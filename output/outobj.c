@@ -76,7 +76,7 @@
  * next operation.
  */
 
-#define RECORD_MAX 1024-3	/* maximal size of any record except type+reclen */
+#define RECORD_MAX (1024-3)	/* maximal size of any record except type+reclen */
 #define OBJ_PARMS  3		/* maximum .parm used by any .ori routine */
 
 #define FIX_08_LOW      0x8000	/* location type for various fixup subrecords */
@@ -133,7 +133,7 @@ struct ObjRecord {
     ObjRecord    **up;			/* Master pointer to this ObjRecord */
     ObjRecord     *back;		/* Previous part of this record     */
     unsigned long  parm[OBJ_PARMS];	/* Parameters for ori routine       */
-    unsigned char  buf[RECORD_MAX];
+    unsigned char  buf[RECORD_MAX+3];
 };
 
 static void obj_fwrite(ObjRecord *orp);
@@ -843,7 +843,19 @@ fprintf(stderr, " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
         ext->name = name;
 	/* Place by default all externs into the current segment */
         ext->defwrt_type = DEFWRT_NONE;
+
+/* 28-Apr-2002 - John Coffman
+  The following code was introduced on 12-Aug-2000, and breaks fixups
+  on code passed thru the MSC 5.1 linker (3.66) and MSC 6.00A linker
+  (5.10).  It was introduced after FIXUP32 was added, and may be needed
+  for 32-bit segments.  The following will get 16-bit segments working
+  again, and maybe someone can correct the 'if' condition which is
+  actually needed.
+*/
+#if 0
 	if (current_seg) {
+#else
+	if (current_seg && current_seg->use32) {
 	    if (current_seg->grp) {
 		ext->defwrt_type = DEFWRT_GROUP;
 		ext->defwrt_ptr.grp = current_seg->grp;
@@ -852,6 +864,8 @@ fprintf(stderr, " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 		ext->defwrt_ptr.seg = current_seg;
 	    }
 	}
+#endif
+
         if (is_global == 2) {
 	    ext->commonsize = offset;
 	    ext->commonelem = 1;	       /* default FAR */
