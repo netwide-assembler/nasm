@@ -6,11 +6,13 @@ Release: 1
 Copyright: LGPL
 Group: Development/Languages
 Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{version}.tar.bz2
-URL: http://nasm.2y.net/
+URL: http://nasm.sourceforge.net/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: /usr
 BuildPrereq: perl
 BuildArchitectures: noarch %{_arch}
+# This is necessary on newer RPM due to the arch/noarch issue
+%define _unpackaged_files_terminate_build 0
 
 %package doc
 Summary: Extensive documentation for NASM
