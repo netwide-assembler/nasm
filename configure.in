@@ -60,7 +60,7 @@ fi
 AC_PROG_INSTALL
 
 if test "$GCC" = "yes"; then
-  GCCFLAGS="-Wall -ansi -pedantic"
+  GCCFLAGS="-Wall -std=c99 -pedantic"
 else
   GCCFLAGS=
 fi
@@ -106,6 +106,16 @@ fi
 AC_CHECK_FUNCS(strspn)
 if test $ac_cv_func_strspn = no; then
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")])
+fi
+
+AC_CHECK_FUNCS(snprintf)
+if test $ac_cv_func_snprintf = no; then
+  AC_MSG_ERROR([NASM requires ISO C99 (specifically, "snprintf")])
+fi
+
+AC_CHECK_FUNCS(vsnprintf)
+if test $ac_cv_func_snprintf = no; then
+  AC_MSG_ERROR([NASM requires ISO C99 (specifically, "vsnprintf")])
 fi
 
 if test $ac_cv_prog_make_vpathok = no; then
