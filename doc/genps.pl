@@ -22,6 +22,8 @@ use Fcntl;
 	   plmarg => 50,	# Page number position relative to left margin
 	   prmarg => 0,		# Page number position relative to right margin
 	   pymarg => 50,	# Page number position relative to bot margin
+	   startcopyright => 100, # How much above the bottom margin is the
+	                          # copyright notice stuff
 	   bulladj => 12,	# How much to indent a bullet paragraph
 	   tocind => 12,	# TOC indentation per level
 	   tocpnz => 24,	# Width of TOC page number only zone
@@ -52,8 +54,8 @@ use Fcntl;
 #
 undef $input;
 while ( $arg = shift(@ARGV) ) {
-    if ( $arg =~ /^\-(|no\-)/ ) {
-	$parm = $';
+    if ( $arg =~ /^\-(|no\-)(.*)$/ ) {
+	$parm = $2;
 	$true = ($1 eq '') ? 1 : 0;
 	if ( $true && defined($papersizes{$parm}) ) {
 	    $psconf{pagewidth}  = $papersizes{$parm}->[0];
@@ -86,6 +88,69 @@ $tocskip = 6;			# Space between TOC entries
 	      'toc1' => $tocskip,  'toc2' => $tocskip);
 
 #
+# Custom encoding vector.  This is basically the same as
+# ISOLatin1Encoding (a level 2 feature, so we dont want to use it),
+# but with a few extra characters thrown in.  It is basically a
+# modified Windows 1252 codepage, minus, for now, the euro sign (\200
+# is reserved for euro.)
+#
+@NASMEncoding =
+(
+ (undef)x32,
+ 'space', 'exclam', 'quotedbl', 'numbersign', 'dollar', 'percent',
+ 'ampersand', 'quoteright', 'parenleft',
+ 'parenright', 'asterisk', 'plus', 'comma', 'minus',
+ 'period', 'slash', 'zero', 'one', 'two', 'three',
+ 'four', 'five', 'six', 'seven', 'eight', 'nine',
+ 'colon', 'semicolon', 'less', 'equal', 'greater',
+ 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+ 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+ 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+ 'bracketleft', 'backslash', 'bracketright',
+ 'asciicircum', 'underscore', 'quoteleft', 'a', 'b',
+ 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+ 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+ 'w', 'x', 'y', 'z', 'braceleft', 'bar',
+ 'braceright', 'asciitilde', undef,
+ undef, 'macron', 'quotesinglbase', 'florin',
+ 'quotedblbase', 'ellipsis', 'dagger', 'dbldagger',
+ 'circumflex', 'perthousand', 'Scaron', 'guilsinglleft',
+ 'OE', 'hungarumlaut', 'Zcaron', 'caron',
+ 'ogonek', 'grave', 'quotesingle', 'quotedblleft',
+ 'quotedblright', 'bullet', 'endash', 'emdash',
+ 'tilde', 'trademark', 'scaron', 'guilsignlright',
+ 'oe', 'ring', 'zcaron', 'Ydieresis',
+ 'space', 'exclamdown', 'cent', 'sterling',
+ 'currency', 'yen', 'brokenbar', 'section',
+ 'dieresis', 'copyright', 'ordfeminine',
+ 'guillemotleft', 'logicalnot', 'hyphen',
+ 'registered', 'macron', 'degree', 'plusminus',
+ 'twosuperior', 'threesuperior', 'acute', 'mu',
+ 'paragraph', 'periodcentered', 'cedilla',
+ 'onesuperior', 'ordmasculine', 'guillemotright',
+ 'onequarter', 'onehalf', 'threequarters',
+ 'questiondown', 'Agrave', 'Aacute', 'Acircumflex',
+ 'Atilde', 'Adieresis', 'Aring', 'AE', 'Ccedilla',
+ 'Egrave', 'Eacute', 'Ecircumflex', 'Edieresis',
+ 'Igrave', 'Iacute', 'Icircumflex', 'Idieresis',
+ 'Eth', 'Ntilde', 'Ograve', 'Oacute', 'Ocircumflex',
+ 'Otilde', 'Odieresis', 'multiply', 'Oslash',
+ 'Ugrave', 'Uacute', 'Ucircumflex', 'Udieresis',
+ 'Yacute', 'Thorn', 'germandbls', 'agrave', 'aacute',
+ 'acircumflex', 'atilde', 'adieresis', 'aring', 'ae',
+ 'ccedilla', 'egrave', 'eacute', 'ecircumflex',
+ 'edieresis', 'igrave', 'iacute', 'icircumflex',
+ 'idieresis', 'eth', 'ntilde', 'ograve', 'oacute',
+ 'ocircumflex', 'otilde', 'odieresis', 'divide',
+ 'oslash', 'ugrave', 'uacute', 'ucircumflex',
+ 'udieresis', 'yacute', 'thorn', 'ydieresis'
+);
+
+$emdash = "\227";
+$endash = "\226";
+$bullet = "\225";
+
+#
 # First, format the stuff coming from the front end into
 # a cleaner representation
 #
@@ -99,11 +164,11 @@ while ( defined($line = <PARAS>) ) {
     chomp $line;
     $data = <PARAS>;
     chomp $data;
-    if ( $line =~ /^meta :/ ) {
-	$metakey = $';
+    if ( $line =~ /^meta :(.*)$/ ) {
+	$metakey = $1;
 	$metadata{$metakey} = $data;
-    } elsif ( $line =~ /^indx :/ ) {
-	$ixentry = $';
+    } elsif ( $line =~ /^indx :(.*)$/ ) {
+	$ixentry = $1;
 	push(@ixentries, $ixentry);
 	$ixterms{$ixentry} = [split(/\037/, $data)];
 	# Look for commas.  This is easier done on the string
@@ -139,6 +204,22 @@ sub int2base($$) {
     }
     return $n.$s;
 }    
+
+#
+# Convert a string to a rendering array
+#
+sub string2array($)
+{
+    my($s) = @_;
+    my(@a) = ();
+    
+    while ( $s =~ /^(\s+|\S+)(.*)$/ ) {
+	push(@a, [0,$1]);
+	$s = $2;
+    }
+
+    return @a;
+}
 
 #
 # Take a crossreference name and generate the PostScript name for it.
@@ -207,11 +288,13 @@ sub ps_flow_lines($$$@) {
 		push(@xd, $e);
 	    }
 	} else {
-	    my $ew = ps_width($$e[1], $fontset->{fonts}->[$$e[0]][1]) *
+	    my $ew = ps_width($$e[1], $fontset->{fonts}->[$$e[0]][1],
+			      \@NASMEncoding) *
 		($fontset->{fonts}->[$$e[0]][0]/1000);
 	    my $sp = $$e[1];
 	    $sp =~ tr/[^ ]//d;	# Delete nonspaces
-	    my $esw = ps_width($sp, $fontset->{fonts}->[$$e[0]][1]) *
+	    my $esw = ps_width($sp, $fontset->{fonts}->[$$e[0]][1],
+			       \@NASMEncoding) *
 		($fontset->{fonts}->[$$e[0]][0]/1000);
 	    
 	    if ( ($w+$ew) - $ps_space_squeeze*($sw+$esw) > $wid ) {
@@ -268,11 +351,15 @@ sub ps_flow_lines($$$@) {
 		# Compute the width of the remainder array
 		for my $le ( @l ) {
 		    if ( $$le[0] >= 0 ) {
-			my $xew = ps_width($$le[1], $fontset->{fonts}->[$$le[0]][1]) *
+			my $xew = ps_width($$le[1],
+					   $fontset->{fonts}->[$$le[0]][1],
+					   \@NASMEncoding) *
 			    ($fontset->{fonts}->[$$le[0]][0]/1000);
 			my $xsp = $$le[1];
 			$xsp =~ tr/[^ ]//d;	# Delete nonspaces
-			my $xsw = ps_width($xsp, $fontset->{fonts}->[$$le[0]][1]) *
+			my $xsw = ps_width($xsp,
+					   $fontset->{fonts}->[$$le[0]][1],
+					   \@NASMEncoding) *
 			    ($fontset->{fonts}->[$$le[0]][0]/1000);
 			$w += $xew;  $sw += $xsw;
 		    }
@@ -358,8 +445,7 @@ sub mkparaarray($@) {
 	    if ( $type eq 'sp' ) {
 		push(@para, [$in_e?1:0, ' ']);
 	    } elsif ( $type eq 'da' ) {
-		# \261 is en dash in Adobe StandardEncoding
-		push(@para, [$in_e?1:0, "\261"]);
+		push(@para, [$in_e?1:0, $endash]);
 	    } elsif ( $type eq 'n ' ) {
 		push(@para, [0, $text]);
 		$in_e = 0;
@@ -482,6 +568,15 @@ for ( $i = 0 ; $i < $npara ; $i++ ) {
 #
 unshift(@paras,  @tocparas);  undef @tocparas;
 unshift(@ptypes, @tocptypes); undef @tocptypes;
+
+#
+# Add copyright notice to the beginning
+#
+unshift(@paras, [[0, "\251"], [0, ' '], [0,$metadata{'year'}],
+		 [0, ' '], string2array($metadata{'author'})],
+	[[0, ' ']], [string2array($metadata{'license'})]);
+unshift(@ptypes, 'norm', 'norm', 'norm');
+
 $npara = scalar(@paras);
 
 #
@@ -550,7 +645,8 @@ sub ps_break_lines($$) {
 	    my $xref = $1;
 	    my $refname = $2.' ';
 	    my $ntoc = substr($ptype,3,1)+0;
-	    my $refwidth = ps_width($refname, $TextFont{fonts}->[0][1]) *
+	    my $refwidth = ps_width($refname, $TextFont{fonts}->[0][1],
+				    \@NASMEncoding) *
 		($TextFont{fonts}->[0][0]/1000);
 	    
 	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
@@ -590,8 +686,10 @@ ps_break_lines(\@paras, \@ptypes);
 # Break lines in to pages
 #
 
-$curpage = 3;			# First text page is page 3
-$curypos = 0;			# Space used on this page
+# Where to start on page 2, the copyright page
+$curpage = 2;			# Start on page 2
+$curypos = $psconf{pageheight}-$psconf{topmarg}-$psconf{botmarg}-
+    $psconf{startcopyright};
 undef $columnstart;		# Not outputting columnar text
 undef $curcolumn;		# Current column
 $nlines = scalar(@pslines);
@@ -786,13 +884,43 @@ foreach $c ( keys(%psbool) ) {
     print "/$c ", ($psbool{$c}?'true':'false'), " def\n";
 }
 
+# Emit custom encoding vector
+$zstr = '/NASMEncoding [ ';
+foreach $c ( @NASMEncoding ) {
+    my $z = '/'.(defined($c)?$c:'.notdef ').' ';
+    if ( length($zstr)+length($z) > 72 ) {
+	print $zstr,"\n";
+	$zstr = ' ';
+    }
+    $zstr .= $z;
+}
+print $zstr, "] def\n";
+
+# Font recoding routine
+# newname fontname --
+print "/nasmenc {\n";
+print "  findfont dup length dict begin\n";
+print "    { 1 index /FID ne {def}{pop pop} ifelse } forall\n";
+print "    /Encoding NASMEncoding def\n";
+print "    currentdict\n";
+print "  end\n";
+print "  definefont pop\n";
+print "} def\n";
+
 # Emit fontset definitions
 foreach $fset ( @AllFonts ) {
     my $i = 0;
     my @zfonts = ();
+    my %allfonts = ();
+    foreach $font ( @{$fset->{fonts}} ) {
+	$allfonts{$font->[1]->{name}}++;
+    }
+    foreach $font ( keys(%allfonts) ) {
+	print '/',$font,'-NASM /',$font," nasmenc\n";
+    }
     foreach $font ( @{$fset->{fonts}} ) {
 	print '/', $fset->{name}, $i, ' ',
-	'/', $font->[1]->{name}, ' findfont ',
+	'/', $font->[1]->{name}, '-NASM findfont ',
 	$font->[0], " scalefont def\n";
 	push(@zfonts, $fset->{name}.$i);
 	$i++;
@@ -862,13 +990,14 @@ $ps_page = 0;
 
 # Title page and inner cover
 ps_start_page();
-# FIX THIS: This shouldn't be hard-coded like this
 $title = $metadata{'title'};
-$title =~ s/ \- / \320 /;	# \320 = em dash
+$title =~ s/ \- / $emdash /;
 $pstitle = ps_string($title);
+
+# FIX THIS: This shouldn't be hard-coded like this
 print <<EOF;
 lmarg pageheight 2 mul 3 div moveto
-/Helvetica-Bold findfont 20 scalefont setfont
+/Helvetica-Bold-NASM findfont 20 scalefont setfont
 /title linkdest ${pstitle} show
 lmarg pageheight 2 mul 3 div 10 sub moveto
 0 setlinecap 3 setlinewidth
@@ -897,17 +1026,14 @@ pageheight 2 div 33 add
 12 nasmlogo
 EOF
 ps_end_page(0);
-ps_start_page();
-print "% Inner cover goes here\n";
-ps_end_page(0);
 
-$curpage = 3;
+$curpage = 2;
 ps_start_page();
 foreach $line ( @pslines ) {
     my $linfo = $line->[0];
     
     if ( $$linfo[4] != $curpage ) {
-        ps_end_page(1);
+        ps_end_page($curpage > 2);
         ps_start_page();
         $curpage = $$linfo[4];
     }

@@ -25,13 +25,14 @@ while ( $line = <STDIN> ) {
 		$charcode = $dd[1];
 	    } elsif ( $dd[0] eq 'WX' ) {
 		$width = $dd[1];
+	    } elsif ( $dd[0] eq 'W' ) {
+		$width = $dd[2];
 	    } elsif ( $dd[0] eq 'N' ) {
 		$name = $dd[1];
 	    }
 	}
-	if ( defined($charcode) && $charcode >= 0 && $charcode < 256 ) {
-	    $charcodes{$name} = $charcode;
-	    $widths[$charcode] = $width;
+	if ( defined($name) && defined($width) ) {
+	    $charwidth{$name} = $width;
 	}
     } elsif ( $kerndata ) {
 	@data = split(/\s+/, $line);
@@ -68,21 +69,10 @@ $psfont =~ s/[^A-Za-z0-9]/_/g;
 
 print "%PS_${psfont} = (\n";
 print "  name => \'$fontname\',\n";
-print "  widths => [\n";
-for ( $i = 0 ; $i < 256 ; $i += 8 ) {
-    print "    ";
-    for ( $j = 0 ; $j < 8 ; $j++ ) {
-	printf("%5d", $widths[$i+$j]);
-	print ',' if (($i+$j) < 255);
-	print ' ' if ($j < 7);
-    }
-    print "\n";
-}
-print "  ],\n";
-print "  kern => {";
+print "  widths => {";
 $lw = 100000;
-foreach $kp ( keys(%kernpairs) ) {
-    $ss = sprintf('%s => %d, ', qstr($kp), $kernpairs{$kp});
+foreach $cc ( keys(%charwidth) ) {
+    $ss = sprintf('%s => %d, ', qstr($cc), $charwidth{$cc});
     $lw += length($ss);
     if ( $lw > 72 ) {
 	print "\n    ";
@@ -90,7 +80,18 @@ foreach $kp ( keys(%kernpairs) ) {
     }
     print $ss;
 }
-print "  }\n";
+print "\n  }\n";
+#print "  kern => {";
+#$lw = 100000;
+#foreach $kp ( keys(%kernpairs) ) {
+#    $ss = sprintf('%s => %d, ', qstr($kp), $kernpairs{$kp});
+#    $lw += length($ss);
+#    if ( $lw > 72 ) {
+#	print "\n    ";
+#	$lw = 4 + length($ss);
+#    }
+#    print $ss;
+#}
+#print "  }\n";
 print ");\n";
-
-
+print "1;\n";
