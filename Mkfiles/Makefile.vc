@@ -73,6 +73,35 @@ insnsa.$(OBJ): insnsa.c nasm.h version.h insnsi.h insns.h
 insnsd.$(OBJ): insnsd.c nasm.h version.h insnsi.h insns.h
 	$(QCL) insnsd.c
 
+# These source files are automagically generated from a single
+# instruction-table file by a Perl script. They're distributed,
+# though, so it isn't necessary to have Perl just to recompile NASM
+# from the distribution.
+
+insnsa.c: insns.dat insns.pl
+	perl insns.pl -a insns.dat
+insnsd.c: insns.dat insns.pl
+	perl insns.pl -d insns.dat
+insnsi.h: insns.dat insns.pl
+	perl insns.pl -i insns.dat
+insnsn.c: insns.dat insns.pl
+	perl insns.pl -n insns.dat
+
+# These files contains all the standard macros that are derived from
+# the version number.
+version.h: version version.pl
+	perl version.pl h < version > version.h
+
+version.mac: version version.pl
+	perl version.pl mac < version > version.mac
+
+# This source file is generated from the standard macros file
+# `standard.mac' by another Perl script. Again, it's part of the
+# standard distribution.
+
+macros.c: macros.pl standard.mac version.mac
+	perl macros.pl standard.mac version.mac
+
 clean :
 	del *.obj
 	del nasm$(SUFFIX)$(EXE)
