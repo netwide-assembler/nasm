@@ -611,7 +611,7 @@ For consistency with the \c{-I}, \c{-D} and \c{-U} options, this
 option can also be specified as \c{-P}.
 
 
-\S{opt-d} The \i\c{-d}\I\c{-D} Option: \I{pre-defining macros} Pre-Define a Macro
+\S{opt-d} The \i\c{-d}\I\c{-D} Option: \I{pre-defining macros}Pre-Define a Macro
 
 \I\c{%define}Just as the \c{-p} option gives an alternative to placing
 \c{%include} directives at the start of a source file, the \c{-d}
@@ -634,7 +634,7 @@ For Makefile compatibility with many C compilers, this option can also
 be specified as \c{-D}.
 
 
-\S{opt-u} The \i\c{-u}\I\c{-U} Option: \I{Undefining macros} Undefine a Macro
+\S{opt-u} The \i\c{-u}\I\c{-U} Option: \I{Undefining macros}Undefine a Macro
 
 \I\c{%undef}The \c{-u} option undefines a macro that would otherwise
 have been pre-defined, either automatically or by a \c{-p} or \c{-d}
