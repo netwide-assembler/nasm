@@ -1,0 +1,110 @@
+# host: windows nt/95
+# target: windows nt/95
+# Makefile for the Netwide Assembler
+#
+# The Netwide Assembler is copyright (C) 1996 Simon Tatham and
+# Julian Hall. All rights reserved. The software is
+# redistributable under the licence given in the file "Licence"
+# distributed in the NASM archive.
+
+# makefile designed for lcc-win32
+# lcc-win32 is lcc (c compiler coded by guys from princeton uni)
+# ported to win32 by jacob navia
+# available at http://www.remcomp.com/lcc-win32/
+
+CFLAGS = -c -O -g2
+CC = lcc.exe $(CFLAGS)
+LFLAGS = -subsystem console -s
+LD = lcclnk.exe $(LFLAGS)
+OBJ = obj
+
+.c.${OBJ}:
+        $(CC) -o $@ $*.c
+
+NASM = nasm.${OBJ} nasmlib.${OBJ} float.${OBJ} insnsa.${OBJ} assemble.${OBJ} labels.${OBJ} \
+       parser.${OBJ} outform.${OBJ} outbin.${OBJ} outaout.${OBJ} outcoff.${OBJ} outelf.${OBJ} \
+       outobj.${OBJ} outas86.${OBJ} outrdf.${OBJ} outdbg.${OBJ} preproc.${OBJ} listing.${OBJ} \
+       eval.${OBJ}
+
+NDISASM = ndisasm.${OBJ} disasm.${OBJ} sync.${OBJ} nasmlib.${OBJ} insnsd.${OBJ}
+
+all: nasm ndisasm
+
+# linker response files
+# that may take long, too much spawning command.com :)
+NASM.LNK: makefile.lcc
+        echo nasm.$(OBJ) > NASM.LNK
+        echo nasmlib.$(OBJ) >> NASM.LNK
+        echo eval.$(OBJ) >> NASM.LNK
+        echo float.$(OBJ) >> NASM.LNK
+        echo insnsa.$(OBJ) >> NASM.LNK
+        echo assemble.$(OBJ) >> NASM.LNK
+        echo labels.$(OBJ) >> NASM.LNK
+        echo listing.$(OBJ) >> NASM.LNK
+        echo parser.$(OBJ) >> NASM.LNK
+        echo preproc.$(OBJ) >> NASM.LNK
+        echo outform.$(OBJ) >> NASM.LNK
+        echo outbin.$(OBJ) >> NASM.LNK
+        echo outaout.$(OBJ) >> NASM.LNK
+        echo outcoff.$(OBJ) >> NASM.LNK
+        echo outelf.$(OBJ) >> NASM.LNK
+        echo outobj.$(OBJ) >> NASM.LNK
+        echo outas86.$(OBJ) >> NASM.LNK
+        echo outrdf.$(OBJ) >> NASM.LNK
+        echo outdbg.$(OBJ) >> NASM.LNK
+
+NDISASM.LNK: makefile.lcc
+        echo ndisasm.$(OBJ) > NDISASM.LNK
+        echo disasm.$(OBJ) >> NDISASM.LNK
+        echo sync.$(OBJ) >> NDISASM.LNK
+        echo nasmlib.$(OBJ) >> NDISASM.LNK
+        echo insnsd.$(OBJ) >> NDISASM.LNK
+
+nasm: $(NASM) nasm.lnk
+        $(LD) -o nasm.exe @nasm.lnk
+
+ndisasm: $(NDISASM) ndisasm.lnk
+        $(LD) -o ndisasm.exe @ndisasm.lnk
+
+assemble.${OBJ}: assemble.c nasm.h nasmlib.h assemble.h insns.h
+disasm.${OBJ}: disasm.c nasm.h disasm.h sync.h insns.h names.c
+eval.${OBJ}: eval.c eval.h nasm.h nasmlib.h
+float.${OBJ}: float.c nasm.h
+insnsa.${OBJ}: insnsa.c nasm.h insns.h
+insnsd.${OBJ}: insnsd.c nasm.h insns.h
+labels.${OBJ}: labels.c nasm.h nasmlib.h
+listing.${OBJ}: listing.c nasm.h nasmlib.h listing.h
+nasm.${OBJ}: nasm.c nasm.h nasmlib.h preproc.h parser.h assemble.h labels.h \
+ outform.h listing.h
+nasmlib.${OBJ}: nasmlib.c nasm.h nasmlib.h
+ndisasm.${OBJ}: ndisasm.c nasm.h nasmlib.h sync.h disasm.h
+outaout.${OBJ}: outaout.c nasm.h nasmlib.h outform.h
+outas86.${OBJ}: outas86.c nasm.h nasmlib.h outform.h
+outbin.${OBJ}: outbin.c nasm.h nasmlib.h outform.h
+outcoff.${OBJ}: outcoff.c nasm.h nasmlib.h outform.h
+outdbg.${OBJ}: outdbg.c nasm.h nasmlib.h outform.h
+outelf.${OBJ}: outelf.c nasm.h nasmlib.h outform.h
+outform.${OBJ}: outform.c outform.h nasm.h
+outobj.${OBJ}: outobj.c nasm.h nasmlib.h outform.h
+outrdf.${OBJ}: outrdf.c nasm.h nasmlib.h outform.h
+parser.${OBJ}: parser.c nasm.h nasmlib.h parser.h float.h names.c
+preproc.${OBJ}: preproc.c nasm.h nasmlib.h macros.c
+sync.${OBJ}: sync.c sync.h
+
+# These two source files are automagically generated from a single
+# instruction-table file by a Perl script. They're distributed,
+# though, so it isn't necessary to have Perl just to recompile NASM
+# from the distribution.
+
+insnsa.c insnsd.c: insns.dat insns.pl
+	perl insns.pl insns.dat
+
+# This source file is generated from the standard macros file
+# `standard.mac' by another Perl script. Again, it's part of the
+# standard distribution.
+
+macros.c: standard.mac macros.pl
+	perl macros.pl standard.mac
+
+clean:
+        rm -f *.${OBJ} nasm.exe ndisasm.exe

@@ -853,27 +853,34 @@ int is_really_simple (expr *vect) {
  * scalar, plus at most one segment-base, plus possibly a WRT).
  */
 int is_reloc (expr *vect) {
-    while (vect->type && !vect->value)
+    while (vect->type && !vect->value) /* skip initial value-0 terms */
     	vect++;
-    if (!vect->type)
-	return 1;
-    if (vect->type < EXPR_SIMPLE)
+    if (!vect->type)		       /* trivially return TRUE if nothing */
+	return 1;		       /* is present apart from value-0s */
+    if (vect->type < EXPR_SIMPLE)      /* FALSE if a register is present */
 	return 0;
-    if (vect->type == EXPR_SIMPLE) {
+    if (vect->type == EXPR_SIMPLE) {   /* skip over a pure number term... */
 	do {
 	    vect++;
 	} while (vect->type && !vect->value);
-	if (!vect->type)
+	if (!vect->type)	       /* ...returning TRUE if that's all */
 	    return 1;
     }
-    if (vect->type != EXPR_WRT && vect->value != 0 && vect->value != 1)
+    if (vect->type == EXPR_WRT) {      /* skip over a WRT term... */
+	do {
+	    vect++;
+	} while (vect->type && !vect->value);
+	if (!vect->type)	       /* ...returning TRUE if that's all */
+	    return 1;
+    }
+    if (vect->value != 0 && vect->value != 1)
 	return 0;		       /* segment base multiplier non-unity */
-    do {
+    do {			       /* skip over _one_ seg-base term... */
 	vect++;
-    } while (vect->type && (vect->type == EXPR_WRT || !vect->value));
-    if (!vect->type)
+    } while (vect->type && !vect->value);
+    if (!vect->type)		       /* ...returning TRUE if that's all */
 	return 1;
-    return 0;
+    return 0;			       /* And return FALSE if there's more */
 }
 
 /*

@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
     int lenread, lendis;
     int autosync = FALSE;
     int bits = 16;
+    int eof = FALSE;
     int rn_error;
     long offset;
     FILE *fp;
@@ -191,6 +192,8 @@ int main(int argc, char **argv) {
 	if (to_read > nextsync-offset-(p-q))
 	    to_read = nextsync-offset-(p-q);
 	lenread = fread (p, 1, to_read, fp);
+	if (lenread == 0)
+	    eof = TRUE;		       /* help along systems with bad feof */
 	p += lenread;
 	if (offset == nextsync) {
 	    if (synclen) {
@@ -218,7 +221,7 @@ int main(int argc, char **argv) {
 	    p -= (q - buffer);
 	    q = buffer;
 	}
-    } while (lenread > 0 || !feof(fp));
+    } while (lenread > 0 || !(eof || feof(fp)));
     fclose (fp);
     return 0;
 }

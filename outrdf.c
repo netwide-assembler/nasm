@@ -221,6 +221,10 @@ static long rdf_section_names(char *name, int pass, int *bits)
 
 static void write_reloc_rec(struct RelocRec *r)
 {
+  if (r->refseg != NO_SEG && (r->refseg & 1))
+    error (ERR_NONFATAL, "RDF format does not support segment base"
+	   " references");
+
   r->refseg >>= 1;    /* adjust segment nos to RDF rather than NASM */
 
   membufwrite(header,&r->type,1);
@@ -465,7 +469,7 @@ static void rdf_cleanup (void) {
 }
 
 static long rdf_segbase (long segment) {
-    return 0;
+    return segment;
 }
 
 static int rdf_directive (char *directive, char *value, int pass) {

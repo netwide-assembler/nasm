@@ -533,3 +533,4 @@ FUNCTION StrTrimRight$ (a$, b$) 'public
         StrTrimRight$ = LEFT$(a$, p)
 END FUNCTION
 
+

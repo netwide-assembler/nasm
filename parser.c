@@ -179,7 +179,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	result->opcode == I_DQ ||
 	result->opcode == I_DT ||
 	result->opcode == I_INCBIN) {
-	extop *eop, **tail = &result->eops;
+	extop *eop, **tail = &result->eops, **fixptr;
 	int oper_num = 0;
 
 	/*
@@ -189,6 +189,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    i = stdscan(NULL, &tokval);
 	    if (i == 0)
 		break;
+	    fixptr = tail;
 	    eop = *tail = nasm_malloc(sizeof(extop));
 	    tail = &eop->next;
 	    eop->next = NULL;
@@ -231,6 +232,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
 			eop->type = EOT_NOTHING;
 		    }
 		    eop = nasm_realloc(eop, sizeof(extop)+eop->stringlen);
+		    tail = &eop->next;
+		    *fixptr = eop;
 		    eop->stringval = (char *)eop + sizeof(extop);
 		    if (!float_const (tokval.t_charptr, sign,
 				      (unsigned char *)eop->stringval,

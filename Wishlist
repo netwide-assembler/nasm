@@ -1,11 +1,17 @@
 NASM Wishlist
 =============
 
-- PUSH WORD EAX silently becomes PUSH EAX. Should warn.
+- forward-reference tracking is instruction-granular not operand-
+  granular. Bummer.
 
-- ndisasm hangs at eof.
+- see if BITS can be made to do anything sensible in obj (eg set the
+  default new-segment property to Use32).
 
-- missing heading in documentation - some subsect in chapter 4.
+- __DATE__, __TIME__, and text variants of __NASM_MAJOR__ and
+  __NASM_MINOR__.
+
+- Warn on TIMES combined with multi-line macros. TIMES gets applied
+  to first line only - should bring to users' attention.
 
 - Add support for lcc 4.0.
   * If-when this happens, remember to bump the `supported lcc

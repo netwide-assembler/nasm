@@ -41,6 +41,13 @@ To rebuild the DOS sources, various makefiles are provided:
 - Makefile.wcw, also for Watcom C, compiling to a Win32 command-
   line application. Also contributed by Dominik Behr.
 
+- Makefile.dj, for DJGPP, compiling to a 32-bit extended DOS
+  executable. Contributed by Dominik Behr.
+
+- Makefile.lcc, for lcc-win32, compiling to a Win32 command line
+  application. (The lcc-win32 compiler and tools are available from
+  http://www.remcomp.com/lcc-win32/)
+
 I can't guarantee that all of those makefiles work, because I don't
 have all of those compilers. However, Makefile.dos and Makefile.vc
 work on my system, and so do Makefile.bor and Makefile.bc2.

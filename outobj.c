@@ -599,7 +599,8 @@ static void obj_out (long segto, void *data, unsigned long type,
 	    datacurr->lptr = obj_write_dword (datacurr->lptr, ldata);
 	datacurr->nonempty = TRUE;
 	rsize = size;
-	if (segment < SEG_ABS && segment % 2 && size == 4) {
+	if (segment < SEG_ABS && (segment != NO_SEG && segment % 2) &&
+	    size == 4) {
 	    /*
 	     * This is a 4-byte segment-base relocation such as
 	     * `MOV EAX,SEG foo'. OBJ format can't actually handle
@@ -1519,7 +1520,7 @@ static void obj_write_file (void) {
 	else
 	    rectype = PUBDEF;
 	for (pub = seg->pubhead; pub; pub = pub->next) {
-	    if (recptr - record + strlen(pub->name) > 1024) {
+	    if (recptr - record + strlen(pub->name) + 7 > 1024) {
 		if (any)
 		    obj_record (rectype, record, recptr);
 		recptr = record;

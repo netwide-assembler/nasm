@@ -12,8 +12,8 @@
 #define NASM_NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 96
-#define NASM_VER "0.96"
+#define NASM_MINOR_VER 97
+#define NASM_VER "0.97"
 
 #ifndef NULL
 #define NULL 0

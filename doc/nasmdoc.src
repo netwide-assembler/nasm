@@ -1411,6 +1411,19 @@ then no other definition of \c{foo} will be accepted: a macro with
 no parameters prohibits the definition of the same name as a macro
 \e{with} parameters, and vice versa.
 
+This doesn't prevent single-line macros being \e{redefined}: you can
+perfectly well define a macro with
+
+\c %define foo bar
+
+and then re-define it later in the same source file with
+
+\c %define foo baz
+
+Then everywhere the macro \c{foo} is invoked, it will be expanded
+according to the most recent definition. This is particularly useful
+when defining single-line macros with \c{%assign} (see \k{assign}).
+
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
@@ -1425,6 +1438,13 @@ exactly the same way that \c{%idefine} differs from \c{%define}).
 parameters and have a numeric value. This value can be specified in
 the form of an expression, and it will be evaluated once, when the
 \c{%assign} directive is processed.
+
+Like \c{%define}, macros defined using \c{%assign} can be re-defined
+later, so you can do things like
+
+\c %assign i i+1
+
+to increment the numeric value of a macro.
 
 \c{%assign} is useful for controlling the termination of \c{%rep}
 preprocessor loops: see \k{rep} for an example of this. Another
@@ -1480,7 +1500,7 @@ things like
 \c           silly 'ab', string_ab  ; string_ab: db 'ab'
 \c           silly {13,10}, crlf    ; crlf:      db 13,10
 
-\S{mlmacover} \I{Overloading Multi-Line Macros}
+\S{mlmacover} \i{Overloading Multi-Line Macros}
 
 As with single-line macros, multi-line macros can be overloaded by
 defining the same macro name several times with different numbers of

@@ -129,8 +129,8 @@ be output when absolute labels were made global.
 
 Updates to RDOFF subdirectory, and changes to outrdf.c.
 
-0.95 not released yet
----------------------
+0.95 released July 1997
+-----------------------
 
 Fixed yet another ELF bug. This one manifested if the user relied on
 the default segment, and attempted to define global symbols without
@@ -242,8 +242,8 @@ Fixed the implementation of WRT, which was too restrictive in that
 you couldn't do `mov ax,[di+abc wrt dgroup]' because (di+abc) wasn't
 a relocatable reference.
 
-0.96 not released yet
----------------------
+0.96 released November 1997
+---------------------------
 
 Fixed a bug whereby, if `nasm sourcefile' would cause a filename
 collision warning and put output into `nasm.out', then `nasm
@@ -403,3 +403,42 @@ assembled differently. This is important since [ESI+EBP] and
 
 Added support for the PharLap OMF extension for 4096-byte segment
 alignment.
+
+0.97 released December 1997
+---------------------------
+
+This was entirely a bug-fix release to 0.96, which seems to have got
+cursed. Silly me.
+
+Fixed stupid mistake in OBJ which caused `MOV EAX,<constant>' to
+fail. Caused by an error in the `MOV EAX,<segment>' support.
+
+ndisasm hung at EOF when compiled with lcc on Linux because lcc on
+Linux somehow breaks feof(). ndisasm now does not rely on feof().
+
+A heading in the documentation was missing due to a markup error in
+the indexing. Fixed.
+
+Fixed failure to update all pointers on realloc() within extended-
+operand code in parser.c. Was causing wrong behaviour and seg faults
+on lines such as `dd 0.0,0.0,0.0,0.0,...'
+
+Fixed a subtle preprocessor bug whereby invoking one multi-line
+macro on the first line of the expansion of another, when the second
+had been invoked with a label defined before it, didn't expand the
+inner macro. 
+
+Added internal.doc back in to the distribution archives - it was
+missing in 0.96 *blush*
+
+Fixed bug causing 0.96 to be unable to assemble its own test files,
+specifically objtest.asm. *blush again*
+
+Fixed seg-faults and bogus error messages caused by mismatching
+%rep and %endrep within multi-line macro definitions.
+
+Fixed a problem with buffer overrun in OBJ, which was causing
+corruption at ends of long PUBDEF records.
+
+Separated DOS archives into main-program and documentation to reduce
+download size.

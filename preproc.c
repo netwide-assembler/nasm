@@ -2604,9 +2604,17 @@ static int expand_mmacro (Token *tline) {
 
     /*
      * If we had a label, push it on the front of the first line of
-     * the macro expansion.
+     * the macro expansion. We must check that this doesn't give
+     * two consecutive TOK_WHITESPACE.
      */
     if (label) {
+	if (last->type == TOK_WHITESPACE &&
+	    istk->expansion->first->type == TOK_WHITESPACE) {
+	    Token *victim = istk->expansion->first; /* kill this whitespace */
+	    istk->expansion->first = victim->next;
+	    nasm_free (victim->text);
+	    nasm_free (victim);
+	}
 	last->next = istk->expansion->first;
 	istk->expansion->first = label;
     }
@@ -2706,6 +2714,25 @@ static char *pp_getline (void) {
 		}
 		line_sync();
 	    } else {
+		/*
+		 * Check whether a `%rep' was started and not ended
+		 * within this macro expansion. This can happen and
+		 * should be detected. It's a fatal error because
+		 * I'm too confused to work out how to recover
+		 * sensibly from it.
+		 */
+		if (defining) {
+		    if (defining->name)
+			error (ERR_PANIC,
+			       "defining with name in expansion");
+		    else if (!istk->mstk->name)
+			error (ERR_PANIC, "istk->mstk has no name but"
+			       " defining is set at end of expansion");
+		    else
+			error (ERR_FATAL, "`%%rep' without `%%endrep' within"
+			       " expansion of macro `%s'", istk->mstk->name);
+		}
+
 		if (istk->mstk->name) {
 		    /*
 		     * This was a real macro call, not a %rep, and

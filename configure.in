@@ -1,0 +1,110 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(nasm.c)
+
+dnl Check for broken VPATH handling on older NetBSD makes.
+AC_DEFUN(AC_PROG_MAKE_VPATHOK,
+[AC_MSG_CHECKING(whether ${MAKE-make} has sane VPATH handling)
+set dummy ${MAKE-make}; ac_make=`echo "[$]2" | sed 'y%./+-%__p_%'`
+AC_CACHE_VAL(ac_cv_prog_make_vpathok,
+[mkdir conftestdir
+cat > conftestdir/conftestmake <<\EOF
+VPATH = ..
+conftestfoo: conftestbar
+	@echo ac_make2temp=ok
+conftestbar: conftestbaz
+	@echo ac_maketemp=broken
+	@touch conftestbar
+EOF
+echo > conftestbaz # these two lines need to be...
+echo > conftestbar # ... in this order not the other
+changequote(, )dnl
+unset ac_maketemp
+unset ac_make2temp
+# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+eval `cd conftestdir; ${MAKE-make} -f conftestmake 2>/dev/null | grep temp=`
+changequote([, ])dnl
+if test -n "$ac_maketemp"; then
+  ac_cv_prog_make_vpathok=no
+else
+  if test -n "$ac_make2temp"; then
+    ac_cv_prog_make_vpathok=yes
+  else
+    ac_cv_prog_make_vpathok=no
+  fi
+fi
+rm -rf conftestdir
+rm -f conftestbar conftestbaz])dnl
+if test $ac_cv_prog_make_vpathok = yes; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+])
+
+AC_PREFIX_PROGRAM(nasm)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+if test -f nasm.c; then
+  # we're building in the source dir, so we don't need this check at all
+  ac_cv_prog_make_vpathok=yes
+else
+  AC_PROG_MAKE_VPATHOK
+fi
+AC_PROG_INSTALL
+
+if test "$GCC" = "yes"; then
+  GCCFLAGS="-Wall -ansi -pedantic"
+else
+  GCCFLAGS=
+fi
+AC_SUBST(GCCFLAGS)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+if test $ac_cv_header_stdc = no; then
+  AC_MSG_ERROR([NASM requires ANSI C header files to compile])
+fi
+
+AC_CHECK_HEADERS(limits.h)
+if test $ac_cv_header_limits_h = no; then
+  AC_MSG_ERROR([NASM requires '<limits.h>' to compile])
+fi
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+if test $ac_cv_c_const = no; then
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, working "const")])
+fi
+
+AC_TYPE_SIZE_T
+if test $ac_cv_type_size_t = no; then
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "size_t")])
+fi
+
+dnl Checks for library functions.
+AC_FUNC_VPRINTF
+if test $ac_cv_func_vprintf = no; then
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "vprintf" and friends)])
+fi
+
+AC_CHECK_FUNCS(strcspn)
+if test $ac_cv_func_strcspn = no; then
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")])
+fi
+
+AC_CHECK_FUNCS(strspn)
+if test $ac_cv_func_strspn = no; then
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")])
+fi
+
+if test $ac_cv_prog_make_vpathok = no; then
+  echo Copying generated srcs into build directory to compensate for VPATH breakage
+  if test ! -f insnsa.c; then cp -p ${srcdir}/insnsa.c .; fi
+  if test ! -f insnsd.c; then cp -p ${srcdir}/insnsd.c .; fi
+  if test ! -f macros.c; then cp -p ${srcdir}/macros.c .; fi
+fi
+
+AC_OUTPUT(Makefile rdoff/Makefile)
