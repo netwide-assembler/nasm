@@ -395,7 +395,7 @@ static void as86_write(void)
     fwritelong (0x000186A3L, as86fp);
     fputc (0x2A, as86fp);
     fwritelong (27+symlen+seglen+strslen, as86fp);   /* header length */
-    fwritelong (stext.len+sdata.len, as86fp);
+    fwritelong (stext.len+sdata.len+bsslen, as86fp);
     fwriteshort (strslen, as86fp);
     fwriteshort (0, as86fp);	       /* class = revision = 0 */
     fwritelong (0x55555555L, as86fp);   /* segment max sizes: always this */
@@ -405,9 +405,9 @@ static void as86_write(void)
     else
 	fwriteshort (stext.len, as86fp);
     if (segsize & 0x40000000L)
-	fwritelong (sdata.len, as86fp);
+	fwritelong (sdata.len+bsslen, as86fp);
     else
-	fwriteshort (sdata.len, as86fp);
+	fwriteshort (sdata.len+bsslen, as86fp);
     fwriteshort (nsyms, as86fp);
 
     /*
@@ -437,6 +437,22 @@ static void as86_write(void)
     as86_reloc_size = -1;
     as86_write_section (&stext, SECT_TEXT);
     as86_write_section (&sdata, SECT_DATA);
+    /*
+     * Append the BSS section to the .data section
+     */
+    if (bsslen > 65535L) {
+	fputc (0x13, as86fp);
+	fwritelong (bsslen, as86fp);
+    }
+    else if (bsslen > 255) {
+	fputc (0x12, as86fp);
+	fwriteshort (bsslen, as86fp);
+    }
+    else if (bsslen) {
+	fputc (0x11, as86fp);
+	fputc (bsslen, as86fp);
+    }
+
     fputc (0, as86fp);		       /* termination */
 }
 

@@ -1,5 +1,6 @@
 0.98.39
 -------
+* fix outas86's .bss handling
 * "make spotless" no longer deletes config.h.in.
 * %(el)if(n)idn insensitivity to string quotes difference (#809300).
 * (nasm.c) __OUTPUT_FORMAT__ changed to string value instead of symbol.
