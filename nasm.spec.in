@@ -10,7 +10,7 @@ URL: http://nasm.sourceforge.net/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: /usr
 BuildPrereq: perl
-BuildArchitectures: noarch %{_arch}
+BuildArchitectures: %{_target_cpu} noarch
 # This is necessary on newer RPM due to the arch/noarch issue
 %define _unpackaged_files_terminate_build 0
 
