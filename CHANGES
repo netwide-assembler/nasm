@@ -4,10 +4,14 @@
   round out the version-query macros.  version.pl now understands
   X.YYplWW or X.YY.ZZplWW as a version number, equivalent to
   X.YY.ZZ.WW (or X.YY.0.WW, as appropriate).
-* New keyword "strict" to disable the optimization of a specific
-  operand.
+* New keyword "strict" to disable the optimization of specific
+  operands.
 * Fix the handing of size overrides with JMP instructions
   (instructions such as "jmp dword foo".)
+* Fix the handling of "ABSOLUTE label", where "label" points into a
+  relocatable segment.
+* Fix OBJ output format with lots of externs.
+* More documentation updates.
 
 
 0.98.32
