@@ -910,7 +910,8 @@ static void gencode (long segment, long offset, int bits,
 	case 0130: case 0131: case 0132:
 	    data = ins->oprs[c-0130].offset;
 	    if (is_sbyte(ins, c-0130, 16)) {
-		out (offset, segment, &data, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	        bytes[0] = data;
+		out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
 		offset++;
 	    } else {
 		if (ins->oprs[c-0130].segment == NO_SEG &&
@@ -935,7 +936,8 @@ static void gencode (long segment, long offset, int bits,
 	case 0140: case 0141: case 0142:
 	    data = ins->oprs[c-0140].offset;
 	    if (is_sbyte(ins, c-0140, 32)) {
-		out (offset, segment, &data, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	        bytes[0] = data;
+		out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
 		offset++;
 	    } else {
 		out (offset, segment, &data, OUT_ADDRESS+4,
