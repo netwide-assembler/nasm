@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "rdoff.h"
 #include "multboot.h"
 
 FILE *infile;
-
-typedef unsigned short int16;
 
 long translatelong(long in) {		/* translate from little endian to
 					   local representation */
@@ -22,7 +21,7 @@ long translatelong(long in) {		/* translate from little endian to
   return r;
 }
   
-int translateshort(int16 in) {
+int16 translateshort(int16 in) {
   int r;
   unsigned char *i;
 
@@ -33,7 +32,7 @@ int translateshort(int16 in) {
 }
 
 void print_header(long length, int rdf_version) {
-  char buf[129],t,s,l;
+  char buf[129],t,s,l,flags;
   unsigned char reclen;
   long o,ll;
   int16 rs;
@@ -45,6 +44,7 @@ void print_header(long length, int rdf_version) {
 	fread(&reclen,1,1,infile);
     }
     switch(t) {
+    
     case 1:		/* relocation record */
     case 6:		/* segment relocation */
       fread(&s,1,1,infile);
@@ -61,6 +61,7 @@ void print_header(long length, int rdf_version) {
       if (rdf_version == 1 && t == 6)
 	  printf("    warning: seg relocation not supported in RDOFF1\n");
       break;
+      
     case 2:             /* import record */
     case 7:		/* import far symbol */
       fread(&rs,2,1,infile);
@@ -83,7 +84,9 @@ void print_header(long length, int rdf_version) {
       if (rdf_version == 1 && t == 7)
 	  printf ("    warning: far import not supported in RDOFF1\n");
       break;
+      
     case 3:             /* export record */
+      fread(&flags,1,1,infile);
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
       ll = 0;
@@ -95,12 +98,19 @@ void print_header(long length, int rdf_version) {
       }
       else
       {
-	  for (; ll < reclen - 5; ll ++)
+	  for (; ll < reclen - 6; ll ++)
 	      fread(&buf[ll],1,1,infile);
       }
-      printf("  export: (%04x:%08lx) = %s\n",(int)s,translatelong(o),buf);
+      if (flags & SYM_GLOBAL)
+        printf("  export");
+      else
+        printf("  global");
+      if (flags & SYM_FUNCTION) printf(" proc");
+      if (flags & SYM_DATA) printf(" data");
+      printf(": (%04x:%08lx) = %s\n",(int)s,translatelong(o),buf);
       if (rdf_version == 1) length -= ll + 6;
       break;
+      
     case 4:		/* DLL and Module records */
     case 8:
       ll = 0;

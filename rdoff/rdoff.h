@@ -48,6 +48,7 @@ struct ImportRec {
 struct ExportRec {
   byte  type;           /* must be 3 */
   byte	reclen;		/* content length */
+  byte  flags;		/* SYM_* flags (see below) */
   byte  segment;        /* segment referred to (0/1/2) */
   long  offset;         /* offset within segment */
   char  label[33];      /* zero terminated as above. max len = 32 chars */
@@ -70,6 +71,11 @@ struct ModRec {
   byte	reclen;		/* content length */
   char  modname[128];   /* module name */
 };
+
+/* Flags for ExportRec */
+#define SYM_DATA	0x01
+#define SYM_FUNCTION	0x02
+#define SYM_GLOBAL	0x04
 
 #ifdef _MULTBOOT_H
 

@@ -103,6 +103,7 @@ in \c{elf}
 convention
 \IR{global, aoutb extensions to} \c{GLOBAL}, \c{aoutb} extensions to
 \IR{global, elf extensions to} \c{GLOBAL}, \c{elf} extensions to
+\IR{global, rdf extensions to} \c{GLOBAL}, \c{rdf} extensions to
 \IR{got} GOT
 \IR{got relocations} \c{GOT} relocations
 \IR{gotoff relocation} \c{GOTOFF} relocations
@@ -3712,6 +3713,45 @@ This is done by the \c{LIBRARY} directive, which takes one argument
 which is the name of the module:
 
 \c           library mylib.rdl
+
+\S{rdfmod} Specifying a Module Name: The \i\c{MODULE} Directive
+
+Special RDOFF header record is used to store the name of the module.
+It can be used, for example, by run-time loader to perform dynamic
+linking. \c{MODULE} directive takes one argument which is the name
+of current module:
+
+\c           module mymodname
+
+Note that when you statically link modules and tell linker to strip
+the symbols from output file, all module names will be stripped too.
+To avoid it, you should start module names with \I{$prefix}\c{$}, like:
+
+\c           module $kernel.core
+
+\S{rdfglob} \c{rdf} Extensions to the \c{GLOBAL} directive\I{GLOBAL,
+rdf extensions to}
+
+RDOFF global symbols can contain additional information needed by the
+static linker. You can mark a global symbol as exported, thus telling
+the linker do not strip it from target executable or library file.
+Like in ELF, you can also specify whether an exported symbol is a
+procedure (function) or data object.
+
+Suffixing the name with a colon and the word \i\c{export} you make the
+symbol exported:
+
+\c           global sys_open:export
+
+To specify that exported symbol is a procedure (function), you add the
+word \i\c{proc} or \i\c{function} after declaration:
+
+\c           global sys_open:export proc
+
+Similarly, to specify exported data object, add the word \i\c{data}
+or \i\c{object} to the directive:
+
+\c           global kernel_ticks:export data
 
 \H{dbgfmt} \i\c{dbg}: Debugging Format
 

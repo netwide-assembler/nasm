@@ -1,25 +1,18 @@
-RDOFF Utils v0.3
-================
+RDOFF Utilities, version 0.3
+============================
 
 The files contained in this directory are the C source code of a set
 of tools (and general purpose library files) for the manipulation of
 RDOFF version 2 object files. Note that these programs (with the
-exception of 'rdfdump') will NOT work with version 1 object files. See
-the subdirectory v1 for programs that perform that task. 
+exception of 'rdfdump') will NOT work with version 1 object files.
+Version 1 of RDOFF is no longer supported.
 
-Note: If you do not have a v1 subdirectory, you may have unpacked the
-ZIP file without specifying the 'restore directory structure' option -
-delete these files, and run your ZIP extracter again with this option 
-turned on ('-d' for PKUNZIP).
-
-RDOFF version 1 is no longer really supported, you should be using
-v2 instead now.
-
-There is also a 'Changes' file, which documents the differences between
-RDOFF 1 and 2, and an 'rdoff2.txt' file, with complete documentation for the
-new format.
+There is also a 'doc' directory with 'v1-v2' file, which documents the
+differences between RDOFF 1 and 2, and an 'rdoff2.txt' file, with
+complete documentation for the new format.
 
 Here is a brief summary of the programs' usage:
+
 
 rdfdump
 =======
@@ -40,6 +33,7 @@ Changes from previous versions:
   looks for incorrect lengths for header records, and checks the
   overall length count at the start of the file)
 
+
 ldrdf
 =====
 
@@ -51,23 +45,43 @@ In normal usage, its command line takes the form:
 
 	ldrdf [-o output-file] object files [-llibrary ...]
 
-Libraries must be specified with their path as no search is performed.
 Modules in libraries are not linked to the program unless they are
 referred to.
 
 Most of its options are not implemented, but those that are are listed here:
 
-   -v	increase verbosity level. Currently 4 verbosity levels are 
+  -2	redirect all output from stderr to stdout. It is useful for some
+  	systems which don't have such a redirection in shell (e.g. DOS).
+
+  -v	increase verbosity level. Currently 4 verbosity levels are 
 	available: default (which only prints error information), normal
 	(which prints information about the produced object, -v), medium
 	(which prints information about what the program is doing, -v -v)
 	and high (which prints all available information, -v -v -v).
 
-   -p	change alignment value to which multiple segments combigned into
+  -a	change alignment value to which multiple segments combigned into
 	a single segment should be aligned (must be either 1, 2, 4, 8,
 	16, 32 or 256. Default is 16).
-
-The default output filename is 'aout.rdx'.
+	
+  -s	strip exported symbols from output file. Symbols marked as
+  	SYM_GLOBAL (see rdoff2.txt) are never stripped.
+	
+  -x	warn about unresolved symbols.
+  
+  -xe	issue an error when at least one symbol is unresolved.
+	
+  -o name	write output to file <name>. The default output filename
+		is 'aout.rdx'.
+		
+  -j path	specify search path for object files. Default path is a
+  		current directory.
+		
+  -L path	specify search path for libraries. Default path is a
+  		current directory.
+		
+  -mbh [addr]	add a Multiboot header to output file. If addr is not
+  		specified, default loading address is 0x110000.
+		
 
 rdx
 ===
@@ -75,6 +89,7 @@ rdx
 This program simply loads and executes an RDOFF object, by calling
 '_main', which it expects to be a C-style function, which will accept
 two parameters, argc and argv in normal C style.
+
 
 rdflib
 ======
@@ -97,13 +112,9 @@ Valid commands are:
 		ie you'd do 'rdflib x libc.rdl strcpy strcpy.rdf to get
 		a copy of strcpy.rdf back out again...)
         t       List modules in the library
+	d	Delete modules from library
+	r	Replace a module in library with a new file
 
-A remove command will be added soon (it is already documented
-as existing, but I haven't had time to implement it... if anyone
-else wants to do this, they're welcome to. The file format should be
-amply documented in the source code... look at 'rdflib.c' and 'rdlib.c',
-and the relevant sections of 'ldrdf.c' to see how libraries can be
-handled).
 
 Library functions
 =================
@@ -126,14 +137,15 @@ just reading them), then please note the existance of a new function
 each segment in your object, to tell the header writing functions
 how long the segment is.
 
+
 BUGS
 ====
 
 This product has recently undergone a major revision, and as such there 
 are probably several bugs left over from the testing phase (although the
 previous version had quite a few that have now been fixed!). Could you
-please report any bugs to me at the address below, including the following
-information:
+please report any bugs to maintainers at the addresses below, including the
+following information:
 
   - A description of the bug
   - What you think the program should be doing
@@ -147,26 +159,22 @@ information:
       problem is in code generated)
     * exact descriptions of error messages/symptoms/etc
 
+
 TODO
 ====
 
-There are still various things unimplemented that I would like to add.
+There are still various things unimplemented that we would like to add.
 If you want to find out what these are, search near the top of each *.c
 file for a comment containing the word 'TODO'. A brief list is given here:
 
 - Improve the performace of ldrdf (there are several enhancements I can think
   of that wouldn't be too hard to add)
 - Stop assuming that we're on a little endian machine
-- Make everything work with both formats (?)
-- Add extra functions to ldrdf (strip symbols/keep symbol list)
 - Check for more bugs
 
-One last thing I have to say: good luck! Whatever it is that you want to use
-RDOFF for, I hope its a success.  People out there are using it for many
-diverse applications, from operating system boot-loaders to loadable modules
-in games.  Whatever your application is, I hope that it works, and that you
-have a good time writing it.
 
+MAINTAINERS
+===========
 
-
-Julian Hall <jules@earthcorp.com>
+Yuri Zaporogets <yuriz@teraflops.com> - primary maintainer
+Julian Hall <jules@dsf.org.uk> - original designer and author

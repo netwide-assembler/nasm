@@ -43,7 +43,7 @@ NROFF		= @NROFF@
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        parser.o outform.o outbin.o outaout.o outcoff.o outelf.o \
-       outobj.o outas86.o outrdf.o outrdf2.o outdbg.o zoutieee.o \
+       outobj.o outas86.o outrdf2.o outdbg.o zoutieee.o \
        preproc.o listing.o eval.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
@@ -77,7 +77,6 @@ outdbg.o: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
 outelf.o: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.o: outform.c outform.h nasm.h insnsi.h
 outobj.o: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf.o: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf2.o: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.o: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.o: preproc.c nasm.h insnsi.h nasmlib.h macros.c

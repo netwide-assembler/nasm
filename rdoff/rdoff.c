@@ -13,10 +13,6 @@
 /* TODO:	The functions in this module assume they are running
  *		on a little-endian machine. This should be fixed to
  *		make it portable.
- *
- *		This module no longer supports RDOFF1. If anybody *really*
- *		needs the functionality of supporting both types at the
- *		same time, I'll add it back in.
  */
 
 #include <stdio.h>
@@ -388,6 +384,7 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
     break;
 
   case 3:	/* Exported symbol record */
+    RI8(r.e.flags);
     RI8(r.e.segment);
     RI32(r.e.offset);
     RS(r.e.label,32);
@@ -464,6 +461,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 	break ;
 
     case 3:				/* export */
+    	membufwrite(h->buf,&r->e.flags,1);
 	membufwrite(h->buf,&r->e.segment,1);
 	membufwrite(h->buf,&r->e.offset,-4);
 	membufwrite(h->buf,&r->e.label,strlen(r->e.label) + 1);

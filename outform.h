@@ -57,7 +57,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf,rdf2 */
+ * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf2 */
 
 /* process options... */
 
@@ -91,9 +91,6 @@
 #endif
 #ifndef OF_AS86
 #define OF_AS86
-#endif
-#ifndef OF_RDF
-#define OF_RDF
 #endif
 #ifndef OF_RDF2
 #define OF_RDF2
@@ -138,9 +135,6 @@
 #ifndef OF_AS86
 #define OF_AS86
 #endif
-#ifndef OF_RDF
-#define OF_RDF
-#endif
 #ifndef OF_RDF2
 #define OF_RDF2
 #endif
@@ -174,9 +168,6 @@
 #ifdef OF_NO_AS86
 #undef OF_AS86
 #endif
-#ifdef OF_NO_RDF
-#undef OF_RDF
-#endif
 #ifdef OF_NO_RDF2
 #undef OF_RDF
 #endif
@@ -201,7 +192,6 @@ extern struct ofmt of_elf;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
 extern struct ofmt of_win32;
-extern struct ofmt of_rdf;
 extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
 extern struct ofmt of_dbg;
@@ -230,9 +220,6 @@ struct ofmt *drivers[]={
 #endif
 #ifdef OF_WIN32
     &of_win32,
-#endif
-#ifdef OF_RDF
-    &of_rdf,
 #endif
 #ifdef OF_RDF2
     &of_rdf2,

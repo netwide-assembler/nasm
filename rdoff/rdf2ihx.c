@@ -78,13 +78,13 @@ int main(int argc, char **argv)
     argv++, argc--;
   }
   if (argc < 2) {
-    puts("rdf2bin: required parameter missing");
+    puts("rdf2ihx: required parameter missing");
     return -1;
   }
   m = rdfload(*argv);
 
   if (!m) {
-    rdfperror("rdf2bin",*argv);
+    rdfperror("rdf2ihx",*argv);
     return 1;
   }
   printf("relocating %s: origin=%lx, align=%d\n",*argv, origin, align);

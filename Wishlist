@@ -4,9 +4,6 @@ NASM Wishlist
 Numbers on right hand side are version numbers that it would be nice to
 have this done by. ? means I haven't looked at it yet.
 
-- Create a binary RDF tools distribution. Should probably be distributed 0.98
-  seperately.
-
 - Check misc/ide.cfg into RCS as Watcom IDE enhancement thingy.		0.98
   (nop@dlc.fi)
 

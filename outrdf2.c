@@ -43,6 +43,18 @@ static const char *RDOFF2Id = "RDOFF2";	/* written to start of RDOFF files */
  * waste any of the 16 bits of segment number written to the file - this
  * allows up to 65533 external labels to be defined; otherwise it would be
  * 32764. */
+ 
+#define RDFREC_RELOC		1
+#define RDFREC_IMPORT		2
+#define RDFREC_GLOBAL		3
+#define RDFREC_DLL		4
+#define RDFREC_BSS		5
+#define RDFREC_SEGRELOC		6
+#define RDFREC_FARIMPORT	7
+#define RDFREC_MODNAME		8
+#define RDFREC_MULTIBOOTHDR	9
+#define RDFREC_GENERIC		0
+
 
 struct RelocRec {
   byte	type;		/* must be 1, or 6 for segment base ref */
@@ -68,7 +80,8 @@ struct ImportRec {
 
 struct ExportRec {
   byte	type;		/* must be 3 */
-  byte  reclen;		/* equals 6+label length */
+  byte  reclen;		/* equals 7+label length */
+  byte  flags;          /* SYM_* flags (see below) */
   byte	segment;	/* segment referred to (0/1) */
   long	offset;		/* offset within segment */
   char	label[33];	/* zero terminated as above. max len = 32 chars */
@@ -85,6 +98,11 @@ struct DLLModRec {
   byte reclen;		/* 1+lib name length for DLLRec, 1+mod name length */
   char name[128];	/* library to link at load time or module name */
 };
+
+/* Flags for ExportRec */
+#define SYM_DATA	0x01
+#define SYM_FUNCTION	0x02
+#define SYM_GLOBAL	0x04
 
 #define COUNT_SEGTYPES 9
 
@@ -266,7 +284,7 @@ static void write_reloc_rec(struct RelocRec *r)
   char buf[4],*b;
 
   if (r->refseg != (int16)NO_SEG && (r->refseg & 1)) /* segment base ref */
-      r->type = 6;
+      r->type = RDFREC_SEGRELOC;
 
   r->refseg >>= 1;    /* adjust segment nos to RDF rather than NASM */
 
@@ -289,6 +307,7 @@ static void write_export_rec(struct ExportRec *r)
 
   saa_wbytes(header,&r->type,1);
   saa_wbytes(header,&r->reclen,1);
+  saa_wbytes(header,&r->flags,1);
   saa_wbytes(header,&r->segment,1);
   b = buf; WRITELONG(b,r->offset);
   saa_wbytes(header,buf,4);
@@ -339,20 +358,37 @@ static void rdf2_deflabel(char *name, long segment, long offset,
   struct ImportRec ri;
   static int farsym = 0;
   static int i;
+  byte export_flags = 0;
 
   if (is_global != 1) return;
 
   if (special) {
     while(*special == ' ' || *special == '\t') special++;
+    
+    if (!nasm_strnicmp(special, "export", 6)) {
+      special += 6;
+      export_flags |= SYM_GLOBAL;  
+    }
 
-    if (!nasm_stricmp(special, "far")) {
-      farsym = 1;
-    }
-    else if (!nasm_stricmp(special, "near")) {
-      farsym = 0;
-    }
-    else
-      error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
+    if (*special) {
+      while(isspace(*special)) special++;
+      if (!nasm_stricmp(special, "far")) {
+        farsym = 1;
+      }
+      else if (!nasm_stricmp(special, "near")) {
+        farsym = 0;
+      }
+      else if (!nasm_stricmp(special, "proc") || 
+               !nasm_stricmp(special, "function")) {
+        export_flags |= SYM_FUNCTION;  
+      }
+      else if (!nasm_stricmp(special, "data") ||
+               !nasm_stricmp(special, "object")) {
+        export_flags |= SYM_DATA;
+      }
+      else
+        error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
+    }	
   }
 
   if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
@@ -365,21 +401,22 @@ static void rdf2_deflabel(char *name, long segment, long offset,
   }
   if (i >= nsegments) {   /* EXTERN declaration */
     if (farsym)
-      ri.type = 7;
+      ri.type = RDFREC_FARIMPORT;
     else
-      ri.type = 2;
+      ri.type = RDFREC_IMPORT;
     ri.segment = segment;
     strncpy(ri.label,name,32);
     ri.label[32] = 0;
     ri.reclen = 3 + strlen(ri.label);
     write_import_rec(&ri);
   } else if (is_global) {
-    r.type = 3;
+    r.type = RDFREC_GLOBAL;
+    r.flags = export_flags;
     r.segment = segment;
     r.offset = offset;
     strncpy(r.label,name,32);
     r.label[32] = 0;
-    r.reclen = 6 + strlen(r.label);
+    r.reclen = 7 + strlen(r.label);
     write_export_rec(&r);
   }
 }
@@ -489,12 +526,12 @@ static void rdf2_out (long segto, void *data, unsigned long type,
     {
 	/* it's an address, so we must write a relocation record */
 
-	rr.type = 1;		/* type signature */
+	rr.type = RDFREC_RELOC;			/* type signature */
 	rr.reclen = 8;
-	rr.segment = segto;		/* segment we're currently in */
+	rr.segment = segto;			/* segment we're currently in */
 	rr.offset = getsegmentlength(segto);	/* current offset */
-	rr.length = bytes;		/* length of reference */
-	rr.refseg = segment;	/* segment referred to */
+	rr.length = bytes;			/* length of reference */
+	rr.refseg = segment;			/* segment referred to */
 	write_reloc_rec(&rr);
     }
 
@@ -518,7 +555,7 @@ static void rdf2_out (long segto, void *data, unsigned long type,
     rr.refseg = segment;	/* segment referred to (will be >>1'd)*/
 
     if (segment != NO_SEG && segment % 2) {
-      rr.type = 6;
+      rr.type = RDFREC_SEGRELOC;
       rr.segment = segto;	/* memory base refs *aren't ever* relative! */
       write_reloc_rec(&rr);
 
@@ -529,7 +566,7 @@ static void rdf2_out (long segto, void *data, unsigned long type,
     }
     else
     {
-      rr.type = 1;		/* type signature */
+      rr.type = RDFREC_RELOC;	/* type signature */
       rr.segment = segto+64;	/* segment we're currently in + rel flag */
       write_reloc_rec(&rr);
 
@@ -551,7 +588,7 @@ static void rdf2_out (long segto, void *data, unsigned long type,
       error(ERR_PANIC, "erm... 4 byte segment base ref?");
     }
 
-    rr.type = 1;		/* type signature */
+    rr.type = RDFREC_RELOC;	/* type signature */
     rr.segment = segto+64;	/* segment we're currently in + rel tag */
     rr.offset = getsegmentlength(segto);	/* current offset */
     rr.length = 4;		/* length of reference */
@@ -579,7 +616,7 @@ static void rdf2_cleanup (int debuginfo) {
 
   if (bsslength != 0)		/* reserve BSS */
   {
-      bs.type = 5;
+      bs.type = RDFREC_BSS;
       bs.amount = bsslength;
       bs.reclen = 4;
       write_bss_rec(&bs);
@@ -631,7 +668,7 @@ static int rdf2_directive (char *directive, char *value, int pass) {
 
     if (! strcmp(directive, "library")) {
 	if (pass == 1) {
-	    r.type = 4;
+	    r.type = RDFREC_DLL;
 	    r.reclen=strlen(value)+1;
 	    strcpy(r.name, value);
 	    write_dllmod_rec(&r);
@@ -641,14 +678,14 @@ static int rdf2_directive (char *directive, char *value, int pass) {
 
     if (! strcmp(directive, "module")) {
 	if (pass == 1) {
-	    r.type = 8;
+	    r.type = RDFREC_MODNAME;
 	    r.reclen=strlen(value)+1;
 	    strcpy(r.name, value);
 	    write_dllmod_rec(&r);
 	}
 	return 1;
     }
-
+    
     return 0;
 }
 

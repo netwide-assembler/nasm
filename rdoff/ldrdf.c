@@ -23,6 +23,9 @@
  * segment exceeds 64K in size, it will not work. This program probably
  * wont work if compiled by a 16 bit compiler. Try DJGPP if you're running
  * under DOS. '#define STINGY_MEMORY' may help a little.
+ *
+ * TO FIX: enhance search of required export symbols in libraries (now depends
+ * on modules order in library).
  */
 
 #include <stdio.h>
@@ -36,7 +39,7 @@
 #include "rdlib.h"
 #include "segtab.h"
 
-#define LDRDF_VERSION "1.02"
+#define LDRDF_VERSION "1.03"
 
 #define RDF_MAXSEGS 64
 /* #define STINGY_MEMORY */
@@ -989,10 +992,10 @@ void write_output(const char * filename)
 	    case 3: /* export symbol */
 		/*
 		 * need to insert an export for this symbol into the new
-		 * header, unless we're stripping symbols [unless this
-		 * symbol is in an explicit keep list]. *** FIXME ***
+		 * header, unless we're stripping symbols. Even if we're
+		 * stripping, put the symbol if it's marked as SYM_GLOBAL.
 		 */
-		if (options.strip)
+		if (options.strip && !(hr->e.flags & SYM_GLOBAL))
 		    break;
 
 		if (hr->e.segment == 2) {
@@ -1019,10 +1022,12 @@ void write_output(const char * filename)
 
 	    case 8: /* module name */
 		 /*
-		  * insert module name record if export symbols
+		  * Insert module name record if export symbols
 		  * are not stripped.
+		  * If module name begins with '$' - insert it anyway.
 		  */
-		if (options.strip) break;
+		  
+		if (options.strip && hr->m.modname[0] != '$') break;
 
 		rdfaddheader(rdfheader, hr);
 		break;
