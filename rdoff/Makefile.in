@@ -88,5 +88,5 @@ install: all
 	$(INSTALL_PROGRAM) rdx$(X) $(INSTALLROOT)$(bindir)/rdx$(X)
 	$(INSTALL_PROGRAM) rdflib$(X) $(INSTALLROOT)$(bindir)/rdflib$(X)
 	$(INSTALL_PROGRAM) rdf2bin$(X) $(INSTALLROOT)$(bindir)/rdf2bin$(X)
-	$(INSTALL_PROGRAM) rdf2ihx$(X) $(INSTALLROOT)$(bindir)/rdf2ihx$X(X)
+	$(INSTALL_PROGRAM) rdf2ihx$(X) $(INSTALLROOT)$(bindir)/rdf2ihx$(X)
 	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
