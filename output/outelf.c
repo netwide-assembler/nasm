@@ -1112,7 +1112,7 @@ static void elf_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, ".o", error);
 }
 
-static char *elf_stdmac[] = {
+const static char *elf_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%define $_%1 $%1",

@@ -14,9 +14,14 @@ struct itemplate {
     int opcode;			       /* the token, passed from "parser.c" */
     int operands;		       /* number of operands */
     long opd[3];		       /* bit flags for operand types */
-    char *code;			       /* the code it assembles to */
+    const char *code;		   /* the code it assembles to */
     unsigned long flags;	       /* some flags */
 };
+
+/* 
+ * this define is used to signify the end of an itemplate 
+ */
+#define ITEMPLATE_END {-1,-1,{-1,-1,-1},NULL,0}
 
 /*
  * Instruction template flags. These specify which processor

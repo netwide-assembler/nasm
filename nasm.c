@@ -30,11 +30,11 @@ struct forwrefinfo {		       /* info held on forward refs. */
 
 static int get_bits (char *value);
 static unsigned long get_cpu (char *cpu_str);
-static void report_error (int, char *, ...);
 static void parse_cmdline (int, char **);
 static void assemble_file (char *);
 static int getkw (char *buf, char **value);
 static void register_output_formats(void);
+static void report_error (int severity, const char *fmt, ...);
 static void usage(void);
 
 static int using_debug_info;
@@ -87,7 +87,7 @@ static char suppressed[1+ERR_WARN_MAX] = {
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static char *suppressed_names[1+ERR_WARN_MAX] = {
+const static char *suppressed_names[1+ERR_WARN_MAX] = {
     NULL, "macro-params", "macro-selfref", "orphan-labels", "number-overflow",
     "gnu-elf-extensions"
 };
@@ -96,7 +96,7 @@ static char *suppressed_names[1+ERR_WARN_MAX] = {
  * The explanations for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static char *suppressed_what[1+ERR_WARN_MAX] = {
+const static char *suppressed_what[1+ERR_WARN_MAX] = {
     NULL,
     "macro calls with wrong no. of params",
     "cyclic macro self-references",
@@ -132,11 +132,11 @@ static int want_usage;
 static int terminate_after_phase;
 int user_nolist = 0;             /* fbk 9/2/00 */
 
-static void nasm_fputs(char *line, FILE *ofile)
+static void nasm_fputs(const char *line, FILE *outfile)
 {
-    if (ofile) {
-	fputs(line, ofile);
-	fputc('\n', ofile);
+    if (outfile) {
+	fputs(line, outfile);
+	fputc('\n', outfile);
     } else
 	puts(line);
 }
@@ -331,7 +331,7 @@ static char *get_param (char *p, char *q, int *advance)
 
 struct textargs
 {
-	char *label;
+	const char *label;
 	int value;
 };
 
@@ -1339,7 +1339,7 @@ static int getkw (char *buf, char **value)
     return -1;
 }
 
-static void report_error (int severity, char *fmt, ...)
+static void report_error (int severity, const char *fmt, ...)
 {
     va_list ap;
 

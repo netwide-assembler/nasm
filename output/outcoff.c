@@ -721,7 +721,7 @@ static void coff_win32_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, ".obj", error);
 }
 
-static char *coff_stdmac[] = {
+const static char *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",

@@ -640,11 +640,11 @@ void saa_fpwrite (struct SAA *s, FILE *fp)
  * by the scanner.
  */
 #include "names.c"
-static char *special_names[] = {
+const static char *special_names[] = {
     "byte", "dword", "far", "long", "near", "nosplit", "qword",
     "short", "to", "tword", "word"
 };
-static char *prefix_names[] = {
+const static char *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
     "repnz", "repz", "times"
 };
@@ -1088,9 +1088,10 @@ char *nasm_strcat(char *one, char *two)
     return rslt;
 }
 
-void null_debug_routine()
+void null_debug_routine(void)
 {
 }
+
 struct dfmt null_debug_form = {
     "Null debug format",
     "null",

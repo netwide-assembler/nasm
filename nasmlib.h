@@ -252,7 +252,7 @@ void nasm_quote(char **str);
 char *nasm_strcat(char *one, char *two);
 void nasmlib_cleanup(void);
 
-void null_debug_routine();
+void null_debug_routine(void);
 extern struct dfmt null_debug_form;
 extern struct dfmt *null_debug_arr[2];
 #endif

@@ -80,7 +80,7 @@ if ( !defined($output) || $output eq 'a' ) {
 	foreach $j (@$aname) {
 	    print A "    $j\n";
 	}
-	print A "    {-1}\n};\n\n";
+	print A "    ITEMPLATE_END\n};\n\n";
     }
     print A "struct itemplate *nasm_instructions[] = {\n";
     foreach $i (@opcodes, @opcodes_cc) {
@@ -107,7 +107,7 @@ if ( !defined($output) || $output eq 'd' ) {
     foreach $j (@big) {
 	print D "    $j\n";
     }
-    print D "    {-1}\n};\n\n";
+	print D "    ITEMPLATE_END\n};\n\n";
     
     for ($c=0; $c<256; $c++) {
 	$h = sprintf "%02X", $c;
@@ -164,7 +164,7 @@ if ( !defined($output) || $output eq 'n' ) {
         " - don't edit it */\n\n";
     print N "/* This file in included by names.c */\n\n";
     
-    print N "static char *insn_names[] = {";
+    print N "const static char *insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
 	print N "," if ( !$first );
@@ -175,7 +175,7 @@ if ( !defined($output) || $output eq 'n' ) {
     }
     print N "\n};\n\n";
     print N "/* Conditional instructions */\n";
-    print N "static char *icn[] = {";
+    print N "const static char *icn[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );

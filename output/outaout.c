@@ -875,7 +875,7 @@ static void aout_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, ".o", error);
 }
 
-static char *aout_stdmac[] = {
+const static char *aout_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",

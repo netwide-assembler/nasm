@@ -696,8 +696,6 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    } 
 	    else	       /* it's a register */
 	    {
-		int i;
-
 		if (value->type>=EXPR_SIMPLE || value->value!=1) {
 		    error (ERR_NONFATAL, "invalid operand type");
 		    result->opcode = -1;

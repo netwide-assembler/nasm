@@ -66,7 +66,7 @@ static void add_reloc (struct Section *s, long bytes, long secref,
     r->target = s;
 }
 
-static struct Section *find_section_by_name(char *name)
+static struct Section *find_section_by_name(const char *name)
 {
    struct Section *s;
 
@@ -555,7 +555,7 @@ static void bin_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, "", error);
 }
 
-static char *bin_stdmac[] = {
+const static char *bin_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro org 1+.nolist",
     "[org %1]",

@@ -1281,7 +1281,7 @@ fprintf(stderr," obj_segment: < %s >, pass=%d, *bits=%d\n",
 	attrs = 0;
 	while (*name == '.')
 	    name++;		       /* hack, but a documented one */
-	p = name;
+		p = name;
 	while (*p && !isspace(*p))
 	    p++;
 	if (*p) {
@@ -1787,10 +1787,10 @@ static long obj_segbase (long segment)
     return segment;		       /* no special treatment */
 }
 
-static void obj_filename (char *inname, char *outname, efunc error) 
+static void obj_filename (char *inname, char *outname, efunc lerror) 
 {
     strcpy(obj_infile, inname);
-    standard_extension (inname, outname, ".obj", error);
+    standard_extension (inname, outname, ".obj", lerror);
 }
 
 static void obj_write_file (int debuginfo) 
@@ -2282,7 +2282,7 @@ void obj_fwrite(ObjRecord *orp)
     fputc ( (-cksum) & 0xFF, ofp);
 }
 
-static char *obj_stdmac[] = {
+static const char *obj_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro group 1+.nolist",
     "[group %1]",
