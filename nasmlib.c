@@ -332,14 +332,14 @@ static struct RAA *real_raa_init (int layers)
     struct RAA *r;
     int i;
 
-    r->layers = layers;
-
     if (layers == 0) {
 	r = nasm_malloc (LEAFSIZ);
+	r->layers = 0;
 	memset (r->u.l.data, 0, sizeof(r->u.l.data));
 	r->stepsize = 1L;
     } else {
 	r = nasm_malloc (BRANCHSIZ);
+	r->layers = layers;
 	for ( i = 0 ; i < RAA_LAYERSIZE ; i++ )
 	  r->u.b.data[i] = NULL;
 	r->stepsize = RAA_BLKSIZE;
