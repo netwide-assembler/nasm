@@ -1727,7 +1727,7 @@ sub write_texi {
   sprintf('%s: (%s).', $metadata{'infoname'}, $metadata{'infofile'}),
   $metadata{'infotitle'};
   print "\@end direntry\n";
-  print "\@settitle ",$metadata{'title'},"\n";
+  print "\@settitle ", $metadata{'title'},"\n";
   print "\@setchapternewpage odd\n";
   print "\@c \%**end of header\n";
   print "\n";
@@ -1740,7 +1740,9 @@ sub write_texi {
   print "\@end ifinfo\n";
   print "\n";
   print "\@titlepage\n";
-  print "\@title ",$metadata{'title'},"\n";
+  $title = $metadata{'title'};
+  $title =~ s/ - / --- /g;
+  print "\@title ${title}\n";
   print "\@author ",$metadata{'author'},"\n";
   print "\n";
   print "\@page\n";
