@@ -1638,7 +1638,7 @@ SUBSD           xmmreg,mem              \301\3\xF2\x0F\x5C\110          WILLAMET
 UCOMISD         xmmreg,xmmreg           \3\x66\x0F\x2E\110              WILLAMETTE,SSE2
 UCOMISD         xmmreg,mem              \301\3\x66\x0F\x2E\110          WILLAMETTE,SSE2
 UNPCKHPD        xmmreg,xmmreg           \3\x66\x0F\x15\110              WILLAMETTE,SSE2
-UNPCKHPD        mem,xmmreg              \300\3\x66\x0F\x15\101          WILLAMETTE,SSE2,SM
+UNPCKHPD        xmmreg,mem              \301\3\x66\x0F\x15\110          WILLAMETTE,SSE2,SM
 UNPCKLPD        xmmreg,xmmreg           \3\x66\x0F\x14\110              WILLAMETTE,SSE2
 UNPCKLPD        xmmreg,mem              \301\3\x66\x0F\x14\110          WILLAMETTE,SSE2,SM
 XORPD           xmmreg,xmmreg           \3\x66\x0F\x57\110              WILLAMETTE,SSE2
