@@ -27,6 +27,7 @@ require 'pswidth.ph';		# PostScript string width
 	   idxspace => 24,	# Minimum space between index title and pg#
 	   idxindent => 32,	# How much to indent a subindex entry
 	   idxgutter => 24,	# Space between index columns
+	   idxcolumns => 2,	# Number of index columns
 	   );
 
 # US-Letter paper
@@ -99,9 +100,21 @@ sub int2base($$) {
 #
 # Take a crossreference name and generate the PostScript name for it.
 #
+# This hack produces a somewhat smaller PDF...
+#%ps_xref_list = ();
+#$ps_xref_next = 0;
+#sub ps_xref($) {
+#    my($s) = @_;
+#    my $q = $ps_xref_list{$s};
+#    return $q if ( defined($ps_xref_list{$s}) );
+#    $q = 'X'.int2base($ps_xref_next++, 52);
+#    $ps_xref_list{$s} = $q;
+#    return $q;
+#}
+
+# Somewhat bigger PDF, but one which obeys # URLs
 sub ps_xref($) {
-    my($s) = @_;
-    return $s;			# Identity transform should be OK for now
+    return @_[0];
 }
 
 #
@@ -111,7 +124,8 @@ sub ps_xref($) {
 # arrays of pairs: [<size>, <metricref>]
 #
 # Each line is represented as:
-# [ [type,first|last,aux,fontset,page,ypos], [rendering array] ]
+# [ [type,first|last,aux,fontset,page,ypos,optional col],
+#   [rendering array] ]
 #
 # A space character may be "squeezed" by up to this much
 # (as a fraction of the normal width of a space.)
@@ -126,17 +140,28 @@ sub ps_flow_lines($$$@) {
     my(@l)  = ();		# Current line
     my(@ls) = ();		# Accumulated output lines
     my(@xd) = ();		# Metadata that goes with subsequent text
+    my $hasmarker = 0;		# Line has -6 marker
+    my $pastmarker = 0;		# -6 marker found
+
+    # If there is a -6 marker anywhere in the paragraph,
+    # *each line* output needs to have a -6 marker
+    foreach $e ( @data ) {
+	$hasmarker = 1 if ( $$e[0] == -6 );
+    }
 
     $w = 0;
     foreach $e ( @data ) {
 	if ( $$e[0] < 0 ) {
 	    # Type is metadata.  Zero width.
-	    if ( $$e[0] < -1 ) {
-		# -1 (end anchor) goes with the preceeding text, otherwise
-		# with the subsequent text
-		push(@xd, $e);
-	    } else {
+	    if ( $$e[0] == -6 ) { 
+		$pastmarker = 1;
+	    }
+	    if ( $$e[0] == -1 || $$e[0] == -6 ) {
+		# -1 (end anchor) or -6 (marker) goes with the preceeding
+		# text, otherwise with the subsequent text
 		push(@l, $e);
+	    } else {
+		push(@xd, $e);
 	    }
 	} else {
 	    my $ew = ps_width($$e[1], $fontset->{fonts}->[$$e[0]][1]) *
@@ -152,7 +177,11 @@ sub ps_flow_lines($$$@) {
 		my $lx = scalar(@l)-1;
 		my @rm = ();
 		while ( $lx >= 0 ) {
-		    while ( $lx >= 0 && $l[$lx]->[0] < 0 ) { $lx-- }; # Skip metadata
+		    while ( $lx >= 0 && $l[$lx]->[0] < 0 ) {
+			# Skip metadata
+			$pastmarker = 0 if ( $l[$lx]->[0] == -6 );
+			$lx--;
+		    };
 		    if ( $lx >= 0 ) {
 			if ( $l[$lx]->[1] eq ' ' ) {
 			    splice(@l, $lx, 1);
@@ -165,20 +194,33 @@ sub ps_flow_lines($$$@) {
 		}
 
 		# Now @l contains the stuff to remain on the old line
-		# If we broke the line inside a link of type -2 or -3,
-		# then split the link into two.
+		# If we broke the line inside a link, then split the link
+		# into two.
 		my $lkref = undef;
 		foreach my $lc ( @l ) {
-		    if ( $$lc[0] == -2 || $$lc[0] == -3 ) {
+		    if ( $$lc[0] == -2 || $$lc[0] == -3 || $lc[0] == -7 ) {
 			$lkref = $lc;
 		    } elsif ( $$lc[0] == -1 ) {
 			undef $lkref;
 		    }
 		}
-		push(@l, [-1,undef]) if ( defined($lkref) );
+
+		if ( defined($lkref) ) {
+		    push(@l, [-1,undef]); # Terminate old reference
+		    unshift(@rm, $lkref); # Duplicate reference on new line
+		}
+
+		if ( $hasmarker ) {
+		    if ( $pastmarker ) {
+			unshift(@rm,[-6,undef]); # New line starts with marker
+		    } else {
+			push(@l,[-6,undef]); # Old line ends with marker
+		    }
+		}
+
 		push(@ls, [[$type,0,undef,$fontset,0,0],[@l]]);
 		@l = @rm;
-		unshift(@l, $lkref) if ( defined($lkref) );
+
 		$w = $sw = 0;
 		# Compute the width of the remainder array
 		for my $le ( @l ) {
@@ -247,6 +289,8 @@ sub ps_merge_chunks(@) {
 # -3 begin weblink
 # -4 index item anchor
 # -5 crossref anchor
+# -6 left/right marker (used in the index)
+# -7 page link (used in the index)
 #  0 normal
 #  1 empatic (italic)
 #  2 code (fixed spacing)
@@ -260,11 +304,11 @@ sub mkparaarray($@) {
     my $chunk;
 
     if ( $ptype =~ /^code/ ) {
-	foreach $chunk ( @{$paras[$i]} ) {
+	foreach $chunk ( @chunks ) {
 	    push(@para, [2, $chunk]);
 	}
     } else {
-	foreach $chunk ( @{$paras[$i]} ) {
+	foreach $chunk ( @chunks ) {
 	    my $type = substr($chunk,0,2);
 	    my $text = substr($chunk,2);
 	    
@@ -393,9 +437,14 @@ for ( $i = 0 ; $i < $npara ; $i++ ) {
 #
 # Add TOC to beginning of paragraph list
 #
-unshift(@paras,  @tocparas);
-unshift(@ptypes, @tocptypes);
+unshift(@paras,  @tocparas);  undef @tocparas;
+unshift(@ptypes, @tocptypes); undef @tocptypes;
 $npara = scalar(@paras);
+
+#
+# No lines generated, yet.
+#
+@pslines    = ();
 
 #
 # Line Auxilliary Information Types
@@ -407,150 +456,204 @@ $AuxXRef    = 4;		# Cross reference as a name
 $AuxNum     = 5;		# Number
 
 #
-# Break or convert paragraphs into lines.
+# Break or convert paragraphs into lines, and push them
+# onto the @pslines array.
 #
-@pslines    = ();
-@pslinedata = ();
-$linewidth  = $psconf{pagewidth}-$psconf{lmarg}-$psconf{rmarg};
-$bullwidth  = $linewidth-$psconf{bulladj};
+sub ps_break_lines($$) {
+    my ($paras,$ptypes) = @_;
 
-for ( $i = 0 ; $i < $npara ; $i++ ) {
-    my $xtype = $ptypes[$i];
-    my $ptype = substr($xtype,0,4);
-    my @data = @{$paras[$i]};
-    my @ls = ();
-    if ( $ptype eq 'code' ) {
-	my $p;
-	# Code paragraph; each chunk is a line
-	foreach $p ( @data ) {
-	    push(@ls, [[$ptype,0,undef,\%TextFont,0,0],[$p]]);
-	}
-	$ls[0]->[0]->[1] |= 1;	     # First in para
-	$ls[-1]->[0]->[1] |= 2;      # Last in para
-    } elsif ( $ptype eq 'chap' || $ptype eq 'appn' ) {
-	# Chapters are flowed normally, but in an unusual font
-	@ls = ps_flow_lines($linewidth, \%ChapFont, $ptype, @data);
-    } elsif ( $ptype eq 'head' || $ptype eq 'subh' ) {
-	unless ( $xtype =~ /^\S+ (\S+) :(.*)$/ ) {
-	    die "Bad para";
-	}
-	my $secn = $1;
-	my $sech = $2;
-	my $font = ($ptype eq 'head') ? \%HeadFont : \%SubhFont;
-	@ls = ps_flow_lines($linewidth, $font, $ptype, @data);
-	# We need the heading number as auxillary data
-	$ls[0]->[0]->[2] = [[$AuxStr,$secn]];
-    } elsif ( $ptype eq 'norm' ) {
-	@ls = ps_flow_lines($linewidth, \%TextFont, $ptype, @data);
-    } elsif ( $ptype eq 'bull' ) {
-	@ls = ps_flow_lines($bullwidth, \%TextFont, $ptype, @data);
-    } elsif ( $ptype =~ /^toc/ ) {
-	unless ( $xtype =~/^\S+ :([^:]*):(.*)$/ ) {
-	    die "Bad para";
-	}
-	my $xref = $1;
-	my $refname = $2.' ';
-	my $ntoc = substr($ptype,3,1)+0;
-	my $refwidth = ps_width($refname, $TextFont{fonts}->[0][1]) *
-	    ($TextFont{fonts}->[0][0]/1000);
-	
-	@ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
-			    $psconf{tocpnz}-$refwidth,
-			    \%TextFont, $ptype, @data);
+    my $linewidth  = $psconf{pagewidth}-$psconf{lmarg}-$psconf{rmarg};
+    my $bullwidth  = $linewidth-$psconf{bulladj};
+    my $indxwidth  = ($linewidth-$psconf{idxgutter})/$psconf{idxcolumns}
+                     -$psconf{idxspace};
 
-	# Auxilliary data: for the first line, the cross reference symbol
-	# and the reference name; for all lines but the first, the
-	# reference width; and for the last line, the page number
-	# as a string.
-	my $nl = scalar(@ls);
-	$ls[0]->[0]->[2] = [[$AuxStr,$refname], [$AuxXRef,$xref]];
-	for ( $j = 1 ; $j < $nl ; $j++ ) {
-	    $ls[$j]->[0]->[2] = [[$AuxNum,$refwidth]];
+    my $npara = scalar(@{$paras});
+    my $i;
+
+    for ( $i = 0 ; $i < $npara ; $i++ ) {
+	my $xtype = $ptypes->[$i];
+	my $ptype = substr($xtype,0,4);
+	my @data = @{$paras->[$i]};
+	my @ls = ();
+	if ( $ptype eq 'code' ) {
+	    my $p;
+	    # Code paragraph; each chunk is a line
+	    foreach $p ( @data ) {
+		push(@ls, [[$ptype,0,undef,\%TextFont,0,0],[$p]]);
+	    }
+	    $ls[0]->[0]->[1] |= 1;	     # First in para
+	    $ls[-1]->[0]->[1] |= 2;      # Last in para
+	} elsif ( $ptype eq 'chap' || $ptype eq 'appn' ) {
+	    # Chapters are flowed normally, but in an unusual font
+	    @ls = ps_flow_lines($linewidth, \%ChapFont, $ptype, @data);
+	} elsif ( $ptype eq 'head' || $ptype eq 'subh' ) {
+	    unless ( $xtype =~ /^\S+ (\S+) :(.*)$/ ) {
+		die "Bad para";
+	    }
+	    my $secn = $1;
+	    my $sech = $2;
+	    my $font = ($ptype eq 'head') ? \%HeadFont : \%SubhFont;
+	    @ls = ps_flow_lines($linewidth, $font, $ptype, @data);
+	    # We need the heading number as auxillary data
+	    $ls[0]->[0]->[2] = [[$AuxStr,$secn]];
+	} elsif ( $ptype eq 'norm' ) {
+	    @ls = ps_flow_lines($linewidth, \%TextFont, $ptype, @data);
+	} elsif ( $ptype eq 'bull' ) {
+	    @ls = ps_flow_lines($bullwidth, \%TextFont, $ptype, @data);
+	} elsif ( $ptype =~ /^toc/ ) {
+	    unless ( $xtype =~/^\S+ :([^:]*):(.*)$/ ) {
+		die "Bad para";
+	    }
+	    my $xref = $1;
+	    my $refname = $2.' ';
+	    my $ntoc = substr($ptype,3,1)+0;
+	    my $refwidth = ps_width($refname, $TextFont{fonts}->[0][1]) *
+		($TextFont{fonts}->[0][0]/1000);
+	    
+	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
+				$psconf{tocpnz}-$refwidth,
+				\%TextFont, $ptype, @data);
+	    
+	    # Auxilliary data: for the first line, the cross reference symbol
+	    # and the reference name; for all lines but the first, the
+	    # reference width; and for the last line, the page number
+	    # as a string.
+	    my $nl = scalar(@ls);
+	    $ls[0]->[0]->[2] = [[$AuxStr,$refname], [$AuxXRef,$xref]];
+	    for ( $j = 1 ; $j < $nl ; $j++ ) {
+		$ls[$j]->[0]->[2] = [[$AuxNum,$refwidth]];
+	    }
+	    push(@{$ls[$nl-1]->[0]->[2]}, [$AuxPageStr,$xref]);
+	} elsif ( $ptype =~ /^idx/ ) {
+	    my $lvl = substr($ptype,3,1)+0;
+
+	    @ls = ps_flow_lines($indxwidth-$lvl*$psconf{idxindent},
+				\%TextFont, $ptype, @data);
+	} else {
+	    die "Unknown para type: $ptype";
 	}
-	push(@{$ls[$nl-1]->[0]->[2]}, [$AuxPageStr,$xref]);
-    } else {
-	die "Unknown para type: $ptype";
+	# Merge adjacent identical chunks
+	foreach $l ( @ls ) {
+	    @{$$l[1]} = ps_merge_chunks(@{$$l[1]});
+	}
+	push(@pslines,@ls);
     }
-    # Merge adjacent identical chunks
-    foreach $l ( @ls ) {
-    	@{$$l[1]} = ps_merge_chunks(@{$$l[1]});
-    }
-    push(@pslines,@ls);
 }
+
+# Break the main body text into lines.
+ps_break_lines(\@paras, \@ptypes);
 
 #
 # Break lines in to pages
 #
 
-# Paragraph types which should never be broken
-$nobreakregexp = "^(chap|appn|head|subh|toc.)\$";
-# Paragraph types which are heading (meaning they should not be broken
-# immediately after)
-$headingregexp = "^(chap|appn|head|subh)\$";
-
 $curpage = 3;			# First text page is page 3
 $curypos = 0;			# Space used on this page
+undef $columnstart;		# Not outputting columnar text
+undef $curcolumn;		# Current column
 $nlines = scalar(@pslines);
 
-$upageheight = $psconf{pageheight}-$psconf{topmarg}-$psconf{botmarg};
-
-for ( $i = 0 ; $i < $nlines ; $i++ ) {
-    my $linfo = $pslines[$i]->[0];
-    if ( ($$linfo[0] eq 'chap' || $$linfo[0] eq 'appn')
-	 && ($$linfo[1] & 1) ) {
-	# First line of a new chapter heading.  Start a new line.
-	$curpage++ if ( $curypos > 0 );
-	$curypos = $chapstart;
-    }
+#
+# This formats lines inside the global @pslines array into pages,
+# updating the page and y-coordinate entries.  Start at the
+# $startline position in @pslines and go to but not including
+# $endline.  The global variables $curpage, $curypos, $columnstart
+# and $curcolumn are updated appropriately.
+#
+sub ps_break_pages($$) {
+    my($startline, $endline) = @_;
     
-    # Adjust position by the appropriate leading
-    $curypos += $$linfo[3]->{leading};
+    # Paragraph types which should never be broken
+    my $nobreakregexp = "^(chap|appn|head|subh|toc.|idx.)\$";
+    # Paragraph types which are heading (meaning they should not be broken
+    # immediately after)
+    my $headingregexp = "^(chap|appn|head|subh)\$";
+    # Paragraph types which are set in columnar format
+    my $columnregexp = "^idx.\$";
 
-    # Record the page and y-position
-    $$linfo[4] = $curpage;
-    $$linfo[5] = $curypos; 
+    my $upageheight = $psconf{pageheight}-$psconf{topmarg}-$psconf{botmarg};
 
-    if ( $curypos > $upageheight ) {
-	# We need to break the page before this line.
- 	my $broken = 0;		# No place found yet
-	while ( !$broken && $pslines[$i]->[0]->[4] == $curpage ) {
-	    my $linfo = $pslines[$i]->[0];
-	    my $pinfo = $pslines[$i-1]->[0];
+    my $i;
 
-	    if ( $$linfo[1] == 2 ) {
-		# This would be an orphan, don't break.
-	    } elsif ( $$linfo[1] & 1 ) {
-		# Sole line or start of paragraph.  Break unless
-		# the previous line was part of a heading.
-		$broken = 1 if ( $$pinfo[0] !~ /$headingregexp/o );
-	    } else {
-		# Middle of paragraph.  Break unless we're in a
-		# no-break paragraph, or the previous line would
-		# end up being a widow.
-		$broken = 1 if ( $$linfo[0] !~ /$nobreakregexp/o &&
-				 $$pinfo[1] != 1 );
-	    }
-	    $i--;
+    for ( $i = $startline ; $i < $endline ; $i++ ) {
+	my $linfo = $pslines[$i]->[0];
+	if ( ($$linfo[0] eq 'chap' || $$linfo[0] eq 'appn' )
+	     && ($$linfo[1] & 1) ) {
+	    # First line of a new chapter heading.  Start a new page.
+	    undef $columnstart;
+	    $curpage++ if ( $curypos > 0 || defined($columnstart) );
+	    $curypos = $chapstart;
+	} elsif ( defined($columnstart) && $$linfo[0] !~ /$columnregexp/o ) {
+	    undef $columnstart;
+	    $curpage++;
+	    $curypos = 0;
 	}
-	die "Nowhere to break page $curpage\n" if ( !$broken );
-	# Now $i should point to line immediately before the break, i.e.
-	# the next paragraph should be the first on the new page
-	$curpage++;
-	$curypos = 0;
-	next;
-    }
 
-    # Add end of paragraph skip
-    if ( $$linfo[1] & 2 ) {
-	$curypos += $skiparray{$$linfo[0]};
+	if ( $$linfo[0] =~ /$columnregexp/o && !defined($columnstart) ) {
+	    $columnstart = $curypos;
+	    $curcolumn = 0;
+	}
+    
+	# Adjust position by the appropriate leading
+	$curypos += $$linfo[3]->{leading};
+	
+	# Record the page and y-position
+	$$linfo[4] = $curpage;
+	$$linfo[5] = $curypos; 
+	$$linfo[6] = $curcolumn if ( defined($columnstart) );
+	
+	if ( $curypos > $upageheight ) {
+	    # We need to break the page before this line.
+	    my $broken = 0;		# No place found yet
+	    while ( !$broken && $pslines[$i]->[0]->[4] == $curpage ) {
+		my $linfo = $pslines[$i]->[0];
+		my $pinfo = $pslines[$i-1]->[0];
+		
+		if ( $$linfo[1] == 2 ) {
+		    # This would be an orphan, don't break.
+		} elsif ( $$linfo[1] & 1 ) {
+		    # Sole line or start of paragraph.  Break unless
+		    # the previous line was part of a heading.
+		    $broken = 1 if ( $$pinfo[0] !~ /$headingregexp/o );
+		} else {
+		    # Middle of paragraph.  Break unless we're in a
+		    # no-break paragraph, or the previous line would
+		    # end up being a widow.
+		    $broken = 1 if ( $$linfo[0] !~ /$nobreakregexp/o &&
+				     $$pinfo[1] != 1 );
+		}
+		$i--;
+	    }
+	    die "Nowhere to break page $curpage\n" if ( !$broken );
+	    # Now $i should point to line immediately before the break, i.e.
+	    # the next paragraph should be the first on the new page
+	    if ( defined($columnstart) &&
+		 ++$curcolumn < $psconf{idxcolumns} ) {
+		# We're actually breaking text into columns, not pages
+		$curypos = $columnstart;
+	    } else {
+		undef $columnstart;
+		$curpage++;
+		$curypos = 0;
+	    }
+	    next;
+	}
+
+	# Add end of paragraph skip
+	if ( $$linfo[1] & 2 ) {
+	    $curypos += $skiparray{$$linfo[0]};
+	}
     }
 }
+
+ps_break_pages(0,$nlines);	# Break the main text body into pages
 
 #
 # Find the page number of all the indices
 #
 %ps_xref_page   = ();		# Crossref anchor pages
 %ps_index_pages = ();		# Index item pages
+$nlines = scalar(@pslines);
 for ( $i = 0 ; $i < $nlines ; $i++ ) {
     my $linfo = $pslines[$i]->[0];
     foreach my $c ( @{$pslines[$i]->[1]} ) {
@@ -568,6 +671,48 @@ for ( $i = 0 ; $i < $nlines ; $i++ ) {
 	}
     }
 }
+
+#
+# Emit index paragraphs
+#
+$startofindex = scalar(@pslines);
+@ixparas = ([[-5,'index'],[0,'Index']]);
+@ixptypes = ('chap');
+
+foreach $k ( @ixentries ) {
+    my $n,$i;
+    my $ixptype = 'idx0';
+    my @ixpara = mkparaarray('idx0',@{$ixterms{$k}});
+
+    push(@ixpara, [-6,undef]);	# Left/right marker
+    $i = 1;  $n = scalar(@{$ps_index_pages{$k}});
+    foreach $p ( @{$ps_index_pages{$k}} ) {
+	if ( $i++ == $n ) {
+	    push(@ixpara,[-7,$p],[0,"$p"],[-1,undef]);
+	} else {
+	    push(@ixpara,[-7,$p],[0,"$p,"],[-1,undef],[0,' ']);
+	}
+    }
+
+    push(@ixparas, [@ixpara]);
+    push(@ixptypes, $ixptype);
+}
+
+#
+# Flow index paragraphs into lines
+#
+ps_break_lines(\@ixparas, \@ixptypes);
+
+#
+# Format index into pages
+#
+$nlines = scalar(@pslines);
+ps_break_pages($startofindex, $nlines);
+
+#
+# Push index onto bookmark list
+#
+push(@bookmarks, ['index', 0, 'Index']);
 
 # Get the list of fonts used
 %ps_all_fonts = ();
@@ -655,6 +800,7 @@ sub ps_start_page() {
     print "%%BeginPageSetup\n";
     print "save\n";
     print "%%EndPageSetup\n";
+    print '/', $ps_page, " pa\n";
 }
 
 # End a PostScript page
@@ -711,19 +857,19 @@ ps_end_page(0);
 
 $curpage = 3;
 ps_start_page();
-for ( $i = 0 ; $i < $nlines ; $i++ ) {
-    my $linfo = $pslines[$i]->[0];
-
+foreach $line ( @pslines ) {
+    my $linfo = $line->[0];
+    
     if ( $$linfo[4] != $curpage ) {
-	ps_end_page(1);
-	ps_start_page();
-	$curpage = $$linfo[4];
+        ps_end_page(1);
+        ps_start_page();
+        $curpage = $$linfo[4];
     }
 
     print '[';
     my $curfont = 0;
-    foreach my $c ( @{$pslines[$i]->[1]} ) {
-	if ( $$c[0] >= 0 ) {
+    foreach my $c ( @{$line->[1]} ) {
+        if ( $$c[0] >= 0 ) {
 	    if ( $curfont != $$c[0] ) {
 		print ($curfont = $$c[0]);
 	    }
@@ -738,6 +884,11 @@ for ( $i = 0 ; $i < $nlines ; $i++ ) {
 	    # Index anchor -- ignore
 	} elsif ( $$c[0] == -5 ) {
 	    print '{/',$$c[1],' xa}'; #xref anchor
+	} elsif ( $$c[0] == -6 ) {
+	    print '][';		# Start a new array
+	    $curfont = 0;
+	} elsif ( $$c[0] == -7 ) {
+	    print '{/',$$c[1],' pl}'; # page link
 	} else {
 	    die "Unknown annotation";
 	}
@@ -761,16 +912,9 @@ for ( $i = 0 ; $i < $nlines ; $i++ ) {
 	}
     }
     print ($psconf{pageheight}-$psconf{topmarg}-$$linfo[5]);
+    print ' ', $$linfo[6] if ( defined($$linfo[6]) );
     print ' ', $$linfo[0].$$linfo[1], "\n";
 }
 
 ps_end_page(1);
 print "%%EOF\n";
-
-# Emit index as comments for now
-foreach $k ( sort(keys(%ps_index_pages)) ) {
-    print "% ",$k, ' ', join(',', @{$ps_index_pages{$k}});
-    print ' [prefix]' if ( defined($ixhasprefix{$k}) );
-    print ' [first]' if ( defined($ixcommafirst{$k}) );
-    print "\n";
-}

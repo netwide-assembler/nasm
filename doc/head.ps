@@ -26,7 +26,7 @@
 /max { 2 copy lt { exch } if pop } def
 
 /lkbegun 0 def
-/lkisuri false def
+/lktype null def
 /lkury 0 def
 /lkurx 0 def
 /lklly 0 def
@@ -35,22 +35,28 @@
 /lkymarg 1 def	% Extra space for link in y dir
 /lktarget () def
 
-% target --
+% target type --
 /linkbegin {
   userdict begin
     /lkbegun 1 def
-    /lkisuri false def
+    /lktype exch def
     /lktarget exch def
   end
 } def
 
+% target --
+/linkbegindest {
+  /Dest linkbegin
+} def
+
 % uristring --
 /linkbeginuri {
-  userdict begin
-    /lkbegun 1 def
-    /lkisuri true def
-    /lktarget exch def
-  end
+  /URI linkbegin
+} def
+
+% pageno --
+/linkbeginpage {
+  /Page linkbegin
 } def
 
 % string spacepadding --
@@ -79,12 +85,17 @@
 % --
 /linkend {
   userdict begin
-    [ lkisuri {
-        /Action
-        % << .. >> would be languagelevel 2 :(
-        2 dict dup /Subtype /URI put dup /URI lktarget put
+    [ lktype /Dest eq {
+	/Dest lktarget
       } {
-        /Dest lktarget
+        lktype /URI eq {
+          /Action
+          % << .. >> would be languagelevel 2 :(
+          2 dict dup /Subtype /URI put dup /URI lktarget put
+        } {
+	   /Dest lktarget
+%          /Page lktarget /View [ /XYZ 0 pageheight null ]
+        } ifelse
       } ifelse
       /Border [0 0 0]
       /Rect [ lkllx lkxmarg sub
@@ -278,27 +289,46 @@
 
 /toc00 { tocx0 exch moveto 0 rmoveto tfont showstream } def
 /toc01 { tocx0 exch moveto
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
 /toc02 { tocx0 exch moveto 3 1 roll
 	 0 rmoveto tfont showstream tocpn } def
 /toc03 { tocx0 exch moveto 4 1 roll
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
 
 /toc10 { tocx1 exch moveto 0 rmoveto tfont showstream } def
 /toc11 { tocx1 exch moveto
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
 /toc12 { tocx1 exch moveto 3 1 roll
 	 0 rmoveto tfont showstream tocpn } def
 /toc13 { tocx1 exch moveto 4 1 roll
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
 
 /toc20 { tocx2 exch moveto 0 rmoveto tfont showstream } def
 /toc21 { tocx2 exch moveto
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
 /toc22 { tocx2 exch moveto 3 1 roll
 	 0 rmoveto tfont showstream tocpn } def
 /toc23 { tocx2 exch moveto 4 1 roll
-	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
+
+% Spacing between index columns
+/indexcolumn pagewidth lmarg sub rmarg sub idxgutter add idxcolumns div def
+% Width of an individual index column
+/indexcolwid indexcolumn idxgutter sub def
+
+/idx03 {
+  2 dict begin
+    indexcolumn mul lmarg add
+    /x exch def /y exch def x y moveto
+    exch tfont showstream
+    dup tfont streamwidth
+    x indexcolwid add exch sub exch pop y moveto
+    tfont showstream
+  end
+} def
+/idx00 {idx03} def
+/idx01 {idx03} def
+/idx02 {idx03} def
 
 %
 % Page numbers
@@ -315,8 +345,10 @@
 % Functions invoked during parsing
 %
 /xa { linkdest } def
-/xl { linkbegin } def
+/pa { 0 pageheight moveto linkdest } def
+/xl { linkbegindest } def
 /wl { linkbeginuri } def
+/pl { linkbeginpage } def
 /el { linkend } def
 
 %
