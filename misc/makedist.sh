@@ -1,4 +1,5 @@
 #!/bin/sh
+# * THIS SCRIPT IS OBSOLETE DO NOT USE *
  
 MAJORVER=`grep NASM_MAJOR_VER nasm.h | head -1 | cut -f3 -d' '`
 MINORVER=`grep NASM_MINOR_VER nasm.h | head -1 | cut -f3 -d' '`

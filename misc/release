@@ -1,0 +1,129 @@
+#!/bin/bash -xe
+#
+# Generate a NASM release
+#
+# Usage: release {test|real} [branch]
+#
+# *** WARNING WARNING WARNING ***
+# Make sure to execute this in an empty directory
+#
+
+if [ -z "$SFUSER" ]; then
+  if [ -f "$HOME/.sfuser" ]; then
+    sfuser=`cat "$HOME/.sfuser"`
+  else
+    sfuser=`whoami`
+  fi
+fi
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 {test|real}" 1>&2
+  exit 1
+fi
+
+if [ "$1" eq "real" ]; then
+  real=true
+else
+  real=false
+fi
+
+work=`pwd`/nasm-release.$$
+mkdir "$work"
+cd "$work"
+
+if $real; then
+  # Need to tag the tree, use real account
+  CVS="cvs -z3 -d ${SFUSER}@cvs.nasm.sourceforge.net:/cvsroot/nasm"
+else
+  # Don't need to tag the tree, can use anonymous
+  echo ':pserver:anonymous@cvs.nasm.sourceforge.net:/cvsroot/nasm A' > "$work"/cvspass
+  export CVS_PASSFILE="$work"/cvspass
+  CVS="cvs -z3 -d :pserver:anonymous@cvs.nasm.sourceforge.net:/cvsroot/nasm"
+fi
+
+if [ -n "$2" ]; then
+  branchopt="-r $2"
+fi
+
+rm -rf nasm*
+
+$CVS co $branchopt nasm
+version=`cat nasm/version`
+v1=`echo $version | cut -d. -f1`
+v2=`echo $version | cut -d. -f2`
+v3=`echo $version | cut -d. -f3`
+
+# Tag the tree as a release
+if $real; then
+  cd nasm && $CVS tag -F -a nasm-`echo $version | sed -e 's/\./_/g'`
+fi
+
+# Extract file names which have the -kb flag set, meaning they
+# are binary files
+bins="$work"/binaries
+rm -f "$bins"
+cd nasm
+find . -type d -name CVS -print | (
+    while read dir; do
+       xdir=`echo "$dir" | sed -e 's|^\./||' -e 's|/CVS$||'`
+       egrep '^/[^/]*/[^/]*/[^/]*/[^/]*-kb[^/]*/' < $dir/Entries | \
+	   cut -d/ -f2 | sed -e "s|^|$xdir/|" >> "$bins"
+    done
+)
+cd ..
+
+# We did "co" instead of "export" -- remove CVS directories
+find nasm -type d -name CVS -print | xargs rm -rf
+
+# Create files which are in the release but automatically generated
+cd nasm
+autoconf
+./configure --prefix=/usr/local
+make dist
+cd ..
+
+# Clean up any previous attempt
+rm -f ../nasm-${version}.tar.gz  ../nasm-${version}-xdoc.tar.gz
+rm -f ../nasm-${version}.tar.bz2 ../nasm-${version}-xdoc.tar.bz2
+rm -f ../nasm-${version}.zip     ../nasm-${version}-xdoc.zip
+
+# Create tarfile (Unix convention: file includes prefix)
+mv nasm nasm-$version
+tar cvvf  nasm-${version}.tar nasm-${version}
+bzip2 -9k nasm-${version}.tar
+gzip -9   nasm-${version}.tar
+mv nasm-${version}.tar.gz nasm-${version}.tar.bz2 ..
+
+# Create zipfile (DOS convention: no prefix, convert file endings)
+cd nasm-$version
+zip -9Dlr ../../nasm-${version}.zip -x@"$bins" *	# Text files
+zip -9Dgr ../../nasm-${version}.zip -i@"$bins" *	# Binary files
+cd ..
+
+# Record what we have already generated
+find nasm-$version -not -type d -print > main
+
+# Create documentation
+cd nasm-${version}
+./configure --prefix=/usr/local
+make doc
+cd ..
+
+# Remove non-documentation
+cat main | xargs rm -f
+
+# Create doc tarfile
+tar cvvf nasm-${version}-xdoc.tar nasm-${version}/doc
+bzip2 -9k nasm-${version}-xdoc.tar
+gzip -9   nasm-${version}-xdoc.tar
+mv nasm-${version}-xdoc.tar.gz nasm-${version}-xdoc.tar.bz2 ..
+
+# Create doc zipfile (DOS convention: no prefix, convert file endings)
+# (Note: generating Win .hlp files requires additional tools)
+cd nasm-${version}
+zip -9Dlr ../../nasm-${version}-xdoc.zip doc -x \*.pdf
+zip -9Dgr ../../nasm-${version}-xdoc.zip doc -i \*.pdf
+
+# Clean up
+cd ..
+rm -rf "$work"
