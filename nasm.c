@@ -58,11 +58,11 @@ static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
 int global_offset_changed;             /* referenced in labels.c */
 
 static loc_t location;
-int          in_abs_seg;	       /* Flag we are in ABSOLUTE seg */
-long  abs_seg;
+int in_abs_seg;			/* Flag we are in ABSOLUTE seg */
+long abs_seg;			/* ABSOLUTE segment basis */
+long abs_offset;		/* ABSOLUTE offset */
 
 static struct RAA *offsets;
-long abs_offset;
 
 static struct SAA *forwrefs;	       /* keep track of forward references */
 static struct forwrefinfo *forwref;
@@ -964,8 +964,8 @@ static void assemble_file (char *fname)
                                  "cannot use non-relocatable expression as "
                                  "ABSOLUTE address");
                      else {
-                           abs_seg = reloc_seg(e);
-                           abs_offset = reloc_value(e);
+			 abs_seg = reloc_seg(e);
+			 abs_offset = reloc_value(e);
                      }
                   } else
                      if (pass==1) abs_offset = 0x100;/* don't go near zero in case of / */
@@ -1124,9 +1124,9 @@ static void assemble_file (char *fname)
                            {
                               int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
                               def_label (output_ins.label,
-                                             output_ins.oprs[0].segment,
-                                             output_ins.oprs[0].offset,
-                                             NULL, FALSE, isext, ofmt, report_error);
+					 output_ins.oprs[0].segment,
+					 output_ins.oprs[0].offset,
+					 NULL, FALSE, isext, ofmt, report_error);
                            }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
