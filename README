@@ -1,6 +1,4 @@
               NASM, the Netwide Assembler.
-                     Version 0.98.30.
-                        2002-04-29
 
 Many many developers all over the net respect NASM for what it is
 - a widespread (thus netwide), portable (thus netwide!), very
@@ -16,6 +14,8 @@ famous Open Source development center on The Net.
 
 Visit our development page at http://nasm.2y.net/ and our
 SF project at http://sf.net/projects/nasm/
+
+See the file CHANGES for the description of changes between revisions.
 
                                                    With best regards,
                                                            NASM crew.
