@@ -76,6 +76,9 @@ nasm$(EXE): $(NASMOBJS)
 ndisasm$(EXE): $(NDISASMOBJS)
 	$(LINK) $(NDISASMOBJS), ndisasm;
 
+output\version.h: version.h
+	copy version.h output
+
 output\nasm.h: nasm.h
 	copy nasm.h output
 
@@ -89,31 +92,46 @@ output\outform.h: outform.h
 	copy outform.h output
 
 
-assemble.$(OBJ): assemble.c nasm.h insnsi.h assemble.h insns.h
-disasm.$(OBJ): disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.$(OBJ): eval.c eval.h nasm.h insnsi.h nasmlib.h
-float.$(OBJ): float.c nasm.h insnsi.h
-labels.$(OBJ): labels.c nasm.h insnsi.h nasmlib.h
-listing.$(OBJ): listing.c nasm.h insnsi.h nasmlib.h listing.h
+assemble.$(OBJ): assemble.c nasm.h version.h insnsi.h assemble.h insns.h
+disasm.$(OBJ): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.$(OBJ): eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.$(OBJ): float.c nasm.h version.h insnsi.h
+labels.$(OBJ): labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.$(OBJ): listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
 nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
-	listing.h outform.h
-nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
-ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
-outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
-output\outas86.$(OBJ): output\outas86.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outaout.$(OBJ): output\outaout.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outbin.$(OBJ): output\outbin.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outcoff.$(OBJ): output\outcoff.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outdbg.$(OBJ): output\outdbg.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outelf.$(OBJ): output\outelf.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outobj.$(OBJ): output\outobj.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outrdf.$(OBJ): output\outrdf.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outrdf2.$(OBJ): output\outrdf2.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-output\outieee.$(OBJ): output\outieee.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h
-parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h
+	listing.h outform.h version.h
+nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c version.h
+ndisasm.$(OBJ): ndisasm.c nasm.h version.h insnsi.h sync.h disasm.h
+outform.$(OBJ): outform.c outform.h nasm.h version.h insnsi.h
+output\outas86.$(OBJ): output\outas86.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outaout.$(OBJ): output\outaout.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outbin.$(OBJ): output\outbin.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outcoff.$(OBJ): output\outcoff.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outdbg.$(OBJ): output\outdbg.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outelf.$(OBJ): output\outelf.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outobj.$(OBJ): output\outobj.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outrdf.$(OBJ): output\outrdf.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outrdf2.$(OBJ): output\outrdf2.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+output\outieee.$(OBJ): output\outieee.c output\nasm.h output\insnsi.h output\nasmlib.h output\outform.h output\version.h
+parser.$(OBJ): parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h version.h insnsi.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
+
+# These files contains all the standard macros that are derived from
+# the version number.
+version.h: version version.pl
+	perl version.pl h < version > version.h
+
+version.mac: version version.pl
+	perl version.pl mac < version > version.mac
+
+# This source file is generated from the standard macros file
+# `standard.mac' by another Perl script. Again, it's part of the
+# standard distribution.
+
+macros.c: macros.pl standard.mac version.mac
+	perl macros.pl standard.mac version.mac
 
 insnsa.c insnsd.c insnsi.h insnsn.c: insns16.dat insns.pl
 	perl insns.pl insns16.dat
@@ -125,10 +143,10 @@ insns16.dat:  insns.dat
 # Another grotty hack: QC is less likely to run out of memory than
 # CL proper; and we don't need any optimisation in these modules
 # since they're just data.
-insnsa.$(OBJ): insnsa.c nasm.h insnsi.h insns.h
+insnsa.$(OBJ): insnsa.c nasm.h version.h insnsi.h insns.h
 	$(QCL) insnsa.c
 
-insnsd.$(OBJ): insnsd.c nasm.h insnsi.h insns.h
+insnsd.$(OBJ): insnsd.c nasm.h version.h insnsi.h insns.h
 	$(QCL) insnsd.c
 
 tidy:
@@ -146,4 +164,5 @@ spotless:  clean
 	del insnsd.c
 	del insnsi.h
 	del insnsn.c
+        del version.h
 
