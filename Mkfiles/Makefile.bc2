@@ -222,9 +222,6 @@ $(OBJD)outelf.$(OBJ): outelf.c nasm.h insnsi.h nasmlib.h
 $(OBJD)outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outrdf.$(OBJ): outrdf.c nasm.h insnsi.h nasmlib.h
-        $(NASM_ASM)
-
 $(OBJD)outrdf2.$(OBJ): outrdf2.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 

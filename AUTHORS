@@ -40,7 +40,7 @@ D: New Athlon instructions
 D: Makefile.vc fix
 
 N: John Coffman
-E: johninsd@san.rr.com
+E: johninsd@users.sourceforge.net
 D: added Jcc optimizations; CPU level checks
 D: bug fixes, compilation fixes
 

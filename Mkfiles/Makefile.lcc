@@ -88,7 +88,6 @@ outdbg.${OBJ}: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
 outelf.${OBJ}: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.${OBJ}: outform.c outform.h nasm.h insnsi.h
 outobj.${OBJ}: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf.${OBJ}: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf2.${OBJ}: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 zoutieee.${OBJ}: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
 parser.${OBJ}: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c

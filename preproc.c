@@ -1199,7 +1199,7 @@ get_ctx(char *name, int all_contexts)
     for (i = strspn(name + 2, "$"), ctx = cstk; (i > 0) && ctx; i--)
     {
 	ctx = ctx->next;
-	i--;
+/*        i--;  Lino - 02/25/02 */
     }
     if (!ctx)
     {
@@ -3741,7 +3741,8 @@ expand_mmacro(Token * tline)
 
     t = tline;
     skip_white_(t);
-    if (!tok_type_(t, TOK_ID))
+/*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
+    if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
 	return 0;
     m = is_mmacro(t, &params);
     if (!m)

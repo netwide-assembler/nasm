@@ -189,9 +189,6 @@ $(OBJD)outelf.$(OBJ): outelf.c nasm.h nasmlib.h
 $(OBJD)outobj.$(OBJ): outobj.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
-        $(NASM_ASM)
-
 $(OBJD)outform.$(OBJ): outform.c outform.h nasm.h
         $(NASM_ASM)
 

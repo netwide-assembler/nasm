@@ -59,7 +59,6 @@ outcoff.$(OBJ): outcoff.c nasm.h insnsi.h nasmlib.h
 outdbg.$(OBJ): outdbg.c nasm.h insnsi.h nasmlib.h
 outelf.$(OBJ): outelf.c nasm.h insnsi.h nasmlib.h
 outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
-outrdf.$(OBJ): outrdf.c nasm.h insnsi.h nasmlib.h
 outrdf2.$(OBJ): outrdf2.c nasm.h insnsi.h nasmlib.h
 zoutieee.$(OBJ): zoutieee.c nasm.h insnsi.h nasmlib.h
 outform.$(OBJ): outform.c outform.h nasm.h insnsi.h

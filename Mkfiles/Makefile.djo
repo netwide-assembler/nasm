@@ -107,7 +107,6 @@ outdbg.o: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
 outelf.o: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.o: outform.c outform.h nasm.h insnsi.h
 outobj.o: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf.o: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf2.o: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.o: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.o: preproc.c nasm.h insnsi.h nasmlib.h macros.c
@@ -134,7 +133,6 @@ outdbg.ol: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
 outelf.ol: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.ol: outform.c outform.h nasm.h insnsi.h
 outobj.ol: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf.ol: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf2.ol: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.ol: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.ol: preproc.c nasm.h insnsi.h nasmlib.h macros.c
@@ -161,7 +159,6 @@ outdbg.obj: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
 outelf.obj: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.obj: outform.c outform.h nasm.h insnsi.h
 outobj.obj: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf.obj: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf2.obj: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.obj: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.obj: preproc.c nasm.h insnsi.h nasmlib.h macros.c
