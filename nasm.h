@@ -11,9 +11,7 @@
 #ifndef NASM_NASM_H
 #define NASM_NASM_H
 
-#define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 98
-#define NASM_VER "0.98.30"
+#include "version.h"		       /* generated NASM version macros */
 
 #ifndef NULL
 #define NULL 0

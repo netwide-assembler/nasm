@@ -2,6 +2,7 @@
 -------
 
 * Correctly build in a separate object directory again.
+* Derive all references to the version number from the version file.
 
 
 0.98.30

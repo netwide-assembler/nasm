@@ -139,50 +139,50 @@ ndisasm$(EXE): $(NDISASMOBJS)
 ################################################################
 # Dependencies for all of NASM's obj files
 
-$(OBJD)assemble.$(OBJ): assemble.c nasm.h insnsi.h assemble.h insns.h
+$(OBJD)assemble.$(OBJ): assemble.c nasm.h version.h insnsi.h assemble.h insns.h
         $(NASM_ASM)
 
-$(OBJD)float.$(OBJ): float.c nasm.h insnsi.h
+$(OBJD)float.$(OBJ): float.c nasm.h version.h insnsi.h
         $(NASM_ASM)
 
-$(OBJD)labels.$(OBJ): labels.c nasm.h insnsi.h nasmlib.h
+$(OBJD)labels.$(OBJ): labels.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)listing.$(OBJ): listing.c nasm.h insnsi.h nasmlib.h listing.h
+$(OBJD)listing.$(OBJ): listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
         $(NASM_ASM)
 
-$(OBJD)eval.$(OBJ): eval.c nasm.h insnsi.h nasmlib.h eval.h
+$(OBJD)eval.$(OBJ): eval.c nasm.h version.h insnsi.h nasmlib.h eval.h
         $(NASM_ASM)
 
-$(OBJD)nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
+$(OBJD)nasm.$(OBJ): nasm.c nasm.h version.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
 		listing.h outform.h
         $(NASM_ASM)
 
-$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
+$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
         $(NASM_ASM)
 
-$(OBJD)parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+$(OBJD)parser.$(OBJ): parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
         $(NASM_ASM)
 
-$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h
+$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h version.h insnsi.h nasmlib.h
 	$(NASM_ASM)
 
-$(OBJD)insnsa.$(OBJ): insnsa.c nasm.h insnsi.h insns.h
+$(OBJD)insnsa.$(OBJ): insnsa.c nasm.h version.h insnsi.h insns.h
         $(NASM_ASM)
 
 ################################################################
 # Dependencies for all of NDISASM's obj files
 
-$(OBJD)disasm.$(OBJ): disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+$(OBJD)disasm.$(OBJ): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
         $(DASM_ASM)
 
-$(OBJD)ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
+$(OBJD)ndisasm.$(OBJ): ndisasm.c nasm.h version.h insnsi.h sync.h disasm.h
         $(DASM_ASM)
 
 $(OBJD)sync.$(OBJ): sync.c sync.h
         $(DASM_ASM)
 
-$(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insnsi.h insns.h
+$(OBJD)insnsd.$(OBJ): insnsd.c nasm.h version.h insnsi.h insns.h
         $(DASM_ASM)
 
 # This is a kludge from the word go, as we can't use the nasmlib.obj compiled
@@ -195,40 +195,40 @@ $(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insnsi.h insns.h
 # the -o... switch tells it the name to compile the obj file to, right here
 # $(OBJD)nasmlibd.obj
 
-$(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
+$(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h version.h insnsi.h nasmlib.h
         $(CC) $(DCCFLAGS) -o$(OBJD)nasmlibd.obj nasmlib.c
 
 ################################################################
 # Dependencies for all of the output format's OBJ files
 
-$(OBJD)outas86.$(OBJ): output/outas86.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outas86.$(OBJ): output/outas86.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outaout.$(OBJ): output/outaout.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outaout.$(OBJ): output/outaout.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outbin.$(OBJ): output/outbin.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outbin.$(OBJ): output/outbin.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outcoff.$(OBJ): output/outcoff.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outcoff.$(OBJ): output/outcoff.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outdbg.$(OBJ): output/outdbg.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outdbg.$(OBJ): output/outdbg.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outelf.$(OBJ): output/outelf.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outelf.$(OBJ): output/outelf.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outobj.$(OBJ): output/outobj.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outobj.$(OBJ): output/outobj.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outrdf2.$(OBJ): output/outrdf2.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outrdf2.$(OBJ): output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outieee.$(OBJ): output/outieee.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outieee.$(OBJ): output/outieee.c nasm.h version.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
+$(OBJD)outform.$(OBJ): outform.c outform.h nasm.h version.h insnsi.h
         $(NASM_ASM)
 
 ################################################################

@@ -42,36 +42,36 @@ nasm$(EXE): $(NASMOBJS)
 ndisasm$(EXE): $(NDISASMOBJS)
 	cl /Fendisasm.exe $(NDISASMOBJS)
 
-assemble.$(OBJ): assemble.c nasm.h insnsi.h assemble.h insns.h
-disasm.$(OBJ): disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.$(OBJ): eval.c eval.h nasm.h insnsi.h nasmlib.h
-float.$(OBJ): float.c nasm.h insnsi.h
-labels.$(OBJ): labels.c nasm.h insnsi.h nasmlib.h
-listing.$(OBJ): listing.c nasm.h insnsi.h nasmlib.h listing.h
-nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
+assemble.$(OBJ): assemble.c nasm.h version.h insnsi.h assemble.h insns.h
+disasm.$(OBJ): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.$(OBJ): eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.$(OBJ): float.c nasm.h version.h insnsi.h
+labels.$(OBJ): labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.$(OBJ): listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+nasm.$(OBJ): nasm.c nasm.h version.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
 	listing.h outform.h
-nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
-ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
-output/outas86.$(OBJ): output/outas86.c nasm.h insnsi.h nasmlib.h
-output/outaout.$(OBJ): output/outaout.c nasm.h insnsi.h nasmlib.h
-output/outbin.$(OBJ): output/outbin.c nasm.h insnsi.h nasmlib.h
-output/outcoff.$(OBJ): output/outcoff.c nasm.h insnsi.h nasmlib.h
-output/outdbg.$(OBJ): output/outdbg.c nasm.h insnsi.h nasmlib.h
-output/outelf.$(OBJ): output/outelf.c nasm.h insnsi.h nasmlib.h
-output/outobj.$(OBJ): output/outobj.c nasm.h insnsi.h nasmlib.h
-output/outrdf2.$(OBJ): output/outrdf2.c nasm.h insnsi.h nasmlib.h
-output/outieee.$(OBJ): output/outieee.c nasm.h insnsi.h nasmlib.h
-outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
-parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h
+nasmlib.$(OBJ): nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
+ndisasm.$(OBJ): ndisasm.c nasm.h version.h insnsi.h sync.h disasm.h
+output/outas86.$(OBJ): output/outas86.c nasm.h version.h insnsi.h nasmlib.h
+output/outaout.$(OBJ): output/outaout.c nasm.h version.h insnsi.h nasmlib.h
+output/outbin.$(OBJ): output/outbin.c nasm.h version.h insnsi.h nasmlib.h
+output/outcoff.$(OBJ): output/outcoff.c nasm.h version.h insnsi.h nasmlib.h
+output/outdbg.$(OBJ): output/outdbg.c nasm.h version.h insnsi.h nasmlib.h
+output/outelf.$(OBJ): output/outelf.c nasm.h version.h insnsi.h nasmlib.h
+output/outobj.$(OBJ): output/outobj.c nasm.h version.h insnsi.h nasmlib.h
+output/outrdf2.$(OBJ): output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h
+output/outieee.$(OBJ): output/outieee.c nasm.h version.h insnsi.h nasmlib.h
+outform.$(OBJ): outform.c outform.h nasm.h version.h insnsi.h
+parser.$(OBJ): parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h version.h insnsi.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
 # Another grotty hack: QC is less likely to run out of memory than
 # CL proper; and we don't need any optimisation in these modules
 # since they're just data.
-insnsa.$(OBJ): insnsa.c nasm.h insnsi.h insns.h
+insnsa.$(OBJ): insnsa.c nasm.h version.h insnsi.h insns.h
 	$(QCL) insnsa.c
-insnsd.$(OBJ): insnsd.c nasm.h insnsi.h insns.h
+insnsd.$(OBJ): insnsd.c nasm.h version.h insnsi.h insns.h
 	$(QCL) insnsd.c
 
 clean :

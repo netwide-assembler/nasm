@@ -87,83 +87,83 @@ nasmd.exe: $(NASM)
 -g -o $@ $(NASM)
 <<
 
-assemble.o: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
-disasm.o: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.o: eval.c eval.h nasm.h insnsi.h nasmlib.h
-float.o: float.c nasm.h insnsi.h
-insnsa.o: insnsa.c nasm.h insnsi.h insns.h
-insnsd.o: insnsd.c nasm.h insnsi.h insns.h
-labels.o: labels.c nasm.h insnsi.h nasmlib.h
-listing.o: listing.c nasm.h insnsi.h nasmlib.h listing.h
-nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
+assemble.o: assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
+disasm.o: disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.o: eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.o: float.c nasm.h version.h insnsi.h
+insnsa.o: insnsa.c nasm.h version.h insnsi.h insns.h
+insnsd.o: insnsd.c nasm.h version.h insnsi.h insns.h
+labels.o: labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.o: listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+nasm.o: nasm.c nasm.h version.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
  outform.h listing.h
-nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
-ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-output/outaout.o: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
-output/outas86.o: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
-output/outbin.o: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
-output/outcoff.o: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-output/outdbg.o: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-output/outelf.o: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
-outform.o: outform.c outform.h nasm.h insnsi.h
-output/outobj.o: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
-output/outrdf2.o: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
-parser.o: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.o: preproc.c nasm.h insnsi.h nasmlib.h macros.c
+nasmlib.o: nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
+ndisasm.o: ndisasm.c nasm.h version.h insnsi.h nasmlib.h sync.h disasm.h
+output/outaout.o: output/outaout.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outas86.o: output/outas86.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outbin.o: output/outbin.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outcoff.o: output/outcoff.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outdbg.o: output/outdbg.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outelf.o: output/outelf.c nasm.h version.h insnsi.h nasmlib.h outform.h
+outform.o: outform.c outform.h nasm.h version.h insnsi.h
+output/outobj.o: output/outobj.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outrdf2.o: output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h outform.h
+parser.o: parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.o: preproc.c nasm.h version.h insnsi.h nasmlib.h macros.c
 sync.o: sync.c sync.h
-output/outieee.o: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.o: output/outieee.c nasm.h version.h insnsi.h nasmlib.h outform.h
 
-assemble.ol: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
-disasm.ol: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.ol: eval.c eval.h nasm.h insnsi.h nasmlib.h
-float.ol: float.c nasm.h insnsi.h
-insnsa.ol: insnsa.c nasm.h insnsi.h insns.h
-insnsd.ol: insnsd.c nasm.h insnsi.h insns.h
-labels.ol: labels.c nasm.h insnsi.h nasmlib.h
-listing.ol: listing.c nasm.h insnsi.h nasmlib.h listing.h
-nasm.ol: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
+assemble.ol: assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
+disasm.ol: disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.ol: eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.ol: float.c nasm.h version.h insnsi.h
+insnsa.ol: insnsa.c nasm.h version.h insnsi.h insns.h
+insnsd.ol: insnsd.c nasm.h version.h insnsi.h insns.h
+labels.ol: labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.ol: listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+nasm.ol: nasm.c nasm.h version.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
  outform.h listing.h
-nasmlib.ol: nasmlib.c nasm.h insnsi.h nasmlib.h
-ndisasm.ol: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-output/outaout.ol: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
-output/outas86.ol: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
-output/outbin.ol: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
-output/outcoff.ol: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-output/outdbg.ol: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-output/outelf.ol: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
-outform.ol: outform.c outform.h nasm.h insnsi.h
-output/outobj.ol: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
-output/outrdf2.ol: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
-parser.ol: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.ol: preproc.c nasm.h insnsi.h nasmlib.h macros.c
+nasmlib.ol: nasmlib.c nasm.h version.h insnsi.h nasmlib.h
+ndisasm.ol: ndisasm.c nasm.h version.h insnsi.h nasmlib.h sync.h disasm.h
+output/outaout.ol: output/outaout.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outas86.ol: output/outas86.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outbin.ol: output/outbin.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outcoff.ol: output/outcoff.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outdbg.ol: output/outdbg.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outelf.ol: output/outelf.c nasm.h version.h insnsi.h nasmlib.h outform.h
+outform.ol: outform.c outform.h nasm.h version.h insnsi.h
+output/outobj.ol: output/outobj.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outrdf2.ol: output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h outform.h
+parser.ol: parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.ol: preproc.c nasm.h version.h insnsi.h nasmlib.h macros.c
 sync.ol: sync.c sync.h
-output/outieee.ol: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.ol: output/outieee.c nasm.h version.h insnsi.h nasmlib.h outform.h
 
-assemble.obj: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
-disasm.obj: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.obj: eval.c eval.h nasm.h insnsi.h nasmlib.h
-float.obj: float.c nasm.h insnsi.h
-insnsa.obj: insnsa.c nasm.h insnsi.h insns.h
-insnsd.obj: insnsd.c nasm.h insnsi.h insns.h
-labels.obj: labels.c nasm.h insnsi.h nasmlib.h
-listing.obj: listing.c nasm.h insnsi.h nasmlib.h listing.h
-nasm.obj: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
+assemble.obj: assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
+disasm.obj: disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.obj: eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.obj: float.c nasm.h version.h insnsi.h
+insnsa.obj: insnsa.c nasm.h version.h insnsi.h insns.h
+insnsd.obj: insnsd.c nasm.h version.h insnsi.h insns.h
+labels.obj: labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.obj: listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+nasm.obj: nasm.c nasm.h version.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
  outform.h listing.h
-nasmlib.obj: nasmlib.c nasm.h insnsi.h nasmlib.h
-ndisasm.obj: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-output/outaout.obj: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
-output/outas86.obj: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
-output/outbin.obj: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
-output/outcoff.obj: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-output/outdbg.obj: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-output/outelf.obj: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
-outform.obj: outform.c outform.h nasm.h insnsi.h
-output/outobj.obj: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
-output/outrdf2.obj: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
-parser.obj: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.obj: preproc.c nasm.h insnsi.h nasmlib.h macros.c
+nasmlib.obj: nasmlib.c nasm.h version.h insnsi.h nasmlib.h
+ndisasm.obj: ndisasm.c nasm.h version.h insnsi.h nasmlib.h sync.h disasm.h
+output/outaout.obj: output/outaout.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outas86.obj: output/outas86.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outbin.obj: output/outbin.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outcoff.obj: output/outcoff.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outdbg.obj: output/outdbg.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outelf.obj: output/outelf.c nasm.h version.h insnsi.h nasmlib.h outform.h
+outform.obj: outform.c outform.h nasm.h version.h insnsi.h
+output/outobj.obj: output/outobj.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outrdf2.obj: output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h outform.h
+parser.obj: parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.obj: preproc.c nasm.h version.h insnsi.h nasmlib.h macros.c
 sync.obj: sync.c sync.h
-output/outieee.obj: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.obj: output/outieee.c nasm.h version.h insnsi.h nasmlib.h outform.h
 
 # These four source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -173,12 +173,20 @@ output/outieee.obj: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 insnsa.c insnsd.c insnsi.h insnsn.c: insns.dat insns.pl
 	perl insns.pl insns.dat
 
+# These files contains all the standard macros that are derived from
+# the version number.
+version.h: version version.pl
+	perl $(srcdir)/version.pl h < $(srcdir)/version > version.h
+
+version.mac: version version.pl
+	perl $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
+
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
 
-macros.c: standard.mac macros.pl
-	perl macros.pl standard.mac
+macros.c: standard.mac macros.pl version.mac
+	perl macros.pl standard.mac version.mac
 
 clean:
 	rm -f *.o nasm ndisasm

@@ -1,4 +1,4 @@
-; Standard macro set for NASM 0.98 -*- nasm -*-
+; Standard macro set for NASM -*- nasm -*-
 
 ; Macros to make NASM ignore some TASM directives before the first include
 ; directive.
@@ -10,12 +10,12 @@
     %idefine P586
     %idefine END
 
+; This is a magic token which indicates the end of the TASM macros
+*END*TASM*MACROS*
+
 ; Note that although some user-level forms of directives are defined
 ; here, not all of them are: the user-level form of a format-specific
 ; directive should be defined in the module for that directive.
-
-%define __NASM_MAJOR__ 0
-%define __NASM_MINOR__ 98
 
 ; These two need to be defined, though the actual definitions will
 ; be constantly updated during preprocessing.

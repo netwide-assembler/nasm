@@ -11,35 +11,38 @@
 
 my $fname;
 my $line = 0;
-my $index = 0;
+my $index      = 0;
+my $tasm_count;
 
-$fname = "standard.mac" unless $fname = $ARGV[0];
-open INPUT,$fname || die "unable to open $fname\n";
+undef $tasm_count;
+
 open OUTPUT,">macros.c" || die "unable to open macros.c\n";
-
+    
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .
-        " - don't edit it */\n\n#include <stddef.h>\n\nstatic char *stdmac[] = {\n";
-
-while (<INPUT>) {
+" - don't edit it */\n\n#include <stddef.h>\n\nstatic char *stdmac[] = {\n";
+    
+foreach $fname ( @ARGV ) {
+    open INPUT,$fname || die "unable to open $fname\n";
+    while (<INPUT>) {
 	$line++;
 	chomp;
-	if (m/^\s*((\s*([^"';\s]+|"[^"]*"|'[^']*'))*)\s*(;.*)?$/) {
-		$_ = $1;
-    	s/\\/\\\\/g;
-    	s/"/\\"/g;
-		if (length > 0) {
-			print OUTPUT "    \"$_\",\n";
-			if ($index >= 0) {
-				if (m/__NASM_MAJOR__/) {
-					$index = -$index;
-				} else {
-					$index++;
-				}
-			}		
-		} 
-  	} else {
-		die "$fname:$line:  error unterminated quote";
+	if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
+	    $tasm_count = $index;
+	} elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
+	    $_ = $1;
+	    s/\\/\\\\/g;
+	    s/"/\\"/g;
+	    if (length > 0) {
+		print OUTPUT "    \"$_\",\n";
+		$index++;
+	    } 
+	} else {
+	    die "$fname:$line:  error unterminated quote";
 	}
+    }
+    close(INPUT);
 }
-$index = -$index;
-print OUTPUT "    NULL\n};\n#define TASM_MACRO_COUNT $index\n"
+print OUTPUT "    NULL\n};\n";
+$tasm_count = $index unless ( defined($tasm_count) );
+print OUTPUT "#define TASM_MACRO_COUNT $tasm_count\n";
+close(OUTPUT);

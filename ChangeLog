@@ -1,4 +1,13 @@
 2002-05-03  H. Peter Anvin <hpa@zytor.com>
+   * (Makefile.in Mkfiles/*): use new version -> version.{h,mac}.
+   * (macros.pl): support multiple input files (standard.mac, version.mac).
+   * (standard.mac): use an explicit delimiter to end the TASM macros.
+   * (nasm-version): remove, no longer needed.
+   * (version.pl): script to produce version.h and version.mac from version.
+   * (version): contains the official NASM version.
+   * (nasm.h): include version.h.
+
+2002-05-03  H. Peter Anvin <hpa@zytor.com>
 
    * (configure.in): create output directory.
    * (Makefile.in): change cd ; to cd &&.
