@@ -76,7 +76,7 @@ here:	jmp	.1
 ;
 ; Was not recognised as an instruction
 ;
-	int01
+	int01			; Instead of INT1
 
 ;-----------------------------------------------------------------------------
 ; Bug fixed by Jim Hague in ???
@@ -290,3 +290,27 @@ emlabel empty_macro
 	jmp	emlabel
 
 %endif
+
+;-----------------------------------------------------------------------------
+; Enhancement by hpa in insns.dat et al
+;
+; Simplified added new instructions, and added some missing instructions
+;
+	int03			; Instead of INT3
+	ud1			; No documented mnemonic for this one
+	ud2
+	sysenter
+	sysexit
+	fxsave [ebx]
+	fxrstor [es:ebx+esi*4+0x3000]
+
+;-----------------------------------------------------------------------------
+; Enhancement by Conan Brink in preproc.c
+;
+; Allow %rep to be nested
+;
+%rep 4
+%rep 5
+	nop
+%endrep
+%endrep

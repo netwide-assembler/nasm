@@ -397,7 +397,7 @@ IBTS      mem,reg16           \320\300\2\x0F\xA7\101        386,SW,UNDOC,ND
 IBTS      reg16,reg16         \320\300\2\x0F\xA7\101        386,UNDOC,ND
 IBTS      mem,reg32           \321\300\2\x0F\xA7\101        386,SD,UNDOC,ND
 IBTS      reg32,reg32         \321\300\2\x0F\xA7\101        386,UNDOC,ND
-ICEBP     void                \1\xF1                        P6,ND
+ICEBP     void                \1\xF1                        386,ND
 IDIV      rm8                 \300\1\xF6\207                8086
 IDIV      rm16                \320\300\1\xF7\207            8086
 IDIV      rm32                \321\300\1\xF7\207            386
@@ -436,8 +436,9 @@ INSB      void                \1\x6C                        186
 INSD      void                \321\1\x6D                    386
 INSW      void                \320\1\x6D                    186
 INT       imm                 \1\xCD\24                     8086,SB
-INT01     void                \1\xF1                        P6,ND
-INT1      void                \1\xF1                        P6
+INT01     void                \1\xF1                        386,ND
+INT1      void                \1\xF1                        386
+INT03     void                \1\xCC                        8086,ND
 INT3      void                \1\xCC                        8086
 INTO      void                \1\xCE                        8086
 INVD      void                \2\x0F\x08                    486
@@ -1005,7 +1006,7 @@ TEST      rm32,imm            \321\300\1\xF7\200\41         386,SM
 TEST      mem,imm8            \300\1\xF6\200\21             8086,SM
 TEST      mem,imm16           \320\300\1\xF7\200\31         8086,SM
 TEST      mem,imm32           \321\300\1\xF7\200\41         386,SM
-UD1       void                \2\x0F\xB9                    286
+UD1       void                \2\x0F\xB9                    286,UNDOC
 UD2       void                \2\x0F\x0B                    286
 UMOV      mem,reg8            \300\2\x0F\x10\101            386,UNDOC,SM
 UMOV      reg8,reg8           \300\2\x0F\x10\101            386,UNDOC

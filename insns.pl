@@ -13,7 +13,6 @@ $fname = "insns.dat" unless $fname = $ARGV[0];
 open (F, $fname) || die "unable to open $fname";
 
 $line = 0;
-$opcodes = 0;
 $insns = 0;
 while (<F>) {
   $line++;
@@ -28,7 +27,12 @@ while (<F>) {
     $aname = "aa_$_[0]";
     push @$aname, $formatted;
   }
-  $opcodes[$opcodes++] = $_[0], $done{$_[0]} = 1 if !$done{$_[0]};
+  if ( $_[0] =~ /cc$/ ) {
+      $k_opcodes_cc{$_[0]}++;
+  } else {
+      $k_opcodes{$_[0]}++;
+  }
+  $done{$_[0]} = 1 if !$done{$_[0]};
   if ($formatted && !$nd) {
     push @big, $formatted;
     foreach $i (&startbyte($_[2])) {
@@ -39,6 +43,9 @@ while (<F>) {
 }
 
 close F;
+
+@opcodes    = sort keys(%k_opcodes);	# Unconditional instructions
+@opcodes_cc = sort keys(%k_opcodes_cc);	# Conditional instructions
 
 print STDERR "Writing insnsa.c...\n";
 
@@ -51,7 +58,7 @@ print A "#include \"nasm.h\"\n";
 print A "#include \"insns.h\"\n";
 print A "\n";
 
-foreach $i (@opcodes) {
+foreach $i (@opcodes, @opcodes_cc) {
   print A "static struct itemplate instrux_${i}[] = {\n";
   $aname = "aa_$i";
   foreach $j (@$aname) {
@@ -60,7 +67,7 @@ foreach $i (@opcodes) {
   print A "    {-1}\n};\n\n";
 }
 print A "struct itemplate *nasm_instructions[] = {\n";
-foreach $i (@opcodes) {
+foreach $i (@opcodes, @opcodes_cc) {
   print A "    instrux_${i},\n";
 }
 print A "};\n";
@@ -107,14 +114,14 @@ print STDERR "Writing insnsi.h...\n";
 open I, ">insnsi.h";
 
 print I "/* This file is auto-generated from insns.dat by insns.pl" .
-        " - don't exit it */\n\n";
+        " - don't edit it */\n\n";
 print I "/* This file in included by nasm.h */\n\n";
 
 print I "/* Instruction names */\n";
 print I "enum {";
 $first  = 1;
 $maxlen = 0;
-foreach $i (@opcodes) {
+foreach $i (@opcodes, @opcodes_cc) {
     print I "," if ( !$first );
     $first = 0;
     print I "\n\tI_${i}";
@@ -132,49 +139,39 @@ print STDERR "Writing insnsn.c...\n";
 open N, ">insnsn.c";
 
 print N "/* This file is auto-generated from insns.dat by insns.pl" .
-        " - don't exit it */\n\n";
+        " - don't edit it */\n\n";
 print N "/* This file in included by names.c */\n\n";
 
 print N "static char *insn_names[] = {";
 $first = 1;
 foreach $i (@opcodes) {
-    # Don't include conditional instructions
-    if ( $i !~ /cc$/ ) {
-	print N "," if ( !$first );
-	$first = 0;
-	$ilower = $i;
-	$ilower =~ tr/A-Z/a-z/;
-	print N "\n\t\"${ilower}\"";
-    }
+    print N "," if ( !$first );
+    $first = 0;
+    $ilower = $i;
+    $ilower =~ tr/A-Z/a-z/;	# Change to lower case (Perl 4 compatible)
+    print N "\n\t\"${ilower}\"";
 }
 print N "\n};\n\n";
 print N "/* Conditional instructions */\n";
 print N "static char *icn[] = {";
 $first = 1;
-foreach $i (@opcodes) {
-    # Only conditional instructions
-    if ( $i =~ /cc$/ ) {
-	$ins = $`;		# Skip cc suffix
-	print N "," if ( !$first );
-	$first = 0;
-	$ilower = $i;
-	$ilower =~ tr/A-Z/a-z/;
-	print N "\n\t\"${ilower}\"";
-    }
+foreach $i (@opcodes_cc) {
+    print N "," if ( !$first );
+    $first = 0;
+    $ilower = $i;
+    $ilower =~ s/cc$//;		# Skip cc suffix
+    $ilower =~ tr/A-Z/a-z/;	# Change to lower case (Perl 4 compatible)
+    print N "\n\t\"${ilower}\"";
 }
 
 print N "\n};\n\n";
 print N "/* and the corresponding opcodes */\n";
 print N "static int ico[] = {";
 $first = 1;
-foreach $i (@opcodes) {
-    # Only conditional instructions
-    if ( $i =~ /cc$/ ) {
-	$ins = $`;		# Skip cc suffix
-	print N "," if ( !$first );
-	$first = 0;
-	print N "\n\tI_$i";
-    }
+foreach $i (@opcodes_cc) {
+    print N "," if ( !$first );
+    $first = 0;
+    print N "\n\tI_$i";
 }
 
 print N "\n};\n";

@@ -75,6 +75,7 @@ struct MMacro {
     Line *expansion;
 
     MMacro *next_active;
+    MMacro *rep_nest;		       /* used for nesting %rep */
     Token **params;		       /* actual parameters */
     Token *iline;		       /* invocation line */
     int nparam, rotate, *paramlen;
@@ -1156,6 +1157,7 @@ static int do_directive (Token *tline)
     Line *l;
     struct tokenval tokval;
     expr *evalresult;
+    MMacro *tmp_defining;	/* Used when manipulating rep_nest */
 
     origline = tline;
 
@@ -1472,6 +1474,7 @@ static int do_directive (Token *tline)
 	defining->plus = FALSE;
 	defining->nolist = FALSE;
 	defining->in_progress = FALSE;
+	defining->rep_nest = NULL;
 	tline = tline->next;
 	skip_white_(tline);
 	if (!tok_type_(tline, TOK_NUMBER)) {
@@ -1590,24 +1593,6 @@ static int do_directive (Token *tline)
 	return 1;
 
       case PP_REP:
-	  if (defining) {
-	      /*
-	       * We don't allow nested %reps, because of a strange bug
-	       * that was causing a panic. The cause of the bug appears to be
-	       * that the nested %rep isn't taken into account when matching
-	       * against the %endreps, so some mechanism to count the
-	       * %reps in and the %endreps out may well work here.
-	       * 
-	       * That's for experimentation with later, though.
-	       * For informations sake, the panic produced by
-	       * nesting %reps was:
-	       *
-	       * istk->mstk has no name but defining is set at end
-	       * of expansion
-	       */
-	      error(ERR_NONFATAL, "nested `%%rep' invocation not allowed");
-	      break;
-	  }
 	nolist = FALSE;
 	tline = tline->next;
 	if (tline->next && tline->next->type == TOK_WHITESPACE)
@@ -1635,6 +1620,7 @@ static int do_directive (Token *tline)
 		  "non-constant value given to `%%rep'");
 	    return 3;
 	}
+	tmp_defining = defining;
 	defining = nasm_malloc(sizeof(MMacro));
 	defining->name = NULL;	       /* flags this macro as a %rep block */
 	defining->casesense = 0;
@@ -1646,6 +1632,7 @@ static int do_directive (Token *tline)
 	defining->dlist = NULL;
 	defining->expansion = NULL;
 	defining->next_active = istk->mstk;
+	defining->rep_nest = tmp_defining;
 	return 1;
 
       case PP_ENDREP:
@@ -1675,7 +1662,8 @@ static int do_directive (Token *tline)
 	istk->mstk = defining;
 
 	list->uplevel (defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
-	defining = NULL;
+	tmp_defining = defining;
+	defining = defining->rep_nest;
 	free_tlist (origline);
 	return 1;
 
@@ -2796,10 +2784,7 @@ static char *pp_getline (void)
 		    if (defining->name)
 			error (ERR_PANIC,
 			       "defining with name in expansion");
-		    else if (!istk->mstk->name)
-			error (ERR_PANIC, "istk->mstk has no name but"
-			       " defining is set at end of expansion");
-		    else
+		    else if (istk->mstk->name)
 			error (ERR_FATAL, "`%%rep' without `%%endrep' within"
 			       " expansion of macro `%s'", istk->mstk->name);
 		}

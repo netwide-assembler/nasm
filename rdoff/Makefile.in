@@ -63,7 +63,7 @@ clean:
 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile *~ *.bak
 
 cleaner: clean
 

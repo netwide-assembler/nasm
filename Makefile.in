@@ -91,7 +91,7 @@ clean:
 	cd rdoff; $(MAKE) clean
 
 distclean: clean
-	rm -f config.* Makefile *~
+	rm -f config.* Makefile *~ *.bak changes.lst changes.bin
 	cd rdoff; $(MAKE) distclean
 
 cleaner: clean
