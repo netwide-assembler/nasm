@@ -959,6 +959,9 @@ sub write_ps {
   $lnamei = "idx" . $lname;
   @lnames = @ltypes = ();
 
+  $linewidth = 468;		# ADJUSTABLE: width of a normal text line
+  $bulletadj = 12;		# ADJUSTABLE: space for a bullet
+
   for ($para = 0; $para <= $#pnames; $para++) {
     $pname = $pnames[$para];
     $pflags = $pflags[$para];
@@ -1033,13 +1036,13 @@ sub write_ps {
       # 75-char right margin and either 7 or 11 char left margin
       # depending on bullets.
       if ($ptype eq "bull") {
-        $width = 456; # leave 12-pt left indent for the bullet
+	$width = $linewidth - $bulletadj;
 	$type = $begtype = "bbeg";
 	$bodytype = "bbdy";
 	$onetype = "bone";
 	$endtype = "bend";
       } else {
-        $width = 468;
+	$width = $linewidth;
 	$type = $begtype = "nbeg";
 	$bodytype = "nbdy";
 	$onetype = "none";
@@ -1457,7 +1460,7 @@ sub ps_header {
       i yy moveto (.) linkshow
     } if
   } for
-  ss linkshow
+  ex yy moveto ss linkshow
   linkend
 } def
 /just { /w exch def /y exch def /a exch def
