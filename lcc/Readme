@@ -1,9 +1,10 @@
 This directory contains the necessary files to port the C compiler
 ``LCC'' (available by FTP from sunsite.doc.ic.ac.uk in the directory
-/computing/programming/languages/c/lcc) to compile for Linux (a.out
-or ELF) by using NASM as a back-end code generator.
+/computing/programming/languages/c/lcc) to compile for Linux (a.out or
+ELF) or other supported operating systems by using NASM as a back-end
+code generator.
 
-This patch has been tested on lcc version 3.6.
+This patch has been tested on lcc version 4.0.
 
 To install:
 
@@ -11,9 +12,9 @@ To install:
 
 - Copy either `lin-elf.c' or `lin-aout.c' into the `etc' directory.
 
-- If you're installing for a.out, edit `x86nasm.md' and change the
-  conditional after the comment reading "CHANGE THIS FOR a.out" in
-  the `defsymbol' function from `#if 0' to `#if 1'.
+- With previous versions, you had to modify x86-nasm.md if you weren't
+  using ELF.  There is now inbuilt support within NASM in the shape
+  of the __CDECL__ macro, so this modification is no longer necessary.
 
 - Make the following changes to `bind.c' in the `src' directory:
 

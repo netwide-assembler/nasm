@@ -158,7 +158,7 @@ extern struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup (long, long, struct ieeeSection *,
-				int, long, long);
+				int, unsigned long, long);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
 static long ieee_segment (char *, int, int *);
 static void ieee_write_file(int debuginfo);
@@ -369,7 +369,8 @@ static void ieee_deflabel (char *name, long segment,
  */
 static void ieee_out (long segto, void *data, unsigned long type,
 		     long segment, long wrt) {
-    long size, realtype;
+    long size;
+    unsigned long realtype;
     unsigned char *ucdata;
     long ldata;
     struct ieeeSection *seg;
@@ -447,7 +448,7 @@ static void ieee_data_new(struct ieeeSection *segto) {
  * If anyone wants to optimize this is a good canditate!
  */
 static void ieee_write_fixup (long segment, long wrt, struct ieeeSection * segto,
-				int size, long realtype, long offset) {
+				int size, unsigned long realtype, long offset) {
     struct ieeeSection *target;
     struct ieeeFixupp s;
 
@@ -954,11 +955,12 @@ static void ieee_write_file (int debuginfo) {
        	    	ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,pub->offset);
 	    else
        	    	ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment*16,pub->offset);
-	    if (debuginfo)
+	    if (debuginfo) {
 	    	if (pub->type >= 0x100)
 	    	    ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
 		else
 	    	    ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+	    }
  	    i++;
         }
     }
@@ -972,11 +974,12 @@ static void ieee_write_file (int debuginfo) {
        	    ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,pub->offset);
 	else
        	    ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment*16,pub->offset);
-	if (debuginfo)
+	if (debuginfo) {
 	    if (pub->type >= 0x100)
 	    	ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
 	    else
 	    	ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+	}
  	i++;
         pub = pub->next;
     }
@@ -1019,11 +1022,12 @@ static void ieee_write_file (int debuginfo) {
        	    	ieee_putascii("ASN%X,R%X,%lX,+.\r\n", i, loc->index,loc->offset);
 	    else
        	    	ieee_putascii("ASN%X,%lX,%lX,+.\r\n", i, loc->segment*16,loc->offset);
-	    if (debuginfo)
+	    if (debuginfo) {
 		if (loc->type >= 0x100)
 	 	    ieee_putascii("ATN%X,T%X.\r\n", i, loc->type - 0x100);
 		else
 	    	    ieee_putascii("ATN%X,%X.\r\n", i, loc->type);
+	    }
  	    i++;
         }
     }

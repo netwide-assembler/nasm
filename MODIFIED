@@ -1,3 +1,10 @@
+- 3/25/01 - fixed "%include bug"
+          - "elfso bug" (aout, too)
+          - "jecxz bug" (& docs)
+          - version "0.98bf"
+              - Frank Kotler <fbkotler@ne.mediaone.net>.
+                (grep "/*bf*/" to find 'em)
+
 This file details changes since NASM 0.98p3.  All the releases in this
 file have been produced by H. Peter Anvin <hpa@zytor.com>.
 

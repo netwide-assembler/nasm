@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 	  ofmt->filename (inname, outname, report_error);
 	ofile = NULL;
 	printf("%s: %s", outname, inname);
-	while ( (line = preproc->getline()) )
+	while ( (line = preproc->getline()) != NULL )
 	  nasm_free (line);
 	preproc->cleanup();
 	putc('\n', stdout);
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
       location.known = FALSE;
       
       preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
-      while ( (line = preproc->getline()) ) {
+      while ( (line = preproc->getline()) != NULL ) {
 	/*
 	 * We generate %line directives if needed for later programs
 	 */
@@ -334,6 +334,7 @@ static int process_arg (char *p, char *q)
 	  case 'p':
 	  case 'd':
 	  case 'D':
+	  case 'U':
 	  case 'i':
 	  case 'l':
 	  case 'E':
@@ -531,7 +532,7 @@ static void process_respfile (FILE *rfile)
 	if (process_arg (prevarg, p))
 	    *p = '\0';
 
-	if (strlen(p) > prevargsize-10) {
+	if ((int)strlen(p) > prevargsize-10) {
 	    prevargsize += ARG_BUF_DELTA;
 	    prevarg = nasm_realloc(prevarg, prevargsize);
 	}
@@ -542,7 +543,7 @@ static void process_respfile (FILE *rfile)
 static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
-    char *envreal, *envcopy=NULL, *p, *q, *arg, *prevarg;
+    char *envreal, *envcopy, *p, *q, *arg, *prevarg;
     char separator = ' ';
 
     *inname = *outname = *listname = '\0';
@@ -579,13 +580,14 @@ static void parse_cmdline(int argc, char **argv)
 	int i;
 	argv++;
 	if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i)))
+	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i))) {
 		if ((rfile = fopen(p, "r"))) {
 		    process_respfile (rfile);
 		    fclose(rfile);
 		} else
 		    report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			    "unable to open response file `%s'", p);
+	    }
 	} else
 	    i = process_arg (argv[0], argc > 1 ? argv[1] : NULL);
 	argv += i, argc -= i;
@@ -616,7 +618,7 @@ static void assemble_file (char *fname)
     location.known = TRUE;
     location.offset = offs = get_curr_ofs;
 
-    while ( (line = preproc->getline()) ) 
+    while ( (line = preproc->getline()) != NULL ) 
     {
 	globallineno++;
 
@@ -934,7 +936,7 @@ static void assemble_file (char *fname)
     globallineno = 0;
     location.offset = offs = get_curr_ofs;
 
-    while ( (line = preproc->getline()) ) 
+    while ( (line = preproc->getline()) != NULL ) 
     {
 	globallineno++;
 

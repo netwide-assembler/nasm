@@ -210,7 +210,8 @@ static int round(unsigned short *mant, int i)
     return 0;
 }
 
-#define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
+#define put(a,b) ( ((a)[0]=(unsigned char)((b) & 0xFF)), \
+		   ((a)[1]=(unsigned char)(((b) >> 8) & 0xFF)) )
 
 static int to_double(char *str, long sign, unsigned char *result,
 		     efunc error) 

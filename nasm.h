@@ -12,8 +12,8 @@
 #define NASM_NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 98
-#define NASM_VER "0.98"
+#define NASM_MINOR_VER 98bf
+#define NASM_VER "0.98bf"
 
 #ifndef NULL
 #define NULL 0
@@ -837,6 +837,6 @@ struct dfmt {
  * the number of elements of a statically defined array.
  */
 
-#define elements(x)     ( sizeof(x) / sizeof(*(x)) )
+#define elements(x)     ((int)(sizeof(x) / sizeof(*(x))))
 
 #endif

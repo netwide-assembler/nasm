@@ -455,8 +455,8 @@ INVLPG    mem                 \300\2\x0F\x01\207            486,PRIV
 IRET      void                \322\1\xCF                    8086
 IRETD     void                \321\1\xCF                    386
 IRETW     void                \320\1\xCF                    8086
-JCXZ      imm                 \320\1\xE3\50                 8086
-JECXZ     imm                 \321\1\xE3\50                 386
+JCXZ      imm                 \310\1\xE3\50                 8086
+JECXZ     imm                 \311\1\xE3\50                 386
 JMP       imm|short           \1\xEB\50                     8086
 JMP       imm                 \322\1\xE9\64                 8086
 JMP       imm|near            \322\1\xE9\64                 8086,ND

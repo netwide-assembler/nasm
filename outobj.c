@@ -282,8 +282,8 @@ static ObjRecord *obj_byte(ObjRecord *orp, unsigned char val)
 static ObjRecord *obj_word(ObjRecord *orp, unsigned int val) 
 {
     orp = obj_check(orp, 2);
-    orp->buf[orp->used] = val;
-    orp->buf[orp->used+1] = val >> 8;
+    orp->buf[orp->used] = (unsigned char)(val & 0xFF);
+    orp->buf[orp->used+1] = (unsigned char)((val >> 8) & 0xFF);
     orp->used += 2;
     return (orp);
 }
@@ -294,8 +294,8 @@ static ObjRecord *obj_word(ObjRecord *orp, unsigned int val)
 static ObjRecord *obj_rword(ObjRecord *orp, unsigned int val) 
 {
     orp = obj_check(orp, 2);
-    orp->buf[orp->used] = val >> 8;
-    orp->buf[orp->used+1] = val;
+    orp->buf[orp->used] = (unsigned char)((val >> 8) & 0xFF);
+    orp->buf[orp->used+1] = (unsigned char)(val & 0xFF);
     orp->used += 2;
     return (orp);
 }
@@ -306,10 +306,10 @@ static ObjRecord *obj_rword(ObjRecord *orp, unsigned int val)
 static ObjRecord *obj_dword(ObjRecord *orp, unsigned long val) 
 {
     orp = obj_check(orp, 4);
-    orp->buf[orp->used] = val;
-    orp->buf[orp->used+1] = val >> 8;
-    orp->buf[orp->used+2] = val >> 16;
-    orp->buf[orp->used+3] = val >> 24;
+    orp->buf[orp->used] = (unsigned char)(val & 0xFF);
+    orp->buf[orp->used+1] = (unsigned char)((val >> 8) & 0xFF);
+    orp->buf[orp->used+2] = (unsigned char)((val >> 16) & 0xFF);
+    orp->buf[orp->used+3] = (unsigned char)((val >> 24) & 0xFF);
     orp->used += 4;
     return (orp);
 }
@@ -364,7 +364,7 @@ static ObjRecord *obj_index(ObjRecord *orp, unsigned int val)
 static ObjRecord *obj_value(ObjRecord *orp, unsigned long val) 
 {
     if (val <= 128)
-	return ( obj_byte(orp, val) );
+	return ( obj_byte(orp, (unsigned char)val) );
     if (val <= 0xFFFF) {
 	orp = obj_byte(orp, 129);
 	return ( obj_word(orp, val) );
@@ -952,7 +952,8 @@ static void obj_deflabel (char *name, long segment,
 static void obj_out (long segto, void *data, unsigned long type,
 		     long segment, long wrt) 
 {
-    long size, realtype;
+    long size;
+    unsigned long realtype;
     unsigned char *ucdata;
     long ldata;
     struct Segment *seg;
@@ -998,7 +999,7 @@ static void obj_out (long segto, void *data, unsigned long type,
 	    unsigned int len;
 	    orp = obj_check(seg->orp, 1);
 	    len = RECORD_MAX - orp->used;
-	    if (len > size)
+	    if ((long)len > size)
 		len = size;
 	    memcpy (orp->buf+orp->used, ucdata, len);
 	    orp->committed = orp->used += len;
@@ -1931,7 +1932,7 @@ static void obj_write_file (int debuginfo)
     orp->parm[0] = 0;
     orp->parm[1] = 0;
     for (pub = fpubhead; pub; pub = pub->next) {   /* pub-crawl :-) */
-	if (orp->parm[2] != pub->segment) {
+	if ((long)orp->parm[2] != pub->segment) {
 	    obj_emit (orp);
 	    orp->parm[2] = pub->segment;
 	}
@@ -2316,7 +2317,7 @@ static void dbgbi_linnum (const char *lnfname, long lineno, long segto)
     if (!seg)
 	error (ERR_PANIC, "lineno directed to nonexistent segment?");
 
-    for (fn = fnhead; fn; fn = fnhead->next)
+    for (fn = fnhead; fn; fn = fn->next) /*bf*/
 	if (!nasm_stricmp(lnfname,fn->name))
 	    break;
     if (!fn) {

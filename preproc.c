@@ -403,7 +403,7 @@ static int hash(char *s)
     while (*s) {
 	h += multipliers[i] * (unsigned char) (toupper(*s));
 	s++;
-	if (++i >= sizeof(multipliers)/sizeof(*multipliers))
+	if (++i >= elements(multipliers))
 	    i = 0;
     }
     h %= NHASH;
@@ -579,7 +579,7 @@ static char *read_line (void)
  */
 static Token *tokenise (char *line) 
 {
-    char *p = line;
+    char *p;
     int type;
     Token *list = NULL;
     Token *t, **tail = &list;
@@ -2745,7 +2745,7 @@ static int expand_mmacro (Token *tline)
      * If we had a label, push it on as the first line of
      * the macro expansion.
      */
-    if (label)
+    if (label) {
 	if (dont_prepend<0)
 	    free_tlist(startline);
 	else {
@@ -2764,7 +2764,7 @@ static int expand_mmacro (Token *tline)
 		tt->text = nasm_strdup(":");
 	    }
 	}
-
+    }
     list->uplevel (m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
     return 1;

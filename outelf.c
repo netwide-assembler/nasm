@@ -447,21 +447,16 @@ static void elf_deflabel (char *name, long segment, long offset,
 
     if (sym->type == SYM_GLOBAL) {
 	/*
-	 * There's a problem here that needs fixing. 
-	 * If sym->section == SHN_ABS, then the first line of the
-	 * else section causes a core dump, because its a reference
+	 * If sym->section == SHN_ABS, then the first line of the else
+	 * section would cause a core dump, because it's a reference
 	 * beyond the end of the section array.
-	 * This behaviour is exhibited by this code:
-	 *     GLOBAL crash_nasm
-	 *     crash_nasm equ 0
+	 * This case happens with code such as this:
+	 *     GLOBAL foo
+	 *     foo equ 0
 	 *
-	 * I'm not sure how to procede, because I haven't got the
-	 * first clue about how ELF works, so I don't know what to
-	 * do with it. Furthermore, I'm not sure what the rest of this
-	 * section of code does. Help?
-	 *
-	 * For now, I'll see if doing absolutely nothing with it will
-	 * work...
+	 * We avoid the crash by skipping over the else section. It's
+	 * a bit unclear whether or not this is the right thing to do,
+	 * but it appears to work correctly.
 	 */
 	if (sym->section == SHN_UNDEF || sym->section == SHN_COMMON)
 	{
@@ -496,6 +491,7 @@ static void elf_deflabel (char *name, long segment, long offset,
 		    struct tokenval tokval;
 		    expr *e;
 		    int fwd = FALSE;
+                    char *saveme=stdscan_bufptr;   /*bf*/
 
 		    while (special[n] && isspace(special[n]))
 			n++;
@@ -518,6 +514,7 @@ static void elf_deflabel (char *name, long segment, long offset,
 			else
 			    sym->size = reloc_value(e);
 		    }
+                    stdscan_bufptr=saveme;    /*bf*/
 		}
 		special_used = TRUE;
 	    }
@@ -938,7 +935,7 @@ static struct SAA *elf_build_symtab (long *len, long *local)
      * Now the other local symbols.
      */
     saa_rewind (syms);
-    while ( (sym = saa_rstruct (syms)) ) {
+    while ( (sym = saa_rstruct (syms)) != NULL ) {
 	if (sym->type & SYM_GLOBAL)
 	    continue;
 	p = entry;
@@ -956,7 +953,7 @@ static struct SAA *elf_build_symtab (long *len, long *local)
      * Now the global symbols.
      */
     saa_rewind (syms);
-    while ( (sym = saa_rstruct (syms)) ) {
+    while ( (sym = saa_rstruct (syms)) != NULL ) {
 	if (!(sym->type & SYM_GLOBAL))
 	    continue;
 	p = entry;

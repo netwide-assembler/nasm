@@ -92,16 +92,16 @@ void standard_extension (char *inname, char *outname, char *extension,
 
 #define WRITELONG(p,v) \
   do { \
-    *(p)++ = (v) & 0xFF; \
-    *(p)++ = ((v) >> 8) & 0xFF; \
-    *(p)++ = ((v) >> 16) & 0xFF; \
-    *(p)++ = ((v) >> 24) & 0xFF; \
+    *(p)++ = (unsigned char)((v) & 0xFF); \
+    *(p)++ = (unsigned char)(((v) >> 8) & 0xFF); \
+    *(p)++ = (unsigned char)(((v) >> 16) & 0xFF); \
+    *(p)++ = (unsigned char)(((v) >> 24) & 0xFF); \
   } while (0)
 
 #define WRITESHORT(p,v) \
   do { \
-    *(p)++ = (v) & 0xFF; \
-    *(p)++ = ((v) >> 8) & 0xFF; \
+    *(p)++ = (unsigned char)((v) & 0xFF); \
+    *(p)++ = (unsigned char)(((v) >> 8) & 0xFF); \
   } while (0)
 
 /*

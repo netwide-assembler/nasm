@@ -655,6 +655,7 @@ static void coff_write_symbols (void)
 {
     char filename[18];
     int i;
+    unsigned long j;
 
     /*
      * The `.file' record, and the file name auxiliary record.
@@ -685,7 +686,7 @@ static void coff_write_symbols (void)
      * The real symbols.
      */
     saa_rewind (syms);
-    for (i=0; i<nsyms; i++) {
+    for (j=0; j<nsyms; j++) {
 	struct Symbol *sym = saa_rstruct (syms);
 	coff_symbol (sym->strpos == -1 ? sym->name : NULL,
 		     sym->strpos, sym->value, sym->section,

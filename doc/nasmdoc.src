@@ -7007,8 +7007,8 @@ on the default \c{BITS} setting at the time.
 
 \H{insJCXZ} \i\c{JCXZ}, \i\c{JECXZ}: Jump if CX/ECX Zero
 
-\c JCXZ imm                      ; o16 E3 rb            [8086]
-\c JECXZ imm                     ; o32 E3 rb            [386]
+\c JCXZ imm                      ; a16 E3 rb            [8086]
+\c JECXZ imm                     ; a32 E3 rb            [386]
 
 \c{JCXZ} performs a short jump (with maximum range 128 bytes) if and
 only if the contents of the \c{CX} register is 0. \c{JECXZ} does the
@@ -7460,7 +7460,7 @@ operation on the 64-bit MMX registers.
 \c OUT DX,AX                     ; o16 EF               [8086]
 \c OUT DX,EAX                    ; o32 EF               [386]
 
-\c{IN} writes the contents of the given source register to the
+\c{OUT} writes the contents of the given source register to the
 specified I/O port. The port number may be specified as an immediate
 value if it is between 0 and 255, and otherwise must be stored in
 \c{DX}. See also \c{IN} (\k{insIN}).

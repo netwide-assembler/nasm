@@ -200,7 +200,7 @@ static long rdf2_section_names(char *name, int pass, int *bits)
     /*
      * see if we have an optional ',number' following the type code
      */
-    if ((q = strchr(p, ','))) {
+    if ((q = strchr(p, ',')) != NULL) {
       *q++ = '\0';
 
       reserved = readnum(q, &i);

@@ -267,7 +267,7 @@ long assemble (long segment, long offset, int bits,
 		fseek (fp, base, SEEK_SET);		
 		l = len;
 		while (l > 0) {
-		    long m = fread (buf, 1, (l>sizeof(buf)?sizeof(buf):l),
+		    long m = fread (buf, 1, (l>(int)sizeof(buf)?sizeof(buf):l),
 				    fp);
 		    if (!m) {
 			/*

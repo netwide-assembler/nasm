@@ -627,7 +627,7 @@ void saa_fpwrite (struct SAA *s, FILE *fp)
     long len;
 
     saa_rewind (s);
-    while ( (data = saa_rbytes (s, &len)) )
+    while ( (data = saa_rbytes (s, &len)) != NULL )
 	fwrite (data, 1, len, fp);
 }
 

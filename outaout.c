@@ -341,6 +341,7 @@ static void aout_deflabel (char *name, long segment, long offset,
 		struct tokenval tokval;
 		expr *e;
 		int fwd = FALSE;
+                char *saveme=stdscan_bufptr;  /*bf*/
 
 		if (!bsd) {
 		    error(ERR_NONFATAL, "Linux a.out does not support"
@@ -369,6 +370,7 @@ static void aout_deflabel (char *name, long segment, long offset,
 			    sym->size = reloc_value(e);
 		    }
 		}
+                stdscan_bufptr=saveme;     /*bf*/
 	    }
 	    special_used = TRUE;
 	}
@@ -823,7 +825,7 @@ static void aout_write_relocs (struct Reloc *r)
 
 static void aout_write_syms (void) 
 {
-    int i;
+    unsigned long i;
 
     saa_rewind (syms);
     for (i=0; i<nsyms; i++) {

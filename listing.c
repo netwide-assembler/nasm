@@ -122,7 +122,8 @@ static void list_out (long offset, char *str)
 
 static void list_output (long offset, void *data, unsigned long type) 
 {
-    long typ, size;
+    unsigned long typ;
+    long size;
 
     if (!listp || suppress)
 	return;
