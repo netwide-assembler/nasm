@@ -159,6 +159,8 @@ install_everything: everything install install_doc install_rdf
 dist: spotless perlreq
 	autoconf
 	rm -rf ./autom4te.cache
+
+tar: dist
 	tar cvjf ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 ../`./nasm-dir`
 
 nasm.spec: nasm.spec.in version
