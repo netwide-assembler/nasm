@@ -1635,6 +1635,7 @@ static unsigned long get_cpu (char *value)
     	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
     if (!nasm_stricmp(value, "p4")    ||	/* is this right? -- jrc */
     	!nasm_stricmp(value, "willamette") ) 	return IF_WILLAMETTE;
+    if (!nasm_stricmp(value, "prescott") )      return IF_PRESCOTT;
     if (!nasm_stricmp(value, "ia64") ||
 	!nasm_stricmp(value, "ia-64") ||
 	!nasm_stricmp(value, "itanium") ||

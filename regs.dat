@@ -19,10 +19,10 @@ cl	REG_CL		reg8	1
 ch	REG8		reg8	5
 cx	REG_CX		reg16	1
 ecx	REG_ECX		reg32	1
-dl	REG8		reg8	2
+dl	REG_DL		reg8	2
 dh	REG8		reg8	6
 dx	REG_DX		reg16	2
-edx	REG32		reg32	2
+edx	REG_EDX		reg32	2
 sp	REG16		reg16	4
 esp	REG32		reg32	4
 bp	REG16		reg16	5

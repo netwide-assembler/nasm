@@ -318,6 +318,9 @@ FIST      mem16               \300\1\xDF\202                8086,FPU
 FISTP     mem32               \300\1\xDB\203                8086,FPU
 FISTP     mem16               \300\1\xDF\203                8086,FPU
 FISTP     mem64               \300\1\xDF\207                8086,FPU
+FISTTP    mem32               \300\1\xDD\201                PRESCOTT,FPU
+FISTTP    mem16               \300\1\xDB\201                PRESCOTT,FPU
+FISTTP    mem64               \300\1\xDF\201                PRESCOTT,FPU
 FISUB     mem32               \300\1\xDA\204                8086,FPU
 FISUB     mem16               \300\1\xDE\204                8086,FPU
 FISUBR    mem32               \300\1\xDA\205                8086,FPU
@@ -563,6 +566,8 @@ LSS       reg32,mem           \321\301\2\x0F\xB2\110        386
 LTR       mem                 \300\1\x0F\17\203             286,PROT,PRIV
 LTR       mem16               \300\1\x0F\17\203             286,PROT,PRIV
 LTR       reg16               \1\x0F\17\203                 286,PROT,PRIV
+MONITOR   void		      \3\x0F\x01\xC8		    PRESCOTT
+MONITOR	  reg_eax,reg_ecx,reg_edx      \3\x0F\x01\xC8	    PRESCOTT,ND
 MOV       mem,reg_sreg        \300\1\x8C\101                8086,SM
 MOV       reg16,reg_sreg      \320\1\x8C\101                8086
 MOV       reg32,reg_sreg      \321\1\x8C\101                386
@@ -624,6 +629,8 @@ MOVZX     reg32,rm16          \321\301\2\x0F\xB7\110        386
 MUL       rm8                 \300\1\xF6\204                8086
 MUL       rm16                \320\300\1\xF7\204            8086
 MUL       rm32                \321\300\1\xF7\204            386
+MWAIT	  void		      \3\x0F\x01\xC9		    PRESCOTT
+MWAIT	  reg_eax,reg_ecx     \3\x0F\x01\xC9		    PRESCOTT,ND
 NEG       rm8                 \300\1\xF6\203                8086
 NEG       rm16                \320\300\1\xF7\203            8086
 NEG       rm32                \321\300\1\xF7\203            386
@@ -1641,3 +1648,24 @@ UNPCKLPD        xmmreg,xmmreg           \3\x66\x0F\x14\110              WILLAMET
 UNPCKLPD        xmmreg,mem              \301\3\x66\x0F\x14\110          WILLAMETTE,SSE2,SM
 XORPD           xmmreg,xmmreg           \3\x66\x0F\x57\110              WILLAMETTE,SSE2
 XORPD           xmmreg,mem              \301\3\x66\x0F\x57\110          WILLAMETTE,SSE2,SM
+
+; Prescott New Instructions (SSE3)
+ADDSUBPD        xmmreg,mem              \301\3\x66\x0F\xD0\110          PRESCOTT,SSE3,SM
+ADDSUBPD	xmmreg,xmmreg           \3\x66\x0F\xD0\110              PRESCOTT,SSE3
+ADDSUBPS	xmmreg,mem		\301\3\xF2\x0F\xD0\110		PRESCOTT,SSE3,SM
+ADDSUBPS	xmmreg,xmmreg           \3\xF2\x0F\xD0\110              PRESCOTT,SSE3
+HADDPD		xmmreg,mem              \301\3\x66\x0F\x7C\110          PRESCOTT,SSE3,SM
+HADDPD		xmmreg,xmmreg           \3\x66\x0F\x7C\110              PRESCOTT,SSE3
+HADDPS		xmmreg,mem		\301\3\xF2\x0F\x7C\110		PRESCOTT,SSE3,SM
+HADDPS		xmmreg,xmmreg           \3\xF2\x0F\x7C\110              PRESCOTT,SSE3
+HSUBPD		xmmreg,mem              \301\3\x66\x0F\x7D\110          PRESCOTT,SSE3,SM
+HSUBPD		xmmreg,xmmreg           \3\x66\x0F\x7D\110              PRESCOTT,SSE3
+HSUBPS		xmmreg,mem		\301\3\xF2\x0F\x7D\110		PRESCOTT,SSE3,SM
+HSUBPS		xmmreg,xmmreg           \3\xF2\x0F\x7D\110              PRESCOTT,SSE3
+LDDQU		xmmreg,mem		\3\xF2\x0F\xF0\110		PRESCOTT,SSE3
+MOVDDUP		xmmreg,mem		\301\3\xF2\x0F\x12\110		PRESCOTT,SSE3
+MOVDDUP		xmmreg,xmmreg		\3\xF2\x0F\x12\110		PRESCOTT,SSE3
+MOVSHDUP	xmmreg,mem		\301\3\xF3\x0F\x16\110		PRESCOTT,SSE3
+MOVSHDUP	xmmreg,xmmreg		\3\xF3\x0F\x16\110		PRESCOTT,SSE3
+MOVSLDUP	xmmreg,mem		\301\3\xF3\x0F\x12\110		PRESCOTT,SSE3
+MOVSLDUP	xmmreg,xmmreg		\3\xF3\x0F\x12\110		PRESCOTT,SSE3

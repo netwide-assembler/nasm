@@ -43,8 +43,12 @@ static int whichreg(long regflags, int regval)
 	return R_AX;
     if (!(REG_EAX & ~regflags))
 	return R_EAX;
+    if (!(REG_DL & ~regflags))
+	return R_DL;
     if (!(REG_DX & ~regflags))
 	return R_DX;
+    if (!(REG_EDX & ~regflags))
+	return R_EDX;
     if (!(REG_CL & ~regflags))
 	return R_CL;
     if (!(REG_CX & ~regflags))
