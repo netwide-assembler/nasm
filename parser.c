@@ -574,7 +574,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    result->oprs[operand].hintbase = hints.base;
 	    result->oprs[operand].hinttype = hints.type;
 
-	    if (e->type <= EXPR_REG_END) {   /* this bit's a register */
+	    if (e->type && e->type <= EXPR_REG_END)   /* this bit's a register */
+	    {
 		if (e->value == 1) /* in fact it can be basereg */
 		    b = e->type;
 		else	       /* no, it has to be indexreg */
