@@ -6806,7 +6806,7 @@ either an \c{XMM} register or a 64-bit memory location.
 
 \c ADDSS xmm1,xmm2/mem32         ; F3 0F 58 /r     [WILLAMETTE,SSE2]
 
-\c{ADDSD} adds the low single-precision FP values from the source
+\c{ADDSS} adds the low single-precision FP values from the source
 and destination operands and stores the single-precision FP result
 in the destination operand.
 
@@ -7960,7 +7960,7 @@ either an \c{XMM} register or a 128-bit memory location.
 
 \c DIVPS xmm1,xmm2/mem128        ; 0F 5E /r        [KATMAI,SSE]
 
-\c{DIVPD} divides the four packed single-precision FP values in
+\c{DIVPS} divides the four packed single-precision FP values in
 the destination operand by the four packed single-precision FP
 values in the source operand, and stores the packed single-precision
 results in the destination register.
@@ -7974,7 +7974,7 @@ either an \c{XMM} register or a 128-bit memory location.
 \c    dst[96-127] := dst[96-127] / src[96-127].
 
 
-\H{insDIVSD} \i\c{DIVPD}: Scalar Double-Precision FP Divide
+\H{insDIVSD} \i\c{DIVSD}: Scalar Double-Precision FP Divide
 
 \c DIVSD xmm1,xmm2/mem64         ; F2 0F 5E /r     [WILLAMETTE,SSE2]
 
@@ -9514,7 +9514,7 @@ the SNaN is not returned). The high quadword of the destination
 is left unchanged.
 
 
-\H{insMAXSS} \i\c{MAXSD}: Return Scalar Single-Precision FP Maximum
+\H{insMAXSS} \i\c{MAXSS}: Return Scalar Single-Precision FP Maximum
 
 \c MAXSS xmm1,xmm2/m32           ; F3 0F 5F /r     [KATMAI,SSE] 
 
@@ -9599,7 +9599,7 @@ the SNaN is not returned). The high quadword of the destination
 is left unchanged.
 
 
-\H{insMINSS} \i\c{MINSD}: Return Scalar Single-Precision FP Minimum
+\H{insMINSS} \i\c{MINSS}: Return Scalar Single-Precision FP Minimum
 
 \c MINSS xmm1,xmm2/m32           ; F3 0F 5D /r     [KATMAI,SSE] 
 
@@ -9672,7 +9672,7 @@ non-Intel Pentium class processors.
 \c MOVAPD xmm1,xmm2/mem128       ; 66 0F 28 /r     [WILLAMETTE,SSE2]
 \c MOVAPD xmm1/mem128,xmm2       ; 66 0F 29 /r     [WILLAMETTE,SSE2]
 
-\c{MOVAPS} moves a double quadword containing 2 packed double-precision
+\c{MOVAPD} moves a double quadword containing 2 packed double-precision
 FP values from the source operand to the destination. When the source
 or destination operand is a memory location, it must be aligned on a
 16-byte boundary.
@@ -9965,7 +9965,7 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c MOVSD xmm1,xmm2/m64           ; F2 0F 10 /r     [WILLAMETTE,SSE2]
 \c MOVSD xmm1/m64,xmm2           ; F2 0F 11 /r     [WILLAMETTE,SSE2]
 
-\c{MOVDS} moves a double-precision FP value from the source operand
+\c{MOVSD} moves a double-precision FP value from the source operand
 to the destination operand. When the source or destination is a
 register, the low-order FP value is read or written.
 
@@ -10218,7 +10218,7 @@ two 64-bit operands into one 64-bit register, while the \c{SSE}
 versions pack two 128-bit operands into one 128-bit register.
 
 \b \c{PACKSSWB} splits the combined value into words, and then reduces
-the words to btes, using signed saturation. It then packs the bytes
+the words to bytes, using signed saturation. It then packs the bytes
 into the destination register in the same order the words were in.
 
 \b \c{PACKSSDW} performs the same operation as \c{PACKSSWB}, except that
@@ -10586,7 +10586,7 @@ If the lower value is zero, it is returned as positive zero.
 
 \c PFNACC mm1,mm2/m64            ; 0F 0F /r 8A          [PENT,3DNOW] 
 
-\c{PFACC} performs a negative accumulate of the two single-precision
+\c{PFNACC} performs a negative accumulate of the two single-precision
 FP values in the source and destination registers. The result of the
 accumulate from the destination register is stored in the low doubleword
 of the destination, and the result of the source accumulate is stored in
@@ -10598,11 +10598,11 @@ The operation is:
 \c    dst[32-63] := src[0-31] - src[32-63].
 
 
-\H{insPFNACC} \i\c{PFNACC}: Packed Single-Precision FP Mixed Accumulate
+\H{insPFPNACC} \i\c{PFPNACC}: Packed Single-Precision FP Mixed Accumulate
 
-\c PFNACC mm1,mm2/m64            ; 0F 0F /r 8E          [PENT,3DNOW] 
+\c PFPNACC mm1,mm2/m64           ; 0F 0F /r 8E          [PENT,3DNOW] 
 
-\c{PFACC} performs a positive accumulate of the two single-precision
+\c{PFPNACC} performs a positive accumulate of the two single-precision
 FP values in the source register and a negative accumulate of the
 destination register. The result of the accumulate from the destination
 register is stored in the low doubleword of the destination, and the
@@ -11168,7 +11168,7 @@ without any changes.
 
 \c PSHUFLW xmm1,xmm2/m128,imm8   ; F2 0F 70 /r ib  [WILLAMETTE,SSE2]
 
-\c{PSHUFW} shuffles the words in the low quadword of the source
+\c{PSHUFLW} shuffles the words in the low quadword of the source
 (second) operand according to the encoding specified by imm8, and
 stores the result in the low quadword of the destination (first)
 operand.
@@ -12040,7 +12040,7 @@ Bits 2 through 7 of the shuffle operand are reserved.
 
 \c SHUFPS xmm1,xmm2/m128,imm8    ; 0F C6 /r ib     [KATMAI,SSE]
 
-\c{SHUFPD} moves two of the packed single-precision FP values from
+\c{SHUFPS} moves two of the packed single-precision FP values from
 the destination operand into the low quadword of the destination
 operand; the upper quadword is generated by moving two of the
 single-precision FP values from the source operand into the
