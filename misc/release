@@ -80,7 +80,6 @@ cd nasm
 autoconf
 ./configure --prefix=/usr/local
 make dist
-mv nasm.spec nasm-${version}.spec
 cd ..
 
 # Clean up any previous attempt
