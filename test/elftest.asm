@@ -22,6 +22,7 @@
 ; [15] Reference a text-section symbol in the data section
 ; [16] Reference a data-section symbol in the data section
 ; [17] Reference a BSS-section symbol in the data section
+; [18] Define a non-global rodata-section symbol
 
 	  BITS 32
 	  GLOBAL lrotate	; [1]
@@ -81,3 +82,6 @@ integer	  resd 1		; [3]
 
 ; a local integer
 localint  resd 1		; [6]
+
+	  SECTION .rodata
+readonly  dd readonly		; [18]

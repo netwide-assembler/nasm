@@ -327,6 +327,9 @@ static long elf_section_names (char *name, int pass, int *bits)
 	if (!strcmp(name, ".text"))
 	    i = elf_make_section (name, SHT_PROGBITS,
 				  SHF_ALLOC | SHF_EXECINSTR, 16);
+	else if (!strcmp(name, ".rodata"))
+	    i = elf_make_section (name, SHT_PROGBITS,
+				  SHF_ALLOC, 4);
 	else if (!strcmp(name, ".data"))
 	    i = elf_make_section (name, SHT_PROGBITS,
 				  SHF_ALLOC | SHF_WRITE, 4);
