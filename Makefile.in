@@ -131,6 +131,7 @@ distclean: clean
 	rm -f output/*~ output/*.bak
 	rm -f test/*.lst test/*.bin test/*.$(O) test/*.bin
 	rm -rf autom4te*.cache
+	rm -f doc/Makefile doc/*~ doc/*.bak
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
