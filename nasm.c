@@ -467,8 +467,8 @@ static int process_arg (char *p, char *q)
 		   "            [options...] [--] filename\n"
 		   "    or nasm -r   for version info (obsolete)\n"
 		   "    or nasm -v   for version info (preferred)\n\n"
-		   "    -t          Assemble in SciTech TASM compatible mode\n"
-		   "    -g          Generate debug information in selected format.\n");
+		   "    -t          assemble in SciTech TASM compatible mode\n"
+		   "    -g          generate debug information in selected format.\n");
 	    printf("    -e          preprocess only (writes output to stdout by default)\n"
 		   "    -a          don't preprocess (assemble only)\n"
 		   "    -M          generate Makefile dependencies on stdout\n\n"
