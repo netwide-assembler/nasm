@@ -12,6 +12,7 @@
 long insn_size (long segment, long offset, int bits,
 		insn *instruction, efunc error);
 long assemble (long segment, long offset, int bits,
-	       insn *instruction, struct ofmt *output, efunc error);
+	       insn *instruction, struct ofmt *output, efunc error,
+	       ListGen *listgen);
 
 #endif

@@ -74,8 +74,15 @@ will assemble `myfile.asm' into an ELF object file `myfile.o'. And
 
 will assemble `myfile.asm' into a raw binary program `myfile.com'.
 
-To get usage instructions from NASM, try typing `nasm -h'. This will
-also list the available output file formats, and what they are.
+To produce a listing file, with the hex codes output from NASM
+displayed on the left of the original sources, use `-l' to give a
+listing file name, for example:
+
+	nasm -f coff myfile.asm -l myfile.lst
+
+To get further usage instructions from NASM, try typing `nasm -h'.
+This will also list the available output file formats, and what they
+are.
 
 If you use Linux but aren't sure whether your system is a.out or
 ELF, type `file /usr/bin/nasm' or wherever you put the NASM binary.
@@ -95,6 +102,92 @@ Like Unix compilers and assemblers, NASM is silent unless it goes
 wrong: you won't see any output at all, unless it gives error
 messages.
 
+If you define an environment variable called NASM, the program will
+interpret it as a list of extra command-line options, processed
+before the real command line. This is probably most useful for
+defining an include-file search path by putting a lot of `-i'
+options in the NASM variable.
+
+The variable's value will be considered to be a space-separated list
+of options unless it begins with something other than a minus sign,
+in which case the first character will be taken as the separator.
+For example, if you want to define a macro whose value has a space
+in it, then setting the NASM variable to `-dNAME="my name"' won't
+work because the string will be split at the space into `-dNAME="my'
+and `name"', but setting it to `|-dNAME="my name"' will be fine
+because all further operands will be considered to be separated by
+vertical bars and so the space has no special meaning.	
+
+Quick Start for MASM Users
+==========================
+
+If you're used to writing programs with MASM, or with TASM in
+MASM-compatible (non-Ideal) mode, or with A86, this section attempts
+to outline the major differences between MASM's syntax and NASM's.
+If you're not already used to MASM, it's probably worth skipping
+this section.
+
+One simple difference is that NASM is case-sensitive. It makes a
+difference whether you call your label `foo', `Foo' or `FOO'. If
+you're assembling to the `obj' MS-DOS output format (or `os2'), you
+can invoke the `UPPERCASE' directive (documented below, in the
+Output Formats section) and ensure that all symbols exported to
+other code modules are forced to uppercase; but even then, _within_
+a single module, NASM will distinguish between labels differing only
+in case.
+
+There are also differences in some of the instructions and register
+names: for example, NASM calls the floating-point stack registers
+`st0', `st1' and so on, rather than MASM's `ST(0)' notation or A86's
+simple numeric `0'. And NASM doesn't support LODS, MOVS, STOS, SCAS,
+CMPS, INS, or OUTS, but only supports the size-specified versions
+LODSB, MOVSW, SCASD and so on.
+
+The _major_ difference, though, is the absence in NASM of variable
+typing. MASM will notice when you declare a variable as `var dw 0',
+and will remember that `var' is a WORD-type variable, so that
+instructions such as `mov var,2' can be unambiguously given the WORD
+size rather than BYTE or DWORD. NASM doesn't and won't do this. The
+statement `var dw 0' merely defines `var' to be a label marking a
+point in memory: no more and no less. It so happens that there are
+two bytes of data following that point in memory before the next
+line of code, but NASM doesn't remember or care. If you want to
+store the number 2 in such a variable, you must specify the size of
+the operation _always_: `mov word [var],2'. This is a deliberate
+design decision, _not_ a bug, so please could people not send us
+mail asking us to `fix' it...
+
+The above example also illustrates another important difference
+between MASM and NASM syntax: the use of OFFSET and of square
+brackets. In MASM, declaring `var dw 0' entitles you to code `mov
+ax,var' to get at the _contents_ of the variable, and you must write
+`mov ax,offset var' to get the _address_ of the variable. In NASM,
+`mov ax,var' gives you the address, and to get at the contents you
+must code `mov ax,[var]'. Again, this is a deliberate design
+decision, since it brings consistency to the syntax: `mov ax,[var]'
+and `mov ax,[bx]' both refer to the contents of memory and both have
+square brackets, whereas neither `mov ax,bx' nor `mov ax,var' refers
+to memory contents and so neither one has square brackets.
+
+This is even more confusing in A86, where declaring a label with a
+trailing colon defines it to be a `label' as opposed to a `variable'
+and causes A86 to adopt NASM-style semantics; so in A86, `mov
+ax,var' has different behaviour depending on whether `var' was
+declared as `var: dw 0' or `var dw 0'. NASM is very simple by
+comparison: _everything_ is a label. The OFFSET keyword is not
+required, and in fact constitutes a syntax error (though you can
+code `%define offset' to suppress the error messages if you want),
+and `var' always refers to the _address_ of the label whereas
+`[var]' refers to the _contents_.
+
+As an addendum to this point of syntax, it's also worth noting that
+the hybrid-style syntaxes supported by MASM and its clones, such as
+`mov ax,table[bx]', where a memory reference is denoted by one
+portion outside square brackets and another portion inside, are also
+not supported by NASM. The correct syntax for the above is `mov
+ax,[table+bx]'. Likewise, `mov ax,es:[di]' is wrong and `mov
+ax,[es:di]' is right.
+
 Writing Programs with NASM
 ==========================
 
@@ -106,7 +199,11 @@ LABEL:	INSTRUCTION	OPERANDS	; COMMENT
 `LABEL' defines a label pointing to that point in the source. There
 are no restrictions on white space: labels may have white space
 before them, or not, as you please. The colon after the label is
-also optional.
+also optional. (Note that NASM can be made to give a warning when it
+sees a label which is the only thing on a line with no trailing
+colon, on the grounds that such a label might easily be a mistyped
+instruction name. The command line option `-w+orphan-labels' will
+enable this feature.)
 
 Valid characters in labels are letters, numbers, `_', `$', `#', `@',
 `~', `?', and `.'. The only characters which may be used as the
@@ -271,6 +368,11 @@ Note that there is no effective difference between `times 100 resb
 1' and `resb 100', except that the latter will be assembled about
 100 times faster due to the internal structure of the assembler.
 
+Note also that TIMES can't be applied to macros: the reason for this
+is that TIMES is processed after the macro phase, which allows the
+argument to TIMES to contain expressions such as `64-$+buffer' as
+above.
+
 Effective Addresses
 ===================
 
@@ -334,6 +436,12 @@ for both of the above instructions, in an effort to save space.
 There is not, currently, any means for forcing NASM to generate the
 larger form of the instruction.
 
+An alternative syntax is supported, in which prefixing an operand
+with `&' is synonymous with enclosing it in square brackets. The
+square bracket syntax is the recommended one, however, and is the
+syntax generated by NDISASM. But, for example, `mov eax,&ebx+ecx' is
+equivalent to `mov eax,[ebx+ecx]'.
+
 Mixing 16 and 32 Bit Code: Unusual Instruction Sizes
 ====================================================
 
@@ -349,13 +457,13 @@ difficult instructions are things like far jumps.
 
 Suppose you are in a 16-bit segment, in protected mode, and you want
 to execute a far jump to a point in a 32-bit segment. You need to
-code a 32-bit far jump in a 16-bit segment; not many assemblers I
-know of will easily support this. NASM can, by means of the `word'
-and `dword' specifiers. So you can code
+code a 32-bit far jump in a 16-bit segment; not all assemblers will
+easily support this. NASM can, by means of the `word' and `dword'
+specifiers. So you can code
 
-	call 1234h:5678h	; this uses the default segment size
-	call word 1234h:5678h	; this is guaranteed to be 16-bit
-	call dword 1234h:56789ABCh ; and this is guaranteed 32-bit
+	jmp 1234h:5678h	; this uses the default segment size
+	jmp word 1234h:5678h	; this is guaranteed to be 16-bit
+	jmp dword 1234h:56789ABCh ; and this is guaranteed 32-bit
 
 and NASM will generate correct code for them.
 
@@ -512,6 +620,11 @@ unary + and -, ~, SEG	highest
 As usual, operators within a precedence level associate to the left
 (i.e. `2-3-4' evaluates the same way as `(2-3)-4').
 
+Note that since the `%' character is used by the preprocessor, it's
+worth making sure that the `%' and `%%' operators are followed by a
+space, to prevent the preprocessor trying to interpret them as
+macro-related things.
+
 A form of algebra is done by NASM when evaluating expressions: I
 have already stated that an effective address expression such as
 `[EAX*6-EAX]' will be recognised by NASM as algebraically equivalent
@@ -537,24 +650,26 @@ to the beginning of the _segment_; if you can't guarantee that the
 segment itself begins on a four-byte boundary, this alignment is
 useless or worse. Be sure you know what kind of alignment you can
 guarantee to get out of your linker before you start trying to use
-TIMES to align to page boundaries. (Of course, the OBJ file format
-can happily cope with page alignment, provided you specify that
-segment attribute.)
+TIMES to align to page boundaries. (Of course, the `obj' and `os2'
+file formats can happily cope with page alignment, provided you
+specify that segment attribute.)
 
 SEG and WRT
 ===========
 
 NASM contains the capability for its object file formats (currently,
-only `obj' makes use of this) to permit programs to directly refer
-to the segment-base values of their segments. This is achieved
-either by the object format defining the segment names as symbols
-(`obj' does this), or by the use of the SEG operator.
+only `obj' and its variant `os2' make use of this) to permit
+programs to directly refer to the segment-base values of their
+segments. This is achieved either by the object format defining the
+segment names as symbols (`obj' and `os2' do this), or by the use of
+the SEG operator.
 
 SEG is a unary prefix operator which, when applied to a symbol
 defined in a segment, will yield the segment base value of that
-segment. (In `obj' format, symbols defined in segments which are
-grouped are considered to be primarily a member of the _group_, not
-the segment, and the return value of SEG reflects this.)
+segment. (In `obj' and `os2' format, symbols defined in segments
+which are grouped are considered to be primarily a member of the
+_group_, not the segment, and the return value of SEG reflects
+this.)
 
 SEG may be used for far pointers: it is guaranteed that for any
 symbol `sym', using the offset `sym' from the segment base `SEG sym'
@@ -708,8 +823,8 @@ below.
 In 32-bit mode, instructions are prefixed with 0x66 or 0x67 prefixes
 when they use 16-bit data or addresses; in 16-bit mode, the reverse
 happens. NASM's default depends on the object format; the defaults
-are documented with the formats. (See `obj', in particular, for some
-unusual behaviour.)
+are documented with the formats. (See `obj' and `os2', in
+particular, for some unusual behaviour.)
 
 `SECTION name' or `SEGMENT name' changes which section the code you
 write will be assembled into. Acceptable section names vary between
@@ -756,8 +871,8 @@ it refers to.
 `COMMON symbol size' defines a symbol as being common: it is
 declared to have the given size, and it is merged at link time with
 any declarations of the same symbol in other modules. This is not
-_fully_ supported in the `obj' file format: see the section on `obj'
-for details.
+_fully_ supported in the `obj' or `os2' file format: see the section
+on `obj' for details.
 
 `STRUC structure' begins the definition of a data structure, and
 `ENDSTRUC' ends it. The structure shown above may be defined,
@@ -766,8 +881,8 @@ exactly equivalently, using STRUC as follows:
 	        struc st
 	stLong  resd 1
 	stWord  resw 1
-	stByte1 resb 1
-	stByte2 resb 1
+	stByte  resb 1
+	stStr   resb 32
 	        endstruc
 
 Notice that this code still defines the symbol `st_size' to be the
@@ -776,6 +891,36 @@ to the structure name. Notice also that the assembler takes care of
 remembering which section you were assembling in (whereas in the
 version using `ABSOLUTE' it was up to the programmer to sort that
 out).
+
+`ISTRUC structure' begins the declaration of an initialised instance
+of a data structure. You can then use the `AT' macro to assign
+values to the structure members, and `IEND' to finish. So, for
+example, given the structure `st' above:
+
+		istruc st
+		at stLong, dd 0x1234
+		at stWord, dw 23
+		at stByte, db 'q'
+		at stStr, db 'hello, world', 13, 10, 0
+		iend
+
+Note that there's nothing stopping the instruction after `at' from
+overflowing on to the next line if you want. So the above example
+could just as well have contained
+
+		at stStr, db 'hello, world'
+		db 13, 10, 0
+
+or even (if you prefer this style)
+
+		at stStr
+		db 'hello, world'
+		db 13, 10, 0
+
+Note also that the `ISTRUC' mechanism is implemented as a set of
+macros, and uses TIMES internally to achieve its effect; so the
+structure fields must be initialised in the same order as they were
+defined in.
 
 This is where user-level directives differ from primitives: the
 `SECTION' (and `SEGMENT') user-level directives don't just call the
@@ -788,14 +933,9 @@ ENDSTRUC - they are implemented in terms of ABSOLUTE and SECTION.
 This also means that if you use STRUC before explicitly announcing a
 target section, you should explicitly announce one after ENDSTRUC.
 
-The primitive directive [INCLUDE filename] (or the equivalent form
-[INC filename]) is supported as a synonym for the preprocessor-
-oriented `%include' form, but only temporarily: this usage will be
-phased out in the next version of NASM.
-
 Directives may also be specific to the output file format. At
-present, the `bin' and `obj' formats define extra directives, which
-are specified below.
+present, the `bin', `obj' and `os2' formats define extra directives,
+which are specified below.
 
 The Preprocessor
 ================
@@ -841,7 +981,30 @@ all to expand to `bar'.
 There is a mechanism which detects when a macro call has occurred as
 a result of a previous expansion of the same macro, to guard against
 circular references and infinite loops. If this happens, the
-preprocessor will report an error.
+preprocessor will only expand the first occurrence of the macro.
+Hence:
+
+   %define a(x) 1+a(x)
+     mov ax,a(3)        ; becomes 1+a(3) and expands no further
+
+This can be useful for doing things like this:
+
+   %macro extrn 1       ; see next section for explanation of `%macro'
+     extern _%1
+     %define %1 _%1
+   %endmacro
+
+which would avoid having to put leading underscores on external
+variables, because you could just code
+
+     extrn foo
+     mov ax,foo
+
+and it would expand as
+
+     extern foo
+   %define foo _foo
+     mov ax,foo         ; becomes mov ax,_foo as required
 
 Single-line macros with parameters can be overloaded: it is possible
 to define two or more single-line macros with the same name, each
@@ -851,6 +1014,19 @@ single-line macro excludes the possibility of any macro of the same
 name _with_ parameters, and vice versa (though single-line macros
 may be redefined, keeping the same number of parameters, without
 error).
+
+You can pre-define single-line macros using the `-d' option on the
+NASM command line, such as
+
+    nasm filename -dDEBUG
+
+(and then you might have various conditional-assembly bits under
+`%ifdef DEBUG'), or possibly
+
+    nasm filename -dTYPE=4
+
+(which might allow you to re-assemble your code to do several
+different things depending on the value of TYPE).
 
 Multiple-line macros
 --------------------
@@ -874,6 +1050,16 @@ The `0' on the `%macro' line indicates that the macro `prologue'
 expects no parameters. Macros can be overloaded: if two macros are
 defined with the same name but different numbers of parameters, they
 will be treated as separate. Multi-line macros may not be redefined.
+
+The assembler will usually generate a warning if you code a line
+which looks like a macro call but involves a number of parameters
+which the macro in question isn't ready to support. (For example, if
+you code a macro `%macro foo 1' and also `%macro foo 3', then you
+write `foo a,b', a warning will be generated.) This feature can be
+disabled by the use of the command line option `-w-macro-params',
+since sometimes it's intentional (for example, you might define
+`%macro push 2' to allow you to push two registers at once; but
+`push ax' shouldn't then generate a warning).
 
 Macros taking parameters can be written using `%1', `%2' and so on
 to reference the parameters. So this code
@@ -902,7 +1088,7 @@ with `%%'. So:
 This defines a different label in place of `%%skip' every time it's
 called. (Of course the above code could have easily been coded using
 `jnz $+3', but not in more complex cases...) The actual label
-defined would be `macro.2345.skip', where 2345 is replaced by some
+defined would be `..@2345.skip', where 2345 is replaced by some
 number that changes with each macro call. Users are warned to avoid
 defining labels of this shape themselves.
 
@@ -923,7 +1109,7 @@ modifier on the `%macro' line:
    %endmacro
      fputs [filehandle], "hi there", 13, 10
 
-This declares `pstring' to be a macro that accepts _at least two_
+This declares `fputs' to be a macro that accepts _at least two_
 parameters, and all parameters after the first one are lumped
 together as part of the last specified one (in this case %2). So in
 the macro call, `%1' expands to `[filehandle]' while `%2' expands to
@@ -1002,9 +1188,9 @@ defined:
 
 which will expand to something like
 
-     jnae macro.1234.skip
+     jnae ..@1234.skip
      mov ax,bx
-   macro.1234.skip:
+   ..@1234.skip:
 
 Note that `%+1' will allow CXZ or ECXZ to be passed as condition
 codes, but `%-1' will of course be unable to invert them.
@@ -1034,6 +1220,28 @@ Defaults may be omitted, in which case they are taken to be blank.
 
 `%endm' is a valid synonym for `%endmacro'.
 
+The specification for the number of macro parameters can be suffixed
+with `.nolist' if you don't want the macro to be explicitly expanded
+in listing files:
+
+   %macro ping 1-2+.nolist
+     ; some stuff
+   %endmacro
+
+Standard Macros and `%clear'
+----------------------------
+
+NASM defines a set of standard macros, before the input file gets
+processed; these are primarily there in order to provide standard
+language features (such as structure support). However, it's
+conceivable that a user might want to write code that doesn't have
+the standard macros defined; you can achieve this by using the
+preprocessor directive `%clear' at the top of your program, which
+will undefine _everything_ that's defined by the preprocessor.
+
+In particular, NASM defines the symbols `__NASM_MAJOR__' and
+`__NASM_MINOR__' to be the major and minor version numbers of NASM.
+
 Conditional Assembly
 --------------------
 
@@ -1054,9 +1262,12 @@ File Inclusion
 --------------
 
 You can include a file using the `%include' directive. Included
-files are only searched for in the current directory: there isn't
-(yet - if there's demand for it it could be arranged) any default
-search path for standard include files.
+files are searched for in the current directory, and then in all
+directories specified on the command line with the `-i' option.
+(Note that the directories specified on the command line are
+directly prepended to the filename, so they must include the
+necessary trailing slash under DOS or Unix, or the equivalent on
+other systems.)
 
 This, again, works like C: `%include' is used to include a file. Of
 course it's quite likely you'd want to do the normal sort of thing
@@ -1074,6 +1285,10 @@ and then elsewhere
 
 so that it doesn't matter if the file accidentally gets included
 more than once.
+
+You can force an include file to be included without using a
+`%include' command, by specifying it as a pre-include file on the
+command line using the `-p' option.
 
 The Context Stack
 -----------------
@@ -1159,8 +1374,8 @@ Output Formats
 ==============
 
 The current output formats supported are `bin', `aout', `coff',
-`elf', `as86', `obj', `win32', `rdf', and the debug pseudo-format
-`dbg'.
+`elf', `as86', `obj', `os2', `win32', `rdf', and the debug
+pseudo-format `dbg'.
 
 `bin': flat-form binary
 -----------------------
@@ -1181,17 +1396,18 @@ NASM does not support the use of ORG to jump around inside an object
 file, like MASM does (see the `Bugs' section for a demonstration of
 the use of MASM's form of ORG to do something that NASM's won't do.)
 
-Like almost all formats (not `obj'), the `bin' format defines the
-section names `.text', `.data' and `.bss'. The layout is that
-`.text' comes first in the output file, followed by `.data', and
-notionally followed by `.bss'. So if you declare a BSS section in a
-flat binary file, references to the BSS section will refer to space
-past the end of the actual file. The `.data' and `.bss' sections are
-considered to be aligned on four-byte boundaries: this is achieved
-by inserting padding zero bytes between the end of the text section
-and the start of the data, if there is data present. Of course if no
-SECTION directives are present, everything will go into `.text', and
-you will get nothing in the output except the code you wrote.
+Like almost all formats (but not `obj' or `os2'), the `bin' format
+defines the section names `.text', `.data' and `.bss'. The layout is
+that `.text' comes first in the output file, followed by `.data',
+and notionally followed by `.bss'. So if you declare a BSS section
+in a flat binary file, references to the BSS section will refer to
+space past the end of the actual file. The `.data' and `.bss'
+sections are considered to be aligned on four-byte boundaries: this
+is achieved by inserting padding zero bytes between the end of the
+text section and the start of the data, if there is data present. Of
+course if no SECTION directives are present, everything will go into
+`.text', and you will get nothing in the output except the code you
+wrote.
 
 `bin' silently ignores GLOBAL directives, and will also not complain
 at EXTERN ones. You only get an error if you actually _reference_ an
@@ -1324,8 +1540,8 @@ to pass directives to the MS linker.
 
 Both `coff' and `win32' default to 32-bit assembly mode.
 
-`obj': Microsoft 16-bit Object Module Format
---------------------------------------------
+`obj' and `os2': Microsoft 16-bit Object Module Format
+------------------------------------------------------
 
 The `obj' format generates 16-bit Microsoft object files, suitable
 for feeding to 16-bit versions of Microsoft C, and probably
@@ -1416,6 +1632,26 @@ place 32-bit code in a Use16 segment, you can use an explicit `BITS
 32' override, but if you switch temporarily away from that segment,
 you will have to repeat the override after coming back to it.
 
+If you're trying to build a .COM application by linking several .OBJ
+files together, you need to put `resb 0x100' at the front of the
+code segment in the first object file, since otherwise the linker
+will get the linking wrong.
+
+OS/2 uses an almost exactly similar file format to DOS, with a
+couple of differences, principally that OS/2 defines a pseudo-group
+called FLAT, containing no segments, and every relocation is made
+relative to that (so it would be equivalent to writing `label WRT
+FLAT' in place of `label' _throughout_ your code). Since this would
+be inconvenient to write code for, NASM implements the `os2' variant
+on `obj', which provides this FLAT group itself and automatically
+makes the default relocation format relative to FLAT.
+
+NOTE TO OS/2 USERS: The OS/2 output format is new in NASM version
+0.95. It hasn't been tested on any actual OS/2 systems, and I don't
+know for sure that it'll work properly. Any OS/2 users are
+encouraged to give it a thorough testing and report the results to
+me. Thanks!
+
 `as86': Linux as86 (bin86-0.3)
 ------------------------------
 
@@ -1448,14 +1684,46 @@ debugging purposes. It produces a debug dump of everything that the
 NASM assembly module feeds to the output driver, for the benefit of
 people trying to write their own output drivers.
 
+Common Problems
+===============
+
+A few problems that people repeatedly ask me about are documented
+here.
+
+NASM's design philosophy of generating exactly the code the
+programmer asks for, without second-guessing or re-interpreting, has
+been known to cause confusion in a couple of areas.
+
+Firstly, several people have complained that instructions such as
+`add esp,4' are assembled in a form that allocates a full four-byte
+offset field to store the `4' in, even though the instruction has a
+shorter form with a single-byte offset field which would work in
+this case. The answer is that NASM by design doesn't try to guess
+which one of these forms you want: if you want one, you code one,
+and if you want the other, you code the other. The other form is
+`add esp, byte 4'.
+
+Secondly, and similarly, I've had repeated questions about
+conditional jumps. The simple `jne label', in NASM, translates
+directly to the old 8086 form of the conditional jump, in which the
+offset can be up to 128 bytes (or thereabouts) in either direction.
+NASM won't automatically generate `je $+3 / jmp label' for labels
+that are further away, and neither will it generate the 386 long-
+offset form of the instruction. If you want the 386-specific
+conditional jump that's capable of reaching anywhere in the same
+segment as the jump instruction, you want `jne near label'. If you
+want an 8086-compatible `je' over another `jmp', code one
+explicitly, or define a macro to do so. NASM doesn't do either of
+these things for you, again by design.
+
 Bugs
 ====
 
 Apart from the missing features (correct OBJ COMMON support, ELF
 alignment, ELF PIC support, etc.), there are no _known_ bugs.
 However, any you find, with patches if possible, should be sent to
-<jules@dcs.warwick.ac.uk> or <anakin@pobox.com>, and we'll try to
-fix them.
+<jules@earthcorp.com> or <anakin@pobox.com>, and we'll try to fix
+them.
 
 Beware of Pentium-specific instructions: Intel have provided a macro
 file for MASM, to implement the eight or nine new Pentium opcodes as

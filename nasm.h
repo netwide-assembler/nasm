@@ -12,8 +12,8 @@
 #define NASM_NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 94
-#define NASM_VER "0.94"
+#define NASM_MINOR_VER 95
+#define NASM_VER "0.95"
 
 #ifndef NULL
 #define NULL 0
@@ -66,6 +66,15 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 #define ERR_OFFBY1 0x40		       /* report error as being on the line 
 					* we're just _about_ to read, not
 					* the one we've just read */
+/*
+ * These codes define specific types of suppressible warning.
+ */
+#define ERR_WARN_MNP  0x0100	       /* macro-num-parameters warning */
+#define ERR_WARN_OL   0x0200	       /* orphan label (no colon, and
+					* alone on line) */
+#define ERR_WARN_MASK 0xFF00	       /* the mask for this feature */
+#define ERR_WARN_SHR  8		       /* how far to shift right */
+#define ERR_WARN_MAX  2		       /* the highest numbered one */
 
 /*
  * -----------------------
@@ -85,14 +94,73 @@ typedef void (*ldfunc) (char *label, long segment, long offset,
 			struct ofmt *ofmt, efunc error);
 
 /*
+ * List-file generators should look like this:
+ */
+typedef struct {
+    /*
+     * Called to initialise the listing file generator. Before this
+     * is called, the other routines will silently do nothing when
+     * called. The `char *' parameter is the file name to write the
+     * listing to.
+     */
+    void (*init) (char *, efunc);
+
+    /*
+     * Called to clear stuff up and close the listing file.
+     */
+    void (*cleanup) (void);
+
+    /*
+     * Called to output binary data. Parameters are: the offset;
+     * the data; the data type. Data types are similar to the
+     * output-format interface, only OUT_ADDRESS will _always_ be
+     * displayed as if it's relocatable, so ensure that any non-
+     * relocatable address has been converted to OUT_RAWDATA by
+     * then. Note that OUT_RAWDATA+0 is a valid data type, and is a
+     * dummy call used to give the listing generator an offset to
+     * work with when doing things like uplevel(LIST_TIMES) or
+     * uplevel(LIST_INCBIN).
+     */
+    void (*output) (long, void *, unsigned long);
+
+    /*
+     * Called to send a text line to the listing generator. The
+     * `int' parameter is LIST_READ or LIST_MACRO depending on
+     * whether the line came directly from an input file or is the
+     * result of a multi-line macro expansion.
+     */
+    void (*line) (int, char *);
+
+    /*
+     * Called to change one of the various levelled mechanisms in
+     * the listing generator. LIST_INCLUDE and LIST_MACRO can be
+     * used to increase the nesting level of include files and
+     * macro expansions; LIST_TIMES and LIST_INCBIN switch on the
+     * two binary-output-suppression mechanisms for large-scale
+     * pseudo-instructions.
+     *
+     * LIST_MACRO_NOLIST is synonymous with LIST_MACRO except that
+     * it indicates the beginning of the expansion of a `nolist'
+     * macro, so anything under that level won't be expanded unless
+     * it includes another file.
+     */
+    void (*uplevel) (int);
+
+    /*
+     * Reverse the effects of uplevel.
+     */
+    void (*downlevel) (int);
+} ListGen;
+
+/*
  * Preprocessors ought to look like this:
  */
 typedef struct {
     /*
-     * Called at the start of a pass; given a file name and an
-     * error reporting function.
+     * Called at the start of a pass; given a file name, an error
+     * reporting function and a listing generator to talk to.
      */
-    void (*reset) (char *, efunc);
+    void (*reset) (char *, efunc, ListGen *);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -120,9 +188,10 @@ typedef struct {
  * (for local labels), whereas a number may appear anywhere *but* at the
  * start. */
 
-#define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' )
+#define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
+                                  || (c)=='@' )
 #define isidchar(c)  ( isidstart(c) || isdigit(c) || (c)=='$' || (c)=='#' \
-                                                  || (c)=='@' || (c)=='~' )
+                                                  || (c)=='~' )
 
 /* Ditto for numeric constants. */
 
@@ -132,6 +201,14 @@ typedef struct {
 /* This returns the numeric value of a given 'digit'. */
 
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
+
+/*
+ * Data-type flags that get passed to listing-file routines.
+ */
+enum {
+    LIST_READ, LIST_MACRO, LIST_MACRO_NOLIST, LIST_INCLUDE,
+    LIST_INCBIN, LIST_TIMES
+};
 
 /*
  * -----------------------------------------------------------
@@ -381,6 +458,13 @@ struct ofmt {
      * which case `offset' holds the _size_ of the variable).
      * Anything else is available for the output driver to use
      * internally.
+     *
+     * This routine explicitly _is_ allowed to call the label
+     * manager to define further symbols, if it wants to, even
+     * though it's been called _from_ the label manager. That much
+     * re-entrancy is guaranteed in the label manager. However, the
+     * label manager will in turn call this routine, so it should
+     * be prepared to be re-entrant itself.
      */
     void (*symdef) (char *name, long segment, long offset, int is_global);
 

@@ -138,7 +138,7 @@ sub format {
 # \17          means byte zero
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
-sub startbyte {  # FIXME we cheat, for now :-)
+sub startbyte {
   local ($codes) = @_;
   local $word, @range;
 

@@ -42,7 +42,7 @@ NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
 	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
-	   preproc.$(OBJ)
+	   preproc.$(OBJ) listing.$(OBJ)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
 	      insnsd.$(OBJ)
@@ -92,7 +92,9 @@ float.$(OBJ): float.c nasm.h
 insnsa.$(OBJ): insnsa.c nasm.h insns.h
 insnsd.$(OBJ): insnsd.c nasm.h insns.h
 labels.$(OBJ): labels.c nasm.h nasmlib.h
-nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h outform.h
+listing.$(OBJ): listing.c nasm.h nasmlib.h listing.h
+nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h \
+	listing.h outform.h
 nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
 ndisasm.$(OBJ): ndisasm.c nasm.h sync.h disasm.h
 outas86.$(OBJ): outas86.c nasm.h nasmlib.h

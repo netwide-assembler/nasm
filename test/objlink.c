@@ -27,4 +27,5 @@ int main(void) {
     function(text);
     printf("this should be 0xF00E: 0x%X\n", bsssym);
     printf("this should be 0xD00E: 0x%X\n", commvar);
+    return 0;
 }

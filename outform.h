@@ -18,7 +18,7 @@
  * OF_NO_name             -- remove output format 'name'
  * OF_DOS                 -- ensure that 'obj', 'bin' & 'win32' are included.
  * OF_UNIX                -- ensure that 'aout', 'coff' and 'elf' are in.
- * OF_OTHERS              -- ensure that 'bin', 'as86' & 'rdf' are in.
+ * OF_OTHERS              -- ensure that 'bin', 'as86', 'os2' & 'rdf' are in.
  * OF_ALL                 -- ensure that all formats are included.
  *
  * OF_DEFAULT=of_name     -- ensure that 'name' is the default format.
@@ -37,8 +37,8 @@
 
 #define MAX_OUTPUT_FORMATS 16
 
-struct ofmt *ofmt_find(char *name);
-void ofmt_list(struct ofmt *deffmt);
+struct ofmt *ofmt_find(char *);
+void ofmt_list(struct ofmt *, FILE *);
 void ofmt_register (struct ofmt *);
 
 /* -------------- USER MODIFIABLE PART ---------------- */
@@ -76,6 +76,9 @@ void ofmt_register (struct ofmt *);
 #endif
 #ifndef OF_OBJ
 #define OF_OBJ
+#endif
+#ifndef OF_OS2
+#define OF_OS2
 #endif
 #ifndef OF_ELF
 #define OF_ELF
@@ -132,6 +135,9 @@ void ofmt_register (struct ofmt *);
 #ifndef OF_RDF
 #define OF_RDF
 #endif
+#ifndef OF_OS2
+#define OF_OS2
+#endif
 #endif
 
 /* finally... override any format specifically specifed to be off */
@@ -158,6 +164,9 @@ void ofmt_register (struct ofmt *);
 #endif
 #ifdef OF_NO_RDF
 #undef OF_RDF
+#endif
+#ifdef OF_NO_OS2
+#undef OF_OS2
 #endif
 
 #ifndef OF_DEFAULT

@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include "sync.h"
@@ -21,10 +22,29 @@
 static struct Sync {
     unsigned long pos;
     unsigned long length;
-} synx[SYNC_MAX+1];		       /* synx[0] never used - who cares :) */
+} *synx;
 static int nsynx;
 
 void init_sync(void) {
+    /*
+     * I'd like to allocate an array of size SYNC_MAX, then write
+     * `synx--' which would allow numbering the array from one
+     * instead of zero without wasting memory. Sadly I don't trust
+     * this to work in 16-bit Large model, so it's staying the way
+     * it is. Btw, we don't care about freeing this array, since it
+     * has to last for the duration of the program and will then be
+     * auto-freed on exit. And I'm lazy ;-)
+     * 
+     * Speaking of 16-bit Large model, that's also the reason I'm
+     * not declaring this array statically - by doing it
+     * dynamically I avoid problems with the total size of DGROUP
+     * in Borland C.
+     */
+    synx = malloc((SYNC_MAX+1) * sizeof(*synx));
+    if (!synx) {
+	fprintf(stderr, "ndisasm: not enough memory for sync array\n");
+	exit(1);
+    }
     nsynx = 0;
 }
 

@@ -85,7 +85,7 @@ static struct Group {
 	long index;
 	char *name;
     } segs[GROUP_MAX];		       /* ...in this */
-} *grphead, **grptail, *obj_grp_needs_update;
+} *grphead, **grptail, *obj_grp_needs_update, *defgrp;
 
 static struct ObjData {
     struct ObjData *next;
@@ -98,6 +98,8 @@ static struct ObjData {
 } *datahead, *datacurr, **datatail;
 
 static long obj_entry_seg, obj_entry_ofs;
+
+static int os2;
 
 enum RecordID {			       /* record ID codes */
 
@@ -136,6 +138,7 @@ static unsigned char *obj_write_name(unsigned char *, char *);
 static unsigned char *obj_write_index(unsigned char *, int);
 static unsigned char *obj_write_value(unsigned char *, unsigned long);
 static void obj_record(int, unsigned char *, unsigned char *);
+static int obj_directive (char *, char *, int);
 
 static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef) {
     ofp = fp;
@@ -158,6 +161,22 @@ static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef) {
     datatail = &datahead;
     obj_entry_seg = NO_SEG;
     obj_uppercase = FALSE;
+
+    if (os2) {
+	obj_directive ("group", "FLAT", 1);
+	defgrp = grphead;
+    } else
+	defgrp = NULL;
+}
+
+static void dos_init (FILE *fp, efunc errfunc, ldfunc ldef) {
+    os2 = FALSE;
+    obj_init (fp, errfunc, ldef);
+}
+
+static void os2_init (FILE *fp, efunc errfunc, ldfunc ldef) {
+    os2 = TRUE;
+    obj_init (fp, errfunc, ldef);
 }
 
 static void obj_cleanup (void) {
@@ -227,12 +246,13 @@ static void obj_deflabel (char *name, long segment,
      * First check for the double-period, signifying something
      * unusual.
      */
-    if (name[0] == '.' && name[1] == '.') {
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (!strcmp(name, "..start")) {
 	    obj_entry_seg = segment;
 	    obj_entry_ofs = offset;
+	    return;
 	}
-	return;
+	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
     }
 
     /*
@@ -265,6 +285,17 @@ static void obj_deflabel (char *name, long segment,
 	return;
     }
 
+    /*
+     * If `any_segs' is still FALSE, we might need to define a
+     * default segment, if they're trying to declare a label in
+     * `first_seg'.
+     */
+    if (!any_segs && segment == first_seg) {
+	int tempint;		       /* ignored */
+	if (segment != obj_segment("__NASMDEFSEG", 2, &tempint))
+	    error (ERR_PANIC, "strange segment conditions in OBJ driver");
+    }
+
     for (seg = seghead; seg; seg = seg->next)
 	if (seg->index == segment) {
 	    /*
@@ -272,7 +303,6 @@ static void obj_deflabel (char *name, long segment,
 	     */
 	    if (is_global) {
 		struct Public *pub;
-
 		pub = *seg->pubtail = nasm_malloc(sizeof(*pub));
 		seg->pubtail = &pub->next;
 		pub->next = NULL;
@@ -390,7 +420,8 @@ static void obj_out (long segto, void *data, unsigned long type,
 	datacurr->nonempty = TRUE;
 	if (segment != NO_SEG)
 	    obj_write_fixup (datacurr, size,
-			     (realtype == OUT_REL2ADR ? 0 : 0x4000),
+			     (realtype == OUT_REL2ADR ||
+			      realtype == OUT_REL4ADR ? 0 : 0x4000),
 			     segment, wrt,
 			     (seg->currentpos - datacurr->startpos));
 	seg->currentpos += size;
@@ -506,10 +537,14 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
     /*
      * If no WRT given, assume the natural default, which is method
      * F5 unless we are doing an OFFSET fixup for a grouped
-     * segment, in which case we require F1 (group).
+     * segment, in which case we require F1 (group). Oh, and in
+     * OS/2 mode we're in F1 (group) on `defgrp' _always_, by
+     * default.
      */
     if (wrt == NO_SEG) {
-	if (!base && s && s->grp)
+	if (os2)
+	    method |= 0x10, fidx = defgrp->obj_index;
+	else if (!base && s && s->grp)
 	    method |= 0x10, fidx = s->grp->obj_index;
 	else
 	    method |= 0x50, fidx = -1;
@@ -731,7 +766,7 @@ static long obj_segment (char *name, int pass, int *bits) {
 
 static int obj_directive (char *directive, char *value, int pass) {
     if (!strcmp(directive, "group")) {
-	char *p, *q;
+	char *p, *q, *v;
 	if (pass == 1) {
 	    struct Group *grp;
 	    struct Segment *seg;
@@ -740,6 +775,7 @@ static int obj_directive (char *directive, char *value, int pass) {
 	    q = value;
 	    while (*q == '.')
 		q++;		       /* hack, but a documented one */
+	    v = q;
 	    while (*q && !isspace(*q))
 		q++;
 	    if (isspace(*q)) {
@@ -747,16 +783,23 @@ static int obj_directive (char *directive, char *value, int pass) {
 		while (*q && isspace(*q))
 		    q++;
 	    }
-	    if (!*q) {
-		error(ERR_NONFATAL, "GROUP directive contains no segments");
-		return 1;
-	    }
+	    /*
+	     * Here we used to sanity-check the group directive to
+	     * ensure nobody tried to declare a group containing no
+	     * segments. However, OS/2 does this as standard
+	     * practice, so the sanity check has been removed.
+	     *
+	     * if (!*q) {
+	     *     error(ERR_NONFATAL,"GROUP directive contains no segments");
+	     *     return 1;
+	     * }
+	     */
 
 	    obj_idx = 1;
 	    for (grp = grphead; grp; grp = grp->next) {
 		obj_idx++;
-		if (!strcmp(grp->name, value)) {
-		    error(ERR_NONFATAL, "group `%s' defined twice", value);
+		if (!strcmp(grp->name, v)) {
+		    error(ERR_NONFATAL, "group `%s' defined twice", v);
 		    return 1;
 		}
 	    }
@@ -770,7 +813,7 @@ static int obj_directive (char *directive, char *value, int pass) {
 	    grp->name = NULL;
 
 	    obj_grp_needs_update = grp;
-	    deflabel (value, grp->index+1, 0L, &of_obj, error);
+	    deflabel (v, grp->index+1, 0L, &of_obj, error);
 	    obj_grp_needs_update = NULL;
 
 	    while (*q) {
@@ -1072,12 +1115,17 @@ static void obj_write_file (void) {
 
     /*
      * Write a COMENT record stating that the linker's first pass
-     * may stop processing at this point.
+     * may stop processing at this point. Exception is if we're in
+     * OS/2 mode and our MODEND record specifies a start point, in
+     * which case, according to the OS/2 documentation, this COMENT
+     * should be omitted.
      */
-    recptr = record;
-    recptr = obj_write_rword (recptr, 0x40A2);
-    recptr = obj_write_byte (recptr, 1);
-    obj_record (COMENT, record, recptr);
+    if (!os2 || obj_entry_seg == NO_SEG) {
+	recptr = record;
+	recptr = obj_write_rword (recptr, 0x40A2);
+	recptr = obj_write_byte (recptr, 1);
+	obj_record (COMENT, record, recptr);
+    }
 
     /*
      * Write the LEDATA/FIXUPP pairs.
@@ -1086,7 +1134,7 @@ static void obj_write_file (void) {
 	if (data->nonempty) {
 	    obj_record (data->letype, data->ledata, data->lptr);
 	    if (data->fptr != data->fixupp)
-		obj_record (FIXUPP, data->fixupp, data->fptr);
+		obj_record (data->ftype, data->fixupp, data->fptr);
 	}
     }
 
@@ -1218,9 +1266,22 @@ static void obj_record(int type, unsigned char *start, unsigned char *end) {
 }
 
 struct ofmt of_obj = {
-    "Microsoft MS-DOS 16-bit object files",
+    "Microsoft MS-DOS 16-bit OMF object files",
     "obj",
-    obj_init,
+    dos_init,
+    obj_out,
+    obj_deflabel,
+    obj_segment,
+    obj_segbase,
+    obj_directive,
+    obj_filename,
+    obj_cleanup
+};
+
+struct ofmt of_os2 = {
+    "OS/2 object files (variant of OMF)",
+    "os2",
+    os2_init,
     obj_out,
     obj_deflabel,
     obj_segment,

@@ -290,7 +290,8 @@ static void elf_deflabel (char *name, long segment, long offset,
     int pos = strslen;
     struct Symbol *sym;
 
-    if (name[0] == '.' && name[1] == '.') {
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
 	return;
     }
 
@@ -306,11 +307,18 @@ static void elf_deflabel (char *name, long segment, long offset,
     else {
 	int i;
 	sym->section = SHN_UNDEF;
-	for (i=0; i<nsects; i++)
-	    if (segment == sects[i]->index) {
-		sym->section = i+1;
-		break;
-	    }
+	if (nsects == 0 && segment == def_seg) {
+	    int tempint;
+	    if (segment != elf_section_names (".text", 2, &tempint))
+		error (ERR_PANIC, "strange segment conditions in ELF driver");
+	    sym->section = nsects;
+	} else {
+	    for (i=0; i<nsects; i++)
+		if (segment == sects[i]->index) {
+		    sym->section = i+1;
+		    break;
+		}
+	}
     }
 
     if (is_global == 2) {

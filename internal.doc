@@ -15,8 +15,10 @@ look like:
 		  |     float.c      |
 		  |		     |
 		  +--- assemble.c ---+
-	nasm.c ---+        |         +--- nasmlib.c
-		  |     insnsa.c     |
+		  |        |         |
+	nasm.c ---+     insnsa.c     +--- nasmlib.c
+		  |		     |
+		  +--- listing.c ----+
 		  |		     |
 		  +---- labels.c ----+
 		  |		     |
@@ -25,9 +27,9 @@ look like:
 		  +----- *out.c -----+
 
 In other words, each of `preproc.c', `parser.c', `assemble.c',
-`labels.c', `outform.c' and each of the output format modules
-`*out.c' are independent modules, which do not inter-communicate
-except through the main program.
+`labels.c', `listing.c', `outform.c' and each of the output format
+modules `*out.c' are independent modules, which do not directly
+inter-communicate except through the main program.
 
 The Netwide *Disassembler* is not intended to be particularly
 portable or reusable or anything, however. So I won't bother
@@ -166,6 +168,15 @@ Finally, `lookup_label' attempts to translate a label name into a
 The label manager module is (theoretically :) restartable: after
 calling `cleanup_labels', you can call `init_labels' again, and
 start a new assembly with a new set of symbols.
+
+listing.c
+---------
+
+This file contains the listing file generator. The interface to the
+module is through the one symbol it exports, `nasmlist', which is a
+structure containing six function pointers. The calling semantics of
+these functions isn't terribly well thought out, as yet, but it
+works (just about) so it's going to get left alone for now...
 
 outform.c
 ---------

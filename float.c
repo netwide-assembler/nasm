@@ -55,7 +55,8 @@ static int multiply(unsigned short *to, unsigned short *from) {
     }
 }
 
-static void flconvert(char *string, unsigned short *mant, long *exponent) {
+static void flconvert(char *string, unsigned short *mant, long *exponent,
+		      efunc error) {
     char digits[MANT_DIGITS], *p, *q, *r;
     unsigned short mult[MANT_WORDS], *m, bit;
     long tenpwr, twopwr;
@@ -69,7 +70,8 @@ static void flconvert(char *string, unsigned short *mant, long *exponent) {
 	    if (!seendot)
 		seendot = TRUE;
 	    else {
-		fprintf(stderr, "too many periods!\n");
+		error (ERR_NONFATAL,
+		       "too many periods in floating-point constant");
 		return;
 	    }
 	} else if (*string >= '0' && *string <= '9') {
@@ -84,7 +86,9 @@ static void flconvert(char *string, unsigned short *mant, long *exponent) {
 		    tenpwr++;
 	    }
 	} else {
-	    fprintf(stderr, "`%c' is invalid char\n", *string);
+	    error (ERR_NONFATAL,
+		   "floating-point constant: `%c' is invalid character",
+		   *string);
 	    return;
 	}
 	string++;
@@ -209,7 +213,7 @@ static int to_double(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent);
+    flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.
@@ -269,7 +273,7 @@ static int to_float(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent);
+    flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.
@@ -322,7 +326,7 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent);
+    flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.

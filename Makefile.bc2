@@ -27,20 +27,43 @@
 # Libaries, if not you'll get some errors. Make sure to keep the trailing
 # backslash, as it's needed, and remeber to use \\ not \ as that will cause
 # some errors.
+#
+# Also inportant, if you get a DGROUP error when you compile NASM, remove
+# or comment out the 'NASMSize=l' line, and uncoment (remove the #) from the
+# NASMSize=h line. Then run 'make Clean' to delete the object files. Then run
+# make again to re-build NASM as huge.
+#
+# History:
+# 06/13/97: * Added the EXED varable for the location to put the EXE files.
+#           * Because different versions of Borland and Turbo C have
+#             different GROUPings for the DGROUP, some version, when you
+#             compile NASM, you will get a DGROUP overflow error, making it
+#             so NASM has to be compiled as huge. As this isn't a constant
+#             through systems (and apperently some version of Borland,
+#             compileing as huge causes some errors) the NASMSize verable
+#             has been added to spicify what size of code you want to
+#             compile as and defaults to large.
+# 06/16/97: * Added 'merge dupicate strings' to the options for compiles.
+
+NASMSize=l              #Compile Nasm as Large
+#NASMSize=h              #Compile Nasm as Huge
 
 LIB =c:\\tc\\lib\\      #location standard libaries
 
 OBJD=obj\\              #directory to put OBJ files in
+EXED=.\                 #directory to put the EXE files.
 CC = tcc                #compiler
 LINK = tlink            #linker
-CCFLAGS = /c /O /A /ml /n$(OBJD) #compiler flags for NASM
+CCFLAGS = /d /c /O /A /m$(NASMSize) /n$(OBJD) #compiler flags for NASM
+  #/d=merge dupicate strings
   #/c=compile only
   #/O=Optimise jumps
   #/A=ANSI standard C
-  #/ml=Model Large
+  #/m$(NASMSize>=the model to use
   #/n$(OBJD)= put the OBJ files in the diectory given.
 
-DCCFLAGS = /c /O /A /mh /n$(OBJD) #compiler flags for NDISASM
+DCCFLAGS = /d /c /O /A /mh /n$(OBJD) #compiler flags for NDISASM
+  #/d=merge dupicate strings
   #/c=compile only
   #/O=Optimise jumps
   #/A=ANSI standard C
@@ -71,7 +94,8 @@ DASM_ASM=$(CC) $(DCCFLAGS) $&.c        #command line for NDISASM
 
 NASMOBJS = $(OBJD)nasm.$(OBJ)   $(OBJD)nasmlib.$(OBJ)  $(OBJD)float.$(OBJ)  \
            $(OBJD)insnsa.$(OBJ) $(OBJD)assemble.$(OBJ) $(OBJD)labels.$(OBJ) \
-           $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)  $(OBJD)preproc.$(OBJ)
+           $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)  $(OBJD)preproc.$(OBJ) \
+	   $(OBJD)listing.$(OBJ)
 
 ################################################################
 #The OBJ files that NDISASM is dependent on
@@ -96,17 +120,17 @@ all : nasm$(EXE) ndisasm$(EXE)
 #NASM, NDISASM compile, I hope it's self explanitorie
 
 nasm$(EXE): $(NASMOBJS) $(OUTOBJ)
-          $(LINK) $(LINKFLAGS) @&&^            #command for the linker
-          $(LIB)c0l.obj $(NASMOBJS) $(OUTOBJ)  #OBJ file list,
-          nasm$(EXE)                           #EXE file name
+          $(LINK) $(LINKFLAGS) @&&^                     #command for the linker
+          $(LIB)c0$(NASMSize).obj $(NASMOBJS) $(OUTOBJ) #OBJ file list
+          $(EXED)nasm$(EXE)                             #EXE file name
 # No need of a map file
-          $(LIB)cl.lib $(LIBRARIES)            #Libaries needed
+          $(LIB)c$(NASMSize).lib $(LIBRARIES)           #Libaries needed
 ^
 
 ndisasm$(EXE): $(NDISASMOBJS)
         $(LINK) $(LINKFLAGS) @&&^              #command for the linker
         $(LIB)c0h.obj $(NDISASMOBJS)           #OBJ file list
-        ndisasm$(EXE)                          #EXE file name
+        $(EXED)ndisasm$(EXE)                   #EXE file name
 # No need of a map file
         $(LIB)ch.lib $(LIBRARIES)              #Libaries needed
 ^
@@ -123,8 +147,11 @@ $(OBJD)float.$(OBJ): float.c nasm.h
 $(OBJD)labels.$(OBJ): labels.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h
-outform.h
+$(OBJD)listing.$(OBJ): listing.c nasm.h nasmlib.h listing.h
+        $(NASM_ASM)
+
+$(OBJD)nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h \
+		listing.h outform.h
         $(NASM_ASM)
 
 $(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
@@ -155,10 +182,10 @@ $(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insns.h
         $(DASM_ASM)
 
 # This is a kludge from the word go, as we can't use the nasmlib.obj compiled
-# for NASM, as it's the wrong model size, so we have to compile it again,
-# but in huge.
+# for NASM, as it's could be the wrong model size, so we have to compile it
+# again as huge to make sure.
 #
-# So as not to overwrite the nasmlib.obj for NASM (if I did, that
+# So as not to overwrite the nasmlib.obj for NASM (if it did, that
 # could cause all kinds of problems) it compiles it into nasmlibd.obj.
 #
 # the -o... switch tells it the name to compile the obj file to, right here
@@ -205,4 +232,4 @@ clean :
 	del nasm$(EXE)
 	del ndisasm$(EXE)
 
-# Makefile created by Fox Cutter <lmb@comtch.iea.com> --01/21/97
+# Makefile created by Fox Cutter <lmb@comtch.iea.com> --01/27/97

@@ -96,8 +96,8 @@ static int whichreg(long regflags, int regval) {
 
 static char *whichcond(int condval) {
     static int conds[] = {
-	C_O, C_NO, C_B, C_AE, C_E, C_NE, C_BE, C_A,
-	C_S, C_NS, C_PE, C_PO, C_L, C_GE, C_LE, C_G
+	C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,
+	C_S, C_NS, C_PE, C_PO, C_L, C_NL, C_NG, C_G
     };
     return conditions[conds[condval]];
 }

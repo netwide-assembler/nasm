@@ -241,6 +241,11 @@ static void bin_out (long segto, void *data, unsigned long type,
 
 static void bin_deflabel (char *name, long segment, long offset,
 			  int is_global) {
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	return;
+    }
+
     if (is_global == 2) {
 	error (ERR_NONFATAL, "binary output format does not support common"
 	       " variables");

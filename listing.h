@@ -1,4 +1,4 @@
-/* preproc.h  header file for preproc.c
+/* listing.h   header file for listing.c
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -6,13 +6,9 @@
  * distributed in the NASM archive.
  */
 
-#ifndef NASM_PREPROC_H
-#define NASM_PREPROC_H
+#ifndef NASM_LISTING_H
+#define NASM_LISTING_H
 
-void pp_include_path (char *);
-void pp_pre_include (char *);
-void pp_pre_define (char *);
-
-extern Preproc nasmpp;
+extern ListGen nasmlist;
 
 #endif

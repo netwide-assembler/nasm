@@ -27,11 +27,11 @@ struct ofmt *ofmt_find(char *name)     /* find driver */
     return NULL;
 }
 
-void ofmt_list(struct ofmt *deffmt)
+void ofmt_list(struct ofmt *deffmt, FILE *fp)
 {
     int i;
     for (i=0; i<ndrivers; i++)
-	fprintf(stderr,"  %c %-7s%s\n",
+	fprintf(fp, "  %c %-7s%s\n",
 		drivers[i] == deffmt ? '*' : ' ',
 		drivers[i]->shortname,
 		drivers[i]->fullname);

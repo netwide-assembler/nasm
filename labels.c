@@ -133,7 +133,8 @@ void define_label_stub (char *label, efunc error) {
 	lptr = find_label (label, 1);
 	if (!lptr)
 	    error (ERR_PANIC, "can't find label `%s' on pass two", label);
-	prevlabel = lptr->defn.label;
+	if (*label != '.')
+	    prevlabel = lptr->defn.label;
     }
 }
 
@@ -156,7 +157,7 @@ void define_label (char *label, long segment, long offset,
 
     if (label[0] != '.')	       /* not local, but not special either */
 	prevlabel = lptr->defn.label;
-    else if (!*prevlabel)
+    else if (label[1] != '.' && !*prevlabel)
 	error(ERR_NONFATAL, "attempt to define a local label before any"
 	      " non-local labels");
 
@@ -282,6 +283,7 @@ static char *perm_copy (char *string1, char *string2) {
     if (perm_tail->size - perm_tail->usage < len) {
 	perm_tail->next = (struct permts *)nasm_malloc(sizeof(struct permts));
 	perm_tail = perm_tail->next;
+	perm_tail->next = NULL;
 	perm_tail->size = PERMTS_SIZE;
 	perm_tail->usage = 0;
     }

@@ -153,7 +153,8 @@ static void aout_deflabel (char *name, long segment, long offset,
     int pos = strslen+4;
     struct Symbol *sym;
 
-    if (name[0] == '.' && name[1] == '.') {
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
 	return;
     }
 

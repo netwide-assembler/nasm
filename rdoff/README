@@ -81,5 +81,4 @@ amply documented in the source code... look at 'rdflib.c' and 'rdlib.c',
 and the relevant sections of 'ldrdf.c' to see how libraries can be
 handled).
 
-Julian Hall (jules@dcs.warwick.ac.uk)
-
+Julian Hall <jules@earthcorp.com>

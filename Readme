@@ -1,8 +1,8 @@
 This is a distribution of NASM, the Netwide Assembler. NASM is a
 prototype general-purpose x86 assembler. It will currently output
 flat-form binary files, a.out, COFF and ELF Unix object files,
-Microsoft 16-bit DOS and Win32 object files, the as86 object format,
-and a home-grown format called RDF.
+Microsoft Win32 and 16-bit DOS object files, OS/2 object files, the
+as86 object format, and a home-grown format called RDF.
 
 Also included is NDISASM, a prototype x86 binary-file disassembler
 which uses the same instruction table as NASM.
@@ -14,24 +14,38 @@ access). You may also want to copy the man page `nasm.1' (and maybe
 `ndisasm.1') to somewhere sensible.
 
 To rebuild the DOS sources, various makefiles are provided:
-- Makefile.dos, the one I build the standard releases from, designed
-  for a hybrid system using Microsoft C and Borland Make (don't ask
-  why :-)
-- Makefile.bor (for Borland C)
-- Makefile.bc2 (also for Borland C, contributed by Fox Cutter
-  <lmb@comtch.iea.com>, may work better than Makefile.bor in some
-  cases).
+
+- Makefile.dos, the one I build the standard 16-bit releases from,
+  designed for a hybrid system using Microsoft C and Borland Make
+  (don't ask why :-)
+- Makefile.vc, for Microsoft Visual C++ compiling to a Win32
+  command-line application. This is the one I build the standard
+  Win32 release binaries from.
+
+- Makefile.bor, for Borland C.
+- Makefile.bc2, also for Borland C, contributed by Fox Cutter.
+  Reported to work better than Makefile.bor on some systems.
+
+- Makefile.sc, for Symantec C++. Contributed by Mark Junker.
 - Makefile.wc, for Watcom C, compiling to a 32-bit extended DOS
   executable. Contributed by Dominik Behr.
 - Makefile.wcw, also for Watcom C, compiling to a Win32 command-
   line application. Also contributed by Dominik Behr.
 
-I don't guarantee that any of those, other than Makefile.dos, work,
-since I don't have the compilers to test them myself. Also be
-warned: I have had various conflicting reports regarding building
-NASM using Borland C. Several people have informed me that it
-doesn't work except under Huge model, and one or two have said that
-it doesn't work under Huge model either.
+I can't guarantee that all of those makefiles work, because I don't
+have all of those compilers. However, Makefile.dos and Makefile.vc
+work on my system, and so do Makefile.bor and Makefile.bc2.
+
+Be careful with Borland C: there have been various conflicting
+reports about how reliable the Huge memory model is. If you try to
+compile NASM in Large model, you may get DGROUP overflows due to the
+vast quantity of data in the instruction tables. I've had reports
+from some people that Huge model doesn't work at all (and also
+reports from others that it works fine), so if you don't want to try
+moving to Huge, you could try adding the option `-dc' to the
+compiler command line instead, which causes string literals to be
+moved from DGROUP to the code segments and might make Large model
+start working. (Either solution works for me.)
 
 Dominik Behr has also contributed the file misc/pmw.bat, which is a
 batch file to turn the output from Makefile.wc (NASM.EXE and
@@ -85,5 +99,7 @@ information about the internal structure of NASM, see
 `internal.doc'. (In particular, _please_ read `internal.doc' before
 writing any code for us...)
 
+The NASM web page is at http://www.cryogen.com/Nasm/
+
 Bug reports (and patches if you can) should be sent to
-<jules@dcs.warwick.ac.uk> or <anakin@pobox.com>.
+<jules@earthcorp.com> or <anakin@pobox.com>.

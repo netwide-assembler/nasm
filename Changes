@@ -82,8 +82,8 @@ seg-fault under Linux.
 Included a new Borland C makefile, Makefile.bc2, donated by Fox
 Cutter <lmb@comtch.iea.com>.
 
-0.94 not released yet
----------------------
+0.94 released April 1997
+------------------------
 
 Major item: added the macro processor.
 
@@ -124,4 +124,120 @@ Due to the advent of the preprocessor, the [INCLUDE] and [INC]
 directives have become obsolete. They are still supported in this
 version, with a warning, but won't be in the next.
 
+Fixed a bug in OBJ format, which caused incorrect object records to
+be output when absolute labels were made global.
+
 Updates to RDOFF subdirectory, and changes to outrdf.c.
+
+0.95 released July 1997
+-----------------------
+
+Fixed yet another ELF bug. This one manifested if the user relied on
+the default segment, and attempted to define global symbols without
+first explicitly declaring the target segment.
+
+Added makefiles (for NASM and the RDF tools) to build Win32 console
+apps under Symantec C++. Donated by Mark Junker.
+
+Added `macros.bas' and `insns.bas', QBasic versions of the Perl
+scripts that convert `standard.mac' to `macros.c' and convert
+`insns.dat' to `insnsa.c' and `insnsd.c'. Also thanks to Mark
+Junker.
+
+Changed the diassembled forms of the conditional instructions so
+that JB is now emitted as JC, and other similar changes. Suggested
+list by Ulrich Doewich.
+
+Added `@' to the list of valid characters to begin an identifier
+with.
+
+Documentary changes, notably the addition of the `Common Problems'
+section in nasm.doc.
+
+Fixed a bug relating to 32-bit PC-relative fixups in OBJ.
+
+Fixed a bug in perm_copy() in labels.c which was causing exceptions
+in cleanup_labels() on some systems.
+
+Positivity sanity check in TIMES argument changed from a warning to
+an error following a further complaint.
+
+Changed the acceptable limits on byte and word operands to allow
+things like `~10111001b' to work.
+
+Fixed a major problem in the preprocessor which caused seg-faults if
+macro definitions contained blank lines or comment-only lines.
+
+Fixed inadequate error checking on the commas separating the
+arguments to `db', `dw' etc.
+
+Fixed a crippling bug in the handling of macros with operand counts
+defined with a `+' modifier.
+
+Fixed a bug whereby object file formats which stored the input file
+name in the output file (such as OBJ and COFF) weren't doing so
+correctly when the output file name was specified on the command
+line.
+
+Removed [INC] and [INCLUDE] support for good, since they were
+obsolete anyway.
+
+Fixed a bug in OBJ which caused all fixups to be output in 16-bit
+(old-format) FIXUPP records, rather than putting the 32-bit ones in
+FIXUPP32 (new-format) records.
+
+Added, tentatively, OS/2 object file support (as a minor variant on
+OBJ).
+
+Updates to Fox Cutter's Borland C makefile, Makefile.bc2.
+
+Removed a spurious second fclose() on the output file.
+
+Added the `-s' command line option to redirect all messages which
+would go to stderr (errors, help text) to stdout instead.
+
+Added the `-w' command line option to selectively suppress some
+classes of assembly warning messages.
+
+Added the `-p' pre-include and `-d' pre-define command-line options.
+
+Added an include file search path: the `-i' command line option.
+
+Fixed a silly little preprocessor bug whereby starting a line with a
+`%!' environment-variable reference caused an `unknown directive'
+error.
+
+Added the long-awaited listing file support: the `-l' command line
+option.
+
+Fixed a problem with OBJ format whereby, in the absence of any
+explicit segment definition, non-global symbols declared in the
+implicit default segment generated spurious EXTDEF records in the
+output.
+
+Added the NASM environment variable.
+
+From this version forward, Win32 console-mode binaries will be
+included in the DOS distribution in addition to the 16-bit binaries.
+Added Makefile.vc for this purpose.
+
+Added `return 0;' to test/objlink.c to prevent compiler warnings.
+
+Added the __NASM_MAJOR__ and __NASM_MINOR__ standard defines.
+
+Added an alternative memory-reference syntax in which prefixing an
+operand with `&' is equivalent to enclosing it in square brackets,
+at the request of Fox Cutter.
+
+Errors in pass two now cause the program to return a non-zero error
+code, which they didn't before.
+
+Fixed the single-line macro cycle detection, which didn't work at
+all on macros with no parameters (caused an infinite loop). Also
+changed the behaviour of single-line macro cycle detection to work
+like cpp, so that macros like `extrn' as given in the documentation
+can be implemented.
+
+Fixed the implementation of WRT, which was too restrictive in that
+you couldn't do `mov ax,[di+abc wrt dgroup]' because (di+abc) wasn't
+a relocatable reference.

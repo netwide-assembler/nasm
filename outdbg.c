@@ -63,8 +63,8 @@ static long dbg_section_names (char *name, int pass, int *bits)
 
 static void dbg_deflabel (char *name, long segment, long offset,
 			   int is_global) {
-  fprintf(dbgf,"deflabel %s := %08lx:%08lx %s (%d)\n",name,segment,offset,
-	  is_global ? "global" : "local", is_global);
+    fprintf(dbgf,"deflabel %s := %08lx:%08lx %s (%d)\n",name,segment,offset,
+	    is_global ? "global" : "local", is_global);
 }
 
 static void dbg_out (long segto, void *data, unsigned long type,

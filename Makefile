@@ -32,7 +32,7 @@ NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
 	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
-	   preproc.$(OBJ)
+	   preproc.$(OBJ) listing.$(OBJ)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
 	      insnsd.$(OBJ)
@@ -45,26 +45,30 @@ nasm$(EXE): $(NASMOBJS)
 ndisasm$(EXE): $(NDISASMOBJS)
 	$(LINK) $(DLINKFLAGS) $(NDISASMOBJS) $(LIBRARIES)
 
-assemble.$(OBJ): assemble.c nasm.h assemble.h insns.h
+assemble.$(OBJ): assemble.c nasm.h nasmlib.h assemble.h insns.h
 disasm.$(OBJ): disasm.c nasm.h disasm.h sync.h insns.h names.c
 float.$(OBJ): float.c nasm.h
 insnsa.$(OBJ): insnsa.c nasm.h insns.h
 insnsd.$(OBJ): insnsd.c nasm.h insns.h
 labels.$(OBJ): labels.c nasm.h nasmlib.h
-nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h outform.h
+listing.$(OBJ): listing.c nasm.h nasmlib.h listing.h
+macros.$(OBJ): macros.c
+names.$(OBJ): names.c
+nasm.$(OBJ): nasm.c nasm.h nasmlib.h preproc.h parser.h assemble.h labels.h \
+ outform.h listing.h
 nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
-ndisasm.$(OBJ): ndisasm.c nasm.h sync.h disasm.h
-outas86.$(OBJ): outas86.c nasm.h nasmlib.h
-outaout.$(OBJ): outaout.c nasm.h nasmlib.h
-outbin.$(OBJ): outbin.c nasm.h nasmlib.h
-outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h
-outdbg.$(OBJ): outdbg.c nasm.h nasmlib.h
-outelf.$(OBJ): outelf.c nasm.h nasmlib.h
-outobj.$(OBJ): outobj.c nasm.h nasmlib.h
-outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
+ndisasm.$(OBJ): ndisasm.c nasm.h nasmlib.h sync.h disasm.h
+outaout.$(OBJ): outaout.c nasm.h nasmlib.h outform.h
+outas86.$(OBJ): outas86.c nasm.h nasmlib.h outform.h
+outbin.$(OBJ): outbin.c nasm.h nasmlib.h outform.h
+outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h outform.h
+outdbg.$(OBJ): outdbg.c nasm.h nasmlib.h outform.h
+outelf.$(OBJ): outelf.c nasm.h nasmlib.h outform.h
 outform.$(OBJ): outform.c outform.h nasm.h
+outobj.$(OBJ): outobj.c nasm.h nasmlib.h outform.h
+outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h outform.h
 parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
-preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
+preproc.$(OBJ): preproc.c nasm.h nasmlib.h macros.c
 sync.$(OBJ): sync.c sync.h
 
 # These two source files are automagically generated from a single
@@ -94,7 +98,6 @@ clean :
 # unless you're using the Makefile under Linux, running bash, with
 # gzip, GNU tar and a sensible version of zip readily available.
 
-DOSEXES = nasm.exe ndisasm.exe
 MANPAGES = nasm.man ndisasm.man
 
 .SUFFIXES: .man .1
@@ -102,5 +105,5 @@ MANPAGES = nasm.man ndisasm.man
 .1.man:
 	-man ./$< | ul > $@
 
-dist: $(AUTOSRCS) $(MANPAGES) $(DOSEXES) clean
+dist: $(AUTOSRCS) $(MANPAGES) clean
 	makedist.sh

@@ -91,7 +91,7 @@ typedef struct memorybuffer {
   struct memorybuffer *next;
 } memorybuffer;
 
-static memorybuffer * newmembuf(){
+static memorybuffer * newmembuf(void){
   memorybuffer * t;
 
   t = nasm_malloc(sizeof(memorybuffer));
@@ -268,6 +268,11 @@ static void rdf_deflabel(char *name, long segment, long offset, int is_global)
 #ifdef VERBOSE_WARNINGS
   static int warned_common = 0;
 #endif
+
+  if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+    error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+    return;
+  }
 
   if (is_global && segment > 4) {
 #ifdef VERBOSE_WARNINGS

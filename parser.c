@@ -153,6 +153,9 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	i = nexttoken();
 	if (i == ':') {		       /* skip over the optional colon */
 	    i = nexttoken();
+	} else if (i == 0 && pass == 1) {
+	    error (ERR_WARNING|ERR_WARN_OL,
+		   "label alone on a line without a colon might be in error");
 	}
     } else			       /* no label; so, moving swiftly on */
 	result->label = NULL;
@@ -187,7 +190,7 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	    } else {
 		result->times = value->value;
 		if (value->value < 0)
-		    error(ERR_WARNING, "TIMES value %d is negative",
+		    error(ERR_NONFATAL, "TIMES value %d is negative",
 			  value->value);
 	    }
 	} else {
@@ -318,6 +321,21 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 			   insn_names[result->opcode], oper_num);
 		}
 	    }
+
+	    /*
+	     * We're about to call nexttoken(), which will eat the
+	     * comma that we're currently sitting on between
+	     * arguments. However, we'd better check first that it
+	     * _is_ a comma.
+	     */
+	    if (i == 0)		       /* also could be EOL */
+		break;
+	    if (i != ',') {
+		error (ERR_NONFATAL, "comma expected after `%s' operand %d",
+		       insn_names[result->opcode], oper_num);
+		result->opcode = -1;/* unrecoverable parse error: */
+		return result;     /* ignore this instruction */
+	    }
 	}
 
 	if (result->opcode == I_INCBIN) {
@@ -358,6 +376,7 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
     for (operand = 0; operand < 3; operand++) {
 	expr *seg, *value;	       /* used most of the time */
 	int mref;		       /* is this going to be a memory ref? */
+	int bracket;		       /* is it a [] mref, or a & mref? */
 
 	result->oprs[operand].addr_size = 0;/* have to zero this whatever */
 	i = nexttoken();
@@ -397,9 +416,10 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	    i = nexttoken();
 	}
 
-	if (i == '[') {		       /* memory reference */
-	    i = nexttoken();
+	if (i == '[' || i == '&') {    /* memory reference */
 	    mref = TRUE;
+	    bracket = (i == '[');
+	    i = nexttoken();	    
 	    if (i == TOKEN_SPECIAL) {  /* check for address size override */
 		switch ((int)tokval.t_integer) {
 		  case S_WORD:
@@ -415,8 +435,10 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 		}
 		i = nexttoken();
 	    }
-	} else 			       /* immediate operand, or register */
+	} else {		       /* immediate operand, or register */
 	    mref = FALSE;
+	    bracket = FALSE;	       /* placate optimisers */
+	}
 
 	eval_reset();
 
@@ -454,7 +476,7 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 		return result;	       /* ignore this instruction */
 	    }
 	} else seg = NULL;
-	if (mref) {		       /* find ] at the end */
+	if (mref && bracket) {	       /* find ] at the end */
 	    if (i != ']') {
 		error (ERR_NONFATAL, "parser: expecting ]");
 		do {		       /* error recovery again */
@@ -910,6 +932,8 @@ static int is_reloc (expr *vect) {
 	if (!vect->type)
 	    return 1;
     }
+    if (vect->type != EXPR_WRT && vect->value != 0 && vect->value != 1)
+	return 0;		       /* segment base multiplier non-unity */
     do {
 	vect++;
     } while (vect->type && (vect->type == EXPR_WRT || !vect->value));
@@ -1313,10 +1337,6 @@ static expr *evaluate (int critical) {
 	return NULL;
 
     if (i == TOKEN_WRT) {
-	if (!is_reloc(e)) {
-	    error(ERR_NONFATAL, "invalid left-hand operand to WRT");
-	    return NULL;
-	}
 	i = nexttoken();	       /* eat the WRT */
 	f = expr6 (critical);
 	if (!f)

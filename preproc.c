@@ -24,6 +24,7 @@ typedef struct Token Token;
 typedef struct Line Line;
 typedef struct Include Include;
 typedef struct Cond Cond;
+typedef struct IncPath IncPath;
 
 /*
  * Store the definition of a single-line macro.
@@ -46,6 +47,7 @@ struct MMacro {
     int casesense;
     int nparam_min, nparam_max;
     int plus;			       /* is the last parameter greedy? */
+    int nolist;			       /* is this macro listing-inhibited? */
     int in_progress;
     Token **defaults, *dlist;
     Line *expansion;
@@ -79,6 +81,11 @@ struct Context {
  * the token representing `x' will have its type changed to
  * TOK_SMAC_PARAM, but the one representing `y' will be
  * TOK_SMAC_PARAM+1.
+ *
+ * TOK_INTERNAL_STRING is a dirty hack: it's a single string token
+ * which doesn't need quotes around it. Used in the pre-include
+ * mechanism as an alternative to trying to find a sensible type of
+ * quote to use on the filename we were passed.
  */
 struct Token {
     Token *next;
@@ -88,7 +95,8 @@ struct Token {
 };
 enum {
     TOK_WHITESPACE = 1, TOK_COMMENT, TOK_ID, TOK_PREPROC_ID, TOK_STRING,
-    TOK_NUMBER, TOK_SMAC_END, TOK_OTHER, TOK_PS_OTHER, TOK_SMAC_PARAM
+    TOK_NUMBER, TOK_SMAC_END, TOK_OTHER, TOK_PS_OTHER, TOK_SMAC_PARAM,
+    TOK_INTERNAL_STRING
 };
 
 /*
@@ -110,8 +118,8 @@ enum {
  * markers delimiting the end of the expansion of a given macro.
  * This is for use in the cycle-tracking code. Such structures have
  * `finishes' non-NULL, and `first' NULL. All others have
- * `finishes' NULL, but `first' may still be non-NULL if the line
- * is blank.
+ * `finishes' NULL, but `first' may still be NULL if the line is
+ * blank.
  */
 struct Line {
     Line *next;
@@ -130,6 +138,16 @@ struct Include {
     Line *expansion;
     char *fname;
     int lineno, lineinc;
+};
+
+/*
+ * Include search path. This is simply a list of strings which get
+ * prepended, in turn, to the name of an include file, in an
+ * attempt to find the file if it's not in the current directory.
+ */
+struct IncPath {
+    IncPath *next;
+    char *path;
 };
 
 /*
@@ -195,12 +213,17 @@ static int inverse_ccs[] = {
 
 static Context *cstk;
 static Include *istk;
+static IncPath *ipath = NULL;
 
 static efunc error;
 
 static unsigned long unique;	       /* unique identifier numbers */
 
 static char *linesync, *outline;
+
+static Line *predef = NULL;
+
+static ListGen *list;
 
 /*
  * The number of hash values we use for the macro lookup tables.
@@ -235,13 +258,10 @@ static MMacro *defining;
 static char **stdmacpos;
 
 /*
- * The pre-preprocessing stage... This function has two purposes:
- * firstly, it translates line number indications as they emerge
- * from GNU cpp (`# lineno "file" flags') into NASM preprocessor
- * line number indications (`%line lineno file'), and secondly, it
- * converts [INCLUDE] and [INC] old-style inclusion directives into
- * the new-style `%include' form (though in the next version it
- * won't do that any more).
+ * The pre-preprocessing stage... This function translates line
+ * number indications as they emerge from GNU cpp (`# lineno "file"
+ * flags') into NASM preprocessor line number indications (`%line
+ * lineno file').
  */
 static char *prepreproc(char *line) {
     int lineno, fnlen;
@@ -258,31 +278,8 @@ static char *prepreproc(char *line) {
 	line = nasm_malloc(20+fnlen);
 	sprintf(line, "%%line %d %.*s", lineno, fnlen, fname);
 	nasm_free (oldline);
-	return line;
-    } else if (!nasm_strnicmp(line, "[include", 8)) {
-	oldline = line;
-	fname = oldline+8;
-	fname += strspn(fname, " \t");
-	fnlen = strcspn(fname, "]");
-	line = nasm_malloc(20+fnlen);
-	sprintf(line, "%%include \"%.*s\"", fnlen, fname);
-	error (ERR_WARNING|ERR_OFFBY1, "use of [INCLUDE] is being phased out;"
-	       " suggest `%%include'");
-	nasm_free (oldline);
-	return line;
-    } else if (!nasm_strnicmp(line, "[inc", 4)) {
-	oldline = line;
-	fname = oldline+4;
-	fname += strspn(fname, " \t");
-	fnlen = strcspn(fname, "]");
-	line = nasm_malloc(20+fnlen);
-	sprintf(line, "%%include \"%.*s\"", fnlen, fname);
-	error (ERR_WARNING|ERR_OFFBY1, "use of [INC] is being phased out;"
-	       " suggest `%%include'");
-	nasm_free (oldline);
-	return line;
-    } else
-	return line;
+    }
+    return line;
 }
 
 /*
@@ -384,9 +381,38 @@ static char *read_line (void) {
     int bufsize;
 
     if (stdmacpos) {
-	if (*stdmacpos)
-	    return nasm_strdup(*stdmacpos++);
-	else {
+	if (*stdmacpos) {
+	    char *ret = nasm_strdup(*stdmacpos++);
+	    /*
+	     * Nasty hack: here we push the contents of `predef' on
+	     * to the top-level expansion stack, since this is the
+	     * most convenient way to implement the pre-include and
+	     * pre-define features.
+	     */
+	    if (!*stdmacpos) {
+		Line *pd, *l;
+		Token *head, **tail, *t, *tt;
+
+		for (pd = predef; pd; pd = pd->next) {
+		    head = NULL;
+		    tail = &head;
+		    for (t = pd->first; t; t = t->next) {
+			tt = *tail = nasm_malloc(sizeof(Token));
+			tt->next = NULL;
+			tail = &tt->next;
+			tt->type = t->type;
+			tt->text = nasm_strdup(t->text);
+			tt->mac = t->mac;   /* always NULL here, in fact */
+		    }
+		    l = nasm_malloc(sizeof(Line));
+		    l->next = istk->expansion;
+		    l->first = head;
+		    l->finishes = FALSE;
+		    istk->expansion = l;
+		}
+	    }
+	    return ret;
+	} else {
 	    stdmacpos = NULL;
 	    line_sync();
 	}
@@ -427,6 +453,8 @@ static char *read_line (void) {
      * by some file transfer utilities.
      */
     buffer[strcspn(buffer, "\032")] = '\0';
+
+    list->line (LIST_READ, buffer);
 
     return buffer;
 }
@@ -600,6 +628,37 @@ static int mstrcmp(char *p, char *q, int casesense) {
 }
 
 /*
+ * Open an include file. This routine must always return a valid
+ * file pointer if it returns - it's responsible for throwing an
+ * ERR_FATAL and bombing out completely if not. It should also try
+ * the include path one by one until it finds the file or reaches
+ * the end of the path.
+ */
+static FILE *inc_fopen(char *file) {
+    FILE *fp;
+    char *prefix = "", *combine;
+    IncPath *ip = ipath;
+    int len = strlen(file);
+
+    do {
+	combine = nasm_malloc(strlen(prefix)+len+1);
+	strcpy(combine, prefix);
+	strcat(combine, file);
+	fp = fopen(combine, "r");
+	nasm_free (combine);
+	if (fp)
+	    return fp;
+	prefix = ip ? ip->path : NULL;
+	if (ip)
+	    ip = ip->next;
+    } while (prefix);
+
+    error (ERR_FATAL|ERR_OFFBY1,
+	   "unable to open include file `%s'", file);
+    return NULL;		       /* never reached - placate compilers */
+}
+
+/*
  * Determine if we should warn on defining a single-line macro of
  * name `name', with `nparam' parameters. If nparam is 0, will
  * return TRUE if _any_ single-line macro of that name is defined.
@@ -741,7 +800,7 @@ static int do_directive (Token *tline) {
     if (tline && tline->type == TOK_WHITESPACE)
 	tline = tline->next;
     if (!tline || tline->type != TOK_PREPROC_ID ||
-	(tline->text[1] == '%' || tline->text[1] == '$'))
+	(tline->text[1]=='%' || tline->text[1]=='$' || tline->text[1]=='!'))
 	return 0;
 
     i = -1;
@@ -790,7 +849,7 @@ static int do_directive (Token *tline) {
       case PP_CLEAR:
 	if (tline->next)
 	    error(ERR_WARNING|ERR_OFFBY1,
-		  "trailing garbage after `%%pop' ignored");
+		  "trailing garbage after `%%clear' ignored");
 	for (j=0; j<NHASH; j++) {
 	    while (mmacros[j]) {
 		MMacro *m = mmacros[j];
@@ -814,26 +873,28 @@ static int do_directive (Token *tline) {
 	tline = tline->next;
 	if (tline && tline->type == TOK_WHITESPACE)
 	    tline = tline->next;
-	if (!tline || tline->type != TOK_STRING) {
+	if (!tline || (tline->type != TOK_STRING &&
+		       tline->type != TOK_INTERNAL_STRING)) {
 	    error(ERR_NONFATAL|ERR_OFFBY1, "`%%include' expects a file name");
 	    return 3;		       /* but we did _something_ */
 	}
 	if (tline->next)
 	    error(ERR_WARNING|ERR_OFFBY1,
 		  "trailing garbage after `%%include' ignored");
-	p = tline->text+1;	       /* point past the quote to the name */
-	p[strlen(p)-1] = '\0';	       /* remove the trailing quote */
+	if (tline->type != TOK_INTERNAL_STRING) {
+	    p = tline->text+1;	       /* point past the quote to the name */
+	    p[strlen(p)-1] = '\0';     /* remove the trailing quote */
+	} else
+	    p = tline->text;	       /* internal_string is easier */
 	inc = nasm_malloc(sizeof(Include));
 	inc->next = istk;
 	inc->conds = NULL;
-	inc->fp = fopen(p, "r");
+	inc->fp = inc_fopen(p);
 	inc->fname = nasm_strdup(p);
 	inc->lineno = inc->lineinc = 1;
 	inc->expansion = NULL;
-	if (!inc->fp)
-	    error (ERR_FATAL|ERR_OFFBY1,
-		   "unable to open include file `%s'", p);
 	istk = inc;
+	list->uplevel (LIST_INCLUDE);
 	return 5;
 
       case PP_PUSH:
@@ -1078,6 +1139,7 @@ static int do_directive (Token *tline) {
 	defining->name = nasm_strdup(tline->text);
 	defining->casesense = (i == PP_MACRO);
 	defining->plus = FALSE;
+	defining->nolist = FALSE;
 	defining->in_progress = FALSE;
 	tline = tline->next;
 	if (tline && tline->type == TOK_WHITESPACE)
@@ -1116,6 +1178,11 @@ static int do_directive (Token *tline) {
 	    !strcmp(tline->next->text, "+")) {
 	    tline = tline->next;
 	    defining->plus = TRUE;
+	}
+	if (tline && tline->next && tline->next->type == TOK_ID &&
+	    !nasm_stricmp(tline->next->text, ".nolist")) {
+	    tline = tline->next;
+	    defining->nolist = TRUE;
 	}
 	mmac = mmacros[hash(defining->name)];
 	while (mmac) {
@@ -1253,7 +1320,7 @@ static int do_directive (Token *tline) {
 	 * Good. We now have a macro name, a parameter count, and a
 	 * token list (in reverse order) for an expansion. We ought
 	 * to be OK just to create an SMacro, store it, and let
-	 * tlist_free have the rest of the line (which we have
+	 * free_tlist have the rest of the line (which we have
 	 * carefully re-terminated after chopping off the expansion
 	 * from the end).
 	 */
@@ -1375,7 +1442,7 @@ static Token *expand_smacro (Token *tline) {
 			if (c) {
 			    q = t->text+1;
 			    q += strspn(q, "$");
-			    sprintf(buffer, "macro.%lu.", c->number);
+			    sprintf(buffer, "..@%lu.", c->number);
 			    p = nasm_malloc (strlen(buffer)+strlen(q)+1);
 			    strcpy (p, buffer);
 			    strcat (p, q);
@@ -1411,10 +1478,12 @@ static Token *expand_smacro (Token *tline) {
 	for (m = head; m; m = m->next)
 	    if (!mstrcmp(m->name, p, m->casesense))
 		break;
-	if (!m) {
+	if (!m || m->in_progress) {
 	    /*
-	     * Didn't find one: this can't be a macro call. Copy it
-	     * through and ignore it.
+	     * Either we didn't find a macro, so this can't be a
+	     * macro call, or we found a macro which was already in
+	     * progress, in which case we don't _treat_ this as a
+	     * macro call. Copy it through and ignore it.
 	     */
 	    tline->type = TOK_PS_OTHER;   /* so it will get copied above */
 	    continue;
@@ -1515,18 +1584,9 @@ static Token *expand_smacro (Token *tline) {
 			break;
 	    }
 	    if (!m) {
-		error (ERR_WARNING|ERR_OFFBY1,
+		error (ERR_WARNING|ERR_OFFBY1|ERR_WARN_MNP,
 		       "macro `%s' exists, but not taking %d parameters",
 		       mstart->text, nparam);
-		nasm_free (params);
-		nasm_free (paramsize);
-		tline = mstart;
-		tline->type = TOK_PS_OTHER;
-		continue;
-	    }
-	    if (m->in_progress) {
-		error (ERR_NONFATAL, "self-reference in single-line macro"
-		       " `%s'", mstart->text);
 		nasm_free (params);
 		nasm_free (paramsize);
 		tline = mstart;
@@ -1713,7 +1773,7 @@ static MMacro *is_mmacro (Token *tline, Token ***params_array) {
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    error (ERR_WARNING|ERR_OFFBY1,
+    error (ERR_WARNING|ERR_OFFBY1|ERR_WARN_MNP,
 	   "macro `%s' exists, but not taking %d parameters",
 	   tline->text, nparam);
     nasm_free (params);
@@ -1783,7 +1843,7 @@ static int expand_mmacro (Token *tline) {
 
     for (i = 0; params[i]; i++) {
 	int brace = FALSE;
-	int comma = !m->plus;
+	int comma = (!m->plus || i < nparam-1);
 
 	t = params[i];
 	if (t && t->type == TOK_WHITESPACE)
@@ -1796,12 +1856,12 @@ static int expand_mmacro (Token *tline) {
 	    if (!t)		       /* end of param because EOL */
 		break;
 	    if (comma && t->type == TOK_OTHER && !strcmp(t->text, ","))
-		    break;	       /* ... because we have hit a comma */
+		break;		       /* ... because we have hit a comma */
 	    if (comma && t->type == TOK_WHITESPACE &&
 		t->next->type == TOK_OTHER && !strcmp(t->next->text, ","))
 		break;		       /* ... or a space then a comma */
 	    if (brace && t->type == TOK_OTHER && !strcmp(t->text, "}"))
-		    break;	       /* ... or a brace */
+		break;		       /* ... or a brace */
 	    t = t->next;
 	    paramlen[i]++;
 	}
@@ -1833,6 +1893,7 @@ static int expand_mmacro (Token *tline) {
 	ll = nasm_malloc(sizeof(Line));
 	ll->next = istk->expansion;
 	ll->finishes = NULL;
+	ll->first = NULL;
 	tail = &ll->first;
 
 	for (t = l->first; t; t = t->next) {
@@ -1851,7 +1912,7 @@ static int expand_mmacro (Token *tline) {
 		switch (t->text[1]) {
 		  case '%':
 		    type = TOK_ID;
-		    sprintf(tmpbuf, "macro.%lu.", unique);
+		    sprintf(tmpbuf, "..@%lu.", unique);
 		    text = nasm_malloc(strlen(tmpbuf)+strlen(t->text+2)+1);
 		    strcpy(text, tmpbuf);
 		    strcat(text, t->text+2);
@@ -1923,6 +1984,7 @@ static int expand_mmacro (Token *tline) {
 	}
 
 	istk->expansion = ll;
+
     }
 
     /*
@@ -1942,10 +2004,12 @@ static int expand_mmacro (Token *tline) {
     nasm_free (params);
     free_tlist (tline);
 
+    list->uplevel (m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+
     return need_sync ? 2 : 1;
 }
 
-static void pp_reset (char *file, efunc errfunc) {
+static void pp_reset (char *file, efunc errfunc, ListGen *listgen) {
     int h;
 
     error = errfunc;
@@ -1967,6 +2031,7 @@ static void pp_reset (char *file, efunc errfunc) {
     }
     unique = 0;
     stdmacpos = stdmac;
+    list = listgen;
 }
 
 static char *pp_getline (void) {
@@ -1988,18 +2053,22 @@ static char *pp_getline (void) {
 	tline = NULL;
 	while (istk->expansion && istk->expansion->finishes) {
 	    Line *l = istk->expansion;
-	    tline = l->first;
 	    l->finishes->in_progress = FALSE;
 	    istk->expansion = l->next;
 	    nasm_free (l);
+	    list->downlevel (LIST_MACRO);
 	    if (!istk->expansion)
 		line_sync();
 	}
 	if (istk->expansion) {
+	    char *p;
 	    Line *l = istk->expansion;
 	    tline = l->first;
 	    istk->expansion = l->next;
 	    nasm_free (l);
+	    p = detoken(tline);
+	    list->line (LIST_MACRO, p);
+	    nasm_free(p);
 	    if (!istk->expansion)
 		line_sync();
 	} else {
@@ -2015,6 +2084,7 @@ static char *pp_getline (void) {
 		    error(ERR_FATAL, "expected `%%endif' before end of file");
 		i = istk;
 		istk = istk->next;
+		list->downlevel (LIST_INCLUDE);
 		nasm_free (i->fname);
 		nasm_free (i);
 		if (!istk)
@@ -2139,6 +2209,70 @@ static void pp_cleanup (void) {
     }
     while (cstk)
 	ctx_pop();
+}
+
+void pp_include_path (char *path) {
+    IncPath *i;
+
+    i = nasm_malloc(sizeof(IncPath));
+    i->path = nasm_strdup(path);
+    i->next = ipath;
+
+    ipath = i;
+}
+
+void pp_pre_include (char *fname) {
+    Token *inc, *space, *name;
+    Line *l;
+
+    inc = nasm_malloc(sizeof(Token));
+    inc->next = space = nasm_malloc(sizeof(Token));
+    space->next = name = nasm_malloc(sizeof(Token));
+    name->next = NULL;
+
+    inc->type = TOK_PREPROC_ID;
+    inc->text = nasm_strdup("%include");
+    space->type = TOK_WHITESPACE;
+    space->text = nasm_strdup(" ");
+    name->type = TOK_INTERNAL_STRING;
+    name->text = nasm_strdup(fname);
+
+    inc->mac = space->mac = name->mac = NULL;
+
+    l = nasm_malloc(sizeof(Line));
+    l->next = predef;
+    l->first = inc;
+    l->finishes = FALSE;
+    predef = l;
+}
+
+void pp_pre_define (char *definition) {
+    Token *def, *space, *name;
+    Line *l;
+    char *equals;
+
+    equals = strchr(definition, '=');
+
+    def = nasm_malloc(sizeof(Token));
+    def->next = space = nasm_malloc(sizeof(Token));
+    if (equals)
+	*equals = ' ';
+    space->next = name = tokenise(definition);
+    if (equals)
+	*equals = '=';
+
+    def->type = TOK_PREPROC_ID;
+    def->text = nasm_strdup("%define");
+    space->type = TOK_WHITESPACE;
+    space->text = nasm_strdup(" ");
+
+    def->mac = space->mac = NULL;
+
+    l = nasm_malloc(sizeof(Line));
+    l->next = predef;
+    l->first = def;
+    l->finishes = FALSE;
+    predef = l;
 }
 
 Preproc nasmpp = {
