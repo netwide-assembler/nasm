@@ -535,8 +535,104 @@ static void coff_sect_write (struct Section *sect,
     sect->len += len;
 }
 
+typedef struct tagString {
+	struct tagString *Next;
+	int len;
+	char *String;
+} STRING;
+
+#define EXPORT_SECTION_NAME ".drectve"
+#define EXPORT_SECTION_FLAGS INFO_FLAGS 
+/* 
+#define EXPORT_SECTION_NAME ".text"
+#define EXPORT_SECTION_FLAGS TEXT_FLAGS
+*/
+
+static STRING *Exports = NULL;
+static struct Section *directive_sec;
+void AddExport(char *name)
+{
+	STRING *rvp = Exports,*newS;
+
+	newS = (STRING *)nasm_malloc(sizeof(STRING));
+	newS->len = strlen(name);
+	newS->Next = NULL;
+	newS->String = (char*)nasm_malloc( newS->len + 1 );
+	strcpy( newS->String, name );
+	if (rvp == NULL)
+	{
+		int i;
+	   for (i=0; i<nsects; i++)
+
+
+   	    if (!strcmp( EXPORT_SECTION_NAME, sects[i]->name))
+      	      break;
+		if( i == nsects )
+			directive_sec = sects[coff_make_section( EXPORT_SECTION_NAME, EXPORT_SECTION_FLAGS )];
+		else
+			directive_sec = sects[i];
+		Exports = newS;
+	}	
+	else {
+		while (rvp->Next) {
+			if (!strcmp(rvp->String,name))
+				return;
+			rvp = rvp->Next;
+		}
+		rvp->Next = newS;
+	}
+}
+
+void BuildExportTable(void)
+{
+	STRING *rvp = Exports, *next;
+	unsigned char buf[256];
+	int len;
+	if (rvp == NULL) return;
+	while (rvp) {
+		len = sprintf( (char*)buf, "-export:%s ", rvp->String );
+		coff_sect_write( directive_sec, buf, len );
+        	rvp = rvp->Next;
+	}
+
+	next = Exports;
+	while( ( rvp = next ) )
+	{
+		next = rvp->Next;
+		nasm_free( rvp->String );
+		nasm_free( rvp );
+	}
+	Exports = NULL;
+}
+
+
 static int coff_directives (char *directive, char *value, int pass) 
 {
+    if (!strcmp(directive, "export")) {
+        char *q, *name;
+
+        if (pass == 2)
+            return 1;                  /* ignore in pass two */
+        name = q = value;
+        while (*q && !isspace(*q))
+            q++;
+        if (isspace(*q)) {
+            *q++ = '\0';
+            while (*q && isspace(*q))
+                q++;
+        }
+
+        if (!*name) {
+            error(ERR_NONFATAL, "`export' directive requires export name");
+            return 1;
+        }
+        if(*q) {
+            error(ERR_NONFATAL, "unrecognised export qualifier `%s'", q);
+            return 1;
+        }
+        AddExport( name );
+        return 1;
+    }
     return 0;
 }
 
@@ -545,6 +641,7 @@ static void coff_write (void)
     long pos, sympos, vsize;
     int i;
 
+    BuildExportTable(); /* fill in the .drectve section with -export's */
     /*
      * Work out how big the file will get. Calculate the start of
      * the `real' symbols at the same time.
@@ -724,6 +821,9 @@ static void coff_win32_filename (char *inname, char *outname, efunc error)
 static const char *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
+    "%endmacro",
+    "%imacro export 1+.nolist",
+    "[export %1]",
     "%endmacro",
     NULL
 };
