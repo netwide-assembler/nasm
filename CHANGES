@@ -1,3 +1,9 @@
+0.98.31
+-------
+
+* Correctly build in a separate object directory again.
+
+
 0.98.30
 -------
 

@@ -1,4 +1,10 @@
+2002-05-03  H. Peter Anvin <hpa@zytor.com>
 
+   * (configure.in): create output directory.
+   * (Makefile.in): change cd ; to cd &&.
+   * (rdoff/Makefile.in): handle building in a separate obj directory
+     correctly.
+	
 2002-04-29  Stanislav Karchebny  <madfire@users.sourceforge.net>
 
    * (Makefile.in): added 'strip' target to strip debug info.
