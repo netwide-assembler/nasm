@@ -1,3 +1,18 @@
+0.98.34
+-------
+* Correct additional address-size vs. operand-size confusions.
+* Generate dependencies for all Makefiles automatically.
+* Add support for unimplemented (but theoretically available)
+  registers such as tr0 and cr5.  Segment registers 6 and 7 are called
+  segr6 and segr7 for the operations which they can be represented.
+* Correct some disassembler bugs related to redundant address-size prefixes.
+  Some work still remains in this area.
+* Correctly generate an error for things like "SEG eax".
+* Add the JMPE instruction, enabled by "CPU IA64".
+* Correct compilation on newer gcc/glibc platforms.
+* Issue an error on things like "jmp far eax".
+
+
 0.98.33
 -------
 
