@@ -373,7 +373,7 @@ sub ps_flow_lines($$$@) {
 	    }
 	}
     }
-    push(@l,@wd);
+    push(@l,@xd);
     if ( scalar(@l) ) {
 	push(@ls, [[$type,0,undef,$fontset,0,0],[@l]]);	# Final line
     }
