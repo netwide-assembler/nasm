@@ -8,10 +8,30 @@
  * initial version 18/iii/97 by Simon Tatham
  */
 
-#define br0 '{'
-#define br1 "{"
-#define br2 '}'
-#define br3 "}"
+/* Typical flow of text through preproc
+ *
+ * pp_getline gets tokenised lines, either
+ *
+ *   from a macro expansion
+ *
+ * or
+ *   {
+ *   read_line  gets raw text from stdmacpos, or predef, or current input file
+ *   tokenise   converts to tokens
+ *   }
+ *
+ * expand_mmac_params is used to expand %1 etc., unless a macro is being
+ * defined or a false conditional is being processed
+ * (%0, %1, %+1, %-1, %%foo
+ *
+ * do_directive checks for directives
+ *
+ * expand_smacro is used to expand single line macros
+ *
+ * expand_mmacro is used to expand multi-line macros
+ *
+ * detoken is used to convert the line back to text
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,8 +343,9 @@ int any_extrastdmac;
 /*
  * Forward declarations.
  */
+static Token *expand_mmac_params (Token *tline);
 static Token *expand_smacro (Token *tline);
-static void make_tok_num(Token *tok, long val);
+static void   make_tok_num(Token *tok, long val);
 
 /*
  * Macros for safe checking of token pointers, avoid *(NULL)
@@ -1413,7 +1434,7 @@ static int do_directive (Token *tline)
 	if (emitting(istk->conds->state) || istk->conds->state == COND_NEVER)
 	    istk->conds->state = COND_NEVER;
 	else {
-	    j = if_condition(tline->next, i);
+	    j = if_condition(expand_mmac_params(tline->next), i);
 	    tline->next = NULL;	       /* it got freed */
 	    free_tlist (origline);
 	    if (j < 0)
@@ -2279,7 +2300,7 @@ static Token *expand_smacro (Token *tline)
 				  white = 0;
 				  continue; /* parameter loop */
 			      }
-			      if (ch == br0 && 
+			      if (ch == '{' && 
 				  (brackets>0 || (brackets==0 &&
 						  !paramsize[nparam])))
 			      {
@@ -2289,7 +2310,7 @@ static Token *expand_smacro (Token *tline)
 				      continue; /* parameter loop */
 				  }
 			      }
-			      if (ch == br2 && brackets>0)
+			      if (ch == '}' && brackets>0)
 				  if (--brackets == 0) {
 				      brackets = -1;
 				      continue; /* parameter loop */
@@ -2966,7 +2987,6 @@ void pp_include_path (char *path)
     i = nasm_malloc(sizeof(IncPath));
     i->path = nasm_strdup(path);
     i->next = ipath;
-
     ipath = i;
 }
 

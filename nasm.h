@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98 pre-release 3.4"
+#define NASM_VER "0.98 pre-release 3.5"
 
 #ifndef NULL
 #define NULL 0
@@ -380,6 +380,7 @@ enum {
 #define REG16     0x00201002L
 #define REG32     0x00201004L
 #define MMXREG    0x00201008L	       /* MMX registers */
+#define XMMREG    0x00201010L          /* XMM Katmai reg */
 #define FPUREG    0x01000000L	       /* floating point stack registers */
 #define FPU0      0x01000800L	       /* FPU stack register zero */
 
@@ -423,7 +424,8 @@ enum {				       /* register names */
     R_EBP, R_EBX, R_ECX, R_EDI, R_EDX, R_ES, R_ESI, R_ESP, R_FS,
     R_GS, R_MM0, R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7,
     R_SI, R_SP, R_SS, R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5,
-    R_ST6, R_ST7, R_TR3, R_TR4, R_TR5, R_TR6, R_TR7, REG_ENUM_LIMIT
+    R_ST6, R_ST7, R_TR3, R_TR4, R_TR5, R_TR6, R_TR7,
+    R_XMM0, R_XMM1, R_XMM2, R_XMM3, R_XMM4, R_XMM5, R_XMM6, R_XMM7, REG_ENUM_LIMIT
 };
 
 /* Instruction names automatically generated from insns.dat */

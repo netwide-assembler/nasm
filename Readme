@@ -1,130 +1,53 @@
-This is a distribution of NASM, the Netwide Assembler. NASM is a
-prototype general-purpose x86 assembler. It will currently output
-flat-form binary files, a.out, COFF and ELF Unix object files,
-Microsoft Win32 and 16-bit DOS object files, OS/2 object files, the
-as86 object format, and a home-grown format called RDF.
+This directory contains the necessary files to port the C compiler
+``LCC'' (available by FTP from sunsite.doc.ic.ac.uk in the directory
+/computing/programming/languages/c/lcc) to compile for Linux (a.out or
+ELF) or other supported operating systems by using NASM as a back-end
+code generator.
 
-Also included is NDISASM, a prototype x86 binary-file disassembler
-which uses the same instruction table as NASM.
+This patch has been tested on lcc version 4.0.
 
-To install NASM on Linux, type `make', and then when it has finished
-copy the file `nasm' (and maybe `ndisasm') to a directory on your
-search path (maybe /usr/local/bin, or ~/bin if you don't have root
-access). You may also want to copy the man page `nasm.1' (and maybe
-`ndisasm.1') to somewhere sensible.
+To install:
 
-To install under DOS, if you don't need to rebuild from the sources,
-you can just copy nasm.exe and ndisasm.exe (16-bit DOS executables),
-or nasmw.exe and ndisasmw.exe (Win32 console applications - less
-likely to run out of memory), to somewhere on your PATH.
+- Copy `x86nasm.md' into the `src' directory of the lcc tree.
 
-To rebuild the DOS sources, various makefiles are provided:
+- Copy either `lin-elf.c' or `lin-aout.c' into the `etc' directory.
 
-- Makefile.dos, the one I build the standard 16-bit releases from,
-  designed for a hybrid system using Microsoft C and Borland Make
-  (don't ask why :-)
-- Makefile.vc, for Microsoft Visual C++ compiling to a Win32
-  command-line application. This is the one I build the standard
-  Win32 release binaries from.
+- With previous versions, you had to modify x86-nasm.md if you weren't
+  using ELF.  There is now inbuilt support within NASM in the shape
+  of the __CDECL__ macro, so this modification is no longer necessary.
 
-- Makefile.bor, for Borland C.
-- Makefile.bc2, also for Borland C, contributed by Fox Cutter.
-  Reported to work better than Makefile.bor on some systems.
+- Make the following changes to `bind.c' in the `src' directory:
 
-- Makefile.sc, for Symantec C++, compiling to a 32-bit extended DOS
-  executable.. Contributed by Mark Junker.
-- Makefile.scw, also for Symantec C++, compiling to a Win32 command-
-  line application. Also contributed by Mark Junker.
+  - Near the top of the file, add a line that reads
+	extern Interface x86nasmIR;
 
-- Makefile.wc, for Watcom C, compiling to a 32-bit extended DOS
-  executable. Contributed by Dominik Behr.
-- Makefile.wcw, also for Watcom C, compiling to a Win32 command-
-  line application. Also contributed by Dominik Behr.
+  - In the `bindings' array, add the lines
+        "x86-nasm",      &x86nasmIR,
+        "x86/nasm",      &x86nasmIR,
+    (in sensible looking places...)
 
-- Makefile.dj, for DJGPP, compiling to a 32-bit extended DOS
-  executable. Contributed by Dominik Behr.
+  A sample `bind.c' has been provided to show what the result of
+  this might look like. You might be able to get away with using it
+  directly...
 
-- Makefile.lcc, for lcc-win32, compiling to a Win32 command line
-  application. (The lcc-win32 compiler and tools are available from
-  http://www.remcomp.com/lcc-win32/)
+- Modify the lcc makefile to include rules for x86nasm.o: this will
+  have to be done in about three places. Just copy any line with
+  `x86' on it and modify it to read `x86nasm' everywhere. (Except
+  that in the list of object files that rcc is made up from, do
+  remember to ensure that every line but the last has a trailing
+  backslash...)
 
-I can't guarantee that all of those makefiles work, because I don't
-have all of those compilers. However, Makefile.dos and Makefile.vc
-work on my system, and so do Makefile.bor and Makefile.bc2.
+- You may have to modify the contents of `lin-elf.c' or `lin-aout.c'
+  to reflect the true locations of files such as crt0.o, crt1.o,
+  ld-linux.so and so forth. If you don't know where to find these,
+  compile a short C program with `gcc -v' and see what command line
+  gcc feeds to `ld'.
 
-Be careful with Borland C: there have been various conflicting
-reports about how reliable the Huge memory model is. If you try to
-compile NASM in Large model, you may get DGROUP overflows due to the
-vast quantity of data in the instruction tables. I've had reports
-from some people that Huge model doesn't work at all (and also
-reports from others that it works fine), so if you don't want to try
-moving to Huge, you could try adding the option `-dc' to the
-compiler command line instead, which causes string literals to be
-moved from DGROUP to the code segments and might make Large model
-start working. (Either solution works for me.)
+- You should now be able to build lcc, using `lin-elf.c' or
+  `lin-aout.c' as the system-dependent part of the `lcc' wrapper
+  program.
 
-Dominik Behr has also contributed the file misc/pmw.bat, which is a
-batch file to turn the output from Makefile.wc (NASM.EXE and
-NDISASM.EXE) into standalone executables incorporating Tran's
-PMODE/W DOS extender, rather than depending on an external extender
-program.
+- Symlink x86nasm.c into the `src' directory before attempting the
+  triple test, or the compile will fail.
 
-Some of the Windows makefiles produce executables called nasmw.exe
-and ndisasmw.exe, and some don't. Be prepared for either...
-
-If you're trying to unpack the DOS (.ZIP format) archive under Unix
-instead of using the .tar.gz version, you can save some time by
-doing `unzip -aL', which will convert the DOS-format text files to
-Unix and also convert all names to lower case.
-
-If you want to build a restricted version of NASM containing only
-some of the object file formats, you can achieve this by adding
-#defines to `outform.h' (see the file itself for documentation), or
-equivalently by adding compiler command line options in the
-Makefile.
-
-There is a machine description file for the `LCC' retargetable C
-compiler (version 3.6), in the directory `lcc', along with
-instructions for its use. This means that NASM can now be used as
-the code-generator back end for a useful C compiler.
-
-Michael `Wuschel' Tippach has ported his DOS extender `WDOSX' to
-enable it to work with the 32-bit binary files NASM can output: the
-original extender and his port `WDOSX/N' are available from his web
-page, http://www.geocities.com/SiliconValley/Park/4493.
-
-Matt Mastracci has written a document explaining how to write
-assembly language modules in DJGPP programs using NASM: it's on his
-web site at http://www.ucalgary.ca/~mmastrac/djgppasm.doc.
-
-The `misc' directory contains `nasm.sl', a NASM editing mode for the
-JED programmers' editor (see http://space.mit.edu/~davis/jed.html
-for details about JED). The comment at the start of the file gives
-instructions on how to install the mode. This directory also
-contains a file (`magic') containing lines to add to /etc/magic on
-Unix systems to allow the `file' command to recognise RDF files, and
-a zip file (`exasm.zip') containing the necessary files for syntax
-highlighting in the Aurora DOS editor. (The Aurora files were
-contributed by <U993847220@aol.com>; I haven't tested them as I
-don't have Aurora.)
-
-The `rdoff' directory contains sources for a linker and loader for
-the RDF object file format, to run under Linux, and also
-documentation on the internal structure of RDF files.
-
-For information about how you can distribute and use NASM, see the
-file Licence. We were tempted to put NASM under the GPL, but decided
-that in many ways it was too restrictive for developers.
-
-For information about how to use NASM, see the various forms of
-documentation in the `doc' directory: documentation is provided in
-HTML, PostScript, plain text, Texinfo, and Windows Help formats. For
-information about how to use NDISASM, see `ndisasm.doc'. For
-information about the internal structure of NASM, see
-`internal.doc'. (In particular, _please_ read `internal.doc' before
-writing any code for us...)
-
-The NASM web page is at http://www.cryogen.com/Nasm/
-
-Bug reports (and patches if you can) should be sent to
-<jules@earthcorp.com> or <anakin@pobox.com>.
+- Now it should pass the triple test, on either ELF or a.out. Voila!

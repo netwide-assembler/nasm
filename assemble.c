@@ -611,7 +611,7 @@ static void gencode (long segment, long offset, int bits,
 	    case R_SS: 
 		bytes[0] = 0x16 + (c == 0x04 ? 1 : 0); break;
 	    default:
-		errfunc (ERR_PANIC, "bizarre 8086 segment register received");
+                errfunc (ERR_PANIC, "bizarre 8086 segment register received");
 	    }
 	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
 	    offset++;
@@ -622,7 +622,7 @@ static void gencode (long segment, long offset, int bits,
 	    case R_FS: bytes[0] = 0xA0 + (c == 0x05 ? 1 : 0); break;
 	    case R_GS: bytes[0] = 0xA8 + (c == 0x05 ? 1 : 0); break;
 	    default:
-		errfunc (ERR_PANIC, "bizarre 386 segment register received");
+                errfunc (ERR_PANIC, "bizarre 386 segment register received");
 	    }
 	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
 	    offset++;
@@ -928,31 +928,31 @@ static int regval (operand *o)
 {
     switch (o->basereg) {
       case R_EAX: case R_AX: case R_AL: case R_ES: case R_CR0: case R_DR0:
-      case R_ST0: case R_MM0:
+      case R_ST0: case R_MM0: case R_XMM0:
 	return 0;
       case R_ECX: case R_CX: case R_CL: case R_CS: case R_DR1: case R_ST1:
-      case R_MM1:
+      case R_MM1: case R_XMM1:
 	return 1;
       case R_EDX: case R_DX: case R_DL: case R_SS: case R_CR2: case R_DR2:
-      case R_ST2: case R_MM2:
+      case R_ST2: case R_MM2:  case R_XMM2:
 	return 2;
       case R_EBX: case R_BX: case R_BL: case R_DS: case R_CR3: case R_DR3:
-      case R_TR3: case R_ST3: case R_MM3:
+      case R_TR3: case R_ST3: case R_MM3:  case R_XMM3:
 	return 3;
       case R_ESP: case R_SP: case R_AH: case R_FS: case R_CR4: case R_TR4:
-      case R_ST4: case R_MM4:
+      case R_ST4: case R_MM4:  case R_XMM4:
 	return 4;
       case R_EBP: case R_BP: case R_CH: case R_GS: case R_TR5: case R_ST5:
-      case R_MM5:
+      case R_MM5:  case R_XMM5:
 	return 5;
       case R_ESI: case R_SI: case R_DH: case R_DR6: case R_TR6: case R_ST6:
-      case R_MM6:
+      case R_MM6:  case R_XMM6:
 	return 6;
       case R_EDI: case R_DI: case R_BH: case R_DR7: case R_TR7: case R_ST7:
-      case R_MM7:
+      case R_MM7:  case R_XMM7:
 	return 7;
       default:			       /* panic */
-	errfunc (ERR_PANIC, "invalid register operand given to regval()");
+        errfunc (ERR_PANIC, "invalid register operand given to regval()");
 	return 0;
     }
 }
@@ -1031,10 +1031,11 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 {
     if (!(REGISTER & ~input->type)) {  /* it's a single register */
 	static int regs[] = {
-	    R_MM0, R_EAX, R_AX, R_AL, R_MM1, R_ECX, R_CX, R_CL,
-	    R_MM2, R_EDX, R_DX, R_DL, R_MM3, R_EBX, R_BX, R_BL,
-	    R_MM4, R_ESP, R_SP, R_AH, R_MM5, R_EBP, R_BP, R_CH,
-	    R_MM6, R_ESI, R_SI, R_DH, R_MM7, R_EDI, R_DI, R_BH
+	  R_AL,   R_CL,   R_DL,   R_BL,   R_AH,   R_CH,   R_DH,   R_BH,
+	  R_AX,   R_CX,   R_DX,   R_BX,   R_SP,   R_BP,   R_SI,   R_DI,
+	  R_EAX,  R_ECX,  R_EDX,  R_EBX,  R_ESP,  R_EBP,  R_ESI,  R_EDI,
+	  R_MM0,  R_MM1,  R_MM2,  R_MM3,  R_MM4,  R_MM5,  R_MM6,  R_MM7,
+	  R_XMM0, R_XMM1, R_XMM2, R_XMM3, R_XMM4, R_XMM5, R_XMM6, R_XMM7
 	};
 	int i;
 
@@ -1043,7 +1044,7 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 	if (i<elements(regs)) {
 	    output->sib_present = FALSE;/* no SIB necessary */
 	    output->bytes = 0;	       /* no offset necessary either */
-	    output->modrm = 0xC0 | (rfield << 3) | (i/4);
+            output->modrm = 0xC0 | (rfield << 3) | (i & 7);
 	} 
 	else
 	    return NULL;

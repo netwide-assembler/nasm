@@ -85,8 +85,8 @@ AND       rm32,imm            \321\300\1\x81\204\41         386,SM
 AND       mem,imm8            \300\1\x80\204\21             8086,SM
 AND       mem,imm16           \320\300\1\x81\204\31         8086,SM
 AND       mem,imm32           \321\300\1\x81\204\41         386,SM
-ARPL      mem,reg16           \300\1\x63\101                286,PRIV,SM
-ARPL      reg16,reg16         \300\1\x63\101                286,PRIV
+ARPL      mem,reg16           \300\1\x63\101                286,PROT,SM
+ARPL      reg16,reg16         \300\1\x63\101                286,PROT
 BOUND     reg16,mem           \320\301\1\x62\110            186
 BOUND     reg32,mem           \321\301\1\x62\110            386
 BSF       reg16,mem           \320\301\2\x0F\xBC\110        386,SM
@@ -273,7 +273,7 @@ FDIVR     fpureg              \1\xD8\10\xF8                 8086,FPU
 FDIVR     fpu0,fpureg         \1\xD8\11\xF8                 8086,FPU
 FDIVRP    fpureg              \1\xDE\10\xF0                 8086,FPU
 FDIVRP    fpureg,fpu0         \1\xDE\10\xF0                 8086,FPU
-FEMMS     void                \2\x0F\x0E                    PENT,MMX,FPU
+FEMMS     void                \2\x0F\x0E                    PENT,3DNOW
 FENI      void                \3\x9B\xDB\xE0                8086,FPU
 FFREE     fpureg              \1\xDD\10\xC0                 8086,FPU
 FIADD     mem32               \300\1\xDA\200                8086,FPU
@@ -387,12 +387,10 @@ FXCH      void                \2\xD9\xC9                    8086,FPU
 FXCH      fpureg              \1\xD9\10\xC8                 8086,FPU
 FXCH      fpureg,fpu0         \1\xD9\10\xC8                 8086,FPU
 FXCH      fpu0,fpureg         \1\xD9\11\xC8                 8086,FPU
-FXRSTOR   mem                 \300\2\x0F\xAE\202            P6,FPU
-FXSAVE    mem                 \300\2\x0F\xAE\200            P6,FPU
 FXTRACT   void                \2\xD9\xF4                    8086,FPU
 FYL2X     void                \2\xD9\xF1                    8086,FPU
 FYL2XP1   void                \2\xD9\xF9                    8086,FPU
-HLT       void                \1\xF4                        8086
+HLT       void                \1\xF4                        8086,PRIV
 IBTS      mem,reg16           \320\300\2\x0F\xA7\101        386,SW,UNDOC,ND
 IBTS      reg16,reg16         \320\300\2\x0F\xA7\101        386,UNDOC,ND
 IBTS      mem,reg32           \321\300\2\x0F\xA7\101        386,SD,UNDOC,ND
@@ -441,8 +439,8 @@ INT1      void                \1\xF1                        386
 INT03     void                \1\xCC                        8086,ND
 INT3      void                \1\xCC                        8086
 INTO      void                \1\xCE                        8086
-INVD      void                \2\x0F\x08                    486
-INVLPG    mem                 \300\2\x0F\x01\207            486
+INVD      void                \2\x0F\x08                    486,PRIV
+INVLPG    mem                 \300\2\x0F\x01\207            486,PRIV
 IRET      void                \322\1\xCF                    8086
 IRETD     void                \321\1\xCF                    386
 IRETW     void                \320\1\xCF                    8086
@@ -469,10 +467,10 @@ JMP       mem                 \322\300\1\xFF\204            8086
 JMP       mem16               \320\300\1\xFF\204            8086
 JMP       mem32               \321\300\1\xFF\204            386
 LAHF      void                \1\x9F                        8086
-LAR       reg16,mem           \320\301\2\x0F\x02\110        286,PRIV,SM
-LAR       reg16,reg16         \320\301\2\x0F\x02\110        286,PRIV
-LAR       reg32,mem           \321\301\2\x0F\x02\110        286,PRIV,SM
-LAR       reg32,reg32         \321\301\2\x0F\x02\110        286,PRIV
+LAR       reg16,mem           \320\301\2\x0F\x02\110        286,PROT,SM
+LAR       reg16,reg16         \320\301\2\x0F\x02\110        286,PROT
+LAR       reg32,mem           \321\301\2\x0F\x02\110        286,PROT,SM
+LAR       reg32,reg32         \321\301\2\x0F\x02\110        286,PROT
 LDS       reg16,mem           \320\301\1\xC5\110            8086
 LDS       reg32,mem           \321\301\1\xC5\110            8086
 LEA       reg16,mem           \320\301\1\x8D\110            8086
@@ -486,9 +484,9 @@ LGDT      mem                 \300\2\x0F\x01\202            286,PRIV
 LGS       reg16,mem           \320\301\2\x0F\xB5\110        386
 LGS       reg32,mem           \321\301\2\x0F\xB5\110        386
 LIDT      mem                 \300\2\x0F\x01\203            286,PRIV
-LLDT      mem                 \300\1\x0F\17\202             286,PRIV
-LLDT      mem16               \300\1\x0F\17\202             286,PRIV
-LLDT      reg16               \300\1\x0F\17\202             286,PRIV
+LLDT      mem                 \300\1\x0F\17\202             286,PROT,PRIV
+LLDT      mem16               \300\1\x0F\17\202             286,PROT,PRIV
+LLDT      reg16               \300\1\x0F\17\202             286,PROT,PRIV
 LMSW      mem                 \300\2\x0F\x01\206            286,PRIV
 LMSW      mem16               \300\2\x0F\x01\206            286,PRIV
 LMSW      reg16               \300\2\x0F\x01\206            286,PRIV
@@ -512,15 +510,15 @@ LOOPNZ    imm,reg_ecx         \311\1\xE0\50                 386
 LOOPZ     imm                 \312\1\xE1\50                 8086
 LOOPZ     imm,reg_cx          \310\1\xE1\50                 8086
 LOOPZ     imm,reg_ecx         \311\1\xE1\50                 386
-LSL       reg16,mem           \320\301\2\x0F\x03\110        286,PRIV,SM
-LSL       reg16,reg16         \320\301\2\x0F\x03\110        286,PRIV
-LSL       reg32,mem           \321\301\2\x0F\x03\110        286,PRIV,SM
-LSL       reg32,reg32         \321\301\2\x0F\x03\110        286,PRIV
+LSL       reg16,mem           \320\301\2\x0F\x03\110        286,PROT,SM
+LSL       reg16,reg16         \320\301\2\x0F\x03\110        286,PROT
+LSL       reg32,mem           \321\301\2\x0F\x03\110        286,PROT,SM
+LSL       reg32,reg32         \321\301\2\x0F\x03\110        286,PROT
 LSS       reg16,mem           \320\301\2\x0F\xB2\110        386
 LSS       reg32,mem           \321\301\2\x0F\xB2\110        386
-LTR       mem                 \300\1\x0F\17\203             286,PRIV
-LTR       mem16               \300\1\x0F\17\203             286,PRIV
-LTR       reg16               \300\1\x0F\17\203             286,PRIV
+LTR       mem                 \300\1\x0F\17\203             286,PROT,PRIV
+LTR       mem16               \300\1\x0F\17\203             286,PROT,PRIV
+LTR       reg16               \300\1\x0F\17\203             286,PROT,PRIV
 MOV       mem,reg_cs          \320\300\1\x8C\201            8086,SM
 MOV       mem,reg_dess        \320\300\1\x8C\101            8086,SM
 MOV       mem,reg_fsgs        \320\300\1\x8C\101            386,SM
@@ -542,14 +540,14 @@ MOV       reg_eax,mem_offs    \301\321\1\xA1\35             386,SM
 MOV       mem_offs,reg_al     \300\1\xA2\34                 8086,SM
 MOV       mem_offs,reg_ax     \300\320\1\xA3\34             8086,SM
 MOV       mem_offs,reg_eax    \300\321\1\xA3\34             386,SM
-MOV       reg32,reg_cr4       \2\x0F\x20\204                PENT
-MOV       reg32,reg_creg      \2\x0F\x20\101                386
-MOV       reg32,reg_dreg      \2\x0F\x21\101                386
-MOV       reg32,reg_treg      \2\x0F\x24\101                386
-MOV       reg_cr4,reg32       \2\x0F\x22\214                PENT
-MOV       reg_creg,reg32      \2\x0F\x22\110                386
-MOV       reg_dreg,reg32      \2\x0F\x23\110                386
-MOV       reg_treg,reg32      \2\x0F\x26\110                386
+MOV       reg32,reg_cr4       \2\x0F\x20\204                PENT,PRIV
+MOV       reg32,reg_creg      \2\x0F\x20\101                386,PRIV
+MOV       reg32,reg_dreg      \2\x0F\x21\101                386,PRIV
+MOV       reg32,reg_treg      \2\x0F\x24\101                386,PRIV
+MOV       reg_cr4,reg32       \2\x0F\x22\214                PENT,PRIV
+MOV       reg_creg,reg32      \2\x0F\x22\110                386,PRIV
+MOV       reg_dreg,reg32      \2\x0F\x23\110                386,PRIV
+MOV       reg_treg,reg32      \2\x0F\x26\110                386,PRIV
 MOV       mem,reg8            \300\1\x88\101                8086,SM
 MOV       reg8,reg8           \300\1\x88\101                8086
 MOV       mem,reg16           \320\300\1\x89\101            8086,SM
@@ -660,8 +658,8 @@ PANDN     mmxreg,mem          \301\2\x0F\xDF\110            PENT,MMX,SM
 PANDN     mmxreg,mmxreg       \2\x0F\xDF\110                PENT,MMX
 PAVEB     mmxreg,mem          \301\2\x0F\x50\110            PENT,MMX,SM,CYRIX
 PAVEB     mmxreg,mmxreg       \2\x0F\x50\110                PENT,MMX,CYRIX
-PAVGUSB   mmxreg,mem          \301\2\x0F\x0F\110\01\xBF     PENT,MMX,SM,FPU
-PAVGUSB   mmxreg,mmxreg       \2\x0F\x0F\110\01\xBF         PENT,MMX,FPU
+PAVGUSB   mmxreg,mem          \301\2\x0F\x0F\110\01\xBF     PENT,3DNOW,SM
+PAVGUSB   mmxreg,mmxreg       \2\x0F\x0F\110\01\xBF         PENT,3DNOW
 PCMPEQB   mmxreg,mem          \301\2\x0F\x74\110            PENT,MMX,SM
 PCMPEQB   mmxreg,mmxreg       \2\x0F\x74\110                PENT,MMX
 PCMPEQD   mmxreg,mem          \301\2\x0F\x76\110            PENT,MMX,SM
@@ -675,40 +673,40 @@ PCMPGTD   mmxreg,mmxreg       \2\x0F\x66\110                PENT,MMX
 PCMPGTW   mmxreg,mem          \301\2\x0F\x65\110            PENT,MMX,SM
 PCMPGTW   mmxreg,mmxreg       \2\x0F\x65\110                PENT,MMX
 PDISTIB   mmxreg,mem          \301\2\x0F\x54\110            PENT,MMX,SM,CYRIX
-PF2ID     mmxreg,mem          \301\2\x0F\x0F\110\01\x1D     PENT,MMX,SM,FPU
-PF2ID     mmxreg,mmxreg       \2\x0F\x0F\110\01\x1D         PENT,MMX,FPU
-PFACC     mmxreg,mem          \301\2\x0F\x0F\110\01\xAE     PENT,MMX,SM,FPU
-PFACC     mmxreg,mmxreg       \2\x0F\x0F\110\01\xAE         PENT,MMX,FPU
-PFADD     mmxreg,mem          \301\2\x0F\x0F\110\01\x9E     PENT,MMX,SM,FPU
-PFADD     mmxreg,mmxreg       \2\x0F\x0F\110\01\x9E         PENT,MMX,FPU
-PFCMPEQ   mmxreg,mem          \301\2\x0F\x0F\110\01\xB0     PENT,MMX,SM,FPU
-PFCMPEQ   mmxreg,mmxreg       \2\x0F\x0F\110\01\xB0         PENT,MMX,FPU
-PFCMPGE   mmxreg,mem          \301\2\x0F\x0F\110\01\x90     PENT,MMX,SM,FPU
-PFCMPGE   mmxreg,mmxreg       \2\x0F\x0F\110\01\x90         PENT,MMX,FPU
-PFCMPGT   mmxreg,mem          \301\2\x0F\x0F\110\01\xA0     PENT,MMX,SM,FPU
-PFCMPGT   mmxreg,mmxreg       \2\x0F\x0F\110\01\xA0         PENT,MMX,FPU
-PFMAX     mmxreg,mem          \301\2\x0F\x0F\110\01\xA4     PENT,MMX,SM,FPU
-PFMAX     mmxreg,mmxreg       \2\x0F\x0F\110\01\xA4         PENT,MMX,FPU
-PFMIN     mmxreg,mem          \301\2\x0F\x0F\110\01\x94     PENT,MMX,SM,FPU
-PFMIN     mmxreg,mmxreg       \2\x0F\x0F\110\01\x94         PENT,MMX,FPU
-PFMUL     mmxreg,mem          \301\2\x0F\x0F\110\01\xB4     PENT,MMX,SM,FPU
-PFMUL     mmxreg,mmxreg       \2\x0F\x0F\110\01\xB4         PENT,MMX,FPU
-PFRCP     mmxreg,mem          \301\2\x0F\x0F\110\01\x96     PENT,MMX,SM,FPU
-PFRCP     mmxreg,mmxreg       \2\x0F\x0F\110\01\x96         PENT,MMX,FPU
-PFRCPIT1  mmxreg,mem          \301\2\x0F\x0F\110\01\xA6     PENT,MMX,SM,FPU
-PFRCPIT1  mmxreg,mmxreg       \2\x0F\x0F\110\01\xA6         PENT,MMX,FPU
-PFRCPIT2  mmxreg,mem          \301\2\x0F\x0F\110\01\xB6     PENT,MMX,SM,FPU
-PFRCPIT2  mmxreg,mmxreg       \2\x0F\x0F\110\01\xB6         PENT,MMX,FPU
-PFRSQIT1  mmxreg,mem          \301\2\x0F\x0F\110\01\xA7     PENT,MMX,SM,FPU
-PFRSQIT1  mmxreg,mmxreg       \2\x0F\x0F\110\01\xA7         PENT,MMX,FPU
-PFRSQRT   mmxreg,mem          \301\2\x0F\x0F\110\01\x97     PENT,MMX,SM,FPU
-PFRSQRT   mmxreg,mmxreg       \2\x0F\x0F\110\01\x97         PENT,MMX,FPU
-PFSUB     mmxreg,mem          \301\2\x0F\x0F\110\01\x9A     PENT,MMX,SM,FPU
-PFSUB     mmxreg,mmxreg       \2\x0F\x0F\110\01\x9A         PENT,MMX,FPU
-PFSUBR    mmxreg,mem          \301\2\x0F\x0F\110\01\xAA     PENT,MMX,SM,FPU
-PFSUBR    mmxreg,mmxreg       \2\x0F\x0F\110\01\xAA         PENT,MMX,FPU
-PI2FD     mmxreg,mem          \301\2\x0F\x0F\110\01\x0D     PENT,MMX,SM,FPU
-PI2FD     mmxreg,mmxreg       \2\x0F\x0F\110\01\x0D         PENT,MMX,FPU
+PF2ID     mmxreg,mem          \301\2\x0F\x0F\110\01\x1D     PENT,3DNOW,SM
+PF2ID     mmxreg,mmxreg       \2\x0F\x0F\110\01\x1D         PENT,3DNOW
+PFACC     mmxreg,mem          \301\2\x0F\x0F\110\01\xAE     PENT,3DNOW,SM
+PFACC     mmxreg,mmxreg       \2\x0F\x0F\110\01\xAE         PENT,3DNOW
+PFADD     mmxreg,mem          \301\2\x0F\x0F\110\01\x9E     PENT,3DNOW,SM
+PFADD     mmxreg,mmxreg       \2\x0F\x0F\110\01\x9E         PENT,3DNOW
+PFCMPEQ   mmxreg,mem          \301\2\x0F\x0F\110\01\xB0     PENT,3DNOW,SM
+PFCMPEQ   mmxreg,mmxreg       \2\x0F\x0F\110\01\xB0         PENT,3DNOW
+PFCMPGE   mmxreg,mem          \301\2\x0F\x0F\110\01\x90     PENT,3DNOW,SM
+PFCMPGE   mmxreg,mmxreg       \2\x0F\x0F\110\01\x90         PENT,3DNOW
+PFCMPGT   mmxreg,mem          \301\2\x0F\x0F\110\01\xA0     PENT,3DNOW,SM
+PFCMPGT   mmxreg,mmxreg       \2\x0F\x0F\110\01\xA0         PENT,3DNOW
+PFMAX     mmxreg,mem          \301\2\x0F\x0F\110\01\xA4     PENT,3DNOW,SM
+PFMAX     mmxreg,mmxreg       \2\x0F\x0F\110\01\xA4         PENT,3DNOW
+PFMIN     mmxreg,mem          \301\2\x0F\x0F\110\01\x94     PENT,3DNOW,SM
+PFMIN     mmxreg,mmxreg       \2\x0F\x0F\110\01\x94         PENT,3DNOW
+PFMUL     mmxreg,mem          \301\2\x0F\x0F\110\01\xB4     PENT,3DNOW,SM
+PFMUL     mmxreg,mmxreg       \2\x0F\x0F\110\01\xB4         PENT,3DNOW
+PFRCP     mmxreg,mem          \301\2\x0F\x0F\110\01\x96     PENT,3DNOW,SM
+PFRCP     mmxreg,mmxreg       \2\x0F\x0F\110\01\x96         PENT,3DNOW
+PFRCPIT1  mmxreg,mem          \301\2\x0F\x0F\110\01\xA6     PENT,3DNOW,SM
+PFRCPIT1  mmxreg,mmxreg       \2\x0F\x0F\110\01\xA6         PENT,3DNOW
+PFRCPIT2  mmxreg,mem          \301\2\x0F\x0F\110\01\xB6     PENT,3DNOW,SM
+PFRCPIT2  mmxreg,mmxreg       \2\x0F\x0F\110\01\xB6         PENT,3DNOW
+PFRSQIT1  mmxreg,mem          \301\2\x0F\x0F\110\01\xA7     PENT,3DNOW,SM
+PFRSQIT1  mmxreg,mmxreg       \2\x0F\x0F\110\01\xA7         PENT,3DNOW
+PFRSQRT   mmxreg,mem          \301\2\x0F\x0F\110\01\x97     PENT,3DNOW,SM
+PFRSQRT   mmxreg,mmxreg       \2\x0F\x0F\110\01\x97         PENT,3DNOW
+PFSUB     mmxreg,mem          \301\2\x0F\x0F\110\01\x9A     PENT,3DNOW,SM
+PFSUB     mmxreg,mmxreg       \2\x0F\x0F\110\01\x9A         PENT,3DNOW
+PFSUBR    mmxreg,mem          \301\2\x0F\x0F\110\01\xAA     PENT,3DNOW,SM
+PFSUBR    mmxreg,mmxreg       \2\x0F\x0F\110\01\xAA         PENT,3DNOW
+PI2FD     mmxreg,mem          \301\2\x0F\x0F\110\01\x0D     PENT,3DNOW,SM
+PI2FD     mmxreg,mmxreg       \2\x0F\x0F\110\01\x0D         PENT,3DNOW
 PMACHRIW  mmxreg,mem          \301\2\x0F\x5E\110            PENT,MMX,SM,CYRIX
 PMADDWD   mmxreg,mem          \301\2\x0F\xF5\110            PENT,MMX,SM
 PMADDWD   mmxreg,mmxreg       \2\x0F\xF5\110                PENT,MMX
@@ -716,8 +714,8 @@ PMAGW     mmxreg,mem          \301\2\x0F\x52\110            PENT,MMX,SM,CYRIX
 PMAGW     mmxreg,mmxreg       \2\x0F\x52\110                PENT,MMX,CYRIX
 PMULHRIW  mmxreg,mem          \301\2\x0F\x5D\110            PENT,MMX,SM,CYRIX
 PMULHRIW  mmxreg,mmxreg       \2\x0F\x5D\110                PENT,MMX,CYRIX
-PMULHRWA  mmxreg,mem          \301\2\x0F\x0F\110\1\xB7      PENT,MMX,SM,FPU
-PMULHRWA  mmxreg,mmxreg       \2\x0F\x0F\110\1\xB7          PENT,MMX,FPU
+PMULHRWA  mmxreg,mem          \301\2\x0F\x0F\110\1\xB7      PENT,3DNOW,SM
+PMULHRWA  mmxreg,mmxreg       \2\x0F\x0F\110\1\xB7          PENT,3DNOW
 PMULHRWC  mmxreg,mem          \301\2\x0F\x59\110            PENT,MMX,SM,CYRIX
 PMULHRWC  mmxreg,mmxreg       \2\x0F\x59\110                PENT,MMX,CYRIX
 PMULHW    mmxreg,mem          \301\2\x0F\xE5\110            PENT,MMX,SM
@@ -743,8 +741,8 @@ POPFD     void                \321\1\x9D                    386
 POPFW     void                \320\1\x9D                    186
 POR       mmxreg,mem          \301\2\x0F\xEB\110            PENT,MMX,SM
 POR       mmxreg,mmxreg       \2\x0F\xEB\110                PENT,MMX
-PREFETCH  mem                 \2\x0F\x0D\200                PENT,MMX,SM,FPU
-PREFETCHW mem                 \2\x0F\x0D\201                PENT,MMX,SM,FPU
+PREFETCH  mem                 \2\x0F\x0D\200                PENT,3DNOW,SM
+PREFETCHW mem                 \2\x0F\x0D\201                PENT,3DNOW,SM
 PSLLD     mmxreg,mem          \301\2\x0F\xF2\110            PENT,MMX,SM
 PSLLD     mmxreg,mmxreg       \2\x0F\xF2\110                PENT,MMX
 PSLLD     mmxreg,imm          \2\x0F\x72\206\25             PENT,MMX
@@ -832,7 +830,8 @@ RCR       rm16,imm            \320\300\1\xC1\203\25         186,SB
 RCR       rm32,unity          \321\300\1\xD1\203            386
 RCR       rm32,reg_cl         \321\300\1\xD3\203            386
 RCR       rm32,imm            \321\300\1\xC1\203\25         386,SB
-RDMSR     void                \2\x0F\x32                    PENT
+RDSHR     void                \2\x0F\x36                    P6,CYRIX,SMM
+RDMSR     void                \2\x0F\x32                    PENT,PRIV
 RDPMC     void                \2\x0F\x33                    P6
 RDTSC     void                \2\x0F\x31                    PENT
 RESB      imm                 \340                          8086
@@ -864,7 +863,9 @@ ROR       rm16,imm            \320\300\1\xC1\201\25         186,SB
 ROR       rm32,unity          \321\300\1\xD1\201            386
 ROR       rm32,reg_cl         \321\300\1\xD3\201            386
 ROR       rm32,imm            \321\300\1\xC1\201\25         386,SB
-RSM       void                \2\x0F\xAA                    PENT
+RSDC      reg_sreg,mem80      \2\x0F\x79\101		    486,CYRIX,SMM
+RSLDT     mem80               \2\x0F\x7B\200		    486,CYRIX,SMM
+RSM       void                \2\x0F\xAA                    PENT,SMM
 SAHF      void                \1\x9E                        8086
 SAL       rm8,unity           \300\1\xD0\204                8086,ND
 SAL       rm8,reg_cl          \300\1\xD2\204                8086,ND
@@ -911,7 +912,7 @@ SBB       mem,imm32           \321\300\1\x81\203\41         386,SM
 SCASB     void                \1\xAE                        8086
 SCASD     void                \321\1\xAF                    386
 SCASW     void                \320\1\xAF                    8086
-SGDT      mem                 \300\2\x0F\x01\200            286,PRIV
+SGDT      mem                 \300\2\x0F\x01\200            286
 SHL       rm8,unity           \300\1\xD0\204                8086
 SHL       rm8,reg_cl          \300\1\xD2\204                8086
 SHL       rm8,imm             \300\1\xC0\204\25             186,SB
@@ -946,23 +947,26 @@ SHRD      mem,reg16,reg_cl    \300\320\2\x0F\xAD\101        386,SM
 SHRD      reg16,reg16,reg_cl  \300\320\2\x0F\xAD\101        386
 SHRD      mem,reg32,reg_cl    \300\321\2\x0F\xAD\101        386,SM
 SHRD      reg32,reg32,reg_cl  \300\321\2\x0F\xAD\101        386
-SIDT      mem                 \300\2\x0F\x01\201            286,PRIV
-SLDT      mem                 \300\1\x0F\17\200             286,PRIV
-SLDT      mem16               \300\1\x0F\17\200             286,PRIV
-SLDT      reg16               \300\1\x0F\17\200             286,PRIV
+SIDT      mem                 \300\2\x0F\x01\201            286
+SLDT      mem                 \300\1\x0F\17\200             286
+SLDT      mem16               \300\1\x0F\17\200             286
+SLDT      reg16               \300\1\x0F\17\200             286
 SMI       void                \1\xF1                        386,UNDOC
-SMSW      mem                 \300\2\x0F\x01\204            286,PRIV
-SMSW      mem16               \300\2\x0F\x01\204            286,PRIV
-SMSW      reg16               \300\2\x0F\x01\204            286,PRIV
+SMINT     void                \2\x0F\x38                    P6,CYRIX
+; Older Cyrix chips had this; they had to move due to conflict with MMX
+SMINTOLD  void                \2\x0F\x7E                    486,CYRIX
+SMSW      mem                 \300\2\x0F\x01\204            286
+SMSW      mem16               \300\2\x0F\x01\204            286
+SMSW      reg16               \300\2\x0F\x01\204            286
 STC       void                \1\xF9                        8086
 STD       void                \1\xFD                        8086
 STI       void                \1\xFB                        8086
 STOSB     void                \1\xAA                        8086
 STOSD     void                \321\1\xAB                    386
 STOSW     void                \320\1\xAB                    8086
-STR       mem                 \300\1\x0F\17\201             286,PRIV
-STR       mem16               \300\1\x0F\17\201             286,PRIV
-STR       reg16               \300\1\x0F\17\201             286,PRIV
+STR       mem                 \300\1\x0F\17\201             286,PROT
+STR       mem16               \300\1\x0F\17\201             286,PROT
+STR       reg16               \300\1\x0F\17\201             286,PROT
 SUB       mem,reg8            \300\1\x28\101                8086,SM
 SUB       reg8,reg8           \300\1\x28\101                8086
 SUB       mem,reg16           \320\300\1\x29\101            8086,SM
@@ -986,8 +990,13 @@ SUB       rm32,imm            \321\300\1\x81\205\41         386,SM
 SUB       mem,imm8            \300\1\x80\205\21             8086,SM
 SUB       mem,imm16           \320\300\1\x81\205\31         8086,SM
 SUB       mem,imm32           \321\300\1\x81\205\41         386,SM
+SVDC	  mem80,reg_sreg      \2\x0F\x78\101		    486,CYRIX,SMM
+SVLDT     mem80               \2\x0F\x7A\200                486,CYRIX,SMM
+SVTS      mem80               \2\x0F\x7C\200                486,CYRIX,SMM
+SYSCALL   void                \2\x0F\x05                    P6,AMD
 SYSENTER  void                \2\x0F\x34                    P6
 SYSEXIT   void                \2\x0F\x36                    P6,PRIV
+SYSRET    void		      \2\x0F\x07		    P6,PRIV,AMD
 TEST      mem,reg8            \300\1\x84\101                8086,SM
 TEST      reg8,reg8           \300\1\x84\101                8086
 TEST      mem,reg16           \320\300\1\x85\101            8086,SM
@@ -1020,15 +1029,16 @@ UMOV      reg16,mem           \320\301\2\x0F\x13\110        386,UNDOC,SM
 UMOV      reg16,reg16         \320\301\2\x0F\x13\110        386,UNDOC
 UMOV      reg32,mem           \321\301\2\x0F\x13\110        386,UNDOC,SM
 UMOV      reg32,reg32         \321\301\2\x0F\x13\110        386,UNDOC
-VERR      mem                 \300\1\x0F\17\204             286,PRIV
-VERR      mem16               \300\1\x0F\17\204             286,PRIV
-VERR      reg16               \300\1\x0F\17\204             286,PRIV
-VERW      mem                 \300\1\x0F\17\205             286,PRIV
-VERW      mem16               \300\1\x0F\17\205             286,PRIV
-VERW      reg16               \300\1\x0F\17\205             286,PRIV
+VERR      mem                 \300\1\x0F\17\204             286,PROT
+VERR      mem16               \300\1\x0F\17\204             286,PROT
+VERR      reg16               \300\1\x0F\17\204             286,PROT
+VERW      mem                 \300\1\x0F\17\205             286,PROT
+VERW      mem16               \300\1\x0F\17\205             286,PROT
+VERW      reg16               \300\1\x0F\17\205             286,PROT
 WAIT      void                \1\x9B                        8086
-WBINVD    void                \2\x0F\x09                    486
-WRMSR     void                \2\x0F\x30                    PENT
+WBINVD    void                \2\x0F\x09                    486,PRIV
+WRSHR     void                \2\x0F\x37                    P6,CYRIX,SMM
+WRMSR     void                \2\x0F\x30                    PENT,PRIV
 XADD      mem,reg8            \300\2\x0F\xC0\101            486,SM
 XADD      reg8,reg8           \300\2\x0F\xC0\101            486
 XADD      mem,reg16           \320\300\2\x0F\xC1\101        486,SM
@@ -1088,3 +1098,196 @@ Jcc       imm                 \330\x70\50                   8086
 Jcc       imm|short           \330\x70\50                   8086
 SETcc     mem                 \300\1\x0F\330\x90\200        386,SB
 SETcc     reg8                \300\1\x0F\330\x90\200        386
+
+; Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
+ADDPS           xmmreg,xmmreg           \2\x0F\x58\110                  KATMAI,SSE
+ADDPS           xmmreg,mem              \301\2\x0F\x58\110              KATMAI,SSE
+ADDSS           xmmreg,xmmreg           \3\xF3\x0F\x58\110              KATMAI,SSE
+ADDSS           xmmreg,mem              \301\3\xF3\x0F\x58\110          KATMAI,SSE
+
+MULPS           xmmreg,xmmreg           \2\x0F\x59\110                  KATMAI,SSE
+MULPS           xmmreg,mem              \301\2\x0F\x59\110              KATMAI,SSE
+MULSS           xmmreg,xmmreg           \3\xF3\x0F\x59\110              KATMAI,SSE
+MULSS           xmmreg,mem              \301\3\xF3\x0F\x59\110          KATMAI,SSE
+
+DIVPS           xmmreg,xmmreg           \2\x0F\x5E\110                  KATMAI,SSE
+DIVPS           xmmreg,mem              \301\2\x0F\x5E\110              KATMAI,SSE
+DIVSS           xmmreg,xmmreg           \3\xF3\x0F\x5E\110              KATMAI,SSE
+DIVSS           xmmreg,mem              \301\3\xF3\x0F\x5E\110          KATMAI,SSE
+
+SUBPS           xmmreg,xmmreg           \2\x0F\x5C\110                  KATMAI,SSE
+SUBPS           xmmreg,mem              \301\2\x0F\x5C\110              KATMAI,SSE
+SUBSS           xmmreg,xmmreg           \3\xF3\x0F\x5C\110              KATMAI,SSE
+SUBSS           xmmreg,mem              \301\3\xF3\x0F\x5C\110          KATMAI,SSE
+
+RCPPS           xmmreg,xmmreg           \2\x0F\x53\110                  KATMAI,SSE
+RCPPS           xmmreg,mem              \301\2\x0F\x53\110              KATMAI,SSE
+RCPSS           xmmreg,xmmreg           \3\xF3\x0F\x53\110              KATMAI,SSE
+RCPSS           xmmreg,mem              \301\3\xF3\x0F\x53\110          KATMAI,SSE
+
+RSQRTPS         xmmreg,xmmreg           \2\x0F\x52\110                  KATMAI,SSE
+RSQRTPS         xmmreg,mem              \301\2\x0F\x52\110              KATMAI,SSE
+RSQRTSS         xmmreg,xmmreg           \3\xF3\x0F\x52\110              KATMAI,SSE
+RSQRTSS         xmmreg,mem              \301\3\xF3\x0F\x52\110          KATMAI,SSE
+
+SQRTPS          xmmreg,xmmreg           \2\x0F\x51\110                  KATMAI,SSE
+SQRTPS          xmmreg,mem              \301\2\x0F\x51\110              KATMAI,SSE
+SQRTSS          xmmreg,xmmreg           \3\xF3\x0F\x51\110              KATMAI,SSE
+SQRTSS          xmmreg,mem              \301\3\xF3\x0F\x51\110          KATMAI,SSE
+
+ANDPS           xmmreg,xmmreg           \2\x0F\x54\110                  KATMAI,SSE
+ANDPS           xmmreg,mem              \301\2\x0F\x54\110              KATMAI,SSE
+ANDNPS          xmmreg,xmmreg           \2\x0F\x55\110                  KATMAI,SSE
+ANDNPS          xmmreg,mem              \301\2\x0F\x55\110              KATMAI,SSE
+ORPS            xmmreg,xmmreg           \2\x0F\x56\110                  KATMAI,SSE
+ORPS            xmmreg,mem              \301\2\x0F\x56\110              KATMAI,SSE
+XORPS           xmmreg,xmmreg           \2\x0F\x57\110                  KATMAI,SSE
+XORPS           xmmreg,mem              \301\2\x0F\x57\110              KATMAI,SSE
+
+MAXPS           xmmreg,xmmreg           \2\x0F\x5F\110                  KATMAI,SSE
+MAXPS           xmmreg,mem              \301\2\x0F\x5F\110              KATMAI,SSE
+MAXSS           xmmreg,xmmreg           \3\xF3\x0F\x5F\110              KATMAI,SSE
+MAXSS           xmmreg,mem              \301\3\xF3\x0F\x5F\110          KATMAI,SSE
+MINPS           xmmreg,xmmreg           \2\x0F\x5D\110                  KATMAI,SSE
+MINPS           xmmreg,mem              \301\2\x0F\x5D\110              KATMAI,SSE
+MINSS           xmmreg,xmmreg           \3\xF3\x0F\x5D\110              KATMAI,SSE
+MINSS           xmmreg,mem              \301\3\xF3\x0F\x5D\110          KATMAI,SSE
+
+CMPEQPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x00            KATMAI,SSE
+CMPEQPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x00        KATMAI,SSE
+CMPEQSS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x00        KATMAI,SSE
+CMPEQSS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\0x00   KATMAI,SSE
+
+CMPLTPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x01            KATMAI,SSE
+CMPLTPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x01        KATMAI,SSE
+CMPLTSS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x01        KATMAI,SSE
+CMPLTSS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x01    KATMAI,SSE
+
+CMPLEPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x02            KATMAI,SSE
+CMPLEPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x02        KATMAI,SSE
+CMPLESS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x02        KATMAI,SSE
+CMPLESS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x02    KATMAI,SSE
+
+CMPUNORDPS      xmmreg,xmmreg           \2\x0F\xC2\110\1\x03            KATMAI,SSE
+CMPUNORDPS      xmmreg,mem              \301\2\x0F\xC2\110\1\x03        KATMAI,SSE
+CMPUNORDSS      xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x03        KATMAI,SSE
+CMPUNORDSS      xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x03    KATMAI,SSE
+
+CMPNEQPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x04            KATMAI,SSE
+CMPNEQPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x04        KATMAI,SSE
+CMPNEQSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x04        KATMAI,SSE
+CMPNEQSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x04    KATMAI,SSE
+
+CMPNLTPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x05            KATMAI,SSE
+CMPNLTPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x05        KATMAI,SSE
+CMPNLTSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x05        KATMAI,SSE
+CMPNLTSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x05    KATMAI,SSE
+
+CMPNLEPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x06            KATMAI,SSE
+CMPNLEPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x06        KATMAI,SSE
+CMPNLESS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x06        KATMAI,SSE
+CMPNLESS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x06    KATMAI,SSE
+
+CMPORDPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x07            KATMAI,SSE
+CMPORDPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x07        KATMAI,SSE
+CMPORDSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x07        KATMAI,SSE
+CMPORDSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x07    KATMAI,SSE
+
+UCOMISS         xmmreg,xmmreg           \2\x0F\x2E\110                  KATMAI,SSE
+UCOMISS         xmmreg,mem              \301\2\x0F\x2E\110              KATMAI,SSE
+COMISS          xmmreg,xmmreg           \2\x0F\x2F\110                  KATMAI,SSE
+COMISS          xmmreg,mem              \301\2\x0F\x2F\110              KATMAI,SSE
+
+CVTPI2PS        xmmreg,mmxreg           \2\x0F\x2A\110                  KATMAI,SSE,MMX
+CVTPI2PS        xmmreg,mem              \301\2\x0F\x2A\110              KATMAI,SSE,MMX
+CVTPS2PI        mmxreg,xmmreg           \2\x0F\x2D\110                  KATMAI,SSE,MMX
+CVTPS2PI        mmxreg,mem              \301\2\x0F\x2D\110              KATMAI,SSE,MMX
+CVTTPS2PI       mmxreg,xmmreg           \2\x0F\x2C\110                  KATMAI,SSE,MMX
+CVTTPS2PI       mmxreg,mem              \301\2\x0F\x2C\110              KATMAI,SSE,MMX
+
+CVTSI2SS        xmmreg,reg32            \3\xF3\x0F\x2A\110              KATMAI,SSE
+CVTSI2SS        xmmreg,mem              \301\3\xF3\x0F\x2A\110          KATMAI,SSE
+CVTSS2SI        reg32,xmmreg            \3\xF3\x0F\x2D\110              KATMAI,SSE
+CVTSS2SI        reg32,mem               \301\3\xF3\x0F\x2D\110          KATMAI,SSE
+CVTTSS2SI       reg32,xmmreg            \3\xF3\x0F\x2C\110              KATMAI,SSE
+CVTTSS2SI       reg32,mem               \301\xF3\3\x0F\x2C\110          KATMAI,SSE
+
+; FXSAVE/FXRSTOR were introduced in Deschutes
+FXSAVE          mem                     \300\2\x0F\xAE\200              P6,SSE,FPU
+FXRSTOR         mem                     \300\2\x0F\xAE\201              P6,SSE,FPU
+LDMXCSR         mem                     \300\2\x0F\xAE\202              KATMAI,SSE
+STMXCSR         mem                     \300\2\x0F\xAE\203              KATMAI,SSE
+
+; These instructions aren't SSE-specific; they are generic memory operations
+; and work even if CR4.OSFXFR == 0
+SFENCE          void                    \3\x0F\xAE\xF8                  KATMAI
+
+PREFETCHNTA     mem                     \300\2\x0F\x18\200              KATMAI,SM
+PREFETCHT0      mem                     \300\2\x0F\x18\201              KATMAI,SM
+PREFETCHT1      mem                     \300\2\x0F\x18\202              KATMAI,SM
+PREFETCHT2      mem                     \300\2\x0F\x18\203              KATMAI,SM
+
+MOVAPS          xmmreg,xmmreg           \2\x0F\x28\110                  KATMAI,SSE
+MOVAPS          xmmreg,mem              \301\2\x0F\x28\110              KATMAI,SSE
+MOVAPS          xmmreg,xmmreg           \2\x0F\x29\101                  KATMAI,SSE
+MOVAPS          mem,xmmreg              \300\2\x0F\x29\101              KATMAI,SSE
+
+MOVHPS          xmmreg,xmmreg           \2\x0F\x16\110                  KATMAI,SSE
+MOVHPS          xmmreg,mem              \301\2\x0F\x16\110              KATMAI,SSE
+MOVHPS          xmmreg,xmmreg           \2\x0F\x17\101                  KATMAI,SSE
+MOVHPS          mem,xmmreg              \300\2\x0F\x17\101              KATMAI,SSE
+
+MOVLPS          xmmreg,xmmreg           \2\x0F\x12\110                  KATMAI,SSE
+MOVLPS          xmmreg,mem              \301\2\x0F\x12\110              KATMAI,SSE
+MOVLPS          xmmreg,xmmreg           \2\x0F\x13\101                  KATMAI,SSE
+MOVLPS          mem,xmmreg              \300\2\x0F\x13\101              KATMAI,SSE
+
+MOVUPS          xmmreg,xmmreg           \2\x0F\x10\110                  KATMAI,SSE
+MOVUPS          xmmreg,mem              \301\2\x0F\x10\110              KATMAI,SSE
+MOVUPS          xmmreg,xmmreg           \2\x0F\x11\101                  KATMAI,SSE
+MOVUPS          mem,xmmreg              \300\2\x0F\x11\101              KATMAI,SSE
+
+MOVSS           xmmreg,xmmreg           \3\xF3\x0F\x10\110              KATMAI,SSE
+MOVSS           xmmreg,mem              \301\3\xF3\x0F\x10\110          KATMAI,SSE
+MOVSS           xmmreg,xmmreg           \3\xF3\x0F\x11\101              KATMAI,SSE
+MOVSS           mem,xmmreg              \300\3\xF3\x0F\x11\101          KATMAI,SSE
+
+MOVMSKPS        reg32,xmmreg            \2\x0F\x50\110                  KATMAI,SSE
+
+MOVNTPS         mem,xmmreg              \2\x0F\x2B\101                  KATMAI,SSE
+
+SHUFPS          xmmreg,xmmreg,imm8      \2\x0F\xC6\110\22               KATMAI,SSE
+SHUFPS		xmmreg,mem,imm8		\301\2\x0F\xC6\110\22		KATMAI,SSE
+
+UNPCKHPS        xmmreg,xmmreg           \2\x0F\x15\110                  KATMAI,SSE
+UNPCKHPS        xmmreg,mem              \301\2\x0F\x15\110              KATMAI,SSE
+UNPCKLPS        xmmreg,xmmreg           \2\x0F\x14\110                  KATMAI,SSE
+UNPCKLPS        xmmreg,mem              \301\2\x0F\x14\110              KATMAI,SSE
+
+; New MMX instructions introduced in Katmai
+MOVNTQ          mem,mmxreg              \2\x0F\xE7\101                  KATMAI,MMX,SM
+PAVGB           mmxreg,mmxreg		\2\x0F\xE0\110			KATMAI,MMX
+PAVGB           mmxreg,mem		\301\2\x0F\xE0\110		KATMAI,MMX,SM
+PAVGW           mmxreg,mmxreg		\2\x0F\xE3\110			KATMAI,MMX
+PAVGW           mmxreg,mem		\301\2\x0F\xE3\110		KATMAI,MMX,SM
+PEXTRW          reg32,mmxreg,imm8	\2\x0F\xC5\110\22		KATMAI,MMX
+; This is documented as using a reg32, but it's really using only 16 bits -- accept either
+PINSRW          mmxreg,reg16,imm8	\2\x0F\xC4\110\22		KATMAI,MMX
+PINSRW          mmxreg,reg32,imm8	\2\x0F\xC4\110\22		KATMAI,MMX
+PINSRW          mmxreg,mem16,imm8	\301\2\x0F\xC4\110\22		KATMAI,MMX,SM
+PMAXSW          mmxreg,mmxreg		\2\x0F\xEE\110			KATMAI,MMX
+PMAXSW		mmxreg,mem		\301\2\x0F\xEE\110		KATMAI,MMX,SM
+PMAXUB          mmxreg,mmxreg		\2\x0F\xDE\110			KATMAI,MMX
+PMAXUB		mmxreg,mem		\301\2\x0F\xDE\110		KATMAI,MMX,SM
+PMINSW          mmxreg,mmxreg		\2\x0F\xEA\110			KATMAI,MMX
+PMINSW		mmxreg,mem		\301\2\x0F\xEA\110		KATMAI,MMX,SM
+PMINUB          mmxreg,mmxreg		\2\x0F\xDA\110			KATMAI,MMX
+PMINUB		mmxreg,mem		\301\2\x0F\xDA\110		KATMAI,MMX,SM
+PMOVMSKB        reg32,mmxreg		\2\x0F\xD7\110			KATMAI,MMX
+PMULHUW         mmxreg,mmxreg		\2\x0F\xE4\110			KATMAI,MMX
+PMULHUW		mmxreg,mem		\301\2\x0F\xE4\110		KATMAI,MMX,SM
+PSADBW          mmxreg,mmxreg		\2\x0F\xF6\110			KATMAI,MMX
+PSADBW 		mmxreg,mem		\301\2\x0F\xF6\110		KATMAI,MMX,SM
+PSHUFW          mmxreg,mmxreg,imm8	\2\x0F\x70\110\22		KATMAI,MMX
+PSHUFW          mmxreg,mem,imm8		\301\2\x0F\x70\110\22		KATMAI,MMX,SM
+MASKMOVQ        mmxreg,mmxreg		\2\x0F\xF7\110			KATMAI,MMX

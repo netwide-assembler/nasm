@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include "insns.h"
 #include "nasm.h"
 #include "nasmlib.h"
 #include "sync.h"
@@ -21,14 +22,15 @@
 
 static const char *help =
 "usage: ndisasm [-a] [-i] [-h] [-r] [-u] [-b bits] [-o origin] [-s sync...]\n"
-"               [-e bytes] [-k start,bytes] file\n"
+"               [-e bytes] [-k start,bytes] [-p vendor] file\n"
 "   -a or -i activates auto (intelligent) sync\n"
 "   -u sets USE32 (32-bit mode)\n"
 "   -b 16 or -b 32 sets number of bits too\n"
 "   -h displays this text\n"
 "   -r displays the version number\n"
 "   -e skips <bytes> bytes of header\n"
-"   -k avoids disassembling <bytes> bytes from position <start>\n";
+"   -k avoids disassembling <bytes> bytes from position <start>\n"
+"   -p selects the preferred vendor instruction set (intel, amd, cyrix)\n";
 
 static void output_ins (unsigned long, unsigned char *, int, char *);
 static void skip (unsigned long dist, FILE *fp);
@@ -44,6 +46,7 @@ int main(int argc, char **argv)
     int autosync = FALSE;
     int bits = 16;
     int eof = FALSE;
+    unsigned long prefer = 0;
     int rn_error;
     long offset;
     FILE *fp;
@@ -157,6 +160,24 @@ int main(int argc, char **argv)
 		add_sync (nextsync, synclen);
 		p = "";		       /* force to next argument */
 		break;
+	    case 'p':		       /* preferred vendor */
+		v = p[1] ? p+1 : --argc ? *++argv : NULL;
+		if (!v) {
+		    fprintf(stderr, "%s: `-p' requires an argument\n", pname);
+		    return 1;
+		}
+		if ( !strcmp(v, "intel") ) {
+		  prefer = 0;	/* Default */
+		} else if ( !strcmp(v, "amd") ) {
+		  prefer = IF_AMD|IF_3DNOW;
+		} else if ( !strcmp(v, "cyrix") ) {
+		  prefer = IF_CYRIX|IF_3DNOW;
+		} else {
+		  fprintf(stderr, "%s: unknown vendor `%s' specified with `-p'\n", pname, v);
+		  return 1;
+		}
+		p = "";		       /* force to next argument */
+		break;
 	    }
 	} else if (!filename) {
 	    filename = p;
@@ -213,7 +234,7 @@ int main(int argc, char **argv)
 	    nextsync = next_sync (offset, &synclen);
 	}
 	while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
-	    lendis = disasm (q, outbuf, bits, offset, autosync);
+	    lendis = disasm (q, outbuf, bits, offset, autosync, prefer);
 	    if (!lendis || lendis > (p - q) ||
 		lendis > nextsync-offset)
 		lendis = eatbyte (q, outbuf);

@@ -2,6 +2,30 @@ This is a modified version of NASM, modified and released by H. Peter
 Anvin <hpa@zytor.com>; it is not the original form released by the
 NASM authors.
 
+For release 0.98p3.5:
+
+* Merged in changes from John S. Fine's 0.98-J5 release.  John's based
+  0.98-J5 on my 0.98p3.3 release; this merges the changes.
+* Expanded the instructions flag field to a long so we can fit more
+  flags; mark SSE (KNI) and AMD or Katmai-specific instructions as
+  such.
+* Fix the "PRIV" flag on a bunch of instructions, and create new
+  "PROT" flag for protected-mode-only instructions (orthogonal to if
+  the instruction is privileged!) and new "SMM" flag for SMM-only
+  instructions.
+* Added AMD-only SYSCALL and SYSRET instructions.
+* Make SSE actually work, and add new Katmai MMX instructions.
+* Added a -p (preferred vendor) option to ndisasm so that it can
+  distinguish e.g. Cyrix opcodes also used in SSE.  For example:
+
+	ndisasm -p cyrix aliased.bin
+	00000000  670F514310        paddsiw mm0,[ebx+0x10]
+	00000005  670F514320        paddsiw mm0,[ebx+0x20]
+	ndisasm -p intel aliased.bin
+	00000000  670F514310        sqrtps xmm0,[ebx+0x10]
+	00000005  670F514320        sqrtps xmm0,[ebx+0x20]
+* Added a bunch of Cyrix-specific instructions.
+
 For release 0.98p3.4:
 
 * Made at least an attempt to modify all the additional Makefiles (in

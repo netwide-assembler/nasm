@@ -28,7 +28,8 @@ static long reg_flags[] = {	       /* sizes and special flags */
     MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG,
     REG16, REG16, REG_DESS, FPU0, FPUREG, FPUREG, FPUREG, FPUREG,
     FPUREG, FPUREG, FPUREG, REG_TREG, REG_TREG, REG_TREG, REG_TREG,
-    REG_TREG
+    REG_TREG,
+    XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG
 };
 
 enum {				       /* special tokens */

@@ -14,7 +14,7 @@ struct itemplate {
     int operands;		       /* number of operands */
     long opd[3];		       /* bit flags for operand types */
     char *code;			       /* the code it assembles to */
-    int flags;			       /* some flags */
+    unsigned long flags;	       /* some flags */
 };
 
 /*
@@ -44,23 +44,30 @@ struct itemplate {
  * required to have unspecified size in the instruction too...)
  */
 
-#define IF_SM     0x0001	       /* size match */
-#define IF_SM2    0x0002	       /* size match first two operands */
-#define IF_SB     0x0004	       /* unsized operands can't be non-byte */
-#define IF_SW     0x0008	       /* unsized operands can't be non-word */
-#define IF_SD     0x0010	       /* unsized operands can't be nondword */
-#define IF_8086   0x0000	       /* 8086 instruction */
-#define IF_186    0x0100	       /* 186+ instruction */
-#define IF_286    0x0200	       /* 286+ instruction */
-#define IF_386    0x0300	       /* 386+ instruction */
-#define IF_486    0x0400	       /* 486+ instruction */
-#define IF_PENT   0x0500	       /* Pentium instruction */
-#define IF_P6     0x0600	       /* P6 instruction */
-#define IF_CYRIX  0x0800	       /* Cyrix-specific instruction */
-#define IF_PMASK  0x0F00	       /* the mask for processor types */
-#define IF_PRIV   0x1000	       /* it's a privileged instruction */
-#define IF_UNDOC  0x2000	       /* it's an undocumented instruction */
-#define IF_FPU    0x4000	       /* it's an FPU instruction */
-#define IF_MMX    0x8000	       /* it's an MMX instruction */
+#define IF_SM     0x00000001UL	       /* size match */
+#define IF_SM2    0x00000002UL	       /* size match first two operands */
+#define IF_SB     0x00000004UL	       /* unsized operands can't be non-byte */
+#define IF_SW     0x00000008UL	       /* unsized operands can't be non-word */
+#define IF_SD     0x00000010UL	       /* unsized operands can't be nondword */
+#define IF_PRIV   0x00000100UL	       /* it's a privileged instruction */
+#define IF_SMM    0x00000200UL	       /* it's only valid in SMM */
+#define IF_PROT   0x00000400UL         /* it's protected mode only */
+#define IF_UNDOC  0x00001000UL	       /* it's an undocumented instruction */
+#define IF_FPU    0x00002000UL	       /* it's an FPU instruction */
+#define IF_MMX    0x00004000UL	       /* it's an MMX instruction */
+#define IF_3DNOW  0x00008000UL	       /* it's a 3DNow! instruction */
+#define IF_SSE    0x00010000UL	       /* it's a SSE (KNI, MMX2) instruction */
+#define IF_PMASK  0xFF000000UL	       /* the mask for processor types */
+#define IF_PFMASK 0xF001FF00UL	       /* the mask for disassembly "prefer" */
+#define IF_8086   0x00000000UL	       /* 8086 instruction */
+#define IF_186    0x01000000UL	       /* 186+ instruction */
+#define IF_286    0x02000000UL	       /* 286+ instruction */
+#define IF_386    0x03000000UL	       /* 386+ instruction */
+#define IF_486    0x04000000UL	       /* 486+ instruction */
+#define IF_PENT   0x05000000UL	       /* Pentium instruction */
+#define IF_P6     0x06000000UL	       /* P6 instruction */
+#define IF_KATMAI 0x07000000UL         /* Katmai instructions */
+#define IF_CYRIX  0x10000000UL	       /* Cyrix-specific instruction */
+#define IF_AMD    0x20000000UL	       /* AMD-specific instruction */
 
 #endif

@@ -98,6 +98,19 @@ forwardref:
 %endmacro
 xxx yyy
 
+;-----------------------------------------------------------------------------
+; Bug added by John in preproc.c 0.98-J4, removed by John in 0.98-J5
+;
+; Tested here to make sure it stays removed
+;
+%macro TestElse 1
+%if %1=0
+%elif %1=1
+nop
+%endif
+%endmacro
+TestElse 1
+
 %ifdef oldmsg
 ;***************************************************************
 ;
@@ -280,9 +293,20 @@ arg_example2 arg2
 	ud2
 	sysenter
 	sysexit
+	syscall
+	sysret
 	fxsave [ebx]
 	fxrstor [es:ebx+esi*4+0x3000]
 
+;-----------------------------------------------------------------------------
+; Enhancement by hpa in insns.dat et al
+;
+; Actually make SSE work, and use the -p option to ndisasm to select
+; one of several aliased opcodes
+;
+	sqrtps xmm0,[ebx+10]	; SSE opcode
+	paddsiw mm0,[ebx+10]	; Cyrix opcode with the same byte seq.
+	
 %endif
 
 %ifdef oldcrash  ;*************************************************************

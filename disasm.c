@@ -53,6 +53,8 @@ static int whichreg(long regflags, int regval)
 	R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5, R_ST6, R_ST7 };
     static int mmxreg[] = {
 	R_MM0, R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7 };
+    static int xmmreg[] = {
+	R_XMM0, R_XMM1, R_XMM2, R_XMM3, R_XMM4, R_XMM5, R_XMM6, R_XMM7 };
 
     if (!(REG_AL & ~regflags))
 	return R_AL;
@@ -96,6 +98,8 @@ static int whichreg(long regflags, int regval)
 	return fpureg[regval];
     if (!(MMXREG & ~regflags))
 	return mmxreg[regval];
+    if (!(XMMREG & ~regflags))
+	return xmmreg[regval];
     return 0;
 }
 
@@ -445,15 +449,16 @@ static int matches (unsigned char *r, unsigned char *data, int asize,
 }
 
 long disasm (unsigned char *data, char *output, int segsize, long offset,
-	     int autosync) 
+	     int autosync, unsigned long prefer)
 {
-    struct itemplate **p;
-    int length = 0;
+    struct itemplate **p, **best_p;
+    int length, best_length = 0;
     char *segover;
     int rep, lock, asize, osize, i, slen, colon;
     unsigned char *origdata;
     int works;
     insn ins;
+    unsigned long goodness, best;
 
     /*
      * Scan for prefixes.
@@ -489,44 +494,54 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
     ins.oprs[0].addr_size = ins.oprs[1].addr_size = ins.oprs[2].addr_size =
 	(segsize == 16 ? 0 : SEG_32BIT);
     ins.condition = -1;
-    works = TRUE;
-    for (p = itable[*data]; *p; p++)
-	if ( (length = matches((unsigned char *)((*p)->code), data,
-			       asize, osize, segsize, &ins)) ) 
-	{
-	    works = TRUE;
-	    /*
-	     * Final check to make sure the types of r/m match up.
-	     */
-	    for (i = 0; i < (*p)->operands; i++)
-		if (
-		    
-		    /* If it's a mem-only EA but we have a register, die. */
-		    ((ins.oprs[i].segment & SEG_RMREG) &&
-		     !(MEMORY & ~(*p)->opd[i])) ||
-		    
-		    /* If it's a reg-only EA but we have a memory ref, die. */
-		    (!(ins.oprs[i].segment & SEG_RMREG) &&
-		     !(REGNORM & ~(*p)->opd[i]) &&
-		     !((*p)->opd[i] & REG_SMASK)) ||
-
-		    /* Register type mismatch (eg FS vs REG_DESS): die. */
-		    ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
-		      (ins.oprs[i].segment & SEG_RMREG)) &&
-		     !whichreg ((*p)->opd[i], ins.oprs[i].basereg)))
-		{
-		    works = FALSE;
-		    /*
-		     * FIXME: can we do a break here?
-		     */
-		}
-
-	    if (works)
-		break;
+    best = ~0UL;		/* Worst possible */
+    best_p = NULL;
+    for (p = itable[*data]; *p; p++) {
+      if ( (length = matches((unsigned char *)((*p)->code), data,
+			     asize, osize, segsize, &ins)) ) {
+	works = TRUE;
+	/*
+	 * Final check to make sure the types of r/m match up.
+	 */
+	for (i = 0; i < (*p)->operands; i++) {
+	  if (
+	      
+	      /* If it's a mem-only EA but we have a register, die. */
+	      ((ins.oprs[i].segment & SEG_RMREG) &&
+	       !(MEMORY & ~(*p)->opd[i])) ||
+	      
+	      /* If it's a reg-only EA but we have a memory ref, die. */
+	      (!(ins.oprs[i].segment & SEG_RMREG) &&
+	       !(REGNORM & ~(*p)->opd[i]) &&
+	       !((*p)->opd[i] & REG_SMASK)) ||
+	      
+	      /* Register type mismatch (eg FS vs REG_DESS): die. */
+	      ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
+		(ins.oprs[i].segment & SEG_RMREG)) &&
+	       !whichreg ((*p)->opd[i], ins.oprs[i].basereg))) {
+	    works = FALSE;
+	    break;
+	  }
+	}  
+	
+	if (works) {
+	  goodness = ((*p)->flags & IF_PFMASK) ^ prefer;
+	  if ( goodness < best ) {
+	    /* This is the best one found so far */
+	    best = goodness;
+	    best_p = p;
+	    best_length = length;
+	  }
 	}
+      }
+    }
 
-    if (!length || !works)
+    if (!best_p )
 	return 0;		       /* no instruction was matched */
+
+    /* Pick the best match */
+    p = best_p;
+    length = best_length;
 
     slen = 0;
 

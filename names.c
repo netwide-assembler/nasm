@@ -14,7 +14,8 @@ static char *reg_names[] = {	       /* register names, as strings */
     "ebx", "ecx", "edi", "edx", "es", "esi", "esp", "fs", "gs",
     "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7", "si",
     "sp", "ss", "st0", "st1", "st2", "st3", "st4", "st5", "st6",
-    "st7", "tr3", "tr4", "tr5", "tr6", "tr7"
+    "st7", "tr3", "tr4", "tr5", "tr6", "tr7",
+    "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7"
 };
 
 static char *conditions[] = {	       /* condition code names */

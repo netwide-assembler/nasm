@@ -12,7 +12,7 @@
 #define INSN_MAX 32	/* one instruction can't be longer than this */
 
 long disasm (unsigned char *data, char *output, int segsize, long offset,
-	     int autosync);
+	     int autosync, unsigned long prefer);
 long eatbyte (unsigned char *data, char *output);
 
 #endif
