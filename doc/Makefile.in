@@ -19,7 +19,7 @@ INSTALL_DATA	= @INSTALL_DATA@
 PERL		= perl
 MAKEINFO	= makeinfo
 TEXI2DVI        = texi2dvi
-PS2PDF          = ps2pdf	# Part of GhostScript
+PS2PDF          = ps2pdf -dOptimize=true	# Part of GhostScript
 
 SRCS		= nasmdoc.src
 OUT		= nasm.info nasmdoc.ps nasmdoc.pdf
