@@ -28,7 +28,7 @@
  * \50, \51, \52 - a byte relative operand, from operand 0, 1 or 2
  * \60, \61, \62 - a word relative operand, from operand 0, 1 or 2
  * \64, \65, \66 - select between \6[012] and \7[012] depending on 16/32 bit
- *                 assembly mode or the address-size override on the operand
+ *                 assembly mode or the operand-size override on the operand
  * \70, \71, \72 - a long relative operand, from operand 0, 1 or 2
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
@@ -601,8 +601,11 @@ static long calcsize (long segment, long offset, int bits,
       case 060: case 061: case 062:
 	length += 2; break;
       case 064: case 065: case 066:
-	length += ((ins->oprs[c-064].addr_size ?
-		    ins->oprs[c-064].addr_size : bits) == 16 ? 2 : 4); break;
+	if ( ins->oprs[c-064].type & (BITS16|BITS32) )
+	  length += (ins->oprs[c-064].type & BITS16) ? 2 : 4;
+	else
+	  length += (bits == 16) ? 2 : 4;
+	break;
       case 070: case 071: case 072:
 	length += 4; break;
       case 0130: case 0131: case 0132:		
@@ -849,14 +852,15 @@ static void gencode (long segment, long offset, int bits,
 	    break;
 
 	case 064: case 065: case 066:
-	    size = ((ins->oprs[c-064].addr_size ?
-		     ins->oprs[c-064].addr_size : bits) == 16 ? 2 : 4);
+	    if ( ins->oprs[c-064].type & (BITS16|BITS32) )
+	      size = (ins->oprs[c-064].type & BITS16) ? 2 : 4;
+	    else
+	      size = (bits == 16) ? 2 : 4;
 	    if (ins->oprs[c-064].segment != segment) {
+	        long reltype = (size == 2 ? OUT_REL2ADR : OUT_REL4ADR);
 		data = ins->oprs[c-064].offset;
-		size = (bits == 16 ? OUT_REL2ADR : OUT_REL4ADR);
-		out (offset, segment, &data, size+insn_end-offset,
+		out (offset, segment, &data, reltype+insn_end-offset,
 		     ins->oprs[c-064].segment, ins->oprs[c-064].wrt);
-		size = (bits == 16 ? 2 : 4);
 	    } else {
 		data = ins->oprs[c-064].offset - insn_end;
 		out (offset, segment, &data,

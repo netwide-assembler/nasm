@@ -360,15 +360,18 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	if (c >= 064 && c <= 066) {
 	    ins->oprs[c-064].offset = *data++;
 	    ins->oprs[c-064].offset |= (*data++ << 8);
-	    if (asize == 32) {
+	    if (osize == 32) {
 		ins->oprs[c-064].offset |= (((long) *data++) << 16);
 		ins->oprs[c-064].offset |= (((long) *data++) << 24);
 		ins->oprs[c-064].segment |= SEG_32BIT;
 	    } else
 		ins->oprs[c-064].segment &= ~SEG_32BIT;
 	    ins->oprs[c-064].segment |= SEG_RELATIVE;
-	    if (segsize != asize)
-		ins->oprs[c-064].addr_size = asize;
+	    if (segsize != osize) {
+	        ins->oprs[c-064].type =
+		    (ins->oprs[c-064].type & NON_SIZE)
+		    | ((osize == 16) ? BITS16 : BITS32);
+	    }
 	}
 	if (c >= 070 && c <= 072) {
 	    ins->oprs[c-070].offset = *data++;

@@ -1,3 +1,15 @@
+0.98.33
+-------
+* New __NASM_PATCHLEVEL__ and __NASM_VERSION_ID__ standard macros to
+  round out the version-query macros.  version.pl now understands
+  X.YYplWW or X.YY.ZZplWW as a version number, equivalent to
+  X.YY.ZZ.WW (or X.YY.0.WW, as appropriate).
+* New keyword "strict" to disable the optimization of a specific
+  operand.
+* Fix the handing of size overrides with JMP instructions
+  (instructions such as "jmp dword foo".)
+
+
 0.98.32
 -------
 
