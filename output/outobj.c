@@ -966,7 +966,7 @@ fprintf(stderr, " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 	eb->next = NULL;
 	ebtail = &eb->next;
     }
-    while (i > EXT_BLKSIZ) {
+    while (i >= EXT_BLKSIZ) {
 	if (eb && eb->next)
 	    eb = eb->next;
 	else {
