@@ -1,4 +1,4 @@
-;; NASM note: this file abuses the section directives in such a way that
+;; NASM note: this file abuses the section flags in such a way that
 ;; NASM 0.98.37 broke when this was compiled with:
 ;; nasm -o tmap.o -f elf -DLINUX tmap.nas
 
@@ -20,8 +20,8 @@
 ;;
 ;;
 ;; $Log$
-;; Revision 1.1  2003/09/08 22:59:45  hpa
-;; More test files...
+;; Revision 1.2  2003/09/10 23:33:38  hpa
+;; Use the version of tmap.nas that actually caused problems
 ;;
 ;; Revision 1.10  2001/02/24 13:35:21  bpereira
 ;; no message
@@ -72,7 +72,7 @@
 [global %1]
 %endmacro
 
-%define CODE_SEG .rwtext
+%define CODE_SEG .data
 %else
 %macro cextern 1
 %define %1 _%1
@@ -137,7 +137,7 @@ loopcount       dd      0
 pixelcount      dd      0
 tystep          dd      0
 
-[SECTION CODE_SEG write exec]
+[SECTION CODE_SEG write]
 
 ;----------------------------------------------------------------------------
 ;fixed_t FixedMul (fixed_t a, fixed_t b)
@@ -877,7 +877,7 @@ shdone:
 
 oldcolormap     dd      0
 
-[SECTION CODE_SEG write exec]
+[SECTION CODE_SEG write]
 
 cglobal R_DrawSpan_8
 R_DrawSpan_8:
@@ -971,7 +971,7 @@ align 4
 obelix          dd      0
 etaussi         dd      0
 
-[SECTION .text]
+[SECTION CODE_SEG]
 
 cglobal R_DrawSpan_8_old
 R_DrawSpan_8_old:
@@ -1108,7 +1108,7 @@ align 4
 ;;  Uses:  extern struct rastery *_rastertab;
 ;;
 
-[SECTION CODE_SEG write exec]
+[SECTION CODE_SEG write]
 
 MINX            EQU    0
 MAXX            EQU    4
