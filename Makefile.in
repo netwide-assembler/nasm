@@ -131,7 +131,6 @@ distclean: clean
 	rm -f output/*~ output/*.bak
 	rm -f test/*.lst test/*.bin test/*.$(O) test/*.bin
 	rm -rf autom4te*.cache
-	rm -f doc/Makefile doc/*~ doc/*.bak
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
@@ -139,6 +138,7 @@ cleaner: clean
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
+	rm -f doc/Makefile doc/*~ doc/*.bak
 
 strip:
 	strip --strip-unneeded nasm$(X) ndisasm$(X)
