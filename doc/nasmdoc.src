@@ -1611,7 +1611,8 @@ character into a single line.  Thus:
 \c %define THIS_VERY_LONG_MACRO_NAME_IS_DEFINED_TO \\
 \c         THIS_VALUE
 
-will work as expected.
+will work like a single-line macro without the backslash-newline
+sequence.
 
 \H{slmacro} \i{Single-Line Macros}
 
@@ -3076,6 +3077,39 @@ each \c{%local} variable declared. It then may be used in
 the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
+\H{otherpreproc} \i{Other Preprocessor Directives}
+
+The following preprocessor directive is supported to allow NASM to
+correctly handle output of the cpp C language preprocessor.
+
+\b\c{%line}  (see \k{line})
+
+\S{line} \i\c{%line} Directive
+
+The \c{%line} directive is used to notify NASM that the input line
+corresponds to a specific line number in another file.  Typically
+this other file would be an original source file, with the current
+NASM input being the output of a pre-processor.  The \c{%line}
+directive allows NASM to output messages which indicate the line
+number of the original source file, instead of the file that is being
+read by NASM.
+
+This preprocessor directive is not generally of use to programmers,
+by may be of interest to preprocessor authors.  The usage of the
+\c{%line} preprocessor directive is as follows:
+
+\c %line nnn[+mmm] [filename]
+
+In this directive, \c{nnn} indentifies the line of the original source
+file which this line corresponds to.  \c{mmm} is an optional parameter
+which specifies a line increment value; each line of the input file
+read in is considered to correspond to \c{mmm} lines of the original
+source file.  Finally, \c{filename} is an optional parameter which
+specifies the file name of the original source file.
+
+After reading a \c{%line} preprocessor directive, NASM will report
+all file name and line numbers relative to the values specified
+therein.
 
 \C{directive} \i{Assembler Directives}
 
