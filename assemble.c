@@ -22,9 +22,11 @@
  * \24, \25, \26 - an unsigned byte immediate operand, from operand 0, 1 or 2
  * \30, \31, \32 - a word immediate operand, from operand 0, 1 or 2
  * \34, \35, \36 - select between \3[012] and \4[012] depending on 16/32 bit
- *                 assembly mode or the address-size override on the operand
+ *                 assembly mode or the operand-size override on the operand
  * \37           - a word constant, from the _segment_ part of operand 0
  * \40, \41, \42 - a long immediate operand, from operand 0, 1 or 2
+ * \44, \45, \46 - select between \3[012] and \4[012] depending on 16/32 bit
+ *                 assembly mode or the address-size override on the operand
  * \50, \51, \52 - a byte relative operand, from operand 0, 1 or 2
  * \60, \61, \62 - a word relative operand, from operand 0, 1 or 2
  * \64, \65, \66 - select between \6[012] and \7[012] depending on 16/32 bit
@@ -590,12 +592,18 @@ static long calcsize (long segment, long offset, int bits,
       case 030: case 031: case 032:
 	length += 2; break;
       case 034: case 035: case 036:
-	length += ((ins->oprs[c-034].addr_size ?
-		    ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4); break;
+	if ( ins->oprs[c-034].type & (BITS16|BITS32) )
+	  length += (ins->oprs[c-034].type & BITS16) ? 2 : 4;
+	else
+	  length += (bits == 16) ? 2 : 4;
+	break;
       case 037:
 	length += 2; break;
       case 040: case 041: case 042:
 	length += 4; break;
+      case 044: case 045: case 046:
+	length += ((ins->oprs[c-044].addr_size ?
+		    ins->oprs[c-044].addr_size : bits) == 16 ? 2 : 4); break;
       case 050: case 051: case 052:
 	length++; break;
       case 060: case 061: case 062:
@@ -799,9 +807,11 @@ static void gencode (long segment, long offset, int bits,
 	    break;
 
 	case 034: case 035: case 036:
+	    if ( ins->oprs[c-034].type & (BITS16|BITS32) )
+	      size = (ins->oprs[c-034].type & BITS16) ? 2 : 4;
+	    else
+	      size = (bits == 16) ? 2 : 4;
 	    data = ins->oprs[c-034].offset;
-	    size = ((ins->oprs[c-034].addr_size ?
-		     ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4);
 	    if (size==2 && (data < -65536L || data > 65535L))
 		errfunc (ERR_WARNING, "word value exceeds bounds");
 	    out (offset, segment, &data, OUT_ADDRESS+size,
@@ -825,6 +835,17 @@ static void gencode (long segment, long offset, int bits,
 	    out (offset, segment, &data, OUT_ADDRESS+4,
 		 ins->oprs[c-040].segment, ins->oprs[c-040].wrt);
 	    offset += 4;
+	    break;
+
+	case 044: case 045: case 046:
+	    data = ins->oprs[c-044].offset;
+	    size = ((ins->oprs[c-044].addr_size ?
+		     ins->oprs[c-044].addr_size : bits) == 16 ? 2 : 4);
+	    if (size==2 && (data < -65536L || data > 65535L))
+		errfunc (ERR_WARNING, "word value exceeds bounds");
+	    out (offset, segment, &data, OUT_ADDRESS+size,
+		 ins->oprs[c-044].segment, ins->oprs[c-044].wrt);
+	    offset += size;
 	    break;
 
 	case 050: case 051: case 052:
