@@ -387,8 +387,9 @@ FXCH      void                \2\xD9\xC9                    8086,FPU
 FXCH      fpureg              \1\xD9\10\xC8                 8086,FPU
 FXCH      fpureg,fpu0         \1\xD9\10\xC8                 8086,FPU
 FXCH      fpu0,fpureg         \1\xD9\11\xC8                 8086,FPU
-FXRSTOR   mem                 \300\2\x0F\xAE\202            P6,FPU
-FXSAVE    mem                 \300\2\x0F\xAE\200            P6,FPU
+; these are KNI instructions and FXRSTOR should be \201 at the end
+;FXRSTOR   mem                 \300\2\x0F\xAE\202            P6,FPU
+;FXSAVE    mem                 \300\2\x0F\xAE\200            P6,FPU
 FXTRACT   void                \2\xD9\xF4                    8086,FPU
 FYL2X     void                \2\xD9\xF1                    8086,FPU
 FYL2XP1   void                \2\xD9\xF9                    8086,FPU
@@ -1088,3 +1089,180 @@ Jcc       imm                 \330\x70\50                   8086
 Jcc       imm|short           \330\x70\50                   8086
 SETcc     mem                 \300\1\x0F\330\x90\200        386,SB
 SETcc     reg8                \300\1\x0F\330\x90\200        386
+
+;kni katmai new instructions
+ADDPS           xmmreg,xmmreg           \2\x0F\x58\110                  P6,MMX
+ADDPS           xmmreg,mem              \301\2\x0F\x58\110              P6,MMX
+ADDSS           xmmreg,xmmreg           \3\xF3\x0F\x58\110              P6,MMX
+ADDSS           xmmreg,mem              \301\3\xF3\x0F\x58\110          P6,MMX
+
+MULPS           xmmreg,xmmreg           \2\x0F\x59\110                  P6,MMX
+MULPS           xmmreg,mem              \301\2\x0F\x59\110              P6,MMX
+MULSS           xmmreg,xmmreg           \3\xF3\x0F\x59\110              P6,MMX
+MULSS           xmmreg,mem              \301\3\xF3\x0F\x59\110          P6,MMX
+
+DIVPS           xmmreg,xmmreg           \2\x0F\x5E\110                  P6,MMX
+DIVPS           xmmreg,mem              \301\2\x0F\x5E\110              P6,MMX
+DIVSS           xmmreg,xmmreg           \3\xF3\x0F\x5E\110              P6,MMX
+DIVSS           xmmreg,mem              \301\3\xF3\x0F\x5E\110          P6,MMX
+
+SUBPS           xmmreg,xmmreg           \2\x0F\x5C\110                  P6,MMX
+SUBPS           xmmreg,mem              \301\2\x0F\x5C\110              P6,MMX
+SUBSS           xmmreg,xmmreg           \3\xF3\x0F\x5C\110              P6,MMX
+SUBSS           xmmreg,mem              \301\3\xF3\x0F\x5C\110          P6,MMX
+
+RCPPS           xmmreg,xmmreg           \2\x0F\x53\110                  P6,MMX
+RCPPS           xmmreg,mem              \301\2\x0F\x53\110              P6,MMX
+RCPSS           xmmreg,xmmreg           \3\xF3\x0F\x53\110              P6,MMX
+RCPSS           xmmreg,mem              \301\3\xF3\x0F\x53\110          P6,MMX
+
+RSQRTPS         xmmreg,xmmreg           \2\x0F\x52\110                  P6,MMX
+RSQRTPS         xmmreg,mem              \301\2\x0F\x52\110              P6,MMX
+RSQRTSS         xmmreg,xmmreg           \3\xF3\x0F\x52\110              P6,MMX
+RSQRTSS         xmmreg,mem              \301\3\xF3\x0F\x52\110          P6,MMX
+
+SQRTPS          xmmreg,xmmreg           \2\x0F\x51\110                  P6,MMX
+SQRTPS          xmmreg,mem              \301\2\x0F\x51\110              P6,MMX
+SQRTSS          xmmreg,xmmreg           \3\xF3\x0F\x51\110              P6,MMX
+SQRTSS          xmmreg,mem              \301\3\xF3\x0F\x51\110          P6,MMX
+
+ANDPS           xmmreg,xmmreg           \2\x0F\x54\110                  P6,MMX
+ANDPS           xmmreg,mem              \301\2\x0F\x54\110              P6,MMX
+ANDNPS          xmmreg,xmmreg           \2\x0F\x55\110                  P6,MMX
+ANDNPS          xmmreg,mem              \301\2\x0F\x55\110              P6,MMX
+ORPS            xmmreg,xmmreg           \2\x0F\x56\110                  P6,MMX
+ORPS            xmmreg,mem              \301\2\x0F\x56\110              P6,MMX
+XORPS           xmmreg,xmmreg           \2\x0F\x57\110                  P6,MMX
+XORPS           xmmreg,mem              \301\2\x0F\x57\110              P6,MMX
+
+MAXPS           xmmreg,xmmreg           \2\x0F\x5F\110                  P6,MMX
+MAXPS           xmmreg,mem              \301\2\x0F\x5F\110              P6,MMX
+MAXSS           xmmreg,xmmreg           \3\xF3\x0F\x5F\110              P6,MMX
+MAXSS           xmmreg,mem              \301\3\xF3\x0F\x5F\110          P6,MMX
+MINPS           xmmreg,xmmreg           \2\x0F\x5D\110                  P6,MMX
+MINPS           xmmreg,mem              \301\2\x0F\x5D\110              P6,MMX
+MINSS           xmmreg,xmmreg           \3\xF3\x0F\x5D\110              P6,MMX
+MINSS           xmmreg,mem              \301\3\xF3\x0F\x5D\110          P6,MMX
+
+CMPEQPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x00            P6,MMX
+CMPEQPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x00        P6,MMX
+CMPEQSS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x00        P6,MMX
+CMPEQSS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\0x00   P6,MMX
+
+CMPLTPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x01            P6,MMX
+CMPLTPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x01        P6,MMX
+CMPLTSS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x01        P6,MMX
+CMPLTSS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x01    P6,MMX
+
+CMPLEPS         xmmreg,xmmreg           \2\x0F\xC2\110\1\x02            P6,MMX
+CMPLEPS         xmmreg,mem              \301\2\x0F\xC2\110\1\x02        P6,MMX
+CMPLESS         xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x02        P6,MMX
+CMPLESS         xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x02    P6,MMX
+
+CMPUNORDPS      xmmreg,xmmreg           \2\x0F\xC2\110\1\x03            P6,MMX
+CMPUNORDPS      xmmreg,mem              \301\2\x0F\xC2\110\1\x03        P6,MMX
+CMPUNORDSS      xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x03        P6,MMX
+CMPUNORDSS      xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x03    P6,MMX
+
+CMPNEQPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x04            P6,MMX
+CMPNEQPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x04        P6,MMX
+CMPNEQSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x04        P6,MMX
+CMPNEQSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x04    P6,MMX
+
+CMPNLTPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x05            P6,MMX
+CMPNLTPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x05        P6,MMX
+CMPNLTSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x05        P6,MMX
+CMPNLTSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x05    P6,MMX
+
+CMPNLEPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x06            P6,MMX
+CMPNLEPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x06        P6,MMX
+CMPNLESS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x06        P6,MMX
+CMPNLESS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x06    P6,MMX
+
+CMPORDPS        xmmreg,xmmreg           \2\x0F\xC2\110\1\x07            P6,MMX
+CMPORDPS        xmmreg,mem              \301\2\x0F\xC2\110\1\x07        P6,MMX
+CMPORDSS        xmmreg,xmmreg           \3\xF3\x0F\xC2\110\1\x07        P6,MMX
+CMPORDSS        xmmreg,mem              \301\3\xF3\x0F\xC2\110\1\x07    P6,MMX
+
+UCOMISS         xmmreg,xmmreg           \2\x0F\x2E\110                  P6,MMX
+UCOMISS         xmmreg,mem              \301\2\x0F\x2E\110              P6,MMX
+COMISS          xmmreg,xmmreg           \2\x0F\x2F\110                  P6,MMX
+COMISS          xmmreg,mem              \301\2\x0F\x2F\110              P6,MMX
+
+CVTPI2PS        xmmreg,mmxreg           \2\x0F\x2A\110                  P6,MMX
+CVTPI2PS        xmmreg,mem              \301\2\x0F\x2A\110              P6,MMX
+CVTPS2PI        mmxreg,xmmreg           \2\x0F\x2D\110                  P6,MMX
+CVTPS2PI        mmxreg,mem              \301\2\x0F\x2D\110              P6,MMX
+CVTTPS2PI       mmxreg,xmmreg           \2\x0F\x2C\110                  P6,MMX
+CVTTPS2PI       mmxreg,mem              \301\2\x0F\x2C\110              P6,MMX
+
+CVTSI2SS        xmmreg,reg32            \3\xF3\x0F\x2A\110              P6,MMX
+CVTSI2SS        xmmreg,mem              \301\3\xF3\x0F\x2A\110          P6,MMX
+CVTSS2SI        reg32,xmmreg            \3\xF3\x0F\x2D\110              P6,MMX
+CVTSS2SI        reg32,mem               \301\3\xF3\x0F\x2D\110          P6,MMX
+CVTTSS2SI       reg32,xmmreg            \3\xF3\x0F\x2C\110              P6,MMX
+CVTTSS2SI       reg32,mem               \301\xF3\3\x0F\x2C\110          P6,MMX
+
+FXSAVE          mem                     \300\2\x0F\xAE\200              P6,MMX
+FXRSTOR         mem                     \300\2\x0F\xAE\201              P6,MMX
+LDMXCSR         mem                     \300\2\x0F\xAE\202              P6,MMX
+STMXCSR         mem                     \300\2\x0F\xAE\203              P6,MMX
+SFENCE          void                    \3\x0F\xAE\xF8                  P6,MMX
+
+PREFETCHNTA     mem                     \300\2\x0F\x18\200              P6,MMX
+PREFETCHT0      mem                     \300\2\x0F\x18\201              P6,MMX
+PREFETCHT1      mem                     \300\2\x0F\x18\202              P6,MMX
+PREFETCHT2      mem                     \300\2\x0F\x18\203              P6,MMX
+
+MOVAPS          xmmreg,xmmreg           \2\x0F\x28\110                  P6,MMX
+MOVAPS          xmmreg,mem              \301\2\x0F\x28\110              P6,MMX
+MOVAPS          xmmreg,xmmreg           \2\x0F\x29\101                  P6,MMX
+MOVAPS          mem,xmmreg              \300\2\x0F\x29\101              P6,MMX
+
+MOVHPS          xmmreg,xmmreg           \2\x0F\x16\110                  P6,MMX
+MOVHPS          xmmreg,mem              \301\2\x0F\x16\110              P6,MMX
+MOVHPS          xmmreg,xmmreg           \2\x0F\x17\101                  P6,MMX
+MOVHPS          mem,xmmreg              \300\2\x0F\x17\101              P6,MMX
+
+MOVLPS          xmmreg,xmmreg           \2\x0F\x12\110                  P6,MMX
+MOVLPS          xmmreg,mem              \301\2\x0F\x12\110              P6,MMX
+MOVLPS          xmmreg,xmmreg           \2\x0F\x13\101                  P6,MMX
+MOVLPS          mem,xmmreg              \300\2\x0F\x13\101              P6,MMX
+
+MOVUPS          xmmreg,xmmreg           \2\x0F\x10\110                  P6,MMX
+MOVUPS          xmmreg,mem              \301\2\x0F\x10\110              P6,MMX
+MOVUPS          xmmreg,xmmreg           \2\x0F\x11\101                  P6,MMX
+MOVUPS          mem,xmmreg              \300\2\x0F\x11\101              P6,MMX
+
+MOVSS           xmmreg,xmmreg           \3\xF3\x0F\x10\110              P6,MMX
+MOVSS           xmmreg,mem              \301\3\xF3\x0F\x10\110          P6,MMX
+MOVSS           xmmreg,xmmreg           \3\xF3\x0F\x11\101              P6,MMX
+MOVSS           mem,xmmreg              \300\3\xF3\x0F\x11\101          P6,MMX
+
+MOVMSKPS        reg32,xmmreg            \2\x0F\x50\110                  P6,MMX
+
+MOVNTPS         mem,xmmreg              \2\x0F\x2B\101                  P6,MMX
+
+SHUFPS          xmmreg,xmmreg,imm8      \2\x0F\xC6\110\22               P6,MMX
+
+UNPCKHPS        xmmreg,xmmreg           \2\x0F\x15\110                  P6,MMX
+UNPCKLPS        xmmreg,xmmreg           \2\x0F\x14\110                  P6,MMX
+
+
+; extra mmx instructions introduced in katmai
+MOVNTQ          mem,mmxreg              \2\x0F\xE7\101                  P6,MMX
+;PAVGB           \xE0
+;PAVGW           \xE3
+;PEXTRW          \xC5
+;PINSRW          \xC4
+;PMAXSW          \xEE
+;PMAXUB          \xDE
+;PMINSW          \xEA
+;PMINUB          \xDA
+;PMOVMSKB        \xD7
+;PMULHUW         \xE4
+;PSADBW          \xF6
+;PSHUFW          \x70
+;MASKMOVQ        \xF7
+
+
