@@ -9,6 +9,7 @@
 * Fix some obsolete Perl4-isms in Perl scripts.
 * Fix configure.in to work with autoconf 2.5x.
 * Fix a couple of "make cleaner" misses.
+* Make the normal "./configure && make" work with Cygwin.
 
 
 0.98.31
