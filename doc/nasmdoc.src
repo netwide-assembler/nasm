@@ -3116,8 +3116,8 @@ NASM, though it attempts to avoid the bureaucracy of assemblers like
 MASM and TASM, is nevertheless forced to support a \e{few}
 directives. These are described in this chapter.
 
-NASM's directives come in two types: \i{user-level
-directives}\e{user-level} directives and \i{primitive
+NASM's directives come in two types: \I{user-level
+directives}\e{user-level} directives and \I{primitive
 directives}\e{primitive} directives. Typically, each directive has a
 user-level form and a primitive form. In almost all cases, we
 recommend that users use the user-level forms of the directives,
