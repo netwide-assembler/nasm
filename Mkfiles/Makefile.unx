@@ -13,24 +13,28 @@
 prefix = /usr/local
 CC = cc
 CFLAGS = -O -I.
+PERL = perl
+
+INSTALL = install -c
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL) -m 644
+
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+mandir = $(prefix)/man
 
 # You _shouldn't_ need to adjust anything below this line.
 
-exec_prefix = ${prefix}
-bindir = ${exec_prefix}/bin
-mandir = ${prefix}/man
-
-INSTALL = install -c
-INSTALL_PROGRAM = ${INSTALL}
-INSTALL_DATA = ${INSTALL} -m 644
+.SUFFIXES: .c .o .h .mac .pl
 
 .c.o:
-	$(CC) -c $(CFLAGS) -o $@ $*.c
+	$(CC) -c $(CFLAGS) $<
 
-NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
-       parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
-       output/outobj.o output/outas86.o output/outrdf.o output/outdbg.o preproc.o listing.o \
-       eval.o output/outrdf2.o output/outieee.o
+NASM = 	nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
+       	parser.o outform.o output/outbin.o output/outaout.o \
+	output/outcoff.o output/outelf.o \
+       	output/outobj.o output/outas86.o output/outdbg.o preproc.o listing.o \
+       	eval.o output/outrdf2.o output/outieee.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
 
@@ -71,20 +75,29 @@ sync.o: sync.c sync.h
 # These files contains all the standard macros that are derived from
 # the version number.
 version.h: version version.pl
-	perl version.pl h < version > version.h
+	$(PERL) version.pl h < version > version.h
 
 version.mac: version version.pl
-	perl version.pl mac < version > version.mac
+	$(PERL) version.pl mac < version > version.mac
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
 
 macros.c: macros.pl standard.mac version.mac
-	perl macros.pl standard.mac version.mac
+	$(PERL) macros.pl standard.mac version.mac
 
-insnsa.c insnsd.c insnsi.h insnsn.c: insns.dat insns.pl
-	perl insns.pl insns.dat
+insnsa.c: insns.pl insns.dat
+	$(PERL) insns.pl -a insns.dat
+
+insnsd.c: insns.pl insns.dat
+	$(PERL) insns.pl -d insns.dat
+
+insnsi.h: insns.pl insns.dat
+	$(PERL) insns.pl -i insns.dat
+
+insnsn.c: insns.pl insns.dat
+	$(PERL) insns.pl -n insns.dat
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
