@@ -753,6 +753,7 @@ static void rdf2_filename (char *inname, char *outname, efunc error) {
 
 static const char *rdf2_stdmac[] = {
     "%define __SECT__ [section .text]",
+    "%define _NASM_FORMAT_ 'rdf'",
     "%imacro library 1+.nolist",
     "[library %1]",
     "%endmacro",
