@@ -28,7 +28,7 @@ mandir = $(prefix)/man
 .SUFFIXES: .c .o .h .mac .pl
 
 .c.o:
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) -o $*.o $<
 
 NASM = 	nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        	parser.o outform.o output/outbin.o output/outaout.o \
