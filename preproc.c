@@ -346,7 +346,7 @@ static Context *cstk;
 static Include *istk;
 static IncPath *ipath = NULL;
 
-static efunc __error;		/* Pointer to client-provided error reporting function */
+static efunc _error;		/* Pointer to client-provided error reporting function */
 static evalfunc evaluate;
 
 static int pass;		/* HACK: pass 0 = generate dependencies only */
@@ -4018,10 +4018,10 @@ error(int severity, char *fmt, ...)
     va_end(arg);
 
     if (istk && istk->mstk && istk->mstk->name)
-	__error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
+	_error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
 		istk->mstk->lineno, buff);
     else
-	__error(severity | ERR_PASS1, "%s", buff);
+	_error(severity | ERR_PASS1, "%s", buff);
 }
 
 static void
@@ -4030,7 +4030,7 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
 {
     int h;
 
-    __error = errfunc;
+    _error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
     istk->next = NULL;
