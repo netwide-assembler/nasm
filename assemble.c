@@ -1390,14 +1390,15 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		    return NULL;
 
 		if (s!=1 && i!=-1) return NULL;/* no can do, in 16-bit EA */
-		if (b==-1 && i!=-1) b ^= i ^= b ^= i;   /* swap them round */
+		if (b==-1 && i!=-1) { int tmp = b; b = i; i = tmp; } /* swap */
 		if ((b==R_SI || b==R_DI) && i!=-1)
-		    b ^= i ^= b ^= i; /* have BX/BP as base, SI/DI index */
+		  { int tmp = b; b = i; i = tmp; }
+		                      /* have BX/BP as base, SI/DI index */
 		if (b==i) return NULL;/* shouldn't ever happen, in theory */
 		if (i!=-1 && b!=-1 &&
 		    (i==R_BP || i==R_BX || b==R_SI || b==R_DI))
 		    return NULL;      /* invalid combinations */
-		if (b==-1)	       /* pure offset: handled above */
+		if (b==-1)	      /* pure offset: handled above */
 		    return NULL;      /* so if it gets to here, panic! */
 
 		rm = -1;
