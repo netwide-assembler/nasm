@@ -17,8 +17,9 @@
  *   - support for segment relocations (hard to do in ANSI C)
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "rdfload.h"
 #include "symtab.h"
