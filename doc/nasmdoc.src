@@ -1221,6 +1221,14 @@ code fragment) by using \c{[byte eax+offset]}. As special cases,
 \c{[dword eax]} will code it with a double-word offset of zero. The
 normal form, \c{[eax]}, will be coded with no offset field.
 
+The form described in the previous paragraph is also useful if you
+are trying to access data in a 32-bit segment from within 16 bit code.
+For more information on this see the section on mixed-size addressing
+(\k{mixaddr}). In particular, if you need to access data with a known
+offset that is larger than will fit in a 16-bit value, if you don't
+specify that it is a dword offset, nasm will cause the high word of
+the offset to be lost.
+
 Similarly, NASM will split \c{[eax*2]} into \c{[eax+eax]} because
 that allows the offset field to be absent and space to be saved; in
 fact, it will also split \c{[eax*2+offset]} into
