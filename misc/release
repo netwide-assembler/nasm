@@ -52,7 +52,7 @@ v3=`echo $version | cut -d. -f3`
 
 # Tag the tree as a release
 if $real; then
-  cd nasm && $CVS tag -F -a nasm-`echo $version | sed -e 's/\./_/g'`
+  cd nasm && $CVS tag -F nasm-`echo $version | sed -e 's/\./_/g'`
 fi
 
 # Extract file names which have the -kb flag set, meaning they
