@@ -153,7 +153,7 @@ define nasm_indent_line() {
     }
 }
 
-define nasm_newline_indent {
+define nasm_newline_indent() {
     push_spot();
     bol_skip_white();
     if (eolp())
@@ -163,7 +163,7 @@ define nasm_newline_indent {
     nasm_indent_line();
 }
 
-define nasm_bol_self_ins {
+define nasm_bol_self_ins() {
     push_spot();
     bskip_white();
     bolp();
@@ -179,7 +179,7 @@ define nasm_bol_self_ins {
 	nasm_indent_line();
 }
 
-define nasm_self_ins_ind {
+define nasm_self_ins_ind() {
     call("self_insert_cmd");
 
     % Grotty: force immediate update of the syntax highlighting.
@@ -189,7 +189,7 @@ define nasm_self_ins_ind {
     nasm_indent_line();
 }
 
-define nasm_insert_comment {
+define nasm_insert_comment() {
     variable spc;
 
     bol_skip_white();
@@ -257,31 +257,31 @@ set_syntax_flags($1,1);
 
 #ifdef HAS_DFA_SYNTAX
 
-enable_highlight_cache("nasm.dfa", $1);
-define_highlight_rule(";.*$", "comment", $1);
-define_highlight_rule("[A-Za-z_\\.\\?][A-Za-z0-9_\\.\\?\\$#@~]*",
+dfa_enable_highlight_cache("nasm.dfa", $1);
+dfa_define_highlight_rule(";.*$", "comment", $1);
+dfa_define_highlight_rule("[A-Za-z_\\.\\?][A-Za-z0-9_\\.\\?\\$#@~]*",
 		      "Knormal", $1);
-define_highlight_rule("$([A-Za-z_\\.\\?][A-Za-z0-9_\\.\\?\\$#@~]*)?",
+dfa_define_highlight_rule("$([A-Za-z_\\.\\?][A-Za-z0-9_\\.\\?\\$#@~]*)?",
 		      "normal", $1);
-define_highlight_rule("[0-9]+(\\.[0-9]*)?([Ee][\\+\\-]?[0-9]*)?",
+dfa_define_highlight_rule("[0-9]+(\\.[0-9]*)?([Ee][\\+\\-]?[0-9]*)?",
 		      "number", $1);
-define_highlight_rule("[0-9]+[QqBb]", "number", $1);
-define_highlight_rule("(0x|\\$[0-9A-Fa-f])[0-9A-Fa-f]*", "number", $1);
-define_highlight_rule("[0-9A-Fa-f]+[Hh]", "number", $1);
-define_highlight_rule("\"[^\"]*\"", "string", $1);
-define_highlight_rule("\"[^\"]*$", "string", $1);
-define_highlight_rule("'[^']*'", "string", $1);
-define_highlight_rule("'[^']*$", "string", $1);
-define_highlight_rule("[\\(\\)\\[\\],:]*", "delimiter", $1);
-define_highlight_rule("^[ \t]*#", "PQpreprocess", $1);
-define_highlight_rule("^[ \t]*\\%{?[^%\\$\\+\\-0-9]", "PQpreprocess", $1);
-define_highlight_rule("^%$", "preprocess", $1);
-define_highlight_rule("[\\|\\^&<>\\+\\-\\*/%~]*", "operator", $1);
-define_highlight_rule("%([%\\$]?-?[0-9A-Za-z_\\.\\?\\$~@]+|{[^}]*}?)",
+dfa_define_highlight_rule("[0-9]+[QqBb]", "number", $1);
+dfa_define_highlight_rule("(0x|\\$[0-9A-Fa-f])[0-9A-Fa-f]*", "number", $1);
+dfa_define_highlight_rule("[0-9A-Fa-f]+[Hh]", "number", $1);
+dfa_define_highlight_rule("\"[^\"]*\"", "string", $1);
+dfa_define_highlight_rule("\"[^\"]*$", "string", $1);
+dfa_define_highlight_rule("'[^']*'", "string", $1);
+dfa_define_highlight_rule("'[^']*$", "string", $1);
+dfa_define_highlight_rule("[\\(\\)\\[\\],:]*", "delimiter", $1);
+dfa_define_highlight_rule("^[ \t]*#", "PQpreprocess", $1);
+dfa_define_highlight_rule("^[ \t]*\\%{?[^%\\$\\+\\-0-9]", "PQpreprocess", $1);
+dfa_define_highlight_rule("^%$", "preprocess", $1);
+dfa_define_highlight_rule("[\\|\\^&<>\\+\\-\\*/%~]*", "operator", $1);
+dfa_define_highlight_rule("%([%\\$]?-?[0-9A-Za-z_\\.\\?\\$~@]+|{[^}]*}?)",
 		      "preprocess", $1);
-define_highlight_rule("[ \t]*", "normal", $1);
-define_highlight_rule(".", "normal", $1);
-build_highlight_table($1);
+dfa_define_highlight_rule("[ \t]*", "normal", $1);
+dfa_define_highlight_rule(".", "normal", $1);
+dfa_build_highlight_table($1);
 #endif
 
 define_keywords_n($1, nasm_kw_2, 2, 0);
@@ -310,7 +310,7 @@ definekey("nasm_bol_self_ins", "[", $1);
 definekey("nasm_self_ins_ind", ":", $1);
 definekey("nasm_insert_comment", "^[;", $1);
 
-define nasm_mode {
+define nasm_mode() {
     set_mode("NASM", 4);
     use_keymap ("NASM");
     use_syntax_table ("NASM");
