@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98.20"
+#define NASM_VER "0.98.21"
 
 #ifndef NULL
 #define NULL 0
@@ -428,8 +428,6 @@ enum {
 #define UNITY     0x00802000L	       /* for shift/rotate instructions */
 #define BYTENESS  0x40000000L          /* so SBYTE == IMMEDIATE | BYTENESS */
 #define SBYTE 	  0x40002000L	       /* for op r16/32,immediate instrs. */
-#define BIGNESS   0x80000000L          /* so SBIG == IMMEDIATE | BIGNESS */
-#define SBIG      0x80002000L          /* for eax immediate instrs. */
 		
 /*
  * Next, the codes returned from the parser, for registers and

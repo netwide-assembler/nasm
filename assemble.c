@@ -552,7 +552,8 @@ static int is_sbyte (insn *ins, int op, int size)
     int ret;
     
     ret = !(ins->forw_ref && ins->oprs[op].opflags ) &&	/* dead in the water on forward reference or External */
-          (optimizing>0 || !(ins->oprs[op].type & (BITS16|BITS32))) &&
+          optimizing>=0 &&
+/*          !(ins->oprs[op].type & (BITS16|BITS32)) && */
           ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
 
     v = ins->oprs[op].offset;
