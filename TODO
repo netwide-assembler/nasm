@@ -1,0 +1,8 @@
+Things to do (incorporate with doc/Wishlist):
+
+1. i18n via gettext
+2. Convert shallow code model to deep code model. Tired of messing between
+lots of unrelated files (especially .c/.h stuff).
+3. Automated dependency generation for Makefile. Current looks awful and will break
+if anything changes.
+4. (as result of 2) Move output modules out*.c to output/ subdir. (?)

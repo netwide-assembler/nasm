@@ -27,6 +27,7 @@ N: Frank Kotler
 E: fbkotler@nettaxi.com
 D: Bug smashing.
 D: Documentation - "KATMAI" and "3DNow!" instructions supported by 0.98
+D: General coordination and moral support.
 
 N: Stephen Silver
 E: nasm@argentum.freeserve.co.uk
@@ -88,3 +89,8 @@ N: Edward J. Beroset
 E: beroset@mindspring.com
 D: added %substr and %strlen
 
+N: Stanislav Karchebny, aka berkus, madfire, daemonhunter
+E: madfire@users.sourceforge.net
+D: multiple sections support for -fbin format
+D: cvs maintenance
+D: webpage at http://nasm.2y.net maintenance

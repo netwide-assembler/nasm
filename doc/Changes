@@ -1,0 +1,542 @@
+Change log for NASM
+===================
+
+This is the Changelog for the official releases; this is a modified
+version.  For the changes from the official release, see the MODIFIED file.
+
+0.90 released October 1996
+--------------------------
+
+First release version. First support for object file output. Other
+changes from previous version (0.3x) too numerous to document.
+
+0.91 released November 1996
+---------------------------
+
+Loads of bug fixes.
+Support for RDF added.
+Support for DBG debugging format added.
+Support for 32-bit extensions to Microsoft OBJ format added.
+Revised for Borland C: some variable names changed, makefile added.
+LCC support revised to actually work.
+JMP/CALL NEAR/FAR notation added.
+`a16', `o16', `a32' and `o32' prefixes added.
+Range checking on short jumps implemented.
+MMX instruction support added.
+Negative floating point constant support added.
+Memory handling improved to bypass 64K barrier under DOS.
+$ prefix to force treatment of reserved words as identifiers added.
+Default-size mechanism for object formats added.
+Compile-time configurability added.
+`#', `@', `~' and `?' are now valid characters in labels.
+`-e' and `-k' options in NDISASM added.
+
+0.92 released January 1997
+--------------------------
+
+The FDIVP/FDIVRP and FSUBP/FSUBRP pairs had been inverted: this was
+fixed. This also affected the LCC driver.
+
+Fixed a bug regarding 32-bit effective addresses of the form
+[other_register+ESP].
+
+Documentary changes, notably documentation of the fact that Borland
+Win32 compilers use `obj' rather than `win32' object format.
+
+Fixed the COMENT record in OBJ files, which was formatted
+incorrectly.
+
+Fixed a bug causing segfaults in large RDF files.
+
+OBJ format now strips initial periods from segment and group
+definitions, in order to avoid complications with the local label
+syntax.
+
+Fixed a bug in disassembling far calls and jumps in NDISASM.
+
+Added support for user-defined sections in COFF and ELF files.
+
+Compiled the DOS binaries with a sensible amount of stack, to
+prevent stack overflows on any arithmetic expression containing
+parentheses.
+
+Fixed a bug in handling of files that do not terminate in a newline.
+
+0.93 released January 1997
+--------------------------
+
+This release went out in a great hurry after semi-crippling bugs
+were found in 0.92.
+
+Really _did_ fix the stack overflows this time. *blush*
+
+Had problems with EA instruction sizes changing between passes, when
+an offset contained a forward reference and so 4 bytes were
+allocated for the offset in pass one; by pass two the symbol had
+been defined and happened to be a small absolute value, so only 1
+byte got allocated, causing instruction size mismatch between passes
+and hence incorrect address calculations. Fixed.
+
+Stupid bug in the revised ELF section generation fixed (associated
+string-table section for .symtab was hard-coded as 7, even when this
+didn't fit with the real section table). Was causing `ld' to
+seg-fault under Linux.
+
+Included a new Borland C makefile, Makefile.bc2, donated by Fox
+Cutter <lmb@comtch.iea.com>.
+
+0.94 released April 1997
+------------------------
+
+Major item: added the macro processor.
+
+Added undocumented instructions SMI, IBTS, XBTS and LOADALL286. Also
+reorganised CMPXCHG instruction into early-486 and Pentium forms.
+Thanks to Thobias Jones for the information.
+
+Fixed two more stupid bugs in ELF, which were causing `ld' to
+continue to seg-fault in a lot of non-trivial cases.
+
+Fixed a seg-fault in the label manager.
+
+Stopped FBLD and FBSTP from _requiring_ the TWORD keyword, which is
+the only option for BCD loads/stores in any case.
+
+Ensured FLDCW, FSTCW and FSTSW can cope with the WORD keyword, if
+anyone bothers to provide it. Previously they complained unless no
+keyword at all was present.
+
+Some forms of FDIV/FDIVR and FSUB/FSUBR were still inverted: a
+vestige of a bug that I thought had been fixed in 0.92. This was
+fixed, hopefully for good this time...
+
+Another minor phase error (insofar as a phase error can _ever_ be
+minor) fixed, this one occurring in code of the form
+   rol ax,forward_reference
+   forward_reference equ 1
+
+The number supplied to TIMES is now sanity-checked for positivity,
+and also may be greater than 64K (which previously didn't work on
+16-bit systems).
+
+Added Watcom C makefiles, and misc/pmw.bat, donated by Dominik Behr.
+
+Added the INCBIN pseudo-opcode.
+
+Due to the advent of the preprocessor, the [INCLUDE] and [INC]
+directives have become obsolete. They are still supported in this
+version, with a warning, but won't be in the next.
+
+Fixed a bug in OBJ format, which caused incorrect object records to
+be output when absolute labels were made global.
+
+Updates to RDOFF subdirectory, and changes to outrdf.c.
+
+0.95 released July 1997
+-----------------------
+
+Fixed yet another ELF bug. This one manifested if the user relied on
+the default segment, and attempted to define global symbols without
+first explicitly declaring the target segment.
+
+Added makefiles (for NASM and the RDF tools) to build Win32 console
+apps under Symantec C++. Donated by Mark Junker.
+
+Added `macros.bas' and `insns.bas', QBasic versions of the Perl
+scripts that convert `standard.mac' to `macros.c' and convert
+`insns.dat' to `insnsa.c' and `insnsd.c'. Also thanks to Mark
+Junker.
+
+Changed the diassembled forms of the conditional instructions so
+that JB is now emitted as JC, and other similar changes. Suggested
+list by Ulrich Doewich.
+
+Added `@' to the list of valid characters to begin an identifier
+with.
+
+Documentary changes, notably the addition of the `Common Problems'
+section in nasm.doc.
+
+Fixed a bug relating to 32-bit PC-relative fixups in OBJ.
+
+Fixed a bug in perm_copy() in labels.c which was causing exceptions
+in cleanup_labels() on some systems.
+
+Positivity sanity check in TIMES argument changed from a warning to
+an error following a further complaint.
+
+Changed the acceptable limits on byte and word operands to allow
+things like `~10111001b' to work.
+
+Fixed a major problem in the preprocessor which caused seg-faults if
+macro definitions contained blank lines or comment-only lines.
+
+Fixed inadequate error checking on the commas separating the
+arguments to `db', `dw' etc.
+
+Fixed a crippling bug in the handling of macros with operand counts
+defined with a `+' modifier.
+
+Fixed a bug whereby object file formats which stored the input file
+name in the output file (such as OBJ and COFF) weren't doing so
+correctly when the output file name was specified on the command
+line.
+
+Removed [INC] and [INCLUDE] support for good, since they were
+obsolete anyway.
+
+Fixed a bug in OBJ which caused all fixups to be output in 16-bit
+(old-format) FIXUPP records, rather than putting the 32-bit ones in
+FIXUPP32 (new-format) records.
+
+Added, tentatively, OS/2 object file support (as a minor variant on
+OBJ).
+
+Updates to Fox Cutter's Borland C makefile, Makefile.bc2.
+
+Removed a spurious second fclose() on the output file.
+
+Added the `-s' command line option to redirect all messages which
+would go to stderr (errors, help text) to stdout instead.
+
+Added the `-w' command line option to selectively suppress some
+classes of assembly warning messages.
+
+Added the `-p' pre-include and `-d' pre-define command-line options.
+
+Added an include file search path: the `-i' command line option.
+
+Fixed a silly little preprocessor bug whereby starting a line with a
+`%!' environment-variable reference caused an `unknown directive'
+error.
+
+Added the long-awaited listing file support: the `-l' command line
+option.
+
+Fixed a problem with OBJ format whereby, in the absence of any
+explicit segment definition, non-global symbols declared in the
+implicit default segment generated spurious EXTDEF records in the
+output.
+
+Added the NASM environment variable.
+
+From this version forward, Win32 console-mode binaries will be
+included in the DOS distribution in addition to the 16-bit binaries.
+Added Makefile.vc for this purpose.
+
+Added `return 0;' to test/objlink.c to prevent compiler warnings.
+
+Added the __NASM_MAJOR__ and __NASM_MINOR__ standard defines.
+
+Added an alternative memory-reference syntax in which prefixing an
+operand with `&' is equivalent to enclosing it in square brackets,
+at the request of Fox Cutter.
+
+Errors in pass two now cause the program to return a non-zero error
+code, which they didn't before.
+
+Fixed the single-line macro cycle detection, which didn't work at
+all on macros with no parameters (caused an infinite loop). Also
+changed the behaviour of single-line macro cycle detection to work
+like cpp, so that macros like `extrn' as given in the documentation
+can be implemented.
+
+Fixed the implementation of WRT, which was too restrictive in that
+you couldn't do `mov ax,[di+abc wrt dgroup]' because (di+abc) wasn't
+a relocatable reference.
+
+0.96 released November 1997
+---------------------------
+
+Fixed a bug whereby, if `nasm sourcefile' would cause a filename
+collision warning and put output into `nasm.out', then `nasm
+sourcefile -o outputfile' still gave the warning even though the
+`-o' was honoured.
+
+Fixed name pollution under Digital UNIX: one of its header files
+defined R_SP, which broke the enum in nasm.h.
+
+Fixed minor instruction table problems: FUCOM and FUCOMP didn't have
+two-operand forms; NDISASM didn't recognise the longer register
+forms of PUSH and POP (eg FF F3 for PUSH BX); TEST mem,imm32 was
+flagged as undocumented; the 32-bit forms of CMOV had 16-bit operand
+size prefixes; `AAD imm' and `AAM imm' are no longer flagged as
+undocumented because the Intel Architecture reference documents
+them.
+
+Fixed a problem with the local-label mechanism, whereby strange
+types of symbol (EQUs, auto-defined OBJ segment base symbols)
+interfered with the `previous global label' value and screwed up
+local labels.
+
+Fixed a bug whereby the stub preprocessor didn't communicate with
+the listing file generator, so that the -a and -l options in
+conjunction would produce a useless listing file.
+
+Merged `os2' object file format back into `obj', after discovering
+that `obj' _also_ shouldn't have a link pass separator in a module
+containing a non-trivial MODEND. Flat segments are now declared
+using the FLAT attribute. `os2' is no longer a valid object format
+name: use `obj'.
+
+Removed the fixed-size temporary storage in the evaluator. Very very
+long expressions (like `mov ax,1+1+1+1+...' for two hundred 1s or
+so) should now no longer crash NASM.
+
+Fixed a bug involving segfaults on disassembly of MMX instructions,
+by changing the meaning of one of the operand-type flags in nasm.h.
+This may cause other apparently unrelated MMX problems; it needs to
+be tested thoroughly.
+
+Fixed some buffer overrun problems with large OBJ output files.
+Thanks to DJ Delorie for the bug report and fix.
+
+Made preprocess-only mode actually listen to the %line markers as it
+prints them, so that it can report errors more sanely.
+
+Re-designed the evaluator to keep more sensible track of expressions
+involving forward references: can now cope with previously-nightmare
+situations such as
+   mov ax,foo | bar
+   foo equ 1
+   bar equ 2
+
+Added the ALIGN and ALIGNB standard macros.
+
+Added PIC support in ELF: use of WRT to obtain the four extra
+relocation types needed.
+
+Added the ability for output file formats to define their own
+extensions to the GLOBAL, COMMON and EXTERN directives.
+
+Implemented common-variable alignment, and global-symbol type and
+size declarations, in ELF.
+
+Implemented NEAR and FAR keywords for common variables, plus
+far-common element size specification, in OBJ.
+
+Added a feature whereby EXTERNs and COMMONs in OBJ can be given a
+default WRT specification (either a segment or a group).
+
+Transformed the Unix NASM archive into an auto-configuring package.
+
+Added a sanity-check for people applying SEG to things which are
+already segment bases: this previously went unnoticed by the SEG
+processing and caused OBJ-driver panics later.
+
+Added the ability, in OBJ format, to deal with `MOV EAX,<segment>'
+type references: OBJ doesn't directly support dword-size segment
+base fixups, but as long as the low two bytes of the constant term
+are zero, a word-size fixup can be generated instead and it will
+work.
+
+Added the ability to specify sections' alignment requirements in
+Win32 object files and pure binary files.
+
+Added preprocess-time expression evaluation: the %assign (and
+%iassign) directive and the bare %if (and %elif) conditional. Added
+relational operators to the evaluator, for use only in %if
+constructs: the standard relationals = < > <= >= <> (and C-like
+synonyms == and !=) plus low-precedence logical operators &&, ^^ and
+||.
+
+Added a preprocessor repeat construct: %rep / %exitrep / %endrep.
+
+Added the __FILE__ and __LINE__ standard macros.
+
+Added a sanity check for number constants being greater than
+0xFFFFFFFF. The warning can be disabled.
+
+Added the %0 token whereby a variadic multi-line macro can tell how
+many parameters it's been given in a specific invocation.
+
+Added %rotate, allowing multi-line macro parameters to be cycled.
+
+Added the `*' option for the maximum parameter count on multi-line
+macros, allowing them to take arbitrarily many parameters.
+
+Added the ability for the user-level forms of EXTERN, GLOBAL and
+COMMON to take more than one argument.
+
+Added the IMPORT and EXPORT directives in OBJ format, to deal with
+Windows DLLs.
+
+Added some more preprocessor %if constructs: %ifidn / %ifidni (exact
+textual identity), and %ifid / %ifnum / %ifstr (token type testing).
+
+Added the ability to distinguish SHL AX,1 (the 8086 version) from
+SHL AX,BYTE 1 (the 286-and-upwards version whose constant happens to
+be 1).
+
+Added NetBSD/FreeBSD/OpenBSD's variant of a.out format, complete
+with PIC shared library features.
+
+Changed NASM's idiosyncratic handling of FCLEX, FDISI, FENI, FINIT,
+FSAVE, FSTCW, FSTENV, and FSTSW to bring it into line with the
+otherwise accepted standard. The previous behaviour, though it was a
+deliberate feature, was a deliberate feature based on a
+misunderstanding. Apologies for the inconvenience.
+
+Improved the flexibility of ABSOLUTE: you can now give it an
+expression rather than being restricted to a constant, and it can
+take relocatable arguments as well.
+
+Added the ability for a variable to be declared as EXTERN multiple
+times, and the subsequent definitions are just ignored.
+
+We now allow instruction prefixes (CS, DS, LOCK, REPZ etc) to be
+alone on a line (without a following instruction).
+
+Improved sanity checks on whether the arguments to EXTERN, GLOBAL
+and COMMON are valid identifiers.
+
+Added misc/exebin.mac to allow direct generation of .EXE files by
+hacking up an EXE header using DB and DW; also added test/binexe.asm
+to demonstrate the use of this. Thanks to Yann Guidon for
+contributing the EXE header code.
+
+ndisasm forgot to check whether the input file had been successfully
+opened. Now it does. Doh!
+
+Added the Cyrix extensions to the MMX instruction set.
+
+Added a hinting mechanism to allow [EAX+EBX] and [EBX+EAX] to be
+assembled differently. This is important since [ESI+EBP] and
+[EBP+ESI] have different default base segment registers.
+
+Added support for the PharLap OMF extension for 4096-byte segment
+alignment.
+
+0.97 released December 1997
+---------------------------
+
+This was entirely a bug-fix release to 0.96, which seems to have got
+cursed. Silly me.
+
+Fixed stupid mistake in OBJ which caused `MOV EAX,<constant>' to
+fail. Caused by an error in the `MOV EAX,<segment>' support.
+
+ndisasm hung at EOF when compiled with lcc on Linux because lcc on
+Linux somehow breaks feof(). ndisasm now does not rely on feof().
+
+A heading in the documentation was missing due to a markup error in
+the indexing. Fixed.
+
+Fixed failure to update all pointers on realloc() within extended-
+operand code in parser.c. Was causing wrong behaviour and seg faults
+on lines such as `dd 0.0,0.0,0.0,0.0,...'
+
+Fixed a subtle preprocessor bug whereby invoking one multi-line
+macro on the first line of the expansion of another, when the second
+had been invoked with a label defined before it, didn't expand the
+inner macro. 
+
+Added internal.doc back in to the distribution archives - it was
+missing in 0.96 *blush*
+
+Fixed bug causing 0.96 to be unable to assemble its own test files,
+specifically objtest.asm. *blush again*
+
+Fixed seg-faults and bogus error messages caused by mismatching
+%rep and %endrep within multi-line macro definitions.
+
+Fixed a problem with buffer overrun in OBJ, which was causing
+corruption at ends of long PUBDEF records.
+
+Separated DOS archives into main-program and documentation to reduce
+download size.
+
+0.98 released May 1999
+----------------------
+
+Fixed a bug whereby STRUC didn't work at all in RDF.
+
+Fixed a problem with group specification in PUBDEFs in OBJ.
+
+Improved ease of adding new output formats. Contribution due to
+Fox Cutter.
+
+Fixed a bug in relocations in the `bin' format: was showing up when
+a relocatable reference crossed an 8192-byte boundary in any output
+section.
+
+Fixed a bug in local labels: local-label lookups were inconsistent
+between passes one and two if an EQU occurred between the definition
+of a global label and the subsequent use of a local label local to
+that global.
+
+Fixed a seg-fault in the preprocessor (again) which happened when
+you use a blank line as the first line of a multi-line macro
+definition and then defined a label on the same line as a call to
+that macro.
+
+Fixed a stale-pointer bug in the handling of the NASM environment
+variable. Thanks to Thomas McWilliams.
+
+ELF had a hard limit on the number of sections which caused
+segfaults when transgressed. Fixed.
+
+Added ability for ndisasm to read from stdin by using `-' as the
+filename.
+
+ndisasm wasn't outputting the TO keyword. Fixed.
+
+Fixed error cascade on bogus expression in %if - an error in
+evaluation was causing the entire %if to be discarded, thus creating
+trouble later when the %else or %endif was encountered.
+
+Forward reference tracking was instruction-granular not operand-
+granular, which was causing 286-specific code to be generated
+needlessly on code of the form `shr word [forwardref],1'. Thanks to
+Jim Hague for sending a patch.
+
+All messages now appear on stdout, as sending them to stderr serves
+no useful purpose other than to make redirection difficult.
+
+Fixed the problem with EQUs pointing to an external symbol - this
+now generates an error message.
+
+Allowed multiple size prefixes to an operand, of which only the first
+is taken into account.
+
+Incorporated John Fine's changes, including fixes of a large number
+of preprocessor bugs, some small problems in OBJ, and a reworking of
+label handling to define labels before their line is assembled, rather
+than after.
+
+Reformatted a lot of the source code to be more readable. Included
+'coding.txt' as a guideline for how to format code for contributors.
+
+Stopped nested %reps causing a panic - they now cause a slightly more
+friendly error message instead.
+
+Fixed floating point constant problems (patch by Pedro Gimeno)
+
+Fixed the return value of insn_size() not being checked for -1, indicating
+an error.
+
+Incorporated 3D now instructions.
+
+Fixed the 'mov eax, eax + ebx' bug.
+
+Fixed the GLOBAL EQU bug in ELF. Released developers release 3.
+
+Incorporated John Fine's command line parsing changes
+
+Incorporated David Lindauer's OMF debug support
+
+Made changes for LCC 4.0 support (__NASM_CDecl__, removed register size
+specification warning when sizes agree).
+
+Released NASM 0.98 Pre-release 1
+
+fixed bug in outcoff.c to do with truncating section names longer
+than 8 characters, referencing beyond end of string; 0.98 pre-release 2
+
+added response file support, improved command line handling, new layout
+help screen
+
+fixed limit checking bug, 'OUT byte nn, reg' bug, and a couple of rdoff
+related bugs, updated Wishlist; 0.98 Prerelease 3.
+
+See the file "MODIFIED" for changes after 0.98p3.

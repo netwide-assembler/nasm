@@ -1,0 +1,6 @@
+
+2002-04-11  Stanislav Karchebny  <berk@madfire.net>
+
+   * Started ChangeLog instead of Changes. ChangeLog is better because all recent changes
+     are on top of the file, easy for inspection.
+     Old entries from doc/Changes will eventually be added here.

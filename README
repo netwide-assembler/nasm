@@ -1,0 +1,27 @@
+              NASM, the Netwide Assembler.
+                     Version 0.98.26.
+
+Many many developers all over the net respect NASM for what it is
+- a widespread (thus netwide), portable (thus netwide!), very
+flexible and mature assembler tool with support for many output
+formats (thus netwide!!).
+
+Now we have good news for you: NASM is licensed under LGPL.
+This means its development is open to even wider society of
+programmers wishing to improve their lovely assembler.
+
+The NASM project is now situated at SourceForge.net, the most
+famous Open Source development center on The Net.
+
+Visit our development page at http://nasm.2y.net and our
+SF project at http://sf.net/projects/nasm
+
+The NASM documentation is in process of severe re-arrangement
+(especially the License issues with sourcecode, the old
+license can be found in doc/License), all files from previous
+releases that didn't go thru the process yet are placed in doc/
+subdirectory. Look there if you don't find a file you need here.
+
+
+                                                   With best regards,
+                                                           NASM crew.

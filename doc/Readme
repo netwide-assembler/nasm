@@ -1,0 +1,49 @@
+
+              NetWide Assembler for the SciTech MGL
+              -------------------------------------
+
+This is a modified distribution of NASM, the Netwide Assembler. NASM
+is a prototype general-purpose x86 assembler. It will currently output
+flat-form binary files, a.out, COFF and ELF Unix object files,
+Microsoft Win32 and 16-bit DOS object files, OS/2 object files, the
+as86 object format, and a home-grown format called RDF.
+
+This version of NASM has been modified by SciTech Software such that it
+can be used to assemble source code in the SciTech MGL graphics library,
+and understands enough of TASM assembler syntax such that both NASM
+and TASM can be used to generate assembler modules for the MGL graphics
+library. A complete macro package is provided as part of the SciTech
+MGL that provides macros to help in building modules that will work with
+either assembler.
+
+A pre-compiled binary of NASM is provided as part of the SciTech MGL
+graphics library, however you may re-build the assembler from the sources
+provided. To do so make sure you have the SciTech Makefile Utilties
+correctly configured for your compiler, and then simly type:
+
+    unset DBG
+    dmake OPT=1
+
+to build an optimised, non-debug version of the assembler. If you wish
+to rebuild for a different OS other than DOS or Win32, you will need to
+first compile the DMAKE make program for your OS. See the DMAKE source
+code for more information.
+
+Licensing issues:
+-----------------
+
+For information about how you can distribute and use NASM, see the
+file Licence.
+
+The NASM web page is at http://www.cryogen.com/Nasm/
+
+Bug reports specific to the SciTech MGL should be posted to SciTech
+Software MGL newsgroups:
+
+    news://news.scitechsoft.com/scitech.mgl.developer
+
+Bug reports (and patches if you can) for NASM itself that are not SciTech
+MGL related should be sent to the authors at:
+
+    Julian Hall <jules@earthcorp.com>
+    Simon Tatham <anakin@pobox.com>

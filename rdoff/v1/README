@@ -1,5 +1,0 @@
-This directory contains programs for working with RDOFF version 1 object
-files. RDOFF version 1 is no longer supported - you should now be using 
-RDOFF2. If you are working with your own code, the changes you will need
-to make are very simple, and are outlined in the document Changes in the
-nasm/rdoff directory.

@@ -1,0 +1,4 @@
+These are pre-created Makefiles for various platforms, use them if
+GNU autoconf/automake packages are not supported on your system.
+
+Copy appropriate Makefile to ../Makefile and run make.
