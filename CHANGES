@@ -13,6 +13,8 @@
 * Fix long label causes coredump (#677841)
 * Use autoheader as well as autoconf to keep configure from generating
   ridiculously long command lines.
+* Make sure that all of the formats which support debugging output
+  actually will suppress debugging output when -g not specified.
 
 0.98.37
 -------
