@@ -554,7 +554,7 @@ static void elf_add_reloc (struct Section *sect, long segment,
 	r->symbol = 0;
 	for (i=0; i<nsects; i++)
 	    if (segment == sects[i]->index)
-		r->symbol = i+3;
+		r->symbol = i+2;
 	if (!r->symbol)
 	    r->symbol = GLOBAL_TEMP_BASE + raa_read(bsym, segment);
     }
@@ -928,13 +928,13 @@ static struct SAA *elf_build_symtab (long *len, long *local)
      * Now some standard symbols defining the segments, for relocation
      * purposes.
      */
-    for (i = 1; i <= nsects+1; i++) {
+    for (i = 1; i <= nsects; i++) {
 	p = entry;
 	WRITELONG (p, 0);	       /* no symbol name */
 	WRITELONG (p, 0);	       /* offset zero */
 	WRITELONG (p, 0);	       /* size zero */
 	WRITESHORT (p, 3);	       /* local section-type thing */
-	WRITESHORT (p, (i==1 ? SHN_ABS : i-1));   /* the section id */
+	WRITESHORT (p, i);             /* the section id */
 	saa_wbytes (s, entry, 16L);
 	*len += 16;
 	(*local)++;
@@ -992,7 +992,7 @@ static struct SAA *elf_build_reltab (long *len, struct Reloc *r) {
 	long sym = r->symbol;
 
 	if (sym >= GLOBAL_TEMP_BASE)
-	    sym += -GLOBAL_TEMP_BASE + (nsects+3) + nlocals;
+	    sym += -GLOBAL_TEMP_BASE + (nsects+2) + nlocals;
 
 	p = entry;
 	WRITELONG (p, r->address);

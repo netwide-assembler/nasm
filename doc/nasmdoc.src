@@ -7920,8 +7920,8 @@ destination (first) operand.
 \c MOVSW                         ; o16 A5               [8086]
 \c MOVSD                         ; o32 A5               [386]
 
-\c{MOVSB} copies the byte at \c{[ES:DI]} or \c{[ES:EDI]} to
-\c{[DS:SI]} or \c{[DS:ESI]}. It then increments or decrements
+\c{MOVSB} copies the byte at \c{[DS:SI]} or \c{[DS:ESI]} to
+\c{[ES:DI]} or \c{[ES:EDI]}. It then increments or decrements
 (depending on the direction flag: increments if the flag is clear,
 decrements if it is set) \c{SI} and \c{DI} (or \c{ESI} and \c{EDI}).
 
