@@ -1483,11 +1483,12 @@ invent one using the macro processor.
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
 When assembling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will override size specifiers (\c{BYTE}, \c{WORD},
-\c{DWORD}, \c{QWORD}, or \c{TWORD}), giving them the smallest possible
-size. The keyword \c{STRICT} can be used to inhibit optimization and
-force a particular operand to be emitted in the specified size.
-For example, with the optimizer on, and in \c{BITS 16} mode,
+\k{opt-On}), NASM will usee size specifiers (\c{BYTE}, \c{WORD},
+\c{DWORD}, \c{QWORD}, or \c{TWORD}), but will give them the smallest
+possible size. The keyword \c{STRICT} can be used to inhibit
+optimization and force a particular operand to be emitted in the
+specified size. For example, with the optimizer on, and in
+\c{BITS 16} mode,
 
 \c         push dword 33
 
