@@ -1881,7 +1881,7 @@ things like
 \c         silly {13,10}, crlf             ; crlf:      db 13,10
 
 
-\S{mlmacover} \i{Overloading Multi-Line Macros}
+\S{mlmacover} Overloading Multi-Line Macros\I{overloading, multi-line macros}
 
 As with single-line macros, multi-line macros can be overloaded by
 defining the same macro name several times with different numbers of
