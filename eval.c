@@ -655,6 +655,8 @@ static expr *expr6(int critical)
 	if (!e)
 	    return NULL;
 	e = segment_part(e);
+	if (!e)
+	    return NULL;
 	if (is_unknown(e) && critical) {
 	    error(ERR_NONFATAL, "unable to determine segment base");
 	    return NULL;
