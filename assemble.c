@@ -1291,6 +1291,9 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		if (((s==2 && i!=R_ESP && !(input->eaflags & EAF_TIMESTWO)) ||
 		     s==3 || s==5 || s==9) && b==-1)
 		    b = i, s--;       /* convert 3*EAX to EAX+2*EAX */
+		if (i==-1 && b!=R_ESP && (input->eaflags & EAF_TIMESTWO))
+		    i = b, b = -1, s = 1;
+			/* convert [NOSPLIT EAX] to sib format with 0x0 displacement */
 		if (s==1 && i==R_ESP)  /* swap ESP into base if scale is 1 */
 		    i = b, b = R_ESP;
 		if (i==R_ESP || (s!=1 && s!=2 && s!=4 && s!=8 && i!=-1))
