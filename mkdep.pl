@@ -76,9 +76,9 @@ foreach $dir ( @files ) {
 }
 
 foreach $file ( sort(keys(%deps)) ) {
-    if ( $file =~ /\.[Cc]$/ && scalar(@{$deps{$file}}) ) {
+    if ( $file =~ /\.[Cc]$/ ) {
 	$ofile = $file; $ofile =~ s/\.[Cc]$/\./; $ofile .= $obj;
-	print $ofile, ': ';
+	print $ofile, ': ', $file, ' ';
 	print join(' ', alldeps($file));
 	print "\n";
     }
