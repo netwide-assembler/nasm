@@ -1286,12 +1286,12 @@ int main(int argc, char ** argv)
 	if (!*argv) argv = respstrings;
 	if (!*argv) break;
 	if (!strncmp(*argv, "-l", 2)) {
-	    if(libpath && (*argv[2] != '/'))
+	    if(libpath && (argv[0][2] != '/'))
 		add_library(newstrcat(libpath,*argv + 2));
             else
 		add_library(*argv + 2);
         } else {
-	    if(objpath && (*argv[0] != '/'))
+	    if(objpath && (argv[0][0] != '/'))
 		loadmodule(newstrcat(objpath, *argv));
 	    else
 		loadmodule(*argv);
