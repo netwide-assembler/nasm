@@ -552,7 +552,7 @@ current directory, but also in any directories specified on the
 command line by the use of the \c{-i} option. Therefore you can
 include files from a \i{macro library}, for example, by typing
 
-\c nasm -ic:\\macrolib\\ -f obj myfile.asm
+\c nasm -ic:\macrolib\ -f obj myfile.asm
 
 (As usual, a space between \c{-i} and the path name is allowed, and
 optional).
