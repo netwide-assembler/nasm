@@ -34,7 +34,7 @@ static long reg_flags[] = {	       /* sizes and special flags */
 
 enum {				       /* special tokens */
     S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD,
-    S_SHORT, S_TO, S_TWORD, S_WORD
+    S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
 };
 
 static int is_comma_next (void);
@@ -403,6 +403,9 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		break;
 	      case S_TO:
 		result->oprs[operand].type |= TO;
+		break;
+	      case S_STRICT:
+		result->oprs[operand].type |= STRICT;
 		break;
 	      case S_FAR:
 		result->oprs[operand].type |= FAR;

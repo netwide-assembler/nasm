@@ -642,7 +642,7 @@ void saa_fpwrite (struct SAA *s, FILE *fp)
 #include "names.c"
 static const char *special_names[] = {
     "byte", "dword", "far", "long", "near", "nosplit", "qword",
-    "short", "to", "tword", "word"
+    "short", "strict", "to", "tword", "word"
 };
 static const char *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",

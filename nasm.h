@@ -382,6 +382,7 @@ enum {
 
 #define TO        0x00000100L          /* reverse effect in FADD, FSUB &c */
 #define COLON     0x00000200L	       /* operand is followed by a colon */
+#define STRICT    0x00000400L	       /* do not optimize this operand */
 
 /* type of operand: memory reference, register, etc. */
 #define MEMORY    0x00204000L

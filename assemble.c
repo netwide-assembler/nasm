@@ -157,7 +157,8 @@ static int jmp_match (long segment, long offset, int bits,
 
     if (c != 0370 && c != 0371) return 0;
     if (ins->oprs[0].opflags & OPFLAG_FORWARD) {
-	if (optimizing<0 && c==0370) return 1;
+	if ((optimizing<0 || (ins->oprs[0].type & STRICT))
+	    && c==0370) return 1;
 	else return (pass0==0);	/* match a forward reference */
     }
     isize = calcsize (segment, offset, bits, ins, code);
@@ -552,9 +553,9 @@ static int is_sbyte (insn *ins, int op, int size)
     int ret;
     
     ret = !(ins->forw_ref && ins->oprs[op].opflags ) &&	/* dead in the water on forward reference or External */
-          optimizing>=0 &&
-/*          !(ins->oprs[op].type & (BITS16|BITS32)) && */
-          ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
+	optimizing>=0 &&
+	!(ins->oprs[op].type & STRICT) &&
+	ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
 
     v = ins->oprs[op].offset;
     if (size==16) v = (signed short)v;   /* sign extend if 16 bits */
