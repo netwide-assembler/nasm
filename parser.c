@@ -19,6 +19,10 @@
 #include "parser.h"
 #include "float.h"
 
+extern int  in_abs_seg;		/* ABSOLUTE segment flag */
+extern long abs_seg;		/* ABSOLUTE segment */
+extern long abs_offset;		/* ABSOLUTE segment offset */
+
 static long reg_flags[] = {	       /* sizes and special flags */
     0, REG8, REG_AL, REG_AX, REG8, REG8, REG16, REG16, REG8, REG_CL,
     REG_CREG, REG_CREG, REG_CREG, REG_CR4, REG_CS, REG_CX, REG8,
@@ -99,7 +103,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	     * Generally fix things. I think this is right as it is, but
 	     * am still not certain.
 	     */
-	    ldef (result->label, location->segment,
+	    ldef (result->label, in_abs_seg?abs_seg:location->segment,
 		  location->offset, NULL, TRUE, FALSE, outfmt, errfunc);
 	}
     }
