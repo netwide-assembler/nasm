@@ -488,13 +488,17 @@ static int process_arg (char *p, char *q)
 	    break;
 	  case 'r':
 	  case 'v':
-	    printf("NASM version %s compiled "
+	  {
+	      const char *nasm_version_string =
+		  "NASM version " NASM_VER " compiled on " __DATE__
 #ifdef DEBUG
-	    "with -DDEBUG "
+		  " with -DDEBUG"
 #endif
-	    "on " __DATE__ "\n", NASM_VER);
-	    exit (0);		       /* never need usage message here */
-	    break;
+		  ;
+	      puts(nasm_version_string);
+	      exit (0);		       /* never need usage message here */
+	  }
+	  break;
 	  case 'e':		       /* preprocess only */
 	    operating_mode = op_preprocess;
 	    break;
