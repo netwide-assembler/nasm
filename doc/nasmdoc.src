@@ -79,6 +79,7 @@ variables
 \IR{a.out, bsd version} \c{a.out}, BSD version
 \IR{a.out, linux version} \c{a.out}, Linux version
 \IR{autoconf} Autoconf
+\IR{bin} bin
 \IR{bitwise and} bitwise AND
 \IR{bitwise or} bitwise OR
 \IR{bitwise xor} bitwise XOR
@@ -3529,7 +3530,7 @@ is also useful for \i{operating system} and \i{boot loader}
 development.
 
 The \c{bin} format supports \i{multiple section names}. For details of
-how nasm handles sections in the bin format, see \k{multisec}.
+how nasm handles sections in the \c{bin} format, see \k{multisec}.
 
 Using the \c{bin} format puts NASM by default into 16-bit mode (see
 \k{bits}). In order to use \c{bin} to write 32-bit code such as an
@@ -3584,7 +3585,7 @@ given may be any power of two.\I{section alignment, in
 bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 
-\S{multisec} \i\c{MULTISECTION} support for the BIN format.
+\S{multisec} \c{Multisection}\I{bin, multisection} support for the BIN format.
 
 The \c{bin} format allows the use of multiple sections, which are
 ordered according to a few basic rules.
@@ -3592,28 +3593,29 @@ ordered according to a few basic rules.
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
 
-\b If a .text section is not given an ORG statement, it is allocated
-\c{ORG 0} by default.
+\b If a \c{.text} section is not given an \c{ORG} statement, it is
+allocated \c{ORG 0} by default.
 
-\b Sections which have an ORG statement, explicit or implicit, are
-placed in the order of the ORG statement. The code is padded with 0s
-to give the correct offsets within the output file.
+\b Sections which have an \c{ORG} statement, explicit or implicit,
+are placed in the order of the \c{ORG} statement. The code is padded
+with 0s to give the correct offsets within the output file.
 
-\b If a section has multiple ORG statements, the last ORG statement
+\b If a section has multiple \c{ORG} statements, the last ORG statement
 is applied to the entire section, without affecting the order in
 which the separate parts of the section are put together at assembly
 time.
 
-\b Sections without an ORG statement will be placed after those which
+\b Sections without an \c{ORG} statement will be placed after those which
 do have one, and they will be placed in the order that they are first
 declared.
 
-\b The .data section does not follow any sepcial rules, unlike the
-.text and .bss sections.
+\b The \c{.data} section does not follow any special rules, unlike the
+\c{.text} and \c{.bss} sections.
 
-\b The .bss section will be placed after all other sections.
+\b The \c{.bss} section will be placed after all other sections.
 
-\b All sections are aligned on dword boundaries.
+\b All sections are aligned on dword boundaries, unless a higher level
+of alignment has been specified.
 
 \b Sections cannot overlap.
 
