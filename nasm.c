@@ -819,7 +819,7 @@ static void assemble_file (char *fname)
                            *q++ = '\0';
                            ofmt->symdef(value, 0L, 0L, 3, q);
                         }
-                  } else if (pass0 == 1) {   /* pass == 1 */
+                  } else if (pass == 1) {   /* pass == 1 */
                         q = value;
                         validid = TRUE;
                         if (!isidstart(*q))
@@ -840,9 +840,12 @@ static void assemble_file (char *fname)
                         } else
                            special = NULL;
                         if (!is_extern(value)) {   /* allow re-EXTERN to be ignored */
+                           int temp = pass0;
+                           pass0 = 1;	/* fake pass 1 in labels.c */
                            declare_as_global (value, special, report_error);
                            define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
                                           ofmt, report_error);
+                           pass0 = temp;
                         }
                   } /* else  pass0 == 1 */
                   break;
