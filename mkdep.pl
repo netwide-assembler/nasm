@@ -86,7 +86,7 @@ sub insert_deps($) {
     my($line,$parm,$val);
     my($obj) = '.o';		# Defaults
     my($sep) = '/';
-    my($maxline) = 78;		# SMTP uses this value...
+    my($maxline) = 78;		# Seems like a reasonable default
 
     while ( defined($line = <IN>) ) {
 	if ( $line =~ /^\s*\#\s*@([a-z0-9-]+):\s*\"([^\"]*)\"/ ) {
