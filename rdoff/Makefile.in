@@ -52,7 +52,7 @@ rdf2ihx.o: rdf2ihx.c
 rdf2bin.o: rdf2bin.c
 rdfdump.o: rdfdump.c
 rdoff.o: rdoff.c rdoff.h
-ldrdf.o: ldrdf.c rdoff.h $(top_srcdir)/nasmlib.h symtab.h collectn.h rdlib.h
+ldrdf.o: ldrdf.c rdoff.h ../nasmlib.h symtab.h collectn.h rdlib.h
 symtab.o: symtab.c symtab.h
 collectn.o: collectn.c collectn.h
 rdx.o: rdx.c rdoff.h rdfload.h symtab.h
@@ -62,9 +62,8 @@ rdflib.o: rdflib.c
 segtab.o: segtab.c
 
 nasmlib.o: $(top_srcdir)/nasmlib.c
-##	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
-	cd $(top_srcdir);make nasmlib.o
-	cp $(top_srcdir)/nasmlib.o $(srcdir)
+	cd .. && $(MAKE) nasmlib.o
+	cp ../nasmlib.o .
 
 clean:
 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx

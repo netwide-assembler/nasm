@@ -49,7 +49,7 @@ NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
 
 all: nasm ndisasm nasm.man ndisasm.man
-	cd rdoff; $(MAKE) all
+	cd rdoff && $(MAKE) all
 
 nasm: $(NASM)
 	$(CC) $(LDFLAGS) -o nasm $(NASM)

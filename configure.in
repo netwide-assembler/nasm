@@ -112,3 +112,4 @@ if test $ac_cv_prog_make_vpathok = no; then
 fi
 
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
+AC_OUTPUT_COMMANDS([mkdir -p output])
