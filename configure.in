@@ -63,7 +63,7 @@ fi
 AC_SUBST(GCCFLAGS)
 
 dnl Look for "nroff" or "groff"
-AC_CHECK_PROGS(NROFF, groff nroff, echo)
+AC_CHECK_PROGS(NROFF, nroff, echo)
 AC_SUBST(NROFF)
 
 dnl Checks for header files.

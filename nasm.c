@@ -43,7 +43,7 @@ static int globallineno;	       /* for forward-reference tracking */
 static int pass;
 static struct ofmt *ofmt = NULL;
 
-static FILE *error_file = stderr;      /* Where to write error messages */
+static FILE *error_file;	       /* Where to write error messages */
 
 static FILE *ofile = NULL;
 static int sb = 16;		       /* by default */
@@ -139,7 +139,8 @@ int main(int argc, char **argv)
 
     preproc = &nasmpp;
     operating_mode = op_normal;
-
+    
+    error_file = stderr;
 
     seg_init();
 
@@ -350,13 +351,13 @@ static int process_arg (char *p, char *q)
 		}
 		else
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
-	    } else if (p[1]=='p') {    /* pre-include */
+	    } else if (p[1]=='P' || p[1]=='p') {    /* pre-include */
 		pp_pre_include (param);
 	    } else if (p[1]=='D' || p[1]=='d') {    /* pre-define */
 		pp_pre_define (param);
 	    } else if (p[1]=='U' || p[1]=='u') {    /* un-define */
 		pp_pre_undefine (param);
-	    } else if (p[1]=='i') {    /* include search path */
+	    } else if (p[1]=='I' || p[1]=='i') {    /* include search path */
 		pp_include_path (param);
 	    } else if (p[1]=='l') {    /* listing file */
 		strcpy (listname, param);
@@ -392,10 +393,10 @@ static int process_arg (char *p, char *q)
 		   "    -E<file>    redirect error messages to file\n\n"
 		   "    -g          enable debug info\n"
 		   "    -F format   select a debugging format\n\n"
-		   "    -i<path>    adds a pathname to the include file path\n"
-		   "    -p<file>    pre-includes a file\n"
-		   "    -d<macro>[=<value>] pre-defines a macro\n"
-		   "    -u<macro>   undefines a macro\n"
+		   "    -I<path>    adds a pathname to the include file path\n"
+		   "    -P<file>    pre-includes a file\n"
+		   "    -D<macro>[=<value>] pre-defines a macro\n"
+		   "    -U<macro>   undefines a macro\n"
 		   "    -w+foo      enables warnings about foo; -w-foo disables them\n"
 		   "where foo can be:\n");
 	    for (i=1; i<=ERR_WARN_MAX; i++)

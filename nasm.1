@@ -112,17 +112,40 @@ to, respectively, enable warnings about labels alone on lines or
 disable warnings about incorrect numbers of parameters in macro
 calls.
 .TP
-.BI \-i " directory"
+.BI \-I " directory"
 Adds a directory to the search path for include files. The directory
 specification must include the trailing slash, as it will be
 directly prepended to the name of the include file.
 .TP
-.BI \-p " file"
+.BI \-i " directory"
+Same as the
+.B \-I
+option.
+.TP
+.BI \-P " file"
 Specifies a file to be pre-included, before the main source file
 starts to be processed.
 .TP
-.BI \-d " macro[=value]"
+.BI \-p " file"
+Same as the
+.B \-P
+option.
+.TP
+.BI \-D " macro[=value]"
 Pre-defines a single-line macro.
+.TP
+.BI \-d " macro[=value]"
+Same as the
+.B \-D
+option.
+.TP
+.BI \-U " macro"
+Undefines a single-line macro.
+.TP
+.BI \-u " macro"
+Same as the
+.B \-U
+option.
 .PP
 .RE
 .SS SYNTAX

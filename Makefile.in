@@ -22,8 +22,13 @@ INSTALL_DATA = @INSTALL_DATA@
 
 NROFF = @NROFF@
 
+.SUFFIXES: .c .o .1 .man
+
 .c.o:
 	$(CC) -c $(CFLAGS) $<
+
+.1.man:
+	$(NROFF) -man $< > $@
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        parser.o outform.o outbin.o outaout.o outcoff.o outelf.o \
@@ -32,7 +37,7 @@ NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
 
-all: nasm ndisasm nasm.man
+all: nasm ndisasm nasm.man ndisasm.man
 
 nasm: $(NASM)
 	$(CC) -o nasm $(NASM)
@@ -82,9 +87,6 @@ insnsa.c insnsd.c insnsi.h insnsn.c: insns.dat insns.pl
 macros.c: standard.mac macros.pl
 	perl $(srcdir)/macros.pl $(srcdir)/standard.mac
 
-nasm.man: nasm.1
-	$(NROFF) -man nasm.1 > nasm.man
-
 install: nasm ndisasm
 	$(INSTALL_PROGRAM) nasm $(bindir)/nasm
 	$(INSTALL_PROGRAM) ndisasm $(bindir)/ndisasm
@@ -100,7 +102,7 @@ distclean: clean
 	cd rdoff; $(MAKE) distclean
 
 cleaner: clean
-	rm -f insnsa.c insnsd.c insnsi.h insnsn.c macros.c nasm.man
+	rm -f insnsa.c insnsd.c insnsi.h insnsn.c macros.c *.man
 
 spotless: distclean cleaner
 

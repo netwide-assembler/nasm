@@ -252,14 +252,21 @@ static unsigned char *do_ea (unsigned char *data, int modrm, int asize,
 }
 
 /*
- * Determine whether the code string in r corresponds to the data
+ * Determine whether the instruction template in t corresponds to the data
  * stream in data. Return the number of bytes matched if so.
  */
-static int matches (unsigned char *r, unsigned char *data, int asize,
-		    int osize, int segsize, insn *ins) 
+static int matches (struct itemplate *t, unsigned char *data, int asize,
+		    int osize, int segsize, int rep, insn *ins) 
 {
+    unsigned char * r = (unsigned char *)(t->code);
     unsigned char * origdata = data;
     int           a_used = FALSE, o_used = FALSE;
+    int           drep = 0;
+
+    if ( rep == 0xF2 )
+      drep = P_REPNE;
+    else if ( rep == 0xF3 )
+      drep = P_REP;
 
     while (*r) 
     {
@@ -434,12 +441,27 @@ static int matches (unsigned char *r, unsigned char *data, int asize,
 	    else
 		ins->condition = d - t;
 	}
+	if (c == 0331) {
+	    if ( rep )
+	        return FALSE;
+	}
+	if (c == 0332) {
+	    if (drep == P_REP)
+	        drep = P_REPE;
+	}
+	if (c == 0333) {
+	    if ( rep != 0xF3 )
+	        return FALSE;
+	    drep = 0;
+	}
     }
 
     /*
-     * Check for unused a/o prefixes.
+     * Check for unused rep or a/o prefixes.
      */
     ins->nprefix = 0;
+    if (drep)
+        ins->prefixes[ins->nprefix++] = drep;
     if (!a_used && asize != segsize)
 	ins->prefixes[ins->nprefix++] = (asize == 16 ? P_A16 : P_A32);
     if (!o_used && osize != segsize)
@@ -457,7 +479,7 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
     int rep, lock, asize, osize, i, slen, colon;
     unsigned char *origdata;
     int works;
-    insn ins;
+    insn tmp_ins, ins;
     unsigned long goodness, best;
 
     /*
@@ -490,35 +512,35 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	    break;
     }
 
-    ins.oprs[0].segment = ins.oprs[1].segment = ins.oprs[2].segment =
-    ins.oprs[0].addr_size = ins.oprs[1].addr_size = ins.oprs[2].addr_size =
-	(segsize == 16 ? 0 : SEG_32BIT);
-    ins.condition = -1;
+    tmp_ins.oprs[0].segment = tmp_ins.oprs[1].segment =
+    tmp_ins.oprs[2].segment =
+    tmp_ins.oprs[0].addr_size = tmp_ins.oprs[1].addr_size =
+      tmp_ins.oprs[2].addr_size = (segsize == 16 ? 0 : SEG_32BIT);
+    tmp_ins.condition = -1;
     best = ~0UL;		/* Worst possible */
     best_p = NULL;
     for (p = itable[*data]; *p; p++) {
-      if ( (length = matches((unsigned char *)((*p)->code), data,
-			     asize, osize, segsize, &ins)) ) {
+      if ( (length = matches(*p, data, asize, osize,
+			     segsize, rep, &tmp_ins)) ) {
 	works = TRUE;
 	/*
 	 * Final check to make sure the types of r/m match up.
 	 */
 	for (i = 0; i < (*p)->operands; i++) {
 	  if (
-	      
 	      /* If it's a mem-only EA but we have a register, die. */
-	      ((ins.oprs[i].segment & SEG_RMREG) &&
+	      ((tmp_ins.oprs[i].segment & SEG_RMREG) &&
 	       !(MEMORY & ~(*p)->opd[i])) ||
 	      
 	      /* If it's a reg-only EA but we have a memory ref, die. */
-	      (!(ins.oprs[i].segment & SEG_RMREG) &&
+	      (!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
 	       !(REGNORM & ~(*p)->opd[i]) &&
 	       !((*p)->opd[i] & REG_SMASK)) ||
 	      
 	      /* Register type mismatch (eg FS vs REG_DESS): die. */
 	      ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
-		(ins.oprs[i].segment & SEG_RMREG)) &&
-	       !whichreg ((*p)->opd[i], ins.oprs[i].basereg))) {
+		(tmp_ins.oprs[i].segment & SEG_RMREG)) &&
+	       !whichreg ((*p)->opd[i], tmp_ins.oprs[i].basereg))) {
 	    works = FALSE;
 	    break;
 	  }
@@ -528,41 +550,35 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	  goodness = ((*p)->flags & IF_PFMASK) ^ prefer;
 	  if ( goodness < best ) {
 	    /* This is the best one found so far */
-	    best = goodness;
-	    best_p = p;
+	    best        = goodness;
+	    best_p      = p;
 	    best_length = length;
+	    ins         = tmp_ins;
 	  }
 	}
       }
     }
 
-    if (!best_p )
+    if (!best_p)
 	return 0;		       /* no instruction was matched */
 
     /* Pick the best match */
-    p = best_p;
+    p      = best_p;
     length = best_length;
 
     slen = 0;
 
-    if (rep) {
-	slen += sprintf(output+slen, "rep%s ",
-			(rep == 0xF2 ? "ne" :
-			 (*p)->opcode == I_CMPSB ||
-			 (*p)->opcode == I_CMPSW ||
-			 (*p)->opcode == I_CMPSD ||
-			 (*p)->opcode == I_SCASB ||
-			 (*p)->opcode == I_SCASW ||
-			 (*p)->opcode == I_SCASD ? "e" : ""));
-    }
     if (lock)
 	slen += sprintf(output+slen, "lock ");
     for (i = 0; i < ins.nprefix; i++)
 	switch (ins.prefixes[i]) {
-	  case P_A16: slen += sprintf(output+slen, "a16 "); break;
-	  case P_A32: slen += sprintf(output+slen, "a32 "); break;
-	  case P_O16: slen += sprintf(output+slen, "o16 "); break;
-	  case P_O32: slen += sprintf(output+slen, "o32 "); break;
+	  case P_REP:   slen += sprintf(output+slen, "rep "); break;
+	  case P_REPE:  slen += sprintf(output+slen, "repe "); break;
+	  case P_REPNE: slen += sprintf(output+slen, "repne "); break;
+	  case P_A16:   slen += sprintf(output+slen, "a16 "); break;
+	  case P_A32:   slen += sprintf(output+slen, "a32 "); break;
+	  case P_O16:   slen += sprintf(output+slen, "o16 "); break;
+	  case P_O32:   slen += sprintf(output+slen, "o32 "); break;
 	}
 
     for (i = 0; i < elements(ico); i++)

@@ -45,6 +45,11 @@
  *                 generates no code in the assembler)
  * \330          - a literal byte follows in the code stream, to be added
  *                 to the condition code value of the instruction.
+ * \331		 - instruction not valid with REP prefix.  Hint for
+ *                 disassembler only; for SSE instructions.
+ * \332		 - disassemble a rep (0xF3 byte) prefix as repe not rep.
+ * \333		 - REP prefix (0xF3 byte); for SSE instructions.  Not encoded
+ *		   as a literal byte in order to aid the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialised storage.
  *                 Operand 0 had better be a segmentless constant.
  */
@@ -555,6 +560,11 @@ static long calcsize (long segment, long offset, int bits,
 	break;
       case 0330:
 	codes++, length++; break;
+      case 0331:
+      case 0332:
+	break;
+      case 0333:
+	length++; break;
       case 0340: case 0341: case 0342:
 	if (ins->oprs[0].segment != NO_SEG)
 	    errfunc (ERR_NONFATAL, "attempt to reserve non-constant"
@@ -853,6 +863,17 @@ static void gencode (long segment, long offset, int bits,
 	    offset += 1;
 	    break;
 
+	case 0331:
+	case 0332:
+	    break;
+
+	case 0333:
+	    *bytes = 0xF3;
+	    out (offset, segment, bytes,
+		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
+	    break;
+
 	case 0340: case 0341: case 0342:
 	    if (ins->oprs[0].segment != NO_SEG)
 		errfunc (ERR_PANIC, "non-constant BSS size in pass two");
@@ -959,7 +980,7 @@ static int regval (operand *o)
 
 static int matches (struct itemplate *itemp, insn *instruction) 
 {
-    int i, size, oprs, ret;
+    int i, size[3], asize, oprs, ret;
 
     ret = 100;
 
@@ -998,29 +1019,55 @@ static int matches (struct itemplate *itemp, insn *instruction)
     /*
      * Check operand sizes
      */
-    if (itemp->flags & IF_SB) {
-	size = BITS8;
-	oprs = itemp->operands;
-    } else if (itemp->flags & IF_SW) {
-	size = BITS16;
-	oprs = itemp->operands;
-    } else if (itemp->flags & IF_SD) {
-	size = BITS32;
-	oprs = itemp->operands;
-    } else if (itemp->flags & (IF_SM | IF_SM2)) {
-	oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
-	size = 0;		       /* placate gcc */
-	for (i=0; i<oprs; i++)
-	    if ( (size = itemp->opd[i] & SIZE_MASK) != 0)
-		break;
+    if (itemp->flags & IF_ARMASK) {
+      size[0] = size[1] = size[2] = 0;
+
+      switch (itemp->flags & IF_ARMASK) {
+      case IF_AR0: i = 0; break;
+      case IF_AR1: i = 1; break;
+      case IF_AR2: i = 2; break;
+      default:     break;	/* Shouldn't happen */
+      }
+      if (itemp->flags & IF_SB) {
+	size[i] = BITS8;
+      } else if (itemp->flags & IF_SW) {
+	size[i] = BITS16;
+      } else if (itemp->flags & IF_SD) {
+	size[i] = BITS32;
+      }
     } else {
-	size = 0;
+      asize = 0;
+      if (itemp->flags & IF_SB) {
+	asize = BITS8;
 	oprs = itemp->operands;
+      } else if (itemp->flags & IF_SW) {
+	asize = BITS16;
+	oprs = itemp->operands;
+      } else if (itemp->flags & IF_SD) {
+	asize = BITS32;
+	oprs = itemp->operands;
+      }
+      size[0] = size[1] = size[2] = asize;
+    }
+
+    if (itemp->flags & (IF_SM | IF_SM2)) {
+      oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
+      asize = 0;
+      for (i=0; i<oprs; i++) {
+	if ( (asize = itemp->opd[i] & SIZE_MASK) != 0) {
+	  int j;
+	  for (j=0; j<oprs; j++)
+	    size[j] = asize;
+	  break;
+	}
+      }
+    } else {
+      oprs = itemp->operands;
     }
 
     for (i=0; i<itemp->operands; i++)
 	if (!(itemp->opd[i] & SIZE_MASK) &&
-	    (instruction->oprs[i].type & SIZE_MASK & ~size))
+	    (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
 	    ret = 2;
 
     return ret;

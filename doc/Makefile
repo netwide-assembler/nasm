@@ -1,5 +1,6 @@
 #
-# Makefile for NASM documentation
+# UNIX Makefile for NASM documentation
+#
 
 SRCS	= nasmdoc.src
 OUT	= nasm.info
@@ -10,12 +11,12 @@ all: $(OUT)
 
 # Consider html, txt and src output a side effect
 .src.texi:
-	-mkdir html
+	mkdir -p html
 	perl ./rdsrc.pl < $<
 	mv -f *.html html
 
 nasm.info: nasmdoc.texi
-	-mkdir info
+	mkdir -p info
 	makeinfo $<
 	mv -f *.info *.info-* info
 

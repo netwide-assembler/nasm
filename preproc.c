@@ -909,14 +909,14 @@ static FILE *inc_fopen(char *file)
 
 /*
  * Determine if we should warn on defining a single-line macro of
- * name `name', with `nparam' parameters. If nparam is 0, will
+ * name `name', with `nparam' parameters. If nparam is 0 or -1, will
  * return TRUE if _any_ single-line macro of that name is defined.
  * Otherwise, will return TRUE if a single-line macro with either
  * `nparam' or no parameters is defined.
  *
  * If a macro with precisely the right number of parameters is
- * defined, the address of the definition structure will be
- * returned in `defn'; otherwise NULL will be returned. If `defn'
+ * defined, or nparam is -1, the address of the definition structure
+ * will be returned in `defn'; otherwise NULL will be returned. If `defn'
  * is NULL, no action will be taken regarding its contents, and no
  * error will occur.
  *
@@ -943,9 +943,9 @@ static int smacro_defined (char *name, int nparam, SMacro **defn, int nocase)
 
     while (m) {
 	if (!mstrcmp(m->name, p, m->casesense & nocase) &&
-	    (nparam == 0 || m->nparam == 0 || nparam == m->nparam)) {
+	    (nparam <= 0 || m->nparam == 0 || nparam == m->nparam)) {
 	    if (defn) {
-		if (nparam == m->nparam)
+		if (nparam == m->nparam || nparam == -1)
 		    *defn = m;
 		else
 		    *defn = NULL;
@@ -1878,7 +1878,7 @@ static int do_directive (Token *tline)
 	/*
 	 * We now have a macro name... go hunt for it.
 	 */
-	if (smacro_defined (mname, 0, &smac, 1) && smac) {
+	while (smacro_defined (mname, -1, &smac, 1)) {
 	  /* Defined, so we need to find its predecessor and nuke it */
 	  SMacro **s;
 	  for ( s = smhead ; *s && *s != smac ; s = &(*s)->next );

@@ -30,7 +30,7 @@ static const char *help =
 "   -r displays the version number\n"
 "   -e skips <bytes> bytes of header\n"
 "   -k avoids disassembling <bytes> bytes from position <start>\n"
-"   -p selects the preferred vendor instruction set (intel, amd, cyrix)\n";
+"   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
 
 static void output_ins (unsigned long, unsigned char *, int, char *);
 static void skip (unsigned long dist, FILE *fp);

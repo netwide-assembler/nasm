@@ -3,6 +3,24 @@ Anvin <hpa@zytor.com>; it is not the original form released by the
 NASM authors.  However, as of 0.98p6 I have agreed to release the
 official 0.98 version, so this is now an "official pre-release".
 
+For release 0.98p7:
+
+* Fixed opcodes with a third byte-sized immediate argument to not
+  complain if given "byte" on the immediate.
+* Allow %undef to remove single-line macros with arguments.  This
+  matches the behaviour of #undef in the C preprocessor.
+* Allow -d, -u, -i and -p to be specified as -D, -U, -I and -P for
+  compatibility with most C compilers and preprocessors.  This allows
+  Makefile options to be shared between cc and nasm, for example.
+* Minor cleanups.
+* Went through the list of Katmai instructions and hopefully fixed the
+  (rather few) mistakes in it.
+* (Hopefully) fixed a number of disassembler bugs related to ambiguous
+  instructions (disambiguated by -p) and SSE instructions with REP.
+* Fix for bug reported by Mark Junger: "call dword 0x12345678" should
+  work and may add an OSP (affected CALL, JMP, Jcc).
+* Fix for environments when "stderr" isn't a compile-time constant.
+
 For release 0.98p6:
 
 * Took officially over coordination of the 0.98 release; so drop

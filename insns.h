@@ -1,4 +1,5 @@
 /* insns.h   header file for insns.c
+ * $Id$
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -49,6 +50,10 @@ struct itemplate {
 #define IF_SB     0x00000004UL	       /* unsized operands can't be non-byte */
 #define IF_SW     0x00000008UL	       /* unsized operands can't be non-word */
 #define IF_SD     0x00000010UL	       /* unsized operands can't be nondword */
+#define IF_AR0	  0x00000020UL	       /* SB, SW, SD applies to argument 0 */
+#define IF_AR1	  0x00000040UL	       /* SB, SW, SD applies to argument 1 */
+#define IF_AR2	  0x00000060UL	       /* SB, SW, SD applies to argument 2 */
+#define IF_ARMASK 0x00000060UL         /* mask for unsized argument spec */
 #define IF_PRIV   0x00000100UL	       /* it's a privileged instruction */
 #define IF_SMM    0x00000200UL	       /* it's only valid in SMM */
 #define IF_PROT   0x00000400UL         /* it's protected mode only */

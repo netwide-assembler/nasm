@@ -1,3 +1,7 @@
+.\" $Id$
+.\"
+.\" This file is part of NASM and is released under the NASM License.
+.\"
 .TH NDISASM 1 "The Netwide Assembler Project"
 .SH NAME
 ndisasm \- the Netwide Disassembler \- 80x86 binary file disassembler
@@ -89,6 +93,20 @@ Specifies either 16-bit or 32-bit mode. The default is 16-bit mode.
 .TP
 .B \-u
 Specifies 32-bit mode, more compactly than using `-b 32'.
+.TP
+.BI \-p " vendor"
+Prefers instructions as defined by
+.I vendor
+in case of a conflict.  Known
+.I vendor
+names include
+.BR intel ,
+.BR amd ,
+.BR cyrix ,
+and
+.BR idt .
+The default is
+.BR intel .
 .PP
 .RE
 .SH RESTRICTIONS
