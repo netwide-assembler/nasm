@@ -2,7 +2,8 @@
 ; Assembly "Hello, World!" for Linux
 ;
 
-/* Properly defined in <sys/syscall.h> */
+
+; Properly defined in <sys/syscall.h>
 %define SYS_exit	1
 %define SYS_write	4
 
