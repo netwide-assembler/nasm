@@ -1,3 +1,8 @@
+2002-05-12  Debbie Wiles <debs@dwiles.demon.co.uk>
+   * (insns.dat): fixed incorrect processor flags
+   * (Mkfiles/Makefile.vc): added optimisation, and changed to work with 0.98.31
+   * (doc/nasmdoc.src): added %ifmacro, and tidied up format of code items.
+
 2002-05-03  H. Peter Anvin <hpa@zytor.com>
    * (nasm.c): Change the NASM environment variable to NASMOPT.
 
