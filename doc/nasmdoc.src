@@ -3662,13 +3662,15 @@ Options are:
 
 \b\c{CPU P2}            Same as 686
 
-\b\c{CPU P3}            Pentium III and Katmai instruction sets
+\b\c{CPU P3}            Pentium III (Katmai) instruction sets
 
 \b\c{CPU KATMAI}        Same as P3
 
 \b\c{CPU P4}            Pentium 4 (Willamette) instruction set
 
 \b\c{CPU WILLAMETTE}    Same as P4
+
+\b\c{CPU PRESCOTT}	Prescott instruction set
 
 \b\c{CPU IA64}          IA64 CPU (in x86 mode) instruction set
 
