@@ -12,8 +12,8 @@
 #define NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 91
-#define NASM_VER "0.91"
+#define NASM_MINOR_VER 93
+#define NASM_VER "0.93"
 
 #ifndef NULL
 #define NULL 0
@@ -268,6 +268,7 @@ typedef struct {		       /* an instruction itself */
     operand oprs[3];	   	       /* the operands, defined as above */
     extop *eops;		       /* extended operands */
     int times;			       /* repeat count (TIMES prefix) */
+    int forw_ref;		       /* is there a forward reference? */
 } insn;
 
 /*

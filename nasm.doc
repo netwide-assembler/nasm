@@ -16,7 +16,8 @@ that maybe someone ought to write one.
   since it's designed to be a back end to gcc, which always feeds it
   correct code. So its error checking is minimal. Also its syntax is
   horrible, from the point of view of anyone trying to actually
-  _write_ anything in it. Plus you can't write 16-bit code in it.
+  _write_ anything in it. Plus you can't write 16-bit code in it
+  (properly).
 
 - AS86 is Linux specific, and (my version at least) doesn't seem to
   have much (or any) documentation.
@@ -255,7 +256,8 @@ ordinary opcodes, so you can code trivial unrolled loops in it:
 	times 100 movsb
 
 Note that there is no effective difference between `times 100 resb
-1' and `resb 100'.
+1' and `resb 100', except that the latter will be assembled about
+100 times faster due to the internal structure of the assembler.
 
 Effective Addresses
 ===================
@@ -402,7 +404,8 @@ generate code to read a byte from [DS:SI], no matter what the size
 of the segment. There are also explicit operand-size override
 prefixes, `o16' and `o32', which will optionally generate 0x66
 bytes, but these are provided for completeness and should never have
-to be used.
+to be used. (Note that NASM does not support the LODS, STOS, MOVS
+etc. forms of the string instructions.)
 
 Constants
 =========
@@ -517,6 +520,15 @@ this can be used for alignment, as shown below:
 
 	times ($$-$) & 3 nop	; pad with NOPs to 4-byte boundary
 
+Note that this technique aligns to a four-byte boundary with respect
+to the beginning of the _segment_; if you can't guarantee that the
+segment itself begins on a four-byte boundary, this alignment is
+useless or worse. Be sure you know what kind of alignment you can
+guarantee to get out of your linker before you start trying to use
+TIMES to align to page boundaries. (Of course, the OBJ file format
+can happily cope with page alignment, provided you specify that
+segment attribute.)
+
 SEG and WRT
 ===========
 
@@ -611,6 +623,21 @@ On pass one, `a' cannot be defined properly, since `b' is not known
 yet. On pass two, `b' is known, so line two can define `a' properly.
 Unfortunately, line 1 needed `a' to be defined properly, so this
 code will not assemble using only two passes.
+
+There's a related issue: in an effective address such as
+`[eax+offset]', the value of `offset' can be stored as either 1 or 4
+bytes. NASM will use the one-byte form if it knows it can, to save
+space, but will therefore be fooled by the following:
+
+  mov eax,[ebx+offset]
+offset equ 10
+
+In this case, although `offset' is a small value and could easily
+fit into the one-byte form of the instruction, when NASM sees the
+instruction in the first pass it doesn't know what `offset' is, and
+for all it knows `offset' could be a symbol requiring relocation. So
+it will allocate the full four bytes for the value of `offset'. This
+can be solved by defining `offset' before it's used.
 
 Local Labels
 ============
@@ -724,7 +751,8 @@ Output Formats
 ==============
 
 The current output formats supported are `bin', `aout', `coff',
-`elf' and `win32'.
+`elf', `as86', `obj', `win32', `rdf', and the debug pseudo-format
+`dbg'.
 
 `bin': flat-form binary
 -----------------------
@@ -742,20 +770,20 @@ to be loaded into memory at the address `addr'. So a DOS .COM file
 should state [ORG 0x100], and a DOS .SYS file should state [ORG 0].
 There should be _one_ ORG directive, at most, in an assembly file:
 NASM does not support the use of ORG to jump around inside an object
-file, like MASM does (see the `Bugs' section for a use of the ORG
-directive not supported by NASM).
+file, like MASM does (see the `Bugs' section for a demonstration of
+the use of MASM's form of ORG to do something that NASM's won't do.)
 
-Like all formats, the `bin' format defines the section names
-`.text', `.data' and `.bss'. The layout is that `.text' comes first
-in the output file, followed by `.data', and notionally followed by
-`.bss'. So if you declare a BSS section in a flat binary file,
-references to the BSS section will refer to space past the end of
-the actual file. The `.data' and `.bss' sections are considered to
-be aligned on four-byte boundaries: this is achieved by inserting
-padding zero bytes between the end of the text section and the start
-of the data, if there is data present. Of course if no [SECTION]
-directives are present, everything will go into `.text', and you
-will get nothing in the output except the code you wrote.
+Like almost all formats (not `obj'), the `bin' format defines the
+section names `.text', `.data' and `.bss'. The layout is that
+`.text' comes first in the output file, followed by `.data', and
+notionally followed by `.bss'. So if you declare a BSS section in a
+flat binary file, references to the BSS section will refer to space
+past the end of the actual file. The `.data' and `.bss' sections are
+considered to be aligned on four-byte boundaries: this is achieved
+by inserting padding zero bytes between the end of the text section
+and the start of the data, if there is data present. Of course if no
+[SECTION] directives are present, everything will go into `.text',
+and you will get nothing in the output except the code you wrote.
 
 `bin' silently ignores GLOBAL directives, and will also not complain
 at EXTERN ones. You only get an error if you actually _reference_ an
@@ -775,6 +803,42 @@ These two object formats are the ones used under Linux. They have no
 format-specific directives, and their default output filename is
 `filename.o'.
 
+`aout' defines the three standard sections `.text', `.data' and
+`.bss'. `elf' defines these three, but can also support user-defined
+section names, which can be declared along with section attributes
+like this:
+
+[section foo align=32 exec]
+[section bar write nobits]
+
+The available options are:
+
+- A section can be `progbits' (the default) or `nobits'. `nobits'
+  sections are BSS: their contents are not stored in the object
+  file, and the only thing you can sensibly do in one is RESB.
+  `progbits' are normal sections.
+
+- A section can be `exec' (indicating that it contains executable
+  code), or `noexec' (the default).
+
+- A section can be `write' (indicating that it should be writable
+  when linked), or `nowrite' (the default).
+
+- A section can be `alloc' (indicating that its contents should be
+  loaded into program VM at load time; the default) or `noalloc'
+  (for storing comments and things that don't form part of the
+  loaded program).
+
+- You can specify a power of two for the section alignment by
+  writing `align=64' or similar.
+
+The attributes of the default sections `.text', `.data' and `.bss'
+can also be redefined from their defaults. The NASM defaults are:
+
+[section .text align=16 alloc exec nowrite progbits]
+[section .data align=4 alloc write noexec progbits]
+[section .bss align=4 alloc write noexec nobits]
+
 ELF is a much more featureful object-file format than a.out: in
 particular it has enough features to support the writing of position
 independent code by means of a global offset table, and position
@@ -793,17 +857,17 @@ The `coff' format generates standard Unix COFF object files, which
 can be fed to (for example) the DJGPP linker. Its default output
 filename, like the other Unix formats, is `filename.o'.
 
-The `win32' format generates Win32 (Windows 95 or Intel-platform
-Windows NT) object files, which nominally use the COFF standard, but
-in fact are not compatible. Its default output filename is
-`filename.obj'.
+The `win32' format generates Microsoft Win32 (Windows 95 or
+Intel-platform Windows NT) object files, which nominally use the
+COFF standard, but in fact are not compatible. Its default output
+filename is `filename.obj'.
 
 `coff' and `win32' are not quite compatible formats, due to the fact
 that Microsoft's interpretation of the term `relative relocation'
 does not seem to be the same as the interpretation used by anyone
 else. It is therefore more correct to state that Win32 uses a
 _variant_ of COFF. The object files will not therefore produce
-correct output when fed to each other's linkers.
+correct output when fed to each other's linkers. (I've tried it!)
 
 In addition to this subtle incompatibility, Win32 also defines
 extensions to basic COFF, such as a mechanism for importing symbols
@@ -824,7 +888,31 @@ interests of not generating incorrect code, NASM will not allow this
 form of reference to be written to a Win32 object file. (Standard
 COFF, or at least the DJGPP linker, seems to be able to cope with
 this contingency. Although that may be due to the executable having
-a zero load address.)
+a zero load address...)
+
+Note also that Borland Win32 compilers reportedly do not use this
+object file format: while Borland linkers will output Win32-COFF
+type executables, their object format is the same as the old DOS OBJ
+format. So if you are using a Borland compiler, don't use the
+`win32' object format, just use `obj' and declare all your segments
+as `USE32'.
+
+Both `coff' and `win32' support, in addition to the three standard
+section names `.text', `.data' and `.bss', the ability to define
+your own sections. Currently (this may change in the future) you can
+provide the options `text' (or `code'), `data' or `bss' to determine
+the type of section. Win32 also allows `info', which is an
+informational section type used by Microsoft C compilers to store
+linker directives. So you can do:
+
+[section .mysect code]  ; defines an extra code section
+
+or maybe, in Win32,
+
+[section .drectve info] ; defines an MS-compatible directive section
+  db '-defaultlib:LIBC -defaultlib:OLDNAMES '
+
+to pass directives to the MS linker.
 
 Both `coff' and `win32' default to 32-bit assembly mode.
 
@@ -863,26 +951,36 @@ segment address:
 
 [SEGMENT SCREEN ABSOLUTE=0xB800]
 
-This is an alternative to the ALIGN keyword.
+The ABSOLUTE and ALIGN keywords are mutually exclusive.
 
 The format-specific directive GROUP allows segment grouping: [GROUP
 DGROUP DATA BSS] defines the group DGROUP to contain segments DATA
 and BSS.
 
-Segments are defined as part of their group by default: if `var' is
-declared in segment `data', which is part of group `dgroup', then
-`SEG var' returns `dgroup', and `var' signifies the offset of `var'
-relative to the beginning of `dgroup'. You must use `var WRT data'
-to get the offset of `var' relative to the beginning of its
+Segments are defined as part of their group by default: if variable
+`var' is declared in segment `data', which is part of group
+`dgroup', then the expression `SEG var' is equivalent to the
+expression `dgroup', and the expression `var' evaluates to the
+offset of the variable `var' relative to the beginning of the group
+`dgroup'. You must use the expression `var WRT data' to get the
+offset of the variable `var' relative to the beginning of its
 _segment_.
 
-NASM allows a segment to be in two groups, but will generate a
-warning. References to the symbols in that segment will be resolved
-relative to the _first_ group it is defined in.
+NASM allows a segment to be part of more than one group (like A86,
+and unlike TASM), but will generate a warning (unlike A86!).
+References to the symbols in that segment will be resolved relative
+to the _first_ group it is defined in.
 
 The directive [UPPERCASE] causes all symbol, segment and group names
 output to the object file to be uppercased. The actual _assembly_ is
 still case sensitive.
+
+To avoid getting tangled up in NASM's local label mechanism, segment
+and group names have leading periods stripped when they are defined.
+Thus, the directive [SEGMENT .text] will define a segment called
+`text', which will clash with any other symbol called `text', and
+you will _not_ be able to reference the segment base as `.text', but
+only as `text'.
 
 Common variables in OBJ files can be `near' or `far': currently,
 NASM has a horribly grotty way to support that, which is that if you
@@ -914,10 +1012,10 @@ to it.
 `as86': Linux as86 (bin86-0.3)
 ------------------------------
 
-This output format replicates the format used to pass data between
-the Linux x86 assembler and linker, as86 and ld86. Its default file
-name, yet again, is `filename.o'. Its default segment-size attribute
-is 16 bits.
+This output format attempts to replicate the format used to pass
+data between the Linux x86 assembler and linker, as86 and ld86. Its
+default file name, yet again, is `filename.o'. Its default
+segment-size attribute is 16 bits.
 
 `rdf': Relocatable Dynamic Object File Format
 ---------------------------------------------
@@ -959,14 +1057,14 @@ instruction as these macros do: this is due to a bug in the _macro_,
 not in NASM. The macro works by generating an SIDT instruction (if I
 remember rightly), which has almost exactly the right form, then
 using ORG to back up a bit and do a DB over the top of one of the
-opcode bytes. The trouble is that Intel overlooked (or were unable
-to allow for) the possibility that the SIDT instruction may contain
-an 0x66 or 0x67 operand or address size prefix. If this happens, the
-ORG will back up by the wrong amount, and the macro will generate
-incorrect code. NASM gets it right. This, also, is not a bug in
-NASM, so please don't report it as one. (Also please note that the
-ORG directive in NASM doesn't work this way, and so you can't do
-equivalent tricks with it...)
+opcode bytes. The trouble is that Intel overlooked (or MASM syntax
+didn't let them allow for) the possibility that the SIDT instruction
+may contain an 0x66 or 0x67 operand or address size prefix. If this
+happens, the ORG will back up by the wrong amount, and the macro
+will generate incorrect code. NASM gets it right. This, also, is not
+a bug in NASM, so please don't report it as one. (Also please note
+that the ORG directive in NASM doesn't work this way, and so you
+can't do equivalent tricks with it...)
 
 That's All Folks!
 =================

@@ -40,7 +40,9 @@ static int sb = 16;		       /* by default */
 static long current_seg;
 static struct RAA *offsets;
 static long abs_offset;
-#define OFFSET_DELTA 256
+
+static struct SAA *forwrefs;	       /* keep track of forward references */
+static int forwline;
 
 /*
  * get/set current offset...
@@ -58,6 +60,7 @@ int main(int argc, char **argv) {
 
     nasm_set_malloc_error (report_error);
     offsets = raa_init();
+    forwrefs = saa_init ((long)sizeof(int));
 
     seg_init();
 
@@ -201,7 +204,7 @@ static void assemble_file (char *fname) {
 	lineno++;
 	if (buffer[strlen(buffer)-1] == '\n') {
 	    buffer[strlen(buffer)-1] = '\0';
-	} else {
+	} else if (!feof(fp)) {
 	    /*
 	     * We have a line that's too long. Throw an error, read
 	     * to EOL, and ignore the line for assembly purposes.
@@ -212,10 +215,14 @@ static void assemble_file (char *fname) {
 		   buffer[strlen(buffer)-1] != '\n');
 	    continue;		       /* read another line */
 	}
+	/*
+	 * Handle spurious ^Z, which may be inserted by some file
+	 * transfer utilities.
+	 */
+	buffer[strcspn(buffer, "\032")] = '\0';
 
 	/* here we parse our directives; this is not handled by the 'real'
 	 * parser. */
-
 	if ( (i = getkw (buffer, &value)) ) {
 	    switch (i) {
 	      case 1:	       /* [SEGMENT n] */
@@ -306,6 +313,8 @@ static void assemble_file (char *fname) {
 	    long offs = get_curr_ofs;
 	    parse_line (current_seg, offs, lookup_label,
 			1, buffer, &output_ins, ofmt, report_error);
+	    if (output_ins.forw_ref)
+		*(int *)saa_wstruct(forwrefs) = lineno;
 	    if (output_ins.opcode == I_EQU) {
 		/*
 		 * Special `..' EQUs get processed in pass two.
@@ -358,6 +367,14 @@ static void assemble_file (char *fname) {
     /* pass two */
     pass = 2;
     rewind (fp);
+    saa_rewind (forwrefs);
+    {
+	int *p = saa_rstruct (forwrefs);
+	if (p)
+	    forwline = *p;
+	else
+	    forwline = -1;
+    }
     current_seg = ofmt->section(NULL, pass, &sb);
     raa_free (offsets);
     offsets = raa_init();
@@ -377,9 +394,14 @@ static void assemble_file (char *fname) {
 	lineno++;
 	if (buffer[strlen(buffer)-1] == '\n')
 	    buffer[strlen(buffer)-1] = '\0';
-	else
+	else if (!feof(fp))
 	    report_error (ERR_PANIC,
 			  "too-long line got through from pass one");
+	/*
+	 * Handle spurious ^Z, which may be inserted by some file
+	 * transfer utilities.
+	 */
+	buffer[strcspn(buffer, "\032")] = '\0';
 
 	/* here we parse our directives; this is not handled by
 	 * the 'real' parser. */
@@ -452,6 +474,15 @@ static void assemble_file (char *fname) {
 	    long offs = get_curr_ofs;
 	    parse_line (current_seg, offs, lookup_label, 2,
 			buffer, &output_ins, ofmt, report_error);
+	    if (lineno == forwline) {
+		int *p = saa_rstruct (forwrefs);
+		if (p)
+		    forwline = *p;
+		else
+		    forwline = -1;
+		output_ins.forw_ref = TRUE;
+	    } else
+		output_ins.forw_ref = FALSE;
 	    obuf = buffer;
 	    if (output_ins.label)
 		define_label_stub (output_ins.label, report_error);

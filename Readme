@@ -7,12 +7,18 @@ and a home-grown format called RDF.
 Also included is NDISASM, a prototype x86 binary-file disassembler
 which uses the same instruction table as NASM.
 
-To install NASM, you will need GCC. Type `make', and then when it
-has finished copy the file `nasm' (and maybe `ndisasm') to a
-directory on your search path (I use /usr/local/bin on my linux
-machine at home, and ~/bin on other machines where I don't have root
+To install NASM on Linux, type `make', and then when it has finished
+copy the file `nasm' (and maybe `ndisasm') to a directory on your
+search path (maybe /usr/local/bin, or ~/bin if you don't have root
 access). You may also want to copy the man page `nasm.1' (and maybe
 `ndisasm.1') to somewhere sensible.
+
+To rebuild the DOS sources, three makefiles are provided:
+Makefile.dos, the one the standard release is built from, designed
+for a hybrid system using Microsoft C and Borland Make (don't ask
+why :-), Makefile.bor (for Borland C) and Makefile.bc2 (also for
+Borland C, contributed by Fox Cutter <lmb@comtch.iea.com>, may work
+better than Makefile.bor in some cases).
 
 If you want to build a restricted version of NASM containing only
 some of the object file formats, you can achieve this by adding

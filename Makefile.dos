@@ -33,8 +33,9 @@ all : nasm$(EXE) ndisasm$(EXE)
 
 # We have to have a horrible kludge here to get round the 128 character
 # limit, as usual...
+LINKOBJS = a*.obj f*.obj insnsa.obj l*.obj na*.obj o*.obj p*.obj
 nasm$(EXE): $(NASMOBJS)
-        cl /Fenasm.exe a*.obj f*.obj insnsa.obj l*.obj na*.obj o*.obj p*.obj
+	cl /Fenasm.exe /F 4000 $(LINKOBJS)
 
 ndisasm$(EXE): $(NDISASMOBJS)
 	cl /Fendisasm.exe $(NDISASMOBJS)

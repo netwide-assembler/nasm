@@ -575,6 +575,8 @@ static long obj_segment (char *name, int pass, int *bits) {
 	 * Look for segment attributes.
 	 */
 	attrs = 0;
+	while (*name == '.')
+	    name++;		       /* hack, but a documented one */
 	p = name;
 	while (*p && !isspace(*p))
 	    p++;
@@ -736,6 +738,8 @@ static int obj_directive (char *directive, char *value, int pass) {
 	    int obj_idx;
 
 	    q = value;
+	    while (*q == '.')
+		q++;		       /* hack, but a documented one */
 	    while (*q && !isspace(*q))
 		q++;
 	    if (isspace(*q)) {
@@ -847,7 +851,7 @@ static void obj_write_file (void) {
     struct Public *pub;
     struct External *ext;
     struct ObjData *data;
-    static unsigned char boast[] = "The Netwide Assembler " NASM_VER;
+    static char boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx, rectype;
 
     /*
@@ -862,7 +866,7 @@ static void obj_write_file (void) {
      */
     recptr = record;
     recptr = obj_write_rword (recptr, 0);   /* comment type zero */
-    recptr = obj_write_data (recptr, boast, sizeof(boast)-1);
+    recptr = obj_write_name (recptr, boast);
     obj_record (COMENT, record, recptr);
 
     /*

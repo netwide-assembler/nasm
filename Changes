@@ -1,0 +1,83 @@
+Change log for NASM
+===================
+
+0.90 released October 1996
+--------------------------
+
+First release version. First support for object file output. Other
+changes from previous version (0.3x) too numerous to document.
+
+0.91 released November 1996
+---------------------------
+
+Loads of bug fixes.
+Support for RDF added.
+Support for DBG debugging format added.
+Support for 32-bit extensions to Microsoft OBJ format added.
+Revised for Borland C: some variable names changed, makefile added.
+LCC support revised to actually work.
+JMP/CALL NEAR/FAR notation added.
+`a16', `o16', `a32' and `o32' prefixes added.
+Range checking on short jumps implemented.
+MMX instruction support added.
+Negative floating point constant support added.
+Memory handling improved to bypass 64K barrier under DOS.
+$ prefix to force treatment of reserved words as identifiers added.
+Default-size mechanism for object formats added.
+Compile-time configurability added.
+`#', `@', `~' and `?' are now valid characters in labels.
+`-e' and `-k' options in NDISASM added.
+
+0.92 released January 1997
+--------------------------
+
+The FDIVP/FDIVRP and FSUBP/FSUBRP pairs had been inverted: this was
+fixed. This also affected the LCC driver.
+
+Fixed a bug regarding 32-bit effective addresses of the form
+[other_register+ESP].
+
+Documentary changes, notably documentation of the fact that Borland
+Win32 compilers use `obj' rather than `win32' object format.
+
+Fixed the COMENT record in OBJ files, which was formatted
+incorrectly.
+
+Fixed a bug causing segfaults in large RDF files.
+
+OBJ format now strips initial periods from segment and group
+definitions, in order to avoid complications with the local label
+syntax.
+
+Fixed a bug in disassembling far calls and jumps in NDISASM.
+
+Added support for user-defined sections in COFF and ELF files.
+
+Compiled the DOS binaries with a sensible amount of stack, to
+prevent stack overflows on any arithmetic expression containing
+parentheses.
+
+Fixed a bug in handling of files that do not terminate in a newline.
+
+0.93 released January 1997
+--------------------------
+
+This release went out in a great hurry after semi-crippling bugs
+were found in 0.92.
+
+Really _did_ fix the stack overflows this time. *blush*
+
+Had problems with EA instruction sizes changing between passes, when
+an offset contained a forward reference and so 4 bytes were
+allocated for the offset in pass one; by pass two the symbol had
+been defined and happened to be a small absolute value, so only 1
+byte got allocated, causing instruction size mismatch between passes
+and hence incorrect address calculations. Fixed.
+
+Stupid bug in the revised ELF section generation fixed (associated
+string-table section for .symtab was hard-coded as 7, even when this
+didn't fit with the real section table). Was causing `ld' to
+seg-fault under Linux.
+
+Included a new Borland C makefile, Makefile.bc2, donated by Fox
+Cutter <lmb@comtch.iea.com>.

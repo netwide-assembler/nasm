@@ -113,12 +113,15 @@ static struct ofmt *outfmt;
 
 static long seg, ofs;
 
+static int forward;
+
 insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 		  char *buffer, insn *result, struct ofmt *output,
 		  efunc errfunc) {
     int operand;
     int critical;
 
+    forward = result->forw_ref = FALSE;
     q = tempstorage;
     bufptr = buffer;
     labelfunc = lookup_label;
@@ -384,6 +387,8 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	eval_reset();
 
 	value = evaluate (critical);
+	if (forward)
+	    result->forw_ref = TRUE;
 	if (!value) {		       /* error in evaluator */
 	    result->opcode = -1;       /* unrecoverable parse error: */
 	    return result;	       /* ignore this instruction */
@@ -407,6 +412,8 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 		i = nexttoken();
 	    }
 	    value = evaluate (critical);
+	    if (forward)
+		result->forw_ref = TRUE;	
 	    /* and get the offset */
 	    if (!value) {	       /* but, error in evaluator */
 		result->opcode = -1;   /* unrecoverable parse error: */
@@ -492,18 +499,33 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 			e++;
 		    } else
 			result->oprs[operand].wrt = NO_SEG;
-		    if (e->type != 0) {   /* is there a segment id? */
-			if (e->type < EXPR_SEGBASE) {
-			    error (ERR_NONFATAL,
-				   "invalid effective address");
-			    result->opcode = -1;
-			    return result;
-			} else
-			    result->oprs[operand].segment = (e->type -
-							     EXPR_SEGBASE);
+		    /*
+		     * Look for a segment base type.
+		     */
+		    if (e->type && e->type < EXPR_SEGBASE) {
+			error (ERR_NONFATAL, "invalid effective address");
+			result->opcode = -1;
+			return result;
+		    }
+		    while (e->type && e->value == 0)
+			e++;
+		    if (e->type && e->value != 1) {
+			error (ERR_NONFATAL, "invalid effective address");
+			result->opcode = -1;
+			return result;
+		    }
+		    if (e->type) {
+			result->oprs[operand].segment = e->type-EXPR_SEGBASE;
 			e++;
 		    } else
 			result->oprs[operand].segment = NO_SEG;
+		    while (e->type && e->value == 0)
+			e++;
+		    if (e->type) {
+			error (ERR_NONFATAL, "invalid effective address");
+			result->opcode = -1;
+			return result;
+		    }
 		}
 	    } else {
 		o = 0;
@@ -1242,6 +1264,7 @@ static expr *expr6(int critical) {
 			   tokval.t_charptr);
 		    return NULL;
 		} else {
+		    forward = TRUE;
 		    label_seg = seg;
 		    label_ofs = ofs;
 		}

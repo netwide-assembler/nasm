@@ -72,7 +72,7 @@ static long calcsize (long, long, int, insn *, char *);
 static void gencode (long, long, int, insn *, char *, long);
 static int regval (operand *o);
 static int matches (struct itemplate *, insn *);
-static ea *process_ea (operand *, ea *, int, int);
+static ea *process_ea (operand *, ea *, int, int, int);
 static int chsize (operand *, int);
 
 long assemble (long segment, long offset, int bits,
@@ -363,8 +363,8 @@ static long calcsize (long segment, long offset, int bits,
       default:			       /* can't do it by 'case' statements */
 	if (c>=0100 && c<=0277) {      /* it's an EA */
 	    ea ea_data;
-
-	    if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, 0)) {
+	    if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, 0,
+			     ins->forw_ref)) {
 	    	errfunc (ERR_NONFATAL, "invalid effective address");
 		return -1;
 	    } else
@@ -598,7 +598,8 @@ static void gencode (long segment, long offset, int bits,
 		rfield = regval (&ins->oprs[c&7]);
 	    else 		       /* rfield is constant */
 	    	rfield = c & 7;
-	    if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, rfield))
+	    if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, rfield,
+			     ins->forw_ref))
 	    	errfunc (ERR_NONFATAL, "invalid effective address");
 
 	    p = bytes;
@@ -733,7 +734,8 @@ static int matches (struct itemplate *itemp, insn *instruction) {
     return ret;
 }
 
-static ea *process_ea (operand *input, ea *output, int addrbits, int rfield) {
+static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
+		       int forw_ref) {
     if (!(REGISTER & ~input->type)) {  /* it's a single register */
 	static int regs[] = {
 	    R_MM0, R_EAX, R_AX, R_AL, R_MM1, R_ECX, R_CX, R_CL,
@@ -789,6 +791,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield) {
 		    b = i, i = -1;
 		if (((s==2 && i!=R_ESP) || s==3 || s==5 || s==9) && b==-1)
 		    b = i, s--;       /* convert 3*EAX to EAX+2*EAX */
+		if (s==1 && i==R_ESP)  /* swap ESP into base if scale is 1 */
+		    i = b, b = R_ESP;
 		if (i==R_ESP || (s!=1 && s!=2 && s!=4 && s!=8 && i!=-1))
 		    return NULL;      /* wrong, for various reasons */
 
@@ -806,12 +810,14 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield) {
 		      default:	       /* should never happen */
 			return NULL;
 		    }
-		    if (b==-1 || (b!=R_EBP && o==0 && seg==NO_SEG))
+		    if (b==-1 || (b!=R_EBP && o==0 &&
+				  seg==NO_SEG && !forw_ref))
 		    	mod = 0;
-		    else if (o>=-128 && o<=127 && seg==NO_SEG)
+		    else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
 		    	mod = 1;
 		    else
 		    	mod = 2;
+
 		    output->sib_present = FALSE;
 		    output->bytes = (b==-1 || mod==2 ? 4 : mod);
 		    output->modrm = (mod<<6) | (rfield<<3) | rm;
@@ -854,9 +860,10 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield) {
 			return NULL;  /* panic */
 		    }
 
-		    if (b==-1 || (b!=R_EBP && o==0 && seg==NO_SEG))
+		    if (b==-1 || (b!=R_EBP && o==0 &&
+				  seg==NO_SEG && !forw_ref))
 		    	mod = 0;
-		    else if (o>=-128 && o<=127 && seg==NO_SEG)
+		    else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
 		    	mod = 1;
 		    else
 		    	mod = 2;
@@ -907,9 +914,9 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield) {
 		if (rm==-1)	       /* can't happen, in theory */
 		    return NULL;      /* so panic if it does */
 
-		if (o==0 && seg==NO_SEG && rm!=6)
+		if (o==0 && seg==NO_SEG && !forw_ref && rm!=6)
 		    mod = 0;
-		else if (o>=-128 && o<=127 && seg==NO_SEG)
+		else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
 		    mod = 1;
 		else
 		    mod = 2;

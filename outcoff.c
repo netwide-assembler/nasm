@@ -70,6 +70,11 @@ struct Reloc {
     struct Reloc *next;
     long address;		       /* relative to _start_ of section */
     long symbol;		       /* symbol number */
+    enum {
+	SECT_SYMBOLS,
+	ABS_SYMBOL,
+	REAL_SYMBOLS
+    } symbase;			       /* relocation for symbol number :) */
     int relative;		       /* TRUE or FALSE */
 };
 
@@ -92,41 +97,31 @@ struct Section {
     int nrelocs;
     long index;
     struct Reloc *head, **tail;
+    unsigned long flags;	       /* section flags */
+    char name[9];
+    long pos, relpos;
 };
 
-static struct Section stext, sdata;
-static unsigned long bsslen;
-static long bssindex;
+#define TEXT_FLAGS (win32 ? 0x60500020L : 0x20L)
+#define DATA_FLAGS (win32 ? 0xC0300040L : 0x40L)
+#define BSS_FLAGS (win32 ? 0xC0300080L : 0x80L)
+#define INFO_FLAGS 0x00100A00L
+
+#define SECT_DELTA 32
+static struct Section **sects;
+static int nsects, sectlen;
 
 static struct SAA *syms;
 static unsigned long nsyms;
+
+static long def_seg;
+
+static int initsym;
 
 static struct RAA *bsym, *symval;
 
 static struct SAA *strs;
 static unsigned long strslen;
-
-/*
- * The symbol table contains a double entry for the file name, a
- * double entry for each of the three sections, and an absolute
- * symbol referencing address zero, followed by the _real_ symbols.
- * That's nine extra symbols.
- */
-#define SYM_INITIAL 9
-
-/*
- * Symbol table indices we can relocate relative to.
- */
-#define SYM_ABS_SEG 8
-#define SYM_TEXT_SEG 2
-#define SYM_DATA_SEG 4
-#define SYM_BSS_SEG 6
-
-/*
- * The section header table ends at this offset: 0x14 for the
- * header, plus 0x28 for each of three sections.
- */
-#define COFF_HDRS_END 0x8c
 
 static void coff_gen_init(FILE *, efunc);
 static void coff_sect_write (struct Section *, unsigned char *,
@@ -151,45 +146,72 @@ static void coff_std_init(FILE *fp, efunc errfunc, ldfunc ldef) {
 static void coff_gen_init(FILE *fp, efunc errfunc) {
     coffp = fp;
     error = errfunc;
-    stext.data = saa_init(1L); stext.head = NULL; stext.tail = &stext.head;
-    sdata.data = saa_init(1L); sdata.head = NULL; sdata.tail = &sdata.head;
-    stext.len = sdata.len = bsslen = 0;
-    stext.nrelocs = sdata.nrelocs = 0;
-    stext.index = seg_alloc();
-    sdata.index = seg_alloc();
-    bssindex = seg_alloc();
+    sects = NULL;
+    nsects = sectlen = 0;
     syms = saa_init((long)sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     symval = raa_init();
     strs = saa_init(1L);
     strslen = 0;
+    def_seg = seg_alloc();
 }
 
 static void coff_cleanup(void) {
     struct Reloc *r;
+    int i;
 
     coff_write();
     fclose (coffp);
-    saa_free (stext.data);
-    while (stext.head) {
-	r = stext.head;
-	stext.head = stext.head->next;
-	nasm_free (r);
+    for (i=0; i<nsects; i++) {
+	if (sects[i]->data)
+	    saa_free (sects[i]->data);
+	while (sects[i]->head) {
+	    r = sects[i]->head;
+	    sects[i]->head = sects[i]->head->next;
+	    nasm_free (r);
+	}
     }
-    saa_free (sdata.data);
-    while (sdata.head) {
-	r = sdata.head;
-	sdata.head = sdata.head->next;
-	nasm_free (r);
-    }
+    nasm_free (sects);
     saa_free (syms);
     raa_free (bsym);
     raa_free (symval);
     saa_free (strs);
 }
 
+static int coff_make_section (char *name, unsigned long flags) {
+    struct Section *s;
+
+    s = nasm_malloc (sizeof(*s));
+
+    if (flags != BSS_FLAGS)
+	s->data = saa_init (1L);
+    else
+	s->data = NULL;
+    s->head = NULL;
+    s->tail = &s->head;
+    s->len = 0;
+    s->nrelocs = 0;
+    if (!strcmp(name, ".text"))
+	s->index = def_seg;
+    else
+	s->index = seg_alloc();
+    strncpy (s->name, name, 8);
+    s->name[8] = '\0';
+    s->flags = flags;
+
+    if (nsects >= sectlen)
+	sects = nasm_realloc (sects, (sectlen += SECT_DELTA)*sizeof(*sects));
+    sects[nsects++] = s;
+
+    return nsects-1;
+}
+
 static long coff_section_names (char *name, int pass, int *bits) {
+    char *p;
+    unsigned long flags;
+    int i;
+
     /*
      * Default is 32 bits.
      */
@@ -197,16 +219,65 @@ static long coff_section_names (char *name, int pass, int *bits) {
 	*bits = 32;
 
     if (!name)
-	return stext.index;
+	return def_seg;
 
-    if (!strcmp(name, ".text"))
-	return stext.index;
-    else if (!strcmp(name, ".data"))
-	return sdata.index;
-    else if (!strcmp(name, ".bss"))
-	return bssindex;
-    else
-	return NO_SEG;
+    p = name;
+    while (*p && !isspace(*p)) p++;
+    if (*p) *p++ = '\0';
+    if (strlen(p) > 8) {
+	error (ERR_WARNING, "COFF section names limited to 8 characters:"
+	       " truncating");
+	p[8] = '\0';
+    }
+    flags = 0;
+
+    while (*p && isspace(*p)) p++;
+    while (*p) {
+	char *q = p;
+	while (*p && !isspace(*p)) p++;
+	if (*p) *p++ = '\0';
+	while (*p && isspace(*p)) p++;
+	
+	if (!nasm_stricmp(q, "code") || !nasm_stricmp(q, "text")) {
+	    flags = TEXT_FLAGS;
+	} else if (!nasm_stricmp(q, "data")) {
+	    flags = DATA_FLAGS;
+	} else if (!nasm_stricmp(q, "bss")) {
+	    flags = BSS_FLAGS;
+	} else if (!nasm_stricmp(q, "info")) {
+	    if (win32)
+		flags = INFO_FLAGS;
+	    else {
+		flags = DATA_FLAGS;    /* gotta do something */
+		error (ERR_NONFATAL, "standard COFF does not support"
+		       " informational sections");
+	    }
+	}
+    }
+
+    for (i=0; i<nsects; i++)
+	if (!strcmp(name, sects[i]->name))
+	    break;
+    if (i == nsects) {
+	if (!strcmp(name, ".text") && !flags)
+	    i = coff_make_section (name, TEXT_FLAGS);
+	else if (!strcmp(name, ".data") && !flags)
+	    i = coff_make_section (name, DATA_FLAGS);
+	else if (!strcmp(name, ".bss") && !flags)
+	    i = coff_make_section (name, BSS_FLAGS);
+	else if (flags)
+	    i = coff_make_section (name, flags);
+	else
+	    i = coff_make_section (name, TEXT_FLAGS);
+	if (flags)
+	    sects[i]->flags = flags;
+    } else if (pass == 1) {
+	if (flags)
+	    error (ERR_WARNING, "section attributes ignored on"
+		   " redeclaration of section `%s'", name);
+    }
+
+    return sects[i]->index;
 }
 
 static void coff_deflabel (char *name, long segment, long offset,
@@ -232,15 +303,16 @@ static void coff_deflabel (char *name, long segment, long offset,
     sym->is_global = !!is_global;
     if (segment == NO_SEG)
 	sym->section = -1;      /* absolute symbol */
-    else if (segment == stext.index)
-	sym->section = 1;       /* .text */
-    else if (segment == sdata.index)
-	sym->section = 2;       /* .data */
-    else if (segment == bssindex)
-	sym->section = 3;       /* .bss */
     else {
-	sym->section = 0;       /* undefined */
-	sym->is_global = TRUE;
+	int i;
+	sym->section = 0;
+	for (i=0; i<nsects; i++)
+	    if (segment == sects[i]->index) {
+		sym->section = i+1;
+		break;
+	    }
+	if (!sym->section)
+	    sym->is_global = TRUE;
     }
     if (is_global == 2)
 	sym->value = offset;
@@ -251,8 +323,7 @@ static void coff_deflabel (char *name, long segment, long offset,
      * define the references from external-symbol segment numbers
      * to these symbol records.
      */
-    if (segment != NO_SEG && segment != stext.index &&
-	segment != sdata.index && segment != bssindex)
+    if (sym->section == 0)
 	bsym = raa_write (bsym, segment, nsyms);
 
     if (segment != NO_SEG)
@@ -270,11 +341,20 @@ static long coff_add_reloc (struct Section *sect, long segment,
     r->next = NULL;
 
     r->address = sect->len;
-    r->symbol = (segment == NO_SEG ? SYM_ABS_SEG :
-		 segment == stext.index ? SYM_TEXT_SEG :
-		 segment == sdata.index ? SYM_DATA_SEG :
-		 segment == bssindex ? SYM_BSS_SEG :
-		 raa_read (bsym, segment) + SYM_INITIAL);
+    if (segment == NO_SEG)
+	r->symbol = 0, r->symbase = ABS_SYMBOL;
+    else {
+	int i;
+	r->symbase = REAL_SYMBOLS;
+	for (i=0; i<nsects; i++)
+	    if (segment == sects[i]->index) {
+		r->symbol = i*2;
+		r->symbase = SECT_SYMBOLS;
+		break;
+	    }
+	if (r->symbase == REAL_SYMBOLS)
+	    r->symbol = raa_read (bsym, segment);
+    }
     r->relative = relative;
 
     sect->nrelocs++;
@@ -282,7 +362,7 @@ static long coff_add_reloc (struct Section *sect, long segment,
     /*
      * Return the fixup for standard COFF common variables.
      */
-    if (r->symbol >= SYM_INITIAL && !win32)
+    if (r->symbase == REAL_SYMBOLS && !win32)
 	return raa_read (symval, segment);
     else
 	return 0;
@@ -293,6 +373,7 @@ static void coff_out (long segto, void *data, unsigned long type,
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     unsigned char mydata[4], *p;
+    int i;
 
     if (wrt != NO_SEG) {
 	wrt = NO_SEG;		       /* continue to do _something_ */
@@ -311,37 +392,38 @@ static void coff_out (long segto, void *data, unsigned long type,
 	return;
     }
 
-    if (segto == stext.index)
-	s = &stext;
-    else if (segto == sdata.index)
-	s = &sdata;
-    else if (segto == bssindex)
-	s = NULL;
-    else {
-	error(ERR_WARNING, "attempt to assemble code in"
-	      " segment %d: defaulting to `.text'", segto);
-	s = &stext;
+    s = NULL;
+    for (i=0; i<nsects; i++)
+	if (segto == sects[i]->index) {
+	    s = sects[i];
+	    break;
+	}
+    if (!s) {
+	int tempint;		       /* ignored */
+	if (segto != coff_section_names (".text", 2, &tempint))
+	    error (ERR_PANIC, "strange segment conditions in COFF driver");
+	else
+	    s = sects[nsects-1];
     }
 
-    if (!s && type != OUT_RESERVE) {
-	error(ERR_WARNING, "attempt to initialise memory in the"
-	      " BSS section: ignored");
+    if (!s->data && type != OUT_RESERVE) {
+	error(ERR_WARNING, "attempt to initialise memory in"
+	      " BSS section `%s': ignored", s->name);
 	if (type == OUT_REL2ADR)
 	    realbytes = 2;
 	else if (type == OUT_REL4ADR)
 	    realbytes = 4;
-	bsslen += realbytes;
+	s->len += realbytes;
 	return;
     }
 
     if (type == OUT_RESERVE) {
-	if (s) {
+	if (s->data) {
 	    error(ERR_WARNING, "uninitialised space declared in"
-		  " %s section: zeroing",
-		  (segto == stext.index ? "code" : "data"));
+		  " non-BSS section `%s': zeroing", s->name);
 	    coff_sect_write (s, NULL, realbytes);
 	} else
-	    bsslen += realbytes;
+	    s->len += realbytes;
     } else if (type == OUT_RAWDATA) {
 	if (segment != NO_SEG)
 	    error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
@@ -404,25 +486,35 @@ static int coff_directives (char *directive, char *value, int pass) {
 }
 
 static void coff_write (void) {
-    long textpos, textrelpos, datapos, datarelpos, sympos;
+    long hdrs_end, pos, sympos, vsize;
+    int i;
 
     /*
-     * Work out how big the file will get.
+     * Work out how big the file will get. Calculate the start of
+     * the `real' symbols at the same time.
      */
-    textpos = COFF_HDRS_END;
-    textrelpos = textpos + stext.len;
-    datapos = textrelpos + stext.nrelocs * 10;
-    datarelpos = datapos + sdata.len;
-    sympos = datarelpos + sdata.nrelocs * 10;
+    pos = hdrs_end = 0x14 + 0x28 * nsects;
+    initsym = 3;		       /* two for the file, one absolute */
+    for (i=0; i<nsects; i++) {
+	if (sects[i]->data) {
+	    sects[i]->pos = pos;
+	    pos += sects[i]->len;
+	    sects[i]->relpos = pos;
+	    pos += 10 * sects[i]->nrelocs;
+	} else
+	    sects[i]->pos = sects[i]->relpos = 0L;
+	initsym += 2;		       /* two for each section */
+    }
+    sympos = pos;
 
     /*
      * Output the COFF header.
      */
     fwriteshort (0x14C, coffp);	       /* MACHINE_i386 */
-    fwriteshort (3, coffp);	       /* number of sections */
+    fwriteshort (nsects, coffp);       /* number of sections */
     fwritelong (time(NULL), coffp);    /* time stamp */
     fwritelong (sympos, coffp);
-    fwritelong (nsyms + SYM_INITIAL, coffp);
+    fwritelong (nsyms + initsym, coffp);
     fwriteshort (0, coffp);	       /* no optional header */
     /* Flags: 32-bit, no line numbers. Win32 doesn't even bother with them. */
     fwriteshort (win32 ? 0 : 0x104, coffp);
@@ -430,27 +522,22 @@ static void coff_write (void) {
     /*
      * Output the section headers.
      */
-
-    coff_section_header (".text", 0L, stext.len, textpos,
-			 textrelpos, stext.nrelocs,
-			 (win32 ? 0x60500020L : 0x20L));
-    coff_section_header (".data", stext.len, sdata.len, datapos,
-			 datarelpos, sdata.nrelocs,
-			 (win32 ? 0xC0300040L : 0x40L));
-    coff_section_header (".bss", stext.len+sdata.len, bsslen, 0L, 0L, 0,
-			 (win32 ? 0xC0300080L : 0x80L));
+    vsize = 0L;
+    for (i=0; i<nsects; i++) {
+	coff_section_header (sects[i]->name, vsize, sects[i]->len,
+			     sects[i]->pos, sects[i]->relpos,
+			     sects[i]->nrelocs, sects[i]->flags);
+	vsize += sects[i]->len;
+    }
 
     /*
-     * Output the text section, and its relocations.
+     * Output the sections and their relocations.
      */
-    saa_fpwrite (stext.data, coffp);
-    coff_write_relocs (&stext);
-
-    /*
-     * Output the data section, and its relocations.
-     */
-    saa_fpwrite (sdata.data, coffp);
-    coff_write_relocs (&sdata);
+    for (i=0; i<nsects; i++)
+	if (sects[i]->data) {
+	    saa_fpwrite (sects[i]->data, coffp);
+	    coff_write_relocs (sects[i]);
+	}
 
     /*
      * Output the symbol and string tables.
@@ -484,7 +571,9 @@ static void coff_write_relocs (struct Section *s) {
 
     for (r = s->head; r; r = r->next) {
 	fwritelong (r->address, coffp);
-	fwritelong (r->symbol, coffp);
+	fwritelong (r->symbol + (r->symbase == REAL_SYMBOLS ? initsym :
+				 r->symbase == ABS_SYMBOL ? initsym-1 :
+				 r->symbase == SECT_SYMBOLS ? 2 : 0), coffp);
 	/*
 	 * Strange: Microsoft's COFF documentation says 0x03 for an
 	 * absolute relocation, but both Visual C++ and DJGPP agree
@@ -531,17 +620,12 @@ static void coff_write_symbols (void) {
      */
     memset (filename, 0, 18);	       /* useful zeroed buffer */
 
-    coff_symbol (".text", 0L, 0L, 1, 3, 1);
-    fwritelong (stext.len, coffp);
-    fwriteshort (stext.nrelocs, coffp);
-    fwrite (filename, 12, 1, coffp);
-    coff_symbol (".data", 0L, 0L, 2, 3, 1);
-    fwritelong (sdata.len, coffp);
-    fwriteshort (sdata.nrelocs, coffp);
-    fwrite (filename, 12, 1, coffp);
-    coff_symbol (".bss", 0L, 0L, 3, 3, 1);
-    fwritelong (bsslen, coffp);
-    fwrite (filename, 14, 1, coffp);
+    for (i=0; i<nsects; i++) {
+	coff_symbol (sects[i]->name, 0L, 0L, i+1, 3, 1);
+	fwritelong (sects[i]->len, coffp);
+	fwriteshort (sects[i]->nrelocs, coffp);
+	fwrite (filename, 12, 1, coffp);
+    }
 
     /*
      * The absolute symbol, for relative-to-absolute relocations.

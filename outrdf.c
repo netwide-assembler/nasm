@@ -27,7 +27,7 @@
 typedef short int16;	/* not sure if this will be required to be altered
 			   at all... best to typedef it just in case */
 
-const char *RDOFFId = "RDOFF1";	/* written to the start of RDOFF files */
+static const char *RDOFFId = "RDOFF1";	/* written to start of RDOFF files */
 
 /* the records that can be found in the RDOFF header */
 
@@ -88,7 +88,7 @@ typedef struct memorybuffer {
   struct memorybuffer *next;
 } memorybuffer;
 
-memorybuffer * newmembuf(){
+static memorybuffer * newmembuf(){
   memorybuffer * t;
 
   t = nasm_malloc(sizeof(memorybuffer));
@@ -98,7 +98,7 @@ memorybuffer * newmembuf(){
   return t;
 }
 
-void membufwrite(memorybuffer *b, void *data, int bytes) {
+static void membufwrite(memorybuffer *b, void *data, int bytes) {
   int16 w;
   long l;
 
@@ -114,6 +114,7 @@ void membufwrite(memorybuffer *b, void *data, int bytes) {
 
     b->next = newmembuf();
     membufwrite(b->next,data,bytes);
+    return;
   }
 
   switch(bytes) {
@@ -145,7 +146,7 @@ void membufwrite(memorybuffer *b, void *data, int bytes) {
   }
 }
 
-void membufdump(memorybuffer *b,FILE *fp)
+static void membufdump(memorybuffer *b,FILE *fp)
 {
   if (!b) return;
 
@@ -154,13 +155,13 @@ void membufdump(memorybuffer *b,FILE *fp)
   membufdump(b->next,fp);
 }
 
-int membuflength(memorybuffer *b)
+static int membuflength(memorybuffer *b)
 {
   if (!b) return 0;
   return b->length + membuflength(b->next);
 }
 
-void freemembuf(memorybuffer *b)
+static void freemembuf(memorybuffer *b)
 {
   if (!b) return;
   freemembuf(b->next);
@@ -173,16 +174,15 @@ void freemembuf(memorybuffer *b)
 
 /* global variables set during the initialisation phase */
 
-memorybuffer *seg[2];	/* seg 0 = code, seg 1 = data */
-memorybuffer *header;	/* relocation/import/export records */
+static memorybuffer *seg[2];	/* seg 0 = code, seg 1 = data */
+static memorybuffer *header;	/* relocation/import/export records */
 
-FILE *ofile;
+static FILE *ofile;
 
-int seg_warned;
 static efunc error;
 
-int segtext,segdata,segbss;
-long bsslength;
+static int segtext,segdata,segbss;
+static long bsslength;
 
 static void rdf_init(FILE *fp, efunc errfunc, ldfunc ldef)
 {
@@ -406,7 +406,7 @@ static void rdf_cleanup (void) {
   /* should write imported & exported symbol declarations to header here */
 
   /* generate the output file... */
-  fwrite("RDOFF1",6,1,ofile);	/* file type magic number */
+  fwrite(RDOFFId,6,1,ofile);	/* file type magic number */
 
   if (bsslength != 0)		/* reserve BSS */
   {

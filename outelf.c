@@ -32,19 +32,38 @@ struct Symbol {
     long value;			       /* address, or COMMON variable size */
 };
 
+#define SHT_PROGBITS 1
+#define SHT_NOBITS 8
+
+#define SHF_WRITE 1
+#define SHF_ALLOC 2
+#define SHF_EXECINSTR 4
+
 struct Section {
     struct SAA *data;
     unsigned long len, size, nrelocs;
     long index;
+    int type;			       /* SHT_PROGBITS or SHT_NOBITS */
+    int align;			       /* alignment: power of two */
+    unsigned long flags;	       /* section flags */
+    char *name;
+    struct SAA *rel;
+    long rellen;
     struct Reloc *head, **tail;
 };
 
-static struct Section stext, sdata;
-static unsigned long bsslen;
-static long bssindex;
+#define SECT_DELTA 32
+static struct Section **sects;
+static int nsects, sectlen;
+
+#define SHSTR_DELTA 256
+static char *shstrtab;
+static int shstrtablen, shstrtabsize;
 
 static struct SAA *syms;
 static unsigned long nlocals, nglobs;
+
+static long def_seg;
 
 static struct RAA *bsym;
 
@@ -86,51 +105,92 @@ static void elf_section_header (int, int, int, void *, int, long,
 static void elf_write_sections (void);
 static struct SAA *elf_build_symtab (long *, long *);
 static struct SAA *elf_build_reltab (long *, struct Reloc *);
+static void add_sectname (char *, char *);
 
 static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef) {
     elffp = fp;
     error = errfunc;
     (void) ldef;		       /* placate optimisers */
-    stext.data = saa_init(1L); stext.head = NULL; stext.tail = &stext.head;
-    sdata.data = saa_init(1L); sdata.head = NULL; sdata.tail = &sdata.head;
-    stext.len = stext.size = sdata.len = sdata.size = bsslen = 0;
-    stext.nrelocs = sdata.nrelocs = 0;
-    stext.index = seg_alloc();
-    sdata.index = seg_alloc();
-    bssindex = seg_alloc();
+    sects = NULL;
+    nsects = sectlen = 0;
     syms = saa_init((long)sizeof(struct Symbol));
     nlocals = nglobs = 0;
     bsym = raa_init();
-
     strs = saa_init(1L);
     saa_wbytes (strs, "\0", 1L);
     saa_wbytes (strs, elf_module, (long)(strlen(elf_module)+1));
     strslen = 2+strlen(elf_module);
+    shstrtab = NULL;
+    shstrtablen = shstrtabsize = 0;;
+    add_sectname ("", "");
+    def_seg = seg_alloc();
 }
 
 static void elf_cleanup(void) {
     struct Reloc *r;
+    int i;
 
     elf_write();
     fclose (elffp);
-    saa_free (stext.data);
-    while (stext.head) {
-	r = stext.head;
-	stext.head = stext.head->next;
-	nasm_free (r);
+    for (i=0; i<nsects; i++) {
+	if (sects[i]->type != SHT_NOBITS)
+	    saa_free (sects[i]->data);
+	if (sects[i]->head)
+	    saa_free (sects[i]->rel);
+	while (sects[i]->head) {
+	    r = sects[i]->head;
+	    sects[i]->head = sects[i]->head->next;
+	    nasm_free (r);
+	}
     }
-    saa_free (sdata.data);
-    while (sdata.head) {
-	r = sdata.head;
-	sdata.head = sdata.head->next;
-	nasm_free (r);
-    }
+    nasm_free (sects);
     saa_free (syms);
     raa_free (bsym);
     saa_free (strs);
 }
 
+static void add_sectname (char *firsthalf, char *secondhalf) {
+    int len = strlen(firsthalf)+strlen(secondhalf);
+    while (shstrtablen + len + 1 > shstrtabsize)
+	shstrtab = nasm_realloc (shstrtab, (shstrtabsize += SHSTR_DELTA));
+    strcpy (shstrtab+shstrtablen, firsthalf);
+    strcat (shstrtab+shstrtablen, secondhalf);
+    shstrtablen += len+1;
+}
+
+static int elf_make_section (char *name, int type, int flags, int align) {
+    struct Section *s;
+
+    s = nasm_malloc (sizeof(*s));
+
+    if (type != SHT_NOBITS)
+	s->data = saa_init (1L);
+    s->head = NULL;
+    s->tail = &s->head;
+    s->len = s->size = 0;
+    s->nrelocs = 0;
+    if (!strcmp(name, ".text"))
+	s->index = def_seg;
+    else
+	s->index = seg_alloc();
+    add_sectname ("", name);
+    s->name = nasm_malloc (1+strlen(name));
+    strcpy (s->name, name);
+    s->type = type;
+    s->flags = flags;
+    s->align = align;
+
+    if (nsects >= sectlen)
+	sects = nasm_realloc (sects, (sectlen += SECT_DELTA)*sizeof(*sects));
+    sects[nsects++] = s;
+
+    return nsects-1;
+}
+
 static long elf_section_names (char *name, int pass, int *bits) {
+    char *p;
+    int flags_and, flags_or, type, align, i;
+
     /*
      * Default is 32 bits.
      */
@@ -138,16 +198,91 @@ static long elf_section_names (char *name, int pass, int *bits) {
 	*bits = 32;
 
     if (!name)
-	return stext.index;
+	return def_seg;
 
-    if (!strcmp(name, ".text"))
-	return stext.index;
-    else if (!strcmp(name, ".data"))
-	return sdata.index;
-    else if (!strcmp(name, ".bss"))
-	return bssindex;
-    else
+    p = name;
+    while (*p && !isspace(*p)) p++;
+    if (*p) *p++ = '\0';
+    flags_and = flags_or = type = align = 0;
+
+    while (*p && isspace(*p)) p++;
+    while (*p) {
+	char *q = p;
+	while (*p && !isspace(*p)) p++;
+	if (*p) *p++ = '\0';
+	while (*p && isspace(*p)) p++;
+	
+	if (!nasm_strnicmp(q, "align=", 6)) {
+	    align = atoi(q+6);
+	    if (align == 0)
+		align = 1;
+	    if ( (align-1) & align ) {   /* means it's not a power of two */
+		error (ERR_NONFATAL, "section alignment %d is not"
+		       " a power of two", align);
+		align = 1;
+	    }
+	} else if (!nasm_stricmp(q, "alloc")) {
+	    flags_and |= SHF_ALLOC;
+	    flags_or |= SHF_ALLOC;
+	} else if (!nasm_stricmp(q, "noalloc")) {
+	    flags_and |= SHF_ALLOC;
+	    flags_or &= ~SHF_ALLOC;
+	} else if (!nasm_stricmp(q, "exec")) {
+	    flags_and |= SHF_EXECINSTR;
+	    flags_or |= SHF_EXECINSTR;
+	} else if (!nasm_stricmp(q, "noexec")) {
+	    flags_and |= SHF_EXECINSTR;
+	    flags_or &= ~SHF_EXECINSTR;
+	} else if (!nasm_stricmp(q, "write")) {
+	    flags_and |= SHF_WRITE;
+	    flags_or |= SHF_WRITE;
+	} else if (!nasm_stricmp(q, "nowrite")) {
+	    flags_and |= SHF_WRITE;
+	    flags_or &= ~SHF_WRITE;
+	} else if (!nasm_stricmp(q, "progbits")) {
+	    type = SHT_PROGBITS;
+	} else if (!nasm_stricmp(q, "nobits")) {
+	    type = SHT_NOBITS;
+	}
+    }
+
+    if (!strcmp(name, ".comment") ||
+	!strcmp(name, ".shstrtab") ||
+	!strcmp(name, ".symtab") ||
+	!strcmp(name, ".strtab")) {
+	error (ERR_NONFATAL, "attempt to redefine reserved section"
+	       "name `%s'", name);
 	return NO_SEG;
+    }
+
+    for (i=0; i<nsects; i++)
+	if (!strcmp(name, sects[i]->name))
+	    break;
+    if (i == nsects) {
+	if (!strcmp(name, ".text"))
+	    i = elf_make_section (name, SHT_PROGBITS,
+				  SHF_ALLOC | SHF_EXECINSTR, 16);
+	else if (!strcmp(name, ".data"))
+	    i = elf_make_section (name, SHT_PROGBITS,
+				  SHF_ALLOC | SHF_WRITE, 4);
+	else if (!strcmp(name, ".bss"))
+	    i = elf_make_section (name, SHT_NOBITS,
+				  SHF_ALLOC | SHF_WRITE, 4);
+	else
+	    i = elf_make_section (name, SHT_PROGBITS, SHF_ALLOC, 1);
+	if (type)
+	    sects[i]->type = type;
+	if (align)
+	    sects[i]->align = align;
+	sects[i]->flags &= ~flags_and;
+	sects[i]->flags |= flags_or;
+    } else if (pass == 1) {
+	if (type || align || flags_and)
+	    error (ERR_WARNING, "section attributes ignored on"
+		   " redeclaration of section `%s'", name);
+    }
+
+    return sects[i]->index;
 }
 
 static void elf_deflabel (char *name, long segment, long offset,
@@ -168,14 +303,15 @@ static void elf_deflabel (char *name, long segment, long offset,
     sym->type = is_global ? SYM_GLOBAL : 0;
     if (segment == NO_SEG)
 	sym->section = SHN_ABS;
-    else if (segment == stext.index)
-	sym->section = 1;
-    else if (segment == sdata.index)
-	sym->section = 2;
-    else if (segment == bssindex)
-	sym->section = 3;
-    else
+    else {
+	int i;
 	sym->section = SHN_UNDEF;
+	for (i=0; i<nsects; i++)
+	    if (segment == sects[i]->index) {
+		sym->section = i+1;
+		break;
+	    }
+    }
 
     if (is_global == 2) {
 	sym->value = offset;
@@ -200,11 +336,17 @@ static void elf_add_reloc (struct Section *sect, long segment,
     r->next = NULL;
 
     r->address = sect->len;
-    r->symbol = (segment == NO_SEG ? 5 :
-		 segment == stext.index ? 2 :
-		 segment == sdata.index ? 3 :
-		 segment == bssindex ? 4 :
-		 GLOBAL_TEMP_BASE + raa_read(bsym, segment));
+    if (segment == NO_SEG)
+	r->symbol = 2;
+    else {
+	int i;
+	r->symbol = 0;
+	for (i=0; i<nsects; i++)
+	    if (segment == sects[i]->index)
+		r->symbol = i+3;
+	if (!r->symbol)
+	    r->symbol = GLOBAL_TEMP_BASE + raa_read(bsym, segment);
+    }
     r->relative = relative;
 
     sect->nrelocs++;
@@ -215,6 +357,7 @@ static void elf_out (long segto, void *data, unsigned long type,
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     unsigned char mydata[4], *p;
+    int i;
 
     if (wrt != NO_SEG) {
 	wrt = NO_SEG;		       /* continue to do _something_ */
@@ -233,37 +376,38 @@ static void elf_out (long segto, void *data, unsigned long type,
 	return;
     }
 
-    if (segto == stext.index)
-	s = &stext;
-    else if (segto == sdata.index)
-	s = &sdata;
-    else if (segto == bssindex)
-	s = NULL;
-    else {
-	error(ERR_WARNING, "attempt to assemble code in"
-	      " segment %d: defaulting to `.text'", segto);
-	s = &stext;
+    s = NULL;
+    for (i=0; i<nsects; i++)
+	if (segto == sects[i]->index) {
+	    s = sects[i];
+	    break;
+	}
+    if (!s) {
+	int tempint;		       /* ignored */
+	if (segto != elf_section_names (".text", 2, &tempint))
+	    error (ERR_PANIC, "strange segment conditions in ELF driver");
+	else
+	    s = sects[nsects-1];
     }
 
-    if (!s && type != OUT_RESERVE) {
-	error(ERR_WARNING, "attempt to initialise memory in the"
-	      " BSS section: ignored");
+    if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
+	error(ERR_WARNING, "attempt to initialise memory in"
+	      " BSS section `%s': ignored", s->name);
 	if (type == OUT_REL2ADR)
 	    realbytes = 2;
 	else if (type == OUT_REL4ADR)
 	    realbytes = 4;
-	bsslen += realbytes;
+	s->len += realbytes;
 	return;
     }
 
     if (type == OUT_RESERVE) {
-	if (s) {
+	if (s->type == SHT_PROGBITS) {
 	    error(ERR_WARNING, "uninitialised space declared in"
-		  " %s section: zeroing",
-		  (segto == stext.index ? "code" : "data"));
+		  " non-BSS section `%s': zeroing", s->name);
 	    elf_sect_write (s, NULL, realbytes);
 	} else
-	    bsslen += realbytes;
+	    s->len += realbytes;
     } else if (type == OUT_RAWDATA) {
 	if (segment != NO_SEG)
 	    error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
@@ -303,41 +447,31 @@ static void elf_out (long segto, void *data, unsigned long type,
 
 static void elf_write(void) {
     int nsections, align;
-    char shstrtab[80], *p;
-    int shstrtablen, commlen;
+    char *p;
+    int commlen;
     char comment[64];
+    int i;
 
-    struct SAA *symtab, *reltext, *reldata;
-    long symtablen, symtablocal, reltextlen, reldatalen;
+    struct SAA *symtab;
+    long symtablen, symtablocal;
 
     /*
-     * Work out how many sections we will have.
-     *
-     * Fixed sections are:
-     *    SHN_UNDEF .text .data .bss .comment .shstrtab .symtab .strtab
-     *
-     * Optional sections are:
-     *    .rel.text .rel.data
-     *
-     * (.rel.bss makes very little sense;-)
+     * Work out how many sections we will have. We have SHN_UNDEF,
+     * then the flexible user sections, then the four fixed
+     * sections `.comment', `.shstrtab', `.symtab' and `.strtab',
+     * then optionally relocation sections for the user sections.
      */
-    nsections = 8;
-    *shstrtab = '\0';
-    shstrtablen = 1;
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".text");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".data");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".bss");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".comment");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".shstrtab");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".symtab");
-    shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".strtab");
-    if (stext.head) {
-	nsections++;
-	shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".rel.text");
-    }
-    if (sdata.head) {
-	nsections++;
-	shstrtablen += 1+sprintf(shstrtab+shstrtablen, ".rel.data");
+    nsections = 5;		       /* SHN_UNDEF and the fixed ones */
+    add_sectname ("", ".comment");
+    add_sectname ("", ".shstrtab");
+    add_sectname ("", ".symtab");
+    add_sectname ("", ".strtab");
+    for (i=0; i<nsects; i++) {
+	nsections++;		       /* for the section itself */
+	if (sects[i]->head) {
+	    nsections++;	       /* for its relocations */
+	    add_sectname (".rel", sects[i]->name);
+	}
     }
 
     /*
@@ -362,8 +496,8 @@ static void elf_write(void) {
     fwriteshort (0, elffp);	       /* no program header table, again */
     fwriteshort (0, elffp);	       /* still no program header table */
     fwriteshort (0x28, elffp);	       /* size of section header */
-    fwriteshort (nsections, elffp);     /* number of sections */
-    fwriteshort (5, elffp);	       /* string table section index for
+    fwriteshort (nsections, elffp);    /* number of sections */
+    fwriteshort (nsects+2, elffp);     /* string table section index for
 					* section header table */
     fwritelong (0L, elffp);	       /* align to 0x40 bytes */
     fwritelong (0L, elffp);
@@ -373,8 +507,10 @@ static void elf_write(void) {
      * Build the symbol table and relocation tables.
      */
     symtab = elf_build_symtab (&symtablen, &symtablocal);
-    reltext = elf_build_reltab (&reltextlen, stext.head);
-    reldata = elf_build_reltab (&reldatalen, sdata.head);
+    for (i=0; i<nsects; i++)
+	if (sects[i]->head)
+	    sects[i]->rel = elf_build_reltab (&sects[i]->rellen,
+					      sects[i]->head);
 
     /*
      * Now output the section header table.
@@ -387,15 +523,13 @@ static void elf_write(void) {
 
     elf_section_header (0, 0, 0, NULL, FALSE, 0L, 0, 0, 0, 0); /* SHN_UNDEF */
     p = shstrtab+1;
-    elf_section_header (p - shstrtab, 1, 6, stext.data, TRUE,
-			stext.len, 0, 0, 16, 0);   /* .text */
-    p += strlen(p)+1;
-    elf_section_header (p - shstrtab, 1, 3, sdata.data, TRUE,
-			sdata.len, 0, 0, 4, 0);   /* .data */
-    p += strlen(p)+1;
-    elf_section_header (p - shstrtab, 8, 3, NULL, TRUE,
-			bsslen, 0, 0, 4, 0);   /* .bss */
-    p += strlen(p)+1;
+    for (i=0; i<nsects; i++) {
+	elf_section_header (p - shstrtab, sects[i]->type, sects[i]->flags,
+			    (sects[i]->type == SHT_PROGBITS ?
+			     sects[i]->data : NULL), TRUE,
+			    sects[i]->len, 0, 0, sects[i]->align, 0);
+	p += strlen(p)+1;
+    }
     elf_section_header (p - shstrtab, 1, 0, comment, FALSE,
 			(long)commlen, 0, 0, 1, 0);/* .comment */
     p += strlen(p)+1;
@@ -403,19 +537,14 @@ static void elf_write(void) {
 			(long)shstrtablen, 0, 0, 1, 0);/* .shstrtab */
     p += strlen(p)+1;
     elf_section_header (p - shstrtab, 2, 0, symtab, TRUE,
-			symtablen, 7, symtablocal, 4, 16);/* .symtab */
+			symtablen, nsects+4, symtablocal, 4, 16);/* .symtab */
     p += strlen(p)+1;
     elf_section_header (p - shstrtab, 3, 0, strs, TRUE,
 			strslen, 0, 0, 1, 0);	    /* .strtab */
-    if (reltext) {
+    for (i=0; i<nsects; i++) if (sects[i]->head) {
 	p += strlen(p)+1;
-	elf_section_header (p - shstrtab, 9, 0, reltext, TRUE,
-			    reltextlen, 6, 1, 4, 8);    /* .rel.text */
-    }
-    if (reldata) {
-	p += strlen(p)+1;
-	elf_section_header (p - shstrtab, 9, 0, reldata, TRUE,
-			    reldatalen, 6, 2, 4, 8);    /* .rel.data */
+	elf_section_header (p - shstrtab, 9, 0, sects[i]->rel, TRUE,
+			    sects[i]->rellen, 6, i+1, 4, 8);
     }
 
     fwrite (align_str, align, 1, elffp);
@@ -426,10 +555,6 @@ static void elf_write(void) {
     elf_write_sections();
 
     saa_free (symtab);
-    if (reltext)
-	saa_free (reltext);
-    if (reldata)
-	saa_free (reldata);
 }
 
 static struct SAA *elf_build_symtab (long *len, long *local) {
@@ -461,16 +586,16 @@ static struct SAA *elf_build_symtab (long *len, long *local) {
     (*local)++;
 
     /*
-     * Now four standard symbols defining segments, for relocation
+     * Now some standard symbols defining the segments, for relocation
      * purposes.
      */
-    for (i = 1; i <= 4; i++) {
+    for (i = 1; i <= nsects+1; i++) {
 	p = entry;
 	WRITELONG (p, 0);	       /* no symbol name */
 	WRITELONG (p, 0);	       /* offset zero */
 	WRITELONG (p, 0);	       /* size zero */
 	WRITESHORT (p, 3);	       /* local section-type thing */
-	WRITESHORT (p, (i==4 ? SHN_ABS : i));   /* the section id */
+	WRITESHORT (p, (i==1 ? SHN_ABS : i-1));   /* the section id */
 	saa_wbytes (s, entry, 16L);
 	*len += 16;
 	(*local)++;
