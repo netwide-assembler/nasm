@@ -156,7 +156,9 @@ struct CommonRec {
 #ifdef RDOFF_UTILS
 
 /* Some systems don't define this automatically */
+#if !defined(strdup)
 extern char *strdup(const char *);
+#endif
 
 typedef union RDFHeaderRec {
   char type;			/* invariant throughout all below */
