@@ -683,9 +683,9 @@ static void parse_cmdline(int argc, char **argv)
     *inname = *outname = *listname = '\0';
 
     /*
-     * First, process the NASM environment variable.
+     * First, process the NASMOPT environment variable.
      */
-    envreal = getenv("NASM");
+    envreal = getenv("NASMOPT");
     arg = NULL;
     if (envreal) {
 	envcopy = nasm_strdup(envreal);
