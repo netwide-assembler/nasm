@@ -66,6 +66,8 @@ while ( $arg = shift(@ARGV) ) {
 	    $psbool{$parm} = $true;
 	} elsif ( $true && defined($psconf{$parm}) ) {
 	    $psconf{$parm} = shift(@ARGV);
+	} elsif ( $parm =~ /^(title|subtitle|year|author|license)$/ ) {
+	    $metadata{$parm} = shift(@ARGV);
 	} else {
 	    die "$0: Unknown option: $arg\n";
 	}
@@ -1053,17 +1055,24 @@ $ps_page = 0;
 
 # Title page
 ps_start_page();
-$title = $metadata{'title'};
+$title = $metadata{'title'} || '';
 $title =~ s/ \- / $emdash /;
-$pstitle = ps_string($title);
+
+$subtitle = $metadata{'subtitle'} || '';
+$subtitle =~ s/ \- / $emdash /;
 
 # Print title
+print "/ti ", ps_string($title), " def\n";
+print "/sti ", ps_string($subtitle), " def\n";
 print "lmarg pageheight 2 mul 3 div moveto\n";
 print "tfont0 setfont\n";
-print "/title linkdest ${pstitle} show\n";
+print "/title linkdest ti show\n";
 print "lmarg pageheight 2 mul 3 div 10 sub moveto\n";
 print "0 setlinecap 3 setlinewidth\n";
-print "pagewidth lmarg sub rmarg sub 0 rlineto stroke\n";
+print "pagewidth lmarg sub rmarg sub 0 rlineto currentpoint stroke moveto\n";
+print "hfont1 setfont sti stringwidth pop neg ",
+    -$HeadFont{leading}, " rmoveto\n";
+print "sti show\n";
 
 # Print logo, if there is one
 # FIX: To be 100% correct, this should look for DocumentNeeded*
