@@ -133,9 +133,8 @@ insnsa.c
 --------
 
 This is another library module: it exports one very big array of
-instruction translations. It has to be a separate module so that DOS
-compilers, with less memory to spare than typical Unix ones, can
-cope with it.
+instruction translations. It is generated automatically from the
+insns.dat file by the insns.pl script.
 
 labels.c
 --------
