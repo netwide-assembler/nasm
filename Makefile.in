@@ -15,7 +15,7 @@ bindir		= @bindir@
 mandir		= @mandir@
 
 CC		= @CC@
-CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I. 
+CFLAGS		= @CFLAGS@ @GCCFLAGS@ @DEFS@ -I$(srcdir) -I.  
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 PERL		= perl

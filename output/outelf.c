@@ -116,7 +116,7 @@ extern struct ofmt of_elf;
 #define SYM_DATA 0x01
 #define SYM_FUNCTION 0x02
 
-#define GLOBAL_TEMP_BASE 15	       /* bigger than any constant sym id */
+#define GLOBAL_TEMP_BASE 6	       /* bigger than any constant sym id */
 
 #define SEG_ALIGN 16		       /* alignment of sections in file */
 #define SEG_ALIGN_1 (SEG_ALIGN-1)
@@ -141,6 +141,63 @@ static struct SAA *elf_build_symtab (long *, long *);
 static struct SAA *elf_build_reltab (long *, struct Reloc *);
 static void add_sectname (char *, char *);
 
+
+/* this stuff is needed for the stabs debugging format */
+#define N_SO 0x64     /* ID for main source file */
+#define N_SOL 0x84    /* ID for sub-source file */
+#define N_BINCL 0x82
+#define N_EINCL 0xA2
+#define N_SLINE 0x44
+#define TY_STABSSYMLIN 0x40 /* ouch */
+
+struct stabentry {
+  unsigned long n_strx;
+  unsigned char n_type;
+  unsigned char n_other;
+  unsigned short n_desc;
+  unsigned long n_value;
+};
+
+struct erel {
+  int offset,info;
+};
+
+struct symlininfo {
+  int offset;
+  int section; /* section index */
+  char *name; /* shallow-copied pointer of section name */
+};
+
+struct linelist {
+  struct symlininfo info;
+  int line;
+  char *filename;
+  struct linelist * next;
+  struct linelist * last;
+};
+
+static struct linelist *stabslines=0;
+static int stabs_immcall=0;
+static int currentline=0;
+static int numlinestabs=0;
+static char * stabs_filename=0;
+static int symtabsection;
+static unsigned char *stabbuf=0,*stabstrbuf=0,*stabrelbuf=0;
+static int stablen,stabstrlen,stabrellen;
+
+
+void stabs_init(struct ofmt *,void *,FILE *,efunc );
+void stabs_linenum(const char *filename,long linenumber,long);
+void stabs_deflabel(char *,long ,long ,int ,char *);
+void stabs_directive(const char *,const char *);
+void stabs_typevalue(long );
+void stabs_output(int ,void *);
+void stabs_generate();
+void stabs_cleanup();
+
+/* end of stabs debugging stuff */
+
+
 /*
  * Special section numbers which are used to define ELF special
  * symbols, which can be used with WRT to provide PIC relocation
@@ -150,7 +207,7 @@ static long elf_gotpc_sect, elf_gotoff_sect;
 static long elf_got_sect, elf_plt_sect;
 static long elf_sym_sect;
 
-static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
     elffp = fp;
     error = errfunc;
@@ -185,7 +242,7 @@ static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     def_seg = seg_alloc();
 }
 
-static void elf_cleanup(int debuginfo) 
+static void elf_cleanup(int debuginfo)
 {
     struct Reloc *r;
     int i;
@@ -209,9 +266,12 @@ static void elf_cleanup(int debuginfo)
     saa_free (syms);
     raa_free (bsym);
     saa_free (strs);
+    if (of_elf.current_dfmt) {
+      of_elf.current_dfmt->cleanup();
+    }
 }
 
-static void add_sectname (char *firsthalf, char *secondhalf) 
+static void add_sectname (char *firsthalf, char *secondhalf)
 {
     int len = strlen(firsthalf)+strlen(secondhalf);
     while (shstrtablen + len + 1 > shstrtabsize)
@@ -221,7 +281,7 @@ static void add_sectname (char *firsthalf, char *secondhalf)
     shstrtablen += len+1;
 }
 
-static int elf_make_section (char *name, int type, int flags, int align) 
+static int elf_make_section (char *name, int type, int flags, int align)
 {
     struct Section *s;
 
@@ -252,7 +312,7 @@ static int elf_make_section (char *name, int type, int flags, int align)
     return nsects-1;
 }
 
-static long elf_section_names (char *name, int pass, int *bits) 
+static long elf_section_names (char *name, int pass, int *bits)
 {
     char *p;
     int flags_and, flags_or, type, align, i;
@@ -354,7 +414,7 @@ static long elf_section_names (char *name, int pass, int *bits)
 }
 
 static void elf_deflabel (char *name, long segment, long offset,
-			   int is_global, char *special) 
+			   int is_global, char *special)
 {
     int pos = strslen;
     struct Symbol *sym;
@@ -465,7 +525,7 @@ fprintf(stderr, " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 
     if (sym->type == SYM_GLOBAL) {
 	/*
-	 * There's a problem here that needs fixing. 
+	 * There's a problem here that needs fixing.
 	 * If sym->section == SHN_ABS, then the first line of the
 	 * else section causes a core dump, because its a reference
 	 * beyond the end of the section array.
@@ -485,7 +545,7 @@ fprintf(stderr, " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 	{
 	    bsym = raa_write (bsym, segment, nglobs);
 	}
-	else if (sym->section != SHN_ABS) 
+	else if (sym->section != SHN_ABS)
 	{
 	    /*
 	     * This is a global symbol; so we must add it to the linked
@@ -552,7 +612,7 @@ fprintf(stderr, " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 }
 
 static void elf_add_reloc (struct Section *sect, long segment,
-			   int type) 
+			   int type)
 {
     struct Reloc *r;
 
@@ -601,7 +661,7 @@ static void elf_add_reloc (struct Section *sect, long segment,
  */
 static long elf_add_gsym_reloc (struct Section *sect,
 				long segment, long offset,
-				int type, int exact) 
+				int type, int exact)
 {
     struct Reloc *r;
     struct Section *s;
@@ -673,6 +733,7 @@ static void elf_out (long segto, const void *data, unsigned long type,
     long addr;
     unsigned char mydata[4], *p;
     int i;
+    static struct symlininfo sinfo;
 
     type &= OUT_TYPMASK;
 
@@ -696,9 +757,20 @@ static void elf_out (long segto, const void *data, unsigned long type,
 	int tempint;		       /* ignored */
 	if (segto != elf_section_names (".text", 2, &tempint))
 	    error (ERR_PANIC, "strange segment conditions in ELF driver");
-	else
-	    s = sects[nsects-1];
+	else {
+	  s = sects[nsects-1];
+	  i=nsects-1;
+	}
     }
+
+    /* again some stabs debugging stuff */
+    if (of_elf.current_dfmt) {
+      sinfo.offset=s->len;
+      sinfo.section=i;
+      sinfo.name=s->name;
+      of_elf.current_dfmt->debug_output(TY_STABSSYMLIN,&sinfo);
+    }
+    /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
 	error(ERR_WARNING, "attempt to initialise memory in"
@@ -827,9 +899,10 @@ static void elf_out (long segto, const void *data, unsigned long type,
     }
 }
 
-static void elf_write(void) 
+static void elf_write(void)
 {
     int nsections, align;
+    int scount;
     char *p;
     int commlen;
     char comment[64];
@@ -844,7 +917,11 @@ static void elf_write(void)
      * sections `.comment', `.shstrtab', `.symtab' and `.strtab',
      * then optionally relocation sections for the user sections.
      */
-    nsections = 5;		       /* SHN_UNDEF and the fixed ones */
+    if (of_elf.current_dfmt)
+      nsections=8;
+    else
+      nsections = 5;		       /* SHN_UNDEF and the fixed ones */
+
     add_sectname ("", ".comment");
     add_sectname ("", ".shstrtab");
     add_sectname ("", ".symtab");
@@ -855,6 +932,13 @@ static void elf_write(void)
 	    nsections++;	       /* for its relocations */
 	    add_sectname (".rel", sects[i]->name);
 	}
+    }
+
+    if (of_elf.current_dfmt) {
+      /* in case the debug information is wanted, just add these three sections... */
+      add_sectname("",".stab");
+      add_sectname("",".stabstr");
+      add_sectname(".rel",".stab");
     }
 
     /*
@@ -906,6 +990,7 @@ static void elf_write(void)
     elf_sects = nasm_malloc(sizeof(*elf_sects) * (2 * nsects + 10));
 
     elf_section_header (0, 0, 0, NULL, FALSE, 0L, 0, 0, 0, 0); /* SHN_UNDEF */
+    scount=1; /* needed for the stabs debugging to track the symtable section */
     p = shstrtab+1;
     for (i=0; i<nsects; i++) {
 	elf_section_header (p - shstrtab, sects[i]->type, sects[i]->flags,
@@ -913,15 +998,19 @@ static void elf_write(void)
 			     sects[i]->data : NULL), TRUE,
 			    sects[i]->len, 0, 0, sects[i]->align, 0);
 	p += strlen(p)+1;
+	scount++; /* dito */
     }
     elf_section_header (p - shstrtab, 1, 0, comment, FALSE,
 			(long)commlen, 0, 0, 1, 0);/* .comment */
+    scount++; /* dito */
     p += strlen(p)+1;
     elf_section_header (p - shstrtab, 3, 0, shstrtab, FALSE,
 			(long)shstrtablen, 0, 0, 1, 0);/* .shstrtab */
+    scount++; /* dito */
     p += strlen(p)+1;
     elf_section_header (p - shstrtab, 2, 0, symtab, TRUE,
 			symtablen, nsects+4, symtablocal, 4, 16);/* .symtab */
+    symtabsection = scount; /* now we got the symtab section index in the ELF file */
     p += strlen(p)+1;
     elf_section_header (p - shstrtab, 3, 0, strs, TRUE,
 			strslen, 0, 0, 1, 0);	    /* .strtab */
@@ -930,7 +1019,25 @@ static void elf_write(void)
 	elf_section_header (p - shstrtab, 9, 0, sects[i]->rel, TRUE,
 			    sects[i]->rellen, nsects+3, i+1, 4, 8);
     }
+    if (of_elf.current_dfmt) {
+      /* for debugging information, create the last three sections
+	 which are the .stab , .stabstr and .rel.stab sections respectively */
 
+      /* this function call creates the stab sections in memory */
+      stabs_generate();
+
+      if ((stabbuf)&&(stabstrbuf)&&(stabrelbuf)) {
+	      p += strlen(p)+1;
+	      elf_section_header(p-shstrtab,1,0,stabbuf,0,stablen,nsections-2,0,4,12);
+
+	      p += strlen(p)+1;
+	      elf_section_header(p-shstrtab,3,0,stabstrbuf,0,stabstrlen,0,0,4,0);
+
+	      p += strlen(p)+1;
+	      /* link -> symtable  info -> section to refer to */
+	      elf_section_header(p-shstrtab,9,0,stabrelbuf,0,stabrellen,symtabsection,nsections-3,4,8);
+      }
+    }
     fwrite (align_str, align, 1, elffp);
 
     /*
@@ -942,7 +1049,7 @@ static void elf_write(void)
     saa_free (symtab);
 }
 
-static struct SAA *elf_build_symtab (long *len, long *local) 
+static struct SAA *elf_build_symtab (long *len, long *local)
 {
     struct SAA *s = saa_init(1L);
     struct Symbol *sym;
@@ -1055,7 +1162,7 @@ static struct SAA *elf_build_reltab (long *len, struct Reloc *r) {
 
 static void elf_section_header (int name, int type, int flags,
 				void *data, int is_saa, long datalen,
-				int link, int info, int align, int eltsize) 
+				int link, int info, int align, int eltsize)
 {
     elf_sects[elf_nsect].data = data;
     elf_sects[elf_nsect].len = datalen;
@@ -1076,7 +1183,7 @@ static void elf_section_header (int name, int type, int flags,
     fwritelong ((long)eltsize, elffp);
 }
 
-static void elf_write_sections (void) 
+static void elf_write_sections (void)
 {
     int i;
     for (i = 0; i < elf_nsect; i++)
@@ -1127,11 +1234,25 @@ static int elf_set_info(enum geninfo type, char **val)
     return 0;
 }
 
+static struct dfmt df_stabs = {
+  "ELF32 (i386) stabs debug format for Linux",
+  "stabs",
+  stabs_init,
+  stabs_linenum,
+  stabs_deflabel,
+  stabs_directive,
+  stabs_typevalue,
+  stabs_output,
+  stabs_cleanup
+};
+
+struct dfmt *elf_debugs_arr[2]={&df_stabs,NULL};
+
 struct ofmt of_elf = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf",
     NULL,
-    null_debug_arr,
+    elf_debugs_arr,
     &null_debug_form,
     elf_stdmac,
     elf_init,
@@ -1144,5 +1265,236 @@ struct ofmt of_elf = {
     elf_filename,
     elf_cleanup
 };
+
+/* again, the stabs debugging stuff (code) */
+
+void stabs_init(struct ofmt *of,void *id,FILE *fp,efunc error) {
+}
+
+void stabs_linenum(const char *filename,long linenumber,long segto) {
+  if (!stabs_filename) {
+    stabs_filename = (char *)malloc(strlen(filename)+1);
+    strcpy(stabs_filename,filename);
+  } else {
+    if (strcmp(stabs_filename,filename)) {
+      /* yep, a memory leak...this program is one-shot anyway, so who cares...
+	 in fact, this leak comes in quite handy to maintain a list of files
+	 encountered so far in the symbol lines... */
+      stabs_filename = (char *)malloc(strlen(filename)+1);
+      strcpy(stabs_filename,filename);
+    }
+  }
+  stabs_immcall=1;
+  currentline=linenumber;
+}
+
+void stabs_deflabel(char *name,long segment,long offset,int is_global,char *special) {
+}
+
+void stabs_directive(const char *directive,const char *params) {
+}
+
+void stabs_typevalue(long type) {
+}
+
+void stabs_output(int type,void *param) {
+  struct symlininfo *s;
+  struct linelist *el;
+  if (type==TY_STABSSYMLIN) {
+    if (stabs_immcall) {
+      s=(struct symlininfo *)param;
+      if (strcmp( s->name,".text")) return; /* we are only interested in the text stuff */
+      numlinestabs++;
+      el=(struct linelist *)malloc(sizeof(struct linelist));
+      el->info.offset=s->offset;
+      el->info.section=s->section;
+      el->info.name=s->name;
+      el->line=currentline;
+      el->filename=stabs_filename;
+      el->next=0;
+      if (stabslines) {
+	stabslines->last->next=el;
+	stabslines->last=el;
+      } else {
+	stabslines=el;
+	stabslines->last=el;
+      }
+    }
+  }
+  stabs_immcall=0;
+}
+
+
+/* for creating the .stab , .stabstr and .rel.stab sections in memory */
+
+void stabs_generate() {
+  int i,numfiles,strsize,numstabs=0,currfile,mainfileindex;
+  struct erel rentry;
+  unsigned char *sbuf,*ssbuf,*rbuf,*sptr,*rptr;
+  char **allfiles;
+  int *fileidx;
+
+  struct linelist *ptr;
+  struct stabentry stab;
+
+  ptr=stabslines;
+
+  allfiles = (char **)malloc(numlinestabs*sizeof(char *));
+  for (i=0;i<numlinestabs;i++) allfiles[i]=0;
+  numfiles=0;
+  while (ptr) {
+    if (numfiles==0) {
+      allfiles[0]=ptr->filename;
+      numfiles++;
+    } else {
+      for (i=0;i<numfiles;i++) {
+	if (!strcmp(allfiles[i],ptr->filename)) break;
+      }
+      if (i>=numfiles) {
+	allfiles[i]=ptr->filename;
+	numfiles++;
+      }
+    }
+    ptr=ptr->next;
+  }
+  strsize=1;
+  fileidx = (int *)malloc(numfiles*sizeof(int));
+  for (i=0;i<numfiles;i++) {
+    fileidx[i]=strsize;
+    strsize+=strlen(allfiles[i])+1;
+  }
+	mainfileindex=0;
+  for (i=0;i<numfiles;i++) {
+  	if (!strcmp(allfiles[i],elf_module)) {
+  		mainfileindex=i;
+  		break;
+		}
+	}		  		
+
+
+	/* worst case size of the stab buffer would be:
+		the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
+		*/
+  sbuf = (unsigned char *)malloc((numlinestabs*2+3)*sizeof(struct stabentry));
+
+  ssbuf = (unsigned char *)malloc(strsize);
+
+  rbuf = (unsigned char *)malloc(numlinestabs*8*(2+3));
+  rptr=rbuf;
+
+  for (i=0;i<numfiles;i++) {
+    strcpy(ssbuf+fileidx[i],allfiles[i]);
+  }
+  ssbuf[0]=0;
+
+  stabstrlen = strsize; /* set global variable for length of stab strings */
+
+  sptr=sbuf;
+  /* this is the first stab, its strx points to the filename of the
+     the source-file, the n_desc field should be set to the number
+     of remaining stabs
+  */
+  stab.n_strx = fileidx[0];
+  stab.n_type=0;
+  stab.n_other=0;
+  stab.n_desc=0; /* # of remaining stabs (to be determined later) */
+  stab.n_value = strlen(allfiles[0])+1;
+  memcpy(sptr,&stab,sizeof(struct stabentry));
+  sptr+=sizeof(struct stabentry);
+
+  ptr=stabslines;
+  for (i=0;i<numfiles;i++) if (!strcmp(allfiles[i],ptr->filename)) break;
+  currfile=i;
+
+  /* this is the stab for the main source file */
+  stab.n_strx = fileidx[mainfileindex];
+  stab.n_type=N_SO;
+  stab.n_other=0;
+  stab.n_desc=0;
+  stab.n_value = 0; /* strlen(allfiles[mainfileindex])+1; */
+  memcpy(sptr,&stab,sizeof(struct stabentry));
+  /* relocation stuff */
+  rentry.offset=(sptr-sbuf)+8;
+			  /* the following section+3 assumption relies on the following order of output sections:
+						0 -> dummy
+						1 -> .text
+						2 -> .data
+						3 -> .comment
+						4 -> .strtab
+			     ... this is an ugly hack and should be improved in the near future
+			  */
+   rentry.info=((ptr->info.section+3)<<8)|R_386_32;
+  memcpy(rptr,&rentry,8);
+  rptr+=8;
+  sptr+=sizeof(struct stabentry);
+
+  numstabs=1;
+  currfile=mainfileindex;
+
+  while (ptr) {
+    if (strcmp(allfiles[currfile],ptr->filename)) {
+      /* oops file has changed... */
+      for (i=0;i<numfiles;i++) if (!strcmp(allfiles[i],ptr->filename)) break;
+      currfile=i;
+      stab.n_strx = fileidx[currfile];
+      stab.n_type=N_SOL;
+      stab.n_other=0;
+      stab.n_desc=0;
+      /* stab.n_value = strlen(allfiles[currfile])+1; */
+      stab.n_value = ptr->info.offset;
+      memcpy(sptr,&stab,sizeof(struct stabentry));
+		  /* relocation stuff */
+		  rentry.offset=(sptr-sbuf)+8;
+		  rentry.info=((ptr->info.section+3)<<8)|R_386_32;
+		  memcpy(rptr,&rentry,8);
+		  rptr+=8;
+      sptr+=sizeof(struct stabentry);
+      numstabs++;
+    }
+    stab.n_strx=0;
+    stab.n_type=N_SLINE;
+    stab.n_other=0;
+    stab.n_desc=ptr->line;
+    stab.n_value=ptr->info.offset;
+    memcpy(sptr,&stab,sizeof(struct stabentry));
+    numstabs++;
+
+    /* relocation stuff */
+    rentry.offset=(sptr-sbuf)+8;
+    rentry.info=((ptr->info.section+3)<<8)|R_386_32;
+    memcpy(rptr,&rentry,8);
+    rptr+=8;
+
+    sptr+=sizeof(struct stabentry);
+    ptr=ptr->next;
+
+  }
+
+
+  ((struct stabentry *)sbuf)->n_desc=numstabs;
+
+  free(allfiles);
+  free(fileidx);
+
+  stablen = (sptr-sbuf);
+  stabrellen=(rptr-rbuf);
+  stabrelbuf= rbuf;
+  stabbuf = sbuf;
+  stabstrbuf = ssbuf;
+}
+
+void stabs_cleanup() {
+  struct linelist *ptr,*del;
+  if (!stabslines) return;
+  ptr=stabslines;
+  while (ptr) {
+    del=ptr;
+    ptr=ptr->next;
+    free(del);
+  }
+  if (stabbuf) free(stabbuf);
+  if (stabrelbuf) free(stabrelbuf);
+  if (stabstrbuf) free(stabstrbuf);
+}
 
 #endif /* OF_ELF */

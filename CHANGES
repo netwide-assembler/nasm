@@ -1,6 +1,7 @@
 0.98.37
 -------
-
+* Added stabs debugging for the ELF output format, patch from
+  Martin Wawro.
 * Fix output/outbin.c to allow origin > 80000000h
 * Make -U switch work
 
