@@ -6,6 +6,7 @@
 * Add new multisection support - map files - fix align bug
 * Fix sysexit, movhps/movlps reg,reg bugs in insns.dat
 * "Q" or "O" suffixes indicate octal
+* Support Prescott new instructions.
 
 0.98.35
 -------
