@@ -86,6 +86,7 @@ sub insert_deps($) {
     my($line,$parm,$val);
     my($obj) = '.o';		# Defaults
     my($sep) = '/';
+    my($maxline) = 78;		# SMTP uses this value...
 
     while ( defined($line = <IN>) ) {
 	if ( $line =~ /^\s*\#\s*@([a-z0-9-]+):\s*\"([^\"]*)\"/ ) {
@@ -94,6 +95,8 @@ sub insert_deps($) {
 		$obj = $val;
 	    } elsif ( $parm eq 'path-separator' ) {
 		$sep = $val;
+	    } elsif ( $parm eq 'line-width' ) {
+		$maxline = $val+0;
 	    }
 	} elsif ( $line eq $barrier ) {
 	    last;		# Stop reading input at barrier line
@@ -102,7 +105,7 @@ sub insert_deps($) {
     }
     close(IN);
 
-    my $dfile, $ofile;
+    my $dfile, $ofile, $str, $sl, $len;
     my @deps, $dep;
 
     print OUT $barrier;
@@ -110,9 +113,19 @@ sub insert_deps($) {
     foreach $dfile ( sort(keys(%deps)) ) {
 	if ( $dfile =~ /\.[Cc]$/ ) {
 	    $ofile = $dfile; $ofile =~ s/\.[Cc]$//;
-	    print OUT convert_file($ofile,$sep), $obj, ':';
+	    $str = convert_file($ofile,$sep).$obj.':';
+	    $len = length($str);
+	    print OUT $str;
 	    foreach $dep ($dfile, alldeps($dfile)) {
-		print OUT ' ', convert_file($dep,$sep);
+		$str = convert_file($dep,$sep);
+		$sl = length($str)+1;
+		if ( $len+$sl > $maxline-2 ) {
+		    print OUT " \\\n ", $str;
+		    $len = $sl;
+		} else {
+		    print OUT ' ', $str;
+		    $len += $sl;
+		}
 	    }
 	    print OUT "\n";
 	}
