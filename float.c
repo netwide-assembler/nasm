@@ -25,7 +25,7 @@
  * => we only have to worry about _one_ bit shift to the left
  */
 
-static int multiply(unsigned short *to, unsigned short *from) 
+static int ieee_multiply(unsigned short *to, unsigned short *from) 
 {
     unsigned long temp[MANT_WORDS*2];
     int           i, j;
@@ -56,7 +56,7 @@ static int multiply(unsigned short *to, unsigned short *from)
     }
 }
 
-static void flconvert(char *string, unsigned short *mant, long *exponent,
+static void ieee_flconvert(char *string, unsigned short *mant, long *exponent,
 		      efunc error) 
 {
     char           digits[MANT_DIGITS];
@@ -166,8 +166,8 @@ static void flconvert(char *string, unsigned short *mant, long *exponent,
 	extratwos = 0;
     while (tenpwr) {
 	if (tenpwr & 1)
-	    twopwr += extratwos + multiply (mant, mult);
-	extratwos = extratwos * 2 + multiply (mult, mult);
+	    twopwr += extratwos + ieee_multiply (mant, mult);
+	extratwos = extratwos * 2 + ieee_multiply (mult, mult);
 	tenpwr >>= 1;
     }
 
@@ -183,7 +183,7 @@ static void flconvert(char *string, unsigned short *mant, long *exponent,
 /*
  * Shift a mantissa to the right by i (i < 16) bits.
  */
-static void shr(unsigned short *mant, int i) 
+static void ieee_shr(unsigned short *mant, int i) 
 {
     unsigned short n = 0, m;
     int            j;
@@ -198,7 +198,7 @@ static void shr(unsigned short *mant, int i)
 /*
  * Round a mantissa off after i words.
  */
-static int round(unsigned short *mant, int i) 
+static int ieee_round(unsigned short *mant, int i) 
 {
     if (mant[i] & 0x8000) {
 	do {
@@ -220,7 +220,7 @@ static int to_double(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent, error);
+    ieee_flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.
@@ -231,10 +231,10 @@ static int to_double(char *str, long sign, unsigned char *result,
 	     * Normalised.
 	     */
 	    exponent += 1023;
-	    shr(mant, 11);
-	    round(mant, 4);
+	    ieee_shr(mant, 11);
+	    ieee_round(mant, 4);
 	    if (mant[0] & 0x20)	       /* did we scale up by one? */
-		shr(mant, 1), exponent++;
+		ieee_shr(mant, 1), exponent++;
 	    mant[0] &= 0xF;	       /* remove leading one */
 	    put(result+6,(exponent << 4) | mant[0] | sign);
 	    put(result+4,mant[1]);
@@ -246,9 +246,9 @@ static int to_double(char *str, long sign, unsigned char *result,
 	     */
 	    int shift = -(exponent+1011);
 	    int sh = shift % 16, wds = shift / 16;
-	    shr(mant, sh);
-	    if (round(mant, 4-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
-		shr(mant, 1);
+	    ieee_shr(mant, sh);
+	    if (ieee_round(mant, 4-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
+		ieee_shr(mant, 1);
 		if (sh==0)
 		    mant[0] |= 0x8000;
 		exponent++;
@@ -281,7 +281,7 @@ static int to_float(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent, error);
+    ieee_flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.
@@ -292,10 +292,10 @@ static int to_float(char *str, long sign, unsigned char *result,
 	     * Normalised.
 	     */
 	    exponent += 127;
-	    shr(mant, 8);
-	    round(mant, 2);
+	    ieee_shr(mant, 8);
+	    ieee_round(mant, 2);
 	    if (mant[0] & 0x100)       /* did we scale up by one? */
-		shr(mant, 1), exponent++;
+		ieee_shr(mant, 1), exponent++;
 	    mant[0] &= 0x7F;	       /* remove leading one */
 	    put(result+2,(exponent << 7) | mant[0] | sign);
 	    put(result+0,mant[1]);
@@ -305,9 +305,9 @@ static int to_float(char *str, long sign, unsigned char *result,
 	     */
 	    int shift = -(exponent+118);
 	    int sh = shift % 16, wds = shift / 16;
-	    shr(mant, sh);
-	    if (round(mant, 2-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
-		shr(mant, 1);
+	    ieee_shr(mant, sh);
+	    if (ieee_round(mant, 2-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
+		ieee_shr(mant, 1);
 		if (sh==0)
 		    mant[0] |= 0x8000;
 		exponent++;
@@ -335,7 +335,7 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    flconvert (str, mant, &exponent, error);
+    ieee_flconvert (str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
 	/*
 	 * Non-zero.
@@ -346,8 +346,8 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
 	     * Normalised.
 	     */
 	    exponent += 16383;
-	    if (round(mant, 4))	       /* did we scale up by one? */
-		shr(mant, 1), mant[0] |= 0x8000, exponent++;
+	    if (ieee_round(mant, 4))	       /* did we scale up by one? */
+		ieee_shr(mant, 1), mant[0] |= 0x8000, exponent++;
 	    put(result+8,exponent | sign);
 	    put(result+6,mant[0]);
 	    put(result+4,mant[1]);
@@ -359,9 +359,9 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
 	     */
 	    int shift = -(exponent+16383);
 	    int sh = shift % 16, wds = shift / 16;
-	    shr(mant, sh);
-	    if (round(mant, 4-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
-		shr(mant, 1);
+	    ieee_shr(mant, sh);
+	    if (ieee_round(mant, 4-wds) || (sh>0 && (mant[0]&(0x8000>>(sh-1))))) {
+		ieee_shr(mant, 1);
 		if (sh==0)
 		    mant[0] |= 0x8000;
 		exponent++;
