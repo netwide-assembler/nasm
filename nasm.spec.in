@@ -1,3 +1,8 @@
+#
+# This RPM file should be built twice: once normally, to build the
+# nasm and nasm-rdoff packages, and once with --target=noarch to build
+# the nasm-doc RPM.
+#
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@VERSION@@
@@ -68,15 +73,19 @@ if [ $1 = 0 ]; then
   /sbin/install-info --delete "$RPM_INSTALL_PREFIX"/info/nasm.info.gz "$RPM_INSTALL_PREFIX"/info/dir
 fi
 
+%ifarch noarch
+
+%files doc
+%attr(-,root,root) %doc /usr/info/nasm.info*.gz
+%attr(-,root,root) %doc /usr/doc/nasm-%{version}/*
+
+%else
+
 %files
 %attr(-,root,root)	/usr/bin/nasm
 %attr(-,root,root)	/usr/bin/ndisasm
 %attr(-,root,root) %doc /usr/man/man1/nasm.1*
 %attr(-,root,root) %doc /usr/man/man1/ndisasm.1*
-
-%files doc
-%attr(-,root,root) %doc /usr/info/nasm.info*.gz
-%attr(-,root,root) %doc /usr/doc/nasm-%{version}/*
 
 %files rdoff
 %attr(-,root,root)	/usr/bin/ldrdf
@@ -86,3 +95,5 @@ fi
 %attr(-,root,root)	/usr/bin/rdflib
 %attr(-,root,root)	/usr/bin/rdx
 %attr(-,root,root) %doc	/usr/doc/nasm-%{version}/rdoff/*
+
+%endif
