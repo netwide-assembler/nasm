@@ -367,14 +367,14 @@ void raa_free (struct RAA *r)
 long raa_read (struct RAA *r, long posn) 
 {
     if (posn > r->stepsize * LAYERSIZ(r))
-	return 0L;
+        nasm_malloc_error (ERR_PANIC, "bad position in raa_read");
     while (r->layers > 0) {
 	ldiv_t l;
 	l = ldiv (posn, r->stepsize);
 	r = r->u.b.data[l.quot];
 	posn = l.rem;
 	if (!r)			       /* better check this */
-	    return 0L;
+            nasm_malloc_error (ERR_PANIC, "null pointer in raa_read");
     }
     return r->u.l.data[posn];
 }
@@ -395,7 +395,7 @@ struct RAA *raa_write (struct RAA *r, long posn, long value)
 	s = nasm_malloc (BRANCHSIZ);
 	memset (s->u.b.data, 0, sizeof(r->u.b.data));
 	s->layers = r->layers + 1;
-	s->stepsize = RAA_LAYERSIZE * r->stepsize;
+	s->stepsize = LAYERSIZ(r) * r->stepsize;
 	s->u.b.data[0] = r;
 	r = s;
     }
