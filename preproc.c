@@ -248,6 +248,12 @@ enum
 };
 #define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
+/* 
+ * These defines are used as the possible return values for do_directive
+ */
+#define NO_DIRECTIVE_FOUND  0
+#define DIRECTIVE_FOUND	    1
+
 /*
  * Condition codes. Note that we use c_ prefix not C_ because C_ is
  * used in nasm.h for the "real" condition codes. At _this_ level,
@@ -450,7 +456,7 @@ check_tasm_directive(char *line)
 
     /* Binary search for the directive name */
     i = -1;
-    j = sizeof(tasm_directives) / sizeof(*tasm_directives);
+    j = elements(tasm_directives);
     len = 0;
     while (!isspace(p[len]) && p[len] != 0)
 	len++;
@@ -554,7 +560,7 @@ hash(char *s)
     {
 	h += multipliers[i] * (unsigned char) (toupper(*s));
 	s++;
-	if (++i >= sizeof(multipliers) / sizeof(*multipliers))
+	if (++i >= elements(multipliers))
 	    i = 0;
     }
     h %= NHASH;
@@ -1737,16 +1743,17 @@ expand_macros_in_string(char **p)
     *p = detoken(line, FALSE);
 }
 
-/*
+/**
+ * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
  * with it if so.
  * 
- * If a directive _is_ found, we are expected to free_tlist() the
- * line.
+ * If a directive _is_ found, it is the responsibility of this routine
+ * (and not the caller) to free_tlist() the line.
  *
- * Return values go like this:
+ * @param tline a pointer to the current tokeninzed line linked list
+ * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
  * 
- * bit 0 is set if a directive was found (so the line gets freed)
  */
 static int
 do_directive(Token * tline)
@@ -1771,10 +1778,10 @@ do_directive(Token * tline)
     if (!tok_type_(tline, TOK_PREPROC_ID) ||
 	    (tline->text[1] == '%' || tline->text[1] == '$'
 		    || tline->text[1] == '!'))
-	return 0;
+	return NO_DIRECTIVE_FOUND;
 
     i = -1;
-    j = sizeof(directives) / sizeof(*directives);
+    j = elements(directives);
     while (j - i > 1)
     {
 	k = (j + i) / 2;
@@ -1806,7 +1813,7 @@ do_directive(Token * tline)
 	 (istk->mstk && !istk->mstk->in_progress)) &&
 	!is_condition(i))
     {
-	return 0;
+	return NO_DIRECTIVE_FOUND;
     }
 
     /*
@@ -1820,14 +1827,14 @@ do_directive(Token * tline)
 	    i != PP_ENDMACRO && i != PP_ENDM &&
 	    (defining->name || (i != PP_ENDREP && i != PP_REP)))
     {
-	return 0;
+	return NO_DIRECTIVE_FOUND;
     }
 
     if (j != -2)
     {
 	error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
 		tline->text);
-	return 0;		/* didn't get it */
+	return NO_DIRECTIVE_FOUND;		/* didn't get it */
     }
 
     switch (i)
@@ -1847,7 +1854,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%stacksize' missing size parameter");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    if (nasm_stricmp(tline->text, "flat") == 0)
 	    {
@@ -1881,10 +1888,10 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%stacksize' invalid size type");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_ARG:
 	    /* TASM like ARG directive to define arguments to functions, in
@@ -1906,7 +1913,7 @@ do_directive(Token * tline)
 		{
 		    error(ERR_NONFATAL, "`%%arg' missing argument parameter");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		arg = tline->text;
 
@@ -1918,7 +1925,7 @@ do_directive(Token * tline)
 		    error(ERR_NONFATAL,
 			    "Syntax error processing `%%arg' directive");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		tline = tline->next;
 		if (!tline || tline->type != TOK_ID)
@@ -1926,7 +1933,7 @@ do_directive(Token * tline)
 		    error(ERR_NONFATAL,
 			    "`%%arg' missing size type parameter");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 
 		/* Allow macro expansion of type parameter */
@@ -1958,7 +1965,7 @@ do_directive(Token * tline)
 			    "Invalid size type for `%%arg' missing directive");
 		    free_tlist(tt);
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		free_tlist(tt);
 
@@ -1976,7 +1983,7 @@ do_directive(Token * tline)
 	    while (tline && tline->type == TOK_OTHER
 		    && tline->text[0] == ',');
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_LOCAL:
 	    /* TASM like LOCAL directive to define local variables for a
@@ -2003,7 +2010,7 @@ do_directive(Token * tline)
 		    error(ERR_NONFATAL,
 			    "`%%local' missing argument parameter");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		local = tline->text;
 
@@ -2015,7 +2022,7 @@ do_directive(Token * tline)
 		    error(ERR_NONFATAL,
 			    "Syntax error processing `%%local' directive");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		tline = tline->next;
 		if (!tline || tline->type != TOK_ID)
@@ -2023,7 +2030,7 @@ do_directive(Token * tline)
 		    error(ERR_NONFATAL,
 			    "`%%local' missing size type parameter");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 
 		/* Allow macro expansion of type parameter */
@@ -2055,7 +2062,7 @@ do_directive(Token * tline)
 			    "Invalid size type for `%%local' missing directive");
 		    free_tlist(tt);
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		free_tlist(tt);
 
@@ -2078,7 +2085,7 @@ do_directive(Token * tline)
 	    while (tline && tline->type == TOK_OTHER
 		    && tline->text[0] == ',');
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_CLEAR:
 	    if (tline->next)
@@ -2102,7 +2109,7 @@ do_directive(Token * tline)
 		}
 	    }
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_INCLUDE:
 	    tline = tline->next;
@@ -2112,7 +2119,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%include' expects a file name");
 		free_tlist(origline);
-		return 3;	/* but we did _something_ */
+		return DIRECTIVE_FOUND;	/* but we did _something_ */
 	    }
 	    if (tline->next)
 		error(ERR_WARNING,
@@ -2137,7 +2144,7 @@ do_directive(Token * tline)
 	    istk = inc;
 	    list->uplevel(LIST_INCLUDE);
 	    free_tlist(origline);
-	    return 5;
+	    return DIRECTIVE_FOUND;
 
 	case PP_PUSH:
 	    tline = tline->next;
@@ -2147,7 +2154,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%push' expects a context identifier");
 		free_tlist(origline);
-		return 3;	/* but we did _something_ */
+		return DIRECTIVE_FOUND;	/* but we did _something_ */
 	    }
 	    if (tline->next)
 		error(ERR_WARNING, "trailing garbage after `%%push' ignored");
@@ -2168,7 +2175,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%repl' expects a context identifier");
 		free_tlist(origline);
-		return 3;	/* but we did _something_ */
+		return DIRECTIVE_FOUND;	/* but we did _something_ */
 	    }
 	    if (tline->next)
 		error(ERR_WARNING, "trailing garbage after `%%repl' ignored");
@@ -2244,7 +2251,7 @@ do_directive(Token * tline)
 	    cond->next = istk->conds;
 	    cond->state = j;
 	    istk->conds = cond;
-	    return (j == COND_IF_TRUE ? 3 : 1);
+	    return DIRECTIVE_FOUND;
 
 	case PP_ELIF:
 	case PP_ELIFCTX:
@@ -2284,7 +2291,7 @@ do_directive(Token * tline)
 		istk->conds->state =
 			j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
 	    }
-	    return (istk->conds->state == COND_IF_TRUE ? 5 : 1);
+	    return DIRECTIVE_FOUND;
 
 	case PP_ELSE:
 	    if (tline->next)
@@ -2297,7 +2304,7 @@ do_directive(Token * tline)
 	    else
 		istk->conds->state = COND_ELSE_TRUE;
 	    free_tlist(origline);
-	    return 5;
+	    return DIRECTIVE_FOUND;
 
 	case PP_ENDIF:
 	    if (tline->next)
@@ -2309,7 +2316,7 @@ do_directive(Token * tline)
 	    istk->conds = cond->next;
 	    nasm_free(cond);
 	    free_tlist(origline);
-	    return 5;
+	    return DIRECTIVE_FOUND;
 
 	case PP_MACRO:
 	case PP_IMACRO:
@@ -2325,7 +2332,7 @@ do_directive(Token * tline)
 		error(ERR_NONFATAL,
 			"`%%%smacro' expects a macro name",
 			(i == PP_IMACRO ? "i" : ""));
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    defining = nasm_malloc(sizeof(MMacro));
 	    defining->name = nasm_strdup(tline->text);
@@ -2417,7 +2424,7 @@ do_directive(Token * tline)
 	    }
 	    defining->expansion = NULL;
 	    free_tlist(origline);
-	    return 1;
+	    return DIRECTIVE_FOUND;
 
 	case PP_ENDM:
 	case PP_ENDMACRO:
@@ -2425,18 +2432,24 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%s': not defining a macro",
 			tline->text);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    k = hash(defining->name);
 	    defining->next = mmacros[k];
 	    mmacros[k] = defining;
 	    defining = NULL;
 	    free_tlist(origline);
-	    return 5;
+	    return DIRECTIVE_FOUND;
 
 	case PP_ROTATE:
 	    if (tline->next && tline->next->type == TOK_WHITESPACE)
 		tline = tline->next;
+	    if (tline->next == NULL)
+	    {
+		free_tlist(origline);
+		error(ERR_NONFATAL, "`%%rotate' missing rotate count");
+		return DIRECTIVE_FOUND;
+	    }
 	    t = expand_smacro(tline->next);
 	    tline->next = NULL;
 	    free_tlist(origline);
@@ -2447,26 +2460,38 @@ do_directive(Token * tline)
 		    evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
 	    free_tlist(tline);
 	    if (!evalresult)
-		return 3;
+		return DIRECTIVE_FOUND;
 	    if (tokval.t_type)
 		error(ERR_WARNING,
 			"trailing garbage after expression ignored");
 	    if (!is_simple(evalresult))
 	    {
 		error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    mmac = istk->mstk;
 	    while (mmac && !mmac->name)	/* avoid mistaking %reps for macros */
 		mmac = mmac->next_active;
 	    if (!mmac)
+	    {
 		error(ERR_NONFATAL,
 			"`%%rotate' invoked outside a macro call");
-	    mmac->rotate = mmac->rotate + reloc_value(evalresult);
-	    if (mmac->rotate < 0)
-		mmac->rotate = mmac->nparam - (-mmac->rotate) % mmac->nparam;
-	    mmac->rotate %= mmac->nparam;
-	    return 1;
+	    } 
+	    else if (mmac->nparam == 0)
+	    {
+		error(ERR_NONFATAL,
+			"`%%rotate' invoked within macro without parameters");
+	    }
+	    else
+	    {
+		mmac->rotate = mmac->rotate + reloc_value(evalresult);
+		
+		if (mmac->rotate < 0)
+		    mmac->rotate = 
+			mmac->nparam - (-mmac->rotate) % mmac->nparam;
+		mmac->rotate %= mmac->nparam;
+	    }
+	    return DIRECTIVE_FOUND;
 
 	case PP_REP:
 	    nolist = FALSE;
@@ -2489,14 +2514,14 @@ do_directive(Token * tline)
 		    evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
 	    free_tlist(tline);
 	    if (!evalresult)
-		return 3;
+		return DIRECTIVE_FOUND;
 	    if (tokval.t_type)
 		error(ERR_WARNING,
 			"trailing garbage after expression ignored");
 	    if (!is_simple(evalresult))
 	    {
 		error(ERR_NONFATAL, "non-constant value given to `%%rep'");
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    tmp_defining = defining;
 	    defining = nasm_malloc(sizeof(MMacro));
@@ -2511,13 +2536,13 @@ do_directive(Token * tline)
 	    defining->expansion = NULL;
 	    defining->next_active = istk->mstk;
 	    defining->rep_nest = tmp_defining;
-	    return 1;
+	    return DIRECTIVE_FOUND;
 
 	case PP_ENDREP:
 	    if (!defining || defining->name)
 	    {
 		error(ERR_NONFATAL, "`%%endrep': no matching `%%rep'");
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    /*
@@ -2543,7 +2568,7 @@ do_directive(Token * tline)
 	    tmp_defining = defining;
 	    defining = defining->rep_nest;
 	    free_tlist(origline);
-	    return 1;
+	    return DIRECTIVE_FOUND;
 
 	case PP_EXITREP:
 	    /*
@@ -2560,7 +2585,7 @@ do_directive(Token * tline)
 	    else
 		error(ERR_NONFATAL, "`%%exitrep' not within `%%rep' block");
 	    free_tlist(origline);
-	    return 1;
+	    return DIRECTIVE_FOUND;
 
 	case PP_XDEFINE:
 	case PP_IXDEFINE:
@@ -2578,7 +2603,7 @@ do_directive(Token * tline)
 			((i == PP_IDEFINE || i == PP_IXDEFINE) ? "i" : ""),
 			((i == PP_XDEFINE || i == PP_IXDEFINE) ? "x" : ""));
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    ctx = get_ctx(tline->text, FALSE);
@@ -2609,7 +2634,7 @@ do_directive(Token * tline)
 		    {
 			error(ERR_NONFATAL, "parameter identifier expected");
 			free_tlist(origline);
-			return 3;
+			return DIRECTIVE_FOUND;
 		    }
 		    if (tline->type != TOK_ID)
 		    {
@@ -2617,7 +2642,7 @@ do_directive(Token * tline)
 				"`%s': parameter identifier expected",
 				tline->text);
 			free_tlist(origline);
-			return 3;
+			return DIRECTIVE_FOUND;
 		    }
 		    tline->type = TOK_SMAC_PARAM + nparam++;
 		    tline = tline->next;
@@ -2632,7 +2657,7 @@ do_directive(Token * tline)
 			error(ERR_NONFATAL,
 				"`)' expected to terminate macro template");
 			free_tlist(origline);
-			return 3;
+			return DIRECTIVE_FOUND;
 		    }
 		    break;
 		}
@@ -2675,7 +2700,7 @@ do_directive(Token * tline)
 			    " without parameters", mname);
 		    free_tlist(origline);
 		    free_tlist(macro_start);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		else
 		{
@@ -2700,7 +2725,7 @@ do_directive(Token * tline)
 	    smac->expansion = macro_start;
 	    smac->in_progress = FALSE;
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_UNDEF:
 	    tline = tline->next;
@@ -2712,7 +2737,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%undef' expects a macro identifier");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    if (tline->next)
 	    {
@@ -2748,7 +2773,7 @@ do_directive(Token * tline)
 		}
 	    }
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_STRLEN:
 	    tline = tline->next;
@@ -2761,7 +2786,7 @@ do_directive(Token * tline)
 		error(ERR_NONFATAL,
 			"`%%strlen' expects a macro identifier as first parameter");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    ctx = get_ctx(tline->text, FALSE);
 	    if (!ctx)
@@ -2783,7 +2808,7 @@ do_directive(Token * tline)
 			"`%%strlen` requires string as second parameter");
 		free_tlist(tline);
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    macro_start = nasm_malloc(sizeof(*macro_start));
@@ -2826,7 +2851,7 @@ do_directive(Token * tline)
 	    smac->in_progress = FALSE;
 	    free_tlist(tline);
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_SUBSTR:
 	    tline = tline->next;
@@ -2839,7 +2864,7 @@ do_directive(Token * tline)
 		error(ERR_NONFATAL,
 			"`%%substr' expects a macro identifier as first parameter");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    ctx = get_ctx(tline->text, FALSE);
 	    if (!ctx)
@@ -2862,7 +2887,7 @@ do_directive(Token * tline)
 			"`%%substr` requires string as second parameter");
 		free_tlist(tline);
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    tt = t->next;
@@ -2874,14 +2899,14 @@ do_directive(Token * tline)
 	    {
 		free_tlist(tline);
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    if (!is_simple(evalresult))
 	    {
 		error(ERR_NONFATAL, "non-constant value given to `%%substr`");
 		free_tlist(tline);
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    macro_start = nasm_malloc(sizeof(*macro_start));
@@ -2934,7 +2959,7 @@ do_directive(Token * tline)
 	    smac->in_progress = FALSE;
 	    free_tlist(tline);
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 
 	case PP_ASSIGN:
@@ -2950,7 +2975,7 @@ do_directive(Token * tline)
 			"`%%%sassign' expects a macro identifier",
 			(i == PP_IASSIGN ? "i" : ""));
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    ctx = get_ctx(tline->text, FALSE);
 	    if (!ctx)
@@ -2971,7 +2996,7 @@ do_directive(Token * tline)
 	    if (!evalresult)
 	    {
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    if (tokval.t_type)
@@ -2984,7 +3009,7 @@ do_directive(Token * tline)
 			"non-constant value given to `%%%sassign'",
 			(i == PP_IASSIGN ? "i" : ""));
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 
 	    macro_start = nasm_malloc(sizeof(*macro_start));
@@ -3026,7 +3051,7 @@ do_directive(Token * tline)
 	    smac->expansion = macro_start;
 	    smac->in_progress = FALSE;
 	    free_tlist(origline);
-	    return 3;
+	    return DIRECTIVE_FOUND;
 
 	case PP_LINE:
 	    /*
@@ -3038,7 +3063,7 @@ do_directive(Token * tline)
 	    {
 		error(ERR_NONFATAL, "`%%line' expects line number");
 		free_tlist(origline);
-		return 3;
+		return DIRECTIVE_FOUND;
 	    }
 	    k = readnum(tline->text, &j);
 	    m = 1;
@@ -3050,7 +3075,7 @@ do_directive(Token * tline)
 		{
 		    error(ERR_NONFATAL, "`%%line' expects line increment");
 		    free_tlist(origline);
-		    return 3;
+		    return DIRECTIVE_FOUND;
 		}
 		m = readnum(tline->text, &j);
 		tline = tline->next;
@@ -3063,7 +3088,7 @@ do_directive(Token * tline)
 		nasm_free(src_set_fname(detoken(tline, FALSE)));
 	    }
 	    free_tlist(origline);
-	    return 5;
+	    return DIRECTIVE_FOUND;
 
 	default:
 	    error(ERR_FATAL,
@@ -3071,7 +3096,7 @@ do_directive(Token * tline)
 		    directives[i]);
 	    break;
     }
-    return 3;
+    return DIRECTIVE_FOUND;
 }
 
 /*
@@ -3094,7 +3119,7 @@ find_cc(Token * t)
 	return -1;
 
     i = -1;
-    j = sizeof(conditions) / sizeof(*conditions);
+    j = elements(conditions);
     while (j - i > 1)
     {
 	k = (j + i) / 2;
@@ -4234,7 +4259,7 @@ pp_getline(void)
 	/*
 	 * Check the line to see if it's a preprocessor directive.
 	 */
-	if (do_directive(tline) & 1)
+	if (do_directive(tline) == DIRECTIVE_FOUND)
 	{
 	    continue;
 	}
