@@ -3129,7 +3129,7 @@ directives are not.
 In addition to the universal directives described in this chapter,
 each object file format can optionally supply extra directives in
 order to control particular features of that file format. These
-\i{format-specific directives}\e{format-specific} directives are
+\I{format-specific directives}\e{format-specific} directives are
 documented along with the formats that implement them, in \k{outfmt}.
 
 
