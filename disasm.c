@@ -154,7 +154,7 @@ static unsigned char *do_ea (unsigned char *data, int modrm, int asize,
 	  case 2:
 	    op->segment |= SEG_DISP16;
 	    op->offset = *data++;
-	    op->offset |= (*data++) << 8;
+	    op->offset |= ((unsigned) *data++) << 8;
 	    break;
 	}
 	return data;
@@ -229,7 +229,7 @@ static unsigned char *do_ea (unsigned char *data, int modrm, int asize,
 	  case 2:
 	    op->segment |= SEG_DISP32;
 	    op->offset = *data++;
-	    op->offset |= (*data++) << 8;
+	    op->offset |= ((unsigned) *data++) << 8;
 	    op->offset |= ((long) *data++) << 16;
 	    op->offset |= ((long) *data++) << 24;
 	    break;
@@ -316,11 +316,11 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	    ins->oprs[c-024].offset = *data++;
 	if (c >= 030 && c <= 032) {
 	    ins->oprs[c-030].offset = *data++;
-	    ins->oprs[c-030].offset |= (*data++ << 8);
+	    ins->oprs[c-030].offset |= (((unsigned) *data++) << 8);
 	}
 	if (c >= 034 && c <= 036) {
 	    ins->oprs[c-034].offset = *data++;
-	    ins->oprs[c-034].offset |= (*data++ << 8);
+	    ins->oprs[c-034].offset |= (((unsigned) *data++) << 8);
 	    if (osize == 32) {
 		ins->oprs[c-034].offset |= (((long) *data++) << 16);
 		ins->oprs[c-034].offset |= (((long) *data++) << 24);
@@ -330,13 +330,13 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	}
 	if (c >= 040 && c <= 042) {
 	    ins->oprs[c-040].offset = *data++;
-	    ins->oprs[c-040].offset |= (*data++ << 8);
+	    ins->oprs[c-040].offset |= (((unsigned) *data++) << 8);
 	    ins->oprs[c-040].offset |= (((long) *data++) << 16);
 	    ins->oprs[c-040].offset |= (((long) *data++) << 24);
 	}
 	if (c >= 044 && c <= 046) {
 	    ins->oprs[c-044].offset = *data++;
-	    ins->oprs[c-044].offset |= (*data++ << 8);
+	    ins->oprs[c-044].offset |= (((unsigned) *data++) << 8);
 	    if (asize == 32) {
 		ins->oprs[c-044].offset |= (((long) *data++) << 16);
 		ins->oprs[c-044].offset |= (((long) *data++) << 24);
@@ -350,13 +350,13 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	}
 	if (c >= 060 && c <= 062) {
 	    ins->oprs[c-060].offset = *data++;
-	    ins->oprs[c-060].offset |= (*data++ << 8);
+	    ins->oprs[c-060].offset |= (((unsigned) *data++) << 8);
 	    ins->oprs[c-060].segment |= SEG_RELATIVE;
 	    ins->oprs[c-060].segment &= ~SEG_32BIT;
 	}
 	if (c >= 064 && c <= 066) {
 	    ins->oprs[c-064].offset = *data++;
-	    ins->oprs[c-064].offset |= (*data++ << 8);
+	    ins->oprs[c-064].offset |= (((unsigned) *data++) << 8);
 	    if (osize == 32) {
 		ins->oprs[c-064].offset |= (((long) *data++) << 16);
 		ins->oprs[c-064].offset |= (((long) *data++) << 24);
@@ -372,7 +372,7 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	}
 	if (c >= 070 && c <= 072) {
 	    ins->oprs[c-070].offset = *data++;
-	    ins->oprs[c-070].offset |= (*data++ << 8);
+	    ins->oprs[c-070].offset |= (((unsigned) *data++) << 8);
 	    ins->oprs[c-070].offset |= (((long) *data++) << 16);
 	    ins->oprs[c-070].offset |= (((long) *data++) << 24);
 	    ins->oprs[c-070].segment |= SEG_32BIT | SEG_RELATIVE;
@@ -386,11 +386,11 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	}
 	if (c >= 0130 && c <= 0132) {
 	    ins->oprs[c-0130].offset = *data++;
-	    ins->oprs[c-0130].offset |= (*data++ << 8);
+	    ins->oprs[c-0130].offset |= (((unsigned) *data++) << 8);
 	}
 	if (c >= 0140 && c <= 0142) {
 	    ins->oprs[c-0140].offset = *data++;
-	    ins->oprs[c-0140].offset |= (*data++ << 8);
+	    ins->oprs[c-0140].offset |= (((unsigned) *data++) << 8);
 	    ins->oprs[c-0140].offset |= (((long) *data++) << 16);
 	    ins->oprs[c-0140].offset |= (((long) *data++) << 24);
 	}

@@ -484,7 +484,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    bracket = FALSE;	       /* placate optimisers */
 	}
 
-	if((result->oprs[operand].type & FAR) && !mref)
+	if((result->oprs[operand].type & FAR) && !mref &&
+	     result->opcode != I_JMP && result->opcode != I_CALL)
 	{
 	    error (ERR_NONFATAL, "invalid use of FAR operand specifier");
 	}

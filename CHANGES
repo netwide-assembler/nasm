@@ -1,3 +1,8 @@
+0.98.36
+-------
+* Fix signed/unsigned problems.
+* Fix JMP FAR label and CALL FAR label.
+
 0.98.35
 -------
 * Fix build failure on 16-bit DOS (Makefile.bc3 workaround for compiler bug.)

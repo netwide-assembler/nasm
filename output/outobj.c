@@ -1101,7 +1101,8 @@ static void obj_out (long segto, const void *data, unsigned long type,
 static void obj_write_fixup (ObjRecord *orp, int bytes,
     int segrel, long seg, long wrt, struct Segment *segto)
 {
-    int locat, method;
+    unsigned locat;
+    int method;
     int base;
     long tidx, fidx;
     struct Segment *s = NULL;
