@@ -5,6 +5,8 @@
   required by OpenWatcom wmake (it supports path searches, but not
   explicit paths.)
 * Fix the STR instruction.
+* Fix the ELF output format, which was broken under certain
+  circumstances due to the addition of stabs support.
 
 0.98.37
 -------
