@@ -139,9 +139,9 @@ CALL      imm|far             \322\1\x9A\34\37              8086,ND
 CALL      imm16               \320\1\xE8\64                 8086
 CALL      imm16|near          \320\1\xE8\64                 8086
 CALL      imm16|far           \320\1\x9A\34\37              8086,ND
-CALL      imm32               \321\1\xE8\64                 8086
-CALL      imm32|near          \321\1\xE8\64                 8086
-CALL      imm32|far           \321\1\x9A\34\37              8086,ND
+CALL      imm32               \321\1\xE8\64                 386
+CALL      imm32|near          \321\1\xE8\64                 386
+CALL      imm32|far           \321\1\x9A\34\37              386,ND
 CALL      imm:imm             \322\1\x9A\35\30              8086
 CALL      imm16:imm           \320\1\x9A\31\30              8086
 CALL      imm:imm16           \320\1\x9A\31\30              8086

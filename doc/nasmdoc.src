@@ -253,38 +253,38 @@ team of developers, accessible through the \c{nasm-devel} mailing list
 If you want to report a bug, please read \k{bugs} first.
 
 NASM has a \i{WWW page} at
-\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm}.
+\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm},
+and another, with additional information, at
+\W{http://nasm.2y.net/}\c{http://nasm.2y.net/}
 
 The original authors are \i{e\-mail}able as
 \W{mailto:jules@dsf.org.uk}\c{jules@dsf.org.uk} and
 \W{mailto:anakin@pobox.com}\c{anakin@pobox.com}.
 The latter is no longer involved in the development team.
 
-\i{New releases} of NASM are uploaded to the official site 
-\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm},
+\i{New releases} of NASM are uploaded to the official sites 
+\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm}
 and to
 \W{ftp://ftp.kernel.org/pub/software/devel/nasm/}\i\c{ftp.kernel.org}
 and 
 \W{ftp://ibiblio.org/pub/Linux/devel/lang/assemblers/}\i\c{ibiblio.org}.
-\# \W{ftp://ftp.simtel.net/pub/simtelnet/msdos/asmutl/}\i\c{ftp.simtel.net}
-\# and
-\# \W{ftp://ftp.coast.net/coast/msdos/asmutil/}\i\c{ftp.coast.net}.
 
 Announcements are posted to
 \W{news:comp.lang.asm.x86}\i\c{comp.lang.asm.x86},
 \W{news:alt.lang.asm}\i\c{alt.lang.asm} and
 \W{news:comp.os.linux.announce}\i\c{comp.os.linux.announce}
-\#  and
-\# \W{news:comp.archives.msdos.announce}\i\c{comp.archives.msdos.announce}
-\# (the last one is done automagically by uploading to
-\# \W{ftp://ftp.simtel.net/pub/simtelnet/msdos/asmutl/}\c{ftp.simtel.net}).
 
 If you want information about NASM beta releases, and the current
-development status, please subscribe to the \i\c{nasm-devel} email lists
+development status, please subscribe to the \i\c{nasm-devel} email list
 by registering at
-\W{http://groups.yahoo.com/group/nasm-devel}\c{http://groups.yahoo.com/group/nasm-devel}
-and
+\W{http://groups.yahoo.com/group/nasm-devel}\c{http://groups.yahoo.com/group/nasm-devel},
 \W{http://www.pairlist.net/mailman/listinfo/nasm-devel}\c{http://www.pairlist.net/mailman/listinfo/nasm-devel}
+and
+\W{http://sourceforge.net/projects/nasm}\c{http://sourceforge.net/projects/nasm}.
+
+The preferred list is the list at Sourceforge, which is also the home to
+the latest nasm source code and releases. The other lists are open, but
+may not continue to be supported in the long term.
 
 
 \H{install} Installation
@@ -784,9 +784,9 @@ character} for options. So setting the \c{NASMENV} variable to the
 value \c{!-s!-ic:\\nasmlib} is equivalent to setting it to \c{-s
 -ic:\\nasmlib}, but \c{!-dNAME="my name"} will work.
 
-This variable was called \c{NASM} in earlier versions of NASM,
-however, this caused problems with makefiles which used a \c{$(NASM)}
-variable.
+This environment variable was previously called \c{NASM}. This was
+changed with version 0.98.31.
+
 
 \H{qstart} \i{Quick Start} for \i{MASM} Users
 
@@ -1676,14 +1676,52 @@ You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
 
+\S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
+
+Individual tokens in single line macros can be concatenated, to produce
+longer tokens for later processing. This can be useful if there are
+several similar macros that perform simlar functions.
+
+As an example, consider the following:
+
+\c %define BDASTART 400h                   ; Start of BIOS data area
+
+\c struc tBIOSDA                           ; its structure
+\c       .COM1addr       RESW    1
+\c       .COM2addr       RESW    1
+\c       ; ..and so on
+\c endstruc
+
+Now, if we need to access the elements of tBIOSDA in different places,
+we can end up with:
+
+\c        mov     ax,BDASTART + tBIOSDA.COM1addr
+\c        mov     bx,BDASTART + tBIOSDA.COM2addr
+
+This will become pretty ugly (and tedious) if used in many places, and
+can be reduced in size significantly by using the following macro:
+
+\c ; Macro to access BIOS variables by their names (from tBDA):
+
+\c %define BDA(x) BDASTART + tBIOSDA. %+ x
+
+Now the above code can be written as:
+
+\c        mov     ax,BDA(COM1addr)
+\c        mov     bx,BDA(COM2addr)
+
+Using this feature, we can simplify references to a lot of macros (and,
+in turn, reduce typing errors).
+
+
 \S{undef} Undefining macros: \i\c{%undef}
 
 Single-line macros can be removed with the \c{%undef} command.  For
 example, the following sequence:
 
 \c %define foo bar
-\c %undef foo
-\c 		mov eax, foo
+\c %undef  foo
+\c                 mov eax, foo
 
 will expand to the instruction \c{mov eax, foo}, since after
 \c{%undef} the macro \c{foo} is no longer defined.
@@ -1776,8 +1814,8 @@ this.
 
 \c %macro prologue 1
 \c           push ebp
-\c           mov ebp,esp
-\c           sub esp,%1
+\c           mov  ebp,esp
+\c           sub  esp,%1
 \c %endmacro
 
 This defines a C-like function prologue as a macro: so you would
@@ -1788,8 +1826,8 @@ invoke the macro with a call such as
 which would expand to the three lines of code
 
 \c myfunc:   push ebp
-\c           mov ebp,esp
-\c           sub esp,12
+\c           mov  ebp,esp
+\c           sub  esp,12
 
 The number \c{1} after the macro name in the \c{%macro} line defines
 the number of parameters the macro \c{prologue} expects to receive.
@@ -5631,8 +5669,9 @@ We have never yet released a version of NASM with any \e{known}
 bugs. That doesn't usually stop there being plenty we didn't know
 about, though. Any that you find should be reported firstly via the
 \i\c{bugtracker} at
-\W{http://nasm.2y.net/bugtracker/}\c{http://nasm.2y.net/bugtracker/},
-or if that fails then through one of the contacts in \k{contact}
+\W{https://sourceforge.net/projects/nasm/}\c{https://sourceforge.net/projects/nasm/}
+(click on "Bugs"), or if that fails then through one of the
+contacts in \k{contact}.
 
 Please read \k{qstart} first, and don't report the bug if it's
 listed in there as a deliberate feature. (If you think the feature
@@ -5909,7 +5948,7 @@ disassembler works, because as far as I know, it isn't an efficient
 one anyway. You have been warned.
 
 
-\A{iref} Intel x86 Instruction Reference
+\A{iref} x86 Instruction Reference
 
 This appendix provides a complete list of the machine instructions
 which NASM will assemble, and a short description of the function of
@@ -5918,7 +5957,7 @@ each one.
 It is not intended to be exhaustive documentation on the fine
 details of the instructions' function, such as which exceptions they
 can trigger: for such documentation, you should go to Intel's Web
-site, \W{http://www.intel.com/}\c{http://www.intel.com/}.
+site, \W{http://developer.intel.com/design/Pentium4/manuals/}\c{http://developer.intel.com/design/Pentium4/manuals/}.
 
 Instead, this appendix is intended primarily to provide
 documentation on the way the instructions may be used within NASM.
@@ -12065,13 +12104,13 @@ entry point in an operating system.
 
 \b The \c{EIP} register is copied into the \c{ECX} register.
 
-\b Bits [31–0] of the 64-bit SYSCALL/SYSRET Target Address Register
+\b Bits [31-0] of the 64-bit SYSCALL/SYSRET Target Address Register
 (\c{STAR}) are copied into the \c{EIP} register.
 
-\b Bits [47–32] of the \c{STAR} register specify the selector that is
+\b Bits [47-32] of the \c{STAR} register specify the selector that is
 copied into the \c{CS} register.
 
-\b Bits [47–32]+1000b of the \c{STAR} register specify the selector that
+\b Bits [47-32]+1000b of the \c{STAR} register specify the selector that
 is copied into the SS register.
 
 The \c{CS} and \c{SS} registers should not be modified by the operating
@@ -12126,7 +12165,7 @@ In particular, note that this instruction des not save the values of
 \c{CS} or \c{(E)IP}. If you need to return to the calling code, you
 need to write your code to cater for this.
 
-For more information, see the Intel Architecture Software Developer’s
+For more information, see the Intel Architecture Software Developer's
 Manual, Volume 2.
 
 
@@ -12184,14 +12223,14 @@ Manual, Volume 2.
 after the corresponding \c{SYSCALL} instruction, is copied into the \c{EIP}
 register.
 
-\b Bits [63–48] of the \c{STAR} register specify the selector that is copied
+\b Bits [63-48] of the \c{STAR} register specify the selector that is copied
 into the \c{CS} register.
 
-\b Bits [63–48]+1000b of the \c{STAR} register specify the selector that is
+\b Bits [63-48]+1000b of the \c{STAR} register specify the selector that is
 copied into the \c{SS} register.
 
-\b Bits [1–0] of the \c{SS} register are set to 11b (RPL of 3) regardless of
-the value of bits [49–48] of the \c{STAR} register.
+\b Bits [1-0] of the \c{SS} register are set to 11b (RPL of 3) regardless of
+the value of bits [49-48] of the \c{STAR} register.
 
 The \c{CS} and \c{SS} registers should not be modified by the operating
 system between the execution of the \c{SYSCALL} instruction and its
