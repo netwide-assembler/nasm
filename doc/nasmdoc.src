@@ -739,9 +739,8 @@ The syntax is:
 \b \c{-On} multi-pass optimization, minimize branch offsets; also will
         minimize signed immediate bytes, overriding size specification
         unless the \c{strict} keyword has been used (see \k{strict}).
-        If 2 <= n <= 3, then there are 5 * n passes, otherwise there
-        are n passes.
-
+        The number specifies the maximum number of passes.  The more
+	passes, the better the code, but the slower is the assembly.
 
 Note that this is a capital O, and is different from a small o, which
 is used to specify the output format. See \k{opt-o}.
@@ -1646,7 +1645,7 @@ forcing byte size in the effective address by coding \c{[byte
 ebx+offset]}.
 
 Note that use of the \c{-On} switch (with n>=2) makes some of the above
-no longer true. (see \k{opt-On})
+no longer true (see \k{opt-On}).
 
 \H{locallab} \i{Local Labels}
 
@@ -6112,14 +6111,15 @@ that isn't listed here.
 
 \S{inefficient} NASM Generates \i{Inefficient Code}
 
-I get a lot of `bug' reports about NASM generating inefficient, or
+We sometimes get `bug' reports about NASM generating inefficient, or
 even `wrong', code on instructions such as \c{ADD ESP,8}. This is a
 deliberate design feature, connected to predictability of output:
 NASM, on seeing \c{ADD ESP,8}, will generate the form of the
 instruction which leaves room for a 32-bit offset. You need to code
-\I\c{BYTE}\c{ADD ESP,BYTE 8} if you want the space-efficient
-form of the instruction. This isn't a bug: at worst it's a
-misfeature, and that's a matter of opinion only. See \k{opt-On}.
+\I\c{BYTE}\c{ADD ESP,BYTE 8} if you want the space-efficient form of
+the instruction. This isn't a bug, it's user error: if you prefer to
+have NASM produce the more efficient code automatically enable
+optimization with the \c{-On} option (see \k{opt-On}).
 
 
 \S{jmprange} My Jumps are Out of Range\I{out of range, jumps}

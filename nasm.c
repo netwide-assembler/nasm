@@ -403,7 +403,6 @@ static int process_arg (char *p, char *q)
 			while(isdigit(*++param)) ;
 			if (opt<=0) optimizing = -1;		/* 0.98 behaviour */
 			else if (opt==1) optimizing = 0;	/* Two passes, 0.98.09 behavior */
-			else if (opt<=3) optimizing = opt*5;	/* Multiple passes */
 			else optimizing = opt;			/* Multiple passes */
 		    } else {
 			if (*param == 'v' || *param == '+') {
