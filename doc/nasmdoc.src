@@ -11499,7 +11499,7 @@ will be copied to bits 0-15 of the destination.
 \c PSLLQ xmm1,xmm2/m128          ; 66 0F F3 /r     [WILLAMETTE,SSE2]
 \c PSLLQ xmm,imm8                ; 66 0F 73 /6 ib  [WILLAMETTE,SSE2]
 
-\c PSLLDQ xmm1,imm8              ; 66 0F 73 /7 ib  [PENT,MMX]
+\c PSLLDQ xmm1,imm8              ; 66 0F 73 /7 ib  [WILLAMETTE,SSE2]
 
 \c{PSLLx} performs logical left shifts of the data elements in the
 destination (first) operand, moving each bit in the separate elements
