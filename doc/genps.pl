@@ -509,6 +509,22 @@ sub ps_dup_para(@) {
 }
 
 #
+# This generates a duplicate of a paragraph, stripping anchor
+# tags (-4 and -5)
+#
+sub ps_dup_para_noanchor(@) {
+    my(@i) = @_;
+    my(@o) = ();
+    my($c);
+
+    foreach $c ( @i ) {
+	my @cc = @{$c};
+	push(@o, [@cc]) unless ( $cc[0] == -4 || $cc[0] == -5 );
+    }
+    return @o;
+}
+
+#
 # Scan for header paragraphs and fix up their contents;
 # also generate table of contents and PDF bookmarks.
 #
@@ -535,7 +551,7 @@ for ( $i = 0 ; $i < $npara ; $i++ ) {
 	push(@bookmarks, $book);
 	$bookref{$secn} = $book;
 
-	push(@tocparas, [ps_dup_para(@{$paras[$i]})]);
+	push(@tocparas, [ps_dup_para_noanchor(@{$paras[$i]})]);
 	push(@tocptypes, 'toc0'.' :'.$sech.':'.$chap.' '.$secn.':');
 
 	unshift(@{$paras[$i]},
@@ -555,7 +571,7 @@ for ( $i = 0 ; $i < $npara ; $i++ ) {
 	$bookref{$secn} = $book;
 	$bookref{$pref}->[1]--;	# Adjust count for parent node
 
-	push(@tocparas, [ps_dup_para(@{$paras[$i]})]);
+	push(@tocparas, [ps_dup_para_noanchor(@{$paras[$i]})]);
 	push(@tocptypes,
 	     (($ptype eq 'subh') ? 'toc2':'toc1').' :'.$sech.':'.$secn);
 
