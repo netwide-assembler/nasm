@@ -83,9 +83,9 @@ void nasm_free (void *q)
 }
 
 #ifdef LOGALLOC
-char *nasm_strdup_log (char *file, int line, char *s)
+char *nasm_strdup_log (char *file, int line, const char *s)
 #else
-char *nasm_strdup (char *s)
+char *nasm_strdup (const char *s)
 #endif
 {
     char *p;
