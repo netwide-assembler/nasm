@@ -4,6 +4,7 @@
   mkdep.pl to be able to generate completely pathless dependencies, as
   required by OpenWatcom wmake (it supports path searches, but not
   explicit paths.)
+* Fix the STR instruction.
 
 0.98.37
 -------
