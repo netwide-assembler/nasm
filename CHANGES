@@ -11,6 +11,8 @@
 * Fix for %rep with no arguments (#560568)
 * Fix concatenation of preprocessor function call  (#794686)
 * Fix long label causes coredump (#677841)
+* Use autoheader as well as autoconf to keep configure from generating
+  ridiculously long command lines.
 
 0.98.37
 -------
