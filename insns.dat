@@ -998,14 +998,16 @@ SHRD      reg32,reg32,reg_cl  \321\2\x0F\xAD\101            386
 SIDT      mem                 \300\2\x0F\x01\201            286
 SLDT      mem                 \300\1\x0F\17\200             286
 SLDT      mem16               \300\1\x0F\17\200             286
-SLDT      reg16               \1\x0F\17\200                 286
+SLDT      reg16               \320\1\x0F\17\200             286
+SLDT      reg32               \321\1\x0F\17\200             386
 SMI       void                \1\xF1                        386,UNDOC
 SMINT     void                \2\x0F\x38                    P6,CYRIX
 ; Older Cyrix chips had this; they had to move due to conflict with MMX
 SMINTOLD  void                \2\x0F\x7E                    486,CYRIX,ND
 SMSW      mem                 \300\2\x0F\x01\204            286
 SMSW      mem16               \300\2\x0F\x01\204            286
-SMSW      reg16               \2\x0F\x01\204                286
+SMSW      reg16               \320\2\x0F\x01\204            286
+SMSW      reg32               \321\2\x0F\x01\204            386
 STC       void                \1\xF9                        8086
 STD       void                \1\xFD                        8086
 STI       void                \1\xFB                        8086
