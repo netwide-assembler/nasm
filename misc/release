@@ -100,6 +100,12 @@ zip -9Dlr ../../nasm-${version}.zip -x@"$bins" *	# Text files
 zip -9Dgr ../../nasm-${version}.zip -i@"$bins" *	# Binary files
 cd ..
 
+# Create specfile
+cd nasm-$version
+make spec
+cp nasm.spec ../../nasm-${version}.spec
+cd ..
+
 # Record what we have already generated
 find nasm-$version -not -type d -print > main
 
