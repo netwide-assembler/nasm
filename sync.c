@@ -12,7 +12,7 @@
 
 #include "sync.h"
 
-#define SYNC_MAX 4096		       /* max # of sync points */
+#define SYNC_MAX 4096           /* max # of sync points */
 
 /*
  * This lot manages the current set of sync points by means of a
@@ -25,7 +25,7 @@ static struct Sync {
 } *synx;
 static int nsynx;
 
-void init_sync(void) 
+void init_sync(void)
 {
     /*
      * I'd like to allocate an array of size SYNC_MAX, then write
@@ -41,72 +41,72 @@ void init_sync(void)
      * dynamically I avoid problems with the total size of DGROUP
      * in Borland C.
      */
-    synx = malloc((SYNC_MAX+1) * sizeof(*synx));
+    synx = malloc((SYNC_MAX + 1) * sizeof(*synx));
     if (!synx) {
-	fprintf(stderr, "ndisasm: not enough memory for sync array\n");
-	exit(1);
+        fprintf(stderr, "ndisasm: not enough memory for sync array\n");
+        exit(1);
     }
     nsynx = 0;
 }
 
-void add_sync(unsigned long pos, unsigned long length) 
+void add_sync(unsigned long pos, unsigned long length)
 {
     int i;
 
     if (nsynx == SYNC_MAX)
-	return;			       /* can't do anything - overflow */
+        return;                 /* can't do anything - overflow */
 
     nsynx++;
     synx[nsynx].pos = pos;
     synx[nsynx].length = length;
 
     for (i = nsynx; i > 1; i /= 2) {
-	if (synx[i/2].pos > synx[i].pos) {
-	    struct Sync t;
-	    t = synx[i/2];	       /* structure copy */
-	    synx[i/2] = synx[i];       /* structure copy again */
-	    synx[i] = t;	       /* another structure copy */
-	}
+        if (synx[i / 2].pos > synx[i].pos) {
+            struct Sync t;
+            t = synx[i / 2];    /* structure copy */
+            synx[i / 2] = synx[i];      /* structure copy again */
+            synx[i] = t;        /* another structure copy */
+        }
     }
 }
 
-unsigned long next_sync(unsigned long position, unsigned long *length) 
+unsigned long next_sync(unsigned long position, unsigned long *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
-	int i, j;
-	struct Sync t;
-	t = synx[nsynx];	       /* structure copy */
-	synx[nsynx] = synx[1];	       /* structure copy */
-	synx[1] = t;		       /* ditto */
+        int i, j;
+        struct Sync t;
+        t = synx[nsynx];        /* structure copy */
+        synx[nsynx] = synx[1];  /* structure copy */
+        synx[1] = t;            /* ditto */
 
-	nsynx--;
+        nsynx--;
 
         i = 1;
-	while (i*2 <= nsynx) {
-	    j = i*2;
-	    if (synx[j].pos < synx[i].pos &&
-		(j+1 > nsynx || synx[j+1].pos > synx[j].pos)) {
-		t = synx[j];	       /* structure copy */
-		synx[j] = synx[i];     /* lots of these... */
-		synx[i] = t;	       /* ...aren't there? */
-		i = j;
-	    } else if (j+1 <= nsynx && synx[j+1].pos < synx[i].pos) {
-		t = synx[j+1];	       /* structure copy */
-		synx[j+1] = synx[i];   /* structure <yawn> copy */
-		synx[i] = t;	       /* structure copy <zzzz....> */
-		i = j+1;
-	    } else
-		break;
-	}
+        while (i * 2 <= nsynx) {
+            j = i * 2;
+            if (synx[j].pos < synx[i].pos &&
+                (j + 1 > nsynx || synx[j + 1].pos > synx[j].pos)) {
+                t = synx[j];    /* structure copy */
+                synx[j] = synx[i];      /* lots of these... */
+                synx[i] = t;    /* ...aren't there? */
+                i = j;
+            } else if (j + 1 <= nsynx && synx[j + 1].pos < synx[i].pos) {
+                t = synx[j + 1];        /* structure copy */
+                synx[j + 1] = synx[i];  /* structure <yawn> copy */
+                synx[i] = t;    /* structure copy <zzzz....> */
+                i = j + 1;
+            } else
+                break;
+        }
     }
 
     if (nsynx > 0) {
-	if (length)
-	    *length = synx[1].length;
-	return synx[1].pos;
+        if (length)
+            *length = synx[1].length;
+        return synx[1].pos;
     } else {
-	if (length)
-	    *length = 0L;
-	return ULONG_MAX;
+        if (length)
+            *length = 0L;
+        return ULONG_MAX;
     }
 }

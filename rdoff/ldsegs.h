@@ -8,12 +8,12 @@
 #endif
 
 struct segconfig {
-    UI16 typelow, typehi;/* range of seg nos for which this is valid */
-    char * typedesc;	 /* a description of the segment type */
-    UI16 dowhat;	 /* one of the SEG_xxxx values below */
-    UI16 mergetype;	 /* if SEG_MERGE what type segment do we merge with?
-			    0 -> same type of segment. This type is also
-			    used with SEG_NEWSEG. */
+    UI16 typelow, typehi;       /* range of seg nos for which this is valid */
+    char *typedesc;             /* a description of the segment type */
+    UI16 dowhat;                /* one of the SEG_xxxx values below */
+    UI16 mergetype;             /* if SEG_MERGE what type segment do we merge with?
+                                   0 -> same type of segment. This type is also
+                                   used with SEG_NEWSEG. */
 };
 
 #define SEG_IGNORE 0
@@ -33,7 +33,8 @@ struct segconfig sconft[SEGCONFIGMAX] = {
     {0x0020, 0x0FFF, "reserved(MOSCOW)", 1, 0},
     {0x1000, 0x7FFF, "reserved(system dependant)", 1, 0},
     {0x8000, 0xFFFE, "reserved(other)", 1, 0},
-    {0xFFFF, 0xFFFF, "invalid segment", 0, 0}};
+    {0xFFFF, 0xFFFF, "invalid segment", 0, 0}
+};
 
 #define getsegconfig(target,number)  				\
     {								\

@@ -10,6 +10,6 @@
 #define NASM_LISTING_H
 
 extern ListGen nasmlist;
-extern int user_nolist;     /* fbk - 9/1/00 */
+extern int user_nolist;         /* fbk - 9/1/00 */
 
 #endif

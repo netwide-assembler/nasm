@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdarg.h>  /* Note: we need the ANSI version of stdarg.h */
+#include <stdarg.h>             /* Note: we need the ANSI version of stdarg.h */
 #include <ctype.h>
 
 #include "nasm.h"
@@ -60,9 +60,9 @@ static FILE *ofp;
 static int any_segs;
 static int arrindex;
 
-#define HUNKSIZE 1024		       /* Size of the data hunk */
+#define HUNKSIZE 1024           /* Size of the data hunk */
 #define EXT_BLKSIZ 512
-#define LDPERLINE 32			/* bytes per line in output */
+#define LDPERLINE 32            /* bytes per line in output */
 
 struct ieeeSection;
 
@@ -89,9 +89,9 @@ static struct ieeePublic {
     struct ieeePublic *next;
     char *name;
     long offset;
-    long segment;		       /* only if it's far-absolute */
+    long segment;               /* only if it's far-absolute */
     long index;
-    int type;	 			/* for debug purposes */	
+    int type;                   /* for debug purposes */
 } *fpubhead, **fpubtail, *last_defined;
 
 static struct ieeeExternal {
@@ -109,20 +109,20 @@ static struct ExtBack {
 
 /* NOTE: the first segment MUST be the lineno segment */
 static struct ieeeSection {
-    struct ieeeObjData *data,*datacurr;
+    struct ieeeObjData *data, *datacurr;
     struct ieeeSection *next;
-    struct ieeeFixupp *fptr, * flptr;
-    long index;			       /* the NASM segment id */
-    long ieee_index;		       /* the OBJ-file segment index */
+    struct ieeeFixupp *fptr, *flptr;
+    long index;                 /* the NASM segment id */
+    long ieee_index;            /* the OBJ-file segment index */
     long currentpos;
-    long align;			       /* can be SEG_ABS + absolute addr */
+    long align;                 /* can be SEG_ABS + absolute addr */
     long startpos;
     enum {
-	CMB_PRIVATE = 0,
-	CMB_PUBLIC = 2,
-	CMB_COMMON = 6
+        CMB_PRIVATE = 0,
+        CMB_PUBLIC = 2,
+        CMB_COMMON = 6
     } combine;
-    long use32;			       /* is this segment 32-bit? */
+    long use32;                 /* is this segment 32-bit? */
     struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
     char *name;
 } *seghead, **segtail, *ieee_seg_needs_update;
@@ -134,15 +134,15 @@ struct ieeeObjData {
 
 struct ieeeFixupp {
     struct ieeeFixupp *next;
-    enum { 
-	FT_SEG = 0,
-	FT_REL = 1,
-	FT_OFS = 2,
-	FT_EXT = 3,
-	FT_WRT = 4,
-	FT_EXTREL = 5,
-	FT_EXTWRT = 6,
-	FT_EXTSEG = 7
+    enum {
+        FT_SEG = 0,
+        FT_REL = 1,
+        FT_OFS = 2,
+        FT_EXT = 3,
+        FT_WRT = 4,
+        FT_EXTREL = 5,
+        FT_EXTWRT = 6,
+        FT_EXTSEG = 7
     } ftype;
     short size;
     long id1;
@@ -150,17 +150,17 @@ struct ieeeFixupp {
     long offset;
     long addend;
 };
-		
+
 static long ieee_entry_seg, ieee_entry_ofs;
 static int checksum;
 
 extern struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
-static void ieee_write_fixup (long, long, struct ieeeSection *,
-				int, unsigned long, long);
+static void ieee_write_fixup(long, long, struct ieeeSection *,
+                             int, unsigned long, long);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
-static long ieee_segment (char *, int, int *);
+static long ieee_segment(char *, int, int *);
 static void ieee_write_file(int debuginfo);
 static void ieee_write_byte(struct ieeeSection *, int);
 static void ieee_write_word(struct ieeeSection *, int);
@@ -171,13 +171,12 @@ static long ieee_putld(long, long, unsigned char *);
 static long ieee_putlr(struct ieeeFixupp *);
 static void ieee_unqualified_name(char *, char *);
 
-
 /* 
  * pup init 
  */
-static void ieee_init (FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
-    (void) eval;
+    (void)eval;
     ofp = fp;
     error = errfunc;
     deflabel = ldef;
@@ -194,64 +193,67 @@ static void ieee_init (FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     ieee_entry_seg = NO_SEG;
     ieee_uppercase = FALSE;
     checksum = 0;
-    of_ieee.current_dfmt->init (&of_ieee,NULL,fp,errfunc);
+    of_ieee.current_dfmt->init(&of_ieee, NULL, fp, errfunc);
 }
 static int ieee_set_info(enum geninfo type, char **val)
 {
-    (void) type;
-    (void) val;
+    (void)type;
+    (void)val;
 
     return 0;
 }
+
 /*
  * Rundown
  */
-static void ieee_cleanup (int debuginfo) 
+static void ieee_cleanup(int debuginfo)
 {
     ieee_write_file(debuginfo);
-    of_ieee.current_dfmt->cleanup ();
-    fclose (ofp);
+    of_ieee.current_dfmt->cleanup();
+    fclose(ofp);
     while (seghead) {
-	struct ieeeSection *segtmp = seghead;
-	seghead = seghead->next;
-	while (segtmp->pubhead) {
-	    struct ieeePublic *pubtmp = segtmp->pubhead;
-	    segtmp->pubhead = pubtmp->next;
-	    nasm_free (pubtmp);
-	}
-	while (segtmp->fptr) {
-	    struct ieeeFixupp *fixtmp = segtmp->fptr;
-	    segtmp->fptr = fixtmp->next;
-	    nasm_free(fixtmp);
-	}
-	while (segtmp->data) {
-	    struct ieeeObjData *dattmp = segtmp->data;
-	    segtmp->data = dattmp->next;
-	    nasm_free(dattmp);
-	}
-	nasm_free (segtmp);
+        struct ieeeSection *segtmp = seghead;
+        seghead = seghead->next;
+        while (segtmp->pubhead) {
+            struct ieeePublic *pubtmp = segtmp->pubhead;
+            segtmp->pubhead = pubtmp->next;
+            nasm_free(pubtmp);
+        }
+        while (segtmp->fptr) {
+            struct ieeeFixupp *fixtmp = segtmp->fptr;
+            segtmp->fptr = fixtmp->next;
+            nasm_free(fixtmp);
+        }
+        while (segtmp->data) {
+            struct ieeeObjData *dattmp = segtmp->data;
+            segtmp->data = dattmp->next;
+            nasm_free(dattmp);
+        }
+        nasm_free(segtmp);
     }
     while (fpubhead) {
-	struct ieeePublic *pubtmp = fpubhead;
-	fpubhead = fpubhead->next;
-	nasm_free (pubtmp);
+        struct ieeePublic *pubtmp = fpubhead;
+        fpubhead = fpubhead->next;
+        nasm_free(pubtmp);
     }
     while (exthead) {
-	struct ieeeExternal *exttmp = exthead;
-	exthead = exthead->next;
-	nasm_free (exttmp);
+        struct ieeeExternal *exttmp = exthead;
+        exthead = exthead->next;
+        nasm_free(exttmp);
     }
     while (ebhead) {
-	struct ExtBack *ebtmp = ebhead;
-	ebhead = ebhead->next;
-	nasm_free (ebtmp);
+        struct ExtBack *ebtmp = ebhead;
+        ebhead = ebhead->next;
+        nasm_free(ebtmp);
     }
 }
+
 /*
  * callback for labels
  */
-static void ieee_deflabel (char *name, long segment,
-			  long offset, int is_global, char *special) {
+static void ieee_deflabel(char *name, long segment,
+                          long offset, int is_global, char *special)
+{
     /*
      * We have three cases:
      *
@@ -279,56 +281,56 @@ static void ieee_deflabel (char *name, long segment,
      * unusual.
      */
     if (name[0] == '.' && name[1] == '.') {
-	if (!strcmp(name, "..start")) {
-	    ieee_entry_seg = segment;
-	    ieee_entry_ofs = offset;
-	}
-	return;
+        if (!strcmp(name, "..start")) {
+            ieee_entry_seg = segment;
+            ieee_entry_ofs = offset;
+        }
+        return;
     }
 
     /*
      * Case (i):
      */
     if (ieee_seg_needs_update) {
-	ieee_seg_needs_update->name = name;
-	return;
-    } 
+        ieee_seg_needs_update->name = name;
+        return;
+    }
     if (segment < SEG_ABS && segment != NO_SEG && segment % 2)
-	return;
+        return;
 
     /*
      * case (ii)
      */
     if (segment >= SEG_ABS) {
-	/*
-	 * SEG_ABS subcase of (ii).
-	 */
-	if (is_global) {
-	    struct ieeePublic *pub;
+        /*
+         * SEG_ABS subcase of (ii).
+         */
+        if (is_global) {
+            struct ieeePublic *pub;
 
-	    pub = *fpubtail = nasm_malloc(sizeof(*pub));
-	    fpubtail = &pub->next;
-	    pub->next = NULL;
-	    pub->name = name;
-	    pub->offset = offset;
-	    pub->segment = segment & ~SEG_ABS;
-	}
-	return;
+            pub = *fpubtail = nasm_malloc(sizeof(*pub));
+            fpubtail = &pub->next;
+            pub->next = NULL;
+            pub->name = name;
+            pub->offset = offset;
+            pub->segment = segment & ~SEG_ABS;
+        }
+        return;
     }
 
     for (seg = seghead; seg && is_global; seg = seg->next)
-	if (seg->index == segment) {
-		struct ieeePublic *pub;
+        if (seg->index == segment) {
+            struct ieeePublic *pub;
 
-	    last_defined = pub = *seg->pubtail = nasm_malloc(sizeof(*pub));
-	    seg->pubtail = &pub->next;
-	    pub->next = NULL;
-	    pub->name = name;
-	    pub->offset = offset;
-	    pub->index = seg->ieee_index;
-	    pub->segment = -1;
-	    return;
-	}
+            last_defined = pub = *seg->pubtail = nasm_malloc(sizeof(*pub));
+            seg->pubtail = &pub->next;
+            pub->next = NULL;
+            pub->name = name;
+            pub->offset = offset;
+            pub->index = seg->ieee_index;
+            pub->segment = -1;
+            return;
+        }
 
     /*
      * Case (iii).
@@ -339,36 +341,37 @@ static void ieee_deflabel (char *name, long segment,
         exttail = &ext->next;
         ext->name = name;
         if (is_global == 2)
-	    ext->commonsize = offset;
-    	else
-	    ext->commonsize = 0;
-    	i = segment/2;
-    	eb = ebhead;
-    	if (!eb) {
-	    eb = *ebtail = nasm_malloc(sizeof(*eb));
-	    eb->next = NULL;
-	    ebtail = &eb->next;
+            ext->commonsize = offset;
+        else
+            ext->commonsize = 0;
+        i = segment / 2;
+        eb = ebhead;
+        if (!eb) {
+            eb = *ebtail = nasm_malloc(sizeof(*eb));
+            eb->next = NULL;
+            ebtail = &eb->next;
         }
-    	while (i > EXT_BLKSIZ) {
-	    if (eb && eb->next)
-	        eb = eb->next;
-	    else {
-	        eb = *ebtail = nasm_malloc(sizeof(*eb));
-	    	eb->next = NULL;
-	    	ebtail = &eb->next;
-	    }
-	    i -= EXT_BLKSIZ;
-    	}
+        while (i > EXT_BLKSIZ) {
+            if (eb && eb->next)
+                eb = eb->next;
+            else {
+                eb = *ebtail = nasm_malloc(sizeof(*eb));
+                eb->next = NULL;
+                ebtail = &eb->next;
+            }
+            i -= EXT_BLKSIZ;
+        }
         eb->index[i] = externals++;
     }
-	
+
 }
 
 /*
  * Put data out
  */
-static void ieee_out (long segto, const void *data, unsigned long type,
-		     long segment, long wrt) {
+static void ieee_out(long segto, const void *data, unsigned long type,
+                     long segment, long wrt)
+{
     unsigned long size, realtype;
     const unsigned char *ucdata;
     long ldata;
@@ -378,10 +381,10 @@ static void ieee_out (long segto, const void *data, unsigned long type,
      * handle absolute-assembly (structure definitions)
      */
     if (segto == NO_SEG) {
-	if ((type & OUT_TYPMASK) != OUT_RESERVE)
-	    error (ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-		   " space");
-	return;
+        if ((type & OUT_TYPMASK) != OUT_RESERVE)
+            error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
+                  " space");
+        return;
     }
 
     /*
@@ -389,269 +392,266 @@ static void ieee_out (long segto, const void *data, unsigned long type,
      * segment.
      */
     if (!any_segs) {
-	int tempint;		       /* ignored */
-	if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-	    error (ERR_PANIC, "strange segment conditions in IEEE driver");
+        int tempint;            /* ignored */
+        if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
+            error(ERR_PANIC, "strange segment conditions in IEEE driver");
     }
 
     /*
      * Find the segment we are targetting.
      */
     for (seg = seghead; seg; seg = seg->next)
-	if (seg->index == segto)
-	    break;
+        if (seg->index == segto)
+            break;
     if (!seg)
-	error (ERR_PANIC, "code directed to nonexistent segment?");
+        error(ERR_PANIC, "code directed to nonexistent segment?");
 
     size = type & OUT_SIZMASK;
     realtype = type & OUT_TYPMASK;
     if (realtype == OUT_RAWDATA) {
-	ucdata = data;
-	while (size--)
-	    ieee_write_byte(seg,*ucdata++);
+        ucdata = data;
+        while (size--)
+            ieee_write_byte(seg, *ucdata++);
     } else if (realtype == OUT_ADDRESS || realtype == OUT_REL2ADR ||
-	       realtype == OUT_REL4ADR) {
-	if (segment == NO_SEG && realtype != OUT_ADDRESS)
-	    error(ERR_NONFATAL, "relative call to absolute address not"
-		  " supported by IEEE format");
-	ldata = *(long *)data;
-	if (realtype == OUT_REL2ADR)
-	    ldata += (size-2);
-	if (realtype == OUT_REL4ADR)
-	    ldata += (size-4);
-	ieee_write_fixup (segment, wrt, seg, size, realtype,ldata);
-	if (size == 2)
-	    ieee_write_word (seg, ldata);
-	else
-	    ieee_write_dword (seg, ldata);
-    } 
-    else if (realtype == OUT_RESERVE) {
-	while (size--)
-	    ieee_write_byte(seg,0);
+               realtype == OUT_REL4ADR) {
+        if (segment == NO_SEG && realtype != OUT_ADDRESS)
+            error(ERR_NONFATAL, "relative call to absolute address not"
+                  " supported by IEEE format");
+        ldata = *(long *)data;
+        if (realtype == OUT_REL2ADR)
+            ldata += (size - 2);
+        if (realtype == OUT_REL4ADR)
+            ldata += (size - 4);
+        ieee_write_fixup(segment, wrt, seg, size, realtype, ldata);
+        if (size == 2)
+            ieee_write_word(seg, ldata);
+        else
+            ieee_write_dword(seg, ldata);
+    } else if (realtype == OUT_RESERVE) {
+        while (size--)
+            ieee_write_byte(seg, 0);
     }
 }
 
-static void ieee_data_new(struct ieeeSection *segto) {
-    
+static void ieee_data_new(struct ieeeSection *segto)
+{
+
     if (!segto->data)
-	segto->data = segto->datacurr = nasm_malloc(sizeof(*(segto->datacurr)));
+        segto->data = segto->datacurr =
+            nasm_malloc(sizeof(*(segto->datacurr)));
     else
-	segto->datacurr = segto->datacurr->next = nasm_malloc(sizeof(*(segto->datacurr)));
+        segto->datacurr = segto->datacurr->next =
+            nasm_malloc(sizeof(*(segto->datacurr)));
     segto->datacurr->next = NULL;
 }
-
 
 /*
  * this routine is unalduterated bloatware.  I usually don't do this
  * but I might as well see what it is like on a harmless program.
  * If anyone wants to optimize this is a good canditate!
  */
-static void ieee_write_fixup (long segment, long wrt, struct ieeeSection * segto,
-				int size, unsigned long realtype, long offset) {
+static void ieee_write_fixup(long segment, long wrt,
+                             struct ieeeSection *segto, int size,
+                             unsigned long realtype, long offset)
+{
     struct ieeeSection *target;
     struct ieeeFixupp s;
 
     /* Don't put a fixup for things NASM can calculate */
     if (wrt == NO_SEG && segment == NO_SEG)
-	return;
+        return;
 
     s.ftype = -1;
     /* if it is a WRT offset */
     if (wrt != NO_SEG) {
-	s.ftype = FT_WRT;
-	s.addend = offset;
-	if (wrt >= SEG_ABS)
-	    s.id1 = -(wrt-SEG_ABS);
-	else {
-	    if (wrt %2 && realtype != OUT_REL2ADR && realtype != OUT_REL4ADR) {
-		wrt--;
+        s.ftype = FT_WRT;
+        s.addend = offset;
+        if (wrt >= SEG_ABS)
+            s.id1 = -(wrt - SEG_ABS);
+        else {
+            if (wrt % 2 && realtype != OUT_REL2ADR
+                && realtype != OUT_REL4ADR) {
+                wrt--;
 
-	    	for (target = seghead; target; target = target->next)
-	            if (target->index == wrt)
-	            	break;
-    	        if (target) {
-	            s.id1 = target->ieee_index;
-	    	    for (target = seghead; target; target = target->next)
-	            	if (target->index == segment)
-	            	    break;
-		
-		    if (target) 
-		    	s.id2 = target->ieee_index;
-	            else {
-			/*
-			 * Now we assume the segment field is being used
-			 * to hold an extern index
-		 	 */
-			long i = segment/2;
-			struct ExtBack *eb = ebhead;
-			while (i > EXT_BLKSIZ) {
-			    if (eb)
-				eb = eb->next;
-			    else
-				break;
-			    i -= EXT_BLKSIZ;
-			}
-				/* if we have an extern decide the type and make a record
-			 */
-			if (eb) {
-			        s.ftype = FT_EXTWRT;
-			        s.addend = 0;
-		        	s.id2 = eb->index[i];
-			}
-			else
-			    error(ERR_NONFATAL,
-				"Source of WRT must be an offset");
-		    }
-			
-		}
-	    	else 
-	            error(ERR_PANIC,
-		          "unrecognised WRT value in ieee_write_fixup");
-	    }
-	    else 
-		error(ERR_NONFATAL,"target of WRT must be a section ");
-	}
-	s.size = size;
-	ieee_install_fixup(segto,&s);
-	return;
+                for (target = seghead; target; target = target->next)
+                    if (target->index == wrt)
+                        break;
+                if (target) {
+                    s.id1 = target->ieee_index;
+                    for (target = seghead; target; target = target->next)
+                        if (target->index == segment)
+                            break;
+
+                    if (target)
+                        s.id2 = target->ieee_index;
+                    else {
+                        /*
+                         * Now we assume the segment field is being used
+                         * to hold an extern index
+                         */
+                        long i = segment / 2;
+                        struct ExtBack *eb = ebhead;
+                        while (i > EXT_BLKSIZ) {
+                            if (eb)
+                                eb = eb->next;
+                            else
+                                break;
+                            i -= EXT_BLKSIZ;
+                        }
+                        /* if we have an extern decide the type and make a record
+                         */
+                        if (eb) {
+                            s.ftype = FT_EXTWRT;
+                            s.addend = 0;
+                            s.id2 = eb->index[i];
+                        } else
+                            error(ERR_NONFATAL,
+                                  "Source of WRT must be an offset");
+                    }
+
+                } else
+                    error(ERR_PANIC,
+                          "unrecognised WRT value in ieee_write_fixup");
+            } else
+                error(ERR_NONFATAL, "target of WRT must be a section ");
+        }
+        s.size = size;
+        ieee_install_fixup(segto, &s);
+        return;
     }
     /* Pure segment fixup ? */
     if (segment != NO_SEG) {
-	s.ftype = FT_SEG;
-	s.id1 = 0;
-	if (segment >= SEG_ABS) {
-	    /* absolute far segment fixup */
-	    s.id1 = -(segment -~SEG_ABS);
-	}
-	else if (segment % 2) {
-	    /* fixup to named segment */
-	    /* look it up */
-	    for (target = seghead; target; target = target->next)
-	        if (target->index == segment-1)
-	            break;
-    	    if (target)
-	        s.id1 = target->ieee_index;
-	    else {
-		/*
-		 * Now we assume the segment field is being used
-		 * to hold an extern index
-		 */
-		long i = segment/2;
-		struct ExtBack *eb = ebhead;
-		while (i > EXT_BLKSIZ) {
-		    if (eb)
-			eb = eb->next;
-		    else
-			break;
-		    i -= EXT_BLKSIZ;
-		}
-		/* if we have an extern decide the type and make a record
-		 */
-		if (eb) {
-		    if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-			error(ERR_PANIC,"Segment of a rel not supported in ieee_write_fixup");
-		    }
-		    else {
-				/* If we want the segment */
-			    s.ftype = FT_EXTSEG;
-			    s.addend = 0;
-			    s.id1 = eb->index[i];
-		    }
-		    
-		}
-		else 
-		    /* If we get here the seg value doesn't make sense */
-	            error(ERR_PANIC,
-		          "unrecognised segment value in ieee_write_fixup");
-	    }
+        s.ftype = FT_SEG;
+        s.id1 = 0;
+        if (segment >= SEG_ABS) {
+            /* absolute far segment fixup */
+            s.id1 = -(segment - ~SEG_ABS);
+        } else if (segment % 2) {
+            /* fixup to named segment */
+            /* look it up */
+            for (target = seghead; target; target = target->next)
+                if (target->index == segment - 1)
+                    break;
+            if (target)
+                s.id1 = target->ieee_index;
+            else {
+                /*
+                 * Now we assume the segment field is being used
+                 * to hold an extern index
+                 */
+                long i = segment / 2;
+                struct ExtBack *eb = ebhead;
+                while (i > EXT_BLKSIZ) {
+                    if (eb)
+                        eb = eb->next;
+                    else
+                        break;
+                    i -= EXT_BLKSIZ;
+                }
+                /* if we have an extern decide the type and make a record
+                 */
+                if (eb) {
+                    if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
+                        error(ERR_PANIC,
+                              "Segment of a rel not supported in ieee_write_fixup");
+                    } else {
+                        /* If we want the segment */
+                        s.ftype = FT_EXTSEG;
+                        s.addend = 0;
+                        s.id1 = eb->index[i];
+                    }
+
+                } else
+                    /* If we get here the seg value doesn't make sense */
+                    error(ERR_PANIC,
+                          "unrecognised segment value in ieee_write_fixup");
+            }
 
         } else {
-	    /* Assume we are offsetting directly from a section
-    	     * So look up the target segment
-	     */
-	    for (target = seghead; target; target = target->next)
-	        if (target->index == segment)
-	            break;
-    	    if (target) {
-		if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-		    /* PC rel to a known offset */
-	            s.id1 = target->ieee_index;
-		    s.ftype = FT_REL;
-		    s.size = size;
-		    s.addend = offset;
-		}
-		else {
-		    /* We were offsetting from a seg */
-	            s.id1 = target->ieee_index;
-		    s.ftype = FT_OFS;
-		    s.size = size;
-		    s.addend = offset;
-		}
-	    }
-	    else {
-		/*
-		 * Now we assume the segment field is being used
-		 * to hold an extern index
-		 */
-		long i = segment/2;
-		struct ExtBack *eb = ebhead;
-		while (i > EXT_BLKSIZ) {
-		    if (eb)
-			eb = eb->next;
-		    else
-			break;
-		    i -= EXT_BLKSIZ;
-		}
-		/* if we have an extern decide the type and make a record
-		 */
-		if (eb) {
-		    if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-		        s.ftype = FT_EXTREL;
-		        s.addend = 0;
-		        s.id1 = eb->index[i];
-		    }
-		    else {
-			    /* else we want the external offset */
-			    s.ftype = FT_EXT;
-			    s.addend = 0;
-			    s.id1 = eb->index[i];
-		    }
-		    
-		}
-		else 
-		    /* If we get here the seg value doesn't make sense */
-	            error(ERR_PANIC,
-		          "unrecognised segment value in ieee_write_fixup");
-	    }
-	}
-	if (size != 2 && s.ftype == FT_SEG)
-	    error(ERR_NONFATAL, "IEEE format can only handle 2-byte"
-		     " segment base references");
-	s.size = size;
-	ieee_install_fixup(segto,&s);
-	return;
+            /* Assume we are offsetting directly from a section
+             * So look up the target segment
+             */
+            for (target = seghead; target; target = target->next)
+                if (target->index == segment)
+                    break;
+            if (target) {
+                if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
+                    /* PC rel to a known offset */
+                    s.id1 = target->ieee_index;
+                    s.ftype = FT_REL;
+                    s.size = size;
+                    s.addend = offset;
+                } else {
+                    /* We were offsetting from a seg */
+                    s.id1 = target->ieee_index;
+                    s.ftype = FT_OFS;
+                    s.size = size;
+                    s.addend = offset;
+                }
+            } else {
+                /*
+                 * Now we assume the segment field is being used
+                 * to hold an extern index
+                 */
+                long i = segment / 2;
+                struct ExtBack *eb = ebhead;
+                while (i > EXT_BLKSIZ) {
+                    if (eb)
+                        eb = eb->next;
+                    else
+                        break;
+                    i -= EXT_BLKSIZ;
+                }
+                /* if we have an extern decide the type and make a record
+                 */
+                if (eb) {
+                    if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
+                        s.ftype = FT_EXTREL;
+                        s.addend = 0;
+                        s.id1 = eb->index[i];
+                    } else {
+                        /* else we want the external offset */
+                        s.ftype = FT_EXT;
+                        s.addend = 0;
+                        s.id1 = eb->index[i];
+                    }
+
+                } else
+                    /* If we get here the seg value doesn't make sense */
+                    error(ERR_PANIC,
+                          "unrecognised segment value in ieee_write_fixup");
+            }
+        }
+        if (size != 2 && s.ftype == FT_SEG)
+            error(ERR_NONFATAL, "IEEE format can only handle 2-byte"
+                  " segment base references");
+        s.size = size;
+        ieee_install_fixup(segto, &s);
+        return;
     }
     /* should never get here */
 }
-static void ieee_install_fixup(struct ieeeSection *seg, struct ieeeFixupp *fix)
+static void ieee_install_fixup(struct ieeeSection *seg,
+                               struct ieeeFixupp *fix)
 {
     struct ieeeFixupp *f;
     f = nasm_malloc(sizeof(struct ieeeFixupp));
-    memcpy(f,fix,sizeof(struct ieeeFixupp));
+    memcpy(f, fix, sizeof(struct ieeeFixupp));
     f->offset = seg->currentpos;
     seg->currentpos += fix->size;
     f->next = NULL;
     if (seg->fptr)
-	seg->flptr = seg->flptr->next = f;
+        seg->flptr = seg->flptr->next = f;
     else
-	seg->fptr = seg->flptr = f;
+        seg->fptr = seg->flptr = f;
 
 }
 
 /*
  * segment registry
  */
-static long ieee_segment (char *name, int pass, int *bits) {
+static long ieee_segment(char *name, int pass, int *bits)
+{
     /*
      * We call the label manager here to define a name for the new
      * segment, and when our _own_ label-definition stub gets
@@ -660,163 +660,166 @@ static long ieee_segment (char *name, int pass, int *bits) {
      * by sponging off the label manager.
      */
     if (!name) {
-	*bits = 16;
-	if (!any_segs)
-		return 0;
-	return seghead->index;
+        *bits = 16;
+        if (!any_segs)
+            return 0;
+        return seghead->index;
     } else {
-	struct ieeeSection *seg;
-	int ieee_idx, attrs, rn_error;
-	char *p;
+        struct ieeeSection *seg;
+        int ieee_idx, attrs, rn_error;
+        char *p;
 
-	/*
-	 * Look for segment attributes.
-	 */
-	attrs = 0;
-	while (*name == '.')
-	    name++;		       /* hack, but a documented one */
-	p = name;
-	while (*p && !isspace(*p))
-	    p++;
-	if (*p) {
-	    *p++ = '\0';
-	    while (*p && isspace(*p))
-		*p++ = '\0';
-	}
-	while (*p) {
-	    while (*p && !isspace(*p))
-		p++;
-	    if (*p) {
-		*p++ = '\0';
-		while (*p && isspace(*p))
-		    *p++ = '\0';
-	    }
+        /*
+         * Look for segment attributes.
+         */
+        attrs = 0;
+        while (*name == '.')
+            name++;             /* hack, but a documented one */
+        p = name;
+        while (*p && !isspace(*p))
+            p++;
+        if (*p) {
+            *p++ = '\0';
+            while (*p && isspace(*p))
+                *p++ = '\0';
+        }
+        while (*p) {
+            while (*p && !isspace(*p))
+                p++;
+            if (*p) {
+                *p++ = '\0';
+                while (*p && isspace(*p))
+                    *p++ = '\0';
+            }
 
-	    attrs++;
-	}
+            attrs++;
+        }
 
-	ieee_idx = 1;
-	for (seg = seghead; seg; seg = seg->next) {
-	    ieee_idx++;
-	    if (!strcmp(seg->name, name)) {
-		if (attrs > 0 && pass == 1)
-		    error(ERR_WARNING, "segment attributes specified on"
-			  " redeclaration of segment: ignoring");
-		if (seg->use32)
-		    *bits = 32;
-		else
-		    *bits = 16;
-		return seg->index;
-	    }
-	}
+        ieee_idx = 1;
+        for (seg = seghead; seg; seg = seg->next) {
+            ieee_idx++;
+            if (!strcmp(seg->name, name)) {
+                if (attrs > 0 && pass == 1)
+                    error(ERR_WARNING, "segment attributes specified on"
+                          " redeclaration of segment: ignoring");
+                if (seg->use32)
+                    *bits = 32;
+                else
+                    *bits = 16;
+                return seg->index;
+            }
+        }
 
-	*segtail = seg = nasm_malloc(sizeof(*seg));
-	seg->next = NULL;
-	segtail = &seg->next;
-	seg->index = seg_alloc();
-	seg->ieee_index = ieee_idx;
-	any_segs = TRUE;
-	seg->name = NULL;
-	seg->currentpos = 0;
-	seg->align = 1;		       /* default */
-	seg->use32 = *bits == 32;      /* default to user spec */
-	seg->combine = CMB_PUBLIC;     /* default */
-	seg->pubhead = NULL;
-	seg->pubtail = &seg->pubhead;
-	seg->data = NULL;
-	seg->fptr = NULL;
-	seg->lochead = NULL;
-	seg->loctail = &seg->lochead;
+        *segtail = seg = nasm_malloc(sizeof(*seg));
+        seg->next = NULL;
+        segtail = &seg->next;
+        seg->index = seg_alloc();
+        seg->ieee_index = ieee_idx;
+        any_segs = TRUE;
+        seg->name = NULL;
+        seg->currentpos = 0;
+        seg->align = 1;         /* default */
+        seg->use32 = *bits == 32;       /* default to user spec */
+        seg->combine = CMB_PUBLIC;      /* default */
+        seg->pubhead = NULL;
+        seg->pubtail = &seg->pubhead;
+        seg->data = NULL;
+        seg->fptr = NULL;
+        seg->lochead = NULL;
+        seg->loctail = &seg->lochead;
 
-	/*
-	 * Process the segment attributes.
-	 */
-	p = name;
-	while (attrs--) {
-	    p += strlen(p);
-	    while (!*p) p++;
+        /*
+         * Process the segment attributes.
+         */
+        p = name;
+        while (attrs--) {
+            p += strlen(p);
+            while (!*p)
+                p++;
 
-	    /*
-	     * `p' contains a segment attribute.
-	     */
-	    if (!nasm_stricmp(p, "private"))
-		seg->combine = CMB_PRIVATE;
-	    else if (!nasm_stricmp(p, "public"))
-		seg->combine = CMB_PUBLIC;
-	    else if (!nasm_stricmp(p, "common"))
-		seg->combine = CMB_COMMON;
-	    else if (!nasm_stricmp(p, "use16"))
-		seg->use32 = FALSE;
-	    else if (!nasm_stricmp(p, "use32"))
-		seg->use32 = TRUE;
-	    else if (!nasm_strnicmp(p, "align=", 6)) {
-		seg->align = readnum(p+6, &rn_error);
-		if (seg->align == 0)
-		    seg->align = 1;
-		if (rn_error) {
-		    seg->align = 1;
-		    error (ERR_NONFATAL, "segment alignment should be"
-			   " numeric");
-		}
-		switch ((int) seg->align) {
-		  case 1:	       /* BYTE */
-		  case 2:	       /* WORD */
-		  case 4:	       /* DWORD */
-		  case 16:	       /* PARA */
-		  case 256:	       /* PAGE */
-		  case 8:
-		  case 32:
-		  case 64:
-		  case 128:
-		    break;
-		  default:
-		    error(ERR_NONFATAL, "invalid alignment value %d",
-			  seg->align);
-		    seg->align = 1;
-		    break;
-		}
-	    } else if (!nasm_strnicmp(p, "absolute=", 9)) {
-		seg->align = SEG_ABS + readnum(p+9, &rn_error);
-		if (rn_error)
-		    error (ERR_NONFATAL, "argument to `absolute' segment"
-			   " attribute should be numeric");
-	    }
-	}
+            /*
+             * `p' contains a segment attribute.
+             */
+            if (!nasm_stricmp(p, "private"))
+                seg->combine = CMB_PRIVATE;
+            else if (!nasm_stricmp(p, "public"))
+                seg->combine = CMB_PUBLIC;
+            else if (!nasm_stricmp(p, "common"))
+                seg->combine = CMB_COMMON;
+            else if (!nasm_stricmp(p, "use16"))
+                seg->use32 = FALSE;
+            else if (!nasm_stricmp(p, "use32"))
+                seg->use32 = TRUE;
+            else if (!nasm_strnicmp(p, "align=", 6)) {
+                seg->align = readnum(p + 6, &rn_error);
+                if (seg->align == 0)
+                    seg->align = 1;
+                if (rn_error) {
+                    seg->align = 1;
+                    error(ERR_NONFATAL, "segment alignment should be"
+                          " numeric");
+                }
+                switch ((int)seg->align) {
+                case 1:        /* BYTE */
+                case 2:        /* WORD */
+                case 4:        /* DWORD */
+                case 16:       /* PARA */
+                case 256:      /* PAGE */
+                case 8:
+                case 32:
+                case 64:
+                case 128:
+                    break;
+                default:
+                    error(ERR_NONFATAL, "invalid alignment value %d",
+                          seg->align);
+                    seg->align = 1;
+                    break;
+                }
+            } else if (!nasm_strnicmp(p, "absolute=", 9)) {
+                seg->align = SEG_ABS + readnum(p + 9, &rn_error);
+                if (rn_error)
+                    error(ERR_NONFATAL, "argument to `absolute' segment"
+                          " attribute should be numeric");
+            }
+        }
 
-	ieee_seg_needs_update = seg;
-	if (seg->align >= SEG_ABS)
-	    deflabel (name, NO_SEG, seg->align - SEG_ABS, 
-			NULL, FALSE, FALSE, &of_ieee, error);
-	else
-	    deflabel (name, seg->index+1, 0L, 
-			NULL, FALSE, FALSE, &of_ieee, error);
-	ieee_seg_needs_update = NULL;
+        ieee_seg_needs_update = seg;
+        if (seg->align >= SEG_ABS)
+            deflabel(name, NO_SEG, seg->align - SEG_ABS,
+                     NULL, FALSE, FALSE, &of_ieee, error);
+        else
+            deflabel(name, seg->index + 1, 0L,
+                     NULL, FALSE, FALSE, &of_ieee, error);
+        ieee_seg_needs_update = NULL;
 
-	if (seg->use32)
-	    *bits = 32;
-	else
-	    *bits = 16;
-	return seg->index;
+        if (seg->use32)
+            *bits = 32;
+        else
+            *bits = 16;
+        return seg->index;
     }
 }
+
 /*
  * directives supported
  */
-static int ieee_directive (char *directive, char *value, int pass) 
+static int ieee_directive(char *directive, char *value, int pass)
 {
-    
-    (void) value;
-    (void) pass;
+
+    (void)value;
+    (void)pass;
     if (!strcmp(directive, "uppercase")) {
-	ieee_uppercase = TRUE;
-	return 1;
+        ieee_uppercase = TRUE;
+        return 1;
     }
     return 0;
 }
+
 /*
  * Return segment data
  */
-static long ieee_segbase (long segment) 
+static long ieee_segbase(long segment)
 {
     struct ieeeSection *seg;
 
@@ -824,26 +827,29 @@ static long ieee_segbase (long segment)
      * Find the segment in our list.
      */
     for (seg = seghead; seg; seg = seg->next)
-	if (seg->index == segment-1)
-	    break;
+        if (seg->index == segment - 1)
+            break;
 
     if (!seg)
-	return segment;		       /* not one of ours - leave it alone */
+        return segment;         /* not one of ours - leave it alone */
 
     if (seg->align >= SEG_ABS)
-	return seg->align;	       /* absolute segment */
+        return seg->align;      /* absolute segment */
 
-    return segment;		       /* no special treatment */
+    return segment;             /* no special treatment */
 }
+
 /*
  * filename
  */
-static void ieee_filename (char *inname, char *outname, efunc error) {
+static void ieee_filename(char *inname, char *outname, efunc error)
+{
     strcpy(ieee_infile, inname);
-    standard_extension (inname, outname, ".o", error);
+    standard_extension(inname, outname, ".o", error);
 }
 
-static void ieee_write_file (int debuginfo) {
+static void ieee_write_file(int debuginfo)
+{
     struct tm *thetime;
     time_t reltime;
     struct FileName *fn;
@@ -859,12 +865,12 @@ static void ieee_write_file (int debuginfo) {
     /*
      * Write the module header
      */
-    ieee_putascii("MBFNASM,%02X%s.\r\n",strlen(ieee_infile),ieee_infile);
+    ieee_putascii("MBFNASM,%02X%s.\r\n", strlen(ieee_infile), ieee_infile);
 
     /*
      * Write the NASM boast comment.
      */
-    ieee_putascii("CO0,%02X%s.\r\n",strlen(boast),boast);
+    ieee_putascii("CO0,%02X%s.\r\n", strlen(boast), boast);
 
     /* 
      * write processor-specific information
@@ -876,16 +882,17 @@ static void ieee_write_file (int debuginfo) {
      */
     time(&reltime);
     thetime = localtime(&reltime);
-    ieee_putascii("DT%04d%02d%02d%02d%02d%02d.\r\n", 
-			1900+thetime->tm_year,thetime->tm_mon+1,thetime->tm_mday,
-			thetime->tm_hour, thetime->tm_min, thetime->tm_sec);
+    ieee_putascii("DT%04d%02d%02d%02d%02d%02d.\r\n",
+                  1900 + thetime->tm_year, thetime->tm_mon + 1,
+                  thetime->tm_mday, thetime->tm_hour, thetime->tm_min,
+                  thetime->tm_sec);
     /* 
      * if debugging, dump file names
      */
     for (fn = fnhead; fn && debuginfo; fn = fn->next) {
-	ieee_putascii("C0105,%02X%s.\r\n",strlen(fn->name),fn->name);
+        ieee_putascii("C0105,%02X%s.\r\n", strlen(fn->name), fn->name);
     }
-     
+
     ieee_putascii("CO101,07ENDHEAD.\r\n");
     /*
      * the standard doesn't specify when to put checksums,
@@ -897,48 +904,51 @@ static void ieee_write_file (int debuginfo) {
      * Write the section headers
      */
     seg = seghead;
-    if (!debuginfo && !strcmp(seg->name,"??LINE"))
-	seg = seg->next;
+    if (!debuginfo && !strcmp(seg->name, "??LINE"))
+        seg = seg->next;
     while (seg) {
-	char buf[256];
-	char attrib;
-	switch(seg->combine) {
-	    case CMB_PUBLIC:
-	    default:
-		attrib = 'C';
-		break;
-	    case CMB_PRIVATE:
-		attrib = 'S';
-		break;
-	    case CMB_COMMON:
-		attrib = 'M';
-		break;
-  	}
-	ieee_unqualified_name(buf,seg->name);
-	if (seg->align >= SEG_ABS) {
-	    ieee_putascii("ST%X,A,%02X%s.\r\n",seg->ieee_index,strlen(buf), buf);
-	    ieee_putascii("ASL%X,%lX.\r\n",seg->ieee_index, (seg->align - SEG_ABS)*16);
-	}
-	else {
-	    ieee_putascii("ST%X,%c,%02X%s.\r\n",seg->ieee_index,attrib,strlen(buf), buf);
-	    ieee_putascii("SA%X,%lX.\r\n",seg->ieee_index,seg->align);
-	    ieee_putascii("ASS%X,%X.\r\n",seg->ieee_index, seg->currentpos);
-	}
-	seg = seg->next;
+        char buf[256];
+        char attrib;
+        switch (seg->combine) {
+        case CMB_PUBLIC:
+        default:
+            attrib = 'C';
+            break;
+        case CMB_PRIVATE:
+            attrib = 'S';
+            break;
+        case CMB_COMMON:
+            attrib = 'M';
+            break;
+        }
+        ieee_unqualified_name(buf, seg->name);
+        if (seg->align >= SEG_ABS) {
+            ieee_putascii("ST%X,A,%02X%s.\r\n", seg->ieee_index,
+                          strlen(buf), buf);
+            ieee_putascii("ASL%X,%lX.\r\n", seg->ieee_index,
+                          (seg->align - SEG_ABS) * 16);
+        } else {
+            ieee_putascii("ST%X,%c,%02X%s.\r\n", seg->ieee_index, attrib,
+                          strlen(buf), buf);
+            ieee_putascii("SA%X,%lX.\r\n", seg->ieee_index, seg->align);
+            ieee_putascii("ASS%X,%X.\r\n", seg->ieee_index,
+                          seg->currentpos);
+        }
+        seg = seg->next;
     }
     /*
      * write the start address if there is one
      */
     if (ieee_entry_seg) {
         for (seg = seghead; seg; seg = seg->next)
-	    if (seg->index == ieee_entry_seg)
-		break;
-	if (!seg)
-	    error(ERR_PANIC,"Start address records are incorrect");
-	else 
-	    ieee_putascii("ASG,R%X,%lX,+.\r\n",seg->ieee_index, ieee_entry_ofs);
-    }	
-
+            if (seg->index == ieee_entry_seg)
+                break;
+        if (!seg)
+            error(ERR_PANIC, "Start address records are incorrect");
+        else
+            ieee_putascii("ASG,R%X,%lX,+.\r\n", seg->ieee_index,
+                          ieee_entry_ofs);
+    }
 
     ieee_putcs(FALSE);
     /*
@@ -947,39 +957,43 @@ static void ieee_write_file (int debuginfo) {
     i = 1;
     for (seg = seghead; seg; seg = seg->next) {
         for (pub = seg->pubhead; pub; pub = pub->next) {
-	    char buf[256];
-	    ieee_unqualified_name(buf,pub->name);
-       	    ieee_putascii("NI%X,%02X%s.\r\n",i, strlen(buf), buf);
-	    if (pub->segment == -1)  
-       	    	ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,pub->offset);
-	    else
-       	    	ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment*16,pub->offset);
-	    if (debuginfo) {
-	    	if (pub->type >= 0x100)
-	    	    ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
-		else
-	    	    ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
-	    }	
- 	    i++;
+            char buf[256];
+            ieee_unqualified_name(buf, pub->name);
+            ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
+            if (pub->segment == -1)
+                ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,
+                              pub->offset);
+            else
+                ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment * 16,
+                              pub->offset);
+            if (debuginfo) {
+                if (pub->type >= 0x100)
+                    ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
+                else
+                    ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+            }
+            i++;
         }
     }
     pub = fpubhead;
     i = 1;
     while (pub) {
-	char buf[256];
-	ieee_unqualified_name(buf,pub->name);
-       	ieee_putascii("NI%X,%02X%s.\r\n",i, strlen(buf), buf);
-	if (pub->segment == -1)  
-       	    ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,pub->offset);
-	else
-       	    ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment*16,pub->offset);
-	if (debuginfo) {
-	    if (pub->type >= 0x100)
-	    	ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
-	    else
-	    	ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
-	}
- 	i++;
+        char buf[256];
+        ieee_unqualified_name(buf, pub->name);
+        ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
+        if (pub->segment == -1)
+            ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,
+                          pub->offset);
+        else
+            ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment * 16,
+                          pub->offset);
+        if (debuginfo) {
+            if (pub->type >= 0x100)
+                ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
+            else
+                ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+        }
+        i++;
         pub = pub->next;
     }
     /*
@@ -988,9 +1002,9 @@ static void ieee_write_file (int debuginfo) {
     ext = exthead;
     i = 1;
     while (ext) {
-	char buf[256];
-	ieee_unqualified_name(buf,ext->name);
-       	ieee_putascii("NX%X,%02X%s.\r\n",i++, strlen(buf), buf);
+        char buf[256];
+        ieee_unqualified_name(buf, ext->name);
+        ieee_putascii("NX%X,%02X%s.\r\n", i++, strlen(buf), buf);
         ext = ext->next;
     }
     ieee_putcs(FALSE);
@@ -1006,7 +1020,8 @@ static void ieee_write_file (int debuginfo) {
      */
     i = ARRAY_BOT;
     for (arr = arrhead; arr && debuginfo; arr = arr->next) {
-	ieee_putascii("TY%X,20,%X,%lX.\r\n",i++,arr->basetype,arr->size);
+        ieee_putascii("TY%X,20,%X,%lX.\r\n", i++, arr->basetype,
+                      arr->size);
     }
     /*
      * now put locals
@@ -1014,56 +1029,62 @@ static void ieee_write_file (int debuginfo) {
     i = 1;
     for (seg = seghead; seg && debuginfo; seg = seg->next) {
         for (loc = seg->lochead; loc; loc = loc->next) {
-	    char buf[256];
-	    ieee_unqualified_name(buf,loc->name);
-       	    ieee_putascii("NN%X,%02X%s.\r\n",i, strlen(buf), buf);
-	    if (loc->segment == -1)  
-       	    	ieee_putascii("ASN%X,R%X,%lX,+.\r\n", i, loc->index,loc->offset);
-	    else
-       	    	ieee_putascii("ASN%X,%lX,%lX,+.\r\n", i, loc->segment*16,loc->offset);
-	    if (debuginfo) {
-		if (loc->type >= 0x100)
-	 	    ieee_putascii("ATN%X,T%X.\r\n", i, loc->type - 0x100);
-		else
-	    	    ieee_putascii("ATN%X,%X.\r\n", i, loc->type);
-	    }
- 	    i++;
+            char buf[256];
+            ieee_unqualified_name(buf, loc->name);
+            ieee_putascii("NN%X,%02X%s.\r\n", i, strlen(buf), buf);
+            if (loc->segment == -1)
+                ieee_putascii("ASN%X,R%X,%lX,+.\r\n", i, loc->index,
+                              loc->offset);
+            else
+                ieee_putascii("ASN%X,%lX,%lX,+.\r\n", i, loc->segment * 16,
+                              loc->offset);
+            if (debuginfo) {
+                if (loc->type >= 0x100)
+                    ieee_putascii("ATN%X,T%X.\r\n", i, loc->type - 0x100);
+                else
+                    ieee_putascii("ATN%X,%X.\r\n", i, loc->type);
+            }
+            i++;
         }
     }
 
     /*
      *  put out section data;
-     */ 
+     */
     seg = seghead;
-    if (!debuginfo && !strcmp(seg->name,"??LINE"))
-	seg = seg->next;
+    if (!debuginfo && !strcmp(seg->name, "??LINE"))
+        seg = seg->next;
     while (seg) {
-	if (seg->currentpos) {
-	    long size,org = 0;
-	    data = seg->data;
-	    ieee_putascii("SB%X.\r\n",seg->ieee_index);
-	    fix = seg->fptr;
-	    while (fix) {
-		size = HUNKSIZE - (org %HUNKSIZE);
-		size = size +org > seg->currentpos ? seg->currentpos-org : size;
-		size = fix->offset - org > size ? size : fix->offset-org;
-		org = ieee_putld(org,org+size,data->data);
-		if (org % HUNKSIZE == 0)
-		    data = data->next;
-		if (org == fix->offset) {
-		    org += ieee_putlr(fix);
-		    fix = fix->next;
-		}
-	    }
-	    while (org < seg->currentpos && data) {
-		size = seg->currentpos-org > HUNKSIZE ? HUNKSIZE : seg->currentpos - org;
-		org = ieee_putld(org,org+size,data->data);
-		data = data->next;
-	    }
-	    ieee_putcs(FALSE);
-		
-	}
-	seg = seg->next;
+        if (seg->currentpos) {
+            long size, org = 0;
+            data = seg->data;
+            ieee_putascii("SB%X.\r\n", seg->ieee_index);
+            fix = seg->fptr;
+            while (fix) {
+                size = HUNKSIZE - (org % HUNKSIZE);
+                size =
+                    size + org >
+                    seg->currentpos ? seg->currentpos - org : size;
+                size = fix->offset - org > size ? size : fix->offset - org;
+                org = ieee_putld(org, org + size, data->data);
+                if (org % HUNKSIZE == 0)
+                    data = data->next;
+                if (org == fix->offset) {
+                    org += ieee_putlr(fix);
+                    fix = fix->next;
+                }
+            }
+            while (org < seg->currentpos && data) {
+                size =
+                    seg->currentpos - org >
+                    HUNKSIZE ? HUNKSIZE : seg->currentpos - org;
+                org = ieee_putld(org, org + size, data->data);
+                data = data->next;
+            }
+            ieee_putcs(FALSE);
+
+        }
+        seg = seg->next;
     }
     /*
      * module end record
@@ -1071,82 +1092,84 @@ static void ieee_write_file (int debuginfo) {
     ieee_putascii("ME.\r\n");
 }
 
-static void ieee_write_byte(struct ieeeSection *seg, int data) {
+static void ieee_write_byte(struct ieeeSection *seg, int data)
+{
     int temp;
     if (!(temp = seg->currentpos++ % HUNKSIZE))
-	ieee_data_new(seg);
+        ieee_data_new(seg);
     seg->datacurr->data[temp] = data;
 }
 
-static void ieee_write_word(struct ieeeSection *seg, int data) {
+static void ieee_write_word(struct ieeeSection *seg, int data)
+{
     ieee_write_byte(seg, data & 0xFF);
-    ieee_write_byte(seg,(data >> 8) & 0xFF);
+    ieee_write_byte(seg, (data >> 8) & 0xFF);
 }
 
-static void ieee_write_dword(struct ieeeSection *seg, long data) {
+static void ieee_write_dword(struct ieeeSection *seg, long data)
+{
     ieee_write_byte(seg, data & 0xFF);
-    ieee_write_byte(seg,(data >> 8) & 0xFF);
-    ieee_write_byte(seg,(data >> 16) & 0xFF);
-    ieee_write_byte(seg,(data >> 24) & 0xFF);
+    ieee_write_byte(seg, (data >> 8) & 0xFF);
+    ieee_write_byte(seg, (data >> 16) & 0xFF);
+    ieee_write_byte(seg, (data >> 24) & 0xFF);
 }
 static void ieee_putascii(char *format, ...)
 {
-	char buffer[256];
-	int i,l;
-	va_list ap;
+    char buffer[256];
+    int i, l;
+    va_list ap;
 
-	va_start(ap, format);
-	vsprintf(buffer, format, ap);
-	l = strlen(buffer);
-	for (i=0; i < l; i++)
-		if ((buffer[i] & 0xff) > 31)
-			checksum+=buffer[i];
-	va_end(ap);
-	fprintf(ofp,buffer);
+    va_start(ap, format);
+    vsprintf(buffer, format, ap);
+    l = strlen(buffer);
+    for (i = 0; i < l; i++)
+        if ((buffer[i] & 0xff) > 31)
+            checksum += buffer[i];
+    va_end(ap);
+    fprintf(ofp, buffer);
 }
 
 /*
  * put out a checksum record */
 static void ieee_putcs(int toclear)
 {
-	if (toclear) {
-		ieee_putascii("CS.\r\n");
-	}
-	else {
-		checksum += 'C';
-		checksum += 'S';
-		ieee_putascii("CS%02X.\r\n",checksum & 127);
-	}
-	checksum = 0;
+    if (toclear) {
+        ieee_putascii("CS.\r\n");
+    } else {
+        checksum += 'C';
+        checksum += 'S';
+        ieee_putascii("CS%02X.\r\n", checksum & 127);
+    }
+    checksum = 0;
 }
 
 static long ieee_putld(long start, long end, unsigned char *buf)
 {
-	long val;
-	if (start == end)
-		return(start);
-	val = start % HUNKSIZE;
-	/* fill up multiple lines */
-	while (end - start >= LDPERLINE) {
-		int i;
-		ieee_putascii("LD");
-		for (i=0; i < LDPERLINE; i++) {
-			ieee_putascii("%02X",buf[val++]);
-			start++;
-		}
-		ieee_putascii(".\r\n");
-	}
-	/* if no partial lines */
-	if (start == end)
-		return(start);
-	/* make a partial line */
-	ieee_putascii("LD");
-	while (start < end) {
-		ieee_putascii("%02X",buf[val++]);
-		start++;
-	}
-	ieee_putascii(".\r\n");
-	return(start);
+    long val;
+    if (start == end)
+        return (start);
+    val = start % HUNKSIZE;
+    /* fill up multiple lines */
+    while (end - start >= LDPERLINE) {
+        int i;
+        ieee_putascii("LD");
+        for (i = 0; i < LDPERLINE; i++) {
+            ieee_putascii("%02X", buf[val++]);
+            start++;
+        }
+        ieee_putascii(".\r\n");
+    }
+    /* if no partial lines */
+    if (start == end)
+        return (start);
+    /* make a partial line */
+    ieee_putascii("LD");
+    while (start < end) {
+        ieee_putascii("%02X", buf[val++]);
+        start++;
+    }
+    ieee_putascii(".\r\n");
+    return (start);
 }
 static long ieee_putlr(struct ieeeFixupp *p)
 {
@@ -1165,74 +1188,78 @@ static long ieee_putlr(struct ieeeFixupp *p)
  * becomes an issue if real mode code is used.  A pure 32-bit linker could
  * get away without defining the virtual mode...
  */
-	char buf[40];
-	long size=p->size;
-	switch(p->ftype) {
-	    case FT_SEG:
-	        if (p->id1 < 0)
-		    sprintf(buf,"%lX",-p->id1);
-		else
-		    sprintf(buf,"L%lX,10,/",p->id1);
-		break;
-	    case FT_OFS:
-		sprintf(buf,"R%lX,%lX,+",p->id1,p->addend);
-		break;
-	    case FT_REL:
-		sprintf(buf,"R%lX,%lX,+,P,-,%X,-",p->id1,p->addend,p->size);
-		break;
-		
-	    case FT_WRT:
-	        if (p->id2 < 0)
-		    sprintf(buf,"R%lX,%lX,+,L%lX,+,%lX,-",p->id2,p->addend,p->id2,-p->id1*16);
-		else
-		    sprintf(buf,"R%lX,%lX,+,L%lX,+,L%lX,-",p->id2,p->addend,p->id2,p->id1);
-		break;
-	    case FT_EXT:
-		sprintf(buf,"X%lX",p->id1);
-		break;
-	    case FT_EXTREL:
-		sprintf(buf,"X%lX,P,-,%lX,-",p->id1,size);
-		break;
-	    case FT_EXTSEG:
-		/* We needed a non-ieee hack here.
-		 * We introduce the Y variable, which is the low
-		 * limit of the native segment the extern resides in
-		 */
-		sprintf(buf,"Y%lX,10,/",p->id1);
-		break;
-	    case FT_EXTWRT:
-	        if (p->id2 < 0)
-		    sprintf(buf,"X%lX,Y%lX,+,%lX,-",p->id2,p->id2,-p->id1*16);
-		else
-		    sprintf(buf,"X%lX,Y%lX,+,L%lX,-",p->id2,p->id2,p->id1);
-		break;
-	}
-	ieee_putascii("LR(%s,%lX).\r\n", buf, size);
+    char buf[40];
+    long size = p->size;
+    switch (p->ftype) {
+    case FT_SEG:
+        if (p->id1 < 0)
+            sprintf(buf, "%lX", -p->id1);
+        else
+            sprintf(buf, "L%lX,10,/", p->id1);
+        break;
+    case FT_OFS:
+        sprintf(buf, "R%lX,%lX,+", p->id1, p->addend);
+        break;
+    case FT_REL:
+        sprintf(buf, "R%lX,%lX,+,P,-,%X,-", p->id1, p->addend, p->size);
+        break;
 
-	return(size);
+    case FT_WRT:
+        if (p->id2 < 0)
+            sprintf(buf, "R%lX,%lX,+,L%lX,+,%lX,-", p->id2, p->addend,
+                    p->id2, -p->id1 * 16);
+        else
+            sprintf(buf, "R%lX,%lX,+,L%lX,+,L%lX,-", p->id2, p->addend,
+                    p->id2, p->id1);
+        break;
+    case FT_EXT:
+        sprintf(buf, "X%lX", p->id1);
+        break;
+    case FT_EXTREL:
+        sprintf(buf, "X%lX,P,-,%lX,-", p->id1, size);
+        break;
+    case FT_EXTSEG:
+        /* We needed a non-ieee hack here.
+         * We introduce the Y variable, which is the low
+         * limit of the native segment the extern resides in
+         */
+        sprintf(buf, "Y%lX,10,/", p->id1);
+        break;
+    case FT_EXTWRT:
+        if (p->id2 < 0)
+            sprintf(buf, "X%lX,Y%lX,+,%lX,-", p->id2, p->id2,
+                    -p->id1 * 16);
+        else
+            sprintf(buf, "X%lX,Y%lX,+,L%lX,-", p->id2, p->id2, p->id1);
+        break;
+    }
+    ieee_putascii("LR(%s,%lX).\r\n", buf, size);
+
+    return (size);
 }
+
 /* Dump all segment data (text and fixups )*/
 
 static void ieee_unqualified_name(char *dest, char *source)
 {
     if (ieee_uppercase) {
-	while (*source)
-	    *dest++ = toupper(*source++);
+        while (*source)
+            *dest++ = toupper(*source++);
         *dest = 0;
-    }
-    else strcpy(dest,source);
+    } else
+        strcpy(dest, source);
 }
-void dbgls_init(struct ofmt * of, void * id, FILE * fp, efunc error)
+void dbgls_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
     int tempint;
-    (void) of;
-    (void) id;
-    (void) fp;
-    (void) error;
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
 
     fnhead = NULL;
     fntail = &fnhead;
-    arrindex = ARRAY_BOT ;
+    arrindex = ARRAY_BOT;
     arrhead = NULL;
     arrtail = &arrhead;
     ieee_segment("??LINE", 2, &tempint);
@@ -1242,23 +1269,23 @@ static void dbgls_cleanup(void)
 {
     struct ieeeSection *segtmp;
     while (fnhead) {
-	struct FileName *fntemp = fnhead;
-	fnhead = fnhead->next;
-	nasm_free (fntemp->name);
-	nasm_free (fntemp);
+        struct FileName *fntemp = fnhead;
+        fnhead = fnhead->next;
+        nasm_free(fntemp->name);
+        nasm_free(fntemp);
     }
     for (segtmp = seghead; segtmp; segtmp = segtmp->next) {
-	while (segtmp->lochead) {
-	    struct ieeePublic *loctmp = segtmp->lochead;
-	    segtmp->lochead = loctmp->next;
-	    nasm_free (loctmp->name);
-	    nasm_free (loctmp);
-	}
+        while (segtmp->lochead) {
+            struct ieeePublic *loctmp = segtmp->lochead;
+            segtmp->lochead = loctmp->next;
+            nasm_free(loctmp->name);
+            nasm_free(loctmp);
+        }
     }
     while (arrhead) {
-	struct Array *arrtmp = arrhead;
+        struct Array *arrtmp = arrhead;
         arrhead = arrhead->next;
-        nasm_free (arrtmp);
+        nasm_free(arrtmp);
     }
 }
 
@@ -1269,57 +1296,58 @@ static void dbgls_cleanup(void)
  * so, we have to make sure the ??LINE segment is avaialbe
  * as the first segment when this debug format is selected
  */
-static void dbgls_linnum (const char *lnfname, long lineno, long segto)
+static void dbgls_linnum(const char *lnfname, long lineno, long segto)
 {
     struct FileName *fn;
     struct ieeeSection *seg;
     int i = 0;
     if (segto == NO_SEG)
-	return;
+        return;
 
     /*
      * If `any_segs' is still FALSE, we must define a default
      * segment.
      */
     if (!any_segs) {
-	int tempint;		       /* ignored */
-	if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-	    error (ERR_PANIC, "strange segment conditions in OBJ driver");
+        int tempint;            /* ignored */
+        if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
+            error(ERR_PANIC, "strange segment conditions in OBJ driver");
     }
 
     /*
      * Find the segment we are targetting.
      */
     for (seg = seghead; seg; seg = seg->next)
-	if (seg->index == segto)
-	    break;
+        if (seg->index == segto)
+            break;
     if (!seg)
-	error (ERR_PANIC, "lineno directed to nonexistent segment?");
+        error(ERR_PANIC, "lineno directed to nonexistent segment?");
 
     for (fn = fnhead; fn; fn = fn->next) {
-	if (!nasm_stricmp(lnfname,fn->name))
-	    break;
+        if (!nasm_stricmp(lnfname, fn->name))
+            break;
         i++;
     }
     if (!fn) {
-	fn = nasm_malloc ( sizeof( *fn));
-	fn->name = nasm_malloc ( strlen(lnfname) + 1) ;
-	fn->index = i;
-        strcpy (fn->name,lnfname);
-	fn->next = NULL;
-	*fntail = fn;
-	fntail = &fn->next;
+        fn = nasm_malloc(sizeof(*fn));
+        fn->name = nasm_malloc(strlen(lnfname) + 1);
+        fn->index = i;
+        strcpy(fn->name, lnfname);
+        fn->next = NULL;
+        *fntail = fn;
+        fntail = &fn->next;
     }
     ieee_write_byte(seghead, fn->index);
     ieee_write_word(seghead, lineno);
-    ieee_write_fixup (segto, NO_SEG, seghead, 4, OUT_ADDRESS, seg->currentpos);
+    ieee_write_fixup(segto, NO_SEG, seghead, 4, OUT_ADDRESS,
+                     seg->currentpos);
 
 }
-static void dbgls_deflabel (char *name, long segment,
-			  long offset, int is_global, char *special) 
+static void dbgls_deflabel(char *name, long segment,
+                           long offset, int is_global, char *special)
 {
     struct ieeeSection *seg;
-    int used_special;		/* have we used the special text? */
+    int used_special;           /* have we used the special text? */
 
     /* Keep compiler from warning about special and used_special */
     used_special = special ? FALSE : FALSE;
@@ -1328,26 +1356,26 @@ static void dbgls_deflabel (char *name, long segment,
      * If it's a special-retry from pass two, discard it.
      */
     if (is_global == 3)
-	return;
+        return;
 
     /*
      * First check for the double-period, signifying something
      * unusual.
      */
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-	return;
+        return;
     }
 
     /*
      * Case (i):
      */
     if (ieee_seg_needs_update)
-	return;
+        return;
     if (segment < SEG_ABS && segment != NO_SEG && segment % 2)
-	return;
+        return;
 
     if (segment >= SEG_ABS || segment == NO_SEG) {
-	return;
+        return;
     }
 
     /*
@@ -1358,71 +1386,71 @@ static void dbgls_deflabel (char *name, long segment,
      */
 
     for (seg = seghead; seg; seg = seg->next)
-	if (seg->index == segment) {
-	    struct ieeePublic *loc;
-	    /*
-	     * Case (ii). Maybe MODPUB someday?
-	     */
-	    if (!is_global) {
-	    	last_defined = loc  = nasm_malloc (sizeof(*loc));
-	    	*seg->loctail = loc;
-	    	seg->loctail = &loc->next;
-	    	loc->next = NULL;
-	    	loc->name = nasm_strdup(name);
-	    	loc->offset = offset;
-		loc->segment = -1;
-		loc->index = seg->ieee_index;
-	    }
-	}
+        if (seg->index == segment) {
+            struct ieeePublic *loc;
+            /*
+             * Case (ii). Maybe MODPUB someday?
+             */
+            if (!is_global) {
+                last_defined = loc = nasm_malloc(sizeof(*loc));
+                *seg->loctail = loc;
+                seg->loctail = &loc->next;
+                loc->next = NULL;
+                loc->name = nasm_strdup(name);
+                loc->offset = offset;
+                loc->segment = -1;
+                loc->index = seg->ieee_index;
+            }
+        }
 }
-static void dbgls_typevalue (long type)
+static void dbgls_typevalue(long type)
 {
     int elem = TYM_ELEMENTS(type);
     type = TYM_TYPE(type);
 
-    if (! last_defined)
-	return;
+    if (!last_defined)
+        return;
 
     switch (type) {
-	case TY_BYTE:
-	    last_defined->type = 1; /* unsigned char */
-	    break;
-	case TY_WORD:
-	    last_defined->type = 3; /* unsigned word */
-	    break;
-	case TY_DWORD:
-	    last_defined->type = 5; /* unsigned dword */
-	    break;
-	case TY_FLOAT:
-	    last_defined->type = 9; /* float */
-	    break;
-	case TY_QWORD:
-	    last_defined->type = 10; /* qword */
-	    break;
-	case TY_TBYTE:
-	    last_defined->type = 11; /* TBYTE */
-	    break;
-	default:
-	    last_defined->type = 0x10; /* near label */
-	    break;
+    case TY_BYTE:
+        last_defined->type = 1; /* unsigned char */
+        break;
+    case TY_WORD:
+        last_defined->type = 3; /* unsigned word */
+        break;
+    case TY_DWORD:
+        last_defined->type = 5; /* unsigned dword */
+        break;
+    case TY_FLOAT:
+        last_defined->type = 9; /* float */
+        break;
+    case TY_QWORD:
+        last_defined->type = 10;        /* qword */
+        break;
+    case TY_TBYTE:
+        last_defined->type = 11;        /* TBYTE */
+        break;
+    default:
+        last_defined->type = 0x10;      /* near label */
+        break;
     }
-               
+
     if (elem > 1) {
-        struct Array *arrtmp = nasm_malloc (sizeof(*arrtmp));
+        struct Array *arrtmp = nasm_malloc(sizeof(*arrtmp));
         int vtype = last_defined->type;
         arrtmp->size = elem;
         arrtmp->basetype = vtype;
         arrtmp->next = NULL;
         last_defined->type = arrindex++ + 0x100;
         *arrtail = arrtmp;
-        arrtail = & (arrtmp->next);
+        arrtail = &(arrtmp->next);
     }
     last_defined = NULL;
 }
-static void dbgls_output (int output_type, void *param)
+static void dbgls_output(int output_type, void *param)
 {
-    (void) output_type;
-    (void) param;
+    (void)output_type;
+    (void)param;
 }
 static struct dfmt ladsoft_debug_form = {
     "LADsoft Debug Records",
@@ -1436,9 +1464,9 @@ static struct dfmt ladsoft_debug_form = {
     dbgls_cleanup,
 };
 static struct dfmt *ladsoft_debug_arr[3] = {
-	&ladsoft_debug_form,
-	&null_debug_form,
-	NULL
+    &ladsoft_debug_form,
+    &null_debug_form,
+    NULL
 };
 struct ofmt of_ieee = {
     "IEEE-695 (LADsoft variant) object file format",
@@ -1458,4 +1486,4 @@ struct ofmt of_ieee = {
     ieee_cleanup
 };
 
-#endif /* OF_IEEE */
+#endif                          /* OF_IEEE */

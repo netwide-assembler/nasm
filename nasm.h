@@ -12,21 +12,21 @@
 #define NASM_NASM_H
 
 #include <stdio.h>
-#include "version.h"		       /* generated NASM version macros */
+#include "version.h"            /* generated NASM version macros */
 
 #ifndef NULL
 #define NULL 0
 #endif
 
 #ifndef FALSE
-#define FALSE 0			       /* comes in handy */
+#define FALSE 0                 /* comes in handy */
 #endif
 #ifndef TRUE
 #define TRUE 1
 #endif
 
-#define NO_SEG -1L		       /* null segment value */
-#define SEG_ABS 0x40000000L	       /* mask for far-absolute segments */
+#define NO_SEG -1L              /* null segment value */
+#define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 
 #ifndef FILENAME_MAX
 #define FILENAME_MAX 256
@@ -73,31 +73,31 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
  * argument to an efunc.
  */
 
-#define ERR_DEBUG  	0x00000008	/* put out debugging message */
-#define ERR_WARNING	0x00000000	/* warn only: no further action */
-#define ERR_NONFATAL	0x00000001	/* terminate assembly after phase */
-#define ERR_FATAL	0x00000002	/* instantly fatal: exit with error */
-#define ERR_PANIC	0x00000003	/* internal error: panic instantly
-					* and dump core for reference */
-#define ERR_MASK	0x0000000F	/* mask off the above codes */
-#define ERR_NOFILE	0x00000010	/* don't give source file name/line */
-#define ERR_USAGE	0x00000020	/* print a usage message */
-#define ERR_PASS1	0x00000040	/* only print this error on pass one */
+#define ERR_DEBUG  	0x00000008      /* put out debugging message */
+#define ERR_WARNING	0x00000000      /* warn only: no further action */
+#define ERR_NONFATAL	0x00000001      /* terminate assembly after phase */
+#define ERR_FATAL	0x00000002      /* instantly fatal: exit with error */
+#define ERR_PANIC	0x00000003      /* internal error: panic instantly
+                                         * and dump core for reference */
+#define ERR_MASK	0x0000000F      /* mask off the above codes */
+#define ERR_NOFILE	0x00000010      /* don't give source file name/line */
+#define ERR_USAGE	0x00000020      /* print a usage message */
+#define ERR_PASS1	0x00000040      /* only print this error on pass one */
 
 /*
  * These codes define specific types of suppressible warning.
  */
 
-#define ERR_WARN_MASK	0x0000FF00	/* the mask for this feature */
-#define ERR_WARN_SHR  8		       /* how far to shift right */
+#define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
+#define ERR_WARN_SHR  8         /* how far to shift right */
 
-#define ERR_WARN_MNP	0x00000100	/* macro-num-parameters warning */
-#define ERR_WARN_MSR	0x00000200	/* macro self-reference */
-#define ERR_WARN_OL	0x00000300	/* orphan label (no colon, and
-					* alone on line) */
-#define ERR_WARN_NOV	0x00000400	/* numeric overflow */
+#define ERR_WARN_MNP	0x00000100      /* macro-num-parameters warning */
+#define ERR_WARN_MSR	0x00000200      /* macro self-reference */
+#define ERR_WARN_OL	0x00000300      /* orphan label (no colon, and
+                                         * alone on line) */
+#define ERR_WARN_NOV	0x00000400      /* numeric overflow */
 #define ERR_WARN_GNUELF	0x00000500      /* using GNU ELF extensions */
-#define ERR_WARN_MAX	5		/* the highest numbered one */
+#define ERR_WARN_MAX	5       /* the highest numbered one */
 
 /*
  * -----------------------
@@ -116,9 +116,9 @@ typedef int (*lfunc) (char *label, long *segment, long *offset);
  * should affect the local-label system), or something odder like
  * an EQU or a segment-base symbol, which shouldn't.
  */
-typedef void (*ldfunc) (char *label, long segment, long offset, char *special,
-			int is_norm, int isextrn, struct ofmt *ofmt,
-			efunc error);
+typedef void (*ldfunc) (char *label, long segment, long offset,
+                        char *special, int is_norm, int isextrn,
+                        struct ofmt * ofmt, efunc error);
 
 /*
  * List-file generators should look like this:
@@ -193,33 +193,33 @@ struct tokenval {
     long t_integer, t_inttwo;
     char *t_charptr;
 };
-typedef int (*scanner) (void *private_data, struct tokenval *tv);
+typedef int (*scanner) (void *private_data, struct tokenval * tv);
 
 /*
  * Token types returned by the scanner, in addition to ordinary
  * ASCII character values, and zero for end-of-string.
  */
-enum {				       /* token types, other than chars */
-    TOKEN_INVALID = -1,		       /* a placeholder value */
-    TOKEN_EOS = 0,		       /* end of string */
-    TOKEN_EQ = '=', TOKEN_GT = '>', TOKEN_LT = '<',   /* aliases */
-    TOKEN_ID = 256, TOKEN_NUM, TOKEN_REG, TOKEN_INSN,  /* major token types */
-    TOKEN_ERRNUM,		       /* numeric constant with error in */
-    TOKEN_HERE, TOKEN_BASE,	       /* $ and $$ */
-    TOKEN_SPECIAL,		       /* BYTE, WORD, DWORD, FAR, NEAR, etc */
-    TOKEN_PREFIX,		       /* A32, O16, LOCK, REPNZ, TIMES, etc */
-    TOKEN_SHL, TOKEN_SHR,	       /* << and >> */
-    TOKEN_SDIV, TOKEN_SMOD,	       /* // and %% */
-    TOKEN_GE, TOKEN_LE, TOKEN_NE,      /* >=, <= and <> (!= is same as <>) */
-    TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR,   /* &&, || and ^^ */
-    TOKEN_SEG, TOKEN_WRT,	       /* SEG and WRT */
-    TOKEN_FLOAT			       /* floating-point constant */
+enum {                          /* token types, other than chars */
+    TOKEN_INVALID = -1,         /* a placeholder value */
+    TOKEN_EOS = 0,              /* end of string */
+    TOKEN_EQ = '=', TOKEN_GT = '>', TOKEN_LT = '<',     /* aliases */
+    TOKEN_ID = 256, TOKEN_NUM, TOKEN_REG, TOKEN_INSN,   /* major token types */
+    TOKEN_ERRNUM,               /* numeric constant with error in */
+    TOKEN_HERE, TOKEN_BASE,     /* $ and $$ */
+    TOKEN_SPECIAL,              /* BYTE, WORD, DWORD, FAR, NEAR, etc */
+    TOKEN_PREFIX,               /* A32, O16, LOCK, REPNZ, TIMES, etc */
+    TOKEN_SHL, TOKEN_SHR,       /* << and >> */
+    TOKEN_SDIV, TOKEN_SMOD,     /* // and %% */
+    TOKEN_GE, TOKEN_LE, TOKEN_NE,       /* >=, <= and <> (!= is same as <>) */
+    TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR, /* &&, || and ^^ */
+    TOKEN_SEG, TOKEN_WRT,       /* SEG and WRT */
+    TOKEN_FLOAT                 /* floating-point constant */
 };
 
 typedef struct {
     long segment;
     long offset;
-    int  known;
+    int known;
 } loc_t;
 
 /*
@@ -235,8 +235,8 @@ typedef struct {
  * `value' field of zero is insignificant.
  */
 typedef struct {
-    long type;			       /* a register, or EXPR_xxx */
-    long value;			       /* must be >= 32 bits */
+    long type;                  /* a register, or EXPR_xxx */
+    long value;                 /* must be >= 32 bits */
 } expr;
 
 /*
@@ -274,9 +274,9 @@ struct eval_hints {
  * the base register in complex effective addresses.
  */
 #define CRITICAL 0x100
-typedef expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
-			   int *fwref, int critical, efunc error,
-			   struct eval_hints *hints);
+typedef expr *(*evalfunc) (scanner sc, void *scprivate,
+                           struct tokenval * tv, int *fwref, int critical,
+                           efunc error, struct eval_hints * hints);
 
 /*
  * Special values for expr->type. ASSUMPTION MADE HERE: the number
@@ -286,7 +286,7 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
  */
 #define EXPR_REG_START 1
 #define EXPR_REG_END 124
-#define EXPR_UNKNOWN 125L	       /* for forward references */
+#define EXPR_UNKNOWN 125L       /* for forward references */
 #define EXPR_SIMPLE 126L
 #define EXPR_WRT 127L
 #define EXPR_SEGBASE 128L
@@ -371,71 +371,71 @@ enum {
 #define BITS8     0x00000001L
 #define BITS16    0x00000002L
 #define BITS32    0x00000004L
-#define BITS64    0x00000008L	       /* FPU only */
-#define BITS80    0x00000010L	       /* FPU only */
-#define FAR       0x00000020L	       /* grotty: this means 16:16 or */
-				       /* 16:32, like in CALL/JMP */
+#define BITS64    0x00000008L   /* FPU only */
+#define BITS80    0x00000010L   /* FPU only */
+#define FAR       0x00000020L   /* grotty: this means 16:16 or */
+                                       /* 16:32, like in CALL/JMP */
 #define NEAR      0x00000040L
-#define SHORT     0x00000080L	       /* and this means what it says :) */
+#define SHORT     0x00000080L   /* and this means what it says :) */
 
-#define SIZE_MASK 0x000000FFL	       /* all the size attributes */
+#define SIZE_MASK 0x000000FFL   /* all the size attributes */
 #define NON_SIZE  (~SIZE_MASK)
 
-#define TO        0x00000100L          /* reverse effect in FADD, FSUB &c */
-#define COLON     0x00000200L	       /* operand is followed by a colon */
-#define STRICT    0x00000400L	       /* do not optimize this operand */
+#define TO        0x00000100L   /* reverse effect in FADD, FSUB &c */
+#define COLON     0x00000200L   /* operand is followed by a colon */
+#define STRICT    0x00000400L   /* do not optimize this operand */
 
 /* type of operand: memory reference, register, etc. */
 #define MEMORY    0x00204000L
-#define REGISTER  0x00001000L	       /* register number in 'basereg' */
+#define REGISTER  0x00001000L   /* register number in 'basereg' */
 #define IMMEDIATE 0x00002000L
 
-#define REGMEM    0x00200000L	       /* for r/m, ie EA, operands */
-#define REGNORM   0x00201000L	       /* 'normal' reg, qualifies as EA */
+#define REGMEM    0x00200000L   /* for r/m, ie EA, operands */
+#define REGNORM   0x00201000L   /* 'normal' reg, qualifies as EA */
 #define REG8      0x00201001L
 #define REG16     0x00201002L
 #define REG32     0x00201004L
-#define MMXREG    0x00201008L	       /* MMX registers */
-#define XMMREG    0x00201010L          /* XMM Katmai reg */
-#define FPUREG    0x01000000L	       /* floating point stack registers */
-#define FPU0      0x01000800L	       /* FPU stack register zero */
+#define MMXREG    0x00201008L   /* MMX registers */
+#define XMMREG    0x00201010L   /* XMM Katmai reg */
+#define FPUREG    0x01000000L   /* floating point stack registers */
+#define FPU0      0x01000800L   /* FPU stack register zero */
 
 /* special register operands: these may be treated differently */
-#define REG_SMASK 0x00070000L	       /* a mask for the following */
-#define REG_ACCUM 0x00211000L	       /* accumulator: AL, AX or EAX */
-#define REG_AL    0x00211001L	       /* REG_ACCUM | BITSxx */
-#define REG_AX    0x00211002L	       /* ditto */
-#define REG_EAX   0x00211004L	       /* and again */
-#define REG_COUNT 0x00221000L	       /* counter: CL, CX or ECX */
-#define REG_CL    0x00221001L	       /* REG_COUNT | BITSxx */
-#define REG_CX    0x00221002L	       /* ditto */
-#define REG_ECX   0x00221004L	       /* another one */
+#define REG_SMASK 0x00070000L   /* a mask for the following */
+#define REG_ACCUM 0x00211000L   /* accumulator: AL, AX or EAX */
+#define REG_AL    0x00211001L   /* REG_ACCUM | BITSxx */
+#define REG_AX    0x00211002L   /* ditto */
+#define REG_EAX   0x00211004L   /* and again */
+#define REG_COUNT 0x00221000L   /* counter: CL, CX or ECX */
+#define REG_CL    0x00221001L   /* REG_COUNT | BITSxx */
+#define REG_CX    0x00221002L   /* ditto */
+#define REG_ECX   0x00221004L   /* another one */
 #define REG_DL    0x00241001L
 #define REG_DX    0x00241002L
 #define REG_EDX   0x00241004L
-#define REG_SREG  0x00081002L	       /* any segment register */
-#define REG_CS    0x01081002L	       /* CS */
-#define REG_DESS  0x02081002L	       /* DS, ES, SS (non-CS 86 registers) */
-#define REG_FSGS  0x04081002L	       /* FS, GS (386 extended registers) */
-#define REG_SEG67 0x08081002L          /* Non-implemented segment registers */
-#define REG_CDT   0x00101004L	       /* CRn, DRn and TRn */
-#define REG_CREG  0x08101004L	       /* CRn */
-#define REG_DREG  0x10101004L	       /* DRn */
-#define REG_TREG  0x20101004L	       /* TRn */
+#define REG_SREG  0x00081002L   /* any segment register */
+#define REG_CS    0x01081002L   /* CS */
+#define REG_DESS  0x02081002L   /* DS, ES, SS (non-CS 86 registers) */
+#define REG_FSGS  0x04081002L   /* FS, GS (386 extended registers) */
+#define REG_SEG67 0x08081002L   /* Non-implemented segment registers */
+#define REG_CDT   0x00101004L   /* CRn, DRn and TRn */
+#define REG_CREG  0x08101004L   /* CRn */
+#define REG_DREG  0x10101004L   /* DRn */
+#define REG_TREG  0x20101004L   /* TRn */
 
 /* special type of EA */
-#define MEM_OFFS  0x00604000L	       /* simple [address] offset */
+#define MEM_OFFS  0x00604000L   /* simple [address] offset */
 
 /* special type of immediate operand */
-#define ONENESS   0x00800000L          /* so UNITY == IMMEDIATE | ONENESS */
-#define UNITY     0x00802000L	       /* for shift/rotate instructions */
-#define BYTENESS  0x40000000L          /* so SBYTE == IMMEDIATE | BYTENESS */
-#define SBYTE 	  0x40002000L	       /* for op r16/32,immediate instrs. */
-		
+#define ONENESS   0x00800000L   /* so UNITY == IMMEDIATE | ONENESS */
+#define UNITY     0x00802000L   /* for shift/rotate instructions */
+#define BYTENESS  0x40000000L   /* so SBYTE == IMMEDIATE | BYTENESS */
+#define SBYTE 	  0x40002000L   /* for op r16/32,immediate instrs. */
+
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
 
-enum {				       /* condition code names */
+enum {                          /* condition code names */
     C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,
     C_NB, C_NBE, C_NC, C_NE, C_NG, C_NGE, C_NL, C_NLE, C_NO, C_NP,
     C_NS, C_NZ, C_O, C_P, C_PE, C_PO, C_S, C_Z
@@ -446,68 +446,68 @@ enum {				       /* condition code names */
  * prefixes, we must ensure the enumerations for prefixes and
  * register names do not overlap.
  */
-enum {				       /* instruction prefixes */
+enum {                          /* instruction prefixes */
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
     P_A16 = PREFIX_ENUM_START, P_A32, P_LOCK, P_O16, P_O32, P_REP, P_REPE,
     P_REPNE, P_REPNZ, P_REPZ, P_TIMES
 };
 
-enum {				       /* extended operand types */
+enum {                          /* extended operand types */
     EOT_NOTHING, EOT_DB_STRING, EOT_DB_NUMBER
 };
 
-enum {				       /* special EA flags */
-    EAF_BYTEOFFS = 1,		       /* force offset part to byte size */
-    EAF_WORDOFFS = 2,		       /* force offset part to [d]word size */
-    EAF_TIMESTWO = 4		       /* really do EAX*2 not EAX+EAX */
+enum {                          /* special EA flags */
+    EAF_BYTEOFFS = 1,           /* force offset part to byte size */
+    EAF_WORDOFFS = 2,           /* force offset part to [d]word size */
+    EAF_TIMESTWO = 4            /* really do EAX*2 not EAX+EAX */
 };
 
-enum {				       /* values for `hinttype' */
-    EAH_NOHINT = 0,		       /* no hint at all - our discretion */
-    EAH_MAKEBASE = 1,		       /* try to make given reg the base */
-    EAH_NOTBASE = 2		       /* try _not_ to make reg the base */
+enum {                          /* values for `hinttype' */
+    EAH_NOHINT = 0,             /* no hint at all - our discretion */
+    EAH_MAKEBASE = 1,           /* try to make given reg the base */
+    EAH_NOTBASE = 2             /* try _not_ to make reg the base */
 };
 
-typedef struct {		       /* operand to an instruction */
-    long type;			       /* type of operand */
-    int addr_size;		       /* 0 means default; 16; 32 */
-    int basereg, indexreg, scale;      /* registers and scale involved */
-    int hintbase, hinttype;	       /* hint as to real base register */
-    long segment;		       /* immediate segment, if needed */
-    long offset;		       /* any immediate number */
-    long wrt;			       /* segment base it's relative to */
-    int eaflags;		       /* special EA flags */
-    int opflags;		       /* see OPFLAG_* defines below */
+typedef struct {                /* operand to an instruction */
+    long type;                  /* type of operand */
+    int addr_size;              /* 0 means default; 16; 32 */
+    int basereg, indexreg, scale;       /* registers and scale involved */
+    int hintbase, hinttype;     /* hint as to real base register */
+    long segment;               /* immediate segment, if needed */
+    long offset;                /* any immediate number */
+    long wrt;                   /* segment base it's relative to */
+    int eaflags;                /* special EA flags */
+    int opflags;                /* see OPFLAG_* defines below */
 } operand;
 
-#define OPFLAG_FORWARD		1      /* operand is a forward reference */
-#define OPFLAG_EXTERN		2      /* operand is an external reference */
+#define OPFLAG_FORWARD		1       /* operand is a forward reference */
+#define OPFLAG_EXTERN		2       /* operand is an external reference */
 
-typedef struct extop {		       /* extended operand */
-    struct extop *next;		       /* linked list */
-    long type;			       /* defined above */
-    char *stringval;		       /* if it's a string, then here it is */
-    int stringlen;		       /* ... and here's how long it is */
-    long segment;		       /* if it's a number/address, then... */
-    long offset;		       /* ... it's given here ... */
-    long wrt;			       /* ... and here */
+typedef struct extop {          /* extended operand */
+    struct extop *next;         /* linked list */
+    long type;                  /* defined above */
+    char *stringval;            /* if it's a string, then here it is */
+    int stringlen;              /* ... and here's how long it is */
+    long segment;               /* if it's a number/address, then... */
+    long offset;                /* ... it's given here ... */
+    long wrt;                   /* ... and here */
 } extop;
 
 #define MAXPREFIX 4
 
-typedef struct {		       /* an instruction itself */
-    char *label;		       /* the label defined, or NULL */
-    int prefixes[MAXPREFIX];	       /* instruction prefixes, if any */
-    int nprefix;		       /* number of entries in above */
-    int opcode;			       /* the opcode - not just the string */
-    int condition;		       /* the condition code, if Jcc/SETcc */
-    int operands;		       /* how many operands? 0-3 
-                                        * (more if db et al) */
-    operand oprs[3];	   	       /* the operands, defined as above */
-    extop *eops;		       /* extended operands */
-    int eops_float;                    /* true if DD and floating */
-    long times;			       /* repeat count (TIMES prefix) */
-    int forw_ref;		       /* is there a forward reference? */
+typedef struct {                /* an instruction itself */
+    char *label;                /* the label defined, or NULL */
+    int prefixes[MAXPREFIX];    /* instruction prefixes, if any */
+    int nprefix;                /* number of entries in above */
+    int opcode;                 /* the opcode - not just the string */
+    int condition;              /* the condition code, if Jcc/SETcc */
+    int operands;               /* how many operands? 0-3 
+                                 * (more if db et al) */
+    operand oprs[3];            /* the operands, defined as above */
+    extop *eops;                /* extended operands */
+    int eops_float;             /* true if DD and floating */
+    long times;                 /* repeat count (TIMES prefix) */
+    int forw_ref;               /* is there a forward reference? */
 } insn;
 
 enum geninfo { GI_SWITCH };
@@ -567,7 +567,7 @@ struct ofmt {
      * to the label manager and expression evaluator if necessary.
      * It also gives it a chance to do other initialisation.
      */
-    void (*init) (FILE *fp, efunc error, ldfunc ldef, evalfunc eval);
+    void (*init) (FILE * fp, efunc error, ldfunc ldef, evalfunc eval);
 
     /*
      * This procedure is called to pass generic information to the
@@ -576,7 +576,7 @@ struct ofmt {
      * and the second parameter gives the value.  This function returns
      * 1 if recognized, 0 if unrecognized
      */
-    int (*setinfo)(enum geninfo type, char **string);
+    int (*setinfo) (enum geninfo type, char **string);
 
     /*
      * This procedure is called by assemble() to write actual
@@ -588,7 +588,7 @@ struct ofmt {
      * usually the size as well: its contents are described below.
      */
     void (*output) (long segto, const void *data, unsigned long type,
-		    long segment, long wrt);
+                    long segment, long wrt);
 
     /*
      * This procedure is called once for every symbol defined in
@@ -619,7 +619,7 @@ struct ofmt {
      * be obvious to the output format from the other parameters.
      */
     void (*symdef) (char *name, long segment, long offset, int is_global,
-		    char *special);
+                    char *special);
 
     /*
      * This procedure is called when the source code requests a
@@ -734,7 +734,7 @@ struct ofmt {
  */
 
 struct dfmt {
-    
+
     /*
      * This is a short (one-liner) description of the type of
      * output generated by the driver.
@@ -746,19 +746,18 @@ struct dfmt {
      */
     const char *shortname;
 
-
     /*
      * init - called initially to set up local pointer to object format, 
      * void pointer to implementation defined data, file pointer (which
      * probably won't be used, but who knows?), and error function.
      */
-    void (*init) (struct ofmt * of, void * id, FILE * fp, efunc error);
+    void (*init) (struct ofmt * of, void *id, FILE * fp, efunc error);
 
     /*
      * linenum - called any time there is output with a change of
      * line number or file.
      */
-    void (*linenum) (const char * filename, long linenumber, long segto);
+    void (*linenum) (const char *filename, long linenumber, long segto);
 
     /*
      * debug_deflabel - called whenever a label is defined. Parameters
@@ -766,8 +765,8 @@ struct dfmt {
      * would be called before the output format version.
      */
 
-    void (*debug_deflabel) (char * name, long segment, long offset,
-                            int is_global, char * special);
+    void (*debug_deflabel) (char *name, long segment, long offset,
+                            int is_global, char *special);
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
      * is encountered. 'directive' contains the first parameter to the
@@ -776,7 +775,7 @@ struct dfmt {
      * function with 'directive' equal to "VAR" and 'params' equal to 
      * "_somevar:int".
      */
-    void (*debug_directive) (const char * directive, const char * params);
+    void (*debug_directive) (const char *directive, const char *params);
 
     /*
      * typevalue - called whenever the assembler wishes to register a type
@@ -846,7 +845,7 @@ extern int tasm_compatible_mode;
  *       2 = pass 2
  */
 
-extern int pass0;	/* this is globally known */
+extern int pass0;               /* this is globally known */
 extern int optimizing;
 
 #endif

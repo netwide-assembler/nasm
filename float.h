@@ -10,7 +10,7 @@
 #ifndef NASM_FLOAT_H
 #define NASM_FLOAT_H
 
-int float_const (char *number, long sign, unsigned char *result, int bytes,
-		 efunc error);
+int float_const(char *number, long sign, unsigned char *result, int bytes,
+                efunc error);
 
 #endif

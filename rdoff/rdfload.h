@@ -17,15 +17,15 @@
 #include "rdoff.h"
 
 typedef struct RDFModuleStruct {
-  rdffile	f;	/* file structure */
-  unsigned char * t, * d, * b; /* text, data, and bss segments */
-  long		textrel;
-  long		datarel;
-  long		bssrel;
-  void *	symtab;
+    rdffile f;                  /* file structure */
+    unsigned char *t, *d, *b;   /* text, data, and bss segments */
+    long textrel;
+    long datarel;
+    long bssrel;
+    void *symtab;
 } rdfmodule;
 
-rdfmodule * rdfload(const char * filename);
+rdfmodule *rdfload(const char *filename);
 int rdf_relocate(rdfmodule * m);
 
 #endif

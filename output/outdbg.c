@@ -28,33 +28,33 @@ FILE *dbgf;
 efunc dbgef;
 
 struct ofmt of_dbg;
-static void dbg_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void dbg_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
-    (void) eval;
+    (void)eval;
 
     dbgf = fp;
     dbgef = errfunc;
     dbgsect = NULL;
-    (void) ldef;
-    fprintf(fp,"NASM Output format debug dump\n");
-    of_dbg.current_dfmt->init(&of_dbg,0,fp,errfunc);
-    
+    (void)ldef;
+    fprintf(fp, "NASM Output format debug dump\n");
+    of_dbg.current_dfmt->init(&of_dbg, 0, fp, errfunc);
+
 }
 
 static void dbg_cleanup(int debuginfo)
 {
-    (void) debuginfo;
+    (void)debuginfo;
     of_dbg.current_dfmt->cleanup();
     while (dbgsect) {
-	struct Section *tmp = dbgsect;
-	dbgsect = dbgsect->next;
-	nasm_free (tmp->name);
-	nasm_free (tmp);
+        struct Section *tmp = dbgsect;
+        dbgsect = dbgsect->next;
+        nasm_free(tmp->name);
+        nasm_free(tmp);
     }
     fclose(dbgf);
 }
 
-static long dbg_section_names (char *name, int pass, int *bits)
+static long dbg_section_names(char *name, int pass, int *bits)
 {
     int seg;
 
@@ -62,46 +62,45 @@ static long dbg_section_names (char *name, int pass, int *bits)
      * We must have an initial default: let's make it 16.
      */
     if (!name)
-	*bits = 16;
+        *bits = 16;
 
     if (!name)
-	fprintf(dbgf, "section_name on init: returning %d\n",
-		seg = seg_alloc());
+        fprintf(dbgf, "section_name on init: returning %d\n",
+                seg = seg_alloc());
     else {
-	int n = strcspn(name, " \t");
-	char *sname = nasm_strndup(name, n);
-	struct Section *s;
+        int n = strcspn(name, " \t");
+        char *sname = nasm_strndup(name, n);
+        struct Section *s;
 
-	seg = NO_SEG;
-	for (s = dbgsect; s; s = s->next)
-	    if (!strcmp(s->name, sname))
-		seg = s->number;
-	
-	if (seg == NO_SEG) {
-	    s = nasm_malloc(sizeof(*s));
-	    s->name = sname;
-	    s->number = seg = seg_alloc();
-	    s->next = dbgsect;
-	    dbgsect = s;
-	    fprintf(dbgf, "section_name %s (pass %d): returning %d\n",
-		    name, pass, seg);
-	}
+        seg = NO_SEG;
+        for (s = dbgsect; s; s = s->next)
+            if (!strcmp(s->name, sname))
+                seg = s->number;
+
+        if (seg == NO_SEG) {
+            s = nasm_malloc(sizeof(*s));
+            s->name = sname;
+            s->number = seg = seg_alloc();
+            s->next = dbgsect;
+            dbgsect = s;
+            fprintf(dbgf, "section_name %s (pass %d): returning %d\n",
+                    name, pass, seg);
+        }
     }
     return seg;
 }
 
-static void dbg_deflabel (char *name, long segment, long offset,
-			  int is_global, char *special) 
+static void dbg_deflabel(char *name, long segment, long offset,
+                         int is_global, char *special)
 {
-    fprintf(dbgf,"deflabel %s := %08lx:%08lx %s (%d)%s%s\n",
-	    name, segment, offset,
-	    is_global == 2 ? "common" : is_global ? "global" : "local",
-	    is_global,
-	    special ? ": " : "", special);
+    fprintf(dbgf, "deflabel %s := %08lx:%08lx %s (%d)%s%s\n",
+            name, segment, offset,
+            is_global == 2 ? "common" : is_global ? "global" : "local",
+            is_global, special ? ": " : "", special);
 }
 
-static void dbg_out (long segto, void *data, unsigned long type,
-		     long segment, long wrt) 
+static void dbg_out(long segto, void *data, unsigned long type,
+                    long segment, long wrt)
 {
     long realbytes = type & OUT_SIZMASK;
     long ldata;
@@ -109,107 +108,111 @@ static void dbg_out (long segto, void *data, unsigned long type,
 
     type &= OUT_TYPMASK;
 
-    fprintf(dbgf,"out to %lx, len = %ld: ",segto,realbytes);
+    fprintf(dbgf, "out to %lx, len = %ld: ", segto, realbytes);
 
-    switch(type) {
-      case OUT_RESERVE:
-	fprintf(dbgf,"reserved.\n"); break;
-      case OUT_RAWDATA:
-	fprintf(dbgf,"raw data = ");
-	while (realbytes--) {
-	    id = *(unsigned char *)data;
-	    data = (char *)data + 1;
-	    fprintf(dbgf,"%02x ",id);
-	}
-	fprintf(dbgf,"\n"); break;
-      case OUT_ADDRESS:
-	ldata = 0; /* placate gcc */
-	if (realbytes == 1)
-	    ldata = *((char *)data);
-	else if (realbytes == 2)
-	    ldata = *((short *)data);
-	else if (realbytes == 4)
-	    ldata = *((long *)data);
-	fprintf(dbgf,"addr %08lx (seg %08lx, wrt %08lx)\n",ldata,
-		segment,wrt);break;
-      case OUT_REL2ADR:
-	fprintf(dbgf,"rel2adr %04x (seg %08lx)\n",(int)*(short *)data,segment);
-	break;
-      case OUT_REL4ADR:
-	fprintf(dbgf,"rel4adr %08lx (seg %08lx)\n",*(long *)data,segment);
-	break;
-      default:
-	fprintf(dbgf,"unknown\n");
-	break;
+    switch (type) {
+    case OUT_RESERVE:
+        fprintf(dbgf, "reserved.\n");
+        break;
+    case OUT_RAWDATA:
+        fprintf(dbgf, "raw data = ");
+        while (realbytes--) {
+            id = *(unsigned char *)data;
+            data = (char *)data + 1;
+            fprintf(dbgf, "%02x ", id);
+        }
+        fprintf(dbgf, "\n");
+        break;
+    case OUT_ADDRESS:
+        ldata = 0;              /* placate gcc */
+        if (realbytes == 1)
+            ldata = *((char *)data);
+        else if (realbytes == 2)
+            ldata = *((short *)data);
+        else if (realbytes == 4)
+            ldata = *((long *)data);
+        fprintf(dbgf, "addr %08lx (seg %08lx, wrt %08lx)\n", ldata,
+                segment, wrt);
+        break;
+    case OUT_REL2ADR:
+        fprintf(dbgf, "rel2adr %04x (seg %08lx)\n", (int)*(short *)data,
+                segment);
+        break;
+    case OUT_REL4ADR:
+        fprintf(dbgf, "rel4adr %08lx (seg %08lx)\n", *(long *)data,
+                segment);
+        break;
+    default:
+        fprintf(dbgf, "unknown\n");
+        break;
     }
 }
 
-static long dbg_segbase(long segment) 
+static long dbg_segbase(long segment)
 {
     return segment;
 }
 
-static int dbg_directive (char *directive, char *value, int pass) 
+static int dbg_directive(char *directive, char *value, int pass)
 {
     fprintf(dbgf, "directive [%s] value [%s] (pass %d)\n",
-	    directive, value, pass);
+            directive, value, pass);
     return 1;
 }
 
-static void dbg_filename (char *inname, char *outname, efunc error) 
+static void dbg_filename(char *inname, char *outname, efunc error)
 {
-    standard_extension (inname, outname, ".dbg", error);
+    standard_extension(inname, outname, ".dbg", error);
 }
 
 static int dbg_set_info(enum geninfo type, char **val)
 {
-    (void) type;
-    (void) val;
+    (void)type;
+    (void)val;
     return 0;
 }
-char *types[] = { 
-	"unknown", "label", "byte","word","dword","float","qword","tbyte" 
+
+char *types[] = {
+    "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
 };
-void dbgdbg_init(struct ofmt * of, void * id, FILE * fp, efunc error)
+void dbgdbg_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
-    (void) of;
-    (void) id;
-    (void) fp;
-    (void) error;
-    fprintf(fp,"   With debug info\n");
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
+    fprintf(fp, "   With debug info\n");
 }
 static void dbgdbg_cleanup(void)
 {
 }
 
-static void dbgdbg_linnum (const char *lnfname, long lineno, long segto)
+static void dbgdbg_linnum(const char *lnfname, long lineno, long segto)
 {
-    fprintf(dbgf,"dbglinenum %s(%ld) := %08lx\n",
-	lnfname,lineno,segto);
+    fprintf(dbgf, "dbglinenum %s(%ld) := %08lx\n", lnfname, lineno, segto);
 }
-static void dbgdbg_deflabel (char *name, long segment,
-			  long offset, int is_global, char *special) 
+static void dbgdbg_deflabel(char *name, long segment,
+                            long offset, int is_global, char *special)
 {
-    fprintf(dbgf,"dbglabel %s := %08lx:%08lx %s (%d)%s%s\n",
-	    name,
+    fprintf(dbgf, "dbglabel %s := %08lx:%08lx %s (%d)%s%s\n",
+            name,
             segment, offset,
-	    is_global == 2 ? "common" : is_global ? "global" : "local",
-	    is_global,
-	    special ? ": " : "", special);
+            is_global == 2 ? "common" : is_global ? "global" : "local",
+            is_global, special ? ": " : "", special);
 }
 static void dbgdbg_define(const char *type, const char *params)
 {
-    fprintf(dbgf,"dbgdirective [%s] value [%s]\n",type, params);
+    fprintf(dbgf, "dbgdirective [%s] value [%s]\n", type, params);
 }
-static void dbgdbg_output (int output_type, void *param)
+static void dbgdbg_output(int output_type, void *param)
 {
-    (void) output_type;
-    (void) param;
+    (void)output_type;
+    (void)param;
 }
 static void dbgdbg_typevalue(long type)
 {
-	fprintf(dbgf,"new type: %s(%lX)\n",
-	    types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type) );
+    fprintf(dbgf, "new type: %s(%lX)\n",
+            types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
 }
 static struct dfmt debug_debug_form = {
     "Trace of all info passed to debug stage",
@@ -224,9 +227,9 @@ static struct dfmt debug_debug_form = {
 };
 
 static struct dfmt *debug_debug_arr[3] = {
-	&debug_debug_form,
-	&null_debug_form,
-	NULL
+    &debug_debug_form,
+    &null_debug_form,
+    NULL
 };
 struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
@@ -246,4 +249,4 @@ struct ofmt of_dbg = {
     dbg_cleanup
 };
 
-#endif /* OF_DBG */
+#endif                          /* OF_DBG */

@@ -16,11 +16,12 @@ extern int bsssym, commvar;
 extern void *selfptr;
 extern void *selfptr2;
 
-int main(void) {
+int main(void)
+{
     printf("these should be identical: %p, %p\n",
-           (long) selfptr, (long) &selfptr);
+           (long)selfptr, (long)&selfptr);
     printf("these should be equivalent but different: %p, %p\n",
-           (long) selfptr2, (long) &selfptr2);
+           (long)selfptr2, (long)&selfptr2);
     printf("you should see \"hello, world\" twice:\n");
     bsssym = 0xF00D;
     commvar = 0xD00F;

@@ -25,20 +25,20 @@
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
-#ifdef NASM_NASM_H		       /* need efunc defined for this */
-void nasm_set_malloc_error (efunc);
+#ifdef NASM_NASM_H              /* need efunc defined for this */
+void nasm_set_malloc_error(efunc);
 #ifndef LOGALLOC
-void *nasm_malloc (size_t);
-void *nasm_realloc (void *, size_t);
-void nasm_free (void *);
-char *nasm_strdup (const char *);
-char *nasm_strndup (char *, size_t);
+void *nasm_malloc(size_t);
+void *nasm_realloc(void *, size_t);
+void nasm_free(void *);
+char *nasm_strdup(const char *);
+char *nasm_strndup(char *, size_t);
 #else
-void *nasm_malloc_log (char *, int, size_t);
-void *nasm_realloc_log (char *, int, void *, size_t);
-void nasm_free_log (char *, int, void *);
-char *nasm_strdup_log (char *, int, const char *);
-char *nasm_strndup_log (char *, int, char *, size_t);
+void *nasm_malloc_log(char *, int, size_t);
+void *nasm_realloc_log(char *, int, void *, size_t);
+void nasm_free_log(char *, int, void *);
+char *nasm_strdup_log(char *, int, const char *);
+char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
 #define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
@@ -58,7 +58,7 @@ char *nasm_strndup_log (char *, int, char *, size_t);
 #define nasm_stricmp strcasecmp
 #endif
 #else
-int nasm_stricmp (const char *, const char *);
+int nasm_stricmp(const char *, const char *);
 #endif
 
 #if defined(strnicmp) || defined(strncasecmp)
@@ -68,7 +68,7 @@ int nasm_stricmp (const char *, const char *);
 #define nasm_strnicmp strncasecmp
 #endif
 #else
-int nasm_strnicmp (const char *, const char *, int);
+int nasm_strnicmp(const char *, const char *, int);
 #endif
 
 /*
@@ -97,8 +97,8 @@ long seg_alloc(void);
  * function to add an extension to the name of the input file
  */
 #ifdef NASM_NASM_H
-void standard_extension (char *inname, char *outname, char *extension,
-			 efunc error);
+void standard_extension(char *inname, char *outname, char *extension,
+                        efunc error);
 #endif
 
 /*
@@ -129,8 +129,8 @@ void standard_extension (char *inname, char *outname, char *extension,
 /*
  * and routines to do the same thing to a file
  */
-void fwriteshort (int data, FILE *fp);
-void fwritelong (long data, FILE *fp);
+void fwriteshort(int data, FILE * fp);
+void fwritelong(long data, FILE * fp);
 
 /*
  * Routines to manage a dynamic random access array of longs which
@@ -138,8 +138,8 @@ void fwritelong (long data, FILE *fp);
  * chunk.
  */
 
-#define RAA_BLKSIZE 4096	       /* this many longs allocated at once */
-#define RAA_LAYERSIZE 1024	       /* this many _pointers_ allocated */
+#define RAA_BLKSIZE 4096        /* this many longs allocated at once */
+#define RAA_LAYERSIZE 1024      /* this many _pointers_ allocated */
 
 typedef struct RAA RAA;
 typedef union RAA_UNION RAA_UNION;
@@ -164,20 +164,19 @@ struct RAA {
      */
     long stepsize;
     union RAA_UNION {
-	struct RAA_LEAF {
-	    long data[RAA_BLKSIZE];
-	} l;
-	struct RAA_BRANCH {
-	    struct RAA *data[RAA_LAYERSIZE];
-	} b;
+        struct RAA_LEAF {
+            long data[RAA_BLKSIZE];
+        } l;
+        struct RAA_BRANCH {
+            struct RAA *data[RAA_LAYERSIZE];
+        } b;
     } u;
 };
 
-
-struct RAA *raa_init (void);
-void raa_free (struct RAA *);
-long raa_read (struct RAA *, long);
-struct RAA *raa_write (struct RAA *r, long posn, long value);
+struct RAA *raa_init(void);
+void raa_free(struct RAA *);
+long raa_read(struct RAA *, long);
+struct RAA *raa_write(struct RAA *r, long posn, long value);
 
 /*
  * Routines to manage a dynamic sequential-access array, under the
@@ -199,17 +198,17 @@ struct SAA {
     char *data;
 };
 
-struct SAA *saa_init (long elem_len);  /* 1 == byte */
-void saa_free (struct SAA *);
-void *saa_wstruct (struct SAA *);      /* return a structure of elem_len */
-void saa_wbytes (struct SAA *, const void *, long);  /* write arbitrary bytes */
-void saa_rewind (struct SAA *);	       /* for reading from beginning */
-void *saa_rstruct (struct SAA *);      /* return NULL on EOA */
-void *saa_rbytes (struct SAA *, long *);   /* return 0 on EOA */
-void saa_rnbytes (struct SAA *, void *, long); /* read a given no. of bytes */
-void saa_fread (struct SAA *s, long posn, void *p, long len);   /* fixup */
-void saa_fwrite (struct SAA *s, long posn, void *p, long len);   /* fixup */
-void saa_fpwrite (struct SAA *, FILE *);
+struct SAA *saa_init(long elem_len);    /* 1 == byte */
+void saa_free(struct SAA *);
+void *saa_wstruct(struct SAA *);        /* return a structure of elem_len */
+void saa_wbytes(struct SAA *, const void *, long);      /* write arbitrary bytes */
+void saa_rewind(struct SAA *);  /* for reading from beginning */
+void *saa_rstruct(struct SAA *);        /* return NULL on EOA */
+void *saa_rbytes(struct SAA *, long *); /* return 0 on EOA */
+void saa_rnbytes(struct SAA *, void *, long);   /* read a given no. of bytes */
+void saa_fread(struct SAA *s, long posn, void *p, long len);    /* fixup */
+void saa_fwrite(struct SAA *s, long posn, void *p, long len);   /* fixup */
+void saa_fpwrite(struct SAA *, FILE *);
 
 #ifdef NASM_NASM_H
 /*
@@ -217,7 +216,7 @@ void saa_fpwrite (struct SAA *, FILE *);
  */
 extern char *stdscan_bufptr;
 void stdscan_reset(void);
-int stdscan (void *private_data, struct tokenval *tv);
+int stdscan(void *private_data, struct tokenval *tv);
 #endif
 
 #ifdef NASM_NASM_H
@@ -226,7 +225,7 @@ int stdscan (void *private_data, struct tokenval *tv);
  */
 int is_reloc(expr *);
 int is_simple(expr *);
-int is_really_simple (expr *);
+int is_really_simple(expr *);
 int is_unknown(expr *);
 int is_just_unknown(expr *);
 long reloc_value(expr *);
@@ -239,8 +238,7 @@ long reloc_wrt(expr *);
  * matching `string', or <0 if no match. `array' is taken to
  * contain `size' elements.
  */
-int bsi (char *string, const char **array, int size);
-
+int bsi(char *string, const char **array, int size);
 
 char *src_set_fname(char *newname);
 long src_set_linnum(long newline);

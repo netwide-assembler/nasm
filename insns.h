@@ -10,21 +10,21 @@
 #ifndef NASM_INSNS_H
 #define NASM_INSNS_H
 
-#include "insnsi.h"		       /* instruction opcode enum */
+#include "insnsi.h"             /* instruction opcode enum */
 
 /* max length of any instruction, register name etc. */
-#if MAX_INSLEN > 9		/* MAX_INSLEN defined in insnsi.h */
+#if MAX_INSLEN > 9              /* MAX_INSLEN defined in insnsi.h */
 #define MAX_KEYWORD MAX_INSLEN
 #else
 #define MAX_KEYWORD 9
 #endif
 
 struct itemplate {
-    int opcode;			       /* the token, passed from "parser.c" */
-    int operands;		       /* number of operands */
-    long opd[3];		       /* bit flags for operand types */
-    const char *code;		   /* the code it assembles to */
-    unsigned long flags;	       /* some flags */
+    int opcode;                 /* the token, passed from "parser.c" */
+    int operands;               /* number of operands */
+    long opd[3];                /* bit flags for operand types */
+    const char *code;           /* the code it assembles to */
+    unsigned long flags;        /* some flags */
 };
 
 /* 
@@ -59,41 +59,41 @@ struct itemplate {
  * required to have unspecified size in the instruction too...)
  */
 
-#define IF_SM     0x00000001UL	       /* size match */
-#define IF_SM2    0x00000002UL	       /* size match first two operands */
-#define IF_SB     0x00000004UL	       /* unsized operands can't be non-byte */
-#define IF_SW     0x00000008UL	       /* unsized operands can't be non-word */
-#define IF_SD     0x00000010UL	       /* unsized operands can't be nondword */
-#define IF_AR0	  0x00000020UL	       /* SB, SW, SD applies to argument 0 */
-#define IF_AR1	  0x00000040UL	       /* SB, SW, SD applies to argument 1 */
-#define IF_AR2	  0x00000060UL	       /* SB, SW, SD applies to argument 2 */
-#define IF_ARMASK 0x00000060UL         /* mask for unsized argument spec */
-#define IF_PRIV   0x00000100UL	       /* it's a privileged instruction */
-#define IF_SMM    0x00000200UL	       /* it's only valid in SMM */
-#define IF_PROT   0x00000400UL         /* it's protected mode only */
-#define IF_UNDOC  0x00001000UL	       /* it's an undocumented instruction */
-#define IF_FPU    0x00002000UL	       /* it's an FPU instruction */
-#define IF_MMX    0x00004000UL	       /* it's an MMX instruction */
-#define IF_3DNOW  0x00008000UL	       /* it's a 3DNow! instruction */
-#define IF_SSE    0x00010000UL	       /* it's a SSE (KNI, MMX2) instruction */
-#define IF_SSE2   0x00020000UL	       /* it's a SSE2 instruction */
-#define IF_SSE3   0x00040000UL	       /* it's a SSE3 (PNI) instruction */
-#define IF_PMASK  0xFF000000UL	       /* the mask for processor types */
-#define IF_PLEVEL 0x0F000000UL         /* the mask for processor instr. level */
-					/* also the highest possible processor */
-#define IF_PFMASK 0xF001FF00UL	       /* the mask for disassembly "prefer" */
-#define IF_8086   0x00000000UL	       /* 8086 instruction */
-#define IF_186    0x01000000UL	       /* 186+ instruction */
-#define IF_286    0x02000000UL	       /* 286+ instruction */
-#define IF_386    0x03000000UL	       /* 386+ instruction */
-#define IF_486    0x04000000UL	       /* 486+ instruction */
-#define IF_PENT   0x05000000UL	       /* Pentium instruction */
-#define IF_P6     0x06000000UL	       /* P6 instruction */
-#define IF_KATMAI 0x07000000UL         /* Katmai instructions */
-#define IF_WILLAMETTE 0x08000000UL         /* Willamette instructions */
-#define IF_PRESCOTT   0x09000000UL     /* Prescott instructions */
-#define IF_IA64   0x0F000000UL	       /* IA64 instructions */
-#define IF_CYRIX  0x10000000UL	       /* Cyrix-specific instruction */
-#define IF_AMD    0x20000000UL	       /* AMD-specific instruction */
+#define IF_SM     0x00000001UL  /* size match */
+#define IF_SM2    0x00000002UL  /* size match first two operands */
+#define IF_SB     0x00000004UL  /* unsized operands can't be non-byte */
+#define IF_SW     0x00000008UL  /* unsized operands can't be non-word */
+#define IF_SD     0x00000010UL  /* unsized operands can't be nondword */
+#define IF_AR0	  0x00000020UL  /* SB, SW, SD applies to argument 0 */
+#define IF_AR1	  0x00000040UL  /* SB, SW, SD applies to argument 1 */
+#define IF_AR2	  0x00000060UL  /* SB, SW, SD applies to argument 2 */
+#define IF_ARMASK 0x00000060UL  /* mask for unsized argument spec */
+#define IF_PRIV   0x00000100UL  /* it's a privileged instruction */
+#define IF_SMM    0x00000200UL  /* it's only valid in SMM */
+#define IF_PROT   0x00000400UL  /* it's protected mode only */
+#define IF_UNDOC  0x00001000UL  /* it's an undocumented instruction */
+#define IF_FPU    0x00002000UL  /* it's an FPU instruction */
+#define IF_MMX    0x00004000UL  /* it's an MMX instruction */
+#define IF_3DNOW  0x00008000UL  /* it's a 3DNow! instruction */
+#define IF_SSE    0x00010000UL  /* it's a SSE (KNI, MMX2) instruction */
+#define IF_SSE2   0x00020000UL  /* it's a SSE2 instruction */
+#define IF_SSE3   0x00040000UL  /* it's a SSE3 (PNI) instruction */
+#define IF_PMASK  0xFF000000UL  /* the mask for processor types */
+#define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
+                                        /* also the highest possible processor */
+#define IF_PFMASK 0xF001FF00UL  /* the mask for disassembly "prefer" */
+#define IF_8086   0x00000000UL  /* 8086 instruction */
+#define IF_186    0x01000000UL  /* 186+ instruction */
+#define IF_286    0x02000000UL  /* 286+ instruction */
+#define IF_386    0x03000000UL  /* 386+ instruction */
+#define IF_486    0x04000000UL  /* 486+ instruction */
+#define IF_PENT   0x05000000UL  /* Pentium instruction */
+#define IF_P6     0x06000000UL  /* P6 instruction */
+#define IF_KATMAI 0x07000000UL  /* Katmai instructions */
+#define IF_WILLAMETTE 0x08000000UL      /* Willamette instructions */
+#define IF_PRESCOTT   0x09000000UL      /* Prescott instructions */
+#define IF_IA64   0x0F000000UL  /* IA64 instructions */
+#define IF_CYRIX  0x10000000UL  /* Cyrix-specific instruction */
+#define IF_AMD    0x20000000UL  /* AMD-specific instruction */
 
 #endif

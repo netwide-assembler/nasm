@@ -10,13 +10,13 @@
 #define _COLLECTN_H
 
 typedef struct tagCollection {
-    void *p[32];	/* array of pointers to objects */
-  
+    void *p[32];                /* array of pointers to objects */
+
     struct tagCollection *next;
 } Collection;
 
-void	collection_init(Collection * c);
-void ** colln(Collection * c, int index);
-void	collection_reset(Collection * c);
+void collection_init(Collection * c);
+void **colln(Collection * c, int index);
+void collection_reset(Collection * c);
 
 #endif

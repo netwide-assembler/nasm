@@ -63,11 +63,11 @@
 
 #ifndef OF_ONLY
 #ifndef OF_ALL
-#define OF_ALL      /* default is to have all formats */
+#define OF_ALL                  /* default is to have all formats */
 #endif
 #endif
 
-#ifdef OF_ALL      /* set all formats on... */
+#ifdef OF_ALL                   /* set all formats on... */
 #ifndef OF_BIN
 #define OF_BIN
 #endif
@@ -98,7 +98,7 @@
 #ifndef OF_IEEE
 #define OF_IEEE
 #endif
-#endif /* OF_ALL */
+#endif                          /* OF_ALL */
 
 /* turn on groups of formats specified.... */
 #ifdef OF_DOS
@@ -179,7 +179,7 @@
 #define OF_DEFAULT of_bin
 #endif
 
-#ifdef BUILD_DRIVERS_ARRAY	       /* only if included from outform.c */
+#ifdef BUILD_DRIVERS_ARRAY      /* only if included from outform.c */
 
 /* pull in the externs for the different formats, then make the *drivers
  * array based on the above defines */
@@ -196,7 +196,7 @@ extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
 extern struct ofmt of_dbg;
 
-struct ofmt *drivers[]={
+struct ofmt *drivers[] = {
 #ifdef OF_BIN
     &of_bin,
 #endif
@@ -231,15 +231,15 @@ struct ofmt *drivers[]={
     &of_dbg,
 #endif
 
-   NULL
+    NULL
 };
 
-#endif  /* BUILD_DRIVERS_ARRAY */
+#endif                          /* BUILD_DRIVERS_ARRAY */
 
 struct ofmt *ofmt_find(char *);
 struct dfmt *dfmt_find(struct ofmt *, char *);
 void ofmt_list(struct ofmt *, FILE *);
-void dfmt_list(struct ofmt *ofmt, FILE *fp);
-struct ofmt *ofmt_register (efunc error);
+void dfmt_list(struct ofmt *ofmt, FILE * fp);
+struct ofmt *ofmt_register(efunc error);
 
-#endif  /* NASM_OUTFORM_H */
+#endif                          /* NASM_OUTFORM_H */

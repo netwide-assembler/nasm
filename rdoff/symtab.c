@@ -21,110 +21,107 @@
 /* Private data types */
 
 typedef struct tagSymtabNode {
-  struct tagSymtabNode  * next;
-  symtabEnt             ent;
+    struct tagSymtabNode *next;
+    symtabEnt ent;
 } symtabNode;
 
-typedef symtabNode *(symtabTab[SYMTABSIZE]); 
+typedef symtabNode *(symtabTab[SYMTABSIZE]);
 
-typedef symtabTab *symtab;                   
+typedef symtabTab *symtab;
 
 /* ------------------------------------- */
-void *
-symtabNew(void)
+void *symtabNew(void)
 {
-  symtab mytab;
+    symtab mytab;
 
-  mytab = (symtabTab *) calloc(SYMTABSIZE ,sizeof(symtabNode *));
-  if (mytab == NULL) {
-    fprintf(stderr,"symtab: out of memory\n");
-    exit(3);
-  }
+    mytab = (symtabTab *) calloc(SYMTABSIZE, sizeof(symtabNode *));
+    if (mytab == NULL) {
+        fprintf(stderr, "symtab: out of memory\n");
+        exit(3);
+    }
 
-  return mytab;
+    return mytab;
 }
 
 /* ------------------------------------- */
-void
-symtabDone(void *stab)
+void symtabDone(void *stab)
 {
-   symtab mytab = (symtab)stab;
-   int i;
-   symtabNode *this, *next;
+    symtab mytab = (symtab) stab;
+    int i;
+    symtabNode *this, *next;
 
-   for (i=0; i < SYMTABSIZE; ++i) {
+    for (i = 0; i < SYMTABSIZE; ++i) {
 
-      for (this = (*mytab)[i]; this; this=next)
-      { next = this->next;   free (this); }
+        for (this = (*mytab)[i]; this; this = next) {
+            next = this->next;
+            free(this);
+        }
 
-   }
-   free (*mytab);
+    }
+    free(*mytab);
 }
 
 /* ------------------------------------- */
-void
-symtabInsert(void *stab, symtabEnt *ent)
+void symtabInsert(void *stab, symtabEnt * ent)
 {
-  symtab mytab = (symtab) stab;
-  symtabNode *node;
-  int slot;
+    symtab mytab = (symtab) stab;
+    symtabNode *node;
+    int slot;
 
-  node = malloc(sizeof(symtabNode));
-  if (node == NULL) {
-    fprintf(stderr,"symtab: out of memory\n");
-    exit(3);
-  }
+    node = malloc(sizeof(symtabNode));
+    if (node == NULL) {
+        fprintf(stderr, "symtab: out of memory\n");
+        exit(3);
+    }
 
-  slot = slotnum(ent->name);
+    slot = slotnum(ent->name);
 
-  node->ent = *ent;
-  node->next = (*mytab)[slot];
-  (*mytab)[slot] = node; 
+    node->ent = *ent;
+    node->next = (*mytab)[slot];
+    (*mytab)[slot] = node;
 }
 
 /* ------------------------------------- */
-symtabEnt *
-symtabFind(void *stab, const char *name)
+symtabEnt *symtabFind(void *stab, const char *name)
 {
-   symtab mytab = (symtab) stab;
-   int slot = slotnum(name);
-   symtabNode *node = (*mytab)[slot];
+    symtab mytab = (symtab) stab;
+    int slot = slotnum(name);
+    symtabNode *node = (*mytab)[slot];
 
-   while (node) {
-      if (!strcmp(node->ent.name,name)) {
-	 return &(node->ent);
-      }
-      node = node->next;
-   }  
+    while (node) {
+        if (!strcmp(node->ent.name, name)) {
+            return &(node->ent);
+        }
+        node = node->next;
+    }
 
-   return NULL;
+    return NULL;
 }
 
 /* ------------------------------------- */
-void
-symtabDump(void *stab, FILE* of)
+void symtabDump(void *stab, FILE * of)
 {
-   symtab mytab = (symtab)stab;
-   int i;
-   char *SegNames[3]={"code","data","bss"};
+    symtab mytab = (symtab) stab;
+    int i;
+    char *SegNames[3] = { "code", "data", "bss" };
 
-   fprintf(of, "Symbol table is ...\n");
-   for (i=0; i < SYMTABSIZE; ++i) {
-      symtabNode        *l = (symtabNode *)(*mytab)[i];
+    fprintf(of, "Symbol table is ...\n");
+    for (i = 0; i < SYMTABSIZE; ++i) {
+        symtabNode *l = (symtabNode *) (*mytab)[i];
 
-      if (l) {
-	 fprintf(of, " ... slot %d ...\n", i);
-      }
-      while(l) {
-	if ((l->ent.segment) == -1) {
-	    fprintf(of,"%-32s Unresolved reference\n",l->ent.name);
-	} else {		
-	    fprintf(of, "%-32s %s:%08lx (%ld)\n",l->ent.name,
-	    SegNames[l->ent.segment],
-	    l->ent.offset, l->ent.flags);
-	}
-	l = l->next;
-      }
-   }
-   fprintf(of, "........... end of Symbol table.\n");
+        if (l) {
+            fprintf(of, " ... slot %d ...\n", i);
+        }
+        while (l) {
+            if ((l->ent.segment) == -1) {
+                fprintf(of, "%-32s Unresolved reference\n", l->ent.name);
+            } else {
+                fprintf(of, "%-32s %s:%08lx (%ld)\n", l->ent.name,
+                        SegNames[l->ent.segment],
+                        l->ent.offset, l->ent.flags);
+            }
+            l = l->next;
+        }
+    }
+    fprintf(of, "........... end of Symbol table.\n");
 }
