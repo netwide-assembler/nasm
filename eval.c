@@ -45,6 +45,10 @@ static int *opflags;
 
 static struct eval_hints *hint;
 
+extern int  in_abs_seg;		/* ABSOLUTE segment flag */
+extern long abs_seg;		/* ABSOLUTE segment */
+extern long abs_offset;		/* ABSOLUTE segment offset */
+
 /*
  * Unimportant cleanup is done to avoid confusing people who are trying
  * to debug real memory leaks
@@ -701,11 +705,11 @@ static expr *expr6(int critical)
 	    type = EXPR_SIMPLE;	       /* might get overridden by UNKNOWN */
 	    if (i == TOKEN_BASE)
 	    {
-		label_seg = location->segment;
+		label_seg = in_abs_seg ? abs_seg : location->segment;
 		label_ofs = 0;
 	    } else if (i == TOKEN_HERE) {
-		label_seg = location->segment;
-		label_ofs = location->offset;
+		label_seg = in_abs_seg ? abs_seg : location->segment;
+		label_ofs = in_abs_seg ? abs_offset : location->offset;
 	    } else {
 		if (!labelfunc(tokval->t_charptr,&label_seg,&label_ofs))
 		{
