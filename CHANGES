@@ -1,5 +1,6 @@
 0.98.36
 -------
+* Update rdoff - librarian/archiver - common rec - docs!
 * Fix signed/unsigned problems.
 * Fix JMP FAR label and CALL FAR label.
 
@@ -106,100 +107,124 @@ it 0.98.28 to not confuse poor little apt-get.
 0.98.25alt
 ----------
 
-* Prettified the source tree. Moved files to more
-reasonable places.
+* Prettified the source tree. Moved files to more reasonable places.
 * Added findleak.pl script to misc/ directory.
-* FIXME: Frank, document this please.
-
+* Attempted to fix doc.
 
 0.98.25
 -------
 
-* FIXME: Frank, document this please.
+* Line continuation character '\'
+* Docs inadvertantly reverted - "dos packaging".
 
 
 0.98.24p1
 ---------
 
-* FIXME: Frank, document this please.
+* FIXME: Someone, document this please.
 
 
 0.98.24
 -------
 
-* FIXME: Frank, document this please.
+* Documentation - Ndisasm doc added to Nasm.doc.
 
 
 0.98.23
 -------
 
-* FIXME: Frank, document this please.
+* Attempted to remove rdoff version1
+* Lino Mastrodomenico's patches to preproc.c (%$$ bug?).
 
 
 0.98.22
 -------
 
-* FIXME: Frank, document this please.
+* Update rdoff2 - attempt to remove v1.
 
 
 0.98.21
 -------
 
-* FIXME: Frank, document this please.
+* Optimization fixes.
 
 
 0.98.20
 -------
 
-* FIXME: Frank, document this please.
+* Optimization fixes.
 
 
 0.98.19
 -------
 
-* FIXME: Frank, document this please.
+* H. J. Lu's patch back out.
 
 
 0.98.18
 -------
 
-* FIXME: Frank, document this please.
+* Added ".rdata" to "-f win32".
 
 
 0.98.17
 -------
 
-* FIXME: Frank, document this please.
+* H. J. Lu's "bogus elf" patch. (Red Hat problem?)
 
 
 0.98.16
 -------
 
-* FIXME: Frank, document this please.
+* Fix whitespace before "[section ..." bug.
 
+0.98.15
+-------
+
+* Rdoff changes (?).
+* Fix fixes to memory leaks.
 
 0.98.14
 -------
 
-* FIXME: Frank, document this please.
-
+* Fix memory leaks.
+* (there was no '.13)
 
 0.98.12
 -------
 
-* FIXME: Frank, document this please.
+* Update optimization (new function of "-O1")
+* Changes to test/bintest.asm (?).
 
+0.98.11
+-------
+
+* Optimization changes.
+* Ndisasm fixed.
+* (there was no '.10)
 
 0.98.09
 -------
 
-* FIXME: Frank, document this please.
-
+* Add multiple sections support to "-f bin".
+* Changed GLOBAL_TEMP_BASE in outelf.c from 6 to 15.
+* Add "-v" as an alias to the "-r" switch.
+* Remove "#ifdef" from Tasm compatibility options.
+* Remove redundant size-overrides on "mov ds, ex", etc.
+* Fixes to SSE2, other insns.dat (?).
+* Enable uppercase "I" and "P" switches.
+* Case insinsitive "seg" and "wrt".
+* Update install.sh (?).
+* Allocate tokens in blocks.
+* Improve "invalid effective address" messages.
 
 0.98.08
 -------
 
-* FIXME: Frank, document this please.
+* Add "%strlen" and "%substr" macro operators
+* Fixed broken c16.mac.
+* Unterminated string error reported.
+* Fixed bugs as per 0.98bf
 
 
 0.98.09b with John Coffman patches released 28-Oct-2001
@@ -240,7 +265,7 @@ from the current BITS setting (16 or 32).
 0.98.07 released 01/28/01
 -------------------------
 
-* fbk - added Stepane Denis' SSE2 instructions to a *working*
+*       Added Stepane Denis' SSE2 instructions to a *working*
         version of the code - some earlier versions were based on
         broken code - sorry 'bout that. version "0.98.07"
 
@@ -248,21 +273,21 @@ from the current BITS setting (16 or 32).
 01/28/01
 --------
 
-* fbk - cosmetic modifications to nasm.c, nasm.h,
+*       Cosmetic modifications to nasm.c, nasm.h,
         AUTHORS, MODIFIED
 
 
 0.98.06f released 01/18/01
 --------------------------
 
-* fbk - "metalbrain"s jecxz bug fix in insns.dat
+*       - Add "metalbrain"s jecxz bug fix in insns.dat
         - alter nasmdoc.src to match - version "0.98.06f"
 
 
 0.98.06e released 01/09/01
 --------------------------
 
-* fbk - removed the "outforms.h" file - it appears to be
+*       Removed the "outforms.h" file - it appears to be
         someone's old backup of "outform.h". version "0.98.06e" 
 
 
@@ -296,14 +321,16 @@ from the current BITS setting (16 or 32).
 ------
 
 * GAS-like palign (Panos Minos)
-* FIXME: Frank, fill this in with details
+* FIXME: Someone, fill this in with details
 
 
-0.98bf (bug-fixed, aka brain-fuck)
+0.98bf (bug-fixed)
 ----------------------------------
 
-* FIXME: Frank, fill this in
-
+* Fixed - elf and aoutb bug - shared libraries
+        - multiple "%include" bug in "-f obj"   
+        - jcxz, jecxz bug
+	- unrecognized option bug in ndisasm 
 
 0.98.03 with John Coffman's changes released 27-Jul-2000
 --------------------------------------------------------
