@@ -160,6 +160,7 @@ everything: all doc rdf
 install_everything: everything install install_doc install_rdf
 
 dist: spotless perlreq spec
+	autoheader
 	autoconf
 	rm -rf ./autom4te*.cache
 

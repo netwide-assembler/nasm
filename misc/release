@@ -29,7 +29,9 @@ work=`pwd`/nasm-release.$$
 mkdir "$work"
 cd "$work"
 
-if $real; then
+# SF uses a mirror server for anonymous CVS now.  Therefore, use a real
+# identity if we have one; otherwise, change the "true" below to "$real".
+if true; then
   # Need to tag the tree, use real account
   CVS="cvs -z3 -d ${sfuser}@cvs.nasm.sourceforge.net:/cvsroot/nasm"
 else
