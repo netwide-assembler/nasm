@@ -86,6 +86,7 @@ cd ..
 rm -f ../nasm-${version}.tar.gz  ../nasm-${version}-xdoc.tar.gz
 rm -f ../nasm-${version}.tar.bz2 ../nasm-${version}-xdoc.tar.bz2
 rm -f ../nasm-${version}.zip     ../nasm-${version}-xdoc.zip
+rm -f ../nasm-${version}.spec
 
 # Create tarfile (Unix convention: file includes prefix)
 mv nasm nasm-$version
@@ -100,18 +101,16 @@ zip -9Dlr ../../nasm-${version}.zip -x@"$bins" *	# Text files
 zip -9Dgr ../../nasm-${version}.zip -i@"$bins" *	# Binary files
 cd ..
 
-# Create specfile
-cd nasm-$version
-make spec
-cp nasm.spec ../../nasm-${version}.spec
-cd ..
-
 # Record what we have already generated
 find nasm-$version -not -type d -print > main
 
-# Create documentation
+# Create specfile
 cd nasm-${version}
 ./configure --prefix=/usr/local
+make spec
+cp nasm.spec ../../nasm-${version}.spec
+
+# Create documentation
 make doc
 # Remove intermediate files.
 make cleaner
