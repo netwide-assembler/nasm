@@ -91,69 +91,61 @@ $tocskip = 6;			# Space between TOC entries
 	      'code' => $paraskip, 'toc0' => $tocskip,
 	      'toc1' => $tocskip,  'toc2' => $tocskip);
 
-#
 # Custom encoding vector.  This is basically the same as
 # ISOLatin1Encoding (a level 2 feature, so we dont want to use it),
-# but with a few extra characters thrown in.  It is basically a
-# modified Windows 1252 codepage, minus, for now, the euro sign (\200
-# is reserved for euro.)
-#
+# but with the "naked" accents at \200-\237 moved to the \000-\037
+# range (ASCII control characters), and a few extra characters thrown
+# in.  It is basically a modified Windows 1252 codepage, minus, for
+# now, the euro sign (\200 is reserved for euro.)
+
 @NASMEncoding =
 (
- (undef)x32,
- 'space', 'exclam', 'quotedbl', 'numbersign', 'dollar', 'percent',
- 'ampersand', 'quoteright', 'parenleft',
- 'parenright', 'asterisk', 'plus', 'comma', 'minus',
- 'period', 'slash', 'zero', 'one', 'two', 'three',
- 'four', 'five', 'six', 'seven', 'eight', 'nine',
- 'colon', 'semicolon', 'less', 'equal', 'greater',
- 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
- 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
- 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
- 'bracketleft', 'backslash', 'bracketright',
- 'asciicircum', 'underscore', 'quoteleft', 'a', 'b',
- 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
- 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
- 'w', 'x', 'y', 'z', 'braceleft', 'bar',
- 'braceright', 'asciitilde', undef,
- undef, 'macron', 'quotesinglbase', 'florin',
- 'quotedblbase', 'ellipsis', 'dagger', 'dbldagger',
- 'circumflex', 'perthousand', 'Scaron', 'guilsinglleft',
- 'OE', 'hungarumlaut', 'Zcaron', 'caron',
- 'ogonek', 'grave', 'quotesingle', 'quotedblleft',
- 'quotedblright', 'bullet', 'endash', 'emdash',
- 'tilde', 'trademark', 'scaron', 'guilsignlright',
- 'oe', 'ring', 'zcaron', 'Ydieresis',
- 'space', 'exclamdown', 'cent', 'sterling',
- 'currency', 'yen', 'brokenbar', 'section',
- 'dieresis', 'copyright', 'ordfeminine',
- 'guillemotleft', 'logicalnot', 'hyphen',
- 'registered', 'macron', 'degree', 'plusminus',
- 'twosuperior', 'threesuperior', 'acute', 'mu',
- 'paragraph', 'periodcentered', 'cedilla',
- 'onesuperior', 'ordmasculine', 'guillemotright',
- 'onequarter', 'onehalf', 'threequarters',
- 'questiondown', 'Agrave', 'Aacute', 'Acircumflex',
- 'Atilde', 'Adieresis', 'Aring', 'AE', 'Ccedilla',
- 'Egrave', 'Eacute', 'Ecircumflex', 'Edieresis',
- 'Igrave', 'Iacute', 'Icircumflex', 'Idieresis',
- 'Eth', 'Ntilde', 'Ograve', 'Oacute', 'Ocircumflex',
- 'Otilde', 'Odieresis', 'multiply', 'Oslash',
- 'Ugrave', 'Uacute', 'Ucircumflex', 'Udieresis',
- 'Yacute', 'Thorn', 'germandbls', 'agrave', 'aacute',
- 'acircumflex', 'atilde', 'adieresis', 'aring', 'ae',
- 'ccedilla', 'egrave', 'eacute', 'ecircumflex',
- 'edieresis', 'igrave', 'iacute', 'icircumflex',
- 'idieresis', 'eth', 'ntilde', 'ograve', 'oacute',
- 'ocircumflex', 'otilde', 'odieresis', 'divide',
- 'oslash', 'ugrave', 'uacute', 'ucircumflex',
- 'udieresis', 'yacute', 'thorn', 'ydieresis'
+ undef, undef, undef, undef, undef, undef, undef, undef, undef, undef,
+ undef, undef, undef, undef, undef, undef, 'dotlessi', 'grave',
+ 'acute', 'circumflex', 'tilde', 'macron', 'breve', 'dotaccent',
+ 'dieresis', undef, 'ring', 'cedilla', undef, 'hungarumlaut',
+ 'ogonek', 'caron', 'space', 'exclam', 'quotedbl', 'numbersign',
+ 'dollar', 'percent', 'ampersand', 'quoteright', 'parenleft',
+ 'parenright', 'asterisk', 'plus', 'comma', 'minus', 'period',
+ 'slash', 'zero', 'one', 'two', 'three', 'four', 'five', 'six',
+ 'seven', 'eight', 'nine', 'colon', 'semicolon', 'less', 'equal',
+ 'greater', 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+ 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+ 'W', 'X', 'Y', 'Z', 'bracketleft', 'backslash', 'bracketright',
+ 'asciicircum', 'underscore', 'quoteleft', 'a', 'b', 'c', 'd', 'e',
+ 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+ 't', 'u', 'v', 'w', 'x', 'y', 'z', 'braceleft', 'bar', 'braceright',
+ 'asciitilde', undef, undef, undef, 'quotesinglbase', 'florin',
+ 'quotedblbase', 'ellipsis', 'dagger', 'dbldagger', 'circumflex',
+ 'perthousand', 'Scaron', 'guilsinglleft', 'OE', undef, 'Zcaron',
+ undef, undef, 'grave', 'quotesingle', 'quotedblleft',
+ 'quotedblright', 'bullet', 'endash', 'emdash', 'tilde', 'trademark',
+ 'scaron', 'guilsignlright', 'oe', undef, 'zcaron', 'Ydieresis',
+ 'space', 'exclamdown', 'cent', 'sterling', 'currency', 'yen',
+ 'brokenbar', 'section', 'dieresis', 'copyright', 'ordfeminine',
+ 'guillemotleft', 'logicalnot', 'hyphen', 'registered', 'macron',
+ 'degree', 'plusminus', 'twosuperior', 'threesuperior', 'acute', 'mu',
+ 'paragraph', 'periodcentered', 'cedilla', 'onesuperior',
+ 'ordmasculine', 'guillemotright', 'onequarter', 'onehalf',
+ 'threequarters', 'questiondown', 'Agrave', 'Aacute', 'Acircumflex',
+ 'Atilde', 'Adieresis', 'Aring', 'AE', 'Ccedilla', 'Egrave', 'Eacute',
+ 'Ecircumflex', 'Edieresis', 'Igrave', 'Iacute', 'Icircumflex',
+ 'Idieresis', 'Eth', 'Ntilde', 'Ograve', 'Oacute', 'Ocircumflex',
+ 'Otilde', 'Odieresis', 'multiply', 'Oslash', 'Ugrave', 'Uacute',
+ 'Ucircumflex', 'Udieresis', 'Yacute', 'Thorn', 'germandbls',
+ 'agrave', 'aacute', 'acircumflex', 'atilde', 'adieresis', 'aring',
+ 'ae', 'ccedilla', 'egrave', 'eacute', 'ecircumflex', 'edieresis',
+ 'igrave', 'iacute', 'icircumflex', 'idieresis', 'eth', 'ntilde',
+ 'ograve', 'oacute', 'ocircumflex', 'otilde', 'odieresis', 'divide',
+ 'oslash', 'ugrave', 'uacute', 'ucircumflex', 'udieresis', 'yacute',
+ 'thorn', 'ydieresis'
 );
 
-$emdash    = "\227";
-$endash    = "\226";
-$bullet    = "\225";
-$copyright = "\251";
+# Name-to-byte lookup hash
+%charcode = ();
+for ( $i = 0 ; $i < 256 ; $i++ ) {
+    $charcode{$NASMEncoding[$i]} = chr($i);
+}
 
 #
 # First, format the stuff coming from the front end into
@@ -222,7 +214,7 @@ sub string2array($)
     my($s) = @_;
     my(@a) = ();
     
-    $s =~ s/ \- / $endash /g;	# Replace " - " with en dash
+    $s =~ s/ \- / $charcode{'endash'} /g;	# Replace " - " with en dash
 
     while ( $s =~ /^(\s+|\S+)(.*)$/ ) {
 	push(@a, [0,$1]);
@@ -456,7 +448,7 @@ sub mkparaarray($@) {
 	    if ( $type eq 'sp' ) {
 		push(@para, [$in_e?1:0, ' ']);
 	    } elsif ( $type eq 'da' ) {
-		push(@para, [$in_e?1:0, $endash]);
+		push(@para, [$in_e?1:0, $charcode{'endash'}]);
 	    } elsif ( $type eq 'n ' ) {
 		push(@para, [0, $text]);
 		$in_e = 0;
@@ -600,7 +592,7 @@ unshift(@ptypes, @tocptypes); undef @tocptypes;
 # Add copyright notice to the beginning
 #
 unshift(@paras,
-	[[0, $copyright], [0, ' '], [0,$metadata{'year'}],
+	[[0, $charcode{'copyright'}], [0, ' '], [0,$metadata{'year'}],
 	 [0, ' '], string2array($metadata{'author'})],
 	[string2array($metadata{'license'})]);
 unshift(@ptypes, 'norm', 'norm');
@@ -973,16 +965,13 @@ print "  definefont pop\n";
 print "} def\n";
 
 # Emit fontset definitions
+foreach $font ( keys(%ps_all_fonts) ) {
+    print '/',$font,'-NASM /',$font," nasmenc\n";
+}
+
 foreach $fset ( @AllFonts ) {
     my $i = 0;
     my @zfonts = ();
-    my %allfonts = ();
-    foreach $font ( @{$fset->{fonts}} ) {
-	$allfonts{$font->[1]->{name}}++;
-    }
-    foreach $font ( keys(%allfonts) ) {
-	print '/',$font,'-NASM /',$font," nasmenc\n";
-    }
     foreach $font ( @{$fset->{fonts}} ) {
 	print '/', $fset->{name}, $i, ' ',
 	'/', $font->[1]->{name}, '-NASM findfont ',
@@ -992,6 +981,9 @@ foreach $fset ( @AllFonts ) {
     }
     print '/', $fset->{name}, ' [', join(' ',@zfonts), "] def\n";
 }
+
+# This is used by the bullet-paragraph PostScript methods
+print "/bullet [",ps_string($charcode{'bullet'}),"] def\n";
 
 # Emit the canned PostScript prologue
 open(PSHEAD, "< head.ps");
