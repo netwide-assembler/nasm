@@ -26,4 +26,5 @@ close(VERSION);
 
 # \240 = no-break space, see @NASMEncoding in genps.pl.
 # If we use a normal space, it breaks on 'doze platforms...
-system($perl, $genps, '-subtitle', "version\240".$version, 'nasmdoc.dip');
+system($perl, $genps, '-subtitle', "version\240".$version,
+       @ARGV, 'nasmdoc.dip');
