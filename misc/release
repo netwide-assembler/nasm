@@ -33,7 +33,7 @@ cd "$work"
 # identity if we have one; otherwise, change the "true" below to "$real".
 if true; then
   # Need to tag the tree, use real account
-  CVS="cvs -z3 -d ${sfuser}@cvs.nasm.sourceforge.net:/cvsroot/nasm"
+  CVS="cvs -z3 -d ${sfuser}@cvs.sourceforge.net:/cvsroot/nasm"
 else
   # Don't need to tag the tree, can use anonymous
   echo ':pserver:anonymous@cvs.nasm.sourceforge.net:/cvsroot/nasm A' > "$work"/cvspass
