@@ -155,7 +155,6 @@ static void out (long offset, long segto, const void *data, unsigned long type,
     if (src_get(&lineno,&lnfname))
     {
 	outfmt->current_dfmt->linenum(lnfname,lineno,segto);
-        if (lnfname) nasm_free(lnfname);
     }
 
     outfmt->output (segto, data, type, segment, wrt);
