@@ -1,5 +1,4 @@
-/* The Netwide Assembler main program module
- *
+ /*
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
  * redistributable under the licence given in the file "Licence"
@@ -22,6 +21,7 @@
 #include "labels.h"
 #include "outform.h"
 #include "listing.h"
+#define CACHE_ALIGN
 
 struct forwrefinfo {		       /* info held on forward refs. */
     int lineno;
@@ -36,6 +36,15 @@ static void assemble_file (char *);
 static int getkw (char *buf, char **value);
 static void register_output_formats(void);
 static void usage(void);
+#ifdef CACHE_ALIGN
+static int get_alignv (char *value);
+void nop(void);
+static int isdirective(char * line);
+typedef struct lline {
+		struct lline * next;
+		char * line;
+} lline;
+#endif
 
 static int using_debug_info;
 int	   tasm_compatible_mode = FALSE;
@@ -55,6 +64,10 @@ int optimizing = -1;		/* number of optimization passes to take */
 static int sb, cmd_sb = 16;		       /* by default */
 static unsigned long cmd_cpu = IF_PLEVEL;	/* highest level by default */
 static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
+#ifdef CACHE_ALIGN
+static int alignv = 0;
+static int alignseg;
+#endif
 int global_offset_changed;             /* referenced in labels.c */
 
 static loc_t location;
@@ -370,7 +383,10 @@ static int process_arg (char *p, char *q)
 	  case 'l':
 	  case 'E':
 	  case 'F':
-	    if ( !(param = get_param (p, q, &advance)) )
+#ifdef 0/*CACHE_ALIGN*/
+	  case 'A':		  
+#endif
+  		  if ( !(param = get_param (p, q, &advance)) )
 		break;
 	    if (p[1]=='o') {	       /* output file */
 		strcpy (outname, param);
@@ -384,8 +400,20 @@ static int process_arg (char *p, char *q)
 		}
 		else
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
-	    } else if (p[1]=='O') {		    /* Optimization level */
+		}
+#ifdef 0 /*CACHE_ALIGN*/
+		else if (p[1]=='A') {
 		int opt;
+			if (!isdigit(*param)) report_error(ERR_FATAL,
+				"command line alignment level must be 0..6");
+			opt = atoi(param);
+			if (opt<=0) alignv = 0;
+			else if (opt>=6) alignv = 64;
+			else alignv = (1 << opt);
+		}
+#endif
+		else if (p[1]=='O') {		    /* Optimization level */
+				int opt;
 	        if (!isdigit(*param)) report_error(ERR_FATAL,
 	             "command line optimization level must be 0..3 or <nn>");
 	    	opt = atoi(param);
@@ -745,6 +773,29 @@ static void assemble_file (char *fname)
 {
     char   * value, * p, * q, * special, * line, debugid[80];
     insn   output_ins;
+
+	#ifdef CACHE_ALIGN
+	lline * prevlline, * curlline, * lastlline;
+	char * nextline;
+	insn  pad_ins[15] ;
+	char * pad_line[] = { 
+	" db 0x90 " ,
+	" db 0x8D,0x36 " ,
+	" db 0x8D,0x76,0x00 " ,
+	" db 0x8D,0x74,0x26,0x00 " ,
+	" db 0x8D,0x74,0x26,0x00,0x90 " ,
+	" db 0x8D,0xB6,0x00,0x00,0x00,0x00 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x90 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x8D,0x36 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x8D,0x76,0x00 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x8D,0x74,0x26,0x00 " ,
+	" db 0x8D,0xB6,0x00,0x00,0x00,0x00,0x8D,0xB6,0x00,0x00,0x00,0x00 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x8D,0xB6,0x00,0x00,0x00,0x00 " ,
+	" db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00,0x8D,0xB4,0x26,0x00,0x00,0x00,0x00 ",
+	" db 0xEB,0x00 " } ;
+	#endif
+
     int    i, rn_error, validid;
     long   seg, offs;
     struct tokenval tokval;
@@ -752,11 +803,19 @@ static void assemble_file (char *fname)
     int pass, pass_max;
     int pass_cnt = 0;		/* count actual passes */
 
-    if (cmd_sb == 32 && cmd_cpu < IF_386)
+	#ifdef CACHE_ALIGN
+	for (i=0 ; i<15 ; i++) {
+		parse_line ( 1 , pad_line[i], &pad_ins[i],
+		report_error, evaluate, define_label); 
+	}
+	#endif
+	
+	if (cmd_sb == 32 && cmd_cpu < IF_386)
       report_error(ERR_FATAL, "command line: "
                     "32-bit segment size requires a higher cpu");
 
-   pass_max = (optimizing>0 ? optimizing : 0) + 2;    /* passes 1, optimizing, then 2 */
+   pass_max = (optimizing>0 ? optimizing : 0) + 2;    /* passes 1, optimizing, 
+then 2 */
    pass0 = !(optimizing>0);		/* start at 1 if not optimizing */
    for (pass = 1; pass <= pass_max  &&  pass0 <= 2; pass++) {
       int pass1, pass2;
@@ -788,10 +847,20 @@ static void assemble_file (char *fname)
       globallineno = 0;
       if (pass == 1) location.known = TRUE;
       location.offset = offs = GET_CURR_OFFS;
-
-      while ( (line = preproc->getline()) )
+#ifdef CACHE_ALIGN
+	  alignv=0;
+	  curlline=nasm_malloc(sizeof(lline));
+	  curlline->next=NULL;
+	  curlline->line = preproc->getline();
+	  prevlline=lastlline=curlline;
+	  while (curlline->line!=NULL)
       {
-         globallineno++;
+		line=curlline->line;
+#else
+	 while ( (line = preproc->getline()) )
+     {
+#endif	 		  
+		globallineno++;
 
          /* here we parse our directives; this is not handled by the 'real'
             * parser. */
@@ -807,7 +876,7 @@ static void assemble_file (char *fname)
                   } else {
                      in_abs_seg = FALSE;
                      location.segment = seg;
-                  }
+					}
                   break;
                case 2:               /* [EXTERN label:special] */
                   if (*value == '$') value++;   /* skip initial $ if present */
@@ -839,11 +908,13 @@ static void assemble_file (char *fname)
                            special = q;
                         } else
                            special = NULL;
-                        if (!is_extern(value)) {   /* allow re-EXTERN to be ignored */
+                        if (!is_extern(value)) {   /* allow re-EXTERN to be 
+ignored */
                            int temp = pass0;
                            pass0 = 1;	/* fake pass 1 in labels.c */
                            declare_as_global (value, special, report_error);
-                           define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
+                           define_label (value, seg_alloc(), 0L, NULL, FALSE, 
+TRUE,
                                           ofmt, report_error);
                            pass0 = temp;
                         }
@@ -942,7 +1013,8 @@ static void assemble_file (char *fname)
                   stdscan_reset();
                   stdscan_bufptr = value;
                   tokval.t_type = TOKEN_INVALID;
-                  e = evaluate(stdscan, NULL, &tokval, NULL, pass2, report_error,
+                  e = evaluate(stdscan, NULL, &tokval, NULL, pass2, 
+report_error,
                               NULL);
                   if (e) {
                      if (!is_reloc(e))
@@ -954,7 +1026,8 @@ static void assemble_file (char *fname)
                            abs_offset = reloc_value(e);
                      }
                   } else
-                     if (pass==1) abs_offset = 0x100;/* don't go near zero in case of / */
+                     if (pass==1) abs_offset = 0x100;/* don't go near zero in 
+case of / */
                      else report_error (ERR_PANIC, "invalid ABSOLUTE address "
                                     "in pass two");
                   in_abs_seg = TRUE;
@@ -978,7 +1051,8 @@ static void assemble_file (char *fname)
                      break;
                   }
                   while (*p && isspace(*p)) p++;
-                  if (pass==pass_max) ofmt->current_dfmt->debug_directive (debugid, p);
+                  if (pass==pass_max) ofmt->current_dfmt->debug_directive 
+(debugid, p);
                   break;
                case 8:			/* [WARNING {+|-}warn-name] */
                   if (pass1 == 1) {
@@ -1019,6 +1093,56 @@ static void assemble_file (char *fname)
                           }
                       }
                   break;
+			#ifdef CACHE_ALIGN
+			   case 11:
+					do {
+						int alignv;
+						int pad_len;
+						insn * pad_temp;
+						extop * pad_eop;
+						alignv = get_alignv(value);
+						if (alignv) {
+							if (pass1 == 1) {
+								offs = offs + ((alignv - 1) & (-offs));
+		            			SET_CURR_OFFS (offs);
+	        				}
+							else {
+								pad_len = ((alignv -1 ) & (-offs));
+								if (pad_len >= 15) {
+									pad_temp = &pad_ins[14];
+									pad_eop = pad_temp->eops  ;
+									pad_eop = pad_eop->next ;
+									pad_eop->offset = pad_len - 2 ;
+									offs += assemble (location.segment, offs, sb, cpu,
+										&pad_ins[14], ofmt, report_error,
+										&nasmlist);
+									SET_CURR_OFFS (offs);
+									pad_len-=2 ;
+									while (pad_len)
+									{
+										offs += assemble (location.segment, offs, sb, cpu,
+											&pad_ins[0], ofmt, report_error,
+											&nasmlist);
+										SET_CURR_OFFS (offs);
+									pad_len--;
+									}
+								}
+								else if (pad_len > 0)
+								{
+									offs += assemble (location.segment, offs, sb, cpu,
+										&pad_ins[pad_len - 1], ofmt, report_error,
+										&nasmlist);
+									SET_CURR_OFFS (offs);
+								}
+							}			
+						}
+					} while (0) ;
+					break;
+				case 12:
+					alignv = get_alignv(value);
+					alignseg = seg;
+					break;
+			#endif				
                default:
                   if (!ofmt->directive (line+1, value, pass2))
                      report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC,
@@ -1036,9 +1160,11 @@ static void assemble_file (char *fname)
                   if (forwref != NULL && globallineno == forwref->lineno) {
                      output_ins.forw_ref = TRUE;
                      do {
-                        output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
+                        output_ins.oprs[forwref->operand].opflags |= 
+OPFLAG_FORWARD;
                         forwref = saa_rstruct (forwrefs);
-                     } while (forwref != NULL && forwref->lineno == globallineno);
+                     } while (forwref != NULL && forwref->lineno == 
+globallineno);
                   } else
                      output_ins.forw_ref = FALSE;
                }
@@ -1052,7 +1178,8 @@ static void assemble_file (char *fname)
                            if (output_ins.oprs[i].opflags & OPFLAG_FORWARD)
                            {
                                     struct forwrefinfo *fwinf =
-                                       (struct forwrefinfo *)saa_wstruct(forwrefs);
+                                       (struct forwrefinfo 
+*)saa_wstruct(forwrefs);
                                  fwinf->lineno = globallineno;
                                  fwinf->operand = i;
                            }
@@ -1108,11 +1235,13 @@ static void assemble_file (char *fname)
                                  (output_ins.oprs[0].type & IMMEDIATE) &&
                                  output_ins.oprs[0].wrt == NO_SEG)
                            {
-                              int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
+                              int isext = output_ins.oprs[0].opflags & 
+OPFLAG_EXTERN;
                               def_label (output_ins.label,
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
-                                             NULL, FALSE, isext, ofmt, report_error);
+                                             NULL, FALSE, isext, ofmt, 
+report_error);
                            }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
@@ -1124,9 +1253,11 @@ static void assemble_file (char *fname)
                                        output_ins.oprs[1].wrt == NO_SEG)
                            {
                                  def_label (output_ins.label,
-                                             output_ins.oprs[0].offset | SEG_ABS,
+                                             output_ins.oprs[0].offset | 
+SEG_ABS,
                                              output_ins.oprs[1].offset,
-                                             NULL, FALSE, FALSE, ofmt, report_error);
+                                             NULL, FALSE, FALSE, ofmt, 
+report_error);
                            }
                            else
                                  report_error(ERR_NONFATAL, "bad syntax for EQU");
@@ -1145,7 +1276,8 @@ static void assemble_file (char *fname)
                                  define_label (output_ins.label,
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
-                                             NULL, FALSE, FALSE, ofmt, report_error);
+                                             NULL, FALSE, FALSE, ofmt, 
+report_error);
                            }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
@@ -1155,9 +1287,11 @@ static void assemble_file (char *fname)
                                        output_ins.oprs[1].segment == NO_SEG)
                            {
                                  define_label (output_ins.label,
-                                             output_ins.oprs[0].offset | SEG_ABS,
+                                             output_ins.oprs[0].offset | 
+SEG_ABS,
                                              output_ins.oprs[1].offset,
-                                             NULL, FALSE, FALSE, ofmt, report_error);
+                                             NULL, FALSE, FALSE, ofmt, 
+report_error);
                            }
                            else
                                  report_error(ERR_NONFATAL, "bad syntax for EQU");
@@ -1178,19 +1312,24 @@ static void assemble_file (char *fname)
                            long typeinfo = TYS_ELEMENTS(output_ins.operands);
                            switch (output_ins.opcode) {
                                     case I_RESB:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
+                                        typeinfo = 
+TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
                                         break;
                                     case I_RESW:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
+                                        typeinfo = 
+TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
                                         break;
                                     case I_RESD:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
+                                        typeinfo = 
+TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
                                         break;
                                     case I_RESQ:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
+                                        typeinfo = 
+TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
                                         break;
                                     case I_REST:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
+                                        typeinfo = 
+TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
                                         break;
                                     case I_DB:
                                         typeinfo |= TY_BYTE;
@@ -1219,8 +1358,50 @@ static void assemble_file (char *fname)
 
                         }
                         if (l != -1) {
-                           offs += l;
-                           SET_CURR_OFFS (offs);
+							offs += l;
+							SET_CURR_OFFS (offs);
+							#ifdef CACHE_ALIGN
+							if (alignv && (seg == alignseg))
+							{
+								lline * nextlline;
+								insn next_ins;
+								long l;
+								nextlline=curlline;
+								while(1)
+								{
+									if (nextlline==lastlline)
+									{
+										lastlline=lastlline->next=nasm_malloc(sizeof(lline));
+										lastlline->next=NULL;
+										lastlline->line=preproc->getline();
+									}
+									nextlline=nextlline->next;
+									nextline=nextlline->line;
+									if(!nextline) break;
+									if ((isdirective(nextline)==1))
+									{
+										alignv=0;
+										break;
+									}		
+									if ((isdirective(nextline)==0)) 
+									{					
+										if (in_abs_seg) break;
+										parse_line (pass1, nextline, &next_ins,report_error, evaluate,nop);
+										l = insn_size (location.segment, offs, sb, cpu,&next_ins, report_error);
+										if ( l > 0 )
+										{
+											if (((((offs & (alignv - 1)) + l) > alignv) && (l <= alignv) ))		
+											{	
+												offs = offs + ((alignv - 1)	& (-offs));	
+												SET_CURR_OFFS (offs);
+											}
+											break;
+										}
+									}
+								}
+									
+							}							
+							#endif
                         }
                         /*
                         * else l == -1 => invalid instruction, which will be
@@ -1228,9 +1409,82 @@ static void assemble_file (char *fname)
                         */
 
                      } else { /* pass == 2 */
-                        offs += assemble (location.segment, offs, sb, cpu,
-                                       &output_ins, ofmt, report_error, &nasmlist);
+						offs += assemble (location.segment, offs, sb, cpu,
+                                       &output_ins, ofmt, report_error, 
+&nasmlist);
                         SET_CURR_OFFS (offs);
+						#ifdef CACHE_ALIGN
+						if (alignv && (seg==alignseg))
+						{
+							insn next_ins;
+							int pad_len ;
+							insn * pad_temp;
+							extop * pad_eop;
+							long l;
+							lline * nextlline;
+							nextlline=curlline;
+							while(1)
+							{	
+								if (nextlline==lastlline)
+								{
+									lastlline=lastlline->next=nasm_malloc(sizeof(lline));
+									lastlline->next=NULL;
+									lastlline->line=preproc->getline();
+								}
+								nextlline=nextlline->next;
+								nextline=nextlline->line;
+								if (!nextline) break;
+								if ((isdirective(nextline)==1))
+								{
+									alignv=0;
+									break;
+								}
+								if ((isdirective(nextline)==0))
+								{	
+									if (in_abs_seg) break;
+									parse_line (pass1, nextline, &next_ins,report_error, evaluate,nop);
+									l = insn_size (location.segment, offs, sb, cpu,&next_ins, report_error);
+									if ( l > 0 )
+									{
+										if (((((offs & (alignv - 1)) + l) > alignv) && (l <= alignv) ))
+										{	
+											pad_len = ((alignv - 1) & (-offs));
+											if (pad_len >= 15)
+   											{
+												pad_temp = &pad_ins[14];
+												pad_eop = pad_temp->eops  ;
+												pad_eop = pad_eop->next ;
+												pad_eop->offset = pad_len - 2 ;
+												offs += assemble (location.segment, offs, sb, cpu,
+													&pad_ins[14], ofmt, report_error,
+													&nasmlist);
+												SET_CURR_OFFS (offs);
+												pad_len-=2 ;
+												while (pad_len)
+	   											{
+													offs += assemble (location.segment, offs, sb, cpu,
+													&pad_ins[0], ofmt, report_error,
+													&nasmlist);
+													SET_CURR_OFFS (offs);
+													pad_len--;
+												}
+											}
+											else if (pad_len > 0)
+   		 									{
+												offs += assemble (location.segment, offs, sb, cpu,
+													&pad_ins[pad_len - 1], ofmt, report_error,
+													&nasmlist);
+												SET_CURR_OFFS (offs);
+											}
+										}
+										break;	
+									}
+								}
+							} 	
+									
+						}
+						#endif
+
 
                      }
                } /* not an EQU */
@@ -1238,7 +1492,18 @@ static void assemble_file (char *fname)
          }
          nasm_free (line);
          location.offset = offs = GET_CURR_OFFS;
-      } /* end while (line = preproc->getline... */
+#ifdef CACHE_ALIGN
+		 prevlline=curlline;
+		 if (curlline==lastlline)
+		 {
+			lastlline=curlline=nasm_malloc(sizeof(lline));
+			curlline->next=NULL;
+			curlline->line=preproc->getline();
+		 }
+		 else curlline=curlline->next;
+		 nasm_free(prevlline);
+#endif
+	 } /* end while (line = preproc->getline... */
 
       if (pass1==2 && global_offset_changed)
          report_error(ERR_NONFATAL, "phase error detected at end of assembly.");
@@ -1334,7 +1599,13 @@ static int getkw (char *buf, char **value)
 	return 9;
     if (!nasm_stricmp(p, "list"))    /* fbk 9/2/00 */
         return 10;
-    return -1;
+#ifdef CACHE_ALIGN
+	if (!nasm_stricmp(p, "palign"))
+		return 11;
+	if (!nasm_stricmp(p, "p2align"))
+		return 12;
+#endif
+	return -1;
 }
 
 static void report_error (int severity, char *fmt, ...)
@@ -1390,7 +1661,8 @@ static void report_error (int severity, char *fmt, ...)
 	/* no further action, by definition */
 	break;
       case ERR_NONFATAL:
-/*     terminate_after_phase = TRUE;   *//**//* hack enables listing(!) on errors */
+/*     terminate_after_phase = TRUE;   *//**//* hack enables listing(!) on 
+errors */
         terminate_after_phase = TRUE;
 	break;
       case ERR_FATAL:
@@ -1550,5 +1822,37 @@ static int get_bits (char *value)
     }
     return i;
 }
+#ifdef CACHE_ALIGN
+static int get_alignv (char *value)
+{
+	int i,j;
+
+	i = atoi(value);
+	if (i<=0) j = 0;
+    else if (i>=6) j = 64;
+	else j = (1 << i);
+	return j;
+}	
+
+void nop(void)
+{
+}
+
+static int isdirective(char * line)
+{
+		int ret;
+		char * templine;
+		char * tempvalue;
+		templine=nasm_malloc(strlen(line)+1);
+		strcpy(templine,line);
+		ret=getkw(templine,&tempvalue);
+		nasm_free(templine);
+		return ret;
+}
+
+
+#endif
+
+
 
 /* end of nasm.c */
