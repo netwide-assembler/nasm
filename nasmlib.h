@@ -107,18 +107,23 @@ void standard_extension (char *inname, char *outname, char *extension,
  * format in memory
  */
 
-#define WRITELONG(p,v) \
+#define WRITECHAR(p,v) \
   do { \
     *(p)++ = (v) & 0xFF; \
-    *(p)++ = ((v) >> 8) & 0xFF; \
-    *(p)++ = ((v) >> 16) & 0xFF; \
-    *(p)++ = ((v) >> 24) & 0xFF; \
   } while (0)
 
 #define WRITESHORT(p,v) \
   do { \
-    *(p)++ = (v) & 0xFF; \
-    *(p)++ = ((v) >> 8) & 0xFF; \
+    WRITECHAR(p,v); \
+    WRITECHAR(p,(v) >> 8); \
+  } while (0)
+
+#define WRITELONG(p,v) \
+  do { \
+    WRITECHAR(p,v); \
+    WRITECHAR(p,(v) >> 8); \
+    WRITECHAR(p,(v) >> 16); \
+    WRITECHAR(p,(v) >> 24); \
   } while (0)
 
 /*

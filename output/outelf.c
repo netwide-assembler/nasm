@@ -1268,10 +1268,12 @@ struct ofmt of_elf = {
 
 /* again, the stabs debugging stuff (code) */
 
-void stabs_init(struct ofmt *of,void *id,FILE *fp,efunc error) {
+void stabs_init(struct ofmt *of,void *id,FILE *fp,efunc error)
+{
 }
 
-void stabs_linenum(const char *filename,long linenumber,long segto) {
+void stabs_linenum(const char *filename,long linenumber,long segto)
+{
   if (!stabs_filename) {
     stabs_filename = (char *)malloc(strlen(filename)+1);
     strcpy(stabs_filename,filename);
@@ -1288,16 +1290,20 @@ void stabs_linenum(const char *filename,long linenumber,long segto) {
   currentline=linenumber;
 }
 
-void stabs_deflabel(char *name,long segment,long offset,int is_global,char *special) {
+void stabs_deflabel(char *name,long segment,long offset,int is_global,char *special)
+{
 }
 
-void stabs_directive(const char *directive,const char *params) {
+void stabs_directive(const char *directive,const char *params)
+{
 }
 
-void stabs_typevalue(long type) {
+void stabs_typevalue(long type)
+{
 }
 
-void stabs_output(int type,void *param) {
+void stabs_output(int type,void *param)
+{
   struct symlininfo *s;
   struct linelist *el;
   if (type==TY_STABSSYMLIN) {
@@ -1324,18 +1330,25 @@ void stabs_output(int type,void *param) {
   stabs_immcall=0;
 }
 
+#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value) \
+  do {\
+    WRITELONG(p,n_strx); \
+    WRITECHAR(p,n_type); \
+    WRITECHAR(p,n_other); \
+    WRITESHORT(p,n_desc); \
+    WRITELONG(p,n_value); \
+  } while (0)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
-void stabs_generate() {
+void stabs_generate(void)
+{
   int i,numfiles,strsize,numstabs=0,currfile,mainfileindex;
-  struct erel rentry;
   unsigned char *sbuf,*ssbuf,*rbuf,*sptr,*rptr;
   char **allfiles;
   int *fileidx;
 
   struct linelist *ptr;
-  struct stabentry stab;
 
   ptr=stabslines;
 
@@ -1383,7 +1396,7 @@ void stabs_generate() {
   rptr=rbuf;
 
   for (i=0;i<numfiles;i++) {
-    strcpy(ssbuf+fileidx[i],allfiles[i]);
+    strcpy((char *)ssbuf+fileidx[i],allfiles[i]);
   }
   ssbuf[0]=0;
 
@@ -1394,78 +1407,46 @@ void stabs_generate() {
      the source-file, the n_desc field should be set to the number
      of remaining stabs
   */
-  stab.n_strx = fileidx[0];
-  stab.n_type=0;
-  stab.n_other=0;
-  stab.n_desc=0; /* # of remaining stabs (to be determined later) */
-  stab.n_value = strlen(allfiles[0])+1;
-  memcpy(sptr,&stab,sizeof(struct stabentry));
-  sptr+=sizeof(struct stabentry);
+  WRITE_STAB(sptr, fileidx[0], 0, 0, 0, strlen(allfiles[0]+12));
 
   ptr=stabslines;
-  for (i=0;i<numfiles;i++) if (!strcmp(allfiles[i],ptr->filename)) break;
-  currfile=i;
+  numstabs = 0;
 
-  /* this is the stab for the main source file */
-  stab.n_strx = fileidx[mainfileindex];
-  stab.n_type=N_SO;
-  stab.n_other=0;
-  stab.n_desc=0;
-  stab.n_value = 0; /* strlen(allfiles[mainfileindex])+1; */
-  memcpy(sptr,&stab,sizeof(struct stabentry));
-  /* relocation stuff */
-  rentry.offset=(sptr-sbuf)+8;
-			  /* the following section+3 assumption relies on the following order of output sections:
-						0 -> dummy
-						1 -> .text
-						2 -> .data
-						3 -> .comment
-						4 -> .strtab
-			     ... this is an ugly hack and should be improved in the near future
-			  */
-   rentry.info=((ptr->info.section+3)<<8)|R_386_32;
-  memcpy(rptr,&rentry,8);
-  rptr+=8;
-  sptr+=sizeof(struct stabentry);
-
-  numstabs=1;
-  currfile=mainfileindex;
+  if ( ptr ) {
+    /* this is the stab for the main source file */
+    WRITE_STAB(sptr, fileidx[mainfileindex], N_SO, 0, 0, 0);
+    
+    /* relocation stuff */
+    /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+    WRITELONG(rptr, (sptr-sbuf)-4);
+    WRITELONG(rptr, ((ptr->info.section+3)<<8)|R_386_32);
+    
+    numstabs++;
+    currfile=mainfileindex;
+  }
 
   while (ptr) {
     if (strcmp(allfiles[currfile],ptr->filename)) {
       /* oops file has changed... */
       for (i=0;i<numfiles;i++) if (!strcmp(allfiles[i],ptr->filename)) break;
       currfile=i;
-      stab.n_strx = fileidx[currfile];
-      stab.n_type=N_SOL;
-      stab.n_other=0;
-      stab.n_desc=0;
-      /* stab.n_value = strlen(allfiles[currfile])+1; */
-      stab.n_value = ptr->info.offset;
-      memcpy(sptr,&stab,sizeof(struct stabentry));
-		  /* relocation stuff */
-		  rentry.offset=(sptr-sbuf)+8;
-		  rentry.info=((ptr->info.section+3)<<8)|R_386_32;
-		  memcpy(rptr,&rentry,8);
-		  rptr+=8;
-      sptr+=sizeof(struct stabentry);
+      WRITE_STAB(sptr,fileidx[currfile],N_SOL,0,0,ptr->info.offset);
       numstabs++;
+
+      /* relocation stuff */
+    /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+      WRITELONG(rptr, (sptr-sbuf)-4);
+      WRITELONG(rptr, ((ptr->info.section+3)<<8)|R_386_32);
     }
-    stab.n_strx=0;
-    stab.n_type=N_SLINE;
-    stab.n_other=0;
-    stab.n_desc=ptr->line;
-    stab.n_value=ptr->info.offset;
-    memcpy(sptr,&stab,sizeof(struct stabentry));
+
+    WRITE_STAB(sptr,0,N_SLINE,0,ptr->line,ptr->info.offset);
     numstabs++;
 
     /* relocation stuff */
-    rentry.offset=(sptr-sbuf)+8;
-    rentry.info=((ptr->info.section+3)<<8)|R_386_32;
-    memcpy(rptr,&rentry,8);
-    rptr+=8;
+    /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+    WRITELONG(rptr, (sptr-sbuf)-4);
+    WRITELONG(rptr, ((ptr->info.section+3)<<8)|R_386_32);
 
-    sptr+=sizeof(struct stabentry);
     ptr=ptr->next;
 
   }
