@@ -104,6 +104,8 @@ cd ..
 find nasm-$version -not -type d -print > main
 
 # Create documentation
+cd nasm-${version}
+./configure --prefix=/usr/local
 make doc
 # Remove intermediate files.
 make cleaner
