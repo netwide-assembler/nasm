@@ -66,7 +66,7 @@ insnsd.o: insnsd.c nasm.h insnsi.h insns.h
 labels.o: labels.c nasm.h insnsi.h nasmlib.h
 listing.o: listing.c nasm.h insnsi.h nasmlib.h listing.h
 nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
- outform.h listing.h
+ outform.h listing.h insns.h
 nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
 outaout.o: outaout.c nasm.h insnsi.h nasmlib.h outform.h

@@ -14,6 +14,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "insns.h"
 #include "preproc.h"
 #include "parser.h"
 #include "eval.h"
@@ -27,6 +28,8 @@ struct forwrefinfo {		       /* info held on forward refs. */
     int operand;
 };
 
+static int get_bits (char *value);
+static unsigned long get_cpu (char *cpu_str);
 static void report_error (int, char *, ...);
 static void parse_cmdline (int, char **);
 static void assemble_file (char *);
@@ -40,13 +43,17 @@ static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
 static char listname[FILENAME_MAX];
 static int globallineno;	       /* for forward-reference tracking */
-static int pass;
+static int pass = 0;
 static struct ofmt *ofmt = NULL;
 
 static FILE *error_file;	       /* Where to write error messages */
 
 static FILE *ofile = NULL;
-static int sb = 16;		       /* by default */
+static int optimizing = 10;		/* number of optimization passes to take */
+static int sb, cmd_sb = 16;		       /* by default */
+static unsigned long cmd_cpu = IF_PLEVEL;	/* highest level by default */
+static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
+int global_offset_changed;             /* referenced in labels.c */
 
 static loc_t location;
 int          in_abs_seg;	       /* Flag we are in ABSOLUTE seg */
@@ -73,7 +80,7 @@ static enum op_type operating_mode;
  * doesn't do anything. Initial defaults are given here.
  */
 static char suppressed[1+ERR_WARN_MAX] = {
-    0, TRUE, TRUE, FALSE
+    0, TRUE, TRUE, TRUE, FALSE
 };
 
 /*
@@ -81,7 +88,7 @@ static char suppressed[1+ERR_WARN_MAX] = {
  * zero does nothing.
  */
 static char *suppressed_names[1+ERR_WARN_MAX] = {
-    NULL, "macro-params", "orphan-labels", "number-overflow"
+    NULL, "macro-params", "macro-selfref", "orphan-labels", "number-overflow",
 };
 
 /*
@@ -89,7 +96,9 @@ static char *suppressed_names[1+ERR_WARN_MAX] = {
  * zero does nothing.
  */
 static char *suppressed_what[1+ERR_WARN_MAX] = {
-    NULL, "macro calls with wrong no. of params",
+    NULL,
+    "macro calls with wrong no. of params",
+    "cyclic macro self-references",
     "labels alone on lines without trailing `:'",
     "numeric constants greater than 0xFFFFFFFF"
 };
@@ -112,9 +121,9 @@ static Preproc no_pp = {
 /*
  * get/set current offset...
  */
-#define get_curr_ofs (in_abs_seg?abs_offset:\
+#define GET_CURR_OFFS (in_abs_seg?abs_offset:\
 		      raa_read(offsets,location.segment))
-#define set_curr_ofs(x) (in_abs_seg?(void)(abs_offset=(x)):\
+#define SET_CURR_OFFS(x) (in_abs_seg?(void)(abs_offset=(x)):\
 			 (void)(offsets=raa_write(offsets,location.segment,(x))))
 
 static int want_usage;
@@ -160,6 +169,13 @@ int main(int argc, char **argv)
     parser_global_info (ofmt, &location);
     eval_global_info (ofmt, lookup_label, &location);
 
+    /* define some macros dependent of command-line */
+    {
+	char temp [64];
+	sprintf (temp, "__OUTPUT_FORMAT__=%s\n", ofmt->shortname);
+	pp_pre_define (temp);
+    }
+
     switch ( operating_mode ) {
     case op_depend:
       {
@@ -193,6 +209,7 @@ int main(int argc, char **argv)
       
       location.known = FALSE;
       
+      pass = 1;
       preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
       while ( (line = preproc->getline()) ) {
 	/*
@@ -253,9 +270,7 @@ int main(int argc, char **argv)
 	if (!terminate_after_phase) {
 	  ofmt->cleanup (using_debug_info);
 	  cleanup_labels ();
-	}
-	else {
-	  
+	    } else {
 	  /*
 	   * We had an fclose on the output file here, but we
 	   * actually do that in all the object file drivers as well,
@@ -330,6 +345,7 @@ static int process_arg (char *p, char *q)
 	      error_file = stdout;
 	      break;
 	  case 'o':		       /* these parameters take values */
+	  case 'O':
 	  case 'f':
 	  case 'p':
 	  case 'd':
@@ -352,6 +368,12 @@ static int process_arg (char *p, char *q)
 		}
 		else
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
+	    } else if (p[1]=='O') {		    /* Optimization level */
+	        if (!isdigit(*param)) report_error(ERR_FATAL,
+	             "command line optimization level must be 0..3");
+	    	optimizing = atoi(param);
+	    	if (optimizing <= 0) optimizing = 0;
+	    	else if (optimizing <= 3) optimizing *= 5;  /* 5 passes for each level */
 	    } else if (p[1]=='P' || p[1]=='p') {    /* pre-include */
 		pp_pre_include (param);
 	    } else if (p[1]=='D' || p[1]=='d') {    /* pre-define */
@@ -396,6 +418,7 @@ static int process_arg (char *p, char *q)
 		   "    -g          enable debug info\n"
 		   "    -F format   select a debugging format\n\n"
 		   "    -I<path>    adds a pathname to the include file path\n"
+		   "    -O<digit>   optimize branch offsets -O0 disables, -O2 default\n"
 		   "    -P<file>    pre-includes a file\n"
 		   "    -D<macro>[=<value>] pre-defines a macro\n"
 		   "    -U<macro>   undefines a macro\n"
@@ -579,13 +602,14 @@ static void parse_cmdline(int argc, char **argv)
 	int i;
 	argv++;
 	if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i)))
+	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i))) {
 		if ((rfile = fopen(p, "r"))) {
 		    process_respfile (rfile);
 		    fclose(rfile);
 		} else
 		    report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			    "unable to open response file `%s'", p);
+	    }
 	} else
 	    i = process_arg (argv[0], argc > 1 ? argv[1] : NULL);
 	argv += i, argc -= i;
@@ -596,6 +620,7 @@ static void parse_cmdline(int argc, char **argv)
 		      "no input file specified");
 }
 
+
 static void assemble_file (char *fname)
 {
     char   * value, * p, * q, * special, * line, debugid[80];
@@ -604,529 +629,493 @@ static void assemble_file (char *fname)
     long   seg, offs;
     struct tokenval tokval;
     expr   * e;
+    int pass_max;
+    int pass_cnt = 0;		/* count actual passes */
 
-    /*
-     * pass one 
-     */
-    pass = 1;
-    in_abs_seg = FALSE;
-    location.segment = ofmt->section(NULL, pass, &sb);
-    preproc->reset(fname, 1, report_error, evaluate, &nasmlist);
-    globallineno = 0;
-    location.known = TRUE;
-    location.offset = offs = get_curr_ofs;
+    if (cmd_sb == 32 && cmd_cpu < IF_386)
+      report_error(ERR_FATAL, "command line: "
+                    "32-bit segment size requires a higher cpu");
 
-    while ( (line = preproc->getline()) ) 
-    {
-	globallineno++;
+   pass_max = optimizing + 2;    /* passes 1, optimizing, then 2 */
+   for (pass = 1; pass <= pass_max; pass++) {
+      int pass1, pass2;
+      ldfunc def_label;
 
-	/* here we parse our directives; this is not handled by the 'real'
-	 * parser. */
-	if ( (i = getkw (line, &value)) ) 
-	{
-	    switch (i) {
-	      case 1:	       /* [SEGMENT n] */
-		seg = ofmt->section (value, pass, &sb);
-		if (seg == NO_SEG) {
-		    report_error (ERR_NONFATAL,
-				  "segment name `%s' not recognised",
-				  value);
-		} else {
-		    in_abs_seg = FALSE;
-		    location.segment = seg;
-		}
-		break;
-	      case 2:	       /* [EXTERN label:special] */
-		if (*value == '$')
-		    value++;	       /* skip initial $ if present */
-		q = value;
-		validid = TRUE;
-		if (!isidstart(*q))
-		    validid = FALSE;
-		while (*q && *q != ':') {
-		    if (!isidchar(*q))
-			validid = FALSE;
-		    q++;
-		}
-		if (!validid) {
-		    report_error (ERR_NONFATAL,
-				  "identifier expected after EXTERN");
-		    break;
-		}
-		if (*q == ':') {
-		    *q++ = '\0';
-		    special = q;
-		} else
-		    special = NULL;
-		if (!is_extern(value)) {   /* allow re-EXTERN to be ignored */
-		    declare_as_global (value, special, report_error);
-		    define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
-				  ofmt, report_error);
-		}
-		break;
-	      case 3:	       /* [BITS bits] */
-		switch (atoi(value)) {
-		  case 16:
-		  case 32:
-		    sb = atoi(value);
-		    break;
-		  default:
-		    report_error(ERR_NONFATAL,
-				 "`%s' is not a valid argument to [BITS]",
-				 value);
-		    break;
-		}
-		break;
-	      case 4:	       /* [GLOBAL symbol:special] */
-		if (*value == '$')
-		    value++;	       /* skip initial $ if present */
-		q = value;
-		validid = TRUE;
-		if (!isidstart(*q))
-		    validid = FALSE;
-		while (*q && *q != ':') {
-		    if (!isidchar(*q))
-			validid = FALSE;
-		    q++;
-		}
-		if (!validid) {
-		    report_error (ERR_NONFATAL,
-				  "identifier expected after GLOBAL");
-		    break;
-		}
-		if (*q == ':') {
-		    *q++ = '\0';
-		    special = q;
-		} else
-		    special = NULL;
-		declare_as_global (value, special, report_error);
-		break;
-	      case 5:	       /* [COMMON symbol size:special] */
-		p = value;
-		validid = TRUE;
-		if (!isidstart(*p))
-		    validid = FALSE;
-		while (*p && !isspace(*p)) {
-		    if (!isidchar(*p))
-			validid = FALSE;
-		    p++;
-		}
-		if (!validid) {
-		    report_error (ERR_NONFATAL,
-				  "identifier expected after COMMON");
-		    break;
-		}
-		if (*p) {
-		    long size;
+      pass1 = pass < pass_max ? 1 : 2;  /* seq is 1, 1, 1,..., 1, 2 */
+      pass2 = pass > 1 ? 2 : 1;         /* seq is 1, 2, 2,..., 2, 2 */
+      def_label = pass > 1 ? redefine_label : define_label;
+      
 
-		    while (*p && isspace(*p))
-			*p++ = '\0';
-		    q = p;
-		    while (*q && *q != ':')
-			q++;
-		    if (*q == ':') {
-			*q++ = '\0';
-			special = q;
-		    } else
-			special = NULL;
-		    size = readnum (p, &rn_error);
-		    if (rn_error)
-			report_error (ERR_NONFATAL, "invalid size specified"
-				      " in COMMON declaration");
-		    else
-			define_common (value, seg_alloc(), size,
-				       special, ofmt, report_error);
-		} else
-		    report_error (ERR_NONFATAL, "no size specified in"
-				  " COMMON declaration");
-		break;
-	      case 6:		       /* [ABSOLUTE address] */
-		stdscan_reset();
-		stdscan_bufptr = value;
-		tokval.t_type = TOKEN_INVALID;
-		e = evaluate(stdscan, NULL, &tokval, NULL, 1, report_error,
-			     NULL);
-		if (e) {
-		    if (!is_reloc(e))
-			report_error (ERR_NONFATAL, "cannot use non-"
-				      "relocatable expression as ABSOLUTE"
-				      " address");
-		    else {
-			abs_seg = reloc_seg(e);
-			abs_offset = reloc_value(e);
-		    }
-		} else
-		    abs_offset = 0x100;/* don't go near zero in case of / */
-		in_abs_seg = TRUE;
-		location.segment = abs_seg;
-		break;
-	      case 7:
-		p = value;
-		validid = TRUE;
-		if (!isidstart(*p))
-		    validid = FALSE;
-		while (*p && !isspace(*p)) {
-		    if (!isidchar(*p))
-			validid = FALSE;
-                    p++;
-		}
-		if (!validid) {
-		    report_error (ERR_NONFATAL,
-				  "identifier expected after DEBUG");
-		    break;
-		}
-                while (*p && isspace(*p)) p++;
-		break;
-	      default:
-		if (!ofmt->directive (line+1, value, 1))
-		    report_error (ERR_NONFATAL, "unrecognised directive [%s]",
-				  line+1);
-		break;
-	    }
-	}
-	else 	/* it isn't a directive */
-	{
-	    parse_line (1, line, &output_ins,
-			report_error, evaluate, define_label);
+      sb = cmd_sb;        /* set 'bits' to command line default */
+      cpu = cmd_cpu;
+      if (pass == pass_max) {
+         if (*listname)
+            nasmlist.init(listname, report_error);
+      }
+      in_abs_seg = FALSE;
+      global_offset_changed = FALSE;      /* set by redefine_label */
+      location.segment = ofmt->section(NULL, pass2, &sb);
+      if (pass > 1) {
+         saa_rewind (forwrefs);
+         forwref = saa_rstruct (forwrefs);
+         raa_free (offsets);
+         offsets = raa_init();
+      }
+      preproc->reset(fname, pass1, report_error, evaluate, &nasmlist);
+      globallineno = 0;
+      if (pass == 1) location.known = TRUE;
+      location.offset = offs = GET_CURR_OFFS;
 
-	    if (output_ins.forw_ref) 
-	    {
-		for(i = 0; i < output_ins.operands; i++) 
-		{
-		    if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) 
-		    {
-		    	struct forwrefinfo *fwinf =
-		    	    (struct forwrefinfo *)saa_wstruct(forwrefs);
-			fwinf->lineno = globallineno;
-			fwinf->operand = i;
-		    }
-		}
-	    }
+      while ( (line = preproc->getline()) ) 
+      {
+         globallineno++;
 
-	    if (output_ins.opcode == I_EQU) 
-	    {
-		/*
-		 * Special `..' EQUs get processed in pass two,
-		 * except `..@' macro-processor EQUs which are done
-		 * in the normal place.
-		 */
-		if (!output_ins.label)
-		    report_error (ERR_NONFATAL,
-				  "EQU not preceded by label");
+         /* here we parse our directives; this is not handled by the 'real'
+            * parser. */
+         if ( (i = getkw (line, &value)) ) 
+         {
+               switch (i) {
+               case 1:               /* [SEGMENT n] */
+                  seg = ofmt->section (value, pass2, &sb);
+                  if (seg == NO_SEG) {
+                     report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC,
+                                    "segment name `%s' not recognised",
+                                    value);
+                  } else {
+                     in_abs_seg = FALSE;
+                     location.segment = seg;
+                  }
+                  break;
+               case 2:               /* [EXTERN label:special] */
+                  if (pass == pass_max) {
+                        q = value;
+                        while (*q && *q != ':')
+                           q++;
+                        if (*q == ':') {
+                           *q++ = '\0';
+                           ofmt->symdef(value, 0L, 0L, 3, q);
+                        }
+                  } else if (pass == 1) {   /* pass == 1 */
+                        if (*value == '$')
+                           value++;               /* skip initial $ if present */
+                        q = value;
+                        validid = TRUE;
+                        if (!isidstart(*q))
+                           validid = FALSE;
+                        while (*q && *q != ':') {
+                           if (!isidchar(*q))
+                                 validid = FALSE;
+                           q++;
+                        }
+                        if (!validid) {
+                           report_error (ERR_NONFATAL,
+                                          "identifier expected after EXTERN");
+                           break;
+                        }
+                        if (*q == ':') {
+                           *q++ = '\0';
+                           special = q;
+                        } else
+                           special = NULL;
+                        if (!is_extern(value)) {   /* allow re-EXTERN to be ignored */
+                           declare_as_global (value, special, report_error);
+                           define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
+                                          ofmt, report_error);
+                        }
+                  } /* else  pass == 1 */
+                  break;
+               case 3:               /* [BITS bits] */
+                  sb = get_bits(value);
+                  break;
+               case 4:               /* [GLOBAL symbol:special] */
+                  if (pass == pass_max) { /* pass 2 */
+                        q = value;
+                        while (*q && *q != ':')
+                           q++;
+                        if (*q == ':') {
+                           *q++ = '\0';
+                           ofmt->symdef(value, 0L, 0L, 3, q);
+                        }
+                  } else if (pass == 1) { /* pass == 1 */
+                        if (*value == '$')
+                           value++;               /* skip initial $ if present */
+                        q = value;
+                        validid = TRUE;
+                        if (!isidstart(*q))
+                           validid = FALSE;
+                        while (*q && *q != ':') {
+                           if (!isidchar(*q))
+                                 validid = FALSE;
+                           q++;
+                        }
+                        if (!validid) {
+                           report_error (ERR_NONFATAL,
+                                          "identifier expected after GLOBAL");
+                           break;
+                        }
+                        if (*q == ':') {
+                           *q++ = '\0';
+                           special = q;
+                        } else
+                           special = NULL;
+                        declare_as_global (value, special, report_error);
+                  } /* pass == 1 */
+                  break;
+               case 5:               /* [COMMON symbol size:special] */
+                  if (pass == 1) {
+                        p = value;
+                        validid = TRUE;
+                        if (!isidstart(*p))
+                           validid = FALSE;
+                        while (*p && !isspace(*p)) {
+                           if (!isidchar(*p))
+                                 validid = FALSE;
+                           p++;
+                        }
+                        if (!validid) {
+                           report_error (ERR_NONFATAL,
+                                          "identifier expected after COMMON");
+                           break;
+                        }
+                        if (*p) {
+                           long size;
 
-		else if (output_ins.label[0] != '.' ||
-			 output_ins.label[1] != '.' ||
-			 output_ins.label[2] == '@') 
-		{
-		    if (output_ins.operands == 1 &&
-			(output_ins.oprs[0].type & IMMEDIATE) &&
-			output_ins.oprs[0].wrt == NO_SEG) 
-		    {
-		      int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
-		      define_label (output_ins.label,
-				    output_ins.oprs[0].segment,
-				    output_ins.oprs[0].offset,
-				    NULL, FALSE, isext, ofmt, report_error);
-		    } 
-		    else if (output_ins.operands == 2 &&
-			       (output_ins.oprs[0].type & IMMEDIATE) &&
-			       (output_ins.oprs[0].type & COLON) &&
-			       output_ins.oprs[0].segment == NO_SEG &&
-			       output_ins.oprs[0].wrt == NO_SEG &&
-			       (output_ins.oprs[1].type & IMMEDIATE) &&
-			       output_ins.oprs[1].segment == NO_SEG &&
-			       output_ins.oprs[1].wrt == NO_SEG) 
-		    {
-			define_label (output_ins.label,
-				      output_ins.oprs[0].offset | SEG_ABS,
-				      output_ins.oprs[1].offset,
-				      NULL, FALSE, FALSE, ofmt, report_error);
-		    } 
-		    else
-			report_error(ERR_NONFATAL, "bad syntax for EQU");
-		}
-	    } 
-	    else  /* instruction isn't an EQU */
-	    {
-		long l = insn_size (location.segment, offs, sb,
-				   &output_ins, report_error);
-		if (using_debug_info && output_ins.opcode != -1) {
-		    /* this is done here so we can do debug type info */
-                    long typeinfo = TYS_ELEMENTS(output_ins.operands);
-		    switch (output_ins.opcode) {
-		    	case I_RESB:
-        		    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;  
+                           while (*p && isspace(*p))
+                                 *p++ = '\0';
+                           q = p;
+                           while (*q && *q != ':')
+                                 q++;
+                           if (*q == ':') {
+                                 *q++ = '\0';
+                                 special = q;
+                           } else
+                                 special = NULL;
+                           size = readnum (p, &rn_error);
+                           if (rn_error)
+                                 report_error (ERR_NONFATAL, "invalid size specified"
+                                             " in COMMON declaration");
+                           else
+                                 define_common (value, seg_alloc(), size,
+                                                special, ofmt, report_error);
+                        } else
+                           report_error (ERR_NONFATAL, "no size specified in"
+                                          " COMMON declaration");
+                  } else if (pass == pass_max) { /* pass == 2 */
+                        q = value;
+                        while (*q && *q != ':') {
+                           if (isspace(*q))
+                                 *q = '\0';
+                           q++;
+                        }
+                        if (*q == ':') {
+                           *q++ = '\0';
+                           ofmt->symdef(value, 0L, 0L, 3, q);
+                        }
+                  }
+                  break;
+               case 6:                       /* [ABSOLUTE address] */
+                  stdscan_reset();
+                  stdscan_bufptr = value;
+                  tokval.t_type = TOKEN_INVALID;
+                  e = evaluate(stdscan, NULL, &tokval, NULL, pass2, report_error,
+                              NULL);
+                  if (e) {
+                     if (!is_reloc(e))
+                           report_error (pass==1 ? ERR_NONFATAL : ERR_PANIC,
+                                 "cannot use non-relocatable expression as "
+                                 "ABSOLUTE address");
+                     else {
+                           abs_seg = reloc_seg(e);
+                           abs_offset = reloc_value(e);
+                     }
+                  } else
+                     if (pass==1) abs_offset = 0x100;/* don't go near zero in case of / */
+                     else report_error (ERR_PANIC, "invalid ABSOLUTE address "
+                                    "in pass two");
+                  in_abs_seg = TRUE;
+                  location.segment = abs_seg;
+                  break;
+               case 7:    /* DEBUG       */
+                  p = value;
+                  q = debugid;
+                  validid = TRUE;
+                  if (!isidstart(*p))
+                     validid = FALSE;
+                  while (*p && !isspace(*p)) {
+                     if (!isidchar(*p))
+                           validid = FALSE;
+                     *q++ = *p++;
+                  }
+                  *q++ = 0;
+                  if (!validid) {
+                     report_error (pass==1 ? ERR_NONFATAL : ERR_PANIC,
+                                    "identifier expected after DEBUG");
+                     break;
+                  }
+                  while (*p && isspace(*p)) p++;
+                  if (pass==pass_max) ofmt->current_dfmt->debug_directive (debugid, p);
+                  break;
+               case 8:			/* [WARNING {+|-}warn-name] */
+                  if (pass1 == 1) {
+		     while (*value && isspace(*value))
+		        value++;
+
+                     if (*value == '+' || *value == '-') {
+		        validid = (*value == '-') ? TRUE : FALSE;
+		        value++;
+		     } else
+		        validid = FALSE;
+
+		     for (i=1; i<=ERR_WARN_MAX; i++)
+		        if (!nasm_stricmp(value, suppressed_names[i]))
 			    break;
-		    	case I_RESW:
-        		    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;  
-			    break;
-		    	case I_RESD:
-        		    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;  
-			    break;
-		    	case I_RESQ:
-        		    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;  
-			    break;
-		    	case I_REST:
-        		    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;  
-			    break;
-	    	    	case I_DB:
-		    	    typeinfo |= TY_BYTE;
-		    	    break;
-	            	case I_DW:
-		    	    typeinfo |= TY_WORD;
-		    	    break;
-	            	case I_DD:
-		    	    if (output_ins.eops_float)
-		    	    	typeinfo |= TY_FLOAT;
-                    	    else
-		    	    	typeinfo |= TY_DWORD;
-		    	    break;
-	    	        case I_DQ:
-		    	    typeinfo |= TY_QWORD;
-		    	    break;
-	    	    	case I_DT:
-		    	    typeinfo |= TY_TBYTE;
-		    	    break;
-	    	    	default:
-		    	    typeinfo = TY_LABEL;
-		    }
-		    ofmt->current_dfmt->debug_typevalue(typeinfo);
-		}
-		if (l != -1) {
-		    offs += l;
-		    set_curr_ofs (offs);
-		}
-		/* 
-		 * else l == -1 => invalid instruction, which will be
-		 * flagged as an error on pass 2
-		 */
-	    }
-	    cleanup_insn (&output_ins);
-	}
-	nasm_free (line);
-	location.offset = offs = get_curr_ofs;
-    }
+		     if (i <= ERR_WARN_MAX)
+		        suppressed[i] = validid;
+		     else
+		        report_error (ERR_NONFATAL, "invalid warning id in WARNING directive");
+	          }
+		  break;
+               case 9:  /* cpu */
+                  cpu = get_cpu (value);
+                  break;
+               default:
+                  if (!ofmt->directive (line+1, value, pass1))
+                     report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC, 
+                              "unrecognised directive [%s]",
+                              line+1);
+                  break;
+               }
+         }
+         else         /* it isn't a directive */
+         {
+               parse_line (pass2, line, &output_ins,
+                           report_error, evaluate, 
+                           def_label);
 
-    preproc->cleanup();
+               if (!optimizing && pass == 2) {
+                  if (forwref != NULL && globallineno == forwref->lineno) {
+                     output_ins.forw_ref = TRUE;
+                     do {
+                        output_ins.oprs[forwref->operand].opflags|= OPFLAG_FORWARD;
+                        forwref = saa_rstruct (forwrefs);
+                     } while (forwref != NULL && forwref->lineno == globallineno);
+                  } else
+                     output_ins.forw_ref = FALSE;
+               }
 
-    if (terminate_after_phase) {
-	fclose(ofile);
-	remove(outname);
-	if (want_usage)
-	    usage();
-	exit (1);
-    }
 
-    /*
-     * pass two 
-     */
+               if (!optimizing && output_ins.forw_ref) 
+               {
+                  if (pass == 1) {
+                        for(i = 0; i < output_ins.operands; i++) 
+                        {
+                           if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) 
+                           {
+                                    struct forwrefinfo *fwinf =
+                                       (struct forwrefinfo *)saa_wstruct(forwrefs);
+                                 fwinf->lineno = globallineno;
+                                 fwinf->operand = i;
+                           }
+                        }
+                  } else { /* pass == 2 */
+                        /*
+                        * Hack to prevent phase error in the code
+                        *   rol ax,x
+                        *   x equ 1
+                        *
+                        * If the second operand is a forward reference,
+                        * the UNITY property of the number 1 in that
+                        * operand is cancelled. Otherwise the above
+                        * sequence will cause a phase error.
+                        *
+                        * This hack means that the above code will
+                        * generate 286+ code.
+                        *
+                        * The forward reference will mean that the
+                        * operand will not have the UNITY property on
+                        * the first pass, so the pass behaviours will
+                        * be consistent.
+                        */
 
-    pass = 2;
-    saa_rewind (forwrefs);
-    if (*listname)
-	nasmlist.init(listname, report_error);
-    forwref = saa_rstruct (forwrefs);
-    in_abs_seg = FALSE;
-    location.segment = ofmt->section(NULL, pass, &sb);
-    raa_free (offsets);
-    offsets = raa_init();
-    preproc->reset(fname, 2, report_error, evaluate, &nasmlist);
-    globallineno = 0;
-    location.offset = offs = get_curr_ofs;
+                        if (output_ins.operands >= 2 &&
+                        (output_ins.oprs[1].opflags & OPFLAG_FORWARD)) 
+                        {
+                           output_ins.oprs[1].type &= ~(ONENESS|BYTENESS);
+                        }
 
-    while ( (line = preproc->getline()) ) 
-    {
-	globallineno++;
+                  } /* pass == 2 */
 
-	/* here we parse our directives; this is not handled by
-	 * the 'real' parser. */
-	if ( (i = getkw (line, &value)) ) {
-	    switch (i) {
-	      case 1:	       /* [SEGMENT n] */
-		seg = ofmt->section (value, pass, &sb);
-		if (seg == NO_SEG) {
-		    report_error (ERR_PANIC,
-				  "invalid segment name on pass two");
-		} else
-		    in_abs_seg = FALSE;
-		    location.segment = seg;
-		break;
-	      case 2:	       /* [EXTERN label] */
-		q = value;
-		while (*q && *q != ':')
-		    q++;
-		if (*q == ':') {
-		    *q++ = '\0';
-		    ofmt->symdef(value, 0L, 0L, 3, q);
-		}
-		break;
-	      case 3:	       /* [BITS bits] */
-		switch (atoi(value)) {
-		  case 16:
-		  case 32:
-		    sb = atoi(value);
-		    break;
-		  default:
-		    report_error(ERR_PANIC,
-				 "invalid [BITS] value on pass two",
-				 value);
-		    break;
-		}
-		break;
-	      case 4:		       /* [GLOBAL symbol] */
-		q = value;
-		while (*q && *q != ':')
-		    q++;
-		if (*q == ':') {
-		    *q++ = '\0';
-		    ofmt->symdef(value, 0L, 0L, 3, q);
-		}
-		break;
-	      case 5:		       /* [COMMON symbol size] */
-		q = value;
-		while (*q && *q != ':') {
-		    if (isspace(*q))
-			*q = '\0';
-		    q++;
-		}
-		if (*q == ':') {
-		    *q++ = '\0';
-		    ofmt->symdef(value, 0L, 0L, 3, q);
-		}
-		break;
-	      case 6:		       /* [ABSOLUTE addr] */
-		stdscan_reset();
-		stdscan_bufptr = value;
-		tokval.t_type = TOKEN_INVALID;
-		e = evaluate(stdscan, NULL, &tokval, NULL, 2, report_error,
-			     NULL);
-		if (e) {
-		    if (!is_reloc(e))
-			report_error (ERR_PANIC, "non-reloc ABSOLUTE address"
-				      " in pass two");
-		    else {
-			abs_seg = reloc_seg(e);
-			abs_offset = reloc_value(e);
-		    }
-		} else
-		    report_error (ERR_PANIC, "invalid ABSOLUTE address "
-				  "in pass two");
-		in_abs_seg = TRUE;
-		location.segment = abs_seg;
-		break;
-	      case 7:
-		p = value;
-                q = debugid;
-		validid = TRUE;
-		if (!isidstart(*p))
-		    validid = FALSE;
-		while (*p && !isspace(*p)) {
-		    if (!isidchar(*p))
-			validid = FALSE;
-		    *q++ = *p++;
-		}
-		*q++ = 0;
-		if (!validid) {
-		    report_error (ERR_PANIC,
-				  "identifier expected after DEBUG in pass 2");
-		    break;
-		}
-                while (*p && isspace(*p)) 
-		    p++;
-		ofmt->current_dfmt->debug_directive (debugid, p);
-		break;
-	      default:
-		if (!ofmt->directive (line+1, value, 2))
-		    report_error (ERR_PANIC, "invalid directive on pass two");
-		break;
-	    }
-	} 
-	else 		/* not a directive */
-	{
-	    parse_line (2, line, &output_ins,
-			report_error, evaluate, redefine_label);
-	    if (forwref != NULL && globallineno == forwref->lineno) {
-		output_ins.forw_ref = TRUE;
-		do {
-		    output_ins.oprs[forwref->operand].opflags|= OPFLAG_FORWARD;
-		    forwref = saa_rstruct (forwrefs);
-		} while (forwref != NULL && forwref->lineno == globallineno);
-	    } else
-		output_ins.forw_ref = FALSE;
+               } /*  forw_ref */
 
-	    /*
-	     * Hack to prevent phase error in the code
-	     *   rol ax,x
-	     *   x equ 1
-	     *
-	     * If the second operand is a forward reference,
-	     * the UNITY property of the number 1 in that
-	     * operand is cancelled. Otherwise the above
-	     * sequence will cause a phase error.
-	     *
-	     * This hack means that the above code will
-	     * generate 286+ code.
-	     *
-	     * The forward reference will mean that the
-	     * operand will not have the UNITY property on
-	     * the first pass, so the pass behaviours will
-	     * be consistent.
-	     */
 
-	    if (output_ins.forw_ref &&
-		output_ins.operands >= 2 &&
-		(output_ins.oprs[1].opflags & OPFLAG_FORWARD)) 
-	    {
-		    output_ins.oprs[1].type &= ~ONENESS;
-	    }
+               if (output_ins.opcode == I_EQU) {
+                     if (pass1 == 1)
+                     {
+                        /*
+                        * Special `..' EQUs get processed in pass two,
+                        * except `..@' macro-processor EQUs which are done
+                        * in the normal place.
+                        */
+                        if (!output_ins.label)
+                           report_error (ERR_NONFATAL,
+                                          "EQU not preceded by label");
 
-	    if (output_ins.opcode == I_EQU) 
-	    {
-		/*
-		 * Special `..' EQUs get processed here, except
-		 * `..@' macro processor EQUs which are done above.
-		 */
-		if (output_ins.label[0] == '.' &&
-		    output_ins.label[1] == '.' &&
-		    output_ins.label[2] != '@') 
-		{
-		    if (output_ins.operands == 1 &&
-			(output_ins.oprs[0].type & IMMEDIATE)) {
-			define_label (output_ins.label,
-				      output_ins.oprs[0].segment,
-				      output_ins.oprs[0].offset,
-				      NULL, FALSE, FALSE, ofmt, report_error);
-		    } 
-		    else if (output_ins.operands == 2 &&
-			       (output_ins.oprs[0].type & IMMEDIATE) &&
-			       (output_ins.oprs[0].type & COLON) &&
-			       output_ins.oprs[0].segment == NO_SEG &&
-			       (output_ins.oprs[1].type & IMMEDIATE) &&
-			       output_ins.oprs[1].segment == NO_SEG) 
-		    {
-			define_label (output_ins.label,
-				      output_ins.oprs[0].offset | SEG_ABS,
-				      output_ins.oprs[1].offset,
-				      NULL, FALSE, FALSE, ofmt, report_error);
-		    } 
-		    else
-			report_error(ERR_NONFATAL, "bad syntax for EQU");
-		}
-	    }
-	    offs += assemble (location.segment, offs, sb,
-			      &output_ins, ofmt, report_error, &nasmlist);
-	    cleanup_insn (&output_ins);
-	    set_curr_ofs (offs);
-	}
+                        else if (output_ins.label[0] != '.' ||
+                                 output_ins.label[1] != '.' ||
+                                 output_ins.label[2] == '@') 
+                        {
+                           if (output_ins.operands == 1 &&
+                                 (output_ins.oprs[0].type & IMMEDIATE) &&
+                                 output_ins.oprs[0].wrt == NO_SEG) 
+                           {
+                              int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
+                              def_label (output_ins.label,
+                                             output_ins.oprs[0].segment,
+                                             output_ins.oprs[0].offset,
+                                             NULL, FALSE, isext, ofmt, report_error);
+                           } 
+                           else if (output_ins.operands == 2 &&
+                                       (output_ins.oprs[0].type & IMMEDIATE) &&
+                                       (output_ins.oprs[0].type & COLON) &&
+                                       output_ins.oprs[0].segment == NO_SEG &&
+                                       output_ins.oprs[0].wrt == NO_SEG &&
+                                       (output_ins.oprs[1].type & IMMEDIATE) &&
+                                       output_ins.oprs[1].segment == NO_SEG &&
+                                       output_ins.oprs[1].wrt == NO_SEG) 
+                           {
+                                 def_label (output_ins.label,
+                                             output_ins.oprs[0].offset | SEG_ABS,
+                                             output_ins.oprs[1].offset,
+                                             NULL, FALSE, FALSE, ofmt, report_error);
+                           } 
+                           else
+                                 report_error(ERR_NONFATAL, "bad syntax for EQU");
+                        }
+                     } else {  /* pass == 2 */
+                        /*
+                        * Special `..' EQUs get processed here, except
+                        * `..@' macro processor EQUs which are done above.
+                        */
+                        if (output_ins.label[0] == '.' &&
+                           output_ins.label[1] == '.' &&
+                           output_ins.label[2] != '@') 
+                        {
+                           if (output_ins.operands == 1 &&
+                                 (output_ins.oprs[0].type & IMMEDIATE)) {
+                                 define_label (output_ins.label,
+                                             output_ins.oprs[0].segment,
+                                             output_ins.oprs[0].offset,
+                                             NULL, FALSE, FALSE, ofmt, report_error);
+                           } 
+                           else if (output_ins.operands == 2 &&
+                                       (output_ins.oprs[0].type & IMMEDIATE) &&
+                                       (output_ins.oprs[0].type & COLON) &&
+                                       output_ins.oprs[0].segment == NO_SEG &&
+                                       (output_ins.oprs[1].type & IMMEDIATE) &&
+                                       output_ins.oprs[1].segment == NO_SEG) 
+                           {
+                                 define_label (output_ins.label,
+                                             output_ins.oprs[0].offset | SEG_ABS,
+                                             output_ins.oprs[1].offset,
+                                             NULL, FALSE, FALSE, ofmt, report_error);
+                           } 
+                           else
+                                 report_error(ERR_NONFATAL, "bad syntax for EQU");
+                        }
+                     }  /* pass == 2 */
+               } else { /* instruction isn't an EQU */
 
-	nasm_free (line);
+                     if (pass1 == 1) {
+                        long l = insn_size (location.segment, offs, sb, cpu,
+                                          &output_ins, report_error);
+                        if (using_debug_info && output_ins.opcode != -1) {
+                           /* this is done here so we can do debug type info */
+                           long typeinfo = TYS_ELEMENTS(output_ins.operands);
+                           switch (output_ins.opcode) {
+                                    case I_RESB:
+                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;  
+                                    break;
+                                    case I_RESW:
+                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;  
+                                    break;
+                                    case I_RESD:
+                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;  
+                                    break;
+                                    case I_RESQ:
+                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;  
+                                    break;
+                                    case I_REST:
+                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;  
+                                    break;
+                                       case I_DB:
+                                       typeinfo |= TY_BYTE;
+                                       break;
+                                    case I_DW:
+                                       typeinfo |= TY_WORD;
+                                       break;
+                                    case I_DD:
+                                       if (output_ins.eops_float)
+                                                typeinfo |= TY_FLOAT;
+                                       else
+                                                typeinfo |= TY_DWORD;
+                                       break;
+                                    case I_DQ:
+                                       typeinfo |= TY_QWORD;
+                                       break;
+                                       case I_DT:
+                                       typeinfo |= TY_TBYTE;
+                                       break;
+                                    default:
+                                       typeinfo = TY_LABEL;
+                           }
+                           ofmt->current_dfmt->debug_typevalue(typeinfo);
+                        }
+                        if (l != -1) {
+                           offs += l;
+                           SET_CURR_OFFS (offs);
+                        }
+                        /* 
+                        * else l == -1 => invalid instruction, which will be
+                        * flagged as an error on pass 2
+                        */
 
-	location.offset = offs = get_curr_ofs;
-    }
+                     } else { /* pass == 2 */
+                        offs += assemble (location.segment, offs, sb, cpu,
+                                       &output_ins, ofmt, report_error, &nasmlist);
+                        SET_CURR_OFFS (offs);
 
-    preproc->cleanup();
-    nasmlist.cleanup();
-}
+                     }
+               } /* not an EQU */
+               cleanup_insn (&output_ins);
+         }
+         nasm_free (line);
+         location.offset = offs = GET_CURR_OFFS;
+      } /* end while (line = preproc->getline... */
+
+      if (pass1==2 && global_offset_changed)
+         report_error(ERR_NONFATAL, "phase error detected at end of assembly.");
+
+      if (pass1 == 1) preproc->cleanup();
+
+      if (pass1==1 && terminate_after_phase) {
+         fclose(ofile);
+         remove(outname);
+         if (want_usage)
+               usage();
+         exit (1);
+      }
+   pass_cnt++;
+   if (pass>1 && !global_offset_changed && pass<pass_max) pass = pass_max-1;
+   } /* for (pass=1; pass<=2; pass++) */
+
+   nasmlist.cleanup();
+#if 1
+   if (optimizing)
+      fprintf(error_file,
+                "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
+#endif    
+} /* exit from assemble_file (...) */
+
 
 static int getkw (char *buf, char **value) 
 {
@@ -1164,22 +1153,28 @@ static int getkw (char *buf, char **value)
 	while (*buf!=']') buf++;
 	*buf++ = '\0';
     }
+#if 0    
     for (q=p; *q; q++)
 	*q = tolower(*q);
-    if (!strcmp(p, "segment") || !strcmp(p, "section"))
+#endif	
+    if (!nasm_stricmp(p, "segment") || !nasm_stricmp(p, "section"))
     	return 1;
-    if (!strcmp(p, "extern"))
+    if (!nasm_stricmp(p, "extern"))
     	return 2;
-    if (!strcmp(p, "bits"))
+    if (!nasm_stricmp(p, "bits"))
     	return 3;
-    if (!strcmp(p, "global"))
+    if (!nasm_stricmp(p, "global"))
     	return 4;
-    if (!strcmp(p, "common"))
+    if (!nasm_stricmp(p, "common"))
     	return 5;
-    if (!strcmp(p, "absolute"))
+    if (!nasm_stricmp(p, "absolute"))
     	return 6;
-    if (!strcmp(p, "debug"))
+    if (!nasm_stricmp(p, "debug"))
 	return 7;
+    if (!nasm_stricmp(p, "warning"))
+    	return 8;
+    if (!nasm_stricmp(p, "cpu"))
+	return 9;
     return -1;
 }
 
@@ -1211,11 +1206,19 @@ static void report_error (int severity, char *fmt, ...)
 	nasm_free (currentfile);
     }
 
-    if ( (severity & ERR_MASK) == ERR_WARNING)
-	fputs ("warning: ", error_file);
-    else if ( (severity & ERR_MASK) == ERR_PANIC)
-	fputs ("panic: ", error_file);
-
+    switch (severity & ERR_MASK) {
+      case ERR_WARNING:
+	fputs ("warning: ", error_file); break;
+      case ERR_NONFATAL:
+	fputs ("error: ", error_file); break;
+      case ERR_FATAL:
+	fputs ("fatal: ", error_file); break;
+      case ERR_PANIC:
+	fputs ("panic: ", error_file); break;
+      case ERR_DEBUG:
+        fputs("debug: ", error_file); break;
+    }
+    
     va_start (ap, fmt);
     vfprintf (error_file, fmt, ap);
     fputc ('\n', error_file);
@@ -1224,7 +1227,7 @@ static void report_error (int severity, char *fmt, ...)
 	want_usage = TRUE;
 
     switch (severity & ERR_MASK) {
-      case ERR_WARNING:
+      case ERR_WARNING: case ERR_DEBUG:
 	/* no further action, by definition */
 	break;
       case ERR_NONFATAL:
@@ -1241,7 +1244,8 @@ static void report_error (int severity, char *fmt, ...)
 	break;			       /* placate silly compilers */
       case ERR_PANIC:
 	fflush(NULL);
-	abort();		       /* halt, catch fire, and dump core */
+/*	abort();	*/	       /* halt, catch fire, and dump core */
+	exit(3);
 	break;
     }
 }
@@ -1342,3 +1346,47 @@ static void no_pp_cleanup (void)
 {
     fclose(no_pp_fp);
 }
+
+static unsigned long get_cpu (char *value)
+{
+    
+    if (!strcmp(value, "8086")) return IF_8086;
+    if (!strcmp(value, "186")) return IF_186;
+    if (!strcmp(value, "286")) return IF_286;
+    if (!strcmp(value, "386")) return IF_386;
+    if (!strcmp(value, "486")) return IF_486;
+    if (!strcmp(value, "586")    || 
+    	!nasm_stricmp(value, "pentium") ) 	return IF_PENT;
+    if (!strcmp(value, "686")  ||
+    	!nasm_stricmp(value, "ppro") ||
+    	!nasm_stricmp(value, "p2")    ) 	return IF_P6;
+    if (!nasm_stricmp(value, "p3")    ||
+    	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
+
+    report_error (pass ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
+        
+    return IF_PLEVEL;	/* the maximum level */
+}
+
+
+static int get_bits (char *value)
+{
+    int i;
+    
+    if ((i = atoi(value)) == 16)  return i;   /* set for a 16-bit segment */
+    else if (i == 32) {
+	if (cpu < IF_386) {
+	    report_error(ERR_NONFATAL,
+	    	"cannot specify 32-bit segment on processor below a 386");
+	    i = 16;
+	}
+    } else {
+	report_error(pass ? ERR_NONFATAL : ERR_FATAL,
+	   "`%s' is not a valid segment size; must be 16 or 32",
+	   value);
+	i = 16;
+    }
+    return i;
+}
+
+/* end of nasm.c */

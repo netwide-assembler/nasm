@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98"
+#define NASM_VER "0.98.03"
 
 #ifndef NULL
 #define NULL 0
@@ -64,26 +64,28 @@ typedef void (*efunc) (int severity, char *fmt, ...);
  * argument to an efunc.
  */
 
-#define ERR_WARNING 0		       /* warn only: no further action */
-#define ERR_NONFATAL 1		       /* terminate assembly after phase */
-#define ERR_FATAL 2		       /* instantly fatal: exit with error */
-#define ERR_PANIC 3		       /* internal error: panic instantly
+#define ERR_DEBUG  	0x00000008	/* put out debugging message */
+#define ERR_WARNING	0x00000000	/* warn only: no further action */
+#define ERR_NONFATAL	0x00000001	/* terminate assembly after phase */
+#define ERR_FATAL	0x00000002	/* instantly fatal: exit with error */
+#define ERR_PANIC	0x00000003	/* internal error: panic instantly
 					* and dump core for reference */
-#define ERR_MASK 0x0F		       /* mask off the above codes */
-#define ERR_NOFILE 0x10		       /* don't give source file name/line */
-#define ERR_USAGE 0x20		       /* print a usage message */
-#define ERR_PASS1 0x80		       /* only print this error on pass one */
+#define ERR_MASK	0x0000000F	/* mask off the above codes */
+#define ERR_NOFILE	0x00000010	/* don't give source file name/line */
+#define ERR_USAGE	0x00000020	/* print a usage message */
+#define ERR_PASS1	0x00000040	/* only print this error on pass one */
 
 /*
  * These codes define specific types of suppressible warning.
  */
-#define ERR_WARN_MNP  0x0100	       /* macro-num-parameters warning */
-#define ERR_WARN_OL   0x0200	       /* orphan label (no colon, and
+#define ERR_WARN_MNP	0x00000100	/* macro-num-parameters warning */
+#define ERR_WARN_MSR	0x00000200	/* macro self-reference */
+#define ERR_WARN_OL	0x00000300	/* orphan label (no colon, and
 					* alone on line) */
-#define ERR_WARN_NOV  0x0300	       /* numeric overflow */
-#define ERR_WARN_MASK 0xFF00	       /* the mask for this feature */
+#define ERR_WARN_NOV	0x00000400	/* numeric overflow */
+#define ERR_WARN_MASK	0x0000FF00	/* the mask for this feature */
 #define ERR_WARN_SHR  8		       /* how far to shift right */
-#define ERR_WARN_MAX  3		       /* the highest numbered one */
+#define ERR_WARN_MAX	4		/* the highest numbered one */
 
 /*
  * -----------------------
@@ -250,8 +252,8 @@ struct eval_hints {
  * defined before use", whereas if `critical' is 2, the error will
  * be "symbol undefined".
  *
- * If `critical' has bit 4 set (in addition to its main value: 0x11
- * and 0x12 correspond to 1 and 2) then an extended expression
+ * If `critical' has bit 8 set (in addition to its main value: 0x101
+ * and 0x102 correspond to 1 and 2) then an extended expression
  * syntax is recognised, in which relational operators such as =, <
  * and >= are accepted, as well as low-precedence logical operators
  * &&, ^^ and ||.
@@ -259,6 +261,7 @@ struct eval_hints {
  * If `hints' is non-NULL, it gets filled in with some hints as to
  * the base register in complex effective addresses.
  */
+#define CRITICAL 0x100
 typedef expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
 			   int *fwref, int critical, efunc error,
 			   struct eval_hints *hints);
@@ -411,7 +414,9 @@ enum {
 /* special type of immediate operand */
 #define ONENESS   0x00800000L          /* so UNITY == IMMEDIATE | ONENESS */
 #define UNITY     0x00802000L	       /* for shift/rotate instructions */
-
+#define BYTENESS  0x80000000L          /* so SBYTE == IMMEDIATE | BYTENESS */
+#define SBYTE 	  0x80002000L	       /* for op r16/32,immediate instrs. */
+		
 /*
  * Next, the codes returned from the parser, for registers and
  * instructions.

@@ -76,7 +76,7 @@
  * next operation.
  */
 
-#define RECORD_MAX 1024		/* maximum size of _any_ record */
+#define RECORD_MAX 1024-3	/* maximal size of any record except type+reclen */
 #define OBJ_PARMS  3		/* maximum .parm used by any .ori routine */
 
 #define FIX_08_LOW      0x8000	/* location type for various fixup subrecords */
@@ -103,6 +103,7 @@ enum RecordID {			       /* record ID codes */
 
     LEDATA = 0xA0,		       /* logical enumerated data */
     FIXUPP = 0x9C,		       /* fixups (relocations) */
+    FIXU32 = 0x9D,		       /* 32-bit fixups (relocations) */
 
     MODEND = 0x8A		       /* module end */
 };
@@ -139,8 +140,6 @@ static void ori_ledata(ObjRecord *orp);
 static void ori_pubdef(ObjRecord *orp);
 static void ori_null(ObjRecord *orp);
 static ObjRecord *obj_commit(ObjRecord *orp);
-static void obj_write_fixup (ObjRecord *orp, int bytes,
-			     int segrel, long seg, long wrt);
 
 static int obj_uppercase;		/* Flag: all names in uppercase */
 
@@ -949,6 +948,10 @@ static void obj_deflabel (char *name, long segment,
 	      " for this symbol type");
 }
 
+/* forward declaration */
+static void obj_write_fixup (ObjRecord *orp, int bytes,
+    int segrel, long seg, long wrt, struct Segment *segto);
+
 static void obj_out (long segto, void *data, unsigned long type,
 		     long segment, long wrt) 
 {
@@ -1049,7 +1052,7 @@ static void obj_out (long segto, void *data, unsigned long type,
 	if (segment != NO_SEG)
 	    obj_write_fixup (orp, rsize,
 			     (realtype == OUT_ADDRESS  ? 0x4000 : 0),
-			     segment, wrt);
+			     segment, wrt, seg);
 	seg->currentpos += size;
     } else if (realtype == OUT_RESERVE) {
 	if (orp->committed)
@@ -1060,7 +1063,7 @@ static void obj_out (long segto, void *data, unsigned long type,
 }
 
 static void obj_write_fixup (ObjRecord *orp, int bytes,
-			     int segrel, long seg, long wrt) 
+    int segrel, long seg, long wrt, struct Segment *segto)
 {
     int locat, method;
     int base;
@@ -1080,6 +1083,11 @@ static void obj_write_fixup (ObjRecord *orp, int bytes,
     if (forp == NULL) {
 	orp->child = forp = obj_new();
 	forp->up = &(orp->child);
+	/* We should choose between FIXUPP and FIXU32 record type */
+	/* If we're targeting a 32-bit segment, use a FIXU32 record */
+	if (segto->use32)
+	    forp->type = FIXU32;
+	else
 	forp->type = FIXUPP;
     }
 

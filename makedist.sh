@@ -2,7 +2,7 @@
 
 MAJORVER=`grep NASM_MAJOR_VER nasm.h | head -1 | cut -f3 -d' '`
 MINORVER=`grep NASM_MINOR_VER nasm.h | head -1 | cut -f3 -d' '`
-VERSION="${MAJORVER}.${MINORVER}"
+VERSION=`grep NASM_VER nasm.h | head -1 | cut -f3 -d' ' | sed s/\"//g`
 DOSVERSION="${MAJORVER}${MINORVER}"
 NASM_TAR_GZ=dist/nasm-${VERSION}.tar.gz
 NASM_ZIP=dist/nasm${DOSVERSION}s.zip
@@ -15,7 +15,7 @@ if [ ! -d dist ]; then mkdir dist; fi
 if [ -f dist/nasm.tar.gz ]; then rm dist/nasm.tar.gz; fi
 mkdir nasm-${VERSION}
 (cd nasm-${VERSION}; ln -s ../* .;
- rm -f nasm-${VERSION} dist Checklist GNUmakefile z*)
+ rm -f nasm-${VERSION} dist Checklist GNUmakefile)
 find nasm-${VERSION}/ -follow -name GNUmakefile > tar-exclude
 find nasm-${VERSION}/ -follow -name RCS >> tar-exclude
 find nasm-${VERSION}/ -follow -name '*.exe' >> tar-exclude

@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -100,6 +101,7 @@ struct MMacro {
     Token *iline;		       /* invocation line */
     int nparam, rotate, *paramlen;
     unsigned long unique;
+    int lineno;				/* Current line number on expansion */
 };
 
 /*
@@ -267,8 +269,9 @@ static char *directives[] = {
     "%endrep", "%error", "%exitrep", "%iassign", "%idefine", "%if",
     "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifnctx",
     "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnnum",
-    "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include", "%line",
-    "%macro", "%pop", "%push", "%rep", "%repl", "%rotate", "%undef"
+    "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include", "%ixdefine",
+    "%line", "%macro", "%pop", "%push", "%rep", "%repl", "%rotate",
+    "%undef", "%xdefine"
 };
 enum {
     PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
@@ -278,8 +281,9 @@ enum {
     PP_ENDREP, PP_ERROR, PP_EXITREP, PP_IASSIGN, PP_IDEFINE, PP_IF,
     PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFNCTX,
     PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNNUM,
-    PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE, PP_LINE,
-    PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE, PP_UNDEF
+    PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE, PP_IXDEFINE,
+    PP_LINE, PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE,
+    PP_UNDEF, PP_XDEFINE
 };
 
 
@@ -287,7 +291,7 @@ static Context *cstk;
 static Include *istk;
 static IncPath *ipath = NULL;
 
-static efunc error;
+static efunc __error;	/* Pointer to client-provided error reporting function */
 static evalfunc evaluate;
 
 static int pass;		/* HACK: pass 0 = generate dependencies only */
@@ -345,7 +349,10 @@ int any_extrastdmac;
  */
 static Token *expand_mmac_params (Token *tline);
 static Token *expand_smacro (Token *tline);
+static Token *expand_id (Token *tline);
+static Context *get_ctx (char *name, int all_contexts);
 static void   make_tok_num(Token *tok, long val);
+static void error (int severity, char *fmt, ...);
 
 /*
  * Macros for safe checking of token pointers, avoid *(NULL)
@@ -586,8 +593,10 @@ static Token *tokenise (char *line)
 
     while (*line) {
 	p = line;
-	if (*p == '%' && ( isdigit(p[1]) || 
-	      ((p[1] == '-' || p[1] == '+') && isdigit(p[2]))))
+	if (*p == '%' &&
+	      (isdigit(p[1]) ||
+	      ((p[1] == '-' || p[1] == '+') && isdigit(p[2])) ||
+	      ((p[1] == '+') && (isspace (p[2]) || !p[2]))))
 	{
 	    p++;
 	    do {
@@ -702,8 +711,10 @@ static Token *tokenise (char *line)
 
 /*
  * Convert a line of tokens back into text.
+ * If expand_locals is not zero, identifiers of the form "%$*xxx"
+ * will be transformed into ..@ctxnum.xxx
  */
-char *detoken (Token *tlist) 
+static char *detoken (Token *tlist, int expand_locals)
 {
     Token *t;
     int len;
@@ -718,6 +729,24 @@ char *detoken (Token *tlist)
 		t->text = nasm_strdup(p);
 	    else
 		t->text = NULL;
+	}
+	/* Expand local macros here and not during preprocessing */
+	if (expand_locals &&
+	    t->type == TOK_PREPROC_ID && t->text &&
+	    t->text[0] == '%' && t->text [1] == '$') {
+	    Context *ctx = get_ctx (t->text, FALSE);
+	    if (ctx) {
+		char buffer [40];
+		char *p, *q = t->text + 2;
+
+		q += strspn (q, "$");
+		sprintf (buffer, "..@%lu.", ctx->number);
+		p = nasm_malloc (strlen(buffer)+strlen(q)+1);
+		strcpy (p, buffer);
+		strcat (p, q);
+		nasm_free (t->text);
+		t->text = p;
+	    }
 	}
 	if (t->text)
 	    len += strlen(t->text);
@@ -827,43 +856,62 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 }
 
 /*
+ * Compare a string to the name of an existing macro; this is a
+ * simple wrapper which calls either strcmp or nasm_stricmp
+ * depending on the value of the `casesense' parameter.
+ */
+static int mstrcmp(char *p, char *q, int casesense)
+{
+    return casesense ? strcmp(p,q) : nasm_stricmp(p,q);
+}
+
+/*
  * Return the Context structure associated with a %$ token. Return
  * NULL, having _already_ reported an error condition, if the
  * context stack isn't deep enough for the supplied number of $
  * signs.
+ * If all_contexts == TRUE, contexts that enclose current are
+ * also scanned for such smacro, until it is found; if not -
+ * only the context that directly results from the number of $'s
+ * in variable's name.
  */
-static Context *get_ctx (char *name) 
+static Context *get_ctx (char *name, int all_contexts)
 {
     Context *ctx;
+    SMacro *m;
     int i;
+
+    if (!name || name[0] != '%' || name[1] != '$')
+	return NULL;
 
     if (!cstk) {
 	error (ERR_NONFATAL, "`%s': context stack is empty", name);
 	return NULL;
     }
 
-    i = 1;
-    ctx = cstk;
-    while (name[i+1] == '$') {
-	i++;
+    for (i = strspn (name+2, "$"), ctx = cstk; (i > 0) && ctx; i--) {
 	ctx = ctx->next;
+	i--;
+    }
 	if (!ctx) {
 	    error (ERR_NONFATAL, "`%s': context stack is only"
 		   " %d level%s deep", name, i-1, (i==2 ? "" : "s"));
 	    return NULL;
 	}
-    }
+    if (!all_contexts)
     return ctx;
-}
 
-/*
- * Compare a string to the name of an existing macro; this is a
- * simple wrapper which calls either strcmp or nasm_stricmp
- * depending on the value of the `casesense' parameter.
- */
-static int mstrcmp(char *p, char *q, int casesense) 
-{
-    return casesense ? strcmp(p,q) : nasm_stricmp(p,q);
+    do {
+	/* Search for this smacro in found context */
+	m = ctx->localmac;
+	while (m) {
+	    if (!mstrcmp(m->name, name, m->casesense))
+		return ctx;
+	    m = m->next;
+	}
+	ctx = ctx->next;
+    } while (ctx);
+    return NULL;
 }
 
 /*
@@ -922,27 +970,30 @@ static FILE *inc_fopen(char *file)
  *
  * Note that this is also called with nparam zero to resolve
  * `ifdef'.
+ *
+ * If you already know which context macro belongs to, you can pass
+ * the context pointer as first parameter; if you won't but name begins
+ * with %$ the context will be automatically computed. If all_contexts
+ * is true, macro will be searched in outer contexts as well.
  */
-static int smacro_defined (char *name, int nparam, SMacro **defn, int nocase) 
+static int smacro_defined (Context *ctx, char *name, int nparam, SMacro **defn,
+    int nocase)
 {
     SMacro *m;
-    Context *ctx;
-    char *p;
 
-    if (name[0] == '%' && name[1] == '$') {
-	ctx = get_ctx (name);
+    if (ctx)
+	m = ctx->localmac;
+    else if (name[0] == '%' && name[1] == '$') {
+	if (cstk)
+	    ctx = get_ctx (name, FALSE);
 	if (!ctx)
 	    return FALSE;	       /* got to return _something_ */
 	m = ctx->localmac;
-	p = name+1;
-	p += strspn(p, "$");
-    } else {
+    } else
 	m = smacros[hash(name)];
-	p = name;
-    }
 
     while (m) {
-	if (!mstrcmp(m->name, p, m->casesense & nocase) &&
+	if (!mstrcmp(m->name, name, m->casesense && nocase) &&
 	    (nparam <= 0 || m->nparam == 0 || nparam == m->nparam)) {
 	    if (defn) {
 		if (nparam == m->nparam || nparam == -1)
@@ -954,6 +1005,7 @@ static int smacro_defined (char *name, int nparam, SMacro **defn, int nocase)
 	}
 	m = m->next;
     }
+
     return FALSE;
 }
 
@@ -1021,10 +1073,7 @@ static int if_condition (Token *tline, int i)
       case PP_IFCTX: case PP_ELIFCTX:
       case PP_IFNCTX: case PP_ELIFNCTX:
 	j = FALSE;		       /* have we matched yet? */
-	if (!cstk)
-	    error(ERR_FATAL,
-		  "`%s': context stack is empty", directives[i]);
-	else while (tline) {
+	while (cstk && tline) {
 	    skip_white_(tline);
 	    if (!tline || tline->type != TOK_ID) {
 		error(ERR_NONFATAL,
@@ -1055,7 +1104,7 @@ static int if_condition (Token *tline, int i)
 		free_tlist (origline);
 		return -1;
 	    }
-	    if (smacro_defined(tline->text, 0, NULL, 1))
+	    if (smacro_defined (NULL, tline->text, 0, NULL, 1))
 		j = TRUE;
 		tline = tline->next;
 	}
@@ -1143,7 +1192,7 @@ static int if_condition (Token *tline, int i)
 	tptr = &t;
 	tokval.t_type = TOKEN_INVALID;
 	evalresult = evaluate (ppscan, tptr, &tokval,
-			       NULL, pass | 0x10, error, NULL);
+			       NULL, pass | CRITICAL, error, NULL);
 	free_tlist (tline);
 	if (!evalresult)
 	    return -1;
@@ -1164,6 +1213,18 @@ static int if_condition (Token *tline, int i)
 	free_tlist (origline);
 	return -1;		       /* yeah, right */
     }
+}
+
+/*
+ * Expand macros in a string. Used in %error and %include directives.
+ * First tokenise the string, apply "expand_smacro" and then de-tokenise back.
+ * The returned variable should ALWAYS be freed after usage.
+ */
+void expand_macros_in_string (char **p)
+{
+    Token *line = tokenise (*p);
+    line = expand_smacro (line);
+    *p = detoken (line, FALSE);
 }
 
 /*
@@ -1303,11 +1364,12 @@ static int do_directive (Token *tline)
 	    p[strlen(p)-1] = '\0';     /* remove the trailing quote */
 	} else
 	    p = tline->text;	       /* internal_string is easier */
+	expand_macros_in_string (&p);
 	inc = nasm_malloc(sizeof(Include));
 	inc->next = istk;
 	inc->conds = NULL;
 	inc->fp = inc_fopen(p);
-	inc->fname = src_set_fname(nasm_strdup(p));
+	inc->fname = src_set_fname (p);
 	inc->lineno = src_set_linnum(0);
 	inc->lineinc = 1;
 	inc->expansion = NULL;
@@ -1320,6 +1382,7 @@ static int do_directive (Token *tline)
       case PP_PUSH:
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tok_type_(tline, TOK_ID)) {
 	    error(ERR_NONFATAL,
 		  "`%%push' expects a context identifier");
@@ -1341,6 +1404,7 @@ static int do_directive (Token *tline)
       case PP_REPL:
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tok_type_(tline, TOK_ID)) {
 	    error(ERR_NONFATAL,
 		  "`%%repl' expects a context identifier");
@@ -1379,10 +1443,12 @@ static int do_directive (Token *tline)
 	if (tok_type_(tline, TOK_STRING)) {
 	    p = tline->text+1;	       /* point past the quote to the name */
 	    p[strlen(p)-1] = '\0';     /* remove the trailing quote */
-	    error(ERR_NONFATAL, "user error: %s", p);
+	    expand_macros_in_string (&p);
+	    error (ERR_NONFATAL, "%s", p);
+	    nasm_free (p);
 	} else {
-	    p = detoken(tline);
-	    error(ERR_WARNING, "user error: %s", p);
+	    p = detoken(tline, FALSE);
+	    error (ERR_WARNING, "%s", p);
 	    nasm_free(p);
 	}
 	free_tlist (origline);
@@ -1409,15 +1475,7 @@ static int do_directive (Token *tline)
 	    j = if_condition(tline->next, i);
 	    tline->next = NULL;	       /* it got freed */
 	    free_tlist (origline);
-	    if (j < 0)
-		/*
-		 * Bogus expression in %if, but we should pretend
-		 * it was OK anyway, so that we don't get an error
-		 * cascade on the subsequent %else / %endif.
-		 */
-		j = COND_NEVER;
-	    else
-		j = j ? COND_IF_TRUE : COND_IF_FALSE;
+	    j = j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
 	}
 	cond = nasm_malloc(sizeof(Cond));
 	cond->next = istk->conds;
@@ -1449,14 +1507,7 @@ static int do_directive (Token *tline)
 	    j = if_condition(expand_mmac_params(tline->next), i);
 	    tline->next = NULL;	       /* it got freed */
 	    free_tlist (origline);
-	    if (j < 0)
-		/*
-		 * The expression was bogus, but let's make
-		 * %endif not complain about missing %if
-		 */
-		j = COND_NEVER;
-	    else
-		istk->conds->state = j ? COND_IF_TRUE : COND_IF_FALSE;
+	    istk->conds->state = j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
 	}
 	return (istk->conds->state == COND_IF_TRUE ? 5 : 1);
 
@@ -1495,6 +1546,7 @@ static int do_directive (Token *tline)
 		   (i == PP_IMACRO ? "i" : ""));
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tok_type_(tline, TOK_ID)) {
 	    error (ERR_NONFATAL,
 		   "`%%%smacro' expects a macro name",
@@ -1508,7 +1560,7 @@ static int do_directive (Token *tline)
 	defining->nolist = FALSE;
 	defining->in_progress = FALSE;
 	defining->rep_nest = NULL;
-	tline = tline->next;
+	tline = expand_smacro (tline->next);
 	skip_white_(tline);
 	if (!tok_type_(tline, TOK_NUMBER)) {
 	    error (ERR_NONFATAL,
@@ -1717,36 +1769,38 @@ static int do_directive (Token *tline)
 	free_tlist (origline);
 	return 1;
 
+      case PP_XDEFINE:
+      case PP_IXDEFINE:
       case PP_DEFINE:
       case PP_IDEFINE:
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tline || (tline->type != TOK_ID &&
 		       (tline->type != TOK_PREPROC_ID ||
 			tline->text[1] != '$'))) {
 	    error (ERR_NONFATAL,
-		   "`%%%sdefine' expects a macro identifier",
-		   (i == PP_IDEFINE ? "i" : ""));
+		   "`%%%s%sdefine' expects a macro identifier",
+		   ((i == PP_IDEFINE || i == PP_IXDEFINE) ? "i" : ""),
+		   ((i == PP_XDEFINE || i == PP_IXDEFINE) ? "x" : ""));
 	    free_tlist (origline);
 	    return 3;
 	}
-	mname = tline->text;
-	if (tline->type == TOK_ID) {
-	    p = tline->text;
-	    smhead = &smacros[hash(mname)];
-	} else {
-	    ctx = get_ctx (tline->text);
-	    if (ctx == NULL)
-		return 3;
-	    else {
-		p = tline->text+1;
-		p += strspn(p, "$");
+
+	ctx = get_ctx (tline->text, FALSE);
+	if (!ctx)
+	    smhead = &smacros[hash(tline->text)];
+	else
 		smhead = &ctx->localmac;
-	    }
-	}
+	mname = tline->text;
 	last = tline;
 	param_start = tline = tline->next;
 	nparam = 0;
+
+	/* Expand the macro definition now for %xdefine and %ixdefine */
+	if ((i == PP_XDEFINE) || (i == PP_IXDEFINE))
+	    tline = expand_smacro (tline);
+
 	if (tok_is_(tline, "(")) {
 	    /*
 	     * This macro has parameters.
@@ -1811,7 +1865,7 @@ static int do_directive (Token *tline)
 	 * carefully re-terminated after chopping off the expansion
 	 * from the end).
 	 */
-	if (smacro_defined (mname, nparam, &smac, i==PP_DEFINE)) {
+	if (smacro_defined (ctx, mname, nparam, &smac, i == PP_DEFINE)) {
 	    if (!smac) {
 		error (ERR_WARNING,
 		       "single-line macro `%s' defined both with and"
@@ -1833,8 +1887,8 @@ static int do_directive (Token *tline)
 	    smac->next = *smhead;
 	    *smhead = smac;
 	}
-	smac->name = nasm_strdup(p);
-	smac->casesense = (i == PP_DEFINE);
+	smac->name = nasm_strdup(mname);
+	smac->casesense = ((i == PP_DEFINE) || (i == PP_XDEFINE));
 	smac->nparam = nparam;
 	smac->expansion = macro_start;
 	smac->in_progress = FALSE;
@@ -1844,6 +1898,7 @@ static int do_directive (Token *tline)
     case PP_UNDEF:
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tline || (tline->type != TOK_ID &&
 		       (tline->type != TOK_PREPROC_ID ||
 			tline->text[1] != '$'))) {
@@ -1852,33 +1907,26 @@ static int do_directive (Token *tline)
 	    free_tlist (origline);
 	    return 3;
 	}
-	mname = tline->text;
-	if (tline->type == TOK_ID) {
-	    p = tline->text;
-	    smhead = &smacros[hash(mname)];
-	} else {
-	    ctx = get_ctx (tline->text);
-	    if (ctx == NULL) {
-		free_tlist (origline);
-		return 3;
-	    } else {
-		p = tline->text+1;
-		p += strspn(p, "$");
-		smhead = &ctx->localmac;
-	    }
+	if (tline->next) {
+	    error (ERR_WARNING,
+		"trailing garbage after macro name ignored");
 	}
-	last = tline;
-	tline = tline->next;
-	last->next = NULL;
 
-	if (tline)
-	    error(ERR_WARNING,
-		  "trailing garbage after macro name ignored");
+	/* Find the context that symbol belongs to */
+	ctx = get_ctx (tline->text, FALSE);
+	if (!ctx)
+	    smhead = &smacros[hash(tline->text)];
+	else
+	    smhead = &ctx->localmac;
+
+	mname = tline->text;
+	last = tline;
+	last->next = NULL;
 
 	/*
 	 * We now have a macro name... go hunt for it.
 	 */
-	while (smacro_defined (mname, -1, &smac, 1)) {
+	while (smacro_defined (ctx, mname, -1, &smac, 1)) {
 	  /* Defined, so we need to find its predecessor and nuke it */
 	  SMacro **s;
 	  for ( s = smhead ; *s && *s != smac ; s = &(*s)->next );
@@ -1889,12 +1937,14 @@ static int do_directive (Token *tline)
 	    nasm_free(smac);
 	  }
 	}
+	free_tlist (origline);
 	return 3;
 
       case PP_ASSIGN:
       case PP_IASSIGN:
 	tline = tline->next;
 	skip_white_(tline);
+	tline = expand_id (tline);
 	if (!tline || (tline->type != TOK_ID &&
 		       (tline->type != TOK_PREPROC_ID ||
 			tline->text[1] != '$'))) {
@@ -1904,26 +1954,16 @@ static int do_directive (Token *tline)
 	    free_tlist (origline);
 	    return 3;
 	}
-	mname = tline->text;
-	if (tline->type == TOK_ID) {
-	    p = tline->text;
-	    smhead = &smacros[hash(mname)];
-	} else {
-	    ctx = get_ctx (tline->text);
-	    if (ctx == NULL) {
-		free_tlist (origline);
-		return 3;
-	    } else {
-		p = tline->text+1;
-		p += strspn(p, "$");
+        ctx = get_ctx (tline->text, FALSE);
+	if (!ctx)
+	    smhead = &smacros[hash(tline->text)];
+	else
 		smhead = &ctx->localmac;
-	    }
-	}
+	mname = tline->text;
 	last = tline;
-	tline = tline->next;
+	tline = expand_smacro (tline->next);
 	last->next = NULL;
 
-	tline = expand_smacro (tline);
 	t = tline;
 	tptr = &t;
 	tokval.t_type = TOKEN_INVALID;
@@ -1956,7 +1996,7 @@ static int do_directive (Token *tline)
 	 * zero, and a numeric token to use as an expansion. Create
 	 * and store an SMacro.
 	 */
-	if (smacro_defined (mname, 0, &smac, i==PP_ASSIGN)) {
+	if (smacro_defined (ctx, mname, 0, &smac, i == PP_ASSIGN)) {
 	    if (!smac)
 		error (ERR_WARNING,
 		       "single-line macro `%s' defined both with and"
@@ -1976,7 +2016,7 @@ static int do_directive (Token *tline)
 	    smac->next = *smhead;
 	    *smhead = smac;
 	}
-	smac->name = nasm_strdup(p);
+	smac->name = nasm_strdup(mname);
 	smac->casesense = (i == PP_ASSIGN);
 	smac->nparam = 0;
 	smac->expansion = macro_start;
@@ -2013,7 +2053,7 @@ static int do_directive (Token *tline)
 	src_set_linnum(k);
 	istk->lineinc = m;
 	if (tline) {
-	    nasm_free ( src_set_fname ( detoken(tline) ) );
+	    nasm_free (src_set_fname (detoken (tline, FALSE)));
 	}
 	free_tlist (origline);
 	return 5;
@@ -2077,7 +2117,7 @@ static Token *expand_mmac_params (Token *tline)
 
     while (tline) {
 	if (tline->type == TOK_PREPROC_ID &&
-	    (tline->text[1] == '+' || tline->text[1] == '-' ||
+	    (((tline->text[1] == '+' || tline->text[1] == '-') && tline->text [2]) ||
 	     tline->text[1] == '%' ||
 	     (tline->text[1] >= '0' && tline->text[1] <= '9'))) {
 	    char *text = NULL;
@@ -2244,26 +2284,38 @@ static Token *expand_smacro (Token *tline)
     SMacro *head = NULL, *m;
     Token **params;
     int *paramsize;
-    int nparam, sparam, brackets;
-    char *p;
+    int nparam, sparam, brackets, rescan;
+    Token *org_tline = tline;
+    Context *ctx;
+    char *mname;
 
+    /*
+     * Trick: we should avoid changing the start token pointer since it can
+     * be contained in "next" field of other token. Because of this
+     * we allocate a copy of first token and work with it; at the end of
+     * routine we copy it back
+     */
+    if (org_tline)
+    {
+	tline = nasm_malloc (sizeof (Token));
+	*tline = *org_tline;
+    }
+
+again:
     tail = &thead;
     thead = NULL;
 
     while (tline) {  /* main token loop */
-	p = NULL;
-	if (tline->type == TOK_ID) {
-	    head = smacros[hash(tline->text)];
-	    p = tline->text;
-	} else if (tline->type == TOK_PREPROC_ID && tline->text[1] == '$') {
-	    Context *ctx = get_ctx (tline->text);
-	    if (ctx) {
+	if ((mname = tline->text)) {
+	    /* if this token is a local macro, look in local context */
+	    if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID)
+		ctx = get_ctx (mname, TRUE);
+            else
+		ctx = NULL;
+	    if (!ctx)
+		head = smacros[hash(mname)];
+	    else
 		head = ctx->localmac;
-		p = tline->text+2;
-		p += strspn(p, "$");
-	    }
-	}
-	if (p) {
 	/*
 	 * We've hit an identifier. As in is_mmacro below, we first
 	 * check whether the identifier is a single-line macro at
@@ -2271,7 +2323,7 @@ static Token *expand_smacro (Token *tline)
 	 * necessary.
 	 */
 	    for (m = head; m; m = m->next)
-		if (!mstrcmp(m->name, p, m->casesense))
+		if (!mstrcmp(m->name, mname, m->casesense))
 		    break;
 	    if (m) {
 	      mstart = tline;
@@ -2303,8 +2355,7 @@ static Token *expand_smacro (Token *tline)
 		    nasm_free (t);
 		    continue;
 		}
-	      } 
-	      else {
+	      } else {
 		  /*
 		   * Complicated case: at least one macro with this name
 		   * exists and takes parameters. We must find the
@@ -2393,7 +2444,7 @@ static Token *expand_smacro (Token *tline)
 		      } /* parameter loop */
 		      nparam++;
 		      while (m && (m->nparam != nparam ||
-				   mstrcmp(m->name, p, m->casesense)))
+				   mstrcmp(m->name, mname, m->casesense)))
 			  m = m->next;
 		      if (!m)
 			  error (ERR_WARNING|ERR_WARN_MNP, 
@@ -2415,8 +2466,7 @@ static Token *expand_smacro (Token *tline)
 		  nasm_free (params);
 		  nasm_free (paramsize);
 		  tline = mstart;
-	      } 
-	      else {
+	      } else {
 		/*
 		 * Expand the macro: we are placed on the last token of the
 		 * call, so that we can easily split the call from the
@@ -2485,24 +2535,135 @@ static Token *expand_smacro (Token *tline)
 	    t->mac = NULL;
 	    t->next = NULL;
 	    tail = &t->next;
-	    if (t->type == TOK_PREPROC_ID && t->text[1] == '$') {
-		Context *c = get_ctx (t->text);
-		char *p, *q, buffer[40];
-
-		t->type = TOK_ID;
-		if (c) {
-		    q = t->text+1;
-		    q += strspn(q, "$");
-		    sprintf(buffer, "..@%lu.", c->number);
-		    p = nasm_strcat (buffer,q);
-		    nasm_free (t->text);
-		    t->text = p;
-		}
-	    }
 	}
     }
 
+    /*
+     * Now scan the entire line and look for successive TOK_IDs that resulted
+     * after expansion (they can't be produced by tokenise()). The successive
+     * TOK_IDs should be concatenated.
+     * Also we look for %+ tokens and concatenate the tokens before and after
+     * them (without white spaces in between).
+     */
+    t = thead;
+    rescan = 0;
+    while (t) {
+	while (t && t->type != TOK_ID && t->type != TOK_PREPROC_ID)
+	    t = t->next;
+	if (!t || !t->next)
+	    break;
+	if (t->next->type == TOK_ID ||
+	    t->next->type == TOK_PREPROC_ID ||
+	    t->next->type == TOK_NUMBER) {
+	    Token *next = t->next->next;
+	    char *p = nasm_malloc (strlen (t->text) + strlen (t->next->text) + 1);
+	    strcpy (p, t->text);
+	    strcat (p, t->next->text);
+		    nasm_free (t->text);
+	    nasm_free (t->next->text);
+	    nasm_free (t->next);
+	    t->next = next;
+		    t->text = p;
+	    rescan = 1;
+	} else if (t->next->type == TOK_WHITESPACE && t->next->next &&
+	           t->next->next->type == TOK_PREPROC_ID &&
+		   strcmp (t->next->next->text, "%+") == 0) {
+	    /* free the next whitespace, the %+ token and next whitespace */
+            int i;
+            for (i = 1; i <= 3; i++)
+            {
+		Token *next;
+		if (!t->next || (i != 2 && t->next->type != TOK_WHITESPACE))
+		    break;
+		next = t->next->next;
+		nasm_free (t->next->text);
+		nasm_free (t->next);
+		t->next = next;
+	    } /* endfor */
+	} else
+	  t = t->next;
+		}
+    /* If we concatenaded something, re-scan the line for macros */
+    if (rescan) {
+	tline = thead;
+	goto again;
+	    }
+
+    if (org_tline)
+    {
+	if (thead) {
+	    *org_tline = *thead;
+	    nasm_free (thead);
+	} else
+	{
+	    /* the expression expanded to empty line;
+	       we can't return NULL for some reasons
+	       we just set the line to a single WHITESPACE token. */
+	    memset (org_tline, 0, sizeof (*org_tline));
+	    org_tline->text = nasm_strdup (" ");
+	    org_tline->type = TOK_WHITESPACE;
+	}
+	thead = org_tline;
+    }
+
     return thead;
+}
+
+/*
+ * Similar to expand_smacro but used exclusively with macro identifiers
+ * right before they are fetched in. The reason is that there can be
+ * identifiers consisting of several subparts. We consider that if there
+ * are more than one element forming the name, user wants a expansion,
+ * otherwise it will be left as-is. Example:
+ *
+ *	%define %$abc cde
+ *
+ * the identifier %$abc will be left as-is so that the handler for %define
+ * will suck it and define the corresponding value. Other case:
+ *
+ *	%define _%$abc cde
+ *
+ * In this case user wants name to be expanded *before* %define starts
+ * working, so we'll expand %$abc into something (if it has a value;
+ * otherwise it will be left as-is) then concatenate all successive
+ * PP_IDs into one.
+ */
+static Token *expand_id (Token *tline)
+{
+    Token *cur, *oldnext = NULL;
+
+    if (!tline ||
+	!tline->next)
+	return tline;
+
+    cur = tline;
+    while (cur->next &&
+	(cur->next->type == TOK_ID ||
+	 cur->next->type == TOK_PREPROC_ID ||
+	 cur->next->type == TOK_NUMBER))
+	cur = cur->next;
+
+    /* If identifier consists of just one token, don't expand */
+    if (cur == tline)
+	return tline;
+
+    if (cur) {
+	oldnext = cur->next;		/* Detach the tail past identifier */
+	cur->next = NULL;		/* so that expand_smacro stops here */
+    }
+
+    tline = expand_smacro (tline);
+
+    if (cur) {
+	/* expand_smacro possibly changhed tline; re-scan for EOL */
+        cur = tline;
+	while (cur && cur->next)
+	    cur = cur->next;
+	if (cur)
+	    cur->next = oldnext;
+    }
+
+    return tline;
 }
 
 /*
@@ -2709,6 +2870,7 @@ static int expand_mmacro (Token *tline)
     m->rotate = 0;
     m->paramlen = paramlen;
     m->unique = unique++;
+    m->lineno = 0;
 
     m->next_active = istk->mstk;
     istk->mstk = m;
@@ -2745,7 +2907,7 @@ static int expand_mmacro (Token *tline)
      * If we had a label, push it on as the first line of
      * the macro expansion.
      */
-    if (label)
+    if (label) {
 	if (dont_prepend<0)
 	    free_tlist(startline);
 	else {
@@ -2764,10 +2926,37 @@ static int expand_mmacro (Token *tline)
 		tt->text = nasm_strdup(":");
 	    }
 	}
+    }
 
     list->uplevel (m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
     return 1;
+}
+
+/*
+ * Since preprocessor always operate only on the line that didn't
+ * arrived yet, we should always use ERR_OFFBY1. Also since user
+ * won't want to see same error twice (preprocessing is done once
+ * per pass) we will want to show errors only during pass one.
+ */
+static void error (int severity, char *fmt, ...)
+{
+    va_list arg;
+    char buff [1024];
+
+    /* If we're in a dead branch of IF or something like it, ignore the error */
+    if (istk->conds && !emitting(istk->conds->state))
+	return;
+
+    va_start (arg, fmt);
+    vsprintf (buff, fmt, arg);
+    va_end (arg);
+
+    if (istk->mstk && istk->mstk->name)
+	__error (severity|ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
+	    istk->mstk->lineno, buff);
+    else
+	__error (severity|ERR_PASS1, "%s", buff);
 }
 
 static void pp_reset (char *file, int apass, efunc errfunc, evalfunc eval,
@@ -2775,7 +2964,7 @@ static void pp_reset (char *file, int apass, efunc errfunc, evalfunc eval,
 {
     int h;
 
-    error = errfunc;
+    __error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
     istk->next = NULL;
@@ -2903,10 +3092,12 @@ static char *pp_getline (void)
 	    if (istk->expansion) {   /* from a macro expansion */
 		char *p;
 		Line *l = istk->expansion;
+		if (istk->mstk)
+		    istk->mstk->lineno++;
 		tline = l->first;
 		istk->expansion = l->next;
 		nasm_free (l);
-		p = detoken(tline);
+		p = detoken (tline, FALSE);
 		list->line (LIST_MACRO, p);
 		nasm_free(p);
 		break;
@@ -2994,7 +3185,7 @@ static char *pp_getline (void)
 		/*
 		 * De-tokenise the line again, and emit it.
 		 */
-		line = detoken(tline);
+		line = detoken(tline, TRUE);
 		free_tlist (tline);
 		break;
 	    } else {

@@ -57,6 +57,12 @@ static char *stdmac[] = {
     "%imacro bits 1+.nolist",
     "[bits %1]",
     "%endmacro",
+    "%imacro use16 0.nolist",
+    "[bits 16]",
+    "%endmacro",
+    "%imacro use32 0.nolist",
+    "[bits 32]",
+    "%endmacro",
     "%imacro global 1-*.nolist",
     "%rep %0",
     "[global %1]",
@@ -68,6 +74,9 @@ static char *stdmac[] = {
     "[common %1]",
     "%rotate 1",
     "%endrep",
+    "%endmacro",
+    "%imacro cpu 1+.nolist",
+    "[cpu %1]",
     "%endmacro",
     NULL
 };

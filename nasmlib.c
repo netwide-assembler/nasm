@@ -125,29 +125,33 @@ char *nasm_strndup (char *s, size_t len)
     return p;
 }
 
+#if !defined(stricmp) && !defined(strcasecmp)
 int nasm_stricmp (const char *s1, const char *s2) 
 {
-    while (*s1 && toupper(*s1) == toupper(*s2))
+    while (*s1 && tolower(*s1) == tolower(*s2))
 	s1++, s2++;
     if (!*s1 && !*s2)
 	return 0;
-    else if (toupper(*s1) < toupper(*s2))
+    else if (tolower(*s1) < tolower(*s2))
 	return -1;
     else
 	return 1;
 }
+#endif
 
+#if !defined(strnicmp) && !defined(strncasecmp)
 int nasm_strnicmp (const char *s1, const char *s2, int n) 
 {
-    while (n > 0 && *s1 && toupper(*s1) == toupper(*s2))
+    while (n > 0 && *s1 && tolower(*s1) == tolower(*s2))
 	s1++, s2++, n--;
     if ((!*s1 && !*s2) || n==0)
 	return 0;
-    else if (toupper(*s1) < toupper(*s2))
+    else if (tolower(*s1) < tolower(*s2))
 	return -1;
     else
 	return 1;
 }
+#endif
 
 #define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')

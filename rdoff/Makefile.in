@@ -29,7 +29,7 @@ LDRDFLIBS 	= rdoff.o nasmlib.o symtab.o collectn.o rdlib.o segtab.o hash.o
 RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
 
 .c.o:
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 all: rdfdump ldrdf rdx rdflib rdf2bin rdf2com
 

@@ -647,8 +647,13 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		result->oprs[operand].offset = reloc_value(value);
 		result->oprs[operand].segment = reloc_seg(value);
 		result->oprs[operand].wrt = reloc_wrt(value);
-		if (is_simple(value) && reloc_value(value)==1)
-		    result->oprs[operand].type |= UNITY;
+		if (is_simple(value)) {
+		    if (reloc_value(value)==1)
+			result->oprs[operand].type |= UNITY;
+		    if (reloc_value(value) >= -128 &&
+		             reloc_value(value) <= 127)
+		        result->oprs[operand].type |= SBYTE;
+		}
 	    } 
 	    else	       /* it's a register */
 	    {

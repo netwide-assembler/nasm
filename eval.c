@@ -760,8 +760,8 @@ expr *evaluate (scanner sc, void *scprivate, struct tokenval *tv,
     if (hint)
 	hint->type = EAH_NOHINT;
 
-    if (critical & 0x10) {
-	critical &= ~0x10;
+    if (critical & CRITICAL) {
+	critical &= ~CRITICAL;
 	bexpr = rexp0;
     } else
 	bexpr = expr0;

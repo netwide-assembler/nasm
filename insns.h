@@ -63,6 +63,8 @@ struct itemplate {
 #define IF_3DNOW  0x00008000UL	       /* it's a 3DNow! instruction */
 #define IF_SSE    0x00010000UL	       /* it's a SSE (KNI, MMX2) instruction */
 #define IF_PMASK  0xFF000000UL	       /* the mask for processor types */
+#define IF_PLEVEL 0x0F000000UL         /* the mask for processor instr. level */
+					/* also the highest possible processor */
 #define IF_PFMASK 0xF001FF00UL	       /* the mask for disassembly "prefer" */
 #define IF_8086   0x00000000UL	       /* 8086 instruction */
 #define IF_186    0x01000000UL	       /* 186+ instruction */

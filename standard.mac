@@ -71,6 +71,13 @@ __SECT__
 [bits %1]
 %endmacro
 
+%imacro use16 0.nolist
+[bits 16]
+%endmacro
+%imacro use32 0.nolist
+[bits 32]
+%endmacro
+
 %imacro global 1-*.nolist
 %rep %0
 [global %1]
@@ -84,3 +91,8 @@ __SECT__
 %rotate 1
 %endrep
 %endmacro
+
+%imacro cpu 1+.nolist
+[cpu %1]
+%endmacro
+

@@ -32,12 +32,19 @@
  * \70, \71, \72 - a long relative operand, from operand 0, 1 or 2
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
+ * \130,\131,\132 - an immediate word or signed byte for operand 0, 1, or 2
+ * \133,\134,\135 - or 2 (s-field) into next opcode byte if operand 0, 1, or 2
+ *		    is a signed byte rather than a word.
+ * \140,\141,\142 - an immediate dword or signed byte for operand 0, 1, or 2
+ * \143,\144,\145 - or 2 (s-field) into next opcode byte if operand 0, 1, or 2
+ *		    is a signed byte rather than a dword.
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
  * \30x          - might be an 0x67 byte, depending on the address size of
  *                 the memory reference in operand x.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
+ * \312		 - (disassembler only) marker on LOOP, LOOPxx instructions.
  * \320          - indicates fixed 16-bit operand size, i.e. optional 0x66.
  * \321          - indicates fixed 32-bit operand size, i.e. optional 0x66.
  * \322          - indicates that this instruction is only valid when the
@@ -52,6 +59,9 @@
  *		   as a literal byte in order to aid the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialised storage.
  *                 Operand 0 had better be a segmentless constant.
+ * \370,\371,\372 - match only if operand 0, 1, 2 meets byte jump criteria.
+ * \373		 - assemble 0x03 if bits==16, 0x05 if bits==32;
+ *		   used for conditional jump over longer jump
  */
 
 #include <stdio.h>
@@ -71,6 +81,7 @@ typedef struct {
     unsigned char modrm, sib;	       /* the bytes themselves */
 } ea;
 
+static unsigned long cpu;		/* cpu level received from nasm.c */
 static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
@@ -134,7 +145,25 @@ static void out (long offset, long segto, void *data, unsigned long type,
     outfmt->output (segto, data, type, segment, wrt);
 }
 
-long assemble (long segment, long offset, int bits,
+static int jmp_match (long segment, long offset, int bits,
+		insn *ins, char *code)
+{   long isize;
+    unsigned char c = code[0];
+
+
+    if (c != 0370) return 0;
+    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return 1;	/* match a forward reference */
+    
+    isize = calcsize (segment, offset, bits, ins, code);
+    if (ins->oprs[0].segment != segment) return 0;
+    isize = ins->oprs[0].offset - offset - isize;	/* isize is now the delta */
+    if (isize >= -128L && isize <= 127L) return 1;	/* it is byte size */
+
+    return 0;
+}		
+
+
+long assemble (long segment, long offset, int bits, unsigned long cp,
 	       insn *instruction, struct ofmt *output, efunc error,
 	       ListGen *listgen) 
 {
@@ -147,6 +176,7 @@ long assemble (long segment, long offset, int bits,
     long   wsize = 0;		       /* size for DB etc. */
 
     errfunc = error;		       /* to pass to other functions */
+    cpu = cp;
     outfmt = output;		       /* likewise */
     list = listgen;		       /* and again */
 
@@ -305,6 +335,8 @@ long assemble (long segment, long offset, int bits,
     temp = nasm_instructions[instruction->opcode];
     while (temp->opcode != -1) {
 	int m = matches (temp, instruction);
+	if (m == 99)
+	    m += jmp_match(segment, offset, bits, instruction, temp->code);
 
 	if (m == 100) 		       /* matches! */
 	{
@@ -371,7 +403,7 @@ long assemble (long segment, long offset, int bits,
 	    if (instruction->times > 1)
 		list->downlevel (LIST_TIMES);
 	    return offset - start;
-	} else if (m > 0) {
+	} else if (m > 0  &&  m > size_prob) {
 	    size_prob = m;
 	}
 	temp++;
@@ -382,6 +414,8 @@ long assemble (long segment, long offset, int bits,
 	    error (ERR_NONFATAL, "operation size not specified");
 	else if (size_prob == 2)
 	    error (ERR_NONFATAL, "mismatch in operand sizes");
+	else if (size_prob == 3)
+	    error (ERR_NONFATAL, "no instruction for this cpu level");
 	else
 	    error (ERR_NONFATAL,
 		   "invalid combination of opcode and operands");
@@ -389,12 +423,13 @@ long assemble (long segment, long offset, int bits,
     return 0;
 }
 
-long insn_size (long segment, long offset, int bits,
+long insn_size (long segment, long offset, int bits, unsigned long cp,
 		insn *instruction, efunc error) 
 {
     struct itemplate *temp;
 
     errfunc = error;		       /* to pass to other functions */
+    cpu = cp;
 
     if (instruction->opcode == -1)
     	return 0;
@@ -472,7 +507,11 @@ long insn_size (long segment, long offset, int bits,
 
     temp = nasm_instructions[instruction->opcode];
     while (temp->opcode != -1) {
-	if (matches(temp, instruction) == 100) {
+    	int m = matches(temp, instruction);
+	if (m == 99)
+	    m += jmp_match(segment, offset, bits, instruction, temp->code);
+    	
+	if (m == 100) {
 	    /* we've matched an instruction. */
 	    long  isize;
 	    char  * codes = temp->code;
@@ -496,6 +535,22 @@ long insn_size (long segment, long offset, int bits,
 	temp++;
     }
     return -1;			       /* didn't match any instruction */
+}
+
+
+/* check that  opn[op]  is a signed byte of size 16 or 32,
+					and return the signed value*/
+static int is_sbyte (insn *ins, int op, int size)
+{
+    signed long v;
+    int ret;
+    
+    ret = !(ins->forw_ref && ins->oprs[op].opflags ) &&	/* dead in the water on forward reference or External */
+              ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
+    v = ins->oprs[op].offset;
+    if (size==16) v = (signed short)v;   /* sign extend if 16 bits */
+    
+    return ret && v>=-128L && v<=127L;
 }
 
 static long calcsize (long segment, long offset, int bits,
@@ -540,6 +595,14 @@ static long calcsize (long segment, long offset, int bits,
 		    ins->oprs[c-064].addr_size : bits) == 16 ? 2 : 4); break;
       case 070: case 071: case 072:
 	length += 4; break;
+      case 0130: case 0131: case 0132:		
+	length += is_sbyte(ins, c-0130, 16) ? 1 : 2; break;
+      case 0133: case 0134: case 0135:
+	codes+=2; length++; break;
+      case 0140: case 0141: case 0142:
+	length += is_sbyte(ins, c-0140, 32) ? 1 : 4; break;
+      case 0143: case 0144: case 0145:
+	codes+=2; length++; break;
       case 0300: case 0301: case 0302:
 	length += chsize (&ins->oprs[c-0300], bits);
 	break;
@@ -573,6 +636,10 @@ static long calcsize (long segment, long offset, int bits,
 	else
 	    length += ins->oprs[0].offset << (c-0340);
 	break;
+      case 0370: case 0371: case 0372:
+	break;
+      case 0373:
+        length++; break;
       default:			       /* can't do it by 'case' statements */
 	if (c>=0100 && c<=0277) {      /* it's an EA */
 	    ea ea_data;
@@ -801,6 +868,51 @@ static void gencode (long segment, long offset, int bits,
 	    offset += 4;
 	    break;
 
+	case 0130: case 0131: case 0132:
+	    data = ins->oprs[c-0130].offset;
+	    if (is_sbyte(ins, c-0130, 16)) {
+		out (offset, segment, &data, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset++;
+	    } else {
+		if (ins->oprs[c-0130].segment == NO_SEG &&
+			ins->oprs[c-0130].wrt == NO_SEG &&
+			(data < -65536L || data > 65535L)) {
+		    errfunc (ERR_WARNING, "word value exceeds bounds");
+		}    
+		out (offset, segment, &data, OUT_ADDRESS+2,
+		          ins->oprs[c-0130].segment, ins->oprs[c-0130].wrt);
+		offset += 2;
+	    }
+	    break;
+
+	case 0133: case 0134: case 0135:
+	    codes++;
+	    bytes[0] = *codes++;
+	    if (is_sbyte(ins, c-0133, 16)) bytes[0] |= 2;   /* s-bit */
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+	    	
+	case 0140: case 0141: case 0142:
+	    data = ins->oprs[c-0140].offset;
+	    if (is_sbyte(ins, c-0140, 32)) {
+		out (offset, segment, &data, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset++;
+	    } else {
+		out (offset, segment, &data, OUT_ADDRESS+4,
+		          ins->oprs[c-0140].segment, ins->oprs[c-0140].wrt);
+		offset += 4;
+	    }
+	    break;
+
+	case 0143: case 0144: case 0145:
+	    codes++;
+	    bytes[0] = *codes++;
+	    if (is_sbyte(ins, c-0143, 32)) bytes[0] |= 2;   /* s-bit */
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+	    	    
 	case 0300: case 0301: case 0302:
 	    if (chsize (&ins->oprs[c-0300], bits)) {
 		*bytes = 0x67;
@@ -858,7 +970,7 @@ static void gencode (long segment, long offset, int bits,
 	    break;
 
 	case 0330:
-	    *bytes = *codes++ + condval[ins->condition];
+	    *bytes = *codes++ ^ condval[ins->condition];
 	    out (offset, segment, bytes,
 		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
 	    offset += 1;
@@ -885,6 +997,16 @@ static void gencode (long segment, long offset, int bits,
 			 OUT_RESERVE+size, NO_SEG, NO_SEG);
 		offset += size;
 	    }
+	    break;
+
+	case 0370: case 0371: case 0372:
+	    break;
+	
+	case 0373:
+	    *bytes = bits==16 ? 3 : 5;
+	    out (offset, segment, bytes,
+		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
 	    break;
 
 	default:	               /* can't do it by 'case' statements */
@@ -1014,7 +1136,8 @@ static int matches (struct itemplate *itemp, insn *instruction)
 		(instruction->oprs[i].type & SIZE_MASK))
 		return 0;
 	    else
-		ret = 1;
+/*		ret = 1;   */
+		return 1;
 	}
 
     /*
@@ -1069,8 +1192,19 @@ static int matches (struct itemplate *itemp, insn *instruction)
     for (i=0; i<itemp->operands; i++)
 	if (!(itemp->opd[i] & SIZE_MASK) &&
 	    (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
-	    ret = 2;
+/*	    ret = 2;  */
+	    return 2;
 
+    /*
+     * Check template is okay at the set cpu level
+     */
+    if ((itemp->flags & IF_PLEVEL) > cpu) return 3;
+    
+    /*
+     * Check if special handling needed for Jumps
+     */
+    if ((unsigned char)(itemp->code[0]) >= 0370) return 99;
+     
     return ret;
 }
 

@@ -51,8 +51,25 @@ char *nasm_strndup_log (char *, int, char *, size_t);
  * ANSI doesn't guarantee the presence of `stricmp' or
  * `strcasecmp'.
  */
+#if defined(stricmp) || defined(strcasecmp)
+#if defined(stricmp)
+#define nasm_stricmp stricmp
+#else
+#define nasm_stricmp strcasecmp
+#endif
+#else
 int nasm_stricmp (const char *, const char *);
+#endif
+
+#if defined(strnicmp) || defined(strncasecmp)
+#if defined(strnicmp)
+#define nasm_strnicmp strnicmp
+#else
+#define nasm_strnicmp strncasecmp
+#endif
+#else
 int nasm_strnicmp (const char *, const char *, int);
+#endif
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
