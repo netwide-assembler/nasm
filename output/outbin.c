@@ -36,8 +36,8 @@
  */
 
 /* Uncomment the following define if you want sections to adapt
- * their PROGBITS/NOBITS state depending on what type of
- * instructions are issued, rather than defaulting to PROGBITS.
+ * their progbits/nobits state depending on what type of
+ * instructions are issued, rather than defaulting to progbits.
  * Note that this behavior violates the specification.
 
 #define ABIN_SMART_ADAPT
@@ -86,10 +86,10 @@ static struct Section
 
 /* Section attributes */
    int flags;            /* see flag definitions above */
-   long align;           /* section alignment */
-   long valign;          /* notional section alignment */
-   long start;           /* section start address */
-   long vstart;          /* section virtual start address */
+   unsigned long align;  /* section alignment */
+   unsigned long valign; /* notional section alignment */
+   unsigned long start;  /* section start address */
+   unsigned long vstart; /* section virtual start address */
    char *follows;        /* the section that this one will follow */
    char *vfollows;       /* the section that this one will notionally follow */
    long start_index;     /* NASM section id for non-relocated version */
@@ -205,7 +205,14 @@ static void bin_cleanup (int debuginfo)
    struct Section * last_progbits;
    struct bin_label *l;
    struct Reloc *r;
-   int h, pend;
+   unsigned long pend;
+   int h;
+
+#ifdef DEBUG
+   fprintf(stdout, "bin_cleanup: Sections were initially referenced in this order:\n");
+   for (h = 0, s = sections; s; h++, s = s->next)
+      fprintf(stdout, "%i. %s\n", h, s->name);
+#endif
 
    /* Assembly has completed, so now we need to generate the output file.
     * Step 1: Separate progbits and nobits sections into separate lists.
@@ -213,7 +220,7 @@ static void bin_cleanup (int debuginfo)
     * Step 3: Compute start addresses for all progbits sections.
     * Step 4: Compute vstart addresses for all sections.
     * Step 5: Apply relocations.
-    * Step 6: Write the section data to the output file.
+    * Step 6: Write the sections' data to the output file.
     * Step 7: Generate the map file.
     * Step 8: Release all allocated memory.
     */
@@ -223,29 +230,14 @@ static void bin_cleanup (int debuginfo)
     * feature will be disabled.  */
 
 
-   /* Step 1: Separate progbits and nobits sections into separate lists. */
-
-   /* For anyone attempting to read this code:
-    * g (group) points to a group of sections, the first one of which has
-    *   a user-defined start address or follows section.
-    * gp (g previous) holds the location of the pointer to g
-    * gs (g scan) is a temp variable that we use to scan to the end of the group
-    * gsp (gs previous) holds the location of the pointer to gs
-    * nt (nobits tail) points to the nobits section-list tail
-    */
-
-#ifdef DEBUG
-   fprintf(stdout, "bin_cleanup: Sections were initially referenced in this order:\n");
-   for (h = 0, s = sections; s; h++, s = s->next)
-      fprintf(stdout, "%i. %s\n", h, s->name);
-#endif
+   /* Step 1: Split progbits and nobits sections into separate lists. */
 
    nt = &nobits;
    /* Move nobits sections into a separate list.  Also pre-process nobits
     * sections' attributes. */
    for (sp = &sections->next, s = sections->next; s; s = *sp)
    {  /* Skip progbits sections. */
-      if (s->flags & TYPE_PROGBITS) 
+      if (s->flags & TYPE_PROGBITS)
       {  sp = &s->next; continue;
       }
       /* Do some special pre-processing on nobits sections' attributes. */
@@ -284,6 +276,15 @@ static void bin_cleanup (int debuginfo)
     * follow the group leader (i.e., they were defined after
     * the group leader and were not given an explicit start
     * address or follows section by the user). */
+
+   /* For anyone attempting to read this code:
+    * g (group) points to a group of sections, the first one of which has
+    *   a user-defined start address or follows section.
+    * gp (g previous) holds the location of the pointer to g.
+    * gs (g scan) is a temp variable that we use to scan to the end of the group.
+    * gsp (gs previous) holds the location of the pointer to gs.
+    * nt (nobits tail) points to the nobits section-list tail.
+    */
 
    /* Link all 'follows' groups to their proper position.  To do
     * this we need to know three things: the start of the group
@@ -457,12 +458,18 @@ static void bin_cleanup (int debuginfo)
          }
       }
    } while (h);
- 
+
    /* Now check for any circular vfollows references, which will manifest
     * themselves as sections without a defined vstart. */
-   for (s = sections; s && (s->flags & VSTART_DEFINED); s = s->next);
-   if (s) error(ERR_FATAL, "cannot compute vstart for section %s"
-      " (circular vfollows path)", s->name);
+   for (h = 0, s = sections; s; s = s->next)
+   {  if (!(s->flags & VSTART_DEFINED))
+      {  /* Non-fatal errors after assembly has completed are generally a
+          * no-no, but we'll throw a fatal one eventually so it's ok.  */
+         error(ERR_NONFATAL, "cannot compute vstart for section %s", s->name);
+         h++;
+      }
+   }
+   if (h) error(ERR_FATAL, "circular vfollows path detected");
 
 #ifdef DEBUG
    fprintf(stdout, "bin_cleanup: Confirm final section order for output file:\n");
@@ -589,7 +596,7 @@ static void bin_cleanup (int debuginfo)
       /* Display symbols information. */
       if (map_control & MAP_SYMBOLS)
       {  long segment, offset;
-      
+
          fprintf(rf, "-- Symbols ");
          for (h = 68; h; h--) fputc('-', rf);
          fprintf(rf, "\n\n");
@@ -636,7 +643,7 @@ static void bin_cleanup (int debuginfo)
       while (s->labels)
       {  l = s->labels; s->labels = l->next;
          nasm_free(l);
-      } 
+      }
       nasm_free(s);
    }
 
@@ -767,7 +774,7 @@ static void bin_deflabel (char *name, long segment, long offset,
    else
    {  struct Section *s;
       struct bin_label ***ltp;
-      
+
       /* Remember label definition so we can look it up later when
        * creating the map file. */
       s = find_section_by_index(segment);
@@ -788,7 +795,7 @@ enum { ATTRIB_START, ATTRIB_ALIGN, ATTRIB_FOLLOWS,
        ATTRIB_VSTART, ATTRIB_VALIGN, ATTRIB_VFOLLOWS,
        ATTRIB_NOBITS, ATTRIB_PROGBITS };
 
-static int bin_read_attribute(char **line, int *attribute, long *value)
+static int bin_read_attribute(char **line, int *attribute, unsigned long *value)
 {  expr *e;
    int attrib_name_size;
    struct tokenval tokval;
@@ -907,13 +914,13 @@ static int bin_read_attribute(char **line, int *attribute, long *value)
          " specified in `section' directive.");
       return -1;
    }
-   *value = reloc_value(e);
+   *value = (unsigned long) reloc_value(e);
    return 1;
 }
 
 static void bin_assign_attributes(struct Section *sec, char *astring)
 {  int attribute, check;
-   long value;
+   unsigned long value;
    char *p;
 
    while (1)
@@ -1204,7 +1211,7 @@ static int bin_directive (char *directive, char *args, int pass)
     * and symbol information to stdout, stderr, or to a file. */
    else if (format_mode && !nasm_stricmp(directive, "map"))
    {  char *p;
-      
+
       if (pass != 1) return 1;
       args += strspn(args, " \t");
       while (*args)
@@ -1226,7 +1233,7 @@ static int bin_directive (char *directive, char *args, int pass)
             else if (!nasm_stricmp(p, "stderr"))
                rf = stderr;
             else
-            {  /* Must be a filename. */         
+            {  /* Must be a filename. */
                rf = fopen(p, "wt");
                if (!rf)
                {  error(ERR_WARNING, "unable to open map file `%s'", p);
