@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 	
 	assemble_file (inname);
 	
-	if (!terminate_after_phase) {
+        if (!terminate_after_phase) {
 	  ofmt->cleanup (using_debug_info);
 	  cleanup_labels ();
 	    } else {
@@ -279,10 +279,9 @@ int main(int argc, char **argv)
 	   * so we're leaving out the one here.
 	   *     fclose (ofile);
 	   */
-	
 	  remove(outname);
-	  if (listname[0])
-	    remove(listname);
+          if (listname[0])
+             remove(listname);
 	}
       }
     break;
@@ -493,7 +492,7 @@ static int process_arg (char *p, char *q)
 		report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			      "invalid option to `-w'");
 	    } else {
-		for (i=1; i<=ERR_WARN_MAX; i++)
+                for (i=1; i<=ERR_WARN_MAX; i++)
 		    if (!nasm_stricmp(p+3, suppressed_names[i]))
 			break;
 		if (i <= ERR_WARN_MAX)
@@ -1262,7 +1261,7 @@ static void assemble_file (char *fname)
    nasmlist.cleanup();
 #if 1
    if (optimizing>0 && using_debug_info)	/*  -On and -g switches */
-      fprintf(error_file,
+      fprintf(stdout,
                 "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
 #endif
 } /* exit from assemble_file (...) */
@@ -1271,6 +1270,10 @@ static void assemble_file (char *fname)
 static int getkw (char *buf, char **value)
 {
     char *p, *q;
+
+    /*  allow leading spaces or tabs */
+    while (*buf==' ' || *buf=='\t')
+       buf++;
 
     if (*buf!='[')
     	return 0;
@@ -1384,7 +1387,8 @@ static void report_error (int severity, char *fmt, ...)
 	/* no further action, by definition */
 	break;
       case ERR_NONFATAL:
-	terminate_after_phase = TRUE;
+/*     terminate_after_phase = TRUE;   *//**//* hack enables listing(!) on errors */
+        terminate_after_phase = TRUE;
 	break;
       case ERR_FATAL:
 	if (ofile) {
