@@ -41,7 +41,7 @@ OPTFLAGS = -d -O1 -Ogmp -k-
 OUTFORMS = -DOF_ONLY -DOF_BIN -DOF_OBJ -DOF_WIN32 -DOF_AS86
 
 #compiler flags
-CFLAGS = $(OPTFLAGS) -mh -f- $(OUTFORMS) -DFARDATA=far
+CFLAGS = $(OPTFLAGS) -mh -f- $(OUTFORMS)
   # -mh = model huge
   # -f- = no floating point
 
