@@ -1,5 +1,6 @@
 0.98.33
 -------
+
 * New __NASM_PATCHLEVEL__ and __NASM_VERSION_ID__ standard macros to
   round out the version-query macros.  version.pl now understands
   X.YYplWW or X.YY.ZZplWW as a version number, equivalent to
@@ -12,6 +13,9 @@
   relocatable segment.
 * Fix OBJ output format with lots of externs.
 * More documentation updates.
+* Add -Ov option to get verbose information about optimizations.
+* Undo a braindead change which broke %elif directives.
+* Makefile updates.
 
 
 0.98.32
