@@ -159,7 +159,7 @@ Object File Format
 \IR{segment alignment, in obj} segment alignment, in \c{obj}
 \IR{segment, obj extensions to} \c{SEGMENT}, \c{elf} extensions to
 \IR{segment names, borland pascal} segment names, Borland Pascal
-\IR{shift commane} \c{shift} command
+\IR{shift command} \c{shift} command
 \IA{sib}{sib byte}
 \IR{sib byte} SIB byte
 \IA{standard section names}{standardised section names}
@@ -208,26 +208,26 @@ essentially that there didn't seem to be a good \e{free} x86-series
 assembler around, and that maybe someone ought to write one.
 
 \b \i\c{a86} is good, but not free, and in particular you don't get any
-32-bit capability until you pay. It's \c{DOS} only, too.
+32-bit capability until you pay. It's DOS only, too.
 
-\b \i\c{gas} is free, and ports over \c{DOS} and \c{Unix}, but it's not
+\b \i\c{gas} is free, and ports over DOS and Unix, but it's not
 very good, since it's designed to be a back end to \i\c{gcc}, which
 always feeds it correct code. So its error checking is minimal. Also,
 its syntax is horrible, from the point of view of anyone trying to
 actually \e{write} anything in it. Plus you can't write 16-bit code in
 it (properly).
 
-\b \i\c{as86} is \c{Linux-specific}, and (my version at least) doesn't
+\b \i\c{as86} is Linux-specific, and (my version at least) doesn't
 seem to have much (or any) documentation.
 
-\b \i{MASM} isn't very good, and it's expensive, and it runs only under
-\c{DOS}.
+\b \i\c{MASM} isn't very good, and it's expensive, and it runs only under
+DOS.
 
-\b \i{TASM} is better, but still strives for \i{MASM} compatibility,
+\b \i\c{TASM} is better, but still strives for MASM compatibility,
 which means millions of directives and tons of red tape. And its syntax
-is essentially \i{MASM}'s, with the contradictions and quirks that
+is essentially MASM's, with the contradictions and quirks that
 entails (although it sorts out some of those by means of Ideal mode).
-It's expensive too. And it's \c{DOS-only}.
+It's expensive too. And it's DOS-only.
 
 So here, for your coding pleasure, is NASM. At present it's
 still in prototype stage - we don't promise that it can outperform
@@ -262,11 +262,11 @@ The original authors are \i{e\-mail}able as
 \W{mailto:anakin@pobox.com}\c{anakin@pobox.com}.
 The latter is no longer involved in the development team.
 
-\i{New releases} of NASM are uploaded to the official sites 
+\i{New releases} of NASM are uploaded to the official sites
 \W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm}
 and to
 \W{ftp://ftp.kernel.org/pub/software/devel/nasm/}\i\c{ftp.kernel.org}
-and 
+and
 \W{ftp://ibiblio.org/pub/Linux/devel/lang/assemblers/}\i\c{ibiblio.org}.
 
 Announcements are posted to
@@ -309,7 +309,7 @@ your PATH, or alternatively edit \i\c{autoexec.bat} to add the
 \c{nasm} directory to your \i\c{PATH}. (If you're only installing the
 \c{Win32} version, you may wish to rename it to \c{nasm.exe}.)
 
-That's it - NASM is installed. You don't need the \c{nasm} directory
+That's it - NASM is installed. You don't need the nasm directory
 to be present to run NASM (unless you've added it to your \c{PATH}),
 so you can delete it if you need to save space; however, you may
 want to keep the documentation or test programs.
@@ -325,10 +325,10 @@ instruction table \c{insns.dat} by a Perl script; the file
 \c{macros.c} is generated from \c{standard.mac} by another Perl
 script. Although the NASM 0.98 distribution includes these generated
 files, you will need to rebuild them (and hence, will need a Perl
-interpreter) if you change \c{insns.dat}, \c{standard.mac} or the
+interpreter) if you change insns.dat, standard.mac or the
 documentation. It is possible future source distributions may not
-include these files at all.  Ports of \i{Perl} for a variety of
-platforms, including \c{DOS} and \c{Windows}, are available from
+include these files at all. Ports of \i{Perl} for a variety of
+platforms, including DOS and Windows, are available from
 \W{http://www.cpan.org/ports/}\i{www.cpan.org}.
 
 
@@ -351,7 +351,7 @@ Once NASM has auto-configured, you can type \i\c{make} to build the
 install them in \c{/usr/local/bin} and install the \i{man pages}
 \i\c{nasm.1} and \i\c{ndisasm.1} in \c{/usr/local/man/man1}.
 Alternatively, you can give options such as \c{--prefix} to the
-\c{configure} script (see the file \i\c{INSTALL} for more details), or
+configure script (see the file \i\c{INSTALL} for more details), or
 install the programs yourself.
 
 NASM also comes with a set of utilities for handling the \c{RDOFF}
@@ -362,7 +362,7 @@ install them with \c{make rdf_install}, if you want them.
 If NASM fails to auto-configure, you may still be able to make it
 compile by using the fall-back Unix makefile \i\c{Makefile.unx}.
 Copy or rename that file to \c{Makefile} and try typing \c{make}.
-There is also a \c{Makefile.unx} file in the \c{rdoff} subdirectory.
+There is also a Makefile.unx file in the \c{rdoff} subdirectory.
 
 
 \C{running} Running NASM
@@ -617,7 +617,7 @@ For example, the following command line:
 \c nasm myfile.asm -dFOO=100 -uFOO
 
 would result in \c{FOO} \e{not} being a predefined macro in the
-program.  This is useful to override options specified at a different
+program. This is useful to override options specified at a different
 point in a Makefile.
 
 For Makefile compatibility with many C compilers, this option can also
@@ -661,22 +661,22 @@ correctly, you have to tell it.
 Using the \c{-O} option, you can tell NASM to carry out multiple passes.
 The syntax is:
 
-\b  \c{-O0}	strict two-pass assembly, JMP and Jcc are handled more
-	like v0.98, except that backward JMPs are short, if possible.
+\b \c{-O0} strict two-pass assembly, JMP and Jcc are handled more
+        like v0.98, except that backward JMPs are short, if possible.
         Immediate operands take their long forms if a short form is
         not specified.
 
-\b  \c{-O1}	strict two-pass assembly, but forward branches are assembled
-	with code guaranteed to reach; may produce larger code than
-	-O0, but will produce successful assembly more often if
-	branch offset sizes are not specified.
-	Additionally, immediate operands which will fit in a signed byte
-	are optimised, unless the long form is specified.
+\b \c{-O1} strict two-pass assembly, but forward branches are assembled
+        with code guaranteed to reach; may produce larger code than
+        -O0, but will produce successful assembly more often if
+        branch offset sizes are not specified.
+        Additionally, immediate operands which will fit in a signed byte
+        are optimised, unless the long form is specified.
 
-\b  \c{-On}	multi-pass optimization, minimize branch offsets; also will
-	minimize signed immediate bytes, overriding size specification.
-	If 2 <= n <= 3, then there are 5 * n passes, otherwise there
-	are n passes.
+\b \c{-On} multi-pass optimization, minimize branch offsets; also will
+        minimize signed immediate bytes, overriding size specification.
+        If 2 <= n <= 3, then there are 5 * n passes, otherwise there
+        are n passes.
 
 
 Note that this is a capital O, and is different from a small o, which
@@ -691,17 +691,17 @@ When NASM's \c{-t} option is used, the following changes are made:
 \b local labels may be prefixed with \c{@@} instead of \c{.}
 
 \b TASM-style response files beginning with \c{@} may be specified on
-the command line.  This is different from the \c{-@resp} style that NASM
+the command line. This is different from the \c{-@resp} style that NASM
 natively supports.
 
-\b size override is supported within brackets.  In TASM compatible mode, 
-a size override inside square brackets changes the size of the operand, 
-and not the address type of the operand as it does in NASM syntax.  E.g.  
-\c{mov eax,[DWORD val]} is valid syntax in TASM compatibility mode.  
-Note that you lose the ability to override the default address type for 
+\b size override is supported within brackets. In TASM compatible mode,
+a size override inside square brackets changes the size of the operand,
+and not the address type of the operand as it does in NASM syntax. E.g. 
+\c{mov eax,[DWORD val]} is valid syntax in TASM compatibility mode. 
+Note that you lose the ability to override the default address type for
 the instruction.
 
-\b \c{%arg} preprocessor directive is supported which is similar to 
+\b \c{%arg} preprocessor directive is supported which is similar to
 TASM's \c{ARG} directive.
 
 \b \c{%local} preprocessor directive
@@ -712,9 +712,9 @@ TASM's \c{ARG} directive.
 \c{else}, \c{endif}, \c{if}, \c{ifdef}, \c{ifdifi}, \c{ifndef},
 \c{include}, \c{local})
 
-\b more... 
+\b more...
 
-For more information on the directives, see the section on TASM 
+For more information on the directives, see the section on TASM
 Compatiblity preprocessor directives in \k{tasmcompat}.
 
 
@@ -1692,7 +1692,7 @@ the NASM command line: see \k{opt-d}.
 
 Individual tokens in single line macros can be concatenated, to produce
 longer tokens for later processing. This can be useful if there are
-several similar macros that perform simlar functions.
+several similar macros that perform similar functions.
 
 As an example, consider the following:
 
@@ -1775,7 +1775,7 @@ involving a register).
 
 \H{strlen} \i{String Handling in Macros}: \i\c{%strlen} and \i\c{%substr}
 
-It's often useful to be able to handle strings in macros.  NASM 
+It's often useful to be able to handle strings in macros. NASM
 supports two simple string handling macro operators from which
 more complex operations can be constructed.
 
@@ -1783,21 +1783,21 @@ more complex operations can be constructed.
 \S{strlen} \i{String Length}: \i\c{%strlen}
 
 The \c{%strlen} macro is like \c{%assign} macro in that it creates
-(or redefines) a numeric value to a macro.  The difference is that
-with \c{%strlen}, the numeric value is the length of a string.  An
+(or redefines) a numeric value to a macro. The difference is that
+with \c{%strlen}, the numeric value is the length of a string. An
 example of the use of this would be:
 
 \c %strlen charcnt 'my string'
 
 In this example, \c{charcnt} would receive the value 8, just as
-if an \c{%assign} had been used.  In this example, \c{'my string'}
-was a literal string but it could also have been a single-line 
+if an \c{%assign} had been used. In this example, \c{'my string'}
+was a literal string but it could also have been a single-line
 macro that expands to a string, as in the following example:
 
 \c %define sometext 'my string'
 \c %strlen charcnt sometext
 
-As in the first case, this would result in \c{charcnt} being 
+As in the first case, this would result in \c{charcnt} being
 assigned the value of 8.
 
 
@@ -1810,12 +1810,12 @@ An example of its use is probably more useful than the description:
 \c %substr mychar  'xyz' 2         ; equivalent to %define mychar 'y'
 \c %substr mychar  'xyz' 3         ; equivalent to %define mychar 'z'
 
-In this example, mychar gets the value of 'y'.  As with \c{%strlen}
-(see \k{strlen}), the first parameter is the single-line macro to 
-be created and the second is the string.  The third parameter 
-specifies which character is to be selected.  Note that the first 
-index is 1, not 0 and the last index is equal to the value that 
-\c{%strlen} would assign given the same string.  Index values out
+In this example, mychar gets the value of 'y'. As with \c{%strlen}
+(see \k{strlen}), the first parameter is the single-line macro to
+be created and the second is the string. The third parameter
+specifies which character is to be selected. Note that the first
+index is 1, not 0 and the last index is equal to the value that
+\c{%strlen} would assign given the same string. Index values out
 of range result in an empty string.
 
 
@@ -2279,7 +2279,7 @@ definitions in \c{%elif} blocks by using \i\c{%elifdef} and
 
 \S{ifmacro} \i\c{ifmacro}: \i{Testing Multi-Line Macro Existence}
 
-The \c{%ifmacro} directive oeprates in the same way as the \c{%ifdef}
+The \c{%ifmacro} directive operates in the same way as the \c{%ifdef}
 directive, except that it checks for the existence of a multi-line macro.
 
 For example, you may be working with a large project and not have control
@@ -2288,7 +2288,7 @@ name if it doesn't already exist, and another name if one with that name
 does exist.
 
 The %ifmacro is considered true if defining a macro with the given name
-and number of arguements would cause a definitions conflict. For example:
+and number of arguments would cause a definitions conflict. For example:
 
 \c %ifmacro MyMacro 1-3
 \c
@@ -2412,8 +2412,8 @@ extended to take advantage of \c{%ifstr} in the following fashion:
 \c       %%endstr: mov     dx,%%str
 \c                 mov     cx,%%endstr-%%str
 \c   %else
-\c 	           mov     dx,%2
-\c 	           mov     cx,%3
+\c                 mov     dx,%2
+\c                 mov     cx,%3
 \c   %endif
 \c                 mov     bx,%1
 \c                 mov     ah,0x40
@@ -2954,8 +2954,8 @@ the use of \c{ALIGN} or \c{ALIGNB}.
 
 \H{tasmcompat} \i{TASM Compatible Preprocessor Directives}
 
-The following preprocessor directives may only be used when TASM 
-compatibility is turned on using the \c{-t} command line switch 
+The following preprocessor directives may only be used when TASM
+compatibility is turned on using the \c{-t} command line switch
 (This switch is described in \k{opt-t}.)
 
 \b\c{%arg}  (see \k{arg})
@@ -2967,18 +2967,18 @@ compatibility is turned on using the \c{-t} command line switch
 
 \S{arg} \i\c{%arg} Directive
 
-The \c{%arg} directive is used to simplify the handling of 
-parameters passed on the stack.  Stack based parameter passing
-is used by many high level languages, including C, C++ and Pascal.  
+The \c{%arg} directive is used to simplify the handling of
+parameters passed on the stack. Stack based parameter passing
+is used by many high level languages, including C, C++ and Pascal. 
 
-While NASM comes with macros which attempt to duplicate this 
-functionality (see \k{16cmacro}), the syntax is not particularly 
-convenient to use and is not TASM compatible.  Here is an example 
+While NASM comes with macros which attempt to duplicate this
+functionality (see \k{16cmacro}), the syntax is not particularly
+convenient to use and is not TASM compatible. Here is an example
 which shows the use of \c{%arg} without any external macros:
 
 \c some_function:
 \c
-\c     %push     mycontext        ; save the current context 
+\c     %push     mycontext        ; save the current context
 \c     %stacksize large           ; tell NASM to use bp
 \c     %arg      i:word, j_ptr:word
 \c
@@ -2987,61 +2987,61 @@ which shows the use of \c{%arg} without any external macros:
 \c         add     ax,[bx]
 \c         ret
 \c
-\c     %pop                       ; restore original context 
+\c     %pop                       ; restore original context
 
-This is similar to the procedure defined in \k{16cmacro} and adds 
-the value in i to the value pointed to by j_ptr and returns the 
-sum in the ax register.  See \k{pushpop} for an explanation of 
+This is similar to the procedure defined in \k{16cmacro} and adds
+the value in i to the value pointed to by j_ptr and returns the
+sum in the ax register. See \k{pushpop} for an explanation of
 \c{push} and \c{pop} and the use of context stacks.
 
 
 \S{stacksize} \i\c{%stacksize} Directive
 
-The \c{%stacksize} directive is used in conjunction with the 
-\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives.  
-It tells NASM the default size to use for subsequent \c{%arg} and 
-\c{%local} directives.  The \c{%stacksize} directive takes one 
+The \c{%stacksize} directive is used in conjunction with the
+\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives. 
+It tells NASM the default size to use for subsequent \c{%arg} and
+\c{%local} directives. The \c{%stacksize} directive takes one
 required argument which is one of \c{flat}, \c{large} or \c{small}.
 
 \c %stacksize flat
 
-This form causes NASM to use stack-based parameter addressing 
+This form causes NASM to use stack-based parameter addressing
 relative to \c{ebp} and it assumes that a near form of call was used
 to get to this label (i.e. that \c{eip} is on the stack).
 
 \c %stacksize large
 
 This form uses \c{bp} to do stack-based parameter addressing and
-assumes that a far form of call was used to get to this address 
+assumes that a far form of call was used to get to this address
 (i.e. that \c{ip} and \c{cs} are on the stack).
 
 \c %stacksize small
 
 This form also uses \c{bp} to address stack parameters, but it is
 different from \c{large} because it also assumes that the old value
-of bp is pushed onto the stack (i.e. it expects an \c{ENTER} 
-instruction).  In other words, it expects that \c{bp}, \c{ip} and 
+of bp is pushed onto the stack (i.e. it expects an \c{ENTER}
+instruction). In other words, it expects that \c{bp}, \c{ip} and
 \c{cs} are on the top of the stack, underneath any local space which
-may have been allocated by \c{ENTER}.  This form is probably most
-useful when used in combination with the \c{%local} directive 
+may have been allocated by \c{ENTER}. This form is probably most
+useful when used in combination with the \c{%local} directive
 (see \k{local}).
 
 
 \S{local} \i\c{%local} Directive
 
 The \c{%local} directive is used to simplify the use of local
-temporary stack variables allocated in a stack frame.  Automatic
-local variables in C are an example of this kind of variable.  The
+temporary stack variables allocated in a stack frame. Automatic
+local variables in C are an example of this kind of variable. The
 \c{%local} directive is most useful when used with the \c{%stacksize}
-(see \k{stacksize} and is also compatible with the \c{%arg} directive 
-(see \k{arg}).  It allows simplified reference to variables on the
-stack which have been allocated typically by using the \c{ENTER} 
+(see \k{stacksize} and is also compatible with the \c{%arg} directive
+(see \k{arg}). It allows simplified reference to variables on the
+stack which have been allocated typically by using the \c{ENTER}
 instruction (see \k{insENTER} for a description of that instruction).
 An example of its use is the following:
 
 \c silly_swap:
 \c
-\c     %push mycontext             ; save the current context 
+\c     %push mycontext             ; save the current context
 \c     %stacksize small            ; tell NASM to use bp
 \c     %assign %$localsize 0       ; see text for explanation
 \c     %local old_ax:word, old_dx:word
@@ -3056,13 +3056,13 @@ An example of its use is the following:
 \c         leave                   ; restore old bp
 \c         ret                     ;
 \c
-\c     %pop                        ; restore original context 
+\c     %pop                        ; restore original context
 
-The \c{%$localsize} variable is used internally by the 
-\c{%local} directive and \e{must} be defined within the 
+The \c{%$localsize} variable is used internally by the
+\c{%local} directive and \e{must} be defined within the
 current context before the \c{%local} directive may be used.
 Failure to do so will result in one expression syntax error for
-each \c{%local} variable declared.  It then may be used in 
+each \c{%local} variable declared. It then may be used in
 the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
@@ -3389,7 +3389,7 @@ Options are:
 
 \b\c{CPU WILLAMETTE}    Same as P4
 
-All options are case insensitive.  All instructions will
+All options are case insensitive. All instructions will
 be selected only if they apply to the selected cpu or lower.
 
 
@@ -4313,7 +4313,7 @@ also provided in the \I{test subdirectory}\c{test} subdirectory of
 the NASM archives, under the name \c{objexe.asm}.
 
 \c segment code
-\c 
+\c
 \c ..start:
 \c         mov     ax,data
 \c         mov     ds,ax
@@ -4845,8 +4845,8 @@ directory, is a file \c{c16.mac} of macros. It defines three macros:
 used for C-style procedure definitions, and they automate a lot of
 the work involved in keeping track of the calling convention.
 
-(An alternative, TASM compatible form of \c{arg} is also now built 
-into NASM's preprocessor.  See \k{tasmcompat} for details.)
+(An alternative, TASM compatible form of \c{arg} is also now built
+into NASM's preprocessor. See \k{tasmcompat} for details.)
 
 An example of an assembly function using the macro set is given
 here:
@@ -5547,7 +5547,7 @@ functions by means of
 
 will give the user the address of the code you wrote, whereas
 
-\c funcptr:        dd      my_function wrt ..sym
+\c funcptr:        dd      my_function wrt .sym
 
 will give the address of the procedure linkage table for the
 function, which is where the calling program will \e{believe} the
@@ -6388,7 +6388,7 @@ The instructions that use this will give details of what the various
 mnemonics are, this table is used to help you work out details of what
 is happening.
 
-\c Predi-  imm8  Description Relation where:   Emula- Result   QNaN 
+\c Predi-  imm8  Description Relation where:   Emula- Result   QNaN
 \c  cate  Encod-             A Is 1st Operand  tion   if NaN   Signal
 \c         ing               B Is 2nd Operand         Operand  Invalid
 \c
@@ -6406,7 +6406,7 @@ is happening.
 \c ---    ----   greater-    A >= B            Swap   False     Yes
 \c               than-or-equal                 Operands,
 \c                                             Use LE
-\c 
+\c
 \c UNORD  011B   unordered   A, B = Unordered         True      No
 \c
 \c NEQ    100B   not-equal   A != B                   True      No
@@ -6482,8 +6482,8 @@ indicates a negative value.)
 
 Set if the integer result is too large a positive number or too
 small a negative number (excluding the sign-bit) to fit in the
-destina-tion operand; cleared otherwise. This flag indicates an
-overflow condition for signed-integer (two’s complement) arithmetic.
+destination operand; cleared otherwise. This flag indicates an
+overflow condition for signed-integer (two's complement) arithmetic.
 
 
 \S{iref-ea} Effective Address Encoding: \i{ModR/M} and \i{SIB}
@@ -6631,7 +6631,10 @@ part of the new instruction set in the Pentium 4 and Intel Xeon
 processors. These instructions are also known as SSE2 instructions.
 
 
-\H{insAAA} \i\c{AAA}, \i\c{AAS}, \i\c{AAM}, \i\c{AAD}: ASCII
+\H{iref-inst} x86 Instruction Set
+
+
+\S{insAAA} \i\c{AAA}, \i\c{AAS}, \i\c{AAM}, \i\c{AAD}: ASCII
 Adjustments
 
 \c AAA                           ; 37                   [8086]
@@ -6678,7 +6681,7 @@ operation to \c{AAM}: it multiplies \c{AH} by ten, adds it to
 be changed.
 
 
-\H{insADC} \i\c{ADC}: Add with Carry
+\S{insADC} \i\c{ADC}: Add with Carry
 
 \c ADC r/m8,reg8                 ; 10 /r                [8086]
 \c ADC r/m16,reg16               ; o16 11 /r            [8086]
@@ -6719,7 +6722,7 @@ To add two numbers without also adding the contents of the carry
 flag, use \c{ADD} (\k{insADD}).
 
 
-\H{insADD} \i\c{ADD}: Add Integers
+\S{insADD} \i\c{ADD}: Add Integers
 
 \c ADD r/m8,reg8                 ; 00 /r                [8086]
 \c ADD r/m16,reg16               ; o16 01 /r            [8086]
@@ -6757,7 +6760,7 @@ the \c{BYTE} qualifier is necessary to force NASM to generate this
 form of the instruction.
 
 
-\H{insADDPD} \i\c{ADDPD}: ADD Packed Double-Precision FP Values
+\S{insADDPD} \i\c{ADDPD}: ADD Packed Double-Precision FP Values
 
 \c ADDPD xmm1,xmm2/mem128        ; 66 0F 58 /r     [WILLAMETTE,SSE2]
 
@@ -6771,7 +6774,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insADDPS} \i\c{ADDPS}: ADD Packed Single-Precision FP Values
+\S{insADDPS} \i\c{ADDPS}: ADD Packed Single-Precision FP Values
 
 \c ADDPS xmm1,xmm2/mem128        ; 0F 58 /r        [KATMAI,SSE]
 
@@ -6787,7 +6790,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insADDSD} \i\c{ADDSD}: ADD Scalar Double-Precision FP Values
+\S{insADDSD} \i\c{ADDSD}: ADD Scalar Double-Precision FP Values
 
 \c ADDSD xmm1,xmm2/mem64         ; F2 0F 58 /r     [KATMAI,SSE]
 
@@ -6802,7 +6805,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 64-bit memory location.
 
 
-\H{insADDSS} \i\c{ADDSS}: ADD Scalar Single-Precision FP Values
+\S{insADDSS} \i\c{ADDSS}: ADD Scalar Single-Precision FP Values
 
 \c ADDSS xmm1,xmm2/mem32         ; F3 0F 58 /r     [WILLAMETTE,SSE2]
 
@@ -6817,7 +6820,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 32-bit memory location.
 
 
-\H{insAND} \i\c{AND}: Bitwise AND
+\S{insAND} \i\c{AND}: Bitwise AND
 
 \c AND r/m8,reg8                 ; 20 /r                [8086]
 \c AND r/m16,reg16               ; o16 21 /r            [8086]
@@ -6841,7 +6844,7 @@ either an \c{XMM} register or a 32-bit memory location.
 \c{AND} performs a bitwise AND operation between its two operands
 (i.e. each bit of the result is 1 if and only if the corresponding
 bits of the two inputs were both 1), and stores the result in the
-destination (first) operand.  The destination operand can be a
+destination (first) operand. The destination operand can be a
 register or a memory location. The source operand can be a register,
 a memory location or an immediate value.
 
@@ -6855,7 +6858,7 @@ The \c{MMX} instruction \c{PAND} (see \k{insPAND}) performs the same
 operation on the 64-bit \c{MMX} registers.
 
 
-\H{insANDNPD} \i\c{ANDNPD}: Bitwise Logical AND NOT of
+\S{insANDNPD} \i\c{ANDNPD}: Bitwise Logical AND NOT of
 Packed Double-Precision FP Values
 
 \c ANDNPD xmm1,xmm2/mem128       ; 66 0F 55 /r     [WILLAMETTE,SSE2]
@@ -6873,7 +6876,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insANDNPS} \i\c{ANDNPS}: Bitwise Logical AND NOT of
+\S{insANDNPS} \i\c{ANDNPS}: Bitwise Logical AND NOT of
 Packed Single-Precision FP Values
 
 \c ANDNPS xmm1,xmm2/mem128       ; 0F 55 /r        [KATMAI,SSE]
@@ -6893,7 +6896,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insANDPD} \i\c{ANDPD}: Bitwise Logical AND For Single FP
+\S{insANDPD} \i\c{ANDPD}: Bitwise Logical AND For Single FP
 
 \c ANDPD xmm1,xmm2/mem128        ; 66 0F 54 /r     [WILLAMETTE,SSE2]
 
@@ -6908,7 +6911,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insANDPS} \i\c{ANDPS}: Bitwise Logical AND For Single FP
+\S{insANDPS} \i\c{ANDPS}: Bitwise Logical AND For Single FP
 
 \c ANDPS xmm1,xmm2/mem128        ; 0F 54 /r        [KATMAI,SSE]
 
@@ -6925,7 +6928,7 @@ The destination is an \c{XMM} register. The source operand can be
 either an \c{XMM} register or a 128-bit memory location.
 
 
-\H{insARPL} \i\c{ARPL}: Adjust RPL Field of Selector
+\S{insARPL} \i\c{ARPL}: Adjust RPL Field of Selector
 
 \c ARPL r/m16,reg16              ; 63 /r                [286,PRIV]
 
@@ -6937,7 +6940,7 @@ field of the source operand. The zero flag is set if and only if a
 change had to be made.
 
 
-\H{insBOUND} \i\c{BOUND}: Check Array Index against Bounds
+\S{insBOUND} \i\c{BOUND}: Check Array Index against Bounds
 
 \c BOUND reg16,mem               ; o16 62 /r            [186]
 \c BOUND reg32,mem               ; o32 62 /r            [386]
@@ -6951,7 +6954,7 @@ in-memory values, or is greater than or equal to the second, it
 throws a \c{BR} exception. Otherwise, it does nothing.
 
 
-\H{insBSF} \i\c{BSF}, \i\c{BSR}: Bit Scan
+\S{insBSF} \i\c{BSF}, \i\c{BSR}: Bit Scan
 
 \c BSF reg16,r/m16               ; o16 0F BC /r         [386]
 \c BSF reg32,r/m32               ; o32 0F BC /r         [386]
@@ -6969,11 +6972,11 @@ operand is zero, the zero flag is set.
 instead, so it finds the most significant set bit.
 
 Bit indices are from 0 (least significant) to 15 or 31 (most
-significant).  The destination operand can only be a register.
+significant). The destination operand can only be a register.
 The source operand can be a register or a memory location.
 
 
-\H{insBSWAP} \i\c{BSWAP}: Byte Swap
+\S{insBSWAP} \i\c{BSWAP}: Byte Swap
 
 \c BSWAP reg32                   ; o32 0F C8+r          [486]
 
@@ -6984,7 +6987,7 @@ bits 16-23. There is no explicit 16-bit equivalent: to byte-swap
 is used with a 16-bit register, the result is undefined.
 
 
-\H{insBT} \i\c{BT}, \i\c{BTC}, \i\c{BTR}, \i\c{BTS}: Bit Test
+\S{insBT} \i\c{BT}, \i\c{BTC}, \i\c{BTR}, \i\c{BTS}: Bit Test
 
 \c BT r/m16,reg16                ; o16 0F A3 /r         [386]
 \c BT r/m32,reg32                ; o32 0F A3 /r         [386]
@@ -7030,7 +7033,7 @@ is in a register, then it can be anything within the signed range of
 the register used (ie, for a 32-bit operand, it can be (-2^31) to (2^31 - 1)
 
 
-\H{insCALL} \i\c{CALL}: Call Subroutine
+\S{insCALL} \i\c{CALL}: Call Subroutine
 
 \c CALL imm                      ; E8 rw/rd             [8086]
 \c CALL imm:imm16                ; o16 9A iw iw         [8086]
@@ -7079,7 +7082,7 @@ the \c{NEAR} keyword (e.g. \c{CALL NEAR [address]}), even though it
 is not strictly necessary.
 
 
-\H{insCBW} \i\c{CBW}, \i\c{CWD}, \i\c{CDQ}, \i\c{CWDE}: Sign Extensions
+\S{insCBW} \i\c{CBW}, \i\c{CWD}, \i\c{CDQ}, \i\c{CWDE}: Sign Extensions
 
 \c CBW                           ; o16 98               [8086]
 \c CWDE                          ; o32 98               [386]
@@ -7098,7 +7101,7 @@ the top bit of \c{AX} throughout \c{DX}, and \c{CDQ} extends
 \c{EAX} into \c{EDX:EAX}.
 
 
-\H{insCLC} \i\c{CLC}, \i\c{CLD}, \i\c{CLI}, \i\c{CLTS}: Clear Flags
+\S{insCLC} \i\c{CLC}, \i\c{CLD}, \i\c{CLI}, \i\c{CLTS}: Clear Flags
 
 \c CLC                           ; F8                   [8086]
 \c CLD                           ; FC                   [8086]
@@ -7115,11 +7118,11 @@ To set the carry, direction, or interrupt flags, use the \c{STC},
 flag, use \c{CMC} (\k{insCMC}).
 
 
-\H{insCLFLUSH} \i\c{CLFLUSH}: Flush Cache Line
+\S{insCLFLUSH} \i\c{CLFLUSH}: Flush Cache Line
 
 \c CLFLUSH mem                   ; 0F AE /7        [WILLAMETTE,SSE2]
 
-\c{CLFLUSH} invlidates the cache line that contains the linear address
+\c{CLFLUSH} invalidates the cache line that contains the linear address
 specified by the source operand from all levels of the processor cache
 hierarchy (data and instruction). If, at any level of the cache
 hierarchy, the line is inconsistent with memory (dirty) it is written
@@ -7132,7 +7135,7 @@ supported on other processors; the \c{CPUID} instruction (\k{insCPUID})
 will return a bit which indicates support for the \c{CLFLUSH} instruction.
 
 
-\H{insCMC} \i\c{CMC}: Complement Carry Flag
+\S{insCMC} \i\c{CMC}: Complement Carry Flag
 
 \c CMC                           ; F5                   [8086]
 
@@ -7140,7 +7143,7 @@ will return a bit which indicates support for the \c{CLFLUSH} instruction.
 to 1, and vice versa.
 
 
-\H{insCMOVcc} \i\c{CMOVcc}: Conditional Move
+\S{insCMOVcc} \i\c{CMOVcc}: Conditional Move
 
 \c CMOVcc reg16,r/m16            ; o16 0F 40+cc /r      [P6]
 \c CMOVcc reg32,r/m32            ; o32 0F 40+cc /r      [P6]
@@ -7157,7 +7160,7 @@ instruction (\k{insCPUID}) will return a bit which indicates whether
 conditional moves are supported.
 
 
-\H{insCMP} \i\c{CMP}: Compare Integers
+\S{insCMP} \i\c{CMP}: Compare Integers
 
 \c CMP r/m8,reg8                 ; 38 /r                [8086]
 \c CMP r/m16,reg16               ; o16 39 /r            [8086]
@@ -7194,20 +7197,20 @@ source can be a register, memory location or an immediate value of
 the same size as the destination.
 
 
-\H{insCMPccPD} \i\c{CMPccPD}: Packed Double-Precision FP Compare
+\S{insCMPccPD} \i\c{CMPccPD}: Packed Double-Precision FP Compare
 \I\c{CMPEQPD} \I\c{CMPLTPD} \I\c{CMPLEPD} \I\c{CMPUNORDPD}
 \I\c{CMPNEQPD} \I\c{CMPNLTPD} \I\c{CMPNLEPD} \I\c{CMPORDPD}
 
-\c CMPPD xmm1,xmm2/mem128,imm8   ; 66 0F C2 /r ib  [WILLAMETTE,SSE2] 
+\c CMPPD xmm1,xmm2/mem128,imm8   ; 66 0F C2 /r ib  [WILLAMETTE,SSE2]
 
-\c CMPEQPD xmm1,xmm2/mem128      ; 66 0F C2 /r 00  [WILLAMETTE,SSE2] 
-\c CMPLTPD xmm1,xmm2/mem128      ; 66 0F C2 /r 01  [WILLAMETTE,SSE2] 
-\c CMPLEPD xmm1,xmm2/mem128      ; 66 0F C2 /r 02  [WILLAMETTE,SSE2] 
-\c CMPUNORDPD xmm1,xmm2/mem128   ; 66 0F C2 /r 03  [WILLAMETTE,SSE2] 
-\c CMPNEQPD xmm1,xmm2/mem128     ; 66 0F C2 /r 04  [WILLAMETTE,SSE2] 
-\c CMPNLTPD xmm1,xmm2/mem128     ; 66 0F C2 /r 05  [WILLAMETTE,SSE2] 
-\c CMPNLEPD xmm1,xmm2/mem128     ; 66 0F C2 /r 06  [WILLAMETTE,SSE2] 
-\c CMPORDPD xmm1,xmm2/mem128     ; 66 0F C2 /r 07  [WILLAMETTE,SSE2] 
+\c CMPEQPD xmm1,xmm2/mem128      ; 66 0F C2 /r 00  [WILLAMETTE,SSE2]
+\c CMPLTPD xmm1,xmm2/mem128      ; 66 0F C2 /r 01  [WILLAMETTE,SSE2]
+\c CMPLEPD xmm1,xmm2/mem128      ; 66 0F C2 /r 02  [WILLAMETTE,SSE2]
+\c CMPUNORDPD xmm1,xmm2/mem128   ; 66 0F C2 /r 03  [WILLAMETTE,SSE2]
+\c CMPNEQPD xmm1,xmm2/mem128     ; 66 0F C2 /r 04  [WILLAMETTE,SSE2]
+\c CMPNLTPD xmm1,xmm2/mem128     ; 66 0F C2 /r 05  [WILLAMETTE,SSE2]
+\c CMPNLEPD xmm1,xmm2/mem128     ; 66 0F C2 /r 06  [WILLAMETTE,SSE2]
+\c CMPORDPD xmm1,xmm2/mem128     ; 66 0F C2 /r 07  [WILLAMETTE,SSE2]
 
 The \c{CMPccPD} instructions compare the two packed double-precision
 FP values in the source and destination operands, and returns the
@@ -7237,20 +7240,20 @@ For more details of the comparison predicates, and details of how
 to emulate the "greater-than" equivalents, see \k{iref-SSE-cc}
 
 
-\H{insCMPccPS} \i\c{CMPccPS}: Packed Single-Precision FP Compare
+\S{insCMPccPS} \i\c{CMPccPS}: Packed Single-Precision FP Compare
 \I\c{CMPEQPS} \I\c{CMPLTPS} \I\c{CMPLEPS} \I\c{CMPUNORDPS}
 \I\c{CMPNEQPS} \I\c{CMPNLTPS} \I\c{CMPNLEPS} \I\c{CMPORDPS}
 
-\c CMPPS xmm1,xmm2/mem128,imm8   ; 0F C2 /r ib     [KATMAI,SSE] 
+\c CMPPS xmm1,xmm2/mem128,imm8   ; 0F C2 /r ib     [KATMAI,SSE]
 
-\c CMPEQPS xmm1,xmm2/mem128      ; 0F C2 /r 00     [KATMAI,SSE] 
-\c CMPLTPS xmm1,xmm2/mem128      ; 0F C2 /r 01     [KATMAI,SSE] 
-\c CMPLEPS xmm1,xmm2/mem128      ; 0F C2 /r 02     [KATMAI,SSE] 
-\c CMPUNORDPS xmm1,xmm2/mem128   ; 0F C2 /r 03     [KATMAI,SSE] 
-\c CMPNEQPS xmm1,xmm2/mem128     ; 0F C2 /r 04     [KATMAI,SSE] 
-\c CMPNLTPS xmm1,xmm2/mem128     ; 0F C2 /r 05     [KATMAI,SSE] 
-\c CMPNLEPS xmm1,xmm2/mem128     ; 0F C2 /r 06     [KATMAI,SSE] 
-\c CMPORDPS xmm1,xmm2/mem128     ; 0F C2 /r 07     [KATMAI,SSE] 
+\c CMPEQPS xmm1,xmm2/mem128      ; 0F C2 /r 00     [KATMAI,SSE]
+\c CMPLTPS xmm1,xmm2/mem128      ; 0F C2 /r 01     [KATMAI,SSE]
+\c CMPLEPS xmm1,xmm2/mem128      ; 0F C2 /r 02     [KATMAI,SSE]
+\c CMPUNORDPS xmm1,xmm2/mem128   ; 0F C2 /r 03     [KATMAI,SSE]
+\c CMPNEQPS xmm1,xmm2/mem128     ; 0F C2 /r 04     [KATMAI,SSE]
+\c CMPNLTPS xmm1,xmm2/mem128     ; 0F C2 /r 05     [KATMAI,SSE]
+\c CMPNLEPS xmm1,xmm2/mem128     ; 0F C2 /r 06     [KATMAI,SSE]
+\c CMPORDPS xmm1,xmm2/mem128     ; 0F C2 /r 07     [KATMAI,SSE]
 
 The \c{CMPccPS} instructions compare the two packed single-precision
 FP values in the source and destination operands, and returns the
@@ -7280,7 +7283,7 @@ For more details of the comparison predicates, and details of how
 to emulate the "greater-than" equivalents, see \k{iref-SSE-cc}
 
 
-\H{insCMPSB} \i\c{CMPSB}, \i\c{CMPSW}, \i\c{CMPSD}: Compare Strings
+\S{insCMPSB} \i\c{CMPSB}, \i\c{CMPSW}, \i\c{CMPSD}: Compare Strings
 
 \c CMPSB                         ; A6                   [8086]
 \c CMPSW                         ; o16 A7               [8086]
@@ -7312,20 +7315,20 @@ The \c{REPE} and \c{REPNE} prefixes (equivalently, \c{REPZ} and
 first unequal or equal byte is found.
 
 
-\H{insCMPccSD} \i\c{CMPccSD}: Scalar Double-Precision FP Compare
+\S{insCMPccSD} \i\c{CMPccSD}: Scalar Double-Precision FP Compare
 \I\c{CMPEQSD} \I\c{CMPLTSD} \I\c{CMPLESD} \I\c{CMPUNORDSD}
 \I\c{CMPNEQSD} \I\c{CMPNLTSD} \I\c{CMPNLESD} \I\c{CMPORDSD}
 
-\c CMPSD xmm1,xmm2/mem64,imm8    ; F2 0F C2 /r ib  [WILLAMETTE,SSE2] 
+\c CMPSD xmm1,xmm2/mem64,imm8    ; F2 0F C2 /r ib  [WILLAMETTE,SSE2]
 
-\c CMPEQSD xmm1,xmm2/mem64       ; F2 0F C2 /r 00  [WILLAMETTE,SSE2] 
-\c CMPLTSD xmm1,xmm2/mem64       ; F2 0F C2 /r 01  [WILLAMETTE,SSE2] 
-\c CMPLESD xmm1,xmm2/mem64       ; F2 0F C2 /r 02  [WILLAMETTE,SSE2] 
-\c CMPUNORDSD xmm1,xmm2/mem64    ; F2 0F C2 /r 03  [WILLAMETTE,SSE2] 
-\c CMPNEQSD xmm1,xmm2/mem64      ; F2 0F C2 /r 04  [WILLAMETTE,SSE2] 
-\c CMPNLTSD xmm1,xmm2/mem64      ; F2 0F C2 /r 05  [WILLAMETTE,SSE2] 
-\c CMPNLESD xmm1,xmm2/mem64      ; F2 0F C2 /r 06  [WILLAMETTE,SSE2] 
-\c CMPORDSD xmm1,xmm2/mem64      ; F2 0F C2 /r 07  [WILLAMETTE,SSE2] 
+\c CMPEQSD xmm1,xmm2/mem64       ; F2 0F C2 /r 00  [WILLAMETTE,SSE2]
+\c CMPLTSD xmm1,xmm2/mem64       ; F2 0F C2 /r 01  [WILLAMETTE,SSE2]
+\c CMPLESD xmm1,xmm2/mem64       ; F2 0F C2 /r 02  [WILLAMETTE,SSE2]
+\c CMPUNORDSD xmm1,xmm2/mem64    ; F2 0F C2 /r 03  [WILLAMETTE,SSE2]
+\c CMPNEQSD xmm1,xmm2/mem64      ; F2 0F C2 /r 04  [WILLAMETTE,SSE2]
+\c CMPNLTSD xmm1,xmm2/mem64      ; F2 0F C2 /r 05  [WILLAMETTE,SSE2]
+\c CMPNLESD xmm1,xmm2/mem64      ; F2 0F C2 /r 06  [WILLAMETTE,SSE2]
+\c CMPORDSD xmm1,xmm2/mem64      ; F2 0F C2 /r 07  [WILLAMETTE,SSE2]
 
 The \c{CMPccSD} instructions compare the low-order double-precision
 FP values in the source and destination operands, and returns the
@@ -7355,20 +7358,20 @@ For more details of the comparison predicates, and details of how
 to emulate the "greater-than" equivalents, see \k{iref-SSE-cc}
 
 
-\H{insCMPccSS} \i\c{CMPccSS}: Scalar Single-Precision FP Compare
+\S{insCMPccSS} \i\c{CMPccSS}: Scalar Single-Precision FP Compare
 \I\c{CMPEQSS} \I\c{CMPLTSS} \I\c{CMPLESS} \I\c{CMPUNORDSS}
 \I\c{CMPNEQSS} \I\c{CMPNLTSS} \I\c{CMPNLESS} \I\c{CMPORDSS}
 
-\c CMPSS xmm1,xmm2/mem32,imm8    ; F3 0F C2 /r ib  [KATMAI,SSE] 
+\c CMPSS xmm1,xmm2/mem32,imm8    ; F3 0F C2 /r ib  [KATMAI,SSE]
 
-\c CMPEQSS xmm1,xmm2/mem32       ; F3 0F C2 /r 00  [KATMAI,SSE] 
-\c CMPLTSS xmm1,xmm2/mem32       ; F3 0F C2 /r 01  [KATMAI,SSE] 
-\c CMPLESS xmm1,xmm2/mem32       ; F3 0F C2 /r 02  [KATMAI,SSE] 
-\c CMPUNORDSS xmm1,xmm2/mem32    ; F3 0F C2 /r 03  [KATMAI,SSE] 
-\c CMPNEQSS xmm1,xmm2/mem32      ; F3 0F C2 /r 04  [KATMAI,SSE] 
-\c CMPNLTSS xmm1,xmm2/mem32      ; F3 0F C2 /r 05  [KATMAI,SSE] 
-\c CMPNLESS xmm1,xmm2/mem32      ; F3 0F C2 /r 06  [KATMAI,SSE] 
-\c CMPORDSS xmm1,xmm2/mem32      ; F3 0F C2 /r 07  [KATMAI,SSE] 
+\c CMPEQSS xmm1,xmm2/mem32       ; F3 0F C2 /r 00  [KATMAI,SSE]
+\c CMPLTSS xmm1,xmm2/mem32       ; F3 0F C2 /r 01  [KATMAI,SSE]
+\c CMPLESS xmm1,xmm2/mem32       ; F3 0F C2 /r 02  [KATMAI,SSE]
+\c CMPUNORDSS xmm1,xmm2/mem32    ; F3 0F C2 /r 03  [KATMAI,SSE]
+\c CMPNEQSS xmm1,xmm2/mem32      ; F3 0F C2 /r 04  [KATMAI,SSE]
+\c CMPNLTSS xmm1,xmm2/mem32      ; F3 0F C2 /r 05  [KATMAI,SSE]
+\c CMPNLESS xmm1,xmm2/mem32      ; F3 0F C2 /r 06  [KATMAI,SSE]
+\c CMPORDSS xmm1,xmm2/mem32      ; F3 0F C2 /r 07  [KATMAI,SSE]
 
 The \c{CMPccSS} instructions compare the low-order single-precision
 FP values in the source and destination operands, and returns the
@@ -7398,7 +7401,7 @@ For more details of the comparison predicates, and details of how
 to emulate the "greater-than" equivalents, see \k{iref-SSE-cc}
 
 
-\H{insCMPXCHG} \i\c{CMPXCHG}, \i\c{CMPXCHG486}: Compare and Exchange
+\S{insCMPXCHG} \i\c{CMPXCHG}, \i\c{CMPXCHG486}: Compare and Exchange
 
 \c CMPXCHG r/m8,reg8             ; 0F B0 /r             [PENT]
 \c CMPXCHG r/m16,reg16           ; o16 0F B1 /r         [PENT]
@@ -7437,7 +7440,7 @@ notified of the failure by a cleared zero flag, so you can go round
 and try again.
 
 
-\H{insCMPXCHG8B} \i\c{CMPXCHG8B}: Compare and Exchange Eight Bytes
+\S{insCMPXCHG8B} \i\c{CMPXCHG8B}: Compare and Exchange Eight Bytes
 
 \c CMPXCHG8B mem                 ; 0F C7 /1             [PENT]
 
@@ -7452,9 +7455,9 @@ execution. This is useful in multi-processor and multi-tasking
 environments.
 
 
-\H{insCOMISD} \i\c{COMISD}: Scalar Ordered Double-Precision FP Compare and Set EFLAGS
+\S{insCOMISD} \i\c{COMISD}: Scalar Ordered Double-Precision FP Compare and Set EFLAGS
 
-\c COMISD xmm1,xmm2/mem64        ; 66 0F 2F /r     [WILLAMETTE,SSE2] 
+\c COMISD xmm1,xmm2/mem64        ; 66 0F 2F /r     [WILLAMETTE,SSE2]
 
 \c{COMISD} compares the low-order double-precision FP value in the
 two source operands. ZF, PF and CF are set according to the result.
@@ -7474,9 +7477,9 @@ The flags are set according to the following rules:
 \c    EQUAL:          ZF,PF,CF <-- 100;
 
 
-\H{insCOMISS} \i\c{COMISS}: Scalar Ordered Single-Precision FP Compare and Set EFLAGS
+\S{insCOMISS} \i\c{COMISS}: Scalar Ordered Single-Precision FP Compare and Set EFLAGS
 
-\c COMISS xmm1,xmm2/mem32        ; 66 0F 2F /r     [KATMAI,SSE] 
+\c COMISS xmm1,xmm2/mem32        ; 66 0F 2F /r     [KATMAI,SSE]
 
 \c{COMISS} compares the low-order single-precision FP value in the
 two source operands. ZF, PF and CF are set according to the result.
@@ -7496,7 +7499,7 @@ The flags are set according to the following rules:
 \c    EQUAL:          ZF,PF,CF <-- 100;
 
 
-\H{insCPUID} \i\c{CPUID}: Get CPU Identification Code
+\S{insCPUID} \i\c{CPUID}: Get CPU Identification Code
 
 \c CPUID                         ; 0F A2                [PENT]
 
@@ -7536,10 +7539,10 @@ For more information on the data returned from \c{CPUID}, see the
 documentation from Intel and other processor manufacturers.
 
 
-\H{insCVTDQ2PD} \i\c{CVTDQ2PD}:
+\S{insCVTDQ2PD} \i\c{CVTDQ2PD}:
 Packed Signed INT32 to Packed Double-Precision FP Conversion
 
-\c CVTDQ2PD xmm1,xmm2/mem64      ; F3 0F E6 /r     [WILLAMETTE,SSE2] 
+\c CVTDQ2PD xmm1,xmm2/mem64      ; F3 0F E6 /r     [WILLAMETTE,SSE2]
 
 \c{CVTDQ2PD} converts two packed signed doublewords from the source
 operand to two packed double-precision FP values in the destination
@@ -7550,10 +7553,10 @@ either an \c{XMM} register or a 64-bit memory location. If the
 source is a register, the packed integers are in the low quadword.
 
 
-\H{insCVTDQ2PS} \i\c{CVTDQ2PS}:
+\S{insCVTDQ2PS} \i\c{CVTDQ2PS}:
 Packed Signed INT32 to Packed Single-Precision FP Conversion
 
-\c CVTDQ2PS xmm1,xmm2/mem128     ; 0F 5B /r        [WILLAMETTE,SSE2] 
+\c CVTDQ2PS xmm1,xmm2/mem128     ; 0F 5B /r        [WILLAMETTE,SSE2]
 
 \c{CVTDQ2PS} converts four packed signed doublewords from the source
 operand to four packed single-precision FP values in the destination
@@ -7565,7 +7568,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPD2DQ} \i\c{CVTPD2DQ}:
+\S{insCVTPD2DQ} \i\c{CVTPD2DQ}:
 Packed Double-Precision FP to Packed Signed INT32 Conversion
 
 \c CVTPD2DQ xmm1,xmm2/mem128     ; F2 0F E6 /r     [WILLAMETTE,SSE2]
@@ -7581,7 +7584,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPD2PI} \i\c{CVTPD2PI}:
+\S{insCVTPD2PI} \i\c{CVTPD2PI}:
 Packed Double-Precision FP to Packed Signed INT32 Conversion
 
 \c CVTPD2PI mm,xmm/mem128        ; 66 0F 2D /r     [WILLAMETTE,SSE2]
@@ -7596,7 +7599,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPD2PS} \i\c{CVTPD2PS}:
+\S{insCVTPD2PS} \i\c{CVTPD2PS}:
 Packed Double-Precision FP to Packed Single-Precision FP Conversion
 
 \c CVTPD2PS xmm1,xmm2/mem128     ; 66 0F 5A /r     [WILLAMETTE,SSE2]
@@ -7612,7 +7615,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPI2PD} \i\c{CVTPI2PD}:
+\S{insCVTPI2PD} \i\c{CVTPI2PD}:
 Packed Signed INT32 to Packed Double-Precision FP Conversion
 
 \c CVTPI2PD xmm,mm/mem64         ; 66 0F 2A /r     [WILLAMETTE,SSE2]
@@ -7627,10 +7630,10 @@ either an \c{MMX} register or a 64-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPI2PS} \i\c{CVTPI2PS}:
+\S{insCVTPI2PS} \i\c{CVTPI2PS}:
 Packed Signed INT32 to Packed Single-FP Conversion
 
-\c CVTPI2PS xmm,mm/mem64         ; 0F 2A /r        [KATMAI,SSE] 
+\c CVTPI2PS xmm,mm/mem64         ; 0F 2A /r        [KATMAI,SSE]
 
 \c{CVTPI2PS} converts two packed signed doublewords from the source
 operand to two packed single-precision FP values in the low quadword
@@ -7643,7 +7646,7 @@ either an \c{MMX} register or a 64-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPS2DQ} \i\c{CVTPS2DQ}:
+\S{insCVTPS2DQ} \i\c{CVTPS2DQ}:
 Packed Single-Precision FP to Packed Signed INT32 Conversion
 
 \c CVTPS2DQ xmm1,xmm2/mem128     ; 66 0F 5B /r     [WILLAMETTE,SSE2]
@@ -7657,7 +7660,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPS2PD} \i\c{CVTPS2PD}:
+\S{insCVTPS2PD} \i\c{CVTPS2PD}:
 Packed Single-Precision FP to Packed Double-Precision FP Conversion
 
 \c CVTPS2PD xmm1,xmm2/mem64      ; 0F 5A /r        [WILLAMETTE,SSE2]
@@ -7673,10 +7676,10 @@ is a register, the input values are in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTPS2PI} \i\c{CVTPS2PI}:
+\S{insCVTPS2PI} \i\c{CVTPS2PI}:
 Packed Single-Precision FP to Packed Signed INT32 Conversion
 
-\c CVTPS2PI mm,xmm/mem64         ; 0F 2D /r        [KATMAI,SSE] 
+\c CVTPS2PI mm,xmm/mem64         ; 0F 2D /r        [KATMAI,SSE]
 
 \c{CVTPS2PI} converts two packed single-precision FP values from
 the source operand to two packed signed doublewords in the destination
@@ -7689,7 +7692,7 @@ source is a register, the input values are in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSD2SI} \i\c{CVTSD2SI}:
+\S{insCVTSD2SI} \i\c{CVTSD2SI}:
 Scalar Double-Precision FP to Signed INT32 Conversion
 
 \c CVTSD2SI reg32,xmm/mem64      ; F2 0F 2D /r     [WILLAMETTE,SSE2]
@@ -7704,10 +7707,10 @@ source is a register, the input value is in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSD2SS} \i\c{CVTSD2SS}:
+\S{insCVTSD2SS} \i\c{CVTSD2SS}:
 Scalar Double-Precision FP to Scalar Single-Precision FP Conversion
 
-\c CVTSD2SS xmm1,xmm2/mem64      ; F2 0F 5A /r     [KATMAI,SSE] 
+\c CVTSD2SS xmm1,xmm2/mem64      ; F2 0F 5A /r     [KATMAI,SSE]
 
 \c{CVTSD2SS} converts a double-precision FP value from the source
 operand to a single-precision FP value in the low doubleword of the
@@ -7720,7 +7723,7 @@ source is a register, the input value is in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSI2SD} \i\c{CVTSI2SD}:
+\S{insCVTSI2SD} \i\c{CVTSI2SD}:
 Signed INT32 to Scalar Double-Precision FP Conversion
 
 \c CVTSI2SD xmm,r/m32            ; F2 0F 2A /r     [WILLAMETTE,SSE2]
@@ -7735,7 +7738,7 @@ a general purpose register or a 32-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSI2SS} \i\c{CVTSI2SS}:
+\S{insCVTSI2SS} \i\c{CVTSI2SS}:
 Signed INT32 to Scalar Single-Precision FP Conversion
 
 \c CVTSI2SS xmm,r/m32            ; F3 0F 2A /r     [KATMAI,SSE]
@@ -7750,7 +7753,7 @@ a general purpose register or a 32-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSS2SD} \i\c{CVTSS2SD}:
+\S{insCVTSS2SD} \i\c{CVTSS2SD}:
 Scalar Single-Precision FP to Scalar Double-Precision FP Conversion
 
 \c CVTSS2SD xmm1,xmm2/mem32      ; F3 0F 5A /r     [WILLAMETTE,SSE2]
@@ -7766,10 +7769,10 @@ register, the input value is contained in the low doubleword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTSS2SI} \i\c{CVTSS2SI}:
+\S{insCVTSS2SI} \i\c{CVTSS2SI}:
 Scalar Single-Precision FP to Signed INT32 Conversion
 
-\c CVTSS2SI reg32,xmm/mem32      ; F3 0F 2D /r     [KATMAI,SSE] 
+\c CVTSS2SI reg32,xmm/mem32      ; F3 0F 2D /r     [KATMAI,SSE]
 
 \c{CVTSS2SI} converts a single-precision FP value from the source
 operand to a signed doubleword in the destination operand.
@@ -7781,7 +7784,7 @@ source is a register, the input value is in the low doubleword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTPD2DQ} \i\c{CVTTPD2DQ}:
+\S{insCVTTPD2DQ} \i\c{CVTTPD2DQ}:
 Packed Double-Precision FP to Packed Signed INT32 Conversion with Truncation
 
 \c CVTTPD2DQ xmm1,xmm2/mem128    ; 66 0F E6 /r     [WILLAMETTE,SSE2]
@@ -7797,7 +7800,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTPD2PI} \i\c{CVTTPD2PI}:
+\S{insCVTTPD2PI} \i\c{CVTTPD2PI}:
 Packed Double-Precision FP to Packed Signed INT32 Conversion with Truncation
 
 \c CVTTPD2PI mm,xmm/mem128        ; 66 0F 2C /r     [WILLAMETTE,SSE2]
@@ -7812,7 +7815,7 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTPS2DQ} \i\c{CVTTPS2DQ}:
+\S{insCVTTPS2DQ} \i\c{CVTTPS2DQ}:
 Packed Single-Precision FP to Packed Signed INT32 Conversion with Truncation
 
 \c CVTTPS2DQ xmm1,xmm2/mem128    ; F3 0F 5B /r     [WILLAMETTE,SSE2]
@@ -7827,10 +7830,10 @@ either an \c{XMM} register or a 128-bit memory location.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTPS2PI} \i\c{CVTTPS2PI}:
+\S{insCVTTPS2PI} \i\c{CVTTPS2PI}:
 Packed Single-Precision FP to Packed Signed INT32 Conversion with Truncation
 
-\c CVTTPS2PI mm,xmm/mem64         ; 0F 2C /r       [KATMAI,SSE] 
+\c CVTTPS2PI mm,xmm/mem64         ; 0F 2C /r       [KATMAI,SSE]
 
 \c{CVTTPS2PI} converts two packed single-precision FP values in the source
 operand to two packed signed doublewords in the destination operand.
@@ -7844,7 +7847,7 @@ is a register, the input value is in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTSD2SI} \i\c{CVTTSD2SI}:
+\S{insCVTTSD2SI} \i\c{CVTTSD2SI}:
 Scalar Double-Precision FP to Signed INT32 Conversion with Truncation
 
 \c CVTTSD2SI reg32,xmm/mem64      ; F2 0F 2C /r    [WILLAMETTE,SSE2]
@@ -7860,10 +7863,10 @@ register, the input value is in the low quadword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insCVTTSS2SI} \i\c{CVTTSS2SI}:
+\S{insCVTTSS2SI} \i\c{CVTTSS2SI}:
 Scalar Single-Precision FP to Signed INT32 Conversion with Truncation
 
-\c CVTTSD2SI reg32,xmm/mem32      ; F3 0F 2C /r    [KATMAI,SSE] 
+\c CVTTSD2SI reg32,xmm/mem32      ; F3 0F 2C /r    [KATMAI,SSE]
 
 \c{CVTTSS2SI} converts a single-precision FP value in the source operand
 to a signed doubleword in the destination operand. If the result is
@@ -7876,7 +7879,7 @@ register, the input value is in the low doubleword.
 For more details of this instruction, see the Intel Processor manuals.
 
 
-\H{insDAA} \i\c{DAA}, \i\c{DAS}: Decimal Adjustments
+\S{insDAA} \i\c{DAA}, \i\c{DAS}: Decimal Adjustments
 
 \c DAA                           ; 27                   [8086]
 \c DAS                           ; 2F                   [8086]
@@ -7899,7 +7902,7 @@ of digits.
 instructions rather than \c{ADD}.
 
 
-\H{insDEC} \i\c{DEC}: Decrement Integer
+\S{insDEC} \i\c{DEC}: Decrement Integer
 
 \c DEC reg16                     ; o16 48+r             [8086]
 \c DEC reg32                     ; o32 48+r             [386]
@@ -7917,7 +7920,7 @@ execution.
 See also \c{INC} (\k{insINC}).
 
 
-\H{insDIV} \i\c{DIV}: Unsigned Integer Divide
+\S{insDIV} \i\c{DIV}: Unsigned Integer Divide
 
 \c DIV r/m8                      ; F6 /6                [8086]
 \c DIV r/m16                     ; o16 F7 /6            [8086]
@@ -7940,7 +7943,7 @@ Signed integer division is performed by the \c{IDIV} instruction:
 see \k{insIDIV}.
 
 
-\H{insDIVPD} \i\c{DIVPD}: Packed Double-Precision FP Divide
+\S{insDIVPD} \i\c{DIVPD}: Packed Double-Precision FP Divide
 
 \c DIVPD xmm1,xmm2/mem128        ; 66 0F 5E /r     [WILLAMETTE,SSE2]
 
@@ -7956,7 +7959,7 @@ either an \c{XMM} register or a 128-bit memory location.
 \c    dst[64-127] := dst[64-127] / src[64-127].
 
 
-\H{insDIVPS} \i\c{DIVPS}: Packed Single-Precision FP Divide
+\S{insDIVPS} \i\c{DIVPS}: Packed Single-Precision FP Divide
 
 \c DIVPS xmm1,xmm2/mem128        ; 0F 5E /r        [KATMAI,SSE]
 
@@ -7974,7 +7977,7 @@ either an \c{XMM} register or a 128-bit memory location.
 \c    dst[96-127] := dst[96-127] / src[96-127].
 
 
-\H{insDIVSD} \i\c{DIVSD}: Scalar Double-Precision FP Divide
+\S{insDIVSD} \i\c{DIVSD}: Scalar Double-Precision FP Divide
 
 \c DIVSD xmm1,xmm2/mem64         ; F2 0F 5E /r     [WILLAMETTE,SSE2]
 
@@ -7990,7 +7993,7 @@ either an \c{XMM} register or a 64-bit memory location.
 \c    dst[64-127] remains unchanged.
 
 
-\H{insDIVSS} \i\c{DIVSS}: Scalar Single-Precision FP Divide
+\S{insDIVSS} \i\c{DIVSS}: Scalar Single-Precision FP Divide
 
 \c DIVSS xmm1,xmm2/mem32         ; F3 0F 5E /r     [KATMAI,SSE]
 
@@ -8006,7 +8009,7 @@ either an \c{XMM} register or a 32-bit memory location.
 \c    dst[32-127] remains unchanged.
 
 
-\H{insEMMS} \i\c{EMMS}: Empty MMX State
+\S{insEMMS} \i\c{EMMS}: Empty MMX State
 
 \c EMMS                          ; 0F 77                [PENT,MMX]
 
@@ -8016,7 +8019,7 @@ the FPU to use. It should be used after executing \c{MMX} instructions
 and before executing any subsequent floating-point operations.
 
 
-\H{insENTER} \i\c{ENTER}: Create Stack Frame
+\S{insENTER} \i\c{ENTER}: Create Stack Frame
 
 \c ENTER imm,imm                 ; C8 iw ib             [186]
 
@@ -8055,7 +8058,7 @@ Stack frames created by \c{ENTER} can be destroyed by the \c{LEAVE}
 instruction: see \k{insLEAVE}.
 
 
-\H{insF2XM1} \i\c{F2XM1}: Calculate 2**X-1
+\S{insF2XM1} \i\c{F2XM1}: Calculate 2**X-1
 
 \c F2XM1                         ; D9 F0                [8086,FPU]
 
@@ -8064,7 +8067,7 @@ stores the result back into \c{ST0}. The initial contents of \c{ST0}
 must be a number in the range -1.0 to +1.0.
 
 
-\H{insFABS} \i\c{FABS}: Floating-Point Absolute Value
+\S{insFABS} \i\c{FABS}: Floating-Point Absolute Value
 
 \c FABS                          ; D9 E1                [8086,FPU]
 
@@ -8072,7 +8075,7 @@ must be a number in the range -1.0 to +1.0.
 bit, and stores the result back in \c{ST0}.
 
 
-\H{insFADD} \i\c{FADD}, \i\c{FADDP}: Floating-Point Addition
+\S{insFADD} \i\c{FADD}, \i\c{FADDP}: Floating-Point Addition
 
 \c FADD mem32                    ; D8 /0                [8086,FPU]
 \c FADD mem64                    ; DC /0                [8086,FPU]
@@ -8099,7 +8102,7 @@ To add an integer value to \c{ST0}, use the c{FIADD} instruction
 (\k{insFIADD})
 
 
-\H{insFBLD} \i\c{FBLD}, \i\c{FBSTP}: BCD Floating-Point Load and Store
+\S{insFBLD} \i\c{FBLD}, \i\c{FBSTP}: BCD Floating-Point Load and Store
 
 \c FBLD mem80                    ; DF /4                [8086,FPU]
 \c FBSTP mem80                   ; DF /6                [8086,FPU]
@@ -8111,7 +8114,7 @@ pushes it on the register stack. \c{FBSTP} stores the value of
 register stack.
 
 
-\H{insFCHS} \i\c{FCHS}: Floating-Point Change Sign
+\S{insFCHS} \i\c{FCHS}: Floating-Point Change Sign
 
 \c FCHS                          ; D9 E0                [8086,FPU]
 
@@ -8119,7 +8122,7 @@ register stack.
 negative numbers become positive, and vice versa.
 
 
-\H{insFCLEX} \i\c{FCLEX}, \c{FNCLEX}: Clear Floating-Point Exceptions
+\S{insFCLEX} \i\c{FCLEX}, \c{FNCLEX}: Clear Floating-Point Exceptions
 
 \c FCLEX                         ; 9B DB E2             [8086,FPU]
 \c FNCLEX                        ; DB E2                [8086,FPU]
@@ -8130,7 +8133,7 @@ floating-point operations (including the \e{handling} of pending
 exceptions) to finish first.
 
 
-\H{insFCMOVB} \i\c{FCMOVcc}: Floating-Point Conditional Move
+\S{insFCMOVB} \i\c{FCMOVcc}: Floating-Point Conditional Move
 
 \c FCMOVB fpureg                 ; DA C0+r              [P6,FPU]
 \c FCMOVB ST0,fpureg             ; DA C0+r              [P6,FPU]
@@ -8184,7 +8187,7 @@ instruction (\k{insCPUID}) will return a bit which indicates whether
 conditional moves are supported.
 
 
-\H{insFCOM} \i\c{FCOM}, \i\c{FCOMP}, \i\c{FCOMPP}, \i\c{FCOMI},
+\S{insFCOM} \i\c{FCOM}, \i\c{FCOMP}, \i\c{FCOMPP}, \i\c{FCOMI},
 \i\c{FCOMIP}: Floating-Point Compare
 
 \c FCOM mem32                    ; D8 /2                [8086,FPU]
@@ -8226,7 +8229,7 @@ will handle them silently and set the condition code flags to an
 `unordered' result, whereas \c{FCOM} will generate an exception.
 
 
-\H{insFCOS} \i\c{FCOS}: Cosine
+\S{insFCOS} \i\c{FCOS}: Cosine
 
 \c FCOS                          ; D9 FF                [386,FPU]
 
@@ -8236,7 +8239,7 @@ result in \c{ST0}. The absolute value of \c{ST0} must be less than 2**63.
 See also \c{FSINCOS} (\k{insFSIN}).
 
 
-\H{insFDECSTP} \i\c{FDECSTP}: Decrement Floating-Point Stack Pointer
+\S{insFDECSTP} \i\c{FDECSTP}: Decrement Floating-Point Stack Pointer
 
 \c FDECSTP                       ; D9 F6                [8086,FPU]
 
@@ -8246,7 +8249,7 @@ as if the contents of \c{ST7} had been pushed on the stack. See also
 \c{FINCSTP} (\k{insFINCSTP}).
 
 
-\H{insFDISI} \i\c{FxDISI}, \i\c{FxENI}: Disable and Enable Floating-Point Interrupts
+\S{insFDISI} \i\c{FxDISI}, \i\c{FxENI}: Disable and Enable Floating-Point Interrupts
 
 \c FDISI                         ; 9B DB E1             [8086,FPU]
 \c FNDISI                        ; DB E1                [8086,FPU]
@@ -8263,7 +8266,7 @@ respectively, but without waiting for the floating-point processor
 to finish what it was doing first.
 
 
-\H{insFDIV} \i\c{FDIV}, \i\c{FDIVP}, \i\c{FDIVR}, \i\c{FDIVRP}: Floating-Point Division
+\S{insFDIV} \i\c{FDIV}, \i\c{FDIVP}, \i\c{FDIVR}, \i\c{FDIVRP}: Floating-Point Division
 
 \c FDIV mem32                    ; D8 /6                [8086,FPU]
 \c FDIV mem64                    ; DC /6                [8086,FPU]
@@ -8309,9 +8312,9 @@ once it has finished.
 For FP/Integer divisions, see \c{FIDIV} (\k{insFIDIV}).
 
 
-\H{insFEMMS} \i\c{FEMMS}: Faster Enter/Exit of the MMX or floating-point state
+\S{insFEMMS} \i\c{FEMMS}: Faster Enter/Exit of the MMX or floating-point state
 
-\c FEMMS                         ; 0F 0E           [PENT,3DNOW] 
+\c FEMMS                         ; 0F 0E           [PENT,3DNOW]
 
 \c{FEMMS} can be used in place of the \c{EMMS} instruction on
 processors which support the 3DNow! instruction set. Following
@@ -8321,7 +8324,7 @@ is undefined, and this allows a faster context switch between
 also be used \e{before} executing \c{MMX} instructions
 
 
-\H{insFFREE} \i\c{FFREE}: Flag Floating-Point Register as Unused
+\S{insFFREE} \i\c{FFREE}: Flag Floating-Point Register as Unused
 
 \c FFREE fpureg                  ; DD C0+r              [8086,FPU]
 \c FFREEP fpureg                 ; DF C0+r              [286,FPU,UNDOC]
@@ -8332,7 +8335,7 @@ also be used \e{before} executing \c{MMX} instructions
 pops the register stack.
 
 
-\H{insFIADD} \i\c{FIADD}: Floating-Point/Integer Addition
+\S{insFIADD} \i\c{FIADD}: Floating-Point/Integer Addition
 
 \c FIADD mem16                   ; DE /0                [8086,FPU]
 \c FIADD mem32                   ; DA /0                [8086,FPU]
@@ -8341,7 +8344,7 @@ pops the register stack.
 memory location to \c{ST0}, storing the result in \c{ST0}.
 
 
-\H{insFICOM} \i\c{FICOM}, \i\c{FICOMP}: Floating-Point/Integer Compare
+\S{insFICOM} \i\c{FICOM}, \i\c{FICOMP}: Floating-Point/Integer Compare
 
 \c FICOM mem16                   ; DE /2                [8086,FPU]
 \c FICOM mem32                   ; DA /2                [8086,FPU]
@@ -8354,7 +8357,7 @@ in the given memory location, and sets the FPU flags accordingly.
 \c{FICOMP} does the same, but pops the register stack afterwards.
 
 
-\H{insFIDIV} \i\c{FIDIV}, \i\c{FIDIVR}: Floating-Point/Integer Division
+\S{insFIDIV} \i\c{FIDIV}, \i\c{FIDIVR}: Floating-Point/Integer Division
 
 \c FIDIV mem16                   ; DE /6                [8086,FPU]
 \c FIDIV mem32                   ; DA /6                [8086,FPU]
@@ -8368,7 +8371,7 @@ the given memory location, and stores the result in \c{ST0}.
 integer by \c{ST0}, but still stores the result in \c{ST0}.
 
 
-\H{insFILD} \i\c{FILD}, \i\c{FIST}, \i\c{FISTP}: Floating-Point/Integer Conversion
+\S{insFILD} \i\c{FILD}, \i\c{FIST}, \i\c{FISTP}: Floating-Point/Integer Conversion
 
 \c FILD mem16                    ; DF /0                [8086,FPU]
 \c FILD mem32                    ; DB /0                [8086,FPU]
@@ -8387,7 +8390,7 @@ real, and pushes it on the FPU register stack. \c{FIST} converts
 same as \c{FIST}, but pops the register stack afterwards.
 
 
-\H{insFIMUL} \i\c{FIMUL}: Floating-Point/Integer Multiplication
+\S{insFIMUL} \i\c{FIMUL}: Floating-Point/Integer Multiplication
 
 \c FIMUL mem16                   ; DE /1                [8086,FPU]
 \c FIMUL mem32                   ; DA /1                [8086,FPU]
@@ -8396,7 +8399,7 @@ same as \c{FIST}, but pops the register stack afterwards.
 in the given memory location, and stores the result in \c{ST0}.
 
 
-\H{insFINCSTP} \i\c{FINCSTP}: Increment Floating-Point Stack Pointer
+\S{insFINCSTP} \i\c{FINCSTP}: Increment Floating-Point Stack Pointer
 
 \c FINCSTP                       ; D9 F7                [8086,FPU]
 
@@ -8408,7 +8411,7 @@ flag the new \c{ST7} (previously \c{ST0}) as empty. See also
 \c{FDECSTP} (\k{insFDECSTP}).
 
 
-\H{insFINIT} \i\c{FINIT}, \i\c{FNINIT}: Initialise Floating-Point Unit
+\S{insFINIT} \i\c{FINIT}, \i\c{FNINIT}: Initialise Floating-Point Unit
 
 \c FINIT                         ; 9B DB E3             [8086,FPU]
 \c FNINIT                        ; DB E3                [8086,FPU]
@@ -8419,7 +8422,7 @@ the top of stack pointer. \c{FNINIT} does the same, without first
 waiting for pending exceptions to clear.
 
 
-\H{insFISUB} \i\c{FISUB}: Floating-Point/Integer Subtraction
+\S{insFISUB} \i\c{FISUB}: Floating-Point/Integer Subtraction
 
 \c FISUB mem16                   ; DE /4                [8086,FPU]
 \c FISUB mem32                   ; DA /4                [8086,FPU]
@@ -8434,7 +8437,7 @@ subtracts \c{ST0} from the given integer, but still stores the
 result in \c{ST0}.
 
 
-\H{insFLD} \i\c{FLD}: Floating-Point Load
+\S{insFLD} \i\c{FLD}: Floating-Point Load
 
 \c FLD mem32                     ; D9 /0                [8086,FPU]
 \c FLD mem64                     ; DD /0                [8086,FPU]
@@ -8445,7 +8448,7 @@ result in \c{ST0}.
 memory location, and pushes it on the FPU register stack.
 
 
-\H{insFLD1} \i\c{FLDxx}: Floating-Point Load Constants
+\S{insFLD1} \i\c{FLDxx}: Floating-Point Load Constants
 
 \c FLD1                          ; D9 E8                [8086,FPU]
 \c FLDL2E                        ; D9 EA                [8086,FPU]
@@ -8469,7 +8472,7 @@ register stack.
 \c  FLDZ           zero
 
 
-\H{insFLDCW} \i\c{FLDCW}: Load Floating-Point Control Word
+\S{insFLDCW} \i\c{FLDCW}: Load Floating-Point Control Word
 
 \c FLDCW mem16                   ; D9 /5                [8086,FPU]
 
@@ -8481,7 +8484,7 @@ generate one, use \c{FCLEX} or \c{FNCLEX} (\k{insFCLEX}) before
 loading the new control word.
 
 
-\H{insFLDENV} \i\c{FLDENV}: Load Floating-Point Environment
+\S{insFLDENV} \i\c{FLDENV}: Load Floating-Point Environment
 
 \c FLDENV mem                    ; D9 /4                [8086,FPU]
 
@@ -8491,7 +8494,7 @@ from memory. The memory area is 14 or 28 bytes long, depending on
 the CPU mode at the time. See also \c{FSTENV} (\k{insFSTENV}).
 
 
-\H{insFMUL} \i\c{FMUL}, \i\c{FMULP}: Floating-Point Multiply
+\S{insFMUL} \i\c{FMUL}, \i\c{FMULP}: Floating-Point Multiply
 
 \c FMUL mem32                    ; D8 /1                [8086,FPU]
 \c FMUL mem64                    ; DC /1                [8086,FPU]
@@ -8511,14 +8514,14 @@ it stores the result in the operand. \c{FMULP} performs the same
 operation as \c{FMUL TO}, and then pops the register stack.
 
 
-\H{insFNOP} \i\c{FNOP}: Floating-Point No Operation
+\S{insFNOP} \i\c{FNOP}: Floating-Point No Operation
 
 \c FNOP                          ; D9 D0                [8086,FPU]
 
 \c{FNOP} does nothing.
 
 
-\H{insFPATAN} \i\c{FPATAN}, \i\c{FPTAN}: Arctangent and Tangent
+\S{insFPATAN} \i\c{FPATAN}, \i\c{FPTAN}: Arctangent and Tangent
 
 \c FPATAN                        ; D9 F3                [8086,FPU]
 \c FPTAN                         ; D9 F2                [8086,FPU]
@@ -8537,7 +8540,7 @@ and stores the result back into \c{ST0}.
 The absolute value of \c{ST0} must be less than 2**63.
 
 
-\H{insFPREM} \i\c{FPREM}, \i\c{FPREM1}: Floating-Point Partial Remainder
+\S{insFPREM} \i\c{FPREM}, \i\c{FPREM1}: Floating-Point Partial Remainder
 
 \c FPREM                         ; D9 F8                [8086,FPU]
 \c FPREM1                        ; D9 F5                [386,FPU]
@@ -8564,7 +8567,7 @@ remainder, you should repeatedly execute \c{FPREM} or \c{FPREM1}
 until C2 becomes clear.
 
 
-\H{insFRNDINT} \i\c{FRNDINT}: Floating-Point Round to Integer
+\S{insFRNDINT} \i\c{FRNDINT}: Floating-Point Round to Integer
 
 \c FRNDINT                       ; D9 FC                [8086,FPU]
 
@@ -8573,7 +8576,7 @@ to the current rounding mode set in the FPU control word, and stores
 the result back in \c{ST0}.
 
 
-\H{insFRSTOR} \i\c{FSAVE}, \i\c{FRSTOR}: Save/Restore Floating-Point State
+\S{insFRSTOR} \i\c{FSAVE}, \i\c{FRSTOR}: Save/Restore Floating-Point State
 
 \c FSAVE mem                     ; 9B DD /6             [8086,FPU]
 \c FNSAVE mem                    ; DD /6                [8086,FPU]
@@ -8590,7 +8593,7 @@ state from the same area of memory.
 pending floating-point exceptions to clear.
 
 
-\H{insFSCALE} \i\c{FSCALE}: Scale Floating-Point Value by Power of Two
+\S{insFSCALE} \i\c{FSCALE}: Scale Floating-Point Value by Power of Two
 
 \c FSCALE                        ; D9 FD                [8086,FPU]
 
@@ -8599,16 +8602,16 @@ towards zero to obtain an integer, then multiplies \c{ST0} by two to
 the power of that integer, and stores the result in \c{ST0}.
 
 
-\H{insFSETPM} \i\c{FSETPM}: Set Protected Mode
+\S{insFSETPM} \i\c{FSETPM}: Set Protected Mode
 
 \c FSETPM                        ; DB E4                [286,FPU]
 
-This instruction initalises protected mode on the 287 floating-point
+This instruction initialises protected mode on the 287 floating-point
 coprocessor. It is only meaningful on that processor: the 387 and
 above treat the instruction as a no-operation.
 
 
-\H{insFSIN} \i\c{FSIN}, \i\c{FSINCOS}: Sine and Cosine
+\S{insFSIN} \i\c{FSIN}, \i\c{FSINCOS}: Sine and Cosine
 
 \c FSIN                          ; D9 FE                [386,FPU]
 \c FSINCOS                       ; D9 FB                [386,FPU]
@@ -8622,7 +8625,7 @@ than executing \c{FSIN} and \c{FCOS} (see \k{insFCOS}) in succession.
 The absolute value of \c{ST0} must be less than 2**63.
 
 
-\H{insFSQRT} \i\c{FSQRT}: Floating-Point Square Root
+\S{insFSQRT} \i\c{FSQRT}: Floating-Point Square Root
 
 \c FSQRT                         ; D9 FA                [8086,FPU]
 
@@ -8630,7 +8633,7 @@ The absolute value of \c{ST0} must be less than 2**63.
 result in \c{ST0}.
 
 
-\H{insFST} \i\c{FST}, \i\c{FSTP}: Floating-Point Store
+\S{insFST} \i\c{FST}, \i\c{FSTP}: Floating-Point Store
 
 \c FST mem32                     ; D9 /2                [8086,FPU]
 \c FST mem64                     ; DD /2                [8086,FPU]
@@ -8646,7 +8649,7 @@ or other FPU register. \c{FSTP} does the same, but then pops the
 register stack.
 
 
-\H{insFSTCW} \i\c{FSTCW}: Store Floating-Point Control Word
+\S{insFSTCW} \i\c{FSTCW}: Store Floating-Point Control Word
 
 \c FSTCW mem16                   ; 9B D9 /7             [8086,FPU]
 \c FNSTCW mem16                  ; D9 /7                [8086,FPU]
@@ -8659,7 +8662,7 @@ memory area. See also \c{FLDCW} (\k{insFLDCW}).
 for pending floating-point exceptions to clear.
 
 
-\H{insFSTENV} \i\c{FSTENV}: Store Floating-Point Environment
+\S{insFSTENV} \i\c{FSTENV}: Store Floating-Point Environment
 
 \c FSTENV mem                    ; 9B D9 /6             [8086,FPU]
 \c FNSTENV mem                   ; D9 /6                [8086,FPU]
@@ -8674,7 +8677,7 @@ depending on the CPU mode at the time. See also \c{FLDENV}
 for pending floating-point exceptions to clear.
 
 
-\H{insFSTSW} \i\c{FSTSW}: Store Floating-Point Status Word
+\S{insFSTSW} \i\c{FSTSW}: Store Floating-Point Status Word
 
 \c FSTSW mem16                   ; 9B DD /7             [8086,FPU]
 \c FSTSW AX                      ; 9B DF E0             [286,FPU]
@@ -8689,7 +8692,7 @@ memory area.
 for pending floating-point exceptions to clear.
 
 
-\H{insFSUB} \i\c{FSUB}, \i\c{FSUBP}, \i\c{FSUBR}, \i\c{FSUBRP}: Floating-Point Subtract
+\S{insFSUB} \i\c{FSUB}, \i\c{FSUBP}, \i\c{FSUBR}, \i\c{FSUBRP}: Floating-Point Subtract
 
 \c FSUB mem32                    ; D8 /4                [8086,FPU]
 \c FSUB mem64                    ; DC /4                [8086,FPU]
@@ -8733,7 +8736,7 @@ once it has finished.
 once it has finished.
 
 
-\H{insFTST} \i\c{FTST}: Test \c{ST0} Against Zero
+\S{insFTST} \i\c{FTST}: Test \c{ST0} Against Zero
 
 \c FTST                          ; D9 E4                [8086,FPU]
 
@@ -8743,7 +8746,7 @@ comparison, so that a `less-than' result is generated if \c{ST0} is
 negative.
 
 
-\H{insFUCOM} \i\c{FUCOMxx}: Floating-Point Unordered Compare
+\S{insFUCOM} \i\c{FUCOMxx}: Floating-Point Unordered Compare
 
 \c FUCOM fpureg                  ; DD E0+r              [386,FPU]
 \c FUCOM ST0,fpureg              ; DD E0+r              [386,FPU]
@@ -8780,7 +8783,7 @@ handle them silently and set the condition code flags to an
 `unordered' result, whereas \c{FCOM} will generate an exception.
 
 
-\H{insFXAM} \i\c{FXAM}: Examine Class of Value in \c{ST0}
+\S{insFXAM} \i\c{FXAM}: Examine Class of Value in \c{ST0}
 
 \c FXAM                          ; D9 E5                [8086,FPU]
 
@@ -8800,7 +8803,7 @@ the type of value stored in \c{ST0}:
 Additionally, the \c{C1} flag is set to the sign of the number.
 
 
-\H{insFXCH} \i\c{FXCH}: Floating-Point Exchange
+\S{insFXCH} \i\c{FXCH}: Floating-Point Exchange
 
 \c FXCH                          ; D9 C9                [8086,FPU]
 \c FXCH fpureg                   ; D9 C8+r              [8086,FPU]
@@ -8811,9 +8814,9 @@ Additionally, the \c{C1} flag is set to the sign of the number.
 form exchanges \c{ST0} with \c{ST1}.
 
 
-\H{insFXRSTOR} \i\c{FXRSTOR}: Restore \c{FP}, \c{MMX} and \c{SSE} State
+\S{insFXRSTOR} \i\c{FXRSTOR}: Restore \c{FP}, \c{MMX} and \c{SSE} State
 
-\c FXRSTOR memory                ; 0F AE /1               [P6,SSE,FPU] 
+\c FXRSTOR memory                ; 0F AE /1               [P6,SSE,FPU]
 
 The \c{FXRSTOR} instruction reloads the \c{FPU}, \c{MMX} and \c{SSE}
 state (environment and registers), from the 512 byte memory area defined
@@ -8821,9 +8824,9 @@ by the source operand. This data should have been written by a previous
 \c{FXSAVE}.
 
 
-\H{insFXSAVE} \i\c{FXSAVE}: Store \c{FP}, \c{MMX} and \c{SSE} State
+\S{insFXSAVE} \i\c{FXSAVE}: Store \c{FP}, \c{MMX} and \c{SSE} State
 
-\c FXSAVE memory                 ; 0F AE /0         [P6,SSE,FPU] 
+\c FXSAVE memory                 ; 0F AE /0         [P6,SSE,FPU]
 
 \c{FXSAVE}The FXSAVE instruction writes the current \c{FPU}, \c{MMX}
 and \c{SSE} technology states (environment and registers), to the
@@ -8833,11 +8836,11 @@ without checking for pending unmasked floating-point exceptions
 
 Unlike the \c{FSAVE/FNSAVE} instructions, the processor retains the
 contents of the \c{FPU}, \c{MMX} and \c{SSE} state in the processor
-after the state has been saved. This instruction has been optimized
+after the state has been saved. This instruction has been optimised
 to maximize floating-point save performance.
 
 
-\H{insFXTRACT} \i\c{FXTRACT}: Extract Exponent and Significand
+\S{insFXTRACT} \i\c{FXTRACT}: Extract Exponent and Significand
 
 \c FXTRACT                       ; D9 F4                [8086,FPU]
 
@@ -8847,7 +8850,7 @@ then pushes the significand on the register stack (so that the
 significand ends up in \c{ST0}, and the exponent in \c{ST1}).
 
 
-\H{insFYL2X} \i\c{FYL2X}, \i\c{FYL2XP1}: Compute Y times Log2(X) or Log2(X+1)
+\S{insFYL2X} \i\c{FYL2X}, \i\c{FYL2XP1}: Compute Y times Log2(X) or Log2(X+1)
 
 \c FYL2X                         ; D9 F1                [8086,FPU]
 \c FYL2XP1                       ; D9 F9                [8086,FPU]
@@ -8862,7 +8865,7 @@ positive.
 magnitude no greater than 1 minus half the square root of two.
 
 
-\H{insHLT} \i\c{HLT}: Halt Processor
+\S{insHLT} \i\c{HLT}: Halt Processor
 
 \c HLT                           ; F4                   [8086,PRIV]
 
@@ -8873,7 +8876,7 @@ reset.
 On the 286 and later processors, this is a privileged instruction.
 
 
-\H{insIBTS} \i\c{IBTS}: Insert Bit String
+\S{insIBTS} \i\c{IBTS}: Insert Bit String
 
 \c IBTS r/m16,reg16              ; o16 0F A7 /r         [386,UNDOC]
 \c IBTS r/m32,reg32              ; o32 0F A7 /r         [386,UNDOC]
@@ -8898,7 +8901,7 @@ supports it only for completeness. Its counterpart is \c{XBTS}
 (see \k{insXBTS}).
 
 
-\H{insIDIV} \i\c{IDIV}: Signed Integer Divide
+\S{insIDIV} \i\c{IDIV}: Signed Integer Divide
 
 \c IDIV r/m8                     ; F6 /7                [8086]
 \c IDIV r/m16                    ; o16 F7 /7            [8086]
@@ -8921,7 +8924,7 @@ Unsigned integer division is performed by the \c{DIV} instruction:
 see \k{insDIV}.
 
 
-\H{insIMUL} \i\c{IMUL}: Signed Integer Multiply
+\S{insIMUL} \i\c{IMUL}: Signed Integer Multiply
 
 \c IMUL r/m8                     ; F6 /5                [8086]
 \c IMUL r/m16                    ; o16 F7 /5            [8086]
@@ -8974,7 +8977,7 @@ Unsigned integer multiplication is performed by the \c{MUL}
 instruction: see \k{insMUL}.
 
 
-\H{insIN} \i\c{IN}: Input from I/O Port
+\S{insIN} \i\c{IN}: Input from I/O Port
 
 \c IN AL,imm8                    ; E4 ib                [8086]
 \c IN AX,imm8                    ; o16 E5 ib            [8086]
@@ -8989,7 +8992,7 @@ be specified as an immediate value if it is between 0 and 255, and
 otherwise must be stored in \c{DX}. See also \c{OUT} (\k{insOUT}).
 
 
-\H{insINC} \i\c{INC}: Increment Integer
+\S{insINC} \i\c{INC}: Increment Integer
 
 \c INC reg16                     ; o16 40+r             [8086]
 \c INC reg32                     ; o32 40+r             [386]
@@ -9006,7 +9009,7 @@ This instruction can be used with a \c{LOCK} prefix to allow atomic execution.
 See also \c{DEC} (\k{insDEC}).
 
 
-\H{insINSB} \i\c{INSB}, \i\c{INSW}, \i\c{INSD}: Input String from I/O Port
+\S{insINSB} \i\c{INSB}, \i\c{INSW}, \i\c{INSD}: Input String from I/O Port
 
 \c INSB                          ; 6C                   [186]
 \c INSW                          ; o16 6D               [186]
@@ -9036,7 +9039,7 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 See also \c{OUTSB}, \c{OUTSW} and \c{OUTSD} (\k{insOUTSB}).
 
 
-\H{insINT} \i\c{INT}: Software Interrupt
+\S{insINT} \i\c{INT}: Software Interrupt
 
 \c INT imm8                      ; CD ib                [8086]
 
@@ -9050,7 +9053,7 @@ order to generate single-byte breakpoint instructions, use the
 \c{INT3} or \c{INT1} instructions (see \k{insINT1}) instead.
 
 
-\H{insINT1} \i\c{INT3}, \i\c{INT1}, \i\c{ICEBP}, \i\c{INT01}: Breakpoints
+\S{insINT1} \i\c{INT3}, \i\c{INT1}, \i\c{ICEBP}, \i\c{INT01}: Breakpoints
 
 \c INT1                          ; F1                   [P6]
 \c ICEBP                         ; F1                   [P6]
@@ -9076,7 +9079,7 @@ breakpoint, bypasses the normal \c{IOPL} checks in virtual-8086 mode,
 and also does not go through interrupt redirection.
 
 
-\H{insINTO} \i\c{INTO}: Interrupt if Overflow
+\S{insINTO} \i\c{INTO}: Interrupt if Overflow
 
 \c INTO                          ; CE                   [8086]
 
@@ -9084,7 +9087,7 @@ and also does not go through interrupt redirection.
 if and only if the overflow flag is set.
 
 
-\H{insINVD} \i\c{INVD}: Invalidate Internal Caches
+\S{insINVD} \i\c{INVD}: Invalidate Internal Caches
 
 \c INVD                          ; 0F 08                [486]
 
@@ -9095,7 +9098,7 @@ any modified data held in the caches will be lost. To write the data
 back first, use \c{WBINVD} (\k{insWBINVD}).
 
 
-\H{insINVLPG} \i\c{INVLPG}: Invalidate TLB Entry
+\S{insINVLPG} \i\c{INVLPG}: Invalidate TLB Entry
 
 \c INVLPG mem                    ; 0F 01 /7             [486]
 
@@ -9103,7 +9106,7 @@ back first, use \c{WBINVD} (\k{insWBINVD}).
 associated with the supplied memory address.
 
 
-\H{insIRET} \i\c{IRET}, \i\c{IRETW}, \i\c{IRETD}: Return from Interrupt
+\S{insIRET} \i\c{IRET}, \i\c{IRETW}, \i\c{IRETD}: Return from Interrupt
 
 \c IRET                          ; CF                   [8086]
 \c IRETW                         ; o16 CF               [8086]
@@ -9123,7 +9126,7 @@ taking 12 bytes off the stack.
 on the default \c{BITS} setting at the time.
 
 
-\H{insJcc} \i\c{Jcc}: Conditional Branch
+\S{insJcc} \i\c{Jcc}: Conditional Branch
 
 \c Jcc imm                       ; 70+cc rb             [8086]
 \c Jcc NEAR imm                  ; 0F 80+cc rw/rd       [386]
@@ -9144,7 +9147,7 @@ instruction, for clarity, but is not necessary.
 For details of the condition codes, see \k{iref-cc}.
 
 
-\H{insJCXZ} \i\c{JCXZ}, \i\c{JECXZ}: Jump if CX/ECX Zero
+\S{insJCXZ} \i\c{JCXZ}, \i\c{JECXZ}: Jump if CX/ECX Zero
 
 \c JCXZ imm                      ; a16 E3 rb            [8086]
 \c JECXZ imm                     ; a32 E3 rb            [386]
@@ -9154,14 +9157,14 @@ only if the contents of the \c{CX} register is 0. \c{JECXZ} does the
 same thing, but with \c{ECX}.
 
 
-\H{insJMP} \i\c{JMP}: Jump
+\S{insJMP} \i\c{JMP}: Jump
 
 \c JMP imm                       ; E9 rw/rd             [8086]
 \c JMP SHORT imm                 ; EB rb                [8086]
 \c JMP imm:imm16                 ; o16 EA iw iw         [8086]
 \c JMP imm:imm32                 ; o32 EA id iw         [386]
 \c JMP FAR mem                   ; o16 FF /5            [8086]
-\c JMP FAR mem                   ; o32 FF /5            [386]
+\c JMP FAR mem32                 ; o32 FF /5            [386]
 \c JMP r/m16                     ; o16 FF /4            [8086]
 \c JMP r/m32                     ; o32 FF /4            [386]
 
@@ -9199,7 +9202,7 @@ the \c{NEAR} keyword (e.g. \c{CALL NEAR [address]}), even though it
 is not strictly necessary.
 
 
-\H{insLAHF} \i\c{LAHF}: Load AH from Flags
+\S{insLAHF} \i\c{LAHF}: Load AH from Flags
 
 \c LAHF                          ; 9F                   [8086]
 
@@ -9213,7 +9216,7 @@ The operation of \c{LAHF} is:
 See also \c{SAHF} (\k{insSAHF}).
 
 
-\H{insLAR} \i\c{LAR}: Load Access Rights
+\S{insLAR} \i\c{LAR}: Load Access Rights
 
 \c LAR reg16,r/m16               ; o16 0F 02 /r         [286,PRIV]
 \c LAR reg32,r/m32               ; o32 0F 02 /r         [286,PRIV]
@@ -9224,7 +9227,7 @@ LDT, and loads the access-rights byte of the descriptor into its
 destination (first) operand.
 
 
-\H{insLDMXCSR} \i\c{LDMXCSR}: Load Streaming SIMD Extension
+\S{insLDMXCSR} \i\c{LDMXCSR}: Load Streaming SIMD Extension
  Control/Status
 
 \c LDMXCSR mem32                 ; 0F AE /2        [KATMAI,SSE]
@@ -9239,7 +9242,7 @@ For details of the \c{MXCSR} register, see the Intel processor docs.
 See also \c{STMXCSR} (\k{insSTMXCSR}
 
 
-\H{insLDS} \i\c{LDS}, \i\c{LES}, \i\c{LFS}, \i\c{LGS}, \i\c{LSS}: Load Far Pointer
+\S{insLDS} \i\c{LDS}, \i\c{LES}, \i\c{LFS}, \i\c{LGS}, \i\c{LSS}: Load Far Pointer
 
 \c LDS reg16,mem                 ; o16 C5 /r            [8086]
 \c LDS reg32,mem                 ; o32 C5 /r            [386]
@@ -9265,7 +9268,7 @@ loads the \e{next} 16 bits from memory into \c{DS}. \c{LES},
 segment registers.
 
 
-\H{insLEA} \i\c{LEA}: Load Effective Address
+\S{insLEA} \i\c{LEA}: Load Effective Address
 
 \c LEA reg16,mem                 ; o16 8D /r            [8086]
 \c LEA reg32,mem                 ; o32 8D /r            [386]
@@ -9288,7 +9291,7 @@ addressing mode was 32-bits, the low 16-bits are stored, and if the
 address was 16-bits, it is zero-extended to 32-bits before storing.
 
 
-\H{insLEAVE} \i\c{LEAVE}: Destroy Stack Frame
+\S{insLEAVE} \i\c{LEAVE}: Destroy Stack Frame
 
 \c LEAVE                         ; C9                   [186]
 
@@ -9298,7 +9301,7 @@ equivalent to \c{MOV ESP,EBP} followed by \c{POP EBP} (or \c{MOV
 SP,BP} followed by \c{POP BP} in 16-bit mode).
 
 
-\H{insLFENCE} \i\c{LFENCE}: Load Fence
+\S{insLFENCE} \i\c{LFENCE}: Load Fence
 
 \c LFENCE                        ; 0F AE /5        [WILLAMETTE,SSE2]
 
@@ -9331,7 +9334,7 @@ of these encodings risks incompatibility with future processors.
 See also \c{SFENCE} (\k{insSFENCE}) and \c{MFENCE} (\k{insMFENCE}).
 
 
-\H{insLGDT} \i\c{LGDT}, \i\c{LIDT}, \i\c{LLDT}: Load Descriptor Tables
+\S{insLGDT} \i\c{LGDT}, \i\c{LIDT}, \i\c{LLDT}: Load Descriptor Tables
 
 \c LGDT mem                      ; 0F 01 /2             [286,PRIV]
 \c LIDT mem                      ; 0F 01 /3             [286,PRIV]
@@ -9351,7 +9354,7 @@ given there into the \c{LDTR} (local descriptor table register).
 See also \c{SGDT}, \c{SIDT} and \c{SLDT} (\k{insSGDT}).
 
 
-\H{insLMSW} \i\c{LMSW}: Load/Store Machine Status Word
+\S{insLMSW} \i\c{LMSW}: Load/Store Machine Status Word
 
 \c LMSW r/m16                    ; 0F 01 /6             [286,PRIV]
 
@@ -9360,7 +9363,7 @@ bottom four bits of the \c{CR0} control register (or the Machine
 Status Word, on 286 processors). See also \c{SMSW} (\k{insSMSW}).
 
 
-\H{insLOADALL} \i\c{LOADALL}, \i\c{LOADALL286}: Load Processor State
+\S{insLOADALL} \i\c{LOADALL}, \i\c{LOADALL286}: Load Processor State
 
 \c LOADALL                       ; 0F 07                [386,UNDOC]
 \c LOADALL286                    ; 0F 05                [286,UNDOC]
@@ -9375,7 +9378,7 @@ this block is located implicitly at absolute address \c{0x800}, and
 on the 386 and 486 it is at \c{[ES:EDI]}.
 
 
-\H{insLODSB} \i\c{LODSB}, \i\c{LODSW}, \i\c{LODSD}: Load from String
+\S{insLODSB} \i\c{LODSB}, \i\c{LODSW}, \i\c{LODSD}: Load from String
 
 \c LODSB                         ; AC                   [8086]
 \c LODSW                         ; o16 AD               [8086]
@@ -9400,7 +9403,7 @@ word or a doubleword instead of a byte, and increment or decrement
 the addressing registers by 2 or 4 instead of 1.
 
 
-\H{insLOOP} \i\c{LOOP}, \i\c{LOOPE}, \i\c{LOOPZ}, \i\c{LOOPNE}, \i\c{LOOPNZ}: Loop with Counter
+\S{insLOOP} \i\c{LOOP}, \i\c{LOOPE}, \i\c{LOOPZ}, \i\c{LOOPNE}, \i\c{LOOPNZ}: Loop with Counter
 
 \c LOOP imm                      ; E2 rb                [8086]
 \c LOOP imm,CX                   ; a16 E2 rb            [8086]
@@ -9432,7 +9435,7 @@ is set. Similarly, \c{LOOPNE} (and \c{LOOPNZ}) jumps only if the
 counter is nonzero and the zero flag is clear.
 
 
-\H{insLSL} \i\c{LSL}: Load Segment Limit
+\S{insLSL} \i\c{LSL}: Load Segment Limit
 
 \c LSL reg16,r/m16               ; o16 0F 03 /r         [286,PRIV]
 \c LSL reg32,r/m32               ; o32 0F 03 /r         [286,PRIV]
@@ -9446,7 +9449,7 @@ byte limit in either case.) The segment limit obtained is then
 loaded into the destination (first) operand.
 
 
-\H{insLTR} \i\c{LTR}: Load Task Register
+\S{insLTR} \i\c{LTR}: Load Task Register
 
 \c LTR r/m16                     ; 0F 00 /3             [286,PRIV]
 
@@ -9455,7 +9458,7 @@ descriptor specified by the segment selector given as its operand,
 and loads them into the Task Register.
 
 
-\H{insMASKMOVDQU} \i\c{MASKMOVDQU}: Byte Mask Write
+\S{insMASKMOVDQU} \i\c{MASKMOVDQU}: Byte Mask Write
 
 \c MASKMOVDQU xmm1,xmm2          ; 66 0F F7 /r     [WILLAMETTE,SSE2]
 
@@ -9466,9 +9469,9 @@ register xmm2 is used to selectively write the data (0 = no write,
 1 = write) on a per-byte basis.
 
 
-\H{insMASKMOVQ} \i\c{MASKMOVQ}: Byte Mask Write
+\S{insMASKMOVQ} \i\c{MASKMOVQ}: Byte Mask Write
 
-\c MASKMOVQ mm1,mm2              ; 0F F7 /r        [KATMAI,MMX] 
+\c MASKMOVQ mm1,mm2              ; 0F F7 /r        [KATMAI,MMX]
 
 \c{MASKMOVQ} stores data from mm1 to the location specified by
 \c{ES:(E)DI}. The size of the store depends on the address-size
@@ -9477,7 +9480,7 @@ register mm2 is used to selectively write the data (0 = no write,
 1 = write) on a per-byte basis.
 
 
-\H{insMAXPD} \i\c{MAXPD}: Return Packed Double-Precision FP Maximum
+\S{insMAXPD} \i\c{MAXPD}: Return Packed Double-Precision FP Maximum
 
 \c MAXPD xmm1,xmm2/m128          ; 66 0F 5F /r     [WILLAMETTE,SSE2]
 
@@ -9489,9 +9492,9 @@ both zeroes, source2 (xmm2/m128) would be returned. If source2
 destination (i.e., a QNaN version of the SNaN is not returned).
 
 
-\H{insMAXPS} \i\c{MAXPS}: Return Packed Single-Precision FP Maximum
+\S{insMAXPS} \i\c{MAXPS}: Return Packed Single-Precision FP Maximum
 
-\c MAXPS xmm1,xmm2/m128          ; 0F 5F /r        [KATMAI,SSE] 
+\c MAXPS xmm1,xmm2/m128          ; 0F 5F /r        [KATMAI,SSE]
 
 \c{MAXPS} performs a SIMD compare of the packed single-precision
 FP numbers from xmm1 and xmm2/mem, and stores the maximum values
@@ -9501,7 +9504,7 @@ both zeroes, source2 (xmm2/m128) would be returned. If source2
 destination (i.e., a QNaN version of the SNaN is not returned).
 
 
-\H{insMAXSD} \i\c{MAXSD}: Return Scalar Double-Precision FP Maximum
+\S{insMAXSD} \i\c{MAXSD}: Return Scalar Double-Precision FP Maximum
 
 \c MAXSD xmm1,xmm2/m64           ; F2 0F 5F /r     [WILLAMETTE,SSE2]
 
@@ -9514,9 +9517,9 @@ the SNaN is not returned). The high quadword of the destination
 is left unchanged.
 
 
-\H{insMAXSS} \i\c{MAXSS}: Return Scalar Single-Precision FP Maximum
+\S{insMAXSS} \i\c{MAXSS}: Return Scalar Single-Precision FP Maximum
 
-\c MAXSS xmm1,xmm2/m32           ; F3 0F 5F /r     [KATMAI,SSE] 
+\c MAXSS xmm1,xmm2/m32           ; F3 0F 5F /r     [KATMAI,SSE]
 
 \c{MAXSS} compares the low-order single-precision FP numbers from
 xmm1 and xmm2/mem, and stores the maximum value in xmm1. If the
@@ -9527,7 +9530,7 @@ the SNaN is not returned). The high three doublewords of the
 destination are left unchanged.
 
 
-\H{insMFENCE} \i\c{MFENCE}: Memory Fence
+\S{insMFENCE} \i\c{MFENCE}: Memory Fence
 
 \c MFENCE                        ; 0F AE /6        [WILLAMETTE,SSE2]
 
@@ -9562,7 +9565,7 @@ of these encodings risks incompatibility with future processors.
 See also \c{LFENCE} (\k{insLFENCE}) and \c{SFENCE} (\k{insSFENCE}).
 
 
-\H{insMINPD} \i\c{MINPD}: Return Packed Double-Precision FP Minimum
+\S{insMINPD} \i\c{MINPD}: Return Packed Double-Precision FP Minimum
 
 \c MINPD xmm1,xmm2/m128          ; 66 0F 5D /r     [WILLAMETTE,SSE2]
 
@@ -9574,9 +9577,9 @@ both zeroes, source2 (xmm2/m128) would be returned. If source2
 destination (i.e., a QNaN version of the SNaN is not returned).
 
 
-\H{insMINPS} \i\c{MINPS}: Return Packed Single-Precision FP Minimum
+\S{insMINPS} \i\c{MINPS}: Return Packed Single-Precision FP Minimum
 
-\c MINPS xmm1,xmm2/m128          ; 0F 5D /r        [KATMAI,SSE] 
+\c MINPS xmm1,xmm2/m128          ; 0F 5D /r        [KATMAI,SSE]
 
 \c{MINPS} performs a SIMD compare of the packed single-precision
 FP numbers from xmm1 and xmm2/mem, and stores the minimum values
@@ -9586,7 +9589,7 @@ both zeroes, source2 (xmm2/m128) would be returned. If source2
 destination (i.e., a QNaN version of the SNaN is not returned).
 
 
-\H{insMINSD} \i\c{MINSD}: Return Scalar Double-Precision FP Minimum
+\S{insMINSD} \i\c{MINSD}: Return Scalar Double-Precision FP Minimum
 
 \c MINSD xmm1,xmm2/m64           ; F2 0F 5D /r     [WILLAMETTE,SSE2]
 
@@ -9599,9 +9602,9 @@ the SNaN is not returned). The high quadword of the destination
 is left unchanged.
 
 
-\H{insMINSS} \i\c{MINSS}: Return Scalar Single-Precision FP Minimum
+\S{insMINSS} \i\c{MINSS}: Return Scalar Single-Precision FP Minimum
 
-\c MINSS xmm1,xmm2/m32           ; F3 0F 5D /r     [KATMAI,SSE] 
+\c MINSS xmm1,xmm2/m32           ; F3 0F 5D /r     [KATMAI,SSE]
 
 \c{MINSS} compares the low-order single-precision FP numbers from
 xmm1 and xmm2/mem, and stores the minimum value in xmm1. If the
@@ -9612,7 +9615,7 @@ the SNaN is not returned). The high three doublewords of the
 destination are left unchanged.
 
 
-\H{insMOV} \i\c{MOV}: Move Data
+\S{insMOV} \i\c{MOV}: Move Data
 
 \c MOV r/m8,reg8                 ; 88 /r                [8086]
 \c MOV r/m16,reg16               ; o16 89 /r            [8086]
@@ -9667,7 +9670,7 @@ Test registers are supported on 386/486 processors and on some
 non-Intel Pentium class processors.
 
 
-\H{insMOVAPD} \i\c{MOVAPD}: Move Aligned Packed Double-Precision FP Values
+\S{insMOVAPD} \i\c{MOVAPD}: Move Aligned Packed Double-Precision FP Values
 
 \c MOVAPD xmm1,xmm2/mem128       ; 66 0F 28 /r     [WILLAMETTE,SSE2]
 \c MOVAPD xmm1/mem128,xmm2       ; 66 0F 29 /r     [WILLAMETTE,SSE2]
@@ -9681,10 +9684,10 @@ To move data in and out of memory locations that are not known to be on
 16-byte boundaries, use the \c{MOVUPD} instruction (\k{insMOVUPD}).
 
 
-\H{insMOVAPS} \i\c{MOVAPS}: Move Aligned Packed Single-Precision FP Values
+\S{insMOVAPS} \i\c{MOVAPS}: Move Aligned Packed Single-Precision FP Values
 
-\c MOVAPS xmm1,xmm2/mem128       ; 0F 28 /r        [KATMAI,SSE] 
-\c MOVAPS xmm1/mem128,xmm2       ; 0F 29 /r        [KATMAI,SSE] 
+\c MOVAPS xmm1,xmm2/mem128       ; 0F 28 /r        [KATMAI,SSE]
+\c MOVAPS xmm1/mem128,xmm2       ; 0F 29 /r        [KATMAI,SSE]
 
 \c{MOVAPS} moves a double quadword containing 4 packed single-precision
 FP values from the source operand to the destination. When the source
@@ -9695,7 +9698,7 @@ To move data in and out of memory locations that are not known to be on
 16-byte boundaries, use the \c{MOVUPS} instruction (\k{insMOVUPS}).
 
 
-\H{insMOVD} \i\c{MOVD}: Move Doubleword to/from MMX Register
+\S{insMOVD} \i\c{MOVD}: Move Doubleword to/from MMX Register
 
 \c MOVD mm,r/m32                 ; 0F 6E /r             [PENT,MMX]
 \c MOVD r/m32,mm                 ; 0F 7E /r             [PENT,MMX]
@@ -9708,7 +9711,7 @@ register or a 128-bit \c{XMM} register, the input value is zero-extended
 to fill the destination register.
 
 
-\H{insMOVDQ2Q} \i\c{MOVDQ2Q}: Move Quadword from XMM to MMX register.
+\S{insMOVDQ2Q} \i\c{MOVDQ2Q}: Move Quadword from XMM to MMX register.
 
 \c MOVDQ2Q mm,xmm                ; F2 OF D6 /r     [WILLAMETTE,SSE2]
 
@@ -9716,7 +9719,7 @@ to fill the destination register.
 destination operand.
 
 
-\H{insMOVDQA} \i\c{MOVDQA}: Move Aligned Double Quadword
+\S{insMOVDQA} \i\c{MOVDQA}: Move Aligned Double Quadword
 
 \c MOVDQA xmm1,xmm2/m128         ; 66 OF 6F /r     [WILLAMETTE,SSE2]
 \c MOVDQA xmm1/m128,xmm2         ; 66 OF 7F /r     [WILLAMETTE,SSE2]
@@ -9729,7 +9732,7 @@ To move a double quadword to or from unaligned memory locations,
 use the \c{MOVDQU} instruction (\k{insMOVDQU}).
 
 
-\H{insMOVDQU} \i\c{MOVDQU}: Move Unaligned Double Quadword
+\S{insMOVDQU} \i\c{MOVDQU}: Move Unaligned Double Quadword
 
 \c MOVDQU xmm1,xmm2/m128         ; F3 OF 6F /r     [WILLAMETTE,SSE2]
 \c MOVDQU xmm1/m128,xmm2         ; F3 OF 7F /r     [WILLAMETTE,SSE2]
@@ -9742,9 +9745,9 @@ To move a double quadword to or from known aligned memory locations,
 use the \c{MOVDQA} instruction (\k{insMOVDQA}).
 
 
-\H{insMOVHLPS} \i\c{MOVHLPS}: Move Packed Single-Precision FP High to Low
+\S{insMOVHLPS} \i\c{MOVHLPS}: Move Packed Single-Precision FP High to Low
 
-\c MOVHLPS xmm1,xmm2             ; OF 12 /r        [KATMAI,SSE] 
+\c MOVHLPS xmm1,xmm2             ; OF 12 /r        [KATMAI,SSE]
 
 \c{MOVHLPS} moves the two packed single-precision FP values from the
 high quadword of the source register xmm2 to the low quadword of the
@@ -9756,7 +9759,7 @@ The operation of this instruction is:
 \c    dst[64-127] remains unchanged.
 
 
-\H{insMOVHPD} \i\c{MOVHPD}: Move High Packed Double-Precision FP
+\S{insMOVHPD} \i\c{MOVHPD}: Move High Packed Double-Precision FP
 
 \c MOVHPD xmm,m64               ; 66 OF 16 /r      [WILLAMETTE,SSE2]
 \c MOVHPD m64,xmm               ; 66 OF 17 /r      [WILLAMETTE,SSE2]
@@ -9775,7 +9778,7 @@ or
 \c    xmm[64-127] := mem[0-63].
 
 
-\H{insMOVHPS} \i\c{MOVHPS}: Move High Packed Single-Precision FP
+\S{insMOVHPS} \i\c{MOVHPS}: Move High Packed Single-Precision FP
 
 \c MOVHPS xmm,m64               ; 0F 16 /r         [KATMAI,SSE]
 \c MOVHPS m64,xmm               ; 0F 17 /r         [KATMAI,SSE]
@@ -9794,9 +9797,9 @@ or
 \c    xmm[64-127] := mem[0-63].
 
 
-\H{insMOVLHPS} \i\c{MOVLHPS}: Move Packed Single-Precision FP Low to High
+\S{insMOVLHPS} \i\c{MOVLHPS}: Move Packed Single-Precision FP Low to High
 
-\c MOVLHPS xmm1,xmm2             ; OF 16 /r         [KATMAI,SSE] 
+\c MOVLHPS xmm1,xmm2             ; OF 16 /r         [KATMAI,SSE]
 
 \c{MOVLHPS} moves the two packed single-precision FP values from the
 low quadword of the source register xmm2 to the high quadword of the
@@ -9807,7 +9810,7 @@ The operation of this instruction is:
 \c    dst[0-63]   remains unchanged;
 \c    dst[64-127] := src[0-63].
 
-\H{insMOVLPD} \i\c{MOVLPD}: Move Low Packed Double-Precision FP
+\S{insMOVLPD} \i\c{MOVLPD}: Move Low Packed Double-Precision FP
 
 \c MOVLPD xmm,m64                ; 66 OF 12 /r     [WILLAMETTE,SSE2]
 \c MOVLPD m64,xmm                ; 66 OF 13 /r     [WILLAMETTE,SSE2]
@@ -9825,10 +9828,10 @@ or
 \c    xmm(0-63)   := mem(0-63);
 \c    xmm(64-127) remains unchanged.
 
-\H{insMOVLPS} \i\c{MOVLPS}: Move Low Packed Single-Precision FP
+\S{insMOVLPS} \i\c{MOVLPS}: Move Low Packed Single-Precision FP
 
-\c MOVLPS xmm,m64                ; OF 12 /r        [KATMAI,SSE] 
-\c MOVLPS m64,xmm                ; OF 13 /r        [KATMAI,SSE] 
+\c MOVLPS xmm,m64                ; OF 12 /r        [KATMAI,SSE]
+\c MOVLPS m64,xmm                ; OF 13 /r        [KATMAI,SSE]
 
 \c{MOVLPS} moves two packed single-precision FP values between the source
 and destination operands. One of the operands is a 64-bit memory location,
@@ -9844,7 +9847,7 @@ or
 \c    xmm(64-127) remains unchanged.
 
 
-\H{insMOVMSKPD} \i\c{MOVMSKPD}: Extract Packed Double-Precision FP Sign Mask
+\S{insMOVMSKPD} \i\c{MOVMSKPD}: Extract Packed Double-Precision FP Sign Mask
 
 \c MOVMSKPD reg32,xmm              ; 66 0F 50 /r   [WILLAMETTE,SSE2]
 
@@ -9852,15 +9855,15 @@ or
 bits of each double-precision FP number of the source operand.
 
 
-\H{insMOVMSKPS} \i\c{MOVMSKPS}: Extract Packed Single-Precision FP Sign Mask
+\S{insMOVMSKPS} \i\c{MOVMSKPS}: Extract Packed Single-Precision FP Sign Mask
 
-\c MOVMSKPS reg32,xmm              ; 0F 50 /r      [KATMAI,SSE] 
+\c MOVMSKPS reg32,xmm              ; 0F 50 /r      [KATMAI,SSE]
 
 \c{MOVMSKPS} inserts a 4-bit mask in r32, formed of the most significant
 bits of each single-precision FP number of the source operand.
 
 
-\H{insMOVNTDQ} \i\c{MOVNTDQ}: Move Double Quadword Non Temporal
+\S{insMOVNTDQ} \i\c{MOVNTDQ}: Move Double Quadword Non Temporal
 
 \c MOVNTDQ m128,xmm              ; 66 0F E7 /r     [WILLAMETTE,SSE2]
 
@@ -9869,7 +9872,7 @@ register to the destination memory location, using a non-temporal
 hint. This store instruction minimizes cache pollution.
 
 
-\H{insMOVNTI} \i\c{MOVNTI}: Move Doubleword Non Temporal
+\S{insMOVNTI} \i\c{MOVNTI}: Move Doubleword Non Temporal
 
 \c MOVNTI m32,reg32              ; 0F C3 /r        [WILLAMETTE,SSE2]
 
@@ -9878,7 +9881,7 @@ to the destination memory location, using a non-temporal
 hint. This store instruction minimizes cache pollution.
 
 
-\H{insMOVNTPD} \i\c{MOVNTPD}: Move Aligned Four Packed Single-Precision
+\S{insMOVNTPD} \i\c{MOVNTPD}: Move Aligned Four Packed Single-Precision
 FP Values Non Temporal
 
 \c MOVNTPD m128,xmm              ; 66 0F 2B /r     [WILLAMETTE,SSE2]
@@ -9889,10 +9892,10 @@ hint. This store instruction minimizes cache pollution. The memory
 location must be aligned to a 16-byte boundary.
 
 
-\H{insMOVNTPS} \i\c{MOVNTPS}: Move Aligned Four Packed Single-Precision
+\S{insMOVNTPS} \i\c{MOVNTPS}: Move Aligned Four Packed Single-Precision
 FP Values Non Temporal
 
-\c MOVNTPS m128,xmm              ; 0F 2B /r        [KATMAI,SSE] 
+\c MOVNTPS m128,xmm              ; 0F 2B /r        [KATMAI,SSE]
 
 \c{MOVNTPS} moves the double quadword from the \c{XMM} source
 register to the destination memory location, using a non-temporal
@@ -9900,7 +9903,7 @@ hint. This store instruction minimizes cache pollution. The memory
 location must be aligned to a 16-byte boundary.
 
 
-\H{insMOVNTQ} \i\c{MOVNTQ}: Move Quadword Non Temporal
+\S{insMOVNTQ} \i\c{MOVNTQ}: Move Quadword Non Temporal
 
 \c MOVNTQ m64,mm                 ; 0F E7 /r        [KATMAI,MMX]
 
@@ -9909,7 +9912,7 @@ to the destination memory location, using a non-temporal
 hint. This store instruction minimizes cache pollution.
 
 
-\H{insMOVQ} \i\c{MOVQ}: Move Quadword to/from MMX Register
+\S{insMOVQ} \i\c{MOVQ}: Move Quadword to/from MMX Register
 
 \c MOVQ mm1,mm2/m64               ; 0F 6F /r             [PENT,MMX]
 \c MOVQ mm1/m64,mm2               ; 0F 7F /r             [PENT,MMX]
@@ -9923,7 +9926,7 @@ the low quadword is moved. When the destination is an \c{XMM} register,
 the destination is the low quadword, and the high quadword is cleared.
 
 
-\H{insMOVQ2DQ} \i\c{MOVQ2DQ}: Move Quadword from MMX to XMM register.
+\S{insMOVQ2DQ} \i\c{MOVQ2DQ}: Move Quadword from MMX to XMM register.
 
 \c MOVQ2DQ xmm,mm                ; F3 OF D6 /r     [WILLAMETTE,SSE2]
 
@@ -9931,7 +9934,7 @@ the destination is the low quadword, and the high quadword is cleared.
 quadword of the destination operand, and clears the high quadword.
 
 
-\H{insMOVSB} \i\c{MOVSB}, \i\c{MOVSW}, \i\c{MOVSD}: Move String
+\S{insMOVSB} \i\c{MOVSB}, \i\c{MOVSW}, \i\c{MOVSD}: Move String
 
 \c MOVSB                         ; A4                   [8086]
 \c MOVSW                         ; o16 A5               [8086]
@@ -9960,7 +9963,7 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c{ECX} - again, the address size chooses which) times.
 
 
-\H{insMOVSD} \i\c{MOVSD}: Move Scalar Double-Precision FP Value
+\S{insMOVSD} \i\c{MOVSD}: Move Scalar Double-Precision FP Value
 
 \c MOVSD xmm1,xmm2/m64           ; F2 0F 10 /r     [WILLAMETTE,SSE2]
 \c MOVSD xmm1/m64,xmm2           ; F2 0F 11 /r     [WILLAMETTE,SSE2]
@@ -9970,17 +9973,17 @@ to the destination operand. When the source or destination is a
 register, the low-order FP value is read or written.
 
 
-\H{insMOVSS} \i\c{MOVSS}: Move Scalar Single-Precision FP Value
+\S{insMOVSS} \i\c{MOVSS}: Move Scalar Single-Precision FP Value
 
-\c MOVSS xmm1,xmm2/m32           ; F3 0F 10 /r     [KATMAI,SSE] 
-\c MOVSS xmm1/m32,xmm2           ; F3 0F 11 /r     [KATMAI,SSE] 
+\c MOVSS xmm1,xmm2/m32           ; F3 0F 10 /r     [KATMAI,SSE]
+\c MOVSS xmm1/m32,xmm2           ; F3 0F 11 /r     [KATMAI,SSE]
 
 \c{MOVSS} moves a single-precision FP value from the source operand
 to the destination operand. When the source or destination is a
 register, the low-order FP value is read or written.
 
 
-\H{insMOVSX} \i\c{MOVSX}, \i\c{MOVZX}: Move Data with Sign or Zero Extend
+\S{insMOVSX} \i\c{MOVSX}, \i\c{MOVZX}: Move Data with Sign or Zero Extend
 
 \c MOVSX reg16,r/m8              ; o16 0F BE /r         [386]
 \c MOVSX reg32,r/m8              ; o32 0F BE /r         [386]
@@ -9996,7 +9999,7 @@ destination operand. \c{MOVZX} does the same, but zero-extends
 rather than sign-extending.
 
 
-\H{insMOVUPD} \i\c{MOVUPD}: Move Unaligned Packed Double-Precision FP Values
+\S{insMOVUPD} \i\c{MOVUPD}: Move Unaligned Packed Double-Precision FP Values
 
 \c MOVUPD xmm1,xmm2/mem128       ; 66 0F 10 /r     [WILLAMETTE,SSE2]
 \c MOVUPD xmm1/mem128,xmm2       ; 66 0F 11 /r     [WILLAMETTE,SSE2]
@@ -10009,10 +10012,10 @@ To move data in and out of memory locations that are known to be on 16-byte
 boundaries, use the \c{MOVAPD} instruction (\k{insMOVAPD}).
 
 
-\H{insMOVUPS} \i\c{MOVUPS}: Move Unaligned Packed Single-Precision FP Values
+\S{insMOVUPS} \i\c{MOVUPS}: Move Unaligned Packed Single-Precision FP Values
 
-\c MOVUPS xmm1,xmm2/mem128       ; 0F 10 /r        [KATMAI,SSE] 
-\c MOVUPS xmm1/mem128,xmm2       ; 0F 11 /r        [KATMAI,SSE] 
+\c MOVUPS xmm1,xmm2/mem128       ; 0F 10 /r        [KATMAI,SSE]
+\c MOVUPS xmm1/mem128,xmm2       ; 0F 11 /r        [KATMAI,SSE]
 
 \c{MOVUPS} moves a double quadword containing 4 packed single-precision
 FP values from the source operand to the destination. This instruction
@@ -10022,7 +10025,7 @@ To move data in and out of memory locations that are known to be on 16-byte
 boundaries, use the \c{MOVAPS} instruction (\k{insMOVAPS}).
 
 
-\H{insMUL} \i\c{MUL}: Unsigned Integer Multiply
+\S{insMUL} \i\c{MUL}: Unsigned Integer Multiply
 
 \c MUL r/m8                      ; F6 /4                [8086]
 \c MUL r/m16                     ; o16 F7 /4            [8086]
@@ -10045,7 +10048,7 @@ Signed integer multiplication is performed by the \c{IMUL}
 instruction: see \k{insIMUL}.
 
 
-\H{insMULPD} \i\c{MULPD}: Packed Single-FP Multiply
+\S{insMULPD} \i\c{MULPD}: Packed Single-FP Multiply
 
 \c MULPD xmm1,xmm2/mem128        ; 66 0F 59 /r     [WILLAMETTE,SSE2]
 
@@ -10053,15 +10056,15 @@ instruction: see \k{insIMUL}.
 values in both operands, and stores the results in the destination register.
 
 
-\H{insMULPS} \i\c{MULPS}: Packed Single-FP Multiply
+\S{insMULPS} \i\c{MULPS}: Packed Single-FP Multiply
 
-\c MULPS xmm1,xmm2/mem128        ; 0F 59 /r        [KATMAI,SSE] 
+\c MULPS xmm1,xmm2/mem128        ; 0F 59 /r        [KATMAI,SSE]
 
 \c{MULPS} performs a SIMD multiply of the packed single-precision FP
 values in both operands, and stores the results in the destination register.
 
 
-\H{insMULSD} \i\c{MULSD}: Scalar Single-FP Multiply
+\S{insMULSD} \i\c{MULSD}: Scalar Single-FP Multiply
 
 \c MULSD xmm1,xmm2/mem32         ; F2 0F 59 /r     [WILLAMETTE,SSE2]
 
@@ -10069,15 +10072,15 @@ values in both operands, and stores the results in the destination register.
 operands, and stores the result in the low quadword of xmm1.
 
 
-\H{insMULSS} \i\c{MULSS}: Scalar Single-FP Multiply
+\S{insMULSS} \i\c{MULSS}: Scalar Single-FP Multiply
 
-\c MULSS xmm1,xmm2/mem32         ; F3 0F 59 /r     [KATMAI,SSE] 
+\c MULSS xmm1,xmm2/mem32         ; F3 0F 59 /r     [KATMAI,SSE]
 
 \c{MULSS} multiplies the lowest single-precision FP values of both
 operands, and stores the result in the low doubleword of xmm1.
 
 
-\H{insNEG} \i\c{NEG}, \i\c{NOT}: Two's and One's Complement
+\S{insNEG} \i\c{NEG}, \i\c{NOT}: Two's and One's Complement
 
 \c NEG r/m8                      ; F6 /3                [8086]
 \c NEG r/m16                     ; o16 F7 /3            [8086]
@@ -10093,7 +10096,7 @@ value. \c{NOT}, similarly, performs one's complement (inverts all
 the bits).
 
 
-\H{insNOP} \i\c{NOP}: No Operation
+\S{insNOP} \i\c{NOP}: No Operation
 
 \c NOP                           ; 90                   [8086]
 
@@ -10102,7 +10105,7 @@ generated by \c{XCHG AX,AX} or \c{XCHG EAX,EAX} (depending on the
 processor mode; see \k{insXCHG}).
 
 
-\H{insOR} \i\c{OR}: Bitwise OR
+\S{insOR} \i\c{OR}: Bitwise OR
 
 \c OR r/m8,reg8                  ; 08 /r                [8086]
 \c OR r/m16,reg16                ; o16 09 /r            [8086]
@@ -10138,7 +10141,7 @@ The MMX instruction \c{POR} (see \k{insPOR}) performs the same
 operation on the 64-bit MMX registers.
 
 
-\H{insORPD} \i\c{ORPD}: Bit-wise Logical OR of Double-Precision FP Data
+\S{insORPD} \i\c{ORPD}: Bit-wise Logical OR of Double-Precision FP Data
 
 \c ORPD xmm1,xmm2/m128           ; 66 0F 56 /r     [WILLAMETTE,SSE2]
 
@@ -10147,16 +10150,16 @@ and stores the result in xmm1. If the source operand is a memory
 location, it must be aligned to a 16-byte boundary.
 
 
-\H{insORPS} \i\c{ORPS}: Bit-wise Logical OR of Single-Precision FP Data
+\S{insORPS} \i\c{ORPS}: Bit-wise Logical OR of Single-Precision FP Data
 
-\c ORPS xmm1,xmm2/m128           ; 0F 56 /r        [KATMAI,SSE] 
+\c ORPS xmm1,xmm2/m128           ; 0F 56 /r        [KATMAI,SSE]
 
 \c{ORPS} return a bit-wise logical OR between xmm1 and xmm2/mem,
 and stores the result in xmm1. If the source operand is a memory
 location, it must be aligned to a 16-byte boundary.
 
 
-\H{insOUT} \i\c{OUT}: Output Data to I/O Port
+\S{insOUT} \i\c{OUT}: Output Data to I/O Port
 
 \c OUT imm8,AL                   ; E6 ib                [8086]
 \c OUT imm8,AX                   ; o16 E7 ib            [8086]
@@ -10171,12 +10174,10 @@ value if it is between 0 and 255, and otherwise must be stored in
 \c{DX}. See also \c{IN} (\k{insIN}).
 
 
-\H{insOUTSB} \i\c{OUTSB}, \i\c{OUTSW}, \i\c{OUTSD}: Output String to I/O Port
+\S{insOUTSB} \i\c{OUTSB}, \i\c{OUTSW}, \i\c{OUTSD}: Output String to I/O Port
 
 \c OUTSB                         ; 6E                   [186]
-
 \c OUTSW                         ; o16 6F               [186]
-
 \c OUTSD                         ; o32 6F               [386]
 
 \c{OUTSB} loads a byte from \c{[DS:SI]} or \c{[DS:ESI]} and writes
@@ -10201,7 +10202,7 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c{ECX} - again, the address size chooses which) times.
 
 
-\H{insPACKSSDW} \i\c{PACKSSDW}, \i\c{PACKSSWB}, \i\c{PACKUSWB}: Pack Data
+\S{insPACKSSDW} \i\c{PACKSSDW}, \i\c{PACKSSWB}, \i\c{PACKUSWB}: Pack Data
 
 \c PACKSSDW mm1,mm2/m64          ; 0F 6B /r             [PENT,MMX]
 \c PACKSSWB mm1,mm2/m64          ; 0F 63 /r             [PENT,MMX]
@@ -10236,7 +10237,7 @@ treated as unsigned, and the input is replaced by the largest unsigned
 number that will fit.
 
 
-\H{insPADDB} \i\c{PADDB}, \i\c{PADDW}, \i\c{PADDD}: Add Packed Integers
+\S{insPADDB} \i\c{PADDB}, \i\c{PADDW}, \i\c{PADDD}: Add Packed Integers
 
 \c PADDB mm1,mm2/m64             ; 0F FC /r             [PENT,MMX]
 \c PADDW mm1,mm2/m64             ; 0F FD /r             [PENT,MMX]
@@ -10261,7 +10262,7 @@ is wrapped around and the low bits are stored, with the carry bit
 discarded.
 
 
-\H{insPADDQ} \i\c{PADDQ}: Add Packed Quadword Integers
+\S{insPADDQ} \i\c{PADDQ}: Add Packed Quadword Integers
 
 \c PADDQ mm1,mm2/m64             ; 0F D4 /r             [PENT,MMX]
 
@@ -10275,7 +10276,7 @@ is wrapped around and the low bits are stored, with the carry bit
 discarded.
 
 
-\H{insPADDSB} \i\c{PADDSB}, \i\c{PADDSW}: Add Packed Signed Integers With Saturation
+\S{insPADDSB} \i\c{PADDSB}, \i\c{PADDSW}: Add Packed Signed Integers With Saturation
 
 \c PADDSB mm1,mm2/m64            ; 0F EC /r             [PENT,MMX]
 \c PADDSW mm1,mm2/m64            ; 0F ED /r             [PENT,MMX]
@@ -10294,7 +10295,7 @@ largest magnitude of the same sign as the result which will fit in
 the available space.
 
 
-\H{insPADDSIW} \i\c{PADDSIW}: MMX Packed Addition to Implicit Destination
+\S{insPADDSIW} \i\c{PADDSIW}: MMX Packed Addition to Implicit Destination
 
 \c PADDSIW mmxreg,r/m64          ; 0F 51 /r             [CYRIX,MMX]
 
@@ -10307,7 +10308,7 @@ number. So \c{PADDSIW MM0,MM2} would put the result in \c{MM1}, but
 \c{PADDSIW MM1,MM2} would put the result in \c{MM0}.
 
 
-\H{insPADDUSB} \i\c{PADDUSB}, \i\c{PADDUSW}: Add Packed Unsigned Integers With Saturation
+\S{insPADDUSB} \i\c{PADDUSB}, \i\c{PADDUSW}: Add Packed Unsigned Integers With Saturation
 
 \c PADDUSB mm1,mm2/m64           ; 0F DC /r             [PENT,MMX]
 \c PADDUSW mm1,mm2/m64           ; 0F DD /r             [PENT,MMX]
@@ -10325,7 +10326,7 @@ saturated value is stored. The resulting value is the maximum value
 that will fit in the available space.
 
 
-\H{insPAND} \i\c{PAND}, \i\c{PANDN}: MMX Bitwise AND and AND-NOT
+\S{insPAND} \i\c{PAND}, \i\c{PANDN}: MMX Bitwise AND and AND-NOT
 
 \c PAND mm1,mm2/m64              ; 0F DB /r             [PENT,MMX]
 \c PANDN mm1,mm2/m64             ; 0F DF /r             [PENT,MMX]
@@ -10343,7 +10344,7 @@ destination (first) operand.
 complement operation on the destination (first) operand first.
 
 
-\H{insPAUSE} \i\c{PAUSE}: Spin Loop Hint
+\S{insPAUSE} \i\c{PAUSE}: Spin Loop Hint
 
 \c PAUSE                         ; F3 90           [WILLAMETTE,SSE2]
 
@@ -10353,7 +10354,7 @@ possible memory order violations. On older processors, this instruction
 operates as a \c{NOP}.
 
 
-\H{insPAVEB} \i\c{PAVEB}: MMX Packed Average
+\S{insPAVEB} \i\c{PAVEB}: MMX Packed Average
 
 \c PAVEB mmxreg,r/m64            ; 0F 50 /r             [CYRIX,MMX]
 
@@ -10366,10 +10367,10 @@ This opcode maps to \c{MOVMSKPS r32, xmm} on processors that support
 the SSE instruction set.
 
 
-\H{insPAVGB} \i\c{PAVGB} \i\c{PAVGW}: Average Packed Integers
+\S{insPAVGB} \i\c{PAVGB} \i\c{PAVGW}: Average Packed Integers
 
-\c PAVGB mm1,mm2/m64             ; 0F E0 /r        [KATMAI,MMX] 
-\c PAVGW mm1,mm2/m64             ; 0F E3 /r        [KATMAI,MMX,SM] 
+\c PAVGB mm1,mm2/m64             ; 0F E0 /r        [KATMAI,MMX]
+\c PAVGW mm1,mm2/m64             ; 0F E3 /r        [KATMAI,MMX,SM]
 
 \c PAVGB xmm1,xmm2/m128          ; 66 0F E0 /r     [WILLAMETTE,SSE2]
 \c PAVGW xmm1,xmm2/m128          ; 66 0F E3 /r     [WILLAMETTE,SSE2]
@@ -10383,10 +10384,10 @@ sum.
 
 \b \c{PAVGB} operates on packed unsigned bytes, and
 
-\b \c{PAVGW} operates on packed unsigned words. 
+\b \c{PAVGW} operates on packed unsigned words.
 
 
-\H{insPAVGUSB} \i\c{PAVGUSB}: Average of unsigned packed 8-bit values
+\S{insPAVGUSB} \i\c{PAVGUSB}: Average of unsigned packed 8-bit values
 
 \c PAVGUSB mm1,mm2/m64           ; 0F 0F /r BF          [PENT,3DNOW]
 
@@ -10401,7 +10402,7 @@ This instruction performs exactly the same operations as the \c{PAVGB}
 \c{MMX} instruction (\k{insPAVGB}).
 
 
-\H{insPCMPEQB} \i\c{PCMPxx}: Compare Packed Integers.
+\S{insPCMPEQB} \i\c{PCMPxx}: Compare Packed Integers.
 
 \c PCMPEQB mm1,mm2/m64           ; 0F 74 /r             [PENT,MMX]
 \c PCMPEQW mm1,mm2/m64           ; 0F 75 /r             [PENT,MMX]
@@ -10439,7 +10440,7 @@ of the first (destination) operand is greater (treated as a signed
 integer) than that of the second (source) operand.
 
 
-\H{insPDISTIB} \i\c{PDISTIB}: MMX Packed Distance and Accumulate
+\S{insPDISTIB} \i\c{PDISTIB}: MMX Packed Distance and Accumulate
 with Implied Register
 
 \c PDISTIB mm,m64                ; 0F 54 /r             [CYRIX,MMX]
@@ -10458,7 +10459,7 @@ number. So \c{PDISTIB MM0,M64} would put the result in \c{MM1}, but
 Note that \c{PDISTIB} cannot take a register as its second source
 operand.
 
-Opration:
+Operation:
 
 \c    dstI[0-7]     := dstI[0-7]   + ABS(src0[0-7] - src1[0-7]),
 \c    dstI[8-15]    := dstI[8-15]  + ABS(src0[8-15] - src1[8-15]),
@@ -10467,7 +10468,7 @@ Opration:
 \c    dstI[56-63]   := dstI[56-63] + ABS(src0[56-63] - src1[56-63]).
 
 
-\H{insPEXTRW} \i\c{PEXTRW}: Extract Word
+\S{insPEXTRW} \i\c{PEXTRW}: Extract Word
 
 \c PEXTRW reg32,mm,imm8          ; 0F C5 /r ib     [KATMAI,MMX]
 \c PEXTRW reg32,xmm,imm8         ; 66 0F C5 /r ib  [WILLAMETTE,SSE2]
@@ -10483,9 +10484,9 @@ an \c{SSE} register, the three least significant bits specify the
 word location.
 
 
-\H{insPF2ID} \i\c{PF2ID}: Packed Single-Precision FP to Integer Convert
+\S{insPF2ID} \i\c{PF2ID}: Packed Single-Precision FP to Integer Convert
 
-\c PF2ID mm1,mm2/m64             ; 0F 0F /r 1D          [PENT,3DNOW] 
+\c PF2ID mm1,mm2/m64             ; 0F 0F /r 1D          [PENT,3DNOW]
 
 \c{PF2ID} converts two single-precision FP values in the source operand
 to signed 32-bit integers, using truncation, and stores them in the
@@ -10494,9 +10495,9 @@ by the destination are saturated to the largest absolute value of the
 same sign.
 
 
-\H{insPF2IW} \i\c{PF2IW}: Packed Single-Precision FP to Integer Word Convert
+\S{insPF2IW} \i\c{PF2IW}: Packed Single-Precision FP to Integer Word Convert
 
-\c PF2IW mm1,mm2/m64             ; 0F 0F /r 1C          [PENT,3DNOW] 
+\c PF2IW mm1,mm2/m64             ; 0F 0F /r 1C          [PENT,3DNOW]
 
 \c{PF2IW} converts two single-precision FP values in the source operand
 to signed 16-bit integers, using truncation, and stores them in the
@@ -10511,9 +10512,9 @@ before storing.
 to 32-bits before storing.
 
 
-\H{insPFACC} \i\c{PFACC}: Packed Single-Precision FP Accumulate
+\S{insPFACC} \i\c{PFACC}: Packed Single-Precision FP Accumulate
 
-\c PFACC mm1,mm2/m64             ; 0F 0F /r AE          [PENT,3DNOW] 
+\c PFACC mm1,mm2/m64             ; 0F 0F /r AE          [PENT,3DNOW]
 
 \c{PFACC} adds the two single-precision FP values from the destination
 operand together, then adds the two single-precision FP values from the
@@ -10526,9 +10527,9 @@ The operation is:
 \c    dst[32-63]  := src[0-31] + src[32-63].
 
 
-\H{insPFADD} \i\c{PFADD}: Packed Single-Precision FP Addition
+\S{insPFADD} \i\c{PFADD}: Packed Single-Precision FP Addition
 
-\c PFADD mm1,mm2/m64             ; 0F 0F /r 9E          [PENT,3DNOW] 
+\c PFADD mm1,mm2/m64             ; 0F 0F /r 9E          [PENT,3DNOW]
 
 \c{PFADD} performs addition on each of two packed single-precision
 FP value pairs.
@@ -10537,12 +10538,12 @@ FP value pairs.
 \c    dst[32-63]  := dst[32-63] + src[32-63].
 
 
-\H{insPFCMP} \i\c{PFCMPxx}: Packed Single-Precision FP Compare
+\S{insPFCMP} \i\c{PFCMPxx}: Packed Single-Precision FP Compare
 \I\c{PFCMPEQ} \I\c{PFCMPGE} \I\c{PFCMPGT}
 
-\c PFCMPEQ mm1,mm2/m64           ; 0F 0F /r B0          [PENT,3DNOW] 
-\c PFCMPGE mm1,mm2/m64           ; 0F 0F /r 90          [PENT,3DNOW] 
-\c PFCMPGT mm1,mm2/m64           ; 0F 0F /r A0          [PENT,3DNOW] 
+\c PFCMPEQ mm1,mm2/m64           ; 0F 0F /r B0          [PENT,3DNOW]
+\c PFCMPGE mm1,mm2/m64           ; 0F 0F /r 90          [PENT,3DNOW]
+\c PFCMPGT mm1,mm2/m64           ; 0F 0F /r A0          [PENT,3DNOW]
 
 The \c{PFCMPxx} instructions compare the packed single-point FP values
 in the source and destination operands, and set the destination
@@ -10556,25 +10557,25 @@ set to all 1s, otherwise it's set to all 0s.
 \b \c{PFCMPGT} tests whether dst >  src.
 
 
-\H{insPFMAX} \i\c{PFMAX}: Packed Single-Precision FP Maximum
+\S{insPFMAX} \i\c{PFMAX}: Packed Single-Precision FP Maximum
 
-\c PFMAX mm1,mm2/m64             ; 0F 0F /r A4          [PENT,3DNOW] 
+\c PFMAX mm1,mm2/m64             ; 0F 0F /r A4          [PENT,3DNOW]
 
 \c{PFMAX} returns the higher of each pair of single-precision FP values.
 If the higher value is zero, it is returned as positive zero.
 
 
-\H{insPFMIN} \i\c{PFMIN}: Packed Single-Precision FP Minimum
+\S{insPFMIN} \i\c{PFMIN}: Packed Single-Precision FP Minimum
 
-\c PFMIN mm1,mm2/m64             ; 0F 0F /r 94          [PENT,3DNOW] 
+\c PFMIN mm1,mm2/m64             ; 0F 0F /r 94          [PENT,3DNOW]
 
 \c{PFMIN} returns the lower of each pair of single-precision FP values.
 If the lower value is zero, it is returned as positive zero.
 
 
-\H{insPFMUL} \i\c{PFMUL}: Packed Single-Precision FP Multiply
+\S{insPFMUL} \i\c{PFMUL}: Packed Single-Precision FP Multiply
 
-\c PFMUL mm1,mm2/m64             ; 0F 0F /r B4          [PENT,3DNOW] 
+\c PFMUL mm1,mm2/m64             ; 0F 0F /r B4          [PENT,3DNOW]
 
 \c{PFMUL} returns the product of each pair of single-precision FP values.
 
@@ -10582,9 +10583,9 @@ If the lower value is zero, it is returned as positive zero.
 \c    dst[32-63] := dst[32-63] * src[32-63].
 
 
-\H{insPFNACC} \i\c{PFNACC}: Packed Single-Precision FP Negative Accumulate
+\S{insPFNACC} \i\c{PFNACC}: Packed Single-Precision FP Negative Accumulate
 
-\c PFNACC mm1,mm2/m64            ; 0F 0F /r 8A          [PENT,3DNOW] 
+\c PFNACC mm1,mm2/m64            ; 0F 0F /r 8A          [PENT,3DNOW]
 
 \c{PFNACC} performs a negative accumulate of the two single-precision
 FP values in the source and destination registers. The result of the
@@ -10598,9 +10599,9 @@ The operation is:
 \c    dst[32-63] := src[0-31] - src[32-63].
 
 
-\H{insPFPNACC} \i\c{PFPNACC}: Packed Single-Precision FP Mixed Accumulate
+\S{insPFPNACC} \i\c{PFPNACC}: Packed Single-Precision FP Mixed Accumulate
 
-\c PFPNACC mm1,mm2/m64           ; 0F 0F /r 8E          [PENT,3DNOW] 
+\c PFPNACC mm1,mm2/m64           ; 0F 0F /r 8E          [PENT,3DNOW]
 
 \c{PFPNACC} performs a positive accumulate of the two single-precision
 FP values in the source register and a negative accumulate of the
@@ -10615,7 +10616,7 @@ The operation is:
 \c    dst[32-63] := src[0-31] + src[32-63].
 
 
-\H{insPFRCP} \i\c{PFRCP}: Packed Single-Precision FP Reciprocal Approximation
+\S{insPFRCP} \i\c{PFRCP}: Packed Single-Precision FP Reciprocal Approximation
 
 \c PFRCP mm1,mm2/m64             ; 0F 0F /r 96          [PENT,3DNOW]
 
@@ -10630,7 +10631,7 @@ two more instructions: \c{PFRCPIT1} (\k{insPFRCPIT1}) and \c{PFRCPIT2}
 see the AMD 3DNow! technology manual.
 
 
-\H{insPFRCPIT1} \i\c{PFRCPIT1}: Packed Single-Precision FP Reciprocal,
+\S{insPFRCPIT1} \i\c{PFRCPIT1}: Packed Single-Precision FP Reciprocal,
 First Iteration Step
 
 \c PFRCPIT1 mm1,mm2/m64          ; 0F 0F /r A6          [PENT,3DNOW]
@@ -10645,7 +10646,7 @@ of a single-precision FP value, see \c{PFRCPIT2} (\k{insPFRCPIT2}). For
 more details, see the AMD 3DNow! technology manual.
 
 
-\H{insPFRCPIT2} \i\c{PFRCPIT2}: Packed Single-Precision FP
+\S{insPFRCPIT2} \i\c{PFRCPIT2}: Packed Single-Precision FP
 Reciprocal/ Reciprocal Square Root, Second Iteration Step
 
 \c PFRCPIT2 mm1,mm2/m64          ; 0F 0F /r B6          [PENT,3DNOW]
@@ -10661,7 +10662,7 @@ either the \c{PFRCP} or the \c{PFRSQRT} instruction. For more details,
 see the AMD 3DNow! technology manual.
 
 
-\H{insPFRSQIT1} \i\c{PFRSQIT1}: Packed Single-Precision FP Reciprocal
+\S{insPFRSQIT1} \i\c{PFRSQIT1}: Packed Single-Precision FP Reciprocal
 Square Root, First Iteration Step
 
 \c PFRSQIT1 mm1,mm2/m64          ; 0F 0F /r A7          [PENT,3DNOW]
@@ -10677,7 +10678,7 @@ of a single-precision FP value, see \c{PFRCPIT2} (\k{insPFRCPIT2}). For
 more details, see the AMD 3DNow! technology manual.
 
 
-\H{insPFRSQRT} \i\c{PFRSQRT}: Packed Single-Precision FP Reciprocal
+\S{insPFRSQRT} \i\c{PFRSQRT}: Packed Single-Precision FP Reciprocal
 Square Root Approximation
 
 \c PFRSQRT mm1,mm2/m64           ; 0F 0F /r 97          [PENT,3DNOW]
@@ -10693,9 +10694,9 @@ two more instructions: \c{PFRSQIT1} (\k{insPFRSQIT1}) and \c{PFRCPIT2}
 see the AMD 3DNow! technology manual.
 
 
-\H{insPFSUB} \i\c{PFSUB}: Packed Single-Precision FP Subtract
+\S{insPFSUB} \i\c{PFSUB}: Packed Single-Precision FP Subtract
 
-\c PFSUB mm1,mm2/m64             ; 0F 0F /r 9A          [PENT,3DNOW] 
+\c PFSUB mm1,mm2/m64             ; 0F 0F /r 9A          [PENT,3DNOW]
 
 \c{PFSUB} subtracts the single-precision FP values in the source from
 those in the destination, and stores the result in the destination
@@ -10705,9 +10706,9 @@ operand.
 \c    dst[32-63] := dst[32-63] - src[32-63].
 
 
-\H{insPFSUBR} \i\c{PFSUBR}: Packed Single-Precision FP Reverse Subtract
+\S{insPFSUBR} \i\c{PFSUBR}: Packed Single-Precision FP Reverse Subtract
 
-\c PFSUBR mm1,mm2/m64            ; 0F 0F /r AA          [PENT,3DNOW] 
+\c PFSUBR mm1,mm2/m64            ; 0F 0F /r AA          [PENT,3DNOW]
 
 \c{PFSUBR} subtracts the single-precision FP values in the destination
 from those in the source, and stores the result in the destination
@@ -10717,25 +10718,25 @@ operand.
 \c    dst[32-63] := src[32-63] - dst[32-63].
 
 
-\H{insPI2FD} \i\c{PI2FD}: Packed Doubleword Integer to Single-Precision FP Convert
+\S{insPI2FD} \i\c{PI2FD}: Packed Doubleword Integer to Single-Precision FP Convert
 
-\c PI2FD mm1,mm2/m64             ; 0F 0F /r 0D          [PENT,3DNOW] 
+\c PI2FD mm1,mm2/m64             ; 0F 0F /r 0D          [PENT,3DNOW]
 
 \c{PF2ID} converts two signed 32-bit integers in the source operand
 to single-precision FP values, using truncation of significant digits,
 and stores them in the destination operand.
 
 
-\H{insPF2IW} \i\c{PF2IW}: Packed Word Integer to Single-Precision FP Convert
+\S{insPF2IW} \i\c{PF2IW}: Packed Word Integer to Single-Precision FP Convert
 
-\c PI2FW mm1,mm2/m64             ; 0F 0F /r 0C          [PENT,3DNOW] 
+\c PI2FW mm1,mm2/m64             ; 0F 0F /r 0C          [PENT,3DNOW]
 
 \c{PF2IW} converts two signed 16-bit integers in the source operand
 to single-precision FP values, and stores them in the destination
 operand. The input values are in the low word of each doubleword.
 
 
-\H{insPINSRW} \i\c{PINSRW}: Insert Word
+\S{insPINSRW} \i\c{PINSRW}: Insert Word
 
 \c PINSRW mm,r16/r32/m16,imm8    ;0F C4 /r ib      [KATMAI,MMX]
 \c PINSRW xmm,r16/r32/m16,imm8   ;66 0F C4 /r ib   [WILLAMETTE,SSE2]
@@ -10749,7 +10750,7 @@ bits are used. The insertion is done in such a way that the other
 words from the destination register are left untouched.
 
 
-\H{insPMACHRIW} \i\c{PMACHRIW}: Packed Multiply and Accumulate with Rounding
+\S{insPMACHRIW} \i\c{PMACHRIW}: Packed Multiply and Accumulate with Rounding
 
 \c PMACHRIW mm,m64               ; 0F 5E /r             [CYRIX,MMX]
 
@@ -10773,7 +10774,7 @@ Note that \c{PMACHRIW} cannot take a register as its second source
 operand.
 
 
-\H{insPMADDWD} \i\c{PMADDWD}: MMX Packed Multiply and Add
+\S{insPMADDWD} \i\c{PMADDWD}: MMX Packed Multiply and Add
 
 \c PMADDWD mm1,mm2/m64           ; 0F F5 /r             [PENT,MMX]
 \c PMADDWD xmm1,xmm2/m128        ; 66 0F F5 /r     [WILLAMETTE,SSE2]
@@ -10798,7 +10799,7 @@ The following apply to the \c{SSE} version of the instruction:
 \c                                + (dst[112-127] * src[112-127]).
 
 
-\H{insPMAGW} \i\c{PMAGW}: MMX Packed Magnitude
+\S{insPMAGW} \i\c{PMAGW}: MMX Packed Magnitude
 
 \c PMAGW mm1,mm2/m64             ; 0F 52 /r             [CYRIX,MMX]
 
@@ -10809,7 +10810,7 @@ of the destination (first) operand to whichever of the two words in
 that position had the larger absolute value.
 
 
-\H{insPMAXSW} \i\c{PMAXSW}: Packed Signed Integer Word Maximum
+\S{insPMAXSW} \i\c{PMAXSW}: Packed Signed Integer Word Maximum
 
 \c PMAXSW mm1,mm2/m64            ; 0F EE /r        [KATMAI,MMX]
 \c PMAXSW xmm1,xmm2/m128         ; 66 0F EE /r     [WILLAMETTE,SSE2]
@@ -10818,7 +10819,7 @@ that position had the larger absolute value.
 for each pair it stores the maximum value in the destination register.
 
 
-\H{insPMAXUB} \i\c{PMAXUB}: Packed Unsigned Integer Byte Maximum
+\S{insPMAXUB} \i\c{PMAXUB}: Packed Unsigned Integer Byte Maximum
 
 \c PMAXUB mm1,mm2/m64            ; 0F DE /r        [KATMAI,MMX]
 \c PMAXUB xmm1,xmm2/m128         ; 66 0F DE /r     [WILLAMETTE,SSE2]
@@ -10827,7 +10828,7 @@ for each pair it stores the maximum value in the destination register.
 for each pair it stores the maximum value in the destination register.
 
 
-\H{insPMINSW} \i\c{PMINSW}: Packed Signed Integer Word Minimum
+\S{insPMINSW} \i\c{PMINSW}: Packed Signed Integer Word Minimum
 
 \c PMINSW mm1,mm2/m64            ; 0F EA /r        [KATMAI,MMX]
 \c PMINSW xmm1,xmm2/m128         ; 66 0F EA /r     [WILLAMETTE,SSE2]
@@ -10836,7 +10837,7 @@ for each pair it stores the maximum value in the destination register.
 for each pair it stores the minimum value in the destination register.
 
 
-\H{insPMINUB} \i\c{PMINUB}: Packed Unsigned Integer Byte Minimum
+\S{insPMINUB} \i\c{PMINUB}: Packed Unsigned Integer Byte Minimum
 
 \c PMINUB mm1,mm2/m64            ; 0F DA /r        [KATMAI,MMX]
 \c PMINUB xmm1,xmm2/m128         ; 66 0F DA /r     [WILLAMETTE,SSE2]
@@ -10845,7 +10846,7 @@ for each pair it stores the minimum value in the destination register.
 for each pair it stores the minimum value in the destination register.
 
 
-\H{insPMOVMSKB} \i\c{PMOVMSKB}: Move Byte Mask To Integer
+\S{insPMOVMSKB} \i\c{PMOVMSKB}: Move Byte Mask To Integer
 
 \c PMOVMSKB reg32,mm             ; 0F D7 /r        [KATMAI,MMX]
 \c PMOVMSKB reg32,xmm            ; 66 0F D7 /r     [WILLAMETTE,SSE2]
@@ -10855,7 +10856,7 @@ significant bits of each byte of source operand (8-bits for an
 \c{MMX} register, 16-bits for an \c{XMM} register).
 
 
-\H{insPMULHRW} \i\c{PMULHRWC}, \i\c{PMULHRIW}: Multiply Packed 16-bit Integers
+\S{insPMULHRW} \i\c{PMULHRWC}, \i\c{PMULHRIW}: Multiply Packed 16-bit Integers
 With Rounding, and Store High Word
 
 \c PMULHRWC mm1,mm2/m64         ; 0F 59 /r              [CYRIX,MMX]
@@ -10882,7 +10883,7 @@ See also \c{PMULHRWA} (\k{insPMULHRWA}) for a 3DNow! version of this
 instruction.
 
 
-\H{insPMULHRWA} \i\c{PMULHRWA}: Multiply Packed 16-bit Integers
+\S{insPMULHRWA} \i\c{PMULHRWA}: Multiply Packed 16-bit Integers
 With Rounding, and Store High Word
 
 \c PMULHRWA mm1,mm2/m64          ; 0F 0F /r B7     [PENT,3DNOW]
@@ -10903,7 +10904,7 @@ See also \c{PMULHRWC} (\k{insPMULHRW}) for a Cyrix version of this
 instruction.
 
 
-\H{insPMULHUW} \i\c{PMULHUW}: Multiply Packed 16-bit Integers,
+\S{insPMULHUW} \i\c{PMULHUW}: Multiply Packed 16-bit Integers,
 and Store High Word
 
 \c PMULHUW mm1,mm2/m64           ; 0F E4 /r        [KATMAI,MMX]
@@ -10914,7 +10915,7 @@ the values in the inputs, then stores bits 16-31 of each result to the
 corresponding position of the destination register.
 
 
-\H{insPMULHW} \i\c{PMULHW}, \i\c{PMULLW}: Multiply Packed 16-bit Integers,
+\S{insPMULHW} \i\c{PMULHW}, \i\c{PMULLW}: Multiply Packed 16-bit Integers,
 and Store
 
 \c PMULHW mm1,mm2/m64            ; 0F E5 /r             [PENT,MMX]
@@ -10933,7 +10934,7 @@ destination (first) operand;
 destination operand.
 
 
-\H{insPMULUDQ} \i\c{PMULUDQ}: Multiply Packed Unsigned
+\S{insPMULUDQ} \i\c{PMULUDQ}: Multiply Packed Unsigned
 32-bit Integers, and Store.
 
 \c PMULUDQ mm1,mm2/m64           ; 0F F4 /r        [WILLAMETTE,SSE2]
@@ -10953,7 +10954,7 @@ The operation is:
 \c    dst[64-127] := dst[64-95] * src[64-95].
 
 
-\H{insPMVccZB} \i\c{PMVccZB}: MMX Packed Conditional Move
+\S{insPMVccZB} \i\c{PMVccZB}: MMX Packed Conditional Move
 
 \c PMVZB mmxreg,mem64            ; 0F 58 /r             [CYRIX,MMX]
 \c PMVNZB mmxreg,mem64           ; 0F 5A /r             [CYRIX,MMX]
@@ -10981,7 +10982,7 @@ Note that these instructions cannot take a register as their second
 source operand.
 
 
-\H{insPOP} \i\c{POP}: Pop Data from Stack
+\S{insPOP} \i\c{POP}: Pop Data from Stack
 
 \c POP reg16                     ; o16 58+r             [8086]
 \c POP reg32                     ; o32 58+r             [386]
@@ -11021,7 +11022,7 @@ prefix for instruction set extensions). However, at least some 8086
 processors do support it, and so NASM generates it for completeness.
 
 
-\H{insPOPA} \i\c{POPAx}: Pop All General-Purpose Registers
+\S{insPOPA} \i\c{POPAx}: Pop All General-Purpose Registers
 
 \c POPA                          ; 61                   [186]
 \c POPAW                         ; o16 61               [186]
@@ -11046,10 +11047,10 @@ Note that the registers are popped in reverse order of their numeric
 values in opcodes (see \k{iref-rv}).
 
 
-\H{insPOPF} \i\c{POPFx}: Pop Flags Register
+\S{insPOPF} \i\c{POPFx}: Pop Flags Register
 
-\c POPF                          ; 9D                   [186]
-\c POPFW                         ; o16 9D               [186]
+\c POPF                          ; 9D                   [8086]
+\c POPFW                         ; o16 9D               [8086]
 \c POPFD                         ; o32 9D               [386]
 
 \b \c{POPFW} pops a word from the stack and stores it in the bottom 16
@@ -11064,7 +11065,7 @@ depending on the current \c{BITS} setting.
 See also \c{PUSHF} (\k{insPUSHF}).
 
 
-\H{insPOR} \i\c{POR}: MMX Bitwise OR
+\S{insPOR} \i\c{POR}: MMX Bitwise OR
 
 \c POR mm1,mm2/m64               ; 0F EB /r             [PENT,MMX]
 \c POR xmm1,xmm2/m128            ; 66 0F EB /r     [WILLAMETTE,SSE2]
@@ -11075,7 +11076,7 @@ corresponding bits of the two inputs was 1), and stores the result
 in the destination (first) operand.
 
 
-\H{insPREFETCH} \i\c{PREFETCH}: Prefetch Data Into Caches
+\S{insPREFETCH} \i\c{PREFETCH}: Prefetch Data Into Caches
 
 \c PREFETCH mem8                 ; 0F 0D /0             [PENT,3DNOW]
 \c PREFETCHW mem8                ; 0F 0D /1             [PENT,3DNOW]
@@ -11087,13 +11088,13 @@ Athlon to earlier processors.
 For more details, see the 3DNow! Technology Manual.
 
 
-\H{insPREFETCHh} \i\c{PREFETCHh}: Prefetch Data Into Caches
+\S{insPREFETCHh} \i\c{PREFETCHh}: Prefetch Data Into Caches
 \I\c{PREFETCHNTA} \I\c{PREFETCHT0} \I\c{PREFETCHT1} \I\c{PREFETCHT2}
 
-\c PREFETCHNTA m8                ; 0F 18 /0        [KATMAI] 
-\c PREFETCHT0 m8                 ; 0F 18 /1        [KATMAI] 
-\c PREFETCHT1 m8                 ; 0F 18 /2        [KATMAI] 
-\c PREFETCHT2 m8                 ; 0F 18 /3        [KATMAI] 
+\c PREFETCHNTA m8                ; 0F 18 /0        [KATMAI]
+\c PREFETCHT0 m8                 ; 0F 18 /1        [KATMAI]
+\c PREFETCHT1 m8                 ; 0F 18 /2        [KATMAI]
+\c PREFETCHT2 m8                 ; 0F 18 /3        [KATMAI]
 
 The \c{PREFETCHh} instructions fetch the line of data from memory
 that contains the specified byte. It is placed in the cache
@@ -11110,7 +11111,7 @@ prefetch data into level 2 cache and higher.
 \b \c{T2} (temporal data with respect to second level cache) -
 prefetch data into level 2 cache and higher.
 
-\b \c{NTA} (non-temporal data with respect to all cache levels) —
+\b \c{NTA} (non-temporal data with respect to all cache levels) -
 prefetch data into non-temporal cache structure and into a
 location close to the processor, minimizing cache pollution.
 
@@ -11119,7 +11120,7 @@ that the data will be in the cache when it is needed. For more
 details, see the Intel IA32 Software Developer Manual, Volume 2.
 
 
-\H{insPSADBW} \i\c{PSADBW}: Packed Sum of Absolute Differences
+\S{insPSADBW} \i\c{PSADBW}: Packed Sum of Absolute Differences
 
 \c PSADBW mm1,mm2/m64            ; 0F F6 /r        [KATMAI,MMX]
 \c PSADBW xmm1,xmm2/m128         ; 66 0F F6 /r     [WILLAMETTE,SSE2]
@@ -11132,7 +11133,7 @@ cleared. The destination operand is an \c{MMX} or an \c{XMM} register.
 The source operand can either be a register or a memory operand.
 
 
-\H{insPSHUFD} \i\c{PSHUFD}: Shuffle Packed Doublewords
+\S{insPSHUFD} \i\c{PSHUFD}: Shuffle Packed Doublewords
 
 \c PSHUFD xmm1,xmm2/m128,imm8    ; 66 0F 70 /r ib  [WILLAMETTE,SSE2]
 
@@ -11148,7 +11149,7 @@ bits 0 and 1 of imm8 indicates that the doubleword at bits 64-95 of
 the source operand will be copied to bits 0-31 of the destination.
 
 
-\H{insPSHUFHW} \i\c{PSHUFHW}: Shuffle Packed High Words
+\S{insPSHUFHW} \i\c{PSHUFHW}: Shuffle Packed High Words
 
 \c PSHUFHW xmm1,xmm2/m128,imm8   ; F3 0F 70 /r ib  [WILLAMETTE,SSE2]
 
@@ -11164,7 +11165,7 @@ The low quadword is copied from the source to the destination
 without any changes.
 
 
-\H{insPSHUFLW} \i\c{PSHUFLW}: Shuffle Packed Low Words
+\S{insPSHUFLW} \i\c{PSHUFLW}: Shuffle Packed Low Words
 
 \c PSHUFLW xmm1,xmm2/m128,imm8   ; F2 0F 70 /r ib  [WILLAMETTE,SSE2]
 
@@ -11180,7 +11181,7 @@ The high quadword is copied from the source to the destination
 without any changes.
 
 
-\H{insPSHUFW} \i\c{PSHUFW}: Shuffle Packed Words
+\S{insPSHUFW} \i\c{PSHUFW}: Shuffle Packed Words
 
 \c PSHUFW mm1,mm2/m64,imm8       ; 0F 70 /r ib     [KATMAI,MMX]
 
@@ -11196,7 +11197,7 @@ of imm8 indicates that the word at bits 32-47 of the source operand
 will be copied to bits 0-15 of the destination.
 
 
-\H{insPSLLD} \i\c{PSLLx}: Packed Data Bit Shift Left Logical
+\S{insPSLLD} \i\c{PSLLx}: Packed Data Bit Shift Left Logical
 
 \c PSLLW mm1,mm2/m64             ; 0F F1 /r             [PENT,MMX]
 \c PSLLW mm,imm8                 ; 0F 71 /6 ib          [PENT,MMX]
@@ -11232,7 +11233,7 @@ clearing the low-order bits as they are vacated.
 \b \c{PSLLDQ} shifts double quadword sized elements.
 
 
-\H{insPSRAD} \i\c{PSRAx}: Packed Data Bit Shift Right Arithmetic
+\S{insPSRAD} \i\c{PSRAx}: Packed Data Bit Shift Right Arithmetic
 
 \c PSRAW mm1,mm2/m64             ; 0F E1 /r             [PENT,MMX]
 \c PSRAW mm,imm8                 ; 0F 71 /4 ib          [PENT,MMX]
@@ -11256,7 +11257,7 @@ setting the high-order bits to the value of the original sign bit.
 \b \c{PSRAD} shifts doubleword sized elements.
 
 
-\H{insPSRLD} \i\c{PSRLx}: Packed Data Bit Shift Right Logical
+\S{insPSRLD} \i\c{PSRLx}: Packed Data Bit Shift Right Logical
 
 \c PSRLW mm1,mm2/m64             ; 0F D1 /r             [PENT,MMX]
 \c PSRLW mm,imm8                 ; 0F 71 /2 ib          [PENT,MMX]
@@ -11292,7 +11293,7 @@ clearing the high-order bits as they are vacated.
 \b \c{PSRLDQ} shifts double quadword sized elements.
 
 
-\H{insPSUBB} \i\c{PSUBx}: Subtract Packed Integers
+\S{insPSUBB} \i\c{PSUBx}: Subtract Packed Integers
 
 \c PSUBB mm1,mm2/m64             ; 0F F8 /r             [PENT,MMX]
 \c PSUBW mm1,mm2/m64             ; 0F F9 /r             [PENT,MMX]
@@ -11317,7 +11318,7 @@ and unsigned integers, and doesn't set any of the flags.
 \b \c{PSUBQ} operates on quadword sized elements.
 
 
-\H{insPSUBSB} \i\c{PSUBSxx}, \i\c{PSUBUSx}: Subtract Packed Integers With Saturation
+\S{insPSUBSB} \i\c{PSUBSxx}, \i\c{PSUBUSx}: Subtract Packed Integers With Saturation
 
 \c PSUBSB mm1,mm2/m64            ; 0F E8 /r             [PENT,MMX]
 \c PSUBSW mm1,mm2/m64            ; 0F E9 /r             [PENT,MMX]
@@ -11333,7 +11334,7 @@ and unsigned integers, and doesn't set any of the flags.
 
 \c{PSUBSx} and \c{PSUBUSx} subtracts packed integers in the source
 operand from those in the destination operand, and use saturation for
-results that are outide the range supported by the destination operand.
+results that are outside the range supported by the destination operand.
 
 \b \c{PSUBSB} operates on signed bytes, and uses signed saturation on the
 results.
@@ -11348,7 +11349,7 @@ the results.
 the results.
 
 
-\H{insPSUBSIW} \i\c{PSUBSIW}: MMX Packed Subtract with Saturation to
+\S{insPSUBSIW} \i\c{PSUBSIW}: MMX Packed Subtract with Saturation to
 Implied Destination
 
 \c PSUBSIW mm1,mm2/m64           ; 0F 55 /r             [CYRIX,MMX]
@@ -11360,7 +11361,7 @@ but instead in the implied destination register, specified as for
 \c{PADDSIW} (\k{insPADDSIW}).
 
 
-\H{insPSWAPD} \i\c{PSWAPD}: Swap Packed Data
+\S{insPSWAPD} \i\c{PSWAPD}: Swap Packed Data
 \I\c{PSWAPW}
 
 \c PSWAPD mm1,mm2/m64            ; 0F 0F /r BB     [PENT,3DNOW]
@@ -11385,7 +11386,7 @@ The operation in the \c{K6-x+}, \c{ATHLON} and later processors is:
 \c    dst[32-63] = src[0-31].
 
 
-\H{insPUNPCKHBW} \i\c{PUNPCKxxx}: Unpack and Interleave Data
+\S{insPUNPCKHBW} \i\c{PUNPCKxxx}: Unpack and Interleave Data
 
 \c PUNPCKHBW mm1,mm2/m64         ; 0F 68 /r             [PENT,MMX]
 \c PUNPCKHWD mm1,mm2/m64         ; 0F 69 /r             [PENT,MMX]
@@ -11446,7 +11447,7 @@ then:
 \b \c{PUNPCKLDQ} would return \c{0x3B2B1B0B3A2A1A0A}.
 
 
-\H{insPUSH} \i\c{PUSH}: Push Data on Stack
+\S{insPUSH} \i\c{PUSH}: Push Data on Stack
 
 \c PUSH reg16                    ; o16 50+r             [8086]
 \c PUSH reg32                    ; o32 50+r             [386]
@@ -11494,7 +11495,7 @@ value it has \e{after} the push instruction, whereas on later
 processors it is the value \e{before} the push instruction.
 
 
-\H{insPUSHA} \i\c{PUSHAx}: Push All General-Purpose Registers
+\S{insPUSHA} \i\c{PUSHAx}: Push All General-Purpose Registers
 
 \c PUSHA                         ; 60                   [186]
 \c PUSHAD                        ; o32 60               [386]
@@ -11520,11 +11521,11 @@ in opcodes (see \k{iref-rv}).
 See also \c{POPA} (\k{insPOPA}).
 
 
-\H{insPUSHF} \i\c{PUSHFx}: Push Flags Register
+\S{insPUSHF} \i\c{PUSHFx}: Push Flags Register
 
-\c PUSHF                         ; 9C                   [186]
+\c PUSHF                         ; 9C                   [8086]
 \c PUSHFD                        ; o32 9C               [386]
-\c PUSHFW                        ; o16 9C               [186]
+\c PUSHFW                        ; o16 9C               [8086]
 
 \b \c{PUSHFW} pops a word from the stack and stores it in the
 bottom 16 bits of the flags register (or the whole flags register,
@@ -11539,7 +11540,7 @@ depending on the current \c{BITS} setting.
 See also \c{POPF} (\k{insPOPF}).
 
 
-\H{insPXOR} \i\c{PXOR}: MMX Bitwise XOR
+\S{insPXOR} \i\c{PXOR}: MMX Bitwise XOR
 
 \c PXOR mm1,mm2/m64              ; 0F EF /r             [PENT,MMX]
 \c PXOR xmm1,xmm2/m128           ; 66 0F EF /r     [WILLAMETTE,SSE2]
@@ -11550,7 +11551,7 @@ corresponding bits of the two inputs was 1), and stores the result
 in the destination (first) operand.
 
 
-\H{insRCL} \i\c{RCL}, \i\c{RCR}: Bitwise Rotate through Carry Bit
+\S{insRCL} \i\c{RCL}, \i\c{RCR}: Bitwise Rotate through Carry Bit
 
 \c RCL r/m8,1                    ; D0 /2                [8086]
 \c RCL r/m8,CL                   ; D2 /2                [8086]
@@ -11589,18 +11590,18 @@ byte) form of \c{RCL foo,1} by using a \c{BYTE} prefix: \c{RCL
 foo,BYTE 1}. Similarly with \c{RCR}.
 
 
-\H{insRCPPS} \i\c{RCPPS}: Packed Single-Precision FP Reciprocal
+\S{insRCPPS} \i\c{RCPPS}: Packed Single-Precision FP Reciprocal
 
-\c RCPPS xmm1,xmm2/m128          ; 0F 53 /r        [KATMAI,SSE] 
+\c RCPPS xmm1,xmm2/m128          ; 0F 53 /r        [KATMAI,SSE]
 
 \c{RCPPS} returns an approximation of the reciprocal of the packed
 single-precision FP values from xmm2/m128. The maximum error for this
 approximation is: |Error| <= 1.5 x 2^-12
 
 
-\H{insRCPSS} \i\c{RCPSS}: Scalar Single-Precision FP Reciprocal
+\S{insRCPSS} \i\c{RCPSS}: Scalar Single-Precision FP Reciprocal
 
-\c RCPSS xmm1,xmm2/m128          ; F3 0F 53 /r     [KATMAI,SSE] 
+\c RCPSS xmm1,xmm2/m128          ; F3 0F 53 /r     [KATMAI,SSE]
 
 \c{RCPSS} returns an approximation of the reciprocal of the lower
 single-precision FP value from xmm2/m32; the upper three fields are
@@ -11608,7 +11609,7 @@ passed through from xmm1. The maximum error for this approximation is:
 |Error| <= 1.5 x 2^-12
 
 
-\H{insRDMSR} \i\c{RDMSR}: Read Model-Specific Registers
+\S{insRDMSR} \i\c{RDMSR}: Read Model-Specific Registers
 
 \c RDMSR                         ; 0F 32                [PENT,PRIV]
 
@@ -11617,7 +11618,7 @@ index is stored in \c{ECX}, and stores the result in \c{EDX:EAX}.
 See also \c{WRMSR} (\k{insWRMSR}).
 
 
-\H{insRDPMC} \i\c{RDPMC}: Read Performance-Monitoring Counters
+\S{insRDPMC} \i\c{RDPMC}: Read Performance-Monitoring Counters
 
 \c RDPMC                         ; 0F 33                [P6]
 
@@ -11628,7 +11629,7 @@ This instruction is available on P6 and later processors and on MMX
 class processors.
 
 
-\H{insRDSHR} \i\c{RDSHR}: Read SMM Header Pointer Register
+\S{insRDSHR} \i\c{RDSHR}: Read SMM Header Pointer Register
 
 \c RDSHR r/m32                   ; 0F 36 /0        [386,CYRIX,SMM]
 
@@ -11639,14 +11640,14 @@ memory location or a 32 bit register.
 See also \c{WRSHR} (\k{insWRSHR}).
 
 
-\H{insRDTSC} \i\c{RDTSC}: Read Time-Stamp Counter
+\S{insRDTSC} \i\c{RDTSC}: Read Time-Stamp Counter
 
 \c RDTSC                         ; 0F 31                [PENT]
 
 \c{RDTSC} reads the processor's time-stamp counter into \c{EDX:EAX}.
 
 
-\H{insRET} \i\c{RET}, \i\c{RETF}, \i\c{RETN}: Return from Procedure Call
+\S{insRET} \i\c{RET}, \i\c{RETF}, \i\c{RETN}: Return from Procedure Call
 
 \c RET                           ; C3                   [8086]
 \c RET imm16                     ; C2 iw                [8086]
@@ -11667,7 +11668,7 @@ then pops \c{CS}, and \e{then} increments the stack pointer by the
 optional argument if present.
 
 
-\H{insROL} \i\c{ROL}, \i\c{ROR}: Bitwise Rotate
+\S{insROL} \i\c{ROL}, \i\c{ROR}: Bitwise Rotate
 
 \c ROL r/m8,1                    ; D0 /0                [8086]
 \c ROL r/m8,CL                   ; D2 /0                [8086]
@@ -11704,7 +11705,7 @@ byte) form of \c{ROL foo,1} by using a \c{BYTE} prefix: \c{ROL
 foo,BYTE 1}. Similarly with \c{ROR}.
 
 
-\H{insRSDC} \i\c{RSDC}: Restore Segment Register and Descriptor
+\S{insRSDC} \i\c{RSDC}: Restore Segment Register and Descriptor
 
 \c RSDC segreg,m80               ; 0F 79 /r        [486,CYRIX,SMM]
 
@@ -11712,14 +11713,14 @@ foo,BYTE 1}. Similarly with \c{ROR}.
 and sets up its descriptor.
 
 
-\H{insRSLDT} \i\c{RSLDT}: Restore Segment Register and Descriptor
+\S{insRSLDT} \i\c{RSLDT}: Restore Segment Register and Descriptor
 
 \c RSLDT m80                     ; 0F 7B /0        [486,CYRIX,SMM]
 
 \c{RSLDT} restores the Local Descriptor Table (LDTR) from mem80.
 
 
-\H{insRSM} \i\c{RSM}: Resume from System-Management Mode
+\S{insRSM} \i\c{RSM}: Resume from System-Management Mode
 
 \c RSM                           ; 0F AA                [PENT]
 
@@ -11727,9 +11728,9 @@ and sets up its descriptor.
 was in System-Management Mode.
 
 
-\H{insRSQRTPS} \i\c{RSQRTPS}: Packed Single-Precision FP Square Root Reciprocal
+\S{insRSQRTPS} \i\c{RSQRTPS}: Packed Single-Precision FP Square Root Reciprocal
 
-\c RSQRTPS xmm1,xmm2/m128        ; 0F 52 /r        [KATMAI,SSE] 
+\c RSQRTPS xmm1,xmm2/m128        ; 0F 52 /r        [KATMAI,SSE]
 
 \c{RSQRTPS} computes the approximate reciprocals of the square
 roots of the packed single-precision floating-point values in the
@@ -11737,9 +11738,9 @@ source and stores the results in xmm1. The maximum error for this
 approximation is: |Error| <= 1.5 x 2^-12
 
 
-\H{insRSQRTSS} \i\c{RSQRTSS}: Scalar Single-Precision FP Square Root Reciprocal
+\S{insRSQRTSS} \i\c{RSQRTSS}: Scalar Single-Precision FP Square Root Reciprocal
 
-\c RSQRTSS xmm1,xmm2/m128        ; F3 0F 52 /r     [KATMAI,SSE] 
+\c RSQRTSS xmm1,xmm2/m128        ; F3 0F 52 /r     [KATMAI,SSE]
 
 \c{RSQRTSS} returns an approximation of the reciprocal of the
 square root of the lowest order single-precision FP value from
@@ -11748,14 +11749,14 @@ register. The upper three fields of xmm1 are preserved. The maximum
 error for this approximation is: |Error| <= 1.5 x 2^-12
 
 
-\H{insRSTS} \i\c{RSTS}: Restore TSR and Descriptor
+\S{insRSTS} \i\c{RSTS}: Restore TSR and Descriptor
 
 \c RSTS m80                      ; 0F 7D /0        [486,CYRIX,SMM]
 
 \c{RSTS} restores Task State Register (TSR) from mem80.
 
 
-\H{insSAHF} \i\c{SAHF}: Store AH to Flags
+\S{insSAHF} \i\c{SAHF}: Store AH to Flags
 
 \c SAHF                          ; 9E                   [8086]
 
@@ -11769,7 +11770,7 @@ The operation of \c{SAHF} is:
 See also \c{LAHF} (\k{insLAHF}).
 
 
-\H{insSAL} \i\c{SAL}, \i\c{SAR}: Bitwise Arithmetic Shifts
+\S{insSAL} \i\c{SAL}, \i\c{SAR}: Bitwise Arithmetic Shifts
 
 \c SAL r/m8,1                    ; D0 /4                [8086]
 \c SAL r/m8,CL                   ; D2 /4                [8086]
@@ -11809,7 +11810,7 @@ byte) form of \c{SAL foo,1} by using a \c{BYTE} prefix: \c{SAL
 foo,BYTE 1}. Similarly with \c{SAR}.
 
 
-\H{insSALC} \i\c{SALC}: Set AL from Carry Flag
+\S{insSALC} \i\c{SALC}: Set AL from Carry Flag
 
 \c SALC                          ; D6                  [8086,UNDOC]
 
@@ -11818,7 +11819,7 @@ foo,BYTE 1}. Similarly with \c{SAR}.
 the carry flag is clear, or to \c{0xFF} if it is set.
 
 
-\H{insSBB} \i\c{SBB}: Subtract with Borrow
+\S{insSBB} \i\c{SBB}: Subtract with Borrow
 
 \c SBB r/m8,reg8                 ; 18 /r                [8086]
 \c SBB r/m16,reg16               ; o16 19 /r            [8086]
@@ -11833,7 +11834,7 @@ the carry flag is clear, or to \c{0xFF} if it is set.
 \c SBB r/m32,imm32               ; o32 81 /3 id         [386]
 
 \c SBB r/m16,imm8                ; o16 83 /3 ib         [8086]
-\c SBB r/m32,imm8                ; o32 83 /3 ib         [8086]
+\c SBB r/m32,imm8                ; o32 83 /3 ib         [386]
 
 \c SBB AL,imm8                   ; 1C ib                [8086]
 \c SBB AX,imm16                  ; o16 1D iw            [8086]
@@ -11856,7 +11857,7 @@ To subtract one number from another without also subtracting the
 contents of the carry flag, use \c{SUB} (\k{insSUB}).
 
 
-\H{insSCASB} \i\c{SCASB}, \i\c{SCASW}, \i\c{SCASD}: Scan String
+\S{insSCASB} \i\c{SCASB}, \i\c{SCASW}, \i\c{SCASD}: Scan String
 
 \c SCASB                         ; AE                   [8086]
 \c SCASW                         ; o16 AF               [8086]
@@ -11887,7 +11888,7 @@ The \c{REPE} and \c{REPNE} prefixes (equivalently, \c{REPZ} and
 first unequal or equal byte is found.
 
 
-\H{insSETcc} \i\c{SETcc}: Set Register from Condition
+\S{insSETcc} \i\c{SETcc}: Set Register from Condition
 
 \c SETcc r/m8                    ; 0F 90+cc /2          [386]
 
@@ -11895,9 +11896,9 @@ first unequal or equal byte is found.
 not satisfied, and to 1 if it is.
 
 
-\H{insSFENCE} \i\c{SFENCE}: Store Fence
+\S{insSFENCE} \i\c{SFENCE}: Store Fence
 
-\c SFENCE                 ; 0F AE /7               [KATMAI] 
+\c SFENCE                 ; 0F AE /7               [KATMAI]
 
 \c{SFENCE} performs a serialising operation on all writes to memory
 that were issued before the \c{SFENCE} instruction. This guarantees that
@@ -11928,7 +11929,7 @@ of these encodings risks incompatibility with future processors.
 See also \c{LFENCE} (\k{insLFENCE}) and \c{MFENCE} (\k{insMFENCE}).
 
 
-\H{insSGDT} \i\c{SGDT}, \i\c{SIDT}, \i\c{SLDT}: Store Descriptor Table Pointers
+\S{insSGDT} \i\c{SGDT}, \i\c{SIDT}, \i\c{SLDT}: Store Descriptor Table Pointers
 
 \c SGDT mem                      ; 0F 01 /0             [286,PRIV]
 \c SIDT mem                      ; 0F 01 /1             [286,PRIV]
@@ -11947,7 +11948,7 @@ descriptor table) into the given operand.
 See also \c{LGDT}, \c{LIDT} and \c{LLDT} (\k{insLGDT}).
 
 
-\H{insSHL} \i\c{SHL}, \i\c{SHR}: Bitwise Logical Shifts
+\S{insSHL} \i\c{SHL}, \i\c{SHR}: Bitwise Logical Shifts
 
 \c SHL r/m8,1                    ; D0 /4                [8086]
 \c SHL r/m8,CL                   ; D2 /4                [8086]
@@ -11986,7 +11987,7 @@ byte) form of \c{SHL foo,1} by using a \c{BYTE} prefix: \c{SHL
 foo,BYTE 1}. Similarly with \c{SHR}.
 
 
-\H{insSHLD} \i\c{SHLD}, \i\c{SHRD}: Bitwise Double-Precision Shifts
+\S{insSHLD} \i\c{SHLD}, \i\c{SHRD}: Bitwise Double-Precision Shifts
 
 \c SHLD r/m16,reg16,imm8         ; o16 0F A4 /r ib      [386]
 \c SHLD r/m16,reg32,imm8         ; o32 0F A4 /r ib      [386]
@@ -12018,7 +12019,7 @@ The number of bits to shift by is given by the third operand. Only
 the bottom five bits of the shift count are considered.
 
 
-\H{insSHUFPD} \i\c{SHUFPD}: Shuffle Packed Double-Precision FP Values
+\S{insSHUFPD} \i\c{SHUFPD}: Shuffle Packed Double-Precision FP Values
 
 \c SHUFPD xmm1,xmm2/m128,imm8    ; 66 0F C6 /r ib  [WILLAMETTE,SSE2]
 
@@ -12036,7 +12037,7 @@ which value is moved from the source operand to the result.
 Bits 2 through 7 of the shuffle operand are reserved.
 
 
-\H{insSHUFPS} \i\c{SHUFPS}: Shuffle Packed Single-Precision FP Values
+\S{insSHUFPS} \i\c{SHUFPS}: Shuffle Packed Single-Precision FP Values
 
 \c SHUFPS xmm1,xmm2/m128,imm8    ; 0F C6 /r ib     [KATMAI,SSE]
 
@@ -12056,7 +12057,7 @@ doubleword of the result, and bits 6 and 7 select the value to be
 moved from the source operand to the high doubleword of the result.
 
 
-\H{insSMI} \i\c{SMI}: System Management Interrupt
+\S{insSMI} \i\c{SMI}: System Management Interrupt
 
 \c SMI                           ; F1                   [386,UNDOC]
 
@@ -12065,7 +12066,7 @@ moved from the source operand to the high doubleword of the result.
 otherwise it generates an Int 1.
 
 
-\H{insSMINT} \i\c{SMINT}, \i\c{SMINTOLD}: Software SMM Entry (CYRIX)
+\S{insSMINT} \i\c{SMINT}, \i\c{SMINTOLD}: Software SMM Entry (CYRIX)
 
 \c SMINT                         ; 0F 38                [PENT,CYRIX]
 \c SMINTOLD                      ; 0F 7E                [486,CYRIX]
@@ -12080,7 +12081,7 @@ This pair of opcodes are specific to the Cyrix and compatible range of
 processors (Cyrix, IBM, Via).
 
 
-\H{insSMSW} \i\c{SMSW}: Store Machine Status Word
+\S{insSMSW} \i\c{SMSW}: Store Machine Status Word
 
 \c SMSW r/m16                    ; 0F 01 /4             [286,PRIV]
 
@@ -12093,7 +12094,7 @@ register (or a 16bit memory location), without needing an operand
 size override byte.
 
 
-\H{insSQRTPD} \i\c{SQRTPD}: Packed Double-Precision FP Square Root
+\S{insSQRTPD} \i\c{SQRTPD}: Packed Double-Precision FP Square Root
 
 \c SQRTPD xmm1,xmm2/m128         ; 66 0F 51 /r     [WILLAMETTE,SSE2]
 
@@ -12102,7 +12103,7 @@ FP value from the source operand, and stores the double-precision
 results in the destination register.
 
 
-\H{insSQRTPS} \i\c{SQRTPS}: Packed Single-Precision FP Square Root
+\S{insSQRTPS} \i\c{SQRTPS}: Packed Single-Precision FP Square Root
 
 \c SQRTPS xmm1,xmm2/m128         ; 0F 51 /r        [KATMAI,SSE]
 
@@ -12111,7 +12112,7 @@ FP value from the source operand, and stores the single-precision
 results in the destination register.
 
 
-\H{insSQRTSD} \i\c{SQRTSD}: Scalar Double-Precision FP Square Root
+\S{insSQRTSD} \i\c{SQRTSD}: Scalar Double-Precision FP Square Root
 
 \c SQRTSD xmm1,xmm2/m128         ; F2 0F 51 /r     [WILLAMETTE,SSE2]
 
@@ -12120,7 +12121,7 @@ FP value from the source operand, and stores the double-precision
 result in the destination register. The high-quadword remains unchanged.
 
 
-\H{insSQRTSS} \i\c{SQRTSS}: Scalar Single-Precision FP Square Root
+\S{insSQRTSS} \i\c{SQRTSS}: Scalar Single-Precision FP Square Root
 
 \c SQRTSS xmm1,xmm2/m128         ; F3 0F 51 /r     [KATMAI,SSE]
 
@@ -12130,7 +12131,7 @@ result in the destination register. The three high doublewords remain
 unchanged.
 
 
-\H{insSTC} \i\c{STC}, \i\c{STD}, \i\c{STI}: Set Flags
+\S{insSTC} \i\c{STC}, \i\c{STD}, \i\c{STI}: Set Flags
 
 \c STC                           ; F9                   [8086]
 \c STD                           ; FD                   [8086]
@@ -12145,10 +12146,10 @@ To clear the carry, direction, or interrupt flags, use the \c{CLC},
 flag, use \c{CMC} (\k{insCMC}).
 
 
-\H{insSTMXCSR} \i\c{STMXCSR}: Store Streaming SIMD Extension
+\S{insSTMXCSR} \i\c{STMXCSR}: Store Streaming SIMD Extension
  Control/Status
 
-\c STMXCSR m32                   ; 0F AE /3        [KATMAI,SSE] 
+\c STMXCSR m32                   ; 0F AE /3        [KATMAI,SSE]
 
 \c{STMXCSR} stores the contents of the \c{MXCSR} control/status
 register to the specified memory location. \c{MXCSR} is used to
@@ -12161,7 +12162,7 @@ For details of the \c{MXCSR} register, see the Intel processor docs.
 See also \c{LDMXCSR} (\k{insLDMXCSR}).
 
 
-\H{insSTOSB} \i\c{STOSB}, \i\c{STOSW}, \i\c{STOSD}: Store Byte to String
+\S{insSTOSB} \i\c{STOSB}, \i\c{STOSW}, \i\c{STOSD}: Store Byte to String
 
 \c STOSB                         ; AA                   [8086]
 \c STOSW                         ; o16 AB               [8086]
@@ -12190,7 +12191,7 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c{ECX} - again, the address size chooses which) times.
 
 
-\H{insSTR} \i\c{STR}: Store Task Register
+\S{insSTR} \i\c{STR}: Store Task Register
 
 \c STR r/m16                     ; 0F 00 /1             [286,PRIV]
 
@@ -12201,7 +12202,7 @@ operand is a memory location, 16 bits are written regardless of the
 operand size.
 
 
-\H{insSUB} \i\c{SUB}: Subtract Integers
+\S{insSUB} \i\c{SUB}: Subtract Integers
 
 \c SUB r/m8,reg8                 ; 28 /r                [8086]
 \c SUB r/m16,reg16               ; o16 29 /r            [8086]
@@ -12235,7 +12236,7 @@ the \c{BYTE} qualifier is necessary to force NASM to generate this
 form of the instruction.
 
 
-\H{insSUBPD} \i\c{SUBPD}: Packed Double-Precision FP Subtract
+\S{insSUBPD} \i\c{SUBPD}: Packed Double-Precision FP Subtract
 
 \c SUBPD xmm1,xmm2/m128          ; 66 0F 5C /r     [WILLAMETTE,SSE2]
 
@@ -12244,7 +12245,7 @@ the source operand from those of the destination operand, and
 stores the result in the destination operation.
 
 
-\H{insSUBPS} \i\c{SUBPS}: Packed Single-Precision FP Subtract
+\S{insSUBPS} \i\c{SUBPS}: Packed Single-Precision FP Subtract
 
 \c SUBPS xmm1,xmm2/m128          ; 0F 5C /r        [KATMAI,SSE]
 
@@ -12253,7 +12254,7 @@ the source operand from those of the destination operand, and
 stores the result in the destination operation.
 
 
-\H{insSUBSD} \i\c{SUBSD}: Scalar Single-FP Subtract
+\S{insSUBSD} \i\c{SUBSD}: Scalar Single-FP Subtract
 
 \c SUBSD xmm1,xmm2/m128          ; F2 0F 5C /r     [WILLAMETTE,SSE2]
 
@@ -12263,7 +12264,7 @@ stores the result in the destination operation. The high
 quadword is unchanged.
 
 
-\H{insSUBSS} \i\c{SUBSS}: Scalar Single-FP Subtract
+\S{insSUBSS} \i\c{SUBSS}: Scalar Single-FP Subtract
 
 \c SUBSS xmm1,xmm2/m128          ; F3 0F 5C /r     [KATMAI,SSE]
 
@@ -12273,7 +12274,7 @@ stores the result in the destination operation. The three high
 doublewords are unchanged.
 
 
-\H{insSVDC} \i\c{SVDC}: Save Segment Register and Descriptor
+\S{insSVDC} \i\c{SVDC}: Save Segment Register and Descriptor
 
 \c SVDC m80,segreg               ; 0F 78 /r        [486,CYRIX,SMM]
 
@@ -12281,25 +12282,25 @@ doublewords are unchanged.
 descriptor to mem80.
 
 
-\H{insSVLDT} \i\c{SVLDT}: Save LDTR and Descriptor
+\S{insSVLDT} \i\c{SVLDT}: Save LDTR and Descriptor
 
 \c SVLDT m80                     ; 0F 7A /0        [486,CYRIX,SMM]
 
 \c{SVLDT} saves the Local Descriptor Table (LDTR) to mem80.
 
 
-\H{insSVTS} \i\c{SVTS}: Save TSR and Descriptor
+\S{insSVTS} \i\c{SVTS}: Save TSR and Descriptor
 
 \c SVTS m80                      ; 0F 7C /0        [486,CYRIX,SMM]
 
 \c{SVTS} saves the Task State Register (TSR) to mem80.
 
 
-\H{insSYSCALL} \i\c{SYSCALL}: Call Operating System
+\S{insSYSCALL} \i\c{SYSCALL}: Call Operating System
 
 \c SYSCALL                       ; 0F 05                [P6,AMD]
 
-\c{SYSCALL} provides a fast method of transfering control to a fixed
+\c{SYSCALL} provides a fast method of transferring control to a fixed
 entry point in an operating system.
 
 \b The \c{EIP} register is copied into the \c{ECX} register.
@@ -12321,7 +12322,7 @@ For more information, see the \c{SYSCALL and SYSRET Instruction Specification}
 (AMD document number 21086.pdf).
 
 
-\H{insSYSENTER} \i\c{SYSENTER}: Fast System Call
+\S{insSYSENTER} \i\c{SYSENTER}: Fast System Call
 
 \c SYSENTER                      ; 0F 34                [P6]
 
@@ -12369,13 +12370,13 @@ For more information, see the Intel Architecture Software Developer's
 Manual, Volume 2.
 
 
-\H{insSYSEXIT} \i\c{SYSEXIT}: Fast Return From System Call
+\S{insSYSEXIT} \i\c{SYSEXIT}: Fast Return From System Call
 
 \c SYSEXIT                       ; 0F 35                [P6,PRIV]
 
 \c{SYSEXIT} executes a fast return to privilege level 3 user code.
 This instruction is a companion instruction to the \c{SYSENTER}
-instruction, and can only be executed by privelege level 0 code.
+instruction, and can only be executed by privilege level 0 code.
 Various registers need to be set up before calling this instruction:
 
 \b \c{SYSENTER_CS_MSR} contains the 32-bit segment selector for the
@@ -12408,11 +12409,11 @@ register.
 \b Begins executing the user code at the \c{EIP} address.
 
 For more information on the use of the \c{SYSENTER} and \c{SYSEXIT}
-instructions, see the Intel Architecture Software Developer’s
+instructions, see the Intel Architecture Software Developer's
 Manual, Volume 2.
 
 
-\H{insSYSRET} \i\c{SYSRET}: Return From Operating System
+\S{insSYSRET} \i\c{SYSRET}: Return From Operating System
 
 \c SYSRET                        ; 0F 07                [P6,AMD,PRIV]
 
@@ -12440,7 +12441,7 @@ For more information, see the \c{SYSCALL and SYSRET Instruction Specification}
 (AMD document number 21086.pdf).
 
 
-\H{insTEST} \i\c{TEST}: Test Bits (notional bitwise AND)
+\S{insTEST} \i\c{TEST}: Test Bits (notional bitwise AND)
 
 \c TEST r/m8,reg8                ; 84 /r                [8086]
 \c TEST r/m16,reg16              ; o16 85 /r            [8086]
@@ -12459,7 +12460,7 @@ affects the flags as if the operation had taken place, but does not
 store the result of the operation anywhere.
 
 
-\H{insUCOMISD} \i\c{UCOMISD}: Unordered Scalar Double-Precision FP
+\S{insUCOMISD} \i\c{UCOMISD}: Unordered Scalar Double-Precision FP
 compare and set EFLAGS
 
 \c UCOMISD xmm1,xmm2/m128        ; 66 0F 2E /r     [WILLAMETTE,SSE2]
@@ -12472,10 +12473,10 @@ in the \c{EFLAGS} register are zeroed out. The unordered predicate
 operand is a \c{NaN} (\c{qNaN} or \c{sNaN}).
 
 
-\H{insUCOMISS} \i\c{UCOMISS}: Unordered Scalar Single-Precision FP
+\S{insUCOMISS} \i\c{UCOMISS}: Unordered Scalar Single-Precision FP
 compare and set EFLAGS
 
-\c UCOMISS xmm1,xmm2/m128        ; 0F 2E /r        [KATMAI,SSE] 
+\c UCOMISS xmm1,xmm2/m128        ; 0F 2E /r        [KATMAI,SSE]
 
 \c{UCOMISS} compares the low-order single-precision FP numbers in the
 two operands, and sets the \c{ZF}, \c{PF} and \c{CF} bits in the
@@ -12485,7 +12486,7 @@ in the \c{EFLAGS} register are zeroed out. The unordered predicate
 operand is a \c{NaN} (\c{qNaN} or \c{sNaN}).
 
 
-\H{insUD2} \i\c{UD0}, \i\c{UD1}, \i\c{UD2}: Undefined Instruction
+\S{insUD2} \i\c{UD0}, \i\c{UD1}, \i\c{UD2}: Undefined Instruction
 
 \c UD0                           ; 0F FF                [186,UNDOC]
 \c UD1                           ; 0F B9                [186,UNDOC]
@@ -12507,7 +12508,7 @@ All these opcodes can be used to generate invalid opcode exceptions on
 all processors that are available at the current time.
 
 
-\H{insUMOV} \i\c{UMOV}: User Move Data
+\S{insUMOV} \i\c{UMOV}: User Move Data
 
 \c UMOV r/m8,reg8                ; 0F 10 /r             [386,UNDOC]
 \c UMOV r/m16,reg16              ; o16 0F 11 /r         [386,UNDOC]
@@ -12526,14 +12527,14 @@ This instruction is only available on some AMD and IBM 386 and 486
 processors.
 
 
-\H{insUNPCKHPD} \i\c{UNPCKHPD}: Unpack and Interleave High Packed
+\S{insUNPCKHPD} \i\c{UNPCKHPD}: Unpack and Interleave High Packed
 Double-Precision FP Values
 
 \c UNPCKHPD xmm1,xmm2/m128       ; 66 0F 15 /r     [WILLAMETTE,SSE2]
 
 \c{UNPCKHPD} performs an interleaved unpack of the high-order data
 elements of the source and destination operands, saving the result
-in \c{xmm1}. It ignores the lower half of the sources. 
+in \c{xmm1}. It ignores the lower half of the sources.
 
 The operation of this instruction is:
 
@@ -12541,7 +12542,7 @@ The operation of this instruction is:
 \c    dst[127-64] := src[127-64].
 
 
-\H{insUNPCKHPS} \i\c{UNPCKHPS}: Unpack and Interleave High Packed
+\S{insUNPCKHPS} \i\c{UNPCKHPS}: Unpack and Interleave High Packed
 Single-Precision FP Values
 
 \c UNPCKHPS xmm1,xmm2/m128       ; 0F 15 /r        [KATMAI,SSE]
@@ -12558,7 +12559,7 @@ The operation of this instruction is:
 \c    dst[127-96] := src[127-96].
 
 
-\H{insUNPCKLPD} \i\c{UNPCKLPD}: Unpack and Interleave Low Packed
+\S{insUNPCKLPD} \i\c{UNPCKLPD}: Unpack and Interleave Low Packed
 Double-Precision FP Data
 
 \c UNPCKLPD xmm1,xmm2/m128       ; 66 0F 14 /r     [WILLAMETTE,SSE2]
@@ -12573,7 +12574,7 @@ The operation of this instruction is:
 \c    dst[127-64] := src[63-0].
 
 
-\H{insUNPCKLPS} \i\c{UNPCKLPS}: Unpack and Interleave Low Packed
+\S{insUNPCKLPS} \i\c{UNPCKLPS}: Unpack and Interleave Low Packed
 Single-Precision FP Data
 
 \c UNPCKLPS xmm1,xmm2/m128       ; 0F 14 /r        [KATMAI,SSE]
@@ -12590,7 +12591,7 @@ The operation of this instruction is:
 \c    dst[127-96] := src[63-32].
 
 
-\H{insVERR} \i\c{VERR}, \i\c{VERW}: Verify Segment Readability/Writability
+\S{insVERR} \i\c{VERR}, \i\c{VERW}: Verify Segment Readability/Writability
 
 \c VERR r/m16                    ; 0F 00 /4             [286,PRIV]
 
@@ -12603,7 +12604,7 @@ Otherwise it is cleared.
 \b \c{VERW} sets the zero flag if the segment can be written.
 
 
-\H{insWAIT} \i\c{WAIT}: Wait for Floating-Point Processor
+\S{insWAIT} \i\c{WAIT}: Wait for Floating-Point Processor
 
 \c WAIT                          ; 9B                   [8086]
 \c FWAIT                         ; 9B                   [8086]
@@ -12619,7 +12620,7 @@ it has the alternative purpose of ensuring that any pending unmasked
 FPU exceptions have happened before execution continues.
 
 
-\H{insWBINVD} \i\c{WBINVD}: Write Back and Invalidate Cache
+\S{insWBINVD} \i\c{WBINVD}: Write Back and Invalidate Cache
 
 \c WBINVD                        ; 0F 09                [486]
 
@@ -12630,7 +12631,7 @@ data is lost. To flush the caches quickly without bothering to write
 the data back first, use \c{INVD} (\k{insINVD}).
 
 
-\H{insWRMSR} \i\c{WRMSR}: Write Model-Specific Registers
+\S{insWRMSR} \i\c{WRMSR}: Write Model-Specific Registers
 
 \c WRMSR                         ; 0F 30                [PENT]
 
@@ -12639,7 +12640,7 @@ Model-Specific Register (MSR) whose index is stored in \c{ECX}.
 See also \c{RDMSR} (\k{insRDMSR}).
 
 
-\H{insWRSHR} \i\c{WRSHR}: Write SMM Header Pointer Register
+\S{insWRSHR} \i\c{WRSHR}: Write SMM Header Pointer Register
 
 \c WRSHR r/m32                   ; 0F 37 /0        [386,CYRIX,SMM]
 
@@ -12649,7 +12650,7 @@ See also \c{RDMSR} (\k{insRDMSR}).
 See also \c{RDSHR} (\k{insRDSHR}).
 
 
-\H{insXADD} \i\c{XADD}: Exchange and Add
+\S{insXADD} \i\c{XADD}: Exchange and Add
 
 \c XADD r/m8,reg8                ; 0F C0 /r             [486]
 \c XADD r/m16,reg16              ; o16 0F C1 /r         [486]
@@ -12661,7 +12662,7 @@ operand. This instruction can be used with a \c{LOCK} prefix for
 multi-processor synchronisation purposes.
 
 
-\H{insXBTS} \i\c{XBTS}: Extract Bit String
+\S{insXBTS} \i\c{XBTS}: Extract Bit String
 
 \c XBTS reg16,r/m16              ; o16 0F A6 /r         [386,UNDOC]
 \c XBTS reg32,r/m32              ; o32 0F A6 /r         [386,UNDOC]
@@ -12673,7 +12674,7 @@ The implied operation of this instruction is:
 
 Writes a bit string from the source operand to the destination. \c{CL}
 indicates the number of bits to be copied, and \c{(E)AX} indicates the
-low order bit offset in the source. The bist are written to the low
+low order bit offset in the source. The bits are written to the low
 order bits of the destination register. For example, if \c{CL} is set
 to 4 and \c{AX} (for 16-bit code) is set to 5, bits 5-8 of \c{src} will
 be copied to bits 0-3 of \c{dst}. This instruction is very poorly
@@ -12685,7 +12686,7 @@ the opcodes for \c{CMPXCHG486} (on early Intel 486s). NASM supports it
 only for completeness. Its counterpart is \c{IBTS} (see \k{insIBTS}).
 
 
-\H{insXCHG} \i\c{XCHG}: Exchange
+\S{insXCHG} \i\c{XCHG}: Exchange
 
 \c XCHG reg8,r/m8                ; 86 /r                [8086]
 \c XCHG reg16,r/m8               ; o16 87 /r            [8086]
@@ -12709,7 +12710,7 @@ setting) generates the opcode \c{90h}, and so is a synonym for
 \c{NOP} (\k{insNOP}).
 
 
-\H{insXLATB} \i\c{XLATB}: Translate Byte in Lookup Table
+\S{insXLATB} \i\c{XLATB}: Translate Byte in Lookup Table
 
 \c XLAT                          ; D7                   [8086]
 \c XLATB                         ; D7                   [8086]
@@ -12728,7 +12729,7 @@ can be overridden by using a segment register name as a prefix (for
 example, \c{es xlatb}).
 
 
-\H{insXOR} \i\c{XOR}: Bitwise Exclusive OR
+\S{insXOR} \i\c{XOR}: Bitwise Exclusive OR
 
 \c XOR r/m8,reg8                 ; 30 /r                [8086]
 \c XOR r/m16,reg16               ; o16 31 /r            [8086]
@@ -12764,19 +12765,19 @@ The \c{MMX} instruction \c{PXOR} (see \k{insPXOR}) performs the same
 operation on the 64-bit \c{MMX} registers.
 
 
-\H{insXORPD} \i\c{XORPD}: Bitwise Logical XOR of Double-Precision FP Values
+\S{insXORPD} \i\c{XORPD}: Bitwise Logical XOR of Double-Precision FP Values
 
 \c XORPD xmm1,xmm2/m128          ; 66 0F 57 /r     [WILLAMETTE,SSE2]
 
-\c{XORPD} returns a bit-wise logical XOR  between the source and
+\c{XORPD} returns a bit-wise logical XOR between the source and
 destination operands, storing the result in the destination operand.
 
 
-\H{insXORPS} \i\c{XORPS}: Bitwise Logical XOR of Single-Precision FP Values
+\S{insXORPS} \i\c{XORPS}: Bitwise Logical XOR of Single-Precision FP Values
 
 \c XORPS xmm1,xmm2/m128          ; 0F 57 /r        [KATMAI,SSE]
 
-\c{XORPS} returns a bit-wise logical XOR  between the source and
+\c{XORPS} returns a bit-wise logical XOR between the source and
 destination operands, storing the result in the destination operand.
 
 
