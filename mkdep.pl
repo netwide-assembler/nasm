@@ -138,10 +138,10 @@ while ( defined($arg = shift(@ARGV)) ) {
 	push(@mkfiles, $arg);
     } elsif ( $arg eq '-M' ) {
 	$mkmode = 1;		# Futher filenames are output Makefile names
-    } elsif ( $arg =~ /^-/ ) {
-	die "Unknown option: $arg\n";
     } elsif ( $arg eq '--' && $mkmode ) {
 	$mkmode = 0;
+    } elsif ( $arg =~ /^-/ ) {
+	die "Unknown option: $arg\n";
     } else {
 	if ( $mkmode ) {
 	    push(@mkfiles, $arg);
