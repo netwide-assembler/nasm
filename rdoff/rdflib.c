@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     int i;
     long l;
     time_t t;
-    char tmptempl[L_tmpnam], rdbuf[10];
+    char rdbuf[10];
 
     _argv = argv;
 
@@ -319,8 +319,7 @@ int main(int argc, char **argv)
 	    }
 	}
 	
-	tmpnam(tmptempl);
-	fptmp = fopen(tmptempl,"wb");
+	fptmp = tmpfile();
 	if (! fptmp)
 	{
 	    fprintf(stderr,"rdflib: could not open temporary file\n");
@@ -333,7 +332,7 @@ int main(int argc, char **argv)
 	l = ftell(fp);		
 	fseek(fp, 0, SEEK_SET);
 	copybytes(fp, fptmp, l);
-	freopen(tmptempl, "rb", fptmp);			/* reopen files */
+	rewind(fptmp);					/* reopen files */
 	freopen(argv[2], "wb", fp);
 	
 	while (! feof(fptmp) ) {
@@ -397,7 +396,6 @@ int main(int argc, char **argv)
 	
 	fclose(fp);
 	fclose(fptmp);
-	unlink(tmptempl);
     	break;
 
     default:
