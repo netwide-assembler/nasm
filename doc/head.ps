@@ -1,0 +1,326 @@
+% $Id$
+%
+% PostScript header for NASM documentation
+%
+
+% Avoid barfing on old PS implementations
+/pdfmark where
+{pop} {userdict /pdfmark /cleartomark load put} ifelse
+/setpagedevice where
+{pop} {userdict /setpagedevice /pop load put} ifelse
+
+% Useful definition
+/space 32 def
+
+%
+% This asks the PostScript interpreter for the proper size paper
+%
+/setpagesize {
+  1 dict dup /PageSize [pagewidth pageheight] put setpagedevice
+} def
+
+%
+% Code to handle links
+%
+/min { 2 copy gt { exch } if pop } def
+/max { 2 copy lt { exch } if pop } def
+
+/lkbegun 0 def
+/lkisuri false def
+/lkury 0 def
+/lkurx 0 def
+/lklly 0 def
+/lkllx 0 def
+/lkxmarg 1 def	% Extra space for link in x dir
+/lkymarg 1 def	% Extra space for link in y dir
+/lktarget () def
+
+% target --
+/linkbegin {
+  userdict begin
+    /lkbegun 1 def
+    /lkisuri false def
+    /lktarget exch def
+  end
+} def
+
+% uristring --
+/linkbeginuri {
+  userdict begin
+    /lkbegun 1 def
+    /lkisuri true def
+    /lktarget exch def
+  end
+} def
+
+% string spacepadding --
+/linkshow {
+  userdict begin
+    /lspad exch def /lss exch def
+    lkbegun 0 ne {
+      gsave lss true charpath flattenpath pathbbox grestore
+      lkbegun 1 eq {
+        /lkury exch def
+        lss spacecount lspad mul add /lkurx exch def
+        /lklly exch def
+        /lkllx exch def
+        /lkbegun 2 def
+      } {
+        lkury max /lkury exch def
+        lss spacecount lspad mul add lkurx max /lkurx exch def
+        lklly min /lklly exch def
+        lkllx min /lkllx exch def
+      } ifelse
+    } if
+    lspad 0 space lss widthshow
+  end
+} def
+
+% --
+/linkend {
+  userdict begin
+    [ lkisuri {
+        /Action
+        % << .. >> would be languagelevel 2 :(
+        2 dict dup /Subtype /URI put dup /URI lktarget put
+      } {
+        /Dest lktarget
+      } ifelse
+      /Border [0 0 0]
+      /Rect [ lkllx lkxmarg sub
+              lklly lkymarg sub
+              lkurx lkxmarg add
+              lkury lkymarg add ]
+      /Subtype /Link
+      /ANN pdfmark
+    /lkbegun 0 def
+  end
+} def
+
+% targetname --
+/linkdest {
+  [ /Dest 3 -1 roll
+    /View [ /XYZ currentpoint null ]
+    /DEST pdfmark
+} def
+
+% A "fontset" is an array of fonts; a "stream" is an array of strings
+% and numbers or procedures:
+% [ 0 (Foo) ( ) (mani) ( ) 1 (padme) 0 ( ) (hum.) ]
+% A number choses a font from the current fontset.
+% A procedure is invoked as-is when printing the stream.
+%
+% When printing justified, an equal amount of space is added in
+% between each string.
+
+% string -- spacecount
+% Count space characters in a string
+/spacecount {
+  0 exch {
+    space eq { 1 add } if
+  } forall
+} def
+
+% stream fontset -- spacecount width
+% Get the width of a stream in the given fontset, and the
+% number of space characters in the stream
+/streamwidth {
+  gsave
+    6 dict begin
+      /f exch def
+      /w 0 def
+      /s 0 def
+      f 0 get setfont
+      /integertype {
+        f exch get setfont
+      } def
+      /stringtype {
+        dup stringwidth pop w add /w exch def
+        spacecount s add /s exch def
+      } def
+      /arraytype { pop } def
+      % The input stream is on the top of the stack now
+      {
+        dup type exec
+      } forall
+      s w
+    end
+  grestore
+} def
+
+% stream fontset spacer --
+% Show the stream in the given fontset, but add a certain amount
+% of space to each space character
+/showstreamspc {
+  5 dict begin
+    /spc exch def
+    /f exch def
+    f 0 get setfont
+    /integertype {
+      f exch get setfont
+    } def
+    /stringtype {
+      spc linkshow
+    } def
+    /arraytype {
+      exec
+    } def
+    % Now stream is on the top of the stack
+    {
+      dup type exec
+    } forall
+  end
+} def
+
+% stream fontset --
+% Show the stream in the given fontset, with no extra spacing
+/showstream {
+  0 showstreamspc
+} def
+
+% stream fontset totalspace --
+% Show the stream justified to fit into a certain number of pixels
+/showstreamjust {
+  userdict begin
+    /ts exch def /fs exch def /st exch def
+      st fs
+        st fs streamwidth ts exch sub exch
+	dup 0 gt { div } { pop } ifelse
+      showstreamspc
+    end
+} def
+
+/bullmarg lmarg bulladj add def
+/lwidth pagewidth lmarg sub rmarg sub def
+/bwidth lwidth bulladj sub def
+
+%
+% The various paragraph types
+% The number at the end indicates start (1) of para, end (2) of para
+%
+/chapline {
+	currentpoint exch pop 10 sub lmarg exch moveto
+	0 setlinecap 3 setlinewidth
+	lwidth 0 rlineto stroke
+} def
+
+/chap0 { lmarg exch moveto cfont lwidth showstreamjust } def
+/chap1 { lmarg exch moveto cfont lwidth showstreamjust } def
+/chap2 { lmarg exch moveto cfont showstream chapline } def
+/chap3 { lmarg exch moveto cfont showstream chapline } def
+
+/appn0 {chap0} def
+/appn1 {chap1} def
+/appn2 {chap2} def
+/appn3 {chap3} def
+
+% lbl ypos fontset -- ypos
+/headlbl {
+  3 -1 roll [exch (  )] exch % ypos strm fontset
+  2 copy % ypos strm fontset strm fontset
+  streamwidth % ypos strm fontset spccount width
+  lmarg exch sub % ypos strm fontset spccount xpos
+  4 index % ypos strm fontset spccount xpos ypos
+  moveto % ypos strm fontset spccount
+  pop % ypos strm fontset spccount
+  showstream % ypos
+} def
+
+/head0 { lmarg exch moveto hfont lwidth showstreamjust } def
+/head1 { hfont headlbl lmarg exch moveto hfont lwidth showstreamjust } def
+/head2 { lmarg exch moveto hfont showstream } def
+/head3 { hfont headlbl lmarg exch moveto hfont showstream } def
+
+/subh0 { lmarg exch moveto sfont lwidth showstreamjust } def
+/subh1 { sfont headlbl lmarg exch moveto sfont lwidth showstreamjust } def
+/subh2 { lmarg exch moveto sfont showstream } def
+/subh3 { sfont headlbl lmarg exch moveto sfont showstream } def
+
+/norm0 { lmarg exch moveto tfont lwidth showstreamjust } def
+/norm1 { lmarg exch moveto tfont lwidth showstreamjust } def
+/norm2 { lmarg exch moveto tfont showstream } def
+/norm3 { lmarg exch moveto tfont showstream } def
+
+/code0 { lmarg exch moveto tfont showstream } def
+/code1 { lmarg exch moveto tfont showstream } def
+/code2 { lmarg exch moveto tfont showstream } def
+/code3 { lmarg exch moveto tfont showstream } def
+
+/bull0 { bullmarg exch moveto tfont bwidth showstreamjust } def
+/bull1 { dup lmarg exch moveto [(\267)] tfont showstream
+	 bullmarg exch moveto tfont bwidth showstreamjust } def
+/bull2 { bullmarg exch moveto tfont showstream } def
+/bull3 { dup lmarg exch moveto [(\267)] tfont showstream
+	 bullmarg exch moveto tfont showstream } def
+
+/tocw0 lwidth tocpnz sub def
+/tocw1 tocw0 tocind sub def
+/tocw2 tocw1 tocind sub def
+
+/tocx0 lmarg def
+/tocx1 tocx0 tocind add def
+/tocx2 tocx1 tocind add def
+
+/tocpn {
+  tfont0 setfont
+  3 dict begin
+    /s exch def
+    /x s stringwidth pop pagewidth rmarg sub exch sub def
+    currentpoint /y exch def
+    lmarg sub tocdots div ceiling tocdots mul lmarg add
+    tocdots x {
+      y moveto (.) 0 linkshow
+    } for
+    x y moveto s 0 linkshow
+  end
+  linkend
+} def
+
+/toc00 { tocx0 exch moveto 0 rmoveto tfont showstream } def
+/toc01 { tocx0 exch moveto
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+/toc02 { tocx0 exch moveto 3 1 roll
+	 0 rmoveto tfont showstream tocpn } def
+/toc03 { tocx0 exch moveto 4 1 roll
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+
+/toc10 { tocx1 exch moveto 0 rmoveto tfont showstream } def
+/toc11 { tocx1 exch moveto
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+/toc12 { tocx1 exch moveto 3 1 roll
+	 0 rmoveto tfont showstream tocpn } def
+/toc13 { tocx1 exch moveto 4 1 roll
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+
+/toc20 { tocx2 exch moveto 0 rmoveto tfont showstream } def
+/toc21 { tocx2 exch moveto
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream } def
+/toc22 { tocx2 exch moveto 3 1 roll
+	 0 rmoveto tfont showstream tocpn } def
+/toc23 { tocx2 exch moveto 4 1 roll
+	 linkbegin tfont0 setfont 0 linkshow tfont showstream tocpn } def
+
+%
+% Page numbers
+%
+/pagey botmarg pymarg sub def
+/pagel lmarg plmarg sub def
+/pager pagewidth rmarg sub prmarg add def
+
+/pageeven { pagel pagey moveto sfont0 setfont show } def
+/pageodd  { sfont0 setfont dup stringwidth pop pager exch sub
+	    pagey moveto show } def
+
+%
+% Functions invoked during parsing
+%
+/xa { linkdest } def
+/xl { linkbegin } def
+/wl { linkbeginuri } def
+/el { linkend } def
+
+%
+% PDF viewer options
+%
+[/PageMode /UseOutlines /DOCVIEW pdfmark	% Display bookmarks
+
