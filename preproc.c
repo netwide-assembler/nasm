@@ -4086,7 +4086,7 @@ error(int severity, const char *fmt, ...)
 	return;
 
     va_start(arg, fmt);
-    vsprintf(buff, fmt, arg);
+    vsnprintf(buff, 1024, fmt, arg);
     va_end(arg);
 
     if (istk && istk->mstk && istk->mstk->name)
