@@ -951,7 +951,7 @@ static void assemble_file (char *fname)
                                  "cannot use non-relocatable expression as "
                                  "ABSOLUTE address");
                      else {
-                          // abs_seg = reloc_seg(e);
+		           /* abs_seg = reloc_seg(e); */
                            abs_offset = reloc_value(e);
                      }
                   } else
