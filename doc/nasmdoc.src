@@ -250,7 +250,7 @@ it (properly).
 \b \i\c{as86} is Minix- and Linux-specific, and (my version at least)
 doesn't seem to have much (or any) documentation.
 
-\b \i\c{MASM} isn't very good, and it's expensive, and it runs only under
+\b \i\c{MASM} isn't very good, and it's (was) expensive, and it runs only under
 DOS.
 
 \b \i\c{TASM} is better, but still strives for MASM compatibility,
@@ -272,7 +272,7 @@ Again.
 
 Please see the file \c{Licence}, supplied as part of any NASM
 distribution archive, for the \i{licence} conditions under which you
-may use NASM.
+may use NASM. (see COPYING - Nasm is now LGPL)
 
 
 \H{contact} Contact Information
@@ -346,7 +346,7 @@ Note that the source files \c{insnsa.c}, \c{insnsd.c}, \c{insnsi.h}
 and \c{insnsn.c} are automatically generated from the master
 instruction table \c{insns.dat} by a Perl script; the file
 \c{macros.c} is generated from \c{standard.mac} by another Perl
-script. Although the NASM 0.98 distribution includes these generated
+script. Although the NASM source distribution includes these generated
 files, you will need to rebuild them (and hence, will need a Perl
 interpreter) if you change insns.dat, standard.mac or the
 documentation. It is possible future source distributions may not
@@ -500,7 +500,11 @@ right. For example:
 
 \c nasm -f elf myfile.asm -l myfile.lst
 
-\#FIXME - "[list +/-]"
+If a list file is selected, you may turn off listing for a 
+section of your source with \c{[list -]}, and turn it back on
+with \c{[list +]}, (the default, obviously). There is no "user 
+form" (without the brackets). This can be used to list only 
+sections of interest, avoiding excessively long listings.
 
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}.
@@ -715,7 +719,7 @@ with a \i{stub preprocessor} which does nothing.
 
 NASM defaults to being a two pass assembler. This means that if you
 have a complex source file which needs more than 2 passes to assemble
-correctly, you have to tell it.
+optimally, you have to enable extra passes.
 
 Using the \c{-O} option, you can tell NASM to carry out multiple passes.
 The syntax is:
@@ -734,7 +738,7 @@ The syntax is:
 
 \b \c{-On} multi-pass optimization, minimize branch offsets; also will
         minimize signed immediate bytes, overriding size specification
-        when the \c{strict} keyword hasn't been used (see \k{strict}).
+        unless the \c{strict} keyword has been used (see \k{strict}).
         If 2 <= n <= 3, then there are 5 * n passes, otherwise there
         are n passes.
 
@@ -803,6 +807,9 @@ being invoked with the wrong number of parameters. This warning
 class is enabled by default; see \k{mlmacover} for an example of why
 you might want to disable it.
 
+\b \i\c{macro-selfref} warns if a macro references itself. This 
+warning class is enabled by default.
+
 \b \i\c{orphan-labels} covers warnings about source lines which
 contain no instruction but define a label without a trailing colon.
 NASM does not warn about this somewhat obscure condition by default;
@@ -813,12 +820,20 @@ don't fit in 32 bits (for example, it's easy to type one too many Fs
 and produce \c{0x7ffffffff} by mistake). This warning class is
 enabled by default.
 
-\#FIXME - more suppressible warnings exist - "[+warning <supp. warn.>]"
+\b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations 
+are used in \c{-f elf} format. The GNU extensions allow this. 
+This warning class is enabled by default.
+
+\b In addition, warning classes may be enabled or disabled across 
+sections of source code with \i\c{[warning +warning-name]} or 
+\i\c{[warning -warning-name]}. No "user form" (without the 
+brackets) exists. 
+
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
 
 Typing \c{NASM -v} will display the version of NASM which you are using,
-and the date on which it was compiled. This replaces the denigrated 
+and the date on which it was compiled. This replaces the deprecated 
 \c{-r}.
 
 You will need the version number if you report a bug.
@@ -830,7 +845,15 @@ debug info formats for the given output format. The default format
 is indicated by an asterisk. E.g. \c{nasm -f obj -y} yields \c{* borland}.
 (as of 0.98.35, the \e{only} debug info format implemented).
 
-\#FIXME - "--prefix", "--postfix"
+
+\S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
+
+The \c{--prefix} and \c{--postfix} options prepend or append 
+(respectively) the given argument to all \c{global} or
+\c{extern} variables. E.g. \c{--prefix_} will prepend the 
+underscore to all global and external variables, as C sometimes 
+(but not always) likes it.
+
 
 \S{nasmenv} The \c{NASMENV} \i{Environment} Variable
 
@@ -1525,7 +1548,7 @@ invent one using the macro processor.
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
 When assembling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will usee size specifiers (\c{BYTE}, \c{WORD},
+\k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
 \c{DWORD}, \c{QWORD}, or \c{TWORD}), but will give them the smallest
 possible size. The keyword \c{STRICT} can be used to inhibit
 optimization and force a particular operand to be emitted in the
@@ -1621,6 +1644,8 @@ problem can be solved by defining \c{offset} before using it, or by
 forcing byte size in the effective address by coding \c{[byte
 ebx+offset]}.
 
+Note that use of the \c{-On} switch (with n>=2) makes some of the above
+no longer true. (see \k{opt-On})
 
 \H{locallab} \i{Local Labels}
 
@@ -3379,6 +3404,7 @@ The \c{BITS} directive has an exactly equivalent primitive form,
 \c{[BITS 16]} and \c{[BITS 32]}. The user-level form is a macro
 which has no function other than to call the primitive form.
 
+Note that the space is neccessary, \c{BITS32} will \e{not} work!
 
 \S{USE16 & USE32} \i\c{USE16} & \i\c{USE32}: Aliases for BITS
 
@@ -3398,7 +3424,8 @@ wish. Hence \c{SECTION} may sometimes give an error message, or may
 define a new section, if you try to switch to a section that does
 not (yet) exist.
 
-The Unix object formats, and the \c{bin} object format, all support
+The Unix object formats, and the \c{bin} object format (but see
+\k{multisec}, all support
 the \i{standardised section names} \c{.text}, \c{.data} and \c{.bss}
 for the code, data and uninitialised-data sections. The \c{obj}
 format, by contrast, does not recognise these section names as being
@@ -3730,10 +3757,29 @@ given may be any power of two.\I{section alignment, in
 bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 
-\S{multisec} \c{Multisection}\I{bin, multisection} support for the BIN format.
+\S{multisec} \i\c{Multisection}\I{bin, multisection} support for the BIN format.
 
-The \c{bin} format allows the use of multiple sections, which are
-ordered according to a few basic rules.
+The \c{bin} format allows the use of multiple sections, of arbitrary names, 
+besides the "known" \c{.text}, \c{.data}, and \c{.bss} names.
+
+\b Sections may be designated \i\c{progbits} or \i\c{nobits}. Default 
+is \c{progbits} (except \c{.bss}, which defaults to \c{nobits}, 
+of course).
+
+\b Sections can be aligned at a specified boundary following the previous 
+section with \c{align=}, or at an arbitrary byte-granular position with 
+\i\c{start=}.
+
+\b Sections can be given a virtual start address, which will be used 
+for the calculation of all memory references within that section 
+with \i\c{vstart=}.
+
+\b Sections can be ordered using \i\c{follows=}\c{<section>} or 
+\i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit 
+start address.
+
+\b Arguments to \c{org}, \c{start}, and \c{vstart} are critical 
+expressions. See \k{crit}.
 
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
@@ -3741,28 +3787,24 @@ is directed by default into the \c{.text} section.
 \b If a \c{.text} section is not given an \c{ORG} statement, it is
 allocated \c{ORG 0} by default.
 
-\b Sections which have an \c{ORG} statement, explicit or implicit,
-are placed in the order of the \c{ORG} statement. The code is padded
-with 0s to give the correct offsets within the output file.
-
-\b If a section has multiple \c{ORG} statements, the last \c{ORG} statement
-is applied to the entire section, without affecting the order in
-which the separate parts of the section are put together at assembly
-time.
-
-\b Sections without an \c{ORG} statement will be placed after those which
-do have one, and they will be placed in the order that they are first
-declared.
-
-\b The \c{.data} section does not follow any special rules, unlike the
-\c{.text} and \c{.bss} sections.
-
-\b The \c{.bss} section will be placed after all other sections.
+\b The \c{.bss} section will be placed after all other sections, 
+unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=} 
+has been specified.
 
 \b All sections are aligned on dword boundaries, unless a higher level
 of alignment has been specified.
 
-\b Sections cannot overlap.
+\b Sections may not overlap.
+
+
+\S{map}\i{Map files}
+
+Map files can be generated in \c{-f bin} format by means of the \c{[map]} 
+option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments}, 
+or \c{symbols} may be specified. Output may be directed to \c{stdout} 
+(default), \c{stderr}, or a specified file. E.g.
+\c{[map symbols myfile.map]}. No "user form" exists, the square
+brackets must be used.
 
 
 \H{objfmt} \i\c{obj}: \i{Microsoft OMF}\I{OMF} Object Files
@@ -4870,6 +4912,7 @@ The \c{cglobal} macro works similarly. You must use \c{cglobal}
 before defining the symbol in question, but you would have had to do
 that anyway if you used \c{GLOBAL}.
 
+Also see \k{opt-pfix}.
 
 \S{16cmodels} \i{Memory Models}
 
@@ -5428,6 +5471,7 @@ underscore; for these compilers, the macros \c{cextern} and
 \c{cglobal}, as given in \k{16cunder}, will still work. For \c{ELF},
 though, the leading underscore should not be used.
 
+See also \k{opt-pfix}.
 
 \S{32cfunc} Function Definitions and Function Calls
 
@@ -6069,7 +6113,7 @@ NASM, on seeing \c{ADD ESP,8}, will generate the form of the
 instruction which leaves room for a 32-bit offset. You need to code
 \I\c{BYTE}\c{ADD ESP,BYTE 8} if you want the space-efficient
 form of the instruction. This isn't a bug: at worst it's a
-misfeature, and that's a matter of opinion only.
+misfeature, and that's a matter of opinion only. See \k{opt-On}.
 
 
 \S{jmprange} My Jumps are Out of Range\I{out of range, jumps}
@@ -6090,7 +6134,7 @@ over a \c{JMP NEAR}; this is a sensible solution for processors
 below a 386, but hardly efficient on processors which have good
 branch prediction \e{and} could have used \c{JNE NEAR} instead. So,
 once again, it's up to the user, not the assembler, to decide what
-instructions should be generated.
+instructions should be generated. See \k{opt-On}.
 
 
 \S{proborg} \i\c{ORG} Doesn't Work
@@ -11518,7 +11562,8 @@ will be copied to bits 0-15 of the destination.
 \c{PSLLx} performs logical left shifts of the data elements in the
 destination (first) operand, moving each bit in the separate elements
 left by the number of bits specified in the source (second) operand,
-clearing the low-order bits as they are vacated.
+clearing the low-order bits as they are vacated. \c{PSLLDQ} 
+shifts bytes, not bits.
 
 \b \c{PSLLW} shifts word sized elements.
 
@@ -11578,7 +11623,8 @@ setting the high-order bits to the value of the original sign bit.
 \c{PSRLx} performs logical right shifts of the data elements in the
 destination (first) operand, moving each bit in the separate elements
 right by the number of bits specified in the source (second) operand,
-clearing the high-order bits as they are vacated.
+clearing the high-order bits as they are vacated. \c{PSRLDQ} 
+shifts bytes, not bits.
 
 \b \c{PSRLW} shifts word sized elements.
 
