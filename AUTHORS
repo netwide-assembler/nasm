@@ -100,3 +100,12 @@ E: debs@dwiles.demon.co.uk
 D: Work on docs, added undocumented instructions (esp SSE2 and 3D-Now!)
 D: Added other documentation and tidied up docs
 D: Added a few instructions to insns.dat and tidied it up.
+
+N: Trevor Woerner
+E: FIXME
+D: Quiet compiler warnings
+
+N: Michael K. Ter Louw
+E: FIXME
+D: Multisection support for "-f bin"
+
