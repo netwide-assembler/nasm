@@ -4010,14 +4010,14 @@ error(int severity, char *fmt, ...)
     char buff[1024];
 
     /* If we're in a dead branch of IF or something like it, ignore the error */
-    if (istk->conds && !emitting(istk->conds->state))
+    if (istk && istk->conds && !emitting(istk->conds->state))
 	return;
 
     va_start(arg, fmt);
     vsprintf(buff, fmt, arg);
     va_end(arg);
 
-    if (istk->mstk && istk->mstk->name)
+    if (istk && istk->mstk && istk->mstk->name)
 	__error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
 		istk->mstk->lineno, buff);
     else
