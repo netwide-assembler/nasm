@@ -698,33 +698,24 @@ static expr *expr6(int critical)
 		break;
 	    }
 
-	    /*
-	     * Since the whole line is parsed before the label it
-	     * defines is given to the label manager, we have
-	     * problems with lines such as
-	     *
-	     *   end: TIMES 512-(end-start) DB 0
-	     *
-	     * where `end' is not known on pass one, despite not
-	     * really being a forward reference, and due to
-	     * criticality it is _needed_. Hence we check our label
-	     * against the currently defined one, and do our own
-	     * resolution of it if we have to.
-	     */
 	    type = EXPR_SIMPLE;	       /* might get overridden by UNKNOWN */
-	    if (i == TOKEN_BASE) {
+	    if (i == TOKEN_BASE)
+	    {
 		label_seg = location->segment;
 		label_ofs = 0;
 	    } else if (i == TOKEN_HERE) {
 		label_seg = location->segment;
 		label_ofs = location->offset;
-	    } else if (!labelfunc(tokval->t_charptr,&label_seg,&label_ofs)) {
+	    } else {
+		if (!labelfunc(tokval->t_charptr,&label_seg,&label_ofs))
+		{
 		if (critical == 2) {
 		    error (ERR_NONFATAL, "symbol `%s' undefined",
 			   tokval->t_charptr);
 		    return NULL;
 		} else if (critical == 1) {
-		    error (ERR_NONFATAL, "symbol `%s' not defined before use",
+			error (ERR_NONFATAL,
+				"symbol `%s' not defined before use",
 			   tokval->t_charptr);
 		    return NULL;
 		} else {
@@ -735,12 +726,12 @@ static expr *expr6(int critical)
 		    label_ofs = 1;
 		}
 	    }
-	    addtotemp(type, label_ofs);
-	    if (label_seg!=NO_SEG) {
-		addtotemp(EXPR_SEGBASE + label_seg, 1L);
 		if (opflags && is_extern (tokval->t_charptr))
 		    *opflags |= OPFLAG_EXTERN;
 	    }
+	    addtotemp(type, label_ofs);
+	    if (label_seg!=NO_SEG)
+		addtotemp(EXPR_SEGBASE + label_seg, 1L);
 	    break;
 	}
 	i = scan(scpriv, tokval);

@@ -2,7 +2,7 @@
 
 static char *stdmac[] = {
     "%define __NASM_MAJOR__ 0",
-    "%define __NASM_MINOR__ 97",
+    "%define __NASM_MINOR__ 98",
     "%define __FILE__",
     "%define __LINE__",
     "%define __SECT__",

@@ -95,6 +95,9 @@
 #ifndef OF_RDF2
 #define OF_RDF2
 #endif
+#ifndef OF_IEEE
+#define OF_IEEE
+#endif
 #endif /* OF_ALL */
 
 /* turn on groups of formats specified.... */
@@ -137,6 +140,9 @@
 #endif
 #ifndef OF_RDF2
 #define OF_RDF2
+#endif
+#ifndef OF_IEEE
+#define OF_IEEE
 #endif
 #endif
 
@@ -191,6 +197,7 @@ extern struct ofmt of_obj;
 extern struct ofmt of_win32;
 extern struct ofmt of_rdf;
 extern struct ofmt of_rdf2;
+extern struct ofmt of_ieee;
 extern struct ofmt of_dbg;
 
 struct ofmt *drivers[]={
@@ -223,6 +230,9 @@ struct ofmt *drivers[]={
 #endif
 #ifdef OF_RDF2
     &of_rdf2,
+#endif
+#ifdef OF_IEEE
+    &of_ieee,
 #endif
 #ifdef OF_DBG
     &of_dbg,

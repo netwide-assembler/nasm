@@ -90,9 +90,14 @@ clean:
 	rm -f *.o nasm ndisasm
 	cd rdoff; $(MAKE) clean
 
-spotless: clean
+distclean: clean
 	rm -f config.* Makefile *~
-	cd rdoff; $(MAKE) spotless
+	cd rdoff; $(MAKE) distclean
+
+cleaner: clean
+	rm -f insnsa.c insnsd.c insnsi.h insnsn.c macros.c
+
+spotless: distclean cleaner
 
 rdf:
 	cd rdoff; $(MAKE)

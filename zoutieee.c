@@ -127,7 +127,7 @@ static struct ieeeSection {
     char *name;
 } *seghead, **segtail, *ieee_seg_needs_update;
 
-static struct ieeeObjData {
+struct ieeeObjData {
     struct ieeeObjData *next;
     unsigned char data[HUNKSIZE];
 };
@@ -1169,39 +1169,39 @@ static long ieee_putlr(struct ieeeFixupp *p)
 	        if (p->id1 < 0)
 		    sprintf(buf,"%lX",-p->id1);
 		else
-		    sprintf(buf,"L%X,10,/",p->id1);
+		    sprintf(buf,"L%lX,10,/",p->id1);
 		break;
 	    case FT_OFS:
-		sprintf(buf,"R%X,%lX,+",p->id1,p->addend);
+		sprintf(buf,"R%lX,%lX,+",p->id1,p->addend);
 		break;
 	    case FT_REL:
-		sprintf(buf,"R%X,%lX,+,P,-,%X,-",p->id1,p->addend,p->size);
+		sprintf(buf,"R%lX,%lX,+,P,-,%X,-",p->id1,p->addend,p->size);
 		break;
 		
 	    case FT_WRT:
 	        if (p->id2 < 0)
-		    sprintf(buf,"R%X,%lX,+,L%X,+,%lX,-",p->id2,p->addend,p->id2,-p->id1*16);
+		    sprintf(buf,"R%lX,%lX,+,L%lX,+,%lX,-",p->id2,p->addend,p->id2,-p->id1*16);
 		else
-		    sprintf(buf,"R%X,%lX,+,L%X,+,L%X,-",p->id2,p->addend,p->id2,p->id1);
+		    sprintf(buf,"R%lX,%lX,+,L%lX,+,L%lX,-",p->id2,p->addend,p->id2,p->id1);
 		break;
 	    case FT_EXT:
-		sprintf(buf,"X%X",p->id1,p->id1);
+		sprintf(buf,"X%lX",p->id1);
 		break;
 	    case FT_EXTREL:
-		sprintf(buf,"X%X,P,-,%X,-",p->id1,size);
+		sprintf(buf,"X%lX,P,-,%lX,-",p->id1,size);
 		break;
 	    case FT_EXTSEG:
 		/* We needed a non-ieee hack here.
 		 * We introduce the Y variable, which is the low
 		 * limit of the native segment the extern resides in
 		 */
-		sprintf(buf,"Y%X,10,/",p->id1);
+		sprintf(buf,"Y%lX,10,/",p->id1);
 		break;
 	    case FT_EXTWRT:
 	        if (p->id2 < 0)
-		    sprintf(buf,"X%X,Y%X,+,%lX,-",p->id2,p->id2,-p->id1*16);
+		    sprintf(buf,"X%lX,Y%lX,+,%lX,-",p->id2,p->id2,-p->id1*16);
 		else
-		    sprintf(buf,"X%X,Y%X,+,L%X,-",p->id2,p->id2,p->id1);
+		    sprintf(buf,"X%lX,Y%lX,+,L%lX,-",p->id2,p->id2,p->id1);
 		break;
 	}
 	ieee_putascii("LR(%s,%lX).\r\n", buf, size);
@@ -1316,9 +1316,10 @@ static void dbgls_deflabel (char *name, long segment,
 			  long offset, int is_global, char *special) 
 {
     struct ieeeSection *seg;
-    int used_special = FALSE;	       /* have we used the special text? */
+    int used_special;		/* have we used the special text? */
 
-    (void) special;
+    /* Keep compiler from warning about special and used_special */
+    used_special = special ? FALSE : FALSE;
 
     /*
      * If it's a special-retry from pass two, discard it.

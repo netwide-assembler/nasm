@@ -62,8 +62,12 @@ nasmlib.o: $(top_srcdir)/nasmlib.c
 clean:
 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com
 
-spotless: clean
+distclean: clean
 	rm -f Makefile
+
+cleaner: clean
+
+spotless: distclean
 
 install: rdfdump ldrdf rdx rdflib rdf2bin rdf2com
 	$(INSTALL_PROGRAM) rdfdump $(bindir)/rdfdump
