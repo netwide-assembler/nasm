@@ -42,7 +42,7 @@ nasm: $(NASM)
 ndisasm: $(NDISASM)
 	$(CC) -o ndisasm $(NDISASM)
 
-assemble.o: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
+assemble.o: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insnsn.c
 disasm.o: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
 eval.o: eval.c eval.h nasm.h insnsi.h nasmlib.h
 float.o: float.c nasm.h insnsi.h
@@ -52,7 +52,7 @@ labels.o: labels.c nasm.h insnsi.h nasmlib.h
 listing.o: listing.c nasm.h insnsi.h nasmlib.h listing.h
 nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
  outform.h listing.h
-nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h
+nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
 outaout.o: outaout.c nasm.h insnsi.h nasmlib.h outform.h
 outas86.o: outas86.c nasm.h insnsi.h nasmlib.h outform.h

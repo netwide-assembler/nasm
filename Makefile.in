@@ -1,3 +1,4 @@
+# $Id$
 #
 # Auto-configuring Makefile for the Netwide Assembler.
 #
@@ -6,26 +7,36 @@
 # redistributable under the licence given in the file "Licence"
 # distributed in the NASM archive.
 
-srcdir = @srcdir@
-VPATH = @srcdir@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
-mandir = @mandir@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
 
-CC = @CC@
-CFLAGS = @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I.
+CC		= @CC@
+CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I.
+LDFLAGS		= @LDFLAGS@
 
-INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA = @INSTALL_DATA@
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
 
-NROFF = @NROFF@
+NROFF		= @NROFF@
 
-.SUFFIXES: .c .o .1 .man
+.SUFFIXES: .c .i .s .o .1 .man
+
+.PHONY: all doc rdf install clean distclean cleaner spotless install_rdf
+.PHONY: install_doc everything install_everything
 
 .c.o:
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+.c.s:
+	$(CC) -S $(CFLAGS) -o $@ $<
+
+.c.i:
+	$(CC) -E $(CFLAGS) -o $@ $<
 
 .1.man:
 	$(NROFF) -man $< > $@
@@ -38,12 +49,13 @@ NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
 
 all: nasm ndisasm nasm.man ndisasm.man
+	cd rdoff; $(MAKE) all
 
 nasm: $(NASM)
-	$(CC) -o nasm $(NASM)
+	$(CC) $(LDFLAGS) -o nasm $(NASM)
 
 ndisasm: $(NDISASM)
-	$(CC) -o ndisasm $(NDISASM)
+	$(CC) $(LDFLAGS) -o ndisasm $(NDISASM)
 
 assemble.o: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
 disasm.o: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
@@ -55,7 +67,7 @@ labels.o: labels.c nasm.h insnsi.h nasmlib.h
 listing.o: listing.c nasm.h insnsi.h nasmlib.h listing.h
 nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
  outform.h listing.h
-nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h
+nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
 outaout.o: outaout.c nasm.h insnsi.h nasmlib.h outform.h
 outas86.o: outas86.c nasm.h insnsi.h nasmlib.h outform.h
@@ -77,8 +89,14 @@ zoutieee.o: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
 
-insnsa.c insnsd.c insnsi.h insnsn.c: insns.dat insns.pl
-	perl $(srcdir)/insns.pl $(srcdir)/insns.dat
+insnsa.c: insns.dat insns.pl
+	perl $(srcdir)/insns.pl -a $(srcdir)/insns.dat
+insnsd.c: insns.dat insns.pl
+	perl $(srcdir)/insns.pl -d $(srcdir)/insns.dat
+insnsi.h: insns.dat insns.pl
+	perl $(srcdir)/insns.pl -i $(srcdir)/insns.dat
+insnsn.c: insns.dat insns.pl
+	perl $(srcdir)/insns.pl -n $(srcdir)/insns.dat
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
@@ -88,26 +106,38 @@ macros.c: standard.mac macros.pl
 	perl $(srcdir)/macros.pl $(srcdir)/standard.mac
 
 install: nasm ndisasm
-	$(INSTALL_PROGRAM) nasm $(bindir)/nasm
-	$(INSTALL_PROGRAM) ndisasm $(bindir)/ndisasm
-	$(INSTALL_DATA) $(srcdir)/nasm.1 $(mandir)/man1/nasm.1
-	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(mandir)/man1/ndisasm.1
+	$(INSTALL_PROGRAM) nasm $(INSTALLROOT)$(bindir)/nasm
+	$(INSTALL_PROGRAM) ndisasm $(INSTALLROOT)$(bindir)/ndisasm
+	$(INSTALL_DATA) $(srcdir)/nasm.1 $(INSTALLROOT)$(mandir)/man1/nasm.1
+	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	rm -f *.o nasm ndisasm
-	cd rdoff; $(MAKE) clean
+	rm -f *.o *.s *.i nasm ndisasm
+	cd rdoff && $(MAKE) clean
 
 distclean: clean
-	rm -f config.* Makefile *~ *.bak changed.lst changed.bin
-	cd rdoff; $(MAKE) distclean
+	rm -f config.* Makefile *~ *.bak *.lst *.bin
+	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
 	rm -f insnsa.c insnsd.c insnsi.h insnsn.c macros.c *.man
+	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
 
 rdf:
-	cd rdoff; $(MAKE)
+	cd rdoff && $(MAKE)
 
 rdf_install install_rdf:
-	cd rdoff; $(MAKE) install
+	cd rdoff && $(MAKE) install
+
+doc:
+	cd doc && $(MAKE) all
+
+doc_install install_doc:
+	cd doc && $(MAKE) install
+
+everything: all doc rdf
+
+install_everything: everything install install_doc install_rdf
+

@@ -322,6 +322,34 @@ arg_example2 arg2
 %error	"TEST_ME defined after %undef"
 %endif
 
+;-----------------------------------------------------------------------------
+; Bug fix by hpa in insns.dat
+;
+; PSHUFW and PINSRW weren't handling the implicit sizes correctly; all of
+; the entries below are (or should be) legal
+;
+	pshufw mm2, mm1, 3
+	pshufw mm3,[ebx],2
+	pshufw mm7,[0+edi*8],1
+	
+	pshufw mm2, mm1, byte 3
+	pshufw mm3,[ebx],byte 2
+	pshufw mm7,[0+edi*8],byte 1
+
+	pshufw mm2, mm1, 3
+	pshufw mm3, qword [ebx], 2
+	pshufw mm7, qword [0+edi*8], 1
+
+	pshufw mm2, mm1, byte 3
+	pshufw mm3, qword [ebx], byte 2
+	pshufw mm7, qword [0+edi*8], byte 1
+
+	pinsrw mm1, [esi], 1
+	pinsrw mm1, word [esi], 1
+	pinsrw mm1, [esi], byte 1
+	pinsrw mm1, word [esi], byte 1
+
+	
 %endif				; oldmsg
 	
 %ifdef oldcrash  ;*************************************************************

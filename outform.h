@@ -92,6 +92,9 @@
 #ifndef OF_AS86
 #define OF_AS86
 #endif
+#ifndef OF_RDF
+#define OF_RDF
+#endif
 #ifndef OF_RDF2
 #define OF_RDF2
 #endif
@@ -176,6 +179,9 @@
 #endif
 #ifdef OF_NO_RDF2
 #undef OF_RDF
+#endif
+#ifdef OF_NO_IEEE
+#undef OF_IEEE
 #endif
 
 #ifndef OF_DEFAULT

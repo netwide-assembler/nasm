@@ -1519,6 +1519,10 @@ sub write_texi {
   print "\input texinfo   \@c -*-texinfo-*-\n";
   print "\@c \%**start of header\n";
   print "\@setfilename nasm.info\n";
+  print "\@dircategory Programming\n";
+  print "\@direntry\n";
+  print "* NASM: (nasm).                The Netwide Assembler for x86.\n";
+  print "\@end direntry\n";
   print "\@settitle NASM: The Netwide Assembler\n";
   print "\@setchapternewpage odd\n";
   print "\@c \%**end of header\n";

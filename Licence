@@ -1,3 +1,4 @@
+
 Terms and Conditions for the use of the Netwide Assembler
 =========================================================
 
@@ -52,7 +53,8 @@ which a fee is charged), as long as permission is granted from the
 authors of the Software. The authors reserve the right to grant this
 permission only for a fee, which may at our option take the form of
 royalty payments. The authors also reserve the right to refuse to
-grant permission if they deem it necessary.
+grant permission if they deem it necessary. For further information
+about who exactly the authors are, see clause XI below.
 
 V. The Software may be incorporated, in its original archive form,
 into software collections or archives which are not freely
@@ -104,5 +106,14 @@ Licence with such distribution.  Furthermore, patches sent to the
 authors for the purpose of inclusion in the official release version
 are considered cleared for release under the full terms of this
 Licence.
+
+XI. The authors of NASM are the original authors (Simon Tatham and
+Julian Hall) and all those who the original authors feel have
+contributed significantly to the overall project.  If you wish to
+contact the authors, Julian Hall (jules@earthcorp.com) should be your
+first port of call.
+
+XII. Should any part of this agreement be deemed unenforcable, it is
+intended that the remainder of the agreement be held in force.
 
 END OF LICENCE AGREEMENT

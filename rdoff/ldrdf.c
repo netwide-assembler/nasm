@@ -1,4 +1,4 @@
-/* ldrdf.c	RDOFF Object File linker/loader main program
+/* ldrdf.c      RDOFF Object File linker/loader main program
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -6,18 +6,23 @@
  * distributed in the NASM archive.
  */
 
-/* TODO: Make the system skip a module (other than the first) if none
- * of the other specified modules contain a reference to it.
- * May require the system to make an extra pass of the modules to be
- * loaded eliminating those that aren't required.
+/*
+ * TODO: actually get this new version working!
+ * - finish off write_output()       - appears to be done
+ * - implement library searching     - appears to be done
+ *   - maybe we only want to do one pass, for performance reasons?
+ *     this makes things a little harder, but unix 'ld' copes...
+ * - implement command line options  - appears to be done
+ * - improve symbol table implementation  - done, thanks to Graeme Defty
+ * - keep a cache of symbol names in each library module so
+ *   we don't have to constantly recheck the file
+ * - general performance improvements
  *
- * Support all the existing documented options...
- *
- * Support libaries (.a files - requires a 'ranlib' type utility)
- *		(I think I've got this working, so I've upped the version)
- *
- * -s option to strip resolved symbols from exports. (Could make this an
- * external utility)
+ * BUGS & LIMITATIONS: this program doesn't support multiple code, data
+ * or bss segments, therefore for 16 bit programs whose code, data or BSS
+ * segment exceeds 64K in size, it will not work. This program probably
+ * wont work if compiled by a 16 bit compiler. Try DJGPP if you're running
+ * under DOS. '#define STINGY_MEMORY' may help a little.
  */
 
 #include <stdio.h>
@@ -25,704 +30,1088 @@
 #include <string.h>
 
 #include "rdoff.h"
-#include "nasmlib.h"
 #include "symtab.h"
 #include "collectn.h"
 #include "rdlib.h"
+#include "segtab.h"
 
-#define LDRDF_VERSION "0.30"
+#define LDRDF_VERSION "1.00 alpha 1"
 
-/* global variables - those to set options: */
+#define RDF_MAXSEGS 64
+/* #define STINGY_MEMORY */
 
-int 	verbose = 0;	/* reflects setting of command line switch */
-int	align = 16;
-int	errors = 0;	/* set by functions to cause halt after current
-			   stage of processing */
+/* =======================================================================
+ * Types & macros that are private to this program
+ */
 
-/* the linked list of modules that must be loaded & linked */
+struct segment_infonode {
+    int		dest_seg;	/* output segment to be placed into, -1 to 
+				   skip linking this segment */
+    long	reloc;		/* segment's relocation factor */
+};
+
 
 struct modulenode {
-    rdffile	f;	/* the file */
-    long	coderel;	/* module's code relocation factor */
-    long	datarel;	/* module's data relocation factor */
-    long	bssrel;		/* module's bss data reloc. factor */
-    void *	header;		/* header location, if loaded */
-    char *	name;		/* filename */
-    struct modulenode *next;
+    rdffile	f;		/* the RDOFF file structure */
+    struct segment_infonode seginfo[RDF_MAXSEGS]; /* what are we doing
+						     with each segment? */
+    void	* header;
+    char	* name;
+    struct modulenode * next;
+    long	bss_reloc;
 };
+
+#include "ldsegs.h"
 
 #define newstr(str) strcpy(malloc(strlen(str) + 1),str)
 #define newstrcat(s1,s2) strcat(strcpy(malloc(strlen(s1)+strlen(s2)+1),s1),s2)
 
-
-struct modulenode *modules = NULL,*lastmodule = NULL;
-
-/* the linked list of libraries to be searched for missing imported
-   symbols */
-
-struct librarynode * libraries = NULL, * lastlib = NULL;
-
-void *symtab;	/* The symbol table */
-
-rdf_headerbuf * newheader ;	/* New header to be written to output */
-
-/* loadmodule - find the characteristics of a module and add it to the
- *		list of those being linked together			*/
-
-void loadmodule(char *filename)
-{
-  struct modulenode *prev;
-  if (! modules) {
-    modules = malloc(sizeof(struct modulenode));
-    lastmodule = modules;
-    prev = NULL;
-  }
-  else {
-    lastmodule->next = malloc(sizeof(struct modulenode));
-    prev = lastmodule;
-    lastmodule = lastmodule->next;
-  }
-
-  if (! lastmodule) {
-    fputs("ldrdf: not enough memory\n",stderr);
-    exit(1);
-  }
-
-  if (rdfopen(&lastmodule->f,filename)) {
-    rdfperror("ldrdf",filename);
-    exit(1);
-  }
-
-  lastmodule->header = NULL;	/* header hasn't been loaded */
-  lastmodule->name = filename;
-  lastmodule->next = NULL;
-
-  if (prev) {
-    lastmodule->coderel = prev->coderel + prev->f.code_len;
-    if (lastmodule->coderel % align != 0)
-      lastmodule->coderel += align - (lastmodule->coderel % align);
-    lastmodule->datarel = prev->datarel + prev->f.data_len;
-    if (lastmodule->datarel % align != 0)
-      lastmodule->datarel += align - (lastmodule->datarel % align);
-  }
-  else {
-    lastmodule->coderel = 0;
-    lastmodule->datarel = 0;
-  }
-
-  if (verbose)
-    printf("%s code = %08lx (+%04lx), data = %08lx (+%04lx)\n",filename,
-	   lastmodule->coderel,lastmodule->f.code_len,
-	   lastmodule->datarel,lastmodule->f.data_len);
-
-  lastmodule->header = malloc(lastmodule->f.header_len);
-  if (!lastmodule->header) {
-      fprintf(stderr,"ldrdf: out of memory\n");
-      exit(1);
-  }
-
-  if (rdfloadseg(&lastmodule->f,RDOFF_HEADER,lastmodule->header))
-  {
-      rdfperror("ldrdf",filename);
-      exit(1);
-  }
-}
-
-/* load_library		add a library to list of libraries to search
- *                      for undefined symbols
+/* ==========================================================================
+ * Function prototypes of private utility functions
  */
 
-void load_library(char * name)
+void processmodule(const char * filename, struct modulenode * mod);
+int allocnewseg(int16 type,int16 reserved);
+int findsegment(int16 type,int16 reserved);
+void symtab_add(const char * symbol, int segment, long offset);
+int symtab_get(const char * symbol, int * segment, long * offset);
+
+/* =========================================================================
+ * Global data structures.
+ */
+
+/* a linked list of modules that will be included in the output */
+struct modulenode 	* modules = NULL;
+struct modulenode 	* lastmodule = NULL;
+
+/* a linked list of libraries to be searched for unresolved imported symbols */
+struct librarynode 	* libraries = NULL;
+struct librarynode	* lastlib = NULL;
+
+/* the symbol table */
+void 			* symtab = NULL;
+
+/* the header of the output file, built up stage by stage */
+rdf_headerbuf 		* newheader = NULL;
+
+/* The current state of segment allocation, including information about
+ * which output segment numbers have been allocated, and their types and
+ * amount of data which has already been allocated inside them. 
+ */
+struct SegmentHeaderRec	outputseg[RDF_MAXSEGS];
+int			nsegs = 0;
+long			bss_length;
+
+/* global options which affect how the program behaves */
+struct ldrdfoptions {
+    int		verbose;
+    int		align;
+    int		warnUnresolved;
+    int		strip;
+} options;
+
+int errorcount = 0;	/* determines main program exit status */
+
+/* =========================================================================
+ * Utility functions
+ */
+
+
+/*
+ * initsegments()
+ *
+ * sets up segments 0, 1, and 2, the initial code data and bss segments
+ */
+
+void initsegments()
 {
-    if (verbose)
-	printf("adding library %s to search path\n",name);
-	
-    if (! lastlib) {
-	lastlib = libraries = malloc(sizeof(struct librarynode));
+    nsegs = 3;
+    outputseg[0].type = 1;
+    outputseg[0].number = 0;
+    outputseg[0].reserved = 0;
+    outputseg[0].length = 0;
+    outputseg[1].type = 2;
+    outputseg[1].number = 1;
+    outputseg[1].reserved = 0;
+    outputseg[1].length = 0;
+    outputseg[2].type = 0xFFFF;	/* reserved segment type */
+    outputseg[2].number = 2;
+    outputseg[2].reserved = 0;
+    outputseg[2].length = 0;
+    bss_length = 0;
+}
+
+/*
+ * loadmodule
+ *
+ * Determine the characteristics of a module, and decide what to do with
+ * each segment it contains (including determining destination segments and
+ * relocation factors for segments that	are kept).
+ */
+
+void loadmodule(const char * filename)
+{
+    if (options.verbose)
+	printf("loading `%s'\n", filename);
+
+    /* allocate a new module entry on the end of the modules list */
+    if (!modules)
+    {
+	modules = malloc (sizeof(*modules));
+	lastmodule = modules;
     }
     else
     {
-	lastlib->next = malloc(sizeof(struct librarynode));
-	lastlib = lastlib->next;
+	lastmodule->next = malloc (sizeof(*modules));
+	lastmodule = lastmodule->next;
     }
 
-    if (! lastlib) {
+    if ( ! lastmodule)
+    {
 	fprintf(stderr, "ldrdf: out of memory\n");
 	exit(1);
     }
-    strcpy (lastlib->name = malloc (1+strlen(name)), name);
-    lastlib->fp = NULL;
-    lastlib->referenced = 0;
-    lastlib->next = NULL;
+
+    /* open the file using 'rdfopen', which returns nonzero on error */
+
+    if (rdfopen(&lastmodule->f, filename) != 0)
+    {
+	rdfperror("ldrdf", filename);
+	exit(1);
+    }
+
+    /* 
+     * store information about the module, and determine what segments
+     * it contains, and what we should do with them (determine relocation
+     * factor if we decide to keep them)
+     */
+
+    lastmodule->header = NULL;
+    lastmodule->name = strdup(filename);
+    lastmodule->next = NULL;
+
+    processmodule(filename, lastmodule);
 }
-
-
-/* build_symbols()	step through each module's header, and locate
- *			exported symbols, placing them in a global table
+	
+/*
+ * processmodule()
+ *
+ * step through each segment, determine what exactly we're doing with
+ * it, and if we intend to keep it, determine (a) which segment to
+ * put it in and (b) whereabouts in that segment it will end up.
+ * (b) is fairly easy, cos we're now keeping track of how big each segment
+ * in our output file is...
  */
 
-long bsslength;
-
-void mod_addsymbols(struct modulenode * mod)
+void processmodule(const char * filename, struct modulenode * mod)
 {
-    rdfheaderrec *r;
-    symtabEnt e;
-    long cbBss;
+    struct segconfig sconf;
+    int		seg, outseg;
+    void	* header;
+    rdfheaderrec * hr;
+    long	bssamount = 0;
 
-    mod->bssrel = bsslength;
-    cbBss = 0;
-    rdfheaderrewind(&mod->f);
-    while ((r = rdfgetheaderrec(&mod->f)))
+    for (seg = 0; seg < mod->f.nsegs; seg++)
     {
+	/*
+	 * get the segment configuration for this type from the segment
+	 * table. getsegconfig() is a macro, defined in ldsegs.h.
+	 */
+	getsegconfig(sconf, mod->f.seg[seg].type);
 
-	if (r->type == 5)		/* Allocate BSS */
-	    cbBss += r->b.amount;
+	if (options.verbose > 1) {
+	    printf ("%s %04x [%04x:%10s] ", filename, mod->f.seg[seg].number, 
+		    mod->f.seg[seg].type, sconf.typedesc);
+	}
+	/*
+	 * sconf->dowhat tells us what to do with a segment of this type.
+	 */
+	switch (sconf.dowhat) {
+	case SEG_IGNORE:
+	    /*
+	     * Set destination segment to -1, to indicate that this segment
+	     * should be ignored for the purpose of output, ie it is left
+	     * out of the linked executable.
+	     */
+	    mod->seginfo[seg].dest_seg = -1;
+	    if (options.verbose > 1) printf("IGNORED\n");
+	    break;
 
-	if (r->type != 3) continue;	/* ignore all but export recs */
+	case SEG_NEWSEG:
+	    /*
+	     * The configuration tells us to create a new segment for
+	     * each occurrence of this segment type.
+	     */
+	    outseg = allocnewseg(sconf.mergetype,
+				 mod->f.seg[seg].reserved);
+	    mod->seginfo[seg].dest_seg = outseg;
+	    mod->seginfo[seg].reloc = 0;
+	    outputseg[outseg].length = mod->f.seg[seg].length;
+	    if (options.verbose > 1) 
+		printf ("=> %04x:%08lx (+%04lx)\n", outseg,
+			mod->seginfo[seg].reloc,
+			mod->f.seg[seg].length);
+	    break;
 
-	e.segment = r->e.segment;
-	e.offset = r->e.offset + 
-	    (e.segment == 0 ? mod->coderel : /* 0 -> code */
-	     e.segment == 1 ? mod->datarel : /* 1 -> data */
-	     mod->bssrel) ; /* 2 -> bss  */
-	
-	e.flags = 0;
-	e.name = malloc(strlen(r->e.label) + 1);
-	if (! e.name)
-	{
-	    fprintf(stderr,"ldrdf: out of memory\n");
+	case SEG_MERGE:
+	    /*
+	     * The configuration tells us to merge the segment with
+	     * a previously existing segment of type 'sconf.mergetype',
+	     * if one exists. Otherwise a new segment is created.
+	     * This is handled transparently by 'findsegment()'.
+	     */
+	    outseg = findsegment(sconf.mergetype,
+				 mod->f.seg[seg].reserved);
+	    mod->seginfo[seg].dest_seg = outseg;
+
+	    /*
+	     * We need to add alignment to these segments.
+	     */
+	    if (outputseg[outseg].length % options.align != 0)
+		outputseg[outseg].length += 
+		    options.align - (outputseg[outseg].length % options.align);
+	    
+	    mod->seginfo[seg].reloc = outputseg[outseg].length;
+	    outputseg[outseg].length  += mod->f.seg[seg].length;
+
+	    if (options.verbose > 1) 
+		printf ("=> %04x:%08lx (+%04lx)\n", outseg,
+			mod->seginfo[seg].reloc,
+			mod->f.seg[seg].length);
+	}
+
+    }
+
+    /*
+     * extract symbols from the header, and dump them into the
+     * symbol table
+     */
+    header = malloc(mod->f.header_len);
+    if (!header) {
+	fprintf(stderr, "ldrdf: not enough memory\n");
+	exit(1);
+    }
+    if (rdfloadseg(&mod->f, RDOFF_HEADER, header)) {
+	rdfperror("ldrdf", filename);
+	exit(1);
+    }
+
+    while ((hr = rdfgetheaderrec (&mod->f)))
+    {
+	switch(hr->type) {
+	case 2:	/* imported symbol - define with seg = -1 */
+	case 7:
+	    symtab_add(hr->i.label, -1, 0);
+	    break;
+
+	case 3: /* exported symbol */
+	    if (mod->seginfo[(int)hr->e.segment].dest_seg == -1)
+		continue;
+	    symtab_add(hr->e.label, mod->seginfo[(int)hr->e.segment].dest_seg,
+		       mod->seginfo[(int)hr->e.segment].reloc + hr->e.offset);
+	    break;
+
+	case 5: /* BSS reservation */
+	    /*
+	     * first, amalgamate all BSS reservations in this module
+	     * into one, because we allow this in the output format.
+	     */
+	    bssamount += hr->b.amount;
+	    break;
+	}
+    }
+
+    if (bssamount != 0)
+    {
+	/*
+	 * handle the BSS segment - first pad the existing bss length
+	 * to the correct alignment, then store the length in bss_reloc
+	 * for this module. Then add this module's BSS length onto
+	 * bss_length.
+	 */
+	if (bss_length % options.align != 0)
+	    bss_length +=  options.align - (bss_length % options.align);
+    
+	mod->bss_reloc = bss_length;
+	if (options.verbose > 1) {
+	    printf ("%s 0002 [            BSS] => 0002:%08lx (+%04lx)\n",
+		    filename, bss_length, bssamount);
+	}
+	bss_length += bssamount;
+    }
+
+#ifdef STINGY_MEMORY
+    /*
+     * we free the header buffer here, to save memory later.
+     * this isn't efficient, but probably halves the memory usage
+     * of this program...
+     */
+    mod->f.header_loc = NULL;
+    free(header);
+
+#endif
+
+}
+
+/*
+ * allocnewseg()
+ * findsegment()
+ *
+ * These functions manipulate the array of output segments, and are used
+ * by processmodule(). allocnewseg() allocates a segment in the array,
+ * initialising it to be empty. findsegment() first scans the array for
+ * a segment of the type requested, and if one isn't found allocates a
+ * new one.
+ */
+int allocnewseg(int16 type,int16 reserved)
+{
+    outputseg[nsegs].type = type;
+    outputseg[nsegs].number = nsegs;
+    outputseg[nsegs].reserved = reserved;
+    outputseg[nsegs].length = 0;
+    outputseg[nsegs].offset = 0;
+    outputseg[nsegs].data = NULL;
+
+    return nsegs++;
+}
+
+int findsegment(int16 type,int16 reserved)
+{
+    int i;
+
+    for (i = 0; i < nsegs; i++)
+	if (outputseg[i].type == type) return i;
+
+    return allocnewseg(type,reserved);
+}
+
+/*
+ * symtab_add()
+ *
+ * inserts a symbol into the global symbol table, which associates symbol
+ * names either with addresses, or a marker that the symbol hasn't been
+ * resolved yet, or possibly that the symbol has been defined as
+ * contained in a dynamic [load time/run time] linked library.
+ *
+ * segment = -1 => not yet defined
+ * segment = -2 => defined as dll symbol
+ *
+ * If the symbol is already defined, and the new segment >= 0, then
+ * if the original segment was < 0 the symbol is redefined, otherwise
+ * a duplicate symbol warning is issued. If new segment == -1, this
+ * routine won't change a previously existing symbol. It will change
+ * to segment = -2 only if the segment was previously < 0.
+ */
+
+void symtab_add(const char * symbol, int segment, long offset)
+{
+    symtabEnt * ste;
+
+    ste = symtabFind(symtab, symbol);
+    if (ste)
+    {
+	if (ste->segment >= 0) {
+	    /*
+	     * symbol previously defined
+	     */
+	    if (segment < 0) return;
+	    fprintf (stderr, "warning: `%s' redefined\n", symbol);
+	    return;
+	}
+
+	/*
+	 * somebody wanted the symbol, and put an undefined symbol
+	 * marker into the table
+	 */
+	if (segment == -1) return;
+	/*
+	 * we have more information now - update the symbol's entry
+	 */
+	ste->segment = segment;
+	ste->offset = offset;
+	ste->flags = 0;
+	return;
+    }
+    /*
+     * this is the first declaration of this symbol
+     */
+    ste = malloc(sizeof(symtabEnt));
+    if (!ste) {
+	fprintf(stderr, "ldrdf: out of memory\n");
+	exit(1);
+    }
+    ste->name = strdup(symbol);
+    ste->segment = segment;
+    ste->offset = offset;
+    ste->flags = 0;
+    symtabInsert(symtab, ste);
+}
+
+/*
+ * symtab_get()
+ *
+ * Retrieves the values associated with a symbol. Undefined symbols
+ * are assumed to have -1:0 associated. Returns 1 if the symbol was
+ * successfully located.
+ */
+
+int symtab_get(const char * symbol, int * segment, long * offset)
+{
+    symtabEnt * ste = symtabFind(symtab, symbol);
+    if (!ste) {
+	*segment = -1;
+	*offset = 0;
+	return 0;
+    }
+    else
+    {
+	*segment = ste->segment;
+	*offset = ste->offset;
+	return 1;
+    }
+}
+
+/*
+ * add_library()
+ *
+ * checks that a library can be opened and is in the correct format,
+ * then adds it to the linked list of libraries.
+ */
+
+void add_library(const char * name)
+{
+    if (rdl_verify(name)) {
+	rdl_perror("ldrdf", name);
+	errorcount++;
+	return;
+    }
+    if (! libraries)
+    {
+	lastlib = libraries = malloc(sizeof(*libraries));
+	if (! libraries) {
+	    fprintf(stderr, "ldrdf: out of memory\n");
 	    exit(1);
 	}
-	strcpy(e.name,r->e.label);
-	symtabInsert(symtab,&e);
     }
-    bsslength += cbBss;
-}
-
-void build_symbols()
-{
-  struct modulenode *mod;
-
-  if (verbose) printf("building global symbol table:\n");
-  newheader = rdfnewheader();
-
-  symtab = symtabNew();
-  bsslength = 0;		  /* keep track of location of BSS symbols */
-
-  for (mod = modules; mod; mod = mod->next)
-  {
-      mod_addsymbols( mod );
-  }
-  if (verbose)
-  {
-      symtabDump(symtab,stdout);
-      printf("BSS length = %ld bytes\n\n",bsslength);
-  }
-}
-
-
-/* scan_libraries()	search through headers of modules for undefined
- *			symbols, and scan libraries for those symbols,
- *			adding library modules found to list of modules
- *			to load.					*/
-
-void scan_libraries(void)
-{
-    struct modulenode 	* mod, * nm;
-    struct librarynode	* lib;
-    rdfheaderrec	* r;
-    int			found;
-    char		* tmp;
-
-    if (verbose) printf("Scanning libraries for unresolved symbols...\n");
-
-    mod = modules;
-
-    while (mod)
+    else
     {
-	rdfheaderrewind(&mod->f);
-
-	while ((r = rdfgetheaderrec(&mod->f)))
-	{
-	    if (r->type != 2) continue;	/* not an import record */
-	    if ( symtabFind (symtab,r->i.label) )
-		continue;		/* symbol already defined */
-	    
-	    /* okay, we have an undefined symbol... step through
-	       the libraries now */
-	    if (verbose >= 2) {
-		printf("undefined symbol '%s'...",r->i.label);
-		fflush(stdout);
-	    }
-
-	    lib = libraries;
-	    found = 0;
-
-	    tmp = newstr(r->i.label);
-	    while (! found && lib)
-	    {
-		/* move this to an outer loop...! */
-		nm = malloc(sizeof(struct modulenode));
-
-		if (rdl_searchlib(lib,tmp,&nm->f))
-		{	/* found a module in the library */
-
-		    /* create a modulenode for it */
-
-		    if (! nm) {
-			fprintf(stderr,"ldrdf: out of memory\n");
-			exit(1);
-		    }
-
-		    nm->name = newstrcat(lib->name,nm->f.name);
-		    if (verbose >= 2) printf("found in '%s'\n",nm->name);
-
-		    nm->coderel = lastmodule->coderel + lastmodule->f.code_len;
-		    if (nm->coderel % align != 0)
-			nm->coderel += align - (nm->coderel % align);
-
-		    nm->datarel = lastmodule->datarel + lastmodule->f.data_len;
-		    if (nm->datarel % align != 0)
-			nm->datarel += align - (nm->datarel % align);
-
-		    nm->header = malloc(nm->f.header_len);
-		    if (! nm->header)
-		    {
-			fprintf(stderr,"ldrdf: out of memory\n");
-			exit(1);
-		    }
-
-		    if (rdfloadseg(&nm->f,RDOFF_HEADER,nm->header))
-		    {
-			rdfperror("ldrdf",nm->name);
-			exit(1);
-		    }
-
-		    nm->next = NULL;
-		    found = 1;
-		    lastmodule->next = nm;
-		    lastmodule = nm;
-
-		    if (verbose)
-			printf("%s code = %08lx (+%04lx), data = %08lx "
-			       "(+%04lx)\n",lastmodule->name,
-			       lastmodule->coderel,lastmodule->f.code_len,
-			       lastmodule->datarel,lastmodule->f.data_len);
-
-		    /* add the module's info to the symbol table */
-		    mod_addsymbols(nm);
-		}
-		else
-		{
-		    if (rdl_error) {
-			rdl_perror("ldrdf",lib->name);
-			exit(1);
-		    }
-		    free(nm);
-		}
-		lib = lib->next;
-	    }
-	    free(tmp);
-	    if (!found && verbose >= 2) printf("not found\n");
+	lastlib->next = malloc(sizeof(*libraries));
+	if (!lastlib->next) {
+	    fprintf(stderr, "ldrdf: out of memory\n");
+	    exit(1);
 	}
-	mod = mod->next;
+	lastlib = lastlib->next;
+    }
+    if (rdl_open(lastlib, name)) {
+	rdl_perror("ldrdf", name);
+	errorcount++;
+	return;
     }
 }
 
-/* load_segments()	allocates memory for & loads the code & data segs
- *			from the RDF modules
+/*
+ * search_libraries()
+ *
+ * scans through the list of libraries, attempting to match symbols
+ * defined in library modules against symbols that are referenced but
+ * not defined (segment = -1 in the symbol table)
+ *
+ * returns 1 if any extra library modules are included, indicating that
+ * another pass through the library list should be made (possibly).
  */
 
-char *text,*data;
-long textlength,datalength;
-
-void load_segments(void)
+int search_libraries()
 {
-  struct modulenode *mod;
+    struct librarynode * cur;
+    rdffile f;
+    int     i;
+    void    * header;
+    int	    segment;
+    long    offset;
+    int	    doneanything = 0, keepfile;
+    rdfheaderrec * hr;
 
-  if (!modules) {
-    fprintf(stderr,"ldrdf: nothing to do\n");
-    exit(0);
-  }
-  if (!lastmodule) {
-    fprintf(stderr,"ldrdf: panic: module list exists, but lastmodule=NULL\n");
-    exit(3);
-  }
+    cur = libraries;
 
-  if (verbose)
-    printf("loading modules into memory\n");
+    while (cur)
+    {
+	if (options.verbose > 2)
+	    printf("scanning library `%s'...\n", cur->name);
+	
+	for (i = 0; rdl_openmodule(cur, i, &f) == 0; i++)
+	{
+	    if (options.verbose > 3)
+		printf("  looking in module `%s'\n", f.name);
 
-  /* The following stops 16 bit DOS from crashing whilst attempting to
-     work using segments > 64K */
-  if (sizeof(int) == 2) { /* expect a 'code has no effect' warning on 32 bit
-			    platforms... */
-    if (lastmodule->coderel + lastmodule->f.code_len > 65535 ||
-	lastmodule->datarel + lastmodule->f.data_len > 65535) {
-      fprintf(stderr,"ldrdf: segment length has exceeded 64K; use a 32 bit "
-	      "version.\nldrdf: code size = %05lx, data size = %05lx\n",
-	      lastmodule->coderel + lastmodule->f.code_len,
-	      lastmodule->datarel + lastmodule->f.data_len);
-      exit(1);
-    }
-  }
-
-  text = malloc(textlength = lastmodule->coderel + lastmodule->f.code_len);
-  data = malloc(datalength = lastmodule->datarel + lastmodule->f.data_len);
-
-  if (!text || !data) {
-    fprintf(stderr,"ldrdf: out of memory\n");
-    exit(1);
-  }
-
-  mod = modules;
-  while (mod) {		/* load the segments for each module */
-      if (verbose >= 2) printf("  loading %s\n",mod->name);
-      if (rdfloadseg(&mod->f,RDOFF_CODE,&text[mod->coderel]) ||
-	  rdfloadseg(&mod->f,RDOFF_DATA,&data[mod->datarel])) {
-	  rdfperror("ldrdf",mod->name);
-	  exit(1);
-      }
-      rdfclose(&mod->f);	/* close file; segments remain */
-      mod = mod->next;
-  }
-}
-    
-/* link_segments()	step through relocation records in each module's
- *			header, fixing up references.
- */
-
-void link_segments(void)
-{
-  struct modulenode	*mod;
-  Collection		imports;
-  symtabEnt		*s;
-  long 			rel,relto;
-  char 			*seg;
-  rdfheaderrec		*r;
-  int			bRelative;
-
-  if (verbose) printf("linking segments\n");
-
-  collection_init(&imports);
-
-  for (mod = modules; mod; mod = mod->next) {
-    if (verbose >= 2) printf("* processing %s\n",mod->name);
-    rdfheaderrewind(&mod->f);
-    while((r = rdfgetheaderrec(&mod->f))) {
-	if (verbose >= 3) printf("record type: %d\n",r->type);
-	switch(r->type) {
-	case 1:		/* relocation record */
-	    if (r->r.segment >= 64) {     	/* Relative relocation; */
-		bRelative = 1;		/* need to find location relative */
-		r->r.segment -= 64;		/* to start of this segment */
-		relto = r->r.segment == 0 ? mod->coderel : mod->datarel;
+	    header = malloc(f.header_len);
+	    if (!header) {
+		fprintf(stderr, "ldrdf: not enough memory\n");
+		exit(1);
 	    }
-	    else
+	    if (rdfloadseg(&f, RDOFF_HEADER, header)) {
+		rdfperror("ldrdf", f.name);
+		errorcount++;
+		return 0;
+	    }
+	    
+	    keepfile = 0;
+
+	    while ((hr = rdfgetheaderrec (&f)))
 	    {
-		bRelative = 0;		/* non-relative - need to relocate
-					 * at load time			*/
-		relto = 0;	       /* placate optimiser warnings */
+                /* we're only interested in exports, so skip others: */
+		if (hr->type != 3) continue; 
+
+		/*
+		 * Find the symbol in the symbol table. If the symbol isn't
+		 * defined, we aren't interested, so go on to the next.
+		 * If it is defined as anything but -1, we're also not
+		 * interested. But if it is defined as -1, insert this
+		 * module into the list of modules to use, and go
+		 * immediately on to the next module...
+		 */
+		if (! symtab_get(hr->e.label, &segment, &offset) 
+		    || segment != -1)
+		{
+		    continue;    
+		}
+		
+		doneanything = 1;
+		keepfile = 1;
+
+		/*
+		 * as there are undefined symbols, we can assume that
+		 * there are modules on the module list by the time
+		 * we get here.
+		 */
+		lastmodule->next = malloc(sizeof(*lastmodule->next));
+		if (!lastmodule->next) {
+		    fprintf(stderr, "ldrdf: not enough memory\n");
+		    exit(1);
+		}
+		lastmodule = lastmodule->next;
+		memcpy(&lastmodule->f, &f, sizeof(f));
+		lastmodule->name = strdup(f.name);
+		processmodule(f.name, lastmodule);
+		break;
 	    }
+	    if (!keepfile)
+		rdfclose(&f);	    
+	}
+	if (rdl_error != 0 && rdl_error != RDL_ENOTFOUND)
+	    rdl_perror("ldrdf", cur->name);
+	cur = cur->next;
+    }
 
-	    /* calculate absolute offset of reference, not rel to beginning of
-	       segment */
-	    r->r.offset += r->r.segment == 0 ? mod->coderel : mod->datarel;
+    return doneanything;
+}
 
-	    /* calculate the relocation factor to apply to the operand -
-	       the base address of one of this modules segments if referred
-	       segment is 0 - 2, or the address of an imported symbol
-	       otherwise. */
+/*
+ * write_output()
+ *
+ * this takes the linked list of modules, and walks through it, merging
+ * all the modules into a single output module, and then writes this to a
+ * file.
+ */
+void write_output(const char * filename)
+{
+    FILE          * f = fopen(filename, "wb");
+    rdf_headerbuf * rdfheader = rdfnewheader();
+    struct modulenode * cur;
+    int		  i, availableseg, seg, localseg, isrelative;
+    void	  * header;
+    rdfheaderrec  * hr, newrec;
+    symtabEnt 	  * se;
+    segtab	  segs;
+    long	  offset;
+    byte 	  * data;
 
-	    if (r->r.refseg == 0) rel = mod->coderel;
-	    else if (r->r.refseg == 1) rel = mod->datarel;
-	    else if (r->r.refseg == 2) rel = mod->bssrel;
-	    else {		/* cross module link - find reference */
-		s = *colln(&imports,r->r.refseg - 2);
-		if (!s) {
-		    fprintf(stderr,"ldrdf: link to undefined segment %04x in"
-			    " %s:%d\n", r->r.refseg,mod->name,r->r.segment);
-		    errors = 1;
+    if (!f) {
+	fprintf(stderr, "ldrdf: couldn't open %s for output\n", filename);
+	exit(1);
+    }
+    if (!rdfheader) {
+	fprintf(stderr, "ldrdf: out of memory\n");
+	exit(1);
+    }
+
+    if (options.verbose)
+	printf ("\nbuilding output module (%d segments)\n", nsegs);
+    
+    /*
+     * Allocate the memory for the segments. We may be better off
+     * building the output module one segment at a time when running
+     * under 16 bit DOS, but that would be a slower way of doing this.
+     * And you could always use DJGPP...
+     */
+    for (i = 0; i < nsegs; i++)
+    {
+	outputseg[i].data = malloc(outputseg[i].length);
+	if (!outputseg[i].data) {
+	    fprintf(stderr, "ldrdf: out of memory\n");
+	    exit(1);
+	}
+    }
+
+    /*
+     * initialise availableseg, used to allocate segment numbers for
+     * imported and exported labels...
+     */
+    availableseg = nsegs;
+
+    /*
+     * Step through the modules, performing required actions on each one
+     */
+    for (cur = modules; cur; cur=cur->next)
+    {
+	/*
+	 * Read the actual segment contents into the correct places in
+	 * the newly allocated segments
+	 */
+
+	for (i = 0; i < cur->f.nsegs; i++)
+	{
+	    int dest = cur->seginfo[i].dest_seg;
+
+	    if (dest == -1) continue;
+	    if (rdfloadseg(&cur->f, i, 
+			   outputseg[dest].data + cur->seginfo[i].reloc))
+	    {
+		rdfperror("ldrdf", cur->name);
+		exit(1);
+	    }
+	}
+ 
+	/*
+	 * Perform fixups, and add new header records where required
+	 */
+
+	header = malloc(cur->f.header_len);
+	if (!header) {
+	    fprintf(stderr, "ldrdf: out of memory\n");
+	    exit(1);
+	}
+
+	if (cur->f.header_loc)
+	    rdfheaderrewind(&cur->f);
+	else
+	    if (rdfloadseg(&cur->f, RDOFF_HEADER, header))
+	    {
+		rdfperror("ldrdf", cur->name);
+		exit(1);
+	    }
+	
+	/*
+	 * we need to create a local segment number -> location
+	 * table for the segments in this module.
+	 */
+	init_seglocations(&segs);
+	for (i = 0; i < cur->f.nsegs; i++)
+	{
+	    add_seglocation(&segs, cur->f.seg[i].number,
+			    cur->seginfo[i].dest_seg, cur->seginfo[i].reloc);
+	}
+	/*
+	 * and the BSS segment (doh!)
+	 */
+	add_seglocation (&segs, 2, 2, cur->bss_reloc);
+
+	while ((hr = rdfgetheaderrec(&cur->f)))
+	{
+	    switch(hr->type) {
+	    case 1: /* relocation record - need to do a fixup */
+		/*
+		 * First correct the offset stored in the segment from
+		 * the start of the segment (which may well have changed).
+		 *
+		 * To do this we add to the number stored the relocation
+		 * factor associated with the segment that contains the
+		 * target segment.
+		 *
+		 * The relocation could be a relative relocation, in which
+		 * case we have to first subtract the amount we've relocated
+		 * the containing segment by.
+		 */
+		
+		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset))
+		{
+		    fprintf(stderr, "%s: reloc to undefined segment %04x\n",
+			    cur->name, (int) hr->r.refseg);
+		    errorcount++;
 		    break;
 		}
-		rel = s->offset;
-	  
-		r->r.refseg = s->segment;	/* change referred segment, 
-						   so that new header is
-						   correct */
-	    }
 
-	    if (bRelative)	/* Relative - subtract current segment start */
-		rel -= relto; 
-	    else  
-	    {			/* Add new relocation header */
-		rdfaddheader(newheader,r);
-	    }
-	    
-	    /* Work out which segment we're making changes to ... */
-	    if (r->r.segment == 0) seg = text;
-	    else if (r->r.segment == 1) seg = data;
-	    else {
-		fprintf(stderr,"ldrdf: relocation in unknown segment %d in "
-			"%s\n", r->r.segment,mod->name);
-		errors = 1;
+		isrelative = (hr->r.segment & 64) == 64;
+		hr->r.segment &= 63;
+
+		if (hr->r.segment == 2 || 
+		    (localseg = rdffindsegment(&cur->f, hr->r.segment)) == -1)
+		{
+		    fprintf(stderr, "%s: reloc from %s segment (%d)\n", 
+			    cur->name,
+			    hr->r.segment == 2 ? "BSS" : "unknown",
+			    hr->r.segment);
+		    errorcount++;
+		    break;
+		}
+
+		if (hr->r.length != 1 && hr->r.length != 2 && hr->r.length!=4)
+		{
+		    fprintf(stderr, "%s: nonstandard length reloc "
+			    "(%d bytes)\n", cur->name, hr->r.length);
+		    errorcount++;
+		    break;
+		}
+
+		/* 
+		 * okay, now the relocation is in the segment pointed to by
+		 * cur->seginfo[localseg], and we know everything else is
+		 * okay to go ahead and do the relocation
+		 */
+		data = outputseg[cur->seginfo[localseg].dest_seg].data;
+		data += cur->seginfo[localseg].reloc + hr->r.offset;
+
+		/*
+		 * data now points to the reference that needs
+		 * relocation. Calculate the relocation factor.
+		 * Factor is:
+		 *      offset of referred object in segment [in offset]
+		 *	(- relocation of localseg, if ref is relative)
+		 * For simplicity, the result is stored in 'offset'.
+		 * Then add 'offset' onto the value at data.
+		 */
+		
+		if (isrelative) offset -= cur->seginfo[localseg].reloc;
+		switch (hr->r.length)
+		{
+		case 1:
+		    offset += *data;
+		    if (offset < -127 || offset > 128)
+			fprintf(stderr, "warning: relocation out of range "
+				"at %s(%02x:%08lx)\n", cur->name,
+				(int)hr->r.segment, hr->r.offset);
+		    *data = (char) offset;
+		    break;
+		case 2:
+		    offset += * (short *)data;
+		    if (offset < -32767 || offset > 32768)
+			fprintf(stderr, "warning: relocation out of range "
+				"at %s(%02x:%08lx)\n", cur->name,
+				(int)hr->r.segment, hr->r.offset);
+		    * (short *)data = (short) offset;
+		    break;
+		case 4:
+		    * (long *)data += offset;
+		    /* we can't easily detect overflow on this one */
+		    break;
+		}
+
+		/*
+		 * If the relocation was relative between two symbols in
+		 * the same segment, then we're done.
+		 *
+		 * Otherwise, we need to output a new relocation record
+		 * with the references updated segment and offset...
+		 */
+		if (! isrelative 
+		    || cur->seginfo[localseg].dest_seg != seg)
+		{
+		    hr->r.segment = cur->seginfo[localseg].dest_seg;
+		    hr->r.offset += cur->seginfo[localseg].reloc;
+		    hr->r.refseg = seg;
+		    rdfaddheader(rdfheader, hr);
+		}
+		break;
+
+	    case 2: /* import symbol */
+	    case 7:
+		/*
+		 * scan the global symbol table for the symbol
+		 * and associate its location with the segment number 
+		 * for this module
+		 */
+		se = symtabFind(symtab, hr->i.label);
+		if (!se || se->segment == -1) {
+		    if (options.warnUnresolved) {
+			fprintf(stderr, "warning: unresolved reference to `%s'"
+				" in module `%s'\n", hr->i.label, cur->name);
+		    }
+		    /*
+		     * we need to allocate a segment number for this
+		     * symbol, and store it in the symbol table for
+		     * future reference
+		     */ 
+		    if (!se) {
+			se=malloc(sizeof(*se));
+			if (!se) {
+			    fprintf(stderr, "ldrdf: out of memory\n");
+			    exit(1);
+			}
+			se->name = strdup(hr->i.label);
+			se->flags = 0;
+			se->segment = availableseg++;
+			se->offset = 0;
+			symtabInsert(symtab, se);
+		    }
+		    else {
+			se->segment = availableseg++;
+			se->offset = 0;
+		    }
+		    /*
+		     * output a header record that imports it to the
+		     * recently allocated segment number...
+		     */
+		    newrec = *hr;
+		    newrec.i.segment = se->segment;
+		    rdfaddheader(rdfheader, &newrec);
+		}
+
+		add_seglocation(&segs, hr->i.segment, se->segment, se->offset);
+		
+		break;
+
+	    case 3: /* export symbol */
+		/*
+		 * need to insert an export for this symbol into the new
+		 * header, unless we're stripping symbols [unless this
+		 * symbol is in an explicit keep list]. *** FIXME ***
+		 */
+		if (options.strip)
+		    break;
+
+		if (hr->e.segment == 2) {
+		    seg = 2;
+		    offset = cur->bss_reloc;
+		}
+		else {
+		    localseg = rdffindsegment(&cur->f, hr->e.segment);
+		    if (localseg == -1) {
+			fprintf(stderr, "%s: exported symbol `%s' from "
+				"unrecognised segment\n", cur->name,
+				hr->e.label);
+			errorcount++;
+			break;
+		    }
+		    offset = cur->seginfo[localseg].reloc;
+		    seg = cur->seginfo[localseg].dest_seg;
+		}
+
+		hr->e.segment = seg;	
+		hr->e.offset += offset;
+		rdfaddheader(rdfheader, hr);
+		break;
+
+	    case 6: /* segment fixup */
+		/*
+		 * modify the segment numbers if necessary, and
+		 * pass straight through to the output module header
+		 *
+		 * *** FIXME ***
+		 */
+		if (hr->r.segment == 2) {
+		    fprintf(stderr, "%s: segment fixup in BSS section\n",
+			    cur->name);
+		    errorcount++;
+		    break;
+		}
+		localseg = rdffindsegment(&cur->f, hr->r.segment);
+		if (localseg == -1) {
+		    fprintf(stderr, "%s: segment fixup in unrecognised"
+			    " segment (%d)\n", cur->name, hr->r.segment);
+		    errorcount++;
+		    break;
+		}
+		hr->r.segment = cur->seginfo[localseg].dest_seg;
+		hr->r.offset += cur->seginfo[localseg].reloc;
+
+		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset))
+		{
+		    fprintf(stderr, "%s: segment fixup to undefined "
+			    "segment %04x\n", cur->name, (int)hr->r.refseg);
+		    errorcount++;
+		    break;
+		}
+		hr->r.refseg = seg;
+		rdfaddheader(rdfheader, hr);
 		break;
 	    }
-
-	    /* Add the relocation factor to the datum specified: */
-
-	    if (verbose >= 3)
-		printf("  - relocating %d:%08lx by %08lx\n",r->r.segment,
-		       r->r.offset,rel);
-
-	    /**** The following code is non-portable. Rewrite it... ****/
-	    switch(r->r.length) {
-	    case 1:
-		seg[r->r.offset] += (char) rel;
-		break;
-	    case 2:
-		*(int16 *)(seg + r->r.offset) += (int16) rel;
-		break;
-	    case 4:
-		*(long *)(seg + r->r.offset) += rel;
-		break;
-	    }
-	    break;
-
-	case 2:		/* import record */
-	    s = symtabFind(symtab, r->i.label);
-	    if (s == NULL) {
-		/* Need to add support for dynamic linkage */
-		fprintf(stderr,"ldrdf: undefined symbol %s in module %s\n",
-			r->i.label,mod->name);
-		errors = 1;
-	    }
-	    else 
-	    {
-		*colln(&imports,r->i.segment - 2) = s;
-		if (verbose >= 2)
-		    printf("imported %s as %04x\n", r->i.label, r->i.segment);
-	    }
-	    break;
-
-	case 3:		/* export; dump to output new version */
-	    s = symtabFind(symtab, r->e.label);
-	    if (! s) {
-		fprintf(stderr,"ldrdf: internal error - undefined symbol %s "
-			"exported in header of '%s'\n",r->e.label,mod->name);
-		continue;
-	    }
-	    r->e.offset = s->offset;
-	    rdfaddheader(newheader,r);
-	    break;
-
-	case 4:		/* DLL record */
-	    rdfaddheader(newheader,r);		/* copy straight to output */
-	    break;
 	}
+
+	free(header);
+	done_seglocations(&segs);
+
+   }
+
+    /*
+     * combined BSS reservation for the entire results
+     */
+    newrec.type = 5;
+    newrec.b.reclen = 4;
+    newrec.b.amount = bss_length;
+    rdfaddheader(rdfheader, &newrec);
+
+    /*
+     * Write the header
+     */
+    for (i = 0; i < nsegs; i++)
+    {
+	if (i == 2) continue;
+	rdfaddsegment (rdfheader, outputseg[i].length);
     }
-    if (rdf_errno != 0) {
-	rdfperror("ldrdf",mod->name);
-	exit(1);
-    }
-    collection_reset(&imports);
-  }
-}
+    rdfwriteheader(f, rdfheader);
+    rdfdoneheader(rdfheader);
+    /*
+     * Step through the segments, one at a time, writing out into
+     * the output file
+     */
     
-/* write_output()	write linked program out to a file */
-
-void write_output(char *filename)
-{
-    FILE		* fp;
-    rdfheaderrec	r;
-
-    if (verbose) printf("writing output to '%s'\n",filename);
-
-    fp = fopen(filename,"wb");
-    if (! fp)
+    for (i = 0; i < nsegs; i++)
     {
-	fprintf(stderr,"ldrdf: could not open '%s' for writing\n",filename);
-	exit(1);
-    }
-  
-    
-    /* add BSS length count to header... */
-    if (bsslength)
-    {
-	r.type = 5;
-	r.b.amount = bsslength;
-	rdfaddheader(newheader,&r);
+	int16 s;
+	long l;
+	
+	if (i == 2) continue;
+
+	s = translateshort(outputseg[i].type);
+	fwrite(&s, 2, 1, f);
+	s = translateshort(outputseg[i].number);
+	fwrite(&s, 2, 1, f);
+	s = translateshort(outputseg[i].reserved);
+	fwrite(&s, 2, 1, f);
+	l = translatelong(outputseg[i].length);
+	fwrite(&l, 4, 1, f);
+
+	fwrite(outputseg[i].data, outputseg[i].length, 1, f);
     }
 
-    /* Write header */
-    rdfwriteheader(fp,newheader);
-    rdfdoneheader(newheader);
-    newheader = NULL;
-
-    /* Write text */
-    if (fwrite(&textlength,1,4,fp) != 4
-	|| fwrite(text,1,textlength,fp) !=textlength)
-    {
-	fprintf(stderr,"ldrdf: error writing %s\n",filename);
-	exit(1);
-    }
-
-    /* Write data */
-    if (fwrite(&datalength,1,4,fp) != 4 ||
-	fwrite(data,1,datalength,fp) != datalength)
-    {
-	fprintf (stderr,"ldrdf: error writing %s\n", filename);
-	exit(1);
-    }
-    fclose(fp);
+    fwrite("\0\0\0\0\0\0\0\0\0\0", 10, 1, f);
 }
 
-
-/* main program: interpret command line, and pass parameters on to
- * individual module loaders & the linker
- *
- * Command line format:
- * ldrdf [-o outfile | -x] [-r xxxx] [-v] [--] infile [infile ...]
- *
- * Default action is to output a file named 'aout.rdx'. -x specifies
- * that the linked object program should be executed, rather than
- * written to a file. -r specifies that the object program should
- * be prelocated at address 'xxxx'. This option cannot be used
- * in conjunction with -x.
+/* =========================================================================
+ * Main program
  */
 
-const char *usagemsg = "usage:\n"
-" ldrdf [-o outfile | -x] [-a x] [-v] [-p x] [--] infile [infile ...]\n"
-"       [-l<libname> ...]\n\n"
-" ldrdf -h	displays this message\n"
-" ldrdf -r	displays version information\n\n"
-"   -o selects output filename (default is aout.rdx)\n"
-"   -x causes ldrdx to link & execute rather than write to file\n"
-"   -a x causes object program to be statically relocated to address 'x'\n"
-"   -v turns on verbose mode\n"
-"   -p x causes segments to be aligned (padded) to x byte boundaries\n"
-"      (default is 16 bytes)\n"
-"   -l<name> causes 'name' to be linked in as a library. Note no search is\n"
-"      performed - the entire pathname MUST be specified.\n";
-
-void usage(void)
+void usage()
 {
-  fputs(usagemsg,stderr);
+    printf("usage:\n");
+    printf("   ldrdf [options] object modules ... [-llibrary ...]\n");
+    printf("   ldrdf -r\n");
+    printf("options:\n");
+    printf("   -v[=n]    increases verbosity by 1, or sets it to n\n");
+    printf("   -a nn     sets segment alignment value (default 16)\n");
+    printf("   -s        strips exported symbols\n");
+    printf("   -x        warn about unresolved symbols\n");
+    printf("   -o name   write output in file 'name'\n");
+    printf("\n");
+    printf("Note: no library searching is performed. Please specify full\n");
+    printf("paths to all files referenced.\n");
+    exit(0);
 }
 
-int main(int argc,char **argv)
+int main(int argc, char ** argv)
 {
-  char	*ofilename = "aout.rdx";
-  long	relocateaddr = -1;	/* -1 if no relocation is to occur */
-  int	execute = 0;		/* 1 to execute after linking, 0 otherwise */
-  int	procsw = 1;		/* set to 0 by '--' */
-  int	tmp;
+    char * outname = "aout.rdf";
+    int  moduleloaded = 0;
 
-  if (argc == 1) {
-    usage();
-    exit(1);
-  }
-
-  /* process command line switches, and add modules specified to linked list
-     of modules, keeping track of total memory required to load them */
-
-  while(argv++,--argc) {
-    if (procsw && !strcmp(*argv,"-h")) {	/* Help command */
-      usage(); exit(1);
+    options.verbose = 0;
+    options.align = 16;
+    options.warnUnresolved = 0;
+    options.strip = 0;
+    
+    argc --, argv ++;
+    if (argc == 0) usage();
+    while (argc && **argv == '-' && argv[0][1] != 'l')
+    {
+	switch(argv[0][1]) {
+	case 'r':
+	    printf("ldrdf (linker for RDF files) version " LDRDF_VERSION "\n");
+	    printf( _RDOFF_H "\n");
+	    exit(0);
+	case 'v':
+	    if (argv[0][2] == '=') {
+		options.verbose = argv[0][3] - '0';
+		if (options.verbose < 0 || options.verbose > 9) {
+		    fprintf(stderr, "ldrdf: verbosity level must be a number"
+			    " between 0 and 9\n");
+		    exit(1);
+		}
+	    }
+	    else
+		options.verbose++;
+	    break;
+	case 'a':
+	    options.align = atoi(argv[1]);
+	    if (options.align <= 0) {
+		fprintf(stderr, 
+			"ldrdf: -a expects a positive number argument\n");
+		exit(1);
+	    }
+	    argv++, argc--;
+	    break;
+	case 's':
+	    options.strip = 1;
+	    break;
+	case 'x':
+	    options.warnUnresolved = 1;
+	    break;
+	case 'o':
+	    outname = argv[1];
+	    argv++, argc--;
+	    break;
+	default:
+	    usage();
+	}
+	argv++, argc--;
     }
-    else if (procsw && !strcmp(*argv,"-r")) {
-      printf("ldrdf version %s (%s) (%s)\n",LDRDF_VERSION,_RDOFF_H,
-	     sizeof(int) == 2 ? "16 bit" : "32 bit");
-      exit(1);
+
+    if (options.verbose > 4) {
+	printf("ldrdf invoked with options:\n");
+	printf("    section alignment: %d bytes\n", options.align);
+	printf("    output name: `%s'\n", outname);
+	if (options.strip)
+	    printf("    strip symbols\n");
+	if (options.warnUnresolved)
+	    printf("    warn about unresolved symbols\n");
+	printf("\n");
     }
-    else if (procsw && !strcmp(*argv,"-o")) {
-      ofilename = *++argv;
-      --argc;
-      if (execute) {
-	fprintf(stderr,"ldrdf: -o and -x switches incompatible\n");
+
+    symtab = symtabNew();
+    initsegments();
+
+    if (!symtab) {
+	fprintf(stderr, "ldrdf: out of memory\n");
 	exit(1);
-      }
-      if (verbose > 1) printf("output filename set to '%s'\n",ofilename);
     }
-    else if (procsw && !strcmp(*argv,"-x")) {
-      execute++;
-      if (verbose > 1) printf("will execute linked object\n");
+
+    while (argc)
+    {
+	if (!strncmp(*argv, "-l", 2)) /* library */
+	    add_library(*argv + 2);
+	else {
+	    loadmodule(*argv);
+	    moduleloaded = 1;
+	}
+	argv++, argc--;
     }
-    else if (procsw && !strcmp(*argv,"-a")) {
-      relocateaddr = readnum(*++argv,&tmp);
-      --argc;
-      if (tmp) {
-	fprintf(stderr,"ldrdf: error in parameter to '-a' switch: '%s'\n",
-		*argv);
+
+    if (! moduleloaded) {
+	printf("ldrdf: nothing to do. ldrdf -h for usage\n");
+	return 0;
+    }
+
+    
+    search_libraries();
+
+    if (options.verbose > 2)
+    {
+	printf ("symbol table:\n");
+	symtabDump(symtab, stdout);
+    }
+
+    write_output(outname);
+
+    if (errorcount > 0)
 	exit(1);
-      }
-      if (execute) {
-	fprintf(stderr,"ldrdf: -a and -x switches incompatible\n");
-	exit(1);
-      }
-      if (verbose) printf("will relocate to %08lx\n",relocateaddr);
-    }
-    else if (procsw && !strcmp(*argv,"-v")) {
-      verbose++;
-      if (verbose == 1) printf("verbose mode selected\n");
-    }
-    else if (procsw && !strcmp(*argv,"-p")) {
-      align = readnum(*++argv,&tmp);
-      --argc;
-      if (tmp) {
-	fprintf(stderr,"ldrdf: error in parameter to '-p' switch: '%s'\n",
-		*argv);
-	exit(1);
-      }
-      if (align != 1 && align != 2 && align != 4 && align != 8 && align != 16
-	  && align != 32 && align != 256) {
-	fprintf(stderr,"ldrdf: %d is an invalid alignment factor - must be"
-		"1,2,4,8,16 or 256\n",align);
-	exit(1);
-      }
-      if (verbose > 1) printf("alignment %d selected\n",align);
-    }
-    else if (procsw && !strncmp(*argv,"-l",2)) {
-	load_library(*argv + 2);
-    }
-    else if (procsw && !strcmp(*argv,"--")) {
-      procsw = 0;
-    }
-    else {					/* is a filename */
-      if (verbose > 1) printf("processing module %s\n",*argv);
-      loadmodule(*argv);
-    }
-  }
 
-  /* we should be scanning for unresolved references, and removing
-     unreferenced modules from the list of modules here, so that
-     we know about the final size once libraries have been linked in */
-
-  build_symbols();	/* build a global symbol table...           */
-
-  scan_libraries();	/* check for imported symbols not in table,
-			   and ensure the relevant library modules
-			   are loaded */
-
-  load_segments();	/* having calculated size of reqd segments, load
-			   each rdoff module's segments into memory */
-
-  link_segments();	/* step through each module's header, and resolve
-			   references to the global symbol table.
-			   This also does local address fixups. */
-
-  if (errors) {
-    fprintf(stderr,"ldrdf: there were errors - aborted\n");
-    exit(errors);
-  }
-  if (execute) {
-    fprintf(stderr,"ldrdf: module execution not yet supported\n");
-    exit(1);
-  }
-  if (relocateaddr != -1) {
-    fprintf(stderr,"ldrdf: static relocation not yet supported\n");
-    exit(1);
-  }
-
-  write_output(ofilename);
-  return 0;
+    return 0;
 }
+

@@ -114,7 +114,7 @@ labels.$(OBJ): labels.c nasm.h insnsi.h nasmlib.h
 listing.$(OBJ): listing.c nasm.h insnsi.h nasmlib.h listing.h
 nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
              listing.h outform.h
-nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
+nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
 outas86.$(OBJ): outas86.c nasm.h insnsi.h nasmlib.h
 outaout.$(OBJ): outaout.c nasm.h insnsi.h nasmlib.h
@@ -135,4 +135,3 @@ clean:
   del *.obj
   del nasm$(SUFFIX)$(EXE)
   del ndisasm$(SUFFIX)$(EXE)
-

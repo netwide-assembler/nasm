@@ -326,7 +326,8 @@ static int process_arg (char *p, char *q)
   	  case '-':			/* -- => stop processing options */
 	      stopoptions = 1;
 	      break;
-	  case 's':		       /* silently ignored for compatibility */
+	  case 's':
+	      error_file = stdout;
 	      break;
 	  case 'o':		       /* these parameters take values */
 	  case 'f':
@@ -390,7 +391,8 @@ static int process_arg (char *p, char *q)
 		   "    -e          preprocess only (writes output to stdout by default)\n"
 		   "    -a          don't preprocess (assemble only)\n"
 		   "    -M          generate Makefile dependencies on stdout\n\n"
-		   "    -E<file>    redirect error messages to file\n\n"
+		   "    -E<file>    redirect error messages to file\n"
+		   "    -s          redirect error messages to stdout\n\n"
 		   "    -g          enable debug info\n"
 		   "    -F format   select a debugging format\n\n"
 		   "    -I<path>    adds a pathname to the include file path\n"
@@ -812,18 +814,6 @@ static void assemble_file (char *fname)
 		    report_error (ERR_NONFATAL,
 				  "EQU not preceded by label");
 
-		/* 
-		 * EQU cannot be used to declare a label relative to
-		 * an external symbol.
-		 */
-		else if ((output_ins.oprs[0].opflags & OPFLAG_EXTERN) 
-			 || (output_ins.operands > 1 
-			     && (output_ins.oprs[1].opflags & OPFLAG_EXTERN)))
-		{
-		    report_error (ERR_NONFATAL,
-				  "EQU used relative to external symbol");
-		}
-
 		else if (output_ins.label[0] != '.' ||
 			 output_ins.label[1] != '.' ||
 			 output_ins.label[2] == '@') 
@@ -832,10 +822,11 @@ static void assemble_file (char *fname)
 			(output_ins.oprs[0].type & IMMEDIATE) &&
 			output_ins.oprs[0].wrt == NO_SEG) 
 		    {
-			define_label (output_ins.label,
-				      output_ins.oprs[0].segment,
-				      output_ins.oprs[0].offset,
-				      NULL, FALSE, FALSE, ofmt, report_error);
+		      int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
+		      define_label (output_ins.label,
+				    output_ins.oprs[0].segment,
+				    output_ins.oprs[0].offset,
+				    NULL, FALSE, isext, ofmt, report_error);
 		    } 
 		    else if (output_ins.operands == 2 &&
 			       (output_ins.oprs[0].type & IMMEDIATE) &&

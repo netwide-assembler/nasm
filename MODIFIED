@@ -1,7 +1,41 @@
-This is a modified version of NASM, modified and released by H. Peter
-Anvin <hpa@zytor.com>; it is not the original form released by the
-NASM authors.  However, as of 0.98p6 I have agreed to release the
-official 0.98 version, so this is now an "official pre-release".
+This file details changes since NASM 0.98p3.  All the releases in this
+file have been produced by H. Peter Anvin <hpa@zytor.com>.
+
+For release 0.98:
+* The documentation comment delimiter is \# not #.
+* Allow EQU definitions to refer to external labels; reported by
+  Pedro Gimeno.
+* Re-enable support for RDOFF v1; reported by Pedro Gimeno.
+* Updated License file per OK from Simon and Julian.
+
+For release 0.98p9:
+* Update documentation (although the instruction set reference will
+  have to wait; I don't want to hold up the 0.98 release for it.)
+* Verified that the NASM implementation of the PEXTRW and PMOVMSKB
+  instructions is correct.  The encoding differs from what the Intel
+  manuals document, but the Pentium III behaviour matches NASM, not
+  the Intel manuals.
+* Fix handling of implicit sizes in PSHUFW and PINSRW, reported by
+  Stefan Hoffmeister.
+* Resurrect the -s option, which was removed when changing the
+  diagnostic output to stdout.
+
+For release 0.98p8:
+* Fix for "DB" when NASM is running on a bigendian machine.
+* Invoke insns.pl once for each output script, making Makefile.in
+  legal for "make -j".
+* Improve the Unix configure-based makefiles to make package
+  creation easier.
+* Included an RPM .spec file for building RPM (RedHat Package Manager)
+  packages on Linux or Unix systems.
+* Fix Makefile dependency problems.
+* Change src/rdsrc.pl to include sectioning information in info
+  output; required for install-info to work.
+* Updated the RDOFF distribution to version 2 from Jules; minor
+  massaging to make it compile in my environment.
+* Split doc files that can be built by anyone with a Perl interpreter off
+  into a separate archive.
+* "Dress rehearsal" release!
 
 For release 0.98p7:
 

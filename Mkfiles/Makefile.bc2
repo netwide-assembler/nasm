@@ -158,7 +158,7 @@ $(OBJD)nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.
 		listing.h outform.h
         $(NASM_ASM)
 
-$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
+$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
         $(NASM_ASM)
 
 $(OBJD)parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c

@@ -111,4 +111,4 @@ if test $ac_cv_prog_make_vpathok = no; then
   if test ! -f macros.c; then cp -p ${srcdir}/macros.c .; fi
 fi
 
-AC_OUTPUT(Makefile rdoff/Makefile)
+AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)

@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     printf("relocating %s: origin=%lx, align=%d\n",*argv,origin,align);
 
     m->textrel = origin;
-    m->datarel = origin + m->f.code_len;
+    m->datarel = origin + m->f.seg[0].length;
     if (m->datarel % align != 0) {
 	codepad = align - (m->datarel % align);
 	m->datarel += codepad;
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     else
 	codepad = 0;
 
-    m->bssrel = m->datarel + m->f.data_len;
+    m->bssrel = m->datarel + m->f.seg[1].length;
     if (m->bssrel % align != 0) {
 	datapad = align - (m->bssrel % align);
 	m->bssrel += datapad;
@@ -112,9 +112,9 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    if (fwrite(m->t,1,m->f.code_len,of) != m->f.code_len ||
+    if (fwrite(m->t,1,m->f.seg[0].length,of) != m->f.seg[0].length ||
 	fwrite(padding,1,codepad,of) != codepad ||
-	fwrite(m->d,1,m->f.data_len,of) != m->f.data_len) 
+	fwrite(m->d,1,m->f.seg[1].length,of) != m->f.seg[1].length) 
     {
 	fprintf(stderr,"rdf2bin: error writing to %s\n", *argv);
 	return 1;

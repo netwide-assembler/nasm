@@ -1,12 +1,22 @@
-\IR{-o} \c{-o} option
-\IR{-f} \c{-f} option
-\IR{-l} \c{-l} option
-\IR{-s} \c{-s} option
-\IR{-i} \c{-i} option
-\IR{-p} \c{-p} option
+\# $Id$
+\#
+\# Source code to NASM documentation
+\#
+\IR{-D} \c{-D} option
+\IR{-E} \c{-E} option
+\IR{-I} \c{-I} option
+\IR{-P} \c{-P} option
+\IR{-U} \c{-U} option
+\IR{-a} \c{-a} option
 \IR{-d} \c{-d} option
 \IR{-e} \c{-e} option
-\IR{-a} \c{-a} option
+\IR{-f} \c{-f} option
+\IR{-i} \c{-i} option
+\IR{-l} \c{-l} option
+\IR{-o} \c{-o} option
+\IR{-p} \c{-p} option
+\IR{-s} \c{-s} option
+\IR{-u} \c{-u} option
 \IR{-w} \c{-w} option
 \IR{!=} \c{!=} operator
 \IR{$ here} \c{$} Here token
@@ -226,14 +236,19 @@ may use NASM.
 
 \H{contact} Contact Information
 
+The current version of NASM (since 0.98) are maintained by H. Peter
+Anvin, \W{mailto:hpa@zytor.com}\c{hpa@zytor.com}. If you want to report
+a bug, please read \k{bugs} first.
+
 NASM has a \i{WWW page} at
-\W{http://www.cryogen.com/Nasm}\c{http://www.cryogen.com/Nasm}. The
-authors are \i{e\-mail}able as
+\W{http://www.cryogen.com/Nasm}\c{http://www.cryogen.com/Nasm}.
+
+The original authors are \i{e\-mail}able as
 \W{mailto:jules@earthcorp.com}\c{jules@earthcorp.com} and
-\W{mailto:anakin@pobox.com}\c{anakin@pobox.com}. If you want to
-report a bug to us, please read \k{bugs} first.
+\W{mailto:anakin@pobox.com}\c{anakin@pobox.com}.
 
 \i{New releases} of NASM are uploaded to
+\W{ftp://ftp.kernel.org/pub/software/devel/nasm/}\i\c{ftp.kernel.org},
 \W{ftp://sunsite.unc.edu/pub/Linux/devel/lang/assemblers/}\i\c{sunsite.unc.edu},
 \W{ftp://ftp.simtel.net/pub/simtelnet/msdos/asmutl/}\i\c{ftp.simtel.net}
 and
@@ -247,9 +262,15 @@ Announcements are posted to
 \W{ftp://ftp.simtel.net/pub/simtelnet/msdos/asmutl/}\c{ftp.simtel.net}).
 
 If you don't have Usenet access, or would rather be informed by
-\i{e\-mail} when new releases come out, e\-mail
-\W{mailto:anakin@pobox.com}\c{anakin@pobox.com}
-and ask.
+\i{e\-mail} when new releases come out, you can subscribe to the
+\c{nasm-announce} email list by sending an email containing the line
+\c{subscribe nasm-announce} to
+\W{mailto:majordomo@linux.kernel.org}\c{majordomo@linux.kernel.org}.
+
+If you want information about NASM beta releases, please subscribe to
+the \c{nasm-beta} email list by sending an email containing the line
+\c{subscribe nasm-beta} to
+\W{mailto:majordomo@linux.kernel.org}\c{majordomo@linux.kernel.org}.
 
 \H{install} Installation
 
@@ -281,14 +302,20 @@ want to keep the documentation or test programs.
 If you've downloaded the \i{DOS source archive}, \i\c{nasmXXXs.zip},
 the \c{nasm} directory will also contain the full NASM \i{source
 code}, and a selection of \i{Makefiles} you can (hopefully) use to
-rebuild your copy of NASM from scratch. The file \c{Readme} lists
-the various Makefiles and which compilers they work with. Note that
-the source files \c{insnsa.c} and \c{insnsd.c} are automatically
-generated from the master instruction table \c{insns.dat} by a Perl
-script; a \i{QBasic} version of the program is provided, but it is
-recommended that you use the Perl version. A DOS port of \i{Perl} is
-available from
-\W{http://www.perl.org/CPAN/ports/msdos/}\i{www.perl.org}.
+rebuild your copy of NASM from scratch. The file \c{Readme} lists the
+various Makefiles and which compilers they work with.
+
+Note that the source files \c{insnsa.c}, \c{insnsd.c}, \c{insnsi.h}
+and \c{insnsn.c} are automatically generated from the master
+instruction table \c{insns.dat} by a Perl script; the file
+\c{macros.c} is generated from \c{standard.mac} by another Perl
+script. Although the NASM 0.98 distribution includes these generated
+files, you will need to rebuild them (and hence, will need a Perl
+interpreter) if you change \c{insns.dat}, \c{standard.mac} or the
+documentation. It is possible future source distributions may not
+include these files at all.  Ports of \i{Perl} for a variety of
+platforms, including DOS and Windows, are available from
+\W{http://www.cpan.org/ports/}\i{www.cpan.org}.
 
 \S{instdos} Installing NASM under \i{Unix}
 
@@ -369,7 +396,8 @@ when you want NASM to produce Linux object files. If it says
 \c nasm: Linux/i386 demand-paged executable (QMAGIC)
 
 or something similar, your system is \c{a.out}, and you should use
-\c{-f aout} instead.
+\c{-f aout} instead (Linux \c{a.out} systems are considered obsolete,
+and are rare these days.)
 
 Like Unix compilers and assemblers, NASM is silent unless it
 goes wrong: you won't see any output at all, unless it gives error
@@ -427,7 +455,7 @@ right. For example:
 
 \c nasm -f elf myfile.asm -l myfile.lst
 
-\S{opt-s} The \i\c{-s} Option: Send Errors to \i\c{stdout}
+\S{opt-E} The \i\c{-E} Option: Send Errors to a File
 
 Under MS-\i{DOS} it can be difficult (though there are ways) to
 redirect the standard-error output of a program to a file. Since
@@ -435,14 +463,25 @@ NASM usually produces its warning and \i{error messages} on
 \i\c{stderr}, this can make it hard to capture the errors if (for
 example) you want to load them into an editor.
 
-NASM therefore provides the \c{-s} option, requiring no argument,
-which causes errors to be sent to standard output rather than
+NASM therefore provides the \c{-E} option, taking a filename argument
+which causes errors to be sent to the specified files rather than
 standard error. Therefore you can \I{redirecting errors}redirect
 the errors into a file by typing
 
-\c nasm -s -f obj myfile.asm > myfile.err
+\c nasm -E myfile.err -f obj myfile.asm
 
-\S{opt-i} The \i\c{-i} Option: Include File Search Directories
+\S{opt-s} The \i\c{-s} Option: Send Errors to \i\c{stdout}
+
+The \c{-s} option redirects \i{error messages} to \c{stdout} rather
+than \c{stderr}, so it can be redirected under MS-\i{DOS}.  To
+assemble the file \c{myfile.asm} and pipe its output to the \c{more}
+program, you can type:
+
+\c nasm -s -f obj myfile.asm | more
+
+See also the \c{-E} option, \k{opt-E}.
+
+\S{opt-i} The \i\c{-i}\I\c{-I} Option: Include File Search Directories
 
 When NASM sees the \i\c{%include} directive in a source file (see
 \k{include}), it will search for the given file not only in the
@@ -471,7 +510,10 @@ similar to \c{/usr/include} on Unix systems, you should place one or
 more \c{-i} directives in the \c{NASM} environment variable (see
 \k{nasmenv}).
 
-\S{opt-p} The \i\c{-p} Option: \I{pre-including files}Pre-Include a File
+For Makefile compatibility with many C compilers, this option can also
+be specified as \c{-I}.
+
+\S{opt-p} The \i\c{-p}\I\c{-P} Option: \I{pre-including files}Pre-Include a File
 
 \I\c{%include}NASM allows you to specify files to be
 \e{pre-included} into your source file, by the use of the \c{-p}
@@ -482,7 +524,10 @@ option. So running
 is equivalent to running \c{nasm myfile.asm} and placing the
 directive \c{%include "myinc.inc"} at the start of the file.
 
-\S{opt-d} The \i\c{-d} Option: \I{pre-defining macros} Pre-Define a Macro
+For consistency with the \c{-I}, \c{-D} and \c{-U} options, this
+option can also be specified as \c{-P}.
+
+\S{opt-d} The \i\c{-d}\I\c{-D} Option: \I{pre-defining macros} Pre-Define a Macro
 
 \I\c{%define}Just as the \c{-p} option gives an alternative to placing
 \c{%include} directives at the start of a source file, the \c{-d}
@@ -500,6 +545,26 @@ the option \c{-dFOO} is equivalent to coding \c{%define FOO}. This
 form of the directive may be useful for selecting \i{assembly-time
 options} which are then tested using \c{%ifdef}, for example
 \c{-dDEBUG}.
+
+For Makefile compatibility with many C compilers, this option can also
+be specified as \c{-D}.
+
+\S{opt-u} The \i\c{-u}\I\c{-U} Option: \I{Undefining macros} Undefine a Macro
+
+\I\c{%undef}The \c{-u} option undefines a macro that would otherwise
+have been pre-defined, either automatically or by a \c{-p} or \c{-d}
+option specified earlier on the command lines.
+
+For example, the following command line:
+
+\c nasm myfile.asm -dFOO=100 -uFOO
+
+would result in \c{FOO} \e{not} being a predefined macro in the
+program.  This is useful to override options specified at a different
+point in a Makefile.
+
+For Makefile compatibility with many C compilers, this option can also
+be specified as \c{-U}.
 
 \S{opt-e} The \i\c{-e} Option: Preprocess Only
 
@@ -1426,6 +1491,22 @@ when defining single-line macros with \c{%assign} (see \k{assign}).
 
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
+
+\S{undef} Undefining macros: \i\c{%undef}
+
+Single-line macros can be removed with the \c{%undef} command.  For
+example, the following sequence:
+
+\c %define foo bar
+\c %undef foo
+\c 		mov eax, foo
+
+will expand to the instruction \c{mov eax, foo}, since after
+\c{%undef} the macro \c{foo} is no longer defined.
+
+Macros that would otherwise be pre-defined can be undefined on the
+command-line using the `-u' option on the NASM command line: see
+\k{opt-u}.
 
 \S{assign} \i{Preprocessor Variables}: \i\c{%assign}
 
@@ -5007,7 +5088,7 @@ problem and generate sensible code.
 We have never yet released a version of NASM with any \e{known}
 bugs. That doesn't usually stop there being plenty we didn't know
 about, though. Any that you find should be reported to
-\W{mailto:anakin@pobox.com}\c{anakin@pobox.com}.
+\W{mailto:hpa@zytor.com}\c{hpa@zytor.com}.
 
 Please read \k{qstart} first, and don't report the bug if it's
 listed in there as a deliberate feature. (If you think the feature
@@ -5093,7 +5174,7 @@ each one.
 It is not intended to be exhaustive documentation on the fine
 details of the instructions' function, such as which exceptions they
 can trigger: for such documentation, you should go to Intel's Web
-site, \W{http://www.intel.com}\c{http://www.intel.com}.
+site, \W{http://www.intel.com/}\c{http://www.intel.com/}.
 
 Instead, this appendix is intended primarily to provide
 documentation on the way the instructions may be used within NASM.

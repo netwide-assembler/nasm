@@ -1272,7 +1272,8 @@ PEXTRW          reg32,mmxreg,imm	\2\x0F\xC5\110\22		KATMAI,MMX,SB,AR2
 ; -- accept either, but be truthful in disassembly
 PINSRW          mmxreg,reg16,imm	\2\x0F\xC4\110\22		KATMAI,MMX,SB,AR2
 PINSRW          mmxreg,reg32,imm	\2\x0F\xC4\110\22		KATMAI,MMX,SB,AR2,ND
-PINSRW          mmxreg,mem16,imm	\301\2\x0F\xC4\110\22		KATMAI,MMX,SB,AR2
+PINSRW		mmxreg,mem,imm		\301\2\x0F\xC4\110\22		KATMAI,MMX,SB,AR2
+PINSRW          mmxreg,mem16,imm	\301\2\x0F\xC4\110\22		KATMAI,MMX,SB,AR2,ND
 PMAXSW          mmxreg,mmxreg		\2\x0F\xEE\110			KATMAI,MMX
 PMAXSW		mmxreg,mem		\301\2\x0F\xEE\110		KATMAI,MMX,SM
 PMAXUB          mmxreg,mmxreg		\2\x0F\xDE\110			KATMAI,MMX
@@ -1286,5 +1287,5 @@ PMULHUW         mmxreg,mmxreg		\2\x0F\xE4\110			KATMAI,MMX
 PMULHUW		mmxreg,mem		\301\2\x0F\xE4\110		KATMAI,MMX,SM
 PSADBW          mmxreg,mmxreg		\2\x0F\xF6\110			KATMAI,MMX
 PSADBW 		mmxreg,mem		\301\2\x0F\xF6\110		KATMAI,MMX,SM
-PSHUFW          mmxreg,mmxreg,imm8	\2\x0F\x70\110\22		KATMAI,MMX
-PSHUFW          mmxreg,mem,imm8		\301\2\x0F\x70\110\22		KATMAI,MMX,SM
+PSHUFW          mmxreg,mmxreg,imm	\2\x0F\x70\110\22		KATMAI,MMX,SB,AR2
+PSHUFW          mmxreg,mem,imm		\301\2\x0F\x70\110\22		KATMAI,MMX,SM2,SB,AR2

@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 
     if (argc < 2)
     {
-	puts("usage: rdf <rdoff-executable> [params]\n");
+ 	puts("usage: rdx <rdoff-executable> [params]\n");
 	exit(255);
     }
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
     if (! m)
     {
-	rdfperror("rdf",argv[1]);
+	rdfperror("rdx",argv[1]);
 	exit(255);
     }
 

@@ -446,8 +446,8 @@ corruption at ends of long PUBDEF records.
 Separated DOS archives into main-program and documentation to reduce
 download size.
 
-0.98 not released yet
----------------------
+0.98 released May 1999
+----------------------
 
 Fixed a bug whereby STRUC didn't work at all in RDF.
 
@@ -539,3 +539,4 @@ help screen
 fixed limit checking bug, 'OUT byte nn, reg' bug, and a couple of rdoff
 related bugs, updated Wishlist; 0.98 Prerelease 3.
 
+See the file "MODIFIED" for changes after 0.98p3.

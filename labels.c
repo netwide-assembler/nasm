@@ -215,12 +215,14 @@ void define_label (char *label, long segment, long offset, char *special,
     lptr->defn.offset = offset;
     lptr->defn.is_norm = (label[0] != '.' && is_norm);
 
-    ofmt->symdef (lptr->defn.label, segment, offset,
-		  !!(lptr->defn.is_global & GLOBAL_BIT),
-		  special ? special : lptr->defn.special);
-    ofmt->current_dfmt->debug_deflabel (label, segment, offset,
-		  !!(lptr->defn.is_global & GLOBAL_BIT),
-		  special ? special : lptr->defn.special);
+    if ( (lptr->defn.is_global & (GLOBAL_BIT|EXTERN_BIT)) != EXTERN_BIT ) {
+      ofmt->symdef (lptr->defn.label, segment, offset,
+		    !!(lptr->defn.is_global & GLOBAL_BIT),
+		    special ? special : lptr->defn.special);
+      ofmt->current_dfmt->debug_deflabel (label, segment, offset,
+		    !!(lptr->defn.is_global & GLOBAL_BIT),
+		    special ? special : lptr->defn.special);
+    }
 }
 
 void define_common (char *label, long segment, long size, char *special,

@@ -177,7 +177,8 @@ long assemble (long segment, long offset, int bits,
 			    errfunc (ERR_NONFATAL,
 				     "one-byte relocation attempted");
 			else {
-			    out (offset, segment, &e->offset, OUT_RAWDATA+1,
+			    unsigned char out_byte = e->offset;
+			    out (offset, segment, &out_byte, OUT_RAWDATA+1,
 				 NO_SEG, NO_SEG);
 			}
 		    } 

@@ -10,6 +10,13 @@
  * with instructions of how to obtain a copy via ftp.
  */
 
+/*
+ * TODO: this has been modified from previous version only in very
+ * simplistic ways. Needs to be improved drastically, especially:
+ *   - support for more than the 2 standard segments
+ *   - support for segment relocations (hard to do in ANSI C)
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -49,8 +56,8 @@ rdfmodule * rdfload(const char *filename)
 
     /* read in text and data segments, and header */
     
-    f->t = malloc (f->f.code_len);
-    f->d = malloc (f->f.data_len); /* BSS seg allocated later */
+    f->t = malloc (f->f.seg[0].length);
+    f->d = malloc (f->f.seg[1].length); /* BSS seg allocated later */
     hdr = malloc (f->f.header_len);
 
     if (! f->t || ! f->d || !hdr) {
@@ -135,7 +142,7 @@ int rdf_relocate(rdfmodule * m)
 	    if ((r->r.segment & 63) == 0) seg = m->t;
 	    else if ((r->r.segment & 63) == 1) seg = m->d;
 	    else
-		return 1;
+		continue;	/* relocation not in a loaded segment */
 
 	    /* it doesn't matter in this case that the code is non-portable,
 	       as the entire concept of executing a module like this is
@@ -167,6 +174,11 @@ int rdf_relocate(rdfmodule * m)
 	    strcpy(e.name,r->e.label);
 	    symtabInsert(m->symtab,&e);
 	    break;
+
+	case 6:			/* segment relocation */
+	    fprintf(stderr, "%s: segment relocation not supported by this "
+		    "loader\n", m->f.name);
+	    return 1;
 	}
     }    
     return 0;

@@ -1,4 +1,6 @@
-/* symtab.c	Routines to maintain and manipulate a symbol table
+/* symtab.c     Routines to maintain and manipulate a symbol table
+ *
+ *   These routines donated to the NASM effort by Graeme Defty.
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -7,74 +9,117 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 #include "symtab.h"
+#include "hash.h"
 
-/* TODO: Implement a hash table, not this stupid implementation which
-   is too slow to be of practical use */
+#define SYMTABSIZE 64
+#define slotnum(x) (hash((x)) % SYMTABSIZE)
 
+/* ------------------------------------- */
 /* Private data types */
 
-typedef struct tagSymtab {
-  symtabEnt		ent;
-  struct tagSymtab	* next;
-} symtabList;
+typedef struct tagSymtabNode {
+  struct tagSymtabNode  * next;
+  symtabEnt             ent;
+} symtabNode;
 
-typedef symtabList *	_symtab;
+typedef symtabNode *(symtabTab[SYMTABSIZE]); 
 
-void *symtabNew(void)
+typedef symtabTab *symtab;                   
+
+/* ------------------------------------- */
+void *
+symtabNew(void)
 {
-  void *p = malloc(sizeof(_symtab));
-  if (p == NULL) {
-    fprintf(stderr,"symtab: out of memory\n");
-    exit(3);
-  }
-  *(_symtab *)p = NULL;
+  symtab mytab;
 
-  return p;
-}
-
-void symtabDone(void *symtab)
-{
-  /* DO SOMETHING HERE! */
-}
-
-void symtabInsert(void *symtab,symtabEnt *ent)
-{
-  symtabList	*l = malloc(sizeof(symtabList));
-
-  if (l == NULL) {
+  mytab = (symtabTab *) calloc(SYMTABSIZE ,sizeof(symtabNode *));
+  if (mytab == NULL) {
     fprintf(stderr,"symtab: out of memory\n");
     exit(3);
   }
 
-  l->ent = *ent;
-  l->next = *(_symtab *)symtab;
-  *(_symtab *)symtab = l;
+  return mytab;
 }
 
-symtabEnt *symtabFind(void *symtab,char *name)
+/* ------------------------------------- */
+void
+symtabDone(void *stab)
 {
-  symtabList	*l = *(_symtab *)symtab;
+   symtab mytab = (symtab)stab;
+   int i;
+   symtabNode *this, *next;
 
-  while (l) {
-    if (!strcmp(l->ent.name,name)) {
-      return &(l->ent);
-    }
-    l = l->next;
-  }  
-  return NULL;
+   for (i=0; i < SYMTABSIZE; ++i) {
+
+      for (this = (*mytab)[i]; this; this=next)
+      { next = this->next;   free (this); }
+
+   }
+   free (*mytab);
 }
 
-void symtabDump(void *symtab,FILE *of)
+/* ------------------------------------- */
+void
+symtabInsert(void *stab, symtabEnt *ent)
 {
-  symtabList	*l = *(_symtab *)symtab;
+  symtab mytab = (symtab) stab;
+  symtabNode *node;
+  int slot;
 
-  while(l) {
-    fprintf(of,"%32s %s:%08lx (%ld)\n",l->ent.name,
-	    l->ent.segment ? "data" : "code" ,
-	    l->ent.offset, l->ent.flags);
-    l = l->next;
+  node = malloc(sizeof(symtabNode));
+  if (node == NULL) {
+    fprintf(stderr,"symtab: out of memory\n");
+    exit(3);
   }
+
+  slot = slotnum(ent->name);
+
+  node->ent = *ent;
+  node->next = (*mytab)[slot];
+  (*mytab)[slot] = node; 
 }
 
+/* ------------------------------------- */
+symtabEnt *
+symtabFind(void *stab, const char *name)
+{
+   symtab mytab = (symtab) stab;
+   int slot = slotnum(name);
+   symtabNode *node = (*mytab)[slot];
+
+   while (node) {
+      if (!strcmp(node->ent.name,name)) {
+	 return &(node->ent);
+      }
+      node = node->next;
+   }  
+
+   return NULL;
+}
+
+/* ------------------------------------- */
+void
+symtabDump(void *stab, FILE* of)
+{
+   symtab mytab = (symtab)stab;
+   int i;
+
+   fprintf(of, "Symbol table is ...\n");
+   for (i=0; i < SYMTABSIZE; ++i) {
+      symtabNode        *l = (symtabNode *)(*mytab)[i];
+
+      if (l) {
+	 fprintf(of, " ... slot %d ...\n", i);
+      }
+      while(l) {
+	 fprintf(of, "%-32s %s:%08lx (%ld)\n",l->ent.name,
+		 l->ent.segment ? "data" : "code" ,
+		 l->ent.offset, l->ent.flags);
+	 l = l->next;
+      }
+   }
+   fprintf(of, "........... end of Symbol table.\n");
+}
