@@ -1533,11 +1533,17 @@ static unsigned long get_cpu (char *value)
     	!nasm_stricmp(value, "pentium") ) 	return IF_PENT;
     if (!strcmp(value, "686")  ||
     	!nasm_stricmp(value, "ppro") ||
+    	!nasm_stricmp(value, "pentiumpro") ||
     	!nasm_stricmp(value, "p2")    ) 	return IF_P6;
     if (!nasm_stricmp(value, "p3")    ||
     	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
     if (!nasm_stricmp(value, "p4")    ||	/* is this right? -- jrc */
     	!nasm_stricmp(value, "willamette") ) 	return IF_WILLAMETTE;
+    if (!nasm_stricmp(value, "ia64") ||
+	!nasm_stricmp(value, "ia-64") ||
+	!nasm_stricmp(value, "itanium") ||
+	!nasm_stricmp(value, "itanic") ||
+	!nasm_stricmp(value, "merced") )	return IF_IA64;
 
     report_error (pass0<2 ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
 

@@ -505,6 +505,11 @@ JMP       reg32               \321\300\1\xFF\204            386
 JMP       mem                 \322\300\1\xFF\204            8086
 JMP       mem16               \320\300\1\xFF\204            8086
 JMP       mem32               \321\300\1\xFF\204            386
+JMPE      imm                 \322\2\x0F\xB8\64             IA64
+JMPE      imm16               \320\2\x0F\xB8\64             IA64
+JMPE      imm32               \321\2\x0F\xB8\64             IA64
+JMPE      rm16                \320\2\x0F\x00\206            IA64
+JMPE      rm32                \321\2\x0F\x00\206            IA64
 LAHF      void                \1\x9F                        8086
 LAR       reg16,mem           \320\301\2\x0F\x02\110        286,PROT,SM
 LAR       reg16,reg16         \320\301\2\x0F\x02\110        286,PROT

@@ -81,6 +81,7 @@ struct itemplate {
 #define IF_P6     0x06000000UL	       /* P6 instruction */
 #define IF_KATMAI 0x07000000UL         /* Katmai instructions */
 #define IF_WILLAMETTE 0x08000000UL         /* Willamette instructions */
+#define IF_IA64   0x0F000000UL	       /* IA64 instructions */
 #define IF_CYRIX  0x10000000UL	       /* Cyrix-specific instruction */
 #define IF_AMD    0x20000000UL	       /* AMD-specific instruction */
 
