@@ -1,9 +1,12 @@
+/*
+ * rdfdump.c - dump RDOFF file header.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "rdoff.h"
-#include "multboot.h"
 
 FILE *infile;
 
@@ -31,12 +34,12 @@ int16 translateshort(int16 in) {
   return r;
 }
 
-void print_header(long length, int rdf_version) {
-  char buf[129],t,s,l,flags;
+void print_header(long length, int rdf_version)
+{
+    char buf[129],t,l,s,flags;
   unsigned char reclen;
   long o,ll;
   int16 rs;
-  struct tMultiBootHeader *mb;
 
   while (length > 0) {
     fread(&t,1,1,infile);
@@ -44,9 +47,13 @@ void print_header(long length, int rdf_version) {
 	fread(&reclen,1,1,infile);
     }
     switch(t) {
+	    case RDFREC_GENERIC:		/* generic record */
+	    	printf("  generic record (length=%d)\n", (int)reclen);
+		fseek(infile, reclen, SEEK_CUR);
+		break;
     
-    case 1:		/* relocation record */
-    case 6:		/* segment relocation */
+	    case RDFREC_RELOC:			/* relocation record */
+	    case RDFREC_SEGRELOC:		/* segment relocation */
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
       fread(&l,1,1,infile);
@@ -62,8 +69,8 @@ void print_header(long length, int rdf_version) {
 	  printf("    warning: seg relocation not supported in RDOFF1\n");
       break;
       
-    case 2:             /* import record */
-    case 7:		/* import far symbol */
+	    case RDFREC_IMPORT:			/* import record */
+	    case RDFREC_FARIMPORT:		/* import far symbol */
       fread(&rs,2,1,infile);
       ll = 0;
 
@@ -71,9 +78,7 @@ void print_header(long length, int rdf_version) {
 	  do {
 	      fread(&buf[ll],1,1,infile);
 	  } while (buf[ll++]);
-      }
-      else
-      {
+		} else {
 	  for (;ll < reclen - 2; ll++)
 	      fread(&buf[ll],1,1,infile);
       }
@@ -85,7 +90,7 @@ void print_header(long length, int rdf_version) {
 	  printf ("    warning: far import not supported in RDOFF1\n");
       break;
       
-    case 3:             /* export record */
+	    case RDFREC_GLOBAL:			/* export record */
       fread(&flags,1,1,infile);
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
@@ -95,9 +100,7 @@ void print_header(long length, int rdf_version) {
 	  do {
 	      fread(&buf[ll],1,1,infile);
 	  } while (buf[ll++]);
-      }
-      else
-      {
+		} else {
 	  for (; ll < reclen - 6; ll ++)
 	      fread(&buf[ll],1,1,infile);
       }
@@ -111,17 +114,15 @@ void print_header(long length, int rdf_version) {
       if (rdf_version == 1) length -= ll + 6;
       break;
       
-    case 4:		/* DLL and Module records */
-    case 8:
+	    case RDFREC_DLL:			/* DLL and Module records */
+	    case RDFREC_MODNAME:
       ll = 0;
 
       if (rdf_version == 1) {
 	  do {
 	      fread(&buf[ll],1,1,infile);
 	  } while (buf[ll++]);
-      }
-      else
-      {
+		} else {
 	  for (; ll < reclen; ll++)
 	      fread(&buf[ll],1,1,infile);
       }
@@ -129,7 +130,8 @@ void print_header(long length, int rdf_version) {
       else printf("  module: %s\n",buf);
       if (rdf_version == 1) length -= ll + 1;
       break;
-    case 5:		/* BSS reservation */
+		
+	    case RDFREC_BSS:			/* BSS reservation */
       fread(&ll,4,1,infile);
       printf("  bss reservation: %08lx bytes\n",translatelong(ll));
       if (rdf_version == 1) length -= 5;
@@ -137,20 +139,27 @@ void print_header(long length, int rdf_version) {
 	  printf("    warning: reclen != 4\n");
       break;
       
-    case 9:		/* MultiBoot header record */
-      fread(buf,reclen,1,infile);
-      mb = (struct tMultiBootHeader *)buf;
-      printf("  multiboot header: load address=0x%X, size=0x%X, entry=0x%X\n",
-             mb->LoadAddr, mb->LoadEndAddr - mb->LoadAddr, mb->Entry);  
+ 	    case RDFREC_COMMON: {
+		unsigned short seg, align;
+		unsigned long size;
+		
+		fread(&seg, 2, 1, infile);
+		fread(&size, 4, 1, infile);
+		fread(&align, 2, 1, infile);
+		for (ll = 0; ll < reclen - 8; ll++)
+			fread(buf+ll, 1, 1, infile);
+		printf("  common: segment %04x = %s, %ld:%d\n", translateshort(seg),
+		       buf, translatelong(size), translateshort(align));
       break;  
+	    }
+
     default:
-      printf("  unrecognised record (type %d",(int)t);
+		printf("  unrecognized record (type %d", (int)t);
       if (rdf_version > 1) {
       	printf(", length %d",(int)reclen);
 	fseek(infile,reclen,SEEK_CUR);
-      }		
+		} else length --;
       printf(")\n");
-      if (rdf_version == 1) length --;
     }
     if (rdf_version != 1) length -= 2 + reclen;
   }

@@ -52,7 +52,7 @@ static const char *RDOFF2Id = "RDOFF2";	/* written to start of RDOFF files */
 #define RDFREC_SEGRELOC		6
 #define RDFREC_FARIMPORT	7
 #define RDFREC_MODNAME		8
-#define RDFREC_MULTIBOOTHDR	9
+#define RDFREC_COMMON		10
 #define RDFREC_GENERIC		0
 
 
@@ -97,6 +97,15 @@ struct DLLModRec {
   byte type;		/* 4 for DLLRec, 8 for ModRec */
   byte reclen;		/* 1+lib name length for DLLRec, 1+mod name length */
   char name[128];	/* library to link at load time or module name */
+};
+
+struct CommonRec {
+  byte	type;		/* must be 10 */
+  byte  reclen;		/* equals 9+label length */
+  int16 segment;	/* segment number */
+  long	size;		/* size of common variable */
+  int16 align;		/* alignment (power of two) */
+  char	label[33];	/* zero terminated as above. max len = 32 chars */
 };
 
 /* Flags for ExportRec */
@@ -341,6 +350,27 @@ static void write_bss_rec(struct BSSRec *r)
 }
 
 /*
+ * Write common variable record.
+ */
+static void write_common_rec(struct CommonRec *r)
+{
+  char buf[4], *b;
+
+  r->segment >>= 1;
+
+  saa_wbytes(header,&r->type,1);
+  saa_wbytes(header,&r->reclen,1);
+  b = buf; WRITESHORT(b,r->segment);
+  saa_wbytes(header,buf,2);
+  b = buf; WRITELONG(b,r->size);
+  saa_wbytes(header,buf,4);
+  b = buf; WRITESHORT(b,r->align);
+  saa_wbytes(header,buf,2);
+  saa_wbytes(header,r->label,strlen(r->label) + 1);
+  headerlength += r->reclen + 2;
+}
+
+/*
  * Write library record. Also used for module name records.
  */
 static void write_dllmod_rec(struct DLLModRec *r)
@@ -356,10 +386,38 @@ static void rdf2_deflabel(char *name, long segment, long offset,
 {
   struct ExportRec r;
   struct ImportRec ri;
+  struct CommonRec ci;
   static int farsym = 0;
   static int i;
   byte export_flags = 0;
 
+  if (is_global == 2) {
+    /* Common variable */
+    ci.type = RDFREC_COMMON;
+    ci.size = offset;
+    ci.segment = segment;
+    strncpy(ci.label, name, 32);
+    ci.label[32] = 0;
+    ci.reclen = 9 + strlen(ci.label);
+    ci.align = 0;
+    
+    /*
+     * Check the special text to see if it's a valid number and power
+     * of two; if so, store it as the alignment for the common variable.
+     */
+    if (special) {
+	int err;
+        ci.align = readnum(special, &err);
+        if (err) error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+                    	             " valid number", special);
+	else if ( (ci.align | (ci.align-1)) != 2*ci.align - 1)
+	    error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+	                        " power of two", special);
+    }    
+    write_common_rec(&ci);
+  }
+
+  /* We don't care about local labels or fix-up hints */
   if (is_global != 1) return;
 
   if (special) {

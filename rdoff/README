@@ -1,5 +1,11 @@
-RDOFF Utilities, version 0.3
-============================
+*******
+This file is getting obsolete. RDOFF documentation is written in Texinfo now.
+Directory doc/ contains Texinfo source (rdoff.texi) and makefile for creating
+different output formats (info, HTML, PostScript and PDF).
+*******
+
+RDOFF Utilities, version 0.3.2
+==============================
 
 The files contained in this directory are the C source code of a set
 of tools (and general purpose library files) for the manipulation of
@@ -8,8 +14,8 @@ exception of 'rdfdump') will NOT work with version 1 object files.
 Version 1 of RDOFF is no longer supported.
 
 There is also a 'doc' directory with 'v1-v2' file, which documents the
-differences between RDOFF 1 and 2, and an 'rdoff2.txt' file, with
-complete documentation for the new format.
+differences between RDOFF 1 and 2, and an 'rdoff2.texi' (texinfo source),
+with complete documentation for the new format.
 
 Here is a brief summary of the programs' usage:
 
@@ -64,7 +70,7 @@ Most of its options are not implemented, but those that are are listed here:
 	16, 32 or 256. Default is 16).
 	
   -s	strip exported symbols from output file. Symbols marked as
-  	SYM_GLOBAL (see rdoff2.txt) are never stripped.
+  	SYM_GLOBAL are never stripped.
 	
   -x	warn about unresolved symbols.
   
@@ -79,8 +85,7 @@ Most of its options are not implemented, but those that are are listed here:
   -L path	specify search path for libraries. Default path is a
   		current directory.
 		
-  -mbh [addr]	add a Multiboot header to output file. If addr is not
-  		specified, default loading address is 0x110000.
+  -g file	embed 'file' as a first header record with type 'generic'.
 		
 
 rdx
@@ -176,5 +181,5 @@ file for a comment containing the word 'TODO'. A brief list is given here:
 MAINTAINERS
 ===========
 
-Yuri Zaporogets <yuriz@teraflops.com> - primary maintainer
+Yuri Zaporogets <yuriz@ukr.net> - primary maintainer
 Julian Hall <jules@dsf.org.uk> - original designer and author

@@ -8,7 +8,7 @@
 
 /*
  * TODO:
- *   enhance search of required export symbols in libraries (now depends
+ * - enhance search of required export symbols in libraries (now depends
  *   on modules order in library)
  * - keep a cache of symbol names in each library module so
  *   we don't have to constantly recheck the file
@@ -25,14 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "multboot.h"
 #include "rdoff.h"
 #include "symtab.h"
 #include "collectn.h"
 #include "rdlib.h"
 #include "segtab.h"
 
-#define LDRDF_VERSION "1.04"
+#define LDRDF_VERSION "1.05"
 
 #define RDF_MAXSEGS 64
 /* #define STINGY_MEMORY */
@@ -94,6 +93,9 @@ char			* objpath = NULL;
 /* libraries search path */
 char			* libpath = NULL;
 
+/* file to embed as a generic record */
+char			* generic_rec_file = NULL;
+
 /* error file */
 static FILE		* error_file;
 
@@ -113,39 +115,15 @@ struct ldrdfoptions {
     int		verbose;
     int		align;
     int		warnUnresolved;
-    int		errorUnresolved;
     int		strip;
     int         respfile;
     int         stderr_redir;
     int         objpath;
     int         libpath;
-    int		addMBheader;
 } options;
 
 int errorcount = 0;	/* determines main program exit status */
 
-/*
- * Multiboot header support.
- */
- 
-/* loading address for multiboot header */
-unsigned		MBHloadAddr;
-
-#define	RDFLDR_LENGTH	4096		/* Loader size is 4K */
-#define	RDFLDR_DESTLOC	0x100000 	/* and its absolute address */
- 
-/*
- * Tiny code that moves RDF setup code to its working memory region
- */
-unsigned char trampoline_code[] = {
-	0xBE, 0, 0, 0, 0,		/* mov	esi,SOURCE_ADDR	*/
-	0xBF, 0, 0, 0, 0,		/* mov	edi,DEST_ADDR	*/
-	0x89, 0xFA,			/* mov	edx,edi		*/
-	0xB9, 0, 4, 0, 0,		/* mov	ecx,RDFLDR_LENGTH/4 */
-	0xFC,				/* cld			*/
-	0xF3, 0xA5,			/* rep	movsd		*/
-	0xFF, 0xE2			/* jmp	edx		*/
-};
 
 /* =========================================================================
  * Utility functions
@@ -234,8 +212,8 @@ void loadmodule(const char * filename)
  * step through each segment, determine what exactly we're doing with
  * it, and if we intend to keep it, determine (a) which segment to
  * put it in and (b) whereabouts in that segment it will end up.
- * (b) is fairly easy, cos we're now keeping track of how big each segment
- * in our output file is...
+ * (b) is fairly easy, because we're now keeping track of how big each
+ * segment in our output file is...
  */
 
 void processmodule(const char * filename, struct modulenode * mod)
@@ -245,6 +223,7 @@ void processmodule(const char * filename, struct modulenode * mod)
     void	* header;
     rdfheaderrec * hr;
     long	bssamount = 0;
+    int		bss_was_referenced = 0;
 
     for (seg = 0; seg < mod->f.nsegs; seg++)
     {
@@ -331,28 +310,25 @@ void processmodule(const char * filename, struct modulenode * mod)
 	exit(1);
     }
 
-    while ((hr = rdfgetheaderrec (&mod->f)))
-    {
+    while ((hr = rdfgetheaderrec (&mod->f))) {
 	switch(hr->type) {
-	case 2:	/* imported symbol - define with seg = -1 */
-	case 7:
+	    case RDFREC_IMPORT:		/* imported symbol */
+	    case RDFREC_FARIMPORT:
+		/* Define with seg = -1 */
 	    symtab_add(hr->i.label, -1, 0);
 	    break;
 
-	case 3: /* exported symbol */
-           {
+	    case RDFREC_GLOBAL:	{	/* exported symbol */
             int destseg;
             long destreloc;
 
-            if (hr->e.segment == 2)
-             {
+        	if (hr->e.segment == 2) {
+	    	    bss_was_referenced = 1;
                destreloc = bss_length;
                if (destreloc % options.align != 0)
                   destreloc +=  options.align - (destreloc % options.align);
                destseg = 2;
-             }
-            else
-             {
+                } else {
                if ((destseg = mod->seginfo[(int)hr->e.segment].dest_seg) == -1)
                   continue;
                destreloc = mod->seginfo[(int)hr->e.segment].reloc;
@@ -361,18 +337,37 @@ void processmodule(const char * filename, struct modulenode * mod)
 	    break;
            }
 
-	case 5: /* BSS reservation */
+	    case RDFREC_BSS:		/* BSS reservation */
 	    /*
 	     * first, amalgamate all BSS reservations in this module
 	     * into one, because we allow this in the output format.
 	     */
 	    bssamount += hr->b.amount;
 	    break;
+
+	    case RDFREC_COMMON: {	/* Common variable */
+	        symtabEnt *ste = symtabFind(symtab, hr->c.label);
+
+		/* Is the symbol already in the table? */
+		if (ste) break;
+		
+		/* Align the variable */
+		if (bss_length % hr->c.align != 0)
+		    bss_length += hr->c.align - (bss_length % hr->c.align);
+		if (options.verbose > 1) {
+		    printf ("%s %04x common '%s' => 0002:%08lx (+%04lx)\n",
+			filename, hr->c.segment, hr->c.label, bss_length, hr->c.size);
+		}
+		
+		symtab_add(hr->c.label, 2, bss_length);
+		mod->bss_reloc = bss_length;
+		bss_length += hr->c.size;
+		break;
+	    }
 	}
     }
 
-    if (bssamount != 0)
-    {
+    if (bssamount != 0 || bss_was_referenced) {
 	/*
 	 * handle the BSS segment - first pad the existing bss length
 	 * to the correct alignment, then store the length in bss_reloc
@@ -405,7 +400,7 @@ void processmodule(const char * filename, struct modulenode * mod)
 
 
 /*
- * Look in list for module by its name.
+ * Look in the list for module by its name.
  */
 int lookformodule(const char *name)
  {
@@ -627,20 +622,24 @@ int search_libraries()
 
 	    while ((hr = rdfgetheaderrec (&f)))
 	    {
-                /* we're only interested in exports, so skip others: */
-		if (hr->type != 3) continue; 
+                /* We're only interested in exports, so skip others */
+		if (hr->type != RDFREC_GLOBAL) continue; 
 
 		/*
-		 * Find the symbol in the symbol table. If the symbol isn't
-		 * defined, we aren't interested, so go on to the next.
+		 * If the symbol is marked as SYM_GLOBAL, somebody will be
+		 * definitely interested in it..
+		 */
+		if ((hr->e.flags & SYM_GLOBAL) == 0) {
+		    /*
+		     * otherwise the symbol is just public. Find it in
+		     * the symbol table. If the symbol isn't defined, we
+		     * aren't interested, so go on to the next.
 		 * If it is defined as anything but -1, we're also not
 		 * interested. But if it is defined as -1, insert this
 		 * module into the list of modules to use, and go
 		 * immediately on to the next module...
 		 */
-		if (! symtab_get(hr->e.label, &segment, &offset) 
-		    || segment != -1)
-		{
+		    if (!symtab_get(hr->e.label, &segment, &offset) || segment != -1)
 		    continue;    
 		}
 		
@@ -664,8 +663,7 @@ int search_libraries()
 		processmodule(f.name, lastmodule);
 		break;
 	    }
-	    if (!keepfile)
-             {
+	    if (!keepfile) {
               free(f.name);
               f.name = NULL;
               f.fp = NULL;
@@ -714,26 +712,31 @@ void write_output(const char * filename)
     }
     
     /*
-     * Add multiboot header if appropriate option is specified.
-     * Multiboot record *MUST* be the first record in output file.
+     * If '-g' option was given, first record in output file will be a
+     * `generic' record, filled with a given file content.
+     * This can be useful, for example, when constructing multiboot
+     * compliant kernels.
      */
-    if (options.addMBheader) {
-	if (options.verbose)
-	    puts("\nadding multiboot header record");
+    if (generic_rec_file) {
+	FILE *ff;
     
-        hr = (rdfheaderrec *) malloc(sizeof(struct MultiBootHdrRec));
-        hr->mbh.type = 9;
-        hr->mbh.reclen = sizeof(struct tMultiBootHeader)+TRAMPOLINESIZE;
-	    
-        hr->mbh.mb.Magic = MB_MAGIC;
-        hr->mbh.mb.Flags = MB_FL_KLUDGE;
-	hr->mbh.mb.Checksum = ~(MB_MAGIC+MB_FL_KLUDGE-1);
-        hr->mbh.mb.HeaderAddr = MBHloadAddr+16;
-        hr->mbh.mb.LoadAddr = MBHloadAddr;
-	hr->mbh.mb.Entry = MBHloadAddr+16+sizeof(struct tMultiBootHeader);
+	if (options.verbose)
+	    printf("\nadding generic record from binary file %s\n", generic_rec_file);
 	
-	memcpy(hr->mbh.trampoline,trampoline_code,TRAMPOLINESIZE);
+        hr = (rdfheaderrec *) malloc(sizeof(struct GenericRec));
+	if ((ff = fopen(generic_rec_file, "r")) == NULL) {
+	    fprintf(stderr, "ldrdf: couldn't open %s for input\n", generic_rec_file);
+	    exit(1);
+	}
+	i = fread(hr->g.data, 1, sizeof(hr->g.data), ff);
+	fseek(ff, 0, SEEK_END);
+	if (ftell(ff) > sizeof(hr->g.data)) {
+	    fprintf (error_file, "warning: maximum generic record size is %d, rest of file ignored\n", sizeof(hr->g.data));
+	}
+	fclose(ff);
 	    
+        hr->g.type = 0;
+        hr->g.reclen = i;
         rdfaddheader(rdfheader,hr);
         free(hr);
     }
@@ -824,7 +827,7 @@ void write_output(const char * filename)
 	while ((hr = rdfgetheaderrec(&cur->f)))
 	{
 	    switch(hr->type) {
-	    case 1: /* relocation record - need to do a fixup */
+	    case RDFREC_RELOC: /* relocation record - need to do a fixup */
 		/*
 		 * First correct the offset stored in the segment from
 		 * the start of the segment (which may well have changed).
@@ -918,27 +921,19 @@ void write_output(const char * filename)
 		 * Otherwise, we need to output a new relocation record
 		 * with the references updated segment and offset...
 		 */
-		 
-		if (isrelative && cur->seginfo[localseg].dest_seg != seg)
-		{
-		    hr->r.segment = cur->seginfo[localseg].dest_seg+64;
-		    hr->r.offset += cur->seginfo[localseg].reloc;
-		    hr->r.refseg = seg;
-		    rdfaddheader(rdfheader, hr);
-		    break;
-		}
-		 
 		if (! isrelative || cur->seginfo[localseg].dest_seg != seg)
 		{
 		    hr->r.segment = cur->seginfo[localseg].dest_seg;
 		    hr->r.offset += cur->seginfo[localseg].reloc;
 		    hr->r.refseg = seg;
+		    if (isrelative)
+		    	hr->r.segment += 64;
 		    rdfaddheader(rdfheader, hr);
 		}
 		break;
 
-	    case 2: /* import symbol */
-	    case 7:
+	    case RDFREC_IMPORT:		/* import symbol */
+	    case RDFREC_FARIMPORT:
 		/*
 		 * scan the global symbol table for the symbol
 		 * and associate its location with the segment number 
@@ -947,9 +942,16 @@ void write_output(const char * filename)
 		se = symtabFind(symtab, hr->i.label);
 		if (!se || se->segment == -1) {
 		    if (options.warnUnresolved) {
-			fprintf(error_file, "warning: unresolved reference to `%s'"
+		    	switch (options.warnUnresolved) {
+			    case 1:
+				fprintf(error_file, "warning");
+				break;
+			    case 2:
+				fprintf(error_file, "error");
+				errorcount++;
+			}
+			fprintf(error_file, ": unresolved reference to `%s'"
 				" in module `%s'\n", hr->i.label, cur->name);
-			if (options.errorUnresolved==1) errorcount++;
 		    }
 		    /*
 		     * we need to allocate a segment number for this
@@ -985,7 +987,7 @@ void write_output(const char * filename)
 		
 		break;
 
-	    case 3: /* export symbol */
+	    case RDFREC_GLOBAL:		/* export symbol */
 		/*
 		 * need to insert an export for this symbol into the new
 		 * header, unless we're stripping symbols. Even if we're
@@ -1016,19 +1018,25 @@ void write_output(const char * filename)
 		rdfaddheader(rdfheader, hr);
 		break;
 
-	    case 8: /* module name */
+	    case RDFREC_MODNAME:	 /* module name */
 		 /*
 		  * Insert module name record if export symbols
 		  * are not stripped.
 		  * If module name begins with '$' - insert it anyway.
 		  */
-		  
 		if (options.strip && hr->m.modname[0] != '$') break;
-
 		rdfaddheader(rdfheader, hr);
 		break;
 
-	    case 6: /* segment fixup */
+	    case RDFREC_DLL:	 	/* DLL name */
+		 /*
+		  * Insert DLL name if it begins with '$'
+		  */
+		if (hr->d.libname[0] != '$') break;
+		rdfaddheader(rdfheader, hr);
+		break;
+
+	    case RDFREC_SEGRELOC:	 /* segment fixup */
 		/*
 		 * modify the segment numbers if necessary, and
 		 * pass straight through to the output module header
@@ -1061,6 +1069,17 @@ void write_output(const char * filename)
 		hr->r.refseg = seg;
 		rdfaddheader(rdfheader, hr);
 		break;
+
+	    case RDFREC_COMMON:		/* Common variable */
+		/* Is this symbol already in the table? */
+		se = symtabFind(symtab, hr->c.label);
+		if (!se) {
+		    printf("%s is not in symtab yet\n", hr->c.label);
+		    break;
+		}
+		/* Add segment location */
+		add_seglocation(&segs, hr->c.segment, se->segment, se->offset);
+		break;
 	    }
 	}
 
@@ -1072,7 +1091,7 @@ void write_output(const char * filename)
     /*
      * combined BSS reservation for the entire results
      */
-    newrec.type = 5;
+    newrec.type = RDFREC_BSS;
     newrec.b.reclen = 4;
     newrec.b.amount = bss_length;
     rdfaddheader(rdfheader, &newrec);
@@ -1086,27 +1105,13 @@ void write_output(const char * filename)
 	rdfaddsegment (rdfheader, outputseg[i].length);
     }
     
-    if (options.addMBheader) {
-	struct MultiBootHdrRec *mbhrec = (struct MultiBootHdrRec *)(rdfheader->buf->buffer);
-	unsigned l = membuflength(rdfheader->buf) + 14 + 
-		     10*rdfheader->nsegments + rdfheader->seglength;
-	unsigned *ldraddr = (unsigned *)(mbhrec->trampoline+1);
-	unsigned *ldrdest = (unsigned *)(mbhrec->trampoline+6);
-
-	mbhrec->mb.LoadEndAddr = MBHloadAddr+l+10+RDFLDR_LENGTH; 
-	mbhrec->mb.BSSendAddr = mbhrec->mb.LoadEndAddr;
-	
-	*ldraddr = MBHloadAddr+l+10;
-	*ldrdest = RDFLDR_DESTLOC;
-    }
-    
     rdfwriteheader(f, rdfheader);
     rdfdoneheader(rdfheader);
+    
     /*
      * Step through the segments, one at a time, writing out into
      * the output file
      */
-    
     for (i = 0; i < nsegs; i++)
     {
 	int16 s;
@@ -1135,19 +1140,18 @@ void write_output(const char * filename)
 
 void usage()
 {
-    printf("usage:\n");
-    printf("   ldrdf [options] object modules ... [-llibrary ...]\n");
-    printf("   ldrdf -r\n");
-    printf("options:\n");
-    printf("   -v[=n]          increases verbosity by 1, or sets it to n\n");
-    printf("   -a nn           sets segment alignment value (default 16)\n");
-    printf("   -s              strips exported symbols\n");
-    printf("   -x              warn about unresolved symbols\n");
-    printf("   -o name         write output in file 'name'\n");
-    printf("   -j path         specify objects search path\n");
-    printf("   -L path         specify libraries search path\n");
-    printf("   -mbh [address]  add multiboot header to output file. Default\n");
-    printf("                   loading address is 0x110000\n");
+    printf("usage:\n"
+           "   ldrdf [options] object modules ... [-llibrary ...]\n"
+           "   ldrdf -r\n"
+           "options:\n"
+           "   -v[=n]          increases verbosity by 1, or sets it to n\n"
+           "   -a nn           sets segment alignment value (default 16)\n"
+           "   -s              strips exported symbols\n"
+           "   -x              warn about unresolved symbols\n"
+           "   -o name         write output in file 'name'\n"
+           "   -j path         specify objects search path\n"
+           "   -L path         specify libraries search path\n"
+           "   -g file         embed 'file' as a first header record with type 'generic'\n");
     exit(0);
 }
 
@@ -1166,7 +1170,7 @@ int main(int argc, char ** argv)
 
     argc --, argv ++;
     if (argc == 0) usage();
-    while (argc && **argv == '-' && argv[0][1] != 'l')
+    while (argc && *argv && **argv == '-' && argv[0][1] != 'l')
     {
 	switch(argv[0][1]) {
 	case 'r':
@@ -1200,35 +1204,29 @@ int main(int argc, char ** argv)
 	case 'x':
 	    options.warnUnresolved = 1;
 	    if (argv[0][2]=='e')
-		options.errorUnresolved = 1;
+		options.warnUnresolved++;
 	    break;
 	case 'o':
 	    outname = argv[1];
 	    argv++, argc--;
 	    break;
 	case 'j':
-	    if (!objpath)
-	     {
+	    if (!objpath) {
               options.objpath = 1;
 	      objpath = argv[1];
 	      argv++, argc--;
 	      break;
-	     }
-	    else
-	     {
+	     } else {
 	      fprintf(stderr,"ldrdf: more than one objects search path specified\n");
 	      exit(1);
 	     }
 	case 'L':
-	    if (!libpath)
-             {
+	    if (!libpath) {
               options.libpath = 1;
 	      libpath = argv[1];
 	      argv++, argc--;
 	      break;
-	     }
-	    else
-	     {
+	     } else {
 	      fprintf(stderr,"ldrdf: more than one libraries search path specified\n");
 	      exit(1);
 	     }
@@ -1239,70 +1237,58 @@ int main(int argc, char ** argv)
 
               options.respfile = 1;
 	      if (argv[1] != NULL) f = fopen(argv[1],"r");
-	      else
-	       {
+	    else {
 		fprintf(stderr,"ldrdf: no response file name specified\n");
 		exit(1);
 	       }
 
-	      if (f == NULL)
-	       {
+	    if (f == NULL) {
 		fprintf(stderr,"ldrdf: unable to open response file\n");
 		exit(1);
 	       }
-	      argc-=2;
-	      while(fgets(buf,sizeof(buf)-1,f)!=NULL)
-	       {
+	    
+	    argv++, argc--;
+	    while (fgets(buf, sizeof(buf), f) != NULL) {
 		char *p;
 		if (buf[0]=='\n') continue;
-		if ((p = strchr(buf,'\n')) != 0)
-		 *p=0;
-		if (i >= 128)
-		 {
+		if ((p = strchr(buf,'\n')) != NULL) *p = '\0';
+		if (i >= 128) {
 		  fprintf(stderr,"ldrdf: too many input files\n");
 		  exit(1);
 		 }
 		*(respstrings+i) = newstr(buf);
 		argc++, i++;
 	       }
-	      goto done;
+            break;
 	 }
 	case '2':
             options.stderr_redir = 1;
 	    error_file = stdout;
 	    break;
-	case 'm':
-	    if (argv[0][2] == 'b' && argv[0][3] == 'h') {
-		if (argv[1][0] != '-') {
-		    MBHloadAddr = atoi(argv[1]);
-		} else {
-		    MBHloadAddr = MB_DEFAULTLOADADDR;
-		}        
-        	options.addMBheader = 1;
+	case 'g':
+	    generic_rec_file = argv[1];
+	    argv++, argc--;
 		break;    
-	    }		
 	default:
 	    usage();
 	}
 	argv++, argc--;
     }
-done:
+
     if (options.verbose > 4) {
 	printf("ldrdf invoked with options:\n");
 	printf("    section alignment: %d bytes\n", options.align);
 	printf("    output name: `%s'\n", outname);
 	if (options.strip)
 	    printf("    strip symbols\n");
-	if (options.warnUnresolved)
+	if (options.warnUnresolved == 1)
 	    printf("    warn about unresolved symbols\n");
-	if (options.errorUnresolved)
+	if (options.warnUnresolved == 2)
 	    printf("    error if unresolved symbols\n");    
         if (options.objpath)
             printf("    objects search path: %s\n",objpath);
         if (options.libpath)
             printf("    libraries search path: %s\n",libpath);
-	if (options.addMBheader)
-            printf("    loading address for multiboot header: 0x%X\n",MBHloadAddr);    
 	printf("\n");
     }
 
@@ -1314,9 +1300,9 @@ done:
 	exit(1);
     }
 
-    if (*respstrings) argv = respstrings;
-    while (argc)
-    {
+    while (argc) {
+	if (!*argv) argv = respstrings;
+	if (!*argv) break;
 	if (!strncmp(*argv, "-l", 2)) /* library */
          {
 	  if(libpath) add_library(newstrcat(libpath,*argv + 2));
@@ -1334,7 +1320,6 @@ done:
 	printf("ldrdf: nothing to do. ldrdf -h for usage\n");
 	return 0;
     }
-
 
     search_libraries();
 

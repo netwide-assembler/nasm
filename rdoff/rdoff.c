@@ -19,8 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#include "multboot.h"
 #include "rdoff.h"
 
 #define newstr(str) strcpy(malloc(strlen(str) + 1),str)
@@ -365,8 +363,8 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
   RI8(r.g.reclen);
 
   switch(r.type) {
-  case 1:	/* Relocation record */
-  case 6:
+  case RDFREC_RELOC:		/* Relocation record */
+  case RDFREC_SEGRELOC:
       if (r.r.reclen != 8) {
 	  rdf_errno = 9;
 	  return NULL;
@@ -377,24 +375,24 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
     RI16(r.r.refseg);
     break;
 
-  case 2:	/* Imported symbol record */
-  case 7:
+  case RDFREC_IMPORT:		/* Imported symbol record */
+  case RDFREC_FARIMPORT:
     RI16(r.i.segment);
     RS(r.i.label,32);
     break;
 
-  case 3:	/* Exported symbol record */
+  case RDFREC_GLOBAL:		/* Exported symbol record */
     RI8(r.e.flags);
     RI8(r.e.segment);
     RI32(r.e.offset);
     RS(r.e.label,32);
     break;
 
-  case 4:	/* DLL record */
+  case RDFREC_DLL:		/* DLL record */
     RS(r.d.libname,127);
     break;
 
-  case 5:	/* BSS reservation record */
+  case RDFREC_BSS:		/* BSS reservation record */
       if (r.r.reclen != 4) {
 	  rdf_errno = 9;
 	  return NULL;
@@ -402,10 +400,17 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
     RI32(r.b.amount);
     break;
 
-  case 8:	/* Module name record */
+  case RDFREC_MODNAME:		/* Module name record */
     RS(r.m.modname,127);
     break;
 
+  case RDFREC_COMMON:		/* Common variable */
+    RI16(r.c.segment);
+    RI32(r.c.size);
+    RI16(r.c.align);
+    RS(r.c.label,32);
+    break;
+    
   default:
 #ifdef STRICT_ERRORS
     rdf_errno = 8; /* unknown header record */
@@ -446,45 +451,42 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 
     switch (r->type)
     {
-    case 1:
-    case 6:
+    case RDFREC_GENERIC:			/* generic */
+    	membufwrite(h->buf, &r->g.data, r->g.reclen);
+	break;
+    case RDFREC_RELOC:
+    case RDFREC_SEGRELOC:
 	membufwrite(h->buf,&r->r.segment,1);
 	membufwrite(h->buf,&r->r.offset,-4);
 	membufwrite(h->buf,&r->r.length,1);
 	membufwrite(h->buf,&r->r.refseg,-2);    /* 9 bytes written */
 	break;
 
-    case 2:				/* import */
-    case 7:
+    case RDFREC_IMPORT:				/* import */
+    case RDFREC_FARIMPORT:
 	membufwrite(h->buf,&r->i.segment,-2);
 	membufwrite(h->buf,&r->i.label,strlen(r->i.label) + 1);
 	break ;
 
-    case 3:				/* export */
+    case RDFREC_GLOBAL:				/* export */
     	membufwrite(h->buf,&r->e.flags,1);
 	membufwrite(h->buf,&r->e.segment,1);
 	membufwrite(h->buf,&r->e.offset,-4);
 	membufwrite(h->buf,&r->e.label,strlen(r->e.label) + 1);
 	break ;
 
-    case 4:				/* DLL */
+    case RDFREC_DLL:				/* DLL */
 	membufwrite(h->buf,&r->d.libname,strlen(r->d.libname) + 1);
 	break ;
 
-    case 5:				/* BSS */
+    case RDFREC_BSS:				/* BSS */
 	membufwrite(h->buf,&r->b.amount,-4);
 	break ;
 
-    case 8:				/* Module name */
+    case RDFREC_MODNAME:			/* Module name */
 	membufwrite(h->buf,&r->m.modname,strlen(r->m.modname) + 1);
 	break ;
 	
-#ifdef _MULTBOOT_H	
-    case 9:				/* MultiBoot header */
-	membufwrite(h->buf,&r->mbh.mb,sizeof(struct tMultiBootHeader)+TRAMPOLINESIZE);
-	break ;
-#endif		
-
     default:
 #ifdef STRICT_ERRORS
 	return (rdf_errno = 8);

@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    if (! nasm_strnicmp(getfilename(*argv),"rdf2com",7)) {
+    if (! nasm_stricmp(getfilename(*argv),"rdf2com")) {
 	origin = 0x100;
     }
     argv++, argc--;

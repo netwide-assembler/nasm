@@ -1,28 +1,16 @@
+/*
+ * rdlib.c - routines for manipulating RDOFF libraries (.rdl)
+ */
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "rdoff.h"
 #include "rdlib.h"
+#include "rdlar.h"
 
-/*
- * format of RDOFF library files:
- * optional signature ('.sig')
- * repeat
- *   null terminated module name (max 255 chars)
- *   RDOFF module
- * until eof
- * optional directory ('.dir')
- */
-
-/*
- * TODO
- *
- * No support exists yet for special modules. But we aren't using
- * any special modules yet. They are only defined now so that their
- * existance doesn't break older versions of the linker... presently
- * anything whose name begins with '.' is ignored.
- */
+/* See Texinfo documentation about new RDOFF libraries format */
 
 int rdl_error = 0;
 
@@ -31,6 +19,7 @@ char *rdl_errors[5] = {
     "file contains modules of an unsupported RDOFF version",
     "module not found"
 };
+
 int rdl_verify(const char * filename)
 {
     FILE    * fp = fopen(filename, "rb");

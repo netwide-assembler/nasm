@@ -23,7 +23,6 @@
  * content size, followed by data.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -203,7 +202,7 @@ int main(int argc, char **argv)
 
     case 'x':
     	if (argc < 5) {
-	    fprintf(stderr, "rdflib: required paramenter missing\n");
+	    fprintf(stderr, "rdflib: required parameter missing\n");
 	    exit(1);
 	}
     case 't':
@@ -297,7 +296,7 @@ int main(int argc, char **argv)
 	argc--;
     case 'd':		/* delete module */
     	if (argc < 4) {
-	    fprintf(stderr, "rdflib: required paramenter missing\n");
+	    fprintf(stderr, "rdflib: required parameter missing\n");
 	    exit(1);
 	}
 	
@@ -332,7 +331,7 @@ int main(int argc, char **argv)
 	l = ftell(fp);		
 	fseek(fp, 0, SEEK_SET);
 	copybytes(fp, fptmp, l);
-	rewind(fptmp);					/* reopen files */
+	rewind(fptmp);
 	freopen(argv[2], "wb", fp);
 	
 	while (! feof(fptmp) ) {

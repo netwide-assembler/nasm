@@ -22,6 +22,16 @@ typedef unsigned char byte;
 #define RDF_MAXSEGS 64
 
 /* the records that can be found in the RDOFF header */
+#define RDFREC_RELOC		1
+#define RDFREC_IMPORT		2
+#define RDFREC_GLOBAL		3
+#define RDFREC_DLL		4
+#define RDFREC_BSS		5
+#define RDFREC_SEGRELOC		6
+#define RDFREC_FARIMPORT	7
+#define RDFREC_MODNAME		8
+#define RDFREC_COMMON		10
+#define RDFREC_GENERIC		0
 
 struct RelocRec {
   byte  type;           /* must be 1 */
@@ -72,33 +82,24 @@ struct ModRec {
   char  modname[128];   /* module name */
 };
 
+struct CommonRec {
+  byte	type;		/* must be 10 */
+  byte  reclen;		/* equals 7+label length */
+  int16 segment;	/* segment number */
+  long	size;		/* size of common variable */
+  int16 align;		/* alignment (power of two) */
+  char	label[33];	/* zero terminated as above. max len = 32 chars */
+};
+
 /* Flags for ExportRec */
 #define SYM_DATA	0x01
 #define SYM_FUNCTION	0x02
 #define SYM_GLOBAL	0x04
 
-/* Multiboot record */
-
-#ifdef _MULTBOOT_H
-
-#define TRAMPOLINESIZE	22
-
-struct MultiBootHdrRec {
-  byte  type;           /* must be 9 */
-  byte	reclen;		/* content length */
-#ifdef __GNUC__  
-  struct tMultiBootHeader mb __attribute__ ((packed));	/* MultiBoot header */
-#else
-  struct tMultiBootHeader mb;
-#endif
-  byte	trampoline[TRAMPOLINESIZE];
-};
-
-#endif
-
-/* GenericRec - contains the type and length field, plus a 128 byte
-   char array 'data', which will probably never be used! */
-
+/* 
+ * GenericRec - contains the type and length field, plus a 128 byte
+ * char array 'data'
+ */
 struct GenericRec {
     byte type;
     byte reclen;
@@ -107,16 +108,14 @@ struct GenericRec {
 
 typedef union RDFHeaderRec {
   char type;			/* invariant throughout all below */
-  struct GenericRec g;
+  struct GenericRec g;		/* type 0 */
   struct RelocRec r;		/* type == 1 / 6 */
   struct ImportRec i;		/* type == 2 / 7 */
   struct ExportRec e;		/* type == 3 */
   struct DLLRec d;		/* type == 4 */
   struct BSSRec b;		/* type == 5 */
   struct ModRec m;              /* type == 8 */
-#ifdef _MULTBOOT_H
-  struct MultiBootHdrRec mbh;	/* type == 9 */
-#endif  
+  struct CommonRec c;           /* type == 10 */
 } rdfheaderrec;
 
 struct SegmentHeaderRec {
@@ -201,8 +200,5 @@ int rdfaddheader(rdf_headerbuf *h,rdfheaderrec *r);
 int rdfaddsegment(rdf_headerbuf *h, long seglength);
 int rdfwriteheader(FILE *fp,rdf_headerbuf *h);
 void rdfdoneheader(rdf_headerbuf *h);
-
-/* This is needed by linker to write multiboot header record */
-int membuflength(memorybuffer *b);
 
 #endif		/* _RDOFF_H */
