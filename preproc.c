@@ -833,6 +833,7 @@ tokenise(char *line)
 	    type = TOK_STRING;
 	    while (*p && *p != c)
 		p++;
+
 	    if (*p)
 	    {
 		p++;
@@ -840,6 +841,7 @@ tokenise(char *line)
 	    else
 	    {
 		error(ERR_WARNING, "unterminated string");
+		type = -1;
 	    }
 	}
 	else if (isnumstart(*p))
@@ -901,7 +903,15 @@ tokenise(char *line)
 	    }
 	    p++;
 	}
-	if (type != TOK_COMMENT)
+
+	/* Handle unterminated string */
+	if (type == -1)
+	{
+	    *tail = t = new_Token(NULL, TOK_STRING, line, p-line+1);
+	    t->text[p-line] = *line;
+	    tail = &t->next;
+	}
+	else if (type != TOK_COMMENT)
 	{
 	    *tail = t = new_Token(NULL, type, line, p - line);
 	    tail = &t->next;
@@ -1520,23 +1530,30 @@ if_condition(Token * tline, int i)
 		    t = t->next;
 		    continue;
 		}
-		else if (tt->type == TOK_WHITESPACE)
+		if (tt->type == TOK_WHITESPACE)
 		{
 		    tt = tt->next;
 		    continue;
 		}
-		else if (tt->type != t->type ||
-			mstrcmp(tt->text, t->text, casesense))
+		if (tt->type != t->type)
 		{
 		    j = FALSE;	/* found mismatching tokens */
 		    break;
 		}
-		else
+		/* Unify surrounding quotes for strings */
+		if (t->type == TOK_STRING)
 		{
-		    t = t->next;
-		    tt = tt->next;
-		    continue;
+		    tt->text[0] = t->text[0];
+		    tt->text[strlen(tt->text) - 1] = t->text[0];
 		}
+		if (mstrcmp(tt->text, t->text, casesense) != 0)
+		{
+		    j = FALSE;	/* found mismatching tokens */
+		    break;
+		}
+
+		t = t->next;
+		tt = tt->next;
 	    }
 	    if ((t->type != TOK_OTHER || strcmp(t->text, ",")) || tt)
 		j = FALSE;	/* trailing gunk on one end or other */

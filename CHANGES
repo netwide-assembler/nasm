@@ -1,6 +1,8 @@
 0.98.39
 -------
 * "make spotless" no longer deletes config.h.in.
+* Unterminated string auto termination.
+* %(el)if(n)idn insensitivity to string quotes difference (#809300).
 
 0.98.38
 -------
@@ -13,7 +15,7 @@
   circumstances due to the addition of stabs support.
 * Quick-fix Borland format debug-info for -f obj  
 * Fix for %rep with no arguments (#560568)
-* Fix concatenation of preprocessor function call  (#794686)
+* Fix concatenation of preprocessor function call (#794686)
 * Fix long label causes coredump (#677841)
 * Use autoheader as well as autoconf to keep configure from generating
   ridiculously long command lines.
