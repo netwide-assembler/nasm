@@ -62,7 +62,9 @@ rdflib.o: rdflib.c
 segtab.o: segtab.c
 
 nasmlib.o: $(top_srcdir)/nasmlib.c
-	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
+##	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
+	cd $(top_srcdir);make nasmlib.o
+	cp $(top_srcdir)/nasmlib.o $(srcdir)
 
 clean:
 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx

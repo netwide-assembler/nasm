@@ -7,13 +7,19 @@
 #
 # This Makefile is designed to build NASM with the latest
 # version of Borland C++Builder and has been tested with 
-# Borland C++ 5.3 (Borland C++Builder 3.0) and Borland C++ 5.4
-# (Borland C++Builder 4.0) in combination with
-# Borland MAKE versions 5.1 and 5.2
+# Borland C++ 5.5 (Borland C++Builder 5.0) in combination
+# Borland MAKE 5.2
+#
+# Additionally, the free Borland C++ Compiler 5.5 is supported;
+# see
+#
+#   http://www.borland.com/bcppbuilder/freecompiler/
 #
 # MAKEFILE is maintained by Stefan.Hoffmeister@Econos.de
 #
 
+srcdir=.
+BINDIR=e:\devel\bcb5\cbuilder5\bin
 
 # If "BINDIR=C:\...." has not been defined on the command line
 # assume that the binary files are in the same directory as the
@@ -35,15 +41,19 @@
 
 
 CC=$(BINDIR)\bcc32
-CCFLAGS=-tWC -c -O2 -A
+CCFLAGS=-q -Q -tWC -c -O2 -A -w-8057
+  # /q:    Suppress compiler identification banner
+  # /Q:    Extended compiler error information
   # /-tWC: Windows console mode application
   # /c:    Compile, do not link
   # /O2:   Optimize for speed
   # /A:    ANSI compatible code only
+  # /-w-8057: Turn off "Parameter <param> never used in function <func>" warning
 
 LINK=$(BINDIR)\ilink32
-LINKFLAGS=/V4.0 /x /c /ap /L$(BINDIR)\..\LIB     # /L -> default LIB directory
+LINKFLAGS=/V4.0 /q /x /c /ap /L$(BINDIR)\..\LIB     # /L -> default LIB directory
   # /V4.0: marked as Win95 / NT application in PE header
+  # /q:    suppress command-line banner
   # /x:    no map file
   # /c:    case sensitive link
   # /ap:   link for 32-bit console application
@@ -131,7 +141,30 @@ parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insns
 preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
+# These source files are automagically generated from a single
+# instruction-table file by a Perl script. They're distributed,
+# though, so it isn't necessary to have Perl just to recompile NASM
+# from the distribution.
+
+insnsa.c: InstructionData
+insnsd.c: InstructionData
+insnsi.h: InstructionData
+insnsn.c: InstructionData
+
+InstructionData: insns.dat insns.pl
+	perl $(srcdir)/insns.pl -a $(srcdir)/insns.dat
+
+# This source file is generated from the standard macros file
+# `standard.mac' by another Perl script. Again, it's part of the
+# standard distribution.
+
+macros.c: standard.mac macros.pl
+	perl $(srcdir)/macros.pl $(srcdir)/standard.mac
+
 clean:
-  del *.obj
-  del nasm$(SUFFIX)$(EXE)
-  del ndisasm$(SUFFIX)$(EXE)
+  @-del /S *.obj  2> NUL 1>&2
+  @-del /S *.il?  2> NUL 1>&2
+  @-del /S *.tds  2> NUL 1>&2
+  @-del /S *.~*  2> NUL 1>&2
+  @-del /S nasm$(SUFFIX)$(EXE)  2> NUL 1>&2
+  @-del /S ndisasm$(SUFFIX)$(EXE)  2> NUL 1>&2

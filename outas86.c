@@ -350,7 +350,7 @@ static void as86_out (long segto, void *data, unsigned long type,
 
 static void as86_write(void) 
 {
-    int i;
+    unsigned long i;
     long symlen, seglen, segsize;
 
     /*

@@ -122,7 +122,7 @@ static void list_out (long offset, char *str)
 
 static void list_output (long offset, void *data, unsigned long type) 
 {
-    long typ, size;
+    unsigned long typ, size;
 
     if (!listp || suppress || user_nolist)    /* fbk - 9/2/00 */
 	return;

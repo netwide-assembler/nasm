@@ -38,9 +38,8 @@ static void register_output_formats(void);
 static void usage(void);
 
 static int using_debug_info;
-#ifdef	TASM_COMPAT
 int	   tasm_compatible_mode = FALSE;
-#endif
+int pass0;
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
@@ -131,7 +130,7 @@ static int want_usage;
 static int terminate_after_phase;
 int user_nolist = 0;             /* fbk 9/2/00 */
 
-static void nasm_fputs(char *line, FILE *ofile) 
+static void nasm_fputs(char *line, FILE *ofile)
 {
     if (ofile) {
 	fputs(line, ofile);
@@ -140,7 +139,7 @@ static void nasm_fputs(char *line, FILE *ofile)
 	puts(line);
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	pass0 = 1;
     want_usage = terminate_after_phase = FALSE;
@@ -151,7 +150,7 @@ int main(int argc, char **argv)
 
     preproc = &nasmpp;
     operating_mode = op_normal;
-    
+
     error_file = stderr;
 
     seg_init();
@@ -160,7 +159,7 @@ int main(int argc, char **argv)
 
     parse_cmdline(argc, argv);
 
-    if (terminate_after_phase) 
+    if (terminate_after_phase)
     {
 	if (want_usage)
 	    usage();
@@ -201,7 +200,7 @@ int main(int argc, char **argv)
       char *file_name = NULL;
       long  prior_linnum=0;
       int   lineinc=0;
-      
+
       if (*outname) {
 	ofile = fopen(outname, "w");
 	if (!ofile)
@@ -209,9 +208,9 @@ int main(int argc, char **argv)
 			"unable to open output file `%s'", outname);
       } else
 	ofile = NULL;
-      
+
       location.known = FALSE;
-      
+
 /*      pass = 1; */
       preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
       while ( (line = preproc->getline()) ) {
@@ -280,7 +279,7 @@ int main(int argc, char **argv)
 	   * so we're leaving out the one here.
 	   *     fclose (ofile);
 	   */
-	  
+	
 	  remove(outname);
 	  if (listname[0])
 	    remove(listname);
@@ -288,10 +287,10 @@ int main(int argc, char **argv)
       }
     break;
     }
-    
+
     if (want_usage)
       usage();
-    
+
     raa_free (offsets);
     saa_free (forwrefs);
     eval_cleanup ();
@@ -354,7 +353,7 @@ static int process_arg (char *p, char *q)
     if (!p || !p[0])
 	return 0;
 
-    if (p[0]=='-' && ! stopoptions) 
+    if (p[0]=='-' && ! stopoptions)
     {
 	switch (p[1]) {
 	  case 's':
@@ -364,9 +363,11 @@ static int process_arg (char *p, char *q)
 	  case 'O':
 	  case 'f':
 	  case 'p':
+          case 'P':
 	  case 'd':
 	  case 'D':
 	  case 'i':
+          case 'I':
 	  case 'l':
 	  case 'E':
 	  case 'F':
@@ -425,20 +426,18 @@ static int process_arg (char *p, char *q)
 	    printf("usage: nasm [-@ response file] [-o outfile] [-f format] "
 		   "[-l listfile]\n"
 		   "            [options...] [--] filename\n"
-		   "    or nasm -r   for version info\n\n"
-#ifdef TASM_COMPAT
+		   "    or nasm -r   for version info (obsolete)\n"
+		   "    or nasm -v   for version info (preferred)\n\n"
 		   "    -t          Assemble in SciTech TASM compatible mode\n"
 		   "    -g          Generate debug information in selected format.\n"
-#endif
 		   "    -e          preprocess only (writes output to stdout by default)\n"
 		   "    -a          don't preprocess (assemble only)\n"
 		   "    -M          generate Makefile dependencies on stdout\n\n"
 		   "    -E<file>    redirect error messages to file\n"
 		   "    -s          redirect error messages to stdout\n\n"
-		   "    -g          enable debug info\n"
 		   "    -F format   select a debugging format\n\n"
 		   "    -I<path>    adds a pathname to the include file path\n"
-		   "    -O<digit>   optimize branch offsets -O0 disables, -O2 default\n"
+		   "    -O<digit>   optimize branch offsets (-O0 disables, default)\n"
 		   "    -P<file>    pre-includes a file\n"
 		   "    -D<macro>[=<value>] pre-defines a macro\n"
 		   "    -U<macro>   undefines a macro\n"
@@ -468,20 +467,16 @@ static int process_arg (char *p, char *q)
 	    dfmt_list(ofmt, stdout);
 	    exit(0);
 	    break;
-#ifdef	TASM_COMPAT
 	  case 't':
 	    tasm_compatible_mode = TRUE;
 	    break;
-#endif
 	  case 'r':
-#ifdef	TASM_COMPAT
-	    printf("NASM version %s - SciTech TASM compatible additions\n", NASM_VER);
-#else
-	    printf("NASM version %s\n", NASM_VER);
-#endif
+	  case 'v':
+	    printf("NASM version %s compiled "
 #ifdef DEBUG
-	    printf("Compiled with -DDEBUG on " __DATE__ "\n");
+	    "with -DDEBUG "
 #endif
+	    "on " __DATE__ "\n", NASM_VER);
 	    exit (0);		       /* never need usage message here */
 	    break;
 	  case 'e':		       /* preprocess only */
@@ -507,7 +502,7 @@ static int process_arg (char *p, char *q)
 	    break;
           case 'M':
 	    operating_mode = op_depend;
-	    break; 
+	    break;
 
 	  case '-':
 	  {
@@ -575,8 +570,8 @@ static int process_arg (char *p, char *q)
 			  p[1]);
 	    break;
 	}
-    } 
-    else 
+    }
+    else
     {
 	if (*inname) {
 	    report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -655,7 +650,6 @@ static void process_respfile (FILE *rfile)
  * argv array. Used by the environment variable and response file
  * processing.
  */
-#ifdef TASM_COMPAT
 static void process_args (char *args) {
     char *p, *q, *arg, *prevarg;
     char separator = ' ';
@@ -676,16 +670,11 @@ static void process_args (char *args) {
     if (arg)
 	process_arg (arg, NULL);
 }
-#endif
 
 static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
     char *envreal, *envcopy=NULL, *p, *arg;
-#ifndef	TASM_COMPAT
-    char *q, *prevarg;
-    char separator = ' ';
-#endif
 
     *inname = *outname = *listname = '\0';
 
@@ -696,24 +685,7 @@ static void parse_cmdline(int argc, char **argv)
     arg = NULL;
     if (envreal) {
 	envcopy = nasm_strdup(envreal);
-#ifdef	TASM_COMPAT
 	process_args(envcopy);
-#else
-	p = envcopy;
-	if (*p && *p != '-')
-	    separator = *p++;
-	while (*p) {
-	    q = p;
-	    while (*p && *p != separator) p++;
-	    while (*p == separator) *p++ = '\0';
-	    prevarg = arg;
-	    arg = q;
-	    if (process_arg (prevarg, arg))
-		arg = NULL;
-	}
-	if (arg)
-	    process_arg (arg, NULL);
-#endif
 	nasm_free (envcopy);
     }
 
@@ -724,7 +696,6 @@ static void parse_cmdline(int argc, char **argv)
     {
 	int i;
 	argv++;
-#ifdef TASM_COMPAT
 	if (argv[0][0] == '@') {
 	    /* We have a response file, so process this as a set of
 	     * arguments like the environment variable. This allows us
@@ -748,7 +719,6 @@ static void parse_cmdline(int argc, char **argv)
 	    argc--;
 	    argv++;
 	}
-#endif
 	if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
 	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i))) {
 		if ((rfile = fopen(p, "r"))) {
@@ -793,9 +763,9 @@ static void assemble_file (char *fname)
       pass1 = pass < pass_max ? 1 : 2;  /* seq is 1, 1, 1,..., 1, 2 */
       pass2 = pass > 1 ? 2 : 1;         /* seq is 1, 2, 2,..., 2, 2 */
   /*      pass0                            seq is 0, 0, 0,..., 1, 2 */
-      
+
       def_label = pass > 1 ? redefine_label : define_label;
-      
+
 
       sb = cmd_sb;        /* set 'bits' to command line default */
       cpu = cmd_cpu;
@@ -817,13 +787,13 @@ static void assemble_file (char *fname)
       if (pass == 1) location.known = TRUE;
       location.offset = offs = GET_CURR_OFFS;
 
-      while ( (line = preproc->getline()) ) 
+      while ( (line = preproc->getline()) )
       {
          globallineno++;
 
          /* here we parse our directives; this is not handled by the 'real'
             * parser. */
-         if ( (i = getkw (line, &value)) ) 
+         if ( (i = getkw (line, &value)) )
          {
                switch (i) {
                case 1:               /* [SEGMENT n] */
@@ -1046,7 +1016,7 @@ static void assemble_file (char *fname)
                   break;
                default:
                   if (!ofmt->directive (line+1, value, pass2))
-                     report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC, 
+                     report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC,
                               "unrecognised directive [%s]",
                               line+1);
                }
@@ -1054,7 +1024,7 @@ static void assemble_file (char *fname)
          else         /* it isn't a directive */
          {
                parse_line (pass1, line, &output_ins,
-                           report_error, evaluate, 
+                           report_error, evaluate,
                            def_label);
 
                if (!optimizing && pass == 2) {
@@ -1069,12 +1039,12 @@ static void assemble_file (char *fname)
                }
 
 
-               if (!optimizing && output_ins.forw_ref) 
+               if (!optimizing && output_ins.forw_ref)
                {
                   if (pass == 1) {
-                        for(i = 0; i < output_ins.operands; i++) 
+                        for(i = 0; i < output_ins.operands; i++)
                         {
-                           if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) 
+                           if (output_ins.oprs[i].opflags & OPFLAG_FORWARD)
                            {
                                     struct forwrefinfo *fwinf =
                                        (struct forwrefinfo *)saa_wstruct(forwrefs);
@@ -1103,7 +1073,7 @@ static void assemble_file (char *fname)
                         */
 
                         if (output_ins.operands >= 2 &&
-                        (output_ins.oprs[1].opflags & OPFLAG_FORWARD)) 
+                        (output_ins.oprs[1].opflags & OPFLAG_FORWARD))
                         {
                            output_ins.oprs[1].type &= ~(ONENESS|BYTENESS);
                         }
@@ -1127,18 +1097,18 @@ static void assemble_file (char *fname)
 
                         else if (output_ins.label[0] != '.' ||
                                  output_ins.label[1] != '.' ||
-                                 output_ins.label[2] == '@') 
+                                 output_ins.label[2] == '@')
                         {
                            if (output_ins.operands == 1 &&
                                  (output_ins.oprs[0].type & IMMEDIATE) &&
-                                 output_ins.oprs[0].wrt == NO_SEG) 
+                                 output_ins.oprs[0].wrt == NO_SEG)
                            {
                               int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
                               def_label (output_ins.label,
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
                                              NULL, FALSE, isext, ofmt, report_error);
-                           } 
+                           }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
                                        (output_ins.oprs[0].type & COLON) &&
@@ -1146,13 +1116,13 @@ static void assemble_file (char *fname)
                                        output_ins.oprs[0].wrt == NO_SEG &&
                                        (output_ins.oprs[1].type & IMMEDIATE) &&
                                        output_ins.oprs[1].segment == NO_SEG &&
-                                       output_ins.oprs[1].wrt == NO_SEG) 
+                                       output_ins.oprs[1].wrt == NO_SEG)
                            {
                                  def_label (output_ins.label,
                                              output_ins.oprs[0].offset | SEG_ABS,
                                              output_ins.oprs[1].offset,
                                              NULL, FALSE, FALSE, ofmt, report_error);
-                           } 
+                           }
                            else
                                  report_error(ERR_NONFATAL, "bad syntax for EQU");
                         }
@@ -1163,7 +1133,7 @@ static void assemble_file (char *fname)
                         */
                         if (output_ins.label[0] == '.' &&
                            output_ins.label[1] == '.' &&
-                           output_ins.label[2] != '@') 
+                           output_ins.label[2] != '@')
                         {
                            if (output_ins.operands == 1 &&
                                  (output_ins.oprs[0].type & IMMEDIATE)) {
@@ -1171,19 +1141,19 @@ static void assemble_file (char *fname)
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
                                              NULL, FALSE, FALSE, ofmt, report_error);
-                           } 
+                           }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
                                        (output_ins.oprs[0].type & COLON) &&
                                        output_ins.oprs[0].segment == NO_SEG &&
                                        (output_ins.oprs[1].type & IMMEDIATE) &&
-                                       output_ins.oprs[1].segment == NO_SEG) 
+                                       output_ins.oprs[1].segment == NO_SEG)
                            {
                                  define_label (output_ins.label,
                                              output_ins.oprs[0].offset | SEG_ABS,
                                              output_ins.oprs[1].offset,
                                              NULL, FALSE, FALSE, ofmt, report_error);
-                           } 
+                           }
                            else
                                  report_error(ERR_NONFATAL, "bad syntax for EQU");
                         }
@@ -1196,26 +1166,26 @@ static void assemble_file (char *fname)
                                           &output_ins, report_error);
 
                         /* if (using_debug_info)  && output_ins.opcode != -1)*/
-                        if (using_debug_info);  /* fbk 12/29/00 */
+                        if (using_debug_info)  /* fbk 03/25/01 */
 
                         {
                            /* this is done here so we can do debug type info */
                            long typeinfo = TYS_ELEMENTS(output_ins.operands);
                            switch (output_ins.opcode) {
                                     case I_RESB:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;  
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
                                         break;
                                     case I_RESW:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;  
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
                                         break;
                                     case I_RESD:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;  
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
                                         break;
                                     case I_RESQ:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;  
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
                                         break;
                                     case I_REST:
-                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;  
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
                                         break;
                                     case I_DB:
                                         typeinfo |= TY_BYTE;
@@ -1247,7 +1217,7 @@ static void assemble_file (char *fname)
                            offs += l;
                            SET_CURR_OFFS (offs);
                         }
-                        /* 
+                        /*
                         * else l == -1 => invalid instruction, which will be
                         * flagged as an error on pass 2
                         */
@@ -1282,7 +1252,7 @@ static void assemble_file (char *fname)
    	 pass0++;
    	 if (pass0==2) pass = pass_max - 1;
       }	else if (!optimizing) pass0++;
-      
+
    } /* for (pass=1; pass<=2; pass++) */
 
    nasmlist.cleanup();
@@ -1290,11 +1260,11 @@ static void assemble_file (char *fname)
    if (optimizing && using_debug_info)	/*  -On and -g switches */
       fprintf(error_file,
                 "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
-#endif    
+#endif
 } /* exit from assemble_file (...) */
 
 
-static int getkw (char *buf, char **value) 
+static int getkw (char *buf, char **value)
 {
     char *p, *q;
 
@@ -1330,7 +1300,7 @@ static int getkw (char *buf, char **value)
 	while (*buf!=']') buf++;
 	*buf++ = '\0';
     }
-#if 0    
+#if 0
     for (q=p; *q; q++)
 	*q = tolower(*q);
 #endif	
@@ -1357,7 +1327,7 @@ static int getkw (char *buf, char **value)
     return -1;
 }
 
-static void report_error (int severity, char *fmt, ...) 
+static void report_error (int severity, char *fmt, ...)
 {
     va_list ap;
 
@@ -1397,7 +1367,7 @@ static void report_error (int severity, char *fmt, ...)
       case ERR_DEBUG:
         fputs("debug: ", error_file); break;
     }
-    
+
     va_start (ap, fmt);
     vfprintf (error_file, fmt, ap);
     fputc ('\n', error_file);
@@ -1429,12 +1399,12 @@ static void report_error (int severity, char *fmt, ...)
     }
 }
 
-static void usage(void) 
+static void usage(void)
 {
     fputs("type `nasm -h' for help\n", error_file);
 }
 
-static void register_output_formats(void) 
+static void register_output_formats(void)
 {
     ofmt = ofmt_register (report_error);
 }
@@ -1447,7 +1417,7 @@ static ListGen *no_pp_list;
 static long no_pp_lineinc;
 
 static void no_pp_reset (char *file, int pass, efunc error, evalfunc eval,
-			 ListGen *listgen) 
+			 ListGen *listgen)
 {
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
@@ -1462,7 +1432,7 @@ static void no_pp_reset (char *file, int pass, efunc error, evalfunc eval,
     (void) eval;		       /* placate compilers */
 }
 
-static char *no_pp_getline (void) 
+static char *no_pp_getline (void)
 {
     char *buffer, *p, *q;
     int bufsize;
@@ -1521,20 +1491,20 @@ static char *no_pp_getline (void)
     return buffer;
 }
 
-static void no_pp_cleanup (void) 
+static void no_pp_cleanup (void)
 {
     fclose(no_pp_fp);
 }
 
 static unsigned long get_cpu (char *value)
 {
-    
+
     if (!strcmp(value, "8086")) return IF_8086;
     if (!strcmp(value, "186")) return IF_186;
     if (!strcmp(value, "286")) return IF_286;
     if (!strcmp(value, "386")) return IF_386;
     if (!strcmp(value, "486")) return IF_486;
-    if (!strcmp(value, "586")    || 
+    if (!strcmp(value, "586")    ||
     	!nasm_stricmp(value, "pentium") ) 	return IF_PENT;
     if (!strcmp(value, "686")  ||
     	!nasm_stricmp(value, "ppro") ||
@@ -1543,7 +1513,7 @@ static unsigned long get_cpu (char *value)
     	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
 
     report_error (pass0<2 ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
-        
+
     return IF_PLEVEL;	/* the maximum level */
 }
 
@@ -1551,7 +1521,7 @@ static unsigned long get_cpu (char *value)
 static int get_bits (char *value)
 {
     int i;
-    
+
     if ((i = atoi(value)) == 16)  return i;   /* set for a 16-bit segment */
     else if (i == 32) {
 	if (cpu < IF_386) {

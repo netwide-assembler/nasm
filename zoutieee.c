@@ -158,7 +158,7 @@ extern struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup (long, long, struct ieeeSection *,
-				int, long, long);
+				int, unsigned long, long);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
 static long ieee_segment (char *, int, int *);
 static void ieee_write_file(int debuginfo);
@@ -369,7 +369,7 @@ static void ieee_deflabel (char *name, long segment,
  */
 static void ieee_out (long segto, void *data, unsigned long type,
 		     long segment, long wrt) {
-    long size, realtype;
+    unsigned long size, realtype;
     unsigned char *ucdata;
     long ldata;
     struct ieeeSection *seg;
@@ -447,7 +447,7 @@ static void ieee_data_new(struct ieeeSection *segto) {
  * If anyone wants to optimize this is a good canditate!
  */
 static void ieee_write_fixup (long segment, long wrt, struct ieeeSection * segto,
-				int size, long realtype, long offset) {
+				int size, unsigned long realtype, long offset) {
     struct ieeeSection *target;
     struct ieeeFixupp s;
 
@@ -1312,7 +1312,7 @@ static void dbgls_linnum (const char *lnfname, long lineno, long segto)
     }
     ieee_write_byte(seghead, fn->index);
     ieee_write_word(seghead, lineno);
-    ieee_write_fixup (segto, NO_SEG, seghead, 4,OUT_ADDRESS,seg->currentpos);
+    ieee_write_fixup (segto, NO_SEG, seghead, 4, OUT_ADDRESS, seg->currentpos);
 
 }
 static void dbgls_deflabel (char *name, long segment,

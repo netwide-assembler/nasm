@@ -651,10 +651,10 @@ static void coff_symbol (char *name, long strpos, long value,
     fputc (aux, coffp);
 }
 
-static void coff_write_symbols (void) 
+static void coff_write_symbols (void)
 {
     char filename[18];
-    int i;
+    unsigned long i;
 
     /*
      * The `.file' record, and the file name auxiliary record.
@@ -669,7 +669,7 @@ static void coff_write_symbols (void)
      */
     memset (filename, 0, 18);	       /* useful zeroed buffer */
 
-    for (i=0; i<nsects; i++) {
+    for (i = 0; i < nsects; i++) {
 	coff_symbol (sects[i]->name, 0L, 0L, i+1, 3, 1);
 	fwritelong (sects[i]->len, coffp);
 	fwriteshort (sects[i]->nrelocs, coffp);
@@ -685,7 +685,7 @@ static void coff_write_symbols (void)
      * The real symbols.
      */
     saa_rewind (syms);
-    for (i=0; i<nsyms; i++) {
+    for (i = 0; i < nsyms; i++) {
 	struct Symbol *sym = saa_rstruct (syms);
 	coff_symbol (sym->strpos == -1 ? sym->name : NULL,
 		     sym->strpos, sym->value, sym->section,

@@ -825,10 +825,10 @@ static void aout_write_relocs (struct Reloc *r)
 
 static void aout_write_syms (void) 
 {
-    int i;
+    unsigned long i;
 
     saa_rewind (syms);
-    for (i=0; i<nsyms; i++) {
+    for (i = 0; i < nsyms; i++) {
 	struct Symbol *sym = saa_rstruct(syms);
 	fwritelong (sym->strpos, aoutfp);
 	fwritelong ((long)sym->type & ~SYM_WITH_SIZE, aoutfp);

@@ -149,7 +149,7 @@
 #endif
 #endif
 
-/* finally... override any format specifically specifed to be off */
+/* finally... override any format specifically specified to be off */
 #ifdef OF_NO_BIN
 #undef OF_BIN
 #endif

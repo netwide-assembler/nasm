@@ -20,7 +20,6 @@
  * @@, so @@local is a TASM compatible local label. Note that we only
  * check for the first @ symbol, although TASM requires both.
  */
-#ifdef	TASM_COMPAT
 #define islocal(l)                                              \
 	(tasm_compatible_mode ?					\
 	(((l)[0] == '.' || (l)[0] == '@') && (l)[1] != '.') :   \
@@ -29,10 +28,6 @@
 	(tasm_compatible_mode ?                                  \
 	((c) == '.' || (c) == '@') :                            \
 	((c) == '.'))
-#else
-#define islocal(l) ((l)[0] == '.' && (l)[1] != '.')
-#define islocalchar(c) ((c) == '.')
-#endif
 
 #define LABEL_BLOCK  32               /* no. of labels/block */
 #define LBLK_SIZE    (LABEL_BLOCK*sizeof(union label))

@@ -423,7 +423,6 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    bracket = (i == '[');
 	    i = stdscan(NULL, &tokval);
 	    if (i == TOKEN_SPECIAL) {  /* check for address size override */
-#ifdef	TASM_COMPAT
 		if (tasm_compatible_mode) {
 		  switch ((int)tokval.t_integer) {
 		    /* For TASM compatibility a size override inside the
@@ -458,7 +457,6 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		      error (ERR_NONFATAL, "invalid operand size specification");
 		  }
 		} else {
-#endif
 		  /* Standard NASM compatible syntax */
 		  switch ((int)tokval.t_integer) {
 		    case S_NOSPLIT:
@@ -480,9 +478,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		      error (ERR_NONFATAL, "invalid size specification in"
 			     " effective address");
 		  }
-#ifdef	TASM_COMPAT
 		}
-#endif
 		i = stdscan(NULL, &tokval);
 	    }
 	} else {		       /* immediate operand, or register */
@@ -589,7 +585,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 
 		else if (e->value != 1)          /* If both want to be index */
 		{
-		    error(ERR_NONFATAL, "invalid effective address");
+		    error(ERR_NONFATAL, "beroset-p-592-invalid effective address");
 		    result->opcode = -1;
 		    return result;
 		} 
@@ -600,7 +596,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    if (e->type != 0) {	       /* is there an offset? */
 		if (e->type <= EXPR_REG_END)  /* in fact, is there an error? */
 		{
-		    error (ERR_NONFATAL, "invalid effective address");
+		    error (ERR_NONFATAL, "beroset-p-603-invalid effective address");
 		    result->opcode = -1;
 		    return result;
 		} 
@@ -627,14 +623,14 @@ insn *parse_line (int pass, char *buffer, insn *result,
 			 * Look for a segment base type.
 			 */
 			if (e->type && e->type < EXPR_SEGBASE) {
-			    error (ERR_NONFATAL, "invalid effective address");
+			    error (ERR_NONFATAL, "beroset-p-630-invalid effective address");
 			    result->opcode = -1;
 			    return result;
 			}
 			while (e->type && e->value == 0)
 			    e++;
 			if (e->type && e->value != 1) {
-			    error (ERR_NONFATAL, "invalid effective address");
+			    error (ERR_NONFATAL, "beroset-p-637-invalid effective address");
 			    result->opcode = -1;
 			    return result;
 			}
@@ -647,7 +643,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 			while (e->type && e->value == 0)
 			    e++;
 			if (e->type) {
-			    error (ERR_NONFATAL, "invalid effective address");
+			    error (ERR_NONFATAL, "beroset-p-650-invalid effective address");
 			    result->opcode = -1;
 			    return result;
 			}
@@ -660,7 +656,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    }
 
 	    if (e->type != 0) {    /* there'd better be nothing left! */
-		error (ERR_NONFATAL, "invalid effective address");
+		error (ERR_NONFATAL, "beroset-p-663-invalid effective address");
 		result->opcode = -1;
 		return result;
 	    }

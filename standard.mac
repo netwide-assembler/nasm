@@ -1,4 +1,15 @@
 ; Standard macro set for NASM 0.98 -*- nasm -*-
+
+; Macros to make NASM ignore some TASM directives before the first include
+; directive.
+
+    %idefine IDEAL
+    %idefine JUMPS
+    %idefine P386
+    %idefine P486
+    %idefine P586
+    %idefine END
+
 ; Note that although some user-level forms of directives are defined
 ; here, not all of them are: the user-level form of a format-specific
 ; directive should be defined in the module for that directive.
@@ -32,7 +43,7 @@
 %define %$strucname %1
 [absolute 0]
 %$strucname:			; allow definition of `.member' to work sanely
-%endmacro
+%endmacro 
 %imacro endstruc 0.nolist
 %{$strucname}_size:
 %pop
@@ -97,12 +108,3 @@ __SECT__
 %endmacro
 
 
-; Macros to make NASM ignore some TASM directives before the first include
-; directive.
-
-%idefine IDEAL
-%idefine JUMPS
-%idefine P386
-%idefine P486
-%idefine P586
-%idefine END

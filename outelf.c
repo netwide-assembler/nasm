@@ -105,7 +105,7 @@ extern struct ofmt of_elf;
 #define SYM_DATA 0x01
 #define SYM_FUNCTION 0x02
 
-#define GLOBAL_TEMP_BASE 6	       /* bigger than any constant sym id */
+#define GLOBAL_TEMP_BASE 15	       /* bigger than any constant sym id */
 
 #define SEG_ALIGN 16		       /* alignment of sections in file */
 #define SEG_ALIGN_1 (SEG_ALIGN-1)

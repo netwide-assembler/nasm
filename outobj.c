@@ -977,7 +977,7 @@ static void obj_write_fixup (ObjRecord *orp, int bytes,
 static void obj_out (long segto, void *data, unsigned long type,
 		     long segment, long wrt) 
 {
-    long size, realtype;
+    unsigned long size, realtype;
     unsigned char *ucdata;
     long ldata;
     struct Segment *seg;

@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98.08"
+#define NASM_VER "0.98.09"
 
 #ifndef NULL
 #define NULL 0
@@ -856,9 +856,7 @@ struct dfmt {
 
 #define elements(x)     ( sizeof(x) / sizeof(*(x)) )
 
-#ifdef	TASM_COMPAT
 extern int tasm_compatible_mode;
-#endif
 
 /*
  * This declaration passes the "pass" number to all other modules
@@ -868,6 +866,6 @@ extern int tasm_compatible_mode;
  *       2 = pass 2
  */
 
-int pass0;	/* this is globally known */
+extern int pass0;	/* this is globally known */
 
 #endif

@@ -757,9 +757,9 @@ int stdscan (void *private_data, struct tokenval *tv)
 	if ((tv->t_integer=bsi(ourcopy, special_names,
 				  elements(special_names)))>=0)
 	    return tv->t_type = TOKEN_SPECIAL;
-	if (!strcmp(ourcopy, "seg"))
+	if (!nasm_stricmp(ourcopy, "seg"))
 	    return tv->t_type = TOKEN_SEG;
-	if (!strcmp(ourcopy, "wrt"))
+	if (!nasm_stricmp(ourcopy, "wrt"))
 	    return tv->t_type = TOKEN_WRT;
 	return tv->t_type = TOKEN_ID;
     } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
