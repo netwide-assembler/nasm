@@ -79,6 +79,7 @@ find nasm -type d -name CVS -print | xargs rm -rf
 
 # Create files which are in the release but automatically generated
 cd nasm
+autoheader
 autoconf
 ./configure --prefix=/usr/local
 make dist
