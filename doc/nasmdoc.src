@@ -706,8 +706,8 @@ natively supports.
 
 \b size override is supported within brackets. In TASM compatible mode,
 a size override inside square brackets changes the size of the operand,
-and not the address type of the operand as it does in NASM syntax. E.g. 
-\c{mov eax,[DWORD val]} is valid syntax in TASM compatibility mode. 
+and not the address type of the operand as it does in NASM syntax. E.g.
+\c{mov eax,[DWORD val]} is valid syntax in TASM compatibility mode.
 Note that you lose the ability to override the default address type for
 the instruction.
 
@@ -2979,7 +2979,7 @@ compatibility is turned on using the \c{-t} command line switch
 
 The \c{%arg} directive is used to simplify the handling of
 parameters passed on the stack. Stack based parameter passing
-is used by many high level languages, including C, C++ and Pascal. 
+is used by many high level languages, including C, C++ and Pascal.
 
 While NASM comes with macros which attempt to duplicate this
 functionality (see \k{16cmacro}), the syntax is not particularly
@@ -3008,7 +3008,7 @@ sum in the ax register. See \k{pushpop} for an explanation of
 \S{stacksize} \i\c{%stacksize} Directive
 
 The \c{%stacksize} directive is used in conjunction with the
-\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives. 
+\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives.
 It tells NASM the default size to use for subsequent \c{%arg} and
 \c{%local} directives. The \c{%stacksize} directive takes one
 required argument which is one of \c{flat}, \c{large} or \c{small}.
