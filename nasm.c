@@ -34,8 +34,12 @@ static void parse_cmdline (int, char **);
 static void assemble_file (char *);
 static int getkw (char *buf, char **value);
 static void register_output_formats(void);
-static void report_error (int severity, const char *fmt, ...);
+static void report_error_gnu (int severity, const char *fmt, ...);
+static void report_error_vc (int severity, const char *fmt, ...);
+static void report_error_common (int severity, const char *fmt, va_list args);
+static int is_suppressed_warning (int severity);
 static void usage(void);
+static efunc report_error;
 
 static int using_debug_info, opt_verbose_info;
 int	   tasm_compatible_mode = FALSE;
@@ -143,8 +147,9 @@ static void nasm_fputs(const char *line, FILE *outfile)
 
 int main(int argc, char **argv)
 {
-	pass0 = 1;
+    pass0 = 1;
     want_usage = terminate_after_phase = FALSE;
+    report_error = report_error_gnu;
 
     nasm_set_malloc_error (report_error);
     offsets = raa_init();
@@ -372,6 +377,7 @@ static int process_arg (char *p, char *q)
 	  case 'l':
 	  case 'E':
 	  case 'F':
+	  case 'X':
 	    if ( !(param = get_param (p, q, &advance)) )
 		break;
 	    if (p[1]=='o') {	       /* output file */
@@ -433,7 +439,16 @@ static int process_arg (char *p, char *q)
 			    	  " output format `%s'",
 				  param, ofmt->shortname);
                 }
-            }
+            } else if (p[1] == 'X') { /* specify error reporting format */
+		if (nasm_stricmp("vc", param) == 0)
+		    report_error = report_error_vc;
+		else if (nasm_stricmp("gnu", param) == 0)
+		    report_error = report_error_gnu;
+		else
+		    report_error (ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+				  "unrecognized error reporting format `%s'",
+				  param);
+	    }
 	    break;
 	  case 'g':
 	    using_debug_info = TRUE;
@@ -457,6 +472,7 @@ static int process_arg (char *p, char *q)
 		   "    -P<file>    pre-includes a file\n"
 		   "    -D<macro>[=<value>] pre-defines a macro\n"
 		   "    -U<macro>   undefines a macro\n"
+		   "    -X<format>  specifies error reporting format (gnu or vc)\n"
 		   "    -w+foo      enables warnings about foo; -w-foo disables them\n"
 		   "where foo can be:\n");
 	    for (i=1; i<=ERR_WARN_MAX; i++)
@@ -1355,22 +1371,25 @@ static int getkw (char *buf, char **value)
     return -1;
 }
 
-static void report_error (int severity, const char *fmt, ...)
+/**
+ * gnu style error reporting
+ * This function prints an error message to error_file in the
+ * style used by GNU. An example would be:
+ * file.asm:50: error: blah blah blah
+ * where file.asm is the name of the file, 50 is the line number on 
+ * which the error occurs (or is detected) and "error:" is one of
+ * the possible optional diagnostics -- it can be "error" or "warning"
+ * or something else.  Finally the line terminates with the actual 
+ * error message.
+ * 
+ * @param severity the severity of the warning or error 
+ * @param fmt the printf style format string
+ */
+static void report_error_gnu (int severity, const char *fmt, ...)
 {
     va_list ap;
 
-    /*
-     * See if it's a suppressed warning.
-     */
-    if ((severity & ERR_MASK) == ERR_WARNING &&
-	(severity & ERR_WARN_MASK) != 0 &&
-	suppressed[ (severity & ERR_WARN_MASK) >> ERR_WARN_SHR ])
-	return;			       /* and bail out if so */
-
-    /*
-     * See if it's a pass-one only warning and we're not in pass one.
-     */
-    if ((severity & ERR_PASS1) && pass0 == 2)
+    if (is_suppressed_warning(severity))
 	return;
 
     if (severity & ERR_NOFILE)
@@ -1382,7 +1401,81 @@ static void report_error (int severity, const char *fmt, ...)
 	fprintf (error_file, "%s:%ld: ", currentfile, lineno);
 	nasm_free (currentfile);
     }
+    va_start (ap, fmt);
+    report_error_common (severity, fmt, ap);
+    va_end (ap);
+}
 
+/**
+ * MS style error reporting
+ * This function prints an error message to error_file in the
+ * style used by Visual C and some other Microsoft tools. An example 
+ * would be:
+ * c:\project\file.asm(50) error: blah blah blah
+ * where c:\project\file.asm is the full path of the file, 
+ * 50 is the line number on which the error occurs (or is detected) 
+ * and "error:" is one of the possible optional diagnostics -- it 
+ * can be "error" or "warning" or something else.  Finally the line 
+ * terminates with the actual error message.
+ * 
+ * @param severity the severity of the warning or error 
+ * @param fmt the printf style format string
+ */
+static void report_error_vc (int severity, const char *fmt, ...)
+{
+    va_list ap;
+
+    if (is_suppressed_warning (severity))
+	return;
+
+    if (severity & ERR_NOFILE)
+	fputs ("nasm: ", error_file);
+    else {
+	char * currentfile = NULL;
+	long lineno = 0;
+	src_get (&lineno, &currentfile);
+	fprintf (error_file, "%s(%ld) ", currentfile, lineno);
+	nasm_free (currentfile);
+    }
+    va_start (ap, fmt);
+    report_error_common (severity, fmt, ap);
+    va_end (ap);
+}
+
+/**
+ * check for supressed warning
+ * checks for suppressed warning or pass one only warning and we're 
+ * not in pass 1
+ *
+ * @param severity the severity of the warning or error
+ * @return true if we should abort error/warning printing
+ */
+static int is_suppressed_warning (int severity)
+{
+    /*
+     * See if it's a suppressed warning.
+     */
+    return ((severity & ERR_MASK) == ERR_WARNING &&
+	(severity & ERR_WARN_MASK) != 0 &&
+	suppressed[ (severity & ERR_WARN_MASK) >> ERR_WARN_SHR ]) ||
+    /*
+     * See if it's a pass-one only warning and we're not in pass one.
+     */
+	((severity & ERR_PASS1) && pass0 == 2);
+}
+
+/**
+ * common error reporting
+ * This is the common back end of the error reporting schemes currently
+ * implemented.  It prints the nature of the warning and then the 
+ * specific error message to error_file and may or may not return.  It
+ * doesn't return if the error severity is a "panic" or "debug" type.
+ * 
+ * @param severity the severity of the warning or error 
+ * @param fmt the printf style format string
+ */
+static void report_error_common (int severity, const char *fmt, va_list args)
+{
     switch (severity & ERR_MASK) {
       case ERR_WARNING:
 	fputs ("warning: ", error_file); break;
@@ -1396,8 +1489,7 @@ static void report_error (int severity, const char *fmt, ...)
         fputs("debug: ", error_file); break;
     }
 
-    va_start (ap, fmt);
-    vfprintf (error_file, fmt, ap);
+    vfprintf (error_file, fmt, args);
     fputc ('\n', error_file);
 
     if (severity & ERR_USAGE)
@@ -1408,7 +1500,7 @@ static void report_error (int severity, const char *fmt, ...)
 	/* no further action, by definition */
 	break;
       case ERR_NONFATAL:
-/*     terminate_after_phase = TRUE;   *//**//* hack enables listing(!) on errors */
+	/* hack enables listing(!) on errors */
         terminate_after_phase = TRUE;
 	break;
       case ERR_FATAL:
