@@ -9470,10 +9470,10 @@ register xmm2 is used to selectively write the data (0 = no write,
 
 \c MASKMOVQ mm1,mm2              ; 0F F7 /r        [KATMAI,MMX] 
 
-\c{MASKMOVQ} stores data from xmm1 to the location specified by
+\c{MASKMOVQ} stores data from mm1 to the location specified by
 \c{ES:(E)DI}. The size of the store depends on the address-size
 attribute. The most significant bit in each byte of the mask
-register xmm2 is used to selectively write the data (0 = no write,
+register mm2 is used to selectively write the data (0 = no write,
 1 = write) on a per-byte basis.
 
 
