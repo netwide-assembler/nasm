@@ -1,3 +1,10 @@
+0.98.38
+-------
+* Add Makefile for 16-bit DOS binaries under OpenWatcom, and modify
+  mkdep.pl to be able to generate completely pathless dependencies, as
+  required by OpenWatcom wmake (it supports path searches, but not
+  explicit paths.)
+
 0.98.37
 -------
 * Paths given in "-I" switch searched for "incbin"ed as
