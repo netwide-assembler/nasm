@@ -185,6 +185,7 @@ static int symtabsection;
 static unsigned char *stabbuf=0,*stabstrbuf=0,*stabrelbuf=0;
 static int stablen,stabstrlen,stabrellen;
 
+static struct dfmt df_stabs;
 
 void stabs_init(struct ofmt *,void *,FILE *,efunc );
 void stabs_linenum(const char *filename,long linenumber,long);
@@ -917,7 +918,7 @@ static void elf_write(void)
      * sections `.comment', `.shstrtab', `.symtab' and `.strtab',
      * then optionally relocation sections for the user sections.
      */
-    if (of_elf.current_dfmt)
+    if (of_elf.current_dfmt == &df_stabs)
       nsections=8;
     else
       nsections = 5;		       /* SHN_UNDEF and the fixed ones */
@@ -934,7 +935,7 @@ static void elf_write(void)
 	}
     }
 
-    if (of_elf.current_dfmt) {
+    if (of_elf.current_dfmt == &df_stabs) {
       /* in case the debug information is wanted, just add these three sections... */
       add_sectname("",".stab");
       add_sectname("",".stabstr");
@@ -1019,7 +1020,7 @@ static void elf_write(void)
 	elf_section_header (p - shstrtab, 9, 0, sects[i]->rel, TRUE,
 			    sects[i]->rellen, nsects+3, i+1, 4, 8);
     }
-    if (of_elf.current_dfmt) {
+    if (of_elf.current_dfmt == &df_stabs) {
       /* for debugging information, create the last three sections
 	 which are the .stab , .stabstr and .rel.stab sections respectively */
 

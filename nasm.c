@@ -173,6 +173,10 @@ int main(int argc, char **argv)
 	return 1;
     }
 
+    /* If debugging info is disabled, suppress any debug calls */
+    if (!using_debug_info)
+        ofmt->current_dfmt = &null_debug_form;
+
     if (ofmt->stdmac)
 	pp_extra_stdmac (ofmt->stdmac);
     parser_global_info (ofmt, &location);
