@@ -30,7 +30,7 @@ cd "$work"
 
 if $real; then
   # Need to tag the tree, use real account
-  CVS="cvs -z3 -d ${SFUSER}@cvs.nasm.sourceforge.net:/cvsroot/nasm"
+  CVS="cvs -z3 -d ${sfuser}@cvs.nasm.sourceforge.net:/cvsroot/nasm"
 else
   # Don't need to tag the tree, can use anonymous
   echo ':pserver:anonymous@cvs.nasm.sourceforge.net:/cvsroot/nasm A' > "$work"/cvspass
@@ -42,7 +42,7 @@ if [ -n "$2" ]; then
   branchopt="-r $2"
 fi
 
-rm -rf nasm*
+rm -rf nasm-release.*
 
 $CVS co $branchopt nasm
 version=`cat nasm/version`
