@@ -330,16 +330,18 @@ void standard_extension (char *inname, char *outname, char *extension,
 static struct RAA *real_raa_init (int layers) 
 {
     struct RAA *r;
+    int i;
+
+    r->layers = layers;
 
     if (layers == 0) {
 	r = nasm_malloc (LEAFSIZ);
 	memset (r->u.l.data, 0, sizeof(r->u.l.data));
-	r->layers = 0;
 	r->stepsize = 1L;
     } else {
 	r = nasm_malloc (BRANCHSIZ);
-	memset (r->u.b.data, 0, sizeof(r->u.b.data));
-	r->layers = layers;
+	for ( i = 0 ; i < RAA_LAYERSIZE ; i++ )
+	  r->u.b.data[i] = NULL;
 	r->stepsize = RAA_BLKSIZE;
 	while (--layers)
 	    r->stepsize *= RAA_LAYERSIZE;
@@ -367,14 +369,14 @@ void raa_free (struct RAA *r)
 long raa_read (struct RAA *r, long posn) 
 {
     if (posn > r->stepsize * LAYERSIZ(r))
-        nasm_malloc_error (ERR_PANIC, "bad position in raa_read");
+	return 0;		/* Return 0 for undefined entries */
     while (r->layers > 0) {
 	ldiv_t l;
 	l = ldiv (posn, r->stepsize);
 	r = r->u.b.data[l.quot];
 	posn = l.rem;
-	if (!r)			       /* better check this */
-            nasm_malloc_error (ERR_PANIC, "null pointer in raa_read");
+	if (!r)
+	    return 0;		/* Return 0 for undefined entries */
     }
     return r->u.l.data[posn];
 }
@@ -388,12 +390,14 @@ struct RAA *raa_write (struct RAA *r, long posn, long value)
 
     while (r->stepsize * LAYERSIZ(r) < posn) {
 	/*
-	 * Must go up a layer.
+	 * Must add a layer.
 	 */
 	struct RAA *s;
+	int i;
 
 	s = nasm_malloc (BRANCHSIZ);
-	memset (s->u.b.data, 0, sizeof(r->u.b.data));
+	for ( i = 0 ; i < RAA_LAYERSIZE ; i++ )
+	    s->u.b.data[i] = NULL;
 	s->layers = r->layers + 1;
 	s->stepsize = LAYERSIZ(r) * r->stepsize;
 	s->u.b.data[0] = r;
