@@ -3213,10 +3213,17 @@ as shown in the example.
 
 \H{otherpreproc} \i{Other Preprocessor Directives}
 
+NASM also has preprocessor directives which allow access to
+information from external sources. Currently they include:
+
 The following preprocessor directive is supported to allow NASM to
 correctly handle output of the cpp C language preprocessor.
 
-\b\c{%line}  (see \k{line})
+\b\c{%line} enables NAsM to correctly handle the output of the cpp
+C language preprocessor (see \k{line}).
+
+\b\c{%!} enables NASM to read in the value of an environment variable,
+which can then be used in your program (see \k{getenv}).
 
 \S{line} \i\c{%line} Directive
 
@@ -3244,6 +3251,30 @@ specifies the file name of the original source file.
 After reading a \c{%line} preprocessor directive, NASM will report
 all file name and line numbers relative to the values specified
 therein.
+
+
+\S{getenv} \i\c{%!}\c{<env>}: Read an environment variable.
+
+The \c{%!<env>} directive makes it possible to read the value of an
+environment variable at assembly time. This could, for example, be used
+to store the contents of an environment variable into a string, which
+could be used at some other point in your code.
+
+For example, you may want to embed the path to your TEMP directory
+in your program. As this is usually stored in an environment variable
+called TEMP, this could be coded as follows:
+
+\c %define TEMP    %!TEMP
+\c %define quote   '
+\c
+\c tmpstr  db      quote TEMP quote
+
+At the time of writing, this will generate an "unterminated string"
+warning at the time of defining "quote", and it will add a space
+before and after the string that is read in. I was unable to find
+a simple workaround, so I believe that you will need to allow for
+the extra spaces if you make use of this feature in that way.
+
 
 \C{directive} \i{Assembler Directives}
 
