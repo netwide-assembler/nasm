@@ -1016,7 +1016,8 @@ STOSD     void                \321\1\xAB                    386
 STOSW     void                \320\1\xAB                    8086
 STR       mem                 \300\1\x0F\17\201             286,PROT
 STR       mem16               \300\1\x0F\17\201             286,PROT
-STR       reg16               \1\x0F\17\201                 286,PROT
+STR       reg16               \320\1\x0F\17\201             286,PROT
+STR       reg32               \321\1\x0F\17\201             386,PROT
 SUB       mem,reg8            \300\1\x28\101                8086,SM
 SUB       reg8,reg8           \1\x28\101                    8086
 SUB       mem,reg16           \320\300\1\x29\101            8086,SM
