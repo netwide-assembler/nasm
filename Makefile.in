@@ -127,7 +127,8 @@ clean:
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
-	rm -f config.* Makefile *~ *.bak *.lst *.bin
+	rm -f config.h config.log config.status
+	rm -f Makefile *~ *.bak *.lst *.bin
 	rm -f output/*~ output/*.bak
 	rm -f test/*.lst test/*.bin test/*.$(O) test/*.bin
 	rm -rf autom4te*.cache
