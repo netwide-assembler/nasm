@@ -32,7 +32,7 @@ static int get_bits (char *value);
 static unsigned long get_cpu (char *cpu_str);
 static void parse_cmdline (int, char **);
 static void assemble_file (char *);
-static int getkw (char *buf, char **value);
+static int getkw (char **directive, char **value);
 static void register_output_formats(void);
 static void report_error_gnu (int severity, const char *fmt, ...);
 static void report_error_vc (int severity, const char *fmt, ...);
@@ -782,7 +782,7 @@ static void parse_cmdline(int argc, char **argv)
 
 static void assemble_file (char *fname)
 {
-    char   * value, * p, * q, * special, * line, debugid[80];
+    char   * directive, * value, * p, * q, * special, * line, debugid[80];
     insn   output_ins;
     int    i, rn_error, validid;
     long   seg, offs;
@@ -834,7 +834,8 @@ static void assemble_file (char *fname)
 
          /* here we parse our directives; this is not handled by the 'real'
             * parser. */
-         if ( (i = getkw (line, &value)) )
+         directive = line;
+         if ( (i = getkw (&directive, &value)) )
          {
                switch (i) {
                case 1:               /* [SEGMENT n] */
@@ -1059,10 +1060,10 @@ static void assemble_file (char *fname)
                       }
                   break;
                default:
-                  if (!ofmt->directive (line+1, value, pass2))
+                  if (!ofmt->directive (directive, value, pass2))
                      report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC,
                               "unrecognised directive [%s]",
-                              line+1);
+                              directive);
                }
          }
          else         /* it isn't a directive */
@@ -1309,9 +1310,11 @@ static void assemble_file (char *fname)
 } /* exit from assemble_file (...) */
 
 
-static int getkw (char *buf, char **value)
+static int getkw (char **directive, char **value)
 {
-    char *p, *q;
+    char *p, *q, *buf;
+    
+    buf = *directive;
 
     /*  allow leading spaces or tabs */
     while (*buf==' ' || *buf=='\t')
@@ -1336,7 +1339,7 @@ static int getkw (char *buf, char **value)
     }
     q[1] = '\0';
 
-    p = buf+1;
+    *directive = p = buf+1;
     while (*buf && *buf!=' ' && *buf!=']' && *buf!='\t')
     	buf++;
     if (*buf==']') {
