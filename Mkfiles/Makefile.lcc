@@ -23,8 +23,8 @@ OBJ = obj
 
 NASM = nasm.${OBJ} nasmlib.${OBJ} float.${OBJ} insnsa.${OBJ} assemble.${OBJ} labels.${OBJ} \
        parser.${OBJ} outform.${OBJ} outbin.${OBJ} outaout.${OBJ} outcoff.${OBJ} outelf.${OBJ} \
-       outobj.${OBJ} outas86.${OBJ} outrdf.${OBJ} outdbg.${OBJ} preproc.${OBJ} listing.${OBJ} \
-       eval.${OBJ}
+       outobj.${OBJ} outas86.${OBJ} outrdf.${OBJ} outdbg.${OBJ} outrdf2.${OBJ} \
+       zoutieee.${OBJ} preproc.${OBJ} listing.${OBJ} eval.${OBJ}
 
 NDISASM = ndisasm.${OBJ} disasm.${OBJ} sync.${OBJ} nasmlib.${OBJ} insnsd.${OBJ}
 
@@ -51,6 +51,8 @@ NASM.LNK: makefile.lcc
         echo outobj.$(OBJ) >> NASM.LNK
         echo outas86.$(OBJ) >> NASM.LNK
         echo outrdf.$(OBJ) >> NASM.LNK
+        echo outrdf2.$(OBJ) >> NASM.LNK
+        echo zoutieee.$(OBJ) >> NASM.LNK
         echo outdbg.$(OBJ) >> NASM.LNK
 
 NDISASM.LNK: makefile.lcc
@@ -87,6 +89,8 @@ outelf.${OBJ}: outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.${OBJ}: outform.c outform.h nasm.h insnsi.h
 outobj.${OBJ}: outobj.c nasm.h insnsi.h nasmlib.h outform.h
 outrdf.${OBJ}: outrdf.c nasm.h insnsi.h nasmlib.h outform.h
+outrdf2.${OBJ}: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+zoutieee.${OBJ}: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
 parser.${OBJ}: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.${OBJ}: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.${OBJ}: sync.c sync.h

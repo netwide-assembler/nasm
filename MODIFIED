@@ -2,6 +2,12 @@ This is a modified version of NASM, modified and released by H. Peter
 Anvin <hpa@zytor.com>; it is not the original form released by the
 NASM authors.
 
+For release 0.98p3.7:
+
+* (Hopefully) fixed the canned Makefiles to include the outrdf2 and
+  zoutieee modules.
+* Renamed changes.asm to changed.asm.
+
 For release 0.98p3.6:
 
 * Fixed a bunch of instructions that were added in 0.98p3.5 which had

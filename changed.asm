@@ -1,13 +1,13 @@
 ;This file demonstrates many of the differences between NASM version X and NASM
 ;version 0.97
 ;
-; changes.asm is copyright (C) 1998 John S. Fine
+; changed.asm is copyright (C) 1998 John S. Fine
 ;
 ;  It may be redistributed under the same conditions as NASM as described in
 ;  Licence file in the NASM archive
 ;_________________________________
 ;
-;  nasm changes.asm -l changes.lst
+;  nasm changed.asm -l changed.lst
 ;
 ; When assembled without any -d switches, it includes examples which:
 ;       Work correctly in version X
@@ -18,21 +18,21 @@
 ; "ndisasm changes"  to examine the code actually generated.
 ;_________________________________
 ;
-;  nasm changes.asm -l changes.lst -doldmsg
+;  nasm changed.asm -l changed.lst -doldmsg
 ;
 ; When assembled with -doldmsg, it adds examples which:
 ;       Work correctly in version X
 ;  and  Generate error messages in version 0.97 and do not generate output
 ;_________________________________
 ;
-;  nasm changes.asm -l changes.lst -doldcrash
+;  nasm changed.asm -l changed.lst -doldcrash
 ;
 ; When assembled with -doldcrash, it adds examples which:
 ;       Work correctly in version X
 ;  and  Cause NASM to crash in version 0.97
 ;_________________________________
 ;
-;  nasm changes.asm -l changes.lst -dnewmsg
+;  nasm changed.asm -l changed.lst -dnewmsg
 ;
 ; When assembled with -dnewmsg, it adds examples which:
 ;       Generate error messages in version X

@@ -108,7 +108,8 @@ NDISASMOBJS = $(OBJD)ndisasm.$(OBJ)  $(OBJD)disasm.$(OBJ) $(OBJD)sync.$(OBJ) \
 
 OUTOBJ= $(OBJD)outbin.$(OBJ) $(OBJD)outaout.$(OBJ) $(OBJD)outcoff.$(OBJ) \
         $(OBJD)outelf.$(OBJ) $(OBJD)outobj.$(OBJ)  $(OBJD)outas86.$(OBJ) \
-        $(OBJD)outrdf.$(OBJ) $(OBJD)outdbg.$(OBJ)
+        $(OBJD)outrdf.$(OBJ) $(OBJD)outdbg.$(OBJ)  $(OBJD)outrdf2.$(OBJ) \
+	$(OBJD)zoutieee.$(OBJ)
 
 
 ################################################################
@@ -222,6 +223,12 @@ $(OBJD)outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
 $(OBJD)outrdf.$(OBJ): outrdf.c nasm.h insnsi.h nasmlib.h
+        $(NASM_ASM)
+
+$(OBJD)outrdf2.$(OBJ): outrdf2.c nasm.h insnsi.h nasmlib.h
+        $(NASM_ASM)
+
+$(OBJD)zoutieee.$(OBJ): zoutieee.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
 $(OBJD)outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
