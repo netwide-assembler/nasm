@@ -19,10 +19,10 @@
 ; [10] Reference a data-section symbol in the data section
 ; [11] Reference a BSS-section symbol in the data section
 
-[BITS 16]
-[ORG 0x100]
+	  BITS 16
+	  ORG 0x100
 
-[SECTION .text]
+	  SECTION .text
 
 	  jmp start		; [6]
 
@@ -44,13 +44,13 @@ start	  mov byte [bss_sym],',' ; [1] [8]
 	  mov bx,[textptr]	; [7]
 	  jmp bx
 
-[SECTION .data]
+	  SECTION .data
 
 datasym	  db 'hello  world', 13, 10, '$' ; [2]
 bssptr	  dw bss_sym		; [2] [11]
 dataptr	  dw datasym+5		; [2] [10]
 textptr	  dw end		; [2] [9]
 
-[SECTION .bss]
+	  SECTION .bss
 
 bss_sym	  resb 1		; [3]

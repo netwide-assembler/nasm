@@ -50,8 +50,3 @@ To install:
   triple test, or the compile will fail.
 
 - Now it should pass the triple test, on either ELF or a.out. Voila!
-
-Known potential problems:
-
-- The machine description may occasionally generate `db' lines that
-  are longer than NASM's 1024-character maximum.

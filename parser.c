@@ -21,7 +21,6 @@
 
 #include "names.c"
 
-
 static long reg_flags[] = {	       /* sizes and special flags */
     0, REG8, REG_AL, REG_AX, REG8, REG8, REG16, REG16, REG8, REG_CL,
     REG_CREG, REG_CREG, REG_CREG, REG_CR4, REG_CS, REG_CX, REG8,
@@ -164,7 +163,7 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
     }
 
     result->nprefix = 0;
-    result->times = 1;
+    result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
 	   (i==TOKEN_REG && !(REG_SREG & ~reg_flags[tokval.t_integer]))) {
@@ -184,9 +183,13 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	    if (!is_simple (value)) {
 		error (ERR_NONFATAL,
 		       "non-constant argument supplied to TIMES");
-		result->times = 1;
-	    } else
+		result->times = 1L;
+	    } else {
 		result->times = value->value;
+		if (value->value < 0)
+		    error(ERR_WARNING, "TIMES value %d is negative",
+			  value->value);
+	    }
 	} else {
 	    if (result->nprefix == MAXPREFIX)
 		error (ERR_NONFATAL,
@@ -231,7 +234,8 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 	result->opcode == I_DW ||
 	result->opcode == I_DD ||
 	result->opcode == I_DQ ||
-	result->opcode == I_DT) {
+	result->opcode == I_DT ||
+	result->opcode == I_INCBIN) {
 	extop *eop, **tail = &result->eops;
 	int oper_num = 0;
 
@@ -315,6 +319,36 @@ insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
 		}
 	    }
 	}
+
+	if (result->opcode == I_INCBIN) {
+	    /*
+	     * Correct syntax for INCBIN is that there should be
+	     * one string operand, followed by one or two numeric
+	     * operands.
+	     */
+	    if (!result->eops || result->eops->type != EOT_DB_STRING)
+		error (ERR_NONFATAL, "`incbin' expects a file name");
+	    else if (result->eops->next &&
+		     result->eops->next->type != EOT_DB_NUMBER)
+		error (ERR_NONFATAL, "`incbin': second parameter is",
+		       " non-numeric");
+	    else if (result->eops->next && result->eops->next->next &&
+		     result->eops->next->next->type != EOT_DB_NUMBER)
+		error (ERR_NONFATAL, "`incbin': third parameter is",
+		       " non-numeric");
+	    else if (result->eops->next && result->eops->next->next &&
+		     result->eops->next->next->next)
+		error (ERR_NONFATAL, "`incbin': more than three parameters");
+	    else
+		return result;
+	    /*
+	     * If we reach here, one of the above errors happened.
+	     * Throw the instruction away.
+	     */
+	    result->opcode = -1;
+	    return result;
+	}
+
 	return result;
     }
 
@@ -594,25 +628,6 @@ static int is_comma_next (void) {
     while (isspace(*p)) p++;
     return (*p == ',' || *p == ';' || !*p);
 }
-
-/* isidstart matches any character that may start an identifier, and isidchar
- * matches any character that may appear at places other than the start of an
- * identifier. E.g. a period may only appear at the start of an identifier
- * (for local labels), whereas a number may appear anywhere *but* at the
- * start. */
-
-#define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' )
-#define isidchar(c)  ( isidstart(c) || isdigit(c) || (c)=='$' || (c)=='#' \
-                                                  || (c)=='@' || (c)=='~' )
-
-/* Ditto for numeric constants. */
-
-#define isnumstart(c)  ( isdigit(c) || (c)=='$' )
-#define isnumchar(c)   ( isalnum(c) )
-
-/* This returns the numeric value of a given 'digit'. */
-
-#define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
 /*
  * This tokeniser routine has only one side effect, that of

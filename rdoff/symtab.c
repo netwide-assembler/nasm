@@ -62,7 +62,7 @@ symtabEnt *symtabFind(void *symtab,char *name)
       return &(l->ent);
     }
     l = l->next;
-  }
+  }  
   return NULL;
 }
 

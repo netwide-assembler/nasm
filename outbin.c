@@ -35,7 +35,7 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
-static int start_point;
+static long start_point;
 
 static void add_reloc (struct Section *s, long bytes, long secref,
 		       long secrel) {
@@ -57,7 +57,7 @@ static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef) {
     error = errfunc;
     (void) ldef;		       /* placate optimisers */
 
-    start_point = 0;		       /* default */
+    start_point = 0L;		       /* default */
     textsect.contents = saa_init(1L);
     datasect.contents = saa_init(1L);
     textsect.length = datasect.length = 0;

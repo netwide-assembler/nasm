@@ -31,7 +31,8 @@ OBJ = o#
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
-	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ)
+	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
+	   preproc.$(OBJ)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
 	      insnsd.$(OBJ)
@@ -57,10 +58,13 @@ outas86.$(OBJ): outas86.c nasm.h nasmlib.h
 outaout.$(OBJ): outaout.c nasm.h nasmlib.h
 outbin.$(OBJ): outbin.c nasm.h nasmlib.h
 outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h
+outdbg.$(OBJ): outdbg.c nasm.h nasmlib.h
 outelf.$(OBJ): outelf.c nasm.h nasmlib.h
 outobj.$(OBJ): outobj.c nasm.h nasmlib.h
+outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
 outform.$(OBJ): outform.c outform.h nasm.h
 parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
 # These two source files are automagically generated from a single
@@ -71,6 +75,15 @@ sync.$(OBJ): sync.c sync.h
 AUTOSRCS = insnsa.c insnsd.c
 $(AUTOSRCS): insns.dat insns.pl
 	perl insns.pl
+
+# This source file is generated from the standard macros file
+# `standard.mac' by another Perl script. Again, it's part of the
+# standard distribution.
+
+macros.c: standard.mac
+	perl macros.pl
+
+# Clean the whole thing up after compilation.
 
 clean :
 	rm -f $(NASMOBJS) $(NDISASMOBJS) nasm$(EXE) ndisasm$(EXE)

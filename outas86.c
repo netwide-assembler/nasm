@@ -354,7 +354,7 @@ static void as86_write(void) {
 	    sym->flags |= 0 << 14, symlen += 4;
 	else if (sym->value >= 0 && sym->value <= 255)
 	    sym->flags |= 1 << 14, symlen += 5;
-	else if (sym->value >= 0 && sym->value <= 65535)
+	else if (sym->value >= 0 && sym->value <= 65535L)
 	    sym->flags |= 2 << 14, symlen += 6;
 	else
 	    sym->flags |= 3 << 14, symlen += 8;
@@ -365,31 +365,31 @@ static void as86_write(void) {
      * descriptor word at the same time.
      */
     seglen = segsize = 0;
-    if ((unsigned long) stext.len > 65535)
-	segsize |= 0x03000000, seglen += 4;
+    if ((unsigned long) stext.len > 65535L)
+	segsize |= 0x03000000L, seglen += 4;
     else
-	segsize |= 0x02000000, seglen += 2;
-    if ((unsigned long) sdata.len > 65535)
-	segsize |= 0xC0000000, seglen += 4;
+	segsize |= 0x02000000L, seglen += 2;
+    if ((unsigned long) sdata.len > 65535L)
+	segsize |= 0xC0000000L, seglen += 4;
     else
-	segsize |= 0x80000000, seglen += 2;
+	segsize |= 0x80000000L, seglen += 2;
 
     /*
      * Emit the as86 header.
      */
-    fwritelong (0x000186A3, as86fp);
+    fwritelong (0x000186A3L, as86fp);
     fputc (0x2A, as86fp);
     fwritelong (27+symlen+seglen+strslen, as86fp);   /* header length */
     fwritelong (stext.len+sdata.len, as86fp);
     fwriteshort (strslen, as86fp);
     fwriteshort (0, as86fp);	       /* class = revision = 0 */
-    fwritelong (0x55555555, as86fp);   /* segment max sizes: always this */
+    fwritelong (0x55555555L, as86fp);   /* segment max sizes: always this */
     fwritelong (segsize, as86fp);      /* segment size descriptors */
-    if (segsize & 0x01000000)
+    if (segsize & 0x01000000L)
 	fwritelong (stext.len, as86fp);
     else
 	fwriteshort (stext.len, as86fp);
-    if (segsize & 0x40000000)
+    if (segsize & 0x40000000L)
 	fwritelong (sdata.len, as86fp);
     else
 	fwriteshort (sdata.len, as86fp);
@@ -481,7 +481,7 @@ static void as86_write_section (struct Section *sect, int index) {
 	     */
 	    as86_set_rsize (p->bytes);
 	    s = p->offset;
-	    if (s > 65535)
+	    if (s > 65535L)
 		s = 3;
 	    else if (s > 255)
 		s = 2;

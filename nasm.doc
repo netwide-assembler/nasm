@@ -33,9 +33,11 @@ that maybe someone ought to write one.
 
 So here, for your coding pleasure, is NASM. At present it's still in
 prototype stage - we don't promise that it can outperform any of
-these assemblers. But please, _please_ send us bug reports and fixes
-and anything else you can get your hands on, and we'll improve it
-out of all recognition. Again.
+these assemblers. But please, _please_ send us bug reports, fixes,
+helpful information, and anything else you can get your hands on
+(and thanks to the many people who've done this already! You all
+know who you are), and we'll improve it out of all recognition.
+Again.
 
 Please see the file `Licence' for the legalese.
 
@@ -198,26 +200,36 @@ Pseudo-Opcodes
 
 Pseudo-opcodes are not real x86 machine opcodes, but are used in the
 instruction field anyway because that's the most convenient place to
-put them. The current pseudo-opcodes are DB, DW and DD, their
-uninitialised counterparts RESB, RESW and RESD, the EQU command, and
-the TIMES prefix.
+put them. The current pseudo-opcodes are DB, DW, DD, DQ and DT,
+their uninitialised counterparts RESB, RESW, RESD, RESQ and REST,
+the INCBIN command, the EQU command, and the TIMES prefix.
 
-DB, DW and DD work as you would expect: they can each take an
-arbitrary number of operands, and when assembled, they generate
+DB, DW, DD, DQ and DT work as you would expect: they can each take
+an arbitrary number of operands, and when assembled, they generate
 nothing but those operands. All three of them can take string
-constants as operands, which no other instruction can currently do.
-See the `Constants' section for details about string constants.
+constants as operands. See the `Constants' section for details about
+string constants.
 
-RESB, RESW and RESD are designed to be used in the BSS section of a
-module: they declare _uninitialised_ storage space. Each takes a
-single operand, which is the number of bytes, words or doublewords
-to reserve. We do not support the MASM/TASM syntax of reserving
-uninitialised space by writing `DW ?' or similar: this is what we do
-instead. (But see `Critical Expressions' for a caveat on the nature
-of the operand.)
+RESB, RESW, RESD, RESQ and REST are designed to be used in the BSS
+section of a module: they declare _uninitialised_ storage space.
+Each takes a single operand, which is the number of bytes, words or
+doublewords to reserve. We do not support the MASM/TASM syntax of
+reserving uninitialised space by writing `DW ?' or similar: this is
+what we do instead. (But see `Critical Expressions' for a caveat on
+the nature of the operand.)
 
 (An aside: if you want to be able to write `DW ?' and have something
 vaguely useful happen, you can always code `? EQU 0'...)
+
+INCBIN is borrowed from the old Amiga assembler Devpac: it includes
+a binary file verbatim into the output file. This can be handy for
+(for example) including graphics and sound data directly into a game
+executable file. It can be called in one of these three ways:
+
+    INCBIN "file.dat"               ; include the whole file
+    INCBIN "file.dat",1024          ; skip the first 1024 bytes
+    INCBIN "file.dat",1024,512      ; skip the first 1024, and
+                                    ; actually include at most 512
 
 EQU defines a symbol to a specified value: when EQU is used, the
 LABEL field must be present. The action of EQU is to define the
@@ -676,15 +688,22 @@ Assembler Directives
 ====================
 
 Assembler directives appear on a line by themselves (apart from a
-comment), and must be enclosed in square brackets. No white space
-may appear before the opening square bracket, although white space
-and a comment may come after the closing bracket.
+comment). They come in two forms: user-level directives and
+primitive directives. Primitive directives are enclosed in square
+brackets (no white space may appear before the opening square
+bracket, although white space and a comment may come after the
+closing bracket), and were the only form of directive supported by
+earlier versions of NASM. User-level directives look the same, only
+without the square brackets, and are the more modern form. (They are
+implemented as macros expanding to primitive directives.) There is a
+distinction in functionality, which is explained below in the
+section on structures.
 
 Some directives are universal: they may be used in any situation,
 and do not change their syntax. The universal directives are listed
 below.
 
-[BITS 16] or [BITS 32] switches NASM into 16-bit or 32-bit mode.
+`BITS 16' or `BITS 32' switches NASM into 16-bit or 32-bit mode.
 (This is equivalent to USE16 and USE32 segments, in TASM or MASM.)
 In 32-bit mode, instructions are prefixed with 0x66 or 0x67 prefixes
 when they use 16-bit data or addresses; in 16-bit mode, the reverse
@@ -692,20 +711,16 @@ happens. NASM's default depends on the object format; the defaults
 are documented with the formats. (See `obj', in particular, for some
 unusual behaviour.)
 
-[INCLUDE filename] or [INC filename] includes another source file
-into the current one. At present, only one level of inclusion is
-supported.
-
-[SECTION name] or [SEGMENT name] changes which section the code you
+`SECTION name' or `SEGMENT name' changes which section the code you
 write will be assembled into. Acceptable section names vary between
 output formats, but most formats (indeed, all formats at the moment)
 support the names `.text', `.data' and `.bss'. Note that `.bss' is
 an uninitialised data section, and so you will receive a warning
 from NASM if you try to assemble any code or data in it. The only
-thing you can do in `.bss' without triggering a warning is use RESB,
-RESW and RESD. That's what they're for.
+thing you can do in `.bss' without triggering a warning is to use
+RESB, RESW and RESD. That's what they're for.
 
-[ABSOLUTE address] can be considered a different form of [SECTION],
+`ABSOLUTE address' can be considered a different form of `SECTION',
 in that it must be overridden using a SECTION directive once you
 have finished using it. It is used to assemble notional code at an
 absolute offset address; of course, you can't actually assemble
@@ -714,38 +729,431 @@ code in place, but you can use RESB, RESW and RESD, and you can
 define labels. Hence you could, for example, define a C-like data
 structure by means of
 
-	[ABSOLUTE 0]
+	        absolute 0
 	stLong  resd 1
 	stWord  resw 1
 	stByte1 resb 1
 	stByte2 resb 1
 	st_size:
-	[SEGMENT .text]
+	        segment .text
 
 and then carry on coding. This defines `stLong' to be zero, `stWord'
 to be 4, `stByte1' to be 6, `stByte2' to be 7 and `st_size' to be 8.
-So this has defined a data structure.
+So this has defined a data structure. The STRUC directive provides a
+nicer way to do this: see below.
 
-[EXTERN symbol] defines a symbol as being `external', in the C
+`EXTERN symbol' defines a symbol as being `external', in the C
 sense: `EXTERN' states that the symbol is _not_ declared in this
 module, but is declared elsewhere, and that you wish to _reference_
 it in this module.
 
-[GLOBAL symbol] defines a symbol as being global, in the sense that
+`GLOBAL symbol' defines a symbol as being global, in the sense that
 it is exported from this module and other modules may reference it.
 All symbols are local, unless declared as global. Note that the
 `GLOBAL' directive must appear before the definition of the symbol
 it refers to.
 
-[COMMON symbol size] defines a symbol as being common: it is
+`COMMON symbol size' defines a symbol as being common: it is
 declared to have the given size, and it is merged at link time with
 any declarations of the same symbol in other modules. This is not
 _fully_ supported in the `obj' file format: see the section on `obj'
 for details.
 
+`STRUC structure' begins the definition of a data structure, and
+`ENDSTRUC' ends it. The structure shown above may be defined,
+exactly equivalently, using STRUC as follows:
+
+	        struc st
+	stLong  resd 1
+	stWord  resw 1
+	stByte1 resb 1
+	stByte2 resb 1
+	        endstruc
+
+Notice that this code still defines the symbol `st_size' to be the
+size of the structure. The `_size' suffix is automatically appended
+to the structure name. Notice also that the assembler takes care of
+remembering which section you were assembling in (whereas in the
+version using `ABSOLUTE' it was up to the programmer to sort that
+out).
+
+This is where user-level directives differ from primitives: the
+`SECTION' (and `SEGMENT') user-level directives don't just call the
+primitive versions, but they also `%define' the special preprocessor
+symbol `__SECT__' to be the primitive directive that specifies the
+current section. So the `ENDSTRUC' directive can remember what
+section the assembly was directed to before the structure definition
+began. For this reason, there is no primitive version of STRUC or
+ENDSTRUC - they are implemented in terms of ABSOLUTE and SECTION.
+This also means that if you use STRUC before explicitly announcing a
+target section, you should explicitly announce one after ENDSTRUC.
+
+The primitive directive [INCLUDE filename] (or the equivalent form
+[INC filename]) is supported as a synonym for the preprocessor-
+oriented `%include' form, but only temporarily: this usage will be
+phased out in the next version of NASM.
+
 Directives may also be specific to the output file format. At
 present, the `bin' and `obj' formats define extra directives, which
 are specified below.
+
+The Preprocessor
+================
+
+NASM contains a full-featured macro preprocessor, which supports
+conditional assembly, multi-level file inclusion, two forms of macro
+(single-line and multi-line), and a `context stack' mechanism for
+extra macro power. Preprocessor directives all begin with a `%'
+sign.
+
+Single-line macros
+------------------
+
+Single-line macros are defined in a similar way to C, using the
+`%define' command. Hence you can do:
+
+   %define ctrl 0x1F &
+   %define param(a,b) ((a)+(a)*(b))
+     mov byte [param(2,ebx)], ctrl 'D'
+
+which will expand to
+
+     mov byte [(2)+(2)*(ebx)], 0x1F & 'D'
+
+When the expansion of a single-line macro contains tokens which
+invoke another macro, the expansion is performed at invocation time,
+not at definition time. Thus the code
+
+   %define a(x) 1+b(x)
+   %define b(x) 2*x
+     mov ax,a(8)
+
+will evaluate in the expected way to `mov ax,1+2*8', even though the
+macro `b' wasn't defined at the time of definition of `a'.
+
+Macros defined with `%define' are case sensitive: after `%define foo
+bar', only `foo' will expand to bar: `Foo' or `FOO' will not. By
+using `%idefine' instead of `%define' (the `i' stands for
+`insensitive') you can define all the case variants of a macro at
+once, so that `%idefine foo bar' would cause `foo', `Foo' and `FOO'
+all to expand to `bar'.
+
+There is a mechanism which detects when a macro call has occurred as
+a result of a previous expansion of the same macro, to guard against
+circular references and infinite loops. If this happens, the
+preprocessor will report an error.
+
+Single-line macros with parameters can be overloaded: it is possible
+to define two or more single-line macros with the same name, each
+taking a different number of parameters, and the macro processor
+will be able to distinguish between them. However, a parameterless
+single-line macro excludes the possibility of any macro of the same
+name _with_ parameters, and vice versa (though single-line macros
+may be redefined, keeping the same number of parameters, without
+error).
+
+Multiple-line macros
+--------------------
+
+These are defined using `%macro' and `%endmacro', so that simple things
+like this can be done:
+
+   %macro prologue 0
+     push ebp
+     mov ebp,esp
+   %endmacro
+
+This defines `prologue' to be a multi-line macro, taking no
+parameters, which expands to the two lines of code given.
+
+Similarly to single-line macros, multi-line macros are case-
+sensitive, unless you define them using `%imacro' instead of
+`%macro'.
+
+The `0' on the `%macro' line indicates that the macro `prologue'
+expects no parameters. Macros can be overloaded: if two macros are
+defined with the same name but different numbers of parameters, they
+will be treated as separate. Multi-line macros may not be redefined.
+
+Macros taking parameters can be written using `%1', `%2' and so on
+to reference the parameters. So this code
+
+   %macro movs 2
+     push %2
+     pop %1
+   %endmacro
+     movs ds,cs
+
+will define a macro `movs' to perform an effective MOV operation
+from segment to segment register. The macro call given would of
+course expand to `push cs' followed by `pop ds'.
+
+You can define a label inside a macro in such a way as to make it
+unique to that macro call (so that repeated calls to the same macro
+won't produce multiple labels with the same name), by prefixing it
+with `%%'. So:
+
+   %macro retz
+     jnz %%skip
+     ret
+   %%skip:
+   %endmacro
+
+This defines a different label in place of `%%skip' every time it's
+called. (Of course the above code could have easily been coded using
+`jnz $+3', but not in more complex cases...) The actual label
+defined would be `macro.2345.skip', where 2345 is replaced by some
+number that changes with each macro call. Users are warned to avoid
+defining labels of this shape themselves.
+
+Sometimes you want a macro to be able to accept arbitrarily many
+parameters and lump them into one. This can be done using the `+'
+modifier on the `%macro' line:
+
+   %macro fputs 2+
+   [section .data] ; this is done as a primitive to avoid
+                   ; disturbing the __SECT__ define
+   %%str db %2
+   %%end:
+   __SECT__        ; this expands to a whole [section xxx] primitive
+     mov dx,%%str
+     mov cx,%%end-%%str
+     mov bx,%1
+     call writefile
+   %endmacro
+     fputs [filehandle], "hi there", 13, 10
+
+This declares `pstring' to be a macro that accepts _at least two_
+parameters, and all parameters after the first one are lumped
+together as part of the last specified one (in this case %2). So in
+the macro call, `%1' expands to `[filehandle]' while `%2' expands to
+the whole remainder of the line: `"hi there", 13, 10'. Note also the
+switching of sections in the middle of this macro expansion, to
+ensure separation of data and code.
+
+There is an alternative mechanism for putting commas in macro
+parameters: instead of specifying the large-parameter-ness at macro
+definition time, you can specify it at macro call time, by the use
+of braces to surround a parameter which you want to contain commas.
+So:
+
+   %macro table_entry 2
+   %%start:
+     db %1
+     times 32-($-%%start) db 0
+     db %2
+     times 64-($-%%start) db 0
+   %endmacro
+     table_entry 'foo','bar'
+     table_entry 'megafoo', { 27,'[1mBAR!',27,'[m' }
+
+will expand to, effectively (actually, there will be labels present,
+but these have been omitted for clarity), the following:
+
+     db 'foo'
+     times 32-3 db 0
+     db 'bar'
+     times 64-35 db 0
+     db 'megafoo'
+     times 32-7 db 0
+     db 27,'[1mBAR!',27,'[m'
+     times 64-46 db 0
+
+Macro parameter expansions can be concatenated on to other tokens,
+so that you can do this:
+
+   %macro keytab_entry 2
+   keypos%1 equ $-keytab
+     db %2
+   %endmacro
+   keytab:
+     keytab_entry F1,128+1
+     keytab_entry F2,128+2
+     keytab_entry Return,13
+
+which will define labels called `keyposF1', `keyposF2' and
+`keyposReturn'. You can similarly do concatenations on the other
+end, such as `%1foo'. If you need to concatenate a digit on to the
+end of a macro parameter expansion, you can do this by enclosing the
+parameter number in braces: `%{1}' is always a valid synonym for
+`%1', and has the advantage that it can be legitimately prepended to
+a digit, as in `%{1}2', and cause no confusion with `%{12}'.
+Macro-specific labels and defines can be concatenated similarly:
+`%{%foo}bar' will succeed where `%%foobar' would cause confusion.
+(As it happens, `%%foobar' would work anyway, due to the format of
+macro-specific labels, but for clarity, `%{%foo}bar' is recommended
+if you _really_ want to do anything this perverse...)
+
+The parameter handling has a special case: it can treat a macro
+parameter specially if it's thought to contain a condition code. The
+reference `%+1' is identical to `%1' except that it will perform an
+initial sanity check to see if the parameter in question is a
+condition code; more usefully, the reference `%-1' will produce the
+_opposite_ condition code to the one specified in the parameter.
+This allows for things such as a conditional-MOV macro to be
+defined:
+
+   %macro movc 3
+     j%-1 %%skip
+     mov %2,%3
+   %%skip:
+   %endmacro
+     movc ae,ax,bx
+
+which will expand to something like
+
+     jnae macro.1234.skip
+     mov ax,bx
+   macro.1234.skip:
+
+Note that `%+1' will allow CXZ or ECXZ to be passed as condition
+codes, but `%-1' will of course be unable to invert them.
+
+Parameters can also be defaulted: you can define a macro which, for
+example, said
+
+   %macro strange 1-3 bx,3
+     < some expansion text >
+   %endmacro
+
+This macro takes between 1 and 3 parameters (inclusive); if
+parameter 2 is not specified it defaults to BX, and if parameter 3
+is not specified it defaults to 3. So the calls
+
+     strange dx,si,di
+     strange dx,si
+     strange dx
+
+would be equivalent to
+
+     strange dx,si,di
+     strange dx,si,3
+     strange dx,bx,3
+
+Defaults may be omitted, in which case they are taken to be blank.
+
+`%endm' is a valid synonym for `%endmacro'.
+
+Conditional Assembly
+--------------------
+
+Similarly to the C preprocessor, the commands `%ifdef' and `%endif'
+may be used to bracket a section of code, which will then only be
+assembled if at least one of the identifiers following `%ifdef' is
+defined as a single-line macro. The command `%ifndef' has opposite
+sense to `%ifdef', and `%else' can be placed between the `%if' and
+the `%endif' to work as expected. Since there is no analogue to C's
+`#if', there is no precise `elif' directive, but `%elifdef' and
+`%elifndef' work as expected.
+
+There is another family of `%if' constructs: `%ifctx', `%ifnctx',
+`%elifctx' and `%elifnctx', which operate on the context stack
+(described below).
+
+File Inclusion
+--------------
+
+You can include a file using the `%include' directive. Included
+files are only searched for in the current directory: there isn't
+(yet - if there's demand for it it could be arranged) any default
+search path for standard include files.
+
+This, again, works like C: `%include' is used to include a file. Of
+course it's quite likely you'd want to do the normal sort of thing
+inside the file:
+
+   %ifndef MY_MACROS_FILE
+   %define MY_MACROS_FILE
+     < go and define some macros >
+   %endif
+
+and then elsewhere
+
+   %include "my-macros-file"
+     < some code making use of the macros >
+
+so that it doesn't matter if the file accidentally gets included
+more than once.
+
+The Context Stack
+-----------------
+
+This is a feature which adds a whole extra level of power to NASM's
+macro capability. The context stack is an internal object within the
+preprocessor, which holds a stack of `contexts'. Each context has a
+name - just an identifier-type token - and can also have labels and
+`%define' macros associated with it. Other macros can manipulate the
+context stack: this is where the power comes in.
+
+To start with: the preprocessor command `%push' will create a new
+context with the given name, and push it on to the top of the stack.
+`%pop', taking no arguments, pops the top context off the stack and
+destroys it. `%repl' renames the top context without destroying any
+associated labels or macros, so it's distinct from doing `%pop'
+followed by `%push'. Finally, `%ifctx' and `%ifnctx' invoke
+conditional assembly based on the name of the top context. (The
+alternative forms `%elifctx' and `%elifnctx' are also available.)
+
+As well as the `%%foo' syntax to define labels specific to a macro
+call, there is also the syntax `%$foo' to define a label specific to
+the context currently on top of the stack. `%$$foo' can be used to
+refer to the context below that, or `%$$$foo' below that, and so on.
+
+This lot allows the definition of macro combinations that enclose
+other code, such as the following big example:
+
+   %macro if 1
+     %push if
+     j%-1 %$ifnot
+   %endmacro
+   %macro else 0
+     %ifctx if
+       %repl else
+       jmp %$ifend
+       %$ifnot:
+     %else
+       %error "expected `if' before `else'"
+     %endif
+   %endmacro
+   %macro endif 0
+     %ifctx if
+       %$ifnot:
+       %pop
+     %elifctx else
+       %$ifend:
+       %pop
+     %else
+       %error "expected `if' or `else' before `endif'"
+     %endif
+   %endmacro
+
+This will cope with a large `if/endif' construct _or_ an
+`if/else/endif', without flinching. So you can code:
+
+     cmp ax,bx
+     if ae
+       cmp bx,cx
+       if ae
+         mov ax,cx
+       else
+         mov ax,bx
+       endif
+     else
+       cmp ax,cx
+       if ae
+         mov ax,cx
+       endif
+     endif
+
+which will place the smallest out of AX, BX and CX into AX. Note the
+use of `%repl' to change the current context from `if' to `else'
+without disturbing the associated labels `%$ifend' and `%$ifnot';
+also note that the stack mechanism allows handling of nested IF
+statements without a hitch, and that conditional assembly is used in
+the `endif' macro in order to cope with the two possible forms with
+and without an `else'. Note also the directive `%error', which
+allows the user to report errors on improper invocation of a macro
+and so can catch unmatched `endif's at preprocess time.
 
 Output Formats
 ==============
@@ -765,9 +1173,9 @@ before they become executable.
 the binary representation of the exact code you wrote.
 
 The `bin' format supports a format-specific directive, which is ORG.
-[ORG addr] declares that your code should be assembled as if it were
+`ORG addr' declares that your code should be assembled as if it were
 to be loaded into memory at the address `addr'. So a DOS .COM file
-should state [ORG 0x100], and a DOS .SYS file should state [ORG 0].
+should state `ORG 0x100', and a DOS .SYS file should state `ORG 0'.
 There should be _one_ ORG directive, at most, in an assembly file:
 NASM does not support the use of ORG to jump around inside an object
 file, like MASM does (see the `Bugs' section for a demonstration of
@@ -782,8 +1190,8 @@ past the end of the actual file. The `.data' and `.bss' sections are
 considered to be aligned on four-byte boundaries: this is achieved
 by inserting padding zero bytes between the end of the text section
 and the start of the data, if there is data present. Of course if no
-[SECTION] directives are present, everything will go into `.text',
-and you will get nothing in the output except the code you wrote.
+SECTION directives are present, everything will go into `.text', and
+you will get nothing in the output except the code you wrote.
 
 `bin' silently ignores GLOBAL directives, and will also not complain
 at EXTERN ones. You only get an error if you actually _reference_ an
@@ -804,12 +1212,12 @@ format-specific directives, and their default output filename is
 `filename.o'.
 
 `aout' defines the three standard sections `.text', `.data' and
-`.bss'. `elf' defines these three, but can also support user-defined
-section names, which can be declared along with section attributes
-like this:
+`.bss'. `elf' also, defines these three, but in addition it can
+support user-defined section names, which can be declared along with
+section attributes like this:
 
-[section foo align=32 exec]
-[section bar write nobits]
+	section foo align=32 exec
+	section bar write nobits
 
 The available options are:
 
@@ -835,9 +1243,9 @@ The available options are:
 The attributes of the default sections `.text', `.data' and `.bss'
 can also be redefined from their defaults. The NASM defaults are:
 
-[section .text align=16 alloc exec nowrite progbits]
-[section .data align=4 alloc write noexec progbits]
-[section .bss align=4 alloc write noexec nobits]
+section .text align=16 alloc exec nowrite progbits
+section .data align=4 alloc write noexec progbits
+section .bss align=4 alloc write noexec nobits
 
 ELF is a much more featureful object-file format than a.out: in
 particular it has enough features to support the writing of position
@@ -905,12 +1313,12 @@ the type of section. Win32 also allows `info', which is an
 informational section type used by Microsoft C compilers to store
 linker directives. So you can do:
 
-[section .mysect code]  ; defines an extra code section
+    section .mysect code    ; defines an extra code section
 
 or maybe, in Win32,
 
-[section .drectve info] ; defines an MS-compatible directive section
-  db '-defaultlib:LIBC -defaultlib:OLDNAMES '
+    section .drectve info   ; defines an MS-compatible directive section
+    db '-defaultlib:LIBC -defaultlib:OLDNAMES '
 
 to pass directives to the MS linker.
 
@@ -928,7 +1336,7 @@ extensions are supported.
 you like. Unlike the other formats, too, segment names are actually
 defined as symbols, so you can write
 
-[SEGMENT CODE]
+	segment CODE
 	mov ax,CODE
 
 and get the _segment_ address of the segment, suitable for loading
@@ -936,7 +1344,7 @@ into a segment register.
 
 Segments can be declared with attributes:
 
-[SEGMENT CODE PRIVATE ALIGN=16 CLASS=CODE OVERLAY=OVL2 USE16]
+	SEGMENT CODE PRIVATE ALIGN=16 CLASS=CODE OVERLAY=OVL2 USE16
 
 You can specify segments to be PRIVATE, PUBLIC, COMMON or STACK;
 their alignment may be any power of two from 1 to 256 (although only
@@ -949,12 +1357,12 @@ alignment, USE16.
 You can also specify that a segment is _absolute_ at a certain
 segment address:
 
-[SEGMENT SCREEN ABSOLUTE=0xB800]
+	SEGMENT SCREEN ABSOLUTE=0xB800
 
 The ABSOLUTE and ALIGN keywords are mutually exclusive.
 
-The format-specific directive GROUP allows segment grouping: [GROUP
-DGROUP DATA BSS] defines the group DGROUP to contain segments DATA
+The format-specific directive GROUP allows segment grouping: `GROUP
+DGROUP DATA BSS' defines the group DGROUP to contain segments DATA
 and BSS.
 
 Segments are defined as part of their group by default: if variable
@@ -971,13 +1379,13 @@ and unlike TASM), but will generate a warning (unlike A86!).
 References to the symbols in that segment will be resolved relative
 to the _first_ group it is defined in.
 
-The directive [UPPERCASE] causes all symbol, segment and group names
+The directive `UPPERCASE' causes all symbol, segment and group names
 output to the object file to be uppercased. The actual _assembly_ is
 still case sensitive.
 
 To avoid getting tangled up in NASM's local label mechanism, segment
 and group names have leading periods stripped when they are defined.
-Thus, the directive [SEGMENT .text] will define a segment called
+Thus, the directive `SEGMENT .text' will define a segment called
 `text', which will clash with any other symbol called `text', and
 you will _not_ be able to reference the segment base as `.text', but
 only as `text'.
@@ -1001,13 +1409,12 @@ of course the normal caveats about EQU dependency still apply).
 
 `obj' has an unusual handling of assembly modes: instead of having a
 global default for the whole file, there is a separate default for
-each segment. Thus, each [SEGMENT] directive carries an implicit
-[BITS] directive with it, which switches to 16-bit or 32-bit mode
-depending on whether the segment is a Use16 or Use32 segment. If you
-want to place 32-bit code in a Use16 segment, you can use an
-explicit [BITS 32] override, but if you switch temporarily away from
-that segment, you will have to repeat the override after coming back
-to it.
+each segment. Thus, each SEGMENT directive carries an implicit BITS
+directive with it, which switches to 16-bit or 32-bit mode depending
+on whether the segment is a Use16 or Use32 segment. If you want to
+place 32-bit code in a Use16 segment, you can use an explicit `BITS
+32' override, but if you switch temporarily away from that segment,
+you will have to repeat the override after coming back to it.
 
 `as86': Linux as86 (bin86-0.3)
 ------------------------------

@@ -10,7 +10,7 @@
 
 typedef struct tagCollection {
   void	*p[32];		/* array of pointers to objects */
-
+  
   struct tagCollection *next;
 } Collection;
 

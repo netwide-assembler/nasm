@@ -23,19 +23,19 @@
 ; [15] Use SEG on a non-external
 ; [16] Use SEG on an external
 
-[bits 16]
+	  bits 16
 
-[global _bsssym]		; [1]
-[global _function]		; [1]
-[global _selfptr]		; [1]
-[global _selfptr2]		; [1]
-[common _commvar 2]		; [3]
-[extern _printf]		; [6]
+	  global _bsssym	; [1]
+	  global _function	; [1]
+	  global _selfptr	; [1]
+	  global _selfptr2	; [1]
+	  common _commvar 2	; [3]
+	  extern _printf	; [6]
 
-[group mygroup mybss mydata]	; [10]
-[group mygroup2 mycode mycode2]	; [10]
+	  group mygroup mybss mydata ; [10]
+	  group mygroup2 mycode mycode2	; [10]
 
-[segment mycode private]
+	  segment mycode private
 
 _function push bp
 	  mov bp,sp
@@ -65,18 +65,18 @@ _function push bp
 
 .printf	  dw _printf, seg _printf ; [2] [4] [16]
 
-[segment mycode2 private]
+	  segment mycode2 private
 
 trampoline: pop ax
 	  push cs
 	  push ax
 	  jmp far _printf
 
-[segment mybss private]
+	  segment mybss private
 
 _bsssym	  resw 64		; [12]
 
-[segment mydata private]
+	  segment mydata private
 
 _selfptr  dw _selfptr, seg _selfptr ; [8] [15]
 _selfptr2 dw _selfptr2 wrt mydata, mydata ; [11] [13]

@@ -13,12 +13,36 @@ search path (maybe /usr/local/bin, or ~/bin if you don't have root
 access). You may also want to copy the man page `nasm.1' (and maybe
 `ndisasm.1') to somewhere sensible.
 
-To rebuild the DOS sources, three makefiles are provided:
-Makefile.dos, the one the standard release is built from, designed
-for a hybrid system using Microsoft C and Borland Make (don't ask
-why :-), Makefile.bor (for Borland C) and Makefile.bc2 (also for
-Borland C, contributed by Fox Cutter <lmb@comtch.iea.com>, may work
-better than Makefile.bor in some cases).
+To rebuild the DOS sources, various makefiles are provided:
+- Makefile.dos, the one I build the standard releases from, designed
+  for a hybrid system using Microsoft C and Borland Make (don't ask
+  why :-)
+- Makefile.bor (for Borland C)
+- Makefile.bc2 (also for Borland C, contributed by Fox Cutter
+  <lmb@comtch.iea.com>, may work better than Makefile.bor in some
+  cases).
+- Makefile.wc, for Watcom C, compiling to a 32-bit extended DOS
+  executable. Contributed by Dominik Behr.
+- Makefile.wcw, also for Watcom C, compiling to a Win32 command-
+  line application. Also contributed by Dominik Behr.
+
+I don't guarantee that any of those, other than Makefile.dos, work,
+since I don't have the compilers to test them myself. Also be
+warned: I have had various conflicting reports regarding building
+NASM using Borland C. Several people have informed me that it
+doesn't work except under Huge model, and one or two have said that
+it doesn't work under Huge model either.
+
+Dominik Behr has also contributed the file misc/pmw.bat, which is a
+batch file to turn the output from Makefile.wc (NASM.EXE and
+NDISASM.EXE) into standalone executables incorporating Tran's
+PMODE/W DOS extender, rather than depending on an external extender
+program.
+
+If you're trying to unpack the DOS (.ZIP format) archive under Unix
+instead of using the .tar.gz version, you can save some time by
+doing `unzip -aL', which will convert the DOS-format text files to
+Unix and also convert all names to lower case.
 
 If you want to build a restricted version of NASM containing only
 some of the object file formats, you can achieve this by adding
@@ -35,6 +59,10 @@ Michael `Wuschel' Tippach has ported his DOS extender `WDOSX' to
 enable it to work with the 32-bit binary files NASM can output: the
 original extender and his port `WDOSX/N' are available from his web
 page, http://www.geocities.com/SiliconValley/Park/4493.
+
+Matt Mastracci has written a document explaining how to write
+assembly language modules in DJGPP programs using NASM: it's on his
+web site at http://www.ucalgary.ca/~mmastrac/djgppasm.doc.
 
 The `misc' directory contains `nasm.sl', a NASM editing mode for the
 JED programmers' editor (see http://space.mit.edu/~davis/jed.html
@@ -54,7 +82,8 @@ that in many ways it was too restrictive for developers.
 For information about how to use NASM, see `nasm.doc'. For
 information about how to use NDISASM, see `ndisasm.doc'. For
 information about the internal structure of NASM, see
-`internals.doc'.
+`internal.doc'. (In particular, _please_ read `internal.doc' before
+writing any code for us...)
 
 Bug reports (and patches if you can) should be sent to
-jules@dcs.warwick.ac.uk or anakin@pobox.com.
+<jules@dcs.warwick.ac.uk> or <anakin@pobox.com>.

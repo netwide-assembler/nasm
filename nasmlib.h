@@ -10,17 +10,39 @@
 #define NASM_NASMLIB_H
 
 /*
+ * If this is defined, the wrappers around malloc et al will
+ * transform into logging variants, which will cause NASM to create
+ * a file called `malloc.log' when run, and spew details of all its
+ * memory management into that. That can then be analysed to detect
+ * memory leaks and potentially other problems too.
+ */
+/* #define LOGALLOC */
+
+/*
  * Wrappers around malloc, realloc and free. nasm_malloc will
  * fatal-error and die rather than return NULL; nasm_realloc will
  * do likewise, and will also guarantee to work right on being
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
+#ifdef NASM_NASM_H		       /* need efunc defined for this */
 void nasm_set_malloc_error (efunc);
+#ifndef LOGALLOC
 void *nasm_malloc (size_t);
 void *nasm_realloc (void *, size_t);
 void nasm_free (void *);
 char *nasm_strdup (char *);
+#else
+void *nasm_malloc_log (char *, int, size_t);
+void *nasm_realloc_log (char *, int, void *, size_t);
+void nasm_free_log (char *, int, void *);
+char *nasm_strdup_log (char *, int, char *);
+#define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
+#define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
+#define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
+#define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
+#endif
+#endif
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or
@@ -46,8 +68,10 @@ long seg_alloc(void);
  * many output formats will be able to make use of this: a standard
  * function to add an extension to the name of the input file
  */
+#ifdef NASM_NASM_H
 void standard_extension (char *inname, char *outname, char *extension,
 			 efunc error);
+#endif
 
 /*
  * some handy macros that will probably be of use in more than one

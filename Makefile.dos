@@ -24,7 +24,8 @@ OBJ = obj#
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
-	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ)
+	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
+	   preproc.$(OBJ)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
               insnsd.$(OBJ)
@@ -57,6 +58,7 @@ outobj.$(OBJ): outobj.c nasm.h nasmlib.h
 outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
 outform.$(OBJ): outform.c outform.h nasm.h
 parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
 # Another grotty hack: QC is less likely to run out of memory than

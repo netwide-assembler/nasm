@@ -1,0 +1,114 @@
+# host: watcom c (dos, windows, os/2)
+# target: dos 32bit
+# Makefile for the Netwide Assembler
+#
+# The Netwide Assembler is copyright (C) 1996 Simon Tatham and
+# Julian Hall. All rights reserved. The software is
+# redistributable under the licence given in the file "Licence"
+# distributed in the NASM archive.
+#
+# this makefile is designed for use with dos version of Watcom C 32 bit
+# compiler, it generates dos 32 bit executable
+# it has been tested with
+# borland make.exe 4.0
+# microsoft nmake.exe 1.3
+# watcom wmake.exe /u 3.2 (remember about that /u option :)
+#
+# all this should compile under watcom c 9.5, 10.0, 10.5 and 10.6
+# i dont know about 11.0 because i didnt yet see it
+
+CFLAGS = -fpi -mf -3r -s -bt=dos -oilrt
+# -fpi    inline math + emulation
+# -mf     flat model (isnt it by default :)
+# -3r     386 register calling (does everyone have pentium nowadays ?)
+# -s      no stack checking
+# -bt=dos target system - dos
+# -oilrt  mega cool optimization :)
+
+CC = wcc386.exe $(CFLAGS)
+# compiler
+LFLAGS = SYSTEM dos4g
+# linker flags
+# target system - dos4gw
+LD = wlink.exe $(LFLAGS)
+# linker
+OBJ = obj
+# whatever
+
+.c.$(OBJ):
+        $(CC) $*.c
+
+NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
+           assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
+	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
+	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
+	   preproc.$(OBJ)
+
+NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
+	      insnsd.$(OBJ)
+
+all : nasm.exe ndisasm.exe
+        echo This is dummy command for dumb make
+
+nasm.exe: $(NASMOBJS) NASM.LNK
+        $(LD) @NASM.LNK
+
+ndisasm.exe: $(NDISASMOBJS) NDISASM.LNK
+        $(LD) @NDISASM.LNK
+
+# linker response files
+# that may take long, too much spawning command.com :)
+NASM.LNK: makefile.wc
+        echo N nasm.exe > NASM.LNK
+        echo F nasm.$(OBJ) >> NASM.LNK
+        echo F nasmlib.$(OBJ) >> NASM.LNK
+        echo F float.$(OBJ) >> NASM.LNK
+        echo F insnsa.$(OBJ) >> NASM.LNK
+        echo F assemble.$(OBJ) >> NASM.LNK
+        echo F labels.$(OBJ) >> NASM.LNK
+        echo F parser.$(OBJ) >> NASM.LNK
+	echo F preproc.$(OBJ) >> NASM.LNK
+        echo F outform.$(OBJ) >> NASM.LNK
+        echo F outbin.$(OBJ) >> NASM.LNK
+        echo F outaout.$(OBJ) >> NASM.LNK
+        echo F outcoff.$(OBJ) >> NASM.LNK
+        echo F outelf.$(OBJ) >> NASM.LNK
+        echo F outobj.$(OBJ) >> NASM.LNK
+        echo F outas86.$(OBJ) >> NASM.LNK
+        echo F outrdf.$(OBJ) >> NASM.LNK
+        echo F outdbg.$(OBJ) >> NASM.LNK
+
+NDISASM.LNK: makefile.wc
+        echo N ndisasm.exe > NDISASM.LNK
+        echo F ndisasm.$(OBJ) >> NDISASM.LNK
+        echo F disasm.$(OBJ) >> NDISASM.LNK
+        echo F sync.$(OBJ) >> NDISASM.LNK
+        echo F nasmlib.$(OBJ) >> NDISASM.LNK
+        echo F insnsd.$(OBJ) >> NDISASM.LNK
+
+assemble.$(OBJ): assemble.c nasm.h assemble.h insns.h
+disasm.$(OBJ): disasm.c nasm.h disasm.h sync.h insns.h names.c
+float.$(OBJ): float.c nasm.h
+insnsa.$(OBJ): insnsa.c nasm.h insns.h
+insnsd.$(OBJ): insnsd.c nasm.h insns.h
+labels.$(OBJ): labels.c nasm.h nasmlib.h
+nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h outform.h
+nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
+ndisasm.$(OBJ): ndisasm.c nasm.h sync.h disasm.h
+outas86.$(OBJ): outas86.c nasm.h nasmlib.h
+outaout.$(OBJ): outaout.c nasm.h nasmlib.h
+outbin.$(OBJ): outbin.c nasm.h nasmlib.h
+outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h
+outelf.$(OBJ): outelf.c nasm.h nasmlib.h
+outobj.$(OBJ): outobj.c nasm.h nasmlib.h
+outform.$(OBJ): outform.c outform.h nasm.h
+parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
+sync.$(OBJ): sync.c sync.h
+
+clean :
+        del *.obj
+        del *.lnk
+        del nasm.exe
+        del ndisasm.exe
+

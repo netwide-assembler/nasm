@@ -81,3 +81,47 @@ seg-fault under Linux.
 
 Included a new Borland C makefile, Makefile.bc2, donated by Fox
 Cutter <lmb@comtch.iea.com>.
+
+0.94 not released yet
+---------------------
+
+Major item: added the macro processor.
+
+Added undocumented instructions SMI, IBTS, XBTS and LOADALL286. Also
+reorganised CMPXCHG instruction into early-486 and Pentium forms.
+Thanks to Thobias Jones for the information.
+
+Fixed two more stupid bugs in ELF, which were causing `ld' to
+continue to seg-fault in a lot of non-trivial cases.
+
+Fixed a seg-fault in the label manager.
+
+Stopped FBLD and FBSTP from _requiring_ the TWORD keyword, which is
+the only option for BCD loads/stores in any case.
+
+Ensured FLDCW, FSTCW and FSTSW can cope with the WORD keyword, if
+anyone bothers to provide it. Previously they complained unless no
+keyword at all was present.
+
+Some forms of FDIV/FDIVR and FSUB/FSUBR were still inverted: a
+vestige of a bug that I thought had been fixed in 0.92. This was
+fixed, hopefully for good this time...
+
+Another minor phase error (insofar as a phase error can _ever_ be
+minor) fixed, this one occurring in code of the form
+   rol ax,forward_reference
+   forward_reference equ 1
+
+The number supplied to TIMES is now sanity-checked for positivity,
+and also may be greater than 64K (which previously didn't work on
+16-bit systems).
+
+Added Watcom C makefiles, and misc/pmw.bat, donated by Dominik Behr.
+
+Added the INCBIN pseudo-opcode.
+
+Due to the advent of the preprocessor, the [INCLUDE] and [INC]
+directives have become obsolete. They are still supported in this
+version, with a warning, but won't be in the next.
+
+Updates to RDOFF subdirectory, and changes to outrdf.c.

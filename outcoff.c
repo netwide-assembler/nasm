@@ -486,14 +486,14 @@ static int coff_directives (char *directive, char *value, int pass) {
 }
 
 static void coff_write (void) {
-    long hdrs_end, pos, sympos, vsize;
+    long pos, sympos, vsize;
     int i;
 
     /*
      * Work out how big the file will get. Calculate the start of
      * the `real' symbols at the same time.
      */
-    pos = hdrs_end = 0x14 + 0x28 * nsects;
+    pos = 0x14 + 0x28 * nsects;
     initsym = 3;		       /* two for the file, one absolute */
     for (i=0; i<nsects; i++) {
 	if (sects[i]->data) {

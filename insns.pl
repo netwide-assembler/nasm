@@ -21,14 +21,14 @@ while (<F>) {
   split;
   next if $#_ == -1; # blank lines
   (warn "line $line does not contain four fields\n"), next if $#_ != 3;
-  $formatted = &format(@_);
+  ($formatted, $nd) = &format(@_);
   if ($formatted) {
     $insns++;
     $aname = "aa_$_[0]";
     push @$aname, $formatted;
   }
   $opcodes[$opcodes++] = $_[0], $done{$_[0]} = 1 if !$done{$_[0]};
-  if ($formatted && $formatted !~ /IF_ND/) {
+  if ($formatted && !$nd) {
     push @big, $formatted;
     foreach $i (&startbyte($_[2])) {
       $aname = sprintf "dd_%02X",$i;
@@ -105,9 +105,9 @@ printf STDERR "Done: %d instructions\n", $insns;
 
 sub format {
   local ($opcode, $operands, $codes, $flags) = @_;
-  local $num;
+  local $num, $nd = 0;
 
-  return undef if $operands eq "ignore";
+  return (undef, undef) if $operands eq "ignore";
 
   # format the operands
   $operands =~ s/:/|colon,/g;
@@ -124,9 +124,10 @@ sub format {
 
   # format the flags
   $flags =~ s/,/|IF_/g;
+  $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
   $flags = "IF_" . $flags;
 
-  "{I_$opcode, $num, {$operands}, \"$codes\", $flags},";
+  ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
 }
 
 # Here we determine the range of possible starting bytes for a given

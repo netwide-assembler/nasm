@@ -544,7 +544,7 @@ static void elf_write(void) {
     for (i=0; i<nsects; i++) if (sects[i]->head) {
 	p += strlen(p)+1;
 	elf_section_header (p - shstrtab, 9, 0, sects[i]->rel, TRUE,
-			    sects[i]->rellen, 6, i+1, 4, 8);
+			    sects[i]->rellen, nsects+3, i+1, 4, 8);
     }
 
     fwrite (align_str, align, 1, elffp);
@@ -659,7 +659,7 @@ static struct SAA *elf_build_reltab (long *len, struct Reloc *r) {
 	long sym = r->symbol;
 
 	if (sym >= GLOBAL_TEMP_BASE)
-	    sym += -GLOBAL_TEMP_BASE + 6 + nlocals;
+	    sym += -GLOBAL_TEMP_BASE + (nsects+3) + nlocals;
 
 	p = entry;
 	WRITELONG (p, r->address);

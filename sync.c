@@ -13,10 +13,15 @@
 
 #define SYNC_MAX 4096		       /* max # of sync points */
 
+/*
+ * This lot manages the current set of sync points by means of a
+ * heap (priority queue) structure.
+ */
+
 static struct Sync {
     unsigned long pos;
     unsigned long length;
-} synx[SYNC_MAX];
+} synx[SYNC_MAX+1];		       /* synx[0] never used - who cares :) */
 static int nsynx;
 
 void init_sync(void) {

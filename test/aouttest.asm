@@ -23,17 +23,17 @@
 ; [16] Reference a data-section symbol in the data section
 ; [17] Reference a BSS-section symbol in the data section
 
-[BITS 32]
-[GLOBAL _lrotate]		; [1]
-[GLOBAL _greet]			; [1]
-[GLOBAL _asmstr]		; [2]
-[GLOBAL _textptr]		; [2]
-[GLOBAL _selfptr]		; [2]
-[GLOBAL _integer]		; [3]
-[EXTERN _printf]		; [10]
-[COMMON _commvar 4]		; [7]
+	  BITS 32
+	  GLOBAL _lrotate	; [1]
+	  GLOBAL _greet		; [1]
+	  GLOBAL _asmstr	; [2]
+	  GLOBAL _textptr	; [2]
+	  GLOBAL _selfptr	; [2]
+	  GLOBAL _integer	; [3]
+	  EXTERN _printf	; [10]
+	  COMMON _commvar 4	; [7]
 
-[SECTION .text]
+	  SECTION .text
 
 ; prototype: long lrotate(long x, int num);
 _lrotate:			; [1]
@@ -53,14 +53,14 @@ _greet	  mov eax,[_integer]	; [14]
 	  mov [localint],eax	; [14]
 	  push dword [_commvar]
 	  mov eax,[localptr]	; [13]
-	  push dword [eax]	;
+	  push dword [eax]
 	  push dword [_integer]	; [1] [14]
 	  push dword _printfstr	; [13]
 	  call _printf		; [11]
 	  add esp,16
 	  ret
 
-[SECTION .data]
+	  SECTION .data
 
 ; a string
 _asmstr	  db 'hello, world', 0	; [2]
@@ -74,7 +74,7 @@ localptr  dd localint		; [5] [17]
 _textptr  dd _greet		; [15]
 _selfptr  dd _selfptr		; [16]
 
-[SECTION .bss]
+	  SECTION .bss
 
 ; an integer
 _integer  resd 1		; [3]

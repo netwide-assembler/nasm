@@ -50,7 +50,7 @@ struct BSSRec {
   char type;		/* must be 5 */
   long amount;		/* number of bytes BSS to reserve */
 };
-
+  
 typedef union RDFHeaderRec {
   char type;			/* invariant throughout all below */
   struct RelocRec r;		/* type == 1 */
@@ -66,10 +66,13 @@ typedef struct RDFFileInfo {
   long header_len;
   long code_len;
   long data_len;
+  long header_ofs; 
   long code_ofs;
   long data_ofs;
   char *header_loc;	/* keep location of header */
   long header_fp;	/* current location within header for reading */
+  char *name;		/* name of module in libraries */
+  int  *refcount;       /* pointer to reference count on file, or NULL */
 } rdffile;
 
 #define BUF_BLOCK_LEN 4088              /* selected to match page size (4096)
@@ -91,8 +94,11 @@ typedef memorybuffer rdf_headerbuf;
 /* mask to find actual segment value in relocation records */
 #define RDOFF_SEGMENTMASK 63
 
+extern int rdf_errno;
+
 /* RDOFF file manipulation functions */
 int rdfopen(rdffile *f,const char *name);
+int rdfopenhere(rdffile *f, FILE *fp, int *refcount, char *name);
 int rdfclose(rdffile *f);
 int rdfloadseg(rdffile *f,int segment,void *buffer);
 rdfheaderrec *rdfgetheaderrec(rdffile *f);   /* returns static storage */

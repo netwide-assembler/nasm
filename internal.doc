@@ -8,13 +8,15 @@ the back end to a compiler.
 The assembler is composed of modules. The interfaces between them
 look like:
 
+		  +--- preproc.c ----+
+		  |		     |
 		  +---- parser.c ----+
 		  |	   |         |
 		  |     float.c      |
 		  |		     |
 		  +--- assemble.c ---+
-		  |        |         |
-	nasm.c ---+     insnsa.c     +--- nasmlib.c
+	nasm.c ---+        |         +--- nasmlib.c
+		  |     insnsa.c     |
 		  |		     |
 		  +---- labels.c ----+
 		  |		     |
@@ -22,10 +24,10 @@ look like:
 		  |		     |
 		  +----- *out.c -----+
 
-In other words, each of `parser.c', `assemble.c', `labels.c',
-`outform.c' and each of the output format modules `*out.c' are
-independent modules, which do not inter-communicate except through
-the main program.
+In other words, each of `preproc.c', `parser.c', `assemble.c',
+`labels.c', `outform.c' and each of the output format modules
+`*out.c' are independent modules, which do not inter-communicate
+except through the main program.
 
 The Netwide *Disassembler* is not intended to be particularly
 portable or reusable or anything, however. So I won't bother
@@ -38,6 +40,16 @@ This is a library module; it contains simple library routines which
 may be referenced by all other modules. Among these are a set of
 wrappers around the standard `malloc' routines, which will report a
 fatal error if they run out of memory, rather than returning NULL.
+
+preproc.c
+---------
+
+This contains a macro preprocessor, which takes a file name as input
+and returns a sequence of preprocessed source lines. The only symbol
+exported from the module is `nasmpp', which is a data structure of
+type `Preproc', declared in nasm.h. This structure contains pointers
+to all the functions designed to be callable from outside the
+module.
 
 parser.c
 --------
@@ -168,12 +180,12 @@ corresponding to a given name.
 The output modules
 ------------------
 
-Each of the output modules, `binout.o', `elfout.o' and so on,
+Each of the output modules, `outbin.o', `outelf.o' and so on,
 exports only one symbol, which is an output driver data structure
 containing pointers to all the functions needed to produce output
 files of the appropriate type.
 
-The exception to this is `coffout.o', which exports _two_ output
+The exception to this is `outcoff.o', which exports _two_ output
 driver structures, since COFF and Win32 object file formats are very
 similar and most of the code is shared between them.
 

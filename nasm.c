@@ -14,6 +14,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "preproc.h"
 #include "parser.h"
 #include "assemble.h"
 #include "labels.h"
@@ -31,6 +32,8 @@ static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
 static char realout[FILENAME_MAX];
 static int lineno;		       /* for error reporting */
+static int lineinc;		       /* set by [LINE] or [ONELINE] */
+static int globallineno;	       /* for forward-reference tracking */
 static int pass;
 static struct ofmt *ofmt = NULL;
 
@@ -43,6 +46,27 @@ static long abs_offset;
 
 static struct SAA *forwrefs;	       /* keep track of forward references */
 static int forwline;
+
+static Preproc *preproc;
+static int preprocess_only;
+
+/* used by error function to report location */
+static char currentfile[FILENAME_MAX];
+
+/*
+ * This is a null preprocessor which just copies lines from input
+ * to output. It's used when someone explicitly requests that NASM
+ * not preprocess their source file.
+ */
+
+static void no_pp_reset (char *, efunc);
+static char *no_pp_getline (void);
+static void no_pp_cleanup (void);
+static Preproc no_pp = {
+    no_pp_reset,
+    no_pp_getline,
+    no_pp_cleanup
+};
 
 /*
  * get/set current offset...
@@ -62,6 +86,9 @@ int main(int argc, char **argv) {
     offsets = raa_init();
     forwrefs = saa_init ((long)sizeof(int));
 
+    preproc = &nasmpp;
+    preprocess_only = FALSE;
+
     seg_init();
 
     register_output_formats();
@@ -74,28 +101,60 @@ int main(int argc, char **argv) {
 	return 1;
     }
 
-    if (!*outname) {
-	ofmt->filename (inname, realout, report_error);
-	strcpy(outname, realout);
-    }
+    if (preprocess_only) {
+	char *line;
 
-    ofile = fopen(outname, "wb");
-    if (!ofile) {
-	report_error (ERR_FATAL | ERR_NOFILE,
-		      "unable to open output file `%s'", outname);
+	if (*outname) {
+	    ofile = fopen(outname, "w");
+	    if (!ofile)
+		report_error (ERR_FATAL | ERR_NOFILE,
+			      "unable to open output file `%s'", outname);
+	} else
+	    ofile = NULL;
+	preproc->reset (inname, report_error);
+	strcpy(currentfile,inname);
+	lineno = 0;
+	lineinc = 1;
+	while ( (line = preproc->getline()) ) {
+	    lineno += lineinc;
+	    if (ofile) {
+		fputs(line, ofile);
+		fputc('\n', ofile);
+	    } else
+		puts(line);
+	    nasm_free (line);
+	}
+	preproc->cleanup();
+	if (ofile)
+	    fclose(ofile);
+	if (ofile && terminate_after_phase)
+	    remove(outname);
+    } else {
+	if (!*outname) {
+	    ofmt->filename (inname, realout, report_error);
+	    strcpy(outname, realout);
+	}
+
+	ofile = fopen(outname, "wb");
+	if (!ofile) {
+	    report_error (ERR_FATAL | ERR_NOFILE,
+			  "unable to open output file `%s'", outname);
+	}
+	ofmt->init (ofile, report_error, define_label);
+	assemble_file (inname);
+	if (!terminate_after_phase) {
+	    ofmt->cleanup ();
+	    cleanup_labels ();
+	}
+	fclose (ofile);
+	if (terminate_after_phase)
+	    remove(outname);
     }
-    ofmt->init (ofile, report_error, define_label);
-    assemble_file (inname);
-    if (!terminate_after_phase) {
-	ofmt->cleanup ();
-	cleanup_labels ();
-    }
-    fclose (ofile);
-    if (terminate_after_phase)
-	remove(outname);
 
     if (want_usage)
 	usage();
+    raa_free (offsets);
+    saa_free (forwrefs);
 
     return 0;
 }
@@ -132,9 +191,13 @@ static void parse_cmdline(int argc, char **argv) {
 		break;
 	      case 'h':
 		fprintf(stderr,
-			"usage: nasm [-o outfile] [-f format] filename\n");
+			"usage: nasm [-o outfile] [-f format]"
+			" [-a] [-e] filename\n");
 		fprintf(stderr,
 			"    or nasm -r   for version info\n\n");
+		fprintf(stderr,
+			"    -e means preprocess only; "
+			"-a means don't preprocess\n\n");
 		fprintf(stderr,
 			"valid output formats for -f are"
 			" (`*' denotes default):\n");
@@ -144,6 +207,12 @@ static void parse_cmdline(int argc, char **argv) {
 	      case 'r':
 		fprintf(stderr, "NASM version %s\n", NASM_VER);
 		exit (0);	       /* never need usage message here */
+		break;
+	      case 'e':		       /* preprocess only */
+		preprocess_only = TRUE;
+		break;
+	      case 'a':		       /* assemble only - don't preprocess */
+		preproc = &no_pp;
 		break;
 	      default:
 		report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -164,66 +233,54 @@ static void parse_cmdline(int argc, char **argv) {
 		      "no input file specified");
 }
 
-/* used by error function to report location */
-static char currentfile[FILENAME_MAX];
-
 static void assemble_file (char *fname) {
-    FILE *fp = fopen (fname, "r");
-    FILE *oldfile = NULL;     /* jrh - used when processing include files */
-    int oldfileline = 0;
-    char *value, *p, buffer[1024+2];   /* maximum line length defined here */
+    char *value, *p, *line;
     insn output_ins;
-    int i, seg, rn_error;
-
-    if (!fp) {			       /* couldn't open file */
-	report_error (ERR_FATAL | ERR_NOFILE,
-		      "unable to open input file `%s'", fname);
-	return;
-    }
+    int i, rn_error;
+    long seg;
 
     init_labels ();
-    strcpy(currentfile,fname);
 
     /* pass one */
     pass = 1;
     current_seg = ofmt->section(NULL, pass, &sb);
+    preproc->reset(fname, report_error);
+    strcpy(currentfile,fname);
     lineno = 0;
-    while (1) {
-        if (! fgets(buffer, sizeof(buffer), fp)) {   /* EOF on current file */
-	    if (oldfile) {
-		fclose(fp);
-		fp = oldfile;
-		lineno = oldfileline;
-		strcpy(currentfile,fname);
-		oldfile = NULL;
-		continue;
-	    }
-	    else
-		break;
-	}
-	lineno++;
-	if (buffer[strlen(buffer)-1] == '\n') {
-	    buffer[strlen(buffer)-1] = '\0';
-	} else if (!feof(fp)) {
+    lineinc = 1;
+    globallineno = 0;
+    while ( (line = preproc->getline()) ) {
+	lineno += lineinc;
+	globallineno++;
+
+	if (line[0] == '%') {
+	    int ln, li;
+	    char buf[FILENAME_MAX];
+
 	    /*
-	     * We have a line that's too long. Throw an error, read
-	     * to EOL, and ignore the line for assembly purposes.
+	     * This will be a line number directive. They come
+	     * straight from the preprocessor, so we'll subject
+	     * them to only minimal error checking.
 	     */
-	    report_error (ERR_NONFATAL, "line is longer than %d characters",
-			  sizeof(buffer)-2);
-	    while (fgets(buffer, sizeof(buffer), fp) &&
-		   buffer[strlen(buffer)-1] != '\n');
-	    continue;		       /* read another line */
+	    if (strncmp(line, "%line", 5)) {
+		if (preproc == &no_pp)
+		    report_error (ERR_WARNING, "unknown `%%' directive in "
+				  " preprocessed source");
+	    } else if (sscanf(line, "%%line %d+%d %s", &ln, &li, buf) != 3) {
+		report_error (ERR_WARNING, "bogus line number directive in"
+			      " preprocessed source");
+	    } else {
+		lineno = ln - li;
+		lineinc = li;
+		strncpy (currentfile, buf, FILENAME_MAX-1);
+		currentfile[FILENAME_MAX-1] = '\0';
+	    }
+	    continue;
 	}
-	/*
-	 * Handle spurious ^Z, which may be inserted by some file
-	 * transfer utilities.
-	 */
-	buffer[strcspn(buffer, "\032")] = '\0';
 
 	/* here we parse our directives; this is not handled by the 'real'
 	 * parser. */
-	if ( (i = getkw (buffer, &value)) ) {
+	if ( (i = getkw (line, &value)) ) {
 	    switch (i) {
 	      case 1:	       /* [SEGMENT n] */
 		seg = ofmt->section (value, pass, &sb);
@@ -254,27 +311,12 @@ static void assemble_file (char *fname) {
 		    break;
 		}
 		break;
-	      case 4:		/* [INC file] */
-		oldfile = fp;
-		oldfileline = lineno;
-		lineno = 0;
-		strcpy(currentfile,value);
-		fp = fopen(value,"r");
-		if (!fp)  {
-		    lineno = oldfileline;
-		    fp = oldfile;
-		    strcpy(currentfile,fname);
-		    report_error (ERR_FATAL,
-				  "unable to open include file `%s'\n",
-				  value);
-		}
-		break;
-	      case 5:	       /* [GLOBAL symbol] */
+	      case 4:	       /* [GLOBAL symbol] */
 		if (*value == '$')
 		    value++;	       /* skip initial $ if present */
 		declare_as_global (value, report_error);
 		break;
-	      case 6:	       /* [COMMON symbol size] */
+	      case 5:	       /* [COMMON symbol size] */
 		p = value;
 		while (*p && !isspace(*p))
 		    p++;
@@ -294,7 +336,7 @@ static void assemble_file (char *fname) {
 		    report_error (ERR_NONFATAL, "no size specified in"
 				  " COMMON declaration");
 		break;
-	      case 7:		       /* [ABSOLUTE address] */
+	      case 6:		       /* [ABSOLUTE address] */
 		current_seg = NO_SEG;
 		abs_offset = readnum(value, &rn_error);
 		if (rn_error) {
@@ -304,17 +346,36 @@ static void assemble_file (char *fname) {
 		}
 		break;
 	      default:
-		if (!ofmt->directive (buffer+1, value, 1))
+		if (!ofmt->directive (line+1, value, 1))
 		    report_error (ERR_NONFATAL, "unrecognised directive [%s]",
-				  buffer+1);
+				  line+1);
 		break;
 	    }
 	} else {
 	    long offs = get_curr_ofs;
 	    parse_line (current_seg, offs, lookup_label,
-			1, buffer, &output_ins, ofmt, report_error);
+			1, line, &output_ins, ofmt, report_error);
 	    if (output_ins.forw_ref)
-		*(int *)saa_wstruct(forwrefs) = lineno;
+		*(int *)saa_wstruct(forwrefs) = globallineno;
+
+	    /*
+	     * Hack to prevent phase error in the code
+	     *   rol ax,x
+	     *   x equ 1
+	     *
+	     * We rule that the presence of a forward reference
+	     * cancels out the UNITY property of the number 1. This
+	     * isn't _strictly_ necessary in pass one, since the
+	     * problem occurs in pass two, but for the sake of
+	     * having the passes as near to identical as we can
+	     * manage, we do it like this.
+	     */
+	    if (output_ins.forw_ref) {
+		int i;
+		for (i=0; i<output_ins.operands; i++)
+		    output_ins.oprs[i].type &= ~ONENESS;
+	    }
+
 	    if (output_ins.opcode == I_EQU) {
 		/*
 		 * Special `..' EQUs get processed in pass two.
@@ -354,7 +415,9 @@ static void assemble_file (char *fname) {
 	    }
 	    cleanup_insn (&output_ins);
 	}
+	nasm_free (line);
     }
+    preproc->cleanup();
 
     if (terminate_after_phase) {
 	fclose(ofile);
@@ -366,7 +429,6 @@ static void assemble_file (char *fname) {
 
     /* pass two */
     pass = 2;
-    rewind (fp);
     saa_rewind (forwrefs);
     {
 	int *p = saa_rstruct (forwrefs);
@@ -378,35 +440,38 @@ static void assemble_file (char *fname) {
     current_seg = ofmt->section(NULL, pass, &sb);
     raa_free (offsets);
     offsets = raa_init();
+    preproc->reset(fname, report_error);
+    strcpy(currentfile,fname);
     lineno = 0;
-    while (1) {
-        if (!fgets(buffer, sizeof(buffer), fp)) {
-	    if (oldfile) {
-		fclose(fp);
-		fp = oldfile;
-		lineno = oldfileline;
-		strcpy(currentfile,fname);
-		oldfile = NULL;
-		continue;
-	    } else
-		break;
-        }
-	lineno++;
-	if (buffer[strlen(buffer)-1] == '\n')
-	    buffer[strlen(buffer)-1] = '\0';
-	else if (!feof(fp))
-	    report_error (ERR_PANIC,
-			  "too-long line got through from pass one");
-	/*
-	 * Handle spurious ^Z, which may be inserted by some file
-	 * transfer utilities.
-	 */
-	buffer[strcspn(buffer, "\032")] = '\0';
+    lineinc = 1;
+    globallineno = 0;
+    while ( (line = preproc->getline()) ) {
+	lineno += lineinc;
+	globallineno++;
+
+	if (line[0] == '%') {
+	    int ln, li;
+	    char buf[FILENAME_MAX];
+
+	    /*
+	     * This will be a line number directive. They come
+	     * straight from the preprocessor, so we'll subject
+	     * them to only minimal error checking.
+	     */
+	    if (!strncmp(line, "%line", 5) &&
+		sscanf(line, "%%line %d+%d %s", &ln, &li, buf) == 3) {
+		lineno = ln - li;
+		lineinc = li;
+		strncpy (currentfile, buf, FILENAME_MAX-1);
+		currentfile[FILENAME_MAX-1] = '\0';
+	    }
+	    continue;
+	}
 
 	/* here we parse our directives; this is not handled by
 	 * the 'real' parser. */
 
-	if ( (i = getkw (buffer, &value)) ) {
+	if ( (i = getkw (line, &value)) ) {
 	    switch (i) {
 	      case 1:	       /* [SEGMENT n] */
 		seg = ofmt->section (value, pass, &sb);
@@ -431,34 +496,11 @@ static void assemble_file (char *fname) {
 		    break;
 		}
 		break;
-	      case 4:
-		oldfile = fp;
-		oldfileline = lineno;
-		lineno = 0;
-		strcpy(currentfile,value);
-		fp = fopen(value,"r");
-		if (!fp) {
-		    lineno = oldfileline;
-		    fp = oldfile;
-		    strcpy(currentfile,fname);
-		    /*
-		     * We don't report this error in the PANIC
-		     * class, even though we might expect to have
-		     * already picked it up during pass one,
-		     * because of the tiny chance that some other
-		     * process may have removed the include file
-		     * between the passes.
-		     */
-		    report_error (ERR_FATAL,
-				  "unable to open include file `%s'\n",
-				  value);
-		}
+	      case 4:		       /* [GLOBAL symbol] */
 		break;
-	      case 5:		       /* [GLOBAL symbol] */
+	      case 5:		       /* [COMMON symbol size] */
 		break;
-	      case 6:		       /* [COMMON symbol size] */
-		break;
-	      case 7:		       /* [ABSOLUTE addr] */
+	      case 6:		       /* [ABSOLUTE addr] */
 		current_seg = NO_SEG;
 		abs_offset = readnum(value, &rn_error);
 		if (rn_error)
@@ -466,15 +508,15 @@ static void assemble_file (char *fname) {
 				  "in pass two");
 		break;
 	      default:
-		if (!ofmt->directive (buffer+1, value, 2))
+		if (!ofmt->directive (line+1, value, 2))
 		    report_error (ERR_PANIC, "invalid directive on pass two");
 		break;
 	    }
 	} else {
 	    long offs = get_curr_ofs;
 	    parse_line (current_seg, offs, lookup_label, 2,
-			buffer, &output_ins, ofmt, report_error);
-	    if (lineno == forwline) {
+			line, &output_ins, ofmt, report_error);
+	    if (globallineno == forwline) {
 		int *p = saa_rstruct (forwrefs);
 		if (p)
 		    forwline = *p;
@@ -483,7 +525,19 @@ static void assemble_file (char *fname) {
 		output_ins.forw_ref = TRUE;
 	    } else
 		output_ins.forw_ref = FALSE;
-	    obuf = buffer;
+
+	    /*
+	     * Hack to prevent phase error in the code
+	     *   rol ax,x
+	     *   x equ 1
+	     */
+	    if (output_ins.forw_ref) {
+		int i;
+		for (i=0; i<output_ins.operands; i++)
+		    output_ins.oprs[i].type &= ~ONENESS;
+	    }
+
+	    obuf = line;
 	    if (output_ins.label)
 		define_label_stub (output_ins.label, report_error);
 	    if (output_ins.opcode == I_EQU) {
@@ -517,7 +571,9 @@ static void assemble_file (char *fname) {
 	    cleanup_insn (&output_ins);
 	    set_curr_ofs (offs);
 	}
+	nasm_free (line);
     }
+    preproc->cleanup();
 }
 
 static int getkw (char *buf, char **value) {
@@ -557,14 +613,12 @@ static int getkw (char *buf, char **value) {
     	return 2;
     if (!strcmp(p, "bits"))
     	return 3;
-    if (!strcmp(p, "inc") || !strcmp(p, "include"))
-        return 4;
     if (!strcmp(p, "global"))
-    	return 5;
+    	return 4;
     if (!strcmp(p, "common"))
-    	return 6;
+    	return 5;
     if (!strcmp(p, "absolute"))
-    	return 7;
+    	return 6;
     return -1;
 }
 
@@ -574,7 +628,8 @@ static void report_error (int severity, char *fmt, ...) {
     if (severity & ERR_NOFILE)
 	fputs ("nasm: ", stderr);
     else
-	fprintf (stderr, "%s:%d: ", currentfile, lineno);
+	fprintf (stderr, "%s:%d: ", currentfile,
+		 lineno + (severity & ERR_OFFBY1 ? lineinc : 0));
 
     if ( (severity & ERR_MASK) == ERR_WARNING)
 	fputs ("warning: ", stderr);
@@ -596,14 +651,16 @@ static void report_error (int severity, char *fmt, ...) {
 	terminate_after_phase = TRUE;
 	break;
       case ERR_FATAL:
-	fclose(ofile);
-	remove(outname);
+	if (ofile) {
+	    fclose(ofile);
+	    remove(outname);
+	}
 	if (want_usage)
 	    usage();
 	exit(1);		       /* instantly die */
 	break;			       /* placate silly compilers */
       case ERR_PANIC:
-	abort();		       /* panic and dump core */
+	abort();		       /* halt, catch fire, and dump core */
 	break;
     }
 }
@@ -676,4 +733,62 @@ static void register_output_formats(void) {
      * set the default format
      */
     ofmt = &OF_DEFAULT;
+}
+
+#define BUF_DELTA 512
+
+static FILE *no_pp_fp;
+static efunc no_pp_err;
+
+static void no_pp_reset (char *file, efunc error) {
+    no_pp_err = error;
+    no_pp_fp = fopen(file, "r");
+    if (!no_pp_fp)
+	no_pp_err (ERR_FATAL | ERR_NOFILE,
+		   "unable to open input file `%s'", file);
+}
+
+static char *no_pp_getline (void) {
+    char *buffer, *p, *q;
+    int bufsize;
+
+    bufsize = BUF_DELTA;
+    buffer = nasm_malloc(BUF_DELTA);
+    p = buffer;
+    while (1) {
+	q = fgets(p, bufsize-(p-buffer), no_pp_fp);
+	if (!q)
+	    break;
+	p += strlen(p);
+	if (p > buffer && p[-1] == '\n')
+	    break;
+	if (p-buffer > bufsize-10) {
+	    bufsize += BUF_DELTA;
+	    buffer = nasm_realloc(buffer, bufsize);
+	}
+    }
+
+    if (!q && p == buffer) {
+	nasm_free (buffer);
+	return NULL;
+    }
+
+    /*
+     * Play safe: remove CRs as well as LFs, if any of either are
+     * present at the end of the line.
+     */
+    while (p > buffer && (p[-1] == '\n' || p[-1] == '\r'))
+	*--p = '\0';
+
+    /*
+     * Handle spurious ^Z, which may be inserted into source files
+     * by some file transfer utilities.
+     */
+    buffer[strcspn(buffer, "\032")] = '\0';
+
+    return buffer;
+}
+
+static void no_pp_cleanup (void) {
+    fclose(no_pp_fp);
 }

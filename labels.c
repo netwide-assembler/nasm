@@ -87,6 +87,8 @@ static union label *find_label (char *label, int create) {
     while (lptr->admin.movingon != END_LIST) {
 	if (lptr->admin.movingon == END_BLOCK) {
 	    lptr = lptr->admin.next;
+	    if (!lptr)
+		break;
 	}
 	if (!strncmp(lptr->defn.label, prev, prevlen) &&
 	    !strcmp(lptr->defn.label+prevlen, label))

@@ -13,8 +13,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #include "rdoff.h"
+
+#define newstr(str) strcpy(malloc(strlen(str) + 1),str)
+#define newstrcat(s1,s2) strcat(strcpy(malloc(strlen(s1) + strlen(s2) + 1), \
+                                       s1),s2)
 
 /* ========================================================================
  * Code for memory buffers (for delayed writing of header until we know
@@ -42,7 +48,7 @@ void membufwrite(memorybuffer *b, void *data, int bytes) {
   }
   if ((bytes < 0 && b->length - bytes > BUF_BLOCK_LEN)
       || (bytes > 0 && b->length + bytes > BUF_BLOCK_LEN)) {
-
+    
     /* buffer full and no next allocated... allocate and initialise next
      * buffer */
 
@@ -84,7 +90,7 @@ void membufdump(memorybuffer *b,FILE *fp)
   if (!b) return;
 
   fwrite (b->buffer, 1, b->length, fp);
-
+  
   membufdump(b->next,fp);
 }
 
@@ -134,7 +140,18 @@ int rdf_errno = 0;
 
 int rdfopen(rdffile *f, const char *name)
 {
+    FILE * fp;
+
+    fp = fopen(name,"rb");
+    if (!fp) return rdf_errno = 1;		/* error 1: file open error */
+
+    return rdfopenhere(f,fp,NULL,"");
+}
+
+int rdfopenhere(rdffile *f, FILE *fp, int *refcount, char *name)
+{
   char buf[8];
+  long initpos;
 
   if (translatelong(0x01020304) != 0x01020304)
   {					/* fix this to be portable! */
@@ -143,9 +160,8 @@ int rdfopen(rdffile *f, const char *name)
     exit(3);
   }
 
-
-  f->fp = fopen(name,"rb");
-  if (!f->fp) return rdf_errno = 1;		/* error 1: file open error */
+  f->fp = fp;
+  initpos = ftell(fp);
 
   fread(buf,6,1,f->fp);		/* read header */
   buf[6] = 0;
@@ -159,6 +175,8 @@ int rdfopen(rdffile *f, const char *name)
     fclose(f->fp);
     return rdf_errno = 3;	/* error 3: file read error */
   }
+
+  f->header_ofs = ftell(f->fp);
 
   if (fseek(f->fp,f->header_len,SEEK_CUR)) {
     fclose(f->fp);
@@ -182,20 +200,32 @@ int rdfopen(rdffile *f, const char *name)
   }
 
   f->data_ofs = ftell(f->fp);
-  rewind(f->fp);
+  fseek(f->fp,initpos,SEEK_SET);
   f->header_loc = NULL;
+
+  f->name = newstr(name);
+  f->refcount = refcount;
+  if (refcount) (*refcount)++;
   return 0;
 }
 
 int rdfclose(rdffile *f)
 {
-    fclose(f->fp);
+    if (! f->refcount || ! *--f->refcount)
+	fclose(f->fp);
+    free(f->name);
+
     return 0;
 }
 
 void rdfperror(const char *app,const char *name)
 {
   fprintf(stderr,"%s:%s: %s\n",app,name,rdf_errors[rdf_errno]);
+  if (rdf_errno == 1 || rdf_errno == 3)
+  {
+      perror(app);
+  }
+
 }
 
 int rdfloadseg(rdffile *f,int segment,void *buffer)
@@ -205,7 +235,7 @@ int rdfloadseg(rdffile *f,int segment,void *buffer)
 
   switch(segment) {
   case RDOFF_HEADER:
-    fpos = 10;
+    fpos = f->header_ofs;
     slen = f->header_len;
     f->header_loc = (char *)buffer;
     f->header_fp = 0;
@@ -224,8 +254,8 @@ int rdfloadseg(rdffile *f,int segment,void *buffer)
   }
 
   if (fseek(f->fp,fpos,SEEK_SET))
-    return rdf_errno = 4;
-
+    return rdf_errno = 4;	
+    
   if (fread(buffer,1,slen,f->fp) != slen)
     return rdf_errno = 3;
 
@@ -294,7 +324,7 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
   }
   return &r;
 }
-
+    
 void rdfheaderrewind(rdffile *f)
 {
   f->header_fp = 0;

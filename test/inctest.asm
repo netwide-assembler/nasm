@@ -5,11 +5,9 @@
 ;    nasm -f bin inctest.asm -o inctest.com
 ; and when run, it should print `hello, world'.
 
-[BITS 16]
-[ORG 0x100]
+	  BITS 16
+	  ORG 0x100
 
 	  jmp _main
 
-[INC inc1.asm]
-
-[INCLUDE inc2.asm]
+%include "inc1.asm"

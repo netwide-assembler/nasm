@@ -248,7 +248,7 @@ static void obj_deflabel (char *name, long segment,
     if (segment < SEG_ABS && segment != NO_SEG && segment % 2)
 	return;
 
-    if (segment >= SEG_ABS) {
+    if (segment >= SEG_ABS || segment == NO_SEG) {
 	/*
 	 * SEG_ABS subcase of (ii).
 	 */
@@ -260,7 +260,7 @@ static void obj_deflabel (char *name, long segment,
 	    pub->next = NULL;
 	    pub->name = name;
 	    pub->offset = offset;
-	    pub->segment = segment & ~SEG_ABS;
+	    pub->segment = (segment == NO_SEG ? 0 : segment & ~SEG_ABS);
 	}
 	return;
     }
@@ -887,7 +887,7 @@ static void obj_write_file (void) {
 	int acbp;
 	int sn, cn, on;		       /* seg, class, overlay LNAME idx */
 
-	if (seg->use32 || seg->currentpos >= 0x10000)
+	if (seg->use32 || seg->currentpos >= 0x10000L)
 	    new_segdef = TRUE;
 	else
 	    new_segdef = FALSE;
@@ -909,7 +909,7 @@ static void obj_write_file (void) {
 
 	acbp = (seg->combine << 2);    /* C field */
 
-	if (seg->currentpos >= 0x10000 && !new_segdef)
+	if (seg->currentpos >= 0x10000L && !new_segdef)
 	    acbp |= 0x02;	       /* B bit */
 
 	if (seg->use32)
@@ -1188,7 +1188,7 @@ static unsigned char *obj_write_value(unsigned char *ptr,
 	*ptr++ = 129;
 	*ptr++ = data & 0xFF;
 	*ptr++ = (data >> 8) & 0xFF;
-    } else if (data <= 0xFFFFFF) {
+    } else if (data <= 0xFFFFFFL) {
 	*ptr++ = 132;
 	*ptr++ = data & 0xFF;
 	*ptr++ = (data >> 8) & 0xFF;

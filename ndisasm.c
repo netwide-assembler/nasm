@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -60,11 +61,9 @@ int main(int argc, char **argv) {
 	      case 'h':
 		fprintf(stderr, help);
 		return 0;
-		break;
 	      case 'r':
 		fprintf(stderr, "NDISASM version " NASM_VER "\n");
 		return 0;
-		break;
 	      case 'u':		       /* USE32 */
 		bits = 32;
 		p++;

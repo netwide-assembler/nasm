@@ -17,7 +17,7 @@ char *include[] = { "-I" LCCDIR "include", "-I/usr/local/include",
 	"-I/usr/include", 0 };
 char *com[] = { LCCDIR "rcc", "-target=x86/nasm",
 	"$1", "$2", "$3", 0 };
-char *as[] = { NASMPATH, "-faout", "-o", "$3", "$1", "$2", 0 };
+char *as[] = { NASMPATH, "-a", "-faout", "-o", "$3", "$1", "$2", 0 };
 char *ld[] = { "/usr/bin/ld", "-m", "i386linux",
 	"-L/usr/i486-linuxaout/lib",
 	"-o", "$3", "$1",

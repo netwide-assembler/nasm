@@ -27,7 +27,7 @@ rdfmodule * rdfload(const char *filename)
     char	* hdr;
     rdfheaderrec *r;
 
-    if (f == NULL)
+    if (f == NULL) 
     {
 	rdf_errno = 6;		/* out of memory */
 	return NULL;
@@ -48,7 +48,7 @@ rdfmodule * rdfload(const char *filename)
     }
 
     /* read in text and data segments, and header */
-
+    
     f->t = malloc (f->f.code_len);
     f->d = malloc (f->f.data_len); /* BSS seg allocated later */
     hdr = malloc (f->f.header_len);
@@ -107,11 +107,11 @@ rdfmodule * rdfload(const char *filename)
 int rdf_relocate(rdfmodule * m)
 {
     rdfheaderrec	* r;
-    Collection		imports;
+    Collection		imports;    
     symtabEnt		e;
     long		rel;
     unsigned char	* seg;
-
+    
     rdfheaderrewind ( & m->f );
     collection_init(&imports);
 
@@ -155,7 +155,7 @@ int rdf_relocate(rdfmodule * m)
 
 	case 3:			/* export record - add to symtab */
 	    e.segment = r->e.segment;
-	    e.offset = r->e.offset +
+	    e.offset = r->e.offset + 
 	               (e.segment == 0 ? m->textrel : /* 0 -> code */
 			e.segment == 1 ? m->datarel : /* 1 -> data */
 			                 m->bssrel) ; /* 2 -> bss  */
@@ -168,6 +168,6 @@ int rdf_relocate(rdfmodule * m)
 	    symtabInsert(m->symtab,&e);
 	    break;
 	}
-    }
+    }    
     return 0;
 }

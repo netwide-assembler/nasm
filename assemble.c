@@ -77,8 +77,8 @@ static int chsize (operand *, int);
 
 long assemble (long segment, long offset, int bits,
 	       insn *instruction, struct ofmt *output, efunc error) {
-    int j, itimes, size_prob;
-    long insn_end;
+    int j, size_prob;
+    long insn_end, itimes;
     long start = offset;
     struct itemplate *temp;
 
@@ -94,8 +94,8 @@ long assemble (long segment, long offset, int bits,
 	instruction->opcode == I_DQ ||
 	instruction->opcode == I_DT) {
 	extop *e;
-	long osize, wsize = 0;	       /* placate gcc */
-	int t = instruction->times;
+	long wsize = 0;		       /* placate gcc */
+	long t = instruction->times;
 
 	switch (instruction->opcode) {
 	  case I_DB: wsize = 1; break;
@@ -107,7 +107,6 @@ long assemble (long segment, long offset, int bits,
 
 	while (t--) {
 	    for (e = instruction->eops; e; e = e->next) {
-		osize = 0;
 		if (e->type == EOT_DB_NUMBER) {
 		    if (wsize == 1) {
 			if (e->segment != NO_SEG)
@@ -142,6 +141,63 @@ long assemble (long segment, long offset, int bits,
 	    }
 	}
 	return offset - start;
+    }
+
+    if (instruction->opcode == I_INCBIN) {
+	static char fname[FILENAME_MAX];
+	FILE *fp;
+	long len;
+
+	len = FILENAME_MAX-1;
+	if (len > instruction->eops->stringlen)
+	    len = instruction->eops->stringlen;
+	strncpy (fname, instruction->eops->stringval, len);
+	fname[len] = '\0';
+	if (!(fp = fopen(fname, "rb")))
+	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
+	else if (fseek(fp, 0L, SEEK_END) < 0)
+	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
+		   fname);
+	else {
+	    static char buf[2048];
+	    long t = instruction->times;
+	    long l;
+
+	    len = ftell (fp);
+	    if (instruction->eops->next) {
+		len -= instruction->eops->next->offset;
+		if (instruction->eops->next->next &&
+		    len > instruction->eops->next->next->offset)
+		    len = instruction->eops->next->next->offset;
+	    }
+	    while (t--) {
+		fseek (fp, 
+		       (instruction->eops->next ?
+			instruction->eops->next->offset : 0),
+		       SEEK_SET);		
+		l = len;
+		while (l > 0) {
+		    long m = fread (buf, 1, (l>sizeof(buf)?sizeof(buf):l),
+				    fp);
+		    if (!m) {
+			/*
+			 * This shouldn't happen unless the file
+			 * actually changes while we are reading
+			 * it.
+			 */
+			error (ERR_NONFATAL, "`incbin': unexpected EOF while"
+			       " reading file `%s'", fname);
+			return 0;      /* it doesn't much matter... */
+		    }
+		    outfmt->output (segment, buf, OUT_RAWDATA+m,
+				    NO_SEG, NO_SEG);
+		    l -= m;
+		}
+	    }
+	    fclose (fp);
+	    return instruction->times * len;
+	}
+	return 0;		       /* if we're here, there's an error */
     }
 
     size_prob = FALSE;
@@ -267,6 +323,35 @@ long insn_size (long segment, long offset, int bits,
 	    isize += osize + align;
 	}
 	return isize * instruction->times;
+    }
+
+    if (instruction->opcode == I_INCBIN) {
+	char fname[FILENAME_MAX];
+	FILE *fp;
+	long len;
+
+	len = FILENAME_MAX-1;
+	if (len > instruction->eops->stringlen)
+	    len = instruction->eops->stringlen;
+	strncpy (fname, instruction->eops->stringval, len);
+	fname[len] = '\0';
+	if (!(fp = fopen(fname, "rb")))
+	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
+	else if (fseek(fp, 0L, SEEK_END) < 0)
+	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
+		   fname);
+	else {
+	    len = ftell (fp);
+	    fclose (fp);
+	    if (instruction->eops->next) {
+		len -= instruction->eops->next->offset;
+		if (instruction->eops->next->next &&
+		    len > instruction->eops->next->next->offset)
+		    len = instruction->eops->next->next->offset;
+	    }
+	    return instruction->times * len;
+	}
+	return 0;		       /* if we're here, there's an error */
     }
 
     temp = nasm_instructions[instruction->opcode];
@@ -448,8 +533,8 @@ static void gencode (long segment, long offset, int bits,
       case 030: case 031: case 032:
 	if (ins->oprs[c-030].segment == NO_SEG &&
 	    ins->oprs[c-030].wrt == NO_SEG &&
-	    (ins->oprs[c-030].offset < -32768 ||
-	    ins->oprs[c-030].offset > 65535))
+	    (ins->oprs[c-030].offset < -32768L ||
+	    ins->oprs[c-030].offset > 65535L))
 	    errfunc (ERR_WARNING, "word value exceeds bounds");
 	data = ins->oprs[c-030].offset;
 	outfmt->output (segment, &data, OUT_ADDRESS+2,
@@ -460,7 +545,7 @@ static void gencode (long segment, long offset, int bits,
 	data = ins->oprs[c-034].offset;
 	size = ((ins->oprs[c-034].addr_size ?
 		 ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4);
-	if (size==16 && (data < -32768 || data > 65535))
+	if (size==16 && (data < -32768L || data > 65535L))
 	    errfunc (ERR_WARNING, "word value exceeds bounds");
 	outfmt->output (segment, &data, OUT_ADDRESS+size,
 			ins->oprs[c-034].segment, ins->oprs[c-034].wrt);

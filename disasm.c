@@ -71,6 +71,8 @@ static int whichreg(long regflags, int regval) {
 	return R_CR4;
     if (!(FPU0 & ~regflags))
 	return R_ST0;
+    if (!(REG_CS & ~regflags))
+	return R_CS;
     if (!((REGMEM|BITS8) & ~regflags))
 	return reg8[regval];
     if (!((REGMEM|BITS16) & ~regflags))

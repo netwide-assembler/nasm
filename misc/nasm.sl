@@ -22,79 +22,52 @@ variable nasm_kw_3 = strncat("a16a32aaaaadaamaasadcaddandbsfbsrbtcbtrbtscbw",
 			     "jngjnljnojnpjnsjnzjpejpolarldslealeslfslgslsl",
 			     "lssltrmm0mm1mm2mm3mm4mm5mm6mm7movmulnegnopnot",
 			     "o16o32outpopporrclrcrrepretrolrorrsmsalsarsbb",
-			     "segshlshrst0st1st2st3st4st5st6st7stcstdstistr",
-			     "subtr3tr4tr5tr6tr7wrtxor", 9);
+			     "segshlshrsmist0st1st2st3st4st5st6st7stcstdsti",
+			     "strsubtr3tr4tr5tr6tr7wrtxor", 9);
 variable nasm_kw_4 = strncat("arplbytecallcltscwdeemmsfabsfaddfbldfchsfcom",
 			     "fcosfdivfenifildfistfld1fldzfmulfnopfsinfstp",
-			     "fsubftstfxamfxchidivimulinsbinsdinswint3into",
-			     "invdiretjcxzjnaejnbejngejnlelahflgdtlidtlldt",
-			     "lmswlocklongloopmovdmovqnearpandpopapopfpush",
-			     "pxorreperepzresbresdreswretfretnsahfsetasetb",
-			     "setcsetesetgsetlsetosetpsetssetzsgdtshldshrd",
-			     "sidtsldtsmswtestverrverwwaitwordxaddxchg", 8);
-variable nasm_kw_5 = strncat("boundbswapcmpsbcmpsdcmpswcpuiddwordenterf2xm1",
-			     "faddpfbstpfclexfcompfdisifdivpfdivrffreefiadd",
-			     "ficomfidivfimulfinitfistpfisubfldcwfldpifmulp",
-			     "fpremfptanfsavefsqrtfstcwfstswfsubpfsubrfucom",
-			     "fyl2xiretdiretwjecxzleavelodsblodsdlodswloope",
-			     "loopzmovsbmovsdmovswmovsxmovzxoutsboutsdoutsw",
-			     "paddbpadddpaddwpandnpopadpopawpopfdpopfwpslld",
-			     "psllqpsllwpsradpsrawpsrldpsrlqpsrlwpsubbpsubd",
-			     "psubwpushapushfqwordrdmsrrdtscrepnerepnzscasb",
-			     "scasdscaswsetaesetbesetgesetlesetnasetnbsetnc",
-			     "setnesetngsetnlsetnosetnpsetnssetnzsetpesetpo",
-			     "shortstosbstosdstoswtimestwordwrmsrxlatb", 12);
-variable nasm_kw_6 = strncat("fcomppfdivrpficompfidivrfisubrfldenvfldl2e",
-			     "fldl2tfldlg2fldln2fpatanfprem1frstorfscale",
-			     "fsetpmfstenvfsubrpfucompinvlpgloopneloopnz",
+			     "fsubftstfxamfxchibtsidivimulinsbinsdinswint1",
+			     "int3intoinvdiretjcxzjnaejnbejngejnlelahflgdt",
+			     "lidtlldtlmswlocklongloopmovdmovqnearpandpopa",
+			     "popfpushpxorreperepzresbresdresqrestreswretf",
+			     "retnsahfsalcsetasetbsetcsetesetgsetlsetosetp",
+			     "setssetzsgdtshldshrdsidtsldtsmswtestumovverr",
+			     "verwwaitwordxaddxbtsxchg", 9);
+variable nasm_kw_5 = strncat("boundbswapcmovacmovbcmovccmovecmovgcmovlcmovo",
+			     "cmovpcmovscmovzcmpsbcmpsdcmpswcpuiddwordenter",
+			     "f2xm1faddpfbstpfclexfcomifcompfdisifdivpfdivr",
+			     "ffreefiaddficomfidivfimulfinitfistpfisubfldcw",
+			     "fldpifmulpfpremfptanfsavefsqrtfstcwfstswfsubp",
+			     "fsubrfucomfyl2xicebpint01iretdiretwjecxzleave",
+			     "lodsblodsdlodswloopeloopzmovsbmovsdmovswmovsx",
+			     "movzxoutsboutsdoutswpaddbpadddpaddwpandnpopad",
+			     "popawpopfdpopfwpslldpsllqpsllwpsradpsrawpsrld",
+			     "psrlqpsrlwpsubbpsubdpsubwpushapushfqwordrdmsr",
+			     "rdpmcrdtscrepnerepnzscasbscasdscaswsetaesetbe",
+			     "setgesetlesetnasetnbsetncsetnesetngsetnlsetno",
+			     "setnpsetnssetnzsetpesetposhortstosbstosdstosw",
+			     "timestwordwrmsrxlatb", 14);
+variable nasm_kw_6 = strncat("cmovaecmovbecmovgecmovlecmovnacmovnbcmovnc",
+			     "cmovnecmovngcmovnlcmovnocmovnpcmovnscmovnz",
+			     "cmovpecmovpofcmovbfcmovefcmovufcomipfcompp",
+			     "fdivrpficompfidivrfisubrfldenvfldl2efldl2t",
+			     "fldlg2fldln2fpatanfprem1frstorfscalefsetpm",
+			     "fstenvfsubrpfucomifucompinvlpgloopneloopnz",
 			     "paddsbpaddswpmulhwpmullwpsubsbpsubswpushad",
 			     "pushawpushfdpushfwsetnaesetnbesetngesetnle",
-			     "wbinvd", 6);
-variable nasm_kw_7 = strncat("cmpxchgfdecstpfincstpfrndintfsincosfucompp",
-			     "fxtractfyl2xp1paddusbpadduswpcmpeqbpcmpeqd",
-			     "pcmpeqwpcmpgtbpcmpgtdpcmpgtwpmaddwdpsubusb",
-			     "psubusw", 4);
-variable nasm_kw_8 = "packssdwpacksswbpackuswb";
+			     "wbinvd", 9);
+variable nasm_kw_7 = strncat("cmovnaecmovnbecmovngecmovnlecmpxchgfcmovbe",
+			     "fcmovnbfcmovnefcmovnufdecstpfincstpfrndint",
+			     "fsincosfucomipfucomppfxtractfyl2xp1loadall",
+			     "paddusbpadduswpcmpeqbpcmpeqdpcmpeqwpcmpgtb",
+			     "pcmpgtdpcmpgtwpmaddwdpsubusbpsubusw", 5);
+variable nasm_kw_8 = "fcmovnbepackssdwpacksswbpackuswb";
 variable nasm_kw_9 = strcat("cmpxchg8bpunpckhbwpunpckhdqpunpckhwdpunpcklbw",
 			    "punpckldqpunpcklwd");
-
-define nasm_is_kw {
-    variable word;
-    variable len;
-    variable list, min, max, pos, cmp;
-
-    word = strlow(());
-    len = strlen(word);
-
-    switch (len)
-    { case 0: return 1; }
-    { case 2: list = nasm_kw_2; }
-    { case 3: list = nasm_kw_3; }
-    { case 4: list = nasm_kw_4; }
-    { case 5: list = nasm_kw_5; }
-    { case 6: list = nasm_kw_6; }
-    { case 7: list = nasm_kw_7; }
-    { case 8: list = nasm_kw_8; }
-    { case 9: list = nasm_kw_9; }
-    { pop(); return 0; }
-
-    min = -1;
-    max = strlen(list) / len;
-    while (max - min >= 2) {
-	pos = (max + min) / 2;
-	cmp = strcmp(word, substr(list, pos * len + 1, len));
-	if (cmp == 0)
-	    return 1;		       % it's a keyword
-	else if (cmp < 0)
-	    max = pos;		       % bottom half
-	else if (cmp > 0)
-	    min = pos;		       % top half
-    }
-    return 0;
-}
+variable nasm_kw_10 = "cmpxchg486loadall286";
 
 define nasm_indent_line() {
-    variable word, len, e;
+    variable word, len, e, c;
 
     e = eolp();
 
@@ -106,6 +79,7 @@ define nasm_indent_line() {
     }
 
     bol_skip_white();
+    c = what_column();
 
     if (orelse
        {looking_at_char(';')}
@@ -118,14 +92,40 @@ define nasm_indent_line() {
 	return;
     }
 
+    if (looking_at_char('%')) {
+	go_right_1();
+	!if (orelse
+	    {looking_at_char('$')}
+	    {looking_at_char('%')}
+	    {looking_at_char('+')}
+	    {looking_at_char('-')}
+	    {looking_at_char('0')}
+	    {looking_at_char('1')}
+	    {looking_at_char('2')}
+	    {looking_at_char('3')}
+	    {looking_at_char('4')}
+	    {looking_at_char('5')}
+	    {looking_at_char('6')}
+	    {looking_at_char('7')}
+	    {looking_at_char('8')}
+	    {looking_at_char('9')}) {
+	    bol_trim();
+	    pop_spot();
+	    EXIT_BLOCK {
+	    }
+	    return;
+	}
+	go_left_1();
+    }
+
     push_mark();
+    skip_chars("%$+-");
     skip_chars("0-9a-zA-Z_.");
     word = bufsubstr();
 
-    if (nasm_is_kw(word)) {
-	bol_trim();
-	whitespace(Nasm_Instruction_Indent);
-    } else {
+    if (orelse
+       {c == 1}
+       {looking_at_char(':')}) {
 	push_spot();
 	bol_trim();
 	pop_spot();
@@ -147,6 +147,9 @@ define nasm_indent_line() {
 		push_spot();
 	    }
 	}
+    } else {
+	bol_trim();
+	whitespace(Nasm_Instruction_Indent);
     }
 }
 
@@ -247,7 +250,7 @@ define_syntax ('\'', '\'', $1);
 define_syntax ("0-9a-zA-Z_.@#", 'w', $1);
 define_syntax ("-+0-9a-fA-F.xXL", '0', $1);
 define_syntax (",:", ',', $1);
-define_syntax ('#', '#', $1);
+define_syntax ('%', '#', $1);
 define_syntax ("|^&<>+-*/%~", '+', $1);
 
 set_syntax_flags($1,1);
@@ -270,13 +273,15 @@ define_highlight_rule("\"[^\"]*$", "string", $1);
 define_highlight_rule("'[^']*'", "string", $1);
 define_highlight_rule("'[^']*$", "string", $1);
 define_highlight_rule("[\\(\\)\\[\\],:]*", "delimiter", $1);
-define_highlight_rule("[\\|\\^&<>\\+\\-\\*/%~]*", "operator", $1);
 define_highlight_rule("^[ \t]*#", "PQpreprocess", $1);
-define_highlight_rule("@[0-9A-Za-z_\\.]*", "keyword1", $1);
+define_highlight_rule("^[ \t]*\\%{?[^%\\$\\+\\-0-9]", "PQpreprocess", $1);
+define_highlight_rule("^%$", "preprocess", $1);
+define_highlight_rule("[\\|\\^&<>\\+\\-\\*/%~]*", "operator", $1);
+define_highlight_rule("%([%\\$]?-?[0-9A-Za-z_\\.\\?\\$~@]+|{[^}]*}?)",
+		      "preprocess", $1);
 define_highlight_rule("[ \t]*", "normal", $1);
 define_highlight_rule(".", "normal", $1);
 build_highlight_table($1);
-
 #endif
 
 define_keywords_n($1, nasm_kw_2, 2, 0);
@@ -287,10 +292,12 @@ define_keywords_n($1, nasm_kw_6, 6, 0);
 define_keywords_n($1, nasm_kw_7, 7, 0);
 define_keywords_n($1, nasm_kw_8, 8, 0);
 define_keywords_n($1, nasm_kw_9, 9, 0);
+define_keywords_n($1, nasm_kw_10, 10, 0);
 
 !if (keymap_p ($1)) make_keymap ($1);
 definekey("nasm_bol_self_ins", ";", $1);
 definekey("nasm_bol_self_ins", "#", $1);
+definekey("nasm_bol_self_ins", "%", $1);
 definekey("nasm_bol_self_ins", "[", $1);
 definekey("nasm_self_ins_ind", ":", $1);
 definekey("nasm_insert_comment", "^[;", $1);

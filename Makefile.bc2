@@ -71,7 +71,7 @@ DASM_ASM=$(CC) $(DCCFLAGS) $&.c        #command line for NDISASM
 
 NASMOBJS = $(OBJD)nasm.$(OBJ)   $(OBJD)nasmlib.$(OBJ)  $(OBJD)float.$(OBJ)  \
            $(OBJD)insnsa.$(OBJ) $(OBJD)assemble.$(OBJ) $(OBJD)labels.$(OBJ) \
-           $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)
+           $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)  $(OBJD)preproc.$(OBJ)
 
 ################################################################
 #The OBJ files that NDISASM is dependent on
@@ -132,6 +132,9 @@ $(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
 
 $(OBJD)parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
         $(NASM_ASM)
+
+$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
+	$(NASM_ASM)
 
 $(OBJD)insnsa.$(OBJ): insnsa.c nasm.h insns.h
         $(NASM_ASM)

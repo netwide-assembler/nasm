@@ -16,33 +16,88 @@
 
 static efunc nasm_malloc_error;
 
+#ifdef LOGALLOC
+static FILE *logfp;
+#endif
+
 void nasm_set_malloc_error (efunc error) {
     nasm_malloc_error = error;
+#ifdef LOGALLOC
+    logfp = fopen ("malloc.log", "w");
+    setvbuf (logfp, NULL, _IOLBF, BUFSIZ);
+    fprintf (logfp, "null pointer is %p\n", NULL);
+#endif
 }
 
-void *nasm_malloc (size_t size) {
+#ifdef LOGALLOC
+void *nasm_malloc_log (char *file, int line, size_t size)
+#else
+void *nasm_malloc (size_t size)
+#endif
+{
     void *p = malloc(size);
     if (!p)
 	nasm_malloc_error (ERR_FATAL | ERR_NOFILE, "out of memory");
+#ifdef LOGALLOC
+    else
+	fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
+		file, line, (long)size, p);
+#endif
     return p;
 }
 
-void *nasm_realloc (void *q, size_t size) {
+#ifdef LOGALLOC
+void *nasm_realloc_log (char *file, int line, void *q, size_t size)
+#else
+void *nasm_realloc (void *q, size_t size)
+#endif
+{
     void *p = q ? realloc(q, size) : malloc(size);
     if (!p)
 	nasm_malloc_error (ERR_FATAL | ERR_NOFILE, "out of memory");
+#ifdef LOGALLOC
+    else if (q)
+	fprintf(logfp, "%s %d realloc(%p,%ld) returns %p\n",
+		file, line, q, (long)size, p);
+    else
+	fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
+		file, line, (long)size, p);
+#endif
     return p;
 }
 
-void nasm_free (void *q) {
-    if (q)
+#ifdef LOGALLOC
+void nasm_free_log (char *file, int line, void *q)
+#else
+void nasm_free (void *q)
+#endif
+{
+    if (q) {
 	free (q);
+#ifdef LOGALLOC
+	fprintf(logfp, "%s %d free(%p)\n",
+		file, line, q);
+#endif
+    }
 }
 
-char *nasm_strdup (char *s) {
+#ifdef LOGALLOC
+char *nasm_strdup_log (char *file, int line, char *s)
+#else
+char *nasm_strdup (char *s)
+#endif
+{
     char *p;
+    int size = strlen(s)+1;
 
-    p = nasm_malloc(strlen(s)+1);
+    p = malloc(size);
+    if (!p)
+	nasm_malloc_error (ERR_FATAL | ERR_NOFILE, "out of memory");
+#ifdef LOGALLOC
+    else
+	fprintf(logfp, "%s %d strdup(%ld) returns %p\n",
+		file, line, (long)size, p);
+#endif
     strcpy (p, s);
     return p;
 }
@@ -69,7 +124,7 @@ int nasm_strnicmp (char *s1, char *s2, int n) {
 	return 1;
 }
 
-#define isnumchar(c)   ( isalnum(c) || (c) == '$')
+#define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
 long readnum (char *str, int *error) {
@@ -82,7 +137,7 @@ long readnum (char *str, int *error) {
     while (isspace(*r)) r++;	       /* find start of number */
     q = r;
 
-    while (isnumchar(*q)) q++;	       /* find end of number */
+    while (lib_isnumchar(*q)) q++;     /* find end of number */
 
     /*
      * If it begins 0x, 0X or $, or ends in H, it's in hex. if it
@@ -125,15 +180,15 @@ long seg_alloc(void) {
 }
 
 void fwriteshort (int data, FILE *fp) {
-    fputc (data & 255, fp);
-    fputc ((data >> 8) & 255, fp);
+    fputc ((int) (data & 255), fp);
+    fputc ((int) ((data >> 8) & 255), fp);
 }
 
 void fwritelong (long data, FILE *fp) {
-    fputc (data & 255, fp);
-    fputc ((data >> 8) & 255, fp);
-    fputc ((data >> 16) & 255, fp);
-    fputc ((data >> 24) & 255, fp);
+    fputc ((int) (data & 255), fp);
+    fputc ((int) ((data >> 8) & 255), fp);
+    fputc ((int) ((data >> 16) & 255), fp);
+    fputc ((int) ((data >> 24) & 255), fp);
 }
 
 void standard_extension (char *inname, char *outname, char *extension,

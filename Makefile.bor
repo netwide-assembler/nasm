@@ -27,8 +27,9 @@ NASMOBJS1 = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ)
 NASMOBJS2 = assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ)
 NASMOBJS3 = outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ)
 NASMOBJS4 = outobj.$(OBJ) outas86.$(OBJ) outdbg.$(OBJ) outrdf.$(OBJ)
+NASMOBJS5 = preproc.$(OBJ)
 
-NASMOBJS = $(NASMOBJS1) $(NASMOBJS2) $(NASMOBJS3) $(NASMOBJS4)
+NASMOBJS = $(NASMOBJS1) $(NASMOBJS2) $(NASMOBJS3) $(NASMOBJS4) $(NASMOBJS5)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
               insnsd.$(OBJ)
@@ -42,7 +43,8 @@ nasm$(EXE): $(NASMOBJS)
         echo c0l.obj $(NASMOBJS1) +> nasmobjs.tmp
         echo $(NASMOBJS2) +>> nasmobjs.tmp
         echo $(NASMOBJS3) +>> nasmobjs.tmp
-        echo $(NASMOBJS4),nasm.exe,,cl.lib, >> nasmobjs.tmp
+        echo $(NASMOBJS4) +>> nasmobjs.tmp
+        echo $(NASMOBJS5),nasm.exe,,cl.lib, >> nasmobjs.tmp
         $(LINK) /Tde @nasmobjs.tmp
 
 ndisasm$(EXE): $(NDISASMOBJS)
@@ -68,6 +70,7 @@ outobj.$(OBJ): outobj.c nasm.h nasmlib.h
 outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
 outform.$(OBJ): outform.c outform.h nasm.h
 parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
 sync.$(OBJ): sync.c sync.h
 
 clean :

@@ -22,6 +22,9 @@
 #include "nasmlib.h"
 #include "outform.h"
 
+/* VERBOSE_WARNINGS: define this to add some extra warnings... */
+#define VERBOSE_WARNINGS     
+
 #ifdef OF_RDF
 
 typedef short int16;	/* not sure if this will be required to be altered
@@ -252,13 +255,27 @@ static void write_bss_rec(struct BSSRec *r)
     membufwrite(header,&r->amount,-4);
 }
 
+static void write_dll_rec(struct DLLRec *r)
+{
+    membufwrite(header,&r->type,1);
+    membufwrite(header,r->libname,strlen(r->libname) + 1);
+}
+
 static void rdf_deflabel(char *name, long segment, long offset, int is_global)
 {
   struct ExportRec r;
   struct ImportRec ri;
+#ifdef VERBOSE_WARNINGS
+  static int warned_common = 0;
+#endif
 
   if (is_global && segment > 4) {
-    error(ERR_WARNING,"common declarations not supported... using extern");
+#ifdef VERBOSE_WARNINGS
+    if (! warned_common) {
+      error(ERR_WARNING,"common declarations not supported... using extern");
+      warned_common = 1;
+    }
+#endif
     is_global = 0;
   }
 
@@ -444,7 +461,18 @@ static long rdf_segbase (long segment) {
 }
 
 static int rdf_directive (char *directive, char *value, int pass) {
-  return 0;
+    struct DLLRec r;
+    
+    if (! strcmp(directive, "library")) {
+	if (pass == 1) {
+	    r.type = 4;
+	    strcpy(r.libname, value);
+	    write_dll_rec(&r);
+	}
+	return 1;
+    }
+
+    return 0;
 }
 
 static void rdf_filename (char *inname, char *outname, efunc error) {

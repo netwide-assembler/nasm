@@ -17,7 +17,7 @@ long translatelong(long in) {		/* translate from little endian to
 
   return r;
 }
-
+  
 int translateshort(short in) {
   int r;
   unsigned char *i;
@@ -28,8 +28,8 @@ int translateshort(short in) {
   return r;
 }
 void print_header(long length) {
-  unsigned char buf[129],t,s,l;
-  long o;
+  char buf[129],t,s,l;
+  long o,ll;
   short rs;
 
   while (length > 0) {
@@ -39,7 +39,7 @@ void print_header(long length) {
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
       fread(&l,1,1,infile);
-      fread(&rs,2,1,infile);
+      fread(&rs,2,1,infile); 
       printf("  relocation: location (%04x:%08lx), length %d, "
 	     "referred seg %04x\n",(int)s,translatelong(o),(int)l,
 	     translateshort(rs));
@@ -47,34 +47,34 @@ void print_header(long length) {
       break;
     case 2:             /* import record */
       fread(&rs,2,1,infile);
-      l = 0;
+      ll = 0;
       do {
-	fread(&buf[l],1,1,infile);
-      } while (buf[l++]);
+	fread(&buf[ll],1,1,infile);
+      } while (buf[ll++]);
       printf("  import: segment %04x = %s\n",translateshort(rs),buf);
-      length -= l + 3;
+      length -= ll + 3;
       break;
     case 3:             /* export record */
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
       l = 0;
       do {
-	fread(&buf[l],1,1,infile);
-      } while (buf[l++]);
+	fread(&buf[ll],1,1,infile);
+      } while (buf[ll++]);
       printf("  export: (%04x:%08lx) = %s\n",(int)s,translatelong(o),buf);
-      length -= l + 6;
+      length -= ll + 6;
       break;
     case 4:		/* DLL record */
       l = 0;
       do {
-	fread(&buf[l],1,1,infile);
-      } while (buf[l++]);
+	fread(&buf[ll],1,1,infile);
+      } while (buf[ll++]);
       printf("  dll: %s\n",buf);
-      length -= l + 1;
+      length -= ll + 1;
       break;
     case 5:		/* BSS reservation */
-      fread(&l,4,1,infile);
-      printf("  bss reservation: %08lx bytes\n",translatelong(l));
+      fread(&ll,4,1,infile);
+      printf("  bss reservation: %08lx bytes\n",translatelong(ll));
       length -= 5;
       break;
     default:

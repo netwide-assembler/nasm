@@ -360,7 +360,7 @@ static void aout_write(void) {
     /*
      * Emit the a.out header.
      */
-    fwritelong (0x640107, aoutfp);     /* OMAGIC, M_386, no flags */
+    fwritelong (0x640107L, aoutfp);    /* OMAGIC, M_386, no flags */
     fwritelong (stext.len, aoutfp);
     fwritelong (sdata.len, aoutfp);
     fwritelong (bsslen, aoutfp);
@@ -400,12 +400,12 @@ static void aout_write_relocs (struct Reloc *r) {
 	fwritelong (r->address, aoutfp);
 
 	if (r->symbol >= 0)
-	    word2 = r->symbol | 0x8000000;
+	    word2 = r->symbol | 0x8000000L;
 	else
 	    word2 = -r->symbol;
 	if (r->relative)
-	    word2 |= 0x1000000;
-	word2 |= (r->bytes == 2 ? 0x2000000 : 0x4000000);
+	    word2 |= 0x1000000L;
+	word2 |= (r->bytes == 2 ? 0x2000000L : 0x4000000L);
 	fwritelong (word2, aoutfp);
 
 	r = r->next;
