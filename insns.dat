@@ -1144,6 +1144,7 @@ XOR       rm32,imm            \321\300\144\1\x81\206\141    386,SM
 XOR       mem,imm8            \300\1\x80\206\21             8086,SM
 XOR       mem,imm16           \320\300\134\1\x81\206\131    8086,SM
 XOR       mem,imm32           \321\300\144\1\x81\206\141    386,SM
+XSTORE    void                \3\x0F\xA7\xC0                P6,CYRIX
 CMOVcc    reg16,mem           \320\301\1\x0F\330\x40\110    P6,SM
 CMOVcc    reg16,reg16         \320\1\x0F\330\x40\110        P6
 CMOVcc    reg32,mem           \321\301\1\x0F\330\x40\110    P6,SM
