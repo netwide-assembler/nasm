@@ -5,11 +5,6 @@
 
 # TODO:
 #
-# PS output:
-# - show page numbers in printed output
-# - think about double-sided support (start all chapters on RHS,
-#   ie odd-numbered, pages).
-#
 # Ellipsis support would be nice.
 
 # Source-form features:
@@ -1091,6 +1086,7 @@ sub write_ps {
     # now) to the length of the current page. Also, _put_ this line on
     # the current page, and allocate it a y-coordinate.
     if ($ltypes[$i] =~ /^chap$/) {
+      $pnum += 1 - ($pnum & 1);  # advance to odd numbered page if necessary
       $plen = 100; # ADJUSTABLE: space taken up by a chapter heading
       $ycoord[$i] = 0; # chapter heading: y-coord doesn't matter
     } else {
@@ -1234,7 +1230,7 @@ sub write_ps {
       last PAGE if $i > $#psindex;
     }
   }
-  &ps_trailer;
+  &ps_trailer($page);
   close PS;
   select STDOUT;
 }
@@ -1263,6 +1259,10 @@ sub ps_header {
     '/es /Helvetica-Oblique findfont 12 scalefont def',
     '/cs /Courier-Bold findfont 12 scalefont def',
     '/n 16#6E def /e 16#65 def /c 16#63 def',
+    '/pageodd {',
+    '   550 50 moveto ns setfont dup stringwidth pop neg 0 rmoveto show',
+    '} def',
+    '/pageeven { 50 50 moveto ns setfont show } def',
     '/chapter {',
     '  100 620 moveto',
     '  {',
@@ -1383,14 +1383,18 @@ sub ps_header {
 }
 
 sub ps_trailer {
-  &ps_donepg;
+  my ($oldpg) = @_;
+  &ps_donepg($oldpg);
   print "%%Trailer\nrestore\n%%EOF\n";
 }
 
 sub ps_throw_pg {
   my ($oldpg, $newpg) = @_;
-  &ps_donepg;
-  &ps_initpg($newpg);
+  while ($oldpg < $newpg) {
+    &ps_donepg($oldpg);
+    $oldpg++;
+    &ps_initpg($oldpg);
+  }
 }
 
 sub ps_initpg {
@@ -1400,7 +1404,12 @@ sub ps_initpg {
 }
 
 sub ps_donepg {
-  print "%%PageTrailer\nrestore showpage\n";
+  my ($pgnum) = @_;
+  if ($pgnum & 1) {
+    print "%%PageTrailer\n($pgnum)pageodd restore showpage\n";
+  } else {
+    print "%%PageTrailer\n($pgnum)pageeven restore showpage\n";
+  }
 }
 
 sub ps_out_line {
@@ -1516,7 +1525,7 @@ sub write_texi {
   select TEXT;
 
   # Preamble.
-  print "\input texinfo   \@c -*-texinfo-*-\n";
+  print "\\input texinfo   \@c -*-texinfo-*-\n";
   print "\@c \%**start of header\n";
   print "\@setfilename nasm.info\n";
   print "\@dircategory Programming\n";
@@ -1550,7 +1559,7 @@ sub write_texi {
   print "\@end titlepage\n";
   print "\n";
   print "\@node Top, $tstruct_next{'Top'}, (dir), (dir)\n";
-  print "\@top\n";
+  print "\@top Netwide Assembler\n";
   print "\n";
   print "\@ifinfo\n";
   print "This file documents NASM, the Netwide Assembler: an assembler\n";
@@ -1606,7 +1615,9 @@ sub write_texi {
         $title .= $ww unless $ww eq "\001";
       }
       print "\@node $node, $tstruct_next{$node}, $tstruct_prev{$node},";
-      print " $tstruct_up{$node}\n\@unnumbered $title\n";
+      print " $tstruct_up{$node}\n";
+      $hdr = ($ptype eq "subh" ? "\@unnumberedsubsec" : "\@unnumberedsec");
+      print "$hdr $title\n";
     } elsif ($ptype eq "code") {
       # Code paragraph. Surround with @example / @end example.
       print "\@example\n";

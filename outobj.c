@@ -105,7 +105,8 @@ enum RecordID {			       /* record ID codes */
     FIXUPP = 0x9C,		       /* fixups (relocations) */
     FIXU32 = 0x9D,		       /* 32-bit fixups (relocations) */
 
-    MODEND = 0x8A		       /* module end */
+    MODEND = 0x8A,		       /* module end */
+    MODE32 = 0x8B		       /* module end for 32-bit objects */
 };
 
 enum ComentID {                        /* ID codes for comment records */
@@ -142,6 +143,7 @@ static void ori_null(ObjRecord *orp);
 static ObjRecord *obj_commit(ObjRecord *orp);
 
 static int obj_uppercase;		/* Flag: all names in uppercase */
+static int obj_use32;			/* Flag: at least one segment is 32-bit */
 
 /*
  * Clear an ObjRecord structure.  (Never reallocates).
@@ -590,6 +592,9 @@ static long obj_entry_seg, obj_entry_ofs;
 
 struct ofmt of_obj;
 
+/* The current segment */
+static struct Segment *current_seg;
+
 static long obj_segment (char *, int, int *);
 static void obj_write_file(int debuginfo);
 static int obj_directive (char *, char *, int);
@@ -620,7 +625,9 @@ static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     grptail = &grphead;
     obj_entry_seg = NO_SEG;
     obj_uppercase = FALSE;
+    obj_use32 = FALSE;
     passtwo = 0;
+    current_seg = NULL;
 
     of_obj.current_dfmt->init (&of_obj,NULL,fp,errfunc);
 }
@@ -740,6 +747,11 @@ static void obj_deflabel (char *name, long segment,
     int i;
     int used_special = FALSE;	       /* have we used the special text? */
 
+#if defined(DEBUG) && DEBUG>2
+fprintf(stderr, " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
+      name, segment, offset, is_global, special);
+#endif
+
     /*
      * If it's a special-retry from pass two, discard it.
      */
@@ -829,7 +841,17 @@ static void obj_deflabel (char *name, long segment,
         ext->next = NULL;
         exttail = &ext->next;
         ext->name = name;
+	/* Place by default all externs into the current segment */
         ext->defwrt_type = DEFWRT_NONE;
+	if (current_seg) {
+	    if (current_seg->grp) {
+		ext->defwrt_type = DEFWRT_GROUP;
+		ext->defwrt_ptr.grp = current_seg->grp;
+	    } else {
+		ext->defwrt_type = DEFWRT_SEGMENT;
+		ext->defwrt_ptr.seg = current_seg;
+	    }
+	}
         if (is_global == 2) {
 	    ext->commonsize = offset;
 	    ext->commonelem = 1;	       /* default FAR */
@@ -1088,7 +1110,7 @@ static void obj_write_fixup (ObjRecord *orp, int bytes,
 	if (segto->use32)
 	    forp->type = FIXU32;
 	else
-	forp->type = FIXUPP;
+	    forp->type = FIXUPP;
     }
 
     if (seg % 2) {
@@ -1224,8 +1246,13 @@ static long obj_segment (char *name, int pass, int *bits)
      * using the pointer it gets passed. That way we save memory,
      * by sponging off the label manager.
      */
+#if defined(DEBUG) && DEBUG>=3
+fprintf(stderr," obj_segment: < %s >, pass=%d, *bits=%d\n",
+	name, pass, *bits);
+#endif     
     if (!name) {
 	*bits = 16;
+	current_seg = NULL;
 	return first_seg;
     } else {
 	struct Segment *seg;
@@ -1271,6 +1298,7 @@ static long obj_segment (char *name, int pass, int *bits)
 		    *bits = 32;
 		else
 		    *bits = 16;
+		current_seg = seg;
 		return seg->index;
 	    }
 	}
@@ -1398,6 +1426,9 @@ static long obj_segment (char *name, int pass, int *bits)
 	    }
 	}
 
+        /* We need to know whenever we have at least one 32-bit segment */
+        obj_use32 |= seg->use32;
+
 	obj_seg_needs_update = seg;
 	if (seg->align >= SEG_ABS)
 	    deflabel (name, NO_SEG, seg->align - SEG_ABS,
@@ -1447,6 +1478,7 @@ static long obj_segment (char *name, int pass, int *bits)
 	    *bits = 32;
 	else
 	    *bits = 16;
+	current_seg = seg;
 	return seg->index;
     }
 }
@@ -2178,7 +2210,7 @@ static void obj_write_file (int debuginfo)
         }
     }
     if (orp->used)
-    	obj_emit (orp);
+        obj_emit (orp);
 
     /*
      * Write the LEDATA/FIXUPP pairs.
@@ -2191,9 +2223,10 @@ static void obj_write_file (int debuginfo)
     /*
      * Write the MODEND module end marker.
      */
-    orp->type = MODEND;
+    orp->type = obj_use32 ? MODE32 : MODEND;
     orp->ori = ori_null;
     if (entry_seg_ptr) {
+	orp->type = entry_seg_ptr->use32 ? MODE32 : MODEND;
 	obj_byte (orp, 0xC1);
 	seg = entry_seg_ptr;
 	if (seg->grp) {
@@ -2324,7 +2357,8 @@ static void dbgbi_linnum (const char *lnfname, long lineno, long segto)
     if (!seg)
 	error (ERR_PANIC, "lineno directed to nonexistent segment?");
 
-    for (fn = fnhead; fn; fn = fnhead->next)
+/*    for (fn = fnhead; fn; fn = fnhead->next) */
+    for (fn = fnhead; fn; fn = fn->next) /* fbk - Austin Lunnen - John Fine*/
 	if (!nasm_stricmp(lnfname,fn->name))
 	    break;
     if (!fn) {

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "multboot.h"
+
 FILE *infile;
 
 typedef unsigned short int16;
@@ -35,6 +37,7 @@ void print_header(long length, int rdf_version) {
   unsigned char reclen;
   long o,ll;
   int16 rs;
+  struct tMultiBootHeader *mb;
 
   while (length > 0) {
     fread(&t,1,1,infile);
@@ -47,7 +50,7 @@ void print_header(long length, int rdf_version) {
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
       fread(&l,1,1,infile);
-      fread(&rs,2,1,infile); 
+      fread(&rs,2,1,infile);
       printf("  %s: location (%04x:%08lx), length %d, "
 	     "referred seg %04x\n", t == 1 ? "relocation" : "seg relocation",
 	     (int)s,translatelong(o),(int)l,
@@ -98,7 +101,8 @@ void print_header(long length, int rdf_version) {
       printf("  export: (%04x:%08lx) = %s\n",(int)s,translatelong(o),buf);
       if (rdf_version == 1) length -= ll + 6;
       break;
-    case 4:		/* DLL record */
+    case 4:		/* DLL and Module records */
+    case 8:
       ll = 0;
 
       if (rdf_version == 1) {
@@ -108,10 +112,11 @@ void print_header(long length, int rdf_version) {
       }
       else
       {
-	  for (; ll < reclen - 1; ll++)
+	  for (; ll < reclen; ll++)
 	      fread(&buf[ll],1,1,infile);
       }
-      printf("  dll: %s\n",buf);
+      if (t==4) printf("  dll: %s\n",buf);
+      else printf("  module: %s\n",buf);
       if (rdf_version == 1) length -= ll + 1;
       break;
     case 5:		/* BSS reservation */
@@ -121,9 +126,19 @@ void print_header(long length, int rdf_version) {
       if (rdf_version > 1 && reclen != 4)
 	  printf("    warning: reclen != 4\n");
       break;
+      
+    case 9:		/* MultiBoot header record */
+      fread(buf,reclen,1,infile);
+      mb = (struct tMultiBootHeader *)buf;
+      printf("  multiboot header: load address=0x%X, size=0x%X, entry=0x%X\n",
+             mb->LoadAddr, mb->LoadEndAddr - mb->LoadAddr, mb->Entry);  
+      break;  
     default:
       printf("  unrecognised record (type %d",(int)t);
-      if (rdf_version > 1) printf(", length %d",(int)reclen);
+      if (rdf_version > 1) {
+      	printf(", length %d",(int)reclen);
+	fseek(infile,reclen,SEEK_CUR);
+      }		
       printf(")\n");
       if (rdf_version == 1) length --;
     }
@@ -158,7 +173,7 @@ int main(int argc,char **argv) {
   long headerlength = 0;
   long objectlength = 0;
 
-  puts("RDOFF Dump utility v2.0 (C) Copyright 1996 Julian R Hall");
+  puts("RDOFF Dump utility v2.1\n(c) Copyright 1996,99,2000 Julian R Hall, Yuri M Zaporogets");
 
   if (argc < 2) {
     fputs("Usage: rdfdump [-v] <filename>\n",stderr);
@@ -178,7 +193,7 @@ int main(int argc,char **argv) {
 
   infile = fopen(argv[1],"rb");
   if (! infile) {
-    fprintf(stderr,"rdfdump: Could not open %s",argv[1]);
+    fprintf(stderr,"rdfdump: Could not open %s\n",argv[1]);
     exit(1);
   }
 

@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98.03"
+#define NASM_VER "0.98.08"
 
 #ifndef NULL
 #define NULL 0
@@ -32,6 +32,16 @@
 #ifndef FILENAME_MAX
 #define FILENAME_MAX 256
 #endif
+
+#ifndef PREFIX_MAX
+#define PREFIX_MAX 10
+#endif
+
+#ifndef POSTFIX_MAX
+#define POSTFIX_MAX 10
+#endif
+
+
 
 /*
  * Name pollution problems: <time.h> on Digital UNIX pulls in some
@@ -78,13 +88,15 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 /*
  * These codes define specific types of suppressible warning.
  */
+
+#define ERR_WARN_MASK	0x0000FF00	/* the mask for this feature */
+#define ERR_WARN_SHR  8		       /* how far to shift right */
+
 #define ERR_WARN_MNP	0x00000100	/* macro-num-parameters warning */
 #define ERR_WARN_MSR	0x00000200	/* macro self-reference */
 #define ERR_WARN_OL	0x00000300	/* orphan label (no colon, and
 					* alone on line) */
 #define ERR_WARN_NOV	0x00000400	/* numeric overflow */
-#define ERR_WARN_MASK	0x0000FF00	/* the mask for this feature */
-#define ERR_WARN_SHR  8		       /* how far to shift right */
 #define ERR_WARN_MAX	4		/* the highest numbered one */
 
 /*
@@ -843,5 +855,19 @@ struct dfmt {
  */
 
 #define elements(x)     ( sizeof(x) / sizeof(*(x)) )
+
+#ifdef	TASM_COMPAT
+extern int tasm_compatible_mode;
+#endif
+
+/*
+ * This declaration passes the "pass" number to all other modules
+ * "pass0" assumes the values: 0, 0, ..., 0, 1, 2
+ * where 0 = optimizing pass
+ *       1 = pass 1
+ *       2 = pass 2
+ */
+
+int pass0;	/* this is globally known */
 
 #endif

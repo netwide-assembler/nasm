@@ -38,18 +38,21 @@ static void register_output_formats(void);
 static void usage(void);
 
 static int using_debug_info;
+#ifdef	TASM_COMPAT
+int	   tasm_compatible_mode = FALSE;
+#endif
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
 static char listname[FILENAME_MAX];
 static int globallineno;	       /* for forward-reference tracking */
-static int pass = 0;
+/* static int pass = 0; */
 static struct ofmt *ofmt = NULL;
 
 static FILE *error_file;	       /* Where to write error messages */
 
 static FILE *ofile = NULL;
-static int optimizing = 10;		/* number of optimization passes to take */
+static int optimizing = 0;		/* number of optimization passes to take */
 static int sb, cmd_sb = 16;		       /* by default */
 static unsigned long cmd_cpu = IF_PLEVEL;	/* highest level by default */
 static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
@@ -72,8 +75,6 @@ enum op_type {
   op_depend			/* Generate dependencies */
 };
 static enum op_type operating_mode;
-
-/* used by error function to report location */
 
 /*
  * Which of the suppressible warnings are suppressed. Entry zero
@@ -128,6 +129,7 @@ static Preproc no_pp = {
 
 static int want_usage;
 static int terminate_after_phase;
+int user_nolist = 0;             /* fbk 9/2/00 */
 
 static void nasm_fputs(char *line, FILE *ofile) 
 {
@@ -140,6 +142,7 @@ static void nasm_fputs(char *line, FILE *ofile)
 
 int main(int argc, char **argv) 
 {
+	pass0 = 1;
     want_usage = terminate_after_phase = FALSE;
 
     nasm_set_malloc_error (report_error);
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
 	if (outname[0] == '\0')
 	  ofmt->filename (inname, outname, report_error);
 	ofile = NULL;
-	printf("%s: %s", outname, inname);
+	fprintf(stdout, "%s: %s", outname, inname);
 	while ( (line = preproc->getline()) )
 	  nasm_free (line);
 	preproc->cleanup();
@@ -209,7 +212,7 @@ int main(int argc, char **argv)
       
       location.known = FALSE;
       
-      pass = 1;
+/*      pass = 1; */
       preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
       while ( (line = preproc->getline()) ) {
 	/*
@@ -326,6 +329,22 @@ static char *get_param (char *p, char *q, int *advance)
     return NULL;
 }
 
+struct textargs
+{
+	char *label;
+	int value;
+};
+
+#define OPT_PREFIX 0
+#define OPT_POSTFIX 1
+struct textargs textopts[] =
+{
+	{"prefix",OPT_PREFIX},
+	{"postfix",OPT_POSTFIX},
+	{NULL,0}
+};
+
+
 int stopoptions = 0;
 static int process_arg (char *p, char *q)
 {
@@ -338,9 +357,6 @@ static int process_arg (char *p, char *q)
     if (p[0]=='-' && ! stopoptions) 
     {
 	switch (p[1]) {
-  	  case '-':			/* -- => stop processing options */
-	      stopoptions = 1;
-	      break;
 	  case 's':
 	      error_file = stdout;
 	      break;
@@ -370,7 +386,7 @@ static int process_arg (char *p, char *q)
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
 	    } else if (p[1]=='O') {		    /* Optimization level */
 	        if (!isdigit(*param)) report_error(ERR_FATAL,
-	             "command line optimization level must be 0..3");
+	             "command line optimization level must be 0..3 or <nn>");
 	    	optimizing = atoi(param);
 	    	if (optimizing <= 0) optimizing = 0;
 	    	else if (optimizing <= 3) optimizing *= 5;  /* 5 passes for each level */
@@ -385,7 +401,7 @@ static int process_arg (char *p, char *q)
 	    } else if (p[1]=='l') {    /* listing file */
 		strcpy (listname, param);
 	    } else if (p[1]=='E') {    /* error messages file */
-	        error_file = fopen(param, "wt");
+		error_file = fopen(param, "w");
 		if ( !error_file ) {
 		  error_file = stderr; /* Revert to default! */
 		  report_error (ERR_FATAL | ERR_NOFILE | ERR_USAGE,
@@ -410,6 +426,10 @@ static int process_arg (char *p, char *q)
 		   "[-l listfile]\n"
 		   "            [options...] [--] filename\n"
 		   "    or nasm -r   for version info\n\n"
+#ifdef TASM_COMPAT
+		   "    -t          Assemble in SciTech TASM compatible mode\n"
+		   "    -g          Generate debug information in selected format.\n"
+#endif
 		   "    -e          preprocess only (writes output to stdout by default)\n"
 		   "    -a          don't preprocess (assemble only)\n"
 		   "    -M          generate Makefile dependencies on stdout\n\n"
@@ -448,8 +468,17 @@ static int process_arg (char *p, char *q)
 	    dfmt_list(ofmt, stdout);
 	    exit(0);
 	    break;
+#ifdef	TASM_COMPAT
+	  case 't':
+	    tasm_compatible_mode = TRUE;
+	    break;
+#endif
 	  case 'r':
+#ifdef	TASM_COMPAT
+	    printf("NASM version %s - SciTech TASM compatible additions\n", NASM_VER);
+#else
 	    printf("NASM version %s\n", NASM_VER);
+#endif
 #ifdef DEBUG
 	    printf("Compiled with -DDEBUG on " __DATE__ "\n");
 #endif
@@ -479,6 +508,66 @@ static int process_arg (char *p, char *q)
           case 'M':
 	    operating_mode = op_depend;
 	    break; 
+
+	  case '-':
+	  {
+		int s;
+		
+		if (p[2]==0) {		/* -- => stop processing options */
+		    stopoptions = 1;
+		    break;
+		}
+		for(s=0; textopts[s].label; s++)
+		{
+			if(!nasm_stricmp(p+2, textopts[s].label))
+			{
+				break;
+			}
+		}
+
+		switch(s)
+		{
+		
+			case OPT_PREFIX:
+			case OPT_POSTFIX:
+			{
+				if (!q)
+				{
+					report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+			      			"option `--%s' requires an argument",
+			      			p+2);
+					break;
+				}
+				else
+				{
+					advance = 1, param = q;
+				}
+				
+				if(s == OPT_PREFIX)
+				{
+					strncpy(lprefix,param,PREFIX_MAX-1);
+					lprefix[PREFIX_MAX-1]=0;
+					break;
+				}
+				if(s == OPT_POSTFIX)
+				{
+					strncpy(lpostfix,param,POSTFIX_MAX-1);
+					lpostfix[POSTFIX_MAX-1]=0;
+					break;
+				}
+				break;
+			}
+			default:
+			{
+				report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+			  		"unrecognised option `--%s'",
+			  		p+2);
+				break;
+			}
+		}
+		break;
+	  }
+
 	  default:
 	    if (!ofmt->setinfo(GI_SWITCH,&p))
 	    	report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -562,11 +651,41 @@ static void process_respfile (FILE *rfile)
     }
 }
 
+/* Function to process args from a string of args, rather than the
+ * argv array. Used by the environment variable and response file
+ * processing.
+ */
+#ifdef TASM_COMPAT
+static void process_args (char *args) {
+    char *p, *q, *arg, *prevarg;
+    char separator = ' ';
+
+    p = args;
+    if (*p && *p != '-')
+	separator = *p++;
+    arg = NULL;
+    while (*p) {
+	q = p;
+	while (*p && *p != separator) p++;
+	while (*p == separator) *p++ = '\0';
+	prevarg = arg;
+	arg = q;
+	if (process_arg (prevarg, arg))
+	    arg = NULL;
+    }
+    if (arg)
+	process_arg (arg, NULL);
+}
+#endif
+
 static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
-    char *envreal, *envcopy=NULL, *p, *q, *arg, *prevarg;
+    char *envreal, *envcopy=NULL, *p, *arg;
+#ifndef	TASM_COMPAT
+    char *q, *prevarg;
     char separator = ' ';
+#endif
 
     *inname = *outname = *listname = '\0';
 
@@ -577,6 +696,9 @@ static void parse_cmdline(int argc, char **argv)
     arg = NULL;
     if (envreal) {
 	envcopy = nasm_strdup(envreal);
+#ifdef	TASM_COMPAT
+	process_args(envcopy);
+#else
 	p = envcopy;
 	if (*p && *p != '-')
 	    separator = *p++;
@@ -591,6 +713,7 @@ static void parse_cmdline(int argc, char **argv)
 	}
 	if (arg)
 	    process_arg (arg, NULL);
+#endif
 	nasm_free (envcopy);
     }
 
@@ -601,6 +724,31 @@ static void parse_cmdline(int argc, char **argv)
     {
 	int i;
 	argv++;
+#ifdef TASM_COMPAT
+	if (argv[0][0] == '@') {
+	    /* We have a response file, so process this as a set of
+	     * arguments like the environment variable. This allows us
+	     * to have multiple arguments on a single line, which is
+	     * different to the -@resp file processing below for regular
+	     * NASM.
+	     */
+	    char *str = malloc(2048);
+	    FILE *f = fopen(&argv[0][1],"r");
+	    if (!str) {
+		printf("out of memory");
+		exit(-1);
+		}
+	    if (f) {
+		while (fgets(str,2048,f)) {
+		    process_args(str);
+		}
+		fclose(f);
+	    }
+	    free(str);
+	    argc--;
+	    argv++;
+	}
+#endif
 	if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
 	    if ((p = get_param (argv[0], argc > 1 ? argv[1] : NULL, &i))) {
 		if ((rfile = fopen(p, "r"))) {
@@ -629,7 +777,7 @@ static void assemble_file (char *fname)
     long   seg, offs;
     struct tokenval tokval;
     expr   * e;
-    int pass_max;
+    int pass, pass_max;
     int pass_cnt = 0;		/* count actual passes */
 
     if (cmd_sb == 32 && cmd_cpu < IF_386)
@@ -637,18 +785,21 @@ static void assemble_file (char *fname)
                     "32-bit segment size requires a higher cpu");
 
    pass_max = optimizing + 2;    /* passes 1, optimizing, then 2 */
-   for (pass = 1; pass <= pass_max; pass++) {
+   pass0 = !optimizing;		/* start at 1 if not optimizing */
+   for (pass = 1; pass <= pass_max  &&  pass0 <= 2; pass++) {
       int pass1, pass2;
       ldfunc def_label;
 
       pass1 = pass < pass_max ? 1 : 2;  /* seq is 1, 1, 1,..., 1, 2 */
       pass2 = pass > 1 ? 2 : 1;         /* seq is 1, 2, 2,..., 2, 2 */
+  /*      pass0                            seq is 0, 0, 0,..., 1, 2 */
+      
       def_label = pass > 1 ? redefine_label : define_label;
       
 
       sb = cmd_sb;        /* set 'bits' to command line default */
       cpu = cmd_cpu;
-      if (pass == pass_max) {
+      if (pass0 == 2) {
          if (*listname)
             nasmlist.init(listname, report_error);
       }
@@ -687,7 +838,8 @@ static void assemble_file (char *fname)
                   }
                   break;
                case 2:               /* [EXTERN label:special] */
-                  if (pass == pass_max) {
+                  if (*value == '$') value++;   /* skip initial $ if present */
+                  if (pass0 == 2) {
                         q = value;
                         while (*q && *q != ':')
                            q++;
@@ -695,9 +847,7 @@ static void assemble_file (char *fname)
                            *q++ = '\0';
                            ofmt->symdef(value, 0L, 0L, 3, q);
                         }
-                  } else if (pass == 1) {   /* pass == 1 */
-                        if (*value == '$')
-                           value++;               /* skip initial $ if present */
+                  } else if (pass0 == 1) {   /* pass == 1 */
                         q = value;
                         validid = TRUE;
                         if (!isidstart(*q))
@@ -722,13 +872,14 @@ static void assemble_file (char *fname)
                            define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
                                           ofmt, report_error);
                         }
-                  } /* else  pass == 1 */
+                  } /* else  pass0 == 1 */
                   break;
                case 3:               /* [BITS bits] */
                   sb = get_bits(value);
                   break;
                case 4:               /* [GLOBAL symbol:special] */
-                  if (pass == pass_max) { /* pass 2 */
+                  if (*value == '$') value++;   /* skip initial $ if present */
+                  if (pass0 == 2) { /* pass 2 */
                         q = value;
                         while (*q && *q != ':')
                            q++;
@@ -736,9 +887,7 @@ static void assemble_file (char *fname)
                            *q++ = '\0';
                            ofmt->symdef(value, 0L, 0L, 3, q);
                         }
-                  } else if (pass == 1) { /* pass == 1 */
-                        if (*value == '$')
-                           value++;               /* skip initial $ if present */
+                  } else if (pass2 == 1) { /* pass == 1 */
                         q = value;
                         validid = TRUE;
                         if (!isidstart(*q))
@@ -762,7 +911,8 @@ static void assemble_file (char *fname)
                   } /* pass == 1 */
                   break;
                case 5:               /* [COMMON symbol size:special] */
-                  if (pass == 1) {
+                  if (*value == '$') value++;   /* skip initial $ if present */
+                  if (pass0 == 1) {
                         p = value;
                         validid = TRUE;
                         if (!isidstart(*p))
@@ -800,7 +950,7 @@ static void assemble_file (char *fname)
                         } else
                            report_error (ERR_NONFATAL, "no size specified in"
                                           " COMMON declaration");
-                  } else if (pass == pass_max) { /* pass == 2 */
+                  } else if (pass0 == 2) { /* pass == 2 */
                         q = value;
                         while (*q && *q != ':') {
                            if (isspace(*q))
@@ -821,7 +971,7 @@ static void assemble_file (char *fname)
                               NULL);
                   if (e) {
                      if (!is_reloc(e))
-                           report_error (pass==1 ? ERR_NONFATAL : ERR_PANIC,
+                           report_error (pass0==1 ? ERR_NONFATAL : ERR_PANIC,
                                  "cannot use non-relocatable expression as "
                                  "ABSOLUTE address");
                      else {
@@ -878,17 +1028,32 @@ static void assemble_file (char *fname)
                case 9:  /* cpu */
                   cpu = get_cpu (value);
                   break;
+               case 10:        /* fbk 9/2/00 */       /* [LIST {+|-}] */
+                   while (*value && isspace(*value))
+                       value++;
+
+                   if (*value == '+') {
+                       user_nolist = 0;
+		     }
+                     else {
+                          if (*value == '-') {
+                          user_nolist = 1;
+                          }
+                          else {
+                              report_error (ERR_NONFATAL, "invalid parameter to \"list\" directive");
+                          }
+                      }
+                  break;
                default:
-                  if (!ofmt->directive (line+1, value, pass1))
+                  if (!ofmt->directive (line+1, value, pass2))
                      report_error (pass1==1 ? ERR_NONFATAL : ERR_PANIC, 
                               "unrecognised directive [%s]",
                               line+1);
-                  break;
                }
          }
          else         /* it isn't a directive */
          {
-               parse_line (pass2, line, &output_ins,
+               parse_line (pass1, line, &output_ins,
                            report_error, evaluate, 
                            def_label);
 
@@ -1026,33 +1191,38 @@ static void assemble_file (char *fname)
                } else { /* instruction isn't an EQU */
 
                      if (pass1 == 1) {
+
                         long l = insn_size (location.segment, offs, sb, cpu,
                                           &output_ins, report_error);
-                        if (using_debug_info && output_ins.opcode != -1) {
+
+                        /* if (using_debug_info)  && output_ins.opcode != -1)*/
+                        if (using_debug_info);  /* fbk 12/29/00 */
+
+                        {
                            /* this is done here so we can do debug type info */
                            long typeinfo = TYS_ELEMENTS(output_ins.operands);
                            switch (output_ins.opcode) {
                                     case I_RESB:
-                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;  
-                                    break;
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;  
+                                        break;
                                     case I_RESW:
-                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;  
-                                    break;
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;  
+                                        break;
                                     case I_RESD:
-                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;  
-                                    break;
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;  
+                                        break;
                                     case I_RESQ:
-                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;  
-                                    break;
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;  
+                                        break;
                                     case I_REST:
-                                    typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;  
-                                    break;
-                                       case I_DB:
-                                       typeinfo |= TY_BYTE;
-                                       break;
+                                        typeinfo = TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;  
+                                        break;
+                                    case I_DB:
+                                        typeinfo |= TY_BYTE;
+                                        break;
                                     case I_DW:
-                                       typeinfo |= TY_WORD;
-                                       break;
+                                        typeinfo |= TY_WORD;
+                                        break;
                                     case I_DD:
                                        if (output_ins.eops_float)
                                                 typeinfo |= TY_FLOAT;
@@ -1062,13 +1232,16 @@ static void assemble_file (char *fname)
                                     case I_DQ:
                                        typeinfo |= TY_QWORD;
                                        break;
-                                       case I_DT:
+                                    case I_DT:
                                        typeinfo |= TY_TBYTE;
                                        break;
                                     default:
                                        typeinfo = TY_LABEL;
+
                            }
+
                            ofmt->current_dfmt->debug_typevalue(typeinfo);
+
                         }
                         if (l != -1) {
                            offs += l;
@@ -1104,13 +1277,17 @@ static void assemble_file (char *fname)
                usage();
          exit (1);
       }
-   pass_cnt++;
-   if (pass>1 && !global_offset_changed && pass<pass_max) pass = pass_max-1;
+      pass_cnt++;
+      if (pass>1 && !global_offset_changed) {
+   	 pass0++;
+   	 if (pass0==2) pass = pass_max - 1;
+      }	else if (!optimizing) pass0++;
+      
    } /* for (pass=1; pass<=2; pass++) */
 
    nasmlist.cleanup();
 #if 1
-   if (optimizing)
+   if (optimizing && using_debug_info)	/*  -On and -g switches */
       fprintf(error_file,
                 "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
 #endif    
@@ -1175,6 +1352,8 @@ static int getkw (char *buf, char **value)
     	return 8;
     if (!nasm_stricmp(p, "cpu"))
 	return 9;
+    if (!nasm_stricmp(p, "list"))    /* fbk 9/2/00 */
+        return 10;
     return -1;
 }
 
@@ -1193,7 +1372,7 @@ static void report_error (int severity, char *fmt, ...)
     /*
      * See if it's a pass-one only warning and we're not in pass one.
      */
-    if ((severity & ERR_PASS1) && pass != 1)
+    if ((severity & ERR_PASS1) && pass0 == 2)
 	return;
 
     if (severity & ERR_NOFILE)
@@ -1363,7 +1542,7 @@ static unsigned long get_cpu (char *value)
     if (!nasm_stricmp(value, "p3")    ||
     	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
 
-    report_error (pass ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
+    report_error (pass0<2 ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
         
     return IF_PLEVEL;	/* the maximum level */
 }
@@ -1381,7 +1560,7 @@ static int get_bits (char *value)
 	    i = 16;
 	}
     } else {
-	report_error(pass ? ERR_NONFATAL : ERR_FATAL,
+	report_error(pass0<2 ? ERR_NONFATAL : ERR_FATAL,
 	   "`%s' is not a valid segment size; must be 16 or 32",
 	   value);
 	i = 16;

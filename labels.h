@@ -6,6 +6,9 @@
  * distributed in the NASM archive.
  */
 
+extern char lprefix[PREFIX_MAX];
+extern char lpostfix[PREFIX_MAX];
+
 int lookup_label (char *label, long *segment, long *offset);
 int is_extern (char *label);
 void define_label (char *label, long segment, long offset, char *special,

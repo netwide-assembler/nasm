@@ -1536,6 +1536,49 @@ The expression passed to \c{%assign} is a \i{critical expression}
 a relocatable reference such as a code or data address, or anything
 involving a register).
 
+\H{strlen} \i{String Handling in Macros}: \i\c{%strlen} and \i\c{%substr}
+
+It's often useful to be able to handle strings in macros.  NASM 
+supports two simple string handling macro operators from which
+more complex operations can be constructed.
+
+\S{strlen} \i{String Length}: \i\c{%strlen}
+
+The \c{%strlen} macro is like \c{%assign} macro in that it creates
+(or redefines) a numeric value to a macro.  The difference is that
+with \c{%strlen}, the numeric value is the length of a string.  An
+example of the use of this would be:
+
+\c %strlen charcnt 'my string'
+
+In this example, \c{charcnt} would receive the value 8, just as
+if an \c{%assign} had been used.  In this example, \c{'my string'}
+was a literal string but it could also have been a single-line 
+macro that expands to a string, as in the following example:
+
+\c %define sometext 'my string'
+\c %strlen charcnt sometext
+
+As in the first case, this would result in \c{charcnt} being 
+assigned the value of 8.
+
+\S{substr} \i{Sub-strings}: \i\c{%substr}
+
+Individual letters in strings can be extracted using \c{%substr}.
+An example of its use is probably more useful than the description:
+
+\c %substr mychar 'xyz' 1  ; equivalent to %define mychar 'x'
+\c %substr mychar 'xyz' 2  ; equivalent to %define mychar 'y'
+\c %substr mychar 'xyz' 3  ; equivalent to %define mychar 'z'
+
+In this example, mychar gets the value of 'y'.  As with \c{%strlen}
+(see \k{strlen}), the first parameter is the single-line macro to 
+be created and the second is the string.  The third parameter 
+specifies which character is to be selected.  Note that the first 
+index is 1, not 0 and the last index is equal to the value that 
+\c{%strlen} would assign given the same string.  Index values out
+of range result in an empty string.
+
 \H{mlmacro} \i{Multi-Line Macros}: \I\c{%imacro}\i\c{%macro}
 
 Multi-line macros are much more like the type of macro seen in MASM
@@ -5620,6 +5663,19 @@ sign-extended to the length of the first operand. In these cases,
 the \c{BYTE} qualifier is necessary to force NASM to generate this
 form of the instruction.
 
+\H{insADDPS} \i\c{ADDPS}: Packed Single FP ADD
+
+\c ADDPS xmmreg,mem128           ; 0f 58 /r     [KATMAI,SSE]
+\c ADDPS xmmreg,xmmreg           ; 0f 58 /r     [KATMAI,SSE]
+
+\c{ADDPS} performs addition on each of four packed SP FP
+number items dst(0-31):=dst(0-31)+src(0-31), ..(63-32), etc.
+
+\H{insADDSS} \i\c{ADDSS}: Scalar Single FP ADD
+
+\c ADDSS xmmreg,mem128           ; f3 0f 58 /r  [KATMAI,SSE]
+\c ADDSS xmmreg,xmmreg           ; f3 0f 58 /r  [KATMAI,SSE]
+
 \H{insAND} \i\c{AND}: Bitwise AND
 
 \c AND r/m8,reg8                 ; 20 /r                [8086]
@@ -5654,6 +5710,18 @@ form of the instruction.
 
 The MMX instruction \c{PAND} (see \k{insPAND}) performs the same
 operation on the 64-bit MMX registers.
+
+\H{insANDNPS} \i\c{ANDNPS}: Bitwise Logical AND NOT For Single FP
+
+\c ANDNPS xmmreg,mem128          ; 0f 55 /r     [KATMAI,SSE]
+\c ANDNPS xmmreg,xmmreg          ; 0f 55 /r     [KATMAI,SSE]
+
+
+\H{insANDPS} \i\c{ANDPS}: Bitwise Logical AND For Single FP
+
+\c ANDPS xmmreg,mem128           ; 0f 54 /r     [KATMAI,SSE]
+\c ANDPS xmmreg,xmmreg           ; 0f 54 /r     [KATMAI,SSE]
+
 
 \H{insARPL} \i\c{ARPL}: Adjust RPL Field of Selector
 
@@ -5872,6 +5940,102 @@ sign-extended to the length of the first operand. In these cases,
 the \c{BYTE} qualifier is necessary to force NASM to generate this
 form of the instruction.
 
+
+\H{insCMPEQPS} \i\c{CMPEQPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPEQPS xmmreg,memory           ; 0f c2 /r ib [KATMAI,SSE] 
+\c CMPEQPS xmmreg,xmmreg           ;             [KATMAI,SSE] 
+
+\c{CMPPS} with condition set, re CMPPS.
+
+\H{insCMPEQSS} \i\c{CMPEQSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPEQSS xmmreg,memory           ; ??          [KATMAI,SSE] 
+\c CMPEQSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{CMPSS} with condition set, re CMPPS.
+
+\H{insCMPLEPS} \i\c{CMPLEPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPLEPS xmmreg,memory           ; ??          [KATMAI,SSE] 
+\c CMPLEPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+
+\H{insCMPLESS} \i\c{CMPLESS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPLESS xmmreg,memory           ; ??          [KATMAI,SSE] 
+\c CMPLESS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+
+\H{insCMPLTPS} \i\c{CMPLTPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPLTPS xmmreg,memory           ; ??          [KATMAI,SSE] 
+\c CMPLTPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+
+\H{insCMPLTSS} \i\c{CMPLTSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPLTSS xmmreg,memory           ; ??          [KATMAI,SSE] 
+\c CMPLTSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+
+\H{insCMPNEQPS} \i\c{CMPNEQPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPNEQPS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNEQPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPNEQSS} \i\c{CMPNEQSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPNEQSS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNEQSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPNLEPS} \i\c{CMPNLEPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPNLEPS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNLEPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPNLESS} \i\c{CMPNLESS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPNLESS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNLESS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPNLTPS} \i\c{CMPNLTPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPNLTPS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNLTPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPNLTSS} \i\c{CMPNLTSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPNLTSS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPNLTSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPORDPS} \i\c{CMPORDPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPORDPS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPORDPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPORDSS} \i\c{CMPORDSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPORDSS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPORDSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPPS} \i\c{CMPPS}: Packed Single FP Compare
+
+\c CMPPS xmmreg,memory,immediate     ; ??    [KATMAI,SSE,SB,AR2] 
+\c CMPPS xmmreg,xmmreg,immediate     ; ??    [KATMAI,SSE,SB,AR2] 
+
+\c{CMP(cc)PS} and \c{CMP(cc)SS} conditions (cc):
+EQ, LT, LE, UNORD, NEQ, NLT, NLE, ORD
+
+
 \H{insCMPSB} \i\c{CMPSB}, \i\c{CMPSW}, \i\c{CMPSD}: Compare Strings
 
 \c CMPSB                         ; A6                   [8086]
@@ -5902,6 +6066,29 @@ The \c{REPE} and \c{REPNE} prefixes (equivalently, \c{REPZ} and
 \c{REPNZ}) may be used to repeat the instruction up to \c{CX} (or
 \c{ECX} - again, the address size chooses which) times until the
 first unequal or equal byte is found.
+
+
+
+\H{insCMPSS} \i\c{CMPSS}: Scalar Single FP Compare
+
+\c CMPSS xmmreg,memory,immediate      ; ??   [KATMAI,SSE,SB,AR2] 
+\c CMPSS xmmreg,xmmreg,immediate      ; ??   [KATMAI,SSE,SB,AR2] 
+
+\c{CMP(cc)PS} and \c{CMP(cc)SS} conditions (cc):
+EQ, LT, LE, UNORD, NEQ, NLT, NLE, ORD
+
+
+\H{insCMPUNORDPS} \i\c{CMPUNORDPS}: Packed Single FP Compare (CMPPS)
+
+\c CMPUNORDPS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPUNORDPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCMPUNORDSS} \i\c{CMPUNORDSS}: Scalar Single FP Compare (CMPSS)
+
+\c CMPUNORDSS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c CMPUNORDSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
 
 \H{insCMPXCHG} \i\c{CMPXCHG}, \i\c{CMPXCHG486}: Compare and Exchange
 
@@ -5948,6 +6135,14 @@ value in \c{EDX:EAX}. If they are equal, it sets the zero flag and
 stores \c{ECX:EBX} into the memory area. If they are unequal, it
 clears the zero flag and leaves the memory area untouched.
 
+\H{insCOMISS} \i\c{COMISS}: Scalar Ordered Single-FP Compare and Set EFLAGS
+
+\c COMISS xmmreg,memory           ; ??         [KATMAI,SSE] 
+\c COMISS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+Set Z, P, C according to comparison, clear O, S, A bits of EFLAGS.
+Z=P=C=1 for "unordered" result (QNaN).
+
 \H{insCPUID} \i\c{CPUID}: Get CPU Identification Code
 
 \c CPUID                         ; 0F A2                [PENT]
@@ -5986,6 +6181,50 @@ Buffers).
 
 For more information on the data returned from \c{CPUID}, see the
 documentation on Intel's web site.
+
+
+\H{insCVTPI2PS} \i\c{CVTPI2PS}:
+Packed Signed INT32 to Packed Single-FP Conversion
+
+\c CVTPI2PS xmmreg,mem64            ; ??         [KATMAI,SSE,MMX] 
+\c CVTPI2PS xmmreg,mmxreg           ; ??         [KATMAI,SSE,MMX] 
+
+
+\H{insCVTPS2PI} \i\c{CVTPS2PI}:
+Packed Single-FP to Packed INT32 Conversion
+
+\c CVTPS2PI mmxreg,mem64            ; ??         [KATMAI,SSE,MMX] 
+\c CVTPS2PI mmxreg,xmmreg           ; ??         [KATMAI,SSE,MMX] 
+
+
+\H{insCVTSI2SS} \i\c{CVTSI2SS}:
+Scalar Signed INT32 to Single-FP Conversion
+
+\c CVTSI2SS xmmreg,memory          ; ??       [KATMAI,SSE,SD,AR1] 
+\c CVTSI2SS xmmreg,reg32           ; ??            [KATMAI,SSE] 
+
+
+
+\H{insCVTSS2SI} \i\c{CVTSS2SI}:
+Scalar Single-FP to Signed INT32 Conversion
+
+\c CVTSS2SI reg32,memory           ; ??         [KATMAI,SSE] 
+\c CVTSS2SI reg32,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\H{insCVTTPS2PI} \i\c{CVTTPS2PI}:
+Packed Single-FP to Packed INT32 Conversion
+
+\c CVTTPS2PI mmxreg,memory           ; ??        [KATMAI,SSE,MMX] 
+\c CVTTPS2PI mmxreg,xmmreg           ; ??        [KATMAI,SSE,MMX] 
+
+
+\H{insCVTTSS2SI} \i\c{CVTTSS2SI}:
+Scalr Single-FP to Signed INT32 Conversion
+
+\c CVTTSS2SI reg32,memory           ; ??         [KATMAI,SSE] 
+\c CVTTSS2SI reg32,xmmreg           ; ??         [KATMAI,SSE] 
+
 
 \H{insDAA} \i\c{DAA}, \i\c{DAS}: Decimal Adjustments
 
@@ -6042,6 +6281,24 @@ the quotient is stored in \c{EAX} and the remainder in \c{EDX}.
 
 Signed integer division is performed by the \c{IDIV} instruction:
 see \k{insIDIV}.
+
+\H{insDIVPS} \i\c{DIVPS}: Packed Single-FP Divide
+
+\c DIVPS xmmreg,memory           ; 0F,5E,/r         [KATMAI,SSE] 
+\c DIVPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{DIVPS}The DIVPS instruction divides the packed SP FP numbers
+of both their operands.
+
+
+\H{insDIVSS} \i\c{DIVSS}: Scalar Single-FP Divide
+
+\c DIVSS xmmreg,memory           ; F3,0F,5E,/r [KATMAI,SSE] 
+\c DIVSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+c\{DIVSS}-The DIVSS instructions divide the lowest SP FP numbers 
+of both operands; the upper three fields are passed through from xmm1.
+
 
 \H{insEMMS} \i\c{EMMS}: Empty MMX State
 
@@ -6322,6 +6579,14 @@ operand.
 \c{FDIVP} operates like \c{FDIV TO}, but pops the register stack
 once it has finished. \c{FDIVRP} operates like \c{FDIVR TO}, but
 pops the register stack once it has finished.
+
+
+\H{insFEMMS} \i\c{FEMMS}: 3dnow instruction (duh!)
+
+\c FEMMS 0,0,0           ; ??                 [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
 
 \H{insFFREE} \i\c{FFREE}: Flag Floating-Point Register as Unused
 
@@ -6754,6 +7019,35 @@ denormal. It also sets the C1 flag to the sign of the number.
 \c{FXCH} exchanges \c{ST0} with a given FPU register. The no-operand
 form exchanges \c{ST0} with \c{ST1}.
 
+\H{insFXRSTOR} \i\c{FXRSTOR}: Restore FP and MMXTM State and 
+Streaming SIMD Extension State
+
+\c FXRSTOR memory           ; 0F,AE,/1               [P6,SSE,FPU] 
+
+\c{FXRSTOR}The FXRSTOR instruction reloads the FP and MMXTM technology
+state, and the Streaming SIMD Extension state (environment and registers),
+from the memory area defined by m512byte. This data should have been
+written by a previous FXSAVE.
+
+
+\H{insFXSAVE} \i\c{FXSAVE}: Store FP and MMXTM State
+ and Streaming SIMD
+
+\c FXSAVE memory           ; 0F,AE,/0         [P6,SSE,FPU] 
+
+
+\c{FXSAVE}The FXSAVE instruction writes the current FP and
+ MMXTM technology state, and Streaming SIMD Extension state
+ (environment and registers), to the specified destination
+ defined by m512byte. It does this without checking for pending
+ unmasked floating-point exceptions (similar to the operation of
+ FNSAVE). Unlike the FSAVE/FNSAVE instructions, the processor
+retains the contents of the FP and MMXTM technology state and
+ Streaming SIMD Extension state in the processor after the state
+ has been saved. This instruction has been optimized to maximize
+ floating-point save performance.
+
+
 \H{insFXTRACT} \i\c{FXTRACT}: Extract Exponent and Significand
 
 \c FXTRACT                       ; D9 F4                [8086,FPU]
@@ -7007,8 +7301,8 @@ on the default \c{BITS} setting at the time.
 
 \H{insJCXZ} \i\c{JCXZ}, \i\c{JECXZ}: Jump if CX/ECX Zero
 
-\c JCXZ imm                      ; o16 E3 rb            [8086]
-\c JECXZ imm                     ; o32 E3 rb            [386]
+\c JCXZ imm                      ; a16 E3 rb            [8086]
+\c JECXZ imm                     ; a32 E3 rb            [386]
 
 \c{JCXZ} performs a short jump (with maximum range 128 bytes) if and
 only if the contents of the \c{CX} register is 0. \c{JECXZ} does the
@@ -7117,6 +7411,17 @@ the given register (depending on the size of the register), then
 loads the \e{next} 16 bits from memory into \c{DS}. \c{LES},
 \c{LFS}, \c{LGS} and \c{LSS} work in the same way but use the other
 segment registers.
+
+
+\H{insLDMXCSR} \i\c{LDMXCSR}: Load Streaming SIMD Extension
+ Control/Status
+
+\c LDMXCSR memory           ; 0F,AE,/2            [KATMAI,SSE,SD]
+
+\c{LDMXCSR} The MXCSR control/status register is used to enable
+ masked/unmasked exception handling, to set rounding modes, to
+  set flush-to-zero mode, and to view exception status flags.
+
 
 \H{insLEA} \i\c{LEA}: Load Effective Address
 
@@ -7260,6 +7565,73 @@ loaded into the destination (first) operand.
 descriptor specified by the segment selector given as its operand,
 and loads them into the Task Register.
 
+
+\H{insMASKMOVQ} \i\c{MASKMOVQ}: Byte Mask Write
+
+\c MASKMOVQ mmxreg,mmxreg        ; 0F,F7,/r        [KATMAI,MMX] 
+
+\c{MASKMOVQ} Data is stored from the mm1 register to the location
+ specified by the di/edi register (using DS segment). The size
+ of the store depends on the address-size attribute. The most
+ significant bit in each byte of the mask register mm2 is used
+ to selectively write the data (0 = no write, 1 = write) on a
+ per-byte basis.
+
+
+\H{insMAXPS} \i\c{MAXPS}: Packed Single-FP Maximum
+
+\c MAXPS xmmreg,memory           ; 0F,5F,/r   [KATMAI,SSE] 
+\c MAXPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{MAXPS}The MAXPS instruction returns the maximum SP FP numbers
+ from XMM1 and XMM2/Mem.If the values being compared are both
+ zeroes, source2 (xmm2/m128) would be returned. If source2
+ (xmm2/m128) is an sNaN, this sNaN is forwarded unchanged
+ to the destination (i.e., a quieted version of the sNaN
+ is not returned).
+
+
+\H{insMAXSS} \i\c{MAXSS}: Scalar Single-FP Maximum
+
+\c MAXSS xmmreg,memory           ; F3,0F,5F,/r  [KATMAI,SSE] 
+\c MAXSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{MAXSS}The MAXSS instruction returns the maximum SP FP number
+ from the lower SP FP numbers of XMM1 and XMM2/Mem; the upper
+ three fields are passed through from xmm1. If the values being
+ compared are both zeroes, source2 (xmm2/m128) will be returned.
+ If source2 (xmm2/m128) is an sNaN, this sNaN is forwarded
+ unchanged to the destination (i.e., a quieted version of the
+ sNaN is not returned).
+
+
+\H{insMINPS} \i\c{MINPS}: Packed Single-FP Minimum
+
+\c MINPS xmmreg,memory           ; 0F,5D,/r   [KATMAI,SSE] 
+\c MINPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{MINPS} The MINPS instruction returns the minimum SP FP
+ numbers from XMM1 and XMM2/Mem. If the values being compared
+ are both zeroes, source2 (xmm2/m128) would be returned. If
+ source2 (xmm2/m128) is an sNaN, this sNaN is forwarded unchanged
+ to the destination (i.e., a quieted version of the sNaN is
+ not returned).
+
+
+\H{insMINSS} \i\c{MINSS}: Scalar Single-FP Minimum
+
+\c MINSS xmmreg,memory           ; F3,0F,5D,/r [KATMAI,SSE] 
+\c MINSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{MINSS} The MINSS instruction returns the minimum SP FP number
+ from the lower SP FP numbers from XMM1 and XMM2/Mem; the upper
+ three fields are passed through from xmm1. If the values being
+ compared are both zeroes, source2 (xmm2/m128) would be returned.
+ If source2 (xmm2/m128) is an sNaN, this sNaN is forwarded
+ unchanged to the destination (i.e., a quieted version of the
+ sNaN is not returned).
+
+
 \H{insMOV} \i\c{MOV}: Move Data
 
 \c MOV r/m8,reg8                 ; 88 /r                [8086]
@@ -7311,6 +7683,21 @@ undefined.
 
 \c{CR4} is only a supported register on the Pentium and above.
 
+\H{insMOVAPS} \i\c{MOVAPS}: Move Aligned Four Packed Single-FP
+
+\c MOVAPS xmmreg,memory           ; 0F,28,/r     [KATMAI,SSE] 
+\c MOVAPS memory,xmmreg           ; 0F,29,/r     [KATMAI,SSE] 
+\c MOVAPS xmmreg,xmmreg           ; ??           [KATMAI,SSE] 
+\c MOVAPS xmmreg,xmmreg           ; ??           [KATMAI,SSE] 
+
+\c{MOVAPS} The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data. When a
+ memory address is indicated, the 16 bytes of data at memory
+ location m128 are loaded or stored. When the register-register
+ form of this operation is used, the content of the 128-bit
+ source register is copied into the 128-bit destination register.
+
+
 \H{insMOVD} \i\c{MOVD}: Move Doubleword to/from MMX Register
 
 \c MOVD mmxreg,r/m32             ; 0F 6E /r             [PENT,MMX]
@@ -7320,6 +7707,57 @@ undefined.
 destination (first) operand. When the destination is a 64-bit MMX
 register, the top 32 bits are set to zero.
 
+
+\H{insMOVHLPS} \i\c{MOVHLPS}: High to Low Packed Single-FP
+
+\c MOVHLPS xmmreg,xmmreg         ; OF,12,/r         [KATMAI,SSE] 
+
+\c{MOVHLPS} The upper 64-bits of the source register xmm2 are
+ loaded into the lower 64-bits of the 128-bit register xmm1,
+ and the upper 64-bits of xmm1 are left unchanged.
+
+
+\H{insMOVHPS} \i\c{MOVHPS}: Move High Packed Single-FP
+
+\c MOVHPS xmmreg,memory           ; 0F,16,/r     [KATMAI,SSE] 
+\c MOVHPS memory,xmmreg           ; 0F,17,/r     [KATMAI,SSE] 
+\c MOVHPS xmmreg,xmmreg           ; ??        [KATMAI,SSE,ND] 
+
+\c{MOVHPS} The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data. When the
+ load form of this operation is used, m64 is loaded into the
+ upper 64-bits of the 128-bit register xmm, and the lower 64-bits
+ are left unchanged.
+
+
+\H{insMOVMSKPS} \i\c{MOVMSKPS}: Move Mask To Integer
+
+\c MOVMSKPS reg32,xmmreg           ; 0F,50,/r     [KATMAI,SSE] 
+
+\c{MOVMSKPS} The MOVMSKPS instruction returns to the integer
+ register r32 a 4-bit mask formed of the most significant bits
+ of each SP FP number of its operand.
+
+
+\H{insMOVNTPS} \i\c{MOVNTPS}: Move Aligned Four Packed Single-FP
+ Non Temporal
+
+\c MOVNTPS memory,xmmreg           ; 0F,2B, /r     [KATMAI,SSE] 
+
+\c{MOVNTPS} The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data. This store
+ instruction minimizes cache pollution.
+
+
+\H{insMOVNTQ} \i\c{MOVNTQ}: Move 64 Bits Non Temporal
+
+\c MOVNTQ memory,mmxreg           ; 0F,E7,/r   [KATMAI,MMX,SM] 
+
+\c{MOVNTQ} The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data. This store
+ instruction minimizes cache pollution.
+
+
 \H{insMOVQ} \i\c{MOVQ}: Move Quadword to/from MMX Register
 
 \c MOVQ mmxreg,r/m64             ; 0F 6F /r             [PENT,MMX]
@@ -7327,6 +7765,8 @@ register, the top 32 bits are set to zero.
 
 \c{MOVQ} copies 64 bits from its source (second) operand into its
 destination (first) operand.
+
+
 
 \H{insMOVSB} \i\c{MOVSB}, \i\c{MOVSW}, \i\c{MOVSD}: Move String
 
@@ -7356,6 +7796,22 @@ addressing registers by 2 or 4 instead of 1.
 The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c{ECX} - again, the address size chooses which) times.
 
+\H{insMOVSS} \i\c{MOVSS}: Move Scalar Single-FP
+
+\c MOVSS xmmreg,memory           ; F3,0F,10,/r [KATMAI,SSE] 
+\c MOVSS memory,xmmreg           ; F3,0F,11,/r [KATMAI,SSE] 
+\c MOVSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+\c MOVSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{MOVSS} The linear address corresponds to the address of
+ the least-significant byte of the referenced memory data.
+ When a memory address is indicated, the four bytes of data
+ at memory location m32 are loaded or stored. When the load
+ form of this operation is used, the 32 bits from memory are
+ copied into the lower 32 bits of the 128-bit register xmm,
+ the 96 most significant bits being cleared.
+
+
 \H{insMOVSX} \i\c{MOVSX}, \i\c{MOVZX}: Move Data with Sign or Zero Extend
 
 \c MOVSX reg16,r/m8              ; o16 0F BE /r         [386]
@@ -7370,6 +7826,24 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 its destination (first) operand, and copies the result into the
 destination operand. \c{MOVZX} does the same, but zero-extends
 rather than sign-extending.
+
+
+\H{insMOVUPS} \i\c{MOVUPS}: Move Unaligned Four Packed Single-FP
+
+\c MOVUPS xmmreg,memory           ; 0F,10,/r    [KATMAI,SSE] 
+\c MOVUPS memory,xmmreg           ; 0F,11,/r    [KATMAI,SSE] 
+\c MOVUPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+\c MOVUPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{MOVUPS} The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data. When a
+ memory address is indicated, the 16 bytes of data at memory
+ location m128 are loaded to the 128-bit multimedia register
+ xmm or stored from the 128-bit multimedia register xmm. When
+ the register-register form of this operation is used, the content
+ of the 128-bit source register is copied into 128-bit register
+ xmm. No assumption is made about alignment.
+
 
 \H{insMUL} \i\c{MUL}: Unsigned Integer Multiply
 
@@ -7392,6 +7866,27 @@ the product is stored in \c{EDX:EAX}.
 
 Signed integer multiplication is performed by the \c{IMUL}
 instruction: see \k{insIMUL}.
+
+\H{insMULPS} \i\c{MULPS}: Packed Single-FP Multiply
+
+\c MULPS xmmreg,memory           ; 0F,59,/r   [KATMAI,SSE] 
+\c MULPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+
+\c{MULPS} The MULPS instructions multiply the packed SP FP
+ numbers of both their operands.
+
+
+\H{insMULSS} \i\c{MULSS}: Scalar Single-FP Multiply
+
+
+\c MULSS xmmreg,memory           ; F3,0F,59,/r [KATMAI,SSE] 
+\c MULSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{MULSS}The MULSS instructions multiply the lowest SP FP
+ numbers of both their operands; the upper three fields
+ are passed through from xmm1.
+
 
 \H{insNEG} \i\c{NEG}, \i\c{NOT}: Two's and One's Complement
 
@@ -7450,6 +7945,15 @@ form of the instruction.
 
 The MMX instruction \c{POR} (see \k{insPOR}) performs the same
 operation on the 64-bit MMX registers.
+
+\H{insORPS} \i\c{ORPS}: Bit-wise Logical OR for Single-FP Data
+
+\c ORPS xmmreg,memory           ; 0F,56,/r    [KATMAI,SSE] 
+\c ORPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{ORPS} The ORPS instructions return a bit-wise logical
+ OR between xmm1 and xmm2/mem.
+
 
 \H{insOUT} \i\c{OUT}: Output Data to I/O Port
 
@@ -7580,6 +8084,38 @@ operands as vectors of eight unsigned bytes, and calculates the
 average of the corresponding bytes in the operands. The resulting
 vector of eight averages is stored in the first operand.
 
+
+\H{insPAVGB} \i\c{PAVGB}: Packed Average
+
+\c PAVGB mmxreg,mmxreg           ; 0F,E0, /r   [KATMAI,MMX] 
+\c PAVGB mmxreg,memory           ; 0F,E3, /r  [KATMAI,MMX,SM] 
+
+
+\H{insPAVGW} \i\c{PAVGW}: Packed Average
+
+\c PAVGW mmxreg,mmxreg           ; ??          [KATMAI,MMX] 
+\c PAVGW mmxreg,memory           ; ??       [KATMAI,MMX,SM] 
+
+\c{PAVGB} The PAVG instructions add the unsigned data elements
+ of the source operand to the unsigned data elements of the
+ destination register, along with a carry-in. The results of
+ the add are then each independently right-shifted by one bit
+ position. The high order bits of each element are filled with
+ the carry bits of the corresponding sum. The destination operand
+ is an MMXTM technology register. The source operand can either
+ be an MMXTM technology register or a 64-bit memory operand.
+    The PAVGB instruction operates on packed unsigned bytes, and
+ the PAVGW instruction operates on packed unsigned words. 
+
+
+\H{insPAVGUSB} \i\c{PAVGUSB}: 3dnow instruction (duh!)
+
+\c PAVGUSB mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PAVGUSB mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
 \H{insPCMPEQB} \i\c{PCMPxx}: MMX Packed Comparison
 
 \c PCMPEQB mmxreg,r/m64          ; 0F 74 /r             [PENT,MMX]
@@ -7609,7 +8145,7 @@ integer) than that of the second (source) operand.
 \H{insPDISTIB} \i\c{PDISTIB}: MMX Packed Distance and Accumulate
 with Implied Register
 
-\c PDISTIB mmxreg,mem64          ; 0F 54 /r             [CYRIX,MMX]
+\c PDISTIB mmxreg,mem64          ; 0F 54 /r           [CYRIX,MMX]
 
 \c{PDISTIB}, specific to the Cyrix MMX extensions, treats its two
 input operands as vectors of eight unsigned bytes. For each byte
@@ -7623,6 +8159,167 @@ The implied output register is found in the same way as \c{PADDSIW}
 
 Note that \c{PDISTIB} cannot take a register as its second source
 operand.
+
+
+\H{insPEXTRW} \i\c{PEXTRW}: Extract Word
+
+\c PEXTRW reg32,mmxreg,immediate ; 0F,C5,/r,ib [KATMAI,MMX,SB,AR2]
+
+\c{PEXTRW}PEXTRW instruction moves the word in MM (selected by the
+ two least significant bits of imm8) to the lower half of a 32-bit
+ integer register.
+
+
+\H{insPF2ID} \i\c{PF2ID}: 3dnow instruction (duh!)
+
+\c PF2ID mmxreg,memory           ; ??       [PENT,3DNOW,SM] 
+\c PF2ID mmxreg,mmxreg           ; ??          [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFACC} \i\c{PFACC}: 3dnow instruction (duh!)
+
+\c PFACC mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFACC mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFADD} \i\c{PFADD}: 3dnow instruction (duh!)
+
+\c PFADD mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFADD mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFCMPEQ} \i\c{PFCMPEQ}: 3dnow instruction (duh!)
+
+\c PFCMPEQ mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFCMPEQ mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFCMPGE} \i\c{PFCMPGE}: 3dnow instruction (duh!)
+
+\c PFCMPGE mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFCMPGE mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFCMPGT} \i\c{PFCMPGT}: 3dnow instruction (duh!)
+
+\c PFCMPGT mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFCMPGT mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFMAX} \i\c{PFMAX}: 3dnow instruction (duh!)
+
+\c PFMAX mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFMAX mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFMIN} \i\c{PFMIN}: 3dnow instruction (duh!)
+
+\c PFMIN mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFMIN mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFMUL} \i\c{PFMUL}: 3dnow instruction (duh!)
+
+\c PFMUL mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFMUL mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFRCP} \i\c{PFRCP}: 3dnow instruction (duh!)
+
+\c PFRCP mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFRCP mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFRCPIT1} \i\c{PFRCPIT1}: 3dnow instruction (duh!)
+
+\c PFRCPIT1 mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFRCPIT1 mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFRCPIT2} \i\c{PFRCPIT2}: 3dnow instruction (duh!)
+
+\c PFRCPIT2 mmxreg,memory           ; ??       [PENT,3DNOW,SM] 
+\c PFRCPIT2 mmxreg,mmxreg           ; ??          [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFRSQIT1} \i\c{PFRSQIT1}: 3dnow instruction (duh!)
+
+\c PFRSQIT1 mmxreg,memory           ; ??       [PENT,3DNOW,SM] 
+\c PFRSQIT1 mmxreg,mmxreg           ; ??          [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFRSQRT} \i\c{PFRSQRT}: 3dnow instruction (duh!)
+
+\c PFRSQRT mmxreg,memory           ; ??       [PENT,3DNOW,SM] 
+\c PFRSQRT mmxreg,mmxreg           ; ??          [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFSUB} \i\c{PFSUB}: 3dnow instruction (duh!)
+
+\c PFSUB mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PFSUB mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPFSUBR} \i\c{PFSUBR}: 3dnow instruction (duh!)
+
+\c PFSUBR mmxreg,memory           ; ??       [PENT,3DNOW,SM] 
+\c PFSUBR mmxreg,mmxreg           ; ??          [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPI2FD} \i\c{PI2FD}: 3dnow instruction (duh!)
+
+\c PI2FD mmxreg,memory           ; ??        [PENT,3DNOW,SM] 
+\c PI2FD mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPINSRW} \i\c{PINSRW}: Insert Word
+
+\c PINSRW mmxreg,reg16,immediate     ;0F,C4,/r,ib [KATMAI,MMX,SB,AR2] 
+\c PINSRW mmxreg,reg32,immediate         ; ??  [KATMAI,MMX,SB,AR2,ND] 
+\c PINSRW mmxreg,memory,immediate        ; ??     [KATMAI,MMX,SB,AR2] 
+\c PINSRW mmxreg,memory|bits16,immediate ; ??  [KATMAI,MMX,SB,AR2,ND] 
+
+\c{PINSRW} The PINSRW instruction loads a word from the lower half
+ of a 32-bit integer register (or from memory) and inserts it in
+ the MM destination register, at a position defined by the two
+ least significant bits of the imm8 constant. The insertion is
+ done in such a way that the three other words from the
+ destination register are left untouched.
+
 
 \H{insPMACHRIW} \i\c{PMACHRIW}: MMX Packed Multiply and Accumulate
 with Rounding
@@ -7658,6 +8355,51 @@ values of the words in corresponding positions, and sets each word
 of the destination (first) operand to whichever of the two words in
 that position had the larger absolute value.
 
+\H{insPMAXSW} \i\c{PMAXSW}: Packed Signed Integer Word Maximum
+
+\c PMAXSW mmxreg,mmxreg           ; 0F,EE, /r  [KATMAI,MMX] 
+\c PMAXSW mmxreg,memory           ; ??         [KATMAI,MMX,SM] 
+
+\c{PMAXSW} The PMAXSW instruction returns the maximum between
+ the four signed words in MM1 and MM2/Mem.
+
+
+\H{insPMAXUB} \i\c{PMAXUB}: Packed Unsigned Integer Byte Maximum
+
+\c PMAXUB mmxreg,mmxreg           ; 0F,DE, /r  [KATMAI,MMX] 
+\c PMAXUB mmxreg,memory           ; ??      [KATMAI,MMX,SM] 
+
+\c{PMAXUB} The PMAXUB instruction returns the maximum between
+ the eight unsigned words in MM1 and MM2/Mem.
+
+
+\H{insPMINSW} \i\c{PMINSW}: Packed Signed Integer Word Minimum
+
+\c PMINSW mmxreg,mmxreg           ; 0F,EA, /r  [KATMAI,MMX] 
+\c PMINSW mmxreg,memory           ; ??      [KATMAI,MMX,SM] 
+
+\c{PMINSW} The PMINSW instruction returns the minimum between
+ the four signed words in MM1 and MM2/Mem.
+
+
+\H{insPMINUB} \i\c{PMINUB}: Packed Unsigned Integer Byte Minimum
+
+\c PMINUB mmxreg,mmxreg           ; 0F,DA, /r  [KATMAI,MMX] 
+\c PMINUB mmxreg,memory           ; ??      [KATMAI,MMX,SM] 
+
+\c{PMINUB}The PMINUB instruction returns the minimum between
+ the eight unsigned words in MM1 and MM2/Mem.
+
+
+\H{insPMOVMSKB} \i\c{PMOVMSKB}: Move Byte Mask To Integer
+
+\c PMOVMSKB reg32,mmxreg           ; 0F,D7,/r   [KATMAI,MMX] 
+
+\c{PMOVMSKB} The PMOVMSKB instruction returns an 8-bit mask
+ formed of the most significant bits of each byte of its
+ source operand. 
+
+
 \H{insPMULHRW} \i\c{PMULHRW}, \i\c{PMULHRIW}: MMX Packed Multiply
 High with Rounding
 
@@ -7677,6 +8419,26 @@ For \c{PMULHRW}, the destination operand is the first operand; for
 \c{PMULHRIW} the destination operand is implied by the first operand
 in the manner of \c{PADDSIW} (\k{insPADDSIW}).
 
+
+\H{insPMULHRWA} \i\c{PMULHRWA}: 3dnow instruction (duh!)
+
+\c PMULHRWA mmxreg,memory           ; ??        [PENT,3DNOW,SM]
+\c PMULHRWA mmxreg,mmxreg           ; ??           [PENT,3DNOW] 
+
+3dnow instruction (duh!)
+
+
+\H{insPMULHUW} \i\c{PMULHUW}: Packed Multiply High Unsigned
+
+\c PMULHUW mmxreg,mmxreg           ; 0F,E4,/r    [KATMAI,MMX] 
+\c PMULHUW mmxreg,memory           ; ??       [KATMAI,MMX,SM] 
+
+\c{PMULHUW} The PMULHUW instruction multiplies the four unsigned
+ words in the destination operand with the four unsigned words
+ in the source operand. The high-order 16 bits of the 32-bit
+ intermediate results are written to the destination operand. 
+
+
 \H{insPMULHW} \i\c{PMULHW}, \i\c{PMULLW}: MMX Packed Multiply
 
 \c PMULHW mmxreg,r/m64           ; 0F E5 /r             [PENT,MMX]
@@ -7689,6 +8451,7 @@ signed doubleword results.
 \c{PMULHW} then stores the top 16 bits of each doubleword in the
 destination (first) operand; \c{PMULLW} stores the bottom 16 bits of
 each doubleword in the destination operand.
+
 
 \H{insPMVccZB} \i\c{PMVccZB}: MMX Packed Conditional Move
 
@@ -7721,7 +8484,7 @@ source operand.
 \c POP r/m16                     ; o16 8F /0            [8086]
 \c POP r/m32                     ; o32 8F /0            [386]
 
-\c POP CS                        ; 0F                   [8086,UNDOC]
+\c POP CS                        ; 0F               [8086,UNDOC]
 \c POP DS                        ; 1F                   [8086]
 \c POP ES                        ; 07                   [8086]
 \c POP SS                        ; 17                   [8086]
@@ -7800,6 +8563,84 @@ See also \c{PUSHF} (\k{insPUSHF}).
 (i.e. each bit of the result is 1 if and only if at least one of the
 corresponding bits of the two inputs was 1), and stores the result
 in the destination (first) operand.
+
+
+\H{insPREFETCHNTA} \i\c{PREFETCHNTA}: Prefetch 
+
+\c PREFETCHNTA memory           ; 0F,18,/0       [KATMAI] 
+
+\c{PREFETCHNTA} Move data specified by address closer to the
+ processor using the nta hint.
+
+
+\H{insPREFETCHT0} \i\c{PREFETCHT0}: Prefetch
+
+\c PREFETCHT0 memory           ; 0F,18,/1     [KATMAI] 
+
+\c{PREFETCHT0} Move data specified by address closer to the
+ processor using the t0 hint.
+
+
+\H{insPREFETCHT1} \i\c{PREFETCHT1}: Prefetch
+
+\c PREFETCHT1 memory           ; 0F,18,/2     [KATMAI] 
+
+\c{PREFETCHT1}Move data specified by address closer to the
+ processor using the t1 hint.
+
+
+\H{insPREFETCHT2} \i\c{PREFETCHT2}: Prefetch
+
+\c PREFETCHT2 memory           ; 0F,18,/3      [KATMAI] 
+
+\c{PREFETCHT2} Move data specified by address closer to the
+ processor using the t2 hint.
+
+
+\H{insPREFETCH} \i\c{PREFETCH}: 3dnow instruction (duh!)
+
+\c PREFETCH memory           ; ??           [PENT,3DNOW,SM] 
+
+3dnow instruction (duh!)
+
+
+\H{insPREFETCHW} \i\c{PREFETCHW}: 3dnow instruction (duh!)
+
+\c PREFETCHW memory           ; ??           [PENT,3DNOW,SM] 
+
+3dnow instruction (duh!)
+
+
+
+
+
+\H{insPSADBW} \i\c{PSADBW}: Packed Sum of Absolute Differences
+
+\c PSADBW mmxreg,mmxreg           ; 0F,F6, /r [KATMAI,MMX] 
+\c PSADBW mmxreg,memory           ; ??     [KATMAI,MMX,SM] 
+
+\c{PSADBW} The PSADBW instruction computes the absolute value of
+ the difference of unsigned bytes for mm1 and mm2/m64. These
+ differences are then summed to produce a word result in the lower
+ 16-bit field; the upper three words are cleared. The destination
+ operand is an MMXTM technology register. The source operand can
+ either be an MMXTM technology register or a 64-bit memory operand.
+
+
+\H{insPSHUFW} \i\c{PSHUFW}: Packed Shuffle Word
+
+\c PSHUFW mmxreg,mmxreg,immediate ; 0F,70,/r,ib [KATMAI,MMX,SB,AR2]
+\c PSHUFW mmxreg,memory,immediate ; ??   [KATMAI,MMX,SM2,SB,AR2] 
+
+\c{PSHUFW} The PSHUF instruction uses the imm8 operand to select
+ which of the four words in MM2/Mem will be placed in each of the
+ words in MM1. Bits 1 and 0 of imm8 encode the source for
+ destination word 0 (MM1[15-0]), bits 3 and 2 encode for word 1,
+ bits 5 and 4 encode for word 2, and bits 7 and 6 encode for
+ word 3 (MM1[63-48]). Similarly, the two-bit encoding represents
+ which source word is to be used, e.g., a binary encoding of 10
+ indicates that source word 2 (MM2/Mem[47-32]) will be used.
+
 
 \H{insPSLLD} \i\c{PSLLx}, \i\c{PSRLx}, \i\c{PSRAx}: MMX Bit Shifts
 
@@ -8061,6 +8902,28 @@ You can force the longer (286 and upwards, beginning with a \c{C1}
 byte) form of \c{RCL foo,1} by using a \c{BYTE} prefix: \c{RCL
 foo,BYTE 1}. Similarly with \c{RCR}.
 
+
+\H{insRCPPS} \i\c{RCPPS}: Packed Single-FP Reciprocal
+
+\c RCPPS xmmreg,memory           ; 0F,53,/r   [KATMAI,SSE] 
+\c RCPPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{RCPPS}RCPPS returns an approximation of the reciprocal of the
+ SP FP numbers from xmm2/m128. The maximum error for this
+ approximation is: Error <=1.5x2-12
+
+
+\H{insRCPSS} \i\c{RCPSS}: Scalar Single-FP Reciprocal
+
+\c RCPSS xmmreg,memory           ; F3,0F,53,/r [KATMAI,SSE] 
+\c RCPSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{RCPSS}RCPSS returns an approximation of the reciprocal of the
+ lower SP FP number from xmm2/m32; the upper three fields are
+ passed through from xmm1. The maximum error for this
+ approximation is: |Error| <= 1.5x2-12
+
+
 \H{insRDMSR} \i\c{RDMSR}: Read Model-Specific Registers
 
 \c RDMSR                         ; 0F 32                [PENT]
@@ -8145,6 +9008,28 @@ foo,BYTE 1}. Similarly with \c{ROR}.
 \c{RSM} returns the processor to its normal operating mode when it
 was in System-Management Mode.
 
+
+\H{insRSQRTPS} \i\c{RSQRTPS}:Packed Single-FP Square Root Reciprocal
+
+\c RSQRTPS xmmreg,memory           ; 0F,52,/r   [KATMAI,SSE] 
+\c RSQRTPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
+
+\c{RSQRTPS} RSQRTPS returns an approximation of the reciprocal
+ of the square root of the SP FP numbers rom xmm2/m128. The
+ maximum error for this approximation is: Error| <= 1.5x2-12
+
+
+\H{insRSQRTSS} \i\c{RSQRTSS}:Scalar Single-FP Square Root Reciprocal
+
+\c RSQRTSS xmmreg,memory         ; F3,0F,52,/r  [KATMAI,SSE] 
+\c RSQRTSS xmmreg,xmmreg         ; ??           [KATMAI,SSE] 
+
+\c{RSQRTSS} RSQRTSS returns an approximation of the reciprocal
+ of the square root of the lowest SP FP number from xmm2/m32;
+ the upper three fields are passed through from xmm1. The maximum
+ error for this approximation is: |Error| <= 1.5x2-12
+
+
 \H{insSAHF} \i\c{SAHF}: Store AH to Flags
 
 \c SAHF                          ; 9E                   [8086]
@@ -8193,7 +9078,7 @@ foo,BYTE 1}. Similarly with \c{SAR}.
 
 \H{insSALC} \i\c{SALC}: Set AL from Carry Flag
 
-\c SALC                          ; D6                   [8086,UNDOC]
+\c SALC                          ; D6                  [8086,UNDOC]
 
 \c{SALC} is an early undocumented instruction similar in concept to
 \c{SETcc} (\k{insSETcc}). Its function is to set \c{AL} to zero if
@@ -8272,6 +9157,36 @@ first unequal or equal byte is found.
 
 \c{SETcc} sets the given 8-bit operand to zero if its condition is
 not satisfied, and to 1 if it is.
+
+
+\H{insSFENCE} \i\c{SFENCE}: Store Fence
+
+\c SFENCE 0,0,0           ; 0F AE /7               [KATMAI] 
+
+\c{SFENCE} Weakly ordered memory types can enable higher
+ performance through such techniques as out-of-order issue,
+ write-combining, and write-collapsing. Memory ordering issues
+ can arise between a producer and a consumer of data and there
+ are a number of common usage models which may be affected by
+ weakly ordered stores: 
+      1. library functions, which use weakly ordered memory
+         to write results 
+      2. compiler-generated code, which also benefit from writing
+         weakly-ordered results 
+      3. hand-written code
+ The degree to which a consumer of data knows that the data is
+ weakly ordered can vary for these cases. As a result, the SFENCE
+ instruction provides a performance-efficient way of ensuring
+ ordering between routines that produce weakly-ordered results
+ and routines that consume this data. The SFENCE is ordered with
+ respect to stores and  other SFENCE instructions. 
+    SFENCE uses the following ModRM encoding:
+           Mod (7:6) = 11B
+           Reg/Opcode (5:3) = 111B
+           R/M (2:0) = 000B
+ All other ModRM encodings are defined to be reserved, and use
+ of these encodings risks incompatibility with future processors.
+
 
 \H{insSGDT} \i\c{SGDT}, \i\c{SIDT}, \i\c{SLDT}: Store Descriptor Table Pointers
 
@@ -8359,6 +9274,18 @@ EAX,EBX,4} would update \c{EAX} to hold \c{0xF0123456}.
 The number of bits to shift by is given by the third operand. Only
 the bottom 5 bits of the shift count are considered.
 
+
+\H{insSHUFPS} \i\c{SHUFPS}: Shuffle Single-FP
+
+\c SHUFPS xmmreg,memory,immediate ; 0F,C6,/r, ib [KATMAI,SSE,SB,AR2]
+\c SHUFPS xmmreg,xmmreg,immediate ; ??         [KATMAI,SSE,SB,AR2] 
+
+\c{SHUFPS} The SHUFPS instruction is able to shuffle any of the
+ four SP FP numbers from xmm1 to the lower two destination fields;
+ the upper two destination fields are generated from a shuffle of
+ any of the four SP FP numbers from xmm2/m128.
+
+
 \H{insSMI} \i\c{SMI}: System Management Interrupt
 
 \c SMI                           ; F1                   [386,UNDOC]
@@ -8375,6 +9302,25 @@ machine into system-management mode, a special debugging mode.
 the Machine Status Word, on 286 processors) into the destination
 operand. See also \c{LMSW} (\k{insLMSW}).
 
+
+\H{insSQRTPS} \i\c{SQRTPS}: Packed Single-FP Square Root
+
+\c SQRTPS xmmreg,memory           ; 0F,51,/r    [KATMAI,SSE] 
+\c SQRTPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{SQRTPS} The SQRTPS instruction returns the square root of
+ the packed SP FP numbers from xmm2/m128.
+
+
+\H{insSQRTSS} \i\c{SQRTSS}: Scalar Single-FP Square Root
+
+\c SQRTSS xmmreg,memory           ; F3,0F,51,/r [KATMAI,SSE] 
+\c SQRTSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{SQRTSS} The SQRTSS instructions return the square root of
+ the lowest SP FP numbers of their operand.
+
+
 \H{insSTC} \i\c{STC}, \i\c{STD}, \i\c{STI}: Set Flags
 
 \c STC                           ; F9                   [8086]
@@ -8388,6 +9334,21 @@ These instructions set various flags. \c{STC} sets the carry flag;
 To clear the carry, direction, or interrupt flags, use the \c{CLC},
 \c{CLD} and \c{CLI} instructions (\k{insCLC}). To invert the carry
 flag, use \c{CMC} (\k{insCMC}).
+
+
+\H{insSTMXCSR} \i\c{STMXCSR}: Store Streaming SIMD Extension
+ Control/Status
+
+\c STMXCSR memory           ; 0F,AE,/3       [KATMAI,SSE,SD] 
+
+\c{STMXCSR} The MXCSR control/status register is used to enable
+ masked/unmasked exception handling, to set rounding modes,
+ to set flush-to-zero mode, and to view exception status flags.
+ Refer to LDMXCSR for a description of the format of MXCSR.
+ The linear address corresponds to the address of the
+ least-significant byte of the referenced memory data.
+ The reserved bits in the MXCSR are stored as zeroes.
+
 
 \H{insSTOSB} \i\c{STOSB}, \i\c{STOSW}, \i\c{STOSD}: Store Byte to String
 
@@ -8457,6 +9418,24 @@ sign-extended to the length of the first operand. In these cases,
 the \c{BYTE} qualifier is necessary to force NASM to generate this
 form of the instruction.
 
+\H{insSUBPS} \i\c{SUBPS}: Packed Single-FP Subtract
+
+\c SUBPS xmmreg,memory           ; 0F,5C,/r    [KATMAI,SSE] 
+\c SUBPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{SUBPS}T he SUBPS instruction subtracts the packed SP FP
+ numbers of both their operands. 
+
+
+\H{insSUBSS} \i\c{SUBSS}: Scalar Single-FP Subtract
+
+\c SUBSS xmmreg,memory           ; F3,0F,5C, /r [KATMAI,SSE] 
+\c SUBSS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{SUBSS} The SUBSS instruction subtracts the lower SP FP
+ numbers of both their operands.
+
+
 \H{insTEST} \i\c{TEST}: Test Bits (notional bitwise AND)
 
 \c TEST r/m8,reg8                ; 84 /r                [8086]
@@ -8475,6 +9454,19 @@ form of the instruction.
 affects the flags as if the operation had taken place, but does not
 store the result of the operation anywhere.
 
+\H{insUCOMISS} \i\c{UCOMISS}: Unordered Scalar Single-FP compare
+ and set EFLAGS
+
+\c UCOMISS xmmreg,memory           ; 0F,2E,/r          [KATMAI,SSE] 
+\c UCOMISS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{UCOMISS} The UCOMISS instructions compare the two lowest scalar
+ SP FP numbers, and set the ZF,PF,CF bits in the EFLAGS register
+ as described above. In addition, the OF, SF, and AF bits in the
+ EFLAGS register are zeroed out. The unordered predicate is
+ returned if either source operand is a NaN (qNaN or sNaN).
+
+
 \H{insUMOV} \i\c{UMOV}: User Move Data
 
 \c UMOV r/m8,reg8                ; 0F 10 /r             [386,UNDOC]
@@ -8489,6 +9481,27 @@ This undocumented instruction is used by in-circuit emulators to
 access user memory (as opposed to host memory). It is used just like
 an ordinary memory/register or register/register \c{MOV}
 instruction, but accesses user space.
+
+
+\H{insUNPCKHPS} \i\c{UNPCKHPS}: Unpack High Packed Single-FP Data
+
+\c UNPCKHPS xmmreg,memory           ; 0F,15,/r    [KATMAI,SSE] 
+\c UNPCKHPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{UNPCKHPS} The UNPCKHPS instruction performs an interleaved
+ unpack of the high-order data elements of XMM1 and XMM2/Mem.
+ It ignores the lower half of the sources. 
+
+
+\H{insUNPCKLPS} \i\c{UNPCKLPS}: Unpack Low Packed Single-FP Data
+
+\c UNPCKLPS xmmreg,memory           ; 0F,14,/r    [KATMAI,SSE] 
+\c UNPCKLPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{UNPCKLPS} The UNPCKLPS instruction performs an interleaved
+ unpack of the low-order data elements of XMM1 and XMM2/Mem.
+ It ignores the upper half part of the sources. 
+
 
 \H{insVERR} \i\c{VERR}, \i\c{VERW}: Verify Segment Readability/Writability
 
@@ -8629,3 +9642,12 @@ form of the instruction.
 
 The MMX instruction \c{PXOR} (see \k{insPXOR}) performs the same
 operation on the 64-bit MMX registers.
+
+
+\H{insXORPS} \i\c{XORPS}: Bit-wise Logical Xor for Single-FP Data
+
+\c XORPS xmmreg,memory           ; 0F,57,/r    [KATMAI,SSE] 
+\c XORPS xmmreg,xmmreg           ; ??          [KATMAI,SSE] 
+
+\c{XORPS} The XORPS instruction returns a bit-wise logical XOR
+ between XMM1 and XMM2/Mem. 

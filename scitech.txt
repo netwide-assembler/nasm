@@ -1,0 +1,213 @@
+
+                        The Netwide Assembler: NASM
+                        ===========================
+
+--------------------------------------------------------------------------------
+                         SciTech MGL Modifications
+--------------------------------------------------------------------------------
+
+All changes can be compiled in and out using the TASM_COMPAT macros,
+and when compiled without TASM_COMPAT defined we get the exact same
+binary as the unmodified 0.98 sources.
+
+standard.mac:
+macros.c:
+ . Added macros to ignore TASM directives before first include
+
+nasm.h:
+ . Added extern declaration for tasm_compatible_mode
+
+nasm.c:
+ . Added global variable tasm_compatible_mode
+ . Added command line switch for TASM compatible mode (-t)
+ . Changed version command line to reflect when compiled with TASM additions
+ . Added response file processing to allow all arguments on a single
+   line (response file is @resp rather than -@resp for NASM format).
+
+labels.c:
+ . Changes islocal() macro to support TASM style @@local labels.
+ . Added islocalchar() macro to support TASM style @@local labels.
+
+parser.c:
+ . Added support for TASM style memory references (ie: mov [DWORD eax],10
+   rather than the NASM style mov DWORD [eax],10).
+
+preproc.c:
+ . Added new directives, %arg, %local, %stacksize to directives table
+ . Added support for TASM style directives without a leading % symbol.
+
+--------------------------------------------------------------------------------
+    Integrated a block of changes from Andrew Zabolotny <bit@eltech.ru>:
+--------------------------------------------------------------------------------
+
+-*- A new keyword %xdefine and its case-insensitive counterpart %ixdefine.
+    They work almost the same way as %define and %idefine but expand
+    the definition immediately, not on the invocation. Something like a cross
+    between %define and %assign. The "x" suffix stands for "eXpand", so
+    "xdefine" can be deciphered as "expand-and-define". Thus you can do
+    things like this:
+
+	%assign ofs	0
+	
+	%macro	arg	1
+		%xdefine %1 dword [esp+ofs]
+		%assign ofs ofs+4
+	%endmacro
+
+-*- Changed the place where the expansion of %$name macros are expanded.
+    Now they are converted into ..@ctxnum.name form when detokenizing, so
+    there are no quirks as before when using %$name arguments to macros,
+    in macros etc. For example:
+
+	%macro	abc	1
+		%define	%1 hello
+	%endm
+
+	abc	%$here
+	%$here
+
+    Now last line will be expanded into "hello" as expected. This also allows
+    for lots of goodies, a good example are extended "proc" macros included
+    in this archive.
+
+-*- Added a check for "cstk" in smacro_defined() before calling get_ctx() -
+    this allows for things like:
+
+	%ifdef %$abc
+	%endif
+
+    to work without warnings even in no context.
+
+-*- Added a check for "cstk" in %if*ctx and %elif*ctx directives -
+    this allows to use %ifctx without excessive warnings. If there is
+    no active context, %ifctx goes through "false" branch.
+
+-*- Removed "user error: " prefix with %error directive: it just clobbers the
+    output and has absolutely no functionality. Besides, this allows to write
+    macros that does not differ from built-in functions in any way.
+
+-*- Added expansion of string that is output by %error directive. Now you
+    can do things like:
+
+	%define hello(x) Hello, x!
+
+	%define %$name andy
+	%error "hello(%$name)"
+
+    Same happened with %include directive.
+
+-*- Now all directives that expect an identifier will try to expand and
+    concatenate everything without whitespaces in between before usage.
+    For example, with "unfixed" nasm the commands
+
+	%define %$abc hello
+	%define __%$abc goodbye
+	__%$abc
+
+    would produce "incorrect" output: last line will expand to
+
+	hello goodbyehello
+
+    Not quite what you expected, eh? :-) The answer is that preprocessor
+    treats the %define construct as if it would be
+
+	%define __ %$abc goodbye
+
+    (note the white space between __ and %$abc). After my "fix" it
+    will "correctly" expand into
+
+	goodbye
+
+    as expected. Note that I use quotes around words "correct", "incorrect"
+    etc because this is rather a feature not a bug; however current behaviour
+    is more logical (and allows more advanced macro usage :-).
+
+    Same change was applied to:
+	%push,%macro,%imacro,%define,%idefine,%xdefine,%ixdefine,
+	%assign,%iassign,%undef
+
+-*- A new directive [WARNING {+|-}warning-id] have been added. It works only
+    if the assembly phase is enabled (i.e. it doesn't work with nasm -e).
+
+-*- A new warning type: macro-selfref. By default this warning is disabled;
+    when enabled NASM warns when a macro self-references itself; for example
+    the following source:
+
+	[WARNING macro-selfref]
+
+	%macro		push	1-*
+		%rep	%0
+			push	%1
+			%rotate	1
+		%endrep
+	%endmacro
+
+			push	eax,ebx,ecx
+
+    will produce a warning, but if we remove the first line we won't see it
+    anymore (which is The Right Thing To Do {tm} IMHO since C preprocessor
+    eats such constructs without warnings at all).
+
+-*- Added a "error" routine to preprocessor which always will set ERR_PASS1
+    bit in severity_code. This removes annoying repeated errors on first
+    and second passes from preprocessor.
+
+-*- Added the %+ operator in single-line macros for concatenating two
+    identifiers. Usage example:
+
+	%define _myfunc _otherfunc
+	%define cextern(x) _ %+ x
+	cextern (myfunc)
+
+    After first expansion, third line will become "_myfunc". After this
+    expansion is performed again so it becomes "_otherunc".
+
+-*- Now if preprocessor is in a non-emmitting state, no warning or error
+    will be emmitted. Example:
+
+	%if 1
+		mov	eax,ebx
+	%else
+		put anything you want between these two brackets,
+		even macro-parameter references %1 or local labels %$zz
+		or macro-local labels %%zz - no warning will be emmitted.
+	%endif
+
+-*- Context-local variables on expansion as a last resort are looked up
+    in outer contexts. For example, the following piece:
+
+	%push	outer
+	%define	%$a [esp]
+
+		%push	inner
+		%$a
+		%pop
+	%pop
+
+    will expand correctly the fourth line to [esp]; if we'll define another
+    %$a inside the "inner" context, it will take precedence over outer
+    definition. However, this modification has been applied only to
+    expand_smacro and not to smacro_define: as a consequence expansion
+    looks in outer contexts, but %ifdef won't look in outer contexts.
+
+    This behaviour is needed because we don't want nested contexts to
+    act on already defined local macros. Example:
+
+	%define %$arg1	[esp+4]
+	test	eax,eax
+	if	nz
+		mov	eax,%$arg1
+	endif
+
+    In this example the "if" mmacro enters into the "if" context, so %$arg1
+    is not valid anymore inside "if". Of course it could be worked around
+    by using explicitely %$$arg1 but this is ugly IMHO.
+
+-*- Fixed memory leak in %undef. The origline wasn't freed before
+    exiting on success.
+
+-*- Fixed trap in preprocessor when line expanded to empty set of tokens.
+    This happens, for example, in the following case:
+
+	#define SOMETHING
+	SOMETHING

@@ -152,7 +152,7 @@ static int jmp_match (long segment, long offset, int bits,
 
 
     if (c != 0370) return 0;
-    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return 1;	/* match a forward reference */
+    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return (! pass0); /*1;*/        /* match a forward reference */
     
     isize = calcsize (segment, offset, bits, ins, code);
     if (ins->oprs[0].segment != segment) return 0;

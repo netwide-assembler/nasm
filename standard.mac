@@ -96,3 +96,13 @@ __SECT__
 [cpu %1]
 %endmacro
 
+
+; Macros to make NASM ignore some TASM directives before the first include
+; directive.
+
+%idefine IDEAL
+%idefine JUMPS
+%idefine P386
+%idefine P486
+%idefine P586
+%idefine END

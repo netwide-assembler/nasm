@@ -4,16 +4,8 @@ RDOFF Utils v0.3
 The files contained in this directory are the C source code of a set
 of tools (and general purpose library files) for the manipulation of
 RDOFF version 2 object files. Note that these programs (with the
-exception of 'rdfdump') will NOT work with version 1 object files. See
-the subdirectory v1 for programs that perform that task. 
-
-Note: If you do not have a v1 subdirectory, you may have unpacked the
-ZIP file without specifying the 'restore directory structure' option -
-delete these files, and run your ZIP extracter again with this option 
-turned on ('-d' for PKUNZIP).
-
-RDOFF version 1 is no longer really supported, you should be using
-v2 instead now.
+exception of 'rdfdump') will NOT work with version 1 object files. Version 1
+of RDOFF is no longer supported. You should be using v2 instead now.
 
 There is also a 'Changes' file, which documents the differences between
 RDOFF 1 and 2, and an 'rdoff2.txt' file, with complete documentation for the

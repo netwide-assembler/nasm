@@ -24,7 +24,9 @@ OUT		= nasm.info
 
 all: $(OUT)
 
-.SUFFIXES: .src .texi .info .ps .rtf .hpj .dvi .ps .txt .pl
+os2: nasm.inf
+
+.SUFFIXES: .src .texi .info .ps .rtf .hpj .dvi .ps .txt .pl .ipf .inf
 
 # Consider html, txt and src output a side effect
 .src.texi:
@@ -37,11 +39,18 @@ nasm.info: nasmdoc.texi
 	$(MAKEINFO) $<
 	mv -f *.info *.info-* info
 
+# Rules for building an OS/2 book
+.texi.ipf:
+	texi2ipf $< >$@
+
+nasm.inf: nasmdoc.ipf
+	ipfc -i -s $< $@
+
 clean:
-	-rm -f *.rtf *.hpj *.texi *.ph *.gid
+	-rm -f *.rtf *.hpj *.texi *.ph *.gid *.ipf
 
 spotless: clean
-	-rm -rf html info *.hlp *.txt *.ps
+	-rm -rf html info *.hlp *.txt *.ps *.inf
 
 install: all
 	$(INSTALL_DATA) info/* $(INSTALLROOT)$(infodir)

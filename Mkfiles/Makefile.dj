@@ -13,7 +13,7 @@
 
 # You may need to adjust these values.
 
-CC = gcc -s
+CC = gcc
 CFLAGS = -O2 -I.
 
 # You _shouldn't_ need to adjust anything below this line.

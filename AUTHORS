@@ -1,0 +1,90 @@
+This is the AUTHORS file for the NASM project located at:
+http://nasm.rm-f.net/
+
+Names should be inserted as follows:
+
+N: Name Here
+E: Email Here
+D: Description Here
+D: Additional Description Here.... and so on
+
+Such is life.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+N: Julian Hall
+E: Jules@acris.co.uk
+D: Original author and co-conspirator
+
+N: Simon Tatham
+E: anakin@pobox.com
+D: Original author and co-conspirator
+
+N: Nelson Rush
+E: palisade@users.sourceforge.net
+D: Some guy.
+
+N: Frank Kotler
+E: fbkotler@nettaxi.com
+D: Bug smashing.
+D: Documentation - "KATMAI" and "3DNow!" instructions supported by 0.98
+
+N: Stephen Silver
+E: nasm@argentum.freeserve.co.uk
+D: Documentation - "3dNow!" instructions and misc.
+D: insns.dat fixes and new instructions.
+
+N: AMD Inc. (names of developers here?)
+E: 
+D: 3DNow instructions
+D: New Athlon instructions
+D: Makefile.vc fix
+
+N: John Coffman
+E: johninsd@users.sourceforge.net
+D: added Jcc optimizations; CPU level checks
+D: bug fixes, compilation fixes
+
+N: Yuri Zaporogets
+E: yuriz@users.sourceforge.net
+D: RDOFF support
+
+N: H. Peter Anvin
+E: hpa@zytor.com
+D: Organized 0.98 release and Linux binaries
+
+N: John Fine
+E: johnfine@earthlink.net
+D: Preprocessor and OBJ (OMF) output format driver
+D: Organized DOS versions of 0.98 release
+
+N: Kendall Bennet
+E: KendallB@scitechsoft.com 
+D: NASM enhancements
+D: macros
+D: Syntax modifications
+
+N: Gary Clark
+E: 
+D: AMD 3DNow! instructions
+
+N: Andrew Crabtree
+E: 
+D: Debugging support
+
+N: Rafael R. Sevilla
+E: dido@pacific.net.ph
+D: RDF2HEX utility
+
+N: Jaime Tejedor Gómez, aka Metalbrain
+E: metalbrain_coder@gmx.net
+D: jecxz bug fix
+
+N: James Seter
+E: pharos@zsnes.com
+D: --POSTFIX, --PREFIX switches
+D: ?
+
+N: Edward J. Beroset
+E: beroset@mindspring.com
+D: added %substr and %strlen
+

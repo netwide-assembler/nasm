@@ -54,4 +54,3 @@ clean :
         del *.$(OBJ) rdfdump$(EXE) ldrdf$(EXE) rdx$(EXE) rdflib$(EXE) rdf2bin$(EXE)
 
 
-

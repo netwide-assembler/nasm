@@ -1,3 +1,46 @@
+01/28/01 - fbk - added Stepane Denis' SSE2 instructions to a *working*
+           version of the code - some earlier versions were based on
+           broken code - sorry 'bout that. version "0.98.07"
+
+01/28/01 - fbk - cosmetic modifications to nasm.c, nasm.h,
+           AUTHORS, MODIFIED
+
+01/18/01 - fbk - "metalbrain"s jecxz bug fix in insns.dat
+           - alter nasmdoc.src to match - version "0.98.06f"
+
+01/09/01 - fbk - removed the "outforms.h" file - it appears to be
+           someone's old backup of "outform.h". version "0.98.06e" 
+
+01/09/01 - fbk - finally added the fix for the "multiple %includes bug",
+           known since 7/27/99 - reported originally (?) and sent to
+           us by Austin Lunnen - he reports that John Fine had a fix
+           within the day. Here it is...
+
+---- Nelson Rush resigns from the group. Big thanks to Nelson for
+           his leadership and enthusiasm in getting these changes
+           incorporated into Nasm!
+
+---- fbk - [list +], [list -] directives - ineptly implemented, should
+           be re-written or removed, perhaps.
+
+---- Brian Raiter / fbk - "elfso bug" fix - applied to aoutb format
+           as well - testing might be desirable...
+
+08/07/00 - James Seter - -postfix, -prefix command line switches.
+
+---- Yuri Zaporogets - rdoff utility changes.
+
+John Coffman's changes:
+For the JMP and other optimizations see the file README03.txt.
+
+Kendall Bennett's changes:
+For changes since the 0.98 release see the file scitech.txt. Note
+            that you must define "TASM_COMPAT" at compile-time
+            to get the Tasm Ideal Mode compatibility.
+
+----------------------------------------------
+... this is the 0.98 "modified" file ...
+--------------------------------------------------
 This file details changes since NASM 0.98p3.  All the releases in this
 file have been produced by H. Peter Anvin <hpa@zytor.com>.
 

@@ -74,16 +74,16 @@ struct ExportRec {
   char	label[33];	/* zero terminated as above. max len = 32 chars */
 };
 
-struct DLLRec {
-  byte	type;		/* must be 4 */
-  byte  reclen;		/* equals 1+library name */
-  char	libname[128];	/* name of library to link with at load time */
-};
-
 struct BSSRec {
   byte	type;		/* must be 5 */
-  byte  reclen;		/* equeals 4 */
+  byte  reclen;		/* equals 4 */
   long	amount;		/* number of bytes BSS to reserve */
+};
+
+struct DLLModRec {
+  byte type;		/* 4 for DLLRec, 8 for ModRec */
+  byte reclen;		/* 1+lib name length for DLLRec, 1+mod name length */
+  char name[128];	/* library to link at load time or module name */
 };
 
 #define COUNT_SEGTYPES 9
@@ -321,11 +321,14 @@ static void write_bss_rec(struct BSSRec *r)
     headerlength += r->reclen + 2;
 }
 
-static void write_dll_rec(struct DLLRec *r)
+/*
+ * Write library record. Also used for module name records.
+ */
+static void write_dllmod_rec(struct DLLModRec *r)
 {
     saa_wbytes(header,&r->type,1);
     saa_wbytes(header,&r->reclen,1);
-    saa_wbytes(header,r->libname,strlen(r->libname) + 1);
+    saa_wbytes(header,r->name,strlen(r->name) + 1);
     headerlength += r->reclen + 2;
 }
 
@@ -334,11 +337,10 @@ static void rdf2_deflabel(char *name, long segment, long offset,
 {
   struct ExportRec r;
   struct ImportRec ri;
-#ifdef VERBOSE_WARNINGS
-  static int warned_common = 0;
-#endif
   static int farsym = 0;
   static int i;
+
+  if (is_global != 1) return;
 
   if (special) {
     while(*special == ' ' || *special == '\t') special++;
@@ -356,16 +358,6 @@ static void rdf2_deflabel(char *name, long segment, long offset,
   if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
     error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
     return;
-  }
-
-  if (is_global == 2) {
-#ifdef VERBOSE_WARNINGS
-    if (!warned_common) {
-      error(ERR_WARNING,"common declarations not supported: using extern");
-      warned_common = 1;
-    }
-#endif
-    is_global = 1;
   }
 
   for (i = 0; i < nsegments; i++) {
@@ -635,13 +627,24 @@ static long rdf2_segbase (long segment) {
 }
 
 static int rdf2_directive (char *directive, char *value, int pass) {
-    struct DLLRec r;
-    
+    struct DLLModRec r;
+
     if (! strcmp(directive, "library")) {
 	if (pass == 1) {
 	    r.type = 4;
-	    strcpy(r.libname, value);
-	    write_dll_rec(&r);
+	    r.reclen=strlen(value)+1;
+	    strcpy(r.name, value);
+	    write_dllmod_rec(&r);
+	}
+	return 1;
+    }
+
+    if (! strcmp(directive, "module")) {
+	if (pass == 1) {
+	    r.type = 8;
+	    r.reclen=strlen(value)+1;
+	    strcpy(r.name, value);
+	    write_dllmod_rec(&r);
 	}
 	return 1;
     }
@@ -657,6 +660,9 @@ static char *rdf2_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",
+    "%endmacro",
+    "%imacro module 1+.nolist",
+    "[module %1]",
     "%endmacro",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",

@@ -15,8 +15,24 @@
 /*
  * A local label is one that begins with exactly one period. Things
  * that begin with _two_ periods are NASM-specific things.
+ *
+ * If TASM compatibility is enabled, a local label can also begin with
+ * @@, so @@local is a TASM compatible local label. Note that we only
+ * check for the first @ symbol, although TASM requires both.
  */
+#ifdef	TASM_COMPAT
+#define islocal(l)                                              \
+	(tasm_compatible_mode ?					\
+	(((l)[0] == '.' || (l)[0] == '@') && (l)[1] != '.') :   \
+	((l)[0] == '.' && (l)[1] != '.'))
+#define islocalchar(c)						\
+	(tasm_compatible_mode ?                                  \
+	((c) == '.' || (c) == '@') :                            \
+	((c) == '.'))
+#else
 #define islocal(l) ((l)[0] == '.' && (l)[1] != '.')
+#define islocalchar(c) ((c) == '.')
+#endif
 
 #define LABEL_BLOCK  32               /* no. of labels/block */
 #define LBLK_SIZE    (LABEL_BLOCK*sizeof(union label))
@@ -70,6 +86,9 @@ static char *perm_copy (char *string1, char *string2);
 static char *prevlabel;
 
 static int initialised = FALSE;
+
+char lprefix[PREFIX_MAX] = {0};
+char lpostfix[PREFIX_MAX] = {0};
 
 /*
  * Internal routine: finds the `union label' corresponding to the
@@ -160,7 +179,8 @@ void redefine_label (char *label, long segment, long offset, char *special,
                    int is_norm, int isextrn, struct ofmt *ofmt, efunc error) 
 {
     union label *lptr;
-
+    int exi;
+    
     /* This routine possibly ought to check for phase errors.  Most assemblers
      * check for phase errors at this point.  I don't know whether phase errors
      * are even possible, nor whether they are checked somewhere else
@@ -185,18 +205,50 @@ void redefine_label (char *label, long segment, long offset, char *special,
         error (ERR_PANIC, "can't find label `%s' on pass two", label);
     
     if (!islocal(label)) {
-        if (*label != '.' && lptr->defn.is_norm)
+	if (!islocalchar(*label) && lptr->defn.is_norm)
             prevlabel = lptr->defn.label;
     }
 
     global_offset_changed |= (lptr->defn.offset != offset);
     lptr->defn.offset = offset;
+    
+if (pass0 == 1) {
+    exi = !!(lptr->defn.is_global & GLOBAL_BIT);
+    if (exi)
+    {
+	char *xsymbol;
+	int slen;
+	slen = strlen(lprefix);
+	slen += strlen(lptr->defn.label);
+	slen += strlen(lpostfix);
+	slen++; /* room for that null char */
+	xsymbol = nasm_malloc(slen);
+	sprintf(xsymbol,"%s%s%s",lprefix,lptr->defn.label,lpostfix);
+
+	ofmt->symdef (xsymbol, segment, offset, exi, 
+		special ? special : lptr->defn.special);
+	ofmt->current_dfmt->debug_deflabel (xsymbol, segment, offset, exi,
+		special ? special : lptr->defn.special);
+/**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
+    }
+    else
+    {
+	if ( (lptr->defn.is_global & (GLOBAL_BIT|EXTERN_BIT)) != EXTERN_BIT ) {
+	ofmt->symdef (lptr->defn.label, segment, offset, exi,
+		special ? special : lptr->defn.special);
+	ofmt->current_dfmt->debug_deflabel (label, segment, offset, exi,
+		special ? special : lptr->defn.special);
+	}
+    }
+} /* if (pass0 == 1) */
+
 }
 
 void define_label (char *label, long segment, long offset, char *special,
                    int is_norm, int isextrn, struct ofmt *ofmt, efunc error) 
 {
     union label *lptr;
+    int exi;
 
 #ifdef DEBUG
 #if DEBUG<3
@@ -212,26 +264,48 @@ void define_label (char *label, long segment, long offset, char *special,
     }
     lptr->defn.is_global |= DEFINED_BIT;
     if (isextrn)
-        lptr->defn.is_global |= EXTERN_BIT;
+	lptr->defn.is_global |= EXTERN_BIT;
 
-    if (label[0] != '.' && is_norm)    /* not local, but not special either */
-        prevlabel = lptr->defn.label;
-    else if (label[0] == '.' && label[1] != '.' && !*prevlabel)
-        error(ERR_NONFATAL, "attempt to define a local label before any"
-              " non-local labels");
+    if (!islocalchar(label[0]) && is_norm)    /* not local, but not special either */
+	prevlabel = lptr->defn.label;
+    else if (islocal(label) && !*prevlabel) {
+	error(ERR_NONFATAL, "attempt to define a local label before any"
+	      " non-local labels");
+	}
 
     lptr->defn.segment = segment;
     lptr->defn.offset = offset;
-    lptr->defn.is_norm = (label[0] != '.' && is_norm);
+    lptr->defn.is_norm = (!islocalchar(label[0]) && is_norm);
 
-    if ( (lptr->defn.is_global & (GLOBAL_BIT|EXTERN_BIT)) != EXTERN_BIT ) {
-      ofmt->symdef (lptr->defn.label, segment, offset,
-                    !!(lptr->defn.is_global & GLOBAL_BIT),
-                    special ? special : lptr->defn.special);
-      ofmt->current_dfmt->debug_deflabel (label, segment, offset,
-                    !!(lptr->defn.is_global & GLOBAL_BIT),
-                    special ? special : lptr->defn.special);
+if (pass0 == 1 || (!is_norm && !isextrn && (segment&1))) {
+    exi = !!(lptr->defn.is_global & GLOBAL_BIT);
+    if (exi)
+    {
+	char *xsymbol;
+	int slen;
+	slen = strlen(lprefix);
+	slen += strlen(lptr->defn.label);
+	slen += strlen(lpostfix);
+	slen++; /* room for that null char */
+	xsymbol = nasm_malloc(slen);
+	sprintf(xsymbol,"%s%s%s",lprefix,lptr->defn.label,lpostfix);
+
+	ofmt->symdef (xsymbol, segment, offset, exi, 
+		special ? special : lptr->defn.special);
+	ofmt->current_dfmt->debug_deflabel (xsymbol, segment, offset, exi,
+		special ? special : lptr->defn.special);
+/**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
     }
+    else
+    {
+	if ( (lptr->defn.is_global & (GLOBAL_BIT|EXTERN_BIT)) != EXTERN_BIT ) {
+	ofmt->symdef (lptr->defn.label, segment, offset, exi,
+		special ? special : lptr->defn.special);
+        ofmt->current_dfmt->debug_deflabel (label, segment, offset, exi,
+		special ? special : lptr->defn.special);
+	}
+    }
+} /* if (pass0 == 1) */
 }
 
 void define_common (char *label, long segment, long size, char *special,
@@ -246,7 +320,7 @@ void define_common (char *label, long segment, long size, char *special,
     }
     lptr->defn.is_global |= DEFINED_BIT;
 
-    if (label[0] != '.')               /* not local, but not special either */
+    if (!islocalchar(label[0]))	       /* not local, but not special either */
         prevlabel = lptr->defn.label;
     else
         error(ERR_NONFATAL, "attempt to define a local label as a "

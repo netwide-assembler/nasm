@@ -62,6 +62,7 @@ struct itemplate {
 #define IF_MMX    0x00004000UL	       /* it's an MMX instruction */
 #define IF_3DNOW  0x00008000UL	       /* it's a 3DNow! instruction */
 #define IF_SSE    0x00010000UL	       /* it's a SSE (KNI, MMX2) instruction */
+#define IF_SSE2   0x00020000UL	       /* it's a SSE2 instruction */
 #define IF_PMASK  0xFF000000UL	       /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL         /* the mask for processor instr. level */
 					/* also the highest possible processor */
@@ -74,6 +75,7 @@ struct itemplate {
 #define IF_PENT   0x05000000UL	       /* Pentium instruction */
 #define IF_P6     0x06000000UL	       /* P6 instruction */
 #define IF_KATMAI 0x07000000UL         /* Katmai instructions */
+#define IF_WILLAMETTE 0x08000000UL         /* Willamette instructions */
 #define IF_CYRIX  0x10000000UL	       /* Cyrix-specific instruction */
 #define IF_AMD    0x20000000UL	       /* AMD-specific instruction */
 

@@ -341,6 +341,7 @@ static void aout_deflabel (char *name, long segment, long offset,
 		struct tokenval tokval;
 		expr *e;
 		int fwd = FALSE;
+		char *saveme=stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
 
 		if (!bsd) {
 		    error(ERR_NONFATAL, "Linux a.out does not support"
@@ -369,6 +370,7 @@ static void aout_deflabel (char *name, long segment, long offset,
 			    sym->size = reloc_value(e);
 		    }
 		}
+		stdscan_bufptr=saveme;     /* bugfix? fbk 8/10/00 */
 	    }
 	    special_used = TRUE;
 	}

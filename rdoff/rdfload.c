@@ -29,12 +29,13 @@ extern int rdf_errno;
 
 rdfmodule * rdfload(const char *filename)
 {
-    rdfmodule 	* f = malloc(sizeof(rdfmodule));
+    rdfmodule 	* f;
     long 	bsslength = 0;
     char	* hdr;
     rdfheaderrec *r;
 
-    if (f == NULL) 
+    f = malloc(sizeof(rdfmodule));
+    if (f == NULL)
     {
 	rdf_errno = 6;		/* out of memory */
 	return NULL;
@@ -92,7 +93,7 @@ rdfmodule * rdfload(const char *filename)
     }
 
     f->b = malloc ( bsslength );
-    if (! f->b )
+    if (bsslength && (!f->b))
     {
 	free(f->t);
 	free(f->d);

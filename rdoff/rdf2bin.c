@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     int 	tmp;
     FILE 	*of;
     char 	* padding;
-    int 	codepad, datapad;
+    int 	codepad, datapad, bsspad=0;
 
     if (argc < 2) {
 	puts("Usage: rdf2bin [-o relocation-origin] [-p segment-alignment] "
@@ -58,6 +58,13 @@ int main(int argc, char **argv)
 		fprintf(stderr,"rdf2bin: invalid parameter: %s\n",*argv);
 		return 1;
 	    }
+	} else if (! strcmp(*argv,"-b")) {
+	    argv++, argc--;
+	    bsspad = readnum(*argv, &tmp);
+	    if (tmp) {
+		fprintf(stderr,"rdf2bin: invalid parameter: %s\n",*argv);
+		return 1;
+	    }    
 	} else 
 	    break;
 
@@ -69,8 +76,7 @@ int main(int argc, char **argv)
     }
     m = rdfload(*argv);
 
-    if (! m)
-    {
+    if (! m) {
 	rdfperror("rdf2bin",*argv);
 	return 1;
     }
@@ -118,6 +124,11 @@ int main(int argc, char **argv)
     {
 	fprintf(stderr,"rdf2bin: error writing to %s\n", *argv);
 	return 1;
+    }
+    
+    if (bsspad) {
+    	void *p = calloc(bsspad-=(m->bssrel - origin),1);
+	fwrite(p,1,bsspad,of);
     }
 
     fclose(of);

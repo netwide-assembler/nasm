@@ -124,7 +124,7 @@ static void list_output (long offset, void *data, unsigned long type)
 {
     long typ, size;
 
-    if (!listp || suppress)
+    if (!listp || suppress || user_nolist)    /* fbk - 9/2/00 */
 	return;
 
     typ = type & OUT_TYPMASK;
@@ -201,6 +201,10 @@ static void list_line (int type, char *line)
 {
     if (!listp)
 	return;
+    if (user_nolist){        /* fbk - 9/2/00 */
+        listlineno++;
+        return;
+    }
 
     if (mistack && mistack->inhibiting) 
     {

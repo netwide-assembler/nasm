@@ -421,28 +421,68 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	if (i == '[' || i == '&') {    /* memory reference */
 	    mref = TRUE;
 	    bracket = (i == '[');
-	    i = stdscan(NULL, &tokval);	    
+	    i = stdscan(NULL, &tokval);
 	    if (i == TOKEN_SPECIAL) {  /* check for address size override */
-		switch ((int)tokval.t_integer) {
-		  case S_NOSPLIT:
-		    result->oprs[operand].eaflags |= EAF_TIMESTWO;
-		    break;
-		  case S_BYTE:
-		    result->oprs[operand].eaflags |= EAF_BYTEOFFS;
-		    break;
-		  case S_WORD:
-		    result->oprs[operand].addr_size = 16;
-		    result->oprs[operand].eaflags |= EAF_WORDOFFS;
-		    break;
-		  case S_DWORD:
-		  case S_LONG:
-		    result->oprs[operand].addr_size = 32;
-		    result->oprs[operand].eaflags |= EAF_WORDOFFS;
-		    break;
-		  default:
-		    error (ERR_NONFATAL, "invalid size specification in"
-			   " effective address");
+#ifdef	TASM_COMPAT
+		if (tasm_compatible_mode) {
+		  switch ((int)tokval.t_integer) {
+		    /* For TASM compatibility a size override inside the
+		     * brackets changes the size of the operand, not the
+		     * address type of the operand as it does in standard
+		     * NASM syntax. Hence:
+		     *
+		     *	mov	eax,[DWORD val]
+		     *
+		     * is valid syntax in TASM compatibility mode. Note that
+		     * you lose the ability to override the default address
+		     * type for the instruction, but we never use anything
+		     * but 32-bit flat model addressing in our code.
+		     */
+		    case S_BYTE:
+		      result->oprs[operand].type |= BITS8;
+		      break;
+		    case S_WORD:
+		      result->oprs[operand].type |= BITS16;
+		      break;
+		    case S_DWORD:
+		    case S_LONG:
+		      result->oprs[operand].type |= BITS32;
+		      break;
+		    case S_QWORD:
+		      result->oprs[operand].type |= BITS64;
+		      break;
+		    case S_TWORD:
+		      result->oprs[operand].type |= BITS80;
+		      break;
+		    default:
+		      error (ERR_NONFATAL, "invalid operand size specification");
+		  }
+		} else {
+#endif
+		  /* Standard NASM compatible syntax */
+		  switch ((int)tokval.t_integer) {
+		    case S_NOSPLIT:
+		      result->oprs[operand].eaflags |= EAF_TIMESTWO;
+		      break;
+		    case S_BYTE:
+		      result->oprs[operand].eaflags |= EAF_BYTEOFFS;
+		      break;
+		    case S_WORD:
+		      result->oprs[operand].addr_size = 16;
+		      result->oprs[operand].eaflags |= EAF_WORDOFFS;
+		      break;
+		    case S_DWORD:
+		    case S_LONG:
+		      result->oprs[operand].addr_size = 32;
+		      result->oprs[operand].eaflags |= EAF_WORDOFFS;
+		      break;
+		    default:
+		      error (ERR_NONFATAL, "invalid size specification in"
+			     " effective address");
+		  }
+#ifdef	TASM_COMPAT
 		}
+#endif
 		i = stdscan(NULL, &tokval);
 	    }
 	} else {		       /* immediate operand, or register */

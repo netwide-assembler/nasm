@@ -346,6 +346,10 @@ static void elf_deflabel (char *name, long segment, long offset,
     struct Symbol *sym;
     int special_used = FALSE;
 
+#if defined(DEBUG) && DEBUG>2
+fprintf(stderr, " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
+      name, segment, offset, is_global, special);
+#endif
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	/*
 	 * This is a NASM special symbol. We never allow it into
@@ -496,6 +500,7 @@ static void elf_deflabel (char *name, long segment, long offset,
 		    struct tokenval tokval;
 		    expr *e;
 		    int fwd = FALSE;
+		    char *saveme=stdscan_bufptr;   /* bugfix? fbk 8/10/00 */
 
 		    while (special[n] && isspace(special[n]))
 			n++;
@@ -518,6 +523,7 @@ static void elf_deflabel (char *name, long segment, long offset,
 			else
 			    sym->size = reloc_value(e);
 		    }
+		    stdscan_bufptr=saveme;    /* bugfix? fbk 8/10/00 */
 		}
 		special_used = TRUE;
 	    }

@@ -262,6 +262,9 @@ static int inverse_ccs[] = {
  * Directive names.
  */
 static char *directives[] = {
+#ifdef TASM_COMPAT
+    "%arg",
+#endif
     "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
     "%elifid", "%elifidn", "%elifidni", "%elifnctx", "%elifndef",
     "%elifnid", "%elifnidn", "%elifnidni", "%elifnnum", "%elifnstr",
@@ -269,11 +272,21 @@ static char *directives[] = {
     "%endrep", "%error", "%exitrep", "%iassign", "%idefine", "%if",
     "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifnctx",
     "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnnum",
-    "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include", "%ixdefine",
-    "%line", "%macro", "%pop", "%push", "%rep", "%repl", "%rotate",
-    "%undef", "%xdefine"
+    "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include",
+    "%ixdefine", "%line",
+#ifdef TASM_COMPAT
+    "%local",
+#endif
+    "%macro", "%pop", "%push", "%rep", "%repl", "%rotate",
+#ifdef TASM_COMPAT
+    "%stacksize",
+#endif
+	"%strlen", "%substr", "%undef", "%xdefine"
 };
 enum {
+#ifdef TASM_COMPAT
+    PP_ARG,
+#endif
     PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
     PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFNCTX, PP_ELIFNDEF,
     PP_ELIFNID, PP_ELIFNIDN, PP_ELIFNIDNI, PP_ELIFNNUM, PP_ELIFNSTR,
@@ -281,11 +294,46 @@ enum {
     PP_ENDREP, PP_ERROR, PP_EXITREP, PP_IASSIGN, PP_IDEFINE, PP_IF,
     PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFNCTX,
     PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNNUM,
-    PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE, PP_IXDEFINE,
-    PP_LINE, PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE,
-    PP_UNDEF, PP_XDEFINE
+    PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE,
+    PP_IXDEFINE, PP_LINE,
+#ifdef TASM_COMPAT
+    PP_LOCAL,
+#endif
+    PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE,
+#ifdef TASM_COMPAT
+    PP_STACKSIZE,
+#endif
+	PP_STRLEN, PP_SUBSTR, PP_UNDEF, PP_XDEFINE
 };
 
+#ifdef	TASM_COMPAT
+
+/* For TASM compatibility we need to be able to recognise TASM compatible
+ * conditional compilation directives. Using the NASM pre-processor does
+ * not work, so we look for them specifically from the following list and
+ * then jam in the equivalent NASM directive into the input stream.
+ */
+
+#ifndef MAX
+#       define MAX(a,b) ( ((a) > (b)) ? (a) : (b))
+#endif
+
+enum {
+    TM_ARG, TM_ELIF, TM_ELSE, TM_ENDIF, TM_IF, TM_IFDEF, TM_IFDIFI,
+    TM_IFNDEF, TM_INCLUDE, TM_LOCAL
+};
+
+static char *tasm_directives[] = {
+    "arg", "elif", "else", "endif", "if", "ifdef", "ifdifi",
+    "ifndef", "include", "local"
+};
+
+static int StackSize = 4;
+static char *StackPointer = "ebp";
+static int ArgOffset = 8;
+static int LocalOffset = 4;
+
+#endif
 
 static Context *cstk;
 static Include *istk;
@@ -351,7 +399,7 @@ static Token *expand_mmac_params (Token *tline);
 static Token *expand_smacro (Token *tline);
 static Token *expand_id (Token *tline);
 static Context *get_ctx (char *name, int all_contexts);
-static void   make_tok_num(Token *tok, long val);
+static void make_tok_num(Token *tok, long val);
 static void error (int severity, char *fmt, ...);
 
 /*
@@ -362,13 +410,72 @@ static void error (int severity, char *fmt, ...);
 #define tok_is_(x,v) (tok_type_((x), TOK_OTHER) && !strcmp((x)->text,(v)))
 #define tok_isnt_(x,v) ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
+#ifdef	TASM_COMPAT
+/* Handle TASM specific directives, which do not contain a % in
+ * front of them. We do it here because I could not find any other
+ * place to do it for the moment, and it is a hack (ideally it would
+ * be nice to be able to use the NASM pre-processor to do it).
+ */
+static char *check_tasm_directive(char *line)
+{
+    int i, j, k, m, len;
+    char *p = line, *oldline, oldchar;
+
+    /* Skip whitespace */
+    while (isspace(*p) && *p != 0)
+	p++;
+
+    /* Binary search for the directive name */
+    i = -1;
+    j = sizeof(tasm_directives) / sizeof(*tasm_directives);
+    len = 0;
+    while (!isspace(p [len]) && p [len] != 0)
+	len++;
+    if (len) {
+	oldchar = p [len];
+	p [len] = 0;
+	while (j - i > 1) {
+	    k = (j + i) / 2;
+	    m = nasm_stricmp(p, tasm_directives [k]);
+	    if (m == 0) {
+		/* We have found a directive, so jam a % in front of it
+		 * so that NASM will then recognise it as one if it's own.
+		 */
+		p [len] = oldchar;
+		len = strlen(p);
+		oldline = line;
+		line = nasm_malloc(len + 2);
+		line [0] = '%';
+		if (k == TM_IFDIFI) {
+		    /* NASM does not recognise IFDIFI, so we convert it to
+		     * %ifdef BOGUS. This is not used in NASM comaptible
+		     * code, but does need to parse for the TASM macro
+		     * package.
+		     */
+		    strcpy(line + 1,"ifdef BOGUS");
+		} else {
+		    memcpy(line + 1, p, len + 1);
+		}
+		nasm_free(oldline);
+		return line;
+	    } else if (m < 0) {
+		j = k;
+	    } else
+		i = k;
+	}
+       p [len] = oldchar;
+    }
+    return line;
+}
+#endif
+
 /*
  * The pre-preprocessing stage... This function translates line
  * number indications as they emerge from GNU cpp (`# lineno "file"
  * flags') into NASM preprocessor line number indications (`%line
  * lineno file').
  */
-static char *prepreproc(char *line) 
+static char *prepreproc(char *line)
 {
     int lineno, fnlen;
     char *fname, *oldline;
@@ -385,6 +492,10 @@ static char *prepreproc(char *line)
 	sprintf(line, "%%line %d %.*s", lineno, fnlen, fname);
 	nasm_free (oldline);
     }
+#ifdef	TASM_COMPAT
+    if (tasm_compatible_mode)
+	return check_tasm_directive(line);
+#endif
     return line;
 }
 
@@ -639,7 +750,12 @@ static Token *tokenise (char *line)
 	    type = TOK_STRING;
 	    while (*p && *p != c)
 		p++;
-	    if (*p) p++;
+	    if (*p) { 
+			p++; 
+		} 
+		else { 
+			error(ERR_WARNING, "unterminated string"); 
+		}
 	} 
 	else if (isnumstart(*p)) {
 	    /*
@@ -914,6 +1030,20 @@ static Context *get_ctx (char *name, int all_contexts)
     return NULL;
 }
 
+#ifdef	TASM_COMPAT
+/* Add a slash to the end of a path if it is missing. We use the
+ * forward slash to make it compatible with Unix systems.
+ */
+static void backslash(char *s)
+{
+    int pos = strlen(s);
+    if (s[pos-1] != '\\' && s[pos-1] != '/') {
+	s[pos] = '/';
+	s[pos+1] = '\0';
+    }
+}
+#endif
+
 /*
  * Open an include file. This routine must always return a valid
  * file pointer if it returns - it's responsible for throwing an
@@ -927,9 +1057,20 @@ static FILE *inc_fopen(char *file)
     char *prefix = "", *combine;
     IncPath *ip = ipath;
     static int namelen = 0;
+#ifdef TASM_COMPAT
+    int len = strlen(file);
+#endif
 
     while (1) {
+#ifdef TASM_COMPAT
+	combine = nasm_malloc(strlen(prefix)+1+len+1);
+	strcpy(combine, prefix);
+	if (prefix[0] != 0)
+	    backslash(combine);
+	strcat(combine, file);
+#else
 	combine = nasm_strcat(prefix,file);
+#endif
 	fp = fopen(combine, "r");
 	if (pass == 0 && fp)
 	{
@@ -1241,6 +1382,9 @@ void expand_macros_in_string (char **p)
 static int do_directive (Token *tline) 
 {
     int i, j, k, m, nparam, nolist;
+#ifdef	TASM_COMPAT
+    int offset;
+#endif
     char *p, *mname;
     Include *inc;
     Context *ctx;
@@ -1324,6 +1468,201 @@ static int do_directive (Token *tline)
     }
 
     switch (i) {
+#ifdef	TASM_COMPAT
+      case PP_STACKSIZE:
+	/* Directive to tell NASM what the default stack size is. The
+	 * default is for a 16-bit stack, and this can be overriden with
+	 * %stacksize large.
+	 * the following form:
+	 *
+	 *	ARG arg1:WORD, arg2:DWORD, arg4:QWORD
+	 */
+	tline = tline->next;
+	if (tline && tline->type == TOK_WHITESPACE)
+	    tline = tline->next;
+	if (!tline || tline->type != TOK_ID) {
+	    error (ERR_NONFATAL,"`%%stacksize' missing size parameter");
+	    free_tlist (origline);
+	    return 3;
+	}
+	if (nasm_stricmp(tline->text,"flat") == 0) {
+	    /* All subsequent ARG directives are for a 32-bit stack */
+	    StackSize = 4;
+	    StackPointer = "ebp";
+	    ArgOffset = 8;
+	    LocalOffset = 4;
+	} else if (nasm_stricmp(tline->text,"large") == 0) {
+	    /* All subsequent ARG directives are for a 16-bit stack,
+	     * far function call.
+	     */
+	    StackSize = 2;
+	    StackPointer = "bp";
+	    ArgOffset = 4;
+	    LocalOffset = 2;
+	} else if (nasm_stricmp(tline->text,"small") == 0) {
+		/* All subsequent ARG directives are for a 16-bit stack,
+	     * far function call. We don't support near functions.
+	     */
+	    StackSize = 2;
+	    StackPointer = "bp";
+	    ArgOffset = 6;
+	    LocalOffset = 2;
+	} else {
+	    error (ERR_NONFATAL,"`%%stacksize' invalid size type");
+	    free_tlist (origline);
+	    return 3;
+	}
+	free_tlist(origline);
+	return 3;
+
+      case PP_ARG:
+	/* TASM like ARG directive to define arguments to functions, in
+	 * the following form:
+	 *
+	 *	ARG arg1:WORD, arg2:DWORD, arg4:QWORD
+	 */
+	offset = ArgOffset;
+	do {
+	    char *arg,directive[256];
+	    int size = StackSize;
+
+	    /* Find the argument name */
+	    tline = tline->next;
+	    if (tline && tline->type == TOK_WHITESPACE)
+		tline = tline->next;
+	    if (!tline || tline->type != TOK_ID) {
+		error (ERR_NONFATAL,"`%%arg' missing argument parameter");
+		free_tlist (origline);
+		return 3;
+	    }
+	    arg = tline->text;
+
+	    /* Find the argument size type */
+	    tline = tline->next;
+	    if (!tline || tline->type != TOK_OTHER || tline->text[0] != ':') {
+		error (ERR_NONFATAL,"Syntax error processing `%%arg' directive");
+		free_tlist (origline);
+		return 3;
+	    }
+	    tline = tline->next;
+	    if (!tline || tline->type != TOK_ID) {
+		error (ERR_NONFATAL,"`%%arg' missing size type parameter");
+		free_tlist (origline);
+		return 3;
+	    }
+
+	    /* Allow macro expansion of type parameter */
+	    tt = tokenise(tline->text);
+	    tt = expand_smacro(tt);
+	    if (nasm_stricmp(tt->text,"byte") == 0) {
+		size = MAX(StackSize,1);
+	    } else if (nasm_stricmp(tt->text,"word") == 0) {
+		size = MAX(StackSize,2);
+	    } else if (nasm_stricmp(tt->text,"dword") == 0) {
+		size = MAX(StackSize,4);
+	    } else if (nasm_stricmp(tt->text,"qword") == 0) {
+		size = MAX(StackSize,8);
+	    } else if (nasm_stricmp(tt->text,"tword") == 0) {
+		size = MAX(StackSize,10);
+	    } else {
+		error (ERR_NONFATAL,"Invalid size type for `%%arg' missing directive");
+		free_tlist (tt);
+		free_tlist (origline);
+		return 3;
+	    }
+	    free_tlist (tt);
+
+	    /* Now define the macro for the argument */
+	    sprintf(directive,"%%define %s (%s+%d)", arg, StackPointer, offset);
+	    do_directive(tokenise(directive));
+	    offset += size;
+
+	    /* Move to the next argument in the list */
+	    tline = tline->next;
+	    if (tline && tline->type == TOK_WHITESPACE)
+		tline = tline->next;
+	} while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+	free_tlist (origline);
+	return 3;
+
+      case PP_LOCAL:
+	/* TASM like LOCAL directive to define local variables for a
+	 * function, in the following form:
+	 *
+	 *	LOCAL local1:WORD, local2:DWORD, local4:QWORD = LocalSize
+	 *
+	 * The '= LocalSize' at the end is ignored by NASM, but is
+	 * required by TASM to define the local parameter size (and used
+	 * by the TASM macro package).
+	 */
+	offset = LocalOffset;
+	do {
+	    char *local,directive[256];
+	    int size = StackSize;
+
+	    /* Find the argument name */
+	    tline = tline->next;
+	    if (tline && tline->type == TOK_WHITESPACE)
+		tline = tline->next;
+	    if (!tline || tline->type != TOK_ID) {
+		error (ERR_NONFATAL,"`%%local' missing argument parameter");
+		free_tlist (origline);
+		return 3;
+	    }
+	    local = tline->text;
+
+	    /* Find the argument size type */
+	    tline = tline->next;
+	    if (!tline || tline->type != TOK_OTHER || tline->text[0] != ':') {
+		error (ERR_NONFATAL,"Syntax error processing `%%local' directive");
+		free_tlist (origline);
+		return 3;
+	    }
+	    tline = tline->next;
+	    if (!tline || tline->type != TOK_ID) {
+		error (ERR_NONFATAL,"`%%local' missing size type parameter");
+		free_tlist (origline);
+		return 3;
+	    }
+
+	    /* Allow macro expansion of type parameter */
+	    tt = tokenise(tline->text);
+	    tt = expand_smacro(tt);
+	    if (nasm_stricmp(tt->text,"byte") == 0) {
+		size = MAX(StackSize,1);
+	    } else if (nasm_stricmp(tt->text,"word") == 0) {
+		size = MAX(StackSize,2);
+	    } else if (nasm_stricmp(tt->text,"dword") == 0) {
+		size = MAX(StackSize,4);
+	    } else if (nasm_stricmp(tt->text,"qword") == 0) {
+		size = MAX(StackSize,8);
+	    } else if (nasm_stricmp(tt->text,"tword") == 0) {
+		size = MAX(StackSize,10);
+	    } else {
+		error (ERR_NONFATAL,"Invalid size type for `%%local' missing directive");
+		free_tlist (tt);
+		free_tlist (origline);
+		return 3;
+	    }
+	    free_tlist (tt);
+
+	    /* Now define the macro for the argument */
+	    sprintf(directive,"%%define %s (%s-%d)", local, StackPointer, offset);
+		do_directive(tokenise(directive));
+		offset += size;
+
+		/* Now define the assign to setup the enter_c macro correctly */
+		sprintf(directive,"%%assign %%$localsize %%$localsize+%d", size);
+		do_directive(tokenise(directive));
+
+	    /* Move to the next argument in the list */
+	    tline = tline->next;
+	    if (tline && tline->type == TOK_WHITESPACE)
+		tline = tline->next;
+	} while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+	free_tlist (origline);
+	return 3;
+#endif
 
       case PP_CLEAR:
 	if (tline->next)
@@ -1940,6 +2279,178 @@ static int do_directive (Token *tline)
 	free_tlist (origline);
 	return 3;
 
+      case PP_STRLEN:
+	tline = tline->next;
+	skip_white_(tline);
+	tline = expand_id (tline);
+	if (!tline || (tline->type != TOK_ID &&
+		       (tline->type != TOK_PREPROC_ID ||
+			tline->text[1] != '$'))) {
+	    error (ERR_NONFATAL,
+		   "`%%strlen' expects a macro identifier as first parameter");
+	    free_tlist (origline);
+	    return 3;
+	}
+        ctx = get_ctx (tline->text, FALSE);
+	if (!ctx)
+	    smhead = &smacros[hash(tline->text)];
+	else
+		smhead = &ctx->localmac;
+	mname = tline->text;
+	last = tline;
+	tline = expand_smacro (tline->next);
+	last->next = NULL;
+
+	t = tline;
+	while (tok_type_(t, TOK_WHITESPACE))
+		t = t->next;
+	/* t should now point to the string */
+	if (t->type != TOK_STRING) {
+		error(ERR_NONFATAL,
+			"`%%strlen` requires string as second parameter");
+		free_tlist(tline);
+		free_tlist(origline);
+		return 3;
+	}
+
+	macro_start = nasm_malloc(sizeof(*macro_start));
+	macro_start->next = NULL;
+	make_tok_num(macro_start, strlen(t->text)-2);
+	macro_start->mac = NULL;
+
+	/*
+	 * We now have a macro name, an implicit parameter count of
+	 * zero, and a numeric token to use as an expansion. Create
+	 * and store an SMacro.
+	 */
+	if (smacro_defined (ctx, mname, 0, &smac, i == PP_STRLEN)) {
+	    if (!smac)
+		error (ERR_WARNING,
+		       "single-line macro `%s' defined both with and"
+		       " without parameters", mname);
+	    else {
+		/*
+		 * We're redefining, so we have to take over an
+		 * existing SMacro structure. This means freeing
+		 * what was already in it.
+		 */
+		nasm_free (smac->name);
+		free_tlist (smac->expansion);
+	    }
+	} 
+	else {
+	    smac = nasm_malloc(sizeof(SMacro));
+	    smac->next = *smhead;
+	    *smhead = smac;
+	}
+	smac->name = nasm_strdup(mname);
+	smac->casesense = (i == PP_STRLEN);
+	smac->nparam = 0;
+	smac->expansion = macro_start;
+	smac->in_progress = FALSE;
+	free_tlist (tline);
+	free_tlist (origline);
+	return 3;
+
+ 	 case PP_SUBSTR:
+	tline = tline->next;
+	skip_white_(tline);
+	tline = expand_id (tline);
+	if (!tline || (tline->type != TOK_ID &&
+		       (tline->type != TOK_PREPROC_ID ||
+			tline->text[1] != '$'))) {
+	    error (ERR_NONFATAL,
+		   "`%%substr' expects a macro identifier as first parameter");
+	    free_tlist (origline);
+	    return 3;
+	}
+        ctx = get_ctx (tline->text, FALSE);
+	if (!ctx)
+	    smhead = &smacros[hash(tline->text)];
+	else
+		smhead = &ctx->localmac;
+	mname = tline->text;
+	last = tline;
+	tline = expand_smacro (tline->next);
+	last->next = NULL;
+
+	t = tline->next;
+	while (tok_type_(t, TOK_WHITESPACE))
+		t = t->next;
+	
+	/* t should now point to the string */
+	if (t->type != TOK_STRING) {
+		error(ERR_NONFATAL,
+			"`%%substr` requires string as second parameter");
+		free_tlist(tline);
+		free_tlist(origline);
+		return 3;
+	}
+
+	tt = t->next;
+	tptr = &tt;
+	tokval.t_type = TOKEN_INVALID;
+	evalresult = evaluate (ppscan, tptr, &tokval, NULL, pass, error, NULL);
+	if (!evalresult) {
+		free_tlist(tline);
+		free_tlist(origline);
+		return 3;
+	}
+	if (!is_simple(evalresult)) {
+		error(ERR_NONFATAL, 
+			"non-constant value given to `%%substr`");
+		free_tlist(tline);
+		free_tlist(origline);
+		return 3;
+	}
+
+	macro_start = nasm_malloc(sizeof(*macro_start));
+	macro_start->next = NULL;
+	macro_start->text = nasm_strdup("'''");
+	if (evalresult->value > 0 && evalresult->value < strlen(t->text)-1) {
+		macro_start->text[1] = t->text[evalresult->value];
+	}
+	else {
+		macro_start->text[2] = '\0';
+	}
+	macro_start->type = TOK_STRING;
+	macro_start->mac = NULL;
+
+	/*
+	 * We now have a macro name, an implicit parameter count of
+	 * zero, and a numeric token to use as an expansion. Create
+	 * and store an SMacro.
+	 */
+	if (smacro_defined (ctx, mname, 0, &smac, i == PP_SUBSTR)) {
+	    if (!smac)
+		error (ERR_WARNING,
+		       "single-line macro `%s' defined both with and"
+		       " without parameters", mname);
+	    else {
+		/*
+		 * We're redefining, so we have to take over an
+		 * existing SMacro structure. This means freeing
+		 * what was already in it.
+		 */
+		nasm_free (smac->name);
+		free_tlist (smac->expansion);
+	    }
+	} 
+	else {
+	    smac = nasm_malloc(sizeof(SMacro));
+	    smac->next = *smhead;
+	    *smhead = smac;
+	}
+	smac->name = nasm_strdup(mname);
+	smac->casesense = (i == PP_SUBSTR);
+	smac->nparam = 0;
+	smac->expansion = macro_start;
+	smac->in_progress = FALSE;
+	free_tlist (tline);
+	free_tlist (origline);
+	return 3;
+
+           
       case PP_ASSIGN:
       case PP_IASSIGN:
 	tline = tline->next;

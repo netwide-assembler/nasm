@@ -9,6 +9,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <malloc.h>
 
 #include "symtab.h"
@@ -106,6 +107,7 @@ symtabDump(void *stab, FILE* of)
 {
    symtab mytab = (symtab)stab;
    int i;
+   char *SegNames[3]={"code","data","bss"};
 
    fprintf(of, "Symbol table is ...\n");
    for (i=0; i < SYMTABSIZE; ++i) {
@@ -116,7 +118,7 @@ symtabDump(void *stab, FILE* of)
       }
       while(l) {
 	 fprintf(of, "%-32s %s:%08lx (%ld)\n",l->ent.name,
-		 l->ent.segment ? "data" : "code" ,
+		 SegNames[l->ent.segment],
 		 l->ent.offset, l->ent.flags);
 	 l = l->next;
       }

@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "multboot.h"
 #include "rdoff.h"
 
 #define newstr(str) strcpy(malloc(strlen(str) + 1),str)
@@ -49,13 +50,14 @@ memorybuffer * newmembuf()
     memorybuffer * t;
 
     t = malloc(sizeof(memorybuffer));
+    if (!t) return NULL;
 
     t->length = 0;
     t->next = NULL;
     return t;
 }
 
-void membufwrite(memorybuffer *b, void *data, int bytes) 
+void membufwrite(memorybuffer *const b, void *data, int bytes)
 {
     int16 w;
     long l;
@@ -276,7 +278,10 @@ int rdfopenhere(rdffile *f, FILE *fp, int *refcount, const char *name)
 int rdfclose(rdffile *f)
 {
     if (! f->refcount || ! --(*f->refcount))
-	fclose(f->fp);
+     {
+      fclose(f->fp);
+      f->fp = NULL;
+     }
     free(f->name);
 
     return 0;
@@ -400,6 +405,10 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
     RI32(r.b.amount);
     break;
 
+  case 8:	/* Module name record */
+    RS(r.m.modname,127);
+    break;
+
   default:
 #ifdef STRICT_ERRORS
     rdf_errno = 8; /* unknown header record */
@@ -420,7 +429,7 @@ void rdfheaderrewind(rdffile *f)
 
 rdf_headerbuf * rdfnewheader(void)
 {
-    rdf_headerbuf * hb = malloc(sizeof(hb));
+    rdf_headerbuf * hb = malloc(sizeof(rdf_headerbuf));
     if (hb == NULL) return NULL;
 
     hb->buf = newmembuf();
@@ -468,6 +477,16 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 	membufwrite(h->buf,&r->b.amount,-4);
 	break ;
 
+    case 8:				/* Module name */
+	membufwrite(h->buf,&r->m.modname,strlen(r->m.modname) + 1);
+	break ;
+	
+#ifdef _MULTBOOT_H	
+    case 9:				/* MultiBoot header */
+	membufwrite(h->buf,&r->mbh.mb,sizeof(struct tMultiBootHeader)+RDFLDRMOVER_SIZE);
+	break ;
+#endif		
+
     default:
 #ifdef STRICT_ERRORS
 	return (rdf_errno = 8);
@@ -509,3 +528,4 @@ void rdfdoneheader(rdf_headerbuf * h)
     freemembuf(h->buf);
     free(h);
 }
+
