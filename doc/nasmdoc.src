@@ -2815,26 +2815,48 @@ described in \k{directive}. The rest of the standard macro set is
 described here.
 
 
-\S{stdmacver} \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__} and
-\i\c{__NASM_SUBMINOR__}: \i{NASM Version}
+\S{stdmacver} \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__},
+\i\c{__NASM_SUBMINOR__} and \i\c{___NASM_PATCHLEVEL__}: \i{NASM Version}
 
-The single-line macros \c{__NASM_MAJOR__}, \c{__NASM_MINOR__} and
-\c{__NASM_SUBMINOR__} expand to the major, minor and subminor parts of
-the \i{version number of NASM} being used. So, under NASM 0.98.31 for
+The single-line macros \c{__NASM_MAJOR__}, \c{__NASM_MINOR__},
+\c{__NASM_SUBMINOR__} and \c{___NASM_PATCHLEVEL__} expand to the
+major, minor, subminor and patch level parts of the \i{version
+number of NASM} being used. So, under NASM 0.98.32p1 for
 example, \c{__NASM_MAJOR__} would be defined to be 0, \c{__NASM_MINOR__}
-would be defined as 98 and \c{__NASM_SUBMINOR__} would be defined to 31.
+would be defined as 98, \c{__NASM_SUBMINOR__} would be defined to 32,
+and \c{___NASM_PATCHLEVEL__} would be defined as 1.
+
+
+\S{stdmacverid} \i\c{__NASM_VERSION_ID__}: \i{NASM Version ID}
+
+The single-line macro \c{__NASM_VERSION_ID__} expands to a dword integer
+representing the full version number of the version of nasm being used.
+The value is the equivalent to \c{__NASM_MAJOR__}, \c{__NASM_MINOR__},
+\c{__NASM_SUBMINOR__} and \c{___NASM_PATCHLEVEL__} concatenated to
+produce a single doubleword. Hence, for 0.98.32p1, the returned number
+would be equivalent to:
+
+\c         dd      0x00622001
+
+or
+
+\c         db      1,32,98,0
+
+Note that the above lines are generate exactly the same code, the second
+line is used just to give an indication of the order that the separate
+values will be present in memory.
 
 
 \S{stdmacverstr} \i\c{__NASM_VER__}: \i{NASM Version string}
 
 The single-line macro \c{__NASM_VER__} expands to a string which defines
-the version number of nasm being used. So, under NASM 0.98.31 for example,
+the version number of nasm being used. So, under NASM 0.98.32 for example,
 
 \c         db      __NASM_VER__
 
 would expand to
 
-\c         db      "0.98.31"
+\c         db      "0.98.32"
 
 
 \S{fileline} \i\c{__FILE__} and \i\c{__LINE__}: File Name and Line Number
