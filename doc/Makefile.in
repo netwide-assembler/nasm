@@ -43,7 +43,7 @@ nasmdoc.texi: nasmdoc.dip
 new: nasmdocx.ps nasmdocx.pdf
 
 nasmdocx.ps: nasmdoc.dip nasmlogo.eps genps.pl psfonts.ph pswidth.ph head.ps
-	$(PERL) $(srcdir)/genps.pl > nasmdocx.ps
+	$(PERL) $(srcdir)/genps.pl nasmdoc.dip > nasmdocx.ps
 
 nasmdocx.pdf: nasmdocx.ps
 	$(PS2PDF) nasmdocx.ps nasmdocx.pdf

@@ -41,6 +41,7 @@
     /lkbegun 1 def
     /lktype exch def
     /lktarget exch def
+    colorlinks { 0 0 0.4 setrgbcolor } if
   end
 } def
 
@@ -85,17 +86,10 @@
 % --
 /linkend {
   userdict begin
-    [ lktype /Dest eq {
-	/Dest lktarget
+    [ lktype /URI eq {
+        /Action 2 dict dup /Subtype /URI put dup /URI lktarget put
       } {
-        lktype /URI eq {
-          /Action
-          % << .. >> would be languagelevel 2 :(
-          2 dict dup /Subtype /URI put dup /URI lktarget put
-        } {
-	   /Dest lktarget
-%          /Page lktarget /View [ /XYZ 0 pageheight null ]
-        } ifelse
+	/Dest lktarget
       } ifelse
       /Border [0 0 0]
       /Rect [ lkllx lkxmarg sub
@@ -105,6 +99,7 @@
       /Subtype /Link
       /ANN pdfmark
     /lkbegun 0 def
+    colorlinks { 0 setgray } if
   end
 } def
 

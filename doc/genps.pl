@@ -6,6 +6,8 @@
 require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
 
+use Fcntl;
+
 #
 # PostScript configurables; these values are also available to the
 # PostScript code itself
@@ -30,11 +32,47 @@ require 'pswidth.ph';		# PostScript string width
 	   idxcolumns => 2,	# Number of index columns
 	   );
 
-# US-Letter paper
-# $psconf{pagewidth} = 612; $psconf{pageheight} = 792;
-# A4 paper
-# $psconf{pagewidth} = 595; $psconf{pageheight} = 842;
+%psbool = (
+	   colorlinks => 0,	# Set links in blue rather than black
+	   );
 
+# Known paper sizes
+%papersizes = (
+	       'a4'     => [595, 842], # ISO standard paper size
+	       'letter' => [612, 792], # US common paper size
+	       'pa4'    => [595, 792], # Compromise ("portable a4")
+	       'b4'     => [709,1002], # ISO intermediate paper size
+	       'legal'  => [612,1008], # US intermediate paper size
+	       'a3'     => [842,1190], # ISO double paper size
+	       '11x17'  => [792,1224], # US double paper size
+	       );
+
+#
+# Parse the command line
+#
+undef $input;
+while ( $arg = shift(@ARGV) ) {
+    if ( $arg =~ /^\-(|no\-)/ ) {
+	$parm = $';
+	$true = ($1 eq '') ? 1 : 0;
+	if ( $true && defined($papersizes{$parm}) ) {
+	    $psconf{pagewidth}  = $papersizes{$parm}->[0];
+	    $psconf{pageheight} = $papersizes{$parm}->[1];
+	} elsif ( defined($psbool{$parm}) ) {
+	    $psbool{$parm} = $true;
+	} elsif ( $true && defined($psconf{$parm}) ) {
+	    $psconf{$parm} = shift(@ARGV);
+	} else {
+	    die "$0: Unknown option: $arg\n";
+	}
+    } else {
+	$input = $arg;
+    }
+}
+
+#
+# Document formatting parameters
+# 
 $paraskip = 6;			# Space between paragraphs
 $chapstart = 30;		# Space before a chapter heading
 $chapskip = 24;			# Space after a chapter heading
@@ -51,7 +89,12 @@ $tocskip = 6;			# Space between TOC entries
 # First, format the stuff coming from the front end into
 # a cleaner representation
 #
-open(PARAS, '< nasmdoc.dip');
+if ( defined($input) ) {
+    sysopen(PARAS, $input, O_RDONLY) or
+	die "$0: cannot open $input: $!\n";
+} else {
+    open(PARAS, "<&STDIN") or die "$0: $!\n";
+}
 while ( defined($line = <PARAS>) ) {
     chomp $line;
     $data = <PARAS>;
@@ -736,8 +779,11 @@ print "%%EndComments\n";
 print "%%BeginProlog\n";
 
 # Emit the configurables as PostScript tokens
-for $c ( keys(%psconf) ) {
+foreach $c ( keys(%psconf) ) {
     print "/$c ", $psconf{$c}, " def\n";
+}
+foreach $c ( keys(%psbool) ) {
+    print "/$c ", ($psbool{$c}?'true':'false'), " def\n";
 }
 
 # Emit fontset definitions
