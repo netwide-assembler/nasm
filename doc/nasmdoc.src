@@ -7203,7 +7203,7 @@ This is a larger and more unwieldy version of \c{CMPXCHG}: it
 compares the 64-bit (eight-byte) value stored at \c{[mem]} with the
 value in \c{EDX:EAX}. If they are equal, it sets the zero flag and
 stores \c{ECX:EBX} into the memory area. If they are unequal, it
-clears the zero flag and stores the memory contents into \c{EDX:EAX}.
+clears the zero flag and leaves the memory area untouched.
 
 \c{CMPXCHG8B} can be used with the \c{LOCK} prefix, to allow atomic
 execution. This is useful in multi-processor and multi-tasking

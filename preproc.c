@@ -722,7 +722,7 @@ read_line(void)
 	return NULL;
     }
 
-    src_set_linnum(src_get_linnum() + istk->lineinc + continued_count);
+    src_set_linnum(src_get_linnum() + istk->lineinc + (continued_count * istk->lineinc));
 
     /*
      * Play safe: remove CRs as well as LFs, if any of either are
