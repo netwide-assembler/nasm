@@ -1055,7 +1055,7 @@ detoken(Token * tlist, int expand_locals)
 		char *p, *q = t->text + 2;
 
 		q += strspn(q, "$");
-		sprintf(buffer, "..@%lu.", ctx->number);
+		snprintf(buffer, sizeof(buffer), "..@%lu.", ctx->number);
 		p = nasm_strcat(buffer, q);
 		nasm_free(t->text);
 		t->text = p;
@@ -1973,7 +1973,7 @@ do_directive(Token * tline)
 		free_tlist(tt);
 
 		/* Now define the macro for the argument */
-		sprintf(directive, "%%define %s (%s+%d)", arg, StackPointer,
+		snprintf(directive, sizeof(directive), "%%define %s (%s+%d)", arg, StackPointer,
 			offset);
 		do_directive(tokenise(directive));
 		offset += size;
@@ -2070,13 +2070,13 @@ do_directive(Token * tline)
 		free_tlist(tt);
 
 		/* Now define the macro for the argument */
-		sprintf(directive, "%%define %s (%s-%d)", local, StackPointer,
+		snprintf(directive, sizeof(directive), "%%define %s (%s-%d)", local, StackPointer,
 			offset);
 		do_directive(tokenise(directive));
 		offset += size;
 
 		/* Now define the assign to setup the enter_c macro correctly */
-		sprintf(directive, "%%assign %%$localsize %%$localsize+%d",
+		snprintf(directive, sizeof(directive), "%%assign %%$localsize %%$localsize+%d",
 			size);
 		do_directive(tokenise(directive));
 
@@ -3201,12 +3201,12 @@ expand_mmac_params(Token * tline)
 			 */
 		    case '0':
 			type = TOK_NUMBER;
-			sprintf(tmpbuf, "%d", mac->nparam);
+			snprintf(tmpbuf, sizeof(tmpbuf), "%d", mac->nparam);
 			text = nasm_strdup(tmpbuf);
 			break;
 		    case '%':
 			type = TOK_ID;
-			sprintf(tmpbuf, "..@%lu.", mac->unique);
+			snprintf(tmpbuf, sizeof(tmpbuf), "..@%lu.", mac->unique);
 			text = nasm_strcat(tmpbuf, t->text + 2);
 			break;
 		    case '-':
@@ -4086,7 +4086,7 @@ error(int severity, const char *fmt, ...)
 	return;
 
     va_start(arg, fmt);
-    vsnprintf(buff, 1024, fmt, arg);
+    vsnprintf(buff, sizeof(buff), fmt, arg);
     va_end(arg);
 
     if (istk && istk->mstk && istk->mstk->name)
@@ -4549,7 +4549,7 @@ static void
 make_tok_num(Token * tok, long val)
 {
     char numbuf[20];
-    sprintf(numbuf, "%ld", val);
+    snprintf(numbuf, sizeof(numbuf), "%ld", val);
     tok->text = nasm_strdup(numbuf);
     tok->type = TOK_NUMBER;
 }
