@@ -1,9 +1,9 @@
 
-%if __NASM_FORMAT__ == 'bin'
+%if __OUTPUT_FORMAT__ == 'bin'
 
 db 'This is binary format file'
 
-%elif __NASM_FORMAT__ == 'obj'
+%elif __OUTPUT_FORMAT__ == 'obj'
 
 db 'This is object format file'
 

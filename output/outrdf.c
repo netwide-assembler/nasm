@@ -501,7 +501,6 @@ static void rdf_filename (char *inname, char *outname, efunc error) {
 
 static char *rdf_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define __NASM_FORMAT__ 'oldrdf'", /* Its always oldrdf for consistency with rdf version 2 */
     "%imacro library 1+.nolist",
     "[library %1]",
     "%endmacro",

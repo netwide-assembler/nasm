@@ -137,7 +137,6 @@ static char *infile, *outfile;
 
 static const char *bin_stdmac[] = {
    "%define __SECT__ [section .text]",
-   "%define __NASM_FORMAT__ 'bin'",
    "%imacro org 1+.nolist",
    "[org %1]",
    "%endmacro",

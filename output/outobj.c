@@ -2285,7 +2285,6 @@ void obj_fwrite(ObjRecord *orp)
 
 static const char *obj_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define __NASM_FORMAT__ 'obj'",
     "%imacro group 1+.nolist",
     "[group %1]",
     "%endmacro",

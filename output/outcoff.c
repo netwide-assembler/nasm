@@ -820,7 +820,6 @@ static void coff_win32_filename (char *inname, char *outname, efunc error)
 
 static const char *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define __NASM_FORMAT__ 'coff'",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     "%imacro export 1+.nolist",

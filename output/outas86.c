@@ -555,7 +555,6 @@ static void as86_filename (char *inname, char *outname, efunc error)
 
 static const char *as86_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define __NASM_FORMAT__ 'as86'",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL
