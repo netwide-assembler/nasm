@@ -367,3 +367,28 @@
 %
 [/PageMode /UseOutlines /DOCVIEW pdfmark	% Display bookmarks
 
+%
+% Functions to include EPS
+%
+/BeginEPSF {
+  /Before_EPSF_State save def
+  /dict_count countdictstack def
+  /op_count count 1 sub def
+  userdict begin
+  /showpage {} def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where
+  {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+/EndEPSF {
+  count op_count sub {pop} repeat
+  countdictstack dict_count sub {end} repeat
+  Before_EPSF_State restore
+} bind def

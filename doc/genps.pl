@@ -930,7 +930,7 @@ foreach $fset ( @AllFonts ) {
 print "%!PS-Adobe-3.0\n";
 print "%%Pages: $curpage\n";
 print "%%BoundingBox: 0 0 ", $psconf{pagewidth}, ' ', $psconf{pageheight}, "\n";
-print "%%Creator: NASM psflow.pl\n";
+print "%%Creator: (NASM psflow.pl)\n";
 print "%%DocumentData: Clean7Bit\n";
 print "%%DocumentFonts: ", join(' ', keys(%ps_all_fonts)), "\n";
 print "%%DocumentNeededFonts: ", join(' ', keys(%ps_all_fonts)), "\n";
@@ -1051,45 +1051,78 @@ sub ps_end_page($) {
 
 $ps_page = 0;
 
-# Title page and inner cover
+# Title page
 ps_start_page();
 $title = $metadata{'title'};
 $title =~ s/ \- / $emdash /;
 $pstitle = ps_string($title);
 
-# FIX THIS: This shouldn't be hard-coded like this
-print <<EOF;
-lmarg pageheight 2 mul 3 div moveto
-tfont0 setfont
-/title linkdest ${pstitle} show
-lmarg pageheight 2 mul 3 div 10 sub moveto
-0 setlinecap 3 setlinewidth
-pagewidth lmarg sub rmarg sub 0 rlineto stroke
-/nasmlogo {
-gsave 1 dict begin
-/sz exch def
-/Courier-Bold findfont sz scalefont setfont
-moveto
-0.85 1.22 scale
-[(-~~..~:\#;L       .-:\#;L,.-   .~:\#:;.T  -~~.~:;. .~:;. )
-( E8+U    *T     +U\'   *T\#  .97     *L   E8+\'  *;T\'  *;, )
-( D97     \`*L  .97     \'*L   \"T;E+:,     D9     *L    *L )
-( H7       I\#  T7       I\#        \"*:.   H7     I\#    I\# )
-( U:       :8  *\#+    , :8  T,      79   U:     :8    :8 )
-(,\#B.     .IE,  \"T;E*  .IE, J *+;\#:T*\"  ,\#B.   .IE,  .IE,)] {
-currentpoint 3 -1 roll
-sz -0.10 mul 0 3 -1 roll ashow
-sz 0.72 mul sub moveto
-} forall
-end grestore
-} def
-0.6 setgray
-pagewidth 2 div 143 sub
-pageheight 2 div 33 add
-12 nasmlogo
-EOF
+# Print title
+print "lmarg pageheight 2 mul 3 div moveto\n";
+print "tfont0 setfont\n";
+print "/title linkdest ${pstitle} show\n";
+print "lmarg pageheight 2 mul 3 div 10 sub moveto\n";
+print "0 setlinecap 3 setlinewidth\n";
+print "pagewidth lmarg sub rmarg sub 0 rlineto stroke\n";
+
+# Print logo, if there is one
+# FIX: To be 100% correct, this should look for DocumentNeeded*
+# and DocumentFonts in the header of the EPSF and add those to the
+# global header.
+if ( defined($metadata{epslogo}) &&
+     sysopen(EPS, $metadata{epslogo}, O_RDONLY) ) {
+    my @eps = ();
+    my ($bbllx,$bblly,$bburx,$bbury) = (undef,undef,undef,undef);
+    my $line;
+    my $scale = 1;
+    my $maxwidth = $psconf{pagewidth}-$psconf{lmarg}-$psconf{rmarg};
+    my $maxheight = $psconf{pageheight}/3-40;
+    my $width, $height;
+    my $x, $y;
+
+    while ( defined($line = <EPS>) ) {
+	last if ( $line =~ /^%%EOF/ );
+	if ( !defined($bbllx) &&
+	     $line =~ /^\%\%BoundingBox\:\s*([0-9\.]+)\s+([0-9\.]+)\s+([0-9\.]+)\s+([0-9\.]+)/i ) {
+	    $bbllx = $1+0; $bblly = $2+0;
+	    $bburx = $3+0; $bbury = $4+0;
+	}
+	push(@eps,$line);
+    }
+    close(EPS);
+
+    if ( defined($bbllx) ) {
+	$width = $bburx-$bbllx;
+	$height = $bbury-$bblly;
+
+	if ( $width > $maxwidth ) {
+	    $scale = $maxwidth/$width;
+	}
+	if ( $height*$scale > $maxheight ) {
+	    $scale = $maxheight/$height;
+	}
+
+	$x = ($psconf{pagewidth}-$width*$scale)/2;
+	$y = ($psconf{pageheight}-$height*$scale)/2;
+
+	print "BeginEPSF\n";
+	print $x, ' ', $y, " translate\n";
+	print $scale, " dup scale\n" unless ( $scale == 1 );
+	print -$bbllx, ' ', -$bblly, " translate\n";
+	print "$bbllx $bblly moveto\n";
+	print "$bburx $bblly lineto\n";
+	print "$bburx $bbury lineto\n";
+	print "$bbllx $bbury lineto\n";
+	print "$bbllx $bblly lineto clip newpath\n";
+	print "%%BeginDocument: ",ps_string($metadata{epslogo}),"\n";
+	print @eps;
+	print "%%EndDocument\n";
+	print "EndEPSF\n";
+    }
+}
 ps_end_page(0);
 
+# Emit the rest of the document (page 2 and on)
 $curpage = 2;
 ps_start_page();
 foreach $line ( @pslines ) {
