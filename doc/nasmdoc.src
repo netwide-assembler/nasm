@@ -544,8 +544,7 @@ Currently, two error reporting formats may be selected.  They are
 the \c{-Xvc} option and the \c{-Xgnu} option.  The GNU format is 
 the default and looks like this:
 
-\c filename.asm:65: error:specific error message 
-
+\c filename.asm:65: error: specific error message 
 
 where \c{filename.asm} is the name of the source file in which the
 error was detected, \c{65} is the source file line number on which 
@@ -556,8 +555,7 @@ detailed text message which should help pinpoint the exact problem.
 The other format, specified by \c{-Xvc} is the style used by Microsoft
 Visual C++ and some other programs.  It looks like this:
 
-\c filename.asm(65) error:specific error message
-
+\c filename.asm(65) : error: specific error message
 
 where the only difference is that the line number is in parentheses
 instead of being delimited by colons.  

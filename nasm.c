@@ -1411,7 +1411,7 @@ static void report_error_gnu (int severity, const char *fmt, ...)
  * This function prints an error message to error_file in the
  * style used by Visual C and some other Microsoft tools. An example 
  * would be:
- * c:\project\file.asm(50) error: blah blah blah
+ * c:\project\file.asm(50) : error: blah blah blah
  * where c:\project\file.asm is the full path of the file, 
  * 50 is the line number on which the error occurs (or is detected) 
  * and "error:" is one of the possible optional diagnostics -- it 
@@ -1434,7 +1434,7 @@ static void report_error_vc (int severity, const char *fmt, ...)
 	char * currentfile = NULL;
 	long lineno = 0;
 	src_get (&lineno, &currentfile);
-	fprintf (error_file, "%s(%ld) ", currentfile, lineno);
+	fprintf (error_file, "%s(%ld) : ", currentfile, lineno);
 	nasm_free (currentfile);
     }
     va_start (ap, fmt);
