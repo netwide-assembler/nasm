@@ -67,7 +67,14 @@ sub convert_file($$) {
 	unshift(@fspec, basename($file));
     }
 
-    return join($sep, @fspec);
+    if ( $sep eq '' ) {
+	# This means kill path completely.  Used with Makes who do
+	# path searches, but doesn't handle output files in subdirectories,
+	# like OpenWatcom WMAKE.
+	return $fspec[scalar(@fspec)-1];
+    } else {
+	return join($sep, @fspec);
+    }
 }
 
 #

@@ -28,7 +28,9 @@ The Makefiles are:
   Makefile.scw	Win32		Symantec C++ 7
   Makefile.unx	Unix		Any(*)		use only if "configure" fails
   Makefile.vc	Win32		MS Visual C++	OK as of NASM 0.98.32
-  Makefile.wcw	Win32		Watcom C
+  Makefile.wc	32-bit DOS	Watcom C	(**)
+  Makefile.wcd	16-bit DOS	OpenWatcom C	OK as of NASM 0.98.37
+  Makefile.wcw	Win32		Watcom C	(**)
 
 
 (*) = This Makefile should work with any compiler which is ANSI
