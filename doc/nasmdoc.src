@@ -34,7 +34,8 @@
 \IR{-v} \c{-v} option
 \IR{-w} \c{-w} option
 \IR{!=} \c{!=} operator
-\IR{$ here} \c{$} Here token
+\IR{$, here} \c{$}, Here token
+\IR{$, prefix} \c{$}, prefix
 \IR{$$} \c{$$} token
 \IR{%} \c{%} operator
 \IR{%%} \c{%%} operator
@@ -110,7 +111,11 @@ in \c{elf}
 \IR{dos source archive} DOS source archive
 \IA{effective address}{effective addresses}
 \IA{effective-address}{effective addresses}
-\IR{elf shared libraries} \c{elf} shared libraries
+\IR{elf} ELF
+\IR{elf, 16-bit code and} ELF, 16-bit code and
+\IR{elf shared libraries} ELF, shared libraries
+\IR{executable and linkable format} Executable and Linkable Format
+\IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
 \IR{freebsd} FreeBSD
 \IR{freelink} FreeLink
 \IR{functions, c calling convention} functions, C calling convention
@@ -123,12 +128,16 @@ convention
 \IR{got relocations} \c{GOT} relocations
 \IR{gotoff relocation} \c{GOTOFF} relocations
 \IR{gotpc relocation} \c{GOTPC} relocations
-\IR{linux elf} Linux ELF
+\IR{intel number formats} Intel number formats
+\IR{linux, elf} Linux, ELF
+\IR{linux, a.out} Linux, \c{a.out}
+\IR{linux, as86} Linux, \c{as86}
 \IR{logical and} logical AND
 \IR{logical or} logical OR
 \IR{logical xor} logical XOR
 \IR{masm} MASM
 \IA{memory reference}{memory references}
+\IR{minix} Minix
 \IA{misc directory}{misc subdirectory}
 \IR{misc subdirectory} \c{misc} subdirectory
 \IR{microsoft omf} Microsoft OMF
@@ -152,6 +161,9 @@ convention
 \IR{plt} PLT
 \IR{plt} \c{PLT} relocations
 \IA{pre-defining macros}{pre-define}
+\IA{preprocessor expressions}{preprocessor, expressions}
+\IA{preprocessor loops}{preprocessor, loops}
+\IA{preprocessor variables}{preprocessor, variables}
 \IA{rdoff subdirectory}{rdoff}
 \IR{rdoff} \c{rdoff} subdirectory
 \IR{relocatable dynamic object file format} Relocatable Dynamic
@@ -171,15 +183,22 @@ Object File Format
 \IR{shift command} \c{shift} command
 \IA{sib}{sib byte}
 \IR{sib byte} SIB byte
+\IR{solaris x86} Solaris x86
 \IA{standard section names}{standardised section names}
 \IR{symbols, exporting from dlls} symbols, exporting from DLLs
 \IR{symbols, importing from dlls} symbols, importing from DLLs
-\IR{tasm} TASM
+\IR{tasm} \c{TASM}
 \IR{test subdirectory} \c{test} subdirectory
-\IR{tlink} TLINK
+\IR{tlink} \c{TLINK}
 \IR{underscore, in c symbols} underscore, in C symbols
 \IR{unix} Unix
-\IR{unix source archive} Unix source archive
+\IA{sco unix}{unix, sco}
+\IR{unix, sco} Unix, SCO
+\IA{unix source archive}{unix, source archive}
+\IR{unix, source archive} Unix, source archive
+\IA{unix system v}{unix, system v}
+\IR{unix, system v} Unix, System V
+\IR{unixware} UnixWare
 \IR{val} VAL
 \IR{version number of nasm} version number of NASM
 \IR{visual c++} Visual C++
@@ -201,7 +220,7 @@ Object File Format
 
 The Netwide Assembler, NASM, is an 80x86 assembler designed for
 portability and modularity. It supports a range of object file
-formats, including Linux \c{a.out} and \c{ELF}, \c{NetBSD/FreeBSD},
+formats, including Linux and \c{NetBSD/FreeBSD} \c{a.out}, \c{ELF}, 
 \c{COFF}, Microsoft 16-bit \c{OBJ} and \c{Win32}. It will also output
 plain binary files. Its syntax is designed to be simple and easy to
 understand, similar to Intel's but less complex. It supports \c{Pentium},
@@ -226,8 +245,8 @@ its syntax is horrible, from the point of view of anyone trying to
 actually \e{write} anything in it. Plus you can't write 16-bit code in
 it (properly).
 
-\b \i\c{as86} is Linux-specific, and (my version at least) doesn't
-seem to have much (or any) documentation.
+\b \i\c{as86} is Minix- and Linux-specific, and (my version at least)
+doesn't seem to have much (or any) documentation.
 
 \b \i\c{MASM} isn't very good, and it's expensive, and it runs only under
 DOS.
@@ -405,8 +424,8 @@ To get further usage instructions from NASM, try typing
 This will also list the available output file formats, and what they
 are.
 
-If you use Linux but aren't sure whether your system is \c{a.out} or
-\c{ELF}, type
+If you use Linux but aren't sure whether your system is \c{a.out}
+or \c{ELF}, type
 
 \c file nasm
 
@@ -421,7 +440,7 @@ when you want NASM to produce Linux object files. If it says
 \c nasm: Linux/i386 demand-paged executable (QMAGIC)
 
 or something similar, your system is \c{a.out}, and you should use
-\c{-f aout} instead (Linux \c{a.out} systems are considered obsolete,
+\c{-f aout} instead (Linux \c{a.out} systems have long been obsolete,
 and are rare these days.)
 
 Like Unix compilers and assemblers, NASM is silent unless it
@@ -694,7 +713,7 @@ is used to specify the output format. See \k{opt-o}.
 
 \S{opt-t} The \i\c{-t} option: Enable TASM Compatibility Mode
 
-NASM includes a limited form of compatibility with Borland's \c{TASM}.
+NASM includes a limited form of compatibility with Borland's \i\c{TASM}.
 When NASM's \c{-t} option is used, the following changes are made:
 
 \b local labels may be prefixed with \c{@@} instead of \c{.}
@@ -971,7 +990,7 @@ you define a label alone on a line without a \i{trailing colon}.)
 \c{#}, \c{@}, \c{~}, \c{.}, and \c{?}. The only characters which may
 be used as the \e{first} character of an identifier are letters,
 \c{.} (with special meaning: see \k{locallab}), \c{_} and \c{?}.
-An identifier may also be prefixed with a \I{$prefix}\c{$} to
+An identifier may also be prefixed with a \I{$, prefix}\c{$} to
 indicate that it is intended to be read as an identifier and not a
 reserved word; thus, if some other module you are linking with
 defines a symbol called \c{eax}, you can refer to \c{$eax} in NASM
@@ -1223,7 +1242,7 @@ numbers in a variety of number bases, in a variety of ways: you can
 suffix \c{H}, \c{Q} and \c{B} for \i{hex}, \i{octal} and \i{binary},
 or you can prefix \c{0x} for hex in the style of C, or you can
 prefix \c{$} for hex in the style of Borland Pascal. Note, though,
-that the \I{$prefix}\c{$} prefix does double duty as a prefix on
+that the \I{$, prefix}\c{$} prefix does double duty as a prefix on
 identifiers (see \k{syntax}), so a hex number prefixed with a \c{$}
 sign must have a digit after the \c{$} rather than a letter.
 
@@ -1327,7 +1346,7 @@ least} 32 bits to work in.
 
 NASM supports two special tokens in expressions, allowing
 calculations to involve the current assembly position: the
-\I{$ here}\c{$} and \i\c{$$} tokens. \c{$} evaluates to the assembly
+\I{$, here}\c{$} and \i\c{$$} tokens. \c{$} evaluates to the assembly
 position at the beginning of the line containing the expression; so
 you can code an \i{infinite loop} using \c{JMP $}. \c{$$} evaluates
 to the beginning of the current section; so you can tell how far
@@ -2261,7 +2280,8 @@ The \i\c{%else} clause is optional, as is the \i\c{%elif} clause.
 You can have more than one \c{%elif} clause as well.
 
 
-\S{ifdef} \i\c{%ifdef}: \i{Testing Single-Line Macro Existence}
+\S{ifdef} \i\c{%ifdef}: Testing Single-Line Macro Existence\I{testing,
+single-line macro existence}
 
 Beginning a conditional-assembly block with the line \c{%ifdef
 MACRO} will assemble the subsequent code if, and only if, a
@@ -2287,7 +2307,8 @@ definitions in \c{%elif} blocks by using \i\c{%elifdef} and
 \i\c{%elifndef}.
 
 
-\S{ifmacro} \i\c{ifmacro}: \i{Testing Multi-Line Macro Existence}
+\S{ifmacro} \i\c{ifmacro}: Testing Multi-Line Macro
+Existence\I{testing, multi-line macro existence}
 
 The \c{%ifmacro} directive operates in the same way as the \c{%ifdef}
 directive, except that it checks for the existence of a multi-line macro.
@@ -2323,7 +2344,8 @@ of \c{%ifmacro}. Additional tests can be performed in \c{%elif} blocks by using
 \i\c{%elifmacro} and \i\c{%elifnmacro}.
 
 
-\S{ifctx} \i\c{%ifctx}: \i{Testing the Context Stack}
+\S{ifctx} \i\c{%ifctx}: Testing the Context Stack\I{testing, context
+stack}
 
 The conditional-assembly construct \c{%ifctx ctxname} will cause the
 subsequent code to be assembled if and only if the top context on
@@ -2335,7 +2357,8 @@ For more details of the context stack, see \k{ctxstack}. For a
 sample use of \c{%ifctx}, see \k{blockif}.
 
 
-\S{if} \i\c{%if}: \i{Testing Arbitrary Numeric Expressions}
+\S{if} \i\c{%if}: Testing Arbitrary Numeric Expressions\I{testing,
+arbitrary numeric expressions}
 
 The conditional-assembly construct \c{%if expr} will cause the
 subsequent code to be assembled if and only if the value of the
@@ -2362,8 +2385,8 @@ is zero, and 0 otherwise). The relational operators also return 1
 for true and 0 for false.
 
 
-\S{ifidn} \i\c{%ifidn} and \i\c{%ifidni}: \i{Testing Exact Text
-Identity}
+\S{ifidn} \i\c{%ifidn} and \i\c{%ifidni}: Testing Exact Text
+Identity\I{testing, exact text identity}
 
 The construct \c{%ifidn text1,text2} will cause the subsequent code
 to be assembled if and only if \c{text1} and \c{text2}, after
@@ -2392,8 +2415,8 @@ Similarly, \c{%ifidni} has counterparts \i\c{%elifidni},
 \i\c{%ifnidni} and \i\c{%elifnidni}.
 
 
-\S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: \i{Testing Token
-Types}
+\S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: Testing Token
+Types\I{testing, token types}
 
 Some macros will want to perform different tasks depending on
 whether they are passed a number, a string, or an identifier. For
@@ -3944,12 +3967,13 @@ directive as \c{win32} does, except that the \c{align} qualifier and
 the \c{info} section type are not supported.
 
 
-\H{elffmt} \i\c{elf}: \i{Linux ELF}\I{Executable and Linkable
+\H{elffmt} \i\c{elf}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
 
 The \c{elf} output format generates \c{ELF32} (Executable and Linkable
-Format) object files, as used by Linux. \c{elf} provides a default
-output file-name extension of \c{.o}.
+Format) object files, as used by Linux as well as \i{Unix System V},
+including \i{Solaris x86}, \i{UnixWare} and \i{SCO Unix}. \c{elf}
+provides a default output file-name extension of \c{.o}.
 
 
 \S{elfsect} \c{elf} Extensions to the \c{SECTION}
@@ -4111,14 +4135,25 @@ This declares the total size of the array to be 128 bytes, and
 requires that it be aligned on a 4-byte boundary.
 
 
-\H{aoutfmt} \i\c{aout}: Linux \I{a.out, Linux version}\c{a.out} Object Files
+\S{elf16} 16-bit code and ELF
+\I{ELF, 16-bit code and}
 
-The \c{aout} format generates \c{a.out} object files, in the form
-used by early Linux systems. (These differ from other \c{a.out}
-object files in that the magic number in the first four bytes of the
-file is different. Also, some implementations of \c{a.out}, for
-example NetBSD's, support position-independent code, which Linux's
-implementation doesn't.)
+The \c{ELF32} specification doesn't provide relocations for 8- and
+16-bit values, but the GNU \c{ld} linker adds these as an extension.
+NASM can generate GNU-compatible relocations, to allow 16-bit code to
+be linked as ELF using GNU \c{ld}. If NASM is used with the
+\c{-w+gnu-elf-extensions} option, a warning is issued when one of
+these relocations is generated.
+
+\H{aoutfmt} \i\c{aout}: Linux \I{a.out, Linux version}\I{linux, a.out}\c{a.out} Object Files
+
+The \c{aout} format generates \c{a.out} object files, in the form used
+by early Linux systems (current Linux systems use ELF, see
+\k{elffmt}.) These differ from other \c{a.out} object files in that
+the magic number in the first four bytes of the file is
+different; also, some implementations of \c{a.out}, for example
+NetBSD's, support position-independent code, which Linux's
+implementation does not.
 
 \c{a.out} provides a default output file-name extension of \c{.o}.
 
@@ -4152,10 +4187,10 @@ directive as \c{elf} does: see \k{elfglob} for documentation of
 this.
 
 
-\H{as86fmt} \c{as86}: Linux \i\c{as86} Object Files
+\H{as86fmt} \c{as86}: \i{Minix}/Linux\I{linux, as86} \i\c{as86} Object Files
 
-The Linux 16-bit assembler \c{as86} has its own non-standard object
-file format. Although its companion linker \i\c{ld86} produces
+The Minix/Linux 16-bit assembler \c{as86} has its own non-standard
+object file format. Although its companion linker \i\c{ld86} produces
 something close to ordinary \c{a.out} binaries as output, the object
 file format used to communicate between \c{as86} and \c{ld86} is not
 itself \c{a.out}.
@@ -4214,7 +4249,7 @@ of current module:
 
 Note that when you statically link modules and tell linker to strip
 the symbols from output file, all module names will be stripped too.
-To avoid it, you should start module names with \I{$prefix}\c{$}, like:
+To avoid it, you should start module names with \I{$, prefix}\c{$}, like:
 
 \c     module  $kernel.core
 
