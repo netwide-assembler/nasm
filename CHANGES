@@ -1,6 +1,9 @@
 0.98.37
 -------
 
+* Fix output/outbin.c to allow origin > 80000000h
+* Make -U switch work
+
 0.98.36
 -------
 * Update rdoff - librarian/archiver - common rec - docs!

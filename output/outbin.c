@@ -124,7 +124,7 @@ extern int lookup_label (char *label, long *segment, long *offset);
 
 static unsigned char format_mode;  /* 0 = original bin, 1 = extended bin */
 static long current_section;       /* only really needed if format_mode = 0 */
-static long origin;
+static unsigned long origin;
 static int origin_defined;
 
 /* Stuff we need for map-file generation. */
@@ -1172,7 +1172,7 @@ static int bin_directive (char *directive, char *args, int pass)
    /* Handle ORG directive */
    if (!nasm_stricmp(directive, "org"))
    {  struct tokenval tokval;
-      long value;
+      unsigned long value;
       expr *e;
 
       stdscan_reset();
@@ -1185,10 +1185,8 @@ static int bin_directive (char *directive, char *args, int pass)
                " expression");
          else
          {  value = reloc_value(e);
-            if (value < 0)
-               error(ERR_NONFATAL, "attempt to set a negative program origin");
             /* Check for ORG redefinition. */
-            else if (origin_defined && (value != origin))
+            if (origin_defined && (value != origin))
                error(ERR_NONFATAL, "program origin redefined");
             else
             {  origin = value;
