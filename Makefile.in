@@ -17,6 +17,7 @@ mandir		= @mandir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I. 
 LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
@@ -56,10 +57,10 @@ all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man
 	cd rdoff && $(MAKE) all
 
 nasm$(X): $(NASM)
-	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM)
+	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(LIBS)
 
 ndisasm$(X): $(NDISASM)
-	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM)
+	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(LIBS)
 
 assemble.$(O): assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
 disasm.$(O): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
