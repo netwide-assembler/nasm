@@ -3,7 +3,7 @@
 * "make spotless" no longer deletes config.h.in.
 * Unterminated string auto termination.
 * %(el)if(n)idn insensitivity to string quotes difference (#809300).
-* _NASM_FORMAT_ now gives output format chosen for compiling.
+* __NASM_FORMAT__ now gives output format chosen for compiling.
   See test/nasmformat.asm for details and output/out*.c for actual values
   for this macro.
   !!NEEDS DOCUMENTING!!

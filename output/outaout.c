@@ -877,7 +877,7 @@ static void aout_filename (char *inname, char *outname, efunc error)
 
 static const char *aout_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define _NASM_FORMAT_ 'aout'",
+    "%define __NASM_FORMAT__ 'aout'",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL

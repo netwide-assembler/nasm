@@ -1225,7 +1225,7 @@ static void elf_filename (char *inname, char *outname, efunc error)
 
 static const char *elf_stdmac[] = {
     "%define __SECT__ [section .text]",
-    "%define _NASM_FORMAT_ 'elf'",
+    "%define __NASM_FORMAT__ 'elf'",
     "%macro __NASM_CDecl__ 1",
     "%define $_%1 $%1",
     "%endmacro",
