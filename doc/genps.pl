@@ -1048,10 +1048,10 @@ $ps_page = 0;
 # Title page
 ps_start_page();
 $title = $metadata{'title'} || '';
-$title =~ s/ \- / $emdash /;
+$title =~ s/ \- / $charcode{'emdash'} /;
 
 $subtitle = $metadata{'subtitle'} || '';
-$subtitle =~ s/ \- / $emdash /;
+$subtitle =~ s/ \- / $charcode{'emdash'} /;
 
 # Print title
 print "/ti ", ps_string($title), " def\n";
