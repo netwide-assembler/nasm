@@ -199,7 +199,7 @@ static struct Section * create_section(char *name)
 
 static void bin_cleanup (int debuginfo)
 {  struct Section *g, **gp;
-   struct Section *gs, **gsp;
+   struct Section *gs = NULL, **gsp;
    struct Section *s, **sp;
    struct Section *nobits = NULL, **nt;
    struct Section * last_progbits;
