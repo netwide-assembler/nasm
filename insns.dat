@@ -943,7 +943,7 @@ SBB       reg16,reg16         \320\301\1\x1B\110            8086
 SBB       reg32,mem           \321\301\1\x1B\110            386,SM
 SBB       reg32,reg32         \321\301\1\x1B\110            386
 SBB       rm16,imm8           \320\300\1\x83\203\15         8086
-SBB       rm32,imm8           \321\300\1\x83\203\15         8086
+SBB       rm32,imm8           \321\300\1\x83\203\15         386
 SBB       reg_al,imm          \1\x1C\21                     8086,SM
 SBB       reg_ax,sbyte        \320\1\x83\203\15             8086,SM,ND
 SBB       reg_ax,imm          \320\1\x1D\31                 8086,SM

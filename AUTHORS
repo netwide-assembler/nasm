@@ -94,3 +94,9 @@ E: madfire@users.sourceforge.net
 D: multiple sections support for -fbin format
 D: cvs maintenance
 D: webpage at http://nasm.2y.net maintenance
+
+N: Debbie Wiles, aka debs
+E: debs@dwiles.demon.co.uk
+D: Work on docs, added undocumented instructions (esp SSE2 and 3D-Now!)
+D: Added other documentation and tidied up docs
+D: Added a few instructions to insns.dat and tidied it up.
