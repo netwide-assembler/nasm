@@ -3240,7 +3240,7 @@ which has no function other than to call the primitive form.
 \S{USE16 & USE32} \i\c{USE16} & \i\c{USE32}: Aliases for BITS
 
 The `\c{USE16}' and `\c{USE32}' directives can be used in place of
-`\c{BIT 16}' and `\c{BITS 32}', for compatibility with other assemblers.
+`\c{BITS 16}' and `\c{BITS 32}', for compatibility with other assemblers.
 
 
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
