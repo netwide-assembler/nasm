@@ -15,10 +15,10 @@ The Makefiles are:
 
   Filename      Target		Compiler	Notes
   ---------------------------------------------------------------------------
-  Makefile.b32	Win32	    	Borland C++
+  Makefile.b32	Win32	    	Borland C++	OK as of NASM 0.98.37
   Makefile.bc3	16-bit DOS  	Borland C++	OK as of NASM 0.98.34
   Makefile.bor	16-bit DOS  	Turbo C		(**)
-  Makefile.dj	32-bit DOS  	DJGPP		OK as of NASM 0.98.31
+  Makefile.dj	32-bit DOS  	DJGPP		OK as of NASM 0.98.37
   Makefile.djo	32-bit DOS  	DJGPP		"Opus Make" version(**)
   Makefile.dl	32-bit DOS  	cc386		cc386 by David Lindauer
   Makefile.dos	16-bit DOS	MSC 5		(**)
@@ -33,8 +33,9 @@ The Makefiles are:
 
 (*) = This Makefile should work with any compiler which is ANSI
       C89/ISO C90 compliant and that uses the standard Unix compiler
-      arguments, such as -c and -O.  Pre-ANSI compilers, such as the
-      "cc" distributed with SunOS 4.x, will not work.
+      arguments, such as -c, -o, -I and -O.  Pre-ANSI compilers,
+      such as the "cc" distributed with SunOS 4.x, will not work.
+      If you find a system on which you need to use this, please write
+      <nasm-devel@lists.sourceforge.net> and tell us which system.
 
 (**) = Probably obsolete, needs updating.
-
