@@ -5,6 +5,7 @@
 * Fix output/outbin.c to allow origin > 80000000h
 * Make -U switch work
 * Fix the use of relative offsets with explicit prefixes, e.g. "a32 loop foo".
+* Remove "backslash()".
 
 0.98.36
 -------

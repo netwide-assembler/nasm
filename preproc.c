@@ -1256,20 +1256,6 @@ get_ctx(char *name, int all_contexts)
     return NULL;
 }
 
-/* Add a slash to the end of a path if it is missing. We use the
- * forward slash to make it compatible with Unix systems.
- */
-static void
-backslash(char *s)
-{
-    int pos = strlen(s);
-    if (s[pos - 1] != '\\' && s[pos - 1] != '/')
-    {
-	s[pos] = '/';
-	s[pos + 1] = '\0';
-    }
-}
-
 /*
  * Open an include file. This routine must always return a valid
  * file pointer if it returns - it's responsible for throwing an
@@ -1288,10 +1274,8 @@ inc_fopen(char *file)
 
     while (1)
     {
-	combine = nasm_malloc(strlen(prefix) + 1 + len + 1);
+	combine = nasm_malloc(strlen(prefix) + len + 1);
 	strcpy(combine, prefix);
-	if (prefix[0] != 0)
-	    backslash(combine);
 	strcat(combine, file);
 	fp = fopen(combine, "r");
 	if (pass == 0 && fp)
