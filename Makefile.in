@@ -114,7 +114,8 @@ macros.c: macros.pl standard.mac version.mac
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
-perlreq: macros.c insnsa.c insnsd.c insnsi.h insnsn.c version.h version.mac
+PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c version.h version.mac 
+perlreq: $(PERLREQ)
 
 install: nasm ndisasm
 	$(INSTALL_PROGRAM) nasm $(INSTALLROOT)$(bindir)/nasm
@@ -135,8 +136,7 @@ distclean: clean
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
-	rm -f insnsa.c insnsd.c insnsi.h insnsn.c macros.c *.man
-	rm -f nasm.spec version.h version.mac
+	rm -f $(PERLREQ) *.man nasm.spec
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
