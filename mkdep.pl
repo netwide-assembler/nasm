@@ -2,7 +2,7 @@
 #
 # Script to create Makefile-style dependencies.
 #
-# Usage: perl [-s path-separator] [-o obj-ext] mkdep.pl dir... > deps
+# Usage: perl mkdep.pl [-s path-separator] [-o obj-ext] dir... > deps
 #
 
 use File::Spec;
