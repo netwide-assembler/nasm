@@ -2479,41 +2479,55 @@ do_directive(Token * tline)
 
 	case PP_REP:
 	    nolist = FALSE;
-	    tline = tline->next;
-	    if (tline->next && tline->next->type == TOK_WHITESPACE)
+	    do {
 		tline = tline->next;
-	    if (tline->next && tline->next->type == TOK_ID &&
-		    !nasm_stricmp(tline->next->text, ".nolist"))
+	    } while (tok_type_(tline, TOK_WHITESPACE));
+
+	    if (tok_type_(tline, TOK_ID) &&
+		nasm_stricmp(tline->text, ".nolist") == 0)
 	    {
-		tline = tline->next;
 		nolist = TRUE;
+		do {
+		    tline = tline->next;
+		} while (tok_type_(tline, TOK_WHITESPACE));
 	    }
-	    t = expand_smacro(tline->next);
-	    tline->next = NULL;
-	    free_tlist(origline);
-	    tline = t;
-	    tptr = &t;
-	    tokval.t_type = TOKEN_INVALID;
-	    evalresult =
-		    evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
-	    free_tlist(tline);
-	    if (!evalresult)
-		return DIRECTIVE_FOUND;
-	    if (tokval.t_type)
-		error(ERR_WARNING,
-			"trailing garbage after expression ignored");
-	    if (!is_simple(evalresult))
+
+	    if (tline)
 	    {
-		error(ERR_NONFATAL, "non-constant value given to `%%rep'");
-		return DIRECTIVE_FOUND;
+		t = expand_smacro(tline);
+		tptr = &t;
+		tokval.t_type = TOKEN_INVALID;
+		evalresult =
+		    evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
+		if (!evalresult)
+		{
+		    free_tlist(origline);
+		    return DIRECTIVE_FOUND;
+		}
+		if (tokval.t_type)
+		    error(ERR_WARNING,
+			  "trailing garbage after expression ignored");
+		if (!is_simple(evalresult))
+		{
+		    error(ERR_NONFATAL, "non-constant value given to `%%rep'");
+		    return DIRECTIVE_FOUND;
+		}
+		i = (int)reloc_value(evalresult) + 1;
 	    }
+	    else
+	    {
+		error(ERR_NONFATAL, "`%%rep' expects a repeat count");
+		i = 0;
+	    }
+	    free_tlist(origline);
+
 	    tmp_defining = defining;
 	    defining = nasm_malloc(sizeof(MMacro));
 	    defining->name = NULL;	/* flags this macro as a %rep block */
 	    defining->casesense = 0;
 	    defining->plus = FALSE;
 	    defining->nolist = nolist;
-	    defining->in_progress = reloc_value(evalresult) + 1;
+	    defining->in_progress = i;
 	    defining->nparam_min = defining->nparam_max = 0;
 	    defining->defaults = NULL;
 	    defining->dlist = NULL;
@@ -3418,8 +3432,18 @@ expand_smacro(Token * tline)
 		     * substitute for the parameters when we expand. What a
 		     * pain.
 		     */
-		    tline = tline->next;
-		    skip_white_(tline);
+		    /*tline = tline->next;
+		    skip_white_(tline);*/
+		    do {
+			t = tline->next;
+			while (tok_type_(t, TOK_SMAC_END))
+			{
+			    t->mac->in_progress = FALSE;
+			    t->text = NULL;
+			    t = tline->next = delete_Token(t);
+			}
+			tline = t;
+		    } while (tok_type_(tline, TOK_WHITESPACE));
 		    if (!tok_is_(tline, "("))
 		    {
 			/*
@@ -3435,14 +3459,26 @@ expand_smacro(Token * tline)
 			int white = 0;
 			brackets = 0;
 			nparam = 0;
-			tline = tline->next;
 			sparam = PARAM_DELTA;
 			params = nasm_malloc(sparam * sizeof(Token *));
-			params[0] = tline;
+			params[0] = tline->next;
 			paramsize = nasm_malloc(sparam * sizeof(int));
 			paramsize[0] = 0;
-			for (;; tline = tline->next)
+			while (TRUE)
 			{	/* parameter loop */
+			    /*
+			     * For some unusual expansions
+			     * which concatenates function call
+			     */
+			    t = tline->next;
+			    while (tok_type_(t, TOK_SMAC_END))
+			    {
+				t->mac->in_progress = FALSE;
+				t->text = NULL;
+				t = tline->next = delete_Token(t);
+			    }
+			    tline = t;
+
 			    if (!tline)
 			    {
 				error(ERR_NONFATAL,
