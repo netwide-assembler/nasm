@@ -2270,8 +2270,16 @@ do_directive(Token * tline)
 		istk->conds->state = COND_NEVER;
 	    else
 	    {
-		j = if_condition(tline->next, i);
-		tline->next = NULL;	/* it got freed */
+		/*
+		 * IMPORTANT: In the case of %if, we will already have
+		 * called expand_mmac_params(); however, if we're
+		 * processing an %elif we must have been in a
+		 * non-emitting mode, which would have inhibited
+		 * the normal invocation of expand_mmac_params().  Therefore,
+		 * we have to do it explicitly here.
+		 */
+		 j = if_condition(expand_mmac_params(tline->next), i);
+		 tline->next = NULL; /* it got freed */
 		free_tlist(origline);
 		istk->conds->state =
 			j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
