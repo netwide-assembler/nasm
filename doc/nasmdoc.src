@@ -4030,8 +4030,8 @@ qualifiers are:
 \c section .bss     nobits    alloc  noexec  write    align=4
 \c section other    progbits  alloc  noexec  nowrite  align=1
 
-(Any section name other than \c{.text}, \c{.data} and \c{.bss} is
-treated by default like \c{other} in the above code.)
+(Any section name other than \c{.text}, \c{.rodata}, \c{.data} and
+\c{.bss} is treated by default like \c{other} in the above code.)
 
 
 \S{elfwrt} \i{Position-Independent Code}\I{PIC}: \c{elf} Special
