@@ -8,6 +8,7 @@
 * Make -U switch work
 * Fix the use of relative offsets with explicit prefixes, e.g. "a32 loop foo".
 * Remove "backslash()".
+* Fix the SMSW and SLDT instructions.
 
 0.98.36
 -------
@@ -17,7 +18,7 @@
 * Add new multisection support - map files - fix align bug
 * Fix sysexit, movhps/movlps reg,reg bugs in insns.dat
 * "Q" or "O" suffixes indicate octal
-* Support Prescott new instructions.
+* Support Prescott new instructions (PNI).
 * Cyrix XSTORE instruction.
 
 0.98.35
