@@ -1,3 +1,13 @@
+0.98.35
+-------
+* Fix build failure on 16-bit DOS (Makefile.bc3 workaround for compiler bug.)
+* Fix dependencies and compiler warnings.
+* Add "const" in a number of places.
+* Add -X option to specify error reporting format (use -Xvc to
+  integrate with Microsoft Visual Studio.)
+* Minor changes for code legibility.
+* Drop use of tmpnam() in rdoff (security fix.)
+
 0.98.34
 -------
 * Correct additional address-size vs. operand-size confusions.
