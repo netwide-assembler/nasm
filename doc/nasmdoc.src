@@ -941,6 +941,10 @@ of any combination of a label, an instruction and a comment is allowed.
 Of course, the operand field is either required or forbidden by the
 presence and nature of the instruction field.
 
+NASM uses backslash (\\) as the line continuation character; if a line
+ends with backslash, the next line is considered to be a part of the
+backslash-ended line.
+
 NASM places no restrictions on white space within a line: labels may
 have white space before them, or instructions may have no space
 before them, or anything. The \i{colon} after a label is also
@@ -1579,6 +1583,13 @@ conditional assembly, multi-level file inclusion, two forms of macro
 extra macro power. Preprocessor directives all begin with a \c{%}
 sign.
 
+The preprocessor collapses all lines which end with a backslash (\\)
+character into a single line.  Thus:
+
+\c %define THIS_VERY_LONG_MACRO_NAME_IS_DEFINED_TO \\
+\c         THIS_VALUE
+
+will work as expected.
 
 \H{slmacro} \i{Single-Line Macros}
 
@@ -7192,7 +7203,7 @@ This is a larger and more unwieldy version of \c{CMPXCHG}: it
 compares the 64-bit (eight-byte) value stored at \c{[mem]} with the
 value in \c{EDX:EAX}. If they are equal, it sets the zero flag and
 stores \c{ECX:EBX} into the memory area. If they are unequal, it
-clears the zero flag and leaves the memory area untouched.
+clears the zero flag and stores the memory contents into \c{EDX:EAX}.
 
 \c{CMPXCHG8B} can be used with the \c{LOCK} prefix, to allow atomic
 execution. This is useful in multi-processor and multi-tasking

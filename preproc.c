@@ -629,7 +629,7 @@ static char *
 read_line(void)
 {
     char *buffer, *p, *q;
-    int bufsize;
+    int bufsize, continued_count;
 
     if (stdmacpos)
     {
@@ -680,6 +680,7 @@ read_line(void)
     bufsize = BUF_DELTA;
     buffer = nasm_malloc(BUF_DELTA);
     p = buffer;
+    continued_count = 0;
     while (1)
     {
 	q = fgets(p, bufsize - (p - buffer), istk->fp);
@@ -688,7 +689,23 @@ read_line(void)
 	p += strlen(p);
 	if (p > buffer && p[-1] == '\n')
 	{
-	    break;
+           /* Convert backslash-CRLF line continuation sequences into
+              nothing at all (for DOS and Windows) */
+           if (((p - 2) > buffer) && (p[-3] == '\\') && (p[-2] == '\r')) {
+               p -= 3;
+               *p = 0;
+               continued_count++;
+           }
+           /* Also convert backslash-LF line continuation sequences into
+              nothing at all (for Unix) */
+           else if (((p - 1) > buffer) && (p[-2] == '\\')) {
+               p -= 2;
+               *p = 0;
+               continued_count++;
+           }
+           else {
+               break;
+           }
 	}
 	if (p - buffer > bufsize - 10)
 	{
@@ -705,7 +722,7 @@ read_line(void)
 	return NULL;
     }
 
-    src_set_linnum(src_get_linnum() + istk->lineinc);
+    src_set_linnum(src_get_linnum() + istk->lineinc + continued_count);
 
     /*
      * Play safe: remove CRs as well as LFs, if any of either are
