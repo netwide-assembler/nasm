@@ -195,7 +195,7 @@ long readnum (char *str, int *error)
 	radix = 16, r++;
     else if (q[-1]=='H' || q[-1]=='h')
 	radix = 16 , q--;
-    else if (q[-1]=='Q' || q[-1]=='q')
+    else if (q[-1]=='Q' || q[-1]=='q' || q[-1]=='O' || q[-1]=='o')
 	radix = 8 , q--;
     else if (q[-1]=='B' || q[-1]=='b')
 	radix = 2 , q--;

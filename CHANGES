@@ -5,6 +5,7 @@
 * Fix JMP FAR label and CALL FAR label.
 * Add new multisection support - map files - fix align bug
 * Fix sysexit, movhps/movlps reg,reg bugs in insns.dat
+* "Q" or "O" suffixes indicate octal
 
 0.98.35
 -------

@@ -1312,7 +1312,7 @@ character, string and floating-point.
 
 A numeric constant is simply a number. NASM allows you to specify
 numbers in a variety of number bases, in a variety of ways: you can
-suffix \c{H}, \c{Q} and \c{B} for \i{hex}, \i{octal} and \i{binary},
+suffix \c{H}, \c{Q} or \c{O}, and \c{B} for \i{hex}, \i{octal} and \i{binary},
 or you can prefix \c{0x} for hex in the style of C, or you can
 prefix \c{$} for hex in the style of Borland Pascal. Note, though,
 that the \I{$, prefix}\c{$} prefix does double duty as a prefix on
@@ -1326,6 +1326,7 @@ Some examples:
 \c         mov     ax,$0a2         ; hex again: the 0 is required
 \c         mov     ax,0xa2         ; hex yet again
 \c         mov     ax,777q         ; octal
+\c         mov     ax,777o         ; octal again
 \c         mov     ax,10010011b    ; binary
 
 
@@ -3778,24 +3779,27 @@ with \i\c{vstart=}.
 \i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit 
 start address.
 
-\b Arguments to \c{org}, \c{start}, and \c{vstart} are critical 
-expressions. See \k{crit}.
+\b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are 
+critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)} 
+- \c{ALIGN_SHIFT} must be defined before it is used here.
 
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
 
-\b If a \c{.text} section is not given an \c{ORG} statement, it is
-allocated \c{ORG 0} by default.
+\b If an \c{ORG} statement is not given, \c{ORG 0} is used 
+by default.
 
-\b The \c{.bss} section will be placed after all other sections, 
-unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=} 
+\b The \c{.bss} section will be placed after the last \c{progbits} 
+section, unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=} 
 has been specified.
 
-\b All sections are aligned on dword boundaries, unless a higher level
-of alignment has been specified.
+\b All sections are aligned on dword boundaries, unless a different 
+alignment has been specified.
 
 \b Sections may not overlap.
 
+\b Nasm creates the \c{section.<secname>.start} for each section, 
+which may be used in your code.
 
 \S{map}\i{Map files}
 
