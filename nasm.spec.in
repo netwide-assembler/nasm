@@ -8,7 +8,6 @@ Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{version}.tar.
 URL: http://nasm.2y.net/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: /usr
-Patch0: nasm-0.98.25alt-nasmopt.diff
 BuildPrereq: perl
 
 %package doc
@@ -36,7 +35,6 @@ include linker, library manager, loader, and information dump.
 
 %prep
 %setup
-%patch0 -p1
 
 %build
 CFLAGS="$RPM_OPT_FLAGS" LDFLAGS=-s ./configure --prefix=/usr
