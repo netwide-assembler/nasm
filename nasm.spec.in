@@ -1,3 +1,4 @@
+# $Id$
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@VERSION@@
@@ -10,9 +11,6 @@ URL: http://nasm.sourceforge.net/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: /usr
 BuildPrereq: perl
-BuildArchitectures: %{_target_cpu} noarch
-# This is necessary on newer RPM due to the arch/noarch issue
-%define _unpackaged_files_terminate_build 0
 
 %package doc
 Summary: Extensive documentation for NASM
@@ -49,13 +47,16 @@ rm -rf "$RPM_BUILD_ROOT"
 mkdir -p "$RPM_BUILD_ROOT"
 mkdir -p "$RPM_BUILD_ROOT"/usr/bin
 mkdir -p "$RPM_BUILD_ROOT"/usr/man/man1
-mkdir -p "$RPM_BUILD_ROOT"/usr/info
+mkdir -p "$RPM_BUILD_ROOT"/%{_infodir}
 DOC="$RPM_BUILD_ROOT"/usr/doc/nasm-%{version}
 mkdir -p "$DOC"
 mkdir -p "$DOC"/rdoff
 rm -f "$RPM_BUILD_ROOT"/usr/info/nasm.*
-make INSTALLROOT="$RPM_BUILD_ROOT" docdir=/usr/doc/nasm-%{version} install_everything
-gzip -9 "$RPM_BUILD_ROOT"/usr/info/nasm.*
+make INSTALLROOT="$RPM_BUILD_ROOT" \
+	docdir=/usr/doc/nasm-%{version} \
+	infodir=%{_infodir} \
+	install_everything
+gzip -9 "$RPM_BUILD_ROOT"/%{_infodir}/nasm.*
 gzip -9 "$DOC"/*.txt "$DOC"/*.ps
 cp AUTHORS CHANGES COPYING README TODO doc/*.doc "$DOC"
 cp rdoff/README "$DOC"/rdoff
@@ -65,20 +66,12 @@ cp rdoff/doc/* "$DOC"/rdoff
 rm -rf "$RPM_BUILD_ROOT"
 
 %post doc
-/sbin/install-info "$RPM_INSTALL_PREFIX"/info/nasm.info.gz "$RPM_INSTALL_PREFIX"/info/dir
+/sbin/install-info %{_infodir}/nasm.info.gz %{_infodir}/dir
 
 %preun doc
 if [ $1 = 0 ]; then
-  /sbin/install-info --delete "$RPM_INSTALL_PREFIX"/info/nasm.info.gz "$RPM_INSTALL_PREFIX"/info/dir
+  /sbin/install-info --delete %{_infodir}/nasm.info.gz %{_infodir}/dir
 fi
-
-%ifarch noarch
-
-%files doc
-%attr(-,root,root) %doc /usr/info/nasm.info*.gz
-%attr(-,root,root) %doc /usr/doc/nasm-%{version}/*
-
-%else
 
 %files
 %attr(-,root,root)	/usr/bin/nasm
@@ -86,13 +79,16 @@ fi
 %attr(-,root,root) %doc /usr/man/man1/nasm.1*
 %attr(-,root,root) %doc /usr/man/man1/ndisasm.1*
 
+%files doc
+%attr(-,root,root) %doc %{_infodir}/nasm.info*.gz
+%attr(-,root,root) %doc /usr/doc/nasm-%{version}/*
+
 %files rdoff
 %attr(-,root,root)	/usr/bin/ldrdf
 %attr(-,root,root)	/usr/bin/rdf2bin
 %attr(-,root,root)	/usr/bin/rdf2com
+%attr(-,root,root)	/usr/bin/rdf2ihx
 %attr(-,root,root)	/usr/bin/rdfdump
 %attr(-,root,root)	/usr/bin/rdflib
 %attr(-,root,root)	/usr/bin/rdx
 %attr(-,root,root) %doc	/usr/doc/nasm-%{version}/rdoff/*
-
-%endif
