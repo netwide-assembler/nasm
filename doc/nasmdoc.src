@@ -142,7 +142,7 @@ convention
 \IR{netbsd} NetBSD
 \IR{omf} OMF
 \IR{openbsd} OpenBSD
-\IR{operating-system} operating system
+\IR{operating system} operating system
 \IR{os/2} OS/2
 \IR{pascal calling convention}Pascal calling convention
 \IR{passes} passes, assembly
@@ -152,7 +152,6 @@ convention
 \IR{plt} PLT
 \IR{plt} \c{PLT} relocations
 \IA{pre-defining macros}{pre-define}
-\IR{qbasic} QBasic
 \IA{rdoff subdirectory}{rdoff}
 \IR{rdoff} \c{rdoff} subdirectory
 \IR{relocatable dynamic object file format} Relocatable Dynamic
@@ -3460,7 +3459,7 @@ The \c{bin} format does not produce object files: it generates
 nothing in the output file except the code you wrote. Such `pure
 binary' files are used by \i{MS-DOS}: \i\c{.COM} executables and
 \i\c{.SYS} device drivers are pure binary files. Pure binary output
-is also useful for \i{operating-system} and \i{boot loader}
+is also useful for \i{operating system} and \i{boot loader}
 development.
 
 \c{bin} supports the three \i{standardised section names} \i\c{.text},
