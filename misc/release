@@ -108,7 +108,7 @@ cd nasm-${version}
 ./configure --prefix=/usr/local
 make doc
 # Remove intermediate files.
-make clean
+make cleaner
 cd ..
 
 # Remove non-documentation
