@@ -3,7 +3,7 @@
 \# Source code to NASM documentation
 \#
 \M{category}{Programming}
-\M{title}{NASM: The Netwide Assembler}
+\M{title}{NASM - The Netwide Assembler}
 \M{year}{2002}
 \M{author}{The NASM Development Team}
 \M{license}{All rights reserved. This document is redistributable under the licence given in the file "COPYING" distributed in the NASM archive.}
