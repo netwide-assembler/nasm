@@ -3600,7 +3600,7 @@ allocated \c{ORG 0} by default.
 are placed in the order of the \c{ORG} statement. The code is padded
 with 0s to give the correct offsets within the output file.
 
-\b If a section has multiple \c{ORG} statements, the last ORG statement
+\b If a section has multiple \c{ORG} statements, the last \c{ORG} statement
 is applied to the entire section, without affecting the order in
 which the separate parts of the section are put together at assembly
 time.
