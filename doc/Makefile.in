@@ -62,7 +62,7 @@ nasm.inf: nasmdoc.ipf
 	ipfc -i -s $< $@
 
 clean:
-	-rm -f *.rtf *.hpj *.texi *.ph *.gid *.ipf
+	-rm -f *.rtf *.hpj *.texi *.gid *.ipf *.dip
 	-rm -f *.aux *.cp *.fn *.ky *.pg *.log *.toc *.tp *.vr
 
 spotless: clean

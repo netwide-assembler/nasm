@@ -142,6 +142,9 @@ print "done.\n";
 print "Producing WinHelp output: ";
 &write_hlp;
 print "done.\n";
+print "Producing Documentation Intermediate Paragraphs: ";
+&write_dip;
+print "done.\n";
 
 sub got_para {
   local ($_) = @_;
@@ -2335,3 +2338,26 @@ sub font_metrics {
      600, 600, 600, 600,   0,   0,   0,   0
   );
 }
+
+#
+# This produces documentation intermediate paragraph format; this is
+# basically the digested output of the front end.  Intended for use
+# by future backends, instead of putting it all in the same script.
+#
+sub write_dip {
+  open(PARAS, "> nasmdoc.dip");
+  foreach $k (keys(%metadata)) {
+      print PARAS 'meta :', $k, "\n";
+      print PARAS $metadata{$k},"\n";
+  }
+  for ($para = 0; $para <= $#pnames; $para++) {
+      print PARAS $pflags[$para], "\n";
+      print PARAS join("\037", @{$pnames[$para]}, "\n");
+  }
+  foreach $k (@itags) {
+      print PARAS 'indx :', $k, "\n";
+      print PARAS join("\037", @{$idxmap{$k}}), "\n";
+  }
+  close(PARAS);
+}
+
