@@ -254,7 +254,7 @@ enum
  * we treat CXZ and ECXZ as condition codes, albeit non-invertible
  * ones, so we need a different enum...
  */
-const static char *conditions[] = {
+static const char *conditions[] = {
     "a", "ae", "b", "be", "c", "cxz", "e", "ecxz", "g", "ge", "l", "le",
     "na", "nae", "nb", "nbe", "nc", "ne", "ng", "nge", "nl", "nle", "no",
     "np", "ns", "nz", "o", "p", "pe", "po", "s", "z"
@@ -274,7 +274,7 @@ static int inverse_ccs[] = {
 /*
  * Directive names.
  */
-const static char *directives[] = {
+static const char *directives[] = {
     "%arg",
     "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
     "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifnctx", "%elifndef",
@@ -331,7 +331,7 @@ enum
     TM_IFNDEF, TM_INCLUDE, TM_LOCAL
 };
 
-const static char *tasm_directives[] = {
+static const char *tasm_directives[] = {
     "arg", "elif", "else", "endif", "if", "ifdef", "ifdifi",
     "ifndef", "include", "local"
 };

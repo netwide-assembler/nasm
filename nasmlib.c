@@ -640,11 +640,11 @@ void saa_fpwrite (struct SAA *s, FILE *fp)
  * by the scanner.
  */
 #include "names.c"
-const static char *special_names[] = {
+static const char *special_names[] = {
     "byte", "dword", "far", "long", "near", "nosplit", "qword",
     "short", "to", "tword", "word"
 };
-const static char *prefix_names[] = {
+static const char *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
     "repnz", "repz", "times"
 };

@@ -164,7 +164,7 @@ if ( !defined($output) || $output eq 'n' ) {
         " - don't edit it */\n\n";
     print N "/* This file in included by names.c */\n\n";
     
-    print N "const static char *insn_names[] = {";
+    print N "static const char *insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
 	print N "," if ( !$first );
@@ -175,7 +175,7 @@ if ( !defined($output) || $output eq 'n' ) {
     }
     print N "\n};\n\n";
     print N "/* Conditional instructions */\n";
-    print N "const static char *icn[] = {";
+    print N "static const char *icn[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );

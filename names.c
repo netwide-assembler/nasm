@@ -7,7 +7,7 @@
  * distributed in the NASM archive.
  */
 
-const static char *reg_names[] = {	       /* register names, as strings */
+static const char *reg_names[] = {	       /* register names, as strings */
     "ah", "al", "ax", "bh", "bl", "bp", "bx", "ch", "cl",
     "cr0", "cr2", "cr3", "cr4", "cs", "cx", "dh", "di", "dl", "dr0",
     "dr1", "dr2", "dr3", "dr6", "dr7", "ds", "dx", "eax", "ebp",
@@ -18,7 +18,7 @@ const static char *reg_names[] = {	       /* register names, as strings */
     "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7"
 };
 
-const static char *conditions[] = {	       /* condition code names */
+static const char *conditions[] = {	       /* condition code names */
     "a", "ae", "b", "be", "c", "e", "g", "ge", "l", "le", "na", "nae",
     "nb", "nbe", "nc", "ne", "ng", "nge", "nl", "nle", "no", "np",
     "ns", "nz", "o", "p", "pe", "po", "s", "z"

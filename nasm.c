@@ -87,7 +87,7 @@ static char suppressed[1+ERR_WARN_MAX] = {
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-const static char *suppressed_names[1+ERR_WARN_MAX] = {
+static const char *suppressed_names[1+ERR_WARN_MAX] = {
     NULL, "macro-params", "macro-selfref", "orphan-labels", "number-overflow",
     "gnu-elf-extensions"
 };
@@ -96,7 +96,7 @@ const static char *suppressed_names[1+ERR_WARN_MAX] = {
  * The explanations for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-const static char *suppressed_what[1+ERR_WARN_MAX] = {
+static const char *suppressed_what[1+ERR_WARN_MAX] = {
     NULL,
     "macro calls with wrong no. of params",
     "cyclic macro self-references",

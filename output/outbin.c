@@ -555,7 +555,7 @@ static void bin_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, "", error);
 }
 
-const static char *bin_stdmac[] = {
+static const char *bin_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro org 1+.nolist",
     "[org %1]",
