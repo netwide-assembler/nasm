@@ -2,11 +2,20 @@ This is a modified version of NASM, modified and released by H. Peter
 Anvin <hpa@zytor.com>; it is not the original form released by the
 NASM authors.
 
+For release 0.98p3.4:
+
+* Made at least an attempt to modify all the additional Makefiles (in
+  the Mkfiles directory).  I can't test it, but this was the best I
+  could do.
+* DOS DJGPP+"Opus Make" Makefile from John S. Fine.
+* changes.asm changes from John S. Fine.
+
+
 For release 0.98p3.3:
 
 * Patch from Conan Brink to allow nesting of %rep directives.
 * If we're going to allow INT01 as an alias for INT1/ICEBP (one of
-  John's J4 changes), then we should allow INT03 as an alias for INT3
+  Jules 0.98p3 changes), then we should allow INT03 as an alias for INT3
   as well.
 * Updated changes.asm to include the latest changes.
 * Tried to clean up the <CR>s that had snuck in from a DOS/Windows

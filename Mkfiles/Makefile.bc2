@@ -13,7 +13,7 @@
 # over.
 #
 # It does show a few of my preferances, like putting the OBJ files
-# in a seperat directory, but if you just set OBJD to '.', it will
+# in a seperate directory, but if you just set OBJD to '.', it will
 # drop them all in the current directory (though you still need to
 # make the directory it's self).
 #
@@ -138,50 +138,50 @@ ndisasm$(EXE): $(NDISASMOBJS)
 ################################################################
 # Dependencies for all of NASM's obj files
 
-$(OBJD)assemble.$(OBJ): assemble.c nasm.h assemble.h insns.h
+$(OBJD)assemble.$(OBJ): assemble.c nasm.h insnsi.h assemble.h insns.h
         $(NASM_ASM)
 
-$(OBJD)float.$(OBJ): float.c nasm.h
+$(OBJD)float.$(OBJ): float.c nasm.h insnsi.h
         $(NASM_ASM)
 
-$(OBJD)labels.$(OBJ): labels.c nasm.h nasmlib.h
+$(OBJD)labels.$(OBJ): labels.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)listing.$(OBJ): listing.c nasm.h nasmlib.h listing.h
+$(OBJD)listing.$(OBJ): listing.c nasm.h insnsi.h nasmlib.h listing.h
         $(NASM_ASM)
 
-$(OBJD)eval.$(OBJ): eval.c nasm.h nasmlib.h eval.h
+$(OBJD)eval.$(OBJ): eval.c nasm.h insnsi.h nasmlib.h eval.h
         $(NASM_ASM)
 
-$(OBJD)nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h \
+$(OBJD)nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
 		listing.h outform.h
         $(NASM_ASM)
 
-$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h nasmlib.h
+$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)parser.$(OBJ): parser.c nasm.h nasmlib.h parser.h float.h names.c
+$(OBJD)parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
         $(NASM_ASM)
 
-$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h nasmlib.h
+$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h
 	$(NASM_ASM)
 
-$(OBJD)insnsa.$(OBJ): insnsa.c nasm.h insns.h
+$(OBJD)insnsa.$(OBJ): insnsa.c nasm.h insnsi.h insns.h
         $(NASM_ASM)
 
 ################################################################
 # Dependencies for all of NDISASM's obj files
 
-$(OBJD)disasm.$(OBJ): disasm.c nasm.h disasm.h sync.h insns.h names.c
+$(OBJD)disasm.$(OBJ): disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
         $(DASM_ASM)
 
-$(OBJD)ndisasm.$(OBJ): ndisasm.c nasm.h sync.h disasm.h
+$(OBJD)ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
         $(DASM_ASM)
 
 $(OBJD)sync.$(OBJ): sync.c sync.h
         $(DASM_ASM)
 
-$(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insns.h
+$(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insnsi.h insns.h
         $(DASM_ASM)
 
 # This is a kludge from the word go, as we can't use the nasmlib.obj compiled
@@ -194,37 +194,37 @@ $(OBJD)insnsd.$(OBJ): insnsd.c nasm.h insns.h
 # the -o... switch tells it the name to compile the obj file to, right here
 # $(OBJD)nasmlibd.obj
 
-$(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h nasmlib.h
+$(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
         $(CC) $(DCCFLAGS) -o$(OBJD)nasmlibd.obj nasmlib.c
 
 ################################################################
 # Dependencies for all of the output format's OBJ files
 
-$(OBJD)outas86.$(OBJ): outas86.c nasm.h nasmlib.h
+$(OBJD)outas86.$(OBJ): outas86.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outaout.$(OBJ): outaout.c nasm.h nasmlib.h
+$(OBJD)outaout.$(OBJ): outaout.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outbin.$(OBJ): outbin.c nasm.h nasmlib.h
+$(OBJD)outbin.$(OBJ): outbin.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h
+$(OBJD)outcoff.$(OBJ): outcoff.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outdbg.$(OBJ): outdbg.c nasm.h nasmlib.h
+$(OBJD)outdbg.$(OBJ): outdbg.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outelf.$(OBJ): outelf.c nasm.h nasmlib.h
+$(OBJD)outelf.$(OBJ): outelf.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outobj.$(OBJ): outobj.c nasm.h nasmlib.h
+$(OBJD)outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outrdf.$(OBJ): outrdf.c nasm.h nasmlib.h
+$(OBJD)outrdf.$(OBJ): outrdf.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outform.$(OBJ): outform.c outform.h nasm.h
+$(OBJD)outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
         $(NASM_ASM)
 
 ################################################################

@@ -269,7 +269,20 @@ arg_example2 arg2
 	RETF	word 4
 
 ; note "ENTER" has not been changed yet.
-	
+
+;-----------------------------------------------------------------------------
+; Enhancement by hpa in insns.dat et al
+;
+; Simplified adding new instructions, and added some missing instructions
+;
+	int03			; Instead of INT3
+	ud1			; No documented mnemonic for this one
+	ud2
+	sysenter
+	sysexit
+	fxsave [ebx]
+	fxrstor [es:ebx+esi*4+0x3000]
+
 %endif
 
 %ifdef oldcrash  ;*************************************************************
@@ -289,21 +302,6 @@ This_label_is_256_characters_long__There_used_to_be_a_bug_in_stdscan_which_made_
 emlabel empty_macro
 	jmp	emlabel
 
-%endif
-
-;-----------------------------------------------------------------------------
-; Enhancement by hpa in insns.dat et al
-;
-; Simplified added new instructions, and added some missing instructions
-;
-	int03			; Instead of INT3
-	ud1			; No documented mnemonic for this one
-	ud2
-	sysenter
-	sysexit
-	fxsave [ebx]
-	fxrstor [es:ebx+esi*4+0x3000]
-
 ;-----------------------------------------------------------------------------
 ; Enhancement by Conan Brink in preproc.c
 ;
@@ -314,3 +312,5 @@ emlabel empty_macro
 	nop
 %endrep
 %endrep
+
+%endif

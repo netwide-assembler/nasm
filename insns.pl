@@ -28,11 +28,12 @@ while (<F>) {
     push @$aname, $formatted;
   }
   if ( $_[0] =~ /cc$/ ) {
+      # Conditional instruction
       $k_opcodes_cc{$_[0]}++;
   } else {
+      # Unconditional instruction
       $k_opcodes{$_[0]}++;
   }
-  $done{$_[0]} = 1 if !$done{$_[0]};
   if ($formatted && !$nd) {
     push @big, $formatted;
     foreach $i (&startbyte($_[2])) {
@@ -44,8 +45,8 @@ while (<F>) {
 
 close F;
 
-@opcodes    = sort keys(%k_opcodes);	# Unconditional instructions
-@opcodes_cc = sort keys(%k_opcodes_cc);	# Conditional instructions
+@opcodes    = sort keys(%k_opcodes);
+@opcodes_cc = sort keys(%k_opcodes_cc);
 
 print STDERR "Writing insnsa.c...\n";
 
