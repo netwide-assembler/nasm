@@ -33,8 +33,8 @@ RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
 
 all: rdfdump ldrdf rdx rdflib rdf2bin
 
-rdfdump: rdfdump.o
-	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o $(LIBS)
+rdfdump: rdfdump.o rdoff.o
+	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o rdoff.o $(LIBS)
 ldrdf: ldrdf.o $(LDRDFLIBS)
 	$(CC) $(LDFLAGS) -o ldrdf ldrdf.o $(LDRDFLIBS) $(LIBS)
 rdx: rdx.o $(RDXLIBS)

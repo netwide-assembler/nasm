@@ -12,6 +12,8 @@
 #ifndef _RDFLOAD_H
 #define _RDFLOAD_H
 
+#define RDOFF_UTILS
+
 #include "rdoff.h"
 
 typedef struct RDFModuleStruct {

@@ -12,8 +12,8 @@
 @end titlepage
 
 @ifinfo
-Copyright @copyright{} 2002-2003 Netwide Assembler Project.
-Written by Yuri Zaporogets @email{yuriz@@ukr.net}
+Copyright @copyright{} 2002-2004 Netwide Assembler Project.
+Written by Yuri Zaporogets @email{yuriz@@users.sf.net}
 Based on various sources and notes written by Julian Hall @email{jules@@dsf.org.uk}
 Distributed under GNU documentation license.
 @end ifinfo

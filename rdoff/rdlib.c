@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RDOFF_UTILS
+
 #include "rdoff.h"
 #include "rdlib.h"
 #include "rdlar.h"
@@ -264,6 +266,3 @@ void rdl_perror(const char *apname, const char *filename)
     else
 	fprintf(stderr,"%s:%s:%s\n",apname,filename,rdl_errors[rdl_error]);
 }
-
-
-

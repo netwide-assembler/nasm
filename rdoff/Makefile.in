@@ -42,8 +42,8 @@ PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
 
 all: $(PROGRAMS)
 
-rdfdump$(X): rdfdump.$(O)
-	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O)
+rdfdump$(X): rdfdump.$(O) rdoff.$(O)
+	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O) rdoff.$(O)
 ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS)
 	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS)
 rdx$(X): rdx.$(O) $(RDXLIBS)

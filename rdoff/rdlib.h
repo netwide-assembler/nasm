@@ -1,4 +1,6 @@
-/* rdlib.h	Functions for manipulating librarys of RDOFF object files */
+/*
+ * rdlib.h	Functions for manipulating libraries of RDOFF object files.
+ */
 
 
 struct librarynode {
@@ -23,5 +25,3 @@ int rdl_searchlib (struct librarynode * lib,
 int rdl_openmodule (struct librarynode * lib, int module, rdffile * f);
 
 void rdl_perror(const char *apname, const char *filename);
-
-

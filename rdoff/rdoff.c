@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+#define RDOFF_UTILS
+
 #include "rdoff.h"
 
 #define newstr(str) strcpy(malloc(strlen(str) + 1),str)
@@ -53,7 +56,7 @@ memorybuffer * newmembuf()
 
 void membufwrite(memorybuffer *const b, void *data, int bytes)
 {
-    int16 w;
+    uint16 w;
     long l;
 
     if (b->next) {        /* memory buffer full - use next buffer */
@@ -85,7 +88,7 @@ void membufwrite(memorybuffer *const b, void *data, int bytes)
 	break;
 
     case -2:
-	w = * (int16 *) data ;
+	w = * (uint16 *) data ;
 	b->buffer[b->length++] = w & 0xFF;
 	w >>= 8 ;
 	b->buffer[b->length++] = w & 0xFF;
@@ -146,9 +149,9 @@ long translatelong(long in)
     return r;
 }
 
-int16 translateshort(int16 in) 
+uint16 translateshort(uint16 in) 
 {
-    int16 r;
+    uint16 r;
     unsigned char * i;
     
     i = (unsigned char *)&in;
@@ -157,15 +160,48 @@ int16 translateshort(int16 in)
     return r;
 }
 
-const char *RDOFFId = "RDOFF2"; /* written to the start of RDOFF files */
+/* Segment types */
+static char *knownsegtypes[8] = {
+    "NULL", "text", "data", "object comment",
+    "linked comment", "loader comment",
+    "symbolic debug", "line number debug"
+};
 
+/* Get a textual string describing the segment type */
+char *translatesegmenttype(uint16 type)
+{
+    if (type < 8)
+	return knownsegtypes[type];
+    if (type < 0x0020)
+	return "reserved";
+    if (type < 0x1000)
+	return "reserved - Moscow";
+    if (type < 0x8000)
+	return "reserved - system dependant";
+    if (type < 0xFFFF)
+	return "reserved - other";
+    if (type == 0xFFFF)
+	return "invalid type code";
+    return "type code out of range";
+}
+
+/* This signature is written to the start of RDOFF files */
+const char *RDOFFId = RDOFF2_SIGNATURE;
+
+/* Error messages. Must correspond to the codes defined in rdoff.h */
 const char *rdf_errors[11] = {
-  "no error occurred","could not open file","invalid file format",
-  "error reading file","unknown error","header not read",
-  "out of memory", "RDOFF v1 not supported",
-  "unknown extended header record", 
-  "header record of known type but unknown length",
-  "no such segment"};
+    /* 0 */	"no error occurred",				
+    /* 1 */	"could not open file",
+    /* 2 */	"invalid file format",
+    /* 3 */	"error reading file",
+    /* 4 */	"unknown error",
+    /* 5 */	"header not read",
+    /* 6 */	"out of memory",
+    /* 7 */	"RDOFF v1 not supported",
+    /* 8 */	"unknown extended header record",
+    /* 9 */	"header record of known type but unknown length",
+    /* 10 */	"no such segment"
+};
 
 int rdf_errno = 0;
 
@@ -178,119 +214,120 @@ int rdfopen(rdffile *f, const char *name)
     FILE * fp;
 
     fp = fopen(name,"rb");
-    if (!fp) return rdf_errno = 1;		/* error 1: file open error */
+    if (!fp)
+	return rdf_errno = RDF_ERR_OPEN;
 
     return rdfopenhere(f,fp,NULL,name);
 }
 
 int rdfopenhere(rdffile *f, FILE *fp, int *refcount, const char *name)
 {
-  char buf[8];
-  long initpos;
-  long l;
-  int16 s;
+    char buf[8];
+    long initpos;
+    long l;
+    uint16 s;
 
-  if (translatelong(0x01020304) != 0x01020304)
-  {					/* fix this to be portable! */
-    fputs("*** this program requires a little endian machine\n",stderr);
-    fprintf(stderr,"01020304h = %08lxh\n",translatelong(0x01020304));
-    exit(3);
-  }
+    if (translatelong(0x01020304) != 0x01020304) {
+        /* fix this to be portable! */
+        fputs("*** this program requires a little endian machine\n",stderr);
+        fprintf(stderr,"01020304h = %08lxh\n",translatelong(0x01020304));
+        exit(3);
+    }
 
-  f->fp = fp;
-  initpos = ftell(fp);
+    f->fp = fp;
+    initpos = ftell(fp);
 
-  fread(buf,6,1,f->fp);		/* read header */
-  buf[6] = 0;
+    fread(buf,6,1,f->fp);		/* read header */
+    buf[6] = 0;
 
-  if (strcmp(buf,RDOFFId)) {
-    fclose(f->fp);
-    if (!strcmp(buf,"RDOFF1"))
-	return rdf_errno = 7;	/* error 7: RDOFF 1 not supported */
-    return rdf_errno = 2; 	/* error 2: invalid file format */
-  }
+    if (strcmp(buf,RDOFFId)) {
+	fclose(f->fp);
+	if (!strcmp(buf,"RDOFF1"))
+	    return rdf_errno = RDF_ERR_VER;
+	return rdf_errno = RDF_ERR_FORMAT;
+    }
 
-  if (fread(&l,1,4,f->fp) != 4 ||
-      fread(&f->header_len,1,4,f->fp) != 4) {
-    fclose(f->fp);
-    return rdf_errno = 3;	/* error 3: file read error */
-  }
+    if (fread(&l,1,4,f->fp) != 4 || fread(&f->header_len,1,4,f->fp) != 4) {
+	fclose(f->fp);
+	return rdf_errno = RDF_ERR_READ;
+    }
 
-  f->header_ofs = ftell(f->fp);
-  f->eof_offset = f->header_ofs + translatelong(l) - 4;
+    f->header_ofs = ftell(f->fp);
+    f->eof_offset = f->header_ofs + translatelong(l) - 4;
 
-  if (fseek(f->fp,f->header_len,SEEK_CUR)) {
-    fclose(f->fp);
-    return rdf_errno = 2;	/* seek past end of file...? */
-  }
+    if (fseek(f->fp,f->header_len,SEEK_CUR)) {
+	fclose(f->fp);
+	return rdf_errno = RDF_ERR_FORMAT;	/* seek past end of file...? */
+    }
 
-  if (fread(&s,1,2,f->fp) != 2) {
-      fclose(f->fp);
-      return rdf_errno = 3;
-  }
+    if (fread(&s,1,2,f->fp) != 2) {
+	fclose(f->fp);
+	return rdf_errno = RDF_ERR_READ;
+    }
 
-  f->nsegs = 0;
+    f->nsegs = 0;
 
-  while (s != 0)
-  {
-      f->seg[f->nsegs].type = s;
-      if (fread(&f->seg[f->nsegs].number,1,2,f->fp) != 2 ||
-	  fread(&f->seg[f->nsegs].reserved,1,2,f->fp) != 2 ||
-	  fread(&f->seg[f->nsegs].length,1,4,f->fp) != 4)
-      {
-	  fclose(f->fp);
-	  return rdf_errno = 3;
-      }
+    while (s != 0) {
+	f->seg[f->nsegs].type = s;
+	if (fread(&f->seg[f->nsegs].number,1,2,f->fp) != 2 ||
+	    fread(&f->seg[f->nsegs].reserved,1,2,f->fp) != 2 ||
+	    fread(&f->seg[f->nsegs].length,1,4,f->fp) != 4) {
+	    fclose(f->fp);
+	    return rdf_errno = RDF_ERR_READ;
+	}
 
-      f->seg[f->nsegs].offset = ftell(f->fp);
-      if (fseek(f->fp,f->seg[f->nsegs].length,SEEK_CUR)) {
-	  fclose(f->fp);
-	  return rdf_errno = 2;
-      }
-      f->nsegs++;
+	f->seg[f->nsegs].offset = ftell(f->fp);
+	if (fseek(f->fp,f->seg[f->nsegs].length,SEEK_CUR)) {
+	    fclose(f->fp);
+	    return rdf_errno = RDF_ERR_FORMAT;
+	}
+	f->nsegs++;
 
-      if (fread(&s,1,2,f->fp) != 2) {
-	  fclose(f->fp);
-	  return rdf_errno = 3;
-      }
-  }
+	if (fread(&s,1,2,f->fp) != 2) {
+	    fclose(f->fp);
+	    return rdf_errno = RDF_ERR_READ;
+	}
+    }
 
-  if (f->eof_offset != ftell(f->fp) + 8)  /* +8 = skip null segment header */
-  {
-      fprintf(stderr, "warning: eof_offset [%ld] and actual eof offset "
+    if (f->eof_offset != ftell(f->fp) + 8) { /* +8 = skip null segment header */
+	fprintf(stderr, "warning: eof_offset [%ld] and actual eof offset "
 	      "[%ld] don't match\n", f->eof_offset, ftell(f->fp) + 8);
-  }
-  fseek(f->fp,initpos,SEEK_SET);
-  f->header_loc = NULL;
+    }
+    fseek(f->fp,initpos,SEEK_SET);
+    f->header_loc = NULL;
 
-  f->name = newstr(name);
-  f->refcount = refcount;
-  if (refcount) (*refcount)++;
-  return 0;
+    f->name = newstr(name);
+    f->refcount = refcount;
+    if (refcount) (*refcount)++;
+    return RDF_OK;
 }
 
 int rdfclose(rdffile *f)
 {
-    if (! f->refcount || ! --(*f->refcount))
-     {
-      fclose(f->fp);
-      f->fp = NULL;
-     }
+    if (! f->refcount || ! --(*f->refcount)) {
+	fclose(f->fp);
+	f->fp = NULL;
+    }
     free(f->name);
 
     return 0;
 }
 
-void rdfperror(const char *app,const char *name)
+/*
+ * Print the message for last error (from rdf_errno)
+ */
+void rdfperror(const char *app, const char *name)
 {
-  fprintf(stderr,"%s:%s: %s\n",app,name,rdf_errors[rdf_errno]);
-  if (rdf_errno == 1 || rdf_errno == 3)
-  {
-      perror(app);
-  }
-
+    fprintf(stderr,"%s:%s: %s\n",app,name,rdf_errors[rdf_errno]);
+    if (rdf_errno == RDF_ERR_OPEN || rdf_errno == RDF_ERR_READ) {
+	perror(app);
+    }
 }
 
+/*
+ * Find the segment by its number.
+ * Returns segment array index, or -1 if segment with such number was not found.
+ */
 int rdffindsegment(rdffile * f, int segno)
 {
     int i;
@@ -299,36 +336,37 @@ int rdffindsegment(rdffile * f, int segno)
     return -1;
 }
 
+/*
+ * Load the segment. Returns status.
+ */
 int rdfloadseg(rdffile *f,int segment,void *buffer)
 {
-  long fpos;
-  long slen;
+    long fpos, slen;
 
-  switch(segment) {
-  case RDOFF_HEADER:
-      fpos = f->header_ofs;
-      slen = f->header_len;
-      f->header_loc = (byte *)buffer;
-      f->header_fp = 0;
-      break;
-  default:
-      if (segment < f->nsegs) {
-	  fpos = f->seg[segment].offset;
-	  slen = f->seg[segment].length;
-	  f->seg[segment].data = (byte *)buffer;
-      }
-      else {
-	  return rdf_errno = 10; /* no such segment */
-      }
-  }
+    switch(segment) {
+      case RDOFF_HEADER:
+	fpos = f->header_ofs;
+	slen = f->header_len;
+	f->header_loc = (byte *)buffer;
+	f->header_fp = 0;
+	break;
+      default:
+	if (segment < f->nsegs) {
+	    fpos = f->seg[segment].offset;
+	    slen = f->seg[segment].length;
+	    f->seg[segment].data = (byte *)buffer;
+	} else {
+	    return rdf_errno = RDF_ERR_SEGMENT;
+	}
+    }
 
-  if (fseek(f->fp,fpos,SEEK_SET))
-    return rdf_errno = 4;	
+    if (fseek(f->fp,fpos,SEEK_SET))
+	return rdf_errno = RDF_ERR_UNKNOWN;	
     
-  if (fread(buffer,1,slen,f->fp) != slen)
-    return rdf_errno = 3;
+    if (fread(buffer,1,slen,f->fp) != slen)
+	return rdf_errno = RDF_ERR_READ;
 
-  return 0;
+    return RDF_OK;
 }
 
 /* Macros for reading integers from header in memory */
@@ -347,86 +385,93 @@ int rdfloadseg(rdffile *f,int segment,void *buffer)
 #define RS(str,max) { for(i=0;i<max;i++){\
   RI8(str[i]); if (!str[i]) break;} str[i]=0; }
 
+/*
+ * Read a header record.
+ * Returns the address of record, or NULL in case of error.
+ */
 rdfheaderrec *rdfgetheaderrec(rdffile *f)
 {
-  static rdfheaderrec r;
-  int i;
+    static rdfheaderrec r;
+    int i;
 
-  if (!f->header_loc) {
-    rdf_errno = 5;
-    return NULL;
-  }
+    if (!f->header_loc) {
+	rdf_errno = RDF_ERR_HEADER;
+	return NULL;
+    }
 
-  if (f->header_fp >= f->header_len) return 0;
+    if (f->header_fp >= f->header_len) return 0;
 
-  RI8(r.type);
-  RI8(r.g.reclen);
+    RI8(r.type);
+    RI8(r.g.reclen);
 
-  switch(r.type) {
-  case RDFREC_RELOC:		/* Relocation record */
-  case RDFREC_SEGRELOC:
-      if (r.r.reclen != 8) {
-	  rdf_errno = 9;
-	  return NULL;
-      }
-    RI8(r.r.segment);
-    RI32(r.r.offset);
-    RI8(r.r.length);
-    RI16(r.r.refseg);
-    break;
+    switch(r.type) {
+      case RDFREC_RELOC:		/* Relocation record */
+      case RDFREC_SEGRELOC:
+	if (r.r.reclen != 8) {
+	    rdf_errno = RDF_ERR_RECLEN;
+	    return NULL;
+	}
+	RI8(r.r.segment);
+	RI32(r.r.offset);
+	RI8(r.r.length);
+	RI16(r.r.refseg);
+	break;
 
-  case RDFREC_IMPORT:		/* Imported symbol record */
-  case RDFREC_FARIMPORT:
-    RI8(r.i.flags);
-    RI16(r.i.segment);
-    RS(r.i.label,32);
-    break;
+      case RDFREC_IMPORT:		/* Imported symbol record */
+      case RDFREC_FARIMPORT:
+	RI8(r.i.flags);
+	RI16(r.i.segment);
+	RS(r.i.label, EXIM_LABEL_MAX);
+	break;
 
-  case RDFREC_GLOBAL:		/* Exported symbol record */
-    RI8(r.e.flags);
-    RI8(r.e.segment);
-    RI32(r.e.offset);
-    RS(r.e.label,32);
-    break;
+      case RDFREC_GLOBAL:		/* Exported symbol record */
+	RI8(r.e.flags);
+	RI8(r.e.segment);
+	RI32(r.e.offset);
+	RS(r.e.label, EXIM_LABEL_MAX);
+	break;
 
-  case RDFREC_DLL:		/* DLL record */
-    RS(r.d.libname,127);
-    break;
+      case RDFREC_DLL:			/* DLL record */
+	RS(r.d.libname, MODLIB_NAME_MAX);
+	break;
 
-  case RDFREC_BSS:		/* BSS reservation record */
-      if (r.r.reclen != 4) {
-	  rdf_errno = 9;
-	  return NULL;
-      }
-    RI32(r.b.amount);
-    break;
+      case RDFREC_BSS:			/* BSS reservation record */
+	if (r.r.reclen != 4) {
+	    rdf_errno = RDF_ERR_RECLEN;
+	    return NULL;
+	}
+	RI32(r.b.amount);
+	break;
 
-  case RDFREC_MODNAME:		/* Module name record */
-    RS(r.m.modname,127);
-    break;
+      case RDFREC_MODNAME:		/* Module name record */
+	RS(r.m.modname, MODLIB_NAME_MAX);
+	break;
 
-  case RDFREC_COMMON:		/* Common variable */
-    RI16(r.c.segment);
-    RI32(r.c.size);
-    RI16(r.c.align);
-    RS(r.c.label,32);
-    break;
+      case RDFREC_COMMON:		/* Common variable */
+	RI16(r.c.segment);
+	RI32(r.c.size);
+	RI16(r.c.align);
+	RS(r.c.label, EXIM_LABEL_MAX);
+	break;
     
-  default:
+      default:
 #ifdef STRICT_ERRORS
-    rdf_errno = 8; /* unknown header record */
-    return NULL;
+	rdf_errno = RDF_ERR_RECTYPE; /* unknown header record */
+	return NULL;
 #else
-    for (i = 0; i < r.g.reclen; i++)
-	RI8(r.g.data[i]);
+	for (i = 0; i < r.g.reclen; i++)
+	    RI8(r.g.data[i]);
 #endif
-  }
-  return &r;
+    }
+    return &r;
 }
-    
+
+/*
+ * Rewind to the beginning of the file
+ */    
 void rdfheaderrewind(rdffile *f)
 {
-  f->header_fp = 0;
+    f->header_fp = 0;
 }
 
 
@@ -450,8 +495,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
     membufwrite(h->buf,&r->type,1);
     membufwrite(h->buf,&r->g.reclen,1);
 
-    switch (r->type)
-    {
+    switch (r->type) {
     case RDFREC_GENERIC:			/* generic */
     	membufwrite(h->buf, &r->g.data, r->g.reclen);
 	break;
@@ -491,7 +535,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 	
     default:
 #ifdef STRICT_ERRORS
-	return (rdf_errno = 8);
+	return rdf_errno = RDF_ERR_RECTYPE;
 #else
 	for (i = 0; i < r->g.reclen; i++)
 	    membufwrite(h->buf, r->g.data[i], 1);
@@ -530,4 +574,3 @@ void rdfdoneheader(rdf_headerbuf * h)
     freemembuf(h->buf);
     free(h);
 }
-

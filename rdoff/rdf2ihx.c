@@ -1,12 +1,14 @@
-/* rdf2ihx: convert an RDOFF object file to Intel Hex format.  This is based
-   on rdf2bin.  Note that this program only writes 16-bit HEX. */
+/*
+ * rdf2ihx.c - convert an RDOFF object file to Intel Hex format.
+ * This is based on rdf2bin.
+ * Note that this program only writes 16-bit HEX.
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "rdfload.h"
-#include "rdoff.h"
 #include "nasmlib.h"
 #include "symtab.h"
 
@@ -186,4 +188,3 @@ int main(int argc, char **argv)
   fclose(of);
   return 0;
 }
-

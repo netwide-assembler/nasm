@@ -16,7 +16,6 @@
 #include <stdlib.h>
 
 #include "rdfload.h"
-#include "rdoff.h"
 #include "symtab.h"
 
 typedef int (*main_fn) (int,char**);	/* Main function prototype */
@@ -27,16 +26,14 @@ int main(int argc, char **argv)
     main_fn	code;
     symtabEnt	* s;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
  	puts("usage: rdx <rdoff-executable> [params]\n");
 	exit(255);
     }
 
     m = rdfload(argv[1]);
 
-    if (! m)
-    {
+    if (! m) {
 	rdfperror("rdx",argv[1]);
 	exit(255);
     }
@@ -46,8 +43,7 @@ int main(int argc, char **argv)
 			   in other cases... */
 
     s = symtabFind(m->symtab, "_main");
-    if (! s)
-    {
+    if (! s) {
 	fprintf(stderr,"rdx: could not find symbol '_main' in '%s'\n",argv[1]);
 	exit(255);
     }
@@ -58,4 +54,3 @@ int main(int argc, char **argv)
 
     return code(argc,argv);	/* execute */
 }
-

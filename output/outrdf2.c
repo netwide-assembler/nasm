@@ -1,10 +1,9 @@
-/* outrdf2.c	output routines for the Netwide Assembler to produce
- *		RDOFF version 2 format object files (which are intended
- *		mainly for use in proprietary projects, as the code to 
- *		load and execute them is very simple). They will also be 
- *		used for device drivers and possibly some executable files
- *		in the MOSCOW operating system. See Rdoff.txt for
- *		details.
+/*
+ * outrdf2.c	output routines for the Netwide Assembler to produce
+ *		RDOFF version 2 format object files, which is used as a
+ *		main binary format in the RadiOS (http://radios.sf.net).
+ *		Originally Julian planned to use it in his MOSCOW
+ *		operating system.
  *
  * The Netwide Assembler is copyright (C) 1996-1998 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -23,19 +22,15 @@
 #include "outform.h"
 
 /* VERBOSE_WARNINGS: define this to add some extra warnings... */
-#define VERBOSE_WARNINGS     
+#define VERBOSE_WARNINGS   
 
 #ifdef OF_RDF2
 
-#define RDF_MAXSEGS 64	/* maximum number of segments - user configurable */
+#include "rdoff/rdoff.h"
 
-typedef unsigned short int16;
-typedef unsigned char byte;
+/* This signature is written to start of RDOFF files */
+static const char *RDOFF2Id = RDOFF2_SIGNATURE;
 
-static const char *RDOFF2Id = "RDOFF2";	/* written to start of RDOFF files */
-
-
-/* the records that can be found in the RDOFF header */
 
 /* Note that whenever a segment is referred to in the RDOFF file, its number
  * is always half of the segment number that NASM uses to refer to it; this
@@ -44,86 +39,16 @@ static const char *RDOFF2Id = "RDOFF2";	/* written to start of RDOFF files */
  * allows up to 65533 external labels to be defined; otherwise it would be
  * 32764. */
  
-#define RDFREC_RELOC		1
-#define RDFREC_IMPORT		2
-#define RDFREC_GLOBAL		3
-#define RDFREC_DLL		4
-#define RDFREC_BSS		5
-#define RDFREC_SEGRELOC		6
-#define RDFREC_FARIMPORT	7
-#define RDFREC_MODNAME		8
-#define RDFREC_COMMON		10
-#define RDFREC_GENERIC		0
-
-
-struct RelocRec {
-  byte	type;		/* must be 1, or 6 for segment base ref */
-  byte	reclen;		/* set to 8 */
-  byte	segment;	/* only 0 for code, or 1 for data supported,
-			 * but add 64 for relative refs (ie do not require
-			 * reloc @ loadtime, only linkage) */
-  long	offset;		/* from start of segment in which reference is loc'd */
-  byte	length;		/* 1 2 or 4 bytes */
-  int16	refseg;		/* segment to which reference refers to */
-};
-
-struct ImportRec {
-  byte 	type;		/* must be 2, or 7 for FAR import */
-  byte	reclen;		/* equals 3+label length */
-  byte  flags;		/* SYM_* flags (see below) */
-  int16	segment;	/* segment number allocated to the label for reloc
-			 * records - label is assumed to be at offset zero
-			 * in this segment, so linker must fix up with offset
-			 * of segment and of offset within segment */
-  char	label[33];	/* zero terminated... should be written to file until
-			 * the zero, but not after it - max len = 32 chars */
-};
-
-struct ExportRec {
-  byte	type;		/* must be 3 */
-  byte  reclen;		/* equals 7+label length */
-  byte  flags;          /* SYM_* flags (see below) */
-  byte	segment;	/* segment referred to (0/1) */
-  long	offset;		/* offset within segment */
-  char	label[33];	/* zero terminated as above. max len = 32 chars */
-};
-
-struct BSSRec {
-  byte	type;		/* must be 5 */
-  byte  reclen;		/* equals 4 */
-  long	amount;		/* number of bytes BSS to reserve */
-};
-
-struct DLLModRec {
-  byte type;		/* 4 for DLLRec, 8 for ModRec */
-  byte reclen;		/* 1+lib name length for DLLRec, 1+mod name length */
-  char name[128];	/* library to link at load time or module name */
-};
-
-struct CommonRec {
-  byte	type;		/* must be 10 */
-  byte  reclen;		/* equals 9+label length */
-  int16 segment;	/* segment number */
-  long	size;		/* size of common variable */
-  int16 align;		/* alignment (power of two) */
-  char	label[33];	/* zero terminated as above. max len = 32 chars */
-};
-
-/* Flags for ExportRec */
-#define SYM_DATA	1
-#define SYM_FUNCTION	2
-#define SYM_GLOBAL	4
-#define SYM_IMPORT	8
-
 #define COUNT_SEGTYPES 9
 
 static char * segmenttypes[COUNT_SEGTYPES] = {
-  "null", "text", "code", "data", "comment", "lcomment", "pcomment",
-  "symdebug", "linedebug" 
+    "null", "text", "code", "data",
+    "comment", "lcomment", "pcomment",
+    "symdebug", "linedebug" 
 };
 
 static int segmenttypenumbers[COUNT_SEGTYPES] = {
-  0, 1, 1, 2, 3, 4, 5, 6, 7
+    0, 1, 1, 2, 3, 4, 5, 6, 7
 };
 
 /* code for managing buffers needed to separate code and data into individual
@@ -147,11 +72,11 @@ static FILE *ofile;
 static efunc error;
 
 static struct seginfo {
-  char *segname;
-  int   segnumber;
-  int16 segtype;
-  int16 segreserved;
-  long  seglength;
+  char	*segname;
+  int	segnumber;
+  uint16 segtype;
+  uint16 segreserved;
+  long	seglength;
 } segments[RDF_MAXSEGS];
 
 static int nsegments;
@@ -290,11 +215,15 @@ static long rdf2_section_names(char *name, int pass, int *bits)
   return i;
 }
 
+
+/*
+ * Write relocation record
+ */
 static void write_reloc_rec(struct RelocRec *r)
 {
   char buf[4],*b;
 
-  if (r->refseg != (int16)NO_SEG && (r->refseg & 1)) /* segment base ref */
+  if (r->refseg != (uint16)NO_SEG && (r->refseg & 1)) /* segment base ref */
       r->type = RDFREC_SEGRELOC;
 
   r->refseg >>= 1;    /* adjust segment nos to RDF rather than NASM */
@@ -310,37 +239,45 @@ static void write_reloc_rec(struct RelocRec *r)
   headerlength += r->reclen + 2;
 }
 
+
+/*
+ * Write export record
+ */
 static void write_export_rec(struct ExportRec *r)
 {
-  char buf[4], *b;
+    char buf[4], *b;
 
-  r->segment >>= 1;
+    r->segment >>= 1;
 
-  saa_wbytes(header,&r->type,1);
-  saa_wbytes(header,&r->reclen,1);
-  saa_wbytes(header,&r->flags,1);
-  saa_wbytes(header,&r->segment,1);
-  b = buf; WRITELONG(b,r->offset);
-  saa_wbytes(header,buf,4);
-  saa_wbytes(header,r->label,strlen(r->label) + 1);
-  headerlength += r->reclen + 2;
+    saa_wbytes(header, &r->type, 1);
+    saa_wbytes(header, &r->reclen, 1);
+    saa_wbytes(header, &r->flags, 1);
+    saa_wbytes(header, &r->segment, 1);
+    b = buf; WRITELONG(b, r->offset);
+    saa_wbytes(header, buf, 4);
+    saa_wbytes(header, r->label, strlen(r->label) + 1);
+    headerlength += r->reclen + 2;
 }
 
 static void write_import_rec(struct ImportRec *r)
 {
-  char buf[4], *b;
+    char buf[4], *b;
 
-  r->segment >>= 1;
+    r->segment >>= 1;
 
-  saa_wbytes(header,&r->type,1);
-  saa_wbytes(header,&r->reclen,1);
-  saa_wbytes(header,&r->flags,1);
-  b = buf; WRITESHORT(b,r->segment);
-  saa_wbytes(header,buf,2);
-  saa_wbytes(header,r->label,strlen(r->label) + 1);
-  headerlength += r->reclen + 2;
+    saa_wbytes(header, &r->type, 1);
+    saa_wbytes(header, &r->reclen, 1);
+    saa_wbytes(header, &r->flags, 1);
+    b = buf; WRITESHORT(b,r->segment);
+    saa_wbytes(header, buf, 2);
+    saa_wbytes(header, r->label, strlen(r->label) + 1);
+    headerlength += r->reclen + 2;
 }
 
+
+/*
+ * Write BSS record
+ */
 static void write_bss_rec(struct BSSRec *r)
 {
     char buf[4], *b;
@@ -353,139 +290,160 @@ static void write_bss_rec(struct BSSRec *r)
 }
 
 /*
- * Write common variable record.
+ * Write common variable record
  */
 static void write_common_rec(struct CommonRec *r)
 {
-  char buf[4], *b;
+    char buf[4], *b;
 
-  r->segment >>= 1;
+    r->segment >>= 1;
 
-  saa_wbytes(header,&r->type,1);
-  saa_wbytes(header,&r->reclen,1);
-  b = buf; WRITESHORT(b,r->segment);
-  saa_wbytes(header,buf,2);
-  b = buf; WRITELONG(b,r->size);
-  saa_wbytes(header,buf,4);
-  b = buf; WRITESHORT(b,r->align);
-  saa_wbytes(header,buf,2);
-  saa_wbytes(header,r->label,strlen(r->label) + 1);
-  headerlength += r->reclen + 2;
-}
-
-/*
- * Write library record. Also used for module name records.
- */
-static void write_dllmod_rec(struct DLLModRec *r)
-{
-    saa_wbytes(header,&r->type,1);
-    saa_wbytes(header,&r->reclen,1);
-    saa_wbytes(header,r->name,strlen(r->name) + 1);
+    saa_wbytes(header, &r->type, 1);
+    saa_wbytes(header, &r->reclen, 1);
+    b = buf; WRITESHORT(b,r->segment);
+    saa_wbytes(header, buf, 2);
+    b = buf; WRITELONG(b, r->size);
+    saa_wbytes(header,buf,4);
+    b = buf; WRITESHORT(b, r->align);
+    saa_wbytes(header, buf, 2);
+    saa_wbytes(header, r->label, strlen(r->label) + 1);
     headerlength += r->reclen + 2;
 }
 
+/*
+ * Write library record
+ */
+static void write_dll_rec(struct DLLRec *r)
+{
+    saa_wbytes(header,&r->type,1);
+    saa_wbytes(header,&r->reclen,1);
+    saa_wbytes(header, r->libname, strlen(r->libname) + 1);
+    headerlength += r->reclen + 2;
+}
+
+
+/*
+ * Write module name record
+ */
+static void write_modname_rec(struct ModRec *r)
+{
+    saa_wbytes(header,&r->type,1);
+    saa_wbytes(header,&r->reclen,1);
+    saa_wbytes(header, r->modname, strlen(r->modname) + 1);
+    headerlength += r->reclen + 2;
+}
+
+
+/*
+ * Handle export, import and common records.
+ */
 static void rdf2_deflabel(char *name, long segment, long offset,
 			 int is_global, char *special)
 {
-  struct ExportRec r;
-  struct ImportRec ri;
-  struct CommonRec ci;
-  static int farsym = 0;
-  static int i;
-  byte symflags = 0;
+    struct ExportRec r;
+    struct ImportRec ri;
+    struct CommonRec ci;
+    static int farsym = 0;
+    static int i;
+    byte symflags = 0;
+    int len;
 
-  if (is_global == 2) {
-    /* Common variable */
-    ci.type = RDFREC_COMMON;
-    ci.size = offset;
-    ci.segment = segment;
-    strncpy(ci.label, name, 32);
-    ci.label[32] = 0;
-    ci.reclen = 9 + strlen(ci.label);
-    ci.align = 0;
+    /* Check if the label length is OK */
+    if ((len = strlen(name)) >= EXIM_LABEL_MAX) {
+	error(ERR_NONFATAL, "label size exceeds %d bytes", EXIM_LABEL_MAX);
+	return;
+    }
+    if (!len) {
+	error(ERR_NONFATAL, "zero-length label");
+	return;
+    }
+
+    if (is_global == 2) {
+	/* Common variable */
+	ci.type = RDFREC_COMMON;
+	ci.size = offset;
+	ci.segment = segment;
+	strcpy(ci.label, name);
+	ci.reclen = 9 + len;
+	ci.align = 0;
     
-    /*
-     * Check the special text to see if it's a valid number and power
-     * of two; if so, store it as the alignment for the common variable.
-     */
+	/*
+	 * Check the special text to see if it's a valid number and power
+	 * of two; if so, store it as the alignment for the common variable.
+	 */
+	if (special) {
+	    int err;
+	    ci.align = readnum(special, &err);
+	    if (err)
+		error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+				    " valid number", special);
+	    else if ( (ci.align | (ci.align-1)) != 2*ci.align - 1)
+		error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+				    " power of two", special);
+	}    
+	write_common_rec(&ci);
+    }
+
+    /* We don't care about local labels or fix-up hints */
+    if (is_global != 1) return;
+
     if (special) {
-	int err;
-        ci.align = readnum(special, &err);
-        if (err) error(ERR_NONFATAL, "alignment constraint `%s' is not a"
-                    	             " valid number", special);
-	else if ( (ci.align | (ci.align-1)) != 2*ci.align - 1)
-	    error(ERR_NONFATAL, "alignment constraint `%s' is not a"
-	                        " power of two", special);
-    }    
-    write_common_rec(&ci);
-  }
-
-  /* We don't care about local labels or fix-up hints */
-  if (is_global != 1) return;
-
-  if (special) {
-    while(*special == ' ' || *special == '\t') special++;
+	while(*special == ' ' || *special == '\t') special++;
     
-    if (!nasm_strnicmp(special, "export", 6)) {
-      special += 6;
-      symflags |= SYM_GLOBAL;  
+	if (!nasm_strnicmp(special, "export", 6)) {
+	    special += 6;
+	    symflags |= SYM_GLOBAL;  
+	} else if (!nasm_strnicmp(special, "import", 6)) {
+	    special += 6;
+	    symflags |= SYM_IMPORT;
+	}
+
+	if (*special) {
+	    while (isspace(*special)) special++;
+	    if (!nasm_stricmp(special, "far")) {
+		farsym = 1;
+	    } else if (!nasm_stricmp(special, "near")) {
+		farsym = 0;
+	    } else if (!nasm_stricmp(special, "proc") || 
+			!nasm_stricmp(special, "function")) {
+		symflags |= SYM_FUNCTION;  
+	    } else if (!nasm_stricmp(special, "data") ||
+			!nasm_stricmp(special, "object")) {
+		symflags |= SYM_DATA;
+	    } else
+		error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
+	}	
     }
-    else if (!nasm_strnicmp(special, "import", 6)) {
-      special += 6;
-      symflags |= SYM_IMPORT;
+
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	return;
     }
 
-    if (*special) {
-      while(isspace(*special)) special++;
-      if (!nasm_stricmp(special, "far")) {
-        farsym = 1;
-      }
-      else if (!nasm_stricmp(special, "near")) {
-        farsym = 0;
-      }
-      else if (!nasm_stricmp(special, "proc") || 
-               !nasm_stricmp(special, "function")) {
-        symflags |= SYM_FUNCTION;  
-      }
-      else if (!nasm_stricmp(special, "data") ||
-               !nasm_stricmp(special, "object")) {
-        symflags |= SYM_DATA;
-      }
-      else
-        error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
-    }	
-  }
+    for (i = 0; i < nsegments; i++) {
+	if (segments[i].segnumber == segment>>1) break;
+    }
 
-  if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-    error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
-    return;
-  }
-
-  for (i = 0; i < nsegments; i++) {
-    if (segments[i].segnumber == segment>>1) break;
-  }
-  if (i >= nsegments) {   /* EXTERN declaration */
-    ri.type = farsym ? RDFREC_FARIMPORT : RDFREC_IMPORT;
-    if (symflags & SYM_GLOBAL)
-      error(ERR_NONFATAL, "symbol type conflict - EXTERN cannot be EXPORT");
-    ri.flags = symflags;
-    ri.segment = segment;
-    strncpy(ri.label,name,32);
-    ri.label[32] = 0;
-    ri.reclen = 4 + strlen(ri.label);
-    write_import_rec(&ri);
-  } else if (is_global) {
-    r.type = RDFREC_GLOBAL;
-    if (symflags & SYM_IMPORT)
-      error(ERR_NONFATAL, "symbol type conflict - GLOBAL cannot be IMPORT");
-    r.flags = symflags;
-    r.segment = segment;
-    r.offset = offset;
-    strncpy(r.label,name,32);
-    r.label[32] = 0;
-    r.reclen = 7 + strlen(r.label);
-    write_export_rec(&r);
-  }
+    if (i >= nsegments) {		/* EXTERN declaration */
+	ri.type = farsym ? RDFREC_FARIMPORT : RDFREC_IMPORT;
+	if (symflags & SYM_GLOBAL)
+	    error(ERR_NONFATAL, "symbol type conflict - EXTERN cannot be EXPORT");
+	ri.flags = symflags;
+	ri.segment = segment;
+	strcpy(ri.label, name);
+	ri.reclen = 4 + len;
+	write_import_rec(&ri);
+    } else if (is_global) {
+	r.type = RDFREC_GLOBAL;		/* GLOBAL declaration */
+	if (symflags & SYM_IMPORT)
+	    error(ERR_NONFATAL, "symbol type conflict - GLOBAL cannot be IMPORT");
+	r.flags = symflags;
+	r.segment = segment;
+	r.offset = offset;
+	strcpy(r.label, name);
+	r.reclen = 7 + len;
+	write_export_rec(&r);
+    }
 }
 
 static void membufwrite(int segment, const void * data, int bytes)
@@ -681,8 +639,7 @@ static void rdf2_cleanup (int debuginfo) {
   /* generate the output file... */
   fwrite(RDOFF2Id,6,1,ofile);	/* file type magic number */
 
-  if (bsslength != 0)		/* reserve BSS */
-  {
+  if (bsslength != 0) {		/* reserve BSS */
       bs.type = RDFREC_BSS;
       bs.amount = bsslength;
       bs.reclen = 4;
@@ -730,25 +687,38 @@ static long rdf2_segbase (long segment) {
     return segment;
 }
 
-static int rdf2_directive (char *directive, char *value, int pass) {
-    struct DLLModRec r;
+
+/*
+ * Handle RDOFF2 specific directives
+ */
+static int rdf2_directive (char *directive, char *value, int pass)
+{
+    int n;
+
+    /* Check if the name length is OK */
+    if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
+	error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
+	return 0;
+    }
 
     if (! strcmp(directive, "library")) {
 	if (pass == 1) {
+	    struct DLLRec r;
 	    r.type = RDFREC_DLL;
-	    r.reclen=strlen(value)+1;
-	    strcpy(r.name, value);
-	    write_dllmod_rec(&r);
+	    r.reclen = n+1;
+	    strcpy(r.libname, value);
+	    write_dll_rec(&r);
 	}
 	return 1;
     }
 
     if (! strcmp(directive, "module")) {
 	if (pass == 1) {
+	    struct ModRec r;
 	    r.type = RDFREC_MODNAME;
-	    r.reclen=strlen(value)+1;
-	    strcpy(r.name, value);
-	    write_dllmod_rec(&r);
+	    r.reclen = n+1;
+	    strcpy(r.modname, value);
+	    write_modname_rec(&r);
 	}
 	return 1;
     }

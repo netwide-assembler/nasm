@@ -23,7 +23,6 @@
 
 #include "rdfload.h"
 #include "symtab.h"
-#include "rdoff.h"
 #include "collectn.h"
 
 extern int rdf_errno;
@@ -36,17 +35,15 @@ rdfmodule * rdfload(const char *filename)
     rdfheaderrec *r;
 
     f = malloc(sizeof(rdfmodule));
-    if (f == NULL)
-    {
-	rdf_errno = 6;		/* out of memory */
+    if (f == NULL) {
+	rdf_errno = RDF_ERR_NOMEM;
 	return NULL;
     }
 
     f->symtab = symtabNew();
-    if (!f->symtab)
-    {
+    if (!f->symtab) {
 	free(f);
-	rdf_errno = 6;
+	rdf_errno = RDF_ERR_NOMEM;
 	return NULL;
     }
 
@@ -63,7 +60,7 @@ rdfmodule * rdfload(const char *filename)
     hdr = malloc (f->f.header_len);
 
     if (! f->t || ! f->d || !hdr) {
-	rdf_errno = 6;
+	rdf_errno = RDF_ERR_NOMEM;
 	rdfclose(&f->f);
 	if (f->t) free(f->t);
 	if (f->d) free(f->d);
@@ -87,20 +84,18 @@ rdfmodule * rdfload(const char *filename)
 
     /* Allocate BSS segment; step through header and count BSS records */
 
-    while ( ( r = rdfgetheaderrec (&f->f) ) )
-    {
+    while ((r = rdfgetheaderrec(&f->f))) {
 	if (r->type == 5)
 	    bsslength += r->b.amount;
     }
 
     f->b = malloc ( bsslength );
-    if (bsslength && (!f->b))
-    {
+    if (bsslength && (!f->b)) {
 	free(f->t);
 	free(f->d);
 	free(f);
 	free(hdr);
-	rdf_errno = 6;
+	rdf_errno = RDF_ERR_NOMEM;
 	return NULL;
     }
 
@@ -121,13 +116,11 @@ int rdf_relocate(rdfmodule * m)
     long		rel;
     unsigned char	* seg;
     
-    rdfheaderrewind ( & m->f );
+    rdfheaderrewind (&m->f);
     collection_init(&imports);
 
-    while ( (r = rdfgetheaderrec ( & m->f ) ) )
-    {
-	switch (r->type)
-	{
+    while ((r = rdfgetheaderrec(&m->f))) {
+	switch (r->type) {
 	case 1:		/* Relocation record */
 
 	    /* calculate relocation factor */
@@ -154,7 +147,7 @@ int rdf_relocate(rdfmodule * m)
 		seg[r->r.offset] += (char) rel;
 		break;
 	    case 2:
-		*(int16 *)(seg + r->r.offset) += (int16) rel;
+		*(uint16 *)(seg + r->r.offset) += (uint16) rel;
 		break;
 	    case 4:
 		*(long *)(seg + r->r.offset) += rel;

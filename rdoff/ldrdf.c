@@ -2,7 +2,7 @@
  * ldrdf.c - RDOFF Object File linker/loader main program.
  *
  * Copyright (c) 1996,99 Julian Hall. All rights reserved.
- * Copyright (c) 2000-2003 RET & COM Research.
+ * Improvements and fixes (c) 1999-2004 RET & COM Research.
  *
  * This file is distributed under the terms and conditions of the
  * GNU Lesser Public License (LGPL), version 2.1.
@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RDOFF_UTILS
+
 #include "rdoff.h"
 #include "symtab.h"
 #include "collectn.h"
@@ -36,7 +38,6 @@
 
 #define LDRDF_VERSION "1.07"
 
-#define RDF_MAXSEGS 64
 /* #define STINGY_MEMORY */
 
 /* =======================================================================
@@ -70,8 +71,8 @@ struct modulenode {
  */
 
 void processmodule(const char * filename, struct modulenode * mod);
-int allocnewseg(int16 type,int16 reserved);
-int findsegment(int16 type,int16 reserved);
+int allocnewseg(uint16 type,uint16 reserved);
+int findsegment(uint16 type,uint16 reserved);
 void symtab_add(const char * symbol, int segment, long offset);
 int symtab_get(const char * symbol, int * segment, long * offset);
 
@@ -219,8 +220,7 @@ void processmodule(const char * filename, struct modulenode * mod)
     long	bssamount = 0;
     int		bss_was_referenced = 0;
 
-    for (seg = 0; seg < mod->f.nsegs; seg++)
-    {
+    for (seg = 0; seg < mod->f.nsegs; seg++) {
 	/*
 	 * get the segment configuration for this type from the segment
 	 * table. getsegconfig() is a macro, defined in ldsegs.h.
@@ -418,7 +418,7 @@ int lookformodule(const char *name)
  * a segment of the type requested, and if one isn't found allocates a
  * new one.
  */
-int allocnewseg(int16 type,int16 reserved)
+int allocnewseg(uint16 type,uint16 reserved)
 {
     outputseg[nsegs].type = type;
     outputseg[nsegs].number = nsegs;
@@ -430,7 +430,7 @@ int allocnewseg(int16 type,int16 reserved)
     return nsegs++;
 }
 
-int findsegment(int16 type,int16 reserved)
+int findsegment(uint16 type,uint16 reserved)
 {
     int i;
 
@@ -463,8 +463,7 @@ void symtab_add(const char * symbol, int segment, long offset)
     symtabEnt * ste;
 
     ste = symtabFind(symtab, symbol);
-    if (ste)
-    {
+    if (ste) {
 	if (ste->segment >= 0) {
 	    /*
 	     * symbol previously defined
@@ -516,9 +515,7 @@ int symtab_get(const char * symbol, int * segment, long * offset)
 	*segment = -1;
 	*offset = 0;
 	return 0;
-    }
-    else
-    {
+    } else {
 	*segment = ste->segment;
 	*offset = ste->offset;
 	return 1;
@@ -539,16 +536,13 @@ void add_library(const char * name)
 	errorcount++;
 	return;
     }
-    if (! libraries)
-    {
+    if (!libraries) {
 	lastlib = libraries = malloc(sizeof(*libraries));
 	if (! libraries) {
 	    fprintf(stderr, "ldrdf: out of memory\n");
 	    exit(1);
 	}
-    }
-    else
-    {
+    } else {
 	lastlib->next = malloc(sizeof(*libraries));
 	if (!lastlib->next) {
 	    fprintf(stderr, "ldrdf: out of memory\n");
@@ -588,13 +582,11 @@ int search_libraries()
 
     cur = libraries;
 
-    while (cur)
-    {
+    while (cur) {
 	if (options.verbose > 2)
 	    printf("scanning library `%s', pass %d...\n", cur->name, pass);
 	
-	for (i = 0; rdl_openmodule(cur, i, &f) == 0; i++)
-	{
+	for (i = 0; rdl_openmodule(cur, i, &f) == 0; i++) {
 	    if (pass == 2 && lookformodule(f.name)) continue;
 
 	    if (options.verbose > 3)
@@ -613,8 +605,7 @@ int search_libraries()
 	    
 	    keepfile = 0;
 
-	    while ((hr = rdfgetheaderrec (&f)))
-	    {
+	    while ((hr = rdfgetheaderrec (&f))) {
                 /* We're only interested in exports, so skip others */
 		if (hr->type != RDFREC_GLOBAL) continue; 
 
@@ -744,8 +735,7 @@ void write_output(const char * filename)
      * under 16 bit DOS, but that would be a slower way of doing this.
      * And you could always use DJGPP...
      */
-    for (i = 0; i < nsegs; i++)
-    {
+    for (i = 0; i < nsegs; i++) {
 	outputseg[i].data=NULL;
 	if(!outputseg[i].length) continue;
 	outputseg[i].data = malloc(outputseg[i].length);
@@ -764,21 +754,18 @@ void write_output(const char * filename)
     /*
      * Step through the modules, performing required actions on each one
      */
-    for (cur = modules; cur; cur=cur->next)
-    {
+    for (cur = modules; cur; cur=cur->next) {
 	/*
 	 * Read the actual segment contents into the correct places in
 	 * the newly allocated segments
 	 */
 
-	for (i = 0; i < cur->f.nsegs; i++)
-	{
+	for (i = 0; i < cur->f.nsegs; i++) {
 	    int dest = cur->seginfo[i].dest_seg;
 
 	    if (dest == -1) continue;
 	    if (rdfloadseg(&cur->f, i, 
-			   outputseg[dest].data + cur->seginfo[i].reloc))
-	    {
+			   outputseg[dest].data + cur->seginfo[i].reloc)) {
 		rdfperror("ldrdf", cur->name);
 		exit(1);
 	    }
@@ -797,8 +784,7 @@ void write_output(const char * filename)
 	if (cur->f.header_loc)
 	    rdfheaderrewind(&cur->f);
 	else
-	    if (rdfloadseg(&cur->f, RDOFF_HEADER, header))
-	    {
+	    if (rdfloadseg(&cur->f, RDOFF_HEADER, header)) {
 		rdfperror("ldrdf", cur->name);
 		exit(1);
 	    }
@@ -808,18 +794,16 @@ void write_output(const char * filename)
 	 * table for the segments in this module.
 	 */
 	init_seglocations(&segs);
-	for (i = 0; i < cur->f.nsegs; i++)
-	{
+	for (i = 0; i < cur->f.nsegs; i++) {
 	    add_seglocation(&segs, cur->f.seg[i].number,
 			    cur->seginfo[i].dest_seg, cur->seginfo[i].reloc);
 	}
 	/*
 	 * and the BSS segment (doh!)
 	 */
-	add_seglocation (&segs, 2, 2, cur->bss_reloc);
+	add_seglocation(&segs, 2, 2, cur->bss_reloc);
 	
-	while ((hr = rdfgetheaderrec(&cur->f)))
-	{
+	while ((hr = rdfgetheaderrec(&cur->f)))	{
 	    switch(hr->type) {
 	    case RDFREC_RELOC: /* relocation record - need to do a fixup */
 		/*
@@ -834,21 +818,18 @@ void write_output(const char * filename)
 		 * case we have to first subtract the amount we've relocated
 		 * the containing segment by.
 		 */
-		
-		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset))
-		{
+		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset)) {
 		    fprintf(stderr, "%s: reloc to undefined segment %04x\n",
 			    cur->name, (int) hr->r.refseg);
 		    errorcount++;
 		    break;
 		}
 
-		isrelative = (hr->r.segment & 64) == 64;
-		hr->r.segment &= 63;
+		isrelative = (hr->r.segment & RDOFF_RELATIVEMASK) == RDOFF_RELATIVEMASK;
+		hr->r.segment &= (RDOFF_RELATIVEMASK-1);
 
 		if (hr->r.segment == 2 || 
-		    (localseg = rdffindsegment(&cur->f, hr->r.segment)) == -1)
-		{
+		    (localseg = rdffindsegment(&cur->f, hr->r.segment)) == -1) {
 		    fprintf(stderr, "%s: reloc from %s segment (%d)\n", 
 			    cur->name,
 			    hr->r.segment == 2 ? "BSS" : "unknown",
@@ -857,8 +838,8 @@ void write_output(const char * filename)
 		    break;
 		}
 
-		if (hr->r.length != 1 && hr->r.length != 2 && hr->r.length!=4)
-		{
+		if (hr->r.length != 1 && hr->r.length != 2 &&
+		    hr->r.length != 4 ) {
 		    fprintf(stderr, "%s: nonstandard length reloc "
 			    "(%d bytes)\n", cur->name, hr->r.length);
 		    errorcount++;
@@ -883,10 +864,10 @@ void write_output(const char * filename)
 		 * Then add 'offset' onto the value at data.
 		 */
 		
-		if (isrelative) offset -= cur->seginfo[localseg].reloc;
-		switch (hr->r.length)
-		{
-		case 1:
+		if (isrelative)
+		    offset -= cur->seginfo[localseg].reloc;
+		switch (hr->r.length) {
+		  case 1:
 		    offset += *data;
 		    if (offset < -127 || offset > 128)
 			fprintf(error_file, "warning: relocation out of range "
@@ -894,7 +875,7 @@ void write_output(const char * filename)
 				(int)hr->r.segment, hr->r.offset);
 		    *data = (char) offset;
 		    break;
-		case 2:
+		  case 2:
 		    offset += * (short *)data;
 		    if (offset < -32767 || offset > 32768)
 			fprintf(error_file, "warning: relocation out of range "
@@ -902,7 +883,7 @@ void write_output(const char * filename)
 				(int)hr->r.segment, hr->r.offset);
 		    * (short *)data = (short) offset;
 		    break;
-		case 4:
+		  case 4:
 		    * (long *)data += offset;
 		    /* we can't easily detect overflow on this one */
 		    break;
@@ -915,13 +896,12 @@ void write_output(const char * filename)
 		 * Otherwise, we need to output a new relocation record
 		 * with the references updated segment and offset...
 		 */
-		if (! isrelative || cur->seginfo[localseg].dest_seg != seg)
-		{
+		if (!isrelative || cur->seginfo[localseg].dest_seg != seg) {
 		    hr->r.segment = cur->seginfo[localseg].dest_seg;
 		    hr->r.offset += cur->seginfo[localseg].reloc;
 		    hr->r.refseg = seg;
 		    if (isrelative)
-		    	hr->r.segment += 64;
+		    	hr->r.segment += RDOFF_RELATIVEMASK;
 		    rdfaddheader(rdfheader, hr);
 		}
 		break;
@@ -1045,8 +1025,7 @@ void write_output(const char * filename)
 		hr->r.segment = cur->seginfo[localseg].dest_seg;
 		hr->r.offset += cur->seginfo[localseg].reloc;
 
-		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset))
-		{
+		if (!get_seglocation(&segs, hr->r.refseg, &seg, &offset)) {
 		    fprintf(stderr, "%s: segment fixup to undefined "
 			    "segment %04x\n", cur->name, (int)hr->r.refseg);
 		    errorcount++;
@@ -1085,8 +1064,7 @@ void write_output(const char * filename)
     /*
      * Write the header
      */
-    for (i = 0; i < nsegs; i++)
-    {
+    for (i = 0; i < nsegs; i++) {
 	if (i == 2) continue;
 	rdfaddsegment (rdfheader, outputseg[i].length);
     }
@@ -1098,9 +1076,8 @@ void write_output(const char * filename)
      * Step through the segments, one at a time, writing out into
      * the output file
      */
-    for (i = 0; i < nsegs; i++)
-    {
-	int16 s;
+    for (i = 0; i < nsegs; i++) {
+	uint16 s;
 	long l;
 	
 	if (i == 2) continue;
@@ -1154,14 +1131,13 @@ int main(int argc, char ** argv)
 
     error_file = stderr;
 
-    argc --, argv ++;
+    argc--, argv++;
     if (argc == 0) usage();
-    while (argc && *argv && **argv == '-' && argv[0][1] != 'l')
-    {
+    while (argc && *argv && **argv == '-' && argv[0][1] != 'l') {
 	switch(argv[0][1]) {
 	case 'r':
 	    printf("ldrdf (linker for RDF files) version " LDRDF_VERSION "\n");
-	    printf( _RDOFF_H "\n");
+	    printf("RDOFF2 revision %s\n", RDOFF2_REVISION);
 	    exit(0);
 	case 'v':
 	    if (argv[0][2] == '=') {
@@ -1318,3 +1294,4 @@ int main(int argc, char ** argv)
     if (errorcount > 0)	exit(1);
     return 0;
 }
+

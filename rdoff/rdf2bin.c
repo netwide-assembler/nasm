@@ -1,11 +1,12 @@
-/* rdf2bin: convert an RDOFF object file to flat binary */
+/*
+ * rdf2bin.c - convert an RDOFF object file to flat binary
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "rdfload.h"
-#include "rdoff.h"
 #include "nasmlib.h"
 
 long origin = 0;

@@ -92,4 +92,3 @@ hash (const char *name)
    return (hashval);
 
 }
-
