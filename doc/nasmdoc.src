@@ -701,8 +701,7 @@ The syntax is:
         are optimised, unless the long form is specified.
 
 \b \c{-On} multi-pass optimization, minimize branch offsets; also will
-        minimize signed immediate bytes, overriding size specification
-        when the \c{strict} keyword hasn't been used (see \k{strict}).
+        minimize signed immediate bytes, overriding size specification.
         If 2 <= n <= 3, then there are 5 * n passes, otherwise there
         are n passes.
 
@@ -1482,12 +1481,12 @@ invent one using the macro processor.
 
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
-When assembling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will usee size specifiers (\c{BYTE}, \c{WORD},
-\c{DWORD}, \c{QWORD}, or \c{TWORD}), but will give them the smallest
-possible size. The keyword \c{STRICT} can be used to inhibit
-optimization and force a particular operand to be emitted in the
-specified size. For example, with the optimizer on, and in
+When compiling with the optimizer set to level 2 or higher (see
+\k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
+\c{DWORD}, \c{QWORD}, or \c{TWORD}) strictly to choose the address- or
+operand-size of the instruction.  The keyword \c{STRICT} can be used
+to inhibit optimization and force a particular operand to be emitted
+in the specified size.  For example, with the optimizer on, and in
 \c{BITS 16} mode,
 
 \c         push dword 33
@@ -1498,9 +1497,6 @@ is encoded in three bytes \c{66 6A 21}, whereas
 
 is encoded in six bytes, with a full dword immediate operand \c{66 68
 21 00 00 00}.
-
-With the optimizer off, the same code (six bytes) is generated whether
-the \c{STRICT} keyword was used or not.
 
 
 \H{crit} \i{Critical Expressions}
@@ -3240,7 +3236,7 @@ which has no function other than to call the primitive form.
 \S{USE16 & USE32} \i\c{USE16} & \i\c{USE32}: Aliases for BITS
 
 The `\c{USE16}' and `\c{USE32}' directives can be used in place of
-`\c{BITS 16}' and `\c{BITS 32}', for compatibility with other assemblers.
+`\c{BIT 16}' and `\c{BITS 32}', for compatibility with other assemblers.
 
 
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
@@ -3528,16 +3524,8 @@ binary' files are used by \i{MS-DOS}: \i\c{.COM} executables and
 is also useful for \i{operating system} and \i{boot loader}
 development.
 
-\c{bin} supports the three \i{standardised section names} \i\c{.text},
-\i\c{.data} and \i\c{.bss} only. The file NASM outputs will contain the
-contents of the \c{.text} section first, followed by the contents of
-the \c{.data} section, aligned on a four-byte boundary. The \c{.bss}
-section is not stored in the output file at all, but is assumed to
-appear directly after the end of the \c{.data} section, again
-aligned on a four-byte boundary.
-
-If you specify no explicit \c{SECTION} directive, the code you write
-will be directed by default into the \c{.text} section.
+The \c{bin} format supports \i{multiple section names}. For details of
+how nasm handles sections in the bin format, see \k{multisec}.
 
 Using the \c{bin} format puts NASM by default into 16-bit mode (see
 \k{bits}). In order to use \c{bin} to write 32-bit code such as an
@@ -3569,7 +3557,7 @@ which allows you to jump around in the object file and overwrite
 code you have already generated, NASM's \c{ORG} does exactly what
 the directive says: \e{origin}. Its sole function is to specify one
 offset which is added to all internal address references within the
-file; it does not permit any of the trickery that MASM's version
+section; it does not permit any of the trickery that MASM's version
 does. See \k{proborg} for further comments.
 
 
@@ -3590,6 +3578,40 @@ The parameter to \c{ALIGN} specifies how many low bits of the
 section start address must be forced to zero. The alignment value
 given may be any power of two.\I{section alignment, in
 bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
+
+
+\S{multisec} \i\c{MULTISECTION} support for the BIN format.
+
+The \c{bin} format allows the use of multiple sections, which are
+ordered according to a few basic rules.
+
+\b Any code which comes before an explicit \c{SECTION} directive
+is directed by default into the \c{.text} section.
+
+\b If a .text section is not given an ORG statement, it is allocated
+\c{ORG 0} by default.
+
+\b Sections which have an ORG statement, explicit or implicit, are
+placed in the order of the ORG statement. The code is padded with 0s
+to give the correct offsets within the output file.
+
+\b If a section has multiple ORG statements, the last ORG statement
+is applied to the entire section, without affecting the order in
+which the separate parts of the section are put together at assembly
+time.
+
+\b Sections without an ORG statement will be placed after those which
+do have one, and they will be placed in the order that they are first
+declared.
+
+\b The .data section does not follow any sepcial rules, unlike the
+.text and .bss sections.
+
+\b The .bss section will be placed after all other sections.
+
+\b All sections are aligned on dword boundaries.
+
+\b Sections cannot overlap.
 
 
 \H{objfmt} \i\c{obj}: \i{Microsoft OMF}\I{OMF} Object Files
