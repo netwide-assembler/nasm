@@ -18,7 +18,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-if [ "$1" eq "real" ]; then
+if [ "$1" = "real" ]; then
   real=true
 else
   real=false
