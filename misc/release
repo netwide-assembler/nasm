@@ -51,7 +51,11 @@ v3=`echo $version | cut -d. -f3`
 
 # Tag the tree as a release
 if $real; then
-  cd nasm && $CVS tag -F nasm-`echo $version | sed -e 's/\./_/g'` && cd ..
+  cvstag=nasm-`echo $version | sed -e 's/\./_/g'`
+  # Create the tag for this release
+  ( cd nasm && $CVS tag -F $cvstag )
+  # Update the LATEST tag
+  $CVS rtag -r $cvstag -F -a LATEST nasm
 fi
 
 # Extract file names which have the -kb flag set, meaning they
