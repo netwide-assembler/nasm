@@ -16,13 +16,13 @@ The Makefiles are:
   Filename      Target		Compiler	Notes
   ---------------------------------------------------------------------------
   Makefile.b32	Win32		Borland C++
-  Makefile.bc3	16-bit DOS	Borland C++	working as of NASM 0.98.31
+  Makefile.bc3	16-bit DOS	Borland C++	OK as of NASM 0.98.31
   Makefile.bor	16-bit DOS	Turbo C		probably obsolete
-  Makefile.dj	32-bit DOS	DJGPP
+  Makefile.dj	32-bit DOS	DJGPP		OK as of NASM 0.98.31
   Makefile.djo	32-bit DOS	DJGPP		"Opus Make" version
   Makefile.dl	32-bit DOS	cc386		cc386 by David Lindauer
   Makefile.dos	16-bit DOS	MSC 5		probably obsolete
-  Makefile.ms7	16-bit DOS	MSC 7		working as of NASM 0.98.31
+  Makefile.ms7	16-bit DOS	MSC 7		OK as of NASM 0.98.31
   Makefile.os2	OS/2 Warp	Borland C++
   Makefile.sc	32-bit DOS	Symantec C++ 7
   Makefile.scw	Win32		Symantec C++ 7
