@@ -28,6 +28,13 @@
 	add eax,strict dword 2		; Explicit Strict
 	add eax,strict dword 123456h	; Explicit Strict
 	add eax,strict byte 123456h	; Explicit Strict Truncation
+
+	imul dx,3			; Implicit
+	imul dx,byte 3			; Explicit
+	imul dx,word 3			; Explicit
+	imul dx,strict byte 3		; Explicit Strict
+	imul dx,strict word 3		; Explicit Strict
+		
 ;
 ; Same thing with branches
 ;
