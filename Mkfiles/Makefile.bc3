@@ -5,12 +5,10 @@
 # redistributable under the licence given in the file "Licence"
 # distributed in the NASM archive.
 #
-# This makefile is made for compile NASM and NDISASM on a 16 bit dos
-# compiler like Microsoft C, or Borland C. This should work on all
-# verioson of Turbo C++ and Borland C++ from version 3.0 and upwords.
-# I'm not fully sure how it will handel on Microsoft C, but all the
-# switches are documented, and it shouldn't be a problem to change it
-# over.
+# This Makefile compiles NASM and NDISASM for 16 bit DOS using Borland
+# C++; tested with version 3.1.  It probably should work for any
+# version of Turbo C++ or Borland C++ from version 3.0 upwards.
+# For Turbo C++, replace "bcc" with "tcc", and replace "-O1" with "-O".
 #
 # Most everything is remarked, and explaned in full, it should be
 # easy to convert it to another compiler. I tried to make the devision
