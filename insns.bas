@@ -5,10 +5,15 @@
 '         FIDO:     Mark Junker@2:2437/47.21
 '
 ' COMMENT: While I wrote this program I often asked me, if it isn't easier
-'          to write an interpreter for pearl-scripts :]
+'          to write an interpreter for Perl-scripts :]
 '
 ' COMMENT: To start the program press SHIFT+F5 within the QBasic IDE
 '          or start it from the command-line with QBASIC /RUN MACROS
+'
+'
+' THIS PROGRAM NEEDS TO BE UPDATED -- it doesn't create insnsi.h
+' and insnsn.c.  However, Perl interpreters are now available for both
+' DOS and Windows, so it seems pointless to spend the effort.
 '
 
 DEFINT A-Z

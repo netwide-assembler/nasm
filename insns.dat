@@ -8,9 +8,7 @@
 ; Format of file: all four fields must be present on every functional
 ; line. Hence `void' for no-operand instructions, and `\0' for such
 ; as EQU. If the last three fields are all `ignore', no action is
-; taken except to register the opcode as being present. _ALL_ opcodes
-; listed in the `enum' in nasm.h must be present in here, in the
-; same order. This is to build the main instruction table for NASM.
+; taken except to register the opcode as being present.
 
 AAA       void                \1\x37                        8086
 AAD       void                \2\xD5\x0A                    8086
@@ -389,6 +387,8 @@ FXCH      void                \2\xD9\xC9                    8086,FPU
 FXCH      fpureg              \1\xD9\10\xC8                 8086,FPU
 FXCH      fpureg,fpu0         \1\xD9\10\xC8                 8086,FPU
 FXCH      fpu0,fpureg         \1\xD9\11\xC8                 8086,FPU
+FXRSTOR   mem                 \300\2\x0F\xAE\202            P6,FPU
+FXSAVE    mem                 \300\2\x0F\xAE\200            P6,FPU
 FXTRACT   void                \2\xD9\xF4                    8086,FPU
 FYL2X     void                \2\xD9\xF1                    8086,FPU
 FYL2XP1   void                \2\xD9\xF9                    8086,FPU
@@ -985,6 +985,8 @@ SUB       rm32,imm            \321\300\1\x81\205\41         386,SM
 SUB       mem,imm8            \300\1\x80\205\21             8086,SM
 SUB       mem,imm16           \320\300\1\x81\205\31         8086,SM
 SUB       mem,imm32           \321\300\1\x81\205\41         386,SM
+SYSENTER  void                \2\x0F\x34                    P6
+SYSEXIT   void                \2\x0F\x36                    P6,PRIV
 TEST      mem,reg8            \300\1\x84\101                8086,SM
 TEST      reg8,reg8           \300\1\x84\101                8086
 TEST      mem,reg16           \320\300\1\x85\101            8086,SM
@@ -1003,6 +1005,8 @@ TEST      rm32,imm            \321\300\1\xF7\200\41         386,SM
 TEST      mem,imm8            \300\1\xF6\200\21             8086,SM
 TEST      mem,imm16           \320\300\1\xF7\200\31         8086,SM
 TEST      mem,imm32           \321\300\1\xF7\200\41         386,SM
+UD1       void                \2\x0F\xB9                    286
+UD2       void                \2\x0F\x0B                    286
 UMOV      mem,reg8            \300\2\x0F\x10\101            386,UNDOC,SM
 UMOV      reg8,reg8           \300\2\x0F\x10\101            386,UNDOC
 UMOV      mem,reg16           \320\300\2\x0F\x11\101        386,UNDOC,SM

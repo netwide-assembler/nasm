@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# insns.pl   produce insnsa.c and insnsd.c from insns.dat
+# insns.pl   produce insnsa.c, insnsd.c, insnsi.h, insnsn.c from insns.dat
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and
 # Julian Hall. All rights reserved. The software is
@@ -101,6 +101,85 @@ for ($c=0; $c<256; $c++) {
 print D "};\n";
 
 close D;
+
+print STDERR "Writing insnsi.h...\n";
+
+open I, ">insnsi.h";
+
+print I "/* This file is auto-generated from insns.dat by insns.pl" .
+        " - don't exit it */\n\n";
+print I "/* This file in included by nasm.h */\n\n";
+
+print I "/* Instruction names */\n";
+print I "enum {";
+$first  = 1;
+$maxlen = 0;
+foreach $i (@opcodes) {
+    print I "," if ( !$first );
+    $first = 0;
+    print I "\n\tI_${i}";
+    $len = length($i);
+    $len++ if ( $i =~ /cc$/ );	# Condition codes can be 3 characters long
+    $maxlen = $len if ( $len > $maxlen );
+}
+print I "\n};\n\n";
+print I "#define MAX_INSLEN ", $maxlen, "\n";
+
+close I;
+
+print STDERR "Writing insnsn.c...\n";
+
+open N, ">insnsn.c";
+
+print N "/* This file is auto-generated from insns.dat by insns.pl" .
+        " - don't exit it */\n\n";
+print N "/* This file in included by names.c */\n\n";
+
+print N "static char *insn_names[] = {";
+$first = 1;
+foreach $i (@opcodes) {
+    # Don't include conditional instructions
+    if ( $i !~ /cc$/ ) {
+	print N "," if ( !$first );
+	$first = 0;
+	$ilower = $i;
+	$ilower =~ tr/A-Z/a-z/;
+	print N "\n\t\"${ilower}\"";
+    }
+}
+print N "\n};\n\n";
+print N "/* Conditional instructions */\n";
+print N "static char *icn[] = {";
+$first = 1;
+foreach $i (@opcodes) {
+    # Only conditional instructions
+    if ( $i =~ /cc$/ ) {
+	$ins = $`;		# Skip cc suffix
+	print N "," if ( !$first );
+	$first = 0;
+	$ilower = $i;
+	$ilower =~ tr/A-Z/a-z/;
+	print N "\n\t\"${ilower}\"";
+    }
+}
+
+print N "\n};\n\n";
+print N "/* and the corresponding opcodes */\n";
+print N "static int ico[] = {";
+$first = 1;
+foreach $i (@opcodes) {
+    # Only conditional instructions
+    if ( $i =~ /cc$/ ) {
+	$ins = $`;		# Skip cc suffix
+	print N "," if ( !$first );
+	$first = 0;
+	print N "\n\tI_$i";
+    }
+}
+
+print N "\n};\n";
+
+close N;
 
 printf STDERR "Done: %d instructions\n", $insns;
 

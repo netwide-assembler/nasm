@@ -1,0 +1,18 @@
+This is a modified version of NASM, modified and released by H. Peter
+Anvin <hpa@zytor.com>; it is not the original form released by the
+NASM authors.
+
+The changes include:
+
+1. Merged nasm098p3.zip with nasm-0.97.tar.gz to create a fully
+   buildable version for Unix systems (Makefile.in updates, etc.)
+
+2. Changed insns.pl to create the instruction tables in nasm.h and
+   names.c, so that a new instruction can be added by adding it *only*
+   to insns.dat.
+
+3. Added the following new instructions: SYSENTER, SYSEXIT, FXSAVE,
+   FXRSTOR, UD1, UD2 (the latter two are two opcodes that Intel
+   guarantee will never be used; one of them is documented as UD2 in
+   Intel documentation, the other one just as "Undefined Opcode" --
+   calling it UD1 seemed to make sense.)
