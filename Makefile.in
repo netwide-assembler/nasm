@@ -175,6 +175,9 @@ nasm.spec: nasm.spec.in version version.pl
 	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl id < $(srcdir)/version`/g \
 	    < nasm.spec.in > nasm.spec
 
+splint: 
+	splint -weak *.c
+
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,
 # it's expected to be invoked manually.
