@@ -28,56 +28,65 @@ LN_S 		= @LN_S@
 LDRDFLIBS 	= rdoff.o nasmlib.o symtab.o collectn.o rdlib.o segtab.o hash.o
 RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
 
-.c.o:
+# Binary suffixes
+O               = @OBJEXT@
+X               = @EXEEXT@
+
+PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
+	   rdf2bin$(X) rdf2com$(X) rdf2ihx$(X)
+
+.SUFFIXES: .c .i .s .$(O) .1 .man
+
+.c.$(O):
 	$(CC) -c $(CFLAGS) $<
 
-all: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
+all: $(PROGRAMS)
 
-rdfdump: rdfdump.o
-	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o
-ldrdf: ldrdf.o $(LDRDFLIBS)
-	$(CC) $(LDFLAGS) -o ldrdf ldrdf.o $(LDRDFLIBS)
-rdx: rdx.o $(RDXLIBS)
-	$(CC) $(LDFLAGS) -o rdx rdx.o $(RDXLIBS)
-rdflib: rdflib.o
-	$(CC) $(LDFLAGS) -o rdflib rdflib.o
-rdf2bin: rdf2bin.o $(RDXLIBS) nasmlib.o
-	$(CC) $(LDFLAGS) -o rdf2bin rdf2bin.o $(RDXLIBS) nasmlib.o
-rdf2com:
-	rm -f rdf2com && $(LN_S) rdf2bin rdf2com
-rdf2ihx: rdf2ihx.o $(RDXLIBS) nasmlib.o
-	$(CC) $(LDFLAGS) -o rdf2ihx rdf2ihx.o $(RDXLIBS) nasmlib.o
+rdfdump$(X): rdfdump.$(O)
+	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O)
+ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS)
+	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS)
+rdx$(X): rdx.$(O) $(RDXLIBS)
+	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(RDXLIBS)
+rdflib$(X): rdflib.$(O)
+	$(CC) $(LDFLAGS) -o rdflib$(X) rdflib.$(O)
+rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
+	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
+rdf2com$(X):
+	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
+rdf2ihx$(X): rdf2ihx.$(O) $(RDXLIBS) nasmlib.$(O)
+	$(CC) $(LDFLAGS) -o rdf2ihx$(X) rdf2ihx.$(O) $(RDXLIBS) nasmlib.$(O)
 
-rdf2ihx.o: rdf2ihx.c
-rdf2bin.o: rdf2bin.c
-rdfdump.o: rdfdump.c
-rdoff.o: rdoff.c rdoff.h
-ldrdf.o: ldrdf.c rdoff.h ../nasmlib.h symtab.h collectn.h rdlib.h
-symtab.o: symtab.c symtab.h
-collectn.o: collectn.c collectn.h
-rdx.o: rdx.c rdoff.h rdfload.h symtab.h
-rdfload.o: rdfload.c rdfload.h rdoff.h collectn.h symtab.h
-rdlib.o: rdlib.c rdlib.h
-rdflib.o: rdflib.c
-segtab.o: segtab.c
+rdf2ihx.$(O): rdf2ihx.c
+rdf2bin.$(O): rdf2bin.c
+rdfdump.$(O): rdfdump.c
+rdoff.$(O): rdoff.c rdoff.h
+ldrdf.$(O): ldrdf.c rdoff.h ../nasmlib.h symtab.h collectn.h rdlib.h
+symtab.$(O): symtab.c symtab.h
+collectn.$(O): collectn.c collectn.h
+rdx.$(O): rdx.c rdoff.h rdfload.h symtab.h
+rdfload.$(O): rdfload.c rdfload.h rdoff.h collectn.h symtab.h
+rdlib.$(O): rdlib.c rdlib.h
+rdflib.$(O): rdflib.c
+segtab.$(O): segtab.c
 
-nasmlib.o: $(top_srcdir)/nasmlib.c
-	cd .. && $(MAKE) nasmlib.o
-	cp ../nasmlib.o .
+nasmlib.$(O): $(top_srcdir)/nasmlib.c
+	cd .. && $(MAKE) nasmlib.$(O)
+	cp ../nasmlib.$(O) .
 
 clean:
-	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
+	rm -f *.$(O) $(PROGRAMS)
 
 spotless: clean
 	rm -f Makefile
 
 distclean: spotless
 
-install: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
-	$(INSTALL_PROGRAM) rdfdump $(INSTALLROOT)$(bindir)/rdfdump
-	$(INSTALL_PROGRAM) ldrdf $(INSTALLROOT)$(bindir)/ldrdf
-	$(INSTALL_PROGRAM) rdx $(INSTALLROOT)$(bindir)/rdx
-	$(INSTALL_PROGRAM) rdflib $(INSTALLROOT)$(bindir)/rdflib
-	$(INSTALL_PROGRAM) rdf2bin $(INSTALLROOT)$(bindir)/rdf2bin
-	$(INSTALL_PROGRAM) rdf2ihx $(INSTALLROOT)$(bindir)/rdf2ihx
-	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com && $(LN_S) rdf2bin rdf2com
+install: all
+	$(INSTALL_PROGRAM) rdfdump$(X) $(INSTALLROOT)$(bindir)/rdfdump$(X)
+	$(INSTALL_PROGRAM) ldrdf$(X) $(INSTALLROOT)$(bindir)/ldrdf$(X)
+	$(INSTALL_PROGRAM) rdx$(X) $(INSTALLROOT)$(bindir)/rdx$(X)
+	$(INSTALL_PROGRAM) rdflib$(X) $(INSTALLROOT)$(bindir)/rdflib$(X)
+	$(INSTALL_PROGRAM) rdf2bin$(X) $(INSTALLROOT)$(bindir)/rdf2bin$(X)
+	$(INSTALL_PROGRAM) rdf2ihx$(X) $(INSTALLROOT)$(bindir)/rdf2ihx$X(X)
+	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
