@@ -494,6 +494,11 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    bracket = FALSE;	       /* placate optimisers */
 	}
 
+	if((result->oprs[operand].type & FAR) && !mref)
+	{
+	    error (ERR_NONFATAL, "invalid use of FAR operand specifier");
+	}
+
 	value = evaluate (stdscan, NULL, &tokval,
 			  &result->oprs[operand].opflags,
 			  critical, error, &hints);
