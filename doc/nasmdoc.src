@@ -3260,20 +3260,22 @@ environment variable at assembly time. This could, for example, be used
 to store the contents of an environment variable into a string, which
 could be used at some other point in your code.
 
-For example, you may want to embed the path to your TEMP directory
-in your program. As this is usually stored in an environment variable
-called TEMP, this could be coded as follows:
+For example, suppose that you have an environment variable \c{FOO}, and
+you want the contents of \c{FOO} to be embedded in your program. You
+could do that as follows:
 
-\c %define TEMP    %!TEMP
+\c %define FOO    %!FOO
 \c %define quote   '
 \c
-\c tmpstr  db      quote TEMP quote
+\c tmpstr  db      quote FOO quote
 
 At the time of writing, this will generate an "unterminated string"
 warning at the time of defining "quote", and it will add a space
 before and after the string that is read in. I was unable to find
-a simple workaround, so I believe that you will need to allow for
-the extra spaces if you make use of this feature in that way.
+a simple workaround (although a workaround can be created using a
+multi-line macro), so I believe that you will need to either learn how
+to create more complex macros, or allow for the extra spaces if you
+make use of this feature in that way.
 
 
 \C{directive} \i{Assembler Directives}
