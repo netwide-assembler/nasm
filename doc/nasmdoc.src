@@ -270,9 +270,10 @@ Again.
 
 \S{legal} Licence Conditions
 
-Please see the file \c{Licence}, supplied as part of any NASM
+Please see the file \c{COPYING}, supplied as part of any NASM
 distribution archive, for the \i{licence} conditions under which you
-may use NASM. (see COPYING - Nasm is now LGPL)
+may use NASM.  NASM is now under the so-called GNU Lesser General
+Public License, LGPL.
 
 
 \H{contact} Contact Information
