@@ -130,15 +130,24 @@ sub insert_deps($) {
 %deps = ();
 @files = ();
 @mkfiles = ();
+$mkmode = 0;
 
 while ( defined($arg = shift(@ARGV)) ) {
     if ( $arg eq '-m' ) {
 	$arg = shift(@ARGV);
 	push(@mkfiles, $arg);
+    } elsif ( $arg eq '-M' ) {
+	$mkmode = 1;		# Futher filenames are output Makefile names
     } elsif ( $arg =~ /^-/ ) {
 	die "Unknown option: $arg\n";
+    } elsif ( $arg eq '--' && $mkmode ) {
+	$mkmode = 0;
     } else {
-	push(@files, $arg);
+	if ( $mkmode ) {
+	    push(@mkfiles, $arg);
+	} else {
+	    push(@files, $arg);
+	}
     }
 }
 
