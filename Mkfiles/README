@@ -27,5 +27,5 @@ The Makefiles are:
   Makefile.sc	32-bit DOS	Symantec C++ 7
   Makefile.scw	Win32		Symantec C++ 7
   Makefile.unx	Unix		cc		use if "configure" fails
-  Makefile.vc	Win32		MS Visual C++	OK as of NASM 0.98.31
+  Makefile.vc	Win32		MS Visual C++	OK as of NASM 0.98.32
   Makefile.wcw	Win32		Watcom C
