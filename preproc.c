@@ -390,7 +390,7 @@ static MMacro *defining;
  * gives our position in the macro set, when we're processing it.
  */
 #include "macros.c"
-static char **stdmacpos;
+static const char **stdmacpos;
 
 /*
  * The extra standard macros that come from the object format, if
@@ -419,7 +419,7 @@ static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(char *name, int all_contexts);
 static void make_tok_num(Token * tok, long val);
-static void error(int severity, char *fmt, ...);
+static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, int type, char *text, int txtlen);
@@ -4004,7 +4004,7 @@ expand_mmacro(Token * tline)
  * per pass) we will want to show errors only during pass one.
  */
 static void
-error(int severity, char *fmt, ...)
+error(int severity, const char *fmt, ...)
 {
     va_list arg;
     char buff[1024];
@@ -4020,7 +4020,7 @@ error(int severity, char *fmt, ...)
     if (istk && istk->mstk && istk->mstk->name)
 	_error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
 		istk->mstk->lineno, buff);
-    else
+    else 
 	_error(severity | ERR_PASS1, "%s", buff);
 }
 
@@ -4196,10 +4196,14 @@ pp_getline(void)
 		fclose(i->fp);
 		if (i->conds)
 		    error(ERR_FATAL, "expected `%%endif' before end of file");
+		/* only set line and file name if there's a next node */
+		if (i->next) 
+		{
+		    src_set_linnum(i->lineno);
+		    nasm_free(src_set_fname(i->fname));
+		}
 		istk = i->next;
 		list->downlevel(LIST_INCLUDE);
-		src_set_linnum(i->lineno);
-		nasm_free(src_set_fname(i->fname));
 		nasm_free(i);
 		if (!istk)
 		    return NULL;
