@@ -80,13 +80,14 @@ cd nasm
 autoconf
 ./configure --prefix=/usr/local
 make dist
+make spec
+mv nasm.spec nasm-${version}.spec
 cd ..
 
 # Clean up any previous attempt
 rm -f ../nasm-${version}.tar.gz  ../nasm-${version}-xdoc.tar.gz
 rm -f ../nasm-${version}.tar.bz2 ../nasm-${version}-xdoc.tar.bz2
 rm -f ../nasm-${version}.zip     ../nasm-${version}-xdoc.zip
-rm -f ../nasm-${version}.spec
 
 # Create tarfile (Unix convention: file includes prefix)
 mv nasm nasm-$version
@@ -103,12 +104,6 @@ cd ..
 
 # Record what we have already generated
 find nasm-$version -not -type d -print > main
-
-# Create specfile
-cd nasm-${version}
-./configure --prefix=/usr/local
-make spec
-cp nasm.spec ../../nasm-${version}.spec
 
 # Create documentation
 make doc
