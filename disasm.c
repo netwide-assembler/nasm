@@ -583,26 +583,26 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
     slen = 0;
 
     if (lock)
-	slen += snprintf(output+slen, outbuflen-slen, "lock ");
+	slen += snprintf(output+slen, outbufsize-slen, "lock ");
     for (i = 0; i < ins.nprefix; i++)
 	switch (ins.prefixes[i]) {
-	  case P_REP:   slen += snprintf(output+slen, outbuflen-slen, "rep "); break;
-	  case P_REPE:  slen += snprintf(output+slen, outbuflen-slen, "repe "); break;
-	  case P_REPNE: slen += snprintf(output+slen, outbuflen-slen, "repne "); break;
-	  case P_A16:   slen += snprintf(output+slen, outbuflen-slen, "a16 "); break;
-	  case P_A32:   slen += snprintf(output+slen, outbuflen-slen, "a32 "); break;
-	  case P_O16:   slen += snprintf(output+slen, outbuflen-slen, "o16 "); break;
-	  case P_O32:   slen += snprintf(output+slen, outbuflen-slen, "o32 "); break;
+	  case P_REP:   slen += snprintf(output+slen, outbufsize-slen, "rep "); break;
+	  case P_REPE:  slen += snprintf(output+slen, outbufsize-slen, "repe "); break;
+	  case P_REPNE: slen += snprintf(output+slen, outbufsize-slen, "repne "); break;
+	  case P_A16:   slen += snprintf(output+slen, outbufsize-slen, "a16 "); break;
+	  case P_A32:   slen += snprintf(output+slen, outbufsize-slen, "a32 "); break;
+	  case P_O16:   slen += snprintf(output+slen, outbufsize-slen, "o16 "); break;
+	  case P_O32:   slen += snprintf(output+slen, outbufsize-slen, "o32 "); break;
 	}
 
     for (i = 0; i < elements(ico); i++)
 	if ((*p)->opcode == ico[i]) {
-	    slen += snprintf(output+slen, outbuflen-slen, "%s%s", icn[i],
+	    slen += snprintf(output+slen, outbufsize-slen, "%s%s", icn[i],
 			    whichcond(ins.condition));
 	    break;
 	}
     if (i >= elements(ico))
-	slen += snprintf(output+slen, outbuflen-slen, "%s", insn_names[(*p)->opcode]);
+	slen += snprintf(output+slen, outbufsize-slen, "%s", insn_names[(*p)->opcode]);
     colon = FALSE;
     length += data - origdata;	       /* fix up for prefixes */
     for (i=0; i<(*p)->operands; i++) {
@@ -633,14 +633,14 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 	    ins.oprs[i].basereg = whichreg ((*p)->opd[i],
 					    ins.oprs[i].basereg);
 	    if ( (*p)->opd[i] & TO )
-		slen += snprintf(output+slen, outbuflen-slen, "to ");
-	    slen += snprintf(output+slen, outbuflen-slen, "%s",
+		slen += snprintf(output+slen, outbufsize-slen, "to ");
+	    slen += snprintf(output+slen, outbufsize-slen, "%s",
 			    reg_names[ins.oprs[i].basereg-EXPR_REG_START]);
 	} else if (!(UNITY & ~(*p)->opd[i])) {
 	    output[slen++] = '1';
 	} else if ( (*p)->opd[i] & IMMEDIATE ) {
 	    if ( (*p)->opd[i] & BITS8 ) {
-		slen += snprintf(output+slen, outbuflen-slen, "byte ");
+		slen += snprintf(output+slen, outbufsize-slen, "byte ");
 		if (ins.oprs[i].segment & SEG_SIGNED) {
 		    if (ins.oprs[i].offset < 0) {
 			ins.oprs[i].offset *= -1;
@@ -649,17 +649,17 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 			output[slen++] = '+';
 		}
 	    } else if ( (*p)->opd[i] & BITS16 ) {
-		slen += snprintf(output+slen, outbuflen-slen, "word ");
+		slen += snprintf(output+slen, outbufsize-slen, "word ");
 	    } else if ( (*p)->opd[i] & BITS32 ) {
-		slen += snprintf(output+slen, outbuflen-slen, "dword ");
+		slen += snprintf(output+slen, outbufsize-slen, "dword ");
 	    } else if ( (*p)->opd[i] & NEAR ) {
-		slen += snprintf(output+slen, outbuflen-slen, "near ");
+		slen += snprintf(output+slen, outbufsize-slen, "near ");
 	    } else if ( (*p)->opd[i] & SHORT ) {
-		slen += snprintf(output+slen, outbuflen-slen, "short ");
+		slen += snprintf(output+slen, outbufsize-slen, "short ");
 	    }
-	    slen += snprintf(output+slen, outbuflen-slen, "0x%lx", ins.oprs[i].offset);
+	    slen += snprintf(output+slen, outbufsize-slen, "0x%lx", ins.oprs[i].offset);
 	} else if ( !(MEM_OFFS & ~(*p)->opd[i]) ) {
-	    slen += snprintf(output+slen, outbuflen-slen, "[%s%s%s0x%lx]",
+	    slen += snprintf(output+slen, outbufsize-slen, "[%s%s%s0x%lx]",
 			    (segover ? segover : ""),
 			    (segover ? ":" : ""),
 			    (ins.oprs[i].addr_size == 32 ? "dword " :
@@ -669,30 +669,30 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 	} else if ( !(REGMEM & ~(*p)->opd[i]) ) {
 	    int started = FALSE;
 	    if ( (*p)->opd[i] & BITS8 )
-		slen += snprintf(output+slen, outbuflen-slen, "byte ");
+		slen += snprintf(output+slen, outbufsize-slen, "byte ");
 	    if ( (*p)->opd[i] & BITS16 )
-		slen += snprintf(output+slen, outbuflen-slen, "word ");
+		slen += snprintf(output+slen, outbufsize-slen, "word ");
 	    if ( (*p)->opd[i] & BITS32 )
-		slen += snprintf(output+slen, outbuflen-slen, "dword ");
+		slen += snprintf(output+slen, outbufsize-slen, "dword ");
 	    if ( (*p)->opd[i] & BITS64 )
-		slen += snprintf(output+slen, outbuflen-slen, "qword ");
+		slen += snprintf(output+slen, outbufsize-slen, "qword ");
 	    if ( (*p)->opd[i] & BITS80 )
-		slen += snprintf(output+slen, outbuflen-slen, "tword ");
+		slen += snprintf(output+slen, outbufsize-slen, "tword ");
 	    if ( (*p)->opd[i] & FAR )
-		slen += snprintf(output+slen, outbuflen-slen, "far ");
+		slen += snprintf(output+slen, outbufsize-slen, "far ");
 	    if ( (*p)->opd[i] & NEAR )
-		slen += snprintf(output+slen, outbuflen-slen, "near ");
+		slen += snprintf(output+slen, outbufsize-slen, "near ");
 	    output[slen++] = '[';
 	    if (ins.oprs[i].addr_size)
-		slen += snprintf(output+slen, outbuflen-slen, "%s",
+		slen += snprintf(output+slen, outbufsize-slen, "%s",
 				(ins.oprs[i].addr_size == 32 ? "dword " :
 				 ins.oprs[i].addr_size == 16 ? "word " : ""));
 	    if (segover) {
-		slen += snprintf(output+slen, outbuflen-slen, "%s:", segover);
+		slen += snprintf(output+slen, outbufsize-slen, "%s:", segover);
 		segover = NULL;
 	    }
 	    if (ins.oprs[i].basereg != -1) {
-		slen += snprintf(output+slen, outbuflen-slen, "%s",
+		slen += snprintf(output+slen, outbufsize-slen, "%s",
 				reg_names[(ins.oprs[i].basereg -
 					   EXPR_REG_START)]);
 		started = TRUE;
@@ -700,11 +700,11 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 	    if (ins.oprs[i].indexreg != -1) {
 		if (started)
 		    output[slen++] = '+';
-		slen += snprintf(output+slen, outbuflen-slen, "%s",
+		slen += snprintf(output+slen, outbufsize-slen, "%s",
 				reg_names[(ins.oprs[i].indexreg -
 					   EXPR_REG_START)]);
 		if (ins.oprs[i].scale > 1)
-		    slen += snprintf(output+slen, outbuflen-slen, "*%d", ins.oprs[i].scale);
+		    slen += snprintf(output+slen, outbufsize-slen, "*%d", ins.oprs[i].scale);
 		started = TRUE;
 	    }
 	    if (ins.oprs[i].segment & SEG_DISP8) {
@@ -713,20 +713,20 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 		    ins.oprs[i].offset = - (signed char) ins.oprs[i].offset;
 		    sign = '-';
 		}
-		slen += snprintf(output+slen, outbuflen-slen, "%c0x%lx", sign,
+		slen += snprintf(output+slen, outbufsize-slen, "%c0x%lx", sign,
 				ins.oprs[i].offset);
 	    } else if (ins.oprs[i].segment & SEG_DISP16) {
 		if (started)
 		    output[slen++] = '+';
-		slen += snprintf(output+slen, outbuflen-slen, "0x%lx", ins.oprs[i].offset);
+		slen += snprintf(output+slen, outbufsize-slen, "0x%lx", ins.oprs[i].offset);
 	    } else if (ins.oprs[i].segment & SEG_DISP32) {
 		if (started)
 		    output[slen++] = '+';
-		slen += snprintf(output+slen, outbuflen-slen, "0x%lx", ins.oprs[i].offset);
+		slen += snprintf(output+slen, outbufsize-slen, "0x%lx", ins.oprs[i].offset);
 	    }
 	    output[slen++] = ']';
 	} else {
-	    slen += snprintf(output+slen, outbuflen-slen, "<operand%d>", i);
+	    slen += snprintf(output+slen, outbufsize-slen, "<operand%d>", i);
 	}
     }
     output[slen] = '\0';
