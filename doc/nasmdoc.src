@@ -778,7 +778,7 @@ NASM command-line processing will get confused by the two
 nonsensical words \c{-dNAME="my} and \c{name"}.
 
 To get round this, NASM provides a feature whereby, if you begin the
-\c{NASM} environment variable with some character that isn't a minus
+\c{NASMENV} environment variable with some character that isn't a minus
 sign, then NASM will treat this character as the \i{separator
 character} for options. So setting the \c{NASMENV} variable to the
 value \c{!-s!-ic:\\nasmlib} is equivalent to setting it to \c{-s
