@@ -1,3 +1,13 @@
+0.98.32
+-------
+
+* Fix NASM crashing when %macro directives were left unterminated.
+* Lots of documentation updates.
+* Complete rewrite of the PostScript/PDF documentation generator.
+* The MS Visual C++ Makefile was updated and corrected.
+* Recognize .rodata as a standard section name in ELF.
+
+
 0.98.31
 -------
 
@@ -8,6 +18,7 @@
 * New %ifmacro directive to test for multiline macros.
 * Documentation updates.
 * Fixes for 16-bit OBJ format output.
+* Changed the NASM environment variable to NASMENV.
 
 
 0.98.30
