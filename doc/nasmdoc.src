@@ -3198,7 +3198,7 @@ When NASM is in \c{BITS 16} state, instructions which use 32-bit
 data are prefixed with an 0x66 byte, and those referring to 32-bit
 addresses have an 0x67 prefix. In \c{BITS 32} state, the reverse is
 true: 32-bit instructions require no prefixes, whereas instructions
-using 16-bit data need an 0x66 and those working in 16-bit addresses
+using 16-bit data need an 0x66 and those working on 16-bit addresses
 need an 0x67.
 
 The \c{BITS} directive has an exactly equivalent primitive form,
@@ -6220,7 +6220,8 @@ anyway.
 There are no known bugs. However, any you find, with patches if
 possible, should be sent to \W{mailto:jules@dsf.org.uk}\c{jules@dsf.org.uk}
 or \W{mailto:anakin@pobox.com}\c{anakin@pobox.com}, or to the
-developer's site \W{http://nasm.2y.net/}\c{http://nasm.2y.net/}
+developer's site at
+\W{https://sourceforge.net/projects/nasm/}\c{https://sourceforge.net/projects/nasm/}
 and we'll try to fix them. Feel free to send contributions and
 new features as well.
 
