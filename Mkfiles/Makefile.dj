@@ -19,7 +19,7 @@ CFLAGS = -O2 -I.
 # You _shouldn't_ need to adjust anything below this line.
 
 .c.o:
-	$(CC) -c $(CFLAGS) $*.c
+	$(CC) -c $(CFLAGS) -o $@ $*.c
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
@@ -92,5 +92,5 @@ macros.c: macros.pl standard.mac version.mac
 	perl macros.pl standard.mac version.mac
 
 clean:
-	rm -f *.o nasm ndisasm
+	rm -f *.o *.exe output/*.o
 
