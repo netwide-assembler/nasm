@@ -26,29 +26,35 @@
 #
 
 CC = bcc                #compiler
+# opimizations
+OPTFLAGS = -d -O1 -Ogmpv -k-
+  # -d  = merge duplicate strings
+  # -O1 = optimize for size
+  # -Og = enable global common subexpression elimination
+  # -Om = enable loop invariant removal
+  # -Op = enable constant propagation
+  # -Ov = enable strength-reduction optimization
+  # -k- = omit stack frames where practical
+#output formats
+OUTFORMS = -DOF_ONLY -DOF_BIN -DOF_OBJ -DOF_WIN32 -DOF_AS86
 #compiler flags
-CCFLAGS = -d -c -O1 -mh -DOF_ONLY -DOF_BIN -DOF_OBJ -DOF_WIN32 -DOF_AS86
-  # -d  = merge dupicate strings
-  # -c  = compile only
-  # -O1 = optimise for size
+CFLAGS = -mh $(OPTFLAGS) $(OUTFORMS)
   # -mh = model huge
-  # -n  = put the OBJ files in the diectory given.
 
 LINKFLAGS = -d -mh
+  # -d  = merge duplicate strings
+  # -mh = model huge
 
-LIBS =             	#any libaries to add, out side of the standard libary
+LIBS =                  #any libaries to add, out side of the standard libary
 EXE = .exe              #executable file extention (keep the . as the start)
 OBJ = obj               #OBJ file extention
-LIB = lib		#LIB file extension
+LIB = lib               #LIB file extension
 
-# Compilation command line
-NASM_ASM=$(CC) $(CCFLAGS) -o$*.$(OBJ) $*.c
-
-.c.o:
-	$(NASM_ASM)
+.c.$(OBJ):
+	$(CC) $(CFLAGS) -c -o$@ $<
 
 ################################################################
-#The OBJ files that NASM is dependent on
+# The OBJ files that NASM is dependent on
 
 NASMOBJS = nasm.$(OBJ)   nasmlib.$(OBJ)  float.$(OBJ)  \
 	   insnsa.$(OBJ) assemble.$(OBJ) labels.$(OBJ) \
@@ -56,20 +62,17 @@ NASMOBJS = nasm.$(OBJ)   nasmlib.$(OBJ)  float.$(OBJ)  \
 	   listing.$(OBJ) eval.$(OBJ)
 
 ################################################################
-#The OBJ files that NDISASM is dependent on
+# The OBJ files that NDISASM is dependent on
 
 NDISASMOBJS = ndisasm.$(OBJ)  disasm.$(OBJ) sync.$(OBJ) \
 	      nasmlib.$(OBJ) insnsd.$(OBJ)
 
 ################################################################
-# The OBJ file for the output formats we want to compile in.
-# It doesn't make sense for 16-bit MS-DOS to include all formats.
+# The OBJ file for the output formats
 
 OUTOBJ= output\\outbin.$(OBJ) output\\outaout.$(OBJ) output\\outcoff.$(OBJ) \
 	output\\outelf.$(OBJ) output\\outobj.$(OBJ)  output\\outas86.$(OBJ) \
-	output\\outrdf.$(OBJ) output\\outdbg.$(OBJ)  output\\outrdf2.$(OBJ) \
-	output\\outieee.$(OBJ)
-
+	output\\outdbg.$(OBJ) output\\outrdf2.$(OBJ) output\\outieee.$(OBJ)
 
 ################################################################
 # Build everything
@@ -77,29 +80,27 @@ OUTOBJ= output\\outbin.$(OBJ) output\\outaout.$(OBJ) output\\outcoff.$(OBJ) \
 all : nasm$(EXE) ndisasm$(EXE)
 
 ################################################################
+# Build the output formats as a library
+output\\out.$(LIB): $(OUTOBJ)
+	-del output\\out.$(LIB)
+	for %a in (output\\*.$(OBJ)) do tlib /C output\\out.$(LIB) +%a
+
+################################################################
 # NASM, NDISASM link.  The &&!...! construct in Borland Make
 # creates a temporary file and inserts its name on the command
 # line.  It works around the DOS 127-character command line
 # limit.
 
-nasm$(EXE): $(NASMOBJS) output\\out.lib
+nasm$(EXE): $(NASMOBJS) output\\out.$(LIB)
 	$(CC) $(LINKFLAGS) -onasm$(EXE) @&&!
 $(NASMOBJS)
-output\\out.lib
+output\\out.$(LIB)
 !
 
 ndisasm$(EXE): $(NDISASMOBJS)
 	$(CC) $(LINKFLAGS) -ondisasm$(EXE) @&&!
 $(NDISASMOBJS)
 !
-
-################################################################
-# Build the output formats as a library
-# The & ... $? construct tells Borland Make to repeat for all
-# out of date dependencies
-output\\out.$(LIB): $(OUTOBJ)
-	-del output\\out.$(LIB)
-	for %a in (output\\*.obj) do tlib /C output\\out.$(LIB) +%a
 
 ################################################################
 # A quick way to delete the OBJ files as well as the binaries.
