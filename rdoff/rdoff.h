@@ -47,6 +47,7 @@ struct RelocRec {
 struct ImportRec {
   byte  type;           /* must be 2 */
   byte	reclen;		/* content length */
+  byte  flags;		/* SYM_* flags (see below) */
   int16 segment;        /* segment number allocated to the label for reloc
                            records - label is assumed to be at offset zero
                            in this segment, so linker must fix up with offset
@@ -92,9 +93,10 @@ struct CommonRec {
 };
 
 /* Flags for ExportRec */
-#define SYM_DATA	0x01
-#define SYM_FUNCTION	0x02
-#define SYM_GLOBAL	0x04
+#define SYM_DATA	1
+#define SYM_FUNCTION	2
+#define SYM_GLOBAL	4
+#define SYM_IMPORT	8
 
 /* 
  * GenericRec - contains the type and length field, plus a 128 byte

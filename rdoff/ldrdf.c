@@ -1,9 +1,12 @@
-/* ldrdf.c      RDOFF Object File linker/loader main program
+/*
+ * ldrdf.c - RDOFF Object File linker/loader main program.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the licence given in the file "Licence"
- * distributed in the NASM archive.
+ * Copyright (c) 1996,99 Julian Hall. All rights reserved.
+ * Copyright (c) 2000-2003 RET & COM Research.
+ *
+ * This file is distributed under the terms and conditions of the
+ * GNU Lesser Public License (LGPL), version 2.1.
+ * See http://www.gnu.org/copyleft/lgpl.html for details.
  */
 
 /*
@@ -31,7 +34,7 @@
 #include "rdlib.h"
 #include "segtab.h"
 
-#define LDRDF_VERSION "1.05"
+#define LDRDF_VERSION "1.07"
 
 #define RDF_MAXSEGS 64
 /* #define STINGY_MEMORY */
@@ -114,7 +117,7 @@ long			bss_length;
 struct ldrdfoptions {
     int		verbose;
     int		align;
-    int		warnUnresolved;
+    int		dynalink;
     int		strip;
     int         respfile;
     int         stderr_redir;
@@ -129,13 +132,11 @@ int errorcount = 0;	/* determines main program exit status */
  * Utility functions
  */
 
-
 /*
  * initsegments()
  *
  * sets up segments 0, 1, and 2, the initial code data and bss segments
  */
-
 void initsegments()
 {
     nsegs = 3;
@@ -154,6 +155,7 @@ void initsegments()
     bss_length = 0;
 }
 
+
 /*
  * loadmodule
  *
@@ -161,34 +163,27 @@ void initsegments()
  * each segment it contains (including determining destination segments and
  * relocation factors for segments that	are kept).
  */
-
 void loadmodule(const char * filename)
 {
     if (options.verbose)
 	printf("loading `%s'\n", filename);
 
     /* allocate a new module entry on the end of the modules list */
-    if (!modules)
-    {
+    if (!modules) {
 	modules = malloc (sizeof(*modules));
 	lastmodule = modules;
-    }
-    else
-    {
+    } else {
 	lastmodule->next = malloc (sizeof(*modules));
 	lastmodule = lastmodule->next;
     }
 
-    if ( ! lastmodule)
-    {
+    if (!lastmodule) {
 	fprintf(stderr, "ldrdf: out of memory\n");
 	exit(1);
     }
 
     /* open the file using 'rdfopen', which returns nonzero on error */
-
-    if (rdfopen(&lastmodule->f, filename) != 0)
-    {
+    if (rdfopen(&lastmodule->f, filename) != 0) {
 	rdfperror("ldrdf", filename);
 	exit(1);
     }
@@ -198,13 +193,13 @@ void loadmodule(const char * filename)
      * it contains, and what we should do with them (determine relocation
      * factor if we decide to keep them)
      */
-
     lastmodule->header = NULL;
     lastmodule->name = strdup(filename);
     lastmodule->next = NULL;
 
     processmodule(filename, lastmodule);
 }
+
 	
 /*
  * processmodule()
@@ -215,7 +210,6 @@ void loadmodule(const char * filename)
  * (b) is fairly easy, because we're now keeping track of how big each
  * segment in our output file is...
  */
-
 void processmodule(const char * filename, struct modulenode * mod)
 {
     struct segconfig sconf;
@@ -315,35 +309,35 @@ void processmodule(const char * filename, struct modulenode * mod)
 	    case RDFREC_IMPORT:		/* imported symbol */
 	    case RDFREC_FARIMPORT:
 		/* Define with seg = -1 */
-	    symtab_add(hr->i.label, -1, 0);
-	    break;
+		symtab_add(hr->i.label, -1, 0);
+		break;
 
 	    case RDFREC_GLOBAL:	{	/* exported symbol */
-            int destseg;
-            long destreloc;
+        	int destseg;
+        	long destreloc;
 
         	if (hr->e.segment == 2) {
 	    	    bss_was_referenced = 1;
-               destreloc = bss_length;
-               if (destreloc % options.align != 0)
-                  destreloc +=  options.align - (destreloc % options.align);
-               destseg = 2;
+            	    destreloc = bss_length;
+            	    if (destreloc % options.align != 0)
+                	destreloc +=  options.align - (destreloc % options.align);
+            	    destseg = 2;
                 } else {
-               if ((destseg = mod->seginfo[(int)hr->e.segment].dest_seg) == -1)
-                  continue;
-               destreloc = mod->seginfo[(int)hr->e.segment].reloc;
-             }
-	    symtab_add(hr->e.label, destseg, destreloc + hr->e.offset);
-	    break;
-           }
+		    if ((destseg = mod->seginfo[(int)hr->e.segment].dest_seg) == -1)
+                	continue;
+            	    destreloc = mod->seginfo[(int)hr->e.segment].reloc;
+                }
+		symtab_add(hr->e.label, destseg, destreloc + hr->e.offset);
+		break;
+	    }
 
 	    case RDFREC_BSS:		/* BSS reservation */
-	    /*
-	     * first, amalgamate all BSS reservations in this module
-	     * into one, because we allow this in the output format.
-	     */
-	    bssamount += hr->b.amount;
-	    break;
+		/*
+	         * first, amalgamate all BSS reservations in this module
+	         * into one, because we allow this in the output format.
+	         */
+		bssamount += hr->b.amount;
+		break;
 
 	    case RDFREC_COMMON: {	/* Common variable */
 	        symtabEnt *ste = symtabFind(symtab, hr->c.label);
@@ -366,7 +360,7 @@ void processmodule(const char * filename, struct modulenode * mod)
 	    }
 	}
     }
-
+    
     if (bssamount != 0 || bss_was_referenced) {
 	/*
 	 * handle the BSS segment - first pad the existing bss length
@@ -375,7 +369,7 @@ void processmodule(const char * filename, struct modulenode * mod)
 	 * bss_length.
 	 */
 	if (bss_length % options.align != 0)
-	    bss_length +=  options.align - (bss_length % options.align);
+	    bss_length += options.align - (bss_length % options.align);
     
 	mod->bss_reloc = bss_length;
 	if (options.verbose > 1) {
@@ -400,18 +394,18 @@ void processmodule(const char * filename, struct modulenode * mod)
 
 
 /*
- * Look in the list for module by its name.
+ * Return 1 if a given module is in the list, 0 otherwise.
  */
 int lookformodule(const char *name)
- {
-  struct modulenode *curr=modules;
+{
+    struct modulenode *curr = modules;
 
-  while(curr) {
-   if (!strcmp(name,curr->name)) return 1;
-   curr = curr->next;
-  }
-  return 0;
- }
+    while(curr) {
+	if (!strcmp(name, curr->name)) return 1;
+	curr = curr->next;
+    }
+    return 0;
+}
 
 
 /*
@@ -446,6 +440,7 @@ int findsegment(int16 type,int16 reserved)
     return allocnewseg(type,reserved);
 }
 
+
 /*
  * symtab_add()
  *
@@ -463,7 +458,6 @@ int findsegment(int16 type,int16 reserved)
  * routine won't change a previously existing symbol. It will change
  * to segment = -2 only if the segment was previously < 0.
  */
-
 void symtab_add(const char * symbol, int segment, long offset)
 {
     symtabEnt * ste;
@@ -515,7 +509,6 @@ void symtab_add(const char * symbol, int segment, long offset)
  * are assumed to have -1:0 associated. Returns 1 if the symbol was
  * successfully located.
  */
-
 int symtab_get(const char * symbol, int * segment, long * offset)
 {
     symtabEnt * ste = symtabFind(symtab, symbol);
@@ -532,13 +525,13 @@ int symtab_get(const char * symbol, int * segment, long * offset)
     }
 }
 
+
 /*
  * add_library()
  *
  * checks that a library can be opened and is in the correct format,
  * then adds it to the linked list of libraries.
  */
-
 void add_library(const char * name)
 {
     if (rdl_verify(name)) {
@@ -571,6 +564,7 @@ void add_library(const char * name)
     }
 }
 
+
 /*
  * search_libraries()
  *
@@ -581,7 +575,6 @@ void add_library(const char * name)
  * returns 1 if any extra library modules are included, indicating that
  * another pass through the library list should be made (possibly).
  */
-
 int search_libraries()
 {
     struct librarynode * cur;
@@ -634,13 +627,13 @@ int search_libraries()
 		     * otherwise the symbol is just public. Find it in
 		     * the symbol table. If the symbol isn't defined, we
 		     * aren't interested, so go on to the next.
-		 * If it is defined as anything but -1, we're also not
-		 * interested. But if it is defined as -1, insert this
-		 * module into the list of modules to use, and go
-		 * immediately on to the next module...
-		 */
+		     * If it is defined as anything but -1, we're also not
+		     * interested. But if it is defined as -1, insert this
+		     * module into the list of modules to use, and go
+		     * immediately on to the next module...
+		     */
 		    if (!symtab_get(hr->e.label, &segment, &offset) || segment != -1)
-		    continue;    
+		        continue;    
 		}
 		
 		doneanything = 1;
@@ -664,10 +657,10 @@ int search_libraries()
 		break;
 	    }
 	    if (!keepfile) {
-              free(f.name);
-              f.name = NULL;
-              f.fp = NULL;
-             }
+		free(f.name);
+		f.name = NULL;
+		f.fp = NULL;
+            }
 	}
 	if (rdl_error != 0 && rdl_error != RDL_ENOTFOUND)
 	    rdl_perror("ldrdf", cur->name);
@@ -681,6 +674,7 @@ int search_libraries()
 
     return doneanything;
 }
+
 
 /*
  * write_output()
@@ -719,10 +713,10 @@ void write_output(const char * filename)
      */
     if (generic_rec_file) {
 	FILE *ff;
-    
+	
 	if (options.verbose)
 	    printf("\nadding generic record from binary file %s\n", generic_rec_file);
-	
+    
         hr = (rdfheaderrec *) malloc(sizeof(struct GenericRec));
 	if ((ff = fopen(generic_rec_file, "r")) == NULL) {
 	    fprintf(stderr, "ldrdf: couldn't open %s for input\n", generic_rec_file);
@@ -734,10 +728,10 @@ void write_output(const char * filename)
 	    fprintf (error_file, "warning: maximum generic record size is %d, rest of file ignored\n", sizeof(hr->g.data));
 	}
 	fclose(ff);
-	    
+	
         hr->g.type = 0;
         hr->g.reclen = i;
-        rdfaddheader(rdfheader,hr);
+	rdfaddheader(rdfheader, hr);
         free(hr);
     }
 
@@ -941,17 +935,10 @@ void write_output(const char * filename)
 		 */
 		se = symtabFind(symtab, hr->i.label);
 		if (!se || se->segment == -1) {
-		    if (options.warnUnresolved) {
-		    	switch (options.warnUnresolved) {
-			    case 1:
-				fprintf(error_file, "warning");
-				break;
-			    case 2:
-				fprintf(error_file, "error");
-				errorcount++;
-			}
-			fprintf(error_file, ": unresolved reference to `%s'"
+		    if (!options.dynalink && !(hr->i.flags & SYM_IMPORT)) {
+			fprintf(error_file, "error: unresolved reference to `%s'"
 				" in module `%s'\n", hr->i.label, cur->name);
+			errorcount++;
 		    }
 		    /*
 		     * we need to allocate a segment number for this
@@ -984,7 +971,6 @@ void write_output(const char * filename)
 		}
 
 		add_seglocation(&segs, hr->i.segment, se->segment, se->offset);
-		
 		break;
 
 	    case RDFREC_GLOBAL:		/* export symbol */
@@ -1023,7 +1009,7 @@ void write_output(const char * filename)
 		  * Insert module name record if export symbols
 		  * are not stripped.
 		  * If module name begins with '$' - insert it anyway.
-		  */
+		  */		  
 		if (options.strip && hr->m.modname[0] != '$') break;
 		rdfaddheader(rdfheader, hr);
 		break;
@@ -1144,10 +1130,10 @@ void usage()
            "   ldrdf [options] object modules ... [-llibrary ...]\n"
            "   ldrdf -r\n"
            "options:\n"
-           "   -v[=n]          increases verbosity by 1, or sets it to n\n"
-           "   -a nn           sets segment alignment value (default 16)\n"
-           "   -s              strips exported symbols\n"
-           "   -x              warn about unresolved symbols\n"
+           "   -v[=n]          increase verbosity by 1, or set it to n\n"
+           "   -a nn           set segment alignment value (default 16)\n"
+           "   -s              strip public symbols\n"
+           "   -dy             Unix-style dynamic linking\n"
            "   -o name         write output in file 'name'\n"
            "   -j path         specify objects search path\n"
            "   -L path         specify libraries search path\n"
@@ -1163,7 +1149,7 @@ int main(int argc, char ** argv)
 
     options.verbose = 0;
     options.align = 16;
-    options.warnUnresolved = 0;
+    options.dynalink = 0;
     options.strip = 0;
 
     error_file = stderr;
@@ -1201,10 +1187,8 @@ int main(int argc, char ** argv)
 	case 's':
 	    options.strip = 1;
 	    break;
-	case 'x':
-	    options.warnUnresolved = 1;
-	    if (argv[0][2]=='e')
-		options.warnUnresolved++;
+	case 'd':
+	    if (argv[0][2] == 'y') options.dynalink = 1;
 	    break;
 	case 'o':
 	    outname = argv[1];
@@ -1212,40 +1196,40 @@ int main(int argc, char ** argv)
 	    break;
 	case 'j':
 	    if (!objpath) {
-              options.objpath = 1;
-	      objpath = argv[1];
-	      argv++, argc--;
-	      break;
+		options.objpath = 1;
+		objpath = argv[1];
+		argv++, argc--;
+		break;
 	     } else {
-	      fprintf(stderr,"ldrdf: more than one objects search path specified\n");
-	      exit(1);
+		fprintf(stderr,"ldrdf: more than one objects search path specified\n");
+		exit(1);
 	     }
 	case 'L':
 	    if (!libpath) {
-              options.libpath = 1;
-	      libpath = argv[1];
-	      argv++, argc--;
-	      break;
+		options.libpath = 1;
+		libpath = argv[1];
+		argv++, argc--;
+		break;
 	     } else {
-	      fprintf(stderr,"ldrdf: more than one libraries search path specified\n");
-	      exit(1);
+		fprintf(stderr,"ldrdf: more than one libraries search path specified\n");
+		exit(1);
 	     }
 	case '@': {
-	      int i=0;
-	      char buf[256];
-	      FILE *f;
+	    int i=0;
+	    char buf[256];
+	    FILE *f;
 
-              options.respfile = 1;
-	      if (argv[1] != NULL) f = fopen(argv[1],"r");
+            options.respfile = 1;
+	    if (argv[1] != NULL) f = fopen(argv[1],"r");
 	    else {
 		fprintf(stderr,"ldrdf: no response file name specified\n");
 		exit(1);
-	       }
+	    }
 
 	    if (f == NULL) {
 		fprintf(stderr,"ldrdf: unable to open response file\n");
 		exit(1);
-	       }
+	    }
 	    
 	    argv++, argc--;
 	    while (fgets(buf, sizeof(buf), f) != NULL) {
@@ -1253,14 +1237,14 @@ int main(int argc, char ** argv)
 		if (buf[0]=='\n') continue;
 		if ((p = strchr(buf,'\n')) != NULL) *p = '\0';
 		if (i >= 128) {
-		  fprintf(stderr,"ldrdf: too many input files\n");
-		  exit(1);
-		 }
-		*(respstrings+i) = newstr(buf);
+		    fprintf(stderr,"ldrdf: too many input files\n");
+		    exit(1);
+		}
+		*(respstrings + i) = newstr(buf);
 		argc++, i++;
-	       }
+	    }
             break;
-	 }
+	}
 	case '2':
             options.stderr_redir = 1;
 	    error_file = stdout;
@@ -1268,7 +1252,7 @@ int main(int argc, char ** argv)
 	case 'g':
 	    generic_rec_file = argv[1];
 	    argv++, argc--;
-		break;    
+	    break;
 	default:
 	    usage();
 	}
@@ -1281,14 +1265,12 @@ int main(int argc, char ** argv)
 	printf("    output name: `%s'\n", outname);
 	if (options.strip)
 	    printf("    strip symbols\n");
-	if (options.warnUnresolved == 1)
-	    printf("    warn about unresolved symbols\n");
-	if (options.warnUnresolved == 2)
-	    printf("    error if unresolved symbols\n");    
+	if (options.dynalink)
+	    printf("    Unix-style dynamic linking\n");
         if (options.objpath)
-            printf("    objects search path: %s\n",objpath);
+            printf("    objects search path: %s\n", objpath);
         if (options.libpath)
-            printf("    libraries search path: %s\n",libpath);
+            printf("    libraries search path: %s\n", libpath);
 	printf("\n");
     }
 
@@ -1303,14 +1285,16 @@ int main(int argc, char ** argv)
     while (argc) {
 	if (!*argv) argv = respstrings;
 	if (!*argv) break;
-	if (!strncmp(*argv, "-l", 2)) /* library */
-         {
-	  if(libpath) add_library(newstrcat(libpath,*argv + 2));
-          else add_library(*argv + 2);
-         }
-	else {
-	    if(objpath) loadmodule(newstrcat(objpath,*argv));
-	    else loadmodule(*argv);
+	if (!strncmp(*argv, "-l", 2)) {
+	    if(libpath && (*argv[2] != '/'))
+		add_library(newstrcat(libpath,*argv + 2));
+            else
+		add_library(*argv + 2);
+        } else {
+	    if(objpath && (*argv[0] != '/'))
+		loadmodule(newstrcat(objpath, *argv));
+	    else
+		loadmodule(*argv);
 	    moduleloaded = 1;
 	}
 	argv++, argc--;

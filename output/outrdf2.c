@@ -70,6 +70,7 @@ struct RelocRec {
 struct ImportRec {
   byte 	type;		/* must be 2, or 7 for FAR import */
   byte	reclen;		/* equals 3+label length */
+  byte  flags;		/* SYM_* flags (see below) */
   int16	segment;	/* segment number allocated to the label for reloc
 			 * records - label is assumed to be at offset zero
 			 * in this segment, so linker must fix up with offset
@@ -109,9 +110,10 @@ struct CommonRec {
 };
 
 /* Flags for ExportRec */
-#define SYM_DATA	0x01
-#define SYM_FUNCTION	0x02
-#define SYM_GLOBAL	0x04
+#define SYM_DATA	1
+#define SYM_FUNCTION	2
+#define SYM_GLOBAL	4
+#define SYM_IMPORT	8
 
 #define COUNT_SEGTYPES 9
 
@@ -124,7 +126,7 @@ static int segmenttypenumbers[COUNT_SEGTYPES] = {
   0, 1, 1, 2, 3, 4, 5, 6, 7
 };
 
-/* code for managing buffers needed to seperate code and data into individual
+/* code for managing buffers needed to separate code and data into individual
  * sections until they are ready to be written to the file.
  * We'd better hope that it all fits in memory else we're buggered... */
 
@@ -332,6 +334,7 @@ static void write_import_rec(struct ImportRec *r)
 
   saa_wbytes(header,&r->type,1);
   saa_wbytes(header,&r->reclen,1);
+  saa_wbytes(header,&r->flags,1);
   b = buf; WRITESHORT(b,r->segment);
   saa_wbytes(header,buf,2);
   saa_wbytes(header,r->label,strlen(r->label) + 1);
@@ -389,7 +392,7 @@ static void rdf2_deflabel(char *name, long segment, long offset,
   struct CommonRec ci;
   static int farsym = 0;
   static int i;
-  byte export_flags = 0;
+  byte symflags = 0;
 
   if (is_global == 2) {
     /* Common variable */
@@ -425,7 +428,11 @@ static void rdf2_deflabel(char *name, long segment, long offset,
     
     if (!nasm_strnicmp(special, "export", 6)) {
       special += 6;
-      export_flags |= SYM_GLOBAL;  
+      symflags |= SYM_GLOBAL;  
+    }
+    else if (!nasm_strnicmp(special, "import", 6)) {
+      special += 6;
+      symflags |= SYM_IMPORT;
     }
 
     if (*special) {
@@ -438,11 +445,11 @@ static void rdf2_deflabel(char *name, long segment, long offset,
       }
       else if (!nasm_stricmp(special, "proc") || 
                !nasm_stricmp(special, "function")) {
-        export_flags |= SYM_FUNCTION;  
+        symflags |= SYM_FUNCTION;  
       }
       else if (!nasm_stricmp(special, "data") ||
                !nasm_stricmp(special, "object")) {
-        export_flags |= SYM_DATA;
+        symflags |= SYM_DATA;
       }
       else
         error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
@@ -458,18 +465,20 @@ static void rdf2_deflabel(char *name, long segment, long offset,
     if (segments[i].segnumber == segment>>1) break;
   }
   if (i >= nsegments) {   /* EXTERN declaration */
-    if (farsym)
-      ri.type = RDFREC_FARIMPORT;
-    else
-      ri.type = RDFREC_IMPORT;
+    ri.type = farsym ? RDFREC_FARIMPORT : RDFREC_IMPORT;
+    if (symflags & SYM_GLOBAL)
+      error(ERR_NONFATAL, "symbol type conflict - EXTERN cannot be EXPORT");
+    ri.flags = symflags;
     ri.segment = segment;
     strncpy(ri.label,name,32);
     ri.label[32] = 0;
-    ri.reclen = 3 + strlen(ri.label);
+    ri.reclen = 4 + strlen(ri.label);
     write_import_rec(&ri);
   } else if (is_global) {
     r.type = RDFREC_GLOBAL;
-    r.flags = export_flags;
+    if (symflags & SYM_IMPORT)
+      error(ERR_NONFATAL, "symbol type conflict - GLOBAL cannot be IMPORT");
+    r.flags = symflags;
     r.segment = segment;
     r.offset = offset;
     strncpy(r.label,name,32);

@@ -12,7 +12,7 @@
 @end titlepage
 
 @ifinfo
-Copyright @copyright{} 2002 Netwide Assembler Project.
+Copyright @copyright{} 2002-2003 Netwide Assembler Project.
 Written by Yuri Zaporogets @email{yuriz@@ukr.net}
 Based on various sources and notes written by Julian Hall @email{jules@@dsf.org.uk}
 Distributed under GNU documentation license.
@@ -81,7 +81,7 @@ by a section header.
 @subsection Relocation records
 
 @node Import
-@subsection Declaring external symbols
+@subsection Declaring external and imported symbols
 
 @node Export
 @subsection Declaring public and exported symbols

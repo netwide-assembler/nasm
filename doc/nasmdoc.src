@@ -119,6 +119,7 @@ in \c{elf}
 \IR{elf shared libraries} ELF, shared libraries
 \IR{executable and linkable format} Executable and Linkable Format
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
+\IR{extern, rdf extensions to} \c{EXTERN}, \c{rdf} extensions to
 \IR{freebsd} FreeBSD
 \IR{freelink} FreeLink
 \IR{functions, c calling convention} functions, C calling convention
@@ -4541,6 +4542,25 @@ Similarly, to specify exported data object, add the word \i\c{data}
 or \i\c{object} to the directive:
 
 \c     global  kernel_ticks:export data
+
+
+\S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} directive\I{EXTERN,
+rdf extensions to}
+
+By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external" 
+symbol (i.e. the static linker will complain if such a symbol is not resolved).
+To declare an "imported" symbol, which must be resolved later during a dynamic
+linking phase, \c{RDOFF} offers an additional \c{import} modifier. As in
+\c{GLOBAL}, you can also specify whether an imported symbol is a procedure
+(function) or data object. For example:
+
+\c     library $libc
+\c     extern  _open:import
+\c     extern  _printf:import proc
+\c     extern  _errno:import data
+
+Here the directive \c{LIBRARY} is also included, which gives the dynamic linker
+a hint as to where to find requested symbols.
 
 
 \H{dbgfmt} \i\c{dbg}: Debugging Format

@@ -10,8 +10,9 @@
 
 FILE *infile;
 
-long translatelong(long in) {		/* translate from little endian to
-					   local representation */
+/* Translate from little endian to local representation */
+long translatelong(long in)
+{
   long r;
   unsigned char *i;
 
@@ -24,7 +25,8 @@ long translatelong(long in) {		/* translate from little endian to
   return r;
 }
   
-int16 translateshort(int16 in) {
+int16 translateshort(int16 in)
+{
   int r;
   unsigned char *i;
 
@@ -37,16 +39,16 @@ int16 translateshort(int16 in) {
 void print_header(long length, int rdf_version)
 {
     char buf[129],t,l,s,flags;
-  unsigned char reclen;
-  long o,ll;
-  int16 rs;
+    unsigned char reclen;
+    long o,ll;
+    int16 rs;
 
-  while (length > 0) {
-    fread(&t,1,1,infile);
-    if (rdf_version >= 2) {
-	fread(&reclen,1,1,infile);
-    }
-    switch(t) {
+    while (length > 0) {
+	fread(&t,1,1,infile);
+	if (rdf_version >= 2) {
+	    fread(&reclen,1,1,infile);
+	}
+	switch(t) {
 	    case RDFREC_GENERIC:		/* generic record */
 	    	printf("  generic record (length=%d)\n", (int)reclen);
 		fseek(infile, reclen, SEEK_CUR);
@@ -54,90 +56,92 @@ void print_header(long length, int rdf_version)
     
 	    case RDFREC_RELOC:			/* relocation record */
 	    case RDFREC_SEGRELOC:		/* segment relocation */
-      fread(&s,1,1,infile);
-      fread(&o,4,1,infile);
-      fread(&l,1,1,infile);
-      fread(&rs,2,1,infile);
-      printf("  %s: location (%04x:%08lx), length %d, "
-	     "referred seg %04x\n", t == 1 ? "relocation" : "seg relocation",
-	     (int)s,translatelong(o),(int)l,
-	     translateshort(rs));
-      if (rdf_version >= 2 && reclen != 8)
-	  printf("    warning: reclen != 8\n");
-      if (rdf_version == 1) length -= 9;
-      if (rdf_version == 1 && t == 6)
-	  printf("    warning: seg relocation not supported in RDOFF1\n");
-      break;
+		fread(&s,1,1,infile);
+		fread(&o,4,1,infile);
+		fread(&l,1,1,infile);
+		fread(&rs,2,1,infile);
+		printf("  %s: location (%04x:%08lx), length %d, "
+			"referred seg %04x\n", t == 1 ? "relocation" : "seg relocation",
+			(int)s,translatelong(o),(int)l,
+	    		translateshort(rs));
+    		if (rdf_version >= 2 && reclen != 8)
+		    printf("    warning: reclen != 8\n");
+    		if (rdf_version == 1) length -= 9;
+		if (rdf_version == 1 && t == 6)
+		    printf("    warning: seg relocation not supported in RDOFF1\n");
+	        break;
       
 	    case RDFREC_IMPORT:			/* import record */
 	    case RDFREC_FARIMPORT:		/* import far symbol */
-      fread(&rs,2,1,infile);
-      ll = 0;
+	        fread(&flags, 1, 1, infile);
+		fread(&rs, 2, 1, infile);
+		ll = 0;
 
-      if (rdf_version == 1) {
-	  do {
-	      fread(&buf[ll],1,1,infile);
-	  } while (buf[ll++]);
+		if (rdf_version == 1) {
+		    do {
+			fread(&buf[ll], 1, 1, infile);
+		    } while (buf[ll++]);
 		} else {
-	  for (;ll < reclen - 2; ll++)
-	      fread(&buf[ll],1,1,infile);
-      }
+		    for (;ll < reclen - 3; ll++)
+			fread(&buf[ll], 1, 1, infile);
+    		}
 
-      printf("  %simport: segment %04x = %s\n",t == 7 ? "far " : "",
-	     translateshort(rs),buf);
-      if (rdf_version == 1) length -= ll + 3;
-      if (rdf_version == 1 && t == 7)
-	  printf ("    warning: far import not supported in RDOFF1\n");
-      break;
+		if (t == 7)
+		    printf("far ");
+		printf((flags & SYM_IMPORT) ? "  import" : "  extern");
+		if (flags & SYM_FUNCTION) printf(" proc");
+		if (flags & SYM_DATA) printf(" data");
+		printf(": segment %04x = %s\n", translateshort(rs), buf);
+		if (rdf_version == 1) length -= ll + 3;
+		if (rdf_version == 1 && t == 7)
+		    printf ("    warning: far import not supported in RDOFF1\n");
+    		break;
       
 	    case RDFREC_GLOBAL:			/* export record */
-      fread(&flags,1,1,infile);
-      fread(&s,1,1,infile);
-      fread(&o,4,1,infile);
-      ll = 0;
+		fread(&flags, 1, 1, infile);
+		fread(&s, 1, 1, infile);
+		fread(&o, 4, 1, infile);
+		ll = 0;
 
-      if (rdf_version == 1) {
-	  do {
-	      fread(&buf[ll],1,1,infile);
-	  } while (buf[ll++]);
+		if (rdf_version == 1) {
+		    do {
+	    		fread(&buf[ll], 1, 1, infile);
+		    } while (buf[ll++]);
 		} else {
-	  for (; ll < reclen - 6; ll ++)
-	      fread(&buf[ll],1,1,infile);
-      }
-      if (flags & SYM_GLOBAL)
-        printf("  export");
-      else
-        printf("  global");
-      if (flags & SYM_FUNCTION) printf(" proc");
-      if (flags & SYM_DATA) printf(" data");
-      printf(": (%04x:%08lx) = %s\n",(int)s,translatelong(o),buf);
-      if (rdf_version == 1) length -= ll + 6;
-      break;
+		for (; ll < reclen - 6; ll ++)
+		    fread(&buf[ll], 1, 1, infile);
+    		}
+    		printf((flags & SYM_GLOBAL) ? "  export" : "  public");
+		if (flags & SYM_FUNCTION) printf(" proc");
+		if (flags & SYM_DATA) printf(" data");
+		printf(": (%04x:%08lx) = %s\n", (int)s, translatelong(o), buf);
+		if (rdf_version == 1) length -= ll + 6;
+		break;
       
 	    case RDFREC_DLL:			/* DLL and Module records */
 	    case RDFREC_MODNAME:
-      ll = 0;
-
-      if (rdf_version == 1) {
-	  do {
-	      fread(&buf[ll],1,1,infile);
-	  } while (buf[ll++]);
+		ll = 0;
+		if (rdf_version == 1) {
+		    do {
+			fread(&buf[ll],1,1,infile);
+		    } while (buf[ll++]);
 		} else {
-	  for (; ll < reclen; ll++)
-	      fread(&buf[ll],1,1,infile);
-      }
-      if (t==4) printf("  dll: %s\n",buf);
-      else printf("  module: %s\n",buf);
-      if (rdf_version == 1) length -= ll + 1;
-      break;
+		    for (; ll < reclen; ll++)
+			fread(&buf[ll], 1, 1, infile);
+    		}
+    		if (t==4) printf("  dll: %s\n",buf);
+    		else printf("  module: %s\n",buf);
+		if (rdf_version == 1)
+		    length -= ll + 1;
+    		break;
 		
 	    case RDFREC_BSS:			/* BSS reservation */
-      fread(&ll,4,1,infile);
-      printf("  bss reservation: %08lx bytes\n",translatelong(ll));
-      if (rdf_version == 1) length -= 5;
-      if (rdf_version > 1 && reclen != 4)
-	  printf("    warning: reclen != 4\n");
-      break;
+		fread(&ll,4,1,infile);
+		printf("  bss reservation: %08lx bytes\n",translatelong(ll));
+		if (rdf_version == 1) length -= 5;
+		if (rdf_version > 1 && reclen != 4)
+		    printf("    warning: reclen != 4\n");
+		break;
       
  	    case RDFREC_COMMON: {
 		unsigned short seg, align;
@@ -150,19 +154,19 @@ void print_header(long length, int rdf_version)
 			fread(buf+ll, 1, 1, infile);
 		printf("  common: segment %04x = %s, %ld:%d\n", translateshort(seg),
 		       buf, translatelong(size), translateshort(align));
-      break;  
+    		break;  
 	    }
 
-    default:
+	    default:
 		printf("  unrecognized record (type %d", (int)t);
-      if (rdf_version > 1) {
-      	printf(", length %d",(int)reclen);
-	fseek(infile,reclen,SEEK_CUR);
+		if (rdf_version > 1) {
+      		    printf(", length %d",(int)reclen);
+		    fseek(infile,reclen,SEEK_CUR);
 		} else length --;
-      printf(")\n");
+	    printf(")\n");
+	}
+	if (rdf_version != 1) length -= 2 + reclen;
     }
-    if (rdf_version != 1) length -= 2 + reclen;
-  }
 }
 
 char * knowntypes[8] = {"NULL", "text", "data", "object comment",
@@ -192,7 +196,9 @@ int main(int argc,char **argv) {
   long headerlength = 0;
   long objectlength = 0;
 
-  puts("RDOFF Dump utility v2.1\n(c) Copyright 1996,99,2000 Julian R Hall, Yuri M Zaporogets");
+  puts("RDOFF Dump utility v2.2\n"\
+       "Copyright (c) 1996,99 Julian R Hall\n"
+       "Copyright (c) 2000-2002 RET & COM Research.");
 
   if (argc < 2) {
     fputs("Usage: rdfdump [-v] <filename>\n",stderr);

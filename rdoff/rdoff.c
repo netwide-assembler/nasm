@@ -377,6 +377,7 @@ rdfheaderrec *rdfgetheaderrec(rdffile *f)
 
   case RDFREC_IMPORT:		/* Imported symbol record */
   case RDFREC_FARIMPORT:
+    RI8(r.i.flags);
     RI16(r.i.segment);
     RS(r.i.label,32);
     break;
@@ -464,6 +465,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 
     case RDFREC_IMPORT:				/* import */
     case RDFREC_FARIMPORT:
+	membufwrite(h->buf,&r->i.flags,1);
 	membufwrite(h->buf,&r->i.segment,-2);
 	membufwrite(h->buf,&r->i.label,strlen(r->i.label) + 1);
 	break ;
