@@ -1,6 +1,34 @@
 This is a modified version of NASM, modified and released by H. Peter
 Anvin <hpa@zytor.com>; it is not the original form released by the
-NASM authors.
+NASM authors.  However, as of 0.98p6 I have agreed to release the
+official 0.98 version, so this is now an "official pre-release".
+
+For release 0.98p6:
+
+* Took officially over coordination of the 0.98 release; so drop
+  the p3.x notation. Skipped p4 and p5 to avoid confusion with John
+  Fine's J4 and J5 releases.
+* Update the documentation; however, it still doesn't include
+  documentation for the various new instructions.  I somehow wonder if
+  it makes sense to have an instruction set reference in the assembler
+  manual when Intel et al have PDF versions of their manuals online.
+* Recognize "idt" or "centaur" for the -p option to ndisasm.
+* Changed error messages back to stderr where they belong, but add an
+  -E option to redirect them elsewhere (the DOS shell cannot redirect
+  stderr.)
+* -M option to generate Makefile dependencies (based on code from Alex
+  Verstak.)
+* %undef preprocessor directive, and -u option, that undefines a
+  single-line macro.
+* OS/2 Makefile (Mkfiles/Makefile.os2) for Borland under OS/2; from
+  Chuck Crayne.
+* Various minor bugfixes (reported by):
+  - Dangling %s in preproc.c (Martin Junker)
+* THERE ARE KNOWN BUGS IN SSE AND THE OTHER KATMAI INSTRUCTIONS.  I am
+  on a trip and didn't bring the Katmai instruction reference, so I
+  can't work on them right now.
+* Updated the License file per agreement with Simon and Jules to
+  include a GPL distribution clause.
 
 For release 0.98p3.7:
 

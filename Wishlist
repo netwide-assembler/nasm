@@ -12,12 +12,16 @@ have this done by. ? means I haven't looked at it yet.
 
 - Package the Linux Assembler HOWTO.					0.98
 
-- AMD 3dNow extensions need documenting.				0.98
+- 3DNow!, SSE and other extensions need documenting.			0.98
+  hpa: Does it really make sense to have a whole instruction set
+  reference packaged with the assembler?
 
 - prototypes of lrotate don't match in test/*. Fix.			0.98
 
 - Build djgpp binaries for 0.98 onwards. Look into PMODE/W as a stub	0.98
   - it might be a lot better than CWSDPMI. It's in PMW133.ZIP.
+
+- %undef operator that goes along with %define				DONE
 
 - Fix `%error' giving error messages twice.				0.99
   Not especially important, as changes planned for 1.1x below will make
@@ -105,9 +109,9 @@ have this done by. ? means I haven't looked at it yet.
   set to be written that allows the same source files to be
   assembled with NASM and TASM.
 
-- Add the UD2 instruction.						?
+- Add the UD2 instruction.						DONE
 
-- Add the four instructions documented in 24368901.pdf (Intel's own	?
+- Add the four instructions documented in 24368901.pdf (Intel's own	DONE
   document).
 
 - Some means of avoiding MOV memoffs,EAX which apparently the		1.10?
@@ -177,6 +181,8 @@ have this done by. ? means I haven't looked at it yet.
 
 - Arbitrary section names in `bin'.					?
   Is this necessary? Is it even desirable?
+  hpa: Desirable, yes.  Necessary?  Probably not, but there are
+  definitely cases where it becomes quite useful.
 
 - Ability to read from a pipe. Obviously not useful under dos, so	1.10
   memory problems with storing entire input file aren't a problem
@@ -240,8 +246,10 @@ have this done by. ? means I haven't looked at it yet.
   undocumented flags in the instruction table. When this happens,
   consider allowing PMULHRW to map to either of the Cyrix or AMD
   versions?
+  hpa: The -p option to ndisasm now uses this to some extent.
 
 - Maybe NEC V20/V30 instructions?					?
+  hpa: What are they?  Should be trivial to implement.
 
 - Yet more object formats.
   * Possibly direct support for .EXE files?				1.10
@@ -262,7 +270,10 @@ have this done by. ? means I haven't looked at it yet.
   byte code; probably ARM/StrongARM; maybe Sparc; maybe Mips; maybe
   Vax. Perhaps Z80 and 6502, just for a laugh?
 
-- Consider a 'verbose' option that prints information about the resulting ?
-  object file onto stdout.
+- Consider a 'verbose' option that prints information about the		?
+  resulting object file onto stdout.
 
+- Line numbers in the .lst file don't match the line numbers in the	?
+  input.  They probably should, rather than the current matching
+  of the post-preprocessor line numbers.
 

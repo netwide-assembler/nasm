@@ -43,6 +43,8 @@ static int globallineno;	       /* for forward-reference tracking */
 static int pass;
 static struct ofmt *ofmt = NULL;
 
+static FILE *error_file = stderr;      /* Where to write error messages */
+
 static FILE *ofile = NULL;
 static int sb = 16;		       /* by default */
 
@@ -57,7 +59,12 @@ static struct SAA *forwrefs;	       /* keep track of forward references */
 static struct forwrefinfo *forwref;
 
 static Preproc *preproc;
-static int preprocess_only;
+enum op_type {
+  op_normal,			/* Preprocess and assemble */
+  op_preprocess,		/* Preprocess only */
+  op_depend			/* Generate dependencies */
+};
+static enum op_type operating_mode;
 
 /* used by error function to report location */
 
@@ -131,7 +138,8 @@ int main(int argc, char **argv)
     forwrefs = saa_init ((long)sizeof(struct forwrefinfo));
 
     preproc = &nasmpp;
-    preprocess_only = FALSE;
+    operating_mode = op_normal;
+
 
     seg_init();
 
@@ -151,52 +159,70 @@ int main(int argc, char **argv)
     parser_global_info (ofmt, &location);
     eval_global_info (ofmt, lookup_label, &location);
 
-    if (preprocess_only) 
-    {
+    switch ( operating_mode ) {
+    case op_depend:
+      {
 	char *line;
-	char *file_name = NULL;
-	long  prior_linnum=0;
-	int   lineinc=0;
-
-	if (*outname) {
-	    ofile = fopen(outname, "w");
-	    if (!ofile)
-		report_error (ERR_FATAL | ERR_NOFILE,
-			      "unable to open output file `%s'", outname);
-	} else
-	    ofile = NULL;
-
-	location.known = FALSE;
-
-	preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
-	while ( (line = preproc->getline()) ) {
-	    /*
-	     * We generate %line directives if needed for later programs
-	     */
-	    long linnum = prior_linnum += lineinc;
-	    int  altline = src_get(&linnum, &file_name);
-	    if (altline) {
-		if (altline==1 && lineinc==1)
-		   nasm_fputs("", ofile);
-		else {
-		   lineinc = (altline != -1 || lineinc!=1);
-		   fprintf(ofile ? ofile : stdout, "%%line %ld+%d %s\n",
-			   linnum, lineinc, file_name);
-		}
-		prior_linnum = linnum;
-	    }
-	    nasm_fputs(line, ofile);
-	    nasm_free (line);
-	}
-	nasm_free(file_name);
+	preproc->reset (inname, 0, report_error, evaluate, &nasmlist);
+	if (outname[0] == '\0')
+	  ofmt->filename (inname, outname, report_error);
+	ofile = NULL;
+	printf("%s: %s", outname, inname);
+	while ( (line = preproc->getline()) )
+	  nasm_free (line);
 	preproc->cleanup();
-	if (ofile)
-	    fclose(ofile);
-	if (ofile && terminate_after_phase)
-	    remove(outname);
-    } 
-    else 	/* NOT preprocess only */
+	putc('\n', stdout);
+      }
+    break;
+
+    case op_preprocess:
     {
+      char *line;
+      char *file_name = NULL;
+      long  prior_linnum=0;
+      int   lineinc=0;
+      
+      if (*outname) {
+	ofile = fopen(outname, "w");
+	if (!ofile)
+	  report_error (ERR_FATAL | ERR_NOFILE,
+			"unable to open output file `%s'", outname);
+      } else
+	ofile = NULL;
+      
+      location.known = FALSE;
+      
+      preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
+      while ( (line = preproc->getline()) ) {
+	/*
+	 * We generate %line directives if needed for later programs
+	 */
+	long linnum = prior_linnum += lineinc;
+	int  altline = src_get(&linnum, &file_name);
+	if (altline) {
+	  if (altline==1 && lineinc==1)
+	    nasm_fputs("", ofile);
+	  else {
+	    lineinc = (altline != -1 || lineinc!=1);
+	    fprintf(ofile ? ofile : stdout, "%%line %ld+%d %s\n",
+		    linnum, lineinc, file_name);
+	  }
+	  prior_linnum = linnum;
+	}
+	nasm_fputs(line, ofile);
+	nasm_free (line);
+      }
+      nasm_free(file_name);
+      preproc->cleanup();
+      if (ofile)
+	fclose(ofile);
+      if (ofile && terminate_after_phase)
+	remove(outname);
+    }
+    break;
+
+    case op_normal:
+      {
 	/*
 	 * We must call ofmt->filename _anyway_, even if the user
 	 * has specified their own output file, because some
@@ -205,46 +231,48 @@ int main(int argc, char **argv)
 	 * file.
 	 */
 	ofmt->filename (inname, outname, report_error);
-
+	
 	ofile = fopen(outname, "wb");
 	if (!ofile) {
-	    report_error (ERR_FATAL | ERR_NOFILE,
-			  "unable to open output file `%s'", outname);
+	  report_error (ERR_FATAL | ERR_NOFILE,
+			"unable to open output file `%s'", outname);
 	}
-
+	
 	/*
 	 * We must call init_labels() before ofmt->init() since
 	 * some object formats will want to define labels in their
 	 * init routines. (eg OS/2 defines the FLAT group)
 	 */
 	init_labels ();
-
+	
 	ofmt->init (ofile, report_error, define_label, evaluate);
-
+	
 	assemble_file (inname);
-
+	
 	if (!terminate_after_phase) {
-	    ofmt->cleanup (using_debug_info);
-	    cleanup_labels ();
+	  ofmt->cleanup (using_debug_info);
+	  cleanup_labels ();
 	}
 	else {
-
-	    /*
-	     * We had an fclose on the output file here, but we
-	     * actually do that in all the object file drivers as well,
-	     * so we're leaving out the one here.
-	     *     fclose (ofile);
-	     */
-
-	    remove(outname);
-	    if (listname[0])
-		remove(listname);
+	  
+	  /*
+	   * We had an fclose on the output file here, but we
+	   * actually do that in all the object file drivers as well,
+	   * so we're leaving out the one here.
+	   *     fclose (ofile);
+	   */
+	  
+	  remove(outname);
+	  if (listname[0])
+	    remove(listname);
 	}
+      }
+    break;
     }
-
+    
     if (want_usage)
-	usage();
-
+      usage();
+    
     raa_free (offsets);
     saa_free (forwrefs);
     eval_cleanup ();
@@ -303,8 +331,10 @@ static int process_arg (char *p, char *q)
 	  case 'f':
 	  case 'p':
 	  case 'd':
+	  case 'D':
 	  case 'i':
 	  case 'l':
+	  case 'E':
 	  case 'F':
 	    if ( !(param = get_param (p, q, &advance)) )
 		break;
@@ -322,12 +352,22 @@ static int process_arg (char *p, char *q)
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
 	    } else if (p[1]=='p') {    /* pre-include */
 		pp_pre_include (param);
-	    } else if (p[1]=='d') {    /* pre-define */
+	    } else if (p[1]=='D' || p[1]=='d') {    /* pre-define */
 		pp_pre_define (param);
+	    } else if (p[1]=='U' || p[1]=='u') {    /* un-define */
+		pp_pre_undefine (param);
 	    } else if (p[1]=='i') {    /* include search path */
 		pp_include_path (param);
 	    } else if (p[1]=='l') {    /* listing file */
 		strcpy (listname, param);
+	    } else if (p[1]=='E') {    /* error messages file */
+	        error_file = fopen(param, "wt");
+		if ( !error_file ) {
+		  error_file = stderr; /* Revert to default! */
+		  report_error (ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+				"cannot open file `%s' for error messages",
+				param);
+		}
 	    } else if (p[1] == 'F') {  /* specify debug format */
 	        ofmt->current_dfmt = dfmt_find(ofmt, param);
 	        if (!ofmt->current_dfmt) {
@@ -344,18 +384,20 @@ static int process_arg (char *p, char *q)
 	  case 'h':
 	    printf("usage: nasm [-@ response file] [-o outfile] [-f format] "
 		   "[-l listfile]\n"
-		   "            [options...] [--] filename\n");
-	    printf("    or nasm -r   for version info\n\n");
-	    printf("    -e          preprocess only (writes output to "
-		   "stdout by default)\n"
-		   "    -a          don't preprocess\n\n");
-	    printf("    -g          enable debug info\n"
-		   "    -F format   select a debugging format\n\n");
-	    printf("    -i<path>    adds a pathname to the include file path\n"
+		   "            [options...] [--] filename\n"
+		   "    or nasm -r   for version info\n\n"
+		   "    -e          preprocess only (writes output to stdout by default)\n"
+		   "    -a          don't preprocess (assemble only)\n"
+		   "    -M          generate Makefile dependencies on stdout\n\n"
+		   "    -E<file>    redirect error messages to file\n\n"
+		   "    -g          enable debug info\n"
+		   "    -F format   select a debugging format\n\n"
+		   "    -i<path>    adds a pathname to the include file path\n"
 		   "    -p<file>    pre-includes a file\n"
-		   "    -d<macro>[=<value>] pre-defines a macro\n");
-	    printf("    -w+foo      enables warnings about foo; "
-		   "-w-foo disables them\n  where foo can be:\n");
+		   "    -d<macro>[=<value>] pre-defines a macro\n"
+		   "    -u<macro>   undefines a macro\n"
+		   "    -w+foo      enables warnings about foo; -w-foo disables them\n"
+		   "where foo can be:\n");
 	    for (i=1; i<=ERR_WARN_MAX; i++)
 		printf("    %-16s%s (default %s)\n",
 		       suppressed_names[i], suppressed_what[i],
@@ -388,7 +430,7 @@ static int process_arg (char *p, char *q)
 	    exit (0);		       /* never need usage message here */
 	    break;
 	  case 'e':		       /* preprocess only */
-	    preprocess_only = TRUE;
+	    operating_mode = op_preprocess;
 	    break;
 	  case 'a':		       /* assemble only - don't preprocess */
 	    preproc = &no_pp;
@@ -408,6 +450,9 @@ static int process_arg (char *p, char *q)
 				  "invalid option to `-w'");
 	    }
 	    break;
+          case 'M':
+	    operating_mode = op_depend;
+	    break; 
 	  default:
 	    if (!ofmt->setinfo(GI_SWITCH,&p))
 	    	report_error (ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -1165,23 +1210,23 @@ static void report_error (int severity, char *fmt, ...)
 	return;
 
     if (severity & ERR_NOFILE)
-	fputs ("nasm: ", stdout);
+	fputs ("nasm: ", error_file);
     else {
 	char * currentfile = NULL;
 	long lineno = 0;
 	src_get (&lineno, &currentfile);
-	fprintf (stdout, "%s:%ld: ", currentfile, lineno);
+	fprintf (error_file, "%s:%ld: ", currentfile, lineno);
 	nasm_free (currentfile);
     }
 
     if ( (severity & ERR_MASK) == ERR_WARNING)
-	fputs ("warning: ", stdout);
+	fputs ("warning: ", error_file);
     else if ( (severity & ERR_MASK) == ERR_PANIC)
-	fputs ("panic: ", stdout);
+	fputs ("panic: ", error_file);
 
     va_start (ap, fmt);
-    vfprintf (stdout, fmt, ap);
-    fputc ('\n', stdout);
+    vfprintf (error_file, fmt, ap);
+    fputc ('\n', error_file);
 
     if (severity & ERR_USAGE)
 	want_usage = TRUE;
@@ -1203,6 +1248,7 @@ static void report_error (int severity, char *fmt, ...)
 	exit(1);		       /* instantly die */
 	break;			       /* placate silly compilers */
       case ERR_PANIC:
+	fflush(NULL);
 	abort();		       /* halt, catch fire, and dump core */
 	break;
     }
@@ -1210,7 +1256,7 @@ static void report_error (int severity, char *fmt, ...)
 
 static void usage(void) 
 {
-    fputs("type `nasm -h' for help\n", stdout);
+    fputs("type `nasm -h' for help\n", error_file);
 }
 
 static void register_output_formats(void) 

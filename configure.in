@@ -62,6 +62,10 @@ else
 fi
 AC_SUBST(GCCFLAGS)
 
+dnl Look for "nroff" or "groff"
+AC_CHECK_PROGS(NROFF, groff nroff, echo)
+AC_SUBST(NROFF)
+
 dnl Checks for header files.
 AC_HEADER_STDC
 if test $ac_cv_header_stdc = no; then

@@ -268,7 +268,7 @@ static char *directives[] = {
     "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifnctx",
     "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnnum",
     "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include", "%line",
-    "%macro", "%pop", "%push", "%rep", "%repl", "%rotate"
+    "%macro", "%pop", "%push", "%rep", "%repl", "%rotate", "%undef"
 };
 enum {
     PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
@@ -279,7 +279,7 @@ enum {
     PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFNCTX,
     PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNNUM,
     PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE, PP_LINE,
-    PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE
+    PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE, PP_UNDEF
 };
 
 
@@ -290,7 +290,7 @@ static IncPath *ipath = NULL;
 static efunc error;
 static evalfunc evaluate;
 
-static int pass;
+static int pass;		/* HACK: pass 0 = generate dependencies only */
 
 static unsigned long unique;	       /* unique identifier numbers */
 
@@ -878,10 +878,21 @@ static FILE *inc_fopen(char *file)
     FILE *fp;
     char *prefix = "", *combine;
     IncPath *ip = ipath;
+    static int namelen = 0;
 
     while (1) {
 	combine = nasm_strcat(prefix,file);
 	fp = fopen(combine, "r");
+	if (pass == 0 && fp)
+	{
+	  namelen += strlen(combine) + 1;
+	  if (namelen > 62)
+	  {
+	    printf(" \\\n  ");
+	    namelen = 2;
+	  }
+	  printf(" %s", combine);
+	}
 	nasm_free (combine);
 	if (fp)
 	    return fp;
@@ -1060,7 +1071,8 @@ static int if_condition (Token *tline, int i)
 	while (tok_isnt_(tt, ","))
 	    tt = tt->next;
 	if (!tt) {
-	    error(ERR_NONFATAL, "`%s' expects two comma-separated arguments");
+	    error(ERR_NONFATAL, "`%s' expects two comma-separated arguments",
+		  directives[i]);
 	    free_tlist (tline);
 	    return -1;
 	}
@@ -1827,6 +1839,56 @@ static int do_directive (Token *tline)
 	smac->expansion = macro_start;
 	smac->in_progress = FALSE;
 	free_tlist (origline);
+	return 3;
+
+    case PP_UNDEF:
+	tline = tline->next;
+	skip_white_(tline);
+	if (!tline || (tline->type != TOK_ID &&
+		       (tline->type != TOK_PREPROC_ID ||
+			tline->text[1] != '$'))) {
+	    error (ERR_NONFATAL,
+		   "`%%undef' expects a macro identifier");
+	    free_tlist (origline);
+	    return 3;
+	}
+	mname = tline->text;
+	if (tline->type == TOK_ID) {
+	    p = tline->text;
+	    smhead = &smacros[hash(mname)];
+	} else {
+	    ctx = get_ctx (tline->text);
+	    if (ctx == NULL) {
+		free_tlist (origline);
+		return 3;
+	    } else {
+		p = tline->text+1;
+		p += strspn(p, "$");
+		smhead = &ctx->localmac;
+	    }
+	}
+	last = tline;
+	tline = tline->next;
+	last->next = NULL;
+
+	if (tline)
+	    error(ERR_WARNING,
+		  "trailing garbage after macro name ignored");
+
+	/*
+	 * We now have a macro name... go hunt for it.
+	 */
+	if (smacro_defined (mname, 0, &smac, 1) && smac) {
+	  /* Defined, so we need to find its predecessor and nuke it */
+	  SMacro **s;
+	  for ( s = smhead ; *s && *s != smac ; s = &(*s)->next );
+	  if ( *s ) {
+	    *s = smac->next;
+	    nasm_free(smac->name);
+	    free_tlist(smac->expansion);
+	    nasm_free(smac);
+	  }
+	}
 	return 3;
 
       case PP_ASSIGN:
@@ -3034,6 +3096,29 @@ void pp_pre_define (char *definition)
 
     def->type = TOK_PREPROC_ID;
     def->text = nasm_strdup("%define");
+    space->type = TOK_WHITESPACE;
+    space->text = nasm_strdup(" ");
+
+    def->mac = space->mac = NULL;
+
+    l = nasm_malloc(sizeof(Line));
+    l->next = predef;
+    l->first = def;
+    l->finishes = FALSE;
+    predef = l;
+}
+
+void pp_pre_undefine (char *definition) 
+{
+    Token *def, *space;
+    Line *l;
+
+    def = nasm_malloc(sizeof(Token));
+    def->next = space = nasm_malloc(sizeof(Token));
+    space->next = tokenise(definition);
+
+    def->type = TOK_PREPROC_ID;
+    def->text = nasm_strdup("%undef");
     space->type = TOK_WHITESPACE;
     space->text = nasm_strdup(" ");
 

@@ -307,8 +307,23 @@ arg_example2 arg2
 	sqrtps xmm0,[ebx+10]	; SSE opcode
 	paddsiw mm0,[ebx+10]	; Cyrix opcode with the same byte seq.
 	
+;-----------------------------------------------------------------------------
+; Enhancement by hpa in preproc.c
+;
+; Support %undef to remoce a single-line macro
+;
+%define	TEST_ME 42
+%ifndef TEST_ME
+%error	"TEST_ME not defined after %define"
+%endif
+			
+%undef  TEST_ME
+%ifdef  TEST_ME
+%error	"TEST_ME defined after %undef"
 %endif
 
+%endif				; oldmsg
+	
 %ifdef oldcrash  ;*************************************************************
 
 This_label_is_256_characters_long__There_used_to_be_a_bug_in_stdscan_which_made_it_crash_when_it_did_a_keyword_search_on_any_label_longer_than_255_characters__Now_anything_longer_than_MAX_KEYWORD_is_always_a_symbol__It_will_not_even_try_a_keyword_search___

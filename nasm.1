@@ -53,6 +53,20 @@ to preprocess the given input file, and write the output to
 (or the specified output file name), and not actually assemble
 anything.
 .TP
+.B \-M
+Causes
+.B nasm
+to output Makefile-style dependencies to stdout; normal output is
+suppressed.
+.TP
+.BI \-E " filename"
+Causes
+.B nasm
+to redirect error messages to
+.IR filename .
+This option exists to support operating systems on which stderr is not
+easily redirected.
+.TP
 .BI \-r
 Causes
 .B nasm

@@ -9,7 +9,11 @@
 ; line. Hence `void' for no-operand instructions, and `\0' for such
 ; as EQU. If the last three fields are all `ignore', no action is
 ; taken except to register the opcode as being present.
-
+;
+; For a detailed description of the code string (third field), please
+; see the comment at the top of assemble.c.  For a detailed description
+; of the flags (fourth field), please see insns.h.
+;
 AAA       void                \1\x37                        8086
 AAD       void                \2\xD5\x0A                    8086
 AAD       imm                 \1\xD5\24                     8086,SB
@@ -1271,10 +1275,11 @@ PAVGB           mmxreg,mem		\301\2\x0F\xE0\110		KATMAI,MMX,SM
 PAVGW           mmxreg,mmxreg		\2\x0F\xE3\110			KATMAI,MMX
 PAVGW           mmxreg,mem		\301\2\x0F\xE3\110		KATMAI,MMX,SM
 PEXTRW          reg32,mmxreg,imm8	\2\x0F\xC5\110\22		KATMAI,MMX
-; This is documented as using a reg32, but it's really using only 16 bits -- accept either
+; PINSRW is documented as using a reg32, but it's really using only 16 bit
+; -- accept either
 PINSRW          mmxreg,reg16,imm8	\2\x0F\xC4\110\22		KATMAI,MMX
 PINSRW          mmxreg,reg32,imm8	\2\x0F\xC4\110\22		KATMAI,MMX
-PINSRW          mmxreg,mem16,imm8	\301\2\x0F\xC4\110\22		KATMAI,MMX,SM
+PINSRW          mmxreg,mem16,imm8	\301\2\x0F\xC4\110\22		KATMAI,MMX
 PMAXSW          mmxreg,mmxreg		\2\x0F\xEE\110			KATMAI,MMX
 PMAXSW		mmxreg,mem		\301\2\x0F\xEE\110		KATMAI,MMX,SM
 PMAXUB          mmxreg,mmxreg		\2\x0F\xDE\110			KATMAI,MMX
