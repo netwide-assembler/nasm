@@ -369,7 +369,7 @@ void raa_free (struct RAA *r)
 
 long raa_read (struct RAA *r, long posn) 
 {
-    if (posn > r->stepsize * LAYERSIZ(r))
+    if (posn >= r->stepsize * LAYERSIZ(r))
 	return 0;		/* Return 0 for undefined entries */
     while (r->layers > 0) {
 	ldiv_t l;
@@ -389,7 +389,7 @@ struct RAA *raa_write (struct RAA *r, long posn, long value)
     if (posn < 0)
 	nasm_malloc_error (ERR_PANIC, "negative position in raa_write");
 
-    while (r->stepsize * LAYERSIZ(r) < posn) {
+    while (r->stepsize * LAYERSIZ(r) <= posn) {
 	/*
 	 * Must add a layer.
 	 */
