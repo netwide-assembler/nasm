@@ -924,7 +924,7 @@ delete_Blocks(void)
 			nasm_free(b->chunk);
 		a = b;
 		b = b->next;
-		if (a != &blocks)
+                if (a != &blocks)
 			nasm_free(a);
 	}
 }	

@@ -102,8 +102,8 @@ static int  chsize (operand *, int);
 static void out (long offset, long segto, void *data, unsigned long type,
 		 long segment, long wrt) 
 {
-    static long lineno;
-    static char *lnfname;
+    long lineno;
+    char *lnfname = NULL;
 
     if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
 	if (segment != NO_SEG || wrt != NO_SEG) {
@@ -143,7 +143,7 @@ static void out (long offset, long segto, void *data, unsigned long type,
     if (src_get(&lineno,&lnfname))
     {
 	outfmt->current_dfmt->linenum(lnfname,lineno,segto);
-	if (lnfname) nasm_free(lnfname);
+        if (lnfname) nasm_free(lnfname);
     }
 
     outfmt->output (segto, data, type, segment, wrt);
