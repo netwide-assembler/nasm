@@ -13,7 +13,7 @@ use File::Spec;
 use Fcntl;
 
 $perl   = $ENV{'PERL'}   || 'perl';
-$srcdir = $ENV{'srcdir'} || '.';
+$srcdir = $ENV{'srcdir'} || File::Spec->curdir();
 
 $versionfile = File::Spec->catfile(File::Spec->updir($srcdir), 'version');
 $genps = File::Spec->catfile($srcdir, 'genps.pl');
