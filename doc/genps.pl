@@ -29,7 +29,7 @@ use Fcntl;
 	   tocpnz => 24,	# Width of TOC page number only zone
 	   tocdots => 8,	# Spacing between TOC dots
 	   idxspace => 24,	# Minimum space between index title and pg#
-	   idxindent => 32,	# How much to indent a subindex entry
+	   idxindent => 24,	# How much to indent a subindex entry
 	   idxgutter => 24,	# Space between index columns
 	   idxcolumns => 2,	# Number of index columns
 	   );
@@ -173,7 +173,7 @@ while ( defined($line = <PARAS>) ) {
 	$ixterms{$ixentry} = [split(/\037/, $data)];
 	# Look for commas.  This is easier done on the string
 	# representation, so do it now.
-	if ( $line =~ /^(.*\,)\037sp\037/ ) {
+	if ( $data =~ /^(.*\,)\037sp\037/ ) {
 	    $ixprefix = $1;
 	    $ixhasprefix{$ixentry} = $ixprefix;
 	    if ( !$ixprefixes{$ixprefix} ) {
@@ -724,7 +724,9 @@ sub ps_break_pages($$) {
     my $nobreakregexp = "^(chap|appn|head|subh|toc.|idx.)\$";
     # Paragraph types which are heading (meaning they should not be broken
     # immediately after)
-    my $headingregexp = "^(chap|appn|head|subh)\$";
+    my $nobreakafter = "^(chap|appn|head|subh)\$";
+    # Paragraph types which should never be broken *before*
+    my $nobreakbefore = "^idx[1-9]\$";
     # Paragraph types which are set in columnar format
     my $columnregexp = "^idx.\$";
 
@@ -771,7 +773,8 @@ sub ps_break_pages($$) {
 		} elsif ( $$linfo[1] & 1 ) {
 		    # Sole line or start of paragraph.  Break unless
 		    # the previous line was part of a heading.
-		    $broken = 1 if ( $$pinfo[0] !~ /$headingregexp/o );
+		    $broken = 1 if ( $$pinfo[0] !~ /$nobreakafter/o &&
+				     $$linfo[0] !~ /$nobreakbefore/o );
 		} else {
 		    # Middle of paragraph.  Break unless we're in a
 		    # no-break paragraph, or the previous line would
@@ -839,7 +842,32 @@ $startofindex = scalar(@pslines);
 foreach $k ( @ixentries ) {
     my $n,$i;
     my $ixptype = 'idx0';
-    my @ixpara = mkparaarray('idx0',@{$ixterms{$k}});
+    my $prefix = $ixhasprefix{$k};
+    my @ixpara = mkparaarray($ixptype,@{$ixterms{$k}});
+    my $commapos = undef;
+
+    if ( defined($prefix) && $ixprefixes{$prefix} > 1 ) {
+	# This entry has a "hanging comma"
+	for ( $i = 0 ; $i < scalar(@ixpara)-1 ; $i++ ) {
+	    if ( substr($ixpara[$i]->[1],-1,1) eq ',' &&
+		 $ixpara[$i+1]->[1] eq ' ' ) {
+		$commapos = $i;
+		last;
+	    }
+	}
+    }
+    if ( defined($commapos) ) {
+	if ( $ixcommafirst{$k} ) {
+	    # This is the first entry; generate the
+	    # "hanging comma" entry
+	    push(@ixparas, [splice(@ixpara,0,$commapos+1),[-6,undef]]);
+	    push(@ixptypes, $ixptype);
+	    shift(@ixpara);	# Remove space
+	} else {
+	    splice(@ixpara,0,$commapos+2);
+	}
+	$ixptype = 'idx1';
+    }
 
     push(@ixpara, [-6,undef]);	# Left/right marker
     $i = 1;  $n = scalar(@{$ps_index_pages{$k}});
@@ -944,7 +972,7 @@ foreach $fset ( @AllFonts ) {
     print '/', $fset->{name}, ' [', join(' ',@zfonts), "] def\n";
 }
 
-# Emit the result as PostScript.  This is *NOT* correct code yet!
+# Emit the canned PostScript prologue
 open(PSHEAD, "< head.ps");
 while ( defined($line = <PSHEAD>) ) {
     print $line;

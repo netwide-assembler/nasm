@@ -327,6 +327,20 @@
 /idx01 {idx03} def
 /idx02 {idx03} def
 
+/idx13 {
+  2 dict begin
+    indexcolumn mul lmarg add idxindent add
+    /x exch def /y exch def x y moveto
+    exch bfont showstream
+    dup bfont streamwidth
+    x indexcolwid idxindent sub add exch sub exch pop y moveto
+    bfont showstream
+  end
+} def
+/idx10 {idx13} def
+/idx11 {idx13} def
+/idx12 {idx13} def
+
 %
 % Page numbers
 %
