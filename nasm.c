@@ -59,7 +59,6 @@ int global_offset_changed;             /* referenced in labels.c */
 
 static loc_t location;
 int          in_abs_seg;	       /* Flag we are in ABSOLUTE seg */
-static long  abs_seg;
 
 static struct RAA *offsets;
 static long abs_offset;
@@ -952,7 +951,7 @@ static void assemble_file (char *fname)
                                  "cannot use non-relocatable expression as "
                                  "ABSOLUTE address");
                      else {
-                           abs_seg = reloc_seg(e);
+                          // abs_seg = reloc_seg(e);
                            abs_offset = reloc_value(e);
                      }
                   } else
@@ -960,7 +959,7 @@ static void assemble_file (char *fname)
                      else report_error (ERR_PANIC, "invalid ABSOLUTE address "
                                     "in pass two");
                   in_abs_seg = TRUE;
-                  location.segment = abs_seg;
+                  location.segment = NO_SEG;
                   break;
                case 7:    /* DEBUG       */
                   p = value;
