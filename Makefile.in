@@ -171,7 +171,9 @@ dist: spotless perlreq
 tar: dist
 	tar cvjf ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 ../`./nasm-dir`
 
+spec: nasm.spec
+
 nasm.spec: nasm.spec.in version
 	sed -e s/@@VERSION@@/`cat $(srcdir)/version`/g \
-	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl < $(srcdir)/version`/g \
+	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl id < $(srcdir)/version`/g \
 	    < nasm.spec.in > nasm.spec
