@@ -27,13 +27,14 @@
 
 CC = bcc                #compiler
 # opimizations
-OPTFLAGS = -d -O1 -Ogmpv -k-
+OPTFLAGS = -d -O1 -Ogmp -k-
   # -d  = merge duplicate strings
   # -O1 = optimize for size
   # -Og = enable global common subexpression elimination
   # -Om = enable loop invariant removal
   # -Op = enable constant propagation
-  # -Ov = enable strength-reduction optimization
+  # ** WARNING: DO NOT ENABLE -Ov (strength reduction) ON BORLAND C++ 3.1 **
+  # ** NASM IS KNOWN TO MISCOMPILE WITH -Ov **
   # -k- = omit stack frames where practical
 #output formats
 OUTFORMS = -DOF_ONLY -DOF_BIN -DOF_OBJ -DOF_WIN32 -DOF_AS86
