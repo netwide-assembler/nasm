@@ -12541,14 +12541,14 @@ purposes.
 \c{UD0} is specifically documented by AMD as being reserved for this
 purpose.
 
-\c{UD1} is specifically documented by Intel as being reserved for this
-purpose.
+\c{UD1} is documented by Intel as being available for this purpose.
 
-\c{UD2} is mentioned by Intel as being available, but is not mentioned
-as reserved.
+\c{UD2} is specifically documented by Intel as being reserved for this
+purpose. Intel document this as the preferred method of generating an
+invalid opcode exception.
 
 All these opcodes can be used to generate invalid opcode exceptions on
-all processors that are available at the current time.
+all currently available processors.
 
 
 \S{insUMOV} \i\c{UMOV}: User Move Data
