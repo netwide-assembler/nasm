@@ -1,5 +1,5 @@
 #! /bin/sh
- 
+
 [ $1 ] || {
     echo "Usage: $0 <library name> <module> [...]"
     exit 1

@@ -3,7 +3,13 @@
 /*
  * an rdoff library is simply a sequence of RDOFF object files, each
  * preceded by the name of the module, an ASCII string of up to 255
- * characters, terminated by a zero. 
+ * characters, terminated by a zero.
+ *
+ * When a library is being created, special signature block is placed
+ * in the beginning of the file. It is a string 'RDLIB' followed by a
+ * version number, then long content size and a long time stamp.
+ * The module name of the signature block is '.sig'.
+ *
  *
  * There may be an optional directory placed on the end of the file.
  * The format of the directory will be 'RDLDD' followed by a version
@@ -11,16 +17,17 @@
  * directory, the format of which has not yet been designed.
  * The module name of the directory must be '.dir'. 
  *
- * All module names beginning with '.' are reserved
- * for possible future extensions. The linker ignores all such modules,
- * assuming they have the format of a six byte type & version identifier
- * followed by long content size, followed by data.
+ * All module names beginning with '.' are reserved for possible future
+ * extensions. The linker ignores all such modules, assuming they have
+ * the format of a six byte type & version identifier followed by long
+ * content size, followed by data.
  */
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 /* functions supported:
  *   create a library	(no extra operands required)
@@ -41,6 +48,9 @@ const char *usage =
    "    r - replace               (module-name filename)\n"
    "    d - delete                (module-name)\n"
    "    t - list\n";
+   
+/* Library signature */
+const char *rdl_signature = "RDLIB2", *sig_modname = ".sig";
 
 char **_argv;
 
@@ -114,10 +124,11 @@ long copylong(FILE *fp, FILE *fp2)
 
 int main(int argc, char **argv)
 {
-    FILE *fp, *fp2, *fptmp;
+    FILE *fp, *fp2 = NULL, *fptmp;
     char *p, buf[256], c;
     int i;
     long l;
+    time_t t;
     char tmptempl[L_tmpnam], rdbuf[10];
 
     _argv = argv;
@@ -137,6 +148,11 @@ int main(int argc, char **argv)
 	    perror("rdflib");
 	    exit(1);
 	}
+	fwrite(sig_modname, 1, strlen(sig_modname)+1, fp);
+	fwrite(rdl_signature, 1, strlen(rdl_signature), fp);
+	l = sizeof(t = time(NULL));
+	fwrite(&l, sizeof(l), 1, fp);
+	fwrite(&t, 1, l, fp);
 	fclose(fp);
 	break;
 

@@ -77,9 +77,11 @@ struct ModRec {
 #define SYM_FUNCTION	0x02
 #define SYM_GLOBAL	0x04
 
+/* Multiboot record */
+
 #ifdef _MULTBOOT_H
 
-#define	RDFLDRMOVER_SIZE 22
+#define TRAMPOLINESIZE	22
 
 struct MultiBootHdrRec {
   byte  type;           /* must be 9 */
@@ -88,9 +90,10 @@ struct MultiBootHdrRec {
   struct tMultiBootHeader mb __attribute__ ((packed));	/* MultiBoot header */
 #else
   struct tMultiBootHeader mb;
-#endif  
-  byte mover[RDFLDRMOVER_SIZE];			/* Mover of RDF loader */
+#endif
+  byte	trampoline[TRAMPOLINESIZE];
 };
+
 #endif
 
 /* GenericRec - contains the type and length field, plus a 128 byte

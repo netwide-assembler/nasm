@@ -481,7 +481,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
 	
 #ifdef _MULTBOOT_H	
     case 9:				/* MultiBoot header */
-	membufwrite(h->buf,&r->mbh.mb,sizeof(struct tMultiBootHeader)+RDFLDRMOVER_SIZE);
+	membufwrite(h->buf,&r->mbh.mb,sizeof(struct tMultiBootHeader)+TRAMPOLINESIZE);
 	break ;
 #endif		
 

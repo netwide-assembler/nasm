@@ -7,13 +7,9 @@
  */
 
 /*
- * TODO: actually get this new version working!
- * - finish off write_output()       - appears to be done
- * - implement library searching     - appears to be done
- *   - maybe we only want to do one pass, for performance reasons?
- *     this makes things a little harder, but unix 'ld' copes...
- * - implement command line options  - appears to be done
- * - improve symbol table implementation  - done, thanks to Graeme Defty
+ * TODO:
+ *   enhance search of required export symbols in libraries (now depends
+ *   on modules order in library)
  * - keep a cache of symbol names in each library module so
  *   we don't have to constantly recheck the file
  * - general performance improvements
@@ -21,11 +17,8 @@
  * BUGS & LIMITATIONS: this program doesn't support multiple code, data
  * or bss segments, therefore for 16 bit programs whose code, data or BSS
  * segment exceeds 64K in size, it will not work. This program probably
- * wont work if compiled by a 16 bit compiler. Try DJGPP if you're running
+ * won't work if compiled by a 16 bit compiler. Try DJGPP if you're running
  * under DOS. '#define STINGY_MEMORY' may help a little.
- *
- * TO FIX: enhance search of required export symbols in libraries (now depends
- * on modules order in library).
  */
 
 #include <stdio.h>
@@ -39,7 +32,7 @@
 #include "rdlib.h"
 #include "segtab.h"
 
-#define LDRDF_VERSION "1.03"
+#define LDRDF_VERSION "1.04"
 
 #define RDF_MAXSEGS 64
 /* #define STINGY_MEMORY */
@@ -104,35 +97,6 @@ char			* libpath = NULL;
 /* error file */
 static FILE		* error_file;
 
-#ifdef _MULTBOOT_H
-
-/* loading address for multiboot header */
-unsigned		MBHloadAddr;
-
-/*
- * Tiny code that moves RDF loader to its working memory region:
- * 	mov	esi,SOURCE_ADDR		; BE xx xx xx xx
- *  	mov	edi,DEST_ADDR		; BF xx xx xx xx
- *	mov	esp,edi			; 89 FC
- *	push	edi			; 57
- *	mov	ecx,RDFLDR_LENGTH/4	; B9 xx xx xx xx
- *	cld				; FC
- *	rep	movsd			; F3 A5
- *	ret				; C3
- */
-
-#define	RDFLDR_LENGTH	4096		/* Loader will be moved to unused */
-#define	RDFLDR_DESTLOC	0xBF000 	/* video page			  */
- 
-unsigned char RDFloaderMover[]={
-	0xBE, 0, 0, 0, 0, 0xBF, 0, 0xF0, 0xB, 0,
-	0x89, 0xFC, 0x57,
-	0xB9, 0, 4, 0, 0,
-	0xFC, 0xF3, 0xA5, 0xC3
-};
-		
-#endif
-
 /* the header of the output file, built up stage by stage */
 rdf_headerbuf 		* newheader = NULL;
 
@@ -159,6 +123,29 @@ struct ldrdfoptions {
 } options;
 
 int errorcount = 0;	/* determines main program exit status */
+
+/*
+ * Multiboot header support.
+ */
+ 
+/* loading address for multiboot header */
+unsigned		MBHloadAddr;
+
+#define	RDFLDR_LENGTH	4096		/* Loader size is 4K */
+#define	RDFLDR_DESTLOC	0x100000 	/* and its absolute address */
+ 
+/*
+ * Tiny code that moves RDF setup code to its working memory region
+ */
+unsigned char trampoline_code[] = {
+	0xBE, 0, 0, 0, 0,		/* mov	esi,SOURCE_ADDR	*/
+	0xBF, 0, 0, 0, 0,		/* mov	edi,DEST_ADDR	*/
+	0x89, 0xFA,			/* mov	edx,edi		*/
+	0xB9, 0, 4, 0, 0,		/* mov	ecx,RDFLDR_LENGTH/4 */
+	0xFC,				/* cld			*/
+	0xF3, 0xA5,			/* rep	movsd		*/
+	0xFF, 0xE2			/* jmp	edx		*/
+};
 
 /* =========================================================================
  * Utility functions
@@ -736,7 +723,7 @@ void write_output(const char * filename)
     
         hr = (rdfheaderrec *) malloc(sizeof(struct MultiBootHdrRec));
         hr->mbh.type = 9;
-        hr->mbh.reclen = sizeof(struct tMultiBootHeader)+RDFLDRMOVER_SIZE;
+        hr->mbh.reclen = sizeof(struct tMultiBootHeader)+TRAMPOLINESIZE;
 	    
         hr->mbh.mb.Magic = MB_MAGIC;
         hr->mbh.mb.Flags = MB_FL_KLUDGE;
@@ -745,7 +732,7 @@ void write_output(const char * filename)
         hr->mbh.mb.LoadAddr = MBHloadAddr;
 	hr->mbh.mb.Entry = MBHloadAddr+16+sizeof(struct tMultiBootHeader);
 	
-	memcpy(hr->mbh.mover,RDFloaderMover,RDFLDRMOVER_SIZE);
+	memcpy(hr->mbh.trampoline,trampoline_code,TRAMPOLINESIZE);
 	    
         rdfaddheader(rdfheader,hr);
         free(hr);
@@ -931,8 +918,17 @@ void write_output(const char * filename)
 		 * Otherwise, we need to output a new relocation record
 		 * with the references updated segment and offset...
 		 */
-		if (! isrelative 
-		    || cur->seginfo[localseg].dest_seg != seg)
+		 
+		if (isrelative && cur->seginfo[localseg].dest_seg != seg)
+		{
+		    hr->r.segment = cur->seginfo[localseg].dest_seg+64;
+		    hr->r.offset += cur->seginfo[localseg].reloc;
+		    hr->r.refseg = seg;
+		    rdfaddheader(rdfheader, hr);
+		    break;
+		}
+		 
+		if (! isrelative || cur->seginfo[localseg].dest_seg != seg)
 		{
 		    hr->r.segment = cur->seginfo[localseg].dest_seg;
 		    hr->r.offset += cur->seginfo[localseg].reloc;
@@ -1094,11 +1090,14 @@ void write_output(const char * filename)
 	struct MultiBootHdrRec *mbhrec = (struct MultiBootHdrRec *)(rdfheader->buf->buffer);
 	unsigned l = membuflength(rdfheader->buf) + 14 + 
 		     10*rdfheader->nsegments + rdfheader->seglength;
-	unsigned *ldraddr = (unsigned *)(mbhrec->mover+1);
+	unsigned *ldraddr = (unsigned *)(mbhrec->trampoline+1);
+	unsigned *ldrdest = (unsigned *)(mbhrec->trampoline+6);
 
 	mbhrec->mb.LoadEndAddr = MBHloadAddr+l+10+RDFLDR_LENGTH; 
 	mbhrec->mb.BSSendAddr = mbhrec->mb.LoadEndAddr;
+	
 	*ldraddr = MBHloadAddr+l+10;
+	*ldrdest = RDFLDR_DESTLOC;
     }
     
     rdfwriteheader(f, rdfheader);

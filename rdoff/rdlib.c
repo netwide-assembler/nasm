@@ -6,11 +6,13 @@
 #include "rdlib.h"
 
 /*
- * format of rdoff library files:
+ * format of RDOFF library files:
+ * optional signature ('.sig')
  * repeat
  *   null terminated module name (max 255 chars)
  *   RDOFF module
  * until eof
+ * optional directory ('.dir')
  */
 
 /*
@@ -54,26 +56,27 @@ int rdl_verify(const char * filename)
 	    i++;
 	if (feof(fp)) break;
 	
-	fread(buf, 6, 1, fp);
-	buf[6] = 0;
 	if (buf[0] == '.') {
 	    /*
-	     * a special module, eg a directory.
+	     * A special module, eg a signature block or a directory.
 	     * Format of such a module is defined to be:
-	     *   six char type identifier (which we've already read)
+	     *   six char type identifier
 	     *   long count bytes content
 	     *   content
-	     * so we can handle it uniformaly with RDOFF2 modules...
-	     * do nothing here. :-)
+	     * so we can handle it uniformaly with RDOFF2 modules.
 	     */
+	     fread(buf, 6, 1, fp);
+	     buf[6] = 0;
+	     /* Currently, nothing useful to do with signature block.. */
+	} else {
+	    fread(buf, 6, 1, fp);
+	    buf[6] = 0;
+	    if (strncmp(buf, "RDOFF", 5)) {
+		return rdl_error = lastresult = 2;
+	    } else if (buf[5] != '2') {
+		return rdl_error = lastresult = 3;
+	    }
 	}
-	else if (strncmp(buf, "RDOFF", 5)) {
-	    return rdl_error = lastresult = 2;
-	}
-	else if (buf[5] != '2') {
-	    return rdl_error = lastresult = 3;
-	}
-
 	fread(&length, 4, 1, fp);
 	fseek(fp, length, SEEK_CUR); /* skip over the module */
     }

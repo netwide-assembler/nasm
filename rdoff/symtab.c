@@ -117,10 +117,14 @@ symtabDump(void *stab, FILE* of)
 	 fprintf(of, " ... slot %d ...\n", i);
       }
       while(l) {
-	 fprintf(of, "%-32s %s:%08lx (%ld)\n",l->ent.name,
-		 SegNames[l->ent.segment],
-		 l->ent.offset, l->ent.flags);
-	 l = l->next;
+	if ((l->ent.segment) == -1) {
+	    fprintf(of,"%-32s Unresolved reference\n",l->ent.name);
+	} else {		
+	    fprintf(of, "%-32s %s:%08lx (%ld)\n",l->ent.name,
+	    SegNames[l->ent.segment],
+	    l->ent.offset, l->ent.flags);
+	}
+	l = l->next;
       }
    }
    fprintf(of, "........... end of Symbol table.\n");
