@@ -102,6 +102,7 @@ struct Section {
 #define DATA_FLAGS (win32 ? 0xC0300040L : 0x40L)
 #define BSS_FLAGS (win32 ? 0xC0300080L : 0x80L)
 #define INFO_FLAGS 0x00100A00L
+#define RDATA_FLAGS (win32 ? 0x40400040L : 0x40L)
 
 #define SECT_DELTA 32
 static struct Section **sects;
@@ -249,6 +250,14 @@ static long coff_section_names (char *name, int pass, int *bits)
 	    flags = TEXT_FLAGS;
 	} else if (!nasm_stricmp(q, "data")) {
 	    flags = DATA_FLAGS;
+	} else if (!nasm_stricmp(q, "rdata")) {
+	    if (win32)
+	    flags = RDATA_FLAGS;
+	    else {
+		flags = DATA_FLAGS;    /* gotta do something */
+		error (ERR_NONFATAL, "standard COFF does not support"
+		       " read-only data sections");
+	    }
 	} else if (!nasm_stricmp(q, "bss")) {
 	    flags = BSS_FLAGS;
 	} else if (!nasm_stricmp(q, "info")) {
@@ -295,6 +304,8 @@ static long coff_section_names (char *name, int pass, int *bits)
 	if (!flags) {
 	    if (!strcmp(name, ".data"))
 		flags = DATA_FLAGS;
+	    else if (!strcmp(name, ".rdata"))
+		flags = RDATA_FLAGS;
 	    else if (!strcmp(name, ".bss"))
 		flags = BSS_FLAGS;
 	    else

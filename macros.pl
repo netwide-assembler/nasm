@@ -18,7 +18,7 @@ open INPUT,$fname || die "unable to open $fname\n";
 open OUTPUT,">macros.c" || die "unable to open macros.c\n";
 
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .
-        " - don't edit it */\n\nstatic char *stdmac[] = {\n";
+        " - don't edit it */\n\n#include <stddef.h>\n\nstatic char *stdmac[] = {\n";
 
 while (<INPUT>) {
 	$line++;

@@ -3422,6 +3422,10 @@ analogously to \c{code}. Data sections are marked as readable and
 writable, but not executable. \c{data} declares an initialised data
 section, whereas \c{bss} declares an uninitialised data section.
 
+\b \c{rdata} declares an initialised data section that is readable
+but not writable. Microsoft compilers use this section to place
+constants in it.
+
 \b \c{info} defines the section to be an \i{informational section},
 which is not included in the executable file by the linker, but may
 (for example) pass information \e{to} the linker. For example,
@@ -3435,7 +3439,8 @@ sections}alignment requirements of the section. The maximum you may
 specify is 64: the Win32 object file format contains no means to
 request a greater section alignment than this. If alignment is not
 explicitly specified, the defaults are 16-byte alignment for code
-sections, and 4-byte alignment for data (and BSS) sections.
+sections, 8-byte alignment for rdata sections and 4-byte alignment
+for data (and BSS) sections.
 Informational sections get a default alignment of 1 byte (no
 alignment), though the value does not matter.
 
@@ -3444,6 +3449,7 @@ qualifiers are:
 
 \c           section .text code align=16
 \c           section .data data align=4
+\c           section .rdata rdata align=8
 \c           section .bss bss align=4
 
 Any other section name is treated by default like \c{.text}.
