@@ -40,7 +40,7 @@
 #define POSTFIX_MAX 10
 #endif
 
-
+#define IDLEN_MAX 4096
 
 /*
  * Name pollution problems: <time.h> on Digital UNIX pulls in some

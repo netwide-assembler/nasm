@@ -38,6 +38,9 @@
 #define BOGUS_VALUE -4
 
 #define PERMTS_SIZE  4096               /* size of text blocks */
+#if (PERMTS_SIZE > IDLEN_MAX)
+#error "IPERMTS_SIZE must be less than or equal to IDLEN_MAX" 
+#endif
 
 /* values for label.defn.is_global */
 #define DEFINED_BIT 1

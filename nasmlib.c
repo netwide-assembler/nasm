@@ -727,8 +727,12 @@ int stdscan (void *private_data, struct tokenval *tv)
 	}
 
  	r = stdscan_bufptr++;
+	/* read the entire buffer to advance the buffer pointer but... */
 	while (isidchar(*stdscan_bufptr)) stdscan_bufptr++;
-	tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+
+	/* ... copy only up to IDLEN_MAX-1 characters */
+	tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r < IDLEN_MAX ? 
+		stdscan_bufptr - r : IDLEN_MAX - 1);
 
 	if (is_sym || stdscan_bufptr-r > MAX_KEYWORD)
 	    return tv->t_type = TOKEN_ID;/* bypass all other checks */
