@@ -356,7 +356,6 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 	    if (insn_size < 0)	       /* shouldn't be, on pass two */
 	    	error (ERR_PANIC, "errors made it through from pass one");
 	    else while (itimes--) {
-		insn_end = offset + insn_size;
 		for (j=0; j<instruction->nprefix; j++) {
 		    unsigned char c=0;
 		    switch (instruction->prefixes[j]) {
@@ -402,6 +401,7 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 			offset++;
 		    }
 		}
+		insn_end = offset + insn_size;
 		gencode (segment, offset, bits, instruction, codes, insn_end);
 		offset += insn_size;
 		if (itimes > 0 && itimes == instruction->times-1) {
