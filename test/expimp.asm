@@ -1,7 +1,6 @@
 ;
 ; Test of explicitly and implicitly sized operands
 ;
-start:
 	add esi,2			; Implicit
 	add esi,123456h			; Implicit
 	add esi,byte 2			; Explicit
@@ -15,9 +14,24 @@ start:
 	add esi,strict dword 2		; Explicit Strict
 	add esi,strict dword 123456h	; Explicit Strict
 	add esi,strict byte 123456h	; Explicit Strict Truncation
+
+	add eax,2			; Implicit
+	add eax,123456h			; Implicit
+	add eax,byte 2			; Explicit
+	add eax,dword 2			; Explicit
+	add eax,dword 123456h		; Explicit
+	add eax,byte 123456h		; Explicit Truncation
+
+	add eax,strict 2		; Implicit Strict
+	add eax,strict 123456h		; Implicit Strict
+	add eax,strict byte 2		; Explicit Strict
+	add eax,strict dword 2		; Explicit Strict
+	add eax,strict dword 123456h	; Explicit Strict
+	add eax,strict byte 123456h	; Explicit Strict Truncation
 ;
 ; Same thing with branches
 ;
+start:
 	jmp short start			; Explicit
 	jmp near start			; Explicit
 	jmp word start			; Explicit
