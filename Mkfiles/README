@@ -1,4 +1,31 @@
 These are pre-created Makefiles for various platforms, use them if
 GNU autoconf/automake packages are not supported on your system.
 
-Copy appropriate Makefile to ../Makefile and run make.
+Copy appropriate Makefile to ../Makefile, look at it to see if there
+are any edits that need to be made, and run make.
+
+Some of these Makefiles have been contributed by end users, and the
+NASM team has no way of knowing if they work correctly or not.  For
+that reason, there are sometimes multiple Makefiles for the same
+platform.  Look at the comments at the beginning to help select a
+Makefile for your particular system.
+
+
+The Makefiles are:
+
+  Filename      Target		Compiler	Notes
+  ---------------------------------------------------------------------------
+  Makefile.b32	Win32		Borland C++
+  Makefile.bc3	16-bit DOS	Borland C++	working as of NASM 0.98.31
+  Makefile.bor	16-bit DOS	Turbo C		probably obsolete
+  Makefile.dj	32-bit DOS	DJGPP
+  Makefile.djo	32-bit DOS	DJGPP		"Opus Make" version
+  Makefile.dl	32-bit DOS	cc386		cc386 by David Lindauer
+  Makefile.dos	16-bit DOS	MSC 5		probably obsolete
+  Makefile.ms7	16-bit DOS	MSC 7		working as of NASM 0.98.31
+  Makefile.os2	OS/2 Warp	Borland C++
+  Makefile.sc	32-bit DOS	Symantec C++ 7
+  Makefile.scw	Win32		Symantec C++ 7
+  Makefile.unx	Unix		cc		use if "configure" fails
+  Makefile.vc	Win32		MS Visual C++
+  Makefile.wcw	Win32		Watcom C

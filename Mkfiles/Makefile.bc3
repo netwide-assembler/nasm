@@ -1,0 +1,196 @@
+# Makefile for the Netwide Assembler under 16-bit DOS (aimed at Borland C)
+#
+# The Netwide Assembler is copyright (C) 1996 Simon Tatham and
+# Julian Hall. All rights reserved. The software is
+# redistributable under the licence given in the file "Licence"
+# distributed in the NASM archive.
+#
+# This makefile is made for compile NASM and NDISASM on a 16 bit dos
+# compiler like Microsoft C, or Borland C. This should work on all
+# verioson of Turbo C++ and Borland C++ from version 3.0 and upwords.
+# I'm not fully sure how it will handel on Microsoft C, but all the
+# switches are documented, and it shouldn't be a problem to change it
+# over.
+#
+# Most everything is remarked, and explaned in full, it should be
+# easy to convert it to another compiler. I tried to make the devision
+# of information logical, and easy to follow.
+#
+# BEFORE YOU USE THIS MAKE FILE!!!
+#
+# Make sure the line below is set to the propper location of your standard
+# Libaries, if not you'll get some errors. Make sure to keep the trailing
+# backslash, as it's needed, and remeber to use \\ not \ as that will cause
+# some errors.
+#
+# This Makefile was updated with NASM 0.98.31, and could compile that
+# version correctly using Borland C++ 3.1 under DOS.
+#
+
+CC = bcc                #compiler
+#compiler flags
+CCFLAGS = -d -c -O1 -mh -DOF_ONLY -DOF_BIN -DOF_OBJ -DOF_WIN32 -DOF_AS86
+  # -d  = merge dupicate strings
+  # -c  = compile only
+  # -O1 = optimise for size
+  # -mh = model huge
+  # -n  = put the OBJ files in the diectory given.
+
+LINKFLAGS = -d -mh
+
+LIBS =             	#any libaries to add, out side of the standard libary
+EXE = .exe              #executable file extention (keep the . as the start)
+OBJ = obj               #OBJ file extention
+LIB = lib		#LIB file extension
+
+# Compilation command line
+NASM_ASM=$(CC) $(CCFLAGS) -o$*.$(OBJ) $*.c
+
+################################################################
+#The OBJ files that NASM is dependent on
+
+NASMOBJS = nasm.$(OBJ)   nasmlib.$(OBJ)  float.$(OBJ)  \
+	   insnsa.$(OBJ) assemble.$(OBJ) labels.$(OBJ) \
+	   parser.$(OBJ) outform.$(OBJ)  preproc.$(OBJ) \
+	   listing.$(OBJ) eval.$(OBJ)
+
+################################################################
+#The OBJ files that NDISASM is dependent on
+
+NDISASMOBJS = ndisasm.$(OBJ)  disasm.$(OBJ) sync.$(OBJ) \
+	      nasmlib.$(OBJ) insnsd.$(OBJ)
+
+################################################################
+# The OBJ file for the output formats we want to compile in.
+# It doesn't make sense for 16-bit MS-DOS to include all formats.
+
+OUTOBJ= output\\outbin.$(OBJ) output\\outaout.$(OBJ) output\\outcoff.$(OBJ) \
+	output\\outelf.$(OBJ) output\\outobj.$(OBJ)  output\\outas86.$(OBJ) \
+	output\\outrdf.$(OBJ) output\\outdbg.$(OBJ)  output\\outrdf2.$(OBJ) \
+	output\\outieee.$(OBJ)
+
+
+################################################################
+# Build everything
+
+all : nasm$(EXE) ndisasm$(EXE)
+
+################################################################
+# NASM, NDISASM link.  The &&!...! construct in Borland Make
+# creates a temporary file and inserts its name on the command
+# line.  It works around the DOS 127-character command line
+# limit.
+
+nasm$(EXE): $(NASMOBJS) output\\out.lib
+	$(CC) $(LINKFLAGS) -onasm$(EXE) @&&!
+$(NASMOBJS)
+output\\out.lib
+!
+
+ndisasm$(EXE): $(NDISASMOBJS)
+	$(CC) $(LINKFLAGS) -ondisasm$(EXE) @&&!
+$(NDISASMOBJS)
+!
+
+################################################################
+# Dependencies for all of NASM's obj files
+
+assemble.$(OBJ): assemble.c nasm.h version.h insnsi.h assemble.h insns.h
+	$(NASM_ASM)
+
+float.$(OBJ): float.c nasm.h version.h insnsi.h
+	$(NASM_ASM)
+
+labels.$(OBJ): labels.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+listing.$(OBJ): listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+	$(NASM_ASM)
+
+eval.$(OBJ): eval.c nasm.h version.h insnsi.h nasmlib.h eval.h
+	$(NASM_ASM)
+
+nasm.$(OBJ): nasm.c nasm.h version.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
+		listing.h outform.h
+	$(NASM_ASM)
+
+nasmlib.$(OBJ): nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
+	$(NASM_ASM)
+
+parser.$(OBJ): parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+	$(NASM_ASM)
+
+preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+insnsa.$(OBJ): insnsa.c nasm.h version.h insnsi.h insns.h
+	$(NASM_ASM)
+
+################################################################
+# Dependencies for all of NDISASM's obj files
+
+disasm.$(OBJ): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+	$(NASM_ASM)
+
+ndisasm.$(OBJ): ndisasm.c nasm.h version.h insnsi.h sync.h disasm.h
+	$(NASM_ASM)
+
+sync.$(OBJ): sync.c sync.h
+	$(NASM_ASM)
+
+insnsd.$(OBJ): insnsd.c nasm.h version.h insnsi.h insns.h
+	$(NASM_ASM)
+
+################################################################
+# Build the output formats as a library
+# The & ... $? construct tells Borland Make to repeat for all
+# out of date dependencies
+output\\out.$(LIB): $(OUTOBJ)
+	-del output\\out.$(LIB)
+	for %a in (output\\*.obj) do tlib /C output\\out.$(LIB) +%a
+
+################################################################
+# Dependencies for all of the output format's OBJ files
+
+output\\outas86.$(OBJ): output\\outas86.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outaout.$(OBJ): output\\outaout.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outbin.$(OBJ): output\\outbin.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outcoff.$(OBJ): output\\outcoff.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outdbg.$(OBJ): output\\outdbg.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outelf.$(OBJ): output\\outelf.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outobj.$(OBJ): output\\outobj.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outrdf.$(OBJ): output\\outrdf.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outrdf2.$(OBJ): output\\outrdf2.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+output\\outieee.$(OBJ): output\\outieee.c nasm.h version.h insnsi.h nasmlib.h
+	$(NASM_ASM)
+
+outform.$(OBJ): outform.c outform.h nasm.h version.h insnsi.h
+	$(NASM_ASM)
+
+################################################################
+# A quick way to delete the OBJ files as well as the binaries.
+
+clean :
+	-del *.$(OBJ)
+	-del output\\*.$(OBJ)
+	-del output\\out.$(LIB)
+	-del nasm$(EXE)
+	-del ndisasm$(EXE)
