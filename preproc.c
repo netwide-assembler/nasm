@@ -841,7 +841,8 @@ tokenise(char *line)
 	    else
 	    {
 		error(ERR_WARNING, "unterminated string");
-		type = -1;
+		/* Handling unterminated strings by UNV */
+		/* type = -1; */
 	    }
 	}
 	else if (isnumstart(*p))
@@ -904,14 +905,15 @@ tokenise(char *line)
 	    p++;
 	}
 
-	/* Handle unterminated string */
-	if (type == -1)
+	/* Handling unterminated string by UNV */
+	/*if (type == -1)
 	{
 	    *tail = t = new_Token(NULL, TOK_STRING, line, p-line+1);
 	    t->text[p-line] = *line;
 	    tail = &t->next;
 	}
-	else if (type != TOK_COMMENT)
+	else*/
+	if (type != TOK_COMMENT)
 	{
 	    *tail = t = new_Token(NULL, type, line, p - line);
 	    tail = &t->next;
@@ -929,20 +931,20 @@ tokenise(char *line)
 static void *
 new_Block(size_t size)
 {
-	Blocks *b = &blocks;
+    Blocks *b = &blocks;
 	
-	/* first, get to the end of the linked list	 */
-	while (b->next)
-		b = b->next;
-	/* now allocate the requested chunk */
-	b->chunk = nasm_malloc(size);
+    /* first, get to the end of the linked list */
+    while (b->next)
+	b = b->next;
+    /* now allocate the requested chunk */
+    b->chunk = nasm_malloc(size);
 	
-	/* now allocate a new block for the next request */
-	b->next = nasm_malloc(sizeof(Blocks));
-	/* and initialize the contents of the new block */
-	b->next->next = NULL;
-	b->next->chunk = NULL;
-	return b->chunk;
+    /* now allocate a new block for the next request */
+    b->next = nasm_malloc(sizeof(Blocks));
+    /* and initialize the contents of the new block */
+    b->next->next = NULL;
+    b->next->chunk = NULL;
+    return b->chunk;
 }
 
 /*
@@ -951,22 +953,22 @@ new_Block(size_t size)
 static void
 delete_Blocks(void)
 {
-	Blocks *a,*b = &blocks;
+    Blocks *a,*b = &blocks;
 
-	/* 
-	 * keep in mind that the first block, pointed to by blocks
-	 * is a static and not dynamically allocated, so we don't 
-	 * free it.
-	 */
-	while (b)
-	{
-		if (b->chunk)
-			nasm_free(b->chunk);
-		a = b;
-		b = b->next;
-                if (a != &blocks)
-			nasm_free(a);
-	}
+    /* 
+     * keep in mind that the first block, pointed to by blocks
+     * is a static and not dynamically allocated, so we don't 
+     * free it.
+     */
+    while (b)
+    {
+	if (b->chunk)
+	    nasm_free(b->chunk);
+	a = b;
+	b = b->next;
+	if (a != &blocks)
+	    nasm_free(a);
+    }
 }	
 
 /*
