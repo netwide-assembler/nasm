@@ -25,7 +25,7 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 .c.o:
-	$(CC) -c $(CFLAGS) $*.c
+	$(CC) -c $(CFLAGS) -o $@ $*.c
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
@@ -82,6 +82,9 @@ version.mac: version version.pl
 
 macros.c: macros.pl standard.mac version.mac
 	perl macros.pl standard.mac version.mac
+
+insnsa.c insnsd.c insnsi.h insnsn.c: insns.dat insns.pl
+	perl insns.pl insns.dat
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
