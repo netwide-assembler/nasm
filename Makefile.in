@@ -15,7 +15,7 @@ bindir		= @bindir@
 mandir		= @mandir@
 
 CC		= @CC@
-CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I. 
+CFLAGS		= @CFLAGS@ -I$(srcdir) -I. 
 LDFLAGS		= @LDFLAGS@
 
 INSTALL		= @INSTALL@
@@ -123,11 +123,15 @@ install: nasm ndisasm
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	rm -f *.o *.s *.i nasm ndisasm
+	rm -f *.o *.s *.i
+	rm -f output/*.o output/*.s output/*.i
+	rm -f nasm ndisasm
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
 	rm -f config.* Makefile *~ *.bak *.lst *.bin
+	rm -f output/*~ output/*.bak
+	rm -f test/*.lst test/*.bin test/*.o test/*.bin
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
