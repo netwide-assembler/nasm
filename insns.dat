@@ -830,11 +830,11 @@ PUNPCKHDQ mmxreg,mem          \301\2\x0F\x6A\110            PENT,MMX,SM
 PUNPCKHDQ mmxreg,mmxreg       \2\x0F\x6A\110                PENT,MMX
 PUNPCKHWD mmxreg,mem          \301\2\x0F\x69\110            PENT,MMX,SM
 PUNPCKHWD mmxreg,mmxreg       \2\x0F\x69\110                PENT,MMX
-PUNPCKLBW mmxreg,mem32        \301\2\x0F\x60\110            PENT,MMX
+PUNPCKLBW mmxreg,mem          \301\2\x0F\x60\110            PENT,MMX,SM
 PUNPCKLBW mmxreg,mmxreg       \2\x0F\x60\110                PENT,MMX
-PUNPCKLDQ mmxreg,mem32        \301\2\x0F\x62\110            PENT,MMX
+PUNPCKLDQ mmxreg,mem          \301\2\x0F\x62\110            PENT,MMX,SM
 PUNPCKLDQ mmxreg,mmxreg       \2\x0F\x62\110                PENT,MMX
-PUNPCKLWD mmxreg,mem32        \301\2\x0F\x61\110            PENT,MMX
+PUNPCKLWD mmxreg,mem          \301\2\x0F\x61\110            PENT,MMX,SM
 PUNPCKLWD mmxreg,mmxreg       \2\x0F\x61\110                PENT,MMX
 PUSH      reg16               \320\10\x50                   8086
 PUSH      reg32               \321\10\x50                   386

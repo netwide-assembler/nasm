@@ -1,0 +1,59 @@
+
+Installing nasm from source
+===========================
+
+Installing nasm is pretty straightforward on UN*X systems with GNU tools installed.
+
+If you checked out source from CVS you will need to run autoconf to generate configure,
+otherwise you don't have to.
+
+$ autoconf
+
+Then run configure to detect your platform settings and generate makefiles.
+
+$ ./configure
+
+You can get information about available configuration options by running `./configure --help`.
+
+If configure fails, please send bug report with detailed platform information to
+<nasm-bugs@lists.sourceforge.net> and we will try to help you asap!
+
+If everything went okay, type
+
+$ make
+
+to build nasm, ndisasm and rdoff tools
+or
+
+$ make everything
+
+to build the former plus the docs.
+
+You can decrease the size of produces executables by stripping off unnecessary information, to
+achieve this run
+
+$ make strip
+
+If you install to a system-wide location you might need to become root:
+$ su
+<enter root password>
+
+then
+
+$ make install
+
+optionally followed by 
+
+$ make install_rdf
+
+Or you can 
+
+$ make install_everything
+
+to install everything =)
+
+
+Thats it, enjoy!
+
+PS. Installation instructions for other platforms are underway.
+

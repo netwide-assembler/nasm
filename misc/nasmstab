@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+ 
 sub StabLine  ($ $ $ $ $ $) {
         local ($comment,$n_strx,$type,$other,$desc,$value) = @_;
         print $comment;

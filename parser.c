@@ -122,7 +122,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    expr *value;
 
 	    i = stdscan(NULL, &tokval);
-	    value = evaluate (stdscan, NULL, &tokval, NULL, pass, error, NULL);
+	    value = evaluate (stdscan, NULL, &tokval, NULL, pass0, error, NULL);
 	    i = tokval.t_type;
 	    if (!value) {	       /* but, error in evaluator */
 		result->opcode = -1;   /* unrecoverable parse error: */
@@ -189,9 +189,10 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	result->opcode == I_RESD ||
 	result->opcode == I_RESQ ||
 	result->opcode == I_REST ||
-	result->opcode == I_EQU)
+	result->opcode == I_EQU ||
+        result->opcode == I_INCBIN)  /* fbk */
     {
-	critical = pass;
+	critical = pass0;
     }
     else
 	critical = (pass==2 ? 2 : 0);

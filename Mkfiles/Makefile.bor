@@ -25,9 +25,9 @@ OBJ = obj#
 
 NASMOBJS1 = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ)
 NASMOBJS2 = assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ)
-NASMOBJS3 = outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ)
-NASMOBJS4 = outobj.$(OBJ) outas86.$(OBJ) outdbg.$(OBJ) outrdf.$(OBJ)
-NASMOBJS5 = outrdf2.$(OBJ) zoutieee.$(OBJ)
+NASMOBJS3 = output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) output/outelf.$(OBJ)
+NASMOBJS4 = output/outobj.$(OBJ) output/outas86.$(OBJ) output/outdbg.$(OBJ) output/outrdf.$(OBJ)
+NASMOBJS5 = output/outrdf2.$(OBJ) output/outieee.$(OBJ)
 NASMOBJS6 = preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ)
 
 NASMOBJS = $(NASMOBJS1) $(NASMOBJS2) $(NASMOBJS3) $(NASMOBJS4) $(NASMOBJS5) \
@@ -65,15 +65,15 @@ nasm.$(OBJ): nasm.c nasm.h insnsi.h nasmlib.h parser.h assemble.h labels.h \
              listing.h outform.h
 nasmlib.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.$(OBJ): ndisasm.c nasm.h insnsi.h sync.h disasm.h
-outas86.$(OBJ): outas86.c nasm.h insnsi.h nasmlib.h
-outaout.$(OBJ): outaout.c nasm.h insnsi.h nasmlib.h
-outbin.$(OBJ): outbin.c nasm.h insnsi.h nasmlib.h
-outcoff.$(OBJ): outcoff.c nasm.h insnsi.h nasmlib.h
-outdbg.$(OBJ): outdbg.c nasm.h insnsi.h nasmlib.h
-outelf.$(OBJ): outelf.c nasm.h insnsi.h nasmlib.h
-outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
-outrdf2.$(OBJ): outrdf2.c nasm.h insnsi.h nasmlib.h
-zoutieee.$(OBJ): zoutieee.c nasm.h insnsi.h nasmlib.h
+output/outas86.$(OBJ): output/outas86.c nasm.h insnsi.h nasmlib.h
+output/outaout.$(OBJ): output/outaout.c nasm.h insnsi.h nasmlib.h
+output/outbin.$(OBJ): output/outbin.c nasm.h insnsi.h nasmlib.h
+output/outcoff.$(OBJ): output/outcoff.c nasm.h insnsi.h nasmlib.h
+output/outdbg.$(OBJ): output/outdbg.c nasm.h insnsi.h nasmlib.h
+output/outelf.$(OBJ): output/outelf.c nasm.h insnsi.h nasmlib.h
+output/outobj.$(OBJ): output/outobj.c nasm.h insnsi.h nasmlib.h
+output/outrdf2.$(OBJ): output/outrdf2.c nasm.h insnsi.h nasmlib.h
+output/outieee.$(OBJ): output/outieee.c nasm.h insnsi.h nasmlib.h
 outform.$(OBJ): outform.c outform.h nasm.h insnsi.h
 parser.$(OBJ): parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h insnsi.h nasmlib.h

@@ -1,0 +1,5 @@
+#!/bin/sh
+# returns nasm version from nasm.h
+# used for dist building
+
+grep NASM_VER nasm.h | awk -F " " -F "\"" '{print $2}'

@@ -1,5 +1,5 @@
 #!/bin/sh
-
+ 
 MAJORVER=`grep NASM_MAJOR_VER nasm.h | head -1 | cut -f3 -d' '`
 MINORVER=`grep NASM_MINOR_VER nasm.h | head -1 | cut -f3 -d' '`
 VERSION=`grep NASM_VER nasm.h | head -1 | cut -f3 -d' ' | sed s/\"//g`

@@ -21,12 +21,23 @@
 /*
  * Relocation types.
  */
-#define R_386_32 1		       /* ordinary absolute relocation */
-#define R_386_PC32 2		       /* PC-relative relocation */
-#define R_386_GOT32 3		       /* an offset into GOT */
-#define R_386_PLT32 4		       /* a PC-relative offset into PLT */
-#define R_386_GOTOFF 9		       /* an offset from GOT base */
-#define R_386_GOTPC 10		       /* a PC-relative offset _to_ GOT */
+enum reloc_type {
+  R_386_32        =  1,		/* ordinary absolute relocation */
+  R_386_PC32      =  2,		/* PC-relative relocation */
+  R_386_GOT32     =  3,		/* an offset into GOT */
+  R_386_PLT32     =  4,		/* a PC-relative offset into PLT */
+  R_386_COPY      =  5,		/* ??? */
+  R_386_GLOB_DAT  =  6,		/* ??? */
+  R_386_JUMP_SLOT =  7,		/* ??? */
+  R_386_RELATIVE  =  8,		/* ??? */
+  R_386_GOTOFF    =  9,		/* an offset from GOT base */
+  R_386_GOTPC     = 10,		/* a PC-relative offset _to_ GOT */
+  /* These are GNU extensions, but useful */
+  R_386_16        = 20,		/* A 16-bit absolute relocation */
+  R_386_PC16      = 21,		/* A 16-bit PC-relative relocation */
+  R_386_8         = 22,		/* An 8-bit absolute relocation */
+  R_386_PC8       = 23		/* An 8-bit PC-relative relocation */
+};
 
 struct Reloc {
     struct Reloc *next;
@@ -709,6 +720,7 @@ static void elf_out (long segto, void *data, unsigned long type,
 	    error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 	elf_sect_write (s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
+        int gnu16 = 0;
 	addr = *(long *)data;
 	if (segment != NO_SEG) {
 	    if (segment % 2) {
@@ -716,7 +728,12 @@ static void elf_out (long segto, void *data, unsigned long type,
 		      " segment base references");
 	    } else {
 		if (wrt == NO_SEG) {
+		  if ( realbytes == 2 ) {
+		    gnu16 = 1;
+		    elf_add_reloc (s, segment, R_386_16);
+		  } else {
 		    elf_add_reloc (s, segment, R_386_32);
+		  }
 		} else if (wrt == elf_gotpc_sect+1) {
 		    /*
 		     * The user will supply GOT relative to $$. ELF
@@ -731,8 +748,14 @@ static void elf_out (long segto, void *data, unsigned long type,
 		    addr = elf_add_gsym_reloc (s, segment, addr,
 					       R_386_GOT32, TRUE);
 		} else if (wrt == elf_sym_sect+1) {
+		  if ( realbytes == 2 ) {
+		    gnu16 = 1;
+		    addr = elf_add_gsym_reloc (s, segment, addr,
+					       R_386_16, FALSE);
+		  } else {
 		    addr = elf_add_gsym_reloc (s, segment, addr,
 					       R_386_32, FALSE);
+		  }
 		} else if (wrt == elf_plt_sect+1) {
 		    error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
 			  "relative PLT references");
@@ -744,14 +767,35 @@ static void elf_out (long segto, void *data, unsigned long type,
 	    }
 	}
 	p = mydata;
-	if (realbytes != 4 && segment != NO_SEG)
-	    error (ERR_NONFATAL, "ELF format does not support non-32-bit"
-		   " relocations");
-	WRITELONG (p, addr);
+	if (gnu16) {
+	    error(ERR_WARNING|ERR_WARN_GNUELF,
+		  "16-bit relocations in ELF is a GNU extension");
+	  WRITESHORT (p, addr);
+	} else {
+	  if (realbytes != 4 && segment != NO_SEG) {
+	    error (ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
+	  }
+	  WRITELONG (p, addr);
+	}
 	elf_sect_write (s, mydata, realbytes);
     } else if (type == OUT_REL2ADR) {
-	error (ERR_NONFATAL, "ELF format does not support 16-bit"
-	       " relocations");
+	if (segment == segto)
+	    error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+	if (segment != NO_SEG && segment % 2) {
+	    error(ERR_NONFATAL, "ELF format does not support"
+		  " segment base references");
+	} else {
+	  if (wrt == NO_SEG) {
+	        error (ERR_WARNING|ERR_WARN_GNUELF,
+		       "16-bit relocations in ELF is a GNU extension");
+	        elf_add_reloc (s, segment, R_386_PC16);
+	    } else {
+		error (ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
+	    }
+	}
+	p = mydata;
+	WRITESHORT (p, *(long*)data - realbytes);
+	elf_sect_write (s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
 	if (segment == segto)
 	    error(ERR_PANIC, "intra-segment OUT_REL4ADR");

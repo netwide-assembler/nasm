@@ -1,0 +1,5 @@
+#!/bin/sh
+# returns nasm directory
+# used for dist building
+
+basename `pwd`

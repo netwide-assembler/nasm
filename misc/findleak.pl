@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# From: Ed Beroset <beroset@mindspring.com>
+
 my %mem = {};
 my %alloc = {};
 while(<>)
@@ -38,4 +40,3 @@ foreach $goo (sort keys %mem)
                 print "$mem{$goo} $alloc{$goo}";
         }
 }
-# From: Ed Beroset <beroset@mindspring.com>

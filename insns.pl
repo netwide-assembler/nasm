@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#
+# 
 # insns.pl   produce insnsa.c, insnsd.c, insnsi.h, insnsn.c from insns.dat
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and

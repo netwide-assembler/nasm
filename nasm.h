@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98.26"
+#define NASM_VER "0.98.30"
 
 #ifndef NULL
 #define NULL 0
@@ -97,7 +97,8 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 #define ERR_WARN_OL	0x00000300	/* orphan label (no colon, and
 					* alone on line) */
 #define ERR_WARN_NOV	0x00000400	/* numeric overflow */
-#define ERR_WARN_MAX	4		/* the highest numbered one */
+#define ERR_WARN_GNUELF	0x00000500      /* using GNU ELF extensions */
+#define ERR_WARN_MAX	5		/* the highest numbered one */
 
 /*
  * -----------------------

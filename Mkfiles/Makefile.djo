@@ -40,18 +40,18 @@ CFLAGS = -O3
 	tcc -O -Z -c -ml -d -DOF_ONLY -DOF_BIN -DOF_OBJ -If:\public\turboc -I. $*.c >$*.err
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
-       parser.o outform.o outbin.o outaout.o outcoff.o outelf.o \
-       outobj.o outas86.o outrdf.o outrdf2.o zoutieee.o outdbg.o preproc.o listing.o \
+       parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
+       output/outobj.o output/outas86.o output/outrdf.o output/outrdf2.o output/outieee.o output/outdbg.o preproc.o listing.o \
        eval.o
 
 NASML = nasm.ol nasmlib.ol float.ol insnsa.ol assemble.ol labels.ol \
-       parser.ol outform.ol outbin.ol outaout.ol outcoff.ol outelf.ol \
-       outobj.ol outas86.ol outrdf.ol outrdf2.ol zoutieee.ol outdbg.ol preproc.ol listing.ol \
+       parser.ol outform.ol output/outbin.ol output/outaout.ol output/outcoff.ol output/outelf.ol \
+       output/outobj.ol output/outas86.ol output/outrdf.ol output/outrdf2.ol output/outieee.ol output/outdbg.ol preproc.ol listing.ol \
        eval.ol
 
 NASM16 = nasm.obj nasmlib.obj float.obj insnsa.obj assemble.obj labels.obj \
-       parser.obj outform.obj outbin.obj \
-       outobj.obj preproc.obj listing.obj \
+       parser.obj outform.obj output/outbin.obj \
+       output/outobj.obj preproc.obj listing.obj \
        eval.obj
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
@@ -99,19 +99,19 @@ nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h 
  outform.h listing.h
 nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-outaout.o: outaout.c nasm.h insnsi.h nasmlib.h outform.h
-outas86.o: outas86.c nasm.h insnsi.h nasmlib.h outform.h
-outbin.o: outbin.c nasm.h insnsi.h nasmlib.h outform.h
-outcoff.o: outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-outdbg.o: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-outelf.o: outelf.c nasm.h insnsi.h nasmlib.h outform.h
+output/outaout.o: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
+output/outas86.o: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
+output/outbin.o: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
+output/outcoff.o: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
+output/outdbg.o: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
+output/outelf.o: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.o: outform.c outform.h nasm.h insnsi.h
-outobj.o: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf2.o: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outobj.o: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
+output/outrdf2.o: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.o: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.o: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.o: sync.c sync.h
-zoutieee.o: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.o: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 
 assemble.ol: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
 disasm.ol: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
@@ -125,19 +125,19 @@ nasm.ol: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h
  outform.h listing.h
 nasmlib.ol: nasmlib.c nasm.h insnsi.h nasmlib.h
 ndisasm.ol: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-outaout.ol: outaout.c nasm.h insnsi.h nasmlib.h outform.h
-outas86.ol: outas86.c nasm.h insnsi.h nasmlib.h outform.h
-outbin.ol: outbin.c nasm.h insnsi.h nasmlib.h outform.h
-outcoff.ol: outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-outdbg.ol: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-outelf.ol: outelf.c nasm.h insnsi.h nasmlib.h outform.h
+output/outaout.ol: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
+output/outas86.ol: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
+output/outbin.ol: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
+output/outcoff.ol: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
+output/outdbg.ol: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
+output/outelf.ol: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.ol: outform.c outform.h nasm.h insnsi.h
-outobj.ol: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf2.ol: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outobj.ol: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
+output/outrdf2.ol: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.ol: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.ol: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.ol: sync.c sync.h
-zoutieee.ol: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.ol: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 
 assemble.obj: assemble.c nasm.h insnsi.h nasmlib.h assemble.h insns.h
 disasm.obj: disasm.c nasm.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
@@ -151,19 +151,19 @@ nasm.obj: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.
  outform.h listing.h
 nasmlib.obj: nasmlib.c nasm.h insnsi.h nasmlib.h
 ndisasm.obj: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-outaout.obj: outaout.c nasm.h insnsi.h nasmlib.h outform.h
-outas86.obj: outas86.c nasm.h insnsi.h nasmlib.h outform.h
-outbin.obj: outbin.c nasm.h insnsi.h nasmlib.h outform.h
-outcoff.obj: outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-outdbg.obj: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-outelf.obj: outelf.c nasm.h insnsi.h nasmlib.h outform.h
+output/outaout.obj: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
+output/outas86.obj: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
+output/outbin.obj: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
+output/outcoff.obj: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
+output/outdbg.obj: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
+output/outelf.obj: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.obj: outform.c outform.h nasm.h insnsi.h
-outobj.obj: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf2.obj: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outobj.obj: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
+output/outrdf2.obj: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
 parser.obj: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.obj: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.obj: sync.c sync.h
-zoutieee.obj: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.obj: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 
 # These four source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,

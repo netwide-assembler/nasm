@@ -27,7 +27,7 @@ NROFF		= @NROFF@
 .SUFFIXES: .c .i .s .o .1 .man
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf
-.PHONY: install_doc everything install_everything
+.PHONY: install_doc everything install_everything strip perlreq dist
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -42,8 +42,8 @@ NROFF		= @NROFF@
 	$(NROFF) -man $< > $@
 
 NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
-       parser.o outform.o outbin.o outaout.o outcoff.o outelf.o \
-       outobj.o outas86.o outrdf2.o outdbg.o zoutieee.o \
+       parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
+       output/outobj.o output/outas86.o output/outrdf2.o output/outdbg.o output/outieee.o \
        preproc.o listing.o eval.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
@@ -69,19 +69,19 @@ nasm.o: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h 
  outform.h listing.h insns.h
 nasmlib.o: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.o: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-outaout.o: outaout.c nasm.h insnsi.h nasmlib.h outform.h
-outas86.o: outas86.c nasm.h insnsi.h nasmlib.h outform.h
-outbin.o: outbin.c nasm.h insnsi.h nasmlib.h outform.h
-outcoff.o: outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-outdbg.o: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-outelf.o: outelf.c nasm.h insnsi.h nasmlib.h outform.h
+output/outaout.o: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
+output/outas86.o: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
+output/outbin.o: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
+output/outcoff.o: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
+output/outdbg.o: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
+output/outelf.o: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.o: outform.c outform.h nasm.h insnsi.h
-outobj.o: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf2.o: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outobj.o: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
+output/outrdf2.o: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.o: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 parser.o: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.o: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.o: sync.c sync.h
-zoutieee.o: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -104,6 +104,10 @@ insnsn.c: insns.dat insns.pl
 macros.c: standard.mac macros.pl
 	perl $(srcdir)/macros.pl $(srcdir)/standard.mac
 
+# This target generates all files that require perl.
+# This allows easier generation of distribution (see dist target).
+perlreq: macros.c insnsa.c insnsd.c insnsi.h insnsn.c
+
 install: nasm ndisasm
 	$(INSTALL_PROGRAM) nasm $(INSTALLROOT)$(bindir)/nasm
 	$(INSTALL_PROGRAM) ndisasm $(INSTALLROOT)$(bindir)/ndisasm
@@ -124,6 +128,9 @@ cleaner: clean
 
 spotless: distclean cleaner
 
+strip:
+	strip --strip-unneeded nasm ndisasm
+
 rdf:
 	cd rdoff && $(MAKE)
 
@@ -140,3 +147,7 @@ everything: all doc rdf
 
 install_everything: everything install install_doc install_rdf
 
+dist: spotless perlreq
+	autoconf
+	rm -rf ./autom4te.cache
+	tar cvjf ../nasm-`./nasm-version`-`date +%Y%m%d`.tar.bz2 ../`./nasm-dir`

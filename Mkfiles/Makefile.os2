@@ -168,25 +168,25 @@ $(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h nasmlib.h
 ################################################################
 # Dependencies for all of the output format's OBJ files
 
-$(OBJD)outas86.$(OBJ): outas86.c nasm.h nasmlib.h
+$(OBJD)outas86.$(OBJ): output/outas86.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outaout.$(OBJ): outaout.c nasm.h nasmlib.h
+$(OBJD)outaout.$(OBJ): output/outaout.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outbin.$(OBJ): outbin.c nasm.h nasmlib.h
+$(OBJD)outbin.$(OBJ): output/outbin.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outcoff.$(OBJ): outcoff.c nasm.h nasmlib.h
+$(OBJD)outcoff.$(OBJ): output/outcoff.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outdbg.$(OBJ): outdbg.c nasm.h nasmlib.h
+$(OBJD)outdbg.$(OBJ): output/outdbg.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outelf.$(OBJ): outelf.c nasm.h nasmlib.h
+$(OBJD)outelf.$(OBJ): output/outelf.c nasm.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outobj.$(OBJ): outobj.c nasm.h nasmlib.h
+$(OBJD)outobj.$(OBJ): output/outobj.c nasm.h nasmlib.h
         $(NASM_ASM)
 
 $(OBJD)outform.$(OBJ): outform.c outform.h nasm.h

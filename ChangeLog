@@ -1,6 +1,21 @@
 
-2002-04-11  Stanislav Karchebny  <berk@madfire.net>
+2002-04-29  Stanislav Karchebny  <madfire@users.sourceforge.net>
 
-   * Started ChangeLog instead of Changes. ChangeLog is better because all recent changes
-     are on top of the file, easy for inspection.
-     Old entries from doc/Changes will eventually be added here.
+   * (Makefile.in): added 'strip' target to strip debug info.
+   * (INSTALL): added INSTALL file.
+   * (nasm.1): added -v option description.
+
+
+2002-04-29  Frank Kotler  <fbkotler@users.sourceforge.net>
+
+   * (parser.c): fixed INCBIN bug reported by Rebel.
+
+
+2002-04-11  Stanislav Karchebny  <madfire@users.sourceforge.net>
+
+   * Started ChangeLog for recording per-file changes in the project.
+     We could get away without ChangeLog at all (use CVS logs), but we
+     lose CVS so often its better to have log glued to the sources =)
+     You should record changes in CHANGES also, not for every change
+     but rather when making a release.
+

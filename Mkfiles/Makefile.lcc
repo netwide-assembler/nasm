@@ -22,9 +22,9 @@ OBJ = obj
         $(CC) -o $@ $*.c
 
 NASM = nasm.${OBJ} nasmlib.${OBJ} float.${OBJ} insnsa.${OBJ} assemble.${OBJ} labels.${OBJ} \
-       parser.${OBJ} outform.${OBJ} outbin.${OBJ} outaout.${OBJ} outcoff.${OBJ} outelf.${OBJ} \
-       outobj.${OBJ} outas86.${OBJ} outrdf.${OBJ} outdbg.${OBJ} outrdf2.${OBJ} \
-       zoutieee.${OBJ} preproc.${OBJ} listing.${OBJ} eval.${OBJ}
+       parser.${OBJ} outform.${OBJ} output/outbin.${OBJ} output/outaout.${OBJ} output/outcoff.${OBJ} output/outelf.${OBJ} \
+       output/outobj.${OBJ} output/outas86.${OBJ} output/outrdf.${OBJ} output/outdbg.${OBJ} output/outrdf2.${OBJ} \
+       output/outieee.${OBJ} preproc.${OBJ} listing.${OBJ} eval.${OBJ}
 
 NDISASM = ndisasm.${OBJ} disasm.${OBJ} sync.${OBJ} nasmlib.${OBJ} insnsd.${OBJ}
 
@@ -44,16 +44,16 @@ NASM.LNK: makefile.lcc
         echo parser.$(OBJ) >> NASM.LNK
         echo preproc.$(OBJ) >> NASM.LNK
         echo outform.$(OBJ) >> NASM.LNK
-        echo outbin.$(OBJ) >> NASM.LNK
-        echo outaout.$(OBJ) >> NASM.LNK
-        echo outcoff.$(OBJ) >> NASM.LNK
-        echo outelf.$(OBJ) >> NASM.LNK
-        echo outobj.$(OBJ) >> NASM.LNK
-        echo outas86.$(OBJ) >> NASM.LNK
-        echo outrdf.$(OBJ) >> NASM.LNK
-        echo outrdf2.$(OBJ) >> NASM.LNK
-        echo zoutieee.$(OBJ) >> NASM.LNK
-        echo outdbg.$(OBJ) >> NASM.LNK
+        echo output/outbin.$(OBJ) >> NASM.LNK
+        echo output/outaout.$(OBJ) >> NASM.LNK
+        echo output/outcoff.$(OBJ) >> NASM.LNK
+        echo output/outelf.$(OBJ) >> NASM.LNK
+        echo output/outobj.$(OBJ) >> NASM.LNK
+        echo output/outas86.$(OBJ) >> NASM.LNK
+        echo output/outrdf.$(OBJ) >> NASM.LNK
+        echo output/outrdf2.$(OBJ) >> NASM.LNK
+        echo output/outieee.$(OBJ) >> NASM.LNK
+        echo output/outdbg.$(OBJ) >> NASM.LNK
 
 NDISASM.LNK: makefile.lcc
         echo ndisasm.$(OBJ) > NDISASM.LNK
@@ -80,16 +80,16 @@ nasm.${OBJ}: nasm.c nasm.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labe
  outform.h listing.h
 nasmlib.${OBJ}: nasmlib.c nasm.h insnsi.h nasmlib.h names.c insnsn.c
 ndisasm.${OBJ}: ndisasm.c nasm.h insnsi.h nasmlib.h sync.h disasm.h
-outaout.${OBJ}: outaout.c nasm.h insnsi.h nasmlib.h outform.h
-outas86.${OBJ}: outas86.c nasm.h insnsi.h nasmlib.h outform.h
-outbin.${OBJ}: outbin.c nasm.h insnsi.h nasmlib.h outform.h
-outcoff.${OBJ}: outcoff.c nasm.h insnsi.h nasmlib.h outform.h
-outdbg.${OBJ}: outdbg.c nasm.h insnsi.h nasmlib.h outform.h
-outelf.${OBJ}: outelf.c nasm.h insnsi.h nasmlib.h outform.h
+output/outaout.${OBJ}: output/outaout.c nasm.h insnsi.h nasmlib.h outform.h
+output/outas86.${OBJ}: output/outas86.c nasm.h insnsi.h nasmlib.h outform.h
+output/outbin.${OBJ}: output/outbin.c nasm.h insnsi.h nasmlib.h outform.h
+output/outcoff.${OBJ}: output/outcoff.c nasm.h insnsi.h nasmlib.h outform.h
+output/outdbg.${OBJ}: output/outdbg.c nasm.h insnsi.h nasmlib.h outform.h
+output/outelf.${OBJ}: output/outelf.c nasm.h insnsi.h nasmlib.h outform.h
 outform.${OBJ}: outform.c outform.h nasm.h insnsi.h
-outobj.${OBJ}: outobj.c nasm.h insnsi.h nasmlib.h outform.h
-outrdf2.${OBJ}: outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
-zoutieee.${OBJ}: zoutieee.c nasm.h insnsi.h nasmlib.h outform.h
+output/outobj.${OBJ}: output/outobj.c nasm.h insnsi.h nasmlib.h outform.h
+output/outrdf2.${OBJ}: output/outrdf2.c nasm.h insnsi.h nasmlib.h outform.h
+output/outieee.${OBJ}: output/outieee.c nasm.h insnsi.h nasmlib.h outform.h
 parser.${OBJ}: parser.c nasm.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
 preproc.${OBJ}: preproc.c nasm.h insnsi.h nasmlib.h macros.c
 sync.${OBJ}: sync.c sync.h

@@ -109,7 +109,7 @@ NDISASMOBJS = $(OBJD)ndisasm.$(OBJ)  $(OBJD)disasm.$(OBJ) $(OBJD)sync.$(OBJ) \
 OUTOBJ= $(OBJD)outbin.$(OBJ) $(OBJD)outaout.$(OBJ) $(OBJD)outcoff.$(OBJ) \
         $(OBJD)outelf.$(OBJ) $(OBJD)outobj.$(OBJ)  $(OBJD)outas86.$(OBJ) \
         $(OBJD)outrdf.$(OBJ) $(OBJD)outdbg.$(OBJ)  $(OBJD)outrdf2.$(OBJ) \
-	$(OBJD)zoutieee.$(OBJ)
+	$(OBJD)outieee.$(OBJ)
 
 
 ################################################################
@@ -201,31 +201,31 @@ $(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h insnsi.h nasmlib.h
 ################################################################
 # Dependencies for all of the output format's OBJ files
 
-$(OBJD)outas86.$(OBJ): outas86.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outas86.$(OBJ): output/outas86.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outaout.$(OBJ): outaout.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outaout.$(OBJ): output/outaout.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outbin.$(OBJ): outbin.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outbin.$(OBJ): output/outbin.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outcoff.$(OBJ): outcoff.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outcoff.$(OBJ): output/outcoff.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outdbg.$(OBJ): outdbg.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outdbg.$(OBJ): output/outdbg.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outelf.$(OBJ): outelf.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outelf.$(OBJ): output/outelf.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outobj.$(OBJ): outobj.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outobj.$(OBJ): output/outobj.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)outrdf2.$(OBJ): outrdf2.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outrdf2.$(OBJ): output/outrdf2.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
-$(OBJD)zoutieee.$(OBJ): zoutieee.c nasm.h insnsi.h nasmlib.h
+$(OBJD)outieee.$(OBJ): output/outieee.c nasm.h insnsi.h nasmlib.h
         $(NASM_ASM)
 
 $(OBJD)outform.$(OBJ): outform.c outform.h nasm.h insnsi.h

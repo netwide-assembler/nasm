@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#
+# 
 # macros.pl   produce macros.c from standard.mac
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and

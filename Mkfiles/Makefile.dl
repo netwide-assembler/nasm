@@ -21,9 +21,9 @@ NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
 
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) eval.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
-	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
-	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outrdf2.$(OBJ) outdbg.$(OBJ) \
-           preproc.$(OBJ) listing.$(OBJ) zoutieee.$(OBJ)
+	   output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) output/outelf.$(OBJ) \
+	   output/outobj.$(OBJ) output/outas86.$(OBJ) output/outrdf.$(OBJ) output/outrdf2.$(OBJ) output/outdbg.$(OBJ) \
+           preproc.$(OBJ) listing.$(OBJ) output/outieee.$(OBJ)
 
 all : nasm.exe ndisasm.exe
 

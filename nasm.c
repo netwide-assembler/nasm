@@ -80,7 +80,7 @@ static enum op_type operating_mode;
  * doesn't do anything. Initial defaults are given here.
  */
 static char suppressed[1+ERR_WARN_MAX] = {
-    0, TRUE, TRUE, TRUE, FALSE
+  0, TRUE, TRUE, TRUE, FALSE, TRUE
 };
 
 /*
@@ -89,6 +89,7 @@ static char suppressed[1+ERR_WARN_MAX] = {
  */
 static char *suppressed_names[1+ERR_WARN_MAX] = {
     NULL, "macro-params", "macro-selfref", "orphan-labels", "number-overflow",
+    "gnu-elf-extensions"
 };
 
 /*
@@ -100,7 +101,8 @@ static char *suppressed_what[1+ERR_WARN_MAX] = {
     "macro calls with wrong no. of params",
     "cyclic macro self-references",
     "labels alone on lines without trailing `:'",
-    "numeric constants greater than 0xFFFFFFFF"
+    "numeric constants greater than 0xFFFFFFFF",
+    "using 8- or 16-bit relocation in ELF, a GNU extension"
 };
 
 /*
@@ -446,7 +448,7 @@ static int process_arg (char *p, char *q)
 		   "    -w+foo      enables warnings about foo; -w-foo disables them\n"
 		   "where foo can be:\n");
 	    for (i=1; i<=ERR_WARN_MAX; i++)
-		printf("    %-16s%s (default %s)\n",
+		printf("    %-23s %s (default %s)\n",
 		       suppressed_names[i], suppressed_what[i],
 		       suppressed[i] ? "off" : "on");
 	    printf ("\nresponse files should contain command line parameters"
