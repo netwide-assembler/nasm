@@ -408,6 +408,9 @@ static int process_arg (char *p, char *q)
 			    ++param;
 			    opt_verbose_info = TRUE;
 			    opt = 0;
+			} else {	/* garbage */
+			    opt = -99;
+			    break;
 			}
 		    }
 		} /* while (*param) */
