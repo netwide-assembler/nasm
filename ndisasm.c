@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 	p += lenread;
 	if ((unsigned long)offset == nextsync) {
 	    if (synclen) {
-		printf("%08lX  skipping 0x%lX bytes\n", offset, synclen);
+		fprintf(stdout, "%08lX  skipping 0x%lX bytes\n", offset, synclen);
 		offset += synclen;
 		skip (synclen, fp);
 	    }
@@ -271,26 +271,26 @@ static void output_ins (unsigned long offset, unsigned char *data,
 			int datalen, char *insn) 
 {
     int bytes;
-    printf("%08lX  ", offset);
+    fprintf(stdout, "%08lX  ", offset);
 
     bytes = 0;
     while (datalen > 0 && bytes < BPL) {
-	printf("%02X", *data++);
+	fprintf(stdout, "%02X", *data++);
 	bytes++;
 	datalen--;
     }
 
-    printf("%*s%s\n", (BPL+1-bytes)*2, "", insn);
+    fprintf(stdout, "%*s%s\n", (BPL+1-bytes)*2, "", insn);
 
     while (datalen > 0) {
-	printf("         -");
+	fprintf(stdout, "         -");
 	bytes = 0;
 	while (datalen > 0 && bytes < BPL) {
-	    printf("%02X", *data++);
+	    fprintf(stdout, "%02X", *data++);
 	    bytes++;
 	    datalen--;
 	}
-	printf("\n");
+	fprintf(stdout, "\n");
     }
 }
 
