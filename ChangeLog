@@ -1,3 +1,8 @@
+2002-05-16  Ed Beroset <beroset@mindspring.com>
+   * (preproc.c): fixed unterminated macro bug error reporting
+   * (nasmlib.h): changed strdup's arg to const char *
+   * (nasmlib.c): changed strdup's arg to const char *
+
 2002-05-12  Debbie Wiles <debs@dwiles.demon.co.uk>
    * (insns.dat): fixed incorrect processor flags
    * (Mkfiles/Makefile.vc): added optimisation, and changed to work with 0.98.31
