@@ -1411,12 +1411,12 @@ static void report_error_gnu (int severity, const char *fmt, ...)
  * This function prints an error message to error_file in the
  * style used by Visual C and some other Microsoft tools. An example 
  * would be:
- * c:\project\file.asm(50) : error: blah blah blah
- * where c:\project\file.asm is the full path of the file, 
- * 50 is the line number on which the error occurs (or is detected) 
- * and "error:" is one of the possible optional diagnostics -- it 
- * can be "error" or "warning" or something else.  Finally the line 
- * terminates with the actual error message.
+ * file.asm(50) : error: blah blah blah
+ * where file.asm is the name of the file, 50 is the line number on 
+ * which the error occurs (or is detected) and "error:" is one of
+ * the possible optional diagnostics -- it can be "error" or "warning"
+ * or something else.  Finally the line terminates with the actual 
+ * error message.
  * 
  * @param severity the severity of the warning or error 
  * @param fmt the printf style format string
