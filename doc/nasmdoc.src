@@ -2920,7 +2920,8 @@ refer to the last unmatched \c{if} or \c{else}.
 NASM defines a set of standard macros, which are already defined
 when it starts to process any source file. If you really need a
 program to be assembled with no pre-defined macros, you can use the
-\i\c{%clear} directive to empty the preprocessor of everything.
+\i\c{%clear} directive to empty the preprocessor of everything but
+context-local preprocessor variables and single-line macros.
 
 Most \i{user-level assembler directives} (see \k{directive}) are
 implemented as macros which invoke primitive directives; these are
@@ -7098,12 +7099,12 @@ flag, use \c{ADD} (\k{insADD}).
 \c ADD reg16,r/m16               ; o16 03 /r            [8086]
 \c ADD reg32,r/m32               ; o32 03 /r            [386]
 
-\c ADD r/m8,imm8                 ; 80 /0 ib             [8086]
-\c ADD r/m16,imm16               ; o16 81 /0 iw         [8086]
-\c ADD r/m32,imm32               ; o32 81 /0 id         [386]
+\c ADD r/m8,imm8                 ; 80 /7 ib             [8086]
+\c ADD r/m16,imm16               ; o16 81 /7 iw         [8086]
+\c ADD r/m32,imm32               ; o32 81 /7 id         [386]
 
-\c ADD r/m16,imm8                ; o16 83 /0 ib         [8086]
-\c ADD r/m32,imm8                ; o32 83 /0 ib         [386]
+\c ADD r/m16,imm8                ; o16 83 /7 ib         [8086]
+\c ADD r/m32,imm8                ; o32 83 /7 ib         [386]
 
 \c ADD AL,imm8                   ; 04 ib                [8086]
 \c ADD AX,imm16                  ; o16 05 iw            [8086]
@@ -7536,12 +7537,12 @@ conditional moves are supported.
 \c CMP reg16,r/m16               ; o16 3B /r            [8086]
 \c CMP reg32,r/m32               ; o32 3B /r            [386]
 
-\c CMP r/m8,imm8                 ; 80 /0 ib             [8086]
-\c CMP r/m16,imm16               ; o16 81 /0 iw         [8086]
-\c CMP r/m32,imm32               ; o32 81 /0 id         [386]
+\c CMP r/m8,imm8                 ; 80 /7 ib             [8086]
+\c CMP r/m16,imm16               ; o16 81 /7 iw         [8086]
+\c CMP r/m32,imm32               ; o32 81 /7 id         [386]
 
-\c CMP r/m16,imm8                ; o16 83 /0 ib         [8086]
-\c CMP r/m32,imm8                ; o32 83 /0 ib         [386]
+\c CMP r/m16,imm8                ; o16 83 /7 ib         [8086]
+\c CMP r/m32,imm8                ; o32 83 /7 ib         [386]
 
 \c CMP AL,imm8                   ; 3C ib                [8086]
 \c CMP AX,imm16                  ; o16 3D iw            [8086]
@@ -8643,8 +8644,8 @@ to finish what it was doing first.
 \c FDIV TO fpureg                ; DC F8+r              [8086,FPU]
 \c FDIV fpureg,ST0               ; DC F8+r              [8086,FPU]
 
-\c FDIVR mem32                   ; D8 /0                [8086,FPU]
-\c FDIVR mem64                   ; DC /0                [8086,FPU]
+\c FDIVR mem32                   ; D8 /7                [8086,FPU]
+\c FDIVR mem64                   ; DC /7                [8086,FPU]
 
 \c FDIVR fpureg                  ; D8 F8+r              [8086,FPU]
 \c FDIVR ST0,fpureg              ; D8 F8+r              [8086,FPU]
@@ -11895,12 +11896,11 @@ See also \c{POPA} (\k{insPOPA}).
 \c PUSHFD                        ; o32 9C               [386]
 \c PUSHFW                        ; o16 9C               [8086]
 
-\b \c{PUSHFW} pops a word from the stack and stores it in the
-bottom 16 bits of the flags register (or the whole flags register,
-on processors below a 386).
+\b \c{PUSHFW} pushes the bottom 16 bits of the flags register 
+(or the whole flags register, on processors below a 386) onto
+the stack.
 
-\b \c{PUSHFD} pops a doubleword and stores it in the entire flags
-register.
+\b \c{PUSHFD} pushes the entire flags register onto the stack.
 
 \c{PUSHF} is an alias mnemonic for either \c{PUSHFW} or \c{PUSHFD},
 depending on the current \c{BITS} setting.
@@ -12457,9 +12457,9 @@ processors (Cyrix, IBM, Via).
 the Machine Status Word, on 286 processors) into the destination
 operand. See also \c{LMSW} (\k{insLMSW}).
 
-For 32-bit code, this would use the low 16-bits of the specified
-register (or a 16bit memory location), without needing an operand
-size override byte.
+For 32-bit code, this would store all of \c{CR0} in the specified
+register (or the bottom 16 bits if the destination is a memory location),
+ without needing an operand size override byte.
 
 
 \S{insSQRTPD} \i\c{SQRTPD}: Packed Double-Precision FP Square Root
@@ -12564,10 +12564,10 @@ The \c{REP} prefix may be used to repeat the instruction \c{CX} (or
 \c STR r/m16                     ; 0F 00 /1             [286,PRIV]
 
 \c{STR} stores the segment selector corresponding to the contents of
-the Task Register into its operand. When the operand size is a 16-bit
-register, the upper 16-bits are cleared to 0s. When the destination
-operand is a memory location, 16 bits are written regardless of the
-operand size.
+the Task Register into its operand. When the operand size is 32 bit and
+the destination is a register, the upper 16-bits are cleared to 0s. 
+When the destination operand is a memory location, 16 bits are
+written regardless of the  operand size.
 
 
 \S{insSUB} \i\c{SUB}: Subtract Integers
