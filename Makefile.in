@@ -24,12 +24,16 @@ INSTALL_DATA	= @INSTALL_DATA@
 
 NROFF		= @NROFF@
 
-.SUFFIXES: .c .i .s .o .1 .man
+# Binary suffixes
+O               = @OBJEXT@
+X               = @EXEEXT@
+
+.SUFFIXES: .c .i .s .$(O) .1 .man
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf
 .PHONY: install_doc everything install_everything strip perlreq dist
 
-.c.o:
+.c.$(O):
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 .c.s:
@@ -41,47 +45,46 @@ NROFF		= @NROFF@
 .1.man:
 	$(NROFF) -man $< > $@
 
-NASM = nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
-       parser.o outform.o output/outbin.o output/outaout.o output/outcoff.o output/outelf.o \
-       output/outobj.o output/outas86.o output/outrdf2.o output/outdbg.o output/outieee.o \
-       preproc.o listing.o eval.o
+NASM = nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) labels.$(O) \
+       parser.$(O) outform.$(O) output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) output/outelf.$(O) \
+       output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) output/outdbg.$(O) output/outieee.$(O) \
+       preproc.$(O) listing.$(O) eval.$(O)
 
-NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
+NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) insnsd.$(O)
 
-all: nasm ndisasm nasm.man ndisasm.man
+all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man
 	cd rdoff && $(MAKE) all
 
-nasm: $(NASM)
-	$(CC) $(LDFLAGS) -o nasm $(NASM)
+nasm$(X): $(NASM)
+	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM)
 
-ndisasm: $(NDISASM)
-	$(CC) $(LDFLAGS) -o ndisasm $(NDISASM)
+ndisasm$(X): $(NDISASM)
+	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM)
 
-assemble.o: assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
-disasm.o: disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
-eval.o: eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
-float.o: float.c nasm.h version.h insnsi.h
-insnsa.o: insnsa.c nasm.h version.h insnsi.h insns.h
-insnsd.o: insnsd.c nasm.h version.h insnsi.h insns.h
-labels.o: labels.c nasm.h version.h insnsi.h nasmlib.h
-listing.o: listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
-nasm.o: nasm.c nasm.h version.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h \
- outform.h listing.h insns.h
-nasmlib.o: nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
-ndisasm.o: ndisasm.c nasm.h version.h insnsi.h nasmlib.h sync.h disasm.h
-output/outaout.o: output/outaout.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outas86.o: output/outas86.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outbin.o: output/outbin.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outcoff.o: output/outcoff.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outdbg.o: output/outdbg.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outelf.o: output/outelf.c nasm.h version.h insnsi.h nasmlib.h outform.h
-outform.o: outform.c outform.h nasm.h version.h insnsi.h
-output/outobj.o: output/outobj.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outrdf2.o: output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h outform.h
-output/outieee.o: output/outieee.c nasm.h version.h insnsi.h nasmlib.h outform.h
-parser.o: parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
-preproc.o: preproc.c nasm.h version.h insnsi.h nasmlib.h macros.c
-sync.o: sync.c sync.h
+assemble.$(O): assemble.c nasm.h version.h insnsi.h nasmlib.h assemble.h insns.h
+disasm.$(O): disasm.c nasm.h version.h insnsi.h disasm.h sync.h insns.h names.c insnsn.c
+eval.$(O): eval.c eval.h nasm.h version.h insnsi.h nasmlib.h
+float.$(O): float.c nasm.h version.h insnsi.h
+insnsa.$(O): insnsa.c nasm.h version.h insnsi.h insns.h
+insnsd.$(O): insnsd.c nasm.h version.h insnsi.h insns.h
+labels.$(O): labels.c nasm.h version.h insnsi.h nasmlib.h
+listing.$(O): listing.c nasm.h version.h insnsi.h nasmlib.h listing.h
+nasm.$(O): nasm.c nasm.h version.h insnsi.h nasmlib.h preproc.h parser.h assemble.h labels.h outform.h listing.h insns.h
+nasmlib.$(O): nasmlib.c nasm.h version.h insnsi.h nasmlib.h names.c insnsn.c
+ndisasm.$(O): ndisasm.c nasm.h version.h insnsi.h nasmlib.h sync.h disasm.h
+output/outaout.$(O): output/outaout.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outas86.$(O): output/outas86.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outbin.$(O): output/outbin.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outcoff.$(O): output/outcoff.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outdbg.$(O): output/outdbg.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outelf.$(O): output/outelf.c nasm.h version.h insnsi.h nasmlib.h outform.h
+outform.$(O): outform.c outform.h nasm.h version.h insnsi.h
+output/outobj.$(O): output/outobj.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outrdf2.$(O): output/outrdf2.c nasm.h version.h insnsi.h nasmlib.h outform.h
+output/outieee.$(O): output/outieee.c nasm.h version.h insnsi.h nasmlib.h outform.h
+parser.$(O): parser.c nasm.h version.h insnsi.h nasmlib.h parser.h float.h names.c insnsn.c
+preproc.$(O): preproc.c nasm.h version.h insnsi.h nasmlib.h macros.c
+sync.$(O): sync.c sync.h
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -117,22 +120,23 @@ macros.c: macros.pl standard.mac version.mac
 PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c version.h version.mac 
 perlreq: $(PERLREQ)
 
-install: nasm ndisasm
-	$(INSTALL_PROGRAM) nasm $(INSTALLROOT)$(bindir)/nasm
-	$(INSTALL_PROGRAM) ndisasm $(INSTALLROOT)$(bindir)/ndisasm
+install: nasm$(X) ndisasm$(X)
+	$(INSTALL_PROGRAM) nasm$(X) $(INSTALLROOT)$(bindir)/nasm$(X)
+	$(INSTALL_PROGRAM) ndisasm$(X) $(INSTALLROOT)$(bindir)/ndisasm$(X)
 	$(INSTALL_DATA) $(srcdir)/nasm.1 $(INSTALLROOT)$(mandir)/man1/nasm.1
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	rm -f *.o *.s *.i
-	rm -f output/*.o output/*.s output/*.i
-	rm -f nasm ndisasm
+	rm -f *.$(O) *.s *.i
+	rm -f output/*.$(O) output/*.s output/*.i
+	rm -f nasm$(X) ndisasm$(X)
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
 	rm -f config.* Makefile *~ *.bak *.lst *.bin
 	rm -f output/*~ output/*.bak
-	rm -f test/*.lst test/*.bin test/*.o test/*.bin
+	rm -f test/*.lst test/*.bin test/*.$(O) test/*.bin
+	rm -rf autom4te*.cache
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
@@ -142,7 +146,7 @@ cleaner: clean
 spotless: distclean cleaner
 
 strip:
-	strip --strip-unneeded nasm ndisasm
+	strip --strip-unneeded nasm$(X) ndisasm$(X)
 
 rdf:
 	cd rdoff && $(MAKE)
