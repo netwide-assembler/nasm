@@ -173,13 +173,17 @@ while ( defined($line = <PARAS>) ) {
 	$ixterms{$ixentry} = [split(/\037/, $data)];
 	# Look for commas.  This is easier done on the string
 	# representation, so do it now.
-	if ( $data =~ /^(.*\,)\037sp\037/ ) {
+	if ( $data =~ /^(.*)\,\037sp\037/ ) {
 	    $ixprefix = $1;
+	    $ixprefix =~ s/\037n $//; # Discard possible font change at end
 	    $ixhasprefix{$ixentry} = $ixprefix;
 	    if ( !$ixprefixes{$ixprefix} ) {
 		$ixcommafirst{$ixentry}++;
 	    }
 	    $ixprefixes{$ixprefix}++;
+	} else {
+	    # A complete term can also be used as a prefix
+	    $ixprefixes{$data}++;
 	}
     } else {
 	push(@ptypes, $line);
@@ -860,7 +864,16 @@ foreach $k ( @ixentries ) {
 	if ( $ixcommafirst{$k} ) {
 	    # This is the first entry; generate the
 	    # "hanging comma" entry
-	    push(@ixparas, [splice(@ixpara,0,$commapos+1),[-6,undef]]);
+	    my @precomma = splice(@ixpara,0,$commapos);
+	    if ( $ixpara[0]->[1] eq ',' ) {
+		shift(@ixpara);	# Discard lone comma
+	    } else {
+		# Discard attached comma
+		$ixpara[0]->[1] =~ s/\,$//;
+		push(@precomma,shift(@ixpara));
+	    }
+	    push(@precomma, [-6,undef]);
+	    push(@ixparas, [@precomma]);
 	    push(@ixptypes, $ixptype);
 	    shift(@ixpara);	# Remove space
 	} else {
