@@ -2783,14 +2783,26 @@ described in \k{directive}. The rest of the standard macro set is
 described here.
 
 
-\S{stdmacver} \i\c{__NASM_MAJOR__} and \i\c{__NASM_MINOR__}: \i{NASM
-Version}
+\S{stdmacver} \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__} and
+\i\c{__NASM_SUBMINOR__}: \i{NASM Version}
 
-The single-line macros \c{__NASM_MAJOR__} and \c{__NASM_MINOR__}
-expand to the major and minor parts of the \i{version number of
-NASM} being used. So, under NASM 0.96 for example,
-\c{__NASM_MAJOR__} would be defined to be 0 and \c{__NASM_MINOR__}
-would be defined as 96.
+The single-line macros \c{__NASM_MAJOR__}, \c{__NASM_MINOR__} and
+\c{__NASM_SUBMINOR__} expand to the major, minor and subminor parts of
+the \i{version number of NASM} being used. So, under NASM 0.98.31 for
+example, \c{__NASM_MAJOR__} would be defined to be 0, \c{__NASM_MINOR__}
+would be defined as 98 and \c{__NASM_SUBMINOR__} would be defined to 31.
+
+
+\S{stdmacverstr} \i\c{__NASM_VER__}: \i{NASM Version string}
+
+The single-line macro \c{__NASM_VER__} expands to a string which defines
+the version number of nasm being used. So, under NASM 0.98.31 for example,
+
+\c         db      __NASM_VER__
+
+would expand to
+
+\c         db      "0.98.31"
 
 
 \S{fileline} \i\c{__FILE__} and \i\c{__LINE__}: File Name and Line Number
