@@ -37,7 +37,7 @@ static void register_output_formats(void);
 static void report_error (int severity, const char *fmt, ...);
 static void usage(void);
 
-static int using_debug_info;
+static int using_debug_info, opt_verbose_info;
 int	   tasm_compatible_mode = FALSE;
 int pass0;
 
@@ -58,11 +58,11 @@ static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
 int global_offset_changed;             /* referenced in labels.c */
 
 static loc_t location;
-int in_abs_seg;			/* Flag we are in ABSOLUTE seg */
-long abs_seg;			/* ABSOLUTE segment basis */
-long abs_offset;		/* ABSOLUTE offset */
+int          in_abs_seg;	       /* Flag we are in ABSOLUTE seg */
+static long  abs_seg;
 
 static struct RAA *offsets;
+static long abs_offset;
 
 static struct SAA *forwrefs;	       /* keep track of forward references */
 static struct forwrefinfo *forwref;
@@ -388,13 +388,25 @@ static int process_arg (char *p, char *q)
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
 	    } else if (p[1]=='O') {		    /* Optimization level */
 		int opt;
-	        if (!isdigit(*param)) report_error(ERR_FATAL,
-	             "command line optimization level must be 0..3 or <nn>");
-	    	opt = atoi(param);
-	    	if (opt<=0) optimizing = -1;		/* 0.98 behaviour */
-	    	else if (opt==1) optimizing = 0;	/* Two passes, 0.98.09 behavior */
-	    	else if (opt<=3) optimizing = opt*5;	/* Multiple passes */
-	    	else optimizing = opt;			/* Multiple passes */
+		opt = -99;
+		while (*param) {
+		    if (isdigit(*param)) {
+			opt = atoi(param);
+			while(isdigit(*++param)) ;
+			if (opt<=0) optimizing = -1;		/* 0.98 behaviour */
+			else if (opt==1) optimizing = 0;	/* Two passes, 0.98.09 behavior */
+			else if (opt<=3) optimizing = opt*5;	/* Multiple passes */
+			else optimizing = opt;			/* Multiple passes */
+		    } else {
+			if (*param == 'v' || *param == '+') {
+			    ++param;
+			    opt_verbose_info = TRUE;
+			    opt = 0;
+			}
+		    }
+		} /* while (*param) */
+		if (opt == -99) report_error(ERR_FATAL,
+			"command line optimization level must be 'v', 0..3 or <nn>");
 	    } else if (p[1]=='P' || p[1]=='p') {    /* pre-include */
 		pp_pre_include (param);
 	    } else if (p[1]=='D' || p[1]=='d') {    /* pre-define */
@@ -952,15 +964,15 @@ static void assemble_file (char *fname)
                                  "cannot use non-relocatable expression as "
                                  "ABSOLUTE address");
                      else {
-			 abs_seg = reloc_seg(e);
-			 abs_offset = reloc_value(e);
+                           abs_seg = reloc_seg(e);
+                           abs_offset = reloc_value(e);
                      }
                   } else
                      if (pass==1) abs_offset = 0x100;/* don't go near zero in case of / */
                      else report_error (ERR_PANIC, "invalid ABSOLUTE address "
                                     "in pass two");
                   in_abs_seg = TRUE;
-                  location.segment = NO_SEG;
+                  location.segment = abs_seg;
                   break;
                case 7:    /* DEBUG       */
                   p = value;
@@ -1112,9 +1124,9 @@ static void assemble_file (char *fname)
                            {
                               int isext = output_ins.oprs[0].opflags & OPFLAG_EXTERN;
                               def_label (output_ins.label,
-					 output_ins.oprs[0].segment,
-					 output_ins.oprs[0].offset,
-					 NULL, FALSE, isext, ofmt, report_error);
+                                             output_ins.oprs[0].segment,
+                                             output_ins.oprs[0].offset,
+                                             NULL, FALSE, isext, ofmt, report_error);
                            }
                            else if (output_ins.operands == 2 &&
                                        (output_ins.oprs[0].type & IMMEDIATE) &&
@@ -1265,7 +1277,7 @@ static void assemble_file (char *fname)
    preproc->cleanup(0);
    nasmlist.cleanup();
 #if 1
-   if (optimizing>0 && using_debug_info)	/*  -On and -g switches */
+   if (optimizing>0 && opt_verbose_info)	/*  -On and -Ov switches */
       fprintf(stdout,
                 "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
 #endif
