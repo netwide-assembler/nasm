@@ -334,7 +334,7 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	if (c >= 034 && c <= 036) {
 	    ins->oprs[c-034].offset = *data++;
 	    ins->oprs[c-034].offset |= (*data++ << 8);
-	    if (asize == 32) {
+	    if (osize == 32) {
 		ins->oprs[c-034].offset |= (((long) *data++) << 16);
 		ins->oprs[c-034].offset |= (((long) *data++) << 24);
 	    }
@@ -346,6 +346,16 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	    ins->oprs[c-040].offset |= (*data++ << 8);
 	    ins->oprs[c-040].offset |= (((long) *data++) << 16);
 	    ins->oprs[c-040].offset |= (((long) *data++) << 24);
+	}
+	if (c >= 044 && c <= 046) {
+	    ins->oprs[c-044].offset = *data++;
+	    ins->oprs[c-044].offset |= (*data++ << 8);
+	    if (asize == 32) {
+		ins->oprs[c-044].offset |= (((long) *data++) << 16);
+		ins->oprs[c-044].offset |= (((long) *data++) << 24);
+	    }
+	    if (segsize != asize)
+		ins->oprs[c-044].addr_size = asize;
 	}
 	if (c >= 050 && c <= 052) {
 	    ins->oprs[c-050].offset = (signed char) *data++;
