@@ -22,8 +22,8 @@ use Fcntl;
 	   plmarg => 50,	# Page number position relative to left margin
 	   prmarg => 0,		# Page number position relative to right margin
 	   pymarg => 50,	# Page number position relative to bot margin
-	   startcopyright => 100, # How much above the bottom margin is the
-	                          # copyright notice stuff
+	   startcopyright => 75, # How much above the bottom margin is the
+	                         # copyright notice stuff
 	   bulladj => 12,	# How much to indent a bullet paragraph
 	   tocind => 12,	# TOC indentation per level
 	   tocpnz => 24,	# Width of TOC page number only zone
@@ -40,6 +40,8 @@ use Fcntl;
 
 # Known paper sizes
 %papersizes = (
+	       'a5'     => [421, 595], # ISO half paper size
+	       'b5'     => [501, 709], # ISO small paper size
 	       'a4'     => [595, 842], # ISO standard paper size
 	       'letter' => [612, 792], # US common paper size
 	       'pa4'    => [595, 792], # Compromise ("portable a4")
@@ -146,9 +148,10 @@ $tocskip = 6;			# Space between TOC entries
  'udieresis', 'yacute', 'thorn', 'ydieresis'
 );
 
-$emdash = "\227";
-$endash = "\226";
-$bullet = "\225";
+$emdash    = "\227";
+$endash    = "\226";
+$bullet    = "\225";
+$copyright = "\251";
 
 #
 # First, format the stuff coming from the front end into
@@ -217,6 +220,8 @@ sub string2array($)
     my($s) = @_;
     my(@a) = ();
     
+    $s =~ s/ \- / $endash /g;	# Replace " - " with en dash
+
     while ( $s =~ /^(\s+|\S+)(.*)$/ ) {
 	push(@a, [0,$1]);
 	$s = $2;
@@ -534,7 +539,7 @@ sub ps_dup_para_noanchor(@) {
 #
 @tocparas = ([[-5, 'contents'], [0,'Contents']]);
 @tocptypes = ('chap');
-@bookmarks = (['title', 0, 'Title Page'], ['contents', 0, 'Contents']);
+@bookmarks = (['title', 0, 'Title'], ['contents', 0, 'Contents']);
 %bookref = ();
 for ( $i = 0 ; $i < $npara ; $i++ ) {
     my $xtype = $ptypes[$i];
@@ -592,10 +597,11 @@ unshift(@ptypes, @tocptypes); undef @tocptypes;
 #
 # Add copyright notice to the beginning
 #
-unshift(@paras, [[0, "\251"], [0, ' '], [0,$metadata{'year'}],
-		 [0, ' '], string2array($metadata{'author'})],
-	[[0, ' ']], [string2array($metadata{'license'})]);
-unshift(@ptypes, 'norm', 'norm', 'norm');
+unshift(@paras,
+	[[0, $copyright], [0, ' '], [0,$metadata{'year'}],
+	 [0, ' '], string2array($metadata{'author'})],
+	[string2array($metadata{'license'})]);
+unshift(@ptypes, 'norm', 'norm');
 
 $npara = scalar(@paras);
 
