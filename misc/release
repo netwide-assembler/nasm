@@ -4,9 +4,6 @@
 #
 # Usage: release {test|real} [branch]
 #
-# *** WARNING WARNING WARNING ***
-# Make sure to execute this in an empty directory
-#
 
 if [ -z "$SFUSER" ]; then
   if [ -f "$HOME/.sfuser" ]; then
@@ -107,6 +104,9 @@ find nasm-$version -not -type d -print > main
 cd nasm-${version}
 ./configure --prefix=/usr/local
 make doc
+# The .hpj and .rtf files are used to generate a Windows .hlp file.
+# That requires Windows tools, so that has to be done separately anyway.
+rm -f doc/nasmdoc.hpj doc/nasmdoc.rtf
 cd ..
 
 # Remove non-documentation
