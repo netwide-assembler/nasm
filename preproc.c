@@ -528,7 +528,7 @@ prepreproc(char *line)
 	    fname++;
 	fnlen = strcspn(fname, "\"");
 	line = nasm_malloc(20 + fnlen);
-	sprintf(line, "%%line %d %.*s", lineno, fnlen, fname);
+	snprintf(line, 20+fnlen,"%%line %d %.*s", lineno, fnlen, fname);
 	nasm_free(oldline);
     }
     if (tasm_compatible_mode)
