@@ -133,7 +133,7 @@ static int elf_nsect;
 static long elf_foffs;
 
 static void elf_write(void);
-static void elf_sect_write(struct Section *, unsigned char *, unsigned long);
+static void elf_sect_write(struct Section *, const unsigned char *, unsigned long);
 static void elf_section_header (int, int, int, void *, int, long,
 				int, int, int, int);
 static void elf_write_sections (void);
@@ -665,7 +665,7 @@ static long elf_add_gsym_reloc (struct Section *sect,
     return offset - sym->value;
 }
 
-static void elf_out (long segto, void *data, unsigned long type,
+static void elf_out (long segto, const void *data, unsigned long type,
 		      long segment, long wrt) 
 {
     struct Section *s;
@@ -1093,7 +1093,7 @@ static void elf_write_sections (void)
 }
 
 static void elf_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) 
+			     const unsigned char *data, unsigned long len) 
 {
     saa_wbytes (sect->data, data, len);
     sect->len += len;

@@ -103,7 +103,7 @@ static int is_pic;
 static void aout_write(void);
 static void aout_write_relocs(struct Reloc *);
 static void aout_write_syms(void);
-static void aout_sect_write(struct Section *, unsigned char *, unsigned long);
+static void aout_sect_write(struct Section *, const unsigned char *, unsigned long);
 static void aout_pad_sections(void);
 static void aout_fixup_relocs(struct Section *);
 
@@ -546,7 +546,7 @@ static long aout_add_gotoff_reloc (struct Section *sect, long segment,
     return offset - asym->value;
 }
 
-static void aout_out (long segto, void *data, unsigned long type,
+static void aout_out (long segto, const void *data, unsigned long type,
 		      long segment, long wrt) 
 {
     struct Section *s;
@@ -854,7 +854,7 @@ static void aout_write_syms (void)
 }
 
 static void aout_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) 
+			     const unsigned char *data, unsigned long len) 
 {
     saa_wbytes (sect->data, data, len);
     sect->len += len;

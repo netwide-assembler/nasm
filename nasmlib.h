@@ -197,7 +197,7 @@ struct SAA {
 struct SAA *saa_init (long elem_len);  /* 1 == byte */
 void saa_free (struct SAA *);
 void *saa_wstruct (struct SAA *);      /* return a structure of elem_len */
-void saa_wbytes (struct SAA *, void *, long);  /* write arbitrary bytes */
+void saa_wbytes (struct SAA *, const void *, long);  /* write arbitrary bytes */
 void saa_rewind (struct SAA *);	       /* for reading from beginning */
 void *saa_rstruct (struct SAA *);      /* return NULL on EOA */
 void *saa_rbytes (struct SAA *, long *);   /* return 0 on EOA */
@@ -234,7 +234,7 @@ long reloc_wrt(expr *);
  * matching `string', or <0 if no match. `array' is taken to
  * contain `size' elements.
  */
-int bsi (char *string, char **array, int size);
+int bsi (char *string, const char **array, int size);
 
 
 char *src_set_fname(char *newname);
@@ -252,7 +252,7 @@ void nasm_quote(char **str);
 char *nasm_strcat(char *one, char *two);
 void nasmlib_cleanup(void);
 
-void null_debug_routine(void);
+void null_debug_routine(const char *directive, const char *params);
 extern struct dfmt null_debug_form;
 extern struct dfmt *null_debug_arr[2];
 #endif

@@ -120,7 +120,7 @@ static void list_out (long offset, char *str)
     strcat(listdata, str);
 }
 
-static void list_output (long offset, void *data, unsigned long type) 
+static void list_output (long offset, const void *data, unsigned long type) 
 {
     unsigned long typ, size;
 
@@ -132,7 +132,7 @@ static void list_output (long offset, void *data, unsigned long type)
 
     if (typ == OUT_RAWDATA) 
     {
-	unsigned char *p = data;
+	unsigned char const *p = data;
 	char q[3];
 	while (size--) 
 	{

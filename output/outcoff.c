@@ -121,7 +121,7 @@ static struct SAA *strs;
 static unsigned long strslen;
 
 static void coff_gen_init(FILE *, efunc);
-static void coff_sect_write (struct Section *, unsigned char *,
+static void coff_sect_write (struct Section *, const unsigned char *,
 			     unsigned long);
 static void coff_write (void);
 static void coff_section_header (char *, long, long, long, long, int, long);
@@ -420,7 +420,7 @@ static long coff_add_reloc (struct Section *sect, long segment,
 	return 0;
 }
 
-static void coff_out (long segto, void *data, unsigned long type,
+static void coff_out (long segto, const void *data, unsigned long type,
 		      long segment, long wrt) 
 {
     struct Section *s;
@@ -529,7 +529,7 @@ static void coff_out (long segto, void *data, unsigned long type,
 }
 
 static void coff_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) 
+			     const unsigned char *data, unsigned long len) 
 {
     saa_wbytes (sect->data, data, len);
     sect->len += len;

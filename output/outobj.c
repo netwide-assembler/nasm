@@ -988,11 +988,11 @@ fprintf(stderr, " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
 static void obj_write_fixup (ObjRecord *orp, int bytes,
     int segrel, long seg, long wrt, struct Segment *segto);
 
-static void obj_out (long segto, void *data, unsigned long type,
+static void obj_out (long segto, const void *data, unsigned long type,
 		     long segment, long wrt) 
 {
     unsigned long size, realtype;
-    unsigned char *ucdata;
+    const unsigned char *ucdata;
     long ldata;
     struct Segment *seg;
     ObjRecord *orp;

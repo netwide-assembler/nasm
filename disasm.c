@@ -90,7 +90,7 @@ static int whichreg(long regflags, int regval)
     return 0;
 }
 
-static char *whichcond(int condval) 
+static const char *whichcond(int condval) 
 {
     static int conds[] = {
 	C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,

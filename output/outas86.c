@@ -78,7 +78,7 @@ static efunc error;
 static void as86_write(void);
 static void as86_write_section (struct Section *, int);
 static int as86_add_string (char *name);
-static void as86_sect_write(struct Section *, unsigned char *, unsigned long);
+static void as86_sect_write(struct Section *, const unsigned char *, unsigned long);
 
 static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
 {
@@ -244,7 +244,7 @@ static void as86_add_piece (struct Section *sect, int type, long offset,
 	p->number = raa_read (bsym, segment), p->type = 2;
 }
 
-static void as86_out (long segto, void *data, unsigned long type,
+static void as86_out (long segto, const void *data, unsigned long type,
 		      long segment, long wrt) 
 {
     struct Section *s;
@@ -524,7 +524,7 @@ static void as86_write_section (struct Section *sect, int index)
 }
 
 static void as86_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) 
+			     const unsigned char *data, unsigned long len) 
 {
     saa_wbytes (sect->data, data, len);
     sect->datalen += len;
@@ -553,7 +553,7 @@ static void as86_filename (char *inname, char *outname, efunc error)
     standard_extension (inname, outname, ".o", error);
 }
 
-static char *as86_stdmac[] = {
+static const char *as86_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",

@@ -314,7 +314,7 @@ static void bin_cleanup (int debuginfo)
    }
 }
 
-static void bin_out (long segto, void *data, unsigned long type,
+static void bin_out (long segto, const void *data, unsigned long type,
            long segment, long wrt)
 {
     unsigned char *p, mydata[4];
@@ -381,7 +381,6 @@ static void bin_out (long segto, void *data, unsigned long type,
 
    } else if ((type & OUT_TYPMASK) == OUT_RAWDATA) {
       type &= OUT_SIZMASK;
-      p = data;
       if (s) {
           saa_wbytes (s->contents, data, type);
           s->length += type;

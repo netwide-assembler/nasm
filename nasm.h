@@ -147,7 +147,7 @@ typedef struct {
      * work with when doing things like uplevel(LIST_TIMES) or
      * uplevel(LIST_INCBIN).
      */
-    void (*output) (long, void *, unsigned long);
+    void (*output) (long, const void *, unsigned long);
 
     /*
      * Called to send a text line to the listing generator. The
@@ -565,7 +565,7 @@ struct ofmt {
      * and user-level equivalents for any format-specific
      * directives).
      */
-    char **stdmac;
+    const char **stdmac;
 
     /*
      * This procedure is called at the start of an output session.
@@ -594,7 +594,7 @@ struct ofmt {
      * The `type' argument specifies the type of output data, and
      * usually the size as well: its contents are described below.
      */
-    void (*output) (long segto, void *data, unsigned long type,
+    void (*output) (long segto, const void *data, unsigned long type,
 		    long segment, long wrt);
 
     /*

@@ -89,8 +89,8 @@ static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
 
-static long calcsize (long, long, int, insn *, char *);
-static void gencode (long, long, int, insn *, char *, long);
+static long calcsize (long, long, int, insn *, const char *);
+static void gencode (long, long, int, insn *, const char *, long);
 static int  regval (operand *o);
 static int  matches (struct itemplate *, insn *);
 static ea * process_ea (operand *, ea *, int, int, int);
@@ -101,7 +101,7 @@ static int  chsize (operand *, int);
  * in order to pass a copy of the data off to the listing file
  * generator at the same time.
  */
-static void out (long offset, long segto, void *data, unsigned long type,
+static void out (long offset, long segto, const void *data, unsigned long type,
 		 long segment, long wrt) 
 {
     long lineno;
@@ -152,7 +152,7 @@ static void out (long offset, long segto, void *data, unsigned long type,
 }
 
 static int jmp_match (long segment, long offset, int bits,
-		insn *ins, char *code)
+		insn *ins, const char *code)
 {   long isize;
     unsigned char c = code[0];
 
@@ -349,7 +349,7 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 
 	if (m == 100) 		       /* matches! */
 	{
-	    char *codes = temp->code;
+	    const char *codes = temp->code;
 	    long insn_size = calcsize(segment, offset, bits,
 				      instruction, codes);
 	    itimes = instruction->times;
@@ -527,7 +527,7 @@ long insn_size (long segment, long offset, int bits, unsigned long cp,
 	if (m == 100) {
 	    /* we've matched an instruction. */
 	    long  isize;
-	    char  * codes = temp->code;
+	    const char  * codes = temp->code;
 	    int   j;
 
 	    isize = calcsize(segment, offset, bits, instruction, codes);
@@ -570,7 +570,7 @@ static int is_sbyte (insn *ins, int op, int size)
 }
 
 static long calcsize (long segment, long offset, int bits,
-		      insn *ins, char *codes) 
+		      insn *ins, const char *codes) 
 {
     long           length = 0;
     unsigned char  c;
@@ -682,7 +682,7 @@ static long calcsize (long segment, long offset, int bits,
 }
 
 static void gencode (long segment, long offset, int bits,
-		     insn *ins, char *codes, long insn_end) 
+		     insn *ins, const char *codes, long insn_end) 
 {
     static char condval[] = { /* conditional opcodes */
 	0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,

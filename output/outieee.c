@@ -367,10 +367,10 @@ static void ieee_deflabel (char *name, long segment,
 /*
  * Put data out
  */
-static void ieee_out (long segto, void *data, unsigned long type,
+static void ieee_out (long segto, const void *data, unsigned long type,
 		     long segment, long wrt) {
     unsigned long size, realtype;
-    unsigned char *ucdata;
+    const unsigned char *ucdata;
     long ldata;
     struct ieeeSection *seg;
 

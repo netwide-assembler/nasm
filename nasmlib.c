@@ -473,9 +473,9 @@ void *saa_wstruct (struct SAA *s)
     return p;
 }
 
-void saa_wbytes (struct SAA *s, void *data, long len) 
+void saa_wbytes (struct SAA *s, const void *data, long len) 
 {
-    char *d = data;
+    const char *d = data;
 
     while (len > 0) {
 	long l = s->end->length - s->end->posn;
@@ -1008,7 +1008,7 @@ long reloc_wrt (expr *vect)
 /*
  * Binary search.
  */
-int bsi (char *string, char **array, int size) 
+int bsi (char *string, const char **array, int size) 
 {
     int i = -1, j = size;	       /* always, i < index < j */
     while (j-i >= 2) {
@@ -1092,20 +1092,24 @@ char *nasm_strcat(char *one, char *two)
     return rslt;
 }
 
-void null_debug_routine(void)
-{
-}
+void null_debug_init(struct ofmt *of, void *id, FILE *fp, efunc error ) {}
+void null_debug_linenum(const char *filename, long linenumber, long segto) {}
+void null_debug_deflabel(char *name, long segment, long offset, int is_global, char *special) {}
+void null_debug_routine(const char *directive, const char *params) {}
+void null_debug_typevalue(long type) {}
+void null_debug_output(int type, void *param) {}
+void null_debug_cleanup(void){}
 
 struct dfmt null_debug_form = {
     "Null debug format",
     "null",
+    null_debug_init,
+    null_debug_linenum,
+    null_debug_deflabel,
     null_debug_routine,
-    null_debug_routine,
-    null_debug_routine,
-    null_debug_routine,
-    null_debug_routine,
-    null_debug_routine,
-    null_debug_routine,
+    null_debug_typevalue,
+    null_debug_output,
+    null_debug_cleanup
 };
 
 struct dfmt *null_debug_arr[2] = { &null_debug_form, NULL };

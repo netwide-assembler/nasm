@@ -421,7 +421,7 @@ static void rdf2_deflabel(char *name, long segment, long offset,
   }
 }
 
-static void membufwrite(int segment, void * data, int bytes)
+static void membufwrite(int segment, const void * data, int bytes)
 {
   int i;
   char buf[4], * b;
@@ -457,7 +457,7 @@ static int getsegmentlength(int segment)
   return segments[i].seglength;
 }
     
-static void rdf2_out (long segto, void *data, unsigned long type,
+static void rdf2_out (long segto, const void *data, unsigned long type,
 		     long segment, long wrt)
 {
   long bytes = type & OUT_SIZMASK;
@@ -693,7 +693,7 @@ static void rdf2_filename (char *inname, char *outname, efunc error) {
   standard_extension(inname,outname,".rdf",error);
 }
 
-static char *rdf2_stdmac[] = {
+static const char *rdf2_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",

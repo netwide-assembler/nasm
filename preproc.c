@@ -402,7 +402,7 @@ static const char **stdmacpos;
  * The extra standard macros that come from the object format, if
  * any.
  */
-static char **extrastdmac = NULL;
+static const char **extrastdmac = NULL;
 int any_extrastdmac;
 
 /*
@@ -4438,7 +4438,7 @@ pp_pre_undefine(char *definition)
 }
 
 void
-pp_extra_stdmac(char **macros)
+pp_extra_stdmac(const char **macros)
 {
     extrastdmac = macros;
 }
