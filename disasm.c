@@ -582,6 +582,13 @@ long disasm (unsigned char *data, char *output, int outbufsize, int segsize,
 
     slen = 0;
 
+    /* TODO: snprintf returns the value that the string would have if
+    *	    the buffer were long enough, and not the actual length of 
+    *	    the returned string, so each instance of using the return
+    *	    value of snprintf should actually be checked to assure that
+    *	    the return value is "sane."  Maybe a macro wrapper could
+    *	    be used for that purpose.
+    */
     if (lock)
 	slen += snprintf(output+slen, outbufsize-slen, "lock ");
     for (i = 0; i < ins.nprefix; i++)
