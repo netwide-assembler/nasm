@@ -20,6 +20,7 @@
 \IR{-On} \c{-On} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
+\IR{-X} \c{-X} option
 \IR{-a} \c{-a} option
 \IR{-d} \c{-d} option
 \IR{-e} \c{-e} option
@@ -33,6 +34,7 @@
 \IR{-u} \c{-u} option
 \IR{-v} \c{-v} option
 \IR{-w} \c{-w} option
+\IR{-y} \c{-y} option
 \IR{!=} \c{!=} operator
 \IR{$, here} \c{$}, Here token
 \IR{$, prefix} \c{$}, prefix
@@ -281,9 +283,9 @@ team of developers, accessible through the \c{nasm-devel} mailing list
 If you want to report a bug, please read \k{bugs} first.
 
 NASM has a \i{WWW page} at
-\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm},
-and another, with additional information, at
-\W{http://nasm.2y.net/}\c{http://nasm.2y.net/}
+\W{http://nasm.sourceforge.net}\c{http://nasm.sourceforge.net}. If it's
+not there, google for us!
+
 
 The original authors are \i{e\-mail}able as
 \W{mailto:jules@dsf.org.uk}\c{jules@dsf.org.uk} and
@@ -291,7 +293,7 @@ The original authors are \i{e\-mail}able as
 The latter is no longer involved in the development team.
 
 \i{New releases} of NASM are uploaded to the official sites
-\W{http://www.web-sites.co.uk/nasm}\c{http://www.web-sites.co.uk/nasm}
+\W{http://nasm.sourceforge.net}\c{http://nasm.sourceforge.net}
 and to
 \W{ftp://ftp.kernel.org/pub/software/devel/nasm/}\i\c{ftp.kernel.org}
 and
@@ -305,14 +307,7 @@ Announcements are posted to
 If you want information about NASM beta releases, and the current
 development status, please subscribe to the \i\c{nasm-devel} email list
 by registering at
-\W{http://groups.yahoo.com/group/nasm-devel}\c{http://groups.yahoo.com/group/nasm-devel},
-\W{http://www.pairlist.net/mailman/listinfo/nasm-devel}\c{http://www.pairlist.net/mailman/listinfo/nasm-devel}
-and
 \W{http://sourceforge.net/projects/nasm}\c{http://sourceforge.net/projects/nasm}.
-
-The preferred list is the list at Sourceforge, which is also the home to
-the latest nasm source code and releases. The other lists are open, but
-may not continue to be supported in the long term.
 
 
 \H{install} Installation
@@ -421,7 +416,7 @@ To get further usage instructions from NASM, try typing
 
 \c nasm -h
 
-This will also list the available output file formats, and what they
+As \c{-hf}, this will also list the available output file formats, and what they
 are.
 
 If you use Linux but aren't sure whether your system is \c{a.out}
@@ -505,6 +500,8 @@ right. For example:
 
 \c nasm -f elf myfile.asm -l myfile.lst
 
+\#FIXME - "[list +/-]"
+
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}.
 
@@ -514,25 +511,30 @@ This can be redirected to a file for further processing. For example:
 \c NASM -M myfile.asm > myfile.dep
 
 
-\S{opt-F} The \i\c{-F} Option: Selecting a \i{Debugging Format}
+\S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
 
-This option can be used to select a debugging format for the output file.
-The syntax is the same as for the -f option, except that it produces
-output in a debugging format.
+This option is used to select the format of the debug information emitted 
+into the output file, to be used by a debugger (or \e{will} be). Use
+of this switch does \e{not} enable output of the selected debug info format.
+Use \c{-g}, see \k{opt-g}, to enable output.
 
 A complete list of the available debug file formats for an output format
-can be seen by issuing the command \i\c{nasm -f <format> -y}.
+can be seen by issuing the command \i\c{nasm -f <format> -y}. (only 
+"borland" in "-f obj", as of 0.98.35, but "watch this space") 
+See: \k{opt-y}.
 
-This option is not built into NASM by default. For information on how
+This should not be confused with the "-f dbg" output format option which 
+is not built into NASM by default. For information on how
 to enable it when building from the sources, see \k{dbgfmt}
 
 
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
 
 This option can be used to generate debugging information in the specified
-format.
-
-See \k{opt-F} for more information.
+format. See: \k{opt-F}. Using \c{-g} without \c{-F} results in emitting 
+debug info in the default format, if any, for the selected output format.
+If no debug information is currently implemented in the selected output 
+format, \c{-g} is \e{silently ignored}.
 
 
 \S{opt-X} The \i\c{-X} Option: Selecting an \i{Error Reporting Format}
@@ -613,6 +615,8 @@ Under Unix, a trailing forward slash is similarly necessary.
 (You can use this to your advantage, if you're really \i{perverse},
 by noting that the option \c{-ifoo} will cause \c{%include "bar.i"}
 to search for the file \c{foobar.i}...)
+
+\#FIXME - the above is not true - see the "backslash()" function
 
 If you want to define a \e{standard} \i{include search path},
 similar to \c{/usr/include} on Unix systems, you should place one or
@@ -809,14 +813,24 @@ don't fit in 32 bits (for example, it's easy to type one too many Fs
 and produce \c{0x7ffffffff} by mistake). This warning class is
 enabled by default.
 
+\#FIXME - more suppressible warnings exist - "[+warning <supp. warn.>]"
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
 
 Typing \c{NASM -v} will display the version of NASM which you are using,
-and the date on which it was compiled.
+and the date on which it was compiled. This replaces the denigrated 
+\c{-r}.
 
 You will need the version number if you report a bug.
 
+\S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
+
+Typing \c{nasm -f <option> -y} will display a list of the available 
+debug info formats for the given output format. The default format 
+is indicated by an asterisk. E.g. \c{nasm -f obj -y} yields \c{* borland}.
+(as of 0.98.35, the \e{only} debug info format implemented).
+
+\#FIXME - "--prefix", "--postfix"
 
 \S{nasmenv} The \c{NASMENV} \i{Environment} Variable
 
@@ -1094,9 +1108,9 @@ be invoked in a wide range of ways:
 \c       db    'a',0x55            ; character constants are OK
 \c       db    'hello',13,10,'$'   ; so are string constants
 \c       dw    0x1234              ; 0x34 0x12
-\c       dw    'a'                 ; 0x41 0x00 (it's just a number)
-\c       dw    'ab'                ; 0x41 0x42 (character constant)
-\c       dw    'abc'               ; 0x41 0x42 0x43 0x00 (string)
+\c       dw    'a'                 ; 0x61 0x00 (it's just a number)
+\c       dw    'ab'                ; 0x61 0x62 (character constant)
+\c       dw    'abc'               ; 0x61 0x62 0x63 0x00 (string)
 \c       dd    0x12345678          ; 0x78 0x56 0x34 0x12
 \c       dd    1.234567e20         ; floating-point constant
 \c       dq    1.234567e20         ; double-precision float
