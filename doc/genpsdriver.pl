@@ -9,13 +9,19 @@
 # necessarily work on non-Unix systems.
 #
 
+use File::Spec;
+use Fcntl;
+
 $perl   = $ENV{'PERL'}   || 'perl';
 $srcdir = $ENV{'srcdir'} || '.';
 
-open(VERSION, '< ../version') or die "$0: cannot open ../version\n";
+$versionfile = File::Spec->catfile(File::Spec->updir($srcdir), 'version');
+$genps = File::Spec->catfile($srcdir, 'genps.pl');
+
+sysopen(VERSION, $versionfile, O_RDONLY)
+    or die "$0: cannot open $versionfile\n";
 $version = <VERSION>;
 chomp $version;
 close(VERSION);
 
-system($perl, "${srcdir}/genps.pl", '-subtitle',
-       'version '.$version, 'nasmdoc.dip');
+system($perl, $genps, '-subtitle', 'version '.$version, 'nasmdoc.dip');
