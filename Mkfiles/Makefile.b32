@@ -43,13 +43,14 @@ BINDIR=e:\devel\bcb5\cbuilder5\bin
 
 
 CC=$(BINDIR)\bcc32
-CCFLAGS=-q -Q -tWC -c -O2 -A -w-8057
+CCFLAGS=-q -Q -tWC -c -O2 -A -d -w-8057
   # /q:    Suppress compiler identification banner
   # /Q:    Extended compiler error information
   # /-tWC: Windows console mode application
   # /c:    Compile, do not link
   # /O2:   Optimize for speed
   # /A:    ANSI compatible code only
+  # /d:    Merge duplicate strings
   # /-w-8057: Turn off "Parameter <param> never used in function <func>" warning
 
 LINK=$(BINDIR)\ilink32
