@@ -73,6 +73,12 @@
 #   aliases one index tag (as might be supplied to \i or \I) to
 #   another, so that \I{foobar} has the effect of \I{bazquux}, and
 #   \i{foobar} has the effect of \I{bazquux}foobar
+#
+# Metadata
+# \M{key}{something}
+#   defines document metadata, such as authorship, title and copyright;
+#   different output formats use this differently.
+#
 
 $diag = 1, shift @ARGV if $ARGV[0] eq "-d";
 
@@ -91,7 +97,7 @@ $pname = "para000000";
 $para = undef;
 while (<>) {
   chomp;
-  if (!/\S/ || /^\\I[AR]/) { # special case: \I[AR] implies new-paragraph
+  if (!/\S/ || /^\\(IA|IR|M)/) { # special case: \IA \IR \M imply new-paragraph
     &got_para($para);
     $para = undef;
   }
@@ -230,6 +236,11 @@ sub got_para {
     # An index-alias.
     die "badly formatted index alias: $_\n" if !/^\\IA{([^}]*)}{([^}]*)}\s*$/;
     $idxalias{$1} = $2;
+    return; # avoid word-by-word code
+  } elsif (/^\\M/) {
+    # Metadata
+    die "badly formed metadata: $_\n" if !/^\\M{([^}]*)}{([^}]*)}\s*$/;
+    $metadata{$1} = $2;
     return; # avoid word-by-word code
   } elsif (/^\\b/) {
     # A bulleted paragraph. Strip off the initial \b and let the
@@ -1706,43 +1717,41 @@ sub write_texi {
   # Preamble.
   print "\\input texinfo   \@c -*-texinfo-*-\n";
   print "\@c \%**start of header\n";
-  print "\@setfilename nasm.info\n";
-  print "\@dircategory Programming\n";
+  print "\@setfilename ",$metadata{'infofile'},".info\n";
+  print "\@dircategory ",$metadata{'category'},"\n";
   print "\@direntry\n";
-  print "* NASM: (nasm).                The Netwide Assembler for x86.\n";
+  printf "* %-28s %s.\n",
+  sprintf('%s: (%s).', $metadata{'infoname'}, $metadata{'infofile'}),
+  $metadata{'infotitle'};
   print "\@end direntry\n";
-  print "\@settitle NASM: The Netwide Assembler\n";
+  print "\@settitle ",$metadata{'title'},"\n";
   print "\@setchapternewpage odd\n";
   print "\@c \%**end of header\n";
   print "\n";
   print "\@ifinfo\n";
-  print "This file documents NASM, the Netwide Assembler: an assembler\n";
-  print "targetting the Intel x86 series of processors, with portable source.\n";
+  print $metadata{'summary'}, "\n";
   print "\n";
-  print "Copyright 1997 Simon Tatham\n";
+  print "Copyright ",$metadata{'year'}," ",$metadata{'author'},"\n";
   print "\n";
-  print "All rights reserved. This document is redistributable under the\n";
-  print "licence given in the file \"Licence\" distributed in the NASM archive.\n";
+  print $metadata{'license'}, "\n";
   print "\@end ifinfo\n";
   print "\n";
   print "\@titlepage\n";
-  print "\@title NASM: The Netwide Assembler\n";
-  print "\@author Simon Tatham\n";
+  print "\@title ",$metadata{'title'},"\n";
+  print "\@author ",$metadata{'author'},"\n";
   print "\n";
   print "\@page\n";
   print "\@vskip 0pt plus 1filll\n";
-  print "Copyright \@copyright{} 1997 Simon Tatham\n";
+  print "Copyright \@copyright{} ",$metadata{'year'},' ',$metadata{'author'},"\n";
   print "\n";
-  print "All rights reserved. This document is redistributable under the\n";
-  print "licence given in the file \"Licence\" distributed in the NASM archive.\n";
+  print $metadata{'license'}, "\n";
   print "\@end titlepage\n";
   print "\n";
   print "\@node Top, $tstruct_next{'Top'}, (dir), (dir)\n";
-  print "\@top Netwide Assembler\n";
+  print "\@top ",$metadata{'infotitle'},"\n";
   print "\n";
   print "\@ifinfo\n";
-  print "This file documents NASM, the Netwide Assembler: an assembler\n";
-  print "targetting the Intel x86 series of processors, with portable source.\n";
+  print $metadata{'summary'}, "\n";
   print "\@end ifinfo\n";
 
   $node = "Top";

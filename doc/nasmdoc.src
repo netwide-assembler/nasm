@@ -2,6 +2,16 @@
 \#
 \# Source code to NASM documentation
 \#
+\M{category}{Programming}
+\M{title}{NASM: The Netwide Assembler}
+\M{year}{2002}
+\M{author}{The NASM Development Team}
+\M{license}{All rights reserved. This document is redistributable under the licence given in the file "COPYING" distributed in the NASM archive.}
+\M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
+\M{infoname}{NASM}
+\M{infofile}{nasm}
+\M{infotitle}{The Netwide Assembler for x86}
+\M{epslogo}{nasmlogo.eps}
 \IR{-D} \c{-D} option
 \IR{-E} \c{-E} option
 \IR{-F} \c{-F} option
