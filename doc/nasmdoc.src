@@ -701,7 +701,8 @@ The syntax is:
         are optimised, unless the long form is specified.
 
 \b \c{-On} multi-pass optimization, minimize branch offsets; also will
-        minimize signed immediate bytes, overriding size specification.
+        minimize signed immediate bytes, overriding size specification
+        when the \c{strict} keyword hasn't been used (see \k{strict}).
         If 2 <= n <= 3, then there are 5 * n passes, otherwise there
         are n passes.
 
@@ -1481,13 +1482,12 @@ invent one using the macro processor.
 
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
-When compiling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
-\c{DWORD}, \c{QWORD}, or \c{TWORD}) strictly to choose the address- or
-operand-size of the instruction.  The keyword \c{STRICT} can be used
-to inhibit optimization and force a particular operand to be emitted
-in the specified size.  For example, with the optimizer on, and in
-\c{BITS 16} mode,
+When assembling with the optimizer set to level 2 or higher (see
+\k{opt-On}), NASM will override size specifiers (\c{BYTE}, \c{WORD},
+\c{DWORD}, \c{QWORD}, or \c{TWORD}), giving them the smallest possible
+size. The keyword \c{STRICT} can be used to inhibit optimization and
+force a particular operand to be emitted in the specified size.
+For example, with the optimizer on, and in \c{BITS 16} mode,
 
 \c         push dword 33
 
@@ -1497,6 +1497,9 @@ is encoded in three bytes \c{66 6A 21}, whereas
 
 is encoded in six bytes, with a full dword immediate operand \c{66 68
 21 00 00 00}.
+
+With the optimizer off, the same code (six bytes) is generated whether
+the \c{STRICT} keyword was used or not.
 
 
 \H{crit} \i{Critical Expressions}
