@@ -8,7 +8,7 @@
 # This Makefile is designed to build NASM as a Win32 command-
 # line executable. It's been tested with Visual C++ 1.10.
 
-CC = cl /c /O
+CC = cl /c /Ox /GF /I.
 QCL = cl /c
 LINK = cl
 LINKFLAGS =
