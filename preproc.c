@@ -1,3 +1,4 @@
+/* -*- mode: c; c-file-style: "bsd" -*- */
 /* preproc.c   macro preprocessor for the Netwide Assembler
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
@@ -276,12 +277,12 @@ static int inverse_ccs[] = {
 static char *directives[] = {
     "%arg",
     "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
-    "%elifid", "%elifidn", "%elifidni", "%elifnctx", "%elifndef",
-    "%elifnid", "%elifnidn", "%elifnidni", "%elifnnum", "%elifnstr",
+    "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifnctx", "%elifndef",
+    "%elifnid", "%elifnidn", "%elifnidni", "%elifnmacro", "%elifnnum", "%elifnstr",
     "%elifnum", "%elifstr", "%else", "%endif", "%endm", "%endmacro",
     "%endrep", "%error", "%exitrep", "%iassign", "%idefine", "%if",
-    "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifnctx",
-    "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnnum",
+    "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifmacro", "%ifnctx",
+    "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnmacro", "%ifnnum",
     "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include",
     "%ixdefine", "%line",
     "%local",
@@ -293,12 +294,12 @@ enum
 {
     PP_ARG,
     PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
-    PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFNCTX, PP_ELIFNDEF,
-    PP_ELIFNID, PP_ELIFNIDN, PP_ELIFNIDNI, PP_ELIFNNUM, PP_ELIFNSTR,
+    PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFMACRO, PP_ELIFNCTX, PP_ELIFNDEF,
+    PP_ELIFNID, PP_ELIFNIDN, PP_ELIFNIDNI, PP_ELIFNMACRO, PP_ELIFNNUM, PP_ELIFNSTR,
     PP_ELIFNUM, PP_ELIFSTR, PP_ELSE, PP_ENDIF, PP_ENDM, PP_ENDMACRO,
     PP_ENDREP, PP_ERROR, PP_EXITREP, PP_IASSIGN, PP_IDEFINE, PP_IF,
-    PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFNCTX,
-    PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNNUM,
+    PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFMACRO, PP_IFNCTX,
+    PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNMACRO, PP_IFNNUM,
     PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE,
     PP_IXDEFINE, PP_LINE,
     PP_LOCAL,
@@ -307,6 +308,12 @@ enum
     PP_STRLEN, PP_SUBSTR, PP_UNDEF, PP_XDEFINE
 };
 
+/* If this is a an IF, ELIF, ELSE or ENDIF keyword */
+static int is_condition(int arg)
+{
+    return ((arg >= PP_ELIF) && (arg <= PP_ENDIF)) ||
+	((arg >= PP_IF) && (arg <= PP_IFSTR));
+}
 
 /* For TASM compatibility we need to be able to recognise TASM compatible
  * conditional compilation directives. Using the NASM pre-processor does
@@ -1471,8 +1478,8 @@ if_condition(Token * tline, int i)
 					tline->text[1] != '$')))
 		{
 		    error(ERR_NONFATAL,
-			    "`%%if%sdef' expects macro identifiers",
-			    (i == PP_ELIFNDEF ? "n" : ""));
+			  "`%s' expects macro identifiers",
+			  directives[i]);
 		    free_tlist(origline);
 		    return -1;
 		}
@@ -1548,6 +1555,98 @@ if_condition(Token * tline, int i)
 		j = !j;
 	    free_tlist(tline);
 	    return j;
+
+        case PP_IFMACRO:
+        case PP_ELIFMACRO:
+        case PP_IFNMACRO:
+        case PP_ELIFNMACRO:
+	{
+	    int found = 0;
+	    MMacro searching, *mmac;
+
+	    tline = tline->next;
+	    skip_white_(tline);
+	    tline = expand_id(tline);
+	    if (!tok_type_(tline, TOK_ID))
+	    {
+		error(ERR_NONFATAL,
+			"`%s' expects a macro name",
+		      directives[i]);
+		return -1;
+	    }
+	    searching.name = nasm_strdup(tline->text);
+	    searching.casesense = (i == PP_MACRO);
+	    searching.plus = FALSE;
+	    searching.nolist = FALSE;
+	    searching.in_progress = FALSE;
+	    searching.rep_nest = NULL;
+	    searching.nparam_min = 0;
+	    searching.nparam_max = INT_MAX;
+	    tline = expand_smacro(tline->next);
+	    skip_white_(tline);
+	    if (!tline)
+	    {
+	    } else if (!tok_type_(tline, TOK_NUMBER))
+	    {
+		error(ERR_NONFATAL,
+		      "`%s' expects a parameter count or nothing",
+		      directives[i]);
+	    }
+	    else
+	    {
+		searching.nparam_min = searching.nparam_max =
+			readnum(tline->text, &j);
+		if (j)
+		    error(ERR_NONFATAL,
+			  "unable to parse parameter count `%s'",
+			  tline->text);
+	    }
+	    if (tline && tok_is_(tline->next, "-"))
+	    {
+		tline = tline->next->next;
+		if (tok_is_(tline, "*"))
+		    searching.nparam_max = INT_MAX;
+		else if (!tok_type_(tline, TOK_NUMBER))
+		    error(ERR_NONFATAL,
+			  "`%s' expects a parameter count after `-'",
+			  directives[i]);
+		else
+		{
+		    searching.nparam_max = readnum(tline->text, &j);
+		    if (j)
+			error(ERR_NONFATAL,
+				"unable to parse parameter count `%s'",
+				tline->text);
+		    if (searching.nparam_min > searching.nparam_max)
+			error(ERR_NONFATAL,
+				"minimum parameter count exceeds maximum");
+		}
+	    }
+	    if (tline && tok_is_(tline->next, "+"))
+	    {
+		tline = tline->next;
+		searching.plus = TRUE;
+	    }
+	    mmac = mmacros[hash(searching.name)];
+	    while (mmac)
+	    {
+		if (!strcmp(mmac->name, searching.name) &&
+			(mmac->nparam_min <= searching.nparam_max
+				|| searching.plus)
+			&& (searching.nparam_min <= mmac->nparam_max
+				|| mmac->plus))
+		{
+		    found = TRUE;
+		    break;
+		}
+		mmac = mmac->next;
+	    }
+	    nasm_free(searching.name);
+	    free_tlist(origline);
+	    if (i == PP_IFNMACRO || i == PP_ELIFNMACRO)
+		found = !found;
+	    return found;
+	}
 
 	case PP_IFID:
 	case PP_ELIFID:
@@ -1704,22 +1803,8 @@ do_directive(Token * tline)
      * directives.
      */
     if (((istk->conds && !emitting(istk->conds->state)) ||
-		    (istk->mstk && !istk->mstk->in_progress)) &&
-	    i != PP_IF && i != PP_ELIF &&
-	    i != PP_IFCTX && i != PP_ELIFCTX &&
-	    i != PP_IFDEF && i != PP_ELIFDEF &&
-	    i != PP_IFID && i != PP_ELIFID &&
-	    i != PP_IFIDN && i != PP_ELIFIDN &&
-	    i != PP_IFIDNI && i != PP_ELIFIDNI &&
-	    i != PP_IFNCTX && i != PP_ELIFNCTX &&
-	    i != PP_IFNDEF && i != PP_ELIFNDEF &&
-	    i != PP_IFNID && i != PP_ELIFNID &&
-	    i != PP_IFNIDN && i != PP_ELIFNIDN &&
-	    i != PP_IFNIDNI && i != PP_ELIFNIDNI &&
-	    i != PP_IFNNUM && i != PP_ELIFNNUM &&
-	    i != PP_IFNSTR && i != PP_ELIFNSTR &&
-	    i != PP_IFNUM && i != PP_ELIFNUM &&
-	    i != PP_IFSTR && i != PP_ELIFSTR && i != PP_ELSE && i != PP_ENDIF)
+	 (istk->mstk && !istk->mstk->in_progress)) &&
+	!is_condition(i))
     {
 	return 0;
     }
@@ -2135,11 +2220,13 @@ do_directive(Token * tline)
 	case PP_IFID:
 	case PP_IFIDN:
 	case PP_IFIDNI:
+        case PP_IFMACRO:
 	case PP_IFNCTX:
 	case PP_IFNDEF:
 	case PP_IFNID:
 	case PP_IFNIDN:
 	case PP_IFNIDNI:
+        case PP_IFNMACRO:
 	case PP_IFNNUM:
 	case PP_IFNSTR:
 	case PP_IFNUM:
@@ -2165,11 +2252,13 @@ do_directive(Token * tline)
 	case PP_ELIFID:
 	case PP_ELIFIDN:
 	case PP_ELIFIDNI:
+        case PP_ELIFMACRO:
 	case PP_ELIFNCTX:
 	case PP_ELIFNDEF:
 	case PP_ELIFNID:
 	case PP_ELIFNIDN:
 	case PP_ELIFNIDNI:
+        case PP_ELIFNMACRO:
 	case PP_ELIFNNUM:
 	case PP_ELIFNSTR:
 	case PP_ELIFNUM:
@@ -2181,7 +2270,7 @@ do_directive(Token * tline)
 		istk->conds->state = COND_NEVER;
 	    else
 	    {
-		j = if_condition(expand_mmac_params(tline->next), i);
+		j = if_condition(tline->next, i);
 		tline->next = NULL;	/* it got freed */
 		free_tlist(origline);
 		istk->conds->state =
