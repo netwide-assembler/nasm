@@ -1096,7 +1096,7 @@ ppscan(void *private_data, struct tokenval *tokval)
 
     if (tline->text[0] == '$' && !tline->text[1])
 	return tokval->t_type = TOKEN_HERE;
-    if (tline->text[0] == '$' && tline->text[1] == '$' && !tline->text[1])
+    if (tline->text[0] == '$' && tline->text[1] == '$' && !tline->text[2])
 	return tokval->t_type = TOKEN_BASE;
 
     if (tline->type == TOK_ID)
