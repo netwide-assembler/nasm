@@ -378,6 +378,8 @@ static int process_arg (char *p, char *q)
 	  case 'E':
 	  case 'F':
 	  case 'X':
+	  case 'u':
+	  case 'U':
 	    if ( !(param = get_param (p, q, &advance)) )
 		break;
 	    if (p[1]=='o') {	       /* output file */

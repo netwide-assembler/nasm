@@ -4429,6 +4429,7 @@ pp_pre_undefine(char *definition)
 
     space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
     def = new_Token(space, TOK_PREPROC_ID, "%undef", 0);
+    space->next = tokenise(definition);
 
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
