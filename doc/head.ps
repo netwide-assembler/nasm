@@ -242,24 +242,24 @@
 /subh2 { lmarg exch moveto sfont showstream } def
 /subh3 { sfont headlbl lmarg exch moveto sfont showstream } def
 
-/norm0 { lmarg exch moveto tfont lwidth showstreamjust } def
-/norm1 { lmarg exch moveto tfont lwidth showstreamjust } def
-/norm2 { lmarg exch moveto tfont showstream } def
-/norm3 { lmarg exch moveto tfont showstream } def
+/norm0 { lmarg exch moveto bfont lwidth showstreamjust } def
+/norm1 { lmarg exch moveto bfont lwidth showstreamjust } def
+/norm2 { lmarg exch moveto bfont showstream } def
+/norm3 { lmarg exch moveto bfont showstream } def
 
-/code0 { lmarg exch moveto tfont showstream } def
-/code1 { lmarg exch moveto tfont showstream } def
-/code2 { lmarg exch moveto tfont showstream } def
-/code3 { lmarg exch moveto tfont showstream } def
+/code0 { lmarg exch moveto bfont showstream } def
+/code1 { lmarg exch moveto bfont showstream } def
+/code2 { lmarg exch moveto bfont showstream } def
+/code3 { lmarg exch moveto bfont showstream } def
 
 /bullet [(\225)] def
 
-/bull0 { bullmarg exch moveto tfont bwidth showstreamjust } def
-/bull1 { dup lmarg exch moveto bullet tfont showstream
-	 bullmarg exch moveto tfont bwidth showstreamjust } def
-/bull2 { bullmarg exch moveto tfont showstream } def
-/bull3 { dup lmarg exch moveto bullet tfont showstream
-	 bullmarg exch moveto tfont showstream } def
+/bull0 { bullmarg exch moveto bfont bwidth showstreamjust } def
+/bull1 { dup lmarg exch moveto bullet bfont showstream
+	 bullmarg exch moveto bfont bwidth showstreamjust } def
+/bull2 { bullmarg exch moveto bfont showstream } def
+/bull3 { dup lmarg exch moveto bullet bfont showstream
+	 bullmarg exch moveto bfont showstream } def
 
 /tocw0 lwidth tocpnz sub def
 /tocw1 tocw0 tocind sub def
@@ -270,7 +270,7 @@
 /tocx2 tocx1 tocind add def
 
 /tocpn {
-  tfont0 setfont
+  bfont0 setfont
   3 dict begin
     /s exch def
     /x s stringwidth pop pagewidth rmarg sub exch sub def
@@ -284,29 +284,29 @@
   linkend
 } def
 
-/toc00 { tocx0 exch moveto 0 rmoveto tfont showstream } def
+/toc00 { tocx0 exch moveto 0 rmoveto bfont showstream } def
 /toc01 { tocx0 exch moveto
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream } def
 /toc02 { tocx0 exch moveto 3 1 roll
-	 0 rmoveto tfont showstream tocpn } def
+	 0 rmoveto bfont showstream tocpn } def
 /toc03 { tocx0 exch moveto 4 1 roll
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream tocpn } def
 
-/toc10 { tocx1 exch moveto 0 rmoveto tfont showstream } def
+/toc10 { tocx1 exch moveto 0 rmoveto bfont showstream } def
 /toc11 { tocx1 exch moveto
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream } def
 /toc12 { tocx1 exch moveto 3 1 roll
-	 0 rmoveto tfont showstream tocpn } def
+	 0 rmoveto bfont showstream tocpn } def
 /toc13 { tocx1 exch moveto 4 1 roll
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream tocpn } def
 
-/toc20 { tocx2 exch moveto 0 rmoveto tfont showstream } def
+/toc20 { tocx2 exch moveto 0 rmoveto bfont showstream } def
 /toc21 { tocx2 exch moveto
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream } def
 /toc22 { tocx2 exch moveto 3 1 roll
-	 0 rmoveto tfont showstream tocpn } def
+	 0 rmoveto bfont showstream tocpn } def
 /toc23 { tocx2 exch moveto 4 1 roll
-	 linkbegindest tfont0 setfont 0 linkshow tfont showstream tocpn } def
+	 linkbegindest bfont0 setfont 0 linkshow bfont showstream tocpn } def
 
 % Spacing between index columns
 /indexcolumn pagewidth lmarg sub rmarg sub idxgutter add idxcolumns div def
@@ -317,10 +317,10 @@
   2 dict begin
     indexcolumn mul lmarg add
     /x exch def /y exch def x y moveto
-    exch tfont showstream
-    dup tfont streamwidth
+    exch bfont showstream
+    dup bfont streamwidth
     x indexcolwid add exch sub exch pop y moveto
-    tfont showstream
+    bfont showstream
   end
 } def
 /idx00 {idx03} def

@@ -633,7 +633,7 @@ sub ps_break_lines($$) {
 	    my $p;
 	    # Code paragraph; each chunk is a line
 	    foreach $p ( @data ) {
-		push(@ls, [[$ptype,0,undef,\%TextFont,0,0],[$p]]);
+		push(@ls, [[$ptype,0,undef,\%BodyFont,0,0],[$p]]);
 	    }
 	    $ls[0]->[0]->[1] |= 1;	     # First in para
 	    $ls[-1]->[0]->[1] |= 2;      # Last in para
@@ -651,9 +651,9 @@ sub ps_break_lines($$) {
 	    # We need the heading number as auxillary data
 	    $ls[0]->[0]->[2] = [[$AuxStr,$secn]];
 	} elsif ( $ptype eq 'norm' ) {
-	    @ls = ps_flow_lines($linewidth, \%TextFont, $ptype, @data);
+	    @ls = ps_flow_lines($linewidth, \%BodyFont, $ptype, @data);
 	} elsif ( $ptype eq 'bull' ) {
-	    @ls = ps_flow_lines($bullwidth, \%TextFont, $ptype, @data);
+	    @ls = ps_flow_lines($bullwidth, \%BodyFont, $ptype, @data);
 	} elsif ( $ptype =~ /^toc/ ) {
 	    unless ( $xtype =~/^\S+ :([^:]*):(.*)$/ ) {
 		die "Bad para";
@@ -661,13 +661,13 @@ sub ps_break_lines($$) {
 	    my $xref = $1;
 	    my $refname = $2.' ';
 	    my $ntoc = substr($ptype,3,1)+0;
-	    my $refwidth = ps_width($refname, $TextFont{fonts}->[0][1],
+	    my $refwidth = ps_width($refname, $BodyFont{fonts}->[0][1],
 				    \@NASMEncoding) *
-		($TextFont{fonts}->[0][0]/1000);
+		($BodyFont{fonts}->[0][0]/1000);
 	    
 	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
 				$psconf{tocpnz}-$refwidth,
-				\%TextFont, $ptype, @data);
+				\%BodyFont, $ptype, @data);
 	    
 	    # Auxilliary data: for the first line, the cross reference symbol
 	    # and the reference name; for all lines but the first, the
@@ -683,7 +683,7 @@ sub ps_break_lines($$) {
 	    my $lvl = substr($ptype,3,1)+0;
 
 	    @ls = ps_flow_lines($indxwidth-$lvl*$psconf{idxindent},
-				\%TextFont, $ptype, @data);
+				\%BodyFont, $ptype, @data);
 	} else {
 	    die "Unknown para type: $ptype";
 	}
@@ -1013,7 +1013,7 @@ $pstitle = ps_string($title);
 # FIX THIS: This shouldn't be hard-coded like this
 print <<EOF;
 lmarg pageheight 2 mul 3 div moveto
-/Helvetica-Bold-NASM findfont 20 scalefont setfont
+tfont0 setfont
 /title linkdest ${pstitle} show
 lmarg pageheight 2 mul 3 div 10 sub moveto
 0 setlinecap 3 setlinewidth
