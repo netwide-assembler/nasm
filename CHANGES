@@ -16,7 +16,7 @@
 * Fix the use of relative offsets with explicit prefixes, e.g. "a32 loop foo".
 * Remove "backslash()".
 * Fix the SMSW and SLDT instructions.
-* -O2 and -O3 are no longer aliases for -O5 and -O10.  If you mean the
+* -O2 and -O3 are no longer aliases for -O10 and -O15.  If you mean the
   latter, please say so! :)
 
 0.98.36
