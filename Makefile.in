@@ -172,4 +172,6 @@ tar: dist
 	tar cvjf ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 ../`./nasm-dir`
 
 nasm.spec: nasm.spec.in version
-	sed -e s/@@VERSION@@/`cat version`/g < nasm.spec.in > nasm.spec
+	sed -e s/@@VERSION@@/`cat $(srcdir)/version`/g \
+	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl < $(srcdir)/version`/g \
+	    < nasm.spec.in > nasm.spec

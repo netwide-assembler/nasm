@@ -7,7 +7,7 @@
 #
 # The NASM version number is assumed to consist of:
 #
-# <major>.<minor>[.<subminor>[.<patchlevel>]]<tail>
+# <major>.<minor>[.<subminor>][pl<patchlevel>]]<tail>
 #
 # ... where <tail> is not necessarily numeric.
 #
@@ -35,27 +35,26 @@
 $line = <STDIN>;
 chomp $line;
 
-if ( $line =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/ ) {
-    $maj  = $1;  $nmaj  = $maj+0;
-    $min  = $2;  $nmin  = $min+0;
-    $smin = $3;  $nsmin = $smin+0;
-    $plvl = $4;  $nplvl = $plvl+0;
+undef $man, $min, $smin, $plvl, $tail;
+
+if ( $line =~ /^([0-9]+)\.([0-9]+)/ ) {
+    $maj  = $1;
+    $min  = $2;
     $tail = $';
-} elsif ( $line =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)/ ) {
-    $maj  = $1;  $nmaj  = $maj+0;
-    $min  = $2;  $nmin  = $min+0;
-    $smin = $3;  $nsmin = $smin+0;
-    $plvl = '';  $nplvl = 0;
-    $tail = $';
-} elsif ( $line =~ /^([0-9]+)\.([0-9]+)/ ) {
-    $maj  = $1;  $nmaj  = $maj+0;
-    $min  = $2;  $nmin  = $min+0;
-    $smin = '';  $nsmin = 0;
-    $plvl = '';  $nplvl = 0;
-    $tail = $';
+    if ( $tail =~ /^\.([0-9]+)/ ) {
+	$smin = $1;
+	$tail = $';
+    }
+    if ( $tail =~ /^(pl|\.)([0-9]+)/ ) {
+	$plvl = $2;
+	$tail = $';
+    }
 } else {
     die "$0: Invalid input format\n";
 }
+
+$nmaj = $maj+0;   $nmin = $min+0;
+$nsmin = $smin+0; $nplvl = $plvl+0;
 
 $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
@@ -76,6 +75,10 @@ if ( $what eq 'h' ) {
     printf "%%define __NASM_PATCHLEVEL__ %d\n", $nplvl;
     printf "%%define __NASM_VERSION_ID__ 0%08Xh\n", $nasm_id;
     printf "%%define __NASM_VER__ \"%s\"\n", $line;
+} elsif ( $what eq 'id' ) {
+    print $nasm_id, "\n";	 # Print ID in decimal
+} elsif ( $what eq 'xid' ) {
+    printf "0x%08x\n", $nasm_id; # Print ID in hexadecimal
 } else {
     die "$0: Unknown output: $what\n";
 }
