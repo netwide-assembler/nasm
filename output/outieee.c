@@ -1296,7 +1296,7 @@ static void dbgls_linnum (const char *lnfname, long lineno, long segto)
     if (!seg)
 	error (ERR_PANIC, "lineno directed to nonexistent segment?");
 
-    for (fn = fnhead; fn; fn = fnhead->next) {
+    for (fn = fnhead; fn; fn = fn->next) {
 	if (!nasm_stricmp(lnfname,fn->name))
 	    break;
         i++;
