@@ -3565,7 +3565,7 @@ Once again, like \c{EXTERN} and \c{GLOBAL}, the primitive form of
 only one argument at a time.
 
 
-\H{CPU} \i\c{CPU XXX}: Defining CPU Dependencies
+\H{CPU} \i\c{CPU}: Defining CPU Dependencies
 
 The \i\c{CPU} directive restricts assembly to those instructions which
 are available on the specified CPU.
@@ -3600,8 +3600,11 @@ Options are:
 
 \b\c{CPU WILLAMETTE}    Same as P4
 
-All options are case insensitive. All instructions will
-be selected only if they apply to the selected cpu or lower.
+\b\c{CPU IA64}          IA64 CPU (in x86 mode) instruction set
+
+All options are case insensitive.  All instructions will be selected
+only if they apply to the selected CPU or lower.  By default, all
+instructions are available.
 
 
 \C{outfmt} \i{Output Formats}
