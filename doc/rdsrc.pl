@@ -858,6 +858,63 @@ sub word_html {
   }
 }
 
+sub ref_ps {
+    my($r) = @_;
+    $r =~ s/\./_/g;
+    return 'n'.$r;
+}
+
+sub ps_write_bookmarks {
+    my $para;
+    my %nchildren = ();
+    my %titles = ();
+    my @reflist = ();
+    my $ref, $pref, $i, $title;
+
+    for ($para = 0; $para <= $#pnames; $para++) {
+	my $pname = $pnames[$para];
+	my $pflags = $pflags[$para];
+	my $ptype = substr($pflags,0,4);
+	
+	if ($ptype eq "chap" || $ptype eq "appn") {
+	    # Chapter/appendix heading. "Chapter N: Title" followed by a line of
+	    # minus signs.
+	    
+	    $pflags =~ /(chap|appn) (.*) :(.*)/;
+	    $ref = &ref_ps($2);
+	    $title = '';
+	    foreach $i (@$pname) {
+		$title .= &word_ps_title($i);
+	    }
+	    $titles{$ref} = $title;
+	    push @reflist, $ref;
+	} elsif ($ptype eq "head" || $ptype eq "subh") {
+	    # Heading/subheading.  Just a number and some text.
+	    $pflags =~ /.... (.*) :(.*)/;
+	    $ref = &ref_ps($1);
+	    $ref =~ /^(n[0-9A-Za-z_]+)\_[0-9A-Za-z]+$/;
+	    $pref = $1;
+
+	    $title = '';
+	    foreach $i (@$pname) {
+		$title .= &word_ps_title($i);
+	    }
+	    $titles{$ref} = $title;
+	    push @reflist, $ref;
+	    $nchildren{$pref}++;
+	}
+    }
+
+    # Now we should have enough data to generate the bookmarks
+    print "[/Title (Contents) /Dest /nContents /OUT pdfmark";
+    foreach $i ( @reflist ) {
+	print '[/Title (', $titles{$i}, ")\n";
+	print '/Count -', $nchildren{$i}, ' ' if ( $nchildren{$i} );
+	print "/Dest /$i /OUT pdfmark\n";
+    }
+    print "[/Title (Index) /Dest /nIndex /OUT pdfmark\n";
+}
+
 sub write_ps {
   # This is called from the top level, so I won't bother using
   # my or local.
@@ -915,7 +972,7 @@ sub write_ps {
       # Chapter heading. "Chapter N: Title" followed by a line of
       # minus signs.
       $pflags =~ /chap (.*) :(.*)/;
-      push @line, "nChapter", " ", "n$1:", " ";
+      push @line, "B".&ref_ps($1), "nChapter", " ", "n$1:", " ";
       foreach $i (@$pname) {
         $ww = &word_ps($i);
         push @line, $ww unless $ww eq "x";
@@ -928,7 +985,7 @@ sub write_ps {
       # Appendix heading. "Appendix N: Title" followed by a line of
       # minus signs.
       $pflags =~ /appn (.*) :(.*)/;
-      push @line, "nAppendix", " ", "n$1:", " ";
+      push @line, "B".&ref_ps($1), "nAppendix", " ", "n$1:", " ";
       foreach $i (@$pname) {
         $ww = &word_ps($i);
         push @line, $ww unless $ww eq "x";
@@ -940,7 +997,7 @@ sub write_ps {
     } elsif ($ptype eq "head") {
       # Heading. Just a number and some text.
       $pflags =~ /.... (.*) :(.*)/;
-      push @line, "n$1";
+      push @line, "B".&ref_ps($1), "n$1";
       foreach $i (@$pname) {
         $ww = &word_ps($i);
         push @line, $ww unless $ww eq "x";
@@ -952,7 +1009,7 @@ sub write_ps {
     } elsif ($ptype eq "subh") {
       # Subheading. Just a number and some text.
       $pflags =~ /subh (.*) :(.*)/;
-      push @line, "n$1";
+      push @line, "B".&ref_ps($1), "n$1";
       foreach $i (@$pname) {
         push @line, &word_ps($i);
       }
@@ -1034,20 +1091,20 @@ sub write_ps {
   print "building contents...";
   @clnames = @cltypes = ();
   $clname = "pscont000000";
-  @$clname = ("nContents"); # "chapter heading" for TOC
+  @$clname = ("BnContents", "nContents"); # "chapter heading" for TOC
   push @clnames,$clname++;
   push @cltypes,"chap";
   for ($i=0; $i<=$#lnames; $i++) {
     $lname = $lnames[$i];
     if ($ltypes[$i] =~ /^(chap|head|subh)/) {
       @$clname = @$lname;
-      splice @$clname,1,0," " if ($ltypes[$i] !~ /chap/);
+      splice @$clname,2,0," " if ($ltypes[$i] !~ /chap/);
       push @$clname,$i; # placeholder for page number
       push @clnames,$clname++;
       push @cltypes,"C" . substr($ltypes[$i],0,3);
     }
   }
-  @$clname = ("nIndex"); # contents entry for Index
+  @$clname = ("BnIndex", "nIndex"); # contents entry for Index
   push @$clname,$i;      # placeholder for page number
   $idx_clname = $clname;
   push @clnames,$clname++;
@@ -1174,9 +1231,10 @@ sub write_ps {
     @pp = ();
     $inums = join(',',sort { $a <=> $b } keys %{$psidxpp{$k}});
     while (length $inums) {
-      $inums =~ /^([^,]+,?)(.*)$/;
-      $inums = $2, $inum = $1;
-      @pnum = (" ", "n$inum");
+      $inums =~ /^([^,]+)(,?)(.*)$/;
+      $inums = $3, $inumc = $2; $inum = $1;
+      @pnum = (" ", "Bp$inum", "n$inum", "E");
+      push(@pnum, "n$inumc") if ( $inumc ne '' );
       $pnumlen = &len_ps(@pnum);
       if ($pnumlen > $len) {
         &ps_idxout($cmd,\@line,\@pp);
@@ -1199,6 +1257,7 @@ sub write_ps {
   select PS;
   $page = $lpages[0];
   &ps_header;
+  &ps_write_bookmarks;
   for ($i=0; $i<=$#lnames; $i++) {
     &ps_throw_pg($page,$lpages[$i]) if $page != $lpages[$i];
     $page = $lpages[$i];
@@ -1209,7 +1268,7 @@ sub write_ps {
     &ps_throw_pg($page, $pnum) if $page != $pnum;
     $page = $pnum++;
     $ypos = 0;
-    $ypos = 100, &ps_out_line(0, "chap", ["nIndex"]) if !$i;
+    $ypos = 100, &ps_out_line(0, "chap", ["BnIndex", "nIndex"]) if !$i;
     $lines = ($pmax - $ypos) / $textht;
     my $col; # ps_out_line hits this variable
     PAGE:for ($col = 1; $col <= 2; $col++) {
@@ -1244,123 +1303,201 @@ sub ps_idxout {
 }
 
 sub ps_header {
-  @pshdr = (
-    '/sp (n ) def', # here it's sure not to get wrapped inside ()
-    '/nf /Times-Roman findfont 11 scalefont def',
-    '/ef /Times-Italic findfont 11 scalefont def',
-    '/cf /Courier findfont 11 scalefont def',
-    '/nc /Helvetica-Bold findfont 18 scalefont def',
-    '/ec /Helvetica-Oblique findfont 18 scalefont def',
-    '/cc /Courier-Bold findfont 18 scalefont def',
-    '/nh /Helvetica-Bold findfont 14 scalefont def',
-    '/eh /Helvetica-Oblique findfont 14 scalefont def',
-    '/ch /Courier-Bold findfont 14 scalefont def',
-    '/ns /Helvetica-Bold findfont 12 scalefont def',
-    '/es /Helvetica-Oblique findfont 12 scalefont def',
-    '/cs /Courier-Bold findfont 12 scalefont def',
-    '/n 16#6E def /e 16#65 def /c 16#63 def',
-    '/pageodd {',
-    '   550 50 moveto ns setfont dup stringwidth pop neg 0 rmoveto show',
-    '} def',
-    '/pageeven { 50 50 moveto ns setfont show } def',
-    '/chapter {',
-    '  100 620 moveto',
-    '  {',
-    '    dup 0 get',
-    '    dup n eq {pop nc setfont} {',
-    '      e eq {ec setfont} {cc setfont} ifelse',
-    '    } ifelse',
-    '    dup length 1 sub 1 exch getinterval show',
-    '  } forall',
-    '  0 setlinecap 3 setlinewidth',
-    '  newpath 100 610 moveto 468 0 rlineto stroke',
-    '} def',
-    '/heading {',
-    '  686 exch sub /y exch def /a exch def',
-    '  90 y moveto a 0 get dup length 1 sub 1 exch getinterval',
-    '  nh setfont dup stringwidth pop neg 0 rmoveto show',
-    '  100 y moveto',
-    '  a dup length 1 sub 1 exch getinterval {',
-    '    /s exch def',
-    '    s 0 get',
-    '    dup n eq {pop nh setfont} {',
-    '      e eq {eh setfont} {ch setfont} ifelse',
-    '    } ifelse',
-    '    s s length 1 sub 1 exch getinterval show',
-    '  } forall',
-    '} def',
-    '/subhead {',
-    '  688 exch sub /y exch def /a exch def',
-    '  90 y moveto a 0 get dup length 1 sub 1 exch getinterval',
-    '  ns setfont dup stringwidth pop neg 0 rmoveto show',
-    '  100 y moveto',
-    '  a dup length 1 sub 1 exch getinterval {',
-    '    /s exch def',
-    '    s 0 get',
-    '    dup n eq {pop ns setfont} {',
-    '      e eq {es setfont} {cs setfont} ifelse',
-    '    } ifelse',
-    '    s s length 1 sub 1 exch getinterval show',
-    '  } forall',
-    '} def',
-    '/disp { /j exch def',
-    '  568 exch sub exch 689 exch sub moveto',
-    '  {',
-    '    /s exch def',
-    '    s 0 get',
-    '    dup n eq {pop nf setfont} {',
-    '      e eq {ef setfont} {cf setfont} ifelse',
-    '    } ifelse',
-    '    s s length 1 sub 1 exch getinterval show',
-    '    s sp eq {j 0 rmoveto} if',
-    '  } forall',
-    '} def',
-    '/contents { /w exch def /y exch def /a exch def',
-    '  /yy 689 y sub def',
-    '  a a length 1 sub get dup length 1 sub 1 exch getinterval /s exch def',
-    '  nf setfont 568 s stringwidth pop sub /ex exch def',
-    '  ex yy moveto s show',
-    '  a 0 a length 1 sub getinterval y w 0 disp',
-    '  /sx currentpoint pop def nf setfont',
-    '  100 10 568 { /i exch def',
-    '    i 5 sub sx gt i 5 add ex lt and {',
-    '      i yy moveto (.) show',
-    '    } if',
-    '  } for',
-    '} def',
-    '/just { /w exch def /y exch def /a exch def',
-    '  /jj w def /spaces 0 def',
-    '  a {',
-    '    /s exch def',
-    '    s 0 get',
-    '    dup n eq {pop nf setfont} {',
-    '      e eq {ef setfont} {cf setfont} ifelse',
-    '    } ifelse',
-    '    s s length 1 sub 1 exch getinterval stringwidth pop',
-    '    jj exch sub /jj exch def',
-    '    s sp eq {/spaces spaces 1 add def} if',
-    '  } forall',
-    '  a y w jj spaces spaces 0 eq {pop pop 0} {div} ifelse disp',
-    '} def',
-    '/idl { 468 exch sub 0 disp } def',
-    '/ldl { 436 exch sub 0 disp } def',
-    '/idr { 222 add 468 exch sub /x exch def /y exch def /a exch def',
-    '  a {',
-    '    /s exch def',
-    '    s 0 get',
-    '    dup n eq {pop nf setfont} {',
-    '      e eq {ef setfont} {cf setfont} ifelse',
-    '    } ifelse',
-    '    s s length 1 sub 1 exch getinterval stringwidth pop',
-    '    x add /x exch def',
-    '  } forall',
-    '  a y x 0 disp',
-    '} def',
-    '/left {0 disp} def',
-    '/bullet {',
-    '  nf setfont dup 100 exch 689 exch sub moveto (\267) show',
-    '} def'
-  );
+    $pshdr = <<'EOF';
+/sp (n ) def
+/nf /Times-Roman findfont 11 scalefont def
+/ef /Times-Italic findfont 11 scalefont def
+/cf /Courier findfont 11 scalefont def
+/nc /Helvetica-Bold findfont 18 scalefont def
+/ec /Helvetica-Oblique findfont 18 scalefont def
+/cc /Courier-Bold findfont 18 scalefont def
+/nh /Helvetica-Bold findfont 14 scalefont def
+/eh /Helvetica-Oblique findfont 14 scalefont def
+/ch /Courier-Bold findfont 14 scalefont def
+/ns /Helvetica-Bold findfont 12 scalefont def
+/es /Helvetica-Oblique findfont 12 scalefont def
+/cs /Courier-Bold findfont 12 scalefont def
+/n 16#6E def /e 16#65 def /c 16#63 def
+/B 16#42 def /E 16#45 def /D 16#44 def
+/min { 2 copy gt { exch } if pop } def
+/max { 2 copy lt { exch } if pop } def
+/lkbegun 0 def
+/lkury 0 def
+/lkurx 0 def
+/lklly 0 def
+/lkllx 0 def
+/lktarget () def
+/linkbegin {
+  /lkbegun 1 def
+  /lktarget exch cvn def
+} def
+/linkshow {
+  lkbegun 0 ne {
+    gsave dup true charpath pathbbox grestore
+    lkbegun 1 eq {
+      /lkury exch def
+      /lkurx exch def
+      /lklly exch def
+      /lkllx exch def
+      /lkbegun 2 def
+    } {
+      lkury max /lkury exch def
+      lkurx max /lkurx exch def
+      lklly min /lklly exch def
+      lkllx min /lkllx exch def
+    } ifelse
+  } if
+  show
+} def
+/linkend {
+  [/Rect [ lkllx lklly lkurx lkury ]
+    /Color [ 1.0 0.0 0.0 ]
+    /Border [0 0 0]
+    /Dest lktarget
+    /Subtype /Link
+    /ANN pdfmark
+  /lkbegun 0 def
+} def
+/linkdest {
+  /lkdest exch cvn def
+  [ /Dest lkdest
+    /View [ /XYZ currentpoint 0 ]
+    /DEST pdfmark
+} def
+/handlelink {
+  dup 0 get
+  dup B eq {
+    pop dup length 1 sub 1 exch getinterval linkbegin
+  } {
+    E eq {
+      pop linkend
+    } {
+      dup length 1 sub 1 exch getinterval linkdest
+    } ifelse
+  } ifelse
+} def
+/pageodd {
+   550 50 moveto ns setfont dup stringwidth pop neg 0 rmoveto show
+} def
+/pageeven { 50 50 moveto ns setfont show } def
+/destmark {
+  dup length 1 sub 1 exch getinterval linkdest
+} def
+/chapter {
+  100 620 moveto
+  dup 0 get destmark
+  dup length 1 sub 1 exch getinterval
+  {
+    dup 0 get
+    dup n eq {pop nc setfont} {
+      e eq {ec setfont} {cc setfont} ifelse
+    } ifelse
+    dup length 1 sub 1 exch getinterval show
+  } forall
+  0 setlinecap 3 setlinewidth
+  newpath 100 610 moveto 468 0 rlineto stroke
+} def
+/heading {
+  686 exch sub /y exch def /a exch def
+  90 y moveto
+  a 0 get destmark
+  a 1 get dup length 1 sub 1 exch getinterval
+  nh setfont dup stringwidth pop neg 0 rmoveto show
+  100 y moveto
+  a dup length 2 sub 2 exch getinterval {
+    /s exch def
+    s 0 get
+    dup n eq {pop nh setfont} {
+      e eq {eh setfont} {ch setfont} ifelse
+    } ifelse
+    s s length 1 sub 1 exch getinterval show
+  } forall
+} def
+/subhead {
+  688 exch sub /y exch def /a exch def
+  90 y moveto
+  a 0 get destmark
+  a 1 get dup length 1 sub 1 exch getinterval
+  ns setfont dup stringwidth pop neg 0 rmoveto show
+  100 y moveto
+  a dup length 2 sub 2 exch getinterval {
+    /s exch def
+    s 0 get
+    dup n eq {pop ns setfont} {
+      e eq {es setfont} {cs setfont} ifelse
+    } ifelse
+    s s length 1 sub 1 exch getinterval show
+  } forall
+} def
+/disp { /j exch def
+  568 exch sub exch 689 exch sub moveto
+  {
+    /s exch def
+    s 0 get
+    dup E le {
+      pop s handlelink
+    } {
+      dup n eq {pop nf setfont} {
+        e eq {ef setfont} {cf setfont} ifelse
+      } ifelse
+      s s length 1 sub 1 exch getinterval linkshow
+      s sp eq {j 0 rmoveto} if
+    } ifelse
+  } forall
+} def
+/contents { /w exch def /y exch def /a exch def
+  /yy 689 y sub def
+  a a length 1 sub get dup length 1 sub 1 exch getinterval
+  /ss exch def
+  nf setfont 568 ss stringwidth pop sub /ex exch def
+  a 0 a length 1 sub getinterval y w 0 disp
+  /sx currentpoint pop def nf setfont
+  100 10 568 { /i exch def
+    i 5 sub sx gt i 5 add ex lt and {
+      i yy moveto (.) linkshow
+    } if
+  } for
+  ss linkshow
+  linkend
+} def
+/just { /w exch def /y exch def /a exch def
+  /jj w def /spaces 0 def
+  a {
+    /s exch def
+    s 0 get
+    dup n eq {pop nf setfont} {
+      e eq {ef setfont} {cf setfont} ifelse
+    } ifelse
+    s s length 1 sub 1 exch getinterval stringwidth pop
+    jj exch sub /jj exch def
+    s sp eq {/spaces spaces 1 add def} if
+  } forall
+  a y w jj spaces spaces 0 eq {pop pop 0} {div} ifelse disp
+} def
+/idl { 468 exch sub 0 disp } def
+/ldl { 436 exch sub 0 disp } def
+/idr { 222 add 468 exch sub /x exch def /y exch def /a exch def
+  a {
+    /s exch def
+    s 0 get
+    dup E le {
+      pop
+    } {
+      dup n eq {pop nf setfont} {
+        e eq {ef setfont} {cf setfont} ifelse
+      } ifelse
+      s s length 1 sub 1 exch getinterval stringwidth pop
+      x add /x exch def
+    } ifelse
+  } forall
+  a y x 0 disp
+} def
+/left {0 disp} def
+/bullet {
+  nf setfont dup 100 exch 689 exch sub moveto (\267) show
+} def
+[/PageMode /UseOutlines /DOCVIEW pdfmark
+EOF
   print "%!PS-Adobe-3.0\n";
   print "%%BoundingBox: 95 95 590 705\n";
   print "%%Creator: a nasty Perl script\n";
@@ -1369,8 +1506,15 @@ sub ps_header {
   print "%%Pages: $lpages[$#lpages]\n";
   print "%%DocumentNeededResources: font Times-Roman Times-Italic\n";
   print "%%+ font Helvetica-Bold Courier Courier-Bold\n";
-  print "%%EndComments\n%%BeginProlog\n%%EndProlog\n%%BeginSetup\nsave\n";
-  $pshdr = join(' ',@pshdr);
+  print "%%EndComments\n";
+  print "%%BeginProlog\n";
+  # This makes sure non-PDF PostScript interpreters don't choke on
+  # pdfmarks in the output
+  print "/pdfmark where\n";
+  print "{pop} {userdict /pdfmark /cleartomark load put} ifelse\n";
+  print "%%EndProlog\n";
+  print "%%BeginSetup\n";
+  print "save\n";
   $pshdr =~ s/\s+/ /g;
   while ($pshdr =~ /\S/) {
     last if length($pshdr) < 72 || $pshdr !~ /^(.{0,72}\S)\s(.*)$/;
@@ -1401,6 +1545,7 @@ sub ps_initpg {
   my ($pgnum) = @_;
   print "%%Page: $pgnum $pgnum\n";
   print "%%BeginPageSetup\nsave\n%%EndPageSetup\n";
+  print "95 705 moveto (p$pgnum) linkdest\n";
 }
 
 sub ps_donepg {
@@ -1423,7 +1568,7 @@ sub ps_out_line {
     $c = "n\261" if $c eq "-";
     $d = '';
     while (length $c) {
-      $d .= $1, $c = $2 while $c =~ /^([ -'\*-\[\]-~]+)(.*)$/;
+      $d .= $1, $c = $2 while $c =~ /^([ -\'\*-\[\]-~]+)(.*)$/;
       while (1) {
         $d .= "\\$1", $c = $2, next if $c =~ /^([\\\(\)])(.*)$/;
 	($d .= sprintf "\\%3o",unpack("C",$1)), $c = $2, next
@@ -1495,6 +1640,35 @@ sub word_ps {
   }
 }
 
+sub word_ps_title {
+  my ($w) = @_;
+  my $wtype, $wmajt;
+
+  return undef if $w eq '' || $w eq undef;
+
+  $wtype = substr($w,0,2);
+  $wmajt = substr($wtype,0,1);
+  $w = substr($w,2);
+  $w =~ s/<.*>// if $wmajt eq "w"; # remove web links
+  if ($wmajt eq "n" || $wtype eq "w ") {
+    return $w;
+  } elsif ($wtype eq "sp") {
+    return ' ';
+  } elsif ($wtype eq "da") {
+    return '-';
+  } elsif ($wmajt eq "c" || $wtype eq "wc") {
+    return $w;
+  } elsif ($wmajt eq "e") {
+    return $w;
+  } elsif ($wmajt eq "x") {
+    return '';
+  } elsif ($wtype eq "i ") {
+    return '';
+  } else {
+    die "panic in word_ps_title: $wtype$w\n";
+  }
+}
+
 sub len_ps {
   my (@line) = @_;
   my $l = 0;
@@ -1505,11 +1679,13 @@ sub len_ps {
     $w = "n " if $w eq " ";
     $w = "n\261" if $w eq "-";
     $f = substr($w,0,1);
-    $f = "timesr" if $f eq "n";
-    $f = "timesi" if $f eq "e";
-    $f = "courr" if $f eq "c";
-    foreach $c (unpack 'C*',substr($w,1)) {
-      $l += $size * $$f[$c];
+    if ( $f !~ /^[BDE]$/ ) {
+	$f = "timesr" if $f eq "n";
+	$f = "timesi" if $f eq "e";
+	$f = "courr" if $f eq "c";
+	foreach $c (unpack 'C*',substr($w,1)) {
+	    $l += $size * $$f[$c];
+	}
     }
   }
   return $l;
@@ -1959,7 +2135,7 @@ sub word_hlp {
   $w =~ s/\{/\\\{/g;
   $w =~ s/\}/\\\}/g;
   $w =~ s/<.*>// if $wmajt eq "w"; # remove web links
-  substr($w,0,length($w)-1) =~ s/-/\\'AD/g if $wmajt ne "x"; #nonbreakhyphens
+  substr($w,0,length($w)-1) =~ s/-/\\\'AD/g if $wmajt ne "x"; #nonbreakhyphens
   if ($wmajt eq "n" || $wtype eq "e " || $wtype eq "w ") {
     return $w;
   } elsif ($wtype eq "sp") {
@@ -1967,7 +2143,7 @@ sub word_hlp {
   } elsif ($wtype eq "da") {
     return "\\'96";
   } elsif ($wmajt eq "c" || $wtype eq "wc") {
-    $w =~ s/ /\\'A0/g; # make spaces non-breaking
+    $w =~ s/ /\\\'A0/g; # make spaces non-breaking
     return $docode ? "{\\f1 ${w}}" : $w;
   } elsif ($wtype eq "es") {
     return "{\\i ${w}";
