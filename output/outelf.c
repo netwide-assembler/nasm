@@ -1275,14 +1275,17 @@ void stabs_init(struct ofmt *of,void *id,FILE *fp,efunc error)
 void stabs_linenum(const char *filename,long linenumber,long segto)
 {
   if (!stabs_filename) {
-    stabs_filename = (char *)malloc(strlen(filename)+1);
+    stabs_filename = (char *)nasm_malloc(strlen(filename)+1);
     strcpy(stabs_filename,filename);
   } else {
     if (strcmp(stabs_filename,filename)) {
       /* yep, a memory leak...this program is one-shot anyway, so who cares...
 	 in fact, this leak comes in quite handy to maintain a list of files
 	 encountered so far in the symbol lines... */
-      stabs_filename = (char *)malloc(strlen(filename)+1);
+     
+      /* why not nasm_free(stabs_filename); we're done with the old one */
+      
+      stabs_filename = (char *)nasm_malloc(strlen(filename)+1);
       strcpy(stabs_filename,filename);
     }
   }
@@ -1311,7 +1314,7 @@ void stabs_output(int type,void *param)
       s=(struct symlininfo *)param;
       if (strcmp( s->name,".text")) return; /* we are only interested in the text stuff */
       numlinestabs++;
-      el=(struct linelist *)malloc(sizeof(struct linelist));
+      el=(struct linelist *)nasm_malloc(sizeof(struct linelist));
       el->info.offset=s->offset;
       el->info.section=s->section;
       el->info.name=s->name;
@@ -1352,7 +1355,7 @@ void stabs_generate(void)
 
   ptr=stabslines;
 
-  allfiles = (char **)malloc(numlinestabs*sizeof(char *));
+  allfiles = (char **)nasm_malloc(numlinestabs*sizeof(char *));
   for (i=0;i<numlinestabs;i++) allfiles[i]=0;
   numfiles=0;
   while (ptr) {
@@ -1371,7 +1374,7 @@ void stabs_generate(void)
     ptr=ptr->next;
   }
   strsize=1;
-  fileidx = (int *)malloc(numfiles*sizeof(int));
+  fileidx = (int *)nasm_malloc(numfiles*sizeof(int));
   for (i=0;i<numfiles;i++) {
     fileidx[i]=strsize;
     strsize+=strlen(allfiles[i])+1;
@@ -1388,11 +1391,11 @@ void stabs_generate(void)
 	/* worst case size of the stab buffer would be:
 		the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
 		*/
-  sbuf = (unsigned char *)malloc((numlinestabs*2+3)*sizeof(struct stabentry));
+  sbuf = (unsigned char *)nasm_malloc((numlinestabs*2+3)*sizeof(struct stabentry));
 
-  ssbuf = (unsigned char *)malloc(strsize);
+  ssbuf = (unsigned char *)nasm_malloc(strsize);
 
-  rbuf = (unsigned char *)malloc(numlinestabs*8*(2+3));
+  rbuf = (unsigned char *)nasm_malloc(numlinestabs*8*(2+3));
   rptr=rbuf;
 
   for (i=0;i<numfiles;i++) {
@@ -1454,8 +1457,8 @@ void stabs_generate(void)
 
   ((struct stabentry *)sbuf)->n_desc=numstabs;
 
-  free(allfiles);
-  free(fileidx);
+  nasm_free(allfiles);
+  nasm_free(fileidx);
 
   stablen = (sptr-sbuf);
   stabrellen=(rptr-rbuf);
@@ -1471,11 +1474,11 @@ void stabs_cleanup() {
   while (ptr) {
     del=ptr;
     ptr=ptr->next;
-    free(del);
+    nasm_free(del);
   }
-  if (stabbuf) free(stabbuf);
-  if (stabrelbuf) free(stabrelbuf);
-  if (stabstrbuf) free(stabstrbuf);
+  if (stabbuf) nasm_free(stabbuf);
+  if (stabrelbuf) nasm_free(stabrelbuf);
+  if (stabstrbuf) nasm_free(stabstrbuf);
 }
 
 #endif /* OF_ELF */
