@@ -1,0 +1,117 @@
+.TH NDISASM 1 "The Netwide Assembler Project"
+.SH NAME
+ndisasm \- the Netwide Disassembler \- 80x86 binary file disassembler
+.SH SYNOPSIS
+.B ndisasm
+[
+.B \-o
+origin
+] [
+.B \-s
+sync-point [...]]
+[
+.B \-a
+|
+.B \-i
+] [
+.B \-b
+bits
+] [
+.B -u
+] [
+.B \-e
+hdrlen
+] [
+.B \-k
+offset,length [...]]
+infile
+.br
+.B ndisasm \-h
+.br
+.B ndisasm \-r
+.SH DESCRIPTION
+The
+.B ndisasm
+command generates a disassembly listing of the binary file
+.I infile
+and directs it to stdout.
+.SS OPTIONS
+.TP
+.B \-h
+Causes
+.B ndisasm
+to exit immediately, after giving a summary of its invocation
+options.
+.TP
+.BI \-r
+Causes
+.B ndisasm
+to exit immediately, after displaying its version number.
+.TP
+.BI \-o " origin"
+Specifies the notional load address for the file. This option causes
+.B ndisasm
+to get the addresses it lists down the left hand margin, and the
+target addresses of PC-relative jumps and calls, right.
+.TP
+.BI \-s " sync-point"
+Manually specifies a synchronisation address, such that
+.B ndisasm
+will not output any machine instruction which encompasses bytes on
+both sides of the address. Hence the instruction which
+.I starts
+at that address will be correctly disassembled.
+.TP
+.BI \-e " hdrlen"
+Specifies a number of bytes to discard from the beginning of the
+file before starting disassembly. This does not count towards the
+calculation of the disassembly offset: the first
+.I disassembled
+instruction will be shown starting at the given load address.
+.TP
+.BI \-k " offset,length"
+Specifies that
+.I length
+bytes, starting from disassembly offset
+.IR offset ,
+should be skipped over without generating any output. The skipped
+bytes still count towards the calculation of the disassembly offset.
+.TP
+.BR \-a " or " \-i
+Enables automatic (or intelligent) sync mode, in which
+.B ndisasm
+will attempt to guess where synchronisation should be performed, by
+means of examining the target addresses of the relative jumps and
+calls it disassembles.
+.TP
+.BI \-b " bits"
+Specifies either 16-bit or 32-bit mode. The default is 16-bit mode.
+.TP
+.B \-u
+Specifies 32-bit mode, more compactly than using `-b 32'.
+.PP
+.RE
+.SH RESTRICTIONS
+.B ndisasm
+only disassembles binary files: it has no understanding of the
+header information present in object or executable files. If you
+want to disassemble an object file, you should probably be using
+.BR objdump "(" 1 ")."
+.PP
+Auto-sync mode won't necessarily cure all your synchronisation
+problems: a sync marker can only be placed automatically if a jump
+or call instruction is found to refer to it
+.I before
+.B ndisasm
+actually disassembles that part of the code. Also, if spurious jumps
+or calls result from disassembling non-machine-code data, sync
+markers may get placed in strange places. Feel free to turn
+auto-sync off and go back to doing it manually if necessary.
+.PP
+.B ndisasm
+can only keep track of 8192 sync markers internally at once: this is
+to do with portability, since DOS machines don't take kindly to more
+than 64K being allocated at a time.
+.PP
+.SH SEE ALSO
+.BR objdump "(" 1 ")."

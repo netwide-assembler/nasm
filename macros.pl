@@ -7,7 +7,8 @@
 # redistributable under the licence given in the file "Licence"
 # distributed in the NASM archive.
 
-open INPUT,"standard.mac" || die "unable to open standard.mac\n";
+$fname = "standard.mac" unless $fname = $ARGV[0];
+open INPUT,$fname || die "unable to open $fname\n";
 open OUTPUT,">macros.c" || die "unable to open macros.c\n";
 
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .

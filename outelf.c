@@ -18,18 +18,33 @@
 
 #ifdef OF_ELF
 
+/*
+ * Relocation types.
+ */
+#define R_386_32 1		       /* ordinary absolute relocation */
+#define R_386_PC32 2		       /* PC-relative relocation */
+#define R_386_GOT32 3		       /* an offset into GOT */
+#define R_386_PLT32 4		       /* a PC-relative offset into PLT */
+#define R_386_GOTOFF 9		       /* an offset from GOT base */
+#define R_386_GOTPC 10		       /* a PC-relative offset _to_ GOT */
+
 struct Reloc {
     struct Reloc *next;
     long address;		       /* relative to _start_ of section */
     long symbol;		       /* ELF symbol info thingy */
-    int relative;		       /* TRUE or FALSE */
+    int type;			       /* type of relocation */
 };
 
 struct Symbol {
     long strpos;		       /* string table position of name */
     long section;		       /* section ID of the symbol */
-    int type;			       /* TRUE or FALSE */
-    long value;			       /* address, or COMMON variable size */
+    int type;			       /* symbol type */
+    long value;			       /* address, or COMMON variable align */
+    long size;			       /* size of symbol */
+    long globnum;		       /* symbol table offset if global */
+    struct Symbol *next;	       /* list of globals in each section */
+    struct Symbol *nextfwd;	       /* list of unresolved-size symbols */
+    char *name;			       /* used temporarily if in above list */
 };
 
 #define SHT_PROGBITS 1
@@ -50,6 +65,7 @@ struct Section {
     struct SAA *rel;
     long rellen;
     struct Reloc *head, **tail;
+    struct Symbol *gsyms;	       /* global symbols in section */
 };
 
 #define SECT_DELTA 32
@@ -72,8 +88,13 @@ static unsigned long strslen;
 
 static FILE *elffp;
 static efunc error;
+static evalfunc evaluate;
+
+static struct Symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
+
+extern struct ofmt of_elf;
 
 #define SHN_ABS 0xFFF1
 #define SHN_COMMON 0xFFF2
@@ -81,6 +102,8 @@ static char elf_module[FILENAME_MAX];
 
 #define SYM_SECTION 0x04
 #define SYM_GLOBAL 0x10
+#define SYM_DATA 0x01
+#define SYM_FUNCTION 0x02
 
 #define GLOBAL_TEMP_BASE 6	       /* bigger than any constant sym id */
 
@@ -107,9 +130,19 @@ static struct SAA *elf_build_symtab (long *, long *);
 static struct SAA *elf_build_reltab (long *, struct Reloc *);
 static void add_sectname (char *, char *);
 
-static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef) {
+/*
+ * Special section numbers which are used to define ELF special
+ * symbols, which can be used with WRT to provide PIC relocation
+ * types.
+ */
+static long elf_gotpc_sect, elf_gotoff_sect;
+static long elf_got_sect, elf_plt_sect;
+static long elf_sym_sect;
+
+static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     elffp = fp;
     error = errfunc;
+    evaluate = eval;
     (void) ldef;		       /* placate optimisers */
     sects = NULL;
     nsects = sectlen = 0;
@@ -123,6 +156,20 @@ static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef) {
     shstrtab = NULL;
     shstrtablen = shstrtabsize = 0;;
     add_sectname ("", "");
+
+    fwds = NULL;
+
+    elf_gotpc_sect = seg_alloc();
+    ldef("..gotpc", elf_gotpc_sect+1, 0L, NULL, FALSE, FALSE, &of_elf, error);
+    elf_gotoff_sect = seg_alloc();
+    ldef("..gotoff", elf_gotoff_sect+1, 0L, NULL, FALSE, FALSE,&of_elf,error);
+    elf_got_sect = seg_alloc();
+    ldef("..got", elf_got_sect+1, 0L, NULL, FALSE, FALSE, &of_elf, error);
+    elf_plt_sect = seg_alloc();
+    ldef("..plt", elf_plt_sect+1, 0L, NULL, FALSE, FALSE, &of_elf, error);
+    elf_sym_sect = seg_alloc();
+    ldef("..sym", elf_sym_sect+1, 0L, NULL, FALSE, FALSE, &of_elf, error);
+
     def_seg = seg_alloc();
 }
 
@@ -179,6 +226,7 @@ static int elf_make_section (char *name, int type, int flags, int align) {
     s->type = type;
     s->flags = flags;
     s->align = align;
+    s->gsyms = NULL;
 
     if (nsects >= sectlen)
 	sects = nasm_realloc (sects, (sectlen += SECT_DELTA)*sizeof(*sects));
@@ -286,13 +334,58 @@ static long elf_section_names (char *name, int pass, int *bits) {
 }
 
 static void elf_deflabel (char *name, long segment, long offset,
-			   int is_global) {
+			   int is_global, char *special) {
     int pos = strslen;
     struct Symbol *sym;
+    int special_used = FALSE;
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	/*
+	 * This is a NASM special symbol. We never allow it into
+	 * the ELF symbol table, even if it's a valid one. If it
+	 * _isn't_ a valid one, we should barf immediately.
+	 */
+	if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
+	    strcmp(name, "..got") && strcmp(name, "..plt") &&
+	    strcmp(name, "..sym"))
+	    error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
 	return;
+    }
+
+    if (is_global == 3) {
+	struct Symbol **s;
+	/*
+	 * Fix up a forward-reference symbol size from the first
+	 * pass.
+	 */
+	for (s = &fwds; *s; s = &(*s)->nextfwd)
+	    if (!strcmp((*s)->name, name)) {
+		struct tokenval tokval;
+		expr *e;
+		char *p = special;
+
+		while (*p && !isspace(*p)) p++;
+		while (*p && isspace(*p)) p++;
+		stdscan_reset();
+		stdscan_bufptr = p;
+		tokval.t_type = TOKEN_INVALID;
+		e = evaluate(stdscan, NULL, &tokval, NULL, 1, error, NULL);
+		if (e) {
+		    if (!is_simple(e))
+			error (ERR_NONFATAL, "cannot use relocatable"
+			       " expression as symbol size");
+		    else
+			(*s)->size = reloc_value(e);
+		}
+
+		/*
+		 * Remove it from the list of unresolved sizes.
+		 */
+		nasm_free ((*s)->name);
+		*s = (*s)->nextfwd;
+		return;
+	    }
+	return;			       /* it wasn't an important one */
     }
 
     saa_wbytes (strs, name, (long)(1+strlen(name)));
@@ -302,6 +395,7 @@ static void elf_deflabel (char *name, long segment, long offset,
 
     sym->strpos = pos;
     sym->type = is_global ? SYM_GLOBAL : 0;
+    sym->size = 0;
     if (segment == NO_SEG)
 	sym->section = SHN_ABS;
     else {
@@ -322,21 +416,96 @@ static void elf_deflabel (char *name, long segment, long offset,
     }
 
     if (is_global == 2) {
-	sym->value = offset;
+	sym->size = offset;
+	sym->value = 0;
 	sym->section = SHN_COMMON;
+	/*
+	 * We have a common variable. Check the special text to see
+	 * if it's a valid number and power of two; if so, store it
+	 * as the alignment for the common variable.
+	 */
+	if (special) {
+	    int err;
+	    sym->value = readnum (special, &err);
+	    if (err)
+		error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+		      " valid number", special);
+	    else if ( (sym->value | (sym->value-1)) != 2*sym->value - 1)
+		error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+		      " power of two", special);
+	}
+	special_used = TRUE;
     } else
 	sym->value = (sym->section == SHN_UNDEF ? 0 : offset);
 
     if (sym->type == SYM_GLOBAL) {
 	if (sym->section == SHN_UNDEF || sym->section == SHN_COMMON)
 	    bsym = raa_write (bsym, segment, nglobs);
+	else {
+	    /*
+	     * This is a global symbol; so we must add it to the linked
+	     * list of global symbols in its section. We'll push it on
+	     * the beginning of the list, because it doesn't matter
+	     * much which end we put it on and it's easier like this.
+	     *
+	     * In addition, we check the special text for symbol
+	     * type and size information.
+	     */
+	    sym->next = sects[sym->section-1]->gsyms;
+	    sects[sym->section-1]->gsyms = sym;
+
+	    if (special) {
+		int n = strcspn(special, " ");
+
+		if (!nasm_strnicmp(special, "function", n))
+		    sym->type |= SYM_FUNCTION;
+		else if (!nasm_strnicmp(special, "data", n) ||
+			 !nasm_strnicmp(special, "object", n))
+		    sym->type |= SYM_DATA;
+		else
+		    error(ERR_NONFATAL, "unrecognised symbol type `%.*s'",
+			  n, special);
+		if (special[n]) {
+		    struct tokenval tokval;
+		    expr *e;
+		    int fwd = FALSE;
+
+		    while (special[n] && isspace(special[n]))
+			n++;
+		    /*
+		     * We have a size expression; attempt to
+		     * evaluate it.
+		     */
+		    stdscan_reset();
+		    stdscan_bufptr = special+n;
+		    tokval.t_type = TOKEN_INVALID;
+		    e = evaluate(stdscan, NULL, &tokval, &fwd, 0, error, NULL);
+		    if (fwd) {
+			sym->nextfwd = fwds;
+			fwds = sym;
+			sym->name = nasm_strdup(name);
+		    } else if (e) {
+			if (!is_simple(e))
+			    error (ERR_NONFATAL, "cannot use relocatable"
+				   " expression as symbol size");
+			else
+			    sym->size = reloc_value(e);
+		    }
+		}
+		special_used = TRUE;
+	    }
+	}
+	sym->globnum = nglobs;
 	nglobs++;
     } else
 	nlocals++;
+
+    if (special && !special_used)
+	error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
 static void elf_add_reloc (struct Section *sect, long segment,
-			    int relative) {
+			   int type) {
     struct Reloc *r;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -355,22 +524,105 @@ static void elf_add_reloc (struct Section *sect, long segment,
 	if (!r->symbol)
 	    r->symbol = GLOBAL_TEMP_BASE + raa_read(bsym, segment);
     }
-    r->relative = relative;
+    r->type = type;
 
     sect->nrelocs++;
+}
+
+/*
+ * This routine deals with ..got and ..sym relocations: the more
+ * complicated kinds. In shared-library writing, some relocations
+ * with respect to global symbols must refer to the precise symbol
+ * rather than referring to an offset from the base of the section
+ * _containing_ the symbol. Such relocations call to this routine,
+ * which searches the symbol list for the symbol in question.
+ *
+ * R_386_GOT32 references require the _exact_ symbol address to be
+ * used; R_386_32 references can be at an offset from the symbol.
+ * The boolean argument `exact' tells us this.
+ *
+ * Return value is the adjusted value of `addr', having become an
+ * offset from the symbol rather than the section. Should always be
+ * zero when returning from an exact call.
+ *
+ * Limitation: if you define two symbols at the same place,
+ * confusion will occur.
+ *
+ * Inefficiency: we search, currently, using a linked list which
+ * isn't even necessarily sorted.
+ */
+static long elf_add_gsym_reloc (struct Section *sect,
+				long segment, long offset,
+				int type, int exact) {
+    struct Reloc *r;
+    struct Section *s;
+    struct Symbol *sym, *sm;
+    int i;
+
+    /*
+     * First look up the segment/offset pair and find a global
+     * symbol corresponding to it. If it's not one of our segments,
+     * then it must be an external symbol, in which case we're fine
+     * doing a normal elf_add_reloc after first sanity-checking
+     * that the offset from the symbol is zero.
+     */
+    s = NULL;
+    for (i=0; i<nsects; i++)
+	if (segment == sects[i]->index) {
+	    s = sects[i];
+	    break;
+	}
+    if (!s) {
+	if (exact && offset != 0)
+	    error (ERR_NONFATAL, "unable to find a suitable global symbol"
+		   " for this reference");
+	else
+	    elf_add_reloc (sect, segment, type);
+	return offset;
+    }
+
+    if (exact) {
+	/*
+	 * Find a symbol pointing _exactly_ at this one.
+	 */
+	for (sym = s->gsyms; sym; sym = sym->next)
+	    if (sym->value == offset)
+		break;
+    } else {
+	/*
+	 * Find the nearest symbol below this one.
+	 */
+	sym = NULL;
+	for (sm = s->gsyms; sm; sm = sm->next)
+	    if (sm->value <= offset && (!sym || sm->value > sym->value))
+		sym = sm;
+    }
+    if (!sym && exact) {
+	error (ERR_NONFATAL, "unable to find a suitable global symbol"
+	       " for this reference");
+	return 0;
+    }
+
+    r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
+    sect->tail = &r->next;
+    r->next = NULL;
+
+    r->address = sect->len;
+    r->symbol = GLOBAL_TEMP_BASE + sym->globnum;
+    r->type = type;
+
+    sect->nrelocs++;
+
+    return offset - sym->value;
 }
 
 static void elf_out (long segto, void *data, unsigned long type,
 		      long segment, long wrt) {
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
+    long addr;
     unsigned char mydata[4], *p;
     int i;
-
-    if (wrt != NO_SEG) {
-	wrt = NO_SEG;		       /* continue to do _something_ */
-	error (ERR_NONFATAL, "WRT not supported by ELF output format");
-    }
 
     type &= OUT_TYPMASK;
 
@@ -421,20 +673,45 @@ static void elf_out (long segto, void *data, unsigned long type,
 	    error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 	elf_sect_write (s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
-	if (wrt != NO_SEG)
-	    error(ERR_NONFATAL, "ELF format does not support WRT types");
+	addr = *(long *)data;
 	if (segment != NO_SEG) {
 	    if (segment % 2) {
 		error(ERR_NONFATAL, "ELF format does not support"
 		      " segment base references");
-	    } else
-		elf_add_reloc (s, segment, FALSE);
+	    } else {
+		if (wrt == NO_SEG) {
+		    elf_add_reloc (s, segment, R_386_32);
+		} else if (wrt == elf_gotpc_sect+1) {
+		    /*
+		     * The user will supply GOT relative to $$. ELF
+		     * will let us have GOT relative to $. So we
+		     * need to fix up the data item by $-$$.
+		     */
+		    addr += s->len;
+		    elf_add_reloc (s, segment, R_386_GOTPC);
+		} else if (wrt == elf_gotoff_sect+1) {
+		    elf_add_reloc (s, segment, R_386_GOTOFF);
+		} else if (wrt == elf_got_sect+1) {
+		    addr = elf_add_gsym_reloc (s, segment, addr,
+					       R_386_GOT32, TRUE);
+		} else if (wrt == elf_sym_sect+1) {
+		    addr = elf_add_gsym_reloc (s, segment, addr,
+					       R_386_32, FALSE);
+		} else if (wrt == elf_plt_sect+1) {
+		    error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
+			  "relative PLT references");
+		} else {
+		    error (ERR_NONFATAL, "ELF format does not support this"
+			   " use of WRT");
+		    wrt = NO_SEG;      /* we can at least _try_ to continue */
+		}
+	    }
 	}
 	p = mydata;
-	if (realbytes == 2 && segment != NO_SEG)
-	    error (ERR_NONFATAL, "ELF format does not support 16-bit"
+	if (realbytes != 4 && segment != NO_SEG)
+	    error (ERR_NONFATAL, "ELF format does not support non-32-bit"
 		   " relocations");
-	WRITELONG (p, *(long *)data);
+	WRITELONG (p, addr);
 	elf_sect_write (s, mydata, realbytes);
     } else if (type == OUT_REL2ADR) {
 	error (ERR_NONFATAL, "ELF format does not support 16-bit"
@@ -445,8 +722,22 @@ static void elf_out (long segto, void *data, unsigned long type,
 	if (segment != NO_SEG && segment % 2) {
 	    error(ERR_NONFATAL, "ELF format does not support"
 		  " segment base references");
-	} else
-	    elf_add_reloc (s, segment, TRUE);
+	} else {
+	    if (wrt == NO_SEG) {
+		elf_add_reloc (s, segment, R_386_PC32);
+	    } else if (wrt == elf_plt_sect+1) {
+		elf_add_reloc (s, segment, R_386_PLT32);
+	    } else if (wrt == elf_gotpc_sect+1 ||
+		       wrt == elf_gotoff_sect+1 ||
+		       wrt == elf_got_sect+1) {
+		error(ERR_NONFATAL, "ELF format cannot produce PC-"
+		      "relative GOT references");
+	    } else {
+		error (ERR_NONFATAL, "ELF format does not support this"
+		       " use of WRT");
+		wrt = NO_SEG;      /* we can at least _try_ to continue */
+	    }
+	}
 	p = mydata;
 	WRITELONG (p, *(long*)data - realbytes);
 	elf_sect_write (s, mydata, 4L);
@@ -614,16 +905,13 @@ static struct SAA *elf_build_symtab (long *len, long *local) {
      */
     saa_rewind (syms);
     while ( (sym = saa_rstruct (syms)) ) {
-	if (sym->type == SYM_GLOBAL)
+	if (sym->type & SYM_GLOBAL)
 	    continue;
 	p = entry;
 	WRITELONG (p, sym->strpos);
 	WRITELONG (p, sym->value);
-	if (sym->section == SHN_COMMON)
-	    WRITELONG (p, sym->value);
-	else
-	    WRITELONG (p, 0);
-	WRITESHORT (p, 0);	       /* local non-typed thing */
+	WRITELONG (p, sym->size);
+	WRITESHORT (p, sym->type);     /* local non-typed thing */
 	WRITESHORT (p, sym->section);
 	saa_wbytes (s, entry, 16L);
         *len += 16;
@@ -635,16 +923,13 @@ static struct SAA *elf_build_symtab (long *len, long *local) {
      */
     saa_rewind (syms);
     while ( (sym = saa_rstruct (syms)) ) {
-	if (sym->type != SYM_GLOBAL)
+	if (!(sym->type & SYM_GLOBAL))
 	    continue;
 	p = entry;
 	WRITELONG (p, sym->strpos);
 	WRITELONG (p, sym->value);
-	if (sym->section == SHN_COMMON)
-	    WRITELONG (p, sym->value);
-	else
-	    WRITELONG (p, 0);
-	WRITESHORT (p, SYM_GLOBAL);    /* global non-typed thing */
+	WRITELONG (p, sym->size);
+	WRITESHORT (p, sym->type);     /* global non-typed thing */
 	WRITESHORT (p, sym->section);
 	saa_wbytes (s, entry, 16L);
 	*len += 16;
@@ -671,7 +956,7 @@ static struct SAA *elf_build_reltab (long *len, struct Reloc *r) {
 
 	p = entry;
 	WRITELONG (p, r->address);
-	WRITELONG (p, (sym << 8) + (r->relative ? 2 : 1));
+	WRITELONG (p, (sym << 8) + r->type);
 	saa_wbytes (s, entry, 8L);
 	*len += 8;
 
@@ -737,9 +1022,15 @@ static void elf_filename (char *inname, char *outname, efunc error) {
     standard_extension (inname, outname, ".o", error);
 }
 
+static char *elf_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    NULL
+};
+
 struct ofmt of_elf = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf",
+    elf_stdmac,
     elf_init,
     elf_out,
     elf_deflabel,

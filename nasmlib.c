@@ -102,6 +102,28 @@ char *nasm_strdup (char *s)
     return p;
 }
 
+#ifdef LOGALLOC
+char *nasm_strndup_log (char *file, int line, char *s, size_t len)
+#else
+char *nasm_strndup (char *s, size_t len)
+#endif
+{
+    char *p;
+    int size = len+1;
+
+    p = malloc(size);
+    if (!p)
+	nasm_malloc_error (ERR_FATAL | ERR_NOFILE, "out of memory");
+#ifdef LOGALLOC
+    else
+	fprintf(logfp, "%s %d strndup(%ld) returns %p\n",
+		file, line, (long)size, p);
+#endif
+    strncpy (p, s, len);
+    p[len] = '\0';
+    return p;
+}
+
 int nasm_stricmp (char *s1, char *s2) {
     while (*s1 && toupper(*s1) == toupper(*s2))
 	s1++, s2++;
@@ -130,7 +152,8 @@ int nasm_strnicmp (char *s1, char *s2, int n) {
 long readnum (char *str, int *error) {
     char *r = str, *q;
     long radix;
-    long result;
+    unsigned long result, checklimit;
+    int warn = FALSE;
 
     *error = FALSE;
 
@@ -157,15 +180,42 @@ long readnum (char *str, int *error) {
     else
 	radix = 10;
 
+    /*
+     * If this number has been found for us by something other than
+     * the ordinary scanners, then it might be malformed by having
+     * nothing between the prefix and the suffix. Check this case
+     * now.
+     */
+    if (r >= q) {
+	*error = TRUE;
+	return 0;
+    }
+
+    /*
+     * `checklimit' must be 2**32 / radix. We can't do that in
+     * 32-bit arithmetic, which we're (probably) using, so we
+     * cheat: since we know that all radices we use are even, we
+     * can divide 2**31 by radix/2 instead.
+     */
+    checklimit = 0x80000000UL / (radix>>1);
+
     result = 0;
     while (*r && r < q) {
 	if (*r<'0' || (*r>'9' && *r<'A') || numvalue(*r)>=radix) {
 	    *error = TRUE;
 	    return 0;
 	}
+	if (result >= checklimit)
+	    warn = TRUE;
 	result = radix * result + numvalue(*r);
 	r++;
     }
+
+    if (warn)
+	nasm_malloc_error (ERR_WARNING | ERR_PASS1 | ERR_WARN_NOV,
+			   "numeric constant %s does not fit in 32 bits",
+			   str);
+
     return result;
 }
 
@@ -195,6 +245,8 @@ void standard_extension (char *inname, char *outname, char *extension,
 			 efunc error) {
     char *p, *q;
 
+    if (*outname)		       /* file name already exists, */
+	return;			       /* so do nothing */
     q = inname;
     p = outname;
     while (*q) *p++ = *q++;	       /* copy, and find end of string */
@@ -225,7 +277,21 @@ typedef struct RAA_LEAF RAA_LEAF;
 typedef struct RAA_BRANCH RAA_BRANCH;
 
 struct RAA {
+    /*
+     * Number of layers below this one to get to the real data. 0
+     * means this structure is a leaf, holding RAA_BLKSIZE real
+     * data items; 1 and above mean it's a branch, holding
+     * RAA_LAYERSIZE pointers to the next level branch or leaf
+     * structures.
+     */
     int layers;
+    /*
+     * Number of real data items spanned by one position in the
+     * `data' array at this level. This number is 1, trivially, for
+     * a leaf (level 0): for a level 1 branch it should be
+     * RAA_BLKSIZE, and for a level 2 branch it's
+     * RAA_LAYERSIZE*RAA_BLKSIZE.
+     */
     long stepsize;
     union RAA_UNION {
 	struct RAA_LEAF {
@@ -254,8 +320,8 @@ static struct RAA *real_raa_init (int layers) {
 	r = nasm_malloc (BRANCHSIZ);
 	memset (r->u.b.data, 0, sizeof(r->u.b.data));
 	r->layers = layers;
-	r->stepsize = 1L;
-	while (layers--)
+	r->stepsize = RAA_BLKSIZE;
+	while (--layers)
 	    r->stepsize *= RAA_LAYERSIZE;
     }
     return r;
@@ -540,4 +606,354 @@ void saa_fpwrite (struct SAA *s, FILE *fp) {
     saa_rewind (s);
     while ( (data = saa_rbytes (s, &len)) )
 	fwrite (data, 1, len, fp);
+}
+
+/*
+ * Register, instruction, condition-code and prefix keywords used
+ * by the scanner.
+ */
+#include "names.c"
+static char *special_names[] = {
+    "byte", "dword", "far", "long", "near", "nosplit", "qword",
+    "short", "to", "tword", "word"
+};
+static char *prefix_names[] = {
+    "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
+    "repnz", "repz", "times"
+};
+
+
+/*
+ * Standard scanner routine used by parser.c and some output
+ * formats. It keeps a succession of temporary-storage strings in
+ * stdscan_tempstorage, which can be cleared using stdscan_reset.
+ */
+static char **stdscan_tempstorage = NULL;
+static int stdscan_tempsize = 0, stdscan_templen = 0;
+#define STDSCAN_TEMP_DELTA 256
+
+static void stdscan_pop(void) {
+    nasm_free (stdscan_tempstorage[--stdscan_templen]);
+}
+
+void stdscan_reset(void) {
+    while (stdscan_templen > 0)
+	stdscan_pop();
+}
+
+static char *stdscan_copy(char *p, int len) {
+    char *text;
+
+    text = nasm_malloc(len+1);
+    strncpy (text, p, len);
+    text[len] = '\0';
+
+    if (stdscan_templen >= stdscan_tempsize) {
+	stdscan_tempsize += STDSCAN_TEMP_DELTA;
+	stdscan_tempstorage = nasm_realloc(stdscan_tempstorage,
+					   stdscan_tempsize*sizeof(char *));
+    }
+    stdscan_tempstorage[stdscan_templen++] = text;
+
+    return text;
+}
+
+char *stdscan_bufptr = NULL;
+int stdscan (void *private_data, struct tokenval *tv) {
+    char ourcopy[256], *r, *s;
+
+    while (isspace(*stdscan_bufptr)) stdscan_bufptr++;
+    if (!*stdscan_bufptr)
+	return tv->t_type = 0;
+
+    /* we have a token; either an id, a number or a char */
+    if (isidstart(*stdscan_bufptr) ||
+	(*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
+	/* now we've got an identifier */
+	int i;
+	int is_sym = FALSE;
+
+	if (*stdscan_bufptr == '$') {
+	    is_sym = TRUE;
+	    stdscan_bufptr++;
+	}
+
+ 	r = stdscan_bufptr++;
+	while (isidchar(*stdscan_bufptr)) stdscan_bufptr++;
+	tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+
+	for (s=tv->t_charptr, r=ourcopy; *s; s++)
+	    *r++ = tolower (*s);
+	*r = '\0';
+	if (is_sym)
+	    return tv->t_type = TOKEN_ID;/* bypass all other checks */
+	/* right, so we have an identifier sitting in temp storage. now,
+	 * is it actually a register or instruction name, or what? */
+	if ((tv->t_integer=bsi(ourcopy, reg_names,
+			       elements(reg_names)))>=0) {
+	    tv->t_integer += EXPR_REG_START;
+	    return tv->t_type = TOKEN_REG;
+	} else if ((tv->t_integer=bsi(ourcopy, insn_names,
+				      elements(insn_names)))>=0) {
+	    return tv->t_type = TOKEN_INSN;
+	}
+	for (i=0; i<elements(icn); i++)
+	    if (!strncmp(ourcopy, icn[i], strlen(icn[i]))) {
+		char *p = ourcopy + strlen(icn[i]);
+		tv->t_integer = ico[i];
+		if ((tv->t_inttwo=bsi(p, conditions,
+					 elements(conditions)))>=0)
+		    return tv->t_type = TOKEN_INSN;
+	    }
+	if ((tv->t_integer=bsi(ourcopy, prefix_names,
+				  elements(prefix_names)))>=0) {
+	    tv->t_integer += PREFIX_ENUM_START;
+	    return tv->t_type = TOKEN_PREFIX;
+	}
+	if ((tv->t_integer=bsi(ourcopy, special_names,
+				  elements(special_names)))>=0)
+	    return tv->t_type = TOKEN_SPECIAL;
+	if (!strcmp(ourcopy, "seg"))
+	    return tv->t_type = TOKEN_SEG;
+	if (!strcmp(ourcopy, "wrt"))
+	    return tv->t_type = TOKEN_WRT;
+	return tv->t_type = TOKEN_ID;
+    } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
+	/*
+	 * It's a $ sign with no following hex number; this must
+	 * mean it's a Here token ($), evaluating to the current
+	 * assembly location, or a Base token ($$), evaluating to
+	 * the base of the current segment.
+	 */
+	stdscan_bufptr++;
+	if (*stdscan_bufptr == '$') {
+	    stdscan_bufptr++;
+	    return tv->t_type = TOKEN_BASE;
+	}
+	return tv->t_type = TOKEN_HERE;
+    } else if (isnumstart(*stdscan_bufptr)) {  /* now we've got a number */
+	int rn_error;
+
+	r = stdscan_bufptr++;
+	while (isnumchar(*stdscan_bufptr))
+	    stdscan_bufptr++;
+
+	if (*stdscan_bufptr == '.') {
+	    /*
+	     * a floating point constant
+	     */
+	    stdscan_bufptr++;
+	    while (isnumchar(*stdscan_bufptr)) {
+		stdscan_bufptr++;
+	    }
+	    tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+	    return tv->t_type = TOKEN_FLOAT;
+	}
+	r = stdscan_copy(r, stdscan_bufptr - r);
+	tv->t_integer = readnum(r, &rn_error);
+	stdscan_pop();
+	if (rn_error)
+	    return tv->t_type = TOKEN_ERRNUM;/* some malformation occurred */
+	tv->t_charptr = NULL;
+	return tv->t_type = TOKEN_NUM;
+    } else if (*stdscan_bufptr == '\'' ||
+	       *stdscan_bufptr == '"') {/* a char constant */
+    	char quote = *stdscan_bufptr++, *r;
+	r = tv->t_charptr = stdscan_bufptr;
+	while (*stdscan_bufptr && *stdscan_bufptr != quote) stdscan_bufptr++;
+	tv->t_inttwo = stdscan_bufptr - r;      /* store full version */
+	if (!*stdscan_bufptr)
+	    return tv->t_type = TOKEN_ERRNUM;       /* unmatched quotes */
+	tv->t_integer = 0;
+	r = stdscan_bufptr++;		       /* skip over final quote */
+	while (quote != *--r) {
+	    tv->t_integer = (tv->t_integer<<8) + (unsigned char) *r;
+	}
+	return tv->t_type = TOKEN_NUM;
+    } else if (*stdscan_bufptr == ';') {  /* a comment has happened - stay */
+	return tv->t_type = 0;
+    } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '>') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_SHR;
+    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '<') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_SHL;
+    } else if (stdscan_bufptr[0] == '/' && stdscan_bufptr[1] == '/') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_SDIV;
+    } else if (stdscan_bufptr[0] == '%' && stdscan_bufptr[1] == '%') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_SMOD;
+    } else if (stdscan_bufptr[0] == '=' && stdscan_bufptr[1] == '=') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_EQ;
+    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '>') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_NE;
+    } else if (stdscan_bufptr[0] == '!' && stdscan_bufptr[1] == '=') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_NE;
+    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '=') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_LE;
+    } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '=') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_GE;
+    } else if (stdscan_bufptr[0] == '&' && stdscan_bufptr[1] == '&') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_DBL_AND;
+    } else if (stdscan_bufptr[0] == '^' && stdscan_bufptr[1] == '^') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_DBL_XOR;
+    } else if (stdscan_bufptr[0] == '|' && stdscan_bufptr[1] == '|') {
+	stdscan_bufptr += 2;
+	return tv->t_type = TOKEN_DBL_OR;
+    } else			       /* just an ordinary char */
+    	return tv->t_type = (unsigned char) (*stdscan_bufptr++);
+}
+
+/*
+ * Return TRUE if the argument is a simple scalar. (Or a far-
+ * absolute, which counts.)
+ */
+int is_simple (expr *vect) {
+    while (vect->type && !vect->value)
+    	vect++;
+    if (!vect->type)
+	return 1;
+    if (vect->type != EXPR_SIMPLE)
+	return 0;
+    do {
+	vect++;
+    } while (vect->type && !vect->value);
+    if (vect->type && vect->type < EXPR_SEGBASE+SEG_ABS) return 0;
+    return 1;
+}
+
+/*
+ * Return TRUE if the argument is a simple scalar, _NOT_ a far-
+ * absolute.
+ */
+int is_really_simple (expr *vect) {
+    while (vect->type && !vect->value)
+    	vect++;
+    if (!vect->type)
+	return 1;
+    if (vect->type != EXPR_SIMPLE)
+	return 0;
+    do {
+	vect++;
+    } while (vect->type && !vect->value);
+    if (vect->type) return 0;
+    return 1;
+}
+
+/*
+ * Return TRUE if the argument is relocatable (i.e. a simple
+ * scalar, plus at most one segment-base, plus possibly a WRT).
+ */
+int is_reloc (expr *vect) {
+    while (vect->type && !vect->value)
+    	vect++;
+    if (!vect->type)
+	return 1;
+    if (vect->type < EXPR_SIMPLE)
+	return 0;
+    if (vect->type == EXPR_SIMPLE) {
+	do {
+	    vect++;
+	} while (vect->type && !vect->value);
+	if (!vect->type)
+	    return 1;
+    }
+    if (vect->type != EXPR_WRT && vect->value != 0 && vect->value != 1)
+	return 0;		       /* segment base multiplier non-unity */
+    do {
+	vect++;
+    } while (vect->type && (vect->type == EXPR_WRT || !vect->value));
+    if (!vect->type)
+	return 1;
+    return 0;
+}
+
+/*
+ * Return TRUE if the argument contains an `unknown' part.
+ */
+int is_unknown(expr *vect) {
+    while (vect->type && vect->type < EXPR_UNKNOWN)
+	vect++;
+    return (vect->type == EXPR_UNKNOWN);
+}
+
+/*
+ * Return TRUE if the argument contains nothing but an `unknown'
+ * part.
+ */
+int is_just_unknown(expr *vect) {
+    while (vect->type && !vect->value)
+	vect++;
+    return (vect->type == EXPR_UNKNOWN);
+}
+
+/*
+ * Return the scalar part of a relocatable vector. (Including
+ * simple scalar vectors - those qualify as relocatable.)
+ */
+long reloc_value (expr *vect) {
+    while (vect->type && !vect->value)
+    	vect++;
+    if (!vect->type) return 0;
+    if (vect->type == EXPR_SIMPLE)
+	return vect->value;
+    else
+	return 0;
+}
+
+/*
+ * Return the segment number of a relocatable vector, or NO_SEG for
+ * simple scalars.
+ */
+long reloc_seg (expr *vect) {
+    while (vect->type && (vect->type == EXPR_WRT || !vect->value))
+    	vect++;
+    if (vect->type == EXPR_SIMPLE) {
+	do {
+	    vect++;
+	} while (vect->type && (vect->type == EXPR_WRT || !vect->value));
+    }
+    if (!vect->type)
+	return NO_SEG;
+    else
+	return vect->type - EXPR_SEGBASE;
+}
+
+/*
+ * Return the WRT segment number of a relocatable vector, or NO_SEG
+ * if no WRT part is present.
+ */
+long reloc_wrt (expr *vect) {
+    while (vect->type && vect->type < EXPR_WRT)
+    	vect++;
+    if (vect->type == EXPR_WRT) {
+	return vect->value;
+    } else
+	return NO_SEG;
+}
+
+/*
+ * Binary search.
+ */
+int bsi (char *string, char **array, int size) {
+    int i = -1, j = size;	       /* always, i < index < j */
+    while (j-i >= 2) {
+	int k = (i+j)/2;
+	int l = strcmp(string, array[k]);
+	if (l<0)		       /* it's in the first half */
+	    j = k;
+	else if (l>0)		       /* it's in the second half */
+	    i = k;
+	else			       /* we've got it :) */
+	    return k;
+    }
+    return -1;			       /* we haven't got it :( */
 }

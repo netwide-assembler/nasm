@@ -294,6 +294,14 @@ define_keywords_n($1, nasm_kw_8, 8, 0);
 define_keywords_n($1, nasm_kw_9, 9, 0);
 define_keywords_n($1, nasm_kw_10, 10, 0);
 
+define_keywords_n($1, "org", 3, 1);
+define_keywords_n($1, "bitsiend", 4, 1);
+define_keywords_n($1, "aligngroupstruc", 5, 1);
+define_keywords_n($1, "alignbcommonexternglobalistruc", 6, 1);
+define_keywords_n($1, "sectionsegmentlibrary", 7, 1);
+define_keywords_n($1, "absoluteendstruc", 8, 1);
+define_keywords_n($1, "uppercase", 9, 1);
+
 !if (keymap_p ($1)) make_keymap ($1);
 definekey("nasm_bol_self_ins", ";", $1);
 definekey("nasm_bol_self_ins", "#", $1);

@@ -187,7 +187,7 @@ static efunc error;
 static int segtext,segdata,segbss;
 static long bsslength;
 
-static void rdf_init(FILE *fp, efunc errfunc, ldfunc ldef)
+static void rdf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
   ofile = fp;
   error = errfunc;
@@ -261,7 +261,8 @@ static void write_dll_rec(struct DLLRec *r)
     membufwrite(header,r->libname,strlen(r->libname) + 1);
 }
 
-static void rdf_deflabel(char *name, long segment, long offset, int is_global)
+static void rdf_deflabel(char *name, long segment, long offset,
+			 int is_global, char *special)
 {
   struct ExportRec r;
   struct ImportRec ri;
@@ -269,28 +270,23 @@ static void rdf_deflabel(char *name, long segment, long offset, int is_global)
   static int warned_common = 0;
 #endif
 
+  if (special)
+    error (ERR_NONFATAL, "RDOFF format does not support any"
+	   " special symbol types");
+
   if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
     error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
     return;
   }
 
-  if (is_global && segment > 4) {
+  if (is_global == 2) {
 #ifdef VERBOSE_WARNINGS
-    if (! warned_common) {
-      error(ERR_WARNING,"common declarations not supported... using extern");
+    if (!warned_common) {
+      error(ERR_WARNING,"common declarations not supported: using extern");
       warned_common = 1;
     }
 #endif
-    is_global = 0;
-  }
-
-  if (is_global) {
-    r.type = 3;
-    r.segment = segment;
-    r.offset = offset;
-    strncpy(r.label,name,32);
-    r.label[32] = 0;
-    write_export_rec(&r);
+    is_global = 1;
   }
 
   if (segment > 4) {   /* EXTERN declaration */
@@ -299,6 +295,13 @@ static void rdf_deflabel(char *name, long segment, long offset, int is_global)
     strncpy(ri.label,name,32);
     ri.label[32] = 0;
     write_import_rec(&ri);
+  } else if (is_global) {
+    r.type = 3;
+    r.segment = segment;
+    r.offset = offset;
+    strncpy(r.label,name,32);
+    r.label[32] = 0;
+    write_export_rec(&r);
   }
 }
 
@@ -484,9 +487,18 @@ static void rdf_filename (char *inname, char *outname, efunc error) {
   standard_extension(inname,outname,".rdf",error);
 }
 
+static char *rdf_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    "%imacro library 1+.nolist",
+    "[library %1]",
+    "%endmacro",
+    NULL
+};
+
 struct ofmt of_rdf = {
   "Relocatable Dynamic Object File Format v1.1",
   "rdf",
+  rdf_stdmac,
   rdf_init,
   rdf_out,
   rdf_deflabel,

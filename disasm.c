@@ -73,6 +73,10 @@ static int whichreg(long regflags, int regval) {
 	return R_ST0;
     if (!(REG_CS & ~regflags))
 	return R_CS;
+    if (!(REG_DESS & ~regflags))
+	return (regval == 0 || regval == 2 || regval == 3 ? sreg[regval] : 0);
+    if (!(REG_FSGS & ~regflags))
+	return (regval == 4 || regval == 5 ? sreg[regval] : 0);
     if (!((REGMEM|BITS8) & ~regflags))
 	return reg8[regval];
     if (!((REGMEM|BITS16) & ~regflags))
@@ -488,11 +492,22 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	     * Final check to make sure the types of r/m match up.
 	     */
 	    for (i = 0; i < (*p)->operands; i++)
-		if (((ins.oprs[i].segment & SEG_RMREG) &&
+		if (
+		    
+		    /* If it's a mem-only EA but we have a register, die. */
+		    ((ins.oprs[i].segment & SEG_RMREG) &&
 		     !(MEMORY & ~(*p)->opd[i])) ||
+		    
+		    /* If it's a reg-only EA but we have a memory ref, die. */
 		    (!(ins.oprs[i].segment & SEG_RMREG) &&
 		     !(REGNORM & ~(*p)->opd[i]) &&
-		     !((*p)->opd[i] & REG_SMASK)))
+		     !((*p)->opd[i] & REG_SMASK)) ||
+
+		    /* Register type mismatch (eg FS vs REG_DESS): die. */
+		    ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
+		      (ins.oprs[i].segment & SEG_RMREG)) &&
+		     !whichreg ((*p)->opd[i], ins.oprs[i].basereg)))
+
 		    works = FALSE;
 	    if (works)
 		break;
@@ -559,7 +574,7 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	    ins.oprs[i].basereg = whichreg ((*p)->opd[i],
 					    ins.oprs[i].basereg);
 	    slen += sprintf(output+slen, "%s",
-			    reg_names[ins.oprs[i].basereg]);
+			    reg_names[ins.oprs[i].basereg-EXPR_REG_START]);
 	} else if (!(UNITY & ~(*p)->opd[i])) {
 	    output[slen++] = '1';
 	} else if ( (*p)->opd[i] & IMMEDIATE ) {
@@ -617,14 +632,16 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	    }
 	    if (ins.oprs[i].basereg != -1) {
 		slen += sprintf(output+slen, "%s",
-				reg_names[ins.oprs[i].basereg]);
+				reg_names[(ins.oprs[i].basereg -
+					   EXPR_REG_START)]);
 		started = TRUE;
 	    }
 	    if (ins.oprs[i].indexreg != -1) {
 		if (started)
 		    output[slen++] = '+';
 		slen += sprintf(output+slen, "%s",
-				reg_names[ins.oprs[i].indexreg]);
+				reg_names[(ins.oprs[i].indexreg -
+					   EXPR_REG_START)]);
 		if (ins.oprs[i].scale > 1)
 		    slen += sprintf(output+slen, "*%d", ins.oprs[i].scale);
 		started = TRUE;

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -169,6 +170,11 @@ int main(int argc, char **argv) {
     }
 
     fp = fopen(filename, "rb");
+    if (!fp) {
+	fprintf(stderr, "%s: unable to open `%s': %s\n",
+		pname, filename, strerror(errno));
+	return 1;
+    }
     if (initskip > 0)
 	skip (initskip, fp);
 

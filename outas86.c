@@ -80,7 +80,7 @@ static void as86_write_section (struct Section *, int);
 static int as86_add_string (char *name);
 static void as86_sect_write(struct Section *, unsigned char *, unsigned long);
 
-static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef) {
+static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     as86fp = fp;
     error = errfunc;
     (void) ldef;		       /* placate optimisers */
@@ -158,8 +158,12 @@ static int as86_add_string (char *name) {
 }
 
 static void as86_deflabel (char *name, long segment, long offset,
-			   int is_global) {
+			   int is_global, char *special) {
     struct Symbol *sym;
+
+    if (special)
+	error (ERR_NONFATAL, "as86 format does not support any"
+	       " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
@@ -429,7 +433,7 @@ static void as86_write(void) {
 static void as86_set_rsize (int size) {
     if (as86_reloc_size != size) {
 	switch (as86_reloc_size = size) {
-	  case 1: fputc (0x01, as86fp); break;   /* shouldn't happen */
+	  case 1: fputc (0x01, as86fp); break;
 	  case 2: fputc (0x02, as86fp); break;
 	  case 4: fputc (0x03, as86fp); break;
 	  default: error (ERR_PANIC, "bizarre relocation size %d", size);
@@ -533,9 +537,15 @@ static void as86_filename (char *inname, char *outname, efunc error) {
     standard_extension (inname, outname, ".o", error);
 }
 
+static char *as86_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    NULL
+};
+
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
+    as86_stdmac,
     as86_init,
     as86_out,
     as86_deflabel,

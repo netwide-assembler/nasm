@@ -13,6 +13,11 @@ search path (maybe /usr/local/bin, or ~/bin if you don't have root
 access). You may also want to copy the man page `nasm.1' (and maybe
 `ndisasm.1') to somewhere sensible.
 
+To install under DOS, if you don't need to rebuild from the sources,
+you can just copy nasm.exe and ndisasm.exe (16-bit DOS executables),
+or nasmw.exe and ndisasmw.exe (Win32 console applications - less
+likely to run out of memory), to somewhere on your PATH.
+
 To rebuild the DOS sources, various makefiles are provided:
 
 - Makefile.dos, the one I build the standard 16-bit releases from,
@@ -26,7 +31,11 @@ To rebuild the DOS sources, various makefiles are provided:
 - Makefile.bc2, also for Borland C, contributed by Fox Cutter.
   Reported to work better than Makefile.bor on some systems.
 
-- Makefile.sc, for Symantec C++. Contributed by Mark Junker.
+- Makefile.sc, for Symantec C++, compiling to a 32-bit extended DOS
+  executable.. Contributed by Mark Junker.
+- Makefile.scw, also for Symantec C++, compiling to a Win32 command-
+  line application. Also contributed by Mark Junker.
+
 - Makefile.wc, for Watcom C, compiling to a 32-bit extended DOS
   executable. Contributed by Dominik Behr.
 - Makefile.wcw, also for Watcom C, compiling to a Win32 command-
@@ -53,6 +62,9 @@ NDISASM.EXE) into standalone executables incorporating Tran's
 PMODE/W DOS extender, rather than depending on an external extender
 program.
 
+Some of the Windows makefiles produce executables called nasmw.exe
+and ndisasmw.exe, and some don't. Be prepared for either...
+
 If you're trying to unpack the DOS (.ZIP format) archive under Unix
 instead of using the .tar.gz version, you can save some time by
 doing `unzip -aL', which will convert the DOS-format text files to
@@ -65,9 +77,9 @@ equivalently by adding compiler command line options in the
 Makefile.
 
 There is a machine description file for the `LCC' retargetable C
-compiler, in the directory `lcc', along with instructions for its
-use. This means that NASM can now be used as the code-generator back
-end for a useful C compiler.
+compiler (version 3.6), in the directory `lcc', along with
+instructions for its use. This means that NASM can now be used as
+the code-generator back end for a useful C compiler.
 
 Michael `Wuschel' Tippach has ported his DOS extender `WDOSX' to
 enable it to work with the 32-bit binary files NASM can output: the
@@ -83,7 +95,11 @@ JED programmers' editor (see http://space.mit.edu/~davis/jed.html
 for details about JED). The comment at the start of the file gives
 instructions on how to install the mode. This directory also
 contains a file (`magic') containing lines to add to /etc/magic on
-Unix systems to allow the `file' command to recognise RDF files.
+Unix systems to allow the `file' command to recognise RDF files, and
+a zip file (`exasm.zip') containing the necessary files for syntax
+highlighting in the Aurora DOS editor. (The Aurora files were
+contributed by <U993847220@aol.com>; I haven't tested them as I
+don't have Aurora.)
 
 The `rdoff' directory contains sources for a linker and loader for
 the RDF object file format, to run under Linux, and also
@@ -93,7 +109,9 @@ For information about how you can distribute and use NASM, see the
 file Licence. We were tempted to put NASM under the GPL, but decided
 that in many ways it was too restrictive for developers.
 
-For information about how to use NASM, see `nasm.doc'. For
+For information about how to use NASM, see the various forms of
+documentation in the `doc' directory: documentation is provided in
+HTML, PostScript, plain text, Texinfo, and Windows Help formats. For
 information about how to use NDISASM, see `ndisasm.doc'. For
 information about the internal structure of NASM, see
 `internal.doc'. (In particular, _please_ read `internal.doc' before

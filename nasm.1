@@ -1,0 +1,423 @@
+.TH NASM 1 "The Netwide Assembler Project"
+.SH NAME
+nasm \- the Netwide Assembler \- portable 80x86 assembler
+.SH SYNOPSIS
+.B nasm
+[
+.B \-f
+format
+] [
+.B \-o
+outfile
+] [
+.IR options ...
+] infile
+.br
+.B nasm \-h
+.br
+.B nasm \-r
+.SH DESCRIPTION
+The
+.B nasm
+command assembles the file
+.I infile
+and directs output to the file
+.I outfile
+if specified. If
+.I outfile
+is not specified,
+.B nasm
+will derive a default output file name from the name of its input
+file, usually by appending `.o' or `.obj', or by removing all
+extensions for a raw binary file. Failing that, the output file name
+will be `nasm.out'.
+.SS OPTIONS
+.TP
+.B \-h
+Causes
+.B nasm
+to exit immediately, after giving a summary of its invocation
+options, and listing all its supported output file formats.
+.TP
+.B \-a
+Causes
+.B nasm
+to assemble the given input file without first applying the macro
+preprocessor.
+.TP
+.B \-e
+Causes
+.B nasm
+to preprocess the given input file, and write the output to
+.I stdout
+(or the specified output file name), and not actually assemble
+anything.
+.TP
+.BI \-r
+Causes
+.B nasm
+to exit immediately, after displaying its version number.
+.TP
+.BI \-f " format"
+Specifies the output file format. Formats include
+.IR bin ,
+to produce flat-form binary files, and
+.I aout
+and
+.I elf
+to produce Linux a.out and ELF object files, respectively.
+.TP
+.BI \-o " outfile"
+Specifies a precise name for the output file, overriding
+.BR nasm 's
+default means of determining it.
+.TP
+.BI \-l " listfile"
+Causes an assembly listing to be directed to the given file, in
+which the original source is displayed on the right hand side (plus
+the source for included files and the expansions of multi-line
+macros) and the generated code is shown in hex on the left.
+.TP
+.B \-s
+Causes
+.B nasm
+to send its error messages and/or help text to
+.I stdout
+instead of
+.IR stderr .
+.TP
+.BI \-w [+-]foo
+Causes
+.B nasm
+to enable or disable certain classes of warning messages, for
+example
+.B \-w+orphan-labels
+or
+.B \-w-macro-params
+to, respectively, enable warnings about labels alone on lines or
+disable warnings about incorrect numbers of parameters in macro
+calls.
+.TP
+.BI \-i " directory"
+Adds a directory to the search path for include files. The directory
+specification must include the trailing slash, as it will be
+directly prepended to the name of the include file.
+.TP
+.BI \-p " file"
+Specifies a file to be pre-included, before the main source file
+starts to be processed.
+.TP
+.BI \-d " macro[=value]"
+Pre-defines a single-line macro.
+.PP
+.RE
+.SS SYNTAX
+This man page does not fully describe the syntax of
+.BR nasm 's
+assembly language, but does give a summary of the differences from
+other assemblers.
+.PP
+.I Registers
+have no leading `%' sign, unlike
+.BR gas ,
+and floating-point stack registers are referred to as
+.IR st0 ,
+.IR st1 ,
+and so on.
+.PP
+.I Floating-point instructions
+may use either the single-operand form or the double. A
+.I TO
+keyword is provided; thus, one could either write
+.PP
+.ti +15n
+fadd st0,st1
+.br
+.ti +15n
+fadd st1,st0
+.PP
+or one could use the alternative single-operand forms
+.PP
+.ti +15n
+fadd st1
+.br
+.ti +15n
+fadd to st1
+.PP
+.I Uninitialised storage
+is reserved using the
+.IR RESB ,
+.IR RESW ,
+.IR RESD ,
+.I RESQ
+and
+.I REST
+pseudo-opcodes, each taking one parameter which gives the number of
+bytes, words, doublewords, quadwords or ten-byte words to reserve.
+.PP
+.I Repetition
+of data items is not done by the
+.I DUP
+keyword as seen in DOS assemblers, but by the use of the
+.I TIMES
+prefix, like this:
+.PP
+.ti +6n
+.ta 9n
+message:	times 3 db 'abc'
+.br
+.ti +15n
+times 64-$+message db 0
+.PP
+which defines the string `abcabcabc', followed by the right number
+of zero bytes to make the total length up to 64 bytes.
+.PP
+.I Symbol references
+are always understood to be immediate (i.e. the address of the
+symbol), unless square brackets are used, in which case the contents
+of the memory location are used. Thus:
+.PP
+.ti +15n
+mov ax,wordvar
+.PP
+loads AX with the address of the variable `wordvar', whereas
+.PP
+.ti +15n
+mov ax,[wordvar]
+.br
+.ti +15n
+mov ax,[wordvar+1]
+.br
+.ti +15n
+mov ax,[es:wordvar+bx]
+.PP
+all refer to the
+.I contents
+of memory locations. The syntaxes
+.PP
+.ti +15n
+mov ax,es:wordvar[bx]
+.br
+.ti +15n
+es mov ax,wordvar[1]
+.PP
+are not legal at all, although the use of a segment register name as
+an instruction prefix is valid, and can be used with instructions
+such as
+.I LODSB
+which can't be overridden any other way.
+.PP
+.I Constants
+may be expressed numerically in most formats: a trailing H, Q or B
+denotes hex, octal or binary respectively, and a leading `0x' or `$'
+denotes hex as well. Leading zeros are not treated specially at all.
+Character constants may be enclosed in single or double quotes;
+there is no escape character. The ordering is little-endian
+(reversed), so that the character constant
+.I 'abcd'
+denotes 0x64636261 and not 0x61626364.
+.PP
+.I Local labels
+begin with a period, and their `locality' is granted by the
+assembler prepending the name of the previous non-local symbol. Thus
+declaring a label `.loop' after a label `label' has actually defined
+a symbol called `label.loop'.
+.SS DIRECTIVES
+.I SECTION name
+or
+.I SEGMENT name
+causes
+.B nasm
+to direct all following code to the named section. Section names
+vary with output file format, although most formats support the
+names
+.IR .text ,
+.I .data
+and
+.IR .bss .
+(The exception is the
+.I obj
+format, in which all segments are user-definable.)
+.PP
+.I ABSOLUTE address
+causes
+.B nasm
+to position its notional assembly point at an absolute address: so
+no code or data may be generated, but you can use
+.IR RESB ,
+.I RESW
+and
+.I RESD
+to move the assembly point further on, and you can define labels. So
+this directive may be used to define data structures. When you have
+finished doing absolute assembly, you must issue another
+.I SECTION
+directive to return to normal assembly.
+.PP
+.I BITS 16
+or
+.I BITS 32
+switches the default processor mode for which
+.B nasm
+is generating code: it is equivalent to
+.I USE16
+or
+.I USE32
+in DOS assemblers.
+.PP
+.I EXTERN symbol
+and
+.I GLOBAL symbol
+import and export symbol definitions, respectively, from and to
+other modules. Note that the
+.I GLOBAL
+directive must appear before the definition of the symbol it refers
+to.
+.PP
+.I STRUC strucname
+and
+.IR ENDSTRUC ,
+when used to bracket a number of
+.IR RESB ,
+.I RESW
+or similar instructions, define a data structure. In addition to
+defining the offsets of the structure members, the construct also
+defines a symbol for the size of the structure, which is simply the
+structure name with
+.I _size
+tacked on to the end.
+.SS FORMAT-SPECIFIC DIRECTIVES
+.I ORG address
+is used by the
+.I bin
+flat-form binary output format, and specifies the address at which
+the output code will eventually be loaded.
+.PP
+.I GROUP grpname seg1 seg2...
+is used by the
+.I obj
+(Microsoft 16-bit) output format, and defines segment groups. This
+format also uses
+.IR UPPERCASE ,
+which directs that all segment, group and symbol names output to the
+object file should be in uppercase. Note that the actual assembly is
+still case sensitive.
+.PP
+.I LIBRARY libname
+is used by the
+.I rdf
+output format, and causes a dependency record to be written to the
+output file which indicates that the program requires a certain
+library in order to run.
+.SS MACRO PREPROCESSOR
+Single-line macros are defined using the
+.I %define
+or
+.I %idefine
+commands, in a similar fashion to the C preprocessor. They can be
+overloaded with respect to number of parameters, although defining a
+macro with no parameters prevents the definition of any macro with
+the same name taking parameters, and vice versa.
+.I %define
+defines macros whose names match case-sensitively, whereas
+.I %idefine
+defines case-insensitive macros.
+.PP
+Multi-line macros are defined using
+.I %macro
+and
+.I %imacro
+(the distinction is the same as that between
+.I %define
+and
+.IR %idefine ),
+whose syntax is as follows:
+.PP
+.ti +6n
+%macro
+.I name
+.IR minprm [- maxprm "][+][.nolist] [" defaults ]
+.br
+.ti +15n
+<some lines of macro expansion text>
+.br
+.ti +6n
+%endmacro
+.PP
+Again, these macros may be overloaded. The trailing plus sign
+indicates that any parameters after the last one get subsumed, with
+their separating commas, into the last parameter. The
+.I defaults
+part can be used to specify defaults for unspecified macro
+parameters after
+.IR minparam .
+.I %endm
+is a valid synonym for
+.IR %endmacro .
+.PP
+To refer to the macro parameters within a macro expansion, you use
+.IR %1 ,
+.I %2
+and so on. You can also enforce that a macro parameter should
+contain a condition code by using
+.IR %+1 ,
+and you can invert the condition code by using
+.IR %-1 .
+You can also define a label specific to a macro invocation by
+prefixing it with a double % sign.
+.PP
+Files can be included using the
+.I %include
+directive, which works like C.
+.PP
+The preprocessor has a `context stack', which may be used by one
+macro to store information that a later one will retrieve. You can
+push a context on the stack using
+.IR %push ,
+remove one using
+.IR %pop ,
+and change the name of the top context (without disturbing any
+associated definitions) using
+.IR %repl .
+Labels and
+.I %define
+macros specific to the top context may be defined by prefixing their
+names with %$, and things specific to the next context down with
+%$$, and so on.
+.PP
+Conditional assembly is done by means of
+.IR %ifdef ,
+.IR %ifndef ,
+.I %else
+and
+.I %endif
+as in C. (Except that
+.I %ifdef
+can accept several putative macro names, and will evaluate TRUE if
+any of them is defined.) In addition, the directives
+.I %ifctx
+and
+.I %ifnctx
+can be used to condition on the name of the top context on the
+context stack. The obvious set of `else-if' directives,
+.IR %elifdef ,
+.IR %elifndef ,
+.IR %elifctx
+and
+.IR %elifnctx
+are also supported.
+.SH BUGS
+There is a reported seg-fault on some (Linux) systems with some
+large source files. This appears to be very hard to reproduce. All
+other
+.I known
+bugs have been fixed...
+.SH RESTRICTIONS
+There is no support for listing files, symbol maps, or debugging
+object-file records. The advanced features of the ELF and Win32
+object file formats are not supported, and there is no means for
+warning the programmer against using an instruction beyond the
+capability of the target processor.
+.SH SEE ALSO
+.BR as "(" 1 "),"
+.BR ld "(" 1 ")."

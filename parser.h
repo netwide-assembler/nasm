@@ -10,9 +10,8 @@
 #ifndef NASM_PARSER_H
 #define NASM_PARSER_H
 
-insn *parse_line (long segment, long offset, lfunc lookup_label, int pass,
-		  char *buffer, insn *result, struct ofmt *output,
-		  efunc error);
+insn *parse_line (int pass, char *buffer, insn *result,
+		  efunc error, evalfunc evaluate, evalinfofunc einfo);
 void cleanup_insn (insn *instruction);
 
 #endif

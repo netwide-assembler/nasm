@@ -32,15 +32,18 @@ void *nasm_malloc (size_t);
 void *nasm_realloc (void *, size_t);
 void nasm_free (void *);
 char *nasm_strdup (char *);
+char *nasm_strndup (char *, size_t);
 #else
 void *nasm_malloc_log (char *, int, size_t);
 void *nasm_realloc_log (char *, int, void *, size_t);
 void nasm_free_log (char *, int, void *);
 char *nasm_strdup_log (char *, int, char *);
+char *nasm_strndup_log (char *, int, char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
 #define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
 #define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
+#define nasm_strndup(x,y) nasm_strndup_log(__FILE__,__LINE__,x,y)
 #endif
 #endif
 
@@ -135,5 +138,35 @@ void saa_rnbytes (struct SAA *, void *, long); /* read a given no. of bytes */
 void saa_fread (struct SAA *s, long posn, void *p, long len);   /* fixup */
 void saa_fwrite (struct SAA *s, long posn, void *p, long len);   /* fixup */
 void saa_fpwrite (struct SAA *, FILE *);
+
+#ifdef NASM_NASM_H
+/*
+ * Standard scanner.
+ */
+extern char *stdscan_bufptr;
+void stdscan_reset(void);
+int stdscan (void *private_data, struct tokenval *tv);
+#endif
+
+#ifdef NASM_NASM_H
+/*
+ * Library routines to manipulate expression data types.
+ */
+int is_reloc(expr *);
+int is_simple(expr *);
+int is_really_simple (expr *);
+int is_unknown(expr *);
+int is_just_unknown(expr *);
+long reloc_value(expr *);
+long reloc_seg(expr *);
+long reloc_wrt(expr *);
+#endif
+
+/*
+ * Binary search routine. Returns index into `array' of an entry
+ * matching `string', or <0 if no match. `array' is taken to
+ * contain `size' elements.
+ */
+int bsi (char *string, char **array, int size);
 
 #endif

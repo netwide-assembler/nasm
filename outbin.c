@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
 #include "nasm.h"
 #include "nasmlib.h"
 #include "outform.h"
@@ -35,6 +37,8 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
+static long data_align, bss_align;
+
 static long start_point;
 
 static void add_reloc (struct Section *s, long bytes, long secref,
@@ -51,7 +55,7 @@ static void add_reloc (struct Section *s, long bytes, long secref,
     r->target = s;
 }
 
-static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef) {
+static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     fp = afp;
 
     error = errfunc;
@@ -67,19 +71,21 @@ static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef) {
     bssindex = seg_alloc();
     relocs = NULL;
     reloctail = &relocs;
+    data_align = bss_align = 4;
 }
 
 static void bin_cleanup (void) {
     struct Reloc *r;
-    long datapos, dataalign, bsspos;
+    long datapos, datagap, bsspos;
 
-    datapos = (start_point + textsect.length + 3) & ~3;/* align on 4 bytes */
-    dataalign = datapos - (start_point + textsect.length);
+    datapos = start_point + textsect.length;
+    datapos = (datapos + data_align-1) & ~(data_align-1);
+    datagap = datapos - (start_point + textsect.length);
+    bsspos = datapos + datasect.length;
+    bsspos = (bsspos + bss_align-1) & ~(bss_align-1);
 
     saa_rewind (textsect.contents);
     saa_rewind (datasect.contents);
-
-    bsspos = (datapos + datasect.length + 3) & ~3;
 
     for (r = relocs; r; r = r->next) {
 	unsigned char *p, *q, mydata[4];
@@ -88,10 +94,12 @@ static void bin_cleanup (void) {
 	saa_fread (r->target->contents, r->posn, mydata, r->bytes);
 	p = q = mydata;
 	l = *p++;
-	l += ((long)*p++) << 8;
-	if (r->bytes == 4) {
-	    l += ((long)*p++) << 16;
-	    l += ((long)*p++) << 24;
+	if (r->bytes > 1) {
+	    l += ((long)*p++) << 8;
+	    if (r->bytes == 4) {
+		l += ((long)*p++) << 16;
+		l += ((long)*p++) << 24;
+	    }
 	}
 
 	if (r->secref == textsect.index)
@@ -110,13 +118,16 @@ static void bin_cleanup (void) {
 
 	if (r->bytes == 4)
 	    WRITELONG(q, l);
-	else
+	else if (r->bytes == 2)
 	    WRITESHORT(q, l);
+	else
+	    *q++ = l & 0xFF;
 	saa_fwrite (r->target->contents, r->posn, mydata, r->bytes);
     }
     saa_fpwrite (textsect.contents, fp);
     if (datasect.length > 0) {
-	fwrite ("\0\0\0\0", dataalign, 1, fp);
+	while (datagap--)
+	    fputc('\0', fp);
 	saa_fpwrite (datasect.contents, fp);
     }
     fclose (fp);
@@ -240,7 +251,12 @@ static void bin_out (long segto, void *data, unsigned long type,
 }
 
 static void bin_deflabel (char *name, long segment, long offset,
-			  int is_global) {
+			  int is_global, char *special) {
+
+    if (special)
+	error (ERR_NONFATAL, "binary format does not support any"
+	       " special symbol types");
+
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
 	return;
@@ -253,6 +269,10 @@ static void bin_deflabel (char *name, long segment, long offset,
 }
 
 static long bin_secname (char *name, int pass, int *bits) {
+    int sec_index;
+    long *sec_align;
+    char *p;
+
     /*
      * Default is 16 bits.
      */
@@ -262,14 +282,40 @@ static long bin_secname (char *name, int pass, int *bits) {
     if (!name)
 	return textsect.index;
 
-    if (!strcmp(name, ".text"))
-	return textsect.index;
-    else if (!strcmp(name, ".data"))
-	return datasect.index;
-    else if (!strcmp(name, ".bss"))
-	return bssindex;
-    else
+    p = name;
+    while (*p && !isspace(*p)) p++;
+    if (*p) *p++ = '\0';
+    if (!strcmp(name, ".text")) {
+	sec_index = textsect.index;
+	sec_align = NULL;
+    } else if (!strcmp(name, ".data")) {
+	sec_index = datasect.index;
+	sec_align = &data_align;
+    } else if (!strcmp(name, ".bss")) {
+	sec_index = bssindex;
+	sec_align = &bss_align;
+    } else
 	return NO_SEG;
+
+    if (*p) {
+	if (!nasm_strnicmp(p,"align=",6)) {
+	    if (sec_align == NULL)
+		error(ERR_NONFATAL, "cannot specify an alignment to"
+		      " the `.text' section");
+	    else if (p[6+strspn(p+6,"0123456789")])
+		error(ERR_NONFATAL, "argument to `align' is not numeric");
+	    else {
+		unsigned int align = atoi(p+6);
+		if (!align || ((align-1) & align))
+		    error(ERR_NONFATAL, "argument to `align' is not a"
+			  " power of two");
+		else
+		    *sec_align = align;
+	    }
+	}
+    }
+
+    return sec_index;
 }
 
 static long bin_segbase (long segment) {
@@ -292,9 +338,18 @@ static void bin_filename (char *inname, char *outname, efunc error) {
     standard_extension (inname, outname, "", error);
 }
 
+static char *bin_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    "%imacro org 1+.nolist",
+    "[org %1]",
+    "%endmacro",
+    NULL
+};
+
 struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
+    bin_stdmac,
     bin_init,
     bin_out,
     bin_deflabel,

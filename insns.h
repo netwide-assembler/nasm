@@ -56,6 +56,7 @@ struct itemplate {
 #define IF_486    0x0400	       /* 486+ instruction */
 #define IF_PENT   0x0500	       /* Pentium instruction */
 #define IF_P6     0x0600	       /* P6 instruction */
+#define IF_CYRIX  0x0800	       /* Cyrix-specific instruction */
 #define IF_PMASK  0x0F00	       /* the mask for processor types */
 #define IF_PRIV   0x1000	       /* it's a privileged instruction */
 #define IF_UNDOC  0x2000	       /* it's an undocumented instruction */

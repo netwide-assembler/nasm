@@ -27,7 +27,7 @@ NASMOBJS1 = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ)
 NASMOBJS2 = assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ)
 NASMOBJS3 = outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ)
 NASMOBJS4 = outobj.$(OBJ) outas86.$(OBJ) outdbg.$(OBJ) outrdf.$(OBJ)
-NASMOBJS5 = preproc.$(OBJ) listing.$(OBJ)
+NASMOBJS5 = preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ)
 
 NASMOBJS = $(NASMOBJS1) $(NASMOBJS2) $(NASMOBJS3) $(NASMOBJS4) $(NASMOBJS5)
 
@@ -53,6 +53,7 @@ ndisasm$(EXE): $(NDISASMOBJS)
 
 assemble.$(OBJ): assemble.c nasm.h assemble.h insns.h
 disasm.$(OBJ): disasm.c nasm.h disasm.h sync.h insns.h names.c
+eval.$(OBJ): eval.c nasm.h nasmlib.h eval.h
 float.$(OBJ): float.c nasm.h
 insnsa.$(OBJ): insnsa.c nasm.h insns.h
 insnsd.$(OBJ): insnsd.c nasm.h insns.h

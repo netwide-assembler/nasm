@@ -22,6 +22,7 @@ static char obj_infile[FILENAME_MAX];
 static int obj_uppercase;
 
 static efunc error;
+static evalfunc evaluate;
 static ldfunc deflabel;
 static FILE *ofp;
 static long first_seg;
@@ -35,6 +36,9 @@ static int any_segs;
 
 static unsigned char record[RECORD_MAX], *recptr;
 
+struct Segment;			       /* need to know these structs exist */
+struct Group;
+
 static struct Public {
     struct Public *next;
     char *name;
@@ -46,13 +50,27 @@ static struct External {
     struct External *next;
     char *name;
     long commonsize;
-} *exthead, **exttail;
+    long commonelem;		       /* element size if FAR, else zero */
+    int index;			       /* OBJ-file external index */
+    enum {
+	DEFWRT_NONE,		       /* no unusual default-WRT */
+	DEFWRT_STRING,		       /* a string we don't yet understand */
+	DEFWRT_SEGMENT,		       /* a segment */
+	DEFWRT_GROUP		       /* a group */
+    } defwrt_type;
+    union {
+	char *string;
+	struct Segment *seg;
+	struct Group *grp;
+    } defwrt_ptr;
+    struct External *next_dws;	       /* next with DEFWRT_STRING */
+} *exthead, **exttail, *dws;
 
 static int externals;
 
 static struct ExtBack {
     struct ExtBack *next;
-    int index[EXT_BLKSIZ];
+    struct External *exts[EXT_BLKSIZ];
 } *ebhead, **ebtail;
 
 static struct Segment {
@@ -85,7 +103,7 @@ static struct Group {
 	long index;
 	char *name;
     } segs[GROUP_MAX];		       /* ...in this */
-} *grphead, **grptail, *obj_grp_needs_update, *defgrp;
+} *grphead, **grptail, *obj_grp_needs_update;
 
 static struct ObjData {
     struct ObjData *next;
@@ -97,9 +115,28 @@ static struct ObjData {
     unsigned char fixupp[RECORD_MAX], *fptr;
 } *datahead, *datacurr, **datatail;
 
-static long obj_entry_seg, obj_entry_ofs;
+static struct ImpDef {
+    struct ImpDef *next;
+    char *extname;
+    char *libname;
+    unsigned int impindex;
+    char *impname;
+} *imphead, **imptail;
 
-static int os2;
+static struct ExpDef {
+    struct ExpDef *next;
+    char *intname;
+    char *extname;
+    unsigned int ordinal;
+    int flags;
+} *exphead, **exptail;
+
+#define EXPDEF_FLAG_ORDINAL  0x80
+#define EXPDEF_FLAG_RESIDENT 0x40
+#define EXPDEF_FLAG_NODATA   0x20
+#define EXPDEF_MASK_PARMCNT  0x1F
+
+static long obj_entry_seg, obj_entry_ofs;
 
 enum RecordID {			       /* record ID codes */
 
@@ -140,9 +177,10 @@ static unsigned char *obj_write_value(unsigned char *, unsigned long);
 static void obj_record(int, unsigned char *, unsigned char *);
 static int obj_directive (char *, char *, int);
 
-static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef) {
+static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     ofp = fp;
     error = errfunc;
+    evaluate = eval;
     deflabel = ldef;
     first_seg = seg_alloc();
     any_segs = FALSE;
@@ -150,6 +188,11 @@ static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef) {
     fpubtail = &fpubhead;
     exthead = NULL;
     exttail = &exthead;
+    imphead = NULL;
+    imptail = &imphead;
+    exphead = NULL;
+    exptail = &exphead;
+    dws = NULL;
     externals = 0;
     ebhead = NULL;
     ebtail = &ebhead;
@@ -161,22 +204,6 @@ static void obj_init (FILE *fp, efunc errfunc, ldfunc ldef) {
     datatail = &datahead;
     obj_entry_seg = NO_SEG;
     obj_uppercase = FALSE;
-
-    if (os2) {
-	obj_directive ("group", "FLAT", 1);
-	defgrp = grphead;
-    } else
-	defgrp = NULL;
-}
-
-static void dos_init (FILE *fp, efunc errfunc, ldfunc ldef) {
-    os2 = FALSE;
-    obj_init (fp, errfunc, ldef);
-}
-
-static void os2_init (FILE *fp, efunc errfunc, ldfunc ldef) {
-    os2 = TRUE;
-    obj_init (fp, errfunc, ldef);
 }
 
 static void obj_cleanup (void) {
@@ -188,6 +215,7 @@ static void obj_cleanup (void) {
 	while (segtmp->pubhead) {
 	    struct Public *pubtmp = segtmp->pubhead;
 	    segtmp->pubhead = pubtmp->next;
+	    nasm_free (pubtmp->name);
 	    nasm_free (pubtmp);
 	}
 	nasm_free (segtmp);
@@ -195,12 +223,28 @@ static void obj_cleanup (void) {
     while (fpubhead) {
 	struct Public *pubtmp = fpubhead;
 	fpubhead = fpubhead->next;
+	nasm_free (pubtmp->name);
 	nasm_free (pubtmp);
     }
     while (exthead) {
 	struct External *exttmp = exthead;
 	exthead = exthead->next;
 	nasm_free (exttmp);
+    }
+    while (imphead) {
+	struct ImpDef *imptmp = imphead;
+	imphead = imphead->next;
+	nasm_free (imptmp->extname);
+	nasm_free (imptmp->libname);
+	nasm_free (imptmp->impname);   /* nasm_free won't mind if it's NULL */
+	nasm_free (imptmp);
+    }
+    while (exphead) {
+	struct ExpDef *exptmp = exphead;
+	exphead = exphead->next;
+	nasm_free (exptmp->extname);
+	nasm_free (exptmp->intname);
+	nasm_free (exptmp);
     }
     while (ebhead) {
 	struct ExtBack *ebtmp = ebhead;
@@ -219,8 +263,34 @@ static void obj_cleanup (void) {
     }
 }
 
+static void obj_ext_set_defwrt (struct External *ext, char *id) {
+    struct Segment *seg;
+    struct Group *grp;
+
+    for (seg = seghead; seg; seg = seg->next)
+	if (!strcmp(seg->name, id)) {
+	    ext->defwrt_type = DEFWRT_SEGMENT;
+	    ext->defwrt_ptr.seg = seg;
+	    nasm_free (id);
+	    return;
+	}
+
+    for (grp = grphead; grp; grp = grp->next)
+	if (!strcmp(grp->name, id)) {
+	    ext->defwrt_type = DEFWRT_GROUP;
+	    ext->defwrt_ptr.grp = grp;
+	    nasm_free (id);
+	    return;
+	}
+
+    ext->defwrt_type = DEFWRT_STRING;
+    ext->defwrt_ptr.string = id;
+    ext->next_dws = dws;
+    dws = ext;
+}
+
 static void obj_deflabel (char *name, long segment,
-			  long offset, int is_global) {
+			  long offset, int is_global, char *special) {
     /*
      * We have three cases:
      *
@@ -241,6 +311,13 @@ static void obj_deflabel (char *name, long segment,
     struct ExtBack *eb;
     struct Segment *seg;
     int i;
+    int used_special = FALSE;	       /* have we used the special text? */
+
+    /*
+     * If it's a special-retry from pass two, discard it.
+     */
+    if (is_global == 3)
+	return;
 
     /*
      * First check for the double-period, signifying something
@@ -278,10 +355,13 @@ static void obj_deflabel (char *name, long segment,
 	    pub = *fpubtail = nasm_malloc(sizeof(*pub));
 	    fpubtail = &pub->next;
 	    pub->next = NULL;
-	    pub->name = name;
+	    pub->name = nasm_strdup(name);
 	    pub->offset = offset;
 	    pub->segment = (segment == NO_SEG ? 0 : segment & ~SEG_ABS);
 	}
+	if (special)
+	    error(ERR_NONFATAL, "OBJ supports no special symbol features"
+		  " for this symbol type");
 	return;
     }
 
@@ -306,9 +386,12 @@ static void obj_deflabel (char *name, long segment,
 		pub = *seg->pubtail = nasm_malloc(sizeof(*pub));
 		seg->pubtail = &pub->next;
 		pub->next = NULL;
-		pub->name = name;
+		pub->name = nasm_strdup(name);
 		pub->offset = offset;
 	    }
+	    if (special)
+		error(ERR_NONFATAL, "OBJ supports no special symbol features"
+		      " for this symbol type");
 	    return;
 	}
 
@@ -319,10 +402,96 @@ static void obj_deflabel (char *name, long segment,
     ext->next = NULL;
     exttail = &ext->next;
     ext->name = name;
-    if (is_global == 2)
+    ext->defwrt_type = DEFWRT_NONE;
+    if (is_global == 2) {
 	ext->commonsize = offset;
-    else
+	ext->commonelem = 1;	       /* default FAR */
+    } else
 	ext->commonsize = 0;
+
+    /*
+     * Now process the special text, if any, to find default-WRT
+     * specifications and common-variable element-size and near/far
+     * specifications.
+     */
+    while (special && *special) {
+	used_special = TRUE;
+
+	/*
+	 * We might have a default-WRT specification.
+	 */
+	if (!nasm_strnicmp(special, "wrt", 3)) {
+	    char *p;
+	    int len;
+	    special += 3;
+	    special += strspn(special, " \t");
+	    p = nasm_strndup(special, len = strcspn(special, ":"));
+	    obj_ext_set_defwrt (ext, p);
+	    special += len;
+	    if (*special && *special != ':')
+		error(ERR_NONFATAL, "`:' expected in special symbol"
+		      " text for `%s'", ext->name);
+	    else if (*special == ':')
+		special++;
+	}
+
+	/*
+	 * The NEAR or FAR keywords specify nearness or
+	 * farness. FAR gives default element size 1.
+	 */
+	if (!nasm_strnicmp(special, "far", 3)) {
+	    if (ext->commonsize)
+		ext->commonelem = 1;
+	    else
+		error(ERR_NONFATAL, "`%s': `far' keyword may only be applied"
+		      " to common variables\n", ext->name);
+	    special += 3;
+	    special += strspn(special, " \t");
+	} else if (!nasm_strnicmp(special, "near", 4)) {
+	    if (ext->commonsize)
+		ext->commonelem = 0;
+	    else
+		error(ERR_NONFATAL, "`%s': `far' keyword may only be applied"
+		      " to common variables\n", ext->name);
+	    special += 4;
+	    special += strspn(special, " \t");
+	}
+
+	/*
+	 * If it's a common, and anything else remains on the line
+	 * before a further colon, evaluate it as an expression and
+	 * use that as the element size. Forward references aren't
+	 * allowed.
+	 */
+	if (*special == ':')
+	    special++;
+	else if (*special) {
+	    if (ext->commonsize) {
+		expr *e;
+		struct tokenval tokval;
+
+		stdscan_reset();
+		stdscan_bufptr = special;
+		tokval.t_type = TOKEN_INVALID;
+		e = evaluate(stdscan, NULL, &tokval, NULL, 1, error, NULL);
+		if (e) {
+		    if (!is_simple(e))
+			error (ERR_NONFATAL, "cannot use relocatable"
+			       " expression as common-variable element size");
+		    else
+			ext->commonelem = reloc_value(e);
+		}
+		special = stdscan_bufptr;
+	    } else {
+		error (ERR_NONFATAL, "`%s': element-size specifications only"
+		       " apply to common variables", ext->name);
+		while (*special && *special != ':')
+		    special++;
+		if (*special == ':')
+		    special++;
+	    }
+	}
+    }
 
     i = segment/2;
     eb = ebhead;
@@ -341,7 +510,12 @@ static void obj_deflabel (char *name, long segment,
 	}
 	i -= EXT_BLKSIZ;
     }
-    eb->index[i] = ++externals;
+    eb->exts[i] = ext;
+    ext->index = ++externals;
+
+    if (special && !used_special)
+	error(ERR_NONFATAL, "OBJ supports no special symbol features"
+	      " for this symbol type");
 }
 
 static void obj_out (long segto, void *data, unsigned long type,
@@ -400,6 +574,8 @@ static void obj_out (long segto, void *data, unsigned long type,
 	}
     } else if (realtype == OUT_ADDRESS || realtype == OUT_REL2ADR ||
 	       realtype == OUT_REL4ADR) {
+	int rsize;
+
 	if (segment == NO_SEG && realtype != OUT_ADDRESS)
 	    error(ERR_NONFATAL, "relative call to absolute address not"
 		  " supported by OBJ format");
@@ -407,10 +583,14 @@ static void obj_out (long segto, void *data, unsigned long type,
 	    error(ERR_NONFATAL, "far-absolute relocations not supported"
 		  " by OBJ format");
 	ldata = *(long *)data;
-	if (realtype == OUT_REL2ADR)
+	if (realtype == OUT_REL2ADR) {
 	    ldata += (size-2);
-	if (realtype == OUT_REL4ADR)
+	    size = 2;
+	}
+	if (realtype == OUT_REL4ADR) {
 	    ldata += (size-4);
+	    size = 4;
+	}
 	if (obj_ledata_space(seg) < 4 || !obj_fixup_free(seg))
 	    obj_ledata_new(seg);
 	if (size == 2)
@@ -418,8 +598,22 @@ static void obj_out (long segto, void *data, unsigned long type,
 	else
 	    datacurr->lptr = obj_write_dword (datacurr->lptr, ldata);
 	datacurr->nonempty = TRUE;
+	rsize = size;
+	if (segment < SEG_ABS && segment % 2 && size == 4) {
+	    /*
+	     * This is a 4-byte segment-base relocation such as
+	     * `MOV EAX,SEG foo'. OBJ format can't actually handle
+	     * these, but if the constant term has the 16 low bits
+	     * zero, we can just apply a 2-byte segment-base
+	     * relocation to the low word instead.
+	     */
+	    rsize = 2;
+	    if (ldata & 0xFFFF)
+		error(ERR_NONFATAL, "OBJ format cannot handle complex"
+		      " dword-size segment base references");
+	}
 	if (segment != NO_SEG)
-	    obj_write_fixup (datacurr, size,
+	    obj_write_fixup (datacurr, rsize,
 			     (realtype == OUT_REL2ADR ||
 			      realtype == OUT_REL4ADR ? 0 : 0x4000),
 			     segment, wrt,
@@ -479,6 +673,13 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
     long tidx, fidx;
     struct Segment *s = NULL;
     struct Group *g = NULL;
+    struct External *e = NULL;
+
+    if (bytes == 1) {
+	error(ERR_NONFATAL, "`obj' output driver does not support"
+	      " one-byte relocations");
+	return;
+    }
 
     locat = 0x8000 | segrel | offset;
     if (seg % 2) {
@@ -486,8 +687,8 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
 	locat |= 0x800;
 	seg--;
 	if (bytes != 2)
-	    error(ERR_NONFATAL, "OBJ format can only handle 2-byte"
-		  " segment base references");
+	    error(ERR_PANIC, "OBJ: 4-byte segment base fixup got"
+		  " through sanity check");
     } else {
 	base = FALSE;
 	if (bytes == 2)
@@ -527,7 +728,7 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
 		i -= EXT_BLKSIZ;
 	    }
 	    if (eb)
-		method = 6, tidx = eb->index[i];
+		method = 6, e = eb->exts[i], tidx = e->index;
 	    else
 		error(ERR_PANIC,
 		      "unrecognised segment value in obj_write_fixup");
@@ -536,17 +737,28 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
 
     /*
      * If no WRT given, assume the natural default, which is method
-     * F5 unless we are doing an OFFSET fixup for a grouped
-     * segment, in which case we require F1 (group). Oh, and in
-     * OS/2 mode we're in F1 (group) on `defgrp' _always_, by
-     * default.
+     * F5 unless:
+     *
+     * - we are doing an OFFSET fixup for a grouped segment, in
+     *   which case we require F1 (group).
+     *
+     * - we are doing an OFFSET fixup for an external with a
+     *   default WRT, in which case we must honour the default WRT.
      */
     if (wrt == NO_SEG) {
-	if (os2)
-	    method |= 0x10, fidx = defgrp->obj_index;
-	else if (!base && s && s->grp)
+	if (!base && s && s->grp)
 	    method |= 0x10, fidx = s->grp->obj_index;
-	else
+	else if (!base && e && e->defwrt_type != DEFWRT_NONE) {
+	    if (e->defwrt_type == DEFWRT_SEGMENT)
+		method |= 0x00, fidx = e->defwrt_ptr.seg->obj_index;
+	    else if (e->defwrt_type == DEFWRT_GROUP)
+		method |= 0x10, fidx = e->defwrt_ptr.grp->obj_index;
+	    else {
+		error(ERR_NONFATAL, "default WRT specification for"
+		      " external `%s' unresolved", e->name);
+		method |= 0x50, fidx = -1; /* got to do _something_ */
+	    }
+	} else
 	    method |= 0x50, fidx = -1;
     } else {
 	/*
@@ -575,7 +787,7 @@ static void obj_write_fixup (struct ObjData *data, int bytes,
 		    i -= EXT_BLKSIZ;
 		}
 		if (eb)
-		    method |= 0x20, fidx = eb->index[i];
+		    method |= 0x20, fidx = eb->exts[i]->index;
 		else
 		    error(ERR_PANIC,
 			  "unrecognised WRT value in obj_write_fixup");
@@ -603,6 +815,7 @@ static long obj_segment (char *name, int pass, int *bits) {
     } else {
 	struct Segment *seg;
 	struct Group *grp;
+	struct External **extp;
 	int obj_idx, i, attrs, rn_error;
 	char *p;
 
@@ -686,7 +899,32 @@ static long obj_segment (char *name, int pass, int *bits) {
 		seg->use32 = FALSE;
 	    else if (!nasm_stricmp(p, "use32"))
 		seg->use32 = TRUE;
-	    else if (!nasm_strnicmp(p, "class=", 6))
+	    else if (!nasm_stricmp(p, "flat")) {
+		/*
+		 * This segment is an OS/2 FLAT segment. That means
+		 * that its default group is group FLAT, even if
+		 * the group FLAT does not explicitly _contain_ the
+		 * segment.
+		 * 
+		 * When we see this, we must create the group
+		 * `FLAT', containing no segments, if it does not
+		 * already exist; then we must set the default
+		 * group of this segment to be the FLAT group.
+		 */
+		struct Group *grp;
+		for (grp = grphead; grp; grp = grp->next)
+		    if (!strcmp(grp->name, "FLAT"))
+			break;
+		if (!grp) {
+		    obj_directive ("group", "FLAT", 1);
+		    for (grp = grphead; grp; grp = grp->next)
+			if (!strcmp(grp->name, "FLAT"))
+			    break;
+		    if (!grp)
+			error (ERR_PANIC, "failure to define FLAT?!");
+		}
+		seg->grp = grp;
+	    } else if (!nasm_strnicmp(p, "class=", 6))
 		seg->segclass = nasm_strdup(p+6);
 	    else if (!nasm_strnicmp(p, "overlay=", 8))
 		seg->overlay = nasm_strdup(p+8);
@@ -703,6 +941,7 @@ static long obj_segment (char *name, int pass, int *bits) {
 		  case 4:	       /* DWORD */
 		  case 16:	       /* PARA */
 		  case 256:	       /* PAGE */
+		  case 4096:	       /* PharLap extension */
 		    break;
 		  case 8:
 		    error(ERR_WARNING, "OBJ format does not support alignment"
@@ -715,6 +954,13 @@ static long obj_segment (char *name, int pass, int *bits) {
 		    error(ERR_WARNING, "OBJ format does not support alignment"
 			  " of %d: rounding up to 256", seg->align);
 		    seg->align = 256;
+		    break;
+		  case 512:
+		  case 1024:
+		  case 2048:
+		    error(ERR_WARNING, "OBJ format does not support alignment"
+			  " of %d: rounding up to 4096", seg->align);
+		    seg->align = 4096;
 		    break;
 		  default:
 		    error(ERR_NONFATAL, "invalid alignment value %d",
@@ -732,9 +978,11 @@ static long obj_segment (char *name, int pass, int *bits) {
 
 	obj_seg_needs_update = seg;
 	if (seg->align >= SEG_ABS)
-	    deflabel (name, NO_SEG, seg->align - SEG_ABS, &of_obj, error);
+	    deflabel (name, NO_SEG, seg->align - SEG_ABS,
+		      NULL, FALSE, FALSE, &of_obj, error);
 	else
-	    deflabel (name, seg->index+1, 0L, &of_obj, error);
+	    deflabel (name, seg->index+1, 0L,
+		      NULL, FALSE, FALSE, &of_obj, error);
 	obj_seg_needs_update = NULL;
 
 	/*
@@ -756,6 +1004,22 @@ static long obj_segment (char *name, int pass, int *bits) {
 	    }
 	}
 
+	/*
+	 * Walk through the list of externals with unresolved
+	 * default-WRT clauses, and resolve any that point at this
+	 * segment.
+	 */
+	extp = &dws;
+	while (*extp) {
+	    if ((*extp)->defwrt_type == DEFWRT_STRING &&
+		!strcmp((*extp)->defwrt_ptr.string, seg->name)) {
+		(*extp)->defwrt_type = DEFWRT_SEGMENT;
+		(*extp)->defwrt_ptr.seg = seg;
+		*extp = (*extp)->next_dws;
+	    } else
+		extp = &(*extp)->next_dws;
+	}
+
 	if (seg->use32)
 	    *bits = 32;
 	else
@@ -770,6 +1034,7 @@ static int obj_directive (char *directive, char *value, int pass) {
 	if (pass == 1) {
 	    struct Group *grp;
 	    struct Segment *seg;
+	    struct External **extp;
 	    int obj_idx;
 
 	    q = value;
@@ -813,7 +1078,8 @@ static int obj_directive (char *directive, char *value, int pass) {
 	    grp->name = NULL;
 
 	    obj_grp_needs_update = grp;
-	    deflabel (v, grp->index+1, 0L, &of_obj, error);
+	    deflabel (v, grp->index+1, 0L,
+		      NULL, FALSE, FALSE, &of_obj, error);
 	    obj_grp_needs_update = NULL;
 
 	    while (*q) {
@@ -852,11 +1118,150 @@ static int obj_directive (char *directive, char *value, int pass) {
 		    grp->segs[grp->nentries++].name = nasm_strdup(p);
 		}
 	    }
+
+	    /*
+	     * Walk through the list of externals with unresolved
+	     * default-WRT clauses, and resolve any that point at
+	     * this group.
+	     */
+	    extp = &dws;
+	    while (*extp) {
+		if ((*extp)->defwrt_type == DEFWRT_STRING &&
+		    !strcmp((*extp)->defwrt_ptr.string, grp->name)) {
+		    (*extp)->defwrt_type = DEFWRT_GROUP;
+		    (*extp)->defwrt_ptr.grp = grp;
+		    *extp = (*extp)->next_dws;
+	    } else
+		    extp = &(*extp)->next_dws;
+	    }
 	}
 	return 1;
     }
     if (!strcmp(directive, "uppercase")) {
 	obj_uppercase = TRUE;
+	return 1;
+    }
+    if (!strcmp(directive, "import")) {
+	char *q, *extname, *libname, *impname;
+
+	if (pass == 2)
+	    return 1;		       /* ignore in pass two */
+	extname = q = value;
+	while (*q && !isspace(*q))
+	    q++;
+	if (isspace(*q)) {
+	    *q++ = '\0';
+	    while (*q && isspace(*q))
+		q++;
+	}
+
+	libname = q;
+	while (*q && !isspace(*q))
+	    q++;
+	if (isspace(*q)) {
+	    *q++ = '\0';
+	    while (*q && isspace(*q))
+		q++;
+	}
+
+	impname = q;
+
+	if (!*extname || !*libname)
+	    error(ERR_NONFATAL, "`import' directive requires symbol name"
+		  " and library name");
+	else {
+	    struct ImpDef *imp;
+	    int err = FALSE;
+
+	    imp = *imptail = nasm_malloc(sizeof(struct ImpDef));
+	    imptail = &imp->next;
+	    imp->next = NULL;
+	    imp->extname = nasm_strdup(extname);
+	    imp->libname = nasm_strdup(libname);
+	    imp->impindex = readnum(impname, &err);
+	    if (!*impname || err)
+		imp->impname = nasm_strdup(impname);
+	    else
+		imp->impname = NULL;
+	}
+
+	return 1;
+    }
+    if (!strcmp(directive, "export")) {
+	char *q, *extname, *intname, *v;
+	struct ExpDef *export;
+	int flags = 0;
+	unsigned int ordinal = 0;
+
+	if (pass == 2)
+	    return 1;		       /* ignore in pass two */
+	intname = q = value;
+	while (*q && !isspace(*q))
+	    q++;
+	if (isspace(*q)) {
+	    *q++ = '\0';
+	    while (*q && isspace(*q))
+		q++;
+	}
+
+	extname = q;
+	while (*q && !isspace(*q))
+	    q++;
+	if (isspace(*q)) {
+	    *q++ = '\0';
+	    while (*q && isspace(*q))
+		q++;
+	}
+
+	if (!*intname) {
+	    error(ERR_NONFATAL, "`export' directive requires export name");
+	    return 1;
+	}
+	if (!*extname) {
+	    extname = intname;
+	    intname = "";
+	}
+	while (*q) {
+	    v = q;
+	    while (*q && !isspace(*q))
+		q++;
+	    if (isspace(*q)) {
+		*q++ = '\0';
+		while (*q && isspace(*q))
+		    q++;
+	    }
+	    if (!nasm_stricmp(v, "resident"))
+		flags |= EXPDEF_FLAG_RESIDENT;
+	    else if (!nasm_stricmp(v, "nodata"))
+		flags |= EXPDEF_FLAG_NODATA;
+	    else if (!nasm_strnicmp(v, "parm=", 5)) {
+		int err = FALSE;
+		flags |= EXPDEF_MASK_PARMCNT & readnum(v+5, &err);
+		if (err) {
+		    error(ERR_NONFATAL,
+			  "value `%s' for `parm' is non-numeric", v+5);
+		    return 1;
+		}
+	    } else {
+		int err = FALSE;
+		ordinal = readnum(v, &err);
+		if (err) {
+		    error(ERR_NONFATAL, "unrecognised export qualifier `%s'",
+			  v);
+		    return 1;
+		}
+		flags |= EXPDEF_FLAG_ORDINAL;
+	    }
+	}
+
+	export = *exptail = nasm_malloc(sizeof(struct ExpDef));
+	exptail = &export->next;
+	export->next = NULL;
+	export->extname = nasm_strdup(extname);
+	export->intname = nasm_strdup(intname);
+	export->ordinal = ordinal;
+	export->flags = flags;
+
 	return 1;
     }
     return 0;
@@ -872,8 +1277,35 @@ static long obj_segbase (long segment) {
 	if (seg->index == segment-1)
 	    break;
 
-    if (!seg)
+    if (!seg) {
+	/*
+	 * Might be an external with a default WRT.
+	 */
+	long i = segment/2;
+	struct ExtBack *eb = ebhead;
+	struct External *e;
+
+	while (i > EXT_BLKSIZ) {
+	    if (eb)
+		eb = eb->next;
+	    else
+		break;
+	    i -= EXT_BLKSIZ;
+	}
+	if (eb) {
+	    e = eb->exts[i];
+	    if (e->defwrt_type == DEFWRT_NONE)
+		return segment;	       /* fine */
+	    else if (e->defwrt_type == DEFWRT_SEGMENT)
+		return e->defwrt_ptr.seg->index+1;
+	    else if (e->defwrt_type == DEFWRT_GROUP)
+		return e->defwrt_ptr.grp->index+1;
+	    else if (e->defwrt_type == DEFWRT_STRING)
+		return NO_SEG;	       /* can't tell what it is */
+	}
+
 	return segment;		       /* not one of ours - leave it alone */
+    }
 
     if (seg->align >= SEG_ABS)
 	return seg->align;	       /* absolute segment */
@@ -894,6 +1326,8 @@ static void obj_write_file (void) {
     struct Public *pub;
     struct External *ext;
     struct ObjData *data;
+    struct ImpDef *imp;
+    struct ExpDef *export;
     static char boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx, rectype;
 
@@ -911,6 +1345,41 @@ static void obj_write_file (void) {
     recptr = obj_write_rword (recptr, 0);   /* comment type zero */
     recptr = obj_write_name (recptr, boast);
     obj_record (COMENT, record, recptr);
+
+    /*
+     * Write the IMPDEF records, if any.
+     */
+    for (imp = imphead; imp; imp = imp->next) {
+	recptr = record;
+	recptr = obj_write_rword (recptr, 0xA0);   /* comment class A0 */
+	recptr = obj_write_byte (recptr, 1);   /* subfunction 1: IMPDEF */
+	if (imp->impname)
+	    recptr = obj_write_byte (recptr, 0);   /* import by name */
+	else
+	    recptr = obj_write_byte (recptr, 1);   /* import by ordinal */
+	recptr = obj_write_name (recptr, imp->extname);
+	recptr = obj_write_name (recptr, imp->libname);
+	if (imp->impname)
+	    recptr = obj_write_name (recptr, imp->impname);
+	else
+	    recptr = obj_write_word (recptr, imp->impindex);
+	obj_record (COMENT, record, recptr);
+    }
+
+    /*
+     * Write the EXPDEF records, if any.
+     */
+    for (export = exphead; export; export = export->next) {
+	recptr = record;
+	recptr = obj_write_rword (recptr, 0xA0);   /* comment class A0 */
+	recptr = obj_write_byte (recptr, 2);   /* subfunction 1: EXPDEF */
+	recptr = obj_write_byte (recptr, export->flags);
+	recptr = obj_write_name (recptr, export->extname);
+	recptr = obj_write_name (recptr, export->intname);
+	if (export->flags & EXPDEF_FLAG_ORDINAL)
+	    recptr = obj_write_word (recptr, export->ordinal);
+	obj_record (COMENT, record, recptr);
+    }
 
     /*
      * Write the first LNAMES record, containing LNAME one, which
@@ -961,10 +1430,12 @@ static void obj_write_file (void) {
 	/* A field */
 	if (seg->align >= SEG_ABS)
 	    acbp |= 0x00;
-	else if (seg->align >= 256) {
-	    if (seg->align > 256)
+	else if (seg->align >= 4096) {
+	    if (seg->align > 4096)
 		error(ERR_NONFATAL, "segment `%s' requires more alignment"
 		      " than OBJ format supports", seg->name);
+	    acbp |= 0xC0;	       /* PharLap extension */
+	} else if (seg->align >= 256) {
 	    acbp |= 0x80;
 	} else if (seg->align >= 16) {
 	    acbp |= 0x60;
@@ -1000,11 +1471,11 @@ static void obj_write_file (void) {
      */
     recptr = record;
     for (grp = grphead; grp; grp = grp->next) {
-	recptr = obj_write_name (recptr, grp->name);
-	if (recptr - record > 1024) {
+	if (recptr - record + strlen(grp->name)+2 > 1024) {
 	    obj_record (LNAMES, record, recptr);
 	    recptr = record;
 	}
+	recptr = obj_write_name (recptr, grp->name);
     }
     if (recptr > record)
 	obj_record (LNAMES, record, recptr);
@@ -1083,28 +1554,29 @@ static void obj_write_file (void) {
     recptr = record;
     for (ext = exthead; ext; ext = ext->next) {
 	if (ext->commonsize == 0) {
-	    recptr = obj_write_name (recptr, ext->name);
-	    recptr = obj_write_index (recptr, 0);
-	    if (recptr - record > 1024) {
+	    /* dj@delorie.com: check for buffer overrun before we overrun it */
+	    if (recptr - record + strlen(ext->name)+2 > RECORD_MAX) {
 		obj_record (EXTDEF, record, recptr);
 		recptr = record;
 	    }
+	    recptr = obj_write_name (recptr, ext->name);
+	    recptr = obj_write_index (recptr, 0);
 	} else {
 	    if (recptr > record)
 		obj_record (EXTDEF, record, recptr);
 	    recptr = record;
-	    if (ext->commonsize > 0) {
+	    if (ext->commonsize) {
 		recptr = obj_write_name (recptr, ext->name);
 		recptr = obj_write_index (recptr, 0);
-		recptr = obj_write_byte (recptr, 0x61);/* far communal */
-		recptr = obj_write_value (recptr, 1L);
-		recptr = obj_write_value (recptr, ext->commonsize);
-		obj_record (COMDEF, record, recptr);
-	    } else if (ext->commonsize < 0) {
-		recptr = obj_write_name (recptr, ext->name);
-		recptr = obj_write_index (recptr, 0);
-		recptr = obj_write_byte (recptr, 0x62);/* near communal */
-		recptr = obj_write_value (recptr, ext->commonsize);
+		if (ext->commonelem) {
+		    recptr = obj_write_byte (recptr, 0x61);/* far communal */
+		    recptr = obj_write_value (recptr, (ext->commonsize /
+						       ext->commonelem));
+		    recptr = obj_write_value (recptr, ext->commonelem);
+		} else {
+		    recptr = obj_write_byte (recptr, 0x62);/* near communal */
+		    recptr = obj_write_value (recptr, ext->commonsize);
+		}
 		obj_record (COMDEF, record, recptr);
 	    }
 	    recptr = record;
@@ -1115,12 +1587,12 @@ static void obj_write_file (void) {
 
     /*
      * Write a COMENT record stating that the linker's first pass
-     * may stop processing at this point. Exception is if we're in
-     * OS/2 mode and our MODEND record specifies a start point, in
-     * which case, according to the OS/2 documentation, this COMENT
-     * should be omitted.
+     * may stop processing at this point. Exception is if our
+     * MODEND record specifies a start point, in which case,
+     * according to some variants of the documentation, this COMENT
+     * should be omitted. So we'll omit it just in case.
      */
-    if (!os2 || obj_entry_seg == NO_SEG) {
+    if (obj_entry_seg == NO_SEG) {
 	recptr = record;
 	recptr = obj_write_rword (recptr, 0x40A2);
 	recptr = obj_write_byte (recptr, 1);
@@ -1262,13 +1734,31 @@ static void obj_record(int type, unsigned char *start, unsigned char *end) {
     fwrite (start, 1, end-start, ofp);
     while (start < end)
 	cksum += *start++;
-    fputc ( (-cksum) & 0xFF, ofp);
+    fputc ( (-(long)cksum) & 0xFF, ofp);
 }
+
+static char *obj_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    "%imacro group 1+.nolist",
+    "[group %1]",
+    "%endmacro",
+    "%imacro uppercase 1+.nolist",
+    "[uppercase %1]",
+    "%endmacro",
+    "%imacro export 1+.nolist",
+    "[export %1]",
+    "%endmacro",
+    "%imacro import 1+.nolist",
+    "[import %1]",
+    "%endmacro",
+    NULL
+};
 
 struct ofmt of_obj = {
     "Microsoft MS-DOS 16-bit OMF object files",
     "obj",
-    dos_init,
+    obj_stdmac,
+    obj_init,
     obj_out,
     obj_deflabel,
     obj_segment,
@@ -1277,18 +1767,4 @@ struct ofmt of_obj = {
     obj_filename,
     obj_cleanup
 };
-
-struct ofmt of_os2 = {
-    "OS/2 object files (variant of OMF)",
-    "os2",
-    os2_init,
-    obj_out,
-    obj_deflabel,
-    obj_segment,
-    obj_segbase,
-    obj_directive,
-    obj_filename,
-    obj_cleanup
-};
-
 #endif /* OF_OBJ */

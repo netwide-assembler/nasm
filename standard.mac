@@ -1,7 +1,15 @@
-; Standard macro set for NASM 0.95
+; Standard macro set for NASM 0.96 -*- nasm -*-
+; Note that although some user-level forms of directives are defined
+; here, not all of them are: the user-level form of a format-specific
+; directive should be defined in the module for that directive.
 
 %define __NASM_MAJOR__ 0
-%define __NASM_MINOR__ 95
+%define __NASM_MINOR__ 96
+
+; These two need to be defined, though the actual definitions will
+; be constantly updated during preprocessing.
+%define __FILE__
+%define __LINE__
 
 %define __SECT__		; it ought to be defined, even if as nothing
 
@@ -23,6 +31,7 @@
 %push struc
 %define %$strucname %1
 [absolute 0]
+%$strucname:			; allow definition of `.member' to work sanely
 %endmacro
 %imacro endstruc 0.nolist
 %{$strucname}_size:
@@ -44,34 +53,34 @@ __SECT__
 %pop
 %endmacro
 
-%imacro extern 1+.nolist
+%imacro align 1-2+.nolist nop
+	  times ($$-$) & ((%1)-1) %2
+%endmacro
+%imacro alignb 1-2+.nolist resb 1
+	  times ($$-$) & ((%1)-1) %2
+%endmacro
+
+%imacro extern 1-*.nolist
+%rep %0
 [extern %1]
+%rotate 1
+%endrep
 %endmacro
 
 %imacro bits 1+.nolist
 [bits %1]
 %endmacro
 
-%imacro global 1+.nolist
+%imacro global 1-*.nolist
+%rep %0
 [global %1]
+%rotate 1
+%endrep
 %endmacro
 
-%imacro common 1+.nolist
+%imacro common 1-*.nolist
+%rep %0
 [common %1]
-%endmacro
-
-%imacro org 1+.nolist
-[org %1]
-%endmacro
-
-%imacro group 1+.nolist
-[group %1]
-%endmacro
-
-%imacro uppercase 1+.nolist
-[uppercase %1]
-%endmacro
-
-%imacro library 1+.nolist
-[library %1]
+%rotate 1
+%endrep
 %endmacro

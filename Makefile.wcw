@@ -42,7 +42,7 @@ NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) outelf.$(OBJ) \
 	   outobj.$(OBJ) outas86.$(OBJ) outrdf.$(OBJ) outdbg.$(OBJ) \
-	   preproc.$(OBJ) listing.$(OBJ)
+	   preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ)
 
 NDISASMOBJS = ndisasm.$(OBJ) disasm.$(OBJ) sync.$(OBJ) nasmlib.$(OBJ) \
 	      insnsd.$(OBJ)
@@ -62,10 +62,12 @@ NASM.LNK: makefile.wcw
         echo N nasm.exe > NASM.LNK
         echo F nasm.$(OBJ) >> NASM.LNK
         echo F nasmlib.$(OBJ) >> NASM.LNK
+        echo F eval.$(OBJ) >> NASM.LNK
         echo F float.$(OBJ) >> NASM.LNK
         echo F insnsa.$(OBJ) >> NASM.LNK
         echo F assemble.$(OBJ) >> NASM.LNK
         echo F labels.$(OBJ) >> NASM.LNK
+        echo F listing.$(OBJ) >> NASM.LNK
         echo F parser.$(OBJ) >> NASM.LNK
 	echo F preproc.$(OBJ) >> NASM.LNK
         echo F outform.$(OBJ) >> NASM.LNK
@@ -88,6 +90,7 @@ NDISASM.LNK: makefile.wcw
 
 assemble.$(OBJ): assemble.c nasm.h assemble.h insns.h
 disasm.$(OBJ): disasm.c nasm.h disasm.h sync.h insns.h names.c
+eval.$(OBJ): eval.c nasm.h nasmlib.h eval.h
 float.$(OBJ): float.c nasm.h
 insnsa.$(OBJ): insnsa.c nasm.h insns.h
 insnsd.$(OBJ): insnsd.c nasm.h insns.h

@@ -69,7 +69,7 @@ DCCFLAGS = /d /c /O /A /mh /n$(OBJD) #compiler flags for NDISASM
   #/A=ANSI standard C
   #/mh=Model huge
   #/n$(OBJD)= put the OBJ files in the diectory given.
-  #NOTE: Huge modle is used, and the array in insnsd.c is large enough to
+  #NOTE: Huge model is used, and the array in insnsd.c is large enough to
   #over size the d-group in large mode.
 
 LINKFLAGS = /c /x       #linker flags
@@ -95,7 +95,7 @@ DASM_ASM=$(CC) $(DCCFLAGS) $&.c        #command line for NDISASM
 NASMOBJS = $(OBJD)nasm.$(OBJ)   $(OBJD)nasmlib.$(OBJ)  $(OBJD)float.$(OBJ)  \
            $(OBJD)insnsa.$(OBJ) $(OBJD)assemble.$(OBJ) $(OBJD)labels.$(OBJ) \
            $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)  $(OBJD)preproc.$(OBJ) \
-	   $(OBJD)listing.$(OBJ)
+	   $(OBJD)listing.$(OBJ) $(OBJD)eval.$(OBJ)
 
 ################################################################
 #The OBJ files that NDISASM is dependent on
@@ -148,6 +148,9 @@ $(OBJD)labels.$(OBJ): labels.c nasm.h nasmlib.h
         $(NASM_ASM)
 
 $(OBJD)listing.$(OBJ): listing.c nasm.h nasmlib.h listing.h
+        $(NASM_ASM)
+
+$(OBJD)eval.$(OBJ): eval.c nasm.h nasmlib.h eval.h
         $(NASM_ASM)
 
 $(OBJD)nasm.$(OBJ): nasm.c nasm.h nasmlib.h parser.h assemble.h labels.h \

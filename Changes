@@ -129,8 +129,8 @@ be output when absolute labels were made global.
 
 Updates to RDOFF subdirectory, and changes to outrdf.c.
 
-0.95 released July 1997
------------------------
+0.95 not released yet
+---------------------
 
 Fixed yet another ELF bug. This one manifested if the user relied on
 the default segment, and attempted to define global symbols without
@@ -241,3 +241,165 @@ can be implemented.
 Fixed the implementation of WRT, which was too restrictive in that
 you couldn't do `mov ax,[di+abc wrt dgroup]' because (di+abc) wasn't
 a relocatable reference.
+
+0.96 not released yet
+---------------------
+
+Fixed a bug whereby, if `nasm sourcefile' would cause a filename
+collision warning and put output into `nasm.out', then `nasm
+sourcefile -o outputfile' still gave the warning even though the
+`-o' was honoured.
+
+Fixed name pollution under Digital UNIX: one of its header files
+defined R_SP, which broke the enum in nasm.h.
+
+Fixed minor instruction table problems: FUCOM and FUCOMP didn't have
+two-operand forms; NDISASM didn't recognise the longer register
+forms of PUSH and POP (eg FF F3 for PUSH BX); TEST mem,imm32 was
+flagged as undocumented; the 32-bit forms of CMOV had 16-bit operand
+size prefixes; `AAD imm' and `AAM imm' are no longer flagged as
+undocumented because the Intel Architecture reference documents
+them.
+
+Fixed a problem with the local-label mechanism, whereby strange
+types of symbol (EQUs, auto-defined OBJ segment base symbols)
+interfered with the `previous global label' value and screwed up
+local labels.
+
+Fixed a bug whereby the stub preprocessor didn't communicate with
+the listing file generator, so that the -a and -l options in
+conjunction would produce a useless listing file.
+
+Merged `os2' object file format back into `obj', after discovering
+that `obj' _also_ shouldn't have a link pass separator in a module
+containing a non-trivial MODEND. Flat segments are now declared
+using the FLAT attribute. `os2' is no longer a valid object format
+name: use `obj'.
+
+Removed the fixed-size temporary storage in the evaluator. Very very
+long expressions (like `mov ax,1+1+1+1+...' for two hundred 1s or
+so) should now no longer crash NASM.
+
+Fixed a bug involving segfaults on disassembly of MMX instructions,
+by changing the meaning of one of the operand-type flags in nasm.h.
+This may cause other apparently unrelated MMX problems; it needs to
+be tested thoroughly.
+
+Fixed some buffer overrun problems with large OBJ output files.
+Thanks to DJ Delorie for the bug report and fix.
+
+Made preprocess-only mode actually listen to the %line markers as it
+prints them, so that it can report errors more sanely.
+
+Re-designed the evaluator to keep more sensible track of expressions
+involving forward references: can now cope with previously-nightmare
+situations such as
+   mov ax,foo | bar
+   foo equ 1
+   bar equ 2
+
+Added the ALIGN and ALIGNB standard macros.
+
+Added PIC support in ELF: use of WRT to obtain the four extra
+relocation types needed.
+
+Added the ability for output file formats to define their own
+extensions to the GLOBAL, COMMON and EXTERN directives.
+
+Implemented common-variable alignment, and global-symbol type and
+size declarations, in ELF.
+
+Implemented NEAR and FAR keywords for common variables, plus
+far-common element size specification, in OBJ.
+
+Added a feature whereby EXTERNs and COMMONs in OBJ can be given a
+default WRT specification (either a segment or a group).
+
+Transformed the Unix NASM archive into an auto-configuring package.
+
+Added a sanity-check for people applying SEG to things which are
+already segment bases: this previously went unnoticed by the SEG
+processing and caused OBJ-driver panics later.
+
+Added the ability, in OBJ format, to deal with `MOV EAX,<segment>'
+type references: OBJ doesn't directly support dword-size segment
+base fixups, but as long as the low two bytes of the constant term
+are zero, a word-size fixup can be generated instead and it will
+work.
+
+Added the ability to specify sections' alignment requirements in
+Win32 object files and pure binary files.
+
+Added preprocess-time expression evaluation: the %assign (and
+%iassign) directive and the bare %if (and %elif) conditional. Added
+relational operators to the evaluator, for use only in %if
+constructs: the standard relationals = < > <= >= <> (and C-like
+synonyms == and !=) plus low-precedence logical operators &&, ^^ and
+||.
+
+Added a preprocessor repeat construct: %rep / %exitrep / %endrep.
+
+Added the __FILE__ and __LINE__ standard macros.
+
+Added a sanity check for number constants being greater than
+0xFFFFFFFF. The warning can be disabled.
+
+Added the %0 token whereby a variadic multi-line macro can tell how
+many parameters it's been given in a specific invocation.
+
+Added %rotate, allowing multi-line macro parameters to be cycled.
+
+Added the `*' option for the maximum parameter count on multi-line
+macros, allowing them to take arbitrarily many parameters.
+
+Added the ability for the user-level forms of EXTERN, GLOBAL and
+COMMON to take more than one argument.
+
+Added the IMPORT and EXPORT directives in OBJ format, to deal with
+Windows DLLs.
+
+Added some more preprocessor %if constructs: %ifidn / %ifidni (exact
+textual identity), and %ifid / %ifnum / %ifstr (token type testing).
+
+Added the ability to distinguish SHL AX,1 (the 8086 version) from
+SHL AX,BYTE 1 (the 286-and-upwards version whose constant happens to
+be 1).
+
+Added NetBSD/FreeBSD/OpenBSD's variant of a.out format, complete
+with PIC shared library features.
+
+Changed NASM's idiosyncratic handling of FCLEX, FDISI, FENI, FINIT,
+FSAVE, FSTCW, FSTENV, and FSTSW to bring it into line with the
+otherwise accepted standard. The previous behaviour, though it was a
+deliberate feature, was a deliberate feature based on a
+misunderstanding. Apologies for the inconvenience.
+
+Improved the flexibility of ABSOLUTE: you can now give it an
+expression rather than being restricted to a constant, and it can
+take relocatable arguments as well.
+
+Added the ability for a variable to be declared as EXTERN multiple
+times, and the subsequent definitions are just ignored.
+
+We now allow instruction prefixes (CS, DS, LOCK, REPZ etc) to be
+alone on a line (without a following instruction).
+
+Improved sanity checks on whether the arguments to EXTERN, GLOBAL
+and COMMON are valid identifiers.
+
+Added misc/exebin.mac to allow direct generation of .EXE files by
+hacking up an EXE header using DB and DW; also added test/binexe.asm
+to demonstrate the use of this. Thanks to Yann Guidon for
+contributing the EXE header code.
+
+ndisasm forgot to check whether the input file had been successfully
+opened. Now it does. Doh!
+
+Added the Cyrix extensions to the MMX instruction set.
+
+Added a hinting mechanism to allow [EAX+EBX] and [EBX+EAX] to be
+assembled differently. This is important since [ESI+EBP] and
+[EBP+ESI] have different default base segment registers.
+
+Added support for the PharLap OMF extension for 4096-byte segment
+alignment.

@@ -592,22 +592,40 @@ static void gencode (long segment, long offset, int bits,
       case 014: case 015: case 016:
 	if (ins->oprs[c-014].offset < -128 || ins->oprs[c-014].offset > 127)
 	    errfunc (ERR_WARNING, "signed byte value exceeds bounds");
-	bytes[0] = ins->oprs[c-014].offset;
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	if (ins->oprs[c-014].segment != NO_SEG) {
+	    data = ins->oprs[c-014].offset;
+	    out (offset, segment, &data, OUT_ADDRESS+1,
+		 ins->oprs[c-014].segment, ins->oprs[c-014].wrt);
+	} else {
+	    bytes[0] = ins->oprs[c-014].offset;
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	}
 	offset += 1;
 	break;
       case 020: case 021: case 022:
 	if (ins->oprs[c-020].offset < -256 || ins->oprs[c-020].offset > 255)
 	    errfunc (ERR_WARNING, "byte value exceeds bounds");
-	bytes[0] = ins->oprs[c-020].offset;
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	if (ins->oprs[c-020].segment != NO_SEG) {
+	    data = ins->oprs[c-020].offset;
+	    out (offset, segment, &data, OUT_ADDRESS+1,
+		 ins->oprs[c-020].segment, ins->oprs[c-020].wrt);
+	} else {
+	    bytes[0] = ins->oprs[c-020].offset;
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	}
 	offset += 1;
 	break;
       case 024: case 025: case 026:
 	if (ins->oprs[c-024].offset < 0 || ins->oprs[c-024].offset > 255)
 	    errfunc (ERR_WARNING, "unsigned byte value exceeds bounds");
-	bytes[0] = ins->oprs[c-024].offset;
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	if (ins->oprs[c-024].segment != NO_SEG) {
+	    data = ins->oprs[c-024].offset;
+	    out (offset, segment, &data, OUT_ADDRESS+1,
+		 ins->oprs[c-024].segment, ins->oprs[c-024].wrt);
+	} else {
+	    bytes[0] = ins->oprs[c-024].offset;
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	}
 	offset += 1;
 	break;
       case 030: case 031: case 032:
@@ -757,8 +775,9 @@ static void gencode (long segment, long offset, int bits,
 	    errfunc (ERR_PANIC, "non-constant BSS size in pass two");
 	else {
 	    long size = ins->oprs[0].offset << (c-0340);
-	    out (offset, segment, NULL,
-		 OUT_RESERVE+size, NO_SEG, NO_SEG);
+	    if (size > 0)
+		out (offset, segment, NULL,
+		     OUT_RESERVE+size, NO_SEG, NO_SEG);
 	    offset += size;
 	}
 	break;
@@ -792,9 +811,16 @@ static void gencode (long segment, long offset, int bits,
 	      case 0:
 		break;
 	      case 1:
-	        *bytes = ins->oprs[(c>>3)&7].offset;
-		out (offset, segment, bytes, OUT_RAWDATA+1,
-		     NO_SEG, NO_SEG);
+		if (ins->oprs[(c>>3)&7].segment != NO_SEG) {
+		    data = ins->oprs[(c>>3)&7].offset;
+		    out (offset, segment, &data, OUT_ADDRESS+1,
+			 ins->oprs[(c>>3)&7].segment,
+			 ins->oprs[(c>>3)&7].wrt);
+		} else {
+		    *bytes = ins->oprs[(c>>3)&7].offset;
+		    out (offset, segment, bytes, OUT_RAWDATA+1,
+			 NO_SEG, NO_SEG);
+		}
 		s++;
 		break;
 	      case 2:
@@ -887,6 +913,9 @@ static int matches (struct itemplate *itemp, insn *instruction) {
     if (itemp->flags & IF_SB) {
 	size = BITS8;
 	oprs = itemp->operands;
+    } else if (itemp->flags & IF_SW) {
+	size = BITS16;
+	oprs = itemp->operands;
     } else if (itemp->flags & IF_SD) {
 	size = BITS32;
 	oprs = itemp->operands;
@@ -939,6 +968,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 	} else {		       /* it's an indirection */
 	    int i=input->indexreg, b=input->basereg, s=input->scale;
 	    long o=input->offset, seg=input->segment;
+	    int hb=input->hintbase, ht=input->hinttype;
+	    int t;
 
 	    if (s==0) i = -1;	       /* make this easy, at least */
 
@@ -960,11 +991,15 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		    return NULL;
 
 		/* now reorganise base/index */
+		if (s == 1 && b != i && b != -1 && i != -1 &&
+		    ((hb==b&&ht==EAH_NOTBASE) || (hb==i&&ht==EAH_MAKEBASE)))
+		    t = b, b = i, i = t;   /* swap if hints say so */
 		if (b==i)	       /* convert EAX+2*EAX to 3*EAX */
 		    b = -1, s++;
-		if (b==-1 && s==1)     /* single register should be base */
-		    b = i, i = -1;
-		if (((s==2 && i!=R_ESP) || s==3 || s==5 || s==9) && b==-1)
+		if (b==-1 && s==1 && !(hb == i && ht == EAH_NOTBASE))
+		    b = i, i = -1;     /* make single reg base, unless hint */
+		if (((s==2 && i!=R_ESP && !(input->eaflags & EAF_TIMESTWO)) ||
+		     s==3 || s==5 || s==9) && b==-1)
 		    b = i, s--;       /* convert 3*EAX to EAX+2*EAX */
 		if (s==1 && i==R_ESP)  /* swap ESP into base if scale is 1 */
 		    i = b, b = R_ESP;
@@ -986,11 +1021,15 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 			return NULL;
 		    }
 		    if (b==-1 || (b!=R_EBP && o==0 &&
-				  seg==NO_SEG && !forw_ref))
+				  seg==NO_SEG && !forw_ref &&
+				  !(input->eaflags &
+				    (EAF_BYTEOFFS|EAF_WORDOFFS))))
 		    	mod = 0;
-		    else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
+		    else if (input->eaflags & EAF_BYTEOFFS ||
+			     (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref &&
+			      !(input->eaflags & EAF_WORDOFFS))) {
 		    	mod = 1;
-		    else
+		    } else
 		    	mod = 2;
 
 		    output->sib_present = FALSE;
@@ -1036,9 +1075,13 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		    }
 
 		    if (b==-1 || (b!=R_EBP && o==0 &&
-				  seg==NO_SEG && !forw_ref))
+				  seg==NO_SEG && !forw_ref &&
+				  !(input->eaflags &
+				    (EAF_BYTEOFFS|EAF_WORDOFFS))))
 		    	mod = 0;
-		    else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
+		    else if (input->eaflags & EAF_BYTEOFFS ||
+			     (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref &&
+			      !(input->eaflags & EAF_WORDOFFS)))
 		    	mod = 1;
 		    else
 		    	mod = 2;
@@ -1089,9 +1132,12 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		if (rm==-1)	       /* can't happen, in theory */
 		    return NULL;      /* so panic if it does */
 
-		if (o==0 && seg==NO_SEG && !forw_ref && rm!=6)
+		if (o==0 && seg==NO_SEG && !forw_ref && rm!=6 &&
+		    !(input->eaflags & (EAF_BYTEOFFS|EAF_WORDOFFS)))
 		    mod = 0;
-		else if (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref)
+		else if (input->eaflags & EAF_BYTEOFFS ||
+			 (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref &&
+			  !(input->eaflags & EAF_WORDOFFS)))
 		    mod = 1;
 		else
 		    mod = 2;

@@ -12,8 +12,8 @@
 #define NASM_NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 95
-#define NASM_VER "0.95"
+#define NASM_MINOR_VER 96
+#define NASM_VER "0.96"
 
 #ifndef NULL
 #define NULL 0
@@ -31,6 +31,15 @@
 
 #ifndef FILENAME_MAX
 #define FILENAME_MAX 256
+#endif
+
+/*
+ * Name pollution problems: <time.h> on Digital UNIX pulls in some
+ * strange hardware header file which sees fit to define R_SP. We
+ * undefine it here so as not to break the enum below.
+ */
+#ifdef R_SP
+#undef R_SP
 #endif
 
 /*
@@ -66,15 +75,18 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 #define ERR_OFFBY1 0x40		       /* report error as being on the line 
 					* we're just _about_ to read, not
 					* the one we've just read */
+#define ERR_PASS1 0x80		       /* only print this error on pass one */
+
 /*
  * These codes define specific types of suppressible warning.
  */
 #define ERR_WARN_MNP  0x0100	       /* macro-num-parameters warning */
 #define ERR_WARN_OL   0x0200	       /* orphan label (no colon, and
 					* alone on line) */
+#define ERR_WARN_NOV  0x0300	       /* numeric overflow */
 #define ERR_WARN_MASK 0xFF00	       /* the mask for this feature */
 #define ERR_WARN_SHR  8		       /* how far to shift right */
-#define ERR_WARN_MAX  2		       /* the highest numbered one */
+#define ERR_WARN_MAX  3		       /* the highest numbered one */
 
 /*
  * -----------------------
@@ -88,10 +100,14 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 typedef int (*lfunc) (char *label, long *segment, long *offset);
 
 /*
- * And a label-definition function like this.
+ * And a label-definition function like this. The boolean parameter
+ * `is_norm' states whether the label is a `normal' label (which
+ * should affect the local-label system), or something odder like
+ * an EQU or a segment-base symbol, which shouldn't.
  */
-typedef void (*ldfunc) (char *label, long segment, long offset,
-			struct ofmt *ofmt, efunc error);
+typedef void (*ldfunc) (char *label, long segment, long offset, char *special,
+			int is_norm, int isextrn, struct ofmt *ofmt,
+			efunc error);
 
 /*
  * List-file generators should look like this:
@@ -153,14 +169,127 @@ typedef struct {
 } ListGen;
 
 /*
+ * The expression evaluator must be passed a scanner function; a
+ * standard scanner is provided as part of nasmlib.c. The
+ * preprocessor will use a different one. Scanners, and the
+ * token-value structures they return, look like this.
+ *
+ * The return value from the scanner is always a copy of the
+ * `t_type' field in the structure.
+ */
+struct tokenval {
+    int t_type;
+    long t_integer, t_inttwo;
+    char *t_charptr;
+};
+typedef int (*scanner) (void *private_data, struct tokenval *tv);
+
+/*
+ * Token types returned by the scanner, in addition to ordinary
+ * ASCII character values, and zero for end-of-string.
+ */
+enum {				       /* token types, other than chars */
+    TOKEN_INVALID = -1,		       /* a placeholder value */
+    TOKEN_EOS = 0,		       /* end of string */
+    TOKEN_EQ = '=', TOKEN_GT = '>', TOKEN_LT = '<',   /* aliases */
+    TOKEN_ID = 256, TOKEN_NUM, TOKEN_REG, TOKEN_INSN,  /* major token types */
+    TOKEN_ERRNUM,		       /* numeric constant with error in */
+    TOKEN_HERE, TOKEN_BASE,	       /* $ and $$ */
+    TOKEN_SPECIAL,		       /* BYTE, WORD, DWORD, FAR, NEAR, etc */
+    TOKEN_PREFIX,		       /* A32, O16, LOCK, REPNZ, TIMES, etc */
+    TOKEN_SHL, TOKEN_SHR,	       /* << and >> */
+    TOKEN_SDIV, TOKEN_SMOD,	       /* // and %% */
+    TOKEN_GE, TOKEN_LE, TOKEN_NE,      /* >=, <= and <> (!= is same as <>) */
+    TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR,   /* &&, || and ^^ */
+    TOKEN_SEG, TOKEN_WRT,	       /* SEG and WRT */
+    TOKEN_FLOAT			       /* floating-point constant */
+};
+
+/*
+ * Expression-evaluator datatype. Expressions, within the
+ * evaluator, are stored as an array of these beasts, terminated by
+ * a record with type==0. Mostly, it's a vector type: each type
+ * denotes some kind of a component, and the value denotes the
+ * multiple of that component present in the expression. The
+ * exception is the WRT type, whose `value' field denotes the
+ * segment to which the expression is relative. These segments will
+ * be segment-base types, i.e. either odd segment values or SEG_ABS
+ * types. So it is still valid to assume that anything with a
+ * `value' field of zero is insignificant.
+ */
+typedef struct {
+    long type;			       /* a register, or EXPR_xxx */
+    long value;			       /* must be >= 32 bits */
+} expr;
+
+/*
+ * The evaluator can also return hints about which of two registers
+ * used in an expression should be the base register. See also the
+ * `operand' structure.
+ */
+struct eval_hints {
+    int base;
+    int type;
+};
+
+/*
+ * The actual expression evaluator function looks like this. When
+ * called, it expects the first token of its expression to already
+ * be in `*tv'; if it is not, set tv->t_type to TOKEN_INVALID and
+ * it will start by calling the scanner.
+ *
+ * If a forward reference happens during evaluation, the evaluator
+ * must set `*fwref' to TRUE if `fwref' is non-NULL.
+ *
+ * `critical' is non-zero if the expression may not contain forward
+ * references. The evaluator will report its own error if this
+ * occurs; if `critical' is 1, the error will be "symbol not
+ * defined before use", whereas if `critical' is 2, the error will
+ * be "symbol undefined".
+ *
+ * If `critical' has bit 4 set (in addition to its main value: 0x11
+ * and 0x12 correspond to 1 and 2) then an extended expression
+ * syntax is recognised, in which relational operators such as =, <
+ * and >= are accepted, as well as low-precedence logical operators
+ * &&, ^^ and ||.
+ *
+ * If `hints' is non-NULL, it gets filled in with some hints as to
+ * the base register in complex effective addresses.
+ */
+typedef expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
+			   int *fwref, int critical, efunc error,
+			   struct eval_hints *hints);
+
+/*
+ * There's also an auxiliary routine through which the evaluator
+ * needs to hear about the value of $ and the label (if any)
+ * defined on the current line.
+ */
+typedef void (*evalinfofunc) (char *labelname, long segment, long offset);
+
+/*
+ * Special values for expr->type. ASSUMPTION MADE HERE: the number
+ * of distinct register names (i.e. possible "type" fields for an
+ * expr structure) does not exceed 124 (EXPR_REG_START through
+ * EXPR_REG_END).
+ */
+#define EXPR_REG_START 1
+#define EXPR_REG_END 124
+#define EXPR_UNKNOWN 125L	       /* for forward references */
+#define EXPR_SIMPLE 126L
+#define EXPR_WRT 127L
+#define EXPR_SEGBASE 128L
+
+/*
  * Preprocessors ought to look like this:
  */
 typedef struct {
     /*
-     * Called at the start of a pass; given a file name, an error
-     * reporting function and a listing generator to talk to.
+     * Called at the start of a pass; given a file name, the number
+     * of the pass, an error reporting function, an evaluator
+     * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, efunc, ListGen *);
+    void (*reset) (char *, int, efunc, evalfunc, ListGen *);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -252,9 +381,9 @@ enum {
 #define REG8      0x00201001L
 #define REG16     0x00201002L
 #define REG32     0x00201004L
+#define MMXREG    0x00201008L	       /* MMX registers */
 #define FPUREG    0x01000000L	       /* floating point stack registers */
 #define FPU0      0x01000800L	       /* FPU stack register zero */
-#define MMXREG    0x00001008L	       /* MMX registers */
 
 /* special register operands: these may be treated differently */
 #define REG_SMASK 0x00070000L	       /* a mask for the following */
@@ -290,13 +419,13 @@ enum {
  */
 
 enum {				       /* register names */
-    R_AH = 1, R_AL, R_AX, R_BH, R_BL, R_BP, R_BX, R_CH, R_CL, R_CR0,
-    R_CR2, R_CR3, R_CR4, R_CS, R_CX, R_DH, R_DI, R_DL, R_DR0, R_DR1,
-    R_DR2, R_DR3, R_DR6, R_DR7, R_DS, R_DX, R_EAX, R_EBP, R_EBX,
-    R_ECX, R_EDI, R_EDX, R_ES, R_ESI, R_ESP, R_FS, R_GS, R_MM0,
-    R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7, R_SI, R_SP,
-    R_SS, R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5, R_ST6, R_ST7,
-    R_TR3, R_TR4, R_TR5, R_TR6, R_TR7, REG_ENUM_LIMIT
+    R_AH = EXPR_REG_START, R_AL, R_AX, R_BH, R_BL, R_BP, R_BX, R_CH,
+    R_CL, R_CR0, R_CR2, R_CR3, R_CR4, R_CS, R_CX, R_DH, R_DI, R_DL,
+    R_DR0, R_DR1, R_DR2, R_DR3, R_DR6, R_DR7, R_DS, R_DX, R_EAX,
+    R_EBP, R_EBX, R_ECX, R_EDI, R_EDX, R_ES, R_ESI, R_ESP, R_FS,
+    R_GS, R_MM0, R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7,
+    R_SI, R_SP, R_SS, R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5,
+    R_ST6, R_ST7, R_TR3, R_TR4, R_TR5, R_TR6, R_TR7, REG_ENUM_LIMIT
 };
 
 enum {				       /* instruction names */
@@ -314,38 +443,41 @@ enum {				       /* instruction names */
     I_FIDIVR, I_FILD, I_FIMUL, I_FINCSTP, I_FINIT, I_FIST, I_FISTP,
     I_FISUB, I_FISUBR, I_FLD, I_FLD1, I_FLDCW, I_FLDENV, I_FLDL2E,
     I_FLDL2T, I_FLDLG2, I_FLDLN2, I_FLDPI, I_FLDZ, I_FMUL, I_FMULP,
-    I_FNOP, I_FPATAN, I_FPREM, I_FPREM1, I_FPTAN, I_FRNDINT,
-    I_FRSTOR, I_FSAVE, I_FSCALE, I_FSETPM, I_FSIN, I_FSINCOS,
-    I_FSQRT, I_FST, I_FSTCW, I_FSTENV, I_FSTP, I_FSTSW, I_FSUB,
-    I_FSUBP, I_FSUBR, I_FSUBRP, I_FTST, I_FUCOM, I_FUCOMI,
-    I_FUCOMIP, I_FUCOMP, I_FUCOMPP, I_FXAM, I_FXCH, I_FXTRACT,
-    I_FYL2X, I_FYL2XP1, I_HLT, I_IBTS, I_ICEBP, I_IDIV, I_IMUL,
-    I_IN, I_INC, I_INCBIN, I_INSB, I_INSD, I_INSW, I_INT, I_INT1,
-    I_INT01, I_INT3, I_INTO, I_INVD, I_INVLPG, I_IRET, I_IRETD,
-    I_IRETW, I_JCXZ, I_JECXZ, I_JMP, I_LAHF, I_LAR, I_LDS, I_LEA,
-    I_LEAVE, I_LES, I_LFS, I_LGDT, I_LGS, I_LIDT, I_LLDT, I_LMSW,
-    I_LOADALL, I_LOADALL286, I_LODSB, I_LODSD, I_LODSW, I_LOOP,
-    I_LOOPE, I_LOOPNE, I_LOOPNZ, I_LOOPZ, I_LSL, I_LSS, I_LTR,
-    I_MOV, I_MOVD, I_MOVQ, I_MOVSB, I_MOVSD, I_MOVSW, I_MOVSX,
-    I_MOVZX, I_MUL, I_NEG, I_NOP, I_NOT, I_OR, I_OUT, I_OUTSB,
-    I_OUTSD, I_OUTSW, I_PACKSSDW, I_PACKSSWB, I_PACKUSWB, I_PADDB,
-    I_PADDD, I_PADDSB, I_PADDSW, I_PADDUSB, I_PADDUSW, I_PADDW,
-    I_PAND, I_PANDN, I_PCMPEQB, I_PCMPEQD, I_PCMPEQW, I_PCMPGTB,
-    I_PCMPGTD, I_PCMPGTW, I_PMADDWD, I_PMULHW, I_PMULLW, I_POP,
-    I_POPA, I_POPAD, I_POPAW, I_POPF, I_POPFD, I_POPFW, I_POR,
-    I_PSLLD, I_PSLLQ, I_PSLLW, I_PSRAD, I_PSRAW, I_PSRLD, I_PSRLQ,
-    I_PSRLW, I_PSUBB, I_PSUBD, I_PSUBSB, I_PSUBSW, I_PSUBUSB,
-    I_PSUBUSW, I_PSUBW, I_PUNPCKHBW, I_PUNPCKHDQ, I_PUNPCKHWD,
-    I_PUNPCKLBW, I_PUNPCKLDQ, I_PUNPCKLWD, I_PUSH, I_PUSHA,
-    I_PUSHAD, I_PUSHAW, I_PUSHF, I_PUSHFD, I_PUSHFW, I_PXOR, I_RCL,
-    I_RCR, I_RDMSR, I_RDPMC, I_RDTSC, I_RESB, I_RESD, I_RESQ,
-    I_REST, I_RESW, I_RET, I_RETF, I_RETN, I_ROL, I_ROR, I_RSM,
-    I_SAHF, I_SAL, I_SALC, I_SAR, I_SBB, I_SCASB, I_SCASD, I_SCASW,
-    I_SGDT, I_SHL, I_SHLD, I_SHR, I_SHRD, I_SIDT, I_SLDT, I_SMI,
-    I_SMSW, I_STC, I_STD, I_STI, I_STOSB, I_STOSD, I_STOSW, I_STR,
-    I_SUB, I_TEST, I_UMOV, I_VERR, I_VERW, I_WAIT, I_WBINVD,
-    I_WRMSR, I_XADD, I_XBTS, I_XCHG, I_XLATB, I_XOR, I_CMOVcc,
-    I_Jcc, I_SETcc
+    I_FNCLEX, I_FNDISI, I_FNENI, I_FNINIT, I_FNOP, I_FNSAVE,
+    I_FNSTCW, I_FNSTENV, I_FNSTSW, I_FPATAN, I_FPREM, I_FPREM1,
+    I_FPTAN, I_FRNDINT, I_FRSTOR, I_FSAVE, I_FSCALE, I_FSETPM,
+    I_FSIN, I_FSINCOS, I_FSQRT, I_FST, I_FSTCW, I_FSTENV, I_FSTP,
+    I_FSTSW, I_FSUB, I_FSUBP, I_FSUBR, I_FSUBRP, I_FTST, I_FUCOM,
+    I_FUCOMI, I_FUCOMIP, I_FUCOMP, I_FUCOMPP, I_FXAM, I_FXCH,
+    I_FXTRACT, I_FYL2X, I_FYL2XP1, I_HLT, I_IBTS, I_ICEBP, I_IDIV,
+    I_IMUL, I_IN, I_INC, I_INCBIN, I_INSB, I_INSD, I_INSW, I_INT,
+    I_INT1, I_INT01, I_INT3, I_INTO, I_INVD, I_INVLPG, I_IRET,
+    I_IRETD, I_IRETW, I_JCXZ, I_JECXZ, I_JMP, I_LAHF, I_LAR, I_LDS,
+    I_LEA, I_LEAVE, I_LES, I_LFS, I_LGDT, I_LGS, I_LIDT, I_LLDT,
+    I_LMSW, I_LOADALL, I_LOADALL286, I_LODSB, I_LODSD, I_LODSW,
+    I_LOOP, I_LOOPE, I_LOOPNE, I_LOOPNZ, I_LOOPZ, I_LSL, I_LSS,
+    I_LTR, I_MOV, I_MOVD, I_MOVQ, I_MOVSB, I_MOVSD, I_MOVSW,
+    I_MOVSX, I_MOVZX, I_MUL, I_NEG, I_NOP, I_NOT, I_OR, I_OUT,
+    I_OUTSB, I_OUTSD, I_OUTSW, I_PACKSSDW, I_PACKSSWB, I_PACKUSWB,
+    I_PADDB, I_PADDD, I_PADDSB, I_PADDSIW, I_PADDSW, I_PADDUSB,
+    I_PADDUSW, I_PADDW, I_PAND, I_PANDN, I_PAVEB, I_PCMPEQB,
+    I_PCMPEQD, I_PCMPEQW, I_PCMPGTB, I_PCMPGTD, I_PCMPGTW,
+    I_PDISTIB, I_PMACHRIW, I_PMADDWD, I_PMAGW, I_PMULHRW,
+    I_PMULHRIW, I_PMULHW, I_PMULLW, I_PMVGEZB, I_PMVLZB, I_PMVNZB,
+    I_PMVZB, I_POP, I_POPA, I_POPAD, I_POPAW, I_POPF, I_POPFD,
+    I_POPFW, I_POR, I_PSLLD, I_PSLLQ, I_PSLLW, I_PSRAD, I_PSRAW,
+    I_PSRLD, I_PSRLQ, I_PSRLW, I_PSUBB, I_PSUBD, I_PSUBSB,
+    I_PSUBSIW, I_PSUBSW, I_PSUBUSB, I_PSUBUSW, I_PSUBW, I_PUNPCKHBW,
+    I_PUNPCKHDQ, I_PUNPCKHWD, I_PUNPCKLBW, I_PUNPCKLDQ, I_PUNPCKLWD,
+    I_PUSH, I_PUSHA, I_PUSHAD, I_PUSHAW, I_PUSHF, I_PUSHFD,
+    I_PUSHFW, I_PXOR, I_RCL, I_RCR, I_RDMSR, I_RDPMC, I_RDTSC,
+    I_RESB, I_RESD, I_RESQ, I_REST, I_RESW, I_RET, I_RETF, I_RETN,
+    I_ROL, I_ROR, I_RSM, I_SAHF, I_SAL, I_SALC, I_SAR, I_SBB,
+    I_SCASB, I_SCASD, I_SCASW, I_SGDT, I_SHL, I_SHLD, I_SHR, I_SHRD,
+    I_SIDT, I_SLDT, I_SMI, I_SMSW, I_STC, I_STD, I_STI, I_STOSB,
+    I_STOSD, I_STOSW, I_STR, I_SUB, I_TEST, I_UMOV, I_VERR, I_VERW,
+    I_WAIT, I_WBINVD, I_WRMSR, I_XADD, I_XBTS, I_XCHG, I_XLATB,
+    I_XOR, I_CMOVcc, I_Jcc, I_SETcc
 };
 
 enum {				       /* condition code names */
@@ -369,13 +501,27 @@ enum {				       /* extended operand types */
     EOT_NOTHING, EOT_DB_STRING, EOT_DB_NUMBER
 };
 
+enum {				       /* special EA flags */
+    EAF_BYTEOFFS = 1,		       /* force offset part to byte size */
+    EAF_WORDOFFS = 2,		       /* force offset part to [d]word size */
+    EAF_TIMESTWO = 4		       /* really do EAX*2 not EAX+EAX */
+};
+
+enum {				       /* values for `hinttype' */
+    EAH_NOHINT = 0,		       /* no hint at all - our discretion */
+    EAH_MAKEBASE = 1,		       /* try to make given reg the base */
+    EAH_NOTBASE = 2		       /* try _not_ to make reg the base */
+};
+
 typedef struct {		       /* operand to an instruction */
     long type;			       /* type of operand */
     int addr_size;		       /* 0 means default; 16; 32 */
     int basereg, indexreg, scale;      /* registers and scale involved */
+    int hintbase, hinttype;	       /* hint as to real base register */
     long segment;		       /* immediate segment, if needed */
     long offset;		       /* any immediate number */
     long wrt;			       /* segment base it's relative to */
+    int eaflags;		       /* special EA flags */
 } operand;
 
 typedef struct extop {		       /* extended operand */
@@ -423,13 +569,22 @@ struct ofmt {
     char *shortname;
 
     /*
+     * This, if non-NULL, is a NULL-terminated list of `char *'s
+     * pointing to extra standard macros supplied by the object
+     * format (e.g. a sensible initial default value of __SECT__,
+     * and user-level equivalents for any format-specific
+     * directives).
+     */
+    char **stdmac;
+
+    /*
      * This procedure is called at the start of an output session.
      * It tells the output format what file it will be writing to,
      * what routine to report errors through, and how to interface
-     * to the label manager if necessary. It also gives it a chance
-     * to do other initialisation.
+     * to the label manager and expression evaluator if necessary.
+     * It also gives it a chance to do other initialisation.
      */
-    void (*init) (FILE *fp, efunc error, ldfunc ldef);
+    void (*init) (FILE *fp, efunc error, ldfunc ldef, evalfunc eval);
 
     /*
      * This procedure is called by assemble() to write actual
@@ -465,8 +620,14 @@ struct ofmt {
      * re-entrancy is guaranteed in the label manager. However, the
      * label manager will in turn call this routine, so it should
      * be prepared to be re-entrant itself.
+     *
+     * The `special' parameter contains special information passed
+     * through from the command that defined the label: it may have
+     * been an EXTERN, a COMMON or a GLOBAL. The distinction should
+     * be obvious to the output format from the other parameters.
      */
-    void (*symdef) (char *name, long segment, long offset, int is_global);
+    void (*symdef) (char *name, long segment, long offset, int is_global,
+		    char *special);
 
     /*
      * This procedure is called when the source code requests a
@@ -492,6 +653,11 @@ struct ofmt {
      * required to produce in return a segment value which may be
      * different. It can map segment bases to absolute numbers by
      * means of returning SEG_ABS types.
+     *
+     * It should return NO_SEG if the segment base cannot be
+     * determined; the evaluator (which calls this routine) is
+     * responsible for throwing an error condition if that occurs
+     * in pass two or in a critical expression.
      */
     long (*segbase) (long segment);
 
@@ -516,8 +682,9 @@ struct ofmt {
      * the "init" routine - and is passed the name of the input
      * file from which this output file is being generated. It
      * should return its preferred name for the output file in
-     * `outfunc'. Since it is called before the driver is properly
-     * initialised, it has to be passed its error handler
+     * `outname', if outname[0] is not '\0', and do nothing to
+     * `outname' otherwise. Since it is called before the driver is
+     * properly initialised, it has to be passed its error handler
      * separately.
      *
      * This procedure may also take its own copy of the input file

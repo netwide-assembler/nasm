@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nasm.h"
 #include "rdoff.h"
 #include "nasmlib.h"
 #include "symtab.h"
@@ -419,8 +418,11 @@ void link_segments(void)
 		relto = r->r.segment == 0 ? mod->coderel : mod->datarel;
 	    }
 	    else
+	    {
 		bRelative = 0;		/* non-relative - need to relocate
 					 * at load time			*/
+		relto = 0;	       /* placate optimiser warnings */
+	    }
 
 	    /* calculate absolute offset of reference, not rel to beginning of
 	       segment */

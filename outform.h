@@ -17,8 +17,8 @@
  * OF_name                -- ensure that output format 'name' is included
  * OF_NO_name             -- remove output format 'name'
  * OF_DOS                 -- ensure that 'obj', 'bin' & 'win32' are included.
- * OF_UNIX                -- ensure that 'aout', 'coff' and 'elf' are in.
- * OF_OTHERS              -- ensure that 'bin', 'as86', 'os2' & 'rdf' are in.
+ * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf' are in.
+ * OF_OTHERS              -- ensure that 'bin', 'as86' & 'rdf' are in.
  * OF_ALL                 -- ensure that all formats are included.
  *
  * OF_DEFAULT=of_name     -- ensure that 'name' is the default format.
@@ -60,7 +60,7 @@ void ofmt_register (struct ofmt *);
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf,aout,coff,win32,as86,rdf */
+ * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf */
 
 /* process options... */
 
@@ -77,9 +77,6 @@ void ofmt_register (struct ofmt *);
 #ifndef OF_OBJ
 #define OF_OBJ
 #endif
-#ifndef OF_OS2
-#define OF_OS2
-#endif
 #ifndef OF_ELF
 #define OF_ELF
 #endif
@@ -88,6 +85,9 @@ void ofmt_register (struct ofmt *);
 #endif
 #ifndef OF_AOUT
 #define OF_AOUT
+#endif
+#ifndef OF_AOUTB
+#define OF_AOUTB
 #endif
 #ifndef OF_WIN32
 #define OF_WIN32
@@ -117,6 +117,9 @@ void ofmt_register (struct ofmt *);
 #ifndef OF_AOUT
 #define OF_AOUT
 #endif
+#ifndef OF_AOUTB
+#define OF_AOUTB
+#endif
 #ifndef OF_COFF
 #define OF_COFF
 #endif
@@ -135,9 +138,6 @@ void ofmt_register (struct ofmt *);
 #ifndef OF_RDF
 #define OF_RDF
 #endif
-#ifndef OF_OS2
-#define OF_OS2
-#endif
 #endif
 
 /* finally... override any format specifically specifed to be off */
@@ -153,6 +153,9 @@ void ofmt_register (struct ofmt *);
 #ifdef OF_NO_AOUT
 #undef OF_AOUT
 #endif
+#ifdef OF_NO_AOUTB
+#undef OF_AOUTB
+#endif
 #ifdef OF_NO_COFF
 #undef OF_COFF
 #endif
@@ -164,9 +167,6 @@ void ofmt_register (struct ofmt *);
 #endif
 #ifdef OF_NO_RDF
 #undef OF_RDF
-#endif
-#ifdef OF_NO_OS2
-#undef OF_OS2
 #endif
 
 #ifndef OF_DEFAULT

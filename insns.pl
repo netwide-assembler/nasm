@@ -9,7 +9,8 @@
 
 print STDERR "Reading insns.dat...\n";
 
-open (F, "insns.dat") || die "unable to open insns.dat";
+$fname = "insns.dat" unless $fname = $ARGV[0];
+open (F, $fname) || die "unable to open $fname";
 
 $line = 0;
 $opcodes = 0;

@@ -37,14 +37,11 @@
  * (2) Win32 doesn't bother putting any flags in the header flags
  * field (at offset 0x12 into the file).
  *
- * (3) Win32 puts some weird flags into the section header table.
- * It uses flags 0x80000000 (writable), 0x40000000 (readable) and
- * 0x20000000 (executable) in the expected combinations, which
- * standard COFF doesn't seem to bother with, but it also does
- * something else strange: it also flags code sections as
- * 0x00500000 and data/bss as 0x00300000. Even Microsoft's
- * documentation doesn't explain what these things mean. I just go
- * ahead and use them anyway - it seems to work.
+ * (3) Win32 uses some extra flags into the section header table:
+ * it defines flags 0x80000000 (writable), 0x40000000 (readable)
+ * and 0x20000000 (executable), and uses them in the expected
+ * combinations. It also defines 0x00100000 through 0x00700000 for
+ * section alignments of 1 through 64 bytes.
  *
  * (4) Both standard COFF and Win32 COFF seem to use the DWORD
  * field directly after the section name in the section header
@@ -53,8 +50,7 @@
  * to end starting at zero. Dunno why. Microsoft's documentation
  * lists this field as "Virtual Size of Section", which doesn't
  * seem to fit at all. In fact, Win32 even includes non-linked
- * sections such as .drectve in this calculation. Not that I can be
- * bothered with those things anyway.
+ * sections such as .drectve in this calculation.
  *
  * (5) Standard COFF does something very strange to common
  * variables: the relocation point for a common variable is as far
@@ -131,13 +127,15 @@ static void coff_section_header (char *, long, long, long, long, int, long);
 static void coff_write_relocs (struct Section *);
 static void coff_write_symbols (void);
 
-static void coff_win32_init(FILE *fp, efunc errfunc, ldfunc ldef) {
+static void coff_win32_init(FILE *fp, efunc errfunc,
+			    ldfunc ldef, evalfunc eval) {
     win32 = TRUE;
     (void) ldef;		       /* placate optimisers */
     coff_gen_init(fp, errfunc);
 }
 
-static void coff_std_init(FILE *fp, efunc errfunc, ldfunc ldef) {
+static void coff_std_init(FILE *fp, efunc errfunc,
+			  ldfunc ldef, evalfunc eval) {
     win32 = FALSE;
     (void) ldef;		       /* placate optimisers */
     coff_gen_init(fp, errfunc);
@@ -209,7 +207,7 @@ static int coff_make_section (char *name, unsigned long flags) {
 
 static long coff_section_names (char *name, int pass, int *bits) {
     char *p;
-    unsigned long flags;
+    unsigned long flags, align_and = ~0L, align_or = 0L;
     int i;
 
     /*
@@ -224,7 +222,7 @@ static long coff_section_names (char *name, int pass, int *bits) {
     p = name;
     while (*p && !isspace(*p)) p++;
     if (*p) *p++ = '\0';
-    if (strlen(p) > 8) {
+    if (strlen(name) > 8) {
 	error (ERR_WARNING, "COFF section names limited to 8 characters:"
 	       " truncating");
 	p[8] = '\0';
@@ -237,7 +235,7 @@ static long coff_section_names (char *name, int pass, int *bits) {
 	while (*p && !isspace(*p)) p++;
 	if (*p) *p++ = '\0';
 	while (*p && isspace(*p)) p++;
-	
+
 	if (!nasm_stricmp(q, "code") || !nasm_stricmp(q, "text")) {
 	    flags = TEXT_FLAGS;
 	} else if (!nasm_stricmp(q, "data")) {
@@ -252,6 +250,32 @@ static long coff_section_names (char *name, int pass, int *bits) {
 		error (ERR_NONFATAL, "standard COFF does not support"
 		       " informational sections");
 	    }
+	} else if (!nasm_strnicmp(q,"align=",6)) {
+	    if (!win32)
+		error (ERR_NONFATAL, "standard COFF does not support"
+		       " section alignment specification");
+	    else {
+		if (q[6+strspn(q+6,"0123456789")])
+		    error(ERR_NONFATAL, "argument to `align' is not numeric");
+		else {
+		    unsigned int align = atoi(q+6);
+		    if (!align || ((align-1) & align))
+			error(ERR_NONFATAL, "argument to `align' is not a"
+			      " power of two");
+		    else if (align > 64)
+			error(ERR_NONFATAL, "Win32 cannot align sections"
+			      " to better than 64-byte boundaries");
+		    else {
+			align_and = ~0x00F00000L;
+			align_or = (align == 1 ? 0x00100000L :
+				    align == 2 ? 0x00200000L :
+				    align == 4 ? 0x00300000L :
+				    align == 8 ? 0x00400000L :
+				    align == 16 ? 0x00500000L :
+				    align == 32 ? 0x00600000L : 0x00700000L);
+		    }
+		}
+	    }
 	}
     }
 
@@ -259,18 +283,19 @@ static long coff_section_names (char *name, int pass, int *bits) {
 	if (!strcmp(name, sects[i]->name))
 	    break;
     if (i == nsects) {
-	if (!strcmp(name, ".text") && !flags)
-	    i = coff_make_section (name, TEXT_FLAGS);
-	else if (!strcmp(name, ".data") && !flags)
-	    i = coff_make_section (name, DATA_FLAGS);
-	else if (!strcmp(name, ".bss") && !flags)
-	    i = coff_make_section (name, BSS_FLAGS);
-	else if (flags)
-	    i = coff_make_section (name, flags);
-	else
-	    i = coff_make_section (name, TEXT_FLAGS);
+	if (!flags) {
+	    if (!strcmp(name, ".data"))
+		flags = DATA_FLAGS;
+	    else if (!strcmp(name, ".bss"))
+		flags = BSS_FLAGS;
+	    else
+		flags = TEXT_FLAGS;
+	}
+	i = coff_make_section (name, flags);
 	if (flags)
 	    sects[i]->flags = flags;
+	sects[i]->flags &= align_and;
+	sects[i]->flags |= align_or;
     } else if (pass == 1) {
 	if (flags)
 	    error (ERR_WARNING, "section attributes ignored on"
@@ -281,9 +306,13 @@ static long coff_section_names (char *name, int pass, int *bits) {
 }
 
 static void coff_deflabel (char *name, long segment, long offset,
-			   int is_global) {
+			   int is_global, char *special) {
     int pos = strslen+4;
     struct Symbol *sym;
+
+    if (special)
+	error (ERR_NONFATAL, "binary format does not support any"
+	       " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	error (ERR_NONFATAL, "unrecognised special symbol `%s'", name);
@@ -430,8 +459,8 @@ static void coff_out (long segto, void *data, unsigned long type,
 	    error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 	coff_sect_write (s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
-	if (realbytes == 2 && (segment != NO_SEG || wrt != NO_SEG))
-	    error(ERR_NONFATAL, "COFF format does not support 16-bit"
+	if (realbytes != 4 && (segment != NO_SEG || wrt != NO_SEG))
+	    error(ERR_NONFATAL, "COFF format does not support non-32-bit"
 		  " relocations");
 	else {
 	    long fix = 0;
@@ -661,11 +690,17 @@ static void coff_win32_filename (char *inname, char *outname, efunc error) {
 
 #endif /* defined(OF_COFF) || defined(OF_WIN32) */
 
+static char *coff_stdmac[] = {
+    "%define __SECT__ [section .text]",
+    NULL
+};
+
 #ifdef OF_COFF
 
 struct ofmt of_coff = {
     "COFF (i386) object files (e.g. DJGPP for DOS)",
     "coff",
+    coff_stdmac,
     coff_std_init,
     coff_out,
     coff_deflabel,
@@ -683,6 +718,7 @@ struct ofmt of_coff = {
 struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
     "win32",
+    coff_stdmac,
     coff_win32_init,
     coff_out,
     coff_deflabel,

@@ -29,15 +29,20 @@
 #define PERMTS_SIZE  4096	       /* size of text blocks */
 
 /* values for label.defn.is_global */
+#define DEFINED_BIT 1
+#define GLOBAL_BIT 2
+#define EXTERN_BIT 4
+
 #define NOT_DEFINED_YET 0
-#define LOCAL_SYMBOL 1
-#define GLOBAL_SYMBOL 2
-#define GLOBAL_PLACEHOLDER 3
+#define TYPE_MASK 3
+#define LOCAL_SYMBOL (DEFINED_BIT)
+#define GLOBAL_PLACEHOLDER (GLOBAL_BIT)
+#define GLOBAL_SYMBOL (DEFINED_BIT|GLOBAL_BIT)
 
 union label {			       /* actual label structures */
     struct {
 	long segment, offset;
-        char *label;
+        char *label, *special;
 	int is_global;
     } defn;
     struct {
@@ -61,6 +66,8 @@ static void init_block (union label *blk);
 static char *perm_copy (char *string1, char *string2);
 
 static char *prevlabel;
+
+static int initialised = FALSE;
 
 /*
  * Internal routine: finds the `union label' corresponding to the
@@ -107,6 +114,7 @@ static union label *find_label (char *label, int create) {
 
 	lfree[hash]->admin.movingon = BOGUS_VALUE;
 	lfree[hash]->defn.label = perm_copy (prev, label);
+	lfree[hash]->defn.special = NULL;
 	lfree[hash]->defn.is_global = NOT_DEFINED_YET;
 	return lfree[hash]++;
     } else
@@ -116,13 +124,28 @@ static union label *find_label (char *label, int create) {
 int lookup_label (char *label, long *segment, long *offset) {
     union label *lptr;
 
+    if (!initialised)
+	return 0;
+
     lptr = find_label (label, 0);
-    if (lptr && (lptr->defn.is_global == LOCAL_SYMBOL ||
-		 lptr->defn.is_global == GLOBAL_SYMBOL)) {
+    if (lptr && (lptr->defn.is_global & DEFINED_BIT)) {
 	*segment = lptr->defn.segment;
 	*offset = lptr->defn.offset;
 	return 1;
     } else
+	return 0;
+}
+
+int is_extern (char *label) {
+    union label *lptr;
+
+    if (!initialised)
+	return 0;
+
+    lptr = find_label (label, 0);
+    if (lptr && (lptr->defn.is_global & EXTERN_BIT))
+	return 1;
+    else
 	return 0;
 }
 
@@ -138,26 +161,22 @@ void define_label_stub (char *label, efunc error) {
     }
 }
 
-void define_label (char *label, long segment, long offset,
-		   struct ofmt *ofmt, efunc error) {
+void define_label (char *label, long segment, long offset, char *special,
+		   int is_norm, int isextrn, struct ofmt *ofmt, efunc error) {
     union label *lptr;
 
     lptr = find_label (label, 1);
-    switch (lptr->defn.is_global) {
-      case NOT_DEFINED_YET:
-	lptr->defn.is_global = LOCAL_SYMBOL;
-	break;
-      case GLOBAL_PLACEHOLDER:
-	lptr->defn.is_global = GLOBAL_SYMBOL;
-	break;
-      default:
+    if (lptr->defn.is_global & DEFINED_BIT) {
 	error(ERR_NONFATAL, "symbol `%s' redefined", label);
 	return;
     }
+    lptr->defn.is_global |= DEFINED_BIT;
+    if (isextrn)
+	lptr->defn.is_global |= EXTERN_BIT;
 
-    if (label[0] != '.')	       /* not local, but not special either */
+    if (label[0] != '.' && is_norm)    /* not local, but not special either */
 	prevlabel = lptr->defn.label;
-    else if (label[1] != '.' && !*prevlabel)
+    else if (label[0] == '.' && label[1] != '.' && !*prevlabel)
 	error(ERR_NONFATAL, "attempt to define a local label before any"
 	      " non-local labels");
 
@@ -165,25 +184,20 @@ void define_label (char *label, long segment, long offset,
     lptr->defn.offset = offset;
 
     ofmt->symdef (lptr->defn.label, segment, offset,
-		  lptr->defn.is_global == GLOBAL_SYMBOL);
+		  !!(lptr->defn.is_global & GLOBAL_BIT),
+		  special ? special : lptr->defn.special);
 }
 
-void define_common (char *label, long segment, long size,
+void define_common (char *label, long segment, long size, char *special,
 		    struct ofmt *ofmt, efunc error) {
     union label *lptr;
 
     lptr = find_label (label, 1);
-    switch (lptr->defn.is_global) {
-      case NOT_DEFINED_YET:
-	lptr->defn.is_global = LOCAL_SYMBOL;
-	break;
-      case GLOBAL_PLACEHOLDER:
-	lptr->defn.is_global = GLOBAL_SYMBOL;
-	break;
-      default:
+    if (lptr->defn.is_global & DEFINED_BIT) {
 	error(ERR_NONFATAL, "symbol `%s' redefined", label);
 	return;
     }
+    lptr->defn.is_global |= DEFINED_BIT;
 
     if (label[0] != '.')	       /* not local, but not special either */
 	prevlabel = lptr->defn.label;
@@ -194,10 +208,11 @@ void define_common (char *label, long segment, long size,
     lptr->defn.segment = segment;
     lptr->defn.offset = 0;
 
-    ofmt->symdef (lptr->defn.label, segment, size, 2);
+    ofmt->symdef (lptr->defn.label, segment, size, 2,
+		  special ? special : lptr->defn.special);
 }
 
-void declare_as_global (char *label, efunc error) {
+void declare_as_global (char *label, char *special, efunc error) {
     union label *lptr;
 
     if (islocal(label)) {
@@ -206,16 +221,18 @@ void declare_as_global (char *label, efunc error) {
 	return;
     }
     lptr = find_label (label, 1);
-    switch (lptr->defn.is_global) {
+    switch (lptr->defn.is_global & TYPE_MASK) {
       case NOT_DEFINED_YET:
 	lptr->defn.is_global = GLOBAL_PLACEHOLDER;
+	lptr->defn.special = special ? perm_copy(special, "") : NULL;
 	break;
       case GLOBAL_PLACEHOLDER:	       /* already done: silently ignore */
       case GLOBAL_SYMBOL:
 	break;
       case LOCAL_SYMBOL:
-	error(ERR_NONFATAL, "symbol `%s': [GLOBAL] directive must"
-	      " appear before symbol definition", label);
+	if (!lptr->defn.is_global & EXTERN_BIT)
+	    error(ERR_NONFATAL, "symbol `%s': GLOBAL directive must"
+		  " appear before symbol definition", label);
 	break;
     }
 }
@@ -241,11 +258,15 @@ int init_labels (void) {
 
     prevlabel = "";
 
+    initialised = TRUE;
+
     return 0;
 }
 
 void cleanup_labels (void) {
     int i;
+
+    initialised = FALSE;
 
     for (i=0; i<LABEL_HASHES; i++) {
 	union label *lptr, *lhold;

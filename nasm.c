@@ -16,6 +16,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "parser.h"
+#include "eval.h"
 #include "assemble.h"
 #include "labels.h"
 #include "outform.h"
@@ -32,7 +33,6 @@ static char *obuf;
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
 static char listname[FILENAME_MAX];
-static char realout[FILENAME_MAX];
 static int lineno;		       /* for error reporting */
 static int lineinc;		       /* set by [LINE] or [ONELINE] */
 static int globallineno;	       /* for forward-reference tracking */
@@ -44,7 +44,7 @@ static int sb = 16;		       /* by default */
 
 static int use_stdout = FALSE;	       /* by default, errors to stderr */
 
-static long current_seg;
+static long current_seg, abs_seg;
 static struct RAA *offsets;
 static long abs_offset;
 
@@ -62,7 +62,7 @@ static char currentfile[FILENAME_MAX];
  * doesn't do anything. Initial defaults are given here.
  */
 static char suppressed[1+ERR_WARN_MAX] = {
-    0, FALSE, TRUE
+    0, FALSE, TRUE, FALSE
 };
 
 /*
@@ -70,7 +70,7 @@ static char suppressed[1+ERR_WARN_MAX] = {
  * zero does nothing.
  */
 static char *suppressed_names[1+ERR_WARN_MAX] = {
-    NULL, "macro-params", "orphan-labels"
+    NULL, "macro-params", "orphan-labels", "number-overflow"
 };
 
 /*
@@ -79,7 +79,8 @@ static char *suppressed_names[1+ERR_WARN_MAX] = {
  */
 static char *suppressed_what[1+ERR_WARN_MAX] = {
     NULL, "macro calls with wrong no. of params",
-    "labels alone on lines without trailing `:'"
+    "labels alone on lines without trailing `:'",
+    "numeric constants greater than 0xFFFFFFFF"
 };
 
 /*
@@ -88,7 +89,7 @@ static char *suppressed_what[1+ERR_WARN_MAX] = {
  * not preprocess their source file.
  */
 
-static void no_pp_reset (char *, efunc, ListGen *);
+static void no_pp_reset (char *, int, efunc, evalfunc, ListGen *);
 static char *no_pp_getline (void);
 static void no_pp_cleanup (void);
 static Preproc no_pp = {
@@ -130,6 +131,10 @@ int main(int argc, char **argv) {
 	return 1;
     }
 
+    if (ofmt->stdmac)
+	pp_extra_stdmac (ofmt->stdmac);
+    eval_global_info (ofmt, lookup_label);
+
     if (preprocess_only) {
 	char *line;
 
@@ -140,12 +145,29 @@ int main(int argc, char **argv) {
 			      "unable to open output file `%s'", outname);
 	} else
 	    ofile = NULL;
-	preproc->reset (inname, report_error, &nasmlist);
+
+	eval_info ("%", 0L, 0L);       /* disallow labels, $ or $$ in exprs */
+
+	preproc->reset (inname, 2, report_error, evaluate, &nasmlist);
 	strcpy(currentfile,inname);
 	lineno = 0;
 	lineinc = 1;
 	while ( (line = preproc->getline()) ) {
+	    int ln, li;
+	    char buf[FILENAME_MAX];
+
 	    lineno += lineinc;
+	    /*
+	     * We must still check for %line directives, so that we
+	     * can report errors accurately.
+	     */
+	    if (!strncmp(line, "%line", 5) &&
+		sscanf(line, "%%line %d+%d %s", &ln, &li, buf) == 3) {
+		lineno = ln - li;
+		lineinc = li;
+		strncpy (currentfile, buf, FILENAME_MAX-1);
+		currentfile[FILENAME_MAX-1] = '\0';
+	    }
 	    if (ofile) {
 		fputs(line, ofile);
 		fputc('\n', ofile);
@@ -166,10 +188,7 @@ int main(int argc, char **argv) {
 	 * the name of the input file and then put that inside the
 	 * file.
 	 */
-	ofmt->filename (inname, realout, report_error);
-	if (!*outname) {
-	    strcpy(outname, realout);
-	}
+	ofmt->filename (inname, outname, report_error);
 
 	ofile = fopen(outname, "wb");
 	if (!ofile) {
@@ -182,7 +201,7 @@ int main(int argc, char **argv) {
 	 * init routines. (eg OS/2 defines the FLAT group)
 	 */
 	init_labels ();
-	ofmt->init (ofile, report_error, define_label);
+	ofmt->init (ofile, report_error, define_label, evaluate);
 	assemble_file (inname);
 	if (!terminate_after_phase) {
 	    ofmt->cleanup ();
@@ -377,19 +396,23 @@ static void parse_cmdline(int argc, char **argv) {
 }
 
 static void assemble_file (char *fname) {
-    char *value, *p, *line;
+    char *value, *p, *q, *special, *line;
     insn output_ins;
-    int i, rn_error;
-    long seg;
+    int i, rn_error, validid;
+    long seg, offs;
+    struct tokenval tokval;
+    expr *e;
 
     /* pass one */
     pass = 1;
     current_seg = ofmt->section(NULL, pass, &sb);
-    preproc->reset(fname, report_error, &nasmlist);
+    preproc->reset(fname, 1, report_error, evaluate, &nasmlist);
     strcpy(currentfile,fname);
     lineno = 0;
     lineinc = 1;
     globallineno = 0;
+    offs = get_curr_ofs;
+    eval_info (NULL, current_seg, offs);   /* set $ */
     while ( (line = preproc->getline()) ) {
 	lineno += lineinc;
 	globallineno++;
@@ -433,11 +456,33 @@ static void assemble_file (char *fname) {
 		    current_seg = seg;
 		}
 		break;
-	      case 2:	       /* [EXTERN label] */
+	      case 2:	       /* [EXTERN label:special] */
 		if (*value == '$')
 		    value++;	       /* skip initial $ if present */
-		declare_as_global (value, report_error);
-		define_label (value, seg_alloc(), 0L, ofmt, report_error);
+		q = value;
+		validid = TRUE;
+		if (!isidstart(*q))
+		    validid = FALSE;
+		while (*q && *q != ':') {
+		    if (!isidchar(*q))
+			validid = FALSE;
+		    q++;
+		}
+		if (!validid) {
+		    report_error (ERR_NONFATAL,
+				  "identifier expected after EXTERN");
+		    break;
+		}
+		if (*q == ':') {
+		    *q++ = '\0';
+		    special = q;
+		} else
+		    special = NULL;
+		if (!is_extern(value)) {   /* allow re-EXTERN to be ignored */
+		    declare_as_global (value, special, report_error);
+		    define_label (value, seg_alloc(), 0L, NULL, FALSE, TRUE,
+				  ofmt, report_error);
+		}
 		break;
 	      case 3:	       /* [BITS bits] */
 		switch (atoi(value)) {
@@ -452,39 +497,87 @@ static void assemble_file (char *fname) {
 		    break;
 		}
 		break;
-	      case 4:	       /* [GLOBAL symbol] */
+	      case 4:	       /* [GLOBAL symbol:special] */
 		if (*value == '$')
 		    value++;	       /* skip initial $ if present */
-		declare_as_global (value, report_error);
+		q = value;
+		validid = TRUE;
+		if (!isidstart(*q))
+		    validid = FALSE;
+		while (*q && *q != ':') {
+		    if (!isidchar(*q))
+			validid = FALSE;
+		    q++;
+		}
+		if (!validid) {
+		    report_error (ERR_NONFATAL,
+				  "identifier expected after GLOBAL");
+		    break;
+		}
+		if (*q == ':') {
+		    *q++ = '\0';
+		    special = q;
+		} else
+		    special = NULL;
+		declare_as_global (value, special, report_error);
 		break;
-	      case 5:	       /* [COMMON symbol size] */
+	      case 5:	       /* [COMMON symbol size:special] */
 		p = value;
-		while (*p && !isspace(*p))
+		validid = TRUE;
+		if (!isidstart(*p))
+		    validid = FALSE;
+		while (*p && !isspace(*p)) {
+		    if (!isidchar(*p))
+			validid = FALSE;
 		    p++;
+		}
+		if (!validid) {
+		    report_error (ERR_NONFATAL,
+				  "identifier expected after COMMON");
+		    break;
+		}
 		if (*p) {
 		    long size;
 
 		    while (*p && isspace(*p))
 			*p++ = '\0';
+		    q = p;
+		    while (*q && *q != ':')
+			q++;
+		    if (*q == ':') {
+			*q++ = '\0';
+			special = q;
+		    } else
+			special = NULL;
 		    size = readnum (p, &rn_error);
 		    if (rn_error)
 			report_error (ERR_NONFATAL, "invalid size specified"
 				      " in COMMON declaration");
 		    else
 			define_common (value, seg_alloc(), size,
-				       ofmt, report_error);
+				       special, ofmt, report_error);
 		} else
 		    report_error (ERR_NONFATAL, "no size specified in"
 				  " COMMON declaration");
 		break;
 	      case 6:		       /* [ABSOLUTE address] */
 		current_seg = NO_SEG;
-		abs_offset = readnum(value, &rn_error);
-		if (rn_error) {
-		    report_error (ERR_NONFATAL, "invalid address specified"
-				  " for ABSOLUTE directive");
+		stdscan_reset();
+		stdscan_bufptr = value;
+		tokval.t_type = TOKEN_INVALID;
+		e = evaluate(stdscan, NULL, &tokval, NULL, 1, report_error,
+			     NULL);
+		if (e) {
+		    if (!is_reloc(e))
+			report_error (ERR_NONFATAL, "cannot use non-"
+				      "relocatable expression as ABSOLUTE"
+				      " address");
+		    else {
+			abs_seg = reloc_seg(e);
+			abs_offset = reloc_value(e);
+		    }
+		} else
 		    abs_offset = 0x100;/* don't go near zero in case of / */
-		}
 		break;
 	      default:
 		if (!ofmt->directive (line+1, value, 1))
@@ -493,9 +586,8 @@ static void assemble_file (char *fname) {
 		break;
 	    }
 	} else {
-	    long offs = get_curr_ofs;
-	    parse_line (current_seg, offs, lookup_label,
-			1, line, &output_ins, ofmt, report_error);
+	    parse_line (1, line, &output_ins,
+			report_error, evaluate, eval_info);
 	    if (output_ins.forw_ref)
 		*(int *)saa_wstruct(forwrefs) = globallineno;
 
@@ -535,7 +627,7 @@ static void assemble_file (char *fname) {
 			define_label (output_ins.label,
 				      output_ins.oprs[0].segment,
 				      output_ins.oprs[0].offset,
-				      ofmt, report_error);
+				      NULL, FALSE, FALSE, ofmt, report_error);
 		    } else if (output_ins.operands == 2 &&
 			       (output_ins.oprs[0].type & IMMEDIATE) &&
 			       (output_ins.oprs[0].type & COLON) &&
@@ -547,15 +639,15 @@ static void assemble_file (char *fname) {
 			define_label (output_ins.label,
 				      output_ins.oprs[0].offset | SEG_ABS,
 				      output_ins.oprs[1].offset,
-				      ofmt, report_error);
+				      NULL, FALSE, FALSE, ofmt, report_error);
 		    } else
 			report_error(ERR_NONFATAL, "bad syntax for EQU");
 		}
 	    } else {
 		if (output_ins.label)
 		    define_label (output_ins.label,
-				  current_seg, offs,
-				  ofmt, report_error);
+				  current_seg==NO_SEG ? abs_seg : current_seg,
+				  offs, NULL, TRUE, FALSE, ofmt, report_error);
 		offs += insn_size (current_seg, offs, sb,
 				   &output_ins, report_error);
 		set_curr_ofs (offs);
@@ -563,6 +655,8 @@ static void assemble_file (char *fname) {
 	    cleanup_insn (&output_ins);
 	}
 	nasm_free (line);
+	offs = get_curr_ofs;
+	eval_info (NULL, current_seg, offs);   /* set $ */
     }
     preproc->cleanup();
 
@@ -589,11 +683,13 @@ static void assemble_file (char *fname) {
     current_seg = ofmt->section(NULL, pass, &sb);
     raa_free (offsets);
     offsets = raa_init();
-    preproc->reset(fname, report_error, &nasmlist);
+    preproc->reset(fname, 2, report_error, evaluate, &nasmlist);
     strcpy(currentfile,fname);
     lineno = 0;
     lineinc = 1;
     globallineno = 0;
+    offs = get_curr_ofs;
+    eval_info (NULL, current_seg, offs);   /* set $ */
     while ( (line = preproc->getline()) ) {
 	lineno += lineinc;
 	globallineno++;
@@ -619,7 +715,6 @@ static void assemble_file (char *fname) {
 
 	/* here we parse our directives; this is not handled by
 	 * the 'real' parser. */
-
 	if ( (i = getkw (line, &value)) ) {
 	    switch (i) {
 	      case 1:	       /* [SEGMENT n] */
@@ -631,6 +726,13 @@ static void assemble_file (char *fname) {
 		    current_seg = seg;
 		break;
 	      case 2:	       /* [EXTERN label] */
+		q = value;
+		while (*q && *q != ':')
+		    q++;
+		if (*q == ':') {
+		    *q++ = '\0';
+		    ofmt->symdef(value, 0L, 0L, 3, q);
+		}
 		break;
 	      case 3:	       /* [BITS bits] */
 		switch (atoi(value)) {
@@ -646,13 +748,42 @@ static void assemble_file (char *fname) {
 		}
 		break;
 	      case 4:		       /* [GLOBAL symbol] */
+		q = value;
+		while (*q && *q != ':')
+		    q++;
+		if (*q == ':') {
+		    *q++ = '\0';
+		    ofmt->symdef(value, 0L, 0L, 3, q);
+		}
 		break;
 	      case 5:		       /* [COMMON symbol size] */
+		q = value;
+		while (*q && *q != ':') {
+		    if (isspace(*q))
+			*q = '\0';
+		    q++;
+		}
+		if (*q == ':') {
+		    *q++ = '\0';
+		    ofmt->symdef(value, 0L, 0L, 3, q);
+		}
 		break;
 	      case 6:		       /* [ABSOLUTE addr] */
 		current_seg = NO_SEG;
-		abs_offset = readnum(value, &rn_error);
-		if (rn_error)
+		stdscan_reset();
+		stdscan_bufptr = value;
+		tokval.t_type = TOKEN_INVALID;
+		e = evaluate(stdscan, NULL, &tokval, NULL, 2, report_error,
+			     NULL);
+		if (e) {
+		    if (!is_reloc(e))
+			report_error (ERR_PANIC, "non-reloc ABSOLUTE address"
+				      " in pass two");
+		    else {
+			abs_seg = reloc_seg(e);
+			abs_offset = reloc_value(e);
+		    }
+		} else
 		    report_error (ERR_PANIC, "invalid ABSOLUTE address "
 				  "in pass two");
 		break;
@@ -662,9 +793,8 @@ static void assemble_file (char *fname) {
 		break;
 	    }
 	} else {
-	    long offs = get_curr_ofs;
-	    parse_line (current_seg, offs, lookup_label, 2,
-			line, &output_ins, ofmt, report_error);
+	    parse_line (2, line, &output_ins,
+			report_error, evaluate, eval_info);
 	    if (globallineno == forwline) {
 		int *p = saa_rstruct (forwrefs);
 		if (p)
@@ -702,7 +832,7 @@ static void assemble_file (char *fname) {
 			define_label (output_ins.label,
 				      output_ins.oprs[0].segment,
 				      output_ins.oprs[0].offset,
-				      ofmt, report_error);
+				      NULL, FALSE, FALSE, ofmt, report_error);
 		    } else if (output_ins.operands == 2 &&
 			       (output_ins.oprs[0].type & IMMEDIATE) &&
 			       (output_ins.oprs[0].type & COLON) &&
@@ -712,7 +842,7 @@ static void assemble_file (char *fname) {
 			define_label (output_ins.label,
 				      output_ins.oprs[0].offset | SEG_ABS,
 				      output_ins.oprs[1].offset,
-				      ofmt, report_error);
+				      NULL, FALSE, FALSE, ofmt, report_error);
 		    } else
 			report_error(ERR_NONFATAL, "bad syntax for EQU");
 		}
@@ -723,6 +853,9 @@ static void assemble_file (char *fname) {
 	    set_curr_ofs (offs);
 	}
 	nasm_free (line);
+
+	offs = get_curr_ofs;
+	eval_info (NULL, current_seg, offs);   /* set $ */
     }
     preproc->cleanup();
     nasmlist.cleanup();
@@ -786,6 +919,12 @@ static void report_error (int severity, char *fmt, ...) {
 	suppressed[ (severity & ERR_WARN_MASK) >> ERR_WARN_SHR ])
 	return;			       /* and bail out if so */
 
+    /*
+     * See if it's a pass-one only warning and we're not in pass one.
+     */
+    if ((severity & ERR_PASS1) && pass != 1)
+	return;
+
     if (severity & ERR_NOFILE)
 	fputs ("nasm: ", use_stdout ? stdout : stderr);
     else
@@ -839,6 +978,9 @@ static void register_output_formats(void) {
 #ifdef OF_AOUT
     extern struct ofmt of_aout;
 #endif
+#ifdef OF_AOUTB
+    extern struct ofmt of_aoutb;
+#endif
 #ifdef OF_COFF
     extern struct ofmt of_coff;
 #endif
@@ -856,9 +998,6 @@ static void register_output_formats(void) {
 #ifdef OF_WIN32
     extern struct ofmt of_win32;
 #endif
-#ifdef OF_OS2
-    extern struct ofmt of_os2;
-#endif
 #ifdef OF_RDF
     extern struct ofmt of_rdf;
 #endif
@@ -871,6 +1010,9 @@ static void register_output_formats(void) {
 #endif
 #ifdef OF_AOUT
     ofmt_register (&of_aout);
+#endif
+#ifdef OF_AOUTB
+    ofmt_register (&of_aoutb);
 #endif
 #ifdef OF_COFF
     ofmt_register (&of_coff);
@@ -886,9 +1028,6 @@ static void register_output_formats(void) {
 #endif
 #ifdef OF_WIN32
     ofmt_register (&of_win32);
-#endif
-#ifdef OF_OS2
-    ofmt_register (&of_os2);
 #endif
 #ifdef OF_RDF
     ofmt_register (&of_rdf);
@@ -906,14 +1045,18 @@ static void register_output_formats(void) {
 
 static FILE *no_pp_fp;
 static efunc no_pp_err;
+static ListGen *no_pp_list;
 
-static void no_pp_reset (char *file, efunc error, ListGen *listgen) {
+static void no_pp_reset (char *file, int pass, efunc error, evalfunc eval,
+			 ListGen *listgen) {
     no_pp_err = error;
     no_pp_fp = fopen(file, "r");
     if (!no_pp_fp)
 	no_pp_err (ERR_FATAL | ERR_NOFILE,
 		   "unable to open input file `%s'", file);
-    (void) listgen;		       /* placate compilers */
+    no_pp_list = listgen;
+    (void) pass;		       /* placate compilers */
+    (void) eval;		       /* placate compilers */
 }
 
 static char *no_pp_getline (void) {
@@ -953,6 +1096,8 @@ static char *no_pp_getline (void) {
      * by some file transfer utilities.
      */
     buffer[strcspn(buffer, "\032")] = '\0';
+
+    no_pp_list->line (LIST_READ, buffer);
 
     return buffer;
 }

@@ -57,7 +57,7 @@ void print_header(long length) {
     case 3:             /* export record */
       fread(&s,1,1,infile);
       fread(&o,4,1,infile);
-      l = 0;
+      ll = 0;
       do {
 	fread(&buf[ll],1,1,infile);
       } while (buf[ll++]);
@@ -65,7 +65,7 @@ void print_header(long length) {
       length -= ll + 6;
       break;
     case 4:		/* DLL record */
-      l = 0;
+      ll = 0;
       do {
 	fread(&buf[ll],1,1,infile);
       } while (buf[ll++]);
@@ -88,6 +88,7 @@ int main(int argc,char **argv) {
   char id[7];
   long l;
   int verbose = 0;
+  long offset;
 
   puts("RDOFF Dump utility v1.1 (C) Copyright 1996 Julian R Hall");
 
@@ -133,9 +134,15 @@ int main(int argc,char **argv) {
   fread(&l,4,1,infile);
   l = translatelong(l);
   printf("\nText segment length = %ld bytes\n",l);
+  offset = 0;
   while(l--) {
     fread(id,1,1,infile);
-    if (verbose) printf("  %02x",(int) (unsigned char)id[0]);
+    if (verbose) {
+      if (offset % 16 == 0)
+	printf("\n%08lx ", offset);
+      printf(" %02x",(int) (unsigned char)id[0]);
+      offset++;
+    }
   }
   if (verbose) printf("\n\n");
 
@@ -145,9 +152,13 @@ int main(int argc,char **argv) {
 
   if (verbose)
   {
+    offset = 0;
     while (l--) {
       fread(id,1,1,infile);
-      printf("  %02x",(int) (unsigned char) id[0]);
+      if (offset % 16 == 0)
+	printf("\n%08lx ", offset);
+      printf(" %02x",(int) (unsigned char) id[0]);
+      offset++;
     }
     printf("\n");
   }
