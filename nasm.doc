@@ -1,0 +1,996 @@
+		     The Netwide Assembler, NASM
+		     ===========================
+
+Introduction
+============
+
+The Netwide Assembler grew out of an idea on comp.lang.asm.x86 (or
+possibly alt.lang.asm, I forget which), which was essentially that
+there didn't seem to be a good free x86-series assembler around, and
+that maybe someone ought to write one.
+
+- A86 is good, but not free, and in particular you don't get any
+  32-bit capability until you pay. It's DOS only, too.
+
+- GAS is free, and ports over DOS/Unix, but it's not very good,
+  since it's designed to be a back end to gcc, which always feeds it
+  correct code. So its error checking is minimal. Also its syntax is
+  horrible, from the point of view of anyone trying to actually
+  _write_ anything in it. Plus you can't write 16-bit code in it.
+
+- AS86 is Linux specific, and (my version at least) doesn't seem to
+  have much (or any) documentation.
+
+- MASM isn't very good. And it's expensive. And it runs only under
+  DOS.
+
+- TASM is better, but still strives for MASM compatibility, which
+  means millions of directives and tons of red tape. And its syntax
+  is essentially MASM's, with the contradictions and quirks that
+  entails (although it sorts out some of those by means of Ideal
+  mode). It's expensive too. And it's DOS only.
+
+So here, for your coding pleasure, is NASM. At present it's still in
+prototype stage - we don't promise that it can outperform any of
+these assemblers. But please, _please_ send us bug reports and fixes
+and anything else you can get your hands on, and we'll improve it
+out of all recognition. Again.
+
+Please see the file `Licence' for the legalese.
+
+Getting Started: Installation
+=============================
+
+NASM is distributed in source form, in what we hope is totally
+ANSI-compliant C. It uses no non-portable code at all, that we know
+of. It ought to compile without change on any system you care to try
+it on. We also supply a pre-compiled 16-bit DOS binary.
+
+To install it, edit the Makefile to describe your C compiler, and
+type `make'. Then copy the binary to somewhere on your path. That's
+all - NASM relies on no files other than its own executable.
+Although if you're on a Unix system, you may also want to install
+the NASM manpage (`nasm.1'). You may also want to install the binary
+and manpage for the Netwide Disassembler, NDISASM (also see
+`ndisasm.doc').
+
+Running NASM
+============
+
+To assemble a file, you issue a command of the form
+
+	nasm -f <format> <filename> [-o <output>]
+
+For example,
+
+	nasm -f elf myfile.asm
+
+will assemble `myfile.asm' into an ELF object file `myfile.o'. And
+
+	nasm -f bin myfile.asm -o myfile.com
+
+will assemble `myfile.asm' into a raw binary program `myfile.com'.
+
+To get usage instructions from NASM, try typing `nasm -h'. This will
+also list the available output file formats, and what they are.
+
+If you use Linux but aren't sure whether your system is a.out or
+ELF, type `file /usr/bin/nasm' or wherever you put the NASM binary.
+If it says something like
+
+/usr/bin/nasm: ELF 32-bit LSB executable i386 (386 and up) Version 1
+
+then your system is ELF, and you should use `-f elf' when you want
+NASM to produce Linux object files. If it says
+
+/usr/bin/nasm: Linux/i386 demand-paged executable (QMAGIC)
+
+or something similar, your system is a.out, and you should use `-f
+aout' instead.
+
+Like Unix compilers and assemblers, NASM is silent unless it goes
+wrong: you won't see any output at all, unless it gives error
+messages.
+
+Writing Programs with NASM
+==========================
+
+Each line of a NASM source file should contain some combination of
+the four fields
+
+LABEL:	INSTRUCTION	OPERANDS	; COMMENT
+
+`LABEL' defines a label pointing to that point in the source. There
+are no restrictions on white space: labels may have white space
+before them, or not, as you please. The colon after the label is
+also optional.
+
+Valid characters in labels are letters, numbers, `_', `$', `#', `@',
+`~', `?', and `.'. The only characters which may be used as the
+_first_ character of an identifier are letters, `_' and `?', and
+(with special meaning: see `Local Labels') `.'. An identifier may
+also be prefixed with a $ sign to indicate that it is intended to be
+read as an identifier and not a reserved word; thus, if some other
+module you are linking with defines a symbol `eax', you can refer to
+`$eax' in NASM code to distinguish it from the register name.
+
+`INSTRUCTION' can be any machine opcode (Pentium and P6 opcodes, FPU
+opcodes, MMX opcodes and even undocumented opcodes are all
+supported). The instruction may be prefixed by LOCK, REP, REPE/REPZ
+or REPNE/REPNZ, in the usual way. Explicit address-size and operand-
+size prefixes A16, A32, O16 and O32 are provided - one example of
+their use is given in the `Unusual Instruction Sizes' section below.
+You can also use a segment register as a prefix: coding `es mov
+[bx],ax' is equivalent to coding `mov [es:bx],ax'. We recommend the
+latter syntax, since it is consistent with other syntactic features
+of the language, but for instructions such as `lodsb' there isn't
+anywhere to put a segment override except as a prefix. This is why
+we support it.
+
+The `INSTRUCTION' field may also contain some pseudo-opcodes: see
+the section on pseudo-opcodes for details.
+
+`OPERANDS' can be nonexistent, or huge, depending on the
+instruction, of course. When operands are registers, they are given
+simply as register names: `eax', `ss', `di' for example. NASM does
+_not_ use the GAS syntax, in which register names are prefixed by a
+`%' sign. Operands may also be effective addresses, or they may be
+constants or expressions. See the separate sections on these for
+details.
+
+`COMMENT' is anything after the first semicolon on the line,
+excluding semicolons inside quoted strings.
+
+Of course, all these fields are optional: the presence or absence of
+the OPERANDS field is required by the nature of the INSTRUCTION
+field, but any line may contain a LABEL or not, may contain an
+INSTRUCTION or not, and may contain a COMMENT or not, independently
+of each other.
+
+Lines may also contain nothing but a directive: see `Assembler
+Directives' below for details.
+
+NASM can currently not handle any line longer than 1024 characters.
+This may be fixed in a future release.
+
+Floating Point Instructions
+===========================
+
+NASM has support for assembling FPU opcodes. However, its syntax is
+not necessarily the same as anyone else's.
+
+NASM uses the notation `st0', `st1', etc. to denote the FPU stack
+registers. NASM also accepts a wide range of single-operand and
+two-operand forms of the instructions. For people who wish to use
+the single-operand form exclusively (this is in fact the `canonical'
+form from NASM's point of view, in that it is the form produced by
+the Netwide Disassembler), there is a TO keyword which makes
+available the opcodes which cannot be so easily accessed by one
+operand. Hence:
+
+	fadd st1	; this sets st0 := st0 + st1
+	fadd st0,st1	; so does this
+	fadd st1,st0	; this sets st1 := st1 + st0
+	fadd to st1	; so does this
+
+It's also worth noting that the FPU instructions that reference
+memory must use the prefixes DWORD, QWORD or TWORD to indicate what
+size of memory operand they refer to.
+
+NASM, in keeping with our policy of not trying to second-guess the
+programmer, will _never_ automatically insert WAIT instructions into
+your code stream. You must code WAIT yourself before _any_
+instruction that needs it. (Of course, on 286 processors or above,
+it isn't needed anyway...)
+
+NASM supports specification of floating point constants by means of
+`dd' (single precision), `dq' (double precision) and `dt' (extended
+precision). Floating-point _arithmetic_ is not done, due to
+portability constraints (not all platforms on which NASM can be run
+support the same floating point types), but simple constants can be
+specified. For example:
+
+gamma	dq 0.5772156649		; Euler's constant
+
+Pseudo-Opcodes
+==============
+
+Pseudo-opcodes are not real x86 machine opcodes, but are used in the
+instruction field anyway because that's the most convenient place to
+put them. The current pseudo-opcodes are DB, DW and DD, their
+uninitialised counterparts RESB, RESW and RESD, the EQU command, and
+the TIMES prefix.
+
+DB, DW and DD work as you would expect: they can each take an
+arbitrary number of operands, and when assembled, they generate
+nothing but those operands. All three of them can take string
+constants as operands, which no other instruction can currently do.
+See the `Constants' section for details about string constants.
+
+RESB, RESW and RESD are designed to be used in the BSS section of a
+module: they declare _uninitialised_ storage space. Each takes a
+single operand, which is the number of bytes, words or doublewords
+to reserve. We do not support the MASM/TASM syntax of reserving
+uninitialised space by writing `DW ?' or similar: this is what we do
+instead. (But see `Critical Expressions' for a caveat on the nature
+of the operand.)
+
+(An aside: if you want to be able to write `DW ?' and have something
+vaguely useful happen, you can always code `? EQU 0'...)
+
+EQU defines a symbol to a specified value: when EQU is used, the
+LABEL field must be present. The action of EQU is to define the
+given label name to the value of its (only) operand. This definition
+is absolute, and cannot change later. So, for example,
+
+message db 'hello, world'
+msglen  equ $-message
+
+defines `msglen' to be the constant 12. `msglen' may not then be
+redefined later. This is not a preprocessor definition either: the
+value of `msglen' is evaluated _once_, using the value of `$' (see
+the section `Expressions' for details of `$') at the point of
+definition, rather than being evaluated wherever it is referenced
+and using the value of `$' at the point of reference. Note that the
+caveat in `Critical Expressions' applies to EQU too, at the moment.
+
+Finally, the TIMES prefix causes the instruction to be assembled
+multiple times. This is partly NASM's equivalent of the DUP syntax
+supported by MASM-compatible assemblers, in that one can do
+
+zerobuf: times 64 db 0
+
+or similar, but TIMES is more versatile than that. TIMES takes not
+just a numeric constant, but a numeric _expression_, so one can do
+things like
+
+buffer: db 'hello, world'
+        times 64-$+buffer db ' '
+
+which will store exactly enough spaces to make the total length of
+`buffer' up to 64. (See the section `Critical Expressions' for a
+caveat on the use of TIMES.) Finally, TIMES can be applied to
+ordinary opcodes, so you can code trivial unrolled loops in it:
+
+	times 100 movsb
+
+Note that there is no effective difference between `times 100 resb
+1' and `resb 100'.
+
+Effective Addresses
+===================
+
+NASM's addressing scheme is very simple, although it can involve
+more typing than other assemblers. Where other assemblers
+distinguish between a _variable_ (label declared without a colon)
+and a _label_ (declared with a colon), and use different means of
+addressing the two, NASM is totally consistent.
+
+To refer to the contents of a memory location, square brackets are
+required. This applies to simple variables, computed offsets,
+segment overrides, effective addresses - _everything_. E.g.:
+
+wordvar dw 123
+	mov ax,[wordvar]
+	mov ax,[wordvar+1]
+	mov ax,[es:wordvar+bx]
+
+NASM does _not_ support the various strange syntaxes used by MASM
+and others, such as
+
+	mov ax,wordvar	; this is legal, but means something else
+	mov ax,es:wordvar[bx]	; not even slightly legal
+	es mov ax,wordvar[1]	; the prefix is OK, but not the rest
+
+If no square brackets are used, NASM interprets label references to
+mean the address of the label. Hence there is no need for MASM's
+OFFSET keyword, but
+
+	mov ax,wordvar
+
+loads AX with the _address_ of the variable `wordvar'.
+
+More complicated effective addresses are handled by enclosing them
+within square brackets as before:
+
+	mov eax,[ebp+2*edi+offset]
+	mov ax,[bx+di+8]
+
+NASM will cope with some fairly strange effective addresses, if you
+try it: provided your effective address expression evaluates
+_algebraically_ to something that the instruction set supports, it
+will be able to assemble it. For example,
+
+	mov eax,[ebx*5]		; actually assembles to [ebx+ebx*4]
+	mov ax,[bx-si+2*si]	; actually assembles to [bx+si]
+
+will both work.
+
+There is an ambiguity in the instruction set, which allows two forms
+of 32-bit effective address with equivalent meaning:
+
+	mov eax,[2*eax+0]
+	mov eax,[eax+eax]
+
+These two expressions clearly refer to the same address. The
+difference is that the first one, if assembled `as is', requires a
+four-byte offset to be stored as part of the instruction, so it
+takes up more space. NASM will generate the second (smaller) form
+for both of the above instructions, in an effort to save space.
+There is not, currently, any means for forcing NASM to generate the
+larger form of the instruction.
+
+Mixing 16 and 32 Bit Code: Unusual Instruction Sizes
+====================================================
+
+A number of assemblers seem to have trouble assembling instructions
+that use a different operand or address size from the one they are
+expecting; as86 is a good example, even though the Linux kernel boot
+process (which is assembled using as86) needs several such
+instructions and as86 can't do them.
+
+Instructions such as `mov eax,2' in 16-bit mode are easy, of course,
+and NASM can do them just as well as any other assembler. The
+difficult instructions are things like far jumps.
+
+Suppose you are in a 16-bit segment, in protected mode, and you want
+to execute a far jump to a point in a 32-bit segment. You need to
+code a 32-bit far jump in a 16-bit segment; not many assemblers I
+know of will easily support this. NASM can, by means of the `word'
+and `dword' specifiers. So you can code
+
+	call 1234h:5678h	; this uses the default segment size
+	call word 1234h:5678h	; this is guaranteed to be 16-bit
+	call dword 1234h:56789ABCh ; and this is guaranteed 32-bit
+
+and NASM will generate correct code for them.
+
+Similarly, if you are coding in a 16-bit code segment, but trying to
+access memory in a 32-bit data segment, your effective addresses
+will want to be 32-bit. Of course as soon as you specify an
+effective address containing a 32-bit register, like `[eax]', the
+addressing is forced to be 32-bit anyway. But if you try to specify
+a simple offset, such as `[label]' or `[0x10000]', you will get the
+default address size, which in this case will be wrong. However,
+NASM allows you to code `[dword 0x10000]' to force a 32-bit address
+size, or conversely `[word wlabel]' to force 16 bits.
+
+Be careful not to confuse `word' and `dword' _inside_ the square
+brackets with _outside_: consider the instruction
+
+	mov word [dword 0x123456],0x7890
+
+which moves 16 bits of data to an address specified by a 32-bit
+offset. There is no contradiction between the `word' and `dword' in
+this instruction, since they modify different aspects of the
+functionality. Or, even more confusingly,
+
+	call dword far [fs:word 0x4321]
+
+which takes an address specified by a 16-bit offset, and extracts a
+48-bit DWORD FAR pointer from it to call.
+
+Using this effective-address syntax, the `dword' or `word' override
+may come before or after the segment override if any: NASM isn't
+fussy. Hence:
+
+	mov ax,[fs:dword 0x123456]
+	mov ax,[dword fs:0x123456]
+
+are equivalent forms, and generate the same code.
+
+The LOOP instruction comes in strange sizes, too: in a 16-bit
+segment it uses CX as its count register by default, and in a 32-bit
+segment it uses ECX. But it's possible to do either one in the other
+segment, and NASM will cope by letting you specify the count
+register as a second operand:
+
+	loop label		; uses CX or ECX depending on mode
+	loop label,cx		; always uses CX
+	loop label,ecx		; always uses ECX
+
+Finally, the string instructions LODSB, STOSB, MOVSB, CMPSB, SCASB,
+INSB, and OUTSB can all have strange address sizes: typically, in a
+16-bit segment they read from [DS:SI] and write to [ES:DI], and in a
+32-bit segment they read from [DS:ESI] and write to [ES:EDI].
+However, this can be changed by the use of the explicit address-size
+prefixes `a16' and `a32'. These prefixes generate null code if used
+in the same size segment as they specify, but generate an 0x67
+prefix otherwise. Hence `a16' generates no code in a 16-bit segment,
+but 0x67 in a 32-bit one, and vice versa. So `a16 lodsb' will always
+generate code to read a byte from [DS:SI], no matter what the size
+of the segment. There are also explicit operand-size override
+prefixes, `o16' and `o32', which will optionally generate 0x66
+bytes, but these are provided for completeness and should never have
+to be used.
+
+Constants
+=========
+
+NASM can accept three kinds of constant: _numeric_, _character_ and
+_string_ constants.
+
+Numeric constants are simply numbers. NASM supports a variety of
+syntaxes for expressing numbers in strange bases: you can do any of
+
+	100	; this is decimal
+	0x100	; hex
+	100h	; hex as well
+	$100	; hex again
+	100q	; octal
+	100b	; binary
+
+NASM does not support A86's syntax of treating anything with a
+leading zero as hex, nor does it support the C syntax of treating
+anything with a leading zero as octal. Leading zeros make no
+difference to NASM. (Except that, as usual, if you have a hex
+constant beginning with a letter, and you want to use the trailing-H
+syntax to represent it, you have to use a leading zero so that NASM
+will recognise it as a number instead of a label.)
+
+The `x' in `0x100', and the trailing `h', `q' and `b', may all be
+upper case if you want.
+
+Character constants consist of up to four characters enclosed in
+single or double quotes. No escape character is defined for
+including the quote character itself: if you want to declare a
+character constant containing a double quote, enclose it in single
+quotes, and vice versa.
+
+Character constants' values are worked out in terms of a
+little-endian computer: if you code
+
+	mov eax,'abcd'
+
+then if you were to examine the binary output from NASM, it would
+contain the visible string `abcd', which of course means that the
+actual value loaded into EAX would be 0x64636261, not 0x61626364.
+
+String constants are like character constants, only more so: if a
+character constant appearing as operand to a DB, DW or DD is longer
+than the word size involved (1, 2 or 4 respectively), it will be
+treated as a string constant instead, which is to say the
+concatenation of separate character constants.
+
+For example,
+
+	db 'hello, world'
+
+declares a twelve-character string constant. And
+
+	dd 'dontpanic'
+
+(a string constant) is equivalent to writing
+
+	dd 'dont','pani','c'
+
+(three character constants), so that what actually gets assembled is
+equivalent to
+
+	db 'dontpanic',0,0,0
+
+(It's worth noting that one of the reasons for the reversal of
+character constants is so that the instruction `dw "ab"' has the
+same meaning whether "ab" is treated as a character constant or a
+string constant. Hence there is less confusion.)
+
+Expressions
+===========
+
+Expressions in NASM can be formed of the following operators: `|'
+(bitwise OR), `^' (bitwise XOR), `&' (bitwise AND), `<<' and `>>'
+(logical bit shifts), `+', `-', `*' (ordinary addition, subtraction
+and multiplication), `/', `%' (unsigned division and modulo), `//',
+`%%' (signed division and modulo), `~' (bitwise NOT), and the
+operators SEG and WRT (see `SEG and WRT' below).
+
+The order of precedence is:
+
+|			lowest
+^
+&
+<< >>
+binary + and -
+* / % // %%
+unary + and -, ~, SEG	highest
+
+As usual, operators within a precedence level associate to the left
+(i.e. `2-3-4' evaluates the same way as `(2-3)-4').
+
+A form of algebra is done by NASM when evaluating expressions: I
+have already stated that an effective address expression such as
+`[EAX*6-EAX]' will be recognised by NASM as algebraically equivalent
+to `[EAX*4+EAX]', and assembled as such. In addition, algebra can be
+done on labels as well: `label2*2-label1' is an acceptable way to
+define an address as far beyond `label2' as `label1' is before it.
+(In less algebraically capable assemblers, one might have to write
+that as `label2 + (label2-label1)', where the value of every
+sub-expression is either a valid address or a constant. NASM can of
+course cope with that version as well.)
+
+Expressions may also contain the special token `$', known as a Here
+token, which always evaluates to the address of the current assembly
+point. (That is, the address of the assembly point _before_ the
+current instruction gets assembled.) The special token `$$'
+evaluates to the address of the beginning of the current section;
+this can be used for alignment, as shown below:
+
+	times ($$-$) & 3 nop	; pad with NOPs to 4-byte boundary
+
+SEG and WRT
+===========
+
+NASM contains the capability for its object file formats (currently,
+only `obj' makes use of this) to permit programs to directly refer
+to the segment-base values of their segments. This is achieved
+either by the object format defining the segment names as symbols
+(`obj' does this), or by the use of the SEG operator.
+
+SEG is a unary prefix operator which, when applied to a symbol
+defined in a segment, will yield the segment base value of that
+segment. (In `obj' format, symbols defined in segments which are
+grouped are considered to be primarily a member of the _group_, not
+the segment, and the return value of SEG reflects this.)
+
+SEG may be used for far pointers: it is guaranteed that for any
+symbol `sym', using the offset `sym' from the segment base `SEG sym'
+yields a correct pointer to the symbol. Hence you can code a far
+call by means of
+
+	CALL SEG routine:routine
+
+or store a far pointer in a data segment by
+
+	DW routine, SEG routine
+
+For convenience, NASM supports the forms
+
+	CALL FAR routine
+	JMP FAR routine
+
+as direct synonyms for the canonical syntax
+
+	CALL SEG routine:routine
+	JMP SEG routine:routine
+
+No alternative syntax for
+
+	DW routine, SEG routine
+
+is supported.
+
+Simply referring to `sym', for some symbol, will return the offset
+of `sym' from its _preferred_ segment base (as returned from `SEG
+sym'); sometimes, you may want to obtain the offset of `sym' from
+some _other_ segment base. (E.g. the offset of `sym' from the base
+of the segment it's in, where normally you'd get the offset from a
+group base). This is accomplished using the WRT (With Reference To)
+keyword: if `sym' is defined in segment `seg' but you want its
+offset relative to the beginning of segment `seg2', you can do
+
+	mov ax,sym WRT seg2
+
+The right-hand operand to WRT must be a segment-base value. You can
+also do `sym WRT SEG sym2' if you need to.
+
+Critical Expressions
+====================
+
+NASM is a two-pass assembler: it goes over the input once to
+determine the location of all the symbols, then once more to
+actually generate the output code. Most expressions are
+non-critical, in that if they contain a forward reference and hence
+their correct value is unknown during the first pass, it doesn't
+matter. However, arguments to RESB, RESW and RESD, and the argument
+to the TIMES prefix, can actually affect the _size_ of the generated
+code, and so it is critical that the expression can be evaluated
+correctly on the first pass. So in these situations, expressions may
+not contain forward references. This prevents NASM from having to
+sort out a mess such as
+
+	times (label-$) db 0
+label:	db 'where am I?'
+
+in which the TIMES argument could equally legally evaluate to
+_anything_, or perhaps even worse,
+
+	times (label-$+1) db 0
+label:	db 'NOW where am I?'
+
+in which any value for the TIMES argument is by definition invalid.
+
+Since NASM is a two-pass assembler, this criticality condition also
+applies to the argument to EQU. Suppose, if this were not the case,
+we were to have the setup
+
+  mov ax,a
+a equ b
+b:
+
+On pass one, `a' cannot be defined properly, since `b' is not known
+yet. On pass two, `b' is known, so line two can define `a' properly.
+Unfortunately, line 1 needed `a' to be defined properly, so this
+code will not assemble using only two passes.
+
+Local Labels
+============
+
+NASM takes its local label scheme mainly from the old Amiga
+assembler Devpac: a local label is one that begins with a period.
+The `localness' comes from the fact that local labels are associated
+with the previous non-local label, so that you may declare the same
+local label twice if a non-local one intervenes. Hence:
+
+label1	; some code
+.loop	; some more code
+	jne .loop
+	ret
+label2	; some code
+.loop	; some more code
+	jne .loop
+	ret
+
+In the above code, each `jne' instruction jumps to the line of code
+before it, since the `.loop' labels are distinct from each other.
+
+NASM, however, introduces an extra capability not present in Devpac,
+which is that the local labels are actually _defined_ in terms of
+their associated non-local label. So if you really have to, you can
+write
+
+label3	; some more code
+	; and some more
+	jmp label1.loop
+
+So although local labels are _usually_ local, it is possible to
+reference them from anywhere in your program, if you really have to.
+
+Assembler Directives
+====================
+
+Assembler directives appear on a line by themselves (apart from a
+comment), and must be enclosed in square brackets. No white space
+may appear before the opening square bracket, although white space
+and a comment may come after the closing bracket.
+
+Some directives are universal: they may be used in any situation,
+and do not change their syntax. The universal directives are listed
+below.
+
+[BITS 16] or [BITS 32] switches NASM into 16-bit or 32-bit mode.
+(This is equivalent to USE16 and USE32 segments, in TASM or MASM.)
+In 32-bit mode, instructions are prefixed with 0x66 or 0x67 prefixes
+when they use 16-bit data or addresses; in 16-bit mode, the reverse
+happens. NASM's default depends on the object format; the defaults
+are documented with the formats. (See `obj', in particular, for some
+unusual behaviour.)
+
+[INCLUDE filename] or [INC filename] includes another source file
+into the current one. At present, only one level of inclusion is
+supported.
+
+[SECTION name] or [SEGMENT name] changes which section the code you
+write will be assembled into. Acceptable section names vary between
+output formats, but most formats (indeed, all formats at the moment)
+support the names `.text', `.data' and `.bss'. Note that `.bss' is
+an uninitialised data section, and so you will receive a warning
+from NASM if you try to assemble any code or data in it. The only
+thing you can do in `.bss' without triggering a warning is use RESB,
+RESW and RESD. That's what they're for.
+
+[ABSOLUTE address] can be considered a different form of [SECTION],
+in that it must be overridden using a SECTION directive once you
+have finished using it. It is used to assemble notional code at an
+absolute offset address; of course, you can't actually assemble
+_code_ there, since no object file format is capable of putting the
+code in place, but you can use RESB, RESW and RESD, and you can
+define labels. Hence you could, for example, define a C-like data
+structure by means of
+
+	[ABSOLUTE 0]
+	stLong  resd 1
+	stWord  resw 1
+	stByte1 resb 1
+	stByte2 resb 1
+	st_size:
+	[SEGMENT .text]
+
+and then carry on coding. This defines `stLong' to be zero, `stWord'
+to be 4, `stByte1' to be 6, `stByte2' to be 7 and `st_size' to be 8.
+So this has defined a data structure.
+
+[EXTERN symbol] defines a symbol as being `external', in the C
+sense: `EXTERN' states that the symbol is _not_ declared in this
+module, but is declared elsewhere, and that you wish to _reference_
+it in this module.
+
+[GLOBAL symbol] defines a symbol as being global, in the sense that
+it is exported from this module and other modules may reference it.
+All symbols are local, unless declared as global. Note that the
+`GLOBAL' directive must appear before the definition of the symbol
+it refers to.
+
+[COMMON symbol size] defines a symbol as being common: it is
+declared to have the given size, and it is merged at link time with
+any declarations of the same symbol in other modules. This is not
+_fully_ supported in the `obj' file format: see the section on `obj'
+for details.
+
+Directives may also be specific to the output file format. At
+present, the `bin' and `obj' formats define extra directives, which
+are specified below.
+
+Output Formats
+==============
+
+The current output formats supported are `bin', `aout', `coff',
+`elf' and `win32'.
+
+`bin': flat-form binary
+-----------------------
+
+This is at present the only output format that generates instantly
+runnable code: all the others produce object files that need linking
+before they become executable.
+
+`bin' output files contain no red tape at all: they simply contain
+the binary representation of the exact code you wrote.
+
+The `bin' format supports a format-specific directive, which is ORG.
+[ORG addr] declares that your code should be assembled as if it were
+to be loaded into memory at the address `addr'. So a DOS .COM file
+should state [ORG 0x100], and a DOS .SYS file should state [ORG 0].
+There should be _one_ ORG directive, at most, in an assembly file:
+NASM does not support the use of ORG to jump around inside an object
+file, like MASM does (see the `Bugs' section for a use of the ORG
+directive not supported by NASM).
+
+Like all formats, the `bin' format defines the section names
+`.text', `.data' and `.bss'. The layout is that `.text' comes first
+in the output file, followed by `.data', and notionally followed by
+`.bss'. So if you declare a BSS section in a flat binary file,
+references to the BSS section will refer to space past the end of
+the actual file. The `.data' and `.bss' sections are considered to
+be aligned on four-byte boundaries: this is achieved by inserting
+padding zero bytes between the end of the text section and the start
+of the data, if there is data present. Of course if no [SECTION]
+directives are present, everything will go into `.text', and you
+will get nothing in the output except the code you wrote.
+
+`bin' silently ignores GLOBAL directives, and will also not complain
+at EXTERN ones. You only get an error if you actually _reference_ an
+external symbol.
+
+Using the `bin' format, the default output filename is `filename'
+for inputs of `filename.asm'. If there is no extension to be
+removed, output will be placed in `nasm.out' and a warning will be
+generated.
+
+`bin' defaults to 16-bit assembly mode.
+
+`aout' and `elf': Linux object files
+------------------------------------
+
+These two object formats are the ones used under Linux. They have no
+format-specific directives, and their default output filename is
+`filename.o'.
+
+ELF is a much more featureful object-file format than a.out: in
+particular it has enough features to support the writing of position
+independent code by means of a global offset table, and position
+independent shared libraries by means of a procedure linkage table.
+Unfortunately NASM, as yet, does not support these extensions, and
+so NASM cannot be used to write shared library code under ELF. NASM
+also does not support the capability, in ELF, for specifying precise
+alignment constraints on common variables.
+
+Both `aout' and `elf' default to 32-bit assembly mode.
+
+`coff' and `win32': Common Object File Format
+---------------------------------------------
+
+The `coff' format generates standard Unix COFF object files, which
+can be fed to (for example) the DJGPP linker. Its default output
+filename, like the other Unix formats, is `filename.o'.
+
+The `win32' format generates Win32 (Windows 95 or Intel-platform
+Windows NT) object files, which nominally use the COFF standard, but
+in fact are not compatible. Its default output filename is
+`filename.obj'.
+
+`coff' and `win32' are not quite compatible formats, due to the fact
+that Microsoft's interpretation of the term `relative relocation'
+does not seem to be the same as the interpretation used by anyone
+else. It is therefore more correct to state that Win32 uses a
+_variant_ of COFF. The object files will not therefore produce
+correct output when fed to each other's linkers.
+
+In addition to this subtle incompatibility, Win32 also defines
+extensions to basic COFF, such as a mechanism for importing symbols
+from dynamic-link libraries at load time. NASM may eventually
+support this extension in the form of a format-specific directive.
+However, as yet, it does not. Neither the `coff' nor `win32' output
+formats have any specific directives.
+
+The Microsoft linker also has a small blind spot: it cannot
+correctly relocate a relative CALL or JMP to an absolute address.
+Hence all PC-relative CALLs or JMPs, when using the `win32' format,
+must have targets which are relative to sections, or to external
+symbols. You can't do
+	call 0x123456
+_even_ if you happen to know that there is executable code at that
+address. The linker simply won't get the reference right; so in the
+interests of not generating incorrect code, NASM will not allow this
+form of reference to be written to a Win32 object file. (Standard
+COFF, or at least the DJGPP linker, seems to be able to cope with
+this contingency. Although that may be due to the executable having
+a zero load address.)
+
+Both `coff' and `win32' default to 32-bit assembly mode.
+
+`obj': Microsoft 16-bit Object Module Format
+--------------------------------------------
+
+The `obj' format generates 16-bit Microsoft object files, suitable
+for feeding to 16-bit versions of Microsoft C, and probably
+TLINK as well (although that hasn't been tested). The Use32
+extensions are supported.
+
+`obj' defines no special segment names: you can call segments what
+you like. Unlike the other formats, too, segment names are actually
+defined as symbols, so you can write
+
+[SEGMENT CODE]
+	mov ax,CODE
+
+and get the _segment_ address of the segment, suitable for loading
+into a segment register.
+
+Segments can be declared with attributes:
+
+[SEGMENT CODE PRIVATE ALIGN=16 CLASS=CODE OVERLAY=OVL2 USE16]
+
+You can specify segments to be PRIVATE, PUBLIC, COMMON or STACK;
+their alignment may be any power of two from 1 to 256 (although only
+1, 2, 4, 16 and 256 are really supported, so anything else gets
+rounded up to the next highest one of those); their class and
+overlay names may be specified. You may also specify segments to be
+USE16 or USE32. The defaults are PUBLIC ALIGN=1, no class, no
+alignment, USE16.
+
+You can also specify that a segment is _absolute_ at a certain
+segment address:
+
+[SEGMENT SCREEN ABSOLUTE=0xB800]
+
+This is an alternative to the ALIGN keyword.
+
+The format-specific directive GROUP allows segment grouping: [GROUP
+DGROUP DATA BSS] defines the group DGROUP to contain segments DATA
+and BSS.
+
+Segments are defined as part of their group by default: if `var' is
+declared in segment `data', which is part of group `dgroup', then
+`SEG var' returns `dgroup', and `var' signifies the offset of `var'
+relative to the beginning of `dgroup'. You must use `var WRT data'
+to get the offset of `var' relative to the beginning of its
+_segment_.
+
+NASM allows a segment to be in two groups, but will generate a
+warning. References to the symbols in that segment will be resolved
+relative to the _first_ group it is defined in.
+
+The directive [UPPERCASE] causes all symbol, segment and group names
+output to the object file to be uppercased. The actual _assembly_ is
+still case sensitive.
+
+Common variables in OBJ files can be `near' or `far': currently,
+NASM has a horribly grotty way to support that, which is that if you
+specify the common variable's size as negative, it will be near, and
+otherwise it will be far. The support isn't perfect: if you declare
+a far common variable both in a NASM assembly module and in a C
+program, you may well find the linker reports "mismatch in
+array-size" or some such. The reason for this is that far common
+variables are defined by means of _two_ size constants, which are
+multiplied to give the real size. Apparently the Microsoft linker
+(at least) likes both constants, not merely their product, to match
+up. This may be fixed in a future release.
+
+If the module you're writing is intended to contain the program
+entry point, you can declare this by defining the special label
+`..start' at the start point, either as a label or by EQU (although
+of course the normal caveats about EQU dependency still apply).
+
+`obj' has an unusual handling of assembly modes: instead of having a
+global default for the whole file, there is a separate default for
+each segment. Thus, each [SEGMENT] directive carries an implicit
+[BITS] directive with it, which switches to 16-bit or 32-bit mode
+depending on whether the segment is a Use16 or Use32 segment. If you
+want to place 32-bit code in a Use16 segment, you can use an
+explicit [BITS 32] override, but if you switch temporarily away from
+that segment, you will have to repeat the override after coming back
+to it.
+
+`as86': Linux as86 (bin86-0.3)
+------------------------------
+
+This output format replicates the format used to pass data between
+the Linux x86 assembler and linker, as86 and ld86. Its default file
+name, yet again, is `filename.o'. Its default segment-size attribute
+is 16 bits.
+
+`rdf': Relocatable Dynamic Object File Format
+---------------------------------------------
+
+RDOFF was designed initially to test the object-file production
+interface to NASM. It soon became apparent that it could be enhanced
+for use in serious applications due to its simplicity; code to load
+and execute an RDOFF object module is very simple. It also contains
+enhancements to allow it to be linked with a dynamic link library at
+either run- or load- time, depending on how complex you wish to make
+your loader.
+
+The `rdoff' directory in the NASM distribution archive contains
+source for an RDF linker and loader to run under Linux.
+
+`rdf' has a default segment-size attribute of 32 bits.
+
+Debugging format: `dbg'
+-----------------------
+
+This output format is not built into NASM by default: it's for
+debugging purposes. It produces a debug dump of everything that the
+NASM assembly module feeds to the output driver, for the benefit of
+people trying to write their own output drivers.
+
+Bugs
+====
+
+Apart from the missing features (correct OBJ COMMON support, ELF
+alignment, ELF PIC support, etc.), there are no _known_ bugs.
+However, any you find, with patches if possible, should be sent to
+<jules@dcs.warwick.ac.uk> or <anakin@pobox.com>, and we'll try to
+fix them.
+
+Beware of Pentium-specific instructions: Intel have provided a macro
+file for MASM, to implement the eight or nine new Pentium opcodes as
+MASM macros. NASM does not generate the same code for the CMPXCHG8B
+instruction as these macros do: this is due to a bug in the _macro_,
+not in NASM. The macro works by generating an SIDT instruction (if I
+remember rightly), which has almost exactly the right form, then
+using ORG to back up a bit and do a DB over the top of one of the
+opcode bytes. The trouble is that Intel overlooked (or were unable
+to allow for) the possibility that the SIDT instruction may contain
+an 0x66 or 0x67 operand or address size prefix. If this happens, the
+ORG will back up by the wrong amount, and the macro will generate
+incorrect code. NASM gets it right. This, also, is not a bug in
+NASM, so please don't report it as one. (Also please note that the
+ORG directive in NASM doesn't work this way, and so you can't do
+equivalent tricks with it...)
+
+That's All Folks!
+=================
+
+Enjoy using NASM! Please feel free to send me comments, or
+constructive criticism, or bug fixes, or requests, or general chat.
+
+Contributions are also welcome: if anyone knows anything about any
+other object file formats I should support, please feel free to send
+me documentation and some short example files (in my experience,
+documentation is useless without at _least_ one example), or even to
+write me an output module. OS/2 object files, in particular, spring
+to mind. I don't have OS/2, though.
+
+Please keep flames to a minimum: I have had some very angry e-mails
+in the past, condemning me for writing a useless assembler, that
+output in no useful format (at the time, that was true), generated
+incorrect code (several typos in the instruction table, since fixed)
+and took up too much memory and disk space (the price you pay for
+total portability, it seems). All these were criticisms I was happy
+to hear, but I didn't appreciate the flames that went with them.
+NASM _is_ still a prototype, and you use it at your own risk. I
+_think_ it works, and if it doesn't then I want to know about it,
+but I don't guarantee anything. So don't flame me, please. Blame,
+but don't flame.
+
+- Simon Tatham <anakin@pobox.com>, 21-Nov-96

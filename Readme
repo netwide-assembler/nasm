@@ -1,0 +1,54 @@
+This is a distribution of NASM, the Netwide Assembler. NASM is a
+prototype general-purpose x86 assembler. It will currently output
+flat-form binary files, a.out, COFF and ELF Unix object files,
+Microsoft 16-bit DOS and Win32 object files, the as86 object format,
+and a home-grown format called RDF.
+
+Also included is NDISASM, a prototype x86 binary-file disassembler
+which uses the same instruction table as NASM.
+
+To install NASM, you will need GCC. Type `make', and then when it
+has finished copy the file `nasm' (and maybe `ndisasm') to a
+directory on your search path (I use /usr/local/bin on my linux
+machine at home, and ~/bin on other machines where I don't have root
+access). You may also want to copy the man page `nasm.1' (and maybe
+`ndisasm.1') to somewhere sensible.
+
+If you want to build a restricted version of NASM containing only
+some of the object file formats, you can achieve this by adding
+#defines to `outform.h' (see the file itself for documentation), or
+equivalently by adding compiler command line options in the
+Makefile.
+
+There is a machine description file for the `LCC' retargetable C
+compiler, in the directory `lcc', along with instructions for its
+use. This means that NASM can now be used as the code-generator back
+end for a useful C compiler.
+
+Michael `Wuschel' Tippach has ported his DOS extender `WDOSX' to
+enable it to work with the 32-bit binary files NASM can output: the
+original extender and his port `WDOSX/N' are available from his web
+page, http://www.geocities.com/SiliconValley/Park/4493.
+
+The `misc' directory contains `nasm.sl', a NASM editing mode for the
+JED programmers' editor (see http://space.mit.edu/~davis/jed.html
+for details about JED). The comment at the start of the file gives
+instructions on how to install the mode. This directory also
+contains a file (`magic') containing lines to add to /etc/magic on
+Unix systems to allow the `file' command to recognise RDF files.
+
+The `rdoff' directory contains sources for a linker and loader for
+the RDF object file format, to run under Linux, and also
+documentation on the internal structure of RDF files.
+
+For information about how you can distribute and use NASM, see the
+file Licence. We were tempted to put NASM under the GPL, but decided
+that in many ways it was too restrictive for developers.
+
+For information about how to use NASM, see `nasm.doc'. For
+information about how to use NDISASM, see `ndisasm.doc'. For
+information about the internal structure of NASM, see
+`internals.doc'.
+
+Bug reports (and patches if you can) should be sent to
+jules@dcs.warwick.ac.uk or anakin@pobox.com.

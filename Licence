@@ -1,0 +1,75 @@
+Terms and Conditions for the use of the Netwide Assembler
+=========================================================
+
+Can I have the gist without reading the legalese?
+-------------------------------------------------
+
+Basically, NASM is free. You can't charge for it. You can copy it as
+much as you like. You can incorporate it, or bits of it, into other
+free programs if you want. (But we want to know about it if you do,
+and we want to be mentioned in the credits.) We may well allow you
+to incorporate it into commercial software too, but we'll probably
+demand some money for it, and we'll certainly demand to be given
+credit. And in extreme cases (although I can't immediately think of
+a reason we might actually want to do this) we may refuse to let you
+do it at all.
+
+NASM LICENCE AGREEMENT
+======================
+
+By "the Software" this licence refers to the complete contents of
+the NASM archive, excluding this licence document itself, and
+excluding the contents of the `test' directory. The Netwide
+Disassembler, NDISASM, is specifically included under this licence.
+
+I. The Software is freely redistributable; anyone may copy the
+Software, or parts of the Software, and give away as many copies as
+they like to anyone, as long as this licence document is kept with
+the Software. Charging a fee for the Software is prohibited,
+although a fee may be charged for the act of transferring a copy,
+and you can offer warranty protection and charge a fee for that.
+
+II. The Software, or parts thereof, may be incorporated into other
+freely redistributable software (by which we mean software that may
+be obtained free of charge) without requiring permission from the
+authors, as long as due credit is given to the authors of the
+Software in the resulting work, as long as the authors are informed
+of this action, and as long as those parts of the Software that are
+used remain under this licence.
+
+III. The Software, or parts thereof, may be incorporated into other
+software which is not freely redistributable (i.e. software for
+which a fee is charged), as long as permission is granted from the
+authors of the Software. The authors reserve the right to grant this
+permission only for a fee, which may at our option take the form of
+royalty payments. The authors also reserve the right to refuse to
+grant permission if they deem it necessary.
+
+IV. You may not copy, modify or distribute the Software except under
+the terms given in this licence document. You may not sublicense the
+Software or in any way place it under any other licence than this
+one. Since you have not signed this licence, you are not of course
+required to accept it; however, no other licence applies to the
+Software, and nothing else grants you any permission to copy,
+modify, sublicense or distribute the Software in any way. These
+actions are therefore prohibited if you do not accept this licence.
+
+V. There is no warranty for the Software, to the extent permitted by
+applicable law. The authors provide the Software "as is" without
+warranty of any kind, either expressed or implied, including but not
+limited to the implied warranties of merchantability and fitness for
+a particular purpose. The entire risk as to the quality and
+performance of the Software is with you. Should the Software prove
+defective, you assume the cost of all necessary servicing, repair or
+correction.
+
+VI. In no event, unless required by applicable law or agreed to in
+writing, will any of the authors be liable to you for damages,
+including any general, special, incidental or consequential damages,
+arising out of the use or the inability to use the Software,
+including but not limited to loss of data or data being rendered
+inaccurate or a failure of the Software to operate with any other
+programs, even if you have been advised of the possibility of such
+damages.
+
+END OF LICENCE AGREEMENT
