@@ -24,6 +24,7 @@ else
   real=false
 fi
 
+rm -rf nasm-release.*
 work=`pwd`/nasm-release.$$
 mkdir "$work"
 cd "$work"
@@ -41,8 +42,6 @@ fi
 if [ -n "$2" ]; then
   branchopt="-r $2"
 fi
-
-rm -rf nasm-release.*
 
 $CVS co $branchopt nasm
 version=`cat nasm/version`
