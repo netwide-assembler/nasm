@@ -1,0 +1,68 @@
+# $Id$
+#
+# List of registers and their classes; classes are defined in nasm.h
+#
+# The columns are: register name, assembler class, disassembler class, regval
+# A * means the line should be repeated for each value from 0 to 7
+#
+
+# General-purpose registers
+al	REG_AL		reg8	0
+ah	REG8		reg8	4
+ax	REG_AX		reg16	0
+eax	REG_EAX		reg32	0
+bl	REG8		reg8	3
+bh	REG8		reg8	7
+bx	REG16		reg16	3
+ebx	REG32		reg32	3
+cl	REG_CL		reg8	1
+ch	REG8		reg8	5
+cx	REG_CX		reg16	1
+ecx	REG_ECX		reg32	1
+dl	REG8		reg8	2
+dh	REG8		reg8	6
+dx	REG_DX		reg16	2
+edx	REG32		reg32	2
+sp	REG16		reg16	4
+esp	REG32		reg32	4
+bp	REG16		reg16	5
+ebp	REG32		reg32	5
+si	REG16		reg16	6
+esi	REG32		reg32	6
+di	REG16		reg16	7
+edi	REG32		reg32	7
+
+# Segment registers
+cs	REG_CS		sreg	1
+ds	REG_DESS	sreg	3
+es	REG_DESS	sreg	0
+ss	REG_DESS	sreg	2
+fs	REG_FSGS	sreg	4
+gs	REG_FSGS	sreg	5
+segr6	REG_SEG67	sreg	6
+segr7	REG_SEG67	sreg	7
+
+# Control registers
+cr*	REG_CREG	creg	*
+
+# Debug registers
+dr*	REG_DREG	dreg	*
+
+# Test registers
+tr*	REG_TREG	treg	*
+
+# Floating-point registers
+st0	FPU0		fpureg	0
+st1	FPUREG		fpureg	1
+st2	FPUREG		fpureg	2
+st3	FPUREG		fpureg	3
+st4	FPUREG		fpureg	4
+st5	FPUREG		fpureg	5
+st6	FPUREG		fpureg	6
+st7	FPUREG		fpureg	7
+
+# MMX registers
+mm*	MMXREG		mmxreg	*
+
+# SSE registers
+xmm*	XMMREG		xmmreg	*

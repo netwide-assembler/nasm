@@ -28,16 +28,10 @@ LIBS       = c2 + os2
 #
 # --------------------------------------------------------------------------
 
-CCFLAGS = /c /v /b
+CCFLAGS = /d /c /O /v /b
 
 CC = bcc                #compiler
 LINK = tlink            #linker
-
-DCCFLAGS = /d /c /O /A  #compiler flags for NDISASM
-  #/d=merge dupicate strings
-  #/c=compile only
-  #/O=Optimise jumps
-  #/A=ANSI standard C
 
 LINKFLAGS = /c /x       #linker flags
   #/c=case sIgnificance on symbols
@@ -47,35 +41,32 @@ LIBRARIES =             #any libaries to add, out side of the standard libary
 EXE = .exe              #executable file extention (keep the . as the start)
 OBJ = obj               #OBJ file extention
 
-NASM_ASM=$(CC) $(CCFLAGS) $&.c         #Command line for NASM
-DASM_ASM=$(CC) $(DCCFLAGS) $&.c        #command line for NDISASM
+# How to build an object file from a C file
+.c.$(OBJ):
+	$(CC) $(CCFLAGS) /o$*.$(OBJ) $*.c
 
-# NOTE: $& is used to create the file name, as it only gives the name it's
-# self, where as using $* would have give the full path of the file it
-# want's done. This becomes a problem if the OBJ files are in a seperate
-# directory, becuse it will then try to find the source file in the OBJ
-# dir.
 
 ################################################################
 #The OBJ files that NASM is dependent on
 
-NASMOBJS = $(OBJD)nasm.$(OBJ)   $(OBJD)nasmlib.$(OBJ)  $(OBJD)float.$(OBJ)  \
-           $(OBJD)insnsa.$(OBJ) $(OBJD)assemble.$(OBJ) $(OBJD)labels.$(OBJ) \
-           $(OBJD)parser.$(OBJ) $(OBJD)outform.$(OBJ)  $(OBJD)preproc.$(OBJ) \
-	   $(OBJD)listing.$(OBJ) $(OBJD)eval.$(OBJ) $(OBJD)outrdf2.$(OBJ) $(OBJD)zoutieee.$(OBJ) 
+NASMOBJS = nasm.$(OBJ)   nasmlib.$(OBJ)  float.$(OBJ)  \
+           insnsa.$(OBJ) assemble.$(OBJ) labels.$(OBJ) \
+           parser.$(OBJ) outform.$(OBJ)  preproc.$(OBJ) \
+	   listing.$(OBJ) eval.$(OBJ)
 
 ################################################################
 #The OBJ files that NDISASM is dependent on
 
-NDISASMOBJS = $(OBJD)ndisasm.$(OBJ)  $(OBJD)disasm.$(OBJ) $(OBJD)sync.$(OBJ) \
-              $(OBJD)nasmlibd.$(OBJ) $(OBJD)insnsd.$(OBJ)
+NDISASMOBJS = ndisasm.$(OBJ)  disasm.$(OBJ) sync.$(OBJ) \
+              nasmlib.$(OBJ) insnsd.$(OBJ)
 
 ################################################################
 #The OBJ file for the output formats.
 
-OUTOBJ= $(OBJD)outbin.$(OBJ) $(OBJD)outaout.$(OBJ) $(OBJD)outcoff.$(OBJ) \
-        $(OBJD)outelf.$(OBJ) $(OBJD)outobj.$(OBJ)  $(OBJD)outas86.$(OBJ) \
-        $(OBJD)outrdf.$(OBJ) $(OBJD)outdbg.$(OBJ)
+OUTOBJ= output\\outbin.$(OBJ) output\\outaout.$(OBJ) output\\outcoff.$(OBJ) \
+        output\\outelf.$(OBJ) output\\outobj.$(OBJ)  output\\outas86.$(OBJ) \
+        output\\outrdf.$(OBJ) output\\outdbg.$(OBJ) output\\outrdf2.$(OBJ) \
+	output\\outieee.$(OBJ) 
 
 
 ################################################################
@@ -103,102 +94,66 @@ ndisasm2$(EXE): $(NDISASMOBJS)
         $(LIBS) $(LIBRARIES)              #Libaries needed
 !
 
-################################################################
-# Dependencies for all of NASM's obj files
-
-$(OBJD)assemble.$(OBJ): assemble.c nasm.h version.h assemble.h insns.h
-        $(NASM_ASM)
-
-$(OBJD)float.$(OBJ): float.c nasm.h version.h
-        $(NASM_ASM)
-
-$(OBJD)labels.$(OBJ): labels.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)listing.$(OBJ): listing.c nasm.h version.h nasmlib.h listing.h
-        $(NASM_ASM)
-
-$(OBJD)eval.$(OBJ): eval.c nasm.h version.h nasmlib.h eval.h
-        $(NASM_ASM)
-
-$(OBJD)nasm.$(OBJ): nasm.c nasm.h version.h nasmlib.h parser.h assemble.h labels.h \
-		listing.h outform.h
-        $(NASM_ASM)
-
-$(OBJD)nasmlib.$(OBJ): nasmlib.c nasm.h version.h nasmlib.h names.c insnsn.c
-        $(NASM_ASM)
-
-$(OBJD)parser.$(OBJ): parser.c nasm.h version.h nasmlib.h parser.h float.h names.c
-        $(NASM_ASM)
-
-$(OBJD)preproc.$(OBJ): preproc.c macros.c preproc.h nasm.h version.h nasmlib.h
-	$(NASM_ASM)
-
-$(OBJD)insnsa.$(OBJ): insnsa.c nasm.h version.h insns.h
-        $(NASM_ASM)
-
-################################################################
-# Dependencies for all of NDISASM's obj files
-
-$(OBJD)disasm.$(OBJ): disasm.c nasm.h version.h disasm.h sync.h insns.h names.c
-        $(DASM_ASM)
-
-$(OBJD)ndisasm.$(OBJ): ndisasm.c nasm.h version.h sync.h disasm.h
-        $(DASM_ASM)
-
-$(OBJD)sync.$(OBJ): sync.c sync.h
-        $(DASM_ASM)
-
-$(OBJD)insnsd.$(OBJ): insnsd.c nasm.h version.h insns.h
-        $(DASM_ASM)
-
-# This is a kludge from the word go, as we can't use the nasmlib.obj compiled
-# for NASM, as it's could be the wrong model size, so we have to compile it
-# again as huge to make sure.
-#
-# So as not to overwrite the nasmlib.obj for NASM (if it did, that
-# could cause all kinds of problems) it compiles it into nasmlibd.obj.
-#
-# the -o... switch tells it the name to compile the obj file to, right here
-# $(OBJD)nasmlibd.obj
-
-$(OBJD)nasmlibd.$(OBJ): nasmlib.c nasm.h version.h nasmlib.h
-        $(CC) $(DCCFLAGS) -o$(OBJD)nasmlibd.obj nasmlib.c
-
-################################################################
-# Dependencies for all of the output format's OBJ files
-
-$(OBJD)outas86.$(OBJ): output/outas86.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outaout.$(OBJ): output/outaout.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outbin.$(OBJ): output/outbin.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outcoff.$(OBJ): output/outcoff.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outdbg.$(OBJ): output/outdbg.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outelf.$(OBJ): output/outelf.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outobj.$(OBJ): output/outobj.c nasm.h version.h nasmlib.h
-        $(NASM_ASM)
-
-$(OBJD)outform.$(OBJ): outform.c outform.h nasm.h version.h
-        $(NASM_ASM)
-
-################################################################
-# A quick way to delete the OBJ files as well as the binaries.
-
 clean :
-        del $(OBJD)*.obj
+        del *.obj
 	del nasmos2$(EXE)
 	del ndisasm2$(EXE)
 
 # Makefile created by Chuck Crayne <ccrayne@pacific.net> --05/4/99
 # Based on Makefile.bc2 by Fox Cutter <lmb@comtch.iea.com> --01/27/97
+
+#-- Magic hints to mkdep.pl --#
+# @object-ending: ".$(OBJ)"
+# @path-separator: "\\"
+#-- Everything below is generated by mkdep.pl - do not edit --#
+assemble.$(OBJ): assemble.c insns.h assemble.h regvals.c nasm.h regs.h \
+ insnsi.h nasmlib.h version.h
+disasm.$(OBJ): disasm.c insns.h regs.c sync.h names.c nasm.h disasm.h regs.h \
+ insnsn.c insnsi.h version.h regdis.c
+eval.$(OBJ): eval.c nasm.h regs.h labels.h insnsi.h nasmlib.h version.h \
+ eval.h
+float.$(OBJ): float.c nasm.h regs.h insnsi.h version.h
+insnsa.$(OBJ): insnsa.c insns.h nasm.h regs.h insnsi.h version.h
+insnsd.$(OBJ): insnsd.c insns.h nasm.h regs.h insnsi.h version.h
+insnsn.$(OBJ): insnsn.c
+labels.$(OBJ): labels.c nasm.h regs.h insnsi.h nasmlib.h version.h
+listing.$(OBJ): listing.c listing.h nasm.h regs.h insnsi.h nasmlib.h \
+ version.h
+macros.$(OBJ): macros.c
+names.$(OBJ): names.c regs.c insnsn.c
+nasm.$(OBJ): nasm.c listing.h preproc.h insns.h outform.h assemble.h \
+ parser.h nasm.h regs.h labels.h insnsi.h nasmlib.h version.h eval.h
+nasmlib.$(OBJ): nasmlib.c regs.c names.c nasm.h regs.h insnsn.c insnsi.h \
+ nasmlib.h version.h
+ndisasm.$(OBJ): ndisasm.c insns.h sync.h nasm.h disasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+outform.$(OBJ): outform.c outform.h nasm.h regs.h insnsi.h version.h
+output\\outaout.$(OBJ): output\\outaout.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outas86.$(OBJ): output\\outas86.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outbin.$(OBJ): output\\outbin.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outcoff.$(OBJ): output\\outcoff.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outdbg.$(OBJ): output\\outdbg.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outelf.$(OBJ): output\\outelf.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outieee.$(OBJ): output\\outieee.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outobj.$(OBJ): output\\outobj.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outrdf.$(OBJ): output\\outrdf.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+output\\outrdf2.$(OBJ): output\\outrdf2.c outform.h nasm.h regs.h insnsi.h \
+ nasmlib.h version.h
+parser.$(OBJ): parser.c parser.h nasm.h regs.h insnsi.h regflags.c float.h \
+ nasmlib.h version.h
+preproc.$(OBJ): preproc.c nasm.h macros.c regs.h insnsi.h nasmlib.h \
+ version.h
+regdis.$(OBJ): regdis.c
+regflags.$(OBJ): regflags.c
+regs.$(OBJ): regs.c
+regvals.$(OBJ): regvals.c
+sync.$(OBJ): sync.c sync.h

@@ -414,9 +414,9 @@ enum {
 #define REG_CS    0x01081002L	       /* CS */
 #define REG_DESS  0x02081002L	       /* DS, ES, SS (non-CS 86 registers) */
 #define REG_FSGS  0x04081002L	       /* FS, GS (386 extended registers) */
+#define REG_SEG67 0x08081002L          /* Non-implemented segment registers */
 #define REG_CDT   0x00101004L	       /* CRn, DRn and TRn */
 #define REG_CREG  0x08101004L	       /* CRn */
-#define REG_CR4   0x08101404L	       /* CR4 (Pentium only) */
 #define REG_DREG  0x10101004L	       /* DRn */
 #define REG_TREG  0x20101004L	       /* TRn */
 
@@ -429,21 +429,8 @@ enum {
 #define BYTENESS  0x40000000L          /* so SBYTE == IMMEDIATE | BYTENESS */
 #define SBYTE 	  0x40002000L	       /* for op r16/32,immediate instrs. */
 		
-/*
- * Next, the codes returned from the parser, for registers and
- * instructions.
- */
-
-enum {				       /* register names */
-    R_AH = EXPR_REG_START, R_AL, R_AX, R_BH, R_BL, R_BP, R_BX, R_CH,
-    R_CL, R_CR0, R_CR2, R_CR3, R_CR4, R_CS, R_CX, R_DH, R_DI, R_DL,
-    R_DR0, R_DR1, R_DR2, R_DR3, R_DR6, R_DR7, R_DS, R_DX, R_EAX,
-    R_EBP, R_EBX, R_ECX, R_EDI, R_EDX, R_ES, R_ESI, R_ESP, R_FS,
-    R_GS, R_MM0, R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7,
-    R_SI, R_SP, R_SS, R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5,
-    R_ST6, R_ST7, R_TR3, R_TR4, R_TR5, R_TR6, R_TR7,
-    R_XMM0, R_XMM1, R_XMM2, R_XMM3, R_XMM4, R_XMM5, R_XMM6, R_XMM7, REG_ENUM_LIMIT
-};
+/* Register names automatically generated from regs.dat */
+#include "regs.h"
 
 /* Instruction names automatically generated from insns.dat */
 #include "insnsi.h"

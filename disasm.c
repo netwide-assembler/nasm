@@ -35,26 +35,7 @@ extern struct itemplate **itable[];
 
 static int whichreg(long regflags, int regval) 
 {
-    static int reg32[] = {
-	R_EAX, R_ECX, R_EDX, R_EBX, R_ESP, R_EBP, R_ESI, R_EDI };
-    static int reg16[] = {
-	R_AX, R_CX, R_DX, R_BX, R_SP, R_BP, R_SI, R_DI };
-    static int reg8[] = {
-	R_AL, R_CL, R_DL, R_BL, R_AH, R_CH, R_DH, R_BH };
-    static int sreg[] = {
-	R_ES, R_CS, R_SS, R_DS, R_FS, R_GS, 0, 0 };
-    static int creg[] = {
-	R_CR0, 0, R_CR2, R_CR3, R_CR4, 0, 0, 0 };
-    static int dreg[] = {
-	R_DR0, R_DR1, R_DR2, R_DR3, 0, 0, R_DR6, R_DR7 };
-    static int treg[] = {
-	0, 0, 0, R_TR3, R_TR4, R_TR5, R_TR6, R_TR7 };
-    static int fpureg[] = {
-	R_ST0, R_ST1, R_ST2, R_ST3, R_ST4, R_ST5, R_ST6, R_ST7 };
-    static int mmxreg[] = {
-	R_MM0, R_MM1, R_MM2, R_MM3, R_MM4, R_MM5, R_MM6, R_MM7 };
-    static int xmmreg[] = {
-	R_XMM0, R_XMM1, R_XMM2, R_XMM3, R_XMM4, R_XMM5, R_XMM6, R_XMM7 };
+#include "regdis.c"
 
     if (!(REG_AL & ~regflags))
 	return R_AL;
@@ -70,16 +51,21 @@ static int whichreg(long regflags, int regval)
 	return R_CX;
     if (!(REG_ECX & ~regflags))
 	return R_ECX;
-    if (!(REG_CR4 & ~regflags))
-	return R_CR4;
     if (!(FPU0 & ~regflags))
 	return R_ST0;
     if (!(REG_CS & ~regflags))
-	return R_CS;
+        return (regval == 1) ? R_CS : 0;
     if (!(REG_DESS & ~regflags))
 	return (regval == 0 || regval == 2 || regval == 3 ? sreg[regval] : 0);
     if (!(REG_FSGS & ~regflags))
 	return (regval == 4 || regval == 5 ? sreg[regval] : 0);
+    if (!(REG_SEG67 & ~regflags))
+	return (regval == 6 || regval == 7 ? sreg[regval] : 0);
+
+    /* All the entries below look up regval in an 8-entry array */
+    if (regval < 0 || regval > 7)
+	return 0;
+
     if (!((REGMEM|BITS8) & ~regflags))
 	return reg8[regval];
     if (!((REGMEM|BITS16) & ~regflags))
@@ -100,6 +86,7 @@ static int whichreg(long regflags, int regval)
 	return mmxreg[regval];
     if (!(XMMREG & ~regflags))
 	return xmmreg[regval];
+
     return 0;
 }
 

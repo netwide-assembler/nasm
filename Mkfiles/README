@@ -15,15 +15,15 @@ The Makefiles are:
 
   Filename      Target		Compiler	Notes
   ---------------------------------------------------------------------------
-  Makefile.b32	Win32		Borland C++
-  Makefile.bc3	16-bit DOS	Borland C++	OK as of NASM 0.98.31
-  Makefile.bor	16-bit DOS	Turbo C		probably obsolete
-  Makefile.dj	32-bit DOS	DJGPP		OK as of NASM 0.98.31
-  Makefile.djo	32-bit DOS	DJGPP		"Opus Make" version
-  Makefile.dl	32-bit DOS	cc386		cc386 by David Lindauer
-  Makefile.dos	16-bit DOS	MSC 5		probably obsolete
+  Makefile.b32	Win32	    	Borland C++
+  Makefile.bc3	16-bit DOS  	Borland C++	OK as of NASM 0.98.34
+  Makefile.bor	16-bit DOS  	Turbo C		(**)
+  Makefile.dj	32-bit DOS  	DJGPP		OK as of NASM 0.98.31
+  Makefile.djo	32-bit DOS  	DJGPP		"Opus Make" version(**)
+  Makefile.dl	32-bit DOS  	cc386		cc386 by David Lindauer
+  Makefile.dos	16-bit DOS	MSC 5		(**)
   Makefile.ms7	16-bit DOS	MSC 7		OK as of NASM 0.98.31
-  Makefile.os2	OS/2 Warp	Borland C++
+  Makefile.os2	OS/2 Warp	Borland C++	(**)
   Makefile.sc	32-bit DOS	Symantec C++ 7
   Makefile.scw	Win32		Symantec C++ 7
   Makefile.unx	Unix		Any(*)		use only if "configure" fails
@@ -35,4 +35,6 @@ The Makefiles are:
       C89/ISO C90 compliant and that uses the standard Unix compiler
       arguments, such as -c and -O.  Pre-ANSI compilers, such as the
       "cc" distributed with SunOS 4.x, will not work.
+
+(**) = Probably obsolete, needs updating.
 

@@ -372,6 +372,10 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 		      case R_FS: c = 0x64; break;
 		      case R_GS: c = 0x65; break;
 		      case R_SS: c = 0x36; break;
+		      case R_SEGR6:
+		      case R_SEGR7:
+			error (ERR_NONFATAL, "segr6 and segr7 cannot be used as prefixes");
+			break;
 		      case P_A16:
 			if (bits != 16)
 			    c = 0x67;
@@ -1103,37 +1107,14 @@ static void gencode (long segment, long offset, int bits,
 	}
 }
 
+#include "regvals.c"
+
 static int regval (operand *o) 
 {
-    switch (o->basereg) {
-      case R_EAX: case R_AX: case R_AL: case R_ES: case R_CR0: case R_DR0:
-      case R_ST0: case R_MM0: case R_XMM0:
-	return 0;
-      case R_ECX: case R_CX: case R_CL: case R_CS: case R_DR1: case R_ST1:
-      case R_MM1: case R_XMM1:
-	return 1;
-      case R_EDX: case R_DX: case R_DL: case R_SS: case R_CR2: case R_DR2:
-      case R_ST2: case R_MM2:  case R_XMM2:
-	return 2;
-      case R_EBX: case R_BX: case R_BL: case R_DS: case R_CR3: case R_DR3:
-      case R_TR3: case R_ST3: case R_MM3:  case R_XMM3:
-	return 3;
-      case R_ESP: case R_SP: case R_AH: case R_FS: case R_CR4: case R_TR4:
-      case R_ST4: case R_MM4:  case R_XMM4:
-	return 4;
-      case R_EBP: case R_BP: case R_CH: case R_GS: case R_TR5: case R_ST5:
-      case R_MM5:  case R_XMM5:
-	return 5;
-      case R_ESI: case R_SI: case R_DH: case R_DR6: case R_TR6: case R_ST6:
-      case R_MM6:  case R_XMM6:
-	return 6;
-      case R_EDI: case R_DI: case R_BH: case R_DR7: case R_TR7: case R_ST7:
-      case R_MM7:  case R_XMM7:
-	return 7;
-      default:			       /* panic */
-        errfunc (ERR_PANIC, "invalid register operand given to regval()");
-	return 0;
+    if ( o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT ) {
+	errfunc (ERR_PANIC, "invalid operand passed to regval()");
     }
+    return regvals[o->basereg];
 }
 
 static int matches (struct itemplate *itemp, insn *instruction) 

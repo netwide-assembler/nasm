@@ -23,18 +23,7 @@ extern int  in_abs_seg;		/* ABSOLUTE segment flag */
 extern long abs_seg;		/* ABSOLUTE segment */
 extern long abs_offset;		/* ABSOLUTE segment offset */
 
-static long reg_flags[] = {	       /* sizes and special flags */
-    0, REG8, REG_AL, REG_AX, REG8, REG8, REG16, REG16, REG8, REG_CL,
-    REG_CREG, REG_CREG, REG_CREG, REG_CR4, REG_CS, REG_CX, REG8,
-    REG16, REG8, REG_DREG, REG_DREG, REG_DREG, REG_DREG, REG_DREG,
-    REG_DREG, REG_DESS, REG_DX, REG_EAX, REG32, REG32, REG_ECX,
-    REG32, REG32, REG_DESS, REG32, REG32, REG_FSGS, REG_FSGS,
-    MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG, MMXREG,
-    REG16, REG16, REG_DESS, FPU0, FPUREG, FPUREG, FPUREG, FPUREG,
-    FPUREG, FPUREG, FPUREG, REG_TREG, REG_TREG, REG_TREG, REG_TREG,
-    REG_TREG,
-    XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG, XMMREG
-};
+#include "regflags.c"		/* List of register flags */
 
 enum {				       /* special tokens */
     S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD,
