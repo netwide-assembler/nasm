@@ -1,3 +1,7 @@
+0.98.39
+-------
+* "make spotless" no longer deletes config.h.in.
+
 0.98.38
 -------
 * Add Makefile for 16-bit DOS binaries under OpenWatcom, and modify
