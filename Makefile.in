@@ -173,7 +173,7 @@ tar: dist
 
 spec: nasm.spec
 
-nasm.spec: nasm.spec.in version
+nasm.spec: nasm.spec.in version version.pl
 	sed -e s/@@VERSION@@/`cat $(srcdir)/version`/g \
 	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl id < $(srcdir)/version`/g \
 	    < nasm.spec.in > nasm.spec
