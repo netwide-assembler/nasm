@@ -561,7 +561,7 @@ to search for the file \c{foobar.i}...)
 
 If you want to define a \e{standard} \i{include search path},
 similar to \c{/usr/include} on Unix systems, you should place one or
-more \c{-i} directives in the \c{NASMOPT} environment variable (see
+more \c{-i} directives in the \c{NASMENV} environment variable (see
 \k{nasmenv}).
 
 For Makefile compatibility with many C compilers, this option can also
@@ -762,13 +762,13 @@ and the date on which it was compiled.
 You will need the version number if you report a bug.
 
 
-\S{nasmenv} The \c{NASMOPT} \i{Environment} Variable
+\S{nasmenv} The \c{NASMENV} \i{Environment} Variable
 
-If you define an environment variable called \c{NASMOPT}, the program
+If you define an environment variable called \c{NASMENV}, the program
 will interpret it as a list of extra command-line options, which are
 processed before the real command line. You can use this to define
 standard search directories for include files, by putting \c{-i}
-options in the \c{NASMOPT} variable.
+options in the \c{NASMENV} variable.
 
 The value of the variable is split up at white space, so that the
 value \c{-s -ic:\\nasmlib} will be treated as two separate options.
@@ -780,7 +780,7 @@ nonsensical words \c{-dNAME="my} and \c{name"}.
 To get round this, NASM provides a feature whereby, if you begin the
 \c{NASM} environment variable with some character that isn't a minus
 sign, then NASM will treat this character as the \i{separator
-character} for options. So setting the \c{NASMOPT} variable to the
+character} for options. So setting the \c{NASMENV} variable to the
 value \c{!-s!-ic:\\nasmlib} is equivalent to setting it to \c{-s
 -ic:\\nasmlib}, but \c{!-dNAME="my name"} will work.
 
@@ -5658,7 +5658,7 @@ it.
 
 \b Which version of NASM you're using, and exactly how you invoked
 it. Give us the precise command line, and the contents of the
-\c{NASMOPT} environment variable if any.
+\c{NASMENV} environment variable if any.
 
 \b Which versions of any supplementary programs you're using, and
 how you invoked them. If the problem only becomes visible at link
