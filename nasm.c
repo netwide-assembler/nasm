@@ -51,7 +51,7 @@ static struct ofmt *ofmt = NULL;
 static FILE *error_file;	       /* Where to write error messages */
 
 static FILE *ofile = NULL;
-int optimizing = 0;		/* number of optimization passes to take */
+int optimizing = -1;		/* number of optimization passes to take */
 static int sb, cmd_sb = 16;		       /* by default */
 static unsigned long cmd_cpu = IF_PLEVEL;	/* highest level by default */
 static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
@@ -386,11 +386,14 @@ static int process_arg (char *p, char *q)
 		else
 		    ofmt->current_dfmt = ofmt->debug_formats[0];
 	    } else if (p[1]=='O') {		    /* Optimization level */
+		int opt;
 	        if (!isdigit(*param)) report_error(ERR_FATAL,
 	             "command line optimization level must be 0..3 or <nn>");
-	    	optimizing = atoi(param);
-	    	if (optimizing <= 0) optimizing = 0;
-	    	else if (optimizing <= 3) optimizing *= 5;  /* 5 passes for each level */
+	    	opt = atoi(param);
+	    	if (opt<=0) optimizing = -1;		/* 0.98 behaviour */
+	    	else if (opt==1) optimizing = 0;	/* Two passes, 0.98.09 behavior */
+	    	else if (opt<=3) optimizing = opt*5;	/* Multiple passes */
+	    	else optimizing = opt;			/* Multiple passes */
 	    } else if (p[1]=='P' || p[1]=='p') {    /* pre-include */
 		pp_pre_include (param);
 	    } else if (p[1]=='D' || p[1]=='d') {    /* pre-define */
@@ -754,8 +757,8 @@ static void assemble_file (char *fname)
       report_error(ERR_FATAL, "command line: "
                     "32-bit segment size requires a higher cpu");
 
-   pass_max = optimizing + 2;    /* passes 1, optimizing, then 2 */
-   pass0 = !optimizing;		/* start at 1 if not optimizing */
+   pass_max = (optimizing>0 ? optimizing : 0) + 2;    /* passes 1, optimizing, then 2 */
+   pass0 = !(optimizing>0);		/* start at 1 if not optimizing */
    for (pass = 1; pass <= pass_max  &&  pass0 <= 2; pass++) {
       int pass1, pass2;
       ldfunc def_label;
@@ -1027,11 +1030,11 @@ static void assemble_file (char *fname)
                            report_error, evaluate,
                            def_label);
 
-               if (!optimizing && pass == 2) {
+               if (!(optimizing>0) && pass == 2) {
                   if (forwref != NULL && globallineno == forwref->lineno) {
                      output_ins.forw_ref = TRUE;
                      do {
-                        output_ins.oprs[forwref->operand].opflags|= OPFLAG_FORWARD;
+                        output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
                         forwref = saa_rstruct (forwrefs);
                      } while (forwref != NULL && forwref->lineno == globallineno);
                   } else
@@ -1039,7 +1042,7 @@ static void assemble_file (char *fname)
                }
 
 
-               if (!optimizing && output_ins.forw_ref)
+               if (!(optimizing>0) && output_ins.forw_ref)
                {
                   if (pass == 1) {
                         for(i = 0; i < output_ins.operands; i++)
@@ -1251,13 +1254,13 @@ static void assemble_file (char *fname)
       if (pass>1 && !global_offset_changed) {
    	 pass0++;
    	 if (pass0==2) pass = pass_max - 1;
-      }	else if (!optimizing) pass0++;
+      }	else if (!(optimizing>0)) pass0++;
 
    } /* for (pass=1; pass<=2; pass++) */
 
    nasmlist.cleanup();
 #if 1
-   if (optimizing && using_debug_info)	/*  -On and -g switches */
+   if (optimizing>0 && using_debug_info)	/*  -On and -g switches */
       fprintf(error_file,
                 "info:: assembly required 1+%d+1 passes\n", pass_cnt-2);
 #endif
@@ -1511,6 +1514,8 @@ static unsigned long get_cpu (char *value)
     	!nasm_stricmp(value, "p2")    ) 	return IF_P6;
     if (!nasm_stricmp(value, "p3")    ||
     	!nasm_stricmp(value, "katmai") ) 	return IF_KATMAI;
+    if (!nasm_stricmp(value, "p4")    ||	/* is this right? -- jrc */
+    	!nasm_stricmp(value, "willamette") ) 	return IF_WILLAMETTE;
 
     report_error (pass0<2 ? ERR_NONFATAL : ERR_FATAL, "unknown 'cpu' type");
 

@@ -7,7 +7,7 @@
 # redistributable under the licence given in the file "Licence"
 # distributed in the NASM archive.
 
-# use strict; # if your PERL's got it
+# use strict;
 
 my $fname;
 my $line = 0;

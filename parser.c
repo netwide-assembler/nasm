@@ -686,7 +686,7 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		if (is_simple(value)) {
 		    if (reloc_value(value)==1)
 			result->oprs[operand].type |= UNITY;
-		    if (optimizing) {
+		    if (optimizing>0) {
   		        if (reloc_value(value) >= -128 &&
 		                 reloc_value(value) <= 127)
 		            result->oprs[operand].type |= SBYTE;

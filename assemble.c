@@ -59,7 +59,8 @@
  *		   as a literal byte in order to aid the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialised storage.
  *                 Operand 0 had better be a segmentless constant.
- * \370,\371,\372 - match only if operand 0, 1, 2 meets byte jump criteria.
+ * \370,\371,\372 - match only if operand 0 meets byte jump criteria.
+ *		   370 is used for Jcc, 371 is used for JMP.
  * \373		 - assemble 0x03 if bits==16, 0x05 if bits==32;
  *		   used for conditional jump over longer jump
  */
@@ -151,9 +152,11 @@ static int jmp_match (long segment, long offset, int bits,
     unsigned char c = code[0];
 
 
-    if (c != 0370) return 0;
-    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return (!pass0);	/* match a forward reference */
-    
+    if (c != 0370 && c != 0371) return 0;
+    if (ins->oprs[0].opflags & OPFLAG_FORWARD) {
+	if (optimizing<0 && c==0370) return 1;
+	else return (pass0==0);	/* match a forward reference */
+    }
     isize = calcsize (segment, offset, bits, ins, code);
     if (ins->oprs[0].segment != segment) return 0;
     isize = ins->oprs[0].offset - offset - isize;	/* isize is now the delta */
@@ -546,7 +549,7 @@ static int is_sbyte (insn *ins, int op, int size)
     int ret;
     
     ret = !(ins->forw_ref && ins->oprs[op].opflags ) &&	/* dead in the water on forward reference or External */
-          (optimizing || !(ins->oprs[op].type & (BITS16|BITS32))) &&
+          (optimizing>0 || !(ins->oprs[op].type & (BITS16|BITS32))) &&
           ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
 
     v = ins->oprs[op].offset;

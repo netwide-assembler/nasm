@@ -1,86 +1,84 @@
-***************
-*** 1,4 ****
-- # $Id$
-  #
-  # Auto-configuring Makefile for RDOFF object file utils; part of the
-  # Netwide Assembler
---- 1,4 ----
-+ # $Id$
-  #
-  # Auto-configuring Makefile for RDOFF object file utils; part of the
-  # Netwide Assembler
-***************
-*** 31,37 ****
-  .c.o:
-  	$(CC) -c $(CFLAGS) $<
-  
-- all: rdfdump ldrdf rdx rdflib rdf2bin rdf2com
-  
-  rdfdump: rdfdump.o
-  	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o
---- 31,37 ----
-  .c.o:
-  	$(CC) -c $(CFLAGS) $<
-  
-+ all: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
-  
-  rdfdump: rdfdump.o
-  	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o
-***************
-*** 45,51 ****
-  	$(CC) $(LDFLAGS) -o rdf2bin rdf2bin.o $(RDXLIBS) nasmlib.o
-  rdf2com:
-  	rm -f rdf2com && $(LN_S) rdf2bin rdf2com
-  
-  rdf2bin.o: rdf2bin.c
-  rdfdump.o: rdfdump.c
-  rdoff.o: rdoff.c rdoff.h
---- 45,54 ----
-  	$(CC) $(LDFLAGS) -o rdf2bin rdf2bin.o $(RDXLIBS) nasmlib.o
-  rdf2com:
-  	rm -f rdf2com && $(LN_S) rdf2bin rdf2com
-+ rdf2ihx: rdf2ihx.o $(RDXLIBS) nasmlib.o
-+ 	$(CC) $(LDFLAGS) -o rdf2ihx rdf2ihx.o $(RDXLIBS) nasmlib.o
-  
-+ rdf2ihx.o: rdf2ihx.c
-  rdf2bin.o: rdf2bin.c
-  rdfdump.o: rdfdump.c
-  rdoff.o: rdoff.c rdoff.h
-***************
-*** 62,78 ****
-  	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
-  
-  clean:
-- 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com
-  
-  spotless: clean
-  	rm -f Makefile
-  
-  distclean: spotless
-  
-- install: rdfdump ldrdf rdx rdflib rdf2bin rdf2com
-  	$(INSTALL_PROGRAM) rdfdump $(INSTALLROOT)$(bindir)/rdfdump
-  	$(INSTALL_PROGRAM) ldrdf $(INSTALLROOT)$(bindir)/ldrdf
-  	$(INSTALL_PROGRAM) rdx $(INSTALLROOT)$(bindir)/rdx
-  	$(INSTALL_PROGRAM) rdflib $(INSTALLROOT)$(bindir)/rdflib
-  	$(INSTALL_PROGRAM) rdf2bin $(INSTALLROOT)$(bindir)/rdf2bin
-  	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com && $(LN_S) rdf2bin rdf2com
---- 65,82 ----
-  	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
-  
-  clean:
-+ 	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
-  
-  spotless: clean
-  	rm -f Makefile
-  
-  distclean: spotless
-  
-+ install: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
-  	$(INSTALL_PROGRAM) rdfdump $(INSTALLROOT)$(bindir)/rdfdump
-  	$(INSTALL_PROGRAM) ldrdf $(INSTALLROOT)$(bindir)/ldrdf
-  	$(INSTALL_PROGRAM) rdx $(INSTALLROOT)$(bindir)/rdx
-  	$(INSTALL_PROGRAM) rdflib $(INSTALLROOT)$(bindir)/rdflib
-  	$(INSTALL_PROGRAM) rdf2bin $(INSTALLROOT)$(bindir)/rdf2bin
-+ 	$(INSTALL_PROGRAM) rdf2ihx $(INSTALLROOT)$(bindir)/rdf2ihx
-  	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com && $(LN_S) rdf2bin rdf2com
+# $Id$
+#
+# Auto-configuring Makefile for RDOFF object file utils; part of the
+# Netwide Assembler
+#
+# The Netwide Assembler is copyright (C) 1996 Simon Tatham and
+# Julian Hall. All rights reserved. The software is
+# redistributable under the licence given in the file "Licence"
+# distributed in the NASM archive.
+
+top_srcdir	= @top_srcdir@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I$(top_srcdir)
+LDFLAGS		= @LDFLAGS@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+LN_S 		= @LN_S@
+
+LDRDFLIBS 	= rdoff.o nasmlib.o symtab.o collectn.o rdlib.o segtab.o hash.o
+RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+all: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
+
+rdfdump: rdfdump.o
+	$(CC) $(LDFLAGS) -o rdfdump rdfdump.o
+ldrdf: ldrdf.o $(LDRDFLIBS)
+	$(CC) $(LDFLAGS) -o ldrdf ldrdf.o $(LDRDFLIBS)
+rdx: rdx.o $(RDXLIBS)
+	$(CC) $(LDFLAGS) -o rdx rdx.o $(RDXLIBS)
+rdflib: rdflib.o
+	$(CC) $(LDFLAGS) -o rdflib rdflib.o
+rdf2bin: rdf2bin.o $(RDXLIBS) nasmlib.o
+	$(CC) $(LDFLAGS) -o rdf2bin rdf2bin.o $(RDXLIBS) nasmlib.o
+rdf2com:
+	rm -f rdf2com && $(LN_S) rdf2bin rdf2com
+rdf2ihx: rdf2ihx.o $(RDXLIBS) nasmlib.o
+	$(CC) $(LDFLAGS) -o rdf2ihx rdf2ihx.o $(RDXLIBS) nasmlib.o
+
+rdf2ihx.o: rdf2ihx.c
+rdf2bin.o: rdf2bin.c
+rdfdump.o: rdfdump.c
+rdoff.o: rdoff.c rdoff.h
+ldrdf.o: ldrdf.c rdoff.h $(top_srcdir)/nasmlib.h symtab.h collectn.h rdlib.h
+symtab.o: symtab.c symtab.h
+collectn.o: collectn.c collectn.h
+rdx.o: rdx.c rdoff.h rdfload.h symtab.h
+rdfload.o: rdfload.c rdfload.h rdoff.h collectn.h symtab.h
+rdlib.o: rdlib.c rdlib.h
+rdflib.o: rdflib.c
+segtab.o: segtab.c
+
+nasmlib.o: $(top_srcdir)/nasmlib.c
+##	$(CC) -c $(CFLAGS) $(top_srcdir)/nasmlib.c
+	cd $(top_srcdir);make nasmlib.o
+	cp $(top_srcdir)/nasmlib.o $(srcdir)
+
+clean:
+	rm -f *.o rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
+
+spotless: clean
+	rm -f Makefile
+
+distclean: spotless
+
+install: rdfdump ldrdf rdx rdflib rdf2bin rdf2com rdf2ihx
+	$(INSTALL_PROGRAM) rdfdump $(INSTALLROOT)$(bindir)/rdfdump
+	$(INSTALL_PROGRAM) ldrdf $(INSTALLROOT)$(bindir)/ldrdf
+	$(INSTALL_PROGRAM) rdx $(INSTALLROOT)$(bindir)/rdx
+	$(INSTALL_PROGRAM) rdflib $(INSTALLROOT)$(bindir)/rdflib
+	$(INSTALL_PROGRAM) rdf2bin $(INSTALLROOT)$(bindir)/rdf2bin
+	$(INSTALL_PROGRAM) rdf2ihx $(INSTALLROOT)$(bindir)/rdf2ihx
+	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com && $(LN_S) rdf2bin rdf2com
