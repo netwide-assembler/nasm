@@ -13,7 +13,7 @@
 
 #define NASM_MAJOR_VER 0
 #define NASM_MINOR_VER 98
-#define NASM_VER "0.98.12"
+#define NASM_VER "0.98.14"
 
 #ifndef NULL
 #define NULL 0
@@ -312,7 +312,7 @@ typedef struct {
     /*
      * Called at the end of a pass.
      */
-    void (*cleanup) (void);
+    void (*cleanup) (int);
 } Preproc;
 
 /*

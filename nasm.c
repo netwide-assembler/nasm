@@ -111,7 +111,7 @@ static char *suppressed_what[1+ERR_WARN_MAX] = {
 
 static void no_pp_reset (char *, int, efunc, evalfunc, ListGen *);
 static char *no_pp_getline (void);
-static void no_pp_cleanup (void);
+static void no_pp_cleanup (int);
 static Preproc no_pp = {
     no_pp_reset,
     no_pp_getline,
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 	fprintf(stdout, "%s: %s", outname, inname);
 	while ( (line = preproc->getline()) )
 	  nasm_free (line);
-	preproc->cleanup();
+	preproc->cleanup(0);
 	putc('\n', stdout);
       }
     break;
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 	nasm_free (line);
       }
       nasm_free(file_name);
-      preproc->cleanup();
+      preproc->cleanup(0);
       if (ofile)
 	fclose(ofile);
       if (ofile && terminate_after_phase)
@@ -1241,7 +1241,7 @@ static void assemble_file (char *fname)
       if (pass1==2 && global_offset_changed)
          report_error(ERR_NONFATAL, "phase error detected at end of assembly.");
 
-      if (pass1 == 1) preproc->cleanup();
+      if (pass1 == 1) preproc->cleanup(1);
 
       if (pass1==1 && terminate_after_phase) {
          fclose(ofile);
@@ -1258,6 +1258,7 @@ static void assemble_file (char *fname)
 
    } /* for (pass=1; pass<=2; pass++) */
 
+   preproc->cleanup(0);
    nasmlist.cleanup();
 #if 1
    if (optimizing>0 && using_debug_info)	/*  -On and -g switches */
@@ -1494,7 +1495,7 @@ static char *no_pp_getline (void)
     return buffer;
 }
 
-static void no_pp_cleanup (void)
+static void no_pp_cleanup (int pass)
 {
     fclose(no_pp_fp);
 }

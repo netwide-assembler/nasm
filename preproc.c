@@ -48,6 +48,7 @@ typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
 typedef struct Context Context;
 typedef struct Token Token;
+typedef struct Blocks Blocks;
 typedef struct Line Line;
 typedef struct Include Include;
 typedef struct Cond Cond;
@@ -396,6 +397,12 @@ int any_extrastdmac;
  */
 #define TOKEN_BLOCKSIZE 4096
 static Token *freeTokens = NULL;
+struct Blocks {
+	Blocks *next;
+	void *chunk;
+};
+
+static Blocks blocks = { NULL, NULL };
 
 /*
  * Forward declarations.
@@ -406,6 +413,8 @@ static Token *expand_id(Token * tline);
 static Context *get_ctx(char *name, int all_contexts);
 static void make_tok_num(Token * tok, long val);
 static void error(int severity, char *fmt, ...);
+static void *new_Block(size_t size);
+static void delete_Blocks(void);
 static Token *new_Token(Token * next, int type, char *text, int txtlen);
 static Token *delete_Token(Token * t);
 
@@ -869,10 +878,56 @@ tokenise(char *line)
 	}
 	line = p;
     }
-
     return list;
 }
 
+/*
+ * this function allocates a new managed block of memory and
+ * returns a pointer to the block.  The managed blocks are 
+ * deleted only all at once by the delete_Blocks function.
+ */
+static void *
+new_Block(size_t size)
+{
+	Blocks *b = &blocks;
+	
+	/* first, get to the end of the linked list	 */
+	while (b->next)
+		b = b->next;
+	/* now allocate the requested chunk */
+	b->chunk = nasm_malloc(size);
+	
+	/* now allocate a new block for the next request */
+	b->next = nasm_malloc(sizeof(Blocks));
+	/* and initialize the contents of the new block */
+	b->next->next = NULL;
+	b->next->chunk = NULL;
+	return b->chunk;
+}
+
+/*
+ * this function deletes all managed blocks of memory
+ */
+static void
+delete_Blocks(void)
+{
+	Blocks *a,*b = &blocks;
+
+	/* 
+	 * keep in mind that the first block, pointed to by blocks
+	 * is a static and not dynamically allocated, so we don't 
+	 * free it.
+	 */
+	while (b)
+	{
+		if (b->chunk)
+			nasm_free(b->chunk);
+		a = b;
+		b = b->next;
+		if (a != &blocks)
+			nasm_free(a);
+	}
+}	
 
 /*
  *  this function creates a new Token and passes a pointer to it 
@@ -887,7 +942,7 @@ new_Token(Token * next, int type, char *text, int txtlen)
 
     if (freeTokens == NULL)
     {
-	freeTokens = nasm_malloc(TOKEN_BLOCKSIZE * sizeof(Token));
+	freeTokens = (Token *)new_Block(TOKEN_BLOCKSIZE * sizeof(Token));
 	for (i = 0; i < TOKEN_BLOCKSIZE - 1; i++)
 	    freeTokens[i].next = &freeTokens[i + 1];
 	freeTokens[i].next = NULL;
@@ -917,7 +972,6 @@ delete_Token(Token * t)
 {
     Token *next = t->next;
     nasm_free(t->text);
-/*    t->next = freeTokens ? freeTokens->next : NULL; */
     t->next = freeTokens;
     freeTokens = t;
     return next;
@@ -3169,6 +3223,8 @@ expand_smacro(Token * tline)
 		new_Token(org_tline->next, org_tline->type, org_tline->text,
 		0);
 	tline->mac = org_tline->mac;
+	nasm_free(org_tline->text);
+	org_tline->text = NULL;
     }
 
   again:
@@ -4124,7 +4180,7 @@ pp_getline(void)
 }
 
 static void
-pp_cleanup(void)
+pp_cleanup(int pass)
 {
     int h;
 
@@ -4163,6 +4219,11 @@ pp_cleanup(void)
     }
     while (cstk)
 	ctx_pop();
+    if (pass == 0)
+	{
+		free_llist(predef);
+		delete_Blocks();
+	}
 }
 
 void
