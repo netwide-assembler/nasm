@@ -7464,7 +7464,7 @@ non-standard opcode, so NASM provides the undocumented
 \c{AL}, \c{AX} or \c{EAX} (depending on the operand size of the
 instruction). If they are equal, it copies its source (second)
 operand into the destination and sets the zero flag. Otherwise, it
-clears the zero flag and leaves the destination alone.
+clears the zero flag and copies the destination register to AL, AX or EAX.
 
 The destination can be either a register or a memory location. The
 source is a register.
