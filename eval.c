@@ -17,37 +17,56 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "eval.h"
+#include "labels.h"
 
-static expr **tempexprs = NULL;
-static int ntempexprs, tempexprs_size = 0;
 #define TEMPEXPRS_DELTA 128
-
-static expr *tempexpr;
-static int ntempexpr, tempexpr_size;
 #define TEMPEXPR_DELTA 8
 
-static scanner scan;
+static scanner scan;	/* Address of scanner routine */
+static efunc error;	/* Address of error reporting routine */
+static lfunc labelfunc;	/* Address of label routine */
+
+static struct ofmt *outfmt;  /* Structure of addresses of output routines */
+
+static expr **tempexprs = NULL;
+static int    ntempexprs;
+static int    tempexprs_size = 0;
+
+static expr  *tempexpr;
+static int   ntempexpr;
+static int   tempexpr_size;
+
+static struct tokenval *tokval;	  /* The current token */
+static int i;			  /* The t_type of tokval */
+
 static void *scpriv;
-static struct tokenval *tokval;
-static efunc error;
-static int i;
-static int seg, ofs;
-static char *label = NULL, special_empty_string[] = "";
-static lfunc labelfunc;
-static struct ofmt *outfmt;
-static int *forward;
+static loc_t *location;		/* Pointer to current line's segment,offset */
+static int *opflags;
 
 static struct eval_hints *hint;
 
 /*
+ * Unimportant cleanup is done to avoid confusing people who are trying
+ * to debug real memory leaks
+ */
+void eval_cleanup(void) 
+{
+    while (ntempexprs)
+	nasm_free (tempexprs[--ntempexprs]);
+    nasm_free (tempexprs);
+}
+
+/*
  * Construct a temporary expression.
  */
-static void begintemp(void) {
+static void begintemp(void) 
+{
     tempexpr = NULL;
     tempexpr_size = ntempexpr = 0;
 }
 
-static void addtotemp(long type, long value) {
+static void addtotemp(long type, long value) 
+{
     while (ntempexpr >= tempexpr_size) {
 	tempexpr_size += TEMPEXPR_DELTA;
 	tempexpr = nasm_realloc(tempexpr,
@@ -57,7 +76,8 @@ static void addtotemp(long type, long value) {
     tempexpr[ntempexpr++].value = value;
 }
 
-static expr *finishtemp(void) {
+static expr *finishtemp(void) 
+{
     addtotemp (0L, 0L);		       /* terminate */
     while (ntempexprs >= tempexprs_size) {
 	tempexprs_size += TEMPEXPRS_DELTA;
@@ -72,7 +92,8 @@ static expr *finishtemp(void) {
  * absolute segment types: we preserve them during addition _only_
  * if one of the segments is a truly pure scalar.
  */
-static expr *add_vectors(expr *p, expr *q) {
+static expr *add_vectors(expr *p, expr *q) 
+{
     int preserve;
 
     preserve = is_really_simple(p) || is_really_simple(q);
@@ -81,7 +102,8 @@ static expr *add_vectors(expr *p, expr *q) {
 
     while (p->type && q->type &&
 	   p->type < EXPR_SEGBASE+SEG_ABS &&
-	   q->type < EXPR_SEGBASE+SEG_ABS) {
+	   q->type < EXPR_SEGBASE+SEG_ABS)
+    {
 	int lasttype;
 
     	if (p->type > q->type) {
@@ -91,7 +113,9 @@ static expr *add_vectors(expr *p, expr *q) {
 	    addtotemp(p->type, p->value);
 	    lasttype = p++->type;
 	} else {		       /* *p and *q have same type */
-	    addtotemp(p->type, p->value + q->value);
+	    long sum = p->value + q->value;
+	    if (sum)
+		addtotemp(p->type, sum);
 	    lasttype = p->type;
 	    p++, q++;
 	}
@@ -100,12 +124,14 @@ static expr *add_vectors(expr *p, expr *q) {
 	}
     }
     while (p->type &&
-	   (preserve || p->type < EXPR_SEGBASE+SEG_ABS)) {
+	   (preserve || p->type < EXPR_SEGBASE+SEG_ABS)) 
+    {
 	addtotemp(p->type, p->value);
 	p++;
     }
     while (q->type &&
-	   (preserve || q->type < EXPR_SEGBASE+SEG_ABS)) {
+	   (preserve || q->type < EXPR_SEGBASE+SEG_ABS)) 
+    {
 	addtotemp(q->type, q->value);
 	q++;
     }
@@ -125,7 +151,8 @@ static expr *add_vectors(expr *p, expr *q) {
  * multiplied. This allows [eax*1+ebx] to hint EBX rather than EAX
  * as the base register.
  */
-static expr *scalar_mult(expr *vect, long scalar, int affect_hints) {
+static expr *scalar_mult(expr *vect, long scalar, int affect_hints) 
+{
     expr *p = vect;
 
     while (p->type && p->type < EXPR_SEGBASE+SEG_ABS) {
@@ -140,13 +167,15 @@ static expr *scalar_mult(expr *vect, long scalar, int affect_hints) {
     return vect;
 }
 
-static expr *scalarvect (long scalar) {
+static expr *scalarvect (long scalar) 
+{
     begintemp();
     addtotemp(EXPR_SIMPLE, scalar);
     return finishtemp();
 }
 
-static expr *unknown_expr (void) {
+static expr *unknown_expr (void) 
+{
     begintemp();
     addtotemp(EXPR_UNKNOWN, 1L);
     return finishtemp();
@@ -157,7 +186,8 @@ static expr *unknown_expr (void) {
  * value. Return NULL, as usual, if an error occurs. Report the
  * error too.
  */
-static expr *segment_part (expr *e) {
+static expr *segment_part (expr *e) 
+{
     long seg;
 
     if (is_unknown(e))
@@ -228,22 +258,27 @@ static expr *expr4(int), *expr5(int), *expr6(int);
 
 static expr *(*bexpr)(int);
 
-static expr *rexp0(int critical) {
+static expr *rexp0(int critical) 
+{
     expr *e, *f;
 
     e = rexp1(critical);
     if (!e)
 	return NULL;
-    while (i == TOKEN_DBL_OR) {
+
+    while (i == TOKEN_DBL_OR) 
+    {	
 	i = scan(scpriv, tokval);
 	f = rexp1(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
-		error(ERR_NONFATAL, "`|' operator may only be applied to"
-		      " scalar values");
-	    }
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
+	    error(ERR_NONFATAL, "`|' operator may only be applied to"
+		  " scalar values");
+	}
+
 	if (is_just_unknown(e) || is_just_unknown(f))
 	    e = unknown_expr();
 	else
@@ -252,22 +287,27 @@ static expr *rexp0(int critical) {
     return e;
 }
 
-static expr *rexp1(int critical) {
+static expr *rexp1(int critical) 
+{
     expr *e, *f;
 
     e = rexp2(critical);
     if (!e)
 	return NULL;
-    while (i == TOKEN_DBL_XOR) {
+    
+    while (i == TOKEN_DBL_XOR) 
+    {
 	i = scan(scpriv, tokval);
 	f = rexp2(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
 	    error(ERR_NONFATAL, "`^' operator may only be applied to"
 		  " scalar values");
 	}
+
 	if (is_just_unknown(e) || is_just_unknown(f))
 	    e = unknown_expr();
 	else
@@ -276,19 +316,22 @@ static expr *rexp1(int critical) {
     return e;
 }
 
-static expr *rexp2(int critical) {
+static expr *rexp2(int critical) 
+{
     expr *e, *f;
 
     e = rexp3(critical);
     if (!e)
 	return NULL;
-    while (i == TOKEN_DBL_AND) {
+    while (i == TOKEN_DBL_AND) 
+    {
 	i = scan(scpriv, tokval);
 	f = rexp3(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
 	    error(ERR_NONFATAL, "`&' operator may only be applied to"
 		  " scalar values");
 	}
@@ -300,22 +343,28 @@ static expr *rexp2(int critical) {
     return e;
 }
 
-static expr *rexp3(int critical) {
+static expr *rexp3(int critical) 
+{
     expr *e, *f;
     long v;
 
     e = expr0(critical);
     if (!e)
 	return NULL;
+
     while (i == TOKEN_EQ || i == TOKEN_LT || i == TOKEN_GT ||
-	   i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE) {
+	   i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE) 
+    {
 	int j = i;
 	i = scan(scpriv, tokval);
 	f = expr0(critical);
 	if (!f)
 	    return NULL;
+
 	e = add_vectors (e, scalar_mult(f, -1L, FALSE));
-	switch (j) {
+
+	switch (j) 
+	{
 	  case TOKEN_EQ: case TOKEN_NE:
 	    if (is_unknown(e))
 		v = -1;		       /* means unknown */
@@ -343,6 +392,7 @@ static expr *rexp3(int critical) {
 	    }
 	    break;
 	}
+
 	if (v == -1)
 	    e = unknown_expr();
 	else
@@ -351,22 +401,26 @@ static expr *rexp3(int critical) {
     return e;
 }
 
-static expr *expr0(int critical) {
+static expr *expr0(int critical) 
+{
     expr *e, *f;
 
     e = expr1(critical);
     if (!e)
 	return NULL;
-    while (i == '|') {
+
+    while (i == '|') 
+    {
 	i = scan(scpriv, tokval);
 	f = expr1(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
-		error(ERR_NONFATAL, "`|' operator may only be applied to"
-		      " scalar values");
-	    }
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
+	    error(ERR_NONFATAL, "`|' operator may only be applied to"
+		  " scalar values");
+	}
 	if (is_just_unknown(e) || is_just_unknown(f))
 	    e = unknown_expr();
 	else
@@ -375,19 +429,22 @@ static expr *expr0(int critical) {
     return e;
 }
 
-static expr *expr1(int critical) {
+static expr *expr1(int critical) 
+{
     expr *e, *f;
 
     e = expr2(critical);
     if (!e)
 	return NULL;
+
     while (i == '^') {
 	i = scan(scpriv, tokval);
 	f = expr2(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
 	    error(ERR_NONFATAL, "`^' operator may only be applied to"
 		  " scalar values");
 	}
@@ -399,19 +456,22 @@ static expr *expr1(int critical) {
     return e;
 }
 
-static expr *expr2(int critical) {
+static expr *expr2(int critical) 
+{
     expr *e, *f;
 
     e = expr3(critical);
     if (!e)
 	return NULL;
+
     while (i == '&') {
 	i = scan(scpriv, tokval);
 	f = expr3(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
 	    error(ERR_NONFATAL, "`&' operator may only be applied to"
 		  " scalar values");
 	}
@@ -423,20 +483,24 @@ static expr *expr2(int critical) {
     return e;
 }
 
-static expr *expr3(int critical) {
+static expr *expr3(int critical) 
+{
     expr *e, *f;
 
     e = expr4(critical);
     if (!e)
 	return NULL;
-    while (i == TOKEN_SHL || i == TOKEN_SHR) {
+
+    while (i == TOKEN_SHL || i == TOKEN_SHR) 
+    {
 	int j = i;
 	i = scan(scpriv, tokval);
 	f = expr4(critical);
 	if (!f)
 	    return NULL;
 	if (!(is_simple(e) || is_just_unknown(e)) ||
-	    !(is_simple(f) || is_just_unknown(f))) {
+	    !(is_simple(f) || is_just_unknown(f))) 
+	{
 	    error(ERR_NONFATAL, "shift operator may only be applied to"
 		  " scalar values");
 	} else if (is_just_unknown(e) || is_just_unknown(f)) {
@@ -454,13 +518,15 @@ static expr *expr3(int critical) {
     return e;
 }
 
-static expr *expr4(int critical) {
+static expr *expr4(int critical) 
+{
     expr *e, *f;
 
     e = expr5(critical);
     if (!e)
 	return NULL;
-    while (i == '+' || i == '-') {
+    while (i == '+' || i == '-') 
+    {
 	int j = i;
 	i = scan(scpriv, tokval);
 	f = expr5(critical);
@@ -478,21 +544,24 @@ static expr *expr4(int critical) {
     return e;
 }
 
-static expr *expr5(int critical) {
+static expr *expr5(int critical) 
+{
     expr *e, *f;
 
     e = expr6(critical);
     if (!e)
 	return NULL;
     while (i == '*' || i == '/' || i == '%' ||
-	   i == TOKEN_SDIV || i == TOKEN_SMOD) {
+	   i == TOKEN_SDIV || i == TOKEN_SMOD) 
+    {
 	int j = i;
 	i = scan(scpriv, tokval);
 	f = expr6(critical);
 	if (!f)
 	    return NULL;
 	if (j != '*' && (!(is_simple(e) || is_just_unknown(e)) ||
-			 !(is_simple(f) || is_just_unknown(f)))) {
+			 !(is_simple(f) || is_just_unknown(f)))) 
+	{
 	    error(ERR_NONFATAL, "division operator may only be applied to"
 		  " scalar values");
 	    return NULL;
@@ -548,7 +617,8 @@ static expr *expr5(int critical) {
     return e;
 }
 
-static expr *expr6(int critical) {
+static expr *expr6(int critical) 
+{
     long type;
     expr *e;
     long label_seg, label_ofs;
@@ -597,8 +667,10 @@ static expr *expr6(int critical) {
 	}
 	i = scan(scpriv, tokval);
 	return e;
-    } else if (i == TOKEN_NUM || i == TOKEN_REG || i == TOKEN_ID ||
-	       i == TOKEN_HERE || i == TOKEN_BASE) {
+    } 
+    else if (i == TOKEN_NUM || i == TOKEN_REG || i == TOKEN_ID ||
+	     i == TOKEN_HERE || i == TOKEN_BASE) 
+    {
 	begintemp();
 	switch (i) {
 	  case TOKEN_NUM:
@@ -613,11 +685,11 @@ static expr *expr6(int critical) {
 	  case TOKEN_HERE:
 	  case TOKEN_BASE:
 	    /*
-	     * If "label" begins with "%", this indicates that no
+	     * If !location->known, this indicates that no
 	     * symbol, Here or Base references are valid because we
 	     * are in preprocess-only mode.
 	     */
-	    if (*label == '%') {
+	    if (!location->known) {
 		error(ERR_NONFATAL,
 		      "%s not supported in preprocess-only mode",
 		      (i == TOKEN_ID ? "symbol references" :
@@ -641,11 +713,11 @@ static expr *expr6(int critical) {
 	     */
 	    type = EXPR_SIMPLE;	       /* might get overridden by UNKNOWN */
 	    if (i == TOKEN_BASE) {
-		label_seg = seg;
+		label_seg = location->segment;
 		label_ofs = 0;
-	    } else if (i == TOKEN_HERE || !strcmp(tokval->t_charptr, label)) {
-		label_seg = seg;
-		label_ofs = ofs;
+	    } else if (i == TOKEN_HERE) {
+		label_seg = location->segment;
+		label_ofs = location->offset;
 	    } else if (!labelfunc(tokval->t_charptr,&label_seg,&label_ofs)) {
 		if (critical == 2) {
 		    error (ERR_NONFATAL, "symbol `%s' undefined",
@@ -656,16 +728,19 @@ static expr *expr6(int critical) {
 			   tokval->t_charptr);
 		    return NULL;
 		} else {
-		    if (forward)
-			*forward = TRUE;
+		    if (opflags)
+			*opflags |= 1;
 		    type = EXPR_UNKNOWN;
 		    label_seg = NO_SEG;
 		    label_ofs = 1;
 		}
 	    }
 	    addtotemp(type, label_ofs);
-	    if (label_seg!=NO_SEG)
+	    if (label_seg!=NO_SEG) {
 		addtotemp(EXPR_SEGBASE + label_seg, 1L);
+		if (opflags && is_extern (tokval->t_charptr))
+		    *opflags |= OPFLAG_EXTERN;
+	    }
 	    break;
 	}
 	i = scan(scpriv, tokval);
@@ -676,26 +751,17 @@ static expr *expr6(int critical) {
     }
 }
 
-void eval_global_info (struct ofmt *output, lfunc lookup_label) {
+void eval_global_info (struct ofmt *output, lfunc lookup_label, loc_t *locp) 
+{
     outfmt = output;
     labelfunc = lookup_label;
-}
-
-void eval_info (char *labelname, long segment, long offset) {
-    if (label != special_empty_string)
-	nasm_free (label);
-    if (labelname)
-	label = nasm_strdup(labelname);
-    else {
-	label = special_empty_string;
-	seg = segment;
-	ofs = offset;
-    }
+    location = locp;
 }
 
 expr *evaluate (scanner sc, void *scprivate, struct tokenval *tv,
 		int *fwref, int critical, efunc report_error,
-		struct eval_hints *hints) {
+		struct eval_hints *hints) 
+{
     expr *e;
     expr *f = NULL;
 
@@ -713,7 +779,7 @@ expr *evaluate (scanner sc, void *scprivate, struct tokenval *tv,
     scpriv = scprivate;
     tokval = tv;
     error = report_error;
-    forward = fwref;
+    opflags = fwref;
 
     if (tokval->t_type == TOKEN_INVALID)
 	i = scan(scpriv, tokval);
@@ -748,7 +814,8 @@ expr *evaluate (scanner sc, void *scprivate, struct tokenval *tv,
 	    value = reloc_seg(f);
 	    if (value == NO_SEG)
 		value = reloc_value(f) | SEG_ABS;
-	    else if (!(value & SEG_ABS) && !(value % 2) && critical) {
+	    else if (!(value & SEG_ABS) && !(value % 2) && critical) 
+	    {
 		error(ERR_NONFATAL, "invalid right-hand operand to WRT");
 		return NULL;
 	    }

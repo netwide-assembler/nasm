@@ -20,9 +20,6 @@
  * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf' are in.
  * OF_OTHERS              -- ensure that 'bin', 'as86' & 'rdf' are in.
  * OF_ALL                 -- ensure that all formats are included.
- *                           note that this doesn't include 'dbg', which is
- *                           only really useful if you're doing development
- *                           work on NASM. Define OF_DBG if you want this.
  *
  * OF_DEFAULT=of_name     -- ensure that 'name' is the default format.
  *
@@ -33,8 +30,8 @@
  *
  * You probably only want to set these options while compiling 'nasm.c'. */
 
-#ifndef NASM_OUTFORM_H
-#define NASM_OUTFORM_H
+#ifndef NASM_OUTFORMS_H
+#define NASM_OUTFORMS_H
 
 #include "nasm.h"
 
@@ -57,7 +54,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf,rdf2 */
+ * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf */
 
 /* process options... */
 
@@ -92,8 +89,8 @@
 #ifndef OF_AS86
 #define OF_AS86
 #endif
-#ifndef OF_RDF2
-#define OF_RDF2
+#ifndef OF_RDF
+#define OF_RDF
 #endif
 #endif /* OF_ALL */
 
@@ -135,9 +132,6 @@
 #ifndef OF_RDF
 #define OF_RDF
 #endif
-#ifndef OF_RDF2
-#define OF_RDF2
-#endif
 #endif
 
 /* finally... override any format specifically specifed to be off */
@@ -168,9 +162,6 @@
 #ifdef OF_NO_RDF
 #undef OF_RDF
 #endif
-#ifdef OF_NO_RDF2
-#undef OF_RDF
-#endif
 
 #ifndef OF_DEFAULT
 #define OF_DEFAULT of_bin
@@ -190,7 +181,6 @@ extern struct ofmt of_as86;
 extern struct ofmt of_obj;
 extern struct ofmt of_win32;
 extern struct ofmt of_rdf;
-extern struct ofmt of_rdf2;
 extern struct ofmt of_dbg;
 
 struct ofmt *drivers[]={
@@ -221,9 +211,6 @@ struct ofmt *drivers[]={
 #ifdef OF_RDF
     &of_rdf,
 #endif
-#ifdef OF_RDF2
-    &of_rdf2,
-#endif
 #ifdef OF_DBG
     &of_dbg,
 #endif
@@ -233,10 +220,4 @@ struct ofmt *drivers[]={
 
 #endif  /* BUILD_DRIVERS_ARRAY */
 
-struct ofmt *ofmt_find(char *);
-struct dfmt *dfmt_find(struct ofmt *, char *);
-void ofmt_list(struct ofmt *, FILE *);
-void dfmt_list(struct ofmt *ofmt, FILE *fp);
-struct ofmt *ofmt_register (efunc error);
-
-#endif  /* NASM_OUTFORM_H */
+#endif  /* NASM_OUTFORMS_H */

@@ -33,7 +33,8 @@ extern struct itemplate **itable[];
 #define SEG_NODISP 64
 #define SEG_SIGNED 128
 
-static int whichreg(long regflags, int regval) {
+static int whichreg(long regflags, int regval) 
+{
     static int reg32[] = {
 	R_EAX, R_ECX, R_EDX, R_EBX, R_ESP, R_EBP, R_ESI, R_EDI };
     static int reg16[] = {
@@ -98,7 +99,8 @@ static int whichreg(long regflags, int regval) {
     return 0;
 }
 
-static char *whichcond(int condval) {
+static char *whichcond(int condval) 
+{
     static int conds[] = {
 	C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,
 	C_S, C_NS, C_PE, C_PO, C_L, C_NL, C_NG, C_G
@@ -110,7 +112,8 @@ static char *whichcond(int condval) {
  * Process an effective address (ModRM) specification.
  */
 static unsigned char *do_ea (unsigned char *data, int modrm, int asize,
-			     int segsize, operand *op) {
+			     int segsize, operand *op) 
+{
     int mod, rm, scale, index, base;
 
     mod = (modrm >> 6) & 03;
@@ -249,11 +252,13 @@ static unsigned char *do_ea (unsigned char *data, int modrm, int asize,
  * stream in data. Return the number of bytes matched if so.
  */
 static int matches (unsigned char *r, unsigned char *data, int asize,
-		    int osize, int segsize, insn *ins) {
-    unsigned char *origdata = data;
-    int a_used = FALSE, o_used = FALSE;
+		    int osize, int segsize, insn *ins) 
+{
+    unsigned char * origdata = data;
+    int           a_used = FALSE, o_used = FALSE;
 
-    while (*r) {
+    while (*r) 
+    {
 	int c = *r++;
 	if (c >= 01 && c <= 03) {
 	    while (c--)
@@ -440,7 +445,8 @@ static int matches (unsigned char *r, unsigned char *data, int asize,
 }
 
 long disasm (unsigned char *data, char *output, int segsize, long offset,
-	     int autosync) {
+	     int autosync) 
+{
     struct itemplate **p;
     int length = 0;
     char *segover;
@@ -486,7 +492,8 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
     works = TRUE;
     for (p = itable[*data]; *p; p++)
 	if ( (length = matches((unsigned char *)((*p)->code), data,
-			       asize, osize, segsize, &ins)) ) {
+			       asize, osize, segsize, &ins)) ) 
+	{
 	    works = TRUE;
 	    /*
 	     * Final check to make sure the types of r/m match up.
@@ -507,11 +514,17 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 		    ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
 		      (ins.oprs[i].segment & SEG_RMREG)) &&
 		     !whichreg ((*p)->opd[i], ins.oprs[i].basereg)))
-
+		{
 		    works = FALSE;
+		    /*
+		     * FIXME: can we do a break here?
+		     */
+		}
+
 	    if (works)
 		break;
 	}
+
     if (!length || !works)
 	return 0;		       /* no instruction was matched */
 
@@ -570,9 +583,12 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
 	    colon = FALSE;
 
 	if (((*p)->opd[i] & (REGISTER | FPUREG)) ||
-	    (ins.oprs[i].segment & SEG_RMREG)) {
+	    (ins.oprs[i].segment & SEG_RMREG)) 
+	{
 	    ins.oprs[i].basereg = whichreg ((*p)->opd[i],
 					    ins.oprs[i].basereg);
+	    if ( (*p)->opd[i] & TO )
+		slen += sprintf(output+slen, "to ");
 	    slen += sprintf(output+slen, "%s",
 			    reg_names[ins.oprs[i].basereg-EXPR_REG_START]);
 	} else if (!(UNITY & ~(*p)->opd[i])) {
@@ -680,7 +696,8 @@ long disasm (unsigned char *data, char *output, int segsize, long offset,
     return length;
 }
 
-long eatbyte (unsigned char *data, char *output) {
+long eatbyte (unsigned char *data, char *output) 
+{
     sprintf(output, "db 0x%02X", *data);
     return 1;
 }

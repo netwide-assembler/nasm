@@ -442,3 +442,97 @@ corruption at ends of long PUBDEF records.
 
 Separated DOS archives into main-program and documentation to reduce
 download size.
+
+0.98 not released yet
+---------------------
+
+Fixed a bug whereby STRUC didn't work at all in RDF.
+
+Fixed a problem with group specification in PUBDEFs in OBJ.
+
+Improved ease of adding new output formats. Contribution due to
+Fox Cutter.
+
+Fixed a bug in relocations in the `bin' format: was showing up when
+a relocatable reference crossed an 8192-byte boundary in any output
+section.
+
+Fixed a bug in local labels: local-label lookups were inconsistent
+between passes one and two if an EQU occurred between the definition
+of a global label and the subsequent use of a local label local to
+that global.
+
+Fixed a seg-fault in the preprocessor (again) which happened when
+you use a blank line as the first line of a multi-line macro
+definition and then defined a label on the same line as a call to
+that macro.
+
+Fixed a stale-pointer bug in the handling of the NASM environment
+variable. Thanks to Thomas McWilliams.
+
+ELF had a hard limit on the number of sections which caused
+segfaults when transgressed. Fixed.
+
+Added ability for ndisasm to read from stdin by using `-' as the
+filename.
+
+ndisasm wasn't outputting the TO keyword. Fixed.
+
+Fixed error cascade on bogus expression in %if - an error in
+evaluation was causing the entire %if to be discarded, thus creating
+trouble later when the %else or %endif was encountered.
+
+Forward reference tracking was instruction-granular not operand-
+granular, which was causing 286-specific code to be generated
+needlessly on code of the form `shr word [forwardref],1'. Thanks to
+Jim Hague for sending a patch.
+
+All messages now appear on stdout, as sending them to stderr serves
+no useful purpose other than to make redirection difficult.
+
+Fixed the problem with EQUs pointing to an external symbol - this
+now generates an error message.
+
+Allowed multiple size prefixes to an operand, of which only the first
+is taken into account.
+
+Incorporated John Fine's changes, including fixes of a large number
+of preprocessor bugs, some small problems in OBJ, and a reworking of
+label handling to define labels before their line is assembled, rather
+than after.
+
+Reformatted a lot of the source code to be more readable. Included
+'coding.txt' as a guideline for how to format code for contributors.
+
+Stopped nested %reps causing a panic - they now cause a slightly more
+friendly error message instead.
+
+Fixed floating point constant problems (patch by Pedro Gimeno)
+
+Fixed the return value of insn_size() not being checked for -1, indicating
+an error.
+
+Incorporated 3D now instructions.
+
+Fixed the 'mov eax, eax + ebx' bug.
+
+Fixed the GLOBAL EQU bug in ELF. Released developers release 3.
+
+Incorporated John Fine's command line parsing changes
+
+Incorporated David Lindauer's OMF debug support
+
+Made changes for LCC 4.0 support (__NASM_CDecl__, removed register size
+specification warning when sizes agree).
+
+Released NASM 0.98 Pre-release 1
+
+fixed bug in outcoff.c to do with truncating section names longer
+than 8 characters, referencing beyond end of string; 0.98 pre-release 2
+
+added response file support, improved command line handling, new layout
+help screen
+
+fixed limit checking bug, 'OUT byte nn, reg' bug, and a couple of rdoff
+related bugs, updated Wishlist; 0.98 Prerelease 3.
+

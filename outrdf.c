@@ -316,6 +316,12 @@ static void rdf_out (long segto, void *data, unsigned long type,
   struct RelocRec rr;
   unsigned char databuf[4],*pd;
 
+  if (segto == NO_SEG) {
+      if ((type & OUT_TYPMASK) != OUT_RESERVE)
+	  error (ERR_NONFATAL, "attempt to assemble code in ABSOLUTE space");
+      return;
+  }
+
   segto >>= 1;    /* convert NASM segment no to RDF number */
 
   if (segto != 0 && segto != 1 && segto != 2) {
@@ -426,10 +432,12 @@ static void rdf_out (long segto, void *data, unsigned long type,
   }
 }
 
-static void rdf_cleanup (void) {
+static void rdf_cleanup (int debuginfo) {
   long		l;
   unsigned char b[4],*d;
   struct BSSRec	bs;
+
+    (void) debuginfo;
 
 
   /* should write imported & exported symbol declarations to header here */
@@ -496,14 +504,29 @@ static char *rdf_stdmac[] = {
     "%imacro library 1+.nolist",
     "[library %1]",
     "%endmacro",
+    "%macro __NASM_CDecl__ 1",
+    "%endmacro",
     NULL
 };
 
+static int rdf_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
+
 struct ofmt of_rdf = {
   "Relocatable Dynamic Object File Format v1.1",
+#ifdef OF_RDF2
+  "oldrdf",
+#else
   "rdf",
+#endif
+  NULL,
+  null_debug_arr,
+  &null_debug_form,
   rdf_stdmac,
   rdf_init,
+  rdf_set_info,
   rdf_out,
   rdf_deflabel,
   rdf_section_names,

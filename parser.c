@@ -41,26 +41,34 @@ static int is_comma_next (void);
 static int i;
 static struct tokenval tokval;
 static efunc error;
+static struct ofmt *outfmt;  /* Structure of addresses of output routines */
+static loc_t *location;	     /* Pointer to current line's segment,offset */
+
+void parser_global_info (struct ofmt *output, loc_t *locp) 
+{
+    outfmt = output;
+    location = locp;
+}
 
 insn *parse_line (int pass, char *buffer, insn *result,
-		  efunc errfunc, evalfunc evaluate, evalinfofunc einfo) {
+		  efunc errfunc, evalfunc evaluate, ldfunc ldef) 
+{
     int operand;
     int critical;
     struct eval_hints hints;
 
     result->forw_ref = FALSE;
     error = errfunc;
-    einfo ("", 0L, 0L);
 
     stdscan_reset();
     stdscan_bufptr = buffer;
     i = stdscan(NULL, &tokval);
 
+    result->label = NULL;	       /* Assume no label */
     result->eops = NULL;	       /* must do this, whatever happens */
     result->operands = 0;	       /* must initialise this */
 
     if (i==0) {			       /* blank line - ignore */
-	result->label = NULL;	       /* so, no label on it */
 	result->opcode = -1;	       /* and no instruction either */
 	return result;
     }
@@ -68,23 +76,32 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	(i!=TOKEN_REG || (REG_SREG & ~reg_flags[tokval.t_integer]))) {
 	error (ERR_NONFATAL, "label or instruction expected"
 	       " at start of line");
-	result->label = NULL;
 	result->opcode = -1;
 	return result;
     }
 
     if (i == TOKEN_ID) {	       /* there's a label here */
 	result->label = tokval.t_charptr;
-	einfo (result->label, 0L, 0L);
 	i = stdscan(NULL, &tokval);
 	if (i == ':') {		       /* skip over the optional colon */
 	    i = stdscan(NULL, &tokval);
-	} else if (i == 0 && pass == 1) {
-	    error (ERR_WARNING|ERR_WARN_OL,
+	} else if (i == 0) {
+	    error (ERR_WARNING|ERR_WARN_OL|ERR_PASS1,
 		   "label alone on a line without a colon might be in error");
 	}
-    } else			       /* no label; so, moving swiftly on */
-	result->label = NULL;
+	if (i != TOKEN_INSN || tokval.t_integer != I_EQU)
+	{
+	    /*
+	     * FIXME: location->segment could be NO_SEG, in which case
+	     * it is possible we should be passing 'abs_seg'. Look into this.
+	     * Work out whether that is *really* what we should be doing.
+	     * Generally fix things. I think this is right as it is, but
+	     * am still not certain.
+	     */
+	    ldef (result->label, location->segment,
+		  location->offset, NULL, TRUE, FALSE, outfmt, errfunc);
+	}
+    }
 
     if (i==0) {
 	result->opcode = -1;	       /* this line contains just a label */
@@ -95,7 +112,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
     result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
-	   (i==TOKEN_REG && !(REG_SREG & ~reg_flags[tokval.t_integer]))) {
+	   (i==TOKEN_REG && !(REG_SREG & ~reg_flags[tokval.t_integer]))) 
+    {
 	/*
 	 * Handle special case: the TIMES prefix.
 	 */
@@ -115,9 +133,11 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		result->times = 1L;
 	    } else {
 		result->times = value->value;
-		if (value->value < 0)
+		if (value->value < 0) {
 		    error(ERR_NONFATAL, "TIMES value %d is negative",
 			  value->value);
+		    result->times = 0;
+		}
 	    }
 	} else {
 	    if (result->nprefix == MAXPREFIX)
@@ -169,7 +189,9 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	result->opcode == I_RESQ ||
 	result->opcode == I_REST ||
 	result->opcode == I_EQU)
+    {
 	critical = pass;
+    }
     else
 	critical = (pass==2 ? 2 : 0);
 
@@ -178,12 +200,15 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	result->opcode == I_DD ||
 	result->opcode == I_DQ ||
 	result->opcode == I_DT ||
-	result->opcode == I_INCBIN) {
+	result->opcode == I_INCBIN) 
+    {
 	extop *eop, **tail = &result->eops, **fixptr;
 	int oper_num = 0;
 
+	result->eops_float = FALSE;
+
 	/*
-	 * Begin to read the DB/DW/DD/DQ/DT operands.
+	 * Begin to read the DB/DW/DD/DQ/DT/INCBIN operands.
 	 */
 	while (1) {
 	    i = stdscan(NULL, &tokval);
@@ -204,14 +229,14 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		continue;
 	    }
 
-	    if (i == TOKEN_FLOAT || i == '-') {
+	    if ((i == TOKEN_FLOAT && is_comma_next()) || i == '-') {
 		long sign = +1L;
 
 		if (i == '-') {
 		    char *save = stdscan_bufptr;
 		    i = stdscan(NULL, &tokval);
 		    sign = -1L;
-		    if (i != TOKEN_FLOAT) {
+		    if (i != TOKEN_FLOAT || !is_comma_next()) {
 			stdscan_bufptr = save;
 			i = tokval.t_type = '-';
 		    }
@@ -219,23 +244,30 @@ insn *parse_line (int pass, char *buffer, insn *result,
 
 		if (i == TOKEN_FLOAT) {
 		    eop->type = EOT_DB_STRING;
+		    result->eops_float = TRUE;
 		    if (result->opcode == I_DD)
 			eop->stringlen = 4;
 		    else if (result->opcode == I_DQ)
 			eop->stringlen = 8;
 		    else if (result->opcode == I_DT)
-		    eop->stringlen = 10;
+			eop->stringlen = 10;
 		    else {
 			error(ERR_NONFATAL, "floating-point constant"
 			      " encountered in `D%c' instruction",
 			      result->opcode == I_DW ? 'W' : 'B');
-			eop->type = EOT_NOTHING;
+			/*
+			 * fix suggested by Pedro Gimeno... original line
+			 * was:
+			 * eop->type = EOT_NOTHING;
+			 */
+			eop->stringlen = 0;
 		    }
 		    eop = nasm_realloc(eop, sizeof(extop)+eop->stringlen);
 		    tail = &eop->next;
 		    *fixptr = eop;
 		    eop->stringval = (char *)eop + sizeof(extop);
-		    if (!float_const (tokval.t_charptr, sign,
+		    if (eop->stringlen < 4 ||
+			!float_const (tokval.t_charptr, sign,
 				      (unsigned char *)eop->stringval,
 				      eop->stringlen, error))
 			eop->type = EOT_NOTHING;
@@ -244,7 +276,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		}
 	    }
 
-	    /* anything else */ {
+	    /* anything else */ 
+	    {
 		expr *value;
 		value = evaluate (stdscan, NULL, &tokval, NULL,
 				  critical, error, NULL);
@@ -312,7 +345,12 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	     */
 	    result->opcode = -1;
 	    return result;
-	}
+	} else /* DB ... */
+	    if (oper_num == 0)
+		error (ERR_WARNING|ERR_PASS1,
+		       "no operand for data declaration");
+            else
+                result->operands = oper_num;
 
 	return result;
     }
@@ -324,29 +362,42 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	expr *value;		       /* used most of the time */
 	int mref;		       /* is this going to be a memory ref? */
 	int bracket;		       /* is it a [] mref, or a & mref? */
+	int setsize = 0;
 
 	result->oprs[operand].addr_size = 0;/* have to zero this whatever */
 	result->oprs[operand].eaflags = 0;   /* and this */
+	result->oprs[operand].opflags = 0;
+
 	i = stdscan(NULL, &tokval);
 	if (i == 0) break;	       /* end of operands: get out of here */
 	result->oprs[operand].type = 0;   /* so far, no override */
 	while (i == TOKEN_SPECIAL)	{/* size specifiers */
 	    switch ((int)tokval.t_integer) {
 	      case S_BYTE:
-		result->oprs[operand].type |= BITS8;
+		if (!setsize)		 /* we want to use only the first */
+		    result->oprs[operand].type |= BITS8;
+		setsize = 1;
 		break;
 	      case S_WORD:
-		result->oprs[operand].type |= BITS16;
+		if (!setsize)
+		    result->oprs[operand].type |= BITS16;
+		setsize = 1;
 		break;
 	      case S_DWORD:
 	      case S_LONG:
-		result->oprs[operand].type |= BITS32;
+		if (!setsize)
+		    result->oprs[operand].type |= BITS32;
+		setsize = 1;
 		break;
 	      case S_QWORD:
-		result->oprs[operand].type |= BITS64;
+		if (!setsize)
+		    result->oprs[operand].type |= BITS64;
+		setsize = 1;
 		break;
 	      case S_TWORD:
-		result->oprs[operand].type |= BITS80;
+		if (!setsize)
+		    result->oprs[operand].type |= BITS80;
+		setsize = 1;
 		break;
 	      case S_TO:
 		result->oprs[operand].type |= TO;
@@ -360,6 +411,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	      case S_SHORT:
 		result->oprs[operand].type |= SHORT;
 		break;
+	      default:
+		error (ERR_NONFATAL, "invalid operand size specification");
 	    }
 	    i = stdscan(NULL, &tokval);
 	}
@@ -397,8 +450,12 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	}
 
 	value = evaluate (stdscan, NULL, &tokval,
-			  &result->forw_ref, critical, error, &hints);
+			  &result->oprs[operand].opflags,
+			  critical, error, &hints);
 	i = tokval.t_type;
+	if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
+	    result->forw_ref = TRUE;
+	}
 	if (!value) {		       /* error in evaluator */
 	    result->opcode = -1;       /* unrecoverable parse error: */
 	    return result;	       /* ignore this instruction */
@@ -434,8 +491,12 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		i = stdscan(NULL, &tokval);
 	    }
 	    value = evaluate (stdscan, NULL, &tokval,
-			      &result->forw_ref, critical, error, &hints);
+			      &result->oprs[operand].opflags,
+			      critical, error, &hints);
 	    i = tokval.t_type;
+	    if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
+		result->forw_ref = TRUE;
+	    }
 	    /* and get the offset */
 	    if (!value) {	       /* but, error in evaluator */
 		result->opcode = -1;   /* unrecoverable parse error: */
@@ -480,34 +541,38 @@ insn *parse_line (int pass, char *buffer, insn *result,
 		    i = e->type, s = e->value;
 		e++;
 	    }
-	    if (e->type && e->type <= EXPR_REG_END) {/* it's a 2nd register */
-		if (e->value != 1) {   /* it has to be indexreg */
-		    if (i != -1) {     /* but it can't be */
-			error(ERR_NONFATAL, "invalid effective address");
-			result->opcode = -1;
-			return result;
-		    } else
-			i = e->type, s = e->value;
-		} else {	       /* it can be basereg */
-		    if (b != -1)       /* or can it? */
-			i = e->type, s = 1;
-		    else
-			b = e->type;
-		}
+	    if (e->type && e->type <= EXPR_REG_END)   /* it's a 2nd register */
+	    {
+		if (b != -1)               /* If the first was the base, ... */
+		    i = e->type, s = e->value;  /* second has to be indexreg */
+
+		else if (e->value != 1)          /* If both want to be index */
+		{
+		    error(ERR_NONFATAL, "invalid effective address");
+		    result->opcode = -1;
+		    return result;
+		} 
+		else
+		    b = e->type;
 		e++;
 	    }
 	    if (e->type != 0) {	       /* is there an offset? */
-		if (e->type <= EXPR_REG_END) {/* in fact, is there an error? */
+		if (e->type <= EXPR_REG_END)  /* in fact, is there an error? */
+		{
 		    error (ERR_NONFATAL, "invalid effective address");
 		    result->opcode = -1;
 		    return result;
-		} else {
+		} 
+		else 
+		{
 		    if (e->type == EXPR_UNKNOWN) {
-			o = 0;	       /* doesn't matter what */
-			result->oprs[operand].wrt = NO_SEG;   /* nor this */
+			o = 0;	                     /* doesn't matter what */
+			result->oprs[operand].wrt = NO_SEG;     /* nor this */
 			result->oprs[operand].segment = NO_SEG;  /* or this */
 			while (e->type) e++;   /* go to the end of the line */
-		    } else {
+		    } 
+		    else 
+		    {
 			if (e->type == EXPR_SIMPLE) {
 			    o = e->value;
 			    e++;
@@ -566,30 +631,63 @@ insn *parse_line (int pass, char *buffer, insn *result,
 	    result->oprs[operand].indexreg = i;
 	    result->oprs[operand].scale = s;
 	    result->oprs[operand].offset = o;
-	} else {		       /* it's not a memory reference */
+	} 
+	else		                      /* it's not a memory reference */
+	{
 	    if (is_just_unknown(value)) {     /* it's immediate but unknown */
 		result->oprs[operand].type |= IMMEDIATE;
 		result->oprs[operand].offset = 0;   /* don't care */
 		result->oprs[operand].segment = NO_SEG; /* don't care again */
 		result->oprs[operand].wrt = NO_SEG;/* still don't care */
-	    } else if (is_reloc(value)) {     /* it's immediate */
+	    } 
+	    else if (is_reloc(value))         /* it's immediate */
+	    {
 		result->oprs[operand].type |= IMMEDIATE;
 		result->oprs[operand].offset = reloc_value(value);
 		result->oprs[operand].segment = reloc_seg(value);
 		result->oprs[operand].wrt = reloc_wrt(value);
 		if (is_simple(value) && reloc_value(value)==1)
 		    result->oprs[operand].type |= UNITY;
-	    } else {	       /* it's a register */
+	    } 
+	    else	       /* it's a register */
+	    {
+		int i;
+
 		if (value->type>=EXPR_SIMPLE || value->value!=1) {
 		    error (ERR_NONFATAL, "invalid operand type");
 		    result->opcode = -1;
 		    return result;
 		}
+
+		/*
+		 * check that its only 1 register, not an expression...
+		 */
+		for (i = 1; value[i].type; i++)
+		    if (value[i].value) {
+			error (ERR_NONFATAL, "invalid operand type");
+			result->opcode = -1;
+			return result;
+		    }
+
 		/* clear overrides, except TO which applies to FPU regs */
+		if (result->oprs[operand].type & ~TO) {
+		    /*
+		     * we want to produce a warning iff the specified size
+		     * is different from the register size
+		     */
+		    i = result->oprs[operand].type & SIZE_MASK;
+		}
+		else
+		    i = 0;
+
 		result->oprs[operand].type &= TO;
 		result->oprs[operand].type |= REGISTER;
 		result->oprs[operand].type |= reg_flags[value->type];
 		result->oprs[operand].basereg = value->type;
+
+		if (i && (result->oprs[operand].type & SIZE_MASK) != i)
+		    error (ERR_WARNING|ERR_PASS1,
+			   "register size specification ignored");
 	    }
 	}
     }
@@ -612,7 +710,8 @@ insn *parse_line (int pass, char *buffer, insn *result,
     return result;
 }
 
-static int is_comma_next (void) {
+static int is_comma_next (void) 
+{
     char *p;
     int i;
     struct tokenval tv;
@@ -623,7 +722,8 @@ static int is_comma_next (void) {
     return (i == ',' || i == ';' || !i);
 }
 
-void cleanup_insn (insn *i) {
+void cleanup_insn (insn *i) 
+{
     extop *e;
 
     while (i->eops) {

@@ -127,21 +127,24 @@ static void coff_section_header (char *, long, long, long, long, int, long);
 static void coff_write_relocs (struct Section *);
 static void coff_write_symbols (void);
 
-static void coff_win32_init(FILE *fp, efunc errfunc,
-			    ldfunc ldef, evalfunc eval) {
+static void coff_win32_init(FILE *fp,  efunc errfunc,
+			    ldfunc ldef, evalfunc eval) 
+{
     win32 = TRUE;
     (void) ldef;		       /* placate optimisers */
     coff_gen_init(fp, errfunc);
 }
 
-static void coff_std_init(FILE *fp, efunc errfunc,
-			  ldfunc ldef, evalfunc eval) {
+static void coff_std_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     win32 = FALSE;
     (void) ldef;		       /* placate optimisers */
     coff_gen_init(fp, errfunc);
 }
 
-static void coff_gen_init(FILE *fp, efunc errfunc) {
+static void coff_gen_init(FILE *fp, efunc errfunc) 
+{
+
     coffp = fp;
     error = errfunc;
     sects = NULL;
@@ -155,9 +158,12 @@ static void coff_gen_init(FILE *fp, efunc errfunc) {
     def_seg = seg_alloc();
 }
 
-static void coff_cleanup(void) {
+static void coff_cleanup(int debuginfo) 
+{
     struct Reloc *r;
     int i;
+
+    (void) debuginfo;
 
     coff_write();
     fclose (coffp);
@@ -169,6 +175,7 @@ static void coff_cleanup(void) {
 	    sects[i]->head = sects[i]->head->next;
 	    nasm_free (r);
 	}
+	nasm_free (sects[i]);
     }
     nasm_free (sects);
     saa_free (syms);
@@ -177,7 +184,8 @@ static void coff_cleanup(void) {
     saa_free (strs);
 }
 
-static int coff_make_section (char *name, unsigned long flags) {
+static int coff_make_section (char *name, unsigned long flags) 
+{
     struct Section *s;
 
     s = nasm_malloc (sizeof(*s));
@@ -205,7 +213,8 @@ static int coff_make_section (char *name, unsigned long flags) {
     return nsects-1;
 }
 
-static long coff_section_names (char *name, int pass, int *bits) {
+static long coff_section_names (char *name, int pass, int *bits) 
+{
     char *p;
     unsigned long flags, align_and = ~0L, align_or = 0L;
     int i;
@@ -225,7 +234,7 @@ static long coff_section_names (char *name, int pass, int *bits) {
     if (strlen(name) > 8) {
 	error (ERR_WARNING, "COFF section names limited to 8 characters:"
 	       " truncating");
-	p[8] = '\0';
+	name[8] = '\0';
     }
     flags = 0;
 
@@ -306,7 +315,8 @@ static long coff_section_names (char *name, int pass, int *bits) {
 }
 
 static void coff_deflabel (char *name, long segment, long offset,
-			   int is_global, char *special) {
+			   int is_global, char *special) 
+{
     int pos = strslen+4;
     struct Symbol *sym;
 
@@ -363,7 +373,8 @@ static void coff_deflabel (char *name, long segment, long offset,
 }
 
 static long coff_add_reloc (struct Section *sect, long segment,
-			    int relative) {
+			    int relative) 
+{
     struct Reloc *r;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -399,7 +410,8 @@ static long coff_add_reloc (struct Section *sect, long segment,
 }
 
 static void coff_out (long segto, void *data, unsigned long type,
-		      long segment, long wrt) {
+		      long segment, long wrt) 
+{
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     unsigned char mydata[4], *p;
@@ -506,16 +518,19 @@ static void coff_out (long segto, void *data, unsigned long type,
 }
 
 static void coff_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) {
+			     unsigned char *data, unsigned long len) 
+{
     saa_wbytes (sect->data, data, len);
     sect->len += len;
 }
 
-static int coff_directives (char *directive, char *value, int pass) {
+static int coff_directives (char *directive, char *value, int pass) 
+{
     return 0;
 }
 
-static void coff_write (void) {
+static void coff_write (void) 
+{
     long pos, sympos, vsize;
     int i;
 
@@ -579,7 +594,8 @@ static void coff_write (void) {
 
 static void coff_section_header (char *name, long vsize,
 				 long datalen, long datapos,
-				 long relpos, int nrelocs, long flags) {
+				 long relpos, int nrelocs, long flags) 
+{
     char padname[8];
 
     memset (padname, 0, 8);
@@ -596,7 +612,8 @@ static void coff_section_header (char *name, long vsize,
     fwritelong (flags, coffp);
 }
 
-static void coff_write_relocs (struct Section *s) {
+static void coff_write_relocs (struct Section *s) 
+{
     struct Reloc *r;
 
     for (r = s->head; r; r = r->next) {
@@ -615,7 +632,8 @@ static void coff_write_relocs (struct Section *s) {
 }
 
 static void coff_symbol (char *name, long strpos, long value,
-			 int section, int type, int aux) {
+			 int section, int type, int aux) 
+{
     char padname[8];
 
     if (name) {
@@ -633,7 +651,8 @@ static void coff_symbol (char *name, long strpos, long value,
     fputc (aux, coffp);
 }
 
-static void coff_write_symbols (void) {
+static void coff_write_symbols (void) 
+{
     char filename[18];
     int i;
 
@@ -674,34 +693,47 @@ static void coff_write_symbols (void) {
     }
 }
 
-static long coff_segbase (long segment) {
+static long coff_segbase (long segment) 
+{
     return segment;
 }
 
-static void coff_std_filename (char *inname, char *outname, efunc error) {
+static void coff_std_filename (char *inname, char *outname, efunc error) 
+{
     strcpy(coff_infile, inname);
     standard_extension (inname, outname, ".o", error);
 }
 
-static void coff_win32_filename (char *inname, char *outname, efunc error) {
+static void coff_win32_filename (char *inname, char *outname, efunc error) 
+{
     strcpy(coff_infile, inname);
     standard_extension (inname, outname, ".obj", error);
 }
 
-#endif /* defined(OF_COFF) || defined(OF_WIN32) */
-
 static char *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
+    "%macro __NASM_CDecl__ 1",
+    "%endmacro",
     NULL
 };
+
+static int coff_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
+#endif /* defined(OF_COFF) || defined(OF_WIN32) */
 
 #ifdef OF_COFF
 
 struct ofmt of_coff = {
     "COFF (i386) object files (e.g. DJGPP for DOS)",
     "coff",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     coff_stdmac,
     coff_std_init,
+    coff_set_info,
     coff_out,
     coff_deflabel,
     coff_section_names,
@@ -718,8 +750,12 @@ struct ofmt of_coff = {
 struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
     "win32",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     coff_stdmac,
     coff_win32_init,
+    coff_set_info,
     coff_out,
     coff_deflabel,
     coff_section_names,

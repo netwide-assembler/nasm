@@ -1,4 +1,4 @@
-/* nasmlib.c	header file for nasmlib.h
+/* nasmlib.h	header file for nasmlib.c
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -51,14 +51,22 @@ char *nasm_strndup_log (char *, int, char *, size_t);
  * ANSI doesn't guarantee the presence of `stricmp' or
  * `strcasecmp'.
  */
-int nasm_stricmp (char *, char *);
-int nasm_strnicmp (char *, char *, int);
+int nasm_stricmp (const char *, const char *);
+int nasm_strnicmp (const char *, const char *, int);
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to TRUE if an error occurs, and FALSE otherwise.
  */
 long readnum(char *str, int *error);
+
+/*
+ * Convert a character constant into a number. Sets
+ * `*warn' to TRUE if an overflow occurs, and FALSE otherwise.
+ * str points to and length covers the middle of the string,
+ * without the quotes.
+ */
+long readstrnum(char *str, int length, int *warn);
 
 /*
  * seg_init: Initialise the segment-number allocator.
@@ -108,7 +116,41 @@ void fwritelong (long data, FILE *fp);
  * chunk.
  */
 
-struct RAA;
+#define RAA_BLKSIZE 4096	       /* this many longs allocated at once */
+#define RAA_LAYERSIZE 1024	       /* this many _pointers_ allocated */
+
+typedef struct RAA RAA;
+typedef union RAA_UNION RAA_UNION;
+typedef struct RAA_LEAF RAA_LEAF;
+typedef struct RAA_BRANCH RAA_BRANCH;
+
+struct RAA {
+    /*
+     * Number of layers below this one to get to the real data. 0
+     * means this structure is a leaf, holding RAA_BLKSIZE real
+     * data items; 1 and above mean it's a branch, holding
+     * RAA_LAYERSIZE pointers to the next level branch or leaf
+     * structures.
+     */
+    int layers;
+    /*
+     * Number of real data items spanned by one position in the
+     * `data' array at this level. This number is 1, trivially, for
+     * a leaf (level 0): for a level 1 branch it should be
+     * RAA_BLKSIZE, and for a level 2 branch it's
+     * RAA_LAYERSIZE*RAA_BLKSIZE.
+     */
+    long stepsize;
+    union RAA_UNION {
+	struct RAA_LEAF {
+	    long data[RAA_BLKSIZE];
+	} l;
+	struct RAA_BRANCH {
+	    struct RAA *data[RAA_LAYERSIZE];
+	} b;
+    } u;
+};
+
 
 struct RAA *raa_init (void);
 void raa_free (struct RAA *);
@@ -125,7 +167,15 @@ struct RAA *raa_write (struct RAA *r, long posn, long value);
  * of a given size.
  */
 
-struct SAA;
+struct SAA {
+    /*
+     * members `end' and `elem_len' are only valid in first link in
+     * list; `rptr' and `rpos' are used for reading
+     */
+    struct SAA *next, *end, *rptr;
+    long elem_len, length, posn, start, rpos;
+    char *data;
+};
 
 struct SAA *saa_init (long elem_len);  /* 1 == byte */
 void saa_free (struct SAA *);
@@ -169,4 +219,23 @@ long reloc_wrt(expr *);
  */
 int bsi (char *string, char **array, int size);
 
+
+char *src_set_fname(char *newname);
+long src_set_linnum(long newline);
+long src_get_linnum(void);
+/*
+ * src_get may be used if you simply want to know the source file and line.
+ * It is also used if you maintain private status about the source location
+ * It return 0 if the information was the same as the last time you
+ * checked, -1 if the name changed and (new-old) if just the line changed.
+ */
+int src_get(long *xline, char **xname);
+
+void nasm_quote(char **str);
+char *nasm_strcat(char *one, char *two);
+void nasmlib_cleanup(void);
+
+void null_debug_routine();
+extern struct dfmt null_debug_form;
+extern struct dfmt *null_debug_arr[2];
 #endif

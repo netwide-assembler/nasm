@@ -25,7 +25,8 @@ static struct Sync {
 } *synx;
 static int nsynx;
 
-void init_sync(void) {
+void init_sync(void) 
+{
     /*
      * I'd like to allocate an array of size SYNC_MAX, then write
      * `synx--' which would allow numbering the array from one
@@ -48,7 +49,8 @@ void init_sync(void) {
     nsynx = 0;
 }
 
-void add_sync(unsigned long pos, unsigned long length) {
+void add_sync(unsigned long pos, unsigned long length) 
+{
     int i;
 
     if (nsynx == SYNC_MAX)
@@ -68,7 +70,8 @@ void add_sync(unsigned long pos, unsigned long length) {
     }
 }
 
-unsigned long next_sync(unsigned long position, unsigned long *length) {
+unsigned long next_sync(unsigned long position, unsigned long *length) 
+{
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
 	int i, j;
 	struct Sync t;

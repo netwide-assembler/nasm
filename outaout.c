@@ -116,7 +116,8 @@ static long aout_gotpc_sect, aout_gotoff_sect;
 static long aout_got_sect, aout_plt_sect;
 static long aout_sym_sect;
 
-static void aoutg_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void aoutg_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     aoutfp = fp;
     error = errfunc;
     evaluate = eval;
@@ -140,7 +141,8 @@ static void aoutg_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
 
 #ifdef OF_AOUT
 
-static void aout_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void aout_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     bsd = FALSE;
     aoutg_init (fp, errfunc, ldef, eval);
 
@@ -154,7 +156,8 @@ static void aout_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
 
 extern struct ofmt of_aoutb;
 
-static void aoutb_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void aoutb_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     bsd = TRUE;
     aoutg_init (fp, errfunc, ldef, eval);
 
@@ -174,8 +177,11 @@ static void aoutb_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
 
 #endif
 
-static void aout_cleanup(void) {
+static void aout_cleanup(int debuginfo) 
+{
     struct Reloc *r;
+
+    (void) debuginfo;
 
     aout_pad_sections();
     aout_fixup_relocs(&stext);
@@ -199,7 +205,8 @@ static void aout_cleanup(void) {
     saa_free (strs);
 }
 
-static long aout_section_names (char *name, int pass, int *bits) {
+static long aout_section_names (char *name, int pass, int *bits) 
+{
     /*
      * Default to 32 bits.
      */
@@ -220,7 +227,8 @@ static long aout_section_names (char *name, int pass, int *bits) {
 }
 
 static void aout_deflabel (char *name, long segment, long offset,
-			   int is_global, char *special) {
+			   int is_global, char *special) 
+{
     int pos = strslen+4;
     struct Symbol *sym;
     int special_used = FALSE;
@@ -384,7 +392,8 @@ static void aout_deflabel (char *name, long segment, long offset,
 }
 
 static void aout_add_reloc (struct Section *sect, long segment,
-			    int reltype, int bytes) {
+			    int reltype, int bytes) 
+{
     struct Reloc *r;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -429,7 +438,8 @@ static void aout_add_reloc (struct Section *sect, long segment,
  */
 static long aout_add_gsym_reloc (struct Section *sect,
 				 long segment, long offset,
-				 int type, int bytes, int exact) {
+				 int type, int bytes, int exact) 
+{
     struct Symbol *sym, *sm, *shead;
     struct Reloc *r;
 
@@ -500,7 +510,8 @@ static long aout_add_gsym_reloc (struct Section *sect,
  * offset from the `asym' symbol rather than the section.
  */
 static long aout_add_gotoff_reloc (struct Section *sect, long segment,
-				   long offset, int bytes) {
+				   long offset, int bytes) 
+{
     struct Reloc *r;
     struct Symbol *asym;
 
@@ -534,7 +545,8 @@ static long aout_add_gotoff_reloc (struct Section *sect, long segment,
 }
 
 static void aout_out (long segto, void *data, unsigned long type,
-		      long segment, long wrt) {
+		      long segment, long wrt) 
+{
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     long addr;
@@ -695,7 +707,8 @@ static void aout_out (long segto, void *data, unsigned long type,
     }
 }
 
-static void aout_pad_sections(void) {
+static void aout_pad_sections(void) 
+{
     static unsigned char pad[] = { 0x90, 0x90, 0x90, 0x90 };
     /*
      * Pad each of the text and data sections with NOPs until their
@@ -716,7 +729,8 @@ static void aout_pad_sections(void) {
  * the relocation table, _after_ the final size of each section is
  * known, and fix up the relocations pointed to.
  */
-static void aout_fixup_relocs(struct Section *sect) {
+static void aout_fixup_relocs(struct Section *sect) 
+{
     struct Reloc *r;
 
     saa_rewind (sect->data);
@@ -748,7 +762,8 @@ static void aout_fixup_relocs(struct Section *sect) {
     }
 }
 
-static void aout_write(void) {
+static void aout_write(void) 
+{
     /*
      * Emit the a.out header.
      */
@@ -786,7 +801,8 @@ static void aout_write(void) {
     saa_fpwrite (strs, aoutfp);
 }
 
-static void aout_write_relocs (struct Reloc *r) {
+static void aout_write_relocs (struct Reloc *r) 
+{
     while (r) {
 	unsigned long word2;
 
@@ -805,7 +821,8 @@ static void aout_write_relocs (struct Reloc *r) {
     }
 }
 
-static void aout_write_syms (void) {
+static void aout_write_syms (void) 
+{
     int i;
 
     saa_rewind (syms);
@@ -835,28 +852,38 @@ static void aout_write_syms (void) {
 }
 
 static void aout_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) {
+			     unsigned char *data, unsigned long len) 
+{
     saa_wbytes (sect->data, data, len);
     sect->len += len;
 }
 
-static long aout_segbase (long segment) {
+static long aout_segbase (long segment) 
+{
     return segment;
 }
 
-static int aout_directive (char *directive, char *value, int pass) {
+static int aout_directive (char *directive, char *value, int pass) 
+{
     return 0;
 }
 
-static void aout_filename (char *inname, char *outname, efunc error) {
+static void aout_filename (char *inname, char *outname, efunc error) 
+{
     standard_extension (inname, outname, ".o", error);
 }
 
 static char *aout_stdmac[] = {
     "%define __SECT__ [section .text]",
+    "%macro __NASM_CDecl__ 1",
+    "%endmacro",
     NULL
 };
 
+static int aout_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
 #endif /* OF_AOUT || OF_AOUTB */
 
 #ifdef OF_AOUT
@@ -864,8 +891,12 @@ static char *aout_stdmac[] = {
 struct ofmt of_aout = {
     "Linux a.out object files",
     "aout",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     aout_stdmac,
     aout_init,
+    aout_set_info,
     aout_out,
     aout_deflabel,
     aout_section_names,
@@ -882,8 +913,12 @@ struct ofmt of_aout = {
 struct ofmt of_aoutb = {
     "NetBSD/FreeBSD a.out object files",
     "aoutb",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     aout_stdmac,
     aoutb_init,
+    aout_set_info,
     aout_out,
     aout_deflabel,
     aout_section_names,
