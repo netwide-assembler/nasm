@@ -6,6 +6,9 @@
 * Complete rewrite of the PostScript/PDF documentation generator.
 * The MS Visual C++ Makefile was updated and corrected.
 * Recognize .rodata as a standard section name in ELF.
+* Fix some obsolete Perl4-isms in Perl scripts.
+* Fix configure.in to work with autoconf 2.5x.
+* Fix a couple of "make cleaner" misses.
 
 
 0.98.31
