@@ -7,6 +7,7 @@
 * Fix sysexit, movhps/movlps reg,reg bugs in insns.dat
 * "Q" or "O" suffixes indicate octal
 * Support Prescott new instructions.
+* Cyrix XSTORE instruction.
 
 0.98.35
 -------
