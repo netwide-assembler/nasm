@@ -146,45 +146,40 @@ assemble.o: assemble.c insns.h assemble.h regvals.c nasm.h regs.h insnsi.h \
  nasmlib.h version.h
 disasm.o: disasm.c insns.h regs.c sync.h names.c nasm.h disasm.h regs.h \
  insnsn.c insnsi.h version.h regdis.c
-eval.o: eval.c nasm.h regs.h labels.h insnsi.h nasmlib.h version.h eval.h
-float.o: float.c nasm.h regs.h insnsi.h version.h
+eval.o: eval.c nasm.h regs.h labels.h nasmlib.h version.h eval.h
+float.o: float.c nasm.h regs.h version.h
 insnsa.o: insnsa.c insns.h nasm.h regs.h insnsi.h version.h
 insnsd.o: insnsd.c insns.h nasm.h regs.h insnsi.h version.h
 insnsn.o: insnsn.c
-labels.o: labels.c nasm.h regs.h insnsi.h nasmlib.h version.h
-listing.o: listing.c listing.h nasm.h regs.h insnsi.h nasmlib.h version.h
+labels.o: labels.c nasm.h regs.h nasmlib.h version.h
+listing.o: listing.c listing.h nasm.h regs.h nasmlib.h version.h
 macros.o: macros.c
 names.o: names.c regs.c insnsn.c
 nasm.o: nasm.c listing.h preproc.h insns.h outform.h assemble.h parser.h \
  nasm.h regs.h labels.h insnsi.h nasmlib.h version.h eval.h
-nasmlib.o: nasmlib.c regs.c names.c nasm.h regs.h insnsn.c insnsi.h \
+nasmlib.o: nasmlib.c insns.h regs.c names.c nasm.h regs.h insnsn.c insnsi.h \
  nasmlib.h version.h
 ndisasm.o: ndisasm.c insns.h sync.h nasm.h disasm.h regs.h insnsi.h \
  nasmlib.h version.h
-outform.o: outform.c outform.h nasm.h regs.h insnsi.h version.h
-output/outaout.o: output/outaout.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outas86.o: output/outas86.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outbin.o: output/outbin.c outform.h nasm.h regs.h insnsi.h nasmlib.h \
+outform.o: outform.c outform.h nasm.h regs.h version.h
+output/outaout.o: output/outaout.c outform.h nasm.h regs.h nasmlib.h \
  version.h
-output/outcoff.o: output/outcoff.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outdbg.o: output/outdbg.c outform.h nasm.h regs.h insnsi.h nasmlib.h \
+output/outas86.o: output/outas86.c outform.h nasm.h regs.h nasmlib.h \
  version.h
-output/outelf.o: output/outelf.c outform.h nasm.h regs.h insnsi.h nasmlib.h \
+output/outbin.o: output/outbin.c outform.h nasm.h regs.h nasmlib.h version.h
+output/outcoff.o: output/outcoff.c outform.h nasm.h regs.h nasmlib.h \
  version.h
-output/outieee.o: output/outieee.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outobj.o: output/outobj.c outform.h nasm.h regs.h insnsi.h nasmlib.h \
+output/outdbg.o: output/outdbg.c outform.h nasm.h regs.h nasmlib.h version.h
+output/outelf.o: output/outelf.c outform.h nasm.h regs.h nasmlib.h version.h
+output/outieee.o: output/outieee.c outform.h nasm.h regs.h nasmlib.h \
  version.h
-output/outrdf.o: output/outrdf.c outform.h nasm.h regs.h insnsi.h nasmlib.h \
+output/outobj.o: output/outobj.c outform.h nasm.h regs.h nasmlib.h version.h
+output/outrdf.o: output/outrdf.c outform.h nasm.h regs.h nasmlib.h version.h
+output/outrdf2.o: output/outrdf2.c outform.h nasm.h regs.h nasmlib.h \
  version.h
-output/outrdf2.o: output/outrdf2.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-parser.o: parser.c parser.h nasm.h regs.h insnsi.h regflags.c float.h \
- nasmlib.h version.h
-preproc.o: preproc.c nasm.h macros.c regs.h insnsi.h nasmlib.h version.h
+parser.o: parser.c insns.h parser.h nasm.h regs.h insnsi.h regflags.c \
+ float.h nasmlib.h version.h
+preproc.o: preproc.c nasm.h macros.c regs.h nasmlib.h version.h
 regdis.o: regdis.c
 regflags.o: regflags.c
 regs.o: regs.c

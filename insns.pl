@@ -69,7 +69,6 @@ if ( !defined($output) || $output eq 'a' ) {
     
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print A "#include <stdio.h>\n";
     print A "#include \"nasm.h\"\n";
     print A "#include \"insns.h\"\n";
     print A "\n";
@@ -98,7 +97,6 @@ if ( !defined($output) || $output eq 'd' ) {
     
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print D "#include <stdio.h>\n";
     print D "#include \"nasm.h\"\n";
     print D "#include \"insns.h\"\n";
     print D "\n";

@@ -89,48 +89,45 @@ assemble.$(OBJ): assemble.c insns.h assemble.h regvals.c nasm.h regs.h \
  insnsi.h nasmlib.h version.h
 disasm.$(OBJ): disasm.c insns.h regs.c sync.h names.c nasm.h disasm.h regs.h \
  insnsn.c insnsi.h version.h regdis.c
-eval.$(OBJ): eval.c nasm.h regs.h labels.h insnsi.h nasmlib.h version.h \
- eval.h
-float.$(OBJ): float.c nasm.h regs.h insnsi.h version.h
+eval.$(OBJ): eval.c nasm.h regs.h labels.h nasmlib.h version.h eval.h
+float.$(OBJ): float.c nasm.h regs.h version.h
 insnsa.$(OBJ): insnsa.c insns.h nasm.h regs.h insnsi.h version.h
 insnsd.$(OBJ): insnsd.c insns.h nasm.h regs.h insnsi.h version.h
 insnsn.$(OBJ): insnsn.c
-labels.$(OBJ): labels.c nasm.h regs.h insnsi.h nasmlib.h version.h
-listing.$(OBJ): listing.c listing.h nasm.h regs.h insnsi.h nasmlib.h \
- version.h
+labels.$(OBJ): labels.c nasm.h regs.h nasmlib.h version.h
+listing.$(OBJ): listing.c listing.h nasm.h regs.h nasmlib.h version.h
 macros.$(OBJ): macros.c
 names.$(OBJ): names.c regs.c insnsn.c
 nasm.$(OBJ): nasm.c listing.h preproc.h insns.h outform.h assemble.h \
  parser.h nasm.h regs.h labels.h insnsi.h nasmlib.h version.h eval.h
-nasmlib.$(OBJ): nasmlib.c regs.c names.c nasm.h regs.h insnsn.c insnsi.h \
- nasmlib.h version.h
+nasmlib.$(OBJ): nasmlib.c insns.h regs.c names.c nasm.h regs.h insnsn.c \
+ insnsi.h nasmlib.h version.h
 ndisasm.$(OBJ): ndisasm.c insns.h sync.h nasm.h disasm.h regs.h insnsi.h \
  nasmlib.h version.h
-outform.$(OBJ): outform.c outform.h nasm.h regs.h insnsi.h version.h
-output/outaout.$(OBJ): output/outaout.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outas86.$(OBJ): output/outas86.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outbin.$(OBJ): output/outbin.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outcoff.$(OBJ): output/outcoff.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outdbg.$(OBJ): output/outdbg.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outelf.$(OBJ): output/outelf.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outieee.$(OBJ): output/outieee.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outobj.$(OBJ): output/outobj.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outrdf.$(OBJ): output/outrdf.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-output/outrdf2.$(OBJ): output/outrdf2.c outform.h nasm.h regs.h insnsi.h \
- nasmlib.h version.h
-parser.$(OBJ): parser.c parser.h nasm.h regs.h insnsi.h regflags.c float.h \
- nasmlib.h version.h
-preproc.$(OBJ): preproc.c nasm.h macros.c regs.h insnsi.h nasmlib.h \
+outform.$(OBJ): outform.c outform.h nasm.h regs.h version.h
+output/outaout.$(OBJ): output/outaout.c outform.h nasm.h regs.h nasmlib.h \
  version.h
+output/outas86.$(OBJ): output/outas86.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outbin.$(OBJ): output/outbin.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outcoff.$(OBJ): output/outcoff.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outdbg.$(OBJ): output/outdbg.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outelf.$(OBJ): output/outelf.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outieee.$(OBJ): output/outieee.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outobj.$(OBJ): output/outobj.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outrdf.$(OBJ): output/outrdf.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+output/outrdf2.$(OBJ): output/outrdf2.c outform.h nasm.h regs.h nasmlib.h \
+ version.h
+parser.$(OBJ): parser.c insns.h parser.h nasm.h regs.h insnsi.h regflags.c \
+ float.h nasmlib.h version.h
+preproc.$(OBJ): preproc.c nasm.h macros.c regs.h nasmlib.h version.h
 regdis.$(OBJ): regdis.c
 regflags.$(OBJ): regflags.c
 regs.$(OBJ): regs.c

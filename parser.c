@@ -15,6 +15,7 @@
 #include <ctype.h>
 
 #include "nasm.h"
+#include "insns.h"
 #include "nasmlib.h"
 #include "parser.h"
 #include "float.h"

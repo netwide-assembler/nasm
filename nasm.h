@@ -11,6 +11,7 @@
 #ifndef NASM_NASM_H
 #define NASM_NASM_H
 
+#include <stdio.h>
 #include "version.h"		       /* generated NASM version macros */
 
 #ifndef NULL
@@ -431,16 +432,6 @@ enum {
 		
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
-
-/* Instruction names automatically generated from insns.dat */
-#include "insnsi.h"
-
-/* max length of any instruction, register name etc. */
-#if MAX_INSLEN > 9
-#define MAX_KEYWORD MAX_INSLEN
-#else
-#define MAX_KEYWORD 9
-#endif
 
 enum {				       /* condition code names */
     C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,

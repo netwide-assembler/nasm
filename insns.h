@@ -10,6 +10,15 @@
 #ifndef NASM_INSNS_H
 #define NASM_INSNS_H
 
+#include "insnsi.h"		       /* instruction opcode enum */
+
+/* max length of any instruction, register name etc. */
+#if MAX_INSLEN > 9		/* MAX_INSLEN defined in insnsi.h */
+#define MAX_KEYWORD MAX_INSLEN
+#else
+#define MAX_KEYWORD 9
+#endif
+
 struct itemplate {
     int opcode;			       /* the token, passed from "parser.c" */
     int operands;		       /* number of operands */

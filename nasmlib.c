@@ -13,6 +13,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "insns.h"		/* For MAX_KEYWORD */
 
 static efunc nasm_malloc_error;
 
