@@ -1749,6 +1749,52 @@ You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
 
+\S{xdefine} Enhancing %define: \I\c{%xidefine}\i\c{%xdefine}
+
+To have a reference to an embedded single-line macro resolved at the
+time that it is embedded, as opposed to when the calling macro is
+expanded, you need a different mechanism to the one offered by
+\c{%define}. The solution is to use \c{%xdefine}, or it's
+\I{case sensitive}case-insensitive counterpart \c{%xidefine}.
+
+Suppose you have the following code:
+
+\c %define  isTrue  1
+\c %define  isFalse isTrue
+\c %define  isTrue  0
+\c
+\c val1:    db      isFalse
+\c
+\c %define  isTrue  1
+\c
+\c val2:    db      isFalse
+
+In this case, \c{val1} is equal to 0, and \c{val2} is equal to 1.
+This is because, when a single-line macro is defined using
+\c{%define}, it is expanded only when it is called. As \c{isFalse}
+expands to \c{isTrue}, the expansion will be the current value of
+\c{isTrue}. The first time it is called that is 0, and the second
+time it is 1.
+
+If you wanted \c{isFalse} to expand to the value assigned to the
+embedded macro \c{isTrue} at the time that \c{isFalse} was defined,
+you need to change the above code to use \c{%xdefine}.
+
+\c %xdefine isTrue  1
+\c %xdefine isFalse isTrue
+\c %xdefine isTrue  0
+\c
+\c val1:    db      isFalse
+\c
+\c %xdefine isTrue  1
+\c
+\c val2:    db      isFalse
+
+Now, each time that \c{isFalse} is called, it expands to 1,
+as that is what the embedded macro \c{isTrue} expanded to at
+the time that \c{isFalse} was defined.
+
+
 \S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
 
 Individual tokens in single line macros can be concatenated, to produce
@@ -1808,7 +1854,7 @@ command-line using the `-u' option on the NASM command line: see
 \S{assign} \i{Preprocessor Variables}: \i\c{%assign}
 
 An alternative way to define single-line macros is by means of the
-\c{%assign} command (and its \i{case sensitive}case-insensitive
+\c{%assign} command (and its \I{case sensitive}case-insensitive
 counterpart \i\c{%iassign}, which differs from \c{%assign} in
 exactly the same way that \c{%idefine} differs from \c{%define}).
 
