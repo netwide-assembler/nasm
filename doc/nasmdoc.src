@@ -5810,7 +5810,8 @@ form of the instruction.
 \c ADDPS xmmreg,xmmreg           ; 0f 58 /r     [KATMAI,SSE]
 
 \c{ADDPS} performs addition on each of four packed SP FP
-number items dst(0-31):=dst(0-31)+src(0-31), ..(63-32), etc.
+number items dst(0-31):=dst(0-31)+src(0-31)
+, ..(63-32), etc.
 
 \H{insADDSS} \i\c{ADDSS}: Scalar Single FP ADD
 
@@ -6219,13 +6220,17 @@ first unequal or equal byte is found.
 EQ, LT, LE, UNORD, NEQ, NLT, NLE, ORD
 
 
-\H{insCMPUNORDPS} \i\c{CMPUNORDPS}: Packed Single FP Compare (CMPPS)
+\H{insCMPUNORDPS} \i\c{CMPUNORDPS}: Packed Single FP Compare
+
+ (CMPPS)
 
 \c CMPUNORDPS xmmreg,memory           ; ??         [KATMAI,SSE] 
 \c CMPUNORDPS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 
 
 
-\H{insCMPUNORDSS} \i\c{CMPUNORDSS}: Scalar Single FP Compare (CMPSS)
+\H{insCMPUNORDSS} \i\c{CMPUNORDSS}: Scalar Single FP Compare
+
+ (CMPSS)
 
 \c CMPUNORDSS xmmreg,memory           ; ??         [KATMAI,SSE] 
 \c CMPUNORDSS xmmreg,xmmreg           ; ??         [KATMAI,SSE] 

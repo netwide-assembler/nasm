@@ -152,7 +152,7 @@ static int jmp_match (long segment, long offset, int bits,
 
 
     if (c != 0370) return 0;
-    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return (! pass0); /*1;*/        /* match a forward reference */
+    if (ins->oprs[0].opflags & OPFLAG_FORWARD) return (!pass0);	/* match a forward reference */
     
     isize = calcsize (segment, offset, bits, ins, code);
     if (ins->oprs[0].segment != segment) return 0;
@@ -546,7 +546,7 @@ static int is_sbyte (insn *ins, int op, int size)
     int ret;
     
     ret = !(ins->forw_ref && ins->oprs[op].opflags ) &&	/* dead in the water on forward reference or External */
-          !(ins->oprs[op].type & (BITS16|BITS32)) &&    /* John Coffman's 3/24/01 patch - fbk - 10/16/01 */
+          (optimizing || !(ins->oprs[op].type & (BITS16|BITS32))) &&
           ins->oprs[op].wrt==NO_SEG && ins->oprs[op].segment==NO_SEG;
 
     v = ins->oprs[op].offset;
@@ -791,7 +791,7 @@ static void gencode (long segment, long offset, int bits,
 	    data = ins->oprs[c-034].offset;
 	    size = ((ins->oprs[c-034].addr_size ?
 		     ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4);
-	    if (size==16 && (data < -65536L || data > 65535L))
+	    if (size==2 && (data < -65536L || data > 65535L))
 		errfunc (ERR_WARNING, "word value exceeds bounds");
 	    out (offset, segment, &data, OUT_ADDRESS+size,
 		 ins->oprs[c-034].segment, ins->oprs[c-034].wrt);

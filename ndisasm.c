@@ -27,7 +27,7 @@ static const char *help =
 "   -u sets USE32 (32-bit mode)\n"
 "   -b 16 or -b 32 sets number of bits too\n"
 "   -h displays this text\n"
-"   -r displays the version number\n"
+"   -r or -v displays the version number\n"
 "   -e skips <bytes> bytes of header\n"
 "   -k avoids disassembling <bytes> bytes from position <start>\n"
 "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
@@ -42,7 +42,8 @@ int main(int argc, char **argv)
     char *pname = *argv;
     char *filename = NULL;
     unsigned long nextsync, synclen, initskip = 0L;
-    int lenread, lendis;
+    int lenread;
+    long lendis;
     int autosync = FALSE;
     int bits = 16;
     int eof = FALSE;
@@ -68,7 +69,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, help);
 		return 0;
 	      case 'r':
-		fprintf(stderr, "NDISASM version " NASM_VER "\n");
+              case 'v':
+                fprintf(stderr, "NDISASM version %s compiled " __DATE__ "\n", NASM_VER);
 		return 0;
 	      case 'u':		       /* USE32 */
 		bits = 32;
@@ -181,6 +183,10 @@ int main(int argc, char **argv)
 		}
 		p = "";		       /* force to next argument */
 		break;
+	    default:							/*bf*/
+		fprintf(stderr, "%s: unrecognised option `-%c'\n",
+			pname, *p);
+		return 1;
 	    }
 	} else if (!filename) {
 	    filename = p;
@@ -227,7 +233,7 @@ int main(int argc, char **argv)
 	} else
 	    lenread = 0;
 	p += lenread;
-	if (offset == nextsync) {
+	if ((unsigned long)offset == nextsync) {
 	    if (synclen) {
 		printf("%08lX  skipping 0x%lX bytes\n", offset, synclen);
 		offset += synclen;
@@ -239,7 +245,7 @@ int main(int argc, char **argv)
 	while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
 	    lendis = disasm (q, outbuf, bits, offset, autosync, prefer);
 	    if (!lendis || lendis > (p - q) ||
-		lendis > nextsync-offset)
+		(unsigned long)lendis > nextsync-offset)
 		lendis = eatbyte (q, outbuf);
 	    output_ins (offset, q, lendis, outbuf);
 	    q += lendis;

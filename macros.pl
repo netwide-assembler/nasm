@@ -6,7 +6,8 @@
 # Julian Hall. All rights reserved. The software is
 # redistributable under the licence given in the file "Licence"
 # distributed in the NASM archive.
-use strict;
+
+# use strict; # if your PERL's got it
 
 my $fname;
 my $line = 0;

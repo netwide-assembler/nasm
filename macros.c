@@ -1,6 +1,12 @@
 /* This file auto-generated from standard.mac by macros.pl - don't edit it */
 
 static char *stdmac[] = {
+    "%idefine IDEAL",
+    "%idefine JUMPS",
+    "%idefine P386",
+    "%idefine P486",
+    "%idefine P586",
+    "%idefine END",
     "%define __NASM_MAJOR__ 0",
     "%define __NASM_MINOR__ 98",
     "%define __FILE__",
@@ -57,6 +63,12 @@ static char *stdmac[] = {
     "%imacro bits 1+.nolist",
     "[bits %1]",
     "%endmacro",
+    "%imacro use16 0.nolist",
+    "[bits 16]",
+    "%endmacro",
+    "%imacro use32 0.nolist",
+    "[bits 32]",
+    "%endmacro",
     "%imacro global 1-*.nolist",
     "%rep %0",
     "[global %1]",
@@ -69,5 +81,9 @@ static char *stdmac[] = {
     "%rotate 1",
     "%endrep",
     "%endmacro",
+    "%imacro cpu 1+.nolist",
+    "[cpu %1]",
+    "%endmacro",
     NULL
 };
+#define TASM_MACRO_COUNT 6

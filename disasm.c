@@ -377,12 +377,22 @@ static int matches (struct itemplate *t, unsigned char *data, int asize,
 	    ins->oprs[c-070].offset |= (((long) *data++) << 24);
 	    ins->oprs[c-070].segment |= SEG_32BIT | SEG_RELATIVE;
 	}
-	if (c >= 0100 && c <= 0177) {
+	if (c >= 0100 && c < 0130) {
 	    int modrm = *data++;
 	    ins->oprs[c & 07].basereg = (modrm >> 3) & 07;
 	    ins->oprs[c & 07].segment |= SEG_RMREG;
 	    data = do_ea (data, modrm, asize, segsize,
 			  &ins->oprs[(c >> 3) & 07]);
+	}
+	if (c >= 0130 && c <= 0132) {
+	    ins->oprs[c-0130].offset = *data++;
+	    ins->oprs[c-0130].offset |= (*data++ << 8);
+	}
+	if (c >= 0140 && c <= 0142) {
+	    ins->oprs[c-0140].offset = *data++;
+	    ins->oprs[c-0140].offset |= (*data++ << 8);
+	    ins->oprs[c-0140].offset |= (((long) *data++) << 16);
+	    ins->oprs[c-0140].offset |= (((long) *data++) << 24);
 	}
 	if (c >= 0200 && c <= 0277) {
 	    int modrm = *data++;

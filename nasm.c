@@ -51,7 +51,7 @@ static struct ofmt *ofmt = NULL;
 static FILE *error_file;	       /* Where to write error messages */
 
 static FILE *ofile = NULL;
-static int optimizing = 0;		/* number of optimization passes to take */
+int optimizing = 0;		/* number of optimization passes to take */
 static int sb, cmd_sb = 16;		       /* by default */
 static unsigned long cmd_cpu = IF_PLEVEL;	/* highest level by default */
 static unsigned long cpu = IF_PLEVEL;		/* passed to insn_size & assemble.c */
@@ -429,15 +429,15 @@ static int process_arg (char *p, char *q)
 		   "    or nasm -r   for version info (obsolete)\n"
 		   "    or nasm -v   for version info (preferred)\n\n"
 		   "    -t          Assemble in SciTech TASM compatible mode\n"
-		   "    -g          Generate debug information in selected format.\n"
-		   "    -e          preprocess only (writes output to stdout by default)\n"
+		   "    -g          Generate debug information in selected format.\n");
+	    printf("    -e          preprocess only (writes output to stdout by default)\n"
 		   "    -a          don't preprocess (assemble only)\n"
 		   "    -M          generate Makefile dependencies on stdout\n\n"
 		   "    -E<file>    redirect error messages to file\n"
 		   "    -s          redirect error messages to stdout\n\n"
 		   "    -F format   select a debugging format\n\n"
-		   "    -I<path>    adds a pathname to the include file path\n"
-		   "    -O<digit>   optimize branch offsets (-O0 disables, default)\n"
+		   "    -I<path>    adds a pathname to the include file path\n");
+	    printf("    -O<digit>   optimize branch offsets (-O0 disables, default)\n"
 		   "    -P<file>    pre-includes a file\n"
 		   "    -D<macro>[=<value>] pre-defines a macro\n"
 		   "    -U<macro>   undefines a macro\n"
