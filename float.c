@@ -25,9 +25,10 @@
  * => we only have to worry about _one_ bit shift to the left
  */
 
-static int multiply(unsigned short *to, unsigned short *from) {
+static int multiply(unsigned short *to, unsigned short *from) 
+{
     unsigned long temp[MANT_WORDS*2];
-    int i, j;
+    int           i, j;
 
     for (i=0; i<MANT_WORDS*2; i++)
 	temp[i] = 0;
@@ -56,11 +57,14 @@ static int multiply(unsigned short *to, unsigned short *from) {
 }
 
 static void flconvert(char *string, unsigned short *mant, long *exponent,
-		      efunc error) {
-    char digits[MANT_DIGITS], *p, *q, *r;
-    unsigned short mult[MANT_WORDS], *m, bit;
-    long tenpwr, twopwr;
-    int extratwos, started, seendot;
+		      efunc error) 
+{
+    char           digits[MANT_DIGITS];
+    char           *p, *q, *r;
+    unsigned short mult[MANT_WORDS], bit;
+    unsigned short * m;
+    long           tenpwr, twopwr;
+    int            extratwos, started, seendot;
 
     p = digits;
     tenpwr = 0;
@@ -179,9 +183,10 @@ static void flconvert(char *string, unsigned short *mant, long *exponent,
 /*
  * Shift a mantissa to the right by i (i < 16) bits.
  */
-static void shr(unsigned short *mant, int i) {
+static void shr(unsigned short *mant, int i) 
+{
     unsigned short n = 0, m;
-    int j;
+    int            j;
 
     for (j=0; j<MANT_WORDS; j++) {
 	m = (mant[j] << (16-i)) & 0xFFFF;
@@ -193,7 +198,8 @@ static void shr(unsigned short *mant, int i) {
 /*
  * Round a mantissa off after i words.
  */
-static int round(unsigned short *mant, int i) {
+static int round(unsigned short *mant, int i) 
+{
     if (mant[i] & 0x8000) {
 	do {
 	    ++mant[--i];
@@ -207,7 +213,8 @@ static int round(unsigned short *mant, int i) {
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
 static int to_double(char *str, long sign, unsigned char *result,
-		     efunc error) {
+		     efunc error) 
+{
     unsigned short mant[MANT_WORDS];
     long exponent;
 
@@ -267,7 +274,8 @@ static int to_double(char *str, long sign, unsigned char *result,
 }
 
 static int to_float(char *str, long sign, unsigned char *result,
-		    efunc error) {
+		    efunc error) 
+{
     unsigned short mant[MANT_WORDS];
     long exponent;
 
@@ -320,7 +328,8 @@ static int to_float(char *str, long sign, unsigned char *result,
 }
 
 static int to_ldoub(char *str, long sign, unsigned char *result,
-		    efunc error) {
+		    efunc error) 
+{
     unsigned short mant[MANT_WORDS];
     long exponent;
 
@@ -379,7 +388,8 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
 }
 
 int float_const (char *number, long sign, unsigned char *result, int bytes,
-		 efunc error) {
+		 efunc error) 
+{
     if (bytes == 4)
 	return to_float (number, sign, result, error);
     else if (bytes == 8)

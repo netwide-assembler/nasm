@@ -12,8 +12,8 @@
 #define NASM_NASM_H
 
 #define NASM_MAJOR_VER 0
-#define NASM_MINOR_VER 97
-#define NASM_VER "0.97"
+#define NASM_MINOR_VER 98
+#define NASM_VER "0.98 pre-release J4"
 
 #ifndef NULL
 #define NULL 0
@@ -72,9 +72,6 @@ typedef void (*efunc) (int severity, char *fmt, ...);
 #define ERR_MASK 0x0F		       /* mask off the above codes */
 #define ERR_NOFILE 0x10		       /* don't give source file name/line */
 #define ERR_USAGE 0x20		       /* print a usage message */
-#define ERR_OFFBY1 0x40		       /* report error as being on the line 
-					* we're just _about_ to read, not
-					* the one we've just read */
 #define ERR_PASS1 0x80		       /* only print this error on pass one */
 
 /*
@@ -205,6 +202,12 @@ enum {				       /* token types, other than chars */
     TOKEN_FLOAT			       /* floating-point constant */
 };
 
+typedef struct {
+    long segment;
+    long offset;
+    int  known;
+} loc_t;
+
 /*
  * Expression-evaluator datatype. Expressions, within the
  * evaluator, are stored as an array of these beasts, terminated by
@@ -261,13 +264,6 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate, struct tokenval *tv,
 			   struct eval_hints *hints);
 
 /*
- * There's also an auxiliary routine through which the evaluator
- * needs to hear about the value of $ and the label (if any)
- * defined on the current line.
- */
-typedef void (*evalinfofunc) (char *labelname, long segment, long offset);
-
-/*
  * Special values for expr->type. ASSUMPTION MADE HERE: the number
  * of distinct register names (i.e. possible "type" fields for an
  * expr structure) does not exceed 124 (EXPR_REG_START through
@@ -311,11 +307,13 @@ typedef struct {
  * ----------------------------------------------------------------
  */
 
-/* isidstart matches any character that may start an identifier, and isidchar
+/*
+ * isidstart matches any character that may start an identifier, and isidchar
  * matches any character that may appear at places other than the start of an
  * identifier. E.g. a period may only appear at the start of an identifier
  * (for local labels), whereas a number may appear anywhere *but* at the
- * start. */
+ * start. 
+ */
 
 #define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
                                   || (c)=='@' )
@@ -439,7 +437,9 @@ enum {				       /* instruction names */
     I_FCMOVBE, I_FCMOVE, I_FCMOVNB, I_FCMOVNBE, I_FCMOVNE,
     I_FCMOVNU, I_FCMOVU, I_FCOM, I_FCOMI, I_FCOMIP, I_FCOMP,
     I_FCOMPP, I_FCOS, I_FDECSTP, I_FDISI, I_FDIV, I_FDIVP, I_FDIVR,
-    I_FDIVRP, I_FENI, I_FFREE, I_FIADD, I_FICOM, I_FICOMP, I_FIDIV,
+    I_FDIVRP,
+    I_FEMMS,
+    I_FENI, I_FFREE, I_FIADD, I_FICOM, I_FICOMP, I_FIDIV,
     I_FIDIVR, I_FILD, I_FIMUL, I_FINCSTP, I_FINIT, I_FIST, I_FISTP,
     I_FISUB, I_FISUBR, I_FLD, I_FLD1, I_FLDCW, I_FLDENV, I_FLDL2E,
     I_FLDL2T, I_FLDLG2, I_FLDLN2, I_FLDPI, I_FLDZ, I_FMUL, I_FMULP,
@@ -451,7 +451,7 @@ enum {				       /* instruction names */
     I_FUCOMI, I_FUCOMIP, I_FUCOMP, I_FUCOMPP, I_FXAM, I_FXCH,
     I_FXTRACT, I_FYL2X, I_FYL2XP1, I_HLT, I_IBTS, I_ICEBP, I_IDIV,
     I_IMUL, I_IN, I_INC, I_INCBIN, I_INSB, I_INSD, I_INSW, I_INT,
-    I_INT1, I_INT01, I_INT3, I_INTO, I_INVD, I_INVLPG, I_IRET,
+    I_INT01, I_INT1, I_INT3, I_INTO, I_INVD, I_INVLPG, I_IRET,
     I_IRETD, I_IRETW, I_JCXZ, I_JECXZ, I_JMP, I_LAHF, I_LAR, I_LDS,
     I_LEA, I_LEAVE, I_LES, I_LFS, I_LGDT, I_LGS, I_LIDT, I_LLDT,
     I_LMSW, I_LOADALL, I_LOADALL286, I_LODSB, I_LODSD, I_LODSW,
@@ -460,12 +460,18 @@ enum {				       /* instruction names */
     I_MOVSX, I_MOVZX, I_MUL, I_NEG, I_NOP, I_NOT, I_OR, I_OUT,
     I_OUTSB, I_OUTSD, I_OUTSW, I_PACKSSDW, I_PACKSSWB, I_PACKUSWB,
     I_PADDB, I_PADDD, I_PADDSB, I_PADDSIW, I_PADDSW, I_PADDUSB,
-    I_PADDUSW, I_PADDW, I_PAND, I_PANDN, I_PAVEB, I_PCMPEQB,
+    I_PADDUSW, I_PADDW, I_PAND, I_PANDN, I_PAVEB, 
+    I_PAVGUSB, I_PCMPEQB,
     I_PCMPEQD, I_PCMPEQW, I_PCMPGTB, I_PCMPGTD, I_PCMPGTW,
-    I_PDISTIB, I_PMACHRIW, I_PMADDWD, I_PMAGW, I_PMULHRW,
-    I_PMULHRIW, I_PMULHW, I_PMULLW, I_PMVGEZB, I_PMVLZB, I_PMVNZB,
+    I_PDISTIB,
+    I_PF2ID, I_PFACC, I_PFADD, I_PFCMPEQ, I_PFCMPGE, I_PFCMPGT,
+    I_PFMAX, I_PFMIN, I_PFMUL, I_PFRCP, I_PFRCPIT1, I_PFRCPIT2,
+    I_PFRSQIT1, I_PFRSQRT, I_PFSUB, I_PFSUBR, I_PI2FD,
+    I_PMACHRIW, I_PMADDWD, I_PMAGW,  I_PMULHRIW, I_PMULHRWA,
+    I_PMULHRWC, I_PMULHW, I_PMULLW, I_PMVGEZB, I_PMVLZB, I_PMVNZB,
     I_PMVZB, I_POP, I_POPA, I_POPAD, I_POPAW, I_POPF, I_POPFD,
-    I_POPFW, I_POR, I_PSLLD, I_PSLLQ, I_PSLLW, I_PSRAD, I_PSRAW,
+    I_POPFW, I_POR, I_PREFETCH, I_PREFETCHW,
+    I_PSLLD, I_PSLLQ, I_PSLLW, I_PSRAD, I_PSRAW,
     I_PSRLD, I_PSRLQ, I_PSRLW, I_PSUBB, I_PSUBD, I_PSUBSB,
     I_PSUBSIW, I_PSUBSW, I_PSUBUSB, I_PSUBUSW, I_PSUBW, I_PUNPCKHBW,
     I_PUNPCKHDQ, I_PUNPCKHWD, I_PUNPCKLBW, I_PUNPCKLDQ, I_PUNPCKLWD,
@@ -479,6 +485,8 @@ enum {				       /* instruction names */
     I_WAIT, I_WBINVD, I_WRMSR, I_XADD, I_XBTS, I_XCHG, I_XLATB,
     I_XOR, I_CMOVcc, I_Jcc, I_SETcc
 };
+
+#define MAX_KEYWORD 9  /* max length of any instruction, register name etc. */
 
 enum {				       /* condition code names */
     C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,
@@ -522,7 +530,11 @@ typedef struct {		       /* operand to an instruction */
     long offset;		       /* any immediate number */
     long wrt;			       /* segment base it's relative to */
     int eaflags;		       /* special EA flags */
+    int opflags;		       /* see OPFLAG_* defines below */
 } operand;
+
+#define OPFLAG_FORWARD		1      /* operand is a forward reference */
+#define OPFLAG_EXTERN		2      /* operand is an external reference */
 
 typedef struct extop {		       /* extended operand */
     struct extop *next;		       /* linked list */
@@ -542,13 +554,16 @@ typedef struct {		       /* an instruction itself */
     int nprefix;		       /* number of entries in above */
     int opcode;			       /* the opcode - not just the string */
     int condition;		       /* the condition code, if Jcc/SETcc */
-    int operands;		       /* how many operands? 0-3 */
+    int operands;		       /* how many operands? 0-3 
+                                        * (more if db et al) */
     operand oprs[3];	   	       /* the operands, defined as above */
     extop *eops;		       /* extended operands */
+    int eops_float;                    /* true if DD and floating */
     long times;			       /* repeat count (TIMES prefix) */
     int forw_ref;		       /* is there a forward reference? */
 } insn;
 
+enum geninfo { GI_SWITCH };
 /*
  * ------------------------------------------------------------
  * The data structure defining an output format driver, and the
@@ -569,6 +584,27 @@ struct ofmt {
     char *shortname;
 
     /*
+     * this is reserved for out module specific help.
+     * It is set to NULL in all the out modules but is not implemented
+     * in the main program
+     */
+    char *helpstring;
+
+    /*
+     * this is a pointer to the first element of the debug information
+     */
+    struct dfmt **debug_formats;
+
+    /*
+     * and a pointer to the element that is being used
+     * note: this is set to the default at compile time and changed if the
+     * -F option is selected.  If developing a set of new debug formats for
+     * an output format, be sure to set this to whatever default you want
+     *
+     */
+    struct dfmt *current_dfmt;
+
+    /*
      * This, if non-NULL, is a NULL-terminated list of `char *'s
      * pointing to extra standard macros supplied by the object
      * format (e.g. a sensible initial default value of __SECT__,
@@ -585,6 +621,15 @@ struct ofmt {
      * It also gives it a chance to do other initialisation.
      */
     void (*init) (FILE *fp, efunc error, ldfunc ldef, evalfunc eval);
+
+    /*
+     * This procedure is called to pass generic information to the
+     * object file.  The first parameter gives the information type
+     * (currently only command line switches)
+     * and the second parameter gives the value.  This function returns
+     * 1 if recognized, 0 if unrecognized
+     */
+    int (*setinfo)(enum geninfo type, char **string);
 
     /*
      * This procedure is called by assemble() to write actual
@@ -705,7 +750,7 @@ struct ofmt {
      * One thing the cleanup routine should always do is to close
      * the output file pointer.
      */
-    void (*cleanup) (void);
+    void (*cleanup) (int debuginfo);
 };
 
 /*
@@ -734,6 +779,103 @@ struct ofmt {
 #define OUT_TYPMASK 0xF0000000UL
 #define OUT_SIZMASK 0x0FFFFFFFUL
 
+/*
+ * ------------------------------------------------------------
+ * The data structure defining a debug format driver, and the
+ * interfaces to the functions therein.
+ * ------------------------------------------------------------
+ */
+
+struct dfmt {
+    
+    /*
+     * This is a short (one-liner) description of the type of
+     * output generated by the driver.
+     */
+    char *fullname;
+
+    /*
+     * This is a single keyword used to select the driver.
+     */
+    char *shortname;
+
+
+    /*
+     * init - called initially to set up local pointer to object format, 
+     * void pointer to implementation defined data, file pointer (which
+     * probably won't be used, but who knows?), and error function.
+     */
+    void (*init) (struct ofmt * of, void * id, FILE * fp, efunc error);
+
+    /*
+     * linenum - called any time there is output with a change of
+     * line number or file.
+     */
+    void (*linenum) (const char * filename, long linenumber, long segto);
+
+    /*
+     * debug_deflabel - called whenever a label is defined. Parameters
+     * are the same as to 'symdef()' in the output format. This function
+     * would be called before the output format version.
+     */
+
+    void (*debug_deflabel) (char * name, long segment, long offset,
+                            int is_global, char * special);
+    /*
+     * debug_directive - called whenever a DEBUG directive other than 'LINE'
+     * is encountered. 'directive' contains the first parameter to the
+     * DEBUG directive, and params contains the rest. For example,
+     * 'DEBUG VAR _somevar:int' would translate to a call to this
+     * function with 'directive' equal to "VAR" and 'params' equal to 
+     * "_somevar:int".
+     */
+    void (*debug_directive) (const char * directive, const char * params);
+
+    /*
+     * typevalue - called whenever the assembler wishes to register a type
+     * for the last defined label.  This routine MUST detect if a type was
+     * already registered and not re-register it.
+     */
+    void (*debug_typevalue) (long type);
+
+    /*
+     * debug_output - called whenever output is required
+     * 'type' is the type of info required, and this is format-specific
+     */
+    void (*debug_output) (int type, void *param);
+
+    /*
+     * cleanup - called after processing of file is complete
+     */
+    void (*cleanup) (void);
+
+};
+/*
+ * The type definition macros
+ * for debugging
+ *
+ * low 3 bits: reserved
+ * next 5 bits: type
+ * next 24 bits: number of elements for arrays (0 for labels)
+ */
+
+#define TY_UNKNOWN 0x00
+#define TY_LABEL   0x08
+#define TY_BYTE    0x10
+#define TY_WORD    0x18
+#define TY_DWORD   0x20
+#define TY_FLOAT   0x28
+#define TY_QWORD   0x30
+#define TY_TBYTE   0x38
+#define TY_COMMON  0xE0
+#define TY_SEG     0xE8
+#define TY_EXTERN  0xF0
+#define TY_EQU     0xF8
+
+#define TYM_TYPE(x) ((x) & 0xF8)
+#define TYM_ELEMENTS(x) (((x) & 0xFFFFFF00) >> 8)
+
+#define TYS_ELEMENTS(x)  ((x) << 8)
 /*
  * -----
  * Other

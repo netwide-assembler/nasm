@@ -42,7 +42,8 @@ static long data_align, bss_align;
 static long start_point;
 
 static void add_reloc (struct Section *s, long bytes, long secref,
-		       long secrel) {
+		       long secrel) 
+{
     struct Reloc *r;
 
     r = *reloctail = nasm_malloc(sizeof(struct Reloc));
@@ -55,8 +56,11 @@ static void add_reloc (struct Section *s, long bytes, long secref,
     r->target = s;
 }
 
-static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     fp = afp;
+
+    (void) eval;   /* Don't warn that this parameter is unused */
 
     error = errfunc;
     (void) ldef;		       /* placate optimisers */
@@ -74,9 +78,12 @@ static void bin_init (FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     data_align = bss_align = 4;
 }
 
-static void bin_cleanup (void) {
+static void bin_cleanup (int debuginfo) 
+{
     struct Reloc *r;
     long datapos, datagap, bsspos;
+
+    (void) debuginfo;
 
     datapos = start_point + textsect.length;
     datapos = (datapos + data_align-1) & ~(data_align-1);
@@ -87,7 +94,8 @@ static void bin_cleanup (void) {
     saa_rewind (textsect.contents);
     saa_rewind (datasect.contents);
 
-    for (r = relocs; r; r = r->next) {
+    for (r = relocs; r; r = r->next) 
+    {
 	unsigned char *p, *q, mydata[4];
 	long l;
 
@@ -141,7 +149,8 @@ static void bin_cleanup (void) {
 }
 
 static void bin_out (long segto, void *data, unsigned long type,
-		     long segment, long wrt) {
+		     long segment, long wrt) 
+{
     unsigned char *p, mydata[4];
     struct Section *s;
     long realbytes;
@@ -221,8 +230,10 @@ static void bin_out (long segto, void *data, unsigned long type,
 	    s->length += type;
 	} else
 	    bsslen += type;
-    } else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
-	       (type & OUT_TYPMASK) == OUT_REL4ADR) {
+    } 
+    else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
+	     (type & OUT_TYPMASK) == OUT_REL4ADR) 
+    {
 	realbytes = ((type & OUT_TYPMASK) == OUT_REL4ADR ? 4 : 2);
 	if (segment != NO_SEG &&
 	    segment != textsect.index &&
@@ -251,7 +262,11 @@ static void bin_out (long segto, void *data, unsigned long type,
 }
 
 static void bin_deflabel (char *name, long segment, long offset,
-			  int is_global, char *special) {
+			  int is_global, char *special) 
+{
+
+    (void) segment;   /* Don't warn that this parameter is unused */
+    (void) offset;    /* Don't warn that this parameter is unused */
 
     if (special)
 	error (ERR_NONFATAL, "binary format does not support any"
@@ -268,10 +283,13 @@ static void bin_deflabel (char *name, long segment, long offset,
     }
 }
 
-static long bin_secname (char *name, int pass, int *bits) {
+static long bin_secname (char *name, int pass, int *bits) 
+{
     int sec_index;
     long *sec_align;
     char *p;
+
+    (void) pass;   /* Don't warn that this parameter is unused */
 
     /*
      * Default is 16 bits.
@@ -318,12 +336,16 @@ static long bin_secname (char *name, int pass, int *bits) {
     return sec_index;
 }
 
-static long bin_segbase (long segment) {
+static long bin_segbase (long segment) 
+{
     return segment;
 }
 
-static int bin_directive (char *directive, char *value, int pass) {
+static int bin_directive (char *directive, char *value, int pass) 
+{
     int rn_error;
+
+    (void) pass;   /* Don't warn that this parameter is unused */
 
     if (!strcmp(directive, "org")) {
 	start_point = readnum (value, &rn_error);
@@ -334,7 +356,8 @@ static int bin_directive (char *directive, char *value, int pass) {
 	return 0;
 }
 
-static void bin_filename (char *inname, char *outname, efunc error) {
+static void bin_filename (char *inname, char *outname, efunc error) 
+{
     standard_extension (inname, outname, "", error);
 }
 
@@ -343,14 +366,24 @@ static char *bin_stdmac[] = {
     "%imacro org 1+.nolist",
     "[org %1]",
     "%endmacro",
+    "%macro __NASM_CDecl__ 1",
+    "%endmacro",
     NULL
 };
 
+static int bin_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
 struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     bin_stdmac,
     bin_init,
+    bin_set_info,
     bin_out,
     bin_deflabel,
     bin_secname,

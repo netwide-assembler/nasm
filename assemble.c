@@ -72,10 +72,10 @@ static ListGen *list;
 
 static long calcsize (long, long, int, insn *, char *);
 static void gencode (long, long, int, insn *, char *, long);
-static int regval (operand *o);
-static int matches (struct itemplate *, insn *);
-static ea *process_ea (operand *, ea *, int, int, int);
-static int chsize (operand *, int);
+static int  regval (operand *o);
+static int  matches (struct itemplate *, insn *);
+static ea * process_ea (operand *, ea *, int, int, int);
+static int  chsize (operand *, int);
 
 /*
  * This routine wrappers the real output format's output routine,
@@ -83,7 +83,11 @@ static int chsize (operand *, int);
  * generator at the same time.
  */
 static void out (long offset, long segto, void *data, unsigned long type,
-		 long segment, long wrt) {
+		 long segment, long wrt) 
+{
+    static long lineno;
+    static char *lnfname;
+
     if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
 	if (segment != NO_SEG || wrt != NO_SEG) {
 	    /*
@@ -91,7 +95,8 @@ static void out (long offset, long segto, void *data, unsigned long type,
 	     * OUT_ADDRESS, so there's no work to be done here.
 	     */
 	    list->output (offset, data, type);
-	} else {
+	} 
+	else {
 	    unsigned char p[4], *q = p;
 	    /*
 	     * This is a non-relocated address, and we're going to
@@ -100,90 +105,105 @@ static void out (long offset, long segto, void *data, unsigned long type,
 	    if ((type & OUT_SIZMASK) == 4) {
 		WRITELONG (q, * (long *) data);
 		list->output (offset, p, OUT_RAWDATA+4);
-	    } else {
+	    } 
+	    else {
 		WRITESHORT (q, * (long *) data);
 		list->output (offset, p, OUT_RAWDATA+2);
 	    }
 	}
-    } else if ((type & OUT_TYPMASK) == OUT_RAWDATA) {
+    } 
+    else if ((type & OUT_TYPMASK) == OUT_RAWDATA) {
 	list->output (offset, data, type);
-    } else if ((type & OUT_TYPMASK) == OUT_RESERVE) {
+    } 
+    else if ((type & OUT_TYPMASK) == OUT_RESERVE) {
 	list->output (offset, NULL, type);
-    } else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
+    } 
+    else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
 	       (type & OUT_TYPMASK) == OUT_REL4ADR) {
 	list->output (offset, data, type);
     }
+
+    if (src_get(&lineno,&lnfname))
+	outfmt->current_dfmt->linenum(lnfname,lineno,segto);
 
     outfmt->output (segto, data, type, segment, wrt);
 }
 
 long assemble (long segment, long offset, int bits,
 	       insn *instruction, struct ofmt *output, efunc error,
-	       ListGen *listgen) {
-    int j, size_prob;
-    long insn_end, itimes;
-    long start = offset;
+	       ListGen *listgen) 
+{
     struct itemplate *temp;
+    int    j;
+    int    size_prob;
+    long   insn_end;
+    long   itimes;
+    long   start = offset;
+    long   wsize = 0;		       /* size for DB etc. */
 
     errfunc = error;		       /* to pass to other functions */
     outfmt = output;		       /* likewise */
     list = listgen;		       /* and again */
 
-    if (instruction->opcode == -1)
-    	return 0;
+    switch (instruction->opcode) 
+    {
+	case   -1: return 0;
+	case I_DB: wsize = 1; break;
+	case I_DW: wsize = 2; break;
+	case I_DD: wsize = 4; break;
+	case I_DQ: wsize = 8; break;
+	case I_DT: wsize = 10; break;
+    }
 
-    if (instruction->opcode == I_DB ||
-	instruction->opcode == I_DW ||
-	instruction->opcode == I_DD ||
-	instruction->opcode == I_DQ ||
-	instruction->opcode == I_DT) {
-	extop *e;
-	long wsize = 0;		       /* placate gcc */
-	long t = instruction->times;
+    if (wsize) {
+	extop  * e;
+	long   t = instruction->times;
+	if (t < 0)
+	    errfunc(ERR_PANIC, "instruction->times < 0 (%ld) in assemble()",t);
 
-	switch (instruction->opcode) {
-	  case I_DB: wsize = 1; break;
-	  case I_DW: wsize = 2; break;
-	  case I_DD: wsize = 4; break;
-	  case I_DQ: wsize = 8; break;
-	  case I_DT: wsize = 10; break;
-	}
-
-	while (t--) {
-	    for (e = instruction->eops; e; e = e->next) {
-		if (e->type == EOT_DB_NUMBER) {
+	while (t--) 		       /* repeat TIMES times */
+	{
+	    for (e = instruction->eops; e; e = e->next) 
+	    {
+		if (e->type == EOT_DB_NUMBER) 
+		{
 		    if (wsize == 1) {
 			if (e->segment != NO_SEG)
 			    errfunc (ERR_NONFATAL,
 				     "one-byte relocation attempted");
 			else {
-			    unsigned char c = e->offset;
-			    out (offset, segment, &c, OUT_RAWDATA+1,
+			    out (offset, segment, &e->offset, OUT_RAWDATA+1,
 				 NO_SEG, NO_SEG);
 			}
-		    } else if (wsize > 5) {
+		    } 
+		    else if (wsize > 5) {
 			errfunc (ERR_NONFATAL, "integer supplied to a D%c"
 				 " instruction", wsize==8 ? 'Q' : 'T');
-		    } else
+		    } 
+		    else
 			out (offset, segment, &e->offset,
 			     OUT_ADDRESS+wsize, e->segment,
 			     e->wrt);
 		    offset += wsize;
-		} else if (e->type == EOT_DB_STRING) {
+		} 
+		else if (e->type == EOT_DB_STRING) 
+		{
 		    int align;
 
-		    align = (-e->stringlen) % wsize;
-		    if (align < 0)
-			align += wsize;
 		    out (offset, segment, e->stringval,
 			 OUT_RAWDATA+e->stringlen, NO_SEG, NO_SEG);
-		    if (align)
-			out (offset, segment, "\0\0\0\0",
+		    align = e->stringlen % wsize;
+
+		    if (align) {
+			align = wsize - align;
+			out (offset, segment, "\0\0\0\0\0\0\0\0",
 			     OUT_RAWDATA+align, NO_SEG, NO_SEG);
+			}
 		    offset += e->stringlen + align;
 		}
 	    }
-	    if (t > 0 && t == instruction->times-1) {
+	    if (t > 0 && t == instruction->times-1) 
+	    {
 		/*
 		 * Dummy call to list->output to give the offset to the
 		 * listing module.
@@ -197,29 +217,33 @@ long assemble (long segment, long offset, int bits,
 	return offset - start;
     }
 
-    if (instruction->opcode == I_INCBIN) {
+    if (instruction->opcode == I_INCBIN) 
+    {
 	static char fname[FILENAME_MAX];
-	FILE *fp;
-	long len;
+	FILE        * fp;
+	long        len;
 
 	len = FILENAME_MAX-1;
 	if (len > instruction->eops->stringlen)
 	    len = instruction->eops->stringlen;
 	strncpy (fname, instruction->eops->stringval, len);
 	fname[len] = '\0';
-	if (!(fp = fopen(fname, "rb")))
+
+	if ( (fp = fopen(fname, "rb")) == NULL)
 	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
 	else if (fseek(fp, 0L, SEEK_END) < 0)
 	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
 		   fname);
-	else {
+	else 
+	{
 	    static char buf[2048];
 	    long t = instruction->times;
-	    long l;
+	    long base = 0;
 
 	    len = ftell (fp);
 	    if (instruction->eops->next) {
-		len -= instruction->eops->next->offset;
+		base = instruction->eops->next->offset;
+		len -= base;
 		if (instruction->eops->next->next &&
 		    len > instruction->eops->next->next->offset)
 		    len = instruction->eops->next->next->offset;
@@ -230,11 +254,11 @@ long assemble (long segment, long offset, int bits,
 	     */
 	    list->output (offset, NULL, OUT_RAWDATA);
 	    list->uplevel(LIST_INCBIN);
-	    while (t--) {
-		fseek (fp, 
-		       (instruction->eops->next ?
-			instruction->eops->next->offset : 0),
-		       SEEK_SET);		
+	    while (t--) 
+	    {
+		long l;
+
+		fseek (fp, base, SEEK_SET);		
 		l = len;
 		while (l > 0) {
 		    long m = fread (buf, 1, (l>sizeof(buf)?sizeof(buf):l),
@@ -247,7 +271,8 @@ long assemble (long segment, long offset, int bits,
 			 */
 			error (ERR_NONFATAL, "`incbin': unexpected EOF while"
 			       " reading file `%s'", fname);
-			return 0;      /* it doesn't much matter... */
+			t=0;  /* Try to exit cleanly */
+			break;
 		    }
 		    out (offset, segment, buf, OUT_RAWDATA+m,
 			 NO_SEG, NO_SEG);
@@ -274,7 +299,9 @@ long assemble (long segment, long offset, int bits,
     temp = nasm_instructions[instruction->opcode];
     while (temp->opcode != -1) {
 	int m = matches (temp, instruction);
-	if (m == 100) {		       /* matches! */
+
+	if (m == 100) 		       /* matches! */
+	{
 	    char *codes = temp->code;
 	    long insn_size = calcsize(segment, offset, bits,
 				      instruction, codes);
@@ -284,7 +311,7 @@ long assemble (long segment, long offset, int bits,
 	    else while (itimes--) {
 		insn_end = offset + insn_size;
 		for (j=0; j<instruction->nprefix; j++) {
-		    unsigned char c;
+		    unsigned char c=0;
 		    switch (instruction->prefixes[j]) {
 		      case P_LOCK:
 			c = 0xF0; break;
@@ -299,37 +326,30 @@ long assemble (long segment, long offset, int bits,
 		      case R_GS: c = 0x65; break;
 		      case R_SS: c = 0x36; break;
 		      case P_A16:
-			if (bits == 16)
-			    c = 0;     /* no prefix */
-			else
+			if (bits != 16)
 			    c = 0x67;
 			break;
 		      case P_A32:
-			if (bits == 32)
-			    c = 0;     /* no prefix */
-			else
+			if (bits != 32)
 			    c = 0x67;
 			break;
 		      case P_O16:
-			if (bits == 16)
-			    c = 0;     /* no prefix */
-			else
+			if (bits != 16)
 			    c = 0x66;
 			break;
 		      case P_O32:
-			if (bits == 32)
-			    c = 0;     /* no prefix */
-			else
+			if (bits != 32)
 			    c = 0x66;
 			break;
 		      default:
 			error (ERR_PANIC,
 			       "invalid instruction prefix");
 		    }
-		    if (c != 0)
+		    if (c != 0) {
 			out (offset, segment, &c, OUT_RAWDATA+1,
 			     NO_SEG, NO_SEG);
-		    offset++;
+			offset++;
+		    }
 		}
 		gencode (segment, offset, bits, instruction, codes, insn_end);
 		offset += insn_size;
@@ -350,6 +370,7 @@ long assemble (long segment, long offset, int bits,
 	}
 	temp++;
     }
+
     if (temp->opcode == -1) {	       /* didn't match any instruction */
 	if (size_prob == 1)	       /* would have matched, but for size */
 	    error (ERR_NONFATAL, "operation size not specified");
@@ -363,7 +384,8 @@ long assemble (long segment, long offset, int bits,
 }
 
 long insn_size (long segment, long offset, int bits,
-		insn *instruction, efunc error) {
+		insn *instruction, efunc error) 
+{
     struct itemplate *temp;
 
     errfunc = error;		       /* to pass to other functions */
@@ -375,12 +397,14 @@ long insn_size (long segment, long offset, int bits,
 	instruction->opcode == I_DW ||
 	instruction->opcode == I_DD ||
 	instruction->opcode == I_DQ ||
-	instruction->opcode == I_DT) {
+	instruction->opcode == I_DT) 
+    {
 	extop *e;
 	long isize, osize, wsize = 0;  /* placate gcc */
 
 	isize = 0;
-	switch (instruction->opcode) {
+	switch (instruction->opcode) 
+	{
 	  case I_DB: wsize = 1; break;
 	  case I_DW: wsize = 2; break;
 	  case I_DD: wsize = 4; break;
@@ -388,7 +412,8 @@ long insn_size (long segment, long offset, int bits,
 	  case I_DT: wsize = 10; break;
 	}
 
-	for (e = instruction->eops; e; e = e->next) {
+	for (e = instruction->eops; e; e = e->next) 
+	{
 	    long align;
 
 	    osize = 0;
@@ -405,29 +430,34 @@ long insn_size (long segment, long offset, int bits,
 	return isize * instruction->times;
     }
 
-    if (instruction->opcode == I_INCBIN) {
-	char fname[FILENAME_MAX];
-	FILE *fp;
-	long len;
+    if (instruction->opcode == I_INCBIN) 
+    {
+	char  fname[FILENAME_MAX];
+	FILE  * fp;
+	long  len;
 
 	len = FILENAME_MAX-1;
 	if (len > instruction->eops->stringlen)
 	    len = instruction->eops->stringlen;
 	strncpy (fname, instruction->eops->stringval, len);
 	fname[len] = '\0';
-	if (!(fp = fopen(fname, "rb")))
+	if ( (fp = fopen(fname, "rb")) == NULL )
 	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
 	else if (fseek(fp, 0L, SEEK_END) < 0)
 	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
 		   fname);
-	else {
+	else 
+	{
 	    len = ftell (fp);
 	    fclose (fp);
-	    if (instruction->eops->next) {
+	    if (instruction->eops->next) 
+	    {
 		len -= instruction->eops->next->offset;
 		if (instruction->eops->next->next &&
 		    len > instruction->eops->next->next->offset)
+		{
 		    len = instruction->eops->next->next->offset;
+		}
 	    }
 	    return instruction->times * len;
 	}
@@ -438,19 +468,22 @@ long insn_size (long segment, long offset, int bits,
     while (temp->opcode != -1) {
 	if (matches(temp, instruction) == 100) {
 	    /* we've matched an instruction. */
-	    long isize;
-	    char *codes = temp->code;
-	    int j;
+	    long  isize;
+	    char  * codes = temp->code;
+	    int   j;
 
 	    isize = calcsize(segment, offset, bits, instruction, codes);
 	    if (isize < 0)
 	    	return -1;
-	    for (j = 0; j < instruction->nprefix; j++) {
+	    for (j = 0; j < instruction->nprefix; j++) 
+	    {
 		if ((instruction->prefixes[j] != P_A16 &&
 		     instruction->prefixes[j] != P_O16 && bits==16) ||
 		    (instruction->prefixes[j] != P_A32 &&
 		     instruction->prefixes[j] != P_O32 && bits==32))
+		{
 		    isize++;
+		}
 	    }
 	    return isize * instruction->times;
 	}
@@ -460,9 +493,13 @@ long insn_size (long segment, long offset, int bits,
 }
 
 static long calcsize (long segment, long offset, int bits,
-		      insn *ins, char *codes) {
-    long length = 0;
-    unsigned char c;
+		      insn *ins, char *codes) 
+{
+    long           length = 0;
+    unsigned char  c;
+
+    (void) segment;  /* Don't warn that this parameter is unused */
+    (void) offset;   /* Don't warn that this parameter is unused */
 
     while (*codes) switch (c = *codes++) {
       case 01: case 02: case 03:
@@ -542,304 +579,353 @@ static long calcsize (long segment, long offset, int bits,
 }
 
 static void gencode (long segment, long offset, int bits,
-		     insn *ins, char *codes, long insn_end) {
+		     insn *ins, char *codes, long insn_end) 
+{
     static char condval[] = { /* conditional opcodes */
 	0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
 	0x3, 0x7, 0x3, 0x5, 0xE, 0xC, 0xD, 0xF, 0x1, 0xB, 0x9, 0x5,
 	0x0, 0xA, 0xA, 0xB, 0x8, 0x4
     };
-    unsigned char c, bytes[4];
-    long data, size;
+    unsigned char c;
+    unsigned char bytes[4];
+    long          data, size;
 
-    while (*codes) switch (c = *codes++) {
-      case 01: case 02: case 03:
-	out (offset, segment, codes, OUT_RAWDATA+c, NO_SEG, NO_SEG);
-	codes += c;
-	offset += c;
-	break;
-      case 04: case 06:
-	switch (ins->oprs[0].basereg) {
-	  case R_CS: bytes[0] = 0x0E + (c == 0x04 ? 1 : 0); break;
-	  case R_DS: bytes[0] = 0x1E + (c == 0x04 ? 1 : 0); break;
-	  case R_ES: bytes[0] = 0x06 + (c == 0x04 ? 1 : 0); break;
-	  case R_SS: bytes[0] = 0x16 + (c == 0x04 ? 1 : 0); break;
-	  default:
-	    errfunc (ERR_PANIC, "bizarre 8086 segment register received");
-	}
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset++;
-	break;
-      case 05: case 07:
-	switch (ins->oprs[0].basereg) {
-	  case R_FS: bytes[0] = 0xA0 + (c == 0x05 ? 1 : 0); break;
-	  case R_GS: bytes[0] = 0xA8 + (c == 0x05 ? 1 : 0); break;
-	  default:
-	    errfunc (ERR_PANIC, "bizarre 386 segment register received");
-	}
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset++;
-	break;
-      case 010: case 011: case 012:
-	bytes[0] = *codes++ + regval(&ins->oprs[c-010]);
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset += 1;
-	break;
-      case 017:
-	bytes[0] = 0;
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset += 1;
-	break;
-      case 014: case 015: case 016:
-	if (ins->oprs[c-014].offset < -128 || ins->oprs[c-014].offset > 127)
-	    errfunc (ERR_WARNING, "signed byte value exceeds bounds");
-	if (ins->oprs[c-014].segment != NO_SEG) {
-	    data = ins->oprs[c-014].offset;
-	    out (offset, segment, &data, OUT_ADDRESS+1,
-		 ins->oprs[c-014].segment, ins->oprs[c-014].wrt);
-	} else {
-	    bytes[0] = ins->oprs[c-014].offset;
-	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	}
-	offset += 1;
-	break;
-      case 020: case 021: case 022:
-	if (ins->oprs[c-020].offset < -256 || ins->oprs[c-020].offset > 255)
-	    errfunc (ERR_WARNING, "byte value exceeds bounds");
-	if (ins->oprs[c-020].segment != NO_SEG) {
-	    data = ins->oprs[c-020].offset;
-	    out (offset, segment, &data, OUT_ADDRESS+1,
-		 ins->oprs[c-020].segment, ins->oprs[c-020].wrt);
-	} else {
-	    bytes[0] = ins->oprs[c-020].offset;
-	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	}
-	offset += 1;
-	break;
-      case 024: case 025: case 026:
-	if (ins->oprs[c-024].offset < 0 || ins->oprs[c-024].offset > 255)
-	    errfunc (ERR_WARNING, "unsigned byte value exceeds bounds");
-	if (ins->oprs[c-024].segment != NO_SEG) {
-	    data = ins->oprs[c-024].offset;
-	    out (offset, segment, &data, OUT_ADDRESS+1,
-		 ins->oprs[c-024].segment, ins->oprs[c-024].wrt);
-	} else {
-	    bytes[0] = ins->oprs[c-024].offset;
-	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	}
-	offset += 1;
-	break;
-      case 030: case 031: case 032:
-	if (ins->oprs[c-030].segment == NO_SEG &&
-	    ins->oprs[c-030].wrt == NO_SEG &&
-	    (ins->oprs[c-030].offset < -65536L ||
-	    ins->oprs[c-030].offset > 65535L))
-	    errfunc (ERR_WARNING, "word value exceeds bounds");
-	data = ins->oprs[c-030].offset;
-	out (offset, segment, &data, OUT_ADDRESS+2,
-			ins->oprs[c-030].segment, ins->oprs[c-030].wrt);
-	offset += 2;
-	break;
-      case 034: case 035: case 036:
-	data = ins->oprs[c-034].offset;
-	size = ((ins->oprs[c-034].addr_size ?
-		 ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4);
-	if (size==16 && (data < -65536L || data > 65535L))
-	    errfunc (ERR_WARNING, "word value exceeds bounds");
-	out (offset, segment, &data, OUT_ADDRESS+size,
-	     ins->oprs[c-034].segment, ins->oprs[c-034].wrt);
-	offset += size;
-	break;
-      case 037:
-	if (ins->oprs[0].segment == NO_SEG)
-	    errfunc (ERR_NONFATAL, "value referenced by FAR is not"
-		     " relocatable");
-	data = 0L;
-	out (offset, segment, &data, OUT_ADDRESS+2,
-	     outfmt->segbase(1+ins->oprs[0].segment),
-			ins->oprs[0].wrt);
-	offset += 2;
-	break;
-      case 040: case 041: case 042:
-	data = ins->oprs[c-040].offset;
-	out (offset, segment, &data, OUT_ADDRESS+4,
-	     ins->oprs[c-040].segment, ins->oprs[c-040].wrt);
-	offset += 4;
-	break;
-      case 050: case 051: case 052:
-	if (ins->oprs[c-050].segment != segment)
-	    errfunc (ERR_NONFATAL, "short relative jump outside segment");
-	data = ins->oprs[c-050].offset - insn_end;
-	if (data > 127 || data < -128)
-	    errfunc (ERR_NONFATAL, "short jump is out of range");
-	bytes[0] = data;
-	out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset += 1;
-	break;
-      case 060: case 061: case 062:
-	if (ins->oprs[c-060].segment != segment) {
-	    data = ins->oprs[c-060].offset;
-	    out (offset, segment, &data, OUT_REL2ADR+insn_end-offset,
-		 ins->oprs[c-060].segment, ins->oprs[c-060].wrt);
-	} else {
-	    data = ins->oprs[c-060].offset - insn_end;
-	    out (offset, segment, &data,
-		 OUT_ADDRESS+2, NO_SEG, NO_SEG);
-	}
-	offset += 2;
-	break;
-      case 064: case 065: case 066:
-	size = ((ins->oprs[c-064].addr_size ?
-		 ins->oprs[c-064].addr_size : bits) == 16 ? 2 : 4);
-	if (ins->oprs[c-064].segment != segment) {
-	    data = ins->oprs[c-064].offset;
-	    size = (bits == 16 ? OUT_REL2ADR : OUT_REL4ADR);
-	    out (offset, segment, &data, size+insn_end-offset,
-		 ins->oprs[c-064].segment, ins->oprs[c-064].wrt);
-	    size = (bits == 16 ? 2 : 4);
-	} else {
-	    data = ins->oprs[c-064].offset - insn_end;
-	    out (offset, segment, &data,
-		 OUT_ADDRESS+size, NO_SEG, NO_SEG);
-	}
-	offset += size;
-	break;
-      case 070: case 071: case 072:
-	if (ins->oprs[c-070].segment != segment) {
-	    data = ins->oprs[c-070].offset;
-	    out (offset, segment, &data, OUT_REL4ADR+insn_end-offset,
-		 ins->oprs[c-070].segment, ins->oprs[c-070].wrt);
-	} else {
-	    data = ins->oprs[c-070].offset - insn_end;
-	    out (offset, segment, &data,
-		 OUT_ADDRESS+4, NO_SEG, NO_SEG);
-	}
-	offset += 4;
-	break;
-      case 0300: case 0301: case 0302:
-	if (chsize (&ins->oprs[c-0300], bits)) {
-	    *bytes = 0x67;
-	    out (offset, segment, bytes,
-		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	    offset += 1;
-	} else
-	    offset += 0;
-	break;
-      case 0310:
-	if (bits==32) {
-	    *bytes = 0x67;
-	    out (offset, segment, bytes,
-		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	    offset += 1;
-	} else
-	    offset += 0;
-	break;
-      case 0311:
-	if (bits==16) {
-	    *bytes = 0x67;
-	    out (offset, segment, bytes,
-		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	    offset += 1;
-	} else
-	    offset += 0;
-	break;
-      case 0312:
-	break;
-      case 0320:
-	if (bits==32) {
-	    *bytes = 0x66;
-	    out (offset, segment, bytes,
-		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	    offset += 1;
-	} else
-	    offset += 0;
-	break;
-      case 0321:
-	if (bits==16) {
-	    *bytes = 0x66;
-	    out (offset, segment, bytes,
-		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	    offset += 1;
-	} else
-	    offset += 0;
-	break;
-      case 0322:
-	break;
-      case 0330:
-	*bytes = *codes++ + condval[ins->condition];
-	out (offset, segment, bytes,
-	     OUT_RAWDATA+1, NO_SEG, NO_SEG);
-	offset += 1;
-	break;
-      case 0340: case 0341: case 0342:
-	if (ins->oprs[0].segment != NO_SEG)
-	    errfunc (ERR_PANIC, "non-constant BSS size in pass two");
-	else {
-	    long size = ins->oprs[0].offset << (c-0340);
-	    if (size > 0)
-		out (offset, segment, NULL,
-		     OUT_RESERVE+size, NO_SEG, NO_SEG);
-	    offset += size;
-	}
-	break;
-      default:			       /* can't do it by 'case' statements */
-	if (c>=0100 && c<=0277) {      /* it's an EA */
-	    ea ea_data;
-	    int rfield;
-	    unsigned char *p;
-	    long s;
+    while (*codes)
+	switch (c = *codes++) 
+	{
+	case 01: case 02: case 03:
+	    out (offset, segment, codes, OUT_RAWDATA+c, NO_SEG, NO_SEG);
+	    codes += c;
+	    offset += c;
+	    break;
 
-	    if (c<=0177)	       /* pick rfield from operand b */
-		rfield = regval (&ins->oprs[c&7]);
-	    else 		       /* rfield is constant */
-	    	rfield = c & 7;
-	    if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, rfield,
-			     ins->forw_ref))
-	    	errfunc (ERR_NONFATAL, "invalid effective address");
-
-	    p = bytes;
-	    *p++ = ea_data.modrm;
-	    if (ea_data.sib_present)
-	    	*p++ = ea_data.sib;
-	    /*
-	     * the cast in the next line is to placate MS C...
-	     */
-	    out (offset, segment, bytes, OUT_RAWDATA+(long)(p-bytes),
-		 NO_SEG, NO_SEG);
-	    s = p-bytes;
-
-	    switch (ea_data.bytes) {
-	      case 0:
-		break;
-	      case 1:
-		if (ins->oprs[(c>>3)&7].segment != NO_SEG) {
-		    data = ins->oprs[(c>>3)&7].offset;
-		    out (offset, segment, &data, OUT_ADDRESS+1,
-			 ins->oprs[(c>>3)&7].segment,
-			 ins->oprs[(c>>3)&7].wrt);
-		} else {
-		    *bytes = ins->oprs[(c>>3)&7].offset;
-		    out (offset, segment, bytes, OUT_RAWDATA+1,
-			 NO_SEG, NO_SEG);
-		}
-		s++;
-		break;
-	      case 2:
-	      case 4:
-		data = ins->oprs[(c>>3)&7].offset;
-		out (offset, segment, &data,
-		     OUT_ADDRESS+ea_data.bytes,
-		     ins->oprs[(c>>3)&7].segment, ins->oprs[(c>>3)&7].wrt);
-		s += ea_data.bytes;
-		break;
+	case 04: case 06:
+	    switch (ins->oprs[0].basereg) 
+	    {
+	    case R_CS: 
+		bytes[0] = 0x0E + (c == 0x04 ? 1 : 0); break;
+	    case R_DS: 
+		bytes[0] = 0x1E + (c == 0x04 ? 1 : 0); break;
+	    case R_ES: 
+		bytes[0] = 0x06 + (c == 0x04 ? 1 : 0); break;
+	    case R_SS: 
+		bytes[0] = 0x16 + (c == 0x04 ? 1 : 0); break;
+	    default:
+		errfunc (ERR_PANIC, "bizarre 8086 segment register received");
 	    }
-	    offset += s;
-	} else
-	    errfunc (ERR_PANIC, "internal instruction table corrupt"
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+
+	case 05: case 07:
+	    switch (ins->oprs[0].basereg) {
+	    case R_FS: bytes[0] = 0xA0 + (c == 0x05 ? 1 : 0); break;
+	    case R_GS: bytes[0] = 0xA8 + (c == 0x05 ? 1 : 0); break;
+	    default:
+		errfunc (ERR_PANIC, "bizarre 386 segment register received");
+	    }
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+
+	case 010: case 011: case 012:
+	    bytes[0] = *codes++ + regval(&ins->oprs[c-010]);
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
+	    break;
+
+	case 017:
+	    bytes[0] = 0;
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
+	    break;
+
+	case 014: case 015: case 016:
+	    if (ins->oprs[c-014].offset < -128 
+		|| ins->oprs[c-014].offset > 127)
+	    {
+		errfunc (ERR_WARNING, "signed byte value exceeds bounds");
+	    }
+
+	    if (ins->oprs[c-014].segment != NO_SEG) 
+	    {
+		data = ins->oprs[c-014].offset;
+		out (offset, segment, &data, OUT_ADDRESS+1,
+		     ins->oprs[c-014].segment, ins->oprs[c-014].wrt);
+	    } 
+	    else {
+		bytes[0] = ins->oprs[c-014].offset;
+		out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    }
+	    offset += 1;
+	    break;
+
+	case 020: case 021: case 022:
+	    if (ins->oprs[c-020].offset < -256 
+		|| ins->oprs[c-020].offset > 255)
+	    {
+		errfunc (ERR_WARNING, "byte value exceeds bounds");
+	    }
+	    if (ins->oprs[c-020].segment != NO_SEG) {
+		data = ins->oprs[c-020].offset;
+		out (offset, segment, &data, OUT_ADDRESS+1,
+		     ins->oprs[c-020].segment, ins->oprs[c-020].wrt);
+	    } 
+	    else {
+		bytes[0] = ins->oprs[c-020].offset;
+		out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    }
+	    offset += 1;
+	    break;
+	
+	case 024: case 025: case 026:
+	    if (ins->oprs[c-024].offset < 0 || ins->oprs[c-024].offset > 255)
+		errfunc (ERR_WARNING, "unsigned byte value exceeds bounds");
+	    if (ins->oprs[c-024].segment != NO_SEG) {
+		data = ins->oprs[c-024].offset;
+		out (offset, segment, &data, OUT_ADDRESS+1,
+		     ins->oprs[c-024].segment, ins->oprs[c-024].wrt);
+	    }
+	    else {
+		bytes[0] = ins->oprs[c-024].offset;
+		out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    }
+	    offset += 1;
+	    break;
+
+	case 030: case 031: case 032:
+	    if (ins->oprs[c-030].segment == NO_SEG &&
+		ins->oprs[c-030].wrt == NO_SEG &&
+		(ins->oprs[c-030].offset < -65536L ||
+		 ins->oprs[c-030].offset > 65535L))
+	    {
+		errfunc (ERR_WARNING, "word value exceeds bounds");
+	    }
+	    data = ins->oprs[c-030].offset;
+	    out (offset, segment, &data, OUT_ADDRESS+2,
+		 ins->oprs[c-030].segment, ins->oprs[c-030].wrt);
+	    offset += 2;
+	    break;
+
+	case 034: case 035: case 036:
+	    data = ins->oprs[c-034].offset;
+	    size = ((ins->oprs[c-034].addr_size ?
+		     ins->oprs[c-034].addr_size : bits) == 16 ? 2 : 4);
+	    if (size==16 && (data < -65536L || data > 65535L))
+		errfunc (ERR_WARNING, "word value exceeds bounds");
+	    out (offset, segment, &data, OUT_ADDRESS+size,
+		 ins->oprs[c-034].segment, ins->oprs[c-034].wrt);
+	    offset += size;
+	    break;
+
+	case 037:
+	    if (ins->oprs[0].segment == NO_SEG)
+		errfunc (ERR_NONFATAL, "value referenced by FAR is not"
+			 " relocatable");
+	    data = 0L;
+	    out (offset, segment, &data, OUT_ADDRESS+2,
+		 outfmt->segbase(1+ins->oprs[0].segment),
+		 ins->oprs[0].wrt);
+	    offset += 2;
+		break;
+
+	case 040: case 041: case 042:
+	    data = ins->oprs[c-040].offset;
+	    out (offset, segment, &data, OUT_ADDRESS+4,
+		 ins->oprs[c-040].segment, ins->oprs[c-040].wrt);
+	    offset += 4;
+	    break;
+
+	case 050: case 051: case 052:
+	    if (ins->oprs[c-050].segment != segment)
+		errfunc (ERR_NONFATAL, "short relative jump outside segment");
+	    data = ins->oprs[c-050].offset - insn_end;
+	    if (data > 127 || data < -128)
+		errfunc (ERR_NONFATAL, "short jump is out of range");
+	    bytes[0] = data;
+	    out (offset, segment, bytes, OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
+	    break;
+
+	case 060: case 061: case 062:
+	    if (ins->oprs[c-060].segment != segment) {
+		data = ins->oprs[c-060].offset;
+		out (offset, segment, &data, OUT_REL2ADR+insn_end-offset,
+		     ins->oprs[c-060].segment, ins->oprs[c-060].wrt);
+	    } else {
+		data = ins->oprs[c-060].offset - insn_end;
+		out (offset, segment, &data,
+		     OUT_ADDRESS+2, NO_SEG, NO_SEG);
+	    }
+	    offset += 2;
+	    break;
+
+	case 064: case 065: case 066:
+	    size = ((ins->oprs[c-064].addr_size ?
+		     ins->oprs[c-064].addr_size : bits) == 16 ? 2 : 4);
+	    if (ins->oprs[c-064].segment != segment) {
+		data = ins->oprs[c-064].offset;
+		size = (bits == 16 ? OUT_REL2ADR : OUT_REL4ADR);
+		out (offset, segment, &data, size+insn_end-offset,
+		     ins->oprs[c-064].segment, ins->oprs[c-064].wrt);
+		size = (bits == 16 ? 2 : 4);
+	    } else {
+		data = ins->oprs[c-064].offset - insn_end;
+		out (offset, segment, &data,
+		     OUT_ADDRESS+size, NO_SEG, NO_SEG);
+	    }
+	    offset += size;
+	    break;
+
+	case 070: case 071: case 072:
+	    if (ins->oprs[c-070].segment != segment) {
+		data = ins->oprs[c-070].offset;
+		out (offset, segment, &data, OUT_REL4ADR+insn_end-offset,
+		     ins->oprs[c-070].segment, ins->oprs[c-070].wrt);
+	    } else {
+		data = ins->oprs[c-070].offset - insn_end;
+		out (offset, segment, &data,
+		     OUT_ADDRESS+4, NO_SEG, NO_SEG);
+	    }
+	    offset += 4;
+	    break;
+
+	case 0300: case 0301: case 0302:
+	    if (chsize (&ins->oprs[c-0300], bits)) {
+		*bytes = 0x67;
+		out (offset, segment, bytes,
+		     OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset += 1;
+	    } else
+		offset += 0;
+	    break;
+
+	case 0310:
+	    if (bits==32) {
+		*bytes = 0x67;
+		out (offset, segment, bytes,
+		     OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset += 1;
+	    } else
+		offset += 0;
+	    break;
+
+	case 0311:
+	    if (bits==16) {
+		*bytes = 0x67;
+		out (offset, segment, bytes,
+		     OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset += 1;
+	    } else
+		offset += 0;
+	    break;
+
+	case 0312:
+	    break;
+
+	case 0320:
+	    if (bits==32) {
+		*bytes = 0x66;
+		out (offset, segment, bytes,
+		     OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset += 1;
+	    } else
+		offset += 0;
+	    break;
+
+	case 0321:
+	    if (bits==16) {
+		*bytes = 0x66;
+		out (offset, segment, bytes,
+		     OUT_RAWDATA+1, NO_SEG, NO_SEG);
+		offset += 1;
+	    } else
+		offset += 0;
+	    break;
+
+	case 0322:
+	    break;
+
+	case 0330:
+	    *bytes = *codes++ + condval[ins->condition];
+	    out (offset, segment, bytes,
+		 OUT_RAWDATA+1, NO_SEG, NO_SEG);
+	    offset += 1;
+	    break;
+
+	case 0340: case 0341: case 0342:
+	    if (ins->oprs[0].segment != NO_SEG)
+		errfunc (ERR_PANIC, "non-constant BSS size in pass two");
+	    else {
+		long size = ins->oprs[0].offset << (c-0340);
+		if (size > 0)
+		    out (offset, segment, NULL,
+			 OUT_RESERVE+size, NO_SEG, NO_SEG);
+		offset += size;
+	    }
+	    break;
+
+	default:	               /* can't do it by 'case' statements */
+	    if (c>=0100 && c<=0277) {      /* it's an EA */
+		ea ea_data;
+		int rfield;
+		unsigned char *p;
+		long s;
+
+		if (c<=0177)	       /* pick rfield from operand b */
+		    rfield = regval (&ins->oprs[c&7]);
+		else 		       /* rfield is constant */
+		    rfield = c & 7;
+
+		if (!process_ea (&ins->oprs[(c>>3)&7], &ea_data, bits, rfield,
+				 ins->forw_ref))
+		{
+		    errfunc (ERR_NONFATAL, "invalid effective address");
+		}
+
+		p = bytes;
+		*p++ = ea_data.modrm;
+		if (ea_data.sib_present)
+		    *p++ = ea_data.sib;
+
+		s = p-bytes;
+		out (offset, segment, bytes, OUT_RAWDATA + s,
+		     NO_SEG, NO_SEG);
+
+		switch (ea_data.bytes) {
+		case 0:
+		    break;
+		case 1:
+		    if (ins->oprs[(c>>3)&7].segment != NO_SEG) {
+			data = ins->oprs[(c>>3)&7].offset;
+			out (offset, segment, &data, OUT_ADDRESS+1,
+			     ins->oprs[(c>>3)&7].segment,
+			     ins->oprs[(c>>3)&7].wrt);
+		    } else {
+			*bytes = ins->oprs[(c>>3)&7].offset;
+			out (offset, segment, bytes, OUT_RAWDATA+1,
+			     NO_SEG, NO_SEG);
+		    }
+		    s++;
+		    break;
+		case 2:
+		case 4:
+		    data = ins->oprs[(c>>3)&7].offset;
+		    out (offset, segment, &data,
+			 OUT_ADDRESS+ea_data.bytes,
+			 ins->oprs[(c>>3)&7].segment, ins->oprs[(c>>3)&7].wrt);
+		    s += ea_data.bytes;
+		    break;
+		}
+		offset += s;
+	    } else
+		errfunc (ERR_PANIC, "internal instruction table corrupt"
 		     ": instruction code 0x%02X given", c);
-    }
+	}
 }
 
-static int regval (operand *o) {
+static int regval (operand *o) 
+{
     switch (o->basereg) {
       case R_EAX: case R_AX: case R_AL: case R_ES: case R_CR0: case R_DR0:
       case R_ST0: case R_MM0:
@@ -871,7 +957,8 @@ static int regval (operand *o) {
     }
 }
 
-static int matches (struct itemplate *itemp, insn *instruction) {
+static int matches (struct itemplate *itemp, insn *instruction) 
+{
     int i, size, oprs, ret;
 
     ret = 100;
@@ -899,7 +986,8 @@ static int matches (struct itemplate *itemp, insn *instruction) {
     for (i=0; i<itemp->operands; i++)
 	if (itemp->opd[i] & ~instruction->oprs[i].type ||
 	    ((itemp->opd[i] & SIZE_MASK) &&
-	     ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
+	     ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK)))
+	{
 	    if ((itemp->opd[i] & ~instruction->oprs[i].type & NON_SIZE) ||
 		(instruction->oprs[i].type & SIZE_MASK))
 		return 0;
@@ -939,7 +1027,8 @@ static int matches (struct itemplate *itemp, insn *instruction) {
 }
 
 static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
-		       int forw_ref) {
+		       int forw_ref) 
+{
     if (!(REGISTER & ~input->type)) {  /* it's a single register */
 	static int regs[] = {
 	    R_MM0, R_EAX, R_AX, R_AL, R_MM1, R_ECX, R_CX, R_CL,
@@ -955,7 +1044,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 	    output->sib_present = FALSE;/* no SIB necessary */
 	    output->bytes = 0;	       /* no offset necessary either */
 	    output->modrm = 0xC0 | (rfield << 3) | (i/4);
-	} else
+	} 
+	else
 	    return NULL;
     } else {			       /* it's a memory reference */
 	if (input->basereg==-1 && (input->indexreg==-1 || input->scale==0)) {
@@ -965,7 +1055,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 	    output->sib_present = FALSE;
 	    output->bytes = (addrbits==32 ? 4 : 2);
 	    output->modrm = (addrbits==32 ? 5 : 6) | (rfield << 3);
-	} else {		       /* it's an indirection */
+	} 
+	else {		       /* it's an indirection */
 	    int i=input->indexreg, b=input->basereg, s=input->scale;
 	    long o=input->offset, seg=input->segment;
 	    int hb=input->hintbase, ht=input->hinttype;
@@ -1029,13 +1120,15 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 			     (o>=-128 && o<=127 && seg==NO_SEG && !forw_ref &&
 			      !(input->eaflags & EAF_WORDOFFS))) {
 		    	mod = 1;
-		    } else
+		    } 
+		    else
 		    	mod = 2;
 
 		    output->sib_present = FALSE;
 		    output->bytes = (b==-1 || mod==2 ? 4 : mod);
 		    output->modrm = (mod<<6) | (rfield<<3) | rm;
-		} else {	       /* we need a SIB */
+		} 
+		else {	       /* we need a SIB */
 		    int mod, scale, index, base;
 
 		    switch (b) {
@@ -1091,7 +1184,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
 		    output->modrm = (mod<<6) | (rfield<<3) | 4;
 		    output->sib = (scale<<6) | (index<<3) | base;
 		}
-	    } else {		       /* it's 16-bit */
+	    } 
+	    else {		       /* it's 16-bit */
 		int mod, rm;
 
 		/* check all registers are BX, BP, SI or DI */
@@ -1152,7 +1246,8 @@ static ea *process_ea (operand *input, ea *output, int addrbits, int rfield,
     return output;
 }
 
-static int chsize (operand *input, int addrbits) {
+static int chsize (operand *input, int addrbits) 
+{
     if (!(MEMORY & ~input->type)) {
 	int i=input->indexreg, b=input->basereg;
 
@@ -1168,6 +1263,7 @@ static int chsize (operand *input, int addrbits) {
 	    return (addrbits==16);
 	else
 	    return (addrbits==32);
-    } else
+    } 
+    else
     	return 0;
 }

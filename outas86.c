@@ -80,7 +80,8 @@ static void as86_write_section (struct Section *, int);
 static int as86_add_string (char *name);
 static void as86_sect_write(struct Section *, unsigned char *, unsigned long);
 
-static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     as86fp = fp;
     error = errfunc;
     (void) ldef;		       /* placate optimisers */
@@ -105,8 +106,11 @@ static void as86_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     as86_add_string (as86_module);
 }
 
-static void as86_cleanup(void) {
+static void as86_cleanup(int debuginfo) 
+{
     struct Piece *p;
+
+    (void) debuginfo;
 
     as86_write();
     fclose (as86fp);
@@ -127,7 +131,8 @@ static void as86_cleanup(void) {
     saa_free (strs);
 }
 
-static long as86_section_names (char *name, int pass, int *bits) {
+static long as86_section_names (char *name, int pass, int *bits) 
+{
     /*
      * Default is 16 bits.
      */
@@ -147,7 +152,8 @@ static long as86_section_names (char *name, int pass, int *bits) {
 	return NO_SEG;
 }
 
-static int as86_add_string (char *name) {
+static int as86_add_string (char *name) 
+{
     int pos = strslen;
     int length = strlen(name);
 
@@ -158,7 +164,8 @@ static int as86_add_string (char *name) {
 }
 
 static void as86_deflabel (char *name, long segment, long offset,
-			   int is_global, char *special) {
+			   int is_global, char *special) 
+{
     struct Symbol *sym;
 
     if (special)
@@ -207,7 +214,8 @@ static void as86_deflabel (char *name, long segment, long offset,
 }
 
 static void as86_add_piece (struct Section *sect, int type, long offset,
-			    long segment, long bytes, int relative) {
+			    long segment, long bytes, int relative) 
+{
     struct Piece *p;
 
     sect->len += bytes;
@@ -237,7 +245,8 @@ static void as86_add_piece (struct Section *sect, int type, long offset,
 }
 
 static void as86_out (long segto, void *data, unsigned long type,
-		      long segment, long wrt) {
+		      long segment, long wrt) 
+{
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     long offset;
@@ -339,7 +348,8 @@ static void as86_out (long segto, void *data, unsigned long type,
     }
 }
 
-static void as86_write(void) {
+static void as86_write(void) 
+{
     int i;
     long symlen, seglen, segsize;
 
@@ -430,7 +440,8 @@ static void as86_write(void) {
     fputc (0, as86fp);		       /* termination */
 }
 
-static void as86_set_rsize (int size) {
+static void as86_set_rsize (int size) 
+{
     if (as86_reloc_size != size) {
 	switch (as86_reloc_size = size) {
 	  case 1: fputc (0x01, as86fp); break;
@@ -441,7 +452,8 @@ static void as86_set_rsize (int size) {
     }
 }
 
-static void as86_write_section (struct Section *sect, int index) {
+static void as86_write_section (struct Section *sect, int index) 
+{
     struct Piece *p;
     unsigned long s;
     long length;
@@ -512,20 +524,24 @@ static void as86_write_section (struct Section *sect, int index) {
 }
 
 static void as86_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) {
+			     unsigned char *data, unsigned long len) 
+{
     saa_wbytes (sect->data, data, len);
     sect->datalen += len;
 }
 
-static long as86_segbase (long segment) {
+static long as86_segbase (long segment) 
+{
     return segment;
 }
 
-static int as86_directive (char *directive, char *value, int pass) {
+static int as86_directive (char *directive, char *value, int pass) 
+{
     return 0;
 }
 
-static void as86_filename (char *inname, char *outname, efunc error) {
+static void as86_filename (char *inname, char *outname, efunc error) 
+{
     char *p;
 
     if ( (p = strrchr (inname, '.')) != NULL) {
@@ -539,16 +555,30 @@ static void as86_filename (char *inname, char *outname, efunc error) {
 
 static char *as86_stdmac[] = {
     "%define __SECT__ [section .text]",
+    "%macro __NASM_CDecl__ 1",
+    "%endmacro",
     NULL
 };
 
+static int as86_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
+void as86_linenumber (char *name, long segment, long offset, int is_main,
+                    int lineno)
+{
+}
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     as86_stdmac,
     as86_init,
+    as86_set_info,
     as86_out,
-    as86_deflabel,
+    as86_deflabel, 
     as86_section_names,
     as86_segbase,
     as86_directive,

@@ -43,7 +43,7 @@ union label {			       /* actual label structures */
     struct {
 	long segment, offset;
         char *label, *special;
-	int is_global;
+	int is_global, is_norm;
     } defn;
     struct {
 	long movingon, dummy;
@@ -74,7 +74,8 @@ static int initialised = FALSE;
  * given label name. Creates a new one, if it isn't found, and if
  * `create' is TRUE.
  */
-static union label *find_label (char *label, int create) {
+static union label *find_label (char *label, int create) 
+{
     int hash = 0;
     char *p, *prev;
     int prevlen;
@@ -117,11 +118,13 @@ static union label *find_label (char *label, int create) {
 	lfree[hash]->defn.special = NULL;
 	lfree[hash]->defn.is_global = NOT_DEFINED_YET;
 	return lfree[hash]++;
-    } else
+    } 
+    else
 	return NULL;
 }
 
-int lookup_label (char *label, long *segment, long *offset) {
+int lookup_label (char *label, long *segment, long *offset) 
+{
     union label *lptr;
 
     if (!initialised)
@@ -132,11 +135,13 @@ int lookup_label (char *label, long *segment, long *offset) {
 	*segment = lptr->defn.segment;
 	*offset = lptr->defn.offset;
 	return 1;
-    } else
+    } 
+    else
 	return 0;
 }
 
-int is_extern (char *label) {
+int is_extern (char *label) 
+{
     union label *lptr;
 
     if (!initialised)
@@ -149,22 +154,48 @@ int is_extern (char *label) {
 	return 0;
 }
 
-void define_label_stub (char *label, efunc error) {
+void redefine_label (char *label, long segment, long offset, char *special,
+		   int is_norm, int isextrn, struct ofmt *ofmt, efunc error) 
+{
     union label *lptr;
+
+    /* This routine possibly ought to check for phase errors.  Most assemblers
+     * check for phase errors at this point.  I don't know whether phase errors
+     * are even possible, nor whether they are checked somewhere else
+     */
+
+    (void) segment;  /* Don't warn that this parameter is unused */
+    (void) offset;   /* Don't warn that this parameter is unused */
+    (void) special;  /* Don't warn that this parameter is unused */
+    (void) is_norm;  /* Don't warn that this parameter is unused */
+    (void) isextrn;  /* Don't warn that this parameter is unused */
+    (void) ofmt;     /* Don't warn that this parameter is unused */
+
+#ifdef DEBUG
+    if (!strncmp(label, "debugdump", 9))
+	fprintf(stderr, "debug: redefine_label (%s, %ld, %08lx, %s, %d, %d)\n",
+		label, segment, offset, special, is_norm, isextrn);
+#endif
 
     if (!islocal(label)) {
 	lptr = find_label (label, 1);
 	if (!lptr)
 	    error (ERR_PANIC, "can't find label `%s' on pass two", label);
-	if (*label != '.')
+	if (*label != '.' && lptr->defn.is_norm)
 	    prevlabel = lptr->defn.label;
     }
 }
 
 void define_label (char *label, long segment, long offset, char *special,
-		   int is_norm, int isextrn, struct ofmt *ofmt, efunc error) {
+		   int is_norm, int isextrn, struct ofmt *ofmt, efunc error) 
+{
     union label *lptr;
 
+#ifdef DEBUG
+    if (!strncmp(label, "debugdump", 9))
+	fprintf(stderr, "debug: define_label (%s, %ld, %08lx, %s, %d, %d)\n",
+		label, segment, offset, special, is_norm, isextrn);
+#endif
     lptr = find_label (label, 1);
     if (lptr->defn.is_global & DEFINED_BIT) {
 	error(ERR_NONFATAL, "symbol `%s' redefined", label);
@@ -182,14 +213,19 @@ void define_label (char *label, long segment, long offset, char *special,
 
     lptr->defn.segment = segment;
     lptr->defn.offset = offset;
+    lptr->defn.is_norm = (label[0] != '.' && is_norm);
 
     ofmt->symdef (lptr->defn.label, segment, offset,
+		  !!(lptr->defn.is_global & GLOBAL_BIT),
+		  special ? special : lptr->defn.special);
+    ofmt->current_dfmt->debug_deflabel (label, segment, offset,
 		  !!(lptr->defn.is_global & GLOBAL_BIT),
 		  special ? special : lptr->defn.special);
 }
 
 void define_common (char *label, long segment, long size, char *special,
-		    struct ofmt *ofmt, efunc error) {
+		    struct ofmt *ofmt, efunc error) 
+{
     union label *lptr;
 
     lptr = find_label (label, 1);
@@ -210,9 +246,12 @@ void define_common (char *label, long segment, long size, char *special,
 
     ofmt->symdef (lptr->defn.label, segment, size, 2,
 		  special ? special : lptr->defn.special);
+    ofmt->current_dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
+		  special ? special : lptr->defn.special);
 }
 
-void declare_as_global (char *label, char *special, efunc error) {
+void declare_as_global (char *label, char *special, efunc error) 
+{
     union label *lptr;
 
     if (islocal(label)) {
@@ -237,7 +276,8 @@ void declare_as_global (char *label, char *special, efunc error) {
     }
 }
 
-int init_labels (void) {
+int init_labels (void) 
+{
     int i;
 
     for (i=0; i<LABEL_HASHES; i++) {
@@ -248,7 +288,9 @@ int init_labels (void) {
 	lfree[i] = ltab[i];
     }
 
-    perm_head = perm_tail = (struct permts *) nasm_malloc (sizeof(struct permts));
+    perm_head = 
+	perm_tail = (struct permts *) nasm_malloc (sizeof(struct permts));
+
     if (!perm_head)
     	return -1;
 
@@ -263,7 +305,8 @@ int init_labels (void) {
     return 0;
 }
 
-void cleanup_labels (void) {
+void cleanup_labels (void) 
+{
     int i;
 
     initialised = FALSE;
@@ -288,7 +331,8 @@ void cleanup_labels (void) {
     }
 }
 
-static void init_block (union label *blk) {
+static void init_block (union label *blk) 
+{
     int j;
 
     for (j=0; j<LABEL_BLOCK-1; j++)
@@ -297,7 +341,8 @@ static void init_block (union label *blk) {
     blk[LABEL_BLOCK-1].admin.next = NULL;
 }
 
-static char *perm_copy (char *string1, char *string2) {
+static char *perm_copy (char *string1, char *string2) 
+{
     char *p, *q;
     int len = strlen(string1)+strlen(string2)+1;
 
@@ -310,8 +355,46 @@ static char *perm_copy (char *string1, char *string2) {
     }
     p = q = perm_tail->data + perm_tail->usage;
     while ( (*q = *string1++) ) q++;
-    while ( (*q++ = *string2++) );
+    while ( (*q++ = *string2++) ) ;
     perm_tail->usage = q - perm_tail->data;
 
     return p;
 }
+
+/*
+ * Notes regarding bug involving redefinition of external segments.
+ *
+ * Up to and including v0.97, the following code didn't work. From 0.97
+ * developers release 2 onwards, it will generate an error.
+ *
+ * EXTERN extlabel
+ * newlabel EQU extlabel + 1
+ *
+ * The results of allowing this code through are that two import records
+ * are generated, one for 'extlabel' and one for 'newlabel'.
+ *
+ * The reason for this is an inadequacy in the defined interface between
+ * the label manager and the output formats. The problem lies in how the
+ * output format driver tells that a label is an external label for which
+ * a label import record must be produced. Most (all except bin?) produce
+ * the record if the segment number of the label is not one of the internal
+ * segments that the output driver is producing.
+ *
+ * A simple fix to this would be to make the output formats keep track of
+ * which symbols they've produced import records for, and make them not
+ * produce import records for segments that are already defined.
+ *
+ * The best way, which is slightly harder but reduces duplication of code
+ * and should therefore make the entire system smaller and more stable is
+ * to change the interface between assembler, define_label(), and
+ * the output module. The changes that are needed are:
+ *
+ * The semantics of the 'isextern' flag passed to define_label() need
+ * examining. This information may or may not tell us what we need to
+ * know (ie should we be generating an import record at this point for this
+ * label). If these aren't the semantics, the semantics should be changed
+ * to this.
+ *
+ * The output module interface needs changing, so that the `isextern' flag
+ * is passed to the module, so that it can be easily tested for.
+ */

@@ -117,7 +117,7 @@ static struct ELF_SECTDATA {
     void *data;
     long len;
     int is_saa;
-} elf_sects[ELF_MAX_SECTIONS];
+} *elf_sects;
 static int elf_nsect;
 static long elf_foffs;
 
@@ -139,7 +139,8 @@ static long elf_gotpc_sect, elf_gotoff_sect;
 static long elf_got_sect, elf_plt_sect;
 static long elf_sym_sect;
 
-static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
+static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) 
+{
     elffp = fp;
     error = errfunc;
     evaluate = eval;
@@ -173,9 +174,12 @@ static void elf_init(FILE *fp, efunc errfunc, ldfunc ldef, evalfunc eval) {
     def_seg = seg_alloc();
 }
 
-static void elf_cleanup(void) {
+static void elf_cleanup(int debuginfo) 
+{
     struct Reloc *r;
     int i;
+
+    (void) debuginfo;
 
     elf_write();
     fclose (elffp);
@@ -196,7 +200,8 @@ static void elf_cleanup(void) {
     saa_free (strs);
 }
 
-static void add_sectname (char *firsthalf, char *secondhalf) {
+static void add_sectname (char *firsthalf, char *secondhalf) 
+{
     int len = strlen(firsthalf)+strlen(secondhalf);
     while (shstrtablen + len + 1 > shstrtabsize)
 	shstrtab = nasm_realloc (shstrtab, (shstrtabsize += SHSTR_DELTA));
@@ -205,7 +210,8 @@ static void add_sectname (char *firsthalf, char *secondhalf) {
     shstrtablen += len+1;
 }
 
-static int elf_make_section (char *name, int type, int flags, int align) {
+static int elf_make_section (char *name, int type, int flags, int align) 
+{
     struct Section *s;
 
     s = nasm_malloc (sizeof(*s));
@@ -235,18 +241,18 @@ static int elf_make_section (char *name, int type, int flags, int align) {
     return nsects-1;
 }
 
-static long elf_section_names (char *name, int pass, int *bits) {
+static long elf_section_names (char *name, int pass, int *bits) 
+{
     char *p;
     int flags_and, flags_or, type, align, i;
 
     /*
      * Default is 32 bits.
      */
-    if (!name)
+    if (!name) {
 	*bits = 32;
-
-    if (!name)
 	return def_seg;
+    }
 
     p = name;
     while (*p && !isspace(*p)) p++;
@@ -334,7 +340,8 @@ static long elf_section_names (char *name, int pass, int *bits) {
 }
 
 static void elf_deflabel (char *name, long segment, long offset,
-			   int is_global, char *special) {
+			   int is_global, char *special) 
+{
     int pos = strslen;
     struct Symbol *sym;
     int special_used = FALSE;
@@ -439,9 +446,29 @@ static void elf_deflabel (char *name, long segment, long offset,
 	sym->value = (sym->section == SHN_UNDEF ? 0 : offset);
 
     if (sym->type == SYM_GLOBAL) {
+	/*
+	 * There's a problem here that needs fixing. 
+	 * If sym->section == SHN_ABS, then the first line of the
+	 * else section causes a core dump, because its a reference
+	 * beyond the end of the section array.
+	 * This behaviour is exhibited by this code:
+	 *     GLOBAL crash_nasm
+	 *     crash_nasm equ 0
+	 *
+	 * I'm not sure how to procede, because I haven't got the
+	 * first clue about how ELF works, so I don't know what to
+	 * do with it. Furthermore, I'm not sure what the rest of this
+	 * section of code does. Help?
+	 *
+	 * For now, I'll see if doing absolutely nothing with it will
+	 * work...
+	 */
 	if (sym->section == SHN_UNDEF || sym->section == SHN_COMMON)
+	{
 	    bsym = raa_write (bsym, segment, nglobs);
-	else {
+	}
+	else if (sym->section != SHN_ABS) 
+	{
 	    /*
 	     * This is a global symbol; so we must add it to the linked
 	     * list of global symbols in its section. We'll push it on
@@ -505,7 +532,8 @@ static void elf_deflabel (char *name, long segment, long offset,
 }
 
 static void elf_add_reloc (struct Section *sect, long segment,
-			   int type) {
+			   int type) 
+{
     struct Reloc *r;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -553,7 +581,8 @@ static void elf_add_reloc (struct Section *sect, long segment,
  */
 static long elf_add_gsym_reloc (struct Section *sect,
 				long segment, long offset,
-				int type, int exact) {
+				int type, int exact) 
+{
     struct Reloc *r;
     struct Section *s;
     struct Symbol *sym, *sm;
@@ -617,7 +646,8 @@ static long elf_add_gsym_reloc (struct Section *sect,
 }
 
 static void elf_out (long segto, void *data, unsigned long type,
-		      long segment, long wrt) {
+		      long segment, long wrt) 
+{
     struct Section *s;
     long realbytes = type & OUT_SIZMASK;
     long addr;
@@ -744,7 +774,8 @@ static void elf_out (long segto, void *data, unsigned long type,
     }
 }
 
-static void elf_write(void) {
+static void elf_write(void) 
+{
     int nsections, align;
     char *p;
     int commlen;
@@ -819,6 +850,7 @@ static void elf_write(void) {
     align = ((elf_foffs+SEG_ALIGN_1) & ~SEG_ALIGN_1) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
+    elf_sects = nasm_malloc(sizeof(*elf_sects) * (2 * nsects + 10));
 
     elf_section_header (0, 0, 0, NULL, FALSE, 0L, 0, 0, 0, 0); /* SHN_UNDEF */
     p = shstrtab+1;
@@ -853,10 +885,12 @@ static void elf_write(void) {
      */
     elf_write_sections();
 
+    nasm_free (elf_sects);
     saa_free (symtab);
 }
 
-static struct SAA *elf_build_symtab (long *len, long *local) {
+static struct SAA *elf_build_symtab (long *len, long *local) 
+{
     struct SAA *s = saa_init(1L);
     struct Symbol *sym;
     unsigned char entry[16], *p;
@@ -968,7 +1002,8 @@ static struct SAA *elf_build_reltab (long *len, struct Reloc *r) {
 
 static void elf_section_header (int name, int type, int flags,
 				void *data, int is_saa, long datalen,
-				int link, int info, int align, int eltsize) {
+				int link, int info, int align, int eltsize) 
+{
     elf_sects[elf_nsect].data = data;
     elf_sects[elf_nsect].len = datalen;
     elf_sects[elf_nsect].is_saa = is_saa;
@@ -988,7 +1023,8 @@ static void elf_section_header (int name, int type, int flags,
     fwritelong ((long)eltsize, elffp);
 }
 
-static void elf_write_sections (void) {
+static void elf_write_sections (void) 
+{
     int i;
     for (i = 0; i < elf_nsect; i++)
 	if (elf_sects[i].data) {
@@ -1004,34 +1040,49 @@ static void elf_write_sections (void) {
 }
 
 static void elf_sect_write (struct Section *sect,
-			     unsigned char *data, unsigned long len) {
+			     unsigned char *data, unsigned long len) 
+{
     saa_wbytes (sect->data, data, len);
     sect->len += len;
 }
 
-static long elf_segbase (long segment) {
+static long elf_segbase (long segment) 
+{
     return segment;
 }
 
-static int elf_directive (char *directive, char *value, int pass) {
+static int elf_directive (char *directive, char *value, int pass) 
+{
     return 0;
 }
 
-static void elf_filename (char *inname, char *outname, efunc error) {
+static void elf_filename (char *inname, char *outname, efunc error) 
+{
     strcpy(elf_module, inname);
     standard_extension (inname, outname, ".o", error);
 }
 
 static char *elf_stdmac[] = {
     "%define __SECT__ [section .text]",
+    "%macro __NASM_CDecl__ 1",
+    "%define $_%1 $%1",
+    "%endmacro",
     NULL
 };
+static int elf_set_info(enum geninfo type, char **val)
+{
+    return 0;
+}
 
 struct ofmt of_elf = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
     elf_stdmac,
     elf_init,
+    elf_set_info,
     elf_out,
     elf_deflabel,
     elf_section_names,

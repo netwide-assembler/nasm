@@ -33,7 +33,8 @@ static const char *help =
 static void output_ins (unsigned long, unsigned char *, int, char *);
 static void skip (unsigned long dist, FILE *fp);
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
     unsigned char buffer[INSN_MAX * 2], *p, *q;
     char outbuf[256];
     char *pname = *argv;
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
 
     while (--argc) {
 	char *v, *vv, *p = *++argv;
-	if (*p == '-') {
+	if (*p == '-' && p[1]) {
 	    p++;
 	    while (*p) switch (tolower(*p)) {
 	      case 'a':		       /* auto or intelligent sync */
@@ -170,12 +171,16 @@ int main(int argc, char **argv) {
 	return 0;
     }
 
-    fp = fopen(filename, "rb");
-    if (!fp) {
-	fprintf(stderr, "%s: unable to open `%s': %s\n",
-		pname, filename, strerror(errno));
-	return 1;
-    }
+    if (strcmp(filename, "-")) {
+	fp = fopen(filename, "rb");
+	if (!fp) {
+	    fprintf(stderr, "%s: unable to open `%s': %s\n",
+		    pname, filename, strerror(errno));
+	    return 1;
+	}
+    } else
+	fp = stdin;
+
     if (initskip > 0)
 	skip (initskip, fp);
 
@@ -191,9 +196,12 @@ int main(int argc, char **argv) {
 	unsigned long to_read = buffer+sizeof(buffer)-p;
 	if (to_read > nextsync-offset-(p-q))
 	    to_read = nextsync-offset-(p-q);
-	lenread = fread (p, 1, to_read, fp);
-	if (lenread == 0)
-	    eof = TRUE;		       /* help along systems with bad feof */
+	if (to_read) {
+	    lenread = fread (p, 1, to_read, fp);
+	    if (lenread == 0)
+		eof = TRUE;	       /* help along systems with bad feof */
+	} else
+	    lenread = 0;
 	p += lenread;
 	if (offset == nextsync) {
 	    if (synclen) {
@@ -222,12 +230,16 @@ int main(int argc, char **argv) {
 	    q = buffer;
 	}
     } while (lenread > 0 || !(eof || feof(fp)));
-    fclose (fp);
+
+    if (fp != stdin)
+	fclose (fp);
+
     return 0;
 }
 
 static void output_ins (unsigned long offset, unsigned char *data,
-			int datalen, char *insn) {
+			int datalen, char *insn) 
+{
     int bytes;
     printf("%08lX  ", offset);
 
@@ -256,7 +268,8 @@ static void output_ins (unsigned long offset, unsigned char *data,
  * Skip a certain amount of data in a file, either by seeking if
  * possible, or if that fails then by reading and discarding.
  */
-static void skip (unsigned long dist, FILE *fp) {
+static void skip (unsigned long dist, FILE *fp) 
+{
     char buffer[256];		       /* should fit on most stacks :-) */
 
     /*

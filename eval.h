@@ -14,15 +14,7 @@
  * providing segment-base details, and what function can be used to
  * look labels up.
  */
-void eval_global_info (struct ofmt *output, lfunc lookup_label);
-
-/*
- * Called to set the information the evaluator needs: the value of
- * $ is set from `segment' and `offset' if `labelname' is NULL, and
- * otherwise the name of the current line's label is set from
- * `labelname' instead.
- */
-void eval_info (char *labelname, long segment, long offset);
+void eval_global_info (struct ofmt *output, lfunc lookup_label, loc_t *locp);
 
 /*
  * The evaluator itself.
@@ -30,5 +22,7 @@ void eval_info (char *labelname, long segment, long offset);
 expr *evaluate (scanner sc, void *scprivate, struct tokenval *tv,
 		int *fwref, int critical, efunc report_error,
 		struct eval_hints *hints);
+
+void eval_cleanup(void);
 
 #endif

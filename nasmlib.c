@@ -20,7 +20,8 @@ static efunc nasm_malloc_error;
 static FILE *logfp;
 #endif
 
-void nasm_set_malloc_error (efunc error) {
+void nasm_set_malloc_error (efunc error) 
+{
     nasm_malloc_error = error;
 #ifdef LOGALLOC
     logfp = fopen ("malloc.log", "w");
@@ -124,7 +125,8 @@ char *nasm_strndup (char *s, size_t len)
     return p;
 }
 
-int nasm_stricmp (char *s1, char *s2) {
+int nasm_stricmp (const char *s1, const char *s2) 
+{
     while (*s1 && toupper(*s1) == toupper(*s2))
 	s1++, s2++;
     if (!*s1 && !*s2)
@@ -135,7 +137,8 @@ int nasm_stricmp (char *s1, char *s2) {
 	return 1;
 }
 
-int nasm_strnicmp (char *s1, char *s2, int n) {
+int nasm_strnicmp (const char *s1, const char *s2, int n) 
+{
     while (n > 0 && *s1 && toupper(*s1) == toupper(*s2))
 	s1++, s2++, n--;
     if ((!*s1 && !*s2) || n==0)
@@ -149,15 +152,29 @@ int nasm_strnicmp (char *s1, char *s2, int n) {
 #define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
-long readnum (char *str, int *error) {
+long readnum (char *str, int *error) 
+{
     char *r = str, *q;
     long radix;
     unsigned long result, checklimit;
+    int digit, last;
     int warn = FALSE;
+    int sign = 1;
 
     *error = FALSE;
 
     while (isspace(*r)) r++;	       /* find start of number */
+
+    /*
+     * If the number came from make_tok_num (as a result of an %assign), it
+     * might have a '-' built into it (rather than in a preceeding token).
+     */
+    if (*r == '-')
+    {
+	r++;
+	sign = -1;
+    }
+
     q = r;
 
     while (lib_isnumchar(*q)) q++;     /* find end of number */
@@ -199,15 +216,26 @@ long readnum (char *str, int *error) {
      */
     checklimit = 0x80000000UL / (radix>>1);
 
+    /*
+     * Calculate the highest allowable value for the last digit
+     * of a 32 bit constant... in radix 10, it is 6, otherwise it is 0
+     */
+    last = (radix == 10 ? 6 : 0);
+
     result = 0;
     while (*r && r < q) {
-	if (*r<'0' || (*r>'9' && *r<'A') || numvalue(*r)>=radix) {
+	if (*r<'0' || (*r>'9' && *r<'A') || (digit = numvalue(*r)) >= radix) 
+	{
 	    *error = TRUE;
 	    return 0;
 	}
-	if (result >= checklimit)
+	if (result > checklimit ||
+	    (result == checklimit && digit >= last))
+	{
 	    warn = TRUE;
-	result = radix * result + numvalue(*r);
+	}
+
+	result = radix * result + digit;
 	r++;
     }
 
@@ -216,25 +244,46 @@ long readnum (char *str, int *error) {
 			   "numeric constant %s does not fit in 32 bits",
 			   str);
 
-    return result;
+    return result*sign;
+}
+
+long readstrnum (char *str, int length, int *warn) 
+{
+    long charconst = 0;
+    int i;
+
+    *warn = FALSE;
+
+    str += length;
+    for (i=0; i<length; i++) {
+	if (charconst & 0xff000000UL) {
+	    *warn = TRUE;
+	}
+	charconst = (charconst<<8) + (unsigned char) *--str;
+    }
+    return charconst;
 }
 
 static long next_seg;
 
-void seg_init(void) {
+void seg_init(void) 
+{
     next_seg = 0;
 }
 
-long seg_alloc(void) {
+long seg_alloc(void) 
+{
     return (next_seg += 2) - 2;
 }
 
-void fwriteshort (int data, FILE *fp) {
+void fwriteshort (int data, FILE *fp) 
+{
     fputc ((int) (data & 255), fp);
     fputc ((int) ((data >> 8) & 255), fp);
 }
 
-void fwritelong (long data, FILE *fp) {
+void fwritelong (long data, FILE *fp) 
+{
     fputc ((int) (data & 255), fp);
     fputc ((int) ((data >> 8) & 255), fp);
     fputc ((int) ((data >> 16) & 255), fp);
@@ -242,7 +291,8 @@ void fwritelong (long data, FILE *fp) {
 }
 
 void standard_extension (char *inname, char *outname, char *extension,
-			 efunc error) {
+			 efunc error) 
+{
     char *p, *q;
 
     if (*outname)		       /* file name already exists, */
@@ -268,47 +318,13 @@ void standard_extension (char *inname, char *outname, char *extension,
 	strcpy(p, extension);
 }
 
-#define RAA_BLKSIZE 4096	       /* this many longs allocated at once */
-#define RAA_LAYERSIZE 1024	       /* this many _pointers_ allocated */
-
-typedef struct RAA RAA;
-typedef union RAA_UNION RAA_UNION;
-typedef struct RAA_LEAF RAA_LEAF;
-typedef struct RAA_BRANCH RAA_BRANCH;
-
-struct RAA {
-    /*
-     * Number of layers below this one to get to the real data. 0
-     * means this structure is a leaf, holding RAA_BLKSIZE real
-     * data items; 1 and above mean it's a branch, holding
-     * RAA_LAYERSIZE pointers to the next level branch or leaf
-     * structures.
-     */
-    int layers;
-    /*
-     * Number of real data items spanned by one position in the
-     * `data' array at this level. This number is 1, trivially, for
-     * a leaf (level 0): for a level 1 branch it should be
-     * RAA_BLKSIZE, and for a level 2 branch it's
-     * RAA_LAYERSIZE*RAA_BLKSIZE.
-     */
-    long stepsize;
-    union RAA_UNION {
-	struct RAA_LEAF {
-	    long data[RAA_BLKSIZE];
-	} l;
-	struct RAA_BRANCH {
-	    struct RAA *data[RAA_LAYERSIZE];
-	} b;
-    } u;
-};
-
 #define LEAFSIZ (sizeof(RAA)-sizeof(RAA_UNION)+sizeof(RAA_LEAF))
 #define BRANCHSIZ (sizeof(RAA)-sizeof(RAA_UNION)+sizeof(RAA_BRANCH))
 
 #define LAYERSIZ(r) ( (r)->layers==0 ? RAA_BLKSIZE : RAA_LAYERSIZE )
 
-static struct RAA *real_raa_init (int layers) {
+static struct RAA *real_raa_init (int layers) 
+{
     struct RAA *r;
 
     if (layers == 0) {
@@ -327,11 +343,13 @@ static struct RAA *real_raa_init (int layers) {
     return r;
 }
 
-struct RAA *raa_init (void) {
+struct RAA *raa_init (void) 
+{
     return real_raa_init (0);
 }
 
-void raa_free (struct RAA *r) {
+void raa_free (struct RAA *r) 
+{
     if (r->layers == 0)
 	nasm_free (r);
     else {
@@ -342,7 +360,8 @@ void raa_free (struct RAA *r) {
     }
 }
 
-long raa_read (struct RAA *r, long posn) {
+long raa_read (struct RAA *r, long posn) 
+{
     if (posn > r->stepsize * LAYERSIZ(r))
 	return 0L;
     while (r->layers > 0) {
@@ -356,7 +375,8 @@ long raa_read (struct RAA *r, long posn) {
     return r->u.l.data[posn];
 }
 
-struct RAA *raa_write (struct RAA *r, long posn, long value) {
+struct RAA *raa_write (struct RAA *r, long posn, long value) 
+{
     struct RAA *result;
 
     if (posn < 0)
@@ -396,17 +416,8 @@ struct RAA *raa_write (struct RAA *r, long posn, long value) {
 
 #define SAA_MAXLEN 8192
 
-struct SAA {
-    /*
-     * members `end' and `elem_len' are only valid in first link in
-     * list; `rptr' and `rpos' are used for reading
-     */
-    struct SAA *next, *end, *rptr;
-    long elem_len, length, posn, start, rpos;
-    char *data;
-};
-
-struct SAA *saa_init (long elem_len) {
+struct SAA *saa_init (long elem_len) 
+{
     struct SAA *s;
 
     if (elem_len > SAA_MAXLEN)
@@ -423,7 +434,8 @@ struct SAA *saa_init (long elem_len) {
     return s;
 }
 
-void saa_free (struct SAA *s) {
+void saa_free (struct SAA *s) 
+{
     struct SAA *t;
 
     while (s) {
@@ -434,7 +446,8 @@ void saa_free (struct SAA *s) {
     }
 }
 
-void *saa_wstruct (struct SAA *s) {
+void *saa_wstruct (struct SAA *s) 
+{
     void *p;
 
     if (s->end->length - s->end->posn < s->elem_len) {
@@ -452,7 +465,8 @@ void *saa_wstruct (struct SAA *s) {
     return p;
 }
 
-void saa_wbytes (struct SAA *s, void *data, long len) {
+void saa_wbytes (struct SAA *s, void *data, long len) 
+{
     char *d = data;
 
     while (len > 0) {
@@ -480,12 +494,14 @@ void saa_wbytes (struct SAA *s, void *data, long len) {
     }
 }
 
-void saa_rewind (struct SAA *s) {
+void saa_rewind (struct SAA *s) 
+{
     s->rptr = s;
     s->rpos = 0L;
 }
 
-void *saa_rstruct (struct SAA *s) {
+void *saa_rstruct (struct SAA *s) 
+{
     void *p;
 
     if (!s->rptr)
@@ -503,7 +519,8 @@ void *saa_rstruct (struct SAA *s) {
     return p;
 }
 
-void *saa_rbytes (struct SAA *s, long *len) {
+void *saa_rbytes (struct SAA *s, long *len) 
+{
     void *p;
 
     if (!s->rptr)
@@ -516,7 +533,8 @@ void *saa_rbytes (struct SAA *s, long *len) {
     return p;
 }
 
-void saa_rnbytes (struct SAA *s, void *data, long len) {
+void saa_rnbytes (struct SAA *s, void *data, long len) 
+{
     char *d = data;
 
     while (len > 0) {
@@ -541,26 +559,27 @@ void saa_rnbytes (struct SAA *s, void *data, long len) {
     }
 }
 
-void saa_fread (struct SAA *s, long posn, void *data, long len) {
+void saa_fread (struct SAA *s, long posn, void *data, long len) 
+{
     struct SAA *p;
     long pos;
     char *cdata = data;
 
-    if (!s->rptr || posn > s->rptr->start + s->rpos)
+    if (!s->rptr || posn < s->rptr->start)
 	saa_rewind (s);
-    while (posn >= s->rptr->start + s->rptr->posn) {
-	s->rptr = s->rptr->next;
-	if (!s->rptr)
+    p = s->rptr;
+    while (posn >= p->start + p->posn) {
+	p = p->next;
+	if (!p)
 	    return;		       /* what else can we do?! */
     }
 
-    p = s->rptr;
-    pos = posn - s->rptr->start;
+    pos = posn - p->start;
     while (len) {
-	long l = s->rptr->posn - pos;
+	long l = p->posn - pos;
 	if (l > len)
 	    l = len;
-	memcpy (cdata, s->rptr->data+pos, l);
+	memcpy (cdata, p->data+pos, l);
 	len -= l;
 	cdata += l;
 	p = p->next;
@@ -568,28 +587,30 @@ void saa_fread (struct SAA *s, long posn, void *data, long len) {
 	    return;
 	pos = 0L;
     }
+    s->rptr = p;
 }
 
-void saa_fwrite (struct SAA *s, long posn, void *data, long len) {
+void saa_fwrite (struct SAA *s, long posn, void *data, long len) 
+{
     struct SAA *p;
     long pos;
     char *cdata = data;
 
-    if (!s->rptr || posn > s->rptr->start + s->rpos)
+    if (!s->rptr || posn < s->rptr->start)
 	saa_rewind (s);
-    while (posn >= s->rptr->start + s->rptr->posn) {
-	s->rptr = s->rptr->next;
-	if (!s->rptr)
+    p = s->rptr;
+    while (posn >= p->start + p->posn) {
+	p = p->next;
+	if (!p)
 	    return;		       /* what else can we do?! */
     }
 
-    p = s->rptr;
-    pos = posn - s->rptr->start;
+    pos = posn - p->start;
     while (len) {
-	long l = s->rptr->posn - pos;
+	long l = p->posn - pos;
 	if (l > len)
 	    l = len;
-	memcpy (s->rptr->data+pos, cdata, l);
+	memcpy (p->data+pos, cdata, l);
 	len -= l;
 	cdata += l;
 	p = p->next;
@@ -597,9 +618,11 @@ void saa_fwrite (struct SAA *s, long posn, void *data, long len) {
 	    return;
 	pos = 0L;
     }
+    s->rptr = p;
 }
 
-void saa_fpwrite (struct SAA *s, FILE *fp) {
+void saa_fpwrite (struct SAA *s, FILE *fp) 
+{
     char *data;
     long len;
 
@@ -632,16 +655,29 @@ static char **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
 
-static void stdscan_pop(void) {
+static void stdscan_pop(void) 
+{
     nasm_free (stdscan_tempstorage[--stdscan_templen]);
 }
 
-void stdscan_reset(void) {
+void stdscan_reset(void) 
+{
     while (stdscan_templen > 0)
 	stdscan_pop();
 }
 
-static char *stdscan_copy(char *p, int len) {
+/*
+ * Unimportant cleanup is done to avoid confusing people who are trying
+ * to debug real memory leaks
+ */
+void nasmlib_cleanup (void) 
+{
+    stdscan_reset();
+    nasm_free (stdscan_tempstorage);
+}
+
+static char *stdscan_copy(char *p, int len) 
+{
     char *text;
 
     text = nasm_malloc(len+1);
@@ -659,8 +695,11 @@ static char *stdscan_copy(char *p, int len) {
 }
 
 char *stdscan_bufptr = NULL;
-int stdscan (void *private_data, struct tokenval *tv) {
-    char ourcopy[256], *r, *s;
+int stdscan (void *private_data, struct tokenval *tv) 
+{
+    char ourcopy[MAX_KEYWORD+1], *r, *s;
+
+    (void) private_data;  /* Don't warn that this parameter is unused */
 
     while (isspace(*stdscan_bufptr)) stdscan_bufptr++;
     if (!*stdscan_bufptr)
@@ -682,11 +721,12 @@ int stdscan (void *private_data, struct tokenval *tv) {
 	while (isidchar(*stdscan_bufptr)) stdscan_bufptr++;
 	tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
 
+	if (is_sym || stdscan_bufptr-r > MAX_KEYWORD)
+	    return tv->t_type = TOKEN_ID;/* bypass all other checks */
+    
 	for (s=tv->t_charptr, r=ourcopy; *s; s++)
 	    *r++ = tolower (*s);
 	*r = '\0';
-	if (is_sym)
-	    return tv->t_type = TOKEN_ID;/* bypass all other checks */
 	/* right, so we have an identifier sitting in temp storage. now,
 	 * is it actually a register or instruction name, or what? */
 	if ((tv->t_integer=bsi(ourcopy, reg_names,
@@ -743,7 +783,10 @@ int stdscan (void *private_data, struct tokenval *tv) {
 	     * a floating point constant
 	     */
 	    stdscan_bufptr++;
-	    while (isnumchar(*stdscan_bufptr)) {
+	    while (isnumchar(*stdscan_bufptr) ||
+		   ((stdscan_bufptr[-1] == 'e' || stdscan_bufptr[-1] == 'E')
+		    && (*stdscan_bufptr == '-' || *stdscan_bufptr == '+')) ) 
+	    {
 		stdscan_bufptr++;
 	    }
 	    tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
@@ -759,16 +802,15 @@ int stdscan (void *private_data, struct tokenval *tv) {
     } else if (*stdscan_bufptr == '\'' ||
 	       *stdscan_bufptr == '"') {/* a char constant */
     	char quote = *stdscan_bufptr++, *r;
+	int rn_warn;
 	r = tv->t_charptr = stdscan_bufptr;
 	while (*stdscan_bufptr && *stdscan_bufptr != quote) stdscan_bufptr++;
 	tv->t_inttwo = stdscan_bufptr - r;      /* store full version */
 	if (!*stdscan_bufptr)
 	    return tv->t_type = TOKEN_ERRNUM;       /* unmatched quotes */
-	tv->t_integer = 0;
-	r = stdscan_bufptr++;		       /* skip over final quote */
-	while (quote != *--r) {
-	    tv->t_integer = (tv->t_integer<<8) + (unsigned char) *r;
-	}
+	stdscan_bufptr++;			/* skip over final quote */
+	tv->t_integer = readstrnum(r, tv->t_inttwo, &rn_warn);
+	/* FIXME: rn_warn is not checked! */
 	return tv->t_type = TOKEN_NUM;
     } else if (*stdscan_bufptr == ';') {  /* a comment has happened - stay */
 	return tv->t_type = 0;
@@ -816,7 +858,8 @@ int stdscan (void *private_data, struct tokenval *tv) {
  * Return TRUE if the argument is a simple scalar. (Or a far-
  * absolute, which counts.)
  */
-int is_simple (expr *vect) {
+int is_simple (expr *vect) 
+{
     while (vect->type && !vect->value)
     	vect++;
     if (!vect->type)
@@ -834,7 +877,8 @@ int is_simple (expr *vect) {
  * Return TRUE if the argument is a simple scalar, _NOT_ a far-
  * absolute.
  */
-int is_really_simple (expr *vect) {
+int is_really_simple (expr *vect) 
+{
     while (vect->type && !vect->value)
     	vect++;
     if (!vect->type)
@@ -852,7 +896,8 @@ int is_really_simple (expr *vect) {
  * Return TRUE if the argument is relocatable (i.e. a simple
  * scalar, plus at most one segment-base, plus possibly a WRT).
  */
-int is_reloc (expr *vect) {
+int is_reloc (expr *vect) 
+{
     while (vect->type && !vect->value) /* skip initial value-0 terms */
     	vect++;
     if (!vect->type)		       /* trivially return TRUE if nothing */
@@ -886,7 +931,8 @@ int is_reloc (expr *vect) {
 /*
  * Return TRUE if the argument contains an `unknown' part.
  */
-int is_unknown(expr *vect) {
+int is_unknown(expr *vect) 
+{
     while (vect->type && vect->type < EXPR_UNKNOWN)
 	vect++;
     return (vect->type == EXPR_UNKNOWN);
@@ -896,7 +942,8 @@ int is_unknown(expr *vect) {
  * Return TRUE if the argument contains nothing but an `unknown'
  * part.
  */
-int is_just_unknown(expr *vect) {
+int is_just_unknown(expr *vect) 
+{
     while (vect->type && !vect->value)
 	vect++;
     return (vect->type == EXPR_UNKNOWN);
@@ -906,7 +953,8 @@ int is_just_unknown(expr *vect) {
  * Return the scalar part of a relocatable vector. (Including
  * simple scalar vectors - those qualify as relocatable.)
  */
-long reloc_value (expr *vect) {
+long reloc_value (expr *vect) 
+{
     while (vect->type && !vect->value)
     	vect++;
     if (!vect->type) return 0;
@@ -920,7 +968,8 @@ long reloc_value (expr *vect) {
  * Return the segment number of a relocatable vector, or NO_SEG for
  * simple scalars.
  */
-long reloc_seg (expr *vect) {
+long reloc_seg (expr *vect) 
+{
     while (vect->type && (vect->type == EXPR_WRT || !vect->value))
     	vect++;
     if (vect->type == EXPR_SIMPLE) {
@@ -938,7 +987,8 @@ long reloc_seg (expr *vect) {
  * Return the WRT segment number of a relocatable vector, or NO_SEG
  * if no WRT part is present.
  */
-long reloc_wrt (expr *vect) {
+long reloc_wrt (expr *vect) 
+{
     while (vect->type && vect->type < EXPR_WRT)
     	vect++;
     if (vect->type == EXPR_WRT) {
@@ -950,7 +1000,8 @@ long reloc_wrt (expr *vect) {
 /*
  * Binary search.
  */
-int bsi (char *string, char **array, int size) {
+int bsi (char *string, char **array, int size) 
+{
     int i = -1, j = size;	       /* always, i < index < j */
     while (j-i >= 2) {
 	int k = (i+j)/2;
@@ -964,3 +1015,88 @@ int bsi (char *string, char **array, int size) {
     }
     return -1;			       /* we haven't got it :( */
 }
+
+static char *file_name = NULL;
+static long line_number = 0;
+
+char *src_set_fname(char *newname) 
+{
+    char *oldname = file_name;
+    file_name = newname;
+    return oldname;
+}
+
+long src_set_linnum(long newline) 
+{
+    long oldline = line_number;
+    line_number = newline;
+    return oldline;
+}
+
+long src_get_linnum(void) 
+{
+    return line_number;
+}
+
+int src_get(long *xline, char **xname) 
+{
+    if (!file_name || !*xname || strcmp(*xname, file_name)) 
+    {
+	nasm_free(*xname);
+	*xname = file_name ? nasm_strdup(file_name) : NULL;
+	*xline = line_number;
+	return -2;
+    }
+    if (*xline != line_number) 
+    {
+	long tmp = line_number - *xline;
+	*xline = line_number;
+	return tmp;
+    }
+    return 0;
+}
+
+void nasm_quote(char **str) 
+{
+    int ln=strlen(*str);
+    char q=(*str)[0];
+    char *p;
+    if (ln>1 && (*str)[ln-1]==q && (q=='"' || q=='\''))
+	return;
+    q = '"';
+    if (strchr(*str,q))
+	q = '\'';
+    p = nasm_malloc(ln+3);
+    strcpy(p+1, *str);
+    nasm_free(*str);
+    p[ln+1] = p[0] = q;
+    p[ln+2] = 0;
+    *str = p;
+}
+    
+char *nasm_strcat(char *one, char *two) 
+{
+    char *rslt;
+    int l1=strlen(one);
+    rslt = nasm_malloc(l1+strlen(two)+1);
+    strcpy(rslt, one);
+    strcpy(rslt+l1, two);
+    return rslt;
+}
+
+void null_debug_routine()
+{
+}
+struct dfmt null_debug_form = {
+    "Null debug format",
+    "null",
+    null_debug_routine,
+    null_debug_routine,
+    null_debug_routine,
+    null_debug_routine,
+    null_debug_routine,
+    null_debug_routine,
+    null_debug_routine,
+};
+
+struct dfmt *null_debug_arr[2] = { &null_debug_form, NULL };
