@@ -2297,7 +2297,7 @@ over the macros in a library. You may want to create a macro with one
 name if it doesn't already exist, and another name if one with that name
 does exist.
 
-The %ifmacro is considered true if defining a macro with the given name
+The \c{%ifmacro} is considered true if defining a macro with the given name
 and number of arguments would cause a definitions conflict. For example:
 
 \c %ifmacro MyMacro 1-3
@@ -2318,9 +2318,9 @@ This will create the macro "MyMacro 1-3" if no macro already exists which
 would conflict with it, and emits a warning if there would be a definition
 conflict.
 
-You can test for the macro not existing by using the \i\c{ifnmacro} instead
-of \c{ifmacro}. Additional tests can be performed in %elif blocks by using
-\i\c{elifmacro} and \i\c{elifnmacro}.
+You can test for the macro not existing by using the \i\c{%ifnmacro} instead
+of \c{%ifmacro}. Additional tests can be performed in \c{%elif} blocks by using
+\i\c{%elifmacro} and \i\c{%elifnmacro}.
 
 
 \S{ifctx} \i\c{%ifctx}: \i{Testing the Context Stack}
