@@ -105,8 +105,8 @@ static int  chsize (operand *, int);
 static void out (long offset, long segto, const void *data, unsigned long type,
 		 long segment, long wrt) 
 {
-    long lineno;
-    char *lnfname = NULL;
+    static long lineno = 0;       /* static!!! */
+    static char *lnfname = NULL;
 
     if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
 	if (segment != NO_SEG || wrt != NO_SEG) {
@@ -142,6 +142,15 @@ static void out (long offset, long segto, const void *data, unsigned long type,
 	       (type & OUT_TYPMASK) == OUT_REL4ADR) {
 	list->output (offset, data, type);
     }
+
+    /*
+     * this call to src_get determines when we call the
+     * debug-format-specific "linenum" function
+     * it updates lineno and lnfname to the current values
+     * returning 0 if "same as last time", -2 if lnfname
+     * changed, and the amount by which lineno changed,
+     * if it did. thus, these variables must be static
+     */
 
     if (src_get(&lineno,&lnfname))
     {

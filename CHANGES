@@ -7,6 +7,7 @@
 * Fix the STR instruction.
 * Fix the ELF output format, which was broken under certain
   circumstances due to the addition of stabs support.
+* Quick-fix Borland format debug-info for -f obj  
 
 0.98.37
 -------
