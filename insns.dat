@@ -863,8 +863,8 @@ ROR       rm16,imm            \320\300\1\xC1\201\25         186,SB
 ROR       rm32,unity          \321\300\1\xD1\201            386
 ROR       rm32,reg_cl         \321\300\1\xD3\201            386
 ROR       rm32,imm            \321\300\1\xC1\201\25         386,SB
-RSDC      reg_sreg,mem80      \2\x0F\x79\101		    486,CYRIX,SMM
-RSLDT     mem80               \2\x0F\x7B\200		    486,CYRIX,SMM
+RSDC      reg_sreg,mem80      \301\2\x0F\x79\101	    486,CYRIX,SMM
+RSLDT     mem80               \300\2\x0F\x7B\200	    486,CYRIX,SMM
 RSM       void                \2\x0F\xAA                    PENT,SMM
 SAHF      void                \1\x9E                        8086
 SAL       rm8,unity           \300\1\xD0\204                8086,ND
@@ -990,9 +990,9 @@ SUB       rm32,imm            \321\300\1\x81\205\41         386,SM
 SUB       mem,imm8            \300\1\x80\205\21             8086,SM
 SUB       mem,imm16           \320\300\1\x81\205\31         8086,SM
 SUB       mem,imm32           \321\300\1\x81\205\41         386,SM
-SVDC	  mem80,reg_sreg      \2\x0F\x78\101		    486,CYRIX,SMM
-SVLDT     mem80               \2\x0F\x7A\200                486,CYRIX,SMM
-SVTS      mem80               \2\x0F\x7C\200                486,CYRIX,SMM
+SVDC	  mem80,reg_sreg      \300\2\x0F\x78\101            486,CYRIX,SMM
+SVLDT     mem80               \300\2\x0F\x7A\200            486,CYRIX,SMM
+SVTS      mem80               \300\2\x0F\x7C\200            486,CYRIX,SMM
 SYSCALL   void                \2\x0F\x05                    P6,AMD
 SYSENTER  void                \2\x0F\x34                    P6
 SYSEXIT   void                \2\x0F\x36                    P6,PRIV

@@ -2,6 +2,12 @@ This is a modified version of NASM, modified and released by H. Peter
 Anvin <hpa@zytor.com>; it is not the original form released by the
 NASM authors.
 
+For release 0.98p3.6:
+
+* Fixed a bunch of instructions that were added in 0.98p3.5 which had
+  memory operands, and the address-size prefix was missing from the
+  instruction pattern.
+
 For release 0.98p3.5:
 
 * Merged in changes from John S. Fine's 0.98-J5 release.  John's based
