@@ -7,18 +7,21 @@
 * Lots of Makefile updates and bug fixes.
 * New %ifmacro directive to test for multiline macros.
 * Documentation updates.
+* Fixes for 16-bit OBJ format output.
+
 
 0.98.30
 -------
 
 * Changed doc files a lot: completely removed old READMExx and
-Wishlist files, incorporating all information in CHANGES and TODO.
+  Wishlist files, incorporating all information in CHANGES and TODO.
 * I waited a long time to rename zoutieee.c to (original) outieee.c
 * moved all output modules to output/ subdirectory.
 * Added 'make strip' target to strip debug info from nasm & ndisasm.
 * Added INSTALL file with installation instructions.
 * Added -v option description to nasm man.
 * Added dist makefile target to produce source distributions.
+* 16-bit support for ELF output format (GNU extension, but useful.)
 
 
 0.98.28
