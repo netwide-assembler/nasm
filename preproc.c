@@ -4358,11 +4358,73 @@ void
 pp_include_path(char *path)
 {
     IncPath *i;
-
+/*  by alexfru: order of path inclusion fixed (was reverse order) */
     i = nasm_malloc(sizeof(IncPath));
     i->path = nasm_strdup(path);
-    i->next = ipath;
+    i->next = NULL;
+
+    if (ipath != NULL)
+    { 
+        IncPath *j = ipath; 
+        while (j->next != NULL)
+            j = j->next; 
+        j->next = i; 
+    }
+    else
+    {
     ipath = i;
+}
+} 
+
+/*
+ * added by alexfru:
+ *
+ * This function is used to "export" the include paths, e.g.
+ * the paths specified in the '-I' command switch.
+ * The need for such exporting is due to the 'incbin' directive,
+ * which includes raw binary files (unlike '%include', which
+ * includes text source files). It would be real nice to be
+ * able to specify paths to search for incbin'ned files also.
+ * So, this is a simple workaround.
+ *
+ * The function use is simple:
+ *
+ * The 1st call (with NULL argument) returns a pointer to the 1st path
+ * (char** type) or NULL if none include paths available.
+ *
+ * All subsequent calls take as argument the value returned by this
+ * function last. The return value is either the next path
+ * (char** type) or NULL if the end of the paths list is reached.
+ *
+ * It is maybe not the best way to do things, but I didn't want
+ * to export too much, just one or two functions and no types or
+ * variables exported.
+ *
+ * Can't say I like the current situation with e.g. this path list either,
+ * it seems to be never deallocated after creation...
+ */
+char**
+pp_get_include_path_ptr (char **pPrevPath)
+{
+/*   This macro returns offset of a member of a structure */
+#define GetMemberOffset(StructType,MemberName)\
+  ((size_t)&((StructType*)0)->MemberName)
+    IncPath *i;
+
+    if (pPrevPath == NULL)
+    {
+        if(ipath != NULL)
+            return &ipath->path;
+        else
+            return NULL;
+    }
+    i = (IncPath*) ((char*)pPrevPath - GetMemberOffset(IncPath,path));
+    i = i->next;
+    if (i != NULL)
+        return &i->path;
+    else
+        return NULL;
+#undef GetMemberOffset
 }
 
 void

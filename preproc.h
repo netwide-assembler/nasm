@@ -10,6 +10,7 @@
 #define NASM_PREPROC_H
 
 void pp_include_path (char *);
+char** pp_get_include_path_ptr (char **pPrevPath);
 void pp_pre_include (char *);
 void pp_pre_define (char *);
 void pp_pre_undefine (char *);

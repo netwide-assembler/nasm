@@ -599,8 +599,9 @@ See also the \c{-E} option, \k{opt-E}.
 
 \S{opt-i} The \i\c{-i}\I\c{-I} Option: Include File Search Directories
 
-When NASM sees the \i\c{%include} directive in a source file (see
-\k{include}), it will search for the given file not only in the
+When NASM sees the \i\c{%include} or \i\c{incbin} directive in 
+a source file (see \k{include} or \k{incbin}), 
+it will search for the given file not only in the
 current directory, but also in any directories specified on the
 command line by the use of the \c{-i} option. Therefore you can
 include files from a \i{macro library}, for example, by typing
@@ -620,8 +621,6 @@ Under Unix, a trailing forward slash is similarly necessary.
 (You can use this to your advantage, if you're really \i{perverse},
 by noting that the option \c{-ifoo} will cause \c{%include "bar.i"}
 to search for the file \c{foobar.i}...)
-
-\#FIXME - the above is not true - see the "backslash()" function
 
 If you want to define a \e{standard} \i{include search path},
 similar to \c{/usr/include} on Unix systems, you should place one or

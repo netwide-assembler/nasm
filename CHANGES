@@ -1,5 +1,7 @@
 0.98.37
 -------
+* Paths given in "-I" switch searched for "incbin"ed as
+  well as "%include"ed files.
 * Added stabs debugging for the ELF output format, patch from
   Martin Wawro.
 * Fix output/outbin.c to allow origin > 80000000h

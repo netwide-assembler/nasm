@@ -109,3 +109,11 @@ N: Michael K. Ter Louw
 E: mterlo1 "at" uic "dot" edu
 D: Multisection support for "-f bin"
 
+N: Martin Wawro
+E: FIXME
+D: stabs debug support for "-f elf"
+
+N: Alexei Frounze
+E: alexfru@users.sourceforge.net
+D: "-I" paths searched for "incbined" files
+D: bugswatting

@@ -74,6 +74,7 @@
 #include "nasmlib.h"
 #include "assemble.h"
 #include "insns.h"
+#include "preproc.h"
 
 extern struct itemplate *nasm_instructions[];
 
@@ -267,6 +268,8 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 	static char fname[FILENAME_MAX];
 	FILE        * fp;
 	long        len;
+        char *prefix = "", *combine;
+        char** pPrevPath = NULL;
 
 	len = FILENAME_MAX-1;
 	if (len > instruction->eops->stringlen)
@@ -274,7 +277,26 @@ long assemble (long segment, long offset, int bits, unsigned long cp,
 	strncpy (fname, instruction->eops->stringval, len);
 	fname[len] = '\0';
 
-	if ( (fp = fopen(fname, "rb")) == NULL)
+        while (1)             /* added by alexfru: 'incbin' uses include paths */
+        {
+          combine = nasm_malloc(strlen(prefix) + len + 1);
+          strcpy(combine, prefix);
+          strcat(combine, fname);
+
+          if ( (fp = fopen(combine, "rb")) != NULL)
+          {
+              nasm_free(combine);
+              break;
+          }
+
+          nasm_free(combine);
+          pPrevPath = pp_get_include_path_ptr (pPrevPath);
+          if (pPrevPath == NULL)
+              break;
+          prefix = *pPrevPath;
+        }
+
+        if (fp == NULL)
 	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
 	else if (fseek(fp, 0L, SEEK_END) < 0)
 	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
@@ -489,13 +511,35 @@ long insn_size (long segment, long offset, int bits, unsigned long cp,
 	char  fname[FILENAME_MAX];
 	FILE  * fp;
 	long  len;
+        char *prefix = "", *combine;
+        char** pPrevPath = NULL;
 
 	len = FILENAME_MAX-1;
 	if (len > instruction->eops->stringlen)
 	    len = instruction->eops->stringlen;
 	strncpy (fname, instruction->eops->stringval, len);
 	fname[len] = '\0';
-	if ( (fp = fopen(fname, "rb")) == NULL )
+
+        while (1)             /* added by alexfru: 'incbin' uses include paths */
+        {
+          combine = nasm_malloc(strlen(prefix) + len + 1);
+          strcpy(combine, prefix);
+          strcat(combine, fname);
+
+          if ( (fp = fopen(combine, "rb")) != NULL)
+          {
+              nasm_free(combine);
+              break;
+          }
+
+          nasm_free(combine);
+          pPrevPath = pp_get_include_path_ptr (pPrevPath);
+          if (pPrevPath == NULL)
+              break;
+          prefix = *pPrevPath;
+        }
+
+        if (fp == NULL)
 	    error (ERR_NONFATAL, "`incbin': unable to open file `%s'", fname);
 	else if (fseek(fp, 0L, SEEK_END) < 0)
 	    error (ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
