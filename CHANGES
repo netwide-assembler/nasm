@@ -3,7 +3,10 @@
 
 * Correctly build in a separate object directory again.
 * Derive all references to the version number from the version file.
-
+* New standard macros __NASM_SUBMINOR__ and __NASM_VER__ macros.
+* Lots of Makefile updates and bug fixes.
+* New %ifmacro directive to test for multiline macros.
+* Documentation updates.
 
 0.98.30
 -------
