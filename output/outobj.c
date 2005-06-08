@@ -1172,7 +1172,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
         else {
             long i = seg / 2;
             struct ExtBack *eb = ebhead;
-            while (i > EXT_BLKSIZ) {
+            while (i >= EXT_BLKSIZ) {
                 if (eb)
                     eb = eb->next;
                 else
@@ -1231,7 +1231,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
             else {
                 long i = wrt / 2;
                 struct ExtBack *eb = ebhead;
-                while (i > EXT_BLKSIZ) {
+                while (i >= EXT_BLKSIZ) {
                     if (eb)
                         eb = eb->next;
                     else
@@ -1766,7 +1766,7 @@ static long obj_segbase(long segment)
         struct ExtBack *eb = ebhead;
         struct External *e;
 
-        while (i > EXT_BLKSIZ) {
+        while (i >= EXT_BLKSIZ) {
             if (eb)
                 eb = eb->next;
             else

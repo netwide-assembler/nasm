@@ -1,3 +1,6 @@
+0.98.40
+* fix (?) bug in outobj.c - every 256th "extern" caused Nasm crash
+
 0.98.39
 -------
 * fix buffer overflow
