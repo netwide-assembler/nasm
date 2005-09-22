@@ -57,7 +57,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf2 */
+ * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf2,macho */
 
 /* process options... */
 
@@ -97,6 +97,9 @@
 #endif
 #ifndef OF_IEEE
 #define OF_IEEE
+#endif
+#ifndef OF_MACHO
+#define OF_MACHO
 #endif
 #endif                          /* OF_ALL */
 
@@ -141,6 +144,9 @@
 #ifndef OF_IEEE
 #define OF_IEEE
 #endif
+#ifndef OF_MACHO
+#define OF_MACHO
+#endif
 #endif
 
 /* finally... override any format specifically specified to be off */
@@ -174,6 +180,9 @@
 #ifdef OF_NO_IEEE
 #undef OF_IEEE
 #endif
+#ifdef OF_NO_MACHO
+#undef OF_MACHO
+#endif
 
 #ifndef OF_DEFAULT
 #define OF_DEFAULT of_bin
@@ -194,6 +203,7 @@ extern struct ofmt of_obj;
 extern struct ofmt of_win32;
 extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
+extern struct ofmt of_macho;
 extern struct ofmt of_dbg;
 
 struct ofmt *drivers[] = {
@@ -226,6 +236,9 @@ struct ofmt *drivers[] = {
 #endif
 #ifdef OF_IEEE
     &of_ieee,
+#endif
+#ifdef OF_MACHO
+    &of_macho,
 #endif
 #ifdef OF_DBG
     &of_dbg,

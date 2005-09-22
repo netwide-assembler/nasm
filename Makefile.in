@@ -51,7 +51,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) \
 	labels.$(O) parser.$(O) outform.$(O) output/outbin.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) output/outelf.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) \
+	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	preproc.$(O) listing.$(O) eval.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) insnsd.$(O)
