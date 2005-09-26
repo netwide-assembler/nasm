@@ -131,6 +131,16 @@ static evalfunc evaluate;
 
 extern struct ofmt of_macho;
 
+/* Global file information. This should be cleaned up into either
+   a structure or as function arguments.  */
+unsigned long head_ncmds = 0;
+unsigned long head_sizeofcmds = 0;
+unsigned long seg_filesize = 0;
+unsigned long seg_vmsize = 0;
+unsigned long seg_nsects = 0;
+unsigned long rel_padcnt = 0;
+
+
 #define xstrncpy(xdst, xsrc) \
     memset(xdst, '\0', sizeof(xdst));	/* zero out whole buffer */ \
     strncpy(xdst, xsrc, sizeof(xdst));	/* copy over string */ \
@@ -563,102 +573,11 @@ static const char *macho_stdmac[] = {
     NULL
 };
 
-static void macho_cleanup(int debuginfo)
+/* Calculate some values we'll need for writing later.  */
+
+static void macho_calculate_sizes (void)
 {
     struct section *s;
-    struct reloc *r;
-    unsigned long offset, rel_padcnt = 0;
-    unsigned long head_ncmds = 0;
-    unsigned long head_sizeofcmds = 0;
-    unsigned long seg_nsects = 0;
-    unsigned long seg_filesize = 0;
-    unsigned long seg_vmsize = 0;
-
-    (void)debuginfo;
-
-    /* mach-o object file structure:
-     **
-     ** mach header
-     **  ulong magic
-     **  int   cpu type
-     **  int   cpu subtype
-     **  ulong mach file type
-     **  ulong number of load commands
-     **  ulong size of all load commands
-     **   (includes section struct size of segment command)
-     **  ulong flags
-     **
-     ** segment command
-     **  ulong command type == LC_SEGMENT
-     **  ulong size of load command
-     **   (including section load commands)
-     **  char[16] segment name
-     **  ulong in-memory offset
-     **  ulong in-memory size
-     **  ulong in-file offset to data area
-     **  ulong in-file size
-     **   (in-memory size excluding zerofill sections)
-     **  int   maximum vm protection
-     **  int   initial vm protection
-     **  ulong number of sections
-     **  ulong flags
-     **
-     ** section commands
-     **   char[16] section name
-     **   char[16] segment name
-     **   ulong in-memory offset
-     **   ulong in-memory size
-     **   ulong in-file offset
-     **   ulong alignment
-     **    (irrelevant in MH_OBJECT)
-     **   ulong in-file offset of relocation entires
-     **   ulong number of relocations
-     **   ulong flags
-     **   ulong reserved
-     **   ulong reserved
-     **
-     ** symbol table command
-     **  ulong command type == LC_SYMTAB
-     **  ulong size of load command
-     **  ulong symbol table offset
-     **  ulong number of symbol table entries
-     **  ulong string table offset
-     **  ulong string table size
-     **
-     ** raw section data
-     **
-     ** padding to long boundary
-     **
-     ** relocation data (struct reloc)
-     ** long offset
-     **  uint data (symbolnum, pcrel, length, extern, type)
-     **
-     ** symbol table data (struct nlist)
-     **  long  string table entry number
-     **  uchar type
-     **   (extern, absolute, defined in section)
-     **  uchar section
-     **   (0 for global symbols, section number of definition (>= 1, <=
-     **   254) for local symbols, size of variable for common symbols
-     **   [type == extern])
-     **  short description
-     **   (for stab debugging format)
-     **  ulong value (i.e. file offset) of symbol or stab offset
-     **
-     ** string table data
-     **  list of null-terminated strings
-     */
-
-    /* simplifications over native NeXTstep assembler:
-     ** - no support for dynamic linking/symbols/libraries, section differences
-     ** - no sorting of symbols and string table, normally its ordered like
-     **  - local symbols, defined external symbols, undefined external symbols
-     **  - strings for external symbols, strings for local symbols
-     **   we just dump them in the order given by the source file and nasm what
-     **   seems to work fine with the link editor
-     */
-
-    /* first calculate and finalise all needed values */
 
     /* count sections and calculate in-memory and in-file offsets */
     for (s = sects; s != NULL; s = s->next) {
@@ -671,7 +590,7 @@ static void macho_cleanup(int debuginfo)
     }
 
     /* calculate size of all headers, load commands and sections to
-     ** get a pointer to the start of all the raw data */
+    ** get a pointer to the start of all the raw data */
     if (seg_nsects > 0) {
         ++head_ncmds;
         head_sizeofcmds +=
@@ -679,83 +598,293 @@ static void macho_cleanup(int debuginfo)
     }
 
     if (nsyms > 0) {
-        ++head_ncmds;
-        head_sizeofcmds += MACHO_SYMCMD_SIZE;
+	++head_ncmds;
+	head_sizeofcmds += MACHO_SYMCMD_SIZE;
+    }
+}
+
+/* Write out the header information for the file.  */
+
+static void macho_write_header (void)
+{
+    fwritelong(MH_MAGIC, machofp);	/* magic */
+    fwritelong(CPU_TYPE_I386, machofp);	/* CPU type */
+    fwritelong(CPU_SUBTYPE_I386_ALL, machofp);	/* CPU subtype */
+    fwritelong(MH_OBJECT, machofp);	/* Mach-O file type */
+    fwritelong(head_ncmds, machofp);	/* number of load commands */
+    fwritelong(head_sizeofcmds, machofp);	/* size of load commands */
+    fwritelong(0, machofp);	/* no flags */
+}
+
+/* Write out the segment load command at offset.  */
+
+static unsigned long macho_write_segment (unsigned long offset)
+{
+    unsigned long s_addr = 0;
+    unsigned long rel_base = alignlong (offset + seg_filesize);
+    unsigned long s_reloff = 0;
+    struct section *s;
+
+    fwritelong(LC_SEGMENT, machofp);        /* cmd == LC_SEGMENT */
+
+    /* size of load command including section load commands */
+    fwritelong(MACHO_SEGCMD_SIZE + seg_nsects *
+	       MACHO_SECTCMD_SIZE, machofp);
+
+    /* in an MH_OBJECT file all sections are in one unnamed (name
+    ** all zeros) segment */
+    fwrite("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16, 1, machofp);
+    fwritelong(0, machofp); /* in-memory offset */
+    fwritelong(seg_vmsize, machofp);        /* in-memory size */
+    fwritelong(offset, machofp);    /* in-file offset to data */
+    fwritelong(seg_filesize, machofp);      /* in-file size */
+    fwritelong(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
+    fwritelong(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
+    fwritelong(seg_nsects, machofp);        /* number of sections */
+    fwritelong(0, machofp); /* no flags */
+
+    /* emit section headers */
+    for (s = sects; s != NULL; s = s->next) {
+	fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
+	fwrite(s->segname, sizeof(s->segname), 1, machofp);
+	fwritelong(s_addr, machofp);
+	fwritelong(s->size, machofp);
+
+	/* dummy data for zerofill sections or proper values */
+	if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
+	    fwritelong(offset, machofp);
+	    fwritelong(0, machofp);
+	    /* To be compatible with cctools as we emit
+	       a zero reloff if we have no relocations.  */
+	    fwritelong(s->nreloc ? rel_base + s_reloff : 0, machofp);
+	    fwritelong(s->nreloc, machofp);
+
+	    offset += s->size;
+	    s_reloff += s->nreloc * MACHO_RELINFO_SIZE;
+	} else {
+	    fwritelong(0, machofp);
+	    fwritelong(0, machofp);
+	    fwritelong(0, machofp);
+	    fwritelong(0, machofp);
+	}
+
+	fwritelong(s->flags, machofp);      /* flags */
+	fwritelong(0, machofp);     /* reserved */
+	fwritelong(0, machofp);     /* reserved */
+
+	s_addr += s->size;
     }
 
-    /* emit the Mach-O header. */
-    fwritelong(MH_MAGIC, machofp);      /* magic */
-    fwritelong(CPU_TYPE_I386, machofp); /* CPU type */
-    fwritelong(CPU_SUBTYPE_I386_ALL, machofp);  /* CPU subtype */
-    fwritelong(MH_OBJECT, machofp);     /* Mach-O file type */
-    fwritelong(head_ncmds, machofp);    /* number of load commands */
-    fwritelong(head_sizeofcmds, machofp);       /* size of load commands */
-    fwritelong(0, machofp);     /* no flags */
+    rel_padcnt = rel_base - offset;
+    offset = rel_base + s_reloff;
+
+    return offset;
+}
+
+/* For a given chain of relocs r, write out the entire relocation
+   chain to the object file.  */
+
+static void macho_write_relocs (struct reloc *r)
+{
+    while (r) {
+	unsigned long word2;
+
+	fwritelong(r->addr, machofp); /* reloc offset */
+
+	word2 = r->snum;
+	word2 |= r->pcrel << 24;
+	word2 |= r->length << 25;
+	word2 |= r->ext << 27;
+	word2 |= r->type << 28;
+	fwritelong(word2, machofp); /* reloc data */
+
+	r = r->next;
+    }
+}
+
+/* Write out the section data.  */
+static void macho_write_section (void)
+{
+    struct section *s, *s2;
+    struct reloc *r;
+    char *rel_paddata = "\0\0\0";
+    unsigned char fi, *p, *q, blk[4];
+    long l;
+
+    for (s = sects; s != NULL; s = s->next) {
+	if ((s->flags & SECTION_TYPE) == S_ZEROFILL)
+	    continue;
+
+	/* no padding needs to be done to the sections */
+
+	/* Like a.out Mach-O references things in the data or bss
+	 * sections by addresses which are actually relative to the
+	 * start of the _text_ section, in the _file_. See outaout.c
+	 * for more information. */
+	saa_rewind(s->data);
+	for (r = s->relocs; r != NULL; r = r->next) {
+	    saa_fread(s->data, r->addr, blk, (long)r->length << 1);
+	    p = q = blk;
+	    l = *p++;
+
+	    /* get offset based on relocation type */
+	    if (r->length > 0) {
+		l += ((long)*p++) << 8;
+
+		if (r->length == 2) {
+		    l += ((long)*p++) << 16;
+		    l += ((long)*p++) << 24;
+		}
+	    }
+
+	    /* add sizes of previous sections to current offset */
+	    for (s2 = sects, fi = 1;
+		 s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
+		if ((s2->flags & SECTION_TYPE) != S_ZEROFILL)
+		    l += s2->size;
+
+	    /* write new offset back */
+	    if (r->length == 2)
+		WRITELONG(q, l);
+	    else if (r->length == 1)
+		WRITESHORT(q, l);
+	    else
+		*q++ = l & 0xFF;
+
+	    saa_fwrite(s->data, r->addr, blk, (long)r->length << 1);
+	}
+
+	/* dump the section data to file */
+	saa_fpwrite(s->data, machofp);
+    }
+
+    /* pad last section up to reloc entries on long boundary */
+    fwrite(rel_paddata, rel_padcnt, 1, machofp);
+
+    /* emit relocation entries */
+    for (s = sects; s != NULL; s = s->next)
+	macho_write_relocs (s->relocs);
+}
+
+/* Write out the symbol table. We should already have sorted this
+   before now.  */
+static void macho_write_symtab (void)
+{
+    struct symbol *sym;
+    struct section *s;
+    long fi, i;
+
+    /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
+
+    saa_rewind(syms);
+    for (i = 0; i < nsyms; ++i) {
+	sym = saa_rstruct(syms);
+
+	fwritelong(sym->strx, machofp);     /* string table entry number */
+	fwrite(&sym->type, 1, 1, machofp);  /* symbol type */
+	fwrite(&sym->sect, 1, 1, machofp);  /* section */
+	fwriteshort(sym->desc, machofp);    /* description */
+
+	/* fix up the symbol value now we know the final section
+	** sizes. */
+	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
+	    for (s = sects, fi = 1;
+		 s != NULL && fi < sym->sect; s = s->next, ++fi)
+		sym->value += s->size;
+	}
+
+	fwritelong(sym->value, machofp);    /* value (i.e. offset) */
+    }
+}
+
+/* Write out the object file.  */
+
+static void macho_write (void)
+{
+    unsigned long offset = 0;
+
+    /* mach-o object file structure:
+    **
+    ** mach header
+    **  ulong magic
+    **  int   cpu type
+    **  int   cpu subtype
+    **  ulong mach file type
+    **  ulong number of load commands
+    **  ulong size of all load commands
+    **   (includes section struct size of segment command)
+    **  ulong flags
+    **
+    ** segment command
+    **  ulong command type == LC_SEGMENT
+    **  ulong size of load command
+    **   (including section load commands)
+    **  char[16] segment name
+    **  ulong in-memory offset
+    **  ulong in-memory size
+    **  ulong in-file offset to data area
+    **  ulong in-file size
+    **   (in-memory size excluding zerofill sections)
+    **  int   maximum vm protection
+    **  int   initial vm protection
+    **  ulong number of sections
+    **  ulong flags
+    **
+    ** section commands
+    **   char[16] section name
+    **   char[16] segment name
+    **   ulong in-memory offset
+    **   ulong in-memory size
+    **   ulong in-file offset
+    **   ulong alignment
+    **    (irrelevant in MH_OBJECT)
+    **   ulong in-file offset of relocation entires
+    **   ulong number of relocations
+    **   ulong flags
+    **   ulong reserved
+    **   ulong reserved
+    **
+    ** symbol table command
+    **  ulong command type == LC_SYMTAB
+    **  ulong size of load command
+    **  ulong symbol table offset
+    **  ulong number of symbol table entries
+    **  ulong string table offset
+    **  ulong string table size
+    **
+    ** raw section data
+    **
+    ** padding to long boundary
+    **
+    ** relocation data (struct reloc)
+    ** long offset
+    **  uint data (symbolnum, pcrel, length, extern, type)
+    **
+    ** symbol table data (struct nlist)
+    **  long  string table entry number
+    **  uchar type
+    **   (extern, absolute, defined in section)
+    **  uchar section
+    **   (0 for global symbols, section number of definition (>= 1, <=
+    **   254) for local symbols, size of variable for common symbols
+    **   [type == extern])
+    **  short description
+    **   (for stab debugging format)
+    **  ulong value (i.e. file offset) of symbol or stab offset
+    **
+    ** string table data
+    **  list of null-terminated strings
+    */
+
+    /* Emit the Mach-O header.  */
+    macho_write_header();
 
     offset = MACHO_HEADER_SIZE + head_sizeofcmds;
 
     /* emit the segment load command */
-    if (seg_nsects > 0) {
-        unsigned long s_addr = 0;
-        unsigned long rel_base = alignlong(offset + seg_filesize);
-        unsigned long s_reloff = 0;
-
-        fwritelong(LC_SEGMENT, machofp);        /* cmd == LC_SEGMENT */
-
-        /* size of load command including section load commands */
-        fwritelong(MACHO_SEGCMD_SIZE + seg_nsects *
-                   MACHO_SECTCMD_SIZE, machofp);
-
-        /* in an MH_OBJECT file all sections are in one unnamed (name
-         ** all zeros) segment */
-        fwrite("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16, 1, machofp);
-        fwritelong(0, machofp); /* in-memory offset */
-        fwritelong(seg_vmsize, machofp);        /* in-memory size */
-        fwritelong(offset, machofp);    /* in-file offset to data */
-        fwritelong(seg_filesize, machofp);      /* in-file size */
-        fwritelong(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
-        fwritelong(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
-        fwritelong(seg_nsects, machofp);        /* number of sections */
-        fwritelong(0, machofp); /* no flags */
-
-        /* emit section headers */
-        for (s = sects; s != NULL; s = s->next) {
-            fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
-            fwrite(s->segname, sizeof(s->segname), 1, machofp);
-            fwritelong(s_addr, machofp);
-            fwritelong(s->size, machofp);
-
-            /* dummy data for zerofill sections or proper values */
-            if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
-                fwritelong(offset, machofp);
-                fwritelong(0, machofp);
-                /* To be compatible with cctools as we emit
-                   a zero reloff if we have no relocations.  */
-                fwritelong(s->nreloc ? rel_base + s_reloff : 0, machofp);
-                fwritelong(s->nreloc, machofp);
-
-                offset += s->size;
-                s_reloff += s->nreloc * MACHO_RELINFO_SIZE;
-            } else {
-                fwritelong(0, machofp);
-                fwritelong(0, machofp);
-                fwritelong(0, machofp);
-                fwritelong(0, machofp);
-            }
-
-            fwritelong(s->flags, machofp);      /* flags */
-            fwritelong(0, machofp);     /* reserved */
-            fwritelong(0, machofp);     /* reserved */
-
-            s_addr += s->size;
-        }
-
-        /* at this point offset has reached rel_base - alignment,
-         ** remember how much we'll have to pad and skip relocation
-         ** data */
-        rel_padcnt = rel_base - offset;
-        offset = rel_base + s_reloff;
-    } else
+    if (seg_nsects > 0)
+	offset = macho_write_segment (offset);
+    else
         error(ERR_WARNING, "no sections?");
 
     if (nsyms > 0) {
@@ -772,111 +901,32 @@ static void macho_cleanup(int debuginfo)
     }
 
     /* emit section data */
-    if (seg_nsects > 0) {
-        struct section *s2;
-        char *rel_paddata = "\0\0\0";
-        unsigned char fi, *p, *q, blk[4];
-        long l;
+    if (seg_nsects > 0)
+	macho_write_section ();
 
-        for (s = sects; s != NULL; s = s->next) {
-            if ((s->flags & SECTION_TYPE) == S_ZEROFILL)
-                continue;
-
-            /* no padding needs to be done to the sections */
-
-            /* Like a.out Mach-O references things in the data or bss
-             * sections by addresses which are actually relative to the
-             * start of the _text_ section, in the _file_. See outaout.c
-             * for more information. */
-            saa_rewind(s->data);
-            for (r = s->relocs; r != NULL; r = r->next) {
-                saa_fread(s->data, r->addr, blk, (long)r->length << 1);
-                p = q = blk;
-                l = *p++;
-
-                /* get offset based on relocation type */
-                if (r->length > 0) {
-                    l += ((long)*p++) << 8;
-
-                    if (r->length == 2) {
-                        l += ((long)*p++) << 16;
-                        l += ((long)*p++) << 24;
-                    }
-                }
-
-                /* add sizes of previous sections to current offset */
-                for (s2 = sects, fi = 1;
-                     s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
-                    if ((s2->flags & SECTION_TYPE) != S_ZEROFILL)
-                        l += s2->size;
-
-                /* write new offset back */
-                if (r->length == 2)
-                    WRITELONG(q, l);
-                else if (r->length == 1)
-                    WRITESHORT(q, l);
-                else
-                    *q++ = l & 0xFF;
-
-                saa_fwrite(s->data, r->addr, blk, (long)r->length << 1);
-            }
-
-            /* dump the section data to file */
-            saa_fpwrite(s->data, machofp);
-        }
-
-        /* pad last section up to reloc entries on long boundary */
-        fwrite(rel_paddata, rel_padcnt, 1, machofp);
-
-        /* emit relocation entries */
-        for (s = sects; s != NULL; s = s->next) {
-            for (r = s->relocs; r != NULL; r = r->next) {
-                unsigned long word2;
-
-                fwritelong(r->addr, machofp);   /* reloc offset */
-
-                word2 = r->snum;
-                word2 |= r->pcrel << 24;
-                word2 |= r->length << 25;
-                word2 |= r->ext << 27;
-                word2 |= r->type << 28;
-                fwritelong(word2, machofp);     /* reloc data */
-            }
-        }
-    }
-
-    /* emit symbol table */
-    if (nsyms > 0) {
-        struct symbol *sym;
-        long fi, i;
-
-        /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
-
-        saa_rewind(syms);
-        for (i = 0; i < nsyms; ++i) {
-            sym = saa_rstruct(syms);
-
-            fwritelong(sym->strx, machofp);     /* string table entry number */
-            fwrite(&sym->type, 1, 1, machofp);  /* symbol type */
-            fwrite(&sym->sect, 1, 1, machofp);  /* section */
-            fwriteshort(sym->desc, machofp);    /* description */
-
-            /* fix up the symbol value now we know the final section
-             ** sizes. */
-            if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-                for (s = sects, fi = 1;
-                     s != NULL && fi < sym->sect; s = s->next, ++fi)
-                    sym->value += s->size;
-            }
-
-            fwritelong(sym->value, machofp);    /* value (i.e. offset) */
-        }
-    }
+    /* emit symbol table if we have symbols */
+    if (nsyms > 0)
+	macho_write_symtab ();
 
     /* we don't need to pad here since MACHO_NLIST_SIZE == 12 */
 
     /* emit string table */
     saa_fpwrite(strs, machofp);
+}
+/* We do quite a bit here, starting with finalizing all of the data
+   for the object file, writing, and then freeing all of the data from
+   the file.  */
+
+static void macho_cleanup(int debuginfo)
+{
+    struct section *s;
+    struct reloc *r;
+
+    (void)debuginfo;
+
+    /* First calculate and finalize needed values.  */
+    macho_calculate_sizes();
+    macho_write();
 
     /* done - yay! */
     fclose(machofp);
