@@ -66,13 +66,22 @@ struct section {
 #define	S_REGULAR	(0x0)   /* standard section */
 #define	S_ZEROFILL	(0x1)   /* zerofill, in-memory only */
 
+#define SECTION_ATTRIBUTES_SYS   0x00ffff00     /* system setable attributes */
+#define S_ATTR_SOME_INSTRUCTIONS 0x00000400     /* section contains some
+                                                   machine instructions */
+#define S_ATTR_EXT_RELOC         0x00000200     /* section has external
+                                                   relocation entries */
+#define S_ATTR_LOC_RELOC         0x00000100     /* section has local
+                                                   relocation entries */
+
+
 static struct sectmap {
     const char *nasmsect;
     const char *segname;
     const char *sectname;
     const long flags;
 } sectmap[] = { {
-".text", "__TEXT", "__text", S_REGULAR}, {
+".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS}, {
 ".data", "__DATA", "__data", S_REGULAR}, {
 ".bss", "__DATA", "__bss", S_ZEROFILL}, {
 NULL, NULL, NULL}};
@@ -84,19 +93,27 @@ struct reloc {
     /* data that goes into the file */
     long addr;                  /* op's offset in section */
     unsigned int snum:24,       /* contains symbol index if
-                                 ** ext otherwise in-file
-                                 ** section number */
-     pcrel:1,                   /* relative relocation */
-     length:2,                  /* 0=byte, 1=word, 2=long */
-     ext:1,                     /* external symbol referenced */
-     type:4;                    /* reloc type, 0 for us */
+				** ext otherwise in-file
+				** section number */
+	pcrel:1,                /* relative relocation */
+	length:2,               /* 0=byte, 1=word, 2=long */
+	ext:1,                  /* external symbol referenced */
+	type:4;                 /* reloc type, 0 for us */
 };
 
 #define	R_ABS		0       /* absolute relocation */
 #define R_SCATTERED	0x80000000      /* reloc entry is scattered if
-                                         ** highest bit == 1 */
+					** highest bit == 1 */
 
 struct symbol {
+    /* nasm internal data */
+    struct symbol *next;	/* next symbol in the list */
+    char *name;			/* name of this symbol */
+    long initial_snum;	       	/* symbol number used above in
+				   reloc */
+    long snum;			/* true snum for reloc */
+
+    /* data that goes into the file */
     long strx;                  /* string table index */
     unsigned char type;         /* symbol type */
     unsigned char sect;         /* NO_SECT or section number */
@@ -110,7 +127,7 @@ struct symbol {
 #define	N_UNDF	0x0             /* undefined symbol | n_sect == */
 #define	N_ABS	0x2             /* absolute symbol  |  NO_SECT */
 #define	N_SECT	0xe             /* defined symbol, n_sect holds
-                                 ** section number */
+				** section number */
 
 #define	N_TYPE	0x0e            /* type bit mask */
 
@@ -119,8 +136,32 @@ struct symbol {
 #define MAX_SECT	255     /* maximum number of sections */
 
 static struct section *sects, **sectstail;
-static struct SAA *syms;
+static struct symbol *syms, **symstail;
 static unsigned long nsyms;
+
+/* These variables are set by macho_layout_symbols() to organize
+   the symbol table and string table in order the dynamic linker
+   expects.  They are then used in macho_write() to put out the
+   symbols and strings in that order.
+
+   The order of the symbol table is:
+     local symbols
+     defined external symbols (sorted by name)
+     undefined external symbols (sorted by name)
+
+   The order of the string table is:
+     strings for external symbols
+     strings for local symbols
+ */
+static unsigned long ilocalsym = 0;
+static unsigned long iextdefsym = 0;
+static unsigned long iundefsym = 0;
+static unsigned long nlocalsym;
+static unsigned long nextdefsym;
+static unsigned long nundefsym;
+static struct symbol **extdefsyms = NULL;
+static struct symbol **undefsyms = NULL;
+
 static struct RAA *extsyms;
 static struct SAA *strs;
 static unsigned long strslen;
@@ -141,16 +182,19 @@ unsigned long seg_nsects = 0;
 unsigned long rel_padcnt = 0;
 
 
-#define xstrncpy(xdst, xsrc) \
-    memset(xdst, '\0', sizeof(xdst));	/* zero out whole buffer */ \
-    strncpy(xdst, xsrc, sizeof(xdst));	/* copy over string */ \
+#define xstrncpy(xdst, xsrc)						\
+    memset(xdst, '\0', sizeof(xdst));	/* zero out whole buffer */	\
+    strncpy(xdst, xsrc, sizeof(xdst));	/* copy over string */		\
     xdst[sizeof(xdst) - 1] = '\0';      /* proper null-termination */
 
-#define align(x, y) \
+#define align(x, y)							\
     (((x) + (y) - 1) & ~((y) - 1))      /* align x to multiple of y */
 
-#define alignlong(x) \
+#define alignlong(x)							\
     align(x, sizeof(long))      /* align x to long boundary */
+
+static void debug_reloc (struct reloc *);
+static void debug_section_relocs (struct section *) __attribute__ ((unused));
 
 static struct section *get_section_by_name(const char *segname,
                                            const char *sectname)
@@ -228,8 +272,12 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
     sects = NULL;
     sectstail = &sects;
 
-    syms = saa_init((long)sizeof(struct symbol));
+    syms = NULL;
+    symstail = &syms;
     nsyms = 0;
+    nlocalsym = 0;
+    nextdefsym = 0;
+    nundefsym = 0;
 
     extsyms = raa_init();
     strs = saa_init(1L);
@@ -265,7 +313,7 @@ static void add_reloc(struct section *sect, long section,
     sect->relocs = r;
 
     /* the current end of the section will be the symbol's address for
-     ** now, might have to be fixed by fixup_relocs() later on. make
+     ** now, might have to be fixed by macho_fixup_relocs() later on. make
      ** sure, we don't make the symbol scattered by setting the highest
      ** bit by accident */
     r->addr = sect->size & ~R_SCATTERED;
@@ -497,12 +545,16 @@ static void macho_symdef(char *name, long section, long offset,
         return;
     }
 
-    sym = saa_wstruct(syms);
+    sym = *symstail = nasm_malloc(sizeof(struct symbol));
+    sym->next = NULL;
+    symstail = &sym->next;
 
+    sym->name = name;
     sym->strx = strslen;
     sym->type = 0;
     sym->desc = 0;
     sym->value = offset;
+    sym->initial_snum = -1;
 
     /* external and common symbols get N_EXT */
     if (is_global != 0)
@@ -523,7 +575,8 @@ static void macho_symdef(char *name, long section, long offset,
              ** symbols, this works because every external symbol gets
              ** its own section number allocated internally by nasm and
              ** can so be used as a key */
-            extsyms = raa_write(extsyms, section, nsyms);
+	    extsyms = raa_write(extsyms, section, nsyms);
+	    sym->initial_snum = nsyms;
 
             switch (is_global) {
             case 1:
@@ -543,10 +596,6 @@ static void macho_symdef(char *name, long section, long offset,
             }
         }
     }
-
-    /* append symbol name to string table */
-    saa_wbytes(strs, name, (long)(strlen(name) + 1));
-    strslen += strlen(name) + 1;
 
     ++nsyms;
 }
@@ -572,6 +621,108 @@ static const char *macho_stdmac[] = {
     "%endmacro",
     NULL
 };
+
+/* Comparison function for qsort symbol layout.  */
+static int layout_compare (const struct symbol **s1,
+			   const struct symbol **s2)
+{
+    return (strcmp ((*s1)->name, (*s2)->name));
+}
+
+/* The native assembler does a few things in a similar function
+
+	* Remove temporary labels
+	* Sort symbols according to local, external, undefined (by name)
+	* Order the string table
+
+   We do not remove temporary labels right now.
+
+   numsyms is the total number of symbols we have. strtabsize is the
+   number entries in the string table.  */
+
+static void macho_layout_symbols (unsigned long *numsyms,
+				  unsigned long *strtabsize)
+{
+    struct symbol *sym, **symp;
+    unsigned long i,j;
+
+    *numsyms = 0;
+    *strtabsize = sizeof (char);
+
+    symp = &syms;
+
+    while ((sym = *symp)) {
+	/* Undefined symbols are now external.  */
+	if (sym->type == N_UNDF)
+	    sym->type |= N_EXT;
+
+	if ((sym->type & N_EXT) == 0) {
+	    sym->snum = *numsyms;
+	    *numsyms = *numsyms + 1;
+	    nlocalsym++;
+	}
+	else {
+	    if ((sym->type & N_TYPE) != N_UNDF)
+		nextdefsym++;
+	    else
+		nundefsym++;
+
+	    /* If we handle debug info we'll want
+	       to check for it here instead of just
+	       adding the symbol to the string table.  */
+	    sym->strx = *strtabsize;
+	    saa_wbytes (strs, sym->name, (long)(strlen(sym->name) + 1));
+	    *strtabsize += strlen(sym->name) + 1;
+	}
+	symp = &(sym->next);
+    }
+
+    /* Next, sort the symbols.  Most of this code is a direct translation from
+       the Apple cctools symbol layout. We need to keep compatibility with that.  */
+    /* Set the indexes for symbol groups into the symbol table */
+    ilocalsym = 0;
+    iextdefsym = nlocalsym;
+    iundefsym = nlocalsym + nextdefsym;
+
+    /* allocate arrays for sorting externals by name */
+    extdefsyms = nasm_malloc(nextdefsym * sizeof(struct symbol *));
+    undefsyms = nasm_malloc(nundefsym * sizeof(struct symbol *));
+
+    i = 0;
+    j = 0;
+
+    symp = &syms;
+
+    while ((sym = *symp)) {
+
+	if((sym->type & N_EXT) == 0) {
+	    sym->strx = *strtabsize;
+	    saa_wbytes (strs, sym->name, (long)(strlen (sym->name) + 1));
+	    *strtabsize += strlen(sym->name) + 1;
+	}
+	else {
+	    if((sym->type & N_TYPE) != N_UNDF)
+		extdefsyms[i++] = sym;
+	    else
+		undefsyms[j++] = sym;
+	}
+	symp = &(sym->next);
+    }
+
+    qsort(extdefsyms, nextdefsym, sizeof(struct symbol *),
+	  (int (*)(const void *, const void *))layout_compare);
+    qsort(undefsyms, nundefsym, sizeof(struct symbol *),
+	  (int (*)(const void *, const void *))layout_compare);
+
+    for(i = 0; i < nextdefsym; i++) {
+	extdefsyms[i]->snum = *numsyms;
+	*numsyms += 1;
+    }
+    for(j = 0; j < nundefsym; j++) {
+	undefsyms[j]->snum = *numsyms;
+	*numsyms += 1;
+    }
+}
 
 /* Calculate some values we'll need for writing later.  */
 
@@ -772,28 +923,84 @@ static void macho_write_symtab (void)
 {
     struct symbol *sym;
     struct section *s;
-    long fi, i;
+    long fi;
+    long i;
 
     /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
 
-    saa_rewind(syms);
-    for (i = 0; i < nsyms; ++i) {
-	sym = saa_rstruct(syms);
+    for (sym = syms; sym != NULL; sym = sym->next) {
+	if ((sym->type & N_EXT) == 0) {
+	    fwritelong(sym->strx, machofp);		/* string table entry number */
+	    fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
+	    fwrite(&sym->sect, 1, 1, machofp);	/* section */
+	    fwriteshort(sym->desc, machofp);	/* description */
 
-	fwritelong(sym->strx, machofp);     /* string table entry number */
-	fwrite(&sym->type, 1, 1, machofp);  /* symbol type */
-	fwrite(&sym->sect, 1, 1, machofp);  /* section */
-	fwriteshort(sym->desc, machofp);    /* description */
+	    /* Fix up the symbol value now that we know the final section
+	       sizes.  */
+	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
+		for (s = sects, fi = 1;
+		     s != NULL && fi < sym->sect; s = s->next, ++fi)
+		    sym->value += s->size;
+	    }
 
-	/* fix up the symbol value now we know the final section
-	** sizes. */
+	    fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+	}
+    }
+
+    for (i = 0; i < nextdefsym; i++) {
+	sym = extdefsyms[i];
+	fwritelong(sym->strx, machofp);
+	fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
+	fwrite(&sym->sect, 1, 1, machofp);	/* section */
+	fwriteshort(sym->desc, machofp);	/* description */
+
+	/* Fix up the symbol value now that we know the final section
+	   sizes.  */
 	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 	    for (s = sects, fi = 1;
 		 s != NULL && fi < sym->sect; s = s->next, ++fi)
 		sym->value += s->size;
 	}
 
-	fwritelong(sym->value, machofp);    /* value (i.e. offset) */
+	fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+    }
+
+     for (i = 0; i < nundefsym; i++) {
+	 sym = undefsyms[i];
+	 fwritelong(sym->strx, machofp);
+	 fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
+	 fwrite(&sym->sect, 1, 1, machofp);	/* section */
+	 fwriteshort(sym->desc, machofp);	/* description */
+
+	 /* Fix up the symbol value now that we know the final section
+	    sizes.  */
+	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
+	     for (s = sects, fi = 1;
+		  s != NULL && fi < sym->sect; s = s->next, ++fi)
+		 sym->value += s->size;
+	 }
+
+	 fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+     }
+}
+
+/* Fixup the snum in the relocation entries, we should be
+   doing this only for externally undefined symbols. */
+static void macho_fixup_relocs (struct reloc *r)
+{
+    struct symbol *sym;
+    int i;
+
+    while (r != NULL) {
+	if (r->ext) {
+	    for (i = 0; i < nundefsym; i++) {
+		sym = undefsyms[i];
+		if (sym->initial_snum == r->snum) {
+		    r->snum = sym->snum;
+		}
+	    }
+	}
+	r = r->next;
     }
 }
 
@@ -921,8 +1128,17 @@ static void macho_cleanup(int debuginfo)
 {
     struct section *s;
     struct reloc *r;
+    struct symbol *sym;
 
     (void)debuginfo;
+
+    /* Sort all symbols.  */
+    macho_layout_symbols (&nsyms, &strslen);
+
+    /* Fixup relocation entries */
+    for (s = sects; s != NULL; s = s->next) {
+	macho_fixup_relocs (s->relocs);
+    }
 
     /* First calculate and finalize needed values.  */
     macho_calculate_sizes();
@@ -948,7 +1164,37 @@ static void macho_cleanup(int debuginfo)
 
     saa_free(strs);
     raa_free(extsyms);
-    saa_free(syms);
+
+    while (syms->next) {
+	sym = syms;
+	syms = syms->next;
+
+	nasm_free (sym);
+    }
+}
+
+/* Debugging routines.  */
+static void debug_reloc (struct reloc *r)
+{
+    fprintf (stdout, "reloc:\n");
+    fprintf (stdout, "\taddr: %ld\n", r->addr);
+    fprintf (stdout, "\tsnum: %d\n", r->snum);
+    fprintf (stdout, "\tpcrel: %d\n", r->pcrel);
+    fprintf (stdout, "\tlength: %d\n", r->length);
+    fprintf (stdout, "\text: %d\n", r->ext);
+    fprintf (stdout, "\ttype: %d\n", r->type);
+}
+
+static void debug_section_relocs (struct section *s)
+{
+    struct reloc *r = s->relocs;
+
+    fprintf (stdout, "relocs for section %s:\n\n", s->sectname);
+
+    while (r != NULL) {
+	debug_reloc (r);
+	r = r->next;
+    }
 }
 
 struct ofmt of_macho = {
