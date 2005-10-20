@@ -15,7 +15,10 @@ bindir		= @bindir@
 mandir		= @mandir@
 
 CC		= @CC@
-CFLAGS		= @CFLAGS@ @GCCFLAGS@ @DEFS@ -I$(srcdir) -I.  
+CFLAGS		= @CFLAGS@
+BUILD_CFLAGS	= $(CFLAGS) @GCCFLAGS@ @DEFS@
+INTERNAL_CFLAGS = -I$(srcdir) -I.
+ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 PERL		= perl
@@ -36,13 +39,13 @@ X               = @EXEEXT@
 .PHONY: install_doc everything install_everything strip perlreq dist
 
 .c.$(O):
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) -c $(ALL_CFLAGS) -o $@ $<
 
 .c.s:
-	$(CC) -S $(CFLAGS) -o $@ $<
+	$(CC) -S $(ALL_CFLAGS) -o $@ $<
 
 .c.i:
-	$(CC) -E $(CFLAGS) -o $@ $<
+	$(CC) -E $(ALL_CFLAGS) -o $@ $<
 
 .1.man:
 	$(NROFF) -man $< > $@
@@ -111,7 +114,7 @@ regs.h: regs.dat regs.pl
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regvals.c \
-	  version.h version.mac 
+	  version.h version.mac
 perlreq: $(PERLREQ)
 
 install: nasm$(X) ndisasm$(X)
@@ -175,7 +178,7 @@ nasm.spec: nasm.spec.in version version.pl
 	    -e s/@@ID@@/`$(PERL) $(srcdir)/version.pl id < $(srcdir)/version`/g \
 	    < nasm.spec.in > nasm.spec
 
-splint: 
+splint:
 	splint -weak *.c
 
 #

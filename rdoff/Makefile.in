@@ -17,7 +17,10 @@ bindir		= @bindir@
 mandir		= @mandir@
 
 CC		= @CC@
-CFLAGS		= @CFLAGS@ @GCCFLAGS@ -I$(srcdir) -I$(top_srcdir)
+CFLAGS		= @CFLAGS@
+BUILD_CFLAGS	= $(CFLAGS) @GCCFLAGS@ @DEFS@
+INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir)
+ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 
 INSTALL		= @INSTALL@
@@ -38,7 +41,7 @@ PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
 .SUFFIXES: .c .i .s .$(O) .1 .man
 
 .c.$(O):
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(ALL_CFLAGS) $<
 
 all: $(PROGRAMS)
 
