@@ -314,7 +314,7 @@ static void add_reloc(struct section *sect, long section,
 
     /* the current end of the section will be the symbol's address for
      ** now, might have to be fixed by macho_fixup_relocs() later on. make
-     ** sure, we don't make the symbol scattered by setting the highest
+     ** sure we don't make the symbol scattered by setting the highest
      ** bit by accident */
     r->addr = sect->size & ~R_SCATTERED;
     r->ext = 0;
@@ -888,11 +888,17 @@ static void macho_write_section (void)
 		}
 	    }
 
-	    /* add sizes of previous sections to current offset */
-	    for (s2 = sects, fi = 1;
-		 s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
-		if ((s2->flags & SECTION_TYPE) != S_ZEROFILL)
-		    l += s2->size;
+	    /* If the relocation is internal add to the current section
+	       offset. Otherwise the only value we need is the symbol
+	       offset which we already have. The linker takes care
+	       of the rest of the address.  */
+	    if (!r->ext) {
+		/* add sizes of previous sections to current offset */
+		for (s2 = sects, fi = 1;
+		     s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
+		    if ((s2->flags & SECTION_TYPE) != S_ZEROFILL)
+			l += s2->size;
+	    }
 
 	    /* write new offset back */
 	    if (r->length == 2)
