@@ -52,6 +52,7 @@ struct section {
     struct SAA *data;
     long index;
     struct reloc *relocs;
+    int align;
 
     /* data that goes into the file */
     char sectname[16];          /* what this section is called */
@@ -83,6 +84,7 @@ static struct sectmap {
 } sectmap[] = { {
 ".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS}, {
 ".data", "__DATA", "__data", S_REGULAR}, {
+".rodata", "__DATA", "__const", S_REGULAR}, {
 ".bss", "__DATA", "__bss", S_ZEROFILL}, {
 NULL, NULL, NULL}};
 
@@ -130,6 +132,8 @@ struct symbol {
 				** section number */
 
 #define	N_TYPE	0x0e            /* type bit mask */
+
+#define DEFAULT_SECTION_ALIGNMENT 0 /* byte (i.e. no) alignment */
 
 /* special section number values */
 #define	NO_SECT		0       /* no section, invalid */
@@ -195,6 +199,24 @@ unsigned long rel_padcnt = 0;
 
 static void debug_reloc (struct reloc *);
 static void debug_section_relocs (struct section *) __attribute__ ((unused));
+
+static int exact_log2 (unsigned long align) {
+    if (align != (align & -align)) {
+	return -1;
+    } else {
+#ifdef __GNUC__
+	return (align ? __builtin_ctzl (align) : 0);
+#else
+	unsigned long result = 0;
+
+	while (align >>= 1) {
+	    ++result;
+	}
+
+	return result;
+#endif
+    }
+}
 
 static struct section *get_section_by_name(const char *segname,
                                            const char *sectname)
@@ -484,22 +506,29 @@ static void macho_output(long secto, const void *data, unsigned long type,
 
 static long macho_section(char *name, int pass, int *bits)
 {
-    long index;
+    long index, originalIndex;
+    char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
 
     /* Default to 32 bits. */
-    if (!name)
+    if (!name) {
         *bits = 32;
-
-    if (!name)
         name = ".text";
+        sectionAttributes = NULL;
+    } else {
+        sectionAttributes = name;
+        name = strsep(&sectionAttributes, " \t");
+    }
 
     for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
         /* make lookup into section name translation table */
         if (!strcmp(name, sm->nasmsect)) {
+            char *currentAttribute;
+
             /* try to find section with that name */
-            index = get_section_index_by_name(sm->segname, sm->sectname);
+            originalIndex = index = get_section_index_by_name(sm->segname,
+                                                              sm->sectname);
 
             /* create it if it doesn't exist yet */
             if (index == -1) {
@@ -510,6 +539,7 @@ static long macho_section(char *name, int pass, int *bits)
                 s->data = saa_init(1L);
                 s->index = seg_alloc();
                 s->relocs = NULL;
+                s->align = DEFAULT_SECTION_ALIGNMENT;
 
                 xstrncpy(s->segname, sm->segname);
                 xstrncpy(s->sectname, sm->sectname);
@@ -518,6 +548,59 @@ static long macho_section(char *name, int pass, int *bits)
                 s->flags = sm->flags;
 
                 index = s->index;
+            } else {
+                s = get_section_by_index(index);
+            }
+
+            while ((NULL != sectionAttributes)
+                   && (currentAttribute = strsep(&sectionAttributes, " \t"))) {
+                if (0 != *currentAttribute) {
+                    if (0 == strncasecmp("align=", currentAttribute, 6)) {
+                        char *end;
+                        int newAlignment, value;
+
+                        value = strtoul(currentAttribute + 6, &end, 0);
+                        newAlignment = exact_log2(value);
+
+                        if (0 != *end) {
+                            error(ERR_PANIC,
+                                  "unknown or missing alignment value \"%s\" "
+                                      "specified for section \"%s\"",
+                                  currentAttribute + 6,
+                                  name);
+                            return NO_SEG;
+                        } else if (0 > newAlignment) {
+                            error(ERR_PANIC,
+                                  "alignment of %d (for section \"%s\") is not "
+                                      "a power of two",
+                                  value,
+                                  name);
+                            return NO_SEG;
+                        }
+
+                        if ((-1 != originalIndex)
+                            && (s->align != newAlignment)) {
+                            error(ERR_PANIC,
+                                  "section \"%s\" has already been specified "
+                                      "with alignment %d, conflicts with new "
+                                      "alignment of %d",
+                            name,
+                            (1 << s->align),
+                            value);
+                            return NO_SEG;
+                        }
+
+                        s->align = newAlignment;
+                    } else if (0 == strcasecmp("data", currentAttribute)) {
+                        /* Do nothing; 'data' is implicit */
+                    } else {
+                        error(ERR_PANIC,
+                              "unknown section attribute %s for section %s",
+                              currentAttribute,
+                              name);
+                        return NO_SEG;
+                    }
+                }
             }
 
             return index;
@@ -804,7 +887,9 @@ static unsigned long macho_write_segment (unsigned long offset)
 	/* dummy data for zerofill sections or proper values */
 	if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
 	    fwritelong(offset, machofp);
-	    fwritelong(0, machofp);
+	    /* Write out section alignment, as a power of two.
+	       e.g. 32-bit word alignment would be 2 (2^^2 = 4).  */
+	    fwritelong(s->align, machofp);
 	    /* To be compatible with cctools as we emit
 	       a zero reloff if we have no relocations.  */
 	    fwritelong(s->nreloc ? rel_base + s_reloff : 0, machofp);
