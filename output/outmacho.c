@@ -1256,11 +1256,13 @@ static void macho_cleanup(int debuginfo)
     saa_free(strs);
     raa_free(extsyms);
 
-    while (syms->next) {
-	sym = syms;
-	syms = syms->next;
+    if (syms) {
+	while (syms->next) {
+	    sym = syms;
+	    syms = syms->next;
 
-	nasm_free (sym);
+	    nasm_free (sym);
+	}
     }
 }
 
