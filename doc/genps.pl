@@ -3,6 +3,9 @@
 # Format the documentation as PostScript
 #
 
+use Env;
+use lib $srcdir;
+
 require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
 
@@ -78,7 +81,7 @@ while ( $arg = shift(@ARGV) ) {
 
 #
 # Document formatting parameters
-# 
+#
 $paraskip = 6;			# Space between paragraphs
 $chapstart = 30;		# Space before a chapter heading
 $chapskip = 24;			# Space after a chapter heading
@@ -204,7 +207,7 @@ sub int2base($$) {
 	$i = int($i/$b);
     }
     return $n.$s;
-}    
+}
 
 #
 # Convert a string to a rendering array
@@ -213,7 +216,7 @@ sub string2array($)
 {
     my($s) = @_;
     my(@a) = ();
-    
+
     $s =~ s/ \- / $charcode{'endash'} /g;	# Replace " - " with en dash
 
     while ( $s =~ /^(\s+|\S+)(.*)$/ ) {
@@ -280,7 +283,7 @@ sub ps_flow_lines($$$@) {
     foreach $e ( @data ) {
 	if ( $$e[0] < 0 ) {
 	    # Type is metadata.  Zero width.
-	    if ( $$e[0] == -6 ) { 
+	    if ( $$e[0] == -6 ) {
 		$pastmarker = 1;
 	    }
 	    if ( $$e[0] == -1 || $$e[0] == -6 ) {
@@ -299,7 +302,7 @@ sub ps_flow_lines($$$@) {
 	    my $esw = ps_width($sp, $fontset->{fonts}->[$$e[0]][1],
 			       \@NASMEncoding) *
 		($fontset->{fonts}->[$$e[0]][0]/1000);
-	    
+
 	    if ( ($w+$ew) - $ps_space_squeeze*($sw+$esw) > $wid ) {
 		# Begin new line
 		# Search backwards for previous space chunk
@@ -398,7 +401,7 @@ sub ps_merge_chunks(@) {
     my(@ci) = @_;
     my($c, $lc);
     my(@co, $eco);
-    
+
     undef $lc;
     @co = ();
     $eco = -1;			# Index of the last entry in @co
@@ -444,7 +447,7 @@ sub mkparaarray($@) {
 	foreach $chunk ( @chunks ) {
 	    my $type = substr($chunk,0,2);
 	    my $text = substr($chunk,2);
-	    
+
 	    if ( $type eq 'sp' ) {
 		push(@para, [$in_e?1:0, ' ']);
 	    } elsif ( $type eq 'da' ) {
@@ -668,11 +671,11 @@ sub ps_break_lines($$) {
 	    my $refwidth = ps_width($refname, $BodyFont{fonts}->[0][1],
 				    \@NASMEncoding) *
 		($BodyFont{fonts}->[0][0]/1000);
-	    
+
 	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
 				$psconf{tocpnz}-$refwidth,
 				\%BodyFont, $ptype, @data);
-	    
+
 	    # Auxilliary data: for the first line, the cross reference symbol
 	    # and the reference name; for all lines but the first, the
 	    # reference width; and for the last line, the page number
@@ -723,7 +726,7 @@ $nlines = scalar(@pslines);
 #
 sub ps_break_pages($$) {
     my($startline, $endline) = @_;
-    
+
     # Paragraph types which should never be broken
     my $nobreakregexp = "^(chap|appn|head|subh|toc.|idx.)\$";
     # Paragraph types which are heading (meaning they should not be broken
@@ -756,22 +759,22 @@ sub ps_break_pages($$) {
 	    $columnstart = $curypos;
 	    $curcolumn = 0;
 	}
-    
+
 	# Adjust position by the appropriate leading
 	$curypos += $$linfo[3]->{leading};
-	
+
 	# Record the page and y-position
 	$$linfo[4] = $curpage;
-	$$linfo[5] = $curypos; 
+	$$linfo[5] = $curypos;
 	$$linfo[6] = $curcolumn if ( defined($columnstart) );
-	
+
 	if ( $curypos > $upageheight ) {
 	    # We need to break the page before this line.
 	    my $broken = 0;		# No place found yet
 	    while ( !$broken && $pslines[$i]->[0]->[4] == $curpage ) {
 		my $linfo = $pslines[$i]->[0];
 		my $pinfo = $pslines[$i-1]->[0];
-		
+
 		if ( $$linfo[1] == 2 ) {
 		    # This would be an orphan, don't break.
 		} elsif ( $$linfo[1] & 1 ) {
@@ -1128,7 +1131,7 @@ $curpage = 2;
 ps_start_page();
 foreach $line ( @pslines ) {
     my $linfo = $line->[0];
-    
+
     if ( $$linfo[4] != $curpage ) {
         ps_end_page($curpage > 2);
         ps_start_page();

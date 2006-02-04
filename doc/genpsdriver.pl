@@ -11,11 +11,12 @@
 
 use File::Spec;
 use Fcntl;
+use Env;
 
-$perl   = $ENV{'PERL'}   || 'perl';
-$srcdir = $ENV{'srcdir'} || File::Spec->curdir();
+$perl   = $ENV{PERL}   || 'perl';
+$srcdir = $ENV{srcdir} || File::Spec->curdir();
 
-$versionfile = File::Spec->catfile(File::Spec->updir($srcdir), 'version');
+$versionfile = File::Spec->catfile($srcdir, File::Spec->updir(), 'version');
 $genps = File::Spec->catfile($srcdir, 'genps.pl');
 
 sysopen(VERSION, $versionfile, O_RDONLY)

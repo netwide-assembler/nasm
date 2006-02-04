@@ -224,7 +224,7 @@ Object File Format
 The Netwide Assembler, NASM, is an 80x86 assembler designed for
 portability and modularity. It supports a range of object file
 formats, including Linux and \c{NetBSD/FreeBSD} \c{a.out}, \c{ELF}, 
-\c{COFF}, Microsoft 16-bit \c{OBJ} and \c{Win32}. It will also output
+\c{COFF}, \c{Mach-O}, Microsoft 16-bit \c{OBJ} and \c{Win32}. It will also output
 plain binary files. Its syntax is designed to be simple and easy to
 understand, similar to Intel's but less complex. It supports \c{Pentium},
 \c{P6}, \c{MMX}, \c{3DNow!}, \c{SSE} and \c{SSE2} opcodes, and has
@@ -453,7 +453,7 @@ For Microsoft object file formats (\i\c{obj} and \i\c{win32}), it
 will remove the \c{.asm} \i{extension} (or whatever extension you
 like to use - NASM doesn't care) from your source file name and
 substitute \c{.obj}. For Unix object file formats (\i\c{aout},
-\i\c{coff}, \i\c{elf} and \i\c{as86}) it will substitute \c{.o}. For
+\i\c{coff}, \i\c{elf}, \i\c{macho} and \i\c{as86}) it will substitute \c{.o}. For
 \i\c{rdf}, it will use \c{.rdf}, and for the \i\c{bin} format it
 will simply remove the extension, so that \c{myfile.asm} produces
 the output file \c{myfile}.
@@ -3378,7 +3378,7 @@ operating in 16-bit mode, or code designed to run on a processor
 operating in 32-bit mode. The syntax is \c{BITS 16} or \c{BITS 32}.
 
 In most cases, you should not need to use \c{BITS} explicitly. The
-\c{aout}, \c{coff}, \c{elf} and \c{win32} object formats, which are
+\c{aout}, \c{coff}, \c{elf}, \c{macho} and \c{win32} object formats, which are
 designed for use in 32-bit operating systems, all cause NASM to
 select 32-bit mode by default. The \c{obj} object format allows you
 to specify each segment you define as either \c{USE16} or \c{USE32},
@@ -4232,6 +4232,12 @@ The \c{coff} format supports the same extensions to the \c{SECTION}
 directive as \c{win32} does, except that the \c{align} qualifier and
 the \c{info} section type are not supported.
 
+\H{machofmt} \i\c{macho}: \i{Mach Object File Format}
+
+The \c{macho} output type produces \c{Mach-O} object files suitable for
+linking with the \i{Mac OSX} linker.
+
+\c{macho} provides a default output file-name extension of \c{.o}.
 
 \H{elffmt} \i\c{elf}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
