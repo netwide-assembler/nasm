@@ -1673,3 +1673,17 @@ MOVSHDUP	xmmreg,mem		\301\3\xF3\x0F\x16\110		PRESCOTT,SSE3
 MOVSHDUP	xmmreg,xmmreg		\3\xF3\x0F\x16\110		PRESCOTT,SSE3
 MOVSLDUP	xmmreg,mem		\301\3\xF3\x0F\x12\110		PRESCOTT,SSE3
 MOVSLDUP	xmmreg,xmmreg		\3\xF3\x0F\x12\110		PRESCOTT,SSE3
+
+; VMX Instructions
+VMCALL		void			\3\x0F\x01\xC1			VMX
+VMCLEAR		mem			\3\x66\x0F\xC7\206		VMX
+VMLAUNCH	void			\3\x0F\x01\xC2			VMX
+VMPTRLD		mem			\2\x0F\xC7\206			VMX
+VMPTRST		mem			\2\x0F\xC7\207			VMX
+VMREAD		mem,reg32		\2\x0F\x78\101			VMX
+VMREAD		reg32,reg32		\2\x0F\x78\101			VMX
+VMRESUME	void			\3\x0F\x01\xC3			VMX
+VMWRITE		reg32,mem		\2\x0F\x79\110			VMX
+VMWRITE		reg32,reg32		\2\x0F\x79\110			VMX
+VMXOFF		void			\3\x0F\x01\xC4			VMX
+VMXON		mem			\3\xF3\x0F\xC7\206		VMX

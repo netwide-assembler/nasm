@@ -27,8 +27,8 @@ struct itemplate {
     unsigned long flags;        /* some flags */
 };
 
-/* 
- * this define is used to signify the end of an itemplate 
+/*
+ * this define is used to signify the end of an itemplate
  */
 #define ITEMPLATE_END {-1,-1,{-1,-1,-1},NULL,0}
 
@@ -78,6 +78,7 @@ struct itemplate {
 #define IF_SSE    0x00010000UL  /* it's a SSE (KNI, MMX2) instruction */
 #define IF_SSE2   0x00020000UL  /* it's a SSE2 instruction */
 #define IF_SSE3   0x00040000UL  /* it's a SSE3 (PNI) instruction */
+#define IF_VMX	  0x00080000UL  /* it's a VMX instruction */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                         /* also the highest possible processor */
