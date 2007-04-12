@@ -1,9 +1,7 @@
 /*
  * outrdf2.c	output routines for the Netwide Assembler to produce
- *		RDOFF version 2 format object files, which is used as a
- *		main binary format in the RadiOS (http://radios.sf.net).
- *		Originally Julian planned to use it in his MOSCOW
- *		operating system.
+ *		RDOFF version 2 format object files, which Julian originally
+ *		planned to use it in his MOSCOW operating system.
  *
  * The Netwide Assembler is copyright (C) 1996-1998 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -16,6 +14,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -29,7 +28,7 @@
 #include "rdoff/rdoff.h"
 
 /* This signature is written to start of RDOFF files */
-static const char *RDOFF2Id = RDOFF2_SIGNATURE;
+static const int8_t *RDOFF2Id = RDOFF2_SIGNATURE;
 
 /* Note that whenever a segment is referred to in the RDOFF file, its number
  * is always half of the segment number that NASM uses to refer to it; this
@@ -40,7 +39,7 @@ static const char *RDOFF2Id = RDOFF2_SIGNATURE;
 
 #define COUNT_SEGTYPES 9
 
-static char *segmenttypes[COUNT_SEGTYPES] = {
+static int8_t *segmenttypes[COUNT_SEGTYPES] = {
     "null", "text", "code", "data",
     "comment", "lcomment", "pcomment",
     "symdebug", "linedebug"
@@ -71,17 +70,17 @@ static FILE *ofile;
 static efunc error;
 
 static struct seginfo {
-    char *segname;
+    int8_t *segname;
     int segnumber;
     uint16 segtype;
     uint16 segreserved;
-    long seglength;
+    int32_t seglength;
 } segments[RDF_MAXSEGS];
 
 static int nsegments;
 
-static long bsslength;
-static long headerlength;
+static int32_t bsslength;
+static int32_t headerlength;
 
 static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -128,10 +127,10 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     headerlength = 0;
 }
 
-static long rdf2_section_names(char *name, int pass, int *bits)
+static int32_t rdf2_section_names(int8_t *name, int pass, int *bits)
 {
     int i;
-    char *p, *q;
+    int8_t *p, *q;
     int code = -1;
     int reserved = 0;
 
@@ -224,7 +223,7 @@ static long rdf2_section_names(char *name, int pass, int *bits)
  */
 static void write_reloc_rec(struct RelocRec *r)
 {
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     if (r->refseg != (uint16) NO_SEG && (r->refseg & 1))        /* segment base ref */
         r->type = RDFREC_SEGRELOC;
@@ -249,7 +248,7 @@ static void write_reloc_rec(struct RelocRec *r)
  */
 static void write_export_rec(struct ExportRec *r)
 {
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     r->segment >>= 1;
 
@@ -266,7 +265,7 @@ static void write_export_rec(struct ExportRec *r)
 
 static void write_import_rec(struct ImportRec *r)
 {
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     r->segment >>= 1;
 
@@ -285,7 +284,7 @@ static void write_import_rec(struct ImportRec *r)
  */
 static void write_bss_rec(struct BSSRec *r)
 {
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     saa_wbytes(header, &r->type, 1);
     saa_wbytes(header, &r->reclen, 1);
@@ -300,7 +299,7 @@ static void write_bss_rec(struct BSSRec *r)
  */
 static void write_common_rec(struct CommonRec *r)
 {
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     r->segment >>= 1;
 
@@ -344,8 +343,8 @@ static void write_modname_rec(struct ModRec *r)
 /*
  * Handle export, import and common records.
  */
-static void rdf2_deflabel(char *name, long segment, long offset,
-                          int is_global, char *special)
+static void rdf2_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                          int is_global, int8_t *special)
 {
     struct ExportRec r;
     struct ImportRec ri;
@@ -463,7 +462,7 @@ static void rdf2_deflabel(char *name, long segment, long offset,
 static void membufwrite(int segment, const void *data, int bytes)
 {
     int i;
-    char buf[4], *b;
+    int8_t buf[4], *b;
 
     for (i = 0; i < nsegments; i++) {
         if (segments[i].segnumber == segment)
@@ -475,9 +474,9 @@ static void membufwrite(int segment, const void *data, int bytes)
     if (bytes < 0) {
         b = buf;
         if (bytes == -2)
-            WRITESHORT(b, *(short *)data);
+            WRITESHORT(b, *(int16_t *)data);
         else
-            WRITELONG(b, *(long *)data);
+            WRITELONG(b, *(int32_t *)data);
         data = buf;
         bytes = -bytes;
     }
@@ -498,12 +497,12 @@ static int getsegmentlength(int segment)
     return segments[i].seglength;
 }
 
-static void rdf2_out(long segto, const void *data, unsigned long type,
-                     long segment, long wrt)
+static void rdf2_out(int32_t segto, const void *data, uint32_t type,
+                     int32_t segment, int32_t wrt)
 {
-    long bytes = type & OUT_SIZMASK;
+    int32_t bytes = type & OUT_SIZMASK;
     struct RelocRec rr;
-    unsigned char databuf[4], *pd;
+    uint8_t databuf[8], *pd;
     int seg;
 
     if (segto == NO_SEG) {
@@ -533,7 +532,7 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
     type &= OUT_TYPMASK;
 
     if (segto == 2 && type != OUT_RESERVE) {
-        error(ERR_NONFATAL, "BSS segments may not be initialised");
+        error(ERR_NONFATAL, "BSS segments may not be initialized");
 
         /* just reserve the space for now... */
 
@@ -576,10 +575,12 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
         }
 
         pd = databuf;           /* convert address to little-endian */
-        if (bytes == 2)
-            WRITESHORT(pd, *(long *)data);
+        if (bytes == 4)
+            WRITESHORT(pd, *(int32_t *)data);
+        else if (bytes == 8)
+            WRITEDLONG(pd, *(int64_t *)data);
         else
-            WRITELONG(pd, *(long *)data);
+            WRITESHORT(pd, *(int32_t *)data);
 
         membufwrite(segto, databuf, bytes);
 
@@ -600,7 +601,7 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
             /* what do we put in the code? Simply the data. This should almost
              * always be zero, unless someone's doing segment arithmetic...
              */
-            rr.offset = *(long *)data;
+            rr.offset = *(int32_t *)data;
         } else {
             rr.type = RDFREC_RELOC;     /* type signature */
             rr.segment = segto + 64;    /* segment we're currently in + rel flag */
@@ -611,7 +612,7 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
              * address of imported symbol onto it to get address relative to end of
              * instruction: import_address + data(offset) - end_of_instrn */
 
-            rr.offset = *(long *)data - (rr.offset + bytes);
+            rr.offset = *(int32_t *)data - (rr.offset + bytes);
         }
 
         membufwrite(segto, &rr.offset, -2);
@@ -630,7 +631,7 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
         rr.reclen = 8;
         write_reloc_rec(&rr);
 
-        rr.offset = *(long *)data - (rr.offset + bytes);
+        rr.offset = *(int32_t *)data - (rr.offset + bytes);
 
         membufwrite(segto, &rr.offset, -4);
     }
@@ -638,7 +639,7 @@ static void rdf2_out(long segto, const void *data, unsigned long type,
 
 static void rdf2_cleanup(int debuginfo)
 {
-    long l;
+    int32_t l;
     struct BSSRec bs;
     int i;
 
@@ -668,9 +669,9 @@ static void rdf2_cleanup(int debuginfo)
     }
     l += 10;                    /* null segment */
 
-    fwritelong(l, ofile);
+    fwriteint32_t(l, ofile);
 
-    fwritelong(headerlength, ofile);
+    fwriteint32_t(headerlength, ofile);
     saa_fpwrite(header, ofile); /* dump header */
     saa_free(header);
 
@@ -678,24 +679,24 @@ static void rdf2_cleanup(int debuginfo)
         if (i == 2)
             continue;
 
-        fwriteshort(segments[i].segtype, ofile);
-        fwriteshort(segments[i].segnumber, ofile);
-        fwriteshort(segments[i].segreserved, ofile);
-        fwritelong(segments[i].seglength, ofile);
+        fwriteint16_t(segments[i].segtype, ofile);
+        fwriteint16_t(segments[i].segnumber, ofile);
+        fwriteint16_t(segments[i].segreserved, ofile);
+        fwriteint32_t(segments[i].seglength, ofile);
 
         saa_fpwrite(seg[i], ofile);
         saa_free(seg[i]);
     }
 
     /* null segment - write 10 bytes of zero */
-    fwritelong(0, ofile);
-    fwritelong(0, ofile);
-    fwriteshort(0, ofile);
+    fwriteint32_t(0, ofile);
+    fwriteint32_t(0, ofile);
+    fwriteint16_t(0, ofile);
 
     fclose(ofile);
 }
 
-static long rdf2_segbase(long segment)
+static int32_t rdf2_segbase(int32_t segment)
 {
     return segment;
 }
@@ -703,7 +704,7 @@ static long rdf2_segbase(long segment)
 /*
  * Handle RDOFF2 specific directives
  */
-static int rdf2_directive(char *directive, char *value, int pass)
+static int rdf2_directive(int8_t *directive, int8_t *value, int pass)
 {
     int n;
 
@@ -738,12 +739,12 @@ static int rdf2_directive(char *directive, char *value, int pass)
     return 0;
 }
 
-static void rdf2_filename(char *inname, char *outname, efunc error)
+static void rdf2_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     standard_extension(inname, outname, ".rdf", error);
 }
 
-static const char *rdf2_stdmac[] = {
+static const int8_t *rdf2_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",
@@ -756,7 +757,7 @@ static const char *rdf2_stdmac[] = {
     NULL
 };
 
-static int rdf2_set_info(enum geninfo type, char **val)
+static int rdf2_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }

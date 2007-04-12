@@ -5,7 +5,7 @@
  * redistributable under the licence given in the file "Licence"
  * distributed in the NASM archive.
  *
- * Permission to use this file in your own projects is granted, as long
+ * Permission to use this file in your own projects is granted, as int32_t
  * as acknowledgement is given in an appropriate manner to its authors,
  * with instructions of how to obtain a copy via ftp.
  */
@@ -27,11 +27,11 @@
 
 extern int rdf_errno;
 
-rdfmodule *rdfload(const char *filename)
+rdfmodule *rdfload(const int8_t *filename)
 {
     rdfmodule *f;
-    long bsslength = 0;
-    char *hdr;
+    int32_t bsslength = 0;
+    int8_t *hdr;
     rdfheaderrec *r;
 
     f = malloc(sizeof(rdfmodule));
@@ -102,9 +102,9 @@ rdfmodule *rdfload(const char *filename)
 
     rdfheaderrewind(&f->f);
 
-    f->textrel = (long)f->t;
-    f->datarel = (long)f->d;
-    f->bssrel = (long)f->b;
+    f->textrel = (int32_t)f->t;
+    f->datarel = (int32_t)f->d;
+    f->bssrel = (int32_t)f->b;
 
     return f;
 }
@@ -114,8 +114,8 @@ int rdf_relocate(rdfmodule * m)
     rdfheaderrec *r;
     Collection imports;
     symtabEnt e;
-    long rel;
-    unsigned char *seg;
+    int32_t rel;
+    uint8_t *seg;
 
     rdfheaderrewind(&m->f);
     collection_init(&imports);
@@ -150,13 +150,13 @@ int rdf_relocate(rdfmodule * m)
                non-portable */
             switch (r->r.length) {
             case 1:
-                seg[r->r.offset] += (char)rel;
+                seg[r->r.offset] += (int8_t)rel;
                 break;
             case 2:
                 *(uint16 *) (seg + r->r.offset) += (uint16) rel;
                 break;
             case 4:
-                *(long *)(seg + r->r.offset) += rel;
+                *(int32_t *)(seg + r->r.offset) += rel;
                 break;
             }
             break;

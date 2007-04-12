@@ -10,10 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
 #include "insns.h"              /* For MAX_KEYWORD */
+
+int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
 
 static efunc nasm_malloc_error;
 
@@ -32,7 +35,7 @@ void nasm_set_malloc_error(efunc error)
 }
 
 #ifdef LOGALLOC
-void *nasm_malloc_log(char *file, int line, size_t size)
+void *nasm_malloc_log(int8_t *file, int line, size_t size)
 #else
 void *nasm_malloc(size_t size)
 #endif
@@ -43,13 +46,13 @@ void *nasm_malloc(size_t size)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (long)size, p);
+                file, line, (int32_t)size, p);
 #endif
     return p;
 }
 
 #ifdef LOGALLOC
-void *nasm_realloc_log(char *file, int line, void *q, size_t size)
+void *nasm_realloc_log(int8_t *file, int line, void *q, size_t size)
 #else
 void *nasm_realloc(void *q, size_t size)
 #endif
@@ -60,16 +63,16 @@ void *nasm_realloc(void *q, size_t size)
 #ifdef LOGALLOC
     else if (q)
         fprintf(logfp, "%s %d realloc(%p,%ld) returns %p\n",
-                file, line, q, (long)size, p);
+                file, line, q, (int32_t)size, p);
     else
         fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (long)size, p);
+                file, line, (int32_t)size, p);
 #endif
     return p;
 }
 
 #ifdef LOGALLOC
-void nasm_free_log(char *file, int line, void *q)
+void nasm_free_log(int8_t *file, int line, void *q)
 #else
 void nasm_free(void *q)
 #endif
@@ -83,12 +86,12 @@ void nasm_free(void *q)
 }
 
 #ifdef LOGALLOC
-char *nasm_strdup_log(char *file, int line, const char *s)
+int8_t *nasm_strdup_log(int8_t *file, int line, const int8_t *s)
 #else
-char *nasm_strdup(const char *s)
+int8_t *nasm_strdup(const int8_t *s)
 #endif
 {
-    char *p;
+    int8_t *p;
     int size = strlen(s) + 1;
 
     p = malloc(size);
@@ -97,19 +100,19 @@ char *nasm_strdup(const char *s)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strdup(%ld) returns %p\n",
-                file, line, (long)size, p);
+                file, line, (int32_t)size, p);
 #endif
     strcpy(p, s);
     return p;
 }
 
 #ifdef LOGALLOC
-char *nasm_strndup_log(char *file, int line, char *s, size_t len)
+int8_t *nasm_strndup_log(int8_t *file, int line, int8_t *s, size_t len)
 #else
-char *nasm_strndup(char *s, size_t len)
+int8_t *nasm_strndup(int8_t *s, size_t len)
 #endif
 {
-    char *p;
+    int8_t *p;
     int size = len + 1;
 
     p = malloc(size);
@@ -118,7 +121,7 @@ char *nasm_strndup(char *s, size_t len)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strndup(%ld) returns %p\n",
-                file, line, (long)size, p);
+                file, line, (int32_t)size, p);
 #endif
     strncpy(p, s, len);
     p[len] = '\0';
@@ -126,7 +129,7 @@ char *nasm_strndup(char *s, size_t len)
 }
 
 #if !defined(stricmp) && !defined(strcasecmp)
-int nasm_stricmp(const char *s1, const char *s2)
+int nasm_stricmp(const int8_t *s1, const int8_t *s2)
 {
     while (*s1 && tolower(*s1) == tolower(*s2))
         s1++, s2++;
@@ -140,7 +143,7 @@ int nasm_stricmp(const char *s1, const char *s2)
 #endif
 
 #if !defined(strnicmp) && !defined(strncasecmp)
-int nasm_strnicmp(const char *s1, const char *s2, int n)
+int nasm_strnicmp(const int8_t *s1, const int8_t *s2, int n)
 {
     while (n > 0 && *s1 && tolower(*s1) == tolower(*s2))
         s1++, s2++, n--;
@@ -156,11 +159,11 @@ int nasm_strnicmp(const char *s1, const char *s2, int n)
 #define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
-long readnum(char *str, int *error)
+int64_t readnum(int8_t *str, int *error)
 {
-    char *r = str, *q;
-    long radix;
-    unsigned long result, checklimit;
+    int8_t *r = str, *q;
+    int32_t radix;
+    uint64_t result, checklimit;
     int digit, last;
     int warn = FALSE;
     int sign = 1;
@@ -212,18 +215,21 @@ long readnum(char *str, int *error)
         *error = TRUE;
         return 0;
     }
-
+    
     /*
-     * `checklimit' must be 2**32 / radix. We can't do that in
-     * 32-bit arithmetic, which we're (probably) using, so we
+     * `checklimit' must be 2**(32|64) / radix. We can't do that in
+     * 32/64-bit arithmetic, which we're (probably) using, so we
      * cheat: since we know that all radices we use are even, we
-     * can divide 2**31 by radix/2 instead.
+     * can divide 2**(31|63) by radix/2 instead.
      */
-    checklimit = 0x80000000UL / (radix >> 1);
+    if (globalbits == 64)
+        checklimit = 0x8000000000000000ULL / (radix >> 1);
+    else
+        checklimit = 0x80000000UL / (radix >> 1);
 
     /*
-     * Calculate the highest allowable value for the last digit
-     * of a 32 bit constant... in radix 10, it is 6, otherwise it is 0
+     * Calculate the highest allowable value for the last digit of a
+     * 32-bit constant... in radix 10, it is 6, otherwise it is 0
      */
     last = (radix == 10 ? 6 : 0);
 
@@ -250,42 +256,49 @@ long readnum(char *str, int *error)
     return result * sign;
 }
 
-long readstrnum(char *str, int length, int *warn)
+int64_t readstrnum(int8_t *str, int length, int *warn)
 {
-    long charconst = 0;
+    int64_t charconst = 0;
     int i;
 
     *warn = FALSE;
 
     str += length;
-    for (i = 0; i < length; i++) {
-        if (charconst & 0xff000000UL) {
-            *warn = TRUE;
+    if (globalbits == 64) {
+        for (i = 0; i < length; i++) {
+            if (charconst & 0xFF00000000000000ULL)
+                *warn = TRUE;
+            charconst = (charconst << 8) + (uint8_t)*--str;
         }
-        charconst = (charconst << 8) + (unsigned char)*--str;
+    } else {
+        for (i = 0; i < length; i++) {
+            if (charconst & 0xFF000000UL)
+                *warn = TRUE;
+            charconst = (charconst << 8) + (uint8_t)*--str;
+        }
     }
     return charconst;
 }
 
-static long next_seg;
+static int32_t next_seg;
 
 void seg_init(void)
 {
     next_seg = 0;
 }
 
-long seg_alloc(void)
+int32_t seg_alloc(void)
 {
     return (next_seg += 2) - 2;
 }
 
-void fwriteshort(int data, FILE * fp)
+void fwriteint16_t(int data, FILE * fp)
 {
     fputc((int)(data & 255), fp);
     fputc((int)((data >> 8) & 255), fp);
 }
 
-void fwritelong(long data, FILE * fp)
+void fwriteint32_t(int32_t data, FILE * fp)
 {
     fputc((int)(data & 255), fp);
     fputc((int)((data >> 8) & 255), fp);
@@ -293,10 +306,10 @@ void fwritelong(long data, FILE * fp)
     fputc((int)((data >> 24) & 255), fp);
 }
 
-void standard_extension(char *inname, char *outname, char *extension,
+void standard_extension(int8_t *inname, int8_t *outname, int8_t *extension,
                         efunc error)
 {
-    char *p, *q;
+    int8_t *p, *q;
 
     if (*outname)               /* file name already exists, */
         return;                 /* so do nothing */
@@ -367,7 +380,7 @@ void raa_free(struct RAA *r)
     }
 }
 
-long raa_read(struct RAA *r, long posn)
+int32_t raa_read(struct RAA *r, int32_t posn)
 {
     if (posn >= r->stepsize * LAYERSIZ(r))
         return 0;               /* Return 0 for undefined entries */
@@ -382,7 +395,7 @@ long raa_read(struct RAA *r, long posn)
     return r->u.l.data[posn];
 }
 
-struct RAA *raa_write(struct RAA *r, long posn, long value)
+struct RAA *raa_write(struct RAA *r, int32_t posn, int32_t value)
 {
     struct RAA *result;
 
@@ -425,7 +438,7 @@ struct RAA *raa_write(struct RAA *r, long posn, long value)
 
 #define SAA_MAXLEN 8192
 
-struct SAA *saa_init(long elem_len)
+struct SAA *saa_init(int32_t elem_len)
 {
     struct SAA *s;
 
@@ -475,12 +488,12 @@ void *saa_wstruct(struct SAA *s)
     return p;
 }
 
-void saa_wbytes(struct SAA *s, const void *data, long len)
+void saa_wbytes(struct SAA *s, const void *data, int32_t len)
 {
-    const char *d = data;
+    const int8_t *d = data;
 
     while (len > 0) {
-        long l = s->end->length - s->end->posn;
+        int32_t l = s->end->length - s->end->posn;
         if (l > len)
             l = len;
         if (l > 0) {
@@ -529,7 +542,7 @@ void *saa_rstruct(struct SAA *s)
     return p;
 }
 
-void *saa_rbytes(struct SAA *s, long *len)
+void *saa_rbytes(struct SAA *s, int32_t *len)
 {
     void *p;
 
@@ -543,12 +556,12 @@ void *saa_rbytes(struct SAA *s, long *len)
     return p;
 }
 
-void saa_rnbytes(struct SAA *s, void *data, long len)
+void saa_rnbytes(struct SAA *s, void *data, int32_t len)
 {
-    char *d = data;
+    int8_t *d = data;
 
     while (len > 0) {
-        long l;
+        int32_t l;
 
         if (!s->rptr)
             return;
@@ -569,11 +582,11 @@ void saa_rnbytes(struct SAA *s, void *data, long len)
     }
 }
 
-void saa_fread(struct SAA *s, long posn, void *data, long len)
+void saa_fread(struct SAA *s, int32_t posn, void *data, int32_t len)
 {
     struct SAA *p;
-    long pos;
-    char *cdata = data;
+    int64_t pos;
+    int8_t *cdata = data;
 
     if (!s->rptr || posn < s->rptr->start)
         saa_rewind(s);
@@ -586,7 +599,7 @@ void saa_fread(struct SAA *s, long posn, void *data, long len)
 
     pos = posn - p->start;
     while (len) {
-        long l = p->posn - pos;
+        int64_t l = p->posn - pos;
         if (l > len)
             l = len;
         memcpy(cdata, p->data + pos, l);
@@ -595,16 +608,16 @@ void saa_fread(struct SAA *s, long posn, void *data, long len)
         p = p->next;
         if (!p)
             return;
-        pos = 0L;
+        pos = 0LL;
     }
     s->rptr = p;
 }
 
-void saa_fwrite(struct SAA *s, long posn, void *data, long len)
+void saa_fwrite(struct SAA *s, int32_t posn, void *data, int32_t len)
 {
     struct SAA *p;
-    long pos;
-    char *cdata = data;
+    int64_t pos;
+    int8_t *cdata = data;
 
     if (!s->rptr || posn < s->rptr->start)
         saa_rewind(s);
@@ -617,7 +630,7 @@ void saa_fwrite(struct SAA *s, long posn, void *data, long len)
 
     pos = posn - p->start;
     while (len) {
-        long l = p->posn - pos;
+        int64_t l = p->posn - pos;
         if (l > len)
             l = len;
         memcpy(p->data + pos, cdata, l);
@@ -626,15 +639,15 @@ void saa_fwrite(struct SAA *s, long posn, void *data, long len)
         p = p->next;
         if (!p)
             return;
-        pos = 0L;
+        pos = 0LL;
     }
     s->rptr = p;
 }
 
 void saa_fpwrite(struct SAA *s, FILE * fp)
 {
-    char *data;
-    long len;
+    int8_t *data;
+    int32_t len;
 
     saa_rewind(s);
     while ((data = saa_rbytes(s, &len)))
@@ -646,11 +659,11 @@ void saa_fpwrite(struct SAA *s, FILE * fp)
  * by the scanner.
  */
 #include "names.c"
-static const char *special_names[] = {
+static const int8_t *special_names[] = {
     "byte", "dword", "far", "long", "near", "nosplit", "qword",
     "short", "strict", "to", "tword", "word"
 };
-static const char *prefix_names[] = {
+static const int8_t *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
     "repnz", "repz", "times"
 };
@@ -660,7 +673,7 @@ static const char *prefix_names[] = {
  * formats. It keeps a succession of temporary-storage strings in
  * stdscan_tempstorage, which can be cleared using stdscan_reset.
  */
-static char **stdscan_tempstorage = NULL;
+static int8_t **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
 
@@ -685,9 +698,9 @@ void nasmlib_cleanup(void)
     nasm_free(stdscan_tempstorage);
 }
 
-static char *stdscan_copy(char *p, int len)
+static int8_t *stdscan_copy(int8_t *p, int len)
 {
-    char *text;
+    int8_t *text;
 
     text = nasm_malloc(len + 1);
     strncpy(text, p, len);
@@ -697,17 +710,17 @@ static char *stdscan_copy(char *p, int len)
         stdscan_tempsize += STDSCAN_TEMP_DELTA;
         stdscan_tempstorage = nasm_realloc(stdscan_tempstorage,
                                            stdscan_tempsize *
-                                           sizeof(char *));
+                                           sizeof(int8_t *));
     }
     stdscan_tempstorage[stdscan_templen++] = text;
 
     return text;
 }
 
-char *stdscan_bufptr = NULL;
+int8_t *stdscan_bufptr = NULL;
 int stdscan(void *private_data, struct tokenval *tv)
 {
-    char ourcopy[MAX_KEYWORD + 1], *r, *s;
+    int8_t ourcopy[MAX_KEYWORD + 1], *r, *s;
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
@@ -755,7 +768,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         }
         for (i = 0; i < elements(icn); i++)
             if (!strncmp(ourcopy, icn[i], strlen(icn[i]))) {
-                char *p = ourcopy + strlen(icn[i]);
+                int8_t *p = ourcopy + strlen(icn[i]);
                 tv->t_integer = ico[i];
                 if ((tv->t_inttwo = bsi(p, conditions,
                                         elements(conditions))) >= 0)
@@ -816,7 +829,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         tv->t_charptr = NULL;
         return tv->t_type = TOKEN_NUM;
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {     /* a char constant */
-        char quote = *stdscan_bufptr++, *r;
+        int8_t quote = *stdscan_bufptr++, *r;
         int rn_warn;
         r = tv->t_charptr = stdscan_bufptr;
         while (*stdscan_bufptr && *stdscan_bufptr != quote)
@@ -867,7 +880,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_DBL_OR;
     } else                      /* just an ordinary char */
-        return tv->t_type = (unsigned char)(*stdscan_bufptr++);
+        return tv->t_type = (uint8_t)(*stdscan_bufptr++);
 }
 
 /*
@@ -971,7 +984,7 @@ int is_just_unknown(expr * vect)
  * Return the scalar part of a relocatable vector. (Including
  * simple scalar vectors - those qualify as relocatable.)
  */
-long reloc_value(expr * vect)
+int64_t reloc_value(expr * vect)
 {
     while (vect->type && !vect->value)
         vect++;
@@ -987,7 +1000,7 @@ long reloc_value(expr * vect)
  * Return the segment number of a relocatable vector, or NO_SEG for
  * simple scalars.
  */
-long reloc_seg(expr * vect)
+int32_t reloc_seg(expr * vect)
 {
     while (vect->type && (vect->type == EXPR_WRT || !vect->value))
         vect++;
@@ -1006,7 +1019,7 @@ long reloc_seg(expr * vect)
  * Return the WRT segment number of a relocatable vector, or NO_SEG
  * if no WRT part is present.
  */
-long reloc_wrt(expr * vect)
+int32_t reloc_wrt(expr * vect)
 {
     while (vect->type && vect->type < EXPR_WRT)
         vect++;
@@ -1019,7 +1032,7 @@ long reloc_wrt(expr * vect)
 /*
  * Binary search.
  */
-int bsi(char *string, const char **array, int size)
+int bsi(int8_t *string, const int8_t **array, int size)
 {
     int i = -1, j = size;       /* always, i < index < j */
     while (j - i >= 2) {
@@ -1035,29 +1048,29 @@ int bsi(char *string, const char **array, int size)
     return -1;                  /* we haven't got it :( */
 }
 
-static char *file_name = NULL;
-static long line_number = 0;
+static int8_t *file_name = NULL;
+static int32_t line_number = 0;
 
-char *src_set_fname(char *newname)
+int8_t *src_set_fname(int8_t *newname)
 {
-    char *oldname = file_name;
+    int8_t *oldname = file_name;
     file_name = newname;
     return oldname;
 }
 
-long src_set_linnum(long newline)
+int32_t src_set_linnum(int32_t newline)
 {
-    long oldline = line_number;
+    int32_t oldline = line_number;
     line_number = newline;
     return oldline;
 }
 
-long src_get_linnum(void)
+int32_t src_get_linnum(void)
 {
     return line_number;
 }
 
-int src_get(long *xline, char **xname)
+int src_get(int32_t *xline, int8_t **xname)
 {
     if (!file_name || !*xname || strcmp(*xname, file_name)) {
         nasm_free(*xname);
@@ -1066,18 +1079,18 @@ int src_get(long *xline, char **xname)
         return -2;
     }
     if (*xline != line_number) {
-        long tmp = line_number - *xline;
+        int32_t tmp = line_number - *xline;
         *xline = line_number;
         return tmp;
     }
     return 0;
 }
 
-void nasm_quote(char **str)
+void nasm_quote(int8_t **str)
 {
     int ln = strlen(*str);
-    char q = (*str)[0];
-    char *p;
+    int8_t q = (*str)[0];
+    int8_t *p;
     if (ln > 1 && (*str)[ln - 1] == q && (q == '"' || q == '\''))
         return;
     q = '"';
@@ -1091,9 +1104,9 @@ void nasm_quote(char **str)
     *str = p;
 }
 
-char *nasm_strcat(char *one, char *two)
+int8_t *nasm_strcat(int8_t *one, int8_t *two)
 {
-    char *rslt;
+    int8_t *rslt;
     int l1 = strlen(one);
     rslt = nasm_malloc(l1 + strlen(two) + 1);
     strcpy(rslt, one);
@@ -1104,17 +1117,17 @@ char *nasm_strcat(char *one, char *two)
 void null_debug_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
 }
-void null_debug_linenum(const char *filename, long linenumber, long segto)
+void null_debug_linenum(const int8_t *filename, int32_t linenumber, int32_t segto)
 {
 }
-void null_debug_deflabel(char *name, long segment, long offset,
-                         int is_global, char *special)
+void null_debug_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                         int is_global, int8_t *special)
 {
 }
-void null_debug_routine(const char *directive, const char *params)
+void null_debug_routine(const int8_t *directive, const int8_t *params)
 {
 }
-void null_debug_typevalue(long type)
+void null_debug_typevalue(int32_t type)
 {
 }
 void null_debug_output(int type, void *param)

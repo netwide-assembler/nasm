@@ -7,14 +7,14 @@
  */
 
 typedef struct {
-    char *name;
+    int8_t *name;
     int segment;
-    long offset;
-    long flags;
+    int32_t offset;
+    int32_t flags;
 } symtabEnt;
 
 void *symtabNew(void);
 void symtabDone(void *symtab);
 void symtabInsert(void *symtab, symtabEnt * ent);
-symtabEnt *symtabFind(void *symtab, const char *name);
+symtabEnt *symtabFind(void *symtab, const int8_t *name);
 void symtabDump(void *symtab, FILE * of);

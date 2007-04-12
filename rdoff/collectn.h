@@ -2,7 +2,7 @@
  * collectn.h - header file for 'collection' abstract data type.
  *
  * This file is public domain, and does not come under the NASM license.
- * It, along with 'collectn.c' implements what is basically a variable
+ * It, aint32_t with 'collectn.c' implements what is basically a variable
  * length array (of pointers).
  */
 

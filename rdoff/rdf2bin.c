@@ -9,13 +9,13 @@
 #include "rdfload.h"
 #include "nasmlib.h"
 
-long origin = 0;
+int32_t origin = 0;
 int align = 16;
 
-char *getfilename(char *pathname)
+int8_t *getfilename(int8_t *pathname)
 {
-    char *lastslash = pathname - 1;
-    char *i = pathname;
+    int8_t *lastslash = pathname - 1;
+    int8_t *i = pathname;
 
     while (*i) {
         if (*i == '/')
@@ -25,12 +25,12 @@ char *getfilename(char *pathname)
     return lastslash + 1;
 }
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
     rdfmodule *m;
     int tmp;
     FILE *of;
-    char *padding;
+    int8_t *padding;
     int codepad, datapad, bsspad = 0;
 
     if (argc < 2) {

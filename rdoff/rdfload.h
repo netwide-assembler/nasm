@@ -18,14 +18,14 @@
 
 typedef struct RDFModuleStruct {
     rdffile f;                  /* file structure */
-    unsigned char *t, *d, *b;   /* text, data, and bss segments */
-    long textrel;
-    long datarel;
-    long bssrel;
+    uint8_t *t, *d, *b;   /* text, data, and bss segments */
+    int32_t textrel;
+    int32_t datarel;
+    int32_t bssrel;
     void *symtab;
 } rdfmodule;
 
-rdfmodule *rdfload(const char *filename);
+rdfmodule *rdfload(const int8_t *filename);
 int rdf_relocate(rdfmodule * m);
 
 #endif

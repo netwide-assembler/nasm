@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -28,22 +29,22 @@
 
 struct Reloc {
     struct Reloc *next;
-    long address;               /* relative to _start_ of section */
-    long symbol;                /* symbol number or -ve section id */
+    int32_t address;               /* relative to _start_ of section */
+    int32_t symbol;                /* symbol number or -ve section id */
     int bytes;                  /* 2 or 4 */
     int reltype;                /* see above */
 };
 
 struct Symbol {
-    long strpos;                /* string table position of name */
+    int32_t strpos;                /* string table position of name */
     int type;                   /* symbol type - see flags below */
-    long value;                 /* address, or COMMON variable size */
-    long size;                  /* size for data or function exports */
-    long segment;               /* back-reference used by gsym_reloc */
+    int32_t value;                 /* address, or COMMON variable size */
+    int32_t size;                  /* size for data or function exports */
+    int32_t segment;               /* back-reference used by gsym_reloc */
     struct Symbol *next;        /* list of globals in each section */
     struct Symbol *nextfwd;     /* list of unresolved-size symbols */
-    char *name;                 /* for unresolved-size symbols */
-    long symnum;                /* index into symbol table */
+    int8_t *name;                 /* for unresolved-size symbols */
+    int32_t symnum;                /* index into symbol table */
 };
 
 /*
@@ -75,8 +76,8 @@ struct Symbol {
 
 struct Section {
     struct SAA *data;
-    unsigned long len, size, nrelocs;
-    long index;
+    uint32_t len, size, nrelocs;
+    int32_t index;
     struct Reloc *head, **tail;
     struct Symbol *gsyms, *asym;
 };
@@ -84,12 +85,12 @@ struct Section {
 static struct Section stext, sdata, sbss;
 
 static struct SAA *syms;
-static unsigned long nsyms;
+static uint32_t nsyms;
 
 static struct RAA *bsym;
 
 static struct SAA *strs;
-static unsigned long strslen;
+static uint32_t strslen;
 
 static struct Symbol *fwds;
 
@@ -103,8 +104,8 @@ static int is_pic;
 static void aout_write(void);
 static void aout_write_relocs(struct Reloc *);
 static void aout_write_syms(void);
-static void aout_sect_write(struct Section *, const unsigned char *,
-                            unsigned long);
+static void aout_sect_write(struct Section *, const uint8_t *,
+                            uint32_t);
 static void aout_pad_sections(void);
 static void aout_fixup_relocs(struct Section *);
 
@@ -113,9 +114,9 @@ static void aout_fixup_relocs(struct Section *);
  * symbols, which can be used with WRT to provide PIC relocation
  * types.
  */
-static long aout_gotpc_sect, aout_gotoff_sect;
-static long aout_got_sect, aout_plt_sect;
-static long aout_sym_sect;
+static int32_t aout_gotpc_sect, aout_gotoff_sect;
+static int32_t aout_got_sect, aout_plt_sect;
+static int32_t aout_sym_sect;
 
 static void aoutg_init(FILE * fp, efunc errfunc, ldfunc ldef,
                        evalfunc eval)
@@ -137,7 +138,7 @@ static void aoutg_init(FILE * fp, efunc errfunc, ldfunc ldef,
     sdata.index = seg_alloc();
     sbss.index = seg_alloc();
     stext.asym = sdata.asym = sbss.asym = NULL;
-    syms = saa_init((long)sizeof(struct Symbol));
+    syms = saa_init((int32_t)sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     strs = saa_init(1L);
@@ -217,7 +218,7 @@ static void aout_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static long aout_section_names(char *name, int pass, int *bits)
+static int32_t aout_section_names(int8_t *name, int pass, int *bits)
 {
     /*
      * Default to 32 bits.
@@ -238,8 +239,8 @@ static long aout_section_names(char *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static void aout_deflabel(char *name, long segment, long offset,
-                          int is_global, char *special)
+static void aout_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                          int is_global, int8_t *special)
 {
     int pos = strslen + 4;
     struct Symbol *sym;
@@ -268,7 +269,7 @@ static void aout_deflabel(char *name, long segment, long offset,
             if (!strcmp((*s)->name, name)) {
                 struct tokenval tokval;
                 expr *e;
-                char *p = special;
+                int8_t *p = special;
 
                 while (*p && !isspace(*p))
                     p++;
@@ -296,7 +297,7 @@ static void aout_deflabel(char *name, long segment, long offset,
         return;                 /* it wasn't an important one */
     }
 
-    saa_wbytes(strs, name, (long)(1 + strlen(name)));
+    saa_wbytes(strs, name, (int32_t)(1 + strlen(name)));
     strslen += 1 + strlen(name);
 
     sym = saa_wstruct(syms);
@@ -355,7 +356,7 @@ static void aout_deflabel(char *name, long segment, long offset,
                 struct tokenval tokval;
                 expr *e;
                 int fwd = FALSE;
-                char *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
+                int8_t *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
 
                 if (!bsd) {
                     error(ERR_NONFATAL, "Linux a.out does not support"
@@ -408,7 +409,7 @@ static void aout_deflabel(char *name, long segment, long offset,
         error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
-static void aout_add_reloc(struct Section *sect, long segment,
+static void aout_add_reloc(struct Section *sect, int32_t segment,
                            int reltype, int bytes)
 {
     struct Reloc *r;
@@ -453,8 +454,8 @@ static void aout_add_reloc(struct Section *sect, long segment,
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static long aout_add_gsym_reloc(struct Section *sect,
-                                long segment, long offset,
+static int32_t aout_add_gsym_reloc(struct Section *sect,
+                                int32_t segment, int32_t offset,
                                 int type, int bytes, int exact)
 {
     struct Symbol *sym, *sm, *shead;
@@ -526,8 +527,8 @@ static long aout_add_gsym_reloc(struct Section *sect,
  * Return value is the adjusted value of `addr', having become an
  * offset from the `asym' symbol rather than the section.
  */
-static long aout_add_gotoff_reloc(struct Section *sect, long segment,
-                                  long offset, int bytes)
+static int32_t aout_add_gotoff_reloc(struct Section *sect, int32_t segment,
+                                  int32_t offset, int bytes)
 {
     struct Reloc *r;
     struct Symbol *asym;
@@ -561,13 +562,13 @@ static long aout_add_gotoff_reloc(struct Section *sect, long segment,
     return offset - asym->value;
 }
 
-static void aout_out(long segto, const void *data, unsigned long type,
-                     long segment, long wrt)
+static void aout_out(int32_t segto, const void *data, uint32_t type,
+                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    long realbytes = type & OUT_SIZMASK;
-    long addr;
-    unsigned char mydata[4], *p;
+    int32_t realbytes = type & OUT_SIZMASK;
+    int32_t addr;
+    uint8_t mydata[4], *p;
 
     type &= OUT_TYPMASK;
 
@@ -594,7 +595,7 @@ static void aout_out(long segto, const void *data, unsigned long type,
     }
 
     if (!s && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialise memory in the"
+        error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         if (type == OUT_REL2ADR)
             realbytes = 2;
@@ -606,7 +607,7 @@ static void aout_out(long segto, const void *data, unsigned long type,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            error(ERR_WARNING, "uninitialised space declared in"
+            error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   (segto == stext.index ? "code" : "data"));
             aout_sect_write(s, NULL, realbytes);
@@ -617,7 +618,7 @@ static void aout_out(long segto, const void *data, unsigned long type,
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
-        addr = *(long *)data;
+        addr = *(int32_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
                 error(ERR_NONFATAL, "a.out format does not support"
@@ -694,7 +695,7 @@ static void aout_out(long segto, const void *data, unsigned long type,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(long *)data - (realbytes + s->len));
+        WRITESHORT(p, *(int32_t *)data - (realbytes + s->len));
         aout_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -724,21 +725,21 @@ static void aout_out(long segto, const void *data, unsigned long type,
             }
         }
         p = mydata;
-        WRITELONG(p, *(long *)data - (realbytes + s->len));
+        WRITELONG(p, *(int32_t *)data - (realbytes + s->len));
         aout_sect_write(s, mydata, 4L);
     }
 }
 
 static void aout_pad_sections(void)
 {
-    static unsigned char pad[] = { 0x90, 0x90, 0x90, 0x90 };
+    static uint8_t pad[] = { 0x90, 0x90, 0x90, 0x90 };
     /*
      * Pad each of the text and data sections with NOPs until their
      * length is a multiple of four. (NOP == 0x90.) Also increase
      * the length of the BSS section similarly.
      */
-    aout_sect_write(&stext, pad, (-(long)stext.len) & 3);
-    aout_sect_write(&sdata, pad, (-(long)sdata.len) & 3);
+    aout_sect_write(&stext, pad, (-(int32_t)stext.len) & 3);
+    aout_sect_write(&sdata, pad, (-(int32_t)sdata.len) & 3);
     sbss.len = (sbss.len + 3) & ~3;
 }
 
@@ -757,17 +758,17 @@ static void aout_fixup_relocs(struct Section *sect)
 
     saa_rewind(sect->data);
     for (r = sect->head; r; r = r->next) {
-        unsigned char *p, *q, blk[4];
-        long l;
+        uint8_t *p, *q, blk[4];
+        int32_t l;
 
-        saa_fread(sect->data, r->address, blk, (long)r->bytes);
+        saa_fread(sect->data, r->address, blk, (int32_t)r->bytes);
         p = q = blk;
         l = *p++;
         if (r->bytes > 1) {
-            l += ((long)*p++) << 8;
+            l += ((int32_t)*p++) << 8;
             if (r->bytes == 4) {
-                l += ((long)*p++) << 16;
-                l += ((long)*p++) << 24;
+                l += ((int32_t)*p++) << 16;
+                l += ((int32_t)*p++) << 24;
             }
         }
         if (r->symbol == -SECT_DATA)
@@ -780,7 +781,7 @@ static void aout_fixup_relocs(struct Section *sect)
             WRITESHORT(q, l);
         else
             *q++ = l & 0xFF;
-        saa_fwrite(sect->data, r->address, blk, (long)r->bytes);
+        saa_fwrite(sect->data, r->address, blk, (int32_t)r->bytes);
     }
 }
 
@@ -790,14 +791,14 @@ static void aout_write(void)
      * Emit the a.out header.
      */
     /* OMAGIC, M_386 or MID_I386, no flags */
-    fwritelong(bsd ? 0x07018600 | is_pic : 0x640107L, aoutfp);
-    fwritelong(stext.len, aoutfp);
-    fwritelong(sdata.len, aoutfp);
-    fwritelong(sbss.len, aoutfp);
-    fwritelong(nsyms * 12, aoutfp);     /* length of symbol table */
-    fwritelong(0L, aoutfp);     /* object files have no entry point */
-    fwritelong(stext.nrelocs * 8, aoutfp);      /* size of text relocs */
-    fwritelong(sdata.nrelocs * 8, aoutfp);      /* size of data relocs */
+    fwriteint32_t(bsd ? 0x07018600 | is_pic : 0x640107L, aoutfp);
+    fwriteint32_t(stext.len, aoutfp);
+    fwriteint32_t(sdata.len, aoutfp);
+    fwriteint32_t(sbss.len, aoutfp);
+    fwriteint32_t(nsyms * 12, aoutfp);     /* length of symbol table */
+    fwriteint32_t(0L, aoutfp);     /* object files have no entry point */
+    fwriteint32_t(stext.nrelocs * 8, aoutfp);      /* size of text relocs */
+    fwriteint32_t(sdata.nrelocs * 8, aoutfp);      /* size of data relocs */
 
     /*
      * Write out the code section and the data section.
@@ -819,16 +820,16 @@ static void aout_write(void)
     /*
      * And the string table.
      */
-    fwritelong(strslen + 4, aoutfp);    /* length includes length count */
+    fwriteint32_t(strslen + 4, aoutfp);    /* length includes length count */
     saa_fpwrite(strs, aoutfp);
 }
 
 static void aout_write_relocs(struct Reloc *r)
 {
     while (r) {
-        unsigned long word2;
+        uint32_t word2;
 
-        fwritelong(r->address, aoutfp);
+        fwriteint32_t(r->address, aoutfp);
 
         if (r->symbol >= 0)
             word2 = r->symbol;
@@ -837,7 +838,7 @@ static void aout_write_relocs(struct Reloc *r)
         word2 |= r->reltype << 24;
         word2 |= (r->bytes == 1 ? 0 :
                   r->bytes == 2 ? 0x2000000L : 0x4000000L);
-        fwritelong(word2, aoutfp);
+        fwriteint32_t(word2, aoutfp);
 
         r = r->next;
     }
@@ -845,13 +846,13 @@ static void aout_write_relocs(struct Reloc *r)
 
 static void aout_write_syms(void)
 {
-    unsigned long i;
+    uint32_t i;
 
     saa_rewind(syms);
     for (i = 0; i < nsyms; i++) {
         struct Symbol *sym = saa_rstruct(syms);
-        fwritelong(sym->strpos, aoutfp);
-        fwritelong((long)sym->type & ~SYM_WITH_SIZE, aoutfp);
+        fwriteint32_t(sym->strpos, aoutfp);
+        fwriteint32_t((int32_t)sym->type & ~SYM_WITH_SIZE, aoutfp);
         /*
          * Fix up the symbol value now we know the final section
          * sizes.
@@ -860,49 +861,49 @@ static void aout_write_syms(void)
             sym->value += stext.len;
         if ((sym->type & SECT_MASK) == SECT_BSS)
             sym->value += stext.len + sdata.len;
-        fwritelong(sym->value, aoutfp);
+        fwriteint32_t(sym->value, aoutfp);
         /*
          * Output a size record if necessary.
          */
         if (sym->type & SYM_WITH_SIZE) {
-            fwritelong(sym->strpos, aoutfp);
-            fwritelong(0x0DL, aoutfp);  /* special value: means size */
-            fwritelong(sym->size, aoutfp);
+            fwriteint32_t(sym->strpos, aoutfp);
+            fwriteint32_t(0x0DL, aoutfp);  /* special value: means size */
+            fwriteint32_t(sym->size, aoutfp);
             i++;                /* use up another of `nsyms' */
         }
     }
 }
 
 static void aout_sect_write(struct Section *sect,
-                            const unsigned char *data, unsigned long len)
+                            const uint8_t *data, uint32_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->len += len;
 }
 
-static long aout_segbase(long segment)
+static int32_t aout_segbase(int32_t segment)
 {
     return segment;
 }
 
-static int aout_directive(char *directive, char *value, int pass)
+static int aout_directive(int8_t *directive, int8_t *value, int pass)
 {
     return 0;
 }
 
-static void aout_filename(char *inname, char *outname, efunc error)
+static void aout_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *aout_stdmac[] = {
+static const int8_t *aout_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL
 };
 
-static int aout_set_info(enum geninfo type, char **val)
+static int aout_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }

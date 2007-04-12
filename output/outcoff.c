@@ -12,12 +12,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
 #include "outform.h"
 
-#if defined(OF_COFF) || defined(OF_WIN32)
+#if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
 
 /*
  * Notes on COFF:
@@ -60,87 +61,97 @@
  */
 
 /* Flag which version of COFF we are currently outputting. */
-static int win32;
+static int win32, win64;
 
 struct Reloc {
     struct Reloc *next;
-    long address;               /* relative to _start_ of section */
-    long symbol;                /* symbol number */
+    int32_t address;               /* relative to _start_ of section */
+    int32_t symbol;                /* symbol number */
     enum {
         SECT_SYMBOLS,
         ABS_SYMBOL,
         REAL_SYMBOLS
     } symbase;                  /* relocation for symbol number :) */
     int relative;               /* TRUE or FALSE */
+    int size64;                 /* TRUE or FALSE */
 };
 
 struct Symbol {
-    char name[9];
-    long strpos;                /* string table position of name */
+    int8_t name[9];
+    int32_t strpos;                /* string table position of name */
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
     int is_global;              /* is it a global symbol or not? */
-    long value;                 /* address, or COMMON variable size */
+    int32_t value;                 /* address, or COMMON variable size */
 };
 
 static FILE *coffp;
 static efunc error;
-static char coff_infile[FILENAME_MAX];
+static int8_t coff_infile[FILENAME_MAX];
 
 struct Section {
     struct SAA *data;
-    unsigned long len;
+    uint32_t len;
     int nrelocs;
-    long index;
+    int32_t index;
     struct Reloc *head, **tail;
-    unsigned long flags;        /* section flags */
-    char name[9];
-    long pos, relpos;
+    uint32_t flags;        /* section flags */
+    int8_t name[9];
+    int32_t pos, relpos;
 };
 
-#define TEXT_FLAGS (win32 ? 0x60500020L : 0x20L)
-#define DATA_FLAGS (win32 ? 0xC0300040L : 0x40L)
-#define BSS_FLAGS (win32 ? 0xC0300080L : 0x80L)
+#define TEXT_FLAGS ((win32 | win64) ? 0x60500020L : 0x20L)
+#define DATA_FLAGS ((win32 | win64) ? 0xC0300040L : 0x40L)
+#define BSS_FLAGS ((win32 | win64) ? 0xC0300080L : 0x80L)
 #define INFO_FLAGS 0x00100A00L
-#define RDATA_FLAGS (win32 ? 0x40400040L : 0x40L)
+#define RDATA_FLAGS ((win32 | win64) ? 0x40400040L : 0x40L)
 
 #define SECT_DELTA 32
 static struct Section **sects;
 static int nsects, sectlen;
 
 static struct SAA *syms;
-static unsigned long nsyms;
+static uint32_t nsyms;
 
-static long def_seg;
+static int32_t def_seg;
 
 static int initsym;
 
 static struct RAA *bsym, *symval;
 
 static struct SAA *strs;
-static unsigned long strslen;
+static uint32_t strslen;
 
 static void coff_gen_init(FILE *, efunc);
-static void coff_sect_write(struct Section *, const unsigned char *,
-                            unsigned long);
+static void coff_sect_write(struct Section *, const uint8_t *,
+                            uint32_t);
 static void coff_write(void);
-static void coff_section_header(char *, long, long, long, long, int, long);
+static void coff_section_header(int8_t *, int32_t, int32_t, int32_t, int32_t, int, int32_t);
 static void coff_write_relocs(struct Section *);
 static void coff_write_symbols(void);
 
 static void coff_win32_init(FILE * fp, efunc errfunc,
                             ldfunc ldef, evalfunc eval)
 {
-    win32 = TRUE;
-    (void)ldef;                 /* placate optimisers */
+    win32 = TRUE; win64 = FALSE;
+    (void)ldef;                 /* placate optimizers */
+    coff_gen_init(fp, errfunc);
+}
+
+static void coff_win64_init(FILE * fp, efunc errfunc,
+                            ldfunc ldef, evalfunc eval)
+{
+    maxbits = 64;
+    win32 = FALSE; win64 = TRUE;
+    (void)ldef;                 /* placate optimizers */
     coff_gen_init(fp, errfunc);
 }
 
 static void coff_std_init(FILE * fp, efunc errfunc, ldfunc ldef,
                           evalfunc eval)
 {
-    win32 = FALSE;
-    (void)ldef;                 /* placate optimisers */
+    win32 = win64 = FALSE;
+    (void)ldef;                 /* placate optimizers */
     coff_gen_init(fp, errfunc);
 }
 
@@ -151,7 +162,7 @@ static void coff_gen_init(FILE * fp, efunc errfunc)
     error = errfunc;
     sects = NULL;
     nsects = sectlen = 0;
-    syms = saa_init((long)sizeof(struct Symbol));
+    syms = saa_init((int32_t)sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     symval = raa_init();
@@ -186,7 +197,7 @@ static void coff_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static int coff_make_section(char *name, unsigned long flags)
+static int coff_make_section(int8_t *name, uint32_t flags)
 {
     struct Section *s;
 
@@ -216,17 +227,21 @@ static int coff_make_section(char *name, unsigned long flags)
     return nsects - 1;
 }
 
-static long coff_section_names(char *name, int pass, int *bits)
+static int32_t coff_section_names(int8_t *name, int pass, int *bits)
 {
-    char *p;
-    unsigned long flags, align_and = ~0L, align_or = 0L;
+    int8_t *p;
+    uint32_t flags, align_and = ~0L, align_or = 0L;
     int i;
 
     /*
-     * Default is 32 bits.
+     * Set default bits.
      */
-    if (!name)
-        *bits = 32;
+    if (!name) {
+        if(win64)
+            *bits = 64;
+        else
+            *bits = 32;
+    }
 
     if (!name)
         return def_seg;
@@ -246,7 +261,7 @@ static long coff_section_names(char *name, int pass, int *bits)
     while (*p && isspace(*p))
         p++;
     while (*p) {
-        char *q = p;
+        int8_t *q = p;
         while (*p && !isspace(*p))
             p++;
         if (*p)
@@ -259,7 +274,7 @@ static long coff_section_names(char *name, int pass, int *bits)
         } else if (!nasm_stricmp(q, "data")) {
             flags = DATA_FLAGS;
         } else if (!nasm_stricmp(q, "rdata")) {
-            if (win32)
+            if (win32 | win64)
                 flags = RDATA_FLAGS;
             else {
                 flags = DATA_FLAGS;     /* gotta do something */
@@ -269,7 +284,7 @@ static long coff_section_names(char *name, int pass, int *bits)
         } else if (!nasm_stricmp(q, "bss")) {
             flags = BSS_FLAGS;
         } else if (!nasm_stricmp(q, "info")) {
-            if (win32)
+            if (win32 | win64)
                 flags = INFO_FLAGS;
             else {
                 flags = DATA_FLAGS;     /* gotta do something */
@@ -277,7 +292,7 @@ static long coff_section_names(char *name, int pass, int *bits)
                       " informational sections");
             }
         } else if (!nasm_strnicmp(q, "align=", 6)) {
-            if (!win32)
+            if (!(win32 | win64))
                 error(ERR_NONFATAL, "standard COFF does not support"
                       " section alignment specification");
             else {
@@ -335,8 +350,8 @@ static long coff_section_names(char *name, int pass, int *bits)
     return sects[i]->index;
 }
 
-static void coff_deflabel(char *name, long segment, long offset,
-                          int is_global, char *special)
+static void coff_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                          int is_global, int8_t *special)
 {
     int pos = strslen + 4;
     struct Symbol *sym;
@@ -346,12 +361,12 @@ static void coff_deflabel(char *name, long segment, long offset,
               " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+        error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
         return;
     }
 
     if (strlen(name) > 8) {
-        saa_wbytes(strs, name, (long)(1 + strlen(name)));
+        saa_wbytes(strs, name, (int32_t)(1 + strlen(name)));
         strslen += 1 + strlen(name);
     } else
         pos = -1;
@@ -384,8 +399,9 @@ static void coff_deflabel(char *name, long segment, long offset,
      * define the references from external-symbol segment numbers
      * to these symbol records.
      */
-    if (sym->section == 0)
+    if (sym->section == 0) {
         bsym = raa_write(bsym, segment, nsyms);
+    }
 
     if (segment != NO_SEG)
         symval = raa_write(symval, segment, sym->section ? 0 : sym->value);
@@ -393,8 +409,8 @@ static void coff_deflabel(char *name, long segment, long offset,
     nsyms++;
 }
 
-static long coff_add_reloc(struct Section *sect, long segment,
-                           int relative)
+static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
+                           int relative, int size64)
 {
     struct Reloc *r;
 
@@ -424,18 +440,18 @@ static long coff_add_reloc(struct Section *sect, long segment,
     /*
      * Return the fixup for standard COFF common variables.
      */
-    if (r->symbase == REAL_SYMBOLS && !win32)
+    if (r->symbase == REAL_SYMBOLS && !(win32 | win64))
         return raa_read(symval, segment);
     else
         return 0;
 }
 
-static void coff_out(long segto, const void *data, unsigned long type,
-                     long segment, long wrt)
+static void coff_out(int32_t segto, const void *data, uint32_t type,
+                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    long realbytes = type & OUT_SIZMASK;
-    unsigned char mydata[4], *p;
+    int32_t realbytes = type & OUT_SIZMASK;
+    uint8_t mydata[8], *p;
     int i;
 
     if (wrt != NO_SEG) {
@@ -470,7 +486,7 @@ static void coff_out(long segto, const void *data, unsigned long type,
     }
 
     if (!s->data && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialise memory in"
+        error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
         if (type == OUT_REL2ADR)
             realbytes = 2;
@@ -492,12 +508,31 @@ static void coff_out(long segto, const void *data, unsigned long type,
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         coff_sect_write(s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
-        if (realbytes != 4 && (segment != NO_SEG || wrt != NO_SEG))
-            error(ERR_NONFATAL, "COFF format does not support non-32-bit"
-                  " relocations");
-        else {
-            long fix = 0;
-            if (segment != NO_SEG || wrt != NO_SEG) {
+        if (!(win64)) {
+            if (realbytes != 4 && (segment != NO_SEG || wrt != NO_SEG))
+                error(ERR_NONFATAL, "COFF format does not support non-32-bit"
+                      " relocations");
+            else {
+                int32_t fix = 0;
+                if (segment != NO_SEG || wrt != NO_SEG) {
+                    if (wrt != NO_SEG) {
+                        error(ERR_NONFATAL, "COFF format does not support"
+                              " WRT types");
+                    } else if (segment % 2) {
+                        error(ERR_NONFATAL, "COFF format does not support"
+                              " segment base references");
+                    } else
+                        fix = coff_add_reloc(s, segment, FALSE, FALSE);
+                }
+                p = mydata;
+                WRITELONG(p, *(int32_t *)data + fix);
+                coff_sect_write(s, mydata, realbytes);
+            }
+        } else {
+            int32_t fix = 0;
+            p = mydata;
+            if (realbytes == 8) {
+/*            if (segment != NO_SEG || wrt != NO_SEG) {
                 if (wrt != NO_SEG) {
                     error(ERR_NONFATAL, "COFF format does not support"
                           " WRT types");
@@ -506,40 +541,46 @@ static void coff_out(long segto, const void *data, unsigned long type,
                           " segment base references");
                 } else
                     fix = coff_add_reloc(s, segment, FALSE);
+            } */
+                fix = coff_add_reloc(s, segment, FALSE, TRUE);
+                WRITEDLONG(p, *(int64_t *)data + fix);
+                coff_sect_write(s, mydata, realbytes);
+            } else {
+                fix = coff_add_reloc(s, segment, FALSE, FALSE);
+                WRITELONG(p, *(int32_t *)data + fix);
+                coff_sect_write(s, mydata, realbytes);
             }
-            p = mydata;
-            WRITELONG(p, *(long *)data + fix);
-            coff_sect_write(s, mydata, realbytes);
         }
     } else if (type == OUT_REL2ADR) {
         error(ERR_NONFATAL, "COFF format does not support 16-bit"
               " relocations");
     } else if (type == OUT_REL4ADR) {
-        if (segment == segto)
+        if (segment == segto && !(win64))  /* Acceptable for RIP-relative */
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         else if (segment == NO_SEG && win32)
             error(ERR_NONFATAL, "Win32 COFF does not correctly support"
                   " relative references to absolute addresses");
         else {
-            long fix = 0;
+            int32_t fix = 0;
             if (segment != NO_SEG && segment % 2) {
                 error(ERR_NONFATAL, "COFF format does not support"
                       " segment base references");
             } else
-                fix = coff_add_reloc(s, segment, TRUE);
+                fix = coff_add_reloc(s, segment, TRUE, FALSE);
             p = mydata;
-            if (win32) {
-                WRITELONG(p, *(long *)data + 4 - realbytes + fix);
+            if (win32 | win64) {
+                WRITELONG(p, *(int32_t *)data + 4 - realbytes + fix);
             } else {
-                WRITELONG(p, *(long *)data - (realbytes + s->len) + fix);
+                WRITELONG(p, *(int32_t *)data - (realbytes + s->len) + fix);
             }
             coff_sect_write(s, mydata, 4L);
         }
+
     }
 }
 
 static void coff_sect_write(struct Section *sect,
-                            const unsigned char *data, unsigned long len)
+                            const uint8_t *data, uint32_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->len += len;
@@ -548,7 +589,7 @@ static void coff_sect_write(struct Section *sect,
 typedef struct tagString {
     struct tagString *Next;
     int len;
-    char *String;
+    int8_t *String;
 } STRING;
 
 #define EXPORT_SECTION_NAME ".drectve"
@@ -560,14 +601,14 @@ typedef struct tagString {
 
 static STRING *Exports = NULL;
 static struct Section *directive_sec;
-void AddExport(char *name)
+void AddExport(int8_t *name)
 {
     STRING *rvp = Exports, *newS;
 
     newS = (STRING *) nasm_malloc(sizeof(STRING));
     newS->len = strlen(name);
     newS->Next = NULL;
-    newS->String = (char *)nasm_malloc(newS->len + 1);
+    newS->String = (int8_t *)nasm_malloc(newS->len + 1);
     strcpy(newS->String, name);
     if (rvp == NULL) {
         int i;
@@ -595,12 +636,12 @@ void AddExport(char *name)
 void BuildExportTable(void)
 {
     STRING *rvp = Exports, *next;
-    unsigned char buf[256];
+    uint8_t buf[256];
     int len;
     if (rvp == NULL)
         return;
     while (rvp) {
-        len = sprintf((char *)buf, "-export:%s ", rvp->String);
+        len = sprintf((int8_t *)buf, "-export:%s ", rvp->String);
         coff_sect_write(directive_sec, buf, len);
         rvp = rvp->Next;
     }
@@ -614,10 +655,10 @@ void BuildExportTable(void)
     Exports = NULL;
 }
 
-static int coff_directives(char *directive, char *value, int pass)
+static int coff_directives(int8_t *directive, int8_t *value, int pass)
 {
     if (!strcmp(directive, "export")) {
-        char *q, *name;
+        int8_t *q, *name;
 
         if (pass == 2)
             return 1;           /* ignore in pass two */
@@ -635,7 +676,7 @@ static int coff_directives(char *directive, char *value, int pass)
             return 1;
         }
         if (*q) {
-            error(ERR_NONFATAL, "unrecognised export qualifier `%s'", q);
+            error(ERR_NONFATAL, "unrecognized export qualifier `%s'", q);
             return 1;
         }
         AddExport(name);
@@ -646,7 +687,7 @@ static int coff_directives(char *directive, char *value, int pass)
 
 static void coff_write(void)
 {
-    long pos, sympos, vsize;
+    int32_t pos, sympos, vsize;
     int i;
 
     BuildExportTable();         /* fill in the .drectve section with -export's */
@@ -671,14 +712,17 @@ static void coff_write(void)
     /*
      * Output the COFF header.
      */
-    fwriteshort(0x14C, coffp);  /* MACHINE_i386 */
-    fwriteshort(nsects, coffp); /* number of sections */
-    fwritelong(time(NULL), coffp);      /* time stamp */
-    fwritelong(sympos, coffp);
-    fwritelong(nsyms + initsym, coffp);
-    fwriteshort(0, coffp);      /* no optional header */
+    if (win64)
+        fwriteint16_t(0x8664, coffp);  /* MACHINE_x86-64 */
+    else
+        fwriteint16_t(0x014C, coffp);  /* MACHINE_i386 */
+    fwriteint16_t(nsects, coffp); /* number of sections */
+    fwriteint32_t(time(NULL), coffp);      /* time stamp */
+    fwriteint32_t(sympos, coffp);
+    fwriteint32_t(nsyms + initsym, coffp);
+    fwriteint16_t(0, coffp);      /* no optional header */
     /* Flags: 32-bit, no line numbers. Win32 doesn't even bother with them. */
-    fwriteshort(win32 ? 0 : 0x104, coffp);
+    fwriteint16_t((win32 | win64) ? 0 : 0x104, coffp);
 
     /*
      * Output the section headers.
@@ -704,28 +748,28 @@ static void coff_write(void)
      * Output the symbol and string tables.
      */
     coff_write_symbols();
-    fwritelong(strslen + 4, coffp);     /* length includes length count */
+    fwriteint32_t(strslen + 4, coffp);     /* length includes length count */
     saa_fpwrite(strs, coffp);
 }
 
-static void coff_section_header(char *name, long vsize,
-                                long datalen, long datapos,
-                                long relpos, int nrelocs, long flags)
+static void coff_section_header(int8_t *name, int32_t vsize,
+                                int32_t datalen, int32_t datapos,
+                                int32_t relpos, int nrelocs, int32_t flags)
 {
-    char padname[8];
+    int8_t padname[8];
 
     memset(padname, 0, 8);
     strncpy(padname, name, 8);
     fwrite(padname, 8, 1, coffp);
-    fwritelong(vsize, coffp);
-    fwritelong(0L, coffp);      /* RVA/offset - we ignore */
-    fwritelong(datalen, coffp);
-    fwritelong(datapos, coffp);
-    fwritelong(relpos, coffp);
-    fwritelong(0L, coffp);      /* no line numbers - we don't do 'em */
-    fwriteshort(nrelocs, coffp);
-    fwriteshort(0, coffp);      /* again, no line numbers */
-    fwritelong(flags, coffp);
+    fwriteint32_t(vsize, coffp);
+    fwriteint32_t(0L, coffp);      /* RVA/offset - we ignore */
+    fwriteint32_t(datalen, coffp);
+    fwriteint32_t(datapos, coffp);
+    fwriteint32_t(relpos, coffp);
+    fwriteint32_t(0L, coffp);      /* no line numbers - we don't do 'em */
+    fwriteint16_t(nrelocs, coffp);
+    fwriteint16_t(0, coffp);      /* again, no line numbers */
+    fwriteint32_t(flags, coffp);
 }
 
 static void coff_write_relocs(struct Section *s)
@@ -733,8 +777,8 @@ static void coff_write_relocs(struct Section *s)
     struct Reloc *r;
 
     for (r = s->head; r; r = r->next) {
-        fwritelong(r->address, coffp);
-        fwritelong(r->symbol + (r->symbase == REAL_SYMBOLS ? initsym :
+        fwriteint32_t(r->address, coffp);
+        fwriteint32_t(r->symbol + (r->symbase == REAL_SYMBOLS ? initsym :
                                 r->symbase == ABS_SYMBOL ? initsym - 1 :
                                 r->symbase == SECT_SYMBOLS ? 2 : 0),
                    coffp);
@@ -742,36 +786,39 @@ static void coff_write_relocs(struct Section *s)
          * Strange: Microsoft's COFF documentation says 0x03 for an
          * absolute relocation, but both Visual C++ and DJGPP agree
          * that in fact it's 0x06. I'll use 0x06 until someone
-         * argues.
+         * argues. ***** UPDATE: PE/COFF Ver.8 docs confirm this -kkanios *****
          */
-        fwriteshort(r->relative ? 0x14 : 0x06, coffp);
+        if (win64)
+            fwriteint16_t(r->relative ? 0x04 : r->size64 ? 0x01 : 0x02, coffp);
+        else
+            fwriteint16_t(r->relative ? 0x14 : 0x06, coffp);
     }
 }
 
-static void coff_symbol(char *name, long strpos, long value,
+static void coff_symbol(int8_t *name, int32_t strpos, int32_t value,
                         int section, int type, int aux)
 {
-    char padname[8];
+    int8_t padname[8];
 
     if (name) {
         memset(padname, 0, 8);
         strncpy(padname, name, 8);
         fwrite(padname, 8, 1, coffp);
     } else {
-        fwritelong(0L, coffp);
-        fwritelong(strpos, coffp);
+        fwriteint32_t(0L, coffp);
+        fwriteint32_t(strpos, coffp);
     }
-    fwritelong(value, coffp);
-    fwriteshort(section, coffp);
-    fwriteshort(0, coffp);
+    fwriteint32_t(value, coffp);
+    fwriteint16_t(section, coffp);
+    fwriteint16_t(0, coffp);
     fputc(type, coffp);
     fputc(aux, coffp);
 }
 
 static void coff_write_symbols(void)
 {
-    char filename[18];
-    unsigned long i;
+    int8_t filename[18];
+    uint32_t i;
 
     /*
      * The `.file' record, and the file name auxiliary record.
@@ -788,8 +835,8 @@ static void coff_write_symbols(void)
 
     for (i = 0; i < nsects; i++) {
         coff_symbol(sects[i]->name, 0L, 0L, i + 1, 3, 1);
-        fwritelong(sects[i]->len, coffp);
-        fwriteshort(sects[i]->nrelocs, coffp);
+        fwriteint32_t(sects[i]->len, coffp);
+        fwriteint16_t(sects[i]->nrelocs, coffp);
         fwrite(filename, 12, 1, coffp);
     }
 
@@ -810,24 +857,24 @@ static void coff_write_symbols(void)
     }
 }
 
-static long coff_segbase(long segment)
+static int32_t coff_segbase(int32_t segment)
 {
     return segment;
 }
 
-static void coff_std_filename(char *inname, char *outname, efunc error)
+static void coff_std_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     strcpy(coff_infile, inname);
     standard_extension(inname, outname, ".o", error);
 }
 
-static void coff_win32_filename(char *inname, char *outname, efunc error)
+static void coff_win32_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     strcpy(coff_infile, inname);
     standard_extension(inname, outname, ".obj", error);
 }
 
-static const char *coff_stdmac[] = {
+static const int8_t *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
@@ -837,7 +884,7 @@ static const char *coff_stdmac[] = {
     NULL
 };
 
-static int coff_set_info(enum geninfo type, char **val)
+static int coff_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }
@@ -875,6 +922,28 @@ struct ofmt of_win32 = {
     &null_debug_form,
     coff_stdmac,
     coff_win32_init,
+    coff_set_info,
+    coff_out,
+    coff_deflabel,
+    coff_section_names,
+    coff_segbase,
+    coff_directives,
+    coff_win32_filename,
+    coff_cleanup
+};
+
+#endif
+
+#ifdef OF_WIN64
+
+struct ofmt of_win64 = {
+    "Microsoft Win64 (x86-64) object files",
+    "win64",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
+    coff_stdmac,
+    coff_win64_init,
     coff_set_info,
     coff_out,
     coff_deflabel,

@@ -27,10 +27,10 @@
 
 #ifdef OF_RDF
 
-typedef short int16;            /* not sure if this will be required to be altered
+typedef int16_t int16;            /* not sure if this will be required to be altered
                                    at all... best to typedef it just in case */
 
-static const char *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
+static const int8_t *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
 
 /* the records that can be found in the RDOFF header */
 
@@ -42,40 +42,40 @@ static const char *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
  * 32764. */
 
 struct RelocRec {
-    char type;                  /* must be 1 */
-    char segment;               /* only 0 for code, or 1 for data supported,
+    int8_t type;                  /* must be 1 */
+    int8_t segment;               /* only 0 for code, or 1 for data supported,
                                  * but add 64 for relative refs (ie do not require
                                  * reloc @ loadtime, only linkage) */
-    long offset;                /* from start of segment in which reference is loc'd */
-    char length;                /* 1 2 or 4 bytes */
+    int32_t offset;                /* from start of segment in which reference is loc'd */
+    int8_t length;                /* 1 2 or 4 bytes */
     int16 refseg;               /* segment to which reference refers to */
 };
 
 struct ImportRec {
-    char type;                  /* must be 2 */
+    int8_t type;                  /* must be 2 */
     int16 segment;              /* segment number allocated to the label for reloc
                                  * records - label is assumed to be at offset zero
                                  * in this segment, so linker must fix up with offset
                                  * of segment and of offset within segment */
-    char label[33];             /* zero terminated... should be written to file until
+    int8_t label[33];             /* zero terminated... should be written to file until
                                  * the zero, but not after it - max len = 32 chars */
 };
 
 struct ExportRec {
-    char type;                  /* must be 3 */
-    char segment;               /* segment referred to (0/1) */
-    long offset;                /* offset within segment */
-    char label[33];             /* zero terminated as above. max len = 32 chars */
+    int8_t type;                  /* must be 3 */
+    int8_t segment;               /* segment referred to (0/1) */
+    int32_t offset;                /* offset within segment */
+    int8_t label[33];             /* zero terminated as above. max len = 32 chars */
 };
 
 struct DLLRec {
-    char type;                  /* must be 4 */
-    char libname[128];          /* name of library to link with at load time */
+    int8_t type;                  /* must be 4 */
+    int8_t libname[128];          /* name of library to link with at load time */
 };
 
 struct BSSRec {
-    char type;                  /* must be 5 */
-    long amount;                /* number of bytes BSS to reserve */
+    int8_t type;                  /* must be 5 */
+    int32_t amount;                /* number of bytes BSS to reserve */
 };
 
 /* code for managing buffers needed to seperate code and data into individual
@@ -87,7 +87,7 @@ struct BSSRec {
 
 typedef struct memorybuffer {
     int length;
-    char buffer[BUF_BLOCK_LEN];
+    int8_t buffer[BUF_BLOCK_LEN];
     struct memorybuffer *next;
 } memorybuffer;
 
@@ -105,7 +105,7 @@ static memorybuffer *newmembuf(void)
 static void membufwrite(memorybuffer * b, void *data, int bytes)
 {
     int16 w;
-    long l;
+    int32_t l;
 
     if (b->next) {              /* memory buffer full - use next buffer */
         membufwrite(b->next, data, bytes);
@@ -114,7 +114,7 @@ static void membufwrite(memorybuffer * b, void *data, int bytes)
     if ((bytes < 0 && b->length - bytes > BUF_BLOCK_LEN)
         || (bytes > 0 && b->length + bytes > BUF_BLOCK_LEN)) {
 
-        /* buffer full and no next allocated... allocate and initialise next
+        /* buffer full and no next allocated... allocate and initialize next
          * buffer */
 
         b->next = newmembuf();
@@ -124,7 +124,7 @@ static void membufwrite(memorybuffer * b, void *data, int bytes)
 
     switch (bytes) {
     case -4:                   /* convert to little-endian */
-        l = *(long *)data;
+        l = *(int32_t *)data;
         b->buffer[b->length++] = l & 0xFF;
         l >>= 8;
         b->buffer[b->length++] = l & 0xFF;
@@ -143,9 +143,9 @@ static void membufwrite(memorybuffer * b, void *data, int bytes)
 
     default:
         while (bytes--) {
-            b->buffer[b->length++] = *(*(unsigned char **)&data);
+            b->buffer[b->length++] = *(*(uint8_t **)&data);
 
-            (*(unsigned char **)&data)++;
+            (*(uint8_t **)&data)++;
         }
         break;
     }
@@ -190,7 +190,7 @@ static FILE *ofile;
 static efunc error;
 
 static int segtext, segdata, segbss;
-static long bsslength;
+static int32_t bsslength;
 
 static void rdf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -209,7 +209,7 @@ static void rdf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     bsslength = 0;
 }
 
-static long rdf_section_names(char *name, int pass, int *bits)
+static int32_t rdf_section_names(int8_t *name, int pass, int *bits)
 {
     /*
      * Default is 32 bits.
@@ -275,8 +275,8 @@ static void write_dll_rec(struct DLLRec *r)
     membufwrite(header, r->libname, strlen(r->libname) + 1);
 }
 
-static void rdf_deflabel(char *name, long segment, long offset,
-                         int is_global, char *special)
+static void rdf_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                         int is_global, int8_t *special)
 {
     struct ExportRec r;
     struct ImportRec ri;
@@ -320,12 +320,12 @@ static void rdf_deflabel(char *name, long segment, long offset,
     }
 }
 
-static void rdf_out(long segto, void *data, unsigned long type,
-                    long segment, long wrt)
+static void rdf_out(int32_t segto, void *data, uint32_t type,
+                    int32_t segment, int32_t wrt)
 {
-    long bytes = type & OUT_SIZMASK;
+    int32_t bytes = type & OUT_SIZMASK;
     struct RelocRec rr;
-    unsigned char databuf[4], *pd;
+    uint8_t databuf[8], *pd;
 
     if (segto == NO_SEG) {
         if ((type & OUT_TYPMASK) != OUT_RESERVE)
@@ -350,7 +350,7 @@ static void rdf_out(long segto, void *data, unsigned long type,
     type &= OUT_TYPMASK;
 
     if (segto == 2 && type != OUT_RESERVE) {
-        error(ERR_NONFATAL, "BSS segments may not be initialised");
+        error(ERR_NONFATAL, "BSS segments may not be initialized");
 
         /* just reserve the space for now... */
 
@@ -389,10 +389,13 @@ static void rdf_out(long segto, void *data, unsigned long type,
         }
 
         pd = databuf;           /* convert address to little-endian */
-        if (bytes == 2)
-            WRITESHORT(pd, *(long *)data);
+        if (bytes == 4)
+            WRITELONG(pd, *(int32_t *)data);
+        else if (bytes == 8)
+            WRITEDLONG(pd, *(int64_t *)data);
         else
-            WRITELONG(pd, *(long *)data);
+            WRITESHORT(pd, *(int32_t *)data);
+            
 
         membufwrite(seg[segto], databuf, bytes);
 
@@ -416,7 +419,7 @@ static void rdf_out(long segto, void *data, unsigned long type,
          * address of imported symbol onto it to get address relative to end of
          * instruction: import_address + data(offset) - end_of_instrn */
 
-        rr.offset = *(long *)data - (rr.offset + bytes);
+        rr.offset = *(int32_t *)data - (rr.offset + bytes);
 
         membufwrite(seg[segto], &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
@@ -434,15 +437,15 @@ static void rdf_out(long segto, void *data, unsigned long type,
         rr.refseg = segment;    /* segment referred to */
         write_reloc_rec(&rr);
 
-        rr.offset = *(long *)data - (rr.offset + bytes);
+        rr.offset = *(int32_t *)data - (rr.offset + bytes);
         membufwrite(seg[segto], &rr.offset, -4);
     }
 }
 
 static void rdf_cleanup(int debuginfo)
 {
-    long l;
-    unsigned char b[4], *d;
+    int32_t l;
+    uint8_t b[4], *d;
     struct BSSRec bs;
 
     (void)debuginfo;
@@ -485,12 +488,12 @@ static void rdf_cleanup(int debuginfo)
     fclose(ofile);
 }
 
-static long rdf_segbase(long segment)
+static int32_t rdf_segbase(int32_t segment)
 {
     return segment;
 }
 
-static int rdf_directive(char *directive, char *value, int pass)
+static int rdf_directive(int8_t *directive, int8_t *value, int pass)
 {
     struct DLLRec r;
 
@@ -506,12 +509,12 @@ static int rdf_directive(char *directive, char *value, int pass)
     return 0;
 }
 
-static void rdf_filename(char *inname, char *outname, efunc error)
+static void rdf_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     standard_extension(inname, outname, ".rdf", error);
 }
 
-static char *rdf_stdmac[] = {
+static int8_t *rdf_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",
@@ -521,7 +524,7 @@ static char *rdf_stdmac[] = {
     NULL
 };
 
-static int rdf_set_info(enum geninfo type, char **val)
+static int rdf_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }

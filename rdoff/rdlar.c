@@ -22,12 +22,12 @@
 typedef enum { FALSE, TRUE } bool;
 
 /** Constants **/
-const char commands[] = "adnrtx";
-const char modifiers[] = "cflouvV";
+const int8_t commands[] = "adnrtx";
+const int8_t modifiers[] = "cflouvV";
 
 /** Global variables **/
-char *progname = "rdlar";
-char **_argv = NULL;
+int8_t *progname = "rdlar";
+int8_t **_argv = NULL;
 struct {
     bool createok;
     bool usefname;
@@ -41,13 +41,13 @@ struct {
 #define _ENDIANNESS 0           /* 0 for little, 1 for big */
 
 /*
- * Convert long to little endian (if we were compiled on big-endian machine)
+ * Convert int32_t to little endian (if we were compiled on big-endian machine)
  */
-static void longtolocal(long *l)
+static void int32_ttolocal(int32_t *l)
 {
 #if _ENDIANNESS
-    unsigned char t;
-    unsigned char *p = (unsigned char *)l;
+    uint8_t t;
+    uint8_t *p = (uint8_t *)l;
 
     t = p[0];
     p[0] = p[3];
@@ -96,7 +96,7 @@ void usage(void)
 /*
  * Print an error message and exit
  */
-void error_exit(int errcode, bool useperror, const char *fmt, ...)
+void error_exit(int errcode, bool useperror, const int8_t *fmt, ...)
 {
     va_list ap;
 
@@ -113,7 +113,7 @@ void error_exit(int errcode, bool useperror, const char *fmt, ...)
 /*
  * Fill in and write a header
  */
-void put_header(struct rdlm_hdr *hdr, FILE * libfp, char *modname)
+void put_header(struct rdlm_hdr *hdr, FILE * libfp, int8_t *modname)
 {
     int n = 0;
 
@@ -128,9 +128,9 @@ void put_header(struct rdlm_hdr *hdr, FILE * libfp, char *modname)
 }
 
 /*
- * Copy n bytes from one file to another and return last character read.
+ * Copy n bytes from one file to another and return last int8_tacter read.
  */
-char copybytes(FILE * fp, FILE * fp2, int n)
+int8_t copybytes(FILE * fp, FILE * fp2, int n)
 {
     int i, t = 0;
 
@@ -143,18 +143,18 @@ char copybytes(FILE * fp, FILE * fp2, int n)
             if (fputc(t, fp2) == EOF)
                 error_exit(1, FALSE, "write error");
     }
-    return (char)t;
+    return (int8_t)t;
 }
 
 /*
- * Copy unsigned long from one file to another.
- * Return local presentation of long.
+ * Copy uint32_t from one file to another.
+ * Return local presentation of int32_t.
  */
-long copylong(FILE * fp, FILE * fp2)
+int32_t copyint32_t(FILE * fp, FILE * fp2)
 {
-    long l;
+    int32_t l;
     int i, t;
-    unsigned char *p = (unsigned char *)&l;
+    uint8_t *p = (uint8_t *)&l;
 
     for (i = 0; i < 4; i++) {
         t = fgetc(fp);
@@ -166,14 +166,14 @@ long copylong(FILE * fp, FILE * fp2)
                 error_exit(1, FALSE, "write error");
         *p++ = t;
     }
-    longtolocal(&l);
+    int32_ttolocal(&l);
     return l;
 }
 
 /*
  * Create a new library
  */
-int create_library(char *libname)
+int create_library(int8_t *libname)
 {
     FILE *libfp;
     struct rdlm_hdr hdr;
@@ -200,7 +200,7 @@ int create_library(char *libname)
 /*
  * Add a module to the library
  */
-int add_module(FILE * libfp, const char *fname, char *modname)
+int add_module(FILE * libfp, const int8_t *fname, int8_t *modname)
 {
     FILE *modfp;
     struct rdlm_hdr hdr = { RDLMMAG, 0, 0, 0, 0, 0, 0 };
@@ -241,13 +241,13 @@ int add_module(FILE * libfp, const char *fname, char *modname)
 /*
  * Main
  */
-int main(int argc, char *argv[])
+int main(int argc, int8_t *argv[])
 {
     FILE *libfp, *tmpfp, *modfp = NULL;
     struct stat finfo;
     struct rdlm_hdr hdr;
-    char buf[MAXMODNAMELEN], *p = NULL;
-    char c;
+    int8_t buf[MAXMODNAMELEN], *p = NULL;
+    int8_t c;
     int i;
 
     progname = argv[0];
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
                 if (options.verbose) {
                     printf("%ld bytes", hdr.size);
                 }
-                putchar('\n');
+                putint8_t('\n');
             }
 
             copybytes(libfp, modfp, hdr.size);

@@ -9,9 +9,9 @@
 
 #include <stdio.h>
 
-char text[] = "hello, world\n";
+int8_t text[] = "hello, world\n";
 
-extern void function(char *);
+extern void function(int8_t *);
 extern int bsssym, commvar;
 extern void *selfptr;
 extern void *selfptr2;
@@ -19,9 +19,9 @@ extern void *selfptr2;
 int main(void)
 {
     printf("these should be identical: %p, %p\n",
-           (long)selfptr, (long)&selfptr);
+           (int32_t)selfptr, (int32_t)&selfptr);
     printf("these should be equivalent but different: %p, %p\n",
-           (long)selfptr2, (long)&selfptr2);
+           (int32_t)selfptr2, (int32_t)&selfptr2);
     printf("you should see \"hello, world\" twice:\n");
     bsssym = 0xF00D;
     commvar = 0xD00F;

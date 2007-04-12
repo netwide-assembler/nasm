@@ -79,9 +79,9 @@ const crc32 consttab[] = {
     0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
 
-unsigned hash(const char *name)
+unsigned hash(const int8_t *name)
 {
-    register const char *n;
+    register const int8_t *n;
     register crc32 hashval = 0xffffffff;
 
     for (n = name; *n; n++)

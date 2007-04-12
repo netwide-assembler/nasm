@@ -1,3 +1,33 @@
+2007-04-10  Keith Kanios <keith@kanios.net>
+   * (insns.dat): updated x86-64 general+system instruction set.
+
+2007-04-09  Keith Kanios <keith@kanios.net>
+   * (outrdf.c): added support for 64-bit addressing.
+   * (outrdf2.c): added support for 64-bit addressing.
+
+2007-04-08  Keith Kanios <keith@kanios.net>
+   * (standard.mac): added entry for __BITS__ standard macro.
+   * (preproc.c): added __BITS__ to the standard macro processing.
+
+2007-04-05  Keith Kanios <keith@kanios.net>
+   * (nasm.c): added [BITS 64] for the x86-64 architecture extension.
+   * (nasm.h): added general flags to support the x86-64 architecture.
+   * (nasmlib.h): updated to support the x86-64 architecture.
+   * (nasmlib.c): revamped readnum/readlinenum to support 64-bit.
+   * (assemble.c): modified for the x86-64 architecture extension.
+   * (regs.dat): added x86-64 register extensions; revamped flags.
+   * (insns.dat): added AMD64 instruction set support.
+   * (outbin.c): added support for 64-bit addressing.
+   * (outcoff.c): added win64 (x86-64 COFF) support.
+   * (outform.h): added entry for win64.
+
+2007-03-15  Keith Kanios <keith@kanios.net>
+   * (*.c): added c99 data-type compliance and <inttypes.h> inclusion.
+   * (*.pl): added c99 data-type compliance and <inttypes.h> inclusion.
+   * (*.h): added c99 data-type compliance.
+   * (assemble.h): fixed procedure defintions to sync with respective
+   procedure declarations.
+
 2002-05-16  Ed Beroset <beroset@mindspring.com>
    * (preproc.c): fixed unterminated macro bug error reporting
    * (nasmlib.h): changed strdup's arg to const char *

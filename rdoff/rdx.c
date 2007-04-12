@@ -18,9 +18,9 @@
 #include "rdfload.h"
 #include "symtab.h"
 
-typedef int (*main_fn) (int, char **);  /* Main function prototype */
+typedef int (*main_fn) (int, int8_t **);  /* Main function prototype */
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
     rdfmodule *m;
     main_fn code;

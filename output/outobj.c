@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -131,8 +132,8 @@ struct ObjRecord {
     ObjRecord *child;           /* Associated record below this one */
     ObjRecord **up;             /* Master pointer to this ObjRecord */
     ObjRecord *back;            /* Previous part of this record     */
-    unsigned long parm[OBJ_PARMS];      /* Parameters for ori routine       */
-    unsigned char buf[RECORD_MAX + 3];
+    uint32_t parm[OBJ_PARMS];      /* Parameters for ori routine       */
+    uint8_t buf[RECORD_MAX + 3];
 };
 
 static void obj_fwrite(ObjRecord * orp);
@@ -268,7 +269,7 @@ static ObjRecord *obj_commit(ObjRecord * orp)
 /*
  * Write a byte
  */
-static ObjRecord *obj_byte(ObjRecord * orp, unsigned char val)
+static ObjRecord *obj_byte(ObjRecord * orp, uint8_t val)
 {
     orp = obj_check(orp, 1);
     orp->buf[orp->used] = val;
@@ -303,7 +304,7 @@ static ObjRecord *obj_rword(ObjRecord * orp, unsigned int val)
 /*
  * Write a dword
  */
-static ObjRecord *obj_dword(ObjRecord * orp, unsigned long val)
+static ObjRecord *obj_dword(ObjRecord * orp, uint32_t val)
 {
     orp = obj_check(orp, 4);
     orp->buf[orp->used] = val;
@@ -336,7 +337,7 @@ static ObjRecord *obj_force(ObjRecord * orp, int x)
  * This routine writes a field of size x.  The caller does not need to worry at
  * all about whether 16-bits or 32-bits are required.
  */
-static ObjRecord *obj_x(ObjRecord * orp, unsigned long val)
+static ObjRecord *obj_x(ObjRecord * orp, uint32_t val)
 {
     if (orp->type & 1)
         orp->x_size = 32;
@@ -361,7 +362,7 @@ static ObjRecord *obj_index(ObjRecord * orp, unsigned int val)
 /*
  * Writes a variable length value
  */
-static ObjRecord *obj_value(ObjRecord * orp, unsigned long val)
+static ObjRecord *obj_value(ObjRecord * orp, uint32_t val)
 {
     if (val <= 128)
         return (obj_byte(orp, val));
@@ -378,10 +379,10 @@ static ObjRecord *obj_value(ObjRecord * orp, unsigned long val)
 /*
  * Writes a counted string
  */
-static ObjRecord *obj_name(ObjRecord * orp, char *name)
+static ObjRecord *obj_name(ObjRecord * orp, int8_t *name)
 {
     int len = strlen(name);
-    unsigned char *ptr;
+    uint8_t *ptr;
 
     orp = obj_check(orp, len + 1);
     ptr = orp->buf + orp->used;
@@ -458,13 +459,13 @@ static void ori_null(ObjRecord * orp)
  * This concludes the low level section of outobj.c
  */
 
-static char obj_infile[FILENAME_MAX];
+static int8_t obj_infile[FILENAME_MAX];
 
 static efunc error;
 static evalfunc evaluate;
 static ldfunc deflabel;
 static FILE *ofp;
-static long first_seg;
+static int32_t first_seg;
 static int any_segs;
 static int passtwo;
 static int arrindex;
@@ -479,13 +480,13 @@ struct Group;
 struct LineNumber {
     struct LineNumber *next;
     struct Segment *segment;
-    long offset;
-    long lineno;
+    int32_t offset;
+    int32_t lineno;
 };
 
 static struct FileName {
     struct FileName *next;
-    char *name;
+    int8_t *name;
     struct LineNumber *lnhead, **lntail;
     int index;
 } *fnhead, **fntail;
@@ -500,17 +501,17 @@ static struct Array {
 
 static struct Public {
     struct Public *next;
-    char *name;
-    long offset;
-    long segment;               /* only if it's far-absolute */
+    int8_t *name;
+    int32_t offset;
+    int32_t segment;               /* only if it's far-absolute */
     int type;                   /* only for local debug syms */
 } *fpubhead, **fpubtail, *last_defined;
 
 static struct External {
     struct External *next;
-    char *name;
-    long commonsize;
-    long commonelem;            /* element size if FAR, else zero */
+    int8_t *name;
+    int32_t commonsize;
+    int32_t commonelem;            /* element size if FAR, else zero */
     int index;                  /* OBJ-file external index */
     enum {
         DEFWRT_NONE,            /* no unusual default-WRT */
@@ -519,7 +520,7 @@ static struct External {
         DEFWRT_GROUP            /* a group */
     } defwrt_type;
     union {
-        char *string;
+        int8_t *string;
         struct Segment *seg;
         struct Group *grp;
     } defwrt_ptr;
@@ -535,49 +536,49 @@ static struct ExtBack {
 
 static struct Segment {
     struct Segment *next;
-    long index;                 /* the NASM segment id */
-    long obj_index;             /* the OBJ-file segment index */
-    struct Group *grp;          /* the group it belongs to */
-    unsigned long currentpos;
-    long align;                 /* can be SEG_ABS + absolute addr */
+    int32_t index;                 /* the NASM segment id */
+    int32_t obj_index;             /* the OBJ-file segment index */
+    struct Group *grp;          /* the group it beint32_ts to */
+    uint32_t currentpos;
+    int32_t align;                 /* can be SEG_ABS + absolute addr */
     enum {
         CMB_PRIVATE = 0,
         CMB_PUBLIC = 2,
         CMB_STACK = 5,
         CMB_COMMON = 6
     } combine;
-    long use32;                 /* is this segment 32-bit? */
+    int32_t use32;                 /* is this segment 32-bit? */
     struct Public *pubhead, **pubtail, *lochead, **loctail;
-    char *name;
-    char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
+    int8_t *name;
+    int8_t *segclass, *overlay;   /* `class' is a C++ keyword :-) */
     ObjRecord *orp;
 } *seghead, **segtail, *obj_seg_needs_update;
 
 static struct Group {
     struct Group *next;
-    char *name;
-    long index;                 /* NASM segment id */
-    long obj_index;             /* OBJ-file group index */
-    long nentries;              /* number of elements... */
-    long nindices;              /* ...and number of index elts... */
+    int8_t *name;
+    int32_t index;                 /* NASM segment id */
+    int32_t obj_index;             /* OBJ-file group index */
+    int32_t nentries;              /* number of elements... */
+    int32_t nindices;              /* ...and number of index elts... */
     union {
-        long index;
-        char *name;
+        int32_t index;
+        int8_t *name;
     } segs[GROUP_MAX];          /* ...in this */
 } *grphead, **grptail, *obj_grp_needs_update;
 
 static struct ImpDef {
     struct ImpDef *next;
-    char *extname;
-    char *libname;
+    int8_t *extname;
+    int8_t *libname;
     unsigned int impindex;
-    char *impname;
+    int8_t *impname;
 } *imphead, **imptail;
 
 static struct ExpDef {
     struct ExpDef *next;
-    char *intname;
-    char *extname;
+    int8_t *intname;
+    int8_t *extname;
     unsigned int ordinal;
     int flags;
 } *exphead, **exptail;
@@ -587,16 +588,16 @@ static struct ExpDef {
 #define EXPDEF_FLAG_NODATA   0x20
 #define EXPDEF_MASK_PARMCNT  0x1F
 
-static long obj_entry_seg, obj_entry_ofs;
+static int32_t obj_entry_seg, obj_entry_ofs;
 
 struct ofmt of_obj;
 
 /* The current segment */
 static struct Segment *current_seg;
 
-static long obj_segment(char *, int, int *);
+static int32_t obj_segment(int8_t *, int, int *);
 static void obj_write_file(int debuginfo);
-static int obj_directive(char *, char *, int);
+static int obj_directive(int8_t *, int8_t *, int);
 
 static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -631,7 +632,7 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     of_obj.current_dfmt->init(&of_obj, NULL, fp, errfunc);
 }
 
-static int obj_set_info(enum geninfo type, char **val)
+static int obj_set_info(enum geninfo type, int8_t **val)
 {
     (void)type;
     (void)val;
@@ -694,7 +695,7 @@ static void obj_cleanup(int debuginfo)
     }
 }
 
-static void obj_ext_set_defwrt(struct External *ext, char *id)
+static void obj_ext_set_defwrt(struct External *ext, int8_t *id)
 {
     struct Segment *seg;
     struct Group *grp;
@@ -721,8 +722,8 @@ static void obj_ext_set_defwrt(struct External *ext, char *id)
     dws = ext;
 }
 
-static void obj_deflabel(char *name, long segment,
-                         long offset, int is_global, char *special)
+static void obj_deflabel(int8_t *name, int32_t segment,
+                         int32_t offset, int is_global, int8_t *special)
 {
     /*
      * We have three cases:
@@ -887,7 +888,7 @@ static void obj_deflabel(char *name, long segment,
          * We might have a default-WRT specification.
          */
         if (!nasm_strnicmp(special, "wrt", 3)) {
-            char *p;
+            int8_t *p;
             int len;
             special += 3;
             special += strspn(special, " \t");
@@ -989,15 +990,15 @@ static void obj_deflabel(char *name, long segment,
 
 /* forward declaration */
 static void obj_write_fixup(ObjRecord * orp, int bytes,
-                            int segrel, long seg, long wrt,
+                            int segrel, int32_t seg, int32_t wrt,
                             struct Segment *segto);
 
-static void obj_out(long segto, const void *data, unsigned long type,
-                    long segment, long wrt)
+static void obj_out(int32_t segto, const void *data, uint32_t type,
+                    int32_t segment, int32_t wrt)
 {
-    unsigned long size, realtype;
-    const unsigned char *ucdata;
-    long ldata;
+    uint32_t size, realtype;
+    const uint8_t *ucdata;
+    int32_t ldata;
     struct Segment *seg;
     ObjRecord *orp;
 
@@ -1059,7 +1060,7 @@ static void obj_out(long segto, const void *data, unsigned long type,
         if (segment >= SEG_ABS)
             error(ERR_NONFATAL, "far-absolute relocations not supported"
                   " by OBJ format");
-        ldata = *(long *)data;
+        ldata = *(int32_t *)data;
         if (realtype == OUT_REL2ADR) {
             ldata += (size - 2);
             size = 2;
@@ -1101,13 +1102,13 @@ static void obj_out(long segto, const void *data, unsigned long type,
 }
 
 static void obj_write_fixup(ObjRecord * orp, int bytes,
-                            int segrel, long seg, long wrt,
+                            int segrel, int32_t seg, int32_t wrt,
                             struct Segment *segto)
 {
     unsigned locat;
     int method;
     int base;
-    long tidx, fidx;
+    int32_t tidx, fidx;
     struct Segment *s = NULL;
     struct Group *g = NULL;
     struct External *e = NULL;
@@ -1170,7 +1171,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
         if (g)
             method = 5, tidx = g->obj_index;
         else {
-            long i = seg / 2;
+            int32_t i = seg / 2;
             struct ExtBack *eb = ebhead;
             while (i >= EXT_BLKSIZ) {
                 if (eb)
@@ -1229,7 +1230,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
             if (g)
                 method |= 0x10, fidx = g->obj_index;
             else {
-                long i = wrt / 2;
+                int32_t i = wrt / 2;
                 struct ExtBack *eb = ebhead;
                 while (i >= EXT_BLKSIZ) {
                     if (eb)
@@ -1254,7 +1255,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     obj_commit(forp);
 }
 
-static long obj_segment(char *name, int pass, int *bits)
+static int32_t obj_segment(int8_t *name, int pass, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -1276,7 +1277,7 @@ static long obj_segment(char *name, int pass, int *bits)
         struct Group *grp;
         struct External **extp;
         int obj_idx, i, attrs, rn_error;
-        char *p;
+        int8_t *p;
 
         /*
          * Look for segment attributes.
@@ -1505,10 +1506,10 @@ static long obj_segment(char *name, int pass, int *bits)
     }
 }
 
-static int obj_directive(char *directive, char *value, int pass)
+static int obj_directive(int8_t *directive, int8_t *value, int pass)
 {
     if (!strcmp(directive, "group")) {
-        char *p, *q, *v;
+        int8_t *p, *q, *v;
         if (pass == 1) {
             struct Group *grp;
             struct Segment *seg;
@@ -1622,7 +1623,7 @@ static int obj_directive(char *directive, char *value, int pass)
         return 1;
     }
     if (!strcmp(directive, "import")) {
-        char *q, *extname, *libname, *impname;
+        int8_t *q, *extname, *libname, *impname;
 
         if (pass == 2)
             return 1;           /* ignore in pass two */
@@ -1668,7 +1669,7 @@ static int obj_directive(char *directive, char *value, int pass)
         return 1;
     }
     if (!strcmp(directive, "export")) {
-        char *q, *extname, *intname, *v;
+        int8_t *q, *extname, *intname, *v;
         struct ExpDef *export;
         int flags = 0;
         unsigned int ordinal = 0;
@@ -1747,7 +1748,7 @@ static int obj_directive(char *directive, char *value, int pass)
     return 0;
 }
 
-static long obj_segbase(long segment)
+static int32_t obj_segbase(int32_t segment)
 {
     struct Segment *seg;
 
@@ -1762,7 +1763,7 @@ static long obj_segbase(long segment)
         /*
          * Might be an external with a default WRT.
          */
-        long i = segment / 2;
+        int32_t i = segment / 2;
         struct ExtBack *eb = ebhead;
         struct External *e;
 
@@ -1796,7 +1797,7 @@ static long obj_segbase(long segment)
     return segment;             /* no special treatment */
 }
 
-static void obj_filename(char *inname, char *outname, efunc lerror)
+static void obj_filename(int8_t *inname, int8_t *outname, efunc lerror)
 {
     strcpy(obj_infile, inname);
     standard_extension(inname, outname, ".obj", lerror);
@@ -1812,7 +1813,7 @@ static void obj_write_file(int debuginfo)
     struct External *ext;
     struct ImpDef *imp;
     struct ExpDef *export;
-    static char boast[] = "The Netwide Assembler " NASM_VER;
+    static int8_t boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx;
     ObjRecord *orp;
 
@@ -1876,7 +1877,7 @@ static void obj_write_file(int debuginfo)
 
     /*
      * Write the first LNAMES record, containing LNAME one, which
-     * is null. Also initialise the LNAME counter.
+     * is null. Also initialize the LNAME counter.
      */
     orp->type = LNAMES;
     obj_byte(orp, 0);
@@ -1907,7 +1908,7 @@ static void obj_write_file(int debuginfo)
     orp->type = SEGDEF;
     for (seg = seghead; seg; seg = seg->next) {
         int acbp;
-        unsigned long seglen = seg->currentpos;
+        uint32_t seglen = seg->currentpos;
 
         acbp = (seg->combine << 2);     /* C field */
 
@@ -2274,7 +2275,7 @@ static void obj_write_file(int debuginfo)
 void obj_fwrite(ObjRecord * orp)
 {
     unsigned int cksum, len;
-    unsigned char *ptr;
+    uint8_t *ptr;
 
     cksum = orp->type;
     if (orp->x_size == 32)
@@ -2282,14 +2283,14 @@ void obj_fwrite(ObjRecord * orp)
     fputc(cksum, ofp);
     len = orp->committed + 1;
     cksum += (len & 0xFF) + ((len >> 8) & 0xFF);
-    fwriteshort(len, ofp);
+    fwriteint16_t(len, ofp);
     fwrite(orp->buf, 1, len - 1, ofp);
     for (ptr = orp->buf; --len; ptr++)
         cksum += *ptr;
     fputc((-cksum) & 0xFF, ofp);
 }
 
-static const char *obj_stdmac[] = {
+static const int8_t *obj_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro group 1+.nolist",
     "[group %1]",
@@ -2350,7 +2351,7 @@ static void dbgbi_cleanup(void)
     }
 }
 
-static void dbgbi_linnum(const char *lnfname, long lineno, long segto)
+static void dbgbi_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
 {
     struct FileName *fn;
     struct LineNumber *ln;
@@ -2401,8 +2402,8 @@ static void dbgbi_linnum(const char *lnfname, long lineno, long segto)
     fn->lntail = &ln->next;
 
 }
-static void dbgbi_deflabel(char *name, long segment,
-                           long offset, int is_global, char *special)
+static void dbgbi_deflabel(int8_t *name, int32_t segment,
+                           int32_t offset, int is_global, int8_t *special)
 {
     struct Segment *seg;
 
@@ -2457,7 +2458,7 @@ static void dbgbi_deflabel(char *name, long segment,
             loc->offset = offset;
         }
 }
-static void dbgbi_typevalue(long type)
+static void dbgbi_typevalue(int32_t type)
 {
     int vsize;
     int elem = TYM_ELEMENTS(type);
@@ -2468,7 +2469,7 @@ static void dbgbi_typevalue(long type)
 
     switch (type) {
     case TY_BYTE:
-        last_defined->type = 8; /* unsigned char */
+        last_defined->type = 8; /* uint8_t */
         vsize = 1;
         break;
     case TY_WORD:

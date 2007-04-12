@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 
@@ -25,9 +26,9 @@
  * => we only have to worry about _one_ bit shift to the left
  */
 
-static int ieee_multiply(unsigned short *to, unsigned short *from)
+static int ieee_multiply(uint16_t *to, uint16_t *from)
 {
-    unsigned long temp[MANT_WORDS * 2];
+    uint32_t temp[MANT_WORDS * 2];
     int i, j;
 
     for (i = 0; i < MANT_WORDS * 2; i++)
@@ -35,8 +36,8 @@ static int ieee_multiply(unsigned short *to, unsigned short *from)
 
     for (i = 0; i < MANT_WORDS; i++)
         for (j = 0; j < MANT_WORDS; j++) {
-            unsigned long n;
-            n = (unsigned long)to[i] * (unsigned long)from[j];
+            uint32_t n;
+            n = (uint32_t)to[i] * (uint32_t)from[j];
             temp[i + j] += n >> 16;
             temp[i + j + 1] += n & 0xFFFF;
         }
@@ -56,14 +57,14 @@ static int ieee_multiply(unsigned short *to, unsigned short *from)
     }
 }
 
-static void ieee_flconvert(char *string, unsigned short *mant,
-                           long *exponent, efunc error)
+static void ieee_flconvert(int8_t *string, uint16_t *mant,
+                           int32_t *exponent, efunc error)
 {
-    char digits[MANT_DIGITS];
-    char *p, *q, *r;
-    unsigned short mult[MANT_WORDS], bit;
-    unsigned short *m;
-    long tenpwr, twopwr;
+    int8_t digits[MANT_DIGITS];
+    int8_t *p, *q, *r;
+    uint16_t mult[MANT_WORDS], bit;
+    uint16_t *m;
+    int32_t tenpwr, twopwr;
     int extratwos, started, seendot;
 
     p = digits;
@@ -118,7 +119,7 @@ static void ieee_flconvert(char *string, unsigned short *mant,
     started = FALSE;
     twopwr = 0;
     while (m < mant + MANT_WORDS) {
-        unsigned short carry = 0;
+        uint16_t carry = 0;
         while (p > q && !p[-1])
             p--;
         if (p <= q)
@@ -183,9 +184,9 @@ static void ieee_flconvert(char *string, unsigned short *mant,
 /*
  * Shift a mantissa to the right by i (i < 16) bits.
  */
-static void ieee_shr(unsigned short *mant, int i)
+static void ieee_shr(uint16_t *mant, int i)
 {
-    unsigned short n = 0, m;
+    uint16_t n = 0, m;
     int j;
 
     for (j = 0; j < MANT_WORDS; j++) {
@@ -198,7 +199,7 @@ static void ieee_shr(unsigned short *mant, int i)
 /*
  * Round a mantissa off after i words.
  */
-static int ieee_round(unsigned short *mant, int i)
+static int ieee_round(uint16_t *mant, int i)
 {
     if (mant[i] & 0x8000) {
         do {
@@ -212,11 +213,11 @@ static int ieee_round(unsigned short *mant, int i)
 
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
-static int to_double(char *str, long sign, unsigned char *result,
+static int to_double(int8_t *str, int32_t sign, uint8_t *result,
                      efunc error)
 {
-    unsigned short mant[MANT_WORDS];
-    long exponent;
+    uint16_t mant[MANT_WORDS];
+    int32_t exponent;
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
@@ -274,11 +275,11 @@ static int to_double(char *str, long sign, unsigned char *result,
     return 1;                   /* success */
 }
 
-static int to_float(char *str, long sign, unsigned char *result,
+static int to_float(int8_t *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
-    unsigned short mant[MANT_WORDS];
-    long exponent;
+    uint16_t mant[MANT_WORDS];
+    int32_t exponent;
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
@@ -329,11 +330,11 @@ static int to_float(char *str, long sign, unsigned char *result,
     return 1;
 }
 
-static int to_ldoub(char *str, long sign, unsigned char *result,
+static int to_ldoub(int8_t *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
-    unsigned short mant[MANT_WORDS];
-    long exponent;
+    uint16_t mant[MANT_WORDS];
+    int32_t exponent;
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
@@ -390,7 +391,7 @@ static int to_ldoub(char *str, long sign, unsigned char *result,
     return 1;
 }
 
-int float_const(char *number, long sign, unsigned char *result, int bytes,
+int float_const(int8_t *number, int32_t sign, uint8_t *result, int bytes,
                 efunc error)
 {
     if (bytes == 4)

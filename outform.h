@@ -89,6 +89,9 @@
 #ifndef OF_WIN32
 #define OF_WIN32
 #endif
+#ifndef OF_WIN64
+#define OF_WIN64
+#endif
 #ifndef OF_AS86
 #define OF_AS86
 #endif
@@ -113,6 +116,9 @@
 #endif
 #ifndef OF_WIN32
 #define OF_WIN32
+#endif
+#ifndef OF_WIN64
+#define OF_WIN64
 #endif
 #endif
 
@@ -171,6 +177,9 @@
 #ifdef OF_NO_WIN32
 #undef OF_WIN32
 #endif
+#ifdef OF_NO_WIN64
+#undef OF_WIN64
+#endif
 #ifdef OF_NO_AS86
 #undef OF_AS86
 #endif
@@ -201,6 +210,7 @@ extern struct ofmt of_elf;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
 extern struct ofmt of_win32;
+extern struct ofmt of_win64;
 extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
 extern struct ofmt of_macho;
@@ -231,6 +241,9 @@ struct ofmt *drivers[] = {
 #ifdef OF_WIN32
     &of_win32,
 #endif
+#ifdef OF_WIN64
+    &of_win64,
+#endif
 #ifdef OF_RDF2
     &of_rdf2,
 #endif
@@ -249,8 +262,8 @@ struct ofmt *drivers[] = {
 
 #endif                          /* BUILD_DRIVERS_ARRAY */
 
-struct ofmt *ofmt_find(char *);
-struct dfmt *dfmt_find(struct ofmt *, char *);
+struct ofmt *ofmt_find(int8_t *);
+struct dfmt *dfmt_find(struct ofmt *, int8_t *);
 void ofmt_list(struct ofmt *, FILE *);
 void dfmt_list(struct ofmt *ofmt, FILE * fp);
 struct ofmt *ofmt_register(efunc error);

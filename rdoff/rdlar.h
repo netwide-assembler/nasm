@@ -17,13 +17,13 @@
 #define MAXMODNAMELEN	256     /* Maximum length of module name */
 
 struct rdlm_hdr {
-    unsigned long magic;        /* Must be RDLAMAG */
-    unsigned long hdrsize;      /* Header size + sizeof(module_name) */
-    unsigned long date;         /* Creation date */
-    unsigned long owner;        /* UID */
-    unsigned long group;        /* GID */
-    unsigned long mode;         /* File mode */
-    unsigned long size;         /* File size */
+    uint32_t magic;        /* Must be RDLAMAG */
+    uint32_t hdrsize;      /* Header size + sizeof(module_name) */
+    uint32_t date;         /* Creation date */
+    uint32_t owner;        /* UID */
+    uint32_t group;        /* GID */
+    uint32_t mode;         /* File mode */
+    uint32_t size;         /* File size */
     /* NULL-terminated module name immediately follows */
 };
 

@@ -1,5 +1,5 @@
 This is the AUTHORS file for the NASM project located at:
-http://nasm.2y.net/
+http://nasm.sourceforge.net/
 
 Names should be inserted as follows:
 
@@ -117,3 +117,11 @@ N: Alexei Frounze
 E: alexfru@users.sourceforge.net
 D: "-I" paths searched for "incbined" files
 D: bugswatting
+
+N: Keith Kanios, aka SpooK
+E: keith@kanios.net
+D: c99 Compliance
+D: General x64 Support
+D: win64 (x86-64 COFF) output format
+D: __BITS__ Standard Macro
+D: Website Maintenance @ http://nasm.sourceforge.net/

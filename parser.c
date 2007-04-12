@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "insns.h"
@@ -21,8 +22,8 @@
 #include "float.h"
 
 extern int in_abs_seg;          /* ABSOLUTE segment flag */
-extern long abs_seg;            /* ABSOLUTE segment */
-extern long abs_offset;         /* ABSOLUTE segment offset */
+extern int32_t abs_seg;            /* ABSOLUTE segment */
+extern int32_t abs_offset;         /* ABSOLUTE segment offset */
 
 #include "regflags.c"           /* List of register flags */
 
@@ -45,7 +46,7 @@ void parser_global_info(struct ofmt *output, loc_t * locp)
     location = locp;
 }
 
-insn *parse_line(int pass, char *buffer, insn * result,
+insn *parse_line(int pass, int8_t *buffer, insn * result,
                  efunc errfunc, evalfunc evaluate, ldfunc ldef)
 {
     int operand;
@@ -61,7 +62,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 
     result->label = NULL;       /* Assume no label */
     result->eops = NULL;        /* must do this, whatever happens */
-    result->operands = 0;       /* must initialise this */
+    result->operands = 0;       /* must initialize this */
 
     if (i == 0) {               /* blank line - ignore */
         result->opcode = -1;    /* and no instruction either */
@@ -216,10 +217,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
             }
 
             if ((i == TOKEN_FLOAT && is_comma_next()) || i == '-') {
-                long sign = +1L;
+                int32_t sign = +1L;
 
                 if (i == '-') {
-                    char *save = stdscan_bufptr;
+                    int8_t *save = stdscan_bufptr;
                     i = stdscan(NULL, &tokval);
                     sign = -1L;
                     if (i != TOKEN_FLOAT || !is_comma_next()) {
@@ -252,10 +253,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
                         nasm_realloc(eop, sizeof(extop) + eop->stringlen);
                     tail = &eop->next;
                     *fixptr = eop;
-                    eop->stringval = (char *)eop + sizeof(extop);
+                    eop->stringval = (int8_t *)eop + sizeof(extop);
                     if (eop->stringlen < 4 ||
                         !float_const(tokval.t_charptr, sign,
-                                     (unsigned char *)eop->stringval,
+                                     (uint8_t *)eop->stringval,
                                      eop->stringlen, error))
                         eop->type = EOT_NOTHING;
                     i = stdscan(NULL, &tokval); /* eat the comma */
@@ -560,7 +561,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
         if (mref) {             /* it's a memory reference */
             expr *e = value;
             int b, i, s;        /* basereg, indexreg, scale */
-            long o;             /* offset */
+            int32_t o;             /* offset */
 
             b = i = -1, o = s = 0;
             result->oprs[operand].hintbase = hints.base;
@@ -756,7 +757,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 
 static int is_comma_next(void)
 {
-    char *p;
+    int8_t *p;
     int i;
     struct tokenval tv;
 

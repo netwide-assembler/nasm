@@ -8,4 +8,4 @@
  * distributed in the NASM archive.
  */
 
-unsigned hash(const char *name);
+unsigned hash(const int8_t *name);

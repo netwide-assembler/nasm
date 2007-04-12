@@ -6,19 +6,19 @@
  * distributed in the NASM archive.
  */
 
-extern char lprefix[PREFIX_MAX];
-extern char lpostfix[PREFIX_MAX];
+extern int8_t lprefix[PREFIX_MAX];
+extern int8_t lpostfix[PREFIX_MAX];
 
-int lookup_label(char *label, long *segment, long *offset);
-int is_extern(char *label);
-void define_label(char *label, long segment, long offset, char *special,
+int lookup_label(int8_t *label, int32_t *segment, int32_t *offset);
+int is_extern(int8_t *label);
+void define_label(int8_t *label, int32_t segment, int32_t offset, int8_t *special,
                   int is_norm, int isextrn, struct ofmt *ofmt,
                   efunc error);
-void redefine_label(char *label, long segment, long offset, char *special,
+void redefine_label(int8_t *label, int32_t segment, int32_t offset, int8_t *special,
                     int is_norm, int isextrn, struct ofmt *ofmt,
                     efunc error);
-void define_common(char *label, long segment, long size, char *special,
+void define_common(int8_t *label, int32_t segment, int32_t size, int8_t *special,
                    struct ofmt *ofmt, efunc error);
-void declare_as_global(char *label, char *special, efunc error);
+void declare_as_global(int8_t *label, int8_t *special, efunc error);
 int init_labels(void);
 void cleanup_labels(void);

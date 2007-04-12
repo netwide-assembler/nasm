@@ -19,7 +19,7 @@ undef $tasm_count;
 open(OUTPUT,">macros.c") or die "unable to open macros.c\n";
     
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .
-" - don't edit it */\n\n#include <stddef.h>\n\nstatic const char *stdmac[] = {\n";
+" - don't edit it */\n\n#include <stddef.h>\n#include <inttypes.h>\n\nstatic const int8_t *stdmac[] = {\n";
     
 foreach $fname ( @ARGV ) {
     open(INPUT,$fname) or die "unable to open $fname\n";

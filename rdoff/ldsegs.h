@@ -4,12 +4,12 @@
  */
 
 #ifndef UI16
-#define UI16 unsigned short
+#define UI16 uint16_t
 #endif
 
 struct segconfig {
     UI16 typelow, typehi;       /* range of seg nos for which this is valid */
-    char *typedesc;             /* a description of the segment type */
+    int8_t *typedesc;             /* a description of the segment type */
     UI16 dowhat;                /* one of the SEG_xxxx values below */
     UI16 mergetype;             /* if SEG_MERGE what type segment do we merge with?
                                    0 -> same type of segment. This type is also

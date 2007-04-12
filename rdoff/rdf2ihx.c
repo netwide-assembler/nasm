@@ -12,13 +12,13 @@
 #include "nasmlib.h"
 #include "symtab.h"
 
-long origin = 0;
+int32_t origin = 0;
 int align = 16;
 
 /* This function writes a single n-byte data record to of.  Maximum value
    for n is 255. */
 static int write_data_record(FILE * of, int ofs, int nbytes,
-                             unsigned char *data)
+                             uint8_t *data)
 {
     int i, iofs;
     unsigned int checksum;
@@ -40,15 +40,15 @@ static int write_data_record(FILE * of, int ofs, int nbytes,
     return (ofs);
 }
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
     rdfmodule *m;
     int tmp;
     FILE *of;
-    char *padding;
-    unsigned char *segbin[2];
+    int8_t *padding;
+    uint8_t *segbin[2];
     int pad[2], segn, ofs, i;
-    long segaddr;
+    int32_t segaddr;
     unsigned int checksum;
     symtabEnt *s;
 

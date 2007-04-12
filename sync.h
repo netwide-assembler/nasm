@@ -10,7 +10,7 @@
 #define NASM_SYNC_H
 
 void init_sync(void);
-void add_sync(unsigned long position, unsigned long length);
-unsigned long next_sync(unsigned long position, unsigned long *length);
+void add_sync(uint32_t position, uint32_t length);
+uint32_t next_sync(uint32_t position, uint32_t *length);
 
 #endif

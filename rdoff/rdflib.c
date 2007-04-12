@@ -3,11 +3,11 @@
 /*
  * an rdoff library is simply a sequence of RDOFF object files, each
  * preceded by the name of the module, an ASCII string of up to 255
- * characters, terminated by a zero.
+ * int8_tacters, terminated by a zero.
  *
  * When a library is being created, special signature block is placed
  * in the beginning of the file. It is a string 'RDLIB' followed by a
- * version number, then long content size and a long time stamp.
+ * version number, then int32_t content size and a int32_t time stamp.
  * The module name of the signature block is '.sig'.
  *
  *
@@ -19,7 +19,7 @@
  *
  * All module names beginning with '.' are reserved for possible future
  * extensions. The linker ignores all such modules, assuming they have
- * the format of a six byte type & version identifier followed by long
+ * the format of a six byte type & version identifier followed by int32_t
  * content size, followed by data.
  */
 
@@ -39,7 +39,7 @@
  *   list modules
  */
 
-const char *usage =
+const int8_t *usage =
     "usage:\n"
     "  rdflib x libname [extra operands]\n\n"
     "  where x is one of:\n"
@@ -50,17 +50,17 @@ const char *usage =
     "    d - delete                (module-name)\n" "    t - list\n";
 
 /* Library signature */
-const char *rdl_signature = "RDLIB2", *sig_modname = ".sig";
+const int8_t *rdl_signature = "RDLIB2", *sig_modname = ".sig";
 
-char **_argv;
+int8_t **_argv;
 
 #define _ENDIANNESS 0           /* 0 for little, 1 for big */
 
-static void longtolocal(long *l)
+static void int32_ttolocal(int32_t *l)
 {
 #if _ENDIANNESS
-    unsigned char t;
-    unsigned char *p = (unsigned char *)l;
+    uint8_t t;
+    uint8_t *p = (uint8_t *)l;
 
     t = p[0];
     p[0] = p[3];
@@ -71,7 +71,7 @@ static void longtolocal(long *l)
 #endif
 }
 
-char copybytes(FILE * fp, FILE * fp2, int n)
+int8_t copybytes(FILE * fp, FILE * fp2, int n)
 {
     int i, t = 0;
 
@@ -88,14 +88,14 @@ char copybytes(FILE * fp, FILE * fp2, int n)
                 exit(1);
             }
     }
-    return (char)t;             /* return last char read */
+    return (int8_t)t;             /* return last int8_t read */
 }
 
-long copylong(FILE * fp, FILE * fp2)
+int32_t copyint32_t(FILE * fp, FILE * fp2)
 {
-    long l;
+    int32_t l;
     int i, t;
-    unsigned char *p = (unsigned char *)&l;
+    uint8_t *p = (uint8_t *)&l;
 
     for (i = 0; i < 4; i++) {   /* skip magic no */
         t = fgetc(fp);
@@ -111,18 +111,18 @@ long copylong(FILE * fp, FILE * fp2)
             }
         *p++ = t;
     }
-    longtolocal(&l);
+    int32_ttolocal(&l);
     return l;
 }
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
     FILE *fp, *fp2 = NULL, *fptmp;
-    char *p, buf[256], c;
+    int8_t *p, buf[256], c;
     int i;
-    long l;
+    int32_t l;
     time_t t;
-    char rdbuf[10];
+    int8_t rdbuf[10];
 
     _argv = argv;
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
         while (!feof(fp)) {
             /* read name */
             p = buf;
-            while ((*(p++) = (char)fgetc(fp)))
+            while ((*(p++) = (int8_t)fgetc(fp)))
                 if (feof(fp))
                     break;
 
@@ -240,14 +240,14 @@ int main(int argc, char **argv)
                 else
                     copybytes(fp, fp2, 6);
 
-                l = copylong(fp, fp2);
+                l = copyint32_t(fp, fp2);
 
                 if (argv[1][0] == 't')
                     printf("   %ld bytes content\n", l);
 
                 copybytes(fp, fp2, l);
             } else if ((c = copybytes(fp, fp2, 6)) >= '2') {    /* version 2 or above */
-                l = copylong(fp, fp2);
+                l = copyint32_t(fp, fp2);
 
                 if (argv[1][0] == 't')
                     printf("RDOFF%c   %ld bytes content\n", c, l);
@@ -259,9 +259,9 @@ int main(int argc, char **argv)
                  * version 1 object, so we don't have an object content
                  * length field.
                  */
-                copybytes(fp, fp2, copylong(fp, fp2));  /* header */
-                copybytes(fp, fp2, copylong(fp, fp2));  /* text */
-                copybytes(fp, fp2, copylong(fp, fp2));  /* data */
+                copybytes(fp, fp2, copyint32_t(fp, fp2));  /* header */
+                copybytes(fp, fp2, copyint32_t(fp, fp2));  /* text */
+                copybytes(fp, fp2, copyint32_t(fp, fp2));  /* data */
             }
 
             if (fp2)
@@ -319,7 +319,7 @@ int main(int argc, char **argv)
         while (!feof(fptmp)) {
             /* read name */
             p = buf;
-            while ((*(p++) = (char)fgetc(fptmp)))
+            while ((*(p++) = (int8_t)fgetc(fptmp)))
                 if (feof(fptmp))
                     break;
 
@@ -329,13 +329,13 @@ int main(int argc, char **argv)
             /* check against desired name */
             if (!strcmp(buf, argv[3])) {
                 fread(p = rdbuf, 1, sizeof(rdbuf), fptmp);
-                l = *(long *)(p + 6);
+                l = *(int32_t *)(p + 6);
                 fseek(fptmp, l, SEEK_CUR);
                 break;
             } else {
                 fwrite(buf, 1, strlen(buf) + 1, fp);    /* module name */
                 if ((c = copybytes(fptmp, fp, 6)) >= '2') {
-                    l = copylong(fptmp, fp);    /* version 2 or above */
+                    l = copyint32_t(fptmp, fp);    /* version 2 or above */
                     copybytes(fptmp, fp, l);    /* entire object */
                 }
             }

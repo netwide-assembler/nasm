@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -46,8 +47,8 @@ static int *opflags;
 static struct eval_hints *hint;
 
 extern int in_abs_seg;          /* ABSOLUTE segment flag */
-extern long abs_seg;            /* ABSOLUTE segment */
-extern long abs_offset;         /* ABSOLUTE segment offset */
+extern int32_t abs_seg;            /* ABSOLUTE segment */
+extern int32_t abs_offset;         /* ABSOLUTE segment offset */
 
 /*
  * Unimportant cleanup is done to avoid confusing people who are trying
@@ -69,7 +70,7 @@ static void begintemp(void)
     tempexpr_size = ntempexpr = 0;
 }
 
-static void addtotemp(long type, long value)
+static void addtotemp(int32_t type, int64_t value)
 {
     while (ntempexpr >= tempexpr_size) {
         tempexpr_size += TEMPEXPR_DELTA;
@@ -116,7 +117,7 @@ static expr *add_vectors(expr * p, expr * q)
             addtotemp(p->type, p->value);
             lasttype = p++->type;
         } else {                /* *p and *q have same type */
-            long sum = p->value + q->value;
+            int32_t sum = p->value + q->value;
             if (sum)
                 addtotemp(p->type, sum);
             lasttype = p->type;
@@ -150,7 +151,7 @@ static expr *add_vectors(expr * p, expr * q)
  * multiplied. This allows [eax*1+ebx] to hint EBX rather than EAX
  * as the base register.
  */
-static expr *scalar_mult(expr * vect, long scalar, int affect_hints)
+static expr *scalar_mult(expr * vect, int32_t scalar, int affect_hints)
 {
     expr *p = vect;
 
@@ -166,7 +167,7 @@ static expr *scalar_mult(expr * vect, long scalar, int affect_hints)
     return vect;
 }
 
-static expr *scalarvect(long scalar)
+static expr *scalarvect(int32_t scalar)
 {
     begintemp();
     addtotemp(EXPR_SIMPLE, scalar);
@@ -187,7 +188,7 @@ static expr *unknown_expr(void)
  */
 static expr *segment_part(expr * e)
 {
-    long seg;
+    int32_t seg;
 
     if (is_unknown(e))
         return unknown_expr();
@@ -208,7 +209,7 @@ static expr *segment_part(expr * e)
               " is already a segment base");
         return NULL;
     } else {
-        long base = outfmt->segbase(seg + 1);
+        int32_t base = outfmt->segbase(seg + 1);
 
         begintemp();
         addtotemp((base == NO_SEG ? EXPR_UNKNOWN : EXPR_SEGBASE + base),
@@ -279,7 +280,7 @@ static expr *rexp0(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((long)(reloc_value(e) || reloc_value(f)));
+            e = scalarvect((int32_t)(reloc_value(e) || reloc_value(f)));
     }
     return e;
 }
@@ -306,7 +307,7 @@ static expr *rexp1(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((long)(!reloc_value(e) ^ !reloc_value(f)));
+            e = scalarvect((int32_t)(!reloc_value(e) ^ !reloc_value(f)));
     }
     return e;
 }
@@ -331,7 +332,7 @@ static expr *rexp2(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((long)(reloc_value(e) && reloc_value(f)));
+            e = scalarvect((int32_t)(reloc_value(e) && reloc_value(f)));
     }
     return e;
 }
@@ -339,7 +340,7 @@ static expr *rexp2(int critical)
 static expr *rexp3(int critical)
 {
     expr *e, *f;
-    long v;
+    int32_t v;
 
     e = expr0(critical);
     if (!e)
@@ -498,7 +499,7 @@ static expr *expr3(int critical)
                 e = scalarvect(reloc_value(e) << reloc_value(f));
                 break;
             case TOKEN_SHR:
-                e = scalarvect(((unsigned long)reloc_value(e)) >>
+                e = scalarvect(((uint32_t)reloc_value(e)) >>
                                reloc_value(f));
                 break;
             }
@@ -573,29 +574,29 @@ static expr *expr5(int critical)
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((unsigned long)reloc_value(e)) /
-                               ((unsigned long)reloc_value(f)));
+                e = scalarvect(((uint32_t)reloc_value(e)) /
+                               ((uint32_t)reloc_value(f)));
             break;
         case '%':
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((unsigned long)reloc_value(e)) %
-                               ((unsigned long)reloc_value(f)));
+                e = scalarvect(((uint32_t)reloc_value(e)) %
+                               ((uint32_t)reloc_value(f)));
             break;
         case TOKEN_SDIV:
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((signed long)reloc_value(e)) /
-                               ((signed long)reloc_value(f)));
+                e = scalarvect(((int32_t)reloc_value(e)) /
+                               ((int32_t)reloc_value(f)));
             break;
         case TOKEN_SMOD:
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((signed long)reloc_value(e)) %
-                               ((signed long)reloc_value(f)));
+                e = scalarvect(((int32_t)reloc_value(e)) %
+                               ((int32_t)reloc_value(f)));
             break;
         }
     }
@@ -604,9 +605,9 @@ static expr *expr5(int critical)
 
 static expr *expr6(int critical)
 {
-    long type;
+    int32_t type;
     expr *e;
-    long label_seg, label_ofs;
+    int32_t label_seg, label_ofs;
 
     if (i == '-') {
         i = scan(scpriv, tokval);
@@ -761,7 +762,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     else
         i = tokval->t_type;
 
-    while (ntempexprs)          /* initialise temporary storage */
+    while (ntempexprs)          /* initialize temporary storage */
         nasm_free(tempexprs[--ntempexprs]);
 
     e = bexpr(critical);
@@ -780,7 +781,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
         if (is_just_unknown(f))
             g = unknown_expr();
         else {
-            long value;
+            int64_t value;
             begintemp();
             if (!is_reloc(f)) {
                 error(ERR_NONFATAL, "invalid right-hand operand to WRT");

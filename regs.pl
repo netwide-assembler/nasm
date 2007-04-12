@@ -10,7 +10,7 @@ sub process_line($) {
     my($line) = @_;
     my @v;
 
-    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([0-7])\s*$/ ) {
+    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([0-9]+)\s*$/ ) {
 	die "regs.dat:$nline: invalid input\n";
     }
     $reg    = $1;
@@ -63,11 +63,15 @@ if ( $fmt eq 'h' ) {
 	$attach = ''; $ch = ',';
     }
     print "    REG_ENUM_LIMIT\n";
-    print "};\n";
+    print "};\n\n";
+    foreach $reg ( sort(keys(%regs)) ) {
+	print "#define REG_NUM_\U${reg}     $regvals{$reg}\n";
+    }
+    print "\n";
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
     print "/* automatically generated from $file - do not edit */\n";
-    print "static const char *reg_names[] = "; $ch = '{';
+    print "static const int8_t *reg_names[] = "; $ch = '{';
     # This one has no dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	print "$ch\n    \"${reg}\"";
@@ -77,7 +81,7 @@ if ( $fmt eq 'h' ) {
 } elsif ( $fmt eq 'fc' ) {
     # Output regflags.c
     print "/* automatically generated from $file - do not edit */\n";
-    print "static const long reg_flags[] = {\n";
+    print "static const int32_t reg_flags[] = {\n";
     print "    0";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	print ",\n    ", $regs{$reg}; # Print the class of the register

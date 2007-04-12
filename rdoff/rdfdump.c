@@ -14,11 +14,11 @@
 
 FILE *infile;
 
-void print_header(long length, int rdf_version)
+void print_header(int32_t length, int rdf_version)
 {
-    char buf[129], t, l, s, flags;
-    unsigned char reclen;
-    long o, ll;
+    int8_t buf[129], t, l, s, flags;
+    uint8_t reclen;
+    int32_t o, ll;
     uint16 rs;
 
     while (length > 0) {
@@ -41,7 +41,7 @@ void print_header(long length, int rdf_version)
             printf("  %s: location (%04x:%08lx), length %d, "
                    "referred seg %04x\n",
                    t == 1 ? "relocation" : "seg relocation", (int)s,
-                   translatelong(o), (int)l, translateshort(rs));
+                   translateint32_t(o), (int)l, translateint16_t(rs));
             if (rdf_version >= 2 && reclen != 8)
                 printf("    warning: reclen != 8\n");
             if (rdf_version == 1)
@@ -73,7 +73,7 @@ void print_header(long length, int rdf_version)
                 printf(" proc");
             if (flags & SYM_DATA)
                 printf(" data");
-            printf(": segment %04x = %s\n", translateshort(rs), buf);
+            printf(": segment %04x = %s\n", translateint16_t(rs), buf);
             if (rdf_version == 1)
                 length -= ll + 3;
             if (rdf_version == 1 && t == 7)
@@ -100,7 +100,7 @@ void print_header(long length, int rdf_version)
                 printf(" proc");
             if (flags & SYM_DATA)
                 printf(" data");
-            printf(": (%04x:%08lx) = %s\n", (int)s, translatelong(o), buf);
+            printf(": (%04x:%08lx) = %s\n", (int)s, translateint32_t(o), buf);
             if (rdf_version == 1)
                 length -= ll + 6;
             break;
@@ -126,7 +126,7 @@ void print_header(long length, int rdf_version)
 
         case RDFREC_BSS:       /* BSS reservation */
             fread(&ll, 4, 1, infile);
-            printf("  bss reservation: %08lx bytes\n", translatelong(ll));
+            printf("  bss reservation: %08lx bytes\n", translateint32_t(ll));
             if (rdf_version == 1)
                 length -= 5;
             if (rdf_version > 1 && reclen != 4)
@@ -134,8 +134,8 @@ void print_header(long length, int rdf_version)
             break;
 
         case RDFREC_COMMON:{
-                unsigned short seg, align;
-                unsigned long size;
+                uint16_t seg, align;
+                uint32_t size;
 
                 fread(&seg, 2, 1, infile);
                 fread(&size, 4, 1, infile);
@@ -143,8 +143,8 @@ void print_header(long length, int rdf_version)
                 for (ll = 0; ll < reclen - 8; ll++)
                     fread(buf + ll, 1, 1, infile);
                 printf("  common: segment %04x = %s, %ld:%d\n",
-                       translateshort(seg), buf, translatelong(size),
-                       translateshort(align));
+                       translateint16_t(seg), buf, translateint32_t(size),
+                       translateint16_t(align));
                 break;
             }
 
@@ -162,19 +162,19 @@ void print_header(long length, int rdf_version)
     }
 }
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
-    char id[7];
-    long l;
+    int8_t id[7];
+    int32_t l;
     uint16 s;
     int verbose = 0;
-    long offset;
+    int32_t offset;
     int foundnullsegment = 0;
     int version;
-    long segmentcontentlength = 0;
+    int32_t segmentcontentlength = 0;
     int nsegments = 0;
-    long headerlength = 0;
-    long objectlength = 0;
+    int32_t headerlength = 0;
+    int32_t objectlength = 0;
 
     printf("RDOFF dump utility, version %s\n", PROGRAM_VERSION);
     printf("RDOFF2 revision %s\n", RDOFF2_REVISION);
@@ -217,18 +217,18 @@ int main(int argc, char **argv)
 
     if (version > 1) {
         fread(&l, 4, 1, infile);
-        objectlength = translatelong(l);
+        objectlength = translateint32_t(l);
         printf("Object content size: %ld bytes\n", objectlength);
     }
 
     fread(&l, 4, 1, infile);
-    headerlength = translatelong(l);
+    headerlength = translateint32_t(l);
     printf("Header (%ld bytes):\n", headerlength);
     print_header(headerlength, version);
 
     if (version == 1) {
         fread(&l, 4, 1, infile);
-        l = translatelong(l);
+        l = translateint32_t(l);
         printf("\nText segment length = %ld bytes\n", l);
         offset = 0;
         while (l--) {
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
             if (verbose) {
                 if (offset % 16 == 0)
                     printf("\n%08lx ", offset);
-                printf(" %02x", (int)(unsigned char)id[0]);
+                printf(" %02x", (int)(uint8_t)id[0]);
                 offset++;
             }
         }
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
             printf("\n\n");
 
         fread(&l, 4, 1, infile);
-        l = translatelong(l);
+        l = translateint32_t(l);
         printf("Data segment length = %ld bytes\n", l);
 
         if (verbose) {
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
                 fread(id, 1, 1, infile);
                 if (offset % 16 == 0)
                     printf("\n%08lx ", offset);
-                printf(" %02x", (int)(unsigned char)id[0]);
+                printf(" %02x", (int)(uint8_t)id[0]);
                 offset++;
             }
             printf("\n");
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
     } else {
         do {
             fread(&s, 2, 1, infile);
-            s = translateshort(s);
+            s = translateint16_t(s);
             if (!s) {
                 printf("\nNULL segment\n");
                 foundnullsegment = 1;
@@ -272,11 +272,11 @@ int main(int argc, char **argv)
             nsegments++;
 
             fread(&s, 2, 1, infile);
-            printf("  Number = %04X\n", (int)translateshort(s));
+            printf("  Number = %04X\n", (int)translateint16_t(s));
             fread(&s, 2, 1, infile);
-            printf("  Resrvd = %04X\n", (int)translateshort(s));
+            printf("  Resrvd = %04X\n", (int)translateint16_t(s));
             fread(&l, 4, 1, infile);
-            l = translatelong(l);
+            l = translateint32_t(l);
             printf("  Length = %ld bytes\n", l);
             segmentcontentlength += l;
 
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
                 if (verbose) {
                     if (offset % 16 == 0)
                         printf("\n%08lx ", offset);
-                    printf(" %02x", (int)(unsigned char)id[0]);
+                    printf(" %02x", (int)(uint8_t)id[0]);
                     offset++;
                 }
             }

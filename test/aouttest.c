@@ -7,10 +7,11 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
-extern int lrotate(long, int);
+extern int lrotate(int32_t, int);
 extern void greet(void);
-extern char asmstr[];
+extern int8_t asmstr[];
 extern void *selfptr;
 extern void *textptr;
 extern int integer, commvar;

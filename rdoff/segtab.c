@@ -5,7 +5,7 @@
 struct segtabnode {
     int localseg;
     int destseg;
-    long offset;
+    int32_t offset;
 
     struct segtabnode *left;
     struct segtabnode *right;
@@ -36,7 +36,7 @@ void init_seglocations(segtab * root)
 }
 
 void descend_tree_add(struct segtabnode **node,
-                      int localseg, int destseg, long offset)
+                      int localseg, int destseg, int32_t offset)
 {
     struct segtabnode *n;
 
@@ -83,14 +83,14 @@ void descend_tree_add(struct segtabnode **node,
     }
 }
 
-void add_seglocation(segtab * root, int localseg, int destseg, long offset)
+void add_seglocation(segtab * root, int localseg, int destseg, int32_t offset)
 {
     descend_tree_add((struct segtabnode **)root, localseg, destseg,
                      offset);
 }
 
 int get_seglocation(segtab * root, int localseg, int *destseg,
-                    long *offset)
+                    int32_t *offset)
 {
     struct segtabnode *n = (struct segtabnode *)*root;
 

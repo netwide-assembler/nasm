@@ -5,7 +5,7 @@
  * redistributable under the licence given in the file "Licence"
  * distributed in the NASM archive.
  *
- * Permission to use this file in your own projects is granted, as long
+ * Permission to use this file in your own projects is granted, as int32_t
  * as acknowledgement is given in an appropriate manner to its authors,
  * with instructions of how to obtain a copy via ftp.
  */
@@ -38,7 +38,7 @@
 
 /* ========================================================================
  * Code for memory buffers (for delayed writing of header until we know
- * how long it is).
+ * how int32_t it is).
  * ======================================================================== */
 
 memorybuffer *newmembuf()
@@ -57,7 +57,7 @@ memorybuffer *newmembuf()
 void membufwrite(memorybuffer * const b, void *data, int bytes)
 {
     uint16 w;
-    long l;
+    int32_t l;
 
     if (b->next) {              /* memory buffer full - use next buffer */
         membufwrite(b->next, data, bytes);
@@ -76,7 +76,7 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
 
     switch (bytes) {
     case -4:                   /* convert to little-endian */
-        l = *(long *)data;
+        l = *(int32_t *)data;
         b->buffer[b->length++] = l & 0xFF;
         l >>= 8;
         b->buffer[b->length++] = l & 0xFF;
@@ -95,9 +95,9 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
 
     default:
         while (bytes--) {
-            b->buffer[b->length++] = *(*(unsigned char **)&data);
+            b->buffer[b->length++] = *(*(uint8_t **)&data);
 
-            (*(unsigned char **)&data)++;
+            (*(uint8_t **)&data)++;
         }
         break;
     }
@@ -133,16 +133,16 @@ void freemembuf(memorybuffer * b)
    ========================================================================= */
 
 /* 
- * translatelong() and translateshort()
+ * translateint32_t() and translateint16_t()
  *
  * translate from little endian to local representation 
  */
-long translatelong(long in)
+int32_t translateint32_t(int32_t in)
 {
-    long r;
-    unsigned char *i;
+    int32_t r;
+    uint8_t *i;
 
-    i = (unsigned char *)&in;
+    i = (uint8_t *)&in;
     r = i[3];
     r = (r << 8) + i[2];
     r = (r << 8) + i[1];
@@ -151,26 +151,26 @@ long translatelong(long in)
     return r;
 }
 
-uint16 translateshort(uint16 in)
+uint16 translateint16_t(uint16 in)
 {
     uint16 r;
-    unsigned char *i;
+    uint8_t *i;
 
-    i = (unsigned char *)&in;
+    i = (uint8_t *)&in;
     r = (i[1] << 8) + i[0];
 
     return r;
 }
 
 /* Segment types */
-static char *knownsegtypes[8] = {
+static int8_t *knownsegtypes[8] = {
     "NULL", "text", "data", "object comment",
     "linked comment", "loader comment",
     "symbolic debug", "line number debug"
 };
 
 /* Get a textual string describing the segment type */
-char *translatesegmenttype(uint16 type)
+int8_t *translatesegmenttype(uint16 type)
 {
     if (type < 8)
         return knownsegtypes[type];
@@ -188,10 +188,10 @@ char *translatesegmenttype(uint16 type)
 }
 
 /* This signature is written to the start of RDOFF files */
-const char *RDOFFId = RDOFF2_SIGNATURE;
+const int8_t *RDOFFId = RDOFF2_SIGNATURE;
 
 /* Error messages. Must correspond to the codes defined in rdoff.h */
-const char *rdf_errors[11] = {
+const int8_t *rdf_errors[11] = {
     /* 0 */ "no error occurred",
     /* 1 */ "could not open file",
     /* 2 */ "invalid file format",
@@ -211,7 +211,7 @@ int rdf_errno = 0;
    The library functions
    ======================================================================== */
 
-int rdfopen(rdffile * f, const char *name)
+int rdfopen(rdffile * f, const int8_t *name)
 {
     FILE *fp;
 
@@ -222,18 +222,18 @@ int rdfopen(rdffile * f, const char *name)
     return rdfopenhere(f, fp, NULL, name);
 }
 
-int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
+int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const int8_t *name)
 {
-    char buf[8];
-    long initpos;
-    long l;
+    int8_t buf[8];
+    int32_t initpos;
+    int32_t l;
     uint16 s;
 
-    if (translatelong(0x01020304) != 0x01020304) {
+    if (translateint32_t(0x01020304) != 0x01020304) {
         /* fix this to be portable! */
         fputs("*** this program requires a little endian machine\n",
               stderr);
-        fprintf(stderr, "01020304h = %08lxh\n", translatelong(0x01020304));
+        fprintf(stderr, "01020304h = %08lxh\n", translateint32_t(0x01020304));
         exit(3);
     }
 
@@ -257,7 +257,7 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
     }
 
     f->header_ofs = ftell(f->fp);
-    f->eof_offset = f->header_ofs + translatelong(l) - 4;
+    f->eof_offset = f->header_ofs + translateint32_t(l) - 4;
 
     if (fseek(f->fp, f->header_len, SEEK_CUR)) {
         fclose(f->fp);
@@ -321,7 +321,7 @@ int rdfclose(rdffile * f)
 /*
  * Print the message for last error (from rdf_errno)
  */
-void rdfperror(const char *app, const char *name)
+void rdfperror(const int8_t *app, const int8_t *name)
 {
     fprintf(stderr, "%s:%s: %s\n", app, name, rdf_errors[rdf_errno]);
     if (rdf_errno == RDF_ERR_OPEN || rdf_errno == RDF_ERR_READ) {
@@ -347,7 +347,7 @@ int rdffindsegment(rdffile * f, int segno)
  */
 int rdfloadseg(rdffile * f, int segment, void *buffer)
 {
-    long fpos, slen;
+    int32_t fpos, slen;
 
     switch (segment) {
     case RDOFF_HEADER:
@@ -551,7 +551,7 @@ int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r)
     return 0;
 }
 
-int rdfaddsegment(rdf_headerbuf * h, long seglength)
+int rdfaddsegment(rdf_headerbuf * h, int32_t seglength)
 {
     h->nsegments++;
     h->seglength += seglength;
@@ -560,14 +560,14 @@ int rdfaddsegment(rdf_headerbuf * h, long seglength)
 
 int rdfwriteheader(FILE * fp, rdf_headerbuf * h)
 {
-    long l, l2;
+    int32_t l, l2;
 
     fwrite(RDOFFId, 1, strlen(RDOFFId), fp);
 
     l = membuflength(h->buf);
     l2 = l + 14 + 10 * h->nsegments + h->seglength;
-    l = translatelong(l);
-    l2 = translatelong(l2);
+    l = translateint32_t(l);
+    l2 = translateint32_t(l2);
     fwrite(&l2, 4, 1, fp);      /* object length */
     fwrite(&l, 4, 1, fp);       /* header length */
 

@@ -66,7 +66,7 @@ struct ofmt;
 /*
  * An error reporting function should look like this.
  */
-typedef void (*efunc) (int severity, const char *fmt, ...);
+typedef void (*efunc) (int severity, const int8_t *fmt, ...);
 
 /*
  * These are the error severity codes which get passed as the first
@@ -108,7 +108,7 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
 /*
  * A label-lookup function should look like this.
  */
-typedef int (*lfunc) (char *label, long *segment, long *offset);
+typedef int (*lfunc) (int8_t *label, int32_t *segment, int32_t *offset);
 
 /*
  * And a label-definition function like this. The boolean parameter
@@ -116,8 +116,8 @@ typedef int (*lfunc) (char *label, long *segment, long *offset);
  * should affect the local-label system), or something odder like
  * an EQU or a segment-base symbol, which shouldn't.
  */
-typedef void (*ldfunc) (char *label, long segment, long offset,
-                        char *special, int is_norm, int isextrn,
+typedef void (*ldfunc) (int8_t *label, int32_t segment, int32_t offset,
+                        int8_t *special, int is_norm, int isextrn,
                         struct ofmt * ofmt, efunc error);
 
 /*
@@ -125,12 +125,12 @@ typedef void (*ldfunc) (char *label, long segment, long offset,
  */
 typedef struct {
     /*
-     * Called to initialise the listing file generator. Before this
+     * Called to initialize the listing file generator. Before this
      * is called, the other routines will silently do nothing when
-     * called. The `char *' parameter is the file name to write the
+     * called. The `int8_t *' parameter is the file name to write the
      * listing to.
      */
-    void (*init) (char *, efunc);
+    void (*init) (int8_t *, efunc);
 
     /*
      * Called to clear stuff up and close the listing file.
@@ -148,7 +148,7 @@ typedef struct {
      * work with when doing things like uplevel(LIST_TIMES) or
      * uplevel(LIST_INCBIN).
      */
-    void (*output) (long, const void *, unsigned long);
+    void (*output) (int32_t, const void *, uint32_t);
 
     /*
      * Called to send a text line to the listing generator. The
@@ -156,7 +156,7 @@ typedef struct {
      * whether the line came directly from an input file or is the
      * result of a multi-line macro expansion.
      */
-    void (*line) (int, char *);
+    void (*line) (int, int8_t *);
 
     /*
      * Called to change one of the various levelled mechanisms in
@@ -190,8 +190,8 @@ typedef struct {
  */
 struct tokenval {
     int t_type;
-    long t_integer, t_inttwo;
-    char *t_charptr;
+    int64_t t_integer, t_inttwo;
+    int8_t *t_charptr;
 };
 typedef int (*scanner) (void *private_data, struct tokenval * tv);
 
@@ -206,7 +206,7 @@ enum {                          /* token types, other than chars */
     TOKEN_ID = 256, TOKEN_NUM, TOKEN_REG, TOKEN_INSN,   /* major token types */
     TOKEN_ERRNUM,               /* numeric constant with error in */
     TOKEN_HERE, TOKEN_BASE,     /* $ and $$ */
-    TOKEN_SPECIAL,              /* BYTE, WORD, DWORD, FAR, NEAR, etc */
+    TOKEN_SPECIAL,              /* BYTE, WORD, DWORD, QWORD, FAR, NEAR, etc */
     TOKEN_PREFIX,               /* A32, O16, LOCK, REPNZ, TIMES, etc */
     TOKEN_SHL, TOKEN_SHR,       /* << and >> */
     TOKEN_SDIV, TOKEN_SMOD,     /* // and %% */
@@ -217,8 +217,8 @@ enum {                          /* token types, other than chars */
 };
 
 typedef struct {
-    long segment;
-    long offset;
+    int32_t segment;
+    int32_t offset;
     int known;
 } loc_t;
 
@@ -235,8 +235,8 @@ typedef struct {
  * `value' field of zero is insignificant.
  */
 typedef struct {
-    long type;                  /* a register, or EXPR_xxx */
-    long value;                 /* must be >= 32 bits */
+    int32_t type;                  /* a register, or EXPR_xxx */
+    int64_t value;                 /* must be >= 32 bits */
 } expr;
 
 /*
@@ -245,7 +245,7 @@ typedef struct {
  * `operand' structure.
  */
 struct eval_hints {
-    int base;
+    int64_t base;
     int type;
 };
 
@@ -300,14 +300,14 @@ typedef struct {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, efunc, evalfunc, ListGen *);
+    void (*reset) (int8_t *, int, efunc, evalfunc, ListGen *);
 
     /*
      * Called to fetch a line of preprocessed source. The line
      * returned has been malloc'ed, and so should be freed after
      * use.
      */
-    char *(*getline) (void);
+    int8_t *(*getline) (void);
 
     /*
      * Called at the end of a pass.
@@ -371,7 +371,7 @@ enum {
 #define BITS8     0x00000001L
 #define BITS16    0x00000002L
 #define BITS32    0x00000004L
-#define BITS64    0x00000008L   /* FPU only */
+#define BITS64    0x00000008L   /* x64 and FPU only */
 #define BITS80    0x00000010L   /* FPU only */
 #define FAR       0x00000020L   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
@@ -395,8 +395,10 @@ enum {
 #define REG8      0x00201001L
 #define REG16     0x00201002L
 #define REG32     0x00201004L
-#define MMXREG    0x00201008L   /* MMX registers */
-#define XMMREG    0x00201010L   /* XMM Katmai reg */
+#define REG64     0x00201008L   /* x64 registers */
+#define REGRIP    0x0020100CL   /* RIP register */
+#define MMXREG    0x00201010L   /* MMX registers */
+#define XMMREG    0x00201011L   /* XMM Katmai reg */
 #define FPUREG    0x01000000L   /* floating point stack registers */
 #define FPU0      0x01000800L   /* FPU stack register zero */
 
@@ -406,13 +408,17 @@ enum {
 #define REG_AL    0x00211001L   /* REG_ACCUM | BITSxx */
 #define REG_AX    0x00211002L   /* ditto */
 #define REG_EAX   0x00211004L   /* and again */
-#define REG_COUNT 0x00221000L   /* counter: CL, CX or ECX */
+#define REG_RAX   0x00211008L   /* and again */
+#define REG_COUNT 0x00221000L   /* counter: CL, CX, ECX or RCX */
 #define REG_CL    0x00221001L   /* REG_COUNT | BITSxx */
 #define REG_CX    0x00221002L   /* ditto */
 #define REG_ECX   0x00221004L   /* another one */
+#define REG_RCX   0x00221008L   /* another one */
 #define REG_DL    0x00241001L
 #define REG_DX    0x00241002L
 #define REG_EDX   0x00241004L
+#define REG_RDX   0x00241008L
+#define REG_RIP   0x0027100CL   /* RIP relative addressing */
 #define REG_SREG  0x00081002L   /* any segment register */
 #define REG_CS    0x01081002L   /* CS */
 #define REG_DESS  0x02081002L   /* DS, ES, SS (non-CS 86 registers) */
@@ -422,6 +428,7 @@ enum {
 #define REG_CREG  0x08101004L   /* CRn */
 #define REG_DREG  0x10101004L   /* DRn */
 #define REG_TREG  0x20101004L   /* TRn */
+#define REG_C8REG 0x40101004L   /* CR8 */
 
 /* special type of EA */
 #define MEM_OFFS  0x00604000L   /* simple [address] offset */
@@ -448,8 +455,8 @@ enum {                          /* condition code names */
  */
 enum {                          /* instruction prefixes */
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
-    P_A16 = PREFIX_ENUM_START, P_A32, P_LOCK, P_O16, P_O32, P_REP, P_REPE,
-    P_REPNE, P_REPNZ, P_REPZ, P_TIMES
+    P_A16 = PREFIX_ENUM_START, P_A32, P_LOCK, P_O16, P_O32,
+    P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES
 };
 
 enum {                          /* extended operand types */
@@ -463,19 +470,19 @@ enum {                          /* special EA flags */
 };
 
 enum {                          /* values for `hinttype' */
-    EAH_NOHINT = 0,             /* no hint at all - our discretion */
+    EAH_NOHINT   = 0,           /* no hint at all - our discretion */
     EAH_MAKEBASE = 1,           /* try to make given reg the base */
-    EAH_NOTBASE = 2             /* try _not_ to make reg the base */
+    EAH_NOTBASE  = 2            /* try _not_ to make reg the base */
 };
 
 typedef struct {                /* operand to an instruction */
-    long type;                  /* type of operand */
-    int addr_size;              /* 0 means default; 16; 32 */
+    int32_t type;               /* type of operand */
+    int addr_size;              /* 0 means default; 16; 32; 64 */
     int basereg, indexreg, scale;       /* registers and scale involved */
     int hintbase, hinttype;     /* hint as to real base register */
-    long segment;               /* immediate segment, if needed */
-    long offset;                /* any immediate number */
-    long wrt;                   /* segment base it's relative to */
+    int32_t segment;            /* immediate segment, if needed */
+    int64_t offset;             /* any immediate number */
+    int32_t wrt;                /* segment base it's relative to */
     int eaflags;                /* special EA flags */
     int opflags;                /* see OPFLAG_* defines below */
 } operand;
@@ -485,18 +492,18 @@ typedef struct {                /* operand to an instruction */
 
 typedef struct extop {          /* extended operand */
     struct extop *next;         /* linked list */
-    long type;                  /* defined above */
-    char *stringval;            /* if it's a string, then here it is */
+    int32_t type;               /* defined above */
+    int8_t *stringval;          /* if it's a string, then here it is */
     int stringlen;              /* ... and here's how long it is */
-    long segment;               /* if it's a number/address, then... */
-    long offset;                /* ... it's given here ... */
-    long wrt;                   /* ... and here */
+    int32_t segment;            /* if it's a number/address, then... */
+    int64_t offset;             /* ... it's given here ... */
+    int32_t wrt;                /* ... and here */
 } extop;
 
 #define MAXPREFIX 4
 
 typedef struct {                /* an instruction itself */
-    char *label;                /* the label defined, or NULL */
+    int8_t *label;              /* the label defined, or NULL */
     int prefixes[MAXPREFIX];    /* instruction prefixes, if any */
     int nprefix;                /* number of entries in above */
     int opcode;                 /* the opcode - not just the string */
@@ -506,8 +513,9 @@ typedef struct {                /* an instruction itself */
     operand oprs[3];            /* the operands, defined as above */
     extop *eops;                /* extended operands */
     int eops_float;             /* true if DD and floating */
-    long times;                 /* repeat count (TIMES prefix) */
+    int32_t times;              /* repeat count (TIMES prefix) */
     int forw_ref;               /* is there a forward reference? */
+    uint8_t rex;                /* Special REX Prefix */
 } insn;
 
 enum geninfo { GI_SWITCH };
@@ -523,19 +531,20 @@ struct ofmt {
      * This is a short (one-liner) description of the type of
      * output generated by the driver.
      */
-    const char *fullname;
+    const int8_t *fullname;
 
     /*
      * This is a single keyword used to select the driver.
      */
-    const char *shortname;
+    const int8_t *shortname;
+    
 
     /*
      * this is reserved for out module specific help.
-     * It is set to NULL in all the out modules but is not implemented
+     * It is set to NULL in all the out modules and is not implemented
      * in the main program
      */
-    const char *helpstring;
+    const int8_t *helpstring;
 
     /*
      * this is a pointer to the first element of the debug information
@@ -552,13 +561,13 @@ struct ofmt {
     struct dfmt *current_dfmt;
 
     /*
-     * This, if non-NULL, is a NULL-terminated list of `char *'s
+     * This, if non-NULL, is a NULL-terminated list of `int8_t *'s
      * pointing to extra standard macros supplied by the object
      * format (e.g. a sensible initial default value of __SECT__,
      * and user-level equivalents for any format-specific
      * directives).
      */
-    const char **stdmac;
+    const int8_t **stdmac;
 
     /*
      * This procedure is called at the start of an output session.
@@ -576,7 +585,7 @@ struct ofmt {
      * and the second parameter gives the value.  This function returns
      * 1 if recognized, 0 if unrecognized
      */
-    int (*setinfo) (enum geninfo type, char **string);
+    int (*setinfo) (enum geninfo type, int8_t **string);
 
     /*
      * This procedure is called by assemble() to write actual
@@ -587,8 +596,8 @@ struct ofmt {
      * The `type' argument specifies the type of output data, and
      * usually the size as well: its contents are described below.
      */
-    void (*output) (long segto, const void *data, unsigned long type,
-                    long segment, long wrt);
+    void (*output) (int32_t segto, const void *data, uint32_t type,
+                    int32_t segment, int32_t wrt);
 
     /*
      * This procedure is called once for every symbol defined in
@@ -618,8 +627,8 @@ struct ofmt {
      * been an EXTERN, a COMMON or a GLOBAL. The distinction should
      * be obvious to the output format from the other parameters.
      */
-    void (*symdef) (char *name, long segment, long offset, int is_global,
-                    char *special);
+    void (*symdef) (int8_t *name, int32_t segment, int32_t offset, int is_global,
+                    int8_t *special);
 
     /*
      * This procedure is called when the source code requests a
@@ -636,7 +645,7 @@ struct ofmt {
      * the segment, by setting `*bits' to 16 or 32. Or, if it
      * doesn't wish to define a default, it can leave `bits' alone.
      */
-    long (*section) (char *name, int pass, int *bits);
+    int32_t (*section) (int8_t *name, int pass, int *bits);
 
     /*
      * This procedure is called to modify the segment base values
@@ -651,7 +660,7 @@ struct ofmt {
      * responsible for throwing an error condition if that occurs
      * in pass two or in a critical expression.
      */
-    long (*segbase) (long segment);
+    int32_t (*segbase) (int32_t segment);
 
     /*
      * This procedure is called to allow the output driver to
@@ -667,7 +676,7 @@ struct ofmt {
      * should also return non-zero if it correctly processes the
      * directive.
      */
-    int (*directive) (char *directive, char *value, int pass);
+    int (*directive) (int8_t *directive, int8_t *value, int pass);
 
     /*
      * This procedure is called before anything else - even before
@@ -676,7 +685,7 @@ struct ofmt {
      * should return its preferred name for the output file in
      * `outname', if outname[0] is not '\0', and do nothing to
      * `outname' otherwise. Since it is called before the driver is
-     * properly initialised, it has to be passed its error handler
+     * properly initialized, it has to be passed its error handler
      * separately.
      *
      * This procedure may also take its own copy of the input file
@@ -686,7 +695,7 @@ struct ofmt {
      * The parameter `outname' points to an area of storage
      * guaranteed to be at least FILENAME_MAX in size.
      */
-    void (*filename) (char *inname, char *outname, efunc error);
+    void (*filename) (int8_t *inname, int8_t *outname, efunc error);
 
     /*
      * This procedure is called after assembly finishes, to allow
@@ -713,9 +722,9 @@ struct ofmt {
  * Also OUT_RESERVE denotes reservation of N bytes of BSS space,
  * and the contents of the "data" parameter is irrelevant.
  *
- * The "data" parameter for the output function points to a "long",
+ * The "data" parameter for the output function points to a "int32_t",
  * containing the address in question, unless the type is
- * OUT_RAWDATA, in which case it points to an "unsigned char"
+ * OUT_RAWDATA, in which case it points to an "uint8_t"
  * array.
  */
 #define OUT_RAWDATA 0x00000000UL
@@ -739,12 +748,12 @@ struct dfmt {
      * This is a short (one-liner) description of the type of
      * output generated by the driver.
      */
-    const char *fullname;
+    const int8_t *fullname;
 
     /*
      * This is a single keyword used to select the driver.
      */
-    const char *shortname;
+    const int8_t *shortname;
 
     /*
      * init - called initially to set up local pointer to object format, 
@@ -757,7 +766,7 @@ struct dfmt {
      * linenum - called any time there is output with a change of
      * line number or file.
      */
-    void (*linenum) (const char *filename, long linenumber, long segto);
+    void (*linenum) (const int8_t *filename, int32_t linenumber, int32_t segto);
 
     /*
      * debug_deflabel - called whenever a label is defined. Parameters
@@ -765,8 +774,8 @@ struct dfmt {
      * would be called before the output format version.
      */
 
-    void (*debug_deflabel) (char *name, long segment, long offset,
-                            int is_global, char *special);
+    void (*debug_deflabel) (int8_t *name, int32_t segment, int32_t offset,
+                            int is_global, int8_t *special);
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
      * is encountered. 'directive' contains the first parameter to the
@@ -775,14 +784,14 @@ struct dfmt {
      * function with 'directive' equal to "VAR" and 'params' equal to 
      * "_somevar:int".
      */
-    void (*debug_directive) (const char *directive, const char *params);
+    void (*debug_directive) (const int8_t *directive, const int8_t *params);
 
     /*
      * typevalue - called whenever the assembler wishes to register a type
      * for the last defined label.  This routine MUST detect if a type was
      * already registered and not re-register it.
      */
-    void (*debug_typevalue) (long type);
+    void (*debug_typevalue) (int32_t type);
 
     /*
      * debug_output - called whenever output is required
@@ -847,5 +856,7 @@ extern int tasm_compatible_mode;
 
 extern int pass0;               /* this is globally known */
 extern int optimizing;
+extern int globalbits;          /* this is globally known */
+extern int maxbits;             /* this is globally known */
 
 #endif

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -50,16 +51,16 @@ struct section {
     /* nasm internal data */
     struct section *next;
     struct SAA *data;
-    long index;
+    int32_t index;
     struct reloc *relocs;
     int align;
 
     /* data that goes into the file */
-    char sectname[16];          /* what this section is called */
-    char segname[16];           /* segment this section will be in */
-    unsigned long size;         /* in-memory and -file size  */
-    unsigned long nreloc;       /* relocation entry count */
-    unsigned long flags;        /* type and attributes (masked) */
+    int8_t sectname[16];          /* what this section is called */
+    int8_t segname[16];           /* segment this section will be in */
+    uint32_t size;         /* in-memory and -file size  */
+    uint32_t nreloc;       /* relocation entry count */
+    uint32_t flags;        /* type and attributes (masked) */
 };
 
 #define SECTION_TYPE	0x000000ff      /* section type mask */
@@ -77,10 +78,10 @@ struct section {
 
 
 static struct sectmap {
-    const char *nasmsect;
-    const char *segname;
-    const char *sectname;
-    const long flags;
+    const int8_t *nasmsect;
+    const int8_t *segname;
+    const int8_t *sectname;
+    const int32_t flags;
 } sectmap[] = { {
 ".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS}, {
 ".data", "__DATA", "__data", S_REGULAR}, {
@@ -93,12 +94,12 @@ struct reloc {
     struct reloc *next;
 
     /* data that goes into the file */
-    long addr;                  /* op's offset in section */
+    int32_t addr;                  /* op's offset in section */
     unsigned int snum:24,       /* contains symbol index if
 				** ext otherwise in-file
 				** section number */
 	pcrel:1,                /* relative relocation */
-	length:2,               /* 0=byte, 1=word, 2=long */
+	length:2,               /* 0=byte, 1=word, 2=int32_t */
 	ext:1,                  /* external symbol referenced */
 	type:4;                 /* reloc type, 0 for us */
 };
@@ -110,17 +111,17 @@ struct reloc {
 struct symbol {
     /* nasm internal data */
     struct symbol *next;	/* next symbol in the list */
-    char *name;			/* name of this symbol */
-    long initial_snum;	       	/* symbol number used above in
+    int8_t *name;			/* name of this symbol */
+    int32_t initial_snum;	       	/* symbol number used above in
 				   reloc */
-    long snum;			/* true snum for reloc */
+    int32_t snum;			/* true snum for reloc */
 
     /* data that goes into the file */
-    long strx;                  /* string table index */
-    unsigned char type;         /* symbol type */
-    unsigned char sect;         /* NO_SECT or section number */
-    short desc;                 /* for stab debugging, 0 for us */
-    unsigned long value;        /* offset of symbol in section */
+    int32_t strx;                  /* string table index */
+    uint8_t type;         /* symbol type */
+    uint8_t sect;         /* NO_SECT or section number */
+    int16_t desc;                 /* for stab debugging, 0 for us */
+    uint32_t value;        /* offset of symbol in section */
 };
 
 /* symbol type bits */
@@ -141,7 +142,7 @@ struct symbol {
 
 static struct section *sects, **sectstail;
 static struct symbol *syms, **symstail;
-static unsigned long nsyms;
+static uint32_t nsyms;
 
 /* These variables are set by macho_layout_symbols() to organize
    the symbol table and string table in order the dynamic linker
@@ -157,18 +158,18 @@ static unsigned long nsyms;
      strings for external symbols
      strings for local symbols
  */
-static unsigned long ilocalsym = 0;
-static unsigned long iextdefsym = 0;
-static unsigned long iundefsym = 0;
-static unsigned long nlocalsym;
-static unsigned long nextdefsym;
-static unsigned long nundefsym;
+static uint32_t ilocalsym = 0;
+static uint32_t iextdefsym = 0;
+static uint32_t iundefsym = 0;
+static uint32_t nlocalsym;
+static uint32_t nextdefsym;
+static uint32_t nundefsym;
 static struct symbol **extdefsyms = NULL;
 static struct symbol **undefsyms = NULL;
 
 static struct RAA *extsyms;
 static struct SAA *strs;
-static unsigned long strslen;
+static uint32_t strslen;
 
 static FILE *machofp;
 static efunc error;
@@ -178,12 +179,12 @@ extern struct ofmt of_macho;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
-unsigned long head_ncmds = 0;
-unsigned long head_sizeofcmds = 0;
-unsigned long seg_filesize = 0;
-unsigned long seg_vmsize = 0;
-unsigned long seg_nsects = 0;
-unsigned long rel_padcnt = 0;
+uint32_t head_ncmds = 0;
+uint32_t head_sizeofcmds = 0;
+uint32_t seg_filesize = 0;
+uint32_t seg_vmsize = 0;
+uint32_t seg_nsects = 0;
+uint32_t rel_padcnt = 0;
 
 
 #define xstrncpy(xdst, xsrc)						\
@@ -194,20 +195,20 @@ unsigned long rel_padcnt = 0;
 #define align(x, y)							\
     (((x) + (y) - 1) & ~((y) - 1))      /* align x to multiple of y */
 
-#define alignlong(x)							\
-    align(x, sizeof(long))      /* align x to long boundary */
+#define alignint32_t(x)							\
+    align(x, sizeof(int32_t))      /* align x to int32_t boundary */
 
 static void debug_reloc (struct reloc *);
 static void debug_section_relocs (struct section *) __attribute__ ((unused));
 
-static int exact_log2 (unsigned long align) {
+static int exact_log2 (uint32_t align) {
     if (align != (align & -align)) {
 	return -1;
     } else {
 #ifdef __GNUC__
 	return (align ? __builtin_ctzl (align) : 0);
 #else
-	unsigned long result = 0;
+	uint32_t result = 0;
 
 	while (align >>= 1) {
 	    ++result;
@@ -218,8 +219,8 @@ static int exact_log2 (unsigned long align) {
     }
 }
 
-static struct section *get_section_by_name(const char *segname,
-                                           const char *sectname)
+static struct section *get_section_by_name(const int8_t *segname,
+                                           const int8_t *sectname)
 {
     struct section *s;
 
@@ -230,7 +231,7 @@ static struct section *get_section_by_name(const char *segname,
     return s;
 }
 
-static struct section *get_section_by_index(const long index)
+static struct section *get_section_by_index(const int32_t index)
 {
     struct section *s;
 
@@ -241,8 +242,8 @@ static struct section *get_section_by_index(const long index)
     return s;
 }
 
-static long get_section_index_by_name(const char *segname,
-                                      const char *sectname)
+static int32_t get_section_index_by_name(const int8_t *segname,
+                                      const int8_t *sectname)
 {
     struct section *s;
 
@@ -253,7 +254,7 @@ static long get_section_index_by_name(const char *segname,
     return -1;
 }
 
-static char *get_section_name_by_index(const long index)
+static int8_t *get_section_name_by_index(const int32_t index)
 {
     struct section *s;
 
@@ -264,10 +265,10 @@ static char *get_section_name_by_index(const long index)
     return NULL;
 }
 
-static unsigned char get_section_fileindex_by_index(const long index)
+static uint8_t get_section_fileindex_by_index(const int32_t index)
 {
     struct section *s;
-    unsigned char i = 1;
+    uint8_t i = 1;
 
     for (s = sects; s != NULL && i < MAX_SECT; s = s->next, ++i)
         if (index == s->index)
@@ -283,7 +284,7 @@ static unsigned char get_section_fileindex_by_index(const long index)
 static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
                        evalfunc eval)
 {
-    char zero = 0;
+    int8_t zero = 0;
 
     machofp = fp;
     error = errfunc;
@@ -305,27 +306,27 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
     strs = saa_init(1L);
 
     /* string table starts with a zero byte - don't ask why */
-    saa_wbytes(strs, &zero, sizeof(char));
+    saa_wbytes(strs, &zero, sizeof(int8_t));
     strslen = 1;
 }
 
-static int macho_setinfo(enum geninfo type, char **val)
+static int macho_setinfo(enum geninfo type, int8_t **val)
 {
     return 0;
 }
 
 static void sect_write(struct section *sect,
-                       const unsigned char *data, unsigned long len)
+                       const uint8_t *data, uint32_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->size += len;
 }
 
-static void add_reloc(struct section *sect, long section,
+static void add_reloc(struct section *sect, int32_t section,
                       int pcrel, int bytes)
 {
     struct reloc *r;
-    long fi;
+    int32_t fi;
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a
@@ -368,13 +369,13 @@ static void add_reloc(struct section *sect, long section,
     ++sect->nreloc;
 }
 
-static void macho_output(long secto, const void *data, unsigned long type,
-                         long section, long wrt)
+static void macho_output(int32_t secto, const void *data, uint32_t type,
+                         int32_t section, int32_t wrt)
 {
     struct section *s, *sbss;
-    long realbytes = type & OUT_SIZMASK;
-    long addr;
-    unsigned char mydata[4], *p;
+    int32_t realbytes = type & OUT_SIZMASK;
+    int32_t addr;
+    uint8_t mydata[4], *p;
 
     type &= OUT_TYPMASK;
 
@@ -407,7 +408,7 @@ static void macho_output(long secto, const void *data, unsigned long type,
     sbss = get_section_by_name("__DATA", "__bss");
 
     if (s == sbss && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialise memory in the"
+        error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
 
         switch (type) {
@@ -430,7 +431,7 @@ static void macho_output(long secto, const void *data, unsigned long type,
     switch (type) {
     case OUT_RESERVE:
         if (s != sbss) {
-            error(ERR_WARNING, "uninitialised space declared in"
+            error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   get_section_name_by_index(secto));
 
@@ -448,7 +449,7 @@ static void macho_output(long secto, const void *data, unsigned long type,
         break;
 
     case OUT_ADDRESS:
-        addr = *(long *)data;
+        addr = *(int32_t *)data;
 
         if (section != NO_SEG) {
             if (section % 2) {
@@ -479,7 +480,7 @@ static void macho_output(long secto, const void *data, unsigned long type,
             add_reloc(s, section, 1, 2);
 
         p = mydata;
-        WRITESHORT(p, *(long *)data - (realbytes + s->size));
+        WRITESHORT(p, *(int32_t *)data - (realbytes + s->size));
         sect_write(s, mydata, 2L);
         break;
 
@@ -494,7 +495,7 @@ static void macho_output(long secto, const void *data, unsigned long type,
             add_reloc(s, section, 1, 4);
 
         p = mydata;
-        WRITELONG(p, *(long *)data - (realbytes + s->size));
+        WRITELONG(p, *(int32_t *)data - (realbytes + s->size));
         sect_write(s, mydata, 4L);
         break;
 
@@ -504,10 +505,10 @@ static void macho_output(long secto, const void *data, unsigned long type,
     }
 }
 
-static long macho_section(char *name, int pass, int *bits)
+static int32_t macho_section(int8_t *name, int pass, int *bits)
 {
-    long index, originalIndex;
-    char *sectionAttributes;
+    int32_t index, originalIndex;
+    int8_t *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
 
@@ -518,13 +519,13 @@ static long macho_section(char *name, int pass, int *bits)
         sectionAttributes = NULL;
     } else {
         sectionAttributes = name;
-        name = strsep(&sectionAttributes, " \t");
+        name = strtok((char*)&sectionAttributes, " \t");
     }
 
     for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
         /* make lookup into section name translation table */
         if (!strcmp(name, sm->nasmsect)) {
-            char *currentAttribute;
+            int8_t *currentAttribute;
 
             /* try to find section with that name */
             originalIndex = index = get_section_index_by_name(sm->segname,
@@ -553,13 +554,13 @@ static long macho_section(char *name, int pass, int *bits)
             }
 
             while ((NULL != sectionAttributes)
-                   && (currentAttribute = strsep(&sectionAttributes, " \t"))) {
+                   && (currentAttribute = strtok((char*)&sectionAttributes, " \t"))) {
                 if (0 != *currentAttribute) {
                     if (0 == strncasecmp("align=", currentAttribute, 6)) {
-                        char *end;
+                        int8_t *end;
                         int newAlignment, value;
 
-                        value = strtoul(currentAttribute + 6, &end, 0);
+                        value = strtoul(currentAttribute + 6, (char**)&end, 0);
                         newAlignment = exact_log2(value);
 
                         if (0 != *end) {
@@ -611,8 +612,8 @@ static long macho_section(char *name, int pass, int *bits)
     return NO_SEG;
 }
 
-static void macho_symdef(char *name, long section, long offset,
-                         int is_global, char *special)
+static void macho_symdef(int8_t *name, int32_t section, int32_t offset,
+                         int is_global, int8_t *special)
 {
     struct symbol *sym;
 
@@ -683,22 +684,22 @@ static void macho_symdef(char *name, long section, long offset,
     ++nsyms;
 }
 
-static long macho_segbase(long section)
+static int32_t macho_segbase(int32_t section)
 {
     return section;
 }
 
-static int macho_directive(char *directive, char *value, int pass)
+static int macho_directive(int8_t *directive, int8_t *value, int pass)
 {
     return 0;
 }
 
-static void macho_filename(char *inname, char *outname, efunc error)
+static void macho_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *macho_stdmac[] = {
+static const int8_t *macho_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
@@ -723,14 +724,14 @@ static int layout_compare (const struct symbol **s1,
    numsyms is the total number of symbols we have. strtabsize is the
    number entries in the string table.  */
 
-static void macho_layout_symbols (unsigned long *numsyms,
-				  unsigned long *strtabsize)
+static void macho_layout_symbols (uint32_t *numsyms,
+				  uint32_t *strtabsize)
 {
     struct symbol *sym, **symp;
-    unsigned long i,j;
+    uint32_t i,j;
 
     *numsyms = 0;
-    *strtabsize = sizeof (char);
+    *strtabsize = sizeof (int8_t);
 
     symp = &syms;
 
@@ -754,7 +755,7 @@ static void macho_layout_symbols (unsigned long *numsyms,
 	       to check for it here instead of just
 	       adding the symbol to the string table.  */
 	    sym->strx = *strtabsize;
-	    saa_wbytes (strs, sym->name, (long)(strlen(sym->name) + 1));
+	    saa_wbytes (strs, sym->name, (int32_t)(strlen(sym->name) + 1));
 	    *strtabsize += strlen(sym->name) + 1;
 	}
 	symp = &(sym->next);
@@ -780,7 +781,7 @@ static void macho_layout_symbols (unsigned long *numsyms,
 
 	if((sym->type & N_EXT) == 0) {
 	    sym->strx = *strtabsize;
-	    saa_wbytes (strs, sym->name, (long)(strlen (sym->name) + 1));
+	    saa_wbytes (strs, sym->name, (int32_t)(strlen (sym->name) + 1));
 	    *strtabsize += strlen(sym->name) + 1;
 	}
 	else {
@@ -841,72 +842,72 @@ static void macho_calculate_sizes (void)
 
 static void macho_write_header (void)
 {
-    fwritelong(MH_MAGIC, machofp);	/* magic */
-    fwritelong(CPU_TYPE_I386, machofp);	/* CPU type */
-    fwritelong(CPU_SUBTYPE_I386_ALL, machofp);	/* CPU subtype */
-    fwritelong(MH_OBJECT, machofp);	/* Mach-O file type */
-    fwritelong(head_ncmds, machofp);	/* number of load commands */
-    fwritelong(head_sizeofcmds, machofp);	/* size of load commands */
-    fwritelong(0, machofp);	/* no flags */
+    fwriteint32_t(MH_MAGIC, machofp);	/* magic */
+    fwriteint32_t(CPU_TYPE_I386, machofp);	/* CPU type */
+    fwriteint32_t(CPU_SUBTYPE_I386_ALL, machofp);	/* CPU subtype */
+    fwriteint32_t(MH_OBJECT, machofp);	/* Mach-O file type */
+    fwriteint32_t(head_ncmds, machofp);	/* number of load commands */
+    fwriteint32_t(head_sizeofcmds, machofp);	/* size of load commands */
+    fwriteint32_t(0, machofp);	/* no flags */
 }
 
 /* Write out the segment load command at offset.  */
 
-static unsigned long macho_write_segment (unsigned long offset)
+static uint32_t macho_write_segment (uint32_t offset)
 {
-    unsigned long s_addr = 0;
-    unsigned long rel_base = alignlong (offset + seg_filesize);
-    unsigned long s_reloff = 0;
+    uint32_t s_addr = 0;
+    uint32_t rel_base = alignint32_t (offset + seg_filesize);
+    uint32_t s_reloff = 0;
     struct section *s;
 
-    fwritelong(LC_SEGMENT, machofp);        /* cmd == LC_SEGMENT */
+    fwriteint32_t(LC_SEGMENT, machofp);        /* cmd == LC_SEGMENT */
 
     /* size of load command including section load commands */
-    fwritelong(MACHO_SEGCMD_SIZE + seg_nsects *
+    fwriteint32_t(MACHO_SEGCMD_SIZE + seg_nsects *
 	       MACHO_SECTCMD_SIZE, machofp);
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
     fwrite("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16, 1, machofp);
-    fwritelong(0, machofp); /* in-memory offset */
-    fwritelong(seg_vmsize, machofp);        /* in-memory size */
-    fwritelong(offset, machofp);    /* in-file offset to data */
-    fwritelong(seg_filesize, machofp);      /* in-file size */
-    fwritelong(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
-    fwritelong(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
-    fwritelong(seg_nsects, machofp);        /* number of sections */
-    fwritelong(0, machofp); /* no flags */
+    fwriteint32_t(0, machofp); /* in-memory offset */
+    fwriteint32_t(seg_vmsize, machofp);        /* in-memory size */
+    fwriteint32_t(offset, machofp);    /* in-file offset to data */
+    fwriteint32_t(seg_filesize, machofp);      /* in-file size */
+    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
+    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
+    fwriteint32_t(seg_nsects, machofp);        /* number of sections */
+    fwriteint32_t(0, machofp); /* no flags */
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
 	fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
 	fwrite(s->segname, sizeof(s->segname), 1, machofp);
-	fwritelong(s_addr, machofp);
-	fwritelong(s->size, machofp);
+	fwriteint32_t(s_addr, machofp);
+	fwriteint32_t(s->size, machofp);
 
 	/* dummy data for zerofill sections or proper values */
 	if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
-	    fwritelong(offset, machofp);
+	    fwriteint32_t(offset, machofp);
 	    /* Write out section alignment, as a power of two.
 	       e.g. 32-bit word alignment would be 2 (2^^2 = 4).  */
-	    fwritelong(s->align, machofp);
+	    fwriteint32_t(s->align, machofp);
 	    /* To be compatible with cctools as we emit
 	       a zero reloff if we have no relocations.  */
-	    fwritelong(s->nreloc ? rel_base + s_reloff : 0, machofp);
-	    fwritelong(s->nreloc, machofp);
+	    fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, machofp);
+	    fwriteint32_t(s->nreloc, machofp);
 
 	    offset += s->size;
 	    s_reloff += s->nreloc * MACHO_RELINFO_SIZE;
 	} else {
-	    fwritelong(0, machofp);
-	    fwritelong(0, machofp);
-	    fwritelong(0, machofp);
-	    fwritelong(0, machofp);
+	    fwriteint32_t(0, machofp);
+	    fwriteint32_t(0, machofp);
+	    fwriteint32_t(0, machofp);
+	    fwriteint32_t(0, machofp);
 	}
 
-	fwritelong(s->flags, machofp);      /* flags */
-	fwritelong(0, machofp);     /* reserved */
-	fwritelong(0, machofp);     /* reserved */
+	fwriteint32_t(s->flags, machofp);      /* flags */
+	fwriteint32_t(0, machofp);     /* reserved */
+	fwriteint32_t(0, machofp);     /* reserved */
 
 	s_addr += s->size;
     }
@@ -923,16 +924,16 @@ static unsigned long macho_write_segment (unsigned long offset)
 static void macho_write_relocs (struct reloc *r)
 {
     while (r) {
-	unsigned long word2;
+	uint32_t word2;
 
-	fwritelong(r->addr, machofp); /* reloc offset */
+	fwriteint32_t(r->addr, machofp); /* reloc offset */
 
 	word2 = r->snum;
 	word2 |= r->pcrel << 24;
 	word2 |= r->length << 25;
 	word2 |= r->ext << 27;
 	word2 |= r->type << 28;
-	fwritelong(word2, machofp); /* reloc data */
+	fwriteint32_t(word2, machofp); /* reloc data */
 
 	r = r->next;
     }
@@ -943,9 +944,9 @@ static void macho_write_section (void)
 {
     struct section *s, *s2;
     struct reloc *r;
-    char *rel_paddata = "\0\0\0";
-    unsigned char fi, *p, *q, blk[4];
-    long l;
+    int8_t *rel_paddata = "\0\0\0";
+    uint8_t fi, *p, *q, blk[4];
+    int32_t l;
 
     for (s = sects; s != NULL; s = s->next) {
 	if ((s->flags & SECTION_TYPE) == S_ZEROFILL)
@@ -959,17 +960,17 @@ static void macho_write_section (void)
 	 * for more information. */
 	saa_rewind(s->data);
 	for (r = s->relocs; r != NULL; r = r->next) {
-	    saa_fread(s->data, r->addr, blk, (long)r->length << 1);
+	    saa_fread(s->data, r->addr, blk, (int32_t)r->length << 1);
 	    p = q = blk;
 	    l = *p++;
 
 	    /* get offset based on relocation type */
 	    if (r->length > 0) {
-		l += ((long)*p++) << 8;
+		l += ((int32_t)*p++) << 8;
 
 		if (r->length == 2) {
-		    l += ((long)*p++) << 16;
-		    l += ((long)*p++) << 24;
+		    l += ((int32_t)*p++) << 16;
+		    l += ((int32_t)*p++) << 24;
 		}
 	    }
 
@@ -993,14 +994,14 @@ static void macho_write_section (void)
 	    else
 		*q++ = l & 0xFF;
 
-	    saa_fwrite(s->data, r->addr, blk, (long)r->length << 1);
+	    saa_fwrite(s->data, r->addr, blk, (int32_t)r->length << 1);
 	}
 
 	/* dump the section data to file */
 	saa_fpwrite(s->data, machofp);
     }
 
-    /* pad last section up to reloc entries on long boundary */
+    /* pad last section up to reloc entries on int32_t boundary */
     fwrite(rel_paddata, rel_padcnt, 1, machofp);
 
     /* emit relocation entries */
@@ -1014,17 +1015,17 @@ static void macho_write_symtab (void)
 {
     struct symbol *sym;
     struct section *s;
-    long fi;
-    long i;
+    int32_t fi;
+    int32_t i;
 
     /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
 
     for (sym = syms; sym != NULL; sym = sym->next) {
 	if ((sym->type & N_EXT) == 0) {
-	    fwritelong(sym->strx, machofp);		/* string table entry number */
+	    fwriteint32_t(sym->strx, machofp);		/* string table entry number */
 	    fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
 	    fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	    fwriteshort(sym->desc, machofp);	/* description */
+	    fwriteint16_t(sym->desc, machofp);	/* description */
 
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
@@ -1034,16 +1035,16 @@ static void macho_write_symtab (void)
 		    sym->value += s->size;
 	    }
 
-	    fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+	    fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
 	}
     }
 
     for (i = 0; i < nextdefsym; i++) {
 	sym = extdefsyms[i];
-	fwritelong(sym->strx, machofp);
+	fwriteint32_t(sym->strx, machofp);
 	fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
 	fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	fwriteshort(sym->desc, machofp);	/* description */
+	fwriteint16_t(sym->desc, machofp);	/* description */
 
 	/* Fix up the symbol value now that we know the final section
 	   sizes.  */
@@ -1053,15 +1054,15 @@ static void macho_write_symtab (void)
 		sym->value += s->size;
 	}
 
-	fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+	fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
     }
 
      for (i = 0; i < nundefsym; i++) {
 	 sym = undefsyms[i];
-	 fwritelong(sym->strx, machofp);
+	 fwriteint32_t(sym->strx, machofp);
 	 fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
 	 fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	 fwriteshort(sym->desc, machofp);	/* description */
+	 fwriteint16_t(sym->desc, machofp);	/* description */
 
 	 /* Fix up the symbol value now that we know the final section
 	    sizes.  */
@@ -1071,7 +1072,7 @@ static void macho_write_symtab (void)
 		 sym->value += s->size;
 	 }
 
-	 fwritelong(sym->value, machofp);	/* value (i.e. offset) */
+	 fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
      }
 }
 
@@ -1099,76 +1100,76 @@ static void macho_fixup_relocs (struct reloc *r)
 
 static void macho_write (void)
 {
-    unsigned long offset = 0;
+    uint32_t offset = 0;
 
     /* mach-o object file structure:
     **
     ** mach header
-    **  ulong magic
+    **  uint32_t magic
     **  int   cpu type
     **  int   cpu subtype
-    **  ulong mach file type
-    **  ulong number of load commands
-    **  ulong size of all load commands
+    **  uint32_t mach file type
+    **  uint32_t number of load commands
+    **  uint32_t size of all load commands
     **   (includes section struct size of segment command)
-    **  ulong flags
+    **  uint32_t flags
     **
     ** segment command
-    **  ulong command type == LC_SEGMENT
-    **  ulong size of load command
+    **  uint32_t command type == LC_SEGMENT
+    **  uint32_t size of load command
     **   (including section load commands)
-    **  char[16] segment name
-    **  ulong in-memory offset
-    **  ulong in-memory size
-    **  ulong in-file offset to data area
-    **  ulong in-file size
+    **  int8_t[16] segment name
+    **  uint32_t in-memory offset
+    **  uint32_t in-memory size
+    **  uint32_t in-file offset to data area
+    **  uint32_t in-file size
     **   (in-memory size excluding zerofill sections)
     **  int   maximum vm protection
     **  int   initial vm protection
-    **  ulong number of sections
-    **  ulong flags
+    **  uint32_t number of sections
+    **  uint32_t flags
     **
     ** section commands
-    **   char[16] section name
-    **   char[16] segment name
-    **   ulong in-memory offset
-    **   ulong in-memory size
-    **   ulong in-file offset
-    **   ulong alignment
+    **   int8_t[16] section name
+    **   int8_t[16] segment name
+    **   uint32_t in-memory offset
+    **   uint32_t in-memory size
+    **   uint32_t in-file offset
+    **   uint32_t alignment
     **    (irrelevant in MH_OBJECT)
-    **   ulong in-file offset of relocation entires
-    **   ulong number of relocations
-    **   ulong flags
-    **   ulong reserved
-    **   ulong reserved
+    **   uint32_t in-file offset of relocation entires
+    **   uint32_t number of relocations
+    **   uint32_t flags
+    **   uint32_t reserved
+    **   uint32_t reserved
     **
     ** symbol table command
-    **  ulong command type == LC_SYMTAB
-    **  ulong size of load command
-    **  ulong symbol table offset
-    **  ulong number of symbol table entries
-    **  ulong string table offset
-    **  ulong string table size
+    **  uint32_t command type == LC_SYMTAB
+    **  uint32_t size of load command
+    **  uint32_t symbol table offset
+    **  uint32_t number of symbol table entries
+    **  uint32_t string table offset
+    **  uint32_t string table size
     **
     ** raw section data
     **
-    ** padding to long boundary
+    ** padding to int32_t boundary
     **
     ** relocation data (struct reloc)
-    ** long offset
+    ** int32_t offset
     **  uint data (symbolnum, pcrel, length, extern, type)
     **
     ** symbol table data (struct nlist)
-    **  long  string table entry number
-    **  uchar type
+    **  int32_t  string table entry number
+    **  uint8_t type
     **   (extern, absolute, defined in section)
-    **  uchar section
+    **  uint8_t section
     **   (0 for global symbols, section number of definition (>= 1, <=
     **   254) for local symbols, size of variable for common symbols
     **   [type == extern])
-    **  short description
+    **  int16_t description
     **   (for stab debugging format)
-    **  ulong value (i.e. file offset) of symbol or stab offset
+    **  uint32_t value (i.e. file offset) of symbol or stab offset
     **
     ** string table data
     **  list of null-terminated strings
@@ -1187,15 +1188,15 @@ static void macho_write (void)
 
     if (nsyms > 0) {
         /* write out symbol command */
-        fwritelong(LC_SYMTAB, machofp); /* cmd == LC_SYMTAB */
-        fwritelong(MACHO_SYMCMD_SIZE, machofp); /* size of load command */
-        fwritelong(offset, machofp);    /* symbol table offset */
-        fwritelong(nsyms, machofp);     /* number of symbol
+        fwriteint32_t(LC_SYMTAB, machofp); /* cmd == LC_SYMTAB */
+        fwriteint32_t(MACHO_SYMCMD_SIZE, machofp); /* size of load command */
+        fwriteint32_t(offset, machofp);    /* symbol table offset */
+        fwriteint32_t(nsyms, machofp);     /* number of symbol
                                          ** table entries */
 
         offset += nsyms * MACHO_NLIST_SIZE;
-        fwritelong(offset, machofp);    /* string table offset */
-        fwritelong(strslen, machofp);   /* string table size */
+        fwriteint32_t(offset, machofp);    /* string table offset */
+        fwriteint32_t(strslen, machofp);   /* string table size */
     }
 
     /* emit section data */

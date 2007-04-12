@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -21,17 +22,17 @@
 struct Piece {
     struct Piece *next;
     int type;                   /* 0 = absolute, 1 = seg, 2 = sym */
-    long offset;                /* relative offset */
+    int32_t offset;                /* relative offset */
     int number;                 /* symbol/segment number (4=bss) */
-    long bytes;                 /* size of reloc or of absolute data */
+    int32_t bytes;                 /* size of reloc or of absolute data */
     int relative;               /* TRUE or FALSE */
 };
 
 struct Symbol {
-    long strpos;                /* string table position of name */
+    int32_t strpos;                /* string table position of name */
     int flags;                  /* symbol flags */
     int segment;                /* 4=bss at this point */
-    long value;                 /* address, or COMMON variable size */
+    int32_t value;                 /* address, or COMMON variable size */
 };
 
 /*
@@ -51,24 +52,24 @@ struct Symbol {
 
 struct Section {
     struct SAA *data;
-    unsigned long datalen, size, len;
-    long index;
+    uint32_t datalen, size, len;
+    int32_t index;
     struct Piece *head, *last, **tail;
 };
 
-static char as86_module[FILENAME_MAX];
+static int8_t as86_module[FILENAME_MAX];
 
 static struct Section stext, sdata;
-static unsigned long bsslen;
-static long bssindex;
+static uint32_t bsslen;
+static int32_t bssindex;
 
 static struct SAA *syms;
-static unsigned long nsyms;
+static uint32_t nsyms;
 
 static struct RAA *bsym;
 
 static struct SAA *strs;
-static unsigned long strslen;
+static uint32_t strslen;
 
 static int as86_reloc_size;
 
@@ -77,9 +78,9 @@ static efunc error;
 
 static void as86_write(void);
 static void as86_write_section(struct Section *, int);
-static int as86_add_string(char *name);
-static void as86_sect_write(struct Section *, const unsigned char *,
-                            unsigned long);
+static int as86_add_string(int8_t *name);
+static void as86_sect_write(struct Section *, const uint8_t *,
+                            uint32_t);
 
 static void as86_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -100,7 +101,7 @@ static void as86_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     stext.index = seg_alloc();
     sdata.index = seg_alloc();
     bssindex = seg_alloc();
-    syms = saa_init((long)sizeof(struct Symbol));
+    syms = saa_init((int32_t)sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     strs = saa_init(1L);
@@ -134,7 +135,7 @@ static void as86_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static long as86_section_names(char *name, int pass, int *bits)
+static int32_t as86_section_names(int8_t *name, int pass, int *bits)
 {
     /*
      * Default is 16 bits.
@@ -155,19 +156,19 @@ static long as86_section_names(char *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static int as86_add_string(char *name)
+static int as86_add_string(int8_t *name)
 {
     int pos = strslen;
     int length = strlen(name);
 
-    saa_wbytes(strs, name, (long)(length + 1));
+    saa_wbytes(strs, name, (int32_t)(length + 1));
     strslen += 1 + length;
 
     return pos;
 }
 
-static void as86_deflabel(char *name, long segment, long offset,
-                          int is_global, char *special)
+static void as86_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                          int is_global, int8_t *special)
 {
     struct Symbol *sym;
 
@@ -216,8 +217,8 @@ static void as86_deflabel(char *name, long segment, long offset,
     nsyms++;
 }
 
-static void as86_add_piece(struct Section *sect, int type, long offset,
-                           long segment, long bytes, int relative)
+static void as86_add_piece(struct Section *sect, int type, int32_t offset,
+                           int32_t segment, int32_t bytes, int relative)
 {
     struct Piece *p;
 
@@ -247,13 +248,13 @@ static void as86_add_piece(struct Section *sect, int type, long offset,
         p->number = raa_read(bsym, segment), p->type = 2;
 }
 
-static void as86_out(long segto, const void *data, unsigned long type,
-                     long segment, long wrt)
+static void as86_out(int32_t segto, const void *data, uint32_t type,
+                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    long realbytes = type & OUT_SIZMASK;
-    long offset;
-    unsigned char mydata[4], *p;
+    int32_t realbytes = type & OUT_SIZMASK;
+    int32_t offset;
+    uint8_t mydata[4], *p;
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
@@ -285,7 +286,7 @@ static void as86_out(long segto, const void *data, unsigned long type,
     }
 
     if (!s && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialise memory in the"
+        error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         if (type == OUT_REL2ADR)
             realbytes = 2;
@@ -297,7 +298,7 @@ static void as86_out(long segto, const void *data, unsigned long type,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            error(ERR_WARNING, "uninitialised space declared in"
+            error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   (segto == stext.index ? "code" : "data"));
             as86_sect_write(s, NULL, realbytes);
@@ -315,12 +316,12 @@ static void as86_out(long segto, const void *data, unsigned long type,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(long *)data;
+                offset = *(int32_t *)data;
                 as86_add_piece(s, 1, offset, segment, realbytes, 0);
             }
         } else {
             p = mydata;
-            WRITELONG(p, *(long *)data);
+            WRITELONG(p, *(int32_t *)data);
             as86_sect_write(s, data, realbytes);
             as86_add_piece(s, 0, 0L, 0L, realbytes, 0);
         }
@@ -332,7 +333,7 @@ static void as86_out(long segto, const void *data, unsigned long type,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(long *)data;
+                offset = *(int32_t *)data;
                 as86_add_piece(s, 1, offset - realbytes + 2, segment, 2L,
                                1);
             }
@@ -345,7 +346,7 @@ static void as86_out(long segto, const void *data, unsigned long type,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(long *)data;
+                offset = *(int32_t *)data;
                 as86_add_piece(s, 1, offset - realbytes + 4, segment, 4L,
                                1);
             }
@@ -355,8 +356,8 @@ static void as86_out(long segto, const void *data, unsigned long type,
 
 static void as86_write(void)
 {
-    unsigned long i;
-    long symlen, seglen, segsize;
+    uint32_t i;
+    int32_t symlen, seglen, segsize;
 
     /*
      * First, go through the symbol records working out how big
@@ -385,11 +386,11 @@ static void as86_write(void)
      * descriptor word at the same time.
      */
     seglen = segsize = 0;
-    if ((unsigned long)stext.len > 65535L)
+    if ((uint32_t)stext.len > 65535L)
         segsize |= 0x03000000L, seglen += 4;
     else
         segsize |= 0x02000000L, seglen += 2;
-    if ((unsigned long)sdata.len > 65535L)
+    if ((uint32_t)sdata.len > 65535L)
         segsize |= 0xC0000000L, seglen += 4;
     else
         segsize |= 0x80000000L, seglen += 2;
@@ -397,23 +398,23 @@ static void as86_write(void)
     /*
      * Emit the as86 header.
      */
-    fwritelong(0x000186A3L, as86fp);
+    fwriteint32_t(0x000186A3L, as86fp);
     fputc(0x2A, as86fp);
-    fwritelong(27 + symlen + seglen + strslen, as86fp); /* header length */
-    fwritelong(stext.len + sdata.len + bsslen, as86fp);
-    fwriteshort(strslen, as86fp);
-    fwriteshort(0, as86fp);     /* class = revision = 0 */
-    fwritelong(0x55555555L, as86fp);    /* segment max sizes: always this */
-    fwritelong(segsize, as86fp);        /* segment size descriptors */
+    fwriteint32_t(27 + symlen + seglen + strslen, as86fp); /* header length */
+    fwriteint32_t(stext.len + sdata.len + bsslen, as86fp);
+    fwriteint16_t(strslen, as86fp);
+    fwriteint16_t(0, as86fp);     /* class = revision = 0 */
+    fwriteint32_t(0x55555555L, as86fp);    /* segment max sizes: always this */
+    fwriteint32_t(segsize, as86fp);        /* segment size descriptors */
     if (segsize & 0x01000000L)
-        fwritelong(stext.len, as86fp);
+        fwriteint32_t(stext.len, as86fp);
     else
-        fwriteshort(stext.len, as86fp);
+        fwriteint16_t(stext.len, as86fp);
     if (segsize & 0x40000000L)
-        fwritelong(sdata.len + bsslen, as86fp);
+        fwriteint32_t(sdata.len + bsslen, as86fp);
     else
-        fwriteshort(sdata.len + bsslen, as86fp);
-    fwriteshort(nsyms, as86fp);
+        fwriteint16_t(sdata.len + bsslen, as86fp);
+    fwriteint16_t(nsyms, as86fp);
 
     /*
      * Write the symbol table.
@@ -421,8 +422,8 @@ static void as86_write(void)
     saa_rewind(syms);
     for (i = 0; i < nsyms; i++) {
         struct Symbol *sym = saa_rstruct(syms);
-        fwriteshort(sym->strpos, as86fp);
-        fwriteshort(sym->flags, as86fp);
+        fwriteint16_t(sym->strpos, as86fp);
+        fwriteint16_t(sym->flags, as86fp);
         switch (sym->flags & (3 << 14)) {
         case 0 << 14:
             break;
@@ -430,10 +431,10 @@ static void as86_write(void)
             fputc(sym->value, as86fp);
             break;
         case 2 << 14:
-            fwriteshort(sym->value, as86fp);
+            fwriteint16_t(sym->value, as86fp);
             break;
         case 3 << 14:
-            fwritelong(sym->value, as86fp);
+            fwriteint32_t(sym->value, as86fp);
             break;
         }
     }
@@ -454,10 +455,10 @@ static void as86_write(void)
      */
     if (bsslen > 65535L) {
         fputc(0x13, as86fp);
-        fwritelong(bsslen, as86fp);
+        fwriteint32_t(bsslen, as86fp);
     } else if (bsslen > 255) {
         fputc(0x12, as86fp);
-        fwriteshort(bsslen, as86fp);
+        fwriteint16_t(bsslen, as86fp);
     } else if (bsslen) {
         fputc(0x11, as86fp);
         fputc(bsslen, as86fp);
@@ -488,8 +489,8 @@ static void as86_set_rsize(int size)
 static void as86_write_section(struct Section *sect, int index)
 {
     struct Piece *p;
-    unsigned long s;
-    long length;
+    uint32_t s;
+    int32_t length;
 
     fputc(0x20 + index, as86fp);        /* select the right section */
 
@@ -504,8 +505,8 @@ static void as86_write_section(struct Section *sect, int index)
              */
             length = p->bytes;
             do {
-                char buf[64];
-                long tmplen = (length > 64 ? 64 : length);
+                int8_t buf[64];
+                int32_t tmplen = (length > 64 ? 64 : length);
                 fputc(0x40 | (tmplen & 0x3F), as86fp);
                 saa_rnbytes(sect->data, buf, tmplen);
                 fwrite(buf, 1, tmplen, as86fp);
@@ -521,9 +522,9 @@ static void as86_write_section(struct Section *sect, int index)
             as86_set_rsize(p->bytes);
             fputc(0x80 | (p->relative ? 0x20 : 0) | p->number, as86fp);
             if (as86_reloc_size == 2)
-                fwriteshort(p->offset, as86fp);
+                fwriteint16_t(p->offset, as86fp);
             else
-                fwritelong(p->offset, as86fp);
+                fwriteint32_t(p->offset, as86fp);
             break;
         case 2:
             /*
@@ -543,7 +544,7 @@ static void as86_write_section(struct Section *sect, int index)
                   (p->relative ? 0x20 : 0) |
                   (p->number > 255 ? 0x04 : 0) | s, as86fp);
             if (p->number > 255)
-                fwriteshort(p->number, as86fp);
+                fwriteint16_t(p->number, as86fp);
             else
                 fputc(p->number, as86fp);
             switch ((int)s) {
@@ -553,10 +554,10 @@ static void as86_write_section(struct Section *sect, int index)
                 fputc(p->offset, as86fp);
                 break;
             case 2:
-                fwriteshort(p->offset, as86fp);
+                fwriteint16_t(p->offset, as86fp);
                 break;
             case 3:
-                fwritelong(p->offset, as86fp);
+                fwriteint32_t(p->offset, as86fp);
                 break;
             }
             break;
@@ -564,25 +565,25 @@ static void as86_write_section(struct Section *sect, int index)
 }
 
 static void as86_sect_write(struct Section *sect,
-                            const unsigned char *data, unsigned long len)
+                            const uint8_t *data, uint32_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->datalen += len;
 }
 
-static long as86_segbase(long segment)
+static int32_t as86_segbase(int32_t segment)
 {
     return segment;
 }
 
-static int as86_directive(char *directive, char *value, int pass)
+static int as86_directive(int8_t *directive, int8_t *value, int pass)
 {
     return 0;
 }
 
-static void as86_filename(char *inname, char *outname, efunc error)
+static void as86_filename(int8_t *inname, int8_t *outname, efunc error)
 {
-    char *p;
+    int8_t *p;
 
     if ((p = strrchr(inname, '.')) != NULL) {
         strncpy(as86_module, inname, p - inname);
@@ -593,18 +594,18 @@ static void as86_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *as86_stdmac[] = {
+static const int8_t *as86_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL
 };
 
-static int as86_set_info(enum geninfo type, char **val)
+static int as86_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }
-void as86_linenumber(char *name, long segment, long offset, int is_main,
+void as86_linenumber(int8_t *name, int32_t segment, int32_t offset, int is_main,
                      int lineno)
 {
 }

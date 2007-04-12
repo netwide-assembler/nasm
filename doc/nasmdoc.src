@@ -6,7 +6,7 @@
 \M{title}{NASM - The Netwide Assembler}
 \M{year}{2003}
 \M{author}{The NASM Development Team}
-\M{license}{All rights reserved. This document is redistributable under the licence given in the file "COPYING" distributed in the NASM archive.}
+\M{license}{All rights reserved. This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
 \M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
@@ -188,7 +188,7 @@ Object File Format
 \IA{sib}{sib byte}
 \IR{sib byte} SIB byte
 \IR{solaris x86} Solaris x86
-\IA{standard section names}{standardised section names}
+\IA{standard section names}{standardized section names}
 \IR{symbols, exporting from dlls} symbols, exporting from DLLs
 \IR{symbols, importing from dlls} symbols, importing from DLLs
 \IR{test subdirectory} \c{test} subdirectory
@@ -207,6 +207,7 @@ Object File Format
 \IR{visual c++} Visual C++
 \IR{www page} WWW page
 \IR{win32} Win32
+\IR{win32} Win64
 \IR{windows} Windows
 \IR{windows 95} Windows 95
 \IR{windows nt} Windows NT
@@ -221,14 +222,14 @@ Object File Format
 
 \H{whatsnasm} What Is NASM?
 
-The Netwide Assembler, NASM, is an 80x86 assembler designed for
+The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed for
 portability and modularity. It supports a range of object file
-formats, including Linux and \c{NetBSD/FreeBSD} \c{a.out}, \c{ELF}, 
-\c{COFF}, \c{Mach-O}, Microsoft 16-bit \c{OBJ} and \c{Win32}. It will also output
-plain binary files. Its syntax is designed to be simple and easy to
-understand, similar to Intel's but less complex. It supports \c{Pentium},
-\c{P6}, \c{MMX}, \c{3DNow!}, \c{SSE} and \c{SSE2} opcodes, and has
-macro capability.
+formats, including Linux and \c{*BSD} \c{a.out}, \c{ELF}, \c{COFF}, \c{Mach-O},
+Microsoft 16-bit \c{OBJ}, \c{Win32} and \c{Win64}. It will also output plain
+binary files. Its syntax is designed to be simple and easy to understand, similar
+to Intel's but less complex. It supports from the upto and including \c{Pentium},
+\c{P6}, \c{MMX}, \c{3DNow!}, \c{SSE}, \c{SSE2}, \c{SSE3} and \c{x64} opcodes. NASM has
+a strong support for macro conventions.
 
 
 \S{yaasm} Why Yet Another Assembler?
@@ -241,14 +242,14 @@ assembler around, and that maybe someone ought to write one.
 \b \i\c{a86} is good, but not free, and in particular you don't get any
 32-bit capability until you pay. It's DOS only, too.
 
-\b \i\c{gas} is free, and ports over DOS and Unix, but it's not
+\b \i\c{gas} is free, and ports over to DOS and Unix, but it's not
 very good, since it's designed to be a back end to \i\c{gcc}, which
 always feeds it correct code. So its error checking is minimal. Also,
 its syntax is horrible, from the point of view of anyone trying to
 actually \e{write} anything in it. Plus you can't write 16-bit code in
-it (properly).
+it (properly.)
 
-\b \i\c{as86} is Minix- and Linux-specific, and (my version at least)
+\b \i\c{as86} is specific to Minix and Linux, and (my version at least)
 doesn't seem to have much (or any) documentation.
 
 \b \i\c{MASM} isn't very good, and it's (was) expensive, and it runs only under
@@ -257,7 +258,7 @@ DOS.
 \b \i\c{TASM} is better, but still strives for MASM compatibility,
 which means millions of directives and tons of red tape. And its syntax
 is essentially MASM's, with the contradictions and quirks that
-entails (although it sorts out some of those by means of Ideal mode).
+entails (although it sorts out some of those by means of Ideal mode.)
 It's expensive too. And it's DOS-only.
 
 So here, for your coding pleasure, is NASM. At present it's
@@ -269,17 +270,17 @@ know who you are), and we'll improve it out of all recognition.
 Again.
 
 
-\S{legal} Licence Conditions
+\S{legal} License Conditions
 
 Please see the file \c{COPYING}, supplied as part of any NASM
-distribution archive, for the \i{licence} conditions under which you
+distribution archive, for the \i{license} conditions under which you
 may use NASM.  NASM is now under the so-called GNU Lesser General
 Public License, LGPL.
 
 
 \H{contact} Contact Information
 
-The current version of NASM (since about 0.98.08) are maintained by a
+The current version of NASM (since about 0.98.08) is maintained by a
 team of developers, accessible through the \c{nasm-devel} mailing list
 (see below for the link).
 If you want to report a bug, please read \k{bugs} first.
@@ -735,7 +736,7 @@ The syntax is:
         -O0, but will produce successful assembly more often if
         branch offset sizes are not specified.
         Additionally, immediate operands which will fit in a signed byte
-        are optimised, unless the long form is specified.
+        are optimized, unless the long form is specified.
 
 \b \c{-On} multi-pass optimization, minimize branch offsets; also will
         minimize signed immediate bytes, overriding size specification
@@ -1009,7 +1010,7 @@ on a misunderstanding by the authors.
 For historical reasons, NASM uses the keyword \i\c{TWORD} where MASM
 and compatible assemblers use \i\c{TBYTE}.
 
-NASM does not declare \i{uninitialised storage} in the same way as
+NASM does not declare \i{uninitialized storage} in the same way as
 MASM: where a MASM programmer might use \c{stack db 64 dup (?)},
 NASM requires \c{stack resb 64}, intended to be read as `reserve 64
 bytes'. For a limited amount of compatibility, since NASM treats
@@ -1115,15 +1116,15 @@ Pseudo-instructions are things which, though not real x86 machine
 instructions, are used in the instruction field anyway because
 that's the most convenient place to put them. The current
 pseudo-instructions are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ} and
-\i\c{DT}, their \i{uninitialised} counterparts \i\c{RESB},
+\i\c{DT}, their \i{uninitialized} counterparts \i\c{RESB},
 \i\c{RESW}, \i\c{RESD}, \i\c{RESQ} and \i\c{REST}, the \i\c{INCBIN}
 command, the \i\c{EQU} command, and the \i\c{TIMES} prefix.
 
 
-\S{db} \c{DB} and friends: Declaring Initialised Data
+\S{db} \c{DB} and friends: Declaring initialized Data
 
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ} and \i\c{DT} are used, much
-as in MASM, to declare initialised data in the output file. They can
+as in MASM, to declare initialized data in the output file. They can
 be invoked in a wide range of ways:
 \I{floating-point}\I{character constant}\I{string constant}
 
@@ -1144,14 +1145,14 @@ be invoked in a wide range of ways:
 constants as operands.
 
 
-\S{resb} \c{RESB} and friends: Declaring \i{Uninitialised} Data
+\S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
 
 \i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ} and \i\c{REST} are
 designed to be used in the BSS section of a module: they declare
-\e{uninitialised} storage space. Each takes a single operand, which
+\e{uninitialized} storage space. Each takes a single operand, which
 is the number of bytes, words, doublewords or whatever to reserve.
 As stated in \k{qsother}, NASM does not support the MASM/TASM syntax
-of reserving uninitialised space by writing \I\c{?}\c{DW ?} or
+of reserving uninitialized space by writing \I\c{?}\c{DW ?} or
 similar things: this is what it does instead. The operand to a
 \c{RESB}-type pseudo-instruction is a \i\e{critical expression}: see
 \k{crit}.
@@ -2740,7 +2741,7 @@ able to nest these loops.
 
 NASM provides this level of power by means of a \e{context stack}.
 The preprocessor maintains a stack of \e{contexts}, each of which is
-characterised by a name. You add a new context to the stack using
+characterized by a name. You add a new context to the stack using
 the \i\c{%push} directive, and remove one using \i\c{%pop}. You can
 define labels that are local to a particular context on the stack.
 
@@ -3003,6 +3004,14 @@ here'. You could then write a macro
 
 and then pepper your code with calls to \c{notdeadyet} until you
 find the crash point.
+
+\S{bitsm} \i\c{__BITS__}: Current BITS Mode
+
+The \c{__BITS__} standard macro is updated every time that the BITS mode is
+set using the \c{BITS XX} or \c{[BITS XX]} directive, where XX is a valid mode
+number of 16, 32 or 64. \c{__BITS__} receives the specified mode number and
+makes it globally available. This can be very useful for those who utilize
+mode-dependent macros.
 
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
@@ -3374,19 +3383,20 @@ documented along with the formats that implement them, in \k{outfmt}.
 
 The \c{BITS} directive specifies whether NASM should generate code
 \I{16-bit mode, versus 32-bit mode}designed to run on a processor
-operating in 16-bit mode, or code designed to run on a processor
-operating in 32-bit mode. The syntax is \c{BITS 16} or \c{BITS 32}.
+operating in 16-bit mode, 32-bit mode or 64-bit mode. The syntax is
+\c{BITS XX}, where XX is 16, 32 or 64.
 
 In most cases, you should not need to use \c{BITS} explicitly. The
-\c{aout}, \c{coff}, \c{elf}, \c{macho} and \c{win32} object formats, which are
-designed for use in 32-bit operating systems, all cause NASM to
-select 32-bit mode by default. The \c{obj} object format allows you
+\c{aout}, \c{coff}, \c{elf}, \c{macho}, \c{win32} and \c{win64}
+object formats, which are designed for use in 32-bit or 64-bit
+operating systems, all cause NASM to select 32-bit or 64-bit mode,
+respectively, by default. The \c{obj} object format allows you
 to specify each segment you define as either \c{USE16} or \c{USE32},
 and NASM will set its operating mode accordingly, so the use of the
 \c{BITS} directive is once again unnecessary.
 
 The most likely reason for using the \c{BITS} directive is to write
-32-bit code in a flat binary file; this is because the \c{bin}
+32-bit or 64-bit code in a flat binary file; this is because the \c{bin}
 output format defaults to 16-bit mode in anticipation of it being
 used most frequently to write DOS \c{.COM} programs, DOS \c{.SYS}
 device drivers and boot loader software.
@@ -3396,18 +3406,29 @@ You do \e{not} need to specify \c{BITS 32} merely in order to use
 assembler will generate incorrect code because it will be writing
 code targeted at a 32-bit platform, to be run on a 16-bit one.
 
-When NASM is in \c{BITS 16} state, instructions which use 32-bit
+When NASM is in \c{BITS 16} mode, instructions which use 32-bit
 data are prefixed with an 0x66 byte, and those referring to 32-bit
-addresses have an 0x67 prefix. In \c{BITS 32} state, the reverse is
+addresses have an 0x67 prefix. In \c{BITS 32} mode, the reverse is
 true: 32-bit instructions require no prefixes, whereas instructions
 using 16-bit data need an 0x66 and those working on 16-bit addresses
 need an 0x67.
 
-The \c{BITS} directive has an exactly equivalent primitive form,
-\c{[BITS 16]} and \c{[BITS 32]}. The user-level form is a macro
-which has no function other than to call the primitive form.
+When NASM is in \c{BITS 64} mode, most instructions operate the same
+as they do for \c{BITS 32} mode. However, 16-bit addresses are depreciated
+in the x86-64 architecture extension and the 0x67 prefix is used for 32-bit
+addressing. This is due to the default of 64-bit addressing. When the \c{REX}
+prefix is used, the processor does not know how to address the AH, BH, CH or
+DH (high 8-bit legacy) registers. This because the x86-64 has added a new
+set of registers and the capability to address the low 8-bits of the SP, BP
+SI and DI registers as SPL, BPL, SIL and DIL, respectively; but only when
+the REX prefix is used. In summary, the \c{REX} prefix causes the addressing
+of AH, BH, CH and DH to be replaced by SPL, BPL, SIL and DIL.
 
-Note that the space is neccessary, \c{BITS32} will \e{not} work!
+The \c{BITS} directive has an exactly equivalent primitive form,
+\c{[BITS 16]}, \c{[BITS 32]} and \c{BITS 64]}. The user-level form is
+a macro which has no function other than to call the primitive form.
+
+Note that the space is neccessary, e.g. \c{BITS32} will \e{not} work!
 
 \S{USE16 & USE32} \i\c{USE16} & \i\c{USE32}: Aliases for BITS
 
@@ -3429,9 +3450,9 @@ not (yet) exist.
 
 The Unix object formats, and the \c{bin} object format (but see
 \k{multisec}, all support
-the \i{standardised section names} \c{.text}, \c{.data} and \c{.bss}
-for the code, data and uninitialised-data sections. The \c{obj}
-format, by contrast, does not recognise these section names as being
+the \i{standardized section names} \c{.text}, \c{.data} and \c{.bss}
+for the code, data and uninitialized-data sections. The \c{obj}
+format, by contrast, does not recognize these section names as being
 special, and indeed will strip off the leading period of any section
 name that has one.
 
@@ -3607,7 +3628,7 @@ time.
 
 The \c{COMMON} directive is used to declare \i\e{common variables}.
 A common variable is much like a global variable declared in the
-uninitialised data section, so that
+uninitialized data section, so that
 
 \c common  intvar  4
 
@@ -3673,6 +3694,8 @@ Options are:
 
 \b\c{CPU PRESCOTT}	Prescott instruction set
 
+\b\c{CPU X64}           x86-64 (x64/AMD64/EM64T) instruction set
+
 \b\c{CPU IA64}          IA64 CPU (in x86 mode) instruction set
 
 All options are case insensitive.  All instructions will be selected
@@ -3710,9 +3733,9 @@ The \c{bin} format supports \i{multiple section names}. For details of
 how nasm handles sections in the \c{bin} format, see \k{multisec}.
 
 Using the \c{bin} format puts NASM by default into 16-bit mode (see
-\k{bits}). In order to use \c{bin} to write 32-bit code such as an
-OS kernel, you need to explicitly issue the \I\c{BITS}\c{BITS 32}
-directive.
+\k{bits}). In order to use \c{bin} to write 32-bit or 64-bit code,
+such as an OS kernel, you need to explicitly issue the \I\c{BITS}\c{BITS 32}
+or \I\c{BITS}\c{BITS 64} directive.
 
 \c{bin} has no default output file name extension: instead, it
 leaves your file name as it is once the original extension has been
@@ -3944,7 +3967,7 @@ you can code
 \c
 \c segment bss
 \c
-\c         ; some uninitialised data
+\c         ; some uninitialized data
 \c
 \c group dgroup data bss
 
@@ -4035,7 +4058,7 @@ resident by the system loader. This is an optimisation for
 frequently used symbols imported by name.
 
 \b \c{nodata} indicates that the exported symbol is a function which
-does not make use of any initialised data.
+does not make use of any initialized data.
 
 \b \c{parm=NNN}, where \c{NNN} is an integer, sets the number of
 parameter words for the case in which the symbol is a call gate
@@ -4185,10 +4208,10 @@ section is code.
 
 \b \c{data} and \c{bss} define the section to be a data section,
 analogously to \c{code}. Data sections are marked as readable and
-writable, but not executable. \c{data} declares an initialised data
-section, whereas \c{bss} declares an uninitialised data section.
+writable, but not executable. \c{data} declares an initialized data
+section, whereas \c{bss} declares an uninitialized data section.
 
-\b \c{rdata} declares an initialised data section that is readable
+\b \c{rdata} declares an initialized data section that is readable
 but not writable. Microsoft compilers use this section to place
 constants in it.
 
@@ -4219,6 +4242,15 @@ qualifiers are:
 \c section .bss     bss   align=4
 
 Any other section name is treated by default like \c{.text}.
+
+
+\H{win64fmt} \i\c{win64}: Microsoft Win64 Object Files
+
+The \c{win64} output format generates Microsoft Win64 object files, 
+which is nearly 100% indentical to the \c{win32} object format (\k{win32fmt})
+with the exception that it is meant to target 64-bit code and the x86-64
+platform altogether. This object file is used exactly the same as the \c{win32}
+object format (\k{win32fmt}), in NASM, with regard to this exception.
 
 
 \H{cofffmt} \i\c{coff}: \i{Common Object File Format}
@@ -4312,7 +4344,7 @@ types.
 \c{elf} defines five special symbols which you can use as the
 right-hand side of the \c{WRT} operator to obtain PIC relocation
 types. They are \i\c{..gotpc}, \i\c{..gotoff}, \i\c{..got},
-\i\c{..plt} and \i\c{..sym}. Their functions are summarised here:
+\i\c{..plt} and \i\c{..sym}. Their functions are summarized here:
 
 \b Referring to the symbol marking the global offset table base
 using \c{wrt ..gotpc} will end up giving the distance from the
@@ -4692,7 +4724,7 @@ the NASM archives, under the name \c{objexe.asm}.
 \c         mov     sp,stacktop
 
 This initial piece of code sets up \c{DS} to point to the data
-segment, and initialises \c{SS} and \c{SP} to point to the top of
+segment, and initializes \c{SS} and \c{SP} to point to the top of
 the provided stack. Notice that interrupts are implicitly disabled
 for one instruction after a move into \c{SS}, precisely for this
 situation, so that there's no chance of an interrupt occurring
@@ -4728,7 +4760,7 @@ The data segment contains the string we want to display.
 \c stacktop:
 
 The above code declares a stack segment containing 64 bytes of
-uninitialised stack space, and points \c{stacktop} at the top of it.
+uninitialized stack space, and points \c{stacktop} at the top of it.
 The directive \c{segment stack stack} defines a segment \e{called}
 \c{stack}, and also of \e{type} \c{STACK}. The latter is not
 necessary to the correct running of the program, but linkers are
@@ -4816,18 +4848,18 @@ like
 \c
 \c section .bss
 \c
-\c         ; put uninitialised data here
+\c         ; put uninitialized data here
 
 The \c{bin} format puts the \c{.text} section first in the file, so
 you can declare data or BSS items before beginning to write code if
 you want to and the code will still end up at the front of the file
 where it belongs.
 
-The BSS (uninitialised data) section does not take up space in the
+The BSS (uninitialized data) section does not take up space in the
 \c{.COM} file itself: instead, addresses of BSS items are resolved
 to point at space beyond the end of the file, on the grounds that
 this will be free memory when the program is run. Therefore you
-should not rely on your BSS being initialised to all zeros when you
+should not rely on your BSS being initialized to all zeros when you
 run.
 
 To assemble the above program, you should use a command line like
@@ -5133,7 +5165,7 @@ code
 
 In large model, the function-call code might look more like this. In
 this example, it is assumed that \c{DS} already holds the segment
-base of the segment \c{_DATA}. If not, you would have to initialise
+base of the segment \c{_DATA}. If not, you would have to initialize
 it first.
 
 \c       push    word [myint]
@@ -5191,7 +5223,7 @@ NASM structure definition (using \i\c{STRUC}), or by calculating the
 one offset and using just that.
 
 To do either of these, you should read your C compiler's manual to
-find out how it organises data structures. NASM gives no special
+find out how it organizes data structures. NASM gives no special
 alignment to structure members in its own \c{STRUC} macro, so you
 have to specify alignment yourself if the C compiler generates it.
 Typically, you might find that a structure like
@@ -5413,10 +5445,10 @@ restrictions:
 \b Procedures and functions must be in a segment whose name is
 either \c{CODE}, \c{CSEG}, or something ending in \c{_TEXT}.
 
-\b Initialised data must be in a segment whose name is either
+\b initialized data must be in a segment whose name is either
 \c{CONST} or something ending in \c{_DATA}.
 
-\b Uninitialised data must be in a segment whose name is either
+\b Uninitialized data must be in a segment whose name is either
 \c{DATA}, \c{DSEG}, or something ending in \c{_BSS}.
 
 \b Any other segments in the object file are completely ignored.
@@ -5647,7 +5679,7 @@ NASM structure definition (using \c{STRUC}), or by calculating the
 one offset and using just that.
 
 To do either of these, you should read your C compiler's manual to
-find out how it organises data structures. NASM gives no special
+find out how it organizes data structures. NASM gives no special
 alignment to structure members in its own \i\c{STRUC} macro, so you
 have to specify alignment yourself if the C compiler generates it.
 Typically, you might find that a structure like
@@ -6417,7 +6449,7 @@ the instructions in your code section.
 
 Sync points are specified using the \i\c{-s} option: they are measured
 in terms of the program origin, not the file position. So if you
-want to synchronise after 32 bytes of a \c{.COM} file, you would have to
+want to synchronize after 32 bytes of a \c{.COM} file, you would have to
 do
 
 \c        ndisasm -o100h -s120h file.com
@@ -6528,7 +6560,7 @@ This appendix provides a complete list of the machine instructions
 which NASM will assemble, and a short description of the function of
 each one.
 
-It is not intended to be exhaustive documentation on the fine
+It is not intended to be an exhaustive documentation on the fine
 details of the instructions' function, such as which exceptions they
 can trigger: for such documentation, you should go to Intel's Web
 site, \W{http://developer.intel.com/design/Pentium4/manuals/}\c{http://developer.intel.com/design/Pentium4/manuals/}.
@@ -6553,12 +6585,13 @@ The instruction descriptions in this appendix specify their operands
 using the following notation:
 
 \b Registers: \c{reg8} denotes an 8-bit \i{general purpose
-register}, \c{reg16} denotes a 16-bit general purpose register, and
-\c{reg32} a 32-bit one. \c{fpureg} denotes one of the eight FPU
-stack registers, \c{mmxreg} denotes one of the eight 64-bit MMX
-registers, and \c{segreg} denotes a segment register. In addition,
-some registers (such as \c{AL}, \c{DX} or
-\c{ECX}) may be specified explicitly.
+register}, \c{reg16} denotes a 16-bit general purpose register,
+\c{reg32} a 32-bit one and \c{reg64} a 64-bit one. \c{fpureg} denotes
+one of the eight FPU stack registers, \c{mmxreg} denotes one of the
+eight 64-bit MMX registers, and \c{segreg} denotes a segment register.
+\c{xmmreg} denotes one of the 8, or 16 in x64 long mode, SSE XMM registers.
+In addition, some registers (such as \c{AL}, \c{DX}, \c{ECX} or \c{RAX})
+may be specified explicitly.
 
 \b Immediate operands: \c{imm} denotes a generic \i{immediate operand}.
 \c{imm8}, \c{imm16} and \c{imm32} are used when the operand is
@@ -6566,7 +6599,8 @@ intended to be a specific size. For some of these instructions, NASM
 needs an explicit specifier: for example, \c{ADD ESP,16} could be
 interpreted as either \c{ADD r/m32,imm32} or \c{ADD r/m32,imm8}.
 NASM chooses the former by default, and so you must specify \c{ADD
-ESP,BYTE 16} for the latter.
+ESP,BYTE 16} for the latter. There is a special case of the allowance
+of an \c{imm64} for particular x64 versions of the MOV instruction.
 
 \b Memory references: \c{mem} denotes a generic \i{memory reference};
 \c{mem8}, \c{mem16}, \c{mem32}, \c{mem64} and \c{mem80} are used
@@ -6578,13 +6612,16 @@ WORD [address]} or \c{DEC DWORD [address]} instead.
 \b \i{Restricted memory references}: one form of the \c{MOV}
 instruction allows a memory address to be specified \e{without}
 allowing the normal range of register combinations and effective
-address processing. This is denoted by \c{memoffs8}, \c{memoffs16}
-and \c{memoffs32}.
+address processing. This is denoted by \c{memoffs8}, \c{memoffs16},
+\c{memoffs32} or \c{memoffs64}.
 
 \b Register or memory choices: many instructions can accept either a
-register \e{or} a memory reference as an operand. \c{r/m8} is a
+register \e{or} a memory reference as an operand. \c{r/m8} is
 shorthand for \c{reg8/mem8}; similarly \c{r/m16} and \c{r/m32}.
-\c{r/m64} is MMX-related, and is a shorthand for \c{mmxreg/mem64}.
+On legacy x86 modes, \c{r/m64} is MMX-related, and is shorthand for
+\c{mmxreg/mem64}. When utilizing the x86-64 architecture extension,
+\c{r/m64} denotes use of a 64-bit GPR as well, and is shorthand for
+\c{reg64/mem64}.
 
 
 \H{iref-opc} Key to Opcode Descriptions
@@ -6660,7 +6697,8 @@ but generates no code in \c{BITS 16} state; and \c{o32} indicates a
 \b The codes \c{a16} and \c{a32}, similarly to \c{o16} and \c{o32},
 indicate the address size of the given form of the instruction.
 Where this does not match the \c{BITS} setting, a \c{67} prefix is
-required.
+required. Please note that \c{a16} is useless in long mode as
+16-bit addressing is depreciated on the x86-64 architecture extension.
 
 
 \S{iref-rv} Register Values
@@ -6672,18 +6710,42 @@ register, a debug register, an MMX register, or whatever. Therefore
 there is no problem with registers of different types sharing an
 encoding value.
 
+Please note that for the register classes listed below, the register
+extensions (REX) classes require the use of the REX prefix, in which
+is only available when in long mode on the x86-64 processor. This
+pretty much goes for any register that has a number higher than 7.
+
 The encodings for the various classes of register are:
 
 \b 8-bit general registers: \c{AL} is 0, \c{CL} is 1, \c{DL} is 2,
-\c{BL} is 3, \c{AH} is 4, \c{CH} is 5, \c{DH} is 6, and \c{BH} is
-7.
+\c{BL} is 3, \c{AH} is 4, \c{CH} is 5, \c{DH} is 6 and \c{BH} is
+7. Please note that \c{AH}, \c{BH}, \c{CH} and \c{DH} are not
+addressable when using the REX prefix in long mode.
+
+\b 8-bit general register extensions (REX): \c{SPL} is 4, \c{BPL} is 5,
+\c{SIL} is 6, \c{DIL} is 7, \c{R8B} is 8, \c{R9B} is 9, \c{R10B} is 10,
+\c{R11B} is 11, \c{R12B} is 12, \c{R13B} is 13, \c{R14B} is 14 and
+\c{R15B} is 15.
 
 \b 16-bit general registers: \c{AX} is 0, \c{CX} is 1, \c{DX} is 2,
 \c{BX} is 3, \c{SP} is 4, \c{BP} is 5, \c{SI} is 6, and \c{DI} is 7.
 
+\b 16-bit general register extensions (REX): \c{R8W} is 8, \c{R9W} is 9,
+\c{R10w} is 10, \c{R11W} is 11, \c{R12W} is 12, \c{R13W} is 13, \c{R14W}
+is 14 and \c{R15W} is 15.
+
 \b 32-bit general registers: \c{EAX} is 0, \c{ECX} is 1, \c{EDX} is
 2, \c{EBX} is 3, \c{ESP} is 4, \c{EBP} is 5, \c{ESI} is 6, and
 \c{EDI} is 7.
+
+\b 32-bit general register extensions (REX): \c{R8D} is 8, \c{R9D} is 9,
+\c{R10D} is 10, \c{R11D} is 11, \c{R12D} is 12, \c{R13D} is 13, \c{R14D}
+is 14 and \c{R15D} is 15.
+
+\b 64-bit general register extensions (REX): \c{RAX} is 0, \c{RCX} is 1,
+\c{RDX} is 2, \c{RBX} is 3, \c{RSP} is 4, \c{RBP} is 5, \c{RSI} is 6,
+\c{RDI} is 7, \c{R8} is 8, \c{R9} is 9, \c{R10} is 10, \c{R11} is 11,
+\c{R12} is 12, \c{R13} is 13, \c{R14} is 14 and \c{R15} is 15.
 
 \b \i{Segment registers}: \c{ES} is 0, \c{CS} is 1, \c{SS} is 2, \c{DS}
 is 3, \c{FS} is 4, and \c{GS} is 5.
@@ -6696,8 +6758,18 @@ is 0, \c{ST1} is 1, \c{ST2} is 2, \c{ST3} is 3, \c{ST4} is 4,
 \c{MM3} is 3, \c{MM4} is 4, \c{MM5} is 5, \c{MM6} is 6, and \c{MM7}
 is 7.
 
+\b 128-bit \i{XMM (SSE) registers}: \c{XMM0} is 0, \c{XMM1} is 1,
+\c{XMM2} is 2, \c{XMM3} is 3, \c{XMM4} is 4, \c{XMM5} is 5, \c{XMM6} is
+6 and \c{XMM7} is 7.
+
+\b 128-bit \i{XMM (SSE) register} extensions (REX): \c{XMM8} is 8,
+\c{XMM9} is 9, \c{XMM10} is 10, \c{XMM11} is 11, \c{XMM12} is 12,
+\c{XMM13} is 13, \c{XMM14} is 14 and \c{XMM15} is 15.
+
 \b \i{Control registers}: \c{CR0} is 0, \c{CR2} is 2, \c{CR3} is 3,
 and \c{CR4} is 4.
+
+\b \i{Control register} extensions: \c{CR8} is 8.
 
 \b \i{Debug registers}: \c{DR0} is 0, \c{DR1} is 1, \c{DR2} is 2,
 \c{DR3} is 3, \c{DR6} is 6, and \c{DR7} is 7.
@@ -6947,11 +7019,65 @@ is not \c{[EBP]} as the above rules would suggest, but instead
 long, and no registers are added to the displacement.
 
 \b If \c{mod} is 0, \c{r/m} is 4 (meaning the SIB byte is present)
-and \c{base} is 4, the effective address encoded is not
+and \c{base} is 5, the effective address encoded is not
 \c{[EBP+index]} as the above rules would suggest, but instead
 \c{[disp32+index]}: the displacement field is present and is four
 bytes long, and there is no base register (but the index register is
 still processed in the normal way).
+
+
+\S{iref-rex} Register Extensions: The \i{REX} Prefix
+
+The Register Extensions, or \i{REX} for short, prefix is the means
+of accessing extended registers on the x86-64 architecture. \i{REX}
+is considered an instruction prefix, but is required to be after
+all other prefixes and thus immediately before the first instruction
+opcode itself. So overall, \i{REX} can be thought of as an "Opcode
+Prefix" instead. The \i{REX} prefix itself is indicated by a value
+of 0x4X, where X is one of 16 different combinations of the actual
+\i{REX} flags.
+
+The \i{REX} prefix flags consist of four 1-bit extensions fields.
+These flags are found in the lower nibble of the actual \i{REX}
+prefix opcode. Below is the list of \i{REX} prefix flags, from
+high bit to low bit.
+
+\c{REX.W}: When set, this flag indicates the use of a 64-bit operand,
+as opposed to the default of using 32-bit operands as found in 32-bit
+Protected Mode.
+
+\c{REX.R}: When set, this flag extends the \c{reg (spare)} field of
+the \c{ModRM} byte. Overall, this raises the amount of addressable
+registers in this field from 8 to 16.
+
+\c{REX.X}: When set, this flag extends the \c{index} field of the
+\c{SIB} byte. Overall, this raises the amount of addressable
+registers in this field from 8 to 16.
+
+\c{REX.B}: When set, this flag extends the \c{r/m} field of the
+\c{ModRM} byte. This flag can also represent an extension to the
+opcode register \c{(/r)} field. The determination of which is used
+varies depending on which instruction is used. Overall, this raises
+the amount of addressable registers in these fields from 8 to 16.
+
+Interal use of the \i{REX} prefix by the processor is consistent,
+yet non-trivial. Most instructions use the \i{REX} prefix as
+indicated by the above flags. Some instructions require the \i{REX}
+prefix to be present even if the flags are empty. Some instructions
+default to a 64-bit operand and require the \i{REX} prefix only for
+actual register extensions, and thus ignores the \c{REX.W} field
+completely.
+
+At any rate, NASM is designed to handle, and fully supports, the
+\i{REX} prefix internally. Please read the appropriate processor
+documentation for further information on the \i{REX} prefix.
+
+You may have noticed that opcodes 0x40 through 0x4F are actually
+opcodes for the INC/DEC instructions for each General Purpose
+Register. This is, of course, correct... for legacy x86. While
+in long mode, opcodes 0x40 through 0x4F are reserved for use as
+the REX prefix. The other opcode forms of the INC/DEC instructions
+are used instead.
 
 
 \H{iref-flg} Key to Instruction Flags
@@ -7003,6 +7129,10 @@ be supported on any given machine.
 \b \c{WILLAMETTE} indicates that the instruction was introduced as
 part of the new instruction set in the Pentium 4 and Intel Xeon
 processors. These instructions are also known as SSE2 instructions.
+
+\b \c{X64} indicates that the instruction was introduced as part of
+the new instruction set in the x86-64 architecture extension,
+commonly referred to as x64, AMD64 or EM64T.
 
 
 \H{iref-inst} x86 Instruction Set
@@ -7882,7 +8012,7 @@ being executed on. It fills the four registers \c{EAX}, \c{EBX},
 \c{ECX} and \c{EDX} with information, which varies depending on the
 input contents of \c{EAX}.
 
-\c{CPUID} also acts as a barrier to serialise instruction execution:
+\c{CPUID} also acts as a barrier to serialize instruction execution:
 executing the \c{CPUID} instruction guarantees that all the effects
 (memory modification, flag modification, register modification) of
 previous instructions have been completed before the next
@@ -8785,12 +8915,12 @@ flag the new \c{ST7} (previously \c{ST0}) as empty. See also
 \c{FDECSTP} (\k{insFDECSTP}).
 
 
-\S{insFINIT} \i\c{FINIT}, \i\c{FNINIT}: Initialise Floating-Point Unit
+\S{insFINIT} \i\c{FINIT}, \i\c{FNINIT}: initialize Floating-Point Unit
 
 \c FINIT                         ; 9B DB E3             [8086,FPU]
 \c FNINIT                        ; DB E3                [8086,FPU]
 
-\c{FINIT} initialises the FPU to its default state. It flags all
+\c{FINIT} initializes the FPU to its default state. It flags all
 registers as empty, without actually change their values, clears
 the top of stack pointer. \c{FNINIT} does the same, without first
 waiting for pending exceptions to clear.
@@ -8980,7 +9110,7 @@ the power of that integer, and stores the result in \c{ST0}.
 
 \c FSETPM                        ; DB E4                [286,FPU]
 
-This instruction initialises protected mode on the 287 floating-point
+This instruction initializes protected mode on the 287 floating-point
 coprocessor. It is only meaningful on that processor: the 387 and
 above treat the instruction as a no-operation.
 
@@ -9210,7 +9340,7 @@ without checking for pending unmasked floating-point exceptions
 
 Unlike the \c{FSAVE/FNSAVE} instructions, the processor retains the
 contents of the \c{FPU}, \c{MMX} and \c{SSE} state in the processor
-after the state has been saved. This instruction has been optimised
+after the state has been saved. This instruction has been optimized
 to maximize floating-point save performance.
 
 
@@ -9571,8 +9701,8 @@ As a convenience, NASM does not require you to jump to a far symbol
 by coding the cumbersome \c{JMP SEG routine:routine}, but instead
 allows the easier synonym \c{JMP FAR routine}.
 
-The \c{CALL r/m} forms given above are near calls; NASM will accept
-the \c{NEAR} keyword (e.g. \c{CALL NEAR [address]}), even though it
+The \c{JMP r/m} forms given above are near calls; NASM will accept
+the \c{NEAR} keyword (e.g. \c{JMP NEAR [address]}), even though it
 is not strictly necessary.
 
 
@@ -9715,7 +9845,7 @@ See also \c{SFENCE} (\k{insSFENCE}) and \c{MFENCE} (\k{insMFENCE}).
 \c LLDT r/m16                    ; 0F 00 /2             [286,PRIV]
 
 \c{LGDT} and \c{LIDT} both take a 6-byte memory area as an operand:
-they load a 32-bit linear address and a 16-bit size limit from that
+they load a 16-bit size limit and a 32-bit linear address from that
 area (in the opposite order) into the \c{GDTR} (global descriptor table
 register) or \c{IDTR} (interrupt descriptor table register). These are
 the only instructions which directly use \e{linear} addresses, rather

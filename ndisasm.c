@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include "insns.h"
 #include "nasm.h"
@@ -20,7 +21,7 @@
 
 #define BPL 8                   /* bytes per line of hex dump */
 
-static const char *help =
+static const int8_t *help =
     "usage: ndisasm [-a] [-i] [-h] [-r] [-u] [-b bits] [-o origin] [-s sync...]\n"
     "               [-e bytes] [-k start,bytes] [-p vendor] file\n"
     "   -a or -i activates auto (intelligent) sync\n"
@@ -32,31 +33,31 @@ static const char *help =
     "   -k avoids disassembling <bytes> bytes from position <start>\n"
     "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
 
-static void output_ins(unsigned long, unsigned char *, int, char *);
-static void skip(unsigned long dist, FILE * fp);
+static void output_ins(uint32_t, uint8_t *, int, int8_t *);
+static void skip(uint32_t dist, FILE * fp);
 
-int main(int argc, char **argv)
+int main(int argc, int8_t **argv)
 {
-    unsigned char buffer[INSN_MAX * 2], *p, *q;
-    char outbuf[256];
-    char *pname = *argv;
-    char *filename = NULL;
-    unsigned long nextsync, synclen, initskip = 0L;
+    uint8_t buffer[INSN_MAX * 2], *p, *q;
+    int8_t outbuf[256];
+    int8_t *pname = *argv;
+    int8_t *filename = NULL;
+    uint32_t nextsync, synclen, initskip = 0L;
     int lenread;
-    long lendis;
+    int32_t lendis;
     int autosync = FALSE;
     int bits = 16;
     int eof = FALSE;
-    unsigned long prefer = 0;
+    uint32_t prefer = 0;
     int rn_error;
-    long offset;
+    int32_t offset;
     FILE *fp;
 
     offset = 0;
     init_sync();
 
     while (--argc) {
-        char *v, *vv, *p = *++argv;
+        int8_t *v, *vv, *p = *++argv;
         if (*p == '-' && p[1]) {
             p++;
             while (*p)
@@ -241,7 +242,7 @@ int main(int argc, char **argv)
     p = q = buffer;
     nextsync = next_sync(offset, &synclen);
     do {
-        unsigned long to_read = buffer + sizeof(buffer) - p;
+        uint32_t to_read = buffer + sizeof(buffer) - p;
         if (to_read > nextsync - offset - (p - q))
             to_read = nextsync - offset - (p - q);
         if (to_read) {
@@ -251,7 +252,7 @@ int main(int argc, char **argv)
         } else
             lenread = 0;
         p += lenread;
-        if ((unsigned long)offset == nextsync) {
+        if ((uint32_t)offset == nextsync) {
             if (synclen) {
                 fprintf(stdout, "%08lX  skipping 0x%lX bytes\n", offset,
                         synclen);
@@ -266,14 +267,14 @@ int main(int argc, char **argv)
                 disasm(q, outbuf, sizeof(outbuf), bits, offset, autosync,
                        prefer);
             if (!lendis || lendis > (p - q)
-                || (unsigned long)lendis > nextsync - offset)
+                || (uint32_t)lendis > nextsync - offset)
                 lendis = eatbyte(q, outbuf, sizeof(outbuf));
             output_ins(offset, q, lendis, outbuf);
             q += lendis;
             offset += lendis;
         }
         if (q >= buffer + INSN_MAX) {
-            unsigned char *r = buffer, *s = q;
+            uint8_t *r = buffer, *s = q;
             int count = p - q;
             while (count--)
                 *r++ = *s++;
@@ -288,8 +289,8 @@ int main(int argc, char **argv)
     return 0;
 }
 
-static void output_ins(unsigned long offset, unsigned char *data,
-                       int datalen, char *insn)
+static void output_ins(uint32_t offset, uint8_t *data,
+                       int datalen, int8_t *insn)
 {
     int bytes;
     fprintf(stdout, "%08lX  ", offset);
@@ -319,9 +320,9 @@ static void output_ins(unsigned long offset, unsigned char *data,
  * Skip a certain amount of data in a file, either by seeking if
  * possible, or if that fails then by reading and discarding.
  */
-static void skip(unsigned long dist, FILE * fp)
+static void skip(uint32_t dist, FILE * fp)
 {
-    char buffer[256];           /* should fit on most stacks :-) */
+    int8_t buffer[256];           /* should fit on most stacks :-) */
 
     /*
      * Got to be careful with fseek: at least one fseek I've tried
@@ -330,7 +331,7 @@ static void skip(unsigned long dist, FILE * fp)
      */
     if (fseek(fp, dist + ftell(fp), SEEK_SET)) {
         while (dist > 0) {
-            unsigned long len = (dist < sizeof(buffer) ?
+            uint32_t len = (dist < sizeof(buffer) ?
                                  dist : sizeof(buffer));
             if (fread(buffer, 1, len, fp) < len) {
                 perror("fread");

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include "sync.h"
 
@@ -20,8 +21,8 @@
  */
 
 static struct Sync {
-    unsigned long pos;
-    unsigned long length;
+    uint32_t pos;
+    uint32_t length;
 } *synx;
 static int nsynx;
 
@@ -49,7 +50,7 @@ void init_sync(void)
     nsynx = 0;
 }
 
-void add_sync(unsigned long pos, unsigned long length)
+void add_sync(uint32_t pos, uint32_t length)
 {
     int i;
 
@@ -70,7 +71,7 @@ void add_sync(unsigned long pos, unsigned long length)
     }
 }
 
-unsigned long next_sync(unsigned long position, unsigned long *length)
+uint32_t next_sync(uint32_t position, uint32_t *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
         int i, j;

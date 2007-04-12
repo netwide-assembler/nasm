@@ -1,5 +1,12 @@
-0.98.40
-* fix (?) bug in outobj.c - every 256th "extern" caused Nasm crash
+0.99.00
+-------
+* Added c99 data-type compliance.
+* Added general x86-64 support.
+* Added win64 (x86-64 COFF) output format.
+* Added __BITS__ standard macro which returns current [BITS XX] mode.
+* fix (???) bug in outobj.c - every 256th "extern" caused Nasm crash.
+  (is this during definition or use, I made over 260 externs with obj
+   and could not duplicate the gripe -Keith Kanios)
 
 0.98.39
 -------

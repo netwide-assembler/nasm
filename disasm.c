@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "disasm.h"
@@ -33,7 +34,7 @@ extern struct itemplate **itable[];
 #define SEG_NODISP 64
 #define SEG_SIGNED 128
 
-static int whichreg(long regflags, int regval)
+static int whichreg(int32_t regflags, int regval)
 {
 #include "regdis.c"
 
@@ -95,7 +96,7 @@ static int whichreg(long regflags, int regval)
     return 0;
 }
 
-static const char *whichcond(int condval)
+static const int8_t *whichcond(int condval)
 {
     static int conds[] = {
         C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,
@@ -107,7 +108,7 @@ static const char *whichcond(int condval)
 /*
  * Process an effective address (ModRM) specification.
  */
-static unsigned char *do_ea(unsigned char *data, int modrm, int asize,
+static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
                             int segsize, operand * op)
 {
     int mod, rm, scale, index, base;
@@ -174,7 +175,7 @@ static unsigned char *do_ea(unsigned char *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = (signed char)*data++;
+            op->offset = (int8_t)*data++;
             break;
         case 2:
             op->segment |= SEG_DISP16;
@@ -293,14 +294,14 @@ static unsigned char *do_ea(unsigned char *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = (signed char)*data++;
+            op->offset = (int8_t)*data++;
             break;
         case 2:
             op->segment |= SEG_DISP32;
             op->offset = *data++;
             op->offset |= ((unsigned)*data++) << 8;
-            op->offset |= ((long)*data++) << 16;
-            op->offset |= ((long)*data++) << 24;
+            op->offset |= ((int32_t)*data++) << 16;
+            op->offset |= ((int32_t)*data++) << 24;
             break;
         }
         return data;
@@ -311,11 +312,11 @@ static unsigned char *do_ea(unsigned char *data, int modrm, int asize,
  * Determine whether the instruction template in t corresponds to the data
  * stream in data. Return the number of bytes matched if so.
  */
-static int matches(struct itemplate *t, unsigned char *data, int asize,
+static int matches(struct itemplate *t, uint8_t *data, int asize,
                    int osize, int segsize, int rep, insn * ins)
 {
-    unsigned char *r = (unsigned char *)(t->code);
-    unsigned char *origdata = data;
+    uint8_t *r = (uint8_t *)(t->code);
+    uint8_t *origdata = data;
     int a_used = FALSE, o_used = FALSE;
     int drep = 0;
 
@@ -401,7 +402,7 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
             if (*data++)
                 return FALSE;
         if (c >= 014 && c <= 016) {
-            ins->oprs[c - 014].offset = (signed char)*data++;
+            ins->oprs[c - 014].offset = (int8_t)*data++;
             ins->oprs[c - 014].segment |= SEG_SIGNED;
         }
         if (c >= 020 && c <= 022)
@@ -416,8 +417,8 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
             ins->oprs[c - 034].offset = *data++;
             ins->oprs[c - 034].offset |= (((unsigned)*data++) << 8);
             if (osize == 32) {
-                ins->oprs[c - 034].offset |= (((long)*data++) << 16);
-                ins->oprs[c - 034].offset |= (((long)*data++) << 24);
+                ins->oprs[c - 034].offset |= (((int32_t)*data++) << 16);
+                ins->oprs[c - 034].offset |= (((int32_t)*data++) << 24);
             }
             if (segsize != asize)
                 ins->oprs[c - 034].addr_size = asize;
@@ -425,21 +426,21 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
         if (c >= 040 && c <= 042) {
             ins->oprs[c - 040].offset = *data++;
             ins->oprs[c - 040].offset |= (((unsigned)*data++) << 8);
-            ins->oprs[c - 040].offset |= (((long)*data++) << 16);
-            ins->oprs[c - 040].offset |= (((long)*data++) << 24);
+            ins->oprs[c - 040].offset |= (((int32_t)*data++) << 16);
+            ins->oprs[c - 040].offset |= (((int32_t)*data++) << 24);
         }
         if (c >= 044 && c <= 046) {
             ins->oprs[c - 044].offset = *data++;
             ins->oprs[c - 044].offset |= (((unsigned)*data++) << 8);
             if (asize == 32) {
-                ins->oprs[c - 044].offset |= (((long)*data++) << 16);
-                ins->oprs[c - 044].offset |= (((long)*data++) << 24);
+                ins->oprs[c - 044].offset |= (((int32_t)*data++) << 16);
+                ins->oprs[c - 044].offset |= (((int32_t)*data++) << 24);
             }
             if (segsize != asize)
                 ins->oprs[c - 044].addr_size = asize;
         }
         if (c >= 050 && c <= 052) {
-            ins->oprs[c - 050].offset = (signed char)*data++;
+            ins->oprs[c - 050].offset = (int8_t)*data++;
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
         }
         if (c >= 060 && c <= 062) {
@@ -452,8 +453,8 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
             ins->oprs[c - 064].offset = *data++;
             ins->oprs[c - 064].offset |= (((unsigned)*data++) << 8);
             if (osize == 32) {
-                ins->oprs[c - 064].offset |= (((long)*data++) << 16);
-                ins->oprs[c - 064].offset |= (((long)*data++) << 24);
+                ins->oprs[c - 064].offset |= (((int32_t)*data++) << 16);
+                ins->oprs[c - 064].offset |= (((int32_t)*data++) << 24);
                 ins->oprs[c - 064].segment |= SEG_32BIT;
             } else
                 ins->oprs[c - 064].segment &= ~SEG_32BIT;
@@ -467,8 +468,8 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
         if (c >= 070 && c <= 072) {
             ins->oprs[c - 070].offset = *data++;
             ins->oprs[c - 070].offset |= (((unsigned)*data++) << 8);
-            ins->oprs[c - 070].offset |= (((long)*data++) << 16);
-            ins->oprs[c - 070].offset |= (((long)*data++) << 24);
+            ins->oprs[c - 070].offset |= (((int32_t)*data++) << 16);
+            ins->oprs[c - 070].offset |= (((int32_t)*data++) << 24);
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
         }
         if (c >= 0100 && c < 0130) {
@@ -485,8 +486,8 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
         if (c >= 0140 && c <= 0142) {
             ins->oprs[c - 0140].offset = *data++;
             ins->oprs[c - 0140].offset |= (((unsigned)*data++) << 8);
-            ins->oprs[c - 0140].offset |= (((long)*data++) << 16);
-            ins->oprs[c - 0140].offset |= (((long)*data++) << 24);
+            ins->oprs[c - 0140].offset |= (((int32_t)*data++) << 16);
+            ins->oprs[c - 0140].offset |= (((int32_t)*data++) << 24);
         }
         if (c >= 0200 && c <= 0277) {
             int modrm = *data++;
@@ -574,17 +575,17 @@ static int matches(struct itemplate *t, unsigned char *data, int asize,
     return data - origdata;
 }
 
-long disasm(unsigned char *data, char *output, int outbufsize, int segsize,
-            long offset, int autosync, unsigned long prefer)
+int32_t disasm(uint8_t *data, int8_t *output, int outbufsize, int segsize,
+            int32_t offset, int autosync, uint32_t prefer)
 {
     struct itemplate **p, **best_p;
     int length, best_length = 0;
-    char *segover;
+    int8_t *segover;
     int rep, lock, asize, osize, i, slen, colon;
-    unsigned char *origdata;
+    uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
-    unsigned long goodness, best;
+    uint32_t goodness, best;
 
     /*
      * Scan for prefixes.
@@ -793,7 +794,8 @@ long disasm(unsigned char *data, char *output, int outbufsize, int segsize,
         } else if (!(MEM_OFFS & ~(*p)->opd[i])) {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%lx]",
-                         (segover ? segover : ""), (segover ? ":" : ""),
+                         ((const char*)segover ? (const char*)segover : ""),    /* placate type mistmatch warning */
+                         ((const char*)segover ? ":" : ""),                     /* by using (const char*) instead of uint8_t* */
                          (ins.oprs[i].addr_size ==
                           32 ? "dword " : ins.oprs[i].addr_size ==
                           16 ? "word " : ""), ins.oprs[i].offset);
@@ -853,7 +855,7 @@ long disasm(unsigned char *data, char *output, int outbufsize, int segsize,
             if (ins.oprs[i].segment & SEG_DISP8) {
                 int sign = '+';
                 if (ins.oprs[i].offset & 0x80) {
-                    ins.oprs[i].offset = -(signed char)ins.oprs[i].offset;
+                    ins.oprs[i].offset = -(int8_t)ins.oprs[i].offset;
                     sign = '-';
                 }
                 slen +=
@@ -881,7 +883,7 @@ long disasm(unsigned char *data, char *output, int outbufsize, int segsize,
     }
     output[slen] = '\0';
     if (segover) {              /* unused segment override */
-        char *p = output;
+        int8_t *p = output;
         int count = slen + 1;
         while (count--)
             p[count + 3] = p[count];
@@ -891,7 +893,7 @@ long disasm(unsigned char *data, char *output, int outbufsize, int segsize,
     return length;
 }
 
-long eatbyte(unsigned char *data, char *output, int outbufsize)
+int32_t eatbyte(uint8_t *data, int8_t *output, int outbufsize)
 {
     snprintf(output, outbufsize, "db 0x%02X", *data);
     return 1;

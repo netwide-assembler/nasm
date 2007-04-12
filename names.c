@@ -7,7 +7,7 @@
  * distributed in the NASM archive.
  */
 
-static const char *conditions[] = {     /* condition code names */
+static const int8_t *conditions[] = {     /* condition code names */
     "a", "ae", "b", "be", "c", "e", "g", "ge", "l", "le", "na", "nae",
     "nb", "nbe", "nc", "ne", "ng", "nge", "nl", "nle", "no", "np",
     "ns", "nz", "o", "p", "pe", "po", "s", "z"

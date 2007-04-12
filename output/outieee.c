@@ -42,6 +42,7 @@
 #include <time.h>
 #include <stdarg.h>             /* Note: we need the ANSI version of stdarg.h */
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -51,7 +52,7 @@
 
 #define ARRAY_BOT 0x1
 
-static char ieee_infile[FILENAME_MAX];
+static int8_t ieee_infile[FILENAME_MAX];
 static int ieee_uppercase;
 
 static efunc error;
@@ -69,14 +70,14 @@ struct ieeeSection;
 struct LineNumber {
     struct LineNumber *next;
     struct ieeeSection *segment;
-    long offset;
-    long lineno;
+    int32_t offset;
+    int32_t lineno;
 };
 
 static struct FileName {
     struct FileName *next;
-    char *name;
-    long index;
+    int8_t *name;
+    int32_t index;
 } *fnhead, **fntail;
 
 static struct Array {
@@ -87,17 +88,17 @@ static struct Array {
 
 static struct ieeePublic {
     struct ieeePublic *next;
-    char *name;
-    long offset;
-    long segment;               /* only if it's far-absolute */
-    long index;
+    int8_t *name;
+    int32_t offset;
+    int32_t segment;               /* only if it's far-absolute */
+    int32_t index;
     int type;                   /* for debug purposes */
 } *fpubhead, **fpubtail, *last_defined;
 
 static struct ieeeExternal {
     struct ieeeExternal *next;
-    char *name;
-    long commonsize;
+    int8_t *name;
+    int32_t commonsize;
 } *exthead, **exttail;
 
 static int externals;
@@ -112,24 +113,24 @@ static struct ieeeSection {
     struct ieeeObjData *data, *datacurr;
     struct ieeeSection *next;
     struct ieeeFixupp *fptr, *flptr;
-    long index;                 /* the NASM segment id */
-    long ieee_index;            /* the OBJ-file segment index */
-    long currentpos;
-    long align;                 /* can be SEG_ABS + absolute addr */
-    long startpos;
+    int32_t index;                 /* the NASM segment id */
+    int32_t ieee_index;            /* the OBJ-file segment index */
+    int32_t currentpos;
+    int32_t align;                 /* can be SEG_ABS + absolute addr */
+    int32_t startpos;
     enum {
         CMB_PRIVATE = 0,
         CMB_PUBLIC = 2,
         CMB_COMMON = 6
     } combine;
-    long use32;                 /* is this segment 32-bit? */
+    int32_t use32;                 /* is this segment 32-bit? */
     struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
-    char *name;
+    int8_t *name;
 } *seghead, **segtail, *ieee_seg_needs_update;
 
 struct ieeeObjData {
     struct ieeeObjData *next;
-    unsigned char data[HUNKSIZE];
+    uint8_t data[HUNKSIZE];
 };
 
 struct ieeeFixupp {
@@ -144,32 +145,32 @@ struct ieeeFixupp {
         FT_EXTWRT = 6,
         FT_EXTSEG = 7
     } ftype;
-    short size;
-    long id1;
-    long id2;
-    long offset;
-    long addend;
+    int16_t size;
+    int32_t id1;
+    int32_t id2;
+    int32_t offset;
+    int32_t addend;
 };
 
-static long ieee_entry_seg, ieee_entry_ofs;
+static int32_t ieee_entry_seg, ieee_entry_ofs;
 static int checksum;
 
 extern struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
-static void ieee_write_fixup(long, long, struct ieeeSection *,
-                             int, unsigned long, long);
+static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
+                             int, uint32_t, int32_t);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
-static long ieee_segment(char *, int, int *);
+static int32_t ieee_segment(int8_t *, int, int *);
 static void ieee_write_file(int debuginfo);
 static void ieee_write_byte(struct ieeeSection *, int);
 static void ieee_write_word(struct ieeeSection *, int);
-static void ieee_write_dword(struct ieeeSection *, long);
-static void ieee_putascii(char *, ...);
+static void ieee_write_dword(struct ieeeSection *, int32_t);
+static void ieee_putascii(int8_t *, ...);
 static void ieee_putcs(int);
-static long ieee_putld(long, long, unsigned char *);
-static long ieee_putlr(struct ieeeFixupp *);
-static void ieee_unqualified_name(char *, char *);
+static int32_t ieee_putld(int32_t, int32_t, uint8_t *);
+static int32_t ieee_putlr(struct ieeeFixupp *);
+static void ieee_unqualified_name(int8_t *, int8_t *);
 
 /* 
  * pup init 
@@ -195,7 +196,7 @@ static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     checksum = 0;
     of_ieee.current_dfmt->init(&of_ieee, NULL, fp, errfunc);
 }
-static int ieee_set_info(enum geninfo type, char **val)
+static int ieee_set_info(enum geninfo type, int8_t **val)
 {
     (void)type;
     (void)val;
@@ -251,8 +252,8 @@ static void ieee_cleanup(int debuginfo)
 /*
  * callback for labels
  */
-static void ieee_deflabel(char *name, long segment,
-                          long offset, int is_global, char *special)
+static void ieee_deflabel(int8_t *name, int32_t segment,
+                          int32_t offset, int is_global, int8_t *special)
 {
     /*
      * We have three cases:
@@ -369,12 +370,12 @@ static void ieee_deflabel(char *name, long segment,
 /*
  * Put data out
  */
-static void ieee_out(long segto, const void *data, unsigned long type,
-                     long segment, long wrt)
+static void ieee_out(int32_t segto, const void *data, uint32_t type,
+                     int32_t segment, int32_t wrt)
 {
-    unsigned long size, realtype;
-    const unsigned char *ucdata;
-    long ldata;
+    uint32_t size, realtype;
+    const uint8_t *ucdata;
+    int32_t ldata;
     struct ieeeSection *seg;
 
     /*
@@ -417,7 +418,7 @@ static void ieee_out(long segto, const void *data, unsigned long type,
         if (segment == NO_SEG && realtype != OUT_ADDRESS)
             error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");
-        ldata = *(long *)data;
+        ldata = *(int32_t *)data;
         if (realtype == OUT_REL2ADR)
             ldata += (size - 2);
         if (realtype == OUT_REL4ADR)
@@ -450,9 +451,9 @@ static void ieee_data_new(struct ieeeSection *segto)
  * but I might as well see what it is like on a harmless program.
  * If anyone wants to optimize this is a good canditate!
  */
-static void ieee_write_fixup(long segment, long wrt,
+static void ieee_write_fixup(int32_t segment, int32_t wrt,
                              struct ieeeSection *segto, int size,
-                             unsigned long realtype, long offset)
+                             uint32_t realtype, int32_t offset)
 {
     struct ieeeSection *target;
     struct ieeeFixupp s;
@@ -489,7 +490,7 @@ static void ieee_write_fixup(long segment, long wrt,
                          * Now we assume the segment field is being used
                          * to hold an extern index
                          */
-                        long i = segment / 2;
+                        int32_t i = segment / 2;
                         struct ExtBack *eb = ebhead;
                         while (i > EXT_BLKSIZ) {
                             if (eb)
@@ -539,7 +540,7 @@ static void ieee_write_fixup(long segment, long wrt,
                  * Now we assume the segment field is being used
                  * to hold an extern index
                  */
-                long i = segment / 2;
+                int32_t i = segment / 2;
                 struct ExtBack *eb = ebhead;
                 while (i > EXT_BLKSIZ) {
                     if (eb)
@@ -593,7 +594,7 @@ static void ieee_write_fixup(long segment, long wrt,
                  * Now we assume the segment field is being used
                  * to hold an extern index
                  */
-                long i = segment / 2;
+                int32_t i = segment / 2;
                 struct ExtBack *eb = ebhead;
                 while (i > EXT_BLKSIZ) {
                     if (eb)
@@ -650,7 +651,7 @@ static void ieee_install_fixup(struct ieeeSection *seg,
 /*
  * segment registry
  */
-static long ieee_segment(char *name, int pass, int *bits)
+static int32_t ieee_segment(int8_t *name, int pass, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -667,7 +668,7 @@ static long ieee_segment(char *name, int pass, int *bits)
     } else {
         struct ieeeSection *seg;
         int ieee_idx, attrs, rn_error;
-        char *p;
+        int8_t *p;
 
         /*
          * Look for segment attributes.
@@ -804,7 +805,7 @@ static long ieee_segment(char *name, int pass, int *bits)
 /*
  * directives supported
  */
-static int ieee_directive(char *directive, char *value, int pass)
+static int ieee_directive(int8_t *directive, int8_t *value, int pass)
 {
 
     (void)value;
@@ -819,7 +820,7 @@ static int ieee_directive(char *directive, char *value, int pass)
 /*
  * Return segment data
  */
-static long ieee_segbase(long segment)
+static int32_t ieee_segbase(int32_t segment)
 {
     struct ieeeSection *seg;
 
@@ -842,7 +843,7 @@ static long ieee_segbase(long segment)
 /*
  * filename
  */
-static void ieee_filename(char *inname, char *outname, efunc error)
+static void ieee_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     strcpy(ieee_infile, inname);
     standard_extension(inname, outname, ".o", error);
@@ -859,7 +860,7 @@ static void ieee_write_file(int debuginfo)
     struct ieeeObjData *data;
     struct ieeeFixupp *fix;
     struct Array *arr;
-    static char boast[] = "The Netwide Assembler " NASM_VER;
+    static int8_t boast[] = "The Netwide Assembler " NASM_VER;
     int i;
 
     /*
@@ -907,8 +908,8 @@ static void ieee_write_file(int debuginfo)
     if (!debuginfo && !strcmp(seg->name, "??LINE"))
         seg = seg->next;
     while (seg) {
-        char buf[256];
-        char attrib;
+        int8_t buf[256];
+        int8_t attrib;
         switch (seg->combine) {
         case CMB_PUBLIC:
         default:
@@ -957,7 +958,7 @@ static void ieee_write_file(int debuginfo)
     i = 1;
     for (seg = seghead; seg; seg = seg->next) {
         for (pub = seg->pubhead; pub; pub = pub->next) {
-            char buf[256];
+            int8_t buf[256];
             ieee_unqualified_name(buf, pub->name);
             ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
             if (pub->segment == -1)
@@ -978,7 +979,7 @@ static void ieee_write_file(int debuginfo)
     pub = fpubhead;
     i = 1;
     while (pub) {
-        char buf[256];
+        int8_t buf[256];
         ieee_unqualified_name(buf, pub->name);
         ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
         if (pub->segment == -1)
@@ -1002,7 +1003,7 @@ static void ieee_write_file(int debuginfo)
     ext = exthead;
     i = 1;
     while (ext) {
-        char buf[256];
+        int8_t buf[256];
         ieee_unqualified_name(buf, ext->name);
         ieee_putascii("NX%X,%02X%s.\r\n", i++, strlen(buf), buf);
         ext = ext->next;
@@ -1029,7 +1030,7 @@ static void ieee_write_file(int debuginfo)
     i = 1;
     for (seg = seghead; seg && debuginfo; seg = seg->next) {
         for (loc = seg->lochead; loc; loc = loc->next) {
-            char buf[256];
+            int8_t buf[256];
             ieee_unqualified_name(buf, loc->name);
             ieee_putascii("NN%X,%02X%s.\r\n", i, strlen(buf), buf);
             if (loc->segment == -1)
@@ -1056,7 +1057,7 @@ static void ieee_write_file(int debuginfo)
         seg = seg->next;
     while (seg) {
         if (seg->currentpos) {
-            long size, org = 0;
+            int32_t size, org = 0;
             data = seg->data;
             ieee_putascii("SB%X.\r\n", seg->ieee_index);
             fix = seg->fptr;
@@ -1106,16 +1107,16 @@ static void ieee_write_word(struct ieeeSection *seg, int data)
     ieee_write_byte(seg, (data >> 8) & 0xFF);
 }
 
-static void ieee_write_dword(struct ieeeSection *seg, long data)
+static void ieee_write_dword(struct ieeeSection *seg, int32_t data)
 {
     ieee_write_byte(seg, data & 0xFF);
     ieee_write_byte(seg, (data >> 8) & 0xFF);
     ieee_write_byte(seg, (data >> 16) & 0xFF);
     ieee_write_byte(seg, (data >> 24) & 0xFF);
 }
-static void ieee_putascii(char *format, ...)
+static void ieee_putascii(int8_t *format, ...)
 {
-    char buffer[256];
+    int8_t buffer[256];
     int i, l;
     va_list ap;
 
@@ -1143,9 +1144,9 @@ static void ieee_putcs(int toclear)
     checksum = 0;
 }
 
-static long ieee_putld(long start, long end, unsigned char *buf)
+static int32_t ieee_putld(int32_t start, int32_t end, uint8_t *buf)
 {
-    long val;
+    int32_t val;
     if (start == end)
         return (start);
     val = start % HUNKSIZE;
@@ -1171,7 +1172,7 @@ static long ieee_putld(long start, long end, unsigned char *buf)
     ieee_putascii(".\r\n");
     return (start);
 }
-static long ieee_putlr(struct ieeeFixupp *p)
+static int32_t ieee_putlr(struct ieeeFixupp *p)
 {
 /*
  * To deal with the vagaries of segmentation the LADsoft linker
@@ -1188,8 +1189,8 @@ static long ieee_putlr(struct ieeeFixupp *p)
  * becomes an issue if real mode code is used.  A pure 32-bit linker could
  * get away without defining the virtual mode...
  */
-    char buf[40];
-    long size = p->size;
+    int8_t buf[40];
+    int32_t size = p->size;
     switch (p->ftype) {
     case FT_SEG:
         if (p->id1 < 0)
@@ -1240,7 +1241,7 @@ static long ieee_putlr(struct ieeeFixupp *p)
 
 /* Dump all segment data (text and fixups )*/
 
-static void ieee_unqualified_name(char *dest, char *source)
+static void ieee_unqualified_name(int8_t *dest, int8_t *source)
 {
     if (ieee_uppercase) {
         while (*source)
@@ -1296,7 +1297,7 @@ static void dbgls_cleanup(void)
  * so, we have to make sure the ??LINE segment is avaialbe
  * as the first segment when this debug format is selected
  */
-static void dbgls_linnum(const char *lnfname, long lineno, long segto)
+static void dbgls_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
 {
     struct FileName *fn;
     struct ieeeSection *seg;
@@ -1343,8 +1344,8 @@ static void dbgls_linnum(const char *lnfname, long lineno, long segto)
                      seg->currentpos);
 
 }
-static void dbgls_deflabel(char *name, long segment,
-                           long offset, int is_global, char *special)
+static void dbgls_deflabel(int8_t *name, int32_t segment,
+                           int32_t offset, int is_global, int8_t *special)
 {
     struct ieeeSection *seg;
     int used_special;           /* have we used the special text? */
@@ -1403,7 +1404,7 @@ static void dbgls_deflabel(char *name, long segment,
             }
         }
 }
-static void dbgls_typevalue(long type)
+static void dbgls_typevalue(int32_t type)
 {
     int elem = TYM_ELEMENTS(type);
     type = TYM_TYPE(type);
@@ -1413,7 +1414,7 @@ static void dbgls_typevalue(long type)
 
     switch (type) {
     case TY_BYTE:
-        last_defined->type = 1; /* unsigned char */
+        last_defined->type = 1; /* uint8_t */
         break;
     case TY_WORD:
         last_defined->type = 3; /* unsigned word */

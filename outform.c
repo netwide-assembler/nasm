@@ -11,13 +11,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #define BUILD_DRIVERS_ARRAY
 #include "outform.h"
 
 static int ndrivers = 0;
 
-struct ofmt *ofmt_find(char *name)
+struct ofmt *ofmt_find(int8_t *name)
 {                               /* find driver */
     int i;
 
@@ -27,7 +28,7 @@ struct ofmt *ofmt_find(char *name)
 
     return NULL;
 }
-struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
+struct dfmt *dfmt_find(struct ofmt *ofmt, int8_t *name)
 {                               /* find driver */
     struct dfmt **dfmt = ofmt->debug_formats;
     while (*dfmt) {

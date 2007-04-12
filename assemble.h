@@ -9,9 +9,9 @@
 #ifndef NASM_ASSEMBLE_H
 #define NASM_ASSEMBLE_H
 
-long insn_size(long segment, long offset, int bits, unsigned long cpu,
+int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
                insn * instruction, efunc error);
-long assemble(long segment, long offset, int bits, unsigned long cpu,
+int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
               insn * instruction, struct ofmt *output, efunc error,
               ListGen * listgen);
 

@@ -6,63 +6,198 @@
 # A * means the line should be repeated for each value from 0 to 7
 #
 
+# Legacy Registers
+# 000-007 = 8-bit Registers
+# 010-017 = 16-bit Registers
+# 020-027 = 32-bit Registers
+
+# System Registers
+# 100-107 = Segment Registers
+# 110-127 = Control Registers
+# 130-147 = Debug Registers
+# 150-167 = Test Registers
+
+# Legacy Extended Registers
+# 200-207 = FPU Registers
+# 210-217 = MMX Registers
+# 220-227 = XMM Registers (XMM0-XMM7)
+
+# x64 Extended Registers
+# 400-407 = 8-bit Extensions (SIL/DIL/BPL/SPL)
+# 410-417 = 8-bit Registers (R8B-R15B)
+# 420-427 = 16-bit Registers (R8W-R15W)
+# 430-437 = 32-bit Registers (R8D-R15D)
+# 440-457 = 64-bit Registers (RAX-RDI+R8-R15)
+# 460-467 = XMM Extended Registers (XMM8-XMM15)
+
+# Special Registers
+# 0500 = RIP (for RIP-relative Addressing)
+
+
 # General-purpose registers
-al	REG_AL		reg8	0
-ah	REG8		reg8	4
-ax	REG_AX		reg16	0
-eax	REG_EAX		reg32	0
-bl	REG8		reg8	3
-bh	REG8		reg8	7
-bx	REG16		reg16	3
-ebx	REG32		reg32	3
-cl	REG_CL		reg8	1
-ch	REG8		reg8	5
-cx	REG_CX		reg16	1
-ecx	REG_ECX		reg32	1
-dl	REG_DL		reg8	2
-dh	REG8		reg8	6
-dx	REG_DX		reg16	2
-edx	REG_EDX		reg32	2
-sp	REG16		reg16	4
-esp	REG32		reg32	4
-bp	REG16		reg16	5
-ebp	REG32		reg32	5
-si	REG16		reg16	6
-esi	REG32		reg32	6
-di	REG16		reg16	7
-edi	REG32		reg32	7
+al	REG_AL		reg8	0000
+ah	REG8		reg8	0004
+ax	REG_AX		reg16	0010
+eax	REG_EAX		reg32	0020
+rax	REG_RAX		reg64	0440
+bl	REG8		reg8	0003
+bh	REG8		reg8	0007
+bx	REG16		reg16	0013
+ebx	REG32		reg32	0023
+rbx	REG64		reg64	0443
+cl	REG_CL		reg8	0001
+ch	REG8		reg8	0005
+cx	REG_CX		reg16	0011
+ecx	REG_ECX		reg32	0021
+rcx	REG_RCX		reg64	0441
+dl	REG_DL		reg8	0002
+dh	REG8		reg8	0006
+dx	REG_DX		reg16	0012
+edx	REG_EDX		reg32	0022
+rdx	REG_RDX		reg64	0442
+spl	REG8		reg8	0404
+sp	REG16		reg16	0014
+esp	REG32		reg32	0024
+rsp	REG64		reg64	0444
+bpl	REG8		reg8	0405
+bp	REG16		reg16	0015
+ebp	REG32		reg32	0025
+rbp	REG64		reg64	0445
+sil	REG8		reg8	0406
+si	REG16		reg16	0016
+esi	REG32		reg32	0026
+rsi	REG64		reg64	0446
+dil	REG8		reg8	0407
+di	REG16		reg16	0017
+edi	REG32		reg32	0027
+rdi	REG64		reg64	0447
+r8b	REG8		reg8	0410
+r8w	REG16		reg16	0420
+r8d	REG32		reg32	0430
+r8	REG64		reg64	0450
+r9b	REG8		reg8	0411
+r9w	REG16		reg16	0421
+r9d	REG32		reg32	0431
+r9	REG64		reg64	0451
+r10b	REG8		reg8	0412
+r10w	REG16		reg16	0422
+r10d	REG32		reg32	0432
+r10	REG64		reg64	0452
+r11b	REG8		reg8	0413
+r11w	REG16		reg16	0423
+r11d	REG32		reg32	0433
+r11	REG64		reg64	0453
+r12b	REG8		reg8	0414
+r12w	REG16		reg16	0424
+r12d	REG32		reg32	0434
+r12	REG64		reg64	0454
+r13b	REG8		reg8	0415
+r13w	REG16		reg16	0425
+r13d	REG32		reg32	0435
+r13	REG64		reg64	0455
+r14b	REG8		reg8	0416
+r14w	REG16		reg16	0426
+r14d	REG32		reg32	0436
+r14	REG64		reg64	0456
+r15b	REG8		reg8	0417
+r15w	REG16		reg16	0427
+r15d	REG32		reg32	0437
+r15	REG64		reg64	0457
 
 # Segment registers
-cs	REG_CS		sreg	1
-ds	REG_DESS	sreg	3
-es	REG_DESS	sreg	0
-ss	REG_DESS	sreg	2
-fs	REG_FSGS	sreg	4
-gs	REG_FSGS	sreg	5
-segr6	REG_SEG67	sreg	6
-segr7	REG_SEG67	sreg	7
+cs	REG_CS		sreg	0101
+ds	REG_DESS	sreg	0103
+es	REG_DESS	sreg	0100
+ss	REG_DESS	sreg	0102
+fs	REG_FSGS	sreg	0104
+gs	REG_FSGS	sreg	0105
+segr6	REG_SEG67	sreg	0106
+segr7	REG_SEG67	sreg	0107
 
 # Control registers
-cr*	REG_CREG	creg	*
+cr0	REG_CREG	creg	0110
+cr1	REG_CREG	creg	0111
+cr2	REG_CREG	creg	0112
+cr3	REG_CREG	creg	0113
+cr4	REG_CREG	creg	0114
+cr5	REG_CREG	creg	0115
+cr6	REG_CREG	creg	0116
+cr7	REG_CREG	creg	0127
+cr8     REG_C8REG       creg    0120
+cr9	REG_CREG	creg	0121
+cr10	REG_CREG	creg	0122
+cr11	REG_CREG	creg	0123
+cr12	REG_CREG	creg	0124
+cr13	REG_CREG	creg	0125
+cr14	REG_CREG	creg	0126
+cr15	REG_CREG	creg	0127
 
 # Debug registers
-dr*	REG_DREG	dreg	*
+dr0	REG_DREG	dreg	0130
+dr1	REG_DREG	dreg	0131
+dr2	REG_DREG	dreg	0132
+dr3	REG_DREG	dreg	0133
+dr4	REG_DREG	dreg	0134
+dr5	REG_DREG	dreg	0135
+dr6	REG_DREG	dreg	0136
+dr7	REG_DREG	dreg	0137
+dr8	REG_DREG	dreg	0140
+dr9	REG_DREG	dreg	0141
+dr10	REG_DREG	dreg	0142
+dr11	REG_DREG	dreg	0143
+dr12	REG_DREG	dreg	0144
+dr13	REG_DREG	dreg	0145
+dr14	REG_DREG	dreg	0146
+dr15	REG_DREG	dreg	0147
 
 # Test registers
-tr*	REG_TREG	treg	*
+tr0	REG_TREG	treg	0150
+tr1	REG_TREG	treg	0151
+tr2	REG_TREG	treg	0152
+tr3	REG_TREG	treg	0153
+tr4	REG_TREG	treg	0154
+tr5	REG_TREG	treg	0155
+tr6	REG_TREG	treg	0156
+tr7	REG_TREG	treg	0157
 
 # Floating-point registers
-st0	FPU0		fpureg	0
-st1	FPUREG		fpureg	1
-st2	FPUREG		fpureg	2
-st3	FPUREG		fpureg	3
-st4	FPUREG		fpureg	4
-st5	FPUREG		fpureg	5
-st6	FPUREG		fpureg	6
-st7	FPUREG		fpureg	7
+st0	FPU0		fpureg	0200
+st1	FPUREG		fpureg	0201
+st2	FPUREG		fpureg	0202
+st3	FPUREG		fpureg	0203
+st4	FPUREG		fpureg	0204
+st5	FPUREG		fpureg	0205
+st6	FPUREG		fpureg	0206
+st7	FPUREG		fpureg	0207
 
 # MMX registers
-mm*	MMXREG		mmxreg	*
+mm0	MMXREG		mmxreg	0220
+mm1	MMXREG		mmxreg	0221
+mm2	MMXREG		mmxreg	0222
+mm3	MMXREG		mmxreg	0223
+mm4	MMXREG		mmxreg	0224
+mm5	MMXREG		mmxreg	0225
+mm6	MMXREG		mmxreg	0226
+mm7	MMXREG		mmxreg	0227
+
 
 # SSE registers
-xmm*	XMMREG		xmmreg	*
+xmm0	XMMREG		xmmreg	0240
+xmm1	XMMREG		xmmreg	0241
+xmm2	XMMREG		xmmreg	0242
+xmm3	XMMREG		xmmreg	0243
+xmm4	XMMREG		xmmreg	0244
+xmm5	XMMREG		xmmreg	0245
+xmm6	XMMREG		xmmreg	0246
+xmm7	XMMREG		xmmreg	0247
+xmm8	XMMREG		xmmreg	0460
+xmm9	XMMREG		xmmreg	0461
+xmm10	XMMREG		xmmreg	0462
+xmm11	XMMREG		xmmreg	0463
+xmm12	XMMREG		xmmreg	0464
+xmm13	XMMREG		xmmreg	0465
+xmm14	XMMREG		xmmreg	0466
+xmm15	XMMREG		xmmreg	0467
+
+# Special registers
+rip     REG_RIP         ripreg  0500

@@ -18,7 +18,42 @@ Anything that doesn't start with /^[FVRCD]:/ should be ignored.
 
 =============
 
+F: Extended x64 Support
+D: Full FPU/MMX/SSE* instruction support for x64
+
+F: ELF64 output format
+D: Support for assembling code to the ELF64 output format
+
+F: NDISASM x64 Support
+D: Ability to disassemble respective x64 code
+
+F: General x64 Support
+V: 0.99.00
+R: Keith Kanios
+C: 99%
+D: Support for assembling 64-bit code to various output formats
+
+F: win64 (x86-64 COFF) output format
+V: 0.99.00
+R: Keith Kanios
+C: 99%
+D: Support for assembling code to the win64 output format
+
+F: c99 data-type compliance
+V: 0.99.00
+R: Keith Kanios
+C: 99%
+D: Revamped entire source-code base data-types for compliance
+D: with c99 (inttypes.h)
+
+F: __BITS__ Standard Macro
+V: 0.99.00
+R: Keith Kanios
+C: 100%
+D: __BITS__ standard macro that returns current [BITS XX] mode
+
 F: i18n via gettext
+D: kkanios: be careful about that, stick to UTF-8 if anything
 
 F: Convert shallow code model to deep code model
 D: Tired of messing between lots of unrelated files (especially .c/.h stuff)
@@ -28,7 +63,7 @@ D: Current looks awful and will break if anything changes.
 
 F: Move output modules out*.c to output/ subdir
 R: madfire
-C: 10%
+C: 100%
 
 == THESE ARE FROM old NASM's Wishlist
 == THEY NEED SEVERE REVISING (seems they weren't updated for a couple of years or so)
@@ -44,6 +79,7 @@ F: 3DNow!, SSE and other extensions need documenting
 V: 0.98
 D: hpa: Does it really make sense to have a whole instruction set
 D: reference packaged with the assembler?
+D: kkanios: Yes, for me it was a great help... and still is.
 
 F: prototypes of lrotate don't match in test/*. Fix.
 V: 0.98

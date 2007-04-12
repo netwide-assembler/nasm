@@ -82,7 +82,7 @@ void symtabInsert(void *stab, symtabEnt * ent)
 }
 
 /* ------------------------------------- */
-symtabEnt *symtabFind(void *stab, const char *name)
+symtabEnt *symtabFind(void *stab, const int8_t *name)
 {
     symtab mytab = (symtab) stab;
     int slot = slotnum(name);
@@ -103,7 +103,7 @@ void symtabDump(void *stab, FILE * of)
 {
     symtab mytab = (symtab) stab;
     int i;
-    char *SegNames[3] = { "code", "data", "bss" };
+    int8_t *SegNames[3] = { "code", "data", "bss" };
 
     fprintf(of, "Symbol table is ...\n");
     for (i = 0; i < SYMTABSIZE; ++i) {

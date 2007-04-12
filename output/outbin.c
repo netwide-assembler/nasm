@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -75,25 +76,25 @@ static efunc error;
 
 /* This struct is used to keep track of symbols for map-file generation. */
 static struct bin_label {
-    char *name;
+    int8_t *name;
     struct bin_label *next;
 } *no_seg_labels, **nsl_tail;
 
 static struct Section {
-    char *name;
+    int8_t *name;
     struct SAA *contents;
-    long length;                /* section length in bytes */
+    int32_t length;                /* section length in bytes */
 
 /* Section attributes */
     int flags;                  /* see flag definitions above */
-    unsigned long align;        /* section alignment */
-    unsigned long valign;       /* notional section alignment */
-    unsigned long start;        /* section start address */
-    unsigned long vstart;       /* section virtual start address */
-    char *follows;              /* the section that this one will follow */
-    char *vfollows;             /* the section that this one will notionally follow */
-    long start_index;           /* NASM section id for non-relocated version */
-    long vstart_index;          /* the NASM section id */
+    uint32_t align;        /* section alignment */
+    uint32_t valign;       /* notional section alignment */
+    uint32_t start;        /* section start address */
+    uint32_t vstart;       /* section virtual start address */
+    int8_t *follows;              /* the section that this one will follow */
+    int8_t *vfollows;             /* the section that this one will notionally follow */
+    int32_t start_index;           /* NASM section id for non-relocated version */
+    int32_t vstart_index;          /* the NASM section id */
 
     struct bin_label *labels;   /* linked-list of label handles for map output. */
     struct bin_label **labels_end;      /* Holds address of end of labels list. */
@@ -112,19 +113,19 @@ static struct Section {
 
 static struct Reloc {
     struct Reloc *next;
-    long posn;
-    long bytes;
-    long secref;
-    long secrel;
+    int32_t posn;
+    int32_t bytes;
+    int32_t secref;
+    int32_t secrel;
     struct Section *target;
 } *relocs, **reloctail;
 
-extern char *stdscan_bufptr;
-extern int lookup_label(char *label, long *segment, long *offset);
+extern int8_t *stdscan_bufptr;
+extern int lookup_label(int8_t *label, int32_t *segment, int32_t *offset);
 
-static unsigned char format_mode;       /* 0 = original bin, 1 = extended bin */
-static long current_section;    /* only really needed if format_mode = 0 */
-static unsigned long origin;
+static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
+static int32_t current_section;    /* only really needed if format_mode = 0 */
+static uint32_t origin;
 static int origin_defined;
 
 /* Stuff we need for map-file generation. */
@@ -133,9 +134,9 @@ static int origin_defined;
 #define MAP_SECTIONS     4
 #define MAP_SYMBOLS      8
 static int map_control = 0;
-static char *infile, *outfile;
+static int8_t *infile, *outfile;
 
-static const char *bin_stdmac[] = {
+static const int8_t *bin_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro org 1+.nolist",
     "[org %1]",
@@ -145,8 +146,8 @@ static const char *bin_stdmac[] = {
     NULL
 };
 
-static void add_reloc(struct Section *s, long bytes, long secref,
-                      long secrel)
+static void add_reloc(struct Section *s, int32_t bytes, int32_t secref,
+                      int32_t secrel)
 {
     struct Reloc *r;
 
@@ -160,7 +161,7 @@ static void add_reloc(struct Section *s, long bytes, long secref,
     r->target = s;
 }
 
-static struct Section *find_section_by_name(const char *name)
+static struct Section *find_section_by_name(const int8_t *name)
 {
     struct Section *s;
 
@@ -170,7 +171,7 @@ static struct Section *find_section_by_name(const char *name)
     return s;
 }
 
-static struct Section *find_section_by_index(long index)
+static struct Section *find_section_by_index(int32_t index)
 {
     struct Section *s;
 
@@ -180,7 +181,7 @@ static struct Section *find_section_by_index(long index)
     return s;
 }
 
-static struct Section *create_section(char *name)
+static struct Section *create_section(int8_t *name)
 {                               /* Create a new section. */
     last_section->next = nasm_malloc(sizeof(struct Section));
     last_section->next->ifollows = last_section;
@@ -211,7 +212,7 @@ static void bin_cleanup(int debuginfo)
     struct Section *last_progbits;
     struct bin_label *l;
     struct Reloc *r;
-    unsigned long pend;
+    uint32_t pend;
     int h;
 
 #ifdef DEBUG
@@ -517,18 +518,24 @@ static void bin_cleanup(int debuginfo)
         saa_rewind(s->contents);
     /* Apply relocations. */
     for (r = relocs; r; r = r->next) {
-        unsigned char *p, *q, mydata[4];
-        long l;
+        uint8_t *p, *q, mydata[8];
+        int64_t l;
 
         saa_fread(r->target->contents, r->posn, mydata, r->bytes);
         p = q = mydata;
         l = *p++;
 
         if (r->bytes > 1) {
-            l += ((long)*p++) << 8;
-            if (r->bytes == 4) {
-                l += ((long)*p++) << 16;
-                l += ((long)*p++) << 24;
+            l += ((int64_t)*p++) << 8;
+            if (r->bytes >= 4) {
+                l += ((int64_t)*p++) << 16;
+                l += ((int64_t)*p++) << 24;
+            }
+            if (r->bytes == 8) {
+                l += ((int64_t)*p++) << 32;
+                l += ((int64_t)*p++) << 40;
+                l += ((int64_t)*p++) << 48;
+                l += ((int64_t)*p++) << 56;
             }
         }
 
@@ -546,13 +553,13 @@ static void bin_cleanup(int debuginfo)
             else
                 l -= s->vstart;
         }
-
-        if (r->bytes == 4)
-            WRITELONG(q, l);
+        
+        if (r->bytes >= 4)
+            WRITEDLONG(q, l);
         else if (r->bytes == 2)
             WRITESHORT(q, l);
         else
-            *q++ = (unsigned char)(l & 0xFF);
+            *q++ = (uint8_t)(l & 0xFF);
         saa_fwrite(r->target->contents, r->posn, mydata, r->bytes);
     }
 
@@ -576,7 +583,7 @@ static void bin_cleanup(int debuginfo)
     /* Step 7: Generate the map file. */
 
     if (map_control) {
-        const char *not_defined = { "not defined" };
+        const int8_t *not_defined = { "not defined" };
 
         /* Display input and output file names. */
         fprintf(rf, "\n- NASM Map file ");
@@ -651,7 +658,7 @@ static void bin_cleanup(int debuginfo)
         }
         /* Display symbols information. */
         if (map_control & MAP_SYMBOLS) {
-            long segment, offset;
+            int32_t segment, offset;
 
             fprintf(rf, "-- Symbols ");
             for (h = 68; h; h--)
@@ -725,13 +732,14 @@ static void bin_cleanup(int debuginfo)
     }
 }
 
-static void bin_out(long segto, const void *data, unsigned long type,
-                    long segment, long wrt)
+static void bin_out(int32_t segto, const void *data, uint32_t type,
+                    int32_t segment, int32_t wrt)
 {
-    unsigned char *p, mydata[4];
+    uint8_t *p, mydata[8];
     struct Section *s;
-    long realbytes;
-
+    int32_t realbytes;
+    
+    
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
         error(ERR_NONFATAL, "WRT not supported by binary output format");
@@ -749,7 +757,7 @@ static void bin_out(long segto, const void *data, unsigned long type,
     s = find_section_by_index(segto);
     if (!s)
         error(ERR_PANIC, "code directed to nonexistent segment?");
-
+        
     /* "Smart" section-type adaptation code. */
     if (!(s->flags & TYPE_DEFINED)) {
         if ((type & OUT_TYPMASK) == OUT_RESERVE)
@@ -759,7 +767,7 @@ static void bin_out(long segto, const void *data, unsigned long type,
     }
 
     if ((s->flags & TYPE_NOBITS) && ((type & OUT_TYPMASK) != OUT_RESERVE))
-        error(ERR_WARNING, "attempt to initialise memory in a"
+        error(ERR_WARNING, "attempt to initialize memory in a"
               " nobits section: ignored");
 
     if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
@@ -777,9 +785,11 @@ static void bin_out(long segto, const void *data, unsigned long type,
                 add_reloc(s, type & OUT_SIZMASK, segment, -1L);
             p = mydata;
             if ((type & OUT_SIZMASK) == 4)
-                WRITELONG(p, *(long *)data);
+                WRITELONG(p, *(int32_t *)data);
+            else if ((type & OUT_SIZMASK) == 8)
+                WRITEDLONG(p, *(int64_t *)data);
             else
-                WRITESHORT(p, *(long *)data);
+                WRITESHORT(p, *(int32_t *)data);
             saa_wbytes(s->contents, mydata, type & OUT_SIZMASK);
         }
         s->length += type & OUT_SIZMASK;
@@ -791,14 +801,18 @@ static void bin_out(long segto, const void *data, unsigned long type,
     } else if ((type & OUT_TYPMASK) == OUT_RESERVE) {
         type &= OUT_SIZMASK;
         if (s->flags & TYPE_PROGBITS) {
-            error(ERR_WARNING, "uninitialised space declared in"
+            error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing", s->name);
             saa_wbytes(s->contents, NULL, type);
         }
         s->length += type;
     } else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
                (type & OUT_TYPMASK) == OUT_REL4ADR) {
-        realbytes = ((type & OUT_TYPMASK) == OUT_REL4ADR ? 4 : 2);
+        realbytes = (type & OUT_TYPMASK);
+        if (realbytes == OUT_REL2ADR)
+            realbytes = 2;
+        else
+            realbytes = 4;
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 error(ERR_NONFATAL, "binary output format does not support"
@@ -812,17 +826,17 @@ static void bin_out(long segto, const void *data, unsigned long type,
             add_reloc(s, realbytes, segment, segto);
             p = mydata;
             if (realbytes == 4)
-                WRITELONG(p, *(long *)data - realbytes - s->length);
+                WRITELONG(p, *(int32_t *)data - realbytes - s->length);
             else
-                WRITESHORT(p, *(long *)data - realbytes - s->length);
+                WRITESHORT(p, *(int32_t *)data - realbytes - s->length);
             saa_wbytes(s->contents, mydata, realbytes);
         }
         s->length += realbytes;
     }
 }
 
-static void bin_deflabel(char *name, long segment, long offset,
-                         int is_global, char *special)
+static void bin_deflabel(int8_t *name, int32_t segment, int32_t offset,
+                         int is_global, int8_t *special)
 {
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
@@ -862,13 +876,13 @@ enum { ATTRIB_START, ATTRIB_ALIGN, ATTRIB_FOLLOWS,
     ATTRIB_NOBITS, ATTRIB_PROGBITS
 };
 
-static int bin_read_attribute(char **line, int *attribute,
-                              unsigned long *value)
+static int bin_read_attribute(int8_t **line, int *attribute,
+                              uint32_t *value)
 {
     expr *e;
     int attrib_name_size;
     struct tokenval tokval;
-    char *exp;
+    int8_t *exp;
 
     /* Skip whitespace. */
     while (**line && isspace(**line))
@@ -924,7 +938,7 @@ static int bin_read_attribute(char **line, int *attribute,
             (*line)++;
         }
     } else {
-        char c;
+        int8_t c;
         int pcount = 1;
 
         /* Full expression (delimited by parenthesis) */
@@ -986,15 +1000,15 @@ static int bin_read_attribute(char **line, int *attribute,
               " specified in `section' directive.");
         return -1;
     }
-    *value = (unsigned long)reloc_value(e);
+    *value = (uint32_t)reloc_value(e);
     return 1;
 }
 
-static void bin_assign_attributes(struct Section *sec, char *astring)
+static void bin_assign_attributes(struct Section *sec, int8_t *astring)
 {
     int attribute, check;
-    unsigned long value;
-    char *p;
+    uint32_t value;
+    int8_t *p;
 
     while (1) {                 /* Get the next attribute. */
         check = bin_read_attribute(&astring, &attribute, &value);
@@ -1182,7 +1196,7 @@ static void bin_define_section_labels()
 {
     static int labels_defined = 0;
     struct Section *sec;
-    char *label_name;
+    int8_t *label_name;
     size_t base_len;
 
     if (labels_defined)
@@ -1208,9 +1222,9 @@ static void bin_define_section_labels()
     labels_defined = 1;
 }
 
-static long bin_secname(char *name, int pass, int *bits)
+static int32_t bin_secname(int8_t *name, int pass, int *bits)
 {
-    char *p;
+    int8_t *p;
     struct Section *sec;
 
     /* bin_secname is called with *name = NULL at the start of each
@@ -1274,12 +1288,12 @@ static long bin_secname(char *name, int pass, int *bits)
     return current_section;
 }
 
-static int bin_directive(char *directive, char *args, int pass)
+static int bin_directive(int8_t *directive, int8_t *args, int pass)
 {
     /* Handle ORG directive */
     if (!nasm_stricmp(directive, "org")) {
         struct tokenval tokval;
-        unsigned long value;
+        uint32_t value;
         expr *e;
 
         stdscan_reset();
@@ -1309,7 +1323,7 @@ static int bin_directive(char *directive, char *args, int pass)
     /* The 'map' directive allows the user to generate section
      * and symbol information to stdout, stderr, or to a file. */
     else if (format_mode && !nasm_stricmp(directive, "map")) {
-        char *p;
+        int8_t *p;
 
         if (pass != 1)
             return 1;
@@ -1356,19 +1370,19 @@ static int bin_directive(char *directive, char *args, int pass)
     return 0;
 }
 
-static void bin_filename(char *inname, char *outname, efunc error)
+static void bin_filename(int8_t *inname, int8_t *outname, efunc error)
 {
     standard_extension(inname, outname, "", error);
     infile = inname;
     outfile = outname;
 }
 
-static long bin_segbase(long segment)
+static int32_t bin_segbase(int32_t segment)
 {
     return segment;
 }
 
-static int bin_set_info(enum geninfo type, char **val)
+static int bin_set_info(enum geninfo type, int8_t **val)
 {
     return 0;
 }
@@ -1381,6 +1395,7 @@ static void bin_init(FILE * afp, efunc errfunc, ldfunc ldef, evalfunc eval)
     (void)eval;                 /* Don't warn that this parameter is unused. */
     (void)ldef;                 /* Placate optimizers. */
 
+    maxbits = 64;               /* Support 64-bit Segments */
     relocs = NULL;
     reloctail = &relocs;
     origin_defined = 0;

@@ -6,7 +6,7 @@
  * redistributable under the licence given in the file "Licence"
  * distributed in the NASM archive.
  *
- * Permission to use this file in your own projects is granted, as long
+ * Permission to use this file in your own projects is granted, as int32_t
  * as acknowledgement is given in an appropriate manner to its authors,
  * with instructions of how to obtain a copy via ftp.
  */
@@ -20,9 +20,9 @@
  */
 
 /* Type definitions */
-typedef unsigned long uint32;
-typedef unsigned short uint16;
-typedef unsigned char byte;
+typedef uint32_t uint32;
+typedef uint16_t uint16;
+typedef uint8_t byte;
 typedef unsigned int bool;
 
 /* RDOFF format revision (currently used only when printing the version) */
@@ -54,12 +54,12 @@ typedef unsigned int bool;
 
 /* 
  * Generic record - contains the type and length field, plus a 128 byte
- * char array 'data'
+ * int8_t array 'data'
  */
 struct GenericRec {
     byte type;
     byte reclen;
-    char data[128];
+    int8_t data[128];
 };
 
 /* 
@@ -71,7 +71,7 @@ struct RelocRec {
     byte segment;               /* only 0 for code, or 1 for data supported,
                                    but add 64 for relative refs (ie do not require
                                    reloc @ loadtime, only linkage) */
-    long offset;                /* from start of segment in which reference is loc'd */
+    int32_t offset;                /* from start of segment in which reference is loc'd */
     byte length;                /* 1 2 or 4 bytes */
     uint16 refseg;              /* segment to which reference refers to */
 };
@@ -87,7 +87,7 @@ struct ImportRec {
                                    records - label is assumed to be at offset zero
                                    in this segment, so linker must fix up with offset
                                    of segment and of offset within segment */
-    char label[EXIM_LABEL_MAX]; /* zero terminated, should be written to file
+    int8_t label[EXIM_LABEL_MAX]; /* zero terminated, should be written to file
                                    until the zero, but not after it */
 };
 
@@ -99,8 +99,8 @@ struct ExportRec {
     byte reclen;                /* content length */
     byte flags;                 /* SYM_* flags (see below) */
     byte segment;               /* segment referred to (0/1/2) */
-    long offset;                /* offset within segment */
-    char label[EXIM_LABEL_MAX]; /* zero terminated as in import */
+    int32_t offset;                /* offset within segment */
+    int8_t label[EXIM_LABEL_MAX]; /* zero terminated as in import */
 };
 
 /*
@@ -109,7 +109,7 @@ struct ExportRec {
 struct DLLRec {
     byte type;                  /* must be 4 */
     byte reclen;                /* content length */
-    char libname[MODLIB_NAME_MAX];      /* name of library to link with at load time */
+    int8_t libname[MODLIB_NAME_MAX];      /* name of library to link with at load time */
 };
 
 /*
@@ -118,7 +118,7 @@ struct DLLRec {
 struct BSSRec {
     byte type;                  /* must be 5 */
     byte reclen;                /* content length */
-    long amount;                /* number of bytes BSS to reserve */
+    int32_t amount;                /* number of bytes BSS to reserve */
 };
 
 /*
@@ -127,7 +127,7 @@ struct BSSRec {
 struct ModRec {
     byte type;                  /* must be 8 */
     byte reclen;                /* content length */
-    char modname[MODLIB_NAME_MAX];      /* module name */
+    int8_t modname[MODLIB_NAME_MAX];      /* module name */
 };
 
 /*
@@ -137,9 +137,9 @@ struct CommonRec {
     byte type;                  /* must be 10 */
     byte reclen;                /* equals 7+label length */
     uint16 segment;             /* segment number */
-    long size;                  /* size of common variable */
+    int32_t size;                  /* size of common variable */
     uint16 align;               /* alignment (power of two) */
-    char label[EXIM_LABEL_MAX]; /* zero terminated as in import */
+    int8_t label[EXIM_LABEL_MAX]; /* zero terminated as in import */
 };
 
 /* Flags for ExportRec */
@@ -154,11 +154,11 @@ struct CommonRec {
 
 /* Some systems don't define this automatically */
 #if !defined(strdup)
-extern char *strdup(const char *);
+extern int8_t *strdup(const int8_t *);
 #endif
 
 typedef union RDFHeaderRec {
-    char type;                  /* invariant throughout all below */
+    int8_t type;                  /* invariant throughout all below */
     struct GenericRec g;        /* type 0 */
     struct RelocRec r;          /* type == 1 / 6 */
     struct ImportRec i;         /* type == 2 / 7 */
@@ -174,29 +174,29 @@ struct SegmentHeaderRec {
     uint16 type;
     uint16 number;
     uint16 reserved;
-    long length;
+    int32_t length;
 
     /* information built up here */
-    long offset;
+    int32_t offset;
     byte *data;                 /* pointer to segment data if it exists in memory */
 };
 
 typedef struct RDFFileInfo {
     FILE *fp;                   /* file descriptor; must be open to use this struct */
     int rdoff_ver;              /* should be 1; any higher => not guaranteed to work */
-    long header_len;
-    long header_ofs;
+    int32_t header_len;
+    int32_t header_ofs;
 
     byte *header_loc;           /* keep location of header */
-    long header_fp;             /* current location within header for reading */
+    int32_t header_fp;             /* current location within header for reading */
 
     struct SegmentHeaderRec seg[RDF_MAXSEGS];
     int nsegs;
 
-    long eof_offset;            /* offset of the first byte beyond the end of this
+    int32_t eof_offset;            /* offset of the first byte beyond the end of this
                                    module */
 
-    char *name;                 /* name of module in libraries */
+    int8_t *name;                 /* name of module in libraries */
     int *refcount;              /* pointer to reference count on file, or NULL */
 } rdffile;
 
@@ -211,7 +211,7 @@ typedef struct memorybuffer {
 typedef struct {
     memorybuffer *buf;          /* buffer containing header records */
     int nsegments;              /* number of segments to be written */
-    long seglength;             /* total length of all the segments */
+    int32_t seglength;             /* total length of all the segments */
 } rdf_headerbuf;
 
 /* segments used by RDOFF, understood by rdoffloadseg */
@@ -241,30 +241,30 @@ enum {
 };
 
 /* utility functions */
-long translatelong(long in);
-uint16 translateshort(uint16 in);
-char *translatesegmenttype(uint16 type);
+int32_t translateint32_t(int32_t in);
+uint16 translateint16_t(uint16 in);
+int8_t *translatesegmenttype(uint16 type);
 
 /* RDOFF file manipulation functions */
-int rdfopen(rdffile * f, const char *name);
-int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name);
+int rdfopen(rdffile * f, const int8_t *name);
+int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const int8_t *name);
 int rdfclose(rdffile * f);
 int rdffindsegment(rdffile * f, int segno);
 int rdfloadseg(rdffile * f, int segment, void *buffer);
 rdfheaderrec *rdfgetheaderrec(rdffile * f);     /* returns static storage */
 void rdfheaderrewind(rdffile * f);      /* back to start of header */
-void rdfperror(const char *app, const char *name);
+void rdfperror(const int8_t *app, const int8_t *name);
 
 /* functions to write a new RDOFF header to a file -
    use rdfnewheader to allocate a header, rdfaddheader to add records to it,
    rdfaddsegment to notify the header routines that a segment exists, and
-   to tell it how long the segment will be.
+   to tell it how int32_t the segment will be.
    rdfwriteheader to write the file id, object length, and header
    to a file, and then rdfdoneheader to dispose of the header */
 
 rdf_headerbuf *rdfnewheader(void);
 int rdfaddheader(rdf_headerbuf * h, rdfheaderrec * r);
-int rdfaddsegment(rdf_headerbuf * h, long seglength);
+int rdfaddsegment(rdf_headerbuf * h, int32_t seglength);
 int rdfwriteheader(FILE * fp, rdf_headerbuf * h);
 void rdfdoneheader(rdf_headerbuf * h);
 

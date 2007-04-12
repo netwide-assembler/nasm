@@ -18,6 +18,7 @@ The Makefiles are:
   Makefile.b32	Win32	    	Borland C++	OK as of NASM 0.98.37
   Makefile.bc3	16-bit DOS  	Borland C++	OK as of NASM 0.98.34
   Makefile.bor	16-bit DOS  	Turbo C		(**)
+  Makefile.dcp	Win32	    	Dev-Cpp/MinGW   OK as of NASM 0.99.00
   Makefile.dj	32-bit DOS  	DJGPP		OK as of NASM 0.98.37
   Makefile.djo	32-bit DOS  	DJGPP		"Opus Make" version(**)
   Makefile.dl	32-bit DOS  	cc386		cc386 by David Lindauer
