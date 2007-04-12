@@ -8,6 +8,8 @@
  * distributed in the NASM archive.
  */
 
+#include <inttypes.h>
+
 #include "hash.h"
 
 typedef unsigned int crc32;

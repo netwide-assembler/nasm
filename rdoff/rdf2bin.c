@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "rdfload.h"
-#include "nasmlib.h"
+#include "../nasmlib.h"
 
 int32_t origin = 0;
 int align = 16;

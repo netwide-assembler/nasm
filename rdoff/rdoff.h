@@ -154,7 +154,7 @@ struct CommonRec {
 
 /* Some systems don't define this automatically */
 #if !defined(strdup)
-extern int8_t *strdup(const int8_t *);
+extern char *strdup(const char *);
 #endif
 
 typedef union RDFHeaderRec {

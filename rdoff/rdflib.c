@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
 
 /* functions supported:
  *   create a library	(no extra operands required)
@@ -52,7 +53,7 @@ const int8_t *usage =
 /* Library signature */
 const int8_t *rdl_signature = "RDLIB2", *sig_modname = ".sig";
 
-int8_t **_argv;
+char **_argv;
 
 #define _ENDIANNESS 0           /* 0 for little, 1 for big */
 
@@ -115,7 +116,7 @@ int32_t copyint32_t(FILE * fp, FILE * fp2)
     return l;
 }
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     FILE *fp, *fp2 = NULL, *fptmp;
     int8_t *p, buf[256], c;
