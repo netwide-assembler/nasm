@@ -6,8 +6,8 @@
  * length array (of pointers).
  */
 
-#ifndef _COLLECTN_H
-#define _COLLECTN_H
+#ifndef RDOFF_COLLECTN_H
+#define RDOFF_COLLECTN_H 1
 
 typedef struct tagCollection {
     void *p[32];                /* array of pointers to objects */

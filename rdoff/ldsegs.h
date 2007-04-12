@@ -3,15 +3,17 @@
  *		types of segment. This may be useful in other contexts also.
  */
 
-#ifndef UI16
-#define UI16 uint16_t
-#endif
+#ifndef RDOFF_LDSEGS_H
+#define RDOFF_LDSEGS_H 1
+
+#include <inttypes.h>
 
 struct segconfig {
-    UI16 typelow, typehi;       /* range of seg nos for which this is valid */
-    int8_t *typedesc;             /* a description of the segment type */
-    UI16 dowhat;                /* one of the SEG_xxxx values below */
-    UI16 mergetype;             /* if SEG_MERGE what type segment do we merge with?
+    uint16_t typelow, typehi;	/* range of seg nos for which this is valid */
+    int8_t *typedesc;		/* a description of the segment type */
+    uint16_t dowhat;		/* one of the SEG_xxxx values below */
+    uint16_t mergetype;		/* if SEG_MERGE what type segment do we merge
+				   with?
                                    0 -> same type of segment. This type is also
                                    used with SEG_NEWSEG. */
 };
@@ -54,3 +56,5 @@ struct segconfig sconft[SEGCONFIGMAX] = {
           exit(1);						\
        }							\
     }
+
+#endif

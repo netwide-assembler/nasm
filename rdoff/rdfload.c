@@ -153,7 +153,7 @@ int rdf_relocate(rdfmodule * m)
                 seg[r->r.offset] += (int8_t)rel;
                 break;
             case 2:
-                *(uint16 *) (seg + r->r.offset) += (uint16) rel;
+                *(uint16_t *) (seg + r->r.offset) += (uint16_t) rel;
                 break;
             case 4:
                 *(int32_t *)(seg + r->r.offset) += rel;

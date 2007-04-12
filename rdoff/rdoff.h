@@ -11,19 +11,15 @@
  * with instructions of how to obtain a copy via ftp.
  */
 
-#ifndef _RDOFF_H
-#define _RDOFF_H
+#ifndef RDOFF_RDOFF_H
+#define RDOFF_RDOFF_H 1
+
+#include <inttypes.h>
 
 /*
  * RDOFF definitions. They are used by RDOFF utilities and by NASM's
  * 'outrdf2.c' output module.
  */
-
-/* Type definitions */
-typedef uint32_t uint32;
-typedef uint16_t uint16;
-typedef uint8_t byte;
-typedef unsigned int bool;
 
 /* RDOFF format revision (currently used only when printing the version) */
 #define RDOFF2_REVISION		"0.6.1"
@@ -54,11 +50,11 @@ typedef unsigned int bool;
 
 /* 
  * Generic record - contains the type and length field, plus a 128 byte
- * int8_t array 'data'
+ * array 'data'
  */
 struct GenericRec {
-    byte type;
-    byte reclen;
+    uint8_t type;
+    uint8_t reclen;
     int8_t data[128];
 };
 
@@ -66,24 +62,24 @@ struct GenericRec {
  * Relocation record
  */
 struct RelocRec {
-    byte type;                  /* must be 1 */
-    byte reclen;                /* content length */
-    byte segment;               /* only 0 for code, or 1 for data supported,
+    uint8_t type;                  /* must be 1 */
+    uint8_t reclen;                /* content length */
+    uint8_t segment;               /* only 0 for code, or 1 for data supported,
                                    but add 64 for relative refs (ie do not require
                                    reloc @ loadtime, only linkage) */
     int32_t offset;                /* from start of segment in which reference is loc'd */
-    byte length;                /* 1 2 or 4 bytes */
-    uint16 refseg;              /* segment to which reference refers to */
+    uint8_t length;                /* 1 2 or 4 bytes */
+    uint16_t refseg;              /* segment to which reference refers to */
 };
 
 /*
  * Extern/import record
  */
 struct ImportRec {
-    byte type;                  /* must be 2 */
-    byte reclen;                /* content length */
-    byte flags;                 /* SYM_* flags (see below) */
-    uint16 segment;             /* segment number allocated to the label for reloc
+    uint8_t type;                  /* must be 2 */
+    uint8_t reclen;                /* content length */
+    uint8_t flags;                 /* SYM_* flags (see below) */
+    uint16_t segment;             /* segment number allocated to the label for reloc
                                    records - label is assumed to be at offset zero
                                    in this segment, so linker must fix up with offset
                                    of segment and of offset within segment */
@@ -95,10 +91,10 @@ struct ImportRec {
  * Public/export record
  */
 struct ExportRec {
-    byte type;                  /* must be 3 */
-    byte reclen;                /* content length */
-    byte flags;                 /* SYM_* flags (see below) */
-    byte segment;               /* segment referred to (0/1/2) */
+    uint8_t type;                  /* must be 3 */
+    uint8_t reclen;                /* content length */
+    uint8_t flags;                 /* SYM_* flags (see below) */
+    uint8_t segment;               /* segment referred to (0/1/2) */
     int32_t offset;                /* offset within segment */
     int8_t label[EXIM_LABEL_MAX]; /* zero terminated as in import */
 };
@@ -107,8 +103,8 @@ struct ExportRec {
  * DLL record
  */
 struct DLLRec {
-    byte type;                  /* must be 4 */
-    byte reclen;                /* content length */
+    uint8_t type;                  /* must be 4 */
+    uint8_t reclen;                /* content length */
     int8_t libname[MODLIB_NAME_MAX];      /* name of library to link with at load time */
 };
 
@@ -116,8 +112,8 @@ struct DLLRec {
  * BSS record
  */
 struct BSSRec {
-    byte type;                  /* must be 5 */
-    byte reclen;                /* content length */
+    uint8_t type;                  /* must be 5 */
+    uint8_t reclen;                /* content length */
     int32_t amount;                /* number of bytes BSS to reserve */
 };
 
@@ -125,8 +121,8 @@ struct BSSRec {
  * Module name record
  */
 struct ModRec {
-    byte type;                  /* must be 8 */
-    byte reclen;                /* content length */
+    uint8_t type;                  /* must be 8 */
+    uint8_t reclen;                /* content length */
     int8_t modname[MODLIB_NAME_MAX];      /* module name */
 };
 
@@ -134,11 +130,11 @@ struct ModRec {
  * Common variable record
  */
 struct CommonRec {
-    byte type;                  /* must be 10 */
-    byte reclen;                /* equals 7+label length */
-    uint16 segment;             /* segment number */
+    uint8_t type;                  /* must be 10 */
+    uint8_t reclen;                /* equals 7+label length */
+    uint16_t segment;             /* segment number */
     int32_t size;                  /* size of common variable */
-    uint16 align;               /* alignment (power of two) */
+    uint16_t align;               /* alignment (power of two) */
     int8_t label[EXIM_LABEL_MAX]; /* zero terminated as in import */
 };
 
@@ -171,14 +167,14 @@ typedef union RDFHeaderRec {
 
 struct SegmentHeaderRec {
     /* information from file */
-    uint16 type;
-    uint16 number;
-    uint16 reserved;
+    uint16_t type;
+    uint16_t number;
+    uint16_t reserved;
     int32_t length;
 
     /* information built up here */
     int32_t offset;
-    byte *data;                 /* pointer to segment data if it exists in memory */
+    uint8_t *data;                 /* pointer to segment data if it exists in memory */
 };
 
 typedef struct RDFFileInfo {
@@ -187,13 +183,13 @@ typedef struct RDFFileInfo {
     int32_t header_len;
     int32_t header_ofs;
 
-    byte *header_loc;           /* keep location of header */
+    uint8_t *header_loc;           /* keep location of header */
     int32_t header_fp;             /* current location within header for reading */
 
     struct SegmentHeaderRec seg[RDF_MAXSEGS];
     int nsegs;
 
-    int32_t eof_offset;            /* offset of the first byte beyond the end of this
+    int32_t eof_offset;            /* offset of the first uint8_t beyond the end of this
                                    module */
 
     int8_t *name;                 /* name of module in libraries */
@@ -204,7 +200,7 @@ typedef struct RDFFileInfo {
                                  * on 80x86 machines for efficiency */
 typedef struct memorybuffer {
     int length;
-    byte buffer[BUF_BLOCK_LEN];
+    uint8_t buffer[BUF_BLOCK_LEN];
     struct memorybuffer *next;
 } memorybuffer;
 
@@ -242,8 +238,8 @@ enum {
 
 /* utility functions */
 int32_t translateint32_t(int32_t in);
-uint16 translateint16_t(uint16 in);
-int8_t *translatesegmenttype(uint16 type);
+uint16_t translateint16_t(uint16_t in);
+int8_t *translatesegmenttype(uint16_t type);
 
 /* RDOFF file manipulation functions */
 int rdfopen(rdffile * f, const int8_t *name);
@@ -270,4 +266,4 @@ void rdfdoneheader(rdf_headerbuf * h);
 
 #endif                          /* RDOFF_UTILS */
 
-#endif                          /* _RDOFF_H */
+#endif                          /* RDOFF_RDOFF_H */

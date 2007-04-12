@@ -2,13 +2,17 @@
  * rdlar.h - definitions of new RDOFF library/archive format.
  */
 
-#ifndef _RDLAR_H
-#define _RDLAR_H
+#ifndef RDOFF_RDLAR_H
+#define RDOFF_RDLAR_H 1
 
-#ifndef _POSIX_SOURCE
-/* For some MS-DOS C compilers */
-#define getuid() 0
-#define getgid() 0
+#include <inttypes.h>
+
+/* For non-POSIX operating systems */
+#ifndef HAVE_GETUID
+# define getuid() 0
+#endif
+#ifndef HAVE_GETGID
+# define getgid() 0
 #endif
 
 #define RDLAMAG		0x414C4452      /* Archive magic */

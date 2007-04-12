@@ -57,7 +57,7 @@ memorybuffer *newmembuf()
 
 void membufwrite(memorybuffer * const b, void *data, int bytes)
 {
-    uint16 w;
+    uint16_t w;
     int32_t l;
 
     if (b->next) {              /* memory buffer full - use next buffer */
@@ -88,7 +88,7 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
         break;
 
     case -2:
-        w = *(uint16 *) data;
+        w = *(uint16_t *) data;
         b->buffer[b->length++] = w & 0xFF;
         w >>= 8;
         b->buffer[b->length++] = w & 0xFF;
@@ -152,9 +152,9 @@ int32_t translateint32_t(int32_t in)
     return r;
 }
 
-uint16 translateint16_t(uint16 in)
+uint16_t translateint16_t(uint16_t in)
 {
-    uint16 r;
+    uint16_t r;
     uint8_t *i;
 
     i = (uint8_t *)&in;
@@ -171,7 +171,7 @@ static int8_t *knownsegtypes[8] = {
 };
 
 /* Get a textual string describing the segment type */
-int8_t *translatesegmenttype(uint16 type)
+int8_t *translatesegmenttype(uint16_t type)
 {
     if (type < 8)
         return knownsegtypes[type];
@@ -228,7 +228,7 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const int8_t *name)
     int8_t buf[8];
     int32_t initpos;
     int32_t l;
-    uint16 s;
+    uint16_t s;
 
     if (translateint32_t(0x01020304) != 0x01020304) {
         /* fix this to be portable! */
@@ -354,14 +354,14 @@ int rdfloadseg(rdffile * f, int segment, void *buffer)
     case RDOFF_HEADER:
         fpos = f->header_ofs;
         slen = f->header_len;
-        f->header_loc = (byte *) buffer;
+        f->header_loc = (uint8_t *) buffer;
         f->header_fp = 0;
         break;
     default:
         if (segment < f->nsegs) {
             fpos = f->seg[segment].offset;
             slen = f->seg[segment].length;
-            f->seg[segment].data = (byte *) buffer;
+            f->seg[segment].data = (uint8_t *) buffer;
         } else {
             return rdf_errno = RDF_ERR_SEGMENT;
         }

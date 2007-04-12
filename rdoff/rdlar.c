@@ -241,7 +241,7 @@ int add_module(FILE * libfp, const int8_t *fname, int8_t *modname)
 /*
  * Main
  */
-int main(int argc, int8_t *argv[])
+int main(int argc, char **argv)
 {
     FILE *libfp, *tmpfp, *modfp = NULL;
     struct stat finfo;

@@ -149,7 +149,7 @@ static void nasm_fputs(const int8_t *line, FILE * outfile)
         puts(line);
 }
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     pass0 = 1;
     want_usage = terminate_after_phase = FALSE;

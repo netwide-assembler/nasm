@@ -25,7 +25,7 @@ int8_t *getfilename(int8_t *pathname)
     return lastslash + 1;
 }
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     rdfmodule *m;
     int tmp;

@@ -72,8 +72,8 @@ static efunc error;
 static struct seginfo {
     int8_t *segname;
     int segnumber;
-    uint16 segtype;
-    uint16 segreserved;
+    uint16_t segtype;
+    uint16_t segreserved;
     int32_t seglength;
 } segments[RDF_MAXSEGS];
 
@@ -225,7 +225,7 @@ static void write_reloc_rec(struct RelocRec *r)
 {
     int8_t buf[4], *b;
 
-    if (r->refseg != (uint16) NO_SEG && (r->refseg & 1))        /* segment base ref */
+    if (r->refseg != (uint16_t) NO_SEG && (r->refseg & 1))        /* segment base ref */
         r->type = RDFREC_SEGRELOC;
 
     r->refseg >>= 1;            /* adjust segment nos to RDF rather than NASM */
@@ -351,7 +351,7 @@ static void rdf2_deflabel(int8_t *name, int32_t segment, int32_t offset,
     struct CommonRec ci;
     static int farsym = 0;
     static int i;
-    byte symflags = 0;
+    uint8_t symflags = 0;
     int len;
 
     /* Check if the label length is OK */

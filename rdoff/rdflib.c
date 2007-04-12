@@ -19,7 +19,7 @@
  *
  * All module names beginning with '.' are reserved for possible future
  * extensions. The linker ignores all such modules, assuming they have
- * the format of a six byte type & version identifier followed by int32_t
+ * the format of a six uint8_t type & version identifier followed by int32_t
  * content size, followed by data.
  */
 
@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 #include <time.h>
 #include <inttypes.h>
 
@@ -40,7 +41,7 @@
  *   list modules
  */
 
-const int8_t *usage =
+const char *usage =
     "usage:\n"
     "  rdflib x libname [extra operands]\n\n"
     "  where x is one of:\n"

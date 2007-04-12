@@ -9,8 +9,8 @@
  * file.
  */
 
-#ifndef _RDFLOAD_H
-#define _RDFLOAD_H
+#ifndef RDOFF_RDFLOAD_H
+#define RDOFF_RDFLOAD_H 1
 
 #define RDOFF_UTILS
 

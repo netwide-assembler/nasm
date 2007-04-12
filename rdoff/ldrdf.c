@@ -70,8 +70,8 @@ struct modulenode {
  */
 
 void processmodule(const int8_t *filename, struct modulenode *mod);
-int allocnewseg(uint16 type, uint16 reserved);
-int findsegment(uint16 type, uint16 reserved);
+int allocnewseg(uint16_t type, uint16_t reserved);
+int findsegment(uint16_t type, uint16_t reserved);
 void symtab_add(const int8_t *symbol, int segment, int32_t offset);
 int symtab_get(const int8_t *symbol, int *segment, int32_t *offset);
 
@@ -417,7 +417,7 @@ int lookformodule(const int8_t *name)
  * a segment of the type requested, and if one isn't found allocates a
  * new one.
  */
-int allocnewseg(uint16 type, uint16 reserved)
+int allocnewseg(uint16_t type, uint16_t reserved)
 {
     outputseg[nsegs].type = type;
     outputseg[nsegs].number = nsegs;
@@ -429,7 +429,7 @@ int allocnewseg(uint16 type, uint16 reserved)
     return nsegs++;
 }
 
-int findsegment(uint16 type, uint16 reserved)
+int findsegment(uint16_t type, uint16_t reserved)
 {
     int i;
 
@@ -686,7 +686,7 @@ void write_output(const int8_t *filename)
     symtabEnt *se;
     segtab segs;
     int32_t offset;
-    byte *data;
+    uint8_t *data;
 
     if ((f = fopen(filename, "wb")) == NULL) {
         fprintf(stderr, "ldrdf: couldn't open %s for output\n", filename);
@@ -1096,7 +1096,7 @@ void write_output(const int8_t *filename)
      * the output file
      */
     for (i = 0; i < nsegs; i++) {
-        uint16 s;
+        uint16_t s;
         int32_t l;
 
         if (i == 2)
@@ -1138,7 +1138,7 @@ void usage()
     exit(0);
 }
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     int8_t *outname = "aout.rdf";
     int moduleloaded = 0;

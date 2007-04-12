@@ -2,8 +2,11 @@
  * rdlib.h	Functions for manipulating libraries of RDOFF object files.
  */
 
+#ifndef RDOFF_RDLIB_H
+#define RDOFF_RDLIB_H 1
+
 struct librarynode {
-    int8_t *name;
+    char *name;
     FILE *fp;                   /* initialised to NULL - always check */
     int referenced;             /* & open if required. Close afterwards */
     struct librarynode *next;   /* if ! referenced. */
@@ -22,3 +25,5 @@ int rdl_searchlib(struct librarynode *lib, const int8_t *label, rdffile * f);
 int rdl_openmodule(struct librarynode *lib, int module, rdffile * f);
 
 void rdl_perror(const int8_t *apname, const int8_t *filename);
+
+#endif

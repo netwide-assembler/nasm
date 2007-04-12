@@ -40,7 +40,7 @@ static int write_data_record(FILE * of, int ofs, int nbytes,
     return (ofs);
 }
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     rdfmodule *m;
     int tmp;

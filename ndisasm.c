@@ -36,7 +36,7 @@ static const int8_t *help =
 static void output_ins(uint32_t, uint8_t *, int, int8_t *);
 static void skip(uint32_t dist, FILE * fp);
 
-int main(int argc, int8_t **argv)
+int main(int argc, char **argv)
 {
     uint8_t buffer[INSN_MAX * 2], *p, *q;
     int8_t outbuf[256];

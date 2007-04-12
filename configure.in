@@ -118,6 +118,9 @@ if test $ac_cv_func_snprintf = no; then
   AC_MSG_ERROR([NASM requires ISO C99 (specifically, "vsnprintf")])
 fi
 
+AC_CHECK_FUNCS(getuid)
+AC_CHECK_FUNCS(getgid)
+
 if test $ac_cv_prog_make_vpathok = no; then
   echo Copying generated srcs into build directory to compensate for VPATH breakage
   for file in macros.c insnsa.c insnsd.c insnsn.c insnsi.h version.h version.mac; do

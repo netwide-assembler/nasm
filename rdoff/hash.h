@@ -8,4 +8,11 @@
  * distributed in the NASM archive.
  */
 
-unsigned hash(const int8_t *name);
+#ifndef RDOFF_HASH_H
+#define RDOFF_HASH_H 1
+
+#include <inttypes.h>
+
+uint32_t hash(const char *name);
+
+#endif

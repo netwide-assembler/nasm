@@ -6,6 +6,11 @@
  * distributed in the NASM archive.
  */
 
+#ifndef RDOFF_SYMTAB_H
+#define RDOFF_SYMTAB_H 1
+
+#include <inttypes.h>
+
 typedef struct {
     int8_t *name;
     int segment;
@@ -18,3 +23,5 @@ void symtabDone(void *symtab);
 void symtabInsert(void *symtab, symtabEnt * ent);
 symtabEnt *symtabFind(void *symtab, const int8_t *name);
 void symtabDump(void *symtab, FILE * of);
+
+#endif
