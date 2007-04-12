@@ -205,7 +205,7 @@ static int exact_log2 (uint32_t align) {
     if (align != (align & -align)) {
 	return -1;
     } else {
-#ifdef __GNUC__
+#if __GNUC__ >= 4
 	return (align ? __builtin_ctzl (align) : 0);
 #else
 	uint32_t result = 0;
