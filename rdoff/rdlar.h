@@ -6,6 +6,7 @@
 #define RDOFF_RDLAR_H 1
 
 #include <inttypes.h>
+#include "config.h"
 
 /* For non-POSIX operating systems */
 #ifndef HAVE_GETUID

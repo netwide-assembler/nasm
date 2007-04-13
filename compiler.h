@@ -16,7 +16,11 @@
  */
 
 #ifndef COMPILER_H
-#define COMPILER_H
+#define COMPILER_H 1
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #ifdef __GNUC__
 # if __GNUC__ >= 4
@@ -33,4 +37,4 @@
 # define _unused
 #endif
 
-#endif
+#endif	/* COMPILER_H */
