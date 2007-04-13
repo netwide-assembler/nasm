@@ -60,7 +60,7 @@ fi
 AC_PROG_INSTALL
 
 if test "$GCC" = "yes"; then
-  GCCFLAGS="-Wall -std=c99 -pedantic"
+  GCCFLAGS="-W -Wall -std=c99 -pedantic"
 else
   GCCFLAGS=
 fi
