@@ -1491,7 +1491,7 @@ void stabs_generate(void)
     stabstrbuf = ssbuf;
 }
 
-void stabs_cleanup()
+void stabs_cleanup(void)
 {
     struct linelist *ptr, *del;
     if (!stabslines)

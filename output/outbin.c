@@ -1192,7 +1192,7 @@ static void bin_assign_attributes(struct Section *sec, char *astring)
     }
 }
 
-static void bin_define_section_labels()
+static void bin_define_section_labels(void)
 {
     static int labels_defined = 0;
     struct Section *sec;
@@ -1438,7 +1438,7 @@ struct ofmt of_bin = {
 };
 
 /* This is needed for bin_define_section_labels() */
-struct ofmt *bin_get_ofmt()
+struct ofmt *bin_get_ofmt(void)
 {
     return &of_bin;
 }
