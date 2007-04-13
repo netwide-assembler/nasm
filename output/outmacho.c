@@ -568,7 +568,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
             while ((NULL != sectionAttributes)
                    && (currentAttribute = strtok((char*)&sectionAttributes, " \t"))) {
                 if (0 != *currentAttribute) {
-                    if (0 == strncasecmp("align=", currentAttribute, 6)) {
+                    if (!(nasm_strnicmp("align=", currentAttribute, 6))) {
                         char *end;
                         int newAlignment, value;
 
@@ -604,7 +604,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         }
 
                         s->align = newAlignment;
-                    } else if (0 == strcasecmp("data", currentAttribute)) {
+                    } else if (!(nasm_stricmp("data", currentAttribute))) {
                         /* Do nothing; 'data' is implicit */
                     } else {
                         error(ERR_PANIC,
