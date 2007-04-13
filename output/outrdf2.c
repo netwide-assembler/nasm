@@ -351,7 +351,7 @@ static void rdf2_deflabel(int8_t *name, int32_t segment, int32_t offset,
     struct CommonRec ci;
     static int farsym = 0;
     static int i;
-    uint8_t symflags = 0;
+    int8_t symflags = 0;
     int len;
 
     /* Check if the label length is OK */
