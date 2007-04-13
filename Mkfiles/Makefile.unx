@@ -28,13 +28,13 @@ mandir = $(prefix)/man
 .SUFFIXES: .c .o .h .mac .pl
 
 .c.o:
-	$(CC) -c $(CFLAGS) -o $*.o $<
+	$(CC) -c $(CFLAGS) -o $*.o $*.c
 
 NASM = 	nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        	parser.o outform.o output/outbin.o output/outaout.o \
 	output/outcoff.o output/outelf.o \
        	output/outobj.o output/outas86.o output/outdbg.o preproc.o listing.o \
-       	eval.o output/outrdf2.o output/outieee.o
+       	eval.o output/outrdf2.o output/outieee.o output/outmacho.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o insnsd.o
 
@@ -144,6 +144,8 @@ output/outcoff.o: output/outcoff.c regs.h outform.h version.h nasmlib.h \
 output/outdbg.o: output/outdbg.c regs.h outform.h version.h nasmlib.h nasm.h
 output/outelf.o: output/outelf.c regs.h outform.h version.h nasmlib.h nasm.h
 output/outieee.o: output/outieee.c regs.h outform.h version.h nasmlib.h \
+ nasm.h
+output/outmacho.o: output/outmacho.c regs.h outform.h version.h nasmlib.h \
  nasm.h
 output/outobj.o: output/outobj.c regs.h outform.h version.h nasmlib.h nasm.h
 output/outrdf.o: output/outrdf.c regs.h outform.h version.h nasmlib.h nasm.h
