@@ -52,7 +52,7 @@
 
 #define ARRAY_BOT 0x1
 
-static int8_t ieee_infile[FILENAME_MAX];
+static char ieee_infile[FILENAME_MAX];
 static int ieee_uppercase;
 
 static efunc error;
@@ -76,7 +76,7 @@ struct LineNumber {
 
 static struct FileName {
     struct FileName *next;
-    int8_t *name;
+    char *name;
     int32_t index;
 } *fnhead, **fntail;
 
@@ -88,7 +88,7 @@ static struct Array {
 
 static struct ieeePublic {
     struct ieeePublic *next;
-    int8_t *name;
+    char *name;
     int32_t offset;
     int32_t segment;               /* only if it's far-absolute */
     int32_t index;
@@ -97,7 +97,7 @@ static struct ieeePublic {
 
 static struct ieeeExternal {
     struct ieeeExternal *next;
-    int8_t *name;
+    char *name;
     int32_t commonsize;
 } *exthead, **exttail;
 
@@ -125,7 +125,7 @@ static struct ieeeSection {
     } combine;
     int32_t use32;                 /* is this segment 32-bit? */
     struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
-    int8_t *name;
+    char *name;
 } *seghead, **segtail, *ieee_seg_needs_update;
 
 struct ieeeObjData {
@@ -161,16 +161,16 @@ static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
                              int, uint32_t, int32_t);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
-static int32_t ieee_segment(int8_t *, int, int *);
+static int32_t ieee_segment(char *, int, int *);
 static void ieee_write_file(int debuginfo);
 static void ieee_write_byte(struct ieeeSection *, int);
 static void ieee_write_word(struct ieeeSection *, int);
 static void ieee_write_dword(struct ieeeSection *, int32_t);
-static void ieee_putascii(int8_t *, ...);
+static void ieee_putascii(char *, ...);
 static void ieee_putcs(int);
 static int32_t ieee_putld(int32_t, int32_t, uint8_t *);
 static int32_t ieee_putlr(struct ieeeFixupp *);
-static void ieee_unqualified_name(int8_t *, int8_t *);
+static void ieee_unqualified_name(char *, char *);
 
 /* 
  * pup init 
@@ -196,7 +196,7 @@ static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     checksum = 0;
     of_ieee.current_dfmt->init(&of_ieee, NULL, fp, errfunc);
 }
-static int ieee_set_info(enum geninfo type, int8_t **val)
+static int ieee_set_info(enum geninfo type, char **val)
 {
     (void)type;
     (void)val;
@@ -252,8 +252,8 @@ static void ieee_cleanup(int debuginfo)
 /*
  * callback for labels
  */
-static void ieee_deflabel(int8_t *name, int32_t segment,
-                          int32_t offset, int is_global, int8_t *special)
+static void ieee_deflabel(char *name, int32_t segment,
+                          int32_t offset, int is_global, char *special)
 {
     /*
      * We have three cases:
@@ -651,7 +651,7 @@ static void ieee_install_fixup(struct ieeeSection *seg,
 /*
  * segment registry
  */
-static int32_t ieee_segment(int8_t *name, int pass, int *bits)
+static int32_t ieee_segment(char *name, int pass, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -668,7 +668,7 @@ static int32_t ieee_segment(int8_t *name, int pass, int *bits)
     } else {
         struct ieeeSection *seg;
         int ieee_idx, attrs, rn_error;
-        int8_t *p;
+        char *p;
 
         /*
          * Look for segment attributes.
@@ -805,7 +805,7 @@ static int32_t ieee_segment(int8_t *name, int pass, int *bits)
 /*
  * directives supported
  */
-static int ieee_directive(int8_t *directive, int8_t *value, int pass)
+static int ieee_directive(char *directive, char *value, int pass)
 {
 
     (void)value;
@@ -843,7 +843,7 @@ static int32_t ieee_segbase(int32_t segment)
 /*
  * filename
  */
-static void ieee_filename(int8_t *inname, int8_t *outname, efunc error)
+static void ieee_filename(char *inname, char *outname, efunc error)
 {
     strcpy(ieee_infile, inname);
     standard_extension(inname, outname, ".o", error);
@@ -860,7 +860,7 @@ static void ieee_write_file(int debuginfo)
     struct ieeeObjData *data;
     struct ieeeFixupp *fix;
     struct Array *arr;
-    static int8_t boast[] = "The Netwide Assembler " NASM_VER;
+    static char boast[] = "The Netwide Assembler " NASM_VER;
     int i;
 
     /*
@@ -908,8 +908,8 @@ static void ieee_write_file(int debuginfo)
     if (!debuginfo && !strcmp(seg->name, "??LINE"))
         seg = seg->next;
     while (seg) {
-        int8_t buf[256];
-        int8_t attrib;
+        char buf[256];
+        char attrib;
         switch (seg->combine) {
         case CMB_PUBLIC:
         default:
@@ -958,7 +958,7 @@ static void ieee_write_file(int debuginfo)
     i = 1;
     for (seg = seghead; seg; seg = seg->next) {
         for (pub = seg->pubhead; pub; pub = pub->next) {
-            int8_t buf[256];
+            char buf[256];
             ieee_unqualified_name(buf, pub->name);
             ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
             if (pub->segment == -1)
@@ -979,7 +979,7 @@ static void ieee_write_file(int debuginfo)
     pub = fpubhead;
     i = 1;
     while (pub) {
-        int8_t buf[256];
+        char buf[256];
         ieee_unqualified_name(buf, pub->name);
         ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
         if (pub->segment == -1)
@@ -1003,7 +1003,7 @@ static void ieee_write_file(int debuginfo)
     ext = exthead;
     i = 1;
     while (ext) {
-        int8_t buf[256];
+        char buf[256];
         ieee_unqualified_name(buf, ext->name);
         ieee_putascii("NX%X,%02X%s.\r\n", i++, strlen(buf), buf);
         ext = ext->next;
@@ -1030,7 +1030,7 @@ static void ieee_write_file(int debuginfo)
     i = 1;
     for (seg = seghead; seg && debuginfo; seg = seg->next) {
         for (loc = seg->lochead; loc; loc = loc->next) {
-            int8_t buf[256];
+            char buf[256];
             ieee_unqualified_name(buf, loc->name);
             ieee_putascii("NN%X,%02X%s.\r\n", i, strlen(buf), buf);
             if (loc->segment == -1)
@@ -1114,9 +1114,9 @@ static void ieee_write_dword(struct ieeeSection *seg, int32_t data)
     ieee_write_byte(seg, (data >> 16) & 0xFF);
     ieee_write_byte(seg, (data >> 24) & 0xFF);
 }
-static void ieee_putascii(int8_t *format, ...)
+static void ieee_putascii(char *format, ...)
 {
-    int8_t buffer[256];
+    char buffer[256];
     int i, l;
     va_list ap;
 
@@ -1189,7 +1189,7 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
  * becomes an issue if real mode code is used.  A pure 32-bit linker could
  * get away without defining the virtual mode...
  */
-    int8_t buf[40];
+    char buf[40];
     int32_t size = p->size;
     switch (p->ftype) {
     case FT_SEG:
@@ -1241,7 +1241,7 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
 
 /* Dump all segment data (text and fixups )*/
 
-static void ieee_unqualified_name(int8_t *dest, int8_t *source)
+static void ieee_unqualified_name(char *dest, char *source)
 {
     if (ieee_uppercase) {
         while (*source)
@@ -1297,7 +1297,7 @@ static void dbgls_cleanup(void)
  * so, we have to make sure the ??LINE segment is avaialbe
  * as the first segment when this debug format is selected
  */
-static void dbgls_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
+static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
     struct FileName *fn;
     struct ieeeSection *seg;
@@ -1344,8 +1344,8 @@ static void dbgls_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
                      seg->currentpos);
 
 }
-static void dbgls_deflabel(int8_t *name, int32_t segment,
-                           int32_t offset, int is_global, int8_t *special)
+static void dbgls_deflabel(char *name, int32_t segment,
+                           int32_t offset, int is_global, char *special)
 {
     struct ieeeSection *seg;
     int used_special;           /* have we used the special text? */

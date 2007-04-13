@@ -43,7 +43,7 @@ struct Symbol {
     int32_t segment;               /* back-reference used by gsym_reloc */
     struct Symbol *next;        /* list of globals in each section */
     struct Symbol *nextfwd;     /* list of unresolved-size symbols */
-    int8_t *name;                 /* for unresolved-size symbols */
+    char *name;                 /* for unresolved-size symbols */
     int32_t symnum;                /* index into symbol table */
 };
 
@@ -218,7 +218,7 @@ static void aout_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static int32_t aout_section_names(int8_t *name, int pass, int *bits)
+static int32_t aout_section_names(char *name, int pass, int *bits)
 {
     /*
      * Default to 32 bits.
@@ -239,8 +239,8 @@ static int32_t aout_section_names(int8_t *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static void aout_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                          int is_global, int8_t *special)
+static void aout_deflabel(char *name, int32_t segment, int32_t offset,
+                          int is_global, char *special)
 {
     int pos = strslen + 4;
     struct Symbol *sym;
@@ -269,7 +269,7 @@ static void aout_deflabel(int8_t *name, int32_t segment, int32_t offset,
             if (!strcmp((*s)->name, name)) {
                 struct tokenval tokval;
                 expr *e;
-                int8_t *p = special;
+                char *p = special;
 
                 while (*p && !isspace(*p))
                     p++;
@@ -356,7 +356,7 @@ static void aout_deflabel(int8_t *name, int32_t segment, int32_t offset,
                 struct tokenval tokval;
                 expr *e;
                 int fwd = FALSE;
-                int8_t *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
+                char *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
 
                 if (!bsd) {
                     error(ERR_NONFATAL, "Linux a.out does not support"
@@ -886,24 +886,24 @@ static int32_t aout_segbase(int32_t segment)
     return segment;
 }
 
-static int aout_directive(int8_t *directive, int8_t *value, int pass)
+static int aout_directive(char *directive, char *value, int pass)
 {
     return 0;
 }
 
-static void aout_filename(int8_t *inname, int8_t *outname, efunc error)
+static void aout_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, ".o", error);
 }
 
-static const int8_t *aout_stdmac[] = {
+static const char *aout_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL
 };
 
-static int aout_set_info(enum geninfo type, int8_t **val)
+static int aout_set_info(enum geninfo type, char **val)
 {
     return 0;
 }

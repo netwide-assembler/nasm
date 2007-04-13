@@ -61,7 +61,7 @@ typedef struct IncPath IncPath;
  */
 struct SMacro {
     SMacro *next;
-    int8_t *name;
+    char *name;
     int casesense;
     int nparam;
     int in_progress;
@@ -87,7 +87,7 @@ struct SMacro {
  */
 struct MMacro {
     MMacro *next;
-    int8_t *name;
+    char *name;
     int casesense;
     int64_t nparam_min, nparam_max;
     int plus;                   /* is the last parameter greedy? */
@@ -113,7 +113,7 @@ struct MMacro {
 struct Context {
     Context *next;
     SMacro *localmac;
-    int8_t *name;
+    char *name;
     uint32_t number;
 };
 
@@ -138,7 +138,7 @@ struct Context {
  */
 struct Token {
     Token *next;
-    int8_t *text;
+    char *text;
     SMacro *mac;                /* associated macro for TOK_SMAC_END */
     int type;
 };
@@ -185,7 +185,7 @@ struct Include {
     FILE *fp;
     Cond *conds;
     Line *expansion;
-    int8_t *fname;
+    char *fname;
     int lineno, lineinc;
     MMacro *mstk;               /* stack of active macros/reps */
 };
@@ -197,7 +197,7 @@ struct Include {
  */
 struct IncPath {
     IncPath *next;
-    int8_t *path;
+    char *path;
 };
 
 /*
@@ -251,7 +251,7 @@ enum {
  * we treat CXZ and ECXZ as condition codes, albeit non-invertible
  * ones, so we need a different enum...
  */
-static const int8_t *conditions[] = {
+static const char *conditions[] = {
     "a", "ae", "b", "be", "c", "cxz", "e", "ecxz", "g", "ge", "l", "le",
     "na", "nae", "nb", "nbe", "nc", "ne", "ng", "nge", "nl", "nle", "no",
     "np", "ns", "nz", "o", "p", "pe", "po", "s", "z"
@@ -270,7 +270,7 @@ static int inverse_ccs[] = {
 /*
  * Directive names.
  */
-static const int8_t *directives[] = {
+static const char *directives[] = {
     "%arg",
     "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
     "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifnctx",
@@ -331,13 +331,13 @@ enum {
     TM_IFNDEF, TM_INCLUDE, TM_LOCAL
 };
 
-static const int8_t *tasm_directives[] = {
+static const char *tasm_directives[] = {
     "arg", "elif", "else", "endif", "if", "ifdef", "ifdifi",
     "ifndef", "include", "local"
 };
 
 static int StackSize = 4;
-static int8_t *StackPointer = "ebp";
+static char *StackPointer = "ebp";
 static int ArgOffset = 8;
 static int LocalOffset = 4;
 
@@ -385,17 +385,17 @@ static MMacro *defining;
 #define PARAM_DELTA 16
 
 /*
- * The standard macro set: defined as `static int8_t *stdmac[]'. Also
+ * The standard macro set: defined as `static char *stdmac[]'. Also
  * gives our position in the macro set, when we're processing it.
  */
 #include "macros.c"
-static const int8_t **stdmacpos;
+static const char **stdmacpos;
 
 /*
  * The extra standard macros that come from the object format, if
  * any.
  */
-static const int8_t **extrastdmac = NULL;
+static const char **extrastdmac = NULL;
 int any_extrastdmac;
 
 /*
@@ -416,12 +416,12 @@ static Blocks blocks = { NULL, NULL };
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
-static Context *get_ctx(int8_t *name, int all_contexts);
+static Context *get_ctx(char *name, int all_contexts);
 static void make_tok_num(Token * tok, int32_t val);
-static void error(int severity, const int8_t *fmt, ...);
+static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
-static Token *new_Token(Token * next, int type, int8_t *text, int txtlen);
+static Token *new_Token(Token * next, int type, char *text, int txtlen);
 static Token *delete_Token(Token * t);
 
 /*
@@ -437,10 +437,10 @@ static Token *delete_Token(Token * t);
  * place to do it for the moment, and it is a hack (ideally it would
  * be nice to be able to use the NASM pre-processor to do it).
  */
-static int8_t *check_tasm_directive(int8_t *line)
+static char *check_tasm_directive(char *line)
 {
     int32_t i, j, k, m, len;
-    int8_t *p = line, *oldline, oldchar;
+    char *p = line, *oldline, oldchar;
 
     /* Skip whitespace */
     while (isspace(*p) && *p != 0)
@@ -495,10 +495,10 @@ static int8_t *check_tasm_directive(int8_t *line)
  * flags') into NASM preprocessor line number indications (`%line
  * lineno file').
  */
-static int8_t *prepreproc(int8_t *line)
+static char *prepreproc(char *line)
 {
     int lineno, fnlen;
-    int8_t *fname, *oldline;
+    char *fname, *oldline;
 
     if (line[0] == '#' && line[1] == ' ') {
         oldline = line;
@@ -523,7 +523,7 @@ static int8_t *prepreproc(int8_t *line)
  * invariant under case changes. We implement this by applying a
  * perfectly normal hash function to the uppercase of the string.
  */
-static int hash(int8_t *s)
+static int hash(char *s)
 {
     unsigned int h = 0;
     int i = 0;
@@ -609,14 +609,14 @@ static void ctx_pop(void)
  * return lines from the standard macro set if this has not already
  * been done.
  */
-static int8_t *read_line(void)
+static char *read_line(void)
 {
-    int8_t *buffer, *p, *q;
+    char *buffer, *p, *q;
     int bufsize, continued_count;
 
     if (stdmacpos) {
         if (*stdmacpos) {
-            int8_t *ret = nasm_strdup(*stdmacpos++);
+            char *ret = nasm_strdup(*stdmacpos++);
             if (!*stdmacpos && any_extrastdmac) {
                 stdmacpos = extrastdmac;
                 any_extrastdmac = FALSE;
@@ -718,9 +718,9 @@ static int8_t *read_line(void)
  * don't need to parse the value out of e.g. numeric tokens: we
  * simply split one string into many.
  */
-static Token *tokenize(int8_t *line)
+static Token *tokenize(char *line)
 {
-    int8_t *p = line;
+    char *p = line;
     int type;
     Token *list = NULL;
     Token *t, **tail = &list;
@@ -769,7 +769,7 @@ static Token *tokenize(int8_t *line)
             /*
              * A string token.
              */
-            int8_t c = *p;
+            char c = *p;
             p++;
             type = TOK_STRING;
             while (*p && *p != c)
@@ -814,7 +814,7 @@ static Token *tokenize(int8_t *line)
              * Anything else is an operator of some kind. We check
              * for all the double-character operators (>>, <<, //,
              * %%, <=, >=, ==, !=, <>, &&, ||, ^^), but anything
-             * else is a single-int8_tacter operator.
+             * else is a single-character operator.
              */
             type = TOK_OTHER;
             if ((p[0] == '>' && p[1] == '>') ||
@@ -900,7 +900,7 @@ static void delete_Blocks(void)
  *  back to the caller.  It sets the type and text elements, and
  *  also the mac and next elements to NULL.
  */
-static Token *new_Token(Token * next, int type, int8_t *text, int txtlen)
+static Token *new_Token(Token * next, int type, char *text, int txtlen)
 {
     Token *t;
     int i;
@@ -942,16 +942,16 @@ static Token *delete_Token(Token * t)
  * If expand_locals is not zero, identifiers of the form "%$*xxx"
  * will be transformed into ..@ctxnum.xxx
  */
-static int8_t *detoken(Token * tlist, int expand_locals)
+static char *detoken(Token * tlist, int expand_locals)
 {
     Token *t;
     int len;
-    int8_t *line, *p;
+    char *line, *p;
 
     len = 0;
     for (t = tlist; t; t = t->next) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
-            int8_t *p = getenv(t->text + 2);
+            char *p = getenv(t->text + 2);
             nasm_free(t->text);
             if (p)
                 t->text = nasm_strdup(p);
@@ -964,8 +964,8 @@ static int8_t *detoken(Token * tlist, int expand_locals)
             t->text[0] == '%' && t->text[1] == '$') {
             Context *ctx = get_ctx(t->text, FALSE);
             if (ctx) {
-                int8_t buffer[40];
-                int8_t *p, *q = t->text + 2;
+                char buffer[40];
+                char *p, *q = t->text + 2;
 
                 q += strspn(q, "$");
                 snprintf(buffer, sizeof(buffer), "..@%lu.", ctx->number);
@@ -1050,7 +1050,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 
     if (tline->type == TOK_STRING) {
         int rn_warn;
-        int8_t q, *r;
+        char q, *r;
         int l;
 
         r = tline->text;
@@ -1105,7 +1105,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
  * simple wrapper which calls either strcmp or nasm_stricmp
  * depending on the value of the `casesense' parameter.
  */
-static int mstrcmp(int8_t *p, int8_t *q, int casesense)
+static int mstrcmp(char *p, char *q, int casesense)
 {
     return casesense ? strcmp(p, q) : nasm_stricmp(p, q);
 }
@@ -1120,7 +1120,7 @@ static int mstrcmp(int8_t *p, int8_t *q, int casesense)
  * only the context that directly results from the number of $'s
  * in variable's name.
  */
-static Context *get_ctx(int8_t *name, int all_contexts)
+static Context *get_ctx(char *name, int all_contexts)
 {
     Context *ctx;
     SMacro *m;
@@ -1167,10 +1167,10 @@ static Context *get_ctx(int8_t *name, int all_contexts)
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static FILE *inc_fopen(int8_t *file)
+static FILE *inc_fopen(char *file)
 {
     FILE *fp;
-    int8_t *prefix = "", *combine;
+    char *prefix = "", *combine;
     IncPath *ip = ipath;
     static int namelen = 0;
     int len = strlen(file);
@@ -1223,7 +1223,7 @@ static FILE *inc_fopen(int8_t *file)
  * is true, macro will be searched in outer contexts as well.
  */
 static int
-smacro_defined(Context * ctx, int8_t *name, int nparam, SMacro ** defn,
+smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
                int nocase)
 {
     SMacro *m;
@@ -1586,7 +1586,7 @@ static int if_condition(Token * tline, int i)
  * First tokenize the string, apply "expand_smacro" and then de-tokenize back.
  * The returned variable should ALWAYS be freed after usage.
  */
-void expand_macros_in_string(int8_t **p)
+void expand_macros_in_string(char **p)
 {
     Token *line = tokenize(*p);
     line = expand_smacro(line);
@@ -1610,7 +1610,7 @@ static int do_directive(Token * tline)
     int i, j, nparam, nolist;
     int64_t k, m;
     int offset;
-    int8_t *p, *mname;
+    char *p, *mname;
     Include *inc;
     Context *ctx;
     Cond *cond;
@@ -1735,7 +1735,7 @@ static int do_directive(Token * tline)
          */
         offset = ArgOffset;
         do {
-            int8_t *arg, directive[256];
+            char *arg, directive[256];
             int size = StackSize;
 
             /* Find the argument name */
@@ -1814,7 +1814,7 @@ static int do_directive(Token * tline)
          */
         offset = LocalOffset;
         do {
-            int8_t *local, directive[256];
+            char *local, directive[256];
             int size = StackSize;
 
             /* Find the argument name */
@@ -2870,9 +2870,9 @@ static Token *expand_mmac_params(Token * tline)
             (((tline->text[1] == '+' || tline->text[1] == '-')
               && tline->text[2]) || tline->text[1] == '%'
              || (tline->text[1] >= '0' && tline->text[1] <= '9'))) {
-            int8_t *text = NULL;
+            char *text = NULL;
             int type = 0, cc;   /* type = 0 to placate optimisers */
-            int8_t tmpbuf[30];
+            char tmpbuf[30];
             int n, i;
             MMacro *mac;
 
@@ -2996,7 +2996,7 @@ static Token *expand_mmac_params(Token * tline)
             break;
         case TOK_ID:
             if (tt->type == TOK_ID || tt->type == TOK_NUMBER) {
-                int8_t *tmp = nasm_strcat(t->text, tt->text);
+                char *tmp = nasm_strcat(t->text, tt->text);
                 nasm_free(t->text);
                 t->text = tmp;
                 t->next = delete_Token(tt);
@@ -3004,7 +3004,7 @@ static Token *expand_mmac_params(Token * tline)
             break;
         case TOK_NUMBER:
             if (tt->type == TOK_NUMBER) {
-                int8_t *tmp = nasm_strcat(t->text, tt->text);
+                char *tmp = nasm_strcat(t->text, tt->text);
                 nasm_free(t->text);
                 t->text = tmp;
                 t->next = delete_Token(tt);
@@ -3031,7 +3031,7 @@ static Token *expand_smacro(Token * tline)
     int nparam, sparam, brackets, rescan;
     Token *org_tline = tline;
     Context *ctx;
-    int8_t *mname;
+    char *mname;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3168,7 +3168,7 @@ static Token *expand_smacro(Token * tline)
                             }
                             if (tline->type == TOK_OTHER
                                 && tline->text[1] == 0) {
-                                int8_t ch = tline->text[0];
+                                char ch = tline->text[0];
                                 if (ch == ',' && !paren && brackets <= 0) {
                                     if (++nparam >= sparam) {
                                         sparam += PARAM_DELTA;
@@ -3317,7 +3317,7 @@ static Token *expand_smacro(Token * tline)
         if (t->next->type == TOK_ID ||
             t->next->type == TOK_PREPROC_ID ||
             t->next->type == TOK_NUMBER) {
-            int8_t *p = nasm_strcat(t->text, t->next->text);
+            char *p = nasm_strcat(t->text, t->next->text);
             nasm_free(t->text);
             t->next = delete_Token(t->next);
             t->text = p;
@@ -3686,10 +3686,10 @@ static int expand_mmacro(Token * tline)
  * won't want to see same error twice (preprocessing is done once
  * per pass) we will want to show errors only during pass one.
  */
-static void error(int severity, const int8_t *fmt, ...)
+static void error(int severity, const char *fmt, ...)
 {
     va_list arg;
-    int8_t buff[1024];
+    char buff[1024];
 
     /* If we're in a dead branch of IF or something like it, ignore the error */
     if (istk && istk->conds && !emitting(istk->conds->state))
@@ -3707,7 +3707,7 @@ static void error(int severity, const int8_t *fmt, ...)
 }
 
 static void
-pp_reset(int8_t *file, int apass, efunc errfunc, evalfunc eval,
+pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
          ListGen * listgen)
 {
     int h;
@@ -3744,9 +3744,9 @@ pp_reset(int8_t *file, int apass, efunc errfunc, evalfunc eval,
     pass = apass;
 }
 
-static int8_t *pp_getline(void)
+static char *pp_getline(void)
 {
-    int8_t *line;
+    char *line;
     Token *tline;
 
     while (1) {
@@ -3840,7 +3840,7 @@ static int8_t *pp_getline(void)
         while (1) {             /* until we get a line we can use */
 
             if (istk->expansion) {      /* from a macro expansion */
-                int8_t *p;
+                char *p;
                 Line *l = istk->expansion;
                 if (istk->mstk)
                     istk->mstk->lineno++;
@@ -3989,7 +3989,7 @@ static void pp_cleanup(int pass)
     }
 }
 
-void pp_include_path(int8_t *path)
+void pp_include_path(char *path)
 {
     IncPath *i;
 /*  by alexfru: order of path inclusion fixed (was reverse order) */
@@ -4021,11 +4021,11 @@ void pp_include_path(int8_t *path)
  * The function use is simple:
  *
  * The 1st call (with NULL argument) returns a pointer to the 1st path
- * (int8_t** type) or NULL if none include paths available.
+ * (char** type) or NULL if none include paths available.
  *
  * All subsequent calls take as argument the value returned by this
  * function last. The return value is either the next path
- * (int8_t** type) or NULL if the end of the paths list is reached.
+ * (char** type) or NULL if the end of the paths list is reached.
  *
  * It is maybe not the best way to do things, but I didn't want
  * to export too much, just one or two functions and no types or
@@ -4034,7 +4034,7 @@ void pp_include_path(int8_t *path)
  * Can't say I like the current situation with e.g. this path list either,
  * it seems to be never deallocated after creation...
  */
-int8_t **pp_get_include_path_ptr(int8_t **pPrevPath)
+char **pp_get_include_path_ptr(char **pPrevPath)
 {
 /*   This macro returns offset of a member of a structure */
 #define GetMemberOffset(StructType,MemberName)\
@@ -4047,7 +4047,7 @@ int8_t **pp_get_include_path_ptr(int8_t **pPrevPath)
         else
             return NULL;
     }
-    i = (IncPath *) ((int8_t *)pPrevPath - GetMemberOffset(IncPath, path));
+    i = (IncPath *) ((char *)pPrevPath - GetMemberOffset(IncPath, path));
     i = i->next;
     if (i != NULL)
         return &i->path;
@@ -4056,7 +4056,7 @@ int8_t **pp_get_include_path_ptr(int8_t **pPrevPath)
 #undef GetMemberOffset
 }
 
-void pp_pre_include(int8_t *fname)
+void pp_pre_include(char *fname)
 {
     Token *inc, *space, *name;
     Line *l;
@@ -4072,11 +4072,11 @@ void pp_pre_include(int8_t *fname)
     predef = l;
 }
 
-void pp_pre_define(int8_t *definition)
+void pp_pre_define(char *definition)
 {
     Token *def, *space;
     Line *l;
-    int8_t *equals;
+    char *equals;
 
     equals = strchr(definition, '=');
     space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
@@ -4094,7 +4094,7 @@ void pp_pre_define(int8_t *definition)
     predef = l;
 }
 
-void pp_pre_undefine(int8_t *definition)
+void pp_pre_undefine(char *definition)
 {
     Token *def, *space;
     Line *l;
@@ -4120,7 +4120,7 @@ void pp_pre_undefine(int8_t *definition)
  * PASS A VALID STRING TO THIS FUNCTION!!!!!
  */
 
-void pp_runtime(int8_t *definition)
+void pp_runtime(char *definition)
 {
     Token *def;
     
@@ -4130,14 +4130,14 @@ void pp_runtime(int8_t *definition)
         
 }
 
-void pp_extra_stdmac(const int8_t **macros)
+void pp_extra_stdmac(const char **macros)
 {
     extrastdmac = macros;
 }
 
 static void make_tok_num(Token * tok, int32_t val)
 {
-    int8_t numbuf[20];
+    char numbuf[20];
     snprintf(numbuf, sizeof(numbuf), "%ld", val);
     tok->text = nasm_strdup(numbuf);
     tok->type = TOK_NUMBER;

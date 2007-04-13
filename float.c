@@ -57,11 +57,11 @@ static int ieee_multiply(uint16_t *to, uint16_t *from)
     }
 }
 
-static void ieee_flconvert(int8_t *string, uint16_t *mant,
+static void ieee_flconvert(char *string, uint16_t *mant,
                            int32_t *exponent, efunc error)
 {
-    int8_t digits[MANT_DIGITS];
-    int8_t *p, *q, *r;
+    char digits[MANT_DIGITS];
+    char *p, *q, *r;
     uint16_t mult[MANT_WORDS], bit;
     uint16_t *m;
     int32_t tenpwr, twopwr;
@@ -213,7 +213,7 @@ static int ieee_round(uint16_t *mant, int i)
 
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
-static int to_double(int8_t *str, int32_t sign, uint8_t *result,
+static int to_double(char *str, int32_t sign, uint8_t *result,
                      efunc error)
 {
     uint16_t mant[MANT_WORDS];
@@ -275,7 +275,7 @@ static int to_double(int8_t *str, int32_t sign, uint8_t *result,
     return 1;                   /* success */
 }
 
-static int to_float(int8_t *str, int32_t sign, uint8_t *result,
+static int to_float(char *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
     uint16_t mant[MANT_WORDS];
@@ -330,7 +330,7 @@ static int to_float(int8_t *str, int32_t sign, uint8_t *result,
     return 1;
 }
 
-static int to_ldoub(int8_t *str, int32_t sign, uint8_t *result,
+static int to_ldoub(char *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
     uint16_t mant[MANT_WORDS];
@@ -391,7 +391,7 @@ static int to_ldoub(int8_t *str, int32_t sign, uint8_t *result,
     return 1;
 }
 
-int float_const(int8_t *number, int32_t sign, uint8_t *result, int bytes,
+int float_const(char *number, int32_t sign, uint8_t *result, int bytes,
                 efunc error)
 {
     if (bytes == 4)

@@ -69,7 +69,6 @@ if ( !defined($output) || $output eq 'a' ) {
     
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print A "#include \<inttypes.h\>\n\n";
     print A "#include \"nasm.h\"\n";
     print A "#include \"insns.h\"\n";
     print A "\n";
@@ -98,7 +97,6 @@ if ( !defined($output) || $output eq 'd' ) {
     
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print D "#include \<inttypes.h\>\n\n";
     print D "#include \"nasm.h\"\n";
     print D "#include \"insns.h\"\n";
     print D "\n";
@@ -163,9 +161,8 @@ if ( !defined($output) || $output eq 'n' ) {
     print N "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
     print N "/* This file in included by names.c */\n\n";
-    print N "#include \<inttypes.h\>\n\n";
     
-    print N "static const int8_t *insn_names[] = {";
+    print N "static const char *insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
 	print N "," if ( !$first );
@@ -176,7 +173,7 @@ if ( !defined($output) || $output eq 'n' ) {
     }
     print N "\n};\n\n";
     print N "/* Conditional instructions */\n";
-    print N "static const int8_t *icn[] = {";
+    print N "static const char *icn[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );

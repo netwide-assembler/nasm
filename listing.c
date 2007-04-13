@@ -31,14 +31,14 @@ static struct MacroInhibit {
     int inhibiting;
 } *mistack;
 
-static int8_t xdigit[] = "0123456789ABCDEF";
+static char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
-static int8_t listline[LIST_MAX_LEN];
+static char listline[LIST_MAX_LEN];
 static int listlinep;
 
-static int8_t listdata[2 * LIST_INDENT];  /* we need less than that actually */
+static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
 
 static int32_t listlineno;
@@ -78,7 +78,7 @@ static void list_emit(void)
     listdata[0] = '\0';
 }
 
-static void list_init(int8_t *fname, efunc error)
+static void list_init(char *fname, efunc error)
 {
     listfp = fopen(fname, "w");
     if (!listfp) {
@@ -112,7 +112,7 @@ static void list_cleanup(void)
     fclose(listfp);
 }
 
-static void list_out(int32_t offset, int8_t *str)
+static void list_out(int32_t offset, char *str)
 {
     if (strlen(listdata) + strlen(str) > LIST_HEXBIT) {
         strcat(listdata, "-");
@@ -136,7 +136,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
 
     if (typ == OUT_RAWDATA) {
         uint8_t const *p = data;
-        int8_t q[3];
+        char q[3];
         while (size--) {
             HEX(q, *p);
             q[2] = '\0';
@@ -145,7 +145,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         }
     } else if (typ == OUT_ADDRESS) {
         uint64_t d = *(int64_t *)data;
-        int8_t q[20];
+        char q[20];
         uint8_t p[8], *r = p;
         if (size == 4) {
             q[0] = '[';
@@ -182,7 +182,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         }
     } else if (typ == OUT_REL2ADR) {
         uint32_t d = *(int32_t *)data;
-        int8_t q[11];
+        char q[11];
         uint8_t p[4], *r = p;
         q[0] = '(';
         q[5] = ')';
@@ -193,7 +193,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         list_out(offset, q);
     } else if (typ == OUT_REL4ADR) {
         uint32_t d = *(int32_t *)data;
-        int8_t q[11];
+        char q[11];
         uint8_t p[4], *r = p;
         q[0] = '(';
         q[9] = ')';
@@ -205,13 +205,13 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         HEX(q + 7, p[3]);
         list_out(offset, q);
     } else if (typ == OUT_RESERVE) {
-        int8_t q[20];
+        char q[20];
         snprintf(q, sizeof(q), "<res %08lX>", size);
         list_out(offset, q);
     }
 }
 
-static void list_line(int type, int8_t *line)
+static void list_line(int type, char *line)
 {
     if (!listp)
         return;

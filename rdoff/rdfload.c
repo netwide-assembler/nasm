@@ -27,11 +27,11 @@
 
 extern int rdf_errno;
 
-rdfmodule *rdfload(const int8_t *filename)
+rdfmodule *rdfload(const char *filename)
 {
     rdfmodule *f;
     int32_t bsslength = 0;
-    int8_t *hdr;
+    char *hdr;
     rdfheaderrec *r;
 
     f = malloc(sizeof(rdfmodule));
@@ -150,7 +150,7 @@ int rdf_relocate(rdfmodule * m)
                non-portable */
             switch (r->r.length) {
             case 1:
-                seg[r->r.offset] += (int8_t)rel;
+                seg[r->r.offset] += (char)rel;
                 break;
             case 2:
                 *(uint16_t *) (seg + r->r.offset) += (uint16_t) rel;

@@ -16,19 +16,19 @@
 
 int rdl_error = 0;
 
-int8_t *rdl_errors[5] = {
+char *rdl_errors[5] = {
     "no error", "could not open file", "invalid file structure",
     "file contains modules of an unsupported RDOFF version",
     "module not found"
 };
 
-int rdl_verify(const int8_t *filename)
+int rdl_verify(const char *filename)
 {
     FILE *fp = fopen(filename, "rb");
-    int8_t buf[257];
+    char buf[257];
     int i;
     int32_t length;
-    static int8_t lastverified[256];
+    static char lastverified[256];
     static int lastresult = -1;
 
     if (lastresult != -1 && !strcmp(filename, lastverified))
@@ -51,7 +51,7 @@ int rdl_verify(const int8_t *filename)
             /*
              * A special module, eg a signature block or a directory.
              * Format of such a module is defined to be:
-             *   six int8_t type identifier
+             *   six char type identifier
              *   int32_t count bytes content
              *   content
              * so we can handle it uniformaly with RDOFF2 modules.
@@ -75,7 +75,7 @@ int rdl_verify(const int8_t *filename)
     return lastresult = 0;      /* library in correct format */
 }
 
-int rdl_open(struct librarynode *lib, const int8_t *name)
+int rdl_open(struct librarynode *lib, const char *name)
 {
     int i = rdl_verify(name);
     if (i)
@@ -95,9 +95,9 @@ void rdl_close(struct librarynode *lib)
     free(lib->name);
 }
 
-int rdl_searchlib(struct librarynode *lib, const int8_t *label, rdffile * f)
+int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
 {
-    int8_t buf[512];
+    char buf[512];
     int i, t;
     void *hdr;
     rdfheaderrec *r;
@@ -182,7 +182,7 @@ int rdl_searchlib(struct librarynode *lib, const int8_t *label, rdffile * f)
 
 int rdl_openmodule(struct librarynode *lib, int moduleno, rdffile * f)
 {
-    int8_t buf[512];
+    char buf[512];
     int i, cmod, t;
     int32_t length;
 
@@ -251,7 +251,7 @@ int rdl_openmodule(struct librarynode *lib, int moduleno, rdffile * f)
     return rdl_error = 4;       /* module not found */
 }
 
-void rdl_perror(const int8_t *apname, const int8_t *filename)
+void rdl_perror(const char *apname, const char *filename)
 {
     if (rdl_error >= 16)
         rdfperror(apname, filename);

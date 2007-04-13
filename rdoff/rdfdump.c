@@ -16,7 +16,7 @@ FILE *infile;
 
 void print_header(int32_t length, int rdf_version)
 {
-    int8_t buf[129], t, l, s, flags;
+    char buf[129], t, l, s, flags;
     uint8_t reclen;
     int32_t o, ll;
     uint16_t rs;
@@ -164,7 +164,7 @@ void print_header(int32_t length, int rdf_version)
 
 int main(int argc, char **argv)
 {
-    int8_t id[7];
+    char id[7];
     int32_t l;
     uint16_t s;
     int verbose = 0;

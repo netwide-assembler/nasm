@@ -25,7 +25,7 @@ typedef struct RDFModuleStruct {
     void *symtab;
 } rdfmodule;
 
-rdfmodule *rdfload(const int8_t *filename);
+rdfmodule *rdfload(const char *filename);
 int rdf_relocate(rdfmodule * m);
 
 #endif

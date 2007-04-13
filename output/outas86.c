@@ -57,7 +57,7 @@ struct Section {
     struct Piece *head, *last, **tail;
 };
 
-static int8_t as86_module[FILENAME_MAX];
+static char as86_module[FILENAME_MAX];
 
 static struct Section stext, sdata;
 static uint32_t bsslen;
@@ -78,7 +78,7 @@ static efunc error;
 
 static void as86_write(void);
 static void as86_write_section(struct Section *, int);
-static int as86_add_string(int8_t *name);
+static int as86_add_string(char *name);
 static void as86_sect_write(struct Section *, const uint8_t *,
                             uint32_t);
 
@@ -135,7 +135,7 @@ static void as86_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static int32_t as86_section_names(int8_t *name, int pass, int *bits)
+static int32_t as86_section_names(char *name, int pass, int *bits)
 {
     /*
      * Default is 16 bits.
@@ -156,7 +156,7 @@ static int32_t as86_section_names(int8_t *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static int as86_add_string(int8_t *name)
+static int as86_add_string(char *name)
 {
     int pos = strslen;
     int length = strlen(name);
@@ -167,8 +167,8 @@ static int as86_add_string(int8_t *name)
     return pos;
 }
 
-static void as86_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                          int is_global, int8_t *special)
+static void as86_deflabel(char *name, int32_t segment, int32_t offset,
+                          int is_global, char *special)
 {
     struct Symbol *sym;
 
@@ -505,7 +505,7 @@ static void as86_write_section(struct Section *sect, int index)
              */
             length = p->bytes;
             do {
-                int8_t buf[64];
+                char buf[64];
                 int32_t tmplen = (length > 64 ? 64 : length);
                 fputc(0x40 | (tmplen & 0x3F), as86fp);
                 saa_rnbytes(sect->data, buf, tmplen);
@@ -576,14 +576,14 @@ static int32_t as86_segbase(int32_t segment)
     return segment;
 }
 
-static int as86_directive(int8_t *directive, int8_t *value, int pass)
+static int as86_directive(char *directive, char *value, int pass)
 {
     return 0;
 }
 
-static void as86_filename(int8_t *inname, int8_t *outname, efunc error)
+static void as86_filename(char *inname, char *outname, efunc error)
 {
-    int8_t *p;
+    char *p;
 
     if ((p = strrchr(inname, '.')) != NULL) {
         strncpy(as86_module, inname, p - inname);
@@ -594,18 +594,18 @@ static void as86_filename(int8_t *inname, int8_t *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const int8_t *as86_stdmac[] = {
+static const char *as86_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
     NULL
 };
 
-static int as86_set_info(enum geninfo type, int8_t **val)
+static int as86_set_info(enum geninfo type, char **val)
 {
     return 0;
 }
-void as86_linenumber(int8_t *name, int32_t segment, int32_t offset, int is_main,
+void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
                      int lineno)
 {
 }

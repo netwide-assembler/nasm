@@ -76,12 +76,12 @@ static efunc error;
 
 /* This struct is used to keep track of symbols for map-file generation. */
 static struct bin_label {
-    int8_t *name;
+    char *name;
     struct bin_label *next;
 } *no_seg_labels, **nsl_tail;
 
 static struct Section {
-    int8_t *name;
+    char *name;
     struct SAA *contents;
     int32_t length;                /* section length in bytes */
 
@@ -91,8 +91,8 @@ static struct Section {
     uint32_t valign;       /* notional section alignment */
     uint32_t start;        /* section start address */
     uint32_t vstart;       /* section virtual start address */
-    int8_t *follows;              /* the section that this one will follow */
-    int8_t *vfollows;             /* the section that this one will notionally follow */
+    char *follows;              /* the section that this one will follow */
+    char *vfollows;             /* the section that this one will notionally follow */
     int32_t start_index;           /* NASM section id for non-relocated version */
     int32_t vstart_index;          /* the NASM section id */
 
@@ -120,8 +120,8 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
-extern int8_t *stdscan_bufptr;
-extern int lookup_label(int8_t *label, int32_t *segment, int32_t *offset);
+extern char *stdscan_bufptr;
+extern int lookup_label(char *label, int32_t *segment, int32_t *offset);
 
 static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
 static int32_t current_section;    /* only really needed if format_mode = 0 */
@@ -134,9 +134,9 @@ static int origin_defined;
 #define MAP_SECTIONS     4
 #define MAP_SYMBOLS      8
 static int map_control = 0;
-static int8_t *infile, *outfile;
+static char *infile, *outfile;
 
-static const int8_t *bin_stdmac[] = {
+static const char *bin_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro org 1+.nolist",
     "[org %1]",
@@ -161,7 +161,7 @@ static void add_reloc(struct Section *s, int32_t bytes, int32_t secref,
     r->target = s;
 }
 
-static struct Section *find_section_by_name(const int8_t *name)
+static struct Section *find_section_by_name(const char *name)
 {
     struct Section *s;
 
@@ -181,7 +181,7 @@ static struct Section *find_section_by_index(int32_t index)
     return s;
 }
 
-static struct Section *create_section(int8_t *name)
+static struct Section *create_section(char *name)
 {                               /* Create a new section. */
     last_section->next = nasm_malloc(sizeof(struct Section));
     last_section->next->ifollows = last_section;
@@ -583,7 +583,7 @@ static void bin_cleanup(int debuginfo)
     /* Step 7: Generate the map file. */
 
     if (map_control) {
-        const int8_t *not_defined = { "not defined" };
+        const char *not_defined = { "not defined" };
 
         /* Display input and output file names. */
         fprintf(rf, "\n- NASM Map file ");
@@ -835,8 +835,8 @@ static void bin_out(int32_t segto, const void *data, uint32_t type,
     }
 }
 
-static void bin_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                         int is_global, int8_t *special)
+static void bin_deflabel(char *name, int32_t segment, int32_t offset,
+                         int is_global, char *special)
 {
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
@@ -876,13 +876,13 @@ enum { ATTRIB_START, ATTRIB_ALIGN, ATTRIB_FOLLOWS,
     ATTRIB_NOBITS, ATTRIB_PROGBITS
 };
 
-static int bin_read_attribute(int8_t **line, int *attribute,
+static int bin_read_attribute(char **line, int *attribute,
                               uint32_t *value)
 {
     expr *e;
     int attrib_name_size;
     struct tokenval tokval;
-    int8_t *exp;
+    char *exp;
 
     /* Skip whitespace. */
     while (**line && isspace(**line))
@@ -938,7 +938,7 @@ static int bin_read_attribute(int8_t **line, int *attribute,
             (*line)++;
         }
     } else {
-        int8_t c;
+        char c;
         int pcount = 1;
 
         /* Full expression (delimited by parenthesis) */
@@ -1004,11 +1004,11 @@ static int bin_read_attribute(int8_t **line, int *attribute,
     return 1;
 }
 
-static void bin_assign_attributes(struct Section *sec, int8_t *astring)
+static void bin_assign_attributes(struct Section *sec, char *astring)
 {
     int attribute, check;
     uint32_t value;
-    int8_t *p;
+    char *p;
 
     while (1) {                 /* Get the next attribute. */
         check = bin_read_attribute(&astring, &attribute, &value);
@@ -1196,7 +1196,7 @@ static void bin_define_section_labels()
 {
     static int labels_defined = 0;
     struct Section *sec;
-    int8_t *label_name;
+    char *label_name;
     size_t base_len;
 
     if (labels_defined)
@@ -1222,9 +1222,9 @@ static void bin_define_section_labels()
     labels_defined = 1;
 }
 
-static int32_t bin_secname(int8_t *name, int pass, int *bits)
+static int32_t bin_secname(char *name, int pass, int *bits)
 {
-    int8_t *p;
+    char *p;
     struct Section *sec;
 
     /* bin_secname is called with *name = NULL at the start of each
@@ -1288,7 +1288,7 @@ static int32_t bin_secname(int8_t *name, int pass, int *bits)
     return current_section;
 }
 
-static int bin_directive(int8_t *directive, int8_t *args, int pass)
+static int bin_directive(char *directive, char *args, int pass)
 {
     /* Handle ORG directive */
     if (!nasm_stricmp(directive, "org")) {
@@ -1323,7 +1323,7 @@ static int bin_directive(int8_t *directive, int8_t *args, int pass)
     /* The 'map' directive allows the user to generate section
      * and symbol information to stdout, stderr, or to a file. */
     else if (format_mode && !nasm_stricmp(directive, "map")) {
-        int8_t *p;
+        char *p;
 
         if (pass != 1)
             return 1;
@@ -1370,7 +1370,7 @@ static int bin_directive(int8_t *directive, int8_t *args, int pass)
     return 0;
 }
 
-static void bin_filename(int8_t *inname, int8_t *outname, efunc error)
+static void bin_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, "", error);
     infile = inname;
@@ -1382,7 +1382,7 @@ static int32_t bin_segbase(int32_t segment)
     return segment;
 }
 
-static int bin_set_info(enum geninfo type, int8_t **val)
+static int bin_set_info(enum geninfo type, char **val)
 {
     return 0;
 }

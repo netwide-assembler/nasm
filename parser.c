@@ -46,7 +46,7 @@ void parser_global_info(struct ofmt *output, loc_t * locp)
     location = locp;
 }
 
-insn *parse_line(int pass, int8_t *buffer, insn * result,
+insn *parse_line(int pass, char *buffer, insn * result,
                  efunc errfunc, evalfunc evaluate, ldfunc ldef)
 {
     int operand;
@@ -220,7 +220,7 @@ insn *parse_line(int pass, int8_t *buffer, insn * result,
                 int32_t sign = +1L;
 
                 if (i == '-') {
-                    int8_t *save = stdscan_bufptr;
+                    char *save = stdscan_bufptr;
                     i = stdscan(NULL, &tokval);
                     sign = -1L;
                     if (i != TOKEN_FLOAT || !is_comma_next()) {
@@ -253,7 +253,7 @@ insn *parse_line(int pass, int8_t *buffer, insn * result,
                         nasm_realloc(eop, sizeof(extop) + eop->stringlen);
                     tail = &eop->next;
                     *fixptr = eop;
-                    eop->stringval = (int8_t *)eop + sizeof(extop);
+                    eop->stringval = (char *)eop + sizeof(extop);
                     if (eop->stringlen < 4 ||
                         !float_const(tokval.t_charptr, sign,
                                      (uint8_t *)eop->stringval,
@@ -757,7 +757,7 @@ insn *parse_line(int pass, int8_t *buffer, insn * result,
 
 static int is_comma_next(void)
 {
-    int8_t *p;
+    char *p;
     int i;
     struct tokenval tv;
 

@@ -71,7 +71,7 @@ if ( $fmt eq 'h' ) {
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
     print "/* automatically generated from $file - do not edit */\n";
-    print "static const int8_t *reg_names[] = "; $ch = '{';
+    print "static const char *reg_names[] = "; $ch = '{';
     # This one has no dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	print "$ch\n    \"${reg}\"";

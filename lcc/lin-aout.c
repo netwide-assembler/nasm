@@ -8,31 +8,31 @@
 
 #define NASMPATH "/usr/local/bin/nasm"
 
-int8_t *cpp[] = { LCCDIR "cpp", "-D__STDC__=1",
+char *cpp[] = { LCCDIR "cpp", "-D__STDC__=1",
     "-Di386", "-D__i386", "-D__i386__",
     "-Dlinux", "-D__linux", "-D__linux__",
     "-Dunix", "-D__unix", "-D__unix__",
     "$1", "$2", "$3", 0
 };
-int8_t *include[] = { "-I" LCCDIR "include", "-I/usr/local/include",
+char *include[] = { "-I" LCCDIR "include", "-I/usr/local/include",
     "-I/usr/include", 0
 };
-int8_t *com[] = { LCCDIR "rcc", "-target=x86/nasm",
+char *com[] = { LCCDIR "rcc", "-target=x86/nasm",
     "$1", "$2", "$3", 0
 };
-int8_t *as[] = { NASMPATH, "-a", "-faout", "-o", "$3", "$1", "$2", 0 };
-int8_t *ld[] = { "/usr/bin/ld", "-m", "i386linux",
+char *as[] = { NASMPATH, "-a", "-faout", "-o", "$3", "$1", "$2", 0 };
+char *ld[] = { "/usr/bin/ld", "-m", "i386linux",
     "-L/usr/i486-linuxaout/lib",
     "-o", "$3", "$1",
     "/usr/i486-linuxaout/lib/crt0.o",
     "$2", "", "-lc", 0
 };
-static int8_t *bbexit = LCCDIR "bbexit.o";
+static char *bbexit = LCCDIR "bbexit.o";
 
-extern int8_t *concat(int8_t *, int8_t *);
-extern int access(const int8_t *, int);
+extern char *concat(char *, char *);
+extern int access(const char *, int);
 
-int option(int8_t *arg)
+int option(char *arg)
 {
     if (strncmp(arg, "-lccdir=", 8) == 0) {
         cpp[0] = concat(&arg[8], "/cpp");

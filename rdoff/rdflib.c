@@ -3,7 +3,7 @@
 /*
  * an rdoff library is simply a sequence of RDOFF object files, each
  * preceded by the name of the module, an ASCII string of up to 255
- * int8_tacters, terminated by a zero.
+ * characters, terminated by a zero.
  *
  * When a library is being created, special signature block is placed
  * in the beginning of the file. It is a string 'RDLIB' followed by a
@@ -52,7 +52,7 @@ const char *usage =
     "    d - delete                (module-name)\n" "    t - list\n";
 
 /* Library signature */
-const int8_t *rdl_signature = "RDLIB2", *sig_modname = ".sig";
+const char *rdl_signature = "RDLIB2", *sig_modname = ".sig";
 
 char **_argv;
 
@@ -73,7 +73,7 @@ static void int32_ttolocal(int32_t *l)
 #endif
 }
 
-int8_t copybytes(FILE * fp, FILE * fp2, int n)
+char copybytes(FILE * fp, FILE * fp2, int n)
 {
     int i, t = 0;
 
@@ -90,7 +90,7 @@ int8_t copybytes(FILE * fp, FILE * fp2, int n)
                 exit(1);
             }
     }
-    return (int8_t)t;             /* return last int8_t read */
+    return (char)t;             /* return last char read */
 }
 
 int32_t copyint32_t(FILE * fp, FILE * fp2)
@@ -120,11 +120,11 @@ int32_t copyint32_t(FILE * fp, FILE * fp2)
 int main(int argc, char **argv)
 {
     FILE *fp, *fp2 = NULL, *fptmp;
-    int8_t *p, buf[256], c;
+    char *p, buf[256], c;
     int i;
     int32_t l;
     time_t t;
-    int8_t rdbuf[10];
+    char rdbuf[10];
 
     _argv = argv;
 
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
         while (!feof(fp)) {
             /* read name */
             p = buf;
-            while ((*(p++) = (int8_t)fgetc(fp)))
+            while ((*(p++) = (char)fgetc(fp)))
                 if (feof(fp))
                     break;
 
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
         while (!feof(fptmp)) {
             /* read name */
             p = buf;
-            while ((*(p++) = (int8_t)fgetc(fptmp)))
+            while ((*(p++) = (char)fgetc(fptmp)))
                 if (feof(fptmp))
                     break;
 

@@ -99,8 +99,8 @@ static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
 
-static int32_t calcsize(int32_t, int32_t, int, insn *, const int8_t *);
-static void gencode(int32_t, int32_t, int, insn *, const int8_t *, int32_t);
+static int32_t calcsize(int32_t, int32_t, int, insn *, const char *);
+static void gencode(int32_t, int32_t, int, insn *, const char *, int32_t);
 static int regval(operand * o);
 static int regflag(operand * o);
 static int matches(struct itemplate *, insn *, int bits);
@@ -116,7 +116,7 @@ static void out(int32_t offset, int32_t segto, const void *data,
                 uint32_t type, int32_t segment, int32_t wrt)
 {
     static int32_t lineno = 0;     /* static!!! */
-    static int8_t *lnfname = NULL;
+    static char *lnfname = NULL;
 
     if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
         if (segment != NO_SEG || wrt != NO_SEG) {
@@ -168,7 +168,7 @@ static void out(int32_t offset, int32_t segto, const void *data,
 }
 
 static int jmp_match(int32_t segment, int32_t offset, int bits,
-                     insn * ins, const int8_t *code)
+                     insn * ins, const char *code)
 {
     int32_t isize;
     uint8_t c = code[0];
@@ -285,11 +285,11 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     }
 
     if (instruction->opcode == I_INCBIN) {
-        static int8_t fname[FILENAME_MAX];
+        static char fname[FILENAME_MAX];
         FILE *fp;
         int32_t len;
-        int8_t *prefix = "", *combine;
-        int8_t **pPrevPath = NULL;
+        char *prefix = "", *combine;
+        char **pPrevPath = NULL;
 
         len = FILENAME_MAX - 1;
         if (len > instruction->eops->stringlen)
@@ -321,7 +321,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
             error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
                   fname);
         else {
-            static int8_t buf[2048];
+            static char buf[2048];
             int32_t t = instruction->times;
             int32_t base = 0;
 
@@ -390,7 +390,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
             m += jmp_match(segment, offset, bits, instruction, temp->code);
 
         if (m == 100) {         /* matches! */
-            const int8_t *codes = temp->code;
+            const char *codes = temp->code;
             int32_t insn_size = calcsize(segment, offset, bits,
                                       instruction, codes);
             itimes = instruction->times;
@@ -558,11 +558,11 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
     }
 
     if (instruction->opcode == I_INCBIN) {
-        int8_t fname[FILENAME_MAX];
+        char fname[FILENAME_MAX];
         FILE *fp;
         int32_t len;
-        int8_t *prefix = "", *combine;
-        int8_t **pPrevPath = NULL;
+        char *prefix = "", *combine;
+        char **pPrevPath = NULL;
 
         len = FILENAME_MAX - 1;
         if (len > instruction->eops->stringlen)
@@ -616,7 +616,7 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
         if (m == 100) {
             /* we've matched an instruction. */
             int32_t isize;
-            const int8_t *codes = temp->code;
+            const char *codes = temp->code;
             int j;
 
             isize = calcsize(segment, offset, bits, instruction, codes);
@@ -658,7 +658,7 @@ static int is_sbyte(insn * ins, int op, int size)
 }
 
 static int32_t calcsize(int32_t segment, int32_t offset, int bits,
-                     insn * ins, const int8_t *codes)
+                     insn * ins, const char *codes)
 {
     int32_t length = 0;
     uint8_t c;
@@ -895,9 +895,9 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 return length; }
 
 static void gencode(int32_t segment, int32_t offset, int bits,
-                    insn * ins, const int8_t *codes, int32_t insn_end)
+                    insn * ins, const char *codes, int32_t insn_end)
 {
-    static int8_t condval[] = {   /* conditional opcodes */
+    static char condval[] = {   /* conditional opcodes */
         0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
         0x3, 0x7, 0x3, 0x5, 0xE, 0xC, 0xD, 0xF, 0x1, 0xB, 0x9, 0x5,
         0x0, 0xA, 0xA, 0xB, 0x8, 0x4

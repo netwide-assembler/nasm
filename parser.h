@@ -11,7 +11,7 @@
 #define NASM_PARSER_H
 
 void parser_global_info(struct ofmt *output, loc_t * locp);
-insn *parse_line(int pass, int8_t *buffer, insn * result,
+insn *parse_line(int pass, char *buffer, insn * result,
                  efunc error, evalfunc evaluate, ldfunc ldef);
 void cleanup_insn(insn * instruction);
 

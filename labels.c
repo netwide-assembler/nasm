@@ -58,7 +58,7 @@
 union label {                   /* actual label structures */
     struct {
         int32_t segment, offset;
-        int8_t *label, *special;
+        char *label, *special;
         int is_global, is_norm;
     } defn;
     struct {
@@ -70,7 +70,7 @@ union label {                   /* actual label structures */
 struct permts {                 /* permanent text storage */
     struct permts *next;        /* for the linked list */
     int size, usage;            /* size and used space in ... */
-    int8_t data[PERMTS_SIZE];     /* ... the data block itself */
+    char data[PERMTS_SIZE];     /* ... the data block itself */
 };
 
 extern int global_offset_changed;       /* defined in nasm.c */
@@ -81,24 +81,24 @@ static struct permts *perm_head;        /* start of perm. text storage */
 static struct permts *perm_tail;        /* end of perm. text storage */
 
 static void init_block(union label *blk);
-static int8_t *perm_copy(int8_t *string1, int8_t *string2);
+static char *perm_copy(char *string1, char *string2);
 
-static int8_t *prevlabel;
+static char *prevlabel;
 
 static int initialized = FALSE;
 
-int8_t lprefix[PREFIX_MAX] = { 0 };
-int8_t lpostfix[PREFIX_MAX] = { 0 };
+char lprefix[PREFIX_MAX] = { 0 };
+char lpostfix[PREFIX_MAX] = { 0 };
 
 /*
  * Internal routine: finds the `union label' corresponding to the
  * given label name. Creates a new one, if it isn't found, and if
  * `create' is TRUE.
  */
-static union label *find_label(int8_t *label, int create)
+static union label *find_label(char *label, int create)
 {
     int hash = 0;
-    int8_t *p, *prev;
+    char *p, *prev;
     int prevlen;
     union label *lptr;
 
@@ -146,7 +146,7 @@ static union label *find_label(int8_t *label, int create)
         return NULL;
 }
 
-int lookup_label(int8_t *label, int32_t *segment, int32_t *offset)
+int lookup_label(char *label, int32_t *segment, int32_t *offset)
 {
     union label *lptr;
 
@@ -162,7 +162,7 @@ int lookup_label(int8_t *label, int32_t *segment, int32_t *offset)
         return 0;
 }
 
-int is_extern(int8_t *label)
+int is_extern(char *label)
 {
     union label *lptr;
 
@@ -176,7 +176,7 @@ int is_extern(int8_t *label)
         return 0;
 }
 
-void redefine_label(int8_t *label, int32_t segment, int32_t offset, int8_t *special,
+void redefine_label(char *label, int32_t segment, int32_t offset, char *special,
                     int is_norm, int isextrn, struct ofmt *ofmt,
                     efunc error)
 {
@@ -217,12 +217,12 @@ void redefine_label(int8_t *label, int32_t segment, int32_t offset, int8_t *spec
     if (pass0 == 1) {
         exi = !!(lptr->defn.is_global & GLOBAL_BIT);
         if (exi) {
-            int8_t *xsymbol;
+            char *xsymbol;
             int slen;
             slen = strlen(lprefix);
             slen += strlen(lptr->defn.label);
             slen += strlen(lpostfix);
-            slen++;             /* room for that null int8_t */
+            slen++;             /* room for that null char */
             xsymbol = nasm_malloc(slen);
             snprintf(xsymbol, slen, "%s%s%s", lprefix, lptr->defn.label,
                      lpostfix);
@@ -249,7 +249,7 @@ void redefine_label(int8_t *label, int32_t segment, int32_t offset, int8_t *spec
     /* if (pass0 == 1) */
 }
 
-void define_label(int8_t *label, int32_t segment, int32_t offset, int8_t *special,
+void define_label(char *label, int32_t segment, int32_t offset, char *special,
                   int is_norm, int isextrn, struct ofmt *ofmt, efunc error)
 {
     union label *lptr;
@@ -285,7 +285,7 @@ void define_label(int8_t *label, int32_t segment, int32_t offset, int8_t *specia
     if (pass0 == 1 || (!is_norm && !isextrn && (segment & 1))) {
         exi = !!(lptr->defn.is_global & GLOBAL_BIT);
         if (exi) {
-            int8_t *xsymbol;
+            char *xsymbol;
             int slen;
             slen = strlen(lprefix);
             slen += strlen(lptr->defn.label);
@@ -316,7 +316,7 @@ void define_label(int8_t *label, int32_t segment, int32_t offset, int8_t *specia
     }                           /* if (pass0 == 1) */
 }
 
-void define_common(int8_t *label, int32_t segment, int32_t size, int8_t *special,
+void define_common(char *label, int32_t segment, int32_t size, char *special,
                    struct ofmt *ofmt, efunc error)
 {
     union label *lptr;
@@ -344,7 +344,7 @@ void define_common(int8_t *label, int32_t segment, int32_t size, int8_t *special
                                        special);
 }
 
-void declare_as_global(int8_t *label, int8_t *special, efunc error)
+void declare_as_global(char *label, char *special, efunc error)
 {
     union label *lptr;
 
@@ -436,9 +436,9 @@ static void init_block(union label *blk)
     blk[LABEL_BLOCK - 1].admin.next = NULL;
 }
 
-static int8_t *perm_copy(int8_t *string1, int8_t *string2)
+static char *perm_copy(char *string1, char *string2)
 {
-    int8_t *p, *q;
+    char *p, *q;
     int len = strlen(string1) + strlen(string2) + 1;
 
     if (perm_tail->size - perm_tail->usage < len) {

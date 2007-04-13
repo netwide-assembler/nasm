@@ -35,7 +35,7 @@ void nasm_set_malloc_error(efunc error)
 }
 
 #ifdef LOGALLOC
-void *nasm_malloc_log(int8_t *file, int line, size_t size)
+void *nasm_malloc_log(char *file, int line, size_t size)
 #else
 void *nasm_malloc(size_t size)
 #endif
@@ -52,7 +52,7 @@ void *nasm_malloc(size_t size)
 }
 
 #ifdef LOGALLOC
-void *nasm_realloc_log(int8_t *file, int line, void *q, size_t size)
+void *nasm_realloc_log(char *file, int line, void *q, size_t size)
 #else
 void *nasm_realloc(void *q, size_t size)
 #endif
@@ -72,7 +72,7 @@ void *nasm_realloc(void *q, size_t size)
 }
 
 #ifdef LOGALLOC
-void nasm_free_log(int8_t *file, int line, void *q)
+void nasm_free_log(char *file, int line, void *q)
 #else
 void nasm_free(void *q)
 #endif
@@ -86,12 +86,12 @@ void nasm_free(void *q)
 }
 
 #ifdef LOGALLOC
-int8_t *nasm_strdup_log(int8_t *file, int line, const int8_t *s)
+char *nasm_strdup_log(char *file, int line, const char *s)
 #else
-int8_t *nasm_strdup(const int8_t *s)
+char *nasm_strdup(const char *s)
 #endif
 {
-    int8_t *p;
+    char *p;
     int size = strlen(s) + 1;
 
     p = malloc(size);
@@ -107,12 +107,12 @@ int8_t *nasm_strdup(const int8_t *s)
 }
 
 #ifdef LOGALLOC
-int8_t *nasm_strndup_log(int8_t *file, int line, int8_t *s, size_t len)
+char *nasm_strndup_log(char *file, int line, char *s, size_t len)
 #else
-int8_t *nasm_strndup(int8_t *s, size_t len)
+char *nasm_strndup(char *s, size_t len)
 #endif
 {
-    int8_t *p;
+    char *p;
     int size = len + 1;
 
     p = malloc(size);
@@ -129,7 +129,7 @@ int8_t *nasm_strndup(int8_t *s, size_t len)
 }
 
 #if !defined(stricmp) && !defined(strcasecmp)
-int nasm_stricmp(const int8_t *s1, const int8_t *s2)
+int nasm_stricmp(const char *s1, const char *s2)
 {
     while (*s1 && tolower(*s1) == tolower(*s2))
         s1++, s2++;
@@ -143,7 +143,7 @@ int nasm_stricmp(const int8_t *s1, const int8_t *s2)
 #endif
 
 #if !defined(strnicmp) && !defined(strncasecmp)
-int nasm_strnicmp(const int8_t *s1, const int8_t *s2, int n)
+int nasm_strnicmp(const char *s1, const char *s2, int n)
 {
     while (n > 0 && *s1 && tolower(*s1) == tolower(*s2))
         s1++, s2++, n--;
@@ -159,9 +159,9 @@ int nasm_strnicmp(const int8_t *s1, const int8_t *s2, int n)
 #define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
-int64_t readnum(int8_t *str, int *error)
+int64_t readnum(char *str, int *error)
 {
-    int8_t *r = str, *q;
+    char *r = str, *q;
     int32_t radix;
     uint64_t result, checklimit;
     int digit, last;
@@ -256,7 +256,7 @@ int64_t readnum(int8_t *str, int *error)
     return result * sign;
 }
 
-int64_t readstrnum(int8_t *str, int length, int *warn)
+int64_t readstrnum(char *str, int length, int *warn)
 {
     int64_t charconst = 0;
     int i;
@@ -306,10 +306,10 @@ void fwriteint32_t(int32_t data, FILE * fp)
     fputc((int)((data >> 24) & 255), fp);
 }
 
-void standard_extension(int8_t *inname, int8_t *outname, int8_t *extension,
+void standard_extension(char *inname, char *outname, char *extension,
                         efunc error)
 {
-    int8_t *p, *q;
+    char *p, *q;
 
     if (*outname)               /* file name already exists, */
         return;                 /* so do nothing */
@@ -490,7 +490,7 @@ void *saa_wstruct(struct SAA *s)
 
 void saa_wbytes(struct SAA *s, const void *data, int32_t len)
 {
-    const int8_t *d = data;
+    const char *d = data;
 
     while (len > 0) {
         int32_t l = s->end->length - s->end->posn;
@@ -558,7 +558,7 @@ void *saa_rbytes(struct SAA *s, int32_t *len)
 
 void saa_rnbytes(struct SAA *s, void *data, int32_t len)
 {
-    int8_t *d = data;
+    char *d = data;
 
     while (len > 0) {
         int32_t l;
@@ -586,7 +586,7 @@ void saa_fread(struct SAA *s, int32_t posn, void *data, int32_t len)
 {
     struct SAA *p;
     int64_t pos;
-    int8_t *cdata = data;
+    char *cdata = data;
 
     if (!s->rptr || posn < s->rptr->start)
         saa_rewind(s);
@@ -617,7 +617,7 @@ void saa_fwrite(struct SAA *s, int32_t posn, void *data, int32_t len)
 {
     struct SAA *p;
     int64_t pos;
-    int8_t *cdata = data;
+    char *cdata = data;
 
     if (!s->rptr || posn < s->rptr->start)
         saa_rewind(s);
@@ -646,11 +646,12 @@ void saa_fwrite(struct SAA *s, int32_t posn, void *data, int32_t len)
 
 void saa_fpwrite(struct SAA *s, FILE * fp)
 {
-    int8_t *data;
+    char *data;
     int32_t len;
 
     saa_rewind(s);
-    while ((data = saa_rbytes(s, &len)))
+//    while ((data = saa_rbytes(s, &len)))
+    for (; (data = saa_rbytes(s, &len));)
         fwrite(data, 1, len, fp);
 }
 
@@ -659,11 +660,11 @@ void saa_fpwrite(struct SAA *s, FILE * fp)
  * by the scanner.
  */
 #include "names.c"
-static const int8_t *special_names[] = {
+static const char *special_names[] = {
     "byte", "dword", "far", "long", "near", "nosplit", "qword",
     "short", "strict", "to", "tword", "word"
 };
-static const int8_t *prefix_names[] = {
+static const char *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
     "repnz", "repz", "times"
 };
@@ -673,7 +674,7 @@ static const int8_t *prefix_names[] = {
  * formats. It keeps a succession of temporary-storage strings in
  * stdscan_tempstorage, which can be cleared using stdscan_reset.
  */
-static int8_t **stdscan_tempstorage = NULL;
+static char **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
 
@@ -698,9 +699,9 @@ void nasmlib_cleanup(void)
     nasm_free(stdscan_tempstorage);
 }
 
-static int8_t *stdscan_copy(int8_t *p, int len)
+static char *stdscan_copy(char *p, int len)
 {
-    int8_t *text;
+    char *text;
 
     text = nasm_malloc(len + 1);
     strncpy(text, p, len);
@@ -710,17 +711,17 @@ static int8_t *stdscan_copy(int8_t *p, int len)
         stdscan_tempsize += STDSCAN_TEMP_DELTA;
         stdscan_tempstorage = nasm_realloc(stdscan_tempstorage,
                                            stdscan_tempsize *
-                                           sizeof(int8_t *));
+                                           sizeof(char *));
     }
     stdscan_tempstorage[stdscan_templen++] = text;
 
     return text;
 }
 
-int8_t *stdscan_bufptr = NULL;
+char *stdscan_bufptr = NULL;
 int stdscan(void *private_data, struct tokenval *tv)
 {
-    int8_t ourcopy[MAX_KEYWORD + 1], *r, *s;
+    char ourcopy[MAX_KEYWORD + 1], *r, *s;
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
@@ -768,7 +769,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         }
         for (i = 0; i < elements(icn); i++)
             if (!strncmp(ourcopy, icn[i], strlen(icn[i]))) {
-                int8_t *p = ourcopy + strlen(icn[i]);
+                char *p = ourcopy + strlen(icn[i]);
                 tv->t_integer = ico[i];
                 if ((tv->t_inttwo = bsi(p, conditions,
                                         elements(conditions))) >= 0)
@@ -829,7 +830,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         tv->t_charptr = NULL;
         return tv->t_type = TOKEN_NUM;
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {     /* a char constant */
-        int8_t quote = *stdscan_bufptr++, *r;
+        char quote = *stdscan_bufptr++, *r;
         int rn_warn;
         r = tv->t_charptr = stdscan_bufptr;
         while (*stdscan_bufptr && *stdscan_bufptr != quote)
@@ -1032,7 +1033,7 @@ int32_t reloc_wrt(expr * vect)
 /*
  * Binary search.
  */
-int bsi(int8_t *string, const int8_t **array, int size)
+int bsi(char *string, const char **array, int size)
 {
     int i = -1, j = size;       /* always, i < index < j */
     while (j - i >= 2) {
@@ -1048,12 +1049,12 @@ int bsi(int8_t *string, const int8_t **array, int size)
     return -1;                  /* we haven't got it :( */
 }
 
-static int8_t *file_name = NULL;
+static char *file_name = NULL;
 static int32_t line_number = 0;
 
-int8_t *src_set_fname(int8_t *newname)
+char *src_set_fname(char *newname)
 {
-    int8_t *oldname = file_name;
+    char *oldname = file_name;
     file_name = newname;
     return oldname;
 }
@@ -1070,7 +1071,7 @@ int32_t src_get_linnum(void)
     return line_number;
 }
 
-int src_get(int32_t *xline, int8_t **xname)
+int src_get(int32_t *xline, char **xname)
 {
     if (!file_name || !*xname || strcmp(*xname, file_name)) {
         nasm_free(*xname);
@@ -1086,11 +1087,11 @@ int src_get(int32_t *xline, int8_t **xname)
     return 0;
 }
 
-void nasm_quote(int8_t **str)
+void nasm_quote(char **str)
 {
     int ln = strlen(*str);
-    int8_t q = (*str)[0];
-    int8_t *p;
+    char q = (*str)[0];
+    char *p;
     if (ln > 1 && (*str)[ln - 1] == q && (q == '"' || q == '\''))
         return;
     q = '"';
@@ -1104,9 +1105,9 @@ void nasm_quote(int8_t **str)
     *str = p;
 }
 
-int8_t *nasm_strcat(int8_t *one, int8_t *two)
+char *nasm_strcat(char *one, char *two)
 {
-    int8_t *rslt;
+    char *rslt;
     int l1 = strlen(one);
     rslt = nasm_malloc(l1 + strlen(two) + 1);
     strcpy(rslt, one);
@@ -1117,14 +1118,14 @@ int8_t *nasm_strcat(int8_t *one, int8_t *two)
 void null_debug_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
 }
-void null_debug_linenum(const int8_t *filename, int32_t linenumber, int32_t segto)
+void null_debug_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
 }
-void null_debug_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                         int is_global, int8_t *special)
+void null_debug_deflabel(char *name, int32_t segment, int32_t offset,
+                         int is_global, char *special)
 {
 }
-void null_debug_routine(const int8_t *directive, const int8_t *params)
+void null_debug_routine(const char *directive, const char *params)
 {
 }
 void null_debug_typevalue(int32_t type)

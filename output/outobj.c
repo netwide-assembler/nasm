@@ -379,7 +379,7 @@ static ObjRecord *obj_value(ObjRecord * orp, uint32_t val)
 /*
  * Writes a counted string
  */
-static ObjRecord *obj_name(ObjRecord * orp, int8_t *name)
+static ObjRecord *obj_name(ObjRecord * orp, char *name)
 {
     int len = strlen(name);
     uint8_t *ptr;
@@ -459,7 +459,7 @@ static void ori_null(ObjRecord * orp)
  * This concludes the low level section of outobj.c
  */
 
-static int8_t obj_infile[FILENAME_MAX];
+static char obj_infile[FILENAME_MAX];
 
 static efunc error;
 static evalfunc evaluate;
@@ -486,7 +486,7 @@ struct LineNumber {
 
 static struct FileName {
     struct FileName *next;
-    int8_t *name;
+    char *name;
     struct LineNumber *lnhead, **lntail;
     int index;
 } *fnhead, **fntail;
@@ -501,7 +501,7 @@ static struct Array {
 
 static struct Public {
     struct Public *next;
-    int8_t *name;
+    char *name;
     int32_t offset;
     int32_t segment;               /* only if it's far-absolute */
     int type;                   /* only for local debug syms */
@@ -509,7 +509,7 @@ static struct Public {
 
 static struct External {
     struct External *next;
-    int8_t *name;
+    char *name;
     int32_t commonsize;
     int32_t commonelem;            /* element size if FAR, else zero */
     int index;                  /* OBJ-file external index */
@@ -520,7 +520,7 @@ static struct External {
         DEFWRT_GROUP            /* a group */
     } defwrt_type;
     union {
-        int8_t *string;
+        char *string;
         struct Segment *seg;
         struct Group *grp;
     } defwrt_ptr;
@@ -549,36 +549,36 @@ static struct Segment {
     } combine;
     int32_t use32;                 /* is this segment 32-bit? */
     struct Public *pubhead, **pubtail, *lochead, **loctail;
-    int8_t *name;
-    int8_t *segclass, *overlay;   /* `class' is a C++ keyword :-) */
+    char *name;
+    char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
     ObjRecord *orp;
 } *seghead, **segtail, *obj_seg_needs_update;
 
 static struct Group {
     struct Group *next;
-    int8_t *name;
+    char *name;
     int32_t index;                 /* NASM segment id */
     int32_t obj_index;             /* OBJ-file group index */
     int32_t nentries;              /* number of elements... */
     int32_t nindices;              /* ...and number of index elts... */
     union {
         int32_t index;
-        int8_t *name;
+        char *name;
     } segs[GROUP_MAX];          /* ...in this */
 } *grphead, **grptail, *obj_grp_needs_update;
 
 static struct ImpDef {
     struct ImpDef *next;
-    int8_t *extname;
-    int8_t *libname;
+    char *extname;
+    char *libname;
     unsigned int impindex;
-    int8_t *impname;
+    char *impname;
 } *imphead, **imptail;
 
 static struct ExpDef {
     struct ExpDef *next;
-    int8_t *intname;
-    int8_t *extname;
+    char *intname;
+    char *extname;
     unsigned int ordinal;
     int flags;
 } *exphead, **exptail;
@@ -595,9 +595,9 @@ struct ofmt of_obj;
 /* The current segment */
 static struct Segment *current_seg;
 
-static int32_t obj_segment(int8_t *, int, int *);
+static int32_t obj_segment(char *, int, int *);
 static void obj_write_file(int debuginfo);
-static int obj_directive(int8_t *, int8_t *, int);
+static int obj_directive(char *, char *, int);
 
 static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -632,7 +632,7 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     of_obj.current_dfmt->init(&of_obj, NULL, fp, errfunc);
 }
 
-static int obj_set_info(enum geninfo type, int8_t **val)
+static int obj_set_info(enum geninfo type, char **val)
 {
     (void)type;
     (void)val;
@@ -695,7 +695,7 @@ static void obj_cleanup(int debuginfo)
     }
 }
 
-static void obj_ext_set_defwrt(struct External *ext, int8_t *id)
+static void obj_ext_set_defwrt(struct External *ext, char *id)
 {
     struct Segment *seg;
     struct Group *grp;
@@ -722,8 +722,8 @@ static void obj_ext_set_defwrt(struct External *ext, int8_t *id)
     dws = ext;
 }
 
-static void obj_deflabel(int8_t *name, int32_t segment,
-                         int32_t offset, int is_global, int8_t *special)
+static void obj_deflabel(char *name, int32_t segment,
+                         int32_t offset, int is_global, char *special)
 {
     /*
      * We have three cases:
@@ -888,7 +888,7 @@ static void obj_deflabel(int8_t *name, int32_t segment,
          * We might have a default-WRT specification.
          */
         if (!nasm_strnicmp(special, "wrt", 3)) {
-            int8_t *p;
+            char *p;
             int len;
             special += 3;
             special += strspn(special, " \t");
@@ -1255,7 +1255,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     obj_commit(forp);
 }
 
-static int32_t obj_segment(int8_t *name, int pass, int *bits)
+static int32_t obj_segment(char *name, int pass, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -1277,7 +1277,7 @@ static int32_t obj_segment(int8_t *name, int pass, int *bits)
         struct Group *grp;
         struct External **extp;
         int obj_idx, i, attrs, rn_error;
-        int8_t *p;
+        char *p;
 
         /*
          * Look for segment attributes.
@@ -1506,10 +1506,10 @@ static int32_t obj_segment(int8_t *name, int pass, int *bits)
     }
 }
 
-static int obj_directive(int8_t *directive, int8_t *value, int pass)
+static int obj_directive(char *directive, char *value, int pass)
 {
     if (!strcmp(directive, "group")) {
-        int8_t *p, *q, *v;
+        char *p, *q, *v;
         if (pass == 1) {
             struct Group *grp;
             struct Segment *seg;
@@ -1623,7 +1623,7 @@ static int obj_directive(int8_t *directive, int8_t *value, int pass)
         return 1;
     }
     if (!strcmp(directive, "import")) {
-        int8_t *q, *extname, *libname, *impname;
+        char *q, *extname, *libname, *impname;
 
         if (pass == 2)
             return 1;           /* ignore in pass two */
@@ -1669,7 +1669,7 @@ static int obj_directive(int8_t *directive, int8_t *value, int pass)
         return 1;
     }
     if (!strcmp(directive, "export")) {
-        int8_t *q, *extname, *intname, *v;
+        char *q, *extname, *intname, *v;
         struct ExpDef *export;
         int flags = 0;
         unsigned int ordinal = 0;
@@ -1797,7 +1797,7 @@ static int32_t obj_segbase(int32_t segment)
     return segment;             /* no special treatment */
 }
 
-static void obj_filename(int8_t *inname, int8_t *outname, efunc lerror)
+static void obj_filename(char *inname, char *outname, efunc lerror)
 {
     strcpy(obj_infile, inname);
     standard_extension(inname, outname, ".obj", lerror);
@@ -1813,7 +1813,7 @@ static void obj_write_file(int debuginfo)
     struct External *ext;
     struct ImpDef *imp;
     struct ExpDef *export;
-    static int8_t boast[] = "The Netwide Assembler " NASM_VER;
+    static char boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx;
     ObjRecord *orp;
 
@@ -2290,7 +2290,7 @@ void obj_fwrite(ObjRecord * orp)
     fputc((-cksum) & 0xFF, ofp);
 }
 
-static const int8_t *obj_stdmac[] = {
+static const char *obj_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro group 1+.nolist",
     "[group %1]",
@@ -2351,7 +2351,7 @@ static void dbgbi_cleanup(void)
     }
 }
 
-static void dbgbi_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
+static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
     struct FileName *fn;
     struct LineNumber *ln;
@@ -2402,8 +2402,8 @@ static void dbgbi_linnum(const int8_t *lnfname, int32_t lineno, int32_t segto)
     fn->lntail = &ln->next;
 
 }
-static void dbgbi_deflabel(int8_t *name, int32_t segment,
-                           int32_t offset, int is_global, int8_t *special)
+static void dbgbi_deflabel(char *name, int32_t segment,
+                           int32_t offset, int is_global, char *special)
 {
     struct Segment *seg;
 

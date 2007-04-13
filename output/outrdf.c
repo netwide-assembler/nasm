@@ -30,7 +30,7 @@
 typedef int16_t int16;            /* not sure if this will be required to be altered
                                    at all... best to typedef it just in case */
 
-static const int8_t *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
+static const char *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
 
 /* the records that can be found in the RDOFF header */
 
@@ -42,39 +42,39 @@ static const int8_t *RDOFFId = "RDOFF1";  /* written to start of RDOFF files */
  * 32764. */
 
 struct RelocRec {
-    int8_t type;                  /* must be 1 */
-    int8_t segment;               /* only 0 for code, or 1 for data supported,
+    char type;                  /* must be 1 */
+    char segment;               /* only 0 for code, or 1 for data supported,
                                  * but add 64 for relative refs (ie do not require
                                  * reloc @ loadtime, only linkage) */
     int32_t offset;                /* from start of segment in which reference is loc'd */
-    int8_t length;                /* 1 2 or 4 bytes */
+    char length;                /* 1 2 or 4 bytes */
     int16 refseg;               /* segment to which reference refers to */
 };
 
 struct ImportRec {
-    int8_t type;                  /* must be 2 */
+    char type;                  /* must be 2 */
     int16 segment;              /* segment number allocated to the label for reloc
                                  * records - label is assumed to be at offset zero
                                  * in this segment, so linker must fix up with offset
                                  * of segment and of offset within segment */
-    int8_t label[33];             /* zero terminated... should be written to file until
+    char label[33];             /* zero terminated... should be written to file until
                                  * the zero, but not after it - max len = 32 chars */
 };
 
 struct ExportRec {
-    int8_t type;                  /* must be 3 */
-    int8_t segment;               /* segment referred to (0/1) */
+    char type;                  /* must be 3 */
+    char segment;               /* segment referred to (0/1) */
     int32_t offset;                /* offset within segment */
-    int8_t label[33];             /* zero terminated as above. max len = 32 chars */
+    char label[33];             /* zero terminated as above. max len = 32 chars */
 };
 
 struct DLLRec {
-    int8_t type;                  /* must be 4 */
-    int8_t libname[128];          /* name of library to link with at load time */
+    char type;                  /* must be 4 */
+    char libname[128];          /* name of library to link with at load time */
 };
 
 struct BSSRec {
-    int8_t type;                  /* must be 5 */
+    char type;                  /* must be 5 */
     int32_t amount;                /* number of bytes BSS to reserve */
 };
 
@@ -87,7 +87,7 @@ struct BSSRec {
 
 typedef struct memorybuffer {
     int length;
-    int8_t buffer[BUF_BLOCK_LEN];
+    char buffer[BUF_BLOCK_LEN];
     struct memorybuffer *next;
 } memorybuffer;
 
@@ -209,7 +209,7 @@ static void rdf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     bsslength = 0;
 }
 
-static int32_t rdf_section_names(int8_t *name, int pass, int *bits)
+static int32_t rdf_section_names(char *name, int pass, int *bits)
 {
     /*
      * Default is 32 bits.
@@ -275,8 +275,8 @@ static void write_dll_rec(struct DLLRec *r)
     membufwrite(header, r->libname, strlen(r->libname) + 1);
 }
 
-static void rdf_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                         int is_global, int8_t *special)
+static void rdf_deflabel(char *name, int32_t segment, int32_t offset,
+                         int is_global, char *special)
 {
     struct ExportRec r;
     struct ImportRec ri;
@@ -493,7 +493,7 @@ static int32_t rdf_segbase(int32_t segment)
     return segment;
 }
 
-static int rdf_directive(int8_t *directive, int8_t *value, int pass)
+static int rdf_directive(char *directive, char *value, int pass)
 {
     struct DLLRec r;
 
@@ -509,12 +509,12 @@ static int rdf_directive(int8_t *directive, int8_t *value, int pass)
     return 0;
 }
 
-static void rdf_filename(int8_t *inname, int8_t *outname, efunc error)
+static void rdf_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, ".rdf", error);
 }
 
-static int8_t *rdf_stdmac[] = {
+static char *rdf_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",
@@ -524,7 +524,7 @@ static int8_t *rdf_stdmac[] = {
     NULL
 };
 
-static int rdf_set_info(enum geninfo type, int8_t **val)
+static int rdf_set_info(enum geninfo type, char **val)
 {
     return 0;
 }

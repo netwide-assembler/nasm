@@ -18,7 +18,7 @@
 
 static int ndrivers = 0;
 
-struct ofmt *ofmt_find(int8_t *name)
+struct ofmt *ofmt_find(char *name)
 {                               /* find driver */
     int i;
 
@@ -28,7 +28,7 @@ struct ofmt *ofmt_find(int8_t *name)
 
     return NULL;
 }
-struct dfmt *dfmt_find(struct ofmt *ofmt, int8_t *name)
+struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
 {                               /* find driver */
     struct dfmt **dfmt = ofmt->debug_formats;
     while (*dfmt) {

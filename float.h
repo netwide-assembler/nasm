@@ -10,7 +10,7 @@
 #ifndef NASM_FLOAT_H
 #define NASM_FLOAT_H
 
-int float_const(int8_t *number, int32_t sign, uint8_t *result, int bytes,
+int float_const(char *number, int32_t sign, uint8_t *result, int bytes,
                 efunc error);
 
 #endif

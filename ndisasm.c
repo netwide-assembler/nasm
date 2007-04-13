@@ -21,7 +21,7 @@
 
 #define BPL 8                   /* bytes per line of hex dump */
 
-static const int8_t *help =
+static const char *help =
     "usage: ndisasm [-a] [-i] [-h] [-r] [-u] [-b bits] [-o origin] [-s sync...]\n"
     "               [-e bytes] [-k start,bytes] [-p vendor] file\n"
     "   -a or -i activates auto (intelligent) sync\n"
@@ -33,15 +33,15 @@ static const int8_t *help =
     "   -k avoids disassembling <bytes> bytes from position <start>\n"
     "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
 
-static void output_ins(uint32_t, uint8_t *, int, int8_t *);
+static void output_ins(uint32_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
 int main(int argc, char **argv)
 {
     uint8_t buffer[INSN_MAX * 2], *p, *q;
-    int8_t outbuf[256];
-    int8_t *pname = *argv;
-    int8_t *filename = NULL;
+    char outbuf[256];
+    char *pname = *argv;
+    char *filename = NULL;
     uint32_t nextsync, synclen, initskip = 0L;
     int lenread;
     int32_t lendis;
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     init_sync();
 
     while (--argc) {
-        int8_t *v, *vv, *p = *++argv;
+        char *v, *vv, *p = *++argv;
         if (*p == '-' && p[1]) {
             p++;
             while (*p)
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
 }
 
 static void output_ins(uint32_t offset, uint8_t *data,
-                       int datalen, int8_t *insn)
+                       int datalen, char *insn)
 {
     int bytes;
     fprintf(stdout, "%08lX  ", offset);
@@ -322,7 +322,7 @@ static void output_ins(uint32_t offset, uint8_t *data,
  */
 static void skip(uint32_t dist, FILE * fp)
 {
-    int8_t buffer[256];           /* should fit on most stacks :-) */
+    char buffer[256];           /* should fit on most stacks :-) */
 
     /*
      * Got to be careful with fseek: at least one fseek I've tried

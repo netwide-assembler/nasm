@@ -28,7 +28,7 @@
 #include "rdoff/rdoff.h"
 
 /* This signature is written to start of RDOFF files */
-static const int8_t *RDOFF2Id = RDOFF2_SIGNATURE;
+static const char *RDOFF2Id = RDOFF2_SIGNATURE;
 
 /* Note that whenever a segment is referred to in the RDOFF file, its number
  * is always half of the segment number that NASM uses to refer to it; this
@@ -39,7 +39,7 @@ static const int8_t *RDOFF2Id = RDOFF2_SIGNATURE;
 
 #define COUNT_SEGTYPES 9
 
-static int8_t *segmenttypes[COUNT_SEGTYPES] = {
+static char *segmenttypes[COUNT_SEGTYPES] = {
     "null", "text", "code", "data",
     "comment", "lcomment", "pcomment",
     "symdebug", "linedebug"
@@ -70,7 +70,7 @@ static FILE *ofile;
 static efunc error;
 
 static struct seginfo {
-    int8_t *segname;
+    char *segname;
     int segnumber;
     uint16_t segtype;
     uint16_t segreserved;
@@ -127,10 +127,10 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     headerlength = 0;
 }
 
-static int32_t rdf2_section_names(int8_t *name, int pass, int *bits)
+static int32_t rdf2_section_names(char *name, int pass, int *bits)
 {
     int i;
-    int8_t *p, *q;
+    char *p, *q;
     int code = -1;
     int reserved = 0;
 
@@ -223,7 +223,7 @@ static int32_t rdf2_section_names(int8_t *name, int pass, int *bits)
  */
 static void write_reloc_rec(struct RelocRec *r)
 {
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     if (r->refseg != (uint16_t) NO_SEG && (r->refseg & 1))        /* segment base ref */
         r->type = RDFREC_SEGRELOC;
@@ -248,7 +248,7 @@ static void write_reloc_rec(struct RelocRec *r)
  */
 static void write_export_rec(struct ExportRec *r)
 {
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     r->segment >>= 1;
 
@@ -265,7 +265,7 @@ static void write_export_rec(struct ExportRec *r)
 
 static void write_import_rec(struct ImportRec *r)
 {
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     r->segment >>= 1;
 
@@ -284,7 +284,7 @@ static void write_import_rec(struct ImportRec *r)
  */
 static void write_bss_rec(struct BSSRec *r)
 {
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     saa_wbytes(header, &r->type, 1);
     saa_wbytes(header, &r->reclen, 1);
@@ -299,7 +299,7 @@ static void write_bss_rec(struct BSSRec *r)
  */
 static void write_common_rec(struct CommonRec *r)
 {
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     r->segment >>= 1;
 
@@ -343,15 +343,15 @@ static void write_modname_rec(struct ModRec *r)
 /*
  * Handle export, import and common records.
  */
-static void rdf2_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                          int is_global, int8_t *special)
+static void rdf2_deflabel(char *name, int32_t segment, int32_t offset,
+                          int is_global, char *special)
 {
     struct ExportRec r;
     struct ImportRec ri;
     struct CommonRec ci;
     static int farsym = 0;
     static int i;
-    int8_t symflags = 0;
+    char symflags = 0;
     int len;
 
     /* Check if the label length is OK */
@@ -462,7 +462,7 @@ static void rdf2_deflabel(int8_t *name, int32_t segment, int32_t offset,
 static void membufwrite(int segment, const void *data, int bytes)
 {
     int i;
-    int8_t buf[4], *b;
+    char buf[4], *b;
 
     for (i = 0; i < nsegments; i++) {
         if (segments[i].segnumber == segment)
@@ -704,7 +704,7 @@ static int32_t rdf2_segbase(int32_t segment)
 /*
  * Handle RDOFF2 specific directives
  */
-static int rdf2_directive(int8_t *directive, int8_t *value, int pass)
+static int rdf2_directive(char *directive, char *value, int pass)
 {
     int n;
 
@@ -739,12 +739,12 @@ static int rdf2_directive(int8_t *directive, int8_t *value, int pass)
     return 0;
 }
 
-static void rdf2_filename(int8_t *inname, int8_t *outname, efunc error)
+static void rdf2_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, ".rdf", error);
 }
 
-static const int8_t *rdf2_stdmac[] = {
+static const char *rdf2_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%imacro library 1+.nolist",
     "[library %1]",
@@ -757,7 +757,7 @@ static const int8_t *rdf2_stdmac[] = {
     NULL
 };
 
-static int rdf2_set_info(enum geninfo type, int8_t **val)
+static int rdf2_set_info(enum geninfo type, char **val)
 {
     return 0;
 }

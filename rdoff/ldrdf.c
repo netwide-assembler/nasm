@@ -55,7 +55,7 @@ struct modulenode {
     struct segment_infonode seginfo[RDF_MAXSEGS];       /* what are we doing
                                                            with each segment? */
     void *header;
-    int8_t *name;
+    char *name;
     struct modulenode *next;
     int32_t bss_reloc;
 };
@@ -69,11 +69,11 @@ struct modulenode {
  * Function prototypes of private utility functions
  */
 
-void processmodule(const int8_t *filename, struct modulenode *mod);
+void processmodule(const char *filename, struct modulenode *mod);
 int allocnewseg(uint16_t type, uint16_t reserved);
 int findsegment(uint16_t type, uint16_t reserved);
-void symtab_add(const int8_t *symbol, int segment, int32_t offset);
-int symtab_get(const int8_t *symbol, int *segment, int32_t *offset);
+void symtab_add(const char *symbol, int segment, int32_t offset);
+int symtab_get(const char *symbol, int *segment, int32_t *offset);
 
 /* =========================================================================
  * Global data structures.
@@ -91,13 +91,13 @@ struct librarynode *lastlib = NULL;
 void *symtab = NULL;
 
 /* objects search path */
-int8_t *objpath = NULL;
+char *objpath = NULL;
 
 /* libraries search path */
-int8_t *libpath = NULL;
+char *libpath = NULL;
 
 /* file to embed as a generic record */
-int8_t *generic_rec_file = NULL;
+char *generic_rec_file = NULL;
 
 /* error file */
 static FILE *error_file;
@@ -157,11 +157,11 @@ void initsegments()
 /*
  * loadmodule
  *
- * Determine the int8_tacteristics of a module, and decide what to do with
+ * Determine the characteristics of a module, and decide what to do with
  * each segment it contains (including determining destination segments and
  * relocation factors for segments that	are kept).
  */
-void loadmodule(const int8_t *filename)
+void loadmodule(const char *filename)
 {
     if (options.verbose)
         printf("loading `%s'\n", filename);
@@ -207,7 +207,7 @@ void loadmodule(const int8_t *filename)
  * (b) is fairly easy, because we're now keeping track of how big each
  * segment in our output file is...
  */
-void processmodule(const int8_t *filename, struct modulenode *mod)
+void processmodule(const char *filename, struct modulenode *mod)
 {
     struct segconfig sconf;
     int seg, outseg;
@@ -395,7 +395,7 @@ void processmodule(const int8_t *filename, struct modulenode *mod)
 /*
  * Return 1 if a given module is in the list, 0 otherwise.
  */
-int lookformodule(const int8_t *name)
+int lookformodule(const char *name)
 {
     struct modulenode *curr = modules;
 
@@ -457,7 +457,7 @@ int findsegment(uint16_t type, uint16_t reserved)
  * routine won't change a previously existing symbol. It will change
  * to segment = -2 only if the segment was previously < 0.
  */
-void symtab_add(const int8_t *symbol, int segment, int32_t offset)
+void symtab_add(const char *symbol, int segment, int32_t offset)
 {
     symtabEnt *ste;
 
@@ -509,7 +509,7 @@ void symtab_add(const int8_t *symbol, int segment, int32_t offset)
  * are assumed to have -1:0 associated. Returns 1 if the symbol was
  * successfully located.
  */
-int symtab_get(const int8_t *symbol, int *segment, int32_t *offset)
+int symtab_get(const char *symbol, int *segment, int32_t *offset)
 {
     symtabEnt *ste = symtabFind(symtab, symbol);
     if (!ste) {
@@ -529,7 +529,7 @@ int symtab_get(const int8_t *symbol, int *segment, int32_t *offset)
  * checks that a library can be opened and is in the correct format,
  * then adds it to the linked list of libraries.
  */
-void add_library(const int8_t *name)
+void add_library(const char *name)
 {
     if (rdl_verify(name)) {
         rdl_perror("ldrdf", name);
@@ -675,7 +675,7 @@ int search_libraries()
  * all the modules into a single output module, and then writes this to a
  * file.
  */
-void write_output(const int8_t *filename)
+void write_output(const char *filename)
 {
     FILE *f;
     rdf_headerbuf *rdfheader;
@@ -885,7 +885,7 @@ void write_output(const int8_t *filename)
                                 "warning: relocation out of range "
                                 "at %s(%02x:%08lx)\n", cur->name,
                                 (int)hr->r.segment, hr->r.offset);
-                    *data = (int8_t)offset;
+                    *data = (char)offset;
                     break;
                 case 2:
                     offset += *(int16_t *)data;
@@ -1140,9 +1140,9 @@ void usage()
 
 int main(int argc, char **argv)
 {
-    int8_t *outname = "aout.rdf";
+    char *outname = "aout.rdf";
     int moduleloaded = 0;
-    int8_t *respstrings[128] = { 0, };
+    char *respstrings[128] = { 0, };
 
     options.verbose = 0;
     options.align = 16;
@@ -1217,7 +1217,7 @@ int main(int argc, char **argv)
             }
         case '@':{
                 int i = 0;
-                int8_t buf[256];
+                char buf[256];
                 FILE *f;
 
                 options.respfile = 1;
@@ -1237,7 +1237,7 @@ int main(int argc, char **argv)
 
                 argv++, argc--;
                 while (fgets(buf, sizeof(buf), f) != NULL) {
-                    int8_t *p;
+                    char *p;
                     if (buf[0] == '\n')
                         continue;
                     if ((p = strchr(buf, '\n')) != NULL)

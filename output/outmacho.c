@@ -56,8 +56,8 @@ struct section {
     int align;
 
     /* data that goes into the file */
-    int8_t sectname[16];          /* what this section is called */
-    int8_t segname[16];           /* segment this section will be in */
+    char sectname[16];          /* what this section is called */
+    char segname[16];           /* segment this section will be in */
     uint32_t size;         /* in-memory and -file size  */
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
@@ -78,9 +78,9 @@ struct section {
 
 
 static struct sectmap {
-    const int8_t *nasmsect;
-    const int8_t *segname;
-    const int8_t *sectname;
+    const char *nasmsect;
+    const char *segname;
+    const char *sectname;
     const int32_t flags;
 } sectmap[] = { {
 ".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS}, {
@@ -111,7 +111,7 @@ struct reloc {
 struct symbol {
     /* nasm internal data */
     struct symbol *next;	/* next symbol in the list */
-    int8_t *name;			/* name of this symbol */
+    char *name;			/* name of this symbol */
     int32_t initial_snum;	       	/* symbol number used above in
 				   reloc */
     int32_t snum;			/* true snum for reloc */
@@ -205,7 +205,7 @@ static int exact_log2 (uint32_t align) {
     if (align != (align & -align)) {
 	return -1;
     } else {
-#if __GNUC__ >= 4
+#ifdef __GNUC__
 	return (align ? __builtin_ctzl (align) : 0);
 #else
 	uint32_t result = 0;
@@ -219,8 +219,8 @@ static int exact_log2 (uint32_t align) {
     }
 }
 
-static struct section *get_section_by_name(const int8_t *segname,
-                                           const int8_t *sectname)
+static struct section *get_section_by_name(const char *segname,
+                                           const char *sectname)
 {
     struct section *s;
 
@@ -242,8 +242,8 @@ static struct section *get_section_by_index(const int32_t index)
     return s;
 }
 
-static int32_t get_section_index_by_name(const int8_t *segname,
-                                      const int8_t *sectname)
+static int32_t get_section_index_by_name(const char *segname,
+                                      const char *sectname)
 {
     struct section *s;
 
@@ -254,7 +254,7 @@ static int32_t get_section_index_by_name(const int8_t *segname,
     return -1;
 }
 
-static int8_t *get_section_name_by_index(const int32_t index)
+static char *get_section_name_by_index(const int32_t index)
 {
     struct section *s;
 
@@ -284,7 +284,7 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
 static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
                        evalfunc eval)
 {
-    int8_t zero = 0;
+    char zero = 0;
 
     machofp = fp;
     error = errfunc;
@@ -306,11 +306,11 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
     strs = saa_init(1L);
 
     /* string table starts with a zero byte - don't ask why */
-    saa_wbytes(strs, &zero, sizeof(int8_t));
+    saa_wbytes(strs, &zero, sizeof(char));
     strslen = 1;
 }
 
-static int macho_setinfo(enum geninfo type, int8_t **val)
+static int macho_setinfo(enum geninfo type, char **val)
 {
     return 0;
 }
@@ -505,10 +505,10 @@ static void macho_output(int32_t secto, const void *data, uint32_t type,
     }
 }
 
-static int32_t macho_section(int8_t *name, int pass, int *bits)
+static int32_t macho_section(char *name, int pass, int *bits)
 {
     int32_t index, originalIndex;
-    int8_t *sectionAttributes;
+    char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
 
@@ -525,7 +525,7 @@ static int32_t macho_section(int8_t *name, int pass, int *bits)
     for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
         /* make lookup into section name translation table */
         if (!strcmp(name, sm->nasmsect)) {
-            int8_t *currentAttribute;
+            char *currentAttribute;
 
             /* try to find section with that name */
             originalIndex = index = get_section_index_by_name(sm->segname,
@@ -557,7 +557,7 @@ static int32_t macho_section(int8_t *name, int pass, int *bits)
                    && (currentAttribute = strtok((char*)&sectionAttributes, " \t"))) {
                 if (0 != *currentAttribute) {
                     if (0 == strncasecmp("align=", currentAttribute, 6)) {
-                        int8_t *end;
+                        char *end;
                         int newAlignment, value;
 
                         value = strtoul(currentAttribute + 6, (char**)&end, 0);
@@ -612,8 +612,8 @@ static int32_t macho_section(int8_t *name, int pass, int *bits)
     return NO_SEG;
 }
 
-static void macho_symdef(int8_t *name, int32_t section, int32_t offset,
-                         int is_global, int8_t *special)
+static void macho_symdef(char *name, int32_t section, int32_t offset,
+                         int is_global, char *special)
 {
     struct symbol *sym;
 
@@ -689,17 +689,17 @@ static int32_t macho_segbase(int32_t section)
     return section;
 }
 
-static int macho_directive(int8_t *directive, int8_t *value, int pass)
+static int macho_directive(char *directive, char *value, int pass)
 {
     return 0;
 }
 
-static void macho_filename(int8_t *inname, int8_t *outname, efunc error)
+static void macho_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, ".o", error);
 }
 
-static const int8_t *macho_stdmac[] = {
+static const char *macho_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
@@ -731,7 +731,7 @@ static void macho_layout_symbols (uint32_t *numsyms,
     uint32_t i,j;
 
     *numsyms = 0;
-    *strtabsize = sizeof (int8_t);
+    *strtabsize = sizeof (char);
 
     symp = &syms;
 
@@ -944,7 +944,7 @@ static void macho_write_section (void)
 {
     struct section *s, *s2;
     struct reloc *r;
-    int8_t *rel_paddata = "\0\0\0";
+    char *rel_paddata = "\0\0\0";
     uint8_t fi, *p, *q, blk[4];
     int32_t l;
 
@@ -1118,7 +1118,7 @@ static void macho_write (void)
     **  uint32_t command type == LC_SEGMENT
     **  uint32_t size of load command
     **   (including section load commands)
-    **  int8_t[16] segment name
+    **  char[16] segment name
     **  uint32_t in-memory offset
     **  uint32_t in-memory size
     **  uint32_t in-file offset to data area
@@ -1130,8 +1130,8 @@ static void macho_write (void)
     **  uint32_t flags
     **
     ** section commands
-    **   int8_t[16] section name
-    **   int8_t[16] segment name
+    **   char[16] section name
+    **   char[16] segment name
     **   uint32_t in-memory offset
     **   uint32_t in-memory size
     **   uint32_t in-file offset

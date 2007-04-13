@@ -12,10 +12,10 @@
 int32_t origin = 0;
 int align = 16;
 
-int8_t *getfilename(int8_t *pathname)
+char *getfilename(char *pathname)
 {
-    int8_t *lastslash = pathname - 1;
-    int8_t *i = pathname;
+    char *lastslash = pathname - 1;
+    char *i = pathname;
 
     while (*i) {
         if (*i == '/')
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     rdfmodule *m;
     int tmp;
     FILE *of;
-    int8_t *padding;
+    char *padding;
     int codepad, datapad, bsspad = 0;
 
     if (argc < 2) {

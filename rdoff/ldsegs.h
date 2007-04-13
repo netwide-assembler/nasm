@@ -10,7 +10,7 @@
 
 struct segconfig {
     uint16_t typelow, typehi;	/* range of seg nos for which this is valid */
-    int8_t *typedesc;		/* a description of the segment type */
+    char *typedesc;		/* a description of the segment type */
     uint16_t dowhat;		/* one of the SEG_xxxx values below */
     uint16_t mergetype;		/* if SEG_MERGE what type segment do we merge
 				   with?

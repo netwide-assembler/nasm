@@ -31,14 +31,14 @@ void nasm_set_malloc_error(efunc);
 void *nasm_malloc(size_t);
 void *nasm_realloc(void *, size_t);
 void nasm_free(void *);
-int8_t *nasm_strdup(const int8_t *);
-int8_t *nasm_strndup(int8_t *, size_t);
+char *nasm_strdup(const char *);
+char *nasm_strndup(char *, size_t);
 #else
-void *nasm_malloc_log(int8_t *, int, size_t);
-void *nasm_realloc_log(int8_t *, int, void *, size_t);
-void nasm_free_log(int8_t *, int, void *);
-int8_t *nasm_strdup_log(int8_t *, int, const int8_t *);
-int8_t *nasm_strndup_log(int8_t *, int, int8_t *, size_t);
+void *nasm_malloc_log(char *, int, size_t);
+void *nasm_realloc_log(char *, int, void *, size_t);
+void nasm_free_log(char *, int, void *);
+char *nasm_strdup_log(char *, int, const char *);
+char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
 #define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
@@ -58,7 +58,7 @@ int8_t *nasm_strndup_log(int8_t *, int, int8_t *, size_t);
 #define nasm_stricmp strcasecmp
 #endif
 #else
-int nasm_stricmp(const int8_t *, const int8_t *);
+int nasm_stricmp(const char *, const char *);
 #endif
 
 #if defined(strnicmp) || defined(strncasecmp)
@@ -68,14 +68,14 @@ int nasm_stricmp(const int8_t *, const int8_t *);
 #define nasm_strnicmp strncasecmp
 #endif
 #else
-int nasm_strnicmp(const int8_t *, const int8_t *, int);
+int nasm_strnicmp(const char *, const char *, int);
 #endif
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to TRUE if an error occurs, and FALSE otherwise.
  */
-int64_t readnum(int8_t *str, int *error);
+int64_t readnum(char *str, int *error);
 
 /*
  * Convert a character constant into a number. Sets
@@ -83,7 +83,7 @@ int64_t readnum(int8_t *str, int *error);
  * str points to and length covers the middle of the string,
  * without the quotes.
  */
-int64_t readstrnum(int8_t *str, int length, int *warn);
+int64_t readstrnum(char *str, int length, int *warn);
 
 /*
  * seg_init: Initialise the segment-number allocator.
@@ -97,7 +97,7 @@ int32_t seg_alloc(void);
  * function to add an extension to the name of the input file
  */
 #ifdef NASM_NASM_H
-void standard_extension(int8_t *inname, int8_t *outname, int8_t *extension,
+void standard_extension(char *inname, char *outname, char *extension,
                         efunc error);
 #endif
 
@@ -207,7 +207,7 @@ struct SAA {
      */
     struct SAA *next, *end, *rptr;
     int32_t elem_len, length, posn, start, rpos;
-    int8_t *data;
+    char *data;
 };
 
 struct SAA *saa_init(int32_t elem_len);    /* 1 == byte */
@@ -226,7 +226,7 @@ void saa_fpwrite(struct SAA *, FILE *);
 /*
  * Standard scanner.
  */
-extern int8_t *stdscan_bufptr;
+extern char *stdscan_bufptr;
 void stdscan_reset(void);
 int stdscan(void *private_data, struct tokenval *tv);
 #endif
@@ -250,9 +250,9 @@ int32_t reloc_wrt(expr *);
  * matching `string', or <0 if no match. `array' is taken to
  * contain `size' elements.
  */
-int bsi(int8_t *string, const int8_t **array, int size);
+int bsi(char *string, const char **array, int size);
 
-int8_t *src_set_fname(int8_t *newname);
+char *src_set_fname(char *newname);
 int32_t src_set_linnum(int32_t newline);
 int32_t src_get_linnum(void);
 /*
@@ -261,13 +261,13 @@ int32_t src_get_linnum(void);
  * It return 0 if the information was the same as the last time you
  * checked, -1 if the name changed and (new-old) if just the line changed.
  */
-int src_get(int32_t *xline, int8_t **xname);
+int src_get(int32_t *xline, char **xname);
 
-void nasm_quote(int8_t **str);
-int8_t *nasm_strcat(int8_t *one, int8_t *two);
+void nasm_quote(char **str);
+char *nasm_strcat(char *one, char *two);
 void nasmlib_cleanup(void);
 
-void null_debug_routine(const int8_t *directive, const int8_t *params);
+void null_debug_routine(const char *directive, const char *params);
 extern struct dfmt null_debug_form;
 extern struct dfmt *null_debug_arr[2];
 

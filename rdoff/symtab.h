@@ -12,7 +12,7 @@
 #include <inttypes.h>
 
 typedef struct {
-    int8_t *name;
+    char *name;
     int segment;
     int32_t offset;
     int32_t flags;
@@ -21,7 +21,7 @@ typedef struct {
 void *symtabNew(void);
 void symtabDone(void *symtab);
 void symtabInsert(void *symtab, symtabEnt * ent);
-symtabEnt *symtabFind(void *symtab, const int8_t *name);
+symtabEnt *symtabFind(void *symtab, const char *name);
 void symtabDump(void *symtab, FILE * of);
 
 #endif

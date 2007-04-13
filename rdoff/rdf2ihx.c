@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     rdfmodule *m;
     int tmp;
     FILE *of;
-    int8_t *padding;
+    char *padding;
     uint8_t *segbin[2];
     int pad[2], segn, ofs, i;
     int32_t segaddr;

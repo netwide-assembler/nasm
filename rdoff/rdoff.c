@@ -164,14 +164,14 @@ uint16_t translateint16_t(uint16_t in)
 }
 
 /* Segment types */
-static int8_t *knownsegtypes[8] = {
+static char *knownsegtypes[8] = {
     "NULL", "text", "data", "object comment",
     "linked comment", "loader comment",
     "symbolic debug", "line number debug"
 };
 
 /* Get a textual string describing the segment type */
-int8_t *translatesegmenttype(uint16_t type)
+char *translatesegmenttype(uint16_t type)
 {
     if (type < 8)
         return knownsegtypes[type];
@@ -189,10 +189,10 @@ int8_t *translatesegmenttype(uint16_t type)
 }
 
 /* This signature is written to the start of RDOFF files */
-const int8_t *RDOFFId = RDOFF2_SIGNATURE;
+const char *RDOFFId = RDOFF2_SIGNATURE;
 
 /* Error messages. Must correspond to the codes defined in rdoff.h */
-const int8_t *rdf_errors[11] = {
+const char *rdf_errors[11] = {
     /* 0 */ "no error occurred",
     /* 1 */ "could not open file",
     /* 2 */ "invalid file format",
@@ -212,7 +212,7 @@ int rdf_errno = 0;
    The library functions
    ======================================================================== */
 
-int rdfopen(rdffile * f, const int8_t *name)
+int rdfopen(rdffile * f, const char *name)
 {
     FILE *fp;
 
@@ -223,9 +223,9 @@ int rdfopen(rdffile * f, const int8_t *name)
     return rdfopenhere(f, fp, NULL, name);
 }
 
-int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const int8_t *name)
+int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
 {
-    int8_t buf[8];
+    char buf[8];
     int32_t initpos;
     int32_t l;
     uint16_t s;
@@ -322,7 +322,7 @@ int rdfclose(rdffile * f)
 /*
  * Print the message for last error (from rdf_errno)
  */
-void rdfperror(const int8_t *app, const int8_t *name)
+void rdfperror(const char *app, const char *name)
 {
     fprintf(stderr, "%s:%s: %s\n", app, name, rdf_errors[rdf_errno]);
     if (rdf_errno == RDF_ERR_OPEN || rdf_errno == RDF_ERR_READ) {

@@ -77,7 +77,7 @@ struct Reloc {
 };
 
 struct Symbol {
-    int8_t name[9];
+    char name[9];
     int32_t strpos;                /* string table position of name */
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
@@ -87,7 +87,7 @@ struct Symbol {
 
 static FILE *coffp;
 static efunc error;
-static int8_t coff_infile[FILENAME_MAX];
+static char coff_infile[FILENAME_MAX];
 
 struct Section {
     struct SAA *data;
@@ -96,7 +96,7 @@ struct Section {
     int32_t index;
     struct Reloc *head, **tail;
     uint32_t flags;        /* section flags */
-    int8_t name[9];
+    char name[9];
     int32_t pos, relpos;
 };
 
@@ -126,7 +126,7 @@ static void coff_gen_init(FILE *, efunc);
 static void coff_sect_write(struct Section *, const uint8_t *,
                             uint32_t);
 static void coff_write(void);
-static void coff_section_header(int8_t *, int32_t, int32_t, int32_t, int32_t, int, int32_t);
+static void coff_section_header(char *, int32_t, int32_t, int32_t, int32_t, int, int32_t);
 static void coff_write_relocs(struct Section *);
 static void coff_write_symbols(void);
 
@@ -197,7 +197,7 @@ static void coff_cleanup(int debuginfo)
     saa_free(strs);
 }
 
-static int coff_make_section(int8_t *name, uint32_t flags)
+static int coff_make_section(char *name, uint32_t flags)
 {
     struct Section *s;
 
@@ -227,9 +227,9 @@ static int coff_make_section(int8_t *name, uint32_t flags)
     return nsects - 1;
 }
 
-static int32_t coff_section_names(int8_t *name, int pass, int *bits)
+static int32_t coff_section_names(char *name, int pass, int *bits)
 {
-    int8_t *p;
+    char *p;
     uint32_t flags, align_and = ~0L, align_or = 0L;
     int i;
 
@@ -261,7 +261,7 @@ static int32_t coff_section_names(int8_t *name, int pass, int *bits)
     while (*p && isspace(*p))
         p++;
     while (*p) {
-        int8_t *q = p;
+        char *q = p;
         while (*p && !isspace(*p))
             p++;
         if (*p)
@@ -350,8 +350,8 @@ static int32_t coff_section_names(int8_t *name, int pass, int *bits)
     return sects[i]->index;
 }
 
-static void coff_deflabel(int8_t *name, int32_t segment, int32_t offset,
-                          int is_global, int8_t *special)
+static void coff_deflabel(char *name, int32_t segment, int32_t offset,
+                          int is_global, char *special)
 {
     int pos = strslen + 4;
     struct Symbol *sym;
@@ -589,7 +589,7 @@ static void coff_sect_write(struct Section *sect,
 typedef struct tagString {
     struct tagString *Next;
     int len;
-    int8_t *String;
+    char *String;
 } STRING;
 
 #define EXPORT_SECTION_NAME ".drectve"
@@ -601,14 +601,14 @@ typedef struct tagString {
 
 static STRING *Exports = NULL;
 static struct Section *directive_sec;
-void AddExport(int8_t *name)
+void AddExport(char *name)
 {
     STRING *rvp = Exports, *newS;
 
     newS = (STRING *) nasm_malloc(sizeof(STRING));
     newS->len = strlen(name);
     newS->Next = NULL;
-    newS->String = (int8_t *)nasm_malloc(newS->len + 1);
+    newS->String = (char *)nasm_malloc(newS->len + 1);
     strcpy(newS->String, name);
     if (rvp == NULL) {
         int i;
@@ -641,7 +641,7 @@ void BuildExportTable(void)
     if (rvp == NULL)
         return;
     while (rvp) {
-        len = sprintf((int8_t *)buf, "-export:%s ", rvp->String);
+        len = sprintf((char *)buf, "-export:%s ", rvp->String);
         coff_sect_write(directive_sec, buf, len);
         rvp = rvp->Next;
     }
@@ -655,10 +655,10 @@ void BuildExportTable(void)
     Exports = NULL;
 }
 
-static int coff_directives(int8_t *directive, int8_t *value, int pass)
+static int coff_directives(char *directive, char *value, int pass)
 {
     if (!strcmp(directive, "export")) {
-        int8_t *q, *name;
+        char *q, *name;
 
         if (pass == 2)
             return 1;           /* ignore in pass two */
@@ -752,11 +752,11 @@ static void coff_write(void)
     saa_fpwrite(strs, coffp);
 }
 
-static void coff_section_header(int8_t *name, int32_t vsize,
+static void coff_section_header(char *name, int32_t vsize,
                                 int32_t datalen, int32_t datapos,
                                 int32_t relpos, int nrelocs, int32_t flags)
 {
-    int8_t padname[8];
+    char padname[8];
 
     memset(padname, 0, 8);
     strncpy(padname, name, 8);
@@ -795,10 +795,10 @@ static void coff_write_relocs(struct Section *s)
     }
 }
 
-static void coff_symbol(int8_t *name, int32_t strpos, int32_t value,
+static void coff_symbol(char *name, int32_t strpos, int32_t value,
                         int section, int type, int aux)
 {
-    int8_t padname[8];
+    char padname[8];
 
     if (name) {
         memset(padname, 0, 8);
@@ -817,7 +817,7 @@ static void coff_symbol(int8_t *name, int32_t strpos, int32_t value,
 
 static void coff_write_symbols(void)
 {
-    int8_t filename[18];
+    char filename[18];
     uint32_t i;
 
     /*
@@ -862,19 +862,19 @@ static int32_t coff_segbase(int32_t segment)
     return segment;
 }
 
-static void coff_std_filename(int8_t *inname, int8_t *outname, efunc error)
+static void coff_std_filename(char *inname, char *outname, efunc error)
 {
     strcpy(coff_infile, inname);
     standard_extension(inname, outname, ".o", error);
 }
 
-static void coff_win32_filename(int8_t *inname, int8_t *outname, efunc error)
+static void coff_win32_filename(char *inname, char *outname, efunc error)
 {
     strcpy(coff_infile, inname);
     standard_extension(inname, outname, ".obj", error);
 }
 
-static const int8_t *coff_stdmac[] = {
+static const char *coff_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%endmacro",
@@ -884,7 +884,7 @@ static const int8_t *coff_stdmac[] = {
     NULL
 };
 
-static int coff_set_info(enum geninfo type, int8_t **val)
+static int coff_set_info(enum geninfo type, char **val)
 {
     return 0;
 }

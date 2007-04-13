@@ -96,7 +96,7 @@ static int whichreg(int32_t regflags, int regval)
     return 0;
 }
 
-static const int8_t *whichcond(int condval)
+static const char *whichcond(int condval)
 {
     static int conds[] = {
         C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,
@@ -175,7 +175,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = (int8_t)*data++;
+            op->offset = (char)*data++;
             break;
         case 2:
             op->segment |= SEG_DISP16;
@@ -294,7 +294,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = (int8_t)*data++;
+            op->offset = (char)*data++;
             break;
         case 2:
             op->segment |= SEG_DISP32;
@@ -402,7 +402,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             if (*data++)
                 return FALSE;
         if (c >= 014 && c <= 016) {
-            ins->oprs[c - 014].offset = (int8_t)*data++;
+            ins->oprs[c - 014].offset = (char)*data++;
             ins->oprs[c - 014].segment |= SEG_SIGNED;
         }
         if (c >= 020 && c <= 022)
@@ -440,7 +440,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
                 ins->oprs[c - 044].addr_size = asize;
         }
         if (c >= 050 && c <= 052) {
-            ins->oprs[c - 050].offset = (int8_t)*data++;
+            ins->oprs[c - 050].offset = (char)*data++;
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
         }
         if (c >= 060 && c <= 062) {
@@ -575,12 +575,12 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
     return data - origdata;
 }
 
-int32_t disasm(uint8_t *data, int8_t *output, int outbufsize, int segsize,
+int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             int32_t offset, int autosync, uint32_t prefer)
 {
     struct itemplate **p, **best_p;
     int length, best_length = 0;
-    int8_t *segover;
+    char *segover;
     int rep, lock, asize, osize, i, slen, colon;
     uint8_t *origdata;
     int works;
@@ -855,7 +855,7 @@ int32_t disasm(uint8_t *data, int8_t *output, int outbufsize, int segsize,
             if (ins.oprs[i].segment & SEG_DISP8) {
                 int sign = '+';
                 if (ins.oprs[i].offset & 0x80) {
-                    ins.oprs[i].offset = -(int8_t)ins.oprs[i].offset;
+                    ins.oprs[i].offset = -(char)ins.oprs[i].offset;
                     sign = '-';
                 }
                 slen +=
@@ -883,7 +883,7 @@ int32_t disasm(uint8_t *data, int8_t *output, int outbufsize, int segsize,
     }
     output[slen] = '\0';
     if (segover) {              /* unused segment override */
-        int8_t *p = output;
+        char *p = output;
         int count = slen + 1;
         while (count--)
             p[count + 3] = p[count];
@@ -893,7 +893,7 @@ int32_t disasm(uint8_t *data, int8_t *output, int outbufsize, int segsize,
     return length;
 }
 
-int32_t eatbyte(uint8_t *data, int8_t *output, int outbufsize)
+int32_t eatbyte(uint8_t *data, char *output, int outbufsize)
 {
     snprintf(output, outbufsize, "db 0x%02X", *data);
     return 1;

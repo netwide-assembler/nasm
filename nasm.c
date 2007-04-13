@@ -29,15 +29,15 @@ struct forwrefinfo {            /* info held on forward refs. */
     int operand;
 };
 
-static int get_bits(int8_t *value);
-static uint32_t get_cpu(int8_t *cpu_str);
-static void parse_cmdline(int, int8_t **);
-static void assemble_file(int8_t *);
-static int getkw(int8_t **directive, int8_t **value);
+static int get_bits(char *value);
+static uint32_t get_cpu(char *cpu_str);
+static void parse_cmdline(int, char **);
+static void assemble_file(char *);
+static int getkw(char **directive, char **value);
 static void register_output_formats(void);
-static void report_error_gnu(int severity, const int8_t *fmt, ...);
-static void report_error_vc(int severity, const int8_t *fmt, ...);
-static void report_error_common(int severity, const int8_t *fmt,
+static void report_error_gnu(int severity, const char *fmt, ...);
+static void report_error_vc(int severity, const char *fmt, ...);
+static void report_error_common(int severity, const char *fmt,
                                 va_list args);
 static int is_suppressed_warning(int severity);
 static void usage(void);
@@ -48,9 +48,9 @@ int tasm_compatible_mode = FALSE;
 int pass0;
 int maxbits = 0;
 
-static int8_t inname[FILENAME_MAX];
-static int8_t outname[FILENAME_MAX];
-static int8_t listname[FILENAME_MAX];
+static char inname[FILENAME_MAX];
+static char outname[FILENAME_MAX];
+static char listname[FILENAME_MAX];
 static int globallineno;        /* for forward-reference tracking */
 /* static int pass = 0; */
 static struct ofmt *ofmt = NULL;
@@ -86,7 +86,7 @@ static enum op_type operating_mode;
  * Which of the suppressible warnings are suppressed. Entry zero
  * doesn't do anything. Initial defaults are given here.
  */
-static int8_t suppressed[1 + ERR_WARN_MAX] = {
+static char suppressed[1 + ERR_WARN_MAX] = {
     0, TRUE, TRUE, TRUE, FALSE, TRUE
 };
 
@@ -94,7 +94,7 @@ static int8_t suppressed[1 + ERR_WARN_MAX] = {
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static const int8_t *suppressed_names[1 + ERR_WARN_MAX] = {
+static const char *suppressed_names[1 + ERR_WARN_MAX] = {
     NULL, "macro-params", "macro-selfref", "orphan-labels",
         "number-overflow",
     "gnu-elf-extensions"
@@ -104,7 +104,7 @@ static const int8_t *suppressed_names[1 + ERR_WARN_MAX] = {
  * The explanations for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static const int8_t *suppressed_what[1 + ERR_WARN_MAX] = {
+static const char *suppressed_what[1 + ERR_WARN_MAX] = {
     NULL,
     "macro calls with wrong no. of params",
     "cyclic macro self-references",
@@ -119,8 +119,8 @@ static const int8_t *suppressed_what[1 + ERR_WARN_MAX] = {
  * not preprocess their source file.
  */
 
-static void no_pp_reset(int8_t *, int, efunc, evalfunc, ListGen *);
-static int8_t *no_pp_getline(void);
+static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *);
+static char *no_pp_getline(void);
 static void no_pp_cleanup(int);
 static Preproc no_pp = {
     no_pp_reset,
@@ -140,7 +140,7 @@ static int want_usage;
 static int terminate_after_phase;
 int user_nolist = 0;            /* fbk 9/2/00 */
 
-static void nasm_fputs(const int8_t *line, FILE * outfile)
+static void nasm_fputs(const char *line, FILE * outfile)
 {
     if (outfile) {
         fputs(line, outfile);
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 
     /* define some macros dependent of command-line */
     {
-        int8_t temp[64];
+        char temp[64];
         snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s\n",
                  ofmt->shortname);
         pp_pre_define(temp);
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
     switch (operating_mode) {
     case op_depend:
         {
-            int8_t *line;
+            char *line;
             preproc->reset(inname, 0, report_error, evaluate, &nasmlist);
             if (outname[0] == '\0')
                 ofmt->filename(inname, outname, report_error);
@@ -211,8 +211,8 @@ int main(int argc, char **argv)
 
     case op_preprocess:
         {
-            int8_t *line;
-            int8_t *file_name = NULL;
+            char *line;
+            char *file_name = NULL;
             int32_t prior_linnum = 0;
             int lineinc = 0;
 
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
  * Get a parameter for a command line option.
  * First arg must be in the form of e.g. -f...
  */
-static int8_t *get_param(int8_t *p, int8_t *q, int *advance)
+static char *get_param(char *p, char *q, int *advance)
 {
     *advance = 0;
     if (p[2]) {                 /* the parameter's in the option */
@@ -341,7 +341,7 @@ static int8_t *get_param(int8_t *p, int8_t *q, int *advance)
 }
 
 struct textargs {
-    const int8_t *label;
+    const char *label;
     int value;
 };
 
@@ -354,9 +354,9 @@ struct textargs textopts[] = {
 };
 
 int stopoptions = 0;
-static int process_arg(int8_t *p, int8_t *q)
+static int process_arg(char *p, char *q)
 {
-    int8_t *param;
+    char *param;
     int i, advance = 0;
 
     if (!p || !p[0])
@@ -515,7 +515,7 @@ static int process_arg(int8_t *p, int8_t *q)
         case 'r':
         case 'v':
             {
-                const int8_t *nasm_version_string =
+                const char *nasm_version_string =
                     "NASM version " NASM_VER " compiled on " __DATE__
 #ifdef DEBUG
                     " with -DDEBUG"
@@ -622,7 +622,7 @@ static int process_arg(int8_t *p, int8_t *q)
 
 static void process_respfile(FILE * rfile)
 {
-    int8_t *buffer, *p, *q, *prevarg;
+    char *buffer, *p, *q, *prevarg;
     int bufsize, prevargsize;
 
     bufsize = prevargsize = ARG_BUF_DELTA;
@@ -685,10 +685,10 @@ static void process_respfile(FILE * rfile)
  * argv array. Used by the environment variable and response file
  * processing.
  */
-static void process_args(int8_t *args)
+static void process_args(char *args)
 {
-    int8_t *p, *q, *arg, *prevarg;
-    int8_t separator = ' ';
+    char *p, *q, *arg, *prevarg;
+    char separator = ' ';
 
     p = args;
     if (*p && *p != '-')
@@ -709,10 +709,10 @@ static void process_args(int8_t *args)
         process_arg(arg, NULL);
 }
 
-static void parse_cmdline(int argc, int8_t **argv)
+static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
-    int8_t *envreal, *envcopy = NULL, *p, *arg;
+    char *envreal, *envcopy = NULL, *p, *arg;
 
     *inname = *outname = *listname = '\0';
 
@@ -740,7 +740,7 @@ static void parse_cmdline(int argc, int8_t **argv)
              * different to the -@resp file processing below for regular
              * NASM.
              */
-            int8_t *str = malloc(2048);
+            char *str = malloc(2048);
             FILE *f = fopen(&argv[0][1], "r");
             if (!str) {
                 printf("out of memory");
@@ -757,8 +757,10 @@ static void parse_cmdline(int argc, int8_t **argv)
             argv++;
         }
         if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-            if ((p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &i))) {
-                if ((rfile = fopen(p, "r"))) {
+	    p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &i);
+            if (p) {
+		rfile = fopen(p, "r");
+                if (rfile) {
                     process_respfile(rfile);
                     fclose(rfile);
                 } else
@@ -775,9 +777,9 @@ static void parse_cmdline(int argc, int8_t **argv)
                      "no input file specified");
 }
 
-static void assemble_file(int8_t *fname)
+static void assemble_file(char *fname)
 {
-    int8_t *directive, *value, *p, *q, *special, *line, debugid[80];
+    char *directive, *value, *p, *q, *special, *line, debugid[80];
     insn output_ins;
     int i, rn_error, validid;
     int32_t seg, offs;
@@ -830,7 +832,8 @@ static void assemble_file(int8_t *fname)
             /* here we parse our directives; this is not handled by the 'real'
              * parser. */
             directive = line;
-            if ((i = getkw(&directive, &value))) {
+	    i = getkw(&directive, &value);
+            if (i) {
                 switch (i) {
                 case 1:        /* [SEGMENT n] */
                     seg = ofmt->section(value, pass2, &sb);
@@ -1336,9 +1339,9 @@ static void assemble_file(int8_t *fname)
 #endif
 }                               /* exit from assemble_file (...) */
 
-static int getkw(int8_t **directive, int8_t **value)
+static int getkw(char **directive, char **value)
 {
-    int8_t *p, *q, *buf;
+    char *p, *q, *buf;
 
     buf = *directive;
 
@@ -1422,7 +1425,7 @@ static int getkw(int8_t **directive, int8_t **value)
  * @param severity the severity of the warning or error 
  * @param fmt the printf style format string
  */
-static void report_error_gnu(int severity, const int8_t *fmt, ...)
+static void report_error_gnu(int severity, const char *fmt, ...)
 {
     va_list ap;
 
@@ -1432,7 +1435,7 @@ static void report_error_gnu(int severity, const int8_t *fmt, ...)
     if (severity & ERR_NOFILE)
         fputs("nasm: ", error_file);
     else {
-        int8_t *currentfile = NULL;
+        char *currentfile = NULL;
         int32_t lineno = 0;
         src_get(&lineno, &currentfile);
         fprintf(error_file, "%s:%ld: ", currentfile, lineno);
@@ -1458,7 +1461,7 @@ static void report_error_gnu(int severity, const int8_t *fmt, ...)
  * @param severity the severity of the warning or error 
  * @param fmt the printf style format string
  */
-static void report_error_vc(int severity, const int8_t *fmt, ...)
+static void report_error_vc(int severity, const char *fmt, ...)
 {
     va_list ap;
 
@@ -1468,7 +1471,7 @@ static void report_error_vc(int severity, const int8_t *fmt, ...)
     if (severity & ERR_NOFILE)
         fputs("nasm: ", error_file);
     else {
-        int8_t *currentfile = NULL;
+        char *currentfile = NULL;
         int32_t lineno = 0;
         src_get(&lineno, &currentfile);
         fprintf(error_file, "%s(%ld) : ", currentfile, lineno);
@@ -1511,7 +1514,7 @@ static int is_suppressed_warning(int severity)
  * @param severity the severity of the warning or error 
  * @param fmt the printf style format string
  */
-static void report_error_common(int severity, const int8_t *fmt,
+static void report_error_common(int severity, const char *fmt,
                                 va_list args)
 {
     switch (severity & ERR_MASK) {
@@ -1581,7 +1584,7 @@ static efunc no_pp_err;
 static ListGen *no_pp_list;
 static int32_t no_pp_lineinc;
 
-static void no_pp_reset(int8_t *file, int pass, efunc error, evalfunc eval,
+static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
                         ListGen * listgen)
 {
     src_set_fname(nasm_strdup(file));
@@ -1597,9 +1600,9 @@ static void no_pp_reset(int8_t *file, int pass, efunc error, evalfunc eval,
     (void)eval;                 /* placate compilers */
 }
 
-static int8_t *no_pp_getline(void)
+static char *no_pp_getline(void)
 {
-    int8_t *buffer, *p, *q;
+    char *buffer, *p, *q;
     int bufsize;
 
     bufsize = BUF_DELTA;
@@ -1639,7 +1642,7 @@ static int8_t *no_pp_getline(void)
         if (!strncmp(buffer, "%line", 5)) {
             int32_t ln;
             int li;
-            int8_t *nm = nasm_malloc(strlen(buffer));
+            char *nm = nasm_malloc(strlen(buffer));
             if (sscanf(buffer + 5, "%ld+%d %s", &ln, &li, nm) == 3) {
                 nasm_free(src_set_fname(nm));
                 src_set_linnum(ln);
@@ -1661,7 +1664,7 @@ static void no_pp_cleanup(int pass)
     fclose(no_pp_fp);
 }
 
-static uint32_t get_cpu(int8_t *value)
+static uint32_t get_cpu(char *value)
 {
 
     if (!strcmp(value, "8086"))
@@ -1702,7 +1705,7 @@ static uint32_t get_cpu(int8_t *value)
     return IF_PLEVEL;           /* the maximum level */
 }
 
-static int get_bits(int8_t *value)
+static int get_bits(char *value)
 {
     int i;
 

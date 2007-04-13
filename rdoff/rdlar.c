@@ -22,12 +22,12 @@
 typedef enum { FALSE, TRUE } bool;
 
 /** Constants **/
-const int8_t commands[] = "adnrtx";
-const int8_t modifiers[] = "cflouvV";
+const char commands[] = "adnrtx";
+const char modifiers[] = "cflouvV";
 
 /** Global variables **/
-int8_t *progname = "rdlar";
-int8_t **_argv = NULL;
+char *progname = "rdlar";
+char **_argv = NULL;
 struct {
     bool createok;
     bool usefname;
@@ -96,7 +96,7 @@ void usage(void)
 /*
  * Print an error message and exit
  */
-void error_exit(int errcode, bool useperror, const int8_t *fmt, ...)
+void error_exit(int errcode, bool useperror, const char *fmt, ...)
 {
     va_list ap;
 
@@ -113,7 +113,7 @@ void error_exit(int errcode, bool useperror, const int8_t *fmt, ...)
 /*
  * Fill in and write a header
  */
-void put_header(struct rdlm_hdr *hdr, FILE * libfp, int8_t *modname)
+void put_header(struct rdlm_hdr *hdr, FILE * libfp, char *modname)
 {
     int n = 0;
 
@@ -128,9 +128,9 @@ void put_header(struct rdlm_hdr *hdr, FILE * libfp, int8_t *modname)
 }
 
 /*
- * Copy n bytes from one file to another and return last int8_tacter read.
+ * Copy n bytes from one file to another and return last character read.
  */
-int8_t copybytes(FILE * fp, FILE * fp2, int n)
+char copybytes(FILE * fp, FILE * fp2, int n)
 {
     int i, t = 0;
 
@@ -143,7 +143,7 @@ int8_t copybytes(FILE * fp, FILE * fp2, int n)
             if (fputc(t, fp2) == EOF)
                 error_exit(1, FALSE, "write error");
     }
-    return (int8_t)t;
+    return (char)t;
 }
 
 /*
@@ -173,7 +173,7 @@ int32_t copyint32_t(FILE * fp, FILE * fp2)
 /*
  * Create a new library
  */
-int create_library(int8_t *libname)
+int create_library(char *libname)
 {
     FILE *libfp;
     struct rdlm_hdr hdr;
@@ -200,7 +200,7 @@ int create_library(int8_t *libname)
 /*
  * Add a module to the library
  */
-int add_module(FILE * libfp, const int8_t *fname, int8_t *modname)
+int add_module(FILE * libfp, const char *fname, char *modname)
 {
     FILE *modfp;
     struct rdlm_hdr hdr = { RDLMMAG, 0, 0, 0, 0, 0, 0 };
@@ -246,8 +246,8 @@ int main(int argc, char **argv)
     FILE *libfp, *tmpfp, *modfp = NULL;
     struct stat finfo;
     struct rdlm_hdr hdr;
-    int8_t buf[MAXMODNAMELEN], *p = NULL;
-    int8_t c;
+    char buf[MAXMODNAMELEN], *p = NULL;
+    char c;
     int i;
 
     progname = argv[0];
@@ -368,7 +368,7 @@ int main(int argc, char **argv)
                 if (options.verbose) {
                     printf("%ld bytes", hdr.size);
                 }
-                putint8_t('\n');
+                putchar('\n');
             }
 
             copybytes(libfp, modfp, hdr.size);

@@ -262,8 +262,8 @@ struct ofmt *drivers[] = {
 
 #endif                          /* BUILD_DRIVERS_ARRAY */
 
-struct ofmt *ofmt_find(int8_t *);
-struct dfmt *dfmt_find(struct ofmt *, int8_t *);
+struct ofmt *ofmt_find(char *);
+struct dfmt *dfmt_find(struct ofmt *, char *);
 void ofmt_list(struct ofmt *, FILE *);
 void dfmt_list(struct ofmt *ofmt, FILE * fp);
 struct ofmt *ofmt_register(efunc error);
