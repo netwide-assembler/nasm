@@ -1712,11 +1712,11 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                     || (s != 1 && s != 2 && s != 4 && s != 8 && it != -1))
                     return NULL;        /* wrong, for various reasons */
 
-                if (i >= 0400 && i < 0500) {             /* Calculate REX.I */
+                if (i >= 0400 && i < 0500) {             /* Calculate REX.X */
                     if (i < 0410 || (i >= 0440 && i < 0450))
                         output->rex |= 0xF0;             /* Set REX.0 */
                     else
-                        output->rex |= 0xF2;             /* Set REX.I */
+                        output->rex |= 0xF2;             /* Set REX.X */
                     if (i >= 0440)
                         output->rex |= 0xF8;             /* Set REX.W */
                 }
