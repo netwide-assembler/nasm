@@ -19,6 +19,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "outform.h"
+#include "compiler.h"
 
 #if defined(OF_MACHO)
 
@@ -199,20 +200,31 @@ uint32_t rel_padcnt = 0;
     align(x, sizeof(int32_t))      /* align x to int32_t boundary */
 
 static void debug_reloc (struct reloc *);
-static void debug_section_relocs (struct section *) __attribute__ ((unused));
+static void debug_section_relocs (struct section *) _unused;
 
-static int exact_log2 (uint32_t align) {
-    if (align != (align & -align)) {
-	return -1;
+static int exact_log2 (uint32_t align)
+{
+    if (align == 0) {
+	return 0;
+    } else if (align & (align-1)) {
+	return -1;		/* Not a power of 2 */
     } else {
-#ifdef __GNUC__
-	return (align ? __builtin_ctzl (align) : 0);
+#ifdef HAVE_GNUC_4
+	return __builtin_ctzl (align);
 #else
 	uint32_t result = 0;
 
-	while (align >>= 1) {
-	    ++result;
-	}
+	/* We know exactly one bit is set at this point. */
+	if (align & 0xffff0000)
+	    result |= 16;
+	if (align & 0xff00ff00)
+	    result |= 8;
+	if (align & 0xf0f0f0f0)
+	    result |= 4;
+	if (align & 0xcccccccc)
+	    result |= 2;
+	if (align & 0xaaaaaaaa)
+	    result |= 1;
 
 	return result;
 #endif
