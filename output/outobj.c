@@ -2272,7 +2272,7 @@ static void obj_write_file(int debuginfo)
     nasm_free(orp);
 }
 
-void obj_fwrite(ObjRecord * orp)
+static void obj_fwrite(ObjRecord * orp)
 {
     unsigned int cksum, len;
     uint8_t *ptr;
