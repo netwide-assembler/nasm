@@ -401,7 +401,7 @@ enum {
 #define REG16     0x00201002L
 #define REG32     0x00201004L
 #define REG64     0x00201008L   /* x64 registers */
-#define REGRIP    0x0020100CL   /* RIP register */
+#define RIPREG    0x0020100CL   /* RIP register */
 #define MMXREG    0x00201010L   /* MMX registers */
 #define XMMREG    0x00201011L   /* XMM Katmai reg */
 #define FPUREG    0x01000000L   /* floating point stack registers */
