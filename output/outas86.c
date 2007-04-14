@@ -87,6 +87,7 @@ static void as86_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     as86fp = fp;
     error = errfunc;
     (void)ldef;                 /* placate optimisers */
+    (void)eval;
     stext.data = saa_init(1L);
     stext.datalen = 0L;
     stext.head = stext.last = NULL;
@@ -137,6 +138,9 @@ static void as86_cleanup(int debuginfo)
 
 static int32_t as86_section_names(char *name, int pass, int *bits)
 {
+    
+    (void)pass;
+
     /*
      * Default is 16 bits.
      */
@@ -578,6 +582,9 @@ static int32_t as86_segbase(int32_t segment)
 
 static int as86_directive(char *directive, char *value, int pass)
 {
+    (void)directive;
+    (void)value;
+    (void)pass;
     return 0;
 }
 
@@ -603,11 +610,18 @@ static const char *as86_stdmac[] = {
 
 static int as86_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
                      int lineno)
 {
+    (void)name;
+    (void)segment;
+    (void)offset;
+    (void)is_main;
+    (void)lineno;
 }
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",

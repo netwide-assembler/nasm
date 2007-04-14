@@ -135,6 +135,7 @@ static void coff_win32_init(FILE * fp, efunc errfunc,
 {
     win32 = TRUE; win64 = FALSE;
     (void)ldef;                 /* placate optimizers */
+    (void)eval;
     coff_gen_init(fp, errfunc);
 }
 
@@ -144,6 +145,7 @@ static void coff_win64_init(FILE * fp, efunc errfunc,
     maxbits = 64;
     win32 = FALSE; win64 = TRUE;
     (void)ldef;                 /* placate optimizers */
+    (void)eval;
     coff_gen_init(fp, errfunc);
 }
 
@@ -152,6 +154,7 @@ static void coff_std_init(FILE * fp, efunc errfunc, ldfunc ldef,
 {
     win32 = win64 = FALSE;
     (void)ldef;                 /* placate optimizers */
+    (void)eval;
     coff_gen_init(fp, errfunc);
 }
 
@@ -413,6 +416,8 @@ static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
                            int relative, int size64)
 {
     struct Reloc *r;
+
+    (void)size64;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
@@ -886,6 +891,8 @@ static const char *coff_stdmac[] = {
 
 static int coff_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 #endif                          /* defined(OF_COFF) || defined(OF_WIN32) */

@@ -1230,6 +1230,9 @@ static int32_t elf_segbase(int32_t segment)
 
 static int elf_directive(char *directive, char *value, int pass)
 {
+    (void)directive;
+    (void)value;
+    (void)pass;
     return 0;
 }
 
@@ -1248,6 +1251,8 @@ static const char *elf_stdmac[] = {
 };
 static int elf_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 
@@ -1287,10 +1292,16 @@ struct ofmt of_elf = {
 
 void stabs_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
 }
 
 void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
+    (void)segto;
+
     if (!stabs_filename) {
         stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
         strcpy(stabs_filename, filename);
@@ -1313,14 +1324,22 @@ void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
 void stabs_deflabel(char *name, int32_t segment, int32_t offset, int is_global,
                     char *special)
 {
+    (void)name;
+    (void)segment;
+    (void)offset;
+    (void)is_global;
+    (void)special;
 }
 
 void stabs_directive(const char *directive, const char *params)
 {
+    (void)directive;
+    (void)params;
 }
 
 void stabs_typevalue(int32_t type)
 {
+    (void)type;
 }
 
 void stabs_output(int type, void *param)

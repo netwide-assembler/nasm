@@ -88,7 +88,7 @@ static struct sectmap {
 ".data", "__DATA", "__data", S_REGULAR}, {
 ".rodata", "__DATA", "__const", S_REGULAR}, {
 ".bss", "__DATA", "__bss", S_ZEROFILL}, {
-NULL, NULL, NULL}};
+NULL, NULL, NULL, NULL}};
 
 struct reloc {
     /* nasm internal data */
@@ -324,6 +324,8 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
 
 static int macho_setinfo(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 
@@ -519,6 +521,9 @@ static void macho_output(int32_t secto, const void *data, uint32_t type,
 
 static int32_t macho_section(char *name, int pass, int *bits)
 {
+
+    (void)pass;
+
     int32_t index, originalIndex;
     char *sectionAttributes;
     struct sectmap *sm;
@@ -703,6 +708,9 @@ static int32_t macho_segbase(int32_t section)
 
 static int macho_directive(char *directive, char *value, int pass)
 {
+    (void)directive;
+    (void)value;
+    (void)pass;
     return 0;
 }
 

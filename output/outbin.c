@@ -205,6 +205,7 @@ static struct Section *create_section(char *name)
 
 static void bin_cleanup(int debuginfo)
 {
+    (void)debuginfo;      /* placate optimizers */
     struct Section *g, **gp;
     struct Section *gs = NULL, **gsp;
     struct Section *s, **sp;
@@ -1384,6 +1385,8 @@ static int32_t bin_segbase(int32_t segment)
 
 static int bin_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 

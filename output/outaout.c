@@ -220,6 +220,9 @@ static void aout_cleanup(int debuginfo)
 
 static int32_t aout_section_names(char *name, int pass, int *bits)
 {
+    
+    (void)pass;
+
     /*
      * Default to 32 bits.
      */
@@ -888,6 +891,9 @@ static int32_t aout_segbase(int32_t segment)
 
 static int aout_directive(char *directive, char *value, int pass)
 {
+    (void)directive;
+    (void)value;
+    (void)pass;
     return 0;
 }
 
@@ -905,6 +911,8 @@ static const char *aout_stdmac[] = {
 
 static int aout_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 #endif                          /* OF_AOUT || OF_AOUTB */

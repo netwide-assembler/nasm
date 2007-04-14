@@ -1661,6 +1661,7 @@ static char *no_pp_getline(void)
 
 static void no_pp_cleanup(int pass)
 {
+    (void)pass;                     /* placate GCC */
     fclose(no_pp_fp);
 }
 

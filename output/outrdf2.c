@@ -84,6 +84,10 @@ static int32_t headerlength;
 
 static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
+    
+    (void)ldef;
+    (void)eval;
+
     int segtext, segdata, segbss;
 
     /* set up the initial segments */
@@ -129,6 +133,9 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 
 static int32_t rdf2_section_names(char *name, int pass, int *bits)
 {
+
+    (void)pass;
+
     int i;
     char *p, *q;
     int code = -1;
@@ -759,6 +766,8 @@ static const char *rdf2_stdmac[] = {
 
 static int rdf2_set_info(enum geninfo type, char **val)
 {
+    (void)type;
+    (void)val;
     return 0;
 }
 
