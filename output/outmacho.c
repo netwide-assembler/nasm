@@ -88,7 +88,7 @@ static struct sectmap {
 ".data", "__DATA", "__data", S_REGULAR}, {
 ".rodata", "__DATA", "__const", S_REGULAR}, {
 ".bss", "__DATA", "__bss", S_ZEROFILL}, {
-NULL, NULL, NULL, (int32_t*)NULL}};
+NULL, NULL, NULL, (int32_t)NULL}};
 
 struct reloc {
     /* nasm internal data */
