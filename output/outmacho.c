@@ -83,12 +83,13 @@ static struct sectmap {
     const char *segname;
     const char *sectname;
     const int32_t flags;
-} sectmap[] = { {
-".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS}, {
-".data", "__DATA", "__data", S_REGULAR}, {
-".rodata", "__DATA", "__const", S_REGULAR}, {
-".bss", "__DATA", "__bss", S_ZEROFILL}, {
-NULL, NULL, NULL, (int32_t)NULL}};
+} sectmap[] = {
+    {".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS},
+    {".data", "__DATA", "__data", S_REGULAR},
+    {".rodata", "__DATA", "__const", S_REGULAR},
+    {".bss", "__DATA", "__bss", S_ZEROFILL},
+    {NULL, NULL, NULL, 0}
+};
 
 struct reloc {
     /* nasm internal data */
@@ -573,7 +574,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
             while ((NULL != sectionAttributes)
                    && (currentAttribute = strtok((char*)&sectionAttributes, " \t"))) {
                 if (0 != *currentAttribute) {
-                    if (!(nasm_strnicmp("align=", currentAttribute, 6))) {
+                    if (!nasm_strnicmp("align=", currentAttribute, 6)) {
                         char *end;
                         int newAlignment, value;
 
@@ -609,7 +610,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         }
 
                         s->align = newAlignment;
-                    } else if (!(nasm_stricmp("data", currentAttribute))) {
+                    } else if (!nasm_stricmp("data", currentAttribute)) {
                         /* Do nothing; 'data' is implicit */
                     } else {
                         error(ERR_PANIC,
