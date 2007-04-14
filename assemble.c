@@ -102,7 +102,7 @@ static ListGen *list;
 static int32_t calcsize(int32_t, int32_t, int, insn *, const char *);
 static void gencode(int32_t, int32_t, int, insn *, const char *, int32_t);
 static int regval(operand * o);
-static int regflag(operand * o);
+// static int regflag(operand * o);
 static int matches(struct itemplate *, insn *, int bits);
 static ea *process_ea(operand *, ea *, int, int, int);
 static int chsize(operand *, int);

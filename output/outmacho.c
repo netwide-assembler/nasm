@@ -1283,7 +1283,7 @@ static void macho_cleanup(int debuginfo)
 static void debug_reloc (struct reloc *r)
 {
     fprintf (stdout, "reloc:\n");
-    fprintf (stdout, "\taddr: %ld\n", r->addr);
+    fprintf (stdout, "\taddr: %"PRId32"\n", r->addr);
     fprintf (stdout, "\tsnum: %d\n", r->snum);
     fprintf (stdout, "\tpcrel: %d\n", r->pcrel);
     fprintf (stdout, "\tlength: %d\n", r->length);

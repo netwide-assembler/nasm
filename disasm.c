@@ -789,11 +789,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                     snprintf(output + slen, outbufsize - slen, "short ");
             }
             slen +=
-                snprintf(output + slen, outbufsize - slen, "0x%lx",
+                snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
                          ins.oprs[i].offset);
         } else if (!(MEM_OFFS & ~(*p)->opd[i])) {
             slen +=
-                snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%lx]",
+                snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%"PRIx64"]",
                          ((const char*)segover ? (const char*)segover : ""),    /* placate type mistmatch warning */
                          ((const char*)segover ? ":" : ""),                     /* by using (const char*) instead of uint8_t* */
                          (ins.oprs[i].addr_size ==
@@ -859,19 +859,19 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                     sign = '-';
                 }
                 slen +=
-                    snprintf(output + slen, outbufsize - slen, "%c0x%lx",
+                    snprintf(output + slen, outbufsize - slen, "%c0x%"PRIx64"",
                              sign, ins.oprs[i].offset);
             } else if (ins.oprs[i].segment & SEG_DISP16) {
                 if (started)
                     output[slen++] = '+';
                 slen +=
-                    snprintf(output + slen, outbufsize - slen, "0x%lx",
+                    snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
                              ins.oprs[i].offset);
             } else if (ins.oprs[i].segment & SEG_DISP32) {
                 if (started)
                     output[slen++] = '+';
                 slen +=
-                    snprintf(output + slen, outbufsize - slen, "0x%lx",
+                    snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
                              ins.oprs[i].offset);
             }
             output[slen++] = ']';

@@ -254,8 +254,7 @@ int main(int argc, char **argv)
         p += lenread;
         if ((uint32_t)offset == nextsync) {
             if (synclen) {
-                fprintf(stdout, "%08lX  skipping 0x%lX bytes\n", offset,
-                        synclen);
+                fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n", offset, synclen);
                 offset += synclen;
                 skip(synclen, fp);
             }
@@ -293,7 +292,7 @@ static void output_ins(uint32_t offset, uint8_t *data,
                        int datalen, char *insn)
 {
     int bytes;
-    fprintf(stdout, "%08lX  ", offset);
+    fprintf(stdout, "%08"PRIX32"  ", offset);
 
     bytes = 0;
     while (datalen > 0 && bytes < BPL) {

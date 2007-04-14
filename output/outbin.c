@@ -596,7 +596,7 @@ static void bin_cleanup(int debuginfo)
             fprintf(rf, "-- Program origin ");
             for (h = 61; h; h--)
                 fputc('-', rf);
-            fprintf(rf, "\n\n%08lX\n\n", origin);
+            fprintf(rf, "\n\n%08"PRIX32"\n\n", origin);
         }
         /* Display sections summary. */
         if (map_control & MAP_SUMMARY) {
@@ -606,7 +606,7 @@ static void bin_cleanup(int debuginfo)
             fprintf(rf, "\n\nVstart    Start     Stop      "
                     "Length    Class     Name\n");
             for (s = sections; s; s = s->next) {
-                fprintf(rf, "%08lX  %08lX  %08lX  %08lX  ",
+                fprintf(rf, "%08"PRIX32"  %08"PRIX32"  %08"PRIX32"  %08"PRIX32"  ",
                         s->vstart, s->start, s->start + s->length,
                         s->length);
                 if (s->flags & TYPE_PROGBITS)
@@ -632,10 +632,10 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "progbits");
                 else
                     fprintf(rf, "nobits");
-                fprintf(rf, "\nlength:    %08lX\nstart:     %08lX"
+                fprintf(rf, "\nlength:    %08"PRIX32"\nstart:     %08"PRIX32""
                         "\nalign:     ", s->length, s->start);
                 if (s->flags & ALIGN_DEFINED)
-                    fprintf(rf, "%08lX", s->align);
+                    fprintf(rf, "%08"PRIX32"", s->align);
                 else
                     fprintf(rf, not_defined);
                 fprintf(rf, "\nfollows:   ");
@@ -643,9 +643,9 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "%s", s->follows);
                 else
                     fprintf(rf, not_defined);
-                fprintf(rf, "\nvstart:    %08lX\nvalign:    ", s->vstart);
+                fprintf(rf, "\nvstart:    %08"PRIX32"\nvalign:    ", s->vstart);
                 if (s->flags & VALIGN_DEFINED)
-                    fprintf(rf, "%08lX", s->valign);
+                    fprintf(rf, "%08"PRIX32"", s->valign);
                 else
                     fprintf(rf, not_defined);
                 fprintf(rf, "\nvfollows:  ");
@@ -671,7 +671,7 @@ static void bin_cleanup(int debuginfo)
                 fprintf(rf, "\n\nValue     Name\n");
                 for (l = no_seg_labels; l; l = l->next) {
                     lookup_label(l->name, &segment, &offset);
-                    fprintf(rf, "%08lX  %s\n", offset, l->name);
+                    fprintf(rf, "%08"PRIX32"  %s\n", offset, l->name);
                 }
                 fprintf(rf, "\n\n");
             }
@@ -683,7 +683,7 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "\n\nReal      Virtual   Name\n");
                     for (l = s->labels; l; l = l->next) {
                         lookup_label(l->name, &segment, &offset);
-                        fprintf(rf, "%08lX  %08lX  %s\n",
+                        fprintf(rf, "%08"PRIX32"  %08"PRIX32"  %s\n",
                                 s->start + offset, s->vstart + offset,
                                 l->name);
                     }

@@ -968,7 +968,7 @@ static char *detoken(Token * tlist, int expand_locals)
                 char *p, *q = t->text + 2;
 
                 q += strspn(q, "$");
-                snprintf(buffer, sizeof(buffer), "..@%lu.", ctx->number);
+                snprintf(buffer, sizeof(buffer), "..@%"PRIu32".", ctx->number);
                 p = nasm_strcat(buffer, q);
                 nasm_free(t->text);
                 t->text = p;
@@ -2897,7 +2897,7 @@ static Token *expand_mmac_params(Token * tline)
                     break;
                 case '%':
                     type = TOK_ID;
-                    snprintf(tmpbuf, sizeof(tmpbuf), "..@%lu.",
+                    snprintf(tmpbuf, sizeof(tmpbuf), "..@%"PRIu32".",
                              mac->unique);
                     text = nasm_strcat(tmpbuf, t->text + 2);
                     break;
@@ -4138,7 +4138,7 @@ void pp_extra_stdmac(const char **macros)
 static void make_tok_num(Token * tok, int32_t val)
 {
     char numbuf[20];
-    snprintf(numbuf, sizeof(numbuf), "%ld", val);
+    snprintf(numbuf, sizeof(numbuf), "%"PRId32"", val);
     tok->text = nasm_strdup(numbuf);
     tok->type = TOK_NUMBER;
 }

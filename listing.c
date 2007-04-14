@@ -56,10 +56,10 @@ static void list_emit(void)
     if (!listlinep && !listdata[0])
         return;
 
-    fprintf(listfp, "%6ld ", ++listlineno);
+    fprintf(listfp, "%6"PRId32" ", ++listlineno);
 
     if (listdata[0])
-        fprintf(listfp, "%08lX %-*s", listoffset, LIST_HEXBIT + 1,
+        fprintf(listfp, "%08"PRIX32" %-*s", listoffset, LIST_HEXBIT + 1,
                 listdata);
     else
         fprintf(listfp, "%*s", LIST_HEXBIT + 10, "");
@@ -206,7 +206,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         list_out(offset, q);
     } else if (typ == OUT_RESERVE) {
         char q[20];
-        snprintf(q, sizeof(q), "<res %08lX>", size);
+        snprintf(q, sizeof(q), "<res %08"PRIX32">", size);
         list_out(offset, q);
     }
 }

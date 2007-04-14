@@ -241,7 +241,7 @@ int main(int argc, char **argv)
                     else {
                         lineinc = (altline != -1 || lineinc != 1);
                         fprintf(ofile ? ofile : stdout,
-                                "%%line %ld+%d %s\n", linnum, lineinc,
+                                "%%line %"PRId32"+%d %s\n", linnum, lineinc,
                                 file_name);
                     }
                     prior_linnum = linnum;
@@ -1438,7 +1438,7 @@ static void report_error_gnu(int severity, const char *fmt, ...)
         char *currentfile = NULL;
         int32_t lineno = 0;
         src_get(&lineno, &currentfile);
-        fprintf(error_file, "%s:%ld: ", currentfile, lineno);
+        fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
         nasm_free(currentfile);
     }
     va_start(ap, fmt);
@@ -1474,7 +1474,7 @@ static void report_error_vc(int severity, const char *fmt, ...)
         char *currentfile = NULL;
         int32_t lineno = 0;
         src_get(&lineno, &currentfile);
-        fprintf(error_file, "%s(%ld) : ", currentfile, lineno);
+        fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
         nasm_free(currentfile);
     }
     va_start(ap, fmt);
@@ -1643,7 +1643,7 @@ static char *no_pp_getline(void)
             int32_t ln;
             int li;
             char *nm = nasm_malloc(strlen(buffer));
-            if (sscanf(buffer + 5, "%ld+%d %s", &ln, &li, nm) == 3) {
+            if (sscanf(buffer + 5, "%"PRId32"+%d %s", &ln, &li, nm) == 3) {
                 nasm_free(src_set_fname(nm));
                 src_set_linnum(ln);
                 no_pp_lineinc = li;

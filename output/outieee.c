@@ -1194,47 +1194,47 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
     switch (p->ftype) {
     case FT_SEG:
         if (p->id1 < 0)
-            sprintf(buf, "%lX", -p->id1);
+            sprintf(buf, "%"PRIX32"", -p->id1);
         else
-            sprintf(buf, "L%lX,10,/", p->id1);
+            sprintf(buf, "L%"PRIX32",10,/", p->id1);
         break;
     case FT_OFS:
-        sprintf(buf, "R%lX,%lX,+", p->id1, p->addend);
+        sprintf(buf, "R%"PRIX32",%"PRIX32",+", p->id1, p->addend);
         break;
     case FT_REL:
-        sprintf(buf, "R%lX,%lX,+,P,-,%X,-", p->id1, p->addend, p->size);
+        sprintf(buf, "R%"PRIX32",%"PRIX32",+,P,-,%X,-", p->id1, p->addend, p->size);
         break;
 
     case FT_WRT:
         if (p->id2 < 0)
-            sprintf(buf, "R%lX,%lX,+,L%lX,+,%lX,-", p->id2, p->addend,
+            sprintf(buf, "R%"PRIX32",%"PRIX32",+,L%"PRIX32",+,%"PRIX32",-", p->id2, p->addend,
                     p->id2, -p->id1 * 16);
         else
-            sprintf(buf, "R%lX,%lX,+,L%lX,+,L%lX,-", p->id2, p->addend,
+            sprintf(buf, "R%"PRIX32",%"PRIX32",+,L%"PRIX32",+,L%"PRIX32",-", p->id2, p->addend,
                     p->id2, p->id1);
         break;
     case FT_EXT:
-        sprintf(buf, "X%lX", p->id1);
+        sprintf(buf, "X%"PRIX32"", p->id1);
         break;
     case FT_EXTREL:
-        sprintf(buf, "X%lX,P,-,%lX,-", p->id1, size);
+        sprintf(buf, "X%"PRIX32",P,-,%"PRIX32",-", p->id1, size);
         break;
     case FT_EXTSEG:
         /* We needed a non-ieee hack here.
          * We introduce the Y variable, which is the low
          * limit of the native segment the extern resides in
          */
-        sprintf(buf, "Y%lX,10,/", p->id1);
+        sprintf(buf, "Y%"PRIX32",10,/", p->id1);
         break;
     case FT_EXTWRT:
         if (p->id2 < 0)
-            sprintf(buf, "X%lX,Y%lX,+,%lX,-", p->id2, p->id2,
+            sprintf(buf, "X%"PRIX32",Y%"PRIX32",+,%"PRIX32",-", p->id2, p->id2,
                     -p->id1 * 16);
         else
-            sprintf(buf, "X%lX,Y%lX,+,L%lX,-", p->id2, p->id2, p->id1);
+            sprintf(buf, "X%"PRIX32",Y%"PRIX32",+,L%"PRIX32",-", p->id2, p->id2, p->id1);
         break;
     }
-    ieee_putascii("LR(%s,%lX).\r\n", buf, size);
+    ieee_putascii("LR(%s,%"PRIX32").\r\n", buf, size);
 
     return (size);
 }
