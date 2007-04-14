@@ -38,7 +38,7 @@ void print_header(int32_t length, int rdf_version)
             fread(&o, 4, 1, infile);
             fread(&l, 1, 1, infile);
             fread(&rs, 2, 1, infile);
-            printf("  %s: location (%04x:%08lx), length %d, "
+            printf("  %s: location (%04x:%08"PRIx32"), length %d, "
                    "referred seg %04x\n",
                    t == 1 ? "relocation" : "seg relocation", (int)s,
                    translateint32_t(o), (int)l, translateint16_t(rs));
@@ -100,7 +100,7 @@ void print_header(int32_t length, int rdf_version)
                 printf(" proc");
             if (flags & SYM_DATA)
                 printf(" data");
-            printf(": (%04x:%08lx) = %s\n", (int)s, translateint32_t(o), buf);
+            printf(": (%04x:%08"PRIx32") = %s\n", (int)s, translateint32_t(o), buf);
             if (rdf_version == 1)
                 length -= ll + 6;
             break;
@@ -126,7 +126,7 @@ void print_header(int32_t length, int rdf_version)
 
         case RDFREC_BSS:       /* BSS reservation */
             fread(&ll, 4, 1, infile);
-            printf("  bss reservation: %08lx bytes\n", translateint32_t(ll));
+            printf("  bss reservation: %08"PRIx32" bytes\n", translateint32_t(ll));
             if (rdf_version == 1)
                 length -= 5;
             if (rdf_version > 1 && reclen != 4)
@@ -142,7 +142,7 @@ void print_header(int32_t length, int rdf_version)
                 fread(&align, 2, 1, infile);
                 for (ll = 0; ll < reclen - 8; ll++)
                     fread(buf + ll, 1, 1, infile);
-                printf("  common: segment %04x = %s, %ld:%d\n",
+                printf("  common: segment %04x = %s, %"PRId32":%d\n",
                        translateint16_t(seg), buf, translateint32_t(size),
                        translateint16_t(align));
                 break;
@@ -218,24 +218,24 @@ int main(int argc, char **argv)
     if (version > 1) {
         fread(&l, 4, 1, infile);
         objectlength = translateint32_t(l);
-        printf("Object content size: %ld bytes\n", objectlength);
+        printf("Object content size: %"PRId32" bytes\n", objectlength);
     }
 
     fread(&l, 4, 1, infile);
     headerlength = translateint32_t(l);
-    printf("Header (%ld bytes):\n", headerlength);
+    printf("Header (%"PRId32" bytes):\n", headerlength);
     print_header(headerlength, version);
 
     if (version == 1) {
         fread(&l, 4, 1, infile);
         l = translateint32_t(l);
-        printf("\nText segment length = %ld bytes\n", l);
+        printf("\nText segment length = %"PRId32" bytes\n", l);
         offset = 0;
         while (l--) {
             fread(id, 1, 1, infile);
             if (verbose) {
                 if (offset % 16 == 0)
-                    printf("\n%08lx ", offset);
+                    printf("\n%08"PRIx32" ", offset);
                 printf(" %02x", (int)(uint8_t)id[0]);
                 offset++;
             }
@@ -245,14 +245,14 @@ int main(int argc, char **argv)
 
         fread(&l, 4, 1, infile);
         l = translateint32_t(l);
-        printf("Data segment length = %ld bytes\n", l);
+        printf("Data segment length = %"PRId32" bytes\n", l);
 
         if (verbose) {
             offset = 0;
             while (l--) {
                 fread(id, 1, 1, infile);
                 if (offset % 16 == 0)
-                    printf("\n%08lx ", offset);
+                    printf("\n%08"PRIx32" ", offset);
                 printf(" %02x", (int)(uint8_t)id[0]);
                 offset++;
             }
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
             printf("  Resrvd = %04X\n", (int)translateint16_t(s));
             fread(&l, 4, 1, infile);
             l = translateint32_t(l);
-            printf("  Length = %ld bytes\n", l);
+            printf("  Length = %"PRId32" bytes\n", l);
             segmentcontentlength += l;
 
             offset = 0;
@@ -285,7 +285,7 @@ int main(int argc, char **argv)
                 fread(id, 1, 1, infile);
                 if (verbose) {
                     if (offset % 16 == 0)
-                        printf("\n%08lx ", offset);
+                        printf("\n%08"PRIx32" ", offset);
                     printf(" %02x", (int)(uint8_t)id[0]);
                     offset++;
                 }
@@ -298,14 +298,14 @@ int main(int argc, char **argv)
                    "NULL segment not found\n");
 
         printf("\nTotal number of segments: %d\n", nsegments);
-        printf("Total segment content length: %ld bytes\n",
+        printf("Total segment content length: %"PRId32" bytes\n",
                segmentcontentlength);
 
         /* calculate what the total object content length should have been */
         l = segmentcontentlength + 10 * (nsegments + 1) + headerlength + 4;
         if (l != objectlength)
-            printf("Warning: actual object length (%ld) != "
-                   "stored object length (%ld)\n", l, objectlength);
+            printf("Warning: actual object length (%"PRId32") != "
+                   "stored object length (%"PRId32")\n", l, objectlength);
     }
     fclose(infile);
     return 0;

@@ -254,7 +254,7 @@ void processmodule(const char *filename, struct modulenode *mod)
             mod->seginfo[seg].reloc = 0;
             outputseg[outseg].length = mod->f.seg[seg].length;
             if (options.verbose > 1)
-                printf("=> %04x:%08lx (+%04lx)\n", outseg,
+                printf("=> %04x:%08"PRIx32" (+%04"PRIx32")\n", outseg,
                        mod->seginfo[seg].reloc, mod->f.seg[seg].length);
             break;
 
@@ -281,7 +281,7 @@ void processmodule(const char *filename, struct modulenode *mod)
             outputseg[outseg].length += mod->f.seg[seg].length;
 
             if (options.verbose > 1)
-                printf("=> %04x:%08lx (+%04lx)\n", outseg,
+                printf("=> %04x:%08"PRIx32" (+%04"PRIx32")\n", outseg,
                        mod->seginfo[seg].reloc, mod->f.seg[seg].length);
         }
 
@@ -349,7 +349,7 @@ void processmodule(const char *filename, struct modulenode *mod)
                 if (bss_length % hr->c.align != 0)
                     bss_length += hr->c.align - (bss_length % hr->c.align);
                 if (options.verbose > 1) {
-                    printf("%s %04x common '%s' => 0002:%08lx (+%04lx)\n",
+                    printf("%s %04x common '%s' => 0002:%08"PRIx32" (+%04"PRIx32")\n",
                            filename, hr->c.segment, hr->c.label,
                            bss_length, hr->c.size);
                 }
@@ -374,7 +374,7 @@ void processmodule(const char *filename, struct modulenode *mod)
 
         mod->bss_reloc = bss_length;
         if (options.verbose > 1) {
-            printf("%s 0002 [            BSS] => 0002:%08lx (+%04lx)\n",
+            printf("%s 0002 [            BSS] => 0002:%08"PRIx32" (+%04"PRIx32")\n",
                    filename, bss_length, bssamount);
         }
         bss_length += bssamount;
@@ -883,7 +883,7 @@ void write_output(const char *filename)
                     if (offset < -127 || offset > 128)
                         fprintf(error_file,
                                 "warning: relocation out of range "
-                                "at %s(%02x:%08lx)\n", cur->name,
+                                "at %s(%02x:%08"PRIx32")\n", cur->name,
                                 (int)hr->r.segment, hr->r.offset);
                     *data = (char)offset;
                     break;
@@ -892,7 +892,7 @@ void write_output(const char *filename)
                     if (offset < -32767 || offset > 32768)
                         fprintf(error_file,
                                 "warning: relocation out of range "
-                                "at %s(%02x:%08lx)\n", cur->name,
+                                "at %s(%02x:%08"PRIx32")\n", cur->name,
                                 (int)hr->r.segment, hr->r.offset);
                     *(int16_t *)data = (int16_t)offset;
                     break;

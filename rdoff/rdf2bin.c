@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "rdfload.h"
-#include "../nasmlib.h"
+#include "nasmlib.h"
 
 int32_t origin = 0;
 int align = 16;
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
         rdfperror("rdf2bin", *argv);
         return 1;
     }
-    printf("relocating %s: origin=%lx, align=%d\n", *argv, origin, align);
+    printf("relocating %s: origin=%"PRIx32", align=%d\n", *argv, origin, align);
 
     m->textrel = origin;
     m->datarel = origin + m->f.seg[0].length;
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     } else
         datapad = 0;
 
-    printf("code: %08lx\ndata: %08lx\nbss:  %08lx\n",
+    printf("code: %08"PRIx32"\ndata: %08"PRIx32"\nbss:  %08"PRIx32"\n",
            m->textrel, m->datarel, m->bssrel);
 
     rdf_relocate(m);

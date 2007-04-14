@@ -70,6 +70,8 @@ static void int32_ttolocal(int32_t *l)
     t = p[1];
     p[1] = p[2];
     p[2] = p[1];
+#else
+    (void)l;             /* placate optimizers */
 #endif
 }
 
@@ -245,14 +247,14 @@ int main(int argc, char **argv)
                 l = copyint32_t(fp, fp2);
 
                 if (argv[1][0] == 't')
-                    printf("   %ld bytes content\n", l);
+                    printf("   %"PRId32" bytes content\n", l);
 
                 copybytes(fp, fp2, l);
             } else if ((c = copybytes(fp, fp2, 6)) >= '2') {    /* version 2 or above */
                 l = copyint32_t(fp, fp2);
 
                 if (argv[1][0] == 't')
-                    printf("RDOFF%c   %ld bytes content\n", c, l);
+                    printf("RDOFF%c   %"PRId32" bytes content\n", c, l);
                 copybytes(fp, fp2, l);  /* entire object */
             } else {
                 if (argv[1][0] == 't')

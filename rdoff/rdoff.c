@@ -234,7 +234,7 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
         /* fix this to be portable! */
         fputs("*** this program requires a little endian machine\n",
               stderr);
-        fprintf(stderr, "01020304h = %08lxh\n", translateint32_t(0x01020304));
+        fprintf(stderr, "01020304h = %08"PRIx32"h\n", translateint32_t(0x01020304));
         exit(3);
     }
 
@@ -295,7 +295,7 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
     }
 
     if (f->eof_offset != ftell(f->fp) + 8) {    /* +8 = skip null segment header */
-        fprintf(stderr, "warning: eof_offset [%ld] and actual eof offset "
+        fprintf(stderr, "warning: eof_offset [%"PRId32"] and actual eof offset "
                 "[%ld] don't match\n", f->eof_offset, ftell(f->fp) + 8);
     }
     fseek(f->fp, initpos, SEEK_SET);

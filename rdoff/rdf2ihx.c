@@ -88,7 +88,7 @@ int main(int argc, char **argv)
         rdfperror("rdf2ihx", *argv);
         return 1;
     }
-    printf("relocating %s: origin=%lx, align=%d\n", *argv, origin, align);
+    printf("relocating %s: origin=%"PRIx32", align=%d\n", *argv, origin, align);
 
     m->textrel = origin;
     m->datarel = origin + m->f.seg[0].length;
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
         pad[1] = 0;
     }
 
-    printf("code: %08lx\ndata: %08lx\nbss:  %08lx\n",
+    printf("code: %08"PRIx32"\ndata: %08"PRIx32"\nbss:  %08"PRIx32"\n",
            m->textrel, m->datarel, m->bssrel);
 
     rdf_relocate(m);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
         segaddr = ((s->segment & 0xffff) << 16) + ((s->offset) & 0xffff);
         fprintf(of, ":04000003");       /* Record mark, reclen, load offset & rectyp
                                            fields for start seg. addr. record */
-        fprintf(of, "%08lX", segaddr);  /* CS/IP field */
+        fprintf(of, "%08"PRIX32"", segaddr);  /* CS/IP field */
         checksum = 0x04 +       /* reclen */
             0x0000 +            /* load offset */
             0x03 +              /* Rectyp */
