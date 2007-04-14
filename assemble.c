@@ -248,9 +248,9 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                             out(offset, segment, &out_byte,
                                 OUT_RAWDATA + 1, NO_SEG, NO_SEG);
                         }
-                    } else if ((wsize > 4 && (bits != 64)) || (wsize > 8)) {
-                        errfunc(ERR_NONFATAL, "integer supplied to a D%c"
-                                " instruction", wsize == 8 ? 'Q' : 'T');
+                    } else if (wsize > 8) {
+                        errfunc(ERR_NONFATAL, "integer supplied to a DT"
+                                " instruction");
                     } else
                         out(offset, segment, &e->offset,
                             OUT_ADDRESS + wsize, e->segment, e->wrt);
