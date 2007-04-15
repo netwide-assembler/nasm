@@ -122,7 +122,7 @@ cr3	REG_CREG	creg	0113
 cr4	REG_CREG	creg	0114
 cr5	REG_CREG	creg	0115
 cr6	REG_CREG	creg	0116
-cr7	REG_CREG	creg	0127
+cr7	REG_CREG	creg	0117
 cr8     REG_C8REG       creg    0120
 cr9	REG_CREG	creg	0121
 cr10	REG_CREG	creg	0122
