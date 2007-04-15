@@ -102,10 +102,15 @@ if ( $fmt eq 'h' ) {
     foreach $class ( sort(keys(%disclass)) ) {
 	printf "static const int %-8s[] = {", $class;
 	@foo = @{$disclass{$class}};
+	@bar = 0;
+	$counter = 0;
 	for ( $i = 0 ; $i < scalar(@foo) ; $i++ ) {
-	    $foo[$i] = defined($foo[$i]) ? "R_\U$foo[$i]\E" : '0';
+            if (defined($foo[$i])) {
+		$bar[$counter] = "R_\U$foo[$i]\E";
+		$counter ++;
+            }
 	}
-	print join(',', @foo), "};\n";
+	print join(',', @bar), "};\n";
     }
 } else {
     die "$0: Unknown output format\n";
