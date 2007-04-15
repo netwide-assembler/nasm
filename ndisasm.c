@@ -25,8 +25,8 @@ static const char *help =
     "usage: ndisasm [-a] [-i] [-h] [-r] [-u] [-b bits] [-o origin] [-s sync...]\n"
     "               [-e bytes] [-k start,bytes] [-p vendor] file\n"
     "   -a or -i activates auto (intelligent) sync\n"
-    "   -u sets USE32 (32-bit mode)\n"
-    "   -b 16 or -b 32 sets number of bits too\n"
+    "   -u same as -b 32\n"
+    "   -b 16, -b 32 or -b 64 sets the processor mode\n"
     "   -h displays this text\n"
     "   -r or -v displays the version number\n"
     "   -e skips <bytes> bytes of header\n"
@@ -38,7 +38,7 @@ static void skip(uint32_t dist, FILE * fp);
 
 int main(int argc, char **argv)
 {
-    uint8_t buffer[INSN_MAX * 2], *p, *q;
+    char buffer[INSN_MAX * 2], *p, *ep, *q;
     char outbuf[256];
     char *pname = *argv;
     char *filename = NULL;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     int lenread;
     int32_t lendis;
     int autosync = FALSE;
-    int bits = 16;
+    int bits = 16, b;
     int eof = FALSE;
     uint32_t prefer = 0;
     int rn_error;
@@ -76,8 +76,9 @@ int main(int argc, char **argv)
                             "NDISASM version %s compiled " __DATE__ "\n",
                             NASM_VER);
                     return 0;
-                case 'u':      /* USE32 */
-                    bits = 32;
+                case 'u':	/* -u for -b 32, -uu for -b 64 */
+		    if (bits < 64)
+			bits <<= 1;
                     p++;
                     break;
                 case 'b':      /* bits */
@@ -87,14 +88,13 @@ int main(int argc, char **argv)
                                 pname);
                         return 1;
                     }
-                    if (!strcmp(v, "16"))
-                        bits = 16;
-                    else if (!strcmp(v, "32"))
-                        bits = 32;
-                    else {
+		    b = strtoul(v, &ep, 10);
+		    if (*ep || !(bits == 16 || bits == 32 || bits == 64)) {
                         fprintf(stderr, "%s: argument to `-b' should"
-                                " be `16' or `32'\n", pname);
-                    }
+                                " be 16, 32 or 64\n", pname);
+                    } else {
+			bits = b;
+		    }
                     p = "";     /* force to next argument */
                     break;
                 case 'o':      /* origin */

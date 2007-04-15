@@ -6,26 +6,51 @@
 
 $nline = 0;
 
+sub toint($) {
+    my($v) = @_;
+
+    return ($v =~ /^0/) ? oct $v : $v+0;
+}
+
 sub process_line($) {
     my($line) = @_;
     my @v;
 
-    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([0-9]+)\s*$/ ) {
+    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([1-9][0-9]+|0[0-7]+|0x[0-9a-f]+)\s*([0-9]+)$/i ) {
 	die "regs.dat:$nline: invalid input\n";
     }
-    $reg    = $1;
-    $aclass = $2;
-    $dclass = $3;
-    $regval   = $4;
+    $reg      = $1;
+    $aclass   = $2;
+    $dclasses = $3;
+    $regval   = toint($4);
+    $x86regno = toint($5);
 
-    $regs{$reg} = $aclass;
-    $regvals{$reg} = $regval;
-
-    if ( !defined($disclass{$dclass}) ) {
-	$disclass{$dclass} = [(undef) x 8];
+    if ($reg =~ /\*$/) {
+	$nregs = 8;
+	$reg =~ s/\*$//;
+    } else {
+	$nregs = 1;
     }
 
-    $disclass{$dclass}->[$regval] = $reg;
+    while ($nregs--) {
+	$regs{$reg} = $aclass;
+	$regvals{$reg} = $regval;
+
+	foreach $dclass (split(/,/, $dclasses)) {
+	    if ( !defined($disclass{$dclass}) ) {
+		$disclass{$dclass} = [];
+	    }
+	    
+	    $disclass{$dclass}->[$x86regno] = $reg;
+	}
+
+	# Compute the next register, if any
+	$regval++;
+	$x86regno++;
+	if ($reg =~ /^(|.*[^0-9])([0-9]+)$/) {
+	    $reg = sprintf("%s%u", $1, $2+1);
+	}
+    }
 }
 
 ($fmt, $file) = @ARGV;
@@ -42,14 +67,7 @@ while ( defined($line = <REGS>) ) {
     
     next if ( $line eq '' );
 
-    if ( $line =~ /\*/ ) {
-	for ( $i = 0 ; $i < 8 ; $i++ ) {
-	    ($xline = $line) =~ s/\*/$i/g;
-	    process_line($xline);
-	}
-    } else {
-	process_line($line);
-    }
+    process_line($line);
 }
 close(REGS);
 
@@ -93,7 +111,7 @@ if ( $fmt eq 'h' ) {
     print "static const int regvals[] = {\n";
     print "    -1";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
-	print ",\n    ", $regvals{$reg}; # Print the regval of the register
+	printf ",\n    0%03o", $regvals{$reg}; # Print the regval of the register
     }
     print "\n};\n";
 } elsif ( $fmt eq 'dc' ) {
@@ -106,6 +124,8 @@ if ( $fmt eq 'h' ) {
 	for ( $i = 0 ; $i < scalar(@foo) ; $i++ ) {
             if (defined($foo[$i])) {
 		push(@bar, "R_\U$foo[$i]\E");
+	    } else {
+		die "$0: No register name for class $class, value $i\n";
             }
 	}
 	print join(',', @bar), "};\n";

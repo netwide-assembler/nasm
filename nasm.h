@@ -433,7 +433,6 @@ enum {
 #define REG_CREG  0x08101004L   /* CRn */
 #define REG_DREG  0x10101004L   /* DRn */
 #define REG_TREG  0x20101004L   /* TRn */
-#define REG_C8REG 0x40101004L   /* CR8 */
 
 /* special type of EA */
 #define MEM_OFFS  0x00604000L   /* simple [address] offset */
