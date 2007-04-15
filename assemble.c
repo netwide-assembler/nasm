@@ -1404,6 +1404,8 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
+                    if (ea_data.rip && data && (ins->oprs[(c >> 3) & 7].type == MEMORY))
+                        ea_data.rip = 0;    /* Make distinction between Symbols and Immediates */
                     out(offset, segment, &data,   /* RIP = Relative, not Absolute */
                         (ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS) + ea_data.bytes,
                         ins->oprs[(c >> 3) & 7].segment,
