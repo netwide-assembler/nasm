@@ -59,12 +59,11 @@ else
 fi
 AC_PROG_INSTALL
 
-if test "$GCC" = "yes"; then
-  GCCFLAGS="-W -Wall -std=c99 -pedantic"
-else
-  GCCFLAGS=
-fi
-AC_SUBST(GCCFLAGS)
+dnl If we have gcc, add appropriate options
+PA_ADD_CFLAGS([-W])
+PA_ADD_CFLAGS([-Wall])
+PA_ADD_CFLAGS([-std=c99])
+PA_ADD_CFLAGS([-pedantic])
 
 dnl Look for "nroff" or "groff"
 AC_CHECK_PROGS(NROFF, nroff, echo)
