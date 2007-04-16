@@ -25,9 +25,9 @@ sub process_line($) {
     $regval   = toint($4);
     $x86regno = toint($5);
 
-    if ($reg =~ /\*$/) {
+    if ($reg =~ /[0-9]\+$/) {
 	$nregs = 8;
-	$reg =~ s/\*$//;
+	$reg =~ s/\+$//;
     } else {
 	$nregs = 1;
     }

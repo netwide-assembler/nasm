@@ -7,12 +7,12 @@
 # register name, assembler class, disassembler class(es),
 # NASM register number, x86 register number
 #
-# If the register name ends in *, then it is repeated 8 times
+# If the register name ends in +, then it is repeated 8 times
 # with the following changes:
 # - a numerical tail to register number is incremented
 # - the NASM and x86 register numbers are incremented
 #
-# For 16-register register sets, two * lines are required.
+# For 16-register register sets, two + lines are required.
 #
 
 # Legacy Registers
@@ -124,15 +124,15 @@ segr6	REG_SEG67	sreg		0106	6
 segr7	REG_SEG67	sreg		0107	7
 
 # Control registers
-cr0*	REG_CREG	creg		0110	0
-cr8*	REG_CREG	creg		0120	8
+cr0+	REG_CREG	creg		0110	0
+cr8+	REG_CREG	creg		0120	8
 
 # Debug registers
-dr0*	REG_DREG	dreg		0130	0
-dr8*	REG_DREG	dreg		0140	8
+dr0+	REG_DREG	dreg		0130	0
+dr8+	REG_DREG	dreg		0140	8
 
 # Test registers
-tr0*	REG_TREG	treg		0150	0
+tr0+	REG_TREG	treg		0150	0
 
 # Floating-point registers
 st0	FPU0		fpureg		0200	0
@@ -145,11 +145,11 @@ st6	FPUREG		fpureg		0206	6
 st7	FPUREG		fpureg		0207	7
 
 # MMX registers
-mm0*	MMXREG		mmxreg		0220	0
+mm0+	MMXREG		mmxreg		0220	0
 
 # SSE registers
-xmm0*	XMMREG		xmmreg		0240	0
-xmm8*	XMMREG		xmmreg		0460	8
+xmm0+	XMMREG		xmmreg		0240	0
+xmm8+	XMMREG		xmmreg		0460	8
 
 # Special registers
 rip	REG_RIP		ripreg		0500
