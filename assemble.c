@@ -415,12 +415,24 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                             c = 0xF3;
                             break;
                         case R_CS:
+                            if (bits == 64) {
+                                error(ERR_WARNING,
+                                      "cs segment base ignored in 64-bit mode");
+                            }
                             c = 0x2E;
                             break;
                         case R_DS:
+                            if (bits == 64) {
+                                error(ERR_WARNING,
+                                      "ds segment base ignored in 64-bit mode");
+                            }
                             c = 0x3E;
                             break;
                         case R_ES:
+                           if (bits == 64) {
+                                error(ERR_WARNING,
+                                      "es segment base ignored in 64-bit mode");
+                           }
                             c = 0x26;
                             break;
                         case R_FS:
@@ -430,6 +442,10 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                             c = 0x65;
                             break;
                         case R_SS:
+                            if (bits == 64) {
+                                error(ERR_WARNING,
+                                      "ss segment base ignored in 64-bit mode");
+                            }
                             c = 0x36;
                             break;
                         case R_SEGR6:
@@ -439,7 +455,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                             break;
                         case P_A16:
                             if (bits == 64) {
-                                error(ERR_PANIC, "16-bit addressing is depreciated in long mode");
+                                error(ERR_PANIC, "16-bit addressing is deprecated in 64-bit mode");
                                 break;
                             }
                             if (bits != 16)
@@ -496,7 +512,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
         else if (size_prob == 3)
             error(ERR_NONFATAL, "no instruction for this cpu level");
         else if (size_prob == 4)
-            error(ERR_NONFATAL, "instruction depreciated in long mode");
+            error(ERR_NONFATAL, "instruction deprecated in 64-bit mode");
         else
             error(ERR_NONFATAL,
                   "invalid combination of opcode and operands");
@@ -627,9 +643,7 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
                 if ((instruction->prefixes[j] != P_A16 &&
                      instruction->prefixes[j] != P_O16 && bits == 16) ||
                     (instruction->prefixes[j] != P_A32 &&
-                     instruction->prefixes[j] != P_O32 && bits == 32) ||
-                    (instruction->prefixes[j] == P_A32 &&
-                     instruction->prefixes[j] != P_O32 && bits == 64)) {
+                     instruction->prefixes[j] != P_O32 && bits >= 32)) {
                     isize++;
                 }
             }
