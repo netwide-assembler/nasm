@@ -561,7 +561,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
         if (mref) {             /* it's a memory reference */
             expr *e = value;
             int b, i, s;        /* basereg, indexreg, scale */
-            int32_t o;             /* offset */
+            int64_t o;             /* offset */
 
             b = i = -1, o = s = 0;
             result->oprs[operand].hintbase = hints.base;
