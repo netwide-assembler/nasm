@@ -673,12 +673,12 @@ MOV       reg_sreg,reg16      \1\x8E\110                    8086
 MOV       reg_sreg,reg32      \1\x8E\110                    386
 MOV       reg_al,mem_offs     \301\1\xA0\45                 8086,SM
 MOV       reg_ax,mem_offs     \301\320\1\xA1\45             8086,SM
-MOV       reg_eax,mem_offs    \301\321\1\xA1\45             386,SM,NOLONG
-MOV       reg_rax,mem_offs    \301\321\1\xA1\45             X64,SM
+MOV       reg_eax,mem_offs    \301\321\1\xA1\45             386,SM
+MOV       reg_rax,mem_offs    \301\324\1\xA1\45             X64,SM
 MOV       mem_offs,reg_al     \300\1\xA2\44                 8086,SM
 MOV       mem_offs,reg_ax     \300\320\1\xA3\44             8086,SM
-MOV       mem_offs,reg_eax    \300\321\1\xA3\44             386,SM,NOLONG
-MOV       mem_offs,reg_rax    \300\321\1\xA3\44             X64,SM
+MOV       mem_offs,reg_eax    \300\321\1\xA3\44             386,SM
+MOV       mem_offs,reg_rax    \300\324\1\xA3\44             X64,SM
 MOV       reg32,reg_creg      \2\x0F\x20\101                386,PRIV
 MOV       reg64,reg_creg      \323\2\x0F\x20\101            X64,PRIV
 MOV       reg_creg,reg32      \2\x0F\x22\110                386,PRIV
