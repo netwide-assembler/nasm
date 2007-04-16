@@ -118,7 +118,7 @@ if ( $fmt eq 'h' ) {
     # Output regdis.c
     print "/* automatically generated from $file - do not edit */\n";
     foreach $class ( sort(keys(%disclass)) ) {
-	printf "static const int %-8s[] = {", $class;
+	printf "static const int rd_%-8s[] = {", $class;
 	@foo = @{$disclass{$class}};
 	@bar = ();
 	for ( $i = 0 ; $i < scalar(@foo) ; $i++ ) {

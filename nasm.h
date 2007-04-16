@@ -223,7 +223,7 @@ enum {                          /* token types, other than chars */
 
 typedef struct {
     int32_t segment;
-    int32_t offset;
+    int64_t offset;
     int known;
 } loc_t;
 
