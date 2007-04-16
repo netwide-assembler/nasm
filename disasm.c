@@ -81,18 +81,24 @@ static int whichreg(int32_t regflags, int regval, int rex)
         return R_AX;
     if (!(REG_EAX & ~regflags))
         return R_EAX;
+    if (!(REG_RAX & ~regflags))
+	return R_RAX;
     if (!(REG_DL & ~regflags))
         return R_DL;
     if (!(REG_DX & ~regflags))
         return R_DX;
     if (!(REG_EDX & ~regflags))
         return R_EDX;
+    if (!(REG_RDX & ~regflags))
+        return R_RDX;
     if (!(REG_CL & ~regflags))
         return R_CL;
     if (!(REG_CX & ~regflags))
         return R_CX;
     if (!(REG_ECX & ~regflags))
         return R_ECX;
+    if (!(REG_RCX & ~regflags))
+        return R_RCX;
     if (!(FPU0 & ~regflags))
         return R_ST0;
     if (!(REG_CS & ~regflags))
@@ -166,7 +172,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
     rm = modrm & 07;
 
     if (mod == 3) {             /* pure register version */
-        op->basereg = rm;
+        op->basereg = rm+(rex & REX_B ? 8 : 0);
         op->segment |= SEG_RMREG;
         return data;
     }
@@ -462,14 +468,15 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             ins->oprs[c - 060].segment |= SEG_RELATIVE;
             ins->oprs[c - 060].segment &= ~SEG_32BIT;
         } else if (c >= 064 && c <= 066) {
-	    if (osize == 32) {
-		ins->oprs[c - 064].offset = getu32(data);
-		data += 4;
-                ins->oprs[c - 064].segment |= SEG_32BIT;
-	    } else {
+	    if (osize == 16) {
 		ins->oprs[c - 064].offset = getu16(data);
 		data += 2;
-                ins->oprs[c - 064].segment &= ~SEG_32BIT;
+                ins->oprs[c - 064].segment &= ~(SEG_32BIT|SEG_64BIT);
+	    } else if (osize == 32) {
+		ins->oprs[c - 064].offset = getu32(data);
+		data += 4;
+                ins->oprs[c - 064].segment &= ~SEG_64BIT;
+                ins->oprs[c - 064].segment |= SEG_32BIT;
 	    }	
             if (segsize != osize) {
                 ins->oprs[c - 064].type =
@@ -499,10 +506,6 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], rex);
         } else if (c >= 0300 && c <= 0302) {
-            if (asize)
-                ins->oprs[c - 0300].segment |= SEG_32BIT;
-            else
-                ins->oprs[c - 0300].segment &= ~SEG_32BIT;
             a_used = TRUE;
         } else if (c == 0310) {
             if (asize != 16)
@@ -538,7 +541,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
 	    rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
 	} else if (c == 0324) {
-	    if (!(rex & REX_P) || osize != 64)
+	    if (!(rex & (REX_P|REX_W)) || osize != 64)
 		return FALSE;
 	} else if (c == 0330) {
             int t = *r++, d = *data++;
@@ -617,8 +620,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	else if (*data == 0x65)
 	    segover = "gs", data++;
 	else if (*data == 0x66) {
-	    if (segsize != 64)	/* 66 prefix is ignored in 64-bit mode */
-		osize = 48 - segsize;
+	    osize = (segsize == 16) ? 32 : 16;
 	    data++;
 	} else if (*data == 0x67) {
 	    asize = (segsize == 32) ? 16 : 32;
