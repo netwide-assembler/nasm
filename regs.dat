@@ -152,4 +152,4 @@ xmm0+	XMMREG		xmmreg		0240	0
 xmm8+	XMMREG		xmmreg		0460	8
 
 # Special registers
-rip	REG_RIP		ripreg		0500
+rip	REG_RIP		ripreg		0500    0
