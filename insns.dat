@@ -708,7 +708,7 @@ MOV       reg64,reg64         \321\1\x8B\110                X64
 MOV       reg8,imm            \10\xB0\21                    8086,SM
 MOV       reg16,imm           \320\10\xB8\31                8086,SM
 MOV       reg32,imm           \321\10\xB8\41                386,SM
-MOV       reg64,imm           \321\10\xB8\55                X64,SM
+MOV       reg64,imm           \324\10\xB8\55                X64,SM
 MOV       rm8,imm             \300\1\xC6\200\21             8086,SM
 MOV       rm16,imm            \320\300\1\xC7\200\31         8086,SM
 MOV       rm32,imm            \321\300\1\xC7\200\41         386,SM

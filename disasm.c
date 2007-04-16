@@ -122,6 +122,8 @@ static int whichreg(int32_t regflags, int regval, int rex)
         return rd_reg16[regval];
     if (!((REGMEM | BITS32) & ~regflags))
         return rd_reg32[regval];
+    if (!((REGMEM | BITS64) & ~regflags))
+        return rd_reg64[regval];
     if (!(REG_SREG & ~regflags))
         return rd_sreg[regval & 7]; /* Ignore REX */
     if (!(REG_CREG & ~regflags))
@@ -338,12 +340,13 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
 
     while (*r) {
         int c = *r++;
-        if (c >= 01 && c <= 03) {
+
+	/* FIX: change this into a switch */
+	if (c >= 01 && c <= 03) {
             while (c--)
                 if (*r++ != *data++)
                     return FALSE;
-        }
-        if (c == 04) {
+	} else if (c == 04) {
             switch (*data++) {
             case 0x07:
                 ins->oprs[0].basereg = 0;
@@ -357,8 +360,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             default:
                 return FALSE;
             }
-        }
-        if (c == 05) {
+	} else if (c == 05) {
             switch (*data++) {
             case 0xA1:
                 ins->oprs[0].basereg = 4;
@@ -368,9 +370,8 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
                 break;
             default:
                 return FALSE;
-            }
-        }
-        if (c == 06) {
+	    }
+	} else if (c == 06) {
             switch (*data++) {
             case 0x06:
                 ins->oprs[0].basereg = 0;
@@ -387,8 +388,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             default:
                 return FALSE;
             }
-        }
-        if (c == 07) {
+	} else if (c == 07) {
             switch (*data++) {
             case 0xA0:
                 ins->oprs[0].basereg = 4;
@@ -399,32 +399,28 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             default:
                 return FALSE;
             }
-        }
-        if (c >= 010 && c <= 012) {
+	} else if (c >= 010 && c <= 012) {
             int t = *r++, d = *data++;
             if (d < t || d > t + 7)
                 return FALSE;
             else {
-                ins->oprs[c - 010].basereg = d - t;
+                ins->oprs[c - 010].basereg = (d-t)+(rex & REX_B ? 8 : 0);
                 ins->oprs[c - 010].segment |= SEG_RMREG;
             }
-        }
-        if (c == 017)
+        } else if (c == 017) {
             if (*data++)
                 return FALSE;
-        if (c >= 014 && c <= 016) {
+	} else if (c >= 014 && c <= 016) {
             ins->oprs[c - 014].offset = (int8_t)*data++;
             ins->oprs[c - 014].segment |= SEG_SIGNED;
-        }
-        if (c >= 020 && c <= 022)
+        } else if (c >= 020 && c <= 022) {
             ins->oprs[c - 020].offset = *data++;
-        if (c >= 024 && c <= 026)
+	} else if (c >= 024 && c <= 026) {
             ins->oprs[c - 024].offset = *data++;
-        if (c >= 030 && c <= 032) {
+	} else if (c >= 030 && c <= 032) {
             ins->oprs[c - 030].offset = getu16(data);
 	    data += 2;
-        }
-        if (c >= 034 && c <= 036) {
+        } else if (c >= 034 && c <= 036) {
 	    if (osize == 32) {
 		ins->oprs[c - 034].offset = getu32(data);
 		data += 4;
@@ -434,38 +430,38 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
 	    }
             if (segsize != asize)
                 ins->oprs[c - 034].addr_size = asize;
-        }
-        if (c >= 040 && c <= 042) {
+        } else if (c >= 040 && c <= 042) {
             ins->oprs[c - 040].offset = getu32(data);
 	    data += 4;
-        }
-        if (c >= 044 && c <= 046) {
-	    /* hpa: should this be gets32/gets16? */
-	    if (asize == 32) {
-		ins->oprs[c - 044].offset = getu32(data);
-		data += 4;
-	    } else {
+        } else if (c >= 044 && c <= 046) {
+	    switch (asize) {
+	    case 16:
 		ins->oprs[c - 044].offset = getu16(data);
 		data += 2;
+		break;
+	    case 32:
+		ins->oprs[c - 044].offset = getu32(data);
+		data += 4;
+		break;
+	    case 64:
+		ins->oprs[c - 044].offset = getu64(data);
+		data += 8;
+		break;
 	    }
             if (segsize != asize)
                 ins->oprs[c - 044].addr_size = asize;
-        }
-        if (c >= 050 && c <= 052) {
+        } else if (c >= 050 && c <= 052) {
             ins->oprs[c - 050].offset = gets8(data++);
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
-        }
-	if (c >= 054 && c <= 056) {
+        } else if (c >= 054 && c <= 056) {
 	    ins->oprs[c - 054].offset = getu64(data);
 	    data += 8;
-	}
-        if (c >= 060 && c <= 062) {
+	} else if (c >= 060 && c <= 062) {
             ins->oprs[c - 060].offset = gets16(data);
 	    data += 2;
             ins->oprs[c - 060].segment |= SEG_RELATIVE;
             ins->oprs[c - 060].segment &= ~SEG_32BIT;
-        }
-        if (c >= 064 && c <= 066) {
+        } else if (c >= 064 && c <= 066) {
 	    if (osize == 32) {
 		ins->oprs[c - 064].offset = getu32(data);
 		data += 4;
@@ -480,101 +476,83 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
                     (ins->oprs[c - 064].type & NON_SIZE)
                     | ((osize == 16) ? BITS16 : BITS32);
             }
-        }
-        if (c >= 070 && c <= 072) {
+        } else if (c >= 070 && c <= 072) {
             ins->oprs[c - 070].offset = getu32(data);
 	    data += 4;
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
-        }
-        if (c >= 0100 && c < 0130) {
+        } else if (c >= 0100 && c < 0130) {
             int modrm = *data++;
-            ins->oprs[c & 07].basereg = (modrm >> 3) & 07;
+            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+(rex & REX_R ? 8 : 0);
             ins->oprs[c & 07].segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], rex);
-        }
-        if (c >= 0130 && c <= 0132) {
+        } else if (c >= 0130 && c <= 0132) {
             ins->oprs[c - 0130].offset = getu16(data);
 	    data += 2;
-        }
-        if (c >= 0140 && c <= 0142) {
+        } else if (c >= 0140 && c <= 0142) {
 	    ins->oprs[c - 0140].offset = getu32(data);
 	    data += 4;
-        }
-        if (c >= 0200 && c <= 0277) {
+        } else if (c >= 0200 && c <= 0277) {
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return FALSE;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], rex);
-        }
-        if (c >= 0300 && c <= 0302) {
+        } else if (c >= 0300 && c <= 0302) {
             if (asize)
                 ins->oprs[c - 0300].segment |= SEG_32BIT;
             else
                 ins->oprs[c - 0300].segment &= ~SEG_32BIT;
             a_used = TRUE;
-        }
-        if (c == 0310) {
+        } else if (c == 0310) {
             if (asize != 16)
                 return FALSE;
             else
                 a_used = TRUE;
-        }
-        if (c == 0311) {
+        } else if (c == 0311) {
             if (asize == 16)
                 return FALSE;
             else
                 a_used = TRUE;
-        }
-        if (c == 0312) {
+        } else if (c == 0312) {
             if (asize != segsize)
                 return FALSE;
             else
                 a_used = TRUE;
-        }
-        if (c == 0320) {
+        } else if (c == 0320) {
             if (osize != 16)
                 return FALSE;
             else
                 o_used = TRUE;
-        }
-        if (c == 0321) {
-            if (osize == 16)
+        } else if (c == 0321) {
+            if (osize != 32)
                 return FALSE;
             else
                 o_used = TRUE;
-        }
-        if (c == 0322) {
+        } else if (c == 0322) {
             if (osize != (segsize == 16) ? 16 : 32)
                 return FALSE;
             else
                 o_used = TRUE;
-        }
-	if (c == 0323) {
+        } else if (c == 0323) {
 	    rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
-	}
-	if (c == 0324) {
-	    if (!(rex & REX_P))
+	} else if (c == 0324) {
+	    if (!(rex & REX_P) || osize != 64)
 		return FALSE;
-	}
-        if (c == 0330) {
+	} else if (c == 0330) {
             int t = *r++, d = *data++;
             if (d < t || d > t + 15)
                 return FALSE;
             else
                 ins->condition = d - t;
-        }
-        if (c == 0331) {
+        } else if (c == 0331) {
             if (rep)
                 return FALSE;
-        }
-        if (c == 0332) {
+        } else if (c == 0332) {
             if (drep == P_REP)
                 drep = P_REPE;
-        }
-        if (c == 0333) {
+        } else if (c == 0333) {
             if (rep != 0xF3)
                 return FALSE;
             drep = 0;

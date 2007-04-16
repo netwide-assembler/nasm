@@ -25,8 +25,9 @@
  *                 assembly mode or the operand-size override on the operand
  * \37           - a word constant, from the _segment_ part of operand 0
  * \40, \41, \42 - a long immediate operand, from operand 0, 1 or 2
- * \44, \45, \46 - select between \3[012] and \4[012] depending on 16/32 bit
- *                 assembly mode or the address-size override on the operand
+ * \44, \45, \46 - select between \3[012], \4[012] and \5[456]
+ *		   depending on assembly mode or the address-size override
+ *		   on the operand.
  * \50, \51, \52 - a byte relative operand, from operand 0, 1 or 2
  * \54, \55, \56 - a qword immediate operand, from operand 0, 1 or 2
  * \60, \61, \62 - a word relative operand, from operand 0, 1 or 2
