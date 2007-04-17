@@ -271,4 +271,6 @@ void null_debug_routine(const char *directive, const char *params);
 extern struct dfmt null_debug_form;
 extern struct dfmt *null_debug_arr[2];
 
+const char *prefix_name(int);
+
 #endif

@@ -115,9 +115,6 @@ static int whichreg(int32_t regflags, int regval, int rex)
     if (regval < 0 || regval > 15)
         return 0;
 
-    if (!(rex & REX_P) && regval > 7)
-	return 0;		/* Internal error! */
-
     if (!((REGMEM | BITS8) & ~regflags)) {
 	if (rex & REX_P)
 	    return rd_reg8_rex[regval];
@@ -322,7 +319,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
  */
 static int matches(struct itemplate *t, uint8_t *data, int asize,
                    int osize, int segsize, int rep, insn * ins,
-		   int rex, int *rexout)
+		   int rex, int *rexout, int lock)
 {
     uint8_t *r = (uint8_t *)(t->code);
     uint8_t *origdata = data;
@@ -331,13 +328,8 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
     
     *rexout = rex;
 
-    if (segsize == 64) {
-	if (t->flags & IF_NOLONG)
-	    return FALSE;
-    } else {
-	if (t->flags & IF_X64)
-	    return FALSE;
-    }
+    if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
+        return FALSE;
 
     if (rep == 0xF2)
         drep = P_REPNE;
@@ -559,21 +551,26 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
             if (rep != 0xF3)
                 return FALSE;
             drep = 0;
-        }
+        } else if (c == 0334) {
+	    if (lock) {
+		rex |= REX_R;
+		lock = 0;
+	    }
+	}
     }
 
     /*
      * Check for unused rep or a/o prefixes.
      */
     ins->nprefix = 0;
+    if (lock)
+	ins->prefixes[ins->nprefix++] = P_LOCK;
     if (drep)
         ins->prefixes[ins->nprefix++] = drep;
     if (!a_used && asize != segsize)
         ins->prefixes[ins->nprefix++] = asize == 16 ? P_A16 : P_A32;
-    if (!o_used && osize == ((segsize == 16) ? 32 : 16)) {
-	fprintf(stderr, "osize = %d, segsize = %d\n", osize, segsize);
+    if (!o_used && osize == ((segsize == 16) ? 32 : 16))
         ins->prefixes[ins->nprefix++] = osize == 16 ? P_O16 : P_O32;
-    }
 
     /* Fix: check for redundant REX prefixes */
 
@@ -645,8 +642,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     best_p = NULL;
     best_rex = 0;
     for (p = itable[*data]; *p; p++) {
-        if ((length = matches(*p, data, asize, osize,
-                              segsize, rep, &tmp_ins, rex, &rexout))) {
+        if ((length = matches(*p, data, asize, osize, segsize, rep,
+			      &tmp_ins, rex, &rexout, lock))) {
             works = TRUE;
             /*
              * Final check to make sure the types of r/m match up.
@@ -703,10 +700,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
      *      the return value is "sane."  Maybe a macro wrapper could
      *      be used for that purpose.
      */
-    if (lock)
-        slen += snprintf(output + slen, outbufsize - slen, "lock ");
     for (i = 0; i < ins.nprefix; i++)
         switch (ins.prefixes[i]) {
+	case P_LOCK:
+	    slen += snprintf(output + slen, outbufsize - slen, "lock ");
+	    break;
         case P_REP:
             slen += snprintf(output + slen, outbufsize - slen, "rep ");
             break;

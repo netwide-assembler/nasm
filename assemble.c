@@ -67,6 +67,7 @@
  * \332		 - disassemble a rep (0xF3 byte) prefix as repe not rep.
  * \333		 - REP prefix (0xF3 byte); for SSE instructions.  Not encoded
  *		   as a literal byte in order to aid the disassembler.
+ * \334		 - LOCK prefix used instead of REX.R
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
  * \370,\371,\372 - match only if operand 0 meets byte jump criteria.
@@ -107,6 +108,18 @@ static int regval(operand * o);
 static int matches(struct itemplate *, insn *, int bits);
 static ea *process_ea(operand *, ea *, int, int, int);
 static int chsize(operand *, int);
+
+static void assert_no_prefix(insn * ins, int prefix)
+{
+    int j;
+
+    for (j = 0; j < ins->nprefix; j++) {
+	if (ins->prefixes[j] == prefix) {
+	    errfunc(ERR_NONFATAL, "invalid %s prefix", prefix_name(prefix));
+	    break;
+	}
+    }
+}
 
 /*
  * This routine wrappers the real output format's output routine,
@@ -455,7 +468,9 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                             break;
                         case P_A16:
                             if (bits == 64) {
-                                error(ERR_PANIC, "16-bit addressing is deprecated in 64-bit mode");
+                                error(ERR_NONFATAL,
+				      "16-bit addressing is not supported "
+				      "in 64-bit mode");
                                 break;
                             }
                             if (bits != 16)
@@ -512,7 +527,9 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
         else if (size_prob == 3)
             error(ERR_NONFATAL, "no instruction for this cpu level");
         else if (size_prob == 4)
-            error(ERR_NONFATAL, "instruction deprecated in 64-bit mode");
+            error(ERR_NONFATAL, "instruction not supported in 64-bit mode");
+	else if (size_prob == 5)
+	    error(ERR_NONFATAL, "invalid operands in non-64-bit mode");
         else
             error(ERR_NONFATAL,
                   "invalid combination of opcode and operands");
@@ -680,6 +697,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     int t;
     ins->rex = 0;               /* Ensure REX is reset */
     int rex_mask = 0xFF;
+    int lock_is_rex_r = 0;
 
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
@@ -700,17 +718,15 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 010:
         case 011:
         case 012:
-            if (bits == 64) {
-                t = regval(&ins->oprs[c - 010]);
-                if (t >= 0400 && t < 0500) {          /* Calculate REX.B */
-                    if (t < 0410 || (t >= 0440 && t < 0450))
-                        ins->rex |= 0xF0;             /* Set REX.0 */
-                    else
-                        ins->rex |= 0xF1;             /* Set REX.B */
-                    if (t >= 0440)
-                        ins->rex |= 0xF8;             /* Set REX.W */
-                }
-            }
+	    t = regval(&ins->oprs[c - 010]);
+	    if (t >= 0400 && t < 0500) {          /* Calculate REX.B */
+		if (t < 0410 || (t >= 0440 && t < 0450))
+		    ins->rex |= 0xF0;             /* Set REX.0 */
+		else
+		    ins->rex |= 0xF1;             /* Set REX.B */
+		if (t >= 0440)
+		    ins->rex |= 0xF8;             /* Set REX.W */
+	    }
             codes++, length++;
             break;
         case 017:
@@ -811,15 +827,14 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0300:
         case 0301:
         case 0302:         
-            if (bits == 64) {                         /* Calculate REX */
-                t = ins->oprs[c - 0300].basereg;
-                if (t >= EXPR_REG_START && t < REG_ENUM_LIMIT) {
-                    t = regvals[t];
-                    if ((t >= 0410 && t < 0440) || (t >= 0450 && t < 0500)) {
-                        ins->rex |= 0xF1;             /* Set REX.B */
-                    }
-                }
-            }
+	    /* Calculate REX */
+	    t = ins->oprs[c - 0300].basereg;
+	    if (t >= EXPR_REG_START && t < REG_ENUM_LIMIT) {
+		t = regvals[t];
+		if ((t >= 0410 && t < 0440) || (t >= 0450 && t < 0500)) {
+		    ins->rex |= 0xF1;             /* Set REX.B */
+		}
+	    }
             length += chsize(&ins->oprs[c - 0300], bits);
             break;
         case 0310:
@@ -856,6 +871,10 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0333:
             length++;
             break;
+	case 0334:
+	    assert_no_prefix(ins, P_LOCK);
+	    lock_is_rex_r = 1;
+	    break;
         case 0340:
         case 0341:
         case 0342:
@@ -878,13 +897,10 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
                 int rfield;
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
                 
-                if (bits == 64) {
-                    if (c <= 0177)         /* pick rfield from operand b */
-                        rfield = regval(&ins->oprs[c & 7]);
-                    else
-                        rfield = c & 7;
-                } else
-                    rfield = 0;
+		if (c <= 0177)         /* pick rfield from operand b */
+		    rfield = regval(&ins->oprs[c & 7]);
+		else
+		    rfield = c & 7;
 
                 if (!process_ea
                     (&ins->oprs[(c >> 3) & 7], &ea_data, bits,
@@ -892,8 +908,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
                 } else {
-                    if (bits == 64)
-                        ins->rex |= ea_data.rex;
+		    ins->rex |= ea_data.rex;
                     length += ea_data.size;
                 }
             } else
@@ -901,13 +916,17 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
                         ": instruction code 0x%02X given", c);
         }
 
-    if (bits == 64) {
-        ins->rex &= rex_mask;
-        if (ins->rex)
-            length += 1;
+    ins->rex &= rex_mask;
+    if (ins->rex) {
+	if (bits == 64 ||
+	    (lock_is_rex_r && ins->rex == 0xf4 && cpu >= IF_X86_64))
+	    length++;
+	else
+	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
     }
 
-return length; }
+    return length;
+}
 
 static void gencode(int32_t segment, int32_t offset, int bits,
                     insn * ins, const char *codes, int32_t insn_end)
@@ -1347,6 +1366,14 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             offset += 1;
             break;
 
+	case 0334:
+	    if (ins->rex & 0x04) {
+		*bytes = 0xF0;
+		out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+		offset += 1;
+	    }
+	    break;
+
         case 0340:
         case 0341:
         case 0342:
@@ -1509,7 +1536,7 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
             size[i] = BITS32;
         } else if (itemp->flags & IF_SQ) {
             if (bits != 64)
-                return 2;
+                return 5;
             size[i] = BITS64;
         }
     } else {
@@ -1525,7 +1552,7 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
             oprs = itemp->operands;
         } else if (itemp->flags & IF_SQ) {
             if (bits != 64)
-                return 2;
+                return 5;
             asize = BITS64;
             oprs = itemp->operands;
         }
@@ -1555,7 +1582,7 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
         if ( (((itemp->opd[i] & SIZE_MASK) == BITS64) ||
               ((instruction->oprs[i].type & SIZE_MASK) == BITS64))
              && bits != 64)
-            return 2;
+            return 5;
             
         x = instruction->oprs[i].indexreg;
         b = instruction->oprs[i].basereg;

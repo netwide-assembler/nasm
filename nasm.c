@@ -1693,7 +1693,7 @@ static uint32_t get_cpu(char *value)
         return IF_PRESCOTT;
     if (!nasm_stricmp(value, "x64") ||
         !nasm_stricmp(value, "x86-64"))
-        return IF_X64;
+        return IF_X86_64;
     if (!nasm_stricmp(value, "ia64") ||
         !nasm_stricmp(value, "ia-64") ||
         !nasm_stricmp(value, "itanium") ||
@@ -1719,7 +1719,7 @@ static int get_bits(char *value)
             i = 16;
         }
     } else if (i == 64) {
-        if (cpu < IF_X64) {
+        if (cpu < IF_X86_64) {
             report_error(ERR_NONFATAL,
                          "cannot specify 64-bit segment on processor below an x86-64");
             i = 16;

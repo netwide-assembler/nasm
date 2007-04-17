@@ -669,6 +669,15 @@ static const char *prefix_names[] = {
     "repnz", "repz", "times"
 };
 
+const char *prefix_name(int token)
+{
+    unsigned int prefix = token-PREFIX_ENUM_START;
+    if (prefix > sizeof prefix_names / sizeof(const char *))
+	return NULL;
+
+    return prefix_names[prefix];
+}
+
 /*
  * Standard scanner routine used by parser.c and some output
  * formats. It keeps a succession of temporary-storage strings in

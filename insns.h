@@ -81,10 +81,11 @@ struct itemplate {
 #define IF_SSE2   0x00020000UL  /* it's a SSE2 instruction */
 #define IF_SSE3   0x00040000UL  /* it's a SSE3 (PNI) instruction */
 #define IF_VMX	  0x00080000UL  /* it's a VMX instruction */
+#define IF_LONG   0x00100000UL	/* long mode instruction */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                         /* also the highest possible processor */
-#define IF_PFMASK 0xF001FF00UL  /* the mask for disassembly "prefer" */
+#define IF_PFMASK 0xF01FFF00UL  /* the mask for disassembly "prefer" */
 #define IF_8086   0x00000000UL  /* 8086 instruction */
 #define IF_186    0x01000000UL  /* 186+ instruction */
 #define IF_286    0x02000000UL  /* 286+ instruction */
@@ -95,8 +96,9 @@ struct itemplate {
 #define IF_KATMAI 0x07000000UL  /* Katmai instructions */
 #define IF_WILLAMETTE 0x08000000UL      /* Willamette instructions */
 #define IF_PRESCOTT   0x09000000UL      /* Prescott instructions */
-#define IF_X64    0x0A000000UL	/* x86-64 instructions */
-#define IF_IA64   0x0F000000UL  /* IA64 instructions */
+#define IF_X86_64 0x0A000000UL	/* x86-64 instruction (long or legacy mode) */
+#define IF_X64	  (IF_LONG|IF_X86_64)
+#define IF_IA64   0x0F000000UL  /* IA64 instructions (in x86 mode) */
 #define IF_CYRIX  0x10000000UL  /* Cyrix-specific instruction */
 #define IF_AMD    0x20000000UL  /* AMD-specific instruction */
 
