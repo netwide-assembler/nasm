@@ -695,9 +695,9 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     int32_t length = 0;
     uint8_t c;
     int t;
-    ins->rex = 0;               /* Ensure REX is reset */
     int rex_mask = 0xFF;
     int lock_is_rex_r = 0;
+    ins->rex = 0;               /* Ensure REX is reset */
 
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
@@ -860,8 +860,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             rex_mask = 0x07;     
             break;
         case 0324:
-            length++;     
-            break;     
+	    ins->rex |= 0xF8;
+            break;
         case 0330:
             codes++, length++;
             break;
@@ -919,10 +919,12 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     ins->rex &= rex_mask;
     if (ins->rex) {
 	if (bits == 64 ||
-	    (lock_is_rex_r && ins->rex == 0xf4 && cpu >= IF_X86_64))
+	    (lock_is_rex_r && ins->rex == 0xf4 && cpu >= IF_X86_64)) {
 	    length++;
-	else
-	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+	} else {
+	  errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+	  return -1;
+	}
     }
 
     return length;
