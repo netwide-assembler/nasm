@@ -194,6 +194,7 @@ static int32_t bsslength;
 
 static void rdf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
+    maxbits = 64;
     ofile = fp;
     error = errfunc;
     seg[0] = newmembuf();
@@ -423,7 +424,7 @@ static void rdf_out(int32_t segto, void *data, uint32_t type,
 
         membufwrite(seg[segto], &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
-        if (segment == segto)
+        if ((segment == segto) && (globalbits != 64))
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             error(ERR_NONFATAL,

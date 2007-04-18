@@ -88,6 +88,8 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     (void)ldef;
     (void)eval;
 
+    maxbits = 64;
+
     int segtext, segdata, segbss;
 
     /* set up the initial segments */
@@ -624,7 +626,7 @@ static void rdf2_out(int32_t segto, const void *data, uint32_t type,
 
         membufwrite(segto, &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
-        if (segment == segto)
+        if ((segment == segto) && (globalbits != 64))
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             error(ERR_PANIC, "erm... 4 byte segment base ref?");
