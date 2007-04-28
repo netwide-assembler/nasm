@@ -143,6 +143,7 @@ void standard_extension(char *inname, char *outname, char *extension,
  */
 void fwriteint16_t(int data, FILE * fp);
 void fwriteint32_t(int32_t data, FILE * fp);
+void fwriteint64_t(int64_t data, FILE * fp);
 
 /*
  * Routines to manage a dynamic random access array of int32_ts which

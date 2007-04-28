@@ -306,6 +306,18 @@ void fwriteint32_t(int32_t data, FILE * fp)
     fputc((int)((data >> 24) & 255), fp);
 }
 
+void fwriteint64_t(int64_t data, FILE * fp)
+{
+    fputc((int)(data & 255), fp);
+    fputc((int)((data >> 8) & 255), fp);
+    fputc((int)((data >> 16) & 255), fp);
+    fputc((int)((data >> 24) & 255), fp);
+    fputc((int)((data >> 32) & 255), fp);
+    fputc((int)((data >> 40) & 255), fp);
+    fputc((int)((data >> 48) & 255), fp);
+    fputc((int)((data >> 56) & 255), fp);
+}
+
 void standard_extension(char *inname, char *outname, char *extension,
                         efunc error)
 {

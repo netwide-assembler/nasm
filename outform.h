@@ -17,7 +17,7 @@
  * OF_name                -- ensure that output format 'name' is included
  * OF_NO_name             -- remove output format 'name'
  * OF_DOS                 -- ensure that 'obj', 'bin' & 'win32' are included.
- * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf' are in.
+ * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf32' 'elf64' are in.
  * OF_OTHERS              -- ensure that 'bin', 'as86' & 'rdf' are in.
  * OF_ALL                 -- ensure that all formats are included.
  *                           note that this doesn't include 'dbg', which is
@@ -26,7 +26,7 @@
  *
  * OF_DEFAULT=of_name     -- ensure that 'name' is the default format.
  *
- * eg: -DOF_UNIX -DOF_ELF -DOF_DEFAULT=of_elf would be a suitable config
+ * eg: -DOF_UNIX -DOF_ELF32 -DOF_DEFAULT=of_elf32 would be a suitable config
  * for an average linux system.
  *
  * Default config = -DOF_ALL -DOF_DEFAULT=of_bin
@@ -57,7 +57,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf,aout,aoutb,coff,win32,as86,rdf2,macho */
+ * bin,obj,elf32,elf64,aout,aoutb,coff,win32,as86,rdf2,macho */
 
 /* process options... */
 
@@ -74,8 +74,11 @@
 #ifndef OF_OBJ
 #define OF_OBJ
 #endif
-#ifndef OF_ELF
-#define OF_ELF
+#ifndef OF_ELF32
+#define OF_ELF32
+#endif
+#ifndef OF_ELF64
+#define OF_ELF64
 #endif
 #ifndef OF_COFF
 #define OF_COFF
@@ -132,8 +135,11 @@
 #ifndef OF_COFF
 #define OF_COFF
 #endif
-#ifndef OF_ELF
-#define OF_ELF
+#ifndef OF_ELF32
+#define OF_ELF32
+#endif
+#ifndef OF_ELF64
+#define OF_ELF64
 #endif
 #endif
 
@@ -162,8 +168,11 @@
 #ifdef OF_NO_OBJ
 #undef OF_OBJ
 #endif
-#ifdef OF_NO_ELF
-#undef OF_ELF
+#ifdef OF_NO_ELF32
+#undef OF_ELF32
+#endif
+#ifdef OF_NO_ELF64
+#undef OF_ELF64
 #endif
 #ifdef OF_NO_AOUT
 #undef OF_AOUT
@@ -206,7 +215,8 @@ extern struct ofmt of_bin;
 extern struct ofmt of_aout;
 extern struct ofmt of_aoutb;
 extern struct ofmt of_coff;
-extern struct ofmt of_elf;
+extern struct ofmt of_elf32;
+extern struct ofmt of_elf64;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
 extern struct ofmt of_win32;
@@ -229,8 +239,11 @@ struct ofmt *drivers[] = {
 #ifdef OF_COFF
     &of_coff,
 #endif
-#ifdef OF_ELF
-    &of_elf,
+#ifdef OF_ELF32
+    &of_elf32,
+#endif
+#ifdef OF_ELF64
+    &of_elf64,
 #endif
 #ifdef OF_AS86
     &of_as86,

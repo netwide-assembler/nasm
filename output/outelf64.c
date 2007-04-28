@@ -1,5 +1,5 @@
 /* outelf.c	output routines for the Netwide Assembler to produce
- *		ELF32 (i386 of course) object file format
+ *		ELF64 (x86_64 of course) object file format
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -17,33 +17,55 @@
 #include "nasmlib.h"
 #include "outform.h"
 
-#ifdef OF_ELF
+#define DEBUG 0
 
-/*
- * Relocation types.
- */
-enum reloc_type {
-    R_386_32 = 1,               /* ordinary absolute relocation */
-    R_386_PC32 = 2,             /* PC-relative relocation */
-    R_386_GOT32 = 3,            /* an offset into GOT */
-    R_386_PLT32 = 4,            /* a PC-relative offset into PLT */
-    R_386_COPY = 5,             /* ??? */
-    R_386_GLOB_DAT = 6,         /* ??? */
-    R_386_JUMP_SLOT = 7,        /* ??? */
-    R_386_RELATIVE = 8,         /* ??? */
-    R_386_GOTOFF = 9,           /* an offset from GOT base */
-    R_386_GOTPC = 10,           /* a PC-relative offset _to_ GOT */
-    /* These are GNU extensions, but useful */
-    R_386_16 = 20,              /* A 16-bit absolute relocation */
-    R_386_PC16 = 21,            /* A 16-bit PC-relative relocation */
-    R_386_8 = 22,               /* An 8-bit absolute relocation */
-    R_386_PC8 = 23              /* An 8-bit PC-relative relocation */
-};
+/* Definitions in lieu of elf.h */
+
+#define SHT_PROGBITS 1
+#define SHT_RELA	  4		/* Relocation entries with addends */
+#define SHT_NOBITS 8
+#define SHF_WRITE	     (1 << 0)	/* Writable */
+#define SHF_ALLOC	     (1 << 1)	/* Occupies memory during execution */
+#define SHF_EXECINSTR	     (1 << 2)	/* Executable */
+#define SHN_ABS		0xfff1		/* Associated symbol is absolute */
+#define SHN_COMMON	0xfff2		/* Associated symbol is common */
+#define R_X86_64_NONE		0	/* No reloc */
+#define R_X86_64_PC32		2	/* PC relative 32 bit signed */
+#define R_X86_64_GOT32		3	/* 32 bit GOT entry */
+#define R_X86_64_PLT32		4	/* 32 bit PLT address */
+#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative */
+#define R_X86_64_32		10	/* Direct 32 bit zero extended */
+#define R_X86_64_16		12	/* Direct 16 bit zero extended */
+#define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset */
+#define ET_REL		1		/* Relocatable file */
+#define EM_X86_64	62		/* AMD x86-64 architecture */
+typedef uint32_t Elf64_Word;
+typedef uint64_t Elf64_Xword;
+typedef uint64_t Elf64_Addr;
+typedef uint64_t Elf64_Off;
+typedef struct
+{
+  Elf64_Word	sh_name;		/* Section name (string tbl index) */
+  Elf64_Word	sh_type;		/* Section type */
+  Elf64_Xword	sh_flags;		/* Section flags */
+  Elf64_Addr	sh_addr;		/* Section virtual addr at execution */
+  Elf64_Off	sh_offset;		/* Section file offset */
+  Elf64_Xword	sh_size;		/* Section size in bytes */
+  Elf64_Word	sh_link;		/* Link to another section */
+  Elf64_Word	sh_info;		/* Additional section information */
+  Elf64_Xword	sh_addralign;		/* Section alignment */
+  Elf64_Xword	sh_entsize;		/* Entry size if section holds table */
+} Elf64_Shdr;
+
+
+#ifdef OF_ELF64
+
 
 struct Reloc {
     struct Reloc *next;
-    int32_t address;               /* relative to _start_ of section */
-    int32_t symbol;                /* ELF symbol info thingy */
+    int64_t address;               /* relative to _start_ of section */
+    int64_t symbol;                /* ELF symbol info thingy */
     int type;                   /* type of relocation */
 };
 
@@ -59,12 +81,6 @@ struct Symbol {
     char *name;                 /* used temporarily if in above list */
 };
 
-#define SHT_PROGBITS 1
-#define SHT_NOBITS 8
-
-#define SHF_WRITE 1
-#define SHF_ALLOC 2
-#define SHF_EXECINSTR 4
 
 struct Section {
     struct SAA *data;
@@ -106,10 +122,8 @@ static struct Symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
-extern struct ofmt of_elf;
+extern struct ofmt of_elf64;
 
-#define SHN_ABS 0xFFF1
-#define SHN_COMMON 0xFFF2
 #define SHN_UNDEF 0
 
 #define SYM_SECTION 0x04
@@ -188,14 +202,14 @@ static int stablen, stabstrlen, stabrellen;
 
 static struct dfmt df_stabs;
 
-void stabs_init(struct ofmt *, void *, FILE *, efunc);
-void stabs_linenum(const char *filename, int32_t linenumber, int32_t);
-void stabs_deflabel(char *, int32_t, int32_t, int, char *);
-void stabs_directive(const char *, const char *);
-void stabs_typevalue(int32_t);
-void stabs_output(int, void *);
-void stabs_generate();
-void stabs_cleanup();
+void stabs64_init(struct ofmt *, void *, FILE *, efunc);
+void stabs64_linenum(const char *filename, int32_t linenumber, int32_t);
+void stabs64_deflabel(char *, int32_t, int32_t, int, char *);
+void stabs64_directive(const char *, const char *);
+void stabs64_typevalue(int32_t);
+void stabs64_output(int, void *);
+void stabs64_generate();
+void stabs64_cleanup();
 
 /* end of stabs debugging stuff */
 
@@ -210,6 +224,7 @@ static int32_t elf_sym_sect;
 
 static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
+    maxbits = 64;
     elffp = fp;
     error = errfunc;
     evaluate = eval;
@@ -230,19 +245,19 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     fwds = NULL;
 
     elf_gotpc_sect = seg_alloc();
-    ldef("..gotpc", elf_gotpc_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf,
+    ldef("..gotpc", elf_gotpc_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
          error);
     elf_gotoff_sect = seg_alloc();
-    ldef("..gotoff", elf_gotoff_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf,
+    ldef("..gotoff", elf_gotoff_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
          error);
     elf_got_sect = seg_alloc();
-    ldef("..got", elf_got_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf,
+    ldef("..got", elf_got_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
          error);
     elf_plt_sect = seg_alloc();
-    ldef("..plt", elf_plt_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf,
+    ldef("..plt", elf_plt_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
          error);
     elf_sym_sect = seg_alloc();
-    ldef("..sym", elf_sym_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf,
+    ldef("..sym", elf_sym_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
          error);
 
     def_seg = seg_alloc();
@@ -272,8 +287,8 @@ static void elf_cleanup(int debuginfo)
     saa_free(syms);
     raa_free(bsym);
     saa_free(strs);
-    if (of_elf.current_dfmt) {
-        of_elf.current_dfmt->cleanup();
+    if (of_elf64.current_dfmt) {
+        of_elf64.current_dfmt->cleanup();
     }
 }
 
@@ -325,10 +340,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     int flags_and, flags_or, type, align, i;
 
     /*
-     * Default is 32 bits.
+     * Default is 64 bits.
      */
     if (!name) {
-        *bits = 32;
+        *bits = 64;
         return def_seg;
     }
 
@@ -433,7 +448,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
 
 #if defined(DEBUG) && DEBUG>2
     fprintf(stderr,
-            " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
+            " elf_deflabel: %s, seg=%x, off=%x, is_global=%d, %s\n",
             name, segment, offset, is_global, special);
 #endif
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
@@ -743,11 +758,17 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
     struct Section *s;
     int32_t realbytes = type & OUT_SIZMASK;
     int32_t addr;
-    uint8_t mydata[4], *p;
+    uint8_t mydata[16], *p;
     int i;
     static struct symlininfo sinfo;
 
     type &= OUT_TYPMASK;
+
+#if defined(DEBUG) && DEBUG>2
+    fprintf(stderr,
+            " elf_out type: %x seg: %d bytes: %x data: %x\n",
+               (type >> 24), segment, realbytes, *(int32_t *)data);
+#endif
 
     /*
      * handle absolute-assembly (structure definitions)
@@ -776,11 +797,11 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
     }
 
     /* again some stabs debugging stuff */
-    if (of_elf.current_dfmt) {
+    if (of_elf64.current_dfmt) {
         sinfo.offset = s->len;
         sinfo.section = i;
         sinfo.name = s->name;
-        of_elf.current_dfmt->debug_output(TY_STABSSYMLIN, &sinfo);
+        of_elf64.current_dfmt->debug_output(TY_STABSSYMLIN, &sinfo);
     }
     /* end of debugging stuff */
 
@@ -817,9 +838,9 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                 if (wrt == NO_SEG) {
                     if (realbytes == 2) {
                         gnu16 = 1;
-                        elf_add_reloc(s, segment, R_386_16);
+                        elf_add_reloc(s, segment, R_X86_64_16);
                     } else {
-                        elf_add_reloc(s, segment, R_386_32);
+                        elf_add_reloc(s, segment, R_X86_64_32);
                     }
                 } else if (wrt == elf_gotpc_sect + 1) {
                     /*
@@ -828,20 +849,20 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                      * need to fix up the data item by $-$$.
                      */
                     addr += s->len;
-                    elf_add_reloc(s, segment, R_386_GOTPC);
+                    elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
                 } else if (wrt == elf_gotoff_sect + 1) {
-                    elf_add_reloc(s, segment, R_386_GOTOFF);
+                    elf_add_reloc(s, segment, R_X86_64_GOTTPOFF);
                 } else if (wrt == elf_got_sect + 1) {
                     addr = elf_add_gsym_reloc(s, segment, addr,
-                                              R_386_GOT32, TRUE);
+                                              R_X86_64_GOT32, TRUE);
                 } else if (wrt == elf_sym_sect + 1) {
                     if (realbytes == 2) {
                         gnu16 = 1;
                         addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_386_16, FALSE);
+                                                  R_X86_64_16, FALSE);
                     } else {
                         addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_386_32, FALSE);
+                                                  R_X86_64_32, FALSE);
                     }
                 } else if (wrt == elf_plt_sect + 1) {
                     error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
@@ -859,11 +880,12 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                   "16-bit relocations in ELF is a GNU extension");
             WRITESHORT(p, addr);
         } else {
-            if (realbytes != 4 && segment != NO_SEG) {
+            if (realbytes != 8 && realbytes != 4 && segment != NO_SEG) {
                 error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
+                      "Unsupported non-64-bit ELF relocation");
             }
-            WRITELONG(p, addr);
+            if (realbytes == 4) WRITELONG(p, addr);
+            else WRITEDLONG(p, (int64_t)addr);
         }
         elf_sect_write(s, mydata, realbytes);
     } else if (type == OUT_REL2ADR) {
@@ -876,10 +898,10 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
             if (wrt == NO_SEG) {
                 error(ERR_WARNING | ERR_WARN_GNUELF,
                       "16-bit relocations in ELF is a GNU extension");
-                elf_add_reloc(s, segment, R_386_PC16);
+                elf_add_reloc(s, segment, R_X86_64_PC16);
             } else {
                 error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
+                      "Unsupported non-32-bit ELF relocation [2]");
             }
         }
         p = mydata;
@@ -893,9 +915,9 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, R_386_PC32);
+                elf_add_reloc(s, segment, R_X86_64_PC32);
             } else if (wrt == elf_plt_sect + 1) {
-                elf_add_reloc(s, segment, R_386_PLT32);
+                elf_add_reloc(s, segment, R_X86_64_PLT32);
             } else if (wrt == elf_gotpc_sect + 1 ||
                        wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {
@@ -931,7 +953,7 @@ static void elf_write(void)
      * sections `.comment', `.shstrtab', `.symtab' and `.strtab',
      * then optionally relocation sections for the user sections.
      */
-    if (of_elf.current_dfmt == &df_stabs)
+    if (of_elf64.current_dfmt == &df_stabs)
         nsections = 8;
     else
         nsections = 5;          /* SHN_UNDEF and the fixed ones */
@@ -943,12 +965,12 @@ static void elf_write(void)
     for (i = 0; i < nsects; i++) {
         nsections++;            /* for the section itself */
         if (sects[i]->head) {
-            nsections++;        /* for its relocations */
-            add_sectname(".rel", sects[i]->name);
+            nsections++;        /* for its relocations without addends*/
+            add_sectname(".rela", sects[i]->name);
         }
     }
 
-    if (of_elf.current_dfmt == &df_stabs) {
+    if (of_elf64.current_dfmt == &df_stabs) {
         /* in case the debug information is wanted, just add these three sections... */
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
@@ -965,25 +987,22 @@ static void elf_write(void)
     /*
      * Output the ELF header.
      */
-    fwrite("\177ELF\1\1\1\0\0\0\0\0\0\0\0\0", 16, 1, elffp);
-    fwriteint16_t(1, elffp);      /* ET_REL relocatable file */
-    fwriteint16_t(3, elffp);      /* EM_386 processor ID */
+    fwrite("\177ELF\2\1\1\0\0\0\0\0\0\0\0\0", 16, 1, elffp);
+    fwriteint16_t(ET_REL, elffp);      /* relocatable file */
+    fwriteint16_t(EM_X86_64, elffp);      /* processor ID */
     fwriteint32_t(1L, elffp);      /* EV_CURRENT file format version */
-    fwriteint32_t(0L, elffp);      /* no entry point */
-    fwriteint32_t(0L, elffp);      /* no program header table */
-    fwriteint32_t(0x40L, elffp);   /* section headers straight after
+    fwriteint64_t(0L, elffp);      /* no entry point */
+    fwriteint64_t(0L, elffp);      /* no program header table */
+    fwriteint64_t(0x40L, elffp);   /* section headers straight after
                                  * ELF header plus alignment */
     fwriteint32_t(0L, elffp);      /* 386 defines no special flags */
-    fwriteint16_t(0x34, elffp);   /* size of ELF header */
+    fwriteint16_t(0x40, elffp);   /* size of ELF header */
     fwriteint16_t(0, elffp);      /* no program header table, again */
     fwriteint16_t(0, elffp);      /* still no program header table */
-    fwriteint16_t(0x28, elffp);   /* size of section header */
+    fwriteint16_t(sizeof(Elf64_Shdr), elffp);   /* size of section header */
     fwriteint16_t(nsections, elffp);      /* number of sections */
     fwriteint16_t(nsects + 2, elffp);     /* string table section index for
                                          * section header table */
-    fwriteint32_t(0L, elffp);      /* align to 0x40 bytes */
-    fwriteint32_t(0L, elffp);
-    fwriteint32_t(0L, elffp);
 
     /*
      * Build the symbol table and relocation tables.
@@ -998,7 +1017,7 @@ static void elf_write(void)
      * Now output the section header table.
      */
 
-    elf_foffs = 0x40 + 0x28 * nsections;
+    elf_foffs = 0x40 + sizeof(Elf64_Shdr) * nsections;
     align = ((elf_foffs + SEG_ALIGN_1) & ~SEG_ALIGN_1) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
@@ -1021,22 +1040,22 @@ static void elf_write(void)
     elf_section_header(p - shstrtab, 3, 0, shstrtab, FALSE, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
     scount++;                   /* dito */
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 2, 0, symtab, TRUE, symtablen, nsects + 4, symtablocal, 4, 16);    /* .symtab */
+    elf_section_header(p - shstrtab, 2, 0, symtab, TRUE, symtablen, nsects + 4, symtablocal, 4, 24);    /* .symtab */
     symtabsection = scount;     /* now we got the symtab section index in the ELF file */
     p += strlen(p) + 1;
     elf_section_header(p - shstrtab, 3, 0, strs, TRUE, strslen, 0, 0, 1, 0);    /* .strtab */
     for (i = 0; i < nsects; i++)
         if (sects[i]->head) {
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab, 9, 0, sects[i]->rel, TRUE,
-                               sects[i]->rellen, nsects + 3, i + 1, 4, 8);
+            elf_section_header(p - shstrtab,SHT_RELA, 0, sects[i]->rel, TRUE,
+                               sects[i]->rellen, nsects + 3, i + 1, 4, 24);
         }
-    if (of_elf.current_dfmt == &df_stabs) {
+    if (of_elf64.current_dfmt == &df_stabs) {
         /* for debugging information, create the last three sections
            which are the .stab , .stabstr and .rel.stab sections respectively */
 
         /* this function call creates the stab sections in memory */
-        stabs_generate();
+        stabs64_generate();
 
         if ((stabbuf) && (stabstrbuf) && (stabrelbuf)) {
             p += strlen(p) + 1;
@@ -1051,7 +1070,7 @@ static void elf_write(void)
             /* link -> symtable  info -> section to refer to */
             elf_section_header(p - shstrtab, 9, 0, stabrelbuf, 0,
                                stabrellen, symtabsection, nsections - 3, 4,
-                               8);
+                               16);
         }
     }
     fwrite(align_str, align, 1, elffp);
@@ -1069,7 +1088,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
 {
     struct SAA *s = saa_init(1L);
     struct Symbol *sym;
-    uint8_t entry[16], *p;
+    uint8_t entry[24], *p;
     int i;
 
     *len = *local = 0;
@@ -1077,8 +1096,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     /*
      * First, an all-zeros entry, required by the ELF spec.
      */
-    saa_wbytes(s, NULL, 16L);   /* null symbol table entry */
-    *len += 16;
+    saa_wbytes(s, NULL, 24L);   /* null symbol table entry */
+    *len += 24;
     (*local)++;
 
     /*
@@ -1086,12 +1105,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
      */
     p = entry;
     WRITELONG(p, 1);            /* we know it's 1st thing in strtab */
-    WRITELONG(p, 0);            /* no value */
-    WRITELONG(p, 0);            /* no size either */
     WRITESHORT(p, 4);           /* type FILE */
     WRITESHORT(p, SHN_ABS);
-    saa_wbytes(s, entry, 16L);
-    *len += 16;
+    WRITEDLONG(p, 0L);            /* no value */
+    WRITEDLONG(p, 0L);            /* no size either */
+    saa_wbytes(s, entry, 24L);
+    *len += 24;
     (*local)++;
 
     /*
@@ -1101,12 +1120,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     for (i = 1; i <= nsects + 1; i++) {
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */
-        WRITELONG(p, 0);        /* offset zero */
-        WRITELONG(p, 0);        /* size zero */
         WRITESHORT(p, 3);       /* local section-type thing */
         WRITESHORT(p, (i == 1 ? SHN_ABS : i - 1));      /* the section id */
-        saa_wbytes(s, entry, 16L);
-        *len += 16;
+        WRITEDLONG(p, 0L);        /* offset zero */
+        WRITEDLONG(p, 0L);        /* size zero */
+        saa_wbytes(s, entry, 24L);
+        *len += 24;
         (*local)++;
     }
 
@@ -1119,12 +1138,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             continue;
         p = entry;
         WRITELONG(p, sym->strpos);
-        WRITELONG(p, sym->value);
-        WRITELONG(p, sym->size);
         WRITESHORT(p, sym->type);       /* local non-typed thing */
         WRITESHORT(p, sym->section);
-        saa_wbytes(s, entry, 16L);
-        *len += 16;
+        WRITEDLONG(p, (int64_t)sym->value);
+        WRITEDLONG(p, (int64_t)sym->size);
+        saa_wbytes(s, entry, 24L);
+        *len += 24;
         (*local)++;
     }
 
@@ -1137,12 +1156,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             continue;
         p = entry;
         WRITELONG(p, sym->strpos);
-        WRITELONG(p, sym->value);
-        WRITELONG(p, sym->size);
         WRITESHORT(p, sym->type);       /* global non-typed thing */
         WRITESHORT(p, sym->section);
-        saa_wbytes(s, entry, 16L);
-        *len += 16;
+        WRITEDLONG(p, (int64_t)sym->value);
+        WRITEDLONG(p, (int64_t)sym->size);
+        saa_wbytes(s, entry, 24L);
+        *len += 24;
     }
 
     return s;
@@ -1151,7 +1170,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
 static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
 {
     struct SAA *s;
-    uint8_t *p, entry[8];
+    uint8_t *p, entry[24];
 
     if (!r)
         return NULL;
@@ -1160,16 +1179,17 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
     *len = 0;
 
     while (r) {
-        int32_t sym = r->symbol;
+        int64_t sym = r->symbol;
 
         if (sym >= GLOBAL_TEMP_BASE)
             sym += -GLOBAL_TEMP_BASE + (nsects + 3) + nlocals;
 
         p = entry;
-        WRITELONG(p, r->address);
-        WRITELONG(p, (sym << 8) + r->type);
-        saa_wbytes(s, entry, 8L);
-        *len += 8;
+        WRITEDLONG(p, r->address);
+        WRITEDLONG(p, (sym << 32) + r->type);
+	WRITEDLONG(p, 0L);
+        saa_wbytes(s, entry, 24L);
+        *len += 24;
 
         r = r->next;
     }
@@ -1188,16 +1208,16 @@ static void elf_section_header(int name, int type, int flags,
 
     fwriteint32_t((int32_t)name, elffp);
     fwriteint32_t((int32_t)type, elffp);
-    fwriteint32_t((int32_t)flags, elffp);
-    fwriteint32_t(0L, elffp);      /* no address, ever, in object files */
-    fwriteint32_t(type == 0 ? 0L : elf_foffs, elffp);
-    fwriteint32_t(datalen, elffp);
+    fwriteint64_t((int64_t)flags, elffp);
+    fwriteint64_t(0L, elffp);      /* no address, ever, in object files */
+    fwriteint64_t(type == 0 ? 0L : elf_foffs, elffp);
+    fwriteint64_t(datalen, elffp);
     if (data)
         elf_foffs += (datalen + SEG_ALIGN_1) & ~SEG_ALIGN_1;
     fwriteint32_t((int32_t)link, elffp);
     fwriteint32_t((int32_t)info, elffp);
-    fwriteint32_t((int32_t)align, elffp);
-    fwriteint32_t((int32_t)eltsize, elffp);
+    fwriteint64_t((int64_t)align, elffp);
+    fwriteint64_t((int64_t)eltsize, elffp);
 }
 
 static void elf_write_sections(void)
@@ -1233,7 +1253,7 @@ static int elf_directive(char *directive, char *value, int pass)
     (void)directive;
     (void)value;
     (void)pass;
-    return 0;
+   return 0;
 }
 
 static void elf_filename(char *inname, char *outname, efunc error)
@@ -1257,24 +1277,24 @@ static int elf_set_info(enum geninfo type, char **val)
 }
 
 static struct dfmt df_stabs = {
-    "ELF32 (i386) stabs debug format for Linux",
+    "ELF64 (X86_64) stabs debug format for Linux",
     "stabs",
-    stabs_init,
-    stabs_linenum,
-    stabs_deflabel,
-    stabs_directive,
-    stabs_typevalue,
-    stabs_output,
-    stabs_cleanup
+    stabs64_init,
+    stabs64_linenum,
+    stabs64_deflabel,
+    stabs64_directive,
+    stabs64_typevalue,
+    stabs64_output,
+    stabs64_cleanup
 };
 
-struct dfmt *elf_debugs_arr[2] = { &df_stabs, NULL };
+struct dfmt *elf64_debugs_arr[2] = { &df_stabs, NULL };
 
-struct ofmt of_elf = {
-    "ELF32 (i386) object files (e.g. Linux)",
-    "elf",
+struct ofmt of_elf64 = {
+    "ELF64 (x86_64) object files (e.g. Linux)",
+    "elf64",
     NULL,
-    elf_debugs_arr,
+    elf64_debugs_arr,
     &null_debug_form,
     elf_stdmac,
     elf_init,
@@ -1290,7 +1310,7 @@ struct ofmt of_elf = {
 
 /* again, the stabs debugging stuff (code) */
 
-void stabs_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+void stabs64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
     (void)of;
     (void)id;
@@ -1298,7 +1318,7 @@ void stabs_init(struct ofmt *of, void *id, FILE * fp, efunc error)
     (void)error;
 }
 
-void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
+void stabs64_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
     (void)segto;
 
@@ -1321,7 +1341,7 @@ void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
     currentline = linenumber;
 }
 
-void stabs_deflabel(char *name, int32_t segment, int32_t offset, int is_global,
+void stabs64_deflabel(char *name, int32_t segment, int32_t offset, int is_global,
                     char *special)
 {
     (void)name;
@@ -1331,18 +1351,18 @@ void stabs_deflabel(char *name, int32_t segment, int32_t offset, int is_global,
     (void)special;
 }
 
-void stabs_directive(const char *directive, const char *params)
+void stabs64_directive(const char *directive, const char *params)
 {
     (void)directive;
     (void)params;
 }
 
-void stabs_typevalue(int32_t type)
+void stabs64_typevalue(int32_t type)
 {
     (void)type;
 }
 
-void stabs_output(int type, void *param)
+void stabs64_output(int type, void *param)
 {
     struct symlininfo *s;
     struct linelist *el;
@@ -1382,7 +1402,7 @@ void stabs_output(int type, void *param)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
-void stabs_generate(void)
+void stabs64_generate(void)
 {
     int i, numfiles, strsize, numstabs = 0, currfile, mainfileindex;
     uint8_t *sbuf, *ssbuf, *rbuf, *sptr, *rptr;
@@ -1393,7 +1413,7 @@ void stabs_generate(void)
 
     ptr = stabslines;
 
-    allfiles = (char **)nasm_malloc(numlinestabs * sizeof(char *));
+    allfiles = (char **)nasm_malloc(numlinestabs * sizeof(int8_t *));
     for (i = 0; i < numlinestabs; i++)
         allfiles[i] = 0;
     numfiles = 0;
@@ -1436,7 +1456,7 @@ void stabs_generate(void)
 
     ssbuf = (uint8_t *)nasm_malloc(strsize);
 
-    rbuf = (uint8_t *)nasm_malloc(numlinestabs * 8 * (2 + 3));
+    rbuf = (uint8_t *)nasm_malloc(numlinestabs * 16 * (2 + 3));
     rptr = rbuf;
 
     for (i = 0; i < numfiles; i++) {
@@ -1462,8 +1482,8 @@ void stabs_generate(void)
 
         /* relocation stuff */
         /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
-        WRITELONG(rptr, (sptr - sbuf) - 4);
-        WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+        WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
+        WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
 
         numstabs++;
         currfile = mainfileindex;
@@ -1482,8 +1502,8 @@ void stabs_generate(void)
 
             /* relocation stuff */
             /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
-            WRITELONG(rptr, (sptr - sbuf) - 4);
-            WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+            WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
+            WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
         }
 
         WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
@@ -1491,8 +1511,8 @@ void stabs_generate(void)
 
         /* relocation stuff */
         /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
-        WRITELONG(rptr, (sptr - sbuf) - 4);
-        WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+        WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
+        WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
 
         ptr = ptr->next;
 
@@ -1510,7 +1530,7 @@ void stabs_generate(void)
     stabstrbuf = ssbuf;
 }
 
-void stabs_cleanup(void)
+void stabs64_cleanup(void)
 {
     struct linelist *ptr, *del;
     if (!stabslines)
