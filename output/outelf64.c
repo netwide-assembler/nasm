@@ -17,8 +17,6 @@
 #include "nasmlib.h"
 #include "outform.h"
 
-#define DEBUG 0
-
 /* Definitions in lieu of elf.h */
 
 #define SHT_PROGBITS 1
@@ -1107,8 +1105,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     WRITELONG(p, 1);            /* we know it's 1st thing in strtab */
     WRITESHORT(p, 4);           /* type FILE */
     WRITESHORT(p, SHN_ABS);
-    WRITEDLONG(p, 0L);            /* no value */
-    WRITEDLONG(p, 0L);            /* no size either */
+    WRITEDLONG(p, (uint64_t) 0);  /* no value */
+    WRITEDLONG(p, (uint64_t) 0);  /* no size either */
     saa_wbytes(s, entry, 24L);
     *len += 24;
     (*local)++;
@@ -1122,8 +1120,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, 0);        /* no symbol name */
         WRITESHORT(p, 3);       /* local section-type thing */
         WRITESHORT(p, (i == 1 ? SHN_ABS : i - 1));      /* the section id */
-        WRITEDLONG(p, 0L);        /* offset zero */
-        WRITEDLONG(p, 0L);        /* size zero */
+        WRITEDLONG(p, (uint64_t) 0);        /* offset zero */
+        WRITEDLONG(p, (uint64_t) 0);        /* size zero */
         saa_wbytes(s, entry, 24L);
         *len += 24;
         (*local)++;
@@ -1187,7 +1185,7 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
         p = entry;
         WRITEDLONG(p, r->address);
         WRITEDLONG(p, (sym << 32) + r->type);
-	WRITEDLONG(p, 0L);
+	WRITEDLONG(p, (uint64_t) 0);
         saa_wbytes(s, entry, 24L);
         *len += 24;
 
