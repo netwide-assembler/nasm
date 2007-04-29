@@ -541,21 +541,14 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
 
     if (sym->type == SYM_GLOBAL) {
         /*
-         * There's a problem here that needs fixing.
          * If sym->section == SHN_ABS, then the first line of the
-         * else section causes a core dump, because its a reference
+         * else section would cause a core dump, because its a reference
          * beyond the end of the section array.
          * This behaviour is exhibited by this code:
          *     GLOBAL crash_nasm
          *     crash_nasm equ 0
-         *
-         * I'm not sure how to procede, because I haven't got the
-         * first clue about how ELF works, so I don't know what to
-         * do with it. Furthermore, I'm not sure what the rest of this
-         * section of code does. Help?
-         *
-         * For now, I'll see if doing absolutely nothing with it will
-         * work...
+         * To avoid such a crash, such requests are silently discarded.
+         * This may not be the best solution.
          */
         if (sym->section == SHN_UNDEF || sym->section == SHN_COMMON) {
             bsym = raa_write(bsym, segment, nglobs);
@@ -1477,8 +1470,12 @@ void stabs32_generate(void)
         /* this is the stab for the main source file */
         WRITE_STAB(sptr, fileidx[mainfileindex], N_SO, 0, 0, 0);
 
-        /* relocation stuff */
-        /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+        /* relocation table entry */
+
+        /* Since the above WRITE_STAB calls have already */
+        /* created two entries, the index in the info.section */
+        /* member must be adjusted by adding 3 */
+
         WRITELONG(rptr, (sptr - sbuf) - 4);
         WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
 
@@ -1497,8 +1494,7 @@ void stabs32_generate(void)
                        ptr->info.offset);
             numstabs++;
 
-            /* relocation stuff */
-            /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+            /* relocation table entry */
             WRITELONG(rptr, (sptr - sbuf) - 4);
             WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
         }
@@ -1506,8 +1502,8 @@ void stabs32_generate(void)
         WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
         numstabs++;
 
-        /* relocation stuff */
-        /* IS THIS SANE?  WHAT DOES SECTION+3 MEAN HERE? */
+        /* relocation table entry */
+
         WRITELONG(rptr, (sptr - sbuf) - 4);
         WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
 
