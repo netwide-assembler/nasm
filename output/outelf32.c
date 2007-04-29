@@ -107,6 +107,7 @@ static struct Symbol *fwds;
 static char elf_module[FILENAME_MAX];
 
 extern struct ofmt of_elf32;
+extern struct ofmt of_elf;
 
 #define SHN_ABS 0xFFF1
 #define SHN_COMMON 0xFFF2
@@ -1272,7 +1273,7 @@ struct dfmt *elf32_debugs_arr[2] = { &df_stabs, NULL };
 
 struct ofmt of_elf32 = {
     "ELF32 (i386) object files (e.g. Linux)",
-    "elf",
+    "elf32",
     NULL,
     elf32_debugs_arr,
     &null_debug_form,
@@ -1288,6 +1289,23 @@ struct ofmt of_elf32 = {
     elf_cleanup
 };
 
+struct ofmt of_elf = {
+    "ELF (short name for ELF32) ",
+    "elf",
+    NULL,
+    elf32_debugs_arr,
+    &null_debug_form,
+    elf_stdmac,
+    elf_init,
+    elf_set_info,
+    elf_out,
+    elf_deflabel,
+    elf_section_names,
+    elf_segbase,
+    elf_directive,
+    elf_filename,
+    elf_cleanup
+};
 /* again, the stabs debugging stuff (code) */
 
 void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)

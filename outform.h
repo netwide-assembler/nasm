@@ -216,6 +216,7 @@ extern struct ofmt of_aout;
 extern struct ofmt of_aoutb;
 extern struct ofmt of_coff;
 extern struct ofmt of_elf32;
+extern struct ofmt of_elf;
 extern struct ofmt of_elf64;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
@@ -241,6 +242,7 @@ struct ofmt *drivers[] = {
 #endif
 #ifdef OF_ELF32
     &of_elf32,
+    &of_elf,
 #endif
 #ifdef OF_ELF64
     &of_elf64,
