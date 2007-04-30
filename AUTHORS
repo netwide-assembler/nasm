@@ -125,3 +125,7 @@ D: General x64 Support
 D: win64 (x86-64 COFF) output format
 D: __BITS__ Standard Macro
 D: Website Maintenance @ http://nasm.sourceforge.net/
+
+N: Chuck Crayne
+E: ccrayne@users.sourceforge.net
+D: elf64 (x86_64) output format
