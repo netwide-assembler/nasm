@@ -631,6 +631,19 @@ static expr *expr6(int critical)
             return NULL;
         }
         return scalarvect(~reloc_value(e));
+    } else if (i == '!') {
+        i = scan(scpriv, tokval);
+        e = expr6(critical);
+        if (!e)
+            return NULL;
+        if (is_just_unknown(e))
+            return unknown_expr();
+        else if (!is_simple(e)) {
+            error(ERR_NONFATAL, "`!' operator may only be applied to"
+                  " scalar values");
+            return NULL;
+        }
+        return scalarvect(!reloc_value(e));
     } else if (i == TOKEN_SEG) {
         i = scan(scpriv, tokval);
         e = expr6(critical);
