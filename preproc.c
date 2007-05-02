@@ -273,14 +273,14 @@ static int inverse_ccs[] = {
 static const char *directives[] = {
     "%arg",
     "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
-    "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifnctx",
+    "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifn", "%elifnctx",
         "%elifndef",
     "%elifnid", "%elifnidn", "%elifnidni", "%elifnmacro", "%elifnnum",
         "%elifnstr",
     "%elifnum", "%elifstr", "%else", "%endif", "%endm", "%endmacro",
     "%endrep", "%error", "%exitrep", "%iassign", "%idefine", "%if",
     "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifmacro",
-        "%ifnctx",
+        "%ifn", "%ifnctx",
     "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnmacro", "%ifnnum",
     "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include",
     "%ixdefine", "%line",
@@ -292,14 +292,14 @@ static const char *directives[] = {
 enum {
     PP_ARG,
     PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
-    PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFMACRO, PP_ELIFNCTX,
+    PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFMACRO, PP_ELIFN, PP_ELIFNCTX,
         PP_ELIFNDEF,
     PP_ELIFNID, PP_ELIFNIDN, PP_ELIFNIDNI, PP_ELIFNMACRO, PP_ELIFNNUM,
         PP_ELIFNSTR,
     PP_ELIFNUM, PP_ELIFSTR, PP_ELSE, PP_ENDIF, PP_ENDM, PP_ENDMACRO,
     PP_ENDREP, PP_ERROR, PP_EXITREP, PP_IASSIGN, PP_IDEFINE, PP_IF,
     PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFMACRO,
-        PP_IFNCTX,
+        PP_IFN, PP_IFNCTX,
     PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNMACRO, PP_IFNNUM,
     PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE,
     PP_IXDEFINE, PP_LINE,
@@ -1553,7 +1553,9 @@ static int if_condition(Token * tline, int i)
         return j;
 
     case PP_IF:
+    case PP_IFN:
     case PP_ELIF:
+    case PP_ELIFN:
         t = tline = expand_smacro(tline);
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
@@ -1570,8 +1572,10 @@ static int if_condition(Token * tline, int i)
                   "non-constant value given to `%s'", directives[i]);
             return -1;
         }
-        return reloc_value(evalresult) != 0;
-
+        j = reloc_value(evalresult) != 0;
+        if (i == PP_IFN || i == PP_ELIFN)
+            j = !j;
+        return j;
     default:
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
@@ -2015,6 +2019,7 @@ static int do_directive(Token * tline)
     case PP_IFIDN:
     case PP_IFIDNI:
     case PP_IFMACRO:
+    case PP_IFN:
     case PP_IFNCTX:
     case PP_IFNDEF:
     case PP_IFNID:
@@ -2046,6 +2051,7 @@ static int do_directive(Token * tline)
     case PP_ELIFIDN:
     case PP_ELIFIDNI:
     case PP_ELIFMACRO:
+    case PP_ELIFN:
     case PP_ELIFNCTX:
     case PP_ELIFNDEF:
     case PP_ELIFNID:
