@@ -867,8 +867,6 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
         }
         p = mydata;
         if (gnu16) {
-            error(ERR_WARNING | ERR_WARN_GNUELF,
-                  "16-bit relocations in ELF is a GNU extension");
             WRITESHORT(p, addr);
         } else {
             if (realbytes != 8 && realbytes != 4 && segment != NO_SEG) {
