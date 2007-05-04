@@ -72,6 +72,7 @@
 \IR{+ modifier} \c{+} modifier
 \IR{- opsubtraction} \c{-} operator, binary
 \IR{- opunary} \c{-} operator, unary
+\IR{! opunary} \c{!} operator, unary
 \IR{alignment, in bin sections} alignment, in \c{bin} sections
 \IR{alignment, in elf sections} alignment, in \c{elf} sections
 \IR{alignment, in win32 sections} alignment, in \c{win32} sections
@@ -1138,11 +1139,11 @@ be invoked in a wide range of ways:
 \c       dw    'abc'               ; 0x61 0x62 0x63 0x00 (string)
 \c       dd    0x12345678          ; 0x78 0x56 0x34 0x12
 \c       dd    1.234567e20         ; floating-point constant
+\c       dq    0x123456789abcdef0  ; eight byte constant
 \c       dq    1.234567e20         ; double-precision float
 \c       dt    1.234567e20         ; extended-precision float
 
-\c{DQ} and \c{DT} do not accept \i{numeric constants} or string
-constants as operands.
+\c{DT} does not accept \i{numeric constants} as operands.
 
 
 \S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
@@ -1483,14 +1484,14 @@ modulo operators are followed by white space wherever they appear.
 
 
 \S{expmul} \i{Unary Operators}: \I{+ opunary}\c{+}, \I{- opunary}\c{-},
-\i\c{~} and \i\c{SEG}
+\i\c{~}, \I{! opunary}\c{!} and \i\c{SEG}
 
 The highest-priority operators in NASM's expression grammar are
 those which only apply to one argument. \c{-} negates its operand,
 \c{+} does nothing (it's provided for symmetry with \c{-}), \c{~}
-computes the \i{one's complement} of its operand, and \c{SEG}
-provides the \i{segment address} of its operand (explained in more
-detail in \k{segwrt}).
+computes the \i{one's complement} of its operand, \c{!} is the
+\i{logical negation} operator, and \c{SEG} provides the \i{segment address}
+of its operand (explained in more detail in \k{segwrt}).
 
 
 \H{segwrt} \i\c{SEG} and \i\c{WRT}
@@ -2531,6 +2532,8 @@ they always return either 0 or 1, and treat any non-zero input as 1
 is zero, and 0 otherwise). The relational operators also return 1
 for true and 0 for false.
 
+Like most other \c{%if} constructs, \c{%if} has a counterpart
+\i\c{%elif}, and negative forms \i\c{%ifn} and \i\c{%elifn}.
 
 \S{ifidn} \i\c{%ifidn} and \i\c{%ifidni}: Testing Exact Text
 Identity\I{testing, exact text identity}
@@ -4271,13 +4274,12 @@ linking with the \i{Mac OSX} linker.
 
 \c{macho} provides a default output file-name extension of \c{.o}.
 
-\H{elffmt} \i\c{elf}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
+\H{elffmt} \i\c{elf, elf32, and elf64}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
 
-The \c{elf} output format generates \c{ELF32} (Executable and Linkable
-Format) object files, as used by Linux as well as \i{Unix System V},
+The \c{elf32} and \c{elf64} output formats generate \c{ELF32 and ELF64} (Executable and Linkable Format) object files, as used by Linux as well as \i{Unix System V},
 including \i{Solaris x86}, \i{UnixWare} and \i{SCO Unix}. \c{elf}
-provides a default output file-name extension of \c{.o}.
+provides a default output file-name extension of \c{.o}. \c{elf} is a synonym for \c{elf32}.
 
 
 \S{elfsect} \c{elf} Extensions to the \c{SECTION}
