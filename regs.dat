@@ -32,7 +32,7 @@
 # 220-227 = XMM Registers (XMM0-XMM7)
 
 # x64 Extended Registers
-# 400-407 = 8-bit Extensions (SIL/DIL/BPL/SPL)
+# 404-407 = 8-bit Extensions (SIL/DIL/BPL/SPL)
 # 410-417 = 8-bit Registers (R8B-R15B)
 # 420-427 = 16-bit Registers (R8W-R15W)
 # 430-437 = 32-bit Registers (R8D-R15D)
