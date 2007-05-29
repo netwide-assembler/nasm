@@ -472,7 +472,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
 	    }	
             if (segsize != osize) {
                 ins->oprs[c - 064].type =
-                    (ins->oprs[c - 064].type & NON_SIZE)
+                    (ins->oprs[c - 064].type & ~SIZE_MASK)
                     | ((osize == 16) ? BITS16 : BITS32);
             }
         } else if (c >= 070 && c <= 072) {

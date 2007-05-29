@@ -1504,7 +1504,7 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
         if (itemp->opd[i] & ~instruction->oprs[i].type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
-            if ((itemp->opd[i] & ~instruction->oprs[i].type & NON_SIZE) ||
+            if ((itemp->opd[i] & ~instruction->oprs[i].type & ~SIZE_MASK) ||
                 (instruction->oprs[i].type & SIZE_MASK))
                 return 0;
             else

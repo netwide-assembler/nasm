@@ -1123,10 +1123,11 @@ static void assemble_file(char *fname)
                          */
 
                         if (output_ins.operands >= 2 &&
-                            (output_ins.oprs[1].opflags & OPFLAG_FORWARD))
-                        {
-                            output_ins.oprs[1].type &=
-                                ~(ONENESS | BYTENESS);
+                            (output_ins.oprs[1].opflags & OPFLAG_FORWARD) &&
+			    !(IMMEDIATE & ~output_ins.oprs[1].type))
+			{
+			    /* Remove special properties bits */
+			    output_ins.oprs[1].type &= ~REG_SMASK;
                         }
 
                     }           /* pass == 2 */
