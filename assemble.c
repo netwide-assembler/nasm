@@ -1960,20 +1960,20 @@ static int chsize(operand * input, int addrbits)
         
         if (input->indexreg < EXPR_REG_START /* Verify as Register */
             || input->indexreg >= REG_ENUM_LIMIT)
-            i = -1;
+            i = 0;
         else
             i = reg_flags[input->indexreg];
 
         if (input->basereg < EXPR_REG_START /* Verify as Register */
             || input->basereg >= REG_ENUM_LIMIT)
-            b = -1;
+            b = 0;
         else
             b = reg_flags[input->basereg];
 
         if (input->scale == 0)
-            i = -1;
+            i = 0;
 
-        if (i == -1 && b == -1) /* pure offset */
+        if (!i && !b)		/* pure offset */
             return (input->addr_size != 0 && input->addr_size != addrbits);
             
         if (!(REG32 & ~i) || !(REG32 & ~b))
