@@ -4,152 +4,111 @@
 #
 # The columns are:
 #
-# register name, assembler class, disassembler class(es),
-# NASM register number, x86 register number
+# register name, assembler class, disassembler class(es), x86 register number
 #
-# If the register name ends in +, then it is repeated 8 times
-# with the following changes:
-# - a numerical tail to register number is incremented
-# - the NASM and x86 register numbers are incremented
+# If the register name ends in two numbers separated by a dash, then it is
+# repeated as many times as indicated, and the register number is
+# updated with it.
 #
-# For 16-register register sets, two + lines are required.
-#
-
-# Legacy Registers
-# 000-007 = 8-bit Registers
-# 010-017 = 16-bit Registers
-# 020-027 = 32-bit Registers
-
-# System Registers
-# 100-107 = Segment Registers
-# 110-127 = Control Registers
-# 130-147 = Debug Registers
-# 150-167 = Test Registers
-
-# Legacy Extended Registers
-# 200-207 = FPU Registers
-# 210-217 = MMX Registers
-# 220-227 = XMM Registers (XMM0-XMM7)
-
-# x64 Extended Registers
-# 404-407 = 8-bit Extensions (SIL/DIL/BPL/SPL)
-# 410-417 = 8-bit Registers (R8B-R15B)
-# 420-427 = 16-bit Registers (R8W-R15W)
-# 430-437 = 32-bit Registers (R8D-R15D)
-# 440-457 = 64-bit Registers (RAX-RDI+R8-R15)
-# 460-467 = XMM Extended Registers (XMM8-XMM15)
-
-# Special Registers
-# 0500 = RIP (for RIP-relative Addressing)
-
 
 # General-purpose registers
-al	REG_AL		reg8,reg8_rex	0000	0
-ah	REG_HIGH	reg8		0004	4
-ax	REG_AX		reg16		0010	0
-eax	REG_EAX		reg32		0020	0
-rax	REG_RAX		reg64		0440	0
-bl	REG8		reg8,reg8_rex	0003	3
-bh	REG_HIGH	reg8		0007	7
-bx	REG16		reg16		0013	3
-ebx	REG32		reg32		0023	3
-rbx	REG64		reg64		0443	3
-cl	REG_CL		reg8,reg8_rex	0001	1
-ch	REG_HIGH	reg8		0005	5
-cx	REG_CX		reg16		0011	1
-ecx	REG_ECX		reg32		0021	1
-rcx	REG_RCX		reg64		0441	1
-dl	REG_DL		reg8,reg8_rex	0002	2
-dh	REG_HIGH	reg8		0006	6
-dx	REG_DX		reg16		0012	2
-edx	REG_EDX		reg32		0022	2
-rdx	REG_RDX		reg64		0442	2
-spl	REG8		reg8_rex	0404	4
-sp	REG16		reg16		0014	4
-esp	REG32		reg32		0024	4
-rsp	REG64		reg64		0444	4
-bpl	REG8		reg8_rex	0405	5
-bp	REG16		reg16		0015	5
-ebp	REG32		reg32		0025	5
-rbp	REG64		reg64		0445	5
-sil	REG8		reg8_rex	0406	6
-si	REG16		reg16		0016	6
-esi	REG32		reg32		0026	6
-rsi	REG64		reg64		0446	6
-dil	REG8		reg8_rex	0407	7
-di	REG16		reg16		0017	7
-edi	REG32		reg32		0027	7
-rdi	REG64		reg64		0447	7
-r8b	REG8		reg8_rex	0410	8
-r8w	REG16		reg16		0420	8
-r8d	REG32		reg32		0430	8
-r8	REG64		reg64		0450	8
-r9b	REG8		reg8_rex	0411	9
-r9w	REG16		reg16		0421	9
-r9d	REG32		reg32		0431	9
-r9	REG64		reg64		0451	9
-r10b	REG8		reg8_rex	0412	10
-r10w	REG16		reg16		0422	10
-r10d	REG32		reg32		0432	10
-r10	REG64		reg64		0452	10
-r11b	REG8		reg8_rex	0413	11
-r11w	REG16		reg16		0423	11
-r11d	REG32		reg32		0433	11
-r11	REG64		reg64		0453	11
-r12b	REG8		reg8_rex	0414	12
-r12w	REG16		reg16		0424	12
-r12d	REG32		reg32		0434	12
-r12	REG64		reg64		0454	12
-r13b	REG8		reg8_rex	0415	13
-r13w	REG16		reg16		0425	13
-r13d	REG32		reg32		0435	13
-r13	REG64		reg64		0455	13
-r14b	REG8		reg8_rex	0416	14
-r14w	REG16		reg16		0426	14
-r14d	REG32		reg32		0436	14
-r14	REG64		reg64		0456	14
-r15b	REG8		reg8_rex	0417	15
-r15w	REG16		reg16		0427	15
-r15d	REG32		reg32		0437	15
-r15	REG64		reg64		0457	15
+al	REG_AL		reg8,reg8_rex	0
+ah	REG_HIGH	reg8		4
+ax	REG_AX		reg16		0
+eax	REG_EAX		reg32		0
+rax	REG_RAX		reg64		0
+bl	REG8		reg8,reg8_rex	3
+bh	REG_HIGH	reg8		7
+bx	REG16		reg16		3
+ebx	REG32		reg32		3
+rbx	REG64		reg64		3
+cl	REG_CL		reg8,reg8_rex	1
+ch	REG_HIGH	reg8		5
+cx	REG_CX		reg16		1
+ecx	REG_ECX		reg32		1
+rcx	REG_RCX		reg64		1
+dl	REG_DL		reg8,reg8_rex	2
+dh	REG_HIGH	reg8		6
+dx	REG_DX		reg16		2
+edx	REG_EDX		reg32		2
+rdx	REG_RDX		reg64		2
+spl	REG8		reg8_rex	4
+sp	REG16		reg16		4
+esp	REG32		reg32		4
+rsp	REG64		reg64		4
+bpl	REG8		reg8_rex	5
+bp	REG16		reg16		5
+ebp	REG32		reg32		5
+rbp	REG64		reg64		5
+sil	REG8		reg8_rex	6
+si	REG16		reg16		6
+esi	REG32		reg32		6
+rsi	REG64		reg64		6
+dil	REG8		reg8_rex	7
+di	REG16		reg16		7
+edi	REG32		reg32		7
+rdi	REG64		reg64		7
+r8b	REG8		reg8_rex	8
+r8w	REG16		reg16		8
+r8d	REG32		reg32		8
+r8	REG64		reg64		8
+r9b	REG8		reg8_rex	9
+r9w	REG16		reg16		9
+r9d	REG32		reg32		9
+r9	REG64		reg64		9
+r10b	REG8		reg8_rex	10
+r10w	REG16		reg16		10
+r10d	REG32		reg32		10
+r10	REG64		reg64		10
+r11b	REG8		reg8_rex	11
+r11w	REG16		reg16		11
+r11d	REG32		reg32		11
+r11	REG64		reg64		11
+r12b	REG8		reg8_rex	12
+r12w	REG16		reg16		12
+r12d	REG32		reg32		12
+r12	REG64		reg64		12
+r13b	REG8		reg8_rex	13
+r13w	REG16		reg16		13
+r13d	REG32		reg32		13
+r13	REG64		reg64		13
+r14b	REG8		reg8_rex	14
+r14w	REG16		reg16		14
+r14d	REG32		reg32		14
+r14	REG64		reg64		14
+r15b	REG8		reg8_rex	15
+r15w	REG16		reg16		15
+r15d	REG32		reg32		15
+r15	REG64		reg64		15
 
 # Segment registers
-cs	REG_CS		sreg		0101	1
-ds	REG_DESS	sreg		0103	3
-es	REG_DESS	sreg		0100	0
-ss	REG_DESS	sreg		0102	2
-fs	REG_FSGS	sreg		0104	4
-gs	REG_FSGS	sreg		0105	5
-segr6	REG_SEG67	sreg		0106	6
-segr7	REG_SEG67	sreg		0107	7
+cs	REG_CS		sreg		1
+ds	REG_DESS	sreg		3
+es	REG_DESS	sreg		0
+ss	REG_DESS	sreg		2
+fs	REG_FSGS	sreg		4
+gs	REG_FSGS	sreg		5
+segr6-7	REG_SEG67	sreg		6
 
 # Control registers
-cr0+	REG_CREG	creg		0110	0
-cr8+	REG_CREG	creg		0120	8
+cr0-15	REG_CREG	creg		0
 
 # Debug registers
-dr0+	REG_DREG	dreg		0130	0
-dr8+	REG_DREG	dreg		0140	8
+dr0-15	REG_DREG	dreg		0
 
 # Test registers
-tr0+	REG_TREG	treg		0150	0
+tr0-7	REG_TREG	treg		0
 
 # Floating-point registers
-st0	FPU0		fpureg		0200	0
-st1	FPUREG		fpureg		0201	1
-st2	FPUREG		fpureg		0202	2
-st3	FPUREG		fpureg		0203	3
-st4	FPUREG		fpureg		0204	4
-st5	FPUREG		fpureg		0205	5
-st6	FPUREG		fpureg		0206	6
-st7	FPUREG		fpureg		0207	7
+st0	FPU0		fpureg		0
+st1-7	FPUREG		fpureg		1
 
 # MMX registers
-mm0+	MMXREG		mmxreg		0220	0
+mm0-7	MMXREG		mmxreg		0
 
 # SSE registers
-xmm0+	XMMREG		xmmreg		0240	0
-xmm8+	XMMREG		xmmreg		0460	8
+xmm0-15	XMMREG		xmmreg		0
 
 # Special registers
-rip	REG_RIP		ripreg		0500    0
+eip	REG_EIP		eipreg		0
+rip	REG_RIP		ripreg		0

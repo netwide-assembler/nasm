@@ -16,25 +16,24 @@ sub process_line($) {
     my($line) = @_;
     my @v;
 
-    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([1-9][0-9]+|0[0-7]+|0x[0-9a-f]+)\s*([0-9]+)$/i ) {
+    if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([0-9]+)$/i ) {
 	die "regs.dat:$nline: invalid input\n";
     }
     $reg      = $1;
     $aclass   = $2;
     $dclasses = $3;
-    $regval   = toint($4);
-    $x86regno = toint($5);
+    $x86regno = toint($4);
 
-    if ($reg =~ /[0-9]\+$/) {
-	$nregs = 8;
-	$reg =~ s/\+$//;
+    if ($reg =~ /^(.*[^0-9])([0-9]+)\-([0-9]+)$/) {
+	$nregs = $3-$2+1;
+	$reg = $1.$2;
     } else {
 	$nregs = 1;
     }
 
     while ($nregs--) {
 	$regs{$reg} = $aclass;
-	$regvals{$reg} = $regval;
+	$regvals{$reg} = $x86regno;
 
 	foreach $dclass (split(/,/, $dclasses)) {
 	    if ( !defined($disclass{$dclass}) ) {
@@ -45,9 +44,8 @@ sub process_line($) {
 	}
 
 	# Compute the next register, if any
-	$regval++;
 	$x86regno++;
-	if ($reg =~ /^(|.*[^0-9])([0-9]+)$/) {
+	if ($reg =~ /^(.*[^0-9])([0-9]+)$/) {
 	    $reg = sprintf("%s%u", $1, $2+1);
 	}
     }
@@ -83,7 +81,7 @@ if ( $fmt eq 'h' ) {
     print "    REG_ENUM_LIMIT\n";
     print "};\n\n";
     foreach $reg ( sort(keys(%regs)) ) {
-	print "#define REG_NUM_\U${reg}     $regvals{$reg}\n";
+	printf "#define %-15s %2d\n", "REG_NUM_\U${reg}", $regvals{$reg};
     }
     print "\n";
 } elsif ( $fmt eq 'c' ) {
@@ -111,7 +109,7 @@ if ( $fmt eq 'h' ) {
     print "static const int regvals[] = {\n";
     print "    -1";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
-	printf ",\n    0%03o", $regvals{$reg}; # Print the regval of the register
+	printf ",\n    %2d", $regvals{$reg}; # Print the regval of the register
     }
     print "\n};\n";
 } elsif ( $fmt eq 'dc' ) {

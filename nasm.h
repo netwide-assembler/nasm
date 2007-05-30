@@ -374,7 +374,7 @@ enum {
  * The basic concept here is that
  *    (class & ~operand) == 0
  *
- * if and only if "operand" is of type "class".
+ * if and only if "operand" belongs to class type "class".
  *
  * The bits are assigned as follows:
  *
@@ -478,8 +478,8 @@ enum {
 #define EIPREG    	0x00801004L   /* EIP */
 #define FPUREG    	0x01001000L   /* floating point stack registers */
 #define FPU0      	0x01011000L   /* FPU stack register zero */
-#define MMXREG    	0x02001008L   /* MMX registers */
-#define XMMREG    	0x04001001L   /* XMM Katmai reg */
+#define MMXREG    	0x02009008L   /* MMX registers */
+#define XMMREG    	0x04009001L   /* XMM Katmai reg */
 #define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004L   /* CRn */
 #define REG_DREG	0x00121004L   /* DRn */
@@ -490,8 +490,8 @@ enum {
 #define REG_FSGS	0x00441002L   /* FS, GS */
 #define REG_SEG67	0x00481002L   /* Unimplemented segment registers */
 
-#define REG_RIP		0x00809008L   /* RIP relative addressing */
-#define REG_EIP		0x00809004L   /* EIP relative addressing */
+#define REG_RIP		0x00801008L   /* RIP relative addressing */
+#define REG_EIP		0x00801004L   /* EIP relative addressing */
 
 /* Special GPRs */
 #define REG_SMASK 	0x000f0000L   /* a mask for the following */
@@ -526,6 +526,18 @@ enum {                          /* condition code names */
     C_NB, C_NBE, C_NC, C_NE, C_NG, C_NGE, C_NL, C_NLE, C_NO, C_NP,
     C_NS, C_NZ, C_O, C_P, C_PE, C_PO, C_S, C_Z
 };
+
+/*
+ * REX flags
+ */
+#define REX_H		0x80	/* High register present, REX forbidden */
+#define REX_P		0x40	/* REX prefix present/required */
+#define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
+#define REX_W		0x08	/* 64-bit operand size */
+#define REX_R		0x04	/* ModRM reg extension */
+#define REX_X		0x02	/* SIB index extension */
+#define REX_B		0x01	/* ModRM r/m extension */
+#define REX_REAL	0x4f	/* Actual REX prefix bits */
 
 /*
  * Note that because segment registers may be used as instruction

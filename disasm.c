@@ -35,15 +35,6 @@ extern struct itemplate **itable[];
 #define SEG_SIGNED	128
 #define SEG_64BIT	256
 
-/*
- * REX flags
- */
-#define REX_P		0x40	/* REX prefix present */
-#define REX_W		0x08	/* 64-bit operand size */
-#define REX_R		0x04	/* ModRM reg extension */
-#define REX_X		0x02	/* SIB index extension */
-#define REX_B		0x01	/* ModRM r/m extension */
-
 #include "regdis.c"
 
 #define getu8(x) (*(uint8_t *)(x))
