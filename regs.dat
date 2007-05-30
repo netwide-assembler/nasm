@@ -45,22 +45,22 @@
 
 # General-purpose registers
 al	REG_AL		reg8,reg8_rex	0000	0
-ah	REG8		reg8		0004	4
+ah	REG_HIGH	reg8		0004	4
 ax	REG_AX		reg16		0010	0
 eax	REG_EAX		reg32		0020	0
 rax	REG_RAX		reg64		0440	0
 bl	REG8		reg8,reg8_rex	0003	3
-bh	REG8		reg8		0007	7
+bh	REG_HIGH	reg8		0007	7
 bx	REG16		reg16		0013	3
 ebx	REG32		reg32		0023	3
 rbx	REG64		reg64		0443	3
 cl	REG_CL		reg8,reg8_rex	0001	1
-ch	REG8		reg8		0005	5
+ch	REG_HIGH	reg8		0005	5
 cx	REG_CX		reg16		0011	1
 ecx	REG_ECX		reg32		0021	1
 rcx	REG_RCX		reg64		0441	1
 dl	REG_DL		reg8,reg8_rex	0002	2
-dh	REG8		reg8		0006	6
+dh	REG_HIGH	reg8		0006	6
 dx	REG_DX		reg16		0012	2
 edx	REG_EDX		reg32		0022	2
 rdx	REG_RDX		reg64		0442	2

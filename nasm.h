@@ -407,9 +407,10 @@ enum {
  * 18: REG_TREG (TRx)
 
  * With REGNORM == REGMEM|REGISTER:
- * 16: REG_ACCUM (AL, AX, EAX, RAX) or 
+ * 16: REG_ACCUM (AL, AX, EAX, RAX)
  * 17: REG_COUNT (CL, CX, ECX, RCX)
  * 18: REG_DATA  (DL, DX, EDX, RDX)
+ * 19: REG_HIGH  (AH, CH, DH, BH)
  *
  * With REG_SREG:
  * 16: REG_CS
@@ -464,19 +465,32 @@ enum {
 #define IMMEDIATE	0x00002000L
 #define MEMORY		0x00204000L
 
+/* Register classes */
 #define REGMEM    	0x00200000L   /* for r/m, ie EA, operands */
 #define REGNORM   	0x00201000L   /* 'normal' reg, qualifies as EA */
 #define REG8      	0x00201001L
 #define REG16     	0x00201002L
 #define REG32     	0x00201004L
 #define REG64     	0x00201008L
-#define IP_REG    	0x00800000L   /* RIP or EIP register */
-#define RIPREG    	0x00800008L   /* RIP */
-#define EIPREG    	0x00800004L   /* EIP */
-#define FPUREG    	0x01000000L   /* floating point stack registers */
-#define MMXREG    	0x02000008L   /* MMX registers */
-#define XMMREG    	0x04000001L   /* XMM Katmai reg */
-#define FPU0      	0x01001000L   /* FPU stack register zero */
+#define IP_REG    	0x00801000L   /* RIP or EIP register */
+#define RIPREG    	0x00801008L   /* RIP */
+#define EIPREG    	0x00801004L   /* EIP */
+#define FPUREG    	0x01001000L   /* floating point stack registers */
+#define FPU0      	0x01011000L   /* FPU stack register zero */
+#define MMXREG    	0x02001008L   /* MMX registers */
+#define XMMREG    	0x04001001L   /* XMM Katmai reg */
+#define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
+#define REG_CREG	0x00111004L   /* CRn */
+#define REG_DREG	0x00121004L   /* DRn */
+#define REG_TREG	0x00141004L   /* TRn */
+#define REG_SREG	0x00401002L   /* any segment register */
+#define REG_CS		0x00411002L   /* CS */
+#define REG_DESS	0x00421002L   /* DS, ES, SS */
+#define REG_FSGS	0x00441002L   /* FS, GS */
+#define REG_SEG67	0x00481002L   /* Unimplemented segment registers */
+
+#define REG_RIP		0x00a01008L   /* RIP relative addressing */
+#define REG_EIP		0x00a01004L   /* EIP relative addressing */
 
 /* Special GPRs */
 #define REG_SMASK 	0x000f0000L   /* a mask for the following */
@@ -494,18 +508,7 @@ enum {
 #define REG_DX		0x00241002L
 #define REG_EDX		0x00241004L
 #define REG_RDX		0x00241008L
-#define REG_RIP		0x0027100CL   /* RIP relative addressing */
-
-/* Register classes */
-#define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
-#define REG_CREG	0x00111004L   /* CRn */
-#define REG_DREG	0x00121004L   /* DRn */
-#define REG_TREG	0x00141004L   /* TRn */
-#define REG_SREG	0x00401002L   /* any segment register */
-#define REG_CS		0x00411002L   /* CS */
-#define REG_DESS	0x00421002L   /* DS, ES, SS */
-#define REG_FSGS	0x00441002L   /* FS, GS */
-#define REG_SEG67	0x00481002L   /* Unimplemented segment registers */
+#define REG_HIGH	0x00281001L   /* high regs: AH, CH, DH, BH */
 
 /* special type of EA */
 #define MEM_OFFS	0x00214000L   /* simple [address] offset */
