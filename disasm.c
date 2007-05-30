@@ -647,6 +647,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             works = TRUE;
             /*
              * Final check to make sure the types of r/m match up.
+	     * XXX: Need to make sure this is actually correct.
              */
             for (i = 0; i < (*p)->operands; i++) {
                 if (
@@ -655,7 +656,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                         !(MEMORY & ~(*p)->opd[i])) ||
                        /* If it's a reg-only EA but we have a memory ref, die. */
                        (!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
-                        !(REGNORM & ~(*p)->opd[i]) &&
+                        !(REG_EA & ~(*p)->opd[i]) &&
                         !((*p)->opd[i] & REG_SMASK)) ||
                        /* Register type mismatch (eg FS vs REG_DESS): die. */
                        ((((*p)->opd[i] & (REGISTER | FPUREG)) ||

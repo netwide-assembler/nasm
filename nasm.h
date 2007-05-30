@@ -467,7 +467,7 @@ enum {
 #define REGMEM    	0x00008000L   /* for r/m, ie EA, operands */
 
 /* Register classes */
-#define REGNORM   	0x00009000L   /* 'normal' reg, qualifies as EA */
+#define REG_EA   	0x00009000L   /* 'normal' reg, qualifies as EA */
 #define REG_GPR		0x00209000L   /* integer register */
 #define REG8      	0x00209001L   /*  8-bit GPR  */
 #define REG16     	0x00209002L   /* 16-bit GPR */
