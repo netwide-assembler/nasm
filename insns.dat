@@ -194,14 +194,14 @@ CALL      mem32|far           \321\300\1\xFF\203            386
 CALL      mem|near            \322\300\1\xFF\202            8086
 CALL      mem16|near          \320\300\1\xFF\202            8086
 CALL      mem32|near          \321\300\1\xFF\202            386,NOLONG
-CALL      mem64|near          \321\300\1\xFF\202            X64
+CALL      mem64|near          \324\300\1\xFF\202            X64
 CALL      reg16               \320\300\1\xFF\202            8086
 CALL      reg32               \321\300\1\xFF\202            386,NOLONG
 CALL      reg64               \321\300\1\xFF\202            X64
 CALL      mem                 \322\300\1\xFF\202            8086
 CALL      mem16               \320\300\1\xFF\202            8086
 CALL      mem32               \321\300\1\xFF\202            386,NOLONG
-CALL      mem64               \321\300\1\xFF\202            X64
+CALL      mem64               \324\300\1\xFF\202            X64
 CBW       void                \320\1\x98                    8086
 CDQ       void                \321\1\x99                    386
 CDQE      void                \324\1\x98                    X64
