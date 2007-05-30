@@ -398,7 +398,7 @@ enum {
  * 12: REGISTER
  * 13: IMMEDIATE
  * 14: MEMORY (always has REGMEM attribute as well)
- * 15: (reserved)
+ * 15: REGMEM (valid EA operand)
  *
  * Bits 16-19: subclasses
  * With REG_CDT:
@@ -406,7 +406,7 @@ enum {
  * 17: REG_DREG (DRx)
  * 18: REG_TREG (TRx)
 
- * With REGNORM == REGMEM|REGISTER:
+ * With REG_GPR:
  * 16: REG_ACCUM (AL, AX, EAX, RAX)
  * 17: REG_COUNT (CL, CX, ECX, RCX)
  * 18: REG_DATA  (DL, DX, EDX, RDX)
@@ -430,7 +430,7 @@ enum {
  *
  * Bits 20-26: register classes
  * 20: REG_CDT (CRx, DRx, TRx)
- * 21: REGMEM (GPR or memory operand)
+ * 21: REG_GPR (integer register)
  * 22: REG_SREG
  * 23: IP_REG (RIP or EIP)
  * 24: FPUREG
@@ -463,15 +463,16 @@ enum {
 #define OPTYPE_MASK	0x0000f000L
 #define REGISTER	0x00001000L   /* register number in 'basereg' */
 #define IMMEDIATE	0x00002000L
-#define MEMORY		0x00204000L
+#define MEMORY		0x0000c000L
+#define REGMEM    	0x00008000L   /* for r/m, ie EA, operands */
 
 /* Register classes */
-#define REGMEM    	0x00200000L   /* for r/m, ie EA, operands */
-#define REGNORM   	0x00201000L   /* 'normal' reg, qualifies as EA */
-#define REG8      	0x00201001L
-#define REG16     	0x00201002L
-#define REG32     	0x00201004L
-#define REG64     	0x00201008L
+#define REGNORM   	0x00009000L   /* 'normal' reg, qualifies as EA */
+#define REG_GPR		0x00209000L   /* integer register */
+#define REG8      	0x00209001L   /*  8-bit GPR  */
+#define REG16     	0x00209002L   /* 16-bit GPR */
+#define REG32     	0x00209004L   /* 32-bit GPR */
+#define REG64     	0x00209008L   /* 64-bit GPR */
 #define IP_REG    	0x00801000L   /* RIP or EIP register */
 #define RIPREG    	0x00801008L   /* RIP */
 #define EIPREG    	0x00801004L   /* EIP */
@@ -489,26 +490,26 @@ enum {
 #define REG_FSGS	0x00441002L   /* FS, GS */
 #define REG_SEG67	0x00481002L   /* Unimplemented segment registers */
 
-#define REG_RIP		0x00a01008L   /* RIP relative addressing */
-#define REG_EIP		0x00a01004L   /* EIP relative addressing */
+#define REG_RIP		0x00809008L   /* RIP relative addressing */
+#define REG_EIP		0x00809004L   /* EIP relative addressing */
 
 /* Special GPRs */
 #define REG_SMASK 	0x000f0000L   /* a mask for the following */
-#define REG_ACCUM	0x00211000L   /* accumulator: AL, AX, EAX, RAX */
-#define REG_AL		0x00211001L
-#define REG_AX		0x00211002L
-#define REG_EAX		0x00211004L
-#define REG_RAX		0x00211008L
-#define REG_COUNT	0x00221000L   /* counter: CL, CX, ECX, RCX */
-#define REG_CL		0x00221001L
-#define REG_CX		0x00221002L
-#define REG_ECX		0x00221004L
-#define REG_RCX		0x00221008L
-#define REG_DL		0x00241001L   /* data: DL, DX, EDX, RDX */
-#define REG_DX		0x00241002L
-#define REG_EDX		0x00241004L
-#define REG_RDX		0x00241008L
-#define REG_HIGH	0x00281001L   /* high regs: AH, CH, DH, BH */
+#define REG_ACCUM	0x00219000L   /* accumulator: AL, AX, EAX, RAX */
+#define REG_AL		0x00219001L
+#define REG_AX		0x00219002L
+#define REG_EAX		0x00219004L
+#define REG_RAX		0x00219008L
+#define REG_COUNT	0x00229000L   /* counter: CL, CX, ECX, RCX */
+#define REG_CL		0x00229001L
+#define REG_CX		0x00229002L
+#define REG_ECX		0x00229004L
+#define REG_RCX		0x00229008L
+#define REG_DL		0x00249001L   /* data: DL, DX, EDX, RDX */
+#define REG_DX		0x00249002L
+#define REG_EDX		0x00249004L
+#define REG_RDX		0x00249008L
+#define REG_HIGH	0x00289001L   /* high regs: AH, CH, DH, BH */
 
 /* special type of EA */
 #define MEM_OFFS	0x00214000L   /* simple [address] offset */
