@@ -72,14 +72,18 @@ close(REGS);
 if ( $fmt eq 'h' ) {
     # Output regs.h
     print "/* automatically generated from $file - do not edit */\n";
+    $expr_regs = 1;
+    printf "#define EXPR_REG_START %d\n", $expr_regs;
     print "enum reg_enum {\n";
     $attach = ' = EXPR_REG_START'; # EXPR_REG_START == 1
     foreach $reg ( sort(keys(%regs)) ) {
 	print "    R_\U${reg}\E${attach},\n";
 	$attach = ''; $ch = ',';
+	$expr_regs++;
     }
     print "    REG_ENUM_LIMIT\n";
     print "};\n\n";
+    printf "#define EXPR_REG_END %d\n", $expr_regs-1;
     foreach $reg ( sort(keys(%regs)) ) {
 	printf "#define %-15s %2d\n", "REG_NUM_\U${reg}", $regvals{$reg};
     }

@@ -284,17 +284,14 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate,
                            efunc error, struct eval_hints * hints);
 
 /*
- * Special values for expr->type. ASSUMPTION MADE HERE: the number
- * of distinct register names (i.e. possible "type" fields for an
- * expr structure) does not exceed 124 (EXPR_REG_START through
- * EXPR_REG_END).
+ * Special values for expr->type.  These come after EXPR_REG_END
+ * as defined in regs.h.
  */
-#define EXPR_REG_START 1
-#define EXPR_REG_END 124
-#define EXPR_UNKNOWN 125L       /* for forward references */
-#define EXPR_SIMPLE 126L
-#define EXPR_WRT 127L
-#define EXPR_SEGBASE 128L
+
+#define EXPR_UNKNOWN	(EXPR_REG_END+1) /* forward references */
+#define EXPR_SIMPLE	(EXPR_REG_END+2)
+#define EXPR_WRT	(EXPR_REG_END+3)
+#define EXPR_SEGBASE	(EXPR_REG_END+4)
 
 /*
  * Preprocessors ought to look like this:
