@@ -531,8 +531,6 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
             error(ERR_NONFATAL, "no instruction for this cpu level");
         else if (size_prob == 4)
             error(ERR_NONFATAL, "instruction not supported in 64-bit mode");
-	else if (size_prob == 5)
-	    error(ERR_NONFATAL, "invalid operands in non-64-bit mode");
         else
             error(ERR_NONFATAL,
                   "invalid combination of opcode and operands");
@@ -1611,11 +1609,6 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
             (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
             return 2;
 
-        if ( (((itemp->opd[i] & SIZE_MASK) == BITS64) ||
-              ((instruction->oprs[i].type & SIZE_MASK) == BITS64))
-             && bits != 64)
-            return 5;
-            
         x = instruction->oprs[i].indexreg;
         b = instruction->oprs[i].basereg;
         
@@ -1730,7 +1723,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 		if (bt != -1) {
 		    if ((REG_GPR & ~bx) && (IP_REG & ~bx))
 			return NULL; /* Invalid register */
-		    if (sok & ~bx)
+		    if (~sok & bx & SIZE_MASK)
 			return NULL; /* Invalid size */
 		    sok &= ~bx;
 		    if (!(IP_REG & ~bx)) {
