@@ -523,17 +523,24 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     }
 
     if (temp->opcode == -1) {   /* didn't match any instruction */
-        if (size_prob == 1)     /* would have matched, but for size */
-            error(ERR_NONFATAL, "operation size not specified");
-        else if (size_prob == 2)
+	switch (size_prob) {
+	case 1:
+	    error(ERR_NONFATAL, "operation size not specified");
+	    break;
+	case 2:
             error(ERR_NONFATAL, "mismatch in operand sizes");
-        else if (size_prob == 3)
+	    break;
+	case 3:
             error(ERR_NONFATAL, "no instruction for this cpu level");
-        else if (size_prob == 4)
+	    break;
+	case 4:
             error(ERR_NONFATAL, "instruction not supported in 64-bit mode");
-        else
+	    break;
+	default:
             error(ERR_NONFATAL,
                   "invalid combination of opcode and operands");
+	    break;
+	}
     }
     return 0;
 }
@@ -1502,7 +1509,7 @@ static int rexflags(int val, int32_t flags, int mask)
 
 static int matches(struct itemplate *itemp, insn * instruction, int bits)
 {
-    int i, b, x, size[3], asize, oprs, ret;
+    int i, size[3], asize, oprs, ret;
 
     ret = 100;
 
@@ -1565,8 +1572,6 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
         } else if (itemp->flags & IF_SD) {
             size[i] = BITS32;
         } else if (itemp->flags & IF_SQ) {
-            if (bits != 64)
-                return 5;
             size[i] = BITS64;
         }
     } else {
@@ -1581,8 +1586,6 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
             asize = BITS32;
             oprs = itemp->operands;
         } else if (itemp->flags & IF_SQ) {
-            if (bits != 64)
-                return 5;
             asize = BITS64;
             oprs = itemp->operands;
         }
@@ -1607,17 +1610,6 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
     for (i = 0; i < itemp->operands; i++) {
         if (!(itemp->opd[i] & SIZE_MASK) &&
             (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
-            return 2;
-
-        x = instruction->oprs[i].indexreg;
-        b = instruction->oprs[i].basereg;
-        
-        if (x != -1 && x >= EXPR_REG_START && x < REG_ENUM_LIMIT)
-            x = regvals[x];
-        if (b != -1 && b >= EXPR_REG_START && b < REG_ENUM_LIMIT)
-            b = regvals[b];
-            
-        if (((b >= 0400 && b <= 0500) || (x >= 0400 && x < 0500)) && bits != 64)
             return 2;
     }
 
