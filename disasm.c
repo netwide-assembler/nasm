@@ -505,6 +505,11 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
                 return FALSE;
             else
                 a_used = TRUE;
+	} else if (c == 0313) {
+	    if (asize != 64)
+		return FALSE;
+	    else
+		a_used = TRUE;
         } else if (c == 0320) {
             if (osize != 16)
                 return FALSE;

@@ -52,13 +52,13 @@
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312		 - (disassembler only) marker on LOOP, LOOPxx instructions.
- * \313          - indicates fixed 64-bit address size, no REX required.
+ * \313          - indicates fixed 64-bit address size, 0x67 invalid.
  * \320          - indicates fixed 16-bit operand size, i.e. optional 0x66.
  * \321          - indicates fixed 32-bit operand size, i.e. optional 0x66.
  * \322          - indicates that this instruction is only valid when the
  *                 operand size is the default (instruction to disassembler,
  *                 generates no code in the assembler)
- * \323          - indicates fixed 64-bit operand size, REX on extensions, only.
+ * \323          - indicates fixed 64-bit operand size, REX on extensions only.
  * \324          - indicates 64-bit operand size requiring REX prefix.
  * \330          - a literal byte follows in the code stream, to be added
  *                 to the condition code value of the instruction.
@@ -837,7 +837,6 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0312:
             break;     
         case 0313:
-            length -= 1;
             break;
         case 0320:
             length += (bits != 16);
