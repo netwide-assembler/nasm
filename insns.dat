@@ -696,7 +696,7 @@ MOV       reg16,reg16         \320\1\x89\101                8086
 MOV       mem,reg32           \321\300\1\x89\101            386,SM
 MOV       reg32,reg32         \321\1\x89\101                386
 MOV       mem,reg64           \324\300\1\x89\101            X64,SM
-MOV       reg64,reg64         \321\1\x89\101                X64
+MOV       reg64,reg64         \324\1\x89\101                X64
 MOV       reg8,mem            \301\1\x8A\110                8086,SM
 MOV       reg8,reg8           \1\x8A\110                    8086
 MOV       reg16,mem           \320\301\1\x8B\110            8086,SM
