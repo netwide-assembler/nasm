@@ -28,22 +28,17 @@ typedef unsigned long long	uint64_t;
 #define _pri32	""
 #define _pri64	"ll"
 
-#define _c8	""
-#define _c16	""
-#define _c32	""
-#define _c64	"LL"
+#define INT8_C(x)	x
+#define INT16_C(x)	x
+#define INT32_C(x)	x
+#define INT64_C(x)	x ## LL
+
+#define UINT8_C(x)	x ## U
+#define UINT16_C(x)	x ## U
+#define UINT32_C(x)	x ## U
+#define UINT64_C(x)	x ## ULL
 
 /* The rest of this is common to all models */
-
-#define INT8_C(x)	x ## _c8
-#define INT16_C(x)	x ## _c16
-#define INT32_C(x)	x ## _c32
-#define INT64_C(x)	x ## _c64
-
-#define UINT8_C(x)	x ## U ## _c8
-#define UINT16_C(x)	x ## U ## _c16
-#define UINT32_C(x)	x ## U ## _c32
-#define UINT64_C(x)	x ## U ## _c64
 
 #define PRId8		_pri8  "d"
 #define PRId16		_pri16 "d"
