@@ -1667,10 +1667,20 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
             /* it's a pure offset */
             if (input->addr_size)
                 addrbits = input->addr_size;
-
-            output->sib_present = FALSE;
-            output->bytes = (addrbits != 16 ? 4 : 2);
-            output->modrm = (addrbits != 16 ? 5 : 6) | ((rfield & 7) << 3);
+            if (addrbits == 64) {
+              int scale, index, base;
+              output->sib_present = TRUE;
+              scale = 0;
+              index = 4;
+              base = 5;
+              output->sib = (scale << 6) | (index << 3) | base;
+              output->bytes = 4;
+              output->modrm = 4 | ((rfield & 7) << 3);
+            } else {
+              output->sib_present = FALSE;
+              output->bytes = (addrbits != 16 ? 4 : 2);
+              output->modrm = (addrbits != 16 ? 5 : 6) | ((rfield & 7) << 3);
+            }
         } else {                /* it's an indirection */
             int i = input->indexreg, b = input->basereg, s = input->scale;
             int32_t o = input->offset, seg = input->segment;
