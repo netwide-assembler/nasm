@@ -91,7 +91,7 @@ typedef unsigned int		uint16_t;
 #define INT16_C(x)		x
 #define UINT16_C(x)		x ## U
 
-#elif SHORT_MAX == 32767
+#elif SHRT_MAX == 32767
 
 /* short is 16 bits */
 typedef signed short		int16_t;
