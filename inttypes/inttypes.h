@@ -25,7 +25,7 @@
 # endif
 #endif
 
-#if LONG_MAX == 9223372036854775807
+#if LONG_MAX == 9223372036854775807L
 
 /* long is 64 bits */
 typedef signed long		int64_t;
@@ -35,7 +35,7 @@ typedef unsigned long		uint64_t;
 #define INT64_C(x)		x ## L
 #define UINT64_C(x)		x ## UL
 
-#elif LLONG_MAX == 9223372036854775807
+#elif LLONG_MAX == 9223372036854775807LL
 
 /* long long is 64 bits */
 typedef signed long long	int64_t;
@@ -63,7 +63,7 @@ typedef unsigned int		uint32_t;
 #define INT32_C(x)		x
 #define UINT32_C(x)		x ## U
 
-#elif LONG_MAX == 2147483647
+#elif LONG_MAX == 2147483647L
 
 /* long is 32 bits */
 typedef signed long		int32_t;
