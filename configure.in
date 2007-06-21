@@ -80,16 +80,12 @@ if test $ac_cv_header_limits_h = no; then
   AC_MSG_ERROR([NASM requires '<limits.h>' to compile])
 fi
 
+dnl Check for <inttypes.h> or add a substitute version
+AC_CHECK_HEADERS(inttypes.h, , CFLAGS="$CFLAGS -I\$(top_srcdir)/inttypes")
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-if test $ac_cv_c_const = no; then
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, working "const")])
-fi
-
 AC_TYPE_SIZE_T
-if test $ac_cv_type_size_t = no; then
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "size_t")])
-fi
 
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
