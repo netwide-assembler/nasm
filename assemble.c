@@ -1459,7 +1459,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         }
 }
 
-static int regflag(const operand * o)
+static int32_t regflag(const operand * o)
 {
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
         errfunc(ERR_PANIC, "invalid operand passed to regflag()");
