@@ -109,7 +109,7 @@ static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, int32_t, int);
 static int op_rexflags(const operand *, int);
-static ea *process_ea(operand *, ea *, int, int, int, int);
+static ea *process_ea(operand *, ea *, int, int, int32_t, int);
 static int chsize(operand *, int);
 
 static void assert_no_prefix(insn * ins, int prefix)
@@ -1467,7 +1467,7 @@ static int32_t regflag(const operand * o)
     return reg_flags[o->basereg];
 }
 
-static int regval(const operand * o)
+static int32_t regval(const operand * o)
 {
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
         errfunc(ERR_PANIC, "invalid operand passed to regval()");
