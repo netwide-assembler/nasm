@@ -51,7 +51,7 @@
  *                 the memory reference in operand x.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
- * \312		 - (disassembler only) marker on LOOP, LOOPxx instructions.
+ * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
  * \313          - indicates fixed 64-bit address size, 0x67 invalid.
  * \320          - indicates fixed 16-bit operand size, i.e. optional 0x66.
  * \321          - indicates fixed 32-bit operand size, i.e. optional 0x66.
@@ -62,14 +62,16 @@
  * \324          - indicates 64-bit operand size requiring REX prefix.
  * \330          - a literal byte follows in the code stream, to be added
  *                 to the condition code value of the instruction.
- * \331		 - instruction not valid with REP prefix.  Hint for
+ * \331          - instruction not valid with REP prefix.  Hint for
  *                 disassembler only; for SSE instructions.
- * \332		 - disassemble a rep (0xF3 byte) prefix as repe not rep.
- * \333		 - REP prefix (0xF3 byte); for SSE instructions.  Not encoded
- *		   as a literal byte in order to aid the disassembler.
- * \334		 - LOCK prefix used instead of REX.R
+ * \332          - disassemble a rep (0xF3 byte) prefix as repe not rep.
+ * \333          - REP prefix (0xF3 byte); for SSE instructions.  Not encoded
+ *                 as a literal byte in order to aid the disassembler.
+ * \334          - LOCK prefix used instead of REX.R
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
+ * \366          - operand-size override prefix (0x66); to ensure proper 
+                   REX prefix placement.
  * \370,\371,\372 - match only if operand 0 meets byte jump criteria.
  *		   370 is used for Jcc, 371 is used for JMP.
  * \373		 - assemble 0x03 if bits==16, 0x05 if bits==32;
@@ -874,6 +876,9 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             else
                 length += ins->oprs[0].offset << (c - 0340);
             break;
+        case 0366:
+             length++;
+             break;
         case 0370:
         case 0371:
         case 0372:
@@ -1356,14 +1361,14 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             offset += 1;
             break;
 
-	case 0334:
-	    if (ins->rex & REX_R) {
-		*bytes = 0xF0;
-		out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
-		offset += 1;
-	    }
-	    ins->rex &= ~(REX_L|REX_R);
-	    break;
+        case 0334:
+            if (ins->rex & REX_R) {
+                *bytes = 0xF0;
+                out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+                offset += 1;
+            }
+            ins->rex &= ~(REX_L|REX_R);
+            break;
 
         case 0340:
         case 0341:
@@ -1379,6 +1384,11 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             }
             break;
 
+        case 0366:
+            *bytes = 0x66;
+            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+            offset += 1;
+            break;
         case 0370:
         case 0371:
         case 0372:
@@ -1753,27 +1763,27 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 		    /* make single reg base, unless hint */
                     bt = it, bx = ix, it = -1, ix = 0;
 		}
-                if (((s == 2 && (it & 7) != (REG_NUM_ESP & 7)
+                if (((s == 2 && t != REG_NUM_ESP
                       && !(input->eaflags & EAF_TIMESTWO)) || s == 3
                      || s == 5 || s == 9) && bt == -1)
                     bt = it, bx = ix, s--; /* convert 3*EAX to EAX+2*EAX */
-                if (it == -1 && (bt & 7) != (REG_NUM_ESP & 7)
+                if (it == -1 && (bt & 7) != REG_NUM_ESP
                     && (input->eaflags & EAF_TIMESTWO))
                     it = bt, ix = bx, bt = -1, bx = 0, s = 1;
                 /* convert [NOSPLIT EAX] to sib format with 0x0 displacement */
-                if (s == 1 && (it & 7) == (REG_NUM_ESP & 7)) {
+                if (s == 1 && it == REG_NUM_ESP) {
 		    /* swap ESP into base if scale is 1 */
                     t = it, it = bt, bt = t;
 		    t = ix, ix = bx, bx = t;
 		}
-                if ((it & 7) == (REG_NUM_ESP & 7)
+                if (it == REG_NUM_ESP
                     || (s != 1 && s != 2 && s != 4 && s != 8 && it != -1))
                     return NULL;        /* wrong, for various reasons */
 
 		output->rex |= rexflags(it, ix, REX_X);
 		output->rex |= rexflags(bt, bx, REX_B);
 
-                if (it == -1 && (bt & 7) != (REG_NUM_ESP & 7)) {
+                if (it == -1 && (bt & 7) != REG_NUM_ESP) {
 		    /* no SIB needed */
                     int mod, rm;
                     
@@ -1782,7 +1792,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                         mod = 0;
                     } else {
                         rm = (bt & 7);
-                        if (rm != (REG_NUM_EBP & 7) && o == 0 &&
+                        if (rm != REG_NUM_EBP && o == 0 &&
                                 seg == NO_SEG && !forw_ref &&
                                 !(input->eaflags &
                                   (EAF_BYTEOFFS | EAF_WORDOFFS)))
@@ -1830,7 +1840,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                         mod = 0;
                     } else {
                         base = (bt & 7);
-                        if (base != (REG_NUM_EBP & 7) && o == 0 &&
+                        if (base != REG_NUM_EBP && o == 0 &&
                                     seg == NO_SEG && !forw_ref &&
                                     !(input->eaflags &
                                       (EAF_BYTEOFFS | EAF_WORDOFFS)))
