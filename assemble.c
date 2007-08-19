@@ -1648,6 +1648,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 {
                       
     int rip = FALSE;              /* Used for RIP-relative addressing */
+    output->rip = 0;
   
     /* REX flags for the rfield operand */
     output->rex |= rexflags(rfield, rflags, REX_R|REX_P|REX_W|REX_H);
