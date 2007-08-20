@@ -108,6 +108,6 @@ uint32_t next_sync(uint32_t position, uint32_t *length)
     } else {
         if (length)
             *length = 0L;
-        return ULONG_MAX;
+        return UINT32_MAX;
     }
 }
