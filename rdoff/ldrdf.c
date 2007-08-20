@@ -720,8 +720,9 @@ void write_output(const char *filename)
         fseek(ff, 0, SEEK_END);
         if (ftell(ff) > sizeof(hr->g.data)) {
             fprintf(error_file,
-                    "warning: maximum generic record size is %d, rest of file ignored\n",
-                    sizeof(hr->g.data));
+                    "warning: maximum generic record size is %u, "
+		    "rest of file ignored\n",
+                    (unsigned int)sizeof(hr->g.data));
         }
         fclose(ff);
 
