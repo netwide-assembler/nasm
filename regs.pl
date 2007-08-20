@@ -24,11 +24,15 @@ sub process_line($) {
     $dclasses = $3;
     $x86regno = toint($4);
 
-    if ($reg =~ /^(.*[^0-9])([0-9]+)\-([0-9]+)$/) {
+    if ($reg =~ /^(.*[^0-9])([0-9]+)\-([0-9]+)(|[^0-9].*)$/) {
 	$nregs = $3-$2+1;
 	$reg = $1.$2;
+	$reg_nr = $2;
+	$reg_prefix = $1;
+	$reg_suffix = $4;
     } else {
 	$nregs = 1;
+	undef $reg_prefix, $reg_suffix;
     }
 
     while ($nregs--) {
@@ -44,9 +48,13 @@ sub process_line($) {
 	}
 
 	# Compute the next register, if any
-	$x86regno++;
-	if ($reg =~ /^(.*[^0-9])([0-9]+)$/) {
-	    $reg = sprintf("%s%u", $1, $2+1);
+	if (defined($reg_prefix)) {
+	    $x86regno++;
+	    $reg_nr++;
+	    $reg = sprintf("%s%u%s", $reg_prefix, $reg_nr, $reg_suffix);
+	} else {
+	    # Not a dashed sequence
+	    die if ($nregs);
 	}
     }
 }
