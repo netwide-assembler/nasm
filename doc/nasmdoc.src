@@ -4408,6 +4408,13 @@ object by suffixing the name with a colon and the word
 exports the global symbol \c{hashlookup} as a function and
 \c{hashtable} as a data object.
 
+Optionally, you can control the ELF visibility of the symbol.  Just
+add one of the visibility keywords: \i\c{default}, \i\c{internal},
+\i\c{hidden}, or \i\c{protected}.  The default is \i\c{default} of
+course.  For example, to make \c{hashlookup} hidden:
+
+\c global   hashlookup:function hidden
+
 You can also specify the size of the data associated with the
 symbol, as a numeric expression (which may involve labels, and even
 forward references) after the type specifier. Like this:

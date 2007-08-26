@@ -51,6 +51,7 @@ struct Symbol {
     int32_t strpos;                /* string table position of name */
     int32_t section;               /* section ID of the symbol */
     int type;                   /* symbol type */
+    int other;                     /* symbol visibility */
     int32_t value;                 /* address, or COMMON variable align */
     int32_t size;                  /* size of symbol */
     int32_t globnum;               /* symbol table offset if global */
@@ -115,8 +116,14 @@ extern struct ofmt of_elf;
 
 #define SYM_SECTION 0x04
 #define SYM_GLOBAL 0x10
+#define SYM_NOTYPE 0x00
 #define SYM_DATA 0x01
 #define SYM_FUNCTION 0x02
+
+#define STV_DEFAULT 0
+#define STV_INTERNAL 1
+#define STV_HIDDEN 2
+#define STV_PROTECTED 3
 
 #define GLOBAL_TEMP_BASE 16     /* bigger than any constant sym id */
 
@@ -495,6 +502,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
 
     sym->strpos = pos;
     sym->type = is_global ? SYM_GLOBAL : 0;
+    sym->other = STV_DEFAULT;
     sym->size = 0;
     if (segment == NO_SEG)
         sym->section = SHN_ABS;
@@ -566,17 +574,38 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
             sects[sym->section - 1]->gsyms = sym;
 
             if (special) {
-                int n = strcspn(special, " ");
+                int n = strcspn(special, " \t");
 
                 if (!nasm_strnicmp(special, "function", n))
                     sym->type |= SYM_FUNCTION;
                 else if (!nasm_strnicmp(special, "data", n) ||
                          !nasm_strnicmp(special, "object", n))
                     sym->type |= SYM_DATA;
+                else if (!nasm_strnicmp(special, "notype", n))
+                    sym->type |= SYM_NOTYPE;
                 else
                     error(ERR_NONFATAL, "unrecognised symbol type `%.*s'",
                           n, special);
-                if (special[n]) {
+                special += n;
+
+                while (isspace(*special))
+                    ++special;
+                if (*special) {
+                    n = strcspn(special, " \t");
+                    if (!nasm_strnicmp(special, "default", n))
+                        sym->other = STV_DEFAULT;
+                    else if (!nasm_strnicmp(special, "internal", n))
+                        sym->other = STV_INTERNAL;
+                    else if (!nasm_strnicmp(special, "hidden", n))
+                        sym->other = STV_HIDDEN;
+                    else if (!nasm_strnicmp(special, "protected", n))
+                        sym->other = STV_PROTECTED;
+                    else
+                        n = 0;
+                    special += n;
+                }
+
+                if (*special) {
                     struct tokenval tokval;
                     expr *e;
                     int fwd = FALSE;
@@ -1115,7 +1144,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, sym->strpos);
         WRITELONG(p, sym->value);
         WRITELONG(p, sym->size);
-        WRITESHORT(p, sym->type);       /* local non-typed thing */
+        WRITECHAR(p, sym->type);        /* local non-typed thing */
+        WRITECHAR(p, sym->other);
         WRITESHORT(p, sym->section);
         saa_wbytes(s, entry, 16L);
         *len += 16;
@@ -1133,7 +1163,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, sym->strpos);
         WRITELONG(p, sym->value);
         WRITELONG(p, sym->size);
-        WRITESHORT(p, sym->type);       /* global non-typed thing */
+        WRITECHAR(p, sym->type);        /* global non-typed thing */
+        WRITECHAR(p, sym->other);
         WRITESHORT(p, sym->section);
         saa_wbytes(s, entry, 16L);
         *len += 16;
