@@ -51,7 +51,7 @@ OBJ = obj#
 NASMOBJS1 = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ)
 NASMOBJS2 = output\outbin.$(OBJ) output\outaout.$(OBJ) output\outcoff.$(OBJ)
-NASMOBJS3 = output\outelf.$(OBJ) output\outobj.$(OBJ) output\outas86.$(OBJ)
+NASMOBJS3 = output\outelf32.$(OBJ) output\outelf64.$(OBJ) output\outobj.$(OBJ) output\outas86.$(OBJ)
 NASMOBJS4 = output\outrdf.$(OBJ) output\outrdf2.$(OBJ) output\outieee.$(OBJ)
 NASMOBJS5 = output\outdbg.$(OBJ) preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ)
 

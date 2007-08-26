@@ -27,7 +27,7 @@ CFLAGS = $(INCS) -I. -O2
 
 NASM = 	nasm.o nasmlib.o float.o insnsa.o assemble.o labels.o \
        	parser.o outform.o output/outbin.o output/outaout.o \
-	output/outcoff.o output/outelf.o \
+	output/outcoff.o output/outelf32.o output/outelf64.o \
        	output/outobj.o output/outas86.o output/outdbg.o preproc.o listing.o \
        	eval.o output/outrdf2.o output/outieee.o output/outmacho.o
 
@@ -138,7 +138,8 @@ output/outbin.o: output/outbin.c labels.h eval.h regs.h outform.h version.h \
 output/outcoff.o: output/outcoff.c regs.h outform.h version.h nasmlib.h \
  nasm.h
 output/outdbg.o: output/outdbg.c regs.h outform.h version.h nasmlib.h nasm.h
-output/outelf.o: output/outelf.c regs.h outform.h version.h nasmlib.h nasm.h
+output/outelf32.o: output/outelf32.c regs.h outform.h version.h nasmlib.h nasm.h
+output/outelf64.o: output/outelf64.c regs.h outform.h version.h nasmlib.h nasm.h
 output/outieee.o: output/outieee.c regs.h outform.h version.h nasmlib.h \
  nasm.h
 output/outmacho.o: output/outmacho.c regs.h outform.h version.h nasmlib.h \

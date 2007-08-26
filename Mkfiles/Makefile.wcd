@@ -49,7 +49,7 @@ OBJ = obj
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
 	   outbin.$(OBJ) outaout.$(OBJ) outcoff.$(OBJ) \
-	   outelf.$(OBJ) outobj.$(OBJ) outas86.$(OBJ) \
+	   outelf32.$(OBJ) outelf64.$(OBJ) outobj.$(OBJ) outas86.$(OBJ) \
 	   outrdf.$(OBJ) outdbg.$(OBJ) \
 	   preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ) outrdf2.$(OBJ) \
 	   outieee.$(OBJ)

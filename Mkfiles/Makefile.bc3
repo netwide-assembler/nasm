@@ -75,7 +75,8 @@ NDISASMOBJS = ndisasm.$(OBJ)  disasm.$(OBJ) sync.$(OBJ) \
 # The OBJ file for the output formats
 
 OUTOBJ= output\\outbin.$(OBJ) output\\outaout.$(OBJ) output\\outcoff.$(OBJ) \
-	output\\outelf.$(OBJ) output\\outobj.$(OBJ)  output\\outas86.$(OBJ) \
+	output\\outelf32.$(OBJ) output\\outelf64.$(OBJ) \
+	output\\outobj.$(OBJ)  output\\outas86.$(OBJ) \
 	output\\outdbg.$(OBJ) output\\outrdf2.$(OBJ) output\\outieee.$(OBJ)
 
 ################################################################

@@ -40,7 +40,8 @@ OBJ = obj
 
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
-	   output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) output/outelf.$(OBJ) \
+	   output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) \
+	   output/outelf32.$(OBJ) output/outelf64.$(OBJ) \
 	   output/outobj.$(OBJ) output/outas86.$(OBJ) output/outrdf.$(OBJ) output/outdbg.$(OBJ) \
 	   preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ) output/outrdf2.$(OBJ) \
 	   output/outieee.$(OBJ)
@@ -75,7 +76,8 @@ NASM.LNK: makefile.wcw
         echo F output/outbin.$(OBJ) >> NASM.LNK
         echo F output/outaout.$(OBJ) >> NASM.LNK
         echo F output/outcoff.$(OBJ) >> NASM.LNK
-        echo F output/outelf.$(OBJ) >> NASM.LNK
+        echo F output/outelf32.$(OBJ) >> NASM.LNK
+        echo F output/outelf64.$(OBJ) >> NASM.LNK
         echo F output/outobj.$(OBJ) >> NASM.LNK
         echo F output/outas86.$(OBJ) >> NASM.LNK
         echo F output/outrdf.$(OBJ) >> NASM.LNK

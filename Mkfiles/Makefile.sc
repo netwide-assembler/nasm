@@ -44,7 +44,8 @@ OBJ = obj
 
 NASMOBJS = nasm.$(OBJ) nasmlib.$(OBJ) float.$(OBJ) insnsa.$(OBJ) \
            assemble.$(OBJ) labels.$(OBJ) parser.$(OBJ) outform.$(OBJ) \
-	   output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) output/outelf.$(OBJ) \
+	   output/outbin.$(OBJ) output/outaout.$(OBJ) output/outcoff.$(OBJ) \
+	   output/outelf32.$(OBJ) output/outelf64.$(OBJ) \
 	   output/outobj.$(OBJ) output/outas86.$(OBJ) output/outrdf.$(OBJ) output/outrdf2.$(OBJ) \
 	   output/outieee.$(OBJ) output/outdbg.$(OBJ) \
 	   preproc.$(OBJ) listing.$(OBJ) eval.$(OBJ)
