@@ -156,6 +156,25 @@ int nasm_strnicmp(const char *s1, const char *s2, int n)
 }
 #endif
 
+#if !defined(strsep)
+char *nasm_strsep(char **stringp, const char *delim)
+{
+        char *s = *stringp;
+        char *e;
+
+        if (!s)
+                return NULL;
+
+        e = strpbrk(s, delim);
+        if (e)
+                *e++ = '\0';
+
+        *stringp = e;
+        return s;
+}
+#endif
+
+
 #define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
@@ -755,7 +774,7 @@ int stdscan(void *private_data, struct tokenval *tv)
     if (isidstart(*stdscan_bufptr) ||
         (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
         /* now we've got an identifier */
-        int i;
+        uint32_t i;
         int is_sym = FALSE;
 
         if (*stdscan_bufptr == '$') {

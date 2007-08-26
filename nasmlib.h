@@ -71,6 +71,13 @@ int nasm_stricmp(const char *, const char *);
 int nasm_strnicmp(const char *, const char *, int);
 #endif
 
+#if defined(strsep)
+#define nasm_strsep strsep
+#else
+char *nasm_strsep(char **stringp, const char *delim);
+#endif
+
+
 /*
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to TRUE if an error occurs, and FALSE otherwise.

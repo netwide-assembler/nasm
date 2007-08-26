@@ -537,7 +537,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
         sectionAttributes = NULL;
     } else {
         sectionAttributes = name;
-        name = strtok((char*)&sectionAttributes, " \t");
+        name = nasm_strsep(&sectionAttributes, " \t");
     }
 
     for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
@@ -572,7 +572,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
             }
 
             while ((NULL != sectionAttributes)
-                   && (currentAttribute = strtok((char*)&sectionAttributes, " \t"))) {
+                   && (currentAttribute = nasm_strsep(&sectionAttributes, " \t"))) {
                 if (0 != *currentAttribute) {
                     if (!nasm_strnicmp("align=", currentAttribute, 6)) {
                         char *end;
@@ -1037,7 +1037,7 @@ static void macho_write_symtab (void)
     struct symbol *sym;
     struct section *s;
     int32_t fi;
-    int32_t i;
+    uint32_t i;
 
     /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
 
@@ -1102,7 +1102,7 @@ static void macho_write_symtab (void)
 static void macho_fixup_relocs (struct reloc *r)
 {
     struct symbol *sym;
-    int i;
+    uint32_t i;
 
     while (r != NULL) {
 	if (r->ext) {
