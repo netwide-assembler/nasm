@@ -28,7 +28,7 @@ extern int32_t abs_offset;         /* ABSOLUTE segment offset */
 #include "regflags.c"           /* List of register flags */
 
 enum {                          /* special tokens */
-    S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD,
+    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
     S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
 };
 
@@ -412,8 +412,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
         if (i == '[' || i == '&') {     /* memory reference */
             mref = TRUE;
             bracket = (i == '[');
-            i = stdscan(NULL, &tokval);
-            if (i == TOKEN_SPECIAL) {   /* check for address size override */
+            while ((i = stdscan(NULL, &tokval)) == TOKEN_SPECIAL) {
+		/* check for address directives */
                 if (tasm_compatible_mode) {
                     switch ((int)tokval.t_integer) {
                         /* For TASM compatibility a size override inside the
@@ -454,6 +454,12 @@ insn *parse_line(int pass, char *buffer, insn * result,
                     case S_NOSPLIT:
                         result->oprs[operand].eaflags |= EAF_TIMESTWO;
                         break;
+		    case S_REL:
+                        result->oprs[operand].eaflags |= EAF_REL;
+			break;
+		    case S_ABS:
+                        result->oprs[operand].eaflags |= EAF_ABS;
+			break;
                     case S_BYTE:
                         result->oprs[operand].eaflags |= EAF_BYTEOFFS;
                         break;
@@ -466,12 +472,15 @@ insn *parse_line(int pass, char *buffer, insn * result,
                         result->oprs[operand].addr_size = 32;
                         result->oprs[operand].eaflags |= EAF_WORDOFFS;
                         break;
+		    case S_QWORD:
+                        result->oprs[operand].addr_size = 64;
+                        result->oprs[operand].eaflags |= EAF_WORDOFFS;
+                        break;
                     default:
                         error(ERR_NONFATAL, "invalid size specification in"
                               " effective address");
                     }
                 }
-                i = stdscan(NULL, &tokval);
             }
         } else {                /* immediate operand, or register */
             mref = FALSE;
@@ -504,8 +513,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
             else if (result->nprefix == MAXPREFIX)
                 error(ERR_NONFATAL,
                       "instruction has more than %d prefixes", MAXPREFIX);
-            else
+            else {
                 result->prefixes[result->nprefix++] = value->type;
+		result->oprs[operand].eaflags |= EAF_SEGOVER;
+	    }
 
             i = stdscan(NULL, &tokval); /* then skip the colon */
             if (i == TOKEN_SPECIAL) {   /* another check for size override */
@@ -517,6 +528,9 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 case S_LONG:
                     result->oprs[operand].addr_size = 32;
                     break;
+		case S_QWORD:
+		    result->oprs[operand].addr_size = 64;
+		    break;
                 default:
                     error(ERR_NONFATAL, "invalid size specification in"
                           " effective address");
@@ -657,8 +671,16 @@ insn *parse_line(int pass, char *buffer, insn * result,
             }
 
             result->oprs[operand].type |= MEMORY;
-            if (b == -1 && (i == -1 || s == 0))
-                result->oprs[operand].type |= MEM_OFFS;
+
+	    if (b == -1 && (i == -1 || s == 0)) {
+		int is_rel = globalbits == 64 &&
+		    !(result->oprs[operand].eaflags & EAF_ABS) &&
+		    ((globalrel &&
+		      !(result->oprs[operand].eaflags & EAF_SEGOVER)) ||
+		     (result->oprs[operand].eaflags & EAF_REL));
+
+                result->oprs[operand].type |= is_rel ? IP_REL : MEM_OFFS;
+	    }
             result->oprs[operand].basereg = b;
             result->oprs[operand].indexreg = i;
             result->oprs[operand].scale = s;

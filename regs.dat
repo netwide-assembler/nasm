@@ -80,7 +80,3 @@ mm0-7	MMXREG		mmxreg		0
 
 # SSE registers
 xmm0-15	XMMREG		xmmreg		0
-
-# Special registers
-eip	REG_EIP		eipreg		0
-rip	REG_RIP		ripreg		0

@@ -166,6 +166,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
     }
 
     op->addr_size = 0;
+    op->eaflags = 0;
 
     if (asize == 16) {
         /*
@@ -250,15 +251,16 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
         if (rm == 5 && mod == 0) {
 	    if (segsize == 64) {
-		op->basereg = R_RIP;
+		op->eaflags |= EAF_REL;
 		op->segment |= SEG_RELATIVE;
 		mod = 2;	/* fake disp32 */
-	    } else {
-		op->basereg = -1;
-		if (segsize != 32)
-		    op->addr_size = 32;
-		mod = 2;            /* fake disp32 */
 	    }
+
+	    if (asize != 64)
+		op->addr_size = asize;
+
+	    op->basereg = -1;
+	    mod = 2;            /* fake disp32 */
         }
 
         if (rm == 4) {          /* process SIB */
@@ -283,6 +285,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 		op->basereg = rd_reg64[base | ((rex & REX_B) ? 8 : 0)];
 	    else
 		op->basereg = rd_reg32[base | ((rex & REX_B) ? 8 : 0)];
+
+	    if (segsize != 32)
+		op->addr_size = 32;
         }
 
         switch (mod) {
@@ -839,6 +844,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 				  ins.oprs[i].addr_size == 32 ? "dword " :
                                   ins.oprs[i].addr_size == 16 ? "word " :
 				  ""));
+	    if (ins.oprs[i].eaflags & EAF_REL)
+		slen += snprintf(output + slen, outbufsize - slen, "rel ");
             if (segover) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s:",
@@ -886,9 +893,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             } else if (ins.oprs[i].segment & SEG_DISP32) {
 		    char *prefix = "";
 		    int32_t offset = ins.oprs[i].offset;
-		    if (ins.oprs[i].basereg == R_RIP) {
-			prefix = ":";
-		    } else if (offset < 0) {
+		    if (offset < 0) {
 			offset = -offset;
 			prefix = "-";
 		    } else {

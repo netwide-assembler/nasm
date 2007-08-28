@@ -385,7 +385,7 @@ enum {
  *  6: NEAR
  *  7: SHORT
  *
- * Bits 8-11: modifiers
+ * Bits 8-11 modifiers
  *  8: TO
  *  9: COLON
  * 10: STRICT
@@ -420,6 +420,7 @@ enum {
  *
  * With MEMORY:
  * 16: MEM_OFFS (this is a simple offset)
+ * 17: IP_REL (IP-relative offset)
  *
  * With IMMEDIATE:
  * 16: UNITY (1)
@@ -429,7 +430,7 @@ enum {
  * 20: REG_CDT (CRx, DRx, TRx)
  * 21: REG_GPR (integer register)
  * 22: REG_SREG
- * 23: IP_REG (RIP or EIP)
+ * 23: IP_REG (RIP or EIP) [unused]
  * 24: FPUREG
  * 25: MMXREG
  * 26: XMMREG
@@ -508,8 +509,9 @@ enum {
 #define REG_RDX		0x00249008L
 #define REG_HIGH	0x00289001L   /* high regs: AH, CH, DH, BH */
 
-/* special type of EA */
-#define MEM_OFFS	0x00214000L   /* simple [address] offset */
+/* special types of EAs */
+#define MEM_OFFS	0x00214000L   /* simple [address] offset - absolute! */
+#define IP_REL		0x00224000L   /* IP-relative offset */
 
 /* special type of immediate operand */
 #define UNITY		0x00012000L   /* for shift/rotate instructions */
@@ -552,9 +554,12 @@ enum {                          /* extended operand types */
 };
 
 enum {                          /* special EA flags */
-    EAF_BYTEOFFS = 1,           /* force offset part to byte size */
-    EAF_WORDOFFS = 2,           /* force offset part to [d]word size */
-    EAF_TIMESTWO = 4            /* really do EAX*2 not EAX+EAX */
+    EAF_BYTEOFFS =  1,          /* force offset part to byte size */
+    EAF_WORDOFFS =  2,          /* force offset part to [d]word size */
+    EAF_TIMESTWO =  4,          /* really do EAX*2 not EAX+EAX */
+    EAF_REL	 =  8,		/* IP-relative addressing */
+    EAF_ABS      = 16,		/* non-IP-relative addressing */
+    EAF_SEGOVER  = 32		/* segment override present */
 };
 
 enum {                          /* values for `hinttype' */
@@ -932,7 +937,11 @@ struct dfmt {
 
 #define elements(x)     ( sizeof(x) / sizeof(*(x)) )
 
-extern int tasm_compatible_mode;
+/*
+ * -----
+ * Global modes
+ * -----
+ */
 
 /*
  * This declaration passes the "pass" number to all other modules
@@ -942,9 +951,12 @@ extern int tasm_compatible_mode;
  *       2 = pass 2
  */
 
-extern int pass0;               /* this is globally known */
+extern int pass0;
+
+extern int tasm_compatible_mode;
 extern int optimizing;
-extern int globalbits;          /* this is globally known */
-extern int maxbits;             /* this is globally known */
+extern int globalbits;          /* 16, 32 or 64-bit mode */
+extern int globalrel;		/* default to relative addressing? */
+extern int maxbits;		/* max bits supported by output */
 
 #endif

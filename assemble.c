@@ -1646,10 +1646,8 @@ static int matches(struct itemplate *itemp, insn * instruction, int bits)
 static ea *process_ea(operand * input, ea * output, int addrbits,
                       int rfield, int32_t rflags, int forw_ref)
 {
-                      
-    int rip = FALSE;              /* Used for RIP-relative addressing */
-    output->rip = 0;
-  
+    output->rip = FALSE;
+
     /* REX flags for the rfield operand */
     output->rex |= rexflags(rfield, rflags, REX_R|REX_P|REX_W|REX_H);
 
@@ -1672,13 +1670,13 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
         output->bytes = 0;  /* no offset necessary either */
         output->modrm = 0xC0 | ((rfield & 7) << 3) | (i & 7);
     } else {                    /* it's a memory reference */
-        
         if (input->basereg == -1
             && (input->indexreg == -1 || input->scale == 0)) {
             /* it's a pure offset */
             if (input->addr_size)
                 addrbits = input->addr_size;
-            if (addrbits == 64) {
+
+            if (globalbits == 64 && (~input->type & IP_REL)) {
               int scale, index, base;
               output->sib_present = TRUE;
               scale = 0;
@@ -1687,10 +1685,12 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
               output->sib = (scale << 6) | (index << 3) | base;
               output->bytes = 4;
               output->modrm = 4 | ((rfield & 7) << 3);
+	      output->rip = FALSE;
             } else {
               output->sib_present = FALSE;
               output->bytes = (addrbits != 16 ? 4 : 2);
               output->modrm = (addrbits != 16 ? 5 : 6) | ((rfield & 7) << 3);
+	      output->rip = globalbits == 64;
             }
         } else {                /* it's an indirection */
             int i = input->indexreg, b = input->basereg, s = input->scale;
@@ -1733,15 +1733,11 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 		}
 
 		if (bt != -1) {
-		    if ((REG_GPR & ~bx) && (IP_REG & ~bx))
+		    if (REG_GPR & ~bx)
 			return NULL; /* Invalid register */
 		    if (~sok & bx & SIZE_MASK)
 			return NULL; /* Invalid size */
 		    sok &= ~bx;
-		    if (!(IP_REG & ~bx)) {
-			bt = b = -1;
-			rip = TRUE;
-		    }
 		}
                 
                 /* While we're here, ensure the user didn't specify WORD. */
@@ -1860,26 +1856,6 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                     output->modrm = (mod << 6) | ((rfield & 7) << 3) | 4;
                     output->sib = (scale << 6) | (index << 3) | base;
                 }
-
-		/* Process RIP-relative Addressing */
-		if (rip) {
-		    if (globalbits != 64 ||
-			(output->modrm & 0xC7) != 0x05)
-			return NULL;
-		    output->rip = TRUE;
-		} else {
-		    output->rip = FALSE;
-		    /* Actual Disp32 needs blank SIB on x64 */
-		    if (globalbits == 64 && 
-			!(output->sib_present) &&
-			((output->modrm & 0xC7) == 0x05)) {
-			output->sib_present = TRUE;
-			/* RM Field = 4 (forward to Base of SIB) */
-			output->modrm--;
-			/* Index = 4 (none), Base = 5 */
-			output->sib = (4 << 3) | 5;
-		    }
-		}
             } else {            /* it's 16-bit */
                 int mod, rm;
                 

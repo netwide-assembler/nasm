@@ -17,7 +17,6 @@
 #include "insns.h"              /* For MAX_KEYWORD */
 
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
-
 static efunc nasm_malloc_error;
 
 #ifdef LOGALLOC
@@ -692,7 +691,7 @@ void saa_fpwrite(struct SAA *s, FILE * fp)
  */
 #include "names.c"
 static const char *special_names[] = {
-    "byte", "dword", "far", "long", "near", "nosplit", "qword",
+    "abs", "byte", "dword", "far", "long", "near", "nosplit", "qword", "rel",
     "short", "strict", "to", "tword", "word"
 };
 static const char *prefix_names[] = {

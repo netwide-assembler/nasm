@@ -47,6 +47,7 @@ static int using_debug_info, opt_verbose_info;
 int tasm_compatible_mode = FALSE;
 int pass0;
 int maxbits = 0;
+int globalrel = 0;
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
