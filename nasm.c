@@ -778,6 +778,16 @@ static void parse_cmdline(int argc, char **argv)
                      "no input file specified");
 }
 
+/* List of directives */
+enum {
+    D_NONE, D_ABSOLUTE, D_BITS, D_COMMON, D_CPU, D_DEBUG, D_DEFAULT,
+    D_EXTERN, D_GLOBAL, D_LIST, D_SECTION, D_SEGMENT, D_WARNING
+};
+static const char *directives[] = {
+    "", "absolute", "bits", "common", "cpu", "debug", "default",
+    "extern", "global", "list", "section", "segment", "warning"
+};
+
 static void assemble_file(char *fname)
 {
     char *directive, *value, *p, *q, *special, *line, debugid[80];
@@ -835,8 +845,11 @@ static void assemble_file(char *fname)
             directive = line;
 	    i = getkw(&directive, &value);
             if (i) {
+		int err = 0;
+
                 switch (i) {
-                case 1:        /* [SEGMENT n] */
+                case D_SEGMENT:		/* [SEGMENT n] */
+		case D_SECTION:
                     seg = ofmt->section(value, pass2, &sb);
                     if (seg == NO_SEG) {
                         report_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
@@ -847,7 +860,7 @@ static void assemble_file(char *fname)
                         location.segment = seg;
                     }
                     break;
-                case 2:        /* [EXTERN label:special] */
+                case D_EXTERN:		/* [EXTERN label:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 2) {
@@ -889,10 +902,10 @@ static void assemble_file(char *fname)
                         }
                     }           /* else  pass0 == 1 */
                     break;
-                case 3:        /* [BITS bits] */
+                case D_BITS:		/* [BITS bits] */
                     globalbits = sb = get_bits(value);
                     break;
-                case 4:        /* [GLOBAL symbol:special] */
+                case D_GLOBAL:		/* [GLOBAL symbol:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 2) {   /* pass 2 */
@@ -926,7 +939,7 @@ static void assemble_file(char *fname)
                         declare_as_global(value, special, report_error);
                     }           /* pass == 1 */
                     break;
-                case 5:        /* [COMMON symbol size:special] */
+                case D_COMMON:		/* [COMMON symbol size:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 1) {
@@ -982,7 +995,7 @@ static void assemble_file(char *fname)
                         }
                     }
                     break;
-                case 6:        /* [ABSOLUTE address] */
+                case D_ABSOLUTE:		/* [ABSOLUTE address] */
                     stdscan_reset();
                     stdscan_bufptr = value;
                     tokval.t_type = TOKEN_INVALID;
@@ -1006,7 +1019,7 @@ static void assemble_file(char *fname)
                     in_abs_seg = TRUE;
                     location.segment = NO_SEG;
                     break;
-                case 7:        /* DEBUG       */
+                case D_DEBUG:		/* [DEBUG] */
                     p = value;
                     q = debugid;
                     validid = TRUE;
@@ -1028,7 +1041,7 @@ static void assemble_file(char *fname)
                     if (pass == pass_max)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
-                case 8:        /* [WARNING {+|-}warn-name] */
+                case D_WARNING:		/* [WARNING {+|-}warn-name] */
                     if (pass1 == 1) {
                         while (*value && isspace(*value))
                             value++;
@@ -1049,10 +1062,10 @@ static void assemble_file(char *fname)
                                          "invalid warning id in WARNING directive");
                     }
                     break;
-                case 9:        /* cpu */
+                case D_CPU:		/* [CPU] */
                     cpu = get_cpu(value);
                     break;
-                case 10:       /* fbk 9/2/00 *//* [LIST {+|-}] */
+                case D_LIST:		/* [LIST {+|-}] */
                     while (*value && isspace(*value))
                         value++;
 
@@ -1062,17 +1075,41 @@ static void assemble_file(char *fname)
                         if (*value == '-') {
                             user_nolist = 1;
                         } else {
-                            report_error(ERR_NONFATAL,
-                                         "invalid parameter to \"list\" directive");
+			    err = 1;
                         }
                     }
                     break;
+		case D_DEFAULT:		/* [DEFAULT] */
+		    stdscan_reset();
+                    stdscan_bufptr = value;
+                    tokval.t_type = TOKEN_INVALID;
+		    if (stdscan(NULL, &tokval) == TOKEN_SPECIAL) {
+			switch ((int)tokval.t_integer) {
+			case S_REL:
+			    globalrel = 1;
+			    break;
+			case S_ABS:
+			    globalrel = 0;
+			    break;
+			default:
+			    err = 1;
+			    break;
+			}
+		    } else {
+			err = 1;
+		    }
+		    break;
                 default:
                     if (!ofmt->directive(directive, value, pass2))
                         report_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
                                      "unrecognised directive [%s]",
                                      directive);
                 }
+		if (err) {
+		    report_error(ERR_NONFATAL,
+				 "invalid parameter to [%s] directive",
+				 directive);
+		}
             } else {            /* it isn't a directive */
 
                 parse_line(pass1, line, &output_ins,
@@ -1386,31 +1423,8 @@ static int getkw(char **directive, char **value)
             buf++;
         *buf++ = '\0';
     }
-#if 0
-    for (q = p; *q; q++)
-        *q = tolower(*q);
-#endif
-    if (!nasm_stricmp(p, "segment") || !nasm_stricmp(p, "section"))
-        return 1;
-    if (!nasm_stricmp(p, "extern"))
-        return 2;
-    if (!nasm_stricmp(p, "bits"))
-        return 3;
-    if (!nasm_stricmp(p, "global"))
-        return 4;
-    if (!nasm_stricmp(p, "common"))
-        return 5;
-    if (!nasm_stricmp(p, "absolute"))
-        return 6;
-    if (!nasm_stricmp(p, "debug"))
-        return 7;
-    if (!nasm_stricmp(p, "warning"))
-        return 8;
-    if (!nasm_stricmp(p, "cpu"))
-        return 9;
-    if (!nasm_stricmp(p, "list"))       /* fbk 9/2/00 */
-        return 10;
-    return -1;
+
+    return bsii(*directive, directives, elements(directives));
 }
 
 /**

@@ -924,6 +924,18 @@ struct dfmt {
 #define TYM_ELEMENTS(x) (((x) & 0xFFFFFF00) >> 8)
 
 #define TYS_ELEMENTS(x)  ((x) << 8)
+
+/*
+ * -----
+ * Special tokens
+ * -----
+ */
+
+enum {
+    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
+    S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
+};
+
 /*
  * -----
  * Other

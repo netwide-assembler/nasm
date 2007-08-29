@@ -27,11 +27,6 @@ extern int32_t abs_offset;         /* ABSOLUTE segment offset */
 
 #include "regflags.c"           /* List of register flags */
 
-enum {                          /* special tokens */
-    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
-    S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
-};
-
 static int is_comma_next(void);
 
 static int i;
