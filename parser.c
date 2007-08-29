@@ -510,7 +510,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
                       "instruction has more than %d prefixes", MAXPREFIX);
             else {
                 result->prefixes[result->nprefix++] = value->type;
-		if (REG_FSGS & ~reg_flags[value->type])
+		if (!(REG_FSGS & ~reg_flags[value->type]))
 		    result->oprs[operand].eaflags |= EAF_FSGS;
 	    }
 
