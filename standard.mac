@@ -111,4 +111,6 @@ __SECT__
 [cpu %1]
 %endmacro
 
-
+%imacro default 1+.nolist
+[default %1]
+%endmacro
