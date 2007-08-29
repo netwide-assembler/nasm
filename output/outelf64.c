@@ -28,6 +28,7 @@
 #define SHN_ABS		0xfff1		/* Associated symbol is absolute */
 #define SHN_COMMON	0xfff2		/* Associated symbol is common */
 #define R_X86_64_NONE		0	/* No reloc */
+#define R_X86_64_64		1	/* Direct 64 bit address */
 #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
 #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
 #define R_X86_64_PLT32		4	/* 32 bit PLT address */
@@ -856,11 +857,19 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-                    if (realbytes == 2) {
-                        gnu16 = 1;
+		    switch (realbytes) {
+		    case 2:
                         elf_add_reloc(s, segment, R_X86_64_16);
-                    } else {
+			break;
+		    case 4:
                         elf_add_reloc(s, segment, R_X86_64_32);
+			break;
+		    case 8:
+			elf_add_reloc(s, segment, R_X86_64_64);
+			break;
+		    default:
+			error(ERR_PANIC, "internal error elf64-hpa-871");
+			break;
                     }
                 } else if (wrt == elf_gotpc_sect + 1) {
                     /*
@@ -876,13 +885,23 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_X86_64_GOT32, TRUE);
                 } else if (wrt == elf_sym_sect + 1) {
-                    if (realbytes == 2) {
+		    switch (realbytes) {
+		    case 2:
                         gnu16 = 1;
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_X86_64_16, FALSE);
-                    } else {
+			break;
+		    case 4:
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_X86_64_32, FALSE);
+			break;
+		    case 8:
+			addr = elf_add_gsym_reloc(s, segment, addr,
+						  R_X86_64_64, FALSE);
+			break;
+		    default:
+			error(ERR_PANIC, "internal error elf64-hpa-903");
+			break;
                     }
                 } else if (wrt == elf_plt_sect + 1) {
                     error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
@@ -914,8 +933,6 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                error(ERR_WARNING | ERR_WARN_GNUELF,
-                      "16-bit relocations in ELF is a GNU extension");
                 elf_add_reloc(s, segment, R_X86_64_PC16);
             } else {
                 error(ERR_NONFATAL,
