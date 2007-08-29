@@ -1,6 +1,6 @@
 	bits 64
 
-	[default abs]
+	default abs
 	
 	mov rax,[foo]
 	mov rax,[123456789abcdef0h]
@@ -47,7 +47,7 @@
 	mov rax,[abs dword fs:foo]
 	mov rax,[abs qword fs:foo]
 
-	[default rel]
+	default rel
 	
 	mov rax,[foo]
 	mov rax,[123456789abcdef0h]
