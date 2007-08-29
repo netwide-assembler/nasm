@@ -257,8 +257,11 @@ int32_t reloc_wrt(expr *);
  * Binary search routine. Returns index into `array' of an entry
  * matching `string', or <0 if no match. `array' is taken to
  * contain `size' elements.
+ *
+ * bsi() is case sensitive, bsii() is case insensitive.
  */
 int bsi(char *string, const char **array, int size);
+int bsii(char *string, const char **array, int size);
 
 char *src_set_fname(char *newname);
 int32_t src_set_linnum(int32_t newline);

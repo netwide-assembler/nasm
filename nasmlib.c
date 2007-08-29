@@ -1088,6 +1088,22 @@ int bsi(char *string, const char **array, int size)
     return -1;                  /* we haven't got it :( */
 }
 
+int bsii(char *string, const char **array, int size)
+{
+    int i = -1, j = size;       /* always, i < index < j */
+    while (j - i >= 2) {
+        int k = (i + j) / 2;
+        int l = nasm_stricmp(string, array[k]);
+        if (l < 0)              /* it's in the first half */
+            j = k;
+        else if (l > 0)         /* it's in the second half */
+            i = k;
+        else                    /* we've got it :) */
+            return k;
+    }
+    return -1;                  /* we haven't got it :( */
+}
+
 static char *file_name = NULL;
 static int32_t line_number = 0;
 
