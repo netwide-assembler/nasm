@@ -1,0 +1,2768 @@
+=pod
+
+=head1 NAME
+
+Graph - graph data structures and algorithms
+
+=head1 SYNOPSIS
+
+	use Graph;
+	my $g0 = Graph->new;             # A directed graph.
+
+	use Graph::Directed;
+	my $g1 = Graph::Directed->new;   # A directed graph.
+
+	use Graph::Undirected;
+	my $g2 = Graph::Undirected->new; # An undirected graph.
+
+        $g->add_edge(...);
+        $g->has_edge(...)
+        $g->delete_edge(...);
+
+        $g->add_vertex(...);
+        $g->has_vertex(...);
+        $g->delete_vertex(...);
+
+        $g->vertices(...)
+        $g->edges(...)
+
+        # And many, many more, see below.
+
+=head1 DESCRIPTION
+
+=head2 Non-Description
+
+This module is not for B<drawing> any sort of I<graphics>, business or
+otherwise.
+
+=head2 Description
+
+Instead, this module is for creating I<abstract data structures>
+called graphs, and for doing various operations on those.
+
+=head2 Perl 5.6.0 minimum
+
+The implementation depends on a Perl feature called "weak references"
+and Perl 5.6.0 was the first to have those.
+
+=head2 Constructors
+
+=over 4
+
+=item new
+
+Create an empty graph.
+
+=item Graph->new(%options)
+
+The options are a hash with option names as the hash keys and the option
+values as the hash values.
+
+The following options are available:
+
+=over 8
+
+=item *
+
+directed
+
+A boolean option telling that a directed graph should be created.
+Often somewhat redundant because a directed graph is the default
+for the Graph class or one could simply use the C<new()> constructor
+of the Graph::Directed class.
+
+You can test the directness of a graph with $g->is_directed() and
+$g->is_undirected().
+
+=item *
+
+undirected
+
+A boolean option telling that an undirected graph should be created.
+One could also use the C<new()> constructor the Graph::Undirected class
+instead.
+
+Note that while often it is possible to think undirected graphs as
+bidirectional graphs, or as directed graphs with edges going both ways,
+in this module directed graphs and undirected graphs are two different
+things that often behave differently.
+
+You can test the directness of a graph with $g->is_directed() and
+$g->is_undirected().
+
+=item *
+
+refvertexed
+
+If you want to use references (including Perl objects) as vertices.
+
+=item *
+
+unionfind
+
+If the graph is undirected, you can specify the C<unionfind> parameter
+to use the so-called union-find scheme to speed up the computation of
+I<connected components> of the graph (see L</is_connected>,
+L</connected_components>, L</connected_component_by_vertex>,
+L</connected_component_by_index>, and L</same_connected_components>).
+If C<unionfind> is used, adding edges (and vertices) becomes slower,
+but connectedness queries become faster.  You can test a graph for
+"union-findness" with
+
+=over 8
+
+=item has_union_find
+
+    has_union_find
+
+=back
+
+=item *
+
+vertices
+
+An array reference of vertices to add.
+
+=item *
+
+edges
+
+An array reference of array references of edge vertices to add.
+
+=back
+
+=item copy
+
+=item copy_graph
+
+    my $c = $g->copy_graph;
+
+Create a shallow copy of the structure (vertices and edges) of the graph.
+If you want a deep copy that includes attributes, see L</deep_copy>.
+The copy will have the same directedness as the original.
+
+=item deep_copy
+
+=item deep_copy_graph
+
+    my $c = $g->deep_copy_graph;
+
+Create a deep copy of the graph (vertices, edges, and attributes) of
+the graph.  If you want a shallow copy that does not include attributes,
+see L</copy>.  (Uses Data::Dumper behind the scenes.  Note that copying
+code references only works with Perls 5.8 or later, and even then only
+if B::Deparse can reconstruct your code.)
+
+=item undirected_copy
+
+=item undirected_copy_graph
+
+    my $c = $g->undirected_copy_graph;
+
+Create an undirected shallow copy (vertices and edges) of the directed graph
+so that for any directed edge (u, v) there is an undirected edge (u, v).
+
+=item directed_copy
+
+=item directed_copy_graph
+
+    my $c = $g->directed_copy_graph;
+
+Create a directed shallow copy (vertices and edges) of the undirected graph
+so that for any undirected edge (u, v) there are two directed edges (u, v)
+and (v, u).
+
+=item transpose
+
+=item transpose_graph
+
+    my $t = $g->transpose_graph;
+
+Create a directed shallow transposed copy (vertices and edges) of the
+directed graph so that for any directed edge (u, v) there is a directed
+edge (v, u).
+
+You can also transpose a single edge with
+
+=over 8
+
+=item transpose_edge
+
+    $g->transpose_edge($u, $v)
+
+=back
+
+=item complete_graph
+
+=item complete
+
+    my $c = $g->complete_graph;
+
+Create a complete graph that has the same vertices as the original graph.
+A complete graph has an edge between every pair of vertices.
+
+=item complement_graph
+
+=item complement
+
+    my $c = $g->complement_graph;
+
+Create a complement graph that has the same vertices as the original graph.
+A complement graph has an edge (u,v) if and only if the original
+graph does not have edge (u,v).
+
+=back
+
+See also L</random_graph> for a random constructor.
+
+=head2 Basics
+
+=over 4
+
+=item add_vertex
+
+    $g->add_vertex($v)
+
+Add the vertex to the graph.  Returns the graph.
+
+By default idempotent, but a graph can be created I<countvertexed>.
+
+A vertex is also known as a I<node>.
+
+Adding C<undef> as vertex is not allowed.
+
+Note that unless you have isolated vertices (or I<countvertexed>
+vertices), you do not need to explicitly use C<add_vertex> since
+L</add_edge> will implicitly add its vertices.
+
+=item add_edge
+
+    $g->add_edge($u, $v)
+
+Add the edge to the graph.  Implicitly first adds the vertices if the
+graph does not have them.  Returns the graph.
+
+By default idempotent, but a graph can be created I<countedged>.
+
+An edge is also known as an I<arc>.
+
+=item has_vertex
+
+    $g->has_vertex($v)
+
+Return true if the vertex exists in the graph, false otherwise.
+
+=item has_edge
+
+    $g->has_edge($u, $v)
+
+Return true if the edge exists in the graph, false otherwise.
+
+=item delete_vertex
+
+    $g->delete_vertex($v)
+
+Delete the vertex from the graph.  Returns the graph, even
+if the vertex did not exist in the graph.
+
+If the graph has been created I<multivertexed> or I<countvertexed>
+and a vertex has been added multiple times, the vertex will require
+at least an equal number of deletions to become completely deleted.
+
+=item delete_vertices
+
+    $g->delete_vertices($v1, $v2, ...)
+
+Delete the vertices from the graph.  Returns the graph.
+
+If the graph has been created I<multivertexed> or I<countvertexed>
+and a vertex has been added multiple times, the vertex will require
+at least an equal number of deletions to become completely deleteted.
+
+=item delete_edge
+
+    $g->delete_edge($u, $v)
+
+Delete the edge from the graph.  Returns the graph, even
+if the edge did not exist in the graph.
+
+If the graph has been created I<multivertexed> or I<countedged>
+and an edge has been added multiple times, the edge will require
+at least an equal number of deletions to become completely deleted.
+
+=item delete_edges
+
+    $g->delete_edges($u1, $v1, $u2, $v2, ...)
+
+Delete the edges from the graph.  Returns the graph.
+
+If the graph has been created I<multivertexed> or I<countedged>
+and an edge has been added multiple times, the edge will require
+at least an equal number of deletions to become completely deleted.
+
+=back
+
+=head2 Displaying
+
+Graphs have stringification overload, so you can do things like
+
+    print "The graph is $g\n"
+
+One-way (directed, unidirected) edges are shown as '-', two-way
+(undirected, bidirected) edges are shown as '='.  If you want to,
+you can call the stringification via the method
+
+=over 4
+
+=item stringify
+
+=back
+
+=head2 Comparing
+
+Testing for equality can be done either by the overloaded C<eq>
+operator
+
+    $g eq "a-b,a-c,d"
+
+or by the method
+
+=over 4
+
+=item eq
+
+    $g->eq("a-b,a-c,d")
+
+=back
+
+The equality testing compares the stringified forms, and therefore it
+assumes total equality, not isomorphism: all the vertices must be
+named the same, and they must have identical edges between them.
+
+For unequality there are correspondingly the overloaded C<ne>
+operator and the method
+
+=over 4
+
+=item ne
+
+    $g->ne("a-b,a-c,d")
+
+=back
+
+See also L</Isomorphism>.
+
+=head2 Paths and Cycles
+
+Paths and cycles are simple extensions of edges: paths are edges
+starting from where the previous edge ended, and cycles are paths
+returning back to the start vertex of the first edge.
+
+=over 4
+
+=item add_path
+
+   $g->add_path($a, $b, $c, ..., $x, $y, $z)
+
+Add the edges $a-$b, $b-$c, ..., $x-$y, $y-$z to the graph.
+Returns the graph.
+
+=item has_path
+
+   $g->has_path($a, $b, $c, ..., $x, $y, $z)
+
+Return true if the graph has all the edges $a-$b, $b-$c, ..., $x-$y, $y-$z,
+false otherwise.
+
+=item delete_path
+
+   $g->delete_path($a, $b, $c, ..., $x, $y, $z)
+
+Delete all the edges edges $a-$b, $b-$c, ..., $x-$y, $y-$z
+(regardless of whether they exist or not).  Returns the graph.
+
+=item add_cycle
+
+   $g->add_cycle($a, $b, $c, ..., $x, $y, $z)
+
+Add the edges $a-$b, $b-$c, ..., $x-$y, $y-$z, and $z-$a to the graph.
+Returns the graph.
+
+=item has_cycle
+
+   $g->has_cycle($a, $b, $c, ..., $x, $y, $z)
+
+Return true if the graph has all the edges $a-$b, $b-$c, ..., $x-$y, $y-$z,
+and $z-$a, false otherwise.
+
+B<NOTE:> This does not I<detect> cycles, see L</has_a_cycle> and
+L</find_a_cycle>.
+
+=item delete_cycle
+
+   $g->delete_cycle($a, $b, $c, ..., $x, $y, $z)
+
+Delete all the edges edges $a-$b, $b-$c, ..., $x-$y, $y-$z, and $z-$a
+(regardless of whether they exist or not).  Returns the graph.
+
+=item has_a_cycle
+
+   $g->has_a_cycle
+
+Returns true if the graph has a cycle, false if not.
+
+=item find_a_cycle
+
+   $g->find_a_cycle
+
+Returns a cycle if the graph has one (as a list of vertices), an empty
+list if no cycle can be found.
+
+Note that this just returns the vertices of I<a cycle>: not any
+particular cycle, just the first one it finds.  A repeated call
+might find the same cycle, or it might find a different one, and
+you cannot call this repeatedly to find all the cycles.
+
+=back
+
+=head2 Graph Types
+
+=over 4
+
+=item is_simple_graph
+
+    $g->is_simple_graph
+
+Return true if the graph has no multiedges, false otherwise.
+
+=item is_pseudo_graph
+
+    $g->is_pseudo_graph
+
+Return true if the graph has any multiedges or any self-loops,
+false otherwise.
+
+=item is_multi_graph
+
+    $g->is_multi_graph
+
+Return true if the graph has any multiedges but no self-loops,
+false otherwise.
+
+=item is_directed_acyclic_graph
+
+=item is_dag
+
+    $g->is_directed_acyclic_graph
+    $g->is_dag
+
+Return true if the graph is directed and acyclic, false otherwise.
+
+=item is_cyclic
+
+    $g->is_cyclic
+
+Return true if the graph is cyclic (contains at least one cycle).
+(This is identical to C<has_a_cycle>.)
+
+To find at least that one cycle, see L</find_a_cycle>.
+
+=item is_acyclic
+
+Return true if the graph is acyclic (does not contain any cycles).
+
+=back
+
+To find a cycle, use L<find_a_cycle>.
+
+=head2 Transitivity
+
+=over 4
+
+=item is_transitive
+
+    $g->is_transitive
+
+Return true if the graph is transitive, false otherwise.
+
+=item TransitiveClosure_Floyd_Warshall
+
+=item transitive_closure
+
+    $tcg = $g->TransitiveClosure_Floyd_Warshall
+
+Return the transitive closure graph of the graph.
+
+=back
+
+You can query the reachability from $u to $v with
+
+=over 4
+
+=item is_reachable
+
+    $tcg->is_reachable($u, $v)
+
+=back
+
+See L<Graph::TransitiveClosure> for more information about creating
+and querying transitive closures.
+
+With
+
+=over 4
+
+=item transitive_closure_matrix
+
+   $tcm = $g->transitive_closure_matrix;
+
+=back
+
+you can (create if not existing and) query the transitive closure
+matrix that underlies the transitive closure graph.  See
+L<Graph::TransitiveClosure::Matrix> for more information.
+
+=head2 Mutators
+
+=over 4
+
+=item add_vertices
+
+    $g->add_vertices('d', 'e', 'f')
+
+Add zero or more vertices to the graph.
+
+=item add_edges
+
+    $g->add_edges(['d', 'e'], ['f', 'g'])
+    $g->add_edges(qw(d e f g));
+
+Add zero or more edges to the graph.  The edges are specified as
+a list of array references, or as a list of vertices where the
+even (0th, 2nd, 4th, ...) items are start vertices and the odd
+(1st, 3rd, 5th, ...) are the corresponding end vertices.
+
+=back
+
+=head2 Accessors
+
+=over 4
+
+=item is_directed
+
+=item directed
+
+    $g->is_directed()
+    $g->directed()
+
+Return true if the graph is directed, false otherwise.
+
+=item is_undirected
+
+=item undirected
+
+    $g->is_undirected()
+    $g->undirected()
+
+Return true if the graph is undirected, false otherwise.
+
+=item is_refvertexed
+
+=item refvertexed
+
+Return true if the graph can handle references (including Perl objects)
+as vertices.
+
+=item vertices
+
+    my $V = $g->vertices
+    my @V = $g->vertices
+
+In scalar context, return the number of vertices in the graph.
+In list context, return the vertices, in no particular order.
+
+=item has_vertices
+
+    $g->has_vertices()
+
+Return true if the graph has any vertices, false otherwise.
+
+=item edges
+
+    my $E = $g->edges
+    my @E = $g->edges
+
+In scalar context, return the number of edges in the graph.
+In list context, return the edges, in no particular order.
+I<The edges are returned as anonymous arrays listing the vertices.>
+
+=item has_edges
+
+    $g->has_edges()
+
+Return true if the graph has any edges, false otherwise.
+
+=item is_connected
+
+    $g->is_connected
+
+For an undirected graph, return true is the graph is connected, false
+otherwise.  Being connected means that from every vertex it is possible
+to reach every other vertex.
+
+If the graph has been created with a true C<unionfind> parameter,
+the time complexity is (essentially) O(V), otherwise O(V log V).
+
+See also L</connected_components>, L</connected_component_by_index>,
+L</connected_component_by_vertex>, and L</same_connected_components>,
+and L</biconnectivity>.
+
+For directed graphs, see L</is_strongly_connected>
+and L</is_weakly_connected>.
+
+=item connected_components
+
+    @cc = $g->connected_components()
+
+For an undirected graph, returns the vertices of the connected
+components of the graph as a list of anonymous arrays.  The ordering
+of the anonymous arrays or the ordering of the vertices inside the
+anonymous arrays (the components) is undefined.
+
+For directed graphs, see L</strongly_connected_components>
+and L</weakly_connected_components>.
+
+=item connected_component_by_vertex
+
+    $i = $g->connected_component_by_vertex($v)
+
+For an undirected graph, return an index identifying the connected
+component the vertex belongs to, the indexing starting from zero.
+
+For the inverse, see L</connected_component_by_index>.
+
+If the graph has been created with a true C<unionfind> parameter,
+the time complexity is (essentially) O(1), otherwise O(V log V).
+
+See also L</biconnectivity>.
+
+For directed graphs, see L</strongly_connected_component_by_vertex>
+and L</weakly_connected_component_by_vertex>.
+
+=item connected_component_by_index
+
+    @v = $g->connected_component_by_index($i)
+
+For an undirected graph, return the vertices of the ith connected
+component, the indexing starting from zero.  The order of vertices is
+undefined, while the order of the connected components is same as from
+connected_components().
+
+For the inverse, see L</connected_component_by_vertex>.
+
+For directed graphs, see L</strongly_connected_component_by_index>
+and L</weakly_connected_component_by_index>.
+
+=item same_connected_components
+
+    $g->same_connected_components($u, $v, ...)
+
+For an undirected graph, return true if the vertices are in the same
+connected component.
+
+If the graph has been created with a true C<unionfind> parameter,
+the time complexity is (essentially) O(1), otherwise O(V log V).
+
+For directed graphs, see L</same_strongly_connected_components>
+and L</same_weakly_connected_components>.
+
+=item connected_graph
+
+    $cg = $g->connected_graph
+
+For an undirected graph, return its connected graph.
+
+=item connectivity_clear_cache
+
+    $g->connectivity_clear_cache
+
+See L</"Clearing cached results">.
+
+See L</"Connected Graphs and Their Components"> for further discussion.
+
+=item biconnectivity
+
+    my ($ap, $bc, $br) = $g->biconnectivity
+
+For an undirected graph, return the various biconnectivity components
+of the graph: the articulation points (cut vertices), biconnected
+components, and bridges.
+
+Note: currently only handles connected graphs.
+
+=item is_biconnected
+
+   $g->is_biconnected
+
+For an undirected graph, return true if the graph is biconnected
+(if it has no articulation points, also known as cut vertices).
+
+=item is_edge_connected
+
+   $g->is_edge_connected
+
+For an undirected graph, return true if the graph is edge-connected
+(if it has no bridges).
+
+=item is_edge_separable
+
+   $g->is_edge_separable
+
+For an undirected graph, return true if the graph is edge-separable
+(if it has bridges).
+
+=item articulation_points
+
+=item cut_vertices
+
+   $g->articulation_points
+
+For an undirected graph, return the articulation points (cut vertices)
+of the graph as a list of vertices.  The order is undefined.
+
+=item biconnected_components
+
+   $g->biconnected_components
+
+For an undirected graph, return the biconnected components of the
+graph as a list of anonymous arrays of vertices in the components.
+The ordering of the anonymous arrays or the ordering of the vertices
+inside the anonymous arrays (the components) is undefined.  Also note
+that one vertex can belong to more than one biconnected component.
+
+=item biconnected_component_by_vertex
+
+   $i = $g->biconnected_component_by_index($v)
+
+For an undirected graph, return an index identifying the biconnected
+component the vertex belongs to, the indexing starting from zero.
+
+For the inverse, see L</connected_component_by_index>.
+
+For directed graphs, see L</strongly_connected_component_by_index>
+and L</weakly_connected_component_by_index>.
+
+=item biconnected_component_by_index
+
+   @v = $g->biconnected_component_by_index($i)
+
+For an undirected graph, return the vertices in the ith biconnected
+component of the graph as an anonymous arrays of vertices in the
+component.  The ordering of the vertices within a component is
+undefined.  Also note that one vertex can belong to more than one
+biconnected component.
+
+=item same_biconnected_components
+
+    $g->same_biconnected_components($u, $v, ...)
+
+For an undirected graph, return true if the vertices are in the same
+biconnected component.
+
+=item biconnected_graph
+
+    $bcg = $g->biconnected_graph
+
+For an undirected graph, return its biconnected graph.
+
+See L</"Connected Graphs and Their Components"> for further discussion.
+
+=item bridges
+
+   $g->bridges
+
+For an undirected graph, return the bridges of the graph as a list of
+anonymous arrays of vertices in the bridges.  The order of bridges and
+the order of vertices in them is undefined.
+
+=item biconnectivity_clear_cache
+
+    $g->biconnectivity_clear_cache
+
+See L</"Clearing cached results">.
+
+=item strongly_connected
+
+=item is_strongly_connected
+
+    $g->is_strongly_connected
+
+For a directed graph, return true is the directed graph is strongly
+connected, false if not.
+
+See also L</is_weakly_connected>.
+
+For undirected graphs, see L</is_connected>, or L</is_biconnected>.
+
+=item strongly_connected_component_by_vertex
+
+    $i = $g->strongly_connected_component_by_vertex($v)
+
+For a directed graph, return an index identifying the strongly
+connected component the vertex belongs to, the indexing starting from
+zero.
+
+For the inverse, see L</strongly_connected_component_by_index>.
+
+See also L</weakly_connected_component_by_vertex>.
+
+For undirected graphs, see L</connected_components> or
+L</biconnected_components>.
+
+=item strongly_connected_component_by_index
+
+    @v = $g->strongly_connected_component_by_index($i)
+
+For a directed graph, return the vertices of the ith connected
+component, the indexing starting from zero.  The order of vertices
+within a component is undefined, while the order of the connected
+components is the as from strongly_connected_components().
+
+For the inverse, see L</strongly_connected_component_by_vertex>.
+
+For undirected graphs, see L</weakly_connected_component_by_index>.
+
+=item same_strongly_connected_components
+
+    $g->same_strongly_connected_components($u, $v, ...)
+
+For a directed graph, return true if the vertices are in the same
+strongly connected component.
+
+See also L</same_weakly_connected_components>.
+
+For undirected graphs, see L</same_connected_components> or
+L</same_biconnected_components>.
+
+=item strong_connectivity_clear_cache
+
+    $g->strong_connectivity_clear_cache
+
+See L</"Clearing cached results">.
+
+=item weakly_connected
+
+=item is_weakly_connected
+
+    $g->is_weakly_connected
+
+For a directed graph, return true is the directed graph is weakly
+connected, false if not.
+
+Weakly connected graph is also known as I<semiconnected> graph.
+
+See also L</is_strongly_connected>.
+
+For undirected graphs, see L</is_connected> or L</is_biconnected>.
+
+=item weakly_connected_components
+
+    @wcc = $g->weakly_connected_components()
+
+For a directed graph, returns the vertices of the weakly connected
+components of the graph as a list of anonymous arrays.  The ordering
+of the anonymous arrays or the ordering of the vertices inside the
+anonymous arrays (the components) is undefined.
+
+See also L</strongly_connected_components>.
+
+For undirected graphs, see L</connected_components> or
+L</biconnected_components>.
+
+=item weakly_connected_component_by_vertex
+
+    $i = $g->weakly_connected_component_by_vertex($v)
+
+For a directed graph, return an index identifying the weakly connected
+component the vertex belongs to, the indexing starting from zero.
+
+For the inverse, see L</weakly_connected_component_by_index>.
+
+For undirected graphs, see L</connected_component_by_vertex>
+and L</biconnected_component_by_vertex>.
+
+=item weakly_connected_component_by_index
+
+    @v = $g->weakly_connected_component_by_index($i)
+
+For a directed graph, return the vertices of the ith weakly connected
+component, the indexing starting zero.  The order of vertices within
+a component is undefined, while the order of the weakly connected
+components is same as from weakly_connected_components().
+
+For the inverse, see L</weakly_connected_component_by_vertex>.
+
+For undirected graphs, see L<connected_component_by_index>
+and L<biconnected_component_by_index>.
+
+=item same_weakly_connected_components
+
+    $g->same_weakly_connected_components($u, $v, ...)
+
+Return true if the vertices are in the same weakly connected component.
+
+=item weakly_connected_graph
+
+    $wcg = $g->weakly_connected_graph
+
+For a directed graph, return its weakly connected graph.
+
+For undirected graphs, see L</connected_graph> and L</biconnected_graph>.
+
+=item strongly_connected_components
+
+   my @scc = $g->strongly_connected_components;
+
+For a directed graph, return the strongly connected components as a
+list of anonymous arrays.  The elements in the anonymous arrays are
+the vertices belonging to the strongly connected component; both the
+elements and the components are in no particular order.
+
+See also L</weakly_connected_components>.
+
+For undirected graphs, see L</connected_components>,
+or see L</biconnected_components>.
+
+=item strongly_connected_graph
+
+   my $scg = $g->strongly_connected_graph;
+
+See L</"Connected Graphs and Their Components"> for further discussion.
+
+Strongly connected graphs are also known as I<kernel graphs>.
+
+See also L</weakly_connected_graph>.
+
+For undirected graphs, see L</connected_graph>, or L</biconnected_graph>.
+
+=item is_sink_vertex
+
+    $g->is_sink_vertex($v)
+
+Return true if the vertex $v is a sink vertex, false if not.  A sink
+vertex is defined as a vertex with predecessors but no successors:
+this definition means that isolated vertices are not sink vertices.
+If you want also isolated vertices, use is_successorless_vertex().
+
+=item is_source_vertex
+
+    $g->is_source_vertex($v)
+
+Return true if the vertex $v is a source vertex, false if not.  A source
+vertex is defined as a vertex with successors but no predecessors:
+the definition means that isolated vertices are not source vertices.
+If you want also isolated vertices, use is_predecessorless_vertex().
+
+=item is_successorless_vertex
+
+    $g->is_successorless_vertex($v)
+
+Return true if the vertex $v has no succcessors (no edges
+leaving the vertex), false if it has.
+
+Isolated vertices will return true: if you do not want this,
+use is_sink_vertex().
+
+=item is_successorful_vertex
+
+    $g->is_successorful_vertex($v)
+
+Return true if the vertex $v has successors, false if not.
+
+=item is_predecessorless_vertex
+
+    $g->is_predecessorless_vertex($v)
+
+Return true if the vertex $v has no predecessors (no edges
+entering the vertex), false if it has.
+
+Isolated vertices will return true: if you do not want this,
+use is_source_vertex().
+
+=item is_predecessorful_vertex
+
+    $g->is_predecessorful_vertex($v)
+
+Return true if the vertex $v has predecessors, false if not.
+
+=item is_isolated_vertex
+
+    $g->is_isolated_vertex($v)
+
+Return true if the vertex $v is an isolated vertex: no successors
+and no predecessors.
+
+=item is_interior_vertex
+
+    $g->is_interior_vertex($v)
+
+Return true if the vertex $v is an interior vertex: both successors
+and predecessors.
+
+=item is_exterior_vertex
+
+    $g->is_exterior_vertex($v)
+
+Return true if the vertex $v is an exterior vertex: has either no
+successors or no predecessors, or neither.
+
+=item is_self_loop_vertex
+
+    $g->is_self_loop_vertex($v)
+
+Return true if the vertex $v is a self loop vertex: has an edge
+from itself to itself.
+
+=item sink_vertices
+
+    @v = $g->sink_vertices()
+
+Return the sink vertices of the graph.
+In scalar context return the number of sink vertices.
+See L</is_sink_vertex> for the definition of a sink vertex.
+
+=item source_vertices
+
+    @v = $g->source_vertices()
+
+Return the source vertices of the graph.
+In scalar context return the number of source vertices.
+See L</is_source_vertex> for the definition of a source vertex.
+
+=item successorful_vertices
+
+    @v = $g->successorful_vertices()
+
+Return the successorful vertices of the graph.
+In scalar context return the number of successorful vertices.
+
+=item successorless_vertices
+
+    @v = $g->successorless_vertices()
+
+Return the successorless vertices of the graph.
+In scalar context return the number of successorless vertices.
+
+=item successors
+
+    @s = $g->successors($v)
+
+Return the immediate successor vertices of the vertex.
+
+=item neighbors
+
+=item neighbours
+
+Return the neighbo(u)ring vertices.  Also known as the I<adjacent vertices>.
+
+=item predecessorful_vertices
+
+    @v = $g->predecessorful_vertices()
+
+Return the predecessorful vertices of the graph.
+In scalar context return the number of predecessorful vertices.
+
+=item predecessorless_vertices
+
+    @v = $g->predecessorless_vertices()
+
+Return the predecessorless vertices of the graph.
+In scalar context return the number of predecessorless vertices.
+
+=item predecessors
+
+    @s = $g->predecessors($v)
+
+Return the immediate predecessor vertices of the vertex.
+
+=item isolated_vertices
+
+    @v = $g->isolated_vertices()
+
+Return the isolated vertices of the graph.
+In scalar context return the number of isolated vertices.
+See L</is_isolated_vertex> for the definition of an isolated vertex.
+
+=item interior_vertices
+
+    @v = $g->interior_vertices()
+
+Return the interior vertices of the graph.
+In scalar context return the number of interior vertices.
+See L</is_interior_vertex> for the definition of an interior vertex.
+
+=item exterior_vertices
+
+    @v = $g->exterior_vertices()
+
+Return the exterior vertices of the graph.
+In scalar context return the number of exterior vertices.
+See L</is_exterior_vertex> for the definition of an exterior vertex.
+
+=item self_loop_vertices
+
+    @v = $g->self_loop_vertices()
+
+Return the self-loop vertices of the graph.
+In scalar context return the number of self-loop vertices.
+See L</is_self_loop_vertex> for the definition of a self-loop vertex.
+
+=back
+
+=head2 Connected Graphs and Their Components
+
+In this discussion I<connected graph> refers to any of
+I<connected graphs>, I<biconnected graphs>, and I<strongly
+connected graphs>.
+
+B<NOTE>: if the vertices of the original graph are Perl objects,
+(in other words, references, so you must be using C<refvertexed>) 
+the vertices of the I<connected graph> are NOT by default usable
+as Perl objects because they are blessed into a package with
+a rather unusable name.
+
+By default, the vertex names of the I<connected graph> are formed from
+the names of the vertices of the original graph by (alphabetically
+sorting them and) concatenating their names with C<+>.  The vertex
+attribute C<subvertices> is also used to store the list (as an array
+reference) of the original vertices.  To change the 'supercomponent'
+vertex names and the whole logic of forming these supercomponents
+use the C<super_component>) option to the method calls:
+
+  $g->connected_graph(super_component => sub { ... })
+  $g->biconnected_graph(super_component => sub { ... })
+  $g->strongly_connected_graph(super_component => sub { ... })
+
+The subroutine reference gets the 'subcomponents' (the vertices of the
+original graph) as arguments, and it is supposed to return the new
+supercomponent vertex, the "stringified" form of which is used as the
+vertex name.
+
+=head2 Degree
+
+A vertex has a degree based on the number of incoming and outgoing edges.
+This really makes sense only for directed graphs.
+
+=over 4
+
+=item degree
+
+=item vertex_degree
+
+    $d = $g->degree($v)
+    $d = $g->vertex_degree($v)
+
+For directed graphs: the in-degree minus the out-degree at the vertex.
+For undirected graphs: the number of edges at the vertex.
+
+=item in_degree
+
+    $d = $g->in_degree($v)
+
+The number of incoming edges at the vertex.
+
+=item out_degree
+
+    $o = $g->out_degree($v)
+
+The number of outgoing edges at the vertex.
+
+=item average_degree
+
+   my $ad = $g->average_degree;
+
+Return the average degree taken over all vertices.
+
+=back
+
+Related methods are
+
+=over 4
+
+=item edges_at
+
+    @e = $g->edges_at($v)
+
+The union of edges from and edges to at the vertex.
+
+=item edges_from
+
+    @e = $g->edges_from($v)
+
+The edges leaving the vertex.
+
+=item edges_to
+
+    @e = $g->edges_to($v)
+
+The edges entering the vertex.
+
+=back
+
+See also L</average_degree>.
+
+=head2 Counted Vertices
+
+I<Counted vertices> are vertices with more than one instance, normally
+adding vertices is idempotent.  To enable counted vertices on a graph,
+give the C<countvertexed> parameter a true value
+
+    use Graph;
+    my $g = Graph->new(countvertexed => 1);
+
+To find out how many times the vertex has been added:
+
+=over 4
+
+=item get_vertex_count
+
+    my $c = $g->get_vertex_count($v);
+
+Return the count of the vertex, or undef if the vertex does not exist.
+
+=back
+
+=head2 Multiedges, Multivertices, Multigraphs
+
+I<Multiedges> are edges with more than one "life", meaning that one
+has to delete them as many times as they have been added.  Normally
+adding edges is idempotent (in other words, adding edges more than
+once makes no difference).
+
+There are two kinds or degrees of creating multiedges and multivertices.
+The two kinds are mutually exclusive.
+
+The weaker kind is called I<counted>, in which the edge or vertex has
+a count on it: add operations increase the count, and delete
+operations decrease the count, and once the count goes to zero, the
+edge or vertex is deleted.  If there are attributes, they all are
+attached to the same vertex.  You can think of this as the graph
+elements being I<refcounted>, or I<reference counted>, if that sounds
+more familiar.
+
+The stronger kind is called (true) I<multi>, in which the edge or vertex
+really has multiple separate identities, so that you can for example
+attach different attributes to different instances.
+
+To enable multiedges on a graph:
+
+    use Graph;
+    my $g0 = Graph->new(countedged => 1);
+    my $g0 = Graph->new(multiedged => 1);
+
+Similarly for vertices
+
+    use Graph;
+    my $g1 = Graph->new(countvertexed => 1);
+    my $g1 = Graph->new(multivertexed => 1);
+
+You can test for these by
+
+=over 4
+
+=item is_countedged
+
+=item countedged
+
+    $g->is_countedged
+    $g->countedged
+
+Return true if the graph is countedged.
+
+=item is_countvertexed
+
+=item countvertexed
+
+    $g->is_countvertexed
+    $g->countvertexed
+
+Return true if the graph is countvertexed.
+
+=item is_multiedged
+
+=item multiedged
+
+    $g->is_multiedged
+    $g->multiedged
+
+Return true if the graph is multiedged.
+
+=item is_multivertexed
+
+=item multivertexed
+
+    $g->is_multivertexed
+    $g->multivertexed
+
+Return true if the graph is multivertexed.
+
+=back
+
+A multiedged (either the weak kind or the strong kind) graph is
+a I<multigraph>, for which you can test with C<is_multi_graph()>.
+
+B<NOTE>: The various graph algorithms do not in general work well with
+multigraphs (they often assume I<simple graphs>, that is, no
+multiedges or loops), and no effort has been made to test the
+algorithms with multigraphs.
+
+vertices() and edges() will return the multiple elements: if you want
+just the unique elements, use
+
+=over 4
+
+=item unique_vertices
+
+=item unique_edges
+
+    @uv = $g->unique_vertices; # unique
+    @mv = $g->vertices;        # possible multiples
+    @ue = $g->unique_edges;
+    @me = $g->edges;
+
+=back
+
+If you are using (the stronger kind of) multielements, you should use
+the I<by_id> variants:
+
+=over 4
+
+=item add_vertex_by_id
+
+=item has_vertex_by_id
+
+=item delete_vertex_by_id
+
+=item add_edge_by_id
+
+=item has_edge_by_id
+
+=item delete_edge_by_id
+
+=back
+
+    $g->add_vertex_by_id($v, $id)
+    $g->has_vertex_by_id($v, $id)
+    $g->delete_vertex_by_id($v, $id)
+
+    $g->add_edge_by_id($u, $v, $id)
+    $g->has_edge_by_id($u, $v, $id)
+    $g->delete_edge_by_id($u, $v, $id)
+
+When you delete the last vertex/edge in a multivertex/edge, the whole
+vertex/edge is deleted.  You can use add_vertex()/add_edge() on
+a multivertex/multiedge graph, in which case an id is generated
+automatically.  To find out which the generated id was, you need
+to use
+
+=over 4
+
+=item add_vertex_get_id
+
+=item add_edge_get_id
+
+=back
+
+    $idv = $g->add_vertex_get_id($v)
+    $ide = $g->add_edge_get_id($u, $v)
+
+To return all the ids of vertices/edges in a multivertex/multiedge, use
+
+=over 4
+
+=item get_multivertex_ids
+
+=item get_multiedge_ids
+
+=back
+
+    $g->get_multivertex_ids($v)
+    $g->get_multiedge_ids($u, $v)
+
+The ids are returned in random order.
+
+To find out how many times the edge has been added (this works for
+either kind of multiedges):
+
+=over 4
+
+=item get_edge_count
+
+    my $c = $g->get_edge_count($u, $v);
+
+Return the count (the "countedness") of the edge, or undef if the
+edge does not exist.
+
+=back
+
+The following multi-entity utility functions exist, mirroring
+the non-multi vertices and edges:
+
+=over 4
+
+=item add_weighted_edge_by_id
+
+=item add_weighted_edges_by_id
+
+=item add_weighted_path_by_id
+
+=item add_weighted_vertex_by_id
+
+=item add_weighted_vertices_by_id
+
+=item delete_edge_weight_by_id
+
+=item delete_vertex_weight_by_id
+
+=item get_edge_weight_by_id
+
+=item get_vertex_weight_by_id
+
+=item has_edge_weight_by_id
+
+=item has_vertex_weight_by_id
+
+=item set_edge_weight_by_id
+
+=item set_vertex_weight_by_id
+
+=back
+
+=head2 Topological Sort
+
+=over 4
+
+=item topological_sort
+
+=item toposort
+
+    my @ts = $g->topological_sort;
+
+Return the vertices of the graph sorted topologically.  Note that
+there may be several possible topological orderings; one of them
+is returned.
+
+If the graph contains a cycle, a fatal error is thrown, you
+can either use C<eval> to trap that, or supply the C<empty_if_cyclic>
+argument with a true value
+
+    my @ts = $g->topological_sort(empty_if_cyclic => 1);
+
+in which case an empty array is returned if the graph is cyclic.
+
+=back
+
+=head2 Minimum Spanning Trees (MST)
+
+Minimum Spanning Trees or MSTs are tree subgraphs derived from an
+undirected graph.  MSTs "span the graph" (covering all the vertices)
+using as lightly weighted (hence the "minimum") edges as possible.
+
+=over 4
+
+=item MST_Kruskal
+
+    $mstg = $g->MST_Kruskal;
+
+Returns the Kruskal MST of the graph.
+
+=item MST_Prim
+
+    $mstg = $g->MST_Prim(%opt);
+
+Returns the Prim MST of the graph.
+
+You can choose the first vertex with $opt{ first_root }.
+
+=item MST_Dijkstra
+
+=item minimum_spanning_tree
+
+    $mstg = $g->MST_Dijkstra;
+    $mstg = $g->minimum_spanning_tree;
+
+Aliases for MST_Prim.
+
+=back
+
+=head2 Single-Source Shortest Paths (SSSP)
+
+Single-source shortest paths, also known as Shortest Path Trees
+(SPTs).  For either a directed or an undirected graph, return a (tree)
+subgraph that from a single start vertex (the "single source") travels
+the shortest possible paths (the paths with the lightest weights) to
+all the other vertices.  Note that the SSSP is neither reflexive (the
+shortest paths do not include the zero-length path from the source
+vertex to the source vertex) nor transitive (the shortest paths do not
+include transitive closure paths).  If no weight is defined for an
+edge, 1 (one) is assumed.
+
+=over 4
+
+=item SPT_Dijkstra
+
+    $sptg = $g->SPT_Dijkstra($root)
+    $sptg = $g->SPT_Dijkstra(%opt)
+
+Return as a graph the the single-source shortest paths of the graph
+using Dijkstra's algorithm.  The graph cannot contain negative edges
+(negative edges cause the algorithm to abort with an error message
+C<Graph::SPT_Dijkstra: edge ... is negative>).
+
+You can choose the first vertex of the result with either a single
+vertex argument or with $opt{ first_root }, otherwise a random vertex
+is chosen.
+
+B<NOTE>: note that all the vertices might not be reachable from the
+selected (explicit or random) start vertex.
+
+The start vertex is be available as the graph attribute
+C<SPT_Dijkstra_root>).
+
+The result weights of vertices can be retrieved from the result graph by
+
+	my $w = $sptg->get_vertex_attribute($v, 'weight');
+
+The predecessor vertex of a vertex in the result graph
+can be retrieved by
+
+	my $u = $sptg->get_vertex_attribute($v, 'p');
+
+("A successor vertex" cannot be retrieved as simply because a single
+vertex can have several successors.  You can first find the
+C<neighbors()> vertices and then remove the predecessor vertex.)
+
+If you want to find the shortest path between two vertices,
+see L</SP_Dijkstra>.
+
+=item SSSP_Dijkstra
+
+=item single_source_shortest_paths
+
+Aliases for SPT_Dijkstra.
+
+=item SP_Dijkstra
+
+    @path = $g->SP_Dijkstra($u, $v)
+
+Return the vertices in the shortest path in the graph $g between the
+two vertices $u, $v.  If no path can be found, an empty list is returned.
+
+Uses SPT_Dijkstra().
+
+=item SPT_Dijkstra_clear_cache
+
+    $g->SPT_Dijkstra_clear_cache
+
+See L</"Clearing cached results">.
+
+=item SPT_Bellman_Ford
+
+    $sptg = $g->SPT_Bellman_Ford(%opt)
+
+Return as a graph the single-source shortest paths of the graph using
+Bellman-Ford's algorithm.  The graph can contain negative edges but
+not negative cycles (negative cycles cause the algorithm to abort
+with an error message C<Graph::SPT_Bellman_Ford: negative cycle exists/>).
+
+You can choose the start vertex of the result with either a single
+vertex argument or with $opt{ first_root }, otherwise a random vertex
+is chosen.
+
+B<NOTE>: note that all the vertices might not be reachable from the
+selected (explicit or random) start vertex.
+
+The start vertex is be available as the graph attribute
+C<SPT_Bellman_Ford_root>).
+
+The result weights of vertices can be retrieved from the result graph by
+
+	my $w = $sptg->get_vertex_attribute($v, 'weight');
+
+The predecessor vertex of a vertex in the result graph
+can be retrieved by
+
+	my $u = $sptg->get_vertex_attribute($v, 'p');
+
+("A successor vertex" cannot be retrieved as simply because a single
+vertex can have several successors.  You can first find the
+C<neighbors()> vertices and then remove the predecessor vertex.)
+
+If you want to find the shortes path between two vertices,
+see L</SP_Bellman_Ford>.
+
+=item SSSP_Bellman_Ford
+
+Alias for SPT_Bellman_Ford.
+
+=item SP_Bellman_Ford
+
+    @path = $g->SP_Bellman_Ford($u, $v)
+
+Return the vertices in the shortest path in the graph $g between the
+two vertices $u, $v.  If no path can be found, an empty list is returned.
+
+Uses SPT_Bellman_Ford().
+
+=item SPT_Bellman_Ford_clear_cache
+
+    $g->SPT_Bellman_Ford_clear_cache
+
+See L</"Clearing cached results">.
+
+=back
+
+=head2 All-Pairs Shortest Paths (APSP)
+
+For either a directed or an undirected graph, return the APSP object
+describing all the possible paths between any two vertices of the
+graph.  If no weight is defined for an edge, 1 (one) is assumed.
+
+=over 4
+
+=item APSP_Floyd_Warshall
+
+=item all_pairs_shortest_paths
+
+    my $apsp = $g->APSP_Floyd_Warshall(...);
+
+Return the all-pairs shortest path object computed from the graph
+using Floyd-Warshall's algorithm.  The length of a path between two
+vertices is the sum of weight attribute of the edges along the
+shortest path between the two vertices.  If no weight attribute name
+is specified explicitly
+
+    $g->APSP_Floyd_Warshall(attribute_name => 'height');
+
+the attribute C<weight> is assumed.
+
+B<If an edge has no defined weight attribute, the value of one is
+assumed when getting the attribute.>
+
+Once computed, you can query the APSP object with
+
+=over 8
+
+=item path_length
+
+    my $l = $apsp->path_length($u, $v);
+
+Return the length of the shortest path between the two vertices.
+
+=item path_vertices
+
+    my @v = $apsp->path_vertices($u, $v);
+
+Return the list of vertices along the shortest path.
+
+=item path_predecessor
+
+   my $u = $apsp->path_predecessor($v);
+
+Returns the predecessor of vertex $v in the all-pairs shortest paths.
+
+=back
+
+=over 8
+
+=item average_path_length
+
+    my $apl = $g->average_path_length; # All vertex pairs.
+
+    my $apl = $g->average_path_length($u); # From $u.
+    my $apl = $g->average_path_length($u, undef); # From $u.
+
+    my $apl = $g->average_path_length($u, $v); # From $u to $v.
+
+    my $apl = $g->average_path_length(undef, $v); # To $v.
+
+Return the average (shortest) path length over all the vertex pairs of
+the graph, from a vertex, between two vertices, and to a vertex.
+
+=item longest_path
+
+    my @lp = $g->longest_path;
+    my $lp = $g->longest_path;
+
+In scalar context return the I<longest shortest> path length over all
+the vertex pairs of the graph.  In list context return the vertices
+along a I<longest shortest> path.  Note that there might be more than
+one such path; this interfaces return a random one of them.
+
+=item diameter
+
+=item graph_diameter
+
+    my $gd = $g->diameter;
+
+The longest path over all the vertex pairs is known as the
+I<graph diameter>.
+
+=item shortest_path
+
+    my @sp = $g->shortest_path;
+    my $sp = $g->shortest_path;
+
+In scalar context return the shortest length over all the vertex pairs
+of the graph.  In list context return the vertices along a shortest
+path.  Note that there might be more than one such path; this
+interface returns a random one of them.
+
+=item radius
+
+    my $gr = $g->radius;
+
+The I<shortest longest> path over all the vertex pairs is known as the
+I<graph radius>.  See also L</diameter>.
+
+=item center_vertices
+
+=item centre_vertices
+
+    my @c = $g->center_vertices;
+    my @c = $g->center_vertices($delta);
+
+The I<graph center> is the set of vertices for which the I<vertex
+eccentricity> is equal to the I<graph radius>.  The vertices are
+returned in random order.  By specifying a delta value you can widen
+the criterion from strict equality (handy for non-integer edge weights).
+
+=item vertex_eccentricity
+
+    my $ve = $g->vertex_eccentricity($v);
+
+The longest path to a vertex is known as the I<vertex eccentricity>.
+If the graph is unconnected, returns Inf.
+
+=back
+
+You can walk through the matrix of the shortest paths by using
+
+=over 4
+
+=item for_shortest_paths
+
+    $n = $g->for_shortest_paths($callback)
+
+The number of shortest paths is returned (this should be equal to V*V).
+The $callback is a sub reference that receives four arguments:
+the transitive closure object from Graph::TransitiveClosure, the two
+vertices, and the index to the current shortest paths (0..V*V-1).
+
+=back
+
+=back
+
+=head2 Clearing cached results
+
+For many graph algorithms there are several different but equally valid
+results.  (Pseudo)Randomness is used internally by the Graph module to
+for example pick a random starting vertex, and to select random edges
+from a vertex.
+
+For efficiency the computed result is often cached to avoid
+recomputing the potentially expensive operation, and this also gives
+additional determinism (once a correct result has been computed, the
+same result will always be given).
+
+However, sometimes the exact opposite is desireable, and the possible
+alternative results are wanted (within the limits of the pseudorandomness:
+not all the possible solutions are guaranteed to be returned, usually only
+a subset is retuned).  To undo the caching, the following methods are
+available:
+
+=over 4
+
+=item *
+
+connectivity_clear_cache
+
+Affects L</connected_components>, L</connected_component_by_vertex>,
+L</connected_component_by_index>, L</same_connected_components>,
+L</connected_graph>, L</is_connected>, L</is_weakly_connected>,
+L</weakly_connected_components>, L</weakly_connected_component_by_vertex>,
+L</weakly_connected_component_by_index>, L</same_weakly_connected_components>,
+L</weakly_connected_graph>.
+
+=item *
+
+biconnectivity_clear_cache
+
+Affects L</biconnected_components>,
+L</biconnected_component_by_vertex>,
+L</biconnected_component_by_index>, L</is_edge_connected>,
+L</is_edge_separable>, L</articulation_points>, L</cut_vertices>,
+L</is_biconnected>, L</biconnected_graph>,
+L</same_biconnected_components>, L</bridges>.
+
+=item *
+
+strong_connectivity_clear_cache
+
+Affects L</strongly_connected_components>,
+L</strongly_connected_component_by_vertex>,
+L</strongly_connected_component_by_index>,
+L</same_strongly_connected_components>, L</is_strongly_connected>,
+L</strongly_connected>, L</strongly_connected_graph>.
+
+=item *
+
+SPT_Dijkstra_clear_cache
+
+Affects L</SPT_Dijkstra>, L</SSSP_Dijkstra>, L</single_source_shortest_paths>,
+L</SP_Dijkstra>.
+
+=item *
+
+SPT_Bellman_Ford_clear_cache
+
+Affects L</SPT_Bellman_Ford>, L</SSSP_Bellman_Ford>, L</SP_Bellman_Ford>.
+
+=back
+
+Note that any such computed and cached results are of course always
+automatically discarded whenever the graph is modified.
+
+=head2 Random
+
+You can either ask for random elements of existing graphs or create
+random graphs.
+
+=over 4
+
+=item random_vertex
+
+    my $v = $g->random_vertex;
+
+Return a random vertex of the graph, or undef if there are no vertices.
+
+=item random_edge
+
+    my $e = $g->random_edge;
+
+Return a random edge of the graph as an array reference having the
+vertices as elements, or undef if there are no edges.
+
+=item random_successor
+
+    my $v = $g->random_successor($v);
+
+Return a random successor of the vertex in the graph, or undef if there
+are no successors.
+
+=item random_predecessor
+
+    my $u = $g->random_predecessor($v);
+
+Return a random predecessor of the vertex in the graph, or undef if there
+are no predecessors.
+
+=item random_graph
+
+    my $g = Graph->random_graph(%opt);
+
+Construct a random graph.  The I<%opt> B<must> contain the C<vertices>
+argument
+
+    vertices => vertices_def
+
+where the I<vertices_def> is one of
+
+=over 8
+
+=item *
+
+an array reference where the elements of the array reference are the
+vertices
+
+=item *
+
+a number N in which case the vertices will be integers 0..N-1
+
+=back
+
+=back
+
+The %opt may have either of the argument C<edges> or the argument
+C<edges_fill>.  Both are used to define how many random edges to
+add to the graph; C<edges> is an absolute number, while C<edges_fill>
+is a relative number (relative to the number of edges in a complete
+graph, C).  The number of edges can be larger than C, but only if the
+graph is countedged.  The random edges will not include self-loops.
+If neither C<edges> nor C<edges_fill> is specified, an C<edges_fill>
+of 0.5 is assumed.
+
+If you want repeatable randomness (what is an oxymoron?)
+you can use the C<random_seed> option:
+
+    $g = Graph->random_graph(vertices => 10, random_seed => 1234);
+
+As this uses the standard Perl srand(), the usual caveat applies:
+use it sparingly, and consider instead using a single srand() call
+at the top level of your application.
+
+The default random distribution of edges is flat, that is, any pair of
+vertices is equally likely to appear.  To define your own distribution,
+use the C<random_edge> option:
+
+    $g = Graph->random_graph(vertices => 10, random_edge => \&d);
+
+where C<d> is a code reference receiving I<($g, $u, $v, $p)> as
+parameters, where the I<$g> is the random graph, I<$u> and I<$v> are
+the vertices, and the I<$p> is the probability ([0,1]) for a flat
+distribution.  It must return a probability ([0,1]) that the vertices
+I<$u> and I<$v> have an edge between them.  Note that returning one
+for a particular pair of vertices doesn't guarantee that the edge will
+be present in the resulting graph because the required number of edges
+might be reached before that particular pair is tested for the
+possibility of an edge.  Be very careful to adjust also C<edges>
+or C<edges_fill> so that there is a possibility of the filling process
+terminating.
+
+=head2 Attributes
+
+You can attach free-form attributes (key-value pairs, in effect a full
+Perl hash) to each vertex, edge, and the graph itself.
+
+Note that attaching attributes does slow down some other operations
+on the graph by a factor of three to ten.  For example adding edge
+attributes does slow down anything that walks through all the edges.
+
+For vertex attributes:
+
+=over 4
+
+=item set_vertex_attribute
+
+    $g->set_vertex_attribute($v, $name, $value)
+
+Set the named vertex attribute.
+
+If the vertex does not exist, the set_...() will create it, and the
+other vertex attribute methods will return false or empty.
+
+B<NOTE: any attributes beginning with an underscore/underline (_)
+are reserved for the internal use of the Graph module.>
+
+=item get_vertex_attribute
+
+    $value = $g->get_vertex_attribute($v, $name)
+
+Return the named vertex attribute.
+
+=item has_vertex_attribute
+
+    $g->has_vertex_attribute($v, $name)
+
+Return true if the vertex has an attribute, false if not.
+
+=item delete_vertex_attribute
+
+    $g->delete_vertex_attribute($v, $name)
+
+Delete the named vertex attribute.
+
+=item set_vertex_attributes
+
+    $g->set_vertex_attributes($v, $attr)
+
+Set all the attributes of the vertex from the anonymous hash $attr.
+
+B<NOTE>: any attributes beginning with an underscore (C<_>) are
+reserved for the internal use of the Graph module.
+
+=item get_vertex_attributes
+
+    $attr = $g->get_vertex_attributes($v)
+
+Return all the attributes of the vertex as an anonymous hash.
+
+=item get_vertex_attribute_names
+
+    @name = $g->get_vertex_attribute_names($v)
+
+Return the names of vertex attributes.
+
+=item get_vertex_attribute_values
+
+    @value = $g->get_vertex_attribute_values($v)
+
+Return the values of vertex attributes.
+
+=item has_vertex_attributes
+
+    $g->has_vertex_attributes($v)
+
+Return true if the vertex has any attributes, false if not.
+
+=item delete_vertex_attributes
+
+    $g->delete_vertex_attributes($v)
+
+Delete all the attributes of the named vertex.
+
+=back
+
+If you are using multivertices, use the I<by_id> variants:
+
+=over 4
+
+=item set_vertex_attribute_by_id
+
+=item get_vertex_attribute_by_id
+
+=item has_vertex_attribute_by_id
+
+=item delete_vertex_attribute_by_id
+
+=item set_vertex_attributes_by_id
+
+=item get_vertex_attributes_by_id
+
+=item get_vertex_attribute_names_by_id
+
+=item get_vertex_attribute_values_by_id
+
+=item has_vertex_attributes_by_id
+
+=item delete_vertex_attributes_by_id
+
+    $g->set_vertex_attribute_by_id($v, $id, $name, $value)
+    $g->get_vertex_attribute_by_id($v, $id, $name)
+    $g->has_vertex_attribute_by_id($v, $id, $name)
+    $g->delete_vertex_attribute_by_id($v, $id, $name)
+    $g->set_vertex_attributes_by_id($v, $id, $attr)
+    $g->get_vertex_attributes_by_id($v, $id)
+    $g->get_vertex_attribute_values_by_id($v, $id)
+    $g->get_vertex_attribute_names_by_id($v, $id)
+    $g->has_vertex_attributes_by_id($v, $id)
+    $g->delete_vertex_attributes_by_id($v, $id)
+
+=back
+
+For edge attributes:
+
+=over 4
+
+=item set_edge_attribute
+
+    $g->set_edge_attribute($u, $v, $name, $value)
+
+Set the named edge attribute.
+
+If the edge does not exist, the set_...() will create it, and the other
+edge attribute methods will return false or empty.
+
+B<NOTE>: any attributes beginning with an underscore (C<_>) are
+reserved for the internal use of the Graph module.
+
+=item get_edge_attribute
+
+    $value = $g->get_edge_attribute($u, $v, $name)
+
+Return the named edge attribute.
+
+=item has_edge_attribute
+
+    $g->has_edge_attribute($u, $v, $name)
+
+Return true if the edge has an attribute, false if not.
+
+=item delete_edge_attribute
+
+    $g->delete_edge_attribute($u, $v, $name)
+
+Delete the named edge attribute.
+
+=item set_edge_attributes
+
+    $g->set_edge_attributes($u, $v, $attr)
+
+Set all the attributes of the edge from the anonymous hash $attr.
+
+B<NOTE>: any attributes beginning with an underscore (C<_>) are
+reserved for the internal use of the Graph module.
+
+=item get_edge_attributes
+
+    $attr = $g->get_edge_attributes($u, $v)
+
+Return all the attributes of the edge as an anonymous hash.
+
+=item get_edge_attribute_names
+
+    @name = $g->get_edge_attribute_names($u, $v)
+
+Return the names of edge attributes.
+
+=item get_edge_attribute_values
+
+    @value = $g->get_edge_attribute_values($u, $v)
+
+Return the values of edge attributes.
+
+=item has_edge_attributes
+
+    $g->has_edge_attributes($u, $v)
+
+Return true if the edge has any attributes, false if not.
+
+=item delete_edge_attributes
+
+    $g->delete_edge_attributes($u, $v)
+
+Delete all the attributes of the named edge.
+
+=back
+
+If you are using multiedges, use the I<by_id> variants:
+
+=over 4
+
+=item set_edge_attribute_by_id
+
+=item get_edge_attribute_by_id
+
+=item has_edge_attribute_by_id
+
+=item delete_edge_attribute_by_id
+
+=item set_edge_attributes_by_id
+
+=item get_edge_attributes_by_id
+
+=item get_edge_attribute_names_by_id
+
+=item get_edge_attribute_values_by_id
+
+=item has_edge_attributes_by_id
+
+=item delete_edge_attributes_by_id
+
+    $g->set_edge_attribute_by_id($u, $v, $id, $name, $value)
+    $g->get_edge_attribute_by_id($u, $v, $id, $name)
+    $g->has_edge_attribute_by_id($u, $v, $id, $name)
+    $g->delete_edge_attribute_by_id($u, $v, $id, $name)
+    $g->set_edge_attributes_by_id($u, $v, $id, $attr)
+    $g->get_edge_attributes_by_id($u, $v, $id)
+    $g->get_edge_attribute_values_by_id($u, $v, $id)
+    $g->get_edge_attribute_names_by_id($u, $v, $id)
+    $g->has_edge_attributes_by_id($u, $v, $id)
+    $g->delete_edge_attributes_by_id($u, $v, $id)
+
+=back
+
+For graph attributes:
+
+=over 4
+
+=item set_graph_attribute
+
+    $g->set_graph_attribute($name, $value)
+
+Set the named graph attribute.
+
+B<NOTE>: any attributes beginning with an underscore (C<_>) are
+reserved for the internal use of the Graph module.
+
+=item get_graph_attribute
+
+    $value = $g->get_graph_attribute($name)
+
+Return the named graph attribute.
+
+=item has_graph_attribute
+
+    $g->has_graph_attribute($name)
+
+Return true if the graph has an attribute, false if not.
+
+=item delete_graph_attribute
+
+    $g->delete_graph_attribute($name)
+
+Delete the named graph attribute.
+
+=item set_graph_attributes
+
+    $g->get_graph_attributes($attr)
+
+Set all the attributes of the graph from the anonymous hash $attr.
+
+B<NOTE>: any attributes beginning with an underscore (C<_>) are
+reserved for the internal use of the Graph module.
+
+=item get_graph_attributes
+
+    $attr = $g->get_graph_attributes()
+
+Return all the attributes of the graph as an anonymous hash.
+
+=item get_graph_attribute_names
+
+    @name = $g->get_graph_attribute_names()
+
+Return the names of graph attributes.
+
+=item get_graph_attribute_values
+
+    @value = $g->get_graph_attribute_values()
+
+Return the values of graph attributes.
+
+=item has_graph_attributes
+
+    $g->has_graph_attributes()
+
+Return true if the graph has any attributes, false if not.
+
+=item delete_graph_attributes
+
+    $g->delete_graph_attributes()
+
+Delete all the attributes of the named graph.
+
+=back
+
+=head2 Weighted
+
+As convenient shortcuts the following methods add, query, and
+manipulate the attribute C<weight> with the specified value to the
+respective Graph elements.
+
+=over 4
+
+=item add_weighted_edge
+
+    $g->add_weighted_edge($u, $v, $weight)
+
+=item add_weighted_edges
+
+    $g->add_weighted_edges($u1, $v1, $weight1, ...)
+
+=item add_weighted_path
+
+    $g->add_weighted_path($v1, $weight1, $v2, $weight2, $v3, ...)
+
+=item add_weighted_vertex
+
+    $g->add_weighted_vertex($v, $weight)
+
+=item add_weighted_vertices
+
+    $g->add_weighted_vertices($v1, $weight1, $v2, $weight2, ...)
+
+=item delete_edge_weight
+
+    $g->delete_edge_weight($u, $v)
+
+=item delete_vertex_weight
+
+    $g->delete_vertex_weight($v)
+
+=item get_edge_weight
+
+    $g->get_edge_weight($u, $v)
+
+=item get_vertex_weight
+
+    $g->get_vertex_weight($v)
+
+=item has_edge_weight
+
+    $g->has_edge_weight($u, $v)
+
+=item has_vertex_weight
+
+    $g->has_vertex_weight($v)
+
+=item set_edge_weight
+
+    $g->set_edge_weight($u, $v, $weight)
+
+=item set_vertex_weight
+
+    $g->set_vertex_weight($v, $weight)
+
+=back
+
+=head2 Isomorphism
+
+Two graphs being I<isomorphic> means that they are structurally the
+same graph, the difference being that the vertices might have been
+I<renamed> or I<substituted>.  For example in the below example $g0
+and $g1 are isomorphic: the vertices C<b c d> have been renamed as
+C<z x y>.
+
+	$g0 = Graph->new;
+	$g0->add_edges(qw(a b a c c d));
+	$g1 = Graph->new;
+	$g1->add_edges(qw(a x x y a z));
+
+In the general case determining isomorphism is I<NP-hard>, in other
+words, really hard (time-consuming), no other ways of solving the problem
+are known than brute force check of of all the possibilities (with possible
+optimization tricks, of course, but brute force still rules at the end of
+the day).
+
+A B<very rough guess> at whether two graphs B<could> be isomorphic
+is possible via the method
+
+=over 4
+
+=item could_be_isomorphic
+
+    $g0->could_be_isomorphic($g1)    
+
+=back
+
+If the graphs do not have the same number of vertices and edges, false
+is returned.  If the distribution of I<in-degrees> and I<out-degrees>
+at the vertices of the graphs does not match, false is returned.
+Otherwise, true is returned.
+
+What is actually returned is the maximum number of possible isomorphic
+graphs between the two graphs, after the above sanity checks have been
+conducted.  It is basically the product of the factorials of the
+absolute values of in-degrees and out-degree pairs at each vertex,
+with the isolated vertices ignored (since they could be reshuffled and
+renamed arbitrarily).  Note that for large graphs the product of these
+factorials can overflow the maximum presentable number (the floating
+point number) in your computer (in Perl) and you might get for example
+I<Infinity> as the result.
+
+=head2 Miscellaneous
+
+The "expect" methods can be used to test a graph and croak if the
+graph is not as expected.
+
+=over 4
+
+=item expect_acyclic
+
+=item expect_dag
+
+=item expect_directed
+
+=item expect_multiedged
+
+=item expect_multivertexed
+
+=item expect_non_multiedged
+
+=item expect_non_multivertexed
+
+=item expect_undirected
+
+=back
+
+In many algorithms it is useful to have a value representing the
+infinity.  The Graph provides (and itself uses):
+
+=over 4
+
+=item Infinity
+
+(Not exported, use Graph::Infinity explicitly)
+
+=back
+
+=head2 Size Requirements
+
+A graph takes up at least 1172 bytes of memory.
+
+A vertex takes up at least 100 bytes of memory.
+
+An edge takes up at least 400 bytes of memory.
+
+(A Perl scalar value takes 16 bytes, or 12 bytes if it's a reference.)
+
+These size approximations are B<very> approximate and optimistic
+(they are based on total_size() of Devel::Size).  In real life many
+factors affect these numbers, for example how Perl is configured.
+The numbers are for a 32-bit platform and for Perl 5.8.8.
+
+Roughly, the above numbers mean that in a megabyte of memory you can
+fit for example a graph of about 1000 vertices and about 2500 edges.
+
+=head2 Hyperedges, hypervertices, hypergraphs
+
+B<BEWARE>: this is a rather thinly tested feature, and the theory
+is even less so.  Do not expect this to stay as it is (or at all)
+in future releases.
+
+B<NOTE>: most usual graph algorithms (and basic concepts) break
+horribly (or at least will look funny) with these hyperthingies.
+Caveat emptor.
+
+Hyperedges are edges that connect a number of vertices different
+from the usual two.
+
+Hypervertices are vertices that consist of a number of vertices
+different from the usual one.
+
+Note that for hypervertices there is an asymmetry: when adding
+hypervertices, the single vertices are also implicitly added.
+
+Hypergraphs are graphs with hyperedges.
+
+To enable hyperness when constructing Graphs use the C<hyperedged>
+and C<hypervertexed> attributes:
+
+   my $h = Graph->new(hyperedged => 1, hypervertexed => 1);
+
+To add hypervertexes, either explicitly use more than one vertex (or,
+indeed, I<no> vertices) when using add_vertex()
+
+   $h->add_vertex("a", "b")
+   $h->add_vertex()
+
+or implicitly with array references when using add_edge()
+
+   $h->add_edge(["a", "b"], "c")
+   $h->add_edge()
+
+Testing for existence and deletion of hypervertices and hyperedges
+works similarly.
+
+To test for hyperness of a graph use the
+
+=over 4
+
+=item is_hypervertexed
+
+=item hypervertexed
+
+    $g->is_hypervertexed
+    $g->hypervertexed
+
+=item is_hyperedged
+
+=item hyperedged
+
+    $g->is_hyperedged
+    $g->hyperedged
+
+=back
+
+Since hypervertices consist of more than one vertex:
+
+=over 4
+
+=item vertices_at
+
+    $g->vertices_at($v)
+
+=back
+
+Return the vertices at the vertex.  This may return just the vertex
+or also other vertices.
+
+To go with the concept of undirected in normal (non-hyper) graphs,
+there is a similar concept of omnidirected I<(this is my own coinage,
+"all-directions")> for hypergraphs, and you can naturally test for it by
+
+=over 4
+
+=item is_omnidirected
+
+=item omnidirected
+
+=item is_omniedged
+
+=item omniedged
+
+   $g->is_omniedged
+
+   $g->omniedged
+
+   $g->is_omnidirected
+
+   $g->omnidirected
+
+Return true if the graph is omnidirected (edges have no direction),
+false if not.
+
+=back
+
+You may be wondering why on earth did I make up this new concept, why
+didn't the "undirected" work for me?  Well, because of this:
+
+   $g = Graph->new(hypervertexed => 1, omnivertexed => 1);
+
+That's right, vertices can be omni, too - and that is indeed the
+default.  You can turn it off and then $g->add_vertex(qw(a b)) no
+more means adding also the (hyper)vertex qw(b a).  In other words,
+the "directivity" is orthogonal to (or independent of) the number of
+vertices in the vertex/edge.
+
+=over 4
+
+=item is_omnivertexed
+
+=item omnivertexed
+
+=back
+
+Another oddity that fell out of the implementation is the uniqueness
+attribute, that comes naturally in C<uniqedged> and C<uniqvertexed>
+flavours.  It does what it sounds like, to unique or not the vertices
+participating in edges and vertices (is the hypervertex qw(a b a) the
+same as the hypervertex qw(a b), for example).  Without too much
+explanation:
+
+=over 4
+
+=item is_uniqedged
+
+=item uniqedged
+
+=item is_uniqvertexed
+
+=item uniqvertexed
+
+=back
+
+=head2 Backward compatibility with Graph 0.2
+
+The Graph 0.2 (and 0.2xxxx) had the following features
+
+=over 4
+
+=item *
+
+vertices() always sorted the vertex list, which most of the time is
+unnecessary and wastes CPU.
+
+=item *
+
+edges() returned a flat list where the begin and end vertices of the
+edges were intermingled: every even index had an edge begin vertex,
+and every odd index had an edge end vertex.  This had the unfortunate
+consequence of C<scalar(@e = edges)> being twice the number of edges,
+and complicating any algorithm walking through the edges.
+
+=item *
+
+The vertex list returned by edges() was sorted, the primary key being
+the edge begin vertices, and the secondary key being the edge end vertices.
+
+=item *
+
+The attribute API was oddly position dependent and dependent
+on the number of arguments.  Use ..._graph_attribute(),
+..._vertex_attribute(), ..._edge_attribute() instead.
+
+=back
+
+B<In future releases of Graph (any release after 0.50) the 0.2xxxx
+compatibility will be removed.  Upgrade your code now.>
+
+If you want to continue using these (mis)features you can use the
+C<compat02> flag when creating a graph:
+
+    my $g = Graph->new(compat02 => 1);
+
+This will change the vertices() and edges() appropriately.  This,
+however, is not recommended, since it complicates all the code using
+vertices() and edges().  Instead it is recommended that the
+vertices02() and edges02() methods are used.  The corresponding new
+style (unsorted, and edges() returning a list of references) methods
+are called vertices05() and edges05().
+
+To test whether a graph has the compatibility turned on
+
+=over 4
+
+=item is_compat02
+
+=item compat02
+
+    $g->is_compat02
+    $g->compat02
+
+=back
+
+The following are not backward compatibility methods, strictly
+speaking, because they did not exist before.
+
+=over 4
+
+=item edges02
+
+Return the edges as a flat list of vertices, elements at even indices
+being the start vertices and elements at odd indices being the end
+vertices.
+
+=item edges05
+
+Return the edges as a list of array references, each element
+containing the vertices of each edge.  (This is not a backward
+compatibility interface as such since it did not exist before.)
+
+=item vertices02
+
+Return the vertices in sorted order.
+
+=item vertices05
+
+Return the vertices in random order.
+
+=back
+
+For the attributes the recommended way is to use the new API.
+
+Do not expect new methods to work for compat02 graphs.
+
+The following compatibility methods exist:
+
+=over 4
+
+=item has_attribute
+
+=item has_attributes
+
+=item get_attribute
+
+=item get_attributes
+
+=item set_attribute
+
+=item set_attributes
+
+=item delete_attribute
+
+=item delete_attributes
+
+Do not use the above, use the new attribute interfaces instead.
+
+=item vertices_unsorted
+
+Alias for vertices() (or rather, vertices05()) since the vertices()
+now always returns the vertices in an unsorted order.  You can also
+use the unsorted_vertices import, but only with a true value (false
+values will cause an error).
+
+=item density_limits
+
+    my ($sparse, $dense, $complete) = $g->density_limits;
+
+Return the "density limits" used to classify graphs as "sparse" or "dense".
+The first limit is C/4 and the second limit is 3C/4, where C is the number
+of edges in a complete graph (the last "limit").
+
+=item density
+
+    my $density = $g->density;
+
+Return the density of the graph, the ratio of the number of edges to the
+number of edges in a complete graph.
+
+=item vertex
+
+    my $v = $g->vertex($v);
+
+Return the vertex if the graph has the vertex, undef otherwise.
+
+=item out_edges
+
+=item in_edges
+
+=item edges($v)
+
+This is now called edges_at($v).
+
+=back
+
+=head2 DIAGNOSTICS
+
+=over 4
+
+=item *
+
+Graph::...Map...: arguments X expected Y ...
+
+If you see these (more user-friendly error messages should have been
+triggered above and before these) please report any such occurrences,
+but in general you should be happy to see these since it means that an
+attempt to call something with a wrong number of arguments was caught
+in time.
+
+=item *
+
+Graph::add_edge: graph is not hyperedged ...
+
+Maybe you used add_weighted_edge() with only the two vertex arguments.
+
+=item *
+
+Not an ARRAY reference at lib/Graph.pm ...
+
+One possibility is that you have code based on Graph 0.2xxxx that
+assumes Graphs being blessed hash references, possibly also assuming
+that certain hash keys are available to use for your own purposes.
+In Graph 0.50 none of this is true.  Please do not expect any
+particular internal implementation of Graphs.  Use inheritance
+and graph/vertex/edge attributes instead.
+
+Another possibility is that you meant to have objects (blessed
+references) as graph vertices, but forgot to use C<refvertexed>
+(see L</refvertexed>) when creating the graph.
+
+=back
+
+=head2 POSSIBLE FUTURES
+
+A possible future direction is a new graph module written for speed:
+this may very possibly mean breaking or limiting some of the APIs or
+behaviour as compared with this release of the module.
+
+What definitely won't happen in future releases is carrying over
+the Graph 0.2xxxx backward compatibility API.
+
+=head1 ACKNOWLEDGEMENTS
+
+All bad terminology, bugs, and inefficiencies are naturally mine, all
+mine, and not the fault of the below.
+
+Thanks to Nathan Goodman and Andras Salamon for bravely betatesting my
+pre-0.50 code.  If they missed something, that was only because of my
+fiendish code.
+
+The following literature for algorithms and some test cases:
+
+=over 4
+
+=item *
+
+Algorithms in C, Third Edition, Part 5, Graph Algorithms, Robert Sedgewick, Addison Wesley
+
+=item *
+
+Introduction to Algorithms, First Edition, Cormen-Leiserson-Rivest, McGraw Hill
+
+=item *
+
+Graphs, Networks and Algorithms, Dieter Jungnickel, Springer
+
+=back
+
+=head1 AUTHOR AND COPYRIGHT
+
+Jarkko Hietaniemi F<jhi@iki.fi>
+
+=head1 LICENSE
+
+This module is licensed under the same terms as Perl itself.
+
+=cut
