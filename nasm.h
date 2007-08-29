@@ -559,7 +559,7 @@ enum {                          /* special EA flags */
     EAF_TIMESTWO =  4,          /* really do EAX*2 not EAX+EAX */
     EAF_REL	 =  8,		/* IP-relative addressing */
     EAF_ABS      = 16,		/* non-IP-relative addressing */
-    EAF_SEGOVER  = 32		/* segment override present */
+    EAF_FSGS	 = 32		/* fs/gs segment override present */
 };
 
 enum {                          /* values for `hinttype' */

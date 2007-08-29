@@ -515,7 +515,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
                       "instruction has more than %d prefixes", MAXPREFIX);
             else {
                 result->prefixes[result->nprefix++] = value->type;
-		result->oprs[operand].eaflags |= EAF_SEGOVER;
+		if (REG_FSGS & ~reg_flags[value->type])
+		    result->oprs[operand].eaflags |= EAF_FSGS;
 	    }
 
             i = stdscan(NULL, &tokval); /* then skip the colon */
@@ -676,7 +677,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 		int is_rel = globalbits == 64 &&
 		    !(result->oprs[operand].eaflags & EAF_ABS) &&
 		    ((globalrel &&
-		      !(result->oprs[operand].eaflags & EAF_SEGOVER)) ||
+		      !(result->oprs[operand].eaflags & EAF_FSGS)) ||
 		     (result->oprs[operand].eaflags & EAF_REL));
 
                 result->oprs[operand].type |= is_rel ? IP_REL : MEM_OFFS;
