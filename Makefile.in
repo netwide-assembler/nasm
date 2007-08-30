@@ -112,10 +112,15 @@ regvals.c: regs.dat regs.pl
 regs.h: regs.dat regs.pl
 	$(PERL) $(srcdir)/regs.pl h $(srcdir)/regs.dat > regs.h
 
+# Token hash
+tokhash.c: insns.dat regs.dat tokens.dat tokhash.pl
+	$(PERL) $(srcdir)/tokhash.pl $(srcdir)/insns.dat $(srcdir)/regs.dat \
+		$(srcdir)/tokens.dat > tokhash.c
+
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c \
-	  regs.c regs.h regflags.c regdis.c regvals.c \
+	  regs.c regs.h regflags.c regdis.c regvals.c tokhash.c \
 	  version.h version.mac
 perlreq: $(PERLREQ)
 
