@@ -57,7 +57,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) \
 	output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	preproc.$(O) listing.$(O) eval.$(O)
+	preproc.$(O) listing.$(O) eval.$(O) stdscan.$(O) tokhash.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) insnsd.$(O)
 
@@ -215,41 +215,45 @@ listing.$(O): listing.c regs.h config.h version.h nasmlib.h nasm.h listing.h
 macros.$(O): macros.c
 names.$(O): names.c regs.c insnsn.c
 nasm.$(O): nasm.c labels.h preproc.h insns.h parser.h eval.h regs.h \
- outform.h config.h version.h nasmlib.h nasm.h assemble.h insnsi.h listing.h
+ outform.h config.h version.h nasmlib.h nasm.h stdscan.h assemble.h insnsi.h \
+ listing.h
 nasmlib.$(O): nasmlib.c insns.h regs.h config.h regs.c version.h nasmlib.h \
  nasm.h insnsn.c names.c insnsi.h
 ndisasm.$(O): ndisasm.c insns.h sync.h regs.h config.h version.h nasmlib.h \
  nasm.h insnsi.h disasm.h
 outform.$(O): outform.c regs.h config.h outform.h version.h nasm.h
 output/outaout.$(O): output/outaout.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outas86.$(O): output/outas86.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outbin.$(O): output/outbin.c labels.h eval.h regs.h outform.h \
- config.h version.h nasmlib.h nasm.h
+ config.h version.h nasmlib.h nasm.h stdscan.h
 output/outcoff.$(O): output/outcoff.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outdbg.$(O): output/outdbg.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outelf32.$(O): output/outelf32.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outelf64.$(O): output/outelf64.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outieee.$(O): output/outieee.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outmacho.$(O): output/outmacho.c compiler.h regs.h outform.h config.h \
  version.h nasmlib.h nasm.h
 output/outobj.$(O): output/outobj.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outrdf.$(O): output/outrdf.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outrdf2.$(O): output/outrdf2.c rdoff/rdoff.h regs.h outform.h \
  config.h version.h nasmlib.h nasm.h
 parser.$(O): parser.c insns.h parser.h float.h regs.h regflags.c config.h \
- version.h nasmlib.h nasm.h insnsi.h
+ version.h nasmlib.h nasm.h stdscan.h insnsi.h
 preproc.$(O): preproc.c macros.c regs.h config.h version.h nasmlib.h nasm.h
 regdis.$(O): regdis.c
 regflags.$(O): regflags.c
 regs.$(O): regs.c
 regvals.$(O): regvals.c
+stdscan.$(O): stdscan.c insns.h regs.h config.h version.h nasmlib.h nasm.h \
+ stdscan.h insnsi.h
 sync.$(O): sync.c sync.h
+tokhash.$(O): tokhash.c insns.h regs.h config.h version.h nasm.h insnsi.h

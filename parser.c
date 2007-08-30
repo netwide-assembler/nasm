@@ -18,6 +18,7 @@
 #include "nasm.h"
 #include "insns.h"
 #include "nasmlib.h"
+#include "stdscan.h"
 #include "parser.h"
 #include "float.h"
 

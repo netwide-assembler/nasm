@@ -29,11 +29,13 @@ sub prehash($$$) {
     my($key, $n, $sv) = @_;
     my $c;
     my $k1 = 0, $k2 = 0;
+    my $kn1, $kn2;
     my($s0, $s1, $s2, $s3) = @{$sv};
 
     foreach $c (unpack("C*", $key)) {
-	$k1 = (rot($k1,$s0)-rot($k2, $s1)+$c) & 0xffffffff;
-	$k2 = (rot($k2,$s2)-rot($k1, $s3)+$c) & 0xffffffff;
+	$kn1 = (rot($k1,$s0)-rot($k2, $s1)+$c) & 0xffffffff;
+	$kn2 = (rot($k2,$s2)-rot($k1, $s3)+$c) & 0xffffffff;
+	$k1 = $kn1; $k2 = $kn2;
     }
 
     return ($k1 % $n, $k2 % $n);

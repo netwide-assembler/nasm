@@ -157,41 +157,44 @@ listing.o: listing.c regs.h config.h version.h nasmlib.h nasm.h listing.h
 macros.o: macros.c
 names.o: names.c regs.c insnsn.c
 nasm.o: nasm.c labels.h preproc.h insns.h parser.h eval.h regs.h outform.h \
- config.h version.h nasmlib.h nasm.h assemble.h insnsi.h listing.h
+ config.h version.h nasmlib.h nasm.h stdscan.h assemble.h insnsi.h listing.h
 nasmlib.o: nasmlib.c insns.h regs.h config.h regs.c version.h nasmlib.h \
  nasm.h insnsn.c names.c insnsi.h
 ndisasm.o: ndisasm.c insns.h sync.h regs.h config.h version.h nasmlib.h \
  nasm.h insnsi.h disasm.h
 outform.o: outform.c regs.h config.h outform.h version.h nasm.h
 output/outaout.o: output/outaout.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outas86.o: output/outas86.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outbin.o: output/outbin.c labels.h eval.h regs.h outform.h config.h \
- version.h nasmlib.h nasm.h
+ version.h nasmlib.h nasm.h stdscan.h
 output/outcoff.o: output/outcoff.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outdbg.o: output/outdbg.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outelf32.o: output/outelf32.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outelf64.o: output/outelf64.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outieee.o: output/outieee.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outmacho.o: output/outmacho.c compiler.h regs.h outform.h config.h \
  version.h nasmlib.h nasm.h
 output/outobj.o: output/outobj.c regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 output/outrdf.o: output/outrdf.c regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 output/outrdf2.o: output/outrdf2.c rdoff/rdoff.h regs.h outform.h config.h \
  version.h nasmlib.h nasm.h
 parser.o: parser.c insns.h parser.h float.h regs.h regflags.c config.h \
- version.h nasmlib.h nasm.h insnsi.h
+ version.h nasmlib.h nasm.h stdscan.h insnsi.h
 preproc.o: preproc.c macros.c regs.h config.h version.h nasmlib.h nasm.h
 regdis.o: regdis.c
 regflags.o: regflags.c
 regs.o: regs.c
 regvals.o: regvals.c
+stdscan.o: stdscan.c insns.h regs.h config.h version.h nasmlib.h nasm.h \
+ stdscan.h insnsi.h
 sync.o: sync.c sync.h
+tokhash.o: tokhash.c insns.h regs.h config.h version.h nasm.h insnsi.h

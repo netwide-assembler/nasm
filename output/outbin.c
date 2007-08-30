@@ -52,6 +52,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "stdscan.h"
 #include "labels.h"
 #include "eval.h"
 #include "outform.h"

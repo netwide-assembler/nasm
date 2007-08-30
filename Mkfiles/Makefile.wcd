@@ -104,39 +104,44 @@ listing.$(OBJ): listing.c regs.h config.h version.h nasmlib.h nasm.h \
 macros.$(OBJ): macros.c
 names.$(OBJ): names.c regs.c insnsn.c
 nasm.$(OBJ): nasm.c labels.h preproc.h insns.h parser.h eval.h regs.h \
- outform.h config.h version.h nasmlib.h nasm.h assemble.h insnsi.h listing.h
+ outform.h config.h version.h nasmlib.h nasm.h stdscan.h assemble.h insnsi.h \
+ listing.h
 nasmlib.$(OBJ): nasmlib.c insns.h regs.h config.h regs.c version.h nasmlib.h \
  nasm.h insnsn.c names.c insnsi.h
 ndisasm.$(OBJ): ndisasm.c insns.h sync.h regs.h config.h version.h nasmlib.h \
  nasm.h insnsi.h disasm.h
 outform.$(OBJ): outform.c regs.h config.h outform.h version.h nasm.h
 outaout.$(OBJ): outaout.c regs.h outform.h config.h version.h nasmlib.h \
- nasm.h
+ nasm.h stdscan.h
 outas86.$(OBJ): outas86.c regs.h outform.h config.h version.h nasmlib.h \
  nasm.h
 outbin.$(OBJ): outbin.c labels.h eval.h regs.h outform.h config.h version.h \
- nasmlib.h nasm.h
+ nasmlib.h nasm.h stdscan.h
 outcoff.$(OBJ): outcoff.c regs.h outform.h config.h version.h nasmlib.h \
  nasm.h
 outdbg.$(OBJ): outdbg.c regs.h outform.h config.h version.h nasmlib.h nasm.h
 outelf32.$(OBJ): outelf32.c regs.h outform.h config.h version.h nasmlib.h \
- nasm.h
+ nasm.h stdscan.h
 outelf64.$(OBJ): outelf64.c regs.h outform.h config.h version.h nasmlib.h \
- nasm.h
+ nasm.h stdscan.h
 outieee.$(OBJ): outieee.c regs.h outform.h config.h version.h nasmlib.h \
  nasm.h
 outmacho.$(OBJ): outmacho.c compiler.h regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
-outobj.$(OBJ): outobj.c regs.h outform.h config.h version.h nasmlib.h nasm.h
+outobj.$(OBJ): outobj.c regs.h outform.h config.h version.h nasmlib.h nasm.h \
+ stdscan.h
 outrdf.$(OBJ): outrdf.c regs.h outform.h config.h version.h nasmlib.h nasm.h
 outrdf2.$(OBJ): outrdf2.c rdoff.h regs.h outform.h config.h version.h \
  nasmlib.h nasm.h
 parser.$(OBJ): parser.c insns.h parser.h float.h regs.h regflags.c config.h \
- version.h nasmlib.h nasm.h insnsi.h
+ version.h nasmlib.h nasm.h stdscan.h insnsi.h
 preproc.$(OBJ): preproc.c macros.c regs.h config.h version.h nasmlib.h \
  nasm.h
 regdis.$(OBJ): regdis.c
 regflags.$(OBJ): regflags.c
 regs.$(OBJ): regs.c
 regvals.$(OBJ): regvals.c
+stdscan.$(OBJ): stdscan.c insns.h regs.h config.h version.h nasmlib.h nasm.h \
+ stdscan.h insnsi.h
 sync.$(OBJ): sync.c sync.h
+tokhash.$(OBJ): tokhash.c insns.h regs.h config.h version.h nasm.h insnsi.h

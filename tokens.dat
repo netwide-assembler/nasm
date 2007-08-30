@@ -2,7 +2,7 @@
 # Tokens other than instructions and registers
 #
 
-% TOKEN_PREFIX, P_*
+% TOKEN_PREFIX, P_*, 0
 a16
 a32
 lock
@@ -15,7 +15,7 @@ repnz
 repz
 times
 
-% TOKEN_SPECIAL, S_*
+% TOKEN_SPECIAL, S_*, 0
 abs
 byte
 dword
@@ -31,8 +31,8 @@ to
 tword
 word
 
-% TOKEN_SEG
+% TOKEN_SEG, 0, 0
 seg
 
-% TOKEN_WRT
+% TOKEN_WRT, 0, 0
 wrt

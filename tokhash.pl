@@ -124,6 +124,8 @@ $sv2 = $sv+2;
 
 die if ($n & ($n-1));
 
+print "#include <stdio.h>\n";
+print "#include <string.h>\n";
 print "#include \"nasm.h\"\n";
 print "#include \"insns.h\"\n";
 print "\n";
@@ -164,18 +166,26 @@ print "\t};\n\n";
 
 print "\tuint32_t k1 = 0, k2 = 0;\n";
 print "\tuint8_t c;\n";
+print "\tunsigned int ix;\n";
 print "\tconst struct tokendata *data;\n";
 print "\tconst char *p = token;\n";
 print "\n";
 
 print "\twhile ((c = *p++) != 0) {\n";
-printf "\t\tk1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
-printf "\t\tk2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
+printf "\t\tuint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
+printf "\t\tuint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
+print "\t\tk1 = kn1; k2 = kn2;\n";
 print "\t}\n";
 print "\n";
-printf "\tdata = &tokendata[(k1+k2) & 0x%08x];\n", $n-1;
-printf "\tif (data >= &tokendata[%d] || strcmp(data->string, token))\n",
-    scalar(@tokendata);
+printf "\tix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
+printf "\tif (ix >= %d)\n", scalar(@tokendata);
+print "\t\treturn -1;\n";
+print "\n";
+print "\tdata = &tokendata[ix];\n";
+
+# print "\tfprintf(stderr, \"Looked for: %s found: %s\\n\", token, data->string);\n\n";
+
+print "\tif (strcmp(data->string, token))\n";
 print "\t\treturn -1;\n";
 print "\n";
 print "\ttv->t_integer = data->i1;\n";

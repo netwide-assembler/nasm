@@ -15,6 +15,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "stdscan.h"
 #include "insns.h"
 #include "preproc.h"
 #include "parser.h"
@@ -311,7 +312,7 @@ int main(int argc, char **argv)
     raa_free(offsets);
     saa_free(forwrefs);
     eval_cleanup();
-    nasmlib_cleanup();
+    stdscan_cleanup();
 
     if (terminate_after_phase)
         return 1;

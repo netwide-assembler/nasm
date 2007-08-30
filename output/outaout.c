@@ -15,6 +15,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "stdscan.h"
 #include "outform.h"
 
 #if defined OF_AOUT || defined OF_AOUTB

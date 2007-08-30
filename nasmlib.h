@@ -232,15 +232,6 @@ void saa_fpwrite(struct SAA *, FILE *);
 
 #ifdef NASM_NASM_H
 /*
- * Standard scanner.
- */
-extern char *stdscan_bufptr;
-void stdscan_reset(void);
-int stdscan(void *private_data, struct tokenval *tv);
-#endif
-
-#ifdef NASM_NASM_H
-/*
  * Library routines to manipulate expression data types.
  */
 int is_reloc(expr *);
@@ -276,7 +267,6 @@ int src_get(int32_t *xline, char **xname);
 
 void nasm_quote(char **str);
 char *nasm_strcat(char *one, char *two);
-void nasmlib_cleanup(void);
 
 void null_debug_routine(const char *directive, const char *params);
 extern struct dfmt null_debug_form;
