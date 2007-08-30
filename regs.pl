@@ -26,7 +26,7 @@ sub process_line($) {
 
     if ($reg =~ /^(.*[^0-9])([0-9]+)\-([0-9]+)(|[^0-9].*)$/) {
 	$nregs = $3-$2+1;
-	$reg = $1.$2;
+	$reg = $1.$2.$4;
 	$reg_nr = $2;
 	$reg_prefix = $1;
 	$reg_suffix = $4;
