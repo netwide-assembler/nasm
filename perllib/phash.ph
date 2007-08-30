@@ -29,10 +29,11 @@ sub prehash($$$) {
     my($key, $n, $sv) = @_;
     my $c;
     my $k1 = 0, $k2 = 0;
-	
+    my($s0, $s1, $s2, $s3) = @{$sv};
+
     foreach $c (unpack("C*", $key)) {
-	$k1 = (rot($k1,$sv+2) + rot($k1, 5) + $c) & 0xffffffff;
-	$k2 = (rot($k2,$sv)   + rot($k2, 7) + $c) & 0xffffffff;
+	$k1 = (rot($k1,$s0)-rot($k2, $s1)+$c) & 0xffffffff;
+	$k2 = (rot($k2,$s2)-rot($k1, $s3)+$c) & 0xffffffff;
     }
 
     return ($k1 % $n, $k2 % $n);
@@ -108,8 +109,6 @@ sub gen_hash_n($$$) {
     @f1 = ffunc($n);
     @f2 = ffunc($n);
 
-    print STDERR "*** New graph ***\n";
-
     $gr = Graph::Undirected->new;
     for ($i = 0; $i < $n; $i++) {
 	$gr->add_vertex($i);
@@ -164,6 +163,13 @@ sub gen_hash_n($$$) {
     return ($n, $sv, \@f1, \@f2, \@g);
 }
 
+#
+# Generate a random prehash vector
+#
+sub prehash_vector()
+{
+    return [int(rand(32)), int(rand(32)), int(rand(32)), int(rand(32))];
+}
 
 #
 # Driver for generating the function
@@ -176,21 +182,21 @@ sub gen_perfect_hash($) {
     my @hashinfo;
     my $n, $i, $j, $sv, $maxj;
 
-    # Minimal power of 2 value for N
+    # Minimal power of 2 value for N with enough wiggle room
+    my $room = scalar(@keys)*1.3;
     $n = 1;
-    while ($n < scalar(@keys)) {
+    while ($n < $room) {
 	$n <<= 1;
     }
 
-    $maxj = 256; # Number of times to try
+    $maxj = 512; # Number of times to try
 
     for ($i = 0; $i < 4; $i++) {
 	print STDERR "Trying n = $n...\n";
 	for ($j = 0; $j < $maxj; $j++) {
-	    for ($sv = 0; $sv < 32; $sv++) {
-		@hashinfo = gen_hash_n($n, $sv, $href);
-		return @hashinfo if (defined(@hashinfo));
-	    }
+	    $sv = prehash_vector();
+	    @hashinfo = gen_hash_n($n, $sv, $href);
+	    return @hashinfo if (defined(@hashinfo));
 	}
 	$n <<= 1;
 	$maxj >>= 1;
@@ -249,8 +255,8 @@ sub verify_hash_table($$)
 	    $k, $p1, $p2, $pf1, $pf2, $g1, $g2, $g1+$g2, ${$href}{$k};
 	    $err = 1;
 	} else {
-	    printf STDERR "%s: %d+%d = %d ok\n",
-	    $k, $g1, $g2, $g1+$g2;
+	    # printf STDERR "%s: %d+%d = %d ok\n",
+	    # $k, $g1, $g2, $g1+$g2;
 	}
     }
 
