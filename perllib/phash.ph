@@ -3,7 +3,7 @@
 # Perfect Minimal Hash Generator written in Perl, which produces
 # C output.
 #
-# Requires the CPAN Graph module (tested against 0.83)
+# Requires the CPAN Graph module (tested against 0.81, 0.83, 0.84)
 
 use Graph::Undirected;
 
@@ -65,10 +65,15 @@ sub shuffle(@) {
 #
 # ffunc(N)
 #
-sub ffunc($) {
-    my($n) = @_;
+sub ffunc($$$) {
+    my($n,$s,$i) = @_;
+    my(@l) = ();
 
-    return shuffle(0..$n-1);
+    while ($n--) {
+	push(@l, $i);
+	$i += $s;
+    }
+    return shuffle(@l);
 }
 
 #
@@ -107,12 +112,13 @@ sub gen_hash_n($$$) {
     my $i, $sv, @f1, @f2, @g;
     my $gr;
     my $k, $v;
+    my $gsize = 2*$n;
 
-    @f1 = ffunc($n);
-    @f2 = ffunc($n);
+    @f1 = ffunc($n, 2, 0);
+    @f2 = ffunc($n, 2, 1);
 
     $gr = Graph::Undirected->new;
-    for ($i = 0; $i < $n; $i++) {
+    for ($i = 0; $i < $gsize; $i++) {
 	$gr->add_vertex($i);
     }
 
@@ -149,7 +155,7 @@ sub gen_hash_n($$$) {
     # edge, the sum of the values for the two vertices give the value
     # for the edge (which is our hash index.)  Since the graph is
     # acyclic, this is always doable.
-    for ($i = 0; $i < $n; $i++) {
+    for ($i = 0; $i < $gsize; $i++) {
 	if (!$gr->has_vertex_attribute($i, "val")) {
 	    walk_graph($gr,$i,0); # First vertex in a cluster
 	}
@@ -160,7 +166,7 @@ sub gen_hash_n($$$) {
     #	print STDERR "Vertex ", $i, ": ", $g[$i], "\n";
     # }
 
-    print STDERR "Done: n = $n, sv = $sv\n";
+    print STDERR "Done: n = $n, sv = [", join(',', @$sv), "]\n";
 
     return ($n, $sv, \@f1, \@f2, \@g);
 }
@@ -184,8 +190,10 @@ sub gen_perfect_hash($) {
     my @hashinfo;
     my $n, $i, $j, $sv, $maxj;
 
-    # Minimal power of 2 value for N with enough wiggle room
-    my $room = scalar(@keys)*1.3;
+    # Minimal power of 2 value for N with enough wiggle room.
+    # The scaling constant must be larger than 0.5 in order for the
+    # algorithm to ever terminate.
+    my $room = scalar(@keys)*0.8;
     $n = 1;
     while ($n < $room) {
 	$n <<= 1;
@@ -242,8 +250,6 @@ sub verify_hash_table($$)
     my ($n, $sv, $f1, $f2, $g) = @{$hashinfo};
     my $k;
     my $err = 0;
-
-    print STDERR "Verify: n = $n, sv = $sv\n";
 
     foreach $k (keys(%$href)) {
 	my ($p1, $p2) = prehash($k, $n, $sv);

@@ -113,7 +113,7 @@ regs.h: regs.dat regs.pl
 	$(PERL) $(srcdir)/regs.pl h $(srcdir)/regs.dat > regs.h
 
 # Token hash
-tokhash.c: insns.dat regs.dat tokens.dat tokhash.pl
+tokhash.c: insns.dat regs.dat tokens.dat tokhash.pl perllib/phash.ph
 	$(PERL) $(srcdir)/tokhash.pl $(srcdir)/insns.dat $(srcdir)/regs.dat \
 		$(srcdir)/tokens.dat > tokhash.c
 
