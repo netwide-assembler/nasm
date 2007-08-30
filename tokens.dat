@@ -1,0 +1,38 @@
+#
+# Tokens other than instructions and registers
+#
+
+% TOKEN_PREFIX, P_*
+a16
+a32
+lock
+o16
+o32
+rep
+repe
+repne
+repnz
+repz
+times
+
+% TOKEN_SPECIAL, S_*
+abs
+byte
+dword
+far
+long
+near
+nosplit
+qword
+rel
+short
+strict
+to
+tword
+word
+
+% TOKEN_SEG
+seg
+
+% TOKEN_WRT
+wrt
