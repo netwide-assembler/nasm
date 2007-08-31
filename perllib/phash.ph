@@ -156,10 +156,16 @@ sub gen_hash_n($$$) {
     # for the edge (which is our hash index.)  Since the graph is
     # acyclic, this is always doable.
     for ($i = 0; $i < $gsize; $i++) {
-	if (!$gr->has_vertex_attribute($i, "val")) {
-	    walk_graph($gr,$i,0); # First vertex in a cluster
+	if ($gr->degree($i)) {
+	    # This vertex has neighbors (is used)
+	    if (!$gr->has_vertex_attribute($i, "val")) {
+		walk_graph($gr,$i,0); # First vertex in a cluster
+	    }
+	    push(@g, $gr->get_vertex_attribute($i, "val"));
+	} else {
+	    # Unused vertex
+	    push(@g, undef);
 	}
-	push(@g, $gr->get_vertex_attribute($i, "val"));
     }
 
     # for ($i = 0; $i < $n; $i++) {

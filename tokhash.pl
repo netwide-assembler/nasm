@@ -148,17 +148,24 @@ print "\n";
 print "int nasm_token_hash(const char *token, struct tokenval *tv)\n";
 print "{\n";
 
+# Put a large value in unused slots.  This makes it extremely unlikely
+# that any combination that involves unused slot will pass the range test.
+# This speeds up rejection of unrecognized tokens, i.e. identifiers.
+$unused = 16383;
+
 print "\tstatic const int16_t hash1[$n] =\n";
 print "\t{\n";
 for ($i = 0; $i < $n; $i++) {
-    print "\t\t", ${$g}[${$f1}[$i]], ",\n";
+    my $h = ${$g}[${$f1}[$i]];
+    printf "\t\t%d,\n", defined($h) ? $h : $unused;
 }
 print "\t};\n\n";
 
 print "\tstatic const int16_t hash2[$n] =\n";
 print "\t{\n";
 for ($i = 0; $i < $n; $i++) {
-    print "\t\t", ${$g}[${$f2}[$i]], ",\n";
+    my $h = ${$g}[${$f2}[$i]];
+    printf "\t\t%d,\n", defined($h) ? $h : $unused;
 }
 print "\t};\n\n";
 
