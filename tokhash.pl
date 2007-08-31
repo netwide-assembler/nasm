@@ -124,7 +124,12 @@ $sv2 = $sv+2;
 
 die if ($n & ($n-1));
 
-print "#include <stdio.h>\n";
+print "/*\n";
+print " * This file is generated from insns.dat, regs.dat and token.dat\n";
+print " * by tokhash.pl; do not edit.\n";
+print " */\n";
+print "\n";
+
 print "#include <string.h>\n";
 print "#include \"nasm.h\"\n";
 print "#include \"insns.h\"\n";
