@@ -171,7 +171,9 @@ print "\t};\n\n";
 
 print "\tuint32_t k1 = 0, k2 = 0;\n";
 print "\tuint8_t c;\n";
-print "\tunsigned int ix;\n";
+# For correct overflow behavior, "ix" should be unsigned of the same
+# width as the hash arrays.
+print "\tuint16_t ix;\n";
 print "\tconst struct tokendata *data;\n";
 print "\tconst char *p = token;\n";
 print "\n";
