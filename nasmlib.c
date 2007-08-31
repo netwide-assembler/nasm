@@ -686,14 +686,8 @@ void saa_fpwrite(struct SAA *s, FILE * fp)
 }
 
 /*
- * Register, instruction, condition-code and prefix keywords used
- * by the scanner.
+ * Common list of prefix names
  */
-#include "names.c"
-static const char *special_names[] = {
-    "abs", "byte", "dword", "far", "long", "near", "nosplit", "qword", "rel",
-    "short", "strict", "to", "tword", "word"
-};
 static const char *prefix_names[] = {
     "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
     "repnz", "repz", "times"
