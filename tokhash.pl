@@ -139,9 +139,9 @@ print "#define rot(x,y) (((uint32_t)(x) << (y))+((uint32_t)(x) >> (32-(y))))\n";
 print "\n";
 
 print "struct tokendata {\n";
-print "\tconst char *string;\n";
-print "\tint tokentype;\n";
-print "\tint i1, i2;\n";
+print "    const char *string;\n";
+print "    int tokentype;\n";
+print "    int i1, i2;\n";
 print "};\n";
 print "\n";
 
@@ -151,58 +151,55 @@ print "{\n";
 # Put a large value in unused slots.  This makes it extremely unlikely
 # that any combination that involves unused slot will pass the range test.
 # This speeds up rejection of unrecognized tokens, i.e. identifiers.
-$unused = 16383;
+print "#define UNUSED 16383\n";
 
-print "\tstatic const int16_t hash1[$n] =\n";
-print "\t{\n";
+print "    static const int16_t hash1[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
     my $h = ${$g}[${$f1}[$i]];
-    printf "\t\t%d,\n", defined($h) ? $h : $unused;
+    print "        ", defined($h) ? $h : 'UNUSED', ",\n";
 }
-print "\t};\n\n";
+print "    };\n";
 
-print "\tstatic const int16_t hash2[$n] =\n";
-print "\t{\n";
+print "    static const int16_t hash2[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
     my $h = ${$g}[${$f2}[$i]];
-    printf "\t\t%d,\n", defined($h) ? $h : $unused;
+    print "        ", defined($h) ? $h : 'UNUSED', ",\n";
 }
-print "\t};\n\n";
+print "    };\n";
 
-printf "\tstatic const struct tokendata tokendata[%d] =\n", scalar(@tokendata);
-print "\t{\n";
+printf "    static const struct tokendata tokendata[%d] = {\n", scalar(@tokendata);
 foreach $d (@tokendata) {
-    print "\t\t{ ", $d, " },\n";
+    print "        { ", $d, " },\n";
 }
-print "\t};\n\n";
+print  "    };\n";
 
-print "\tuint32_t k1 = 0, k2 = 0;\n";
-print "\tuint8_t c;\n";
+print  "    uint32_t k1 = 0, k2 = 0;\n";
+print  "    uint8_t c;\n";
 # For correct overflow behavior, "ix" should be unsigned of the same
 # width as the hash arrays.
-print "\tuint16_t ix;\n";
-print "\tconst struct tokendata *data;\n";
-print "\tconst char *p = token;\n";
-print "\n";
+print  "    uint16_t ix;\n";
+print  "    const struct tokendata *data;\n";
+print  "    const char *p = token;\n";
+print  "\n";
 
-print "\twhile ((c = *p++) != 0) {\n";
-printf "\t\tuint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
-printf "\t\tuint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
-print "\t\tk1 = kn1; k2 = kn2;\n";
-print "\t}\n";
-print "\n";
-printf "\tix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
-printf "\tif (ix >= %d)\n", scalar(@tokendata);
-print "\t\treturn -1;\n";
-print "\n";
-print "\tdata = &tokendata[ix];\n";
+print  "    while ((c = *p++) != 0) {\n";
+printf "        uint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
+printf "        uint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
+print  "        k1 = kn1; k2 = kn2;\n";
+print  "    }\n";
+print  "\n";
+printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
+printf "    if (ix >= %d)\n", scalar(@tokendata);
+print  "        return -1;\n";
+print  "\n";
+print  "    data = &tokendata[ix];\n";
 
-# print "\tfprintf(stderr, \"Looked for: %s found: %s\\n\", token, data->string);\n\n";
+# print  "    fprintf(stderr, \"Looked for: %s found: %s\\n\", token, data->string);\n\n";
 
-print "\tif (strcmp(data->string, token))\n";
-print "\t\treturn -1;\n";
-print "\n";
-print "\ttv->t_integer = data->i1;\n";
-print "\ttv->t_inttwo  = data->i2;\n";
-print "\treturn tv->t_type = data->tokentype;\n";
-print "}\n";
+print  "    if (strcmp(data->string, token))\n";
+print  "        return -1;\n";
+print  "\n";
+print  "    tv->t_integer = data->i1;\n";
+print  "    tv->t_inttwo  = data->i2;\n";
+print  "    return tv->t_type = data->tokentype;\n";
+print  "}\n";
