@@ -4,12 +4,10 @@
 # C output.
 #
 # Requires the CPAN Graph module (tested against 0.81, 0.83, 0.84)
+#
 
 use Graph::Undirected;
-
-
-# Produce the same values every time, please...
-srand(0);
+require 'random_sv_vectors.ph';
 
 #
 # 32-bit rotate
@@ -38,42 +36,11 @@ sub prehash($$$) {
 	$k1 = $kn1; $k2 = $kn2;
     }
 
-    return ($k1 % $n, $k2 % $n);
-}
+    # Create a bipartite graph...
+    $k1 = (($k1 % $n) << 1) + 0;
+    $k2 = (($k2 % $n) << 1) + 1;
 
-#
-# Shuffle a list.
-#
-sub shuffle(@) {
-    my(@l) = @_;
-    my($i, $j);
-    my $tmp;
-
-    for ($i = scalar(@l)-1; $i > 0; $i--) {
-	$j = int(rand($i));
-	
-	$tmp = $l[$j];
-	$l[$j] = $l[$i];
-	$l[$i] = $tmp;
-    }
-
-    return @l;
-}
-
-#
-# Pick a set of F-functions of length N.
-#
-# ffunc(N)
-#
-sub ffunc($$$) {
-    my($n,$s,$i) = @_;
-    my(@l) = ();
-
-    while ($n--) {
-	push(@l, $i);
-	$i += $s;
-    }
-    return shuffle(@l);
+    return ($k1, $k2);
 }
 
 #
@@ -109,13 +76,10 @@ sub walk_graph($$$) {
 sub gen_hash_n($$$) {
     my($n, $sv, $href) = @_;
     my @keys = keys(%{$href});
-    my $i, $sv, @f1, @f2, @g;
+    my $i, $sv, @g;
     my $gr;
     my $k, $v;
     my $gsize = 2*$n;
-
-    @f1 = ffunc($n, 2, 0);
-    @f2 = ffunc($n, 2, 1);
 
     $gr = Graph::Undirected->new;
     for ($i = 0; $i < $gsize; $i++) {
@@ -123,20 +87,18 @@ sub gen_hash_n($$$) {
     }
 
     foreach $k (@keys) {
-	my ($p1, $p2) = prehash($k, $n, $sv);
-	my $pf1 = $f1[$p1];
-	my $pf2 = $f2[$p2];
+	my ($pf1, $pf2) = prehash($k, $n, $sv);
 	my $e = ${$href}{$k};
 
 	if ($gr->has_edge($pf1, $pf2)) {
 	    my $xkey = $gr->get_edge_attribute($pf1, $pf2, "key");
 	    my ($xp1, $xp2) = prehash($xkey, $n, $sv);
-	    print STDERR "Collision: $pf1=$pf2 $k ($p1,$p2) with ";
+	    print STDERR "Collision: $pf1=$pf2 $k with ";
 	    print STDERR "$xkey ($xp1,$xp2)\n";
 	    return;
 	}
 
-	# print STDERR "Edge $pf1=$pf2 value $e from $k ($p1,$p2)\n";
+	# print STDERR "Edge $pf1=$pf2 value $e from $k\n";
 
 	$gr->add_edge($pf1, $pf2);
 	$gr->set_edge_attribute($pf1, $pf2, "hash", $e);
@@ -174,7 +136,7 @@ sub gen_hash_n($$$) {
 
     print STDERR "Done: n = $n, sv = [", join(',', @$sv), "]\n";
 
-    return ($n, $sv, \@f1, \@f2, \@g);
+    return ($n, $sv, \@g);
 }
 
 #
@@ -182,7 +144,7 @@ sub gen_hash_n($$$) {
 #
 sub prehash_vector()
 {
-    return [int(rand(32)), int(rand(32)), int(rand(32)), int(rand(32))];
+    return [myrand(32), myrand(32), myrand(32), myrand(32)];
 }
 
 #
@@ -205,12 +167,14 @@ sub gen_perfect_hash($) {
 	$n <<= 1;
     }
 
-    $maxj = 512; # Number of times to try
+    # Number of times to try...
+    $maxj = scalar @random_sv_vectors;
 
     for ($i = 0; $i < 4; $i++) {
 	print STDERR "Trying n = $n...\n";
 	for ($j = 0; $j < $maxj; $j++) {
-	    $sv = prehash_vector();
+	    $sv = $random_sv_vectors[$j];
+	    # $sv = prehash_vector();
 	    @hashinfo = gen_hash_n($n, $sv, $href);
 	    return @hashinfo if (defined(@hashinfo));
 	}
@@ -253,20 +217,18 @@ sub read_input() {
 sub verify_hash_table($$)
 {
     my ($href, $hashinfo) = @_;
-    my ($n, $sv, $f1, $f2, $g) = @{$hashinfo};
+    my ($n, $sv, $g) = @{$hashinfo};
     my $k;
     my $err = 0;
 
     foreach $k (keys(%$href)) {
-	my ($p1, $p2) = prehash($k, $n, $sv);
-	my $pf1 = ${$f1}[$p1];
-	my $pf2 = ${$f2}[$p2];
+	my ($pf1, $pf2) = prehash($k, $n, $sv);
 	my $g1 = ${$g}[$pf1];
 	my $g2 = ${$g}[$pf2];
 
 	if ($g1+$g2 != ${$href}{$k}) {
-	    printf STDERR "%s(%d,%d): %d=%d, %d+%d = %d != %d\n",
-	    $k, $p1, $p2, $pf1, $pf2, $g1, $g2, $g1+$g2, ${$href}{$k};
+	    printf STDERR "%s(%d,%d): %d+%d = %d != %d\n",
+	    $k, $pf1, $pf2, $g1, $g2, $g1+$g2, ${$href}{$k};
 	    $err = 1;
 	} else {
 	    # printf STDERR "%s: %d+%d = %d ok\n",

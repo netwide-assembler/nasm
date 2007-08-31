@@ -119,7 +119,7 @@ if (!defined(@hashinfo)) {
 # Paranoia...
 verify_hash_table(\%tokens, \@hashinfo);
 
-($n, $sv, $f1, $f2, $g) = @hashinfo;
+($n, $sv, $g) = @hashinfo;
 $sv2 = $sv+2;
 
 die if ($n & ($n-1));
@@ -155,14 +155,14 @@ print "#define UNUSED 16383\n";
 
 print "    static const int16_t hash1[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
-    my $h = ${$g}[${$f1}[$i]];
+    my $h = ${$g}[$i*2+0];
     print "        ", defined($h) ? $h : 'UNUSED', ",\n";
 }
 print "    };\n";
 
 print "    static const int16_t hash2[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
-    my $h = ${$g}[${$f2}[$i]];
+    my $h = ${$g}[$i*2+1];
     print "        ", defined($h) ? $h : 'UNUSED', ",\n";
 }
 print "    };\n";
