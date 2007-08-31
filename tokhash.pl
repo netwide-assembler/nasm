@@ -143,14 +143,14 @@ print "\n";
 print "int nasm_token_hash(const char *token, struct tokenval *tv)\n";
 print "{\n";
 
-print "\tstatic const int hash1[$n] =\n";
+print "\tstatic const int16_t hash1[$n] =\n";
 print "\t{\n";
 for ($i = 0; $i < $n; $i++) {
     print "\t\t", ${$g}[${$f1}[$i]], ",\n";
 }
 print "\t};\n\n";
 
-print "\tstatic const int hash2[$n] =\n";
+print "\tstatic const int16_t hash2[$n] =\n";
 print "\t{\n";
 for ($i = 0; $i < $n; $i++) {
     print "\t\t", ${$g}[${$f2}[$i]], ",\n";
