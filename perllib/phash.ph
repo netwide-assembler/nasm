@@ -10,13 +10,22 @@ use Graph::Undirected;
 require 'random_sv_vectors.ph';
 
 #
+# Truncate to 32-bit integer
+#
+sub int32($) {
+    my($x) = @_;
+
+    return int($x) % 4294967296;
+}
+
+#
 # 32-bit rotate
 #
 sub rot($$) {
-    use integer;
     my($v,$s) = @_;
 
-    return (($v << $s)+($v >> (32-$s))) & 0xffffffff;
+    $v = int32($v);
+    return int32(($v << $s)|($v >> (32-$s)));
 }
 
 #
@@ -25,17 +34,16 @@ sub rot($$) {
 # prehash(key, sv, N)
 #
 sub prehash($$$) {
-    use integer;
     my($key, $n, $sv) = @_;
     my $c;
     my $k1 = 0, $k2 = 0;
-    my $kn1, $kn2;
+    my $ko1, $ko2;
     my($s0, $s1, $s2, $s3) = @{$sv};
 
     foreach $c (unpack("C*", $key)) {
-	$kn1 = (rot($k1,$s0)-rot($k2, $s1)+$c) & 0xffffffff;
-	$kn2 = (rot($k2,$s2)-rot($k1, $s3)+$c) & 0xffffffff;
-	$k1 = $kn1; $k2 = $kn2;
+	$ko1 = $k1;  $ko2 = $k2;
+	$k1 = int32(rot($ko1,$s0)-rot($ko2, $s1)+$c);
+	$k2 = int32(rot($ko2,$s2)-rot($ko1, $s3)+$c);
     }
 
     # Create a bipartite graph...
