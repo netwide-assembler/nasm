@@ -718,22 +718,18 @@ MOV       mem,imm16           \320\300\1\xC7\200\31         8086,SM
 MOV       mem,imm32           \321\300\1\xC7\200\41         386,SM
 MOVD      mmxreg,mem          \301\2\x0F\x6E\110            PENT,MMX,SD
 MOVD      mmxreg,reg32        \2\x0F\x6E\110                PENT,MMX
-MOVD      mmxreg,reg64        \2\x0F\x6E\110                X64,MMX
 MOVD      mem,mmxreg          \300\2\x0F\x7E\101            PENT,MMX,SD
 MOVD      reg32,mmxreg        \2\x0F\x7E\101                PENT,MMX
-MOVD      reg64,mmxreg        \2\x0F\x7E\101                X64,MMX
 MOVD      xmmreg,mem          \320\301\2\x0F\x6E\110        X64,SD
 MOVD      xmmreg,reg32        \320\2\x0F\x6E\110            X64
-MOVD      xmmreg,reg64        \320\2\x0F\x6E\110            X64
 MOVD      mem,xmmreg          \320\300\2\x0F\x7E\101        X64,SD
 MOVD      reg32,xmmreg        \320\2\x0F\x7E\101            X64,SSE
-MOVD      reg64,xmmreg        \320\2\x0F\x7E\101            X64,SSE
-MOVMSKPD  reg32,xmmreg        \320\2\x0F\x50\101            X64,SSE
-MOVMSKPS  reg32,xmmreg        \2\x0F\x50\101                X64,SSE
-MOVQ      mmxreg,mem          \301\2\x0F\x6F\110            PENT,MMX,SM
+MOVQ      mmxreg,mem          \301\2\x0F\x6F\110            PENT,MMX,SQ
 MOVQ      mmxreg,mmxreg       \2\x0F\x6F\110                PENT,MMX
-MOVQ      mem,mmxreg          \300\2\x0F\x7F\101            PENT,MMX,SM
+MOVQ      mem,mmxreg          \300\2\x0F\x7F\101            PENT,MMX,SQ
 MOVQ      mmxreg,mmxreg       \2\x0F\x7F\101                PENT,MMX
+MOVQ      mmxreg,rm64         \2\x0F\x6E\110                X64,MMX
+MOVQ      rm64,mmxreg         \2\x0F\x7E\101                X64,MMX
 MOVSB     void                \1\xA4                        8086
 MOVSD     void                \321\1\xA5                    386
 MOVSQ     void                \324\1\xA5                    X64
@@ -1474,6 +1470,7 @@ MOVLPS          xmmreg,mem              \301\2\x0F\x12\110              KATMAI,S
 MOVLPS          mem,xmmreg              \300\2\x0F\x13\101              KATMAI,SSE
 MOVHLPS         xmmreg,xmmreg           \2\x0F\x12\110                  KATMAI,SSE
 MOVMSKPS        reg32,xmmreg            \2\x0F\x50\110                  KATMAI,SSE
+MOVMSKPS        reg64,xmmreg            \324\2\x0F\x50\110              X64,SSE
 MOVNTPS         mem,xmmreg              \300\2\x0F\x2B\101              KATMAI,SSE
 MOVSS           xmmreg,mem              \301\333\2\x0F\x10\110          KATMAI,SSE
 MOVSS           mem,xmmreg              \300\333\2\x0F\x11\101          KATMAI,SSE
@@ -1585,8 +1582,8 @@ MFENCE          void                    \3\x0F\xAE\xF0                  WILLAMET
 ; Willamette MMX instructions (SSE2 SIMD Integer Instructions)
 MOVD            xmmreg,reg32            \366\2\x0F\x6E\110              WILLAMETTE,SSE2
 MOVD            reg32,xmmreg            \366\2\x0F\x7E\101              WILLAMETTE,SSE2
-MOVD            mem,xmmreg              \300\366\2\x0F\x7E\101          WILLAMETTE,SSE2
-MOVD            xmmreg,mem              \301\366\2\x0F\x6E\110          WILLAMETTE,SSE2
+MOVD            mem,xmmreg              \300\366\2\x0F\x7E\101          WILLAMETTE,SSE2,SD
+MOVD            xmmreg,mem              \301\366\2\x0F\x6E\110          WILLAMETTE,SSE2,SD
 MOVDQA          xmmreg,xmmreg           \366\2\x0F\x6F\110              WILLAMETTE,SSE2
 MOVDQA          mem,xmmreg              \300\366\2\x0F\x7F\101          WILLAMETTE,SSE2,SM
 MOVDQA          xmmreg,mem              \301\366\2\x0F\x6F\110          WILLAMETTE,SSE2,SM
@@ -1598,8 +1595,10 @@ MOVDQU          xmmreg,xmmreg           \333\2\x0F\x7F\110              WILLAMET
 MOVDQ2Q         mmxreg,xmmreg           \3\xF2\x0F\xD6\110              WILLAMETTE,SSE2
 MOVQ            xmmreg,xmmreg           \333\2\x0F\x7E\110              WILLAMETTE,SSE2
 MOVQ            xmmreg,xmmreg           \366\2\x0F\xD6\110              WILLAMETTE,SSE2
-MOVQ            mem,xmmreg              \300\366\2\x0F\xD6\101          WILLAMETTE,SSE2
-MOVQ            xmmreg,mem              \301\333\2\x0F\x7E\110          WILLAMETTE,SSE2
+MOVQ            mem,xmmreg              \300\366\2\x0F\xD6\101          WILLAMETTE,SSE2,SQ
+MOVQ            xmmreg,mem              \301\333\2\x0F\x7E\110          WILLAMETTE,SSE2,SQ
+MOVQ		xmmreg,rm64         	\366\324\2\x0F\x6E\110		X64,SSE2
+MOVQ		rm64,xmmreg		\366\324\2\x0F\x7E\101		X64,SSE2
 MOVQ2DQ         xmmreg,mmxreg           \333\2\x0F\xD6\110              WILLAMETTE,SSE2
 PACKSSWB        xmmreg,xmmreg           \366\2\x0F\x63\110              WILLAMETTE,SSE2
 PACKSSWB        xmmreg,mem              \301\366\2\x0F\x63\110          WILLAMETTE,SSE2,SM
@@ -1846,6 +1845,7 @@ MOVHPD          xmmreg,mem              \301\366\2\x0F\x16\110          WILLAMET
 MOVLPD          mem,xmmreg              \300\366\2\x0F\x13\101          WILLAMETTE,SSE2
 MOVLPD          xmmreg,mem              \301\366\2\x0F\x12\110          WILLAMETTE,SSE2
 MOVMSKPD        reg32,xmmreg            \366\2\x0F\x50\110              WILLAMETTE,SSE2
+MOVMSKPD        reg64,xmmreg            \366\324\2\x0F\x50\110          X64,SSE2
 MOVSD           xmmreg,xmmreg           \3\xF2\x0F\x10\110              WILLAMETTE,SSE2
 MOVSD           xmmreg,xmmreg           \3\xF2\x0F\x11\110              WILLAMETTE,SSE2
 MOVSD           mem,xmmreg              \300\3\xF2\x0F\x11\101          WILLAMETTE,SSE2
