@@ -13,6 +13,7 @@ require 'random_sv_vectors.ph';
 # 32-bit rotate
 #
 sub rot($$) {
+    use integer;
     my($v,$s) = @_;
 
     return (($v << $s)+($v >> (32-$s))) & 0xffffffff;
@@ -24,6 +25,7 @@ sub rot($$) {
 # prehash(key, sv, N)
 #
 sub prehash($$$) {
+    use integer;
     my($key, $n, $sv) = @_;
     my $c;
     my $k1 = 0, $k2 = 0;
@@ -37,8 +39,8 @@ sub prehash($$$) {
     }
 
     # Create a bipartite graph...
-    $k1 = (($k1 % $n) << 1) + 0;
-    $k2 = (($k2 % $n) << 1) + 1;
+    $k1 = (($k1 & ($n-1)) << 1) + 0;
+    $k2 = (($k2 & ($n-1)) << 1) + 1;
 
     return ($k1, $k2);
 }
