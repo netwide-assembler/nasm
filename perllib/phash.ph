@@ -142,14 +142,6 @@ sub gen_hash_n($$$) {
 }
 
 #
-# Generate a random prehash vector
-#
-sub prehash_vector()
-{
-    return [myrand(32), myrand(32), myrand(32), myrand(32)];
-}
-
-#
 # Driver for generating the function
 #
 # gen_perfect_hash(\%data)
@@ -176,7 +168,6 @@ sub gen_perfect_hash($) {
 	print STDERR "Trying n = $n...\n";
 	for ($j = 0; $j < $maxj; $j++) {
 	    $sv = $random_sv_vectors[$j];
-	    # $sv = prehash_vector();
 	    @hashinfo = gen_hash_n($n, $sv, $href);
 	    return @hashinfo if (defined(@hashinfo));
 	}
