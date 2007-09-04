@@ -84,14 +84,14 @@ static struct bin_label {
 static struct Section {
     char *name;
     struct SAA *contents;
-    int32_t length;                /* section length in bytes */
+    int64_t length;                /* section length in bytes */
 
 /* Section attributes */
     int flags;                  /* see flag definitions above */
-    uint32_t align;        /* section alignment */
-    uint32_t valign;       /* notional section alignment */
-    uint32_t start;        /* section start address */
-    uint32_t vstart;       /* section virtual start address */
+    uint64_t align;        /* section alignment */
+    uint64_t valign;       /* notional section alignment */
+    uint64_t start;        /* section start address */
+    uint64_t vstart;       /* section virtual start address */
     char *follows;              /* the section that this one will follow */
     char *vfollows;             /* the section that this one will notionally follow */
     int32_t start_index;           /* NASM section id for non-relocated version */
@@ -126,7 +126,7 @@ extern int lookup_label(char *label, int32_t *segment, int32_t *offset);
 
 static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
 static int32_t current_section;    /* only really needed if format_mode = 0 */
-static uint32_t origin;
+static uint64_t origin;
 static int origin_defined;
 
 /* Stuff we need for map-file generation. */
@@ -214,7 +214,7 @@ static void bin_cleanup(int debuginfo)
     struct Section *last_progbits;
     struct bin_label *l;
     struct Reloc *r;
-    uint32_t pend;
+    uint64_t pend;
     int h;
 
 #ifdef DEBUG
@@ -483,7 +483,7 @@ static void bin_cleanup(int debuginfo)
                 g->vstart =
                     (s->vstart + s->length + g->valign - 1) & ~(g->valign -
                                                                 1);
-                g->flags |= VSTART_DEFINED;
+               g->flags |= VSTART_DEFINED;
                 h++;
                 /* Start and vstart mean the same thing for nobits sections. */
                 if (g->flags & TYPE_NOBITS)
@@ -598,17 +598,17 @@ static void bin_cleanup(int debuginfo)
             fprintf(rf, "-- Program origin ");
             for (h = 61; h; h--)
                 fputc('-', rf);
-            fprintf(rf, "\n\n%08"PRIX32"\n\n", origin);
+            fprintf(rf, "\n\n%08"PRIX64"\n\n", origin);
         }
         /* Display sections summary. */
         if (map_control & MAP_SUMMARY) {
             fprintf(rf, "-- Sections (summary) ");
             for (h = 57; h; h--)
                 fputc('-', rf);
-            fprintf(rf, "\n\nVstart    Start     Stop      "
+            fprintf(rf, "\n\nVstart            Start             Stop              "
                     "Length    Class     Name\n");
             for (s = sections; s; s = s->next) {
-                fprintf(rf, "%08"PRIX32"  %08"PRIX32"  %08"PRIX32"  %08"PRIX32"  ",
+                fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %16"PRIX64"  %08"PRIX64"  ",
                         s->vstart, s->start, s->start + s->length,
                         s->length);
                 if (s->flags & TYPE_PROGBITS)
@@ -634,10 +634,10 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "progbits");
                 else
                     fprintf(rf, "nobits");
-                fprintf(rf, "\nlength:    %08"PRIX32"\nstart:     %08"PRIX32""
+                fprintf(rf, "\nlength:    %16"PRIX64"\nstart:     %16"PRIX64""
                         "\nalign:     ", s->length, s->start);
                 if (s->flags & ALIGN_DEFINED)
-                    fprintf(rf, "%08"PRIX32"", s->align);
+                    fprintf(rf, "%16"PRIX64"", s->align);
                 else
                     fprintf(rf, not_defined);
                 fprintf(rf, "\nfollows:   ");
@@ -645,9 +645,9 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "%s", s->follows);
                 else
                     fprintf(rf, not_defined);
-                fprintf(rf, "\nvstart:    %08"PRIX32"\nvalign:    ", s->vstart);
+                fprintf(rf, "\nvstart:    %16"PRIX64"\nvalign:    ", s->vstart);
                 if (s->flags & VALIGN_DEFINED)
-                    fprintf(rf, "%08"PRIX32"", s->valign);
+                    fprintf(rf, "%16"PRIX64"", s->valign);
                 else
                     fprintf(rf, not_defined);
                 fprintf(rf, "\nvfollows:  ");
@@ -682,10 +682,10 @@ static void bin_cleanup(int debuginfo)
                     fprintf(rf, "---- Section %s ", s->name);
                     for (h = 65 - strlen(s->name); h; h--)
                         fputc('-', rf);
-                    fprintf(rf, "\n\nReal      Virtual   Name\n");
+                    fprintf(rf, "\n\nReal              Virtual           Name\n");
                     for (l = s->labels; l; l = l->next) {
                         lookup_label(l->name, &segment, &offset);
-                        fprintf(rf, "%08"PRIX32"  %08"PRIX32"  %s\n",
+                        fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %s\n",
                                 s->start + offset, s->vstart + offset,
                                 l->name);
                     }
@@ -879,7 +879,7 @@ enum { ATTRIB_START, ATTRIB_ALIGN, ATTRIB_FOLLOWS,
 };
 
 static int bin_read_attribute(char **line, int *attribute,
-                              uint32_t *value)
+                              uint64_t *value)
 {
     expr *e;
     int attrib_name_size;
@@ -1002,14 +1002,14 @@ static int bin_read_attribute(char **line, int *attribute,
               " specified in `section' directive.");
         return -1;
     }
-    *value = (uint32_t)reloc_value(e);
+    *value = (uint64_t)reloc_value(e);
     return 1;
 }
 
 static void bin_assign_attributes(struct Section *sec, char *astring)
 {
     int attribute, check;
-    uint32_t value;
+    uint64_t value;
     char *p;
 
     while (1) {                 /* Get the next attribute. */
@@ -1112,9 +1112,6 @@ static void bin_assign_attributes(struct Section *sec, char *astring)
             if (sec->flags & FOLLOWS_DEFINED)
                 error(ERR_NONFATAL, "cannot combine `start' and `follows'"
                       " section attributes");
-            else if (value < 0)
-                error(ERR_NONFATAL, "attempt to specify a negative"
-                      " section start address");
             else if ((sec->flags & START_DEFINED) && (value != sec->start))
                 error(ERR_NONFATAL, "section start address redefined");
             else {
@@ -1295,7 +1292,7 @@ static int bin_directive(char *directive, char *args, int pass)
     /* Handle ORG directive */
     if (!nasm_stricmp(directive, "org")) {
         struct tokenval tokval;
-        uint32_t value;
+        uint64_t value;
         expr *e;
 
         stdscan_reset();
