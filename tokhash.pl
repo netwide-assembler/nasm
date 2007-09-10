@@ -32,14 +32,14 @@ while (defined($line = <ID>)) {
 	    # Single instruction token
 	    if (!defined($tokens{$token})) {
 		$tokens{$token} = scalar @tokendata;
-		push(@tokendata, "\"${token}\", TOKEN_INSN, I_${insn}, 0");
+		push(@tokendata, "\"${token}\", TOKEN_INSN, 0, I_${insn}");
 	    }
 	} else {
 	    # Conditional instruction
 	    foreach $cc (@conditions) {
 		if (!defined($tokens{$token.$cc})) {
 		    $tokens{$token.$cc} = scalar @tokendata;
-		    push(@tokendata, "\"${token}${cc}\", TOKEN_INSN, I_${insn}, C_\U$cc\E");
+		    push(@tokendata, "\"${token}${cc}\", TOKEN_INSN, C_\U$cc\E, I_${insn}");
 		}
 	    }
 	}
@@ -71,7 +71,7 @@ while (defined($line = <RD>)) {
 		die "Duplicate definition: $reg\n";
 	    }
 	    $tokens{$reg} = scalar @tokendata;
-	    push(@tokendata, "\"${reg}\", TOKEN_REG, R_\U${reg}\E, 0");
+	    push(@tokendata, "\"${reg}\", TOKEN_REG, 0, R_\U${reg}\E");
 	
 	    if (defined($reg_prefix)) {
 		$reg_nr++;
@@ -138,10 +138,14 @@ print "\n";
 print "#define rot(x,y) (((uint32_t)(x) << (y))+((uint32_t)(x) >> (32-(y))))\n";
 print "\n";
 
+# These somewhat odd sizes and ordering thereof are due to the
+# relative ranges of the types; this makes it fit in 16 bytes on
+# 64-bit machines and 12 bytes on 32-bit machines.
 print "struct tokendata {\n";
 print "    const char *string;\n";
-print "    int tokentype;\n";
-print "    int i1, i2;\n";
+print "    int16_t tokentype;\n";
+print "    uint16_t aux;\n";
+print "    uint32_t num;\n";
 print "};\n";
 print "\n";
 
@@ -199,7 +203,7 @@ print  "    data = &tokendata[ix];\n";
 print  "    if (strcmp(data->string, token))\n";
 print  "        return -1;\n";
 print  "\n";
-print  "    tv->t_integer = data->i1;\n";
-print  "    tv->t_inttwo  = data->i2;\n";
+print  "    tv->t_integer = data->num;\n";
+print  "    tv->t_inttwo  = data->aux;\n";
 print  "    return tv->t_type = data->tokentype;\n";
 print  "}\n";
