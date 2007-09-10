@@ -1760,7 +1760,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 		    /* make single reg base, unless hint */
                     bt = it, bx = ix, it = -1, ix = 0;
 		}
-                if (((s == 2 && t != REG_NUM_ESP
+                if (((s == 2 && it != REG_NUM_ESP
                       && !(input->eaflags & EAF_TIMESTWO)) || s == 3
                      || s == 5 || s == 9) && bt == -1)
                     bt = it, bx = ix, s--; /* convert 3*EAX to EAX+2*EAX */
