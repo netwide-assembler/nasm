@@ -476,8 +476,8 @@ enum {
 #define EIPREG    	0x00801004L   /* EIP */
 #define FPUREG    	0x01001000L   /* floating point stack registers */
 #define FPU0      	0x01011000L   /* FPU stack register zero */
-#define MMXREG    	0x04009001L   /* MMX registers */
-#define XMMREG    	0x04009002L   /* XMM Katmai reg */
+#define MMXREG    	0x02009000L   /* MMX registers */
+#define XMMREG    	0x04009000L   /* XMM Katmai reg */
 #define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004L   /* CRn */
 #define REG_DREG	0x00121004L   /* DRn */
