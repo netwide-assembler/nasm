@@ -95,7 +95,7 @@ while (defined($line = <TD>)) {
     } elsif ($line =~ /^([a-z0-9_-]+)/) {
 	$token = $1;
 
-	if (defined($tokens{$reg})) {
+	if (defined($tokens{$token})) {
 	    die "Duplicate definition: $token\n";
 	}
 	$tokens{$token} = scalar @tokendata;
