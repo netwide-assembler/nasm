@@ -20,11 +20,11 @@
 #endif
 
 struct itemplate {
-    int opcode;                 /* the token, passed from "parser.c" */
-    int operands;               /* number of operands */
-    int32_t opd[3];                /* bit flags for operand types */
-    const char *code;           /* the code it assembles to */
-    uint32_t flags;        /* some flags */
+    enum opcode opcode;		/* the token, passed from "parser.c" */
+    int operands;		/* number of operands */
+    int32_t opd[3];		/* bit flags for operand types */
+    const char *code;		/* the code it assembles to */
+    uint32_t flags;		/* some flags */
 };
 
 /*

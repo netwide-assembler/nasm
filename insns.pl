@@ -136,7 +136,7 @@ if ( !defined($output) || $output eq 'i' ) {
     print I "/* This file in included by nasm.h */\n\n";
     
     print I "/* Instruction names */\n";
-    print I "enum {";
+    print I "enum opcode {";
     $first  = 1;
     $maxlen = 0;
     foreach $i (@opcodes, @opcodes_cc) {
