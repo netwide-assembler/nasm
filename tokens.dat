@@ -31,8 +31,6 @@ to
 tword
 word
 
-% TOKEN_SEG, 0, 0
+% TOKEN_*, 0, 0
 seg
-
-% TOKEN_WRT, 0, 0
 wrt
