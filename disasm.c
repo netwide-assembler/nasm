@@ -589,6 +589,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     insn tmp_ins, ins;
     uint32_t goodness, best;
 
+    memset(&ins, 0, sizeof ins);
+
     /*
      * Scan for prefixes.
      */
