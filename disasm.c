@@ -19,8 +19,6 @@
 
 #include "names.c"
 
-extern struct itemplate **itable[];
-
 /*
  * Flags that go into the `segment' field of `insn' structures
  * during disassembly.
@@ -313,7 +311,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
  * Determine whether the instruction template in t corresponds to the data
  * stream in data. Return the number of bytes matched if so.
  */
-static int matches(struct itemplate *t, uint8_t *data, int asize,
+static int matches(const struct itemplate *t, uint8_t *data, int asize,
                    int osize, int segsize, int rep, insn * ins,
 		   int rex, int *rexout, int lock)
 {
@@ -582,7 +580,7 @@ static int matches(struct itemplate *t, uint8_t *data, int asize,
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             int32_t offset, int autosync, uint32_t prefer)
 {
-    struct itemplate **p, **best_p;
+    const struct itemplate * const *p, * const *best_p;
     int length, best_length = 0;
     char *segover;
     int rep, lock, asize, osize, i, slen, colon, rex, rexout, best_rex;

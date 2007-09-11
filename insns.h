@@ -27,6 +27,10 @@ struct itemplate {
     uint32_t flags;		/* some flags */
 };
 
+/* Tables for the assembler and disassembler, respectively */
+extern const struct itemplate * const nasm_instructions[];
+extern const struct itemplate * const * const itable[];
+
 /*
  * this define is used to signify the end of an itemplate
  */

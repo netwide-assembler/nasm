@@ -74,14 +74,14 @@ if ( !defined($output) || $output eq 'a' ) {
     print A "\n";
     
     foreach $i (@opcodes, @opcodes_cc) {
-	print A "static struct itemplate instrux_${i}[] = {\n";
+	print A "static const struct itemplate instrux_${i}[] = {\n";
 	$aname = "aa_$i";
 	foreach $j (@$aname) {
 	    print A "    $j\n";
 	}
 	print A "    ITEMPLATE_END\n};\n\n";
     }
-    print A "struct itemplate *nasm_instructions[] = {\n";
+    print A "const struct itemplate * const nasm_instructions[] = {\n";
     foreach $i (@opcodes, @opcodes_cc) {
 	print A "    instrux_${i},\n";
     }
@@ -101,7 +101,7 @@ if ( !defined($output) || $output eq 'd' ) {
     print D "#include \"insns.h\"\n";
     print D "\n";
     
-    print D "static struct itemplate instrux[] = {\n";
+    print D "static const struct itemplate instrux[] = {\n";
     foreach $j (@big) {
 	print D "    $j\n";
     }
@@ -109,7 +109,7 @@ if ( !defined($output) || $output eq 'd' ) {
     
     for ($c=0; $c<256; $c++) {
 	$h = sprintf "%02X", $c;
-	print D "static struct itemplate *itable_${h}[] = {\n";
+	print D "static const struct itemplate * const itable_${h}[] = {\n";
 	$aname = "dd_$h";
 	foreach $j (@$aname) {
 	    print D "    instrux + $j,\n";
@@ -117,7 +117,7 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "    NULL\n};\n\n";
     }
     
-    print D "struct itemplate **itable[] = {\n";
+    print D "const struct itemplate * const * const itable[] = {\n";
     for ($c=0; $c<256; $c++) {
 	printf D "    itable_%02X,\n", $c;
     }
@@ -162,7 +162,7 @@ if ( !defined($output) || $output eq 'n' ) {
         " - don't edit it */\n\n";
     print N "/* This file in included by names.c */\n\n";
     
-    print N "static const char *insn_names[] = {";
+    print N "static const char * const insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
 	print N "," if ( !$first );
@@ -186,7 +186,7 @@ if ( !defined($output) || $output eq 'n' ) {
     
     print N "\n};\n\n";
     print N "/* and the corresponding opcodes */\n";
-    print N "static int ico[] = {";
+    print N "static const int ico[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );

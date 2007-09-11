@@ -90,8 +90,6 @@
 #include "regflags.c"
 #include "regvals.c"
 
-extern struct itemplate *nasm_instructions[];
-
 typedef struct {
     int sib_present;                 /* is a SIB byte necessary? */
     int bytes;                       /* # of bytes of offset needed */
@@ -106,7 +104,7 @@ static ListGen *list;
 
 static int32_t calcsize(int32_t, int32_t, int, insn *, const char *);
 static void gencode(int32_t, int32_t, int, insn *, const char *, int32_t);
-static int matches(struct itemplate *, insn *, int bits);
+static int matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, int32_t, int);
@@ -215,7 +213,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
               insn * instruction, struct ofmt *output, efunc error,
               ListGen * listgen)
 {
-    struct itemplate *temp;
+    const struct itemplate *temp;
     int j;
     int size_prob;
     int32_t insn_end;
@@ -550,7 +548,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
 int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
                insn * instruction, efunc error)
 {
-    struct itemplate *temp;
+    const struct itemplate *temp;
 
     errfunc = error;            /* to pass to other functions */
     cpu = cp;
@@ -1516,7 +1514,7 @@ static int rexflags(int val, int32_t flags, int mask)
     return rex & mask;
 }
 
-static int matches(struct itemplate *itemp, insn * instruction, int bits)
+static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 {
     int i, size[3], asize, oprs, ret;
 
