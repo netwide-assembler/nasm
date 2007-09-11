@@ -36,6 +36,20 @@
 
 #include "regdis.c"
 
+/*
+ * Prefix information
+ */
+struct prefix_info {
+    uint8_t osize;		/* Operand size */
+    uint8_t asize;		/* Address size */
+    uint8_t osp;		/* Operand size prefix present */
+    uint8_t asp;		/* Address size prefix present */
+    uint8_t rep;		/* Rep prefix present */
+    uint8_t seg;		/* Segment override prefix present */
+    uint8_t lock;		/* Lock prefix present */
+    uint8_t rex;		/* Rex prefix present */
+};
+
 #define getu8(x) (*(uint8_t *)(x))
 #if defined(__i386__) || defined(__x86_64__)
 /* Littleendian CPU which can handle unaligned references */
@@ -312,14 +326,16 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
  * Determine whether the instruction template in t corresponds to the data
  * stream in data. Return the number of bytes matched if so.
  */
-static int matches(const struct itemplate *t, uint8_t *data, int asize,
-                   int osize, int segsize, int rep, insn * ins,
-		   int rex, int *rexout, int lock)
+static int matches(const struct itemplate *t, uint8_t *data,
+		   const struct prefix_info *prefix, int segsize, insn *ins)
 {
     uint8_t *r = (uint8_t *)(t->code);
     uint8_t *origdata = data;
     int a_used = FALSE, o_used = FALSE;
-    int drep = 0;
+    enum prefixes drep = 0;
+    uint8_t lock = prefix->lock;
+    int osize = prefix->osize;
+    int asize = prefix->asize;
 
     ins->oprs[0].segment = ins->oprs[1].segment =
 	ins->oprs[2].segment =
@@ -327,15 +343,14 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
 	ins->oprs[2].addr_size = (segsize == 64 ? SEG_64BIT :
 				  segsize == 32 ? SEG_32BIT : 0);
     ins->condition = -1;
-
-    *rexout = rex;
+    ins->rex = prefix->rex;
 
     if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
         return FALSE;
 
-    if (rep == 0xF2)
+    if (prefix->rep == 0xF2)
         drep = P_REPNE;
-    else if (rep == 0xF3)
+    else if (prefix->rep == 0xF3)
         drep = P_REP;
 
     while (*r) {
@@ -404,7 +419,8 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
             if (d < t || d > t + 7)
                 return FALSE;
             else {
-                ins->oprs[c - 010].basereg = (d-t)+(rex & REX_B ? 8 : 0);
+                ins->oprs[c - 010].basereg = (d-t)+
+		    (ins->rex & REX_B ? 8 : 0);
                 ins->oprs[c - 010].segment |= SEG_RMREG;
             }
         } else if (c == 017) {
@@ -483,10 +499,11 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
         } else if (c >= 0100 && c < 0130) {
             int modrm = *data++;
-            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+(rex & REX_R ? 8 : 0);
+            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
+		(ins->rex & REX_R ? 8 : 0);
             ins->oprs[c & 07].segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], rex);
+                         &ins->oprs[(c >> 3) & 07], ins->rex);
         } else if (c >= 0130 && c <= 0132) {
             ins->oprs[c - 0130].offset = getu16(data);
 	    data += 2;
@@ -498,7 +515,7 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
             if (((modrm >> 3) & 07) != (c & 07))
                 return FALSE;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], rex);
+                         &ins->oprs[(c >> 3) & 07], ins->rex);
         } else if (c >= 0300 && c <= 0302) {
             a_used = TRUE;
         } else if (c == 0310) {
@@ -537,10 +554,10 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
             else
                 o_used = TRUE;
         } else if (c == 0323) {
-	    rex |= REX_W;	/* 64-bit only instruction */
+	    ins->rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
 	} else if (c == 0324) {
-	    if (!(rex & (REX_P|REX_W)) || osize != 64)
+	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
 		return FALSE;
 	} else if (c == 0330) {
             int t = *r++, d = *data++;
@@ -549,23 +566,32 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
             else
                 ins->condition = d - t;
         } else if (c == 0331) {
-            if (rep)
+            if (prefix->rep)
                 return FALSE;
         } else if (c == 0332) {
             if (drep == P_REP)
                 drep = P_REPE;
         } else if (c == 0333) {
-            if (rep != 0xF3)
+            if (prefix->rep != 0xF3)
                 return FALSE;
             drep = 0;
         } else if (c == 0334) {
 	    if (lock) {
-		rex |= REX_R;
+		ins->rex |= REX_R;
 		lock = 0;
 	    }
+	} else if (c == 0364) {
+	    if (prefix->osp)
+		return FALSE;
+	} else if (c == 0365) {
+	    if (prefix->asp)
+		return FALSE;
 	} else if (c == 0366) {
-	    /* Fix: should look specifically for the presence of the prefix */
-	    if (osize != ((segsize == 16) ? 32 : 16))
+	    if (!prefix->osp)
+		return FALSE;
+	    o_used = TRUE;
+	} else if (c == 0367) {
+	    if (!prefix->asp)
 		return FALSE;
 	    o_used = TRUE;
 	}
@@ -586,7 +612,6 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
 
     /* Fix: check for redundant REX prefixes */
 
-    *rexout = rex;
     return data - origdata;
 }
 
@@ -596,51 +621,51 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     const struct itemplate * const *p, * const *best_p;
     int length, best_length = 0;
     char *segover;
-    int rep, lock, asize, osize, i, slen, colon, rex, rexout;
-    int best_rex, best_pref;
+    int i, slen, colon;
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
     uint32_t goodness, best;
+    int best_pref;
+    struct prefix_info prefix;
 
     memset(&ins, 0, sizeof ins);
 
     /*
      * Scan for prefixes.
      */
-    asize = segsize;
-    osize = (segsize == 64) ? 32 : segsize;
-    rex = 0;
+    memset(&prefix, 0, sizeof prefix);
+    prefix.asize = segsize;
+    prefix.osize = (segsize == 64) ? 32 : segsize;
     segover = NULL;
-    rep = lock = 0;
     origdata = data;
     for (;;) {
         if (*data == 0xF3 || *data == 0xF2)
-            rep = *data++;
+            prefix.rep = *data++;
         else if (*data == 0xF0)
-            lock = *data++;
+            prefix.lock = *data++;
         else if (*data == 0x2E)
-	    segover = "cs", data++;
+	    segover = "cs", prefix.seg = *data++;
 	else if (*data == 0x36)
-	    segover = "ss", data++;
+	    segover = "ss", prefix.seg = *data++;
 	else if (*data == 0x3E)
-	    segover = "ds", data++;
+	    segover = "ds", prefix.seg = *data++;
 	else if (*data == 0x26)
-	    segover = "es", data++;
+	    segover = "es", prefix.seg = *data++;
 	else if (*data == 0x64)
-	    segover = "fs", data++;
+	    segover = "fs", prefix.seg = *data++;
 	else if (*data == 0x65)
-	    segover = "gs", data++;
+	    segover = "gs", prefix.seg = *data++;
 	else if (*data == 0x66) {
-	    osize = (segsize == 16) ? 32 : 16;
-	    data++;
+	    prefix.osize = (segsize == 16) ? 32 : 16;
+	    prefix.osp = *data++;
 	} else if (*data == 0x67) {
-	    asize = (segsize == 32) ? 16 : 32;
-	    data++;
+	    prefix.asize = (segsize == 32) ? 16 : 32;
+	    prefix.asp = *data++;
 	} else if (segsize == 64 && (*data & 0xf0) == REX_P) {
-	    rex = *data++;
-	    if (rex & REX_W)
-		osize = 64;
+	    prefix.rex = *data++;
+	    if (prefix.rex & REX_W)
+		prefix.osize = 64;
 	    break;		/* REX is always the last prefix */
 	} else {
             break;
@@ -649,12 +674,10 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 
     best = -1;			/* Worst possible */
     best_p = NULL;
-    best_rex = 0;
     best_pref = INT_MAX;
 
     for (p = itable[*data]; *p; p++) {
-        if ((length = matches(*p, data, asize, osize, segsize, rep,
-			      &tmp_ins, rex, &rexout, lock))) {
+        if ((length = matches(*p, data, &prefix, segsize, &tmp_ins))) {
             works = TRUE;
             /*
              * Final check to make sure the types of r/m match up.
@@ -673,7 +696,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                        ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
                          (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
                         !whichreg((*p)->opd[i],
-                                  tmp_ins.oprs[i].basereg, rexout))) {
+                                  tmp_ins.oprs[i].basereg, tmp_ins.rex))) {
                     works = FALSE;
                     break;
                 }
@@ -697,7 +720,6 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    best_pref = tmp_ins.nprefix;
                     best_length = length;
                     ins = tmp_ins;
-		    best_rex = rexout;
                 }
             }
         }
@@ -709,9 +731,6 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     /* Pick the best match */
     p = best_p;
     length = best_length;
-    rex = best_rex;
-    if (best_rex & REX_W)
-	osize = 64;
 
     slen = 0;
 
@@ -790,7 +809,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         if (((*p)->opd[i] & (REGISTER | FPUREG)) ||
             (ins.oprs[i].segment & SEG_RMREG)) {
             ins.oprs[i].basereg = whichreg((*p)->opd[i],
-                                           ins.oprs[i].basereg, rex);
+                                           ins.oprs[i].basereg, ins.rex);
             if ((*p)->opd[i] & TO)
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
             slen += snprintf(output + slen, outbufsize - slen, "%s",
@@ -831,8 +850,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         } else if (!(MEM_OFFS & ~(*p)->opd[i])) {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%"PRIx64"]",
-                         ((const char*)segover ? (const char*)segover : ""),    /* placate type mistmatch warning */
-                         ((const char*)segover ? ":" : ""),                     /* by using (const char*) instead of uint8_t* */
+                         (segover ? segover : ""),
+                         (segover ? ":" : ""),
                          (ins.oprs[i].addr_size ==
                           32 ? "dword " : ins.oprs[i].addr_size ==
                           16 ? "word " : ""), ins.oprs[i].offset);

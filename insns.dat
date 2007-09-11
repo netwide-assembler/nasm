@@ -1469,8 +1469,8 @@ MOVLHPS         xmmreg,xmmreg           \2\x0F\x16\110                  KATMAI,S
 MOVLPS          xmmreg,mem              \301\2\x0F\x12\110              KATMAI,SSE
 MOVLPS          mem,xmmreg              \300\2\x0F\x13\101              KATMAI,SSE
 MOVHLPS         xmmreg,xmmreg           \2\x0F\x12\110                  KATMAI,SSE
-MOVMSKPS        reg32,xmmreg            \2\x0F\x50\110                  KATMAI,SSE
-MOVMSKPS        reg64,xmmreg            \324\2\x0F\x50\110              X64,SSE
+MOVMSKPS        reg32,xmmreg            \364\2\x0F\x50\110              KATMAI,SSE
+MOVMSKPS        reg64,xmmreg            \364\324\2\x0F\x50\110          X64,SSE
 MOVNTPS         mem,xmmreg              \300\2\x0F\x2B\101              KATMAI,SSE
 MOVSS           xmmreg,mem              \301\333\2\x0F\x10\110          KATMAI,SSE
 MOVSS           mem,xmmreg              \300\333\2\x0F\x11\101          KATMAI,SSE

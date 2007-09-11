@@ -70,8 +70,10 @@
  * \334          - LOCK prefix used instead of REX.R
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
- * \366          - operand-size override prefix (0x66); to ensure proper 
-                   REX prefix placement.
+ * \364          - operand-size prefix (0x66) not permitted
+ * \365          - address-size prefix (0x67) not permitted
+ * \366          - operand-size prefix (0x66) used as opcode extension
+ * \367          - address-size prefix (0x67) used as opcode extension
  * \370,\371,\372 - match only if operand 0 meets byte jump criteria.
  *		   370 is used for Jcc, 371 is used for JMP.
  * \373		 - assemble 0x03 if bits==16, 0x05 if bits==32;
@@ -874,9 +876,13 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             else
                 length += ins->oprs[0].offset << (c - 0340);
             break;
+	case 0364:
+	case 0365:
+	    break;
         case 0366:
-             length++;
-             break;
+        case 0367:
+	    length++;
+	    break;
         case 0370:
         case 0371:
         case 0372:
@@ -1382,11 +1388,17 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             }
             break;
 
+	case 0364:
+	case 0365:
+	    break;
+
         case 0366:
-            *bytes = 0x66;
+	case 0367:
+            *bytes = c - 0366 + 0x66;
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
+
         case 0370:
         case 0371:
         case 0372:
