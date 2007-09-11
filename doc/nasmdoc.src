@@ -1309,7 +1309,7 @@ the \c{NOSPLIT} keyword: \c{[nosplit eax*2]} will force
 In 64-bit mode, NASM will by default generate absolute addresses.  The
 \i\c{REL} keyword makes it produce \c{RIP}-relative addresses. Since
 this is frequently the normally desired behaviour, see the \c{DEFAULT}
-directive.  The keyword \i\c{ABS} overrides \i\c{REL}.
+directive (\k{default}). The keyword \i\c{ABS} overrides \i\c{REL}.
 
 
 \H{const} \i{Constants}
@@ -3459,13 +3459,16 @@ to use.
 Currently, the only \c{DEFAULT} that is settable is whether or not
 registerless instructions in 64-bit mode are \c{RIP}-relative or not.
 By default, they are absolute unless overridden with the \i\c{REL}
-specifier.  However, if \c{DEFAULT REL} is specified, \c{REL} is
-default, unless overridden with the \c{ABS} specifier, \e{except when
-used with an \c{FS} or \c{GS} segment override}.  The special handling
-of \c{FS} and \c{GS} overrides are due to the fact that these
-registers are generally used as thread pointers or other special
-functions in 64-bit mode, and generating \c{RIP}-relative addresses
-would be extremely confusing.
+specifier (see \k{effaddr}).  However, if \c{DEFAULT REL} is
+specified, \c{REL} is default, unless overridden with the \c{ABS}
+specifier, \e{except when used with an FS or GS segment override}.
+
+The special handling of \c{FS} and \c{GS} overrides are due to the
+fact that these registers are generally used as thread pointers or
+other special functions in 64-bit mode, and generating
+\c{RIP}-relative addresses would be extremely confusing.
+
+\c{DEFAULT REL} is disabled with \c{DEFAULT ABS}.
 
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
 Sections}
