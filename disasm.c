@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <inttypes.h>
 
 #include "nasm.h"
@@ -62,7 +63,7 @@ static uint64_t getu64(uint8_t *data)
 #define gets64(x) ((int64_t)getu64(x))
 
 /* Important: regval must already have been adjusted for rex extensions */
-static int whichreg(int32_t regflags, int regval, int rex)
+static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
 {
     if (!(REG_AL & ~regflags))
         return R_AL;
@@ -319,7 +320,14 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
     uint8_t *origdata = data;
     int a_used = FALSE, o_used = FALSE;
     int drep = 0;
-    
+
+    ins->oprs[0].segment = ins->oprs[1].segment =
+	ins->oprs[2].segment =
+	ins->oprs[0].addr_size = ins->oprs[1].addr_size =
+	ins->oprs[2].addr_size = (segsize == 64 ? SEG_64BIT :
+				  segsize == 32 ? SEG_32BIT : 0);
+    ins->condition = -1;
+
     *rexout = rex;
 
     if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
@@ -555,6 +563,11 @@ static int matches(const struct itemplate *t, uint8_t *data, int asize,
 		rex |= REX_R;
 		lock = 0;
 	    }
+	} else if (c == 0366) {
+	    /* Fix: should look specifically for the presence of the prefix */
+	    if (osize != ((segsize == 16) ? 32 : 16))
+		return FALSE;
+	    o_used = TRUE;
 	}
     }
 
@@ -583,7 +596,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     const struct itemplate * const *p, * const *best_p;
     int length, best_length = 0;
     char *segover;
-    int rep, lock, asize, osize, i, slen, colon, rex, rexout, best_rex;
+    int rep, lock, asize, osize, i, slen, colon, rex, rexout;
+    int best_rex, best_pref;
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
@@ -633,15 +647,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	}
     }
 
-    tmp_ins.oprs[0].segment = tmp_ins.oprs[1].segment =
-        tmp_ins.oprs[2].segment =
-        tmp_ins.oprs[0].addr_size = tmp_ins.oprs[1].addr_size =
-        tmp_ins.oprs[2].addr_size = (segsize == 64 ? SEG_64BIT :
-				     segsize == 32 ? SEG_32BIT : 0);
-    tmp_ins.condition = -1;
     best = -1;			/* Worst possible */
     best_p = NULL;
     best_rex = 0;
+    best_pref = INT_MAX;
+
     for (p = itable[*data]; *p; p++) {
         if ((length = matches(*p, data, asize, osize, segsize, rep,
 			      &tmp_ins, rex, &rexout, lock))) {
@@ -669,12 +679,22 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 }
             }
 
+	    /*
+	     * Note: we always prefer instructions which incorporate
+	     * prefixes in the instructions themselves.  This is to allow
+	     * e.g. PAUSE to be preferred to REP NOP, and deal with
+	     * MMX/SSE instructions where prefixes are used to select
+	     * between MMX and SSE register sets or outright opcode
+	     * selection.
+	     */
             if (works) {
                 goodness = ((*p)->flags & IF_PFMASK) ^ prefer;
-                if (goodness < best) {
+                if (tmp_ins.nprefix < best_pref ||
+		    (tmp_ins.nprefix == best_pref && goodness < best)) {
                     /* This is the best one found so far */
                     best = goodness;
                     best_p = p;
+		    best_pref = tmp_ins.nprefix;
                     best_length = length;
                     ins = tmp_ins;
 		    best_rex = rexout;
@@ -728,16 +748,18 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case P_O32:
             slen += snprintf(output + slen, outbufsize - slen, "o32 ");
             break;
+	default:
+	    break;
         }
 
-    for (i = 0; i < elements(ico); i++)
+    for (i = 0; i < (int)elements(ico); i++)
         if ((*p)->opcode == ico[i]) {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "%s%s", icn[i],
                          whichcond(ins.condition));
             break;
         }
-    if (i >= elements(ico))
+    if (i >= (int)elements(ico))
         slen +=
             snprintf(output + slen, outbufsize - slen, "%s",
                      insn_names[(*p)->opcode]);
