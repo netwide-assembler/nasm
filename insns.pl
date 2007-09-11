@@ -186,7 +186,7 @@ if ( !defined($output) || $output eq 'n' ) {
     
     print N "\n};\n\n";
     print N "/* and the corresponding opcodes */\n";
-    print N "static const int ico[] = {";
+    print N "static const enum opcode ico[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );

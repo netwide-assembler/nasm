@@ -543,7 +543,7 @@ enum {                          /* condition code names */
  * prefixes, we must ensure the enumerations for prefixes and
  * register names do not overlap.
  */
-enum {                          /* instruction prefixes */
+enum prefixes {			/* instruction prefixes */
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
     P_A16 = PREFIX_ENUM_START, P_A32, P_LOCK, P_O16, P_O32,
     P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES
@@ -562,7 +562,7 @@ enum {                          /* special EA flags */
     EAF_FSGS	 = 32		/* fs/gs segment override present */
 };
 
-enum {                          /* values for `hinttype' */
+enum eval_hint {                /* values for `hinttype' */
     EAH_NOHINT   = 0,           /* no hint at all - our discretion */
     EAH_MAKEBASE = 1,           /* try to make given reg the base */
     EAH_NOTBASE  = 2            /* try _not_ to make reg the base */
@@ -571,8 +571,10 @@ enum {                          /* values for `hinttype' */
 typedef struct {                /* operand to an instruction */
     int32_t type;               /* type of operand */
     int addr_size;              /* 0 means default; 16; 32; 64 */
-    int basereg, indexreg, scale;       /* registers and scale involved */
-    int hintbase, hinttype;     /* hint as to real base register */
+    enum reg_enum basereg, indexreg; /* address registers */
+    int scale;			/* index scale */
+    int hintbase;
+    enum eval_hint hinttype;    /* hint as to real base register */
     int32_t segment;            /* immediate segment, if needed */
     int64_t offset;             /* any immediate number */
     int32_t wrt;                /* segment base it's relative to */
@@ -597,7 +599,7 @@ typedef struct extop {          /* extended operand */
 
 typedef struct {                /* an instruction itself */
     char *label;              /* the label defined, or NULL */
-    int prefixes[MAXPREFIX];    /* instruction prefixes, if any */
+    enum prefixes prefixes[MAXPREFIX]; /* instruction prefixes, if any */
     int nprefix;                /* number of entries in above */
     int opcode;                 /* the opcode - not just the string */
     int condition;              /* the condition code, if Jcc/SETcc */
@@ -931,7 +933,7 @@ struct dfmt {
  * -----
  */
 
-enum {
+enum special_tokens {
     S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
     S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
 };
