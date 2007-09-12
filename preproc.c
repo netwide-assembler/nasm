@@ -272,10 +272,10 @@ static int inverse_ccs[] = {
  * Directive names.
  */
 /* If this is a an IF, ELIF, ELSE or ENDIF keyword */
-static int is_condition(int arg)
+static int is_condition(enum preproc_token arg)
 {
-    return ((arg >= PP_ELIF) && (arg <= PP_ENDIF)) ||
-        ((arg >= PP_IF) && (arg <= PP_IFSTR));
+    return IS_PP_IF(arg) || IS_PP_ELIF(arg) ||
+	(arg == PP_ELSE) || (arg == PP_ENDIF);
 }
 
 /* For TASM compatibility we need to be able to recognise TASM compatible

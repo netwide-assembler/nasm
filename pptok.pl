@@ -27,6 +27,10 @@ while (defined($line = <IN>)) {
 }
 close(IN);
 
+@cctok = sort @cctok;
+@cond = sort @cond;
+
+# Generate the expanded list including conditionals
 foreach $ct (@cctok) {
     foreach $cc (@cond) {
 	push(@pptok, $ct.$cc);
@@ -52,6 +56,16 @@ if ($what eq 'h') {
     }
     print OUT "    PP_INVALID = -1\n";
     print OUT "};\n";
+    print OUT "\n";
+
+    $first_cc = $cond[0];
+    $last_cc  = $cond[(scalar @cond)-1];
+
+    foreach $ct (@cctok) {
+	(my $cx = $ct) =~ s/\%//g;
+	print OUT "#define IS_PP_\U$cx\E(x) ((x) >= PP_\U$cx$first_cc\E && ";
+	print OUT "(x) <= PP_\U$cx$last_cc\E)\n";
+    }
 }
 
 #
