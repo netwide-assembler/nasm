@@ -163,7 +163,7 @@ sub gen_perfect_hash($) {
     # Minimal power of 2 value for N with enough wiggle room.
     # The scaling constant must be larger than 0.5 in order for the
     # algorithm to ever terminate.
-    my $room = scalar(@keys)*0.8;
+    my $room = scalar(@keys)*0.7;
     $n = 1;
     while ($n < $room) {
 	$n <<= 1;
