@@ -9,6 +9,9 @@
 #ifndef NASM_NASMLIB_H
 #define NASM_NASMLIB_H
 
+#include <inttypes.h>
+#include <stdio.h>
+
 /*
  * If this is defined, the wrappers around malloc et al will
  * transform into logging variants, which will cause NASM to create

@@ -45,6 +45,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "preproc.h"
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -270,45 +271,6 @@ static int inverse_ccs[] = {
 /*
  * Directive names.
  */
-static const char *directives[] = {
-    "%arg",
-    "%assign", "%clear", "%define", "%elif", "%elifctx", "%elifdef",
-    "%elifid", "%elifidn", "%elifidni", "%elifmacro", "%elifn", "%elifnctx",
-        "%elifndef",
-    "%elifnid", "%elifnidn", "%elifnidni", "%elifnmacro", "%elifnnum",
-        "%elifnstr",
-    "%elifnum", "%elifstr", "%else", "%endif", "%endm", "%endmacro",
-    "%endrep", "%error", "%exitrep", "%iassign", "%idefine", "%if",
-    "%ifctx", "%ifdef", "%ifid", "%ifidn", "%ifidni", "%ifmacro",
-        "%ifn", "%ifnctx",
-    "%ifndef", "%ifnid", "%ifnidn", "%ifnidni", "%ifnmacro", "%ifnnum",
-    "%ifnstr", "%ifnum", "%ifstr", "%imacro", "%include",
-    "%ixdefine", "%line",
-    "%local",
-    "%macro", "%pop", "%push", "%rep", "%repl", "%rotate",
-    "%stacksize",
-    "%strlen", "%substr", "%undef", "%xdefine"
-};
-enum {
-    PP_ARG,
-    PP_ASSIGN, PP_CLEAR, PP_DEFINE, PP_ELIF, PP_ELIFCTX, PP_ELIFDEF,
-    PP_ELIFID, PP_ELIFIDN, PP_ELIFIDNI, PP_ELIFMACRO, PP_ELIFN, PP_ELIFNCTX,
-        PP_ELIFNDEF,
-    PP_ELIFNID, PP_ELIFNIDN, PP_ELIFNIDNI, PP_ELIFNMACRO, PP_ELIFNNUM,
-        PP_ELIFNSTR,
-    PP_ELIFNUM, PP_ELIFSTR, PP_ELSE, PP_ENDIF, PP_ENDM, PP_ENDMACRO,
-    PP_ENDREP, PP_ERROR, PP_EXITREP, PP_IASSIGN, PP_IDEFINE, PP_IF,
-    PP_IFCTX, PP_IFDEF, PP_IFID, PP_IFIDN, PP_IFIDNI, PP_IFMACRO,
-        PP_IFN, PP_IFNCTX,
-    PP_IFNDEF, PP_IFNID, PP_IFNIDN, PP_IFNIDNI, PP_IFNMACRO, PP_IFNNUM,
-    PP_IFNSTR, PP_IFNUM, PP_IFSTR, PP_IMACRO, PP_INCLUDE,
-    PP_IXDEFINE, PP_LINE,
-    PP_LOCAL,
-    PP_MACRO, PP_POP, PP_PUSH, PP_REP, PP_REPL, PP_ROTATE,
-    PP_STACKSIZE,
-    PP_STRLEN, PP_SUBSTR, PP_UNDEF, PP_XDEFINE
-};
-
 /* If this is a an IF, ELIF, ELSE or ENDIF keyword */
 static int is_condition(int arg)
 {
@@ -1326,7 +1288,7 @@ static int if_condition(Token * tline, int i)
             skip_white_(tline);
             if (!tline || tline->type != TOK_ID) {
                 error(ERR_NONFATAL,
-                      "`%s' expects context identifiers", directives[i]);
+                      "`%s' expects context identifiers", pp_directives[i]);
                 free_tlist(origline);
                 return -1;
             }
@@ -1350,7 +1312,7 @@ static int if_condition(Token * tline, int i)
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
                 error(ERR_NONFATAL,
-                      "`%s' expects macro identifiers", directives[i]);
+                      "`%s' expects macro identifiers", pp_directives[i]);
                 free_tlist(origline);
                 return -1;
             }
@@ -1378,7 +1340,7 @@ static int if_condition(Token * tline, int i)
         if (!tt) {
             error(ERR_NONFATAL,
                   "`%s' expects two comma-separated arguments",
-                  directives[i]);
+                  pp_directives[i]);
             free_tlist(tline);
             return -1;
         }
@@ -1389,7 +1351,7 @@ static int if_condition(Token * tline, int i)
         while ((t->type != TOK_OTHER || strcmp(t->text, ",")) && tt) {
             if (tt->type == TOK_OTHER && !strcmp(tt->text, ",")) {
                 error(ERR_NONFATAL, "`%s': more than one comma on line",
-                      directives[i]);
+                      pp_directives[i]);
                 free_tlist(tline);
                 return -1;
             }
@@ -1439,7 +1401,7 @@ static int if_condition(Token * tline, int i)
             tline = expand_id(tline);
             if (!tok_type_(tline, TOK_ID)) {
                 error(ERR_NONFATAL,
-                      "`%s' expects a macro name", directives[i]);
+                      "`%s' expects a macro name", pp_directives[i]);
                 return -1;
             }
             searching.name = nasm_strdup(tline->text);
@@ -1456,7 +1418,7 @@ static int if_condition(Token * tline, int i)
             } else if (!tok_type_(tline, TOK_NUMBER)) {
                 error(ERR_NONFATAL,
                       "`%s' expects a parameter count or nothing",
-                      directives[i]);
+                      pp_directives[i]);
             } else {
                 searching.nparam_min = searching.nparam_max =
                     readnum(tline->text, &j);
@@ -1472,7 +1434,7 @@ static int if_condition(Token * tline, int i)
                 else if (!tok_type_(tline, TOK_NUMBER))
                     error(ERR_NONFATAL,
                           "`%s' expects a parameter count after `-'",
-                          directives[i]);
+                          pp_directives[i]);
                 else {
                     searching.nparam_max = readnum(tline->text, &j);
                     if (j)
@@ -1569,7 +1531,7 @@ static int if_condition(Token * tline, int i)
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL,
-                  "non-constant value given to `%s'", directives[i]);
+                  "non-constant value given to `%s'", pp_directives[i]);
             return -1;
         }
         j = reloc_value(evalresult) != 0;
@@ -1579,7 +1541,7 @@ static int if_condition(Token * tline, int i)
     default:
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
-              directives[i]);
+              pp_directives[i]);
         free_tlist(origline);
         return -1;              /* yeah, right */
     }
@@ -1611,7 +1573,9 @@ void expand_macros_in_string(char **p)
  */
 static int do_directive(Token * tline)
 {
-    int i, j, nparam, nolist;
+    enum preproc_token i;
+    int j;
+    int nparam, nolist;
     int64_t k, m;
     int offset;
     char *p, *mname;
@@ -1634,25 +1598,7 @@ static int do_directive(Token * tline)
          || tline->text[1] == '!'))
         return NO_DIRECTIVE_FOUND;
 
-    i = -1;
-    j = elements(directives);
-    while (j - i > 1) {
-        k = (j + i) / 2;
-        m = nasm_stricmp(tline->text, directives[k]);
-        if (m == 0) {
-            if (tasm_compatible_mode) {
-                i = k;
-                j = -2;
-            } else if (k != PP_ARG && k != PP_LOCAL && k != PP_STACKSIZE) {
-                i = k;
-                j = -2;
-            }
-            break;
-        } else if (m < 0) {
-            j = k;
-        } else
-            i = k;
-    }
+    i = pp_token_hash(tline->text);
 
     /*
      * If we're in a non-emitting branch of a condition construct,
@@ -1678,13 +1624,12 @@ static int do_directive(Token * tline)
         return NO_DIRECTIVE_FOUND;
     }
 
-    if (j != -2) {
+    switch (i) {
+    case PP_INVALID:
         error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
               tline->text);
         return NO_DIRECTIVE_FOUND;      /* didn't get it */
-    }
 
-    switch (i) {
     case PP_STACKSIZE:
         /* Directive to tell NASM what the default stack size is. The
          * default is for a 16-bit stack, and this can be overriden with
@@ -2063,7 +2008,7 @@ static int do_directive(Token * tline)
     case PP_ELIFNUM:
     case PP_ELIFSTR:
         if (!istk->conds)
-            error(ERR_FATAL, "`%s': no matching `%%if'", directives[i]);
+            error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
         if (emitting(istk->conds->state)
             || istk->conds->state == COND_NEVER)
             istk->conds->state = COND_NEVER;
@@ -2817,7 +2762,7 @@ static int do_directive(Token * tline)
     default:
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
-              directives[i]);
+              pp_directives[i]);
         break;
     }
     return DIRECTIVE_FOUND;

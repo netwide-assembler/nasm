@@ -296,7 +296,7 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate,
 /*
  * Preprocessors ought to look like this:
  */
-typedef struct {
+typedef struct preproc_ops {
     /*
      * Called at the start of a pass; given a file name, the number
      * of the pass, an error reporting function, an evaluator
@@ -316,6 +316,8 @@ typedef struct {
      */
     void (*cleanup) (int);
 } Preproc;
+
+extern Preproc nasmpp;
 
 /*
  * ----------------------------------------------------------------
