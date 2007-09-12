@@ -194,7 +194,7 @@ if ($what eq 'c') {
     print OUT  "        return PP_INVALID;\n";
     print OUT  "\n";
 
-    print OUT  "    if (nasm_stricmp(pp_directives[ix], token))\n";
+    print OUT  "    if (!pp_directives[ix] || nasm_stricmp(pp_directives[ix], token))\n";
     print OUT  "        return PP_INVALID;\n";
     print OUT  "\n";
     print OUT  "    return ix;\n";
