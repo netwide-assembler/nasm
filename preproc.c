@@ -254,17 +254,17 @@ enum {
 static const char *conditions[] = {
     "a", "ae", "b", "be", "c", "cxz", "e", "ecxz", "g", "ge", "l", "le",
     "na", "nae", "nb", "nbe", "nc", "ne", "ng", "nge", "nl", "nle", "no",
-    "np", "ns", "nz", "o", "p", "pe", "po", "s", "z"
+    "np", "ns", "nz", "o", "p", "pe", "po", "rcxz", "s", "z"
 };
 enum {
     c_A, c_AE, c_B, c_BE, c_C, c_CXZ, c_E, c_ECXZ, c_G, c_GE, c_L, c_LE,
     c_NA, c_NAE, c_NB, c_NBE, c_NC, c_NE, c_NG, c_NGE, c_NL, c_NLE, c_NO,
-    c_NP, c_NS, c_NZ, c_O, c_P, c_PE, c_PO, c_S, c_Z
+    c_NP, c_NS, c_NZ, c_O, c_P, c_PE, c_PO, c_RCXZ, c_S, c_Z
 };
 static int inverse_ccs[] = {
     c_NA, c_NAE, c_NB, c_NBE, c_NC, -1, c_NE, -1, c_NG, c_NGE, c_NL, c_NLE,
     c_A, c_AE, c_B, c_BE, c_C, c_E, c_G, c_GE, c_L, c_LE, c_O, c_P, c_S,
-    c_Z, c_NO, c_NP, c_PO, c_PE, c_NS, c_NZ
+    c_Z, c_NO, c_NP, c_PO, c_PE, -1, c_NS, c_NZ
 };
 
 /*
