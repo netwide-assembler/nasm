@@ -133,7 +133,7 @@ output/outrdf2.o: output/outrdf2.c rdoff/rdoff.h regs.h outform.h config.h \
  version.h nasmlib.h nasm.h
 parser.o: parser.c insns.h parser.h float.h regs.h regflags.c config.h \
  version.h nasmlib.h nasm.h stdscan.h insnsi.h
-pptok.o: pptok.c
+pptok.o: pptok.c preproc.h pptok.h nasmlib.h
 preproc.o: preproc.c preproc.h macros.c pptok.h regs.h config.h version.h \
  nasmlib.h nasm.h
 regdis.o: regdis.c
