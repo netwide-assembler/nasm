@@ -17,9 +17,9 @@ while (defined($line = <IN>)) {
     $line =~ s/\s*\#.*$//;	# Remove comments and trailing whitespace
     next if ($line eq '');
     
-    if ($line =~ /^(\%.*)\*$/) {
+    if ($line =~ /^\%(.*)\*$/) {
 	push(@cctok, $1);
-    } elsif ($line =~ /^(\%.*)$/) {
+    } elsif ($line =~ /^\%(.*)$/) {
 	push(@pptok, $1);
     } elsif ($line =~ /^\*(.*)$/) {
 	push(@cond, $1);
@@ -29,16 +29,29 @@ close(IN);
 
 @cctok = sort @cctok;
 @cond = sort @cond;
+@pptok = sort @pptok;
 
-# Generate the expanded list including conditionals
-foreach $ct (@cctok) {
-    foreach $cc (@cond) {
-	push(@pptok, $ct.$cc);
-	push(@pptok, $ct.'n'.$cc);
-    }
+# Generate the expanded list including conditionals.  The conditionals
+# are at the beginning, padded to a power of 2, with the inverses
+# interspersed; this allows a simple mask to pick out the condition.
+
+while ((scalar @cond) & (scalar @cond)-1) {
+    push(@cond, undef);
 }
 
-@pptok = sort @pptok;
+@cptok = ();
+foreach $ct (@cctok) {
+    foreach $cc (@cond) {
+	if (defined($cc)) {
+	    push(@cptok, $ct.$cc);
+	    push(@cptok, $ct.'n'.$cc);
+	} else {
+	    push(@cptok, undef, undef);
+	}
+    }
+}
+$first_uncond = $pptok[0];
+@pptok = (@cptok, @pptok);
 
 open(OUT, "> $out") or die "$0: cannot open: $out\n";
 print OUT "/* Automatically generated from $in by $0 */\n";
@@ -50,21 +63,44 @@ print OUT "\n";
 #
 if ($what eq 'h') {
     print OUT "enum preproc_token {\n";
+    $n = 0;
     foreach $pt (@pptok) {
-	(my $px = $pt) =~ s/\%//g;
-	print OUT "    PP_\U$px\E,\n";
+	if (defined($pt)) {
+	    printf OUT "    %-16s = %3d,\n", "PP_\U$pt\E", $n;
+	}
+	$n++;
     }
-    print OUT "    PP_INVALID = -1\n";
+    printf OUT "    %-16s = %3d\n", 'PP_INVALID', -1;
     print OUT "};\n";
     print OUT "\n";
 
-    $first_cc = $cond[0];
-    $last_cc  = $cond[(scalar @cond)-1];
+    print  OUT "enum pp_conditional {\n";
+    $n = 0;
+    foreach $cc (@cond) {
+	if (defined($cc)) {
+	    printf OUT "    %-16s = %3d,\n", "PPC_IF\U$cc\E", $n;
+	}
+	$n += 2;
+    }
+    print  OUT "};\n\n";
+    
+    printf OUT "#define PP_COND(x)     ((enum pp_conditional)((x) & 0x%x))\n",
+    	(scalar(@cond)-1) << 1;
+    print  OUT "#define PP_IS_COND(x)  ((unsigned int)(x) < PP_\U$first_uncond\E)\n";
+    print  OUT "#define PP_NEGATIVE(x) ((x) & 1)\n";
+    print  OUT "\n";
 
     foreach $ct (@cctok) {
-	(my $cx = $ct) =~ s/\%//g;
-	print OUT "#define IS_PP_\U$cx\E(x) ((x) >= PP_\U$cx$first_cc\E && ";
-	print OUT "(x) <= PP_\U$cx$last_cc\E)\n";
+	print OUT "#define CASE_PP_\U$ct\E";
+	$pref = " \\\n";
+	foreach $cc (@cond) {
+	    if (defined($cc)) {
+		print OUT "$pref\tcase PP_\U${ct}${cc}\E: \\\n";
+		print OUT "\tcase PP_\U${ct}N${cc}\E";
+		$pref = ":\\\n";
+	    }
+	}
+	print OUT "\n";		# No colon or newline on the last one
     }
 }
 
@@ -75,10 +111,12 @@ if ($what eq 'c') {
     my %tokens = ();
     my @tokendata = ();
 
+    my $n = 0;
     foreach $pt (@pptok) {
-	(my $px = $pt) =~ s/\%//g;
-	$tokens{$pt} = scalar @tokendata;
-	push(@tokendata, $pt);
+	if (defined($pt)) {
+	    $tokens{'%'.$pt} = $n;
+	}
+	$n++;
     }
 
     my @hashinfo = gen_perfect_hash(\%tokens);
@@ -104,10 +142,13 @@ if ($what eq 'c') {
     print OUT "\n";
 
     # Note that this is global.
-    printf OUT "const char * const pp_directives[%d] = {\n",
-    	scalar(@tokendata);
-    foreach $d (@tokendata) {
-	print OUT "    \"$d\",\n";
+    printf OUT "const char * const pp_directives[%d] = {\n", scalar(@pptok);
+    foreach $d (@pptok) {
+	if (defined($d)) {
+	    print OUT "    \"%$d\",\n";
+	} else {
+	    print OUT "    NULL,\n";
+	}
     }
     print OUT  "};\n";
     
@@ -149,7 +190,7 @@ if ($what eq 'c') {
     print OUT  "    }\n";
     print OUT  "\n";
     printf OUT "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
-    printf OUT "    if (ix >= %d)\n", scalar(@tokendata);
+    printf OUT "    if (ix >= %d)\n", scalar(@pptok);
     print OUT  "        return PP_INVALID;\n";
     print OUT  "\n";
 

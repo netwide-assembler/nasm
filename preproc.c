@@ -137,16 +137,18 @@ struct Context {
  * mechanism as an alternative to trying to find a sensible type of
  * quote to use on the filename we were passed.
  */
+enum pp_token_type {
+    TOK_NONE = 0, TOK_WHITESPACE, TOK_COMMENT, TOK_ID,
+    TOK_PREPROC_ID, TOK_STRING,
+    TOK_NUMBER, TOK_SMAC_END, TOK_OTHER, TOK_SMAC_PARAM,
+    TOK_INTERNAL_STRING
+};
+
 struct Token {
     Token *next;
     char *text;
     SMacro *mac;                /* associated macro for TOK_SMAC_END */
-    int type;
-};
-enum {
-    TOK_WHITESPACE = 1, TOK_COMMENT, TOK_ID, TOK_PREPROC_ID, TOK_STRING,
-    TOK_NUMBER, TOK_SMAC_END, TOK_OTHER, TOK_SMAC_PARAM,
-    TOK_INTERNAL_STRING
+    enum pp_token_type type;
 };
 
 /*
@@ -274,8 +276,7 @@ static int inverse_ccs[] = {
 /* If this is a an IF, ELIF, ELSE or ENDIF keyword */
 static int is_condition(enum preproc_token arg)
 {
-    return IS_PP_IF(arg) || IS_PP_ELIF(arg) ||
-	(arg == PP_ELSE) || (arg == PP_ENDIF);
+    return PP_IS_COND(arg) || (arg == PP_ELSE) || (arg == PP_ENDIF);
 }
 
 /* For TASM compatibility we need to be able to recognise TASM compatible
@@ -383,7 +384,7 @@ static void make_tok_num(Token * tok, int32_t val);
 static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
-static Token *new_Token(Token * next, int type, char *text, int txtlen);
+static Token *new_Token(Token * next, enum pp_token_type type, char *text, int txtlen);
 static Token *delete_Token(Token * t);
 
 /*
@@ -683,7 +684,7 @@ static char *read_line(void)
 static Token *tokenize(char *line)
 {
     char *p = line;
-    int type;
+    enum pp_token_type type;
     Token *list = NULL;
     Token *t, **tail = &list;
 
@@ -862,7 +863,7 @@ static void delete_Blocks(void)
  *  back to the caller.  It sets the type and text elements, and
  *  also the mac and next elements to NULL.
  */
-static Token *new_Token(Token * next, int type, char *text, int txtlen)
+static Token *new_Token(Token * next, enum pp_token_type type, char *text, int txtlen)
 {
     Token *t;
     int i;
@@ -1269,26 +1270,25 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
  *
  * We must free the tline we get passed.
  */
-static int if_condition(Token * tline, int i)
+static int if_condition(Token * tline, enum preproc_token ct)
 {
-    int j, casesense;
+    enum pp_conditional i = PP_COND(ct);
+    int j;
     Token *t, *tt, **tptr, *origline;
     struct tokenval tokval;
     expr *evalresult;
+    enum pp_token_type needtype;
 
     origline = tline;
 
     switch (i) {
-    case PP_IFCTX:
-    case PP_ELIFCTX:
-    case PP_IFNCTX:
-    case PP_ELIFNCTX:
+    case PPC_IFCTX:
         j = FALSE;              /* have we matched yet? */
         while (cstk && tline) {
             skip_white_(tline);
             if (!tline || tline->type != TOK_ID) {
                 error(ERR_NONFATAL,
-                      "`%s' expects context identifiers", pp_directives[i]);
+                      "`%s' expects context identifiers", pp_directives[ct]);
                 free_tlist(origline);
                 return -1;
             }
@@ -1296,15 +1296,9 @@ static int if_condition(Token * tline, int i)
                 j = TRUE;
             tline = tline->next;
         }
-        if (i == PP_IFNCTX || i == PP_ELIFNCTX)
-            j = !j;
-        free_tlist(origline);
-        return j;
+	break;
 
-    case PP_IFDEF:
-    case PP_ELIFDEF:
-    case PP_IFNDEF:
-    case PP_ELIFNDEF:
+    case PPC_IFDEF:
         j = FALSE;              /* have we matched yet? */
         while (tline) {
             skip_white_(tline);
@@ -1312,27 +1306,17 @@ static int if_condition(Token * tline, int i)
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
                 error(ERR_NONFATAL,
-                      "`%s' expects macro identifiers", pp_directives[i]);
-                free_tlist(origline);
-                return -1;
+                      "`%s' expects macro identifiers", pp_directives[ct]);
+		goto fail;
             }
             if (smacro_defined(NULL, tline->text, 0, NULL, 1))
                 j = TRUE;
             tline = tline->next;
         }
-        if (i == PP_IFNDEF || i == PP_ELIFNDEF)
-            j = !j;
-        free_tlist(origline);
-        return j;
+	break;
 
-    case PP_IFIDN:
-    case PP_ELIFIDN:
-    case PP_IFNIDN:
-    case PP_ELIFNIDN:
-    case PP_IFIDNI:
-    case PP_ELIFIDNI:
-    case PP_IFNIDNI:
-    case PP_ELIFNIDNI:
+    case PPC_IFIDN:
+    case PPC_IFIDNI:
         tline = expand_smacro(tline);
         t = tt = tline;
         while (tok_isnt_(tt, ","))
@@ -1340,20 +1324,16 @@ static int if_condition(Token * tline, int i)
         if (!tt) {
             error(ERR_NONFATAL,
                   "`%s' expects two comma-separated arguments",
-                  pp_directives[i]);
-            free_tlist(tline);
-            return -1;
+                  pp_directives[ct]);
+	    goto fail;
         }
         tt = tt->next;
-        casesense = (i == PP_IFIDN || i == PP_ELIFIDN ||
-                     i == PP_IFNIDN || i == PP_ELIFNIDN);
         j = TRUE;               /* assume equality unless proved not */
         while ((t->type != TOK_OTHER || strcmp(t->text, ",")) && tt) {
             if (tt->type == TOK_OTHER && !strcmp(tt->text, ",")) {
                 error(ERR_NONFATAL, "`%s': more than one comma on line",
-                      pp_directives[i]);
-                free_tlist(tline);
-                return -1;
+                      pp_directives[ct]);
+		goto fail;
             }
             if (t->type == TOK_WHITESPACE) {
                 t = t->next;
@@ -1372,7 +1352,7 @@ static int if_condition(Token * tline, int i)
                 tt->text[0] = t->text[0];
                 tt->text[strlen(tt->text) - 1] = t->text[0];
             }
-            if (mstrcmp(tt->text, t->text, casesense) != 0) {
+            if (mstrcmp(tt->text, t->text, i == PPC_IFIDN) != 0) {
                 j = FALSE;      /* found mismatching tokens */
                 break;
             }
@@ -1382,16 +1362,9 @@ static int if_condition(Token * tline, int i)
         }
         if ((t->type != TOK_OTHER || strcmp(t->text, ",")) || tt)
             j = FALSE;          /* trailing gunk on one end or other */
-        if (i == PP_IFNIDN || i == PP_ELIFNIDN ||
-            i == PP_IFNIDNI || i == PP_ELIFNIDNI)
-            j = !j;
-        free_tlist(tline);
-        return j;
+	break;
 
-    case PP_IFMACRO:
-    case PP_ELIFMACRO:
-    case PP_IFNMACRO:
-    case PP_ELIFNMACRO:
+    case PPC_IFMACRO:
         {
             int found = 0;
             MMacro searching, *mmac;
@@ -1401,8 +1374,8 @@ static int if_condition(Token * tline, int i)
             tline = expand_id(tline);
             if (!tok_type_(tline, TOK_ID)) {
                 error(ERR_NONFATAL,
-                      "`%s' expects a macro name", pp_directives[i]);
-                return -1;
+                      "`%s' expects a macro name", pp_directives[ct]);
+		goto fail;
             }
             searching.name = nasm_strdup(tline->text);
             searching.casesense = (i == PP_MACRO);
@@ -1418,7 +1391,7 @@ static int if_condition(Token * tline, int i)
             } else if (!tok_type_(tline, TOK_NUMBER)) {
                 error(ERR_NONFATAL,
                       "`%s' expects a parameter count or nothing",
-                      pp_directives[i]);
+                      pp_directives[ct]);
             } else {
                 searching.nparam_min = searching.nparam_max =
                     readnum(tline->text, &j);
@@ -1434,7 +1407,7 @@ static int if_condition(Token * tline, int i)
                 else if (!tok_type_(tline, TOK_NUMBER))
                     error(ERR_NONFATAL,
                           "`%s' expects a parameter count after `-'",
-                          pp_directives[i]);
+                          pp_directives[ct]);
                 else {
                     searching.nparam_max = readnum(tline->text, &j);
                     if (j)
@@ -1463,67 +1436,36 @@ static int if_condition(Token * tline, int i)
                 mmac = mmac->next;
             }
             nasm_free(searching.name);
-            free_tlist(origline);
-            if (i == PP_IFNMACRO || i == PP_ELIFNMACRO)
-                found = !found;
-            return found;
+	    j = found;
+	    break;
         }
 
-    case PP_IFID:
-    case PP_ELIFID:
-    case PP_IFNID:
-    case PP_ELIFNID:
-    case PP_IFNUM:
-    case PP_ELIFNUM:
-    case PP_IFNNUM:
-    case PP_ELIFNNUM:
-    case PP_IFSTR:
-    case PP_ELIFSTR:
-    case PP_IFNSTR:
-    case PP_ELIFNSTR:
+    case PPC_IFID:
+	needtype = TOK_ID;
+	goto iftype;
+    case PPC_IFNUM:
+	needtype = TOK_NUMBER;
+	goto iftype;
+    case PPC_IFSTR:
+	needtype = TOK_STRING;
+	goto iftype;
+
+    iftype:
         tline = expand_smacro(tline);
         t = tline;
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
         j = FALSE;              /* placate optimiser */
         if (t)
-            switch (i) {
-            case PP_IFID:
-            case PP_ELIFID:
-            case PP_IFNID:
-            case PP_ELIFNID:
-                j = (t->type == TOK_ID);
-                break;
-            case PP_IFNUM:
-            case PP_ELIFNUM:
-            case PP_IFNNUM:
-            case PP_ELIFNNUM:
-                j = (t->type == TOK_NUMBER);
-                break;
-            case PP_IFSTR:
-            case PP_ELIFSTR:
-            case PP_IFNSTR:
-            case PP_ELIFNSTR:
-                j = (t->type == TOK_STRING);
-                break;
-            }
-        if (i == PP_IFNID || i == PP_ELIFNID ||
-            i == PP_IFNNUM || i == PP_ELIFNNUM ||
-            i == PP_IFNSTR || i == PP_ELIFNSTR)
-            j = !j;
-        free_tlist(tline);
-        return j;
+	    j = t->type == needtype;
+	break;
 
-    case PP_IF:
-    case PP_IFN:
-    case PP_ELIF:
-    case PP_ELIFN:
+    case PPC_IF:
         t = tline = expand_smacro(tline);
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
         evalresult = evaluate(ppscan, tptr, &tokval,
                               NULL, pass | CRITICAL, error, NULL);
-        free_tlist(tline);
         if (!evalresult)
             return -1;
         if (tokval.t_type)
@@ -1531,20 +1473,24 @@ static int if_condition(Token * tline, int i)
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL,
-                  "non-constant value given to `%s'", pp_directives[i]);
-            return -1;
+                  "non-constant value given to `%s'", pp_directives[ct]);
+	    goto fail;
         }
         j = reloc_value(evalresult) != 0;
-        if (i == PP_IFN || i == PP_ELIFN)
-            j = !j;
         return j;
     default:
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
-              pp_directives[i]);
-        free_tlist(origline);
-        return -1;              /* yeah, right */
+              pp_directives[ct]);
+	goto fail;
     }
+
+    free_tlist(origline);
+    return j ^ PP_NEGATIVE(ct);
+    
+fail:
+    free_tlist(origline);
+    return -1;
 }
 
 /*
@@ -1957,24 +1903,7 @@ static int do_directive(Token * tline)
         free_tlist(origline);
         break;
 
-    case PP_IF:
-    case PP_IFCTX:
-    case PP_IFDEF:
-    case PP_IFID:
-    case PP_IFIDN:
-    case PP_IFIDNI:
-    case PP_IFMACRO:
-    case PP_IFN:
-    case PP_IFNCTX:
-    case PP_IFNDEF:
-    case PP_IFNID:
-    case PP_IFNIDN:
-    case PP_IFNIDNI:
-    case PP_IFNMACRO:
-    case PP_IFNNUM:
-    case PP_IFNSTR:
-    case PP_IFNUM:
-    case PP_IFSTR:
+    CASE_PP_IF:
         if (istk->conds && !emitting(istk->conds->state))
             j = COND_NEVER;
         else {
@@ -1989,24 +1918,7 @@ static int do_directive(Token * tline)
         istk->conds = cond;
         return DIRECTIVE_FOUND;
 
-    case PP_ELIF:
-    case PP_ELIFCTX:
-    case PP_ELIFDEF:
-    case PP_ELIFID:
-    case PP_ELIFIDN:
-    case PP_ELIFIDNI:
-    case PP_ELIFMACRO:
-    case PP_ELIFN:
-    case PP_ELIFNCTX:
-    case PP_ELIFNDEF:
-    case PP_ELIFNID:
-    case PP_ELIFNIDN:
-    case PP_ELIFNIDNI:
-    case PP_ELIFNMACRO:
-    case PP_ELIFNNUM:
-    case PP_ELIFNSTR:
-    case PP_ELIFNUM:
-    case PP_ELIFSTR:
+    CASE_PP_ELIF:
         if (!istk->conds)
             error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
         if (emitting(istk->conds->state)
@@ -2961,6 +2873,8 @@ static Token *expand_mmac_params(Token * tline)
                 t->next = delete_Token(tt);
             }
             break;
+	default:
+	    break;
         }
 
     return thead;
