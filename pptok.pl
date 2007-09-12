@@ -142,7 +142,7 @@ if ($what eq 'c') {
     print OUT  "\n";
 
     print OUT  "    while ((c = *p++) != 0) {\n";
-    print OUT "         c = tolower(c);\n";
+    print OUT  "        c = tolower(c);\n";
     printf OUT "        uint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
     printf OUT "        uint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
     print OUT  "        k1 = kn1; k2 = kn2;\n";
