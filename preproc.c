@@ -1478,6 +1478,7 @@ static int if_condition(Token * tline, enum preproc_token ct)
         }
         j = reloc_value(evalresult) != 0;
         return j;
+
     default:
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
