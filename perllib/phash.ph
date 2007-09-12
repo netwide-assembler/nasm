@@ -120,8 +120,8 @@ sub gen_hash_n($$$) {
 	print STDERR "Graph is cyclic\n";
 	return;
     }
-
-    # print STDERR "Graph:\n$gr\n";
+    
+    print STDERR "Graph OK, computing vertices...\n";
 
     # Now we need to assign values to each vertex, so that for each
     # edge, the sum of the values for the two vertices give the value
