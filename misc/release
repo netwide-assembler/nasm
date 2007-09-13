@@ -2,112 +2,74 @@
 #
 # Generate a NASM release
 #
-# Usage: release {test|real} [branch]
+# Usage: release version [destination]
 #
 
-if [ -z "$SFUSER" ]; then
-  if [ -f "$HOME/.sfuser" ]; then
-    sfuser=`cat "$HOME/.sfuser"`
-  else
-    sfuser=`whoami`
-  fi
-fi
-
+version="$1"
 if [ -z "$1" ]; then
-  echo "Usage: $0 {test|real}" 1>&2
-  exit 1
+    echo "Usage: $0 version [destination]" 1>&2
+    exit 1
 fi
 
-if [ "$1" = "real" ]; then
-  real=true
+WHERE="$2"
+if [ -z "$WHERE" ]; then
+    WHERE=/var/tmp
+fi
+
+if [ -n "$GIT_DIR" ]; then
+    HERE="$GIT_DIR"
 else
-  real=false
+    HERE=`pwd`
 fi
 
+if [ x`cat version` != x"${version}" ]; then
+    echo "${version}" > version
+    git update-index version
+    git commit -m "Version ${version}" -- version
+fi
+git tag -f "nasm-${version}" -m "NASM version ${version}"
+
+cd "$WHERE"
 rm -rf nasm-release.*
-work=`pwd`/nasm-release.$$
-mkdir "$work"
-cd "$work"
-
-# SF uses a mirror server for anonymous CVS now.  Therefore, use a real
-# identity if we have one; otherwise, change the "true" below to "$real".
-if true; then
-  # Need to tag the tree, use real account
-  CVS="cvs -z3 -d ${sfuser}@nasm.cvs.sourceforge.net:/cvsroot/nasm"
-else
-  # Don't need to tag the tree, can use anonymous
-  echo ':pserver:anonymous@nasm.cvs.sourceforge.net:/cvsroot/nasm A' > "$work"/cvspass
-  export CVS_PASSFILE="$work"/cvspass
-  CVS="cvs -z3 -d :pserver:anonymous@nasm.cvs.sourceforge.net:/cvsroot/nasm"
-fi
-
-if [ -n "$2" ]; then
-  branchopt="-r $2"
-fi
-
-$CVS co $branchopt nasm
-version=`cat nasm/version`
-v1=`echo $version | cut -d. -f1`
-v2=`echo $version | cut -d. -f2`
-v3=`echo $version | cut -d. -f3`
-
-# Tag the tree as a release
-if $real; then
-  cvstag=nasm-`echo $version | sed -e 's/\./_/g'`
-  # Create the tag for this release
-  ( cd nasm && $CVS tag -F $cvstag )
-  # Update the LATEST tag
-  $CVS rtag -r $cvstag -F -a LATEST nasm
-fi
-
-# Extract file names which have the -kb flag set, meaning they
-# are binary files
-bins="$work"/binaries
-rm -f "$bins"
-cd nasm
-find . -type d -name CVS -print | (
-    while read dir; do
-       xdir=`echo "$dir" | sed -e 's|^\./||' -e 's|/CVS$||'`
-       egrep '^/[^/]*/[^/]*/[^/]*/[^/]*-kb[^/]*/' < $dir/Entries | \
-	   cut -d/ -f2 | sed -e "s|^|$xdir/|" >> "$bins"
-    done
-)
-cd ..
-
-# We did "co" instead of "export" -- remove CVS directories
-find nasm -type d -name CVS -print | xargs rm -rf
+work=nasm-release.$$
+mkdir $work
+cd $work
+unset GIT_DIR
+git clone -s -l "$HERE" nasm
+rm -rf nasm-"$version"/.git
 
 # Create files which are in the release but automatically generated
 cd nasm
-autoheader
-autoconf
+./autogen.sh
 ./configure --prefix=/usr/local
-make dist
+make perlreq spec
+make alldeps
+make distclean
 cd ..
 
 # Clean up any previous attempt
-rm -f ../nasm-${version}.tar.gz  ../nasm-${version}-xdoc.tar.gz
-rm -f ../nasm-${version}.tar.bz2 ../nasm-${version}-xdoc.tar.bz2
-rm -f ../nasm-${version}.zip     ../nasm-${version}-xdoc.zip
+rm -f ../nasm-"$version".tar.gz  ../nasm-"$version"-xdoc.tar.gz
+rm -f ../nasm-"$version".tar.bz2 ../nasm-"$version"-xdoc.tar.bz2
+rm -f ../nasm-"$version".zip     ../nasm-"$version"-xdoc.zip
 
 # Create tarfile (Unix convention: file includes prefix)
-mv nasm nasm-$version
-tar cvvf  nasm-${version}.tar nasm-${version}
-bzip2 -9k nasm-${version}.tar
-gzip -9   nasm-${version}.tar
-mv nasm-${version}.tar.gz nasm-${version}.tar.bz2 ..
+mv nasm nasm-"$version"
+tar cvvf  nasm-"$version".tar nasm-"$version"
+bzip2 -9k nasm-"$version".tar
+gzip -9   nasm-"$version".tar
+mv nasm-"$version".tar.gz nasm-"$version".tar.bz2 ..
 
 # Create zipfile (DOS convention: no prefix, convert file endings)
-cd nasm-$version
-zip -9Dlr ../../nasm-${version}.zip -x@"$bins" *	# Text files
-zip -9Dgr ../../nasm-${version}.zip -i@"$bins" *	# Binary files
+cd nasm-"$version"
+zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip	# Text files
+zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip	# Binary files
 cd ..
 
 # Record what we have already generated
-find nasm-$version -not -type d -print > main
+find nasm-"$version" -not -type d -print > main
 
 # Create documentation
-cd nasm-${version}
+cd nasm-"$version"
 ./configure --prefix=/usr/local
 make doc
 # Remove intermediate files.
@@ -118,16 +80,16 @@ cd ..
 cat main | xargs rm -f
 
 # Create doc tarfile
-tar cvvf nasm-${version}-xdoc.tar nasm-${version}/doc
-bzip2 -9k nasm-${version}-xdoc.tar
-gzip -9   nasm-${version}-xdoc.tar
-mv nasm-${version}-xdoc.tar.gz nasm-${version}-xdoc.tar.bz2 ..
+tar cvvf nasm-"$version"-xdoc.tar nasm-"$version"/doc
+bzip2 -9k nasm-"$version"-xdoc.tar
+gzip -9   nasm-"$version"-xdoc.tar
+mv nasm-"$version"-xdoc.tar.gz nasm-"$version"-xdoc.tar.bz2 ..
 
 # Create doc zipfile (DOS convention: no prefix, convert file endings)
 # (Note: generating Win .hlp files requires additional tools)
-cd nasm-${version}
-zip -9Dlr ../../nasm-${version}-xdoc.zip doc -x \*.pdf
-zip -9Dgr ../../nasm-${version}-xdoc.zip doc -i \*.pdf
+cd nasm-"$version"
+zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf
+zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf
 
 # Clean up
 cd ..
