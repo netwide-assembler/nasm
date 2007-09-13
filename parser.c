@@ -667,7 +667,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 return result;
             }
 
-            result->oprs[operand].type |= MEMORY;
+	    /* It is memory, but it can match any r/m operand */
+            result->oprs[operand].type |= MEMORY_ANY;
 
 	    if (b == -1 && (i == -1 || s == 0)) {
 		int is_rel = globalbits == 64 &&

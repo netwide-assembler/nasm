@@ -432,12 +432,12 @@ enum {
  *
  * Bits 20-26: register classes
  * 20: REG_CDT (CRx, DRx, TRx)
- * 21: REG_GPR (integer register)
+ * 21: RM_GPR (REG_GPR) (integer register)
  * 22: REG_SREG
  * 23: IP_REG (RIP or EIP) [unused]
  * 24: FPUREG
- * 25: MMXREG
- * 26: XMMREG
+ * 25: RM_MMX (MMXREG)
+ * 26: RM_XMM (XMMREG)
  *
  * Bits 27-31 are currently unallocated.
  */
@@ -470,6 +470,7 @@ enum {
 
 /* Register classes */
 #define REG_EA   	0x00009000L   /* 'normal' reg, qualifies as EA */
+#define RM_GPR		0x00208000L   /* integer operand */
 #define REG_GPR		0x00209000L   /* integer register */
 #define REG8      	0x00209001L   /*  8-bit GPR  */
 #define REG16     	0x00209002L   /* 16-bit GPR */
@@ -480,8 +481,10 @@ enum {
 #define EIPREG    	0x00801004L   /* EIP */
 #define FPUREG    	0x01001000L   /* floating point stack registers */
 #define FPU0      	0x01011000L   /* FPU stack register zero */
-#define MMXREG    	0x02009000L   /* MMX registers */
-#define XMMREG    	0x04009000L   /* XMM Katmai reg */
+#define RM_MMX		0x02008000L   /* MMX operand */
+#define MMXREG    	0x02009000L   /* MMX register */
+#define RM_XMM		0x04008000L   /* XMM (SSE) operand */
+#define XMMREG    	0x04009000L   /* XMM (SSE) register */
 #define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004L   /* CRn */
 #define REG_DREG	0x00121004L   /* DRn */
@@ -514,8 +517,11 @@ enum {
 #define REG_HIGH	0x00289001L   /* high regs: AH, CH, DH, BH */
 
 /* special types of EAs */
-#define MEM_OFFS	0x00214000L   /* simple [address] offset - absolute! */
-#define IP_REL		0x00224000L   /* IP-relative offset */
+#define MEM_OFFS	0x0001c000L   /* simple [address] offset - absolute! */
+#define IP_REL		0x0002c000L   /* IP-relative offset */
+
+/* memory which matches any type of r/m operand */
+#define MEMORY_ANY	(MEMORY|RM_GPR|RM_MMX|RM_XMM)
 
 /* special type of immediate operand */
 #define UNITY		0x00012000L   /* for shift/rotate instructions */

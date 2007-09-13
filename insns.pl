@@ -215,7 +215,9 @@ sub format {
   $operands =~ s/memory_offs/mem_offs/g;
   $operands =~ s/imm(\d+)/imm|bits$1/g;
   $operands =~ s/imm/immediate/g;
-  $operands =~ s/rm(\d+)/regmem|bits$1/g;
+  $operands =~ s/rm(\d+)/rm_gpr|bits$1/g;
+  $operands =~ s/mmxrm/rm_mmx/g;
+  $operands =~ s/xmmrm/rm_xmm/g;
   $num = 3;
   $operands = '0,0,0', $num = 0 if $operands eq 'void';
   $operands .= ',0', $num-- while $operands !~ /,.*,/;

@@ -79,6 +79,11 @@ static uint64_t getu64(uint8_t *data)
 /* Important: regval must already have been adjusted for rex extensions */
 static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
 {
+    if (!(regflags & (REGISTER|REGMEM)))
+	return 0;		/* Registers not permissible?! */
+
+    regflags |= REGISTER;
+
     if (!(REG_AL & ~regflags))
         return R_AL;
     if (!(REG_AX & ~regflags))
@@ -119,17 +124,17 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
     if (regval < 0 || regval > 15)
         return 0;
 
-    if (!((REGMEM | BITS8) & ~regflags)) {
+    if (!(REG8 & ~regflags)) {
 	if (rex & REX_P)
 	    return rd_reg8_rex[regval];
 	else
 	    return rd_reg8[regval];
     }
-    if (!((REGMEM | BITS16) & ~regflags))
+    if (!(REG16 & ~regflags))
         return rd_reg16[regval];
-    if (!((REGMEM | BITS32) & ~regflags))
+    if (!(REG32 & ~regflags))
         return rd_reg32[regval];
-    if (!((REGMEM | BITS64) & ~regflags))
+    if (!(REG64 & ~regflags))
         return rd_reg64[regval];
     if (!(REG_SREG & ~regflags))
         return rd_sreg[regval & 7]; /* Ignore REX */
