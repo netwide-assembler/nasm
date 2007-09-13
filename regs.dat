@@ -78,4 +78,5 @@ st1-7	FPUREG		fpureg		1
 mm0-7	MMXREG		mmxreg		0
 
 # SSE registers
-xmm0-15	XMMREG		xmmreg		0
+xmm0	XMM0		xmmreg		0
+xmm1-15	XMMREG		xmmreg		1

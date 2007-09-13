@@ -103,6 +103,7 @@ extern const struct itemplate * const * const itable[];
 #define IF_WILLAMETTE 0x08000000UL      /* Willamette instructions */
 #define IF_PRESCOTT   0x09000000UL      /* Prescott instructions */
 #define IF_X86_64 0x0A000000UL	/* x86-64 instruction (long or legacy mode) */
+#define IF_NEHALEM 0x0B000000UL  /* Nehalem instruction */
 #define IF_X64	  (IF_LONG|IF_X86_64)
 #define IF_IA64   0x0F000000UL  /* IA64 instructions (in x86 mode) */
 #define IF_CYRIX  0x10000000UL  /* Cyrix-specific instruction */

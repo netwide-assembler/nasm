@@ -422,6 +422,9 @@ enum {
  * With FPUREG:
  * 16: FPU0
  *
+ * With XMMREG:
+ * 16: XMM0
+ *
  * With MEMORY:
  * 16: MEM_OFFS (this is a simple offset)
  * 17: IP_REL (IP-relative offset)
@@ -485,6 +488,7 @@ enum {
 #define MMXREG    	0x02009000L   /* MMX register */
 #define RM_XMM		0x04008000L   /* XMM (SSE) operand */
 #define XMMREG    	0x04009000L   /* XMM (SSE) register */
+#define XMM0		0x04019000L   /* XMM register zero */
 #define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004L   /* CRn */
 #define REG_DREG	0x00121004L   /* DRn */

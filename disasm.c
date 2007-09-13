@@ -573,9 +573,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
         } else if (c == 0331) {
             if (prefix->rep)
                 return FALSE;
-        } else if (c == 0332) {
-            if (drep == P_REP)
-                drep = P_REPE;
+	} else if (c == 0332) {
+	    if (prefix->rep != 0xF2)
+		return FALSE;
         } else if (c == 0333) {
             if (prefix->rep != 0xF3)
                 return FALSE;
@@ -585,6 +585,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		ins->rex |= REX_R;
 		lock = 0;
 	    }
+        } else if (c == 0335) {
+            if (drep == P_REP)
+                drep = P_REPE;
 	} else if (c == 0364) {
 	    if (prefix->osp)
 		return FALSE;

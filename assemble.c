@@ -64,10 +64,10 @@
  *                 to the condition code value of the instruction.
  * \331          - instruction not valid with REP prefix.  Hint for
  *                 disassembler only; for SSE instructions.
- * \332          - disassemble a rep (0xF3 byte) prefix as repe not rep.
- * \333          - REP prefix (0xF3 byte); for SSE instructions.  Not encoded
- *                 as a literal byte in order to aid the disassembler.
+ * \332          - REP prefix (0xF2 byte) used as opcode extension.
+ * \333          - REP prefix (0xF3 byte) used as opcode extension.
  * \334          - LOCK prefix used instead of REX.R
+ * \335          - disassemble a rep (0xF3 byte) prefix as repe not rep.
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
  * \364          - operand-size prefix (0x66) not permitted
@@ -862,14 +862,16 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             codes++, length++;
             break;
         case 0331:
-        case 0332:
             break;
+        case 0332:
         case 0333:
             length++;
             break;
 	case 0334:
 	    assert_no_prefix(ins, P_LOCK);
 	    ins->rex |= REX_L;
+	    break;
+        case 0335:
 	    break;
         case 0340:
         case 0341:
@@ -1360,11 +1362,11 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             break;
 
         case 0331:
-        case 0332:
             break;
 
+	case 0332:
         case 0333:
-            *bytes = 0xF3;
+            *bytes = c - 0332 + 0xF2;
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
@@ -1377,6 +1379,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             }
             ins->rex &= ~(REX_L|REX_R);
             break;
+
+        case 0335:
+	    break;
 
         case 0340:
         case 0341:
