@@ -1915,3 +1915,36 @@ VMWRITE		reg32,rm32		\2\x0F\x79\110			VMX
 VMXOFF		void			\3\x0F\x01\xC4			VMX
 VMXON		mem			\3\xF3\x0F\xC7\206		VMX
 
+; Tejas New Instructions (SSSE3)
+PABSB		mmxreg,mmxrm		\364\3\x0F\x38\x1C\110		SSSE3,MMX,SQ
+PABSB		xmmreg,xmmrm		\366\3\x0F\x38\x1C\110		SSSE3
+PABSW		mmxreg,mmxrm		\364\3\x0F\x38\x1D\110		SSSE3,MMX,SQ
+PABSW		xmmreg,xmmrm		\366\3\x0F\x38\x1D\110		SSSE3
+PABSD		mmxreg,mmxrm		\364\3\x0F\x38\x1E\110		SSSE3,MMX,SQ
+PABSD		xmmreg,xmmrm		\366\3\x0F\x38\x1E\110		SSSE3
+PALIGNR		mmxreg,mmxrm,imm	\364\3\x0F\x3A\x0F\110\26	SSSE3,MMX,SQ
+PALIGNR		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0F\110\26	SSSE3
+PHADDW		mmxreg,mmxrm		\364\3\x0F\x38\x01\110		SSSE3,MMX,SQ
+PHADDW		xmmreg,xmmrm		\366\3\x0F\x38\x01\110		SSSE3
+PHADDD		mmxreg,mmxrm		\364\3\x0F\x38\x02\110		SSSE3,MMX,SQ
+PHADDD		xmmreg,xmmrm		\366\3\x0F\x38\x02\110		SSSE3
+PHADDSW		mmxreg,mmxrm		\364\3\x0F\x38\x03\110		SSSE3,MMX,SQ
+PHADDSW		xmmreg,xmmrm		\366\3\x0F\x38\x03\110		SSSE3
+PHSUBW		mmxreg,mmxrm		\364\3\x0F\x38\x05\110		SSSE3,MMX,SQ
+PHSUBW		xmmreg,xmmrm		\366\3\x0F\x38\x05\110		SSSE3
+PHSUBD		mmxreg,mmxrm		\364\3\x0F\x38\x06\110		SSSE3,MMX,SQ
+PHSUBD		xmmreg,xmmrm		\366\3\x0F\x38\x06\110		SSSE3
+PHSUBSW		mmxreg,mmxrm		\364\3\x0F\x38\x07\110		SSSE3,MMX,SQ
+PHSUBSW		xmmreg,xmmrm		\366\3\x0F\x38\x07\110		SSSE3
+PMADDUBSW	mmxreg,mmxrm		\364\3\x0F\x38\x04\110		SSSE3,MMX,SQ
+PMADDUBSW	xmmreg,xmmrm		\366\3\x0F\x38\x04\110		SSSE3
+PMULHRSW	mmxreg,mmxrm		\364\3\x0F\x38\x0B\110		SSSE3,MMX,SQ
+PMULHRSW	xmmreg,xmmrm		\366\3\x0F\x38\x0B\110		SSSE3
+PSHUFB		mmxreg,mmxrm		\364\3\x0F\x38\x00\110		SSSE3,MMX,SQ
+PSHUFB		xmmreg,xmmrm		\366\3\x0F\x38\x00\110		SSSE3
+PSIGNB		mmxreg,mmxrm		\364\3\x0F\x38\x08\110		SSSE3,MMX,SQ
+PSIGNB		xmmreg,xmmrm		\366\3\x0F\x38\x08\110		SSSE3
+PSIGNW		mmxreg,mmxrm		\364\3\x0F\x38\x09\110		SSSE3,MMX,SQ
+PSIGNW		xmmreg,xmmrm		\366\3\x0F\x38\x09\110		SSSE3
+PSIGND		mmxreg,mmxrm		\364\3\x0F\x38\x0A\110		SSSE3,MMX,SQ
+PSIGND		xmmreg,xmmrm		\366\3\x0F\x38\x0A\110		SSSE3
