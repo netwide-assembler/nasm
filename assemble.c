@@ -246,6 +246,8 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     case I_DT:
         wsize = 10;
         break;
+    default:
+	break;
     }
 
     if (wsize) {
@@ -582,6 +584,8 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
         case I_DT:
             wsize = 10;
             break;
+	default:
+	    break;
         }
 
         for (e = instruction->eops; e; e = e->next) {
@@ -1554,7 +1558,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
     /*
      * Check that the operand flags all match up
      */
-    for (i = 0; i < itemp->operands; i++)
+    for (i = 0; i < itemp->operands; i++) {
         if (itemp->opd[i] & ~instruction->oprs[i].type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
@@ -1564,6 +1568,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
             else
                 return 1;
         }
+    }
 
     /*
      * Check operand sizes

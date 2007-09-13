@@ -769,6 +769,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
         result->opcode = I_RESB;
         result->oprs[0].offset *= 10;
         break;
+    default:
+	break;
     }
 
     return result;

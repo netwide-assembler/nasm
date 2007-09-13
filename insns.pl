@@ -135,20 +135,21 @@ if ( !defined($output) || $output eq 'i' ) {
         " - don't edit it */\n\n";
     print I "/* This file in included by nasm.h */\n\n";
     
-    print I "/* Instruction names */\n";
-    print I "enum opcode {";
-    $first  = 1;
+    print I "/* Instruction names */\n\n";
+    print I "#ifndef NASM_INSNSI_H\n";
+    print I "#define NASM_INSNSI_H 1\n\n";
+    print I "enum opcode {\n";
     $maxlen = 0;
     foreach $i (@opcodes, @opcodes_cc) {
-	print I "," if ( !$first );
-	$first = 0;
-	print I "\n\tI_${i}";
+	print I "\tI_${i},\n";
 	$len = length($i);
 	$len++ if ( $i =~ /cc$/ );	# Condition codes can be 3 characters long
 	$maxlen = $len if ( $len > $maxlen );
     }
+    print I "\tI_none = -1\n";
     print I "\n};\n\n";
-    print I "#define MAX_INSLEN ", $maxlen, "\n";
+    print I "#define MAX_INSLEN ", $maxlen, "\n\n";
+    print I "#endif /* NASM_INSNSI_H */\n";
     
     close I;
 }

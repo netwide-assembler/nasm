@@ -32,7 +32,7 @@ while (defined($line = <ID>)) {
 	    # Single instruction token
 	    if (!defined($tokens{$token})) {
 		$tokens{$token} = scalar @tokendata;
-		push(@tokendata, "\"${token}\", TOKEN_INSN, 0, I_${insn}");
+		push(@tokendata, "\"${token}\", TOKEN_INSN, C_none, I_${insn}");
 	    }
 	} else {
 	    # Conditional instruction
@@ -144,8 +144,8 @@ print "\n";
 print "struct tokendata {\n";
 print "    const char *string;\n";
 print "    int16_t tokentype;\n";
-print "    uint16_t aux;\n";
-print "    uint32_t num;\n";
+print "    int16_t aux;\n";
+print "    int32_t num;\n";
 print "};\n";
 print "\n";
 

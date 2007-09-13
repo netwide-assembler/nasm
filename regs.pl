@@ -86,10 +86,14 @@ if ( $fmt eq 'h' ) {
     $attach = ' = EXPR_REG_START'; # EXPR_REG_START == 1
     foreach $reg ( sort(keys(%regs)) ) {
 	print "    R_\U${reg}\E${attach},\n";
-	$attach = ''; $ch = ',';
+	$attach = '';
 	$expr_regs++;
     }
-    print "    REG_ENUM_LIMIT\n";
+    print "    REG_ENUM_LIMIT,\n";
+    # Unfortunately the code uses both 0 and -1 as "no register" in
+    # different places...
+    print "    R_zero = 0,\n";
+    print "    R_none = -1";
     print "};\n\n";
     printf "#define EXPR_REG_END %d\n", $expr_regs-1;
     foreach $reg ( sort(keys(%regs)) ) {

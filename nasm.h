@@ -19,6 +19,8 @@
 #include "config.h"
 #endif
 
+#include "insnsi.h"		/* For enum opcode */
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -522,10 +524,11 @@ enum {
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
 
-enum {                          /* condition code names */
+enum ccode {			/* condition code names */
     C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,
     C_NB, C_NBE, C_NC, C_NE, C_NG, C_NGE, C_NL, C_NLE, C_NO, C_NP,
-    C_NS, C_NZ, C_O, C_P, C_PE, C_PO, C_S, C_Z
+    C_NS, C_NZ, C_O, C_P, C_PE, C_PO, C_S, C_Z,
+    C_none = -1
 };
 
 /*
@@ -603,8 +606,8 @@ typedef struct {                /* an instruction itself */
     char *label;              /* the label defined, or NULL */
     enum prefixes prefixes[MAXPREFIX]; /* instruction prefixes, if any */
     int nprefix;                /* number of entries in above */
-    int opcode;                 /* the opcode - not just the string */
-    int condition;              /* the condition code, if Jcc/SETcc */
+    enum opcode opcode;         /* the opcode - not just the string */
+    enum ccode condition;       /* the condition code, if Jcc/SETcc */
     int operands;               /* how many operands? 0-3 
                                  * (more if db et al) */
     operand oprs[3];            /* the operands, defined as above */
