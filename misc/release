@@ -92,5 +92,5 @@ zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf
 zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf
 
 # Clean up
-cd ..
+cd ../..
 rm -rf "$work"
