@@ -1,4 +1,3 @@
-# $Id$
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@VERSION@@

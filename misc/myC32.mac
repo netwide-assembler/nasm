@@ -3,7 +3,6 @@
 ;
 ; Originally included in NASM.  Modifications by Peter Johnson, 1999.
 ;
-; $Id$
 
 %imacro proc 1                  ; begin a procedure definition
 %push proc

@@ -1,5 +1,4 @@
 /* insns.h   header file for insns.c
- * $Id$
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is

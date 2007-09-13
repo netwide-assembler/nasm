@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 #
 # version.pl
-# $Id$
 #
 # Parse the NASM version file and produce appropriate macros
 #

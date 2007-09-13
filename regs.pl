@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id$
 #
 # Read regs.dat and output regs.h and regs.c (included in names.c)
 #
