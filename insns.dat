@@ -1908,13 +1908,11 @@ VMLOAD          void                    \3\x0F\x01\xDA                  X64,VMX
 VMMCALL         void                    \3\x0F\x01\xD9                  X64,VMX
 VMPTRLD		mem			\2\x0F\xC7\206			VMX
 VMPTRST		mem			\2\x0F\xC7\207			VMX
-VMREAD		mem,reg32		\2\x0F\x78\101			VMX
-VMREAD		reg32,reg32		\2\x0F\x78\101			VMX
+VMREAD		rm32,reg32		\2\x0F\x78\101			VMX
 VMRESUME	void			\3\x0F\x01\xC3			VMX
 VMRUN           void                    \3\x0F\x01\xD8                  X64,VMX
 VMSAVE          void                    \3\x0F\x01\xDB                  X64,VMX
-VMWRITE		reg32,mem		\2\x0F\x79\110			VMX
-VMWRITE		reg32,reg32		\2\x0F\x79\110			VMX
+VMWRITE		reg32,rm32		\2\x0F\x79\110			VMX
 VMXOFF		void			\3\x0F\x01\xC4			VMX
 VMXON		mem			\3\xF3\x0F\xC7\206		VMX
 
