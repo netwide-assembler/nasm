@@ -13,6 +13,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "hashtbl.h"
 
 /*
  * A local label is one that begins with exactly one period. Things
@@ -31,9 +32,8 @@
 	((c) == '.' || (c) == '@') :                            \
 	((c) == '.'))
 
-#define LABEL_BLOCK  32         /* no. of labels/block */
+#define LABEL_BLOCK  128	/* no. of labels/block */
 #define LBLK_SIZE    (LABEL_BLOCK*sizeof(union label))
-#define LABEL_HASHES 37         /* no. of hash table entries */
 
 #define END_LIST -3             /* don't clash with NO_SEG! */
 #define END_BLOCK -2
@@ -75,8 +75,9 @@ struct permts {                 /* permanent text storage */
 
 extern int global_offset_changed;       /* defined in nasm.c */
 
-static union label *ltab[LABEL_HASHES]; /* using a hash table */
-static union label *lfree[LABEL_HASHES];        /* pointer into the above */
+static struct hash_table *ltab;		/* labels hash table */
+static union label *ldata;		/* all label data blocks */
+static union label *lfree;		/* labels free block */
 static struct permts *perm_head;        /* start of perm. text storage */
 static struct permts *perm_tail;        /* end of perm. text storage */
 
@@ -97,53 +98,50 @@ char lpostfix[PREFIX_MAX] = { 0 };
  */
 static union label *find_label(char *label, int create)
 {
-    int hash = 0;
-    char *p, *prev;
-    int prevlen;
+    char *prev;
+    int prevlen, len;
     union label *lptr;
+    char label_str[IDLEN_MAX];
+    struct hash_insert ip;
 
-    if (islocal(label))
+    if (islocal(label)) {
         prev = prevlabel;
-    else
+	prevlen = strlen(prev);
+	len = strlen(label);
+	if (prevlen+len >= IDLEN_MAX)
+	    return NULL;	/* Error... */
+	memcpy(label_str, prev, prevlen);
+	memcpy(label_str+prevlen, label, len);
+	label_str[len += prevlen] = '\0';
+	label = label_str;
+    } else {
         prev = "";
-    prevlen = strlen(prev);
-    p = prev;
-    while (*p)
-        hash += *p++;
-    p = label;
-    while (*p)
-        hash += *p++;
-    hash %= LABEL_HASHES;
-    lptr = ltab[hash];
-    while (lptr->admin.movingon != END_LIST) {
-        if (lptr->admin.movingon == END_BLOCK) {
-            lptr = lptr->admin.next;
-            if (!lptr)
-                break;
-        }
-        if (!strncmp(lptr->defn.label, prev, prevlen) &&
-            !strcmp(lptr->defn.label + prevlen, label))
-            return lptr;
-        lptr++;
+	prevlen = 0;
     }
-    if (create) {
-        if (lfree[hash]->admin.movingon == END_BLOCK) {
-            /*
-             * must allocate a new block
-             */
-            lfree[hash]->admin.next =
-                (union label *)nasm_malloc(LBLK_SIZE);
-            lfree[hash] = lfree[hash]->admin.next;
-            init_block(lfree[hash]);
-        }
 
-        lfree[hash]->admin.movingon = BOGUS_VALUE;
-        lfree[hash]->defn.label = perm_copy(prev, label);
-        lfree[hash]->defn.special = NULL;
-        lfree[hash]->defn.is_global = NOT_DEFINED_YET;
-        return lfree[hash]++;
-    } else
-        return NULL;
+    lptr = hash_find(ltab, label, &ip);
+
+    if (lptr || !create)
+	return lptr;
+
+    /* Create a new label... */
+    if (lfree->admin.movingon == END_BLOCK) {
+	/*
+	 * must allocate a new block
+	 */
+	lfree->admin.next =
+	    (union label *)nasm_malloc(LBLK_SIZE);
+	lfree = lfree->admin.next;
+	init_block(lfree);
+    }
+    
+    lfree->admin.movingon = BOGUS_VALUE;
+    lfree->defn.label = perm_copy(prev, label);
+    lfree->defn.special = NULL;
+    lfree->defn.is_global = NOT_DEFINED_YET;
+    
+    hash_add(&ip, lfree->defn.label, lfree);
+    return lfree++;
 }
 
 int lookup_label(char *label, int32_t *segment, int32_t *offset)
@@ -372,21 +370,13 @@ void declare_as_global(char *label, char *special, efunc error)
 
 int init_labels(void)
 {
-    int i;
+    ltab = hash_init();
 
-    for (i = 0; i < LABEL_HASHES; i++) {
-        ltab[i] = (union label *)nasm_malloc(LBLK_SIZE);
-        if (!ltab[i])
-            return -1;          /* can't initialise, panic */
-        init_block(ltab[i]);
-        lfree[i] = ltab[i];
-    }
+    ldata = lfree = (union label *)nasm_malloc(LBLK_SIZE);
+    init_block(lfree);
 
     perm_head =
         perm_tail = (struct permts *)nasm_malloc(sizeof(struct permts));
-
-    if (!perm_head)
-        return -1;
 
     perm_head->next = NULL;
     perm_head->size = PERMTS_SIZE;
@@ -399,24 +389,28 @@ int init_labels(void)
     return 0;
 }
 
+static void cleanup_hashed_label(char *key, void *data)
+{
+    /* The key is part of the permanent string storage */
+    /* The data is part of the ldata chain */
+    (void)key; (void)data;
+}
+
 void cleanup_labels(void)
 {
-    int i;
+    union label *lptr, *lhold;
 
     initialized = FALSE;
 
-    for (i = 0; i < LABEL_HASHES; i++) {
-        union label *lptr, *lhold;
+    hash_free(ltab, cleanup_hashed_label);
 
-        lptr = lhold = ltab[i];
 
-        while (lptr) {
-            while (lptr->admin.movingon != END_BLOCK)
-                lptr++;
-            lptr = lptr->admin.next;
-            nasm_free(lhold);
-            lhold = lptr;
-        }
+    lptr = lhold = ldata;
+    while (lptr) {
+	lptr = &lptr[LABEL_BLOCK-1];
+	lptr = lptr->admin.next;
+	nasm_free(lhold);
+	lhold = lptr;
     }
 
     while (perm_head) {
