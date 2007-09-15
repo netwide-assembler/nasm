@@ -90,7 +90,7 @@ struct MMacro {
     MMacro *next;
     char *name;
     int casesense;
-    int64_t nparam_min, nparam_max;
+    int nparam_min, nparam_max;
     int plus;                   /* is the last parameter greedy? */
     int nolist;                 /* is this macro listing-inhibited? */
     int in_progress;
@@ -1523,7 +1523,7 @@ static int do_directive(Token * tline)
     enum preproc_token i;
     int j;
     int nparam, nolist;
-    int64_t k, m;
+    int k, m;
     int offset;
     char *p, *mname;
     Include *inc;
