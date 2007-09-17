@@ -1,10 +1,18 @@
-Installing nasm from source
-===========================
+1. Installing nasm from source (Unix, MacOS X, Windows/Cygwin,
+   Windows/MinGW)
+2. Installing nasm from source (Windows/MS Visual C++)
 
-Installing nasm is pretty straightforward on UN*X systems with Perl
-and GNU tools installed.
 
-If you checked out source from CVS you will need to run autoconf to
+1. Installing nasm from source (Unix, MacOS X, Windows/Cygwin, Windows/MinGW)
+=============================================================================
+
+Installing nasm is pretty straightforward on Unix or Unix-like systems
+with Perl and GNU tools installed, including MinGW for Windows with
+MSYS installed.  Perl is optional for compiling unmodified sources
+from a tarball, but is required to build from git or for most source
+modifications.
+
+If you checked out source from git you will need to run autoconf to
 generate configure, otherwise you don't have to.
 
 $ autoheader
@@ -58,5 +66,19 @@ to install everything =)
 
 Thats it, enjoy!
 
-PS. Installation instructions for other platforms are underway.
 
+2. Installing nasm from source (Windows/MS Visual C++)
+======================================================
+
+The recommended compiler for NASM on Windows is MinGW
+(http://www.mingw.org), but it is also possible to compile with
+Microsoft Visual C++ (tested with Visual C++ 2005 Express Edition.)
+
+To do so, start the "Visual C++ Command Shell", go to the directory
+where the NASM source code was extracted, and run:
+
+> nmake /f Mkfiles/msvc.mak
+
+We recommend MinGW over Visual C++ 2005 as we have found it to be more
+up to date with regards to C99 compliance, and we are increasingly
+using C99 features in NASM.
