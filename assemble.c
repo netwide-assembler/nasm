@@ -1272,7 +1272,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                     errfunc(ERR_WARNING, "word value exceeds bounds");
                 }
                 out(offset, segment, &data, OUT_ADDRESS + 2,
-                    ins->oprs[c - 0140].segment, ins->oprs[c - 0130].wrt);
+                    ins->oprs[c - 0140].segment, ins->oprs[c - 0140].wrt);
                 offset += 2;
             }
             break;
@@ -1302,7 +1302,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                 offset++;
             } else {
                 out(offset, segment, &data, OUT_ADDRESS + 4,
-                    ins->oprs[c - 0150].segment, ins->oprs[c - 0140].wrt);
+                    ins->oprs[c - 0150].segment, ins->oprs[c - 0150].wrt);
                 offset += 4;
             }
             break;

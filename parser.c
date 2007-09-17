@@ -339,10 +339,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
         return result;
     }
 
-    /* right. Now we begin to parse the operands. There may be up to three
+    /* right. Now we begin to parse the operands. There may be up to four
      * of these, separated by commas, and terminated by a zero token. */
 
-    for (operand = 0; operand < 3; operand++) {
+    for (operand = 0; operand < MAX_OPERANDS; operand++) {
         expr *value;            /* used most of the time */
         int mref;               /* is this going to be a memory ref? */
         int bracket;            /* is it a [] mref, or a & mref? */
