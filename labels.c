@@ -82,7 +82,7 @@ static struct permts *perm_head;        /* start of perm. text storage */
 static struct permts *perm_tail;        /* end of perm. text storage */
 
 static void init_block(union label *blk);
-static char *perm_copy(char *string1, char *string2);
+static char *perm_copy(const char *string);
 
 static char *prevlabel;
 
@@ -111,8 +111,7 @@ static union label *find_label(char *label, int create)
 	if (prevlen+len >= IDLEN_MAX)
 	    return NULL;	/* Error... */
 	memcpy(label_str, prev, prevlen);
-	memcpy(label_str+prevlen, label, len);
-	label_str[len += prevlen] = '\0';
+	memcpy(label_str+prevlen, label, len+1);
 	label = label_str;
     } else {
         prev = "";
@@ -136,7 +135,7 @@ static union label *find_label(char *label, int create)
     }
     
     lfree->admin.movingon = BOGUS_VALUE;
-    lfree->defn.label = perm_copy(prev, label);
+    lfree->defn.label = perm_copy(label);
     lfree->defn.special = NULL;
     lfree->defn.is_global = NOT_DEFINED_YET;
     
@@ -355,7 +354,7 @@ void declare_as_global(char *label, char *special, efunc error)
     switch (lptr->defn.is_global & TYPE_MASK) {
     case NOT_DEFINED_YET:
         lptr->defn.is_global = GLOBAL_PLACEHOLDER;
-        lptr->defn.special = special ? perm_copy(special, "") : NULL;
+        lptr->defn.special = special ? perm_copy(special) : NULL;
         break;
     case GLOBAL_PLACEHOLDER:   /* already done: silently ignore */
     case GLOBAL_SYMBOL:
@@ -389,21 +388,13 @@ int init_labels(void)
     return 0;
 }
 
-static void cleanup_hashed_label(char *key, void *data)
-{
-    /* The key is part of the permanent string storage */
-    /* The data is part of the ldata chain */
-    (void)key; (void)data;
-}
-
 void cleanup_labels(void)
 {
     union label *lptr, *lhold;
 
     initialized = FALSE;
 
-    hash_free(ltab, cleanup_hashed_label);
-
+    hash_free(ltab);
 
     lptr = lhold = ldata;
     while (lptr) {
@@ -430,10 +421,10 @@ static void init_block(union label *blk)
     blk[LABEL_BLOCK - 1].admin.next = NULL;
 }
 
-static char *perm_copy(char *string1, char *string2)
+static char *perm_copy(const char *string)
 {
-    char *p, *q;
-    int len = strlen(string1) + strlen(string2) + 1;
+    char *p;
+    int len = strlen(string)+1;
 
     if (perm_tail->size - perm_tail->usage < len) {
         perm_tail->next =
@@ -443,11 +434,9 @@ static char *perm_copy(char *string1, char *string2)
         perm_tail->size = PERMTS_SIZE;
         perm_tail->usage = 0;
     }
-    p = q = perm_tail->data + perm_tail->usage;
-    while ((*q = *string1++))
-        q++;
-    while ((*q++ = *string2++)) ;
-    perm_tail->usage = q - perm_tail->data;
+    p = perm_tail->data + perm_tail->usage;
+    memcpy(p, string, len);
+    perm_tail->usage += len;
 
     return p;
 }
