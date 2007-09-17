@@ -11,6 +11,7 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#include "compiler.h"
 
 /*
  * If this is defined, the wrappers around malloc et al will

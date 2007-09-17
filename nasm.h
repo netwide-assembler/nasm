@@ -14,11 +14,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "version.h"            /* generated NASM version macros */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include "compiler.h"
 #include "insnsi.h"		/* For enum opcode */
 
 #ifndef NULL

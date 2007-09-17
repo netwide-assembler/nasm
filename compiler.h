@@ -37,4 +37,14 @@
 # define _unused
 #endif
 
+/* Some versions of MSVC have these only with underscores in front */
+
+#if !defined(HAVE_SNPRINTF) && defined(HAVE__SNPRINTF)
+# define snprintf _snprintf
+#endif
+
+#if !defined(HAVE_VSNPRINTF) && defined(HAVE__VSNPRINTF)
+# define vsnprintf _vsnprintf
+#endif
+
 #endif	/* COMPILER_H */
