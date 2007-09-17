@@ -54,7 +54,7 @@ sub alldeps($) {
 	    $adeps{$idep} = 1;
 	}
     }
-    return keys(%adeps);
+    return sort(keys(%adeps));
 }
 
 # This converts a filename from host syntax to target syntax
