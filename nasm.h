@@ -607,6 +607,7 @@ typedef struct extop {          /* extended operand */
 } extop;
 
 #define MAXPREFIX 4
+#define MAX_OPERANDS 4
 
 typedef struct {                /* an instruction itself */
     char *label;              /* the label defined, or NULL */
@@ -616,7 +617,7 @@ typedef struct {                /* an instruction itself */
     enum ccode condition;       /* the condition code, if Jcc/SETcc */
     int operands;               /* how many operands? 0-3 
                                  * (more if db et al) */
-    operand oprs[3];            /* the operands, defined as above */
+    operand oprs[MAX_OPERANDS]; /* the operands, defined as above */
     extop *eops;                /* extended operands */
     int eops_float;             /* true if DD and floating */
     int32_t times;              /* repeat count (TIMES prefix) */

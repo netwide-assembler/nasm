@@ -12,39 +12,36 @@
  *                 (POP is never used for CS) depending on operand 0
  * \5, \7        - the second byte of POP/PUSH codes for FS, GS, depending
  *                 on operand 0
- * \10, \11, \12 - a literal byte follows in the code stream, to be added
- *                 to the register value of operand 0, 1 or 2
- * \17           - encodes the literal byte 0. (Some compilers don't take
- *                 kindly to a zero byte in the _middle_ of a compile time
- *                 string constant, so I had to put this hack in.)
- * \14, \15, \16 - a signed byte immediate operand, from operand 0, 1 or 2
- * \20, \21, \22 - a byte immediate operand, from operand 0, 1 or 2
- * \24, \25, \26 - an unsigned byte immediate operand, from operand 0, 1 or 2
- * \30, \31, \32 - a word immediate operand, from operand 0, 1 or 2
- * \34, \35, \36 - select between \3[012] and \4[012] depending on 16/32 bit
+ * \10..\13      - a literal byte follows in the code stream, to be added
+ *                 to the register value of operand 0..3
+ * \14..\17      - a signed byte immediate operand, from operand 0..3
+ * \20..\23      - a byte immediate operand, from operand 0..3
+ * \24..\27      - an unsigned byte immediate operand, from operand 0..3
+ * \30..\33      - a word immediate operand, from operand 0..3
+ * \34..\37      - select between \3[0-3] and \4[0-3] depending on 16/32 bit
  *                 assembly mode or the operand-size override on the operand
- * \37           - a word constant, from the _segment_ part of operand 0
- * \40, \41, \42 - a long immediate operand, from operand 0, 1 or 2
- * \44, \45, \46 - select between \3[012], \4[012] and \5[456]
+ * \40..\43      - a long immediate operand, from operand 0..3
+ * \44..\47      - select between \3[0-3], \4[0-3] and \5[4-7]
  *		   depending on assembly mode or the address-size override
  *		   on the operand.
- * \50, \51, \52 - a byte relative operand, from operand 0, 1 or 2
- * \54, \55, \56 - a qword immediate operand, from operand 0, 1 or 2
- * \60, \61, \62 - a word relative operand, from operand 0, 1 or 2
- * \64, \65, \66 - select between \6[012] and \7[012] depending on 16/32 bit
+ * \50..\53      - a byte relative operand, from operand 0..3
+ * \54..\57      - a qword immediate operand, from operand 0..3
+ * \60..\63      - a word relative operand, from operand 0..3
+ * \64..\67      - select between \6[0-3] and \7[0-3] depending on 16/32 bit
  *                 assembly mode or the operand-size override on the operand
- * \70, \71, \72 - a long relative operand, from operand 0, 1 or 2
+ * \70..\73      - a long relative operand, from operand 0..3
+ * \74..\77       - a word constant, from the _segment_ part of operand 0..3
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
- * \130,\131,\132 - an immediate word or signed byte for operand 0, 1, or 2
- * \133,\134,\135 - or 2 (s-field) into next opcode byte if operand 0, 1, or 2
+ * \140..\143    - an immediate word or signed byte for operand 0..3
+ * \144..\147    - or 2 (s-field) into next opcode byte if operand 0..3
  *		    is a signed byte rather than a word.
- * \140,\141,\142 - an immediate dword or signed byte for operand 0, 1, or 2
- * \143,\144,\145 - or 2 (s-field) into next opcode byte if operand 0, 1, or 2
+ * \150..\153     - an immediate dword or signed byte for operand 0..3
+ * \154..\157     - or 2 (s-field) into next opcode byte if operand 0..3
  *		    is a signed byte rather than a dword.
- * \150,\151,\152 - an immediate qword or signed byte for operand 0, 1, or 2
- * \153,\154,\155 - or 2 (s-field) into next opcode byte if operand 0, 1, or 2
- *		    is a signed byte rather than a qword.
+ * \170          - encodes the literal byte 0. (Some compilers don't take
+ *                 kindly to a zero byte in the _middle_ of a compile time
+ *                 string constant, so I had to put this hack in.)
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
  * \30x          - might be an 0x67 byte, depending on the address size of
@@ -730,73 +727,79 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 010:
         case 011:
         case 012:
+	case 013:
 	    ins->rex |=
 		op_rexflags(&ins->oprs[c - 010], REX_B|REX_H|REX_P|REX_W);
             codes++, length++;
             break;
-        case 017:
-            length++;
-            break;
         case 014:
         case 015:
         case 016:
+	case 017:
             length++;
             break;
         case 020:
         case 021:
         case 022:
+	case 023:
             length++;
             break;
         case 024:
         case 025:
         case 026:
+	case 027:
             length++;
             break;
         case 030:
         case 031:
         case 032:
+	case 033:
             length += 2;
             break;
         case 034:
         case 035:
         case 036:
+	case 037:
             if (ins->oprs[c - 034].type & (BITS16 | BITS32 | BITS64))
                 length += (ins->oprs[c - 034].type & BITS16) ? 2 : 4;
             else
                 length += (bits == 16) ? 2 : 4;
             break;
-        case 037:
-            length += 2;
-            break;
         case 040:
         case 041:
         case 042:
+	case 043:
             length += 4;
             break;
         case 044:
         case 045:
         case 046:
+	case 047:
             length += ((ins->oprs[c - 044].addr_size ?
                         ins->oprs[c - 044].addr_size : bits) >> 3);
             break;
         case 050:
         case 051:
         case 052:
+	case 053:
             length++;
             break;
         case 054:
         case 055:
         case 056:
+	case 057:
             length += 8; /* MOV reg64/imm */
             break;
         case 060:
         case 061:
         case 062:
+	case 063:
             length += 2;
             break;
         case 064:
         case 065:
         case 066:
+	case 067:
             if (ins->oprs[c - 064].type & (BITS16 | BITS32 | BITS64))
                 length += (ins->oprs[c - 064].type & BITS16) ? 2 : 4;
             else
@@ -805,33 +808,48 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 070:
         case 071:
         case 072:
+	case 073:
             length += 4;
             break;
-        case 0130:
-        case 0131:
-        case 0132:
-            length += is_sbyte(ins, c - 0130, 16) ? 1 : 2;
-            break;
-        case 0133:
-        case 0134:
-        case 0135:
-            codes += 2;
-            length++;
+        case 074:
+        case 075:
+        case 076:
+        case 077:
+            length += 2;
             break;
         case 0140:
         case 0141:
         case 0142:
-            length += is_sbyte(ins, c - 0140, 32) ? 1 : 4;
+	case 0143:
+            length += is_sbyte(ins, c - 0140, 16) ? 1 : 2;
             break;
-        case 0143:
         case 0144:
         case 0145:
+        case 0146:
+        case 0147:
             codes += 2;
+            length++;
+            break;
+        case 0150:
+        case 0151:
+        case 0152:
+        case 0153:
+            length += is_sbyte(ins, c - 0150, 32) ? 1 : 4;
+            break;
+        case 0154:
+        case 0155:
+        case 0156:
+        case 0157:
+            codes += 2;
+            length++;
+            break;
+        case 0170:
             length++;
             break;
         case 0300:
         case 0301:
         case 0302:         
+        case 0303:         
             length += chsize(&ins->oprs[c - 0300], bits);
             break;
         case 0310:
@@ -1020,14 +1038,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 010:
         case 011:
         case 012:
+	case 013:
 	    EMIT_REX();
             bytes[0] = *codes++ + ((regval(&ins->oprs[c - 010])) & 7);
-            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
-            offset += 1;
-            break;
-
-        case 017:
-            bytes[0] = 0;
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
@@ -1035,6 +1048,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 014:
         case 015:
         case 016:
+	case 017:
             if (ins->oprs[c - 014].offset < -128
                 || ins->oprs[c - 014].offset > 127) {
                 errfunc(ERR_WARNING, "signed byte value exceeds bounds");
@@ -1055,6 +1069,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 020:
         case 021:
         case 022:
+	case 023:
             if (ins->oprs[c - 020].offset < -256
                 || ins->oprs[c - 020].offset > 255) {
                 errfunc(ERR_WARNING, "byte value exceeds bounds");
@@ -1074,6 +1089,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 024:
         case 025:
         case 026:
+	case 027:
             if (ins->oprs[c - 024].offset < 0
                 || ins->oprs[c - 024].offset > 255)
                 errfunc(ERR_WARNING, "unsigned byte value exceeds bounds");
@@ -1092,6 +1108,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 030:
         case 031:
         case 032:
+	case 033:
             if (ins->oprs[c - 030].segment == NO_SEG &&
                 ins->oprs[c - 030].wrt == NO_SEG &&
                 (ins->oprs[c - 030].offset < -65536L ||
@@ -1107,6 +1124,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 034:
         case 035:
         case 036:
+	case 037:
             if (ins->oprs[c - 034].type & (BITS16 | BITS32))
                 size = (ins->oprs[c - 034].type & BITS16) ? 2 : 4;
             else
@@ -1119,20 +1137,10 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             offset += size;
             break;
 
-        case 037:
-            if (ins->oprs[0].segment == NO_SEG)
-                errfunc(ERR_NONFATAL, "value referenced by FAR is not"
-                        " relocatable");
-            data = 0L;
-            out(offset, segment, &data, OUT_ADDRESS + 2,
-                outfmt->segbase(1 + ins->oprs[0].segment),
-                ins->oprs[0].wrt);
-            offset += 2;
-            break;
-
         case 040:
         case 041:
         case 042:
+	case 043:
             data = ins->oprs[c - 040].offset;
             out(offset, segment, &data, OUT_ADDRESS + 4,
                 ins->oprs[c - 040].segment, ins->oprs[c - 040].wrt);
@@ -1142,6 +1150,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 044:
         case 045:
         case 046:
+	case 047:
             data = ins->oprs[c - 044].offset;
             size = ((ins->oprs[c - 044].addr_size ?
                      ins->oprs[c - 044].addr_size : bits) >> 3);
@@ -1155,6 +1164,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 050:
         case 051:
         case 052:
+	case 053:
             if (ins->oprs[c - 050].segment != segment)
                 errfunc(ERR_NONFATAL,
                         "short relative jump outside segment");
@@ -1169,6 +1179,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 054:
         case 055:
         case 056:
+	case 057:
             data = (int64_t)ins->oprs[c - 054].offset;
             out(offset, segment, &data, OUT_ADDRESS + 8,
                 ins->oprs[c - 054].segment, ins->oprs[c - 054].wrt);
@@ -1178,6 +1189,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 060:
         case 061:
         case 062:
+	case 063:
             if (ins->oprs[c - 060].segment != segment) {
                 data = ins->oprs[c - 060].offset;
                 out(offset, segment, &data,
@@ -1194,6 +1206,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 064:
         case 065:
         case 066:
+	case 067:
             if (ins->oprs[c - 064].type & (BITS16 | BITS32 | BITS64))
                 size = (ins->oprs[c - 064].type & BITS16) ? 2 : 4;
             else
@@ -1214,6 +1227,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 070:
         case 071:
         case 072:
+	case 073:
             if (ins->oprs[c - 070].segment != segment) {
                 data = ins->oprs[c - 070].offset;
                 out(offset, segment, &data,
@@ -1227,70 +1241,95 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             offset += 4;
             break;
 
-        case 0130:
-        case 0131:
-        case 0132:
-            data = ins->oprs[c - 0130].offset;
-            if (is_sbyte(ins, c - 0130, 16)) {
-                bytes[0] = data;
-                out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
-                    NO_SEG);
-                offset++;
-            } else {
-                if (ins->oprs[c - 0130].segment == NO_SEG &&
-                    ins->oprs[c - 0130].wrt == NO_SEG &&
-                    (data < -65536L || data > 65535L)) {
-                    errfunc(ERR_WARNING, "word value exceeds bounds");
-                }
-                out(offset, segment, &data, OUT_ADDRESS + 2,
-                    ins->oprs[c - 0130].segment, ins->oprs[c - 0130].wrt);
-                offset += 2;
-            }
-            break;
-
-        case 0133:
-        case 0134:
-        case 0135:
-	    EMIT_REX();
-            codes++;
-            bytes[0] = *codes++;
-            if (is_sbyte(ins, c - 0133, 16))
-                bytes[0] |= 2;  /* s-bit */
-            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
-            offset++;
+        case 074:
+        case 075:
+        case 076:
+        case 077:
+            if (ins->oprs[c - 074].segment == NO_SEG)
+                errfunc(ERR_NONFATAL, "value referenced by FAR is not"
+                        " relocatable");
+            data = 0L;
+            out(offset, segment, &data, OUT_ADDRESS + 2,
+                outfmt->segbase(1 + ins->oprs[c - 074].segment),
+                ins->oprs[c - 074].wrt);
+            offset += 2;
             break;
 
         case 0140:
         case 0141:
         case 0142:
+	case 0143:
             data = ins->oprs[c - 0140].offset;
-            if (is_sbyte(ins, c - 0140, 32)) {
+            if (is_sbyte(ins, c - 0140, 16)) {
+                bytes[0] = data;
+                out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
+                    NO_SEG);
+                offset++;
+            } else {
+                if (ins->oprs[c - 0140].segment == NO_SEG &&
+                    ins->oprs[c - 0140].wrt == NO_SEG &&
+                    (data < -65536L || data > 65535L)) {
+                    errfunc(ERR_WARNING, "word value exceeds bounds");
+                }
+                out(offset, segment, &data, OUT_ADDRESS + 2,
+                    ins->oprs[c - 0140].segment, ins->oprs[c - 0130].wrt);
+                offset += 2;
+            }
+            break;
+
+        case 0144:
+        case 0145:
+        case 0146:
+	case 0147:
+	    EMIT_REX();
+            codes++;
+            bytes[0] = *codes++;
+            if (is_sbyte(ins, c - 0144, 16))
+                bytes[0] |= 2;  /* s-bit */
+            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+            offset++;
+            break;
+
+        case 0150:
+        case 0151:
+        case 0152:
+	case 0153:
+            data = ins->oprs[c - 0150].offset;
+            if (is_sbyte(ins, c - 0150, 32)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
                 offset++;
             } else {
                 out(offset, segment, &data, OUT_ADDRESS + 4,
-                    ins->oprs[c - 0140].segment, ins->oprs[c - 0140].wrt);
+                    ins->oprs[c - 0150].segment, ins->oprs[c - 0140].wrt);
                 offset += 4;
             }
             break;
 
-        case 0143:
-        case 0144:
-        case 0145:
+        case 0154:
+        case 0155:
+        case 0156:
+	case 0157:
 	    EMIT_REX();
             codes++;
             bytes[0] = *codes++;
-            if (is_sbyte(ins, c - 0143, 32))
+            if (is_sbyte(ins, c - 0154, 32))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset++;
             break;
 
+        case 0170:
+            bytes[0] = 0;
+            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+            offset += 1;
+            break;
+
         case 0300:
         case 0301:
         case 0302:
+        case 0303:
             if (chsize(&ins->oprs[c - 0300], bits)) {
                 *bytes = 0x67;
                 out(offset, segment, bytes,
@@ -1537,7 +1576,7 @@ static int rexflags(int val, int32_t flags, int mask)
 
 static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 {
-    int i, size[3], asize, oprs, ret;
+    int i, size[MAX_OPERANDS], asize, oprs, ret;
 
     ret = 100;
 
@@ -1579,7 +1618,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
      * Check operand sizes
      */
     if (itemp->flags & IF_ARMASK) {
-        size[0] = size[1] = size[2] = 0;
+	memset(size, 0, sizeof size);
 
         switch (itemp->flags & IF_ARMASK) {
         case IF_AR0:
@@ -1591,34 +1630,54 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
         case IF_AR2:
             i = 2;
             break;
+#if 0 /* Need to reorganize instruction flags to fit IF_AR3 */
+	case IF_AR3:
+	    i = 3;
+	    break;
+#endif
         default:
             break;              /* Shouldn't happen */
         }
-        if (itemp->flags & IF_SB) {
+	switch (itemp->flags & IF_SMASK) {
+	case IF_SB:
             size[i] = BITS8;
-        } else if (itemp->flags & IF_SW) {
+	    break;
+	case IF_SW:
             size[i] = BITS16;
-        } else if (itemp->flags & IF_SD) {
+	    break;
+	case IF_SD:
             size[i] = BITS32;
-        } else if (itemp->flags & IF_SQ) {
+	    break;
+	case IF_SQ:
             size[i] = BITS64;
+	    break;
+	default:
+	    break;
         }
     } else {
         asize = 0;
-        if (itemp->flags & IF_SB) {
+	switch (itemp->flags & IF_SMASK) {
+	case IF_SB:
             asize = BITS8;
             oprs = itemp->operands;
-        } else if (itemp->flags & IF_SW) {
+	    break;
+	case IF_SW:
             asize = BITS16;
             oprs = itemp->operands;
-        } else if (itemp->flags & IF_SD) {
+	    break;
+	case IF_SD:
             asize = BITS32;
             oprs = itemp->operands;
-        } else if (itemp->flags & IF_SQ) {
+	    break;
+	case IF_SQ:
             asize = BITS64;
             oprs = itemp->operands;
+	    break;
+	default:
+	    break;
         }
-        size[0] = size[1] = size[2] = asize;
+	for (i = 0; i < MAX_OPERANDS; i++)
+	    size[i] = asize;
     }
     
     if (itemp->flags & (IF_SM | IF_SM2)) {

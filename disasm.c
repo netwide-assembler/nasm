@@ -341,12 +341,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
     uint8_t lock = prefix->lock;
     int osize = prefix->osize;
     int asize = prefix->asize;
+    int i;
 
-    ins->oprs[0].segment = ins->oprs[1].segment =
-	ins->oprs[2].segment =
-	ins->oprs[0].addr_size = ins->oprs[1].addr_size =
-	ins->oprs[2].addr_size = (segsize == 64 ? SEG_64BIT :
-				  segsize == 32 ? SEG_32BIT : 0);
+    for (i = 0; i < MAX_OPERANDS; i++) {
+	ins->oprs[i].segment = ins->oprs[i].addr_size =
+	    (segsize == 64 ? SEG_64BIT : segsize == 32 ? SEG_32BIT : 0);
+    }
     ins->condition = -1;
     ins->rex = prefix->rex;
 
@@ -419,7 +419,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             default:
                 return FALSE;
             }
-	} else if (c >= 010 && c <= 012) {
+	} else if (c >= 010 && c <= 013) {
             int t = *r++, d = *data++;
             if (d < t || d > t + 7)
                 return FALSE;
@@ -428,20 +428,17 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		    (ins->rex & REX_B ? 8 : 0);
                 ins->oprs[c - 010].segment |= SEG_RMREG;
             }
-        } else if (c == 017) {
-            if (*data++)
-                return FALSE;
-	} else if (c >= 014 && c <= 016) {
+	} else if (c >= 014 && c <= 017) {
             ins->oprs[c - 014].offset = (int8_t)*data++;
             ins->oprs[c - 014].segment |= SEG_SIGNED;
-        } else if (c >= 020 && c <= 022) {
+        } else if (c >= 020 && c <= 023) {
             ins->oprs[c - 020].offset = *data++;
-	} else if (c >= 024 && c <= 026) {
+	} else if (c >= 024 && c <= 027) {
             ins->oprs[c - 024].offset = *data++;
-	} else if (c >= 030 && c <= 032) {
+	} else if (c >= 030 && c <= 033) {
             ins->oprs[c - 030].offset = getu16(data);
 	    data += 2;
-        } else if (c >= 034 && c <= 036) {
+        } else if (c >= 034 && c <= 037) {
 	    if (osize == 32) {
 		ins->oprs[c - 034].offset = getu32(data);
 		data += 4;
@@ -451,10 +448,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    }
             if (segsize != asize)
                 ins->oprs[c - 034].addr_size = asize;
-        } else if (c >= 040 && c <= 042) {
+        } else if (c >= 040 && c <= 043) {
             ins->oprs[c - 040].offset = getu32(data);
 	    data += 4;
-        } else if (c >= 044 && c <= 046) {
+        } else if (c >= 044 && c <= 047) {
 	    switch (asize) {
 	    case 16:
 		ins->oprs[c - 044].offset = getu16(data);
@@ -471,18 +468,18 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    }
             if (segsize != asize)
                 ins->oprs[c - 044].addr_size = asize;
-        } else if (c >= 050 && c <= 052) {
+        } else if (c >= 050 && c <= 053) {
             ins->oprs[c - 050].offset = gets8(data++);
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
-        } else if (c >= 054 && c <= 056) {
+        } else if (c >= 054 && c <= 057) {
 	    ins->oprs[c - 054].offset = getu64(data);
 	    data += 8;
-	} else if (c >= 060 && c <= 062) {
+	} else if (c >= 060 && c <= 063) {
             ins->oprs[c - 060].offset = gets16(data);
 	    data += 2;
             ins->oprs[c - 060].segment |= SEG_RELATIVE;
             ins->oprs[c - 060].segment &= ~SEG_32BIT;
-        } else if (c >= 064 && c <= 066) {
+        } else if (c >= 064 && c <= 067) {
 	    if (osize == 16) {
 		ins->oprs[c - 064].offset = getu16(data);
 		data += 2;
@@ -498,30 +495,33 @@ static int matches(const struct itemplate *t, uint8_t *data,
                     (ins->oprs[c - 064].type & ~SIZE_MASK)
                     | ((osize == 16) ? BITS16 : BITS32);
             }
-        } else if (c >= 070 && c <= 072) {
+        } else if (c >= 070 && c <= 073) {
             ins->oprs[c - 070].offset = getu32(data);
 	    data += 4;
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
-        } else if (c >= 0100 && c < 0130) {
+        } else if (c >= 0100 && c < 0140) {
             int modrm = *data++;
             ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
 		(ins->rex & REX_R ? 8 : 0);
             ins->oprs[c & 07].segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], ins->rex);
-        } else if (c >= 0130 && c <= 0132) {
-            ins->oprs[c - 0130].offset = getu16(data);
+        } else if (c >= 0140 && c <= 0143) {
+            ins->oprs[c - 0140].offset = getu16(data);
 	    data += 2;
-        } else if (c >= 0140 && c <= 0142) {
-	    ins->oprs[c - 0140].offset = getu32(data);
+        } else if (c >= 0150 && c <= 0153) {
+	    ins->oprs[c - 0150].offset = getu32(data);
 	    data += 4;
+        } else if (c == 0170) {
+            if (*data++)
+                return FALSE;
         } else if (c >= 0200 && c <= 0277) {
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return FALSE;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], ins->rex);
-        } else if (c >= 0300 && c <= 0302) {
+        } else if (c >= 0300 && c <= 0303) {
             a_used = TRUE;
         } else if (c == 0310) {
             if (asize != 16)

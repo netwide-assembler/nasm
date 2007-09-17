@@ -203,45 +203,52 @@ if ( !defined($output) || $output eq 'n' ) {
 printf STDERR "Done: %d instructions\n", $insns;
 
 sub format {
-  local ($opcode, $operands, $codes, $flags) = @_;
-  local $num, $nd = 0;
+    my ($opcode, $operands, $codes, $flags) = @_;
+    my $num, $nd = 0;
 
-  return (undef, undef) if $operands eq "ignore";
-
-  # format the operands
-  $operands =~ s/:/|colon,/g;
-  $operands =~ s/mem(\d+)/mem|bits$1/g;
-  $operands =~ s/mem/memory/g;
-  $operands =~ s/memory_offs/mem_offs/g;
-  $operands =~ s/imm(\d+)/imm|bits$1/g;
-  $operands =~ s/imm/immediate/g;
-  $operands =~ s/rm(\d+)/rm_gpr|bits$1/g;
-  $operands =~ s/mmxrm/rm_mmx/g;
-  $operands =~ s/xmmrm/rm_xmm/g;
-  $num = 3;
-  $operands = '0,0,0', $num = 0 if $operands eq 'void';
-  $operands .= ',0', $num-- while $operands !~ /,.*,/;
-  $operands =~ tr/a-z/A-Z/;
-
-  # format the flags
-  $flags =~ s/,/|IF_/g;
-  $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
-  $flags = "IF_" . $flags;
-
-  ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
+    return (undef, undef) if $operands eq "ignore";
+    
+    # format the operands
+    $operands =~ s/:/|colon,/g;
+    $operands =~ s/mem(\d+)/mem|bits$1/g;
+    $operands =~ s/mem/memory/g;
+    $operands =~ s/memory_offs/mem_offs/g;
+    $operands =~ s/imm(\d+)/imm|bits$1/g;
+    $operands =~ s/imm/immediate/g;
+    $operands =~ s/rm(\d+)/rm_gpr|bits$1/g;
+    $operands =~ s/mmxrm/rm_mmx/g;
+    $operands =~ s/xmmrm/rm_xmm/g;
+    if ($operands eq 'void') {
+	@ops = ();
+    } else {
+	@ops = split(/\,/, $operands);
+    }
+    $num = scalar(@ops);
+    while (scalar(@ops) < 4) {
+	push(@ops, '0');
+    }
+    $operands = join(',', @ops);
+    $operands =~ tr/a-z/A-Z/;
+    
+    # format the flags
+    $flags =~ s/,/|IF_/g;
+    $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
+    $flags = "IF_" . $flags;
+    
+    ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
 }
 
 # Here we determine the range of possible starting bytes for a given
 # instruction. We need only consider the codes:
 # \1 \2 \3     mean literal bytes, of course
 # \4 \5 \6 \7  mean PUSH/POP of segment registers: special case
-# \10 \11 \12  mean byte plus register value
-# \17          means byte zero
+# \1[0123]     mean byte plus register value
+# \170         means byte zero
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
 sub startbyte {
-  local ($codes) = @_;
-  local $word, @range;
+  my ($codes) = @_;
+  my $word, @range;
 
   while (1) {
     die "couldn't get code in '$codes'" if $codes !~ /^(\\[^\\]+)(\\.*)?$/;
@@ -251,8 +258,8 @@ sub startbyte {
     return (0xA1, 0xA9) if $word eq "\\5";
     return (0x06, 0x0E, 0x16, 0x1E) if $word eq "\\6";
     return (0xA0, 0xA8) if $word eq "\\7";
-    $start=hex $1, $r=8, last if $word =~ /^\\1[012]$/ && $codes =~/^\\x(..)/;
-    return (0) if $word eq "\\17";
+    $start=hex $1, $r=8, last if $word =~ /^\\1[0123]$/ && $codes =~/^\\x(..)/;
+    return (0) if $word eq "\\170";
     $start=hex $1, $r=16, last if $word =~ /^\\330$/ && $codes =~ /^\\x(..)/;
     return () if $word eq "\\0" || $word eq "\\340";
   }
