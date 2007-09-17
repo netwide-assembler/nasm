@@ -540,6 +540,8 @@ enum ccode {			/* condition code names */
 /*
  * REX flags
  */
+#define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
+#define REX_D		0x0100	/* Instruction uses DREX instead of REX */
 #define REX_H		0x80	/* High register present, REX forbidden */
 #define REX_P		0x40	/* REX prefix present/required */
 #define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
@@ -622,7 +624,8 @@ typedef struct {                /* an instruction itself */
     int eops_float;             /* true if DD and floating */
     int32_t times;              /* repeat count (TIMES prefix) */
     int forw_ref;               /* is there a forward reference? */
-    uint8_t rex;                /* Special REX Prefix */
+    int rex;			/* Special REX Prefix */
+    int drexdst;		/* Destination register for DREX suffix */
 } insn;
 
 enum geninfo { GI_SWITCH };

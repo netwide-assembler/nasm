@@ -39,9 +39,16 @@
  * \150..\153     - an immediate dword or signed byte for operand 0..3
  * \154..\157     - or 2 (s-field) into next opcode byte if operand 0..3
  *		    is a signed byte rather than a dword.
+ * \160..\163    - this instruction uses DREX rather than REX, with the
+ *		   OC0 field set to 0, and the dest field taken from
+ *                 operand 0..3.
+ * \164..\167    - this instruction uses DREX rather than REX, with the
+ *		   OC0 field set to 1, and the dest field taken from
+ *                 operand 0..3.
  * \170          - encodes the literal byte 0. (Some compilers don't take
  *                 kindly to a zero byte in the _middle_ of a compile time
  *                 string constant, so I had to put this hack in.)
+ * \171		 - placement of DREX suffix in the absence of an EA
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
  * \30x          - might be an 0x67 byte, depending on the address size of
@@ -843,9 +850,25 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             codes += 2;
             length++;
             break;
+	case 0160:
+	case 0161:
+	case 0162:
+	case 0163:
+	    length++;
+	    ins->rex |= REX_D;
+	    break;
+	case 0164:
+	case 0165:
+	case 0166:
+	case 0167:
+	    length++;
+	    ins->rex |= REX_D|REX_OC;
+	    break;
         case 0170:
             length++;
             break;
+	case 0171:
+	    break;
         case 0300:
         case 0301:
         case 0302:         
@@ -945,7 +968,14 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         }
 
     ins->rex &= rex_mask;
-    if (ins->rex & REX_REAL) {
+    
+    if (ins->rex & REX_D) {
+	if (ins->rex & REX_H) {
+	    errfunc(ERR_NONFATAL, "cannot use high register in drex instruction");
+	    return -1;
+	}
+	length++;
+    } else if (ins->rex & REX_REAL) {
 	if (ins->rex & REX_H) {
 	    errfunc(ERR_NONFATAL, "cannot use high register in rex instruction");
 	    return -1;
@@ -964,7 +994,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 }
 
 #define EMIT_REX()							\
-    if((ins->rex & REX_REAL) && (bits == 64)) {				\
+    if (!(ins->rex & REX_D) && (ins->rex & REX_REAL) && (bits == 64)) {	\
 	ins->rex = (ins->rex & REX_REAL)|REX_P;				\
 	out(offset, segment, &ins->rex, OUT_RAWDATA+1, NO_SEG, NO_SEG); \
 	ins->rex = 0;							\
@@ -1320,11 +1350,32 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             offset++;
             break;
 
+	case 0160:
+	case 0161:
+	case 0162:
+	case 0163:
+	case 0164:
+	case 0165:
+	case 0166:
+	case 0167:
+	    ins->drexdst = regval(&ins->oprs[c & 3]);
+	    break;
+
         case 0170:
             bytes[0] = 0;
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
+
+	case 0171:
+	    bytes[0] =
+		(ins->drexdst << 4) |
+		(ins->rex & REX_OC ? 0x08 : 0) |
+		(ins->rex & (REX_R|REX_X|REX_B));
+	    ins->rex = 0;
+            out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
 
         case 0300:
         case 0301:
@@ -1486,6 +1537,15 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
                     *p++ = ea_data.sib;
+
+		/* DREX suffixes come between the SIB and the displacement */
+		if (ins->rex & REX_D) {
+		    *p++ =
+			(ins->drexdst << 4) |
+			(ins->rex & REX_OC ? 0x08 : 0) |
+			(ins->rex & (REX_R|REX_X|REX_B));
+		    ins->rex = 0;
+		}
 
                 s = p - bytes;
                 out(offset, segment, bytes, OUT_RAWDATA + s,
