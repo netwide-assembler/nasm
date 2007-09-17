@@ -6215,7 +6215,9 @@ registers, which still add their bases.
 
 Position independence in 64-bit mode is significantly simpler, since
 the processor supports \c{RIP}-relative addressing directly; see the
-\c{REL} keyword (\k{effaddr}).
+\c{REL} keyword (\k{effaddr}).  On most 64-bit platforms, it is
+probably desirable to make that the default, using the directive
+\c{DEFAULT REL} (\k{default}).
 
 64-bit programming is relatively similar to 32-bit programming, but
 of course pointers are 64 bits long; additionally, all existing
@@ -6223,6 +6225,58 @@ platforms pass arguments in registers rather than on the stack.
 Furthermore, 64-bit platforms use SSE2 by default for floating point.
 Please see the ABI documentation for your platform.
 
+64-bit platforms differ in the sizes of the fundamental datatypes, not
+just from 32-bit platforms but from each other.  If a specific size
+data type is desired, it is probably best to use the types defined in
+the Standard C header \c{<inttypes.h>}.
+
+\H{unix64} Interfacing to 64-bit C Programs (Unix)
+
+On Unix, the 64-bit ABI is defined by the document:
+
+\W{http://www.x86-64.org/documentation/abi.pdf}\c{http://www.x86-64.org/documentation/abi.pdf}
+
+Although written for AT&T-syntax assembly, the concepts apply equally
+well for NASM-style assembly.  What follows is a simplified summary.
+
+The first six integer arguments (from the left) are passed in \c{RDI},
+\c{RSI}, \c{RDX}, \c{RCX}, \c{R8}, and \c{R9}, in that order.
+Additional integer arguments are passed on the stack.  These
+registers, plus \c{RAX}, \c{R10} and \c{R11} are destroyed by function
+calls, and thus are available for use by the function without saving.
+
+Integer return values are passed in \c{RAX} and \c{RDX}, in that order.
+
+Floating point is done using SSE registers, except for \c{long
+double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM7};
+return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed on the
+stack, and returned in \c{ST(0)} and \c{ST(1)}.
+
+All SSE and x87 registers are destroyed by function calls.
+
+On 64-bit Unix, \c{long} is 64 bits.
+
+\H{win64} Interfacing to 64-bit C Programs (Win64)
+
+The Win64 ABI is described at:
+
+\W{http://msdn2.microsoft.com/en-gb/library/ms794533.aspx}\c{http://msdn2.microsoft.com/en-gb/library/ms794533.aspx}
+
+What follows is a simplified summary.
+
+The first four integer arguments are passwd in \c{RCX}, \c{RDX},
+\c{R8} and \c{R9}, in that order.  Additional integer arguments are
+passed on the stack.  These registers, plus \c{RAX}, \c{R10} and
+\c{R11} are destroyed by function calls, and thus are available for
+use by the function without saving.
+
+Integer return values are passed in \c{RAX} only.
+
+Floating point is done using SSE registers, except for \c{long
+double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM3};
+return is \c{XMM0} only.
+
+On Win64, \c{long} is 32 bits; \c{long long} or \c{_int64} is 64 bits.
 
 \C{trouble} Troubleshooting
 
