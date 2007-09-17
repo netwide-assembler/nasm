@@ -1630,11 +1630,9 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
         case IF_AR2:
             i = 2;
             break;
-#if 0 /* Need to reorganize instruction flags to fit IF_AR3 */
 	case IF_AR3:
 	    i = 3;
 	    break;
-#endif
         default:
             break;              /* Shouldn't happen */
         }
