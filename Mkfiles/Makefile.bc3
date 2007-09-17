@@ -189,7 +189,7 @@ parser.$(OBJ): parser.c insns.h parser.h float.h regs.h regflags.c config.h \
  version.h nasmlib.h nasm.h stdscan.h insnsi.h
 pptok.$(OBJ): pptok.c preproc.h pptok.h nasmlib.h
 preproc.$(OBJ): preproc.c preproc.h macros.c pptok.h regs.h config.h \
- version.h nasmlib.h nasm.h insnsi.h
+ version.h hashtbl.h nasmlib.h nasm.h insnsi.h
 regdis.$(OBJ): regdis.c
 regflags.$(OBJ): regflags.c
 regs.$(OBJ): regs.c
