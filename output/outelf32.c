@@ -203,8 +203,8 @@ void stabs32_deflabel(char *, int32_t, int32_t, int, char *);
 void stabs32_directive(const char *, const char *);
 void stabs32_typevalue(int32_t);
 void stabs32_output(int, void *);
-void stabs32_generate();
-void stabs32_cleanup();
+void stabs32_generate(void);
+void stabs32_cleanup(void);
 
 /* end of stabs debugging stuff */
 
@@ -1256,10 +1256,10 @@ static int32_t elf_segbase(int32_t segment)
 
 static int elf_directive(char *directive, char *value, int pass)
 {
-   (void)directive;
-   (void)value;
-   (void)pass;
-   return 0;
+    (void)directive;
+    (void)value;
+    (void)pass;
+    return 0;
 }
 
 static void elf_filename(char *inname, char *outname, efunc error)
@@ -1344,6 +1344,7 @@ void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 void stabs32_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
     (void)segto;
+
     if (!stabs_filename) {
         stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
         strcpy(stabs_filename, filename);
@@ -1555,7 +1556,7 @@ void stabs32_generate(void)
     stabstrbuf = ssbuf;
 }
 
-void stabs32_cleanup()
+void stabs32_cleanup(void)
 {
     struct linelist *ptr, *del;
     if (!stabslines)

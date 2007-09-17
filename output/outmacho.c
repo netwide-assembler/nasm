@@ -522,13 +522,12 @@ static void macho_output(int32_t secto, const void *data, uint32_t type,
 
 static int32_t macho_section(char *name, int pass, int *bits)
 {
-
-    (void)pass;
-
     int32_t index, originalIndex;
     char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
+
+    (void)pass;
 
     /* Default to 32 bits. */
     if (!name) {

@@ -84,13 +84,12 @@ static int32_t headerlength;
 
 static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
-    
+    int segtext, segdata, segbss;
+
     (void)ldef;
     (void)eval;
 
     maxbits = 64;
-
-    int segtext, segdata, segbss;
 
     /* set up the initial segments */
     segments[0].segname = ".text";
@@ -135,13 +134,12 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 
 static int32_t rdf2_section_names(char *name, int pass, int *bits)
 {
-
-    (void)pass;
-
     int i;
     char *p, *q;
     int code = -1;
     int reserved = 0;
+
+    (void)pass;
 
     /*
      * Default is 32 bits, in the text segment.

@@ -206,7 +206,6 @@ static struct Section *create_section(char *name)
 
 static void bin_cleanup(int debuginfo)
 {
-    (void)debuginfo;      /* placate optimizers */
     struct Section *g, **gp;
     struct Section *gs = NULL, **gsp;
     struct Section *s, **sp;
@@ -216,6 +215,8 @@ static void bin_cleanup(int debuginfo)
     struct Reloc *r;
     uint64_t pend;
     int h;
+
+    (void)debuginfo;      /* placate optimizers */
 
 #ifdef DEBUG
     fprintf(stdout,

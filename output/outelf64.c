@@ -215,8 +215,8 @@ void stabs64_deflabel(char *, int32_t, int32_t, int, char *);
 void stabs64_directive(const char *, const char *);
 void stabs64_typevalue(int32_t);
 void stabs64_output(int, void *);
-void stabs64_generate();
-void stabs64_cleanup();
+void stabs64_generate(void);
+void stabs64_cleanup(void);
 
 /* end of stabs debugging stuff */
 
@@ -1291,7 +1291,7 @@ static int elf_directive(char *directive, char *value, int pass)
     (void)directive;
     (void)value;
     (void)pass;
-   return 0;
+    return 0;
 }
 
 static void elf_filename(char *inname, char *outname, efunc error)
@@ -1525,7 +1525,8 @@ void stabs64_generate(void)
         /* member must be adjusted by adding 3 */
 
         WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
-        WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
+	WRITELONG(rptr, R_X86_64_32);
+	WRITELONG(rptr, ptr->info.section + 3);
 
         numstabs++;
         currfile = mainfileindex;
@@ -1545,7 +1546,8 @@ void stabs64_generate(void)
             /* relocation table entry */
 
             WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
-            WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
+	    WRITELONG(rptr, R_X86_64_32);
+	    WRITELONG(rptr, ptr->info.section + 3);
         }
 
         WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
@@ -1554,7 +1556,8 @@ void stabs64_generate(void)
         /* relocation table entry */
 
         WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
-        WRITEDLONG(rptr, ((int64_t)(ptr->info.section + 3) << 32) | R_X86_64_32);
+	WRITELONG(rptr, R_X86_64_32);
+	WRITELONG(rptr, ptr->info.section + 3);
 
         ptr = ptr->next;
 
