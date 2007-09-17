@@ -42,8 +42,11 @@ struct hash_table *hash_init(void)
  *
  * WARNING: this data is only valid until the very next call of
  * hash_add(); it cannot be "saved" to a later date.
+ *
+ * On success, return a pointer to the "data" element of the hash
+ * structure.
  */
-void *hash_find(struct hash_table *head, const char *key,
+void **hash_find(struct hash_table *head, const char *key,
 		struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
@@ -55,7 +58,7 @@ void *hash_find(struct hash_table *head, const char *key,
 
     while ((np = &tbl[pos])->key) {
 	if (hash == np->hash && !strcmp(key, np->key))
-	    return np->data;
+	    return &np->data;
 	pos = (pos+inc) & mask;
     }
 
@@ -69,9 +72,38 @@ void *hash_find(struct hash_table *head, const char *key,
 }
 
 /*
- * Insert node.
+ * Same as hash_find, but for case-insensitive hashing.
  */
-void hash_add(struct hash_insert *insert, const char *key, void *data)
+void **hash_findi(struct hash_table *head, const char *key,
+		  struct hash_insert *insert)
+{
+    struct hash_tbl_node *np;
+    uint64_t hash = crc64i(key);
+    struct hash_tbl_node *tbl = head->table;
+    size_t mask = head->size-1;
+    size_t pos  = hash & mask;
+    size_t inc  = ((hash >> 32) & mask) | 1;	/* Always odd */
+
+    while ((np = &tbl[pos])->key) {
+	if (hash == np->hash && !nasm_stricmp(key, np->key))
+	    return &np->data;
+	pos = (pos+inc) & mask;
+    }
+
+    /* Not found.  Store info for insert if requested. */
+    if (insert) {
+	insert->head  = head;
+	insert->hash  = hash;
+	insert->where = np;
+    }
+    return NULL;
+}
+
+/*
+ * Insert node.  Return a pointer to the "data" element of the newly
+ * created hash node.
+ */
+void **hash_add(struct hash_insert *insert, const char *key, void *data)
 {
     struct hash_table *head  = insert->head;
     struct hash_tbl_node *np = insert->where;
@@ -89,7 +121,7 @@ void hash_add(struct hash_insert *insert, const char *key, void *data)
 	size_t mask = newsize-1;
 
 	if (head->table) {
-	    struct hash_tbl_node *op;
+	    struct hash_tbl_node *op, *xp;
 	    size_t i;
 
 	    /* Rebalance all the entries */
@@ -98,10 +130,12 @@ void hash_add(struct hash_insert *insert, const char *key, void *data)
 		    size_t pos = op->hash & mask;
 		    size_t inc = ((op->hash >> 32) & mask) | 1;
 		    
-		    while ((np = &newtbl[pos])->data)
+		    while ((xp = &newtbl[pos])->key)
 			pos = (pos+inc) & mask;
 
-		    *np = *op;
+		    *xp = *op;
+		    if (op == np)
+			np = xp;
 		}
 	    }
 	    nasm_free(head->table);
@@ -111,18 +145,47 @@ void hash_add(struct hash_insert *insert, const char *key, void *data)
 	head->size     = newsize;
 	head->max_load = newsize*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
     }
+
+    return &np->data;
 }
 
-void hash_free(struct hash_table *head, void (*free_func)(char *, void *))
+/*
+ * Iterate over all members of a hash set.  For the first call,
+ * iterator should be initialized to NULL.  Returns the data pointer,
+ * or NULL on failure.
+ */
+void *hash_iterate(const struct hash_table *head,
+		   struct hash_tbl_node **iterator,
+		   const char **key)
 {
-    size_t i;
-    struct hash_tbl_node *op;
+    struct hash_tbl_node *np = *iterator;
+    struct hash_tbl_node *ep = head->table + head->size;
 
-    for (i = 0, op = head->table; i < head->size; i++, op++) {
-	if (op->key)
-	    free_func((char *)op->key, op->data);
+    if (!np)
+	np = head->table;
+
+    while (np < ep) {
+	if (np->key) {
+	    *iterator = np+1;
+	    if (key)
+		*key = np->key;
+	    return np->data;
+	}
+	np++;
     }
 
+    *iterator = NULL;
+    if (key)
+	*key = NULL;
+    return NULL;
+}
+
+/*
+ * Free the hash itself.  Doesn't free the data elements; use
+ * hash_iterate() to do that first, if needed.
+ */
+void hash_free(struct hash_table *head)
+{
     nasm_free(head->table);
     nasm_free(head);
 }

@@ -31,10 +31,16 @@ struct hash_insert {
 };
 
 uint64_t crc64(const char *string);
+uint64_t crc64i(const char *string);
 struct hash_table *hash_init(void);
-void *hash_find(struct hash_table *head, const char *string,
+void **hash_find(struct hash_table *head, const char *string,
 		struct hash_insert *insert);
-void hash_add(struct hash_insert *insert, const char *string, void *data);
-void hash_free(struct hash_table *head, void (*free_func)(char *, void *));
+void **hash_findi(struct hash_table *head, const char *string,
+		struct hash_insert *insert);
+void **hash_add(struct hash_insert *insert, const char *string, void *data);
+void *hash_iterate(const struct hash_table *head,
+		   struct hash_tbl_node **iterator,
+		   const char **key);
+void hash_free(struct hash_table *head);
 
 #endif /* NASM_HASHTBL_H */

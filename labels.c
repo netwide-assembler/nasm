@@ -100,7 +100,7 @@ static union label *find_label(char *label, int create)
 {
     char *prev;
     int prevlen, len;
-    union label *lptr;
+    union label *lptr, **lpp;
     char label_str[IDLEN_MAX];
     struct hash_insert ip;
 
@@ -118,7 +118,8 @@ static union label *find_label(char *label, int create)
 	prevlen = 0;
     }
 
-    lptr = hash_find(ltab, label, &ip);
+    lpp = (union label **) hash_find(ltab, label, &ip);
+    lptr = lpp ? *lpp : NULL;
 
     if (lptr || !create)
 	return lptr;

@@ -46,6 +46,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "preproc.h"
+#include "hashtbl.h"
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -56,6 +57,15 @@ typedef struct Line Line;
 typedef struct Include Include;
 typedef struct Cond Cond;
 typedef struct IncPath IncPath;
+
+/*
+ * Note on the storage of both SMacro and MMacros: the hash table
+ * indexes them case-insensitively, and we then have to go through a
+ * linked list of potential case aliases (and, for MMacros, parameter
+ * ranges); this is to preserve the matching semantics of the earlier
+ * code.  If the number of case aliases for a specific macro is a
+ * performance issue, you may want to reconsider your coding style.
+ */
 
 /*
  * Store the definition of a single-line macro.
@@ -320,21 +330,14 @@ static Line *predef = NULL;
 static ListGen *list;
 
 /*
- * The number of hash values we use for the macro lookup tables.
- * FIXME: We should *really* be able to configure this at run time,
- * or even have the hash table automatically expanding when necessary.
- */
-#define NHASH 31
-
-/*
  * The current set of multi-line macros we have defined.
  */
-static MMacro *mmacros[NHASH];
+static struct hash_table *mmacros;
 
 /*
  * The current set of single-line macros we have defined.
  */
-static SMacro *smacros[NHASH];
+static struct hash_table *smacros;
 
 /*
  * The multi-line macro we are currently defining, or the %rep
@@ -481,34 +484,6 @@ static char *prepreproc(char *line)
 }
 
 /*
- * The hash function for macro lookups. Note that due to some
- * macros having case-insensitive names, the hash function must be
- * invariant under case changes. We implement this by applying a
- * perfectly normal hash function to the uppercase of the string.
- */
-static int hash(char *s)
-{
-    unsigned int h = 0;
-    int i = 0;
-    /*
-     * Powers of three, mod 31.
-     */
-    static const int multipliers[] = {
-        1, 3, 9, 27, 19, 26, 16, 17, 20, 29, 25, 13, 8, 24, 10,
-        30, 28, 22, 4, 12, 5, 15, 14, 11, 2, 6, 18, 23, 7, 21
-    };
-
-    while (*s) {
-        h += multipliers[i] * (uint8_t)(toupper(*s));
-        s++;
-        if (++i >= elements(multipliers))
-            i = 0;
-    }
-    h %= NHASH;
-    return h;
-}
-
-/*
  * Free a linked list of tokens.
  */
 static void free_tlist(Token * list)
@@ -542,6 +517,50 @@ static void free_mmacro(MMacro * m)
     nasm_free(m->defaults);
     free_llist(m->expansion);
     nasm_free(m);
+}
+
+/*
+ * Free all currently defined macros, and free the hash tables
+ */
+static void free_macros(void)
+{
+    struct hash_tbl_node *it;
+    const char *key;
+    SMacro *s;
+    MMacro *m;
+
+    it = NULL;
+    while ((s = hash_iterate(smacros, &it, &key)) != NULL) {
+	nasm_free((void *)key);
+	while (s) {
+	    SMacro *ns = s->next;
+	    nasm_free(s->name);
+	    free_tlist(s->expansion);
+	    nasm_free(s);
+	    s = ns;
+	}
+    }
+    hash_free(smacros);
+
+    it = NULL;
+    while ((m = hash_iterate(mmacros, &it, &key)) != NULL) {
+	nasm_free((void *)key);
+	while (m) {
+	    MMacro *nm = m->next;
+	    free_mmacro(m);
+	    m = nm;
+	}
+    }
+    hash_free(mmacros);
+}
+
+/*
+ * Initialize the hash tables
+ */
+static void init_macros(void)
+{
+    smacros = hash_init();
+    mmacros = hash_init();
 }
 
 /*
@@ -1165,6 +1184,39 @@ static FILE *inc_fopen(char *file)
 }
 
 /*
+ * Search for a key in the hash index; adding it if necessary
+ * (in which case we initialize the data pointer to NULL.)
+ */
+static void **
+hash_findi_add(struct hash_table *hash, const char *str)
+{
+    struct hash_insert hi;
+    void **r;
+    char *strx;
+
+    r = hash_findi(hash, str, &hi);
+    if (r)
+	return r;
+
+    strx = nasm_strdup(str);	/* Use a more efficient allocator here? */
+    return hash_add(&hi, strx, NULL);
+}
+
+/*
+ * Like hash_findi, but returns the data element rather than a pointer
+ * to it.  Used only when not adding a new element, hence no third
+ * argument.
+ */
+static void *
+hash_findix(struct hash_table *hash, const char *str)
+{
+    void **p;
+
+    p = hash_findi(hash, str, NULL);
+    return p ? *p : NULL;
+}
+
+/*
  * Determine if we should warn on defining a single-line macro of
  * name `name', with `nparam' parameters. If nparam is 0 or -1, will
  * return TRUE if _any_ single-line macro of that name is defined.
@@ -1191,16 +1243,17 @@ smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
 {
     SMacro *m;
 
-    if (ctx)
+    if (ctx) {
         m = ctx->localmac;
-    else if (name[0] == '%' && name[1] == '$') {
-        if (cstk)
+    } else if (name[0] == '%' && name[1] == '$') {
+	if (cstk)
             ctx = get_ctx(name, FALSE);
         if (!ctx)
             return FALSE;       /* got to return _something_ */
         m = ctx->localmac;
-    } else
-        m = smacros[hash(name)];
+    } else {
+	m = (SMacro *) hash_findix(smacros, name);
+    }
 
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
@@ -1423,18 +1476,18 @@ static int if_condition(Token * tline, enum preproc_token ct)
                 tline = tline->next;
                 searching.plus = TRUE;
             }
-            mmac = mmacros[hash(searching.name)];
-            while (mmac) {
-                if (!strcmp(mmac->name, searching.name) &&
-                    (mmac->nparam_min <= searching.nparam_max
-                     || searching.plus)
-                    && (searching.nparam_min <= mmac->nparam_max
-                        || mmac->plus)) {
-                    found = TRUE;
-                    break;
-                }
-                mmac = mmac->next;
-            }
+            mmac = (MMacro *) hash_findix(mmacros, searching.name);
+	    while (mmac) {
+		if (!strcmp(mmac->name, searching.name) &&
+		    (mmac->nparam_min <= searching.nparam_max
+		     || searching.plus)
+		    && (searching.nparam_min <= mmac->nparam_max
+			|| mmac->plus)) {
+		    found = TRUE;
+		    break;
+		}
+		mmac = mmac->next;
+	    }
             nasm_free(searching.name);
 	    j = found;
 	    break;
@@ -1530,7 +1583,7 @@ static int do_directive(Token * tline)
     Context *ctx;
     Cond *cond;
     SMacro *smac, **smhead;
-    MMacro *mmac;
+    MMacro *mmac, **mmhead;
     Token *t, *tt, *param_start, *macro_start, *last, **tptr, *origline;
     Line *l;
     struct tokenval tokval;
@@ -1787,20 +1840,8 @@ static int do_directive(Token * tline)
     case PP_CLEAR:
         if (tline->next)
             error(ERR_WARNING, "trailing garbage after `%%clear' ignored");
-        for (j = 0; j < NHASH; j++) {
-            while (mmacros[j]) {
-                MMacro *m = mmacros[j];
-                mmacros[j] = m->next;
-                free_mmacro(m);
-            }
-            while (smacros[j]) {
-                SMacro *s = smacros[j];
-                smacros[j] = smacros[j]->next;
-                nasm_free(s->name);
-                free_tlist(s->expansion);
-                nasm_free(s);
-            }
-        }
+	free_macros();
+	init_macros();
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2030,7 +2071,7 @@ static int do_directive(Token * tline)
             tline = tline->next;
             defining->nolist = TRUE;
         }
-        mmac = mmacros[hash(defining->name)];
+        mmac = (MMacro *) hash_findix(mmacros, defining->name);
         while (mmac) {
             if (!strcmp(mmac->name, defining->name) &&
                 (mmac->nparam_min <= defining->nparam_max
@@ -2065,9 +2106,9 @@ static int do_directive(Token * tline)
             error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
             return DIRECTIVE_FOUND;
         }
-        k = hash(defining->name);
-        defining->next = mmacros[k];
-        mmacros[k] = defining;
+	mmhead = (MMacro **) hash_findi_add(mmacros, defining->name);
+        defining->next = *mmhead;
+	*mmhead = defining;
         defining = NULL;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2236,10 +2277,7 @@ static int do_directive(Token * tline)
         }
 
         ctx = get_ctx(tline->text, FALSE);
-        if (!ctx)
-            smhead = &smacros[hash(tline->text)];
-        else
-            smhead = &ctx->localmac;
+
         mname = tline->text;
         last = tline;
         param_start = tline = tline->next;
@@ -2330,6 +2368,11 @@ static int do_directive(Token * tline)
                 free_tlist(smac->expansion);
             }
         } else {
+	    if (!ctx)
+		smhead = (SMacro **) hash_findi_add(smacros, mname);
+	    else
+		smhead = &ctx->localmac;
+
             smac = nasm_malloc(sizeof(SMacro));
             smac->next = *smhead;
             *smhead = smac;
@@ -2361,29 +2404,31 @@ static int do_directive(Token * tline)
         /* Find the context that symbol belongs to */
         ctx = get_ctx(tline->text, FALSE);
         if (!ctx)
-            smhead = &smacros[hash(tline->text)];
+            smhead = (SMacro **) hash_findi(smacros, tline->text, NULL);
         else
             smhead = &ctx->localmac;
 
-        mname = tline->text;
-        last = tline;
-        last->next = NULL;
+	if (smhead) {
+	    SMacro *s, **sp;
 
-        /*
-         * We now have a macro name... go hunt for it.
-         */
-        while (smacro_defined(ctx, mname, -1, &smac, 1)) {
-            /* Defined, so we need to find its predecessor and nuke it */
-            SMacro **s;
-            for (s = smhead; *s && *s != smac; s = &(*s)->next) ;
-            if (*s) {
-                *s = smac->next;
-                nasm_free(smac->name);
-                free_tlist(smac->expansion);
-                nasm_free(smac);
-            }
-        }
-        free_tlist(origline);
+	    mname = tline->text;
+	    last = tline;
+	    last->next = NULL;
+	    
+	    /*
+	     * We now have a macro name... go hunt for it.
+	     */
+	    for (sp = smhead; *sp; sp = &(*sp)->next) {
+		s = *sp;
+		if (!mstrcmp(s->name, tline->text, s->casesense)) {
+		    *sp = s->next;
+		    nasm_free(s->name);
+		    free_tlist(s->expansion);
+		    nasm_free(s);
+		}
+	    }
+	    free_tlist(origline);
+	}
         return DIRECTIVE_FOUND;
 
     case PP_STRLEN:
@@ -2399,10 +2444,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
         ctx = get_ctx(tline->text, FALSE);
-        if (!ctx)
-            smhead = &smacros[hash(tline->text)];
-        else
-            smhead = &ctx->localmac;
+
         mname = tline->text;
         last = tline;
         tline = expand_smacro(tline->next);
@@ -2445,6 +2487,11 @@ static int do_directive(Token * tline)
                 free_tlist(smac->expansion);
             }
         } else {
+	    if (!ctx)
+		smhead = (SMacro **) hash_findi_add(smacros, mname);
+	    else
+		smhead = &ctx->localmac;
+
             smac = nasm_malloc(sizeof(SMacro));
             smac->next = *smhead;
             *smhead = smac;
@@ -2471,10 +2518,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
         ctx = get_ctx(tline->text, FALSE);
-        if (!ctx)
-            smhead = &smacros[hash(tline->text)];
-        else
-            smhead = &ctx->localmac;
+
         mname = tline->text;
         last = tline;
         tline = expand_smacro(tline->next);
@@ -2542,6 +2586,11 @@ static int do_directive(Token * tline)
                 free_tlist(smac->expansion);
             }
         } else {
+	    if (!ctx)
+		smhead = (SMacro **) hash_findi_add(smacros, tline->text);
+	    else
+		smhead = &ctx->localmac;
+
             smac = nasm_malloc(sizeof(SMacro));
             smac->next = *smhead;
             *smhead = smac;
@@ -2570,10 +2619,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
         ctx = get_ctx(tline->text, FALSE);
-        if (!ctx)
-            smhead = &smacros[hash(tline->text)];
-        else
-            smhead = &ctx->localmac;
+
         mname = tline->text;
         last = tline;
         tline = expand_smacro(tline->next);
@@ -2627,6 +2673,11 @@ static int do_directive(Token * tline)
                 free_tlist(smac->expansion);
             }
         } else {
+	    if (!ctx)
+		smhead = (SMacro **) hash_findi_add(smacros, mname);
+	    else
+		smhead = &ctx->localmac;
+
             smac = nasm_malloc(sizeof(SMacro));
             smac->next = *smhead;
             *smhead = smac;
@@ -2925,53 +2976,54 @@ static Token *expand_smacro(Token * tline)
                 ctx = get_ctx(mname, TRUE);
             else
                 ctx = NULL;
-            if (!ctx)
-                head = smacros[hash(mname)];
-            else
+            if (!ctx) {
+		head = (SMacro *) hash_findix(smacros, mname);
+	    } else {
                 head = ctx->localmac;
+	    }
             /*
              * We've hit an identifier. As in is_mmacro below, we first
              * check whether the identifier is a single-line macro at
              * all, then think about checking for parameters if
              * necessary.
              */
-            for (m = head; m; m = m->next)
-                if (!mstrcmp(m->name, mname, m->casesense))
-                    break;
-            if (m) {
-                mstart = tline;
-                params = NULL;
-                paramsize = NULL;
-                if (m->nparam == 0) {
-                    /*
-                     * Simple case: the macro is parameterless. Discard the
-                     * one token that the macro call took, and push the
-                     * expansion back on the to-do stack.
-                     */
-                    if (!m->expansion) {
-                        if (!strcmp("__FILE__", m->name)) {
-                            int32_t num = 0;
-                            src_get(&num, &(tline->text));
-                            nasm_quote(&(tline->text));
-                            tline->type = TOK_STRING;
+	    for (m = head; m; m = m->next)
+		if (!mstrcmp(m->name, mname, m->casesense))
+		    break;
+	    if (m) {
+		mstart = tline;
+		params = NULL;
+		paramsize = NULL;
+		if (m->nparam == 0) {
+		    /*
+		     * Simple case: the macro is parameterless. Discard the
+		     * one token that the macro call took, and push the
+		     * expansion back on the to-do stack.
+		     */
+		    if (!m->expansion) {
+			if (!strcmp("__FILE__", m->name)) {
+			    int32_t num = 0;
+			    src_get(&num, &(tline->text));
+			    nasm_quote(&(tline->text));
+			    tline->type = TOK_STRING;
+			    continue;
+			}
+			if (!strcmp("__LINE__", m->name)) {
+			    nasm_free(tline->text);
+			    make_tok_num(tline, src_get_linnum());
+			    continue;
+			}
+			if (!strcmp("__BITS__", m->name)) {
+			    nasm_free(tline->text);
+			    make_tok_num(tline, globalbits);
                             continue;
-                        }
-                        if (!strcmp("__LINE__", m->name)) {
-                            nasm_free(tline->text);
-                            make_tok_num(tline, src_get_linnum());
-                            continue;
-                        }
-                        if (!strcmp("__BITS__", m->name)) {
-                            nasm_free(tline->text);
-                            make_tok_num(tline, globalbits);
-                            continue;
-                        }
-                        tline = delete_Token(tline);
-                        continue;
-                    }
-                } else {
-                    /*
-                     * Complicated case: at least one macro with this name
+			}
+			tline = delete_Token(tline);
+			continue;
+		    }
+		} else {
+		    /*
+		     * Complicated case: at least one macro with this name
                      * exists and takes parameters. We must find the
                      * parameters in the call, count them, find the SMacro
                      * that corresponds to that form of the macro call, and
@@ -3298,7 +3350,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
     Token **params;
     int nparam;
 
-    head = mmacros[hash(tline->text)];
+    head = (MMacro *) hash_findix(mmacros, tline->text);
 
     /*
      * Efficiency: first we see if any macro exists with the given
@@ -3576,8 +3628,6 @@ static void
 pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
          ListGen * listgen)
 {
-    int h;
-
     _error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
@@ -3594,10 +3644,7 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
         error(ERR_FATAL | ERR_NOFILE, "unable to open input file `%s'",
               file);
     defining = NULL;
-    for (h = 0; h < NHASH; h++) {
-        mmacros[h] = NULL;
-        smacros[h] = NULL;
-    }
+    init_macros();
     unique = 0;
     if (tasm_compatible_mode) {
         stdmacpos = stdmac;
@@ -3817,8 +3864,6 @@ static char *pp_getline(void)
 
 static void pp_cleanup(int pass)
 {
-    int h;
-
     if (defining) {
         error(ERR_NONFATAL, "end of file while still defining macro `%s'",
               defining->name);
@@ -3826,20 +3871,7 @@ static void pp_cleanup(int pass)
     }
     while (cstk)
         ctx_pop();
-    for (h = 0; h < NHASH; h++) {
-        while (mmacros[h]) {
-            MMacro *m = mmacros[h];
-            mmacros[h] = mmacros[h]->next;
-            free_mmacro(m);
-        }
-        while (smacros[h]) {
-            SMacro *s = smacros[h];
-            smacros[h] = smacros[h]->next;
-            nasm_free(s->name);
-            free_tlist(s->expansion);
-            nasm_free(s);
-        }
-    }
+    free_macros();
     while (istk) {
         Include *i = istk;
         istk = istk->next;

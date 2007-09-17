@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <ctype.h>
 
 static const uint64_t crc64_tab[256] = {
     UINT64_C(0x0000000000000000), UINT64_C(0x7ad870c830358979),
@@ -137,6 +138,19 @@ uint64_t crc64(const char *str)
     uint8_t c;
 
     while ((c = *str++) != 0) {
+	crc = crc64_tab[(uint8_t)crc ^ c] ^ (crc >> 8);
+    }
+
+    return crc;
+}
+
+uint64_t crc64i(const char *str)
+{
+    uint64_t crc = UINT64_C(0xffffffffffffffff);
+    uint8_t c;
+
+    while ((c = *str++) != 0) {
+	c = tolower(c);
 	crc = crc64_tab[(uint8_t)crc ^ c] ^ (crc >> 8);
     }
 
