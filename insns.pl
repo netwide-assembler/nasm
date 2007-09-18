@@ -102,10 +102,11 @@ if ( !defined($output) || $output eq 'd' ) {
     print D "\n";
     
     print D "static const struct itemplate instrux[] = {\n";
+    $n = 0;
     foreach $j (@big) {
-	print D "    $j\n";
+	printf D "    /* %4d */ %s\n", $n++, $j;
     }
-	print D "    ITEMPLATE_END\n};\n\n";
+    print D "    ITEMPLATE_END\n};\n\n";
     
     for ($c=0; $c<256; $c++) {
 	$h = sprintf "%02X", $c;

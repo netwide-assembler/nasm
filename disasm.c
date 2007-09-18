@@ -167,15 +167,45 @@ static const char *whichcond(int condval)
 }
 
 /*
+ * Process a DREX suffix
+ */
+static uint8_t *do_drex(uint8_t *data, insn *ins)
+{
+    uint8_t drex = *data++;
+    operand *dst = &ins->oprs[ins->drexdst];
+
+    if ((drex & 8) != ((ins->rex & REX_OC) ? 8 : 0))
+	return NULL;	/* OC0 mismatch */
+    ins->rex = (ins->rex & ~7) | (drex & 7);
+    
+    dst->segment = SEG_RMREG;
+    dst->basereg = drex >> 4;
+    return data;
+}
+
+
+/*
  * Process an effective address (ModRM) specification.
  */
 static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
-		      int segsize, operand * op, int rex)
+		      int segsize, operand * op, insn *ins)
 {
     int mod, rm, scale, index, base;
+    int rex;
+    uint8_t sib = 0;
 
     mod = (modrm >> 6) & 03;
     rm = modrm & 07;
+
+    if (mod != 3 && rm == 4 && asize != 16)
+	sib = *data++;
+
+    if (ins->rex & REX_D) {
+	data = do_drex(data, ins);
+	if (!data)
+	    return NULL;
+    }
+    rex = ins->rex;
 
     if (mod == 3) {             /* pure register version */
         op->basereg = rm+(rex & REX_B ? 8 : 0);
@@ -282,10 +312,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
         }
 
         if (rm == 4) {          /* process SIB */
-            scale = (*data >> 6) & 03;
-            index = (*data >> 3) & 07;
-            base = *data & 07;
-            data++;
+            scale = (sib >> 6) & 03;
+            index = (sib >> 3) & 07;
+            base = sib & 07;
 
             op->scale = 1 << scale;
 
@@ -501,26 +530,37 @@ static int matches(const struct itemplate *t, uint8_t *data,
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
         } else if (c >= 0100 && c < 0140) {
             int modrm = *data++;
-            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
-		(ins->rex & REX_R ? 8 : 0);
             ins->oprs[c & 07].segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], ins->rex);
+			 &ins->oprs[(c >> 3) & 07], ins);
+	    if (!data)
+		return FALSE;
+            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
+		(ins->rex & REX_R ? 8 : 0);
         } else if (c >= 0140 && c <= 0143) {
             ins->oprs[c - 0140].offset = getu16(data);
 	    data += 2;
         } else if (c >= 0150 && c <= 0153) {
 	    ins->oprs[c - 0150].offset = getu32(data);
 	    data += 4;
+	} else if (c >= 0160 && c <= 0167) {
+	    ins->rex |= (c & 4) ? REX_D|REX_OC : REX_D;
+	    ins->drexdst = c & 3;
         } else if (c == 0170) {
             if (*data++)
                 return FALSE;
+	} else if (c == 0171) {
+	    data = do_drex(data, ins);
+	    if (!data)
+		return FALSE;
         } else if (c >= 0200 && c <= 0277) {
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return FALSE;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], ins->rex);
+                         &ins->oprs[(c >> 3) & 07], ins);
+	    if (!data)
+		return FALSE;
         } else if (c >= 0300 && c <= 0303) {
             a_used = TRUE;
         } else if (c == 0310) {
@@ -604,6 +644,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    o_used = TRUE;
 	}
     }
+
+    /* REX cannot be combined with DREX */
+    if ((ins->rex & REX_D) && (prefix->rex))
+	return FALSE;
 
     /*
      * Check for unused rep or a/o prefixes.
@@ -692,19 +736,21 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	     * XXX: Need to make sure this is actually correct.
              */
             for (i = 0; i < (*p)->operands; i++) {
-                if (
-                       /* If it's a mem-only EA but we have a register, die. */
-                       ((tmp_ins.oprs[i].segment & SEG_RMREG) &&
-                        !(MEMORY & ~(*p)->opd[i])) ||
-                       /* If it's a reg-only EA but we have a memory ref, die. */
-                       (!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
-                        !(REG_EA & ~(*p)->opd[i]) &&
-                        !((*p)->opd[i] & REG_SMASK)) ||
-                       /* Register type mismatch (eg FS vs REG_DESS): die. */
-                       ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
-                         (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
-                        !whichreg((*p)->opd[i],
-                                  tmp_ins.oprs[i].basereg, tmp_ins.rex))) {
+                if (!((*p)->opd[i] & SAME_AS) &&
+		    (
+			/* If it's a mem-only EA but we have a register, die. */
+			((tmp_ins.oprs[i].segment & SEG_RMREG) &&
+			 !(MEMORY & ~(*p)->opd[i])) ||
+			/* If it's a reg-only EA but we have a memory ref, die. */
+			(!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
+			 !(REG_EA & ~(*p)->opd[i]) &&
+			 !((*p)->opd[i] & REG_SMASK)) ||
+			/* Register type mismatch (eg FS vs REG_DESS): die. */
+			((((*p)->opd[i] & (REGISTER | FPUREG)) ||
+			  (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
+			 !whichreg((*p)->opd[i],
+				   tmp_ins.oprs[i].basereg, tmp_ins.rex))
+			)) {
                     works = FALSE;
                     break;
                 }
@@ -793,107 +839,116 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     colon = FALSE;
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
+	opflags_t t = (*p)->opd[i];
+	const operand *o = &ins.oprs[i];
+	int64_t offs;
+
+	if (t & SAME_AS) {
+	    o = &ins.oprs[t & ~SAME_AS];
+	    t = (*p)->opd[t & ~SAME_AS];
+	}
+
         output[slen++] = (colon ? ':' : i == 0 ? ' ' : ',');
 
-        if (ins.oprs[i].segment & SEG_RELATIVE) {
-            ins.oprs[i].offset += offset + length;
+	offs = o->offset;
+        if (o->segment & SEG_RELATIVE) {
+            offs += offset + length;
             /*
              * sort out wraparound
              */
-            if (!(ins.oprs[i].segment & (SEG_32BIT|SEG_64BIT)))
-		ins.oprs[i].offset &= 0xffff;
+            if (!(o->segment & (SEG_32BIT|SEG_64BIT)))
+		offs &= 0xffff;
             /*
              * add sync marker, if autosync is on
              */
             if (autosync)
-                add_sync(ins.oprs[i].offset, 0L);
+                add_sync(offs, 0L);
         }
 
-        if ((*p)->opd[i] & COLON)
+        if (t & COLON)
             colon = TRUE;
         else
             colon = FALSE;
 
-        if (((*p)->opd[i] & (REGISTER | FPUREG)) ||
-            (ins.oprs[i].segment & SEG_RMREG)) {
-            ins.oprs[i].basereg = whichreg((*p)->opd[i],
-                                           ins.oprs[i].basereg, ins.rex);
-            if ((*p)->opd[i] & TO)
+        if ((t & (REGISTER | FPUREG)) ||
+            (o->segment & SEG_RMREG)) {
+	    enum reg_enum reg;
+            reg = whichreg(t, o->basereg, ins.rex);
+            if (t & TO)
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
             slen += snprintf(output + slen, outbufsize - slen, "%s",
-                             reg_names[ins.oprs[i].basereg -
-                                       EXPR_REG_START]);
-        } else if (!(UNITY & ~(*p)->opd[i])) {
+                             reg_names[reg - EXPR_REG_START]);
+        } else if (!(UNITY & ~t)) {
             output[slen++] = '1';
-        } else if ((*p)->opd[i] & IMMEDIATE) {
-            if ((*p)->opd[i] & BITS8) {
+        } else if (t & IMMEDIATE) {
+            if (t & BITS8) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "byte ");
-                if (ins.oprs[i].segment & SEG_SIGNED) {
-                    if (ins.oprs[i].offset < 0) {
-                        ins.oprs[i].offset *= -1;
+                if (o->segment & SEG_SIGNED) {
+                    if (offs < 0) {
+                        offs *= -1;
                         output[slen++] = '-';
                     } else
                         output[slen++] = '+';
                 }
-            } else if ((*p)->opd[i] & BITS16) {
+            } else if (t & BITS16) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "word ");
-            } else if ((*p)->opd[i] & BITS32) {
+            } else if (t & BITS32) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "dword ");
-            } else if ((*p)->opd[i] & BITS64) {
+            } else if (t & BITS64) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "qword ");
-            } else if ((*p)->opd[i] & NEAR) {
+            } else if (t & NEAR) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "near ");
-            } else if ((*p)->opd[i] & SHORT) {
+            } else if (t & SHORT) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "short ");
             }
             slen +=
                 snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
-                         ins.oprs[i].offset);
-        } else if (!(MEM_OFFS & ~(*p)->opd[i])) {
+                         offs);
+        } else if (!(MEM_OFFS & ~t)) {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%"PRIx64"]",
                          (segover ? segover : ""),
                          (segover ? ":" : ""),
-                         (ins.oprs[i].addr_size ==
-                          32 ? "dword " : ins.oprs[i].addr_size ==
-                          16 ? "word " : ""), ins.oprs[i].offset);
+                         (o->addr_size ==
+                          32 ? "dword " : o->addr_size ==
+                          16 ? "word " : ""), offs);
             segover = NULL;
-        } else if (!(REGMEM & ~(*p)->opd[i])) {
+        } else if (!(REGMEM & ~t)) {
             int started = FALSE;
-            if ((*p)->opd[i] & BITS8)
+            if (t & BITS8)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "byte ");
-            if ((*p)->opd[i] & BITS16)
+            if (t & BITS16)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "word ");
-            if ((*p)->opd[i] & BITS32)
+            if (t & BITS32)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "dword ");
-            if ((*p)->opd[i] & BITS64)
+            if (t & BITS64)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "qword ");
-            if ((*p)->opd[i] & BITS80)
+            if (t & BITS80)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "tword ");
-            if ((*p)->opd[i] & FAR)
+            if (t & FAR)
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
-            if ((*p)->opd[i] & NEAR)
+            if (t & NEAR)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "near ");
             output[slen++] = '[';
-            if (ins.oprs[i].addr_size)
+            if (o->addr_size)
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 (ins.oprs[i].addr_size == 64 ? "qword " :
-				  ins.oprs[i].addr_size == 32 ? "dword " :
-                                  ins.oprs[i].addr_size == 16 ? "word " :
+                                 (o->addr_size == 64 ? "qword " :
+				  o->addr_size == 32 ? "dword " :
+                                  o->addr_size == 16 ? "word " :
 				  ""));
-	    if (ins.oprs[i].eaflags & EAF_REL)
+	    if (o->eaflags & EAF_REL)
 		slen += snprintf(output + slen, outbufsize - slen, "rel ");
             if (segover) {
                 slen +=
@@ -901,27 +956,27 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                              segover);
                 segover = NULL;
             }
-            if (ins.oprs[i].basereg != -1) {
+            if (o->basereg != -1) {
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 reg_names[(ins.oprs[i].basereg -
+                                 reg_names[(o->basereg -
                                             EXPR_REG_START)]);
                 started = TRUE;
             }
-            if (ins.oprs[i].indexreg != -1) {
+            if (o->indexreg != -1) {
                 if (started)
                     output[slen++] = '+';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 reg_names[(ins.oprs[i].indexreg -
+                                 reg_names[(o->indexreg -
                                             EXPR_REG_START)]);
-                if (ins.oprs[i].scale > 1)
+                if (o->scale > 1)
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",
-                                 ins.oprs[i].scale);
+                                 o->scale);
                 started = TRUE;
             }
-            if (ins.oprs[i].segment & SEG_DISP8) {
+            if (o->segment & SEG_DISP8) {
 		int minus = 0;
-		int8_t offset = ins.oprs[i].offset;
+		int8_t offset = offs;
 		if (offset < 0) {
 		    minus = 1;
 		    offset = -offset;
@@ -929,9 +984,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx8"",
 			     minus ? "-" : "+", offset);
-            } else if (ins.oprs[i].segment & SEG_DISP16) {
+            } else if (o->segment & SEG_DISP16) {
 		int minus = 0;
-		int16_t offset = ins.oprs[i].offset;
+		int16_t offset = offs;
 		if (offset < 0) {
 		    minus = 1;
 		    offset = -offset;
@@ -939,9 +994,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx16"",
 			     minus ? "-" : started ? "+" : "", offset);
-            } else if (ins.oprs[i].segment & SEG_DISP32) {
+            } else if (o->segment & SEG_DISP32) {
 		    char *prefix = "";
-		    int32_t offset = ins.oprs[i].offset;
+		    int32_t offset = offs;
 		    if (offset < 0) {
 			offset = -offset;
 			prefix = "-";
