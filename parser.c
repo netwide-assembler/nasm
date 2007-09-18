@@ -230,30 +230,36 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 if (i == TOKEN_FLOAT) {
                     eop->type = EOT_DB_STRING;
                     result->eops_float = TRUE;
-                    if (result->opcode == I_DD)
+		    switch (result->opcode) {
+		    case I_DW:
+			eop->stringlen = 2;
+			break;
+		    case I_DD:
                         eop->stringlen = 4;
-                    else if (result->opcode == I_DQ)
+			break;
+		    case I_DQ:
                         eop->stringlen = 8;
-                    else if (result->opcode == I_DT)
+			break;
+		    case I_DT:
                         eop->stringlen = 10;
-		    else if (result->opcode == I_DO)
-			eop->stringlen = 16;
-                    else {
+			break;
+		    default:
                         error(ERR_NONFATAL, "floating-point constant"
-                              " encountered in `D%c' instruction",
-                              result->opcode == I_DW ? 'W' : 'B');
+                              " encountered in `d%c' instruction"
+			      ? (result->opcode == I_DO) ? 'o' : 'b');
                         /*
                          * fix suggested by Pedro Gimeno... original line
                          * was:
                          * eop->type = EOT_NOTHING;
                          */
                         eop->stringlen = 0;
+			break;
                     }
                     eop = nasm_realloc(eop, sizeof(extop) + eop->stringlen);
                     tail = &eop->next;
                     *fixptr = eop;
                     eop->stringval = (char *)eop + sizeof(extop);
-                    if (eop->stringlen < 4 ||
+                    if (!eop->stringlen ||
                         !float_const(tokval.t_charptr, sign,
                                      (uint8_t *)eop->stringval,
                                      eop->stringlen, error))

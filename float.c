@@ -213,6 +213,7 @@ static int ieee_round(uint16_t *mant, int i)
 
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
+/* 64-bit format with 52-bit mantissa and 11-bit exponent */
 static int to_double(char *str, int32_t sign, uint8_t *result,
                      efunc error)
 {
@@ -275,6 +276,7 @@ static int to_double(char *str, int32_t sign, uint8_t *result,
     return 1;                   /* success */
 }
 
+/* 32-bit format with 23-bit mantissa and 8-bit exponent */
 static int to_float(char *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
@@ -330,6 +332,64 @@ static int to_float(char *str, int32_t sign, uint8_t *result,
     return 1;
 }
 
+/* 16-bit format with 10-bit mantissa and 5-bit exponent.
+   Defined in IEEE 754r.  Used in SSE5.  See the AMD SSE5 manual, AMD
+   document number 43479. */
+static int to_float16(char *str, int32_t sign, uint8_t *result,
+		      efunc error)
+{
+    uint16_t mant[MANT_WORDS];
+    int32_t exponent;
+
+    sign = (sign < 0 ? 0x8000L : 0L);
+
+    ieee_flconvert(str, mant, &exponent, error);
+    if (mant[0] & 0x8000) {
+        /*
+         * Non-zero.
+         */
+        exponent--;
+        if (exponent >= -14 && exponent <= 16) {
+            /*
+             * Normalised.
+             */
+            exponent += 15;
+            ieee_shr(mant, 5);
+            ieee_round(mant, 1);
+            if (mant[0] & 0x800)        /* did we scale up by one? */
+                ieee_shr(mant, 1), exponent++;
+            mant[0] &= 0x3FF;    /* remove leading one */
+            put(result + 0, (exponent << 7) | mant[0] | sign);
+        } else if (exponent < -14 && exponent >= -24) {
+            /*
+             * Denormal.
+             */
+            int shift = -(exponent + 8);
+            int sh = shift % 16, wds = shift / 16;
+            ieee_shr(mant, sh);
+            if (ieee_round(mant, 1 - wds)
+                || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
+                ieee_shr(mant, 1);
+                if (sh == 0)
+                    mant[0] |= 0x8000;
+                exponent++;
+            }
+            put(result + 0, (wds == 0 ? mant[0] : 0) | sign);
+        } else {
+            if (exponent > 0) {
+                error(ERR_NONFATAL, "overflow in floating-point constant");
+                return 0;
+            } else
+                memset(result, 0, 2);
+        }
+    } else {
+        memset(result, 0, 2);
+    }
+    return 1;
+}
+
+/* 80-bit format with 64-bit mantissa *including an explicit integer 1*
+   and 15-bit exponent. */
 static int to_ldoub(char *str, int32_t sign, uint8_t *result,
                     efunc error)
 {
@@ -394,13 +454,16 @@ static int to_ldoub(char *str, int32_t sign, uint8_t *result,
 int float_const(char *number, int32_t sign, uint8_t *result, int bytes,
                 efunc error)
 {
-    if (bytes == 4)
+    switch (bytes) {
+    case 2:
+	return to_float16(number, sign, result, error);
+    case 4:
         return to_float(number, sign, result, error);
-    else if (bytes == 8)
+    case 8:
         return to_double(number, sign, result, error);
-    else if (bytes == 10)
+    case 10:
         return to_ldoub(number, sign, result, error);
-    else {
+    default:
         error(ERR_PANIC, "strange value %d passed to float_const", bytes);
         return 0;
     }
