@@ -856,6 +856,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 	case 0163:
 	    length++;
 	    ins->rex |= REX_D;
+	    ins->drexdst = regval(&ins->oprs[c & 3]);
 	    break;
 	case 0164:
 	case 0165:
@@ -863,6 +864,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 	case 0167:
 	    length++;
 	    ins->rex |= REX_D|REX_OC;
+	    ins->drexdst = regval(&ins->oprs[c & 3]);
 	    break;
         case 0170:
             length++;
@@ -974,6 +976,11 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 	    errfunc(ERR_NONFATAL, "cannot use high register in drex instruction");
 	    return -1;
 	}
+	if (bits != 64 && ((ins->rex & (REX_W|REX_X|REX_B)) ||
+			   ins->drexdst > 7)) {
+	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+	    return -1;
+	}
 	length++;
     } else if (ins->rex & REX_REAL) {
 	if (ins->rex & REX_H) {
@@ -985,8 +992,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 		    cpu >= IF_X86_64)) {
 	    length++;
 	} else {
-	  errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
-	  return -1;
+	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+	    return -1;
 	}
     }
 
@@ -1358,7 +1365,6 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 	case 0165:
 	case 0166:
 	case 0167:
-	    ins->drexdst = regval(&ins->oprs[c & 3]);
 	    break;
 
         case 0170:
@@ -1663,7 +1669,12 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
      * Check that the operand flags all match up
      */
     for (i = 0; i < itemp->operands; i++) {
-        if (itemp->opd[i] & ~instruction->oprs[i].type ||
+	if (itemp->opd[i] & SAME_AS) {
+	    int j = itemp->opd[i] & ~SAME_AS;
+	    if (instruction->oprs[i].type != instruction->oprs[j].type ||
+		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
+		return 0;
+	} else  if (itemp->opd[i] & ~instruction->oprs[i].type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~instruction->oprs[i].type & ~SIZE_MASK) ||

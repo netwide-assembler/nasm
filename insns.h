@@ -21,7 +21,7 @@
 struct itemplate {
     enum opcode opcode;		/* the token, passed from "parser.c" */
     int operands;		/* number of operands */
-    int32_t opd[MAX_OPERANDS];	/* bit flags for operand types */
+    opflags_t opd[MAX_OPERANDS]; /* bit flags for operand types */
     const char *code;		/* the code it assembles to */
     uint32_t flags;		/* some flags */
 };
@@ -90,6 +90,7 @@ extern const struct itemplate * const * const itable[];
 #define IF_SSSE3  0x00200000UL  /* it's an SSSE3 instruction */
 #define IF_SSE41  0x00400000UL  /* it's an SSE4.1 instruction */
 #define IF_SSE42  0x00800000UL  /* it's an SSE4.2 instruction */
+#define IF_SSE5   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                         /* also the highest possible processor */

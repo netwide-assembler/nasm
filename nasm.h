@@ -438,8 +438,15 @@ enum {
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
  *
- * Bits 27-31 are currently unallocated.
+ * Bits 27-29 & 31 are currently unallocated.
+ *
+ * 30: SAME_AS
+ * Special flag only used in instruction patterns; means this operand
+ * has to be identical to another operand.  Currently only supported
+ * for registers.
  */
+
+typedef uint32_t opflags_t;
 
 /* Size, and other attributes, of the operand */
 #define BITS8     	0x00000001L
@@ -526,6 +533,9 @@ enum {
 /* special type of immediate operand */
 #define UNITY		0x00012000L   /* for shift/rotate instructions */
 #define SBYTE		0x00022000L   /* for op r16/32,immediate instrs. */
+
+/* special flags */
+#define SAME_AS		0x40000000L
 
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
