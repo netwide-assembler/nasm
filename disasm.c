@@ -671,9 +671,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             int32_t offset, int autosync, uint32_t prefer)
 {
     const struct itemplate * const *p, * const *best_p;
+    const struct disasm_index *ix;
+    uint8_t *dp;
     int length, best_length = 0;
     char *segover;
-    int i, slen, colon;
+    int i, slen, colon, n;
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
@@ -728,7 +730,14 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     best_p = NULL;
     best_pref = INT_MAX;
 
-    for (p = itable[*data]; *p; p++) {
+    dp = data;
+    ix = itable + *dp++;
+    while (ix->n == (size_t)-1) {
+	ix = (const struct disasm_index *)ix->p + *dp++;
+    }
+
+    p = (const struct itemplate * const *)ix->p;
+    for (n = ix->n; n; n--, p++) {
         if ((length = matches(*p, data, &prefix, segsize, &tmp_ins))) {
             works = TRUE;
             /*

@@ -26,9 +26,18 @@ struct itemplate {
     uint32_t flags;		/* some flags */
 };
 
+/* Disassembler table structure */
+/* If n == -1, then p points to another table of 256
+   struct disasm_index, otherwise p points to a list of n
+   struct itemplates to consider. */
+struct disasm_index {
+    const void *p;
+    int n;
+};
+
 /* Tables for the assembler and disassembler, respectively */
 extern const struct itemplate * const nasm_instructions[];
-extern const struct itemplate * const * const itable[];
+extern const struct disasm_index itable[256];
 
 /*
  * this define is used to signify the end of an itemplate
