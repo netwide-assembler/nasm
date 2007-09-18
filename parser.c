@@ -175,23 +175,25 @@ insn *parse_line(int pass, char *buffer, insn * result,
      * For the moment, EQU has the same difficulty, so we'll
      * include that.
      */
-    if (result->opcode == I_RESB || result->opcode == I_RESW || result->opcode == I_RESD || result->opcode == I_RESQ || result->opcode == I_REST || result->opcode == I_EQU || result->opcode == I_INCBIN) {    /* fbk */
+    if (result->opcode == I_RESB || result->opcode == I_RESW ||
+	result->opcode == I_RESD || result->opcode == I_RESQ ||
+	result->opcode == I_REST || result->opcode == I_RESO ||
+	result->opcode == I_EQU || result->opcode == I_INCBIN) {
         critical = pass0;
     } else
         critical = (pass == 2 ? 2 : 0);
 
-    if (result->opcode == I_DB ||
-        result->opcode == I_DW ||
-        result->opcode == I_DD ||
-        result->opcode == I_DQ ||
-        result->opcode == I_DT || result->opcode == I_INCBIN) {
+    if (result->opcode == I_DB || result->opcode == I_DW ||
+        result->opcode == I_DD || result->opcode == I_DQ ||
+        result->opcode == I_DT || result->opcode == I_DO ||
+	result->opcode == I_INCBIN) {
         extop *eop, **tail = &result->eops, **fixptr;
         int oper_num = 0;
 
         result->eops_float = FALSE;
 
         /*
-         * Begin to read the DB/DW/DD/DQ/DT/INCBIN operands.
+         * Begin to read the DB/DW/DD/DQ/DT/DO/INCBIN operands.
          */
         while (1) {
             i = stdscan(NULL, &tokval);
@@ -234,6 +236,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
                         eop->stringlen = 8;
                     else if (result->opcode == I_DT)
                         eop->stringlen = 10;
+		    else if (result->opcode == I_DO)
+			eop->stringlen = 16;
                     else {
                         error(ERR_NONFATAL, "floating-point constant"
                               " encountered in `D%c' instruction",
@@ -245,8 +249,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
                          */
                         eop->stringlen = 0;
                     }
-                    eop =
-                        nasm_realloc(eop, sizeof(extop) + eop->stringlen);
+                    eop = nasm_realloc(eop, sizeof(extop) + eop->stringlen);
                     tail = &eop->next;
                     *fixptr = eop;
                     eop->stringval = (char *)eop + sizeof(extop);
@@ -384,6 +387,11 @@ insn *parse_line(int pass, char *buffer, insn * result,
                     result->oprs[operand].type |= BITS80;
                 setsize = 1;
                 break;
+            case S_OWORD:
+                if (!setsize)
+                    result->oprs[operand].type |= BITS128;
+                setsize = 1;
+                break;
             case S_TO:
                 result->oprs[operand].type |= TO;
                 break;
@@ -439,6 +447,9 @@ insn *parse_line(int pass, char *buffer, insn * result,
                         break;
                     case S_TWORD:
                         result->oprs[operand].type |= BITS80;
+                        break;
+                    case S_OWORD:
+                        result->oprs[operand].type |= BITS128;
                         break;
                     default:
                         error(ERR_NONFATAL,
@@ -751,7 +762,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
         result->oprs[operand++].type = 0;
 
     /*
-     * Transform RESW, RESD, RESQ, REST into RESB.
+     * Transform RESW, RESD, RESQ, REST, RESO into RESB.
      */
     switch (result->opcode) {
     case I_RESW:
@@ -769,6 +780,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
     case I_REST:
         result->opcode = I_RESB;
         result->oprs[0].offset *= 10;
+        break;
+    case I_RESO:
+        result->opcode = I_RESB;
+        result->oprs[0].offset *= 16;
         break;
     default:
 	break;

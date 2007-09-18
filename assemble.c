@@ -1720,6 +1720,9 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	case IF_SQ:
             size[i] = BITS64;
 	    break;
+	case IF_SO:
+	    size[i] = BITS128;
+	    break;
 	default:
 	    break;
         }
@@ -1740,6 +1743,10 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	    break;
 	case IF_SQ:
             asize = BITS64;
+            oprs = itemp->operands;
+	    break;
+	case IF_SO:
+            asize = BITS128;
             oprs = itemp->operands;
 	    break;
 	default:

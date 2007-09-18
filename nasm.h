@@ -375,7 +375,7 @@ enum {
  *
  * The bits are assigned as follows:
  *
- * Bits 0-7: sizes
+ * Bits 0-7, 29: sizes
  *  0:  8 bits (BYTE)
  *  1: 16 bits (WORD)
  *  2: 32 bits (DWORD)
@@ -384,6 +384,7 @@ enum {
  *  5: FAR
  *  6: NEAR
  *  7: SHORT
+ * 29: 128 bits (OWORD)
  *
  * Bits 8-11 modifiers
  *  8: TO
@@ -454,12 +455,13 @@ typedef uint32_t opflags_t;
 #define BITS32    	0x00000004L
 #define BITS64    	0x00000008L   /* x64 and FPU only */
 #define BITS80    	0x00000010L   /* FPU only */
+#define BITS128		0x20000000L
 #define FAR       	0x00000020L   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
 #define NEAR      	0x00000040L
 #define SHORT     	0x00000080L   /* and this means what it says :) */
 
-#define SIZE_MASK 	0x000000FFL   /* all the size attributes */
+#define SIZE_MASK 	0x200000FFL   /* all the size attributes */
 
 /* Modifiers */
 #define MODIFIER_MASK	0x00000f00L
@@ -959,8 +961,8 @@ struct dfmt {
  */
 
 enum special_tokens {
-    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
-    S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
+    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT,
+    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
 };
 
 /*

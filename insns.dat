@@ -14,6 +14,22 @@
 ; see the comment at the top of assemble.c.  For a detailed description
 ; of the flags (fourth field), please see insns.h.
 ;
+
+; Special instructions...
+DB        ignore              ignore                        ignore
+DW        ignore              ignore                        ignore
+DD        ignore              ignore                        ignore
+DQ        ignore              ignore                        ignore
+DT        ignore              ignore                        ignore
+DO        ignore              ignore                        ignore
+RESB      imm                 \340                          8086
+RESW      ignore              ignore                        ignore
+RESD      ignore              ignore                        ignore
+RESQ      ignore              ignore                        ignore
+REST      ignore              ignore                        ignore
+RESO      ignore              ignore                        ignore
+
+; Conventional instructions
 AAA       void                \1\x37                        8086,NOLONG
 AAD       void                \2\xD5\x0A                    8086,NOLONG
 AAD       imm                 \1\xD5\24                     8086,SB,NOLONG
@@ -270,8 +286,6 @@ CWD       void                \320\1\x99                    8086
 CWDE      void                \321\1\x98                    386
 DAA       void                \1\x27                        8086,NOLONG
 DAS       void                \1\x2F                        8086,NOLONG
-DB        ignore              ignore                        ignore
-DD        ignore              ignore                        ignore
 DEC       reg16               \320\10\x48                   8086,NOLONG
 DEC       reg32               \321\10\x48                   386,NOLONG
 DEC       rm8                 \300\1\xFE\201                8086
@@ -282,9 +296,6 @@ DIV       rm8                 \300\1\xF6\206                8086
 DIV       rm16                \320\300\1\xF7\206            8086
 DIV       rm32                \321\300\1\xF7\206            386
 DIV       rm64                \324\300\1\xF7\206            X64
-DQ        ignore              ignore                        ignore
-DT        ignore              ignore                        ignore
-DW        ignore              ignore                        ignore
 EMMS      void                \2\x0F\x77                    PENT,MMX
 ENTER     imm,imm             \1\xC8\30\25                  186
 EQU       imm                 \0                            8086
@@ -1029,11 +1040,6 @@ RDMSR     void                \2\x0F\x32                    PENT,PRIV
 RDPMC     void                \2\x0F\x33                    P6
 RDTSC     void                \2\x0F\x31                    PENT
 RDTSCP    void                \3\x0F\x01\xF9                X64
-RESB      imm                 \340                          8086
-RESD      ignore              ignore                        ignore
-RESQ      ignore              ignore                        ignore
-REST      ignore              ignore                        ignore
-RESW      ignore              ignore                        ignore
 RET       void                \1\xC3                        8086
 RET       imm                 \1\xC2\30                     8086,SW
 RETF      void                \1\xCB                        8086

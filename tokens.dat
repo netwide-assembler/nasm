@@ -23,6 +23,7 @@ far
 long
 near
 nosplit
+oword
 qword
 rel
 short
