@@ -42,8 +42,8 @@ sub prehash($$$) {
 
     foreach $c (unpack("C*", $key)) {
 	$ko1 = $k1;  $ko2 = $k2;
-	$k1 = int32(rot($ko1,$s0)-rot($ko2, $s1)+$c);
-	$k2 = int32(rot($ko2,$s2)-rot($ko1, $s3)+$c);
+	$k1 = int32(rot($ko1,$s0)^int32(rot($ko2, $s1)+$c));
+	$k2 = int32(rot($ko2,$s2)^int32(rot($ko1, $s3)+$c));
     }
 
     # Create a bipartite graph...

@@ -187,8 +187,8 @@ print  "    const char *p = token;\n";
 print  "\n";
 
 print  "    while ((c = *p++) != 0) {\n";
-printf "        uint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
-printf "        uint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
+printf "        uint32_t kn1 = rot(k1,%2d)^(rot(k2,%2d) + c);\n", ${$sv}[0], ${$sv}[1];
+printf "        uint32_t kn2 = rot(k2,%2d)^(rot(k1,%2d) + c);\n", ${$sv}[2], ${$sv}[3];
 print  "        k1 = kn1; k2 = kn2;\n";
 print  "    }\n";
 print  "\n";
