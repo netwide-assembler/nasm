@@ -128,7 +128,7 @@ static void ieee_flconvert_hex(char *string, uint16_t *mant,
 	} else {
             error(ERR_NONFATAL,
                   "floating-point constant: `%c' is invalid character",
-                  *string);
+                  c);
             return;
         }
     }
