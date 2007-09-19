@@ -250,6 +250,9 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     case I_DT:
         wsize = 10;
         break;
+    case I_DO:
+	wsize = 16;
+	break;
     default:
 	break;
     }
@@ -564,10 +567,9 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
     if (instruction->opcode == -1)
         return 0;
 
-    if (instruction->opcode == I_DB ||
-        instruction->opcode == I_DW ||
-        instruction->opcode == I_DD ||
-        instruction->opcode == I_DQ || instruction->opcode == I_DT) {
+    if (instruction->opcode == I_DB || instruction->opcode == I_DW ||
+        instruction->opcode == I_DD || instruction->opcode == I_DQ ||
+	instruction->opcode == I_DT || instruction->opcode == I_DO) {
         extop *e;
         int32_t isize, osize, wsize = 0;   /* placate gcc */
 
@@ -588,6 +590,9 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
         case I_DT:
             wsize = 10;
             break;
+	case I_DO:
+	    wsize = 16;
+	    break;
 	default:
 	    break;
         }

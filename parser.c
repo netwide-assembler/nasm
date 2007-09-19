@@ -214,16 +214,18 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 continue;
             }
 
-            if ((i == TOKEN_FLOAT && is_comma_next()) || i == '-') {
-                int32_t sign = +1L;
+            if ((i == TOKEN_FLOAT && is_comma_next())
+		|| i == '-' || i == '+') {
+                int32_t sign = +1;
 
-                if (i == '-') {
+                if (i == '+' || i == '-') {
                     char *save = stdscan_bufptr;
+		    int token = i;
+		    sign = (i == '-') ? -1 : 1;
                     i = stdscan(NULL, &tokval);
-                    sign = -1L;
                     if (i != TOKEN_FLOAT || !is_comma_next()) {
                         stdscan_bufptr = save;
-                        i = tokval.t_type = '-';
+                        i = tokval.t_type = token;
                     }
                 }
 
@@ -243,10 +245,12 @@ insn *parse_line(int pass, char *buffer, insn * result,
 		    case I_DT:
                         eop->stringlen = 10;
 			break;
+		    case I_DO:
+                        eop->stringlen = 16;
+			break;
 		    default:
                         error(ERR_NONFATAL, "floating-point constant"
-                              " encountered in `d%c' instruction"
-			      ? (result->opcode == I_DO) ? 'o' : 'b');
+                              " encountered in `db' instruction");
                         /*
                          * fix suggested by Pedro Gimeno... original line
                          * was:
