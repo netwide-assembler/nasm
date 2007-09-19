@@ -8,6 +8,7 @@
  * initial version 13/ix/96 by Simon Tatham
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,91 @@ static int ieee_multiply(uint16_t *to, uint16_t *from)
     }
 }
 
+static int hexval(char c)
+{
+    if (c >= '0' && c <= '9')
+	return c-'0';
+    else if (c >= 'a' && c <= 'f')
+	return c-'a'+10;
+    else
+	return c-'A'+10;
+}
+
+static void ieee_flconvert_hex(char *string, uint16_t *mant,
+			       int32_t *exponent, efunc error)
+{
+    static const int log2tbl[16] =
+	{ -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
+    uint16_t mult[MANT_WORDS+1], *mp;
+    int ms;
+    int32_t twopwr;
+    int seendot, seendigit;
+    unsigned char c;
+
+    twopwr = 0;
+    seendot = seendigit = 0;
+
+    memset(mult, 0, sizeof mult);
+
+    while ((c = *string++) != '\0') {
+	if (c == '.') {
+            if (!seendot)
+                seendot = TRUE;
+            else {
+                error(ERR_NONFATAL,
+                      "too many periods in floating-point constant");
+                return;
+            }
+	} else if (isxdigit(c)) {
+	    int v = hexval(c);
+
+	    if (!seendigit && v) {
+		int l = log2tbl[v];
+
+		seendigit = 1;
+		mp = mult;
+		ms = 15-l;
+
+		twopwr = seendot ? twopwr-4+l : l-3;
+	    }
+
+	    if (seendigit) {
+		if (ms <= 0) {
+		    *mp |= v >> -ms;
+		    mp++;
+		    if (mp > &mult[MANT_WORDS])
+			mp = &mult[MANT_WORDS]; /* Guard slot */
+		    ms += 16;
+		}
+		*mp |= v << ms;
+		ms -= 4;
+
+		if (!seendot)
+		    twopwr += 4;
+	    } else {
+		if (seendot)
+		    twopwr -= 4;
+	    }
+	} else if (c == 'p' || c == 'P') {
+	    twopwr += atoi(string);
+	    break;
+	} else {
+            error(ERR_NONFATAL,
+                  "floating-point constant: `%c' is invalid character",
+                  *string);
+            return;
+        }
+    }
+
+    if (!seendigit) {
+	memset(mant, 0, 2*MANT_WORDS); /* Zero */
+	*exponent = 0;
+    } else {
+	memcpy(mant, mult, 2*MANT_WORDS);
+	*exponent = twopwr;
+    }
+}
+
 static void ieee_flconvert(char *string, uint16_t *mant,
                            int32_t *exponent, efunc error)
 {
@@ -65,6 +151,11 @@ static void ieee_flconvert(char *string, uint16_t *mant,
     uint16_t *m;
     int32_t tenpwr, twopwr;
     int extratwos, started, seendot;
+
+    if (string[0] == '0' && (string[1] == 'x' || string[1] == 'X')) {
+	ieee_flconvert_hex(string+2, mant, exponent, error);
+	return;
+    }
 
     p = digits;
     tenpwr = 0;

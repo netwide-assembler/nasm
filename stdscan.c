@@ -130,7 +130,9 @@ int stdscan(void *private_data, struct tokenval *tv)
             stdscan_bufptr++;
             while (isnumchar(*stdscan_bufptr) ||
                    ((stdscan_bufptr[-1] == 'e'
-                     || stdscan_bufptr[-1] == 'E')
+                     || stdscan_bufptr[-1] == 'E'
+		     || stdscan_bufptr[-1] == 'p'
+		     || stdscan_bufptr[-1] == 'P')
                     && (*stdscan_bufptr == '-' || *stdscan_bufptr == '+'))) {
                 stdscan_bufptr++;
             }
