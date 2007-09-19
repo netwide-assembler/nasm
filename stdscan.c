@@ -75,7 +75,6 @@ int stdscan(void *private_data, struct tokenval *tv)
         (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
         /* now we've got an identifier */
         int is_sym = FALSE;
-	int t;
 
         if (*stdscan_bufptr == '$') {
             is_sym = TRUE;
@@ -99,10 +98,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         *r = '\0';
         /* right, so we have an identifier sitting in temp storage. now,
          * is it actually a register or instruction name, or what? */
-	if ((t = nasm_token_hash(ourcopy, tv)) != -1)
-	    return t;
-	else
-	    return tv->t_type = TOKEN_ID;
+	return nasm_token_hash(ourcopy, tv);
     } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
@@ -130,7 +126,9 @@ int stdscan(void *private_data, struct tokenval *tv)
             stdscan_bufptr++;
             while (isnumchar(*stdscan_bufptr) ||
                    ((stdscan_bufptr[-1] == 'e'
-                     || stdscan_bufptr[-1] == 'E')
+                     || stdscan_bufptr[-1] == 'E'
+		     || stdscan_bufptr[-1] == 'p'
+		     || stdscan_bufptr[-1] == 'P')
                     && (*stdscan_bufptr == '-' || *stdscan_bufptr == '+'))) {
                 stdscan_bufptr++;
             }

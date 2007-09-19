@@ -375,7 +375,7 @@ enum {
  *
  * The bits are assigned as follows:
  *
- * Bits 0-7: sizes
+ * Bits 0-7, 29: sizes
  *  0:  8 bits (BYTE)
  *  1: 16 bits (WORD)
  *  2: 32 bits (DWORD)
@@ -384,6 +384,7 @@ enum {
  *  5: FAR
  *  6: NEAR
  *  7: SHORT
+ * 29: 128 bits (OWORD)
  *
  * Bits 8-11 modifiers
  *  8: TO
@@ -438,8 +439,15 @@ enum {
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
  *
- * Bits 27-31 are currently unallocated.
+ * Bits 27-29 & 31 are currently unallocated.
+ *
+ * 30: SAME_AS
+ * Special flag only used in instruction patterns; means this operand
+ * has to be identical to another operand.  Currently only supported
+ * for registers.
  */
+
+typedef uint32_t opflags_t;
 
 /* Size, and other attributes, of the operand */
 #define BITS8     	0x00000001L
@@ -447,12 +455,13 @@ enum {
 #define BITS32    	0x00000004L
 #define BITS64    	0x00000008L   /* x64 and FPU only */
 #define BITS80    	0x00000010L   /* FPU only */
+#define BITS128		0x20000000L
 #define FAR       	0x00000020L   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
 #define NEAR      	0x00000040L
 #define SHORT     	0x00000080L   /* and this means what it says :) */
 
-#define SIZE_MASK 	0x000000FFL   /* all the size attributes */
+#define SIZE_MASK 	0x200000FFL   /* all the size attributes */
 
 /* Modifiers */
 #define MODIFIER_MASK	0x00000f00L
@@ -527,6 +536,9 @@ enum {
 #define UNITY		0x00012000L   /* for shift/rotate instructions */
 #define SBYTE		0x00022000L   /* for op r16/32,immediate instrs. */
 
+/* special flags */
+#define SAME_AS		0x40000000L
+
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
 
@@ -540,6 +552,8 @@ enum ccode {			/* condition code names */
 /*
  * REX flags
  */
+#define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
+#define REX_D		0x0100	/* Instruction uses DREX instead of REX */
 #define REX_H		0x80	/* High register present, REX forbidden */
 #define REX_P		0x40	/* REX prefix present/required */
 #define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
@@ -607,6 +621,7 @@ typedef struct extop {          /* extended operand */
 } extop;
 
 #define MAXPREFIX 4
+#define MAX_OPERANDS 4
 
 typedef struct {                /* an instruction itself */
     char *label;              /* the label defined, or NULL */
@@ -616,12 +631,13 @@ typedef struct {                /* an instruction itself */
     enum ccode condition;       /* the condition code, if Jcc/SETcc */
     int operands;               /* how many operands? 0-3 
                                  * (more if db et al) */
-    operand oprs[3];            /* the operands, defined as above */
+    operand oprs[MAX_OPERANDS]; /* the operands, defined as above */
     extop *eops;                /* extended operands */
     int eops_float;             /* true if DD and floating */
     int32_t times;              /* repeat count (TIMES prefix) */
     int forw_ref;               /* is there a forward reference? */
-    uint8_t rex;                /* Special REX Prefix */
+    int rex;			/* Special REX Prefix */
+    int drexdst;		/* Destination register for DREX suffix */
 } insn;
 
 enum geninfo { GI_SWITCH };
@@ -945,8 +961,8 @@ struct dfmt {
  */
 
 enum special_tokens {
-    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT, S_QWORD, S_REL,
-    S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
+    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT,
+    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
 };
 
 /*
