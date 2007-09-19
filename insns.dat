@@ -206,7 +206,7 @@ CDQ       void                \321\1\x99                    386
 CDQE      void                \324\1\x98                    X64
 CLC       void                \1\xF8                        8086
 CLD       void                \1\xFC                        8086
-CLFLUSH   mem8                \300\2\x0F\x80\207            X64,AMD,SM
+CLFLUSH   mem                 \300\2\x0F\x80\207            KATMAI
 CLGI      void                \3\x0F\x01\xDD                X64,AMD
 CLI       void                \1\xFA                        8086
 CLTS      void                \2\x0F\x06                    286,PRIV
@@ -757,6 +757,9 @@ NEG       rm16                \320\300\1\xF7\203            8086
 NEG       rm32                \321\300\1\xF7\203            386
 NEG       rm64                \324\300\1\xF7\203            X64
 NOP       void                \1\x90                        8086
+NOP	  rm16                \320\300\2\x0F\x1F\200        P6
+NOP	  rm32                \321\300\2\x0F\x1F\200        P6
+NOP	  rm64                \324\300\2\x0F\x1F\200        X64
 NOT       rm8                 \300\1\xF6\202                8086
 NOT       rm16                \320\300\1\xF7\202            8086
 NOT       rm32                \321\300\1\xF7\202            386

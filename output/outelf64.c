@@ -74,7 +74,7 @@ struct Symbol {
     int32_t section;               /* section ID of the symbol */
     int type;                   /* symbol type */
     int other;                     /* symbol visibility */
-    int32_t value;                 /* address, or COMMON variable align */
+    int64_t value;                 /* address, or COMMON variable align */
     int32_t size;                  /* size of symbol */
     int32_t globnum;               /* symbol table offset if global */
     struct Symbol *next;        /* list of globals in each section */
@@ -709,7 +709,7 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
  * isn't even necessarily sorted.
  */
 static int32_t elf_add_gsym_reloc(struct Section *sect,
-                               int32_t segment, int32_t offset,
+                               int32_t segment, int64_t offset,
                                int type, int exact)
 {
     struct Reloc *r;
@@ -779,7 +779,7 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
 {
     struct Section *s;
     int32_t realbytes = type & OUT_SIZMASK;
-    int32_t addr;
+    int64_t addr;
     uint8_t mydata[16], *p;
     int i;
     static struct symlininfo sinfo;
@@ -851,7 +851,7 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
         elf_sect_write(s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
         int gnu16 = 0;
-        addr = *(int32_t *)data;
+        addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
                 error(ERR_NONFATAL, "ELF format does not support"

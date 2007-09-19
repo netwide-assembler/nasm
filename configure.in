@@ -87,28 +87,22 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
-AC_FUNC_VPRINTF
-if test $ac_cv_func_vprintf = no; then
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "vprintf" and friends)])
-fi
 
-AC_CHECK_FUNCS(strcspn)
-if test $ac_cv_func_strcspn = no; then
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")])
-fi
+AC_CHECK_FUNCS(strcspn, ,
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")]))
 
-AC_CHECK_FUNCS(strspn)
-if test $ac_cv_func_strspn = no; then
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")])
-fi
+AC_CHECK_FUNCS(strspn, ,
+  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")]))
 
-AC_CHECK_FUNCS(snprintf)
-if test $ac_cv_func_snprintf = no; then
+missing=true
+AC_CHECK_FUNCS([snprintf _snprintf], missing=false)
+if $missing; then
   AC_MSG_ERROR([NASM requires ISO C99 (specifically, "snprintf")])
 fi
 
-AC_CHECK_FUNCS(vsnprintf)
-if test $ac_cv_func_snprintf = no; then
+missing=true
+AC_CHECK_FUNCS([vsnprintf _vsnprintf], missing=false)
+if $missing; then
   AC_MSG_ERROR([NASM requires ISO C99 (specifically, "vsnprintf")])
 fi
 
