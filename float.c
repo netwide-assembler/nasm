@@ -18,8 +18,8 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MANT_WORDS 6            /* 64 bits + 32 for accuracy == 96 */
-#define MANT_DIGITS 28          /* 29 digits don't fit in 96 bits */
+#define MANT_WORDS  10          /* 112 bits + 48 for accuracy == 160 */
+#define MANT_DIGITS 49          /* 50 digits don't fit in 160 bits */
 
 /*
  * guaranteed top bit of from is set
@@ -47,9 +47,8 @@ static int ieee_multiply(uint16_t *to, uint16_t *from)
         temp[i] &= 0xFFFF;
     }
     if (temp[0] & 0x8000) {
-        for (i = 0; i < MANT_WORDS; i++)
-            to[i] = temp[i] & 0xFFFF;
-        return 0;
+	memcpy(to, temp, 2*MANT_WORDS);
+	return 0;
     } else {
         for (i = 0; i < MANT_WORDS; i++)
             to[i] = (temp[i] << 1) + !!(temp[i + 1] & 0x8000);
@@ -213,75 +212,33 @@ static int ieee_round(uint16_t *mant, int i)
 
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
-/* 64-bit format with 52-bit mantissa and 11-bit exponent */
-static int to_double(char *str, int32_t sign, uint8_t *result,
-                     efunc error)
-{
-    uint16_t mant[MANT_WORDS];
-    int32_t exponent;
+/* Produce standard IEEE formats, with implicit "1" bit; this makes
+   the following assumptions:
 
-    sign = (sign < 0 ? 0x8000L : 0L);
+   - the sign bit is the MSB, followed by the exponent.
+   - the sign bit plus exponent fit in 16 bits.
+   - the exponent bias is 2^(n-1)-1 for an n-bit exponent */
 
-    ieee_flconvert(str, mant, &exponent, error);
-    if (mant[0] & 0x8000) {
-        /*
-         * Non-zero.
-         */
-        exponent--;
-        if (exponent >= -1022 && exponent <= 1024) {
-            /*
-             * Normalised.
-             */
-            exponent += 1023;
-            ieee_shr(mant, 11);
-            ieee_round(mant, 4);
-            if (mant[0] & 0x20) /* did we scale up by one? */
-                ieee_shr(mant, 1), exponent++;
-            mant[0] &= 0xF;     /* remove leading one */
-            put(result + 6, (exponent << 4) | mant[0] | sign);
-            put(result + 4, mant[1]);
-            put(result + 2, mant[2]);
-            put(result + 0, mant[3]);
-        } else if (exponent < -1022 && exponent >= -1074) {
-            /*
-             * Denormal.
-             */
-            int shift = -(exponent + 1011);
-            int sh = shift % 16, wds = shift / 16;
-            ieee_shr(mant, sh);
-            if (ieee_round(mant, 4 - wds)
-                || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
-                ieee_shr(mant, 1);
-                if (sh == 0)
-                    mant[0] |= 0x8000;
-                exponent++;
-            }
-            put(result + 6, (wds == 0 ? mant[0] : 0) | sign);
-            put(result + 4, (wds <= 1 ? mant[1 - wds] : 0));
-            put(result + 2, (wds <= 2 ? mant[2 - wds] : 0));
-            put(result + 0, (wds <= 3 ? mant[3 - wds] : 0));
-        } else {
-            if (exponent > 0) {
-                error(ERR_NONFATAL, "overflow in floating-point constant");
-                return 0;
-            } else
-                memset(result, 0, 8);
-        }
-    } else {
-        /*
-         * Zero.
-         */
-        memset(result, 0, 8);
-    }
-    return 1;                   /* success */
-}
+struct ieee_format {
+    int words;
+    int mantissa;		/* Bits in the mantissa */
+    int exponent;		/* Bits in the exponent */
+};
 
-/* 32-bit format with 23-bit mantissa and 8-bit exponent */
+static const struct ieee_format ieee_16  = { 1,  10,  5 };
+static const struct ieee_format ieee_32  = { 2,  23,  8 };
+static const struct ieee_format ieee_64  = { 4,  52, 11 };
+static const struct ieee_format ieee_128 = { 8, 112, 15 };
+
+/* Produce all the standard IEEE formats: 16, 32, 64, and 128 bits */
 static int to_float(char *str, int32_t sign, uint8_t *result,
-                    efunc error)
+		    const struct ieee_format *fmt, efunc error)
 {
-    uint16_t mant[MANT_WORDS];
+    uint16_t mant[MANT_WORDS], *mp;
     int32_t exponent;
+    int32_t expmax = 1 << (fmt->exponent-1);
+    uint16_t implicit_one = 0x8000 >> fmt->exponent;
+    int i;
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
@@ -291,101 +248,64 @@ static int to_float(char *str, int32_t sign, uint8_t *result,
          * Non-zero.
          */
         exponent--;
-        if (exponent >= -126 && exponent <= 128) {
+        if (exponent >= 2-expmax && exponent <= expmax) {
             /*
              * Normalised.
              */
-            exponent += 127;
-            ieee_shr(mant, 8);
-            ieee_round(mant, 2);
-            if (mant[0] & 0x100)        /* did we scale up by one? */
-                ieee_shr(mant, 1), exponent++;
-            mant[0] &= 0x7F;    /* remove leading one */
-            put(result + 2, (exponent << 7) | mant[0] | sign);
-            put(result + 0, mant[1]);
-        } else if (exponent < -126 && exponent >= -149) {
+            exponent += expmax;
+            ieee_shr(mant, fmt->exponent);
+            ieee_round(mant, fmt->words);
+	    /* did we scale up by one? */
+            if (mant[0] & (implicit_one << 1)) {
+                ieee_shr(mant, 1);
+		exponent++;
+	    }
+
+            mant[0] &= (implicit_one-1);     /* remove leading one */
+	    mant[0] |= exponent << (15 - fmt->exponent);
+        } else if (exponent < 2-expmax && exponent >= 2-expmax-fmt->mantissa) {
             /*
              * Denormal.
              */
-            int shift = -(exponent + 118);
+            int shift = -(exponent + expmax-2-fmt->exponent);
             int sh = shift % 16, wds = shift / 16;
             ieee_shr(mant, sh);
-            if (ieee_round(mant, 2 - wds)
+            if (ieee_round(mant, fmt->words - wds)
                 || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
                 ieee_shr(mant, 1);
                 if (sh == 0)
                     mant[0] |= 0x8000;
                 exponent++;
             }
-            put(result + 2, (wds == 0 ? mant[0] : 0) | sign);
-            put(result + 0, (wds <= 1 ? mant[1 - wds] : 0));
+
+	    if (wds) {
+		for (i = fmt->words-1; i >= wds; i--)
+		    mant[i] = mant[i-wds];
+		for (; i >= 0; i--)
+		    mant[i] = 0;
+	    }
         } else {
             if (exponent > 0) {
                 error(ERR_NONFATAL, "overflow in floating-point constant");
                 return 0;
-            } else
-                memset(result, 0, 4);
+	    } else {
+		memset(mant, 0, 2*fmt->words);
+	    }
         }
     } else {
-        memset(result, 0, 4);
+	/* Zero */
+        memset(mant, 0, 2*fmt->words);
     }
-    return 1;
-}
 
-/* 16-bit format with 10-bit mantissa and 5-bit exponent.
-   Defined in IEEE 754r.  Used in SSE5.  See the AMD SSE5 manual, AMD
-   document number 43479. */
-static int to_float16(char *str, int32_t sign, uint8_t *result,
-		      efunc error)
-{
-    uint16_t mant[MANT_WORDS];
-    int32_t exponent;
+    mant[0] |= sign;
 
-    sign = (sign < 0 ? 0x8000L : 0L);
-
-    ieee_flconvert(str, mant, &exponent, error);
-    if (mant[0] & 0x8000) {
-        /*
-         * Non-zero.
-         */
-        exponent--;
-        if (exponent >= -14 && exponent <= 16) {
-            /*
-             * Normalised.
-             */
-            exponent += 15;
-            ieee_shr(mant, 5);
-            ieee_round(mant, 1);
-            if (mant[0] & 0x800)        /* did we scale up by one? */
-                ieee_shr(mant, 1), exponent++;
-            mant[0] &= 0x3FF;    /* remove leading one */
-            put(result + 0, (exponent << 7) | mant[0] | sign);
-        } else if (exponent < -14 && exponent >= -24) {
-            /*
-             * Denormal.
-             */
-            int shift = -(exponent + 8);
-            int sh = shift % 16, wds = shift / 16;
-            ieee_shr(mant, sh);
-            if (ieee_round(mant, 1 - wds)
-                || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
-                ieee_shr(mant, 1);
-                if (sh == 0)
-                    mant[0] |= 0x8000;
-                exponent++;
-            }
-            put(result + 0, (wds == 0 ? mant[0] : 0) | sign);
-        } else {
-            if (exponent > 0) {
-                error(ERR_NONFATAL, "overflow in floating-point constant");
-                return 0;
-            } else
-                memset(result, 0, 2);
-        }
-    } else {
-        memset(result, 0, 2);
+    for (mp = &mant[fmt->words], i = 0; i < fmt->words; i++) {
+	uint16_t m = *--mp;
+	put(result, m);
+	result += 2;
     }
-    return 1;
+
+    return 1;                   /* success */
 }
 
 /* 80-bit format with 64-bit mantissa *including an explicit integer 1*
@@ -456,13 +376,15 @@ int float_const(char *number, int32_t sign, uint8_t *result, int bytes,
 {
     switch (bytes) {
     case 2:
-	return to_float16(number, sign, result, error);
+	return to_float(number, sign, result, &ieee_16, error);
     case 4:
-        return to_float(number, sign, result, error);
+        return to_float(number, sign, result, &ieee_32, error);
     case 8:
-        return to_double(number, sign, result, error);
+        return to_float(number, sign, result, &ieee_64, error);
     case 10:
         return to_ldoub(number, sign, result, error);
+    case 16:
+        return to_float(number, sign, result, &ieee_128, error);
     default:
         error(ERR_PANIC, "strange value %d passed to float_const", bytes);
         return 0;
