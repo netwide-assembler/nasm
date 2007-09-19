@@ -194,14 +194,14 @@ print  "    }\n";
 print  "\n";
 printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
 printf "    if (ix >= %d)\n", scalar(@tokendata);
-print  "        return -1;\n";
+print  "        return tv->t_type = TOKEN_ID;\n";
 print  "\n";
 print  "    data = &tokendata[ix];\n";
 
 # print  "    fprintf(stderr, \"Looked for: %s found: %s\\n\", token, data->string);\n\n";
 
 print  "    if (strcmp(data->string, token))\n";
-print  "        return -1;\n";
+print  "        return tv->t_type = TOKEN_ID;\n";
 print  "\n";
 print  "    tv->t_integer = data->num;\n";
 print  "    tv->t_inttwo  = data->aux;\n";
