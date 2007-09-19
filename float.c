@@ -303,6 +303,12 @@ static int ieee_round(uint16_t *mant, int i)
 
 #define put(a,b) ( (*(a)=(b)), ((a)[1]=(b)>>8) )
 
+/* Set a bit, using *bigendian* bit numbering (0 = MSB) */
+static void set_bit(uint16_t *mant, int bit)
+{
+    mant[bit >> 4] |= 1 << (~bit & 15);
+}
+
 /* Produce standard IEEE formats, with implicit "1" bit; this makes
    the following assumptions:
 
@@ -333,59 +339,84 @@ static int to_float(char *str, int32_t sign, uint8_t *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
-    ieee_flconvert(str, mant, &exponent, error);
-    if (mant[0] & 0x8000) {
-        /*
-         * Non-zero.
-         */
-        exponent--;
-        if (exponent >= 2-expmax && exponent <= expmax) {
-            /*
-             * Normalised.
-             */
-            exponent += expmax;
-            ieee_shr(mant, fmt->exponent);
-            ieee_round(mant, fmt->words);
-	    /* did we scale up by one? */
-            if (mant[0] & (implicit_one << 1)) {
-                ieee_shr(mant, 1);
-		exponent++;
-	    }
+    if (str[0] == '_') {
+	/* NaN or Infinity */
+	int32_t expmask = (1 << fmt->exponent)-1;
 
-            mant[0] &= (implicit_one-1);     /* remove leading one */
-	    mant[0] |= exponent << (15 - fmt->exponent);
-        } else if (exponent < 2-expmax && exponent >= 2-expmax-fmt->mantissa) {
-            /*
-             * Denormal.
-             */
-            int shift = -(exponent + expmax-2-fmt->exponent);
-            int sh = shift % 16, wds = shift / 16;
-            ieee_shr(mant, sh);
-            if (ieee_round(mant, fmt->words - wds)
-                || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
-                ieee_shr(mant, 1);
-                if (sh == 0)
-                    mant[0] |= 0x8000;
-                exponent++;
-            }
+	memset(mant, 0, sizeof mant);
+	mant[0] = expmask << (15-fmt->exponent); /* Exponent: all bits one */
 
-	    if (wds) {
-		for (i = fmt->words-1; i >= wds; i--)
-		    mant[i] = mant[i-wds];
-		for (; i >= 0; i--)
-		    mant[i] = 0;
-	    }
-        } else {
-            if (exponent > 0) {
-                error(ERR_NONFATAL, "overflow in floating-point constant");
-                return 0;
-	    } else {
-		memset(mant, 0, 2*fmt->words);
-	    }
-        }
+	switch (str[2]) {
+	case 'n':		/* __nan__ */
+	case 'N':
+	case 'q':		/* __qnan__ */
+	case 'Q':
+	    set_bit(mant, fmt->exponent+1); /* Highest bit in mantissa */
+	    break;
+	case 's':		/* __snan__ */
+	case 'S':
+	    set_bit(mant, fmt->exponent+fmt->mantissa);	/* Last bit */
+	    break;
+	case 'i':		/* __infinity__ */
+	case 'I':
+	    break;
+	}
     } else {
-	/* Zero */
-        memset(mant, 0, 2*fmt->words);
+	ieee_flconvert(str, mant, &exponent, error);
+	if (mant[0] & 0x8000) {
+	    /*
+	     * Non-zero.
+	     */
+	    exponent--;
+	    if (exponent >= 2-expmax && exponent <= expmax) {
+		/*
+		 * Normalised.
+		 */
+		exponent += expmax;
+		ieee_shr(mant, fmt->exponent);
+		ieee_round(mant, fmt->words);
+		/* did we scale up by one? */
+		if (mant[0] & (implicit_one << 1)) {
+		    ieee_shr(mant, 1);
+		    exponent++;
+		}
+		
+		mant[0] &= (implicit_one-1);     /* remove leading one */
+		mant[0] |= exponent << (15 - fmt->exponent);
+	    } else if (exponent < 2-expmax &&
+		       exponent >= 2-expmax-fmt->mantissa) {
+		/*
+		 * Denormal.
+		 */
+		int shift = -(exponent + expmax-2-fmt->exponent);
+		int sh = shift % 16, wds = shift / 16;
+		ieee_shr(mant, sh);
+		if (ieee_round(mant, fmt->words - wds)
+		    || (sh > 0 && (mant[0] & (0x8000 >> (sh - 1))))) {
+		    ieee_shr(mant, 1);
+		    if (sh == 0)
+			mant[0] |= 0x8000;
+		    exponent++;
+		}
+		
+		if (wds) {
+		    for (i = fmt->words-1; i >= wds; i--)
+			mant[i] = mant[i-wds];
+		    for (; i >= 0; i--)
+			mant[i] = 0;
+		}
+	    } else {
+		if (exponent > 0) {
+		    error(ERR_NONFATAL, "overflow in floating-point constant");
+		    return 0;
+		} else {
+		    memset(mant, 0, 2*fmt->words);
+		}
+	    }
+	} else {
+	    /* Zero */
+	    memset(mant, 0, 2*fmt->words);
+	}
     }
 
     mant[0] |= sign;
@@ -409,6 +440,31 @@ static int to_ldoub(char *str, int32_t sign, uint8_t *result,
 
     sign = (sign < 0 ? 0x8000L : 0L);
 
+    if (str[0] == '_') {
+	uint16_t is_snan = 0, is_qnan = 0x8000;
+	switch (str[2]) {
+	case 'n':
+	case 'N':
+	case 'q':
+	case 'Q':
+	    is_qnan = 0xc000;
+	    break;
+	case 's':
+	case 'S':
+	    is_snan = 1;
+	    break;
+	case 'i':
+	case 'I':
+	    break;
+	}
+	put(result + 0, is_snan);
+	put(result + 2, 0);
+	put(result + 4, 0);
+	put(result + 6, is_qnan);
+	put(result + 8, 0x7fff|sign);
+	return 1;
+    }
+
     ieee_flconvert(str, mant, &exponent, error);
     if (mant[0] & 0x8000) {
         /*
@@ -422,11 +478,11 @@ static int to_ldoub(char *str, int32_t sign, uint8_t *result,
             exponent += 16383;
             if (ieee_round(mant, 4))    /* did we scale up by one? */
                 ieee_shr(mant, 1), mant[0] |= 0x8000, exponent++;
-            put(result + 8, exponent | sign);
-            put(result + 6, mant[0]);
-            put(result + 4, mant[1]);
-            put(result + 2, mant[2]);
             put(result + 0, mant[3]);
+            put(result + 2, mant[2]);
+            put(result + 4, mant[1]);
+            put(result + 6, mant[0]);
+            put(result + 8, exponent | sign);
         } else if (exponent < -16383 && exponent >= -16446) {
             /*
              * Denormal.
@@ -441,23 +497,29 @@ static int to_ldoub(char *str, int32_t sign, uint8_t *result,
                     mant[0] |= 0x8000;
                 exponent++;
             }
-            put(result + 8, sign);
-            put(result + 6, (wds == 0 ? mant[0] : 0));
-            put(result + 4, (wds <= 1 ? mant[1 - wds] : 0));
-            put(result + 2, (wds <= 2 ? mant[2 - wds] : 0));
             put(result + 0, (wds <= 3 ? mant[3 - wds] : 0));
+            put(result + 2, (wds <= 2 ? mant[2 - wds] : 0));
+            put(result + 4, (wds <= 1 ? mant[1 - wds] : 0));
+            put(result + 6, (wds == 0 ? mant[0] : 0));
+            put(result + 8, sign);
         } else {
             if (exponent > 0) {
                 error(ERR_NONFATAL, "overflow in floating-point constant");
                 return 0;
-            } else
-                memset(result, 0, 10);
+            } else {
+		goto zero;
+	    }
         }
     } else {
         /*
          * Zero.
          */
-        memset(result, 0, 10);
+    zero:
+	put(result + 0, 0);
+	put(result + 2, 0);
+	put(result + 4, 0);
+	put(result + 6, 0);
+	put(result + 8, sign);
     }
     return 1;
 }

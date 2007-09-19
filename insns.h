@@ -12,10 +12,10 @@
 #include "nasm.h"
 
 /* max length of any instruction, register name etc. */
-#if MAX_INSLEN > 9              /* MAX_INSLEN defined in insnsi.h */
+#if MAX_INSLEN > 12              /* MAX_INSLEN defined in insnsi.h */
 #define MAX_KEYWORD MAX_INSLEN
 #else
-#define MAX_KEYWORD 9
+#define MAX_KEYWORD 12
 #endif
 
 struct itemplate {
