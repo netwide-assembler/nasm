@@ -151,6 +151,7 @@ convention
 \IR{ms-dos} MS-DOS
 \IR{ms-dos device drivers} MS-DOS device drivers
 \IR{multipush} \c{multipush} macro
+\IR{nan} NaN
 \IR{nasm version} NASM version
 \IR{netbsd} NetBSD
 \IR{omf} OMF
@@ -1424,6 +1425,15 @@ do floating arithmetic it would have to include its own complete set
 of floating-point routines, which would significantly increase the
 size of the assembler for very little benefit.
 
+The special tokens \i\c{__Infinity__}, \i\c{__QNaN__} (or
+\i\c{__NaN__}) and \i\c{__SNaN__} can be used to generate
+\I{infinity}infinities, quiet \i{NaN}s, and signalling NaNs,
+respectively.  These are normally used as macros:
+
+\c %define Inf __Infinity__
+\c %define NaN __QNaN__
+\c
+\c       dq    +1.5, -Inf, NaN         ; Double-precision constants
 
 \H{expr} \i{Expressions}
 
