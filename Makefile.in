@@ -58,7 +58,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	preproc.$(O) pptok.$(O) \
-	listing.$(O) eval.$(O) stdscan.$(O) tokhash.$(O)
+	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) tokhash.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) insnsd.$(O)
 
@@ -211,16 +211,19 @@ assemble.$(O): assemble.c assemble.h compiler.h config.h insns.h insnsi.h \
  nasm.h nasmlib.h pptok.h preproc.h regflags.c regs.h regvals.c version.h
 crc64.$(O): crc64.c
 disasm.$(O): disasm.c compiler.h config.h disasm.h insns.h insnsi.h insnsn.c \
- names.c nasm.h regdis.c regs.c regs.h sync.h version.h
+ names.c nasm.h nasmlib.h regdis.c regs.c regs.h sync.h version.h
 eval.$(O): eval.c compiler.h config.h eval.h insnsi.h labels.h nasm.h \
  nasmlib.h regs.h version.h
-float.$(O): float.c compiler.h config.h insnsi.h nasm.h regs.h version.h
+exprlib.$(O): exprlib.c compiler.h config.h insnsi.h nasm.h nasmlib.h regs.h \
+ version.h
+float.$(O): float.c compiler.h config.h insnsi.h nasm.h nasmlib.h regs.h \
+ version.h
 hashtbl.$(O): hashtbl.c compiler.h config.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h regs.h version.h
-insnsa.$(O): insnsa.c compiler.h config.h insns.h insnsi.h nasm.h regs.h \
- version.h
-insnsd.$(O): insnsd.c compiler.h config.h insns.h insnsi.h nasm.h regs.h \
- version.h
+insnsa.$(O): insnsa.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
+ regs.h version.h
+insnsd.$(O): insnsd.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
+ regs.h version.h
 insnsn.$(O): insnsn.c
 labels.$(O): labels.c compiler.h config.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h regs.h version.h
@@ -235,8 +238,8 @@ nasmlib.$(O): nasmlib.c compiler.h config.h insns.h insnsi.h nasm.h \
  nasmlib.h regs.h version.h
 ndisasm.$(O): ndisasm.c compiler.h config.h disasm.h insns.h insnsi.h nasm.h \
  nasmlib.h regs.h sync.h version.h
-outform.$(O): outform.c compiler.h config.h insnsi.h nasm.h outform.h regs.h \
- version.h
+outform.$(O): outform.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
+ outform.h regs.h version.h
 output/outaout.$(O): output/outaout.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h regs.h stdscan.h version.h
 output/outas86.$(O): output/outas86.c compiler.h config.h insnsi.h nasm.h \
@@ -272,6 +275,6 @@ regs.$(O): regs.c
 regvals.$(O): regvals.c
 stdscan.$(O): stdscan.c compiler.h config.h insns.h insnsi.h nasm.h \
  nasmlib.h regs.h stdscan.h version.h
-sync.$(O): sync.c sync.h
-tokhash.$(O): tokhash.c compiler.h config.h insns.h insnsi.h nasm.h regs.h \
- version.h
+sync.$(O): sync.c compiler.h config.h nasmlib.h sync.h
+tokhash.$(O): tokhash.c compiler.h config.h insns.h insnsi.h nasm.h \
+ nasmlib.h regs.h version.h

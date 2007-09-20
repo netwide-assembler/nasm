@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -36,6 +37,17 @@ static const char *help =
 static void output_ins(uint32_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
+static void ndisasm_error(int severity, const char *fmt, ...)
+{
+    va_list va;
+
+    va_start(va, fmt);
+    vfprintf(stderr, fmt, va);
+
+    if (severity & ERR_FATAL)
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
     char buffer[INSN_MAX * 2], *p, *ep, *q;
@@ -52,6 +64,8 @@ int main(int argc, char **argv)
     int rn_error;
     int32_t offset;
     FILE *fp;
+
+    nasm_set_malloc_error(ndisasm_error);
 
     offset = 0;
     init_sync();

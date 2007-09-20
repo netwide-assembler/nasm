@@ -15,6 +15,7 @@
 #include <inttypes.h>
 #include "version.h"            /* generated NASM version macros */
 #include "compiler.h"
+#include "nasmlib.h"
 #include "insnsi.h"		/* For enum opcode */
 
 #ifndef NULL
@@ -59,48 +60,6 @@
  * since we have to reference it before we define it...
  */
 struct ofmt;
-
-/*
- * -------------------------
- * Error reporting functions
- * -------------------------
- */
-
-/*
- * An error reporting function should look like this.
- */
-typedef void (*efunc) (int severity, const char *fmt, ...);
-
-/*
- * These are the error severity codes which get passed as the first
- * argument to an efunc.
- */
-
-#define ERR_DEBUG  	0x00000008      /* put out debugging message */
-#define ERR_WARNING	0x00000000      /* warn only: no further action */
-#define ERR_NONFATAL	0x00000001      /* terminate assembly after phase */
-#define ERR_FATAL	0x00000002      /* instantly fatal: exit with error */
-#define ERR_PANIC	0x00000003      /* internal error: panic instantly
-                                         * and dump core for reference */
-#define ERR_MASK	0x0000000F      /* mask off the above codes */
-#define ERR_NOFILE	0x00000010      /* don't give source file name/line */
-#define ERR_USAGE	0x00000020      /* print a usage message */
-#define ERR_PASS1	0x00000040      /* only print this error on pass one */
-
-/*
- * These codes define specific types of suppressible warning.
- */
-
-#define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR  8         /* how far to shift right */
-
-#define ERR_WARN_MNP	0x00000100      /* macro-num-parameters warning */
-#define ERR_WARN_MSR	0x00000200      /* macro self-reference */
-#define ERR_WARN_OL	0x00000300      /* orphan label (no colon, and
-                                         * alone on line) */
-#define ERR_WARN_NOV	0x00000400      /* numeric overflow */
-#define ERR_WARN_GNUELF	0x00000500      /* using GNU ELF extensions */
-#define ERR_WARN_MAX	5       /* the highest numbered one */
 
 /*
  * -----------------------
@@ -241,6 +200,18 @@ typedef struct {
     int32_t type;                  /* a register, or EXPR_xxx */
     int64_t value;                 /* must be >= 32 bits */
 } expr;
+
+/*
+ * Library routines to manipulate expression data types.
+ */
+int is_reloc(expr *);
+int is_simple(expr *);
+int is_really_simple(expr *);
+int is_unknown(expr *);
+int is_just_unknown(expr *);
+int64_t reloc_value(expr *);
+int32_t reloc_seg(expr *);
+int32_t reloc_wrt(expr *);
 
 /*
  * The evaluator can also return hints about which of two registers
