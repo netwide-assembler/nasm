@@ -187,21 +187,21 @@ print  "    const char *p = token;\n";
 print  "\n";
 
 print  "    while ((c = *p++) != 0) {\n";
-printf "        uint32_t kn1 = rot(k1,%2d) - rot(k2,%2d) + c;\n", ${$sv}[0], ${$sv}[1];
-printf "        uint32_t kn2 = rot(k2,%2d) - rot(k1,%2d) + c;\n", ${$sv}[2], ${$sv}[3];
+printf "        uint32_t kn1 = rot(k1,%2d)^(rot(k2,%2d) + c);\n", ${$sv}[0], ${$sv}[1];
+printf "        uint32_t kn2 = rot(k2,%2d)^(rot(k1,%2d) + c);\n", ${$sv}[2], ${$sv}[3];
 print  "        k1 = kn1; k2 = kn2;\n";
 print  "    }\n";
 print  "\n";
 printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
 printf "    if (ix >= %d)\n", scalar(@tokendata);
-print  "        return -1;\n";
+print  "        return tv->t_type = TOKEN_ID;\n";
 print  "\n";
 print  "    data = &tokendata[ix];\n";
 
 # print  "    fprintf(stderr, \"Looked for: %s found: %s\\n\", token, data->string);\n\n";
 
 print  "    if (strcmp(data->string, token))\n";
-print  "        return -1;\n";
+print  "        return tv->t_type = TOKEN_ID;\n";
 print  "\n";
 print  "    tv->t_integer = data->num;\n";
 print  "    tv->t_inttwo  = data->aux;\n";

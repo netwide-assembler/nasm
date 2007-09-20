@@ -9,26 +9,35 @@
 #ifndef NASM_INSNS_H
 #define NASM_INSNS_H
 
-#include "insnsi.h"             /* instruction opcode enum */
+#include "nasm.h"
 
 /* max length of any instruction, register name etc. */
-#if MAX_INSLEN > 9              /* MAX_INSLEN defined in insnsi.h */
+#if MAX_INSLEN > 12              /* MAX_INSLEN defined in insnsi.h */
 #define MAX_KEYWORD MAX_INSLEN
 #else
-#define MAX_KEYWORD 9
+#define MAX_KEYWORD 12
 #endif
 
 struct itemplate {
     enum opcode opcode;		/* the token, passed from "parser.c" */
     int operands;		/* number of operands */
-    int32_t opd[3];		/* bit flags for operand types */
+    opflags_t opd[MAX_OPERANDS]; /* bit flags for operand types */
     const char *code;		/* the code it assembles to */
     uint32_t flags;		/* some flags */
 };
 
+/* Disassembler table structure */
+/* If n == -1, then p points to another table of 256
+   struct disasm_index, otherwise p points to a list of n
+   struct itemplates to consider. */
+struct disasm_index {
+    const void *p;
+    int n;
+};
+
 /* Tables for the assembler and disassembler, respectively */
 extern const struct itemplate * const nasm_instructions[];
-extern const struct itemplate * const * const itable[];
+extern const struct disasm_index itable[256];
 
 /*
  * this define is used to signify the end of an itemplate
@@ -66,12 +75,15 @@ extern const struct itemplate * const * const itable[];
 #define IF_SM2    0x00000002UL  /* size match first two operands */
 #define IF_SB     0x00000004UL  /* unsized operands can't be non-byte */
 #define IF_SW     0x00000008UL  /* unsized operands can't be non-word */
-#define IF_SD     0x00000010UL  /* unsized operands can't be non-dword */
-#define IF_SQ     0x00000020UL  /* unsized operands can't be non-qword */
-#define IF_AR0	  0x00000040UL  /* SB, SW, SD applies to argument 0 */
-#define IF_AR1	  0x00000080UL  /* SB, SW, SD applies to argument 1 */
-#define IF_AR2	  0x000000C0UL  /* SB, SW, SD applies to argument 2 */
-#define IF_ARMASK 0x000000C0UL  /* mask for unsized argument spec */
+#define IF_SD     0x0000000CUL  /* unsized operands can't be non-dword */
+#define IF_SQ     0x00000010UL  /* unsized operands can't be non-qword */
+#define IF_SO     0x00000014UL  /* unsized operands can't be non-oword */
+#define IF_SMASK  0x0000001CUL  /* mask for unsized argument size */
+#define IF_AR0	  0x00000020UL  /* SB, SW, SD applies to argument 0 */
+#define IF_AR1	  0x00000040UL  /* SB, SW, SD applies to argument 1 */
+#define IF_AR2	  0x00000060UL  /* SB, SW, SD applies to argument 2 */
+#define IF_AR3	  0x00000080UL  /* SB, SW, SD applies to argument 2 */
+#define IF_ARMASK 0x000000E0UL  /* mask for unsized argument spec */
 #define IF_PRIV   0x00000100UL  /* it's a privileged instruction */
 #define IF_SMM    0x00000200UL  /* it's only valid in SMM */
 #define IF_PROT   0x00000400UL  /* it's protected mode only */
@@ -88,6 +100,7 @@ extern const struct itemplate * const * const itable[];
 #define IF_SSSE3  0x00200000UL  /* it's an SSSE3 instruction */
 #define IF_SSE41  0x00400000UL  /* it's an SSE4.1 instruction */
 #define IF_SSE42  0x00800000UL  /* it's an SSE4.2 instruction */
+#define IF_SSE5   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                         /* also the highest possible processor */
