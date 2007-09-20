@@ -11,9 +11,10 @@
 #include <limits.h>
 #include <inttypes.h>
 
+#include "nasmlib.h"
 #include "sync.h"
 
-#define SYNC_MAX 4096           /* max # of sync points */
+#define SYNC_MAX 4096           /* max # of sync points (initial) */
 
 /*
  * This lot manages the current set of sync points by means of a
@@ -24,29 +25,12 @@ static struct Sync {
     uint32_t pos;
     uint32_t length;
 } *synx;
-static int nsynx;
+static int max_synx, nsynx;
 
 void init_sync(void)
 {
-    /*
-     * I'd like to allocate an array of size SYNC_MAX, then write
-     * `synx--' which would allow numbering the array from one
-     * instead of zero without wasting memory. Sadly I don't trust
-     * this to work in 16-bit Large model, so it's staying the way
-     * it is. Btw, we don't care about freeing this array, since it
-     * has to last for the duration of the program and will then be
-     * auto-freed on exit. And I'm lazy ;-)
-     * 
-     * Speaking of 16-bit Large model, that's also the reason I'm
-     * not declaring this array statically - by doing it
-     * dynamically I avoid problems with the total size of DGROUP
-     * in Borland C.
-     */
-    synx = malloc((SYNC_MAX + 1) * sizeof(*synx));
-    if (!synx) {
-        fprintf(stderr, "ndisasm: not enough memory for sync array\n");
-        exit(1);
-    }
+    max_synx = SYNC_MAX-1;
+    synx = nasm_malloc(SYNC_MAX * sizeof(*synx));
     nsynx = 0;
 }
 
@@ -54,8 +38,10 @@ void add_sync(uint32_t pos, uint32_t length)
 {
     int i;
 
-    if (nsynx == SYNC_MAX)
-        return;                 /* can't do anything - overflow */
+    if (nsynx >= max_synx) {
+	max_synx = (max_synx << 1)+1;
+	synx = nasm_realloc(synx, (max_synx+1) * sizeof(*synx));
+    }
 
     nsynx++;
     synx[nsynx].pos = pos;
