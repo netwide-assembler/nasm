@@ -88,7 +88,7 @@ means of examining the target addresses of the relative jumps and
 calls it disassembles.
 .TP
 .BI \-b " bits"
-Specifies either 16-bit or 32-bit mode. The default is 16-bit mode.
+Specifies 16-, 32- or 64-bit mode. The default is 16-bit mode.
 .TP
 .B \-u
 Specifies 32-bit mode, more compactly than using `-b 32'.
@@ -124,11 +124,6 @@ actually disassembles that part of the code. Also, if spurious jumps
 or calls result from disassembling non-machine-code data, sync
 markers may get placed in strange places. Feel free to turn
 auto-sync off and go back to doing it manually if necessary.
-.PP
-.B ndisasm
-can only keep track of 8192 sync markers internally at once: this is
-to do with portability, since DOS machines don't take kindly to more
-than 64K being allocated at a time.
 .PP
 .SH SEE ALSO
 .BR objdump "(" 1 ")."

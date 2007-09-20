@@ -192,9 +192,10 @@ is reserved using the
 .IR RESB ,
 .IR RESW ,
 .IR RESD ,
-.I RESQ
-and
+.IR RESQ ,
 .I REST
+and
+.I RESO
 pseudo-opcodes, each taking one parameter which gives the number of
 bytes, words, doublewords, quadwords or ten-byte words to reserve.
 .PP
@@ -297,9 +298,10 @@ finished doing absolute assembly, you must issue another
 .I SECTION
 directive to return to normal assembly.
 .PP
-.I BITS 16
-or
+.I BITS 16,
 .I BITS 32
+or
+.I BITS 64
 switches the default processor mode for which
 .B nasm
 is generating code: it is equivalent to
