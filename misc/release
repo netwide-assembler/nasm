@@ -36,7 +36,7 @@ mkdir $work
 cd $work
 unset GIT_DIR
 git clone -s -l "$HERE" nasm
-rm -rf nasm-"$version"/.git
+rm -rf nasm/.git
 
 # Create files which are in the release but automatically generated
 cd nasm
