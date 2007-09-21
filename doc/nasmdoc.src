@@ -151,6 +151,7 @@ convention
 \IR{ms-dos} MS-DOS
 \IR{ms-dos device drivers} MS-DOS device drivers
 \IR{multipush} \c{multipush} macro
+\IR{nan} NaN
 \IR{nasm version} NASM version
 \IR{netbsd} NetBSD
 \IR{omf} OMF
@@ -1093,7 +1094,7 @@ syntax in which register names must be prefixed by a \c{%} sign), or
 they can be \i{effective addresses} (see \k{effaddr}), constants
 (\k{const}) or expressions (\k{expr}).
 
-For \i{floating-point} instructions, NASM accepts a wide range of
+For x87 \i{floating-point} instructions, NASM accepts a wide range of
 syntaxes: you can use two-operand forms like MASM supports, or you
 can use NASM's native single-operand forms in most cases.
 \# Details of
@@ -1107,7 +1108,7 @@ For example, you can code:
 \c         fadd    st1,st0         ; this sets st1 := st1 + st0
 \c         fadd    to st1          ; so does this
 
-Almost any floating-point instruction that references memory must
+Almost any x87 floating-point instruction that references memory must
 use one of the prefixes \i\c{DWORD}, \i\c{QWORD} or \i\c{TWORD} to
 indicate what size of \i{memory operand} it refers to.
 
@@ -1115,19 +1116,19 @@ indicate what size of \i{memory operand} it refers to.
 \H{pseudop} \i{Pseudo-Instructions}
 
 Pseudo-instructions are things which, though not real x86 machine
-instructions, are used in the instruction field anyway because
-that's the most convenient place to put them. The current
-pseudo-instructions are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ} and
-\i\c{DT}, their \i{uninitialized} counterparts \i\c{RESB},
-\i\c{RESW}, \i\c{RESD}, \i\c{RESQ} and \i\c{REST}, the \i\c{INCBIN}
+instructions, are used in the instruction field anyway because that's
+the most convenient place to put them. The current pseudo-instructions
+are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT} and \i\c{DO};
+their \i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
+\i\c{RESD}, \i\c{RESQ}, \i\c{REST} and \i\c{RESO}; the \i\c{INCBIN}
 command, the \i\c{EQU} command, and the \i\c{TIMES} prefix.
 
 
 \S{db} \c{DB} and friends: Declaring initialized Data
 
-\i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ} and \i\c{DT} are used, much
-as in MASM, to declare initialized data in the output file. They can
-be invoked in a wide range of ways:
+\i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT} and \i\c{DO} are
+used, much as in MASM, to declare initialized data in the output
+file. They can be invoked in a wide range of ways:
 \I{floating-point}\I{character constant}\I{string constant}
 
 \c       db    0x55                ; just the byte 0x55
@@ -1144,20 +1145,21 @@ be invoked in a wide range of ways:
 \c       dq    1.234567e20         ; double-precision float
 \c       dt    1.234567e20         ; extended-precision float
 
-\c{DT} does not accept \i{numeric constants} as operands.
+\c{DT} and \c{DO} do not accept \i{numeric constants} as operands.
+\c{DB} does not accept \i{floating-point} numbers as operands.
 
 
 \S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
 
-\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ} and \i\c{REST} are
-designed to be used in the BSS section of a module: they declare
-\e{uninitialized} storage space. Each takes a single operand, which
-is the number of bytes, words, doublewords or whatever to reserve.
-As stated in \k{qsother}, NASM does not support the MASM/TASM syntax
-of reserving uninitialized space by writing \I\c{?}\c{DW ?} or
-similar things: this is what it does instead. The operand to a
-\c{RESB}-type pseudo-instruction is a \i\e{critical expression}: see
-\k{crit}.
+\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST} and
+\i\c{RESO} are designed to be used in the BSS section of a module:
+they declare \e{uninitialized} storage space. Each takes a single
+operand, which is the number of bytes, words, doublewords or whatever
+to reserve.  As stated in \k{qsother}, NASM does not support the
+MASM/TASM syntax of reserving uninitialized space by writing
+\I\c{?}\c{DW ?} or similar things: this is what it does instead. The
+operand to a \c{RESB}-type pseudo-instruction is a \i\e{critical
+expression}: see \k{crit}.
 
 For example:
 
@@ -1390,20 +1392,28 @@ when they are operands to \c{dw}.
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
 \i{Floating-point} constants are acceptable only as arguments to
-\i\c{DD}, \i\c{DQ} and \i\c{DT}. They are expressed in the
-traditional form: digits, then a period, then optionally more
-digits, then optionally an \c{E} followed by an exponent. The period
-is mandatory, so that NASM can distinguish between \c{dd 1}, which
-declares an integer constant, and \c{dd 1.0} which declares a
-floating-point constant.
+\i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}. They are
+expressed in the traditional form: digits, then a period, then
+optionally more digits, then optionally an \c{E} followed by an
+exponent. The period is mandatory, so that NASM can distinguish
+between \c{dd 1}, which declares an integer constant, and \c{dd 1.0}
+which declares a floating-point constant.
+
+NASM also support C99-style hexadecimal floating-point: \c{0x},
+hexadecimal digits, period, optionally more hexadeximal digits, then
+optionally a \c{P} followed by a \e{binary} (not hexadecimal) exponent
+in decimal notation.
 
 Some examples:
 
+\c       dw    -0.5                    ; IEEE half precision
 \c       dd    1.2                     ; an easy one
+\c	 dd    0x1p+2		       ; 1.0x2^2 = 4.0
 \c       dq    1.e10                   ; 10,000,000,000
 \c       dq    1.e+10                  ; synonymous with 1.e10
 \c       dq    1.e-10                  ; 0.000 000 000 1
 \c       dt    3.141592653589793238462 ; pi
+\c       do    1.e+4000		       ; IEEE quad precision
 
 NASM cannot do compile-time arithmetic on floating-point constants.
 This is because NASM is designed to be portable - although it always
@@ -1415,18 +1425,21 @@ do floating arithmetic it would have to include its own complete set
 of floating-point routines, which would significantly increase the
 size of the assembler for very little benefit.
 
+The special tokens \i\c{__Infinity__}, \i\c{__QNaN__} (or
+\i\c{__NaN__}) and \i\c{__SNaN__} can be used to generate
+\I{infinity}infinities, quiet \i{NaN}s, and signalling NaNs,
+respectively.  These are normally used as macros:
+
+\c %define Inf __Infinity__
+\c %define NaN __QNaN__
+\c
+\c       dq    +1.5, -Inf, NaN         ; Double-precision constants
 
 \H{expr} \i{Expressions}
 
-Expressions in NASM are similar in syntax to those in C.
-
-NASM does not guarantee the size of the integers used to evaluate
-expressions at compile time: since NASM can compile and run on
-64-bit systems quite happily, don't assume that expressions are
-evaluated in 32-bit registers and so try to make deliberate use of
-\i{integer overflow}. It might not always work. The only thing NASM
-will guarantee is what's guaranteed by ANSI C: you always have \e{at
-least} 32 bits to work in.
+Expressions in NASM are similar in syntax to those in C.  Expressions
+are evaluated as 64-bit integers which are then adjusted to the
+appropriate size.
 
 NASM supports two special tokens in expressions, allowing
 calculations to involve the current assembly position: the
@@ -1560,11 +1573,11 @@ invent one using the macro processor.
 
 When assembling with the optimizer set to level 2 or higher (see
 \k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
-\c{DWORD}, \c{QWORD}, or \c{TWORD}), but will give them the smallest
-possible size. The keyword \c{STRICT} can be used to inhibit
+\c{DWORD}, \c{QWORD}, \c{TWORD} or \c{OWORD}), but will give them the
+smallest possible size. The keyword \c{STRICT} can be used to inhibit
 optimization and force a particular operand to be emitted in the
-specified size. For example, with the optimizer on, and in
-\c{BITS 16} mode,
+specified size. For example, with the optimizer on, and in \c{BITS 16}
+mode,
 
 \c         push dword 33
 
@@ -3425,15 +3438,21 @@ using 16-bit data need an 0x66 and those working on 16-bit addresses
 need an 0x67.
 
 When NASM is in \c{BITS 64} mode, most instructions operate the same
-as they do for \c{BITS 32} mode. However, 16-bit addresses are depreciated
-in the x86-64 architecture extension and the 0x67 prefix is used for 32-bit
-addressing. This is due to the default of 64-bit addressing. When the \c{REX}
-prefix is used, the processor does not know how to address the AH, BH, CH or
-DH (high 8-bit legacy) registers. This because the x86-64 has added a new
-set of registers and the capability to address the low 8-bits of the SP, BP
-SI and DI registers as SPL, BPL, SIL and DIL, respectively; but only when
-the REX prefix is used. In summary, the \c{REX} prefix causes the addressing
-of AH, BH, CH and DH to be replaced by SPL, BPL, SIL and DIL.
+as they do for \c{BITS 32} mode. However, there are 8 more general and
+SSE registers, and 16-bit addressing is no longer supported.
+
+The default address size is 64 bits; 32-bit addressing can be selected
+with the 0x67 prefix.  The default operand size is still 32 bits,
+however, and the 0x66 prefix selects 16-bit operand size.  The \c{REX}
+prefix is used both to select 64-bit operand size, and to access the
+new registers. NASM automatically inserts REX prefixes when
+necessary.
+
+When the \c{REX} prefix is used, the processor does not know how to
+address the AH, BH, CH or DH (high 8-bit legacy) registers. Instead,
+it is possible to access the the low 8-bits of the SP, BP SI and DI
+registers as SPL, BPL, SIL and DIL, respectively; but only when the
+REX prefix is used.
 
 The \c{BITS} directive has an exactly equivalent primitive form,
 \c{[BITS 16]}, \c{[BITS 32]} and \c{[BITS 64]}. The user-level form is

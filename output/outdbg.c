@@ -100,7 +100,7 @@ static void dbg_deflabel(char *name, int32_t segment, int32_t offset,
             is_global, special ? ": " : "", special);
 }
 
-static void dbg_out(int32_t segto, void *data, uint32_t type,
+static void dbg_out(int32_t segto, const void *data, uint32_t type,
                     int32_t segment, int32_t wrt)
 {
     int32_t realbytes = type & OUT_SIZMASK;

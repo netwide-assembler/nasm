@@ -23,6 +23,7 @@ far
 long
 near
 nosplit
+oword
 qword
 rel
 short
@@ -30,6 +31,12 @@ strict
 to
 tword
 word
+
+% TOKEN_FLOAT, 0, 0
+__infinity__
+__nan__
+__qnan__
+__snan__
 
 % TOKEN_*, 0, 0
 seg
