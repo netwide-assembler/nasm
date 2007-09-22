@@ -35,18 +35,23 @@ $line = <STDIN>;
 chomp $line;
 
 undef $man, $min, $smin, $plvl, $tail;
+$is_rc = 0;
 
-if ( $line =~ /^([0-9]+)\.([0-9]+)/ ) {
+if ( $line =~ /^([0-9]+)\.([0-9]+)(.*)$/ ) {
     $maj  = $1;
     $min  = $2;
-    $tail = $';
-    if ( $tail =~ /^\.([0-9]+)/ ) {
+    $tail = $3;
+    if ( $tail =~ /^\.([0-9]+)(.*)$/ ) {
 	$smin = $1;
-	$tail = $';
+	$tail = $2;
     }
-    if ( $tail =~ /^(pl|\.)([0-9]+)/ ) {
+    if ( $tail =~ /^(pl|\.)([0-9]+)(.*)$/ ) {
 	$plvl = $2;
-	$tail = $';
+	$tail = $3;
+    } elsif ( $tail =~ /^rc([0-9]+)(.*)$/ ) {
+	$is_rc = 1;
+	$plvl = $1;
+	$tail = $2;
     }
 } else {
     die "$0: Invalid input format\n";
@@ -54,6 +59,21 @@ if ( $line =~ /^([0-9]+)\.([0-9]+)/ ) {
 
 $nmaj = $maj+0;   $nmin = $min+0;
 $nsmin = $smin+0; $nplvl = $plvl+0;
+
+if ($is_rc) {
+    $nplvl += 90;
+    if ($nsmin > 0) {
+	$nsmin--;
+    } else {
+	$nsmin = 99;
+	if ($nmin > 0) {
+	    $nmin--;
+	} else {
+	    $nmin = 99;
+	    $nmaj--;
+	}
+    }
+}
 
 $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
