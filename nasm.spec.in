@@ -1,13 +1,14 @@
+%define nasm_version @@NASM_VER@@
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
-Version: @@VERSION@@
+Version: @@NASM_MANGLED_VER@@
 Release: 1
 License: LGPL
 Group: Development/Languages
-Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{version}.tar.bz2
+Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{nasm_version}.tar.bz2
 URL: http://nasm.sourceforge.net/
 BuildRoot: /tmp/rpm-build-nasm
-Prefix: /usr
+Prefix: %{_prefix}
 BuildPrereq: perl
 
 %package doc
@@ -37,21 +38,21 @@ include linker, library manager, loader, and information dump.
 %setup
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" LDFLAGS=-s ./configure --prefix=/usr
-make everything
+%configure
+%make %{?_smp_mflags} everything
 
 %install
 rm -rf "$RPM_BUILD_ROOT"
 mkdir -p "$RPM_BUILD_ROOT"
-mkdir -p "$RPM_BUILD_ROOT"/usr/bin
-mkdir -p "$RPM_BUILD_ROOT"/usr/man/man1
+mkdir -p "$RPM_BUILD_ROOT"/%{_bindir}
+mkdir -p "$RPM_BUILD_ROOT"/%{_mandir}/man1
 mkdir -p "$RPM_BUILD_ROOT"/%{_infodir}
-DOC="$RPM_BUILD_ROOT"/usr/doc/nasm-%{version}
+DOC="$RPM_BUILD_ROOT"%{_docdir}
 mkdir -p "$DOC"
 mkdir -p "$DOC"/rdoff
-rm -f "$RPM_BUILD_ROOT"/usr/info/nasm.*
+rm -f "$RPM_BUILD_ROOT"/%{_infodir}/nasm.*
 make INSTALLROOT="$RPM_BUILD_ROOT" \
-	docdir=/usr/doc/nasm-%{version} \
+	docdir=%{_docdir} \
 	infodir=%{_infodir} \
 	install_everything
 gzip -9 "$RPM_BUILD_ROOT"/%{_infodir}/nasm.*
@@ -72,21 +73,21 @@ if [ $1 = 0 ]; then
 fi
 
 %files
-%attr(-,root,root)	/usr/bin/nasm
-%attr(-,root,root)	/usr/bin/ndisasm
-%attr(-,root,root) %doc /usr/man/man1/nasm.1*
-%attr(-,root,root) %doc /usr/man/man1/ndisasm.1*
+%attr(-,root,root)	%{_bindir}/nasm
+%attr(-,root,root)	%{_bindir}/ndisasm
+%attr(-,root,root) %doc %{_mandir}/man1/nasm.1*
+%attr(-,root,root) %doc %{_mandir}/man1/ndisasm.1*
 
 %files doc
 %attr(-,root,root) %doc %{_infodir}/nasm.info*.gz
-%attr(-,root,root) %doc /usr/doc/nasm-%{version}/*
+%attr(-,root,root) %doc %{_docdir}/*
 
 %files rdoff
-%attr(-,root,root)	/usr/bin/ldrdf
-%attr(-,root,root)	/usr/bin/rdf2bin
-%attr(-,root,root)	/usr/bin/rdf2com
-%attr(-,root,root)	/usr/bin/rdf2ihx
-%attr(-,root,root)	/usr/bin/rdfdump
-%attr(-,root,root)	/usr/bin/rdflib
-%attr(-,root,root)	/usr/bin/rdx
-%attr(-,root,root) %doc	/usr/doc/nasm-%{version}/rdoff/*
+%attr(-,root,root)	%{_bindir}/ldrdf
+%attr(-,root,root)	%{_bindir}/rdf2bin
+%attr(-,root,root)	%{_bindir}/rdf2com
+%attr(-,root,root)	%{_bindir}/rdf2ihx
+%attr(-,root,root)	%{_bindir}/rdfdump
+%attr(-,root,root)	%{_bindir}/rdflib
+%attr(-,root,root)	%{_bindir}/rdx
+%attr(-,root,root) %doc	%{_docdir}/rdoff/*

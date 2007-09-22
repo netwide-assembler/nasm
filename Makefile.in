@@ -93,6 +93,9 @@ version.h: version version.pl
 version.mac: version version.pl
 	$(PERL) $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
 
+version.sed: version version.pl
+	$(PERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
+
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
@@ -187,9 +190,8 @@ tar: dist
 
 spec: nasm.spec
 
-nasm.spec: nasm.spec.in version version.pl
-	sed -e s/@@VERSION@@/`cat $(srcdir)/version`/g \
-	    < nasm.spec.in > nasm.spec
+nasm.spec: nasm.spec.in version.sed
+	sed -f version.sed < nasm.spec.in > nasm.spec
 
 splint:
 	splint -weak *.c

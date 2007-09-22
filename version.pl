@@ -77,6 +77,9 @@ if ($is_rc) {
 
 $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
+$mangled_ver = sprintf("%d.%02d.%02d", $nmaj, $nmin, $nsmin);
+$mangled_ver .= '.'.$nplvl if ($nplvl != 0);
+
 if ( $what eq 'h' ) {
     print  "#ifndef NASM_VERSION_H\n";
     print  "#define NASM_VERSION_H\n";
@@ -94,6 +97,15 @@ if ( $what eq 'h' ) {
     printf "%%define __NASM_PATCHLEVEL__ %d\n", $nplvl;
     printf "%%define __NASM_VERSION_ID__ 0%08Xh\n", $nasm_id;
     printf "%%define __NASM_VER__ \"%s\"\n", $line;
+} elsif ( $what eq 'sed' ) {
+    printf "s/\@\@NASM_MAJOR\@\@/%d/g\n", $nmaj;
+    printf "s/\@\@NASM_MINOR\@\@/%d/g\n", $nmin;
+    printf "s/\@\@NASM_SUBMINOR\@\@/%d/g\n", $nsmin;
+    printf "s/\@\@NASM_PATCHLEVEL\@\@/%d/g\n", $nplvl;
+    printf "s/\@\@NASM_VERSION_ID\@\@/%d/g\n", $nasm_id;
+    printf "s/\@\@NASM_VERSION_XID\@\@/0x%08x/g\n", $nasm_id;
+    printf "s/\@\@NASM_VER\@\@/%s/g\n", $line;
+    printf "s/\@\@NASM_MANGLED_VER\@\@/%s/g\n", $mangled_ver;
 } elsif ( $what eq 'id' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {
