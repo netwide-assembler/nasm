@@ -35,11 +35,11 @@ is sometimes used with the Netwide Assembler (NASM).  These tools
 include linker, library manager, loader, and information dump.
 
 %prep
-%setup
+%setup -n nasm-%{nasm_version}
 
 %build
 %configure
-%make %{?_smp_mflags} everything
+make %{?_smp_mflags} everything
 
 %install
 rm -rf "$RPM_BUILD_ROOT"
