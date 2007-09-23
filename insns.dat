@@ -569,7 +569,7 @@ INT3      void                \1\xCC                        8086
 INTO      void                \1\xCE                        8086,NOLONG
 INVD      void                \2\x0F\x08                    486,PRIV
 INVLPG    mem                 \300\2\x0F\x01\207            486,PRIV
-INVLPGA   void                \3\x0F\x01\xDF                X64,AMD
+INVLPGA   void                \3\x0F\x01\xDF                X86_64,AMD
 IRET      void                \322\1\xCF                    8086
 IRETD     void                \321\1\xCF                    386
 IRETQ     void                \324\1\xCF                    X64
@@ -1047,7 +1047,7 @@ RDSHR     rm32                \321\300\2\x0F\x36\200        P6,CYRIX,SMM
 RDMSR     void                \2\x0F\x32                    PENT,PRIV
 RDPMC     void                \2\x0F\x33                    P6
 RDTSC     void                \2\x0F\x31                    PENT
-RDTSCP    void                \3\x0F\x01\xF9                X64
+RDTSCP    void                \3\x0F\x01\xF9                X86_64
 RET       void                \1\xC3                        8086
 RET       imm                 \1\xC2\30                     8086,SW
 RETF      void                \1\xCB                        8086
