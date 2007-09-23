@@ -1905,7 +1905,7 @@ HSUBPD		xmmreg,mem              \301\366\2\x0F\x7D\110          PRESCOTT,SSE3,SM
 HSUBPD		xmmreg,xmmreg           \366\2\x0F\x7D\110              PRESCOTT,SSE3
 HSUBPS		xmmreg,mem		\301\332\2\x0F\x7D\110		PRESCOTT,SSE3,SM
 HSUBPS		xmmreg,xmmreg           \332\2\x0F\x7D\110              PRESCOTT,SSE3
-LDDQU		xmmreg,mem		\332\2\x0F\xF0\110		PRESCOTT,SSE3
+LDDQU		xmmreg,mem		\301\332\2\x0F\xF0\110		PRESCOTT,SSE3,SM
 MOVDDUP		xmmreg,mem		\301\332\2\x0F\x12\110		PRESCOTT,SSE3
 MOVDDUP		xmmreg,xmmreg		\332\2\x0F\x12\110		PRESCOTT,SSE3
 MOVSHDUP	xmmreg,mem		\301\333\2\x0F\x16\110		PRESCOTT,SSE3
