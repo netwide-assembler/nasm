@@ -915,6 +915,7 @@ struct dfmt {
 #define TY_FLOAT   0x28
 #define TY_QWORD   0x30
 #define TY_TBYTE   0x38
+#define TY_OWORD   0x40
 #define TY_COMMON  0xE0
 #define TY_SEG     0xE8
 #define TY_EXTERN  0xF0

@@ -1319,6 +1319,9 @@ static void assemble_file(char *fname)
                             case I_DT:
                                 typeinfo |= TY_TBYTE;
                                 break;
+			    case I_DO:
+				typeinfo |= TY_OWORD;
+				break;
                             default:
                                 typeinfo = TY_LABEL;
 
