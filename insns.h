@@ -98,8 +98,9 @@ extern const struct disasm_index itable[256];
 #define IF_VMX	  0x00080000UL  /* it's a VMX instruction */
 #define IF_LONG   0x00100000UL	/* long mode instruction */
 #define IF_SSSE3  0x00200000UL  /* it's an SSSE3 instruction */
-#define IF_SSE41  0x00400000UL  /* it's an SSE4.1 instruction */
-#define IF_SSE42  0x00800000UL  /* it's an SSE4.2 instruction */
+#define IF_SSE4A  0x00400000UL  /* AMD SSE4a */
+#define IF_SSE41  0x00800000UL  /* it's an SSE4.1 instruction */
+#define IF_SSE42  0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_SSE5   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */

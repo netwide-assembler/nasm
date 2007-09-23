@@ -1958,6 +1958,19 @@ PSIGNW		xmmreg,xmmrm		\366\3\x0F\x38\x09\110		SSSE3
 PSIGND		mmxreg,mmxrm		\364\3\x0F\x38\x0A\110		SSSE3,MMX,SQ
 PSIGND		xmmreg,xmmrm		\366\3\x0F\x38\x0A\110		SSSE3
 
+; AMD SSE4A
+EXTRQ		xmmreg,imm,imm		\366\2\x0F\x78\200\25\26	SSE4A,AMD
+EXTRQ		xmmreg,xmmreg		\366\2\x0F\x79\110		SSE4A,AMD
+INSERTQ		xmmreg,xmmreg,imm,imm	\332\2\x0F\x78\110\26\27	SSE4A,AMD
+INSERTQ		xmmreg,xmmreg		\332\2\x0F\x79\110		SSE4A,AMD
+MOVNTSD		mem,xmmreg		\332\2\x0F\x2B\101		SSE4A,AMD,SQ
+MOVNTSS		mem,xmmreg		\333\2\x0F\x2B\101		SSE4A,AMD,SD
+
+; New instructions in Barcelona
+LZCNT		reg16,rm16		\320\333\2\x0F\xBD\110		P6,AMD
+LZCNT		reg32,rm32		\321\333\2\x0F\xBD\110		P6,AMD
+LZCNT		reg64,rm64		\324\333\2\x0F\xBD\110		P6,AMD
+
 ; Penryn New Instructions (SSE4.1)
 BLENDPD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0D\110\26	SSE41
 BLENDPS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0C\110\26	SSE41
