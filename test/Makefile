@@ -2,22 +2,22 @@
 
 NASM = ../nasm
 
-.asm.bin:
+%.bin: %.asm $(NASM)
 	$(NASM) -f bin -o $@ -l $*.lst $<
 
-.asm.o:
+%.o: %.asm $(NASM)
 	$(NASM) -f elf32 -o $@ -l $*.lst $<
 
-.asm.o64:
+%.o64: %.asm $(NASM)
 	$(NASM) -f elf64 -o $@ -l $*.lst $<
 
-.asm.obj:
+%.obj: %.asm $(NASM)
 	$(NASM) -f win32 -o $@ -l $*.lst $<
 
-.asm.obj64:
+%.obj64: %.asm $(NASM)
 	$(NASM) -f win64 -o $@ -l $*.lst $<
 
 all:
 
 clean:
-	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst
+	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst *.bin
