@@ -569,6 +569,9 @@ INT3		void			\1\xCC				8086
 INTO		void			\1\xCE				8086,NOLONG
 INVD		void			\2\x0F\x08			486,PRIV
 INVLPG		mem			\2\x0F\x01\207			486,PRIV
+INVLPGA		reg_ax,reg_ecx		\310\3\x0F\x01\xDF		X86_64,AMD,NOLONG
+INVLPGA		reg_eax,reg_ecx		\311\3\x0F\x01\xDF		X86_64,AMD
+INVLPGA		reg_rax,reg_ecx		\313\3\x0F\x01\xDF		X64,AMD
 INVLPGA		void			\3\x0F\x01\xDF			X86_64,AMD
 IRET		void			\322\1\xCF			8086
 IRETD		void			\321\1\xCF			386
