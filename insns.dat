@@ -2208,3 +2208,6 @@ ROUNDPS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 ROUNDPD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 ROUNDSS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 ROUNDSD 	xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
+
+; Intel SMX
+GETSEC		void			\2\x0F\x37			KATMAI
