@@ -272,12 +272,12 @@ CMPXCHG   mem,reg32           \321\300\2\x0F\xB1\101        PENT,SM
 CMPXCHG   reg32,reg32         \321\2\x0F\xB1\101            PENT
 CMPXCHG   mem,reg64           \324\300\2\x0F\xB1\101        X64,SM
 CMPXCHG   reg64,reg64         \324\2\x0F\xB1\101            X64
-CMPXCHG486 mem,reg8           \300\2\x0F\xA6\101            486,SM,UNDOC
-CMPXCHG486 reg8,reg8          \2\x0F\xA6\101                486,UNDOC
-CMPXCHG486 mem,reg16          \320\300\2\x0F\xA7\101        486,SM,UNDOC
-CMPXCHG486 reg16,reg16        \320\2\x0F\xA7\101            486,UNDOC
-CMPXCHG486 mem,reg32          \321\300\2\x0F\xA7\101        486,SM,UNDOC
-CMPXCHG486 reg32,reg32        \321\2\x0F\xA7\101            486,UNDOC
+CMPXCHG486 mem,reg8           \300\2\x0F\xA6\101            486,SM,UNDOC,ND
+CMPXCHG486 reg8,reg8          \2\x0F\xA6\101                486,UNDOC,ND
+CMPXCHG486 mem,reg16          \320\300\2\x0F\xA7\101        486,SM,UNDOC,ND
+CMPXCHG486 reg16,reg16        \320\2\x0F\xA7\101            486,UNDOC,ND
+CMPXCHG486 mem,reg32          \321\300\2\x0F\xA7\101        486,SM,UNDOC,ND
+CMPXCHG486 reg32,reg32        \321\2\x0F\xA7\101            486,UNDOC,ND
 CMPXCHG8B mem                 \300\2\x0F\xC7\201            PENT
 CMPXCHG16B mem                \324\300\2\x0F\xC7\201        X64
 CPUID     void                \2\x0F\xA2                    PENT
@@ -1377,7 +1377,6 @@ XOR       rm64,imm            \324\300\155\1\x81\206\151    X64,SM
 XOR       mem,imm8            \300\1\x80\206\21             8086,SM
 XOR       mem,imm16           \320\300\145\1\x81\206\141    8086,SM
 XOR       mem,imm32           \321\300\155\1\x81\206\151    386,SM
-XSTORE    void                \3\x0F\xA7\xC0                P6,CYRIX
 CMOVcc    reg16,mem           \320\301\1\x0F\330\x40\110    P6,SM
 CMOVcc    reg16,reg16         \320\1\x0F\330\x40\110        P6
 CMOVcc    reg32,mem           \321\301\1\x0F\330\x40\110    P6,SM
@@ -2217,3 +2216,10 @@ GETSEC		void			\2\x0F\x37			KATMAI
 ; Geode (Cyrix) 3DNow! additions
 PFRCP		mmxreg,mmxrm		\301\2\x0F\x0F\110\1\x86	PENT,3DNOW,SM,CYRIX
 PFRSQRT		mmxreg,mmxrm		\301\2\x0F\x0F\110\1\x87	PENT,3DNOW,SM,CYRIX
+
+; VIA (Centaur) security instructions
+XSTORE		void			\3\x0F\xA7\xC0			PENT,CYRIX
+XCRYPTECB	void			\333\3\x0F\xA7\xC8		PENT,CYRIX
+XCRYPTCBC	void			\333\3\x0F\xA7\xD0		PENT,CYRIX
+XCRYPTCFB	void			\333\3\x0F\xA7\xE0		PENT,CYRIX
+XCRYPTOFB	void			\333\3\x0F\xA7\xE8		PENT,CYRIX

@@ -9,7 +9,7 @@
 
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
-@disasm_prefixes = qw(0F0F 0F24 0F25 0F38 0F3A 0F7A 0F);
+@disasm_prefixes = qw(0F0F 0F24 0F25 0F38 0F3A 0F7A 0FA7 0F);
 
 print STDERR "Reading insns.dat...\n";
 
