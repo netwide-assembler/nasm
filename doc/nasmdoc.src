@@ -1891,6 +1891,9 @@ Individual tokens in single line macros can be concatenated, to produce
 longer tokens for later processing. This can be useful if there are
 several similar macros that perform similar functions.
 
+Please note that a space is required after \c{%+}, in order to
+disambiguate it from the syntax \c{%+1} used in multiline macros.
+
 As an example, consider the following:
 
 \c %define BDASTART 400h                ; Start of BIOS data area

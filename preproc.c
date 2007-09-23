@@ -74,7 +74,7 @@ struct SMacro {
     SMacro *next;
     char *name;
     int casesense;
-    int nparam;
+    unsigned int nparam;
     int in_progress;
     Token *expansion;
 };
@@ -113,7 +113,8 @@ struct MMacro {
     MMacro *rep_nest;           /* used for nesting %rep */
     Token **params;             /* actual parameters */
     Token *iline;               /* invocation line */
-    int nparam, rotate, *paramlen;
+    unsigned int nparam, rotate;
+    int *paramlen;
     uint32_t unique;
     int lineno;                 /* Current line number on expansion */
 };
@@ -2148,12 +2149,13 @@ static int do_directive(Token * tline)
             error(ERR_NONFATAL,
                   "`%%rotate' invoked within macro without parameters");
         } else {
-            mmac->rotate = mmac->rotate + reloc_value(evalresult);
+	    int rotate = mmac->rotate + reloc_value(evalresult);
 
-            if (mmac->rotate < 0)
-                mmac->rotate =
-                    mmac->nparam - (-mmac->rotate) % mmac->nparam;
-            mmac->rotate %= mmac->nparam;
+	    rotate %= (int)mmac->nparam;
+	    if (rotate < 0)
+		rotate += mmac->nparam;
+	    
+	    mmac->rotate = rotate;
         }
         return DIRECTIVE_FOUND;
 
@@ -2742,6 +2744,9 @@ static int find_cc(Token * t)
     Token *tt;
     int i, j, k, m;
 
+    if (!t)
+	    return -1;		/* Probably a %+ without a space */
+
     skip_white_(t);
     if (t->type != TOK_ID)
         return -1;
@@ -2788,7 +2793,8 @@ static Token *expand_mmac_params(Token * tline)
             char *text = NULL;
             int type = 0, cc;   /* type = 0 to placate optimisers */
             char tmpbuf[30];
-            int n, i;
+            unsigned int n;
+	    int i;
             MMacro *mac;
 
             t = tline;
@@ -2945,7 +2951,8 @@ static Token *expand_smacro(Token * tline)
     SMacro *head = NULL, *m;
     Token **params;
     int *paramsize;
-    int nparam, sparam, brackets, rescan;
+    unsigned int nparam, sparam;
+    int brackets, rescan;
     Token *org_tline = tline;
     Context *ctx;
     char *mname;
