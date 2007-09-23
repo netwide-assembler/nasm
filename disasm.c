@@ -561,8 +561,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
                          &ins->oprs[(c >> 3) & 07], ins);
 	    if (!data)
 		return FALSE;
-        } else if (c >= 0300 && c <= 0303) {
-            a_used = TRUE;
         } else if (c == 0310) {
             if (asize != 16)
                 return FALSE;
@@ -652,6 +650,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
     /*
      * Check for unused rep or a/o prefixes.
      */
+    for (i = 0; i < t->operands; i++) {
+	if (ins->oprs[i].segment != SEG_RMREG)
+	    a_used = TRUE;
+    }
+
     ins->nprefix = 0;
     if (lock)
 	ins->prefixes[ins->nprefix++] = P_LOCK;

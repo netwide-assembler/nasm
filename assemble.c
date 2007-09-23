@@ -51,8 +51,6 @@
  * \171		 - placement of DREX suffix in the absence of an EA
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
- * \30x          - might be an 0x67 byte, depending on the address size of
- *                 the memory reference in operand x.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
@@ -116,18 +114,22 @@ static int32_t regval(const operand *);
 static int rexflags(int, int32_t, int);
 static int op_rexflags(const operand *, int);
 static ea *process_ea(operand *, ea *, int, int, int32_t, int);
-static int chsize(operand *, int);
+static void add_asp(insn *, int);
 
-static void assert_no_prefix(insn * ins, int prefix)
+static int has_prefix(insn * ins, enum prefixes prefix)
 {
     int j;
-
     for (j = 0; j < ins->nprefix; j++) {
-	if (ins->prefixes[j] == prefix) {
-	    errfunc(ERR_NONFATAL, "invalid %s prefix", prefix_name(prefix));
-	    break;
-	}
+	if (ins->prefixes[j] == prefix)
+	    return 1;
     }
+    return 0;
+}
+
+static void assert_no_prefix(insn * ins, enum prefixes prefix)
+{
+    if (has_prefix(ins, prefix))
+	errfunc(ERR_NONFATAL, "invalid %s prefix", prefix_name(prefix));
 }
 
 /*
@@ -277,7 +279,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                                 OUT_RAWDATA + 1, NO_SEG, NO_SEG);
                         }
                     } else if (wsize > 8) {
-                        errfunc(ERR_NONFATAL, "integer supplied to a DT"
+                        errfunc(ERR_NONFATAL, "integer supplied to a DT or DO"
                                 " instruction");
                     } else
                         out(offset, segment, &e->offset,
@@ -408,6 +410,9 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
         }
         return 0;               /* if we're here, there's an error */
     }
+
+    /* Check to see if we need an address-size prefix */
+    add_asp(instruction, bits);
 
     size_prob = FALSE;
     
@@ -665,6 +670,9 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
         return 0;               /* if we're here, there's an error */
     }
 
+    /* Check to see if we need an address-size prefix */
+    add_asp(instruction, bits);
+
     for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++) {
         int m = matches(temp, instruction, bits);
         if (m == 99)
@@ -680,12 +688,27 @@ int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
             if (isize < 0)
                 return -1;
             for (j = 0; j < instruction->nprefix; j++) {
-                if ((instruction->prefixes[j] != P_A16 &&
-                     instruction->prefixes[j] != P_O16 && bits == 16) ||
-                    (instruction->prefixes[j] != P_A32 &&
-                     instruction->prefixes[j] != P_O32 && bits >= 32)) {
-                    isize++;
-                }
+		switch (instruction->prefixes[j]) {
+		case P_A16:
+		    if (bits != 16)
+			isize++;
+		    break;
+		case P_A32:
+		    if (bits != 32)
+			isize++;
+		    break;
+		case P_O16:
+		    if (bits != 16)
+			isize++;
+		    break;
+		case P_O32:
+		    if (bits == 16)
+			isize++;
+		    break;
+		default:
+		    isize++;
+		    break;
+		}
             }
             return isize * instruction->times;
         }
@@ -880,17 +903,20 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0301:
         case 0302:         
         case 0303:         
-            length += chsize(&ins->oprs[c - 0300], bits);
             break;
         case 0310:
-            length += (bits != 16);
+	    if (bits == 64)
+		return -1;
+            length += (bits != 16) && !has_prefix(ins,P_A16);
             break;
         case 0311:
-            length += (bits != 32);
+            length += (bits != 32) && !has_prefix(ins,P_A32);
             break;
         case 0312:
             break;     
         case 0313:
+	    if (bits != 64 || has_prefix(ins,P_A16) || has_prefix(ins,P_A32))
+		return -1;
             break;
         case 0320:
             length += (bits != 16);
@@ -1392,17 +1418,10 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 0301:
         case 0302:
         case 0303:
-            if (chsize(&ins->oprs[c - 0300], bits)) {
-                *bytes = 0x67;
-                out(offset, segment, bytes,
-                    OUT_RAWDATA + 1, NO_SEG, NO_SEG);
-                offset += 1;
-            } else
-                offset += 0;
             break;
 
         case 0310:
-            if (bits != 16) {
+            if (bits == 32 && !has_prefix(ins,P_A16)) {
                 *bytes = 0x67;
                 out(offset, segment, bytes,
                     OUT_RAWDATA + 1, NO_SEG, NO_SEG);
@@ -1412,7 +1431,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             break;
 
         case 0311:
-            if (bits != 32) {
+            if (bits != 32 && !has_prefix(ins,P_A32)) {
                 *bytes = 0x67;
                 out(offset, segment, bytes,
                     OUT_RAWDATA + 1, NO_SEG, NO_SEG);
@@ -1427,7 +1446,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 0313:
             ins->rex = 0;
             break;
-            
+
         case 0320:
             if (bits != 16) {
                 *bytes = 0x66;
@@ -2109,34 +2128,67 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
     return output;
 }
 
-static int chsize(operand * input, int addrbits)
+static void add_asp(insn *instruction, int addrbits)
 {
-    if (!(MEMORY & ~input->type)) {
-        int32_t i, b;
-        
-        if (input->indexreg < EXPR_REG_START /* Verify as Register */
-            || input->indexreg >= REG_ENUM_LIMIT)
-            i = 0;
-        else
-            i = reg_flags[input->indexreg];
+    int j, valid;
 
-        if (input->basereg < EXPR_REG_START /* Verify as Register */
-            || input->basereg >= REG_ENUM_LIMIT)
-            b = 0;
-        else
-            b = reg_flags[input->basereg];
+    valid = (addrbits == 64) ? 64|32 : 32|16;
 
-        if (input->scale == 0)
-            i = 0;
+    for (j = 0; j < instruction->operands; j++) {
+	if (!(MEMORY & ~instruction->oprs[j].type)) {
+	    int32_t i, b;
+	    
+	    /* Verify as Register */
+	    if (instruction->oprs[j].indexreg < EXPR_REG_START
+		|| instruction->oprs[j].indexreg >= REG_ENUM_LIMIT)
+		i = 0;
+	    else
+		i = reg_flags[instruction->oprs[j].indexreg];
+	    
+	    /* Verify as Register */
+	    if (instruction->oprs[j].basereg < EXPR_REG_START
+		|| instruction->oprs[j].basereg >= REG_ENUM_LIMIT)
+		b = 0;
+	    else
+		b = reg_flags[instruction->oprs[j].basereg];
+	    
+	    if (instruction->oprs[j].scale == 0)
+		i = 0;
 
-        if (!i && !b)		/* pure offset */
-            return (input->addr_size != 0 && input->addr_size != addrbits);
-            
-        if (!(REG32 & ~i) || !(REG32 & ~b))
-            return (addrbits != 32);
-        else
-            return (addrbits == 32);
+	    if (!i && !b) {
+		if (instruction->oprs[j].addr_size)
+		    valid &= instruction->oprs[j].addr_size;
+	    } else {
+		if (!(REG16 & ~b))
+		    valid &= 16;
+		if (!(REG32 & ~b))
+		    valid &= 32;
+		if (!(REG64 & ~b))
+		    valid &= 64;
+		
+		if (!(REG16 & ~i))
+		    valid &= 16;
+		if (!(REG32 & ~i))
+		    valid &= 32;
+		if (!(REG64 & ~i))
+		    valid &= 64;
+	    }
+	}
+    }
+
+    if (valid & addrbits) {
+	/* Don't do anything */
+    } else if (valid & ((addrbits == 32) ? 16 : 32)) {
+	/* Add an instruction size prefix */
+	enum prefixes pref = (addrbits == 32) ? P_A16 : P_A32;
+	for (j = 0; j < instruction->nprefix; j++) {
+	    if (instruction->prefixes[j] == pref)
+		return;		/* Already there */
+	}
+	instruction->prefixes[j] = pref;
+	instruction->nprefix++;
     } else {
-        return 0;
+	/* Impossible... */
+	errfunc(ERR_NONFATAL, "impossible combination of address sizes");
     }
 }
