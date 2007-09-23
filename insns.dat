@@ -137,6 +137,8 @@ AND       mem,imm16           \320\300\145\1\x81\204\141    8086,SM
 AND       mem,imm32           \321\300\155\1\x81\204\151    386,SM
 ARPL      mem,reg16           \300\1\x63\101                286,PROT,SM,NOLONG
 ARPL      reg16,reg16         \1\x63\101                    286,PROT,NOLONG
+BB0_RESET void                \2\x0F\x3A                    PENT,CYRIX,ND
+BB1_RESET void                \2\x0F\x3B                    PENT,CYRIX,ND
 BOUND     reg16,mem           \320\301\1\x62\110            186,NOLONG
 BOUND     reg32,mem           \321\301\1\x62\110            386,NOLONG
 BSF       reg16,mem           \320\301\2\x0F\xBC\110        386,SM
@@ -281,6 +283,8 @@ CMPXCHG486 reg32,reg32        \321\2\x0F\xA7\101            486,UNDOC,ND
 CMPXCHG8B mem                 \300\2\x0F\xC7\201            PENT
 CMPXCHG16B mem                \324\300\2\x0F\xC7\201        X64
 CPUID     void                \2\x0F\xA2                    PENT
+CPU_READ  void		      \2\x0F\x3D                    PENT,CYRIX
+CPU_WRITE void                \2\x0F\x3C                    PENT,CYRIX
 CQO       void                \324\1\x99                    X64
 CWD       void                \320\1\x99                    8086
 CWDE      void                \321\1\x98                    386
