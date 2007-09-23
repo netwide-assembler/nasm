@@ -296,6 +296,7 @@ DIV       rm8                 \300\1\xF6\206                8086
 DIV       rm16                \320\300\1\xF7\206            8086
 DIV       rm32                \321\300\1\xF7\206            386
 DIV       rm64                \324\300\1\xF7\206            X64
+DMINT     void                \2\x0F\x38                    P6,CYRIX
 EMMS      void                \2\x0F\x77                    PENT,MMX
 ENTER     imm,imm             \1\xC8\30\25                  186
 EQU       imm                 \0                            8086
@@ -1073,6 +1074,7 @@ ROR       rm32,imm            \321\300\1\xC1\201\25         386,SB
 ROR       rm64,unity          \324\300\1\xD1\201            X64
 ROR       rm64,reg_cl         \324\300\1\xD3\201            X64
 ROR       rm64,imm            \324\300\1\xC1\201\25         X64,SB
+RDM       void                \2\x0F\x3A                    P6,CYRIX
 RSDC      reg_sreg,mem80      \301\2\x0F\x79\110            486,CYRIX,SMM
 RSLDT     mem80               \300\2\x0F\x7B\200            486,CYRIX,SMM
 RSM       void                \2\x0F\xAA                    PENT,SMM
@@ -2211,3 +2213,7 @@ ROUNDSD 	xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 
 ; Intel SMX
 GETSEC		void			\2\x0F\x37			KATMAI
+
+; Geode (Cyrix) 3DNow! additions
+PFRCP		mmxreg,mmxrm		\301\2\x0F\x0F\110\1\x86	PENT,3DNOW,SM,CYRIX
+PFRSQRT		mmxreg,mmxrm		\301\2\x0F\x0F\110\1\x87	PENT,3DNOW,SM,CYRIX
