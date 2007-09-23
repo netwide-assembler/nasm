@@ -407,8 +407,12 @@ static int process_arg(char *p, char *q)
                             optimizing = -1;    /* 0.98 behaviour */
                         else if (opt == 1)
                             optimizing = 0;     /* Two passes, 0.98.09 behavior */
-                        else
-                            optimizing = opt;   /* Multiple passes */
+                        else if (opt <= 5)
+			    /* The optimizer seems to have problems with
+			       < 5 passes?  Hidden bug? */
+			    optimizing = 5;	/* 5 passes */
+			else
+                            optimizing = opt;   /* More than 5 passes */
                     } else {
                         if (*param == 'v' || *param == '+') {
                             ++param;
