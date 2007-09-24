@@ -1433,7 +1433,7 @@ floating-point number as an integer, and can use anywhere integer
 constants are used in an expression.  \c{__float80m__} and
 \c{__float80e__} produce the 64-bit mantissa and 16-bit exponent of an
 80-bit floating-point number, and \c{__float128l__} and
-\c{__float128h__} produce the lower and upper 64-bit half of a 128-bit
+\c{__float128h__} produce the lower and upper 64-bit halves of a 128-bit
 floating-point number, respectively.
 
 For example:
