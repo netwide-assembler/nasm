@@ -1392,17 +1392,20 @@ when they are operands to \c{dw}.
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
 \i{Floating-point} constants are acceptable only as arguments to
-\i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}. They are
-expressed in the traditional form: digits, then a period, then
-optionally more digits, then optionally an \c{E} followed by an
-exponent. The period is mandatory, so that NASM can distinguish
-between \c{dd 1}, which declares an integer constant, and \c{dd 1.0}
-which declares a floating-point constant.
+\i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as arguments
+to the special operators \i\c{__float16__}, \i\c{__float32__},
+\i\c{__float64__}, \i\c{__float80m__}, \i\c{__float80e__},
+\i\c{__float128l__}, and \i\c{__float128h__}.
 
-NASM also support C99-style hexadecimal floating-point: \c{0x},
-hexadecimal digits, period, optionally more hexadeximal digits, then
-optionally a \c{P} followed by a \e{binary} (not hexadecimal) exponent
-in decimal notation.
+Floating-point constants are expressed in the traditional form:
+digits, then a period, then optionally more digits, then optionally an
+\c{E} followed by an exponent. The period is mandatory, so that NASM
+can distinguish between \c{dd 1}, which declares an integer constant,
+and \c{dd 1.0} which declares a floating-point constant.  NASM also
+support C99-style hexadecimal floating-point: \c{0x}, hexadecimal
+digits, period, optionally more hexadeximal digits, then optionally a
+\c{P} followed by a \e{binary} (not hexadecimal) exponent in decimal
+notation.
 
 Some examples:
 
@@ -1414,6 +1417,22 @@ Some examples:
 \c       dq    1.e-10                  ; 0.000 000 000 1
 \c       dt    3.141592653589793238462 ; pi
 \c       do    1.e+4000		       ; IEEE quad precision
+
+The special operators are used to produce floating-point numbers in
+other contexts.  They produce the binary representation of a specific
+floating-point number as an integer, and can use anywhere integer
+constants are used in an expression.  \c{__float80m__} and
+\c{__float80e__} produce the 64-bit mantissa and 16-bit exponent of an
+80-bit floating-point number, and \c{__float128l__} and
+\c{__float128h__} produce the lower and upper 64-bit half of a 128-bit
+floating-point number, respectively.
+
+For example:
+
+\c       mov    rax,__float64__(3.141592653589793238462)
+
+... would assign the binary representation of pi as a 64-bit floating
+point number into \c{RAX}.
 
 NASM cannot do compile-time arithmetic on floating-point constants.
 This is because NASM is designed to be portable - although it always
