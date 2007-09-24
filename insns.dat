@@ -300,7 +300,7 @@ DIV		rm8			\1\xF6\206			8086
 DIV		rm16			\320\1\xF7\206			8086
 DIV		rm32			\321\1\xF7\206			386
 DIV		rm64			\324\1\xF7\206			X64
-DMINT		void			\2\x0F\x38			P6,CYRIX
+DMINT		void			\2\x0F\x39			P6,CYRIX
 EMMS		void			\2\x0F\x77			PENT,MMX
 ENTER		imm,imm			\1\xC8\30\25			186
 EQU		imm			\0				8086
@@ -1135,7 +1135,7 @@ SLDT		reg16			\320\1\x0F\170\200		286
 SLDT		reg32			\321\1\x0F\170\200		386
 SKINIT		void			\3\x0F\x01\xDE			X64
 SMI		void			\1\xF1				386,UNDOC
-SMINT		void			\2\x0F\x38			P6,CYRIX
+SMINT		void			\2\x0F\x38			P6,CYRIX,ND
 ; Older Cyrix chips had this; they had to move due to conflict with MMX
 SMINTOLD	void			\2\x0F\x7E			486,CYRIX,ND
 SMSW		mem			\2\x0F\x01\204			286
