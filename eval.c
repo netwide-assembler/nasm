@@ -609,16 +609,20 @@ static expr *expr6(int critical)
     expr *e;
     int32_t label_seg, label_ofs;
 
-    if (i == '-') {
+    switch (i) {
+    case '-':
         i = scan(scpriv, tokval);
         e = expr6(critical);
         if (!e)
             return NULL;
         return scalar_mult(e, -1L, FALSE);
-    } else if (i == '+') {
+
+
+    case '+':
         i = scan(scpriv, tokval);
         return expr6(critical);
-    } else if (i == '~') {
+
+    case '~':
         i = scan(scpriv, tokval);
         e = expr6(critical);
         if (!e)
@@ -631,7 +635,8 @@ static expr *expr6(int critical)
             return NULL;
         }
         return scalarvect(~reloc_value(e));
-    } else if (i == '!') {
+
+    case '!':
         i = scan(scpriv, tokval);
         e = expr6(critical);
         if (!e)
@@ -644,7 +649,8 @@ static expr *expr6(int critical)
             return NULL;
         }
         return scalarvect(!reloc_value(e));
-    } else if (i == TOKEN_SEG) {
+
+    case TOKEN_SEG:
         i = scan(scpriv, tokval);
         e = expr6(critical);
         if (!e)
@@ -657,7 +663,8 @@ static expr *expr6(int critical)
             return NULL;
         }
         return e;
-    } else if (i == '(') {
+
+    case '(':
         i = scan(scpriv, tokval);
         e = bexpr(critical);
         if (!e)
@@ -668,8 +675,12 @@ static expr *expr6(int critical)
         }
         i = scan(scpriv, tokval);
         return e;
-    } else if (i == TOKEN_NUM || i == TOKEN_REG || i == TOKEN_ID ||
-               i == TOKEN_HERE || i == TOKEN_BASE) {
+
+    case TOKEN_NUM:
+    case TOKEN_REG:
+    case TOKEN_ID:
+    case TOKEN_HERE:
+    case TOKEN_BASE:
         begintemp();
         switch (i) {
         case TOKEN_NUM:
@@ -733,7 +744,8 @@ static expr *expr6(int critical)
         }
         i = scan(scpriv, tokval);
         return finishtemp();
-    } else {
+
+    default:
         error(ERR_NONFATAL, "expression syntax error");
         return NULL;
     }
