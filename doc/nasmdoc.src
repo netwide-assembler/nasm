@@ -512,7 +512,7 @@ form" (without the brackets). This can be used to list only
 sections of interest, avoiding excessively long listings.
 
 
-\S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}.
+\S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}
 
 This option can be used to generate makefile dependencies on stdout.
 This can be redirected to a file for further processing. For example:
@@ -520,7 +520,7 @@ This can be redirected to a file for further processing. For example:
 \c NASM -M myfile.asm > myfile.dep
 
 
-\S{opt-MG} The \i\c{-MG} Option: Generate \i{Makefile Dependencies}.
+\S{opt-MG} The \i\c{-MG} Option: Generate \i{Makefile Dependencies}
 
 This option can be used to generate makefile dependencies on stdout.
 This differs from the \c{-M} option in that if a nonexisting file is
