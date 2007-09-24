@@ -10,13 +10,7 @@
 #define NASM_INSNS_H
 
 #include "nasm.h"
-
-/* max length of any instruction, register name etc. */
-#if MAX_INSLEN > 12              /* MAX_INSLEN defined in insnsi.h */
-#define MAX_KEYWORD MAX_INSLEN
-#else
-#define MAX_KEYWORD 12
-#endif
+#include "tokens.h"
 
 struct itemplate {
     enum opcode opcode;		/* the token, passed from "parser.c" */

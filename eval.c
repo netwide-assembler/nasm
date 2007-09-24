@@ -19,6 +19,7 @@
 #include "nasmlib.h"
 #include "eval.h"
 #include "labels.h"
+#include "float.h"
 
 #define TEMPEXPRS_DELTA 128
 #define TEMPEXPR_DELTA 8
@@ -603,6 +604,61 @@ static expr *expr5(int critical)
     return e;
 }
 
+static expr *eval_floatize(enum floatize type)
+{
+    uint8_t result[16], *p;	/* Up to 128 bits */
+    static const struct {
+	int bytes, start, len;
+    } formats[] = {
+	{  2, 0, 2 },		/* FLOAT_16 */
+	{  4, 0, 4 },		/* FLOAT_32 */
+	{  8, 0, 8 },		/* FLOAT_64 */
+	{ 10, 0, 8 },		/* FLOAT_80M */
+	{ 10, 8, 2 },		/* FLOAT_80E */
+	{ 16, 0, 8 },		/* FLOAT_128L */
+	{ 16, 8, 8 },		/* FLOAT_128H */
+    };
+    int sign = 1;
+    int64_t val;
+    int j;
+	
+    i = scan(scpriv, tokval);
+    if (i != '(') {
+	error(ERR_NONFATAL, "expecting `('");
+	return NULL;
+    }
+    i = scan(scpriv, tokval);
+    if (i == '-' || i == '+') {
+	sign = (i == '-') ? -1 : 1;
+	i = scan(scpriv, tokval);
+    }
+    if (i != TOKEN_FLOAT) {
+	error(ERR_NONFATAL, "expecting floating-point number");
+	return NULL;
+    }
+    if (!float_const(tokval->t_charptr, sign, result,
+		     formats[type].bytes, error))
+	return NULL;
+    i = scan(scpriv, tokval);
+    if (i != ')') {
+	error(ERR_NONFATAL, "expecting `)'");
+	return NULL;
+    }
+
+    p = result+formats[type].start+formats[type].len;
+    val = 0;
+    for (j = formats[type].len; j; j--) {
+	p--;
+	val = (val << 8) + *p;
+    }
+
+    begintemp();
+    addtotemp(EXPR_SIMPLE, val);
+
+    i = scan(scpriv, tokval);
+    return finishtemp();
+}
+
 static expr *expr6(int critical)
 {
     int32_t type;
@@ -663,6 +719,9 @@ static expr *expr6(int critical)
             return NULL;
         }
         return e;
+
+    case TOKEN_FLOATIZE:
+	return eval_floatize(tokval->t_integer);
 
     case '(':
         i = scan(scpriv, tokval);

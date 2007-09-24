@@ -38,6 +38,15 @@ __nan__
 __qnan__
 __snan__
 
+% TOKEN_FLOATIZE, 0, FLOAT_{__float*__}
+__float16__
+__float32__
+__float64__
+__float80m__
+__float80e__
+__float128l__
+__float128h__
+
 % TOKEN_*, 0, 0
 seg
 wrt

@@ -175,7 +175,18 @@ enum {                          /* token types, other than chars */
     TOKEN_GE, TOKEN_LE, TOKEN_NE,       /* >=, <= and <> (!= is same as <>) */
     TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR, /* &&, || and ^^ */
     TOKEN_SEG, TOKEN_WRT,       /* SEG and WRT */
-    TOKEN_FLOAT                 /* floating-point constant */
+    TOKEN_FLOAT,                /* floating-point constant */
+    TOKEN_FLOATIZE,		/* __floatX__ */
+};
+
+enum floatize {
+    FLOAT_16,
+    FLOAT_32,
+    FLOAT_64,
+    FLOAT_80M,
+    FLOAT_80E,
+    FLOAT_128L,
+    FLOAT_128H,
 };
 
 typedef struct {
