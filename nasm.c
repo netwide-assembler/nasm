@@ -80,7 +80,8 @@ static Preproc *preproc;
 enum op_type {
     op_normal,                  /* Preprocess and assemble */
     op_preprocess,              /* Preprocess only */
-    op_depend                   /* Generate dependencies */
+    op_depend,                  /* Generate dependencies */
+    op_depend_missing_ok,	/* Generate dependencies, missing OK */
 };
 static enum op_type operating_mode;
 
@@ -196,6 +197,9 @@ int main(int argc, char **argv)
     }
 
     switch (operating_mode) {
+    case op_depend_missing_ok:
+	pp_include_path(NULL);	/* "assume generated" */
+	/* fall through */
     case op_depend:
         {
             char *line;
@@ -479,7 +483,8 @@ static int process_arg(char *p, char *q)
             printf
                 ("    -e          preprocess only (writes output to stdout by default)\n"
                  "    -a          don't preprocess (assemble only)\n"
-                 "    -M          generate Makefile dependencies on stdout\n\n"
+                 "    -M          generate Makefile dependencies on stdout\n"
+                 "    -MG         d:o, missing files assumed generated\n\n"
                  "    -E<file>    redirect error messages to file\n"
                  "    -s          redirect error messages to stdout\n\n"
                  "    -F format   select a debugging format\n\n"
@@ -553,7 +558,7 @@ static int process_arg(char *p, char *q)
             }
             break;
         case 'M':
-            operating_mode = op_depend;
+            operating_mode = p[2] == 'G' ? op_depend_missing_ok : op_depend;
             break;
 
         case '-':

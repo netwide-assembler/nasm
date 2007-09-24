@@ -16,6 +16,7 @@
 \IR{-F} \c{-F} option
 \IR{-I} \c{-I} option
 \IR{-M} \c{-M} option
+\IR{-MG} \c{-MG} option
 \IR{-On} \c{-On} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
@@ -517,6 +518,14 @@ This option can be used to generate makefile dependencies on stdout.
 This can be redirected to a file for further processing. For example:
 
 \c NASM -M myfile.asm > myfile.dep
+
+
+\S{opt-MG} The \i\c{-MG} Option: Generate \i{Makefile Dependencies}.
+
+This option can be used to generate makefile dependencies on stdout.
+This differs from the \c{-M} option in that if a nonexisting file is
+encountered, it is assumed to be a generated file and is added to the
+dependency list without a prefix.
 
 
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}

@@ -1178,6 +1178,19 @@ static FILE *inc_fopen(char *file)
             break;
         prefix = ip->path;
         ip = ip->next;
+
+	if (!prefix) {
+		/* -MG given and file not found */
+		if (pass == 0) {
+			namelen += strlen(file) + 1;
+			if (namelen > 62) {
+				printf(" \\\n  ");
+				namelen = 2;
+			}
+			printf(" %s", file);
+		}
+	    return NULL;
+	}
     }
 
     error(ERR_FATAL, "unable to open include file `%s'", file);
@@ -1868,14 +1881,19 @@ static int do_directive(Token * tline)
         inc->next = istk;
         inc->conds = NULL;
         inc->fp = inc_fopen(p);
-        inc->fname = src_set_fname(p);
-        inc->lineno = src_set_linnum(0);
-        inc->lineinc = 1;
-        inc->expansion = NULL;
-        inc->mstk = NULL;
-        istk = inc;
-        list->uplevel(LIST_INCLUDE);
-        free_tlist(origline);
+	if (!inc->fp && pass == 0) {
+	    /* -MG given but file not found */
+	    nasm_free(inc);
+	} else {
+	    inc->fname = src_set_fname(p);
+	    inc->lineno = src_set_linnum(0);
+	    inc->lineinc = 1;
+	    inc->expansion = NULL;
+	    inc->mstk = NULL;
+	    istk = inc;
+	    list->uplevel(LIST_INCLUDE);
+	}
+	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_PUSH:
@@ -3897,9 +3915,9 @@ static void pp_cleanup(int pass)
 void pp_include_path(char *path)
 {
     IncPath *i;
-/*  by alexfru: order of path inclusion fixed (was reverse order) */
+
     i = nasm_malloc(sizeof(IncPath));
-    i->path = nasm_strdup(path);
+    i->path = path ? nasm_strdup(path) : NULL;
     i->next = NULL;
 
     if (ipath != NULL) {
