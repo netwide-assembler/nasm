@@ -1432,7 +1432,9 @@ For example:
 \c       mov    rax,__float64__(3.141592653589793238462)
 
 ... would assign the binary representation of pi as a 64-bit floating
-point number into \c{RAX}.
+point number into \c{RAX}.  This is exactly equivalent to:
+
+\c       mov    rax,0x401921fb54442d18
 
 NASM cannot do compile-time arithmetic on floating-point constants.
 This is because NASM is designed to be portable - although it always
