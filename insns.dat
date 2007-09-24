@@ -1443,8 +1443,7 @@ PMINUB		mmxreg,mmxrm		\2\x0F\xDA\110			KATMAI,MMX,SM
 PMOVMSKB	reg32,mmxreg		\2\x0F\xD7\110			KATMAI,MMX
 PMULHUW		mmxreg,mmxrm		\2\x0F\xE4\110			KATMAI,MMX,SM
 PSADBW		mmxreg,mmxrm		\2\x0F\xF6\110			KATMAI,MMX,SM
-PSHUFW		mmxreg,mmxreg,imm	\2\x0F\x70\110\22		KATMAI,MMX,SB,AR2
-PSHUFW		mmxreg,mem,imm		\2\x0F\x70\110\22		KATMAI,MMX,SM2,SB,AR2
+PSHUFW		mmxreg,mmxrm,imm	\2\x0F\x70\110\22		KATMAI,MMX,SM2,SB,AR2
 
 ; AMD Enhanced 3DNow! (Athlon) instructions
 PF2IW		mmxreg,mmxrm		\2\x0F\x0F\110\01\x1C		PENT,3DNOW,SM
@@ -1591,10 +1590,8 @@ CMPUNORDPD	xmmreg,xmmrm		\331\366\2\x0F\xC2\110\1\x03	WILLAMETTE,SSE2,SM
 CMPUNORDSD	xmmreg,xmmrm		\331\332\2\x0F\xC2\110\1\x03	WILLAMETTE,SSE2
 ; CMPPD/CMPSD must come after the specific ops; that way the disassembler will find the
 ; specific ops first and only disassemble illegal ones as cmppd/cmpsd.
-CMPPD		xmmreg,xmmreg,imm	\331\366\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SB,AR2
-CMPPD		xmmreg,mem,imm		\331\366\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SM2,SB,AR2
-CMPSD		xmmreg,xmmreg,imm	\331\332\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SB,AR2
-CMPSD		xmmreg,mem,imm		\331\332\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SB,AR2
+CMPPD		xmmreg,xmmrm,imm	\331\366\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SM2,SB,AR2
+CMPSD		xmmreg,xmmrm,imm	\331\332\2\x0F\xC2\110\26	WILLAMETTE,SSE2,SB,AR2
 COMISD		xmmreg,xmmrm		\331\366\2\x0F\x2F\110		WILLAMETTE,SSE2
 CVTDQ2PD	xmmreg,xmmrm		\333\2\x0F\xE6\110		WILLAMETTE,SSE2
 CVTDQ2PS	xmmreg,xmmrm		\2\x0F\x5B\110			WILLAMETTE,SSE2,SM
