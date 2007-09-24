@@ -101,6 +101,18 @@ while (defined($line = <TD>)) {
 	$tokens{$token} = scalar @tokendata;
 	
 	$data = $pattern;
+	if ($data =~ /^(.*)\{(.*)\}(.*)$/) {
+	    my $head = $1, $tail = $3;
+	    my $px = $2;
+	    
+	    $px =~ s/\*/(.*)/g;
+	    if ($token =~ /$px/i) {
+		$data = $head."\U$1".$tail;
+	    } else {
+		die "$0: token $token doesn't match $px\n";
+	    }
+	}
+
 	$data =~ s/\*/\U$token/g;
 
 	push(@tokendata, "\"$token\", $data");
