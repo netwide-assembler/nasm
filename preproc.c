@@ -2438,13 +2438,15 @@ static int do_directive(Token * tline)
 	    /*
 	     * We now have a macro name... go hunt for it.
 	     */
-	    for (sp = smhead; *sp; sp = &(*sp)->next) {
-		s = *sp;
+	    sp = smhead;
+	    while ((s = *sp) != NULL) {
 		if (!mstrcmp(s->name, tline->text, s->casesense)) {
 		    *sp = s->next;
 		    nasm_free(s->name);
 		    free_tlist(s->expansion);
 		    nasm_free(s);
+		} else {
+		    sp = &s->next;
 		}
 	    }
 	    free_tlist(origline);
