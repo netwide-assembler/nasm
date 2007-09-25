@@ -158,14 +158,14 @@ int main(int argc, char **argv)
     want_usage = terminate_after_phase = FALSE;
     report_error = report_error_gnu;
 
+    error_file = stderr;
+
     nasm_set_malloc_error(report_error);
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
     preproc = &nasmpp;
     operating_mode = op_normal;
-
-    error_file = stderr;
 
     seg_init();
 
