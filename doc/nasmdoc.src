@@ -6314,16 +6314,16 @@ displacement size as \c{QWORD}:
 
 \c      default abs
 \c
-\c      mov eax,[foo]           ; 32-bit absolute displacement (-2..2 GB)
-\c      mov eax,[a32 foo]       ; 32-bit absolute displacement (0..4 GB)
-\c      mov eax,[qword foo]     ; 64-bit absolute displacement
+\c      mov eax,[foo]           ; 32-bit absolute disp (-2..2 GB)
+\c      mov eax,[a32 foo]       ; 32-bit absolute disp (0..4 GB)
+\c      mov eax,[qword foo]     ; 64-bit absolute disp
 \c
 \c      default rel
 \c
-\c      mov eax,[foo]           ; 32-bit relative displacement
+\c      mov eax,[foo]           ; 32-bit relative disp
 \c      mov eax,[a32 foo]       ; d:o, address truncated to 32 bits(!)
-\c      mov eax,[qword foo]     ; 32-bit relative displacement(!)
-\c      mov eax,[abs qword foo] ; 64-bit absolute displacement
+\c      mov eax,[qword foo]     ; 32-bit relative disp(!)
+\c      mov eax,[abs qword foo] ; 64-bit absolute disp
 
 FIXME: THIS IS NOT YET CORRECTLY IMPLEMENTED
 
