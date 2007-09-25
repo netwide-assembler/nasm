@@ -29,6 +29,11 @@ INSTALL_DATA	= @INSTALL_DATA@
 
 NROFF		= @NROFF@
 
+MKDIR		= mkdir
+RM		= rm
+
+STRIP		= strip
+
 # Binary suffixes
 O               = @OBJEXT@
 X               = @EXEEXT@
@@ -140,34 +145,36 @@ PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c \
 perlreq: $(PERLREQ)
 
 install: nasm$(X) ndisasm$(X)
+	$(MKDIR) -p $(INSTALLROOT)$(bindir)
 	$(INSTALL_PROGRAM) nasm$(X) $(INSTALLROOT)$(bindir)/nasm$(X)
 	$(INSTALL_PROGRAM) ndisasm$(X) $(INSTALLROOT)$(bindir)/ndisasm$(X)
+	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/nasm.1 $(INSTALLROOT)$(mandir)/man1/nasm.1
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	rm -f *.$(O) *.s *.i
-	rm -f output/*.$(O) output/*.s output/*.i
-	rm -f nasm$(X) ndisasm$(X)
+	$(RM) -f *.$(O) *.s *.i
+	$(RM) -f output/*.$(O) output/*.s output/*.i
+	$(RM) -f nasm$(X) ndisasm$(X)
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
-	rm -f config.h config.log config.status
-	rm -f Makefile *~ *.bak *.lst *.bin
-	rm -f output/*~ output/*.bak
-	rm -f test/*.lst test/*.bin test/*.$(O) test/*.bin
-	rm -rf autom4te*.cache
+	$(RM) -f config.h config.log config.status
+	$(RM) -f Makefile *~ *.bak *.lst *.bin
+	$(RM) -f output/*~ output/*.bak
+	$(RM) -f test/*.lst test/*.bin test/*.$(O) test/*.bin
+	$(RM) -rf autom4te*.cache
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
-	rm -f $(PERLREQ) *.man nasm.spec
+	$(RM) -f $(PERLREQ) *.man nasm.spec
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
-	rm -f doc/Makefile doc/*~ doc/*.bak
+	$(RM) -f doc/Makefile doc/*~ doc/*.bak
 
 strip:
-	strip --strip-unneeded nasm$(X) ndisasm$(X)
+	$(STRIP) --strip-unneeded nasm$(X) ndisasm$(X)
 
 rdf:
 	cd rdoff && $(MAKE)
@@ -188,7 +195,7 @@ install_everything: everything install install_doc install_rdf
 dist: spotless perlreq spec
 	autoheader
 	autoconf
-	rm -rf ./autom4te*.cache
+	$(RM) -rf ./autom4te*.cache
 
 tar: dist
 	tar -cvj --exclude CVS -C .. -f ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 `basename \`pwd\``
