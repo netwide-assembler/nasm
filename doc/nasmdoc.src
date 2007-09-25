@@ -6282,6 +6282,51 @@ just from 32-bit platforms but from each other.  If a specific size
 data type is desired, it is probably best to use the types defined in
 the Standard C header \c{<inttypes.h>}.
 
+In 64-bit mode, the default instruction size is still 32 bits.  When
+loading a value into a 32-bit register (but not an 8- or 16-bit
+register), the upper 32 bits of the corresponding 64-bit register are
+set to zero.
+
+\H{id64} Immediates and displacements in 64-bit mode
+
+In 64-bit mode, immediates and displacements are generally only 32
+bits wide.  NASM will therefore truncate most displacements and
+immediates to 32 bits.
+
+The only instruction which takes a full 64 bit immediate is:
+
+\c      MOV reg64,imm64
+
+NASM will produce this instruction whenever the programmer uses \c{MOV}
+with an immediate into a 64-bit register.  If this is not desirable,
+simply specify the equivalent 32-bit register, which will be
+automatically zero-extended by the processor:
+
+\c      mov rax,foo             ; 64-bit immediate
+\c      mov eax,foo             ; 32-bit immediate, zero-extended
+
+The only instructions which take a full 64-bit \e{displacement} is
+loading or storing, using \c{MOV}, \c{AL}, \c{AX}, \c{EAX} or \c{RAX}
+(but no other registers) to an absolute 64-bit address.  Since this is
+a relatively rarely used instruction (64-bit code generally uses
+relative addressing), the programmer has to explicitly declare the
+displacement size as \c{QWORD}:
+
+\c      default abs
+\c
+\c      mov eax,[foo]           ; 32-bit absolute displacement (-2..2 GB)
+\c      mov eax,[a32 foo]       ; 32-bit absolute displacement (0..4 GB)
+\c      mov eax,[qword foo]     ; 64-bit absolute displacement
+\c
+\c      default rel
+\c
+\c      mov eax,[foo]           ; 32-bit relative displacement
+\c      mov eax,[a32 foo]       ; d:o, address truncated to 32 bits(!)
+\c      mov eax,[qword foo]     ; 32-bit relative displacement(!)
+\c      mov eax,[abs qword foo] ; 64-bit absolute displacement
+
+FIXME: THIS IS NOT YET CORRECTLY IMPLEMENTED
+
 \H{unix64} Interfacing to 64-bit C Programs (Unix)
 
 On Unix, the 64-bit ABI is defined by the document:
