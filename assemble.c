@@ -1698,7 +1698,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	    if (instruction->oprs[i].type != instruction->oprs[j].type ||
 		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
 		return 0;
-	} else  if (itemp->opd[i] & ~instruction->oprs[i].type ||
+	} else if (itemp->opd[i] & ~instruction->oprs[i].type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~instruction->oprs[i].type & ~SIZE_MASK) ||
