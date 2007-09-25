@@ -15,9 +15,7 @@
 static struct hash_tbl_node *alloc_table(size_t newsize)
 {
     size_t bytes = newsize*sizeof(struct hash_tbl_node);
-    struct hash_tbl_node *newtbl = nasm_malloc(bytes);
-
-    memset(newtbl, 0, bytes);
+    struct hash_tbl_node *newtbl = nasm_zalloc(bytes);
 
     return newtbl;
 }
