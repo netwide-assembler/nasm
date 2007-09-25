@@ -53,6 +53,9 @@
  * seem to fit at all. In fact, Win32 even includes non-linked
  * sections such as .drectve in this calculation.
  *
+ * Newer versions of MASM seem to have changed this to be zero, and
+ * that apparently matches the COFF spec, so go with that.
+ *
  * (5) Standard COFF does something very strange to common
  * variables: the relocation point for a common variable is as far
  * _before_ the variable as its size stretches out _after_ it. So
@@ -763,10 +766,12 @@ static void coff_section_header(char *name, int32_t vsize,
 {
     char padname[8];
 
+    (void)vsize;
+
     memset(padname, 0, 8);
     strncpy(padname, name, 8);
     fwrite(padname, 8, 1, coffp);
-    fwriteint32_t(vsize, coffp);
+    fwriteint32_t(0, coffp);	/* Virtual size field - set to 0 or vsize */
     fwriteint32_t(0L, coffp);      /* RVA/offset - we ignore */
     fwriteint32_t(datalen, coffp);
     fwriteint32_t(datapos, coffp);
