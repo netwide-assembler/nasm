@@ -80,6 +80,8 @@ static void ieee_flconvert_hex(char *string, uint16_t *mant,
 
     twopwr = 0;
     seendot = seendigit = 0;
+    ms = 0;
+    mp = NULL;
 
     memset(mult, 0, sizeof mult);
 
