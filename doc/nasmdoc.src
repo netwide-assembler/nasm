@@ -35,6 +35,7 @@
 \IR{-v} \c{-v} option
 \IR{-w} \c{-w} option
 \IR{-y} \c{-y} option
+\IR{-Z} \c{-Z} option
 \IR{!=} \c{!=} operator
 \IR{$, here} \c{$}, Here token
 \IR{$, prefix} \c{$}, prefix
@@ -581,7 +582,7 @@ instead of being delimited by colons.
 
 See also the \c{Visual C++} output format, \k{win32fmt}.
 
-\S{opt-E} The \i\c{-E} Option: Send Errors to a File
+\S{opt-Z} The \i\c{-Z} Option: Send Errors to a File
 
 Under \I{DOS}\c{MS-DOS} it can be difficult (though there are ways) to
 redirect the standard-error output of a program to a file. Since
@@ -589,13 +590,16 @@ NASM usually produces its warning and \i{error messages} on
 \i\c{stderr}, this can make it hard to capture the errors if (for
 example) you want to load them into an editor.
 
-NASM therefore provides the \c{-E} option, taking a filename argument
+NASM therefore provides the \c{-Z} option, taking a filename argument
 which causes errors to be sent to the specified files rather than
 standard error. Therefore you can \I{redirecting errors}redirect
 the errors into a file by typing
 
-\c nasm -E myfile.err -f obj myfile.asm
+\c nasm -Z myfile.err -f obj myfile.asm
 
+In earlier versions of NASM, this option was called \c{-E}, but it was
+changed since \c{-E} is an option conventionally used for
+preprocessing only, with disastrous results.  See \k{opt-E}.
 
 \S{opt-s} The \i\c{-s} Option: Send Errors to \i\c{stdout}
 
@@ -606,7 +610,7 @@ program, you can type:
 
 \c nasm -s -f obj myfile.asm | more
 
-See also the \c{-E} option, \k{opt-E}.
+See also the \c{-Z} option, \k{opt-Z}.
 
 
 \S{opt-i} The \i\c{-i}\I\c{-I} Option: Include File Search Directories
@@ -699,10 +703,10 @@ For Makefile compatibility with many C compilers, this option can also
 be specified as \c{-U}.
 
 
-\S{opt-e} The \i\c{-e} Option: Preprocess Only
+\S{opt-E} The \i\c{-E}\I{-e} Option: Preprocess Only
 
 NASM allows the \i{preprocessor} to be run on its own, up to a
-point. Using the \c{-e} option (which requires no arguments) will
+point. Using the \c{-E} option (which requires no arguments) will
 cause NASM to preprocess its input file, expand all the macro
 references, remove all the comments and preprocessor directives, and
 print the resulting file on standard output (or save it to a file,
@@ -716,6 +720,9 @@ which depend on the values of symbols: so code such as
 
 will cause an error in \i{preprocess-only mode}.
 
+For compatiblity with older version of NASM, this option can also be
+written \c{-e}.  \c{-E} in older versions of NASM was the equivalent
+of the current \c{-Z} option, \k{opt-Z}.
 
 \S{opt-a} The \i\c{-a} Option: Don't Preprocess At All
 
@@ -844,8 +851,7 @@ brackets) exists.
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
 
 Typing \c{NASM -v} will display the version of NASM which you are using,
-and the date on which it was compiled. This replaces the deprecated 
-\c{-r}.
+and the date on which it was compiled.
 
 You will need the version number if you report a bug.
 
