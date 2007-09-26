@@ -6293,19 +6293,24 @@ In 64-bit mode, immediates and displacements are generally only 32
 bits wide.  NASM will therefore truncate most displacements and
 immediates to 32 bits.
 
-The only instruction which takes a full 64 bit immediate is:
+The only instruction which takes a full \i{64-bit immediate} is:
 
 \c      MOV reg64,imm64
 
-NASM will produce this instruction whenever the programmer uses \c{MOV}
-with an immediate into a 64-bit register.  If this is not desirable,
-simply specify the equivalent 32-bit register, which will be
-automatically zero-extended by the processor:
+NASM will produce this instruction whenever the programmer uses
+\c{MOV} with an immediate into a 64-bit register.  If this is not
+desirable, simply specify the equivalent 32-bit register, which will
+be automatically zero-extended by the processor, or specify the
+immediate as \c{DWORD}:
 
 \c      mov rax,foo             ; 64-bit immediate
+\c      mov rax,qword foo       ; (identical)
 \c      mov eax,foo             ; 32-bit immediate, zero-extended
+\c      mov rax,dword foo       ; 32-bit immediate, sign-extended
 
-The only instructions which take a full 64-bit \e{displacement} is
+The length of these instructions are 10, 5 and 7 bytes, respectively.
+
+The only instructions which take a full \i{64-bit \e{displacement}} is
 loading or storing, using \c{MOV}, \c{AL}, \c{AX}, \c{EAX} or \c{RAX}
 (but no other registers) to an absolute 64-bit address.  Since this is
 a relatively rarely used instruction (64-bit code generally uses
@@ -6314,16 +6319,19 @@ displacement size as \c{QWORD}:
 
 \c      default abs
 \c
-\c      mov eax,[foo]           ; 32-bit absolute disp (-2..2 GB)
-\c      mov eax,[a32 foo]       ; 32-bit absolute disp (0..4 GB)
+\c      mov eax,[foo]           ; 32-bit absolute disp, sign-extended
+\c      mov eax,[a32 foo]       ; 32-bit absolute disp, zero-extended
 \c      mov eax,[qword foo]     ; 64-bit absolute disp
 \c
 \c      default rel
 \c
 \c      mov eax,[foo]           ; 32-bit relative disp
 \c      mov eax,[a32 foo]       ; d:o, address truncated to 32 bits(!)
-\c      mov eax,[qword foo]     ; 32-bit relative disp(!)
+\c      mov eax,[qword foo]     ; error
 \c      mov eax,[abs qword foo] ; 64-bit absolute disp
+
+A sign-extended absolute displacement can access from -2 GB to +2 GB;
+a zero-extended absolute displacement can access from 0 to 4 GB.
 
 FIXME: THIS IS NOT YET CORRECTLY IMPLEMENTED
 
