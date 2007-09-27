@@ -1,44 +1,19 @@
 These are pre-created Makefiles for various platforms, use them if
 GNU autoconf/automake packages are not supported on your system.
 
-Copy appropriate Makefile to ../Makefile, look at it to see if there
-are any edits that need to be made, and run make.
-
-Some of these Makefiles have been contributed by end users, and the
-NASM team has no way of knowing if they work correctly or not.  For
-that reason, there are sometimes multiple Makefiles for the same
-platform.  Look at the comments at the beginning to help select a
-Makefile for your particular system.
-
-
 The Makefiles are:
 
-  Filename      Target		Compiler	Notes
+  Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
-  Makefile.b32	Win32	    	Borland C++	OK as of NASM 0.98.37
-  Makefile.bc3	16-bit DOS  	Borland C++	OK as of NASM 0.98.34
-  Makefile.bor	16-bit DOS  	Turbo C		(**)
-  Makefile.dcp	Win32	    	Dev-Cpp/MinGW   OK as of NASM 0.99.00
-  Makefile.dj	32-bit DOS  	DJGPP		OK as of NASM 0.98.37
-  Makefile.djo	32-bit DOS  	DJGPP		"Opus Make" version(**)
-  Makefile.dl	32-bit DOS  	cc386		cc386 by David Lindauer
-  Makefile.dos	16-bit DOS	MSC 5		(**)
-  Makefile.ms7	16-bit DOS	MSC 7		OK as of NASM 0.98.31
-  Makefile.os2	OS/2 Warp	Borland C++	(**)
-  Makefile.sc	32-bit DOS	Symantec C++ 7
-  Makefile.scw	Win32		Symantec C++ 7
-  Makefile.unx	Unix		Any(*)		use only if "configure" fails
-  Makefile.vc	Win32		MS Visual C++	OK as of NASM 0.98.32
-  Makefile.wc	32-bit DOS	Watcom C	(**)
-  Makefile.wcd	16-bit DOS	OpenWatcom C	OK as of NASM 0.98.37
-  Makefile.wcw	Win32		Watcom C	(**)
+  msvc.mak	Win32		MS Visual C++	Visual C++ Express 2005
+
+	Usage:	nmake /f Mkfiles/msvc.mak
 
 
-(*) = This Makefile should work with any compiler which is ANSI
-      C89/ISO C90 compliant and that uses the standard Unix compiler
-      arguments, such as -c, -o, -I and -O.  Pre-ANSI compilers,
-      such as the "cc" distributed with SunOS 4.x, will not work.
-      If you find a system on which you need to use this, please write
-      <nasm-devel@lists.sourceforge.net> and tell us which system.
+  Filename      Target		Compiler	Tested with
+  ---------------------------------------------------------------------------
+  openwcom.mak	multiple	OpenWatcom C	OpenWatcom 1.7 (Win32)
 
-(**) = Probably obsolete, needs updating.
+	Usage:	wmake /f Mkfiles/<filename> <target>
+
+	<target> is dos, win32, or os2.

@@ -93,6 +93,7 @@ sub insert_deps($) {
     my($line,$parm,$val);
     my($obj) = '.o';		# Defaults
     my($sep) = '/';
+    my($cont) = "\\";
     my($maxline) = 78;		# Seems like a reasonable default
 
     while ( defined($line = <IN>) ) {
@@ -104,6 +105,8 @@ sub insert_deps($) {
 		$sep = $val;
 	    } elsif ( $parm eq 'line-width' ) {
 		$maxline = $val+0;
+	    } elsif ( $parm eq 'continuation' ) {
+		$cont = $val;
 	    }
 	} elsif ( $line eq $barrier ) {
 	    last;		# Stop reading input at barrier line
@@ -127,7 +130,7 @@ sub insert_deps($) {
 		$str = convert_file($dep,$sep);
 		$sl = length($str)+1;
 		if ( $len+$sl > $maxline-2 ) {
-		    print OUT " \\\n ", $str;
+		    print OUT ' ', $cont, "\n ", $str;
 		    $len = $sl;
 		} else {
 		    print OUT ' ', $str;
