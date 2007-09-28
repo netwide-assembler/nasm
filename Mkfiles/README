@@ -7,13 +7,28 @@ The Makefiles are:
   ---------------------------------------------------------------------------
   msvc.mak	Win32		MS Visual C++	Visual C++ Express 2005
 
+	For building on a Win32 host using Microsoft Visual C++.
+
 	Usage:	nmake /f Mkfiles/msvc.mak
 
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
-  openwcom.mak	multiple	OpenWatcom C	OpenWatcom 1.7 (Win32)
+  openwcom.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.7 (Win32)
+
+	For building on a DOS, OS/2 or Win32 host using OpenWatcom.
+	OpenWatcom can be downloaded from http://www.openwatcom.org/.
 
 	Usage:	wmake /f Mkfiles/<filename> <target>
+
+	<target> is dos, win32, or os2.
+
+  Filename      Target		Compiler	Tested with
+  ---------------------------------------------------------------------------
+  owlinux.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.6rc2 (Linux)
+
+	For building on a Linux host using OpenWatcom for Linux.
+
+	Usage:	make -f Mkfiles/<filename> <target>
 
 	<target> is dos, win32, or os2.
