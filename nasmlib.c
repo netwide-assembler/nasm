@@ -17,7 +17,7 @@
 #include "insns.h"
 
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
-static efunc nasm_malloc_error;
+efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
 
 #ifdef LOGALLOC
 static FILE *logfp;

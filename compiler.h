@@ -38,13 +38,24 @@
 #endif
 
 /* Some versions of MSVC have these only with underscores in front */
+#include <stdio.h>
+#include <stddef.h>
+#include <stdarg.h>
 
-#if !defined(HAVE_SNPRINTF) && defined(HAVE__SNPRINTF)
-# define snprintf _snprintf
+#ifndef HAVE_SNPRINTF
+# ifdef HAVE__SNPRINTF
+#  define snprintf _snprintf
+# else
+int snprintf(char *, size_t, const char *, ...);
+# endif
 #endif
 
-#if !defined(HAVE_VSNPRINTF) && defined(HAVE__VSNPRINTF)
-# define vsnprintf _vsnprintf
+#ifndef HAVE_VSNPRINTF
+# ifdef HAVE__VSNPRINT
+#  define vsnprintf _vsnprintf
+# else
+int vsnprintf(char *, size_t, const char *, va_list);
+# endif
 #endif
 
 #endif	/* COMPILER_H */

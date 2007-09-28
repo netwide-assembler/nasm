@@ -192,6 +192,8 @@ insnsd.$(O): insnsd.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
 insnsn.$(O): insnsn.c
 labels.$(O): labels.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h
+lib/snprintf.$(O): lib/snprintf.c compiler.h nasmlib.h
+lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h nasmlib.h
 listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h \
  regs.h version.h
 macros.$(O): macros.c

@@ -87,6 +87,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
+AC_SUBST_FILE(XOBJS)
 
 AC_CHECK_FUNCS(strcspn, ,
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")]))
@@ -95,15 +96,15 @@ AC_CHECK_FUNCS(strspn, ,
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")]))
 
 missing=true
-AC_CHECK_FUNCS([snprintf _snprintf], missing=false)
+AC_CHECK_FUNCS([vsnprintf _vsnprintf], missing=false)
 if $missing; then
-  AC_MSG_ERROR([NASM requires ISO C99 (specifically, "snprintf")])
+   XOBJS="$XOBJS lib/vsnprintf.o"
 fi
 
 missing=true
-AC_CHECK_FUNCS([vsnprintf _vsnprintf], missing=false)
+AC_CHECK_FUNCS([snprintf _snprintf], missing=false)
 if $missing; then
-  AC_MSG_ERROR([NASM requires ISO C99 (specifically, "vsnprintf")])
+   XOBJS="$XOBJS lib/snprintf.o"
 fi
 
 AC_CHECK_FUNCS(getuid)
