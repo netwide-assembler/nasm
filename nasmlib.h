@@ -74,17 +74,20 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
 void nasm_set_malloc_error(efunc);
 #ifndef LOGALLOC
 void *nasm_malloc(size_t);
+void *nasm_zalloc(size_t);
 void *nasm_realloc(void *, size_t);
 void nasm_free(void *);
 char *nasm_strdup(const char *);
 char *nasm_strndup(char *, size_t);
 #else
 void *nasm_malloc_log(char *, int, size_t);
+void *nasm_zalloc_log(char *, int, size_t);
 void *nasm_realloc_log(char *, int, void *, size_t);
 void nasm_free_log(char *, int, void *);
 char *nasm_strdup_log(char *, int, const char *);
 char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
+#define nasm_zalloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
 #define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
 #define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)

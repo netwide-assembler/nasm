@@ -17,7 +17,7 @@
 #include "insns.h"
 
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
-static efunc nasm_malloc_error;
+efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
 
 #ifdef LOGALLOC
 static FILE *logfp;
@@ -45,7 +45,24 @@ void *nasm_malloc(size_t size)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (int32_t)size, p);
+                file, line, (long)size, p);
+#endif
+    return p;
+}
+
+#ifdef LOGALLOC
+void *nasm_zalloc_log(char *file, int line, size_t size)
+#else
+void *nasm_zalloc(size_t size)
+#endif
+{
+    void *p = calloc(size, 1);
+    if (!p)
+        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+#ifdef LOGALLOC
+    else
+        fprintf(logfp, "%s %d calloc(%ld, 1) returns %p\n",
+                file, line, (long)size, p);
 #endif
     return p;
 }
@@ -62,10 +79,10 @@ void *nasm_realloc(void *q, size_t size)
 #ifdef LOGALLOC
     else if (q)
         fprintf(logfp, "%s %d realloc(%p,%ld) returns %p\n",
-                file, line, q, (int32_t)size, p);
+                file, line, q, (long)size, p);
     else
         fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (int32_t)size, p);
+                file, line, (long)size, p);
 #endif
     return p;
 }
@@ -99,7 +116,7 @@ char *nasm_strdup(const char *s)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strdup(%ld) returns %p\n",
-                file, line, (int32_t)size, p);
+                file, line, (long)size, p);
 #endif
     strcpy(p, s);
     return p;
@@ -120,7 +137,7 @@ char *nasm_strndup(char *s, size_t len)
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strndup(%ld) returns %p\n",
-                file, line, (int32_t)size, p);
+                file, line, (long)size, p);
 #endif
     strncpy(p, s, len);
     p[len] = '\0';
@@ -377,9 +394,7 @@ static struct RAA *real_raa_init(int layers)
     int i;
 
     if (layers == 0) {
-        r = nasm_malloc(LEAFSIZ);
-        r->layers = 0;
-        memset(r->u.l.data, 0, sizeof(r->u.l.data));
+        r = nasm_zalloc(LEAFSIZ);
         r->stepsize = 1L;
     } else {
         r = nasm_malloc(BRANCHSIZ);

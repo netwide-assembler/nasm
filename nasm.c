@@ -383,11 +383,11 @@ static int process_arg(char *p, char *q)
         case 'i':
         case 'I':
         case 'l':
-        case 'E':
         case 'F':
         case 'X':
         case 'u':
         case 'U':
+	case 'Z':
             if (!(param = get_param(p, q, &advance)))
                 break;
             if (p[1] == 'o') {  /* output file */
@@ -441,7 +441,7 @@ static int process_arg(char *p, char *q)
                 pp_include_path(param);
             } else if (p[1] == 'l') {   /* listing file */
                 strcpy(listname, param);
-            } else if (p[1] == 'E') {   /* error messages file */
+            } else if (p[1] == 'Z') {   /* error messages file */
                 error_file = fopen(param, "w");
                 if (!error_file) {
                     error_file = stderr;        /* Revert to default! */
@@ -476,16 +476,15 @@ static int process_arg(char *p, char *q)
                 ("usage: nasm [-@ response file] [-o outfile] [-f format] "
                  "[-l listfile]\n"
                  "            [options...] [--] filename\n"
-                 "    or nasm -r   for version info (obsolete)\n"
-                 "    or nasm -v   for version info (preferred)\n\n"
+                 "    or nasm -v   for version info\n\n"
                  "    -t          assemble in SciTech TASM compatible mode\n"
                  "    -g          generate debug information in selected format.\n");
             printf
-                ("    -e          preprocess only (writes output to stdout by default)\n"
+                ("    -E (or -e)  preprocess only (writes output to stdout by default)\n"
                  "    -a          don't preprocess (assemble only)\n"
                  "    -M          generate Makefile dependencies on stdout\n"
                  "    -MG         d:o, missing files assumed generated\n\n"
-                 "    -E<file>    redirect error messages to file\n"
+                 "    -Z<file>    redirect error messages to file\n"
                  "    -s          redirect error messages to stdout\n\n"
                  "    -F format   select a debugging format\n\n"
                  "    -I<path>    adds a pathname to the include file path\n");
@@ -523,7 +522,6 @@ static int process_arg(char *p, char *q)
         case 't':
             tasm_compatible_mode = TRUE;
             break;
-        case 'r':
         case 'v':
             {
                 const char *nasm_version_string =
@@ -537,6 +535,7 @@ static int process_arg(char *p, char *q)
             }
             break;
         case 'e':              /* preprocess only */
+	case 'E':
             operating_mode = op_preprocess;
             break;
         case 'a':              /* assemble only - don't preprocess */

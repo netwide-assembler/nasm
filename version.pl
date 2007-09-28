@@ -8,7 +8,8 @@
 #
 # <major>.<minor>[.<subminor>][pl<patchlevel>]]<tail>
 #
-# ... where <tail> is not necessarily numeric.
+# ... where <tail> is not necessarily numeric, but if it is of the form
+# -<digits> it is assumed to be a snapshot release.
 #
 # This defines the following macros:
 #
@@ -17,6 +18,7 @@
 # NASM_MINOR_VER
 # NASM_SUBMINOR_VER	-- this is zero if no subminor
 # NASM_PATCHLEVEL_VER	-- this is zero is no patchlevel
+# NASM_SNAPSHOT		-- if snapshot
 # NASM_VERSION_ID       -- version number encoded
 # NASM_VER		-- whole version number as a string
 #
@@ -25,6 +27,7 @@
 # __NASM_MINOR__
 # __NASM_SUBMINOR__
 # __NASM_PATCHLEVEL__
+# __NASM_SNAPSHOT__
 # __NASM_VERSION_ID__
 # __NASM_VER__
 #
@@ -57,6 +60,12 @@ if ( $line =~ /^([0-9]+)\.([0-9]+)(.*)$/ ) {
     die "$0: Invalid input format\n";
 }
 
+if ($tail =~ /^\-([0-9]+)/) {
+    $snapshot = $1;
+} else {
+    undef $snapshot;
+}
+
 $nmaj = $maj+0;   $nmin = $min+0;
 $nsmin = $smin+0; $nplvl = $plvl+0;
 
@@ -79,6 +88,8 @@ $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
 $mangled_ver = sprintf("%d.%02d.%02d", $nmaj, $nmin, $nsmin);
 $mangled_ver .= '.'.$nplvl if ($nplvl != 0);
+($mtail = $tail) =~ tr/-/./;
+$mangled_ver .= $mtail;
 
 if ( $what eq 'h' ) {
     print  "#ifndef NASM_VERSION_H\n";
@@ -87,6 +98,9 @@ if ( $what eq 'h' ) {
     printf "#define NASM_MINOR_VER      %d\n", $nmin;
     printf "#define NASM_SUBMINOR_VER   %d\n", $nsmin;
     printf "#define NASM_PATCHLEVEL_VER %d\n", $nplvl;
+    if (defined($snapshot)) {
+	printf "#define NASM_SNAPSHOT       %d\n", $snapshot;
+    }
     printf "#define NASM_VERSION_ID     0x%08x\n", $nasm_id;
     printf "#define NASM_VER            \"%s\"\n", $line;
     print  "#endif /* NASM_VERSION_H */\n";
@@ -95,6 +109,9 @@ if ( $what eq 'h' ) {
     printf "%%define __NASM_MINOR__ %d\n", $nmin;
     printf "%%define __NASM_SUBMINOR__ %d\n", $nsmin;
     printf "%%define __NASM_PATCHLEVEL__ %d\n", $nplvl;
+    if (defined($snapshot)) {
+	printf "%%define __NASM_SNAPSHOT__ %d\n", $snapshot;
+    }
     printf "%%define __NASM_VERSION_ID__ 0%08Xh\n", $nasm_id;
     printf "%%define __NASM_VER__ \"%s\"\n", $line;
 } elsif ( $what eq 'sed' ) {
@@ -102,6 +119,7 @@ if ( $what eq 'h' ) {
     printf "s/\@\@NASM_MINOR\@\@/%d/g\n", $nmin;
     printf "s/\@\@NASM_SUBMINOR\@\@/%d/g\n", $nsmin;
     printf "s/\@\@NASM_PATCHLEVEL\@\@/%d/g\n", $nplvl;
+    printf "s/\@\@NASM_SNAPSHOT\@\@/%d/g\n", $snapshot;	# Possibly empty
     printf "s/\@\@NASM_VERSION_ID\@\@/%d/g\n", $nasm_id;
     printf "s/\@\@NASM_VERSION_XID\@\@/0x%08x/g\n", $nasm_id;
     printf "s/\@\@NASM_VER\@\@/%s/g\n", $line;
