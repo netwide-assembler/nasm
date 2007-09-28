@@ -95,6 +95,7 @@ sub insert_deps($) {
     my($sep) = '/';
     my($cont) = "\\";
     my($maxline) = 78;		# Seems like a reasonable default
+    my @exclude = ();		# Don't exclude anything
 
     while ( defined($line = <IN>) ) {
 	if ( $line =~ /^\s*\#\s*@([a-z0-9-]+):\s*\"([^\"]*)\"/ ) {
@@ -107,6 +108,8 @@ sub insert_deps($) {
 		$maxline = $val+0;
 	    } elsif ( $parm eq 'continuation' ) {
 		$cont = $val;
+	    } elsif ( $parm eq 'exclude' ) {
+		@exclude = split(/\,/, $val);
 	    }
 	} elsif ( $line eq $barrier ) {
 	    last;		# Stop reading input at barrier line
@@ -114,6 +117,11 @@ sub insert_deps($) {
 	print OUT $line;
     }
     close(IN);
+
+    my $e, %do_exclude;
+    foreach $e (@exclude) {
+	$do_exclude{$e} = 1;
+    }
 
     my $dfile, $ofile, $str, $sl, $len;
     my @deps, $dep;
@@ -127,14 +135,16 @@ sub insert_deps($) {
 	    $len = length($str);
 	    print OUT $str;
 	    foreach $dep ($dfile, alldeps($dfile)) {
-		$str = convert_file($dep,$sep);
-		$sl = length($str)+1;
-		if ( $len+$sl > $maxline-2 ) {
-		    print OUT ' ', $cont, "\n ", $str;
-		    $len = $sl;
-		} else {
-		    print OUT ' ', $str;
-		    $len += $sl;
+		unless ($do_exclude{$dep}) {
+		    $str = convert_file($dep,$sep);
+		    $sl = length($str)+1;
+		    if ( $len+$sl > $maxline-2 ) {
+			print OUT ' ', $cont, "\n ", $str;
+			$len = $sl;
+		    } else {
+			print OUT ' ', $str;
+			$len += $sl;
+		    }
 		}
 	    }
 	    print OUT "\n";
