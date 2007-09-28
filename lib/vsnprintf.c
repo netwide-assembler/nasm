@@ -30,17 +30,17 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
     }
 
     rv = vsprintf(snprintf_buffer, format, ap);
-    if (rv > BUFFER_SIZE) {
+    if (rv >= BUFFER_SIZE) {
 	nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
 			  "snprintf buffer overflow");
     }
 
-    if (rv < (int)size-1)
-	bytes = rv;
-    else
-	bytes = size-1;
-
     if (size > 0) {
+	if ((size_t)rv < size-1)
+	    bytes = rv;
+	else
+	    bytes = size-1;
+
 	memcpy(str, snprintf_buffer, bytes);
 	str[bytes] = '\0';
     }
