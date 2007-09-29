@@ -87,7 +87,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
-AC_SUBST_FILE(XOBJS)
+AC_SUBST(XOBJS)
 
 AC_CHECK_FUNCS(strcspn, ,
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")]))
