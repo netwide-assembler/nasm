@@ -1601,10 +1601,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
-                    if (ea_data.rip && (ins->oprs[(c >> 3) & 7].segment == 0xFFFFFFFF))
-                            ea_data.rip = 0;    /* Make distinction between Symbols and Immediates */
-                    out(offset, segment, &data,   /* RIP = Relative, not Absolute */
-                        (ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS) + ea_data.bytes,
+                    out(offset, segment, &data,
+                        (ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS)
+			+ ea_data.bytes,
                         ins->oprs[(c >> 3) & 7].segment,
                         ins->oprs[(c >> 3) & 7].wrt);
                     s += ea_data.bytes;
