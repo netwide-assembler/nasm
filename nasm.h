@@ -541,9 +541,12 @@ enum ccode {			/* condition code names */
  * register names do not overlap.
  */
 enum prefixes {			/* instruction prefixes */
+    P_none = 0,
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
-    P_A16 = PREFIX_ENUM_START, P_A32, P_LOCK, P_O16, P_O32,
-    P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES
+    P_A16 = PREFIX_ENUM_START, P_A32, P_A64, P_ASP,
+    P_LOCK, P_O16, P_O32, P_O64, P_OSP,
+    P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES,
+    PREFIX_ENUM_LIMIT
 };
 
 enum {                          /* extended operand types */
@@ -565,9 +568,9 @@ enum eval_hint {                /* values for `hinttype' */
     EAH_NOTBASE  = 2            /* try _not_ to make reg the base */
 };
 
-typedef struct {                /* operand to an instruction */
+typedef struct operand {	/* operand to an instruction */
     int32_t type;               /* type of operand */
-    int addr_size;              /* 0 means default; 16; 32; 64 */
+    int disp_size;              /* 0 means default; 16; 32; 64 */
     enum reg_enum basereg, indexreg; /* address registers */
     int scale;			/* index scale */
     int hintbase;
@@ -592,17 +595,32 @@ typedef struct extop {          /* extended operand */
     int32_t wrt;                /* ... and here */
 } extop;
 
-#define MAXPREFIX 4
+/* Prefix positions: each type of prefix goes in a specific slot.
+   This affects the final ordering of the assembled output, which
+   shouldn't matter to the processor, but if you have stylistic
+   preferences, you can change this.  REX prefixes are handled
+   differently for the time being.
+
+   Note that LOCK and REP are in the same slot.  This is
+   an x86 architectural constraint. */
+enum prefix_pos {
+    PPS_LREP,			/* Lock or REP prefix */
+    PPS_SEG,			/* Segment override prefix */
+    PPS_OSIZE,			/* Operand size prefix */
+    PPS_ASIZE,			/* Address size prefix */
+    MAXPREFIX			/* Total number of prefix slots */
+};
+
 #define MAX_OPERANDS 4
 
-typedef struct {                /* an instruction itself */
-    char *label;              /* the label defined, or NULL */
+typedef struct insn {		/* an instruction itself */
+    char *label;		/* the label defined, or NULL */
     enum prefixes prefixes[MAXPREFIX]; /* instruction prefixes, if any */
-    int nprefix;                /* number of entries in above */
     enum opcode opcode;         /* the opcode - not just the string */
     enum ccode condition;       /* the condition code, if Jcc/SETcc */
     int operands;               /* how many operands? 0-3
                                  * (more if db et al) */
+    int addr_size;		/* address size */
     operand oprs[MAX_OPERANDS]; /* the operands, defined as above */
     extop *eops;                /* extended operands */
     int eops_float;             /* true if DD and floating */
@@ -934,8 +952,11 @@ struct dfmt {
  */
 
 enum special_tokens {
-    S_ABS, S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT,
-    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD
+    SPECIAL_ENUM_START = PREFIX_ENUM_LIMIT,
+    S_ABS = SPECIAL_ENUM_START,
+    S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT,
+    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD,
+    SPECIAL_ENUM_LIMIT
 };
 
 /*

@@ -44,12 +44,133 @@ void parser_global_info(struct ofmt *output, struct location * locp)
     location = locp;
 }
 
+static int prefix_slot(enum prefixes prefix)
+{
+    switch (prefix) {
+    case R_CS:
+    case R_DS:
+    case R_SS:
+    case R_ES:
+    case R_FS:
+    case R_GS:
+	return PPS_SEG;
+    case P_LOCK:
+    case P_REP:
+    case P_REPE:
+    case P_REPZ:
+    case P_REPNE:
+    case P_REPNZ:
+	return PPS_LREP;
+    case P_O16:
+    case P_O32:
+    case P_O64:
+    case P_OSP:
+	return PPS_OSIZE;
+    case P_A16:
+    case P_A32:
+    case P_A64:
+    case P_ASP:
+	return PPS_ASIZE;
+    default:
+	error(ERR_PANIC, "Invalid value %d passed to prefix_slot()", prefix);
+	return -1;
+    }
+}
+
+static void process_size_override(insn * result, int operand)
+{
+    if (tasm_compatible_mode) {
+	switch ((int)tokval.t_integer) {
+	    /* For TASM compatibility a size override inside the
+	     * brackets changes the size of the operand, not the
+	     * address type of the operand as it does in standard
+	     * NASM syntax. Hence:
+	     *
+	     *  mov     eax,[DWORD val]
+	     *
+	     * is valid syntax in TASM compatibility mode. Note that
+	     * you lose the ability to override the default address
+	     * type for the instruction, but we never use anything
+	     * but 32-bit flat model addressing in our code.
+	     */
+	case S_BYTE:
+	    result->oprs[operand].type |= BITS8;
+	    break;
+	case S_WORD:
+	    result->oprs[operand].type |= BITS16;
+	    break;
+	case S_DWORD:
+	case S_LONG:
+	    result->oprs[operand].type |= BITS32;
+	    break;
+	case S_QWORD:
+	    result->oprs[operand].type |= BITS64;
+	    break;
+	case S_TWORD:
+	    result->oprs[operand].type |= BITS80;
+	    break;
+	case S_OWORD:
+	    result->oprs[operand].type |= BITS128;
+	    break;
+	default:
+	    error(ERR_NONFATAL,
+		  "invalid operand size specification");
+	    break;
+	}
+    } else {
+	/* Standard NASM compatible syntax */
+	switch ((int)tokval.t_integer) {
+	case S_NOSPLIT:
+	    result->oprs[operand].eaflags |= EAF_TIMESTWO;
+	    break;
+	case S_REL:
+	    result->oprs[operand].eaflags |= EAF_REL;
+	    break;
+	case S_ABS:
+	    result->oprs[operand].eaflags |= EAF_ABS;
+	    break;
+	case S_BYTE:
+	    result->oprs[operand].disp_size = 8;
+	    result->oprs[operand].eaflags |= EAF_BYTEOFFS;
+	    break;
+	case P_A16:
+	case P_A32:
+	case P_A64:
+	    if (result->prefixes[PPS_ASIZE] &&
+		result->prefixes[PPS_ASIZE] != tokval.t_integer)
+		error(ERR_NONFATAL,
+		      "conflicting address size specifications");
+	    else
+		result->prefixes[PPS_ASIZE] = tokval.t_integer;
+	    break;
+	case S_WORD:
+	    result->oprs[operand].disp_size = 16;
+	    result->oprs[operand].eaflags |= EAF_WORDOFFS;
+	    break;
+	case S_DWORD:
+	case S_LONG:
+	    result->oprs[operand].disp_size = 32;
+	    result->oprs[operand].eaflags |= EAF_WORDOFFS;
+	    break;
+	case S_QWORD:
+	    result->oprs[operand].disp_size = 64;
+	    result->oprs[operand].eaflags |= EAF_WORDOFFS;
+	    break;
+	default:
+	    error(ERR_NONFATAL, "invalid size specification in"
+		  " effective address");
+	    break;
+	}
+    }
+}
+
 insn *parse_line(int pass, char *buffer, insn * result,
                  efunc errfunc, evalfunc evaluate, ldfunc ldef)
 {
     int operand;
     int critical;
     struct eval_hints hints;
+    int j;
 
     result->forw_ref = false;
     error = errfunc;
@@ -101,7 +222,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
         return result;
     }
 
-    result->nprefix = 0;
+    for (j = 0; j < MAXPREFIX; j++)
+	result->prefixes[j] = P_none;
     result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
@@ -134,17 +256,25 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 }
             }
         } else {
-            if (result->nprefix == MAXPREFIX)
-                error(ERR_NONFATAL,
-                      "instruction has more than %d prefixes", MAXPREFIX);
-            else
-                result->prefixes[result->nprefix++] = tokval.t_integer;
+	    int slot = prefix_slot(tokval.t_integer);
+	    if (result->prefixes[slot]) {
+		error(ERR_NONFATAL,
+		      "instruction has conflicting prefixes");
+	    }
+	    result->prefixes[slot] = tokval.t_integer;
             i = stdscan(NULL, &tokval);
         }
     }
 
     if (i != TOKEN_INSN) {
-        if (result->nprefix > 0 && i == 0) {
+	int j;
+	enum prefixes pfx;
+
+	for (j = 0; j < MAXPREFIX; j++)
+	    if ((pfx = result->prefixes[j]) != P_none)
+		break;
+		
+        if (i == 0 && pfx != P_none) {
             /*
              * Instruction prefixes are present, but no actual
              * instruction. This is allowed: at this point we
@@ -358,12 +488,12 @@ insn *parse_line(int pass, char *buffer, insn * result,
      * of these, separated by commas, and terminated by a zero token. */
 
     for (operand = 0; operand < MAX_OPERANDS; operand++) {
-        expr *value;            /* used most of the time */
+	expr *value;		/* used most of the time */
         int mref;               /* is this going to be a memory ref? */
         int bracket;            /* is it a [] mref, or a & mref? */
         int setsize = 0;
 
-        result->oprs[operand].addr_size = 0;    /* have to zero this whatever */
+        result->oprs[operand].disp_size = 0;    /* have to zero this whatever */
         result->oprs[operand].eaflags = 0;      /* and this */
         result->oprs[operand].opflags = 0;
 
@@ -428,78 +558,10 @@ insn *parse_line(int pass, char *buffer, insn * result,
         if (i == '[' || i == '&') {     /* memory reference */
             mref = true;
             bracket = (i == '[');
-            while ((i = stdscan(NULL, &tokval)) == TOKEN_SPECIAL) {
-		/* check for address directives */
-                if (tasm_compatible_mode) {
-                    switch ((int)tokval.t_integer) {
-                        /* For TASM compatibility a size override inside the
-                         * brackets changes the size of the operand, not the
-                         * address type of the operand as it does in standard
-                         * NASM syntax. Hence:
-                         *
-                         *  mov     eax,[DWORD val]
-                         *
-                         * is valid syntax in TASM compatibility mode. Note that
-                         * you lose the ability to override the default address
-                         * type for the instruction, but we never use anything
-                         * but 32-bit flat model addressing in our code.
-                         */
-                    case S_BYTE:
-                        result->oprs[operand].type |= BITS8;
-                        break;
-                    case S_WORD:
-                        result->oprs[operand].type |= BITS16;
-                        break;
-                    case S_DWORD:
-                    case S_LONG:
-                        result->oprs[operand].type |= BITS32;
-                        break;
-                    case S_QWORD:
-                        result->oprs[operand].type |= BITS64;
-                        break;
-                    case S_TWORD:
-                        result->oprs[operand].type |= BITS80;
-                        break;
-                    case S_OWORD:
-                        result->oprs[operand].type |= BITS128;
-                        break;
-                    default:
-                        error(ERR_NONFATAL,
-                              "invalid operand size specification");
-                    }
-                } else {
-                    /* Standard NASM compatible syntax */
-                    switch ((int)tokval.t_integer) {
-                    case S_NOSPLIT:
-                        result->oprs[operand].eaflags |= EAF_TIMESTWO;
-                        break;
-		    case S_REL:
-                        result->oprs[operand].eaflags |= EAF_REL;
-			break;
-		    case S_ABS:
-                        result->oprs[operand].eaflags |= EAF_ABS;
-			break;
-                    case S_BYTE:
-                        result->oprs[operand].eaflags |= EAF_BYTEOFFS;
-                        break;
-                    case S_WORD:
-                        result->oprs[operand].addr_size = 16;
-                        result->oprs[operand].eaflags |= EAF_WORDOFFS;
-                        break;
-                    case S_DWORD:
-                    case S_LONG:
-                        result->oprs[operand].addr_size = 32;
-                        result->oprs[operand].eaflags |= EAF_WORDOFFS;
-                        break;
-		    case S_QWORD:
-                        result->oprs[operand].addr_size = 64;
-                        result->oprs[operand].eaflags |= EAF_WORDOFFS;
-                        break;
-                    default:
-                        error(ERR_NONFATAL, "invalid size specification in"
-                              " effective address");
-                    }
-                }
+            i = stdscan(NULL, &tokval); /* then skip the colon */
+            while (i == TOKEN_SPECIAL || i == TOKEN_PREFIX) {
+		process_size_override(result, operand);
+                i = stdscan(NULL, &tokval);
             }
         } else {                /* immediate operand, or register */
             mref = false;
@@ -529,32 +591,18 @@ insn *parse_line(int pass, char *buffer, insn * result,
             if (value[1].type != 0 || value->value != 1 ||
                 REG_SREG & ~reg_flags[value->type])
                 error(ERR_NONFATAL, "invalid segment override");
-            else if (result->nprefix == MAXPREFIX)
+            else if (result->prefixes[PPS_SEG])
                 error(ERR_NONFATAL,
-                      "instruction has more than %d prefixes", MAXPREFIX);
+                      "instruction has conflicting segment overrides");
             else {
-                result->prefixes[result->nprefix++] = value->type;
+		result->prefixes[PPS_SEG] = value->type;
 		if (!(REG_FSGS & ~reg_flags[value->type]))
 		    result->oprs[operand].eaflags |= EAF_FSGS;
 	    }
 
             i = stdscan(NULL, &tokval); /* then skip the colon */
-            if (i == TOKEN_SPECIAL) {   /* another check for size override */
-                switch ((int)tokval.t_integer) {
-                case S_WORD:
-                    result->oprs[operand].addr_size = 16;
-                    break;
-                case S_DWORD:
-                case S_LONG:
-                    result->oprs[operand].addr_size = 32;
-                    break;
-		case S_QWORD:
-		    result->oprs[operand].addr_size = 64;
-		    break;
-                default:
-                    error(ERR_NONFATAL, "invalid size specification in"
-                          " effective address");
-                }
+            while (i == TOKEN_SPECIAL || i == TOKEN_PREFIX) {
+		process_size_override(result, operand);
                 i = stdscan(NULL, &tokval);
             }
             value = evaluate(stdscan, NULL, &tokval,
@@ -700,7 +748,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 		      !(result->oprs[operand].eaflags & EAF_FSGS)) ||
 		     (result->oprs[operand].eaflags & EAF_REL));
 
-                result->oprs[operand].type |= is_rel ? IP_REL : MEM_OFFS;
+		result->oprs[operand].type |= is_rel ? IP_REL : MEM_OFFS;
 	    }
             result->oprs[operand].basereg = b;
             result->oprs[operand].indexreg = i;
@@ -770,8 +818,9 @@ insn *parse_line(int pass, char *buffer, insn * result,
 
     result->operands = operand; /* set operand count */
 
-    while (operand < 3)         /* clear remaining operands */
-        result->oprs[operand++].type = 0;
+/* clear remaining operands */
+while (operand < MAX_OPERANDS)
+    result->oprs[operand++].type = 0;
 
     /*
      * Transform RESW, RESD, RESQ, REST, RESO into RESB.
