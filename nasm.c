@@ -780,16 +780,25 @@ static void parse_cmdline(int argc, char **argv)
     if (!*inname)
         report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                      "no input file specified");
-    else {
-            if (*errname) {  
-                error_file = fopen(errname, "w");
-                if (!error_file) {
-                    error_file = stderr;        /* Revert to default! */
-                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-                                 "cannot open file `%s' for error messages",
-                                 errname);
-                }
-            }
+
+    /* Look for basic command line typos.  This definitely doesn't
+       catch all errors, but it might help cases of fumbled fingers. */
+    if ((errname && !strcmp(inname, errname)) ||
+	(outname && !strcmp(inname, outname)) ||
+	(listname && !strcmp(inname, listname))) {
+	report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+		     "file `%s' is both input and output file",
+		     inname);
+    }
+
+    if (*errname) {  
+	error_file = fopen(errname, "w");
+	if (!error_file) {
+	    error_file = stderr;        /* Revert to default! */
+	    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+			 "cannot open file `%s' for error messages",
+			 errname);
+	}
     }
 }
 
