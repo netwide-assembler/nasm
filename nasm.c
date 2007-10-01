@@ -53,6 +53,7 @@ int globalrel = 0;
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
 static char listname[FILENAME_MAX];
+static char errname[FILENAME_MAX];
 static int globallineno;        /* for forward-reference tracking */
 /* static int pass = 0; */
 static struct ofmt *ofmt = NULL;
@@ -442,13 +443,7 @@ static int process_arg(char *p, char *q)
             } else if (p[1] == 'l') {   /* listing file */
                 strcpy(listname, param);
             } else if (p[1] == 'Z') {   /* error messages file */
-                error_file = fopen(param, "w");
-                if (!error_file) {
-                    error_file = stderr;        /* Revert to default! */
-                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-                                 "cannot open file `%s' for error messages",
-                                 param);
-                }
+                strcpy(errname, param);
             } else if (p[1] == 'F') {   /* specify debug format */
                 ofmt->current_dfmt = dfmt_find(ofmt, param);
                 if (!ofmt->current_dfmt) {
@@ -724,7 +719,7 @@ static void parse_cmdline(int argc, char **argv)
     FILE *rfile;
     char *envreal, *envcopy = NULL, *p, *arg;
 
-    *inname = *outname = *listname = '\0';
+    *inname = *outname = *listname = *errname = '\0';
 
     /*
      * First, process the NASMENV environment variable.
@@ -785,6 +780,17 @@ static void parse_cmdline(int argc, char **argv)
     if (!*inname)
         report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                      "no input file specified");
+    else {
+            if (*errname) {  
+                error_file = fopen(errname, "w");
+                if (!error_file) {
+                    error_file = stderr;        /* Revert to default! */
+                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                                 "cannot open file `%s' for error messages",
+                                 errname);
+                }
+            }
+    }
 }
 
 /* List of directives */

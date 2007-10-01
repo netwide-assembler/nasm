@@ -4,23 +4,29 @@ nasm \- the Netwide Assembler, a portable 80x86 assembler
 .SH SYNOPSIS
 .B nasm
 [
+.B \-@
+response file
+] [
 .B \-f
 format
 ] [
 .B \-o
 outfile
 ] [
+.B \-l
+listfile
+] [
 .IR options ...
-] infile
+] filename
 .br
 .B nasm \-h
 .br
-.B nasm \-r
+.B nasm \-v
 .SH DESCRIPTION
 The
 .B nasm
 command assembles the file
-.I infile
+.I filename
 and directs output to the file
 .I outfile
 if specified. If
@@ -33,17 +39,26 @@ extensions for a raw binary file. Failing that, the output file name
 will be `nasm.out'.
 .SS OPTIONS
 .TP
-.B \-h
+.BI \-@ " filename"
 Causes
 .B nasm
-to exit immediately, after giving a summary of its invocation
-options, and listing all its supported output file formats.
+to process options from 
+.I filename
+as if they were included on the command line.
 .TP
 .B \-a
 Causes
 .B nasm
 to assemble the given input file without first applying the macro
 preprocessor.
+.TP
+.BI \-D " macro[=value]"
+Pre-defines a single-line macro.
+.TP
+.BI \-d " macro[=value]"
+Same as the
+.B \-D
+option.
 .TP
 .B \-e
 Causes
@@ -53,70 +68,27 @@ to preprocess the given input file, and write the output to
 (or the specified output file name), and not actually assemble
 anything.
 .TP
-.B \-M
-Causes
-.B nasm
-to output Makefile-style dependencies to stdout; normal output is
-suppressed.
-.TP
-.BI \-E " filename"
-Causes
-.B nasm
-to redirect error messages to
-.IR filename .
-This option exists to support operating systems on which stderr is not
-easily redirected.
-.TP
-.BI \-r
-Causes
-.B nasm
-to exit immediately, after displaying its version number.
-.I (obsolete)
-.TP
-.BI \-v
-Causes
-.B nasm
-to exit immediately, after displaying its version number.
-.TP
 .BI \-f " format"
-Specifies the output file format. Formats include
-.IR bin ,
-to produce flat-form binary files, and
-.I aout
-and
-.I elf
-to produce Linux a.out and ELF object files, respectively.
+Specifies the output file format. To see a list of valid output
+formats, use the
+.B -hf
+option.
 .TP
-.BI \-o " outfile"
-Specifies a precise name for the output file, overriding
-.BR nasm 's
-default means of determining it.
-.TP
-.BI \-l " listfile"
-Causes an assembly listing to be directed to the given file, in
-which the original source is displayed on the right hand side (plus
-the source for included files and the expansions of multi-line
-macros) and the generated code is shown in hex on the left.
-.TP
-.B \-s
+.B \-g
 Causes
 .B nasm
-to send its error messages and/or help text to
-.I stdout
-instead of
-.IR stderr .
+to generate debug information in selected format
 .TP
-.BI \-w [+-]foo
+.B \-h
 Causes
 .B nasm
-to enable or disable certain classes of warning messages, for
-example
-.B \-w+orphan-labels
-or
-.B \-w-macro-params
-to, respectively, enable warnings about labels alone on lines or
-disable warnings about incorrect numbers of parameters in macro
-calls.
+to exit immediately, after giving a summary of its invocation
+options.
+.TP
+.B \-hf
+Same as
+.B -h
+, but also lists all valid output formats.
 .TP
 .BI \-I " directory"
 Adds a directory to the search path for include files. The directory
@@ -128,6 +100,26 @@ Same as the
 .B \-I
 option.
 .TP
+.BI \-l " listfile"
+Causes an assembly listing to be directed to the given file, in
+which the original source is displayed on the right hand side (plus
+the source for included files and the expansions of multi-line
+macros) and the generated code is shown in hex on the left.
+.TP
+.B \-M
+Causes
+.B nasm
+to output Makefile-style dependencies to stdout; normal output is
+suppressed.
+.TP
+.BI \-O " number"
+optimize branch offsets (-O0 disables, default).
+.TP
+.BI \-o " outfile"
+Specifies a precise name for the output file, overriding
+.BR nasm 's
+default means of determining it.
+.TP
 .BI \-P " file"
 Specifies a file to be pre-included, before the main source file
 starts to be processed.
@@ -137,13 +129,24 @@ Same as the
 .B \-P
 option.
 .TP
-.BI \-D " macro[=value]"
-Pre-defines a single-line macro.
+.BI \-r
+Causes
+.B nasm
+to exit immediately, after displaying its version number.
+.I (obsolete)
 .TP
-.BI \-d " macro[=value]"
-Same as the
-.B \-D
-option.
+.B \-s
+Causes
+.B nasm
+to send its error messages and/or help text to
+.I stdout
+instead of
+.IR stderr .
+.TP
+.B \-t
+Causes
+.B nasm
+to assemble in SciTech TASM compatible mode
 .TP
 .BI \-U " macro"
 Undefines a single-line macro.
@@ -152,6 +155,31 @@ Undefines a single-line macro.
 Same as the
 .B \-U
 option.
+.TP
+.BI \-v
+Causes
+.B nasm
+to exit immediately, after displaying its version number.
+.TP
+.BI \-w [+-]foo
+Causes
+.B nasm
+to enable or disable certain classes of warning messages, for
+example
+.B \-w+orphan-labels
+or
+.B \-w-macro-params
+.TP
+.BI \-X " format"
+specifies error reporting format (gnu or vc).
+.TP
+.BI \-Z " filename"
+Causes
+.B nasm
+to redirect error messages to
+.IR filename .
+This option exists to support operating systems on which stderr is not
+easily redirected.
 .PP
 .RE
 .SS SYNTAX
@@ -452,17 +480,7 @@ and
 .IR %elifnctx
 are also supported.
 .SH BUGS
-There is a reported seg-fault on some (Linux) systems with some
-large source files. This appears to be very hard to reproduce. All
-other
-.I known
-bugs have been fixed...
-.SH RESTRICTIONS
-There is no support for listing files, symbol maps, or debugging
-object-file records. The advanced features of the ELF and Win32
-object file formats are not supported, and there is no means for
-warning the programmer against using an instruction beyond the
-capability of the target processor.
+Please report bugs through the bug tracker function at http://nasm.sourceforge.org.
 .SH SEE ALSO
 .BR as "(" 1 "),"
 .BR ld "(" 1 ")."
