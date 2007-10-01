@@ -5,9 +5,13 @@
 % TOKEN_PREFIX, 0, P_*
 a16
 a32
+a64
+asp
 lock
 o16
 o32
+o64
+osp
 rep
 repe
 repne

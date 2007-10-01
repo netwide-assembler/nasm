@@ -215,7 +215,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
         return data;
     }
 
-    op->addr_size = 0;
+    op->disp_size = 0;
     op->eaflags = 0;
 
     if (asize == 16) {
@@ -260,7 +260,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
         if (rm == 6 && mod == 0) {      /* special case */
             op->basereg = -1;
             if (segsize != 16)
-                op->addr_size = 16;
+                op->disp_size = 16;
             mod = 2;            /* fake disp16 */
         }
         switch (mod) {
@@ -307,7 +307,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 	    }
 
 	    if (asize != 64)
-		op->addr_size = asize;
+		op->disp_size = asize;
 
 	    op->basereg = -1;
 	    mod = 2;            /* fake disp32 */
@@ -336,7 +336,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 		op->basereg = rd_reg32[base | ((rex & REX_B) ? 8 : 0)];
 
 	    if (segsize != 32)
-		op->addr_size = 32;
+		op->disp_size = 32;
         }
 
         switch (mod) {
@@ -375,7 +375,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int i;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
-	ins->oprs[i].segment = ins->oprs[i].addr_size =
+	ins->oprs[i].segment = ins->oprs[i].disp_size =
 	    (segsize == 64 ? SEG_64BIT : segsize == 32 ? SEG_32BIT : 0);
     }
     ins->condition = -1;
@@ -478,7 +478,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		data += 2;
 	    }
             if (segsize != asize)
-                ins->oprs[c - 034].addr_size = asize;
+                ins->oprs[c - 034].disp_size = asize;
         } else if (c >= 040 && c <= 043) {
             ins->oprs[c - 040].offset = getu32(data);
 	    data += 4;
@@ -498,7 +498,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		break;
 	    }
             if (segsize != asize)
-                ins->oprs[c - 044].addr_size = asize;
+                ins->oprs[c - 044].disp_size = asize;
         } else if (c >= 050 && c <= 053) {
             ins->oprs[c - 050].offset = gets8(data++);
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
@@ -658,15 +658,26 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    a_used = true;
     }
 
-    ins->nprefix = 0;
-    if (lock)
-	ins->prefixes[ins->nprefix++] = P_LOCK;
-    if (drep)
-        ins->prefixes[ins->nprefix++] = drep;
-    if (!a_used && asize != segsize)
-        ins->prefixes[ins->nprefix++] = asize == 16 ? P_A16 : P_A32;
-    if (!o_used && osize == ((segsize == 16) ? 32 : 16))
-        ins->prefixes[ins->nprefix++] = osize == 16 ? P_O16 : P_O32;
+    if (lock) {
+	if (ins->prefixes[PPS_LREP])
+	    return false;
+	ins->prefixes[PPS_LREP] = P_LOCK;
+    }
+    if (drep) {
+	if (ins->prefixes[PPS_LREP])
+	    return false;
+        ins->prefixes[PPS_LREP] = drep;
+    }
+    if (!o_used && osize == ((segsize == 16) ? 32 : 16)) {
+	if (ins->prefixes[PPS_OSIZE])
+	    return false;
+        ins->prefixes[PPS_OSIZE] = osize == 16 ? P_O16 : P_O32;
+    }
+    if (!a_used && asize != segsize) {
+	if (ins->prefixes[PPS_ASIZE])
+	    return false;
+        ins->prefixes[PPS_ASIZE] = asize == 16 ? P_A16 : P_A32;
+    }
 
     /* Fix: check for redundant REX prefixes */
 
@@ -780,13 +791,18 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	     * selection.
 	     */
             if (works) {
+		int i, nprefix;
                 goodness = ((*p)->flags & IF_PFMASK) ^ prefer;
-                if (tmp_ins.nprefix < best_pref ||
-		    (tmp_ins.nprefix == best_pref && goodness < best)) {
+		nprefix = 0;
+		for (i = 0; i < MAXPREFIX; i++)
+		    if (tmp_ins.prefixes[i])
+			nprefix++;
+                if (nprefix < best_pref ||
+		    (nprefix == best_pref && goodness < best)) {
                     /* This is the best one found so far */
                     best = goodness;
                     best_p = p;
-		    best_pref = tmp_ins.nprefix;
+		    best_pref = nprefix;
                     best_length = length;
                     ins = tmp_ins;
                 }
@@ -810,7 +826,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
      *      the return value is "sane."  Maybe a macro wrapper could
      *      be used for that purpose.
      */
-    for (i = 0; i < ins.nprefix; i++)
+    for (i = 0; i < MAXPREFIX; i++)
         switch (ins.prefixes[i]) {
 	case P_LOCK:
 	    slen += snprintf(output + slen, outbufsize - slen, "lock ");
@@ -930,8 +946,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%"PRIx64"]",
                          (segover ? segover : ""),
                          (segover ? ":" : ""),
-                         (o->addr_size ==
-                          32 ? "dword " : o->addr_size ==
+                         (o->disp_size ==
+                          32 ? "dword " : o->disp_size ==
                           16 ? "word " : ""), offs);
             segover = NULL;
         } else if (!(REGMEM & ~t)) {
@@ -957,11 +973,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "near ");
             output[slen++] = '[';
-            if (o->addr_size)
+            if (o->disp_size)
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 (o->addr_size == 64 ? "qword " :
-				  o->addr_size == 32 ? "dword " :
-                                  o->addr_size == 16 ? "word " :
+                                 (o->disp_size == 64 ? "qword " :
+				  o->disp_size == 32 ? "dword " :
+                                  o->disp_size == 16 ? "word " :
 				  ""));
 	    if (o->eaflags & EAF_REL)
 		slen += snprintf(output + slen, outbufsize - slen, "rel ");
