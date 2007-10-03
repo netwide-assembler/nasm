@@ -233,7 +233,7 @@ output/outrdf2.$(O): output/outrdf2.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h rdoff/rdoff.h regs.h version.h
 parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h \
  parser.h regflags.c regs.h stdscan.h tokens.h version.h
-pptok.$(O): pptok.c compiler.h nasmlib.h pptok.h preproc.h
+pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h macros.c nasm.h \
  nasmlib.h pptok.h preproc.h regs.h version.h
 regdis.$(O): regdis.c
@@ -243,5 +243,5 @@ regvals.$(O): regvals.c
 stdscan.$(O): stdscan.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
  stdscan.h tokens.h version.h
 sync.$(O): sync.c compiler.h nasmlib.h sync.h
-tokhash.$(O): tokhash.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
- tokens.h version.h
+tokhash.$(O): tokhash.c compiler.h hashtbl.h insns.h insnsi.h nasm.h \
+ nasmlib.h regs.h tokens.h version.h
