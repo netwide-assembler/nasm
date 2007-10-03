@@ -8,6 +8,8 @@
  * distributed in the NASM archive.
  */
 
+#include "compiler.h"
+
 #include "hash.h"
 
 const uint32_t consttab[] = {

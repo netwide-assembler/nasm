@@ -12,6 +12,8 @@
    files. You can use these files in your own program to load RDOFF objects
    and execute the code in them in a similar way to what is shown here. */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 

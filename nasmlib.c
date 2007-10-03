@@ -6,6 +6,8 @@
  * distributed in the NASM archive.
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,7 +146,7 @@ char *nasm_strndup(char *s, size_t len)
     return p;
 }
 
-#if !defined(stricmp) && !defined(strcasecmp)
+#ifndef nasm_stricmp
 int nasm_stricmp(const char *s1, const char *s2)
 {
     while (*s1 && tolower(*s1) == tolower(*s2))
@@ -158,7 +160,7 @@ int nasm_stricmp(const char *s1, const char *s2)
 }
 #endif
 
-#if !defined(strnicmp) && !defined(strncasecmp)
+#ifndef nasm_strnicmp
 int nasm_strnicmp(const char *s1, const char *s2, int n)
 {
     while (n > 0 && *s1 && tolower(*s1) == tolower(*s2))
@@ -172,7 +174,7 @@ int nasm_strnicmp(const char *s1, const char *s2, int n)
 }
 #endif
 
-#if !defined(strsep)
+#ifndef nasm_strsep
 char *nasm_strsep(char **stringp, const char *delim)
 {
         char *s = *stringp;

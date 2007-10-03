@@ -1,3 +1,4 @@
+#include "compiler.h"
 #include <inttypes.h>
 #include <ctype.h>
 

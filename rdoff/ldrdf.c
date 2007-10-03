@@ -24,6 +24,8 @@
  * under DOS. '#define STINGY_MEMORY' may help a little.
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -34,6 +34,8 @@
  * detoken is used to convert the line back to text
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>

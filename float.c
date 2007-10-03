@@ -8,6 +8,8 @@
  * initial version 13/ix/96 by Simon Tatham
  */
 
+#include "compiler.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>

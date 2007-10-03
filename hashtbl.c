@@ -4,6 +4,8 @@
  * Efficient dictionary hash table class.
  */
 
+#include "compiler.h"
+
 #include <inttypes.h>
 #include <string.h>
 #include "nasm.h"

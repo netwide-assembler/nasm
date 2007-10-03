@@ -2,6 +2,8 @@
  * rdf2bin.c - convert an RDOFF object file to flat binary
  */
 
+#include "compiler.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

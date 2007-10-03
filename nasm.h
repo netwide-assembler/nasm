@@ -11,10 +11,11 @@
 #ifndef NASM_NASM_H
 #define NASM_NASM_H
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <inttypes.h>
 #include "version.h"            /* generated NASM version macros */
-#include "compiler.h"
 #include "nasmlib.h"
 #include "insnsi.h"		/* For enum opcode */
 

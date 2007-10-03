@@ -8,6 +8,8 @@
  * initial version 2/vii/97 by Simon Tatham
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>

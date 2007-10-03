@@ -4,8 +4,9 @@
  * This file is public domain.
  */
 
-#include "collectn.h"
+#include "compiler.h"
 #include <stdlib.h>
+#include "collectn.h"
 
 void collection_init(Collection * c)
 {

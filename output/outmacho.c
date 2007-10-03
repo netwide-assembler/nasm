@@ -10,6 +10,8 @@
 /* Most of this file is, like Mach-O itself, based on a.out. For more
  * guidelines see outaout.c.  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -82,6 +82,9 @@ fi
 dnl Check for <inttypes.h> or add a substitute version
 AC_CHECK_HEADERS(inttypes.h, , CFLAGS="$CFLAGS -I\$(top_srcdir)/inttypes")
 
+dnl The standard header for str*casecmp is <strings.h>
+AC_CHECK_HEADERS(strings.h)
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T
@@ -106,6 +109,10 @@ AC_CHECK_FUNCS([snprintf _snprintf], missing=false)
 if $missing; then
    XOBJS="$XOBJS lib/snprintf.o"
 fi
+
+AC_CHECK_FUNCS(strcasecmp stricmp)
+AC_CHECK_FUNCS(strncasecmp strnicmp)
+AC_CHECK_FUNCS(strsep)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)

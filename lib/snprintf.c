@@ -4,6 +4,8 @@
  * Implement snprintf() in terms of vsnprintf()
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

@@ -2,6 +2,8 @@
  * rdfdump.c - dump RDOFF file header.
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

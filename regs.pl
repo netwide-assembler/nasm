@@ -78,7 +78,7 @@ close(REGS);
 
 if ( $fmt eq 'h' ) {
     # Output regs.h
-    print "/* automatically generated from $file - do not edit */\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
     $expr_regs = 1;
     printf "#define EXPR_REG_START %d\n", $expr_regs;
     print "enum reg_enum {\n";
@@ -101,7 +101,8 @@ if ( $fmt eq 'h' ) {
     print "\n";
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
-    print "/* automatically generated from $file - do not edit */\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
+    print "#include \"compiler.h\"\n\n";
     print "static const char * const reg_names[] = "; $ch = '{';
     # This one has no dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {

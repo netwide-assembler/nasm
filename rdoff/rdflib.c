@@ -23,6 +23,8 @@
  * content size, followed by data.
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

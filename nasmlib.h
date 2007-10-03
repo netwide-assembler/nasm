@@ -9,9 +9,14 @@
 #ifndef NASM_NASMLIB_H
 #define NASM_NASMLIB_H
 
+#include "compiler.h"
+
 #include <inttypes.h>
 #include <stdio.h>
-#include "compiler.h"
+#include <string.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 /*
  * If this is defined, the wrappers around malloc et al will
@@ -98,27 +103,23 @@ char *nasm_strndup_log(char *, int, char *, size_t);
  * ANSI doesn't guarantee the presence of `stricmp' or
  * `strcasecmp'.
  */
-#if defined(stricmp) || defined(strcasecmp)
-#if defined(stricmp)
-#define nasm_stricmp stricmp
-#else
+#if defined(HAVE_STRCASECMP)
 #define nasm_stricmp strcasecmp
-#endif
+#elif defined(HAVE_STRICMP)
+#define nasm_stricmp stricmp
 #else
 int nasm_stricmp(const char *, const char *);
 #endif
 
-#if defined(strnicmp) || defined(strncasecmp)
-#if defined(strnicmp)
-#define nasm_strnicmp strnicmp
-#else
+#if defined(HAVE_STRNCASECMP)
 #define nasm_strnicmp strncasecmp
-#endif
+#elif defined(HAVE_STRNICMP)
+#define nasm_strnicmp strnicmp
 #else
 int nasm_strnicmp(const char *, const char *, int);
 #endif
 
-#if defined(strsep)
+#if defined(HAVE_STRSEP)
 #define nasm_strsep strsep
 #else
 char *nasm_strsep(char **stringp, const char *delim);

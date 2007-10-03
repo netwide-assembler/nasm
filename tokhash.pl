@@ -168,6 +168,7 @@ if ($output eq 'h') {
     print " */\n";
     print "\n";
     
+    print "#include \"compiler.h\"\n";
     print "#include <string.h>\n";
     print "#include \"nasm.h\"\n";
     print "#include \"hashtbl.h\"\n";

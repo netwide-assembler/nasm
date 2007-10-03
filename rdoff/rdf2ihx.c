@@ -4,6 +4,8 @@
  * Note that this program only writes 16-bit HEX.
  */
 
+#include "compiler.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

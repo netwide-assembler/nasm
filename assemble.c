@@ -82,6 +82,8 @@
  *		   used for conditional jump over longer jump
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>

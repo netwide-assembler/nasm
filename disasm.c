@@ -8,6 +8,8 @@
  * initial version 27/iii/95 by Simon Tatham
  */
 
+#include "compiler.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
