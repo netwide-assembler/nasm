@@ -48,7 +48,7 @@ void **hash_find(struct hash_table *head, const char *key,
 		struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
-    uint64_t hash = crc64(key);
+    uint64_t hash = crc64(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
     size_t mask = head->size-1;
     size_t pos  = hash & mask;
@@ -76,7 +76,7 @@ void **hash_findi(struct hash_table *head, const char *key,
 		  struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
-    uint64_t hash = crc64i(key);
+    uint64_t hash = crc64i(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
     size_t mask = head->size-1;
     size_t pos  = hash & mask;

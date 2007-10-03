@@ -15,19 +15,11 @@ $outl = '   ';
 
 for ($i = 0; $i < $n; $i++) {
 
-    do {
-	die if (sysread(UR, $x4, 4) != 4);
-	@n = unpack("C*", $x4);
+    die if (sysread(UR, $x8, 8) != 8);
+    @n = unpack("V*", $x8);
 
-	$n[0] &= 31;
-	$n[1] &= 31;
-	$n[2] &= 31;
-	$n[3] &= 31;
-    } while ($n[0] == 0 || $n[1] == 0 || $n[2] == 0 || $n[3] == 0 ||
-	$n[0] == $n[3] || $n[1] == $n[2]);
-
-    $xl = sprintf(" [%d,%d,%d,%d]%s",
-		  $n[0], $n[1], $n[2], $n[3],
+    $xl = sprintf(" [0x%08x, 0x%08x]%s",
+		  $n[0], $n[1],
 		  ($i == $n-1) ? '' : ',');
     if (length($outl.$xl) > $maxlen) {
 	print $outl, "\n";

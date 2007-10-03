@@ -170,10 +170,8 @@ if ($output eq 'h') {
     
     print "#include <string.h>\n";
     print "#include \"nasm.h\"\n";
+    print "#include \"hashtbl.h\"\n";
     print "#include \"insns.h\"\n";
-    print "\n";
-    
-    print "#define rot(x,y) (((uint32_t)(x) << (y))+((uint32_t)(x) >> (32-(y))))\n";
     print "\n";
     
     # These somewhat odd sizes and ordering thereof are due to the
@@ -215,20 +213,17 @@ if ($output eq 'h') {
     }
     print  "    };\n";
     
-    print  "    uint32_t k1 = 0, k2 = 0;\n";
-    print  "    uint8_t c;\n";
+    print  "    uint32_t k1, k2;\n";
+    print  "    uint64_t crc;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
     # width as the hash arrays.
     print  "    uint16_t ix;\n";
     print  "    const struct tokendata *data;\n";
-    print  "    const char *p = token;\n";
     print  "\n";
-    
-    print  "    while ((c = *p++) != 0) {\n";
-    printf "        uint32_t kn1 = rot(k1,%2d)^(rot(k2,%2d) + c);\n", ${$sv}[0], ${$sv}[1];
-    printf "        uint32_t kn2 = rot(k2,%2d)^(rot(k1,%2d) + c);\n", ${$sv}[2], ${$sv}[3];
-    print  "        k1 = kn1; k2 = kn2;\n";
-    print  "    }\n";
+    printf "    crc = crc64(UINT64_C(0x%08x%08x), token);\n",
+    	$$sv[0], $$sv[1];
+    print  "    k1 = (uint32_t)crc;\n";
+    print  "    k2 = (uint32_t)(crc >> 32);\n";
     print  "\n";
     printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
     printf "    if (ix >= %d)\n", scalar(@tokendata);

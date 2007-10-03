@@ -132,9 +132,8 @@ static const uint64_t crc64_tab[256] = {
     UINT64_C(0x536fa08fdfd90e51), UINT64_C(0x29b7d047efec8728),
 };
 
-uint64_t crc64(const char *str)
+uint64_t crc64(uint64_t crc, const char *str)
 {
-    uint64_t crc = UINT64_C(0xffffffffffffffff);
     uint8_t c;
 
     while ((c = *str++) != 0) {
@@ -144,9 +143,8 @@ uint64_t crc64(const char *str)
     return crc;
 }
 
-uint64_t crc64i(const char *str)
+uint64_t crc64i(uint64_t crc, const char *str)
 {
-    uint64_t crc = UINT64_C(0xffffffffffffffff);
     uint8_t c;
 
     while ((c = *str++) != 0) {

@@ -141,10 +141,8 @@ if ($what eq 'c') {
     print OUT "#include <inttypes.h>\n";
     print OUT "#include <ctype.h>\n";
     print OUT "#include \"nasmlib.h\"\n";
+    print OUT "#include \"hashtbl.h\"\n";
     print OUT "#include \"preproc.h\"\n";
-    print OUT "\n";
-
-    print OUT "#define rot(x,y) (((uint32_t)(x) << (y))+((uint32_t)(x) >> (32-(y))))\n";
     print OUT "\n";
 
     # Note that this is global.
@@ -180,22 +178,18 @@ if ($what eq 'c') {
     }
     print OUT "    };\n";
     
-    print OUT  "    uint32_t k1 = 0, k2 = 0;\n";
-    print OUT  "    uint8_t c;\n";
+    print OUT  "    uint32_t k1, k2;\n";
+    print OUT  "    uint64_t crc;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
     # width as the hash arrays.
     print OUT  "    uint16_t ix;\n";
-    print OUT  "    const char *p = token;\n";
     print OUT  "\n";
 
-    print OUT  "    while ((c = *p++) != 0) {\n";
-    print OUT  "        uint32_t kn1, kn2;\n";
-    print OUT  "        c |= 0x20; /* convert to lower case */\n";
-    printf OUT "        kn1 = rot(k1,%2d)^(rot(k2,%2d) + c);\n", ${$sv}[0], ${$sv}[1];
-    printf OUT "        kn2 = rot(k2,%2d)^(rot(k1,%2d) + c);\n", ${$sv}[2], ${$sv}[3];
-    print OUT  "        k1 = kn1; k2 = kn2;\n";
-    print OUT  "    }\n";
-    print OUT  "\n";
+    printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), token);\n",
+    	$$sv[0], $$sv[1];
+    print  OUT "    k1 = (uint32_t)crc;\n";
+    print  OUT "    k2 = (uint32_t)(crc >> 32);\n";
+    print  OUT "\n";
     printf OUT "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
     printf OUT "    if (ix >= %d)\n", scalar(@pptok);
     print OUT  "        return PP_INVALID;\n";

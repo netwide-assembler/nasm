@@ -8,25 +8,7 @@
 
 use Graph::Undirected;
 require 'random_sv_vectors.ph';
-
-#
-# Truncate to 32-bit integer
-#
-sub int32($) {
-    my($x) = @_;
-
-    return int($x) % 4294967296;
-}
-
-#
-# 32-bit rotate
-#
-sub rot($$) {
-    my($v,$s) = @_;
-
-    $v = int32($v);
-    return int32(($v << $s)|($v >> (32-$s)));
-}
+require 'crc64.ph';
 
 #
 # Compute the prehash for a key
@@ -35,20 +17,11 @@ sub rot($$) {
 #
 sub prehash($$$) {
     my($key, $n, $sv) = @_;
-    my $c;
-    my $k1 = 0, $k2 = 0;
-    my $ko1, $ko2;
-    my($s0, $s1, $s2, $s3) = @{$sv};
-
-    foreach $c (unpack("C*", $key)) {
-	$ko1 = $k1;  $ko2 = $k2;
-	$k1 = int32(rot($ko1,$s0)^int32(rot($ko2, $s1)+$c));
-	$k2 = int32(rot($ko2,$s2)^int32(rot($ko1, $s3)+$c));
-    }
+    my @c = crc64($sv, $key);
 
     # Create a bipartite graph...
-    $k1 = (($k1 & ($n-1)) << 1) + 0;
-    $k2 = (($k2 & ($n-1)) << 1) + 1;
+    $k1 = (($c[1] & ($n-1)) << 1) + 0; # low word
+    $k2 = (($c[0] & ($n-1)) << 1) + 1; # high word
 
     return ($k1, $k2);
 }
@@ -81,10 +54,10 @@ sub walk_graph($$$) {
 #
 # Generate the function assuming a given N.
 #
-# gen_hash_n(N, sv, \%data)
+# gen_hash_n(N, sv, \%data, run)
 #
-sub gen_hash_n($$$) {
-    my($n, $sv, $href) = @_;
+sub gen_hash_n($$$$) {
+    my($n, $sv, $href, $run) = @_;
     my @keys = keys(%{$href});
     my $i, $sv, @g;
     my $gr;
@@ -103,8 +76,10 @@ sub gen_hash_n($$$) {
 	if ($gr->has_edge($pf1, $pf2)) {
 	    my $xkey = $gr->get_edge_attribute($pf1, $pf2, "key");
 	    my ($xp1, $xp2) = prehash($xkey, $n, $sv);
-	    print STDERR "Collision: $pf1=$pf2 $k with ";
-	    print STDERR "$xkey ($xp1,$xp2)\n";
+	    if (defined($run)) {
+		print STDERR "$run: Collision: $pf1=$pf2 $k with ";
+		print STDERR "$xkey ($xp1,$xp2)\n";
+	    }
 	    return;
 	}
 
@@ -117,11 +92,15 @@ sub gen_hash_n($$$) {
 
     # At this point, we're good if the graph is acyclic.
     if ($gr->is_cyclic) {
-	print STDERR "Graph is cyclic\n";
+	if (defined($run)) {
+	    print STDERR "$run: Graph is cyclic\n";
+	}
 	return;
     }
     
-    print STDERR "Graph OK, computing vertices...\n";
+    if (defined($run)) {
+	print STDERR "$run: Graph OK, computing vertices...\n";
+    }
 
     # Now we need to assign values to each vertex, so that for each
     # edge, the sum of the values for the two vertices give the value
@@ -144,7 +123,10 @@ sub gen_hash_n($$$) {
     #	print STDERR "Vertex ", $i, ": ", $g[$i], "\n";
     # }
 
-    print STDERR "Done: n = $n, sv = [", join(',', @$sv), "]\n";
+    if (defined($run)) {
+	printf STDERR "$run: Done: n = $n, sv = [0x%08x, 0x%08x]\n",
+	$$sv[0], $$sv[1];
+    }
 
     return ($n, $sv, \@g);
 }
@@ -159,6 +141,7 @@ sub gen_perfect_hash($) {
     my @keys = keys(%{$href});
     my @hashinfo;
     my $n, $i, $j, $sv, $maxj;
+    my $run = 1;
 
     # Minimal power of 2 value for N with enough wiggle room.
     # The scaling constant must be larger than 0.5 in order for the
@@ -176,7 +159,7 @@ sub gen_perfect_hash($) {
 	print STDERR "Trying n = $n...\n";
 	for ($j = 0; $j < $maxj; $j++) {
 	    $sv = $random_sv_vectors[$j];
-	    @hashinfo = gen_hash_n($n, $sv, $href);
+	    @hashinfo = gen_hash_n($n, $sv, $href, $run++);
 	    return @hashinfo if (defined(@hashinfo));
 	}
 	$n <<= 1;

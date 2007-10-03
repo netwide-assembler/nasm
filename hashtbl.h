@@ -30,8 +30,10 @@ struct hash_insert {
     struct hash_tbl_node *where;
 };
 
-uint64_t crc64(const char *string);
-uint64_t crc64i(const char *string);
+uint64_t crc64(uint64_t crc, const char *string);
+uint64_t crc64i(uint64_t crc, const char *string);
+#define CRC64_INIT UINT64_C(0xffffffffffffffff)
+
 struct hash_table *hash_init(void);
 void **hash_find(struct hash_table *head, const char *string,
 		struct hash_insert *insert);
