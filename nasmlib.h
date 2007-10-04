@@ -206,8 +206,8 @@ void fwriteint64_t(int64_t data, FILE * fp);
  * chunk.
  */
 
-#define RAA_BLKSIZE 4096        /* this many longs allocated at once */
-#define RAA_LAYERSIZE 1024      /* this many _pointers_ allocated */
+#define RAA_BLKSIZE	65536	/* this many longs allocated at once */
+#define RAA_LAYERSIZE	32768	/* this many _pointers_ allocated */
 
 typedef struct RAA RAA;
 typedef union RAA_UNION RAA_UNION;
@@ -261,21 +261,34 @@ struct SAA {
      * members `end' and `elem_len' are only valid in first link in
      * list; `rptr' and `rpos' are used for reading
      */
-    struct SAA *next, *end, *rptr;
-    int32_t elem_len, length, posn, start, rpos;
-    char *data;
+    size_t elem_len;		/* Size of each element */
+    size_t blk_len;		/* Size of each allocation block */
+    size_t nblks;		/* Total number of allocated blocks */
+    size_t nblkptrs;		/* Total number of allocation block pointers */
+    size_t length;		/* Total allocated length of the array */
+    size_t datalen;		/* Total data length of the array */
+    char **wblk;		/* Write block pointer */
+    size_t wpos;		/* Write position inside block */
+    size_t wptr;		/* Absolute write position */
+    char **rblk;		/* Read block pointer */
+    size_t rpos;		/* Read position inside block */
+    size_t rptr;		/* Absolute read position */
+    char **blk_ptrs;		/* Pointer to pointer blocks */
 };
 
-struct SAA *saa_init(int32_t elem_len);    /* 1 == byte */
+struct SAA *saa_init(size_t elem_len);    /* 1 == byte */
 void saa_free(struct SAA *);
 void *saa_wstruct(struct SAA *);        /* return a structure of elem_len */
-void saa_wbytes(struct SAA *, const void *, int32_t);      /* write arbitrary bytes */
+void saa_wbytes(struct SAA *, const void *, size_t);      /* write arbitrary bytes */
 void saa_rewind(struct SAA *);  /* for reading from beginning */
 void *saa_rstruct(struct SAA *);        /* return NULL on EOA */
-void *saa_rbytes(struct SAA *, int32_t *); /* return 0 on EOA */
-void saa_rnbytes(struct SAA *, void *, int32_t);   /* read a given no. of bytes */
-void saa_fread(struct SAA *s, int32_t posn, void *p, int32_t len);    /* fixup */
-void saa_fwrite(struct SAA *s, int32_t posn, void *p, int32_t len);   /* fixup */
+const void *saa_rbytes(struct SAA *, size_t *); /* return 0 on EOA */
+void saa_rnbytes(struct SAA *, void *, size_t);   /* read a given no. of bytes */
+/* random access */
+void saa_fread(struct SAA *, size_t, void *, size_t);
+void saa_fwrite(struct SAA *, size_t, const void *, size_t);
+
+/* dump to file */
 void saa_fpwrite(struct SAA *, FILE *);
 
 /*

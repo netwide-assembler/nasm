@@ -483,222 +483,251 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int32_t value)
     return result;
 }
 
-#define SAA_MAXLEN 8192
+/* Aggregate SAA components smaller than this */
+#define SAA_BLKLEN 65536
 
-struct SAA *saa_init(int32_t elem_len)
+struct SAA *saa_init(size_t elem_len)
 {
     struct SAA *s;
+    char *data;
 
-    if (elem_len > SAA_MAXLEN)
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
-                          "SAA with huge elements");
+    s = nasm_zalloc(sizeof(struct SAA));
 
-    s = nasm_malloc(sizeof(struct SAA));
-    s->posn = s->start = 0L;
+    if (elem_len >= SAA_BLKLEN)
+	s->blk_len = elem_len;
+    else
+	s->blk_len = SAA_BLKLEN - (SAA_BLKLEN % elem_len);
+
     s->elem_len = elem_len;
-    s->length = SAA_MAXLEN - (SAA_MAXLEN % elem_len);
-    s->data = nasm_malloc(s->length);
-    s->next = NULL;
-    s->end = s;
+    s->length = s->blk_len;
+    data = nasm_malloc(s->blk_len);
+    s->nblkptrs = s->nblks = 1;
+    s->blk_ptrs = nasm_malloc(sizeof(char *));
+    s->blk_ptrs[0] = data;
+    s->wblk = s->rblk = &s->blk_ptrs[0];
 
     return s;
 }
 
 void saa_free(struct SAA *s)
 {
-    struct SAA *t;
+    char **p;
+    size_t n;
 
-    while (s) {
-        t = s->next;
-        nasm_free(s->data);
-        nasm_free(s);
-        s = t;
+    for (p = s->blk_ptrs, n = s->nblks; n; p++, n--)
+	nasm_free(*p);
+
+    nasm_free(s->blk_ptrs);
+    nasm_free(s);
+}
+
+/* Add one allocation block to an SAA */
+static void saa_extend(struct SAA *s)
+{
+    size_t blkn = s->nblks++;
+    
+    if (blkn >= s->nblkptrs) {
+	size_t rindex = s->rblk - s->blk_ptrs;
+	size_t windex = s->wblk - s->blk_ptrs;
+
+	s->nblkptrs <<= 1;
+	s->blk_ptrs = nasm_realloc(s->blk_ptrs, s->nblkptrs*sizeof(char *));
+
+	s->rblk = s->blk_ptrs + rindex;
+	s->wblk = s->blk_ptrs + windex;
     }
+
+    s->blk_ptrs[blkn] = nasm_malloc(s->blk_len);
+    s->length += s->blk_len;
 }
 
 void *saa_wstruct(struct SAA *s)
 {
     void *p;
 
-    if (s->end->length - s->end->posn < s->elem_len) {
-        s->end->next = nasm_malloc(sizeof(struct SAA));
-        s->end->next->start = s->end->start + s->end->posn;
-        s->end = s->end->next;
-        s->end->length = s->length;
-        s->end->next = NULL;
-        s->end->posn = 0L;
-        s->end->data = nasm_malloc(s->length);
+    if (s->wpos % s->elem_len)
+	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
+			      "misaligned wpos in saa_wstruct");
+
+    if (s->wpos + s->elem_len > s->blk_len) {
+	if (s->wpos != s->blk_len)
+	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
+			      "unfilled block in saa_wstruct");
+
+	if (s->wptr + s->elem_len > s->length)
+	    saa_extend(s);
+	s->wblk++;
+	s->wpos = 0;
     }
 
-    p = s->end->data + s->end->posn;
-    s->end->posn += s->elem_len;
+    p = *s->wblk + s->wpos;
+    s->wpos += s->elem_len;
+    s->wptr += s->elem_len;
+
+    if (s->wptr > s->datalen)
+	s->datalen = s->wptr;
+
     return p;
 }
 
-void saa_wbytes(struct SAA *s, const void *data, int32_t len)
+void saa_wbytes(struct SAA *s, const void *data, size_t len)
 {
     const char *d = data;
 
-    while (len > 0) {
-        int32_t l = s->end->length - s->end->posn;
+    while (len) {
+        size_t l = s->blk_len - s->wpos;
         if (l > len)
             l = len;
-        if (l > 0) {
+        if (l) {
             if (d) {
-                memcpy(s->end->data + s->end->posn, d, l);
+                memcpy(*s->wblk + s->wpos, d, l);
                 d += l;
             } else
-                memset(s->end->data + s->end->posn, 0, l);
-            s->end->posn += l;
+                memset(*s->wblk + s->wpos, 0, l);
+            s->wpos += l;
+	    s->wptr += l;
             len -= l;
+
+	    if (s->datalen < s->wptr)
+		s->datalen = s->wptr;
         }
-        if (len > 0) {
-            s->end->next = nasm_malloc(sizeof(struct SAA));
-            s->end->next->start = s->end->start + s->end->posn;
-            s->end = s->end->next;
-            s->end->length = s->length;
-            s->end->next = NULL;
-            s->end->posn = 0L;
-            s->end->data = nasm_malloc(s->length);
-        }
+        if (len) {
+	    if (s->wptr >= s->length)
+		saa_extend(s);
+	    s->wblk++;
+	    s->wpos = 0;
+	}
     }
 }
 
 void saa_rewind(struct SAA *s)
 {
-    s->rptr = s;
-    s->rpos = 0L;
+    s->rblk = s->blk_ptrs;
+    s->rpos = s->rptr = 0;
 }
 
 void *saa_rstruct(struct SAA *s)
 {
     void *p;
 
-    if (!s->rptr)
-        return NULL;
+    if (s->rptr + s->elem_len < s->datalen)
+	return NULL;
 
-    if (s->rptr->posn - s->rpos < s->elem_len) {
-        s->rptr = s->rptr->next;
-        if (!s->rptr)
-            return NULL;        /* end of array */
-        s->rpos = 0L;
+    if (s->rpos % s->elem_len)
+	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
+			      "misaligned rpos in saa_rstruct");
+
+    if (s->rpos + s->elem_len > s->blk_len) {
+	s->rblk++;
+	s->rpos = 0;
     }
 
-    p = s->rptr->data + s->rpos;
+    p = *s->rblk + s->rpos;
     s->rpos += s->elem_len;
+    s->rptr += s->elem_len;
+
     return p;
 }
 
-void *saa_rbytes(struct SAA *s, int32_t *len)
+const void *saa_rbytes(struct SAA *s, size_t *lenp)
 {
-    void *p;
+    const void *p;
+    size_t len;
 
-    if (!s->rptr)
-        return NULL;
+    if (s->rptr >= s->datalen) {
+	*lenp = 0;
+	return NULL;
+    }
 
-    p = s->rptr->data + s->rpos;
-    *len = s->rptr->posn - s->rpos;
-    s->rptr = s->rptr->next;
-    s->rpos = 0L;
+    if (s->rpos >= s->blk_len) {
+	s->rblk++;
+	s->rpos = 0;
+    }
+
+    len = *lenp;
+    if (len > s->datalen - s->rptr)
+	len = s->datalen - s->rptr;
+    if (len > s->blk_len - s->rpos)
+	len = s->blk_len - s->rpos;
+
+    *lenp = len;
+    p = *s->rblk + s->rpos;
+
+    s->rpos += len;
+    s->rptr += len;
+
     return p;
 }
 
-void saa_rnbytes(struct SAA *s, void *data, int32_t len)
+void saa_rnbytes(struct SAA *s, void *data, size_t len)
 {
     char *d = data;
 
-    while (len > 0) {
-        int32_t l;
+    if (s->rptr + len > s->datalen) {
+	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_rnbytes");
+	return;
+    }
 
-        if (!s->rptr)
-            return;
+    while (len) {
+        size_t l;
+	const void *p;
 
-        l = s->rptr->posn - s->rpos;
-        if (l > len)
-            l = len;
-        if (l > 0) {
-            memcpy(d, s->rptr->data + s->rpos, l);
-            d += l;
-            s->rpos += l;
-            len -= l;
-        }
-        if (len > 0) {
-            s->rptr = s->rptr->next;
-            s->rpos = 0L;
-        }
+	l = len;
+	p = saa_rbytes(s, &l);
+
+	memcpy(d, p, l);
+	d   += l;
+	len -= l;
     }
 }
 
-void saa_fread(struct SAA *s, int32_t posn, void *data, int32_t len)
+/* Same as saa_rnbytes, except position the counter first */
+void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 {
-    struct SAA *p;
-    int64_t pos;
-    char *cdata = data;
-
-    if (!s->rptr || posn < s->rptr->start)
-        saa_rewind(s);
-    p = s->rptr;
-    while (posn >= p->start + p->posn) {
-        p = p->next;
-        if (!p)
-            return;             /* what else can we do?! */
+    size_t ix;
+    
+    if (posn+len > s->datalen) {
+	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fread");
+	return;
     }
 
-    pos = posn - p->start;
-    while (len) {
-        int64_t l = p->posn - pos;
-        if (l > len)
-            l = len;
-        memcpy(cdata, p->data + pos, l);
-        len -= l;
-        cdata += l;
-        p = p->next;
-        if (!p)
-            return;
-        pos = 0LL;
-    }
-    s->rptr = p;
+    ix = posn / s->blk_len;
+    s->rpos = posn % s->blk_len;
+    s->rblk = &s->blk_ptrs[ix];
+
+    saa_rnbytes(s, data, len);
 }
 
-void saa_fwrite(struct SAA *s, int32_t posn, void *data, int32_t len)
+/* Same as saa_wbytes, except position the counter first */
+void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 {
-    struct SAA *p;
-    int64_t pos;
-    char *cdata = data;
-
-    if (!s->rptr || posn < s->rptr->start)
-        saa_rewind(s);
-    p = s->rptr;
-    while (posn >= p->start + p->posn) {
-        p = p->next;
-        if (!p)
-            return;             /* what else can we do?! */
+    size_t ix;
+    
+    if (posn > s->datalen) {
+	/* Seek beyond the end of the existing array not supported */
+	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fwrite");
+	return;
     }
 
-    pos = posn - p->start;
-    while (len) {
-        int64_t l = p->posn - pos;
-        if (l > len)
-            l = len;
-        memcpy(p->data + pos, cdata, l);
-        len -= l;
-        cdata += l;
-        p = p->next;
-        if (!p)
-            return;
-        pos = 0LL;
+    ix = posn / s->blk_len;
+    s->wpos = posn % s->blk_len;
+    s->wblk = &s->blk_ptrs[ix];
+
+    if (!s->wpos) {
+	s->wpos = s->blk_len;
+	s->wblk--;
     }
-    s->rptr = p;
+
+    saa_wbytes(s, data, len);
 }
 
 void saa_fpwrite(struct SAA *s, FILE * fp)
 {
-    char *data;
-    int32_t len;
+    const char *data;
+    size_t len;
 
     saa_rewind(s);
-//    while ((data = saa_rbytes(s, &len)))
-    for (; (data = saa_rbytes(s, &len));)
+    while ((data = saa_rbytes(s, &len)) != NULL)
         fwrite(data, 1, len, fp);
 }
 

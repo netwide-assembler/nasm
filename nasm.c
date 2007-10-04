@@ -77,7 +77,7 @@ int32_t abs_offset;                /* ABSOLUTE offset */
 static struct RAA *offsets;
 
 static struct SAA *forwrefs;    /* keep track of forward references */
-static struct forwrefinfo *forwref;
+static const struct forwrefinfo *forwref;
 
 static Preproc *preproc;
 enum op_type {
