@@ -69,7 +69,7 @@ static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
 static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
 int global_offset_changed;      /* referenced in labels.c */
 
-static loc_t location;
+static cloc_t location;
 int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
 int32_t abs_seg;                   /* ABSOLUTE segment basis */
 int32_t abs_offset;                /* ABSOLUTE offset */

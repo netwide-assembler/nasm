@@ -15,7 +15,7 @@
  * look labels up.
  */
 void eval_global_info(struct ofmt *output, lfunc lookup_label,
-                      loc_t * locp);
+                      cloc_t * locp);
 
 /*
  * The evaluator itself.

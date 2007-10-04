@@ -194,7 +194,7 @@ typedef struct {
     int32_t segment;
     int64_t offset;
     int known;
-} loc_t;
+} cloc_t;
 
 /*
  * Expression-evaluator datatype. Expressions, within the
