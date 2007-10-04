@@ -1682,7 +1682,7 @@ static char *no_pp_getline(void)
          */
         buffer[strcspn(buffer, "\r\n\032")] = '\0';
 
-        if (!strncmp(buffer, "%line", 5)) {
+        if (!nasm_strnicmp(buffer, "%line", 5)) {
             int32_t ln;
             int li;
             char *nm = nasm_malloc(strlen(buffer));
