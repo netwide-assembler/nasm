@@ -24,14 +24,6 @@
 # include "config.h"
 #endif
 
-/* Request as many features as we can */
-#define _GNU_SOURCE
-#define _ISO99_SOURCE
-#define _POSIX_SOURCE
-#define _POSIX_C_SOURCE		200112L
-#define _XOPEN_SOURCE		600
-#define _XOPEN_SOURCE_EXTENDED
-
 #ifdef __GNUC__
 # if __GNUC__ >= 4
 #  define HAVE_GNUC_4
