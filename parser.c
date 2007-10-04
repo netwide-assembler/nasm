@@ -36,9 +36,9 @@ static int i;
 static struct tokenval tokval;
 static efunc error;
 static struct ofmt *outfmt;     /* Structure of addresses of output routines */
-static cloc_t *location;         /* Pointer to current line's segment,offset */
+static struct location *location;         /* Pointer to current line's segment,offset */
 
-void parser_global_info(struct ofmt *output, cloc_t * locp)
+void parser_global_info(struct ofmt *output, struct location * locp)
 {
     outfmt = output;
     location = locp;

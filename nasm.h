@@ -190,11 +190,11 @@ enum floatize {
     FLOAT_128H,
 };
 
-typedef struct {
-    int32_t segment;
+struct location {
     int64_t offset;
+    int32_t segment;
     int known;
-} cloc_t;
+};
 
 /*
  * Expression-evaluator datatype. Expressions, within the

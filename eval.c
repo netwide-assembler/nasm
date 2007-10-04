@@ -44,7 +44,7 @@ static struct tokenval *tokval; /* The current token */
 static int i;                   /* The t_type of tokval */
 
 static void *scpriv;
-static cloc_t *location;         /* Pointer to current line's segment,offset */
+static struct location *location;         /* Pointer to current line's segment,offset */
 static int *opflags;
 
 static struct eval_hints *hint;
@@ -813,7 +813,7 @@ static expr *expr6(int critical)
 }
 
 void eval_global_info(struct ofmt *output, lfunc lookup_label,
-                      cloc_t * locp)
+                      struct location * locp)
 {
     outfmt = output;
     labelfunc = lookup_label;
