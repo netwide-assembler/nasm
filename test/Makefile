@@ -1,7 +1,8 @@
-.SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst
+.SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
 
 NASM = ../nasm
 NASMOPT = -O999 -I../misc
+PERL = perl
 
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
@@ -17,6 +18,9 @@ NASMOPT = -O999 -I../misc
 
 %.obj64: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
+
+%.asm: %.pl
+	$(PERL) $< > $@
 
 all:
 
