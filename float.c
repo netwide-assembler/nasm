@@ -376,7 +376,7 @@ static int to_float(char *str, int32_t sign, uint8_t *result,
 		/*
 		 * Normalised.
 		 */
-		exponent += expmax;
+		exponent += expmax-1;
 		ieee_shr(mant, fmt->exponent);
 		ieee_round(mant, fmt->words);
 		/* did we scale up by one? */
