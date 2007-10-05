@@ -23,6 +23,11 @@
 	dw 0x0.0000123456789
 	dw 0x0.0000123456789p+10
 	dw 0x0.0000123456789p-10
+	dw 0x1.0p-25		; Underflow
+	dw 0x1.0p-24		; Smallest denorm
+	dw 0x1.0p-15		; Denorm
+	dw 0x1.0p-14		; Smallest non-denorm
+	dw 0x1.0p+15		; Biggest possible exponent
 
 ; 32-bit
 	dd 1.0
@@ -48,6 +53,11 @@
 	dd 0x0000123456789.0
 	dd 0x123456789.0p+0
 	dd 0x123456789.0p+64
+	dd 0x1.0p-150		; Underflow
+	dd 0x1.0p-149		; Smallest denorm
+	dd 0x1.0p-127		; Denorm
+	dd 0x1.0p-126		; Smallest non-denorm
+	dd 0x1.0p+127		; Biggest possible exponent
 
 ; 64-bit
 	dq 1.0
@@ -73,6 +83,11 @@
 	dq 0x0000123456789.0
 	dq 0x123456789.0p+0
 	dq 0x123456789.0p+300
+	dq 0x1.0p-1075		; Underflow
+	dq 0x1.0p-1074		; Smallest denorm
+	dq 0x1.0p-1023		; Denorm
+	dq 0x1.0p-1022		; Smallest non-denorm
+	dq 0x1.0p+1023		; Biggest possible exponent
 	
 ; 80-bit
 	dt 1.0
@@ -98,6 +113,12 @@
 	dt 0x0000123456789.0
 	dt 0x123456789.0p+0
 	dt 0x123456789.0p+1024
+	dt 0x1.0p-16446		; Underflow
+	dt 0x1.0p-16445		; Smallest denorm
+	dt 0x1.0p-16383		; Denorm
+	dt 0x1.0p-16382		; Smallest non-denorm
+	dt 0x1.0p+16383		; Biggest possible exponent
+
 
 ; 128-bit
 	do 1.0
@@ -123,3 +144,8 @@
 	do 0x0000123456789.0
 	do 0x123456789.0p+0
 	do 0x123456789.0p+1024
+	do 0x1.0p-16495		; Underflow
+	do 0x1.0p-16494		; Smallest denorm
+	do 0x1.0p-16383		; Denorm
+	do 0x1.0p-16382		; Smallest non-denorm
+	do 0x1.0p+16383		; Biggest possible exponent
