@@ -3,6 +3,9 @@
 ;
 ; Test hexadecimal floating-point numbers
 
+%define Inf __Infinity__
+%define NaN __QNaN__
+
 ; 16-bit
 	dw 1.0
 	dw 0x1.0
@@ -28,6 +31,8 @@
 	dw 0x1.0p-15		; Denorm
 	dw 0x1.0p-14		; Smallest non-denorm
 	dw 0x1.0p+15		; Biggest possible exponent
+	dw Inf			; Infinity
+	dw NaN
 
 ; 32-bit
 	dd 1.0
@@ -58,6 +63,8 @@
 	dd 0x1.0p-127		; Denorm
 	dd 0x1.0p-126		; Smallest non-denorm
 	dd 0x1.0p+127		; Biggest possible exponent
+	dd Inf			; Infinity
+	dd NaN
 
 ; 64-bit
 	dq 1.0
@@ -88,7 +95,9 @@
 	dq 0x1.0p-1023		; Denorm
 	dq 0x1.0p-1022		; Smallest non-denorm
 	dq 0x1.0p+1023		; Biggest possible exponent
-	
+	dq Inf			; Infinity
+	dq NaN
+
 ; 80-bit
 	dt 1.0
 	dt 0x1.0
@@ -118,7 +127,8 @@
 	dt 0x1.0p-16383		; Denorm
 	dt 0x1.0p-16382		; Smallest non-denorm
 	dt 0x1.0p+16383		; Biggest possible exponent
-
+	dt Inf			; Infinity
+	dt NaN
 
 ; 128-bit
 	do 1.0
@@ -149,3 +159,5 @@
 	do 0x1.0p-16383		; Denorm
 	do 0x1.0p-16382		; Smallest non-denorm
 	do 0x1.0p+16383		; Biggest possible exponent
+	do Inf			; Infinity
+	do NaN
