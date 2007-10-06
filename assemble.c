@@ -1401,6 +1401,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 	    break;
 
         case 0170:
+	    EMIT_REX();
             bytes[0] = 0;
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
