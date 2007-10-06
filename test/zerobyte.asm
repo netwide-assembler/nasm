@@ -5,3 +5,20 @@
 foo:	
 	add al,r10b
 bar:
+
+	lldt ax
+	lldt r8w
+	ltr [rax]
+	sldt eax
+	sldt r8d
+	str eax
+	str rax
+	str r8d
+	str r8
+	verr ax
+	verr r8w
+	verw ax
+	verw r8w
+
+	fmaddps xmm0,xmm0,xmm0,xmm0
+	fmaddps xmm8,xmm8,xmm8,xmm8
