@@ -610,7 +610,7 @@ void *saa_rstruct(struct SAA *s)
 {
     void *p;
 
-    if (s->rptr + s->elem_len < s->datalen)
+    if (s->rptr + s->elem_len > s->datalen)
 	return NULL;
 
     if (s->rpos % s->elem_len)
