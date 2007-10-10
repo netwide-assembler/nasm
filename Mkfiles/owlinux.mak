@@ -14,7 +14,8 @@ mandir		= $(prefix)/man
 CC		= wcl386
 CFLAGS		= -3 -bcl=$(TARGET) -ox -wx -ze -fpi
 BUILD_CFLAGS	= $(CFLAGS) # -I$(srcdir)/inttypes
-INTERNAL_CFLAGS = -I$(srcdir) -I. -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+INTERNAL_CFLAGS = -I$(srcdir) -I. \
+		  -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD		= $(CC)
 LDFLAGS		= $(ALL_CFLAGS)
@@ -143,7 +144,7 @@ clean:
 	-rm -f output/*.i
 	-rm -f nasm$(X)
 	-rm -f ndisasm$(X)
-	cd rdoff && $(MAKE) clean
+	# cd rdoff && $(MAKE) clean
 
 distclean: clean .SYMBOLIC
 	-rm -f config.h
@@ -161,13 +162,13 @@ distclean: clean .SYMBOLIC
 	-rm -f test/*.$(O)
 	-rm -f test/*.bin
 	-rm -f/s autom4te*.cache
-	cd rdoff && $(MAKE) distclean
+	# cd rdoff && $(MAKE) distclean
 
 cleaner: clean .SYMBOLIC
 	-rm -f $(PERLREQ)
 	-rm -f *.man
 	-rm -f nasm.spec
-	cd doc && $(MAKE) clean
+	# cd doc && $(MAKE) clean
 
 spotless: distclean cleaner .SYMBOLIC
 	-rm -f doc/Makefile
