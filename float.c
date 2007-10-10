@@ -18,9 +18,6 @@
 
 #include "nasm.h"
 
-#define TRUE 1
-#define FALSE 0
-
 #define MANT_WORDS  10          /* 112 bits + 48 for accuracy == 160 */
 #define MANT_DIGITS 49          /* 50 digits don't fit in 160 bits */
 
@@ -90,7 +87,7 @@ static void ieee_flconvert_hex(char *string, uint16_t *mant,
     while ((c = *string++) != '\0') {
 	if (c == '.') {
             if (!seendot)
-                seendot = TRUE;
+                seendot = true;
             else {
                 error(ERR_NONFATAL,
                       "too many periods in floating-point constant");
@@ -163,11 +160,11 @@ static void ieee_flconvert(char *string, uint16_t *mant,
 
     p = digits;
     tenpwr = 0;
-    started = seendot = FALSE;
+    started = seendot = false;
     while (*string && *string != 'E' && *string != 'e') {
         if (*string == '.') {
             if (!seendot)
-                seendot = TRUE;
+                seendot = true;
             else {
                 error(ERR_NONFATAL,
                       "too many periods in floating-point constant");
@@ -178,7 +175,7 @@ static void ieee_flconvert(char *string, uint16_t *mant,
                 if (seendot)
                     tenpwr--;
             } else {
-                started = TRUE;
+                started = true;
                 if (p < digits + sizeof(digits))
                     *p++ = *string - '0';
                 if (!seendot)
@@ -210,7 +207,7 @@ static void ieee_flconvert(char *string, uint16_t *mant,
         *m = 0;
     m = mant;
     q = digits;
-    started = FALSE;
+    started = false;
     twopwr = 0;
     while (m < mant + MANT_WORDS) {
         uint16_t carry = 0;
@@ -229,7 +226,7 @@ static void ieee_flconvert(char *string, uint16_t *mant,
             *r = i;
         }
         if (carry)
-            *m |= bit, started = TRUE;
+            *m |= bit, started = true;
         if (started) {
             if (bit == 1)
                 bit = 0x8000, m++;

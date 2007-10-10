@@ -202,10 +202,10 @@ int64_t readnum(char *str, int *error)
     int32_t radix;
     uint64_t result, checklimit;
     int digit, last;
-    int warn = FALSE;
+    int warn = false;
     int sign = 1;
 
-    *error = FALSE;
+    *error = false;
 
     while (isspace(*r))
         r++;                    /* find start of number */
@@ -249,7 +249,7 @@ int64_t readnum(char *str, int *error)
      * now.
      */
     if (r >= q) {
-        *error = TRUE;
+        *error = true;
         return 0;
     }
     
@@ -274,11 +274,11 @@ int64_t readnum(char *str, int *error)
     while (*r && r < q) {
         if (*r < '0' || (*r > '9' && *r < 'A')
             || (digit = numvalue(*r)) >= radix) {
-            *error = TRUE;
+            *error = true;
             return 0;
         }
         if (result > checklimit || (result == checklimit && digit >= last)) {
-            warn = TRUE;
+            warn = true;
         }
 
         result = radix * result + digit;
@@ -298,19 +298,19 @@ int64_t readstrnum(char *str, int length, int *warn)
     int64_t charconst = 0;
     int i;
 
-    *warn = FALSE;
+    *warn = false;
 
     str += length;
     if (globalbits == 64) {
         for (i = 0; i < length; i++) {
             if (charconst & 0xFF00000000000000ULL)
-                *warn = TRUE;
+                *warn = true;
             charconst = (charconst << 8) + (uint8_t)*--str;
         }
     } else {
         for (i = 0; i < length; i++) {
             if (charconst & 0xFF000000UL)
-                *warn = TRUE;
+                *warn = true;
             charconst = (charconst << 8) + (uint8_t)*--str;
         }
     }

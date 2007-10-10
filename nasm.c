@@ -48,7 +48,7 @@ static void usage(void);
 static efunc report_error;
 
 static int using_debug_info, opt_verbose_info;
-int tasm_compatible_mode = FALSE;
+bool tasm_compatible_mode = false;
 int pass0;
 int maxbits = 0;
 int globalrel = 0;
@@ -94,7 +94,7 @@ static enum op_type operating_mode;
  * doesn't do anything. Initial defaults are given here.
  */
 static char suppressed[1 + ERR_WARN_MAX] = {
-    0, TRUE, TRUE, TRUE, FALSE, TRUE
+    0, true, true, true, false, true
 };
 
 /*
@@ -159,7 +159,7 @@ static void nasm_fputs(const char *line, FILE * outfile)
 int main(int argc, char **argv)
 {
     pass0 = 1;
-    want_usage = terminate_after_phase = FALSE;
+    want_usage = terminate_after_phase = false;
     report_error = report_error_gnu;
 
     error_file = stderr;
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
             } else
                 ofile = NULL;
 
-            location.known = FALSE;
+            location.known = false;
 
 /*      pass = 1; */
             preproc->reset(inname, 2, report_error, evaluate, &nasmlist);
@@ -432,7 +432,7 @@ static int process_arg(char *p, char *q)
 			case 'v':
 			case '+':
 			    param++;
-			    opt_verbose_info = TRUE;
+			    opt_verbose_info = true;
 			    break;
 			    
 			case 'x':
@@ -480,7 +480,7 @@ static int process_arg(char *p, char *q)
             }
             break;
         case 'g':
-            using_debug_info = TRUE;
+            using_debug_info = true;
             break;
         case 'h':
             printf
@@ -531,7 +531,7 @@ static int process_arg(char *p, char *q)
             exit(0);
             break;
         case 't':
-            tasm_compatible_mode = TRUE;
+            tasm_compatible_mode = true;
             break;
         case 'v':
             {
@@ -859,8 +859,8 @@ static void assemble_file(char *fname)
             if (*listname)
                 nasmlist.init(listname, report_error);
         }
-        in_abs_seg = FALSE;
-        global_offset_changed = FALSE;  /* set by redefine_label */
+        in_abs_seg = false;
+        global_offset_changed = false;  /* set by redefine_label */
         location.segment = ofmt->section(NULL, pass2, &sb);
         globalbits = sb;
         if (pass > 1) {
@@ -872,7 +872,7 @@ static void assemble_file(char *fname)
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist);
         globallineno = 0;
         if (pass == 1)
-            location.known = TRUE;
+            location.known = true;
         location.offset = offs = GET_CURR_OFFS;
 
         while ((line = preproc->getline())) {
@@ -894,7 +894,7 @@ static void assemble_file(char *fname)
                                      "segment name `%s' not recognized",
                                      value);
                     } else {
-                        in_abs_seg = FALSE;
+                        in_abs_seg = false;
                         location.segment = seg;
                     }
                     break;
@@ -911,12 +911,12 @@ static void assemble_file(char *fname)
                         }
                     } else if (pass == 1) {     /* pass == 1 */
                         q = value;
-                        validid = TRUE;
+                        validid = true;
                         if (!isidstart(*q))
-                            validid = FALSE;
+                            validid = false;
                         while (*q && *q != ':') {
                             if (!isidchar(*q))
-                                validid = FALSE;
+                                validid = false;
                             q++;
                         }
                         if (!validid) {
@@ -935,7 +935,7 @@ static void assemble_file(char *fname)
                             declare_as_global(value, special,
                                               report_error);
                             define_label(value, seg_alloc(), 0L, NULL,
-                                         FALSE, TRUE, ofmt, report_error);
+                                         false, true, ofmt, report_error);
                             pass0 = temp;
                         }
                     }           /* else  pass0 == 1 */
@@ -956,12 +956,12 @@ static void assemble_file(char *fname)
                         }
                     } else if (pass2 == 1) {    /* pass == 1 */
                         q = value;
-                        validid = TRUE;
+                        validid = true;
                         if (!isidstart(*q))
-                            validid = FALSE;
+                            validid = false;
                         while (*q && *q != ':') {
                             if (!isidchar(*q))
-                                validid = FALSE;
+                                validid = false;
                             q++;
                         }
                         if (!validid) {
@@ -982,12 +982,12 @@ static void assemble_file(char *fname)
                         value++;        /* skip initial $ if present */
                     if (pass0 == 1) {
                         p = value;
-                        validid = TRUE;
+                        validid = true;
                         if (!isidstart(*p))
-                            validid = FALSE;
+                            validid = false;
                         while (*p && !isspace(*p)) {
                             if (!isidchar(*p))
-                                validid = FALSE;
+                                validid = false;
                             p++;
                         }
                         if (!validid) {
@@ -1054,18 +1054,18 @@ static void assemble_file(char *fname)
                     else
                         report_error(ERR_PANIC, "invalid ABSOLUTE address "
                                      "in pass two");
-                    in_abs_seg = TRUE;
+                    in_abs_seg = true;
                     location.segment = NO_SEG;
                     break;
                 case D_DEBUG:		/* [DEBUG] */
                     p = value;
                     q = debugid;
-                    validid = TRUE;
+                    validid = true;
                     if (!isidstart(*p))
-                        validid = FALSE;
+                        validid = false;
                     while (*p && !isspace(*p)) {
                         if (!isidchar(*p))
-                            validid = FALSE;
+                            validid = false;
                         *q++ = *p++;
                     }
                     *q++ = 0;
@@ -1085,10 +1085,10 @@ static void assemble_file(char *fname)
                             value++;
 
                         if (*value == '+' || *value == '-') {
-                            validid = (*value == '-') ? TRUE : FALSE;
+                            validid = (*value == '-') ? true : false;
                             value++;
                         } else
-                            validid = FALSE;
+                            validid = false;
 
                         for (i = 1; i <= ERR_WARN_MAX; i++)
                             if (!nasm_stricmp(value, suppressed_names[i]))
@@ -1155,7 +1155,7 @@ static void assemble_file(char *fname)
 
                 if (!(optimizing > 0) && pass == 2) {
                     if (forwref != NULL && globallineno == forwref->lineno) {
-                        output_ins.forw_ref = TRUE;
+                        output_ins.forw_ref = true;
                         do {
                             output_ins.oprs[forwref->operand].opflags |=
                                 OPFLAG_FORWARD;
@@ -1163,7 +1163,7 @@ static void assemble_file(char *fname)
                         } while (forwref != NULL
                                  && forwref->lineno == globallineno);
                     } else
-                        output_ins.forw_ref = FALSE;
+                        output_ins.forw_ref = false;
                 }
 
                 if (!(optimizing > 0) && output_ins.forw_ref) {
@@ -1234,7 +1234,7 @@ static void assemble_file(char *fname)
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].segment,
                                           output_ins.oprs[0].offset, NULL,
-                                          FALSE, isext, ofmt,
+                                          false, isext, ofmt,
                                           report_error);
                             } else if (output_ins.operands == 2
                                        && (output_ins.oprs[0].
@@ -1253,7 +1253,7 @@ static void assemble_file(char *fname)
                                           output_ins.oprs[0].
                                           offset | SEG_ABS,
                                           output_ins.oprs[1].offset, NULL,
-                                          FALSE, FALSE, ofmt,
+                                          false, false, ofmt,
                                           report_error);
                             } else
                                 report_error(ERR_NONFATAL,
@@ -1272,7 +1272,7 @@ static void assemble_file(char *fname)
                                 define_label(output_ins.label,
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
-                                             NULL, FALSE, FALSE, ofmt,
+                                             NULL, false, false, ofmt,
                                              report_error);
                             } else if (output_ins.operands == 2
                                        && (output_ins.oprs[0].
@@ -1288,7 +1288,7 @@ static void assemble_file(char *fname)
                                              output_ins.oprs[0].
                                              offset | SEG_ABS,
                                              output_ins.oprs[1].offset,
-                                             NULL, FALSE, FALSE, ofmt,
+                                             NULL, false, false, ofmt,
                                              report_error);
                             } else
                                 report_error(ERR_NONFATAL,
@@ -1596,7 +1596,7 @@ static void report_error_common(int severity, const char *fmt,
     fputc('\n', error_file);
 
     if (severity & ERR_USAGE)
-        want_usage = TRUE;
+        want_usage = true;
 
     switch (severity & ERR_MASK) {
     case ERR_WARNING:
@@ -1605,7 +1605,7 @@ static void report_error_common(int severity, const char *fmt,
         break;
     case ERR_NONFATAL:
         /* hack enables listing(!) on errors */
-        terminate_after_phase = TRUE;
+        terminate_after_phase = true;
         break;
     case ERR_FATAL:
         if (ofile) {

@@ -88,7 +88,7 @@ static char *perm_copy(const char *string);
 
 static char *prevlabel;
 
-static int initialized = FALSE;
+static int initialized = false;
 
 char lprefix[PREFIX_MAX] = { 0 };
 char lpostfix[PREFIX_MAX] = { 0 };
@@ -96,7 +96,7 @@ char lpostfix[PREFIX_MAX] = { 0 };
 /*
  * Internal routine: finds the `union label' corresponding to the
  * given label name. Creates a new one, if it isn't found, and if
- * `create' is TRUE.
+ * `create' is true.
  */
 static union label *find_label(char *label, int create)
 {
@@ -386,7 +386,7 @@ int init_labels(void)
 
     prevlabel = "";
 
-    initialized = TRUE;
+    initialized = true;
 
     return 0;
 }
@@ -395,7 +395,7 @@ void cleanup_labels(void)
 {
     union label *lptr, *lhold;
 
-    initialized = FALSE;
+    initialized = false;
 
     hash_free(ltab);
 

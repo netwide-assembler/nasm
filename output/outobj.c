@@ -145,8 +145,8 @@ static void ori_pubdef(ObjRecord * orp);
 static void ori_null(ObjRecord * orp);
 static ObjRecord *obj_commit(ObjRecord * orp);
 
-static int obj_uppercase;       /* Flag: all names in uppercase */
-static int obj_use32;           /* Flag: at least one segment is 32-bit */
+static bool obj_uppercase;       /* Flag: all names in uppercase */
+static bool obj_use32;           /* Flag: at least one segment is 32-bit */
 
 /*
  * Clear an ObjRecord structure.  (Never reallocates).
@@ -469,7 +469,7 @@ static evalfunc evaluate;
 static ldfunc deflabel;
 static FILE *ofp;
 static int32_t first_seg;
-static int any_segs;
+static bool any_segs;
 static int passtwo;
 static int arrindex;
 
@@ -550,7 +550,7 @@ static struct Segment {
         CMB_STACK = 5,
         CMB_COMMON = 6
     } combine;
-    int32_t use32;                 /* is this segment 32-bit? */
+    bool use32;                 /* is this segment 32-bit? */
     struct Public *pubhead, **pubtail, *lochead, **loctail;
     char *name;
     char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
@@ -609,7 +609,7 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     evaluate = eval;
     deflabel = ldef;
     first_seg = seg_alloc();
-    any_segs = FALSE;
+    any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;
     exthead = NULL;
@@ -627,8 +627,8 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     grphead = obj_grp_needs_update = NULL;
     grptail = &grphead;
     obj_entry_seg = NO_SEG;
-    obj_uppercase = FALSE;
-    obj_use32 = FALSE;
+    obj_uppercase = false;
+    obj_use32 = false;
     passtwo = 0;
     current_seg = NULL;
 
@@ -748,7 +748,7 @@ static void obj_deflabel(char *name, int32_t segment,
     struct ExtBack *eb;
     struct Segment *seg;
     int i;
-    int used_special = FALSE;   /* have we used the special text? */
+    bool used_special = false;   /* have we used the special text? */
 
 #if defined(DEBUG) && DEBUG>2
     fprintf(stderr,
@@ -809,7 +809,7 @@ static void obj_deflabel(char *name, int32_t segment,
     }
 
     /*
-     * If `any_segs' is still FALSE, we might need to define a
+     * If `any_segs' is still false, we might need to define a
      * default segment, if they're trying to declare a label in
      * `first_seg'.
      */
@@ -885,7 +885,7 @@ static void obj_deflabel(char *name, int32_t segment,
      * specifications.
      */
     while (special && *special) {
-        used_special = TRUE;
+        used_special = true;
 
         /*
          * We might have a default-WRT specification.
@@ -1016,7 +1016,7 @@ static void obj_out(int32_t segto, const void *data, uint32_t type,
     }
 
     /*
-     * If `any_segs' is still FALSE, we must define a default
+     * If `any_segs' is still false, we must define a default
      * segment.
      */
     if (!any_segs) {
@@ -1136,14 +1136,14 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     }
 
     if (seg % 2) {
-        base = TRUE;
+        base = true;
         locat = FIX_16_SELECTOR;
         seg--;
         if (bytes != 2)
             error(ERR_PANIC, "OBJ: 4-byte segment base fixup got"
                   " through sanity check");
     } else {
-        base = FALSE;
+        base = false;
         locat = (bytes == 2) ? FIX_16_OFFSET : FIX_32_OFFSET;
         if (!segrel)
             /*
@@ -1330,11 +1330,11 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         seg->index = (any_segs ? seg_alloc() : first_seg);
         seg->obj_index = obj_idx;
         seg->grp = NULL;
-        any_segs = TRUE;
+        any_segs = true;
         seg->name = NULL;
         seg->currentpos = 0;
         seg->align = 1;         /* default */
-        seg->use32 = FALSE;     /* default */
+        seg->use32 = false;     /* default */
         seg->combine = CMB_PUBLIC;      /* default */
         seg->segclass = seg->overlay = NULL;
         seg->pubhead = NULL;
@@ -1368,9 +1368,9 @@ static int32_t obj_segment(char *name, int pass, int *bits)
             else if (!nasm_stricmp(p, "stack"))
                 seg->combine = CMB_STACK;
             else if (!nasm_stricmp(p, "use16"))
-                seg->use32 = FALSE;
+                seg->use32 = false;
             else if (!nasm_stricmp(p, "use32"))
-                seg->use32 = TRUE;
+                seg->use32 = true;
             else if (!nasm_stricmp(p, "flat")) {
                 /*
                  * This segment is an OS/2 FLAT segment. That means
@@ -1457,10 +1457,10 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         obj_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
             deflabel(name, NO_SEG, seg->align - SEG_ABS,
-                     NULL, FALSE, FALSE, &of_obj, error);
+                     NULL, false, false, &of_obj, error);
         else
             deflabel(name, seg->index + 1, 0L,
-                     NULL, FALSE, FALSE, &of_obj, error);
+                     NULL, false, false, &of_obj, error);
         obj_seg_needs_update = NULL;
 
         /*
@@ -1561,7 +1561,7 @@ static int obj_directive(char *directive, char *value, int pass)
 
             obj_grp_needs_update = grp;
             deflabel(v, grp->index + 1, 0L,
-                     NULL, FALSE, FALSE, &of_obj, error);
+                     NULL, false, false, &of_obj, error);
             obj_grp_needs_update = NULL;
 
             while (*q) {
@@ -1622,7 +1622,7 @@ static int obj_directive(char *directive, char *value, int pass)
         return 1;
     }
     if (!strcmp(directive, "uppercase")) {
-        obj_uppercase = TRUE;
+        obj_uppercase = true;
         return 1;
     }
     if (!strcmp(directive, "import")) {
@@ -1655,7 +1655,7 @@ static int obj_directive(char *directive, char *value, int pass)
                   " and library name");
         else {
             struct ImpDef *imp;
-            int err = FALSE;
+            int err = false;
 
             imp = *imptail = nasm_malloc(sizeof(struct ImpDef));
             imptail = &imp->next;
@@ -1719,7 +1719,7 @@ static int obj_directive(char *directive, char *value, int pass)
             else if (!nasm_stricmp(v, "nodata"))
                 flags |= EXPDEF_FLAG_NODATA;
             else if (!nasm_strnicmp(v, "parm=", 5)) {
-                int err = FALSE;
+                int err = false;
                 flags |= EXPDEF_MASK_PARMCNT & readnum(v + 5, &err);
                 if (err) {
                     error(ERR_NONFATAL,
@@ -1727,7 +1727,7 @@ static int obj_directive(char *directive, char *value, int pass)
                     return 1;
                 }
             } else {
-                int err = FALSE;
+                int err = false;
                 ordinal = readnum(v, &err);
                 if (err) {
                     error(ERR_NONFATAL,
@@ -2364,7 +2364,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
         return;
 
     /*
-     * If `any_segs' is still FALSE, we must define a default
+     * If `any_segs' is still false, we must define a default
      * segment.
      */
     if (!any_segs) {
@@ -2442,7 +2442,7 @@ static void dbgbi_deflabel(char *name, int32_t segment,
     }
 
     /*
-     * If `any_segs' is still FALSE, we might need to define a
+     * If `any_segs' is still false, we might need to define a
      * default segment, if they're trying to declare a label in
      * `first_seg'.  But the label should exist due to a prior
      * call to obj_deflabel so we can skip that.

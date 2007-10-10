@@ -19,17 +19,6 @@
 #include "nasmlib.h"
 #include "insnsi.h"		/* For enum opcode */
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef FALSE
-#define FALSE 0                 /* comes in handy */
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
-
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 
@@ -242,7 +231,7 @@ struct eval_hints {
  * it will start by calling the scanner.
  *
  * If a forward reference happens during evaluation, the evaluator
- * must set `*fwref' to TRUE if `fwref' is non-NULL.
+ * must set `*fwref' to true if `fwref' is non-NULL.
  *
  * `critical' is non-zero if the expression may not contain forward
  * references. The evaluator will report its own error if this
@@ -978,7 +967,7 @@ enum special_tokens {
 
 extern int pass0;
 
-extern int tasm_compatible_mode;
+extern bool tasm_compatible_mode;
 extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;		/* default to relative addressing? */

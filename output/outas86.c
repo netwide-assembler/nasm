@@ -24,17 +24,17 @@
 struct Piece {
     struct Piece *next;
     int type;                   /* 0 = absolute, 1 = seg, 2 = sym */
-    int32_t offset;                /* relative offset */
-    int number;                 /* symbol/segment number (4=bss) */
-    int32_t bytes;                 /* size of reloc or of absolute data */
-    int relative;               /* TRUE or FALSE */
+    int32_t offset;		/* relative offset */
+    int number;			/* symbol/segment number (4=bss) */
+    int32_t bytes;	        /* size of reloc or of absolute data */
+    bool relative;		/* relative address? */
 };
 
 struct Symbol {
-    int32_t strpos;                /* string table position of name */
+    int32_t strpos;		/* string table position of name */
     int flags;                  /* symbol flags */
     int segment;                /* 4=bss at this point */
-    int32_t value;                 /* address, or COMMON variable size */
+    int32_t value;		/* address, or COMMON variable size */
 };
 
 /*

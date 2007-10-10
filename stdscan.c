@@ -76,10 +76,10 @@ int stdscan(void *private_data, struct tokenval *tv)
     if (isidstart(*stdscan_bufptr) ||
         (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
         /* now we've got an identifier */
-        int is_sym = FALSE;
+        bool is_sym = false;
 
         if (*stdscan_bufptr == '$') {
-            is_sym = TRUE;
+            is_sym = true;
             stdscan_bufptr++;
         }
 

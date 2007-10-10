@@ -223,7 +223,7 @@ static expr *segment_part(expr * e)
 
 /*
  * Recursive-descent parser. Called with a single boolean operand,
- * which is TRUE if the evaluation is critical (i.e. unresolved
+ * which is true if the evaluation is critical (i.e. unresolved
  * symbols are an error condition). Must update the global `i' to
  * reflect the token after the parsed string. May return NULL.
  *
@@ -357,7 +357,7 @@ static expr *rexp3(int critical)
         if (!f)
             return NULL;
 
-        e = add_vectors(e, scalar_mult(f, -1L, FALSE));
+        e = add_vectors(e, scalar_mult(f, -1L, false));
 
         switch (j) {
         case TOKEN_EQ:
@@ -365,9 +365,9 @@ static expr *rexp3(int critical)
             if (is_unknown(e))
                 v = -1;         /* means unknown */
             else if (!is_really_simple(e) || reloc_value(e) != 0)
-                v = (j == TOKEN_NE);    /* unequal, so return TRUE if NE */
+                v = (j == TOKEN_NE);    /* unequal, so return true if NE */
             else
-                v = (j == TOKEN_EQ);    /* equal, so return TRUE if EQ */
+                v = (j == TOKEN_EQ);    /* equal, so return true if EQ */
             break;
         default:
             if (is_unknown(e))
@@ -528,7 +528,7 @@ static expr *expr4(int critical)
             e = add_vectors(e, f);
             break;
         case '-':
-            e = add_vectors(e, scalar_mult(f, -1L, FALSE));
+            e = add_vectors(e, scalar_mult(f, -1L, false));
             break;
         }
     }
@@ -562,9 +562,9 @@ static expr *expr5(int critical)
         switch (j) {
         case '*':
             if (is_simple(e))
-                e = scalar_mult(f, reloc_value(e), TRUE);
+                e = scalar_mult(f, reloc_value(e), true);
             else if (is_simple(f))
-                e = scalar_mult(e, reloc_value(f), TRUE);
+                e = scalar_mult(e, reloc_value(f), true);
             else if (is_just_unknown(e) && is_just_unknown(f))
                 e = unknown_expr();
             else {
@@ -673,7 +673,7 @@ static expr *expr6(int critical)
         e = expr6(critical);
         if (!e)
             return NULL;
-        return scalar_mult(e, -1L, FALSE);
+        return scalar_mult(e, -1L, false);
 
 
     case '+':
@@ -861,7 +861,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
         if (!f)
             return NULL;
     }
-    e = scalar_mult(e, 1L, FALSE);      /* strip far-absolute segment part */
+    e = scalar_mult(e, 1L, false);      /* strip far-absolute segment part */
     if (f) {
         expr *g;
         if (is_just_unknown(f))

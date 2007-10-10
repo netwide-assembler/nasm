@@ -76,7 +76,7 @@ static void list_emit(void)
         fprintf(listfp, " %s", listline);
 
     fputc('\n', listfp);
-    listlinep = FALSE;
+    listlinep = false;
     listdata[0] = '\0';
 }
 
@@ -90,13 +90,13 @@ static void list_init(char *fname, efunc error)
 
     *listline = '\0';
     listlineno = 0;
-    listp = TRUE;
+    listp = true;
     listlevel = 0;
     suppress = 0;
     mistack = nasm_malloc(sizeof(MacroInhibit));
     mistack->next = NULL;
     mistack->level = 0;
-    mistack->inhibiting = TRUE;
+    mistack->inhibiting = true;
 }
 
 static void list_cleanup(void)
@@ -232,7 +232,7 @@ static void list_line(int type, char *line)
         }
     }
     list_emit();
-    listlinep = TRUE;
+    listlinep = true;
     strncpy(listline, line, LIST_MAX_LEN - 1);
     listline[LIST_MAX_LEN - 1] = '\0';
     listlevel_e = listlevel;
@@ -254,13 +254,13 @@ static void list_uplevel(int type)
         MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
         temp->next = mistack;
         temp->level = listlevel;
-        temp->inhibiting = FALSE;
+        temp->inhibiting = false;
         mistack = temp;
     } else if (type == LIST_MACRO_NOLIST) {
         MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
         temp->next = mistack;
         temp->level = listlevel;
-        temp->inhibiting = TRUE;
+        temp->inhibiting = true;
         mistack = temp;
     }
 }

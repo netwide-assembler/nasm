@@ -7,7 +7,7 @@
 #include "nasm.h"
 
 /*
- * Return TRUE if the argument is a simple scalar. (Or a far-
+ * Return true if the argument is a simple scalar. (Or a far-
  * absolute, which counts.)
  */
 int is_simple(expr * vect)
@@ -27,7 +27,7 @@ int is_simple(expr * vect)
 }
 
 /*
- * Return TRUE if the argument is a simple scalar, _NOT_ a far-
+ * Return true if the argument is a simple scalar, _NOT_ a far-
  * absolute.
  */
 int is_really_simple(expr * vect)
@@ -47,29 +47,29 @@ int is_really_simple(expr * vect)
 }
 
 /*
- * Return TRUE if the argument is relocatable (i.e. a simple
+ * Return true if the argument is relocatable (i.e. a simple
  * scalar, plus at most one segment-base, plus possibly a WRT).
  */
 int is_reloc(expr * vect)
 {
     while (vect->type && !vect->value)  /* skip initial value-0 terms */
         vect++;
-    if (!vect->type)            /* trivially return TRUE if nothing */
+    if (!vect->type)            /* trivially return true if nothing */
         return 1;               /* is present apart from value-0s */
-    if (vect->type < EXPR_SIMPLE)       /* FALSE if a register is present */
+    if (vect->type < EXPR_SIMPLE)       /* false if a register is present */
         return 0;
     if (vect->type == EXPR_SIMPLE) {    /* skip over a pure number term... */
         do {
             vect++;
         } while (vect->type && !vect->value);
-        if (!vect->type)        /* ...returning TRUE if that's all */
+        if (!vect->type)        /* ...returning true if that's all */
             return 1;
     }
     if (vect->type == EXPR_WRT) {       /* skip over a WRT term... */
         do {
             vect++;
         } while (vect->type && !vect->value);
-        if (!vect->type)        /* ...returning TRUE if that's all */
+        if (!vect->type)        /* ...returning true if that's all */
             return 1;
     }
     if (vect->value != 0 && vect->value != 1)
@@ -77,13 +77,13 @@ int is_reloc(expr * vect)
     do {                        /* skip over _one_ seg-base term... */
         vect++;
     } while (vect->type && !vect->value);
-    if (!vect->type)            /* ...returning TRUE if that's all */
+    if (!vect->type)            /* ...returning true if that's all */
         return 1;
-    return 0;                   /* And return FALSE if there's more */
+    return 0;                   /* And return false if there's more */
 }
 
 /*
- * Return TRUE if the argument contains an `unknown' part.
+ * Return true if the argument contains an `unknown' part.
  */
 int is_unknown(expr * vect)
 {
@@ -93,7 +93,7 @@ int is_unknown(expr * vect)
 }
 
 /*
- * Return TRUE if the argument contains nothing but an `unknown'
+ * Return true if the argument contains nothing but an `unknown'
  * part.
  */
 int is_just_unknown(expr * vect)

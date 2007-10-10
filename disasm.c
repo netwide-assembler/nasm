@@ -367,7 +367,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 {
     uint8_t *r = (uint8_t *)(t->code);
     uint8_t *origdata = data;
-    int a_used = FALSE, o_used = FALSE;
+    bool a_used = false, o_used = false;
     enum prefixes drep = 0;
     uint8_t lock = prefix->lock;
     int osize = prefix->osize;
@@ -382,7 +382,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     ins->rex = prefix->rex;
 
     if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
-        return FALSE;
+        return false;
 
     if (prefix->rep == 0xF2)
         drep = P_REPNE;
@@ -396,7 +396,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	if (c >= 01 && c <= 03) {
             while (c--)
                 if (*r++ != *data++)
-                    return FALSE;
+                    return false;
 	} else if (c == 04) {
             switch (*data++) {
             case 0x07:
@@ -409,7 +409,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 ins->oprs[0].basereg = 3;
                 break;
             default:
-                return FALSE;
+                return false;
             }
 	} else if (c == 05) {
             switch (*data++) {
@@ -420,7 +420,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 ins->oprs[0].basereg = 5;
                 break;
             default:
-                return FALSE;
+                return false;
 	    }
 	} else if (c == 06) {
             switch (*data++) {
@@ -437,7 +437,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 ins->oprs[0].basereg = 3;
                 break;
             default:
-                return FALSE;
+                return false;
             }
 	} else if (c == 07) {
             switch (*data++) {
@@ -448,12 +448,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 ins->oprs[0].basereg = 5;
                 break;
             default:
-                return FALSE;
+                return false;
             }
 	} else if (c >= 010 && c <= 013) {
             int t = *r++, d = *data++;
             if (d < t || d > t + 7)
-                return FALSE;
+                return false;
             else {
                 ins->oprs[c - 010].basereg = (d-t)+
 		    (ins->rex & REX_B ? 8 : 0);
@@ -536,7 +536,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             data = do_ea(data, modrm, asize, segsize,
 			 &ins->oprs[(c >> 3) & 07], ins);
 	    if (!data)
-		return FALSE;
+		return false;
             ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
 		(ins->rex & REX_R ? 8 : 0);
         } else if (c >= 0140 && c <= 0143) {
@@ -550,75 +550,75 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    ins->drexdst = c & 3;
         } else if (c == 0170) {
             if (*data++)
-                return FALSE;
+                return false;
 	} else if (c == 0171) {
 	    data = do_drex(data, ins);
 	    if (!data)
-		return FALSE;
+		return false;
         } else if (c >= 0200 && c <= 0277) {
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
-                return FALSE;   /* spare field doesn't match up */
+                return false;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize,
                          &ins->oprs[(c >> 3) & 07], ins);
 	    if (!data)
-		return FALSE;
+		return false;
         } else if (c == 0310) {
             if (asize != 16)
-                return FALSE;
+                return false;
             else
-                a_used = TRUE;
+                a_used = true;
         } else if (c == 0311) {
             if (asize == 16)
-                return FALSE;
+                return false;
             else
-                a_used = TRUE;
+                a_used = true;
         } else if (c == 0312) {
             if (asize != segsize)
-                return FALSE;
+                return false;
             else
-                a_used = TRUE;
+                a_used = true;
 	} else if (c == 0313) {
 	    if (asize != 64)
-		return FALSE;
+		return false;
 	    else
-		a_used = TRUE;
+		a_used = true;
         } else if (c == 0320) {
             if (osize != 16)
-                return FALSE;
+                return false;
             else
-                o_used = TRUE;
+                o_used = true;
         } else if (c == 0321) {
             if (osize != 32)
-                return FALSE;
+                return false;
             else
-                o_used = TRUE;
+                o_used = true;
         } else if (c == 0322) {
             if (osize != (segsize == 16) ? 16 : 32)
-                return FALSE;
+                return false;
             else
-                o_used = TRUE;
+                o_used = true;
         } else if (c == 0323) {
 	    ins->rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
 	} else if (c == 0324) {
 	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
-		return FALSE;
+		return false;
 	} else if (c == 0330) {
             int t = *r++, d = *data++;
             if (d < t || d > t + 15)
-                return FALSE;
+                return false;
             else
                 ins->condition = d - t;
         } else if (c == 0331) {
             if (prefix->rep)
-                return FALSE;
+                return false;
 	} else if (c == 0332) {
 	    if (prefix->rep != 0xF2)
-		return FALSE;
+		return false;
         } else if (c == 0333) {
             if (prefix->rep != 0xF3)
-                return FALSE;
+                return false;
             drep = 0;
         } else if (c == 0334) {
 	    if (lock) {
@@ -630,31 +630,31 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 drep = P_REPE;
 	} else if (c == 0364) {
 	    if (prefix->osp)
-		return FALSE;
+		return false;
 	} else if (c == 0365) {
 	    if (prefix->asp)
-		return FALSE;
+		return false;
 	} else if (c == 0366) {
 	    if (!prefix->osp)
-		return FALSE;
-	    o_used = TRUE;
+		return false;
+	    o_used = true;
 	} else if (c == 0367) {
 	    if (!prefix->asp)
-		return FALSE;
-	    o_used = TRUE;
+		return false;
+	    o_used = true;
 	}
     }
 
     /* REX cannot be combined with DREX */
     if ((ins->rex & REX_D) && (prefix->rex))
-	return FALSE;
+	return false;
 
     /*
      * Check for unused rep or a/o prefixes.
      */
     for (i = 0; i < t->operands; i++) {
 	if (ins->oprs[i].segment != SEG_RMREG)
-	    a_used = TRUE;
+	    a_used = true;
     }
 
     ins->nprefix = 0;
@@ -744,7 +744,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     p = (const struct itemplate * const *)ix->p;
     for (n = ix->n; n; n--, p++) {
         if ((length = matches(*p, data, &prefix, segsize, &tmp_ins))) {
-            works = TRUE;
+            works = true;
             /*
              * Final check to make sure the types of r/m match up.
 	     * XXX: Need to make sure this is actually correct.
@@ -765,7 +765,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 			 !whichreg((*p)->opd[i],
 				   tmp_ins.oprs[i].basereg, tmp_ins.rex))
 			)) {
-                    works = FALSE;
+                    works = false;
                     break;
                 }
             }
@@ -850,7 +850,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         slen +=
             snprintf(output + slen, outbufsize - slen, "%s",
                      insn_names[(*p)->opcode]);
-    colon = FALSE;
+    colon = false;
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
 	opflags_t t = (*p)->opd[i];
@@ -880,9 +880,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         }
 
         if (t & COLON)
-            colon = TRUE;
+            colon = true;
         else
-            colon = FALSE;
+            colon = false;
 
         if ((t & (REGISTER | FPUREG)) ||
             (o->segment & SEG_RMREG)) {
@@ -934,7 +934,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                           16 ? "word " : ""), offs);
             segover = NULL;
         } else if (!(REGMEM & ~t)) {
-            int started = FALSE;
+            int started = false;
             if (t & BITS8)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "byte ");
@@ -974,7 +974,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                                  reg_names[(o->basereg -
                                             EXPR_REG_START)]);
-                started = TRUE;
+                started = true;
             }
             if (o->indexreg != -1) {
                 if (started)
@@ -986,7 +986,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",
                                  o->scale);
-                started = TRUE;
+                started = true;
             }
             if (o->segment & SEG_DISP8) {
 		int minus = 0;

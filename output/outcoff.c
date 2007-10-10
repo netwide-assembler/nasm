@@ -66,28 +66,28 @@
  */
 
 /* Flag which version of COFF we are currently outputting. */
-static int win32, win64;
+static bool win32, win64;
 
 struct Reloc {
     struct Reloc *next;
-    int32_t address;               /* relative to _start_ of section */
-    int32_t symbol;                /* symbol number */
+    int32_t address;		/* relative to _start_ of section */
+    int32_t symbol;		/* symbol number */
     enum {
         SECT_SYMBOLS,
         ABS_SYMBOL,
         REAL_SYMBOLS
     } symbase;                  /* relocation for symbol number :) */
-    int relative;               /* TRUE or FALSE */
-    int size64;                 /* TRUE or FALSE */
+    bool relative;
+    bool size64;
 };
 
 struct Symbol {
     char name[9];
-    int32_t strpos;                /* string table position of name */
+    int32_t strpos;		/* string table position of name */
+    int32_t value;		/* address, or COMMON variable size */
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
-    int is_global;              /* is it a global symbol or not? */
-    int32_t value;                 /* address, or COMMON variable size */
+    bool is_global;              /* is it a global symbol or not? */
 };
 
 static FILE *coffp;
@@ -138,7 +138,7 @@ static void coff_write_symbols(void);
 static void coff_win32_init(FILE * fp, efunc errfunc,
                             ldfunc ldef, evalfunc eval)
 {
-    win32 = TRUE; win64 = FALSE;
+    win32 = true; win64 = false;
     (void)ldef;                 /* placate optimizers */
     (void)eval;
     coff_gen_init(fp, errfunc);
@@ -148,7 +148,7 @@ static void coff_win64_init(FILE * fp, efunc errfunc,
                             ldfunc ldef, evalfunc eval)
 {
     maxbits = 64;
-    win32 = FALSE; win64 = TRUE;
+    win32 = false; win64 = true;
     (void)ldef;                 /* placate optimizers */
     (void)eval;
     coff_gen_init(fp, errfunc);
@@ -157,7 +157,7 @@ static void coff_win64_init(FILE * fp, efunc errfunc,
 static void coff_std_init(FILE * fp, efunc errfunc, ldfunc ldef,
                           evalfunc eval)
 {
-    win32 = win64 = FALSE;
+    win32 = win64 = false;
     (void)ldef;                 /* placate optimizers */
     (void)eval;
     coff_gen_init(fp, errfunc);
@@ -396,7 +396,7 @@ static void coff_deflabel(char *name, int32_t segment, int32_t offset,
                 break;
             }
         if (!sym->section)
-            sym->is_global = TRUE;
+            sym->is_global = true;
     }
     if (is_global == 2)
         sym->value = offset;
@@ -532,7 +532,7 @@ static void coff_out(int32_t segto, const void *data, uint32_t type,
                         error(ERR_NONFATAL, "COFF format does not support"
                               " segment base references");
                     } else
-                        fix = coff_add_reloc(s, segment, FALSE, FALSE);
+                        fix = coff_add_reloc(s, segment, false, false);
                 }
                 p = mydata;
                 WRITELONG(p, *(int32_t *)data + fix);
@@ -550,13 +550,13 @@ static void coff_out(int32_t segto, const void *data, uint32_t type,
                     error(ERR_NONFATAL, "COFF format does not support"
                           " segment base references");
                 } else
-                    fix = coff_add_reloc(s, segment, FALSE);
+                    fix = coff_add_reloc(s, segment, false);
             } */
-                fix = coff_add_reloc(s, segment, FALSE, TRUE);
+                fix = coff_add_reloc(s, segment, false, true);
                 WRITEDLONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, realbytes);
             } else {
-                fix = coff_add_reloc(s, segment, FALSE, FALSE);
+                fix = coff_add_reloc(s, segment, false, false);
                 WRITELONG(p, *(int32_t *)data + fix);
                 coff_sect_write(s, mydata, realbytes);
             }
@@ -576,7 +576,7 @@ static void coff_out(int32_t segto, const void *data, uint32_t type,
                 error(ERR_NONFATAL, "COFF format does not support"
                       " segment base references");
             } else
-                fix = coff_add_reloc(s, segment, TRUE, FALSE);
+                fix = coff_add_reloc(s, segment, true, false);
             p = mydata;
             if (win32 | win64) {
                 WRITELONG(p, *(int32_t *)data + 4 - realbytes + fix);

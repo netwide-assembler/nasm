@@ -51,7 +51,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
     int critical;
     struct eval_hints hints;
 
-    result->forw_ref = FALSE;
+    result->forw_ref = false;
     error = errfunc;
 
     stdscan_reset();
@@ -92,7 +92,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
              * am still not certain.
              */
             ldef(result->label, in_abs_seg ? abs_seg : location->segment,
-                 location->offset, NULL, TRUE, FALSE, outfmt, errfunc);
+                 location->offset, NULL, true, false, outfmt, errfunc);
         }
     }
 
@@ -192,7 +192,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
         extop *eop, **tail = &result->eops, **fixptr;
         int oper_num = 0;
 
-        result->eops_float = FALSE;
+        result->eops_float = false;
 
         /*
          * Begin to read the DB/DW/DD/DQ/DT/DO/INCBIN operands.
@@ -233,7 +233,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 
                 if (i == TOKEN_FLOAT) {
                     eop->type = EOT_DB_STRING;
-                    result->eops_float = TRUE;
+                    result->eops_float = true;
 		    switch (result->opcode) {
 		    case I_DW:
 			eop->stringlen = 2;
@@ -426,7 +426,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
         }
 
         if (i == '[' || i == '&') {     /* memory reference */
-            mref = TRUE;
+            mref = true;
             bracket = (i == '[');
             while ((i = stdscan(NULL, &tokval)) == TOKEN_SPECIAL) {
 		/* check for address directives */
@@ -502,8 +502,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
                 }
             }
         } else {                /* immediate operand, or register */
-            mref = FALSE;
-            bracket = FALSE;    /* placate optimisers */
+            mref = false;
+            bracket = false;    /* placate optimisers */
         }
 
         if ((result->oprs[operand].type & FAR) && !mref &&
@@ -516,7 +516,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
                          critical, error, &hints);
         i = tokval.t_type;
         if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
-            result->forw_ref = TRUE;
+            result->forw_ref = true;
         }
         if (!value) {           /* error in evaluator */
             result->opcode = -1;        /* unrecoverable parse error: */
@@ -562,7 +562,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
                              critical, error, &hints);
             i = tokval.t_type;
             if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
-                result->forw_ref = TRUE;
+                result->forw_ref = true;
             }
             /* and get the offset */
             if (!value) {       /* but, error in evaluator */

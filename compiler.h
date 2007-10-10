@@ -60,4 +60,12 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # endif
 #endif
 
+#ifndef __cplusplus		/* C++ has false, true, bool as keywords */
+# ifdef HAVE_STDBOOL_H
+#  include <stdbool.h>
+# else
+typedef enum { false, true } bool;
+# endif
+#endif
+
 #endif	/* NASM_COMPILER_H */

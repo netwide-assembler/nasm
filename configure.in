@@ -87,6 +87,9 @@ AC_CHECK_HEADERS(inttypes.h, , CFLAGS="$CFLAGS -I\$(top_srcdir)/inttypes")
 dnl The standard header for str*casecmp is <strings.h>
 AC_CHECK_HEADERS(strings.h)
 
+dnl Look for <stdbool.h>
+AC_CHECK_HEADERS(stdbool.h)
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T

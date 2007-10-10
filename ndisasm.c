@@ -59,9 +59,9 @@ int main(int argc, char **argv)
     uint32_t nextsync, synclen, initskip = 0L;
     int lenread;
     int32_t lendis;
-    int autosync = FALSE;
+    bool autosync = false;
     int bits = 16, b;
-    int eof = FALSE;
+    bool eof = false;
     uint32_t prefer = 0;
     int rn_error;
     int32_t offset;
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
                 switch (tolower(*p)) {
                 case 'a':      /* auto or intelligent sync */
                 case 'i':
-                    autosync = TRUE;
+                    autosync = true;
                     p++;
                     break;
                 case 'h':
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
         if (to_read) {
             lenread = fread(p, 1, to_read, fp);
             if (lenread == 0)
-                eof = TRUE;     /* help along systems with bad feof */
+                eof = true;     /* help along systems with bad feof */
         } else
             lenread = 0;
         p += lenread;

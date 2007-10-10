@@ -19,9 +19,6 @@
 
 #define PROGRAM_VERSION "0.1"
 
-/** Types **/
-typedef enum { FALSE, TRUE } bool;
-
 /** Constants **/
 const char commands[] = "adnrtx";
 const char modifiers[] = "cflouvV";
@@ -125,7 +122,7 @@ void put_header(struct rdlm_hdr *hdr, FILE * libfp, char *modname)
         return;
     if (fwrite(hdr, 1, sizeof(*hdr), libfp) != sizeof(*hdr) ||
         (modname && (fwrite(modname, 1, n, libfp) != n)))
-        error_exit(3, TRUE, "could not write header");
+        error_exit(3, true, "could not write header");
 }
 
 /*
@@ -138,11 +135,11 @@ char copybytes(FILE * fp, FILE * fp2, int n)
     for (i = 0; i < n; i++) {
         t = fgetc(fp);
         if (t == EOF)
-            error_exit(1, FALSE, "premature end of file in '%s'",
+            error_exit(1, false, "premature end of file in '%s'",
                        _argv[2]);
         if (fp2)
             if (fputc(t, fp2) == EOF)
-                error_exit(1, FALSE, "write error");
+                error_exit(1, false, "write error");
     }
     return (char)t;
 }
@@ -160,11 +157,11 @@ int32_t copyint32_t(FILE * fp, FILE * fp2)
     for (i = 0; i < 4; i++) {
         t = fgetc(fp);
         if (t == EOF)
-            error_exit(1, FALSE, "premature end of file in '%s'",
+            error_exit(1, false, "premature end of file in '%s'",
                        _argv[2]);
         if (fp2)
             if (fputc(t, fp2) == EOF)
-                error_exit(1, FALSE, "write error");
+                error_exit(1, false, "write error");
         *p++ = t;
     }
     int32_ttolocal(&l);
@@ -189,13 +186,13 @@ int create_library(char *libname)
 
     libfp = fopen(libname, "wb");
     if (!libfp)
-        error_exit(1, TRUE, "could not open '%s'\n", libname);
+        error_exit(1, true, "could not open '%s'\n", libname);
 
     /* Write library header */
     put_header(&hdr, libfp, NULL);
 
     fclose(libfp);
-    return TRUE;
+    return true;
 }
 
 /*
@@ -213,7 +210,7 @@ int add_module(FILE * libfp, const char *fname, char *modname)
 
     /* Initialize some fields in the module header */
     if (stat(fname, &finfo) < 0)
-        error_exit(1, TRUE, "could not stat '%s'", fname);
+        error_exit(1, true, "could not stat '%s'", fname);
     hdr.date = finfo.st_mtime;
     hdr.owner = finfo.st_uid;
     hdr.group = finfo.st_gid;
@@ -221,7 +218,7 @@ int add_module(FILE * libfp, const char *fname, char *modname)
 
     modfp = fopen(fname, "rb");
     if (!modfp)
-        error_exit(1, TRUE, "could not open '%s'", fname);
+        error_exit(1, true, "could not open '%s'", fname);
 
     /* Write module header */
     put_header(&hdr, libfp, modname);
@@ -232,11 +229,11 @@ int add_module(FILE * libfp, const char *fname, char *modname)
         if (i == EOF)
             break;
         if (fputc(i, libfp) == EOF)
-            error_exit(1, FALSE, "write error");
+            error_exit(1, false, "write error");
     }
 
     fclose(modfp);
-    return TRUE;
+    return true;
 }
 
 /*
@@ -263,19 +260,19 @@ int main(int argc, char **argv)
     for (i = 1; i < strlen(argv[1]); i++) {
         switch (c = argv[1][i]) {
         case 'c':
-            options.createok = TRUE;
+            options.createok = true;
             break;
         case 'f':
-            options.usefname = TRUE;
+            options.usefname = true;
             break;
         case 'l':
-            options.align = TRUE;
+            options.align = true;
             break;
         case 'o':
-            options.odate = TRUE;
+            options.odate = true;
             break;
         case 'u':
-            options.fresh = TRUE;
+            options.fresh = true;
             break;
         case 'v':
             options.verbose++;
@@ -285,13 +282,13 @@ int main(int argc, char **argv)
             exit(0);
         default:
             if (strchr(commands, c) == NULL)
-                error_exit(2, FALSE, "invalid command or modifier '%c'",
+                error_exit(2, false, "invalid command or modifier '%c'",
                            c);
         }
     }
 
     if (argc < 3)
-        error_exit(2, FALSE, "missing library name");
+        error_exit(2, false, "missing library name");
 
     /* Process the command */
     if (argv[1][0] == '-')
@@ -299,7 +296,7 @@ int main(int argc, char **argv)
     switch (c = argv[1][0]) {
     case 'a':                  /* add a module */
         if (argc < 4 || (!options.usefname && argc != 5))
-            error_exit(2, FALSE, "invalid number of arguments");
+            error_exit(2, false, "invalid number of arguments");
 
         /* Check if a library already exists. If not - create it */
         if (access(argv[2], F_OK) < 0) {
@@ -310,7 +307,7 @@ int main(int argc, char **argv)
 
         libfp = fopen(argv[2], "ab");
         if (!libfp)
-            error_exit(1, TRUE, "could not open '%s'", argv[2]);
+            error_exit(1, true, "could not open '%s'", argv[2]);
 
         if (!options.usefname)
             add_module(libfp, argv[4], argv[3]);
@@ -329,17 +326,17 @@ int main(int argc, char **argv)
         if (!options.usefname)
             argc--;
         if (argc < 4)
-            error_exit(2, FALSE, "required parameter missing");
+            error_exit(2, false, "required parameter missing");
         p = options.usefname ? argv[3] : argv[4];
     case 't':                  /* list library contents */
         libfp = fopen(argv[2], "rb");
         if (!libfp)
-            error_exit(1, TRUE, "could not open '%s'\n", argv[2]);
+            error_exit(1, true, "could not open '%s'\n", argv[2]);
 
         /* Read library header */
         if (fread(&hdr, 1, sizeof(hdr), libfp) != sizeof(hdr) ||
             hdr.magic != RDLAMAG)
-            error_exit(1, FALSE, "invalid library format");
+            error_exit(1, false, "invalid library format");
 
         /* Walk through the library looking for requested module */
         while (!feof(libfp)) {
@@ -348,11 +345,11 @@ int main(int argc, char **argv)
             if (feof(libfp))
                 break;
             if (i != sizeof(hdr) || hdr.magic != RDLMMAG)
-                error_exit(1, FALSE, "invalid module header");
+                error_exit(1, false, "invalid module header");
             /* Read module name */
             i = hdr.hdrsize - sizeof(hdr);
             if (i > sizeof(buf) || fread(buf, 1, i, libfp) != i)
-                error_exit(1, FALSE, "invalid module name");
+                error_exit(1, false, "invalid module name");
             if (c == 'x') {
                 /* Check against desired name */
                 if (!strcmp(buf, argv[3])) {
@@ -362,7 +359,7 @@ int main(int argc, char **argv)
                                 p);
                     modfp = fopen(p, "wb");
                     if (!modfp)
-                        error_exit(1, TRUE, "could not open '%s'", p);
+                        error_exit(1, true, "could not open '%s'", p);
                 }
             } else {
                 printf("%-40s ", buf);
@@ -381,26 +378,26 @@ int main(int argc, char **argv)
         if (modfp)
             fclose(modfp);
         else if (c == 'x')
-            error_exit(1, FALSE, "module '%s' not found in '%s'",
+            error_exit(1, false, "module '%s' not found in '%s'",
                        argv[3], argv[2]);
         break;
 
     case 'r':                  /* replace module(s) */
         argc--;
         if (stat(argv[4], &finfo) < 0)
-            error_exit(1, TRUE, "could not stat '%s'", argv[4]);
+            error_exit(1, true, "could not stat '%s'", argv[4]);
     case 'd':                  /* delete module(s) */
         if (argc < 4)
-            error_exit(2, FALSE, "required parameter missing");
+            error_exit(2, false, "required parameter missing");
 
         libfp = fopen(argv[2], "rb");
         if (!libfp)
-            error_exit(1, TRUE, "could not open '%s'", argv[2]);
+            error_exit(1, true, "could not open '%s'", argv[2]);
 
         /* Copy the library into a temporary file */
         tmpfp = tmpfile();
         if (!tmpfp)
-            error_exit(1, TRUE, "could not open temporary file");
+            error_exit(1, true, "could not open temporary file");
 
         stat(argv[2], &finfo);
         copybytes(libfp, tmpfp, finfo.st_size);
@@ -410,7 +407,7 @@ int main(int argc, char **argv)
         /* Read library header and write it to a new file */
         if (fread(&hdr, 1, sizeof(hdr), tmpfp) != sizeof(hdr) ||
             hdr.magic != RDLAMAG)
-            error_exit(1, FALSE, "invalid library format");
+            error_exit(1, false, "invalid library format");
         put_header(&hdr, libfp, NULL);
 
         /* Walk through the library looking for requested module */
@@ -418,11 +415,11 @@ int main(int argc, char **argv)
             /* Read module header */
             if (fread(&hdr, 1, sizeof(hdr), tmpfp) != sizeof(hdr) ||
                 hdr.magic != RDLMMAG)
-                error_exit(1, FALSE, "invalid module header");
+                error_exit(1, false, "invalid module header");
             /* Read module name */
             i = hdr.hdrsize - sizeof(hdr);
             if (i > sizeof(buf) || fread(buf, 1, i, tmpfp) != i)
-                error_exit(1, FALSE, "invalid module name");
+                error_exit(1, false, "invalid module name");
             /* Check against desired name */
             if (!strcmp(buf, argv[3]) &&
                 (c == 'd' || !options.odate
@@ -449,7 +446,7 @@ int main(int argc, char **argv)
                 break;
 
             if (fputc(i, libfp) == EOF)
-                error_exit(1, FALSE, "write error");
+                error_exit(1, false, "write error");
         }
 
         fclose(libfp);
@@ -457,7 +454,7 @@ int main(int argc, char **argv)
         break;
 
     default:
-        error_exit(2, FALSE, "invalid command '%c'\n", c);
+        error_exit(2, false, "invalid command '%c'\n", c);
     }
 
     return 0;

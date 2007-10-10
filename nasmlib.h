@@ -128,13 +128,13 @@ char *nasm_strsep(char **stringp, const char *delim);
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
- * `*error' to TRUE if an error occurs, and FALSE otherwise.
+ * `*error' to true if an error occurs, and false otherwise.
  */
 int64_t readnum(char *str, int *error);
 
 /*
  * Convert a character constant into a number. Sets
- * `*warn' to TRUE if an overflow occurs, and FALSE otherwise.
+ * `*warn' to true if an overflow occurs, and false otherwise.
  * str points to and length covers the middle of the string,
  * without the quotes.
  */

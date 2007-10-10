@@ -60,7 +60,7 @@ static int ieee_uppercase;
 static efunc error;
 static ldfunc deflabel;
 static FILE *ofp;
-static int any_segs;
+static bool any_segs;
 static int arrindex;
 
 #define HUNKSIZE 1024           /* Size of the data hunk */
@@ -183,7 +183,7 @@ static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     ofp = fp;
     error = errfunc;
     deflabel = ldef;
-    any_segs = FALSE;
+    any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;
     exthead = NULL;
@@ -194,7 +194,7 @@ static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     seghead = ieee_seg_needs_update = NULL;
     segtail = &seghead;
     ieee_entry_seg = NO_SEG;
-    ieee_uppercase = FALSE;
+    ieee_uppercase = false;
     checksum = 0;
     of_ieee.current_dfmt->init(&of_ieee, NULL, fp, errfunc);
 }
@@ -391,7 +391,7 @@ static void ieee_out(int32_t segto, const void *data, uint32_t type,
     }
 
     /*
-     * If `any_segs' is still FALSE, we must define a default
+     * If `any_segs' is still false, we must define a default
      * segment.
      */
     if (!any_segs) {
@@ -718,7 +718,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         segtail = &seg->next;
         seg->index = seg_alloc();
         seg->ieee_index = ieee_idx;
-        any_segs = TRUE;
+        any_segs = true;
         seg->name = NULL;
         seg->currentpos = 0;
         seg->align = 1;         /* default */
@@ -750,9 +750,9 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
             else if (!nasm_stricmp(p, "common"))
                 seg->combine = CMB_COMMON;
             else if (!nasm_stricmp(p, "use16"))
-                seg->use32 = FALSE;
+                seg->use32 = false;
             else if (!nasm_stricmp(p, "use32"))
-                seg->use32 = TRUE;
+                seg->use32 = true;
             else if (!nasm_strnicmp(p, "align=", 6)) {
                 seg->align = readnum(p + 6, &rn_error);
                 if (seg->align == 0)
@@ -790,10 +790,10 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         ieee_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
             deflabel(name, NO_SEG, seg->align - SEG_ABS,
-                     NULL, FALSE, FALSE, &of_ieee, error);
+                     NULL, false, false, &of_ieee, error);
         else
             deflabel(name, seg->index + 1, 0L,
-                     NULL, FALSE, FALSE, &of_ieee, error);
+                     NULL, false, false, &of_ieee, error);
         ieee_seg_needs_update = NULL;
 
         if (seg->use32)
@@ -813,7 +813,7 @@ static int ieee_directive(char *directive, char *value, int pass)
     (void)value;
     (void)pass;
     if (!strcmp(directive, "uppercase")) {
-        ieee_uppercase = TRUE;
+        ieee_uppercase = true;
         return 1;
     }
     return 0;
@@ -901,7 +901,7 @@ static void ieee_write_file(int debuginfo)
      * the standard doesn't specify when to put checksums,
      * we'll just do it periodically.
      */
-    ieee_putcs(FALSE);
+    ieee_putcs(false);
 
     /* 
      * Write the section headers
@@ -953,7 +953,7 @@ static void ieee_write_file(int debuginfo)
                           ieee_entry_ofs);
     }
 
-    ieee_putcs(FALSE);
+    ieee_putcs(false);
     /*
      * Write the publics
      */
@@ -1010,7 +1010,7 @@ static void ieee_write_file(int debuginfo)
         ieee_putascii("NX%X,%02X%s.\r\n", i++, strlen(buf), buf);
         ext = ext->next;
     }
-    ieee_putcs(FALSE);
+    ieee_putcs(false);
 
     /*
      * IEEE doesn't have a standard pass break record
@@ -1084,7 +1084,7 @@ static void ieee_write_file(int debuginfo)
                 org = ieee_putld(org, org + size, data->data);
                 data = data->next;
             }
-            ieee_putcs(FALSE);
+            ieee_putcs(false);
 
         }
         seg = seg->next;
@@ -1266,7 +1266,7 @@ void dbgls_init(struct ofmt *of, void *id, FILE * fp, efunc error)
     arrhead = NULL;
     arrtail = &arrhead;
     ieee_segment("??LINE", 2, &tempint);
-    any_segs = FALSE;
+    any_segs = false;
 }
 static void dbgls_cleanup(void)
 {
@@ -1308,7 +1308,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
         return;
 
     /*
-     * If `any_segs' is still FALSE, we must define a default
+     * If `any_segs' is still false, we must define a default
      * segment.
      */
     if (!any_segs) {
@@ -1350,10 +1350,9 @@ static void dbgls_deflabel(char *name, int32_t segment,
                            int32_t offset, int is_global, char *special)
 {
     struct ieeeSection *seg;
-    int used_special;           /* have we used the special text? */
 
-    /* Keep compiler from warning about special and used_special */
-    used_special = special ? FALSE : FALSE;
+    /* Keep compiler from warning about special */
+    (void)special;
 
     /*
      * If it's a special-retry from pass two, discard it.
@@ -1382,7 +1381,7 @@ static void dbgls_deflabel(char *name, int32_t segment,
     }
 
     /*
-     * If `any_segs' is still FALSE, we might need to define a
+     * If `any_segs' is still false, we might need to define a
      * default segment, if they're trying to declare a label in
      * `first_seg'.  But the label should exist due to a prior
      * call to ieee_deflabel so we can skip that.

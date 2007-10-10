@@ -159,7 +159,7 @@ static int32_t elf_foffs;
 static void elf_write(void);
 static void elf_sect_write(struct Section *, const uint8_t *,
                            uint32_t);
-static void elf_section_header(int, int, int, void *, int, int32_t, int, int,
+static void elf_section_header(int, int, int, void *, bool, int32_t, int, int,
                                int, int);
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
@@ -254,19 +254,19 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     fwds = NULL;
 
     elf_gotpc_sect = seg_alloc();
-    ldef("..gotpc", elf_gotpc_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
+    ldef("..gotpc", elf_gotpc_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
     elf_gotoff_sect = seg_alloc();
-    ldef("..gotoff", elf_gotoff_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
+    ldef("..gotoff", elf_gotoff_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
     elf_got_sect = seg_alloc();
-    ldef("..got", elf_got_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
+    ldef("..got", elf_got_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
     elf_plt_sect = seg_alloc();
-    ldef("..plt", elf_plt_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
+    ldef("..plt", elf_plt_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
     elf_sym_sect = seg_alloc();
-    ldef("..sym", elf_sym_sect + 1, 0L, NULL, FALSE, FALSE, &of_elf64,
+    ldef("..sym", elf_sym_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
 
     def_seg = seg_alloc();
@@ -453,7 +453,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
 {
     int pos = strslen;
     struct Symbol *sym;
-    int special_used = FALSE;
+    bool special_used = false;
 
 #if defined(DEBUG) && DEBUG>2
     fprintf(stderr,
@@ -559,7 +559,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
                 error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " power of two", special);
         }
-        special_used = TRUE;
+        special_used = true;
     } else
         sym->value = (sym->section == SHN_UNDEF ? 0 : offset);
 
@@ -624,7 +624,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
                 if (*special) {
                     struct tokenval tokval;
                     expr *e;
-                    int fwd = FALSE;
+		    int fwd = 0;
                     char *saveme = stdscan_bufptr;      /* bugfix? fbk 8/10/00 */
 
                     while (special[n] && isspace(special[n]))
@@ -651,7 +651,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
                     }
                     stdscan_bufptr = saveme;    /* bugfix? fbk 8/10/00 */
                 }
-                special_used = TRUE;
+                special_used = true;
             }
         }
         sym->globnum = nglobs;
@@ -712,7 +712,7 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
  */
 static int32_t elf_add_gsym_reloc(struct Section *sect,
                                int32_t segment, int64_t offset,
-                               int type, int exact)
+                               int type, bool exact)
 {
     struct Reloc *r;
     struct Section *s;
@@ -886,21 +886,21 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                     elf_add_reloc(s, segment, R_X86_64_GOTTPOFF);
                 } else if (wrt == elf_got_sect + 1) {
                     addr = elf_add_gsym_reloc(s, segment, addr,
-                                              R_X86_64_GOT32, TRUE);
+                                              R_X86_64_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
 		    switch (realbytes) {
 		    case 2:
                         gnu16 = 1;
                         addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_X86_64_16, FALSE);
+                                                  R_X86_64_16, false);
 			break;
 		    case 4:
                         addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_X86_64_32, FALSE);
+                                                  R_X86_64_32, false);
 			break;
 		    case 8:
 			addr = elf_add_gsym_reloc(s, segment, addr,
-						  R_X86_64_64, FALSE);
+						  R_X86_64_64, false);
 			break;
 		    default:
 			error(ERR_PANIC, "internal error elf64-hpa-903");
@@ -1061,31 +1061,31 @@ static void elf_write(void)
     elf_nsect = 0;
     elf_sects = nasm_malloc(sizeof(*elf_sects) * (2 * nsects + 10));
 
-    elf_section_header(0, 0, 0, NULL, FALSE, 0L, 0, 0, 0, 0);   /* SHN_UNDEF */
+    elf_section_header(0, 0, 0, NULL, false, 0L, 0, 0, 0, 0);   /* SHN_UNDEF */
     scount = 1;                 /* needed for the stabs debugging to track the symtable section */
     p = shstrtab + 1;
     for (i = 0; i < nsects; i++) {
         elf_section_header(p - shstrtab, sects[i]->type, sects[i]->flags,
                            (sects[i]->type == SHT_PROGBITS ?
-                            sects[i]->data : NULL), TRUE,
+                            sects[i]->data : NULL), true,
                            sects[i]->len, 0, 0, sects[i]->align, 0);
         p += strlen(p) + 1;
         scount++;               /* dito */
     }
-    elf_section_header(p - shstrtab, 1, 0, comment, FALSE, (int32_t)commlen, 0, 0, 1, 0);  /* .comment */
+    elf_section_header(p - shstrtab, 1, 0, comment, false, (int32_t)commlen, 0, 0, 1, 0);  /* .comment */
     scount++;                   /* dito */
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 3, 0, shstrtab, FALSE, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
+    elf_section_header(p - shstrtab, 3, 0, shstrtab, false, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
     scount++;                   /* dito */
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 2, 0, symtab, TRUE, symtablen, nsects + 4, symtablocal, 4, 24);    /* .symtab */
+    elf_section_header(p - shstrtab, 2, 0, symtab, true, symtablen, nsects + 4, symtablocal, 4, 24);    /* .symtab */
     symtabsection = scount;     /* now we got the symtab section index in the ELF file */
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 3, 0, strs, TRUE, strslen, 0, 0, 1, 0);    /* .strtab */
+    elf_section_header(p - shstrtab, 3, 0, strs, true, strslen, 0, 0, 1, 0);    /* .strtab */
     for (i = 0; i < nsects; i++)
         if (sects[i]->head) {
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab,SHT_RELA, 0, sects[i]->rel, TRUE,
+            elf_section_header(p - shstrtab,SHT_RELA, 0, sects[i]->rel, true,
                                sects[i]->rellen, nsects + 3, i + 1, 4, 24);
         }
     if (of_elf64.current_dfmt == &df_stabs) {
@@ -1097,16 +1097,16 @@ static void elf_write(void)
 
         if ((stabbuf) && (stabstrbuf) && (stabrelbuf)) {
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab, 1, 0, stabbuf, 0, stablen,
+            elf_section_header(p - shstrtab, 1, 0, stabbuf, false, stablen,
                                nsections - 2, 0, 4, 12);
 
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab, 3, 0, stabstrbuf, 0,
+            elf_section_header(p - shstrtab, 3, 0, stabstrbuf, false,
                                stabstrlen, 0, 0, 4, 0);
 
             p += strlen(p) + 1;
             /* link -> symtable  info -> section to refer to */
-            elf_section_header(p - shstrtab, 9, 0, stabrelbuf, 0,
+            elf_section_header(p - shstrtab, 9, 0, stabrelbuf, false,
                                stabrellen, symtabsection, nsections - 3, 4,
                                16);
         }
@@ -1238,7 +1238,7 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
 }
 
 static void elf_section_header(int name, int type, int flags,
-                               void *data, int is_saa, int32_t datalen,
+                               void *data, bool is_saa, int32_t datalen,
                                int link, int info, int align, int eltsize)
 {
     elf_sects[elf_nsect].data = data;

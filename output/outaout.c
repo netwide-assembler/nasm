@@ -153,7 +153,7 @@ static void aoutg_init(FILE * fp, efunc errfunc, ldfunc ldef,
 
 static void aout_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
-    bsd = FALSE;
+    bsd = false;
     aoutg_init(fp, errfunc, ldef, eval);
 
     aout_gotpc_sect = aout_gotoff_sect = aout_got_sect =
@@ -169,25 +169,25 @@ extern struct ofmt of_aoutb;
 static void aoutb_init(FILE * fp, efunc errfunc, ldfunc ldef,
                        evalfunc eval)
 {
-    bsd = TRUE;
+    bsd = true;
     aoutg_init(fp, errfunc, ldef, eval);
 
     is_pic = 0x00;              /* may become 0x40 */
 
     aout_gotpc_sect = seg_alloc();
-    ldef("..gotpc", aout_gotpc_sect + 1, 0L, NULL, FALSE, FALSE, &of_aoutb,
+    ldef("..gotpc", aout_gotpc_sect + 1, 0L, NULL, false, false, &of_aoutb,
          error);
     aout_gotoff_sect = seg_alloc();
-    ldef("..gotoff", aout_gotoff_sect + 1, 0L, NULL, FALSE, FALSE,
+    ldef("..gotoff", aout_gotoff_sect + 1, 0L, NULL, false, false,
          &of_aoutb, error);
     aout_got_sect = seg_alloc();
-    ldef("..got", aout_got_sect + 1, 0L, NULL, FALSE, FALSE, &of_aoutb,
+    ldef("..got", aout_got_sect + 1, 0L, NULL, false, false, &of_aoutb,
          error);
     aout_plt_sect = seg_alloc();
-    ldef("..plt", aout_plt_sect + 1, 0L, NULL, FALSE, FALSE, &of_aoutb,
+    ldef("..plt", aout_plt_sect + 1, 0L, NULL, false, false, &of_aoutb,
          error);
     aout_sym_sect = seg_alloc();
-    ldef("..sym", aout_sym_sect + 1, 0L, NULL, FALSE, FALSE, &of_aoutb,
+    ldef("..sym", aout_sym_sect + 1, 0L, NULL, false, false, &of_aoutb,
          error);
 }
 
@@ -250,7 +250,7 @@ static void aout_deflabel(char *name, int32_t segment, int32_t offset,
 {
     int pos = strslen + 4;
     struct Symbol *sym;
-    int special_used = FALSE;
+    int special_used = false;
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         /*
@@ -361,7 +361,7 @@ static void aout_deflabel(char *name, int32_t segment, int32_t offset,
             if (special[n]) {
                 struct tokenval tokval;
                 expr *e;
-                int fwd = FALSE;
+                int fwd = false;
                 char *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
 
                 if (!bsd) {
@@ -394,7 +394,7 @@ static void aout_deflabel(char *name, int32_t segment, int32_t offset,
                 }
                 stdscan_bufptr = saveme;        /* bugfix? fbk 8/10/00 */
             }
-            special_used = TRUE;
+            special_used = true;
         }
     }
 
@@ -649,11 +649,11 @@ static void aout_out(int32_t segto, const void *data, uint32_t type,
                     is_pic = 0x40;
                     addr =
                         aout_add_gsym_reloc(s, segment, addr, RELTYPE_GOT,
-                                            realbytes, TRUE);
+                                            realbytes, true);
                 } else if (wrt == aout_sym_sect + 1) {
                     addr = aout_add_gsym_reloc(s, segment, addr,
                                                RELTYPE_ABSOLUTE, realbytes,
-                                               FALSE);
+                                               false);
                 } else if (wrt == aout_plt_sect + 1) {
                     is_pic = 0x40;
                     error(ERR_NONFATAL,

@@ -416,7 +416,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    size_prob = FALSE;
+    size_prob = false;
     
     for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){ 
         int m = matches(temp, instruction, bits);
@@ -1827,7 +1827,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 static ea *process_ea(operand * input, ea * output, int addrbits,
                       int rfield, int32_t rflags, int forw_ref)
 {
-    output->rip = FALSE;
+    output->rip = false;
 
     /* REX flags for the rfield operand */
     output->rex |= rexflags(rfield, rflags, REX_R|REX_P|REX_W|REX_H);
@@ -1847,7 +1847,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 	
 	output->rex |= op_rexflags(input, REX_B|REX_P|REX_W|REX_H);
 
-        output->sib_present = FALSE;             /* no SIB necessary */
+        output->sib_present = false;             /* no SIB necessary */
         output->bytes = 0;  /* no offset necessary either */
         output->modrm = 0xC0 | ((rfield & 7) << 3) | (i & 7);
     } else {                    /* it's a memory reference */
@@ -1859,16 +1859,16 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 
             if (globalbits == 64 && (~input->type & IP_REL)) {
               int scale, index, base;
-              output->sib_present = TRUE;
+              output->sib_present = true;
               scale = 0;
               index = 4;
               base = 5;
               output->sib = (scale << 6) | (index << 3) | base;
               output->bytes = 4;
               output->modrm = 4 | ((rfield & 7) << 3);
-	      output->rip = FALSE;
+	      output->rip = false;
             } else {
-              output->sib_present = FALSE;
+              output->sib_present = false;
               output->bytes = (addrbits != 16 ? 4 : 2);
               output->modrm = (addrbits != 16 ? 5 : 6) | ((rfield & 7) << 3);
 	      output->rip = globalbits == 64;
@@ -1984,7 +1984,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                             mod = 2;
                     }
 
-                    output->sib_present = FALSE;
+                    output->sib_present = false;
                     output->bytes = (bt == -1 || mod == 2 ? 4 : mod);
                     output->modrm = (mod << 6) | ((rfield & 7) << 3) | rm;
                 } else {
@@ -2032,7 +2032,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                             mod = 2;
                     }
 
-                    output->sib_present = TRUE;
+                    output->sib_present = true;
                     output->bytes =  (bt == -1 || mod == 2 ? 4 : mod);
                     output->modrm = (mod << 6) | ((rfield & 7) << 3) | 4;
                     output->sib = (scale << 6) | (index << 3) | base;
@@ -2119,7 +2119,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 else
                     mod = 2;
 
-                output->sib_present = FALSE;    /* no SIB - it's 16-bit */
+                output->sib_present = false;    /* no SIB - it's 16-bit */
                 output->bytes = mod;    /* bytes of offset needed */
                 output->modrm = (mod << 6) | ((rfield & 7) << 3) | rm;
             }
