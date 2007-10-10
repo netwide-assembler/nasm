@@ -14,6 +14,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -405,35 +406,48 @@ static int process_arg(char *p, char *q)
                     ofmt->current_dfmt = ofmt->debug_formats[0];
             } else if (p[1] == 'O') {   /* Optimization level */
                 int opt;
-                opt = -99;
-                while (*param) {
-                    if (isdigit(*param)) {
-                        opt = atoi(param);
-                        while (isdigit(*++param)) ;
-                        if (opt <= 0)
-                            optimizing = -1;    /* 0.98 behaviour */
-                        else if (opt == 1)
-                            optimizing = 0;     /* Two passes, 0.98.09 behavior */
-                        else if (opt <= 5)
-			    /* The optimizer seems to have problems with
-			       < 5 passes?  Hidden bug? */
-			    optimizing = 5;	/* 5 passes */
-			else
-                            optimizing = opt;   /* More than 5 passes */
-                    } else {
-                        if (*param == 'v' || *param == '+') {
-                            ++param;
-                            opt_verbose_info = TRUE;
-                            opt = 0;
-                        } else {        /* garbage */
-                            opt = -99;
-                            break;
-                        }
-                    }
-                }               /* while (*param) */
-                if (opt == -99)
-                    report_error(ERR_FATAL,
-                                 "command line optimization level must be 'v', 0..3 or <nn>");
+		
+		if (!*param) {
+		    /* Naked -O == -Ox */
+		    optimizing = INT_MAX >> 1; /* Almost unlimited */
+		} else {
+		    while (*param) {
+			switch (*param) {
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+			    opt = strtoul(param, &param, 10);
+
+			    /* -O0 -> optimizing == -1, 0.98 behaviour */
+			    /* -O1 -> optimizing == 0, 0.98.09 behaviour */
+			    if (opt < 2)
+				optimizing = opt - 1;
+			    else if (opt <= 5)
+				/* The optimizer seems to have problems with
+				   < 5 passes?  Hidden bug? */
+				optimizing = 5;	/* 5 passes */
+			    else
+				optimizing = opt;   /* More than 5 passes */
+			    break;
+			    
+			case 'v':
+			case '+':
+			    param++;
+			    opt_verbose_info = TRUE;
+			    break;
+			    
+			case 'x':
+			    param++;
+			    optimizing = INT_MAX >> 1; /* Almost unlimited */
+			    break;
+			    
+			default:
+			    report_error(ERR_FATAL,
+					 "unknown optimization option -O%c\n",
+					 *param);
+			    break;
+			}
+		    }
+		}
             } else if (p[1] == 'P' || p[1] == 'p') {    /* pre-include */
                 pp_pre_include(param);
             } else if (p[1] == 'D' || p[1] == 'd') {    /* pre-define */

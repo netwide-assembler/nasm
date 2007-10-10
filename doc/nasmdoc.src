@@ -761,6 +761,9 @@ The syntax is:
         The number specifies the maximum number of passes.  The more
 	passes, the better the code, but the slower is the assembly.
 
+\b \c{-Ox} where \c{x} is the actual letter \c{x}, indicates to NASM
+   	to do unlimited passes.
+
 Note that this is a capital O, and is different from a small o, which
 is used to specify the output format. See \k{opt-o}.
 
