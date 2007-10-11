@@ -24,6 +24,13 @@
 # include "config.h"
 #endif
 
+/* This is required to get the standard <inttypes.h> macros when compiling
+   with a C++ compiler.  This must be defined *before* <inttypes.h> is
+   included, directly or indirectly. */
+#define __STDC_CONSTANT_MACROS	1
+#define __STDC_LIMIT_MACROS	1
+#define __STDC_FORMAT_MACROS	1
+
 #ifdef __GNUC__
 # if __GNUC__ >= 4
 #  define HAVE_GNUC_4
