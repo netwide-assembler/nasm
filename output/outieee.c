@@ -669,7 +669,8 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         return seghead->index;
     } else {
         struct ieeeSection *seg;
-        int ieee_idx, attrs, rn_error;
+        int ieee_idx, attrs;
+	bool rn_error;
         char *p;
 
         /*

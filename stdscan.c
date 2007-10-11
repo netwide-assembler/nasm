@@ -146,7 +146,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         return tv->t_type = TOKEN_NUM;
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {     /* a char constant */
         char quote = *stdscan_bufptr++, *r;
-        int rn_warn;
+        bool rn_warn;
         r = tv->t_charptr = stdscan_bufptr;
         while (*stdscan_bufptr && *stdscan_bufptr != quote)
             stdscan_bufptr++;
