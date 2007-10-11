@@ -76,7 +76,7 @@ struct SMacro {
     SMacro *next;
     char *name;
     bool casesense;
-    int in_progress;
+    bool in_progress;
     unsigned int nparam;
     Token *expansion;
 };
