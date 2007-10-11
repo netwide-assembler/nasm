@@ -1,4 +1,3 @@
-/* -*- mode: c; c-file-style: "bsd" -*- */
 /* preproc.c   macro preprocessor for the Netwide Assembler
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
@@ -1254,9 +1253,9 @@ hash_findix(struct hash_table *hash, const char *str)
  * with %$ the context will be automatically computed. If all_contexts
  * is true, macro will be searched in outer contexts as well.
  */
-static int
+static bool
 smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
-               int nocase)
+               bool nocase)
 {
     SMacro *m;
 
@@ -1379,7 +1378,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                       "`%s' expects macro identifiers", pp_directives[ct]);
 		goto fail;
             }
-            if (smacro_defined(NULL, tline->text, 0, NULL, 1))
+            if (smacro_defined(NULL, tline->text, 0, NULL, true))
                 j = true;
             tline = tline->next;
         }
@@ -1448,7 +1447,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		goto fail;
             }
             searching.name = nasm_strdup(tline->text);
-            searching.casesense = (i == PP_MACRO);
+            searching.casesense = true;
             searching.plus = false;
             searching.nolist = false;
             searching.in_progress = 0;
@@ -1595,6 +1594,7 @@ static int do_directive(Token * tline)
     bool err;
     int nparam;
     bool nolist;
+    bool casesense;
     int k, m;
     int offset;
     char *p, *mname;
@@ -2288,16 +2288,16 @@ static int do_directive(Token * tline)
     case PP_IXDEFINE:
     case PP_DEFINE:
     case PP_IDEFINE:
+	casesense = (i == PP_DEFINE || i == PP_IXDEFINE);
+
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
-                  "`%%%s%sdefine' expects a macro identifier",
-                  ((i == PP_IDEFINE || i == PP_IXDEFINE) ? "i" : ""),
-                  ((i == PP_XDEFINE || i == PP_IXDEFINE) ? "x" : ""));
+            error(ERR_NONFATAL, "`%s' expects a macro identifier",
+		  pp_directives[i]);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
@@ -2376,7 +2376,7 @@ static int do_directive(Token * tline)
          * carefully re-terminated after chopping off the expansion
          * from the end).
          */
-        if (smacro_defined(ctx, mname, nparam, &smac, i == PP_DEFINE)) {
+        if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
             if (!smac) {
                 error(ERR_WARNING,
                       "single-line macro `%s' defined both with and"
@@ -2404,7 +2404,7 @@ static int do_directive(Token * tline)
             *smhead = smac;
         }
         smac->name = nasm_strdup(mname);
-        smac->casesense = ((i == PP_DEFINE) || (i == PP_XDEFINE));
+        smac->casesense = casesense;
         smac->nparam = nparam;
         smac->expansion = macro_start;
         smac->in_progress = false;
@@ -2460,6 +2460,8 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_STRLEN:
+	casesense = true;
+	
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
@@ -2500,7 +2502,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, i == PP_STRLEN)) {
+        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
             if (!smac)
                 error(ERR_WARNING,
                       "single-line macro `%s' defined both with and"
@@ -2525,7 +2527,7 @@ static int do_directive(Token * tline)
             *smhead = smac;
         }
         smac->name = nasm_strdup(mname);
-        smac->casesense = (i == PP_STRLEN);
+        smac->casesense = casesense;
         smac->nparam = 0;
         smac->expansion = macro_start;
         smac->in_progress = false;
@@ -2534,6 +2536,8 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_SUBSTR:
+	casesense = true;
+
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
@@ -2599,7 +2603,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, i == PP_SUBSTR)) {
+        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
             if (!smac)
                 error(ERR_WARNING,
                       "single-line macro `%s' defined both with and"
@@ -2624,7 +2628,7 @@ static int do_directive(Token * tline)
             *smhead = smac;
         }
         smac->name = nasm_strdup(mname);
-        smac->casesense = (i == PP_SUBSTR);
+        smac->casesense = casesense;
         smac->nparam = 0;
         smac->expansion = macro_start;
         smac->in_progress = false;
@@ -2634,6 +2638,8 @@ static int do_directive(Token * tline)
 
     case PP_ASSIGN:
     case PP_IASSIGN:
+	casesense = (i == PP_ASSIGN);
+
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
@@ -2686,7 +2692,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, i == PP_ASSIGN)) {
+        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
             if (!smac)
                 error(ERR_WARNING,
                       "single-line macro `%s' defined both with and"
@@ -2711,7 +2717,7 @@ static int do_directive(Token * tline)
             *smhead = smac;
         }
         smac->name = nasm_strdup(mname);
-        smac->casesense = (i == PP_ASSIGN);
+        smac->casesense = casesense;
         smac->nparam = 0;
         smac->expansion = macro_start;
         smac->in_progress = false;
