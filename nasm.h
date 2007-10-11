@@ -60,7 +60,7 @@ struct ofmt;
 /*
  * A label-lookup function should look like this.
  */
-typedef int (*lfunc) (char *label, int32_t *segment, int32_t *offset);
+typedef bool (*lfunc) (char *label, int32_t *segment, int32_t *offset);
 
 /*
  * And a label-definition function like this. The boolean parameter
@@ -69,7 +69,7 @@ typedef int (*lfunc) (char *label, int32_t *segment, int32_t *offset);
  * an EQU or a segment-base symbol, which shouldn't.
  */
 typedef void (*ldfunc) (char *label, int32_t segment, int32_t offset,
-                        char *special, int is_norm, int isextrn,
+                        char *special, bool is_norm, bool isextrn,
                         struct ofmt * ofmt, efunc error);
 
 /*
@@ -721,8 +721,8 @@ struct ofmt {
      * been an EXTERN, a COMMON or a GLOBAL. The distinction should
      * be obvious to the output format from the other parameters.
      */
-    void (*symdef) (char *name, int32_t segment, int32_t offset, int is_global,
-                    char *special);
+    void (*symdef) (char *name, int32_t segment, int32_t offset,
+		    int is_global, char *special);
 
     /*
      * This procedure is called when the source code requests a

@@ -75,9 +75,9 @@ typedef struct IncPath IncPath;
 struct SMacro {
     SMacro *next;
     char *name;
-    int casesense;
-    unsigned int nparam;
+    bool casesense;
     int in_progress;
+    unsigned int nparam;
     Token *expansion;
 };
 
@@ -1025,7 +1025,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     }
 
     if (tline->type == TOK_NUMBER) {
-        int rn_error;
+        bool rn_error;
 
         tokval->t_integer = readnum(tline->text, &rn_error);
         if (rn_error)
@@ -1091,7 +1091,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
  * simple wrapper which calls either strcmp or nasm_stricmp
  * depending on the value of the `casesense' parameter.
  */
-static int mstrcmp(char *p, char *q, int casesense)
+static int mstrcmp(char *p, char *q, bool casesense)
 {
     return casesense ? strcmp(p, q) : nasm_stricmp(p, q);
 }
@@ -1340,10 +1340,10 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
  *
  * We must free the tline we get passed.
  */
-static int if_condition(Token * tline, enum preproc_token ct)
+static bool if_condition(Token * tline, enum preproc_token ct)
 {
     enum pp_conditional i = PP_COND(ct);
-    int j;
+    bool j;
     Token *t, *tt, **tptr, *origline;
     struct tokenval tokval;
     expr *evalresult;
@@ -1592,7 +1592,9 @@ static int do_directive(Token * tline)
 {
     enum preproc_token i;
     int j;
-    int nparam, nolist;
+    bool err;
+    int nparam;
+    bool nolist;
     int k, m;
     int offset;
     char *p, *mname;
@@ -2060,8 +2062,8 @@ static int do_directive(Token * tline)
             defining->nparam_min = defining->nparam_max = 0;
         } else {
             defining->nparam_min = defining->nparam_max =
-                readnum(tline->text, &j);
-            if (j)
+                readnum(tline->text, &err);
+            if (err)
                 error(ERR_NONFATAL,
                       "unable to parse parameter count `%s'", tline->text);
         }
@@ -2074,8 +2076,8 @@ static int do_directive(Token * tline)
                       "`%%%smacro' expects a parameter count after `-'",
                       (i == PP_IMACRO ? "i" : ""));
             else {
-                defining->nparam_max = readnum(tline->text, &j);
-                if (j)
+                defining->nparam_max = readnum(tline->text, &err);
+                if (err)
                     error(ERR_NONFATAL,
                           "unable to parse parameter count `%s'",
                           tline->text);
@@ -2221,7 +2223,7 @@ static int do_directive(Token * tline)
         tmp_defining = defining;
         defining = nasm_malloc(sizeof(MMacro));
         defining->name = NULL;  /* flags this macro as a %rep block */
-        defining->casesense = 0;
+        defining->casesense = false;
         defining->plus = false;
         defining->nolist = nolist;
         defining->in_progress = i;
@@ -2726,7 +2728,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        k = readnum(tline->text, &j);
+        k = readnum(tline->text, &err);
         m = 1;
         tline = tline->next;
         if (tok_is_(tline, "+")) {
@@ -2736,7 +2738,7 @@ static int do_directive(Token * tline)
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
-            m = readnum(tline->text, &j);
+            m = readnum(tline->text, &err);
             tline = tline->next;
         }
         skip_white_(tline);

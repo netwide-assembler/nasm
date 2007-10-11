@@ -139,7 +139,7 @@ static const char align_str[SEG_ALIGN] = "";    /* ANSI will pad this with 0s */
 static struct ELF_SECTDATA {
     void *data;
     int32_t len;
-    int is_saa;
+    bool is_saa;
 } *elf_sects;
 static int elf_nsect;
 static int32_t elf_foffs;
@@ -537,7 +537,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
          * as the alignment for the common variable.
          */
         if (special) {
-            int err;
+            bool err;
             sym->value = readnum(special, &err);
             if (err)
                 error(ERR_NONFATAL, "alignment constraint `%s' is not a"
@@ -833,7 +833,7 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, realbytes);
     } else if (type == OUT_ADDRESS) {
-        int gnu16 = 0;
+        bool gnu16 = false;
         addr = *(int32_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -842,7 +842,7 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
             } else {
                 if (wrt == NO_SEG) {
                     if (realbytes == 2) {
-                        gnu16 = 1;
+                        gnu16 = true;
                         elf_add_reloc(s, segment, R_386_16);
                     } else {
                         elf_add_reloc(s, segment, R_386_32);
@@ -862,7 +862,7 @@ static void elf_out(int32_t segto, const void *data, uint32_t type,
                                               R_386_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
                     if (realbytes == 2) {
-                        gnu16 = 1;
+                        gnu16 = true;
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_386_16, false);
                     } else {

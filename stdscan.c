@@ -115,7 +115,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         }
         return tv->t_type = TOKEN_HERE;
     } else if (isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
-        int rn_error;
+        bool rn_error;
 
         r = stdscan_bufptr++;
         while (isnumchar(*stdscan_bufptr))

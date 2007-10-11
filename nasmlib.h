@@ -130,7 +130,7 @@ char *nasm_strsep(char **stringp, const char *delim);
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to true if an error occurs, and false otherwise.
  */
-int64_t readnum(char *str, int *error);
+int64_t readnum(char *str, bool *error);
 
 /*
  * Convert a character constant into a number. Sets
@@ -138,7 +138,7 @@ int64_t readnum(char *str, int *error);
  * str points to and length covers the middle of the string,
  * without the quotes.
  */
-int64_t readstrnum(char *str, int length, int *warn);
+int64_t readstrnum(char *str, int length, bool *warn);
 
 /*
  * seg_init: Initialise the segment-number allocator.

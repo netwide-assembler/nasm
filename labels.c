@@ -75,7 +75,7 @@ struct permts {                 /* permanent text storage */
     char data[PERMTS_SIZE];     /* ... the data block itself */
 };
 
-extern int global_offset_changed;       /* defined in nasm.c */
+extern bool global_offset_changed;       /* defined in nasm.c */
 
 static struct hash_table *ltab;		/* labels hash table */
 static union label *ldata;		/* all label data blocks */
@@ -88,7 +88,7 @@ static char *perm_copy(const char *string);
 
 static char *prevlabel;
 
-static int initialized = false;
+static bool initialized = false;
 
 char lprefix[PREFIX_MAX] = { 0 };
 char lpostfix[PREFIX_MAX] = { 0 };
@@ -146,38 +146,35 @@ static union label *find_label(char *label, int create)
     return lfree++;
 }
 
-int lookup_label(char *label, int32_t *segment, int32_t *offset)
+bool lookup_label(char *label, int32_t *segment, int32_t *offset)
 {
     union label *lptr;
 
     if (!initialized)
-        return 0;
+        return false;
 
     lptr = find_label(label, 0);
     if (lptr && (lptr->defn.is_global & DEFINED_BIT)) {
         *segment = lptr->defn.segment;
         *offset = lptr->defn.offset;
-        return 1;
+        return true;
     } else
-        return 0;
+        return false;
 }
 
-int is_extern(char *label)
+bool is_extern(char *label)
 {
     union label *lptr;
 
     if (!initialized)
-        return 0;
+        return false;
 
     lptr = find_label(label, 0);
-    if (lptr && (lptr->defn.is_global & EXTERN_BIT))
-        return 1;
-    else
-        return 0;
+    return (lptr && (lptr->defn.is_global & EXTERN_BIT));
 }
 
 void redefine_label(char *label, int32_t segment, int32_t offset, char *special,
-                    int is_norm, int isextrn, struct ofmt *ofmt,
+                    bool is_norm, bool isextrn, struct ofmt *ofmt,
                     efunc error)
 {
     union label *lptr;
@@ -250,7 +247,7 @@ void redefine_label(char *label, int32_t segment, int32_t offset, char *special,
 }
 
 void define_label(char *label, int32_t segment, int32_t offset, char *special,
-                  int is_norm, int isextrn, struct ofmt *ofmt, efunc error)
+                  bool is_norm, bool isextrn, struct ofmt *ofmt, efunc error)
 {
     union label *lptr;
     int exi;

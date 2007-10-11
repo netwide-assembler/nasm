@@ -37,7 +37,6 @@ static int get_bits(char *value);
 static uint32_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
 static void assemble_file(char *);
-static int getkw(char **directive, char **value);
 static void register_output_formats(void);
 static void report_error_gnu(int severity, const char *fmt, ...);
 static void report_error_vc(int severity, const char *fmt, ...);
@@ -68,7 +67,7 @@ int optimizing = -1;            /* number of optimization passes to take */
 static int sb, cmd_sb = 16;     /* by default */
 static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
 static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
-int global_offset_changed;      /* referenced in labels.c */
+bool global_offset_changed;      /* referenced in labels.c */
 
 static struct location location;
 int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
@@ -817,7 +816,7 @@ static void parse_cmdline(int argc, char **argv)
 }
 
 /* List of directives */
-enum {
+enum directives {
     D_NONE, D_ABSOLUTE, D_BITS, D_COMMON, D_CPU, D_DEBUG, D_DEFAULT,
     D_EXTERN, D_GLOBAL, D_LIST, D_SECTION, D_SEGMENT, D_WARNING
 };
@@ -825,12 +824,14 @@ static const char *directives[] = {
     "", "absolute", "bits", "common", "cpu", "debug", "default",
     "extern", "global", "list", "section", "segment", "warning"
 };
+static enum directives getkw(char **directive, char **value);
 
 static void assemble_file(char *fname)
 {
     char *directive, *value, *p, *q, *special, *line, debugid[80];
     insn output_ins;
-    int i, rn_error, validid;
+    int i, validid;
+    bool rn_error;
     int32_t seg, offs;
     struct tokenval tokval;
     expr *e;
@@ -876,16 +877,17 @@ static void assemble_file(char *fname)
         location.offset = offs = GET_CURR_OFFS;
 
         while ((line = preproc->getline())) {
+	    enum directives d;
             globallineno++;
 
             /* here we parse our directives; this is not handled by the 'real'
              * parser. */
             directive = line;
-	    i = getkw(&directive, &value);
-            if (i) {
+	    d = getkw(&directive, &value);
+            if (d) {
 		int err = 0;
 
-                switch (i) {
+                switch (d) {
                 case D_SEGMENT:		/* [SEGMENT n] */
 		case D_SECTION:
                     seg = ofmt->section(value, pass2, &sb);
@@ -1419,7 +1421,7 @@ static void assemble_file(char *fname)
 #endif
 }                               /* exit from assemble_file (...) */
 
-static int getkw(char **directive, char **value)
+static enum directives getkw(char **directive, char **value)
 {
     char *p, *q, *buf;
 

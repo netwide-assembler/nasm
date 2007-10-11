@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     int bits = 16, b;
     bool eof = false;
     uint32_t prefer = 0;
-    int rn_error;
+    bool rn_error;
     int32_t offset;
     FILE *fp;
 

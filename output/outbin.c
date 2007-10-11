@@ -124,7 +124,6 @@ static struct Reloc {
 } *relocs, **reloctail;
 
 extern char *stdscan_bufptr;
-extern int lookup_label(char *label, int32_t *segment, int32_t *offset);
 
 static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
 static int32_t current_section;    /* only really needed if format_mode = 0 */

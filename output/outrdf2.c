@@ -137,6 +137,7 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 static int32_t rdf2_section_names(char *name, int pass, int *bits)
 {
     int i;
+    bool err;
     char *p, *q;
     int code = -1;
     int reserved = 0;
@@ -167,8 +168,8 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
         if ((q = strchr(p, ','))) {
             *q++ = '\0';
 
-            reserved = readnum(q, &i);
-            if (i) {
+            reserved = readnum(q, &err);
+            if (err) {
                 error(ERR_NONFATAL,
                       "value following comma must be numeric");
                 reserved = 0;
@@ -184,8 +185,8 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
                 break;
             }
         if (code == -1) {       /* didn't find anything */
-            code = readnum(p, &i);
-            if (i) {
+            code = readnum(p, &err);
+            if (err) {
                 error(ERR_NONFATAL, "unrecognised RDF segment type (%s)",
                       p);
                 code = 3;
@@ -387,7 +388,7 @@ static void rdf2_deflabel(char *name, int32_t segment, int32_t offset,
          * of two; if so, store it as the alignment for the common variable.
          */
         if (special) {
-            int err;
+            bool err;
             ci.align = readnum(special, &err);
             if (err)
                 error(ERR_NONFATAL, "alignment constraint `%s' is not a"

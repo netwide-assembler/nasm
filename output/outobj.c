@@ -1279,7 +1279,8 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         struct Segment *seg;
         struct Group *grp;
         struct External **extp;
-        int obj_idx, i, attrs, rn_error;
+        int obj_idx, i, attrs;
+	bool rn_error;
         char *p;
 
         /*
@@ -1655,7 +1656,7 @@ static int obj_directive(char *directive, char *value, int pass)
                   " and library name");
         else {
             struct ImpDef *imp;
-            int err = false;
+            bool err = false;
 
             imp = *imptail = nasm_malloc(sizeof(struct ImpDef));
             imptail = &imp->next;
@@ -1719,7 +1720,7 @@ static int obj_directive(char *directive, char *value, int pass)
             else if (!nasm_stricmp(v, "nodata"))
                 flags |= EXPDEF_FLAG_NODATA;
             else if (!nasm_strnicmp(v, "parm=", 5)) {
-                int err = false;
+                bool err = false;
                 flags |= EXPDEF_MASK_PARMCNT & readnum(v + 5, &err);
                 if (err) {
                     error(ERR_NONFATAL,
@@ -1727,7 +1728,7 @@ static int obj_directive(char *directive, char *value, int pass)
                     return 1;
                 }
             } else {
-                int err = false;
+                bool err = false;
                 ordinal = readnum(v, &err);
                 if (err) {
                     error(ERR_NONFATAL,
