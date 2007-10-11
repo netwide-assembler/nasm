@@ -105,7 +105,7 @@ struct MMacro {
     bool casesense;
     bool plus;                   /* is the last parameter greedy? */
     bool nolist;                 /* is this macro listing-inhibited? */
-    int in_progress;
+    int64_t in_progress;
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
@@ -117,7 +117,7 @@ struct MMacro {
     Token *iline;               /* invocation line */
     unsigned int nparam, rotate;
     int *paramlen;
-    uint32_t unique;
+    uint64_t unique;
     int lineno;                 /* Current line number on expansion */
 };
 
@@ -327,7 +327,7 @@ static evalfunc evaluate;
 
 static int pass;                /* HACK: pass 0 = generate dependencies only */
 
-static uint32_t unique;    /* unique identifier numbers */
+static uint64_t unique;    /* unique identifier numbers */
 
 static Line *predef = NULL;
 
@@ -1035,7 +1035,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     }
 
     if (tline->type == TOK_STRING) {
-        int rn_warn;
+	bool rn_warn;
         char q, *r;
         int l;
 
@@ -1451,7 +1451,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             searching.casesense = (i == PP_MACRO);
             searching.plus = false;
             searching.nolist = false;
-            searching.in_progress = false;
+            searching.in_progress = 0;
             searching.rep_nest = NULL;
             searching.nparam_min = 0;
             searching.nparam_max = INT_MAX;
@@ -1608,6 +1608,7 @@ static int do_directive(Token * tline)
     struct tokenval tokval;
     expr *evalresult;
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
+    int64_t count;
 
     origline = tline;
 
@@ -2051,7 +2052,7 @@ static int do_directive(Token * tline)
         defining->casesense = (i == PP_MACRO);
         defining->plus = false;
         defining->nolist = false;
-        defining->in_progress = false;
+        defining->in_progress = 0;
         defining->rep_nest = NULL;
         tline = expand_smacro(tline->next);
         skip_white_(tline);
@@ -2213,10 +2214,10 @@ static int do_directive(Token * tline)
                 error(ERR_NONFATAL, "non-constant value given to `%%rep'");
                 return DIRECTIVE_FOUND;
             }
-            i = (int)reloc_value(evalresult) + 1;
+            count = reloc_value(evalresult) + 1;
         } else {
             error(ERR_NONFATAL, "`%%rep' expects a repeat count");
-            i = 0;
+            count = 0;
         }
         free_tlist(origline);
 
@@ -2226,7 +2227,7 @@ static int do_directive(Token * tline)
         defining->casesense = false;
         defining->plus = false;
         defining->nolist = nolist;
-        defining->in_progress = i;
+        defining->in_progress = count;
         defining->nparam_min = defining->nparam_max = 0;
         defining->defaults = NULL;
         defining->dlist = NULL;
@@ -2843,7 +2844,7 @@ static Token *expand_mmac_params(Token * tline)
                     break;
                 case '%':
                     type = TOK_ID;
-                    snprintf(tmpbuf, sizeof(tmpbuf), "..@%"PRIu32".",
+                    snprintf(tmpbuf, sizeof(tmpbuf), "..@%"PRIu64".",
                              mac->unique);
                     text = nasm_strcat(tmpbuf, t->text + 2);
                     break;
