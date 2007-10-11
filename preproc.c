@@ -105,7 +105,7 @@ struct MMacro {
     bool casesense;
     bool plus;                   /* is the last parameter greedy? */
     bool nolist;                 /* is this macro listing-inhibited? */
-    bool in_progress;
+    int in_progress;
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
