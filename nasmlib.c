@@ -692,6 +692,7 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
     }
 
     ix = posn / s->blk_len;
+    s->rptr = posn;
     s->rpos = posn % s->blk_len;
     s->rblk = &s->blk_ptrs[ix];
 
@@ -710,6 +711,7 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
     }
 
     ix = posn / s->blk_len;
+    s->wptr = posn;
     s->wpos = posn % s->blk_len;
     s->wblk = &s->blk_ptrs[ix];
 
