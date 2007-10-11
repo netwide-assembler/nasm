@@ -1090,7 +1090,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
  * simple wrapper which calls either strcmp or nasm_stricmp
  * depending on the value of the `casesense' parameter.
  */
-static int mstrcmp(char *p, char *q, bool casesense)
+static int mstrcmp(const char *p, const char *q, bool casesense)
 {
     return casesense ? strcmp(p, q) : nasm_stricmp(p, q);
 }
@@ -1575,6 +1575,81 @@ void expand_macros_in_string(char **p)
     *p = detoken(line, false);
 }
 
+/*
+ * Common code for defining an smacro
+ */
+static bool define_smacro(Context *ctx, char *mname, bool casesense,
+			  int nparam, Token *expansion)
+{
+    SMacro *smac, **smhead;
+    
+    if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
+	if (!smac) {
+	    error(ERR_WARNING,
+		  "single-line macro `%s' defined both with and"
+		  " without parameters", mname);
+
+	    /* Some instances of the old code considered this a failure,
+	       some others didn't.  What is the right thing to do here? */
+	    free_tlist(expansion);
+	    return false;	/* Failure */
+	} else {
+	    /*
+	     * We're redefining, so we have to take over an
+	     * existing SMacro structure. This means freeing
+	     * what was already in it.
+	     */
+	    nasm_free(smac->name);
+	    free_tlist(smac->expansion);
+	}
+    } else {
+	if (!ctx)
+	    smhead = (SMacro **) hash_findi_add(smacros, mname);
+	else
+	    smhead = &ctx->localmac;
+	
+	smac = nasm_malloc(sizeof(SMacro));
+	smac->next = *smhead;
+	*smhead = smac;
+    }
+    smac->name = nasm_strdup(mname);
+    smac->casesense = casesense;
+    smac->nparam = nparam;
+    smac->expansion = expansion;
+    smac->in_progress = false;
+    return true;		/* Success */
+}
+
+/*
+ * Undefine an smacro
+ */
+static void undef_smacro(Context *ctx, const char *mname)
+{
+    SMacro **smhead, *s, **sp;
+
+    if (!ctx)
+	smhead = (SMacro **) hash_findi(smacros, mname, NULL);
+    else
+	smhead = &ctx->localmac;
+    
+    if (smhead) {
+	/*
+	 * We now have a macro name... go hunt for it.
+	 */
+	sp = smhead;
+	while ((s = *sp) != NULL) {
+	    if (!mstrcmp(s->name, mname, s->casesense)) {
+		*sp = s->next;
+		nasm_free(s->name);
+		free_tlist(s->expansion);
+		nasm_free(s);
+	    } else {
+		sp = &s->next;
+	    }
+	}
+    }
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -1601,7 +1676,6 @@ static int do_directive(Token * tline)
     Include *inc;
     Context *ctx;
     Cond *cond;
-    SMacro *smac, **smhead;
     MMacro *mmac, **mmhead;
     Token *t, *tt, *param_start, *macro_start, *last, **tptr, *origline;
     Line *l;
@@ -2376,38 +2450,7 @@ static int do_directive(Token * tline)
          * carefully re-terminated after chopping off the expansion
          * from the end).
          */
-        if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
-            if (!smac) {
-                error(ERR_WARNING,
-                      "single-line macro `%s' defined both with and"
-                      " without parameters", mname);
-                free_tlist(origline);
-                free_tlist(macro_start);
-                return DIRECTIVE_FOUND;
-            } else {
-                /*
-                 * We're redefining, so we have to take over an
-                 * existing SMacro structure. This means freeing
-                 * what was already in it.
-                 */
-                nasm_free(smac->name);
-                free_tlist(smac->expansion);
-            }
-        } else {
-	    if (!ctx)
-		smhead = (SMacro **) hash_findi_add(smacros, mname);
-	    else
-		smhead = &ctx->localmac;
-
-            smac = nasm_malloc(sizeof(SMacro));
-            smac->next = *smhead;
-            *smhead = smac;
-        }
-        smac->name = nasm_strdup(mname);
-        smac->casesense = casesense;
-        smac->nparam = nparam;
-        smac->expansion = macro_start;
-        smac->in_progress = false;
+        define_smacro(ctx, mname, casesense, nparam, macro_start);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2429,34 +2472,8 @@ static int do_directive(Token * tline)
 
         /* Find the context that symbol belongs to */
         ctx = get_ctx(tline->text, false);
-        if (!ctx)
-            smhead = (SMacro **) hash_findi(smacros, tline->text, NULL);
-        else
-            smhead = &ctx->localmac;
-
-	if (smhead) {
-	    SMacro *s, **sp;
-
-	    mname = tline->text;
-	    last = tline;
-	    last->next = NULL;
-	    
-	    /*
-	     * We now have a macro name... go hunt for it.
-	     */
-	    sp = smhead;
-	    while ((s = *sp) != NULL) {
-		if (!mstrcmp(s->name, tline->text, s->casesense)) {
-		    *sp = s->next;
-		    nasm_free(s->name);
-		    free_tlist(s->expansion);
-		    nasm_free(s);
-		} else {
-		    sp = &s->next;
-		}
-	    }
-	    free_tlist(origline);
-	}
+	undef_smacro(ctx, tline->text);
+	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_STRLEN:
@@ -2502,35 +2519,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
-            if (!smac)
-                error(ERR_WARNING,
-                      "single-line macro `%s' defined both with and"
-                      " without parameters", mname);
-            else {
-                /*
-                 * We're redefining, so we have to take over an
-                 * existing SMacro structure. This means freeing
-                 * what was already in it.
-                 */
-                nasm_free(smac->name);
-                free_tlist(smac->expansion);
-            }
-        } else {
-	    if (!ctx)
-		smhead = (SMacro **) hash_findi_add(smacros, mname);
-	    else
-		smhead = &ctx->localmac;
-
-            smac = nasm_malloc(sizeof(SMacro));
-            smac->next = *smhead;
-            *smhead = smac;
-        }
-        smac->name = nasm_strdup(mname);
-        smac->casesense = casesense;
-        smac->nparam = 0;
-        smac->expansion = macro_start;
-        smac->in_progress = false;
+	define_smacro(ctx, mname, casesense, 0, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2603,35 +2592,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
-            if (!smac)
-                error(ERR_WARNING,
-                      "single-line macro `%s' defined both with and"
-                      " without parameters", mname);
-            else {
-                /*
-                 * We're redefining, so we have to take over an
-                 * existing SMacro structure. This means freeing
-                 * what was already in it.
-                 */
-                nasm_free(smac->name);
-                free_tlist(smac->expansion);
-            }
-        } else {
-	    if (!ctx)
-		smhead = (SMacro **) hash_findi_add(smacros, tline->text);
-	    else
-		smhead = &ctx->localmac;
-
-            smac = nasm_malloc(sizeof(SMacro));
-            smac->next = *smhead;
-            *smhead = smac;
-        }
-        smac->name = nasm_strdup(mname);
-        smac->casesense = casesense;
-        smac->nparam = 0;
-        smac->expansion = macro_start;
-        smac->in_progress = false;
+	define_smacro(ctx, mname, casesense, 0, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2692,35 +2653,7 @@ static int do_directive(Token * tline)
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        if (smacro_defined(ctx, mname, 0, &smac, casesense)) {
-            if (!smac)
-                error(ERR_WARNING,
-                      "single-line macro `%s' defined both with and"
-                      " without parameters", mname);
-            else {
-                /*
-                 * We're redefining, so we have to take over an
-                 * existing SMacro structure. This means freeing
-                 * what was already in it.
-                 */
-                nasm_free(smac->name);
-                free_tlist(smac->expansion);
-            }
-        } else {
-	    if (!ctx)
-		smhead = (SMacro **) hash_findi_add(smacros, mname);
-	    else
-		smhead = &ctx->localmac;
-
-            smac = nasm_malloc(sizeof(SMacro));
-            smac->next = *smhead;
-            *smhead = smac;
-        }
-        smac->name = nasm_strdup(mname);
-        smac->casesense = casesense;
-        smac->nparam = 0;
-        smac->expansion = macro_start;
-        smac->in_progress = false;
+	define_smacro(ctx, mname, casesense, 0, macro_start);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
