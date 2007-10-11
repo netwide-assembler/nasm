@@ -2288,7 +2288,7 @@ static int do_directive(Token * tline)
     case PP_IXDEFINE:
     case PP_DEFINE:
     case PP_IDEFINE:
-	casesense = (i == PP_DEFINE || i == PP_IXDEFINE);
+	casesense = (i == PP_DEFINE || i == PP_XDEFINE);
 
         tline = tline->next;
         skip_white_(tline);
