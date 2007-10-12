@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 extern int lrotate(int32_t, int);
 extern void greet(void);

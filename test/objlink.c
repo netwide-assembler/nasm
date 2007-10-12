@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 int8_t text[] = "hello, world\n";
 
