@@ -386,7 +386,7 @@ static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(char *name, bool all_contexts);
-static void make_tok_num(Token * tok, int32_t val);
+static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
@@ -4005,10 +4005,10 @@ void pp_extra_stdmac(const char **macros)
     extrastdmac = macros;
 }
 
-static void make_tok_num(Token * tok, int32_t val)
+static void make_tok_num(Token * tok, int64_t val)
 {
     char numbuf[20];
-    snprintf(numbuf, sizeof(numbuf), "%"PRId32"", val);
+    snprintf(numbuf, sizeof(numbuf), "%"PRId64"", val);
     tok->text = nasm_strdup(numbuf);
     tok->type = TOK_NUMBER;
 }

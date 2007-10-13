@@ -120,7 +120,7 @@ static expr *add_vectors(expr * p, expr * q)
             addtotemp(p->type, p->value);
             lasttype = p++->type;
         } else {                /* *p and *q have same type */
-            int32_t sum = p->value + q->value;
+            int64_t sum = p->value + q->value;
             if (sum)
                 addtotemp(p->type, sum);
             lasttype = p->type;
@@ -154,7 +154,7 @@ static expr *add_vectors(expr * p, expr * q)
  * multiplied. This allows [eax*1+ebx] to hint EBX rather than EAX
  * as the base register.
  */
-static expr *scalar_mult(expr * vect, int32_t scalar, int affect_hints)
+static expr *scalar_mult(expr * vect, int64_t scalar, int affect_hints)
 {
     expr *p = vect;
 
@@ -170,7 +170,7 @@ static expr *scalar_mult(expr * vect, int32_t scalar, int affect_hints)
     return vect;
 }
 
-static expr *scalarvect(int32_t scalar)
+static expr *scalarvect(int64_t scalar)
 {
     begintemp();
     addtotemp(EXPR_SIMPLE, scalar);
@@ -283,7 +283,7 @@ static expr *rexp0(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((int32_t)(reloc_value(e) || reloc_value(f)));
+            e = scalarvect((int64_t)(reloc_value(e) || reloc_value(f)));
     }
     return e;
 }
@@ -310,7 +310,7 @@ static expr *rexp1(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((int32_t)(!reloc_value(e) ^ !reloc_value(f)));
+            e = scalarvect((int64_t)(!reloc_value(e) ^ !reloc_value(f)));
     }
     return e;
 }
@@ -335,7 +335,7 @@ static expr *rexp2(int critical)
         if (is_just_unknown(e) || is_just_unknown(f))
             e = unknown_expr();
         else
-            e = scalarvect((int32_t)(reloc_value(e) && reloc_value(f)));
+            e = scalarvect((int64_t)(reloc_value(e) && reloc_value(f)));
     }
     return e;
 }
@@ -343,7 +343,7 @@ static expr *rexp2(int critical)
 static expr *rexp3(int critical)
 {
     expr *e, *f;
-    int32_t v;
+    int64_t v;
 
     e = expr0(critical);
     if (!e)
@@ -502,7 +502,7 @@ static expr *expr3(int critical)
                 e = scalarvect(reloc_value(e) << reloc_value(f));
                 break;
             case TOKEN_SHR:
-                e = scalarvect(((uint32_t)reloc_value(e)) >>
+                e = scalarvect(((uint64_t)reloc_value(e)) >>
                                reloc_value(f));
                 break;
             }
@@ -577,29 +577,29 @@ static expr *expr5(int critical)
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((uint32_t)reloc_value(e)) /
-                               ((uint32_t)reloc_value(f)));
+                e = scalarvect(((uint64_t)reloc_value(e)) /
+                               ((uint64_t)reloc_value(f)));
             break;
         case '%':
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((uint32_t)reloc_value(e)) %
-                               ((uint32_t)reloc_value(f)));
+                e = scalarvect(((uint64_t)reloc_value(e)) %
+                               ((uint64_t)reloc_value(f)));
             break;
         case TOKEN_SDIV:
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((int32_t)reloc_value(e)) /
-                               ((int32_t)reloc_value(f)));
+                e = scalarvect(((int64_t)reloc_value(e)) /
+                               ((int64_t)reloc_value(f)));
             break;
         case TOKEN_SMOD:
             if (is_just_unknown(e) || is_just_unknown(f))
                 e = unknown_expr();
             else
-                e = scalarvect(((int32_t)reloc_value(e)) %
-                               ((int32_t)reloc_value(f)));
+                e = scalarvect(((int64_t)reloc_value(e)) %
+                               ((int64_t)reloc_value(f)));
             break;
         }
     }
