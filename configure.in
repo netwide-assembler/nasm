@@ -1,6 +1,6 @@
-dnl Process this file with autoconf 2.61 or later to produce
+dnl Process this file with autoconf 2.59 or later to produce
 dnl a configure script.
-AC_PREREQ(2.61)
+AC_PREREQ(2.59)
 AC_INIT(config.h.in)
 AC_CONFIG_HEADERS(config.h)
 
@@ -47,8 +47,10 @@ fi
 AC_PREFIX_PROGRAM(nasm)
 
 dnl Checks for programs.
-AC_USE_SYSTEM_EXTENSIONS
+dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
+AC_GNU_SOURCE
 AC_ISC_POSIX
+AC_MINIX
 AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
