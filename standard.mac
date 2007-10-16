@@ -115,7 +115,7 @@ __SECT__
 %define __FLOAT_ROUND__ near
 ; __FLOAT__ contains the whole floating-point configuration so it can
 ; be saved and restored
-%define __FLOAT__ __FLOAT_DAZ__ __FLOAT_ROUND__
+%define __FLOAT__ __FLOAT_DAZ__,__FLOAT_ROUND__
 %imacro float 1-*.nolist
 %rep %0
 [float %1]
