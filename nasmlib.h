@@ -59,15 +59,21 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
  */
 
 #define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR  8         /* how far to shift right */
+#define ERR_WARN_SHR  8         	/* how far to shift right */
 
-#define ERR_WARN_MNP	0x00000100      /* macro-num-parameters warning */
-#define ERR_WARN_MSR	0x00000200      /* macro self-reference */
-#define ERR_WARN_OL	0x00000300      /* orphan label (no colon, and
+#define WARN(x) ((x) << ERR_WARN_SHR)
+
+#define ERR_WARN_MNP		WARN(1) /* macro-num-parameters warning */
+#define ERR_WARN_MSR		WARN(2) /* macro self-reference */
+#define ERR_WARN_OL		WARN(3)	/* orphan label (no colon, and
                                          * alone on line) */
-#define ERR_WARN_NOV	0x00000400      /* numeric overflow */
-#define ERR_WARN_GNUELF	0x00000500      /* using GNU ELF extensions */
-#define ERR_WARN_MAX	5       /* the highest numbered one */
+#define ERR_WARN_NOV		WARN(4)	/* numeric overflow */
+#define ERR_WARN_GNUELF		WARN(5)	/* using GNU ELF extensions */
+#define ERR_WARN_FL_OVERFLOW	WARN(6) /* FP overflow */
+#define ERR_WARN_FL_DENORM	WARN(7) /* FP denormal */
+#define ERR_WARN_FL_UNDERFLOW	WARN(8)	/* FP underflow */
+#define ERR_WARN_FL_TOOLONG	WARN(9) /* FP too many digits */
+#define ERR_WARN_MAX	8       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will

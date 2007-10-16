@@ -92,8 +92,8 @@ static enum op_type operating_mode;
  * Which of the suppressible warnings are suppressed. Entry zero
  * doesn't do anything. Initial defaults are given here.
  */
-static char suppressed[1 + ERR_WARN_MAX] = {
-    0, true, true, true, false, true
+static bool suppressed[1 + ERR_WARN_MAX] = {
+    0, true, true, true, false, true, false, true, true, false
 };
 
 /*
@@ -102,8 +102,8 @@ static char suppressed[1 + ERR_WARN_MAX] = {
  */
 static const char *suppressed_names[1 + ERR_WARN_MAX] = {
     NULL, "macro-params", "macro-selfref", "orphan-labels",
-        "number-overflow",
-    "gnu-elf-extensions"
+    "number-overflow", "gnu-elf-extensions", "float-overflow",
+    "float-denorm", "float-underflow", "float-toolong"
 };
 
 /*
@@ -115,8 +115,12 @@ static const char *suppressed_what[1 + ERR_WARN_MAX] = {
     "macro calls with wrong no. of params",
     "cyclic macro self-references",
     "labels alone on lines without trailing `:'",
-    "numeric constants greater than 0xFFFFFFFF",
-    "using 8- or 16-bit relocation in ELF, a GNU extension"
+    "numeric constants do not fit in 32 bits",
+    "using 8- or 16-bit relocation in ELF32, a GNU extension"
+    "floating point overflow",
+    "floating point denormal",
+    "floating point underflow",
+    "too many digits in floating-point number",
 };
 
 /*

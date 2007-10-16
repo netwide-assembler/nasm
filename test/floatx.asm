@@ -28,9 +28,12 @@
 	dw 0x0.0000123456789p-10
 	dw 0x1.0p-25		; Underflow
 	dw 0x1.0p-24		; Smallest denorm
+	dw 0x1.ffffffffffffffffffffffffffffp-16	; Rounds to denorm
 	dw 0x1.0p-15		; Denorm
+	dw 0x1.ffffffffffffffffffffffffffffp-15	; Rounds to normal
 	dw 0x1.0p-14		; Smallest non-denorm
 	dw 0x1.0p+15		; Biggest possible exponent
+	dw 0x1.ffffffffffffffffffffffffffffp+15	; Rounds to infinity
 	dw Inf			; Infinity
 	dw NaN
 
@@ -60,9 +63,12 @@
 	dd 0x123456789.0p+64
 	dd 0x1.0p-150		; Underflow
 	dd 0x1.0p-149		; Smallest denorm
+	dd 0x1.ffffffffffffffffffffffffffffp-128	; Rounds to denorm
 	dd 0x1.0p-127		; Denorm
+	dd 0x1.ffffffffffffffffffffffffffffp-127	; Rounds to normal
 	dd 0x1.0p-126		; Smallest non-denorm
 	dd 0x1.0p+127		; Biggest possible exponent
+	dd 0x1.ffffffffffffffffffffffffffffp+127	; Rounds to infinity
 	dd Inf			; Infinity
 	dd NaN
 
@@ -92,9 +98,12 @@
 	dq 0x123456789.0p+300
 	dq 0x1.0p-1075		; Underflow
 	dq 0x1.0p-1074		; Smallest denorm
+	dq 0x1.ffffffffffffffffffffffffffffp-1024	; Rounds to denorm
 	dq 0x1.0p-1023		; Denorm
+	dq 0x1.ffffffffffffffffffffffffffffp-1023	; Rounds to normal
 	dq 0x1.0p-1022		; Smallest non-denorm
 	dq 0x1.0p+1023		; Biggest possible exponent
+	dq 0x1.ffffffffffffffffffffffffffffp+1023	; Rounds to infinity
 	dq Inf			; Infinity
 	dq NaN
 
@@ -124,9 +133,12 @@
 	dt 0x123456789.0p+1024
 	dt 0x1.0p-16446		; Underflow
 	dt 0x1.0p-16445		; Smallest denorm
+	dt 0x1.ffffffffffffffffffffffffffffp-16384	; Rounds to denorm
 	dt 0x1.0p-16383		; Denorm
+	dt 0x1.ffffffffffffffffffffffffffffp-16383	; Rounds to normal
 	dt 0x1.0p-16382		; Smallest non-denorm
 	dt 0x1.0p+16383		; Biggest possible exponent
+	dq 0x1.ffffffffffffffffffffffffffffp+16383	; Rounds to infinity
 	dt Inf			; Infinity
 	dt NaN
 
@@ -156,8 +168,11 @@
 	do 0x123456789.0p+1024
 	do 0x1.0p-16495		; Underflow
 	do 0x1.0p-16494		; Smallest denorm
+	do 0x1.ffffffffffffffffffffffffffffffffp-16384	; Rounds to denorm
 	do 0x1.0p-16383		; Denorm
+	do 0x1.ffffffffffffffffffffffffffffffffp-16383	; Rounds to normal
 	do 0x1.0p-16382		; Smallest non-denorm
 	do 0x1.0p+16383		; Biggest possible exponent
+	do 0x1.ffffffffffffffffffffffffffffffffp+16383	; Rounds to infinity
 	do Inf			; Infinity
 	do NaN

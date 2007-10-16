@@ -149,7 +149,7 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
                     *p++ = *string - '0';
                 } else {
                     if (!warned) {
-                        error(ERR_WARNING,
+                        error(ERR_WARNING|ERR_WARN_FL_TOOLONG,
                               "floating-point constant significand contains "
                               "more than %i digits", MANT_DIGITS);
                         warned = true;
@@ -639,11 +639,11 @@ static int to_float(const char *str, int sign, uint8_t * result,
             exponent--;
             if (exponent >= 2 - expmax && exponent <= expmax) {
 		type = FL_NORMAL;
-            } else if (!daz && exponent < 2 - expmax &&
+            } else if (exponent < 2 - expmax &&
                        exponent >= 2 - expmax - fmt->mantissa) {
 		type = FL_DENORMAL;
             } else if (exponent > 0) {
-		error(ERR_NONFATAL,
+		error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
 		      "overflow in floating-point constant");
 		type = FL_INFINITY;
 	    } else {
@@ -658,6 +658,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
 
     switch (type) {
     case FL_ZERO:
+    zero:
 	memset(mant, 0, sizeof mant);
 	break;
 
@@ -666,15 +667,16 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	shift = -(exponent + expmax - 2 - fmt->exponent)
 	    + fmt->explicit;
 	ieee_shr(mant, shift);
-	if (ieee_round(sign, mant, fmt->words)
-	    || (shift > 0 && test_bit(mant, shift-1))) {
-	    ieee_shr(mant, 1);
-	    if (!shift) {
-		/* XXX: We shifted into the normal range? */
-		/* XXX: This is definitely not right... */
-		mant[0] |= 0x8000;
-	    }
-	    exponent++;	/* UNUSED, WTF? */
+	ieee_round(sign, mant, fmt->words);
+	if (mant[one_pos] & one_mask) {
+	    /* One's position is set, we rounded up into normal range */
+	    exponent = 1;
+	    if (!fmt->explicit)
+		mant[one_pos] &= ~one_mask;	/* remove explicit one */
+	    mant[0] |= exponent << (15 - fmt->exponent);
+	} else if (daz) {
+	    /* Flush denormals to zero */
+	    goto zero;
 	}
 	break;
     }
@@ -687,7 +689,12 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	if (test_bit(mant, fmt->exponent+fmt->explicit-1)) {
 	    ieee_shr(mant, 1);
 	    exponent++;
-	    /* XXX: Handle overflow here */
+	    if (exponent >= expmax) {
+		error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
+		      "overflow in floating-point constant");
+		type = FL_INFINITY;
+		goto overflow;
+	    }
 	}
 	
 	if (!fmt->explicit)
@@ -698,6 +705,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
     case FL_INFINITY:
     case FL_QNAN:
     case FL_SNAN:
+    overflow:
 	memset(mant, 0, sizeof mant);
 	mant[0] = ((1 << fmt->exponent)-1) << (15 - fmt->exponent);
 	if (fmt->explicit)
