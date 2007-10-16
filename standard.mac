@@ -111,6 +111,33 @@ __SECT__
 [cpu %1]
 %endmacro
 
+%define __FLOAT_DAZ__ nodaz
+%define __FLOAT_ROUND__ near
+; __FLOAT__ contains the whole floating-point configuration so it can
+; be saved and restored
+%define __FLOAT__ __FLOAT_DAZ__ __FLOAT_ROUND__
+%imacro float 1-*.nolist
+%rep %0
+[float %1]
+%ifidni %1,daz
+%define __FLOAT_DAZ__ daz
+%elifidni %1,nodaz
+%define __FLOAT_DAZ__ nodaz
+%elifidni %1,near
+%define __FLOAT_ROUND__ near
+%elifidni %1,up
+%define __FLOAT_ROUND__ up
+%elifidni %1,down
+%define __FLOAT_ROUND__ down
+%elifidni %1,zero
+%define __FLOAT_ROUND__ zero
+%elifidni %1,default
+%define __FLOAT_DAZ__ nodaz
+%define __FLOAT_ROUND__ near
+%endif
+%endrep
+%endmacro
+
 %imacro default 1+.nolist
 [default %1]
 %endmacro

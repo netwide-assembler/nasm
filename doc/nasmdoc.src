@@ -3786,7 +3786,7 @@ Options are:
 
 \b\c{CPU WILLAMETTE}    Same as P4
 
-\b\c{CPU PRESCOTT}	Prescott instruction set
+\b\c{CPU PRESCOTT}      Prescott instruction set
 
 \b\c{CPU X64}           x86-64 (x64/AMD64/EM64T) instruction set
 
@@ -3795,6 +3795,34 @@ Options are:
 All options are case insensitive.  All instructions will be selected
 only if they apply to the selected CPU or lower.  By default, all
 instructions are available.
+
+
+\H{FLOAT} \i\c{FLOAT}: Handling of \I{floating-point, constants}floating-point constants
+
+By default, floating-point constants are rounded to nearest, and IEEE
+denormals are supported.  The following options can be set to alter
+this behaviour:
+
+\b\c{FLOAT DAZ}         Flush denormals to zero
+
+\b\c{FLOAT NODAZ}       Do not flush denormals to zero (default)
+
+\b\c{FLOAT NEAR}        Round to nearest (default)
+
+\b\c{FLOAT UP}          Round up (toward +Infinity)
+
+\b\c{FLOAT DOWN}        Round down (toward -Infinity)
+
+\b\c{FLOAT ZERO}        Round toward zero
+
+\b\c{FLOAT DEFAULT}     Restore default settings
+
+The standard macros \i\c{__FLOAT_DAZ__}, \i\c{__FLOAT_ROUND__}, and
+\i\c{__FLOAT__} contain the current state, as long as the programmer
+has avoided the use of the brackeded primitive form, (\c{[FLOAT]}).
+
+\c{__FLOAT__} contains the full set of floating-point settings; this
+value can be saved away and invoked later to restore the setting.
 
 
 \C{outfmt} \i{Output Formats}

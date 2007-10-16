@@ -18,6 +18,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "float.h"
 #include "stdscan.h"
 #include "insns.h"
 #include "preproc.h"
@@ -822,11 +823,11 @@ static void parse_cmdline(int argc, char **argv)
 /* List of directives */
 enum directives {
     D_NONE, D_ABSOLUTE, D_BITS, D_COMMON, D_CPU, D_DEBUG, D_DEFAULT,
-    D_EXTERN, D_GLOBAL, D_LIST, D_SECTION, D_SEGMENT, D_WARNING
+    D_EXTERN, D_FLOAT, D_GLOBAL, D_LIST, D_SECTION, D_SEGMENT, D_WARNING
 };
 static const char *directives[] = {
     "", "absolute", "bits", "common", "cpu", "debug", "default",
-    "extern", "global", "list", "section", "segment", "warning"
+    "extern", "float", "global", "list", "section", "segment", "warning"
 };
 static enum directives getkw(char **directive, char **value);
 
@@ -1141,6 +1142,13 @@ static void assemble_file(char *fname)
 			}
 		    } else {
 			err = 1;
+		    }
+		    break;
+		case D_FLOAT:
+		    if (float_option(value)) {
+			report_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+				     "unknown 'float' directive: %s",
+				     value);
 		    }
 		    break;
                 default:
@@ -1730,7 +1738,6 @@ static void no_pp_cleanup(int pass)
 
 static uint32_t get_cpu(char *value)
 {
-
     if (!strcmp(value, "8086"))
         return IF_8086;
     if (!strcmp(value, "186"))

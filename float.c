@@ -776,3 +776,34 @@ int float_const(const char *number, int32_t sign, uint8_t * result,
         return 0;
     }
 }
+
+/* Set floating-point options */
+int float_option(const char *option)
+{
+    if (!nasm_stricmp(option, "daz")) {
+	daz = true;
+	return 0;
+    } else if (!nasm_stricmp(option, "nodaz")) {
+	daz = false;
+	return 0;
+    } else if (!nasm_stricmp(option, "near")) {
+	rc = FLOAT_RC_NEAR;
+	return 0;
+    } else if (!nasm_stricmp(option, "down")) {
+	rc = FLOAT_RC_DOWN;
+	return 0;
+    } else if (!nasm_stricmp(option, "up")) {
+	rc = FLOAT_RC_UP;
+	return 0;
+    } else if (!nasm_stricmp(option, "zero")) {
+	rc = FLOAT_RC_ZERO;
+	return 0;
+    } else if (!nasm_stricmp(option, "default")) {
+	rc = FLOAT_RC_NEAR;
+	daz = false;
+	return 0;
+    } else {
+	return -1;		/* Unknown option */
+    }
+}
+
