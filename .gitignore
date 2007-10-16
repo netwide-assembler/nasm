@@ -1,9 +1,12 @@
-*.o
-*.obj
-*.o64
-*.obj64
+*.bin
 *.exe
+*.lst
+*.o
+*.o64
+*.obj
+*.obj64
 *.orig
+*.out
 *.rej
 *~
 Makefile
@@ -12,8 +15,12 @@ config.h.in
 config.log
 config.status
 configure
+doc/*.dip
+doc/*.hpj
 doc/*.pdf
 doc/*.ps
+doc/*.rtf
+doc/*.texi
 doc/*.txt
 doc/Makefile
 doc/html
@@ -42,6 +49,7 @@ regflags.c
 regs.c
 regs.h
 regvals.c
+test/perf/*.asm
 tokens.h
 tokhash.c
 version.h
