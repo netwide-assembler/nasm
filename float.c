@@ -128,7 +128,8 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
     bool started, seendot, warned;
     p = digits;
     tenpwr = 0;
-    started = seendot = warned = false;
+    started = seendot = false;
+    warned = (pass0 != 1);
     while (*string && *string != 'E' && *string != 'e') {
         if (*string == '.') {
             if (!seendot) {
@@ -541,9 +542,21 @@ static void set_bit(uint16_t *mant, int bit)
 }
 
 /* Test a single bit */
-static int test_bit(uint16_t *mant, int bit)
+static int test_bit(const uint16_t *mant, int bit)
 {
     return (mant[bit >> 4] >> (~bit & 15)) & 1;
+}
+
+/* Report if the mantissa value is all zero */
+static bool is_zero(const uint16_t *mant)
+{
+    int i;
+
+    for (i = 0; i < MANT_WORDS; i++)
+	if (mant[i])
+	    return false;
+
+    return true;
 }
 
 /* Produce standard IEEE formats, with implicit or explicit integer
@@ -643,11 +656,15 @@ static int to_float(const char *str, int sign, uint8_t * result,
                        exponent >= 2 - expmax - fmt->mantissa) {
 		type = FL_DENORMAL;
             } else if (exponent > 0) {
-		error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
-		      "overflow in floating-point constant");
+		if (pass0 == 1)
+		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
+			  "overflow in floating-point constant");
 		type = FL_INFINITY;
 	    } else {
 		/* underflow */
+		if (pass0 == 1)
+		    error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW,
+			  "underflow in floating-point constant");
 		type = FL_ZERO;
 	    }
 	} else {
@@ -674,9 +691,18 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	    if (!fmt->explicit)
 		mant[one_pos] &= ~one_mask;	/* remove explicit one */
 	    mant[0] |= exponent << (15 - fmt->exponent);
-	} else if (daz) {
-	    /* Flush denormals to zero */
-	    goto zero;
+	} else {
+	    if (daz || is_zero(mant)) {
+		/* Flush denormals to zero */
+		if (pass0 == 1)
+		    error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW,
+			  "underflow in floating-point constant");
+		goto zero;
+	    } else {
+		if (pass0 == 1)
+		    error(ERR_WARNING|ERR_WARN_FL_DENORM,
+			  "denormal floating-point constant");
+	    }
 	}
 	break;
     }
@@ -689,9 +715,10 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	if (test_bit(mant, fmt->exponent+fmt->explicit-1)) {
 	    ieee_shr(mant, 1);
 	    exponent++;
-	    if (exponent >= expmax) {
-		error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
-		      "overflow in floating-point constant");
+	    if (exponent >= (expmax << 1)-1) {
+		if (pass0 == 1)
+		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
+			  "overflow in floating-point constant");
 		type = FL_INFINITY;
 		goto overflow;
 	    }

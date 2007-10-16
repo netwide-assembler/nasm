@@ -73,7 +73,7 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
 #define ERR_WARN_FL_DENORM	WARN(7) /* FP denormal */
 #define ERR_WARN_FL_UNDERFLOW	WARN(8)	/* FP underflow */
 #define ERR_WARN_FL_TOOLONG	WARN(9) /* FP too many digits */
-#define ERR_WARN_MAX	8       /* the highest numbered one */
+#define ERR_WARN_MAX	9		/* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will

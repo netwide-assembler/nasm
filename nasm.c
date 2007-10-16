@@ -116,11 +116,11 @@ static const char *suppressed_what[1 + ERR_WARN_MAX] = {
     "cyclic macro self-references",
     "labels alone on lines without trailing `:'",
     "numeric constants do not fit in 32 bits",
-    "using 8- or 16-bit relocation in ELF32, a GNU extension"
+    "using 8- or 16-bit relocation in ELF32, a GNU extension",
     "floating point overflow",
     "floating point denormal",
     "floating point underflow",
-    "too many digits in floating-point number",
+    "too many digits in floating-point number"
 };
 
 /*
