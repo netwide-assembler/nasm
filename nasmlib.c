@@ -237,8 +237,10 @@ int64_t readnum(char *str, bool *error)
         radix = 16, q--;
     else if (q[-1] == 'Q' || q[-1] == 'q' || q[-1] == 'O' || q[-1] == 'o')
         radix = 8, q--;
-    else if (q[-1] == 'B' || q[-1] == 'b')
+    else if (q[-1] == 'B' || q[-1] == 'b' || q[-1] == 'Y' || q[-1] == 'y')
         radix = 2, q--;
+    else if (q[-1] == 'D' || q[-1] == 'd' || q[-1] == 'T' || q[-1] == 't')
+	radix = 10, q--;
     else
         radix = 10;
 
