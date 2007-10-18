@@ -1394,7 +1394,7 @@ void stabs32_output(int type, void *param)
     if (type == TY_STABSSYMLIN) {
         if (stabs_immcall) {
             s = (struct symlininfo *)param;
-            if (strcmp(s->name, ".text"))
+            if (!(sects[s->section]->flags & SHF_EXECINSTR))
                 return;         /* we are only interested in the text stuff */
             numlinestabs++;
             el = (struct linelist *)nasm_malloc(sizeof(struct linelist));
@@ -1492,16 +1492,16 @@ void stabs32_generate(void)
     stabstrlen = strsize;       /* set global variable for length of stab strings */
 
     sptr = sbuf;
-    /* this is the first stab, its strx points to the filename of the
-       the source-file, the n_desc field should be set to the number
-       of remaining stabs
-     */
-    WRITE_STAB(sptr, fileidx[0], 0, 0, 0, strlen(allfiles[0] + 12));
-
     ptr = stabslines;
     numstabs = 0;
 
     if (ptr) {
+        /* this is the first stab, its strx points to the filename of the
+        the source-file, the n_desc field should be set to the number
+        of remaining stabs
+        */
+        WRITE_STAB(sptr, fileidx[0], 0, 0, 0, strlen(allfiles[0] + 12));
+
         /* this is the stab for the main source file */
         WRITE_STAB(sptr, fileidx[mainfileindex], N_SO, 0, 0, 0);
 
