@@ -1,6 +1,10 @@
 	dd 0x1234_5678
 	dd 305_419_896		; Same number as above it
 	dd 0x1e16		; NOT a floating-point number!
+	dd 1e16h		; NOT a floating-point number!
+	dd 1e16_h		; NOT a floating-point number!
+	dd $1e16		; NOT a floating-point number!
+	dd $1e16		; NOT a floating-point number!
 	dd 1e16			; THIS is a floating-point number!
 	dd 1e+16
 	dd 1.e+16

@@ -118,6 +118,8 @@ int stdscan(void *private_data, struct tokenval *tv)
         bool rn_error;
 	bool is_hex = false;
 	bool is_float = false;
+	bool has_e = false;
+	bool has_h = false;
 	char c;
 
         r = stdscan_bufptr++;
@@ -128,8 +130,17 @@ int stdscan(void *private_data, struct tokenval *tv)
 	for (;;) {
 	    c = *stdscan_bufptr++;
 
-	    if ((!is_hex && (c == 'e' || c == 'E')) ||
-		(c == 'P' || c == 'p')) {
+	    if (!is_hex && (c == 'e' || c == 'E')) {
+		has_e = true;
+		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-') {
+		    /* e can only be followed by +/- if it is either a
+		       prefixed hex number or a floating-point number */
+		    is_float = true;
+		    stdscan_bufptr++;
+		}
+	    } else if (c == 'H' || c == 'h') {
+		has_h = true;
+	    } else if (c == 'P' || c == 'p') {
 		is_float = true;
 		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
 		    stdscan_bufptr++;
@@ -141,6 +152,11 @@ int stdscan(void *private_data, struct tokenval *tv)
 		break;
 	}
 	stdscan_bufptr--;	/* Point to first character beyond number */
+
+	if (has_e && !has_h) {
+	    /* 1e13 is floating-point, but 1e13h is not */
+	    is_float = true;
+	}
 
 	if (is_float) {
 	    tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
@@ -154,7 +170,8 @@ int stdscan(void *private_data, struct tokenval *tv)
 	    tv->t_charptr = NULL;
 	    return tv->t_type = TOKEN_NUM;
 	}
-    } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {     /* a char constant */
+    } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {
+	/* a char constant */
         char quote = *stdscan_bufptr++, *r;
         bool rn_warn;
         r = tv->t_charptr = stdscan_bufptr;
