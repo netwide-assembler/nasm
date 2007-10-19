@@ -138,7 +138,7 @@
 	dt 0x1.ffffffffffffffffffffffffffffp-16383	; Rounds to normal
 	dt 0x1.0p-16382		; Smallest non-denorm
 	dt 0x1.0p+16383		; Biggest possible exponent
-	dq 0x1.ffffffffffffffffffffffffffffp+16383	; Rounds to infinity
+	dt 0x1.ffffffffffffffffffffffffffffp+16383	; Rounds to infinity
 	dt Inf			; Infinity
 	dt NaN
 
