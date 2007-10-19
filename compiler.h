@@ -24,6 +24,11 @@
 # include "config.h"
 #endif
 
+/* __STRICT_ANSI__ buggers up MinGW, so disable it */
+#ifdef __MINGW32__
+# undef __STRICT_ANSI__
+#endif
+
 /* This is required to get the standard <inttypes.h> macros when compiling
    with a C++ compiler.  This must be defined *before* <inttypes.h> is
    included, directly or indirectly. */
