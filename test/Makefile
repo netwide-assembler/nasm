@@ -1,7 +1,7 @@
 .SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
 
 NASM = ../nasm
-NASMOPT = -O999 -I../misc
+NASMOPT = -Ox -I../misc
 PERL = perl
 
 %.bin: %.asm $(NASM)
