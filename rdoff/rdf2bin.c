@@ -30,7 +30,7 @@ char *getfilename(char *pathname)
 int main(int argc, char **argv)
 {
     rdfmodule *m;
-    int tmp;
+    bool err;
     FILE *of;
     char *padding;
     int codepad, datapad, bsspad = 0;
@@ -49,22 +49,22 @@ int main(int argc, char **argv)
     while (argc > 2) {
         if (!strcmp(*argv, "-o")) {
             argv++, argc--;
-            origin = readnum(*argv, &tmp);
-            if (tmp) {
+            origin = readnum(*argv, &err);
+            if (err) {
                 fprintf(stderr, "rdf2bin: invalid parameter: %s\n", *argv);
                 return 1;
             }
         } else if (!strcmp(*argv, "-p")) {
             argv++, argc--;
-            align = readnum(*argv, &tmp);
-            if (tmp) {
+            align = readnum(*argv, &err);
+            if (err) {
                 fprintf(stderr, "rdf2bin: invalid parameter: %s\n", *argv);
                 return 1;
             }
         } else if (!strcmp(*argv, "-b")) {
             argv++, argc--;
-            bsspad = readnum(*argv, &tmp);
-            if (tmp) {
+            bsspad = readnum(*argv, &err);
+            if (err) {
                 fprintf(stderr, "rdf2bin: invalid parameter: %s\n", *argv);
                 return 1;
             }

@@ -45,7 +45,7 @@ static int write_data_record(FILE * of, int ofs, int nbytes,
 int main(int argc, char **argv)
 {
     rdfmodule *m;
-    int tmp;
+    bool err;
     FILE *of;
     char *padding;
     uint8_t *segbin[2];
@@ -64,15 +64,15 @@ int main(int argc, char **argv)
     while (argc > 2) {
         if (strcmp(*argv, "-o") == 0) {
             argv++, argc--;
-            origin = readnum(*argv, &tmp);
-            if (tmp) {
+            origin = readnum(*argv, &err);
+            if (err) {
                 fprintf(stderr, "rdf2ihx: invalid parameter: %s\n", *argv);
                 return 1;
             }
         } else if (strcmp(*argv, "-p") == 0) {
             argv++, argc--;
-            align = readnum(*argv, &tmp);
-            if (tmp) {
+            align = readnum(*argv, &err);
+            if (err) {
                 fprintf(stderr, "rdf2ihx: invalid parameter: %s\n", *argv);
                 return 1;
             }
