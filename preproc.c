@@ -1273,9 +1273,9 @@ smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
 
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
-            (nparam <= 0 || m->nparam == 0 || nparam == m->nparam)) {
+            (nparam <= 0 || m->nparam == 0 || nparam == (int) m->nparam)) {
             if (defn) {
-                if (nparam == m->nparam || nparam == -1)
+                if (nparam == (int) m->nparam || nparam == -1)
                     *defn = m;
                 else
                     *defn = NULL;
@@ -2579,7 +2579,7 @@ static int do_directive(Token * tline)
         macro_start->next = NULL;
         macro_start->text = nasm_strdup("'''");
         if (evalresult->value > 0
-            && evalresult->value < strlen(t->text) - 1) {
+            && evalresult->value < (int) strlen(t->text) - 1) {
             macro_start->text[1] = t->text[evalresult->value];
         } else {
             macro_start->text[2] = '\0';

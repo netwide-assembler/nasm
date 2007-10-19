@@ -698,7 +698,7 @@ static void process_respfile(FILE * rfile)
         if (process_arg(prevarg, p))
             *p = '\0';
 
-        if (strlen(p) > prevargsize - 10) {
+        if ((int) strlen(p) > prevargsize - 10) {
             prevargsize += ARG_BUF_DELTA;
             prevarg = nasm_realloc(prevarg, prevargsize);
         }
