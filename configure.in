@@ -67,6 +67,9 @@ PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-std=c99])
 PA_ADD_CFLAGS([-pedantic])
+dnl mingw disables a bunch of features if __STRICT_ANSI__ is defined,
+dnl and -std=c99 defines __STRICT_ANSI__
+PA_ADD_CFLAGS([-U__STRICT_ANSI__])
 
 dnl Look for "nroff" or "groff"
 AC_CHECK_PROGS(NROFF, nroff, echo)
