@@ -10,6 +10,7 @@ bindir		= @bindir@
 mandir		= @mandir@
 docdir		= $(prefix)/doc/nasm
 infodir		= @infodir@
+datarootdir	= @datarootdir@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
