@@ -116,7 +116,7 @@ static int float_multiply(uint16_t * to, uint16_t * from)
  *  read an exponent; returns INT32_MAX on error
  * ---------------------------------------------------------------------------
  */
-int32_t read_exponent(const char *string, int32_t max)
+static int32_t read_exponent(const char *string, int32_t max)
 {
     int32_t i = 0;
     bool neg = false;
