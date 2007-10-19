@@ -737,7 +737,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 
     dp = data;
     ix = itable + *dp++;
-    while (ix->n == (size_t)-1) {
+    while (ix->n == -1) {
 	ix = (const struct disasm_index *)ix->p + *dp++;
     }
 

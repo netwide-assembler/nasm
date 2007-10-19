@@ -279,17 +279,17 @@ int main(int argc, char **argv)
         }
         while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
             lendis =
-                disasm(q, outbuf, sizeof(outbuf), bits, offset, autosync,
+                disasm((uint8_t *) q, outbuf, sizeof(outbuf), bits, offset, autosync,
                        prefer);
             if (!lendis || lendis > (p - q)
                 || (uint32_t)lendis > nextsync - offset)
-                lendis = eatbyte(q, outbuf, sizeof(outbuf));
-            output_ins(offset, q, lendis, outbuf);
+                lendis = eatbyte((uint8_t *) q, outbuf, sizeof(outbuf));
+            output_ins(offset, (uint8_t *) q, lendis, outbuf);
             q += lendis;
             offset += lendis;
         }
         if (q >= buffer + INSN_MAX) {
-            uint8_t *r = buffer, *s = q;
+            uint8_t *r = (uint8_t *) buffer, *s = (uint8_t *) q;
             int count = p - q;
             while (count--)
                 *r++ = *s++;
