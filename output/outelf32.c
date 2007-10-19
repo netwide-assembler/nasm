@@ -333,7 +333,8 @@ static int elf_make_section(char *name, int type, int flags, int align)
 static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
-    int flags_and, flags_or, type, align, i;
+    unsigned flags_and, flags_or;
+    int type, align, i;
 
     /*
      * Default is 32 bits.
@@ -427,7 +428,9 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         sects[i]->flags &= ~flags_and;
         sects[i]->flags |= flags_or;
     } else if (pass == 1) {
-        if (type || align || flags_and)
+          if ((type && sects[i]->type != type)
+             || (align && sects[i]->align != align)
+             || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
             error(ERR_WARNING, "section attributes ignored on"
                   " redeclaration of section `%s'", name);
     }
