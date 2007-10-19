@@ -140,7 +140,7 @@ static void as86_cleanup(int debuginfo)
 
 static int32_t as86_section_names(char *name, int pass, int *bits)
 {
-    
+
     (void)pass;
 
     /*

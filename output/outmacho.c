@@ -116,7 +116,7 @@ struct symbol {
     /* nasm internal data */
     struct symbol *next;	/* next symbol in the list */
     char *name;			/* name of this symbol */
-    int32_t initial_snum;	       	/* symbol number used above in
+    int32_t initial_snum;		/* symbol number used above in
 				   reloc */
     int32_t snum;			/* true snum for reloc */
 

@@ -27,7 +27,7 @@ while (defined($line = <ID>)) {
     if ($line =~ /^([A-Z0-9_]+)(|cc)\s/) {
 	$insn = $1.$2;
 	($token = $1) =~ tr/A-Z/a-z/;
-	
+
 	if ($2 eq '') {
 	    # Single instruction token
 	    if (!defined($tokens{$token})) {
@@ -60,7 +60,7 @@ while (defined($line = <RD>)) {
 	    $reg = $1.$2.$4;
 	    $reg_nr = $2;
 	    $reg_prefix = $1;
-	    $reg_suffix = $4;	
+	    $reg_suffix = $4;
 	} else {
 	    $nregs = 1;
 	    undef $reg_prefix, $reg_suffix;
@@ -72,7 +72,7 @@ while (defined($line = <RD>)) {
 	    }
 	    $tokens{$reg} = scalar @tokendata;
 	    push(@tokendata, "\"${reg}\", TOKEN_REG, 0, R_\U${reg}\E");
-	
+
 	    if (defined($reg_prefix)) {
 		$reg_nr++;
 		$reg = sprintf("%s%u%s", $reg_prefix, $reg_nr, $reg_suffix);
@@ -99,12 +99,12 @@ while (defined($line = <TD>)) {
 	    die "Duplicate definition: $token\n";
 	}
 	$tokens{$token} = scalar @tokendata;
-	
+
 	$data = $pattern;
 	if ($data =~ /^(.*)\{(.*)\}(.*)$/) {
 	    my $head = $1, $tail = $3;
 	    my $px = $2;
-	    
+
 	    $px =~ s/\*/(.*)/g;
 	    if ($token =~ /$px/i) {
 		$data = $head."\U$1".$tail;
@@ -156,25 +156,25 @@ if ($output eq 'h') {
 
     # Paranoia...
     verify_hash_table(\%tokens, \@hashinfo);
-    
+
     ($n, $sv, $g) = @hashinfo;
     $sv2 = $sv+2;
-    
+
     die if ($n & ($n-1));
-    
+
     print "/*\n";
     print " * This file is generated from insns.dat, regs.dat and token.dat\n";
     print " * by tokhash.pl; do not edit.\n";
     print " */\n";
     print "\n";
-    
+
     print "#include \"compiler.h\"\n";
     print "#include <string.h>\n";
     print "#include \"nasm.h\"\n";
     print "#include \"hashtbl.h\"\n";
     print "#include \"insns.h\"\n";
     print "\n";
-    
+
     # These somewhat odd sizes and ordering thereof are due to the
     # relative ranges of the types; this makes it fit in 16 bytes on
     # 64-bit machines and 12 bytes on 32-bit machines.
@@ -185,35 +185,35 @@ if ($output eq 'h') {
     print "    int32_t num;\n";
     print "};\n";
     print "\n";
-    
+
     print "int nasm_token_hash(const char *token, struct tokenval *tv)\n";
     print "{\n";
-    
+
     # Put a large value in unused slots.  This makes it extremely unlikely
     # that any combination that involves unused slot will pass the range test.
     # This speeds up rejection of unrecognized tokens, i.e. identifiers.
     print "#define UNUSED 16383\n";
-    
+
     print "    static const int16_t hash1[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+0];
 	print "        ", defined($h) ? $h : 'UNUSED', ",\n";
     }
     print "    };\n";
-    
+
     print "    static const int16_t hash2[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+1];
 	print "        ", defined($h) ? $h : 'UNUSED', ",\n";
     }
     print "    };\n";
-    
+
     printf "    static const struct tokendata tokendata[%d] = {\n", scalar(@tokendata);
     foreach $d (@tokendata) {
 	print "        { ", $d, " },\n";
     }
     print  "    };\n";
-    
+
     print  "    uint32_t k1, k2;\n";
     print  "    uint64_t crc;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
@@ -222,7 +222,7 @@ if ($output eq 'h') {
     print  "    const struct tokendata *data;\n";
     print  "\n";
     printf "    crc = crc64(UINT64_C(0x%08x%08x), token);\n",
-    	$$sv[0], $$sv[1];
+	$$sv[0], $$sv[1];
     print  "    k1 = (uint32_t)crc;\n";
     print  "    k2 = (uint32_t)(crc >> 32);\n";
     print  "\n";
@@ -231,7 +231,7 @@ if ($output eq 'h') {
     print  "        return tv->t_type = TOKEN_ID;\n";
     print  "\n";
     print  "    data = &tokendata[ix];\n";
-    
+
     print  "    if (strcmp(data->string, token))\n";
     print  "        return tv->t_type = TOKEN_ID;\n";
     print  "\n";

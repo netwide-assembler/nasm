@@ -70,7 +70,7 @@ static int float_multiply(uint16_t * to, uint16_t * from)
     uint32_t temp[MANT_WORDS * 2];
     int32_t i, j;
 
-    /* 
+    /*
      * guaranteed that top bit of 'from' is set -- so we only have
      * to worry about _one_ bit shift to the left
      */
@@ -120,7 +120,7 @@ static int32_t read_exponent(const char *string, int32_t max)
 {
     int32_t i = 0;
     bool neg = false;
-    
+
     if (*string == '+') {
 	string++;
     } else if (*string == '-') {
@@ -130,7 +130,7 @@ static int32_t read_exponent(const char *string, int32_t max)
     while (*string) {
 	if (*string >= '0' && *string <= '9') {
 	    i = (i * 10) + (*string - '0');
-	    
+
 	    /*
 	     * To ensure that underflows and overflows are
 	     * handled properly we must avoid wraparounds of
@@ -217,7 +217,7 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
         }
         string++;
     }
-    
+
     if (*string) {
 	int32_t e;
 
@@ -742,7 +742,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
 		goto overflow;
 	    }
 	}
-	
+
 	if (!fmt->explicit)
 	    mant[one_pos] &= ~one_mask;	/* remove explicit one */
 	mant[0] |= exponent << (15 - fmt->exponent);
@@ -825,4 +825,3 @@ int float_option(const char *option)
 	return -1;		/* Unknown option */
     }
 }
-

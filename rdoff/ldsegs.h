@@ -38,7 +38,7 @@ struct segconfig sconft[SEGCONFIGMAX] = {
     {0xFFFF, 0xFFFF, "invalid segment", 0, 0}
 };
 
-#define getsegconfig(target,number)  				\
+#define getsegconfig(target,number)				\
     {								\
        int _i;							\
        int _t = number;						\

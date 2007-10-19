@@ -410,7 +410,7 @@ static int process_arg(char *p, char *q)
                     ofmt->current_dfmt = ofmt->debug_formats[0];
             } else if (p[1] == 'O') {   /* Optimization level */
                 int opt;
-		
+
 		if (!*param) {
 		    /* Naked -O == -Ox */
 		    optimizing = INT_MAX >> 1; /* Almost unlimited */
@@ -432,18 +432,18 @@ static int process_arg(char *p, char *q)
 			    else
 				optimizing = opt;   /* More than 5 passes */
 			    break;
-			    
+
 			case 'v':
 			case '+':
 			    param++;
 			    opt_verbose_info = true;
 			    break;
-			    
+
 			case 'x':
 			    param++;
 			    optimizing = INT_MAX >> 1; /* Almost unlimited */
 			    break;
-			    
+
 			default:
 			    report_error(ERR_FATAL,
 					 "unknown optimization option -O%c\n",
@@ -809,7 +809,7 @@ static void parse_cmdline(int argc, char **argv)
 		     "file `%s' is both input and output file",
 		     inname);
 
-    if (*errname) {  
+    if (*errname) {
 	error_file = fopen(errname, "w");
 	if (!error_file) {
 	    error_file = stderr;        /* Revert to default! */
@@ -1487,13 +1487,13 @@ static enum directives getkw(char **directive, char **value)
  * This function prints an error message to error_file in the
  * style used by GNU. An example would be:
  * file.asm:50: error: blah blah blah
- * where file.asm is the name of the file, 50 is the line number on 
+ * where file.asm is the name of the file, 50 is the line number on
  * which the error occurs (or is detected) and "error:" is one of
  * the possible optional diagnostics -- it can be "error" or "warning"
- * or something else.  Finally the line terminates with the actual 
+ * or something else.  Finally the line terminates with the actual
  * error message.
- * 
- * @param severity the severity of the warning or error 
+ *
+ * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
 static void report_error_gnu(int severity, const char *fmt, ...)
@@ -1520,16 +1520,16 @@ static void report_error_gnu(int severity, const char *fmt, ...)
 /**
  * MS style error reporting
  * This function prints an error message to error_file in the
- * style used by Visual C and some other Microsoft tools. An example 
+ * style used by Visual C and some other Microsoft tools. An example
  * would be:
  * file.asm(50) : error: blah blah blah
- * where file.asm is the name of the file, 50 is the line number on 
+ * where file.asm is the name of the file, 50 is the line number on
  * which the error occurs (or is detected) and "error:" is one of
  * the possible optional diagnostics -- it can be "error" or "warning"
- * or something else.  Finally the line terminates with the actual 
+ * or something else.  Finally the line terminates with the actual
  * error message.
- * 
- * @param severity the severity of the warning or error 
+ *
+ * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
 static void report_error_vc(int severity, const char *fmt, ...)
@@ -1555,7 +1555,7 @@ static void report_error_vc(int severity, const char *fmt, ...)
 
 /**
  * check for supressed warning
- * checks for suppressed warning or pass one only warning and we're 
+ * checks for suppressed warning or pass one only warning and we're
  * not in pass 1
  *
  * @param severity the severity of the warning or error
@@ -1578,11 +1578,11 @@ static int is_suppressed_warning(int severity)
 /**
  * common error reporting
  * This is the common back end of the error reporting schemes currently
- * implemented.  It prints the nature of the warning and then the 
+ * implemented.  It prints the nature of the warning and then the
  * specific error message to error_file and may or may not return.  It
  * doesn't return if the error severity is a "panic" or "debug" type.
- * 
- * @param severity the severity of the warning or error 
+ *
+ * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
 static void report_error_common(int severity, const char *fmt,

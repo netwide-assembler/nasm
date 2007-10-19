@@ -119,8 +119,8 @@ int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
         rewind(lib->fp);
 
     while (!feof(lib->fp)) {
-        /* 
-         * read the module name from the file, and prepend 
+        /*
+         * read the module name from the file, and prepend
          * the library name and '.' to it.
          */
         strcpy(buf, lib->name);

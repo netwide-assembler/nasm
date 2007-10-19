@@ -15,7 +15,7 @@
  * The format of the directory will be 'RDLDD' followed by a version
  * number, followed by the length of the directory, and then the
  * directory, the format of which has not yet been designed.
- * The module name of the directory must be '.dir'. 
+ * The module name of the directory must be '.dir'.
  *
  * All module names beginning with '.' are reserved for possible future
  * extensions. The linker ignores all such modules, assuming they have

@@ -21,5 +21,3 @@ foreach $mode ('abs', 'rel') {
 }
 
 print "\nfoo:\n";
-
-	

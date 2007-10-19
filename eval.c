@@ -623,7 +623,7 @@ static expr *eval_floatize(enum floatize type)
     int sign = 1;
     int64_t val;
     int j;
-	
+
     i = scan(scpriv, tokval);
     if (i != '(') {
 	error(ERR_NONFATAL, "expecting `('");

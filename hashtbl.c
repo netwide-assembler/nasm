@@ -129,7 +129,7 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
 		if (op->key) {
 		    size_t pos = op->hash & mask;
 		    size_t inc = ((op->hash >> 32) & mask) | 1;
-		    
+
 		    while ((xp = &newtbl[pos])->key)
 			pos = (pos+inc) & mask;
 

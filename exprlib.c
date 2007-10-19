@@ -151,4 +151,3 @@ int32_t reloc_wrt(expr * vect)
     } else
         return NO_SEG;
 }
-

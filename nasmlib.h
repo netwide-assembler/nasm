@@ -43,7 +43,7 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
  * argument to an efunc.
  */
 
-#define ERR_DEBUG  	0x00000008      /* put out debugging message */
+#define ERR_DEBUG	0x00000008      /* put out debugging message */
 #define ERR_WARNING	0x00000000      /* warn only: no further action */
 #define ERR_NONFATAL	0x00000001      /* terminate assembly after phase */
 #define ERR_FATAL	0x00000002      /* instantly fatal: exit with error */
@@ -59,7 +59,7 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
  */
 
 #define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR  8         	/* how far to shift right */
+#define ERR_WARN_SHR  8			/* how far to shift right */
 
 #define WARN(x) ((x) << ERR_WARN_SHR)
 
@@ -186,7 +186,7 @@ void standard_extension(char *inname, char *outname, char *extension,
     WRITECHAR(p,(v) >> 16); \
     WRITECHAR(p,(v) >> 24); \
   } while (0)
-  
+
 #define WRITEDLONG(p,v) \
   do { \
     WRITECHAR(p,v); \

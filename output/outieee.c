@@ -174,8 +174,8 @@ static int32_t ieee_putld(int32_t, int32_t, uint8_t *);
 static int32_t ieee_putlr(struct ieeeFixupp *);
 static void ieee_unqualified_name(char *, char *);
 
-/* 
- * pup init 
+/*
+ * pup init
  */
 static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -266,7 +266,7 @@ static void ieee_deflabel(char *name, int32_t segment,
      *
      * (ii) `segment' is one of our segments, or a SEG_ABS segment.
      * Save the label position for later output of a PUBDEF record.
-     * 
+     *
      *
      * (iii) `segment' is not one of our segments. Save the label
      * position for later output of an EXTDEF.
@@ -876,7 +876,7 @@ static void ieee_write_file(int debuginfo)
      */
     ieee_putascii("CO0,%02X%s.\r\n", strlen(boast), boast);
 
-    /* 
+    /*
      * write processor-specific information
      */
     ieee_putascii("AD8,4,L.\r\n");
@@ -890,7 +890,7 @@ static void ieee_write_file(int debuginfo)
                   1900 + thetime->tm_year, thetime->tm_mon + 1,
                   thetime->tm_mday, thetime->tm_hour, thetime->tm_min,
                   thetime->tm_sec);
-    /* 
+    /*
      * if debugging, dump file names
      */
     for (fn = fnhead; fn && debuginfo; fn = fn->next) {
@@ -904,7 +904,7 @@ static void ieee_write_file(int debuginfo)
      */
     ieee_putcs(false);
 
-    /* 
+    /*
      * Write the section headers
      */
     seg = seghead;

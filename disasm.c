@@ -179,7 +179,7 @@ static uint8_t *do_drex(uint8_t *data, insn *ins)
     if ((drex & 8) != ((ins->rex & REX_OC) ? 8 : 0))
 	return NULL;	/* OC0 mismatch */
     ins->rex = (ins->rex & ~7) | (drex & 7);
-    
+
     dst->segment = SEG_RMREG;
     dst->basereg = drex >> 4;
     return data;
@@ -520,7 +520,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		data += 4;
                 ins->oprs[c - 064].segment &= ~SEG_64BIT;
                 ins->oprs[c - 064].segment |= SEG_32BIT;
-	    }	
+	    }
             if (segsize != osize) {
                 ins->oprs[c - 064].type =
                     (ins->oprs[c - 064].type & ~SIZE_MASK)
@@ -803,7 +803,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     slen = 0;
 
     /* TODO: snprintf returns the value that the string would have if
-     *      the buffer were long enough, and not the actual length of 
+     *      the buffer were long enough, and not the actual length of
      *      the returned string, so each instance of using the return
      *      value of snprintf should actually be checked to assure that
      *      the return value is "sane."  Maybe a macro wrapper could

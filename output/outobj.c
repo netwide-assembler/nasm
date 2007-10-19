@@ -1378,7 +1378,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                  * that its default group is group FLAT, even if
                  * the group FLAT does not explicitly _contain_ the
                  * segment.
-                 * 
+                 *
                  * When we see this, we must create the group
                  * `FLAT', containing no segments, if it does not
                  * already exist; then we must set the default

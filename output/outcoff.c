@@ -604,7 +604,7 @@ typedef struct tagString {
 
 #define EXPORT_SECTION_NAME ".drectve"
 #define EXPORT_SECTION_FLAGS INFO_FLAGS
-/* 
+/*
 #define EXPORT_SECTION_NAME ".text"
 #define EXPORT_SECTION_FLAGS TEXT_FLAGS
 */

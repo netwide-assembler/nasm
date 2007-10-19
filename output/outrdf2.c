@@ -176,7 +176,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
             }
         }
         /*
-         * check it against the text strings in segmenttypes 
+         * check it against the text strings in segmenttypes
          */
 
         for (i = 0; i < COUNT_SEGTYPES; i++)

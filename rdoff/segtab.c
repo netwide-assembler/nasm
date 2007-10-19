@@ -11,7 +11,7 @@ struct segtabnode {
 
     struct segtabnode *left;
     struct segtabnode *right;
-    /* 
+    /*
      * counts of how many are left or right, for use in reorganising
      * the tree
      */

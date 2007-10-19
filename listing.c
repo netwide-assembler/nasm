@@ -172,7 +172,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
             HEX(q + 11, p[5]);
             HEX(q + 13, p[6]);
             HEX(q + 15, p[7]);
-            list_out(offset, q);               
+            list_out(offset, q);
         } else {
             q[0] = '[';
             q[5] = ']';

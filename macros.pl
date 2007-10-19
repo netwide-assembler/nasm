@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# 
+#
 # macros.pl   produce macros.c from standard.mac
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and
@@ -17,10 +17,10 @@ my $tasm_count;
 undef $tasm_count;
 
 open(OUTPUT,">macros.c") or die "unable to open macros.c\n";
-    
+
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .
 " - don't edit it */\n\n#include \"compiler.h\"\n\nstatic const char *stdmac[] = {\n";
-    
+
 foreach $fname ( @ARGV ) {
     open(INPUT,$fname) or die "unable to open $fname\n";
     while (<INPUT>) {
@@ -35,7 +35,7 @@ foreach $fname ( @ARGV ) {
 	    if (length > 0) {
 		print OUTPUT "    \"$_\",\n";
 		$index++;
-	    } 
+	    }
 	} else {
 	    die "$fname:$line:  error unterminated quote";
 	}

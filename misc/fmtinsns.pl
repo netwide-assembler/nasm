@@ -29,5 +29,3 @@ while ($line = <STDIN>) {
     }
     print $line, "\n";
 }
-
-	

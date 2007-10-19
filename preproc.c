@@ -139,7 +139,7 @@ struct Context {
  * the substituted parameter. So in the definition
  *
  *     %define a(x,y) ( (x) & ~(y) )
- * 
+ *
  * the token representing `x' will have its type changed to
  * TOK_SMAC_PARAM, but the one representing `y' will be
  * TOK_SMAC_PARAM+1.
@@ -167,7 +167,7 @@ struct Token {
  * Multi-line macro definitions are stored as a linked list of
  * these, which is essentially a container to allow several linked
  * lists of Tokens.
- * 
+ *
  * Note that in this module, linked lists are treated as stacks
  * wherever possible. For this reason, Lines are _pushed_ on to the
  * `expansion' field in MMacro structures, so that the linked list,
@@ -254,7 +254,7 @@ enum {
 };
 #define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
-/* 
+/*
  * These defines are used as the possible return values for do_directive
  */
 #define NO_DIRECTIVE_FOUND  0
@@ -837,7 +837,7 @@ static Token *tokenize(char *line)
 
 /*
  * this function allocates a new managed block of memory and
- * returns a pointer to the block.  The managed blocks are 
+ * returns a pointer to the block.  The managed blocks are
  * deleted only all at once by the delete_Blocks function.
  */
 static void *new_Block(size_t size)
@@ -865,9 +865,9 @@ static void delete_Blocks(void)
 {
     Blocks *a, *b = &blocks;
 
-    /* 
+    /*
      * keep in mind that the first block, pointed to by blocks
-     * is a static and not dynamically allocated, so we don't 
+     * is a static and not dynamically allocated, so we don't
      * free it.
      */
     while (b) {
@@ -881,7 +881,7 @@ static void delete_Blocks(void)
 }
 
 /*
- *  this function creates a new Token and passes a pointer to it 
+ *  this function creates a new Token and passes a pointer to it
  *  back to the caller.  It sets the type and text elements, and
  *  also the mac and next elements to NULL.
  */
@@ -1557,7 +1557,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 
     free_tlist(origline);
     return j ^ PP_NEGATIVE(ct);
-    
+
 fail:
     free_tlist(origline);
     return -1;
@@ -1582,7 +1582,7 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 			  int nparam, Token *expansion)
 {
     SMacro *smac, **smhead;
-    
+
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
 	if (!smac) {
 	    error(ERR_WARNING,
@@ -1607,7 +1607,7 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 	    smhead = (SMacro **) hash_findi_add(smacros, mname);
 	else
 	    smhead = &ctx->localmac;
-	
+
 	smac = nasm_malloc(sizeof(SMacro));
 	smac->next = *smhead;
 	*smhead = smac;
@@ -1631,7 +1631,7 @@ static void undef_smacro(Context *ctx, const char *mname)
 	smhead = (SMacro **) hash_findi(smacros, mname, NULL);
     else
 	smhead = &ctx->localmac;
-    
+
     if (smhead) {
 	/*
 	 * We now have a macro name... go hunt for it.
@@ -1654,13 +1654,13 @@ static void undef_smacro(Context *ctx, const char *mname)
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
  * with it if so.
- * 
+ *
  * If a directive _is_ found, it is the responsibility of this routine
  * (and not the caller) to free_tlist() the line.
  *
  * @param tline a pointer to the current tokeninzed line linked list
  * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
- * 
+ *
  */
 static int do_directive(Token * tline)
 {
@@ -2252,7 +2252,7 @@ static int do_directive(Token * tline)
 	    rotate %= (int)mmac->nparam;
 	    if (rotate < 0)
 		rotate += mmac->nparam;
-	    
+
 	    mmac->rotate = rotate;
         }
         return DIRECTIVE_FOUND;
@@ -2478,7 +2478,7 @@ static int do_directive(Token * tline)
 
     case PP_STRLEN:
 	casesense = true;
-	
+
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
@@ -3119,11 +3119,11 @@ static Token *expand_smacro(Token * tline)
                 if (m && m->in_progress)
                     m = NULL;
                 if (!m) {       /* in progess or didn't find '(' or wrong nparam */
-                    /* 
+                    /*
                      * Design question: should we handle !tline, which
                      * indicates missing ')' here, or expand those
                      * macros anyway, which requires the (t) test a few
-                     * lines down?  
+                     * lines down?
                      */
                     nasm_free(params);
                     nasm_free(paramsize);
@@ -3993,11 +3993,11 @@ void pp_pre_undefine(char *definition)
 void pp_runtime(char *definition)
 {
     Token *def;
-    
+
     def = tokenize(definition);
     if(do_directive(def) == NO_DIRECTIVE_FOUND)
         free_tlist(def);
-        
+
 }
 
 void pp_extra_stdmac(const char **macros)

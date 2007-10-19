@@ -47,7 +47,7 @@
  */
 
 struct segment_infonode {
-    int dest_seg;               /* output segment to be placed into, -1 to 
+    int dest_seg;               /* output segment to be placed into, -1 to
                                    skip linking this segment */
     int32_t reloc;                 /* segment's relocation factor */
 };
@@ -109,7 +109,7 @@ rdf_headerbuf *newheader = NULL;
 
 /* The current state of segment allocation, including information about
  * which output segment numbers have been allocated, and their types and
- * amount of data which has already been allocated inside them. 
+ * amount of data which has already been allocated inside them.
  */
 struct SegmentHeaderRec outputseg[RDF_MAXSEGS];
 int nsegs = 0;
@@ -188,7 +188,7 @@ void loadmodule(const char *filename)
         exit(1);
     }
 
-    /* 
+    /*
      * store information about the module, and determine what segments
      * it contains, and what we should do with them (determine relocation
      * factor if we decide to keep them)
@@ -860,7 +860,7 @@ void write_output(const char *filename)
                     break;
                 }
 
-                /* 
+                /*
                  * okay, now the relocation is in the segment pointed to by
                  * cur->seginfo[localseg], and we know everything else is
                  * okay to go ahead and do the relocation
@@ -926,7 +926,7 @@ void write_output(const char *filename)
             case RDFREC_FARIMPORT:
                 /*
                  * scan the global symbol table for the symbol
-                 * and associate its location with the segment number 
+                 * and associate its location with the segment number
                  * for this module
                  */
                 se = symtabFind(symtab, hr->i.label);

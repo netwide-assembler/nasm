@@ -398,7 +398,7 @@ static void rdf_out(int32_t segto, void *data, uint32_t type,
             WRITEDLONG(pd, *(int64_t *)data);
         else
             WRITESHORT(pd, *(int32_t *)data);
-            
+
 
         membufwrite(seg[segto], databuf, bytes);
 

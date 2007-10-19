@@ -223,7 +223,7 @@ static void aout_cleanup(int debuginfo)
 
 static int32_t aout_section_names(char *name, int pass, int *bits)
 {
-    
+
     (void)pass;
 
     /*

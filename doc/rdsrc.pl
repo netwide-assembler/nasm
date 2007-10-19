@@ -9,24 +9,24 @@
 
 # Source-form features:
 # ---------------------
-# 
+#
 # Bullet \b
 #   Bullets the paragraph. Rest of paragraph is indented to cope. In
 #   HTML, consecutive groups of bulleted paragraphs become unordered
 #   lists.
-# 
+#
 # Emphasis \e{foobar}
 #   produces `_foobar_' in text and italics in HTML, PS, RTF
-# 
+#
 # Inline code \c{foobar}
 #   produces ``foobar'' in text, and fixed-pitch font in HTML, PS, RTF
-# 
+#
 # Display code
 # \c  line one
 # \c   line two
 #   produces fixed-pitch font where appropriate, and doesn't break
 #   pages except sufficiently far into the middle of a display.
-# 
+#
 # Chapter, header and subheader
 # \C{intro} Introduction
 # \H{whatsnasm} What is NASM?
@@ -40,17 +40,17 @@
 #   Expands to `Chapter 1', `Section 1.1', `Section 1.1.1'. \K has an
 #   initial capital whereas \k doesn't. In HTML, will produce
 #   hyperlinks.
-# 
+#
 # Web link \W{http://foobar/}{text} or \W{mailto:me@here}\c{me@here}
 #   the \W prefix is ignored except in HTML; in HTML the last part
 #   becomes a hyperlink to the first part.
-# 
+#
 # Literals \{ \} \\
 #   In case it's necessary, they expand to the real versions.
-# 
+#
 # Nonbreaking hyphen \-
 #   Need more be said?
-# 
+#
 # Source comment \#
 #   Causes everything after it on the line to be ignored by the
 #   source-form processor.
@@ -458,7 +458,7 @@ sub fixup_xrefs {
       if ($$pname[$i] =~ /^k/) {
         $k = $$pname[$i];
         $caps = ($k =~ /^kK/);
-	$k = substr($k,2);	
+	$k = substr($k,2);
         $repl = $refs{$k};
 	die "undefined keyword `$k'\n" unless $repl;
 	substr($repl,0,1) =~ tr/a-z/A-Z/ if $caps;
@@ -1417,4 +1417,3 @@ sub write_dip {
   }
   close(PARAS);
 }
-

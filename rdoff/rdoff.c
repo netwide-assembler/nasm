@@ -1,4 +1,4 @@
-/* rdoff.c   	library of routines for manipulating rdoff files
+/* rdoff.c	library of routines for manipulating rdoff files
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -135,10 +135,10 @@ void freemembuf(memorybuffer * b)
    General purpose routines and variables used by the library functions
    ========================================================================= */
 
-/* 
+/*
  * translateint32_t() and translateint16_t()
  *
- * translate from little endian to local representation 
+ * translate from little endian to local representation
  */
 int32_t translateint32_t(int32_t in)
 {

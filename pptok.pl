@@ -16,7 +16,7 @@ while (defined($line = <IN>)) {
     $line =~ s/^\s+//;		# Remove leading whitespace
     $line =~ s/\s*\#.*$//;	# Remove comments and trailing whitespace
     next if ($line eq '');
-    
+
     if ($line =~ /^\%(.*)\*$/) {
 	push(@cctok, $1);
     } elsif ($line =~ /^\%(.*)$/) {
@@ -83,9 +83,9 @@ if ($what eq 'h') {
 	$n += 2;
     }
     print  OUT "};\n\n";
-    
+
     printf OUT "#define PP_COND(x)     ((enum pp_conditional)((x) & 0x%x))\n",
-    	(scalar(@cond)-1) << 1;
+	(scalar(@cond)-1) << 1;
     print  OUT "#define PP_IS_COND(x)  ((unsigned int)(x) < PP_\U$first_uncond\E)\n";
     print  OUT "#define PP_NEGATIVE(x) ((x) & 1)\n";
     print  OUT "\n";
@@ -132,12 +132,12 @@ if ($what eq 'c') {
 
     # Paranoia...
     verify_hash_table(\%tokens, \@hashinfo);
-    
+
     ($n, $sv, $g) = @hashinfo;
     $sv2 = $sv+2;
-    
+
     die if ($n & ($n-1));
-    
+
     print OUT "#include \"compiler.h\"\n";
     print OUT "#include <inttypes.h>\n";
     print OUT "#include <ctype.h>\n";
@@ -156,7 +156,7 @@ if ($what eq 'c') {
 	}
     }
     print OUT  "};\n";
-    
+
     print OUT "enum preproc_token pp_token_hash(const char *token)\n";
     print OUT "{\n";
 
@@ -171,14 +171,14 @@ if ($what eq 'c') {
 	print OUT "        ", defined($h) ? $h : 'UNUSED', ",\n";
     }
     print OUT "    };\n";
-    
+
     print OUT "    static const int16_t hash2[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+1];
 	print OUT "        ", defined($h) ? $h : 'UNUSED', ",\n";
     }
     print OUT "    };\n";
-    
+
     print OUT  "    uint32_t k1, k2;\n";
     print OUT  "    uint64_t crc;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
@@ -187,7 +187,7 @@ if ($what eq 'c') {
     print OUT  "\n";
 
     printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), token);\n",
-    	$$sv[0], $$sv[1];
+	$$sv[0], $$sv[1];
     print  OUT "    k1 = (uint32_t)crc;\n";
     print  OUT "    k2 = (uint32_t)(crc >> 32);\n";
     print  OUT "\n";

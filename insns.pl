@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# 
+#
 # insns.pl   produce insnsa.c, insnsd.c, insnsi.h, insnsn.c from insns.dat
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and
@@ -72,15 +72,15 @@ close F;
 
 if ( !defined($output) || $output eq 'a' ) {
     print STDERR "Writing insnsa.c...\n";
-    
+
     open A, ">insnsa.c";
-    
+
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
     print A "#include \"nasm.h\"\n";
     print A "#include \"insns.h\"\n";
     print A "\n";
-    
+
     foreach $i (@opcodes, @opcodes_cc) {
 	print A "static const struct itemplate instrux_${i}[] = {\n";
 	$aname = "aa_$i";
@@ -94,21 +94,21 @@ if ( !defined($output) || $output eq 'a' ) {
 	print A "    instrux_${i},\n";
     }
     print A "};\n";
-    
+
     close A;
 }
 
 if ( !defined($output) || $output eq 'd' ) {
     print STDERR "Writing insnsd.c...\n";
-    
+
     open D, ">insnsd.c";
-    
+
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
     print D "#include \"nasm.h\"\n";
     print D "#include \"insns.h\"\n";
     print D "\n";
-    
+
     print D "static const struct itemplate instrux[] = {\n";
     $n = 0;
     foreach $j (@big) {
@@ -139,26 +139,26 @@ if ( !defined($output) || $output eq 'd' ) {
 		printf D "    { itable_%s, -1 },\n", $nn;
 	    } elsif (defined($dinstables{$nn})) {
 		printf D "    { itable_%s, %u },\n",
-	    	$nn, scalar(@{$dinstables{$nn}});
+		$nn, scalar(@{$dinstables{$nn}});
 	    } else {
 		printf D "    { NULL, 0 },\n";
 	    }
 	}
     print D "};\n";
     }
-    
+
     close D;
 }
 
 if ( !defined($output) || $output eq 'i' ) {
     print STDERR "Writing insnsi.h...\n";
-    
+
     open I, ">insnsi.h";
-    
+
     print I "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
     print I "/* This file in included by nasm.h */\n\n";
-    
+
     print I "/* Instruction names */\n\n";
     print I "#ifndef NASM_INSNSI_H\n";
     print I "#define NASM_INSNSI_H 1\n\n";
@@ -174,19 +174,19 @@ if ( !defined($output) || $output eq 'i' ) {
     print I "\n};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n\n";
     print I "#endif /* NASM_INSNSI_H */\n";
-    
+
     close I;
 }
 
 if ( !defined($output) || $output eq 'n' ) {
     print STDERR "Writing insnsn.c...\n";
-    
+
     open N, ">insnsn.c";
-    
+
     print N "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
     print N "/* This file in included by names.c */\n\n";
-    
+
     print N "static const char * const insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
@@ -208,7 +208,7 @@ if ( !defined($output) || $output eq 'n' ) {
 	$ilower =~ tr/A-Z/a-z/;	# Change to lower case (Perl 4 compatible)
 	print N "\n\t\"${ilower}\"";
     }
-    
+
     print N "\n};\n\n";
     print N "/* and the corresponding opcodes */\n";
     print N "static const enum opcode ico[] = {";
@@ -218,9 +218,9 @@ if ( !defined($output) || $output eq 'n' ) {
 	$first = 0;
 	print N "\n\tI_$i";
     }
-    
+
     print N "\n};\n";
-    
+
     close N;
 }
 
@@ -231,7 +231,7 @@ sub format {
     my $num, $nd = 0;
 
     return (undef, undef) if $operands eq "ignore";
-    
+
     # format the operands
     $operands =~ s/:/|colon,/g;
     $operands =~ s/mem(\d+)/mem|bits$1/g;
@@ -254,12 +254,12 @@ sub format {
     }
     $operands = join(',', @ops);
     $operands =~ tr/a-z/A-Z/;
-    
+
     # format the flags
     $flags =~ s/,/|IF_/g;
     $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
     $flags = "IF_" . $flags;
-    
+
     ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
 }
 

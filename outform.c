@@ -1,7 +1,7 @@
 /* outform.c	manages a list of output formats, and associates
- * 		them with their relevant drivers. Also has a
- * 		routine to find the correct driver given a name
- * 		for it
+ *		them with their relevant drivers. Also has a
+ *		routine to find the correct driver given a name
+ *		for it
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is

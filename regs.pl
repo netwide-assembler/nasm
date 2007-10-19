@@ -42,7 +42,7 @@ sub process_line($) {
 	    if ( !defined($disclass{$dclass}) ) {
 		$disclass{$dclass} = [];
 	    }
-	    
+
 	    $disclass{$dclass}->[$x86regno] = $reg;
 	}
 
@@ -69,7 +69,7 @@ while ( defined($line = <REGS>) ) {
 
     chomp $line;
     $line =~ s/\s*(\#.*|)$//;
-    
+
     next if ( $line eq '' );
 
     process_line($line);

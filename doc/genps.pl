@@ -561,7 +561,7 @@ for ( $i = 0 ; $i < $npara ; $i++ ) {
 	push(@tocptypes, 'toc0'.' :'.$sech.':'.$chap.' '.$secn.':');
 
 	unshift(@{$paras[$i]},
- 		[-5, $xref], [0,$chap.' '.$secn.':'], [0, ' ']);
+		[-5, $xref], [0,$chap.' '.$secn.':'], [0, ' ']);
     } elsif ( $ptype eq 'head' || $ptype eq 'subh' ) {
 	unless ( $xtype =~ /^\S+ (\S+) :(.*)$/ ) {
 	    die "Bad para";

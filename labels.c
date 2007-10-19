@@ -136,12 +136,12 @@ static union label *find_label(char *label, int create)
 	lfree = lfree->admin.next;
 	init_block(lfree);
     }
-    
+
     lfree->admin.movingon = BOGUS_VALUE;
     lfree->defn.label = perm_copy(label);
     lfree->defn.special = NULL;
     lfree->defn.is_global = NOT_DEFINED_YET;
-    
+
     hash_add(&ip, lfree->defn.label, lfree);
     return lfree++;
 }

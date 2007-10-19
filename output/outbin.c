@@ -557,7 +557,7 @@ static void bin_cleanup(int debuginfo)
             else
                 l -= s->vstart;
         }
-        
+
         if (r->bytes >= 4)
             WRITEDLONG(q, l);
         else if (r->bytes == 2)
@@ -742,8 +742,8 @@ static void bin_out(int32_t segto, const void *data, uint32_t type,
     uint8_t *p, mydata[8];
     struct Section *s;
     int32_t realbytes;
-    
-    
+
+
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
         error(ERR_NONFATAL, "WRT not supported by binary output format");
@@ -761,7 +761,7 @@ static void bin_out(int32_t segto, const void *data, uint32_t type,
     s = find_section_by_index(segto);
     if (!s)
         error(ERR_PANIC, "code directed to nonexistent segment?");
-        
+
     /* "Smart" section-type adaptation code. */
     if (!(s->flags & TYPE_DEFINED)) {
         if ((type & OUT_TYPMASK) == OUT_RESERVE)

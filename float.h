@@ -1,5 +1,5 @@
 /* float.h   header file for the floating-point constant module of
- * 	     the Netwide Assembler
+ *	     the Netwide Assembler
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is

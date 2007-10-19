@@ -254,7 +254,7 @@ int64_t readnum(char *str, bool *error)
         *error = true;
         return 0;
     }
-    
+
     /*
      * `checklimit' must be 2**(32|64) / radix. We can't do that in
      * 32/64-bit arithmetic, which we're (probably) using, so we
@@ -284,7 +284,7 @@ int64_t readnum(char *str, bool *error)
 		(result == checklimit && digit >= last)) {
 		warn = true;
 	    }
-	    
+
 	    result = radix * result + digit;
 	}
         r++;
@@ -530,7 +530,7 @@ void saa_free(struct SAA *s)
 static void saa_extend(struct SAA *s)
 {
     size_t blkn = s->nblks++;
-    
+
     if (blkn >= s->nblkptrs) {
 	size_t rindex = s->rblk - s->blk_ptrs;
 	size_t windex = s->wblk - s->blk_ptrs;
@@ -690,7 +690,7 @@ void saa_rnbytes(struct SAA *s, void *data, size_t len)
 void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 {
     size_t ix;
-    
+
     if (posn+len > s->datalen) {
 	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fread");
 	return;
@@ -708,7 +708,7 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 {
     size_t ix;
-    
+
     if (posn > s->datalen) {
 	/* Seek beyond the end of the existing array not supported */
 	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fwrite");
@@ -867,7 +867,7 @@ void null_debug_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
 	(void)filename;
 	(void)linenumber;
-	(void)segto;	
+	(void)segto;
 }
 void null_debug_deflabel(char *name, int32_t segment, int32_t offset,
                          int is_global, char *special)

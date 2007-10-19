@@ -84,7 +84,7 @@ sub insert_deps($) {
     my($file) = @_;
     $nexttemp++;		# Unique serial number for each temp file
     my($tmp) = File::Spec->catfile(dirname($file), 'tmp.'.$nexttemp);
-    
+
     sysopen(IN, $file, O_RDONLY)
 	or die "$0: Cannot open input: $file\n";
     sysopen(OUT, $tmp, O_WRONLY|O_CREAT|O_TRUNC, 0666)
@@ -151,15 +151,15 @@ sub insert_deps($) {
 	}
     }
     close(OUT);
-    
-    (unlink($file) && rename($tmp, $file)) 
+
+    (unlink($file) && rename($tmp, $file))
 	or die "$0: Failed to change $tmp -> $file\n";
 }
 
 #
 # Main program
 #
-    
+
 %deps = ();
 @files = ();
 @mkfiles = ();

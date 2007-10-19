@@ -301,7 +301,7 @@ extern Preproc nasmpp;
  * matches any character that may appear at places other than the start of an
  * identifier. E.g. a period may only appear at the start of an identifier
  * (for local labels), whereas a number may appear anywhere *but* at the
- * start. 
+ * start.
  */
 
 #define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
@@ -422,51 +422,51 @@ enum {
 typedef uint32_t opflags_t;
 
 /* Size, and other attributes, of the operand */
-#define BITS8     	0x00000001L
-#define BITS16    	0x00000002L
-#define BITS32    	0x00000004L
-#define BITS64    	0x00000008L   /* x64 and FPU only */
-#define BITS80    	0x00000010L   /* FPU only */
+#define BITS8		0x00000001L
+#define BITS16		0x00000002L
+#define BITS32		0x00000004L
+#define BITS64		0x00000008L   /* x64 and FPU only */
+#define BITS80		0x00000010L   /* FPU only */
 #define BITS128		0x20000000L
-#define FAR       	0x00000020L   /* grotty: this means 16:16 or */
+#define FAR		0x00000020L   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
-#define NEAR      	0x00000040L
-#define SHORT     	0x00000080L   /* and this means what it says :) */
+#define NEAR		0x00000040L
+#define SHORT		0x00000080L   /* and this means what it says :) */
 
-#define SIZE_MASK 	0x200000FFL   /* all the size attributes */
+#define SIZE_MASK	0x200000FFL   /* all the size attributes */
 
 /* Modifiers */
 #define MODIFIER_MASK	0x00000f00L
-#define TO        	0x00000100L   /* reverse effect in FADD, FSUB &c */
-#define COLON     	0x00000200L   /* operand is followed by a colon */
-#define STRICT    	0x00000400L   /* do not optimize this operand */
+#define TO		0x00000100L   /* reverse effect in FADD, FSUB &c */
+#define COLON		0x00000200L   /* operand is followed by a colon */
+#define STRICT		0x00000400L   /* do not optimize this operand */
 
 /* Type of operand: memory reference, register, etc. */
 #define OPTYPE_MASK	0x0000f000L
 #define REGISTER	0x00001000L   /* register number in 'basereg' */
 #define IMMEDIATE	0x00002000L
 #define MEMORY		0x0000c000L
-#define REGMEM    	0x00008000L   /* for r/m, ie EA, operands */
+#define REGMEM		0x00008000L   /* for r/m, ie EA, operands */
 
 /* Register classes */
-#define REG_EA   	0x00009000L   /* 'normal' reg, qualifies as EA */
+#define REG_EA		0x00009000L   /* 'normal' reg, qualifies as EA */
 #define RM_GPR		0x00208000L   /* integer operand */
 #define REG_GPR		0x00209000L   /* integer register */
-#define REG8      	0x00209001L   /*  8-bit GPR  */
-#define REG16     	0x00209002L   /* 16-bit GPR */
-#define REG32     	0x00209004L   /* 32-bit GPR */
-#define REG64     	0x00209008L   /* 64-bit GPR */
-#define IP_REG    	0x00801000L   /* RIP or EIP register */
-#define RIPREG    	0x00801008L   /* RIP */
-#define EIPREG    	0x00801004L   /* EIP */
-#define FPUREG    	0x01001000L   /* floating point stack registers */
-#define FPU0      	0x01011000L   /* FPU stack register zero */
+#define REG8		0x00209001L   /*  8-bit GPR  */
+#define REG16		0x00209002L   /* 16-bit GPR */
+#define REG32		0x00209004L   /* 32-bit GPR */
+#define REG64		0x00209008L   /* 64-bit GPR */
+#define IP_REG		0x00801000L   /* RIP or EIP register */
+#define RIPREG		0x00801008L   /* RIP */
+#define EIPREG		0x00801004L   /* EIP */
+#define FPUREG		0x01001000L   /* floating point stack registers */
+#define FPU0		0x01011000L   /* FPU stack register zero */
 #define RM_MMX		0x02008000L   /* MMX operand */
-#define MMXREG    	0x02009000L   /* MMX register */
+#define MMXREG		0x02009000L   /* MMX register */
 #define RM_XMM		0x04008000L   /* XMM (SSE) operand */
-#define XMMREG    	0x04009000L   /* XMM (SSE) register */
+#define XMMREG		0x04009000L   /* XMM (SSE) register */
 #define XMM0		0x04019000L   /* XMM register zero */
-#define REG_CDT   	0x00101004L   /* CRn, DRn and TRn */
+#define REG_CDT		0x00101004L   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004L   /* CRn */
 #define REG_DREG	0x00121004L   /* DRn */
 #define REG_TREG	0x00141004L   /* TRn */
@@ -480,7 +480,7 @@ typedef uint32_t opflags_t;
 #define REG_EIP		0x00801004L   /* EIP relative addressing */
 
 /* Special GPRs */
-#define REG_SMASK 	0x000f0000L   /* a mask for the following */
+#define REG_SMASK	0x000f0000L   /* a mask for the following */
 #define REG_ACCUM	0x00219000L   /* accumulator: AL, AX, EAX, RAX */
 #define REG_AL		0x00219001L
 #define REG_AX		0x00219002L
@@ -601,7 +601,7 @@ typedef struct {                /* an instruction itself */
     int nprefix;                /* number of entries in above */
     enum opcode opcode;         /* the opcode - not just the string */
     enum ccode condition;       /* the condition code, if Jcc/SETcc */
-    int operands;               /* how many operands? 0-3 
+    int operands;               /* how many operands? 0-3
                                  * (more if db et al) */
     operand oprs[MAX_OPERANDS]; /* the operands, defined as above */
     extop *eops;                /* extended operands */
@@ -631,7 +631,7 @@ struct ofmt {
      * This is a single keyword used to select the driver.
      */
     const char *shortname;
-    
+
 
     /*
      * this is reserved for out module specific help.
@@ -850,7 +850,7 @@ struct dfmt {
     const char *shortname;
 
     /*
-     * init - called initially to set up local pointer to object format, 
+     * init - called initially to set up local pointer to object format,
      * void pointer to implementation defined data, file pointer (which
      * probably won't be used, but who knows?), and error function.
      */
@@ -875,7 +875,7 @@ struct dfmt {
      * is encountered. 'directive' contains the first parameter to the
      * DEBUG directive, and params contains the rest. For example,
      * 'DEBUG VAR _somevar:int' would translate to a call to this
-     * function with 'directive' equal to "VAR" and 'params' equal to 
+     * function with 'directive' equal to "VAR" and 'params' equal to
      * "_somevar:int".
      */
     void (*debug_directive) (const char *directive, const char *params);

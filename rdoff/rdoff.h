@@ -48,7 +48,7 @@
 #define RDFREC_MODNAME		8
 #define RDFREC_COMMON		10
 
-/* 
+/*
  * Generic record - contains the type and length field, plus a 128 byte
  * array 'data'
  */
@@ -58,7 +58,7 @@ struct GenericRec {
     char data[128];
 };
 
-/* 
+/*
  * Relocation record
  */
 struct RelocRec {

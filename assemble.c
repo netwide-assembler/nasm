@@ -417,10 +417,10 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     add_asp(instruction, bits);
 
     size_prob = false;
-    
-    for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){ 
+
+    for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){
         int m = matches(temp, instruction, bits);
-        
+
         if (m == 99)
             m += jmp_match(segment, offset, bits, instruction, temp->code);
 
@@ -517,7 +517,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                                 NO_SEG, NO_SEG);
                             offset++;
                         }
-                    }                    
+                    }
                     insn_end = offset + insn_size;
                     gencode(segment, offset, bits, instruction, codes,
                             insn_end);
@@ -903,8 +903,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 	    break;
         case 0300:
         case 0301:
-        case 0302:         
-        case 0303:         
+        case 0302:
+        case 0303:
             break;
         case 0310:
 	    if (bits == 64)
@@ -915,7 +915,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
             length += (bits != 32) && !has_prefix(ins,P_A32);
             break;
         case 0312:
-            break;     
+            break;
         case 0313:
 	    if (bits != 64 || has_prefix(ins,P_A16) || has_prefix(ins,P_A32))
 		return -1;
@@ -978,7 +978,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
                 int rfield;
 		int32_t rflags;
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
-                
+
 		if (c <= 0177) {
 		    /* pick rfield from operand b */
 		    rflags = regflag(&ins->oprs[c & 7]);
@@ -1003,7 +1003,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         }
 
     ins->rex &= rex_mask;
-    
+
     if (ins->rex & REX_D) {
 	if (ins->rex & REX_H) {
 	    errfunc(ERR_NONFATAL, "cannot use high register in drex instruction");
@@ -1053,7 +1053,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
     uint8_t bytes[4];
     int32_t size;
     int64_t data;
-    
+
     while (*codes)
         switch (c = *codes++) {
         case 01:
@@ -1245,7 +1245,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
-            
+
         case 054:
         case 055:
         case 056:
@@ -1471,13 +1471,13 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             break;
 
         case 0322:
-        case 0323:     
-            break;                
-            
+        case 0323:
+            break;
+
         case 0324:
             ins->rex |= REX_W;
             break;
-        
+
         case 0330:
             *bytes = *codes++ ^ condval[ins->condition];
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
@@ -1549,7 +1549,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 		int32_t rflags;
                 uint8_t *p;
                 int32_t s;
-                
+
                 if (c <= 0177) {
 		    /* pick rfield from operand b */
 		    rflags = regflag(&ins->oprs[c & 7]);
@@ -1565,7 +1565,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 		     rfield, rflags, ins->forw_ref)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }
-                            
+
                 p = bytes;
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
@@ -1600,7 +1600,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                     }
                     s++;
                     break;
-                case 8:               
+                case 8:
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
@@ -1690,7 +1690,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
     for (i = 0; i < itemp->operands; i++)
         if (instruction->oprs[i].type & ~itemp->opd[i] & (COLON | TO))
             return 0;
-            
+
     /*
      * Check that the operand flags all match up
      */
@@ -1781,7 +1781,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	for (i = 0; i < MAX_OPERANDS; i++)
 	    size[i] = asize;
     }
-    
+
     if (itemp->flags & (IF_SM | IF_SM2)) {
         oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
         asize = 0;
@@ -1808,7 +1808,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
      */
     if (((itemp->flags & IF_PLEVEL) > cpu))
         return 3;
-        
+
     /*
      * Check if instruction is available in long mode
      */
@@ -1844,7 +1844,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 
 	if (REG_EA & ~f)
 	    return NULL;	/* Invalid EA register */
-	
+
 	output->rex |= op_rexflags(input, REX_B|REX_P|REX_W|REX_H);
 
         output->sib_present = false;             /* no SIB necessary */
@@ -1883,7 +1883,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 
             if (s == 0)
                 i = -1;         /* make this easy, at least */
-                
+
             if (i >= EXPR_REG_START && i < REG_ENUM_LIMIT) {
                 it = regvals[i];
 		ix = reg_flags[i];
@@ -1891,7 +1891,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 it = -1;
 		ix = 0;
 	    }
-                
+
 	    if (b != -1 && b >= EXPR_REG_START && b < REG_ENUM_LIMIT) {
                 bt = regvals[b];
 		bx = reg_flags[b];
@@ -1899,7 +1899,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 bt = -1;
 		bx = 0;
 	    }
-                
+
 	    /* check for a 32/64-bit memory reference... */
 	    if ((ix|bx) & (BITS32|BITS64)) {
                 /* it must be a 32/64-bit memory reference. Firstly we have
@@ -1920,7 +1920,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
 			return NULL; /* Invalid size */
 		    sok &= ~bx;
 		}
-                
+
                 /* While we're here, ensure the user didn't specify WORD. */
                 if (input->addr_size == 16 ||
 		    (input->addr_size == 32 && !(sok & BITS32)) ||
@@ -1964,7 +1964,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 if (it == -1 && (bt & 7) != REG_NUM_ESP) {
 		    /* no SIB needed */
                     int mod, rm;
-                    
+
                     if (bt == -1) {
                         rm = 5;
                         mod = 0;
@@ -1990,12 +1990,12 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 } else {
 		    /* we need a SIB */
                     int mod, scale, index, base;
-                    
+
                     if (it == -1)
                         index = 4, s = 1;
                     else
                         index = (it & 7);
-                    
+
                     switch (s) {
                     case 1:
                         scale = 0;
@@ -2012,7 +2012,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                     default:   /* then what the smeg is it? */
                         return NULL;    /* panic */
                     }
-                    
+
                     if (bt == -1) {
                         base = 5;
                         mod = 0;
@@ -2039,7 +2039,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
                 }
             } else {            /* it's 16-bit */
                 int mod, rm;
-                
+
                 /* check for 64-bit long mode */
                 if (addrbits == 64)
                     return NULL;
@@ -2125,7 +2125,7 @@ static ea *process_ea(operand * input, ea * output, int addrbits,
             }
         }
     }
-    
+
     output->size = 1 + output->sib_present + output->bytes;
     return output;
 }
@@ -2139,21 +2139,21 @@ static void add_asp(insn *instruction, int addrbits)
     for (j = 0; j < instruction->operands; j++) {
 	if (!(MEMORY & ~instruction->oprs[j].type)) {
 	    int32_t i, b;
-	    
+
 	    /* Verify as Register */
 	    if (instruction->oprs[j].indexreg < EXPR_REG_START
 		|| instruction->oprs[j].indexreg >= REG_ENUM_LIMIT)
 		i = 0;
 	    else
 		i = reg_flags[instruction->oprs[j].indexreg];
-	    
+
 	    /* Verify as Register */
 	    if (instruction->oprs[j].basereg < EXPR_REG_START
 		|| instruction->oprs[j].basereg >= REG_ENUM_LIMIT)
 		b = 0;
 	    else
 		b = reg_flags[instruction->oprs[j].basereg];
-	    
+
 	    if (instruction->oprs[j].scale == 0)
 		i = 0;
 
@@ -2167,7 +2167,7 @@ static void add_asp(insn *instruction, int addrbits)
 		    valid &= 32;
 		if (!(REG64 & ~b))
 		    valid &= 64;
-		
+
 		if (!(REG16 & ~i))
 		    valid &= 16;
 		if (!(REG32 & ~i))

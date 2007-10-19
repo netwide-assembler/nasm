@@ -225,4 +225,3 @@ int stdscan(void *private_data, struct tokenval *tv)
     } else                      /* just an ordinary char */
         return tv->t_type = (uint8_t)(*stdscan_bufptr++);
 }
-
