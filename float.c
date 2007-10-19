@@ -113,6 +113,53 @@ static int float_multiply(uint16_t * to, uint16_t * from)
 
 /*
  * ---------------------------------------------------------------------------
+ *  read an exponent; returns INT32_MAX on error
+ * ---------------------------------------------------------------------------
+ */
+int32_t read_exponent(const char *string, int32_t max)
+{
+    int32_t i = 0;
+    bool neg = false;
+    
+    if (*string == '+') {
+	string++;
+    } else if (*string == '-') {
+	neg = true;
+	string++;
+    }
+    while (*string) {
+	if (*string >= '0' && *string <= '9') {
+	    i = (i * 10) + (*string - '0');
+	    
+	    /*
+	     * To ensure that underflows and overflows are
+	     * handled properly we must avoid wraparounds of
+	     * the signed integer value that is used to hold
+	     * the exponent. Therefore we cap the exponent at
+	     * +/-5000, which is slightly more/less than
+	     * what's required for normal and denormal numbers
+	     * in single, double, and extended precision, but
+	     * sufficient to avoid signed integer wraparound.
+	     */
+	    if (i > max) {
+		break;
+	    }
+	} else if (*string == '_') {
+	    /* do nothing */
+	} else {
+	    error(ERR_NONFATAL,
+		  "invalid character in floating-point constant %s: '%c'",
+		  "exponent", *string);
+	    return INT32_MAX;
+	}
+	string++;
+    }
+
+    return neg ? -i : i;
+}
+
+/*
+ * ---------------------------------------------------------------------------
  *  convert
  * ---------------------------------------------------------------------------
  */
@@ -161,7 +208,6 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
                 }
             }
         } else if (*string == '_') {
-
             /* do nothing */
         } else {
             error(ERR_NONFATAL,
@@ -171,48 +217,15 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
         }
         string++;
     }
+    
     if (*string) {
-        int32_t i = 0;
-        bool neg = false;
+	int32_t e;
+
         string++;               /* eat the E */
-        if (*string == '+') {
-            string++;
-        } else if (*string == '-') {
-            neg = true;
-            string++;
-        }
-        while (*string) {
-            if (*string >= '0' && *string <= '9') {
-                i = (i * 10) + (*string - '0');
-
-                /*
-                 * To ensure that underflows and overflows are
-                 * handled properly we must avoid wraparounds of
-                 * the signed integer value that is used to hold
-                 * the exponent. Therefore we cap the exponent at
-                 * +/-5000, which is slightly more/less than
-                 * what's required for normal and denormal numbers
-                 * in single, double, and extended precision, but
-                 * sufficient to avoid signed integer wraparound.
-                 */
-                if (i > 5000) {
-                    break;
-                }
-            } else if (*string == '_') {
-
-                /* do nothing */
-            } else {
-                error(ERR_NONFATAL,
-                      "invalid character in floating-point constant %s: '%c'",
-                      "exponent", *string);
-                return false;
-            }
-            string++;
-        }
-        if (neg) {
-            i = 0 - i;
-        }
-        tenpwr += i;
+	e = read_exponent(string, 5000);
+	if (e == INT32_MAX)
+	    return false;
+	tenpwr += e;
     }
 
     /*
@@ -480,8 +493,14 @@ static bool ieee_flconvert_hex(const char *string, uint16_t * mant,
                     twopwr -= 4;
             }
         } else if (c == 'p' || c == 'P') {
-            twopwr += atoi(string);
+	    int32_t e;
+	    e = read_exponent(string, 16384);
+	    if (e == INT32_MAX)
+		return false;
+	    twopwr += e;
             break;
+	} else if (c == '_') {
+	    /* ignore */
         } else {
             error(ERR_NONFATAL,
                   "floating-point constant: `%c' is invalid character", c);

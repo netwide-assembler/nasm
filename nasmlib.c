@@ -193,7 +193,7 @@ char *nasm_strsep(char **stringp, const char *delim)
 #endif
 
 
-#define lib_isnumchar(c)   ( isalnum(c) || (c) == '$')
+#define lib_isnumchar(c)   (isalnum(c) || (c) == '$' || (c) == '_')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
 int64_t readnum(char *str, bool *error)
@@ -274,16 +274,19 @@ int64_t readnum(char *str, bool *error)
 
     result = 0;
     while (*r && r < q) {
-        if (*r < '0' || (*r > '9' && *r < 'A')
-            || (digit = numvalue(*r)) >= radix) {
-            *error = true;
-            return 0;
-        }
-        if (result > checklimit || (result == checklimit && digit >= last)) {
-            warn = true;
-        }
-
-        result = radix * result + digit;
+	if (*r != '_') {
+	    if (*r < '0' || (*r > '9' && *r < 'A')
+		|| (digit = numvalue(*r)) >= radix) {
+		*error = true;
+		return 0;
+	    }
+	    if (result > checklimit ||
+		(result == checklimit && digit >= last)) {
+		warn = true;
+	    }
+	    
+	    result = radix * result + digit;
+	}
         r++;
     }
 

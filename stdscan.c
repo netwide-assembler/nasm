@@ -116,34 +116,44 @@ int stdscan(void *private_data, struct tokenval *tv)
         return tv->t_type = TOKEN_HERE;
     } else if (isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
         bool rn_error;
+	bool is_hex = false;
+	bool is_float = false;
+	char c;
 
         r = stdscan_bufptr++;
-        while (isnumchar(*stdscan_bufptr))
-            stdscan_bufptr++;
 
-        if (*stdscan_bufptr == '.') {
-            /*
-             * a floating point constant
-             */
-            stdscan_bufptr++;
-            while (isnumchar(*stdscan_bufptr) ||
-                   ((stdscan_bufptr[-1] == 'e'
-                     || stdscan_bufptr[-1] == 'E'
-		     || stdscan_bufptr[-1] == 'p'
-		     || stdscan_bufptr[-1] == 'P')
-                    && (*stdscan_bufptr == '-' || *stdscan_bufptr == '+'))) {
-                stdscan_bufptr++;
-            }
-            tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
-            return tv->t_type = TOKEN_FLOAT;
-        }
-        r = stdscan_copy(r, stdscan_bufptr - r);
-        tv->t_integer = readnum(r, &rn_error);
-        stdscan_pop();
-        if (rn_error)
-            return tv->t_type = TOKEN_ERRNUM;   /* some malformation occurred */
-        tv->t_charptr = NULL;
-        return tv->t_type = TOKEN_NUM;
+	if (r[0] == '$' || (r[0] == '0' || (r[1] == 'x' || r[1] == 'X')))
+	    is_hex = true;
+
+	for (;;) {
+	    c = *stdscan_bufptr++;
+
+	    if ((!is_hex && (c == 'e' || c == 'E')) ||
+		(c == 'P' || c == 'p')) {
+		is_float = true;
+		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
+		    stdscan_bufptr++;
+	    } else if (isnumchar(c) || c == '_')
+		; /* just advance */
+	    else if (c == '.')
+		is_float = true;
+	    else
+		break;
+	}
+	stdscan_bufptr--;	/* Point to first character beyond number */
+
+	if (is_float) {
+	    tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+	    return tv->t_type = TOKEN_FLOAT;
+	} else {
+	    r = stdscan_copy(r, stdscan_bufptr - r);
+	    tv->t_integer = readnum(r, &rn_error);
+	    stdscan_pop();
+	    if (rn_error)
+		return tv->t_type = TOKEN_ERRNUM;   /* some malformation occurred */
+	    tv->t_charptr = NULL;
+	    return tv->t_type = TOKEN_NUM;
+	}
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {     /* a char constant */
         char quote = *stdscan_bufptr++, *r;
         bool rn_warn;
