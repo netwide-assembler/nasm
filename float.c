@@ -659,6 +659,8 @@ static int to_float(const char *str, int sign, uint8_t * result,
     } else {
         if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
             ok = ieee_flconvert_hex(str + 2, mant, &exponent);
+	else if (str[0] == '$')
+	    ok = ieee_flconvert_hex(str + 1, mant, &exponent);
         else
             ok = ieee_flconvert(str, mant, &exponent);
 
