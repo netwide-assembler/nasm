@@ -141,9 +141,8 @@ static int32_t read_exponent(const char *string, int32_t max)
 	     * in single, double, and extended precision, but
 	     * sufficient to avoid signed integer wraparound.
 	     */
-	    if (i > max) {
-		break;
-	    }
+	    if (i > max)
+		i = max;
 	} else if (*string == '_') {
 	    /* do nothing */
 	} else {
@@ -494,7 +493,7 @@ static bool ieee_flconvert_hex(const char *string, uint16_t * mant,
             }
         } else if (c == 'p' || c == 'P') {
 	    int32_t e;
-	    e = read_exponent(string, 16384);
+	    e = read_exponent(string, 20000);
 	    if (e == INT32_MAX)
 		return false;
 	    twopwr += e;
