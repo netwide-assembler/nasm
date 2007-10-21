@@ -46,7 +46,7 @@ enum reloc_type {
 struct Reloc {
     struct Reloc *next;
     int32_t address;               /* relative to _start_ of section */
-    int32_t symbol;                /* ELF symbol info thingy */
+    int32_t symbol;                /*  symbol index */
     int type;                   /* type of relocation */
 };
 
@@ -663,13 +663,13 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
 
     r->address = sect->len;
     if (segment == NO_SEG)
-        r->symbol = 2;
+        r->symbol = 0;
     else {
         int i;
         r->symbol = 0;
         for (i = 0; i < nsects; i++)
             if (segment == sects[i]->index)
-                r->symbol = i + 3;
+                r->symbol = i + 2;
         if (!r->symbol)
             r->symbol = GLOBAL_TEMP_BASE + raa_read(bsym, segment);
     }
@@ -1114,7 +1114,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
      * Next, an entry for the file name.
      */
     p = entry;
-    WRITELONG(p, 1);            /* we know it's 1st thing in strtab */
+    WRITELONG(p, 1);            /* we know it's 1st entry in strtab */
     WRITELONG(p, 0);            /* no value */
     WRITELONG(p, 0);            /* no size either */
     WRITESHORT(p, 4);           /* type FILE */
@@ -1127,13 +1127,13 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
      * Now some standard symbols defining the segments, for relocation
      * purposes.
      */
-    for (i = 1; i <= nsects + 1; i++) {
+    for (i = 1; i <= nsects; i++) {
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */
         WRITELONG(p, 0);        /* offset zero */
         WRITELONG(p, 0);        /* size zero */
-        WRITESHORT(p, 3);       /* local section-type thing */
-        WRITESHORT(p, (i == 1 ? SHN_ABS : i - 1));      /* the section id */
+        WRITESHORT(p, 3);       /* type, binding, and visibility */
+        WRITESHORT(p, i);       /* section id */
         saa_wbytes(s, entry, 16L);
         *len += 16;
         (*local)++;
@@ -1150,8 +1150,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, sym->strpos);
         WRITELONG(p, sym->value);
         WRITELONG(p, sym->size);
-        WRITECHAR(p, sym->type);        /* local non-typed thing */
-        WRITECHAR(p, sym->other);
+        WRITECHAR(p, sym->type);        /* type and binding */
+        WRITECHAR(p, sym->other);       /* visibility */
         WRITESHORT(p, sym->section);
         saa_wbytes(s, entry, 16L);
         *len += 16;
@@ -1169,8 +1169,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, sym->strpos);
         WRITELONG(p, sym->value);
         WRITELONG(p, sym->size);
-        WRITECHAR(p, sym->type);        /* global non-typed thing */
-        WRITECHAR(p, sym->other);
+        WRITECHAR(p, sym->type);        /* type and binding */
+        WRITECHAR(p, sym->other);       /* visibility */
         WRITESHORT(p, sym->section);
         saa_wbytes(s, entry, 16L);
         *len += 16;
@@ -1194,7 +1194,7 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
         int32_t sym = r->symbol;
 
         if (sym >= GLOBAL_TEMP_BASE)
-            sym += -GLOBAL_TEMP_BASE + (nsects + 3) + nlocals;
+            sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
 
         p = entry;
         WRITELONG(p, r->address);
