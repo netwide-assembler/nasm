@@ -119,13 +119,14 @@ int stdscan(void *private_data, struct tokenval *tv)
 	bool is_hex = false;
 	bool is_float = false;
 	bool has_e = false;
-	bool has_h = false;
 	char c;
 
-        r = stdscan_bufptr++;
+        r = stdscan_bufptr;
 
-	if (r[0] == '$' || (r[0] == '0' || (r[1] == 'x' || r[1] == 'X')))
+	if (*stdscan_bufptr == '$') {
+	    stdscan_bufptr++;
 	    is_hex = true;
+	}
 
 	for (;;) {
 	    c = *stdscan_bufptr++;
@@ -138,9 +139,9 @@ int stdscan(void *private_data, struct tokenval *tv)
 		    is_float = true;
 		    stdscan_bufptr++;
 		}
-	    } else if (c == 'H' || c == 'h') {
-		has_h = true;
-	    } else if (is_hex & (c == 'P' || c == 'p')) {
+	    } else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
+		is_hex = true;
+	    } else if (is_hex && (c == 'P' || c == 'p')) {
 		is_float = true;
 		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
 		    stdscan_bufptr++;
@@ -153,7 +154,7 @@ int stdscan(void *private_data, struct tokenval *tv)
 	}
 	stdscan_bufptr--;	/* Point to first character beyond number */
 
-	if (has_e && !has_h) {
+	if (has_e && !is_hex) {
 	    /* 1e13 is floating-point, but 1e13h is not */
 	    is_float = true;
 	}

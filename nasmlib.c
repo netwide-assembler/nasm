@@ -196,6 +196,26 @@ char *nasm_strsep(char **stringp, const char *delim)
 #define lib_isnumchar(c)   (isalnum(c) || (c) == '$' || (c) == '_')
 #define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
 
+static int radix_letter(char c)
+{
+    switch (c) {
+    case 'b': case 'B':
+    case 'y': case 'Y':
+	return 2;		/* Binary */
+    case 'o': case 'O':
+    case 'q': case 'Q':
+	return 8;		/* Octal */
+    case 'h': case 'H':
+    case 'x': case 'X':
+	return 16;		/* Hexadecimal */
+    case 'd': case 'D':
+    case 't': case 'T':
+	return 10;		/* Decimal */
+    default:
+	return 0;		/* Not a known radix letter */
+    }
+}
+
 int64_t readnum(char *str, bool *error)
 {
     char *r = str, *q;
@@ -225,24 +245,20 @@ int64_t readnum(char *str, bool *error)
         q++;                    /* find end of number */
 
     /*
-     * If it begins 0x, 0X or $, or ends in H, it's in hex. if it
-     * ends in Q, it's octal. if it ends in B, it's binary.
-     * Otherwise, it's ordinary decimal.
+     * Handle radix formats:
+     *
+     * 0<radix-letter><string>
+     * $<string>		(hexadecimal)
+     * <string><radix-letter>
      */
-    if (*r == '0' && (r[1] == 'x' || r[1] == 'X'))
-        radix = 16, r += 2;
+    if (*r == '0' && (radix = radix_letter(r[1])))
+        r += 2;
     else if (*r == '$')
-        radix = 16, r++;
-    else if (q[-1] == 'H' || q[-1] == 'h')
-        radix = 16, q--;
-    else if (q[-1] == 'Q' || q[-1] == 'q' || q[-1] == 'O' || q[-1] == 'o')
-        radix = 8, q--;
-    else if (q[-1] == 'B' || q[-1] == 'b' || q[-1] == 'Y' || q[-1] == 'y')
-        radix = 2, q--;
-    else if (q[-1] == 'D' || q[-1] == 'd' || q[-1] == 'T' || q[-1] == 't')
-	radix = 10, q--;
+	radix = 16, r++;
+    else if ((radix = radix_letter(q[-1])) != 0)
+	q--;
     else
-        radix = 10;
+	radix = 10;
 
     /*
      * If this number has been found for us by something other than

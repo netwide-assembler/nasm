@@ -656,7 +656,8 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	    break;
         }
     } else {
-        if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
+        if (str[0] == '0' &&
+	    (str[1] == 'x' || str[1] == 'X' || str[1] == 'h' || str[1] == 'H'))
             ok = ieee_flconvert_hex(str + 2, mant, &exponent);
 	else if (str[0] == '$')
 	    ok = ieee_flconvert_hex(str + 1, mant, &exponent);
