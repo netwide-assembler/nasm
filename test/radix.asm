@@ -1,3 +1,5 @@
+	;;  Integer constants...
+
 	dd 1010_0101		; Decimal
 	dd 01010_0101		; Decimal (*not* octal!)
 	dd 0d1010_0101		; Decimal
@@ -20,4 +22,19 @@
 	dd 1010_0101h		; Hex
 	dd 1010_0101x		; Hex
 	dd $1010_0101		; Hex
+
+	;; Floating-point constants
+	;; All of these should output B4A21147
+	dd 3.7282705e+4		; Decimal
+	dd 00003.7282705e+4 	; Decimal
+	dd 0d3.7282705e+4	; Decimal
+	dd 0t3.7282705e+4	; Decimal
+
+	dd 0x1.23456789p+15	; Hex
+	dd 0h1.23456789p+15	; Hex
 	
+	dd 0o1.10642547422p+15	; Octal
+	dd 0q1.10642547422p+15	; Octal
+
+	dd 0b1.0010_0011_0100_0101_0110_0111_1000_1001p+15 ; Binary
+	dd 0y1.0010_0011_0100_0101_0110_0111_1000_1001p+15 ; Binary

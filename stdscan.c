@@ -141,7 +141,7 @@ int stdscan(void *private_data, struct tokenval *tv)
 		}
 	    } else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
 		is_hex = true;
-	    } else if (is_hex && (c == 'P' || c == 'p')) {
+	    } else if (c == 'P' || c == 'p') {
 		is_float = true;
 		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
 		    stdscan_bufptr++;

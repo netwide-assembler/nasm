@@ -424,29 +424,33 @@ static bool ieee_round(int sign, uint16_t * mant, int32_t i)
     return false;
 }
 
-static int hexval(char c)
+/* Returns a value >= 16 if not a valid hex digit */
+static unsigned int hexval(char c)
 {
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    else if (c >= 'a' && c <= 'f')
-        return c - 'a' + 10;
+    unsigned int v = (unsigned char) c;
+
+    if (v >= '0' && v <= '9')
+        return v - '0';
     else
-        return c - 'A' + 10;
+        return (v|0x20) - 'a' + 10;
 }
 
-static bool ieee_flconvert_hex(const char *string, uint16_t * mant,
-                               int32_t * exponent)
+/* Handle floating-point numbers with radix 2^bits and binary exponent */
+static bool ieee_flconvert_bin(const char *string, int bits,
+			       uint16_t * mant, int32_t * exponent)
 {
     static const int log2tbl[16] =
         { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
     uint16_t mult[MANT_WORDS + 1], *mp;
     int ms;
     int32_t twopwr;
-    int seendot, seendigit;
+    bool seendot, seendigit;
     unsigned char c;
+    int radix = 1 << bits;
+    unsigned int v;
 
     twopwr = 0;
-    seendot = seendigit = 0;
+    seendot = seendigit = false;
     ms = 0;
     mp = NULL;
 
@@ -461,17 +465,15 @@ static bool ieee_flconvert_hex(const char *string, uint16_t * mant,
                       "too many periods in floating-point constant");
                 return false;
             }
-        } else if (isxdigit(c)) {
-            int v = hexval(c);
-
+        } else if ((v = hexval(c)) < (unsigned int)radix) {
             if (!seendigit && v) {
                 int l = log2tbl[v];
 
                 seendigit = 1;
                 mp = mult;
-                ms = 15 - l;
+                ms = 15-l;
 
-                twopwr = seendot ? twopwr - 4 + l : l - 3;
+                twopwr = seendot ? twopwr-bits+l : l+1-bits;
             }
 
             if (seendigit) {
@@ -483,13 +485,13 @@ static bool ieee_flconvert_hex(const char *string, uint16_t * mant,
                     ms += 16;
                 }
                 *mp |= v << ms;
-                ms -= 4;
+                ms -= bits;
 
                 if (!seendot)
-                    twopwr += 4;
+                    twopwr += bits;
             } else {
                 if (seendot)
-                    twopwr -= 4;
+                    twopwr -= bits;
             }
         } else if (c == 'p' || c == 'P') {
 	    int32_t e;
@@ -656,13 +658,41 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	    break;
         }
     } else {
-        if (str[0] == '0' &&
-	    (str[1] == 'x' || str[1] == 'X' || str[1] == 'h' || str[1] == 'H'))
-            ok = ieee_flconvert_hex(str + 2, mant, &exponent);
-	else if (str[0] == '$')
-	    ok = ieee_flconvert_hex(str + 1, mant, &exponent);
-        else
+        if (str[0] == '0') {
+	    switch (str[1]) {
+	    case 'x': case 'X':
+	    case 'h': case 'H':
+		ok = ieee_flconvert_bin(str+2, 4, mant, &exponent);
+		break;
+	    case 'o': case 'O':
+	    case 'q': case 'Q':
+		ok = ieee_flconvert_bin(str+2, 3, mant, &exponent);
+		break;
+	    case 'b': case 'B':
+	    case 'y': case 'Y':
+		ok = ieee_flconvert_bin(str+2, 1, mant, &exponent);
+		break;
+	    case 'd': case 'D':
+	    case 't': case 'T':
+		ok = ieee_flconvert(str+2, mant, &exponent);
+		break;
+	    case '0': case '1': case '2': case '3': case '4':
+	    case '5': case '6': case '7': case '8': case '9':
+	    case '\0':
+		/* Leading zero was just a zero */
+		ok = ieee_flconvert(str, mant, &exponent);
+		break;
+	    default:
+		error(ERR_NONFATAL,
+		      "floating-point constant: invalid radix `%c'", str[1]);
+		ok = false;
+		break;
+	    }
+	} else if (str[0] == '$') {
+	    ok = ieee_flconvert_bin(str+1, 4, mant, &exponent);
+	} else {
             ok = ieee_flconvert(str, mant, &exponent);
+	}
 
 	if (!ok) {
 	    type = FL_QNAN;
