@@ -219,7 +219,8 @@ static int radix_letter(char c)
 int64_t readnum(char *str, bool *error)
 {
     char *r = str, *q;
-    int32_t radix;
+    int32_t pradix, sradix, radix;
+    int plen, slen;
     uint64_t result, checklimit;
     int digit, last;
     bool warn = false;
@@ -251,14 +252,26 @@ int64_t readnum(char *str, bool *error)
      * $<string>		(hexadecimal)
      * <string><radix-letter>
      */
-    if (*r == '0' && (radix = radix_letter(r[1])))
-        r += 2;
+    pradix = sradix = 0;
+    plen = slen = 0;
+
+    if (*r == '0' && (pradix = radix_letter(r[1])) != 0)
+	plen = 2;
     else if (*r == '$')
-	radix = 16, r++;
-    else if ((radix = radix_letter(q[-1])) != 0)
-	q--;
-    else
+	pradix = 16, plen = 1;
+
+    if ((sradix = radix_letter(q[-1])) != 0)
+	slen = 1;
+
+    if (pradix && pradix > sradix) {
+	radix = pradix;
+	r += plen;
+    } else if (sradix && sradix > pradix) {
+	radix = sradix;
+	q -= slen;
+    } else {
 	radix = 10;
+    }
 
     /*
      * If this number has been found for us by something other than

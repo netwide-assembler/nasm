@@ -23,6 +23,15 @@
 	dd 1010_0101x		; Hex
 	dd $1010_0101		; Hex
 
+	db 0dh			; Hex
+	db 0bh			; Hex
+	db 0dx			; Hex
+	db 0bx			; Hex
+	db 0hd			; Hex
+	db 0hb			; Hex
+	db 0xd			; Hex
+	db 0xb			; Hex
+	
 	;; Floating-point constants
 	;; All of these should output B4A21147
 	dd 3.7282705e+4		; Decimal
