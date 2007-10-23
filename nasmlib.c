@@ -263,13 +263,15 @@ int64_t readnum(char *str, bool *error)
     if ((sradix = radix_letter(q[-1])) != 0)
 	slen = 1;
 
-    if (pradix && pradix > sradix) {
+    if (pradix > sradix) {
 	radix = pradix;
 	r += plen;
-    } else if (sradix && sradix > pradix) {
+    } else if (sradix > pradix) {
 	radix = sradix;
 	q -= slen;
     } else {
+	/* Either decimal, or invalid -- if invalid, we'll trip up
+	   further down. */
 	radix = 10;
     }
 
