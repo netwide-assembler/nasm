@@ -676,16 +676,9 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	    case 't': case 'T':
 		ok = ieee_flconvert(str+2, mant, &exponent);
 		break;
-	    case '0': case '1': case '2': case '3': case '4':
-	    case '5': case '6': case '7': case '8': case '9':
-	    case '\0':
-		/* Leading zero was just a zero */
-		ok = ieee_flconvert(str, mant, &exponent);
-		break;
 	    default:
-		error(ERR_NONFATAL,
-		      "floating-point constant: invalid radix `%c'", str[1]);
-		ok = false;
+		/* Leading zero was just a zero? */
+		ok = ieee_flconvert(str, mant, &exponent);
 		break;
 	    }
 	} else if (str[0] == '$') {
