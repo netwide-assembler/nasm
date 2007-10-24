@@ -537,8 +537,8 @@ of this switch does \e{not} enable output of the selected debug info format.
 Use \c{-g}, see \k{opt-g}, to enable output.
 
 A complete list of the available debug file formats for an output format
-can be seen by issuing the command \i\c{nasm -f <format> -y}. (only 
-"borland" in "-f obj", as of 0.98.35, but "watch this space") 
+can be seen by issuing the command \i\c{nasm -f <format> -y}. (As of 0.99.05,
+only "-f elf32", "-f elf64", "-f ieee", and "-f obj" provide debug information.) 
 See: \k{opt-y}.
 
 This should not be confused with the "-f dbg" output format option which 
@@ -862,8 +862,8 @@ You will need the version number if you report a bug.
 
 Typing \c{nasm -f <option> -y} will display a list of the available 
 debug info formats for the given output format. The default format 
-is indicated by an asterisk. E.g. \c{nasm -f obj -y} yields \c{* borland}.
-(as of 0.98.35, the \e{only} debug info format implemented).
+is indicated by an asterisk. E.g. \c{nasm -f elf -y} yields \c{* stabs}.
+(as of 0.99.05, the \e{only} debug info format implemented for this output format).
 
 
 \S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
@@ -4577,6 +4577,14 @@ NASM can generate GNU-compatible relocations, to allow 16-bit code to
 be linked as ELF using GNU \c{ld}. If NASM is used with the
 \c{-w+gnu-elf-extensions} option, a warning is issued when one of
 these relocations is generated.
+
+\S{elfdbg} Debug formats and ELF
+\I{ELF, Debug formats and}
+
+\c{ELF32} and \c{ELF64} provide debug information in \c{STABS} format.
+As of 0.99.05, this information is generated only for the ".text" section.
+However, in more recent versions, all executable sections are included.
+(Note that only the ".text" section is executable by default.)
 
 \H{aoutfmt} \i\c{aout}: Linux \I{a.out, Linux version}\I{linux, a.out}\c{a.out} Object Files
 
