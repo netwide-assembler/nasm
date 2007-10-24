@@ -511,6 +511,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             ins->oprs[c - 060].segment |= SEG_RELATIVE;
             ins->oprs[c - 060].segment &= ~SEG_32BIT;
         } else if (c >= 064 && c <= 067) {
+            ins->oprs[c - 064].segment |= SEG_RELATIVE;
 	    if (osize == 16) {
 		ins->oprs[c - 064].offset = getu16(data);
 		data += 2;
