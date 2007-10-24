@@ -48,6 +48,8 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "hashtbl.h"
+#include "stdscan.h"
+#include "tokens.h"
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -152,7 +154,7 @@ struct Context {
 enum pp_token_type {
     TOK_NONE = 0, TOK_WHITESPACE, TOK_COMMENT, TOK_ID,
     TOK_PREPROC_ID, TOK_STRING,
-    TOK_NUMBER, TOK_SMAC_END, TOK_OTHER, TOK_SMAC_PARAM,
+    TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER, TOK_SMAC_PARAM,
     TOK_INTERNAL_STRING
 };
 
@@ -768,13 +770,70 @@ static Token *tokenize(char *line)
                 /* type = -1; */
             }
         } else if (isnumstart(*p)) {
+	    bool is_hex = false;
+	    bool is_float = false;
+	    bool has_e = false;
+	    char c, *r;
+
             /*
-             * A number token.
+             * A numeric token.
              */
-            type = TOK_NUMBER;
-            p++;
-            while (*p && isnumchar(*p))
-                p++;
+
+	    if (*p == '$') {
+		p++;
+		is_hex = true;
+	    }
+
+	    for (;;) {
+		c = *p++;
+
+		if (!is_hex && (c == 'e' || c == 'E')) {
+		    has_e = true;
+		    if (*p == '+' || *p == '-') {
+			/* e can only be followed by +/- if it is either a
+			   prefixed hex number or a floating-point number */
+			p++;
+			is_float = true;
+		    }
+		} else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
+		    is_hex = true;
+		} else if (c == 'P' || c == 'p') {
+		    is_float = true;
+		    if (*p == '+' || *p == '-')
+			p++;
+		} else if (isnumchar(c) || c == '_')
+		    ; /* just advance */
+		else if (c == '.') {
+		    /* we need to deal with consequences of the legacy
+		       parser, like "1.nolist" being two tokens
+		       (TOK_NUMBER, TOK_ID) here; at least give it
+		       a shot for now.  In the future, we probably need
+		       a flex-based scanner with proper pattern matching
+		       to do it as well as it can be done.  Nothing in
+		       the world is going to help the person who wants
+		       0x123.p16 interpreted as two tokens, though. */
+		    r = p;
+		    while (*r == '_')
+			r++;
+
+		    if (isdigit(*r) || (is_hex && isxdigit(*r)) ||
+			(!is_hex && (*r == 'e' || *r == 'E')) ||
+			(*r == 'p' || *r == 'P')) {
+			p = r;
+			is_float = true;
+		    } else
+			break;	/* Terminate the token */
+		} else
+		    break;
+	    }
+	    p--;	/* Point to first character beyond number */
+
+	    if (has_e && !is_hex) {
+		/* 1e13 is floating-point, but 1e13h is not */
+		is_float = true;
+	    }
+
+	    type = is_float ? TOK_FLOAT : TOK_NUMBER;
         } else if (isspace(*p)) {
             type = TOK_WHITESPACE;
             p++;
@@ -985,11 +1044,14 @@ static char *detoken(Token * tlist, int expand_locals)
  * operates on a line of Tokens. Expects a pointer to a pointer to
  * the first token in the line to be passed in as its private_data
  * field.
+ *
+ * FIX: This really needs to be unified with stdscan.
  */
 static int ppscan(void *private_data, struct tokenval *tokval)
 {
     Token **tlineptr = private_data;
     Token *tline;
+    char ourcopy[MAX_KEYWORD+1], *p, *r, *s;
 
     do {
         tline = *tlineptr;
@@ -1001,36 +1063,42 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     if (!tline)
         return tokval->t_type = TOKEN_EOS;
 
+    tokval->t_charptr = tline->text;
+
     if (tline->text[0] == '$' && !tline->text[1])
         return tokval->t_type = TOKEN_HERE;
     if (tline->text[0] == '$' && tline->text[1] == '$' && !tline->text[2])
         return tokval->t_type = TOKEN_BASE;
 
     if (tline->type == TOK_ID) {
-        tokval->t_charptr = tline->text;
-        if (tline->text[0] == '$') {
+        p = tokval->t_charptr = tline->text;
+        if (p[0] == '$') {
             tokval->t_charptr++;
             return tokval->t_type = TOKEN_ID;
         }
 
-        /*
-         * This is the only special case we actually need to worry
-         * about in this restricted context.
-         */
-        if (!nasm_stricmp(tline->text, "seg"))
-            return tokval->t_type = TOKEN_SEG;
-
-        return tokval->t_type = TOKEN_ID;
+        for (r = p, s = ourcopy; *r; r++) {
+	    if (r > p+MAX_KEYWORD)
+		return tokval->t_type = TOKEN_ID; /* Not a keyword */
+            *s++ = tolower(*r);
+	}
+        *s = '\0';
+        /* right, so we have an identifier sitting in temp storage. now,
+         * is it actually a register or instruction name, or what? */
+	return nasm_token_hash(ourcopy, tokval);
     }
 
     if (tline->type == TOK_NUMBER) {
-        bool rn_error;
+	bool rn_error;
+	tokval->t_integer = readnum(tline->text, &rn_error);
+	if (rn_error)
+	    return tokval->t_type = TOKEN_ERRNUM;   /* some malformation occurred */
+	tokval->t_charptr = tline->text;
+	return tokval->t_type = TOKEN_NUM;
+    }
 
-        tokval->t_integer = readnum(tline->text, &rn_error);
-        if (rn_error)
-            return tokval->t_type = TOKEN_ERRNUM;
-        tokval->t_charptr = NULL;
-        return tokval->t_type = TOKEN_NUM;
+    if (tline->type == TOK_FLOAT) {
+	return tokval->t_type = TOKEN_FLOAT;
     }
 
     if (tline->type == TOK_STRING) {

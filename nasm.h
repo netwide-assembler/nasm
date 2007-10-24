@@ -312,7 +312,7 @@ extern Preproc nasmpp;
 /* Ditto for numeric constants. */
 
 #define isnumstart(c)  ( isdigit(c) || (c)=='$' )
-#define isnumchar(c)   ( isalnum(c) )
+#define isnumchar(c)   ( isalnum(c) || (c)=='_' )
 
 /* This returns the numeric value of a given 'digit'. */
 
