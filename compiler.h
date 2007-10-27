@@ -24,11 +24,6 @@
 # include "config.h"
 #endif
 
-/* __STRICT_ANSI__ buggers up MinGW, so disable it */
-#ifdef __MINGW32__
-# undef __STRICT_ANSI__
-#endif
-
 /* This is required to get the standard <inttypes.h> macros when compiling
    with a C++ compiler.  This must be defined *before* <inttypes.h> is
    included, directly or indirectly. */
@@ -78,6 +73,27 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # else
 typedef enum { false, true } bool;
 # endif
+#endif
+
+/* Some misguided platforms hide the defs for these */
+#if defined(HAVE_STRCASECMP) && !HAVE_DECL_STRCASECMP
+int strcasecmp(const char *, const char *);
+#endif
+
+#if defined(HAVE_STRICMP) && !HAVE_DECL_STRICMP
+int stricmp(const char *, const char *);
+#endif
+
+#if defined(HAVE_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
+int strncasecmp(const char *, const char *, size_t);
+#endif
+
+#if defined(HAVE_STRNICMP) && !HAVE_DECL_STRNICMP
+int strnicmp(const char *, const char *, size_t);
+#endif
+
+#if defined(HAVE_STRSEP) && !HAVE_DECL_STRSEP
+char *strsep(char **, const char *);
 #endif
 
 #endif	/* NASM_COMPILER_H */
