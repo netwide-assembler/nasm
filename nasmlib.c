@@ -220,7 +220,7 @@ int64_t readnum(char *str, bool *error)
 {
     char *r = str, *q;
     int32_t pradix, sradix, radix;
-    int plen, slen;
+    int plen, slen, len;
     uint64_t result, checklimit;
     int digit, last;
     bool warn = false;
@@ -245,6 +245,13 @@ int64_t readnum(char *str, bool *error)
     while (lib_isnumchar(*q))
         q++;                    /* find end of number */
 
+    len = q-r;
+    if (!len) {
+	/* Not numeric */
+	*error = true;
+	return 0;
+    }
+
     /*
      * Handle radix formats:
      *
@@ -255,12 +262,12 @@ int64_t readnum(char *str, bool *error)
     pradix = sradix = 0;
     plen = slen = 0;
 
-    if (*r == '0' && (pradix = radix_letter(r[1])) != 0)
+    if (len > 2 && *r == '0' && (pradix = radix_letter(r[1])) != 0)
 	plen = 2;
-    else if (*r == '$')
+    else if (len > 1 && *r == '$')
 	pradix = 16, plen = 1;
 
-    if ((sradix = radix_letter(q[-1])) != 0)
+    if (len > 1 && (sradix = radix_letter(q[-1])) != 0)
 	slen = 1;
 
     if (pradix > sradix) {
@@ -273,17 +280,6 @@ int64_t readnum(char *str, bool *error)
 	/* Either decimal, or invalid -- if invalid, we'll trip up
 	   further down. */
 	radix = 10;
-    }
-
-    /*
-     * If this number has been found for us by something other than
-     * the ordinary scanners, then it might be malformed by having
-     * nothing between the prefix and the suffix. Check this case
-     * now.
-     */
-    if (r >= q) {
-        *error = true;
-        return 0;
     }
 
     /*
