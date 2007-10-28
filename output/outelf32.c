@@ -117,11 +117,16 @@ extern struct ofmt of_elf;
 #define SHN_COMMON 0xFFF2
 #define SHN_UNDEF 0
 
-#define SYM_SECTION 0x04
 #define SYM_GLOBAL 0x10
-#define SYM_NOTYPE 0x00
-#define SYM_DATA 0x01
-#define SYM_FUNCTION 0x02
+
+#define STT_NOTYPE	0		/* Symbol type is unspecified */
+#define STT_OBJECT	1		/* Symbol is a data object */
+#define STT_FUNC	2		/* Symbol is a code object */
+#define STT_SECTION	3		/* Symbol associated with a section */
+#define STT_FILE	4		/* Symbol's name is file name */
+#define STT_COMMON	5		/* Symbol is a common data object */
+#define STT_TLS		6		/* Symbol is thread-local data object*/
+#define	STT_NUM		7		/* Number of defined types.  */
 
 #define STV_DEFAULT 0
 #define STV_INTERNAL 1
@@ -198,6 +203,7 @@ static uint8_t *stabbuf = 0, *stabstrbuf = 0, *stabrelbuf = 0;
 static int stablen, stabstrlen, stabrellen;
 
 static struct dfmt df_stabs;
+static struct Symbol *lastsym;
 
 void stabs32_init(struct ofmt *, void *, FILE *, efunc);
 void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
@@ -504,7 +510,7 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
     saa_wbytes(strs, name, (int32_t)(1 + strlen(name)));
     strslen += 1 + strlen(name);
 
-    sym = saa_wstruct(syms);
+    lastsym = sym = saa_wstruct(syms);
 
     sym->strpos = pos;
     sym->type = is_global ? SYM_GLOBAL : 0;
@@ -583,12 +589,12 @@ static void elf_deflabel(char *name, int32_t segment, int32_t offset,
                 int n = strcspn(special, " \t");
 
                 if (!nasm_strnicmp(special, "function", n))
-                    sym->type |= SYM_FUNCTION;
+                    sym->type |= STT_FUNC;
                 else if (!nasm_strnicmp(special, "data", n) ||
                          !nasm_strnicmp(special, "object", n))
-                    sym->type |= SYM_DATA;
+                    sym->type |= STT_OBJECT;
                 else if (!nasm_strnicmp(special, "notype", n))
-                    sym->type |= SYM_NOTYPE;
+                    sym->type |= STT_NOTYPE;
                 else
                     error(ERR_NONFATAL, "unrecognised symbol type `%.*s'",
                           n, special);
@@ -1117,7 +1123,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     WRITELONG(p, 1);            /* we know it's 1st entry in strtab */
     WRITELONG(p, 0);            /* no value */
     WRITELONG(p, 0);            /* no size either */
-    WRITESHORT(p, 4);           /* type FILE */
+    WRITESHORT(p, STT_FILE);    /* type FILE */
     WRITESHORT(p, SHN_ABS);
     saa_wbytes(s, entry, 16L);
     *len += 16;
@@ -1132,7 +1138,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITELONG(p, 0);        /* no symbol name */
         WRITELONG(p, 0);        /* offset zero */
         WRITELONG(p, 0);        /* size zero */
-        WRITESHORT(p, 3);       /* type, binding, and visibility */
+        WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
         WRITESHORT(p, i);       /* section id */
         saa_wbytes(s, entry, 16L);
         *len += 16;
@@ -1387,7 +1393,65 @@ void stabs32_directive(const char *directive, const char *params)
 
 void stabs32_typevalue(int32_t type)
 {
-   (void)type;
+    int32_t stype, ssize;
+    switch (TYM_TYPE(type)) {
+        case TY_LABEL:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        case TY_BYTE:
+            ssize = 1;
+            stype = STT_OBJECT;
+            break;
+        case TY_WORD:
+            ssize = 2;
+            stype = STT_OBJECT;
+            break;
+        case TY_DWORD:
+            ssize = 4;
+            stype = STT_OBJECT;
+            break;
+        case TY_FLOAT:
+            ssize = 4;
+            stype = STT_OBJECT;
+            break;
+        case TY_QWORD:
+            ssize = 8;
+            stype = STT_OBJECT;
+            break;
+        case TY_TBYTE:
+            ssize = 10;
+            stype = STT_OBJECT;
+            break;
+        case TY_OWORD:
+            ssize = 8;
+            stype = STT_OBJECT;
+            break;
+        case TY_COMMON:
+            ssize = 0;
+            stype = STT_COMMON;
+            break;
+        case TY_SEG:
+            ssize = 0;
+            stype = STT_SECTION;
+            break;
+        case TY_EXTERN:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        case TY_EQU:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        default:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+    }
+    if (stype == STT_OBJECT && !lastsym->type) {
+        lastsym->size = ssize;
+        lastsym->type = stype;
+    }
 }
 
 void stabs32_output(int type, void *param)
@@ -1510,12 +1574,12 @@ void stabs32_generate(void)
 
         /* relocation table entry */
 
-        /* Since the above WRITE_STAB calls have already */
-        /* created two entries, the index in the info.section */
-        /* member must be adjusted by adding 3 */
+        /* Since the symbol table has two entries before */
+        /* the section symbols, the index in the info.section */
+        /* member must be adjusted by adding 2 */
 
         WRITELONG(rptr, (sptr - sbuf) - 4);
-        WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+        WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_386_32);
 
         numstabs++;
         currfile = mainfileindex;
@@ -1534,7 +1598,7 @@ void stabs32_generate(void)
 
             /* relocation table entry */
             WRITELONG(rptr, (sptr - sbuf) - 4);
-            WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+            WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_386_32);
         }
 
         WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
@@ -1543,7 +1607,7 @@ void stabs32_generate(void)
         /* relocation table entry */
 
         WRITELONG(rptr, (sptr - sbuf) - 4);
-        WRITELONG(rptr, ((ptr->info.section + 3) << 8) | R_386_32);
+        WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_386_32);
 
         ptr = ptr->next;
 
