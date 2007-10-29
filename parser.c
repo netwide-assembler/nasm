@@ -273,7 +273,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 	for (j = 0; j < MAXPREFIX; j++)
 	    if ((pfx = result->prefixes[j]) != P_none)
 		break;
-		
+
         if (i == 0 && pfx != P_none) {
             /*
              * Instruction prefixes are present, but no actual
