@@ -104,9 +104,9 @@ rdfmodule *rdfload(const char *filename)
 
     rdfheaderrewind(&f->f);
 
-    f->textrel = (int32_t)f->t;
-    f->datarel = (int32_t)f->d;
-    f->bssrel = (int32_t)f->b;
+    f->textrel = (size_t)(uint32_t)f->t;
+    f->datarel = (size_t)(uint32_t)f->d;
+    f->bssrel  = (size_t)(int32_t)f->b;
 
     return f;
 }
