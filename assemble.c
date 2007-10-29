@@ -1931,7 +1931,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 		ix = 0;
 	    }
 
-	    if (b != -1 && b >= EXPR_REG_START && b < REG_ENUM_LIMIT) {
+	    if (b >= EXPR_REG_START && b < REG_ENUM_LIMIT) {
                 bt = regvals[b];
 		bx = reg_flags[b];
 	    } else {
@@ -1957,7 +1957,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 			return NULL; /* Invalid register */
 		    if (~sok & bx & SIZE_MASK)
 			return NULL; /* Invalid size */
-		    sok &= ~bx;
+		    sok &= bx;
 		}
 
                 /* While we're here, ensure the user didn't specify
