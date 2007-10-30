@@ -724,20 +724,15 @@ static int to_float(const char *str, int s, uint8_t * result,
             exponent--;
             if (exponent >= 2 - expmax && exponent <= expmax) {
 		type = FL_NORMAL;
-            } else if (exponent < 2 - expmax &&
-                       exponent >= 2 - expmax - fmt->mantissa) {
-		type = FL_DENORMAL;
             } else if (exponent > 0) {
 		if (pass0 == 1)
 		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
 			  "overflow in floating-point constant");
 		type = FL_INFINITY;
 	    } else {
-		/* underflow */
-		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW,
-			  "underflow in floating-point constant");
-		type = FL_ZERO;
+		/* underflow or denormal; the denormal code handles
+		   actual underflow. */
+		type = FL_DENORMAL;
 	    }
 	} else {
 	    /* Zero */
