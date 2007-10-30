@@ -182,7 +182,8 @@ eval.$(O): eval.c compiler.h eval.h float.h insnsi.h labels.h nasm.h \
  nasmlib.h regs.h version.h
 exprlib.$(O): exprlib.c compiler.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h
-float.$(O): float.c compiler.h insnsi.h nasm.h nasmlib.h regs.h version.h
+float.$(O): float.c compiler.h float.h insnsi.h nasm.h nasmlib.h regs.h \
+ version.h
 hashtbl.$(O): hashtbl.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h
 insnsa.$(O): insnsa.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
@@ -198,9 +199,9 @@ listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h \
  regs.h version.h
 macros.$(O): macros.c compiler.h
 names.$(O): names.c compiler.h insnsn.c regs.c
-nasm.$(O): nasm.c assemble.h compiler.h eval.h insns.h insnsi.h labels.h \
- listing.h nasm.h nasmlib.h outform.h parser.h pptok.h preproc.h regs.h \
- stdscan.h tokens.h version.h
+nasm.$(O): nasm.c assemble.h compiler.h eval.h float.h insns.h insnsi.h \
+ labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h preproc.h \
+ regs.h stdscan.h tokens.h version.h
 nasmlib.$(O): nasmlib.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
  tokens.h version.h
 ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h \
@@ -235,7 +236,7 @@ parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h \
  parser.h regflags.c regs.h stdscan.h tokens.h version.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h macros.c nasm.h \
- nasmlib.h pptok.h preproc.h regs.h version.h
+ nasmlib.h pptok.h preproc.h regs.h stdscan.h tokens.h version.h
 regdis.$(O): regdis.c
 regflags.$(O): regflags.c
 regs.$(O): regs.c compiler.h
