@@ -258,7 +258,11 @@ insn *parse_line(int pass, char *buffer, insn * result,
         } else {
 	    int slot = prefix_slot(tokval.t_integer);
 	    if (result->prefixes[slot]) {
-		error(ERR_NONFATAL,
+               if (result->prefixes[slot] == tokval.t_integer)
+ 		    error(ERR_WARNING,
+		      "instruction has redundant prefixes");
+               else
+		    error(ERR_NONFATAL,
 		      "instruction has conflicting prefixes");
 	    }
 	    result->prefixes[slot] = tokval.t_integer;
