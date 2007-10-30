@@ -27,6 +27,7 @@
 	dw 0x0.0000123456789p+10
 	dw 0x0.0000123456789p-10
 	dw 0x1.0p-25		; Underflow
+	dw 0x1.01p-25		; Rounds to denorm
 	dw 0x1.0p-24		; Smallest denorm
 	dw 0x1.ffffffffffffffffffffffffffffp-16	; Rounds to denorm
 	dw 0x1.0p-15		; Denorm
@@ -62,6 +63,7 @@
 	dd 0x123456789.0p+0
 	dd 0x123456789.0p+64
 	dd 0x1.0p-150		; Underflow
+	dd 0x1.01p-150		; Rounds to denorm
 	dd 0x1.0p-149		; Smallest denorm
 	dd 0x1.ffffffffffffffffffffffffffffp-128	; Rounds to denorm
 	dd 0x1.0p-127		; Denorm
@@ -97,6 +99,7 @@
 	dq 0x123456789.0p+0
 	dq 0x123456789.0p+300
 	dq 0x1.0p-1075		; Underflow
+	dq 0x1.01p-1075		; Rounds to denorm
 	dq 0x1.0p-1074		; Smallest denorm
 	dq 0x1.ffffffffffffffffffffffffffffp-1024	; Rounds to denorm
 	dq 0x1.0p-1023		; Denorm
@@ -132,6 +135,7 @@
 	dt 0x123456789.0p+0
 	dt 0x123456789.0p+1024
 	dt 0x1.0p-16446		; Underflow
+	dt 0x1.01p-16446	; Rounds to denorm
 	dt 0x1.0p-16445		; Smallest denorm
 	dt 0x1.ffffffffffffffffffffffffffffp-16384	; Rounds to denorm
 	dt 0x1.0p-16383		; Denorm
@@ -167,6 +171,7 @@
 	do 0x123456789.0p+0
 	do 0x123456789.0p+1024
 	do 0x1.0p-16495		; Underflow
+	do 0x1.01p-16495	; Rounds to denorm
 	do 0x1.0p-16494		; Smallest denorm
 	do 0x1.ffffffffffffffffffffffffffffffffp-16384	; Rounds to denorm
 	do 0x1.0p-16383		; Denorm
