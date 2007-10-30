@@ -369,6 +369,9 @@ insn *parse_line(int pass, char *buffer, insn * result,
                     eop->type = EOT_DB_STRING;
                     result->eops_float = true;
 		    switch (result->opcode) {
+		    case I_DB:
+			eop->stringlen = 1;
+			break;
 		    case I_DW:
 			eop->stringlen = 2;
 			break;
@@ -386,7 +389,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 			break;
 		    default:
                         error(ERR_NONFATAL, "floating-point constant"
-                              " encountered in `db' instruction");
+                              " encountered in unknown instruction");
                         /*
                          * fix suggested by Pedro Gimeno... original line
                          * was:

@@ -170,6 +170,7 @@ enum {                          /* token types, other than chars */
 };
 
 enum floatize {
+    FLOAT_8,
     FLOAT_16,
     FLOAT_32,
     FLOAT_64,

@@ -1164,7 +1164,6 @@ file. They can be invoked in a wide range of ways:
 \c       dt    1.234567e20         ; extended-precision float
 
 \c{DT} and \c{DO} do not accept \i{numeric constants} as operands.
-\c{DB} does not accept \i{floating-point} numbers as operands.
 
 
 \S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
@@ -1410,10 +1409,11 @@ when they are operands to \c{dw}.
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
 \i{Floating-point} constants are acceptable only as arguments to
-\i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as arguments
-to the special operators \i\c{__float16__}, \i\c{__float32__},
-\i\c{__float64__}, \i\c{__float80m__}, \i\c{__float80e__},
-\i\c{__float128l__}, and \i\c{__float128h__}.
+\i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as
+arguments to the special operators \i\c{__float8__},
+\i\c{__float16__}, \i\c{__float32__}, \i\c{__float64__},
+\i\c{__float80m__}, \i\c{__float80e__}, \i\c{__float128l__}, and
+\i\c{__float128h__}.
 
 Floating-point constants are expressed in the traditional form:
 digits, then a period, then optionally more digits, then optionally an
@@ -1427,14 +1427,21 @@ notation.
 
 Some examples:
 
-\c       dw    -0.5                    ; IEEE half precision
+\c       db    -0.2                    ; "Quarter precision"
+\c       dw    -0.5                    ; IEEE 754r/SSE5 half precision
 \c       dd    1.2                     ; an easy one
-\c	 dd    0x1p+2		       ; 1.0x2^2 = 4.0
+\c       dd    0x1p+2                  ; 1.0x2^2 = 4.0
 \c       dq    1.e10                   ; 10,000,000,000
 \c       dq    1.e+10                  ; synonymous with 1.e10
 \c       dq    1.e-10                  ; 0.000 000 000 1
 \c       dt    3.141592653589793238462 ; pi
-\c       do    1.e+4000		       ; IEEE quad precision
+\c       do    1.e+4000                ; IEEE 754r quad precision
+
+The 8-bit "quarter-precision" floating-point format is
+sign:exponent:mantissa = 1:4:3 with an exponent bias of 7.  This
+appears to be the most frequently used 8-bit floating-point format,
+although it is not covered by any formal standard.  This is sometimes
+called a "\i{minifloat}."
 
 The special operators are used to produce floating-point numbers in
 other contexts.  They produce the binary representation of a specific
@@ -1452,7 +1459,7 @@ For example:
 ... would assign the binary representation of pi as a 64-bit floating
 point number into \c{RAX}.  This is exactly equivalent to:
 
-\c       mov    rax,0x401921fb54442d18
+\c       mov    rax,0x400921fb54442d18
 
 NASM cannot do compile-time arithmetic on floating-point constants.
 This is because NASM is designed to be portable - although it always

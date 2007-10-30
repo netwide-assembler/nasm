@@ -3,6 +3,32 @@
 ; Test of floating-point formats
 ;
 
+; 8-bit
+	mov al,__float8__(1.0)
+	mov al,__float8__(+1.0)
+	mov al,__float8__(-1.0)
+	mov al,__float8__(0.0)
+	mov al,__float8__(+0.0)
+	mov al,__float8__(-0.0)
+	mov al,__float8__(1.83203125)
+	mov al,__float8__(+1.83203125)
+	mov al,__float8__(-1.83203125)
+	mov al,__float8__(1.83203125e1)
+	mov al,__float8__(+1.83203125e1)
+	mov al,__float8__(-1.83203125e1)
+	mov al,__float8__(1.83203125e-1)
+	mov al,__float8__(+1.83203125e-1)
+	mov al,__float8__(-1.83203125e-1)
+	mov al,__float8__(1.13203125e-2)		; Denormal!
+	mov al,__float8__(+1.13203125e-2)		; Denormal!
+	mov al,__float8__(-1.13203125e-2)		; Denormal!
+	mov al,__float8__(__Infinity__)
+	mov al,__float8__(+__Infinity__)
+	mov al,__float8__(-__Infinity__)
+	mov al,__float8__(__NaN__)
+	mov al,__float8__(__QNaN__)
+	mov al,__float8__(__SNaN__)
+
 ; 16-bit
 	mov ax,__float16__(1.0)
 	mov ax,__float16__(+1.0)

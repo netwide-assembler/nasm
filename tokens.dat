@@ -43,6 +43,7 @@ __qnan__
 __snan__
 
 % TOKEN_FLOATIZE, 0, FLOAT_{__float*__}
+__float8__
 __float16__
 __float32__
 __float64__

@@ -34,19 +34,38 @@ static enum float_round rc = FLOAT_RC_NEAR;     /* rounding control */
  * -----------
  */
 
+/* "A limb is like a digit but bigger */
+typedef uint32_t fp_limb;
+typedef uint64_t fp_2limb;
+
+#define LIMB_BITS	32
+#define LIMB_BYTES      (LIMB_BITS/8)
+#define LIMB_TOP_BIT	((fp_limb)1 << (LIMB_BITS-1))
+#define LIMB_MASK	((fp_limb)(~0))
+#define LIMB_ALL_BYTES	((fp_limb)0x01010101)
+#define LIMB_BYTE(x)	((x)*LIMB_ALL_BYTES)
+
+#if defined(__i386__) || defined(__x86_64__)
+#define put(a,b) (*(uint32_t *)(a) = (b))
+#else
+#define put(a,b) (((a)[0] = (b)),		\
+		  ((a)[1] = (b) >> 8),		\
+		  ((a)[2] = (b) >> 16),		\
+		  ((a)[3] = (b) >> 24))
+#endif
+
 /* 112 bits + 64 bits for accuracy + 16 bits for rounding */
-#define MANT_WORDS 12
+#define MANT_LIMBS 6
 
 /* 52 digits fit in 176 bits because 10^53 > 2^176 > 10^52 */
 #define MANT_DIGITS 52
 
-/* the format and the argument list depend on MANT_WORDS */
-#define MANT_FMT "%04x%04x_%04x%04x_%04x%04x_%04x%04x_%04x%04x_%04x%04x"
+/* the format and the argument list depend on MANT_LIMBS */
+#define MANT_FMT "%08x_%08x_%08x_%08x_%08x_%08x"
 #define MANT_ARG SOME_ARG(mant, 0)
 
 #define SOME_ARG(a,i) (a)[(i)+0], (a)[(i)+1], (a)[(i)+2], (a)[(i)+3],	\
-	(a)[(i)+4], (a)[(i)+5], (a)[(i)+6], (a)[(i)+7], (a)[(i)+8],	\
-	(a)[(i)+9], (a)[(i)+10], (a)[(i)+11]
+	(a)[(i)+4], (a)[(i)+5]
 
 /*
  * ---------------------------------------------------------------------------
@@ -65,10 +84,10 @@ static enum float_round rc = FLOAT_RC_NEAR;     /* rounding control */
  *  multiply
  * ---------------------------------------------------------------------------
  */
-static int float_multiply(uint16_t * to, uint16_t * from)
+static int float_multiply(fp_limb *to, fp_limb *from)
 {
-    uint32_t temp[MANT_WORDS * 2];
-    int32_t i, j;
+    fp_2limb temp[MANT_LIMBS * 2];
+    int i, j;
 
     /*
      * guaranteed that top bit of 'from' is set -- so we only have
@@ -79,32 +98,32 @@ static int float_multiply(uint16_t * to, uint16_t * from)
 
     memset(temp, 0, sizeof temp);
 
-    for (i = 0; i < MANT_WORDS; i++) {
-        for (j = 0; j < MANT_WORDS; j++) {
-            uint32_t n;
-            n = (uint32_t) to[i] * (uint32_t) from[j];
-            temp[i + j] += n >> 16;
-            temp[i + j + 1] += n & 0xFFFF;
+    for (i = 0; i < MANT_LIMBS; i++) {
+        for (j = 0; j < MANT_LIMBS; j++) {
+            fp_2limb n;
+            n = (fp_2limb) to[i] * (fp_2limb) from[j];
+            temp[i + j] += n >> LIMB_BITS;
+            temp[i + j + 1] += (fp_limb)n;
         }
     }
 
-    for (i = MANT_WORDS * 2; --i;) {
-        temp[i - 1] += temp[i] >> 16;
-        temp[i] &= 0xFFFF;
+    for (i = MANT_LIMBS * 2; --i;) {
+        temp[i - 1] += temp[i] >> LIMB_BITS;
+        temp[i] &= LIMB_MASK;
     }
 
     dprintf(("%s=" MANT_FMT "_" MANT_FMT "\n", "temp", SOME_ARG(temp, 0),
-             SOME_ARG(temp, MANT_WORDS)));
+             SOME_ARG(temp, MANT_LIMBS)));
 
-    if (temp[0] & 0x8000) {
-        for (i = 0; i < MANT_WORDS; i++) {
-            to[i] = temp[i] & 0xFFFF;
+    if (temp[0] & LIMB_TOP_BIT) {
+        for (i = 0; i < MANT_LIMBS; i++) {
+            to[i] = temp[i] & LIMB_MASK;
         }
         dprintf(("%s=" MANT_FMT " (%i)\n", "prod", SOME_ARG(to, 0), 0));
         return 0;
     } else {
-        for (i = 0; i < MANT_WORDS; i++) {
-            to[i] = (temp[i] << 1) + !!(temp[i + 1] & 0x8000);
+        for (i = 0; i < MANT_LIMBS; i++) {
+            to[i] = (temp[i] << 1) + !!(temp[i + 1] & LIMB_TOP_BIT);
         }
         dprintf(("%s=" MANT_FMT " (%i)\n", "prod", SOME_ARG(to, 0), -1));
         return -1;
@@ -162,13 +181,13 @@ static int32_t read_exponent(const char *string, int32_t max)
  *  convert
  * ---------------------------------------------------------------------------
  */
-static bool ieee_flconvert(const char *string, uint16_t * mant,
+static bool ieee_flconvert(const char *string, fp_limb *mant,
                            int32_t * exponent)
 {
     char digits[MANT_DIGITS];
     char *p, *q, *r;
-    uint16_t mult[MANT_WORDS], bit;
-    uint16_t *m;
+    fp_limb mult[MANT_LIMBS], bit;
+    fp_limb *m;
     int32_t tenpwr, twopwr;
     int32_t extratwos;
     bool started, seendot, warned;
@@ -243,16 +262,16 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
     /*
      * Now convert [digits,p) to our internal representation.
      */
-    bit = 0x8000;
-    for (m = mant; m < mant + MANT_WORDS; m++) {
+    bit = LIMB_TOP_BIT;
+    for (m = mant; m < mant + MANT_LIMBS; m++) {
         *m = 0;
     }
     m = mant;
     q = digits;
     started = false;
     twopwr = 0;
-    while (m < mant + MANT_WORDS) {
-        uint16_t carry = 0;
+    while (m < mant + MANT_LIMBS) {
+        fp_limb carry = 0;
         while (p > q && !p[-1]) {
             p--;
         }
@@ -276,7 +295,7 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
         }
         if (started) {
             if (bit == 1) {
-                bit = 0x8000;
+                bit = LIMB_TOP_BIT;
                 m++;
             } else {
                 bit >>= 1;
@@ -299,10 +318,10 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
      * Now multiply 'mant' by 5^tenpwr.
      */
     if (tenpwr < 0) {           /* mult = 5^-1 = 0.2 */
-        for (m = mult; m < mult + MANT_WORDS - 1; m++) {
-            *m = 0xCCCC;
+        for (m = mult; m < mult + MANT_LIMBS - 1; m++) {
+            *m = LIMB_BYTE(0xcc);
         }
-        mult[MANT_WORDS - 1] = 0xCCCD;
+        mult[MANT_LIMBS - 1] = LIMB_BYTE(0xcc)+1;
         extratwos = -2;
         tenpwr = -tenpwr;
 
@@ -314,8 +333,8 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
          * the exponent parsing code, this shouldn't happen though.
          */
     } else if (tenpwr > 0) {    /* mult = 5^+1 = 5.0 */
-        mult[0] = 0xA000;
-        for (m = mult + 1; m < mult + MANT_WORDS; m++) {
+        mult[0] = (fp_limb)5 << (LIMB_BITS-3); /* 0xA000... */
+        for (m = mult + 1; m < mult + MANT_LIMBS; m++) {
             *m = 0;
         }
         extratwos = 3;
@@ -358,68 +377,102 @@ static bool ieee_flconvert(const char *string, uint16_t * mant,
 
 /*
  * ---------------------------------------------------------------------------
+ *  operations of specific bits
+ * ---------------------------------------------------------------------------
+ */
+
+/* Set a bit, using *bigendian* bit numbering (0 = MSB) */
+static void set_bit(fp_limb *mant, int bit)
+{
+    mant[bit/LIMB_BITS] |= LIMB_TOP_BIT >> (bit & (LIMB_BITS-1));
+}
+
+/* Test a single bit */
+static int test_bit(const fp_limb *mant, int bit)
+{
+    return (mant[bit/LIMB_BITS] >> (~bit & (LIMB_BITS-1))) & 1;
+}
+
+/* Report if the mantissa value is all zero */
+static bool is_zero(const fp_limb *mant)
+{
+    int i;
+
+    for (i = 0; i < MANT_LIMBS; i++)
+	if (mant[i])
+	    return false;
+
+    return true;
+}
+
+/*
+ * ---------------------------------------------------------------------------
  *  round a mantissa off after i words
  * ---------------------------------------------------------------------------
  */
 
 #define ROUND_COLLECT_BITS			\
-    for (j = i; j < MANT_WORDS; j++) {		\
-	m = m | mant[j];			\
-    }
+    do {					\
+	m = mant[i] & (2*bit-1);		\
+	for (j = i+1; j < MANT_LIMBS; j++)	\
+	    m = m | mant[j];			\
+    } while (0)
 
 #define ROUND_ABS_DOWN				\
-    for (j = i; j < MANT_WORDS; j++) {		\
-	mant[j] = 0x0000;			\
-    }
+    do {					\
+	mant[i] &= ~(bit-1);			\
+	for (j = i+1; j < MANT_LIMBS; j++)	\
+	    mant[j] = 0;			\
+	return false;				\
+    } while (0)
 
 #define ROUND_ABS_UP				\
     do {					\
-	++mant[--i];				\
-	mant[i] &= 0xFFFF;			\
-    } while (i > 0 && !mant[i]);		\
-    return (!i && !mant[i]);
+	mant[i] = (mant[i] & ~(bit-1)) + bit;	\
+	for (j = i+1; j < MANT_LIMBS; j++)	\
+	    mant[j] = 0;			\
+	while (i > 0 && !mant[i])		\
+	    ++mant[--i];			\
+	return !mant[0];			\
+    } while (0)
 
-static bool ieee_round(int sign, uint16_t * mant, int32_t i)
+static bool ieee_round(bool minus, fp_limb *mant, int bits)
 {
-    uint16_t m = 0;
+    fp_limb m = 0;
     int32_t j;
-    if ((sign == 0x0000) || (sign == 0x8000)) {
-        if (rc == FLOAT_RC_NEAR) {
-            if (mant[i] & 0x8000) {
-                mant[i] &= 0x7FFF;
-                ROUND_COLLECT_BITS;
-                mant[i] |= 0x8000;
-                if (m) {
-                    ROUND_ABS_UP;
-                } else {
-                    if (mant[i - 1] & 1) {
-                        ROUND_ABS_UP;
-                    } else {
-                        ROUND_ABS_DOWN;
-                    }
-                }
-            } else {
-                ROUND_ABS_DOWN;
-            }
-        } else if (((sign == 0x0000) && (rc == FLOAT_RC_DOWN))
-                   || ((sign == 0x8000) && (rc == FLOAT_RC_UP))) {
-            ROUND_COLLECT_BITS;
-            if (m) {
-                ROUND_ABS_DOWN;
-            }
-        } else if (((sign == 0x0000) && (rc == FLOAT_RC_UP))
-                   || ((sign == 0x8000) && (rc == FLOAT_RC_DOWN))) {
-            ROUND_COLLECT_BITS;
-            if (m) {
-                ROUND_ABS_UP;
-            }
-        } else if (rc == FLOAT_RC_ZERO) {
-            ROUND_ABS_DOWN;
-        } else {
-            error(ERR_PANIC, "float_round() can't handle rc=%i", rc);
-        }
+    int i = bits / LIMB_BITS;
+    int p = bits % LIMB_BITS;
+    fp_limb bit = LIMB_TOP_BIT >> p;
+
+    if (rc == FLOAT_RC_NEAR) {
+	if (mant[i] & bit) {
+	    mant[i] &= ~bit;
+	    ROUND_COLLECT_BITS;
+	    mant[i] |= bit;
+	    if (m) {
+		ROUND_ABS_UP;
+	    } else {
+		if (test_bit(mant, bits-1)) {
+		    ROUND_ABS_UP;
+		} else {
+		    ROUND_ABS_DOWN;
+		}
+	    }
+	} else {
+	    ROUND_ABS_DOWN;
+	}
+    } else if (rc == FLOAT_RC_ZERO ||
+	       rc == (minus ? FLOAT_RC_UP : FLOAT_RC_DOWN)) {
+	ROUND_ABS_DOWN;
     } else {
-        error(ERR_PANIC, "float_round() can't handle sign=%i", sign);
+	/* rc == (minus ? FLOAT_RC_DOWN : FLOAT_RC_UP) */
+	/* Round toward +/- infinity */
+	ROUND_COLLECT_BITS;
+	if (m) {
+	    ROUND_ABS_UP;
+	} else {
+	    ROUND_ABS_DOWN;
+	}
     }
     return false;
 }
@@ -437,17 +490,17 @@ static unsigned int hexval(char c)
 
 /* Handle floating-point numbers with radix 2^bits and binary exponent */
 static bool ieee_flconvert_bin(const char *string, int bits,
-			       uint16_t * mant, int32_t * exponent)
+			       fp_limb *mant, int32_t *exponent)
 {
     static const int log2tbl[16] =
         { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
-    uint16_t mult[MANT_WORDS + 1], *mp;
+    fp_limb mult[MANT_LIMBS + 1], *mp;
     int ms;
     int32_t twopwr;
     bool seendot, seendigit;
     unsigned char c;
     int radix = 1 << bits;
-    unsigned int v;
+    fp_limb v;
 
     twopwr = 0;
     seendot = seendigit = false;
@@ -469,9 +522,9 @@ static bool ieee_flconvert_bin(const char *string, int bits,
             if (!seendigit && v) {
                 int l = log2tbl[v];
 
-                seendigit = 1;
+                seendigit = true;
                 mp = mult;
-                ms = 15-l;
+                ms = (LIMB_BITS-1)-l;
 
                 twopwr = seendot ? twopwr-bits+l : l+1-bits;
             }
@@ -480,9 +533,9 @@ static bool ieee_flconvert_bin(const char *string, int bits,
                 if (ms <= 0) {
                     *mp |= v >> -ms;
                     mp++;
-                    if (mp > &mult[MANT_WORDS])
-                        mp = &mult[MANT_WORDS]; /* Guard slot */
-                    ms += 16;
+                    if (mp > &mult[MANT_LIMBS])
+                        mp = &mult[MANT_LIMBS]; /* Guard slot */
+                    ms += LIMB_BITS;
                 }
                 *mp |= v << ms;
                 ms -= bits;
@@ -510,10 +563,10 @@ static bool ieee_flconvert_bin(const char *string, int bits,
     }
 
     if (!seendigit) {
-        memset(mant, 0, 2 * MANT_WORDS);        /* Zero */
+        memset(mant, 0, sizeof mult); /* Zero */
         *exponent = 0;
     } else {
-        memcpy(mant, mult, 2 * MANT_WORDS);
+        memcpy(mant, mult, sizeof mult);
         *exponent = twopwr;
     }
 
@@ -523,22 +576,22 @@ static bool ieee_flconvert_bin(const char *string, int bits,
 /*
  * Shift a mantissa to the right by i bits.
  */
-static void ieee_shr(uint16_t * mant, int i)
+static void ieee_shr(fp_limb *mant, int i)
 {
-    uint16_t n, m;
+    fp_limb n, m;
     int j = 0;
     int sr, sl, offs;
 
-    sr = i%16; sl = 16-sr;
-    offs = i/16;
+    sr = i % LIMB_BITS; sl = LIMB_BITS-sr;
+    offs = i/LIMB_BITS;
 
     if (sr == 0) {
 	if (offs)
-	    for (j = MANT_WORDS-1; j >= offs; j--)
+	    for (j = MANT_LIMBS-1; j >= offs; j--)
 		mant[j] = mant[j-offs];
     } else {
-	n = mant[MANT_WORDS-1-offs] >> sr;
-	for (j = MANT_WORDS-1; j > offs; j--) {
+	n = mant[MANT_LIMBS-1-offs] >> sr;
+	for (j = MANT_LIMBS-1; j > offs; j--) {
 	    m = mant[j-offs-1];
 	    mant[j] = (m << sl) | n;
 	    n = m >> sr;
@@ -547,36 +600,6 @@ static void ieee_shr(uint16_t * mant, int i)
     }
     while (j >= 0)
 	mant[j--] = 0;
-}
-
-#if defined(__i386__) || defined(__x86_64__)
-#define put(a,b) (*(uint16_t *)(a) = (b))
-#else
-#define put(a,b) (((a)[0] = (b)), ((a)[1] = (b) >> 8))
-#endif
-
-/* Set a bit, using *bigendian* bit numbering (0 = MSB) */
-static void set_bit(uint16_t *mant, int bit)
-{
-    mant[bit >> 4] |= 1 << (~bit & 15);
-}
-
-/* Test a single bit */
-static int test_bit(const uint16_t *mant, int bit)
-{
-    return (mant[bit >> 4] >> (~bit & 15)) & 1;
-}
-
-/* Report if the mantissa value is all zero */
-static bool is_zero(const uint16_t *mant)
-{
-    int i;
-
-    for (i = 0; i < MANT_WORDS; i++)
-	if (mant[i])
-	    return false;
-
-    return true;
 }
 
 /* Produce standard IEEE formats, with implicit or explicit integer
@@ -588,7 +611,7 @@ static bool is_zero(const uint16_t *mant)
    - the exponent bias is 2^(n-1)-1 for an n-bit exponent */
 
 struct ieee_format {
-    int words;
+    int bytes;
     int mantissa;               /* Fractional bits in the mantissa */
     int explicit;		/* Explicit integer */
     int exponent;               /* Bits in the exponent */
@@ -601,12 +624,16 @@ struct ieee_format {
  * The 32- and 64-bit formats are the original IEEE 754 formats.
  *
  * The 80-bit format is x87-specific, but widely used.
+ *
+ * The 8-bit format appears to be the consensus 8-bit floating-point
+ * format.  It is apparently used in graphics applications.
  */
-static const struct ieee_format ieee_16  = { 1,  10, 0,  5 };
-static const struct ieee_format ieee_32  = { 2,  23, 0,  8 };
-static const struct ieee_format ieee_64  = { 4,  52, 0, 11 };
-static const struct ieee_format ieee_80  = { 5,  63, 1, 15 };
-static const struct ieee_format ieee_128 = { 8, 112, 0, 15 };
+static const struct ieee_format ieee_8   = {  1,   3, 0,  4 };
+static const struct ieee_format ieee_16  = {  2,  10, 0,  5 };
+static const struct ieee_format ieee_32  = {  4,  23, 0,  8 };
+static const struct ieee_format ieee_64  = {  8,  52, 0, 11 };
+static const struct ieee_format ieee_80  = { 10,  63, 1, 15 };
+static const struct ieee_format ieee_128 = { 16, 112, 0, 15 };
 
 /* Types of values we can generate */
 enum floats {
@@ -618,20 +645,21 @@ enum floats {
     FL_SNAN
 };
 
-static int to_float(const char *str, int sign, uint8_t * result,
+static int to_float(const char *str, int s, uint8_t * result,
                     const struct ieee_format *fmt)
 {
-    uint16_t mant[MANT_WORDS], *mp;
+    fp_limb mant[MANT_LIMBS], *mp, m;
     int32_t exponent = 0;
     int32_t expmax = 1 << (fmt->exponent - 1);
-    uint16_t one_mask = 0x8000 >> ((fmt->exponent+fmt->explicit) % 16);
-    int one_pos = (fmt->exponent+fmt->explicit)/16;
+    fp_limb one_mask = LIMB_TOP_BIT >>
+	((fmt->exponent+fmt->explicit) % LIMB_BITS);
+    int one_pos = (fmt->exponent+fmt->explicit)/LIMB_BITS;
     int i;
     int shift;
     enum floats type;
     bool ok;
-
-    sign = (sign < 0 ? 0x8000 : 0);
+    bool minus = s < 0;
+    int bits = fmt->bytes * 8;
 
     if (str[0] == '_') {
 	/* Special tokens */
@@ -689,7 +717,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
 
 	if (!ok) {
 	    type = FL_QNAN;
-	} else if (mant[0] & 0x8000) {
+	} else if (mant[0] & LIMB_TOP_BIT) {
             /*
              * Non-zero.
              */
@@ -728,13 +756,13 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	shift = -(exponent + expmax - 2 - fmt->exponent)
 	    + fmt->explicit;
 	ieee_shr(mant, shift);
-	ieee_round(sign, mant, fmt->words);
+	ieee_round(minus, mant, bits);
 	if (mant[one_pos] & one_mask) {
 	    /* One's position is set, we rounded up into normal range */
 	    exponent = 1;
 	    if (!fmt->explicit)
 		mant[one_pos] &= ~one_mask;	/* remove explicit one */
-	    mant[0] |= exponent << (15 - fmt->exponent);
+	    mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
 	} else {
 	    if (daz || is_zero(mant)) {
 		/* Flush denormals to zero */
@@ -754,7 +782,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
     case FL_NORMAL:
 	exponent += expmax - 1;
 	ieee_shr(mant, fmt->exponent+fmt->explicit);
-	ieee_round(sign, mant, fmt->words);
+	ieee_round(minus, mant, bits);
 	/* did we scale up by one? */
 	if (test_bit(mant, fmt->exponent+fmt->explicit-1)) {
 	    ieee_shr(mant, 1);
@@ -770,7 +798,7 @@ static int to_float(const char *str, int sign, uint8_t * result,
 
 	if (!fmt->explicit)
 	    mant[one_pos] &= ~one_mask;	/* remove explicit one */
-	mant[0] |= exponent << (15 - fmt->exponent);
+	mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
 	break;
 
     case FL_INFINITY:
@@ -778,7 +806,8 @@ static int to_float(const char *str, int sign, uint8_t * result,
     case FL_SNAN:
     overflow:
 	memset(mant, 0, sizeof mant);
-	mant[0] = ((1 << fmt->exponent)-1) << (15 - fmt->exponent);
+	mant[0] = (((fp_limb)1 << fmt->exponent)-1)
+	    << (LIMB_BITS-1 - fmt->exponent);
 	if (fmt->explicit)
 	    mant[one_pos] |= one_mask;
 	if (type == FL_QNAN)
@@ -788,12 +817,17 @@ static int to_float(const char *str, int sign, uint8_t * result,
 	break;
     }
 
-    mant[0] |= sign;
+    mant[0] |= minus ? LIMB_TOP_BIT : 0;
 
-    for (mp = &mant[fmt->words], i = 0; i < fmt->words; i++) {
-        uint16_t m = *--mp;
+    m = mant[fmt->bytes/LIMB_BYTES];
+    for (i = LIMB_BYTES-(fmt->bytes % LIMB_BYTES); i < LIMB_BYTES; i++)
+	*result++ = m >> (i*8);
+
+    for (mp = &mant[fmt->bytes/LIMB_BYTES], i = 0;
+	 i < fmt->bytes; i += LIMB_BYTES) {
+        m = *--mp;
         put(result, m);
-        result += 2;
+        result += LIMB_BYTES;
     }
 
     return 1;                   /* success */
@@ -805,6 +839,8 @@ int float_const(const char *number, int32_t sign, uint8_t * result,
     error = err;
 
     switch (bytes) {
+    case 1:
+        return to_float(number, sign, result, &ieee_8);
     case 2:
         return to_float(number, sign, result, &ieee_16);
     case 4:

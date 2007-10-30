@@ -612,6 +612,7 @@ static expr *eval_floatize(enum floatize type)
     static const struct {
 	int bytes, start, len;
     } formats[] = {
+	{  1, 0, 1 },		/* FLOAT_8 */
 	{  2, 0, 2 },		/* FLOAT_16 */
 	{  4, 0, 4 },		/* FLOAT_32 */
 	{  8, 0, 8 },		/* FLOAT_64 */
