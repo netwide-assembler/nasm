@@ -1247,7 +1247,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             else
                 size = (bits == 16) ? 2 : 4;
             data = ins->oprs[c - 034].offset;
-	    warn_overflow(size, data);
+            if (ins->oprs[c - 034].segment == NO_SEG &&
+                ins->oprs[c - 034].wrt == NO_SEG)
+		warn_overflow(size, data);
             out(offset, segment, &data, OUT_ADDRESS + size,
                 ins->oprs[c - 034].segment, ins->oprs[c - 034].wrt);
             offset += size;
@@ -1269,7 +1271,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 	case 047:
             data = ins->oprs[c - 044].offset;
             size = ins->addr_size >> 3;
-	    warn_overflow(size, data);
+	    if (ins->oprs[c - 044].segment == NO_SEG &&
+		ins->oprs[c - 044].wrt == NO_SEG)
+		warn_overflow(size, data);
             out(offset, segment, &data, OUT_ADDRESS + size,
                 ins->oprs[c - 044].segment, ins->oprs[c - 044].wrt);
             offset += size;
