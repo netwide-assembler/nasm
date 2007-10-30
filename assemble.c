@@ -789,6 +789,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     uint8_t c;
     int rex_mask = ~0;
     ins->rex = 0;               /* Ensure REX is reset */
+    struct operand *opx;
 
     if (ins->prefixes[PPS_OSIZE] == P_O64)
 	ins->rex |= REX_W;
@@ -796,8 +797,10 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
 
-    while (*codes)
-        switch (c = *codes++) {
+    while (*codes) {
+	c = *codes++;
+	opx = &ins->oprs[c & 3];
+        switch (c) {
         case 01:
         case 02:
         case 03:
@@ -814,7 +817,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 012:
 	case 013:
 	    ins->rex |=
-		op_rexflags(&ins->oprs[c - 010], REX_B|REX_H|REX_P|REX_W);
+		op_rexflags(opx, REX_B|REX_H|REX_P|REX_W);
             codes++, length++;
             break;
         case 014:
@@ -845,8 +848,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 035:
         case 036:
 	case 037:
-            if (ins->oprs[c - 034].type & (BITS16 | BITS32 | BITS64))
-                length += (ins->oprs[c - 034].type & BITS16) ? 2 : 4;
+            if (opx->type & (BITS16 | BITS32 | BITS64))
+                length += (opx->type & BITS16) ? 2 : 4;
             else
                 length += (bits == 16) ? 2 : 4;
             break;
@@ -884,8 +887,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 065:
         case 066:
 	case 067:
-            if (ins->oprs[c - 064].type & (BITS16 | BITS32 | BITS64))
-                length += (ins->oprs[c - 064].type & BITS16) ? 2 : 4;
+            if (opx->type & (BITS16 | BITS32 | BITS64))
+                length += (opx->type & BITS16) ? 2 : 4;
             else
                 length += (bits == 16) ? 2 : 4;
             break;
@@ -905,7 +908,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0141:
         case 0142:
 	case 0143:
-            length += is_sbyte(ins, c - 0140, 16) ? 1 : 2;
+            length += is_sbyte(ins, c & 3, 16) ? 1 : 2;
             break;
         case 0144:
         case 0145:
@@ -918,7 +921,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
         case 0151:
         case 0152:
         case 0153:
-            length += is_sbyte(ins, c - 0150, 32) ? 1 : 4;
+            length += is_sbyte(ins, c & 3, 32) ? 1 : 4;
             break;
         case 0154:
         case 0155:
@@ -1003,7 +1006,7 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
                 errfunc(ERR_NONFATAL, "attempt to reserve non-constant"
                         " quantity of BSS space");
             else
-                length += ins->oprs[0].offset << (c - 0340);
+                length += ins->oprs[0].offset << (c & 3);
             break;
 	case 0364:
 	case 0365:
@@ -1044,10 +1047,12 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 		    ins->rex |= ea_data.rex;
                     length += ea_data.size;
                 }
-            } else
+            } else {
                 errfunc(ERR_PANIC, "internal instruction table corrupt"
                         ": instruction code 0x%02X given", c);
+	    }
         }
+    }
 
     ins->rex &= rex_mask;
 
@@ -1103,9 +1108,12 @@ static void gencode(int32_t segment, int32_t offset, int bits,
     uint8_t bytes[4];
     int32_t size;
     int64_t data;
+    struct operand *opx;
 
-    while (*codes)
-        switch (c = *codes++) {
+    while (*codes) {
+	c = *codes++;
+	opx = &ins->oprs[c & 3];
+        switch (c) {
         case 01:
         case 02:
         case 03:
@@ -1160,7 +1168,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 012:
 	case 013:
 	    EMIT_REX();
-            bytes[0] = *codes++ + ((regval(&ins->oprs[c - 010])) & 7);
+            bytes[0] = *codes++ + ((regval(opx)) & 7);
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
@@ -1169,17 +1177,16 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 015:
         case 016:
 	case 017:
-            if (ins->oprs[c - 014].offset < -128
-                || ins->oprs[c - 014].offset > 127) {
+            if (opx->offset < -128 || opx->offset > 127) {
                 errfunc(ERR_WARNING, "signed byte value exceeds bounds");
             }
 
-            if (ins->oprs[c - 014].segment != NO_SEG) {
-                data = ins->oprs[c - 014].offset;
+            if (opx->segment != NO_SEG) {
+                data = opx->offset;
                 out(offset, segment, &data, OUT_ADDRESS + 1,
-                    ins->oprs[c - 014].segment, ins->oprs[c - 014].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                bytes[0] = ins->oprs[c - 014].offset;
+                bytes[0] = opx->offset;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
             }
@@ -1190,16 +1197,15 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 021:
         case 022:
 	case 023:
-            if (ins->oprs[c - 020].offset < -256
-                || ins->oprs[c - 020].offset > 255) {
+            if (opx->offset < -256 || opx->offset > 255) {
                 errfunc(ERR_WARNING, "byte value exceeds bounds");
             }
-            if (ins->oprs[c - 020].segment != NO_SEG) {
-                data = ins->oprs[c - 020].offset;
+            if (opx->segment != NO_SEG) {
+                data = opx->offset;
                 out(offset, segment, &data, OUT_ADDRESS + 1,
-                    ins->oprs[c - 020].segment, ins->oprs[c - 020].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                bytes[0] = ins->oprs[c - 020].offset;
+                bytes[0] = opx->offset;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
             }
@@ -1210,15 +1216,14 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 025:
         case 026:
 	case 027:
-            if (ins->oprs[c - 024].offset < 0
-                || ins->oprs[c - 024].offset > 255)
+            if (opx->offset < 0 || opx->offset > 255)
                 errfunc(ERR_WARNING, "unsigned byte value exceeds bounds");
-            if (ins->oprs[c - 024].segment != NO_SEG) {
-                data = ins->oprs[c - 024].offset;
+            if (opx->segment != NO_SEG) {
+                data = opx->offset;
                 out(offset, segment, &data, OUT_ADDRESS + 1,
-                    ins->oprs[c - 024].segment, ins->oprs[c - 024].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                bytes[0] = ins->oprs[c - 024].offset;
+                bytes[0] = opx->offset;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
             }
@@ -1229,12 +1234,11 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 031:
         case 032:
 	case 033:
-            data = ins->oprs[c - 030].offset;
-            if (ins->oprs[c - 030].segment == NO_SEG &&
-                ins->oprs[c - 030].wrt == NO_SEG)
+            data = opx->offset;
+            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
 		warn_overflow(2, data);
             out(offset, segment, &data, OUT_ADDRESS + 2,
-                ins->oprs[c - 030].segment, ins->oprs[c - 030].wrt);
+                opx->segment, opx->wrt);
             offset += 2;
             break;
 
@@ -1242,16 +1246,15 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 035:
         case 036:
 	case 037:
-            if (ins->oprs[c - 034].type & (BITS16 | BITS32))
-                size = (ins->oprs[c - 034].type & BITS16) ? 2 : 4;
+            if (opx->type & (BITS16 | BITS32))
+                size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
-            data = ins->oprs[c - 034].offset;
-            if (ins->oprs[c - 034].segment == NO_SEG &&
-                ins->oprs[c - 034].wrt == NO_SEG)
+            data = opx->offset;
+            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
 		warn_overflow(size, data);
             out(offset, segment, &data, OUT_ADDRESS + size,
-                ins->oprs[c - 034].segment, ins->oprs[c - 034].wrt);
+                opx->segment, opx->wrt);
             offset += size;
             break;
 
@@ -1259,9 +1262,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 041:
         case 042:
 	case 043:
-            data = ins->oprs[c - 040].offset;
+            data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS + 4,
-                ins->oprs[c - 040].segment, ins->oprs[c - 040].wrt);
+                opx->segment, opx->wrt);
             offset += 4;
             break;
 
@@ -1269,13 +1272,13 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 045:
         case 046:
 	case 047:
-            data = ins->oprs[c - 044].offset;
+            data = opx->offset;
             size = ins->addr_size >> 3;
-	    if (ins->oprs[c - 044].segment == NO_SEG &&
-		ins->oprs[c - 044].wrt == NO_SEG)
+	    if (opx->segment == NO_SEG &&
+		opx->wrt == NO_SEG)
 		warn_overflow(size, data);
             out(offset, segment, &data, OUT_ADDRESS + size,
-                ins->oprs[c - 044].segment, ins->oprs[c - 044].wrt);
+                opx->segment, opx->wrt);
             offset += size;
             break;
 
@@ -1283,10 +1286,10 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 051:
         case 052:
 	case 053:
-            if (ins->oprs[c - 050].segment != segment)
+            if (opx->segment != segment)
                 errfunc(ERR_NONFATAL,
                         "short relative jump outside segment");
-            data = ins->oprs[c - 050].offset - insn_end;
+            data = opx->offset - insn_end;
             if (data > 127 || data < -128)
                 errfunc(ERR_NONFATAL, "short jump is out of range");
             bytes[0] = data;
@@ -1298,9 +1301,9 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 055:
         case 056:
 	case 057:
-            data = (int64_t)ins->oprs[c - 054].offset;
+            data = (int64_t)opx->offset;
             out(offset, segment, &data, OUT_ADDRESS + 8,
-                ins->oprs[c - 054].segment, ins->oprs[c - 054].wrt);
+                opx->segment, opx->wrt);
             offset += 8;
             break;
 
@@ -1308,13 +1311,13 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 061:
         case 062:
 	case 063:
-            if (ins->oprs[c - 060].segment != segment) {
-                data = ins->oprs[c - 060].offset;
+            if (opx->segment != segment) {
+                data = opx->offset;
                 out(offset, segment, &data,
                     OUT_REL2ADR + insn_end - offset,
-                    ins->oprs[c - 060].segment, ins->oprs[c - 060].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                data = ins->oprs[c - 060].offset - insn_end;
+                data = opx->offset - insn_end;
                 out(offset, segment, &data,
                     OUT_ADDRESS + 2, NO_SEG, NO_SEG);
             }
@@ -1325,17 +1328,17 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 065:
         case 066:
 	case 067:
-            if (ins->oprs[c - 064].type & (BITS16 | BITS32 | BITS64))
-                size = (ins->oprs[c - 064].type & BITS16) ? 2 : 4;
+            if (opx->type & (BITS16 | BITS32 | BITS64))
+                size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
-            if (ins->oprs[c - 064].segment != segment) {
+            if (opx->segment != segment) {
                 int32_t reltype = (size == 2 ? OUT_REL2ADR : OUT_REL4ADR);
-                data = ins->oprs[c - 064].offset;
+                data = opx->offset;
                 out(offset, segment, &data, reltype + insn_end - offset,
-                    ins->oprs[c - 064].segment, ins->oprs[c - 064].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                data = ins->oprs[c - 064].offset - insn_end;
+                data = opx->offset - insn_end;
                 out(offset, segment, &data,
                     OUT_ADDRESS + size, NO_SEG, NO_SEG);
             }
@@ -1346,13 +1349,13 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 071:
         case 072:
 	case 073:
-            if (ins->oprs[c - 070].segment != segment) {
-                data = ins->oprs[c - 070].offset;
+            if (opx->segment != segment) {
+                data = opx->offset;
                 out(offset, segment, &data,
                     OUT_REL4ADR + insn_end - offset,
-                    ins->oprs[c - 070].segment, ins->oprs[c - 070].wrt);
+                    opx->segment, opx->wrt);
             } else {
-                data = ins->oprs[c - 070].offset - insn_end;
+                data = opx->offset - insn_end;
                 out(offset, segment, &data,
                     OUT_ADDRESS + 4, NO_SEG, NO_SEG);
             }
@@ -1363,13 +1366,13 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 075:
         case 076:
         case 077:
-            if (ins->oprs[c - 074].segment == NO_SEG)
+            if (opx->segment == NO_SEG)
                 errfunc(ERR_NONFATAL, "value referenced by FAR is not"
                         " relocatable");
             data = 0L;
             out(offset, segment, &data, OUT_ADDRESS + 2,
-                outfmt->segbase(1 + ins->oprs[c - 074].segment),
-                ins->oprs[c - 074].wrt);
+                outfmt->segbase(1 + opx->segment),
+                opx->wrt);
             offset += 2;
             break;
 
@@ -1377,18 +1380,18 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 0141:
         case 0142:
 	case 0143:
-            data = ins->oprs[c - 0140].offset;
-            if (is_sbyte(ins, c - 0140, 16)) {
+            data = opx->offset;
+            if (is_sbyte(ins, c & 3, 16)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
                 offset++;
             } else {
-                if (ins->oprs[c - 0140].segment == NO_SEG &&
-                    ins->oprs[c - 0140].wrt == NO_SEG)
+                if (opx->segment == NO_SEG &&
+                    opx->wrt == NO_SEG)
 		    warn_overflow(2, data);
                 out(offset, segment, &data, OUT_ADDRESS + 2,
-                    ins->oprs[c - 0140].segment, ins->oprs[c - 0140].wrt);
+                    opx->segment, opx->wrt);
                 offset += 2;
             }
             break;
@@ -1400,7 +1403,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 	    EMIT_REX();
             codes++;
             bytes[0] = *codes++;
-            if (is_sbyte(ins, c - 0144, 16))
+            if (is_sbyte(ins, c & 3, 16))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset++;
@@ -1410,15 +1413,15 @@ static void gencode(int32_t segment, int32_t offset, int bits,
         case 0151:
         case 0152:
 	case 0153:
-            data = ins->oprs[c - 0150].offset;
-            if (is_sbyte(ins, c - 0150, 32)) {
+            data = opx->offset;
+            if (is_sbyte(ins, c & 3, 32)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG,
                     NO_SEG);
                 offset++;
             } else {
                 out(offset, segment, &data, OUT_ADDRESS + 4,
-                    ins->oprs[c - 0150].segment, ins->oprs[c - 0150].wrt);
+                    opx->segment, opx->wrt);
                 offset += 4;
             }
             break;
@@ -1430,7 +1433,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
 	    EMIT_REX();
             codes++;
             bytes[0] = *codes++;
-            if (is_sbyte(ins, c - 0154, 32))
+            if (is_sbyte(ins, c & 3, 32))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA + 1, NO_SEG, NO_SEG);
             offset++;
@@ -1558,7 +1561,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             if (ins->oprs[0].segment != NO_SEG)
                 errfunc(ERR_PANIC, "non-constant BSS size in pass two");
             else {
-                int32_t size = ins->oprs[0].offset << (c - 0340);
+                int32_t size = ins->oprs[0].offset << (c & 3);
                 if (size > 0)
                     out(offset, segment, NULL,
                         OUT_RESERVE + size, NO_SEG, NO_SEG);
@@ -1659,10 +1662,12 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                     break;
                 }
                 offset += s;
-            } else
+            } else {
                 errfunc(ERR_PANIC, "internal instruction table corrupt"
                         ": instruction code 0x%02X given", c);
+	    }
         }
+    }
 }
 
 static int32_t regflag(const operand * o)
