@@ -788,8 +788,9 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
     int32_t length = 0;
     uint8_t c;
     int rex_mask = ~0;
-    ins->rex = 0;               /* Ensure REX is reset */
     struct operand *opx;
+
+    ins->rex = 0;               /* Ensure REX is reset */
 
     if (ins->prefixes[PPS_OSIZE] == P_O64)
 	ins->rex |= REX_W;
