@@ -88,8 +88,8 @@ mv nasm-"$version"-xdoc.tar.gz nasm-"$version"-xdoc.tar.bz2 ..
 # Create doc zipfile (DOS convention: no prefix, convert file endings)
 # (Note: generating Win .hlp files requires additional tools)
 cd nasm-"$version"
-zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf
-zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf
+zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf -x \*.info\*
+zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf -i \*.info\*
 
 # Clean up
 cd ../..
