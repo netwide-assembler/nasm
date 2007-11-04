@@ -152,7 +152,7 @@ static const char *size_name(int size)
 static void warn_overflow(int size, int64_t data)
 {
     if (size < 8) {
-	int64_t lim = (1 << (size*8))-1;
+	int64_t lim = (1l << (size*8))-1;
 
 	if (data < ~lim || data > lim)
 	    errfunc(ERR_WARNING, "%s data exceeds bounds", size_name(size));
@@ -1616,6 +1616,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }
 
+
                 p = bytes;
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
@@ -1654,6 +1655,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
+		    warn_overflow(ea_data.bytes, data);
                     out(offset, segment, &data,
                         (ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS)
 			+ ea_data.bytes,
