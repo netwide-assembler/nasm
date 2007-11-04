@@ -152,7 +152,7 @@ static const char *size_name(int size)
 static void warn_overflow(int size, int64_t data)
 {
     if (size < 8) {
-	int64_t lim = (1l << (size*8))-1;
+	int64_t lim = ((int64_t)1 << (size*8))-1;
 
 	if (data < ~lim || data > lim)
 	    errfunc(ERR_WARNING, "%s data exceeds bounds", size_name(size));
