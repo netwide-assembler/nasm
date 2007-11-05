@@ -171,7 +171,11 @@ insn *parse_line(int pass, char *buffer, insn * result,
     int critical;
     struct eval_hints hints;
     int j;
+    bool first;
+    bool insn_is_label = false;
 
+restart_parse:
+    first = true;
     result->forw_ref = false;
     error = errfunc;
 
@@ -195,7 +199,9 @@ insn *parse_line(int pass, char *buffer, insn * result,
         return result;
     }
 
-    if (i == TOKEN_ID) {        /* there's a label here */
+    if (i == TOKEN_ID || (insn_is_label && i == TOKEN_INSN)) {
+        /* there's a label here */
+	first = false;
         result->label = tokval.t_charptr;
         i = stdscan(NULL, &tokval);
         if (i == ':') {         /* skip over the optional colon */
@@ -229,6 +235,8 @@ insn *parse_line(int pass, char *buffer, insn * result,
     while (i == TOKEN_PREFIX ||
            (i == TOKEN_REG && !(REG_SREG & ~reg_flags[tokval.t_integer])))
     {
+	first = false;
+
         /*
          * Handle special case: the TIMES prefix.
          */
@@ -259,7 +267,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
 	    int slot = prefix_slot(tokval.t_integer);
 	    if (result->prefixes[slot]) {
                if (result->prefixes[slot] == tokval.t_integer)
- 		    error(ERR_WARNING,
+		    error(ERR_WARNING,
 		      "instruction has redundant prefixes");
                else
 		    error(ERR_NONFATAL,
@@ -335,6 +343,11 @@ insn *parse_line(int pass, char *buffer, insn * result,
             i = stdscan(NULL, &tokval);
             if (i == 0)
                 break;
+	    else if (first && i == ':') {
+		insn_is_label = true;
+		goto restart_parse;
+	    }
+	    first = false;
             fixptr = tail;
             eop = *tail = nasm_malloc(sizeof(extop));
             tail = &eop->next;
@@ -507,6 +520,11 @@ insn *parse_line(int pass, char *buffer, insn * result,
         i = stdscan(NULL, &tokval);
         if (i == 0)
             break;              /* end of operands: get out of here */
+	else if (first && i == ':') {
+	    insn_is_label = true;
+	    goto restart_parse;
+	}
+	first = false;
         result->oprs[operand].type = 0; /* so far, no override */
         while (i == TOKEN_SPECIAL) {    /* size specifiers */
             switch ((int)tokval.t_integer) {

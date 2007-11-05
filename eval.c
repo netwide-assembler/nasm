@@ -741,6 +741,7 @@ static expr *expr6(int critical)
     case TOKEN_NUM:
     case TOKEN_REG:
     case TOKEN_ID:
+    case TOKEN_INSN:		/* Opcodes that occur here are really labels */
     case TOKEN_HERE:
     case TOKEN_BASE:
         begintemp();
@@ -754,6 +755,7 @@ static expr *expr6(int critical)
                 hint->base = tokval->t_integer, hint->type = EAH_MAKEBASE;
             break;
         case TOKEN_ID:
+	case TOKEN_INSN:
         case TOKEN_HERE:
         case TOKEN_BASE:
             /*
@@ -764,8 +766,9 @@ static expr *expr6(int critical)
             if (!location->known) {
                 error(ERR_NONFATAL,
                       "%s not supported in preprocess-only mode",
-                      (i == TOKEN_ID ? "symbol references" :
-                       i == TOKEN_HERE ? "`$'" : "`$$'"));
+		      (i == TOKEN_HERE ? "`$'" :
+		       i == TOKEN_BASE ? "`$$'" :
+		       "symbol references"));
                 addtotemp(EXPR_UNKNOWN, 1L);
                 break;
             }
