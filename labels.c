@@ -59,12 +59,14 @@
 
 union label {                   /* actual label structures */
     struct {
-        int32_t segment, offset;
+        int32_t segment;
+	int64_t offset;
         char *label, *special;
         int is_global, is_norm;
     } defn;
     struct {
-        int32_t movingon, dummy;
+        int32_t movingon;
+        int64_t dummy;
         union label *next;
     } admin;
 };
@@ -146,7 +148,7 @@ static union label *find_label(char *label, int create)
     return lfree++;
 }
 
-bool lookup_label(char *label, int32_t *segment, int32_t *offset)
+bool lookup_label(char *label, int32_t *segment, int64_t *offset)
 {
     union label *lptr;
 
@@ -173,7 +175,7 @@ bool is_extern(char *label)
     return (lptr && (lptr->defn.is_global & EXTERN_BIT));
 }
 
-void redefine_label(char *label, int32_t segment, int32_t offset, char *special,
+void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
                     bool is_norm, bool isextrn, struct ofmt *ofmt,
                     efunc error)
 {
@@ -246,7 +248,7 @@ void redefine_label(char *label, int32_t segment, int32_t offset, char *special,
     /* if (pass0 == 1) */
 }
 
-void define_label(char *label, int32_t segment, int32_t offset, char *special,
+void define_label(char *label, int32_t segment, int64_t offset, char *special,
                   bool is_norm, bool isextrn, struct ofmt *ofmt, efunc error)
 {
     union label *lptr;

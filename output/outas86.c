@@ -173,7 +173,7 @@ static int as86_add_string(char *name)
     return pos;
 }
 
-static void as86_deflabel(char *name, int32_t segment, int32_t offset,
+static void as86_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
     struct Symbol *sym;

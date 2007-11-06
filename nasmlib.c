@@ -896,7 +896,7 @@ void null_debug_linenum(const char *filename, int32_t linenumber, int32_t segto)
 	(void)linenumber;
 	(void)segto;
 }
-void null_debug_deflabel(char *name, int32_t segment, int32_t offset,
+void null_debug_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
 	(void)name;

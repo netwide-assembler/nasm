@@ -245,7 +245,7 @@ static int32_t aout_section_names(char *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static void aout_deflabel(char *name, int32_t segment, int32_t offset,
+static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
     int pos = strslen + 4;

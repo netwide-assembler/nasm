@@ -662,7 +662,8 @@ static void bin_cleanup(int debuginfo)
         }
         /* Display symbols information. */
         if (map_control & MAP_SYMBOLS) {
-            int32_t segment, offset;
+            int32_t segment;
+            int64_t offset;
 
             fprintf(rf, "-- Symbols ");
             for (h = 68; h; h--)
@@ -675,7 +676,7 @@ static void bin_cleanup(int debuginfo)
                 fprintf(rf, "\n\nValue     Name\n");
                 for (l = no_seg_labels; l; l = l->next) {
                     lookup_label(l->name, &segment, &offset);
-                    fprintf(rf, "%08"PRIX32"  %s\n", offset, l->name);
+                    fprintf(rf, "%08"PRIX64"  %s\n", offset, l->name);
                 }
                 fprintf(rf, "\n\n");
             }
@@ -839,7 +840,7 @@ static void bin_out(int32_t segto, const void *data, uint32_t type,
     }
 }
 
-static void bin_deflabel(char *name, int32_t segment, int32_t offset,
+static void bin_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
     (void)segment;              /* Don't warn that this parameter is unused */

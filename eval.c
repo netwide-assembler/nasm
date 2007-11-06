@@ -666,7 +666,8 @@ static expr *expr6(int critical)
 {
     int32_t type;
     expr *e;
-    int32_t label_seg, label_ofs;
+    int32_t label_seg;
+    int64_t label_ofs;
 
     switch (i) {
     case '-':

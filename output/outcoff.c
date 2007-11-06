@@ -358,7 +358,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
     return sects[i]->index;
 }
 
-static void coff_deflabel(char *name, int32_t segment, int32_t offset,
+static void coff_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
     int pos = strslen + 4;
@@ -845,7 +845,7 @@ static void coff_write_symbols(void)
      */
     memset(filename, 0, 18);    /* useful zeroed buffer */
 
-    for (i = 0; i < nsects; i++) {
+    for (i = 0; i < (uint32_t) nsects; i++) {
         coff_symbol(sects[i]->name, 0L, 0L, i + 1, 3, 1);
         fwriteint32_t(sects[i]->len, coffp);
         fwriteint16_t(sects[i]->nrelocs, coffp);

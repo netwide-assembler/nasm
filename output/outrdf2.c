@@ -353,7 +353,7 @@ static void write_modname_rec(struct ModRec *r)
 /*
  * Handle export, import and common records.
  */
-static void rdf2_deflabel(char *name, int32_t segment, int32_t offset,
+static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
     struct ExportRec r;

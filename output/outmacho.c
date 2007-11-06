@@ -631,7 +631,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
     return NO_SEG;
 }
 
-static void macho_symdef(char *name, int32_t section, int32_t offset,
+static void macho_symdef(char *name, int32_t section, int64_t offset,
                          int is_global, char *special)
 {
     struct symbol *sym;

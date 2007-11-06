@@ -207,7 +207,7 @@ static struct Symbol *lastsym;
 
 void stabs32_init(struct ofmt *, void *, FILE *, efunc);
 void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
-void stabs32_deflabel(char *, int32_t, int32_t, int, char *);
+void stabs32_deflabel(char *, int32_t, int64_t, int, char *);
 void stabs32_directive(const char *, const char *);
 void stabs32_typevalue(int32_t);
 void stabs32_output(int, void *);
@@ -444,7 +444,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     return sects[i]->index;
 }
 
-static void elf_deflabel(char *name, int32_t segment, int32_t offset,
+static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
     int pos = strslen;
@@ -1375,7 +1375,7 @@ void stabs32_linenum(const char *filename, int32_t linenumber, int32_t segto)
     currentline = linenumber;
 }
 
-void stabs32_deflabel(char *name, int32_t segment, int32_t offset, int is_global,
+void stabs32_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
                     char *special)
 {
    (void)name;

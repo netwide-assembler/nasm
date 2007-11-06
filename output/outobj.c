@@ -726,7 +726,7 @@ static void obj_ext_set_defwrt(struct External *ext, char *id)
 }
 
 static void obj_deflabel(char *name, int32_t segment,
-                         int32_t offset, int is_global, char *special)
+                         int64_t offset, int is_global, char *special)
 {
     /*
      * We have three cases:
@@ -2407,7 +2407,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 
 }
 static void dbgbi_deflabel(char *name, int32_t segment,
-                           int32_t offset, int is_global, char *special)
+                           int64_t offset, int is_global, char *special)
 {
     struct Segment *seg;
 

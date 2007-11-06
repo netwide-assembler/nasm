@@ -60,7 +60,7 @@ struct ofmt;
 /*
  * A label-lookup function should look like this.
  */
-typedef bool (*lfunc) (char *label, int32_t *segment, int32_t *offset);
+typedef bool (*lfunc) (char *label, int32_t *segment, int64_t *offset);
 
 /*
  * And a label-definition function like this. The boolean parameter
@@ -68,7 +68,7 @@ typedef bool (*lfunc) (char *label, int32_t *segment, int32_t *offset);
  * should affect the local-label system), or something odder like
  * an EQU or a segment-base symbol, which shouldn't.
  */
-typedef void (*ldfunc) (char *label, int32_t segment, int32_t offset,
+typedef void (*ldfunc) (char *label, int32_t segment, int64_t offset,
                         char *special, bool is_norm, bool isextrn,
                         struct ofmt * ofmt, efunc error);
 
@@ -740,7 +740,7 @@ struct ofmt {
      * been an EXTERN, a COMMON or a GLOBAL. The distinction should
      * be obvious to the output format from the other parameters.
      */
-    void (*symdef) (char *name, int32_t segment, int32_t offset,
+    void (*symdef) (char *name, int32_t segment, int64_t offset,
 		    int is_global, char *special);
 
     /*
@@ -887,7 +887,7 @@ struct dfmt {
      * would be called before the output format version.
      */
 
-    void (*debug_deflabel) (char *name, int32_t segment, int32_t offset,
+    void (*debug_deflabel) (char *name, int32_t segment, int64_t offset,
                             int is_global, char *special);
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
