@@ -475,21 +475,21 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                         case R_CS:
                             if (bits == 64) {
                                 error(ERR_WARNING,
-                                      "cs segment base ignored in 64-bit mode");
+                                      "cs segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x2E;
                             break;
                         case R_DS:
                             if (bits == 64) {
                                 error(ERR_WARNING,
-                                      "ds segment base ignored in 64-bit mode");
+                                      "ds segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x3E;
                             break;
                         case R_ES:
                            if (bits == 64) {
                                 error(ERR_WARNING,
-                                      "es segment base ignored in 64-bit mode");
+                                      "es segment base generated, but will be ignored in 64-bit mode");
                            }
                             c = 0x26;
                             break;
@@ -502,7 +502,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
                         case R_SS:
                             if (bits == 64) {
                                 error(ERR_WARNING,
-                                      "ss segment base ignored in 64-bit mode");
+                                      "ss segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x36;
                             break;
