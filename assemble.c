@@ -107,8 +107,8 @@ static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
 
-static int32_t calcsize(int32_t, int32_t, int, insn *, const char *);
-static void gencode(int32_t, int32_t, int, insn *, const char *, int32_t);
+static int64_t calcsize(int32_t, int64_t, int, insn *, const char *);
+static void gencode(int32_t, int64_t, int, insn *, const char *, int64_t);
 static int matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
@@ -163,7 +163,7 @@ static void warn_overflow(int size, int64_t data)
  * in order to pass a copy of the data off to the listing file
  * generator at the same time.
  */
-static void out(int32_t offset, int32_t segto, const void *data,
+static void out(int64_t offset, int32_t segto, const void *data,
                 uint32_t type, int32_t segment, int32_t wrt)
 {
     static int32_t lineno = 0;     /* static!!! */
@@ -243,17 +243,17 @@ static int jmp_match(int32_t segment, int32_t offset, int bits,
     return 0;
 }
 
-int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
+int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
               insn * instruction, struct ofmt *output, efunc error,
               ListGen * listgen)
 {
     const struct itemplate *temp;
     int j;
     int size_prob;
-    int32_t insn_end;
+    int64_t insn_end;
     int32_t itimes;
-    int32_t start = offset;
-    int32_t wsize = 0;             /* size for DB etc. */
+    int64_t start = offset;
+    int64_t wsize = 0;             /* size for DB etc. */
 
     errfunc = error;            /* to pass to other functions */
     cpu = cp;
@@ -450,7 +450,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
 
         if (m == 100) {         /* matches! */
             const char *codes = temp->code;
-            int32_t insn_size = calcsize(segment, offset, bits,
+            int64_t insn_size = calcsize(segment, offset, bits,
                                       instruction, codes);
             itimes = instruction->times;
             if (insn_size < 0)  /* shouldn't be, on pass two */
@@ -603,7 +603,7 @@ int32_t assemble(int32_t segment, int32_t offset, int bits, uint32_t cp,
     return 0;
 }
 
-int32_t insn_size(int32_t segment, int32_t offset, int bits, uint32_t cp,
+int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
                insn * instruction, efunc error)
 {
     const struct itemplate *temp;
@@ -782,10 +782,10 @@ static int is_sbyte(insn * ins, int op, int size)
     return ret && v >= -128L && v <= 127L;
 }
 
-static int32_t calcsize(int32_t segment, int32_t offset, int bits,
+static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                      insn * ins, const char *codes)
 {
-    int32_t length = 0;
+    int64_t length = 0;
     uint8_t c;
     int rex_mask = ~0;
     struct operand *opx;
@@ -1097,8 +1097,8 @@ static int32_t calcsize(int32_t segment, int32_t offset, int bits,
 	offset += 1; \
     }
 
-static void gencode(int32_t segment, int32_t offset, int bits,
-                    insn * ins, const char *codes, int32_t insn_end)
+static void gencode(int32_t segment, int64_t offset, int bits,
+                    insn * ins, const char *codes, int64_t insn_end)
 {
     static char condval[] = {   /* conditional opcodes */
         0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
@@ -1107,7 +1107,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
     };
     uint8_t c;
     uint8_t bytes[4];
-    int32_t size;
+    int64_t size;
     int64_t data;
     struct operand *opx;
 
@@ -1562,7 +1562,7 @@ static void gencode(int32_t segment, int32_t offset, int bits,
             if (ins->oprs[0].segment != NO_SEG)
                 errfunc(ERR_PANIC, "non-constant BSS size in pass two");
             else {
-                int32_t size = ins->oprs[0].offset << (c & 3);
+                int64_t size = ins->oprs[0].offset << (c & 3);
                 if (size > 0)
                     out(offset, segment, NULL,
                         OUT_RESERVE + size, NO_SEG, NO_SEG);
