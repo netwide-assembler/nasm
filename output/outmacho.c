@@ -386,7 +386,7 @@ static void add_reloc(struct section *sect, int32_t section,
     ++sect->nreloc;
 }
 
-static void macho_output(int32_t secto, const void *data, uint32_t type,
+static void macho_output(int32_t secto, const void *data, uint64_t type,
                          int32_t section, int32_t wrt)
 {
     struct section *s, *sbss;

@@ -254,11 +254,11 @@ static void as86_add_piece(struct Section *sect, int type, int32_t offset,
         p->number = raa_read(bsym, segment), p->type = 2;
 }
 
-static void as86_out(int32_t segto, const void *data, uint32_t type,
+static void as86_out(int32_t segto, const void *data, uint64_t type,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int32_t realbytes = type & OUT_SIZMASK;
+    int64_t realbytes = type & OUT_SIZMASK;
     int32_t offset;
     uint8_t mydata[4], *p;
 

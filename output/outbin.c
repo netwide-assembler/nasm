@@ -737,12 +737,12 @@ static void bin_cleanup(int debuginfo)
     }
 }
 
-static void bin_out(int32_t segto, const void *data, uint32_t type,
+static void bin_out(int32_t segto, const void *data, uint64_t type,
                     int32_t segment, int32_t wrt)
 {
     uint8_t *p, mydata[8];
     struct Section *s;
-    int32_t realbytes;
+    int64_t realbytes;
 
 
     if (wrt != NO_SEG) {

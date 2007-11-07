@@ -164,7 +164,7 @@ static void warn_overflow(int size, int64_t data)
  * generator at the same time.
  */
 static void out(int64_t offset, int32_t segto, const void *data,
-                uint32_t type, int32_t segment, int32_t wrt)
+                uint64_t type, int32_t segment, int32_t wrt)
 {
     static int32_t lineno = 0;     /* static!!! */
     static char *lnfname = NULL;
@@ -1334,7 +1334,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             else
                 size = (bits == 16) ? 2 : 4;
             if (opx->segment != segment) {
-                int32_t reltype = (size == 2 ? OUT_REL2ADR : OUT_REL4ADR);
+                int64_t reltype = (size == 2 ? OUT_REL2ADR : OUT_REL4ADR);
                 data = opx->offset;
                 out(offset, segment, &data, reltype + insn_end - offset,
                     opx->segment, opx->wrt);

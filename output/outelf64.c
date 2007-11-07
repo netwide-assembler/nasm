@@ -784,7 +784,7 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
     return offset - sym->value;
 }
 
-static void elf_out(int32_t segto, const void *data, uint32_t type,
+static void elf_out(int32_t segto, const void *data, uint64_t type,
                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
@@ -1438,7 +1438,7 @@ void stabs64_typevalue(int32_t type)
             stype = STT_OBJECT;
             break;
         case TY_OWORD:
-            ssize = 8;
+            ssize = 16;
             stype = STT_OBJECT;
             break;
         case TY_COMMON:

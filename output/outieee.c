@@ -161,7 +161,7 @@ extern struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
-                             int, uint32_t, int32_t);
+                             int, uint64_t, int32_t);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
 static int32_t ieee_segment(char *, int, int *);
 static void ieee_write_file(int debuginfo);
@@ -372,10 +372,10 @@ static void ieee_deflabel(char *name, int32_t segment,
 /*
  * Put data out
  */
-static void ieee_out(int32_t segto, const void *data, uint32_t type,
+static void ieee_out(int32_t segto, const void *data, uint64_t type,
                      int32_t segment, int32_t wrt)
 {
-    uint32_t size, realtype;
+    uint64_t size, realtype;
     const uint8_t *ucdata;
     int32_t ldata;
     struct ieeeSection *seg;
@@ -455,7 +455,7 @@ static void ieee_data_new(struct ieeeSection *segto)
  */
 static void ieee_write_fixup(int32_t segment, int32_t wrt,
                              struct ieeeSection *segto, int size,
-                             uint32_t realtype, int32_t offset)
+                             uint64_t realtype, int32_t offset)
 {
     struct ieeeSection *target;
     struct ieeeFixupp s;

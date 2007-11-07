@@ -456,7 +456,7 @@ static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
         return 0;
 }
 
-static void coff_out(int32_t segto, const void *data, uint32_t type,
+static void coff_out(int32_t segto, const void *data, uint64_t type,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;

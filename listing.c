@@ -125,9 +125,9 @@ static void list_out(int32_t offset, char *str)
     strcat(listdata, str);
 }
 
-static void list_output(int32_t offset, const void *data, uint32_t type)
+static void list_output(int32_t offset, const void *data, uint64_t type)
 {
-    uint32_t typ, size;
+    uint64_t typ, size;
 
     if (!listp || suppress || user_nolist)      /* fbk - 9/2/00 */
         return;
@@ -208,7 +208,7 @@ static void list_output(int32_t offset, const void *data, uint32_t type)
         list_out(offset, q);
     } else if (typ == OUT_RESERVE) {
         char q[20];
-        snprintf(q, sizeof(q), "<res %08"PRIX32">", size);
+        snprintf(q, sizeof(q), "<res %08"PRIX64">", size);
         list_out(offset, q);
     }
 }

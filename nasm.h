@@ -100,7 +100,7 @@ typedef struct {
      * work with when doing things like uplevel(LIST_TIMES) or
      * uplevel(LIST_INCBIN).
      */
-    void (*output) (int32_t, const void *, uint32_t);
+    void (*output) (int32_t, const void *, uint64_t);
 
     /*
      * Called to send a text line to the listing generator. The
@@ -709,7 +709,7 @@ struct ofmt {
      * The `type' argument specifies the type of output data, and
      * usually the size as well: its contents are described below.
      */
-    void (*output) (int32_t segto, const void *data, uint32_t type,
+    void (*output) (int32_t segto, const void *data, uint64_t type,
                     int32_t segment, int32_t wrt);
 
     /*
@@ -840,13 +840,14 @@ struct ofmt {
  * OUT_RAWDATA, in which case it points to an "uint8_t"
  * array.
  */
-#define OUT_RAWDATA 0x00000000UL
-#define OUT_ADDRESS 0x10000000UL
-#define OUT_REL2ADR 0x20000000UL
-#define OUT_REL4ADR 0x30000000UL
-#define OUT_RESERVE 0x40000000UL
-#define OUT_TYPMASK 0xF0000000UL
-#define OUT_SIZMASK 0x0FFFFFFFUL
+#define OUT_RAWDATA (uint64_t)0x0000000000000000
+#define OUT_ADDRESS (uint64_t)0x1000000000000000
+#define OUT_REL2ADR (uint64_t)0x2000000000000000
+#define OUT_REL4ADR (uint64_t)0x3000000000000000
+#define OUT_RESERVE (uint64_t)0x4000000000000000
+#define OUT_REL8ADR (uint64_t)0x5000000000000000
+#define OUT_TYPMASK (uint64_t)0xF000000000000000
+#define OUT_SIZMASK (uint64_t)0x0FFFFFFFFFFFFFFF
 
 /*
  * ------------------------------------------------------------

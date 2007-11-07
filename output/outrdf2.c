@@ -507,10 +507,10 @@ static int getsegmentlength(int segment)
     return segments[i].seglength;
 }
 
-static void rdf2_out(int32_t segto, const void *data, uint32_t type,
+static void rdf2_out(int32_t segto, const void *data, uint64_t type,
                      int32_t segment, int32_t wrt)
 {
-    int32_t bytes = type & OUT_SIZMASK;
+    int64_t bytes = type & OUT_SIZMASK;
     struct RelocRec rr;
     uint8_t databuf[8], *pd;
     int seg;

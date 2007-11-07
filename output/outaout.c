@@ -568,7 +568,7 @@ static int32_t aout_add_gotoff_reloc(struct Section *sect, int32_t segment,
     return offset - asym->value;
 }
 
-static void aout_out(int32_t segto, const void *data, uint32_t type,
+static void aout_out(int32_t segto, const void *data, uint64_t type,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;

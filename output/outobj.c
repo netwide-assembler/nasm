@@ -996,10 +996,10 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
                             int segrel, int32_t seg, int32_t wrt,
                             struct Segment *segto);
 
-static void obj_out(int32_t segto, const void *data, uint32_t type,
+static void obj_out(int32_t segto, const void *data, uint64_t type,
                     int32_t segment, int32_t wrt)
 {
-    uint32_t size, realtype;
+    uint64_t size, realtype;
     const uint8_t *ucdata;
     int32_t ldata;
     struct Segment *seg;
