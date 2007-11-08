@@ -459,7 +459,7 @@ void raa_free(struct RAA *r)
     }
 }
 
-int32_t raa_read(struct RAA *r, int32_t posn)
+int64_t raa_read(struct RAA *r, int32_t posn)
 {
     if (posn >= r->stepsize * LAYERSIZ(r))
         return 0;               /* Return 0 for undefined entries */
@@ -474,7 +474,7 @@ int32_t raa_read(struct RAA *r, int32_t posn)
     return r->u.l.data[posn];
 }
 
-struct RAA *raa_write(struct RAA *r, int32_t posn, int32_t value)
+struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
 {
     struct RAA *result;
 

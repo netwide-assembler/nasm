@@ -837,7 +837,8 @@ static void assemble_file(char *fname)
     insn output_ins;
     int i, validid;
     bool rn_error;
-    int32_t seg, offs;
+    int32_t seg;
+    int64_t offs;
     struct tokenval tokval;
     expr *e;
     int pass, pass_max;
@@ -1313,7 +1314,7 @@ static void assemble_file(char *fname)
 
                     if (pass1 == 1) {
 
-                        int32_t l = insn_size(location.segment, offs, sb, cpu,
+                        int64_t l = insn_size(location.segment, offs, sb, cpu,
                                            &output_ins, report_error);
 
                         /* if (using_debug_info)  && output_ins.opcode != -1) */

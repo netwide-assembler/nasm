@@ -218,10 +218,10 @@ static void out(int64_t offset, int32_t segto, const void *data,
     outfmt->output(segto, data, type, segment, wrt);
 }
 
-static int jmp_match(int32_t segment, int32_t offset, int bits,
+static int jmp_match(int32_t segment, int64_t offset, int bits,
                      insn * ins, const char *code)
 {
-    int32_t isize;
+    int64_t isize;
     uint8_t c = code[0];
 
     if (c != 0370 && c != 0371)
@@ -723,7 +723,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
         if (m == 100) {
             /* we've matched an instruction. */
-            int32_t isize;
+            int64_t isize;
             const char *codes = temp->code;
             int j;
 

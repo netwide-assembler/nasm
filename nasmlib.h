@@ -212,7 +212,7 @@ void fwriteint64_t(int64_t data, FILE * fp);
  * chunk.
  */
 
-#define RAA_BLKSIZE	65536	/* this many longs allocated at once */
+#define RAA_BLKSIZE	32768	/* this many longs allocated at once */
 #define RAA_LAYERSIZE	32768	/* this many _pointers_ allocated */
 
 typedef struct RAA RAA;
@@ -239,7 +239,7 @@ struct RAA {
     int32_t stepsize;
     union RAA_UNION {
         struct RAA_LEAF {
-            int32_t data[RAA_BLKSIZE];
+            int64_t data[RAA_BLKSIZE];
         } l;
         struct RAA_BRANCH {
             struct RAA *data[RAA_LAYERSIZE];
@@ -249,8 +249,8 @@ struct RAA {
 
 struct RAA *raa_init(void);
 void raa_free(struct RAA *);
-int32_t raa_read(struct RAA *, int32_t);
-struct RAA *raa_write(struct RAA *r, int32_t posn, int32_t value);
+int64_t raa_read(struct RAA *, int32_t);
+struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value);
 
 /*
  * Routines to manage a dynamic sequential-access array, under the
