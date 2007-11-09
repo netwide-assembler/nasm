@@ -300,10 +300,6 @@ static int is_condition(enum preproc_token arg)
  * then jam in the equivalent NASM directive into the input stream.
  */
 
-#ifndef MAX
-#       define MAX(a,b) ( ((a) > (b)) ? (a) : (b))
-#endif
-
 enum {
     TM_ARG, TM_ELIF, TM_ELSE, TM_ENDIF, TM_IF, TM_IFDEF, TM_IFDIFI,
     TM_IFNDEF, TM_INCLUDE, TM_LOCAL
@@ -317,7 +313,7 @@ static const char * const tasm_directives[] = {
 static int StackSize = 4;
 static char *StackPointer = "ebp";
 static int ArgOffset = 8;
-static int LocalOffset = 4;
+static int LocalOffset = 0;
 
 static Context *cstk;
 static Include *istk;
@@ -1718,6 +1714,18 @@ static void undef_smacro(Context *ctx, const char *mname)
     }
 }
 
+/*
+ * Decode a size directive
+ */
+static int parse_size(const char *str) {
+    static const char *size_names[] =
+	{ "byte", "dword", "oword", "qword", "tword", "word" };
+    static const int sizes[] =
+	{ 0, 1, 4, 16, 8, 10, 2 };
+
+    return sizes[bsii(str, size_names, elements(size_names))+1];
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -1813,7 +1821,7 @@ static int do_directive(Token * tline)
             StackSize = 4;
             StackPointer = "ebp";
             ArgOffset = 8;
-            LocalOffset = 4;
+            LocalOffset = 0;
         } else if (nasm_stricmp(tline->text, "large") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call.
@@ -1821,7 +1829,7 @@ static int do_directive(Token * tline)
             StackSize = 2;
             StackPointer = "bp";
             ArgOffset = 4;
-            LocalOffset = 2;
+            LocalOffset = 0;
         } else if (nasm_stricmp(tline->text, "small") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call. We don't support near functions.
@@ -1829,7 +1837,7 @@ static int do_directive(Token * tline)
             StackSize = 2;
             StackPointer = "bp";
             ArgOffset = 6;
-            LocalOffset = 2;
+            LocalOffset = 0;
         } else {
             error(ERR_NONFATAL, "`%%stacksize' invalid size type");
             free_tlist(origline);
@@ -1879,17 +1887,8 @@ static int do_directive(Token * tline)
             /* Allow macro expansion of type parameter */
             tt = tokenize(tline->text);
             tt = expand_smacro(tt);
-            if (nasm_stricmp(tt->text, "byte") == 0) {
-                size = MAX(StackSize, 1);
-            } else if (nasm_stricmp(tt->text, "word") == 0) {
-                size = MAX(StackSize, 2);
-            } else if (nasm_stricmp(tt->text, "dword") == 0) {
-                size = MAX(StackSize, 4);
-            } else if (nasm_stricmp(tt->text, "qword") == 0) {
-                size = MAX(StackSize, 8);
-            } else if (nasm_stricmp(tt->text, "tword") == 0) {
-                size = MAX(StackSize, 10);
-            } else {
+	    size = parse_size(tt->text);
+	    if (!size) {
                 error(ERR_NONFATAL,
                       "Invalid size type for `%%arg' missing directive");
                 free_tlist(tt);
@@ -1897,6 +1896,9 @@ static int do_directive(Token * tline)
                 return DIRECTIVE_FOUND;
             }
             free_tlist(tt);
+
+	    /* Round up to even stack slots */
+	    size = (size+StackSize-1) & ~(StackSize-1);
 
             /* Now define the macro for the argument */
             snprintf(directive, sizeof(directive), "%%define %s (%s+%d)",
@@ -1908,8 +1910,8 @@ static int do_directive(Token * tline)
             tline = tline->next;
             if (tline && tline->type == TOK_WHITESPACE)
                 tline = tline->next;
-        }
-        while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+        } while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+	ArgOffset = offset;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -1960,17 +1962,8 @@ static int do_directive(Token * tline)
             /* Allow macro expansion of type parameter */
             tt = tokenize(tline->text);
             tt = expand_smacro(tt);
-            if (nasm_stricmp(tt->text, "byte") == 0) {
-                size = MAX(StackSize, 1);
-            } else if (nasm_stricmp(tt->text, "word") == 0) {
-                size = MAX(StackSize, 2);
-            } else if (nasm_stricmp(tt->text, "dword") == 0) {
-                size = MAX(StackSize, 4);
-            } else if (nasm_stricmp(tt->text, "qword") == 0) {
-                size = MAX(StackSize, 8);
-            } else if (nasm_stricmp(tt->text, "tword") == 0) {
-                size = MAX(StackSize, 10);
-            } else {
+	    size = parse_size(tt->text);
+	    if (!size) {
                 error(ERR_NONFATAL,
                       "Invalid size type for `%%local' missing directive");
                 free_tlist(tt);
@@ -1979,11 +1972,15 @@ static int do_directive(Token * tline)
             }
             free_tlist(tt);
 
-            /* Now define the macro for the argument */
+	    /* Round up to even stack slots */
+	    size = (size+StackSize-1) & ~(StackSize-1);
+
+            offset += size;	/* Negative offset, increment before */
+
+	    /* Now define the macro for the argument */
             snprintf(directive, sizeof(directive), "%%define %s (%s-%d)",
                      local, StackPointer, offset);
             do_directive(tokenize(directive));
-            offset += size;
 
             /* Now define the assign to setup the enter_c macro correctly */
             snprintf(directive, sizeof(directive),
@@ -1994,8 +1991,8 @@ static int do_directive(Token * tline)
             tline = tline->next;
             if (tline && tline->type == TOK_WHITESPACE)
                 tline = tline->next;
-        }
-        while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+        } while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+	LocalOffset = offset;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
