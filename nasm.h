@@ -963,19 +963,6 @@ enum special_tokens {
 
 /*
  * -----
- * Other
- * -----
- */
-
-/*
- * This is a useful #define which I keep meaning to use more often:
- * the number of elements of a statically defined array.
- */
-
-#define elements(x)     ( sizeof(x) / sizeof(*(x)) )
-
-/*
- * -----
  * Global modes
  * -----
  */

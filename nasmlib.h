@@ -163,6 +163,16 @@ void standard_extension(char *inname, char *outname, char *extension,
 #endif
 
 /*
+ * Utility macros...
+ *
+ * This is a useful #define which I keep meaning to use more often:
+ * the number of elements of a statically defined array.
+ */
+
+#define elements(x)     ( sizeof(x) / sizeof(*(x)) )
+
+
+/*
  * some handy macros that will probably be of use in more than one
  * output format: convert integers into little-endian byte packed
  * format in memory
