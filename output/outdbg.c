@@ -102,16 +102,14 @@ static void dbg_deflabel(char *name, int32_t segment, int32_t offset,
             is_global, special ? ": " : "", special);
 }
 
-static void dbg_out(int32_t segto, const void *data, uint32_t type,
+static void dbg_out(int32_t segto, const void *data,
+		    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
-    int32_t realbytes = type & OUT_SIZMASK;
     int32_t ldata;
     int id;
 
-    type &= OUT_TYPMASK;
-
-    fprintf(dbgf, "out to %lx, len = %ld: ", segto, realbytes);
+    fprintf(dbgf, "out to %lx, len = %ld: ", segto, size);
 
     switch (type) {
     case OUT_RESERVE:
@@ -119,7 +117,7 @@ static void dbg_out(int32_t segto, const void *data, uint32_t type,
         break;
     case OUT_RAWDATA:
         fprintf(dbgf, "raw data = ");
-        while (realbytes--) {
+        while (size--) {
             id = *(uint8_t *)data;
             data = (char *)data + 1;
             fprintf(dbgf, "%02x ", id);
@@ -128,11 +126,11 @@ static void dbg_out(int32_t segto, const void *data, uint32_t type,
         break;
     case OUT_ADDRESS:
         ldata = 0;              /* placate gcc */
-        if (realbytes == 1)
+        if (size == 1)
             ldata = *((char *)data);
-        else if (realbytes == 2)
+        else if (size == 2)
             ldata = *((int16_t *)data);
-        else if (realbytes == 4)
+        else if (size == 4)
             ldata = *((int32_t *)data);
         fprintf(dbgf, "addr %08lx (seg %08lx, wrt %08lx)\n", ldata,
                 segment, wrt);

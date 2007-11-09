@@ -568,15 +568,13 @@ static int32_t aout_add_gotoff_reloc(struct Section *sect, int32_t segment,
     return offset - asym->value;
 }
 
-static void aout_out(int32_t segto, const void *data, uint64_t type,
+static void aout_out(int32_t segto, const void *data,
+		     enum out_type type, uint64_t size,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int32_t realbytes = type & OUT_SIZMASK;
     int32_t addr;
     uint8_t mydata[4], *p;
-
-    type &= OUT_TYPMASK;
 
     /*
      * handle absolute-assembly (structure definitions)
@@ -604,10 +602,10 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         if (type == OUT_REL2ADR)
-            realbytes = 2;
+            size = 2;
         else if (type == OUT_REL4ADR)
-            realbytes = 4;
-        sbss.len += realbytes;
+            size = 4;
+        sbss.len += size;
         return;
     }
 
@@ -616,13 +614,13 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
             error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   (segto == stext.index ? "code" : "data"));
-            aout_sect_write(s, NULL, realbytes);
+            aout_sect_write(s, NULL, size);
         } else
-            sbss.len += realbytes;
+            sbss.len += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
-        aout_sect_write(s, data, realbytes);
+        aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         addr = *(int32_t *)data;
         if (segment != NO_SEG) {
@@ -632,7 +630,7 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
             } else {
                 if (wrt == NO_SEG) {
                     aout_add_reloc(s, segment, RELTYPE_ABSOLUTE,
-                                   realbytes);
+                                   size);
                 } else if (!bsd) {
                     error(ERR_NONFATAL,
                           "Linux a.out format does not support"
@@ -640,19 +638,19 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
                     wrt = NO_SEG;       /* we can at least _try_ to continue */
                 } else if (wrt == aout_gotpc_sect + 1) {
                     is_pic = 0x40;
-                    aout_add_reloc(s, segment, RELTYPE_GOTPC, realbytes);
+                    aout_add_reloc(s, segment, RELTYPE_GOTPC, size);
                 } else if (wrt == aout_gotoff_sect + 1) {
                     is_pic = 0x40;
                     addr = aout_add_gotoff_reloc(s, segment,
-                                                 addr, realbytes);
+                                                 addr, size);
                 } else if (wrt == aout_got_sect + 1) {
                     is_pic = 0x40;
                     addr =
                         aout_add_gsym_reloc(s, segment, addr, RELTYPE_GOT,
-                                            realbytes, true);
+                                            size, true);
                 } else if (wrt == aout_sym_sect + 1) {
                     addr = aout_add_gsym_reloc(s, segment, addr,
-                                               RELTYPE_ABSOLUTE, realbytes,
+                                               RELTYPE_ABSOLUTE, size,
                                                false);
                 } else if (wrt == aout_plt_sect + 1) {
                     is_pic = 0x40;
@@ -668,11 +666,11 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
             }
         }
         p = mydata;
-        if (realbytes == 2)
+        if (size == 2)
             WRITESHORT(p, addr);
         else
             WRITELONG(p, addr);
-        aout_sect_write(s, mydata, realbytes);
+        aout_sect_write(s, mydata, size);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
@@ -701,7 +699,7 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - (realbytes + s->len));
+        WRITESHORT(p, *(int32_t *)data - (size + s->len));
         aout_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -731,7 +729,7 @@ static void aout_out(int32_t segto, const void *data, uint64_t type,
             }
         }
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - (realbytes + s->len));
+        WRITELONG(p, *(int32_t *)data - (size + s->len));
         aout_sect_write(s, mydata, 4L);
     }
 }

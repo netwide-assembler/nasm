@@ -737,13 +737,12 @@ static void bin_cleanup(int debuginfo)
     }
 }
 
-static void bin_out(int32_t segto, const void *data, uint64_t type,
+static void bin_out(int32_t segto, const void *data,
+		    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
     uint8_t *p, mydata[8];
     struct Section *s;
-    int64_t realbytes;
-
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
@@ -752,7 +751,7 @@ static void bin_out(int32_t segto, const void *data, uint64_t type,
 
     /* Handle absolute-assembly (structure definitions). */
     if (segto == NO_SEG) {
-        if ((type & OUT_TYPMASK) != OUT_RESERVE)
+        if (type != OUT_RESERVE)
             error(ERR_NONFATAL, "attempt to assemble code in"
                   " [ABSOLUTE] space");
         return;
@@ -765,17 +764,17 @@ static void bin_out(int32_t segto, const void *data, uint64_t type,
 
     /* "Smart" section-type adaptation code. */
     if (!(s->flags & TYPE_DEFINED)) {
-        if ((type & OUT_TYPMASK) == OUT_RESERVE)
+        if (type == OUT_RESERVE)
             s->flags |= TYPE_DEFINED | TYPE_NOBITS;
         else
             s->flags |= TYPE_DEFINED | TYPE_PROGBITS;
     }
 
-    if ((s->flags & TYPE_NOBITS) && ((type & OUT_TYPMASK) != OUT_RESERVE))
+    if ((s->flags & TYPE_NOBITS) && (type != OUT_RESERVE))
         error(ERR_WARNING, "attempt to initialize memory in a"
               " nobits section: ignored");
 
-    if ((type & OUT_TYPMASK) == OUT_ADDRESS) {
+    if (type == OUT_ADDRESS) {
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 error(ERR_NONFATAL, "binary output format does not support"
@@ -787,37 +786,44 @@ static void bin_out(int32_t segto, const void *data, uint64_t type,
         }
         if (s->flags & TYPE_PROGBITS) {
             if (segment != NO_SEG)
-                add_reloc(s, type & OUT_SIZMASK, segment, -1L);
+                add_reloc(s, size, segment, -1L);
             p = mydata;
-            if ((type & OUT_SIZMASK) == 4)
+            if (size == 4)
                 WRITELONG(p, *(int32_t *)data);
-            else if ((type & OUT_SIZMASK) == 8)
+            else if (size == 8)
                 WRITEDLONG(p, *(int64_t *)data);
             else
                 WRITESHORT(p, *(int32_t *)data);
-            saa_wbytes(s->contents, mydata, type & OUT_SIZMASK);
+            saa_wbytes(s->contents, mydata, size);
         }
-        s->length += type & OUT_SIZMASK;
-    } else if ((type & OUT_TYPMASK) == OUT_RAWDATA) {
-        type &= OUT_SIZMASK;
+        s->length += size;
+    } else if (type == OUT_RAWDATA) {
         if (s->flags & TYPE_PROGBITS)
-            saa_wbytes(s->contents, data, type);
-        s->length += type;
-    } else if ((type & OUT_TYPMASK) == OUT_RESERVE) {
-        type &= OUT_SIZMASK;
+            saa_wbytes(s->contents, data, size);
+        s->length += size;
+    } else if (type == OUT_RESERVE) {
         if (s->flags & TYPE_PROGBITS) {
             error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing", s->name);
-            saa_wbytes(s->contents, NULL, type);
+            saa_wbytes(s->contents, NULL, size);
         }
         s->length += type;
-    } else if ((type & OUT_TYPMASK) == OUT_REL2ADR ||
-               (type & OUT_TYPMASK) == OUT_REL4ADR) {
-        realbytes = (type & OUT_TYPMASK);
-        if (realbytes == OUT_REL2ADR)
-            realbytes = 2;
-        else
-            realbytes = 4;
+    } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
+	       type == OUT_REL8ADR) {
+	switch (type) {
+	case OUT_REL2ADR:
+	    size = 2;
+	    break;
+	case OUT_REL4ADR:
+	    size = 4;
+	    break;
+	case OUT_REL8ADR:
+	    size = 8;
+	    break;
+	default:
+	    size = 0;		/* Shut up warning */
+	    break;
+	}
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 error(ERR_NONFATAL, "binary output format does not support"
@@ -828,15 +834,16 @@ static void bin_out(int32_t segto, const void *data, uint64_t type,
             segment = NO_SEG;
         }
         if (s->flags & TYPE_PROGBITS) {
-            add_reloc(s, realbytes, segment, segto);
+            add_reloc(s, size, segment, segto);
             p = mydata;
-            if (realbytes == 4)
-                WRITELONG(p, *(int32_t *)data - realbytes - s->length);
+	    /* XXX: WHAT ABOUT SIZE == 8? */
+            if (size == 4)
+                WRITELONG(p, *(int32_t *)data - size - s->length);
             else
-                WRITESHORT(p, *(int32_t *)data - realbytes - s->length);
-            saa_wbytes(s->contents, mydata, realbytes);
+                WRITESHORT(p, *(int32_t *)data - size - s->length);
+            saa_wbytes(s->contents, mydata, size);
         }
-        s->length += realbytes;
+        s->length += size;
     }
 }
 

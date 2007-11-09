@@ -507,16 +507,16 @@ static int getsegmentlength(int segment)
     return segments[i].seglength;
 }
 
-static void rdf2_out(int32_t segto, const void *data, uint64_t type,
+static void rdf2_out(int32_t segto, const void *data,
+		     enum out_type type, uint64_t size,
                      int32_t segment, int32_t wrt)
 {
-    int64_t bytes = type & OUT_SIZMASK;
     struct RelocRec rr;
     uint8_t databuf[8], *pd;
     int seg;
 
     if (segto == NO_SEG) {
-        if ((type & OUT_TYPMASK) != OUT_RESERVE)
+        if (type != OUT_RESERVE)
             error(ERR_NONFATAL,
                   "attempt to assemble code in ABSOLUTE space");
         return;
@@ -539,31 +539,29 @@ static void rdf2_out(int32_t segto, const void *data, uint64_t type,
         error(ERR_NONFATAL, "WRT not supported by rdf output format");
     }
 
-    type &= OUT_TYPMASK;
-
     if (segto == 2 && type != OUT_RESERVE) {
         error(ERR_NONFATAL, "BSS segments may not be initialized");
 
         /* just reserve the space for now... */
 
         if (type == OUT_REL2ADR)
-            bytes = 2;
+            size = 2;
         else
-            bytes = 4;
+            size = 4;
         type = OUT_RESERVE;
     }
 
     if (type == OUT_RESERVE) {
         if (segto == 2)         /* BSS segment space reserverd */
-            bsslength += bytes;
+            bsslength += size;
         else
-            while (bytes--)
+            while (size--)
                 membufwrite(segto, databuf, 1);
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
-        membufwrite(segto, data, bytes);
+        membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
 
         /* if segment == NO_SEG then we are writing an address of an
@@ -579,20 +577,20 @@ static void rdf2_out(int32_t segto, const void *data, uint64_t type,
             rr.reclen = 8;
             rr.segment = segto; /* segment we're currently in */
             rr.offset = getsegmentlength(segto);        /* current offset */
-            rr.length = bytes;  /* length of reference */
+            rr.length = size;  /* length of reference */
             rr.refseg = segment;        /* segment referred to */
             write_reloc_rec(&rr);
         }
 
         pd = databuf;           /* convert address to little-endian */
-        if (bytes == 4)
+        if (size == 4)
             WRITESHORT(pd, *(int32_t *)data);
-        else if (bytes == 8)
+        else if (size == 8)
             WRITEDLONG(pd, *(int64_t *)data);
         else
             WRITESHORT(pd, *(int32_t *)data);
 
-        membufwrite(segto, databuf, bytes);
+        membufwrite(segto, databuf, size);
 
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
@@ -622,7 +620,7 @@ static void rdf2_out(int32_t segto, const void *data, uint64_t type,
              * address of imported symbol onto it to get address relative to end of
              * instruction: import_address + data(offset) - end_of_instrn */
 
-            rr.offset = *(int32_t *)data - (rr.offset + bytes);
+            rr.offset = *(int32_t *)data - (rr.offset + size);
         }
 
         membufwrite(segto, &rr.offset, -2);
@@ -641,7 +639,7 @@ static void rdf2_out(int32_t segto, const void *data, uint64_t type,
         rr.reclen = 8;
         write_reloc_rec(&rr);
 
-        rr.offset = *(int32_t *)data - (rr.offset + bytes);
+        rr.offset = *(int32_t *)data - (rr.offset + size);
 
         membufwrite(segto, &rr.offset, -4);
     }

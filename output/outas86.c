@@ -254,11 +254,11 @@ static void as86_add_piece(struct Section *sect, int type, int32_t offset,
         p->number = raa_read(bsym, segment), p->type = 2;
 }
 
-static void as86_out(int32_t segto, const void *data, uint64_t type,
+static void as86_out(int32_t segto, const void *data,
+		     enum out_type type, uint64_t size,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int64_t realbytes = type & OUT_SIZMASK;
     int32_t offset;
     uint8_t mydata[4], *p;
 
@@ -266,8 +266,6 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
         wrt = NO_SEG;           /* continue to do _something_ */
         error(ERR_NONFATAL, "WRT not supported by as86 output format");
     }
-
-    type &= OUT_TYPMASK;
 
     /*
      * handle absolute-assembly (structure definitions)
@@ -295,10 +293,10 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         if (type == OUT_REL2ADR)
-            realbytes = 2;
+            size = 2;
         else if (type == OUT_REL4ADR)
-            realbytes = 4;
-        bsslen += realbytes;
+            size = 4;
+        bsslen += size;
         return;
     }
 
@@ -307,15 +305,15 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
             error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   (segto == stext.index ? "code" : "data"));
-            as86_sect_write(s, NULL, realbytes);
-            as86_add_piece(s, 0, 0L, 0L, realbytes, 0);
+            as86_sect_write(s, NULL, size);
+            as86_add_piece(s, 0, 0L, 0L, size, 0);
         } else
-            bsslen += realbytes;
+            bsslen += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
-        as86_sect_write(s, data, realbytes);
-        as86_add_piece(s, 0, 0L, 0L, realbytes, 0);
+        as86_sect_write(s, data, size);
+        as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -323,13 +321,13 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
                       " segment base references");
             } else {
                 offset = *(int32_t *)data;
-                as86_add_piece(s, 1, offset, segment, realbytes, 0);
+                as86_add_piece(s, 1, offset, segment, size, 0);
             }
         } else {
             p = mydata;
             WRITELONG(p, *(int32_t *)data);
-            as86_sect_write(s, data, realbytes);
-            as86_add_piece(s, 0, 0L, 0L, realbytes, 0);
+            as86_sect_write(s, data, size);
+            as86_add_piece(s, 0, 0L, 0L, size, 0);
         }
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
@@ -340,7 +338,7 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
                       " segment base references");
             } else {
                 offset = *(int32_t *)data;
-                as86_add_piece(s, 1, offset - realbytes + 2, segment, 2L,
+                as86_add_piece(s, 1, offset - size + 2, segment, 2L,
                                1);
             }
         }
@@ -353,7 +351,7 @@ static void as86_out(int32_t segto, const void *data, uint64_t type,
                       " segment base references");
             } else {
                 offset = *(int32_t *)data;
-                as86_add_piece(s, 1, offset - realbytes + 4, segment, 4L,
+                as86_add_piece(s, 1, offset - size + 4, segment, 4L,
                                1);
             }
         }

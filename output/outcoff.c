@@ -456,11 +456,11 @@ static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
         return 0;
 }
 
-static void coff_out(int32_t segto, const void *data, uint64_t type,
+static void coff_out(int32_t segto, const void *data,
+		     enum out_type type, uint64_t size,
                      int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int32_t realbytes = type & OUT_SIZMASK;
     uint8_t mydata[8], *p;
     int i;
 
@@ -468,8 +468,6 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
         wrt = NO_SEG;           /* continue to do _something_ */
         error(ERR_NONFATAL, "WRT not supported by COFF output formats");
     }
-
-    type &= OUT_TYPMASK;
 
     /*
      * handle absolute-assembly (structure definitions)
@@ -499,10 +497,10 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
         if (type == OUT_REL2ADR)
-            realbytes = 2;
+            size = 2;
         else if (type == OUT_REL4ADR)
-            realbytes = 4;
-        s->len += realbytes;
+            size = 4;
+        s->len += size;
         return;
     }
 
@@ -510,16 +508,16 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
         if (s->data) {
             error(ERR_WARNING, "uninitialised space declared in"
                   " non-BSS section `%s': zeroing", s->name);
-            coff_sect_write(s, NULL, realbytes);
+            coff_sect_write(s, NULL, size);
         } else
-            s->len += realbytes;
+            s->len += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
-        coff_sect_write(s, data, realbytes);
+        coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         if (!(win64)) {
-            if (realbytes != 4 && (segment != NO_SEG || wrt != NO_SEG))
+            if (size != 4 && (segment != NO_SEG || wrt != NO_SEG))
                 error(ERR_NONFATAL, "COFF format does not support non-32-bit"
                       " relocations");
             else {
@@ -536,12 +534,12 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
                 }
                 p = mydata;
                 WRITELONG(p, *(int32_t *)data + fix);
-                coff_sect_write(s, mydata, realbytes);
+                coff_sect_write(s, mydata, size);
             }
         } else {
             int32_t fix = 0;
             p = mydata;
-            if (realbytes == 8) {
+            if (size == 8) {
 /*            if (segment != NO_SEG || wrt != NO_SEG) {
                 if (wrt != NO_SEG) {
                     error(ERR_NONFATAL, "COFF format does not support"
@@ -554,11 +552,11 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
             } */
                 fix = coff_add_reloc(s, segment, false, true);
                 WRITEDLONG(p, *(int64_t *)data + fix);
-                coff_sect_write(s, mydata, realbytes);
+                coff_sect_write(s, mydata, size);
             } else {
                 fix = coff_add_reloc(s, segment, false, false);
                 WRITELONG(p, *(int32_t *)data + fix);
-                coff_sect_write(s, mydata, realbytes);
+                coff_sect_write(s, mydata, size);
             }
         }
     } else if (type == OUT_REL2ADR) {
@@ -579,9 +577,9 @@ static void coff_out(int32_t segto, const void *data, uint64_t type,
                 fix = coff_add_reloc(s, segment, true, false);
             p = mydata;
             if (win32 | win64) {
-                WRITELONG(p, *(int32_t *)data + 4 - realbytes + fix);
+                WRITELONG(p, *(int32_t *)data + 4 - size + fix);
             } else {
-                WRITELONG(p, *(int32_t *)data - (realbytes + s->len) + fix);
+                WRITELONG(p, *(int32_t *)data - (size + s->len) + fix);
             }
             coff_sect_write(s, mydata, 4L);
         }
