@@ -1822,6 +1822,12 @@ static int do_directive(Token * tline)
             StackPointer = "ebp";
             ArgOffset = 8;
             LocalOffset = 0;
+        } else if (nasm_stricmp(tline->text, "flat64") == 0) {
+            /* All subsequent ARG directives are for a 64-bit stack */
+            StackSize = 8;
+            StackPointer = "rbp";
+            ArgOffset = 8;
+            LocalOffset = 0;
         } else if (nasm_stricmp(tline->text, "large") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call.
