@@ -386,15 +386,14 @@ static void add_reloc(struct section *sect, int32_t section,
     ++sect->nreloc;
 }
 
-static void macho_output(int32_t secto, const void *data, uint64_t type,
+static void macho_output(int32_t secto, const void *data, uint64_t xtype,
                          int32_t section, int32_t wrt)
 {
     struct section *s, *sbss;
-    int32_t realbytes = type & OUT_SIZMASK;
+    int64_t realbytes = xtype & OUT_SIZMASK;
     int32_t addr;
     uint8_t mydata[4], *p;
-
-    type &= OUT_TYPMASK;
+    int type = OUT_TYPE(xtype);
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;
@@ -403,7 +402,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
     }
 
     if (secto == NO_SEG) {
-        if (type != OUT_RESERVE)
+        if (type != OUT_TYPE(OUT_RESERVE))
             error(ERR_NONFATAL, "attempt to assemble code in "
                   "[ABSOLUTE] space");
 
@@ -424,16 +423,16 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
 
     sbss = get_section_by_name("__DATA", "__bss");
 
-    if (s == sbss && type != OUT_RESERVE) {
+    if (s == sbss && type != OUT_TYPE(OUT_RESERVE)) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
 
         switch (type) {
-        case OUT_REL2ADR:
+        case OUT_TYPE(OUT_REL2ADR):
             realbytes = 2;
             break;
 
-        case OUT_REL4ADR:
+        case OUT_TYPE(OUT_REL4ADR):
             realbytes = 4;
             break;
 
@@ -446,7 +445,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
     }
 
     switch (type) {
-    case OUT_RESERVE:
+    case OUT_TYPE(OUT_RESERVE):
         if (s != sbss) {
             error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
@@ -458,14 +457,14 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
 
         break;
 
-    case OUT_RAWDATA:
+    case OUT_TYPE(OUT_RAWDATA):
         if (section != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
         sect_write(s, data, realbytes);
         break;
 
-    case OUT_ADDRESS:
+    case OUT_TYPE(OUT_ADDRESS):
         addr = *(int32_t *)data;
 
         if (section != NO_SEG) {
@@ -486,7 +485,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
         sect_write(s, mydata, realbytes);
         break;
 
-    case OUT_REL2ADR:
+    case OUT_TYPE(OUT_REL2ADR):
         if (section == secto)
             error(ERR_PANIC, "intra-section OUT_REL2ADR");
 
@@ -501,7 +500,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t type,
         sect_write(s, mydata, 2L);
         break;
 
-    case OUT_REL4ADR:
+    case OUT_TYPE(OUT_REL4ADR):
         if (section == secto)
             error(ERR_PANIC, "intra-section OUT_REL4ADR");
 
