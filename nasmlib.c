@@ -776,7 +776,7 @@ static const char *prefix_names[] = {
 const char *prefix_name(int token)
 {
     unsigned int prefix = token-PREFIX_ENUM_START;
-    if (prefix > sizeof prefix_names / sizeof(const char *))
+    if (prefix > elements(prefix_names))
 	return NULL;
 
     return prefix_names[prefix];
