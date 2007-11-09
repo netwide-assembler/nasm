@@ -62,7 +62,7 @@ mv nasm-"$version".tar.gz nasm-"$version".tar.bz2 ..
 # Create zipfile (DOS convention: no prefix, convert file endings)
 cd nasm-"$version"
 zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip	# Text files
-zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip	# Binary files
+# zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip	# Binary files
 cd ..
 
 # Record what we have already generated
