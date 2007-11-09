@@ -785,7 +785,7 @@ const char *prefix_name(int token)
 /*
  * Binary search.
  */
-int bsi(char *string, const char **array, int size)
+int bsi(const char *string, const char **array, int size)
 {
     int i = -1, j = size;       /* always, i < index < j */
     while (j - i >= 2) {
@@ -801,7 +801,7 @@ int bsi(char *string, const char **array, int size)
     return -1;                  /* we haven't got it :( */
 }
 
-int bsii(char *string, const char **array, int size)
+int bsii(const char *string, const char **array, int size)
 {
     int i = -1, j = size;       /* always, i < index < j */
     while (j - i >= 2) {

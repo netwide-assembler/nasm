@@ -304,8 +304,8 @@ void saa_fpwrite(struct SAA *, FILE *);
  *
  * bsi() is case sensitive, bsii() is case insensitive.
  */
-int bsi(char *string, const char **array, int size);
-int bsii(char *string, const char **array, int size);
+int bsi(const char *string, const char **array, int size);
+int bsii(const char *string, const char **array, int size);
 
 char *src_set_fname(char *newname);
 int32_t src_set_linnum(int32_t newline);
