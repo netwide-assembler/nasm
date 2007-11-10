@@ -386,14 +386,13 @@ static void add_reloc(struct section *sect, int32_t section,
     ++sect->nreloc;
 }
 
-static void macho_output(int32_t secto, const void *data, uint64_t xtype,
+static void macho_output(int32_t secto, const void *data,
+			 enum out_type type, uint64_t size,
                          int32_t section, int32_t wrt)
 {
     struct section *s, *sbss;
-    int64_t realbytes = xtype & OUT_SIZMASK;
     int32_t addr;
     uint8_t mydata[4], *p;
-    int type = OUT_TYPE(xtype);
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;
@@ -402,7 +401,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t xtype,
     }
 
     if (secto == NO_SEG) {
-        if (type != OUT_TYPE(OUT_RESERVE))
+        if (type != OUT_RESERVE)
             error(ERR_NONFATAL, "attempt to assemble code in "
                   "[ABSOLUTE] space");
 
@@ -423,48 +422,48 @@ static void macho_output(int32_t secto, const void *data, uint64_t xtype,
 
     sbss = get_section_by_name("__DATA", "__bss");
 
-    if (s == sbss && type != OUT_TYPE(OUT_RESERVE)) {
+    if (s == sbss && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
 
         switch (type) {
-        case OUT_TYPE(OUT_REL2ADR):
-            realbytes = 2;
+        case OUT_REL2ADR:
+            size = 2;
             break;
 
-        case OUT_TYPE(OUT_REL4ADR):
-            realbytes = 4;
+        case OUT_REL4ADR:
+            size = 4;
             break;
 
         default:
             break;
         }
 
-        s->size += realbytes;
+        s->size += size;
         return;
     }
 
     switch (type) {
-    case OUT_TYPE(OUT_RESERVE):
+    case OUT_RESERVE:
         if (s != sbss) {
             error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   get_section_name_by_index(secto));
 
-            sect_write(s, NULL, realbytes);
+            sect_write(s, NULL, size);
         } else
-            s->size += realbytes;
+            s->size += size;
 
         break;
 
-    case OUT_TYPE(OUT_RAWDATA):
+    case OUT_RAWDATA:
         if (section != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
-        sect_write(s, data, realbytes);
+        sect_write(s, data, size);
         break;
 
-    case OUT_TYPE(OUT_ADDRESS):
+    case OUT_ADDRESS:
         addr = *(int32_t *)data;
 
         if (section != NO_SEG) {
@@ -472,20 +471,20 @@ static void macho_output(int32_t secto, const void *data, uint64_t xtype,
                 error(ERR_NONFATAL, "Mach-O format does not support"
                       " section base references");
             } else
-                add_reloc(s, section, 0, realbytes);
+                add_reloc(s, section, 0, size);
         }
 
         p = mydata;
 
-        if (realbytes == 2)
+        if (size == 2)
             WRITESHORT(p, addr);
         else
             WRITELONG(p, addr);
 
-        sect_write(s, mydata, realbytes);
+        sect_write(s, mydata, size);
         break;
 
-    case OUT_TYPE(OUT_REL2ADR):
+    case OUT_REL2ADR:
         if (section == secto)
             error(ERR_PANIC, "intra-section OUT_REL2ADR");
 
@@ -496,11 +495,11 @@ static void macho_output(int32_t secto, const void *data, uint64_t xtype,
             add_reloc(s, section, 1, 2);
 
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - (realbytes + s->size));
+        WRITESHORT(p, *(int32_t *)data - (size + s->size));
         sect_write(s, mydata, 2L);
         break;
 
-    case OUT_TYPE(OUT_REL4ADR):
+    case OUT_REL4ADR:
         if (section == secto)
             error(ERR_PANIC, "intra-section OUT_REL4ADR");
 
@@ -511,7 +510,7 @@ static void macho_output(int32_t secto, const void *data, uint64_t xtype,
             add_reloc(s, section, 1, 4);
 
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - (realbytes + s->size));
+        WRITELONG(p, *(int32_t *)data - (size + s->size));
         sect_write(s, mydata, 4L);
         break;
 

@@ -372,10 +372,10 @@ static void ieee_deflabel(char *name, int32_t segment,
 /*
  * Put data out
  */
-static void ieee_out(int32_t segto, const void *data, uint64_t type,
+static void ieee_out(int32_t segto, const void *data,
+		     enum out_type type, uint64_t size,
                      int32_t segment, int32_t wrt)
 {
-    uint64_t size, realtype;
     const uint8_t *ucdata;
     int32_t ldata;
     struct ieeeSection *seg;
@@ -384,7 +384,7 @@ static void ieee_out(int32_t segto, const void *data, uint64_t type,
      * handle absolute-assembly (structure definitions)
      */
     if (segto == NO_SEG) {
-        if ((type & OUT_TYPMASK) != OUT_RESERVE)
+        if (type != OUT_RESERVE)
             error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
                   " space");
         return;
@@ -409,28 +409,26 @@ static void ieee_out(int32_t segto, const void *data, uint64_t type,
     if (!seg)
         error(ERR_PANIC, "code directed to nonexistent segment?");
 
-    size = type & OUT_SIZMASK;
-    realtype = type & OUT_TYPMASK;
-    if (realtype == OUT_RAWDATA) {
+    if (type == OUT_RAWDATA) {
         ucdata = data;
         while (size--)
             ieee_write_byte(seg, *ucdata++);
-    } else if (realtype == OUT_ADDRESS || realtype == OUT_REL2ADR ||
-               realtype == OUT_REL4ADR) {
-        if (segment == NO_SEG && realtype != OUT_ADDRESS)
+    } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
+               type == OUT_REL4ADR) {
+        if (segment == NO_SEG && type != OUT_ADDRESS)
             error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");
         ldata = *(int32_t *)data;
-        if (realtype == OUT_REL2ADR)
+        if (type == OUT_REL2ADR)
             ldata += (size - 2);
-        if (realtype == OUT_REL4ADR)
+        if (type == OUT_REL4ADR)
             ldata += (size - 4);
-        ieee_write_fixup(segment, wrt, seg, size, realtype, ldata);
+        ieee_write_fixup(segment, wrt, seg, size, type, ldata);
         if (size == 2)
             ieee_write_word(seg, ldata);
         else
             ieee_write_dword(seg, ldata);
-    } else if (realtype == OUT_RESERVE) {
+    } else if (type == OUT_RESERVE) {
         while (size--)
             ieee_write_byte(seg, 0);
     }

@@ -996,10 +996,10 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
                             int segrel, int32_t seg, int32_t wrt,
                             struct Segment *segto);
 
-static void obj_out(int32_t segto, const void *data, uint64_t type,
+static void obj_out(int32_t segto, const void *data,
+		    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
-    uint64_t size, realtype;
     const uint8_t *ucdata;
     int32_t ldata;
     struct Segment *seg;
@@ -1009,7 +1009,7 @@ static void obj_out(int32_t segto, const void *data, uint64_t type,
      * handle absolute-assembly (structure definitions)
      */
     if (segto == NO_SEG) {
-        if ((type & OUT_TYPMASK) != OUT_RESERVE)
+        if (type != OUT_RESERVE)
             error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
                   " space");
         return;
@@ -1037,9 +1037,7 @@ static void obj_out(int32_t segto, const void *data, uint64_t type,
     orp = seg->orp;
     orp->parm[0] = seg->currentpos;
 
-    size = type & OUT_SIZMASK;
-    realtype = type & OUT_TYPMASK;
-    if (realtype == OUT_RAWDATA) {
+    if (type == OUT_RAWDATA) {
         ucdata = data;
         while (size > 0) {
             unsigned int len;
@@ -1053,22 +1051,22 @@ static void obj_out(int32_t segto, const void *data, uint64_t type,
             ucdata += len;
             size -= len;
         }
-    } else if (realtype == OUT_ADDRESS || realtype == OUT_REL2ADR ||
-               realtype == OUT_REL4ADR) {
+    } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
+               type == OUT_REL4ADR) {
         int rsize;
 
-        if (segment == NO_SEG && realtype != OUT_ADDRESS)
+        if (segment == NO_SEG && type != OUT_ADDRESS)
             error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by OBJ format");
         if (segment >= SEG_ABS)
             error(ERR_NONFATAL, "far-absolute relocations not supported"
                   " by OBJ format");
         ldata = *(int32_t *)data;
-        if (realtype == OUT_REL2ADR) {
+        if (type == OUT_REL2ADR) {
             ldata += (size - 2);
             size = 2;
         }
-        if (realtype == OUT_REL4ADR) {
+        if (type == OUT_REL4ADR) {
             ldata += (size - 4);
             size = 4;
         }
@@ -1093,10 +1091,10 @@ static void obj_out(int32_t segto, const void *data, uint64_t type,
         }
         if (segment != NO_SEG)
             obj_write_fixup(orp, rsize,
-                            (realtype == OUT_ADDRESS ? 0x4000 : 0),
+                            (type == OUT_ADDRESS ? 0x4000 : 0),
                             segment, wrt, seg);
         seg->currentpos += size;
-    } else if (realtype == OUT_RESERVE) {
+    } else if (type == OUT_RESERVE) {
         if (orp->committed)
             orp = obj_bump(orp);
         seg->currentpos += size;
@@ -1997,7 +1995,7 @@ static void obj_write_file(int debuginfo)
     orp->parm[0] = 0;
     orp->parm[1] = 0;
     for (pub = fpubhead; pub; pub = pub->next) {        /* pub-crawl :-) */
-        if (orp->parm[2] != pub->segment) {
+        if ((uint64_t)orp->parm[2] != pub->segment) {
             obj_emit(orp);
             orp->parm[2] = pub->segment;
         }

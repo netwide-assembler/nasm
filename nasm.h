@@ -52,6 +52,32 @@
 struct ofmt;
 
 /*
+ * values for the `type' parameter to an output function.
+ *
+ * Exceptions are OUT_RELxADR, which denote an x-byte relocation
+ * which will be a relative jump. For this we need to know the
+ * distance in bytes from the start of the relocated record until
+ * the end of the containing instruction. _This_ is what is stored
+ * in the size part of the parameter, in this case.
+ *
+ * Also OUT_RESERVE denotes reservation of N bytes of BSS space,
+ * and the contents of the "data" parameter is irrelevant.
+ *
+ * The "data" parameter for the output function points to a "int32_t",
+ * containing the address in question, unless the type is
+ * OUT_RAWDATA, in which case it points to an "uint8_t"
+ * array.
+ */
+enum out_type {
+    OUT_RAWDATA,		/* Plain bytes */
+    OUT_ADDRESS,		/* An address (symbol value) */
+    OUT_RESERVE,		/* Reserved bytes (RESB et al) */
+    OUT_REL2ADR,		/* 2-byte relative address */
+    OUT_REL4ADR,		/* 4-byte relative address */
+    OUT_REL8ADR,		/* 8-byte relative address */
+};
+
+/*
  * -----------------------
  * Other function typedefs
  * -----------------------
@@ -95,12 +121,12 @@ typedef struct {
      * output-format interface, only OUT_ADDRESS will _always_ be
      * displayed as if it's relocatable, so ensure that any non-
      * relocatable address has been converted to OUT_RAWDATA by
-     * then. Note that OUT_RAWDATA+0 is a valid data type, and is a
+     * then. Note that OUT_RAWDATA,0 is a valid data type, and is a
      * dummy call used to give the listing generator an offset to
      * work with when doing things like uplevel(LIST_TIMES) or
      * uplevel(LIST_INCBIN).
      */
-    void (*output) (int32_t, const void *, uint64_t);
+    void (*output) (int32_t, const void *, enum out_type, uint64_t);
 
     /*
      * Called to send a text line to the listing generator. The
@@ -709,7 +735,8 @@ struct ofmt {
      * The `type' argument specifies the type of output data, and
      * usually the size as well: its contents are described below.
      */
-    void (*output) (int32_t segto, const void *data, uint64_t type,
+    void (*output) (int32_t segto, const void *data,
+		    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt);
 
     /*
@@ -822,33 +849,6 @@ struct ofmt {
     void (*cleanup) (int debuginfo);
 };
 
-/*
- * values for the `type' parameter to an output function. Each one
- * must have the actual number of _bytes_ added to it.
- *
- * Exceptions are OUT_RELxADR, which denote an x-byte relocation
- * which will be a relative jump. For this we need to know the
- * distance in bytes from the start of the relocated record until
- * the end of the containing instruction. _This_ is what is stored
- * in the size part of the parameter, in this case.
- *
- * Also OUT_RESERVE denotes reservation of N bytes of BSS space,
- * and the contents of the "data" parameter is irrelevant.
- *
- * The "data" parameter for the output function points to a "int32_t",
- * containing the address in question, unless the type is
- * OUT_RAWDATA, in which case it points to an "uint8_t"
- * array.
- */
-#define OUT_RAWDATA UINT64_C(0x0000000000000000)
-#define OUT_ADDRESS UINT64_C(0x1000000000000000)
-#define OUT_REL2ADR UINT64_C(0x2000000000000000)
-#define OUT_REL4ADR UINT64_C(0x3000000000000000)
-#define OUT_RESERVE UINT64_C(0x4000000000000000)
-#define OUT_REL8ADR UINT64_C(0x5000000000000000)
-#define OUT_TYPMASK UINT64_C(0xF000000000000000)
-#define OUT_SIZMASK UINT64_C(0x0FFFFFFFFFFFFFFF)
-#define OUT_TYPE(x) ((int)((x) >> 60))
 
 /*
  * ------------------------------------------------------------

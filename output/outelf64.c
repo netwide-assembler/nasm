@@ -784,22 +784,20 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
     return offset - sym->value;
 }
 
-static void elf_out(int32_t segto, const void *data, uint64_t type,
+static void elf_out(int32_t segto, const void *data,
+		    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int32_t realbytes = type & OUT_SIZMASK;
     int64_t addr;
     uint8_t mydata[16], *p;
     int i;
     static struct symlininfo sinfo;
 
-    type &= OUT_TYPMASK;
-
 #if defined(DEBUG) && DEBUG>2
     fprintf(stderr,
             " elf_out type: %x seg: %d bytes: %x data: %x\n",
-               (type >> 24), segment, realbytes, *(int32_t *)data);
+               (type >> 24), segment, size, *(int32_t *)data);
 #endif
 
     /*
@@ -841,10 +839,10 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
         if (type == OUT_REL2ADR)
-            realbytes = 2;
+            size = 2;
         else if (type == OUT_REL4ADR)
-            realbytes = 4;
-        s->len += realbytes;
+            size = 4;
+        s->len += size;
         return;
     }
 
@@ -852,13 +850,13 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
         if (s->type == SHT_PROGBITS) {
             error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
-            elf_sect_write(s, NULL, realbytes);
+            elf_sect_write(s, NULL, size);
         } else
-            s->len += realbytes;
+            s->len += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
-        elf_sect_write(s, data, realbytes);
+        elf_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         bool gnu16 = false;
         addr = *(int64_t *)data;
@@ -868,7 +866,7 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-		    switch (realbytes) {
+		    switch (size) {
 		    case 2:
                         elf_add_reloc(s, segment, R_X86_64_16);
 			break;
@@ -896,7 +894,7 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_X86_64_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
-		    switch (realbytes) {
+		    switch (size) {
 		    case 2:
                         gnu16 = true;
                         addr = elf_add_gsym_reloc(s, segment, addr,
@@ -928,14 +926,14 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
         if (gnu16) {
             WRITESHORT(p, addr);
         } else {
-            if (realbytes != 8 && realbytes != 4 && segment != NO_SEG) {
+            if (size != 8 && size != 4 && segment != NO_SEG) {
                 error(ERR_NONFATAL,
                       "Unsupported non-64-bit ELF relocation");
             }
-            if (realbytes == 4) WRITELONG(p, addr);
+            if (size == 4) WRITELONG(p, addr);
             else WRITEDLONG(p, (int64_t)addr);
         }
-        elf_sect_write(s, mydata, realbytes);
+        elf_sect_write(s, mydata, size);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
@@ -951,7 +949,7 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - realbytes);
+        WRITESHORT(p, *(int32_t *)data - size);
         elf_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -976,7 +974,7 @@ static void elf_out(int32_t segto, const void *data, uint64_t type,
             }
         }
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - realbytes);
+        WRITELONG(p, *(int32_t *)data - size);
         elf_sect_write(s, mydata, 4L);
     }
 }
