@@ -775,6 +775,10 @@ When NASM's \c{-t} option is used, the following changes are made:
 
 \b local labels may be prefixed with \c{@@} instead of \c{.}
 
+\b TASM-style response files beginning with \c{@} may be specified on
+the command line. This is different from the \c{-@resp} style that NASM
+natively supports.
+
 \b size override is supported within brackets. In TASM compatible mode,
 a size override inside square brackets changes the size of the operand,
 and not the address type of the operand as it does in NASM syntax. E.g.
@@ -782,9 +786,22 @@ and not the address type of the operand as it does in NASM syntax. E.g.
 Note that you lose the ability to override the default address type for
 the instruction.
 
+\b \c{%arg} preprocessor directive is supported which is similar to
+TASM's \c{ARG} directive.
+
+\b \c{%local} preprocessor directive
+
+\b \c{%stacksize} preprocessor directive
+
 \b unprefixed forms of some directives supported (\c{arg}, \c{elif},
 \c{else}, \c{endif}, \c{if}, \c{ifdef}, \c{ifdifi}, \c{ifndef},
 \c{include}, \c{local})
+
+\b more...
+
+For more information on the directives, see the section on TASM
+Compatiblity preprocessor directives in \k{tasmcompat}.
+
 
 \S{opt-w} The \i\c{-w} Option: Enable or Disable Assembly \i{Warnings}
 
@@ -1623,9 +1640,10 @@ the \c{STRICT} keyword was used or not.
 
 \H{crit} \i{Critical Expressions}
 
-Although NASM has an optional multi-pass optimizer, there are some
-expressions which must be resolvable on the first pass. These are
-called \e{Critical Expressions}.
+A limitation of NASM is that it is a \i{two-pass assembler}; unlike
+TASM and others, it will always do exactly two \I{passes}\i{assembly
+passes}. Therefore it is unable to cope with source files that are
+complex enough to require three or more passes.
 
 The first pass is used to determine the size of all the assembled
 code and data, so that the second pass, when generating all the
@@ -3229,10 +3247,11 @@ check that the section's alignment characteristics are sensible for
 the use of \c{ALIGN} or \c{ALIGNB}.
 
 
-\H{stackrel} \i{Stack Relative Preprocessor Directives}
+\H{tasmcompat} \i{TASM Compatible Preprocessor Directives}
 
-The following preprocessor directives provide a way to use
-labels to refer to local variables allocated on the stack.
+The following preprocessor directives may only be used when TASM
+compatibility is turned on using the \c{-t} command line switch
+(This switch is described in \k{opt-t}.)
 
 \b\c{%arg}  (see \k{arg})
 
@@ -3247,9 +3266,9 @@ The \c{%arg} directive is used to simplify the handling of
 parameters passed on the stack. Stack based parameter passing
 is used by many high level languages, including C, C++ and Pascal.
 
-While NASM has macros which attempt to duplicate this
+While NASM comes with macros which attempt to duplicate this
 functionality (see \k{16cmacro}), the syntax is not particularly
-convenient to use. and is not TASM compatible. Here is an example
+convenient to use and is not TASM compatible. Here is an example
 which shows the use of \c{%arg} without any external macros:
 
 \c some_function:
@@ -3277,19 +3296,13 @@ The \c{%stacksize} directive is used in conjunction with the
 \c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives.
 It tells NASM the default size to use for subsequent \c{%arg} and
 \c{%local} directives. The \c{%stacksize} directive takes one
-required argument which is one of \c{flat}, \c{flat64}, \c{large} or \c{small}.
+required argument which is one of \c{flat}, \c{large} or \c{small}.
 
 \c %stacksize flat
 
 This form causes NASM to use stack-based parameter addressing
 relative to \c{ebp} and it assumes that a near form of call was used
 to get to this label (i.e. that \c{eip} is on the stack).
-
-\c %stacksize flat64
-
-This form causes NASM to use stack-based parameter addressing
-relative to \c{rbp} and it assumes that a near form of call was used
-to get to this label (i.e. that \c{rip} is on the stack).
 
 \c %stacksize large
 
@@ -5379,7 +5392,7 @@ used for C-style procedure definitions, and they automate a lot of
 the work involved in keeping track of the calling convention.
 
 (An alternative, TASM compatible form of \c{arg} is also now built
-into NASM's preprocessor. See \k{stackrel} for details.)
+into NASM's preprocessor. See \k{tasmcompat} for details.)
 
 An example of an assembly function using the macro set is given
 here:
