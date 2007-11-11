@@ -95,14 +95,15 @@ struct Symbol {
 
 struct Section {
     struct SAA *data;
-    uint32_t len, size, nrelocs;
+    uint64_t len, size;
+    uint32_t nrelocs;
     int32_t index;
-    int type;                   /* SHT_PROGBITS or SHT_NOBITS */
-    int align;                  /* alignment: power of two */
-    uint32_t flags;        /* section flags */
+    uint32_t type;             /* SHT_PROGBITS or SHT_NOBITS */
+    uint64_t align;            /* alignment: power of two */
+    uint64_t flags;            /* section flags */
     char *name;
     struct SAA *rel;
-    int32_t rellen;
+    uint64_t rellen;
     struct Reloc *head, **tail;
     struct Symbol *gsyms;       /* global symbols in section */
 };
@@ -154,20 +155,20 @@ static const char align_str[SEG_ALIGN] = "";    /* ANSI will pad this with 0s */
 #define ELF_MAX_SECTIONS 16     /* really 10, but let's play safe */
 static struct ELF_SECTDATA {
     void *data;
-    int32_t len;
+    int64_t len;
     bool is_saa;
 } *elf_sects;
 static int elf_nsect;
-static int32_t elf_foffs;
+static int64_t elf_foffs;
 
 static void elf_write(void);
 static void elf_sect_write(struct Section *, const uint8_t *,
-                           uint32_t);
-static void elf_section_header(int, int, int, void *, bool, int32_t, int, int,
+                           uint64_t);
+static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, int,
                                int, int);
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
-static struct SAA *elf_build_reltab(int32_t *, struct Reloc *);
+static struct SAA *elf_build_reltab(uint64_t *, struct Reloc *);
 static void add_sectname(char *, char *);
 
 /* this stuff is needed for the stabs debugging format */
@@ -352,7 +353,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
     unsigned flags_and, flags_or;
-    int type, align, i;
+    uint64_t type, align;
+    int i;
 
     /*
      * Default is 64 bits.
@@ -1213,7 +1215,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     return s;
 }
 
-static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
+static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
 {
     struct SAA *s;
     uint8_t *p, entry[24];
@@ -1243,8 +1245,8 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
     return s;
 }
 
-static void elf_section_header(int name, int type, int flags,
-                               void *data, bool is_saa, int32_t datalen,
+static void elf_section_header(int name, int type, uint64_t flags,
+                               void *data, bool is_saa, uint64_t datalen,
                                int link, int info, int align, int eltsize)
 {
     elf_sects[elf_nsect].data = data;
@@ -1283,7 +1285,7 @@ static void elf_write_sections(void)
 }
 
 static void elf_sect_write(struct Section *sect,
-                           const uint8_t *data, uint32_t len)
+                           const uint8_t *data, uint64_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->len += len;
