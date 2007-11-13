@@ -841,7 +841,7 @@ static void elf_out(int32_t segto, const void *data,
         elf_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         bool gnu16 = false;
-        addr = *(int32_t *)data;
+        addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
                 error(ERR_NONFATAL, "ELF format does not support"
@@ -916,7 +916,7 @@ static void elf_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - size);
+        WRITESHORT(p, *(int64_t *)data - size);
         elf_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -941,7 +941,7 @@ static void elf_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - size);
+        WRITELONG(p, *(int64_t *)data - size);
         elf_sect_write(s, mydata, 4L);
     }
 }

@@ -392,16 +392,8 @@ static void rdf_out(int32_t segto, void *data, uint32_t type,
         }
 
         pd = databuf;           /* convert address to little-endian */
-        if (bytes == 4)
-            WRITELONG(pd, *(int32_t *)data);
-        else if (bytes == 8)
-            WRITEDLONG(pd, *(int64_t *)data);
-        else
-            WRITESHORT(pd, *(int32_t *)data);
-
-
+	WRITEADDR(pd, *(int64_t *)data, bytes);
         membufwrite(seg[segto], databuf, bytes);
-
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
@@ -422,7 +414,7 @@ static void rdf_out(int32_t segto, void *data, uint32_t type,
          * address of imported symbol onto it to get address relative to end of
          * instruction: import_address + data(offset) - end_of_instrn */
 
-        rr.offset = *(int32_t *)data - (rr.offset + bytes);
+        rr.offset = *(int64_t *)data - (rr.offset + bytes);
 
         membufwrite(seg[segto], &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
@@ -440,7 +432,7 @@ static void rdf_out(int32_t segto, void *data, uint32_t type,
         rr.refseg = segment;    /* segment referred to */
         write_reloc_rec(&rr);
 
-        rr.offset = *(int32_t *)data - (rr.offset + bytes);
+        rr.offset = *(int64_t *)data - (rr.offset + bytes);
         membufwrite(seg[segto], &rr.offset, -4);
     }
 }

@@ -53,7 +53,7 @@ struct prefix_info {
 };
 
 #define getu8(x) (*(uint8_t *)(x))
-#if defined(__i386__) || defined(__x86_64__)
+#if X86_MEMORY
 /* Littleendian CPU which can handle unaligned references */
 #define getu16(x) (*(uint16_t *)(x))
 #define getu32(x) (*(uint32_t *)(x))

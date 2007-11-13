@@ -209,12 +209,24 @@ void standard_extension(char *inname, char *outname, char *extension,
     WRITECHAR(p,(v) >> 56); \
   } while (0)
 
+#define WRITEADDR(p,v,s) \
+    do {					\
+	int _s = (s);				\
+	uint64_t _v = (v);			\
+	while (_s--) {				\
+	    WRITECHAR(p,_v);			\
+	    _v >>= 8;				\
+	}					\
+    } while(0)
+
 /*
  * and routines to do the same thing to a file
  */
+#define fwriteint8_t(d,f) putc(d,f)
 void fwriteint16_t(int data, FILE * fp);
 void fwriteint32_t(int32_t data, FILE * fp);
 void fwriteint64_t(int64_t data, FILE * fp);
+void fwriteaddr(int64_t data, int size, FILE * fp);
 
 /*
  * Routines to manage a dynamic random access array of int32_ts which

@@ -96,4 +96,15 @@ int strnicmp(const char *, const char *, size_t);
 char *strsep(char **, const char *);
 #endif
 
+/*
+ * Define this to 1 for faster performance if this is a littleendian
+ * platform which can do unaligned memory references.  It is safe
+ * to leave it defined to 0 even if that is true.
+ */
+#if defined(__i386__) || defined(__x86_64__)
+# define X86_MEMORY 1
+#else
+# define X86_MEMORY 0
+#endif
+
 #endif	/* NASM_COMPILER_H */

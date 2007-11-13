@@ -75,7 +75,7 @@ static void list_emit(void)
     if (listlinep)
         fprintf(listfp, " %s", listline);
 
-    fputc('\n', listfp);
+    putc('\n', listfp);
     listlinep = false;
     listdata[0] = '\0';
 }

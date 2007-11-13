@@ -363,28 +363,30 @@ int32_t seg_alloc(void)
 
 void fwriteint16_t(int data, FILE * fp)
 {
-    fputc((int)(data & 255), fp);
-    fputc((int)((data >> 8) & 255), fp);
+    char buffer[2], *p = buffer;
+    WRITESHORT(p, data);
+    fwrite(buffer, 1, 2, fp);
 }
 
 void fwriteint32_t(int32_t data, FILE * fp)
 {
-    fputc((int)(data & 255), fp);
-    fputc((int)((data >> 8) & 255), fp);
-    fputc((int)((data >> 16) & 255), fp);
-    fputc((int)((data >> 24) & 255), fp);
+    char buffer[4], *p = buffer;
+    WRITELONG(p, data);
+    fwrite(buffer, 1, 4, fp);
 }
 
 void fwriteint64_t(int64_t data, FILE * fp)
 {
-    fputc((int)(data & 255), fp);
-    fputc((int)((data >> 8) & 255), fp);
-    fputc((int)((data >> 16) & 255), fp);
-    fputc((int)((data >> 24) & 255), fp);
-    fputc((int)((data >> 32) & 255), fp);
-    fputc((int)((data >> 40) & 255), fp);
-    fputc((int)((data >> 48) & 255), fp);
-    fputc((int)((data >> 56) & 255), fp);
+    char buffer[8], *p = buffer;
+    WRITEDLONG(p, data);
+    fwrite(buffer, 1, 8, fp);
+}
+
+void fwriteaddr(int64_t data, int size, FILE * fp)
+{
+    char buffer[8], *p = buffer;
+    WRITEADDR(p, data, size);
+    fwrite(buffer, 1, size, fp);
 }
 
 void standard_extension(char *inname, char *outname, char *extension,

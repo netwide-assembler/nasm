@@ -622,7 +622,7 @@ static void aout_out(int32_t segto, const void *data,
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
-        addr = *(int32_t *)data;
+        addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
                 error(ERR_NONFATAL, "a.out format does not support"
@@ -699,7 +699,7 @@ static void aout_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - (size + s->len));
+        WRITESHORT(p, *(int64_t *)data - (size + s->len));
         aout_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -729,7 +729,7 @@ static void aout_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - (size + s->len));
+        WRITELONG(p, *(int64_t *)data - (size + s->len));
         aout_sect_write(s, mydata, 4L);
     }
 }

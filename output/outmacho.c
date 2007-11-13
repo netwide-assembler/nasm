@@ -464,7 +464,7 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     case OUT_ADDRESS:
-        addr = *(int32_t *)data;
+        addr = *(int64_t *)data;
 
         if (section != NO_SEG) {
             if (section % 2) {
@@ -475,12 +475,7 @@ static void macho_output(int32_t secto, const void *data,
         }
 
         p = mydata;
-
-        if (size == 2)
-            WRITESHORT(p, addr);
-        else
-            WRITELONG(p, addr);
-
+	WRITEADDR(p, addr, size);
         sect_write(s, mydata, size);
         break;
 

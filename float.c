@@ -45,7 +45,7 @@ typedef uint64_t fp_2limb;
 #define LIMB_ALL_BYTES	((fp_limb)0x01010101)
 #define LIMB_BYTE(x)	((x)*LIMB_ALL_BYTES)
 
-#if defined(__i386__) || defined(__x86_64__)
+#if X86_MEMORY
 #define put(a,b) (*(uint32_t *)(a) = (b))
 #else
 #define put(a,b) (((a)[0] = (b)),		\

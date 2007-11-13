@@ -583,15 +583,8 @@ static void rdf2_out(int32_t segto, const void *data,
         }
 
         pd = databuf;           /* convert address to little-endian */
-        if (size == 4)
-            WRITESHORT(pd, *(int32_t *)data);
-        else if (size == 8)
-            WRITEDLONG(pd, *(int64_t *)data);
-        else
-            WRITESHORT(pd, *(int32_t *)data);
-
+	WRITEADDR(pd, *(int64_t *)data, size);
         membufwrite(segto, databuf, size);
-
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
@@ -609,7 +602,7 @@ static void rdf2_out(int32_t segto, const void *data,
             /* what do we put in the code? Simply the data. This should almost
              * always be zero, unless someone's doing segment arithmetic...
              */
-            rr.offset = *(int32_t *)data;
+            rr.offset = *(int64_t *)data;
         } else {
             rr.type = RDFREC_RELOC;     /* type signature */
             rr.segment = segto + 64;    /* segment we're currently in + rel flag */
@@ -639,7 +632,7 @@ static void rdf2_out(int32_t segto, const void *data,
         rr.reclen = 8;
         write_reloc_rec(&rr);
 
-        rr.offset = *(int32_t *)data - (rr.offset + size);
+        rr.offset = *(int64_t *)data - (rr.offset + size);
 
         membufwrite(segto, &rr.offset, -4);
     }

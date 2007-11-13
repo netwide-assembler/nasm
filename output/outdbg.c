@@ -125,13 +125,7 @@ static void dbg_out(int32_t segto, const void *data,
         fprintf(dbgf, "\n");
         break;
     case OUT_ADDRESS:
-        ldata = 0;              /* placate gcc */
-        if (size == 1)
-            ldata = *((char *)data);
-        else if (size == 2)
-            ldata = *((int16_t *)data);
-        else if (size == 4)
-            ldata = *((int32_t *)data);
+	ldata = *(int64_t *)data;
         fprintf(dbgf, "addr %08lx (seg %08lx, wrt %08lx)\n", ldata,
                 segment, wrt);
         break;

@@ -533,7 +533,7 @@ static void coff_out(int32_t segto, const void *data,
                         fix = coff_add_reloc(s, segment, false, false);
                 }
                 p = mydata;
-                WRITELONG(p, *(int32_t *)data + fix);
+                WRITELONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, size);
             }
         } else {
@@ -555,7 +555,7 @@ static void coff_out(int32_t segto, const void *data,
                 coff_sect_write(s, mydata, size);
             } else {
                 fix = coff_add_reloc(s, segment, false, false);
-                WRITELONG(p, *(int32_t *)data + fix);
+                WRITELONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, size);
             }
         }
@@ -577,9 +577,9 @@ static void coff_out(int32_t segto, const void *data,
                 fix = coff_add_reloc(s, segment, true, false);
             p = mydata;
             if (win32 | win64) {
-                WRITELONG(p, *(int32_t *)data + 4 - size + fix);
+                WRITELONG(p, *(int64_t *)data + 4 - size + fix);
             } else {
-                WRITELONG(p, *(int32_t *)data - (size + s->len) + fix);
+                WRITELONG(p, *(int64_t *)data - (size + s->len) + fix);
             }
             coff_sect_write(s, mydata, 4L);
         }

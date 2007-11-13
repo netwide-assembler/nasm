@@ -788,12 +788,7 @@ static void bin_out(int32_t segto, const void *data,
             if (segment != NO_SEG)
                 add_reloc(s, size, segment, -1L);
             p = mydata;
-            if (size == 4)
-                WRITELONG(p, *(int32_t *)data);
-            else if (size == 8)
-                WRITEDLONG(p, *(int64_t *)data);
-            else
-                WRITESHORT(p, *(int32_t *)data);
+	    WRITEADDR(p, *(int64_t *)data, size);
             saa_wbytes(s->contents, mydata, size);
         }
         s->length += size;
@@ -836,11 +831,7 @@ static void bin_out(int32_t segto, const void *data,
         if (s->flags & TYPE_PROGBITS) {
             add_reloc(s, size, segment, segto);
             p = mydata;
-	    /* XXX: WHAT ABOUT SIZE == 8? */
-            if (size == 4)
-                WRITELONG(p, *(int32_t *)data - size - s->length);
-            else
-                WRITESHORT(p, *(int32_t *)data - size - s->length);
+	    WRITEADDR(p, *(int64_t *)data - size - s->length, size);
             saa_wbytes(s->contents, mydata, size);
         }
         s->length += size;

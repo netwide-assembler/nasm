@@ -418,7 +418,7 @@ static void ieee_out(int32_t segto, const void *data,
         if (segment == NO_SEG && type != OUT_ADDRESS)
             error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");
-        ldata = *(int32_t *)data;
+        ldata = *(int64_t *)data;
         if (type == OUT_REL2ADR)
             ldata += (size - 2);
         if (type == OUT_REL4ADR)

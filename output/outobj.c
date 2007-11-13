@@ -1061,7 +1061,7 @@ static void obj_out(int32_t segto, const void *data,
         if (segment >= SEG_ABS)
             error(ERR_NONFATAL, "far-absolute relocations not supported"
                   " by OBJ format");
-        ldata = *(int32_t *)data;
+        ldata = *(int64_t *)data;
         if (type == OUT_REL2ADR) {
             ldata += (size - 2);
             size = 2;

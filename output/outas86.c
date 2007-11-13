@@ -320,12 +320,12 @@ static void as86_out(int32_t segto, const void *data,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(int32_t *)data;
+                offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset, segment, size, 0);
             }
         } else {
             p = mydata;
-            WRITELONG(p, *(int32_t *)data);
+            WRITELONG(p, *(int64_t *)data);
             as86_sect_write(s, data, size);
             as86_add_piece(s, 0, 0L, 0L, size, 0);
         }
@@ -337,7 +337,7 @@ static void as86_out(int32_t segto, const void *data,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(int32_t *)data;
+                offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset - size + 2, segment, 2L,
                                1);
             }
@@ -350,7 +350,7 @@ static void as86_out(int32_t segto, const void *data,
                 error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
-                offset = *(int32_t *)data;
+                offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset - size + 4, segment, 4L,
                                1);
             }

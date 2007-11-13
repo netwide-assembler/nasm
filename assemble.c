@@ -181,18 +181,13 @@ static void out(int64_t offset, int32_t segto, const void *data,
 	 * convert it into RAWDATA format.
 	 */
 	uint8_t *q = p;
-	
-	switch (size) {
-	case 2:
-	    WRITESHORT(q, *(int32_t *)data);
-	    break;
-	case 4:
-	    WRITELONG(q, *(int32_t *)data);
-	    break;
-	case 8:
-	    WRITEDLONG(q, *(int64_t *)data);
-	    break;
+
+	if (size > 8) {
+	    errfunc(ERR_PANIC, "OUT_ADDRESS with size > 8");
+	    return;
 	}
+	
+	WRITEADDR(q, *(int64_t *)data, size);
 	data = p;
 	type = OUT_RAWDATA;
     }

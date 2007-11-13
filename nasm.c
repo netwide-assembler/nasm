@@ -155,7 +155,7 @@ static void nasm_fputs(const char *line, FILE * outfile)
 {
     if (outfile) {
         fputs(line, outfile);
-        fputc('\n', outfile);
+        putc('\n', outfile);
     } else
         puts(line);
 }
@@ -1608,7 +1608,7 @@ static void report_error_common(int severity, const char *fmt,
     }
 
     vfprintf(error_file, fmt, args);
-    fputc('\n', error_file);
+    putc('\n', error_file);
 
     if (severity & ERR_USAGE)
         want_usage = true;

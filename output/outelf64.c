@@ -798,8 +798,8 @@ static void elf_out(int32_t segto, const void *data,
 
 #if defined(DEBUG) && DEBUG>2
     fprintf(stderr,
-            " elf_out type: %x seg: %d bytes: %x data: %x\n",
-               (type >> 24), segment, size, *(int32_t *)data);
+            " elf_out type: %x seg: %d bytes: %x data: %"PRIx64"\n",
+               (type >> 24), segment, size, *(int64_t *)data);
 #endif
 
     /*
@@ -951,7 +951,7 @@ static void elf_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - size);
+        WRITESHORT(p, *(int64_t *)data - size);
         elf_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
@@ -976,7 +976,7 @@ static void elf_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - size);
+        WRITELONG(p, *(int64_t *)data - size);
         elf_sect_write(s, mydata, 4L);
     }
 }
