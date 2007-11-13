@@ -54,6 +54,10 @@
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
  * \313          - indicates fixed 64-bit address size, 0x67 invalid.
+ * \314          - (disassembler only) invalid with REX.B
+ * \315          - (disassembler only) invalid with REX.X
+ * \316          - (disassembler only) invalid with REX.R
+ * \317          - (disassembler only) invalid with REX.W
  * \320          - indicates fixed 16-bit operand size, i.e. optional 0x66.
  * \321          - indicates fixed 32-bit operand size, i.e. optional 0x66.
  * \322          - indicates that this instruction is only valid when the
@@ -965,6 +969,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 		has_prefix(ins, PPS_ASIZE, P_A32))
 		return -1;
             break;
+	case 0314:
+	case 0315:
+	case 0316:
+	case 0317:
+	    break;
         case 0320:
             length += (bits != 16);
             break;
@@ -1490,6 +1499,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0313:
             ins->rex = 0;
             break;
+
+	case 0314:
+	case 0315:
+	case 0316:
+	case 0317:
+	    break;
 
         case 0320:
             if (bits != 16) {

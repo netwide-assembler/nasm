@@ -773,7 +773,7 @@ NEG		rm8			\1\xF6\203			8086
 NEG		rm16			\320\1\xF7\203			8086
 NEG		rm32			\321\1\xF7\203			386
 NEG		rm64			\324\1\xF7\203			X64
-NOP		void			\1\x90				8086
+NOP		void			\314\1\x90			8086
 NOP		rm16			\320\2\x0F\x1F\200		P6
 NOP		rm32			\321\2\x0F\x1F\200		P6
 NOP		rm64			\324\2\x0F\x1F\200		X64

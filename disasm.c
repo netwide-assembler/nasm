@@ -584,6 +584,18 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
 	    else
 		a_used = true;
+	} else if (c == 0314) {
+	    if (prefix->rex & REX_B)
+		return false;
+	} else if (c == 0315) {
+	    if (prefix->rex & REX_X)
+		return false;
+	} else if (c == 0316) {
+	    if (prefix->rex & REX_R)
+		return false;
+	} else if (c == 0317) {
+	    if (prefix->rex & REX_W)
+		return false;
         } else if (c == 0320) {
             if (osize != 16)
                 return false;
