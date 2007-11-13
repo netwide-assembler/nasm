@@ -94,7 +94,7 @@ static enum op_type operating_mode;
  * isn't an actual warning, but it used for -w+error/-Werror.
  */
 static bool suppressed[ERR_WARN_MAX+1] = {
-    true, true, true, true, false, true, false, true, true, false
+    true, false, true, false, false, true, false, true, true, false
 };
 
 /*
@@ -113,10 +113,10 @@ static const char *suppressed_names[ERR_WARN_MAX+1] = {
  */
 static const char *suppressed_what[ERR_WARN_MAX+1] = {
     "treat warnings as errors",
-    "macro calls with wrong no. of params",
-    "cyclic macro self-references",
+    "macro calls with wrong parameter count",
+    "cyclic macro references",
     "labels alone on lines without trailing `:'",
-    "numeric constants do not fit in 32 bits",
+    "numeric constants does not fit in 64 bits",
     "using 8- or 16-bit relocation in ELF32, a GNU extension",
     "floating point overflow",
     "floating point denormal",
