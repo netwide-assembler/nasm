@@ -91,18 +91,18 @@ static enum op_type operating_mode;
 
 /*
  * Which of the suppressible warnings are suppressed. Entry zero
- * doesn't do anything. Initial defaults are given here.
+ * isn't an actual warning, but it used for -w+error/-Werror.
  */
-static bool suppressed[1 + ERR_WARN_MAX] = {
-    0, true, true, true, false, true, false, true, true, false
+static bool suppressed[ERR_WARN_MAX+1] = {
+    true, true, true, true, false, true, false, true, true, false
 };
 
 /*
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static const char *suppressed_names[1 + ERR_WARN_MAX] = {
-    NULL, "macro-params", "macro-selfref", "orphan-labels",
+static const char *suppressed_names[ERR_WARN_MAX+1] = {
+    "error", "macro-params", "macro-selfref", "orphan-labels",
     "number-overflow", "gnu-elf-extensions", "float-overflow",
     "float-denorm", "float-underflow", "float-toolong"
 };
@@ -111,8 +111,8 @@ static const char *suppressed_names[1 + ERR_WARN_MAX] = {
  * The explanations for the suppressible warnings. As before, entry
  * zero does nothing.
  */
-static const char *suppressed_what[1 + ERR_WARN_MAX] = {
-    NULL,
+static const char *suppressed_what[ERR_WARN_MAX+1] = {
+    "treat warnings as errors",
     "macro calls with wrong no. of params",
     "cyclic macro self-references",
     "labels alone on lines without trailing `:'",
@@ -372,6 +372,7 @@ static int process_arg(char *p, char *q)
 {
     char *param;
     int i, advance = 0;
+    bool suppress;
 
     if (!p || !p[0])
         return 0;
@@ -509,9 +510,10 @@ static int process_arg(char *p, char *q)
                  "    -D<macro>[=<value>] pre-defines a macro\n"
                  "    -U<macro>   undefines a macro\n"
                  "    -X<format>  specifies error reporting format (gnu or vc)\n"
-                 "    -w+foo      enables warnings about foo; -w-foo disables them\n"
-                 "where foo can be:\n");
-            for (i = 1; i <= ERR_WARN_MAX; i++)
+                 "    -w+foo      enables warning foo (equiv. -Wfoo)\n"
+		 "    -w-foo      disable warning foo (equiv. -Wno-foo)\n"
+                 "Warnings:\n");
+            for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
                        suppressed_names[i], suppressed_what[i],
                        suppressed[i] ? "off" : "on");
@@ -556,20 +558,36 @@ static int process_arg(char *p, char *q)
         case 'a':              /* assemble only - don't preprocess */
             preproc = &no_pp;
             break;
+	case 'W':
+	    if (p[2] == 'n' && p[3] == 'o' && p[4] == '-') {
+		suppress = true;
+		p += 5;
+	    } else {
+		suppress = false;
+		p += 2;
+	    }
+	    goto set_warning;
         case 'w':
             if (p[2] != '+' && p[2] != '-') {
                 report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                              "invalid option to `-w'");
-            } else {
-                for (i = 1; i <= ERR_WARN_MAX; i++)
-                    if (!nasm_stricmp(p + 3, suppressed_names[i]))
-                        break;
-                if (i <= ERR_WARN_MAX)
-                    suppressed[i] = (p[2] == '-');
-                else
-                    report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                                 "invalid option to `-w'");
+		break;
             }
+	    suppress = (p[2] == '-');
+	    p += 3;
+	    goto set_warning;
+	set_warning:
+	    for (i = 0; i <= ERR_WARN_MAX; i++)
+		if (!nasm_stricmp(p, suppressed_names[i]))
+		    break;
+	    if (i <= ERR_WARN_MAX)
+		suppressed[i] = suppress;
+	    else if (!nasm_stricmp(p, "all"))
+		for (i = 1; i <= ERR_WARN_MAX; i++)
+		    suppressed[i] = suppress;
+	    else
+		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+			     "invalid warning `%s'", p);
             break;
         case 'M':
             operating_mode = p[2] == 'G' ? op_depend_missing_ok : op_depend;
@@ -1614,12 +1632,14 @@ static void report_error_common(int severity, const char *fmt,
         want_usage = true;
 
     switch (severity & ERR_MASK) {
-    case ERR_WARNING:
     case ERR_DEBUG:
         /* no further action, by definition */
         break;
+    case ERR_WARNING:
+	if (!suppressed[0])	/* Treat warnings as errors */
+	    terminate_after_phase = true;
+	break;
     case ERR_NONFATAL:
-        /* hack enables listing(!) on errors */
         terminate_after_phase = true;
         break;
     case ERR_FATAL:
