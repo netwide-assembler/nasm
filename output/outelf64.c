@@ -868,7 +868,7 @@ static void elf_out(int32_t segto, const void *data,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-		    switch (size) {
+		    switch ((int)size) {
 		    case 2:
                         elf_add_reloc(s, segment, R_X86_64_16);
 			break;
@@ -896,7 +896,7 @@ static void elf_out(int32_t segto, const void *data,
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_X86_64_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
-		    switch (size) {
+		    switch ((int)size) {
 		    case 2:
                         gnu16 = true;
                         addr = elf_add_gsym_reloc(s, segment, addr,
