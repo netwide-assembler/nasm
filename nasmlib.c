@@ -363,54 +363,50 @@ int32_t seg_alloc(void)
 
 #if X86_MEMORY
 
-void fwriteint16_t(int data, FILE * fp)
+void fwriteint16_t(uint16_t data, FILE * fp)
 {
-    uint16_t d = data;
-    fwrite(&d, 1, 2, fp);
+    fwrite(&data, 1, 2, fp);
 }
 
-void fwriteint32_t(int32_t data, FILE * fp)
+void fwriteint32_t(uint32_t data, FILE * fp)
 {
-    uint32_t d = data;
-    fwrite(&d, 1, 4, fp);
+    fwrite(&data, 1, 4, fp);
 }
 
-void fwriteint64_t(int64_t data, FILE * fp)
+void fwriteint64_t(uint64_t data, FILE * fp)
 {
-    uint64_t d = data;
-    fwrite(&d, 1, 8, fp);
+    fwrite(&data, 1, 8, fp);
 }
 
-void fwriteaddr(int64_t data, int size, FILE * fp)
+void fwriteaddr(uint64_t data, int size, FILE * fp)
 {
-    uint64_t d = data;
-    fwrite(&d, 1, size, fp);
+    fwrite(&data, 1, size, fp);
 }
 
 #else /* !X86_MEMORY */
 
-void fwriteint16_t(int data, FILE * fp)
+void fwriteint16_t(uint16_t data, FILE * fp)
 {
     char buffer[2], *p = buffer;
     WRITESHORT(p, data);
     fwrite(buffer, 1, 2, fp);
 }
 
-void fwriteint32_t(int32_t data, FILE * fp)
+void fwriteint32_t(uint32_t data, FILE * fp)
 {
     char buffer[4], *p = buffer;
     WRITELONG(p, data);
     fwrite(buffer, 1, 4, fp);
 }
 
-void fwriteint64_t(int64_t data, FILE * fp)
+void fwriteint64_t(uint64_t data, FILE * fp)
 {
     char buffer[8], *p = buffer;
     WRITEDLONG(p, data);
     fwrite(buffer, 1, 8, fp);
 }
 
-void fwriteaddr(int64_t data, int size, FILE * fp)
+void fwriteaddr(uint64_t data, int size, FILE * fp)
 {
     char buffer[8], *p = buffer;
     WRITEADDR(p, data, size);

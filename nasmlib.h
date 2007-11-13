@@ -260,10 +260,10 @@ void standard_extension(char *inname, char *outname, char *extension,
  * and routines to do the same thing to a file
  */
 #define fwriteint8_t(d,f) putc(d,f)
-void fwriteint16_t(int data, FILE * fp);
-void fwriteint32_t(int32_t data, FILE * fp);
-void fwriteint64_t(int64_t data, FILE * fp);
-void fwriteaddr(int64_t data, int size, FILE * fp);
+void fwriteint16_t(uint16_t data, FILE * fp);
+void fwriteint32_t(uint32_t data, FILE * fp);
+void fwriteint64_t(uint64_t data, FILE * fp);
+void fwriteaddr(uint64_t data, int size, FILE * fp);
 
 /*
  * Routines to manage a dynamic random access array of int32_ts which
