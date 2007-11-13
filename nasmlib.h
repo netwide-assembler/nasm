@@ -178,6 +178,41 @@ void standard_extension(char *inname, char *outname, char *extension,
  * format in memory
  */
 
+#if X86_MEMORY
+
+#define WRITECHAR(p,v)				\
+    do {					\
+	*(uint8_t *)(p) = (v);			\
+	(p) += 1;				\
+    } while (0)
+
+#define WRITESHORT(p,v)				\
+    do {					\
+	*(uint16_t *)(p) = (v);			\
+	(p) += 2;				\
+    } while (0)
+
+#define WRITELONG(p,v)				\
+    do {					\
+	*(uint32_t *)(p) = (v);			\
+	(p) += 4;				\
+    } while (0)
+
+#define WRITEDLONG(p,v)				\
+    do {					\
+	*(uint64_t *)(p) = (v);			\
+	(p) += 8;				\
+    } while (0)
+
+#define WRITEADDR(p,v,s)			\
+    do {					\
+	uint64_t _v = (v);			\
+	memcpy((p), &_v, (s));			\
+	(p) += (s);				\
+    } while (0)
+
+#else /* !X86_MEMORY */
+
 #define WRITECHAR(p,v) \
   do { \
     *(p)++ = (v) & 0xFF; \
@@ -218,6 +253,8 @@ void standard_extension(char *inname, char *outname, char *extension,
 	    _v >>= 8;				\
 	}					\
     } while(0)
+
+#endif
 
 /*
  * and routines to do the same thing to a file

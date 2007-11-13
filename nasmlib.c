@@ -361,6 +361,34 @@ int32_t seg_alloc(void)
     return (next_seg += 2) - 2;
 }
 
+#if X86_MEMORY
+
+void fwriteint16_t(int data, FILE * fp)
+{
+    uint16_t d = data;
+    fwrite(&d, 1, 2, fp);
+}
+
+void fwriteint32_t(int32_t data, FILE * fp)
+{
+    uint32_t d = data;
+    fwrite(&d, 1, 4, fp);
+}
+
+void fwriteint64_t(int64_t data, FILE * fp)
+{
+    uint64_t d = data;
+    fwrite(&d, 1, 8, fp);
+}
+
+void fwriteaddr(int64_t data, int size, FILE * fp)
+{
+    uint64_t d = data;
+    fwrite(&d, 1, size, fp);
+}
+
+#else /* !X86_MEMORY */
+
 void fwriteint16_t(int data, FILE * fp)
 {
     char buffer[2], *p = buffer;
@@ -388,6 +416,8 @@ void fwriteaddr(int64_t data, int size, FILE * fp)
     WRITEADDR(p, data, size);
     fwrite(buffer, 1, size, fp);
 }
+
+#endif
 
 void standard_extension(char *inname, char *outname, char *extension,
                         efunc error)
