@@ -397,17 +397,18 @@ enum {
  * 14: MEMORY (always has REGMEM attribute as well)
  * 15: REGMEM (valid EA operand)
  *
- * Bits 16-19: subclasses
+ * Bits 16-19, 28: subclasses
  * With REG_CDT:
  * 16: REG_CREG (CRx)
  * 17: REG_DREG (DRx)
  * 18: REG_TREG (TRx)
 
  * With REG_GPR:
- * 16: REG_ACCUM (AL, AX, EAX, RAX)
- * 17: REG_COUNT (CL, CX, ECX, RCX)
- * 18: REG_DATA  (DL, DX, EDX, RDX)
- * 19: REG_HIGH  (AH, CH, DH, BH)
+ * 16: REG_ACCUM  (AL, AX, EAX, RAX)
+ * 17: REG_COUNT  (CL, CX, ECX, RCX)
+ * 18: REG_DATA   (DL, DX, EDX, RDX)
+ * 19: REG_HIGH   (AH, CH, DH, BH)
+ * 28: REG_NOTACC (not REG_ACCUM)
  *
  * With REG_SREG:
  * 16: REG_CS
@@ -438,7 +439,7 @@ enum {
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
  *
- * Bits 27-29 & 31 are currently unallocated.
+ * Bits 27, 31 are currently unallocated.
  *
  * 30: SAME_AS
  * Special flag only used in instruction patterns; means this operand
@@ -449,94 +450,99 @@ enum {
 typedef uint32_t opflags_t;
 
 /* Size, and other attributes, of the operand */
-#define BITS8		0x00000001L
-#define BITS16		0x00000002L
-#define BITS32		0x00000004L
-#define BITS64		0x00000008L   /* x64 and FPU only */
-#define BITS80		0x00000010L   /* FPU only */
-#define BITS128		0x20000000L
-#define FAR		0x00000020L   /* grotty: this means 16:16 or */
+#define BITS8		0x00000001U
+#define BITS16		0x00000002U
+#define BITS32		0x00000004U
+#define BITS64		0x00000008U   /* x64 and FPU only */
+#define BITS80		0x00000010U   /* FPU only */
+#define BITS128		0x20000000U
+#define FAR		0x00000020U   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
-#define NEAR		0x00000040L
-#define SHORT		0x00000080L   /* and this means what it says :) */
+#define NEAR		0x00000040U
+#define SHORT		0x00000080U   /* and this means what it says :) */
 
-#define SIZE_MASK	0x200000FFL   /* all the size attributes */
+#define SIZE_MASK	0x200000FFU   /* all the size attributes */
 
 /* Modifiers */
-#define MODIFIER_MASK	0x00000f00L
-#define TO		0x00000100L   /* reverse effect in FADD, FSUB &c */
-#define COLON		0x00000200L   /* operand is followed by a colon */
-#define STRICT		0x00000400L   /* do not optimize this operand */
+#define MODIFIER_MASK	0x00000f00U
+#define TO		0x00000100U   /* reverse effect in FADD, FSUB &c */
+#define COLON		0x00000200U   /* operand is followed by a colon */
+#define STRICT		0x00000400U   /* do not optimize this operand */
 
 /* Type of operand: memory reference, register, etc. */
-#define OPTYPE_MASK	0x0000f000L
-#define REGISTER	0x00001000L   /* register number in 'basereg' */
-#define IMMEDIATE	0x00002000L
-#define MEMORY		0x0000c000L
-#define REGMEM		0x00008000L   /* for r/m, ie EA, operands */
+#define OPTYPE_MASK	0x0000f000U
+#define REGISTER	0x00001000U   /* register number in 'basereg' */
+#define IMMEDIATE	0x00002000U
+#define MEMORY		0x0000c000U
+#define REGMEM		0x00008000U   /* for r/m, ie EA, operands */
 
 /* Register classes */
-#define REG_EA		0x00009000L   /* 'normal' reg, qualifies as EA */
-#define RM_GPR		0x00208000L   /* integer operand */
-#define REG_GPR		0x00209000L   /* integer register */
-#define REG8		0x00209001L   /*  8-bit GPR  */
-#define REG16		0x00209002L   /* 16-bit GPR */
-#define REG32		0x00209004L   /* 32-bit GPR */
-#define REG64		0x00209008L   /* 64-bit GPR */
-#define IP_REG		0x00801000L   /* RIP or EIP register */
-#define RIPREG		0x00801008L   /* RIP */
-#define EIPREG		0x00801004L   /* EIP */
-#define FPUREG		0x01001000L   /* floating point stack registers */
-#define FPU0		0x01011000L   /* FPU stack register zero */
-#define RM_MMX		0x02008000L   /* MMX operand */
-#define MMXREG		0x02009000L   /* MMX register */
-#define RM_XMM		0x04008000L   /* XMM (SSE) operand */
-#define XMMREG		0x04009000L   /* XMM (SSE) register */
-#define XMM0		0x04019000L   /* XMM register zero */
-#define REG_CDT		0x00101004L   /* CRn, DRn and TRn */
-#define REG_CREG	0x00111004L   /* CRn */
-#define REG_DREG	0x00121004L   /* DRn */
-#define REG_TREG	0x00141004L   /* TRn */
-#define REG_SREG	0x00401002L   /* any segment register */
-#define REG_CS		0x00411002L   /* CS */
-#define REG_DESS	0x00421002L   /* DS, ES, SS */
-#define REG_FSGS	0x00441002L   /* FS, GS */
-#define REG_SEG67	0x00481002L   /* Unimplemented segment registers */
+#define REG_EA		0x00009000U   /* 'normal' reg, qualifies as EA */
+#define RM_GPR		0x00208000U   /* integer operand */
+#define REG_GPR		0x00209000U   /* integer register */
+#define REG8		0x00209001U   /*  8-bit GPR  */
+#define REG16		0x00209002U   /* 16-bit GPR */
+#define REG32		0x00209004U   /* 32-bit GPR */
+#define REG64		0x00209008U   /* 64-bit GPR */
+#define IP_REG		0x00801000U   /* RIP or EIP register */
+#define RIPREG		0x00801008U   /* RIP */
+#define EIPREG		0x00801004U   /* EIP */
+#define FPUREG		0x01001000U   /* floating point stack registers */
+#define FPU0		0x01011000U   /* FPU stack register zero */
+#define RM_MMX		0x02008000U   /* MMX operand */
+#define MMXREG		0x02009000U   /* MMX register */
+#define RM_XMM		0x04008000U   /* XMM (SSE) operand */
+#define XMMREG		0x04009000U   /* XMM (SSE) register */
+#define XMM0		0x04019000U   /* XMM register zero */
+#define REG_CDT		0x00101004U   /* CRn, DRn and TRn */
+#define REG_CREG	0x00111004U   /* CRn */
+#define REG_DREG	0x00121004U   /* DRn */
+#define REG_TREG	0x00141004U   /* TRn */
+#define REG_SREG	0x00401002U   /* any segment register */
+#define REG_CS		0x00411002U   /* CS */
+#define REG_DESS	0x00421002U   /* DS, ES, SS */
+#define REG_FSGS	0x00441002U   /* FS, GS */
+#define REG_SEG67	0x00481002U   /* Unimplemented segment registers */
 
-#define REG_RIP		0x00801008L   /* RIP relative addressing */
-#define REG_EIP		0x00801004L   /* EIP relative addressing */
+#define REG_RIP		0x00801008U   /* RIP relative addressing */
+#define REG_EIP		0x00801004U   /* EIP relative addressing */
 
 /* Special GPRs */
-#define REG_SMASK	0x000f0000L   /* a mask for the following */
-#define REG_ACCUM	0x00219000L   /* accumulator: AL, AX, EAX, RAX */
-#define REG_AL		0x00219001L
-#define REG_AX		0x00219002L
-#define REG_EAX		0x00219004L
-#define REG_RAX		0x00219008L
-#define REG_COUNT	0x00229000L   /* counter: CL, CX, ECX, RCX */
-#define REG_CL		0x00229001L
-#define REG_CX		0x00229002L
-#define REG_ECX		0x00229004L
-#define REG_RCX		0x00229008L
-#define REG_DL		0x00249001L   /* data: DL, DX, EDX, RDX */
-#define REG_DX		0x00249002L
-#define REG_EDX		0x00249004L
-#define REG_RDX		0x00249008L
-#define REG_HIGH	0x00289001L   /* high regs: AH, CH, DH, BH */
+#define REG_SMASK	0x100f0000U   /* a mask for the following */
+#define REG_ACCUM	0x00219000U   /* accumulator: AL, AX, EAX, RAX */
+#define REG_AL		0x00219001U
+#define REG_AX		0x00219002U
+#define REG_EAX		0x00219004U
+#define REG_RAX		0x00219008U
+#define REG_COUNT	0x10229000U   /* counter: CL, CX, ECX, RCX */
+#define REG_CL		0x10229001U
+#define REG_CX		0x10229002U
+#define REG_ECX		0x10229004U
+#define REG_RCX		0x10229008U
+#define REG_DL		0x10249001U   /* data: DL, DX, EDX, RDX */
+#define REG_DX		0x10249002U
+#define REG_EDX		0x10249004U
+#define REG_RDX		0x10249008U
+#define REG_HIGH	0x10289001U   /* high regs: AH, CH, DH, BH */
+#define REG_NOTACC	0x10000000U   /* non-accumulator register */
+#define REG8NA		0x10209001U   /*  8-bit non-acc GPR  */
+#define REG16NA		0x10209002U   /* 16-bit non-acc GPR */
+#define REG32NA		0x10209004U   /* 32-bit non-acc GPR */
+#define REG64NA		0x10209008U   /* 64-bit non-acc GPR */
 
 /* special types of EAs */
-#define MEM_OFFS	0x0001c000L   /* simple [address] offset - absolute! */
-#define IP_REL		0x0002c000L   /* IP-relative offset */
+#define MEM_OFFS	0x0001c000U   /* simple [address] offset - absolute! */
+#define IP_REL		0x0002c000U   /* IP-relative offset */
 
 /* memory which matches any type of r/m operand */
 #define MEMORY_ANY	(MEMORY|RM_GPR|RM_MMX|RM_XMM)
 
 /* special type of immediate operand */
-#define UNITY		0x00012000L   /* for shift/rotate instructions */
-#define SBYTE		0x00022000L   /* for op r16/32,immediate instrs. */
+#define UNITY		0x00012000U   /* for shift/rotate instructions */
+#define SBYTE		0x00022000U   /* for op r16/32,immediate instrs. */
 
 /* special flags */
-#define SAME_AS		0x40000000L
+#define SAME_AS		0x40000000U
 
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
