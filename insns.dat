@@ -60,8 +60,8 @@ ADC		reg_ax,sbyte		\320\1\x83\202\15		8086,SM,ND
 ADC		reg_ax,imm		\320\1\x15\31			8086,SM
 ADC		reg_eax,sbyte		\321\1\x83\202\15		386,SM,ND
 ADC		reg_eax,imm		\321\1\x15\41			386,SM
-ADC		reg_rax,sbyte		\321\1\x83\202\15		X64,SM,ND
-ADC		reg_rax,imm		\321\1\x15\41			X64,SM
+ADC		reg_rax,sbyte		\324\1\x83\202\15		X64,SM,ND
+ADC		reg_rax,imm		\324\1\x15\41			X64,SM
 ADC		rm8,imm			\1\x80\202\21			8086,SM
 ADC		rm16,imm		\320\145\1\x81\202\141		8086,SM
 ADC		rm32,imm		\321\155\1\x81\202\151		386,SM
@@ -93,8 +93,8 @@ ADD		reg_ax,sbyte		\320\1\x83\200\15		8086,SM,ND
 ADD		reg_ax,imm		\320\1\x05\31			8086,SM
 ADD		reg_eax,sbyte		\321\1\x83\200\15		386,SM,ND
 ADD		reg_eax,imm		\321\1\x05\41			386,SM
-ADD		reg_rax,sbyte		\321\1\x83\200\15		X64,SM,ND
-ADD		reg_rax,imm		\323\1\x05\41			X64,SM
+ADD		reg_rax,sbyte		\324\1\x83\200\15		X64,SM,ND
+ADD		reg_rax,imm		\324\1\x05\41			X64,SM
 ADD		rm8,imm			\1\x80\200\21			8086,SM
 ADD		rm16,imm		\320\145\1\x81\200\141		8086,SM
 ADD		rm32,imm		\321\155\1\x81\200\151		386,SM
@@ -126,7 +126,7 @@ AND		reg_ax,sbyte		\320\1\x83\204\15		8086,SM,ND
 AND		reg_ax,imm		\320\1\x25\31			8086,SM
 AND		reg_eax,sbyte		\321\1\x83\204\15		386,SM,ND
 AND		reg_eax,imm		\321\1\x25\41			386,SM
-AND		reg_rax,sbyte		\321\1\x83\204\15		X64,SM,ND
+AND		reg_rax,sbyte		\324\1\x83\204\15		X64,SM,ND
 AND		reg_rax,imm		\324\1\x25\41			X64,SM
 AND		rm8,imm			\1\x80\204\21			8086,SM
 AND		rm16,imm		\320\145\1\x81\204\141		8086,SM
@@ -253,8 +253,8 @@ CMP		reg_ax,sbyte		\320\1\x83\207\15		8086,SM,ND
 CMP		reg_ax,imm		\320\1\x3D\31			8086,SM
 CMP		reg_eax,sbyte		\321\1\x83\207\15		386,SM,ND
 CMP		reg_eax,imm		\321\1\x3D\41			386,SM
-CMP		reg_rax,sbyte		\321\1\x83\207\15		X64,SM,ND
-CMP		reg_rax,imm		\321\1\x3D\41			X64,SM
+CMP		reg_rax,sbyte		\324\1\x83\207\15		X64,SM,ND
+CMP		reg_rax,imm		\324\1\x3D\41			X64,SM
 CMP		rm8,imm			\1\x80\207\21			8086,SM
 CMP		rm16,imm		\320\145\1\x81\207\141		8086,SM
 CMP		rm32,imm		\321\155\1\x81\207\151		386,SM
@@ -571,7 +571,7 @@ INVD		void			\2\x0F\x08			486,PRIV
 INVLPG		mem			\2\x0F\x01\207			486,PRIV
 INVLPGA		reg_ax,reg_ecx		\310\3\x0F\x01\xDF		X86_64,AMD,NOLONG
 INVLPGA		reg_eax,reg_ecx		\311\3\x0F\x01\xDF		X86_64,AMD
-INVLPGA		reg_rax,reg_ecx		\313\3\x0F\x01\xDF		X64,AMD
+INVLPGA		reg_rax,reg_ecx		\323\313\3\x0F\x01\xDF		X64,AMD
 INVLPGA		void			\3\x0F\x01\xDF			X86_64,AMD
 IRET		void			\322\1\xCF			8086
 IRETD		void			\321\1\xCF			386
@@ -805,8 +805,8 @@ OR		reg_ax,sbyte		\320\1\x83\201\15		8086,SM,ND
 OR		reg_ax,imm		\320\1\x0D\31			8086,SM
 OR		reg_eax,sbyte		\321\1\x83\201\15		386,SM,ND
 OR		reg_eax,imm		\321\1\x0D\41			386,SM
-OR		reg_rax,sbyte		\321\1\x83\201\15		X64,SM,ND
-OR		reg_rax,imm		\321\1\x0D\41			X64,SM
+OR		reg_rax,sbyte		\324\1\x83\201\15		X64,SM,ND
+OR		reg_rax,imm		\324\1\x0D\41			X64,SM
 OR		rm8,imm			\1\x80\201\21			8086,SM
 OR		rm16,imm		\320\145\1\x81\201\141		8086,SM
 OR		rm32,imm		\321\155\1\x81\201\151		386,SM
@@ -1065,8 +1065,8 @@ SBB		reg_ax,sbyte		\320\1\x83\203\15		8086,SM,ND
 SBB		reg_ax,imm		\320\1\x1D\31			8086,SM
 SBB		reg_eax,sbyte		\321\1\x83\203\15		386,SM,ND
 SBB		reg_eax,imm		\321\1\x1D\41			386,SM
-SBB		reg_rax,sbyte		\321\1\x83\203\15		X64,SM,ND
-SBB		reg_rax,imm		\321\1\x1D\41			X64,SM
+SBB		reg_rax,sbyte		\324\1\x83\203\15		X64,SM,ND
+SBB		reg_rax,imm		\324\1\x1D\41			X64,SM
 SBB		rm8,imm			\1\x80\203\21			8086,SM
 SBB		rm16,imm		\320\145\1\x81\203\141		8086,SM
 SBB		rm32,imm		\321\155\1\x81\203\151		386,SM
@@ -1179,8 +1179,8 @@ SUB		reg_ax,sbyte		\320\1\x83\205\15		8086,SM,ND
 SUB		reg_ax,imm		\320\1\x2D\31			8086,SM
 SUB		reg_eax,sbyte		\321\1\x83\205\15		386,SM,ND
 SUB		reg_eax,imm		\321\1\x2D\41			386,SM
-SUB		reg_rax,sbyte		\321\1\x83\205\15		X64,SM,ND
-SUB		reg_rax,imm		\321\1\x2D\41			X64,SM
+SUB		reg_rax,sbyte		\324\1\x83\205\15		X64,SM,ND
+SUB		reg_rax,imm		\324\1\x2D\41			X64,SM
 SUB		rm8,imm			\1\x80\205\21			8086,SM
 SUB		rm16,imm		\320\145\1\x81\205\141		8086,SM
 SUB		rm32,imm		\321\155\1\x81\205\151		386,SM
@@ -1211,7 +1211,7 @@ TEST		reg64,mem		\324\1\x85\110			X64,SM
 TEST		reg_al,imm		\1\xA8\21			8086,SM
 TEST		reg_ax,imm		\320\1\xA9\31			8086,SM
 TEST		reg_eax,imm		\321\1\xA9\41			386,SM
-TEST		reg_rax,imm		\321\1\xA9\41			X64,SM
+TEST		reg_rax,imm		\324\1\xA9\41			X64,SM
 TEST		rm8,imm			\1\xF6\200\21			8086,SM
 TEST		rm16,imm		\320\1\xF7\200\31		8086,SM
 TEST		rm32,imm		\321\1\xF7\200\41		386,SM
@@ -1304,8 +1304,8 @@ XOR		reg_ax,sbyte		\320\1\x83\206\15		8086,SM,ND
 XOR		reg_ax,imm		\320\1\x35\31			8086,SM
 XOR		reg_eax,sbyte		\321\1\x83\206\15		386,SM,ND
 XOR		reg_eax,imm		\321\1\x35\41			386,SM
-XOR		reg_rax,sbyte		\321\1\x83\206\15		X64,SM,ND
-XOR		reg_rax,imm		\321\1\x35\41			X64,SM
+XOR		reg_rax,sbyte		\324\1\x83\206\15		X64,SM,ND
+XOR		reg_rax,imm		\324\1\x35\41			X64,SM
 XOR		rm8,imm			\1\x80\206\21			8086,SM
 XOR		rm16,imm		\320\145\1\x81\206\141		8086,SM
 XOR		rm32,imm		\321\155\1\x81\206\151		386,SM
