@@ -848,7 +848,7 @@ PADDUSW		mmxreg,mmxrm		\2\x0F\xDD\110			PENT,MMX,SM
 PADDW		mmxreg,mmxrm		\2\x0F\xFD\110			PENT,MMX,SM
 PAND		mmxreg,mmxrm		\2\x0F\xDB\110			PENT,MMX,SM
 PANDN		mmxreg,mmxrm		\2\x0F\xDF\110			PENT,MMX,SM
-PAUSE		void			\333\1\x90			8086
+PAUSE		void			\314\333\1\x90			8086
 PAVEB		mmxreg,mmxrm		\2\x0F\x50\110			PENT,MMX,SM,CYRIX
 PAVGUSB		mmxreg,mmxrm		\2\x0F\x0F\110\01\xBF		PENT,3DNOW,SM
 PCMPEQB		mmxreg,mmxrm		\2\x0F\x74\110			PENT,MMX,SM
@@ -1271,12 +1271,13 @@ XBTS		reg32,mem		\321\2\x0F\xA6\110		386,SD,UNDOC,ND
 XBTS		reg32,reg32		\321\2\x0F\xA6\110		386,UNDOC,ND
 XCHG		reg_ax,reg16		\320\11\x90			8086
 XCHG		reg_eax,reg32na		\321\11\x90			386
-XCHG		reg_rax,reg64na		\324\11\x90			X64
+XCHG		reg_rax,reg64		\324\11\x90			X64
 XCHG		reg16,reg_ax		\320\10\x90			8086
 XCHG		reg32na,reg_eax		\321\10\x90			386
-XCHG		reg64na,reg_rax		\324\10\x90			X64
+XCHG		reg64,reg_rax		\324\10\x90			X64
+; This must be NOLONG since opcode 90 is NOP, and in 64-bit mode
+; "xchg eax,eax" is *not* a NOP.
 XCHG		reg_eax,reg_eax		\321\1\x90			386,NOLONG
-XCHG		reg_rax,reg_rax		\323\1\x90			X64
 XCHG		reg8,mem		\1\x86\110			8086,SM
 XCHG		reg8,reg8		\1\x86\110			8086
 XCHG		reg16,mem		\320\1\x87\110			8086,SM

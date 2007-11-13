@@ -382,6 +382,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     }
     ins->condition = -1;
     ins->rex = prefix->rex;
+    memset(ins->prefixes, 0, sizeof ins->prefixes);
 
     if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
         return false;
@@ -712,11 +713,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0323:
 	    ins->rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
+	    o_used = true;
 	    break;
 
 	case 0324:
 	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
 		return false;
+	    o_used = true;
 	    break;
 
 	case 0330:
@@ -779,7 +782,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0367:
 	    if (!prefix->asp)
 		return false;
-	    o_used = true;
+	    a_used = true;
 	    break;
 
 	default:
@@ -809,10 +812,26 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    return false;
         ins->prefixes[PPS_LREP] = drep;
     }
-    if (!o_used && osize == ((segsize == 16) ? 32 : 16)) {
-	if (ins->prefixes[PPS_OSIZE])
-	    return false;
-        ins->prefixes[PPS_OSIZE] = osize == 16 ? P_O16 : P_O32;
+    if (!o_used) {
+	if (osize != ((segsize == 16) ? 16 : 32)) {
+	    enum prefixes pfx = 0;
+
+	    switch (osize) {
+	    case 16:
+		pfx = P_O16;
+		break;
+	    case 32:
+		pfx = P_O32;
+		break;
+	    case 64:
+		pfx = P_O64;
+		break;
+	    }
+
+	    if (ins->prefixes[PPS_OSIZE])
+		return false;
+	    ins->prefixes[PPS_OSIZE] = pfx;
+	}
     }
     if (!a_used && asize != segsize) {
 	if (ins->prefixes[PPS_ASIZE])
@@ -1006,11 +1025,17 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case P_A32:
             slen += snprintf(output + slen, outbufsize - slen, "a32 ");
             break;
+        case P_A64:
+            slen += snprintf(output + slen, outbufsize - slen, "a64 ");
+            break;
         case P_O16:
             slen += snprintf(output + slen, outbufsize - slen, "o16 ");
             break;
         case P_O32:
             slen += snprintf(output + slen, outbufsize - slen, "o32 ");
+            break;
+        case P_O64:
+            slen += snprintf(output + slen, outbufsize - slen, "o64 ");
             break;
 	default:
 	    break;
