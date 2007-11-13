@@ -375,6 +375,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int osize = prefix->osize;
     int asize = prefix->asize;
     int i, c;
+    struct operand *opx;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -393,6 +394,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
         drep = P_REP;
 
     while ((c = *r++) != 0) {
+	opx = &ins->oprs[c & 3];
+
 	switch (c) {
 	case 01:
 	case 02:
@@ -469,110 +472,110 @@ static int matches(const struct itemplate *t, uint8_t *data,
             if (d < t || d > t + 7)
                 return false;
             else {
-                ins->oprs[c - 010].basereg = (d-t)+
+                opx->basereg = (d-t)+
 		    (ins->rex & REX_B ? 8 : 0);
-                ins->oprs[c - 010].segment |= SEG_RMREG;
+                opx->segment |= SEG_RMREG;
             }
 	    break;
 	}
 
 	case4(014):
-            ins->oprs[c - 014].offset = (int8_t)*data++;
-            ins->oprs[c - 014].segment |= SEG_SIGNED;
+            opx->offset = (int8_t)*data++;
+            opx->segment |= SEG_SIGNED;
 	    break;
 
 	case4(020):
-            ins->oprs[c - 020].offset = *data++;
+            opx->offset = *data++;
 	    break;
 
 	case4(024):
-            ins->oprs[c - 024].offset = *data++;
+            opx->offset = *data++;
 	    break;
 
 	case4(030):
-            ins->oprs[c - 030].offset = getu16(data);
+            opx->offset = getu16(data);
 	    data += 2;
 	    break;
 
 	case4(034):
 	    if (osize == 32) {
-		ins->oprs[c - 034].offset = getu32(data);
+		opx->offset = getu32(data);
 		data += 4;
 	    } else {
-		ins->oprs[c - 034].offset = getu16(data);
+		opx->offset = getu16(data);
 		data += 2;
 	    }
             if (segsize != asize)
-                ins->oprs[c - 034].disp_size = asize;
+                opx->disp_size = asize;
 	    break;
 
 	case4(040):
-            ins->oprs[c - 040].offset = getu32(data);
+            opx->offset = getu32(data);
 	    data += 4;
 	    break;
 
 	case4(044):
 	    switch (asize) {
 	    case 16:
-		ins->oprs[c - 044].offset = getu16(data);
+		opx->offset = getu16(data);
 		data += 2;
 		if (segsize != 16)
-		    ins->oprs[c - 044].disp_size = 16;
+		    opx->disp_size = 16;
 		break;
 	    case 32:
-		ins->oprs[c - 044].offset = getu32(data);
+		opx->offset = getu32(data);
 		data += 4;
 		if (segsize == 16)
-		    ins->oprs[c - 044].disp_size = 32;
+		    opx->disp_size = 32;
 		break;
 	    case 64:
-		ins->oprs[c - 044].offset = getu64(data);
-		ins->oprs[c - 044].disp_size = 64;
+		opx->offset = getu64(data);
+		opx->disp_size = 64;
 		data += 8;
 		break;
 	    }
 	    break;
 
 	case4(050):
-            ins->oprs[c - 050].offset = gets8(data++);
-            ins->oprs[c - 050].segment |= SEG_RELATIVE;
+            opx->offset = gets8(data++);
+            opx->segment |= SEG_RELATIVE;
 	    break;
 
 	case4(054):
-	    ins->oprs[c - 054].offset = getu64(data);
+	    opx->offset = getu64(data);
 	    data += 8;
 	    break;
 
 	case4(060):
-            ins->oprs[c - 060].offset = gets16(data);
+            opx->offset = gets16(data);
 	    data += 2;
-            ins->oprs[c - 060].segment |= SEG_RELATIVE;
-            ins->oprs[c - 060].segment &= ~SEG_32BIT;
+            opx->segment |= SEG_RELATIVE;
+            opx->segment &= ~SEG_32BIT;
 	    break;
 
 	case4(064):
-            ins->oprs[c - 064].segment |= SEG_RELATIVE;
+            opx->segment |= SEG_RELATIVE;
 	    if (osize == 16) {
-		ins->oprs[c - 064].offset = getu16(data);
+		opx->offset = getu16(data);
 		data += 2;
-                ins->oprs[c - 064].segment &= ~(SEG_32BIT|SEG_64BIT);
+                opx->segment &= ~(SEG_32BIT|SEG_64BIT);
 	    } else if (osize == 32) {
-		ins->oprs[c - 064].offset = getu32(data);
+		opx->offset = getu32(data);
 		data += 4;
-                ins->oprs[c - 064].segment &= ~SEG_64BIT;
-                ins->oprs[c - 064].segment |= SEG_32BIT;
+                opx->segment &= ~SEG_64BIT;
+                opx->segment |= SEG_32BIT;
 	    }
             if (segsize != osize) {
-                ins->oprs[c - 064].type =
-                    (ins->oprs[c - 064].type & ~SIZE_MASK)
+                opx->type =
+                    (opx->type & ~SIZE_MASK)
                     | ((osize == 16) ? BITS16 : BITS32);
             }
 	    break;
 
 	case4(070):
-            ins->oprs[c - 070].offset = getu32(data);
+            opx->offset = getu32(data);
 	    data += 4;
-            ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
+            opx->segment |= SEG_32BIT | SEG_RELATIVE;
 	    break;
 
 	case4(0100):
@@ -581,23 +584,23 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case4(0130):
 	{
 	    int modrm = *data++;
-            ins->oprs[c & 07].segment |= SEG_RMREG;
+            opx->segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
-			 &ins->oprs[(c >> 3) & 07], ins);
+			 &ins->oprs[(c >> 3) & 3], ins);
 	    if (!data)
 		return false;
-            ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
+            opx->basereg = ((modrm >> 3)&7)+
 		(ins->rex & REX_R ? 8 : 0);
 	    break;
 	}
 
 	case4(0140):
-            ins->oprs[c - 0140].offset = getu16(data);
+            opx->offset = getu16(data);
 	    data += 2;
 	    break;
 
 	case4(0150):
-	    ins->oprs[c - 0150].offset = getu32(data);
+	    opx->offset = getu32(data);
 	    data += 4;
 	    break;
 
