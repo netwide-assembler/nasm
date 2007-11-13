@@ -335,7 +335,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 	    else
 		op->basereg = rd_reg32[base | ((rex & REX_B) ? 8 : 0)];
 
-	    if (segsize != 32)
+	    if (segsize == 16)
 		op->disp_size = 32;
         }
 
@@ -362,6 +362,8 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
  * Determine whether the instruction template in t corresponds to the data
  * stream in data. Return the number of bytes matched if so.
  */
+#define case4(x) case (x): case (x)+1: case (x)+2: case (x)+3
+
 static int matches(const struct itemplate *t, uint8_t *data,
 		   const struct prefix_info *prefix, int segsize, insn *ins)
 {
@@ -372,7 +374,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     uint8_t lock = prefix->lock;
     int osize = prefix->osize;
     int asize = prefix->asize;
-    int i;
+    int i, c;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -389,15 +391,17 @@ static int matches(const struct itemplate *t, uint8_t *data,
     else if (prefix->rep == 0xF3)
         drep = P_REP;
 
-    while (*r) {
-        int c = *r++;
-
-	/* FIX: change this into a switch */
-	if (c >= 01 && c <= 03) {
+    while ((c = *r++) != 0) {
+	switch (c) {
+	case 01:
+	case 02:
+	case 03:
             while (c--)
                 if (*r++ != *data++)
                     return false;
-	} else if (c == 04) {
+	    break;
+
+	case 04:
             switch (*data++) {
             case 0x07:
                 ins->oprs[0].basereg = 0;
@@ -411,7 +415,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
             default:
                 return false;
             }
-	} else if (c == 05) {
+	    break;
+
+	case 05:
             switch (*data++) {
             case 0xA1:
                 ins->oprs[0].basereg = 4;
@@ -422,7 +428,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
             default:
                 return false;
 	    }
-	} else if (c == 06) {
+	    break;
+
+	case 06:
             switch (*data++) {
             case 0x06:
                 ins->oprs[0].basereg = 0;
@@ -439,7 +447,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
             default:
                 return false;
             }
-	} else if (c == 07) {
+	    break;
+
+	case 07:
             switch (*data++) {
             case 0xA0:
                 ins->oprs[0].basereg = 4;
@@ -450,7 +460,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
             default:
                 return false;
             }
-	} else if (c >= 010 && c <= 013) {
+	    break;
+
+	case4(010):
+	{
             int t = *r++, d = *data++;
             if (d < t || d > t + 7)
                 return false;
@@ -459,17 +472,28 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		    (ins->rex & REX_B ? 8 : 0);
                 ins->oprs[c - 010].segment |= SEG_RMREG;
             }
-	} else if (c >= 014 && c <= 017) {
+	    break;
+	}
+
+	case4(014):
             ins->oprs[c - 014].offset = (int8_t)*data++;
             ins->oprs[c - 014].segment |= SEG_SIGNED;
-        } else if (c >= 020 && c <= 023) {
+	    break;
+
+	case4(020):
             ins->oprs[c - 020].offset = *data++;
-	} else if (c >= 024 && c <= 027) {
+	    break;
+
+	case4(024):
             ins->oprs[c - 024].offset = *data++;
-	} else if (c >= 030 && c <= 033) {
+	    break;
+
+	case4(030):
             ins->oprs[c - 030].offset = getu16(data);
 	    data += 2;
-        } else if (c >= 034 && c <= 037) {
+	    break;
+
+	case4(034):
 	    if (osize == 32) {
 		ins->oprs[c - 034].offset = getu32(data);
 		data += 4;
@@ -479,38 +503,53 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    }
             if (segsize != asize)
                 ins->oprs[c - 034].disp_size = asize;
-        } else if (c >= 040 && c <= 043) {
+	    break;
+
+	case4(040):
             ins->oprs[c - 040].offset = getu32(data);
 	    data += 4;
-        } else if (c >= 044 && c <= 047) {
+	    break;
+
+	case4(044):
 	    switch (asize) {
 	    case 16:
 		ins->oprs[c - 044].offset = getu16(data);
 		data += 2;
+		if (segsize != 16)
+		    ins->oprs[c - 044].disp_size = 16;
 		break;
 	    case 32:
 		ins->oprs[c - 044].offset = getu32(data);
 		data += 4;
+		if (segsize == 16)
+		    ins->oprs[c - 044].disp_size = 32;
 		break;
 	    case 64:
 		ins->oprs[c - 044].offset = getu64(data);
+		ins->oprs[c - 044].disp_size = 64;
 		data += 8;
 		break;
 	    }
-            if (segsize != asize)
-                ins->oprs[c - 044].disp_size = asize;
-        } else if (c >= 050 && c <= 053) {
+	    break;
+
+	case4(050):
             ins->oprs[c - 050].offset = gets8(data++);
             ins->oprs[c - 050].segment |= SEG_RELATIVE;
-        } else if (c >= 054 && c <= 057) {
+	    break;
+
+	case4(054):
 	    ins->oprs[c - 054].offset = getu64(data);
 	    data += 8;
-	} else if (c >= 060 && c <= 063) {
+	    break;
+
+	case4(060):
             ins->oprs[c - 060].offset = gets16(data);
 	    data += 2;
             ins->oprs[c - 060].segment |= SEG_RELATIVE;
             ins->oprs[c - 060].segment &= ~SEG_32BIT;
-        } else if (c >= 064 && c <= 067) {
+	    break;
+
+	case4(064):
             ins->oprs[c - 064].segment |= SEG_RELATIVE;
 	    if (osize == 16) {
 		ins->oprs[c - 064].offset = getu16(data);
@@ -527,12 +566,20 @@ static int matches(const struct itemplate *t, uint8_t *data,
                     (ins->oprs[c - 064].type & ~SIZE_MASK)
                     | ((osize == 16) ? BITS16 : BITS32);
             }
-        } else if (c >= 070 && c <= 073) {
+	    break;
+
+	case4(070):
             ins->oprs[c - 070].offset = getu32(data);
 	    data += 4;
             ins->oprs[c - 070].segment |= SEG_32BIT | SEG_RELATIVE;
-        } else if (c >= 0100 && c < 0140) {
-            int modrm = *data++;
+	    break;
+
+	case4(0100):
+	case4(0110):
+	case4(0120):
+	case4(0130):
+	{
+	    int modrm = *data++;
             ins->oprs[c & 07].segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize,
 			 &ins->oprs[(c >> 3) & 07], ins);
@@ -540,23 +587,49 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
             ins->oprs[c & 07].basereg = ((modrm >> 3)&7)+
 		(ins->rex & REX_R ? 8 : 0);
-        } else if (c >= 0140 && c <= 0143) {
+	    break;
+	}
+
+	case4(0140):
             ins->oprs[c - 0140].offset = getu16(data);
 	    data += 2;
-        } else if (c >= 0150 && c <= 0153) {
+	    break;
+
+	case4(0150):
 	    ins->oprs[c - 0150].offset = getu32(data);
 	    data += 4;
-	} else if (c >= 0160 && c <= 0167) {
-	    ins->rex |= (c & 4) ? REX_D|REX_OC : REX_D;
+	    break;
+
+	case4(0160):
+	    ins->rex |= REX_D;
 	    ins->drexdst = c & 3;
-        } else if (c == 0170) {
+	    break;
+
+	case4(0164):
+	    ins->rex |= REX_D|REX_OC;
+	    ins->drexdst = c & 3;
+	    break;
+
+	case 0170:
             if (*data++)
                 return false;
-	} else if (c == 0171) {
+	    break;
+
+	case 0171:
 	    data = do_drex(data, ins);
 	    if (!data)
 		return false;
-        } else if (c >= 0200 && c <= 0277) {
+	    break;
+
+	case4(0200):
+	case4(0204):
+	case4(0210):
+	case4(0214):
+	case4(0220):
+	case4(0224):
+	case4(0230):
+	case4(0234):
+	{
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return false;   /* spare field doesn't match up */
@@ -564,97 +637,153 @@ static int matches(const struct itemplate *t, uint8_t *data,
                          &ins->oprs[(c >> 3) & 07], ins);
 	    if (!data)
 		return false;
-        } else if (c == 0310) {
+	    break;
+	}
+
+	case 0310:
             if (asize != 16)
                 return false;
             else
                 a_used = true;
-        } else if (c == 0311) {
+	    break;
+
+	case 0311:
             if (asize == 16)
                 return false;
             else
                 a_used = true;
-        } else if (c == 0312) {
+	    break;
+
+	case 0312:
             if (asize != segsize)
                 return false;
             else
                 a_used = true;
-	} else if (c == 0313) {
+	    break;
+
+	case 0313:
 	    if (asize != 64)
 		return false;
 	    else
 		a_used = true;
-	} else if (c == 0314) {
+	    break;
+
+	case 0314:
 	    if (prefix->rex & REX_B)
 		return false;
-	} else if (c == 0315) {
+	    break;
+
+	case 0315:
 	    if (prefix->rex & REX_X)
 		return false;
-	} else if (c == 0316) {
+	    break;
+
+	case 0316:
 	    if (prefix->rex & REX_R)
 		return false;
-	} else if (c == 0317) {
+	    break;
+
+	case 0317:
 	    if (prefix->rex & REX_W)
 		return false;
-        } else if (c == 0320) {
+	    break;
+
+	case 0320:
             if (osize != 16)
                 return false;
             else
                 o_used = true;
-        } else if (c == 0321) {
+	    break;
+
+	case 0321:
             if (osize != 32)
                 return false;
             else
                 o_used = true;
-        } else if (c == 0322) {
+	    break;
+
+	case 0322:
             if (osize != (segsize == 16) ? 16 : 32)
                 return false;
             else
                 o_used = true;
-        } else if (c == 0323) {
+	    break;
+
+	case 0323:
 	    ins->rex |= REX_W;	/* 64-bit only instruction */
 	    osize = 64;
-	} else if (c == 0324) {
+	    break;
+
+	case 0324:
 	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
 		return false;
-	} else if (c == 0330) {
+	    break;
+
+	case 0330:
+	{
             int t = *r++, d = *data++;
             if (d < t || d > t + 15)
                 return false;
             else
                 ins->condition = d - t;
-        } else if (c == 0331) {
+	    break;
+	}
+
+	case 0331:
             if (prefix->rep)
                 return false;
-	} else if (c == 0332) {
+	    break;
+
+	case 0332:
 	    if (prefix->rep != 0xF2)
 		return false;
-        } else if (c == 0333) {
+	    break;
+
+	case 0333:
             if (prefix->rep != 0xF3)
                 return false;
             drep = 0;
-        } else if (c == 0334) {
+	    break;
+
+	case 0334:
 	    if (lock) {
 		ins->rex |= REX_R;
 		lock = 0;
 	    }
-        } else if (c == 0335) {
+	    break;
+
+	case 0335:
             if (drep == P_REP)
                 drep = P_REPE;
-	} else if (c == 0364) {
+	    break;
+
+	case 0340:
+	    return false;
+
+	case 0364:
 	    if (prefix->osp)
 		return false;
-	} else if (c == 0365) {
+	    break;
+
+	case 0365:
 	    if (prefix->asp)
 		return false;
-	} else if (c == 0366) {
+	    break;
+
+	case 0366:
 	    if (!prefix->osp)
 		return false;
 	    o_used = true;
-	} else if (c == 0367) {
+	    break;
+
+	case 0367:
 	    if (!prefix->asp)
 		return false;
 	    o_used = true;
+	    break;
+
+	default:
+	    return false;	/* Unknown code */
 	}
     }
 
@@ -711,6 +840,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     uint32_t goodness, best;
     int best_pref;
     struct prefix_info prefix;
+    bool end_prefix;
 
     memset(&ins, 0, sizeof ins);
 
@@ -722,36 +852,51 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     prefix.osize = (segsize == 64) ? 32 : segsize;
     segover = NULL;
     origdata = data;
-    for (;;) {
-        if (*data == 0xF3 || *data == 0xF2)
+
+    for (end_prefix = false; !end_prefix; ) {
+	switch (*data) {
+	case 0xF2:
+	case 0xF3:
             prefix.rep = *data++;
-        else if (*data == 0xF0)
+	    break;
+	case 0xF0:
             prefix.lock = *data++;
-        else if (*data == 0x2E)
+	    break;
+	case 0x2E:
 	    segover = "cs", prefix.seg = *data++;
-	else if (*data == 0x36)
+	    break;
+	case 0x36:
 	    segover = "ss", prefix.seg = *data++;
-	else if (*data == 0x3E)
+	    break;
+	case 0x3E:
 	    segover = "ds", prefix.seg = *data++;
-	else if (*data == 0x26)
+	    break;
+	case 0x26:
 	    segover = "es", prefix.seg = *data++;
-	else if (*data == 0x64)
+	    break;
+	case 0x64:
 	    segover = "fs", prefix.seg = *data++;
-	else if (*data == 0x65)
+	    break;
+	case 0x65:
 	    segover = "gs", prefix.seg = *data++;
-	else if (*data == 0x66) {
+	    break;
+	case 0x66:
 	    prefix.osize = (segsize == 16) ? 32 : 16;
 	    prefix.osp = *data++;
-	} else if (*data == 0x67) {
+	    break;
+	case 0x67:
 	    prefix.asize = (segsize == 32) ? 16 : 32;
 	    prefix.asp = *data++;
-	} else if (segsize == 64 && (*data & 0xf0) == REX_P) {
-	    prefix.rex = *data++;
-	    if (prefix.rex & REX_W)
-		prefix.osize = 64;
-	    break;		/* REX is always the last prefix */
-	} else {
-            break;
+	    break;
+	default:
+	    if (segsize == 64 && (*data & 0xf0) == REX_P) {
+		prefix.rex = *data++;
+		if (prefix.rex & REX_W)
+		    prefix.osize = 64;
+		end_prefix = true;
+	    } else {
+		end_prefix = true;
+	    }
 	}
     }
 
@@ -776,14 +921,17 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             for (i = 0; i < (*p)->operands; i++) {
                 if (!((*p)->opd[i] & SAME_AS) &&
 		    (
-			/* If it's a mem-only EA but we have a register, die. */
+			/* If it's a mem-only EA but we have a
+			   register, die. */
 			((tmp_ins.oprs[i].segment & SEG_RMREG) &&
 			 !(MEMORY & ~(*p)->opd[i])) ||
-			/* If it's a reg-only EA but we have a memory ref, die. */
+			/* If it's a reg-only EA but we have a memory
+			   ref, die. */
 			(!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
 			 !(REG_EA & ~(*p)->opd[i]) &&
 			 !((*p)->opd[i] & REG_SMASK)) ||
-			/* Register type mismatch (eg FS vs REG_DESS): die. */
+			/* Register type mismatch (eg FS vs REG_DESS):
+			   die. */
 			((((*p)->opd[i] & (REGISTER | FPUREG)) ||
 			  (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
 			 !whichreg((*p)->opd[i],
@@ -955,12 +1103,13 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                          offs);
         } else if (!(MEM_OFFS & ~t)) {
             slen +=
-                snprintf(output + slen, outbufsize - slen, "[%s%s%s0x%"PRIx64"]",
+                snprintf(output + slen, outbufsize - slen,
+			 "[%s%s%s0x%"PRIx64"]",
                          (segover ? segover : ""),
                          (segover ? ":" : ""),
-                         (o->disp_size ==
-                          32 ? "dword " : o->disp_size ==
-                          16 ? "word " : ""), offs);
+			 (o->disp_size == 64 ? "qword " :
+			  o->disp_size == 32 ? "dword " :
+			  o->disp_size == 16 ? "word " : ""), offs);
             segover = NULL;
         } else if (!(REGMEM & ~t)) {
             int started = false;
@@ -979,6 +1128,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             if (t & BITS80)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "tword ");
+            if (t & BITS128)
+                slen +=
+                    snprintf(output + slen, outbufsize - slen, "oword ");
             if (t & FAR)
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
             if (t & NEAR)
@@ -1017,30 +1169,49 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                                  o->scale);
                 started = true;
             }
+
+
             if (o->segment & SEG_DISP8) {
-		int minus = 0;
-		int8_t offset = offs;
-		if (offset < 0) {
-		    minus = 1;
+		const char *prefix;
+		uint8_t offset = offs;
+		if ((int8_t)offset < 0) {
+		    prefix = "-";
 		    offset = -offset;
+		} else {
+		    prefix = "+";
 		}
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx8"",
-			     minus ? "-" : "+", offset);
+			     prefix, offset);
             } else if (o->segment & SEG_DISP16) {
-		int minus = 0;
-		int16_t offset = offs;
-		if (offset < 0) {
-		    minus = 1;
+		const char *prefix;
+		uint16_t offset = offs;
+		if ((int16_t)offset < 0 && started) {
 		    offset = -offset;
+		    prefix = "-";
+		} else {
+		    prefix = started ? "+" : "";
 		}
                 slen +=
-                    snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx16"",
-			     minus ? "-" : started ? "+" : "", offset);
+                    snprintf(output + slen, outbufsize - slen,
+			     "%s0x%"PRIx16"", prefix, offset);
             } else if (o->segment & SEG_DISP32) {
-		    char *prefix = "";
-		    int32_t offset = offs;
-		    if (offset < 0) {
+		if (prefix.asize == 64) {
+		    const char *prefix;
+		    uint64_t offset = (int64_t)(int32_t)offs;
+		    if ((int32_t)offs < 0 && started) {
+			offset = -offset;
+			prefix = "-";
+		    } else {
+			prefix = started ? "+" : "";
+		    }
+		    slen +=
+			snprintf(output + slen, outbufsize - slen,
+				 "%s0x%"PRIx64"", prefix, offset);
+		} else {
+		    const char *prefix;
+		    uint32_t offset = offs;
+		    if ((int32_t) offset < 0 && started) {
 			offset = -offset;
 			prefix = "-";
 		    } else {
@@ -1049,6 +1220,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    slen +=
 			snprintf(output + slen, outbufsize - slen,
 				 "%s0x%"PRIx32"", prefix, offset);
+		}
             }
             output[slen++] = ']';
         } else {
