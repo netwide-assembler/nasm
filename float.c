@@ -165,7 +165,7 @@ static int32_t read_exponent(const char *string, int32_t max)
 	} else if (*string == '_') {
 	    /* do nothing */
 	} else {
-	    error(ERR_NONFATAL,
+	    error(ERR_NONFATAL|ERR_PASS1,
 		  "invalid character in floating-point constant %s: '%c'",
 		  "exponent", *string);
 	    return INT32_MAX;
@@ -191,16 +191,18 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
     int32_t tenpwr, twopwr;
     int32_t extratwos;
     bool started, seendot, warned;
+
+    warned = false;
     p = digits;
     tenpwr = 0;
     started = seendot = false;
-    warned = (pass0 != 1);
+
     while (*string && *string != 'E' && *string != 'e') {
         if (*string == '.') {
             if (!seendot) {
                 seendot = true;
             } else {
-                error(ERR_NONFATAL,
+                error(ERR_NONFATAL|ERR_PASS1,
                       "too many periods in floating-point constant");
                 return false;
             }
@@ -215,7 +217,7 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
                     *p++ = *string - '0';
                 } else {
                     if (!warned) {
-                        error(ERR_WARNING|ERR_WARN_FL_TOOLONG,
+                        error(ERR_WARNING|ERR_WARN_FL_TOOLONG|ERR_PASS1,
                               "floating-point constant significand contains "
                               "more than %i digits", MANT_DIGITS);
                         warned = true;
@@ -228,7 +230,7 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
         } else if (*string == '_') {
             /* do nothing */
         } else {
-            error(ERR_NONFATAL,
+            error(ERR_NONFATAL|ERR_PASS1,
                   "invalid character in floating-point constant %s: '%c'",
                   "significand", *string);
             return false;
@@ -514,7 +516,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
             if (!seendot)
                 seendot = true;
             else {
-                error(ERR_NONFATAL,
+                error(ERR_NONFATAL|ERR_PASS1,
                       "too many periods in floating-point constant");
                 return false;
             }
@@ -556,7 +558,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
 	} else if (c == '_') {
 	    /* ignore */
         } else {
-            error(ERR_NONFATAL,
+            error(ERR_NONFATAL|ERR_PASS1,
                   "floating-point constant: `%c' is invalid character", c);
             return false;
         }
@@ -680,7 +682,7 @@ static int to_float(const char *str, int s, uint8_t * result,
 	    type = FL_INFINITY;
             break;
 	default:
-	    error(ERR_NONFATAL,
+	    error(ERR_NONFATAL|ERR_PASS1,
 		  "internal error: unknown FP constant token `%s'\n", str);
 	    type = FL_QNAN;
 	    break;
@@ -726,7 +728,7 @@ static int to_float(const char *str, int s, uint8_t * result,
 		type = FL_NORMAL;
             } else if (exponent > 0) {
 		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
+		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
 			  "overflow in floating-point constant");
 		type = FL_INFINITY;
 	    } else {
@@ -761,14 +763,12 @@ static int to_float(const char *str, int s, uint8_t * result,
 	} else {
 	    if (daz || is_zero(mant)) {
 		/* Flush denormals to zero */
-		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW,
-			  "underflow in floating-point constant");
+		error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW|ERR_PASS1,
+		      "underflow in floating-point constant");
 		goto zero;
 	    } else {
-		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_DENORM,
-			  "denormal floating-point constant");
+		error(ERR_WARNING|ERR_WARN_FL_DENORM|ERR_PASS1,
+		      "denormal floating-point constant");
 	    }
 	}
 	break;
@@ -783,8 +783,7 @@ static int to_float(const char *str, int s, uint8_t * result,
 	    ieee_shr(mant, 1);
 	    exponent++;
 	    if (exponent >= (expmax << 1)-1) {
-		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW,
+		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
 			  "overflow in floating-point constant");
 		type = FL_INFINITY;
 		goto overflow;
