@@ -110,6 +110,9 @@ static struct Symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
+static uint8_t elf_osabi = 0;	/* Default OSABI = 0 (System V or Linux) */
+static uint8_t elf_abiver = 0;	/* Current ABI version */
+
 extern struct ofmt of_elf32;
 extern struct ofmt of_elf;
 
@@ -998,7 +1001,10 @@ static void elf_write(void)
     /*
      * Output the ELF header.
      */
-    fwrite("\177ELF\1\1\1\0\0\0\0\0\0\0\0\0", 16, 1, elffp);
+    fwrite("\177ELF\1\1\1", 7, 1, elffp);
+    fputc(elf_osabi, elffp);
+    fputc(elf_abiver, elffp);
+    fwrite("\0\0\0\0\0\0\0", 7, 1, elffp);
     fwriteint16_t(1, elffp);      /* ET_REL relocatable file */
     fwriteint16_t(3, elffp);      /* EM_386 processor ID */
     fwriteint32_t(1L, elffp);      /* EV_CURRENT file format version */
@@ -1265,9 +1271,39 @@ static int32_t elf_segbase(int32_t segment)
 
 static int elf_directive(char *directive, char *value, int pass)
 {
-    (void)directive;
-    (void)value;
-    (void)pass;
+    bool err;
+    int64_t n;
+    char *p;
+
+    if (!strcmp(directive, "osabi")) {
+	if (pass == 2)
+	    return 1;		/* ignore in pass 2 */
+
+	n = readnum(value, &err);
+	if (err) {
+	    error(ERR_NONFATAL, "`osabi' directive requires a parameter");
+	    return 1;
+	}
+	if (n < 0 || n > 255) {
+	    error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
+	    return 1;
+	}
+	elf_osabi  = n;
+	elf_abiver = 0;
+
+	if ((p = strchr(value,',')) == NULL)
+	    return 1;
+
+	n = readnum(p+1, &err);
+	if (err || n < 0 || n > 255) {
+	    error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
+	    return 1;
+	}
+	
+	elf_abiver = n;
+	return 1;
+    }
+	
     return 0;
 }
 
@@ -1281,6 +1317,9 @@ static const char *elf_stdmac[] = {
     "%define __SECT__ [section .text]",
     "%macro __NASM_CDecl__ 1",
     "%define $_%1 $%1",
+    "%endmacro",
+    "%macro osabi 1+.nolist",
+    "[osabi %1]",
     "%endmacro",
     NULL
 };
