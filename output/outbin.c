@@ -802,7 +802,7 @@ static void bin_out(int32_t segto, const void *data,
                   " %s section: zeroing", s->name);
             saa_wbytes(s->contents, NULL, size);
         }
-        s->length += type;
+        s->length += size;
     } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
 	       type == OUT_REL8ADR) {
 	switch (type) {
