@@ -998,13 +998,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0335:
 	    break;
         case 0340:
-        case 0341:
-        case 0342:
             if (ins->oprs[0].segment != NO_SEG)
                 errfunc(ERR_NONFATAL, "attempt to reserve non-constant"
                         " quantity of BSS space");
             else
-                length += ins->oprs[0].offset << (c & 3);
+                length += ins->oprs[0].offset;
             break;
 	case 0364:
 	case 0365:
@@ -1556,12 +1554,10 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	    break;
 
         case 0340:
-        case 0341:
-        case 0342:
             if (ins->oprs[0].segment != NO_SEG)
                 errfunc(ERR_PANIC, "non-constant BSS size in pass two");
             else {
-                int64_t size = ins->oprs[0].offset << (c & 3);
+                int64_t size = ins->oprs[0].offset;
                 if (size > 0)
                     out(offset, segment, NULL,
                         OUT_RESERVE, size, NO_SEG, NO_SEG);
