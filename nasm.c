@@ -336,9 +336,9 @@ int main(int argc, char **argv)
  * Get a parameter for a command line option.
  * First arg must be in the form of e.g. -f...
  */
-static char *get_param(char *p, char *q, int *advance)
+static char *get_param(char *p, char *q, bool *advance)
 {
-    *advance = 0;
+    *advance = false;
     if (p[2]) {                 /* the parameter's in the option */
         p += 2;
         while (isspace(*p))
@@ -346,7 +346,7 @@ static char *get_param(char *p, char *q, int *advance)
         return p;
     }
     if (q && q[0]) {
-        *advance = 1;
+        *advance = true;
         return q;
     }
     report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -367,126 +367,145 @@ struct textargs textopts[] = {
     {NULL, 0}
 };
 
-int stopoptions = 0;
-static int process_arg(char *p, char *q)
+static bool stopoptions = false;
+static bool process_arg(char *p, char *q)
 {
     char *param;
-    int i, advance = 0;
+    int i;
+    bool advance = false;
     bool suppress;
 
     if (!p || !p[0])
-        return 0;
+        return false;
 
     if (p[0] == '-' && !stopoptions) {
+	if (strchr("oOfpPdDiIlFXuUZwW", p[1])) {
+	    /* These parameters take values */
+	    if (!(param = get_param(p, q, &advance)))
+		return advance;
+	}
+
         switch (p[1]) {
         case 's':
             error_file = stdout;
             break;
-        case 'o':              /* these parameters take values */
-        case 'O':
-        case 'f':
-        case 'p':
-        case 'P':
-        case 'd':
-        case 'D':
-        case 'i':
-        case 'I':
-        case 'l':
-        case 'F':
-        case 'X':
-        case 'u':
-        case 'U':
-	case 'Z':
-            if (!(param = get_param(p, q, &advance)))
-                break;
-            if (p[1] == 'o') {  /* output file */
-                strcpy(outname, param);
-            } else if (p[1] == 'f') {   /* output format */
-                ofmt = ofmt_find(param);
-                if (!ofmt) {
-                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-                                 "unrecognised output format `%s' - "
-                                 "use -hf for a list", param);
-                } else
-                    ofmt->current_dfmt = ofmt->debug_formats[0];
-            } else if (p[1] == 'O') {   /* Optimization level */
-                int opt;
 
-		if (!*param) {
-		    /* Naked -O == -Ox */
-		    optimizing = INT_MAX >> 1; /* Almost unlimited */
-		} else {
-		    while (*param) {
-			switch (*param) {
-			case '0': case '1': case '2': case '3': case '4':
-			case '5': case '6': case '7': case '8': case '9':
-			    opt = strtoul(param, &param, 10);
+	case 'o':		/* output file */
+	    strcpy(outname, param);
+	    break;
 
-			    /* -O0 -> optimizing == -1, 0.98 behaviour */
-			    /* -O1 -> optimizing == 0, 0.98.09 behaviour */
-			    if (opt < 2)
-				optimizing = opt - 1;
-			    else if (opt <= 5)
-				/* The optimizer seems to have problems with
-				   < 5 passes?  Hidden bug? */
-				optimizing = 5;	/* 5 passes */
-			    else
-				optimizing = opt;   /* More than 5 passes */
-			    break;
+	case 'f':		/* output format */
+	    ofmt = ofmt_find(param);
+	    if (!ofmt) {
+		report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+			     "unrecognised output format `%s' - "
+			     "use -hf for a list", param);
+	    } else {
+		ofmt->current_dfmt = ofmt->debug_formats[0];
+	    }
+	    break;
 
-			case 'v':
-			case '+':
-			    param++;
-			    opt_verbose_info = true;
-			    break;
-
-			case 'x':
-			    param++;
-			    optimizing = INT_MAX >> 1; /* Almost unlimited */
-			    break;
-
-			default:
-			    report_error(ERR_FATAL,
-					 "unknown optimization option -O%c\n",
-					 *param);
-			    break;
-			}
+	case 'O':		/* Optimization level */
+	{
+	    int opt;
+	    
+	    if (!*param) {
+		/* Naked -O == -Ox */
+		optimizing = INT_MAX >> 1; /* Almost unlimited */
+	    } else {
+		while (*param) {
+		    switch (*param) {
+		    case '0': case '1': case '2': case '3': case '4':
+		    case '5': case '6': case '7': case '8': case '9':
+			opt = strtoul(param, &param, 10);
+			
+			/* -O0 -> optimizing == -1, 0.98 behaviour */
+			/* -O1 -> optimizing == 0, 0.98.09 behaviour */
+			if (opt < 2)
+			    optimizing = opt - 1;
+			else if (opt <= 5)
+			    /* The optimizer seems to have problems with
+			       < 5 passes?  Hidden bug? */
+			    optimizing = 5;	/* 5 passes */
+			else
+			    optimizing = opt;   /* More than 5 passes */
+			break;
+			
+		    case 'v':
+		    case '+':
+			param++;
+			opt_verbose_info = true;
+			break;
+			
+		    case 'x':
+			param++;
+			optimizing = INT_MAX >> 1; /* Almost unlimited */
+			break;
+			
+		    default:
+			report_error(ERR_FATAL,
+				     "unknown optimization option -O%c\n",
+				     *param);
+			break;
 		    }
 		}
-            } else if (p[1] == 'P' || p[1] == 'p') {    /* pre-include */
-                pp_pre_include(param);
-            } else if (p[1] == 'D' || p[1] == 'd') {    /* pre-define */
-                pp_pre_define(param);
-            } else if (p[1] == 'U' || p[1] == 'u') {    /* un-define */
-                pp_pre_undefine(param);
-            } else if (p[1] == 'I' || p[1] == 'i') {    /* include search path */
-                pp_include_path(param);
-            } else if (p[1] == 'l') {   /* listing file */
-                strcpy(listname, param);
-            } else if (p[1] == 'Z') {   /* error messages file */
-                strcpy(errname, param);
-            } else if (p[1] == 'F') {   /* specify debug format */
-                ofmt->current_dfmt = dfmt_find(ofmt, param);
-                if (!ofmt->current_dfmt) {
-                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-                                 "unrecognized debug format `%s' for"
-                                 " output format `%s'",
-                                 param, ofmt->shortname);
-                }
-            } else if (p[1] == 'X') {   /* specify error reporting format */
-                if (nasm_stricmp("vc", param) == 0)
-                    report_error = report_error_vc;
-                else if (nasm_stricmp("gnu", param) == 0)
-                    report_error = report_error_gnu;
-                else
-                    report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-                                 "unrecognized error reporting format `%s'",
-                                 param);
-            }
+	    }
+	    break;
+	}
+
+	case 'p':			/* pre-include */
+	case 'P':
+	    pp_pre_include(param);
+	    break;
+
+	case 'd':			/* pre-define */
+	case 'D':
+	    pp_pre_define(param);
+	    break;
+
+	case 'u':			/* un-define */
+	case 'U':
+	    pp_pre_undefine(param);
+	    break;
+
+	case 'i':			/* include search path */
+	case 'I':
+	    pp_include_path(param);
+	    break;
+
+	case 'l':			/* listing file */
+	    strcpy(listname, param);
+	    break;
+
+	case 'Z':			/* error messages file */
+	    strcpy(errname, param);
+	    break;
+
+	case 'F':			/* specify debug format */
+	    ofmt->current_dfmt = dfmt_find(ofmt, param);
+	    if (!ofmt->current_dfmt) {
+		report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+			     "unrecognized debug format `%s' for"
+			     " output format `%s'",
+			     param, ofmt->shortname);
+	    }
+	    break;
+
+	case 'X':		/* specify error reporting format */
+	    if (nasm_stricmp("vc", param) == 0)
+		report_error = report_error_vc;
+	    else if (nasm_stricmp("gnu", param) == 0)
+		report_error = report_error_gnu;
+	    else
+		report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+			     "unrecognized error reporting format `%s'",
+			     param);
             break;
+
         case 'g':
             using_debug_info = true;
             break;
+
         case 'h':
             printf
                 ("usage: nasm [-@ response file] [-o outfile] [-f format] "
@@ -530,15 +549,18 @@ static int process_arg(char *p, char *q)
             }
             exit(0);            /* never need usage message here */
             break;
+
         case 'y':
             printf("\nvalid debug formats for '%s' output format are"
                    " ('*' denotes default):\n", ofmt->shortname);
             dfmt_list(ofmt, stdout);
             exit(0);
             break;
+
         case 't':
             tasm_compatible_mode = true;
             break;
+
         case 'v':
             {
                 const char *nasm_version_string =
@@ -551,44 +573,51 @@ static int process_arg(char *p, char *q)
                 exit(0);        /* never need usage message here */
             }
             break;
+
         case 'e':              /* preprocess only */
 	case 'E':
             operating_mode = op_preprocess;
             break;
+
         case 'a':              /* assemble only - don't preprocess */
             preproc = &no_pp;
             break;
+
 	case 'W':
-	    if (p[2] == 'n' && p[3] == 'o' && p[4] == '-') {
+	    if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
 		suppress = true;
-		p += 5;
+		param += 3;
 	    } else {
 		suppress = false;
-		p += 2;
 	    }
 	    goto set_warning;
+
         case 'w':
-            if (p[2] != '+' && p[2] != '-') {
+            if (param[0] != '+' && param[0] != '-') {
                 report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                              "invalid option to `-w'");
 		break;
             }
-	    suppress = (p[2] == '-');
-	    p += 3;
+	    suppress = (param[0] == '-');
+	    param++;
 	    goto set_warning;
 	set_warning:
 	    for (i = 0; i <= ERR_WARN_MAX; i++)
-		if (!nasm_stricmp(p, suppressed_names[i]))
+		if (!nasm_stricmp(param, suppressed_names[i]))
 		    break;
 	    if (i <= ERR_WARN_MAX)
 		suppressed[i] = suppress;
-	    else if (!nasm_stricmp(p, "all"))
+	    else if (!nasm_stricmp(param, "all"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
 		    suppressed[i] = suppress;
+	    else if (!nasm_stricmp(param, "none"))
+		for (i = 1; i <= ERR_WARN_MAX; i++)
+		    suppressed[i] = !suppress;
 	    else
 		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-			     "invalid warning `%s'", p);
+			     "invalid warning `%s'", param);
             break;
+
         case 'M':
             operating_mode = p[2] == 'G' ? op_depend_missing_ok : op_depend;
             break;
@@ -774,7 +803,7 @@ static void parse_cmdline(int argc, char **argv)
      * Now process the actual command line.
      */
     while (--argc) {
-        int i;
+	bool advance;
         argv++;
         if (argv[0][0] == '@') {
             /* We have a response file, so process this as a set of
@@ -800,7 +829,7 @@ static void parse_cmdline(int argc, char **argv)
             argv++;
         }
         if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-	    p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &i);
+	    p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &advance);
             if (p) {
 		rfile = fopen(p, "r");
                 if (rfile) {
@@ -811,8 +840,8 @@ static void parse_cmdline(int argc, char **argv)
                                  "unable to open response file `%s'", p);
             }
         } else
-            i = process_arg(argv[0], argc > 1 ? argv[1] : NULL);
-        argv += i, argc -= i;
+            advance = process_arg(argv[0], argc > 1 ? argv[1] : NULL);
+        argv += advance, argc -= advance;
     }
 
     if (!*inname)
