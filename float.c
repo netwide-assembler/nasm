@@ -827,7 +827,7 @@ static int to_float(const char *str, int s, uint8_t * result,
     return 1;                   /* success */
 }
 
-int float_const(const char *number, int32_t sign, uint8_t * result,
+int float_const(const char *number, int sign, uint8_t * result,
                 int bytes, efunc err)
 {
     error = err;
