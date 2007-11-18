@@ -354,6 +354,20 @@ static char *get_param(char *p, char *q, bool *advance)
     return NULL;
 }
 
+/*
+ * Copy a filename
+ */
+static void copy_filename(char *dst, const char *src)
+{
+    size_t len = strlen(src);
+
+    if (len >= (size_t)FILENAME_MAX) {
+	report_error(ERR_FATAL | ERR_NOFILE, "file name too long");
+	return;
+    }
+    strncpy(dst, src, FILENAME_MAX);
+}
+
 struct textargs {
     const char *label;
     int value;
@@ -391,7 +405,7 @@ static bool process_arg(char *p, char *q)
             break;
 
 	case 'o':		/* output file */
-	    strcpy(outname, param);
+	    copy_filename(outname, param);
 	    break;
 
 	case 'f':		/* output format */
@@ -474,7 +488,7 @@ static bool process_arg(char *p, char *q)
 	    break;
 
 	case 'l':			/* listing file */
-	    strcpy(listname, param);
+	    copy_filename(listname, param);
 	    break;
 
 	case 'Z':			/* error messages file */
@@ -683,8 +697,9 @@ static bool process_arg(char *p, char *q)
         if (*inname) {
             report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                          "more than one input file specified");
-        } else
-            strcpy(inname, p);
+        } else {
+            copy_filename(inname, p);
+	}
     }
 
     return advance;
@@ -703,7 +718,6 @@ static void process_respfile(FILE * rfile)
     prevarg[0] = '\0';
 
     while (1) {                 /* Loop to handle all lines in file */
-
         p = buffer;
         while (1) {             /* Loop to handle long lines */
             q = fgets(p, bufsize - (p - buffer), rfile);
@@ -749,7 +763,7 @@ static void process_respfile(FILE * rfile)
             prevargsize += ARG_BUF_DELTA;
             prevarg = nasm_realloc(prevarg, prevargsize);
         }
-        strcpy(prevarg, p);
+        strncpy(prevarg, p, prevargsize);
     }
 }
 
