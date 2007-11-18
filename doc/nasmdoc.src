@@ -6379,8 +6379,6 @@ displacement size as \c{QWORD}:
 A sign-extended absolute displacement can access from -2 GB to +2 GB;
 a zero-extended absolute displacement can access from 0 to 4 GB.
 
-FIXME: THIS IS NOT YET CORRECTLY IMPLEMENTED
-
 \H{unix64} Interfacing to 64-bit C Programs (Unix)
 
 On Unix, the 64-bit ABI is defined by the document:
