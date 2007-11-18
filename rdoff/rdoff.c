@@ -61,6 +61,7 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
 {
     uint16_t w;
     int32_t l;
+    char *c;
 
     if (b->next) {              /* memory buffer full - use next buffer */
         membufwrite(b->next, data, bytes);
@@ -97,11 +98,9 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
         break;
 
     default:
-        while (bytes--) {
-            b->buffer[b->length++] = *(*(uint8_t **)&data);
-
-            (*(uint8_t **)&data)++;
-        }
+        c = data;
+        while (bytes--)
+            b->buffer[b->length++] = *c++;
         break;
     }
 }
@@ -350,7 +349,8 @@ int rdffindsegment(rdffile * f, int segno)
  */
 int rdfloadseg(rdffile * f, int segment, void *buffer)
 {
-    int32_t fpos, slen;
+    int32_t fpos;
+    size_t slen;
 
     switch (segment) {
     case RDOFF_HEADER:
