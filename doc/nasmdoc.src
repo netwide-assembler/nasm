@@ -3782,7 +3782,7 @@ Options are:
 
 \b\c{CPU PRESCOTT}      Prescott instruction set
 
-\b\c{CPU X64}           x86-64 (x64/AMD64/EM64T) instruction set
+\b\c{CPU X64}           x86-64 (x64/AMD64/Intel 64) instruction set
 
 \b\c{CPU IA64}          IA64 CPU (in x86 mode) instruction set
 

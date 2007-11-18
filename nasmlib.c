@@ -283,19 +283,16 @@ int64_t readnum(char *str, bool *error)
     }
 
     /*
-     * `checklimit' must be 2**(32|64) / radix. We can't do that in
-     * 32/64-bit arithmetic, which we're (probably) using, so we
+     * `checklimit' must be 2**64 / radix. We can't do that in
+     * 64-bit arithmetic, which we're (probably) using, so we
      * cheat: since we know that all radices we use are even, we
-     * can divide 2**(31|63) by radix/2 instead.
+     * can divide 2**63 by radix/2 instead.
      */
-    if (globalbits == 64)
-        checklimit = 0x8000000000000000ULL / (radix >> 1);
-    else
-        checklimit = 0x80000000UL / (radix >> 1);
+    checklimit = 0x8000000000000000ULL / (radix >> 1);
 
     /*
      * Calculate the highest allowable value for the last digit of a
-     * 32-bit constant... in radix 10, it is 6, otherwise it is 0
+     * 64-bit constant... in radix 10, it is 6, otherwise it is 0
      */
     last = (radix == 10 ? 6 : 0);
 
