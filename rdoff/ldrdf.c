@@ -218,6 +218,8 @@ void processmodule(const char *filename, struct modulenode *mod)
     int32_t bssamount = 0;
     int bss_was_referenced = 0;
 
+    memset(&sconf, 0, sizeof sconf);
+
     for (seg = 0; seg < mod->f.nsegs; seg++) {
         /*
          * get the segment configuration for this type from the segment
@@ -720,7 +722,7 @@ void write_output(const char *filename)
         }
         i = fread(hr->g.data, 1, sizeof(hr->g.data), ff);
         fseek(ff, 0, SEEK_END);
-        if (ftell(ff) > sizeof(hr->g.data)) {
+        if (ftell(ff) > (long)sizeof(hr->g.data)) {
             fprintf(error_file,
                     "warning: maximum generic record size is %u, "
 		    "rest of file ignored\n",

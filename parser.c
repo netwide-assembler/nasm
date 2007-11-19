@@ -802,6 +802,7 @@ restart_parse:
                     }
                 }
             } else {            /* it's a register */
+		unsigned int rs;
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
                     error(ERR_NONFATAL, "invalid operand type");
@@ -825,16 +826,16 @@ restart_parse:
                      * we want to produce a warning iff the specified size
                      * is different from the register size
                      */
-                    i = result->oprs[operand].type & SIZE_MASK;
+                    rs = result->oprs[operand].type & SIZE_MASK;
                 } else
-                    i = 0;
+                    rs = 0;
 
                 result->oprs[operand].type &= TO;
                 result->oprs[operand].type |= REGISTER;
                 result->oprs[operand].type |= reg_flags[value->type];
                 result->oprs[operand].basereg = value->type;
 
-                if (i && (result->oprs[operand].type & SIZE_MASK) != i)
+                if (rs && (result->oprs[operand].type & SIZE_MASK) != rs)
                     error(ERR_WARNING | ERR_PASS1,
                           "register size specification ignored");
             }

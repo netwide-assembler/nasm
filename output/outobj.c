@@ -1995,7 +1995,7 @@ static void obj_write_file(int debuginfo)
     orp->parm[0] = 0;
     orp->parm[1] = 0;
     for (pub = fpubhead; pub; pub = pub->next) {        /* pub-crawl :-) */
-        if ((uint64_t)orp->parm[2] != pub->segment) {
+        if (orp->parm[2] != (uint32_t)pub->segment) {
             obj_emit(orp);
             orp->parm[2] = pub->segment;
         }
