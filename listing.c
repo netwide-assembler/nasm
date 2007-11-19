@@ -136,6 +136,8 @@ static void list_output(int32_t offset, const void *data,
     {
         uint8_t const *p = data;
         char q[3];
+	if (size == 0 && !listdata[0])
+	    listoffset = offset;
         while (size--) {
             HEX(q, *p);
             q[2] = '\0';
