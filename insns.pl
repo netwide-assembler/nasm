@@ -57,7 +57,6 @@ while (<F>) {
   if ($formatted && !$nd) {
     push @big, $formatted;
     my @sseq = startseq($_[2]);
-    print $_[0], ':', join(',', @sseq), "\n";
     foreach $i (@sseq) {
 	if (!defined($dinstables{$i})) {
 	    $dinstables{$i} = [];
