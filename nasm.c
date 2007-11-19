@@ -858,13 +858,12 @@ static void parse_cmdline(int argc, char **argv)
         argv += advance, argc -= advance;
     }
 
+    /* Look for basic command line typos.  This definitely doesn't
+       catch all errors, but it might help cases of fumbled fingers. */
     if (!*inname)
         report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                      "no input file specified");
-
-    /* Look for basic command line typos.  This definitely doesn't
-       catch all errors, but it might help cases of fumbled fingers. */
-    if (!strcmp(inname, errname) || !strcmp(inname, outname) ||
+    else if (!strcmp(inname, errname) || !strcmp(inname, outname) ||
 	!strcmp(inname, listname))
 	report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
 		     "file `%s' is both input and output file",
