@@ -2994,7 +2994,7 @@ static Token *expand_smacro(Token * tline)
     Token *org_tline = tline;
     Context *ctx;
     char *mname;
-    int deadman = 0;
+    int deadman = DEADMAN_LIMIT;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3016,7 +3016,7 @@ again:
     thead = NULL;
 
     while (tline) {             /* main token loop */
-	if (++deadman > DEADMAN_LIMIT) {
+	if (!--deadman) {
 	    error(ERR_NONFATAL, "interminable macro recursion");
 	    break;
 	}
