@@ -376,6 +376,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int asize = prefix->asize;
     int i, c;
     struct operand *opx;
+    int s_field_for = -1;	/* No 144/154 series code encountered */
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -595,13 +596,30 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	}
 
 	case4(0140):
-            opx->offset = getu16(data);
-	    data += 2;
+	    if (s_field_for == (c & 3)) {
+		opx->offset = gets8(data);
+		data++;
+	    } else {
+		opx->offset = getu16(data);
+		data += 2;
+	    }
+	    break;
+
+	case4(0144):
+	case4(0154):
+	    s_field_for = (*data & 0x02) ? c & 3 : -1;
+	    if ((*data++ & ~0x02) != *r++)
+		return false;
 	    break;
 
 	case4(0150):
-	    opx->offset = getu32(data);
-	    data += 4;
+	    if (s_field_for == (c & 3)) {
+		opx->offset = gets8(data);
+		data++;
+	    } else {
+		opx->offset = getu32(data);
+		data += 4;
+	    }
 	    break;
 
 	case4(0160):
@@ -743,6 +761,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0332:
 	    if (prefix->rep != 0xF2)
 		return false;
+	    drep = 0;
 	    break;
 
 	case 0333:

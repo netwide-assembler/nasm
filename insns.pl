@@ -56,7 +56,9 @@ while (<F>) {
   }
   if ($formatted && !$nd) {
     push @big, $formatted;
-    foreach $i (startseq($_[2])) {
+    my @sseq = startseq($_[2]);
+    print $_[0], ':', join(',', @sseq), "\n";
+    foreach $i (@sseq) {
 	if (!defined($dinstables{$i})) {
 	    $dinstables{$i} = [];
 	}
@@ -263,14 +265,15 @@ sub format {
     ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
 }
 
-sub hexlist($$$) {
-    my($prefix, $start, $n) = @_;
-    my $i;
+sub addprefix ($@) {
+    my ($prefix, @list) = @_;
+    my $x;
     my @l = ();
 
-    for ($i = 0; $i < $n; $i++) {
-	push(@l, sprintf("%s%02X", $prefix, $start+$i));
+    foreach $x (@list) {
+	push(@l, sprintf("%s%02X", $prefix, $x));
     }
+
     return @l;
 }
 
@@ -326,9 +329,9 @@ sub startseq($) {
 	  }
 
 	  foreach $pfx (@disasm_prefixes) {
-	      if ($fbs =~ /^$pfx(.*)$/) {
+	      if (substr($fbs, 0, length($pfx)) eq $pfx) {
 		  $prefix = $pfx;
-		  $fbs = $1;
+		  $fbs = substr($fbs, length($pfx));
 		  last;
 	      }
 	  }
@@ -336,21 +339,28 @@ sub startseq($) {
 	  if ($fbs ne '') {
 	      return ($prefix.substr($fbs,0,2));
 	  }
+
+	  unshift(@codes, $c0);
       } elsif ($c0 == 04) {
-	  return ("07", "17", "1F");
+	  return addprefix($prefix, 0x07, 0x17, 0x1F);
       } elsif ($c0 == 05) {
-	  return ("A1", "A9");
+	  return addprefix($prefix, 0xA1, 0xA9);
       } elsif ($c0 == 06) {
-	  return ("06", "0E", "16", "1E");
+	  return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
       } elsif ($c0 == 07) {
-	  return ("A0", "A8");
+	  return addprefix($prefix, 0xA0, 0xA8);
       } elsif ($c0 >= 010 && $c0 <= 013) {
-	  return hexlist($prefix, $c1, 8);
+	  return addprefix($prefix, $c1..($c1+7));
+      } elsif (($c0 & ~013) == 0144) {
+	  return addprefix($prefix, $c1, $c1|2);
       } elsif ($c0 == 0330) {
-	  return hexlist($prefix, $c1, 16);
+	  return addprefix($prefix, $c1..($c1+15));
       } elsif ($c0 == 0 || $c0 == 0340) {
-	  return ();
+	  return $prefix;
+      } else {
+	  # We really need to be able to distinguish "forbidden"
+	  # and "ignorable" codes here
       }
   }
-  return ();
+  return $prefix;
 }

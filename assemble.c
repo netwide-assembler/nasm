@@ -33,11 +33,11 @@
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
  * \140..\143    - an immediate word or signed byte for operand 0..3
- * \144..\147    - or 2 (s-field) into next opcode byte if operand 0..3
- *		    is a signed byte rather than a word.
+ * \144..\147    - or 2 (s-field) into opcode byte if operand 0..3
+ *		    is a signed byte rather than a word.  Opcode byte follows.
  * \150..\153     - an immediate dword or signed byte for operand 0..3
- * \154..\157     - or 2 (s-field) into next opcode byte if operand 0..3
- *		    is a signed byte rather than a dword.
+ * \154..\157    - or 2 (s-field) into opcode byte if operand 0..3
+ *		    is a signed byte rather than a word.  Opcode byte follows.
  * \160..\163    - this instruction uses DREX rather than REX, with the
  *		   OC0 field set to 0, and the dest field taken from
  *                 operand 0..3.
@@ -907,7 +907,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0145:
         case 0146:
         case 0147:
-            codes += 2;
+            codes++;
             length++;
             break;
         case 0150:
@@ -920,7 +920,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0155:
         case 0156:
         case 0157:
-            codes += 2;
+            codes++;
             length++;
             break;
 	case 0160:
@@ -1397,7 +1397,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0146:
 	case 0147:
 	    EMIT_REX();
-            codes++;
             bytes[0] = *codes++;
             if (is_sbyte(ins, c & 3, 16))
                 bytes[0] |= 2;  /* s-bit */
@@ -1427,7 +1426,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0156:
 	case 0157:
 	    EMIT_REX();
-            codes++;
             bytes[0] = *codes++;
             if (is_sbyte(ins, c & 3, 32))
                 bytes[0] |= 2;  /* s-bit */
