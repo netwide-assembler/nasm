@@ -474,14 +474,13 @@ struct RAA *raa_init(void)
 
 void raa_free(struct RAA *r)
 {
-    if (r->layers == 0)
-        nasm_free(r);
-    else {
+    if (r->layers) {
         struct RAA **p;
         for (p = r->u.b.data; p - r->u.b.data < RAA_LAYERSIZE; p++)
             if (*p)
                 raa_free(*p);
     }
+    nasm_free(r);
 }
 
 int64_t raa_read(struct RAA *r, int32_t posn)
