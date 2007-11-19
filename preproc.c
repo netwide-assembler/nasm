@@ -2981,6 +2981,8 @@ static Token *expand_mmac_params(Token * tline)
  * Tokens from input to output a lot of the time, rather than
  * actually bothering to destroy and replicate.)
  */
+#define DEADMAN_LIMIT (1 << 20)
+
 static Token *expand_smacro(Token * tline)
 {
     Token *t, *tt, *mstart, **tail, *thead;
@@ -2992,6 +2994,7 @@ static Token *expand_smacro(Token * tline)
     Token *org_tline = tline;
     Context *ctx;
     char *mname;
+    int deadman = 0;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3008,11 +3011,16 @@ static Token *expand_smacro(Token * tline)
         org_tline->text = NULL;
     }
 
-  again:
+again:
     tail = &thead;
     thead = NULL;
 
     while (tline) {             /* main token loop */
+	if (++deadman > DEADMAN_LIMIT) {
+	    error(ERR_NONFATAL, "interminable macro recursion");
+	    break;
+	}
+
         if ((mname = tline->text)) {
             /* if this token is a local macro, look in local context */
             if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID)
