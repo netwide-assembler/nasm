@@ -1,0 +1,13 @@
+#!/bin/sh
+version="$1"
+if [ -z "$version" ]; then
+  echo "Usage: $0 version" 1>&2
+  exit 1
+fi
+
+echo "$version" > version
+git add version
+git commit -m "NASM $version"
+git tag -a -m "NASM $version" nasm-"$version"
+git push
+git push --tags
