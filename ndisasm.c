@@ -259,7 +259,7 @@ int main(int argc, char **argv)
     nextsync = next_sync(offset, &synclen);
     do {
         uint32_t to_read = buffer + sizeof(buffer) - p;
-        if (to_read > nextsync - offset - (p - q))
+	if (nextsync && to_read > nextsync - offset - (p - q))
             to_read = nextsync - offset - (p - q);
         if (to_read) {
             lenread = fread(p, 1, to_read, fp);
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
         } else
             lenread = 0;
         p += lenread;
-        if ((uint32_t)offset == nextsync) {
+        if (nextsync && (uint32_t)offset == nextsync) {
             if (synclen) {
                 fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n", offset, synclen);
                 offset += synclen;
