@@ -263,9 +263,9 @@ CMP		mem,imm8		\1\x80\207\21			8086,SM
 CMP		mem,imm16		\320\145\x81\207\141		8086,SM
 CMP		mem,imm32		\321\155\x81\207\151		386,SM
 CMPSB		void			\335\1\xA6			8086
-CMPSD		void			\335\321\xA7			386
-CMPSQ		void			\335\324\xA7			X64
-CMPSW		void			\335\320\xA7			8086
+CMPSD		void			\335\321\1\xA7			386
+CMPSQ		void			\335\324\1\xA7			X64
+CMPSW		void			\335\320\1\xA7			8086
 CMPXCHG		mem,reg8		\2\x0F\xB0\101			PENT,SM
 CMPXCHG		reg8,reg8		\2\x0F\xB0\101			PENT
 CMPXCHG		mem,reg16		\320\2\x0F\xB1\101		PENT,SM
