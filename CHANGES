@@ -1,12 +1,24 @@
-0.99.00
+2.00
 -------
 * Added c99 data-type compliance.
 * Added general x86-64 support.
 * Added win64 (x86-64 COFF) output format.
-* Added __BITS__ standard macro which returns current [BITS XX] mode.
-* fix (???) bug in outobj.c - every 256th "extern" caused Nasm crash.
-  (is this during definition or use, I made over 260 externs with obj
-   and could not duplicate the gripe -Keith Kanios)
+* Added __BITS__ standard macro.
+* Added elf32 and elf64 output formats.
+* Added Numeric constants in DQ directive.
+* Added oword, do and reso pseudo operands.
+* Added 8-bit floating-point format.
+* Added Floating-point option control.
+* Added Infinity and NaN floating point support.
+* Added ELF Symbol Visibility support.
+* Added Setting OSABI value in ELF header directive.
+* Added Generate Makefile Dependencies option.
+* Added Unlimited Optimization Passes option.
+* Added %IFN and %ELIFN support.
+* Added Logical Negation Operator.
+* Enhanced Stack Relative Preprocessor Directives.
+* Enhanced ELF Debug Formats.
+* Enhanced Send Errors to a File option.
 
 0.98.39
 -------
