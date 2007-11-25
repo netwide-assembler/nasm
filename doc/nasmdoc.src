@@ -3379,7 +3379,7 @@ by may be of interest to preprocessor authors.  The usage of the
 
 \c %line nnn[+mmm] [filename]
 
-In this directive, \c{nnn} indentifies the line of the original source
+In this directive, \c{nnn} identifies the line of the original source
 file which this line corresponds to.  \c{mmm} is an optional parameter
 which specifies a line increment value; each line of the input file
 read in is considered to correspond to \c{mmm} lines of the original
@@ -4363,7 +4363,7 @@ Any other section name is treated by default like \c{.text}.
 \H{win64fmt} \i\c{win64}: Microsoft Win64 Object Files
 
 The \c{win64} output format generates Microsoft Win64 object files, 
-which is nearly 100% indentical to the \c{win32} object format (\k{win32fmt})
+which is nearly 100% identical to the \c{win32} object format (\k{win32fmt})
 with the exception that it is meant to target 64-bit code and the x86-64
 platform altogether. This object file is used exactly the same as the \c{win32}
 object format (\k{win32fmt}), in NASM, with regard to this exception.
