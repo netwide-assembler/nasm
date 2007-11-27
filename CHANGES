@@ -1,5 +1,5 @@
 2.00
--------
+----
 * Added c99 data-type compliance.
 * Added general x86-64 support.
 * Added win64 (x86-64 COFF) output format.
@@ -8,6 +8,7 @@
 * Added Numeric constants in DQ directive.
 * Added oword, do and reso pseudo operands.
 * Added 8-bit floating-point format.
+* Correct the generation of floating-point constants.
 * Added Floating-point option control.
 * Added Infinity and NaN floating point support.
 * Added ELF Symbol Visibility support.
@@ -19,6 +20,9 @@
 * Enhanced Stack Relative Preprocessor Directives.
 * Enhanced ELF Debug Formats.
 * Enhanced Send Errors to a File option.
+* Added SSSE3, SSE4.1, SSE4.2, SSE5 support.
+* Added a large number of additional instructions.
+* Significant performance improvements.
 
 0.98.39
 -------
