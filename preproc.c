@@ -2121,13 +2121,13 @@ static int do_directive(Token * tline)
         else {
             j = if_condition(tline->next, i);
             tline->next = NULL; /* it got freed */
-            free_tlist(origline);
             j = j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
         }
         cond = nasm_malloc(sizeof(Cond));
         cond->next = istk->conds;
         cond->state = j;
         istk->conds = cond;
+	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     CASE_PP_ELIF:
@@ -2147,10 +2147,10 @@ static int do_directive(Token * tline)
              */
             j = if_condition(expand_mmac_params(tline->next), i);
             tline->next = NULL; /* it got freed */
-            free_tlist(origline);
             istk->conds->state =
                 j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
         }
+	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_ELSE:
