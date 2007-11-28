@@ -1,12 +1,13 @@
-1. Installing nasm from source (Unix, MacOS X, Windows/Cygwin,
+1. Installing NASM from source (Unix, MacOS X, Windows/Cygwin,
    Windows/MinGW)
-2. Installing nasm from source (Windows/MS Visual C++)
+2. Installing NASM from source (Windows/MS Visual C++)
+3. Installing NASM from source (DOS-Windows-OS/2/OpenWatcom)
 
 
-1. Installing nasm from source (Unix, MacOS X, Windows/Cygwin, Windows/MinGW)
+1. Installing NASM from source (Unix, MacOS X, Windows/Cygwin, Windows/MinGW)
 =============================================================================
 
-Installing nasm is pretty straightforward on Unix or Unix-like systems
+Installing NASM is pretty straightforward on Unix or Unix-like systems
 with Perl and GNU tools installed, including MinGW for Windows with
 MSYS installed.  Perl is optional for compiling unmodified sources
 from a tarball, but is required to build from git or for most source
@@ -25,15 +26,16 @@ $ ./configure
 You can get information about available configuration options by
 running `./configure --help`.
 
-If configure fails, please send bug report with detailed platform
-information to <nasm-bugs@lists.sourceforge.net> and we will try to
-help you asap!
+If configure fails, please file a bug report with detailed platform
+information at:
+
+    http://www.sf.net/projects/nasm/
 
 If everything went okay, type
 
 $ make
 
-to build nasm, ndisasm and rdoff tools, or
+to build NASM, ndisasm and rdoff tools, or
 
 $ make everything
 
@@ -67,7 +69,7 @@ to install everything =)
 Thats it, enjoy!
 
 
-2. Installing nasm from source (Windows/MS Visual C++)
+2. Installing NASM from source (Windows/MS Visual C++)
 ======================================================
 
 The recommended compiler for NASM on Windows is MinGW
@@ -82,3 +84,20 @@ where the NASM source code was extracted, and run:
 We recommend MinGW over Visual C++ 2005 as we have found it to be more
 up to date with regards to C99 compliance, and we are increasingly
 using C99 features in NASM.
+
+
+3. Installing NASM from source (DOS-Windows-OS/2/OpenWatcom)
+============================================================
+
+NASM has been reported to build correctly with OpenWatcom 1.7 on and
+OS/2 platform.  The NASM developers have not tested this on any other
+platforms.
+
+A WMAKE make file is provided:
+
+> wmake -f Mkfiles\openwcom.mak <platform>
+
+... where <platform> is "dos", "win32" or "os2".
+
+NASM is known to NOT compile correctly using OpenWatcom 1.7.1 as a
+cross compiler with a Linux host (OpenWatcom bug report 751.)
