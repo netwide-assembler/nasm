@@ -4,7 +4,8 @@
 * Added general x86-64 support.
 * Added win64 (x86-64 COFF) output format.
 * Added __BITS__ standard macro.
-* Added elf32 and elf64 output formats.
+* Renamed the elf output format to elf32 for clarity.
+* Added elf64 and macho (MacOS X) output formats.
 * Added Numeric constants in DQ directive.
 * Added oword, do and reso pseudo operands.
 * Added 8-bit floating-point format.
