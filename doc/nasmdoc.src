@@ -6456,6 +6456,12 @@ All SSE and x87 registers are destroyed by function calls.
 
 On 64-bit Unix, \c{long} is 64 bits.
 
+Integer and SSE register arguments are counted separately, so for the case of
+
+\c      void foo(long a, double b, int c)
+
+\c{a} is passed in \c{RDI}, \c{b} in \c{XMM0}, and \c{c} in \c{ESI}.
+
 \H{win64} Interfacing to 64-bit C Programs (Win64)
 
 The Win64 ABI is described at:
@@ -6477,6 +6483,12 @@ double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM3};
 return is \c{XMM0} only.
 
 On Win64, \c{long} is 32 bits; \c{long long} or \c{_int64} is 64 bits.
+
+Integer and SSE register arguments are counted together, so for the case of
+
+\c      void foo(long long a, double b, int c)
+
+\c{a} is passed in \c{RCX}, \c{b} in \c{XMM1}, and \c{c} in \c{R8D}.
 
 \C{trouble} Troubleshooting
 
