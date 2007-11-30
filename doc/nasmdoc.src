@@ -370,41 +370,38 @@ by registering at
 
 \S{instdos} \i{Installing} NASM under MS-\i{DOS} or Windows
 
-Once you've obtained the \i{DOS archive} for NASM, \i\c{nasmXXX.zip}
-(where \c{XXX} denotes the version number of NASM contained in the
-archive), unpack it into its own directory (for example \c{c:\\nasm}).
+Once you've obtained the appropriate archive for NASM,
+\i\c{nasm-XXX-dos.zip} or \i\c{nasm-XXX-win32.zip} (where \c{XXX}
+denotes the version number of NASM contained in the archive), unpack
+it into its own directory (for example \c{c:\\nasm}).
 
-The archive will contain four executable files: the NASM executable
-files \i\c{nasm.exe} and \i\c{nasmw.exe}, and the NDISASM executable
-files \i\c{ndisasm.exe} and \i\c{ndisasmw.exe}. In each case, the
-file whose name ends in \c{w} is a \I{Win32}\c{Win32} executable,
-designed to run under \I{Windows 95}\c{Windows 95} or \I{Windows NT}
-\c{Windows NT} Intel, and the other one is a 16-bit \I{DOS}\c{DOS}
-executable.
+The archive will contain a set of executable files: the NASM
+executable file \i\c{nasm.exe}, the NDISASM executable file
+\i\c{ndisasm.exe}, and possibly additional utilities to handle the
+RDOFF file format.
 
 The only file NASM needs to run is its own executable, so copy
-(at least) one of \c{nasm.exe} and \c{nasmw.exe} to a directory on
-your PATH, or alternatively edit \i\c{autoexec.bat} to add the
-\c{nasm} directory to your \i\c{PATH}. (If you're only installing the
-\c{Win32} version, you may wish to rename it to \c{nasm.exe}.)
+\c{nasm.exe} to a directory on your PATH, or alternatively edit
+\i\c{autoexec.bat} to add the \c{nasm} directory to your
+\i\c{PATH} (to do that under Windows XP, go to Start > Control Panel >
+System > Advanced > Environment Variables; these instructions may work
+under other versions of Windows as well.)
 
 That's it - NASM is installed. You don't need the nasm directory
 to be present to run NASM (unless you've added it to your \c{PATH}),
 so you can delete it if you need to save space; however, you may
 want to keep the documentation or test programs.
 
-If you've downloaded the \i{DOS source archive}, \i\c{nasmXXXs.zip},
+If you've downloaded the \i{DOS source archive}, \i\c{nasm-XXX.zip},
 the \c{nasm} directory will also contain the full NASM \i{source
 code}, and a selection of \i{Makefiles} you can (hopefully) use to
-rebuild your copy of NASM from scratch.
+rebuild your copy of NASM from scratch.  See the file \c{INSTALL} in
+the source archive.
 
-Note that the source files \c{insnsa.c}, \c{insnsd.c}, \c{insnsi.h}
-and \c{insnsn.c} are automatically generated from the master
-instruction table \c{insns.dat} by a Perl script; the file
-\c{macros.c} is generated from \c{standard.mac} by another Perl
-script. Although the NASM source distribution includes these generated
-files, you will need to rebuild them (and hence, will need a Perl
-interpreter) if you change insns.dat, standard.mac or the
+Note that a number of files are generated from other files by Perl
+scripts.  Although the NASM source distribution includes these
+generated files, you will need to rebuild them (and hence, will need a
+Perl interpreter) if you change insns.dat, standard.mac or the
 documentation. It is possible future source distributions may not
 include these files at all. Ports of \i{Perl} for a variety of
 platforms, including DOS and Windows, are available from
@@ -414,10 +411,10 @@ platforms, including DOS and Windows, are available from
 \S{instdos} Installing NASM under \i{Unix}
 
 Once you've obtained the \i{Unix source archive} for NASM,
-\i\c{nasm-X.XX.tar.gz} (where \c{X.XX} denotes the version number of
+\i\c{nasm-XXX.tar.gz} (where \c{XXX} denotes the version number of
 NASM contained in the archive), unpack it into a directory such
 as \c{/usr/local/src}. The archive, when unpacked, will create its
-own subdirectory \c{nasm-X.XX}.
+own subdirectory \c{nasm-XXX}.
 
 NASM is an \I{Autoconf}\I\c{configure}auto-configuring package: once
 you've unpacked it, \c{cd} to the directory it's been unpacked into
@@ -437,11 +434,6 @@ NASM also comes with a set of utilities for handling the \c{RDOFF}
 custom object-file format, which are in the \i\c{rdoff} subdirectory
 of the NASM archive. You can build these with \c{make rdf} and
 install them with \c{make rdf_install}, if you want them.
-
-If NASM fails to auto-configure, you may still be able to make it
-compile by using the fall-back Unix makefile \i\c{Makefile.unx}.
-Copy or rename that file to \c{Makefile} and try typing \c{make}.
-There is also a Makefile.unx file in the \c{rdoff} subdirectory.
 
 
 \C{running} Running NASM
@@ -589,7 +581,7 @@ Use \c{-g}, see \k{opt-g}, to enable output.
 A complete list of the available debug file formats for an output format
 can be seen by issuing the command \i\c{nasm -f <format> -y}. (As of 2.00,
 only "-f elf32", "-f elf64", "-f ieee", and "-f obj" provide debug information.) 
-See: \k{opt-y}.
+See \k{opt-y}.
 
 This should not be confused with the "-f dbg" output format option which 
 is not built into NASM by default. For information on how
@@ -599,7 +591,7 @@ to enable it when building from the sources, see \k{dbgfmt}
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
 
 This option can be used to generate debugging information in the specified
-format. See: \k{opt-F}. Using \c{-g} without \c{-F} results in emitting 
+format. See \k{opt-F}. Using \c{-g} without \c{-F} results in emitting 
 debug info in the default format, if any, for the selected output format.
 If no debug information is currently implemented in the selected output 
 format, \c{-g} is \e{silently ignored}.
