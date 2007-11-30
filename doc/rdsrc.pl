@@ -401,7 +401,7 @@ sub indexsort {
            } map { # transform array into list of 3-element lists
 	     my $ientry = $idxmap{$_};
 	     my $a = substr($$ientry[0],2);
-	     $a =~ tr/A-Za-z//cd;
+	     $a =~ tr/A-Za-z0-9//cd;
 	     [$_, uc($a), substr($$ientry[0],0,2)]
 	   } keys %idxmap;
 
