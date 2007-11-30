@@ -5729,11 +5729,10 @@ See also \k{opt-pfix}.
 
 \S{32cfunc} Function Definitions and Function Calls
 
-\I{functions, C calling convention}The \i{C calling convention}The C
-calling convention in 32-bit programs is as follows. In the
-following description, the words \e{caller} and \e{callee} are used
-to denote the function doing the calling and the function which gets
-called.
+\I{functions, C calling convention}The \i{C calling convention}
+in 32-bit programs is as follows. In the following description,
+the words \e{caller} and \e{callee} are used to denote
+the function doing the calling and the function which gets called.
 
 \b The caller pushes the function's parameters on the stack, one
 after another, in reverse order (right to left, so that the first
@@ -6408,10 +6407,10 @@ immediate as \c{DWORD}:
 
 The length of these instructions are 10, 5 and 7 bytes, respectively.
 
-The only instructions which take a full \i{64-bit \e{displacement}} is
-loading or storing, using \c{MOV}, \c{AL}, \c{AX}, \c{EAX} or \c{RAX}
-(but no other registers) to an absolute 64-bit address.  Since this is
-a relatively rarely used instruction (64-bit code generally uses
+The only instructions which take a full \I{64-bit displacement}64-bit
+\e{displacement} is loading or storing, using \c{MOV}, \c{AL}, \c{AX},
+\c{EAX} or \c{RAX} (but no other registers) to an absolute 64-bit address.
+Since this is a relatively rarely used instruction (64-bit code generally uses
 relative addressing), the programmer has to explicitly declare the
 displacement size as \c{QWORD}:
 
@@ -6465,7 +6464,7 @@ The Win64 ABI is described at:
 
 What follows is a simplified summary.
 
-The first four integer arguments are passwd in \c{RCX}, \c{RDX},
+The first four integer arguments are passed in \c{RCX}, \c{RDX},
 \c{R8} and \c{R9}, in that order.  Additional integer arguments are
 passed on the stack.  These registers, plus \c{RAX}, \c{R10} and
 \c{R11} are destroyed by function calls, and thus are available for
