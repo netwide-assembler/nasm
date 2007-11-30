@@ -814,8 +814,8 @@ The syntax is:
 \b \c{-Ox} where \c{x} is the actual letter \c{x}, indicates to NASM
    	to do unlimited passes.
 
-Note that this is a capital O, and is different from a small o, which
-is used to specify the output format. See \k{opt-o}.
+Note that this is a capital \c{O}, and is different from a small \c{o}, which
+is used to specify the output file name. See \k{opt-o}.
 
 
 \S{opt-t} The \i\c{-t} option: Enable TASM Compatibility Mode
