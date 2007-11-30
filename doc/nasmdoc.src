@@ -241,7 +241,7 @@ Object File Format
 
 \S{fpenhance} Floating Point Enhancements
 
-\b 8-bit floating-point format \k{fltconst}
+\b 8-, 16- and 128-bit floating-point format \k{fltconst}
 
 \b Floating-point option control \k{FLOAT}
 
