@@ -8,7 +8,9 @@
 * Added elf64 and macho (MacOS X) output formats.
 * Added Numeric constants in DQ directive.
 * Added oword, do and reso pseudo operands.
-* Added 8-bit floating-point format.
+* Allow underscores in numbers.
+* Added 8-, 16- and 128-bit floating-point formats.
+* Added binary, octal and hexadecimal floating-point.
 * Correct the generation of floating-point constants.
 * Added Floating-point option control.
 * Added Infinity and NaN floating point support.
