@@ -65,3 +65,8 @@
 %idefine r5l bpl
 %idefine r6l sil
 %idefine r7l dil
+
+%idefine r0h ah
+%idefine r1h ch
+%idefine r2h dh
+%idefine r3h bh
