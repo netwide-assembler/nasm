@@ -230,6 +230,8 @@ static int32_t elf_sym_sect;
 
 static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
+    if (of_elf.current_dfmt != &null_debug_form)
+        of_elf32.current_dfmt = of_elf.current_dfmt;
     elffp = fp;
     error = errfunc;
     evaluate = eval;
