@@ -6376,6 +6376,24 @@ loading a value into a 32-bit register (but not an 8- or 16-bit
 register), the upper 32 bits of the corresponding 64-bit register are
 set to zero.
 
+\H{reg64} Register names in 64-bit mode
+
+NASM uses the following names for general-purpose registers in 64-bit
+mode, for 8-, 16-, 32- and 64-bit references, respecitively:
+
+\c      AL/AH, CL/CH, DL/DH, BL/BH, SPL, BPL, SIL, DIL, R8B-R15B
+\c      AX, CX, DX, BX, SP, BP, SI, DI, R8W-R15W
+\c      EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, R8D-R15D
+\c      RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8-R15
+
+This is consistent with the AMD documentation and most other
+assemblers.  The Intel documentation, however, uses the names
+\c{R8L-R15L} for 8-bit references to the higher registers.  It is
+possible to use those names by definiting them as macros; similarly,
+if one wants to use numeric names for the low 8 registers, define them
+as macros.  See the file \i\c{altreg.inc} in the \c{misc} directory of
+the NASM source distribution.
+
 \H{id64} Immediates and displacements in 64-bit mode
 
 In 64-bit mode, immediates and displacements are generally only 32
