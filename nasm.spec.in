@@ -74,7 +74,8 @@ fi
 %doc AUTHORS CHANGES README TODO
 %{_bindir}/nasm
 %{_bindir}/ndisasm
-%{_mandir}/*/*
+%{_mandir}/man1/nasm.1
+%{_mandir}/man1/ndisasm.1
 %{_infodir}/nasm.info*.gz
 
 %files doc
@@ -90,3 +91,9 @@ fi
 %{_bindir}/rdfdump
 %{_bindir}/rdflib
 %{_bindir}/rdx
+%{_mandir}/man1/ldrdf.1
+%{_mandir}/man1/rdf2bin.1
+%{_mandir}/man1/rdf2com.1
+%{_mandir}/man1/rdfdump.1
+%{_mandir}/man1/rdflib.1
+%{_mandir}/man1/rdx.1
