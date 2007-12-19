@@ -1,0 +1,31 @@
+.TH RDF2BIN 1 "September 6, 1999" "Debian Project" "Debian Manual"
+.SH NAME
+rdf2bin, rdf2com \- convert an RDOFF object file to flat binary
+.SH SYNOPSIS
+.B rdf2bin
+.RI "[-o " relocation-origin ]
+.RI "[-p " segment-alignment ]
+.I input-file
+.I output-file
+.br
+.B rdf2com
+.RI "[-p " segment-alignment ]
+.I input-file
+.I output-file
+.SH OPTIONS
+.TP
+.RI "-o " relocation-origin
+Relocate at origin
+.IR relocation-origin .
+If invoked as
+.BR rdf2com ,
+the default relocation origin will be 0x100. Else, the default origin is 0.
+.TP
+.RI "-p " segment-alignment
+Pad segments until their size is a multiple of
+.IR segment-alignment .
+By default, 16 is used.
+.SH AUTHORS
+Julian Hall <jules@earthcorp.com>.
+.PP
+This manual page was written by Matej Vela <vela@debian.org>.

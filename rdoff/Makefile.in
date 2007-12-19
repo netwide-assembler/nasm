@@ -86,6 +86,7 @@ spotless: clean
 distclean: spotless
 
 install: all
+	$(MKDIR) -p $(INSTALLROOT)$(bindir)
 	$(INSTALL_PROGRAM) rdfdump$(X) $(INSTALLROOT)$(bindir)/rdfdump$(X)
 	$(INSTALL_PROGRAM) ldrdf$(X) $(INSTALLROOT)$(bindir)/ldrdf$(X)
 	$(INSTALL_PROGRAM) rdx$(X) $(INSTALLROOT)$(bindir)/rdx$(X)
@@ -93,3 +94,5 @@ install: all
 	$(INSTALL_PROGRAM) rdf2bin$(X) $(INSTALLROOT)$(bindir)/rdf2bin$(X)
 	$(INSTALL_PROGRAM) rdf2ihx$(X) $(INSTALLROOT)$(bindir)/rdf2ihx$(X)
 	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
+	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
+	$(INSTALL_DATA) $(srcdir)/*.1 $(INSTALLROOT)$(mandir)/man1/
