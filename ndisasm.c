@@ -259,7 +259,8 @@ int main(int argc, char **argv)
     nextsync = next_sync(offset, &synclen);
     do {
         uint32_t to_read = buffer + sizeof(buffer) - p;
-	if (nextsync && to_read > nextsync - offset - (p - q))
+	if ((nextsync || synclen) &&
+	    to_read > nextsync - offset - (p - q))
             to_read = nextsync - offset - (p - q);
         if (to_read) {
             lenread = fread(p, 1, to_read, fp);
@@ -268,7 +269,8 @@ int main(int argc, char **argv)
         } else
             lenread = 0;
         p += lenread;
-        if (nextsync && (uint32_t)offset == nextsync) {
+        if ((nextsync || synclen) &&
+	    (uint32_t)offset == nextsync) {
             if (synclen) {
                 fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n", offset, synclen);
                 offset += synclen;
@@ -282,7 +284,8 @@ int main(int argc, char **argv)
                 disasm((uint8_t *) q, outbuf, sizeof(outbuf), bits, offset, autosync,
                        prefer);
             if (!lendis || lendis > (p - q)
-                || (uint32_t)lendis > nextsync - offset)
+                || ((nextsync || synclen) &&
+		    (uint32_t)lendis > nextsync - offset))
                 lendis = eatbyte((uint8_t *) q, outbuf, sizeof(outbuf));
             output_ins(offset, (uint8_t *) q, lendis, outbuf);
             q += lendis;
