@@ -4,6 +4,7 @@
   memory (broken in 2.00 due to 64-bit changes.)
 * Fix the PREFETCH instructions.
 * Fix the documentation.
+* Fix debugging info when using "-f elf" (backwards alias for "-f elf32").
 
 2.00
 ----
