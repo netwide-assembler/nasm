@@ -1,3 +1,10 @@
+2.01
+----
+* Fix the handling of MMX registers with explicit "qword" tags on
+  memory (broken in 2.00 due to 64-bit changes.)
+* Fix the PREFETCH instructions.
+* Fix the documentation.
+
 2.00
 ----
 * Added c99 data-type compliance.
