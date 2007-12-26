@@ -4,7 +4,9 @@
   memory (broken in 2.00 due to 64-bit changes.)
 * Fix the PREFETCH instructions.
 * Fix the documentation.
-* Fix debugging info when using "-f elf" (backwards alias for "-f elf32").
+* Fix debugging info when using "-f elf" (backwards alias for "-f
+  elf32").
+* Man pages for rdoff tools (from the Debian project.)
 
 2.00
 ----
