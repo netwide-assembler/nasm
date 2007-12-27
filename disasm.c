@@ -325,7 +325,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 	    else if (a64)
 		op->indexreg = rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
 	    else
-		op->indexreg = rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
+		op->indexreg = rd_reg32[index | ((rex & REX_X) ? 8 : 0)];
 
 	    if (base == 5 && mod == 0) {
 		op->basereg = -1;
