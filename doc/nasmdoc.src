@@ -2059,7 +2059,7 @@ example of the use of this would be:
 
 \c %strlen charcnt 'my string'
 
-In this example, \c{charcnt} would receive the value 8, just as
+In this example, \c{charcnt} would receive the value 9, just as
 if an \c{%assign} had been used. In this example, \c{'my string'}
 was a literal string but it could also have been a single-line
 macro that expands to a string, as in the following example:
@@ -2068,7 +2068,7 @@ macro that expands to a string, as in the following example:
 \c %strlen charcnt sometext
 
 As in the first case, this would result in \c{charcnt} being
-assigned the value of 8.
+assigned the value of 9.
 
 
 \S{substr} \i{Sub-strings}: \i\c{%substr}
