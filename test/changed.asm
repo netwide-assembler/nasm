@@ -4,7 +4,7 @@
 ; changed.asm is copyright (C) 1998 John S. Fine
 ;
 ;  It may be redistributed under the same conditions as NASM as described in
-;  Licence file in the NASM archive
+;  LICENSE file in the NASM archive
 ;_________________________________
 ;
 ;  nasm changed.asm -l changed.lst

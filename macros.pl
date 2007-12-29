@@ -4,7 +4,7 @@
 #
 # The Netwide Assembler is copyright (C) 1996 Simon Tatham and
 # Julian Hall. All rights reserved. The software is
-# redistributable under the licence given in the file "Licence"
+# redistributable under the license given in the file "LICENSE"
 # distributed in the NASM archive.
 
 use strict;

@@ -3,7 +3,7 @@
  *   Copyright 2007 The NASM Authors - All Rights Reserved
  *
  *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the license given in the file "License"
+ *   it under the terms of the license given in the file "LICENSE"
  *   distributed in the NASM archive.
  *
  * ----------------------------------------------------------------------- */
