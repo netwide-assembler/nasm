@@ -27,6 +27,7 @@ INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 LN_S 		= @LN_S@
+MKDIR		= mkdir
 
 LDRDFLIBS 	= rdoff.o nasmlib.o symtab.o collectn.o rdlib.o segtab.o hash.o
 RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
