@@ -350,7 +350,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 2:
             op->segment |= SEG_DISP32;
-            op->offset = getu32(data);
+            op->offset = gets32(data);
 	    data += 4;
             break;
         }
@@ -557,11 +557,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case4(064):
             opx->segment |= SEG_RELATIVE;
 	    if (osize == 16) {
-		opx->offset = getu16(data);
+		opx->offset = gets16(data);
 		data += 2;
                 opx->segment &= ~(SEG_32BIT|SEG_64BIT);
 	    } else if (osize == 32) {
-		opx->offset = getu32(data);
+		opx->offset = gets32(data);
 		data += 4;
                 opx->segment &= ~SEG_64BIT;
                 opx->segment |= SEG_32BIT;
@@ -574,7 +574,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case4(070):
-            opx->offset = getu32(data);
+            opx->offset = gets32(data);
 	    data += 4;
             opx->segment |= SEG_32BIT | SEG_RELATIVE;
 	    break;
@@ -1096,6 +1096,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
              */
             if (!(o->segment & (SEG_32BIT|SEG_64BIT)))
 		offs &= 0xffff;
+	    else if (segsize != 64)
+		offs &= 0xffffffff;
+
             /*
              * add sync marker, if autosync is on
              */
