@@ -316,7 +316,7 @@ int64_t readnum(char *str, bool *error)
 
     if (warn)
         nasm_malloc_error(ERR_WARNING | ERR_PASS1 | ERR_WARN_NOV,
-                          "numeric constant %s does not fit in 32 bits",
+                          "numeric constant %s does not fit in 64 bits",
                           str);
 
     return result * sign;

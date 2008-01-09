@@ -159,7 +159,7 @@ static void warn_overflow(int size, int64_t data)
 	int64_t lim = ((int64_t)1 << (size*8))-1;
 
 	if (data < ~lim || data > lim)
-	    errfunc(ERR_WARNING, "%s data exceeds bounds", size_name(size));
+	    errfunc(ERR_WARNING | ERR_WARN_NOV, "%s data exceeds bounds", size_name(size));
     }
 }
 /*
@@ -1174,7 +1174,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 016:
 	case 017:
             if (opx->offset < -128 || opx->offset > 127) {
-                errfunc(ERR_WARNING, "signed byte value exceeds bounds");
+                errfunc(ERR_WARNING | ERR_WARN_NOV,
+			"signed byte value exceeds bounds");
             }
 
             if (opx->segment != NO_SEG) {
@@ -1194,7 +1195,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 022:
 	case 023:
             if (opx->offset < -256 || opx->offset > 255) {
-                errfunc(ERR_WARNING, "byte value exceeds bounds");
+                errfunc(ERR_WARNING | ERR_WARN_NOV,
+			"byte value exceeds bounds");
             }
             if (opx->segment != NO_SEG) {
                 data = opx->offset;
@@ -1213,7 +1215,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 026:
 	case 027:
             if (opx->offset < 0 || opx->offset > 255)
-                errfunc(ERR_WARNING, "unsigned byte value exceeds bounds");
+                errfunc(ERR_WARNING | ERR_WARN_NOV,
+			"unsigned byte value exceeds bounds");
             if (opx->segment != NO_SEG) {
                 data = opx->offset;
                 out(offset, segment, &data, OUT_ADDRESS, 1,
@@ -1259,6 +1262,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 042:
 	case 043:
             data = opx->offset;
+            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
+		warn_overflow(4, data);
             out(offset, segment, &data, OUT_ADDRESS, 4,
                 opx->segment, opx->wrt);
             offset += 4;
