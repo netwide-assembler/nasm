@@ -983,6 +983,7 @@ enum special_tokens {
  */
 
 extern int pass0;
+extern int passn;		/* Actual pass number */
 
 extern bool tasm_compatible_mode;
 extern int optimizing;

@@ -49,7 +49,7 @@ static efunc report_error;
 
 static int using_debug_info, opt_verbose_info;
 bool tasm_compatible_mode = false;
-int pass0;
+int pass0, passn;
 int maxbits = 0;
 int globalrel = 0;
 
@@ -897,8 +897,7 @@ static void assemble_file(char *fname)
     int64_t offs;
     struct tokenval tokval;
     expr *e;
-    int pass, pass_max;
-    int pass_cnt = 0;           /* count actual passes */
+    int pass_max;
 
     if (cmd_sb == 32 && cmd_cpu < IF_386)
         report_error(ERR_FATAL, "command line: "
@@ -906,15 +905,17 @@ static void assemble_file(char *fname)
 
     pass_max = (optimizing > 0 ? optimizing : 0) + 2;   /* passes 1, optimizing, then 2 */
     pass0 = !(optimizing > 0);  /* start at 1 if not optimizing */
-    for (pass = 1; pass0 <= 2; pass++) {
+    for (passn = 1; pass0 <= 2; passn++) {
         int pass1, pass2;
         ldfunc def_label;
 
-        pass1 = pass < pass_max ? 1 : 2;        /* seq is 1, 1, 1,..., 1, 2 */
-        pass2 = pass > 1 ? 2 : 1;       /* seq is 1, 2, 2,..., 2, 2 */
-        /*      pass0                            seq is 0, 0, 0,..., 1, 2 */
+        pass1 = pass0 == 2 ? 2 : 1;	/* 1, 1, 1, ..., 1, 2 */
+        pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
+        /* pass0                           0, 0, 0, ..., 1, 2 */
 
-        def_label = pass > 1 ? redefine_label : define_label;
+	printf("pass = %d (%d,%d,%d)\n", passn, pass0, pass1, pass2);
+
+        def_label = passn > 1 ? redefine_label : define_label;
 
         globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
         cpu = cmd_cpu;
@@ -926,7 +927,7 @@ static void assemble_file(char *fname)
         global_offset_changed = false;  /* set by redefine_label */
         location.segment = ofmt->section(NULL, pass2, &sb);
         globalbits = sb;
-        if (pass > 1) {
+        if (passn > 1) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
             raa_free(offsets);
@@ -934,7 +935,7 @@ static void assemble_file(char *fname)
         }
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist);
         globallineno = 0;
-        if (pass == 1)
+        if (passn == 1)
             location.known = true;
         location.offset = offs = GET_CURR_OFFS;
 
@@ -973,7 +974,7 @@ static void assemble_file(char *fname)
                             *q++ = '\0';
                             ofmt->symdef(value, 0L, 0L, 3, q);
                         }
-                    } else if (pass == 1) {     /* pass == 1 */
+                    } else if (passn == 1) {
                         q = value;
                         validid = true;
                         if (!isidstart(*q))
@@ -1113,7 +1114,7 @@ static void assemble_file(char *fname)
                             abs_seg = reloc_seg(e);
                             abs_offset = reloc_value(e);
                         }
-                    } else if (pass == 1)
+                    } else if (passn == 1)
                         abs_offset = 0x100;     /* don't go near zero in case of / */
                     else
                         report_error(ERR_PANIC, "invalid ABSOLUTE address "
@@ -1134,13 +1135,13 @@ static void assemble_file(char *fname)
                     }
                     *q++ = 0;
                     if (!validid) {
-                        report_error(pass == 1 ? ERR_NONFATAL : ERR_PANIC,
+                        report_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
                                      "identifier expected after DEBUG");
                         break;
                     }
                     while (*p && isspace(*p))
                         p++;
-                    if (pass == pass_max)
+                    if (pass0 == 2)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
                 case D_WARNING:		/* [WARNING {+|-}warn-name] */
@@ -1224,7 +1225,7 @@ static void assemble_file(char *fname)
                 parse_line(pass1, line, &output_ins,
                            report_error, evaluate, def_label);
 
-                if (!(optimizing > 0) && pass == 2) {
+                if (!(optimizing > 0) && pass0 == 2) {
                     if (forwref != NULL && globallineno == forwref->lineno) {
                         output_ins.forw_ref = true;
                         do {
@@ -1238,7 +1239,7 @@ static void assemble_file(char *fname)
                 }
 
                 if (!(optimizing > 0) && output_ins.forw_ref) {
-                    if (pass == 1) {
+                    if (passn == 1) {
                         for (i = 0; i < output_ins.operands; i++) {
                             if (output_ins.oprs[i].
                                 opflags & OPFLAG_FORWARD) {
@@ -1249,7 +1250,7 @@ static void assemble_file(char *fname)
                                 fwinf->operand = i;
                             }
                         }
-                    } else {    /* pass == 2 */
+                    } else {    /* passn > 1 */
                         /*
                          * Hack to prevent phase error in the code
                          *   rol ax,x
@@ -1277,7 +1278,7 @@ static void assemble_file(char *fname)
 			    output_ins.oprs[1].type &= ~REG_SMASK;
                         }
 
-                    }           /* pass == 2 */
+                    }
 
                 }
 
@@ -1330,7 +1331,7 @@ static void assemble_file(char *fname)
                                 report_error(ERR_NONFATAL,
                                              "bad syntax for EQU");
                         }
-                    } else {    /* pass == 2 */
+                    } else {
                         /*
                          * Special `..' EQUs get processed here, except
                          * `..@' macro processor EQUs which are done above.
@@ -1365,7 +1366,7 @@ static void assemble_file(char *fname)
                                 report_error(ERR_NONFATAL,
                                              "bad syntax for EQU");
                         }
-                    }           /* pass == 2 */
+                    }
                 } else {        /* instruction isn't an EQU */
 
                     if (pass1 == 1) {
@@ -1443,7 +1444,7 @@ static void assemble_file(char *fname)
                          * flagged as an error on pass 2
                          */
 
-                    } else {    /* pass == 2 */
+                    } else {
                         offs += assemble(location.segment, offs, sb, cpu,
                                          &output_ins, ofmt, report_error,
                                          &nasmlist);
@@ -1471,23 +1472,17 @@ static void assemble_file(char *fname)
                 usage();
             exit(1);
         }
-        pass_cnt++;
-        if ((pass > 1 && !global_offset_changed) ||
-	    pass >= pass_max - 2) {
+        if (passn >= pass_max - 2 ||
+	    (passn > 1 && !global_offset_changed))
             pass0++;
-            if (pass0 == 2)
-                pass = pass_max - 1;
-        } else if (!(optimizing > 0))
-            pass0++;
-
-    }                           /* for (pass=1; pass<=2; pass++) */
+    }
 
     preproc->cleanup(0);
     nasmlist.cleanup();
 #if 1
     if (optimizing > 0 && opt_verbose_info)     /*  -On and -Ov switches */
         fprintf(stdout,
-                "info:: assembly required 1+%d+1 passes\n", pass_cnt - 2);
+                "info:: assembly required 1+%d+1 passes\n", passn-3);
 #endif
 }                               /* exit from assemble_file (...) */
 
@@ -1628,9 +1623,10 @@ static int is_suppressed_warning(int severity)
             (severity & ERR_WARN_MASK) != 0 &&
             suppressed[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
         /*
-         * See if it's a pass-one only warning and we're not in pass one.
+         * See if it's a pass-one only warning and we're not in pass
+	 * zero or one.
          */
-        ((severity & ERR_PASS1) && pass0 == 2);
+        ((severity & ERR_PASS1) && pass0 != 1);
 }
 
 /**
