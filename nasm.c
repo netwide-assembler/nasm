@@ -437,12 +437,8 @@ static bool process_arg(char *p, char *q)
 			/* -O1 -> optimizing == 0, 0.98.09 behaviour */
 			if (opt < 2)
 			    optimizing = opt - 1;
-			else if (opt <= 5)
-			    /* The optimizer seems to have problems with
-			       < 5 passes?  Hidden bug? */
-			    optimizing = 5;	/* 5 passes */
 			else
-			    optimizing = opt;   /* More than 5 passes */
+			    optimizing = opt;
 			break;
 			
 		    case 'v':
