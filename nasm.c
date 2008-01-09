@@ -910,7 +910,7 @@ static void assemble_file(char *fname)
 
     pass_max = (optimizing > 0 ? optimizing : 0) + 2;   /* passes 1, optimizing, then 2 */
     pass0 = !(optimizing > 0);  /* start at 1 if not optimizing */
-    for (pass = 1; pass <= pass_max && pass0 <= 2; pass++) {
+    for (pass = 1; pass0 <= 2; pass++) {
         int pass1, pass2;
         ldfunc def_label;
 
@@ -1476,7 +1476,8 @@ static void assemble_file(char *fname)
             exit(1);
         }
         pass_cnt++;
-        if (pass > 1 && !global_offset_changed) {
+        if ((pass > 1 && !global_offset_changed) ||
+	    pass >= pass_max - 2) {
             pass0++;
             if (pass0 == 2)
                 pass = pass_max - 1;
