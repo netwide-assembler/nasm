@@ -148,14 +148,13 @@ extern struct ofmt of_elf64;
 #define STV_HIDDEN 2
 #define STV_PROTECTED 3
 
-#define GLOBAL_TEMP_BASE 16     /* bigger than any constant sym id */
+#define GLOBAL_TEMP_BASE 4096     /* bigger than any reasonable sym id */
 
 #define SEG_ALIGN 16            /* alignment of sections in file */
 #define SEG_ALIGN_1 (SEG_ALIGN-1)
 
 static const char align_str[SEG_ALIGN] = "";    /* ANSI will pad this with 0s */
 
-#define ELF_MAX_SECTIONS 16     /* really 10, but let's play safe */
 static struct ELF_SECTDATA {
     void *data;
     int64_t len;
