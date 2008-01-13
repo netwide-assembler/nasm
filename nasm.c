@@ -913,8 +913,6 @@ static void assemble_file(char *fname)
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
         /* pass0                           0, 0, 0, ..., 1, 2 */
 
-	printf("pass = %d (%d,%d,%d)\n", passn, pass0, pass1, pass2);
-
         def_label = passn > 1 ? redefine_label : define_label;
 
         globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
