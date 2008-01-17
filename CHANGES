@@ -7,6 +7,7 @@
 * Fix debugging info when using "-f elf" (backwards alias for "-f
   elf32").
 * Man pages for rdoff tools (from the Debian project.)
+* ELF: handle large numbers of sections.
 
 2.00
 ----
