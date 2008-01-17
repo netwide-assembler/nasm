@@ -148,7 +148,7 @@ extern struct ofmt of_elf64;
 #define STV_HIDDEN 2
 #define STV_PROTECTED 3
 
-#define GLOBAL_TEMP_BASE 4096     /* bigger than any reasonable sym id */
+#define GLOBAL_TEMP_BASE 1048576     /* bigger than any reasonable sym id */
 
 #define SEG_ALIGN 16            /* alignment of sections in file */
 #define SEG_ALIGN_1 (SEG_ALIGN-1)
