@@ -32,10 +32,12 @@ all: $(OUT)
 
 os2: nasm.inf
 
-# Consider html, txt and ps output a side effect
-nasmdoc.dip: nasmdoc.src rdsrc.pl inslist.pl ../insns.dat
-	mkdir -p html
+inslist.src: inslist.pl ../insns.dat
 	$(PERL) $(srcdir)/inslist.pl
+
+# Consider html, txt and ps output a side effect
+nasmdoc.dip: nasmdoc.src rdsrc.pl inslist.src
+	mkdir -p html
 	$(PERL) $(srcdir)/rdsrc.pl < $<
 	mv -f *.html html
 
@@ -73,8 +75,8 @@ clean:
 
 spotless: clean
 	-rm -rf html info
-	-rm -f *.hlp *.txt *.inf *.pdf *.dvi
-	-rm -f nasmdoc*.ps
+	-rm -f *.hlp nasmdoc.txt *.inf *.pdf *.dvi
+	-rm -f nasmdoc*.ps inslist.src
 
 install: all
 	$(INSTALL_DATA) info/* $(INSTALLROOT)$(infodir)
