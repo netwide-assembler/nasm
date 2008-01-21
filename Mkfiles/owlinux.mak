@@ -3,6 +3,22 @@
 # Makefile for cross-compiling NASM from Linux
 # to DOS, Win32 or OS/2 using OpenWatcom.
 #
+# Please see http://bugzilla.openwatcom.org/show_bug.cgi?id=751
+# for some caveats in using OpenWatcom as a cross-compiler
+# from Linux, in particular:
+#
+# > Second and more importantly, the makefile needs to ensure that the
+# > proper headers are included. This is normally not a problem when
+# > building on DOS, Windows, or OS/2, as they share the same C
+# > library headers. But when cross-compiling from (or to) Linux, it
+# > is crucial.
+# > 
+# > This may be accomplished by setting the INCLUDE env var in the
+# > makefile, or setting OS2_INCLUDE, DOS_INCLUDE, NT_INCLUDE env vars
+# > *and* making sure that the proper -bt switch is used, or passing a
+# > switch like -I"$(%WATCOM)/h". The last variant is probably the
+# > easiest to implement and least likely to break.
+#
 
 top_srcdir	= .
 srcdir		= .
@@ -12,8 +28,8 @@ bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
 CC		= wcl386
-CFLAGS		= -3 -bcl=$(TARGET) -ox -wx -ze -fpi
-BUILD_CFLAGS	= $(CFLAGS) # -I$(srcdir)/inttypes
+CFLAGS		= -3 -ox -wx -ze -fpi
+BUILD_CFLAGS	= $(CFLAGS) $(TARGET_FLAGS) # -I$(srcdir)/inttypes
 INTERNAL_CFLAGS = -I$(srcdir) -I. \
 		  -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
@@ -54,13 +70,13 @@ what:
 	@echo 'Please build "dos", "win32" or "os2"'
 
 dos:
-	$(MAKE) -f $(MAKEFILE_LIST) all TARGET=DOS4G
+	$(MAKE) -f $(MAKEFILE_LIST) all TARGET_FLAGS='-bt=DOS -l=DOS4G'
 
 win32:
-	$(MAKE) -f $(MAKEFILE_LIST) all TARGET=NT
+	$(MAKE) -f $(MAKEFILE_LIST) all TARGET_FLAGS='-bt=NT  -l=NT'
 
 os2:
-	$(MAKE) -f $(MAKEFILE_LIST) all TARGET=OS2V2
+	$(MAKE) -f $(MAKEFILE_LIST) all TARGET_FLAGS='-bt=OS2 -l=OS2V2'
 
 all: nasm$(X) ndisasm$(X)
 

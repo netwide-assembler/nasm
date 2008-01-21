@@ -14,8 +14,8 @@ bindir		= $(prefix)\bin
 mandir		= $(prefix)\man
 
 CC		= wcl386
-CFLAGS		= -3 -bcl=$(TARGET) -ox -wx -ze -fpi
-BUILD_CFLAGS	= $(CFLAGS) # -I$(srcdir)/inttypes
+CFLAGS		= -3 -ox -wx -ze -fpi
+BUILD_CFLAGS	= $(CFLAGS) $(TARGET_FLAGS) # -I$(srcdir)/inttypes
 INTERNAL_CFLAGS = -I$(srcdir) -I. -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD		= $(CC)
@@ -59,13 +59,13 @@ what:	.SYMBOLIC
 	@echo Please build "dos", "win32" or "os2"
 
 dos:	.SYMBOLIC
-	$(MAKE) /f $(__MAKEFILES__) all TARGET=DOS4G
+	$(MAKE) /f $(__MAKEFILES__) all TARGET_FLAGS="-bt=DOS -l=DOS4G"
 
 win32:	.SYMBOLIC
-	$(MAKE) /f $(__MAKEFILES__) all TARGET=NT
+	$(MAKE) /f $(__MAKEFILES__) all TARGET_FLAGS="-bt=NT  -l=NT"
 
 os2:	.SYMBOLIC
-	$(MAKE) /f $(__MAKEFILES__) all TARGET=OS2V2
+	$(MAKE) /f $(__MAKEFILES__) all TARGET_FLAGS="-bt=OS2 -l=OS2V2"
 
 all: nasm$(X) ndisasm$(X) .SYMBOLIC
 	rem cd rdoff && $(MAKE) all
