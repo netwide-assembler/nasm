@@ -14,8 +14,11 @@
 ; see the comment at the top of assemble.c.  For a detailed description
 ; of the flags (fourth field), please see insns.h.
 ;
+; Comments with a pound sign after the semicolon generate section
+; subheaders in the NASM documentation.
 
-; Special instructions...
+
+;# Special instructions...
 DB		ignore			ignore				ignore
 DW		ignore			ignore				ignore
 DD		ignore			ignore				ignore
@@ -29,7 +32,7 @@ RESQ		ignore			ignore				ignore
 REST		ignore			ignore				ignore
 RESO		ignore			ignore				ignore
 
-; Conventional instructions
+;# Conventional instructions
 AAA		void			\1\x37				8086,NOLONG
 AAD		void			\2\xD5\x0A			8086,NOLONG
 AAD		imm			\1\xD5\24			8086,SB,NOLONG
@@ -1375,7 +1378,7 @@ Jcc		imm			\330\x70\50			8086
 SETcc		mem			\1\x0F\330\x90\200		386,SB
 SETcc		reg8			\1\x0F\330\x90\200		386
 
-; Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
+;# Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
 ADDPS		xmmreg,xmmrm		\331\2\x0F\x58\110		KATMAI,SSE
 ADDSS		xmmreg,xmmrm		\333\2\x0F\x58\110		KATMAI,SSE
 ANDNPS		xmmreg,xmmrm		\2\x0F\x55\110			KATMAI,SSE
@@ -1457,11 +1460,12 @@ UNPCKHPS	xmmreg,xmmrm		\2\x0F\x15\110			KATMAI,SSE
 UNPCKLPS	xmmreg,xmmrm		\2\x0F\x14\110			KATMAI,SSE
 XORPS		xmmreg,xmmrm		\2\x0F\x57\110			KATMAI,SSE
 
-; Introduced in Deschutes but necessary for SSE support
+;# Introduced in Deschutes but necessary for SSE support
 FXRSTOR		mem			\2\x0F\xAE\201			P6,SSE,FPU
 FXSAVE		mem			\2\x0F\xAE\200			P6,SSE,FPU
 
-; These instructions are not SSE-specific; they are generic memory operations
+; These instructions are not SSE-specific; they are
+;# Generic memory operations
 ; and work even if CR4.OSFXFR == 0
 PREFETCHNTA	mem			\2\x0F\x18\200			KATMAI
 PREFETCHT0	mem			\2\x0F\x18\201			KATMAI
@@ -1469,7 +1473,7 @@ PREFETCHT1	mem			\2\x0F\x18\202			KATMAI
 PREFETCHT2	mem			\2\x0F\x18\203			KATMAI
 SFENCE		void			\3\x0F\xAE\xF8			KATMAI
 
-; New MMX instructions introduced in Katmai
+;# New MMX instructions introduced in Katmai
 MASKMOVQ	mmxreg,mmxreg		\2\x0F\xF7\110			KATMAI,MMX
 MOVNTQ		mem,mmxreg		\2\x0F\xE7\101			KATMAI,MMX,SM
 PAVGB		mmxreg,mmxrm		\2\x0F\xE0\110			KATMAI,MMX,SM
@@ -1490,14 +1494,14 @@ PMULHUW		mmxreg,mmxrm		\2\x0F\xE4\110			KATMAI,MMX,SQ
 PSADBW		mmxreg,mmxrm		\2\x0F\xF6\110			KATMAI,MMX,SQ
 PSHUFW		mmxreg,mmxrm,imm	\2\x0F\x70\110\22		KATMAI,MMX,SM2,SB,AR2
 
-; AMD Enhanced 3DNow! (Athlon) instructions
+;# AMD Enhanced 3DNow! (Athlon) instructions
 PF2IW		mmxreg,mmxrm		\2\x0F\x0F\110\01\x1C		PENT,3DNOW,SQ
 PFNACC		mmxreg,mmxrm		\2\x0F\x0F\110\01\x8A		PENT,3DNOW,SQ
 PFPNACC		mmxreg,mmxrm		\2\x0F\x0F\110\01\x8E		PENT,3DNOW,SQ
 PI2FW		mmxreg,mmxrm		\2\x0F\x0F\110\01\x0C		PENT,3DNOW,SQ
 PSWAPD		mmxreg,mmxrm		\2\x0F\x0F\110\01\xBB		PENT,3DNOW,SQ
 
-; Willamette SSE2 Cacheability Instructions
+;# Willamette SSE2 Cacheability Instructions
 MASKMOVDQU	xmmreg,xmmreg		\366\2\x0F\xF7\110		WILLAMETTE,SSE2
 ; CLFLUSH needs its own feature flag implemented one day
 CLFLUSH		mem			\2\x0F\xAE\207			WILLAMETTE,SSE2
@@ -1508,7 +1512,7 @@ PAUSE		void			\333\1\x90			WILLAMETTE,SSE2
 LFENCE		void			\3\x0F\xAE\xE8			WILLAMETTE,SSE2
 MFENCE		void			\3\x0F\xAE\xF0			WILLAMETTE,SSE2
 
-; Willamette MMX instructions (SSE2 SIMD Integer Instructions)
+;# Willamette MMX instructions (SSE2 SIMD Integer Instructions)
 MOVD		xmmreg,reg32		\366\2\x0F\x6E\110		WILLAMETTE,SSE2
 MOVD		reg32,xmmreg		\366\2\x0F\x7E\101		WILLAMETTE,SSE2
 MOVD		mem,xmmreg		\366\2\x0F\x7E\101		WILLAMETTE,SSE2,SD
@@ -1612,7 +1616,7 @@ PUNPCKLDQ	xmmreg,xmmrm		\366\2\x0F\x62\110		WILLAMETTE,SSE2,SM
 PUNPCKLQDQ	xmmreg,xmmrm		\366\2\x0F\x6C\110		WILLAMETTE,SSE2,SM
 PXOR		xmmreg,xmmrm		\366\2\x0F\xEF\110		WILLAMETTE,SSE2,SM
 
-; Willamette Streaming SIMD instructions (SSE2)
+;# Willamette Streaming SIMD instructions (SSE2)
 ADDPD		xmmreg,xmmrm		\331\366\2\x0F\x58\110		WILLAMETTE,SSE2,SM
 ADDSD		xmmreg,xmmrm		\331\332\2\x0F\x58\110		WILLAMETTE,SSE2
 ANDNPD		xmmreg,xmmrm		\331\366\2\x0F\x55\110		WILLAMETTE,SSE2,SM
@@ -1693,7 +1697,7 @@ UNPCKHPD	xmmreg,xmmrm		\366\2\x0F\x15\110		WILLAMETTE,SSE2,SM
 UNPCKLPD	xmmreg,xmmrm		\366\2\x0F\x14\110		WILLAMETTE,SSE2,SM
 XORPD		xmmreg,xmmrm		\366\2\x0F\x57\110		WILLAMETTE,SSE2,SM
 
-; Prescott New Instructions (SSE3)
+;# Prescott New Instructions (SSE3)
 ADDSUBPD	xmmreg,xmmrm		\366\2\x0F\xD0\110		PRESCOTT,SSE3,SM
 ADDSUBPS	xmmreg,xmmrm		\332\2\x0F\xD0\110		PRESCOTT,SSE3,SM
 HADDPD		xmmreg,xmmrm		\366\2\x0F\x7C\110		PRESCOTT,SSE3,SM
@@ -1705,7 +1709,7 @@ MOVDDUP		xmmreg,xmmrm		\332\2\x0F\x12\110		PRESCOTT,SSE3
 MOVSHDUP	xmmreg,xmmrm		\333\2\x0F\x16\110		PRESCOTT,SSE3
 MOVSLDUP	xmmreg,xmmrm		\333\2\x0F\x12\110		PRESCOTT,SSE3
 
-; VMX Instructions
+;# VMX Instructions
 VMCALL		void			\3\x0F\x01\xC1			VMX
 VMCLEAR		mem			\366\2\x0F\xC7\206		VMX
 VMLAUNCH	void			\3\x0F\x01\xC2			VMX
@@ -1721,7 +1725,7 @@ VMWRITE		reg32,rm32		\2\x0F\x79\110			VMX
 VMXOFF		void			\3\x0F\x01\xC4			VMX
 VMXON		mem			\333\2\x0F\xC7\206		VMX
 
-; Tejas New Instructions (SSSE3)
+;# Tejas New Instructions (SSSE3)
 PABSB		mmxreg,mmxrm		\364\3\x0F\x38\x1C\110		SSSE3,MMX,SQ
 PABSB		xmmreg,xmmrm		\366\3\x0F\x38\x1C\110		SSSE3
 PABSW		mmxreg,mmxrm		\364\3\x0F\x38\x1D\110		SSSE3,MMX,SQ
@@ -1755,7 +1759,7 @@ PSIGNW		xmmreg,xmmrm		\366\3\x0F\x38\x09\110		SSSE3
 PSIGND		mmxreg,mmxrm		\364\3\x0F\x38\x0A\110		SSSE3,MMX,SQ
 PSIGND		xmmreg,xmmrm		\366\3\x0F\x38\x0A\110		SSSE3
 
-; AMD SSE4A
+;# AMD SSE4A
 EXTRQ		xmmreg,imm,imm		\366\2\x0F\x78\200\25\26	SSE4A,AMD
 EXTRQ		xmmreg,xmmreg		\366\2\x0F\x79\110		SSE4A,AMD
 INSERTQ		xmmreg,xmmreg,imm,imm	\332\2\x0F\x78\110\26\27	SSE4A,AMD
@@ -1763,12 +1767,12 @@ INSERTQ		xmmreg,xmmreg		\332\2\x0F\x79\110		SSE4A,AMD
 MOVNTSD		mem,xmmreg		\332\2\x0F\x2B\101		SSE4A,AMD,SQ
 MOVNTSS		mem,xmmreg		\333\2\x0F\x2B\101		SSE4A,AMD,SD
 
-; New instructions in Barcelona
+;# New instructions in Barcelona
 LZCNT		reg16,rm16		\320\333\2\x0F\xBD\110		P6,AMD
 LZCNT		reg32,rm32		\321\333\2\x0F\xBD\110		P6,AMD
 LZCNT		reg64,rm64		\324\333\2\x0F\xBD\110		P6,AMD
 
-; Penryn New Instructions (SSE4.1)
+;# Penryn New Instructions (SSE4.1)
 BLENDPD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0D\110\26	SSE41
 BLENDPS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0C\110\26	SSE41
 BLENDVPD	xmmreg,xmmrm,xmm0	\366\3\x0F\x38\x15\110		SSE41
@@ -1825,7 +1829,7 @@ ROUNDPS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE41
 ROUNDSD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0B\110\26	SSE41
 ROUNDSS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x0A\110\26	SSE41
 
-; Nehalem New Instructions (SSE4.2)
+;# Nehalem New Instructions (SSE4.2)
 CRC32		reg32,rm8		\332\3\x0F\x38\1\xF0\110	SSE42
 CRC32		reg32,rm16		\332\3\x0F\x38\1\xF1\110	SSE42
 CRC32		reg32,rm32		\332\3\x0F\x38\1\xF1\110	SSE42
@@ -1840,7 +1844,7 @@ POPCNT		reg16,rm16		\320\333\2\x0F\xB8\110		NEHALEM
 POPCNT		reg32,rm32		\321\333\2\x0F\xB8\110		NEHALEM
 POPCNT		reg64,rm32		\324\333\2\x0F\xB8\110		NEHALEM,X64
 
-; AMD SSE5 instructions
+;# AMD SSE5 instructions
 
 ; Four operands with DREX
 FMADDPS		xmmreg,=0,xmmreg,xmmrm	\160\2\x0F\x24\170\132		SSE5,AMD
@@ -2006,14 +2010,14 @@ ROUNDPD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 ROUNDSS		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 ROUNDSD		xmmreg,xmmrm,imm	\366\3\x0F\x3A\x08\110\26	SSE5,AMD
 
-; Intel SMX
+;# Intel SMX
 GETSEC		void			\2\x0F\x37			KATMAI
 
-; Geode (Cyrix) 3DNow! additions
+;# Geode (Cyrix) 3DNow! additions
 PFRCP		mmxreg,mmxrm		\2\x0F\x0F\110\1\x86		PENT,3DNOW,SM,CYRIX
 PFRSQRT		mmxreg,mmxrm		\2\x0F\x0F\110\1\x87		PENT,3DNOW,SM,CYRIX
 
-; VIA (Centaur) security instructions
+;# VIA (Centaur) security instructions
 XSTORE		void			\3\x0F\xA7\xC0			PENT,CYRIX
 XCRYPTECB	void			\333\3\x0F\xA7\xC8		PENT,CYRIX
 XCRYPTCBC	void			\333\3\x0F\xA7\xD0		PENT,CYRIX
@@ -2023,7 +2027,7 @@ MONTMUL		void			\333\3\x0F\xA6\xC0		PENT,CYRIX
 XSHA1		void			\333\3\x0F\xA6\xC8		PENT,CYRIX
 XSHA256		void			\333\3\x0F\xA6\xD0		PENT,CYRIX
 
-; Systematic names for the hinting nop instructions
+;# Systematic names for the hinting nop instructions
 HINT_NOP0	rm16			\320\2\x0F\x18\200		P6,UNDOC
 HINT_NOP0	rm32			\321\2\x0F\x18\200		P6,UNDOC
 HINT_NOP0	rm64			\324\2\x0F\x18\200		X64,UNDOC

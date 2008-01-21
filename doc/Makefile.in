@@ -33,8 +33,9 @@ all: $(OUT)
 os2: nasm.inf
 
 # Consider html, txt and ps output a side effect
-nasmdoc.dip: nasmdoc.src rdsrc.pl
+nasmdoc.dip: nasmdoc.src rdsrc.pl inslist.pl ../insns.dat
 	mkdir -p html
+	$(PERL) $(srcdir)/inslist.pl
 	$(PERL) $(srcdir)/rdsrc.pl < $<
 	mv -f *.html html
 

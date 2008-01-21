@@ -60,7 +60,7 @@ zip -k ${NASM_DOS_ZIP} *.exe misc/exasm.zip
 rm -f nasm.doc
 (cd doc; zip -l -k ../${NASM_DOC_ZIP} \
   Readme \
-  nasmdoc.src rdsrc.pl \
+  nasmdoc.src rdsrc.pl inslist.pl \
   nasmdoc.txt \
   nasmdoc.ps \
   *.html

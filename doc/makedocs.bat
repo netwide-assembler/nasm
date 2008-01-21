@@ -39,6 +39,7 @@ echo                        This takes a while. Stretch!
 echo.
 echo.
 
+perl inslist.pl
 perl rdsrc.pl<nasmdoc.src
 echo.
 echo.

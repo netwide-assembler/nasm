@@ -79,6 +79,12 @@
 #   defines document metadata, such as authorship, title and copyright;
 #   different output formats use this differently.
 #
+# Include subfile
+# \&{filename}
+#  Includes filename. Recursion is allowed.
+#
+ 
+use IO::File;
 
 $diag = 1, shift @ARGV if $ARGV[0] eq "-d";
 
@@ -96,15 +102,7 @@ $pname = "para000000";
 @pnames = @pflags = ();
 $para = undef;
 while (<>) {
-  chomp;
-  if (!/\S/ || /^\\(IA|IR|M)/) { # special case: \IA \IR \M imply new-paragraph
-    &got_para($para);
-    $para = undef;
-  }
-  if (/\S/) {
-    s/\\#.*$//; # strip comments
-    $para .= " " . $_;
-  }
+  &check_include($_);
 }
 &got_para($para);
 print "done.\n";
@@ -143,6 +141,33 @@ print "Producing Documentation Intermediate Paragraphs: ";
 &write_dip;
 print "done.\n";
 
+sub check_include {
+  local $_ = shift;
+  if (/\\& (\S+)/) {
+     &include($1);
+  } else {
+     &get_para($_);
+  }
+}
+sub get_para($_) {
+  chomp;
+  if (!/\S/ || /^\\(IA|IR|M)/) { # special case: \IA \IR \M imply new-paragraph
+    &got_para($para);
+    $para = undef;
+  }
+  if (/\S/) {
+    s/\\#.*$//; # strip comments
+    $para .= " " . $_;
+  }
+}
+sub include {
+  my $name = shift;
+  my $F = IO::File->new($name)
+     or die "Cannot open $name: $!";
+  while (<$F>) {
+     &check_include($_);
+  }
+}
 sub got_para {
   local ($_) = @_;
   my $pflags = "", $i, $w, $l, $t;
