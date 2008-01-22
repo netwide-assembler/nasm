@@ -45,15 +45,6 @@ typedef uint64_t fp_2limb;
 #define LIMB_ALL_BYTES	((fp_limb)0x01010101)
 #define LIMB_BYTE(x)	((x)*LIMB_ALL_BYTES)
 
-#if X86_MEMORY
-#define put(a,b) (*(uint32_t *)(a) = (b))
-#else
-#define put(a,b) (((a)[0] = (b)),		\
-		  ((a)[1] = (b) >> 8),		\
-		  ((a)[2] = (b) >> 16),		\
-		  ((a)[3] = (b) >> 24))
-#endif
-
 /* 112 bits + 64 bits for accuracy + 16 bits for rounding */
 #define MANT_LIMBS 6
 
@@ -650,7 +641,7 @@ enum floats {
 static int to_float(const char *str, int s, uint8_t * result,
                     const struct ieee_format *fmt)
 {
-    fp_limb mant[MANT_LIMBS], *mp, m;
+    fp_limb mant[MANT_LIMBS];
     int32_t exponent = 0;
     int32_t expmax = 1 << (fmt->exponent - 1);
     fp_limb one_mask = LIMB_TOP_BIT >>
@@ -813,16 +804,8 @@ static int to_float(const char *str, int s, uint8_t * result,
 
     mant[0] |= minus ? LIMB_TOP_BIT : 0;
 
-    m = mant[fmt->bytes/LIMB_BYTES];
-    for (i = LIMB_BYTES-(fmt->bytes % LIMB_BYTES); i < LIMB_BYTES; i++)
-	*result++ = m >> (i*8);
-
-    for (mp = &mant[fmt->bytes/LIMB_BYTES], i = 0;
-	 i < fmt->bytes; i += LIMB_BYTES) {
-        m = *--mp;
-        put(result, m);
-        result += LIMB_BYTES;
-    }
+    for (i = fmt->bytes - 1; i >= 0; i--)
+	*result++ = mant[i/LIMB_BYTES] >> ((i%LIMB_BYTES)*8);
 
     return 1;                   /* success */
 }
