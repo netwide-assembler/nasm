@@ -158,26 +158,10 @@ typedef struct {
 } ListGen;
 
 /*
- * The expression evaluator must be passed a scanner function; a
- * standard scanner is provided as part of nasmlib.c. The
- * preprocessor will use a different one. Scanners, and the
- * token-value structures they return, look like this.
- *
- * The return value from the scanner is always a copy of the
- * `t_type' field in the structure.
- */
-struct tokenval {
-    int t_type;
-    int64_t t_integer, t_inttwo;
-    char *t_charptr;
-};
-typedef int (*scanner) (void *private_data, struct tokenval * tv);
-
-/*
  * Token types returned by the scanner, in addition to ordinary
  * ASCII character values, and zero for end-of-string.
  */
-enum {                          /* token types, other than chars */
+enum token_type {		/* token types, other than chars */
     TOKEN_INVALID = -1,         /* a placeholder value */
     TOKEN_EOS = 0,              /* end of string */
     TOKEN_EQ = '=', TOKEN_GT = '>', TOKEN_LT = '<',     /* aliases */
@@ -205,6 +189,22 @@ enum floatize {
     FLOAT_128L,
     FLOAT_128H,
 };
+
+/*
+ * The expression evaluator must be passed a scanner function; a
+ * standard scanner is provided as part of nasmlib.c. The
+ * preprocessor will use a different one. Scanners, and the
+ * token-value structures they return, look like this.
+ *
+ * The return value from the scanner is always a copy of the
+ * `t_type' field in the structure.
+ */
+struct tokenval {
+    enum token_type t_type;
+    char *t_charptr;
+    int64_t t_integer, t_inttwo;
+};
+typedef int (*scanner) (void *private_data, struct tokenval * tv);
 
 struct location {
     int64_t offset;
