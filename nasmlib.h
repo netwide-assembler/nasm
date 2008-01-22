@@ -98,7 +98,7 @@ void nasm_free_log(char *, int, void *);
 char *nasm_strdup_log(char *, int, const char *);
 char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
-#define nasm_zalloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
+#define nasm_zalloc(x) nasm_zalloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
 #define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
 #define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
