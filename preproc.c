@@ -987,6 +987,7 @@ static char *detoken(Token * tlist, int expand_locals)
     Token *t;
     int len;
     char *line, *p;
+    const char *q;
 
     len = 0;
     for (t = tlist; t; t = t->next) {
@@ -1023,12 +1024,11 @@ static char *detoken(Token * tlist, int expand_locals)
     p = line = nasm_malloc(len + 1);
     for (t = tlist; t; t = t->next) {
         if (t->type == TOK_WHITESPACE) {
-            *p = ' ';
-            p++;
-            *p = '\0';
+            *p++ = ' ';
         } else if (t->text) {
-            strcpy(p, t->text);
-            p += strlen(p);
+	    q = t->text;
+	    while (*q)
+		*p++ = *q++;
         }
     }
     *p = '\0';
