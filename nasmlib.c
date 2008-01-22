@@ -96,10 +96,10 @@ void nasm_free(void *q)
 #endif
 {
     if (q) {
-        free(q);
 #ifdef LOGALLOC
         fprintf(logfp, "%s %d free(%p)\n", file, line, q);
 #endif
+        free(q);
     }
 }
 
