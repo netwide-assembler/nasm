@@ -43,7 +43,7 @@ static void report_error_gnu(int severity, const char *fmt, ...);
 static void report_error_vc(int severity, const char *fmt, ...);
 static void report_error_common(int severity, const char *fmt,
                                 va_list args);
-static int is_suppressed_warning(int severity);
+static bool is_suppressed_warning(int severity);
 static void usage(void);
 static efunc report_error;
 
@@ -1614,19 +1614,16 @@ static void report_error_vc(int severity, const char *fmt, ...)
  * @param severity the severity of the warning or error
  * @return true if we should abort error/warning printing
  */
-static int is_suppressed_warning(int severity)
+static bool is_suppressed_warning(int severity)
 {
     /*
      * See if it's a suppressed warning.
      */
-    return ((severity & ERR_MASK) == ERR_WARNING &&
-            (severity & ERR_WARN_MASK) != 0 &&
-            suppressed[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
-        /*
-         * See if it's a pass-one only warning and we're not in pass
-	 * zero or one.
-         */
-        ((severity & ERR_PASS1) && pass0 != 1);
+    return (severity & ERR_MASK) == ERR_WARNING &&
+	(((severity & ERR_WARN_MASK) != 0 &&
+	  suppressed[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
+	 /* See if it's a pass-one only warning and we're not in pass one. */
+	 ((severity & ERR_PASS1) && pass0 != 1));
 }
 
 /**
