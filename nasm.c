@@ -791,6 +791,20 @@ static void process_args(char *args)
         process_arg(arg, NULL);
 }
 
+static void process_response_file(const char *file)
+{
+    char str[2048];
+    FILE *f = fopen(file, "r");
+    if (!f) {
+	perror(file);
+	exit(-1);
+    }
+    while (fgets(str, sizeof str, f)) {
+	process_args(str);
+    }
+    fclose(f);
+}
+
 static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
@@ -822,19 +836,7 @@ static void parse_cmdline(int argc, char **argv)
              * different to the -@resp file processing below for regular
              * NASM.
              */
-            char *str = malloc(2048);
-            FILE *f = fopen(&argv[0][1], "r");
-            if (!str) {
-                printf("out of memory");
-                exit(-1);
-            }
-            if (f) {
-                while (fgets(str, 2048, f)) {
-                    process_args(str);
-                }
-                fclose(f);
-            }
-            free(str);
+	    process_response_file(argv[0]+1);
             argc--;
             argv++;
         }
