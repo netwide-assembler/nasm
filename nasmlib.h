@@ -266,13 +266,15 @@ void fwriteint64_t(uint64_t data, FILE * fp);
 void fwriteaddr(uint64_t data, int size, FILE * fp);
 
 /*
- * Routines to manage a dynamic random access array of int32_ts which
+ * Routines to manage a dynamic random access array of int64_ts which
  * may grow in size to be more than the largest single malloc'able
  * chunk.
  */
 
-#define RAA_BLKSIZE	32768	/* this many longs allocated at once */
-#define RAA_LAYERSIZE	32768	/* this many _pointers_ allocated */
+#define RAA_BLKSHIFT	15	/* 2**this many longs allocated at once */
+#define RAA_BLKSIZE	(1 << RAA_BLKSHIFT)
+#define RAA_LAYERSHIFT	15	/* 2**this many _pointers_ allocated */
+#define RAA_LAYERSIZE	(1 << RAA_LAYERSHIFT)
 
 typedef struct RAA RAA;
 typedef union RAA_UNION RAA_UNION;
@@ -288,14 +290,16 @@ struct RAA {
      * structures.
      */
     int layers;
+
     /*
      * Number of real data items spanned by one position in the
-     * `data' array at this level. This number is 1, trivially, for
+     * `data' array at this level. This number is 0 trivially, for
      * a leaf (level 0): for a level 1 branch it should be
-     * RAA_BLKSIZE, and for a level 2 branch it's
-     * RAA_LAYERSIZE*RAA_BLKSIZE.
+     * RAA_BLKSHIFT, and for a level 2 branch it's
+     * RAA_LAYERSHIFT+RAA_BLKSHIFT.
      */
-    int32_t stepsize;
+    int shift;
+
     union RAA_UNION {
         struct RAA_LEAF {
             int64_t data[RAA_BLKSIZE];

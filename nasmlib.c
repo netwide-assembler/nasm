@@ -445,7 +445,7 @@ void standard_extension(char *inname, char *outname, char *extension,
 #define LEAFSIZ (sizeof(RAA)-sizeof(RAA_UNION)+sizeof(RAA_LEAF))
 #define BRANCHSIZ (sizeof(RAA)-sizeof(RAA_UNION)+sizeof(RAA_BRANCH))
 
-#define LAYERSIZ(r) ( (r)->layers==0 ? RAA_BLKSIZE : RAA_LAYERSIZE )
+#define LAYERSHIFT(r) ( (r)->layers==0 ? RAA_BLKSHIFT : RAA_LAYERSHIFT )
 
 static struct RAA *real_raa_init(int layers)
 {
@@ -454,15 +454,13 @@ static struct RAA *real_raa_init(int layers)
 
     if (layers == 0) {
         r = nasm_zalloc(LEAFSIZ);
-        r->stepsize = 1L;
+        r->shift = 0;
     } else {
         r = nasm_malloc(BRANCHSIZ);
         r->layers = layers;
         for (i = 0; i < RAA_LAYERSIZE; i++)
             r->u.b.data[i] = NULL;
-        r->stepsize = RAA_BLKSIZE;
-        while (--layers)
-            r->stepsize *= RAA_LAYERSIZE;
+        r->shift = (RAA_BLKSHIFT-RAA_LAYERSHIFT) + layers*RAA_LAYERSHIFT;
     }
     return r;
 }
@@ -485,13 +483,12 @@ void raa_free(struct RAA *r)
 
 int64_t raa_read(struct RAA *r, int32_t posn)
 {
-    if (posn >= r->stepsize * LAYERSIZ(r))
+    if ((uint32_t)posn >= (UINT32_C(1) << (r->shift + LAYERSHIFT(r))))
         return 0;               /* Return 0 for undefined entries */
     while (r->layers > 0) {
-        ldiv_t l;
-        l = ldiv(posn, r->stepsize);
-        r = r->u.b.data[l.quot];
-        posn = l.rem;
+	int32_t l = posn >> r->shift;
+	posn &= (UINT32_C(1) << r->shift)-1;
+        r = r->u.b.data[l];
         if (!r)
             return 0;           /* Return 0 for undefined entries */
     }
@@ -505,7 +502,7 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
     if (posn < 0)
         nasm_malloc_error(ERR_PANIC, "negative position in raa_write");
 
-    while (r->stepsize * LAYERSIZ(r) <= posn) {
+    while ((UINT32_C(1) << (r->shift+LAYERSHIFT(r))) <= (uint32_t)posn) {
         /*
          * Must add a layer.
          */
@@ -516,7 +513,7 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
         for (i = 0; i < RAA_LAYERSIZE; i++)
             s->u.b.data[i] = NULL;
         s->layers = r->layers + 1;
-        s->stepsize = LAYERSIZ(r) * r->stepsize;
+        s->shift = LAYERSHIFT(r) + r->shift;
         s->u.b.data[0] = r;
         r = s;
     }
@@ -524,14 +521,13 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
     result = r;
 
     while (r->layers > 0) {
-        ldiv_t l;
         struct RAA **s;
-        l = ldiv(posn, r->stepsize);
-        s = &r->u.b.data[l.quot];
+	int32_t l = posn >> r->shift;
+	posn &= (UINT32_C(1) << r->shift)-1;
+        s = &r->u.b.data[l];
         if (!*s)
             *s = real_raa_init(r->layers - 1);
         r = *s;
-        posn = l.rem;
     }
 
     r->u.l.data[posn] = value;
