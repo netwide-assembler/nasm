@@ -28,7 +28,8 @@ bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
 CC		= wcl386
-CFLAGS		= -3 -ox -wx -ze -fpi
+DEBUG		= 
+CFLAGS		= -3 -ox -wx -ze -fpi $(DEBUG)
 BUILD_CFLAGS	= $(CFLAGS) $(TARGET_FLAGS) # -I$(srcdir)/inttypes
 INTERNAL_CFLAGS = -I$(srcdir) -I. \
 		  -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
