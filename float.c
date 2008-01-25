@@ -805,7 +805,7 @@ static int to_float(const char *str, int s, uint8_t * result,
     mant[0] |= minus ? LIMB_TOP_BIT : 0;
 
     for (i = fmt->bytes - 1; i >= 0; i--)
-	*result++ = mant[i/LIMB_BYTES] >> ((i%LIMB_BYTES)*8);
+	*result++ = mant[i/LIMB_BYTES] >> (((LIMB_BYTES-1)-(i%LIMB_BYTES))*8);
 
     return 1;                   /* success */
 }
