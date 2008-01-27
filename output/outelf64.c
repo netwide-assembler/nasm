@@ -1500,7 +1500,7 @@ void stabs64_typevalue(int32_t type)
             stype = STT_NOTYPE;
             break;
     }
-    if (stype == STT_OBJECT && !lastsym->type) {
+    if (stype == STT_OBJECT && lastsym && !lastsym->type) {
         lastsym->size = ssize;
         lastsym->type = stype;
     }
