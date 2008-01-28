@@ -312,7 +312,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
                     if (align) {
                         align = wsize - align;
-                        out(offset, segment, "\0\0\0\0\0\0\0\0",
+                        out(offset, segment,
+			    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
                             OUT_RAWDATA, align, NO_SEG, NO_SEG);
                     }
                     offset += e->stringlen + align;
