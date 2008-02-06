@@ -118,7 +118,8 @@ sub insert_deps($) {
     }
     close(IN);
 
-    my $e, %do_exclude;
+    my $e;
+    my %do_exclude = ();
     foreach $e (@exclude) {
 	$do_exclude{$e} = 1;
     }
