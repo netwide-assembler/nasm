@@ -124,6 +124,12 @@ if ( $what eq 'h' ) {
     printf "s/\@\@NASM_VERSION_XID\@\@/0x%08x/g\n", $nasm_id;
     printf "s/\@\@NASM_VER\@\@/%s/g\n", $line;
     printf "s/\@\@NASM_MANGLED_VER\@\@/%s/g\n", $mangled_ver;
+} elsif ( $what eq 'make' ) {
+    printf "NASM_VER=%s\n", $line;
+    printf "NASM_MAJOR_VER=%d\n", $nmaj;
+    printf "NASM_MINOR_VER=%d\n", $nmin;
+    printf "NASM_SUBMINOR_VER=%d\n", $nsmin;
+    printf "NASM_PATCHLEVEL_VER=%d\n", $nplvl;
 } elsif ( $what eq 'id' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {
