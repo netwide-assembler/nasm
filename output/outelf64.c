@@ -21,10 +21,10 @@
 #include "outform.h"
 
 /* Definitions in lieu of elf.h */
-
-#define SHT_PROGBITS 1
+#define SHT_NULL 0			/* Inactive section header */
+#define SHT_PROGBITS 1			/* Program defined content */
 #define SHT_RELA	  4		/* Relocation entries with addends */
-#define SHT_NOBITS 8
+#define SHT_NOBITS 8			/* Section requires no space in file */
 #define SHF_WRITE	     (1 << 0)	/* Writable */
 #define SHF_ALLOC	     (1 << 1)	/* Occupies memory during execution */
 #define SHF_EXECINSTR	     (1 << 2)	/* Executable */
@@ -50,6 +50,105 @@
 #define STT_COMMON	5		/* Symbol is a common data object */
 #define STT_TLS		6		/* Symbol is thread-local data object*/
 #define	STT_NUM		7		/* Number of defined types.  */
+
+/* Definitions in lieu of dwarf.h */
+#define    DW_TAG_compile_unit   0x11
+#define    DW_TAG_subprogram   0x2e
+#define    DW_AT_low_pc   0x11
+#define    DW_AT_high_pc   0x12
+#define    DW_AT_frame_base   0x40
+#define    DW_AT_name   0x03
+#define    DW_AT_stmt_list   0x10
+#define    DW_FORM_addr   0x01
+#define    DW_FORM_data4   0x06
+#define    DW_FORM_string   0x08
+#define    DW_LNS_extended_op  0
+#define    DW_LNS_advance_pc   2
+#define    DW_LNS_advance_line   3
+#define    DW_LNS_set_file   4
+#define    DW_LNE_end_sequence   1
+#define    DW_LNE_set_address   2
+#define    DW_LNE_define_file   3
+#define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
+#if X86_MEMORY
+
+#define WSAACHAR(s,p,v)				\
+    do {					\
+	*(uint8_t *)(p) = (v);			\
+	saa_wbytes(s, p, 1);				\
+    } while (0)
+
+#define WSAASHORT(s,p,v)				\
+    do {					\
+	*(uint16_t *)(p) = (v);			\
+	saa_wbytes(s, p, 2);				\
+    } while (0)
+
+#define WSAALONG(s,p,v)				\
+    do {					\
+	*(uint32_t *)(p) = (v);			\
+	saa_wbytes(s, p, 4);				\
+    } while (0)
+
+#define WSAADLONG(s,p,v)				\
+    do {					\
+	*(uint64_t *)(p) = (v);			\
+	saa_wbytes(s, p, 8);				\
+    } while (0)
+
+#define WSAAADDR(a,p,v,s)			\
+    do {					\
+	uint64_t _v = (v);			\
+	memcpy((p), &_v, (s));			\
+	saa_wbytes(a, p, s);				\
+    } while (0)
+
+#else /* !X86_MEMORY */
+
+#define WSAACHAR(s,p,v) \
+  do { \
+    *(p) = (v) & 0xFF; \
+    saa_wbytes(s, p, 1);				\
+  } while (0)
+
+#define WSAASHORT(s,p,v) \
+  do { \
+    WSAACHAR(s,p,v); \
+    WSAACHAR(p+1,(v) >> 8); \
+  } while (0)
+
+#define WSAALONG(s,p,v) \
+  do { \
+    WSAACHAR(s,p,v); \
+    WSAACHAR(p+1,(v) >> 8); \
+    WSAACHAR(p+2,(v) >> 16); \
+    WSAACHAR(p+3,(v) >> 24); \
+  } while (0)
+
+#define WSAADLONG(s,p,v) \
+  do { \
+    WSAACHAR(s,p,v); \
+    WSAACHAR(p+1,(v) >> 8); \
+    WSAACHAR(p+2,(v) >> 16); \
+    WSAACHAR(p+3,(v) >> 24); \
+    WSAACHAR(p+4,(v) >> 32); \
+    WSAACHAR(p+5,(v) >> 40); \
+    WSAACHAR(p+6,(v) >> 48); \
+    WSAACHAR(p+7,(v) >> 56); \
+  } while (0)
+
+#define WSAAADDR(a,p,v,s) \
+    do {					\
+	int _s = (s);				\
+	uint64_t _v = (v);			\
+	while (_s--) {				\
+	    WSAACHAR(a,p,_v);			\
+	    _v >>= 8;				\
+	}					\
+    } while(0)
+
+#endif
+
 typedef uint32_t Elf64_Word;
 typedef uint64_t Elf64_Xword;
 typedef uint64_t Elf64_Addr;
@@ -207,15 +306,32 @@ struct linelist {
     struct linelist *last;
 };
 
+/* common debug variables */
+static int currentline = 1;
+
+/* stabs debug variables */
 static struct linelist *stabslines = 0;
 static int stabs_immcall = 0;
-static int currentline = 0;
 static int numlinestabs = 0;
 static char *stabs_filename = 0;
 static int symtabsection;
 static uint8_t *stabbuf = 0, *stabstrbuf = 0, *stabrelbuf = 0;
 static int stablen, stabstrlen, stabrellen;
 
+/* dwarf debug variables */
+static struct linelist *dwarf_flist = 0, *dwarf_clist = 0, *dwarf_elist = 0;
+static int dwarf_immcall = 0, dwarf_numfiles = 0;
+static uint8_t *arangesbuf = 0, *arangesrelbuf = 0, *pubnamesbuf = 0, *infobuf = 0,  *inforelbuf = 0,
+               *abbrevbuf = 0, *linebuf = 0, *linerelbuf = 0, *framebuf = 0, *locbuf = 0;
+static int8_t line_base = -5, line_range = 14, opcode_base = 13;
+static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
+           abbrevlen, linelen, linerellen, framelen, loclen;
+static int dwarf_line = 1, dwarf_offset = 0, dwarf_fileinx = 0;
+static struct SAA *plinep;
+static char workbuf[1024];
+
+
+static struct dfmt df_dwarf;
 static struct dfmt df_stabs;
 static struct Symbol *lastsym;
 
@@ -228,7 +344,18 @@ void stabs64_output(int, void *);
 void stabs64_generate(void);
 void stabs64_cleanup(void);
 
-/* end of stabs debugging stuff */
+/* dwarf debugging routines */
+void dwarf64_init(struct ofmt *, void *, FILE *, efunc);
+void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t);
+void dwarf64_deflabel(char *, int32_t, int64_t, int, char *);
+void dwarf64_directive(const char *, const char *);
+void dwarf64_typevalue(int32_t);
+void dwarf64_output(int, void *);
+void dwarf64_generate(void);
+void dwarf64_cleanup(void);
+void dwarf64_findfile(const char *);
+void saa_wleb128u(struct SAA *, int);
+void saa_wleb128s(struct SAA *, int);
 
 /*
  * Special section numbers which are used to define ELF special
@@ -278,6 +405,8 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
          error);
 
     def_seg = seg_alloc();
+
+    if (of_elf64.current_dfmt) of_elf64.current_dfmt->init(0,0,0,0);
 }
 
 static void elf_cleanup(int debuginfo)
@@ -1003,6 +1132,8 @@ static void elf_write(void)
      */
     if (of_elf64.current_dfmt == &df_stabs)
         nsections = 8;
+    else if (of_elf64.current_dfmt == &df_dwarf)
+        nsections = 15;
     else
         nsections = 5;          /* SHN_UNDEF and the fixed ones */
 
@@ -1013,7 +1144,7 @@ static void elf_write(void)
     for (i = 0; i < nsects; i++) {
         nsections++;            /* for the section itself */
         if (sects[i]->head) {
-            nsections++;        /* for its relocations without addends*/
+            nsections++;        /* for its relocations */
             add_sectname(".rela", sects[i]->name);
         }
     }
@@ -1023,6 +1154,20 @@ static void elf_write(void)
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
         add_sectname(".rel", ".stab");
+    }
+
+    else if (of_elf64.current_dfmt == &df_dwarf) {
+        /* in case the debug information is wanted, add these ten sections... */
+        add_sectname("", ".debug_aranges");
+        add_sectname(".rela", ".debug_aranges");
+        add_sectname("", ".debug_pubnames");
+        add_sectname("", ".debug_info");
+        add_sectname(".rela", ".debug_info");
+        add_sectname("", ".debug_abbrev");
+        add_sectname("", ".debug_line");
+        add_sectname(".rela", ".debug_line");
+        add_sectname("", ".debug_frame");
+        add_sectname("", ".debug_loc");
     }
 
     /*
@@ -1072,8 +1217,7 @@ static void elf_write(void)
     align = ((elf_foffs + SEG_ALIGN_1) & ~SEG_ALIGN_1) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
-    elf_sects = nasm_malloc(sizeof(*elf_sects) * (2 * nsects + 10));
-
+    elf_sects = nasm_malloc(sizeof(*elf_sects) * nsections);
     elf_section_header(0, 0, 0, NULL, false, 0L, 0, 0, 0, 0);   /* SHN_UNDEF */
     scount = 1;                 /* needed for the stabs debugging to track the symtable section */
     p = shstrtab + 1;
@@ -1083,13 +1227,13 @@ static void elf_write(void)
                             sects[i]->data : NULL), true,
                            sects[i]->len, 0, 0, sects[i]->align, 0);
         p += strlen(p) + 1;
-        scount++;               /* dito */
+        scount++;               /* ditto */
     }
     elf_section_header(p - shstrtab, 1, 0, comment, false, (int32_t)commlen, 0, 0, 1, 0);  /* .comment */
-    scount++;                   /* dito */
+    scount++;                   /* ditto */
     p += strlen(p) + 1;
     elf_section_header(p - shstrtab, 3, 0, shstrtab, false, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
-    scount++;                   /* dito */
+    scount++;                   /* ditto */
     p += strlen(p) + 1;
     elf_section_header(p - shstrtab, 2, 0, symtab, true, symtablen, nsects + 4, symtablocal, 4, 24);    /* .symtab */
     symtabsection = scount;     /* now we got the symtab section index in the ELF file */
@@ -1123,6 +1267,44 @@ static void elf_write(void)
                                stabrellen, symtabsection, nsections - 3, 4,
                                16);
         }
+    }
+    else if (of_elf64.current_dfmt == &df_dwarf) {
+            /* for dwarf debugging information, create the ten dwarf sections */
+
+            /* this function call creates the dwarf sections in memory */
+            dwarf64_generate();
+
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
+                               arangeslen, 0, 0, 1, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
+                               arangesrellen, symtabsection, nsections - 10, 1, 24);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf, false,
+                               pubnameslen, 0, 0, 1, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, infobuf, false,
+                               infolen, 0, 0, 1, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
+                               inforellen, symtabsection, nsections - 7, 1, 24);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
+                               abbrevlen, 0, 0, 1, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, linebuf, false,
+                               linelen, 0, 0, 1, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
+                               linerellen, symtabsection, nsections - 4, 1, 24);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
+                               framelen, 0, 0, 8, 0);
+            p += strlen(p) + 1;
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, locbuf, false,
+                               loclen, 0, 0, 1, 0);
+
     }
     fwrite(align_str, align, 1, elffp);
 
@@ -1361,7 +1543,17 @@ static int elf_set_info(enum geninfo type, char **val)
     (void)val;
     return 0;
 }
-
+static struct dfmt df_dwarf = {
+    "ELF64 (X86_64) dwarf debug format for Linux",
+    "dwarf",
+    dwarf64_init,
+    dwarf64_linenum,
+    dwarf64_deflabel,
+    dwarf64_directive,
+    dwarf64_typevalue,
+    dwarf64_output,
+    dwarf64_cleanup
+};
 static struct dfmt df_stabs = {
     "ELF64 (X86_64) stabs debug format for Linux",
     "stabs",
@@ -1374,7 +1566,7 @@ static struct dfmt df_stabs = {
     stabs64_cleanup
 };
 
-struct dfmt *elf64_debugs_arr[2] = { &df_stabs, NULL };
+struct dfmt *elf64_debugs_arr[3] = { &df_stabs, &df_dwarf, NULL };
 
 struct ofmt of_elf64 = {
     "ELF64 (x86_64) object files (e.g. Linux)",
@@ -1407,7 +1599,6 @@ void stabs64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 void stabs64_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
     (void)segto;
-
     if (!stabs_filename) {
         stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
         strcpy(stabs_filename, filename);
@@ -1699,5 +1890,462 @@ void stabs64_cleanup(void)
     if (stabstrbuf)
         nasm_free(stabstrbuf);
 }
+/* dwarf routines */
 
+void dwarf64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+{
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
+    /* initialize line program SAA */
+    plinep = saa_init(1L);
+    WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
+    WSAACHAR(plinep,workbuf,9);			/* operand length */
+    WSAACHAR(plinep,workbuf,DW_LNE_set_address);
+    WSAADLONG(plinep,workbuf,0);		/* Start Address */
+}
+
+void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t segto)
+{
+    (void)segto;
+    dwarf64_findfile(filename);
+    dwarf_immcall = 1;
+    currentline = linenumber;
+}
+
+void dwarf64_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
+                    char *special)
+{
+    (void)name;
+    (void)segment;
+    (void)offset;
+    (void)is_global;
+    (void)special;
+}
+
+void dwarf64_directive(const char *directive, const char *params)
+{
+    (void)directive;
+    (void)params;
+}
+
+void dwarf64_typevalue(int32_t type)
+{
+    int32_t stype, ssize;
+    switch (TYM_TYPE(type)) {
+        case TY_LABEL:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        case TY_BYTE:
+            ssize = 1;
+            stype = STT_OBJECT;
+            break;
+        case TY_WORD:
+            ssize = 2;
+            stype = STT_OBJECT;
+            break;
+        case TY_DWORD:
+            ssize = 4;
+            stype = STT_OBJECT;
+            break;
+        case TY_FLOAT:
+            ssize = 4;
+            stype = STT_OBJECT;
+            break;
+        case TY_QWORD:
+            ssize = 8;
+            stype = STT_OBJECT;
+            break;
+        case TY_TBYTE:
+            ssize = 10;
+            stype = STT_OBJECT;
+            break;
+        case TY_OWORD:
+            ssize = 16;
+            stype = STT_OBJECT;
+            break;
+        case TY_COMMON:
+            ssize = 0;
+            stype = STT_COMMON;
+            break;
+        case TY_SEG:
+            ssize = 0;
+            stype = STT_SECTION;
+            break;
+        case TY_EXTERN:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        case TY_EQU:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+        default:
+            ssize = 0;
+            stype = STT_NOTYPE;
+            break;
+    }
+    if (stype == STT_OBJECT && lastsym && !lastsym->type) {
+        lastsym->size = ssize;
+        lastsym->type = stype;
+    }
+}
+void dwarf64_output(int type, void *param)
+{
+  (void)type;
+  int ln, aa, inx, maxln, soc;
+  struct symlininfo *s;
+
+  /* do nothing unless line or file has changed */
+  if (dwarf_immcall)
+  {
+    s = (struct symlininfo *)param;
+    ln = currentline - dwarf_line;
+    aa = s->offset - dwarf_offset;
+    inx = dwarf_clist->line;
+    /* check for file change */
+    if (!(inx == dwarf_fileinx))
+    {
+       WSAACHAR(plinep,workbuf,DW_LNS_set_file);
+       WSAACHAR(plinep,workbuf,inx);
+       dwarf_fileinx = inx;
+    }
+    /* check for line change */
+    if (ln)
+    {
+       /* test if in range of special op code */
+       maxln = line_base + line_range;
+       soc = (ln - line_base) + (line_range * aa) + opcode_base;
+       if (ln >= line_base && ln < maxln && soc < 256)
+       {
+          WSAACHAR(plinep,workbuf,soc);
+       }
+       else
+       {
+          if (ln)
+          {
+          WSAACHAR(plinep,workbuf,DW_LNS_advance_line);
+          saa_wleb128s(plinep,ln);
+          }
+          if (aa)
+          {
+          WSAACHAR(plinep,workbuf,DW_LNS_advance_pc);
+          saa_wleb128u(plinep,aa);
+          }
+       }
+       dwarf_line = currentline;
+       dwarf_offset = s->offset;
+    }
+    /* show change handled */
+    dwarf_immcall = 0;
+  }
+}
+
+
+void dwarf64_generate(void)
+{
+    uint8_t *pbuf;
+    int indx;
+    struct linelist *ftentry;
+    struct SAA *paranges, *ppubnames, *pinfo, *pabbrev, *plines;
+    size_t saalen, linepoff;
+
+    /* build aranges section */
+    paranges = saa_init(1L);
+    WSAASHORT(paranges,workbuf,3);		/* dwarf version */
+    WSAALONG(paranges,workbuf,0);		/* offset into info */
+    WSAACHAR(paranges,workbuf,8);		/* pointer size */
+    WSAACHAR(paranges,workbuf,0);		/* not segmented */
+    WSAALONG(paranges,workbuf,0);		/* padding */
+    WSAADLONG(paranges,workbuf,0x0000);		/* 1st address */
+    WSAADLONG(paranges,workbuf,0x108);		/* 1st length */
+    WSAADLONG(paranges,workbuf,0);		/* null address */
+    WSAADLONG(paranges,workbuf,0);		/* null length */
+    saalen = paranges->datalen;
+    arangeslen = saalen + 4;
+    arangesbuf = pbuf = nasm_malloc(arangeslen);
+    WRITELONG(pbuf,saalen);			/* initial length */
+    memcpy(pbuf, saa_rbytes(paranges, &saalen), saalen);
+    saa_free(paranges);
+
+    /* build rela.aranges section */
+    arangesrellen = 24;
+    arangesrelbuf = pbuf = nasm_malloc(arangesrellen); 
+    WRITEDLONG(pbuf, 16);
+    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (uint64_t) 0);
+
+    /* build pubnames section */
+    ppubnames = saa_init(1L);
+    WSAASHORT(ppubnames,workbuf,3);			/* dwarf version */
+    WSAALONG(ppubnames,workbuf,0);			/* offset into info */
+    WSAALONG(ppubnames,workbuf,0);			/* space used in info */
+    WSAALONG(ppubnames,workbuf,0);			/* end of list */
+    saalen = ppubnames->datalen;
+    pubnameslen = saalen + 4;
+    pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
+    WRITELONG(pbuf,saalen);	/* initial length */
+    memcpy(pbuf, saa_rbytes(ppubnames, &saalen), saalen);
+    saa_free(ppubnames);
+
+    /* build info section */
+    pinfo = saa_init(1L);
+    WSAASHORT(pinfo,workbuf,3);			/* dwarf version */
+    WSAALONG(pinfo,workbuf,0);			/* offset into abbrev */
+    WSAACHAR(pinfo,workbuf,8);			/* pointer size */
+    WSAACHAR(pinfo,workbuf,1);			/* abbrviation number LEB128u */
+    WSAADLONG(pinfo,workbuf,0);			/* DW_AT_low_pc */
+    WSAADLONG(pinfo,workbuf,108);		/* DW_AT_high_pc */
+    WSAALONG(pinfo,workbuf,0);			/* DW_AT_stmt_list */
+    strcpy(workbuf,elf_module);    		/* input file name */
+    saa_wbytes(pinfo, workbuf, (int32_t)(strlen(elf_module) + 1));
+    WSAACHAR(pinfo,workbuf,2);			/* abbrviation number LEB128u */
+    WSAADLONG(pinfo,workbuf,0);			/* DW_AT_low_pc */
+    WSAADLONG(pinfo,workbuf,0);			/* DW_AT_frame_base */
+    WSAACHAR(pinfo,workbuf,0);			/* end of entries */
+    saalen = pinfo->datalen;
+    infolen = saalen + 4;
+    infobuf = pbuf = nasm_malloc(infolen);
+    WRITELONG(pbuf,saalen);		/* initial length */
+    memcpy(pbuf, saa_rbytes(pinfo, &saalen), saalen);
+    saa_free(pinfo);
+
+    /* build rela.info section */
+    inforellen = 48;
+    inforelbuf = pbuf = nasm_malloc(inforellen); 
+    WRITEDLONG(pbuf, 12);
+    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (uint64_t) 0);
+    WRITEDLONG(pbuf, 20);
+    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (uint64_t) 0);
+
+    /* build abbrev section */
+    pabbrev = saa_init(1L);
+    WSAACHAR(pabbrev,workbuf,1);			/* entry number LEB128u */
+    WSAACHAR(pabbrev,workbuf,DW_TAG_compile_unit);	/* tag LEB128u */
+    WSAACHAR(pabbrev,workbuf,1);			/* has children */
+    /* the following attributes and forms are all LEB128u values */
+    WSAACHAR(pabbrev,workbuf,DW_AT_low_pc);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_addr);
+    WSAACHAR(pabbrev,workbuf,DW_AT_high_pc);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_addr);
+    WSAACHAR(pabbrev,workbuf,DW_AT_stmt_list);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_data4);
+    WSAACHAR(pabbrev,workbuf,DW_AT_name);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_string);
+    WSAASHORT(pabbrev,workbuf,0);			/* end of entry */
+    /* LEB128u usage same as above */
+    WSAACHAR(pabbrev,workbuf,2);			/* entry number */
+    WSAACHAR(pabbrev,workbuf,DW_TAG_subprogram);
+    WSAACHAR(pabbrev,workbuf,0);			/* no children */
+    WSAACHAR(pabbrev,workbuf,DW_AT_low_pc);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_addr);
+    WSAACHAR(pabbrev,workbuf,DW_AT_frame_base);
+    WSAACHAR(pabbrev,workbuf,DW_FORM_data4);
+    WSAASHORT(pabbrev,workbuf,0);			/* end of entry */
+    abbrevlen = saalen = pabbrev->datalen;
+    abbrevbuf = pbuf = nasm_malloc(saalen);
+    memcpy(pbuf, saa_rbytes(pabbrev, &saalen), saalen);
+    saa_free(pabbrev);
+
+
+
+
+    /* build line section */
+    /* prolog */
+    plines = saa_init(1L);
+    WSAACHAR(plines,workbuf,1);			/* Minimum Instruction Length */
+    WSAACHAR(plines,workbuf,1);			/* Initial value of 'is_stmt' */
+    WSAACHAR(plines,workbuf,line_base);		/* Line Base */
+    WSAACHAR(plines,workbuf,line_range);	/* Line Range */
+    WSAACHAR(plines,workbuf,opcode_base);	/* Opcode Base */
+    /* standard opcode lengths (# of LEB128u operands) */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 1 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 2 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 3 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 4 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 5 length */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 6 length */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 7 length */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 8 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 9 length */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 10 length */
+    WSAACHAR(plines,workbuf,0);			/* Std opcode 11 length */
+    WSAACHAR(plines,workbuf,1);			/* Std opcode 12 length */
+    /* Directory Table */ 
+    WSAACHAR(plines,workbuf,0);			/* End of table */
+    /* File Name Table */
+    ftentry = dwarf_flist;
+    for (indx = 0;indx<dwarf_numfiles;indx++)
+    {
+      saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
+      WSAACHAR(plines,workbuf,0);			/* directory  LEB128u */
+      WSAACHAR(plines,workbuf,0);			/* time LEB128u */
+      WSAACHAR(plines,workbuf,0);			/* size LEB128u */
+      ftentry = ftentry->next;
+    }
+    WSAACHAR(plines,workbuf,0);			/* End of table */
+    /* Line Number Program Epilogue */
+    WSAACHAR(plinep,workbuf,2);			/* std op 2 */
+    WSAACHAR(plinep,workbuf,1);
+    WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
+    WSAACHAR(plinep,workbuf,1);			/* operand length */
+    WSAACHAR(plinep,workbuf,DW_LNE_end_sequence);
+    linepoff = plines->datalen;
+    linelen = linepoff + plinep->datalen + 10;
+    linebuf = pbuf = nasm_malloc(linelen);
+    WRITELONG(pbuf,linelen-4);		/* initial length */
+    WRITESHORT(pbuf,3);			/* dwarf version */
+    WRITELONG(pbuf,linepoff);		/* offset to line number program */
+    saalen = linepoff;
+    memcpy(pbuf, saa_rbytes(plines, &saalen), saalen);
+    pbuf += linepoff;
+    saa_free(plines);
+    saalen = plinep->datalen;
+    memcpy(pbuf, saa_rbytes(plinep, &saalen), saalen);
+    saa_free(plinep);
+
+    /* build rela.lines section */
+    linerellen = 24;
+    linerelbuf = pbuf = nasm_malloc(linerellen); 
+    WRITEDLONG(pbuf, linepoff + 13);
+    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (uint64_t) 0);
+
+
+    /* build frame section */
+    framelen = 4;
+    framebuf = pbuf = nasm_malloc(framelen);
+    WRITELONG(pbuf,framelen-4);		/* initial length */
+
+    /* build loc section */
+    loclen = 16;
+    locbuf = pbuf = nasm_malloc(loclen);
+    WRITEDLONG(pbuf,0);		/* null  beginning offset */
+    WRITEDLONG(pbuf,0);		/* null  ending offset */
+}
+
+void dwarf64_cleanup(void)
+{
+    if (arangesbuf)
+        nasm_free(arangesbuf);
+    if (arangesrelbuf)
+        nasm_free(arangesrelbuf);
+    if (pubnamesbuf)
+        nasm_free(pubnamesbuf);
+    if (infobuf)
+        nasm_free(infobuf);
+    if (inforelbuf)
+        nasm_free(inforelbuf);
+    if (abbrevbuf)
+        nasm_free(abbrevbuf);
+    if (linebuf)
+        nasm_free(linebuf);
+    if (linerelbuf)
+        nasm_free(linerelbuf);
+    if (framebuf)
+        nasm_free(framebuf);
+    if (locbuf)
+        nasm_free(locbuf);
+}
+void dwarf64_findfile(const char * fname)
+{
+   int finx;
+   struct linelist *match;
+
+   /* return if fname is current file name */
+   if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename))) return;
+   /* search for match */
+   else 
+   {
+     match = 0;
+     if (dwarf_flist)
+     {
+       match = dwarf_flist;
+       for (finx = 0; finx < dwarf_numfiles; finx++)
+       {
+         if (!(strcmp(fname, match->filename)))
+         {
+	   dwarf_clist = match;
+           return;
+         }
+       }
+     }
+     /* add file name to end of list */
+     dwarf_clist =  (struct linelist *)nasm_malloc(sizeof(struct linelist));
+     dwarf_numfiles++;
+     dwarf_clist->line = dwarf_numfiles;
+     dwarf_clist->filename = nasm_malloc(sizeof(fname + 1));
+     strcpy(dwarf_clist->filename,fname);
+     dwarf_clist->next = 0;
+     /* if first entry */
+     if (!dwarf_flist)
+     {
+       dwarf_flist = dwarf_elist = dwarf_clist;
+       dwarf_clist->last = 0;
+     }
+     /* chain to previous entry */
+     else
+     {
+       dwarf_elist->next = dwarf_clist;
+       dwarf_elist = dwarf_clist;
+     }
+   }
+}
+/* write unsigned LEB128 value to SAA */
+void saa_wleb128u(struct SAA *psaa, int value)
+{
+  char temp[64], *ptemp;
+  uint8_t byte;
+  int len;
+
+  ptemp = temp;
+  len = 0;
+  do
+  {
+     byte = value & 127;
+     value >>= 7;
+     if (value != 0) /* more bytes to come */
+        byte |= 0x80;
+     *ptemp = byte;
+     ptemp++;
+     len++;
+  } while (value != 0);
+  saa_wbytes(psaa, temp, len);  
+}
+/* write signed LEB128 value to SAA */
+void saa_wleb128s(struct SAA *psaa, int value)
+{
+  char temp[64], *ptemp;
+  uint8_t byte;
+  bool more, negative;
+  int size, len;
+
+  ptemp = temp;
+  more = 1;
+  negative = (value < 0);
+  size = sizeof(int) * 8;
+  len = 0;
+  while(more)
+  {
+    byte = value & 0x7f;
+    value >>= 7;
+    if (negative)
+     /* sign extend */
+     value |= - (1 <<(size - 7));
+    /* sign bit of byte is second high order bit (0x40) */
+    if ((value == 0 && ! (byte & 0x40)) ||
+       ((value == -1) && (byte & 0x40)))
+       more = 0;
+    else
+      byte |= 0x80;
+    *ptemp = byte;
+    ptemp++;
+    len++;
+  } 
+  saa_wbytes(psaa, temp, len);  
+}
 #endif                          /* OF_ELF */
