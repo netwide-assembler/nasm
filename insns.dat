@@ -1464,6 +1464,13 @@ XORPS		xmmreg,xmmrm		\2\x0F\x57\110			KATMAI,SSE
 FXRSTOR		mem			\2\x0F\xAE\201			P6,SSE,FPU
 FXSAVE		mem			\2\x0F\xAE\200			P6,SSE,FPU
 
+; Introduced in ??? ... we really need to clean up the handling
+; of CPU feature bits.
+XGETBV		void			\3\x0F\x01\xD0			NEHALEM,PRIV
+XSETBV		void			\3\x0F\x01\xD1			NEHALEM,PRIV
+XSAVE		mem			\2\x0F\xAE\204			NEHALEM
+XRSTOR		mem			\2\x0F\xAE\205			NEHALEM
+
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
 ; and work even if CR4.OSFXFR == 0
