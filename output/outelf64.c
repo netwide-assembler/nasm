@@ -6,7 +6,6 @@
  * redistributable under the license given in the file "LICENSE"
  * distributed in the NASM archive.
  */
-
 #include "compiler.h"
 
 #include <stdio.h>
@@ -196,7 +195,7 @@ struct Section {
     struct SAA *data;
     uint64_t len, size;
     uint32_t nrelocs;
-    int32_t index;
+    int32_t index;	       /* index into sects array */
     uint32_t type;             /* SHT_PROGBITS or SHT_NOBITS */
     uint64_t align;            /* alignment: power of two */
     uint64_t flags;            /* section flags */
@@ -278,7 +277,7 @@ static void add_sectname(char *, char *);
 #define N_BINCL 0x82
 #define N_EINCL 0xA2
 #define N_SLINE 0x44
-#define TY_STABSSYMLIN 0x40     /* ouch */
+#define TY_STABSSYMLIN 0x40     /* internal call to debug_out */
 
 struct stabentry {
     uint32_t n_strx;
@@ -294,7 +293,8 @@ struct erel {
 
 struct symlininfo {
     int offset;
-    int section;                /* section index */
+    int section;                /* index into sects[] */
+    int segto;			/* internal section number */
     char *name;                 /* shallow-copied pointer of section name */
 };
 
@@ -304,6 +304,16 @@ struct linelist {
     char *filename;
     struct linelist *next;
     struct linelist *last;
+};
+
+struct sectlist {
+    struct SAA *psaa;
+    int section;
+    int line;
+    int offset;
+    int file;
+    struct sectlist *next;
+    struct sectlist *last;
 };
 
 /* common debug variables */
@@ -320,14 +330,13 @@ static int stablen, stabstrlen, stabrellen;
 
 /* dwarf debug variables */
 static struct linelist *dwarf_flist = 0, *dwarf_clist = 0, *dwarf_elist = 0;
-static int dwarf_immcall = 0, dwarf_numfiles = 0;
+static struct sectlist *dwarf_fsect = 0, *dwarf_csect = 0, *dwarf_esect = 0;
+static int dwarf_immcall = 0, dwarf_numfiles = 0, dwarf_nsections;
 static uint8_t *arangesbuf = 0, *arangesrelbuf = 0, *pubnamesbuf = 0, *infobuf = 0,  *inforelbuf = 0,
                *abbrevbuf = 0, *linebuf = 0, *linerelbuf = 0, *framebuf = 0, *locbuf = 0;
 static int8_t line_base = -5, line_range = 14, opcode_base = 13;
 static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
            abbrevlen, linelen, linerellen, framelen, loclen;
-static int dwarf_line = 1, dwarf_offset = 0, dwarf_fileinx = 0;
-static struct SAA *plinep;
 static char workbuf[1024];
 
 
@@ -354,6 +363,7 @@ void dwarf64_output(int, void *);
 void dwarf64_generate(void);
 void dwarf64_cleanup(void);
 void dwarf64_findfile(const char *);
+void dwarf64_findsect(const int);
 void saa_wleb128u(struct SAA *, int);
 void saa_wleb128s(struct SAA *, int);
 
@@ -406,7 +416,6 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 
     def_seg = seg_alloc();
 
-    if (of_elf64.current_dfmt) of_elf64.current_dfmt->init(0,0,0,0);
 }
 
 static void elf_cleanup(int debuginfo)
@@ -437,7 +446,7 @@ static void elf_cleanup(int debuginfo)
         of_elf64.current_dfmt->cleanup();
     }
 }
-
+/* add entry to the elf .shstrtab section */
 static void add_sectname(char *firsthalf, char *secondhalf)
 {
     int len = strlen(firsthalf) + strlen(secondhalf);
@@ -807,7 +816,6 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
 static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
 {
     struct Reloc *r;
-
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
     r->next = NULL;
@@ -928,9 +936,12 @@ static void elf_out(int32_t segto, const void *data,
     static struct symlininfo sinfo;
 
 #if defined(DEBUG) && DEBUG>2
-    fprintf(stderr,
-            " elf_out type: %x seg: %d bytes: %x data: %"PRIx64"\n",
-               (type >> 24), segment, size, *(int64_t *)data);
+    if (data) fprintf(stderr,
+            " elf_out line: %d type: %x seg: %d segto: %d bytes: %x data: %"PRIx64"\n",
+               currentline, type, segment, segto, size, *(int64_t *)data);
+    else fprintf(stderr,
+            " elf_out line: %d type: %x seg: %d segto: %d bytes: %x\n",
+               currentline, type, segment, segto, size);
 #endif
 
     /*
@@ -959,10 +970,11 @@ static void elf_out(int32_t segto, const void *data,
         }
     }
 
-    /* again some stabs debugging stuff */
+    /* invoke current debug_output routine */
     if (of_elf64.current_dfmt) {
         sinfo.offset = s->len;
         sinfo.section = i;
+        sinfo.segto = segto;
         sinfo.name = s->name;
         of_elf64.current_dfmt->debug_output(TY_STABSSYMLIN, &sinfo);
     }
@@ -1157,7 +1169,12 @@ static void elf_write(void)
     }
 
     else if (of_elf64.current_dfmt == &df_dwarf) {
-        /* in case the debug information is wanted, add these ten sections... */
+        /* the dwarf debug standard specifies the following ten sections,
+           not all of which are currently implemented,
+           although all of them are defined. */
+        #define debug_aranges nsections-10
+        #define debug_info nsections-7
+        #define debug_line nsections-4
         add_sectname("", ".debug_aranges");
         add_sectname(".rela", ".debug_aranges");
         add_sectname("", ".debug_pubnames");
@@ -1279,7 +1296,7 @@ static void elf_write(void)
                                arangeslen, 0, 0, 1, 0);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
-                               arangesrellen, symtabsection, nsections - 10, 1, 24);
+                               arangesrellen, symtabsection, debug_aranges, 1, 24);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf, false,
                                pubnameslen, 0, 0, 1, 0);
@@ -1288,7 +1305,7 @@ static void elf_write(void)
                                infolen, 0, 0, 1, 0);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
-                               inforellen, symtabsection, nsections - 7, 1, 24);
+                               inforellen, symtabsection, debug_info, 1, 24);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
                                abbrevlen, 0, 0, 1, 0);
@@ -1297,7 +1314,7 @@ static void elf_write(void)
                                linelen, 0, 0, 1, 0);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
-                               linerellen, symtabsection, nsections - 4, 1, 24);
+                               linerellen, symtabsection, debug_line, 1, 24);
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
                                framelen, 0, 0, 8, 0);
@@ -1705,7 +1722,7 @@ void stabs64_output(int type, void *param)
         if (stabs_immcall) {
             s = (struct symlininfo *)param;
             if (!(sects[s->section]->flags & SHF_EXECINSTR))
-                return;         /* we are only interested in the text stuff */
+                return; /* line info is only collected for executable sections */
             numlinestabs++;
             el = (struct linelist *)nasm_malloc(sizeof(struct linelist));
             el->info.offset = s->offset;
@@ -1898,12 +1915,6 @@ void dwarf64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
     (void)id;
     (void)fp;
     (void)error;
-    /* initialize line program SAA */
-    plinep = saa_init(1L);
-    WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
-    WSAACHAR(plinep,workbuf,9);			/* operand length */
-    WSAACHAR(plinep,workbuf,DW_LNE_set_address);
-    WSAADLONG(plinep,workbuf,0);		/* Start Address */
 }
 
 void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t segto)
@@ -1992,25 +2003,36 @@ void dwarf64_typevalue(int32_t type)
         lastsym->type = stype;
     }
 }
+/* called from elf_out with type == TY_STABSSYMLIN */
 void dwarf64_output(int type, void *param)
 {
   (void)type;
   int ln, aa, inx, maxln, soc;
   struct symlininfo *s;
+  struct SAA *plinep;
 
+   s = (struct symlininfo *)param;
+   /* line number info is only gathered for executable sections */
+   if (!(sects[s->section]->flags & SHF_EXECINSTR))
+     return;
+  /* Check if section index has changed */
+  if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
+  {
+     dwarf64_findsect(s->section);
+  }
   /* do nothing unless line or file has changed */
   if (dwarf_immcall)
   {
-    s = (struct symlininfo *)param;
-    ln = currentline - dwarf_line;
-    aa = s->offset - dwarf_offset;
+    ln = currentline - dwarf_csect->line;
+    aa = s->offset - dwarf_csect->offset;
     inx = dwarf_clist->line;
+    plinep = dwarf_csect->psaa;
     /* check for file change */
-    if (!(inx == dwarf_fileinx))
+    if (!(inx == dwarf_csect->file))
     {
        WSAACHAR(plinep,workbuf,DW_LNS_set_file);
        WSAACHAR(plinep,workbuf,inx);
-       dwarf_fileinx = inx;
+       dwarf_csect->file = inx;
     }
     /* check for line change */
     if (ln)
@@ -2035,8 +2057,8 @@ void dwarf64_output(int type, void *param)
           saa_wleb128u(plinep,aa);
           }
        }
-       dwarf_line = currentline;
-       dwarf_offset = s->offset;
+       dwarf_csect->line = currentline;
+       dwarf_csect->offset = s->offset;
     }
     /* show change handled */
     dwarf_immcall = 0;
@@ -2049,18 +2071,45 @@ void dwarf64_generate(void)
     uint8_t *pbuf;
     int indx;
     struct linelist *ftentry;
-    struct SAA *paranges, *ppubnames, *pinfo, *pabbrev, *plines;
-    size_t saalen, linepoff;
+    struct SAA *paranges, *ppubnames, *pinfo, *pabbrev, *plines, *plinep;
+    struct SAA *parangesrel, *plinesrel;
+    struct sectlist *psect;
+    size_t saalen, linepoff, totlen, highaddr;
 
-    /* build aranges section */
+    /* write epilogues for each line program range */
+    /* and build aranges section */
     paranges = saa_init(1L);
+    parangesrel = saa_init(1L);
     WSAASHORT(paranges,workbuf,3);		/* dwarf version */
     WSAALONG(paranges,workbuf,0);		/* offset into info */
     WSAACHAR(paranges,workbuf,8);		/* pointer size */
     WSAACHAR(paranges,workbuf,0);		/* not segmented */
     WSAALONG(paranges,workbuf,0);		/* padding */
-    WSAADLONG(paranges,workbuf,0x0000);		/* 1st address */
-    WSAADLONG(paranges,workbuf,0x108);		/* 1st length */
+    /* iterate though sectlist entries */
+     psect = dwarf_fsect;
+     totlen = 0;
+     highaddr = 0;
+     for (indx = 0; indx < dwarf_nsections; indx++)
+     {
+         plinep = psect->psaa;
+         /* Line Number Program Epilogue */
+         WSAACHAR(plinep,workbuf,2);			/* std op 2 */
+         WSAACHAR(plinep,workbuf,(sects[psect->section]->len)-psect->offset);
+         WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
+         WSAACHAR(plinep,workbuf,1);			/* operand length */
+         WSAACHAR(plinep,workbuf,DW_LNE_end_sequence);
+         totlen += plinep->datalen;
+         /* range table relocation entry */
+         WSAADLONG(parangesrel,workbuf, paranges->datalen + 4);
+         WSAADLONG(parangesrel,workbuf, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+         WSAADLONG(parangesrel,workbuf, (uint64_t) 0);
+         /* range table entry */
+         WSAADLONG(paranges,workbuf,0x0000);		/* range start */
+         WSAADLONG(paranges,workbuf,sects[psect->section]->len);	/* range length */
+         highaddr += sects[psect->section]->len;
+         /* done with this entry */
+         psect = psect->next;
+     }
     WSAADLONG(paranges,workbuf,0);		/* null address */
     WSAADLONG(paranges,workbuf,0);		/* null length */
     saalen = paranges->datalen;
@@ -2071,11 +2120,10 @@ void dwarf64_generate(void)
     saa_free(paranges);
 
     /* build rela.aranges section */
-    arangesrellen = 24;
+    arangesrellen = saalen = parangesrel->datalen;
     arangesrelbuf = pbuf = nasm_malloc(arangesrellen); 
-    WRITEDLONG(pbuf, 16);
-    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
-    WRITEDLONG(pbuf, (uint64_t) 0);
+    memcpy(pbuf, saa_rbytes(parangesrel, &saalen), saalen);
+    saa_free(parangesrel);
 
     /* build pubnames section */
     ppubnames = saa_init(1L);
@@ -2097,7 +2145,7 @@ void dwarf64_generate(void)
     WSAACHAR(pinfo,workbuf,8);			/* pointer size */
     WSAACHAR(pinfo,workbuf,1);			/* abbrviation number LEB128u */
     WSAADLONG(pinfo,workbuf,0);			/* DW_AT_low_pc */
-    WSAADLONG(pinfo,workbuf,108);		/* DW_AT_high_pc */
+    WSAADLONG(pinfo,workbuf,highaddr);		/* DW_AT_high_pc */
     WSAALONG(pinfo,workbuf,0);			/* DW_AT_stmt_list */
     strcpy(workbuf,elf_module);    		/* input file name */
     saa_wbytes(pinfo, workbuf, (int32_t)(strlen(elf_module) + 1));
@@ -2116,10 +2164,10 @@ void dwarf64_generate(void)
     inforellen = 48;
     inforelbuf = pbuf = nasm_malloc(inforellen); 
     WRITEDLONG(pbuf, 12);
-    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (2LL << 32) +  R_X86_64_64);
     WRITEDLONG(pbuf, (uint64_t) 0);
     WRITEDLONG(pbuf, 20);
-    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
+    WRITEDLONG(pbuf, (2LL << 32) +  R_X86_64_64);
     WRITEDLONG(pbuf, (uint64_t) 0);
 
     /* build abbrev section */
@@ -2150,9 +2198,6 @@ void dwarf64_generate(void)
     abbrevbuf = pbuf = nasm_malloc(saalen);
     memcpy(pbuf, saa_rbytes(pabbrev, &saalen), saalen);
     saa_free(pabbrev);
-
-
-
 
     /* build line section */
     /* prolog */
@@ -2188,33 +2233,42 @@ void dwarf64_generate(void)
       ftentry = ftentry->next;
     }
     WSAACHAR(plines,workbuf,0);			/* End of table */
-    /* Line Number Program Epilogue */
-    WSAACHAR(plinep,workbuf,2);			/* std op 2 */
-    WSAACHAR(plinep,workbuf,1);
-    WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
-    WSAACHAR(plinep,workbuf,1);			/* operand length */
-    WSAACHAR(plinep,workbuf,DW_LNE_end_sequence);
     linepoff = plines->datalen;
-    linelen = linepoff + plinep->datalen + 10;
+    linelen = linepoff + totlen + 10;
     linebuf = pbuf = nasm_malloc(linelen);
     WRITELONG(pbuf,linelen-4);		/* initial length */
     WRITESHORT(pbuf,3);			/* dwarf version */
     WRITELONG(pbuf,linepoff);		/* offset to line number program */
+    /* write line header */
     saalen = linepoff;
     memcpy(pbuf, saa_rbytes(plines, &saalen), saalen);
     pbuf += linepoff;
     saa_free(plines);
-    saalen = plinep->datalen;
-    memcpy(pbuf, saa_rbytes(plinep, &saalen), saalen);
-    saa_free(plinep);
+    /* concatonate line program ranges */
+    linepoff += 13;
+    plinesrel = saa_init(1L);
+    psect = dwarf_fsect;
+    for (indx = 0; indx < dwarf_nsections; indx++)
+    {
+         WSAADLONG(plinesrel,workbuf, linepoff);
+         WSAADLONG(plinesrel,workbuf, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+         WSAADLONG(plinesrel,workbuf, (uint64_t) 0);
+         plinep = psect->psaa;
+         saalen = plinep->datalen;
+         memcpy(pbuf, saa_rbytes(plinep, &saalen), saalen);
+         pbuf += saalen;
+         linepoff += saalen;
+         saa_free(plinep);
+         /* done with this entry */
+         psect = psect->next;
+    }
+
 
     /* build rela.lines section */
-    linerellen = 24;
+    linerellen =saalen = plinesrel->datalen;
     linerelbuf = pbuf = nasm_malloc(linerellen); 
-    WRITEDLONG(pbuf, linepoff + 13);
-    WRITEDLONG(pbuf, (2L << 32) +  R_X86_64_64);
-    WRITEDLONG(pbuf, (uint64_t) 0);
-
+    memcpy(pbuf, saa_rbytes(plinesrel, &saalen), saalen);
+    saa_free(plinesrel);
 
     /* build frame section */
     framelen = 4;
@@ -2295,6 +2349,63 @@ void dwarf64_findfile(const char * fname)
      }
    }
 }
+/*  */
+void dwarf64_findsect(const int index)
+{
+   int sinx;
+   struct sectlist *match;
+   struct SAA *plinep;
+   /* return if index is current section index */
+   if (dwarf_csect && (dwarf_csect->section == index))
+   {
+      return;
+   }
+   /* search for match */
+   else 
+   {
+     match = 0;
+     if (dwarf_fsect)
+     {
+       match = dwarf_fsect;
+       for (sinx = 0; sinx < dwarf_nsections; sinx++)
+       {
+         if ((match->section == index))
+         {
+	   dwarf_csect = match;
+           return;
+         }
+        match = match->next;
+       }
+     }
+     /* add entry to end of list */
+     dwarf_csect =  (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
+     dwarf_nsections++;
+     dwarf_csect->psaa = plinep = saa_init(1L);
+     dwarf_csect->line = 1;
+     dwarf_csect->offset = 0;
+     dwarf_csect->file = 1;
+     dwarf_csect->section = index;
+     dwarf_csect->next = 0;
+     /* set relocatable address at start of line program */
+     WSAACHAR(plinep,workbuf,DW_LNS_extended_op);
+     WSAACHAR(plinep,workbuf,9);			/* operand length */
+     WSAACHAR(plinep,workbuf,DW_LNE_set_address);
+     WSAADLONG(plinep,workbuf,0);		/* Start Address */
+     /* if first entry */
+     if (!dwarf_fsect)
+     {
+       dwarf_fsect = dwarf_esect = dwarf_csect;
+       dwarf_csect->last = 0;
+     }
+     /* chain to previous entry */
+     else
+     {
+       dwarf_esect->next = dwarf_csect;
+       dwarf_esect = dwarf_csect;
+     }
+   }
+}
+
 /* write unsigned LEB128 value to SAA */
 void saa_wleb128u(struct SAA *psaa, int value)
 {
