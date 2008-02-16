@@ -3135,7 +3135,7 @@ produce consistent output.
 The \c{__DATE__} and \c{__TIME__} macros give the assembly date and
 time in universal time (UTC) as strings, in ISO 8601 format
 (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the
-underlying platform doesn't provide UTC time, these macros are
+host platform doesn't provide UTC time, these macros are
 undefined.
 
 All instances of time and date macros in the same assembly session
@@ -3147,7 +3147,7 @@ assembly UTC date and time
 The \c{__UTC_DATE_NUM__} and \c{__UTC_TIME_NUM__} macros give the
 assembly date and time universal time (UTC) in numeric form; in the
 format \c{YYYYMMDD} and \c{HHMMSS} respectively.  If the
-underlying platform doesn't provide UTC time, these macros are
+host platform doesn't provide UTC time, these macros are
 undefined.
 
 All instances of time and date macros in the same assembly session
@@ -3159,7 +3159,7 @@ The \c{__POSIX_TIME__} macro is defined as a number containing the
 number of seconds since the POSIX epoch, 1 January 1970 00:00:00 UTC;
 excluding any leap seconds.
 
-This is computed using UTC time if available on the platform,
+This is computed using UTC time if available on the host platform,
 otherwise it is computed using the local time as if it was UTC.
 
 All instances of time and date macros in the same assembly session
