@@ -101,7 +101,7 @@ char *strsep(char **, const char *);
  * platform which can do unaligned memory references.  It is safe
  * to leave it defined to 0 even if that is true.
  */
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__386__) || defined(__i386__) || defined(__x86_64__)
 # define X86_MEMORY 1
 #else
 # define X86_MEMORY 0
