@@ -356,13 +356,13 @@ static MMacro *defining;
  * gives our position in the macro set, when we're processing it.
  */
 #include "macros.c"
-static const char **stdmacpos;
+static const char * const *stdmacpos;
 
 /*
  * The extra standard macros that come from the object format, if
  * any.
  */
-static const char **extrastdmac = NULL;
+static const char * const *extrastdmac = NULL;
 bool any_extrastdmac;
 
 /*
