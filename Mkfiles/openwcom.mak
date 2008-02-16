@@ -15,7 +15,7 @@ mandir		= $(prefix)\man
 
 CC		= wcl386
 DEBUG		= 
-CFLAGS		= -3 -ox -wx -ze -fpi $(DEBUG)
+CFLAGS		= -6 -ox -wx -ze -fpi $(DEBUG)
 BUILD_CFLAGS	= $(CFLAGS) $(TARGET_FLAGS) # -I$(srcdir)/inttypes
 INTERNAL_CFLAGS = -I$(srcdir) -I. -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
