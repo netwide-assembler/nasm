@@ -74,77 +74,91 @@
 #define WSAACHAR(s,p,v)				\
     do {					\
 	*(uint8_t *)(p) = (v);			\
-	saa_wbytes(s, p, 1);				\
+	saa_wbytes(s, p, 1);			\
     } while (0)
 
-#define WSAASHORT(s,p,v)				\
+#define WSAASHORT(s,p,v)			\
     do {					\
 	*(uint16_t *)(p) = (v);			\
-	saa_wbytes(s, p, 2);				\
+	saa_wbytes(s, p, 2);			\
     } while (0)
 
 #define WSAALONG(s,p,v)				\
     do {					\
 	*(uint32_t *)(p) = (v);			\
-	saa_wbytes(s, p, 4);				\
+	saa_wbytes(s, p, 4);			\
     } while (0)
 
-#define WSAADLONG(s,p,v)				\
+#define WSAADLONG(s,p,v)			\
     do {					\
 	*(uint64_t *)(p) = (v);			\
-	saa_wbytes(s, p, 8);				\
+	saa_wbytes(s, p, 8);			\
     } while (0)
 
 #define WSAAADDR(a,p,v,s)			\
     do {					\
 	uint64_t _v = (v);			\
 	memcpy((p), &_v, (s));			\
-	saa_wbytes(a, p, s);				\
+	saa_wbytes(a, p, s);			\
     } while (0)
 
 #else /* !X86_MEMORY */
 
-#define WSAACHAR(s,p,v) \
-  do { \
-    *(p) = (v) & 0xFF; \
-    saa_wbytes(s, p, 1);				\
-  } while (0)
-
-#define WSAASHORT(s,p,v) \
-  do { \
-    WSAACHAR(s,p,v); \
-    WSAACHAR(p+1,(v) >> 8); \
-  } while (0)
-
-#define WSAALONG(s,p,v) \
-  do { \
-    WSAACHAR(s,p,v); \
-    WSAACHAR(p+1,(v) >> 8); \
-    WSAACHAR(p+2,(v) >> 16); \
-    WSAACHAR(p+3,(v) >> 24); \
-  } while (0)
-
-#define WSAADLONG(s,p,v) \
-  do { \
-    WSAACHAR(s,p,v); \
-    WSAACHAR(p+1,(v) >> 8); \
-    WSAACHAR(p+2,(v) >> 16); \
-    WSAACHAR(p+3,(v) >> 24); \
-    WSAACHAR(p+4,(v) >> 32); \
-    WSAACHAR(p+5,(v) >> 40); \
-    WSAACHAR(p+6,(v) >> 48); \
-    WSAACHAR(p+7,(v) >> 56); \
-  } while (0)
-
-#define WSAAADDR(a,p,v,s) \
+#define WSAACHAR(s,p,v) 			\
     do {					\
-	int _s = (s);				\
+	*(uint8_t *)p = (v);			\
+	saa_wbytes(s, p, 1);			\
+    } while (0)
+
+#define WSAASHORT(s,p,v) 			\
+    do {					\
+	uint16_t _v = (v);			\
+	uint8_t *_p = (uint8_t *)(p);		\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	saa_wbytes(s, _p, 2);			\
+    } while (0)
+
+#define WSAALONG(s,p,v)				\
+    do {					\
+	uint32_t _v = (v);			\
+	uint8_t *_p = (uint8_t *)(p);		\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	_p[2] = _v >> 16;			\
+	_p[3] = _v >> 24;			\
+	saa_wbytes(s, _p, 4);			\
+    } while (0)
+
+#define WSAADLONG(s,p,v) 			\
+    do {					\
 	uint64_t _v = (v);			\
-	while (_s--) {				\
-	    WSAACHAR(a,p,_v);			\
-	    _v >>= 8;				\
-	}					\
-    } while(0)
+	uint8_t *_p = (uint8_t *)(p);		\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	_p[2] = _v >> 16;			\
+	_p[3] = _v >> 24;			\
+	_p[4] = _v >> 32;			\
+	_p[5] = _v >> 40;			\
+	_p[6] = _v >> 48;			\
+	_p[7] = _v >> 56;			\
+	saa_wbytes(s, _p, 8);			\
+    } while (0)
+
+#define WSAAADDR(a,p,v,s) 			\
+    do {					\
+	uint64_t _v = (v);			\
+	uint8_t *_p = (uint8_t *)(p);		\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	_p[2] = _v >> 16;			\
+	_p[3] = _v >> 24;			\
+	_p[4] = _v >> 32;			\
+	_p[5] = _v >> 40;			\
+	_p[6] = _v >> 48;			\
+	_p[7] = _v >> 56;			\
+	saa_wbytes(a, _p, s);			\
+    } while (0)
 
 #endif
 
@@ -2006,12 +2020,13 @@ void dwarf64_typevalue(int32_t type)
 /* called from elf_out with type == TY_STABSSYMLIN */
 void dwarf64_output(int type, void *param)
 {
-  (void)type;
   int ln, aa, inx, maxln, soc;
   struct symlininfo *s;
   struct SAA *plinep;
 
-   s = (struct symlininfo *)param;
+  (void)type;
+
+  s = (struct symlininfo *)param;
    /* line number info is only gathered for executable sections */
    if (!(sects[s->section]->flags & SHF_EXECINSTR))
      return;

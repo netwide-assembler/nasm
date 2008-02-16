@@ -213,38 +213,50 @@ void standard_extension(char *inname, char *outname, char *extension,
 
 #else /* !X86_MEMORY */
 
-#define WRITECHAR(p,v) \
-  do { \
-    *(p)++ = (v) & 0xFF; \
-  } while (0)
+#define WRITECHAR(p,v)				\
+    do {					\
+	uint8_t *_p = (uint8_t *)(p);		\
+	uint8_t _v = (v);			\
+	_p[0] = _v;				\
+	(p) = (void *)(_p + 1);			\
+    } while (0)
 
-#define WRITESHORT(p,v) \
-  do { \
-    WRITECHAR(p,v); \
-    WRITECHAR(p,(v) >> 8); \
-  } while (0)
+#define WRITESHORT(p,v)				\
+    do {					\
+	uint8_t *_p = (uint8_t *)(p);		\
+	uint16_t _v = (v);			\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	(p) = (void *)(_p + 2);			\
+    } while (0)
 
-#define WRITELONG(p,v) \
-  do { \
-    WRITECHAR(p,v); \
-    WRITECHAR(p,(v) >> 8); \
-    WRITECHAR(p,(v) >> 16); \
-    WRITECHAR(p,(v) >> 24); \
-  } while (0)
+#define WRITELONG(p,v)				\
+    do {					\
+	uint8_t *_p = (uint8_t *)(p);		\
+	uint32_t _v = (v);			\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	_p[2] = _v >> 16;			\
+	_p[3] = _v >> 24;			\
+	(p) = (void *)(_p + 4);			\
+    } while (0)
 
-#define WRITEDLONG(p,v) \
-  do { \
-    WRITECHAR(p,v); \
-    WRITECHAR(p,(v) >> 8); \
-    WRITECHAR(p,(v) >> 16); \
-    WRITECHAR(p,(v) >> 24); \
-    WRITECHAR(p,(v) >> 32); \
-    WRITECHAR(p,(v) >> 40); \
-    WRITECHAR(p,(v) >> 48); \
-    WRITECHAR(p,(v) >> 56); \
-  } while (0)
+#define WRITEDLONG(p,v)				\
+    do {					\
+	uint8_t *_p = (uint8_t *)(p);		\
+	uint64_t _v = (v);			\
+	_p[0] = _v;				\
+	_p[1] = _v >> 8;			\
+	_p[2] = _v >> 16;			\
+	_p[3] = _v >> 24;			\
+	_p[4] = _v >> 32;			\
+	_p[5] = _v >> 40;			\
+	_p[6] = _v >> 48;			\
+	_p[7] = _v >> 56;			\
+	(p) = (void *)(_p + 8);			\
+    } while (0)
 
-#define WRITEADDR(p,v,s) \
+#define WRITEADDR(p,v,s)			\
     do {					\
 	int _s = (s);				\
 	uint64_t _v = (v);			\
