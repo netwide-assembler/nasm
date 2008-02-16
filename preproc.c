@@ -1584,13 +1584,17 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 	goto iftype;
 
     iftype:
-        tline = expand_smacro(tline);
-        t = tline;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
-        j = false;              /* placate optimiser */
-        if (t)
-	    j = t->type == needtype;
+	tline = expand_smacro(tline);
+	t = tline;
+	
+	while (tok_type_(t, TOK_WHITESPACE) ||
+	       (needtype == TOK_NUMBER &&
+		tok_type_(t, TOK_OTHER) &&
+		(t->text[0] == '-' || t->text[0] == '+') &&
+		!t->text[1]))
+	    t = t->next;
+	
+	j = t && t->type == needtype;
 	break;
 
     case PPC_IF:
