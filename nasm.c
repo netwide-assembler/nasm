@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <time.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -52,6 +53,8 @@ bool tasm_compatible_mode = false;
 int pass0, passn;
 int maxbits = 0;
 int globalrel = 0;
+
+time_t official_compile_time;
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
@@ -160,8 +163,86 @@ static void nasm_fputs(const char *line, FILE * outfile)
         puts(line);
 }
 
+/* Convert a struct tm to a POSIX-style time constant */
+static int64_t posix_mktime(struct tm *tm)
+{
+    int64_t t;
+    int64_t y = tm->tm_year;
+
+    /* See IEEE 1003.1:2004, section 4.14 */
+
+    t = (y-70)*365 + (y-69)/4 - (y-1)/100 + (y+299)/400;
+    t += tm->tm_yday;
+    t *= 24;
+    t += tm->tm_hour;
+    t *= 60;
+    t += tm->tm_min;
+    t *= 60;
+    t += tm->tm_sec;
+
+    return t;
+}
+
+static void define_macros_early(void)
+{
+    char temp[128];
+    struct tm lt, *lt_p, gm, *gm_p;
+    int64_t posix_time;
+
+    lt_p = localtime(&official_compile_time);
+    if (lt_p) {
+	lt = *lt_p;
+
+	strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
+	pp_pre_define(temp);
+    }
+
+    gm_p = gmtime(&official_compile_time);
+    if (gm_p) {
+	gm = *gm_p;
+
+	strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
+	pp_pre_define(temp);
+	strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
+	pp_pre_define(temp);
+    }
+    
+    if (gm_p)
+	posix_time = posix_mktime(&gm);
+    else if (lt_p)
+	posix_time = posix_mktime(&lt);
+    else
+	posix_time = 0;
+
+    if (posix_time) {
+	snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
+	pp_pre_define(temp);
+    }
+}
+
+static void define_macros_late(void)
+{
+    char temp[128];
+
+    snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s\n",
+	     ofmt->shortname);
+    pp_pre_define(temp);
+}
+
 int main(int argc, char **argv)
 {
+    time(&official_compile_time);
+
     pass0 = 1;
     want_usage = terminate_after_phase = false;
     report_error = report_error_gnu;
@@ -178,6 +259,10 @@ int main(int argc, char **argv)
     seg_init();
 
     register_output_formats();
+
+    /* Define some macros dependent on the runtime, but not
+       on the command line. */
+    define_macros_early();
 
     parse_cmdline(argc, argv);
 
@@ -197,12 +282,7 @@ int main(int argc, char **argv)
     eval_global_info(ofmt, lookup_label, &location);
 
     /* define some macros dependent of command-line */
-    {
-        char temp[64];
-        snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s\n",
-                 ofmt->shortname);
-        pp_pre_define(temp);
-    }
+    define_macros_late();
 
     switch (operating_mode) {
     case op_depend_missing_ok:

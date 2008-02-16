@@ -3111,6 +3111,56 @@ number of 16, 32 or 64. \c{__BITS__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
 
+\S{datetime} \i\c{__DATE__} and \i\c{__TIME__}: Assembly date and time
+
+The \c{__DATE__} and \c{__TIME__} macros give the assembly date and
+time as strings, in ISO 8601 format (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"},
+respectively.)
+
+All instances of time and date macros in the same assembly session
+produce consistent output.
+
+\S{datetimenum} \i\c{__DATE_NUM__} and \i\c{__TIME_NUM__}: Numeric
+assembly date and time
+
+The \c{__DATE_NUM__} and \c{__TIME_NUM__} macros give the assembly
+date and time in numeric form; in the format \c{YYYYMMDD} and
+\c{HHMMSS} respectively.
+
+All instances of time and date macros in the same assembly session
+produce consistent output.
+
+\S{utcdatetime} \i\c{__UTC_DATE__} and \i\c{__UTC_TIME__}: Assembly UTC date and time
+
+The \c{__DATE__} and \c{__TIME__} macros give the assembly date and
+time in universal time (UTC) as strings, in ISO 8601 format
+(\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the
+underlying platform doesn't provide UTC time, these macros are
+undefined.
+
+All instances of time and date macros in the same assembly session
+produce consistent output.
+
+\S{utcdatetimenum} \i\c{__UTC_DATE_NUM__} and \i\c{__UTC_TIME_NUM__}: Numeric
+assembly UTC date and time
+
+The \c{__UTC_DATE_NUM__} and \c{__UTC_TIME_NUM__} macros give the
+assembly date and time universal time (UTC) in numeric form; in the
+format \c{YYYYMMDD} and \c{HHMMSS} respectively.  If the
+underlying platform doesn't provide UTC time, these macros are
+undefined.
+
+All instances of time and date macros in the same assembly session
+produce consistent output.
+
+\S{posixtime} \i\c{__POSIX_TIME__}: POSIX time constant
+
+The \c{__POSIX_TIME__} macro is defined as a number containing the
+number of seconds since the POSIX epoch, 1 January 1970 00:00:00 UTC;
+excluding any leap seconds.
+
+This is computed using UTC time if available on the platform,
+otherwise it is computed using the local time as if it was UTC.
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
