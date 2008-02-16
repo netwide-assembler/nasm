@@ -3162,6 +3162,9 @@ excluding any leap seconds.
 This is computed using UTC time if available on the platform,
 otherwise it is computed using the local time as if it was UTC.
 
+All instances of time and date macros in the same assembly session
+produce consistent output.
+
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
 The core of NASM contains no intrinsic means of defining data
