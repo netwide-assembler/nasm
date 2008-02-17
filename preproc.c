@@ -1594,7 +1594,21 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		!t->text[1]))
 	    t = t->next;
 	
-	j = t && t->type == needtype;
+	j = tok_type_(t, needtype);
+	break;
+
+    case PPC_IFTOKEN:
+	t = tline = expand_smacro(tline);
+	while (tok_type_(t, TOK_WHITESPACE))
+	    t = t->next;
+
+	j = false;
+	if (t) {
+	    t = t->next;	/* Skip the actual token */
+	    while (tok_type_(t, TOK_WHITESPACE))
+		t = t->next;
+	    j = !t;		/* Should be nothing left */
+	}
 	break;
 
     case PPC_IF:

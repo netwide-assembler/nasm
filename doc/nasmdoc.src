@@ -2659,7 +2659,6 @@ Like most other \c{%if} constructs, \c{%ifidn} has a counterpart
 Similarly, \c{%ifidni} has counterparts \i\c{%elifidni},
 \i\c{%ifnidni} and \i\c{%elifnidni}.
 
-
 \S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: Testing Token
 Types\I{testing, token types}
 
@@ -2721,6 +2720,21 @@ which case, all but the first two would be lumped together into
 The usual \c{%elifXXX}, \c{%ifnXXX} and \c{%elifnXXX} versions exist
 for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
 
+\S{iftoken} \i\c{%iftoken}: Test For A Single Token
+
+Some macros will want to do different things depending on if it is
+passed a single token (e.g. paste it to something else using \c{%+})
+versus a multi-token sequence.
+
+The conditional assembly construct \c{%iftoken} assembles the
+subsequent code if and only if the expanded parameters consist of
+exactly one token, possibly surrounded by whitespace.
+
+For example, \c{1} will assemble the subsequent code, but \c{-1} will
+not (\c{-} being an operator.)
+
+The usual \i\c{%eliftoken}, \i\c\{%ifntoken}, and \i\c{%elifntoken}
+variants are also provided.
 
 \S{pperror} \i\c{%error}: Reporting \i{User-Defined Errors}
 
