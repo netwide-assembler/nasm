@@ -13,6 +13,7 @@
 * ELF: Experimental support for DWARF debugging information.
 * New compile date and time standard macros.
 * %ifnum now returns true for negative numbers.
+* New %iftoken test for a single token.
 * Add support for the XSAVE instruction group.
 * Makefile for Netware/gcc.
 * Fix issue with some warnings getting emitted way too many times.
