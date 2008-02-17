@@ -2736,6 +2736,15 @@ not (\c{-} being an operator.)
 The usual \i\c{%eliftoken}, \i\c\{%ifntoken}, and \i\c{%elifntoken}
 variants are also provided.
 
+\S{ifempty} \i\c{%ifempty}: Test For Empty Expansion
+
+The conditional assembly construct \c{%ifempty} assembles the
+subsequent code if and only if the expanded parameters do not contain
+any tokens at all, whitespace excepted.
+
+The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
+variants are also provided.
+
 \S{pperror} \i\c{%error}: Reporting \i{User-Defined Errors}
 
 The preprocessor directive \c{%error} will cause NASM to report an

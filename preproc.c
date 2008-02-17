@@ -1584,8 +1584,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 	goto iftype;
 
     iftype:
-	tline = expand_smacro(tline);
-	t = tline;
+	t = tline = expand_smacro(tline);
 	
 	while (tok_type_(t, TOK_WHITESPACE) ||
 	       (needtype == TOK_NUMBER &&
@@ -1609,6 +1608,14 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		t = t->next;
 	    j = !t;		/* Should be nothing left */
 	}
+	break;
+
+    case PPC_IFEMPTY:
+	t = tline = expand_smacro(tline);
+	while (tok_type_(t, TOK_WHITESPACE))
+	    t = t->next;
+
+	j = !t;			/* Should be empty */
 	break;
 
     case PPC_IF:

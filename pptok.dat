@@ -5,13 +5,14 @@
 *
 *ctx
 *def
+*empty
 *id
 *idn
 *idni
 *macro
 *num
-*token
 *str
+*token
 %arg
 %assign
 %clear
