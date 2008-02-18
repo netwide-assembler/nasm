@@ -117,6 +117,9 @@
 #ifndef OF_BIN
 #define OF_BIN
 #endif
+#ifndef OF_COFF
+#define OF_COFF			/* COFF is used by DJGPP */
+#endif
 #ifndef OF_WIN32
 #define OF_WIN32
 #endif
