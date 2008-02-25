@@ -361,6 +361,8 @@ struct SAA *saa_init(size_t elem_len);    /* 1 == byte */
 void saa_free(struct SAA *);
 void *saa_wstruct(struct SAA *);        /* return a structure of elem_len */
 void saa_wbytes(struct SAA *, const void *, size_t);      /* write arbitrary bytes */
+void saa_wleb128u(struct SAA *, int); /* write unsigned LEB128 value */
+void saa_wleb128s(struct SAA *, int); /* write signed LEB128 value */
 void saa_rewind(struct SAA *);  /* for reading from beginning */
 void *saa_rstruct(struct SAA *);        /* return NULL on EOA */
 const void *saa_rbytes(struct SAA *, size_t *); /* return 0 on EOA */

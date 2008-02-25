@@ -100,13 +100,6 @@
 	saa_wbytes(s, p, 8);			\
     } while (0)
 
-#define WSAAADDR(a,p,v,s)			\
-    do {					\
-	uint64_t _v = (v);			\
-	memcpy((p), &_v, (s));			\
-	saa_wbytes(a, p, s);			\
-    } while (0)
-
 #else /* !X86_MEMORY */
 
 #define WSAACHAR(s,p,v) 			\
@@ -148,21 +141,6 @@
 	_p[6] = _v >> 48;			\
 	_p[7] = _v >> 56;			\
 	saa_wbytes(s, _p, 8);			\
-    } while (0)
-
-#define WSAAADDR(a,p,v,s) 			\
-    do {					\
-	uint64_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	_p[2] = _v >> 16;			\
-	_p[3] = _v >> 24;			\
-	_p[4] = _v >> 32;			\
-	_p[5] = _v >> 40;			\
-	_p[6] = _v >> 48;			\
-	_p[7] = _v >> 56;			\
-	saa_wbytes(a, _p, s);			\
     } while (0)
 
 #endif
@@ -384,8 +362,6 @@ void dwarf64_generate(void);
 void dwarf64_cleanup(void);
 void dwarf64_findfile(const char *);
 void dwarf64_findsect(const int);
-void saa_wleb128u(struct SAA *, int);
-void saa_wleb128s(struct SAA *, int);
 
 /*
  * Special section numbers which are used to define ELF special
@@ -2130,11 +2106,11 @@ void dwarf64_generate(void)
     WSAACHAR(pinfo,workbuf,8);			/* pointer size */
     WSAACHAR(pinfo,workbuf,1);			/* abbrviation number LEB128u */
     WSAADLONG(pinforel,workbuf, pinfo->datalen + 4);
-    WSAADLONG(pinforel,workbuf, (2LL << 32) +  R_X86_64_64);
+    WSAADLONG(pinforel,workbuf, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
     WSAADLONG(pinforel,workbuf, (uint64_t) 0);
     WSAADLONG(pinfo,workbuf,0);			/* DW_AT_low_pc */
     WSAADLONG(pinforel,workbuf, pinfo->datalen + 4);
-    WSAADLONG(pinforel,workbuf, (2LL << 32) +  R_X86_64_64);
+    WSAADLONG(pinforel,workbuf, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
     WSAADLONG(pinforel,workbuf, (uint64_t) 0);
     WSAADLONG(pinfo,workbuf,highaddr);		/* DW_AT_high_pc */
     WSAADLONG(pinforel,workbuf, pinfo->datalen + 4);
@@ -2148,7 +2124,7 @@ void dwarf64_generate(void)
     WSAASHORT(pinfo,workbuf,DW_LANG_Mips_Assembler);
     WSAACHAR(pinfo,workbuf,2);			/* abbrviation number LEB128u */
     WSAADLONG(pinforel,workbuf, pinfo->datalen + 4);
-    WSAADLONG(pinforel,workbuf, (2LL << 32) +  R_X86_64_64);
+    WSAADLONG(pinforel,workbuf, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
     WSAADLONG(pinforel,workbuf, (uint64_t) 0);
     WSAADLONG(pinfo,workbuf,0);			/* DW_AT_low_pc */
     WSAADLONG(pinfo,workbuf,0);			/* DW_AT_frame_base */
@@ -2332,7 +2308,7 @@ void dwarf64_findfile(const char * fname)
      dwarf_clist =  (struct linelist *)nasm_malloc(sizeof(struct linelist));
      dwarf_numfiles++;
      dwarf_clist->line = dwarf_numfiles;
-     dwarf_clist->filename = nasm_malloc(sizeof(fname + 1));
+     dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
      strcpy(dwarf_clist->filename,fname);
      dwarf_clist->next = 0;
      /* if first entry */
@@ -2406,57 +2382,4 @@ void dwarf64_findsect(const int index)
    }
 }
 
-/* write unsigned LEB128 value to SAA */
-void saa_wleb128u(struct SAA *psaa, int value)
-{
-  char temp[64], *ptemp;
-  uint8_t byte;
-  int len;
-
-  ptemp = temp;
-  len = 0;
-  do
-  {
-     byte = value & 127;
-     value >>= 7;
-     if (value != 0) /* more bytes to come */
-        byte |= 0x80;
-     *ptemp = byte;
-     ptemp++;
-     len++;
-  } while (value != 0);
-  saa_wbytes(psaa, temp, len);  
-}
-/* write signed LEB128 value to SAA */
-void saa_wleb128s(struct SAA *psaa, int value)
-{
-  char temp[64], *ptemp;
-  uint8_t byte;
-  bool more, negative;
-  int size, len;
-
-  ptemp = temp;
-  more = 1;
-  negative = (value < 0);
-  size = sizeof(int) * 8;
-  len = 0;
-  while(more)
-  {
-    byte = value & 0x7f;
-    value >>= 7;
-    if (negative)
-     /* sign extend */
-     value |= - (1 <<(size - 7));
-    /* sign bit of byte is second high order bit (0x40) */
-    if ((value == 0 && ! (byte & 0x40)) ||
-       ((value == -1) && (byte & 0x40)))
-       more = 0;
-    else
-      byte |= 0x80;
-    *ptemp = byte;
-    ptemp++;
-    len++;
-  } 
-  saa_wbytes(psaa, temp, len);  
-}
 #endif                          /* OF_ELF */

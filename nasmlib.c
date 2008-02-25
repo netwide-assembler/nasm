@@ -652,6 +652,61 @@ void saa_wbytes(struct SAA *s, const void *data, size_t len)
     }
 }
 
+/* write unsigned LEB128 value to SAA */
+void saa_wleb128u(struct SAA *psaa, int value)
+{
+  char temp[64], *ptemp;
+  uint8_t byte;
+  int len;
+
+  ptemp = temp;
+  len = 0;
+  do
+  {
+     byte = value & 127;
+     value >>= 7;
+     if (value != 0) /* more bytes to come */
+        byte |= 0x80;
+     *ptemp = byte;
+     ptemp++;
+     len++;
+  } while (value != 0);
+  saa_wbytes(psaa, temp, len);  
+}
+
+/* write signed LEB128 value to SAA */
+void saa_wleb128s(struct SAA *psaa, int value)
+{
+  char temp[64], *ptemp;
+  uint8_t byte;
+  bool more, negative;
+  int size, len;
+
+  ptemp = temp;
+  more = 1;
+  negative = (value < 0);
+  size = sizeof(int) * 8;
+  len = 0;
+  while(more)
+  {
+    byte = value & 0x7f;
+    value >>= 7;
+    if (negative)
+     /* sign extend */
+     value |= - (1 <<(size - 7));
+    /* sign bit of byte is second high order bit (0x40) */
+    if ((value == 0 && ! (byte & 0x40)) ||
+       ((value == -1) && (byte & 0x40)))
+       more = 0;
+    else
+      byte |= 0x80;
+    *ptemp = byte;
+    ptemp++;
+    len++;
+  } 
+  saa_wbytes(psaa, temp, len);  
+}
+
 void saa_rewind(struct SAA *s)
 {
     s->rblk = s->blk_ptrs;
