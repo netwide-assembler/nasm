@@ -1989,7 +1989,7 @@ void dwarf32_generate(void)
     /* and build aranges section */
     paranges = saa_init(1L);
     parangesrel = saa_init(1L);
-    WSAASHORT(paranges,workbuf,3);		/* dwarf version */
+    WSAASHORT(paranges,workbuf,2);		/* dwarf version */
     WSAALONG(parangesrel,workbuf, paranges->datalen+4);
     WSAALONG(parangesrel,workbuf, (dwarf_infosym << 8) +  R_386_32); /* reloc to info */
     WSAALONG(parangesrel,workbuf, (uint32_t) 0);
@@ -2053,7 +2053,7 @@ void dwarf32_generate(void)
     /* build info section */
     pinfo = saa_init(1L);
     pinforel = saa_init(1L);
-    WSAASHORT(pinfo,workbuf,3);			/* dwarf version */
+    WSAASHORT(pinfo,workbuf,2);			/* dwarf version */
     WSAALONG(pinforel,workbuf, pinfo->datalen + 4);
     WSAALONG(pinforel,workbuf, (dwarf_abbrevsym << 8) +  R_386_32); /* reloc to abbrev */
     WSAALONG(pinforel,workbuf, (uint32_t) 0);
