@@ -281,7 +281,7 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
     lptr->defn.offset = offset;
     lptr->defn.is_norm = (!islocalchar(label[0]) && is_norm);
 
-    if (pass0 == 1 || (!is_norm && !isextrn && (segment & 1))) {
+    if (pass0 == 1 || (!is_norm && !isextrn && (segment > 0) && (segment & 1))) {
         exi = !!(lptr->defn.is_global & GLOBAL_BIT);
         if (exi) {
             char *xsymbol;
