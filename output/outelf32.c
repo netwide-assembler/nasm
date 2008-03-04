@@ -1414,7 +1414,11 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
         int32_t sym = r->symbol;
 
         if (sym >= GLOBAL_TEMP_BASE)
-            sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
+        {
+           if (of_elf32.current_dfmt == &df_dwarf)
+              sym += -GLOBAL_TEMP_BASE + (nsects + 5) + nlocals;
+           else   sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
+        }
 
         p = entry;
         WRITELONG(p, r->address);
