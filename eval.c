@@ -668,6 +668,7 @@ static expr *expr6(int critical)
     expr *e;
     int32_t label_seg;
     int64_t label_ofs;
+    char *scope;
 
     switch (i) {
     case '-':
@@ -783,14 +784,15 @@ static expr *expr6(int critical)
                 label_ofs = in_abs_seg ? abs_offset : location->offset;
             } else {
                 if (!labelfunc(tokval->t_charptr, &label_seg, &label_ofs)) {
+                    scope = local_scope(tokval->t_charptr);
                     if (critical == 2) {
-                        error(ERR_NONFATAL, "symbol `%s' undefined",
-                              tokval->t_charptr);
+                        error(ERR_NONFATAL, "symbol `%s%s' undefined",
+                              scope,tokval->t_charptr);
                         return NULL;
                     } else if (critical == 1) {
                         error(ERR_NONFATAL,
-                              "symbol `%s' not defined before use",
-                              tokval->t_charptr);
+                              "symbol `%s%s' not defined before use",
+                              scope,tokval->t_charptr);
                         return NULL;
                     } else {
                         if (opflags)

@@ -443,6 +443,11 @@ static char *perm_copy(const char *string)
     return p;
 }
 
+char *local_scope(char *label)
+{
+   return islocal(label) ? prevlabel : "";
+}
+
 /*
  * Notes regarding bug involving redefinition of external segments.
  *

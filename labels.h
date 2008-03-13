@@ -25,5 +25,6 @@ void define_common(char *label, int32_t segment, int32_t size, char *special,
 void declare_as_global(char *label, char *special, efunc error);
 int init_labels(void);
 void cleanup_labels(void);
+char *local_scope(char *label);
 
 #endif /* LABELS_H */
