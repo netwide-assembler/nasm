@@ -227,7 +227,7 @@ CDQ		void			\321\1\x99			386
 CDQE		void			\324\1\x98			X64
 CLC		void			\1\xF8				8086
 CLD		void			\1\xFC				8086
-CLFLUSH		mem			\2\x0F\x80\207			KATMAI
+CLFLUSH		mem			\2\x0F\xAE\207			KATMAI
 CLGI		void			\3\x0F\x01\xDD			X64,AMD
 CLI		void			\1\xFA				8086
 CLTS		void			\2\x0F\x06			286,PRIV
