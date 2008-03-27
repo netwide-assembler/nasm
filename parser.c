@@ -323,7 +323,8 @@ restart_parse:
 	result->opcode == I_RESD || result->opcode == I_RESQ ||
 	result->opcode == I_REST || result->opcode == I_RESO ||
 	result->opcode == I_EQU || result->opcode == I_INCBIN) {
-        critical = pass0;
+        critical = (pass0 < 2 ? 1 : 2);
+
     } else
         critical = (pass == 2 ? 2 : 0);
 
