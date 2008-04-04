@@ -72,12 +72,14 @@ extern const struct disasm_index itable[256];
 #define IF_SD     0x0000000CUL  /* unsized operands can't be non-dword */
 #define IF_SQ     0x00000010UL  /* unsized operands can't be non-qword */
 #define IF_SO     0x00000014UL  /* unsized operands can't be non-oword */
+#define IF_SZ     0x00000018UL  /* unsized operands must match the bitsize */
 #define IF_SMASK  0x0000001CUL  /* mask for unsized argument size */
 #define IF_AR0	  0x00000020UL  /* SB, SW, SD applies to argument 0 */
 #define IF_AR1	  0x00000040UL  /* SB, SW, SD applies to argument 1 */
 #define IF_AR2	  0x00000060UL  /* SB, SW, SD applies to argument 2 */
-#define IF_AR3	  0x00000080UL  /* SB, SW, SD applies to argument 2 */
+#define IF_AR3	  0x00000080UL  /* SB, SW, SD applies to argument 3 */
 #define IF_ARMASK 0x000000E0UL  /* mask for unsized argument spec */
+#define IF_ARSHFT 5		/* LSB in IF_ARMASK */
 #define IF_PRIV   0x00000100UL  /* it's a privileged instruction */
 #define IF_SMM    0x00000200UL  /* it's only valid in SMM */
 #define IF_PROT   0x00000400UL  /* it's protected mode only */

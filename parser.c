@@ -797,9 +797,16 @@ restart_parse:
                         result->oprs[operand].type |= UNITY;
                     if (optimizing >= 0 &&
                         !(result->oprs[operand].type & STRICT)) {
-                        if (reloc_value(value) >= -128 &&
-                            reloc_value(value) <= 127)
-                            result->oprs[operand].type |= SBYTE;
+			int64_t v64 = reloc_value(value);
+			int32_t v32 = (int32_t)v64;
+			int16_t v16 = (int16_t)v32;
+
+			if (v64 >= -128 && v64 <= 127)
+                            result->oprs[operand].type |= SBYTE64;
+			if (v32 >= -128 && v32 <= 127)
+                            result->oprs[operand].type |= SBYTE32;
+			if (v16 >= -128 && v16 <= 127)
+                            result->oprs[operand].type |= SBYTE16;
                     }
                 }
             } else {            /* it's a register */

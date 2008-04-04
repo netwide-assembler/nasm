@@ -37,7 +37,7 @@
  *		    is a signed byte rather than a word.  Opcode byte follows.
  * \150..\153     - an immediate dword or signed byte for operand 0..3
  * \154..\157    - or 2 (s-field) into opcode byte if operand 0..3
- *		    is a signed byte rather than a word.  Opcode byte follows.
+ *		    is a signed byte rather than a dword.  Opcode byte follows.
  * \160..\163    - this instruction uses DREX rather than REX, with the
  *		   OC0 field set to 0, and the dest field taken from
  *                 operand 0..3.
@@ -50,6 +50,9 @@
  * \171		 - placement of DREX suffix in the absence of an EA
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
+ * \250..\253    - same as \150..\153, except warn if the 64-bit operand
+ *                 is not equal to the truncated and sign-extended 32-bit
+ *                 operand; used for 32-bit immediates in 64-bit mode.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
@@ -159,7 +162,8 @@ static void warn_overflow(int size, int64_t data)
 	int64_t lim = ((int64_t)1 << (size*8))-1;
 
 	if (data < ~lim || data > lim)
-	    errfunc(ERR_WARNING | ERR_WARN_NOV, "%s data exceeds bounds", size_name(size));
+	    errfunc(ERR_WARNING | ERR_WARN_NOV,
+		    "%s data exceeds bounds", size_name(size));
     }
 }
 /*
@@ -756,25 +760,55 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     return -1;                  /* didn't match any instruction */
 }
 
-/* check that  opn[op]  is a signed byte of size 16 or 32,
-					and return the signed value*/
-static int is_sbyte(insn * ins, int op, int size)
+static bool possible_sbyte(insn * ins, int op)
 {
-    int32_t v;
-    int ret;
-
-    ret = !(ins->forw_ref && ins->oprs[op].opflags) &&  /* dead in the water on forward reference or External */
+    return !(ins->forw_ref && ins->oprs[op].opflags) &&
         optimizing >= 0 &&
         !(ins->oprs[op].type & STRICT) &&
         ins->oprs[op].wrt == NO_SEG && ins->oprs[op].segment == NO_SEG;
-
-    v = ins->oprs[op].offset;
-    if (size == 16)
-        v = (int16_t)v;    /* sign extend if 16 bits */
-
-    return ret && v >= -128L && v <= 127L;
 }
 
+/* check that opn[op]  is a signed byte of size 16 or 32 */
+static bool is_sbyte16(insn * ins, int op)
+{
+    int16_t v;
+
+    if (!possible_sbyte(ins, op))
+	return false;
+
+    v = ins->oprs[op].offset;
+    return v >= -128 && v <= 127;
+}
+
+static bool is_sbyte32(insn * ins, int op)
+{
+    int32_t v;
+
+    if (!possible_sbyte(ins, op))
+	return false;
+
+    v = ins->oprs[op].offset;
+    return v >= -128 && v <= 127;
+}
+
+/* check that  opn[op]  is a signed byte of size 32; warn if this is not
+   the original value when extended to 64 bits */
+static bool is_sbyte64(insn * ins, int op)
+{
+    int64_t v64;
+    int32_t v32;
+
+    /* dead in the water on forward reference or External */
+    if (!possible_sbyte(ins, op))
+	return false;
+
+    v64 = ins->oprs[op].offset;
+    v32 = (int32_t)v64;
+
+    warn_overflow(32, v64);
+
+    return v32 >= -128 && v32 <= 127;
+}
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                      insn * ins, const char *codes)
 {
@@ -902,7 +936,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0141:
         case 0142:
 	case 0143:
-            length += is_sbyte(ins, c & 3, 16) ? 1 : 2;
+            length += is_sbyte16(ins, c & 3) ? 1 : 2;
             break;
         case 0144:
         case 0145:
@@ -915,7 +949,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0151:
         case 0152:
         case 0153:
-            length += is_sbyte(ins, c & 3, 32) ? 1 : 4;
+            length += is_sbyte32(ins, c & 3) ? 1 : 4;
             break;
         case 0154:
         case 0155:
@@ -945,6 +979,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 	case 0171:
 	    break;
+        case 0250:
+        case 0251:
+        case 0252:
+        case 0253:
+            length += is_sbyte64(ins, c & 3) ? 1 : 4;
+            break;
         case 0300:
         case 0301:
         case 0302:
@@ -1174,6 +1214,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 015:
         case 016:
 	case 017:
+	    /* XXX: warns for legitimate optimizer actions */
             if (opx->offset < -128 || opx->offset > 127) {
                 errfunc(ERR_WARNING | ERR_WARN_NOV,
 			"signed byte value exceeds bounds");
@@ -1383,7 +1424,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0142:
 	case 0143:
             data = opx->offset;
-            if (is_sbyte(ins, c & 3, 16)) {
+            if (is_sbyte16(ins, c & 3)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1404,7 +1445,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0147:
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte(ins, c & 3, 16))
+            if (is_sbyte16(ins, c & 3))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1415,7 +1456,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0152:
 	case 0153:
             data = opx->offset;
-            if (is_sbyte(ins, c & 3, 32)) {
+            if (is_sbyte32(ins, c & 3)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1433,7 +1474,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0157:
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte(ins, c & 3, 32))
+            if (is_sbyte32(ins, c & 3))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1465,6 +1506,24 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
 	    offset++;
 	    break;
+
+        case 0250:
+        case 0251:
+        case 0252:
+	case 0253:
+            data = opx->offset;
+	    /* is_sbyte32() is right here, we have already warned */
+            if (is_sbyte32(ins, c & 3)) {
+                bytes[0] = data;
+                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
+                    NO_SEG);
+                offset++;
+            } else {
+                out(offset, segment, &data, OUT_ADDRESS, 4,
+                    opx->segment, opx->wrt);
+                offset += 4;
+            }
+            break;
 
         case 0300:
         case 0301:
@@ -1744,47 +1803,13 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
             return 0;
 
     /*
-     * Check that the operand flags all match up
-     */
-    for (i = 0; i < itemp->operands; i++) {
-	if (itemp->opd[i] & SAME_AS) {
-	    int j = itemp->opd[i] & ~SAME_AS;
-	    if (instruction->oprs[i].type != instruction->oprs[j].type ||
-		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
-		return 0;
-	} else  if (itemp->opd[i] & ~instruction->oprs[i].type ||
-            ((itemp->opd[i] & SIZE_MASK) &&
-             ((itemp->opd[i] ^ instruction->oprs[i].type) & SIZE_MASK))) {
-            if ((itemp->opd[i] & ~instruction->oprs[i].type & ~SIZE_MASK) ||
-                (instruction->oprs[i].type & SIZE_MASK))
-                return 0;
-            else
-                return 1;
-        }
-    }
-
-    /*
-     * Check operand sizes
+     * Process size flags
      */
     if (itemp->flags & IF_ARMASK) {
 	memset(size, 0, sizeof size);
 
-        switch (itemp->flags & IF_ARMASK) {
-        case IF_AR0:
-            i = 0;
-            break;
-        case IF_AR1:
-            i = 1;
-            break;
-        case IF_AR2:
-            i = 2;
-            break;
-	case IF_AR3:
-	    i = 3;
-	    break;
-        default:
-            break;              /* Shouldn't happen */
-        }
+	i = ((itemp->flags & IF_ARMASK) >> IF_ARSHFT) - 1;
+
 	switch (itemp->flags & IF_SMASK) {
 	case IF_SB:
             size[i] = BITS8;
@@ -1801,6 +1826,19 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	case IF_SO:
 	    size[i] = BITS128;
 	    break;
+	case IF_SZ:
+	    switch (bits) {
+	    case 16:
+		size[i] = BITS16;
+		break;
+	    case 32:
+		size[i] = BITS32;
+		break;
+	    case 64:
+		size[i] = BITS64;
+		break;
+	    }
+	    break;
 	default:
 	    break;
         }
@@ -1809,23 +1847,31 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	switch (itemp->flags & IF_SMASK) {
 	case IF_SB:
             asize = BITS8;
-            oprs = itemp->operands;
 	    break;
 	case IF_SW:
             asize = BITS16;
-            oprs = itemp->operands;
 	    break;
 	case IF_SD:
             asize = BITS32;
-            oprs = itemp->operands;
 	    break;
 	case IF_SQ:
             asize = BITS64;
-            oprs = itemp->operands;
 	    break;
 	case IF_SO:
             asize = BITS128;
-            oprs = itemp->operands;
+	    break;
+	case IF_SZ:
+	    switch (bits) {
+	    case 16:
+		asize = BITS16;
+		break;
+	    case 32:
+		asize = BITS32;
+		break;
+	    case 64:
+		asize = BITS64;
+		break;
+	    }
 	    break;
 	default:
 	    break;
@@ -1834,6 +1880,33 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	    size[i] = asize;
     }
 
+    /*
+     * Check that the operand flags all match up
+     */
+    for (i = 0; i < itemp->operands; i++) {
+	int32_t type = instruction->oprs[i].type;
+	if (!(type & SIZE_MASK))
+	    type |= size[i];
+	    
+	if (itemp->opd[i] & SAME_AS) {
+	    int j = itemp->opd[i] & ~SAME_AS;
+	    if (type != instruction->oprs[j].type ||
+		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
+		return 0;
+	} else if (itemp->opd[i] & ~type ||
+            ((itemp->opd[i] & SIZE_MASK) &&
+             ((itemp->opd[i] ^ type) & SIZE_MASK))) {
+            if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
+                (type & SIZE_MASK))
+                return 0;
+            else
+                return 1;
+        }
+    }
+
+    /*
+     * Check operand sizes
+     */
     if (itemp->flags & (IF_SM | IF_SM2)) {
         oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
         asize = 0;

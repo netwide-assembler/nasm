@@ -428,7 +428,9 @@ enum {
  *
  * With IMMEDIATE:
  * 16: UNITY (1)
- * 17: BYTENESS (-128..127)
+ * 17: BYTENESS16 (-128..127)
+ * 18: BYTENESS32 (-128..127)
+ * 19: BYTENESS64 (-128..127)
  *
  * Bits 20-26: register classes
  * 20: REG_CDT (CRx, DRx, TRx)
@@ -539,7 +541,9 @@ typedef uint32_t opflags_t;
 
 /* special type of immediate operand */
 #define UNITY		0x00012000U   /* for shift/rotate instructions */
-#define SBYTE		0x00022000U   /* for op r16/32,immediate instrs. */
+#define SBYTE16		0x00022000U   /* for op r16,immediate instrs. */
+#define SBYTE32		0x00042000U   /* for op r32,immediate instrs. */
+#define SBYTE64		0x00082000U   /* for op r64,immediate instrs. */
 
 /* special flags */
 #define SAME_AS		0x40000000U
