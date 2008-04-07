@@ -1544,7 +1544,7 @@ static int elf_set_info(enum geninfo type, char **val)
     return 0;
 }
 static struct dfmt df_dwarf = {
-    "elf32 (X86_64) dwarf debug format for Linux",
+    "elf32 (i386) dwarf debug format for Linux",
     "dwarf",
     debug32_init,
     dwarf32_linenum,
