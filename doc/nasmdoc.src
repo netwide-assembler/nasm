@@ -887,8 +887,13 @@ You will need the version number if you report a bug.
 
 Typing \c{nasm -f <option> -y} will display a list of the available 
 debug info formats for the given output format. The default format 
-is indicated by an asterisk. E.g. \c{nasm -f elf -y} yields \c{* stabs}.
-(as of 2.00, the \e{only} debug info format implemented for this output format).
+is indicated by an asterisk. For example:
+
+\c nasm -f elf -y
+
+\c valid debug formats for 'elf32' output format are ('*' denotes default):
+\c   * stabs     ELF32 (i386) stabs debug format for Linux
+\c     dwarf     elf32 (i386) dwarf debug format for Linux
 
 
 \S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
@@ -4702,10 +4707,9 @@ these relocations is generated.
 \S{elfdbg} Debug formats and ELF
 \I{ELF, Debug formats and}
 
-\c{ELF32} and \c{ELF64} provide debug information in \c{STABS} format.
-Prior to 2.00, this information was generated only for the ".text" section.
-However, all executable sections are now included.
-(Note that only the ".text" section is executable by default.)
+\c{ELF32} and \c{ELF64} provide debug information in \c{STABS} and \c{DWARF} formats.
+Line number information is generated for all executable sections, but please
+note that only the ".text" section is executable by default.
 
 \H{aoutfmt} \i\c{aout}: Linux \I{a.out, Linux version}\I{linux, a.out}\c{a.out} Object Files
 
