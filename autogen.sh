@@ -4,4 +4,4 @@
 #
 autoheader
 autoconf
-rm -rf autom4te.cache config.log
+rm -rf autom4te.cache config.log config.status
