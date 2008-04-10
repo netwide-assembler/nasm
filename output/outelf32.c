@@ -19,6 +19,7 @@
 #include "nasmlib.h"
 #include "stdscan.h"
 #include "outform.h"
+#include "wsaa.h"
 
 #ifdef OF_ELF32
 
@@ -167,55 +168,7 @@ extern struct ofmt of_elf;
 #define    DW_LANG_Mips_Assembler  0x8001
 
 #define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
-#if X86_MEMORY
 
-#define WSAACHAR(s,p,v)				\
-    do {					\
-	*(uint8_t *)(p) = (v);			\
-	saa_wbytes(s, p, 1);			\
-    } while (0)
-
-#define WSAASHORT(s,p,v)			\
-    do {					\
-	*(uint16_t *)(p) = (v);			\
-	saa_wbytes(s, p, 2);			\
-    } while (0)
-
-#define WSAALONG(s,p,v)				\
-    do {					\
-	*(uint32_t *)(p) = (v);			\
-	saa_wbytes(s, p, 4);			\
-    } while (0)
-
-#else /* !X86_MEMORY */
-
-#define WSAACHAR(s,p,v) 			\
-    do {					\
-	*(uint8_t *)p = (v);			\
-	saa_wbytes(s, p, 1);			\
-    } while (0)
-
-#define WSAASHORT(s,p,v) 			\
-    do {					\
-	uint16_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	saa_wbytes(s, _p, 2);			\
-    } while (0)
-
-#define WSAALONG(s,p,v)				\
-    do {					\
-	uint32_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	_p[2] = _v >> 16;			\
-	_p[3] = _v >> 24;			\
-	saa_wbytes(s, _p, 4);			\
-    } while (0)
-
-#endif
 static const char align_str[SEG_ALIGN] = "";    /* ANSI will pad this with 0s */
 
 static struct ELF_SECTDATA {
@@ -1544,7 +1497,7 @@ static int elf_set_info(enum geninfo type, char **val)
     return 0;
 }
 static struct dfmt df_dwarf = {
-    "elf32 (i386) dwarf debug format for Linux",
+    "elf32 (X86_64) dwarf debug format for Linux",
     "dwarf",
     debug32_init,
     dwarf32_linenum,

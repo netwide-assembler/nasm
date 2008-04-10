@@ -18,6 +18,7 @@
 #include "nasmlib.h"
 #include "stdscan.h"
 #include "outform.h"
+#include "wsaa.h"
 
 /* Definitions in lieu of elf.h */
 #define SHT_NULL 0			/* Inactive section header */
@@ -74,76 +75,6 @@
 #define    DW_LANG_Mips_Assembler  0x8001
 
 #define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
-#if X86_MEMORY
-
-#define WSAACHAR(s,p,v)				\
-    do {					\
-	*(uint8_t *)(p) = (v);			\
-	saa_wbytes(s, p, 1);			\
-    } while (0)
-
-#define WSAASHORT(s,p,v)			\
-    do {					\
-	*(uint16_t *)(p) = (v);			\
-	saa_wbytes(s, p, 2);			\
-    } while (0)
-
-#define WSAALONG(s,p,v)				\
-    do {					\
-	*(uint32_t *)(p) = (v);			\
-	saa_wbytes(s, p, 4);			\
-    } while (0)
-
-#define WSAADLONG(s,p,v)			\
-    do {					\
-	*(uint64_t *)(p) = (v);			\
-	saa_wbytes(s, p, 8);			\
-    } while (0)
-
-#else /* !X86_MEMORY */
-
-#define WSAACHAR(s,p,v) 			\
-    do {					\
-	*(uint8_t *)p = (v);			\
-	saa_wbytes(s, p, 1);			\
-    } while (0)
-
-#define WSAASHORT(s,p,v) 			\
-    do {					\
-	uint16_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	saa_wbytes(s, _p, 2);			\
-    } while (0)
-
-#define WSAALONG(s,p,v)				\
-    do {					\
-	uint32_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	_p[2] = _v >> 16;			\
-	_p[3] = _v >> 24;			\
-	saa_wbytes(s, _p, 4);			\
-    } while (0)
-
-#define WSAADLONG(s,p,v) 			\
-    do {					\
-	uint64_t _v = (v);			\
-	uint8_t *_p = (uint8_t *)(p);		\
-	_p[0] = _v;				\
-	_p[1] = _v >> 8;			\
-	_p[2] = _v >> 16;			\
-	_p[3] = _v >> 24;			\
-	_p[4] = _v >> 32;			\
-	_p[5] = _v >> 40;			\
-	_p[6] = _v >> 48;			\
-	_p[7] = _v >> 56;			\
-	saa_wbytes(s, _p, 8);			\
-    } while (0)
-
-#endif
 
 typedef uint32_t Elf64_Word;
 typedef uint64_t Elf64_Xword;

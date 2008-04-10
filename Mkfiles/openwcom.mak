@@ -245,9 +245,9 @@ output\outcoff.$(O): output\outcoff.c compiler.h insnsi.h nasm.h nasmlib.h &
 output\outdbg.$(O): output\outdbg.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h regs.h version.h
 output\outelf32.$(O): output\outelf32.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h regs.h stdscan.h version.h
+ outform.h regs.h stdscan.h version.h wsaa.h
 output\outelf64.$(O): output\outelf64.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h regs.h stdscan.h version.h
+ outform.h regs.h stdscan.h version.h wsaa.h
 output\outieee.$(O): output\outieee.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h regs.h version.h
 output\outmacho.$(O): output\outmacho.c compiler.h insnsi.h nasm.h nasmlib.h &

@@ -184,9 +184,9 @@ output/outcoff.o: output/outcoff.c compiler.h config.h insnsi.h nasm.h \
 output/outdbg.o: output/outdbg.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h regs.h version.h
 output/outelf32.o: output/outelf32.c compiler.h config.h insnsi.h nasm.h \
- nasmlib.h outform.h regs.h stdscan.h version.h
+ nasmlib.h outform.h regs.h stdscan.h version.h wsaa.h
 output/outelf64.o: output/outelf64.c compiler.h config.h insnsi.h nasm.h \
- nasmlib.h outform.h regs.h stdscan.h version.h
+ nasmlib.h outform.h regs.h stdscan.h version.h wsaa.h
 output/outieee.o: output/outieee.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h regs.h version.h
 output/outmacho.o: output/outmacho.c compiler.h config.h insnsi.h nasm.h \
