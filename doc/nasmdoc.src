@@ -891,7 +891,8 @@ is indicated by an asterisk. For example:
 
 \c nasm -f elf -y
 
-\c valid debug formats for 'elf32' output format are ('*' denotes default):
+\c valid debug formats for 'elf32' output format are
+\c   ('*' denotes default):
 \c   * stabs     ELF32 (i386) stabs debug format for Linux
 \c     dwarf     elf32 (i386) dwarf debug format for Linux
 
