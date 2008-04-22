@@ -440,8 +440,9 @@ enum {
  * 24: FPUREG
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
+ * 27: RM_YMM (YMMREG)
  *
- * Bits 27, 31 are currently unallocated.
+ * Bit 31 is currently unallocated.
  *
  * 30: SAME_AS
  * Special flag only used in instruction patterns; means this operand
@@ -496,6 +497,8 @@ typedef uint32_t opflags_t;
 #define RM_XMM		0x04008000U   /* XMM (SSE) operand */
 #define XMMREG		0x04009000U   /* XMM (SSE) register */
 #define XMM0		0x04019000U   /* XMM register zero */
+#define RM_YMM		0x08008000U   /* YMM (AVX) operand */
+#define YMMREG		0x08009000U   /* YMM (AVX) register */
 #define REG_CDT		0x00101004U   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004U   /* CRn */
 #define REG_DREG	0x00121004U   /* DRn */
