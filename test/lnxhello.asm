@@ -1,3 +1,8 @@
+;Testname=aout;  Arguments=-faout  -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
+;Testname=aoutb; Arguments=-faoutb -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
+;Testname=as86;  Arguments=-fas86  -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
+;Testname=elf32; Arguments=-felf32 -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
+
 ;
 ; Assembly "Hello, World!" for Linux
 ;

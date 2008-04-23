@@ -1,3 +1,5 @@
+;Testname=test; Arguments=-fbin -olar_lsl.bin; Files=.stdout .stderr lar_lsl.bin
+
 ; LAR/LSL
 ;---------
 

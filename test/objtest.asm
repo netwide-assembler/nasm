@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fobj -oobj.o; Files=.stdout .stderr obj.o
+;Testname=optimized;   Arguments=-Ox -fobj -oobj.o; Files=.stdout .stderr obj.o
+
 ; test source file for assembling to Microsoft 16-bit .OBJ
 ; build with (16-bit Microsoft C):
 ;    nasm -f obj objtest.asm

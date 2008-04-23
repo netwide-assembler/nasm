@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fbin -ofloatexp.bin; Files=.stdout .stderr floatexp.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofloatexp.bin; Files=.stdout .stderr floatexp.bin
+
 	bits 64
 ;
 ; Test of floating-point formats

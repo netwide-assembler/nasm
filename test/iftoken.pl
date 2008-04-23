@@ -4,6 +4,7 @@
 	 'foo', 'foo bar', '%', '+foo', '<<');
 @tests = ('token', 'empty');
 
+print ";Testname=test; Arguments=-fbin -oiftoken.txt; Files=.stdout .stderr iftoken.txt"
 print "%define ZMACRO\n";
 print "%define NMACRO 1\n";
 print "%define TMACRO 1 2\n";

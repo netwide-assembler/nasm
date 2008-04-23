@@ -1,3 +1,5 @@
+;Testname=unoptimized; Arguments=-fbin -oriprel.bin -O0; Files=.stdout .stderr riprel.bin
+;Testname=optimized;   Arguments=-fbin -oriprel.bin -Ox; Files=.stdout .stderr riprel.bin
 	bits 64
 
 	default abs

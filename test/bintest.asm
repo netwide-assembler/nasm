@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fbin -obintest.bin; Files=.stdout .stderr bintest.bin
+;Testname=optimized;   Arguments=-Ox -fbin -obintest.bin; Files=.stdout .stderr bintest.bin
+
 ; test source file for assembling to binary files
 ; build with:
 ;    nasm -f bin -o bintest.com bintest.asm

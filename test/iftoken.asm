@@ -1,3 +1,5 @@
+;Testname=test; Arguments=-fbin -oiftoken.txt; Files=.stdout .stderr iftoken.txt
+
 %define ZMACRO
 %define NMACRO 1
 %define TMACRO 1 2

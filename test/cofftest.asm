@@ -1,3 +1,6 @@
+;Cannot be automatically tested because it differs every time,
+;I guess because of a date/time field.
+
 ; test source file for assembling to COFF
 ; build with (under DJGPP, for example):
 ;    nasm -f coff cofftest.asm
