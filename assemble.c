@@ -1616,15 +1616,15 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	    codes += 2;
 	    if (ins->vex_m != 1 || (ins->rex & (REX_W|REX_X|REX_B))) {
 		bytes[0] = 0xc4;
-		bytes[1] = ins->vex_m | ((ins->rex & 7) << 5);
+		bytes[1] = ins->vex_m | ((~ins->rex & 7) << 5);
 		bytes[2] = ((ins->rex & REX_W) << (7-3)) |
-		    (ins->drexdst << 3) | (ins->vex_wlp & 07);
+		    ((~ins->drexdst & 15)<< 3) | (ins->vex_wlp & 07);
 		out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);
 		offset += 3;
 	    } else {
 		bytes[0] = 0xc5;
-		bytes[1] = ((ins->rex & REX_R) << (7-2)) |
-		    (ins->drexdst << 3) | (ins->vex_wlp & 07);
+		bytes[1] = ((~ins->rex & REX_R) << (7-2)) |
+		    ((~ins->drexdst & 15) << 3) | (ins->vex_wlp & 07);
 		out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
 		offset += 2;
 	    }
