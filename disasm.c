@@ -643,6 +643,16 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
 	    break;
 
+	case 0172:
+	{
+	    uint8_t ximm = *data++;
+	    c = *r++;
+	    ins->oprs[c >> 3].basereg = ximm >> 4;
+	    ins->oprs[c >> 3].segment |= SEG_RMREG;
+	    ins->oprs[c & 7].offset = ximm & 15;
+	}
+	break;
+
 	case4(0200):
 	case4(0204):
 	case4(0210):

@@ -98,6 +98,7 @@ extern const struct disasm_index itable[256];
 #define IF_SSE41  0x00800000UL  /* it's an SSE4.1 instruction */
 #define IF_SSE42  0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_SSE5   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX    0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                         /* also the highest possible processor */
@@ -114,6 +115,7 @@ extern const struct disasm_index itable[256];
 #define IF_PRESCOTT   0x09000000UL      /* Prescott instructions */
 #define IF_X86_64 0x0A000000UL	/* x86-64 instruction (long or legacy mode) */
 #define IF_NEHALEM 0x0B000000UL  /* Nehalem instruction */
+#define IF_SANDYBANKS 0x0C000000UL /* Sandy Banks instruction */
 #define IF_X64	  (IF_LONG|IF_X86_64)
 #define IF_IA64   0x0F000000UL  /* IA64 instructions (in x86 mode) */
 #define IF_CYRIX  0x10000000UL  /* Cyrix-specific instruction */

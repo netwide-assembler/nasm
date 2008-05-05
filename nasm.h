@@ -540,7 +540,7 @@ typedef uint32_t opflags_t;
 #define IP_REL		0x0002c000U   /* IP-relative offset */
 
 /* memory which matches any type of r/m operand */
-#define MEMORY_ANY	(MEMORY|RM_GPR|RM_MMX|RM_XMM)
+#define MEMORY_ANY	(MEMORY|RM_GPR|RM_MMX|RM_XMM|RM_YMM)
 
 /* special type of immediate operand */
 #define UNITY		0x00012000U   /* for shift/rotate instructions */
@@ -564,16 +564,17 @@ enum ccode {			/* condition code names */
 /*
  * REX flags
  */
-#define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
-#define REX_D		0x0100	/* Instruction uses DREX instead of REX */
-#define REX_H		0x80	/* High register present, REX forbidden */
-#define REX_P		0x40	/* REX prefix present/required */
-#define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
-#define REX_W		0x08	/* 64-bit operand size */
-#define REX_R		0x04	/* ModRM reg extension */
-#define REX_X		0x02	/* SIB index extension */
-#define REX_B		0x01	/* ModRM r/m extension */
 #define REX_REAL	0x4f	/* Actual REX prefix bits */
+#define REX_B		0x01	/* ModRM r/m extension */
+#define REX_X		0x02	/* SIB index extension */
+#define REX_R		0x04	/* ModRM reg extension */
+#define REX_W		0x08	/* 64-bit operand size */
+#define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
+#define REX_P		0x40	/* REX prefix present/required */
+#define REX_H		0x80	/* High register present, REX forbidden */
+#define REX_D		0x0100	/* Instruction uses DREX instead of REX */
+#define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
+#define REX_V		0x0400	/* Instruction uses VEX instead of REX */
 
 /*
  * Note that because segment registers may be used as instruction
@@ -651,7 +652,7 @@ enum prefix_pos {
     MAXPREFIX			/* Total number of prefix slots */
 };
 
-#define MAX_OPERANDS 4
+#define MAX_OPERANDS 5
 
 typedef struct insn {		/* an instruction itself */
     char *label;		/* the label defined, or NULL */
@@ -667,7 +668,9 @@ typedef struct insn {		/* an instruction itself */
     int32_t times;              /* repeat count (TIMES prefix) */
     int forw_ref;               /* is there a forward reference? */
     int rex;			/* Special REX Prefix */
-    int drexdst;		/* Destination register for DREX suffix */
+    int drexdst;		/* Destination register for DREX/VEX suffix */
+    int vex_m;			/* M register for VEX prefix */
+    int vex_wlp;		/* W, P and L information for VEX prefix */
 } insn;
 
 enum geninfo { GI_SWITCH };

@@ -671,7 +671,7 @@ void saa_wleb128u(struct SAA *psaa, int value)
      ptemp++;
      len++;
   } while (value != 0);
-  saa_wbytes(psaa, temp, len);  
+  saa_wbytes(psaa, temp, len);
 }
 
 /* write signed LEB128 value to SAA */
@@ -703,8 +703,8 @@ void saa_wleb128s(struct SAA *psaa, int value)
     *ptemp = byte;
     ptemp++;
     len++;
-  } 
-  saa_wbytes(psaa, temp, len);  
+  }
+  saa_wbytes(psaa, temp, len);
 }
 
 void saa_rewind(struct SAA *s)

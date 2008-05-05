@@ -1585,14 +1585,14 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 
     iftype:
 	t = tline = expand_smacro(tline);
-	
+
 	while (tok_type_(t, TOK_WHITESPACE) ||
 	       (needtype == TOK_NUMBER &&
 		tok_type_(t, TOK_OTHER) &&
 		(t->text[0] == '-' || t->text[0] == '+') &&
 		!t->text[1]))
 	    t = t->next;
-	
+
 	j = tok_type_(t, needtype);
 	break;
 

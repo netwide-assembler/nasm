@@ -2023,6 +2023,12 @@ GETSEC		void			\2\x0F\x37			KATMAI
 PFRCP		mmxreg,mmxrm		\323\2\x0F\x0F\110\1\x86	PENT,3DNOW,SQ,CYRIX
 PFRSQRT		mmxreg,mmxrm		\323\2\x0F\x0F\110\1\x87	PENT,3DNOW,SQ,CYRIX
 
+;# Intel AVX instructions
+VPERMIL2PS	xmmreg,xmmreg,xmmrm,xmmreg,imm	\260\103\101\1\x48\123\172\34	AVX,SANDYBANKS
+VPERMIL2PS	xmmreg,xmmreg,xmmreg,xmmrm,imm	\260\103\111\1\x48\132\172\14	AVX,SANDYBANKS
+VPERMIL2PS	ymmreg,ymmreg,ymmrm,ymmreg,imm	\260\103\105\1\x48\123\172\34	AVX,SANDYBANKS
+VPERMIL2PS	ymmreg,ymmreg,ymmreg,ymmrm,imm	\260\103\115\1\x48\132\172\14	AVX,SANDYBANKS
+
 ;# VIA (Centaur) security instructions
 XSTORE		void			\3\x0F\xA7\xC0			PENT,CYRIX
 XCRYPTECB	void			\333\3\x0F\xA7\xC8		PENT,CYRIX

@@ -32,13 +32,13 @@
 
 #else /* !X86_MEMORY */
 
-#define WSAACHAR(s,p,v) 			\
+#define WSAACHAR(s,p,v)				\
     do {					\
 	*(uint8_t *)(p) = (v);			\
 	saa_wbytes(s, p, 1);			\
     } while (0)
 
-#define WSAASHORT(s,p,v) 			\
+#define WSAASHORT(s,p,v)			\
     do {					\
 	uint16_t _wss_v = (v);			\
 	uint8_t *_wss_p = (uint8_t *)(p);	\
@@ -58,7 +58,7 @@
 	saa_wbytes(s, _wsl_p, 4);		\
     } while (0)
 
-#define WSAADLONG(s,p,v) 			\
+#define WSAADLONG(s,p,v)			\
     do {					\
 	uint64_t _wsq_v = (v);			\
 	uint8_t *_wsq_p = (uint8_t *)(p);	\

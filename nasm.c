@@ -216,7 +216,7 @@ static void define_macros_early(void)
 	strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
 	pp_pre_define(temp);
     }
-    
+
     if (gm_p)
 	posix_time = posix_mktime(&gm);
     else if (lt_p)
@@ -502,7 +502,7 @@ static bool process_arg(char *p, char *q)
 	case 'O':		/* Optimization level */
 	{
 	    int opt;
-	    
+
 	    if (!*param) {
 		/* Naked -O == -Ox */
 		optimizing = INT_MAX >> 1; /* Almost unlimited */
@@ -512,7 +512,7 @@ static bool process_arg(char *p, char *q)
 		    case '0': case '1': case '2': case '3': case '4':
 		    case '5': case '6': case '7': case '8': case '9':
 			opt = strtoul(param, &param, 10);
-			
+
 			/* -O0 -> optimizing == -1, 0.98 behaviour */
 			/* -O1 -> optimizing == 0, 0.98.09 behaviour */
 			if (opt < 2)
@@ -520,18 +520,18 @@ static bool process_arg(char *p, char *q)
 			else
 			    optimizing = opt;
 			break;
-			
+
 		    case 'v':
 		    case '+':
 			param++;
 			opt_verbose_info = true;
 			break;
-			
+
 		    case 'x':
 			param++;
 			optimizing = INT_MAX >> 1; /* Almost unlimited */
 			break;
-			
+
 		    default:
 			report_error(ERR_FATAL,
 				     "unknown optimization option -O%c\n",

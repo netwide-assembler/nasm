@@ -241,8 +241,7 @@ sub format {
     $operands =~ s/imm(\d+)/imm|bits$1/g;
     $operands =~ s/imm/immediate/g;
     $operands =~ s/rm(\d+)/rm_gpr|bits$1/g;
-    $operands =~ s/mmxrm/rm_mmx/g;
-    $operands =~ s/xmmrm/rm_xmm/g;
+    $operands =~ s/(mmx|xmm|ymm)rm/rm_$1/g;
     $operands =~ s/\=([0-9]+)/same_as|$1/g;
     if ($operands eq 'void') {
 	@ops = ();

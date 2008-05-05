@@ -48,11 +48,25 @@
  *                 kindly to a zero byte in the _middle_ of a compile time
  *                 string constant, so I had to put this hack in.)
  * \171		 - placement of DREX suffix in the absence of an EA
+ * \172\ab	 - the register number from operand a in bits 7..4, with
+ *                 the 4-bit immediate from operand b in bits 0..3.
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
  * \250..\253    - same as \150..\153, except warn if the 64-bit operand
  *                 is not equal to the truncated and sign-extended 32-bit
  *                 operand; used for 32-bit immediates in 64-bit mode.
+ * \260..\263    - this instruction uses VEX rather than REX, with the
+ *		   V field taken from operand 0..3.
+ * \270		 - this instruction uses VEX rather than REX, with the
+ *		   V field set to 1111b.
+ *
+ * VEX prefixes are followed by the sequence:
+ * \1mm\1wp        where mm is the M field; and wp is:
+ *                 01 0ww lpp
+ *                 ww = 0 for W = 0
+ *                 ww = 1 for W = 1
+ *                 ww = 2 for W used as REX.W
+ *
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
@@ -190,7 +204,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
 	    errfunc(ERR_PANIC, "OUT_ADDRESS with size > 8");
 	    return;
 	}
-	
+
 	WRITEADDR(q, *(int64_t *)data, size);
 	data = p;
 	type = OUT_RAWDATA;
@@ -964,7 +978,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	case 0163:
 	    length++;
 	    ins->rex |= REX_D;
-	    ins->drexdst = regval(&ins->oprs[c & 3]);
+	    ins->drexdst = regval(opx);
 	    break;
 	case 0164:
 	case 0165:
@@ -972,12 +986,16 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	case 0167:
 	    length++;
 	    ins->rex |= REX_D|REX_OC;
-	    ins->drexdst = regval(&ins->oprs[c & 3]);
+	    ins->drexdst = regval(opx);
 	    break;
         case 0170:
             length++;
             break;
 	case 0171:
+	    break;
+	case 0172:
+	    codes++;
+	    length++;
 	    break;
         case 0250:
         case 0251:
@@ -985,6 +1003,23 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0253:
             length += is_sbyte64(ins, c & 3) ? 1 : 4;
             break;
+	case 0260:
+	case 0261:
+	case 0262:
+	case 0263:
+	    length += 2;
+	    ins->rex |= REX_V;
+	    ins->drexdst = regval(opx);
+	    ins->vex_m = *codes++;
+	    ins->vex_wlp = *codes++;
+	    break;
+	case 0270:
+	    length += 2;
+	    ins->rex |= REX_V;
+	    ins->drexdst = 0;
+	    ins->vex_m = *codes++;
+	    ins->vex_wlp = *codes++;
+	    break;
         case 0300:
         case 0301:
         case 0302:
@@ -1093,12 +1128,40 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     ins->rex &= rex_mask;
 
-    if (ins->rex & REX_D) {
+    if (ins->rex & REX_V) {
+	int bad32 = REX_R|REX_W|REX_X|REX_B;
+
+	if (ins->rex & REX_H) {
+	    errfunc(ERR_NONFATAL, "cannot use high register in vex instruction");
+	    return -1;
+	}
+	switch (ins->vex_wlp & 030) {
+	case 000:
+	    ins->rex &= ~REX_W;
+	    break;
+	case 010:
+	    ins->rex |= REX_W;
+	    bad32 &= ~REX_W;
+	    break;
+	default:
+	    /* Follow REX_W */
+	    break;
+	}
+
+	if (bits != 64 && ((ins->rex & bad32) || ins->drexdst > 7)) {
+	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+	    return -1;
+	}
+	if (ins->vex_m != 1 || (ins->rex & (REX_W|REX_R|REX_B)))
+	    length += 3;
+	else
+	    length += 2;
+    } else if (ins->rex & REX_D) {
 	if (ins->rex & REX_H) {
 	    errfunc(ERR_NONFATAL, "cannot use high register in drex instruction");
 	    return -1;
 	}
-	if (bits != 64 && ((ins->rex & (REX_W|REX_X|REX_B)) ||
+	if (bits != 64 && ((ins->rex & (REX_R|REX_W|REX_X|REX_B)) ||
 			   ins->drexdst > 7)) {
 	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
 	    return -1;
@@ -1126,7 +1189,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 }
 
 #define EMIT_REX()							\
-    if (!(ins->rex & REX_D) && (ins->rex & REX_REAL) && (bits == 64)) {	\
+    if (!(ins->rex & (REX_D|REX_V)) && (ins->rex & REX_REAL) && (bits == 64)) { \
 	ins->rex = (ins->rex & REX_REAL)|REX_P;				\
 	out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG); \
 	ins->rex = 0;							\
@@ -1507,6 +1570,26 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	    offset++;
 	    break;
 
+	case 0172:
+	    c = *codes++;
+	    opx = &ins->oprs[c >> 3];
+	    bytes[0] = regvals[opx->basereg] << 4;
+	    opx = &ins->oprs[c & 7];
+	    if (opx->segment != NO_SEG || opx->wrt != NO_SEG) {
+		errfunc(ERR_NONFATAL,
+			"non-absolute expression not permitted as argument %d",
+			c & 7);
+	    } else {
+		if (opx->offset & ~15) {
+		    errfunc(ERR_WARNING | ERR_WARN_NOV,
+			    "four-bit argument exceeds bounds");
+		}
+		bytes[0] |= opx->offset & 15;
+	    }
+	    out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+
         case 0250:
         case 0251:
         case 0252:
@@ -1524,6 +1607,28 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 offset += 4;
             }
             break;
+
+	case 0260:
+	case 0261:
+	case 0262:
+	case 0263:
+	case 0270:
+	    codes += 2;
+	    if (ins->vex_m != 1 || (ins->rex & (REX_W|REX_X|REX_B))) {
+		bytes[0] = 0xc4;
+		bytes[1] = ins->vex_m | ((ins->rex & 7) << 5);
+		bytes[2] = ((ins->rex & REX_W) << (7-3)) |
+		    (ins->drexdst << 3) | (ins->vex_wlp & 07);
+		out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);
+		offset += 3;
+	    } else {
+		bytes[0] = 0xc5;
+		bytes[1] = ((ins->rex & REX_R) << (7-2)) |
+		    (ins->drexdst << 3) | (ins->vex_wlp & 07);
+		out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
+		offset += 2;
+	    }
+	    break;
 
         case 0300:
         case 0301:
@@ -1887,7 +1992,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	int32_t type = instruction->oprs[i].type;
 	if (!(type & SIZE_MASK))
 	    type |= size[i];
-	    
+
 	if (itemp->opd[i] & SAME_AS) {
 	    int j = itemp->opd[i] & ~SAME_AS;
 	    if (type != instruction->oprs[j].type ||
