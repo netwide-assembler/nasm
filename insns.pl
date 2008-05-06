@@ -355,6 +355,11 @@ sub startseq($) {
 	  return addprefix($prefix, $c1..($c1+15));
       } elsif ($c0 == 0 || $c0 == 0340) {
 	  return $prefix;
+      } elsif (($c0 & ~3) == 0260 || $c0 == 270) {
+	  shift(@codes);
+	  shift(@codes);
+      } elsif ($c0 == 0172) {
+	  shift(@codes);
       } else {
 	  # We really need to be able to distinguish "forbidden"
 	  # and "ignorable" codes here

@@ -49,7 +49,11 @@ struct prefix_info {
     uint8_t rep;		/* Rep prefix present */
     uint8_t seg;		/* Segment override prefix present */
     uint8_t lock;		/* Lock prefix present */
-    uint8_t rex;		/* Rex prefix present */
+    uint8_t vex[3];		/* VEX prefix present */
+    uint8_t vex_m;		/* VEX.M field */
+    uint8_t vex_v;
+    uint8_t vex_lp;		/* VEX.LP fields */
+    uint32_t rex;		/* REX prefix present */
 };
 
 #define getu8(x) (*(uint8_t *)(x))
@@ -155,6 +159,8 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
         return rd_mmxreg[regval & 7]; /* Ignore REX */
     if (!(XMMREG & ~regflags))
         return rd_xmmreg[regval];
+    if (!(YMMREG & ~regflags))
+        return rd_ymmreg[regval];
 
     return 0;
 }
@@ -672,6 +678,71 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
+	case4(0260):
+	{
+	    int vexm   = *r++;
+	    int vexwlp = *r++;
+	    ins->rex |= REX_V;
+	    if ((prefix->rex & (REX_V|REX_D|REX_P)) != REX_V)
+		return false;
+
+	    if ((vexm & 0x1f) != prefix->vex_m)
+		return false;
+
+	    switch (vexwlp & 030) {
+	    case 000:
+		if (prefix->rex & REX_W)
+		    return false;
+		break;
+	    case 010:
+		if (!(prefix->rex & REX_W))
+		    return false;
+		break;
+	    default:
+		break;		/* XXX: Need to do anything special here? */
+	    }
+
+	    if ((vexwlp & 007) != prefix->vex_lp)
+		return false;
+
+	    opx->segment |= SEG_RMREG;
+	    opx->basereg = prefix->vex_v;
+	    break;
+	}
+
+	case 0270:
+	{
+	    int vexm   = *r++;
+	    int vexwlp = *r++;
+	    ins->rex |= REX_V;
+	    if ((prefix->rex & (REX_V|REX_D|REX_P)) != REX_V)
+		return false;
+
+	    if ((vexm & 0x1f) != prefix->vex_m)
+		return false;
+
+	    switch (vexwlp & 030) {
+	    case 000:
+		if (ins->rex & REX_W)
+		    return false;
+		break;
+	    case 010:
+		if (!(ins->rex & REX_W))
+		    return false;
+		break;
+	    default:
+		break;		/* Need to do anything special here? */
+	    }
+
+	    if ((vexwlp & 007) != prefix->vex_lp)
+		return false;
+
+	    if (prefix->vex_v != 0)
+		return false;
+
+	    break;
+	}
+
 	case 0310:
             if (asize != 16)
                 return false;
@@ -822,8 +893,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	}
     }
 
-    /* REX cannot be combined with DREX */
-    if ((ins->rex & REX_D) && (prefix->rex))
+    /* REX cannot be combined with DREX or VEX */
+    if ((ins->rex & (REX_D|REX_V)) && (prefix->rex & REX_P))
 	return false;
 
     /*
@@ -904,7 +975,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     segover = NULL;
     origdata = data;
 
-    for (end_prefix = false; !end_prefix; ) {
+    end_prefix = false;
+    while (!end_prefix) {
 	switch (*data) {
 	case 0xF2:
 	case 0xF3:
@@ -939,15 +1011,55 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	    prefix.asize = (segsize == 32) ? 16 : 32;
 	    prefix.asp = *data++;
 	    break;
-	default:
-	    if (segsize == 64 && (*data & 0xf0) == REX_P) {
+	case 0xC4:
+	case 0xC5:
+	    if (segsize == 64 || (data[1] & 0xc0) == 0xc0) {
+		prefix.vex[0] = *data++;
+		prefix.vex[1] = *data++;
+		if (prefix.vex[0] == 0xc4)
+		    prefix.vex[2] = *data++;
+	    }
+	    prefix.rex = REX_V;
+	    if (prefix.vex[0] == 0xc4) {
+		prefix.rex |= (~prefix.vex[1] >> 5) & 7; /* REX_RXB */
+		prefix.rex |= (prefix.vex[2] >> (7-3)) & REX_W;
+		prefix.vex_m = prefix.vex[1] & 0x1f;
+		prefix.vex_v = (~prefix.vex[2] >> 3) & 15;
+		prefix.vex_lp = prefix.vex[2] & 7;
+	    } else {
+		prefix.rex |= (~prefix.vex[1] >> (7-2)) & REX_R;
+		prefix.vex_m = 1;
+		prefix.vex_v = (~prefix.vex[1] >> 3) & 15;
+		prefix.vex_lp = prefix.vex[1] & 7;
+	    }
+	    end_prefix = true;
+	    break;
+	case REX_P + 0x0:
+	case REX_P + 0x1:
+	case REX_P + 0x2:
+	case REX_P + 0x3:
+	case REX_P + 0x4:
+	case REX_P + 0x5:
+	case REX_P + 0x6:
+	case REX_P + 0x7:
+	case REX_P + 0x8:
+	case REX_P + 0x9:
+	case REX_P + 0xA:
+	case REX_P + 0xB:
+	case REX_P + 0xC:
+	case REX_P + 0xD:
+	case REX_P + 0xE:
+	case REX_P + 0xF:
+	    if (segsize == 64) {
 		prefix.rex = *data++;
 		if (prefix.rex & REX_W)
 		    prefix.osize = 64;
-		end_prefix = true;
-	    } else {
-		end_prefix = true;
 	    }
+	    end_prefix = true;
+	    break;
+	default:
+	    end_prefix = true;
+	    break;
 	}
     }
 
