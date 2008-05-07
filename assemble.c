@@ -50,6 +50,8 @@
  * \171		 - placement of DREX suffix in the absence of an EA
  * \172\ab	 - the register number from operand a in bits 7..4, with
  *                 the 4-bit immediate from operand b in bits 0..3.
+ * \173\xab	 - the register number from operand a in bits 7..4, with
+ *		   the value b in bits 0..3.
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
  * \250..\253    - same as \150..\153, except warn if the 64-bit operand
@@ -994,6 +996,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	case 0171:
 	    break;
 	case 0172:
+	case 0173:
 	    codes++;
 	    length++;
 	    break;
@@ -1586,6 +1589,15 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		}
 		bytes[0] |= opx->offset & 15;
 	    }
+	    out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+	    offset++;
+	    break;
+
+	case 0173:
+	    c = *codes++;
+	    opx = &ins->oprs[c >> 4];
+	    bytes[0] = regvals[opx->basereg] << 4;
+	    bytes[0] |= c & 15;
 	    out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
 	    offset++;
 	    break;
