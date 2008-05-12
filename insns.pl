@@ -275,6 +275,34 @@ sub addprefix ($@) {
     return @l;
 }
 
+#
+# Turn a code string into a sequence of bytes
+#
+sub decodify($) {
+  # Although these are C-syntax strings, by convention they should have
+  # only octal escapes (for directives) and hexadecimal escapes
+  # (for verbatim bytes)
+    my($codestr) = @_;
+    my $c = $codestr;
+    my @codes = ();
+
+    while ($c ne '') {
+	if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
+	    push(@codes, hex $1);
+	    $c = $2;
+	    next;
+	} elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
+	    push(@codes, oct $1);
+	    $c = $2;
+	    next;
+	} else {
+	    die "$0: unknown code format in \"$codestr\"\n";
+	}
+    }
+
+    return @codes;
+}
+
 # Here we determine the range of possible starting bytes for a given
 # instruction. We need only consider the codes:
 # \1 \2 \3     mean literal bytes, of course
@@ -291,22 +319,7 @@ sub startseq($) {
   my $c0, $c1, $i;
   my $prefix = '';
 
-  # Although these are C-syntax strings, by convention they should have
-  # only octal escapes (for directives) and hexadecimal escapes
-  # (for verbatim bytes)
-  while ($c ne '') {
-      if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
-	  push(@codes, hex $1);
-	  $c = $2;
-	  next;
-      } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
-	  push(@codes, oct $1);
-	  $c = $2;
-	  next;
-      } else {
-	  die "$0: unknown code format in \"$codestr\"\n";
-      }
-  }
+  @codes = decodify($codestr);
 
   while ($c0 = shift(@codes)) {
       $c1 = $codes[0];
