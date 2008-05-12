@@ -113,7 +113,7 @@ if ( !defined($output) || $output eq 'b') {
 
     $p = 0;
     foreach $bl (@bytecode_array) {
-	printf B "    /* %4d */ ", $p;
+	printf B "    /* %5d */ ", $p;
 	foreach $d (@$bl) {
 	    printf B "%#o,", $d;
 	    $p++;
