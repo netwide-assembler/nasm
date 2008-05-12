@@ -391,7 +391,6 @@ sub hexstr(@) {
 # \1 \2 \3     mean literal bytes, of course
 # \4 \5 \6 \7  mean PUSH/POP of segment registers: special case
 # \1[0123]     mean byte plus register value
-# \170         means byte zero
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
 sub startseq($) {
@@ -406,7 +405,7 @@ sub startseq($) {
 
   while ($c0 = shift(@codes)) {
       $c1 = $codes[0];
-      if ($c0 == 01 || $c0 == 02 || $c0 == 03 || $c0 == 0170) {
+      if ($c0 == 01 || $c0 == 02 || $c0 == 03) {
 	  # Fixed byte string
 	  my $fbs = $prefix;
 	  while (1) {
@@ -414,8 +413,6 @@ sub startseq($) {
 		  while ($c0--) {
 		      $fbs .= sprintf("%02X", shift(@codes));
 		  }
-	      } elsif ($c0 == 0170) {
-		  $fbs .= '00';
 	      } else {
 		  last;
 	      }

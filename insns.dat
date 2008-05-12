@@ -72,8 +72,8 @@ ADC		rm64,imm		\324\155\x81\202\251		X64,SM
 ADC		mem,imm8		\1\x80\202\21			8086,SM
 ADC		mem,imm16		\320\145\x81\202\141		8086,SM
 ADC		mem,imm32		\321\155\x81\202\151		386,SM
-ADD		mem,reg8		\170\101			8086,SM
-ADD		reg8,reg8		\170\101			8086
+ADD		mem,reg8		\1\x00\101			8086,SM
+ADD		reg8,reg8		\1\x00\101			8086
 ADD		mem,reg16		\320\1\x01\101			8086,SM
 ADD		reg16,reg16		\320\1\x01\101			8086
 ADD		mem,reg32		\321\1\x01\101			386,SM
@@ -678,9 +678,9 @@ LGDT		mem			\2\x0F\x01\202			286,PRIV
 LGS		reg16,mem		\320\2\x0F\xB5\110		386
 LGS		reg32,mem		\321\2\x0F\xB5\110		386
 LIDT		mem			\2\x0F\x01\203			286,PRIV
-LLDT		mem			\1\x0F\170\202			286,PROT,PRIV
-LLDT		mem16			\1\x0F\170\202			286,PROT,PRIV
-LLDT		reg16			\1\x0F\170\202			286,PROT,PRIV
+LLDT		mem			\2\x0F\x00\202			286,PROT,PRIV
+LLDT		mem16			\2\x0F\x00\202			286,PROT,PRIV
+LLDT		reg16			\2\x0F\x00\202			286,PROT,PRIV
 LMSW		mem			\2\x0F\x01\206			286,PRIV
 LMSW		mem16			\2\x0F\x01\206			286,PRIV
 LMSW		reg16			\2\x0F\x01\206			286,PRIV
@@ -724,9 +724,9 @@ LSL		reg64,reg32		\324\2\x0F\x03\110		X64,PROT
 LSL		reg64,reg64		\324\2\x0F\x03\110		X64,PROT
 LSS		reg16,mem		\320\2\x0F\xB2\110		386
 LSS		reg32,mem		\321\2\x0F\xB2\110		386
-LTR		mem			\1\x0F\170\203			286,PROT,PRIV
-LTR		mem16			\1\x0F\170\203			286,PROT,PRIV,NOLONG
-LTR		reg16			\1\x0F\170\203			286,PROT,PRIV,NOLONG
+LTR		mem			\2\x0F\x00\203			286,PROT,PRIV
+LTR		mem16			\2\x0F\x00\203			286,PROT,PRIV,NOLONG
+LTR		reg16			\2\x0F\x00\203			286,PROT,PRIV,NOLONG
 MFENCE		void			\3\x0F\xAE\xF0			X64,AMD
 MONITOR		void			\3\x0F\x01\xC8			PRESCOTT
 MONITOR		reg_eax,reg_ecx,reg_edx	\3\x0F\x01\xC8			PRESCOTT,ND
@@ -1172,10 +1172,10 @@ SHRD		reg32,reg32,reg_cl	\321\2\x0F\xAD\101		386
 SHRD		mem,reg64,reg_cl	\324\2\x0F\xAD\101		X64,SM
 SHRD		reg64,reg64,reg_cl	\324\2\x0F\xAD\101		X64
 SIDT		mem			\2\x0F\x01\201			286
-SLDT		mem			\1\x0F\170\200			286
-SLDT		mem16			\1\x0F\170\200			286
-SLDT		reg16			\320\1\x0F\170\200		286
-SLDT		reg32			\321\1\x0F\170\200		386
+SLDT		mem			\2\x0F\x00\200			286
+SLDT		mem16			\2\x0F\x00\200			286
+SLDT		reg16			\320\2\x0F\x00\200		286
+SLDT		reg32			\321\2\x0F\x00\200		386
 SKINIT		void			\3\x0F\x01\xDE			X64
 SMI		void			\1\xF1				386,UNDOC
 SMINT		void			\2\x0F\x38			P6,CYRIX,ND
@@ -1193,11 +1193,11 @@ STOSB		void			\1\xAA				8086
 STOSD		void			\321\1\xAB			386
 STOSQ		void			\324\1\xAB			X64
 STOSW		void			\320\1\xAB			8086
-STR		mem			\1\x0F\170\201			286,PROT
-STR		mem16			\1\x0F\170\201			286,PROT
-STR		reg16			\320\1\x0F\170\201		286,PROT
-STR		reg32			\321\1\x0F\170\201		386,PROT
-STR		reg64			\324\1\x0F\170\201		X64
+STR		mem			\2\x0F\x00\201			286,PROT
+STR		mem16			\2\x0F\x00\201			286,PROT
+STR		reg16			\320\2\x0F\x00\201		286,PROT
+STR		reg32			\321\2\x0F\x00\201		386,PROT
+STR		reg64			\324\2\x0F\x00\201		X64
 SUB		mem,reg8		\1\x28\101			8086,SM
 SUB		reg8,reg8		\1\x28\101			8086
 SUB		mem,reg16		\320\1\x29\101			8086,SM
@@ -1277,12 +1277,12 @@ UMOV		reg16,mem		\320\2\x0F\x13\110		386,UNDOC,SM,ND
 UMOV		reg16,reg16		\320\2\x0F\x13\110		386,UNDOC,ND
 UMOV		reg32,mem		\321\2\x0F\x13\110		386,UNDOC,SM,ND
 UMOV		reg32,reg32		\321\2\x0F\x13\110		386,UNDOC,ND
-VERR		mem			\1\x0F\170\204			286,PROT
-VERR		mem16			\1\x0F\170\204			286,PROT
-VERR		reg16			\1\x0F\170\204			286,PROT
-VERW		mem			\1\x0F\170\205			286,PROT
-VERW		mem16			\1\x0F\170\205			286,PROT
-VERW		reg16			\1\x0F\170\205			286,PROT
+VERR		mem			\2\x0F\x00\204			286,PROT
+VERR		mem16			\2\x0F\x00\204			286,PROT
+VERR		reg16			\2\x0F\x00\204			286,PROT
+VERW		mem			\2\x0F\x00\205			286,PROT
+VERW		mem16			\2\x0F\x00\205			286,PROT
+VERW		reg16			\2\x0F\x00\205			286,PROT
 WAIT		void			\1\x9B				8086
 FWAIT		void			\1\x9B				8086
 WBINVD		void			\2\x0F\x09			486,PRIV
@@ -1853,8 +1853,8 @@ POPCNT		reg64,rm32		\324\333\2\x0F\xB8\110		NEHALEM,X64
 ;# AMD SSE5 instructions
 
 ; Four operands with DREX
-FMADDPS		xmmreg,=0,xmmreg,xmmrm	\160\2\x0F\x24\170\132		SSE5,AMD
-FMADDPS		xmmreg,=0,xmmrm,xmmreg	\164\2\x0F\x24\170\123		SSE5,AMD
+FMADDPS		xmmreg,=0,xmmreg,xmmrm	\160\3\x0F\x24\x00\132		SSE5,AMD
+FMADDPS		xmmreg,=0,xmmrm,xmmreg	\164\3\x0F\x24\x00\123		SSE5,AMD
 FMADDPS		xmmreg,xmmreg,xmmrm,=0	\160\3\x0F\x24\x04\121		SSE5,AMD
 FMADDPS		xmmreg,xmmrm,xmmreg,=0	\164\3\x0F\x24\x04\112		SSE5,AMD
 FMADDPD		xmmreg,=0,xmmreg,xmmrm	\160\3\x0F\x24\x01\132		SSE5,AMD
@@ -2024,10 +2024,10 @@ PFRCP		mmxreg,mmxrm		\323\2\x0F\x0F\110\1\x86	PENT,3DNOW,SQ,CYRIX
 PFRSQRT		mmxreg,mmxrm		\323\2\x0F\x0F\110\1\x87	PENT,3DNOW,SQ,CYRIX
 
 ;# Intel AVX instructions
-VPERMIL2PS	xmmreg,xmmreg,xmmrm,xmmreg,imm	\261\103\101\1\x48\120\172\34	AVX,SANDYBRIDGE
-VPERMIL2PS	xmmreg,xmmreg,xmmreg,xmmrm,imm	\261\103\111\1\x48\130\172\24	AVX,SANDYBRIDGE
-VPERMIL2PS	ymmreg,ymmreg,ymmrm,ymmreg,imm	\261\103\105\1\x48\120\172\34	AVX,SANDYBRIDGE
-VPERMIL2PS	ymmreg,ymmreg,ymmreg,ymmrm,imm	\261\103\115\1\x48\130\172\24	AVX,SANDYBRIDGE
+VPERMIL2PS	xmmreg,xmmreg,xmmrm,xmmreg,imm	\261\03\01\1\x48\120\172\34	AVX,SANDYBRIDGE
+VPERMIL2PS	xmmreg,xmmreg,xmmreg,xmmrm,imm	\261\03\11\1\x48\130\172\24	AVX,SANDYBRIDGE
+VPERMIL2PS	ymmreg,ymmreg,ymmrm,ymmreg,imm	\261\03\05\1\x48\120\172\34	AVX,SANDYBRIDGE
+VPERMIL2PS	ymmreg,ymmreg,ymmreg,ymmrm,imm	\261\03\15\1\x48\130\172\24	AVX,SANDYBRIDGE
 
 ;# VIA (Centaur) security instructions
 XSTORE		void			\3\x0F\xA7\xC0			PENT,CYRIX
@@ -2039,7 +2039,7 @@ MONTMUL		void			\333\3\x0F\xA6\xC0		PENT,CYRIX
 XSHA1		void			\333\3\x0F\xA6\xC8		PENT,CYRIX
 XSHA256		void			\333\3\x0F\xA6\xD0		PENT,CYRIX
 
-;# Systematic names for the hinting nop instructions
+;# Systematic names for the hinting nop instructions; should be last
 HINT_NOP0	rm16			\320\2\x0F\x18\200		P6,UNDOC
 HINT_NOP0	rm32			\321\2\x0F\x18\200		P6,UNDOC
 HINT_NOP0	rm64			\324\2\x0F\x18\200		X64,UNDOC

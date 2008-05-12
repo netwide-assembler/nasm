@@ -44,9 +44,6 @@
  * \164..\167    - this instruction uses DREX rather than REX, with the
  *		   OC0 field set to 1, and the dest field taken from
  *                 operand 0..3.
- * \170          - encodes the literal byte 0. (Some compilers don't take
- *                 kindly to a zero byte in the _middle_ of a compile time
- *                 string constant, so I had to put this hack in.)
  * \171		 - placement of DREX suffix in the absence of an EA
  * \172\ab	 - the register number from operand a in bits 7..4, with
  *                 the 4-bit immediate from operand b in bits 0..3.
@@ -63,8 +60,8 @@
  *		   V field set to 1111b.
  *
  * VEX prefixes are followed by the sequence:
- * \1mm\1wp        where mm is the M field; and wp is:
- *                 01 0ww lpp
+ * \mm\wlp         where mm is the M field; and wlp is:
+ *                 00 0ww lpp
  *                 ww = 0 for W = 0
  *                 ww = 1 for W = 1
  *                 ww = 2 for W used as REX.W
@@ -990,9 +987,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    ins->rex |= REX_D|REX_OC;
 	    ins->drexdst = regval(opx);
 	    break;
-        case 0170:
-            length++;
-            break;
 	case 0171:
 	    break;
 	case 0172:
@@ -1555,13 +1549,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0166:
 	case 0167:
 	    break;
-
-        case 0170:
-	    EMIT_REX();
-            bytes[0] = 0;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
-            break;
 
 	case 0171:
 	    bytes[0] =

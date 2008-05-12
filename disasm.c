@@ -638,11 +638,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    ins->drexdst = c & 3;
 	    break;
 
-	case 0170:
-            if (*data++)
-                return false;
-	    break;
-
 	case 0171:
 	    data = do_drex(data, ins);
 	    if (!data)
