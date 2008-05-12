@@ -130,8 +130,8 @@ static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
 
-static int64_t calcsize(int32_t, int64_t, int, insn *, const char *);
-static void gencode(int32_t, int64_t, int, insn *, const char *, int64_t);
+static int64_t calcsize(int32_t, int64_t, int, insn *, const uint8_t *);
+static void gencode(int32_t, int64_t, int, insn *, const uint8_t *, int64_t);
 static int matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
@@ -231,7 +231,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
 }
 
 static int jmp_match(int32_t segment, int64_t offset, int bits,
-                     insn * ins, const char *code)
+                     insn * ins, const uint8_t *code)
 {
     int64_t isize;
     uint8_t c = code[0];
@@ -462,7 +462,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
             m += jmp_match(segment, offset, bits, instruction, temp->code);
 
         if (m == 100) {         /* matches! */
-            const char *codes = temp->code;
+            const uint8_t *codes = temp->code;
             int64_t insn_size = calcsize(segment, offset, bits,
                                       instruction, codes);
             itimes = instruction->times;
@@ -737,7 +737,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
         if (m == 100) {
             /* we've matched an instruction. */
             int64_t isize;
-            const char *codes = temp->code;
+            const uint8_t *codes = temp->code;
             int j;
 
             isize = calcsize(segment, offset, bits, instruction, codes);
@@ -826,7 +826,7 @@ static bool is_sbyte64(insn * ins, int op)
     return v32 >= -128 && v32 <= 127;
 }
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
-                     insn * ins, const char *codes)
+                     insn * ins, const uint8_t *codes)
 {
     int64_t length = 0;
     uint8_t c;
@@ -1200,7 +1200,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     }
 
 static void gencode(int32_t segment, int64_t offset, int bits,
-                    insn * ins, const char *codes, int64_t insn_end)
+                    insn * ins, const uint8_t *codes, int64_t insn_end)
 {
     static char condval[] = {   /* conditional opcodes */
         0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,

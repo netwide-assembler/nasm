@@ -16,7 +16,7 @@ struct itemplate {
     enum opcode opcode;		/* the token, passed from "parser.c" */
     int operands;		/* number of operands */
     opflags_t opd[MAX_OPERANDS]; /* bit flags for operand types */
-    const char *code;		/* the code it assembles to */
+    const uint8_t *code;	/* the code it assembles to */
     uint32_t flags;		/* some flags */
 };
 

@@ -17,7 +17,7 @@ print STDERR "Reading insns.dat...\n";
 undef $output;
 foreach $arg ( @ARGV ) {
     if ( $arg =~ /^\-/ ) {
-	if  ( $arg =~ /^\-([adin])$/ ) {
+	if  ( $arg =~ /^\-([abdin])$/ ) {
 	    $output = $1;
 	} else {
 	    die "$0: Unknown option: ${arg}\n";
@@ -31,6 +31,7 @@ $fname = "insns.dat" unless $fname = $args[0];
 open (F, $fname) || die "unable to open $fname";
 
 %dinstables = ();
+@bytecode_list = ();
 
 $line = 0;
 $insns = 0;
@@ -68,9 +69,59 @@ while (<F>) {
 
 close F;
 
+#
+# Generate the bytecode array.  At this point, @bytecode_list contains
+# the full set of bytecodes.
+#
+
+# Sort by descending length
+@bytecode_list = sort { scalar(@$b) <=> scalar(@$a) } @bytecode_list;
+@bytecode_array = ();
+%bytecode_pos = ();
+$bytecode_next = 0;
+foreach $bl (@bytecode_list) {
+    my $h = hexstr(@$bl);
+    next if (defined($bytecode_pos{$h}));
+
+    push(@bytecode_array, $bl);
+    while ($h ne '') {
+	$bytecode_pos{$h} = $bytecode_next;
+	$h = substr($h, 2);
+	$bytecode_next++;
+    }
+}
+undef @bytecode_list;
+
 @opcodes    = sort keys(%k_opcodes);
 @opcodes_cc = sort keys(%k_opcodes_cc);
 
+if ( !defined($output) || $output eq 'b') {
+    print STDERR "Writing insnsb.c...\n";
+
+    open B, ">insnsb.c";
+    
+    print B "/* This file auto-generated from insns.dat by insns.pl" .
+        " - don't edit it */\n\n";
+
+    print B "#include \"nasm.h\"\n";
+    print B "#include \"insns.h\"\n\n";
+
+    print B "static const uint8_t nasm_bytecodes[$bytecode_next] = {\n";
+
+    $p = 0;
+    foreach $bl (@bytecode_array) {
+	printf B "    /* %4d */ ", $p;
+	foreach $d (@$bl) {
+	    printf B "%#o,", $d;
+	    $p++;
+	}
+	printf B "\n";
+    }
+    print B "};\n";
+
+    close B;
+}
+    
 if ( !defined($output) || $output eq 'a' ) {
     print STDERR "Writing insnsa.c...\n";
 
@@ -78,15 +129,14 @@ if ( !defined($output) || $output eq 'a' ) {
 
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print A "#include \"nasm.h\"\n";
-    print A "#include \"insns.h\"\n";
-    print A "\n";
+
+    print A "#include \"insnsb.c\"\n\n";
 
     foreach $i (@opcodes, @opcodes_cc) {
 	print A "static const struct itemplate instrux_${i}[] = {\n";
 	$aname = "aa_$i";
 	foreach $j (@$aname) {
-	    print A "    $j\n";
+	    print A "    ", codesubst($j), "\n";
 	}
 	print A "    ITEMPLATE_END\n};\n\n";
     }
@@ -106,14 +156,13 @@ if ( !defined($output) || $output eq 'd' ) {
 
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print D "#include \"nasm.h\"\n";
-    print D "#include \"insns.h\"\n";
-    print D "\n";
+
+    print D "#include \"insnsb.c\"\n\n";
 
     print D "static const struct itemplate instrux[] = {\n";
     $n = 0;
     foreach $j (@big) {
-	printf D "    /* %4d */ %s\n", $n++, $j;
+	printf D "    /* %4d */ %s\n", $n++, codesubst($j);
     }
     print D "};\n";
 
@@ -230,6 +279,7 @@ printf STDERR "Done: %d instructions\n", $insns;
 sub format {
     my ($opcode, $operands, $codes, $flags) = @_;
     my $num, $nd = 0;
+    my @bytecode;
 
     return (undef, undef) if $operands eq "ignore";
 
@@ -260,7 +310,29 @@ sub format {
     $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
     $flags = "IF_" . $flags;
 
-    ("{I_$opcode, $num, {$operands}, \"$codes\", $flags},", $nd);
+    @bytecode = (decodify($codes), 0);
+    push(@bytecode_list, [@bytecode]);
+    $codes = hexstr(@bytecode);
+
+    ("{I_$opcode, $num, {$operands}, \@\@CODES-$codes\@\@, $flags},", $nd);
+}
+
+#
+# Look for @@CODES-xxx@@ sequences and replace them with the appropriate
+# offset into nasm_bytecodes
+#
+sub codesubst($) {
+    my($s) = @_;
+    my $n;
+
+    while ($s =~ /\@\@CODES-([0-9A-F]+)\@\@/) {
+	my $pos = $bytecode_pos{$1};
+	if (!defined($pos)) {
+	    die "$0: no position assigned to byte code $1\n";
+	}
+	$s = $` . "nasm_bytecodes+${pos}" . "$'";
+    }
+    return $s;
 }
 
 sub addprefix ($@) {
@@ -301,6 +373,17 @@ sub decodify($) {
     }
 
     return @codes;
+}
+
+# Turn a numeric list into a hex string
+sub hexstr(@) {
+    my $s = '';
+    my $c;
+
+    foreach $c (@_) {
+	$s .= sprintf("%02X", $c);
+    }
+    return $s;
 }
 
 # Here we determine the range of possible starting bytes for a given

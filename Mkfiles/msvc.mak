@@ -19,8 +19,8 @@ CFLAGS		= /O2 /Ox /Oy /W2
 BUILD_CFLAGS	= $(CFLAGS) /I$(srcdir)/inttypes
 INTERNAL_CFLAGS = /I$(srcdir) /I. /DHAVE__SNPRINTF /DHAVE__VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-LDFLAGS		= 
-LIBS		= 
+LDFLAGS		=
+LIBS		=
 PERL		= perl -I$(srcdir)/perllib
 
 # Binary suffixes
@@ -58,6 +58,8 @@ ndisasm$(X): $(NDISASM)
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
 
+insnsb.c: insns.dat insns.pl
+	$(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
 insnsa.c: insns.dat insns.pl
 	$(PERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
 insnsd.c: insns.dat insns.pl
@@ -113,7 +115,7 @@ pptok.c: pptok.dat pptok.pl perllib/phash.ph
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
-PERLREQ = macros.c insnsa.c insnsd.c insnsi.h insnsn.c \
+PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regvals.c tokhash.c tokens.h \
 	  version.h version.mac pptok.h pptok.c
 perlreq: $(PERLREQ)
@@ -186,10 +188,12 @@ float.$(O): float.c compiler.h float.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h
 hashtbl.$(O): hashtbl.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h
-insnsa.$(O): insnsa.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
+insnsa.$(O): insnsa.c compiler.h insns.h insnsb.c insnsi.h nasm.h nasmlib.h \
+ regs.h tokens.h version.h
+insnsb.$(O): insnsb.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
  tokens.h version.h
-insnsd.$(O): insnsd.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
- tokens.h version.h
+insnsd.$(O): insnsd.c compiler.h insns.h insnsb.c insnsi.h nasm.h nasmlib.h \
+ regs.h tokens.h version.h
 insnsn.$(O): insnsn.c
 labels.$(O): labels.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h
