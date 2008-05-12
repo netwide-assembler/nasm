@@ -652,6 +652,7 @@ enum prefix_pos {
     MAXPREFIX			/* Total number of prefix slots */
 };
 
+/* If you need to change this, also change it in insns.pl */
 #define MAX_OPERANDS 5
 
 typedef struct insn {		/* an instruction itself */

@@ -11,6 +11,9 @@
 # LONGER PREFIXES FIRST!
 @disasm_prefixes = qw(0F24 0F25 0F38 0F3A 0F7A 0FA6 0FA7 0F);
 
+# This should match MAX_OPERANDS from nasm.h
+$MAX_OPERANDS = 5;
+
 print STDERR "Reading insns.dat...\n";
 
 @args   = ();
@@ -299,7 +302,7 @@ sub format {
 	@ops = split(/\,/, $operands);
     }
     $num = scalar(@ops);
-    while (scalar(@ops) < 4) {
+    while (scalar(@ops) < $MAX_OPERANDS) {
 	push(@ops, '0');
     }
     $operands = join(',', @ops);
