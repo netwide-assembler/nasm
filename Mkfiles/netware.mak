@@ -31,6 +31,7 @@ NASM_OBJ = \
 	$(OBJDIR)/nasmlib.o\
 	$(OBJDIR)/float.o\
 	$(OBJDIR)/insnsa.o\
+	$(OBJDIR)/insnsb.o\
 	$(OBJDIR)/assemble.o\
 	$(OBJDIR)/labels.o\
 	$(OBJDIR)/hashtbl.o\
@@ -63,6 +64,7 @@ NDIS_OBJ = \
 	$(OBJDIR)/disasm.o\
 	$(OBJDIR)/sync.o\
 	$(OBJDIR)/insnsd.o\
+	$(OBJDIR)/insnsb.o\
 	$(EOLIST)
 
 VPATH  = *.c $(PROOT) $(PROOT)/output
@@ -151,12 +153,12 @@ float.o: float.c compiler.h config.h float.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h
 hashtbl.o: hashtbl.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h
-insnsa.o: insnsa.c compiler.h config.h insns.h insnsb.c insnsi.h nasm.h \
- nasmlib.h regs.h tokens.h version.h
+insnsa.o: insnsa.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
+ regs.h tokens.h version.h
 insnsb.o: insnsb.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
  regs.h tokens.h version.h
-insnsd.o: insnsd.c compiler.h config.h insns.h insnsb.c insnsi.h nasm.h \
- nasmlib.h regs.h tokens.h version.h
+insnsd.o: insnsd.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
+ regs.h tokens.h version.h
 insnsn.o: insnsn.c
 labels.o: labels.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h

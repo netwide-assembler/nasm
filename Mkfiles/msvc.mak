@@ -32,8 +32,8 @@ X               = .exe
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
 
-NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) \
-	labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
+NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
+	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf32.$(O) output/outelf64.$(O) \
@@ -42,7 +42,8 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) assemble.$(O) \
 	preproc.$(O) pptok.$(O) \
 	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) tokhash.$(O)
 
-NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) insnsd.$(O)
+NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) \
+	insnsd.$(O) insnsb.$(O)
 
 all: nasm$(X) ndisasm$(X)
 	rem cd rdoff && $(MAKE) all
@@ -188,12 +189,12 @@ float.$(O): float.c compiler.h float.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h
 hashtbl.$(O): hashtbl.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  regs.h version.h
-insnsa.$(O): insnsa.c compiler.h insns.h insnsb.c insnsi.h nasm.h nasmlib.h \
- regs.h tokens.h version.h
+insnsa.$(O): insnsa.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
+ tokens.h version.h
 insnsb.$(O): insnsb.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
  tokens.h version.h
-insnsd.$(O): insnsd.c compiler.h insns.h insnsb.c insnsi.h nasm.h nasmlib.h \
- regs.h tokens.h version.h
+insnsd.$(O): insnsd.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
+ tokens.h version.h
 insnsn.$(O): insnsn.c
 labels.$(O): labels.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h regs.h \
  version.h

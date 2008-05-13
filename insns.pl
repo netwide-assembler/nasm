@@ -109,7 +109,7 @@ if ( !defined($output) || $output eq 'b') {
     print B "#include \"nasm.h\"\n";
     print B "#include \"insns.h\"\n\n";
 
-    print B "static const uint8_t nasm_bytecodes[$bytecode_next] = {\n";
+    print B "const uint8_t nasm_bytecodes[$bytecode_next] = {\n";
 
     $p = 0;
     foreach $bl (@bytecode_array) {
@@ -133,7 +133,8 @@ if ( !defined($output) || $output eq 'a' ) {
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
 
-    print A "#include \"insnsb.c\"\n\n";
+    print A "#include \"nasm.h\"\n";
+    print A "#include \"insns.h\"\n\n";
 
     foreach $i (@opcodes, @opcodes_cc) {
 	print A "static const struct itemplate instrux_${i}[] = {\n";
@@ -160,7 +161,8 @@ if ( !defined($output) || $output eq 'd' ) {
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
 
-    print D "#include \"insnsb.c\"\n\n";
+    print D "#include \"nasm.h\"\n";
+    print D "#include \"insns.h\"\n\n";
 
     print D "static const struct itemplate instrux[] = {\n";
     $n = 0;

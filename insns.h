@@ -33,6 +33,9 @@ struct disasm_index {
 extern const struct itemplate * const nasm_instructions[];
 extern const struct disasm_index itable[256];
 
+/* Common table for the byte codes */
+extern const uint8_t nasm_bytecodes[];
+
 /*
  * this define is used to signify the end of an itemplate
  */
