@@ -2011,7 +2011,6 @@ PROTB		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x40\110\26			SSE5,AMD
 PROTW		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x41\110\26			SSE5,AMD
 PROTD		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x42\110\26			SSE5,AMD
 PROTQ		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x43\110\26			SSE5,AMD
-PTEST		xmmreg,xmmrm			\361\3\x0F\x38\x17\110				SSE5,AMD
 ROUNDPS		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
 ROUNDPD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
 ROUNDSS		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
