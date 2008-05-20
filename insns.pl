@@ -678,7 +678,7 @@ sub byte_code_compile($) {
 		die "$0: $line: $op without 'i' and 's' operands\n";
 	    }
 	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
-	} elsif ($op =~ /^is4=([0-9]+)$/) {
+	} elsif ($op =~ /^is4\=([0-9]+)$/) {
 	    if (!defined($oppos{'s'})) {
 		die "$0: $line: $op without 's' operand\n";
 	    }
