@@ -374,7 +374,7 @@ enum {
  *
  * The bits are assigned as follows:
  *
- * Bits 0-7, 29: sizes
+ * Bits 0-7, 23, 29: sizes
  *  0:  8 bits (BYTE)
  *  1: 16 bits (WORD)
  *  2: 32 bits (DWORD)
@@ -383,6 +383,7 @@ enum {
  *  5: FAR
  *  6: NEAR
  *  7: SHORT
+ * 23: 256 bits (YWORD)
  * 29: 128 bits (OWORD)
  *
  * Bits 8-11 modifiers
@@ -432,11 +433,10 @@ enum {
  * 18: BYTENESS32 (-128..127)
  * 19: BYTENESS64 (-128..127)
  *
- * Bits 20-26: register classes
+ * Bits 20-22, 24-27: register classes
  * 20: REG_CDT (CRx, DRx, TRx)
  * 21: RM_GPR (REG_GPR) (integer register)
  * 22: REG_SREG
- * 23: IP_REG (RIP or EIP) [unused]
  * 24: FPUREG
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
@@ -459,12 +459,13 @@ typedef uint32_t opflags_t;
 #define BITS64		0x00000008U   /* x64 and FPU only */
 #define BITS80		0x00000010U   /* FPU only */
 #define BITS128		0x20000000U
+#define BITS256		0x00800000U
 #define FAR		0x00000020U   /* grotty: this means 16:16 or */
                                        /* 16:32, like in CALL/JMP */
 #define NEAR		0x00000040U
 #define SHORT		0x00000080U   /* and this means what it says :) */
 
-#define SIZE_MASK	0x200000FFU   /* all the size attributes */
+#define SIZE_MASK	0x208000FFU   /* all the size attributes */
 
 /* Modifiers */
 #define MODIFIER_MASK	0x00000f00U
@@ -955,6 +956,7 @@ struct dfmt {
 #define TY_QWORD   0x30
 #define TY_TBYTE   0x38
 #define TY_OWORD   0x40
+#define TY_YWORD   0x48
 #define TY_COMMON  0xE0
 #define TY_SEG     0xE8
 #define TY_EXTERN  0xF0
@@ -975,7 +977,7 @@ enum special_tokens {
     SPECIAL_ENUM_START = PREFIX_ENUM_LIMIT,
     S_ABS = SPECIAL_ENUM_START,
     S_BYTE, S_DWORD, S_FAR, S_LONG, S_NEAR, S_NOSPLIT,
-    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD,
+    S_OWORD, S_QWORD, S_REL, S_SHORT, S_STRICT, S_TO, S_TWORD, S_WORD, S_YWORD,
     SPECIAL_ENUM_LIMIT
 };
 

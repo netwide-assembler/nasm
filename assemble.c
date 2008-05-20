@@ -119,6 +119,9 @@
 #include "regflags.c"
 #include "regvals.c"
 
+/* Initialized to zero by the C standard */
+static const uint8_t const_zero_buf[256];
+
 typedef struct {
     int sib_present;                 /* is a SIB byte necessary? */
     int bytes;                       /* # of bytes of offset needed */
@@ -168,6 +171,8 @@ static const char *size_name(int size)
 	return "tword";
     case 16:
 	return "oword";
+    case 32:
+	return "yword";
     default:
 	return "???";
     }
@@ -294,6 +299,9 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     case I_DO:
 	wsize = 16;
 	break;
+    case I_DY:
+	wsize = 32;
+	break;
     default:
 	break;
     }
@@ -318,7 +326,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                                 OUT_RAWDATA, 1, NO_SEG, NO_SEG);
                         }
                     } else if (wsize > 8) {
-                        errfunc(ERR_NONFATAL, "integer supplied to a DT or DO"
+                        errfunc(ERR_NONFATAL, "integer supplied to a DT, DO or DY"
                                 " instruction");
                     } else
                         out(offset, segment, &e->offset,
@@ -333,8 +341,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
                     if (align) {
                         align = wsize - align;
-                        out(offset, segment,
-			    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+                        out(offset, segment, const_zero_buf,
                             OUT_RAWDATA, align, NO_SEG, NO_SEG);
                     }
                     offset += e->stringlen + align;
@@ -630,7 +637,8 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
     if (instruction->opcode == I_DB || instruction->opcode == I_DW ||
         instruction->opcode == I_DD || instruction->opcode == I_DQ ||
-	instruction->opcode == I_DT || instruction->opcode == I_DO) {
+	instruction->opcode == I_DT || instruction->opcode == I_DO ||
+	instruction->opcode == I_DY) {
         extop *e;
         int32_t isize, osize, wsize = 0;   /* placate gcc */
 
@@ -653,6 +661,9 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
             break;
 	case I_DO:
 	    wsize = 16;
+	    break;
+	case I_DY:
+	    wsize = 32;
 	    break;
 	default:
 	    break;
@@ -1483,7 +1494,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             if (opx->segment == NO_SEG)
                 errfunc(ERR_NONFATAL, "value referenced by FAR is not"
                         " relocatable");
-            data = 0L;
+	    data = 0;
             out(offset, segment, &data, OUT_ADDRESS, 2,
                 outfmt->segbase(1 + opx->segment),
                 opx->wrt);
@@ -1957,6 +1968,9 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	case IF_SO:
 	    size[i] = BITS128;
 	    break;
+	case IF_SY:
+	    size[i] = BITS256;
+	    break;
 	case IF_SZ:
 	    switch (bits) {
 	    case 16:
@@ -1990,6 +2004,9 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	    break;
 	case IF_SO:
             asize = BITS128;
+	    break;
+	case IF_SY:
+            asize = BITS256;
 	    break;
 	case IF_SZ:
 	    switch (bits) {

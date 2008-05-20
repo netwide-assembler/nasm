@@ -1744,9 +1744,9 @@ static void undef_smacro(Context *ctx, const char *mname)
  */
 static int parse_size(const char *str) {
     static const char *size_names[] =
-	{ "byte", "dword", "oword", "qword", "tword", "word" };
+	{ "byte", "dword", "oword", "qword", "tword", "word", "yword" };
     static const int sizes[] =
-	{ 0, 1, 4, 16, 8, 10, 2 };
+	{ 0, 1, 4, 16, 8, 10, 2, 32 };
 
     return sizes[bsii(str, size_names, elements(size_names))+1];
 }

@@ -1331,6 +1331,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             if (t & BITS128)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "oword ");
+            if (t & BITS256)
+                slen +=
+                    snprintf(output + slen, outbufsize - slen, "yword ");
             if (t & FAR)
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
             if (t & NEAR)

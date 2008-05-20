@@ -1486,6 +1486,16 @@ static void assemble_file(char *fname)
                                     TYS_ELEMENTS(output_ins.oprs[0].
                                                  offset) | TY_TBYTE;
                                 break;
+                            case I_RESO:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].
+                                                 offset) | TY_OWORD;
+                                break;
+                            case I_RESY:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].
+                                                 offset) | TY_YWORD;
+                                break;
                             case I_DB:
                                 typeinfo |= TY_BYTE;
                                 break;
@@ -1506,6 +1516,9 @@ static void assemble_file(char *fname)
                                 break;
 			    case I_DO:
 				typeinfo |= TY_OWORD;
+				break;
+			    case I_DY:
+				typeinfo |= TY_YWORD;
 				break;
                             default:
                                 typeinfo = TY_LABEL;

@@ -75,7 +75,8 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SD     0x0000000CUL  /* unsized operands can't be non-dword */
 #define IF_SQ     0x00000010UL  /* unsized operands can't be non-qword */
 #define IF_SO     0x00000014UL  /* unsized operands can't be non-oword */
-#define IF_SZ     0x00000018UL  /* unsized operands must match the bitsize */
+#define IF_SY     0x00000018UL  /* unsized operands can't be non-yword */
+#define IF_SZ     0x0000001CUL  /* unsized operands must match the bitsize */
 #define IF_SMASK  0x0000001CUL  /* mask for unsized argument size */
 #define IF_AR0	  0x00000020UL  /* SB, SW, SD applies to argument 0 */
 #define IF_AR1	  0x00000040UL  /* SB, SW, SD applies to argument 1 */
