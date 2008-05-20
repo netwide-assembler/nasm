@@ -673,6 +673,19 @@ sub byte_code_compile($) {
 		push(@codes, 0250+$oppos{'i'});
 	    }
 	    $prefix_ok = 0;
+	} elsif ($op eq 'is4' || $op eq 'imz2') {
+	    if (!defined($oppos{'i'} || !defined($oppos{'s'}))) {
+		die "$0: $line: $op without 'i' and 's' operands\n";
+	    }
+	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
+	} elsif ($op =~ /^is4=([0-9]+)$/) {
+	    if (!defined($oppos{'s'})) {
+		die "$0: $line: $op without 's' operand\n";
+	    }
+	    if ($1 < 0 || $1 > 15) {
+		die "$0: $line: invalid imm4 value for $op\n";
+	    }
+	    push(@codes, 0173, ($oppos{'s'} << 4) + $1);
 	} elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$0: $op without 'i' operand\n";
