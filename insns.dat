@@ -2050,7 +2050,8 @@ MONTMUL		void				\363\3\x0F\xA6\xC0				PENT,CYRIX
 XSHA1		void				\363\3\x0F\xA6\xC8				PENT,CYRIX
 XSHA256		void				\363\3\x0F\xA6\xD0				PENT,CYRIX
 
-;# Systematic names for the hinting nop instructions; should be last
+;# Systematic names for the hinting nop instructions
+; These should be last in the file
 HINT_NOP0	rm16				\320\2\x0F\x18\200				P6,UNDOC
 HINT_NOP0	rm32				\321\2\x0F\x18\200				P6,UNDOC
 HINT_NOP0	rm64				\324\2\x0F\x18\200				X64,UNDOC
