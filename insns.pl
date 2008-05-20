@@ -491,6 +491,9 @@ sub startseq($) {
 # i = immediate
 # s = register field of is4/imz2 field
 #
+# For an operand that should be filled into more than one field,
+# enter it as e.g. "r+v".
+#
 sub byte_code_compile($) {
     my($str) = @_;
     my $opr;
@@ -509,8 +512,14 @@ sub byte_code_compile($) {
 	$opc = "\L$str";
     }
 
+    my $op = 0;
     for ($i = 0; $i < length($opr); $i++) {
-	$oppos{substr($opr,$i,1)} = $i;
+	my $c = substr($opr,$i,1);
+	if ($c eq '+') {
+	    $op--;
+	} else {
+	    $oppos{$c} = $op++;
+	}
     }
 
     $prefix_ok = 1;
@@ -597,7 +606,9 @@ sub byte_code_compile($) {
 		} elsif ($oq =~ /^m([0-9]+)$/) {
 		    $m = $1+0;
 		} elsif ($oq eq 'nds' || $oq eq 'ndd') {
-		    return undef if (!defined($oppos{'v'}));
+		    if (!defined($oppos{'v'})) {
+			die "$0: $line: vex.$oq without 'v' operand\n";
+		    }
 		} else {
 		    die "$0: $line: undefined VEX subcode: $oq\n";
 		}
