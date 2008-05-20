@@ -325,7 +325,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                                 OUT_RAWDATA, 1, NO_SEG, NO_SEG);
                         }
                     } else if (wsize > 8) {
-                        errfunc(ERR_NONFATAL, "integer supplied to a DT, DO or DY"
+                        errfunc(ERR_NONFATAL,
+				"integer supplied to a DT, DO or DY"
                                 " instruction");
                     } else
                         out(offset, segment, &e->offset,

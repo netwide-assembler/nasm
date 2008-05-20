@@ -401,6 +401,11 @@ restart_parse:
 		    case I_DO:
                         eop->stringlen = 16;
 			break;
+		    case I_DY:
+                        error(ERR_NONFATAL, "floating-point constant"
+                              " encountered in DY instruction");
+			eop->stringlen = 0;
+			break;
 		    default:
                         error(ERR_NONFATAL, "floating-point constant"
                               " encountered in unknown instruction");
