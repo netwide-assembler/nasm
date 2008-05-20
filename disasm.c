@@ -874,6 +874,26 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0340:
 	    return false;
 
+	case 0360:
+	    if (prefix->osp || prefix->rep)
+		return false;
+	    break;
+
+	case 0361:
+	    if (!prefix->osp || prefix->rep)
+		return false;
+	    break;
+
+	case 0362:
+	    if (prefix->osp || prefix->rep != 0xf2)
+		return false;
+	    break;
+
+	case 0363:
+	    if (prefix->osp || prefix->rep != 0xf3)
+		return false;
+	    break;
+
 	case 0364:
 	    if (prefix->osp)
 		return false;

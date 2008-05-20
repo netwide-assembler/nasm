@@ -539,13 +539,13 @@ sub byte_code_compile($) {
 	} elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
 	    # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
 	    if ($op eq '66') {
-		push(@codes, 0366, 0331);
+		push(@codes, 0361);
 	    } elsif ($op eq 'f2') {
-		push(@codes, 0332, 0364);
+		push(@codes, 0362);
 	    } elsif ($op eq 'f3') {
-		push(@codes, 0333, 0364);
+		push(@codes, 0363);
 	    } else {
-		push(@codes, 0331, 0364);
+		push(@codes, 0360);
 	    }
 	} elsif ($op =~ /^[0-9a-f]{2}$/) {
 	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes) {
@@ -678,6 +678,7 @@ sub byte_code_compile($) {
 		die "$0: $line: $op without 'i' and 's' operands\n";
 	    }
 	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
+	    $prefix_ok = 0;
 	} elsif ($op =~ /^(is4|imz2)\=([0-9]+)$/) {
 	    my $imm = $2;
 	    if (!defined($oppos{'s'})) {
@@ -687,6 +688,7 @@ sub byte_code_compile($) {
 		die "$0: $line: invalid imm4 value for $op: $imm\n";
 	    }
 	    push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
+	    $prefix_ok = 0;
 	} elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$0: $op without 'i' operand\n";
