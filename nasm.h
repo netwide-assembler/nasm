@@ -488,9 +488,6 @@ typedef uint32_t opflags_t;
 #define REG16		0x00209002U   /* 16-bit GPR */
 #define REG32		0x00209004U   /* 32-bit GPR */
 #define REG64		0x00209008U   /* 64-bit GPR */
-#define IP_REG		0x00801000U   /* RIP or EIP register */
-#define RIPREG		0x00801008U   /* RIP */
-#define EIPREG		0x00801004U   /* EIP */
 #define FPUREG		0x01001000U   /* floating point stack registers */
 #define FPU0		0x01011000U   /* FPU stack register zero */
 #define RM_MMX		0x02008000U   /* MMX operand */
