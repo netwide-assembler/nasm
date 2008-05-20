@@ -146,7 +146,7 @@ sub gen_perfect_hash($) {
     # Minimal power of 2 value for N with enough wiggle room.
     # The scaling constant must be larger than 0.5 in order for the
     # algorithm to ever terminate.
-    my $room = scalar(@keys)*0.7;
+    my $room = scalar(@keys)*0.8;
     $n = 1;
     while ($n < $room) {
 	$n <<= 1;
@@ -156,14 +156,14 @@ sub gen_perfect_hash($) {
     $maxj = scalar @random_sv_vectors;
 
     for ($i = 0; $i < 4; $i++) {
-	print STDERR "Trying n = $n...\n";
+	printf STDERR "%d vectors, trying n = %d...\n",
+		scalar @keys, $n;
 	for ($j = 0; $j < $maxj; $j++) {
 	    $sv = $random_sv_vectors[$j];
 	    @hashinfo = gen_hash_n($n, $sv, $href, $run++);
 	    return @hashinfo if (defined(@hashinfo));
 	}
 	$n <<= 1;
-	$maxj >>= 1;
     }
 
     return;
