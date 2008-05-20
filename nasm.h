@@ -423,6 +423,9 @@ enum {
  * With XMMREG:
  * 16: XMM0
  *
+ * With YMMREG:
+ * 16: YMM0
+ *
  * With MEMORY:
  * 16: MEM_OFFS (this is a simple offset)
  * 17: IP_REL (IP-relative offset)
@@ -497,6 +500,7 @@ typedef uint32_t opflags_t;
 #define XMM0		0x04019000U   /* XMM register zero */
 #define RM_YMM		0x08008000U   /* YMM (AVX) operand */
 #define YMMREG		0x08009000U   /* YMM (AVX) register */
+#define YMM0		0x08019000U   /* YMM register zero */
 #define REG_CDT		0x00101004U   /* CRn, DRn and TRn */
 #define REG_CREG	0x00111004U   /* CRn */
 #define REG_DREG	0x00121004U   /* DRn */
