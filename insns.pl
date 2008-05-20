@@ -40,27 +40,30 @@ $line = 0;
 $insns = 0;
 while (<F>) {
   $line++;
-  next if /^\s*;/;   # comments
   chomp;
-  split;
-  next if $#_ == -1; # blank lines
-  (warn "line $line does not contain four fields\n"), next if $#_ != 3;
-  ($formatted, $nd) = &format(@_);
+  next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
+
+  unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
+      warn "line $line does not contain four fields\n";
+      next;
+  }
+  @fields = ($1, $2, $3, $4);
+  ($formatted, $nd) = format(@fields);
   if ($formatted) {
     $insns++;
-    $aname = "aa_$_[0]";
+    $aname = "aa_$fields[0]";
     push @$aname, $formatted;
   }
-  if ( $_[0] =~ /cc$/ ) {
+  if ( $fields[0] =~ /cc$/ ) {
       # Conditional instruction
-      $k_opcodes_cc{$_[0]}++;
+      $k_opcodes_cc{$fields[0]}++;
   } else {
       # Unconditional instruction
-      $k_opcodes{$_[0]}++;
+      $k_opcodes{$fields[0]}++;
   }
   if ($formatted && !$nd) {
     push @big, $formatted;
-    my @sseq = startseq($_[2]);
+    my @sseq = startseq($fields[2]);
     foreach $i (@sseq) {
 	if (!defined($dinstables{$i})) {
 	    $dinstables{$i} = [];
@@ -281,7 +284,7 @@ if ( !defined($output) || $output eq 'n' ) {
 
 printf STDERR "Done: %d instructions\n", $insns;
 
-sub format {
+sub format(@) {
     my ($opcode, $operands, $codes, $flags) = @_;
     my $num, $nd = 0;
     my @bytecode;
@@ -362,6 +365,10 @@ sub decodify($) {
     my($codestr) = @_;
     my $c = $codestr;
     my @codes = ();
+
+    if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
+	return byte_code_compile($1);
+    }
 
     while ($c ne '') {
 	if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
@@ -465,3 +472,100 @@ sub startseq($) {
   }
   return $prefix;
 }
+
+#
+# This function takes a series of byte codes in a format which is more
+# typical of the Intel documentation, and encode it.
+#
+# The format looks like:
+#
+# [operands: opcodes]
+#
+# The operands word lists the order of the operands:
+#
+# r = register field in the modr/m
+# m = modr/m
+# v = VEX "v" field or DREX "src" field
+# i = immediate
+# z = register field of is4 or imz2 field
+# 
+sub byte_code_compile($) {
+    my($str) = @_;
+    my $opr;
+    my $opc;	
+    my @codes = ();
+    my $litix = undef;
+    my %oppos = ();
+    my $i;
+    my $op, $oq;
+    
+    if ($str =~ /^(\S*)\:\s*(.*\S)\s*$/) {
+	$opr = "\L$1";
+	$opc = "\L$2";
+    } else {
+	$opr = '';
+	$opc = $str;
+    }
+    
+    for ($i = 0; $i < length($opr); $i++) {
+	$oppos{substr($opr,$i,1)} = $i;
+    }
+
+    foreach $op (split($opc)) {
+	if ($op =~ /^[0-9a-f]{2}$/) {
+	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes) {
+		$codes[$litix]++;
+		push(@codes, hex $op);
+	    } else {
+		$litix = scalar(@codes);
+		push(@codes, 01, hex $op);
+	    }
+	} elsif ($op eq '/r') {
+	    if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
+		die "$0: $line: $op requires r and m operands\n";
+	    }
+	    push(@codes, 0100 + ($oppos{'m'} << 3) + $oppos{'r'});
+	} elsif ($op =~ m:^/([0-7])$:) {
+	    if (!defined($oppos{'m'})) {
+		die "$0: $line: $op requires m operand\n";
+	    }
+	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1;
+	} elsif ($op =~ /^vex\./) {
+	    my ($m,$w,$l,$p) = (undef,2,undef,0);
+	    foreach $oq (split(/\./, $op)) {
+		if ($oq eq 'vex') {
+		    # prefix
+		} elsif ($oq eq '128' || $oq eq 'l0') {
+		    $l = 0;
+		} elsif ($oq eq '256' || $oq eq 'l1') {
+		    $l = 1;
+		} elsif ($oq eq 'w0') {
+		    $w = 0;
+		} elsif ($oq eq 'w1') {
+		    $w = 1;
+		} elsif ($oq eq '66') {
+		    $p = 1;
+		} elsif ($oq eq 'f3') {
+		    $p = 2;
+		} elsif ($oq eq 'f2') {
+		    $p = 3;
+		} elsif ($oq eq '0f') {
+		    $m = 1;
+		} elsif ($oq eq '0f38') {
+		    $m = 2;
+		} elsif ($oq eq '0f3a') {
+		    $m = 3;
+		} elsif ($oq =~ /^m([0-9]+)$/) {
+		    $m = $1+0;
+		} elsif ($oq eq 'nds' || $oq eq 'ndd') {
+		    return undef if (!defined($oppos{'v'}));
+		} else {
+		    die "$0: $line: undefined VEX subcode: $oq\n";
+		}
+	    }
+	    if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
+		die "$0: $line: missing fields in VEX specification\n";
+	    }
+	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
+		 $m, ($w << 3)+($l << 2)+$p);
+	}   
