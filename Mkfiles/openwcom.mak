@@ -143,9 +143,9 @@ pptok.c: pptok.dat pptok.pl perllib/phash.ph
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
-PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
-	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
-	  tokhash.c tokens.h pptok.h pptok.c \
+PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c &
+	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c &
+	  tokhash.c tokens.h pptok.h pptok.c &
 	  version.h version.mac
 perlreq: $(PERLREQ)
 
