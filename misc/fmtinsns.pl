@@ -3,7 +3,7 @@
 # Re-align the columns in insns.dat
 #
 
-@cols = (0, 16, 40, 72);
+@cols = (0, 16, 48, 96);
 
 while ($line = <STDIN>) {
     chomp $line;
