@@ -116,8 +116,7 @@
 #include "assemble.h"
 #include "insns.h"
 #include "preproc.h"
-#include "regflags.c"
-#include "regvals.c"
+#include "tables.h"
 
 /* Initialized to zero by the C standard */
 static const uint8_t const_zero_buf[256];
@@ -1123,7 +1122,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 		if (c <= 0177) {
 		    /* pick rfield from operand b */
 		    rflags = regflag(&ins->oprs[c & 7]);
-		    rfield = regvals[ins->oprs[c & 7].basereg];
+		    rfield = nasm_regvals[ins->oprs[c & 7].basereg];
 		} else {
 		    rflags = 0;
 		    rfield = c & 7;
@@ -1585,7 +1584,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0172:
 	    c = *codes++;
 	    opx = &ins->oprs[c >> 3];
-	    bytes[0] = regvals[opx->basereg] << 4;
+	    bytes[0] = nasm_regvals[opx->basereg] << 4;
 	    opx = &ins->oprs[c & 7];
 	    if (opx->segment != NO_SEG || opx->wrt != NO_SEG) {
 		errfunc(ERR_NONFATAL,
@@ -1605,7 +1604,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0173:
 	    c = *codes++;
 	    opx = &ins->oprs[c >> 4];
-	    bytes[0] = regvals[opx->basereg] << 4;
+	    bytes[0] = nasm_regvals[opx->basereg] << 4;
 	    bytes[0] |= c & 15;
 	    out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
 	    offset++;
@@ -1803,7 +1802,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 if (c <= 0177) {
 		    /* pick rfield from operand b */
 		    rflags = regflag(&ins->oprs[c & 7]);
-                    rfield = regvals[ins->oprs[c & 7].basereg];
+                    rfield = nasm_regvals[ins->oprs[c & 7].basereg];
 		} else {
 		    /* rfield is constant */
 		    rflags = 0;
@@ -1877,7 +1876,7 @@ static int32_t regflag(const operand * o)
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
         errfunc(ERR_PANIC, "invalid operand passed to regflag()");
     }
-    return reg_flags[o->basereg];
+    return nasm_reg_flags[o->basereg];
 }
 
 static int32_t regval(const operand * o)
@@ -1885,7 +1884,7 @@ static int32_t regval(const operand * o)
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
         errfunc(ERR_PANIC, "invalid operand passed to regval()");
     }
-    return regvals[o->basereg];
+    return nasm_regvals[o->basereg];
 }
 
 static int op_rexflags(const operand * o, int mask)
@@ -1897,8 +1896,8 @@ static int op_rexflags(const operand * o, int mask)
         errfunc(ERR_PANIC, "invalid operand passed to op_rexflags()");
     }
 
-    flags = reg_flags[o->basereg];
-    val = regvals[o->basereg];
+    flags = nasm_reg_flags[o->basereg];
+    val = nasm_regvals[o->basereg];
 
     return rexflags(val, flags, mask);
 }
@@ -2113,7 +2112,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
             || input->basereg >= REG_ENUM_LIMIT)
             return NULL;
 	f = regflag(input);
-        i = regvals[input->basereg];
+        i = nasm_regvals[input->basereg];
 
 	if (REG_EA & ~f)
 	    return NULL;	/* Invalid EA register */
@@ -2155,16 +2154,16 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 i = -1;         /* make this easy, at least */
 
             if (i >= EXPR_REG_START && i < REG_ENUM_LIMIT) {
-                it = regvals[i];
-		ix = reg_flags[i];
+                it = nasm_regvals[i];
+		ix = nasm_reg_flags[i];
 	    } else {
                 it = -1;
 		ix = 0;
 	    }
 
 	    if (b >= EXPR_REG_START && b < REG_ENUM_LIMIT) {
-                bt = regvals[b];
-		bx = reg_flags[b];
+                bt = nasm_regvals[b];
+		bx = nasm_reg_flags[b];
 	    } else {
                 bt = -1;
 		bx = 0;
@@ -2437,14 +2436,14 @@ static void add_asp(insn *ins, int addrbits)
 		|| ins->oprs[j].indexreg >= REG_ENUM_LIMIT)
 		i = 0;
 	    else
-		i = reg_flags[ins->oprs[j].indexreg];
+		i = nasm_reg_flags[ins->oprs[j].indexreg];
 
 	    /* Verify as Register */
 	    if (ins->oprs[j].basereg < EXPR_REG_START
 		|| ins->oprs[j].basereg >= REG_ENUM_LIMIT)
 		b = 0;
 	    else
-		b = reg_flags[ins->oprs[j].basereg];
+		b = nasm_reg_flags[ins->oprs[j].basereg];
 
 	    if (ins->oprs[j].scale == 0)
 		i = 0;

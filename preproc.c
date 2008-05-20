@@ -50,6 +50,7 @@
 #include "hashtbl.h"
 #include "stdscan.h"
 #include "tokens.h"
+#include "tables.h"
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -352,10 +353,9 @@ static MMacro *defining;
 #define PARAM_DELTA 16
 
 /*
- * The standard macro set: defined as `static char *stdmac[]'. Also
- * gives our position in the macro set, when we're processing it.
+ * The standard macro set: defined in macros.c in the array nasm_stdmac.
+ * This gives our position in the macro set, when we're processing it.
  */
-#include "macros.c"
 static const char * const *stdmacpos;
 
 /*
@@ -3723,9 +3723,9 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     init_macros();
     unique = 0;
     if (tasm_compatible_mode) {
-        stdmacpos = stdmac;
+        stdmacpos = nasm_stdmac;
     } else {
-        stdmacpos = &stdmac[TASM_MACRO_COUNT];
+        stdmacpos = nasm_stdmac_after_tasm;
     }
     any_extrastdmac = (extrastdmac != NULL);
     list = listgen;

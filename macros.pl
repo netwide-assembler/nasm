@@ -21,9 +21,9 @@ open(OUTPUT,">macros.c") or die "unable to open macros.c\n";
 print OUTPUT "/* This file auto-generated from standard.mac by macros.pl" .
 " - don't edit it */\n";
 print OUTPUT "\n";
-print OUTPUT "#include \"compiler.h\"\n";
+print OUTPUT "#include \"tables.h\"\n";
 print OUTPUT "\n";
-print OUTPUT "static const char * const stdmac[] = {\n";
+print OUTPUT "const char * const nasm_stdmac[] = {\n";
 
 foreach $fname ( @ARGV ) {
     open(INPUT,$fname) or die "unable to open $fname\n";
@@ -46,7 +46,8 @@ foreach $fname ( @ARGV ) {
     }
     close(INPUT);
 }
-print OUTPUT "    NULL\n};\n";
+print OUTPUT "    NULL\n};\n\n";
 $tasm_count = $index unless ( defined($tasm_count) );
-print OUTPUT "#define TASM_MACRO_COUNT $tasm_count\n";
+print OUTPUT "const char * const * nasm_stdmac_after_tasm = ",
+    "&nasm_stdmac[$tasm_count];\n";
 close(OUTPUT);

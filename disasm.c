@@ -19,8 +19,8 @@
 #include "disasm.h"
 #include "sync.h"
 #include "insns.h"
-
-#include "names.c"
+#include "tables.h"
+#include "regdis.h"
 
 /*
  * Flags that go into the `segment' field of `insn' structures
@@ -35,8 +35,6 @@
 #define SEG_NODISP	 64
 #define SEG_SIGNED	128
 #define SEG_64BIT	256
-
-#include "regdis.c"
 
 /*
  * Prefix information
@@ -120,11 +118,11 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
         return (regval == 1) ? R_CS : 0;
     if (!(REG_DESS & ~regflags))
         return (regval == 0 || regval == 2
-                || regval == 3 ? rd_sreg[regval] : 0);
+                || regval == 3 ? nasm_rd_sreg[regval] : 0);
     if (!(REG_FSGS & ~regflags))
-        return (regval == 4 || regval == 5 ? rd_sreg[regval] : 0);
+        return (regval == 4 || regval == 5 ? nasm_rd_sreg[regval] : 0);
     if (!(REG_SEG67 & ~regflags))
-        return (regval == 6 || regval == 7 ? rd_sreg[regval] : 0);
+        return (regval == 6 || regval == 7 ? nasm_rd_sreg[regval] : 0);
 
     /* All the entries below look up regval in an 16-entry array */
     if (regval < 0 || regval > 15)
@@ -132,46 +130,37 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
 
     if (!(REG8 & ~regflags)) {
 	if (rex & REX_P)
-	    return rd_reg8_rex[regval];
+	    return nasm_rd_reg8_rex[regval];
 	else
-	    return rd_reg8[regval];
+	    return nasm_rd_reg8[regval];
     }
     if (!(REG16 & ~regflags))
-        return rd_reg16[regval];
+        return nasm_rd_reg16[regval];
     if (!(REG32 & ~regflags))
-        return rd_reg32[regval];
+        return nasm_rd_reg32[regval];
     if (!(REG64 & ~regflags))
-        return rd_reg64[regval];
+        return nasm_rd_reg64[regval];
     if (!(REG_SREG & ~regflags))
-        return rd_sreg[regval & 7]; /* Ignore REX */
+        return nasm_rd_sreg[regval & 7]; /* Ignore REX */
     if (!(REG_CREG & ~regflags))
-        return rd_creg[regval];
+        return nasm_rd_creg[regval];
     if (!(REG_DREG & ~regflags))
-        return rd_dreg[regval];
+        return nasm_rd_dreg[regval];
     if (!(REG_TREG & ~regflags)) {
 	if (rex & REX_P)
 	    return 0;		/* TR registers are ill-defined with rex */
-        return rd_treg[regval];
+        return nasm_rd_treg[regval];
     }
     if (!(FPUREG & ~regflags))
-        return rd_fpureg[regval & 7]; /* Ignore REX */
+        return nasm_rd_fpureg[regval & 7]; /* Ignore REX */
     if (!(MMXREG & ~regflags))
-        return rd_mmxreg[regval & 7]; /* Ignore REX */
+        return nasm_rd_mmxreg[regval & 7]; /* Ignore REX */
     if (!(XMMREG & ~regflags))
-        return rd_xmmreg[regval];
+        return nasm_rd_xmmreg[regval];
     if (!(YMMREG & ~regflags))
-        return rd_ymmreg[regval];
+        return nasm_rd_ymmreg[regval];
 
     return 0;
-}
-
-static const char *whichcond(int condval)
-{
-    static int conds[] = {
-        C_O, C_NO, C_C, C_NC, C_Z, C_NZ, C_NA, C_A,
-        C_S, C_NS, C_PE, C_PO, C_L, C_NL, C_NG, C_G
-    };
-    return conditions[conds[condval]];
 }
 
 /*
@@ -301,9 +290,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
         op->indexreg = -1;
 
 	if (a64)
-	    op->basereg = rd_reg64[rm | ((rex & REX_B) ? 8 : 0)];
+	    op->basereg = nasm_rd_reg64[rm | ((rex & REX_B) ? 8 : 0)];
 	else
-	    op->basereg = rd_reg32[rm | ((rex & REX_B) ? 8 : 0)];
+	    op->basereg = nasm_rd_reg32[rm | ((rex & REX_B) ? 8 : 0)];
 
         if (rm == 5 && mod == 0) {
 	    if (segsize == 64) {
@@ -329,17 +318,17 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 	    if (index == 4)
 		op->indexreg = -1; /* ESP/RSP/R12 cannot be an index */
 	    else if (a64)
-		op->indexreg = rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
+		op->indexreg = nasm_rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
 	    else
-		op->indexreg = rd_reg32[index | ((rex & REX_X) ? 8 : 0)];
+		op->indexreg = nasm_rd_reg32[index | ((rex & REX_X) ? 8 : 0)];
 
 	    if (base == 5 && mod == 0) {
 		op->basereg = -1;
 		mod = 2;	/* Fake disp32 */
 	    } else if (a64)
-		op->basereg = rd_reg64[base | ((rex & REX_B) ? 8 : 0)];
+		op->basereg = nasm_rd_reg64[base | ((rex & REX_B) ? 8 : 0)];
 	    else
-		op->basereg = rd_reg32[base | ((rex & REX_B) ? 8 : 0)];
+		op->basereg = nasm_rd_reg32[base | ((rex & REX_B) ? 8 : 0)];
 
 	    if (segsize == 16)
 		op->disp_size = 32;
@@ -975,6 +964,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
     return data - origdata;
 }
 
+/* Condition names for disassembly, sorted by x86 code */
+static const char * const condition_name[16] = {
+    "o", "no", "c", "nc", "z", "nz", "na", "a",
+    "s", "ns", "pe", "po", "l", "nl", "ng", "g"
+};
+
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             int32_t offset, int autosync, uint32_t prefer)
 {
@@ -1213,17 +1208,18 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	    break;
         }
 
-    for (i = 0; i < (int)elements(ico); i++)
-        if ((*p)->opcode == ico[i]) {
+    for (i = 0; i < NCOND_OPCODES; i++)
+        if ((*p)->opcode == nasm_cond_insn_opcodes[i]) {
             slen +=
-                snprintf(output + slen, outbufsize - slen, "%s%s", icn[i],
-                         whichcond(ins.condition));
+                snprintf(output + slen, outbufsize - slen, "%s%s",
+			 nasm_cond_insn_names[i],
+                         condition_name[ins.condition]);
             break;
         }
-    if (i >= (int)elements(ico))
+    if (i >= NCOND_OPCODES)
         slen +=
             snprintf(output + slen, outbufsize - slen, "%s",
-                     insn_names[(*p)->opcode]);
+                     nasm_insn_names[(*p)->opcode]);
     colon = false;
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
@@ -1268,7 +1264,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             if (t & TO)
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
             slen += snprintf(output + slen, outbufsize - slen, "%s",
-                             reg_names[reg - EXPR_REG_START]);
+                             nasm_reg_names[reg-EXPR_REG_START]);
         } else if (!(UNITY & ~t)) {
             output[slen++] = '1';
         } else if (t & IMMEDIATE) {
@@ -1356,16 +1352,14 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             }
             if (o->basereg != -1) {
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 reg_names[(o->basereg -
-                                            EXPR_REG_START)]);
+                                 nasm_reg_names[(o->basereg-EXPR_REG_START)]);
                 started = true;
             }
             if (o->indexreg != -1) {
                 if (started)
                     output[slen++] = '+';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                                 reg_names[(o->indexreg -
-                                            EXPR_REG_START)]);
+                                 nasm_reg_names[(o->indexreg-EXPR_REG_START)]);
                 if (o->scale > 1)
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",

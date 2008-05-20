@@ -23,12 +23,11 @@
 #include "stdscan.h"
 #include "parser.h"
 #include "float.h"
+#include "tables.h"
 
 extern int in_abs_seg;          /* ABSOLUTE segment flag */
 extern int32_t abs_seg;            /* ABSOLUTE segment */
 extern int32_t abs_offset;         /* ABSOLUTE segment offset */
-
-#include "regflags.c"           /* List of register flags */
 
 static int is_comma_next(void);
 
@@ -192,7 +191,7 @@ restart_parse:
         return result;
     }
     if (i != TOKEN_ID && i != TOKEN_INSN && i != TOKEN_PREFIX &&
-        (i != TOKEN_REG || (REG_SREG & ~reg_flags[tokval.t_integer]))) {
+        (i != TOKEN_REG || (REG_SREG & ~nasm_reg_flags[tokval.t_integer]))) {
         error(ERR_NONFATAL, "label or instruction expected"
               " at start of line");
         result->opcode = -1;
@@ -233,7 +232,7 @@ restart_parse:
     result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
-           (i == TOKEN_REG && !(REG_SREG & ~reg_flags[tokval.t_integer])))
+           (i == TOKEN_REG && !(REG_SREG & ~nasm_reg_flags[tokval.t_integer])))
     {
 	first = false;
 
@@ -621,14 +620,14 @@ restart_parse:
              * Process the segment override.
              */
             if (value[1].type != 0 || value->value != 1 ||
-                REG_SREG & ~reg_flags[value->type])
+                REG_SREG & ~nasm_reg_flags[value->type])
                 error(ERR_NONFATAL, "invalid segment override");
             else if (result->prefixes[PPS_SEG])
                 error(ERR_NONFATAL,
                       "instruction has conflicting segment overrides");
             else {
 		result->prefixes[PPS_SEG] = value->type;
-		if (!(REG_FSGS & ~reg_flags[value->type]))
+		if (!(REG_FSGS & ~nasm_reg_flags[value->type]))
 		    result->oprs[operand].eaflags |= EAF_FSGS;
 	    }
 
@@ -846,7 +845,7 @@ restart_parse:
 
                 result->oprs[operand].type &= TO;
                 result->oprs[operand].type |= REGISTER;
-                result->oprs[operand].type |= reg_flags[value->type];
+                result->oprs[operand].type |= nasm_reg_flags[value->type];
                 result->oprs[operand].basereg = value->type;
 
                 if (rs && (result->oprs[operand].type & SIZE_MASK) != rs)

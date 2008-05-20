@@ -231,6 +231,7 @@ if ( !defined($output) || $output eq 'i' ) {
     print I "\tI_none = -1\n";
     print I "\n};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n\n";
+    print I "#define NCOND_OPCODES ", scalar @opcodes_cc, "\n\n";
     print I "#endif /* NASM_INSNSI_H */\n";
 
     close I;
@@ -243,9 +244,9 @@ if ( !defined($output) || $output eq 'n' ) {
 
     print N "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
-    print N "/* This file in included by names.c */\n\n";
+    print N "#include \"tables.h\"\n\n";
 
-    print N "static const char * const insn_names[] = {";
+    print N "const char * const nasm_insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes) {
 	print N "," if ( !$first );
@@ -256,7 +257,7 @@ if ( !defined($output) || $output eq 'n' ) {
     }
     print N "\n};\n\n";
     print N "/* Conditional instructions */\n";
-    print N "static const char *icn[] = {";
+    print N "const char * const nasm_cond_insn_names[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );
@@ -269,7 +270,7 @@ if ( !defined($output) || $output eq 'n' ) {
 
     print N "\n};\n\n";
     print N "/* and the corresponding opcodes */\n";
-    print N "static const enum opcode ico[] = {";
+    print N "const enum opcode nasm_cond_insn_opcodes[] = {";
     $first = 1;
     foreach $i (@opcodes_cc) {
 	print N "," if ( !$first );
@@ -278,7 +279,6 @@ if ( !defined($output) || $output eq 'n' ) {
     }
 
     print N "\n};\n";
-
     close N;
 }
 

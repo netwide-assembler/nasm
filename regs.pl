@@ -102,8 +102,8 @@ if ( $fmt eq 'h' ) {
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
     print "/* automatically generated from $file - do not edit */\n\n";
-    print "#include \"compiler.h\"\n\n";
-    print "static const char * const reg_names[] = "; $ch = '{';
+    print "#include \"tables.h\"\n\n";
+    print "const char * const nasm_reg_names[] = "; $ch = '{';
     # This one has no dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	print "$ch\n    \"${reg}\"";
@@ -112,8 +112,10 @@ if ( $fmt eq 'h' ) {
     print "\n};\n";
 } elsif ( $fmt eq 'fc' ) {
     # Output regflags.c
-    print "/* automatically generated from $file - do not edit */\n";
-    print "static const int32_t reg_flags[] = {\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
+    print "#include \"tables.h\"\n";
+    print "#include \"nasm.h\"\n\n";
+    print "const int32_t nasm_reg_flags[] = {\n";
     print "    0";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	print ",\n    ", $regs{$reg}; # Print the class of the register
@@ -121,8 +123,9 @@ if ( $fmt eq 'h' ) {
     print "\n};\n";
 } elsif ( $fmt eq 'vc' ) {
     # Output regvals.c
-    print "/* automatically generated from $file - do not edit */\n";
-    print "static const int regvals[] = {\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
+    print "#include \"tables.h\"\n\n";
+    print "const int nasm_regvals[] = {\n";
     print "    -1";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	printf ",\n    %2d", $regvals{$reg}; # Print the regval of the register
@@ -130,9 +133,11 @@ if ( $fmt eq 'h' ) {
     print "\n};\n";
 } elsif ( $fmt eq 'dc' ) {
     # Output regdis.c
-    print "/* automatically generated from $file - do not edit */\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
+    print "#include \"regs.h\"\n\n";
     foreach $class ( sort(keys(%disclass)) ) {
-	printf "static const enum reg_enum rd_%-8s[] = {", $class;
+	printf "const enum reg_enum nasm_rd_%-8s[%d] = {\n",
+		$class, scalar @{$disclass{$class}};
 	@foo = @{$disclass{$class}};
 	@bar = ();
 	for ( $i = 0 ; $i < scalar(@foo) ; $i++ ) {
@@ -143,6 +148,13 @@ if ( $fmt eq 'h' ) {
             }
 	}
 	print join(',', @bar), "};\n";
+    }
+} elsif ( $fmt eq 'dh' ) {
+    # Output regdis.h
+    print "/* automatically generated from $file - do not edit */\n";
+    foreach $class ( sort(keys(%disclass)) ) {
+	printf "const enum reg_enum nasm_rd_%-8s[%d];\n",
+		$class, scalar @{$disclass{$class}};
     }
 } else {
     die "$0: Unknown output format\n";
