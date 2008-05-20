@@ -363,12 +363,13 @@ sub decodify($) {
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
     my($codestr) = @_;
-    my $c = $codestr;
-    my @codes = ();
 
     if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
 	return byte_code_compile($1);
     }
+
+    my $c = $codestr;
+    my @codes = ();
 
     while ($c ne '') {
 	if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
@@ -505,7 +506,7 @@ sub byte_code_compile($) {
 	$opc = "\L$2";
     } else {
 	$opr = '';
-	$opc = $str;
+	$opc = "\L$str";
     }
 
     for ($i = 0; $i < length($opr); $i++) {
@@ -513,7 +514,7 @@ sub byte_code_compile($) {
     }
 
     $prefix_ok = 1;
-    foreach $op (split($opc)) {
+    foreach $op (split(/\s+/, $opc)) {
 	if ($op eq 'o16') {
 	    push(@codes, 0320);
 	} elsif ($op eq 'o32') {
