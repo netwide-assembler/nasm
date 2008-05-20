@@ -523,7 +523,7 @@ sub byte_code_compile($) {
     }
 
     $prefix_ok = 1;
-    foreach $op (split(/\s+/, $opc)) {
+    foreach $op (split(/\s*(?:\s|(?=[\/\\]))/, $opc)) {
 	if ($op eq 'o16') {
 	    push(@codes, 0320);
 	} elsif ($op eq 'o32') {
