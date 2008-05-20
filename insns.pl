@@ -678,14 +678,15 @@ sub byte_code_compile($) {
 		die "$0: $line: $op without 'i' and 's' operands\n";
 	    }
 	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
-	} elsif ($op =~ /^is4\=([0-9]+)$/) {
+	} elsif ($op =~ /^(is4|imz2)\=([0-9]+)$/) {
+	    my $imm = $2;
 	    if (!defined($oppos{'s'})) {
 		die "$0: $line: $op without 's' operand\n";
 	    }
-	    if ($1 < 0 || $1 > 15) {
-		die "$0: $line: invalid imm4 value for $op\n";
+	    if ($imm < 0 || $imm > 15) {
+		die "$0: $line: invalid imm4 value for $op: $imm\n";
 	    }
-	    push(@codes, 0173, ($oppos{'s'} << 4) + $1);
+	    push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
 	} elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$0: $op without 'i' operand\n";
