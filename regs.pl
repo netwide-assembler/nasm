@@ -136,7 +136,7 @@ if ( $fmt eq 'h' ) {
     print "/* automatically generated from $file - do not edit */\n\n";
     print "#include \"regs.h\"\n\n";
     foreach $class ( sort(keys(%disclass)) ) {
-	printf "const enum reg_enum nasm_rd_%-8s[%d] = {\n",
+	printf "const enum reg_enum nasm_rd_%-8s[%2d] = {",
 		$class, scalar @{$disclass{$class}};
 	@foo = @{$disclass{$class}};
 	@bar = ();
@@ -153,7 +153,7 @@ if ( $fmt eq 'h' ) {
     # Output regdis.h
     print "/* automatically generated from $file - do not edit */\n";
     foreach $class ( sort(keys(%disclass)) ) {
-	printf "const enum reg_enum nasm_rd_%-8s[%d];\n",
+	printf "const enum reg_enum nasm_rd_%-8s[%2d];\n",
 		$class, scalar @{$disclass{$class}};
     }
 } else {
