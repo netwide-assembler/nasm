@@ -48,7 +48,7 @@ while (<F>) {
       next;
   }
   @fields = ($1, $2, $3, $4);
-  ($formatted, $nd) = format(@fields);
+  ($formatted, $nd) = format_insn(@fields);
   if ($formatted) {
     $insns++;
     $aname = "aa_$fields[0]";
@@ -105,7 +105,7 @@ if ( !defined($output) || $output eq 'b') {
     print STDERR "Writing insnsb.c...\n";
 
     open B, ">insnsb.c";
-    
+
     print B "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
 
@@ -127,7 +127,7 @@ if ( !defined($output) || $output eq 'b') {
 
     close B;
 }
-    
+
 if ( !defined($output) || $output eq 'a' ) {
     print STDERR "Writing insnsa.c...\n";
 
@@ -284,7 +284,7 @@ if ( !defined($output) || $output eq 'n' ) {
 
 printf STDERR "Done: %d instructions\n", $insns;
 
-sub format(@) {
+sub format_insn(@) {
     my ($opcode, $operands, $codes, $flags) = @_;
     my $num, $nd = 0;
     my @bytecode;
@@ -485,20 +485,21 @@ sub startseq($) {
 #
 # r = register field in the modr/m
 # m = modr/m
-# v = VEX "v" field or DREX "src" field
+# v = VEX "v" field
+# d = DREX "dst" field
 # i = immediate
-# z = register field of is4 or imz2 field
-# 
+# s = register field of is4 or imz2 field
+#
 sub byte_code_compile($) {
     my($str) = @_;
     my $opr;
-    my $opc;	
+    my $opc;
     my @codes = ();
     my $litix = undef;
     my %oppos = ();
     my $i;
     my $op, $oq;
-    
+
     if ($str =~ /^(\S*)\:\s*(.*\S)\s*$/) {
 	$opr = "\L$1";
 	$opc = "\L$2";
@@ -506,13 +507,47 @@ sub byte_code_compile($) {
 	$opr = '';
 	$opc = $str;
     }
-    
+
     for ($i = 0; $i < length($opr); $i++) {
 	$oppos{substr($opr,$i,1)} = $i;
     }
 
+    $prefix_ok = 1;
     foreach $op (split($opc)) {
-	if ($op =~ /^[0-9a-f]{2}$/) {
+	if ($op eq 'o16') {
+	    push(@codes, 0320);
+	} elsif ($op eq 'o32') {
+	    push(@codes, 0321);
+	} elsif ($op eq 'o64') {  # 64-bit operand size requiring REX.W
+	    push(@codes, 0324);
+	} elsif ($op eq 'o64i') { # Implied 64-bit operand size (no REX.W)
+	    push(@codes, 0323);
+	} elsif ($op eq 'a16') {
+	    push(@codes, 0310);
+	} elsif ($op eq 'a32') {
+	    push(@codes, 0311);
+	} elsif ($op eq 'a64') {
+	    push(@codes, 0313);
+	} elsif ($op eq '!osp') {
+	    push(@codes, 0364);
+	} elsif ($op eq '!asp') {
+	    push(@codes, 0365);
+	} elsif ($op eq 'rex.l') {
+	    push(@codes, 0334);
+	} elsif ($op eq 'repe') {
+	    push(@codes, 0335);
+	} elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
+	    # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
+	    if ($op eq '66') {
+		push(@codes, 0366, 0331);
+	    } elsif ($op eq 'f2') {
+		push(@codes, 0332, 0364);
+	    } elsif ($op eq 'f3') {
+		push(@codes, 0333, 0364);
+	    } else {
+		push(@codes, 0331, 0364);
+	    }
+	} elsif ($op =~ /^[0-9a-f]{2}$/) {
 	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes) {
 		$codes[$litix]++;
 		push(@codes, hex $op);
@@ -520,17 +555,20 @@ sub byte_code_compile($) {
 		$litix = scalar(@codes);
 		push(@codes, 01, hex $op);
 	    }
+	    $prefix_ok = 0;
 	} elsif ($op eq '/r') {
 	    if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
 		die "$0: $line: $op requires r and m operands\n";
 	    }
 	    push(@codes, 0100 + ($oppos{'m'} << 3) + $oppos{'r'});
+	    $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-7])$:) {
 	    if (!defined($oppos{'m'})) {
 		die "$0: $line: $op requires m operand\n";
 	    }
-	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1;
-	} elsif ($op =~ /^vex\./) {
+	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1);
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^vex(|\..*)$/) {
 	    my ($m,$w,$l,$p) = (undef,2,undef,0);
 	    foreach $oq (split(/\./, $op)) {
 		if ($oq eq 'vex') {
@@ -568,4 +606,90 @@ sub byte_code_compile($) {
 	    }
 	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
 		 $m, ($w << 3)+($l << 2)+$p);
-	}   
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^drex(|..*)$/) {
+	    my ($oc0) = (0);
+	    foreach $oq (split(/\./, $op)) {
+		if ($oq eq 'drex') {
+		    #prefix
+		} elsif ($oq eq 'oc0') {
+		    $oc0 = 1;
+		} else {
+		    die "$0: $line: undefined DREX subcode: $oq\n";
+		}
+	    }
+	    if (!defined($oppos{'d'})) {
+		die "$0: $line: DREX without a 'd' operand\n";
+	    }
+	    push(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
+	} elsif ($op =~ /^(imm8|imm8u|imm8s|imm16|imm32|imm32s|imm64|imm|immx|rel8|rel16|rel32|rel64|rel|seg|simm16|simm32|simm32s)$/) {
+	    if (!defined($oppos{'i'})) {
+		die "$0: $op without 'i' operand\n";
+	    }
+	    if ($op eq 'imm8s') {
+		push(@codes, 014+$oppos{'i'});
+	    } elsif ($op eq 'imm8') {
+		push(@codes, 020+$oppos{'i'});
+	    } elsif ($op eq 'imm8u') {
+		push(@codes, 024+$oppos{'i'});
+	    } elsif ($op eq 'imm16') {
+		push(@codes, 030+$oppos{'i'});
+	    } elsif ($op eq 'imm') { # 16 or 32 bit operand
+		push(@codes, 034+$oppos{'i'});
+	    } elsif ($op eq 'imm32') {
+		push(@codes, 040+$oppos{'i'});
+	    } elsif ($op eq 'immx') { # 16, 32 or 64 bit operand
+		push(@codes, 044+$oppos{'i'});
+	    } elsif ($op eq 'rel8') {
+		push(@codes, 050+$oppos{'i'});
+	    } elsif ($op eq 'rel64') {
+		push(@codes, 054+$oppos{'i'});
+	    } elsif ($op eq 'rel16') {
+		push(@codes, 060+$oppos{'i'});
+	    } elsif ($op eq 'rel') { # 16 or 32 bit relative operand
+		push(@codes, 064+$oppos{'i'});
+	    } elsif ($op eq 'rel32') {
+		push(@codes, 070+$oppos{'i'});
+	    } elsif ($op eq 'seg') {
+		push(@codes, 074+$oppos{'i'});
+	    } elsif ($op eq 'simm16') { # imm16 that can be bytified
+		if (!defined($s_pos)) {
+		    die "$0: $line: $op without a +s byte\n";
+		}
+		$codes[$s_pos] += 0144;
+		push(@codes, 0140+$oppos{'i'});
+	    } elsif ($op eq 'simm32') { # imm32 that can be bytified
+		if (!defined($s_pos)) {
+		    die "$0: $line: $op without a +s byte\n";
+		}
+		$codes[$s_pos] += 0154;
+		push(@codes, 0150+$oppos{'i'});
+	    } elsif ($op eq 'simm32s') {
+		# imm32 that can be bytified, sign extended
+		if (!defined($s_pos)) {
+		    die "$0: $line: $op without a +s byte\n";
+		}
+		$codes[$s_pos] += 0154;
+		push(@codes, 0250+$oppos{'i'});
+	    }
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
+	    if (!defined($oppos{'i'})) {
+		die "$0: $op without 'i' operand\n";
+	    }
+	    $s_pos = scalar @codes;
+	    push(@codes, $oppos{'i'}, hex $1);
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^([0-9a-f]{2})\+c$/) {
+	    push(@codes, 0330, hex $1);
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^\\([0-7]+|x[0-9a-f]{2})$/) {
+	    # Escape to enter literal bytecodes
+	    push(@codes, oct $1);
+	} else {
+	    die "$0: unknown operation: $op\n";
+	}
+    }
+
+    return @codes;
+}
