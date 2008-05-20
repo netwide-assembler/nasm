@@ -488,7 +488,7 @@ sub startseq($) {
 # v = VEX "v" field
 # d = DREX "dst" field
 # i = immediate
-# s = register field of is4 or imz2 field
+# s = register field of is4/imz2 field
 #
 sub byte_code_compile($) {
     my($str) = @_;
@@ -673,13 +673,13 @@ sub byte_code_compile($) {
 		push(@codes, 0250+$oppos{'i'});
 	    }
 	    $prefix_ok = 0;
-	} elsif ($op eq 'is4' || $op eq 'imz2') {
+	} elsif ($op eq '/is4') {
 	    if (!defined($oppos{'i'} || !defined($oppos{'s'}))) {
 		die "$0: $line: $op without 'i' and 's' operands\n";
 	    }
 	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
 	    $prefix_ok = 0;
-	} elsif ($op =~ /^(is4|imz2)\=([0-9]+)$/) {
+	} elsif ($op =~ /^\/is4\=([0-9]+)$/) {
 	    my $imm = $2;
 	    if (!defined($oppos{'s'})) {
 		die "$0: $line: $op without 's' operand\n";
