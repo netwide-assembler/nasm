@@ -634,27 +634,27 @@ sub byte_code_compile($) {
 		die "$0: $line: DREX without a 'd' operand\n";
 	    }
 	    push(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
-	} elsif ($op =~ /^(imm8|imm8u|imm8s|imm16|imm32|imm32s|imm64|imm|immx|rel8|rel16|rel32|rel64|rel|seg|simm16|simm32|simm32s)$/) {
+	} elsif ($op =~ /^(ib\,s|ib|ib\,w|iw|iwd|id|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$0: $op without 'i' operand\n";
 	    }
-	    if ($op eq 'imm8s') {
+	    if ($op eq 'ib,s') { # Signed imm8
 		push(@codes, 014+$oppos{'i'});
-	    } elsif ($op eq 'imm8') {
+	    } elsif ($op eq 'ib') { # imm8
 		push(@codes, 020+$oppos{'i'});
-	    } elsif ($op eq 'imm8u') {
+	    } elsif ($op eq 'ib,u') { # Unsigned imm8
 		push(@codes, 024+$oppos{'i'});
-	    } elsif ($op eq 'imm16') {
+	    } elsif ($op eq 'iw') { # imm16
 		push(@codes, 030+$oppos{'i'});
-	    } elsif ($op eq 'imm') { # 16 or 32 bit operand
+	    } elsif ($op eq 'iwd') { # imm16 or imm32, depending on opsize
 		push(@codes, 034+$oppos{'i'});
-	    } elsif ($op eq 'imm32') {
+	    } elsif ($op eq 'id') { # imm32
 		push(@codes, 040+$oppos{'i'});
-	    } elsif ($op eq 'immx') { # 16, 32 or 64 bit operand
+	    } elsif ($op eq 'iwdq') { # imm16/32/64, depending on opsize
 		push(@codes, 044+$oppos{'i'});
 	    } elsif ($op eq 'rel8') {
 		push(@codes, 050+$oppos{'i'});
-	    } elsif ($op eq 'rel64') {
+	    } elsif ($op eq 'iq') {
 		push(@codes, 054+$oppos{'i'});
 	    } elsif ($op eq 'rel16') {
 		push(@codes, 060+$oppos{'i'});
@@ -664,20 +664,20 @@ sub byte_code_compile($) {
 		push(@codes, 070+$oppos{'i'});
 	    } elsif ($op eq 'seg') {
 		push(@codes, 074+$oppos{'i'});
-	    } elsif ($op eq 'simm16') { # imm16 that can be bytified
+	    } elsif ($op eq 'ibw') { # imm16 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$0: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0144;
 		push(@codes, 0140+$oppos{'i'});
-	    } elsif ($op eq 'simm32') { # imm32 that can be bytified
+	    } elsif ($op eq 'ibd') { # imm32 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$0: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
 		push(@codes, 0150+$oppos{'i'});
-	    } elsif ($op eq 'simm32s') {
-		# imm32 that can be bytified, sign extended
+	    } elsif ($op eq 'ibd,s') {
+		# imm32 that can be bytified, sign extended to 64 bits
 		if (!defined($s_pos)) {
 		    die "$0: $line: $op without a +s byte\n";
 		}
