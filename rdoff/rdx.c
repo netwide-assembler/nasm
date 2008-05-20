@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         exit(255);
     }
 
-    code = (main_fn) s->offset;
+    code = (main_fn)(size_t) s->offset;
 
     argv++, argc--;             /* remove 'rdx' from command line */
 
