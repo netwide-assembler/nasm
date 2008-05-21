@@ -1925,18 +1925,18 @@ FNMSUBSD	xmmreg,=0,xmmreg,xmmrm		\160\3\x0F\x24\x1B\132				SSE5,AMD
 FNMSUBSD	xmmreg,=0,xmmrm,xmmreg		\164\3\x0F\x24\x1B\123				SSE5,AMD
 FNMSUBSD	xmmreg,xmmreg,xmmrm,=0		\160\3\x0F\x24\x1F\121				SSE5,AMD
 FNMSUBSD	xmmreg,xmmrm,xmmreg,=0		\164\3\x0F\x24\x1F\112				SSE5,AMD
-COMPS		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x2C\121\27			SSE5,AMD
-COMPD		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x2D\121\27			SSE5,AMD
-COMSS		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x2E\121\27			SSE5,AMD
-COMSD		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x2F\121\27			SSE5,AMD
-PCOMB		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x4C\121\27			SSE5,AMD
-PCOMW		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x4D\121\27			SSE5,AMD
-PCOMD		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x4E\121\27			SSE5,AMD
-PCOMQ		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x4F\121\27			SSE5,AMD
-PCOMUB		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x6C\121\27			SSE5,AMD
-PCOMUW		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x6D\121\27			SSE5,AMD
-PCOMUD		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x6E\121\27			SSE5,AMD
-PCOMUQ		xmmreg,xmmreg,xmmrm,imm		\160\3\x0F\x25\x6F\121\27			SSE5,AMD
+COMPS		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 2c /r /drex0 ib]			SSE5,AMD,SO
+COMPD		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 2d /r /drex0 ib]			SSE5,AMD,SO
+COMSS		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 2e /r /drex0 ib]			SSE5,AMD,SD
+COMSD		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 2f /r /drex0 ib]			SSE5,AMD,SQ
+PCOMB		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4c /r /drex0 ib]			SSE5,AMD,SO
+PCOMW		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4d /r /drex0 ib]			SSE5,AMD,SO
+PCOMD		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4e /r /drex0 ib]			SSE5,AMD,SO
+PCOMQ		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4f /r /drex0 ib]			SSE5,AMD,SO
+PCOMUB		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4c /r /drex0 ib]			SSE5,AMD,SO
+PCOMUW		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4d /r /drex0 ib]			SSE5,AMD,SO
+PCOMUD		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4e /r /drex0 ib]			SSE5,AMD,SO
+PCOMUQ		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4f /r /drex0 ib]			SSE5,AMD,SO
 PERMPS		xmmreg,=0,xmmreg,xmmrm		\160\3\x0F\x24\x20\132				SSE5,AMD
 PERMPS		xmmreg,=0,xmmrm,xmmreg		\164\3\x0F\x24\x20\123				SSE5,AMD
 PERMPS		xmmreg,xmmreg,xmmrm,=0		\160\3\x0F\x24\x24\121				SSE5,AMD
