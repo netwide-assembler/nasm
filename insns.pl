@@ -226,20 +226,20 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
-    print D "\nconst struct disasm_index * const itable_VEX[32][8] = {\n";
+    print D "\nconst struct disasm_index * const itable_VEX[32][8] = {\n   ";
     for ($m = 0; $m < 32; $m++) {
-	print D "\t{\n";
+	print D " {\n";
 	for ($lp = 0; $lp < 8; $lp++) {
 	    $vp = sprintf("VEX%02X%01X", $m, $lp);
 	    if ($is_prefix{$vp}) {
-		printf D "\t\titable_%s,\n", $vp;
+		printf D "        itable_%s,\n", $vp;
 	    } else {
-		print  D "\t\tNULL,\n";
+		print  D "        NULL,\n";
 	    }
 	}
-	print D "\t},\n";
+	print D "    },";
     }
-    print D "};\n";
+    print D "\n};\n";
 
     close D;
 }
