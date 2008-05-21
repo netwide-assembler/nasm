@@ -660,21 +660,18 @@ sub byte_code_compile($) {
 	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
 		 $m, ($w << 3)+($l << 2)+$p);
 	    $prefix_ok = 0;
-	} elsif ($op =~ /^drex(|..*)$/) {
-	    my ($oc0) = (0);
-	    foreach $oq (split(/\./, $op)) {
-		if ($oq eq 'drex') {
-		    #prefix
-		} elsif ($oq eq 'oc0') {
-		    $oc0 = 1;
-		} else {
-		    die "$0: $line: undefined DREX subcode: $oq\n";
-		}
-	    }
+	} elsif ($op =~ /^\/drex([01])$/) {
+	    my $oc0 = $1;
 	    if (!defined($oppos{'d'})) {
 		die "$0: $line: DREX without a 'd' operand\n";
 	    }
-	    push(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
+	    # Note the use of *unshift* here, as opposed to *push*.
+	    # This is because NASM want this byte code at the start of
+	    # the instruction sequence, but the AMD documentation puts
+	    # this at (roughly) the position of the drex byte itself.
+	    # This allows us to match the AMD documentation and still
+	    # do the right thing.
+	    unshift(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
 	} elsif ($op =~ /^(ib\,s|ib|ib\,w|iw|iwd|id|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$0: $op without 'i' operand\n";
