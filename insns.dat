@@ -1733,6 +1733,11 @@ VMSAVE		void				\3\x0F\x01\xDB					X64,VMX
 VMWRITE		reg32,rm32			\360\2\x0F\x79\110				VMX
 VMXOFF		void				\3\x0F\x01\xC4					VMX
 VMXON		mem				\363\2\x0F\xC7\206				VMX
+;# Extended Page Tables VMX instructions
+INVEPT		reg32,mem			[rm: o32 66 0f 38 80 /r]			VMX,SO,NOLONG
+INVEPT		reg64,mem			[rm: o64nw 66 0f 38 80 /r]			VMX,SO,X64
+INVVPID		reg32,mem			[rm: o32 66 0f 38 81 /r]			VMX,SO,NOLONG
+INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,X64
 
 ;# Tejas New Instructions (SSSE3)
 PABSB		mmxreg,mmxrm			\360\3\x0F\x38\x1C\110				SSSE3,MMX,SQ
