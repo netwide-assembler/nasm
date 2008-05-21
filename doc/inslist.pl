@@ -35,28 +35,31 @@ $line = 0;
 $insns = 0;
 while (<F>) {
   $line++;
-  if ( /^\s*;/ )  # comments
+  next if (/^\s*$/);		# blank lines
+  if ( /^\s*;/ )		# comments
   {
-    if ( /^\s*;\#\s*(.+)/ )  # section subheader
+    if ( /^\s*;\#\s*(.+)/ )	# section subheader
     {
       print S "\n\\S{} $1\n\n";
     }
     next;
   }
   chomp;
-  my @entry = split;
-  next if $#entry == -1; # blank lines
-  (warn "line $line does not contain four fields\n"), next if $#entry != 3;
+  unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
+      warn "line $line does not contain four fields\n";
+      next;
+  }
+  my @entry = ($1, $2, $3, $4);
 
-  @entry[1] =~ s/ignore//;
-  @entry[1] =~ s/void//;
-  @entry[3] =~ s/ignore//;
-  @entry[3] =~ s/,SB//;
-  @entry[3] =~ s/,SM//;
-  @entry[3] =~ s/,SM2//;
-  @entry[3] =~ s/,SQ//;
-  @entry[3] =~ s/,AR2//;
-  printf S "\\c %-16s %-24s %s\n",@entry[0],@entry[1],@entry[3];
+  $entry[1] =~ s/ignore//;
+  $entry[1] =~ s/void//;
+  $entry[3] =~ s/ignore//;
+  $entry[3] =~ s/,SB//;
+  $entry[3] =~ s/,SM//;
+  $entry[3] =~ s/,SM2//;
+  $entry[3] =~ s/,SQ//;
+  $entry[3] =~ s/,AR2//;
+  printf S "\\c %-16s %-24s %s\n",$entry[0],$entry[1],$entry[3];
   $insns++;
 }
 print S "\n";
