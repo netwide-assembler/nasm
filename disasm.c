@@ -1208,18 +1208,15 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	    break;
         }
 
-    for (i = 0; i < NCOND_OPCODES; i++)
-        if ((*p)->opcode == nasm_cond_insn_opcodes[i]) {
-            slen +=
-                snprintf(output + slen, outbufsize - slen, "%s%s",
-			 nasm_cond_insn_names[i],
-                         condition_name[ins.condition]);
-            break;
-        }
-    if (i >= NCOND_OPCODES)
-        slen +=
-            snprintf(output + slen, outbufsize - slen, "%s",
-                     nasm_insn_names[(*p)->opcode]);
+    i = (*p)->opcode;
+    if (i >= FIRST_COND_OPCODE) {
+	slen += snprintf(output + slen, outbufsize - slen, "%s%s",
+			 nasm_cond_insn_names[i-FIRST_COND_OPCODE],
+			 condition_name[ins.condition]);
+    } else {
+        slen += snprintf(output + slen, outbufsize - slen, "%s",
+			 nasm_insn_names[i]);
+    }
     colon = false;
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
