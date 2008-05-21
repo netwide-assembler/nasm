@@ -687,10 +687,14 @@ sub byte_code_compile($) {
 	    }
 	    $prefix_ok = 0;
 	} elsif ($op eq '/is4') {
-	    if (!defined($oppos{'i'} || !defined($oppos{'s'}))) {
-		die "$0: $line: $op without 'i' and 's' operands\n";
+	    if (!defined($oppos{'s'})) {
+		die "$0: $line: $op without 's' operand\n";
 	    }
-	    push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
+	    if (defined($oppos{'i'})) {
+		push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
+	    } else {
+		push(@codes, 0174, $oppos{'s'});
+	    }
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^\/is4\=([0-9]+)$/) {
 	    my $imm = $1;
