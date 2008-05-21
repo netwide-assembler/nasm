@@ -490,6 +490,7 @@ sub startseq($) {
 # d = DREX "dst" field
 # i = immediate
 # s = register field of is4/imz2 field
+# - = implicit (unencoded) operand
 #
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".

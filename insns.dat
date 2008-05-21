@@ -2080,13 +2080,13 @@ VBLENDPS	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0c /r ib]		AVX,SANDYBRIDG
 VBLENDPS	ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SY
 VBLENDPS	ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SY
 VBLENDVPD	xmmreg,xmmreg,xmmrm,xmmrm	[rvms:	vex.nds.128.66.0f3a 4b /r /is4]		AVX,SANDYBRIDGE,SO
-VBLENDVPD	xmmreg,xmmrm,xmm0		[rm:	vex.128.66.0f38 15 /r]			AVX,SANDYBRIDGE,SO
+VBLENDVPD	xmmreg,xmmrm,xmm0		[rm-:	vex.128.66.0f38 15 /r]			AVX,SANDYBRIDGE,SO
 VBLENDVPD	ymmreg,ymmreg,ymmrm,ymmrm	[rvms:	vex.nds.256.66.0f3a 4b /r /is4]		AVX,SANDYBRIDGE,SY
-VBLENDVPD	ymmreg,ymmrm,ymm0		[rm:	vex.256.66.0f38 15 /r]			AVX,SANDYBRIDGE,SY
+VBLENDVPD	ymmreg,ymmrm,ymm0		[rm-:	vex.256.66.0f38 15 /r]			AVX,SANDYBRIDGE,SY
 VBLENDVPS	xmmreg,xmmreg,xmmrm,xmmrm	[rvms:	vex.nds.128.66.0f3a 4a /r /is4]		AVX,SANDYBRIDGE,SO
-VBLENDVPS	xmmreg,xmmrm,xmm0		[rm:	vex.128.66.0f38 14 /r]			AVX,SANDYBRIDGE,SO
+VBLENDVPS	xmmreg,xmmrm,xmm0		[rm-:	vex.128.66.0f38 14 /r]			AVX,SANDYBRIDGE,SO
 VBLENDVPS	ymmreg,ymmreg,ymmrm,ymmrm	[rvms:	vex.nds.256.66.0f3a 4a /r /is4]		AVX,SANDYBRIDGE,SY
-VBLENDVPD	ymmreg,ymmrm,ymm0		[rm:	vex.256.66.0f38 14 /r]			AVX,SANDYBRIDGE,SY
+VBLENDVPD	ymmreg,ymmrm,ymm0		[rm-:	vex.256.66.0f38 14 /r]			AVX,SANDYBRIDGE,SY
 VBROADCASTSS	xmmreg,mem			[rm:	vex.128.66.0f38 18 /r]			AVX,SANDYBRIDGE,SD
 VBROADCASTSS	ymmreg,mem			[rm:	vex.256.66.0f38 18 /r]			AVX,SANDYBRIDGE,SD
 VBROADCASTSD	ymmreg,mem			[rm:	vex.256.66.0f38 19 /r]			AVX,SANDYBRIDGE,SQ
