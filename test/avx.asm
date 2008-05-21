@@ -1,4 +1,6 @@
 		bits 64
+		blendvpd	xmm2,xmm1,xmm0
+
 		vblendvpd	xmm2,xmm1,xmm0,xmm0
 		vblendvpd	xmm2,xmm1,xmm0
 		vblendvpd	ymm2,ymm1,ymm0,ymm0
