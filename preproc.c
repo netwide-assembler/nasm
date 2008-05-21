@@ -1074,7 +1074,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
         }
 
         for (r = p, s = ourcopy; *r; r++) {
-	    if (r > p+MAX_KEYWORD)
+	    if (r >= p+MAX_KEYWORD)
 		return tokval->t_type = TOKEN_ID; /* Not a keyword */
             *s++ = tolower(*r);
 	}
