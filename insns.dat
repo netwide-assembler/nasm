@@ -1264,9 +1264,11 @@ TEST		rm64,imm			\324\1\xF7\200\41				X64,SM
 TEST		mem,imm8			\1\xF6\200\21					8086,SM
 TEST		mem,imm16			\320\1\xF7\200\31				8086,SM
 TEST		mem,imm32			\321\1\xF7\200\41				386,SM
-UD0		void				\360\2\x0F\xFF					286,UNDOC
+UD0		void				\2\x0F\xFF					286,UNDOC
 UD1		void				\2\x0F\xB9					286,UNDOC
+UD2B		void				\2\x0F\xB9					286,UNDOC,ND
 UD2		void				\2\x0F\x0B					286
+UD2A		void				\2\x0F\x0B					286,ND
 UMOV		mem,reg8			\360\2\x0F\x10\101				386,UNDOC,SM,ND
 UMOV		reg8,reg8			\360\2\x0F\x10\101				386,UNDOC,ND
 UMOV		mem,reg16			\360\320\2\x0F\x11\101				386,UNDOC,SM,ND
