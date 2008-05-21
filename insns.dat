@@ -2636,6 +2636,14 @@ VPERMIL2PS	xmmreg,xmmreg,xmmreg,xmmrm,imm	[rvsmi: vex.nds.128.66.0f3a.w1 48 /r /
 VPERMIL2PS	ymmreg,ymmreg,ymmrm,ymmreg,imm	[rvmsi: vex.nds.256.66.0f3a.w0 48 /r /is4]	AVX,SANDYBRIDGE,SY
 VPERMIL2PS	ymmreg,ymmreg,ymmreg,ymmrm,imm	[rvsmi: vex.nds.256.66.0f3a.w1 48 /r /is4]	AVX,SANDYBRIDGE,SY
 
+;# Intel Carry-Less Multiplication instructions (CLMUL)
+; Again, no idea what CPU flag for these...
+PCLMULLQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 00]			SSE,SANDYBRIDGE,SO
+PCLMULHQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 01]			SSE,SANDYBRIDGE,SO
+PCLMULLQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 02]			SSE,SANDYBRIDGE,SO
+PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 03]			SSE,SANDYBRIDGE,SO
+PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,SANDYBRIDGE,SO
+
 ;# VIA (Centaur) security instructions
 XSTORE		void				\360\3\x0F\xA7\xC0				PENT,CYRIX
 XCRYPTECB	void				\363\3\x0F\xA7\xC8				PENT,CYRIX
