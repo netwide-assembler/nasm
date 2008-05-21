@@ -571,7 +571,7 @@ sub byte_code_compile($) {
 	    push(@codes, 0321);
 	} elsif ($op eq 'o64') {  # 64-bit operand size requiring REX.W
 	    push(@codes, 0324);
-	} elsif ($op eq 'o64i') { # Implied 64-bit operand size (no REX.W)
+	} elsif ($op eq 'o64nw') { # Implied 64-bit operand size (no REX.W)
 	    push(@codes, 0323);
 	} elsif ($op eq 'a16') {
 	    push(@codes, 0310);
