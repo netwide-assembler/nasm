@@ -14,6 +14,15 @@
 # This should match MAX_OPERANDS from nasm.h
 $MAX_OPERANDS = 5;
 
+# Add VEX prefixes
+@vexlist = ();
+for ($m = 0; $m < 32; $m++) {
+    for ($lp = 0; $lp < 8; $lp++) {
+	push(@vexlist, sprintf("VEX%02X%01X", $m, $lp));
+    }
+}
+@disasm_prefixes = (@vexlist, @disasm_prefixes);
+
 print STDERR "Reading insns.dat...\n";
 
 @args   = ();
@@ -182,8 +191,20 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
+    @prefix_list = ();
     foreach $h (@disasm_prefixes, '') {
-	$is_prefix{$h} = 1;
+	for ($c = 0; $c < 256; $c++) {
+	    $nn = sprintf("%s%02X", $h, $c);
+	    if ($is_prefix{$nn} || defined($dinstables{$nn})) {
+		# At least one entry in this prefix table
+		push(@prefix_list, $h);
+		$is_prefix{$h} = 1;
+		last;
+	    }
+	}
+    }
+
+    foreach $h (@prefix_list) {
 	print D "\n";
 	print D "static " unless ($h eq '');
 	print D "const struct disasm_index ";
@@ -202,8 +223,23 @@ if ( !defined($output) || $output eq 'd' ) {
 		printf D "    { NULL, 0 },\n";
 	    }
 	}
-    print D "};\n";
+	print D "};\n";
     }
+
+    print D "\nconst struct disasm_index * const itable_VEX[32][8] = {\n";
+    for ($m = 0; $m < 32; $m++) {
+	print D "\t{\n";
+	for ($lp = 0; $lp < 8; $lp++) {
+	    $vp = sprintf("VEX%02X%01X", $m, $lp);
+	    if ($is_prefix{$vp}) {
+		printf D "\t\titable_%s,\n", $vp;
+	    } else {
+		print  D "\t\tNULL,\n";
+	    }
+	}
+	print D "\t},\n";
+    }
+    print D "};\n";
 
     close D;
 }
@@ -464,8 +500,10 @@ sub startseq($) {
       } elsif ($c0 == 0 || $c0 == 0340) {
 	  return $prefix;
       } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
-	  shift(@codes);	# Skip VEX control bytes
-	  shift(@codes);
+	  my $m,$wlp,$vxp;
+	  $m   = shift(@codes);
+	  $wlp = shift(@codes);
+	  $prefix .= sprintf('VEX%02X%01X', $m, $wlp & 7);
       } elsif ($c0 >= 0172 && $c0 <= 174) {
 	  shift(@codes);	# Skip is4 control byte
       } else {

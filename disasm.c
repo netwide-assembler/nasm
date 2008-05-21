@@ -1021,6 +1021,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     segover = NULL;
     origdata = data;
 
+    ix = itable;
+
     end_prefix = false;
     while (!end_prefix) {
 	switch (*data) {
@@ -1028,9 +1030,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	case 0xF3:
             prefix.rep = *data++;
 	    break;
+
 	case 0xF0:
             prefix.lock = *data++;
 	    break;
+
 	case 0x2E:
 	    segover = "cs", prefix.seg = *data++;
 	    break;
@@ -1049,6 +1053,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	case 0x65:
 	    segover = "gs", prefix.seg = *data++;
 	    break;
+
 	case 0x66:
 	    prefix.osize = (segsize == 16) ? 32 : 16;
 	    prefix.osp = *data++;
@@ -1057,6 +1062,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	    prefix.asize = (segsize == 32) ? 16 : 32;
 	    prefix.asp = *data++;
 	    break;
+
 	case 0xC4:
 	case 0xC5:
 	    if (segsize == 64 || (data[1] & 0xc0) == 0xc0) {
@@ -1078,8 +1084,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex_v = (~prefix.vex[1] >> 3) & 15;
 		prefix.vex_lp = prefix.vex[1] & 7;
 	    }
+
+	    ix = itable_VEX[prefix.vex_m][prefix.vex_lp];
 	    end_prefix = true;
 	    break;
+
 	case REX_P + 0x0:
 	case REX_P + 0x1:
 	case REX_P + 0x2:
@@ -1103,6 +1112,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	    }
 	    end_prefix = true;
 	    break;
+
 	default:
 	    end_prefix = true;
 	    break;
@@ -1113,8 +1123,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     best_p = NULL;
     best_pref = INT_MAX;
 
+    if (!ix)
+	return 0;		/* No instruction table at all... */
+
     dp = data;
-    ix = itable + *dp++;
+    ix += *dp++;
     while (ix->n == -1) {
 	ix = (const struct disasm_index *)ix->p + *dp++;
     }

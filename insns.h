@@ -32,6 +32,7 @@ struct disasm_index {
 /* Tables for the assembler and disassembler, respectively */
 extern const struct itemplate * const nasm_instructions[];
 extern const struct disasm_index itable[256];
+extern const struct disasm_index * const itable_VEX[32][8];
 
 /* Common table for the byte codes */
 extern const uint8_t nasm_bytecodes[];
