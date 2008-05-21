@@ -284,36 +284,14 @@ if ( !defined($output) || $output eq 'n' ) {
 
     print N "const char * const nasm_insn_names[] = {";
     $first = 1;
-    foreach $i (@opcodes) {
+    foreach $i (@opcodes, @opcodes_cc) {
 	print N "," if ( !$first );
 	$first = 0;
 	$ilower = $i;
+	$ilower =~ s/cc$//;	# Remove conditional cc suffix
 	$ilower =~ tr/A-Z/a-z/;	# Change to lower case (Perl 4 compatible)
 	print N "\n\t\"${ilower}\"";
     }
-    print N "\n};\n\n";
-    print N "/* Conditional instructions */\n";
-    print N "const char * const nasm_cond_insn_names[] = {";
-    $first = 1;
-    foreach $i (@opcodes_cc) {
-	print N "," if ( !$first );
-	$first = 0;
-	$ilower = $i;
-	$ilower =~ s/cc$//;		# Skip cc suffix
-	$ilower =~ tr/A-Z/a-z/;	# Change to lower case (Perl 4 compatible)
-	print N "\n\t\"${ilower}\"";
-    }
-
-    print N "\n};\n\n";
-    print N "/* and the corresponding opcodes */\n";
-    print N "const enum opcode nasm_cond_insn_opcodes[] = {";
-    $first = 1;
-    foreach $i (@opcodes_cc) {
-	print N "," if ( !$first );
-	$first = 0;
-	print N "\n\tI_$i";
-    }
-
     print N "\n};\n";
     close N;
 }

@@ -21,8 +21,6 @@ extern const char * const * nasm_stdmac_after_tasm;
 
 /* insnsn.c */
 extern const char * const nasm_insn_names[];
-extern const char * const nasm_cond_insn_names[];
-extern const enum opcode nasm_cond_insn_opcodes[];
 
 /* --- From regs.dat via regs.pl: --- */
 
