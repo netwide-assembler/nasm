@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fbin -oavx.bin; Files=.stdout .stderr avx.bin
+;Testname=optimized;   Arguments=-Ox -fbin -oavx.bin; Files=.stdout .stderr avx.bin
+
 		bits 64
 		vblendvpd	xmm2,xmm1,xmm0,xmm0
 		vblendvpd	xmm2,xmm1,xmm0
