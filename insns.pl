@@ -406,6 +406,8 @@ sub hexstr(@) {
 # \1[0123]     mean byte plus register value
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
+# \17[234]     skip is4 control byte
+# \26x \270    skip VEX control bytes
 sub startseq($) {
   my ($codestr) = @_;
   my $word, @range;
@@ -461,11 +463,11 @@ sub startseq($) {
 	  return addprefix($prefix, $c1..($c1+15));
       } elsif ($c0 == 0 || $c0 == 0340) {
 	  return $prefix;
-      } elsif (($c0 & ~3) == 0260 || $c0 == 270) {
+      } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	  shift(@codes);	# Skip VEX control bytes
 	  shift(@codes);
-	  shift(@codes);
-      } elsif ($c0 == 0172) {
-	  shift(@codes);
+      } elsif ($c0 >= 0172 && $c0 <= 174) {
+	  shift(@codes);	# Skip is4 control byte
       } else {
 	  # We really need to be able to distinguish "forbidden"
 	  # and "ignorable" codes here
