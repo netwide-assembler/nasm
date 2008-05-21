@@ -2025,6 +2025,15 @@ GETSEC		void				\2\x0F\x37					KATMAI
 PFRCP		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x86			PENT,3DNOW,SQ,CYRIX
 PFRSQRT		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x87			PENT,3DNOW,SQ,CYRIX
 												
+;# Intel new instructions in ???
+; Is NEHALEM right here?
+MOVBE		reg16,mem16			[rm:	o16 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		reg32,mem32			[rm:	o32 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		reg64,mem64			[rm:	o64 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		mem16,reg16			[mr:	o16 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		mem32,reg32			[mr:	o32 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		mem64,reg64			[mr:	o64 0f 38 f1 /r]			NEHALEM,SM
+
 ;# Intel AES instructions
 ; Is NEHALEM right here?
 AESENC		xmmreg,xmmrm			[rm:	66 0f 38 dc /r]				NEHALEM,SO
