@@ -372,6 +372,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int i, c;
     struct operand *opx;
     int s_field_for = -1;	/* No 144/154 series code encountered */
+    bool vex_ok = false;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -714,6 +715,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	    opx->segment |= SEG_RMREG;
 	    opx->basereg = prefix->vex_v;
+	    vex_ok = true;
 	    break;
 	}
 
@@ -747,6 +749,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    if (prefix->vex_v != 0)
 		return false;
 
+	    vex_ok = true;
 	    break;
 	}
 
@@ -919,6 +922,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    return false;	/* Unknown code */
 	}
     }
+
+    if (!vex_ok && (ins->rex & REX_V))
+	return false;
 
     /* REX cannot be combined with DREX or VEX */
     if ((ins->rex & (REX_D|REX_V)) && (prefix->rex & REX_P))
