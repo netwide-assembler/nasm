@@ -114,6 +114,10 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
         return R_RCX;
     if (!(FPU0 & ~regflags))
         return R_ST0;
+    if (!(XMM0 & ~regflags))
+	return R_XMM0;
+    if (!(YMM0 & ~regflags))
+	return R_YMM0;
     if (!(REG_CS & ~regflags))
         return (regval == 1) ? R_CS : 0;
     if (!(REG_DESS & ~regflags))
@@ -884,16 +888,19 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0361:
 	    if (!prefix->osp || prefix->rep)
 		return false;
+	    o_used = true;
 	    break;
 
 	case 0362:
 	    if (prefix->osp || prefix->rep != 0xf2)
 		return false;
+	    drep = 0;
 	    break;
 
 	case 0363:
 	    if (prefix->osp || prefix->rep != 0xf3)
 		return false;
+	    drep = 0;
 	    break;
 
 	case 0364:
