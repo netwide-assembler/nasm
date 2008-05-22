@@ -371,7 +371,7 @@ void declare_as_global(char *label, char *special, efunc error)
 
 int init_labels(void)
 {
-    ltab = hash_init();
+    ltab = hash_init(HASH_LARGE);
 
     ldata = lfree = (union label *)nasm_malloc(LBLK_SIZE);
     init_block(lfree);

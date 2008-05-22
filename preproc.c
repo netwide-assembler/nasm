@@ -128,7 +128,7 @@ struct MMacro {
  */
 struct Context {
     Context *next;
-    SMacro *localmac;
+    struct hash_table *localmac;
     char *name;
     uint32_t number;
 };
@@ -523,15 +523,13 @@ static void free_mmacro(MMacro * m)
 /*
  * Free all currently defined macros, and free the hash tables
  */
-static void free_macros(void)
+static void free_smacro_table(struct hash_table *smt)
 {
-    struct hash_tbl_node *it;
-    const char *key;
     SMacro *s;
-    MMacro *m;
+    const char *key;
+    struct hash_tbl_node *it = NULL;
 
-    it = NULL;
-    while ((s = hash_iterate(smacros, &it, &key)) != NULL) {
+    while ((s = hash_iterate(smt, &it, &key)) != NULL) {
 	nasm_free((void *)key);
 	while (s) {
 	    SMacro *ns = s->next;
@@ -541,10 +539,17 @@ static void free_macros(void)
 	    s = ns;
 	}
     }
-    hash_free(smacros);
+    hash_free(smt);
+}
+
+static void free_mmacro_table(struct hash_table *mmt)
+{
+    MMacro *m;
+    const char *key;
+    struct hash_tbl_node *it = NULL;
 
     it = NULL;
-    while ((m = hash_iterate(mmacros, &it, &key)) != NULL) {
+    while ((m = hash_iterate(mmt, &it, &key)) != NULL) {
 	nasm_free((void *)key);
 	while (m) {
 	    MMacro *nm = m->next;
@@ -552,7 +557,13 @@ static void free_macros(void)
 	    m = nm;
 	}
     }
-    hash_free(mmacros);
+    hash_free(mmt);
+}
+
+static void free_macros(void)
+{
+    free_smacro_table(smacros);
+    free_mmacro_table(mmacros);
 }
 
 /*
@@ -560,8 +571,8 @@ static void free_macros(void)
  */
 static void init_macros(void)
 {
-    smacros = hash_init();
-    mmacros = hash_init();
+    smacros = hash_init(HASH_LARGE);
+    mmacros = hash_init(HASH_LARGE);
 }
 
 /*
@@ -570,19 +581,44 @@ static void init_macros(void)
 static void ctx_pop(void)
 {
     Context *c = cstk;
-    SMacro *smac, *s;
 
     cstk = cstk->next;
-    smac = c->localmac;
-    while (smac) {
-        s = smac;
-        smac = smac->next;
-        nasm_free(s->name);
-        free_tlist(s->expansion);
-        nasm_free(s);
-    }
+    free_smacro_table(c->localmac);
     nasm_free(c->name);
     nasm_free(c);
+}
+
+/*
+ * Search for a key in the hash index; adding it if necessary
+ * (in which case we initialize the data pointer to NULL.)
+ */
+static void **
+hash_findi_add(struct hash_table *hash, const char *str)
+{
+    struct hash_insert hi;
+    void **r;
+    char *strx;
+
+    r = hash_findi(hash, str, &hi);
+    if (r)
+	return r;
+
+    strx = nasm_strdup(str);	/* Use a more efficient allocator here? */
+    return hash_add(&hi, strx, NULL);
+}
+
+/*
+ * Like hash_findi, but returns the data element rather than a pointer
+ * to it.  Used only when not adding a new element, hence no third
+ * argument.
+ */
+static void *
+hash_findix(struct hash_table *hash, const char *str)
+{
+    void **p;
+
+    p = hash_findi(hash, str, NULL);
+    return p ? *p : NULL;
 }
 
 #define BUF_DELTA 512
@@ -1197,7 +1233,7 @@ static Context *get_ctx(char *name, bool all_contexts)
 
     do {
         /* Search for this smacro in found context */
-        m = ctx->localmac;
+        m = hash_findix(ctx->localmac, name);
         while (m) {
             if (!mstrcmp(m->name, name, m->casesense))
                 return ctx;
@@ -1264,39 +1300,6 @@ static FILE *inc_fopen(char *file)
 }
 
 /*
- * Search for a key in the hash index; adding it if necessary
- * (in which case we initialize the data pointer to NULL.)
- */
-static void **
-hash_findi_add(struct hash_table *hash, const char *str)
-{
-    struct hash_insert hi;
-    void **r;
-    char *strx;
-
-    r = hash_findi(hash, str, &hi);
-    if (r)
-	return r;
-
-    strx = nasm_strdup(str);	/* Use a more efficient allocator here? */
-    return hash_add(&hi, strx, NULL);
-}
-
-/*
- * Like hash_findi, but returns the data element rather than a pointer
- * to it.  Used only when not adding a new element, hence no third
- * argument.
- */
-static void *
-hash_findix(struct hash_table *hash, const char *str)
-{
-    void **p;
-
-    p = hash_findi(hash, str, NULL);
-    return p ? *p : NULL;
-}
-
-/*
  * Determine if we should warn on defining a single-line macro of
  * name `name', with `nparam' parameters. If nparam is 0 or -1, will
  * return true if _any_ single-line macro of that name is defined.
@@ -1324,13 +1327,13 @@ smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
     SMacro *m;
 
     if (ctx) {
-        m = ctx->localmac;
+        m = (SMacro *) hash_findix(ctx->localmac, name);
     } else if (name[0] == '%' && name[1] == '$') {
 	if (cstk)
             ctx = get_ctx(name, false);
         if (!ctx)
             return false;       /* got to return _something_ */
-        m = ctx->localmac;
+        m = (SMacro *) hash_findix(ctx->localmac, name);
     } else {
 	m = (SMacro *) hash_findix(smacros, name);
     }
@@ -1692,11 +1695,8 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 	    free_tlist(smac->expansion);
 	}
     } else {
-	if (!ctx)
-	    smhead = (SMacro **) hash_findi_add(smacros, mname);
-	else
-	    smhead = &ctx->localmac;
-
+	smhead = (SMacro **) hash_findi_add(ctx ? ctx->localmac : smacros,
+					    mname);
 	smac = nasm_malloc(sizeof(SMacro));
 	smac->next = *smhead;
 	*smhead = smac;
@@ -1716,10 +1716,7 @@ static void undef_smacro(Context *ctx, const char *mname)
 {
     SMacro **smhead, *s, **sp;
 
-    if (!ctx)
-	smhead = (SMacro **) hash_findi(smacros, mname, NULL);
-    else
-	smhead = &ctx->localmac;
+    smhead = (SMacro **)hash_findi(ctx ? ctx->localmac : smacros, mname, NULL);
 
     if (smhead) {
 	/*
@@ -2085,7 +2082,7 @@ static int do_directive(Token * tline)
             error(ERR_WARNING, "trailing garbage after `%%push' ignored");
         ctx = nasm_malloc(sizeof(Context));
         ctx->next = cstk;
-        ctx->localmac = NULL;
+        ctx->localmac = hash_init(HASH_SMALL);
         ctx->name = nasm_strdup(tline->text);
         ctx->number = unique++;
         cstk = ctx;
@@ -3052,11 +3049,10 @@ again:
                 ctx = get_ctx(mname, true);
             else
                 ctx = NULL;
-            if (!ctx) {
-		head = (SMacro *) hash_findix(smacros, mname);
-	    } else {
-                head = ctx->localmac;
-	    }
+
+	    head = (SMacro *) hash_findix(ctx ? ctx->localmac : smacros,
+					  mname);
+
             /*
              * We've hit an identifier. As in is_mmacro below, we first
              * check whether the identifier is a single-line macro at

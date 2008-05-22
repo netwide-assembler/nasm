@@ -11,7 +11,6 @@
 #include "nasm.h"
 #include "hashtbl.h"
 
-#define HASH_INITIAL_SIZE	64
 #define HASH_MAX_LOAD		2 /* Higher = more memory-efficient, slower */
 
 static struct hash_tbl_node *alloc_table(size_t newsize)
@@ -22,14 +21,14 @@ static struct hash_tbl_node *alloc_table(size_t newsize)
     return newtbl;
 }
 
-struct hash_table *hash_init(void)
+struct hash_table *hash_init(size_t size)
 {
     struct hash_table *head = nasm_malloc(sizeof(struct hash_table));
 
-    head->table    = alloc_table(HASH_INITIAL_SIZE);
+    head->table    = alloc_table(size);
     head->load     = 0;
-    head->size     = HASH_INITIAL_SIZE;
-    head->max_load = HASH_INITIAL_SIZE*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
+    head->size     = size;
+    head->max_load = size*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
 
     return head;
 }
