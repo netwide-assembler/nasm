@@ -599,6 +599,7 @@ sub byte_code_compile($) {
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^vex(|\..*)$/) {
 	    my ($m,$w,$l,$p) = (undef,2,undef,0);
+	    my $has_nds = 0;
 	    foreach $oq (split(/\./, $op)) {
 		if ($oq eq 'vex') {
 		    # prefix
@@ -628,12 +629,16 @@ sub byte_code_compile($) {
 		    if (!defined($oppos{'v'})) {
 			die "$0: $line: vex.$oq without 'v' operand\n";
 		    }
+		    $has_nds = 1;
 		} else {
 		    die "$0: $line: undefined VEX subcode: $oq\n";
 		}
 	    }
 	    if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
 		die "$0: $line: missing fields in VEX specification\n";
+	    }
+	    if (defined($oppos{'v'}) && !$has_nds) {
+		die "$0: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
 	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
 		 $m, ($w << 3)+($l << 2)+$p);
