@@ -64,9 +64,11 @@
  * VEX prefixes are followed by the sequence:
  * \mm\wlp         where mm is the M field; and wlp is:
  *                 00 0ww lpp
- *                 ww = 0 for W = 0
- *                 ww = 1 for W = 1
- *                 ww = 2 for W used as REX.W
+ *                 [w0] ww = 0 for W = 0
+ *                 [w1] ww = 1 for W = 1
+ *                 [wx] ww = 2 for W don't care (always assembled as 0)
+ *                 [ww] ww = 3 for W used as REX.W
+ *
  *
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
@@ -1159,13 +1161,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	}
 	switch (ins->vex_wlp & 030) {
 	case 000:
+	case 020:
 	    ins->rex &= ~REX_W;
 	    break;
 	case 010:
 	    ins->rex |= REX_W;
 	    bad32 &= ~REX_W;
 	    break;
-	default:
+	case 030:
 	    /* Follow REX_W */
 	    break;
 	}

@@ -709,9 +709,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    case 010:
 		if (!(prefix->rex & REX_W))
 		    return false;
+		ins->rex &= ~REX_W;
 		break;
-	    default:
-		break;		/* XXX: Need to do anything special here? */
+	    case 020:		/* VEX.W is a don't care */
+		ins->rex &= ~REX_W;
+		break;
+	    case 030:
+		break;
 	    }
 
 	    if ((vexwlp & 007) != prefix->vex_lp)

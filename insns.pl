@@ -611,6 +611,10 @@ sub byte_code_compile($) {
 		    $w = 0;
 		} elsif ($oq eq 'w1') {
 		    $w = 1;
+		} elsif ($oq eq 'wx') {
+		    $w = 2;
+		} elsif ($oq eq 'ww') {
+		    $w = 3;
 		} elsif ($oq eq '66') {
 		    $p = 1;
 		} elsif ($oq eq 'f3') {
