@@ -17,3 +17,16 @@
 		vpermil2ps	ymm0,ymm1,ymm2,[rdi],3
 		vpermil2ps	ymm0,ymm1,[rdi],ymm3,2
 		vpermil2ps	ymm0,ymm1,ymm2,[rdi],3
+
+		vpextrb		[rax],xmm1,0x33
+		vpextrw		[rax],xmm1,0x33
+		vpextrd		[rax],xmm1,0x33
+		vpextrq		[rax],xmm1,0x33
+		vpextrb		rax,xmm1,0x33
+		vpextrw		rax,xmm1,0x33
+		vpextrd		rax,xmm1,0x33
+		vpextrq		rax,xmm1,0x33
+		vpextrb		eax,xmm1,0x33
+		vpextrw		eax,xmm1,0x33
+		vpextrd		eax,xmm1,0x33
+;		vpextrq		eax,xmm1,0x33
