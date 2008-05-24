@@ -3230,6 +3230,69 @@ PCLMULLQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 02]			SSE,SANDYBRIDGE,SO
 PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 03]			SSE,SANDYBRIDGE,SO
 PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,SANDYBRIDGE,SO
 
+;# Intel Fused Multiply-Add instructions (FMA)
+; Sandybridge is probably wrong for these...
+VFMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 69 /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 69 /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 69 /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 69 /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 68 /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 68 /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 68 /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 68 /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDSD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6b /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMADDSD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6b /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMADDSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6a /r /is4]	FMA,SANDYBRIDGE,SD
+VFMADDSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6a /r /is4]	FMA,SANDYBRIDGE,SD
+VFMADDSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 5d /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 5d /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 5d /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 5d /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 5c /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 5c /r /is4]	FMA,SANDYBRIDGE,SO
+VFMADDSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 5c /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 5c /r /is4]	FMA,SANDYBRIDGE,SY
+VFMADDSUBSD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 5f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMADDSUBSD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 5f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMADDSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 5e /r /is4]	FMA,SANDYBRIDGE,SD
+VFMADDSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 5e /r /is4]	FMA,SANDYBRIDGE,SD
+VFMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6d /r /is4]	FMA,SANDYBRIDGE,SO
+VFMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6d /r /is4]	FMA,SANDYBRIDGE,SO
+VFMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 6d /r /is4]	FMA,SANDYBRIDGE,SY
+VFMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 6d /r /is4]	FMA,SANDYBRIDGE,SY
+VFMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6c /r /is4]	FMA,SANDYBRIDGE,SO
+VFMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6c /r /is4]	FMA,SANDYBRIDGE,SO
+VFMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 6c /r /is4]	FMA,SANDYBRIDGE,SY
+VFMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 6c /r /is4]	FMA,SANDYBRIDGE,SY
+VFMSUBSD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMSUBSD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFMSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 6e /r /is4]	FMA,SANDYBRIDGE,SD
+VFMSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 6e /r /is4]	FMA,SANDYBRIDGE,SD
+VFNMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 79 /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 79 /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 79 /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 79 /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 78 /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 78 /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 78 /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 78 /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMADDSD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7b /r /is4]	FMA,SANDYBRIDGE,SQ
+VFNMADDSD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7b /r /is4]	FMA,SANDYBRIDGE,SQ
+VFNMADDSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7a /r /is4]	FMA,SANDYBRIDGE,SD
+VFNMADDSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7a /r /is4]	FMA,SANDYBRIDGE,SD
+VFNMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7d /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7d /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 7d /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 7d /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7c /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7c /r /is4]	FMA,SANDYBRIDGE,SO
+VFNMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.256.66.0f3a.w0 7c /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.256.66.0f3a.w1 7c /r /is4]	FMA,SANDYBRIDGE,SY
+VFNMSUBSD	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFNMSUBSD	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7f /r /is4]	FMA,SANDYBRIDGE,SQ
+VFNMSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7e /r /is4]	FMA,SANDYBRIDGE,SD
+VFNMSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7e /r /is4]	FMA,SANDYBRIDGE,SD
+
 ;# VIA (Centaur) security instructions
 XSTORE		void				\360\3\x0F\xA7\xC0				PENT,CYRIX
 XCRYPTECB	void				\363\3\x0F\xA7\xC8				PENT,CYRIX
