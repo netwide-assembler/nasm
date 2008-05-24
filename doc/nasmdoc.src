@@ -1167,10 +1167,11 @@ indicate what size of \i{memory operand} it refers to.
 Pseudo-instructions are things which, though not real x86 machine
 instructions, are used in the instruction field anyway because that's
 the most convenient place to put them. The current pseudo-instructions
-are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT} and \i\c{DO};
-their \i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
-\i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO} and \i\c{RESY};
-the \i\c{INCBIN} command, the \i\c{EQU} command, and the \i\c{TIMES} prefix.
+are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO} and
+\i\c{DY}; their \i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
+\i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO} and \i\c{RESY}; the
+\i\c{INCBIN} command, the \i\c{EQU} command, and the \i\c{TIMES}
+prefix.
 
 
 \S{db} \c{DB} and friends: Declaring initialized Data
