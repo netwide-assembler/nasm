@@ -735,7 +735,8 @@ static int coff_directives(char *directive, char *value, int pass)
 		}
 	    }
 	    if (n == nsyms) {
-		error(ERR_FATAL,"`safeseh' directive requires valid symbol");
+		error(ERR_NONFATAL,
+		      "`safeseh' directive requires valid symbol");
 	    }
 	}
 	return 1;
