@@ -68,6 +68,9 @@
 /* Flag which version of COFF we are currently outputting. */
 static bool win32, win64;
 
+static int32_t imagebase_sect;
+#define WRT_IMAGEBASE "..imagebase"
+
 struct Reloc {
     struct Reloc *next;
     int32_t address;		/* relative to _start_ of section */
@@ -77,9 +80,17 @@ struct Reloc {
         ABS_SYMBOL,
         REAL_SYMBOLS
     } symbase;                  /* relocation for symbol number :) */
-    bool relative;
-    bool size64;
+    int16_t type;
 };
+
+/* possible values for Reloc->type */
+#define IMAGE_REL_AMD64_ADDR64		0x0001
+#define IMAGE_REL_AMD64_ADDR32		0x0002
+#define IMAGE_REL_AMD64_ADDR32NB	0x0003
+#define IMAGE_REL_AMD64_REL32		0x0004
+#define IMAGE_REL_I386_DIR32		0x0006
+#define IMAGE_REL_I386_DIR32NB		0x0007
+#define IMAGE_REL_I386_REL32		0x0014
 
 struct Symbol {
     char name[9];
@@ -149,11 +160,15 @@ static void coff_win32_init(FILE * fp, efunc errfunc,
 static void coff_win64_init(FILE * fp, efunc errfunc,
                             ldfunc ldef, evalfunc eval)
 {
+    extern struct ofmt of_win64;
+
     maxbits = 64;
     win32 = false; win64 = true;
     (void)ldef;                 /* placate optimizers */
     (void)eval;
     coff_gen_init(fp, errfunc);
+    imagebase_sect = seg_alloc()+1;
+    ldef(WRT_IMAGEBASE,imagebase_sect,0,NULL,false,false,&of_win64,errfunc);
 }
 
 static void coff_std_init(FILE * fp, efunc errfunc, ldfunc ldef,
@@ -343,6 +358,10 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
                 flags = RDATA_FLAGS;
             else if (!strcmp(name, ".bss"))
                 flags = BSS_FLAGS;
+	    else if (win64 && !strcmp(name, ".pdata"))
+		flags = 0x40300040; /* rdata align=4 */
+	    else if (win64 && !strcmp(name, ".xdata"))
+		flags = 0x40400040; /* rdate align=8 */
             else
                 flags = TEXT_FLAGS;
         }
@@ -371,7 +390,8 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
               " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
+	if (strcmp(name,WRT_IMAGEBASE))
+            error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
         return;
     }
 
@@ -421,11 +441,9 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
 }
 
 static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
-                           int relative, int size64)
+				int16_t type)
 {
     struct Reloc *r;
-
-    (void)size64;
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
@@ -446,7 +464,7 @@ static int32_t coff_add_reloc(struct Section *sect, int32_t segment,
         if (r->symbase == REAL_SYMBOLS)
             r->symbol = raa_read(bsym, segment);
     }
-    r->relative = relative;
+    r->type = type;
 
     sect->nrelocs++;
 
@@ -467,7 +485,7 @@ static void coff_out(int32_t segto, const void *data,
     uint8_t mydata[8], *p;
     int i;
 
-    if (wrt != NO_SEG) {
+    if (wrt != NO_SEG && !win64) {
         wrt = NO_SEG;           /* continue to do _something_ */
         error(ERR_NONFATAL, "WRT not supported by COFF output formats");
     }
@@ -495,6 +513,11 @@ static void coff_out(int32_t segto, const void *data,
         else
             s = sects[nsects - 1];
     }
+
+    /* magically default to 'wrt ..imagebase' in .pdata and .xdata */
+    if (win64 && wrt == NO_SEG &&
+	(!strcmp(s->name,".pdata") || !strcmp(s->name,".xdata")))
+	wrt = imagebase_sect;
 
     if (!s->data && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
@@ -533,7 +556,7 @@ static void coff_out(int32_t segto, const void *data,
                         error(ERR_NONFATAL, "COFF format does not support"
                               " segment base references");
                     } else
-                        fix = coff_add_reloc(s, segment, false, false);
+                        fix = coff_add_reloc(s, segment, IMAGE_REL_I386_DIR32);
                 }
                 p = mydata;
                 WRITELONG(p, *(int64_t *)data + fix);
@@ -553,11 +576,13 @@ static void coff_out(int32_t segto, const void *data,
                 } else
                     fix = coff_add_reloc(s, segment, false);
             } */
-                fix = coff_add_reloc(s, segment, false, true);
+                fix = coff_add_reloc(s, segment, IMAGE_REL_AMD64_ADDR64);
                 WRITEDLONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, size);
             } else {
-                fix = coff_add_reloc(s, segment, false, false);
+                fix = coff_add_reloc(s, segment,
+			wrt == imagebase_sect ?	IMAGE_REL_AMD64_ADDR32NB:
+						IMAGE_REL_AMD64_ADDR32);
                 WRITELONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, size);
             }
@@ -577,7 +602,8 @@ static void coff_out(int32_t segto, const void *data,
                 error(ERR_NONFATAL, "COFF format does not support"
                       " segment base references");
             } else
-                fix = coff_add_reloc(s, segment, true, false);
+                fix = coff_add_reloc(s, segment,
+			win64 ? IMAGE_REL_AMD64_REL32 : IMAGE_REL_I386_REL32);
             p = mydata;
             if (win32 | win64) {
                 WRITELONG(p, *(int64_t *)data + 4 - size + fix);
@@ -858,16 +884,7 @@ static void coff_write_relocs(struct Section *s)
                                 r->symbase == ABS_SYMBOL ? initsym - 1 :
                                 r->symbase == SECT_SYMBOLS ? 2 : 0),
                    coffp);
-        /*
-         * Strange: Microsoft's COFF documentation says 0x03 for an
-         * absolute relocation, but both Visual C++ and DJGPP agree
-         * that in fact it's 0x06. I'll use 0x06 until someone
-         * argues. ***** UPDATE: PE/COFF Ver.8 docs confirm this -kkanios *****
-         */
-        if (win64)
-            fwriteint16_t(r->relative ? 0x04 : r->size64 ? 0x01 : 0x02, coffp);
-        else
-            fwriteint16_t(r->relative ? 0x14 : 0x06, coffp);
+	fwriteint16_t(r->type, coffp);
     }
 }
 
