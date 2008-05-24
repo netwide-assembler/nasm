@@ -1,3 +1,16 @@
+2.03
+----
+* Add support for Intel AVX, CLMUL and FMA instructions,
+  including YMM registers.
+* "dy", "resy" and "yword" for 32-byte operands.
+* Fix some SSE5 instructions.
+* Intel INVEPT, INVVPID and MOVBE instructions.
+* Fix checking for critical expressions when the optimizer is enabled.
+* Support the DWARF debugging format for ELF targets.
+* Fix optimizations of signed bytes.
+* Fix operation on bigendian machines.
+* Fix buffer overflow in the preprocessor.
+
 2.02
 ----
 * Additional fixes for MMX operands with explicit "qword", as well as
