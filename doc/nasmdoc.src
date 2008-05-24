@@ -1169,15 +1169,15 @@ instructions, are used in the instruction field anyway because that's
 the most convenient place to put them. The current pseudo-instructions
 are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT} and \i\c{DO};
 their \i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
-\i\c{RESD}, \i\c{RESQ}, \i\c{REST} and \i\c{RESO}; the \i\c{INCBIN}
-command, the \i\c{EQU} command, and the \i\c{TIMES} prefix.
+\i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO} and \i\c{RESY};
+the \i\c{INCBIN} command, the \i\c{EQU} command, and the \i\c{TIMES} prefix.
 
 
 \S{db} \c{DB} and friends: Declaring initialized Data
 
-\i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT} and \i\c{DO} are
-used, much as in MASM, to declare initialized data in the output
-file. They can be invoked in a wide range of ways:
+\i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO} and
+\i\c{DY} are used, much as in MASM, to declare initialized data in the
+output file. They can be invoked in a wide range of ways:
 \I{floating-point}\I{character constant}\I{string constant}
 
 \c       db    0x55                ; just the byte 0x55
@@ -1194,13 +1194,13 @@ file. They can be invoked in a wide range of ways:
 \c       dq    1.234567e20         ; double-precision float
 \c       dt    1.234567e20         ; extended-precision float
 
-\c{DT} and \c{DO} do not accept \i{numeric constants} as operands.
+\c{DT}, \c{DO} and \c{DY} do not accept \i{numeric constants} as operands.
 
 
 \S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
 
-\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST} and
-\i\c{RESO} are designed to be used in the BSS section of a module:
+\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO}
+and \i\c{RESY} are designed to be used in the BSS section of a module:
 they declare \e{uninitialized} storage space. Each takes a single
 operand, which is the number of bytes, words, doublewords or whatever
 to reserve.  As stated in \k{qsother}, NASM does not support the
@@ -1214,7 +1214,7 @@ For example:
 \c buffer:         resb    64              ; reserve 64 bytes
 \c wordvar:        resw    1               ; reserve a word
 \c realarray       resq    10              ; array of ten reals
-
+\c ymmval:         resy    1               ; one YMM register
 
 \S{incbin} \i\c{INCBIN}: Including External \i{Binary Files}
 
@@ -1413,8 +1413,8 @@ the sense of character constants understood by the Pentium's
 \S{strconst} String Constants
 
 String constants are only acceptable to some pseudo-instructions,
-namely the \I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\i\c{DB} family and
-\i\c{INCBIN}.
+namely the \I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\I\c{DO}\I\c{DY}\i\c{DB}
+family and \i\c{INCBIN}.
 
 A string constant looks like a character constant, only longer. It
 is treated as a concatenation of maximum-size character constants
@@ -1429,12 +1429,12 @@ And the following are also equivalent:
 \c       dd    'nine','char','s'     ; becomes three doublewords
 \c       db    'ninechars',0,0,0     ; and really looks like this
 
-Note that when used as an operand to \c{db}, a constant like
-\c{'ab'} is treated as a string constant despite being short enough
-to be a character constant, because otherwise \c{db 'ab'} would have
-the same effect as \c{db 'a'}, which would be silly. Similarly,
-three-character or four-character constants are treated as strings
-when they are operands to \c{dw}.
+Note that when used as operands to the \c{DB} family
+pseudo-instructions, quoted strings are treated as a string constants
+even if they are short enough to be a character constant, because
+otherwise \c{db 'ab'} would have the same effect as \c{db 'a'}, which
+would be silly. Similarly, three-character or four-character constants
+are treated as strings when they are operands to \c{DW}, and so forth.
 
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
@@ -1650,11 +1650,11 @@ invent one using the macro processor.
 
 When assembling with the optimizer set to level 2 or higher (see
 \k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
-\c{DWORD}, \c{QWORD}, \c{TWORD} or \c{OWORD}), but will give them the
-smallest possible size. The keyword \c{STRICT} can be used to inhibit
-optimization and force a particular operand to be emitted in the
-specified size. For example, with the optimizer on, and in \c{BITS 16}
-mode,
+\c{DWORD}, \c{QWORD}, \c{TWORD}, \c{OWORD} or \c{YWORD}), but will
+give them the smallest possible size. The keyword \c{STRICT} can be
+used to inhibit optimization and force a particular operand to be
+emitted in the specified size. For example, with the optimizer on, and
+in \c{BITS 16} mode,
 
 \c         push dword 33
 
