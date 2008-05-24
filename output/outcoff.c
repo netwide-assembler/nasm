@@ -88,6 +88,8 @@ struct Symbol {
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
     bool is_global;              /* is it a global symbol or not? */
+    int16_t type;		/* 0 - notype, 0x20 - function */
+    int32_t namlen;		/* full name length */
 };
 
 static FILE *coffp;
@@ -382,6 +384,7 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     sym = saa_wstruct(syms);
 
     sym->strpos = pos;
+    sym->namlen = strlen(name);
     if (pos == -1)
         strcpy(sym->name, name);
     sym->is_global = !!is_global;
@@ -689,6 +692,53 @@ static int coff_directives(char *directive, char *value, int pass)
         }
         AddExport(name);
         return 1;
+    } else if (win32 && !strcmp(directive,"safeseh")) {
+	static int sxseg=-1;
+	int i;
+	if (sxseg==-1)
+	{   for (i = 0; i < nsects; i++)
+		if (!strcmp(".sxdata",sects[i]->name))
+		    break;
+	    if (i == nsects)
+		sxseg = coff_make_section(".sxdata",0x200);
+	    else
+		sxseg = i;
+	}
+	if (pass==2) {
+	    uint32_t n;
+	    saa_rewind(syms);
+	    for (n = 0; n < nsyms; n++) {
+		struct Symbol *sym = saa_rstruct(syms);
+		bool equals;
+
+		/* sym->strpos is biased by 4, because symbol
+		 * table is prefixed with table length */
+		if (sym->strpos >=4) {
+		    char *name = nasm_malloc(sym->namlen+1);
+		    saa_fread(strs,sym->strpos-4,name,sym->namlen);
+		    name[sym->namlen]='\0';
+		    equals = !strcmp(value,name);
+		    nasm_free(name);
+		}
+		else
+		    equals = !strcmp(value,sym->name);
+
+		if (equals) {
+		    /* this value arithmetics effectively reflects
+		     * initsym in coff_write(): 2 for file, 1 for
+		     * .absolute and two per each section */
+		    unsigned char value[4],*p=value;
+		    WRITELONG(p,n + 2 + 1 + nsects*2);
+		    coff_sect_write(sects[sxseg],value,4);
+		    sym->type = 0x20;
+		    break;
+		}
+	    }
+	    if (n == nsyms) {
+		error(ERR_FATAL,"`safeseh' directive requires valid symbol");
+	    }
+	}
+	return 1;
     }
     return 0;
 }
@@ -699,6 +749,21 @@ static void coff_write(void)
     int i;
 
     BuildExportTable();         /* fill in the .drectve section with -export's */
+
+    if (win32) {
+	/* add default value for @feat.00, this allows to 'link /safeseh' */
+	uint32_t n;
+
+	saa_rewind(syms);
+	for (n = 0; n < nsyms; n++) {
+            struct Symbol *sym = saa_rstruct(syms);
+	    if (sym->strpos == -1 && !strcmp("@feat.00",sym->name))
+		break;
+	}
+	if (n == nsyms)
+	    coff_deflabel("@feat.00",NO_SEG,1,0,NULL);
+    }
+
     /*
      * Work out how big the file will get. Calculate the start of
      * the `real' symbols at the same time.
@@ -806,7 +871,7 @@ static void coff_write_relocs(struct Section *s)
 }
 
 static void coff_symbol(char *name, int32_t strpos, int32_t value,
-                        int section, int type, int aux)
+                        int section, int type, int storageclass, int aux)
 {
     char padname[8];
 
@@ -820,8 +885,8 @@ static void coff_symbol(char *name, int32_t strpos, int32_t value,
     }
     fwriteint32_t(value, coffp);
     fwriteint16_t(section, coffp);
-    fwriteint16_t(0, coffp);
-    fputc(type, coffp);
+    fwriteint16_t(type, coffp);
+    fputc(storageclass, coffp);
     fputc(aux, coffp);
 }
 
@@ -833,7 +898,7 @@ static void coff_write_symbols(void)
     /*
      * The `.file' record, and the file name auxiliary record.
      */
-    coff_symbol(".file", 0L, 0L, -2, 0x67, 1);
+    coff_symbol(".file", 0L, 0L, -2, 0, 0x67, 1);
     memset(filename, 0, 18);
     strncpy(filename, coff_infile, 18);
     fwrite(filename, 18, 1, coffp);
@@ -844,7 +909,7 @@ static void coff_write_symbols(void)
     memset(filename, 0, 18);    /* useful zeroed buffer */
 
     for (i = 0; i < (uint32_t) nsects; i++) {
-        coff_symbol(sects[i]->name, 0L, 0L, i + 1, 3, 1);
+        coff_symbol(sects[i]->name, 0L, 0L, i + 1, 0, 3, 1);
         fwriteint32_t(sects[i]->len, coffp);
         fwriteint16_t(sects[i]->nrelocs, coffp);
         fwrite(filename, 12, 1, coffp);
@@ -853,7 +918,7 @@ static void coff_write_symbols(void)
     /*
      * The absolute symbol, for relative-to-absolute relocations.
      */
-    coff_symbol(".absolut", 0L, 0L, -1, 3, 0);
+    coff_symbol(".absolut", 0L, 0L, -1, 0, 3, 0);
 
     /*
      * The real symbols.
@@ -863,7 +928,7 @@ static void coff_write_symbols(void)
         struct Symbol *sym = saa_rstruct(syms);
         coff_symbol(sym->strpos == -1 ? sym->name : NULL,
                     sym->strpos, sym->value, sym->section,
-                    sym->is_global ? 2 : 3, 0);
+                    sym->type, sym->is_global ? 2 : 3, 0);
     }
 }
 
@@ -890,6 +955,9 @@ static const char *coff_stdmac[] = {
     "%endmacro",
     "%imacro export 1+.nolist",
     "[export %1]",
+    "%endmacro",
+    "%imacro safeseh 1.nolist",
+    "[safeseh %1]",
     "%endmacro",
     NULL
 };
