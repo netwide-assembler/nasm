@@ -213,7 +213,7 @@ if ( !defined($output) || $output eq 'd' ) {
 	for ($c = 0; $c < 256; $c++) {
 	    $nn = sprintf("%s%02X", $h, $c);
 	    if ($is_prefix{$nn}) {
-		die "$0: ambiguous decoding of $nn\n"
+		die "$fname: ambiguous decoding of $nn\n"
 		    if (defined($dinstables{$nn}));
 		printf D "    { itable_%s, -1 },\n", $nn;
 	    } elsif (defined($dinstables{$nn})) {
@@ -350,7 +350,7 @@ sub codesubst($) {
     while ($s =~ /\@\@CODES-([0-9A-F]+)\@\@/) {
 	my $pos = $bytecode_pos{$1};
 	if (!defined($pos)) {
-	    die "$0: no position assigned to byte code $1\n";
+	    die "$fname: no position assigned to byte code $1\n";
 	}
 	$s = $` . "nasm_bytecodes+${pos}" . "$'";
     }
@@ -395,7 +395,7 @@ sub decodify($) {
 	    $c = $2;
 	    next;
 	} else {
-	    die "$0: unknown code format in \"$codestr\"\n";
+	    die "$fname: unknown code format in \"$codestr\"\n";
 	}
     }
 
@@ -523,13 +523,11 @@ sub byte_code_compile($) {
     my $i;
     my $op, $oq;
 
-    if ($str =~ /^(\S*)\:\s*(.*\S)\s*$/) {
-	$opr = "\L$1";
-	$opc = "\L$2";
-    } else {
-	$opr = '';
-	$opc = "\L$str";
+    unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
+	die "$fname: $line: cannot parse: [$str]\n";
     }
+    $opr = "\L$2";
+    $opc = "\L$3";
 
     my $op = 0;
     for ($i = 0; $i < length($opr); $i++) {
@@ -587,13 +585,13 @@ sub byte_code_compile($) {
 	    $prefix_ok = 0;
 	} elsif ($op eq '/r') {
 	    if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
-		die "$0: $line: $op requires r and m operands\n";
+		die "$fname: $line: $op requires r and m operands\n";
 	    }
 	    push(@codes, 0100 + ($oppos{'m'} << 3) + $oppos{'r'});
 	    $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-7])$:) {
 	    if (!defined($oppos{'m'})) {
-		die "$0: $line: $op requires m operand\n";
+		die "$fname: $line: $op requires m operand\n";
 	    }
 	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1);
 	    $prefix_ok = 0;
@@ -631,18 +629,18 @@ sub byte_code_compile($) {
 		    $m = $1+0;
 		} elsif ($oq eq 'nds' || $oq eq 'ndd') {
 		    if (!defined($oppos{'v'})) {
-			die "$0: $line: vex.$oq without 'v' operand\n";
+			die "$fname: $line: vex.$oq without 'v' operand\n";
 		    }
 		    $has_nds = 1;
 		} else {
-		    die "$0: $line: undefined VEX subcode: $oq\n";
+		    die "$fname: $line: undefined VEX subcode: $oq\n";
 		}
 	    }
 	    if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
-		die "$0: $line: missing fields in VEX specification\n";
+		die "$fname: $line: missing fields in VEX specification\n";
 	    }
 	    if (defined($oppos{'v'}) && !$has_nds) {
-		die "$0: $line: 'v' operand without vex.nds or vex.ndd\n";
+		die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
 	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
 		 $m, ($w << 3)+($l << 2)+$p);
@@ -650,7 +648,7 @@ sub byte_code_compile($) {
 	} elsif ($op =~ /^\/drex([01])$/) {
 	    my $oc0 = $1;
 	    if (!defined($oppos{'d'})) {
-		die "$0: $line: DREX without a 'd' operand\n";
+		die "$fname: $line: DREX without a 'd' operand\n";
 	    }
 	    # Note the use of *unshift* here, as opposed to *push*.
 	    # This is because NASM want this byte code at the start of
@@ -661,7 +659,7 @@ sub byte_code_compile($) {
 	    unshift(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
 	} elsif ($op =~ /^(ib\,s|ib|ib\,w|iw|iwd|id|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
-		die "$0: $op without 'i' operand\n";
+		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    if ($op eq 'ib,s') { # Signed imm8
 		push(@codes, 014+$oppos{'i'});
@@ -691,20 +689,20 @@ sub byte_code_compile($) {
 		push(@codes, 074+$oppos{'i'});
 	    } elsif ($op eq 'ibw') { # imm16 that can be bytified
 		if (!defined($s_pos)) {
-		    die "$0: $line: $op without a +s byte\n";
+		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0144;
 		push(@codes, 0140+$oppos{'i'});
 	    } elsif ($op eq 'ibd') { # imm32 that can be bytified
 		if (!defined($s_pos)) {
-		    die "$0: $line: $op without a +s byte\n";
+		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
 		push(@codes, 0150+$oppos{'i'});
 	    } elsif ($op eq 'ibd,s') {
 		# imm32 that can be bytified, sign extended to 64 bits
 		if (!defined($s_pos)) {
-		    die "$0: $line: $op without a +s byte\n";
+		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
 		push(@codes, 0250+$oppos{'i'});
@@ -712,7 +710,7 @@ sub byte_code_compile($) {
 	    $prefix_ok = 0;
 	} elsif ($op eq '/is4') {
 	    if (!defined($oppos{'s'})) {
-		die "$0: $line: $op without 's' operand\n";
+		die "$fname: $line: $op without 's' operand\n";
 	    }
 	    if (defined($oppos{'i'})) {
 		push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
@@ -723,16 +721,16 @@ sub byte_code_compile($) {
 	} elsif ($op =~ /^\/is4\=([0-9]+)$/) {
 	    my $imm = $1;
 	    if (!defined($oppos{'s'})) {
-		die "$0: $line: $op without 's' operand\n";
+		die "$fname: $line: $op without 's' operand\n";
 	    }
 	    if ($imm < 0 || $imm > 15) {
-		die "$0: $line: invalid imm4 value for $op: $imm\n";
+		die "$fname: $line: invalid imm4 value for $op: $imm\n";
 	    }
 	    push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
 	    if (!defined($oppos{'i'})) {
-		die "$0: $op without 'i' operand\n";
+		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    $s_pos = scalar @codes;
 	    push(@codes, $oppos{'i'}, hex $1);
@@ -744,7 +742,7 @@ sub byte_code_compile($) {
 	    # Escape to enter literal bytecodes
 	    push(@codes, oct $1);
 	} else {
-	    die "$0: unknown operation: $op\n";
+	    die "$fname: $line: unknown operation: $op\n";
 	}
     }
 
