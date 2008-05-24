@@ -10,6 +10,7 @@
 * Fix optimizations of signed bytes.
 * Fix operation on bigendian machines.
 * Fix buffer overflow in the preprocessor.
+* SAFESEH support for Win32, IMAGEREL for Win64 (SEH).
 
 2.02
 ----
