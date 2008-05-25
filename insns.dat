@@ -2038,44 +2038,44 @@ PCOMFALSEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 4f /r /drex0 06]			SSE5,AMD,SO
 PCOMTRUEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 4f /r /drex0 07]			SSE5,AMD,SO
 PCOMQ		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 4f /r /drex0 ib]			SSE5,AMD,SO
 ; PCOMUB: aliases for specific versions first, then generic
-PCOMULTB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 00]			SSE5,AMD,SO
-PCOMULEB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 01]			SSE5,AMD,SO
-PCOMUGTB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 02]			SSE5,AMD,SO
-PCOMUGEB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 03]			SSE5,AMD,SO
-PCOMUEQB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 04]			SSE5,AMD,SO
-PCOMUNEQB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 05]			SSE5,AMD,SO
-PCOMUFALSEB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 06]			SSE5,AMD,SO
-PCOMUTRUEB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 07]			SSE5,AMD,SO
+PCOMLTUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 00]			SSE5,AMD,SO
+PCOMLEUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 01]			SSE5,AMD,SO
+PCOMGTUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 02]			SSE5,AMD,SO
+PCOMGEUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 03]			SSE5,AMD,SO
+PCOMEQUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 04]			SSE5,AMD,SO
+PCOMNEQUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 05]			SSE5,AMD,SO
+PCOMFALSEUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 06]			SSE5,AMD,SO
+PCOMTRUEUB	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6c /r /drex0 07]			SSE5,AMD,SO
 PCOMUB		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 6c /r /drex0 ib]			SSE5,AMD,SO
 ; PCOMUW: aliases for specific versions first, then generic
-PCOMULTW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 00]			SSE5,AMD,SO
-PCOMULEW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 01]			SSE5,AMD,SO
-PCOMUGTW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 02]			SSE5,AMD,SO
-PCOMUGEW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 03]			SSE5,AMD,SO
-PCOMUEQW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 04]			SSE5,AMD,SO
-PCOMUNEQW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 05]			SSE5,AMD,SO
-PCOMUFALSEW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 06]			SSE5,AMD,SO
-PCOMUTRUEW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 07]			SSE5,AMD,SO
+PCOMLTUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 00]			SSE5,AMD,SO
+PCOMLEUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 01]			SSE5,AMD,SO
+PCOMGTUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 02]			SSE5,AMD,SO
+PCOMGEUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 03]			SSE5,AMD,SO
+PCOMEQUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 04]			SSE5,AMD,SO
+PCOMNEQUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 05]			SSE5,AMD,SO
+PCOMFALSEUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 06]			SSE5,AMD,SO
+PCOMTRUEUW	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6d /r /drex0 07]			SSE5,AMD,SO
 PCOMUW		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 6d /r /drex0 ib]			SSE5,AMD,SO
 ; PCOMUD: aliases for specific versions first, then generic
-PCOMULTD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 00]			SSE5,AMD,SO
-PCOMULED	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 01]			SSE5,AMD,SO
-PCOMUGTD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 02]			SSE5,AMD,SO
-PCOMUGED	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 03]			SSE5,AMD,SO
-PCOMUEQD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 04]			SSE5,AMD,SO
-PCOMUNEQD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 05]			SSE5,AMD,SO
-PCOMUFALSED	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 06]			SSE5,AMD,SO
-PCOMUTRUED	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 07]			SSE5,AMD,SO
+PCOMLTUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 00]			SSE5,AMD,SO
+PCOMLEUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 01]			SSE5,AMD,SO
+PCOMGTUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 02]			SSE5,AMD,SO
+PCOMGEUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 03]			SSE5,AMD,SO
+PCOMEQUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 04]			SSE5,AMD,SO
+PCOMNEQUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 05]			SSE5,AMD,SO
+PCOMFALSEUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 06]			SSE5,AMD,SO
+PCOMTRUEUD	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6e /r /drex0 07]			SSE5,AMD,SO
 PCOMUD		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 6e /r /drex0 ib]			SSE5,AMD,SO
 ; PCOMUQ: aliases for specific versions first, then generic
-PCOMULTQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 00]			SSE5,AMD,SO
-PCOMULEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 01]			SSE5,AMD,SO
-PCOMUGTQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 02]			SSE5,AMD,SO
-PCOMUGEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 03]			SSE5,AMD,SO
-PCOMUEQQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 04]			SSE5,AMD,SO
-PCOMUNEQQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 05]			SSE5,AMD,SO
-PCOMUFALSEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 06]			SSE5,AMD,SO
-PCOMUTRUEQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 07]			SSE5,AMD,SO
+PCOMLTUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 00]			SSE5,AMD,SO
+PCOMLEUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 01]			SSE5,AMD,SO
+PCOMGTUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 02]			SSE5,AMD,SO
+PCOMGEUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 03]			SSE5,AMD,SO
+PCOMEQUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 04]			SSE5,AMD,SO
+PCOMNEQUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 05]			SSE5,AMD,SO
+PCOMFALSEUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 06]			SSE5,AMD,SO
+PCOMTRUEUQ	xmmreg,xmmreg,xmmrm		[drm:	0f 25 6f /r /drex0 07]			SSE5,AMD,SO
 PCOMUQ		xmmreg,xmmreg,xmmrm,imm		[drmi:	0f 25 6f /r /drex0 ib]			SSE5,AMD,SO
 PERMPS		xmmreg,=0,xmmreg,xmmrm		\160\3\x0F\x24\x20\132				SSE5,AMD
 PERMPS		xmmreg,=0,xmmrm,xmmreg		\164\3\x0F\x24\x20\123				SSE5,AMD
