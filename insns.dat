@@ -3069,8 +3069,8 @@ VPSADBW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f6 /r]		AVX,SANDYBRIDGE,SO
 VPSHUFB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 00 /r]		AVX,SANDYBRIDGE,SO
 VPSHUFB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 00 /r]		AVX,SANDYBRIDGE,SO
 VPSHUFD		xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
-VPSHUFW		xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
-VPSHUFLW	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
+VPSHUFHW	xmmreg,xmmrm,imm		[rmi:	vex.128.f3.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
+VPSHUFLW	xmmreg,xmmrm,imm		[rmi:	vex.128.f2.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
 VPSIGNB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 08 /r]		AVX,SANDYBRIDGE,SO
 VPSIGNB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 08 /r]		AVX,SANDYBRIDGE,SO
 VPSIGNW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 09 /r]		AVX,SANDYBRIDGE,SO
