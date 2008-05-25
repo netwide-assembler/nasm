@@ -2909,7 +2909,7 @@ VPBLENDVB	xmmreg,xmmrm,xmmreg		[r+vms:	vex.nds.128.66.0f3a 4c /r /is4]		AVX,SAND
 VPBLENDW	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0e /r ib]		AVX,SANDYBRIDGE,SO
 VPBLENDW	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0e /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPESTRI	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 61 /r ib]		AVX,SANDYBRIDGE,SO
-VPCMDESTRM	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 60 /r ib]		AVX,SANDYBRIDGE,SO
+VPCMPESTRM	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 60 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPISTRI	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 63 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPISTRM	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 62 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPEQB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 74 /r]		AVX,SANDYBRIDGE,SO
