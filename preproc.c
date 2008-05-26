@@ -155,8 +155,10 @@ struct Context {
 enum pp_token_type {
     TOK_NONE = 0, TOK_WHITESPACE, TOK_COMMENT, TOK_ID,
     TOK_PREPROC_ID, TOK_STRING,
-    TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER, TOK_SMAC_PARAM,
-    TOK_INTERNAL_STRING
+    TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
+    TOK_INTERNAL_STRING,
+    TOK_PREPROC_Q, TOK_PREPROC_QQ,
+    TOK_SMAC_PARAM		/* MUST BE LAST IN THE LIST!!! */
 };
 
 struct Token {
@@ -766,6 +768,13 @@ static Token *tokenize(char *line)
                 if (*p)
                     p++;
                 type = TOK_PREPROC_ID;
+	    } else if (*p == '?') {
+		type = TOK_PREPROC_Q; /* %? */
+		p++;
+		if (*p == '?') {
+		    type = TOK_PREPROC_QQ; /* %?? */
+		    p++;
+		}
             } else if (isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
                         isidchar(p[1]))) {
@@ -3260,6 +3269,12 @@ again:
                                 ttt = ttt->next;
                             }
                             tline = pcopy;
+			} else if (t->type == TOK_PREPROC_Q) {
+			    tt = new_Token(tline, TOK_ID, mname, 0);
+			    tline = tt;
+			} else if (t->type == TOK_PREPROC_QQ) {
+			    tt = new_Token(tline, TOK_ID, m->name, 0);
+			    tline = tt;
                         } else {
                             tt = new_Token(tline, t->type, t->text, 0);
                             tline = tt;
