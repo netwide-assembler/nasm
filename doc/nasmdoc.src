@@ -3,7 +3,7 @@
 \#
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{2007}
+\M{year}{2008}
 \M{author}{The NASM Development Team}
 \M{license}{All rights reserved. This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
 \M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
@@ -2002,6 +2002,36 @@ Now the above code can be written as:
 Using this feature, we can simplify references to a lot of macros (and,
 in turn, reduce typing errors).
 
+
+\S{selfref%?} The Macro Name Itself: \i\c{%?} and \i\c{%??}
+
+The special symbols \c{%?} and \c{%??} can be used to reference the
+macro name itself inside a macro expansion, this is supported for both
+single-and multi-line macros.  \c{%?} refers to the macro name as
+\e{invoked}, whereas \c{%??} refers to the macro name as
+\e{declared}.  The two are always the same for case-sensitive
+macros, but for case-insensitive macros, they can differ.
+
+For example:
+
+\c %idefine Foo mov %?,%??
+\c
+\c         foo
+\c         FOO
+
+will expand to:
+
+\c         mov foo,Foo
+\c         mov FOO,Foo
+
+The sequence:
+
+\c %idefine keyword $%?
+
+can be used to make a keyword "disappear", for example in case a new
+instruction has been used as a label in older code.  For example:
+
+\c %idefine pause $%?                  ; Hide the PAUSE instruction
 
 \S{undef} Undefining macros: \i\c{%undef}
 
