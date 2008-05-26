@@ -79,11 +79,14 @@ sub gen_hash_n($$$$) {
     %edges = ();
     foreach $k (@keys) {
 	my ($pf1, $pf2) = prehash($k, $n, $sv);
+	($pf1,$pf2) = ($pf2,$pf1) if ($pf1 > $pf2); # Canonicalize order
+
 	my $pf = "$pf1,$pf2";
 	my $e = ${$href}{$k};
 	my $xkey;
 
-	if (defined($xkey = $edges{$pf}) && ${$href}{$xkey} != $e) {
+	if (defined($xkey = $edges{$pf})) {
+	    next if ($e == ${$href}{$xkey}); # Duplicate hash, safe to ignore
 	    if (defined($run)) {
 		print STDERR "$run: Collision: $pf: $k with $xkey\n";
 	    }
