@@ -377,6 +377,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     struct operand *opx;
     int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
+    int regmask = (segsize == 64) ? 15 : 7;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -642,7 +643,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    uint8_t ximm = *data++;
 	    c = *r++;
-	    ins->oprs[c >> 3].basereg = ximm >> 4;
+	    ins->oprs[c >> 3].basereg = (ximm >> 4) & regmask;
 	    ins->oprs[c >> 3].segment |= SEG_RMREG;
 	    ins->oprs[c & 7].offset = ximm & 15;
 	}
@@ -656,7 +657,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    if ((c ^ ximm) & 15)
 		return false;
 
-	    ins->oprs[c >> 4].basereg = ximm >> 4;
+	    ins->oprs[c >> 4].basereg = (ximm >> 4) & regmask;
 	    ins->oprs[c >> 4].segment |= SEG_RMREG;
 	}
 	break;
@@ -666,7 +667,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    uint8_t ximm = *data++;
 	    c = *r++;
 
-	    ins->oprs[c].basereg = ximm >> 4;
+	    ins->oprs[c].basereg = (ximm >> 4) & regmask;
 	    ins->oprs[c].segment |= SEG_RMREG;
 	}
 	break;
