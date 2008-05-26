@@ -3538,16 +3538,17 @@ static int expand_mmacro(Token * tline)
     Token *startline = tline;
     Token *label = NULL;
     int dont_prepend = 0;
-    Token **params, *t, *tt;
+    Token **params, *t, *mtok, *tt;
     MMacro *m;
     Line *l, *ll;
     int i, nparam, *paramlen;
 
     t = tline;
     skip_white_(t);
-/*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
+    /*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
     if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
         return 0;
+    mtok = t;
     m = is_mmacro(t, &params);
     if (!m) {
         Token *last;
@@ -3646,16 +3647,27 @@ static int expand_mmacro(Token * tline)
 
         for (t = l->first; t; t = t->next) {
             Token *x = t;
-            if (t->type == TOK_PREPROC_ID &&
-                t->text[1] == '0' && t->text[2] == '0') {
-                dont_prepend = -1;
-                x = label;
-                if (!x)
-                    continue;
-            }
-            tt = *tail = new_Token(NULL, x->type, x->text, 0);
-            tail = &tt->next;
-        }
+	    switch (t->type) {
+	    case TOK_PREPROC_Q:
+		tt = *tail = new_Token(NULL, TOK_ID, mtok->text, 0);
+		break;
+	    case TOK_PREPROC_QQ:
+		tt = *tail = new_Token(NULL, TOK_ID, m->name, 0);
+		break;
+	    case TOK_PREPROC_ID:
+		if (t->text[1] == '0' && t->text[2] == '0') {
+		    dont_prepend = -1;
+		    x = label;
+		    if (!x)
+			continue;
+		}
+		/* fall through */
+	    default:
+		tt = *tail = new_Token(NULL, x->type, x->text, 0);
+		break;
+	    } 
+	    tail = &tt->next;
+	}
         *tail = NULL;
     }
 
