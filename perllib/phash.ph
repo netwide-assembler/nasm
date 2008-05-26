@@ -83,7 +83,7 @@ sub gen_hash_n($$$$) {
 	my $e = ${$href}{$k};
 	my $xkey;
 
-	if (defined($xkey = $edges{$pf})) {
+	if (defined($xkey = $edges{$pf}) && ${$href}{$xkey} != $e) {
 	    if (defined($run)) {
 		print STDERR "$run: Collision: $pf: $k with $xkey\n";
 	    }
