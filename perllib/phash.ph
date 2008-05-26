@@ -6,7 +6,6 @@
 # Requires the CPAN Graph module (tested against 0.81, 0.83, 0.84)
 #
 
-use Graph::Undirected;
 require 'random_sv_vectors.ph';
 require 'crc64.ph';
 
@@ -27,28 +26,34 @@ sub prehash($$$) {
 }
 
 #
-# Walk the assignment graph
+# Walk the assignment graph, return true on success
 #
-sub walk_graph($$$) {
-    my($gr,$n,$v) = @_;
+sub walk_graph($$$$) {
+    my($nodeval,$nodeneigh,$n,$v) = @_;
     my $nx;
 
     # print STDERR "Vertex $n value $v\n";
-    $gr->set_vertex_attribute($n,"val",$v);
+    $$nodeval[$n] = $v;
 
-    foreach $nx ($gr->neighbors($n)) {
-	die unless ($gr->has_edge_attribute($n, $nx, "hash"));
-	my $e = $gr->get_edge_attribute($n, $nx, "hash");
+    foreach $nx (@{$$nodeneigh[$n]}) {
+	# $nx -> [neigh, hash]
+	my ($o, $e) = @$nx;
 
-	# print STDERR "Edge $n=$nx value $e: ";
-
-	if ($gr->has_vertex_attribute($nx, "val")) {
-	    die if ($v+$gr->get_vertex_attribute($nx, "val") != $e);
-	    # print STDERR "ok\n";
+	# print STDERR "Edge $n,$o value $e: ";
+	my $ov;
+	if (defined($ov = $$nodeval[$o])) {
+	    if ($v+$ov != $e) {
+		# Cyclic graph with collision
+		# print STDERR "error, should be ", $v+$ov, "\n";
+		return 0;
+	    } else {
+		# print STDERR "ok\n";
+	    }
 	} else {
-	    walk_graph($gr, $nx, $e-$v);
+	    return 0 unless (walk_graph($nodeval, $nodeneigh, $o, $e-$v));
 	}
     }
+    return 1;
 }
 
 #
@@ -59,63 +64,57 @@ sub walk_graph($$$) {
 sub gen_hash_n($$$$) {
     my($n, $sv, $href, $run) = @_;
     my @keys = keys(%{$href});
-    my $i, $sv, @g;
+    my $i, $sv;
     my $gr;
     my $k, $v;
     my $gsize = 2*$n;
+    my @nodeval;
+    my @nodeneigh;
+    my %edges;
 
-    $gr = Graph::Undirected->new;
     for ($i = 0; $i < $gsize; $i++) {
-	$gr->add_vertex($i);
+	$nodeneigh[$i] = [];
     }
 
+    %edges = ();
     foreach $k (@keys) {
 	my ($pf1, $pf2) = prehash($k, $n, $sv);
+	my $pf = "$pf1,$pf2";
 	my $e = ${$href}{$k};
+	my $xkey;
 
-	if ($gr->has_edge($pf1, $pf2)) {
-	    my $xkey = $gr->get_edge_attribute($pf1, $pf2, "key");
-	    my ($xp1, $xp2) = prehash($xkey, $n, $sv);
+	if (defined($xkey = $edges{$pf})) {
 	    if (defined($run)) {
-		print STDERR "$run: Collision: $pf1=$pf2 $k with ";
-		print STDERR "$xkey ($xp1,$xp2)\n";
+		print STDERR "$run: Collision: $pf: $k with $xkey\n";
 	    }
 	    return;
 	}
 
-	# print STDERR "Edge $pf1=$pf2 value $e from $k\n";
+	# print STDERR "Edge $pf value $e from $k\n";
 
-	$gr->add_edge($pf1, $pf2);
-	$gr->set_edge_attribute($pf1, $pf2, "hash", $e);
-	$gr->set_edge_attribute($pf1, $pf2, "key", $k);
-    }
-
-    # At this point, we're good if the graph is acyclic.
-    if ($gr->is_cyclic) {
-	if (defined($run)) {
-	    print STDERR "$run: Graph is cyclic\n";
-	}
-	return;
-    }
-    
-    if (defined($run)) {
-	print STDERR "$run: Graph OK, computing vertices...\n";
+	$edges{$pf} = $k;
+	push(@{$nodeneigh[$pf1]}, [$pf2, $e]);
+	push(@{$nodeneigh[$pf2]}, [$pf1, $e]);
     }
 
     # Now we need to assign values to each vertex, so that for each
     # edge, the sum of the values for the two vertices give the value
-    # for the edge (which is our hash index.)  Since the graph is
-    # acyclic, this is always doable.
+    # for the edge (which is our hash index.)  If we find an impossible
+    # sitation, the graph was cyclic.
+    @nodeval = (undef) x $gsize;
+
     for ($i = 0; $i < $gsize; $i++) {
-	if ($gr->degree($i)) {
+	if (scalar(@{$nodeneigh[$i]})) {
 	    # This vertex has neighbors (is used)
-	    if (!$gr->has_vertex_attribute($i, "val")) {
-		walk_graph($gr,$i,0); # First vertex in a cluster
+	    if (!defined($nodeval[$i])) {
+		# First vertex in a cluster
+		unless (walk_graph(\@nodeval, \@nodeneigh, $i, 0)) {
+		    if (defined($run)) {
+			print STDERR "$run: Graph is cyclic\n";
+		    }
+		    return;
+		}
 	    }
-	    push(@g, $gr->get_vertex_attribute($i, "val"));
-	} else {
-	    # Unused vertex
-	    push(@g, undef);
 	}
     }
 
@@ -128,7 +127,7 @@ sub gen_hash_n($$$$) {
 	$$sv[0], $$sv[1];
     }
 
-    return ($n, $sv, \@g);
+    return ($n, $sv, \@nodeval);
 }
 
 #
@@ -180,7 +179,7 @@ sub read_input() {
     while (defined($l = <STDIN>)) {
 	chomp $l;
 	$l =~ s/\s*(\#.*|)$//;
-	
+
 	next if ($l eq '');
 
 	if ($l =~ /^([^=]+)\=([^=]+)$/) {
