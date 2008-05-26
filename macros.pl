@@ -25,23 +25,23 @@ print OUTPUT " */\n";
 print OUTPUT "\n";
 print OUTPUT "#include \"tables.h\"\n";
 print OUTPUT "\n";
-print OUTPUT "const char * const nasm_stdmac[] = {\n";
+print OUTPUT "const char * const nasm_stdmac[] = {";
 
 foreach $fname ( @ARGV ) {
     open(INPUT,$fname) or die "unable to open $fname\n";
-    print OUTPUT "    /* *** From $fname *** */\n";
+    print OUTPUT "\n    /* From $fname */\n";
     while (<INPUT>) {
 	$line++;
 	chomp;
 	if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
 	    $tasm_count = $index;
-	    print OUTPUT "    /* --- End of TASM macros --- */\n";
+	    print OUTPUT "    /* End of TASM macros */\n";
 	} elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
 	    $_ = $1;
 	    s/\\/\\\\/g;
 	    s/"/\\"/g;
 	    if (length > 0) {
-		print OUTPUT "    \"$_\",\n";
+		print OUTPUT "        \"$_\",\n";
 		$index++;
 	    }
 	} else {
@@ -50,7 +50,7 @@ foreach $fname ( @ARGV ) {
     }
     close(INPUT);
 }
-print OUTPUT "    NULL\n};\n\n";
+print OUTPUT "\n    NULL\n};\n\n";
 $tasm_count = $index unless ( defined($tasm_count) );
 print OUTPUT "const char * const * nasm_stdmac_after_tasm = ",
     "&nasm_stdmac[$tasm_count];\n";
