@@ -158,7 +158,8 @@ enum pp_token_type {
     TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
     TOK_INTERNAL_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
-    TOK_SMAC_PARAM		/* MUST BE LAST IN THE LIST!!! */
+    TOK_SMAC_PARAM,		/* MUST BE LAST IN THE LIST!!! */
+    TOK_MAX = INT_MAX		/* Keep compiler from reducing the range */
 };
 
 struct Token {
