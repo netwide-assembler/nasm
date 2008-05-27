@@ -116,21 +116,24 @@ if ( $fmt eq 'h' ) {
     print "#include \"tables.h\"\n";
     print "#include \"nasm.h\"\n\n";
     print "const int32_t nasm_reg_flags[] = {\n";
-    print "    0";		# Dummy entry for 0
+    printf "    0,\n";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
-	print ",\n    ", $regs{$reg}; # Print the class of the register
+	# Print the class of the register
+	printf "    %-15s /* %-5s */\n",
+		$regs{$reg}.',', $reg;
     }
-    print "\n};\n";
+    print "};\n";
 } elsif ( $fmt eq 'vc' ) {
     # Output regvals.c
     print "/* automatically generated from $file - do not edit */\n\n";
     print "#include \"tables.h\"\n\n";
     print "const int nasm_regvals[] = {\n";
-    print "    -1";		# Dummy entry for 0
+    print "    -1,\n";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
-	printf ",\n    %2d", $regvals{$reg}; # Print the regval of the register
+	# Print the x86 value of the register
+	printf "    %2d,  /* %-5s */\n", $regvals{$reg}, $reg;
     }
-    print "\n};\n";
+    print "};\n";
 } elsif ( $fmt eq 'dc' ) {
     # Output regdis.c
     print "/* automatically generated from $file - do not edit */\n\n";
