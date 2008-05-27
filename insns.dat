@@ -2652,7 +2652,7 @@ VCVTDQ2PD	ymmreg,xmmrm			[rm:	vex.256.f3.0f e6 /r]			AVX,SANDYBRIDGE,SO
 VCVTDQ2PS	xmmreg,xmmrm			[rm:	vex.128.0f 5b /r]			AVX,SANDYBRIDGE,SO
 VCVTDQ2PS	ymmreg,ymmrm			[rm:	vex.256.0f 5b /r]			AVX,SANDYBRIDGE,SY
 VCVTPD2DQ	xmmreg,xmmrm			[rm:	vex.128.f2.0f e6 /r]			AVX,SANDYBRIDGE,SO
-VCVTPD2DQ	ymmreg,ymmrm			[rm:	vex.256.f2.0f e6 /r]			AVX,SANDYBRIDGE,SY
+VCVTPD2DQ	xmmreg,ymmrm			[rm:	vex.256.f2.0f e6 /r]			AVX,SANDYBRIDGE,SY
 VCVTPD2PS	xmmreg,xmmrm			[rm:	vex.128.66.0f 5a /r]			AVX,SANDYBRIDGE,SO
 VCVTPD2PS	xmmreg,ymmrm			[rm:	vex.256.66.0f 5a /r]			AVX,SANDYBRIDGE,SY
 VCVTPS2DQ	xmmreg,xmmrm			[rm:	vex.128.66.0f 5b /r]			AVX,SANDYBRIDGE,SO
