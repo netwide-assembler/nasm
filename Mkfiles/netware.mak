@@ -182,7 +182,7 @@ parser.o: parser.c compiler.h config.h float.h insns.h insnsi.h nasm.h \
 pptok.o: pptok.c compiler.h config.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.o: preproc.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h stdscan.h tables.h tokens.h version.h
-regdis.o: regdis.c regs.h
+regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h
 regs.o: regs.c compiler.h config.h insnsi.h tables.h

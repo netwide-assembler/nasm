@@ -242,7 +242,7 @@ parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h \
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h stdscan.h tables.h tokens.h version.h
-regdis.$(O): regdis.c regs.h
+regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h
 regs.$(O): regs.c compiler.h insnsi.h tables.h
