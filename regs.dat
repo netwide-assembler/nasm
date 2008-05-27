@@ -83,4 +83,4 @@ xmm1-15	XMMREG		xmmreg		1
 
 # AVX registers
 ymm0	YMM0		ymmreg		0
-ymm1-15	YMMREG		ymmreg		0
+ymm1-15	YMMREG		ymmreg		1
