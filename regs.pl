@@ -79,6 +79,9 @@ close(REGS);
 if ( $fmt eq 'h' ) {
     # Output regs.h
     print "/* automatically generated from $file - do not edit */\n\n";
+    print "#ifndef NASM_REGS_H\n";
+    print "#define NASM_REGS_H\n\n";
+
     $expr_regs = 1;
     printf "#define EXPR_REG_START %d\n\n", $expr_regs;
     print "enum reg_enum {\n";
@@ -98,7 +101,7 @@ if ( $fmt eq 'h' ) {
     foreach $reg ( sort(keys(%regs)) ) {
 	printf "#define %-15s %2d\n", "REG_NUM_\U${reg}", $regvals{$reg};
     }
-    print "\n";
+    print "\n\n#endif /* NASM_REGS_H */\n";
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
     print "/* automatically generated from $file - do not edit */\n\n";
@@ -137,7 +140,6 @@ if ( $fmt eq 'h' ) {
 } elsif ( $fmt eq 'dc' ) {
     # Output regdis.c
     print "/* automatically generated from $file - do not edit */\n\n";
-    print "#include \"regs.h\"\n";
     print "#include \"regdis.h\"\n\n";
     foreach $class ( sort(keys(%disclass)) ) {
 	printf "const enum reg_enum nasm_rd_%-8s[%2d] = {",
@@ -155,11 +157,15 @@ if ( $fmt eq 'h' ) {
     }
 } elsif ( $fmt eq 'dh' ) {
     # Output regdis.h
-    print "/* automatically generated from $file - do not edit */\n";
+    print "/* automatically generated from $file - do not edit */\n\n";
+    print "#ifndef NASM_REGDIS_H\n";
+    print "#define NASM_REGDIS_H\n\n";
+    print "#include \"regs.h\"\n\n";
     foreach $class ( sort(keys(%disclass)) ) {
 	printf "extern const enum reg_enum nasm_rd_%-8s[%2d];\n",
 		$class, scalar @{$disclass{$class}};
     }
+    print "\n#endif /* NASM_REGDIS_H */\n";
 } else {
     die "$0: Unknown output format\n";
 }
