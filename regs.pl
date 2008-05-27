@@ -80,21 +80,21 @@ if ( $fmt eq 'h' ) {
     # Output regs.h
     print "/* automatically generated from $file - do not edit */\n\n";
     $expr_regs = 1;
-    printf "#define EXPR_REG_START %d\n", $expr_regs;
+    printf "#define EXPR_REG_START %d\n\n", $expr_regs;
     print "enum reg_enum {\n";
+    # Unfortunately the code uses both 0 and -1 as "no register" in
+    # different places...
+    print "    R_zero = 0,\n";
+    print "    R_none = -1,\n";
     $attach = ' = EXPR_REG_START'; # EXPR_REG_START == 1
     foreach $reg ( sort(keys(%regs)) ) {
 	print "    R_\U${reg}\E${attach},\n";
 	$attach = '';
 	$expr_regs++;
     }
-    print "    REG_ENUM_LIMIT,\n";
-    # Unfortunately the code uses both 0 and -1 as "no register" in
-    # different places...
-    print "    R_zero = 0,\n";
-    print "    R_none = -1";
+    print "    REG_ENUM_LIMIT\n";
     print "};\n\n";
-    printf "#define EXPR_REG_END %d\n", $expr_regs-1;
+    printf "#define EXPR_REG_END %d\n\n", $expr_regs-1;
     foreach $reg ( sort(keys(%regs)) ) {
 	printf "#define %-15s %2d\n", "REG_NUM_\U${reg}", $regvals{$reg};
     }
@@ -137,7 +137,8 @@ if ( $fmt eq 'h' ) {
 } elsif ( $fmt eq 'dc' ) {
     # Output regdis.c
     print "/* automatically generated from $file - do not edit */\n\n";
-    print "#include \"regs.h\"\n\n";
+    print "#include \"regs.h\"\n";
+    print "#include \"regdis.h\"\n\n";
     foreach $class ( sort(keys(%disclass)) ) {
 	printf "const enum reg_enum nasm_rd_%-8s[%2d] = {",
 		$class, scalar @{$disclass{$class}};
@@ -156,7 +157,7 @@ if ( $fmt eq 'h' ) {
     # Output regdis.h
     print "/* automatically generated from $file - do not edit */\n";
     foreach $class ( sort(keys(%disclass)) ) {
-	printf "const enum reg_enum nasm_rd_%-8s[%2d];\n",
+	printf "extern const enum reg_enum nasm_rd_%-8s[%2d];\n",
 		$class, scalar @{$disclass{$class}};
     }
 } else {
