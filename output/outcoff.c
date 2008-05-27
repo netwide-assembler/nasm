@@ -566,16 +566,10 @@ static void coff_out(int32_t segto, const void *data,
             int32_t fix = 0;
             p = mydata;
             if (size == 8) {
-/*            if (segment != NO_SEG || wrt != NO_SEG) {
-                if (wrt != NO_SEG) {
-                    error(ERR_NONFATAL, "COFF format does not support"
-                          " WRT types");
-                } else if (segment % 2) {
-                    error(ERR_NONFATAL, "COFF format does not support"
-                          " segment base references");
-                } else
-                    fix = coff_add_reloc(s, segment, false);
-            } */
+	        if (wrt == imagebase_sect) {
+		    error(ERR_NONFATAL, "operand size mismatch: 'wrt "
+			WRT_IMAGEBASE "' is a 32-bit operand");
+		}
                 fix = coff_add_reloc(s, segment, IMAGE_REL_AMD64_ADDR64);
                 WRITEDLONG(p, *(int64_t *)data + fix);
                 coff_sect_write(s, mydata, size);
