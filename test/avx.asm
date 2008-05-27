@@ -30,3 +30,22 @@
 		vpextrw		eax,xmm1,0x33
 		vpextrd		eax,xmm1,0x33
 ;		vpextrq		eax,xmm1,0x33
+
+		vcvtpd2ps	xmm0,xmm1
+		vcvtpd2ps	xmm0,oword [rsi]
+		vcvtpd2ps	xmm0,ymm1
+		vcvtpd2ps	xmm0,yword [rsi]
+;		vcvtpd2ps	xmm0,[rsi]
+
+		vcvtpd2dq	xmm0,xmm1
+		vcvtpd2dq	xmm0,oword [rsi]
+		vcvtpd2dq	xmm0,ymm1
+		vcvtpd2dq	xmm0,yword [rsi]
+;		vcvtpd2dq	xmm0,[rsi]
+
+		vcvttpd2dq	xmm0,xmm1
+		vcvttpd2dq	xmm0,oword [rsi]
+		vcvttpd2dq	xmm0,ymm1
+		vcvttpd2dq	xmm0,yword [rsi]
+;		vcvttpd2dq	xmm0,[rsi]
+	
