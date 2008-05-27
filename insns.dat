@@ -2169,7 +2169,7 @@ GETSEC		void				\2\x0F\x37					KATMAI
 ;# Geode (Cyrix) 3DNow! additions
 PFRCP		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x86			PENT,3DNOW,SQ,CYRIX
 PFRSQRT		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x87			PENT,3DNOW,SQ,CYRIX
-												
+
 ;# Intel new instructions in ???
 ; Is NEHALEM right here?
 MOVBE		reg16,mem16			[rm:	o16 0f 38 f0 /r]			NEHALEM,SM
