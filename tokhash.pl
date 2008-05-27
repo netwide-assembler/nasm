@@ -122,7 +122,7 @@ close(TD);
 
 if ($output eq 'h') {
     #
-    # keywords.h
+    # tokens.h
     #
 
     $max_len = 0;
