@@ -9,7 +9,7 @@
 		vcvtsi2sd	xmm9,xmm10,ecx
 		vcvtsi2sd	xmm9,xmm10,rcx
 		vcvtsi2sd	xmm9,xmm10,dword [rdi]
-		vcvtsi2sd	xmm9,xmm10,qword [rdi] 
+		vcvtsi2sd	xmm9,xmm10,qword [rdi]
 
 		vpermil2ps	xmm0,xmm1,[rdi],xmm3,0
 		vpermil2ps	xmm0,xmm1,xmm2,[rdi],1
@@ -48,4 +48,3 @@
 		vcvttpd2dq	xmm0,ymm1
 		vcvttpd2dq	xmm0,yword [rsi]
 ;		vcvttpd2dq	xmm0,[rsi]
-	
