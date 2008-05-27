@@ -1734,9 +1734,9 @@ VMWRITE		reg32,rm32			\360\2\x0F\x79\110				VMX
 VMXOFF		void				\3\x0F\x01\xC4					VMX
 VMXON		mem				\363\2\x0F\xC7\206				VMX
 ;# Extended Page Tables VMX instructions
-INVEPT		reg32,mem			[rm: o32 66 0f 38 80 /r]			VMX,SO,NOLONG
+INVEPT		reg32,mem			[rm: 66 0f 38 80 /r]			VMX,SO,NOLONG
 INVEPT		reg64,mem			[rm: o64nw 66 0f 38 80 /r]			VMX,SO,LONG
-INVVPID		reg32,mem			[rm: o32 66 0f 38 81 /r]			VMX,SO,NOLONG
+INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]			VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
 
 ;# Tejas New Instructions (SSSE3)
