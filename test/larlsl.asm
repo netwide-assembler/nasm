@@ -1,3 +1,5 @@
+;Testname=test; Arguments=-fbin -olarlsl.bin; Files=.stdout .stderr larlsl.bin
+
 	bits 64
 
 	lar ax,bx

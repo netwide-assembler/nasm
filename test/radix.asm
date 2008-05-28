@@ -1,3 +1,5 @@
+;Testname=test; Arguments=-fbin -oradix.bin; Files=.stdout .stderr radix.bin
+
 	;;  Integer constants...
 
 	dd 1010_0101		; Decimal

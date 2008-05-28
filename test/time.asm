@@ -1,3 +1,4 @@
+;Not automatically testable because it is not constant
 	db __DATE__, 13, 10
 	db __TIME__, 13, 10
 	db __UTC_DATE__, 13, 10

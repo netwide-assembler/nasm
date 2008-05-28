@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -faout -oaouttest.o; Files=.stdout .stderr aouttest.o
+;Testname=optimized;   Arguments=-Ox -faout -oaouttest.o; Files=.stdout .stderr aouttest.o
+
 ; test source file for assembling to a.out
 ; build with:
 ;    nasm -f aout aouttest.asm

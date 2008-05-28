@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -frdf -obr560873.rdf; Files=.stdout .stderr br560873.rdf
+;Testname=optimized;   Arguments=-Ox -frdf -obr560873.rdf; Files=.stdout .stderr br560873.rdf
+
 label:
 	bits 16
 	call far dword label

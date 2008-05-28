@@ -1,3 +1,4 @@
+;Testname=test; Arguments=-fbin -otestnos3.bin; Files=.stdout .stderr testnos3.bin
 ;
 ; Double-precision floating point tests, derived from Fred Tydeman's posting
 ; of 26 February 1996 to comp.arch.arithmetic, via David M. Gay's gdtoa

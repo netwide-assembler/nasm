@@ -1,3 +1,5 @@
+;Testname=test; Arguments=-fbin -oifmacro.txt; Files=.stdout .stderr ifmacro.txt
+
 ;
 ; ifmacro.asm
 ;

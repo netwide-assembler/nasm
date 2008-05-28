@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fbin -obr1879590.bin; Files=.stdout .stderr br1879590.bin
+;Testname=optimized;   Arguments=-Ox -fbin -obr1879590.bin; Files=.stdout .stderr br1879590.bin
+
 	bits 32
 
 	pavgb mm0,[ebx]
