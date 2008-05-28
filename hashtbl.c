@@ -21,16 +21,12 @@ static struct hash_tbl_node *alloc_table(size_t newsize)
     return newtbl;
 }
 
-struct hash_table *hash_init(size_t size)
+void hash_init(struct hash_table *head, size_t size)
 {
-    struct hash_table *head = nasm_malloc(sizeof(struct hash_table));
-
     head->table    = alloc_table(size);
     head->load     = 0;
     head->size     = size;
     head->max_load = size*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
-
-    return head;
 }
 
 /*
@@ -185,6 +181,7 @@ void *hash_iterate(const struct hash_table *head,
  */
 void hash_free(struct hash_table *head)
 {
-    nasm_free(head->table);
-    nasm_free(head);
+    void *p = head->table;
+    head->table = NULL;
+    nasm_free(p);
 }

@@ -79,7 +79,7 @@ struct permts {                 /* permanent text storage */
 
 extern bool global_offset_changed;       /* defined in nasm.c */
 
-static struct hash_table *ltab;		/* labels hash table */
+static struct hash_table ltab;		/* labels hash table */
 static union label *ldata;		/* all label data blocks */
 static union label *lfree;		/* labels free block */
 static struct permts *perm_head;        /* start of perm. text storage */
@@ -122,7 +122,7 @@ static union label *find_label(char *label, int create)
 	prevlen = 0;
     }
 
-    lpp = (union label **) hash_find(ltab, label, &ip);
+    lpp = (union label **) hash_find(&ltab, label, &ip);
     lptr = lpp ? *lpp : NULL;
 
     if (lptr || !create)
@@ -371,7 +371,7 @@ void declare_as_global(char *label, char *special, efunc error)
 
 int init_labels(void)
 {
-    ltab = hash_init(HASH_LARGE);
+    hash_init(&ltab, HASH_LARGE);
 
     ldata = lfree = (union label *)nasm_malloc(LBLK_SIZE);
     init_block(lfree);
@@ -396,7 +396,7 @@ void cleanup_labels(void)
 
     initialized = false;
 
-    hash_free(ltab);
+    hash_free(&ltab);
 
     lptr = lhold = ldata;
     while (lptr) {

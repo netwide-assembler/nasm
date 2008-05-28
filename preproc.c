@@ -128,8 +128,8 @@ struct MMacro {
  */
 struct Context {
     Context *next;
-    struct hash_table *localmac;
     char *name;
+    struct hash_table localmac;
     uint32_t number;
 };
 
@@ -337,12 +337,12 @@ static ListGen *list;
 /*
  * The current set of multi-line macros we have defined.
  */
-static struct hash_table *mmacros;
+static struct hash_table mmacros;
 
 /*
  * The current set of single-line macros we have defined.
  */
-static struct hash_table *smacros;
+static struct hash_table smacros;
 
 /*
  * The multi-line macro we are currently defining, or the %rep
@@ -565,8 +565,8 @@ static void free_mmacro_table(struct hash_table *mmt)
 
 static void free_macros(void)
 {
-    free_smacro_table(smacros);
-    free_mmacro_table(mmacros);
+    free_smacro_table(&smacros);
+    free_mmacro_table(&mmacros);
 }
 
 /*
@@ -574,8 +574,8 @@ static void free_macros(void)
  */
 static void init_macros(void)
 {
-    smacros = hash_init(HASH_LARGE);
-    mmacros = hash_init(HASH_LARGE);
+    hash_init(&smacros, HASH_LARGE);
+    hash_init(&mmacros, HASH_LARGE);
 }
 
 /*
@@ -586,7 +586,7 @@ static void ctx_pop(void)
     Context *c = cstk;
 
     cstk = cstk->next;
-    free_smacro_table(c->localmac);
+    free_smacro_table(&c->localmac);
     nasm_free(c->name);
     nasm_free(c);
 }
@@ -1243,7 +1243,7 @@ static Context *get_ctx(char *name, bool all_contexts)
 
     do {
         /* Search for this smacro in found context */
-        m = hash_findix(ctx->localmac, name);
+        m = hash_findix(&ctx->localmac, name);
         while (m) {
             if (!mstrcmp(m->name, name, m->casesense))
                 return ctx;
@@ -1334,19 +1334,21 @@ static bool
 smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
                bool nocase)
 {
+    struct hash_table *smtbl;
     SMacro *m;
 
     if (ctx) {
-        m = (SMacro *) hash_findix(ctx->localmac, name);
+	smtbl = &ctx->localmac;
     } else if (name[0] == '%' && name[1] == '$') {
 	if (cstk)
             ctx = get_ctx(name, false);
         if (!ctx)
             return false;       /* got to return _something_ */
-        m = (SMacro *) hash_findix(ctx->localmac, name);
+	smtbl = &ctx->localmac;
     } else {
-	m = (SMacro *) hash_findix(smacros, name);
+	smtbl = &smacros;
     }
+    m = (SMacro *) hash_findix(smtbl, name);
 
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
@@ -1569,7 +1571,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 tline = tline->next;
                 searching.plus = true;
             }
-            mmac = (MMacro *) hash_findix(mmacros, searching.name);
+            mmac = (MMacro *) hash_findix(&mmacros, searching.name);
 	    while (mmac) {
 		if (!strcmp(mmac->name, searching.name) &&
 		    (mmac->nparam_min <= searching.nparam_max
@@ -1684,6 +1686,7 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 			  int nparam, Token *expansion)
 {
     SMacro *smac, **smhead;
+    struct hash_table *smtbl;
 
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
 	if (!smac) {
@@ -1705,8 +1708,8 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 	    free_tlist(smac->expansion);
 	}
     } else {
-	smhead = (SMacro **) hash_findi_add(ctx ? ctx->localmac : smacros,
-					    mname);
+	smtbl  = ctx ? &ctx->localmac : &smacros;
+	smhead = (SMacro **) hash_findi_add(smtbl, mname);
 	smac = nasm_malloc(sizeof(SMacro));
 	smac->next = *smhead;
 	*smhead = smac;
@@ -1725,8 +1728,10 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 static void undef_smacro(Context *ctx, const char *mname)
 {
     SMacro **smhead, *s, **sp;
+    struct hash_table *smtbl;
 
-    smhead = (SMacro **)hash_findi(ctx ? ctx->localmac : smacros, mname, NULL);
+    smtbl = ctx ? &ctx->localmac : &smacros;
+    smhead = (SMacro **)hash_findi(smtbl, mname, NULL);
 
     if (smhead) {
 	/*
@@ -2092,7 +2097,7 @@ static int do_directive(Token * tline)
             error(ERR_WARNING, "trailing garbage after `%%push' ignored");
         ctx = nasm_malloc(sizeof(Context));
         ctx->next = cstk;
-        ctx->localmac = hash_init(HASH_SMALL);
+        hash_init(&ctx->localmac, HASH_SMALL);
         ctx->name = nasm_strdup(tline->text);
         ctx->number = unique++;
         cstk = ctx;
@@ -2273,7 +2278,7 @@ static int do_directive(Token * tline)
             tline = tline->next;
             defining->nolist = true;
         }
-        mmac = (MMacro *) hash_findix(mmacros, defining->name);
+        mmac = (MMacro *) hash_findix(&mmacros, defining->name);
         while (mmac) {
             if (!strcmp(mmac->name, defining->name) &&
                 (mmac->nparam_min <= defining->nparam_max
@@ -2308,7 +2313,7 @@ static int do_directive(Token * tline)
             error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
             return DIRECTIVE_FOUND;
         }
-	mmhead = (MMacro **) hash_findi_add(mmacros, defining->name);
+	mmhead = (MMacro **) hash_findi_add(&mmacros, defining->name);
         defining->next = *mmhead;
 	*mmhead = defining;
         defining = NULL;
@@ -3018,6 +3023,7 @@ static Token *expand_mmac_params(Token * tline)
 static Token *expand_smacro(Token * tline)
 {
     Token *t, *tt, *mstart, **tail, *thead;
+    struct hash_table *smtbl;
     SMacro *head = NULL, *m;
     Token **params;
     int *paramsize;
@@ -3055,13 +3061,15 @@ again:
 
         if ((mname = tline->text)) {
             /* if this token is a local macro, look in local context */
-            if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID)
+            if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID) {
                 ctx = get_ctx(mname, true);
-            else
+		smtbl = &ctx->localmac;
+	    } else {
                 ctx = NULL;
+		smtbl = &smacros;
+	    }
 
-	    head = (SMacro *) hash_findix(ctx ? ctx->localmac : smacros,
-					  mname);
+	    head = (SMacro *) hash_findix(smtbl, mname);
 
             /*
              * We've hit an identifier. As in is_mmacro below, we first
@@ -3438,7 +3446,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
     Token **params;
     int nparam;
 
-    head = (MMacro *) hash_findix(mmacros, tline->text);
+    head = (MMacro *) hash_findix(&mmacros, tline->text);
 
     /*
      * Efficiency: first we see if any macro exists with the given
@@ -3666,7 +3674,7 @@ static int expand_mmacro(Token * tline)
 	    default:
 		tt = *tail = new_Token(NULL, x->type, x->text, 0);
 		break;
-	    } 
+	    }
 	    tail = &tt->next;
 	}
         *tail = NULL;

@@ -39,7 +39,7 @@ uint64_t crc64i(uint64_t crc, const char *string);
 #define HASH_MEDIUM	16
 #define HASH_LARGE	256
 
-struct hash_table *hash_init(size_t size);
+void hash_init(struct hash_table *head, size_t size);
 void **hash_find(struct hash_table *head, const char *string,
 		struct hash_insert *insert);
 void **hash_findi(struct hash_table *head, const char *string,
