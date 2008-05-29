@@ -2587,7 +2587,7 @@ definitions in \c{%elif} blocks by using \i\c{%elifdef} and
 \i\c{%elifndef}.
 
 
-\S{ifmacro} \i\c{ifmacro}: Testing Multi-Line Macro
+\S{ifmacro} \i\c{%ifmacro}: Testing Multi-Line Macro
 Existence\I{testing, multi-line macro existence}
 
 The \c{%ifmacro} directive operates in the same way as the \c{%ifdef}
