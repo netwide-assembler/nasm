@@ -3061,14 +3061,13 @@ again:
 
         if ((mname = tline->text)) {
             /* if this token is a local macro, look in local context */
+	    ctx = NULL;
+	    smtbl = &smacros;
             if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID) {
                 ctx = get_ctx(mname, true);
-		smtbl = &ctx->localmac;
-	    } else {
-                ctx = NULL;
-		smtbl = &smacros;
+		if (ctx)
+		    smtbl = &ctx->localmac;
 	    }
-
 	    head = (SMacro *) hash_findix(smtbl, mname);
 
             /*
