@@ -146,6 +146,6 @@ __SECT__
 %push _incbin
 %pathsearch %$dep %1
 %depend %$dep
-	incbin %$dep,%2
+	%? %$dep,%2
 %pop
 %endmacro
