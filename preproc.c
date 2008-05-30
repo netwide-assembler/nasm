@@ -2061,7 +2061,7 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_INCLUDE:
-        tline = tline->next;
+        tline = expand_smacros(tline->next);
         skip_white_(tline);
         if (!tline || (tline->type != TOK_STRING &&
                        tline->type != TOK_INTERNAL_STRING)) {
@@ -2077,7 +2077,6 @@ static int do_directive(Token * tline)
             p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
         } else
             p = tline->text;    /* internal_string is easier */
-        expand_macros_in_string(&p);
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
