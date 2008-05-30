@@ -3283,11 +3283,10 @@ produce consistent output.
 
 \S{utcdatetime} \i\c{__UTC_DATE__} and \i\c{__UTC_TIME__}: Assembly UTC date and time
 
-The \c{__DATE__} and \c{__TIME__} macros give the assembly date and
-time in universal time (UTC) as strings, in ISO 8601 format
-(\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the
-host platform doesn't provide UTC time, these macros are
-undefined.
+The \c{__UTC_DATE__} and \c{__UTC_TIME__} macros give the assembly
+date and time in universal time (UTC) as strings, in ISO 8601 format
+(\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the host
+platform doesn't provide UTC time, these macros are undefined.
 
 All instances of time and date macros in the same assembly session
 produce consistent output.
