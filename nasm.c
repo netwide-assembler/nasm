@@ -38,7 +38,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 static int get_bits(char *value);
 static uint32_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
-static void assemble_file(char *);
+static void assemble_file(char *, FILE *);
 static void register_output_formats(void);
 static void report_error_gnu(int severity, const char *fmt, ...);
 static void report_error_vc(int severity, const char *fmt, ...);
@@ -88,9 +88,12 @@ enum op_type {
     op_normal,                  /* Preprocess and assemble */
     op_preprocess,              /* Preprocess only */
     op_depend,                  /* Generate dependencies */
-    op_depend_missing_ok,	/* Generate dependencies, missing OK */
 };
 static enum op_type operating_mode;
+/* Dependency flags */
+static bool depend_missing_ok = false;
+static const char *depend_target = NULL;
+static const char *depend_file = NULL;
 
 /*
  * Which of the suppressible warnings are suppressed. Entry zero
@@ -133,7 +136,7 @@ static const char *suppressed_what[ERR_WARN_MAX+1] = {
  * not preprocess their source file.
  */
 
-static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *);
+static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *, FILE *);
 static char *no_pp_getline(void);
 static void no_pp_cleanup(int);
 static Preproc no_pp = {
@@ -241,6 +244,8 @@ static void define_macros_late(void)
 
 int main(int argc, char **argv)
 {
+    FILE *depends;
+
     time(&official_compile_time);
 
     pass0 = 1;
@@ -284,22 +289,39 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
+    depends = NULL;
+    if (depend_file) {
+	depends = fopen(depend_file, "w");
+	if (!depends) {
+	    report_error(ERR_FATAL | ERR_NOFILE,
+			 "unable to open dependencies file `%s'",
+			 depend_file);
+	}
+    }
+
+    if (!depend_target)
+	depend_target = outname;
+
     switch (operating_mode) {
-    case op_depend_missing_ok:
-	pp_include_path(NULL);	/* "assume generated" */
-	/* fall through */
     case op_depend:
         {
             char *line;
-            preproc->reset(inname, 0, report_error, evaluate, &nasmlist);
+
+	    if (!depends)
+		depends = stdout;
+
+	    if (depend_missing_ok)
+		pp_include_path(NULL);	/* "assume generated" */
+
+            preproc->reset(inname, 0, report_error, evaluate, &nasmlist,
+			   depends);
             if (outname[0] == '\0')
                 ofmt->filename(inname, outname, report_error);
             ofile = NULL;
-            fprintf(stdout, "%s: %s", outname, inname);
+            fprintf(depends, "%s: %s", depend_target, inname);
             while ((line = preproc->getline()))
                 nasm_free(line);
             preproc->cleanup(0);
-            putc('\n', stdout);
         }
         break;
 
@@ -321,8 +343,12 @@ int main(int argc, char **argv)
 
             location.known = false;
 
-/*      pass = 1; */
-            preproc->reset(inname, 2, report_error, evaluate, &nasmlist);
+	    /* pass = 1; */
+            preproc->reset(inname, 2, report_error, evaluate, &nasmlist,
+			   depends);
+	    if (depends)
+		fprintf(depends, "%s: %s", depend_target, inname);
+
             while ((line = preproc->getline())) {
                 /*
                  * We generate %line directives if needed for later programs
@@ -378,7 +404,7 @@ int main(int argc, char **argv)
 
             ofmt->init(ofile, report_error, define_label, evaluate);
 
-            assemble_file(inname);
+            assemble_file(inname, depends);
 
             if (!terminate_after_phase) {
                 ofmt->cleanup(using_debug_info);
@@ -396,6 +422,12 @@ int main(int argc, char **argv)
             }
         }
         break;
+    }
+
+    if (depends) {
+	putc('\n', depends);
+	if (depends != stdout)
+	    fclose(depends);
     }
 
     if (want_usage)
@@ -446,6 +478,88 @@ static void copy_filename(char *dst, const char *src)
 	return;
     }
     strncpy(dst, src, FILENAME_MAX);
+}
+
+/*
+ * Convert a string to Make-safe form
+ */
+static char *quote_for_make(const char *str)
+{
+    const char *p;
+    char *os, *q;
+
+    size_t n = 1;		/* Terminating zero */
+    size_t nbs = 0;
+
+    if (!str)
+	return NULL;
+
+    for (p = str; *p; p++) {
+	switch (*p) {
+	case ' ':
+	case '\t':
+	    /* Convert N backslashes + ws -> 2N+1 backslashes + ws */
+	    n += nbs + 2;
+	    nbs = 0;
+	    break;
+	case '$':
+	case '#':
+	    nbs = 0;
+	    n += 2;
+	    break;
+	case '\\':
+	    nbs++;
+	    n++;
+	    break;
+	default:
+	    nbs = 0;
+	    n++;
+	break;
+	}
+    }
+
+    /* Convert N backslashes at the end of filename to 2N backslashes */
+    if (nbs)
+	n += nbs;
+
+    os = q = nasm_malloc(n);
+
+    nbs = 0;
+    for (p = str; *p; p++) {
+	switch (*p) {
+	case ' ':
+	case '\t':
+	    while (nbs--)
+		*q++ = '\\';
+	    *q++ = '\\';
+	    *q++ = *p;
+	    break;
+	case '$':
+	    *q++ = *p;
+	    *q++ = *p;
+	    nbs = 0;
+	    break;
+	case '#':
+	    *q++ = '\\';
+	    *q++ = *p;
+	    nbs = 0;
+	    break;
+	case '\\':
+	    *q++ = *p;
+	    nbs++;
+	    break;
+	default:
+	    *q++ = *p;
+	    nbs = 0;
+	break;
+	}
+    }
+    while (nbs--)
+	*q++ = '\\';
+
+    *q = '\0';
+
+    return os;
 }
 
 struct textargs {
@@ -709,7 +823,37 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'M':
-            operating_mode = p[2] == 'G' ? op_depend_missing_ok : op_depend;
+	    switch (p[2]) {
+	    case 0:
+	    case 'M':
+		operating_mode = op_depend;
+		break;
+	    case 'G':
+		operating_mode = op_depend;
+		depend_missing_ok = true;
+		break;
+	    case 'D':
+		depend_file = q;
+		advance = true;
+		break;
+	    case 'T':
+		depend_target = q;
+		advance = true;
+		break;
+	    case 'Q':
+		depend_target = quote_for_make(q);
+		advance = true;
+		break;
+	    default:
+		report_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+			     "unknown dependency option `-M%c'", p[2]);
+		break;
+	    }
+	    if (advance && (!q || !q[0])) {
+		report_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+			     "option `-M%c' requires a parameter", p[2]);
+		break;
+	    }
             break;
 
         case '-':
@@ -969,7 +1113,7 @@ static const char *directives[] = {
 };
 static enum directives getkw(char **directive, char **value);
 
-static void assemble_file(char *fname)
+static void assemble_file(char *fname, FILE *depends)
 {
     char *directive, *value, *p, *q, *special, *line, debugid[80];
     insn output_ins;
@@ -1013,7 +1157,11 @@ static void assemble_file(char *fname)
             raa_free(offsets);
             offsets = raa_init();
         }
-        preproc->reset(fname, pass1, report_error, evaluate, &nasmlist);
+        preproc->reset(fname, pass1, report_error, evaluate, &nasmlist,
+		       pass1 == 2 ? depends : NULL);
+	if (pass1 == 2 && depends)
+	    fprintf(depends, "%s: %s", depend_target, inname);
+	    
         globallineno = 0;
         if (passn == 1)
             location.known = true;
@@ -1802,7 +1950,7 @@ static ListGen *no_pp_list;
 static int32_t no_pp_lineinc;
 
 static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
-                        ListGen * listgen)
+                        ListGen * listgen, FILE *depends)
 {
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
@@ -1815,6 +1963,7 @@ static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
     no_pp_list = listgen;
     (void)pass;                 /* placate compilers */
     (void)eval;                 /* placate compilers */
+    (void)depends;              /* placate compilers */
 }
 
 static char *no_pp_getline(void)

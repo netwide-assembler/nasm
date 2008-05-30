@@ -291,7 +291,7 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate,
 #define EXPR_SEGBASE	(EXPR_REG_END+4)
 
 /*
- * Preprocessors ought to look like this:
+ * preprocessors ought to look like this:
  */
 typedef struct preproc_ops {
     /*
@@ -299,7 +299,7 @@ typedef struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, efunc, evalfunc, ListGen *);
+    void (*reset) (char *, int, efunc, evalfunc, ListGen *, FILE *);
 
     /*
      * Called to fetch a line of preprocessed source. The line

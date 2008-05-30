@@ -327,6 +327,7 @@ static efunc _error;            /* Pointer to client-provided error reporting fu
 static evalfunc evaluate;
 
 static int pass;                /* HACK: pass 0 = generate dependencies only */
+static FILE *deplist;		/* Write dependencies to this FILE */
 
 static uint64_t unique;    /* unique identifier numbers */
 
@@ -1275,13 +1276,13 @@ static FILE *inc_fopen(char *file)
         strcpy(combine, prefix);
         strcat(combine, file);
         fp = fopen(combine, "r");
-        if (pass == 0 && fp) {
+	if (fp && deplist) {
             namelen += strlen(combine) + 1;
             if (namelen > 62) {
-                printf(" \\\n  ");
+                fprintf(deplist, " \\\n  ");
                 namelen = 2;
             }
-            printf(" %s", combine);
+            fprintf(deplist, " %s", combine);
         }
         nasm_free(combine);
         if (fp)
@@ -1293,13 +1294,13 @@ static FILE *inc_fopen(char *file)
 
 	if (!prefix) {
 		/* -MG given and file not found */
-		if (pass == 0) {
+		if (deplist) {
 			namelen += strlen(file) + 1;
 			if (namelen > 62) {
-				printf(" \\\n  ");
-				namelen = 2;
+			    fprintf(deplist, " \\\n  ");
+			    namelen = 2;
 			}
-			printf(" %s", file);
+			fprintf(deplist, " %s", file);
 		}
 	    return NULL;
 	}
@@ -3733,7 +3734,7 @@ static void error(int severity, const char *fmt, ...)
 
 static void
 pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
-         ListGen * listgen)
+         ListGen * listgen, FILE * adeplist)
 {
     _error = errfunc;
     cstk = NULL;
@@ -3762,6 +3763,7 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     list = listgen;
     evaluate = eval;
     pass = apass;
+    deplist = adeplist;
 }
 
 static char *pp_getline(void)
