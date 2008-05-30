@@ -38,7 +38,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 static int get_bits(char *value);
 static uint32_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
-static void assemble_file(char *, FILE *);
+static void assemble_file(char *, StrList **);
 static void register_output_formats(void);
 static void report_error_gnu(int severity, const char *fmt, ...);
 static void report_error_vc(int severity, const char *fmt, ...);
@@ -91,6 +91,7 @@ enum op_type {
 };
 static enum op_type operating_mode;
 /* Dependency flags */
+static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
 static const char *depend_target = NULL;
 static const char *depend_file = NULL;
@@ -136,7 +137,7 @@ static const char *suppressed_what[ERR_WARN_MAX+1] = {
  * not preprocess their source file.
  */
 
-static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *, FILE *);
+static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *, StrList **);
 static char *no_pp_getline(void);
 static void no_pp_cleanup(int);
 static Preproc no_pp = {
@@ -242,9 +243,50 @@ static void define_macros_late(void)
     pp_pre_define(temp);
 }
 
+static void emit_dependencies(StrList *list)
+{
+    FILE *deps;
+    int linepos, len;
+    StrList *l, *nl;
+
+    if (depend_file && strcmp(depend_file, "-")) {
+	deps = fopen(depend_file, "w");
+	if (!deps) {
+	    report_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+			 "unable to write dependency file `%s'", depend_file);
+	    return;
+	}
+    } else {
+	deps = stdout;
+    }
+    
+    linepos = fprintf(deps, "%s:", depend_target);
+    for (l = list; l; l = l->next) {
+	len = strlen(l->str);
+	if (linepos + len > 62) {
+	    fprintf(deps, " \\\n ");
+	    linepos = 1;
+	}
+	fprintf(deps, " %s", l->str);
+	linepos += len+1;
+    }
+    fprintf(deps, "\n\n");
+    
+    for (l = list; l; l = nl) {
+	if (depend_emit_phony)
+	    fprintf(deps, "%s:\n\n", l->str);
+	    
+	nl = l->next;
+	nasm_free(l);
+    }
+
+    if (deps != stdout)
+	fclose(deps);
+}
+
 int main(int argc, char **argv)
 {
-    FILE *depends;
+    StrList *depend_list = NULL, **depend_ptr;
 
     time(&official_compile_time);
 
@@ -289,16 +331,8 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
-    depends = NULL;
-    if (depend_file) {
-	depends = fopen(depend_file, "w");
-	if (!depends) {
-	    report_error(ERR_FATAL | ERR_NOFILE,
-			 "unable to open dependencies file `%s'",
-			 depend_file);
-	}
-    }
-
+    depend_ptr = (depend_file || (operating_mode == op_depend))
+	? &depend_list : NULL;
     if (!depend_target)
 	depend_target = outname;
 
@@ -307,18 +341,14 @@ int main(int argc, char **argv)
         {
             char *line;
 
-	    if (!depends)
-		depends = stdout;
-
 	    if (depend_missing_ok)
 		pp_include_path(NULL);	/* "assume generated" */
 
             preproc->reset(inname, 0, report_error, evaluate, &nasmlist,
-			   depends);
+			   depend_ptr);
             if (outname[0] == '\0')
                 ofmt->filename(inname, outname, report_error);
             ofile = NULL;
-            fprintf(depends, "%s: %s", depend_target, inname);
             while ((line = preproc->getline()))
                 nasm_free(line);
             preproc->cleanup(0);
@@ -345,9 +375,7 @@ int main(int argc, char **argv)
 
 	    /* pass = 1; */
             preproc->reset(inname, 2, report_error, evaluate, &nasmlist,
-			   depends);
-	    if (depends)
-		fprintf(depends, "%s: %s", depend_target, inname);
+			   depend_ptr);
 
             while ((line = preproc->getline())) {
                 /*
@@ -404,7 +432,7 @@ int main(int argc, char **argv)
 
             ofmt->init(ofile, report_error, define_label, evaluate);
 
-            assemble_file(inname, depends);
+            assemble_file(inname, depend_ptr);
 
             if (!terminate_after_phase) {
                 ofmt->cleanup(using_debug_info);
@@ -424,11 +452,8 @@ int main(int argc, char **argv)
         break;
     }
 
-    if (depends) {
-	putc('\n', depends);
-	if (depends != stdout)
-	    fclose(depends);
-    }
+    if (depend_list)
+	emit_dependencies(depend_list);
 
     if (want_usage)
         usage();
@@ -825,12 +850,14 @@ static bool process_arg(char *p, char *q)
         case 'M':
 	    switch (p[2]) {
 	    case 0:
-	    case 'M':
 		operating_mode = op_depend;
 		break;
 	    case 'G':
 		operating_mode = op_depend;
 		depend_missing_ok = true;
+		break;
+	    case 'P':
+		depend_emit_phony = true;
 		break;
 	    case 'D':
 		depend_file = q;
@@ -1085,8 +1112,10 @@ static void parse_cmdline(int argc, char **argv)
     if (!*inname)
         report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                      "no input file specified");
-    else if (!strcmp(inname, errname) || !strcmp(inname, outname) ||
-	!strcmp(inname, listname))
+    else if (!strcmp(inname, errname) ||
+	     !strcmp(inname, outname) ||
+	     !strcmp(inname, listname) ||
+	     (depend_file && !strcmp(inname, depend_file)))
 	report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
 		     "file `%s' is both input and output file",
 		     inname);
@@ -1113,7 +1142,7 @@ static const char *directives[] = {
 };
 static enum directives getkw(char **directive, char **value);
 
-static void assemble_file(char *fname, FILE *depends)
+static void assemble_file(char *fname, StrList **depend_ptr)
 {
     char *directive, *value, *p, *q, *special, *line, debugid[80];
     insn output_ins;
@@ -1158,9 +1187,7 @@ static void assemble_file(char *fname, FILE *depends)
             offsets = raa_init();
         }
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist,
-		       pass1 == 2 ? depends : NULL);
-	if (pass1 == 2 && depends)
-	    fprintf(depends, "%s: %s", depend_target, inname);
+		       pass1 == 2 ? depend_ptr : NULL);
 	    
         globallineno = 0;
         if (passn == 1)
@@ -1950,7 +1977,7 @@ static ListGen *no_pp_list;
 static int32_t no_pp_lineinc;
 
 static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
-                        ListGen * listgen, FILE *depends)
+                        ListGen * listgen, StrList **deplist)
 {
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
@@ -1963,7 +1990,13 @@ static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
     no_pp_list = listgen;
     (void)pass;                 /* placate compilers */
     (void)eval;                 /* placate compilers */
-    (void)depends;              /* placate compilers */
+
+    if (deplist) {
+	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
+	sl->next = NULL;
+	strcpy(sl->str, file);
+	*deplist = sl;
+    }
 }
 
 static char *no_pp_getline(void)

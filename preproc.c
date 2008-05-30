@@ -327,7 +327,7 @@ static efunc _error;            /* Pointer to client-provided error reporting fu
 static evalfunc evaluate;
 
 static int pass;                /* HACK: pass 0 = generate dependencies only */
-static FILE *deplist;		/* Write dependencies to this FILE */
+static StrList **dephead, **deptail; /* Dependency list */
 
 static uint64_t unique;    /* unique identifier numbers */
 
@@ -1257,51 +1257,63 @@ static Context *get_ctx(char *name, bool all_contexts)
 }
 
 /*
+ * Check to see if a file is already in a string list
+ */
+static bool in_list(const StrList *list, const char *str)
+{
+    while (list) {
+	if (!strcmp(list->str, str))
+	    return true;
+	list = list->next;
+    }
+    return false;
+}
+
+/*
  * Open an include file. This routine must always return a valid
  * file pointer if it returns - it's responsible for throwing an
  * ERR_FATAL and bombing out completely if not. It should also try
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static FILE *inc_fopen(char *file)
+static FILE *inc_fopen(const char *file)
 {
     FILE *fp;
-    char *prefix = "", *combine;
+    char *prefix = "";
     IncPath *ip = ipath;
-    static int namelen = 0;
     int len = strlen(file);
+    size_t prefix_len = 0;
+    StrList *sl;
 
     while (1) {
-        combine = nasm_malloc(strlen(prefix) + len + 1);
-        strcpy(combine, prefix);
-        strcat(combine, file);
-        fp = fopen(combine, "r");
-	if (fp && deplist) {
-            namelen += strlen(combine) + 1;
-            if (namelen > 62) {
-                fprintf(deplist, " \\\n  ");
-                namelen = 2;
-            }
-            fprintf(deplist, " %s", combine);
-        }
-        nasm_free(combine);
+        sl = nasm_malloc(prefix_len+len+1+sizeof sl->next);
+	memcpy(sl->str, prefix, prefix_len);
+	memcpy(sl->str+prefix_len, file, len+1);
+        fp = fopen(sl->str, "r");
+	if (fp && dephead && !in_list(*dephead, sl->str)) {
+	    sl->next = NULL;
+	    *deptail = sl;
+	    deptail = &sl->next;
+        } else {
+	    nasm_free(sl);
+	}
         if (fp)
             return fp;
         if (!ip)
             break;
         prefix = ip->path;
         ip = ip->next;
-
-	if (!prefix) {
-		/* -MG given and file not found */
-		if (deplist) {
-			namelen += strlen(file) + 1;
-			if (namelen > 62) {
-			    fprintf(deplist, " \\\n  ");
-			    namelen = 2;
-			}
-			fprintf(deplist, " %s", file);
-		}
+	if (prefix) {
+	    prefix_len = strlen(prefix);
+	} else {
+	    /* -MG given and file not found */
+	    if (dephead && !in_list(*dephead, file)) {
+		sl = nasm_malloc(len+1+sizeof sl->next);
+		sl->next = NULL;
+		strcpy(sl->str, file);
+		*deptail = sl;
+		deptail = &sl->next;
+	    }
 	    return NULL;
 	}
     }
@@ -3734,7 +3746,7 @@ static void error(int severity, const char *fmt, ...)
 
 static void
 pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
-         ListGen * listgen, FILE * adeplist)
+         ListGen * listgen, StrList **deplist)
 {
     _error = errfunc;
     cstk = NULL;
@@ -3763,7 +3775,14 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     list = listgen;
     evaluate = eval;
     pass = apass;
-    deplist = adeplist;
+    dephead = deptail = deplist;
+    if (deplist) {
+	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
+	sl->next = NULL;
+	strcpy(sl->str, file);
+	*deptail = sl;
+	deptail = &sl->next;
+    }
 }
 
 static char *pp_getline(void)

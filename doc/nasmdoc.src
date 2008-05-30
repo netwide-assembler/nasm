@@ -19,6 +19,7 @@
 \IR{-MD} \c{-MD} option
 \IR{-MF} \c{-MF} option
 \IR{-MG} \c{-MG} option
+\IR{-MP} \c{-MP} option
 \IR{-MQ} \c{-MQ} option
 \IR{-MT} \c{-MT} option
 \IR{-On} \c{-On} option
@@ -607,6 +608,14 @@ The \c{-MQ} option acts as the \c{-MT} option, except it tries to
 quote characters that have special meaning in Makefile syntax.  This
 is not foolproof, as not all characters with special meaning are
 quotable in Make.
+
+
+\S{opt-MP} The \i\c{-MP} Option: Emit phony targets
+
+When used with any of the dependency generation options, the \c{-MP}
+option causes NASM to emit a phony target without dependencies for
+each header file.  This prevents Make from complaining if a header
+file has been removed.
 
 
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}

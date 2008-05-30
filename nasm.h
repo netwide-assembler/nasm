@@ -291,6 +291,14 @@ typedef expr *(*evalfunc) (scanner sc, void *scprivate,
 #define EXPR_SEGBASE	(EXPR_REG_END+4)
 
 /*
+ * Linked list of strings...
+ */
+typedef struct string_list {
+    struct string_list *next;
+    char str[1];
+} StrList;
+
+/*
  * preprocessors ought to look like this:
  */
 typedef struct preproc_ops {
@@ -299,7 +307,7 @@ typedef struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, efunc, evalfunc, ListGen *, FILE *);
+    void (*reset) (char *, int, efunc, evalfunc, ListGen *, StrList **);
 
     /*
      * Called to fetch a line of preprocessed source. The line
