@@ -183,7 +183,7 @@ int stdscan(void *private_data, struct tokenval *tv)
             return tv->t_type = TOKEN_ERRNUM;   /* unmatched quotes */
         stdscan_bufptr++;       /* skip over final quote */
         tv->t_integer = readstrnum(r, tv->t_inttwo, &rn_warn);
-        /* FIXME: rn_warn is not checked! */
+        /* rn_warn is not checked on purpose; it might not be a valid number */
         return tv->t_type = TOKEN_NUM;
     } else if (*stdscan_bufptr == ';') {        /* a comment has happened - stay */
         return tv->t_type = 0;
