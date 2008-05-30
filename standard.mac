@@ -135,6 +135,7 @@ __SECT__
 %define __FLOAT_DAZ__ nodaz
 %define __FLOAT_ROUND__ near
 %endif
+%rotate 1
 %endrep
 %endmacro
 
