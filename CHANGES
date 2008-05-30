@@ -14,6 +14,9 @@
 * %? and %?? to refer to the name of a macro itself.  In particular,
   "%idefine keyword $%?" can be used to make a keyword "disappear".
 * New options for dependency generation: -MD, -MF, -MP, -MT, -MQ.
+* New preprocessor directives %pathsearch and %depend; INCBIN
+  reimplemented as a macro.
+* %include now resolves macros in a sane manner.
 
 2.02
 ----
