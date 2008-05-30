@@ -141,3 +141,11 @@ __SECT__
 %imacro default 1+.nolist
 [default %1]
 %endmacro
+
+%imacro incbin 1-2+.nolist 0
+%push _incbin
+%pathsearch %$dep %1
+%depend %$dep
+	incbin %$dep,%2
+%pop
+%endmacro

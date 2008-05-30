@@ -930,6 +930,8 @@ int src_get(int32_t *xline, char **xname)
     return 0;
 }
 
+/* XXX: This is broken for strings which contain multiple quotes...
+   NASM doesn't have a sane syntax for dealing with those currently. */
 void nasm_quote(char **str)
 {
     int ln = strlen(*str);

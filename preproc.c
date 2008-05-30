@@ -1276,7 +1276,8 @@ static bool in_list(const StrList *list, const char *str)
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static FILE *inc_fopen(const char *file)
+static FILE *inc_fopen(const char *file, StrList **dhead, StrList **dtail,
+		       bool missing_ok)
 {
     FILE *fp;
     char *prefix = "";
@@ -1290,29 +1291,33 @@ static FILE *inc_fopen(const char *file)
 	memcpy(sl->str, prefix, prefix_len);
 	memcpy(sl->str+prefix_len, file, len+1);
         fp = fopen(sl->str, "r");
-	if (fp && dephead && !in_list(*dephead, sl->str)) {
+	if (fp && dhead && !in_list(*dhead, sl->str)) {
 	    sl->next = NULL;
-	    *deptail = sl;
-	    deptail = &sl->next;
+	    *dtail = sl;
+	    dtail = &sl->next;
         } else {
 	    nasm_free(sl);
 	}
         if (fp)
             return fp;
-        if (!ip)
-            break;
-        prefix = ip->path;
-        ip = ip->next;
+	if (!ip) {
+	    if (!missing_ok)
+		break;
+	    prefix = NULL;
+	} else {
+	    prefix = ip->path;
+	    ip = ip->next;
+	}
 	if (prefix) {
 	    prefix_len = strlen(prefix);
 	} else {
 	    /* -MG given and file not found */
-	    if (dephead && !in_list(*dephead, file)) {
+	    if (dhead && !in_list(*dhead, file)) {
 		sl = nasm_malloc(len+1+sizeof sl->next);
 		sl->next = NULL;
 		strcpy(sl->str, file);
-		*deptail = sl;
-		deptail = &sl->next;
+		*dtail = sl;
+		dtail = &sl->next;
 	    }
 	    return NULL;
 	}
@@ -1681,7 +1686,9 @@ fail:
 }
 
 /*
- * Expand macros in a string. Used in %error and %include directives.
+ * Expand macros in a string. Used in %error directives (and it should
+ * almost certainly be removed from there, too.)
+ *
  * First tokenize the string, apply "expand_smacro" and then de-tokenize back.
  * The returned variable should ALWAYS be freed after usage.
  */
@@ -2060,9 +2067,37 @@ static int do_directive(Token * tline)
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
-    case PP_INCLUDE:
-        tline = expand_smacros(tline->next);
+    case PP_DEPEND:
+	tline = expand_smacro(tline->next);
         skip_white_(tline);
+        if (!tline || (tline->type != TOK_STRING &&
+                       tline->type != TOK_INTERNAL_STRING)) {
+            error(ERR_NONFATAL, "`%%depend' expects a file name");
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;     /* but we did _something_ */
+        }
+        if (tline->next)
+            error(ERR_WARNING,
+                  "trailing garbage after `%%depend' ignored");
+        if (tline->type != TOK_INTERNAL_STRING) {
+            p = tline->text + 1;        /* point past the quote to the name */
+            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
+        } else
+            p = tline->text;    /* internal_string is easier */
+	if (dephead && !in_list(*dephead, p)) {
+	    StrList *sl = nasm_malloc(strlen(p)+1+sizeof sl->next);
+	    sl->next = NULL;
+	    strcpy(sl->str, p);
+	    *deptail = sl;
+	    deptail = &sl->next;
+	}
+	free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+    case PP_INCLUDE:
+	tline = expand_smacro(tline->next);
+        skip_white_(tline);
+	
         if (!tline || (tline->type != TOK_STRING &&
                        tline->type != TOK_INTERNAL_STRING)) {
             error(ERR_NONFATAL, "`%%include' expects a file name");
@@ -2080,8 +2115,8 @@ static int do_directive(Token * tline)
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
-        inc->fp = inc_fopen(p);
-	if (!inc->fp && pass == 0) {
+        inc->fp = inc_fopen(p, dephead, deptail, pass == 0);
+	if (!inc->fp) {
 	    /* -MG given but file not found */
 	    nasm_free(inc);
 	} else {
@@ -2153,7 +2188,7 @@ static int do_directive(Token * tline)
         if (tok_type_(tline, TOK_STRING)) {
             p = tline->text + 1;        /* point past the quote to the name */
             p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
-            expand_macros_in_string(&p);
+	    expand_macros_in_string(&p);
             error(ERR_NONFATAL, "%s", p);
             nasm_free(p);
         } else {
@@ -2595,6 +2630,76 @@ static int do_directive(Token * tline)
 	undef_smacro(ctx, tline->text);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
+
+    case PP_PATHSEARCH:
+    {
+	FILE *fp;
+	StrList *xsl = NULL;
+
+	casesense = true;
+
+        tline = tline->next;
+        skip_white_(tline);
+        tline = expand_id(tline);
+        if (!tline || (tline->type != TOK_ID &&
+                       (tline->type != TOK_PREPROC_ID ||
+                        tline->text[1] != '$'))) {
+            error(ERR_NONFATAL,
+                  "`%%pathsearch' expects a macro identifier as first parameter");
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
+        ctx = get_ctx(tline->text, false);
+
+        mname = tline->text;
+        last = tline;
+        tline = expand_smacro(tline->next);
+        last->next = NULL;
+
+	t = tline;
+        while (tok_type_(t, TOK_WHITESPACE))
+            t = t->next;
+
+        if (!t || (t->type != TOK_STRING &&
+		   t->type != TOK_INTERNAL_STRING)) {
+            error(ERR_NONFATAL, "`%%pathsearch' expects a file name");
+	    free_tlist(tline);
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;     /* but we did _something_ */
+        }
+        if (t->next)
+            error(ERR_WARNING,
+                  "trailing garbage after `%%pathsearch' ignored");
+        if (t->type != TOK_INTERNAL_STRING) {
+            p = t->text + 1;        /* point past the quote to the name */
+            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
+        } else
+            p = t->text;    /* internal_string is easier */
+
+	fp = inc_fopen(p, &xsl, &xsl, true);
+	if (fp) {
+	    p = xsl->str;
+	    fclose(fp);		/* Don't actually care about the file */
+	}
+        macro_start = nasm_malloc(sizeof(*macro_start));
+        macro_start->next = NULL;
+	macro_start->text = nasm_strdup(p);
+	nasm_quote(&macro_start->text);
+	macro_start->type = TOK_STRING;
+        macro_start->mac = NULL;
+	if (xsl)
+	    nasm_free(xsl);
+
+        /*
+         * We now have a macro name, an implicit parameter count of
+         * zero, and a string token to use as an expansion. Create
+         * and store an SMacro.
+         */
+	define_smacro(ctx, mname, casesense, 0, macro_start);
+	free_tlist(tline);
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
+    }
 
     case PP_STRLEN:
 	casesense = true;
@@ -4030,55 +4135,6 @@ void pp_include_path(char *path)
     } else {
         ipath = i;
     }
-}
-
-/*
- * added by alexfru:
- *
- * This function is used to "export" the include paths, e.g.
- * the paths specified in the '-I' command switch.
- * The need for such exporting is due to the 'incbin' directive,
- * which includes raw binary files (unlike '%include', which
- * includes text source files). It would be real nice to be
- * able to specify paths to search for incbin'ned files also.
- * So, this is a simple workaround.
- *
- * The function use is simple:
- *
- * The 1st call (with NULL argument) returns a pointer to the 1st path
- * (char** type) or NULL if none include paths available.
- *
- * All subsequent calls take as argument the value returned by this
- * function last. The return value is either the next path
- * (char** type) or NULL if the end of the paths list is reached.
- *
- * It is maybe not the best way to do things, but I didn't want
- * to export too much, just one or two functions and no types or
- * variables exported.
- *
- * Can't say I like the current situation with e.g. this path list either,
- * it seems to be never deallocated after creation...
- */
-char **pp_get_include_path_ptr(char **pPrevPath)
-{
-/*   This macro returns offset of a member of a structure */
-#define GetMemberOffset(StructType,MemberName)\
-  ((size_t)&((StructType*)0)->MemberName)
-    IncPath *i;
-
-    if (pPrevPath == NULL) {
-        if (ipath != NULL)
-            return &ipath->path;
-        else
-            return NULL;
-    }
-    i = (IncPath *) ((char *)pPrevPath - GetMemberOffset(IncPath, path));
-    i = i->next;
-    if (i != NULL)
-        return &i->path;
-    else
-        return NULL;
-#undef GetMemberOffset
 }
 
 void pp_pre_include(char *fname)

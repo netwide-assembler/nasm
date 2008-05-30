@@ -119,7 +119,6 @@
 #include "nasmlib.h"
 #include "assemble.h"
 #include "insns.h"
-#include "preproc.h"
 #include "tables.h"
 
 /* Initialized to zero by the C standard */
@@ -369,8 +368,6 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
         static char fname[FILENAME_MAX];
         FILE *fp;
         int32_t len;
-        char *prefix = "", *combine;
-        char **pPrevPath = NULL;
 
         len = FILENAME_MAX - 1;
         if (len > instruction->eops->stringlen)
@@ -378,30 +375,14 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
         strncpy(fname, instruction->eops->stringval, len);
         fname[len] = '\0';
 
-        while (1) {         /* added by alexfru: 'incbin' uses include paths */
-            combine = nasm_malloc(strlen(prefix) + len + 1);
-            strcpy(combine, prefix);
-            strcat(combine, fname);
-
-            if ((fp = fopen(combine, "rb")) != NULL) {
-                nasm_free(combine);
-                break;
-            }
-
-            nasm_free(combine);
-            pPrevPath = pp_get_include_path_ptr(pPrevPath);
-            if (pPrevPath == NULL)
-                break;
-            prefix = *pPrevPath;
-        }
-
-        if (fp == NULL)
+	fp = fopen(fname, "rb");
+	if (!fp) {
             error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);
-        else if (fseek(fp, 0L, SEEK_END) < 0)
+	} else if (fseek(fp, 0L, SEEK_END) < 0) {
             error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
                   fname);
-        else {
+	} else {
             static char buf[2048];
             int32_t t = instruction->times;
             int32_t base = 0;
@@ -694,34 +675,15 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
         char fname[FILENAME_MAX];
         FILE *fp;
         int32_t len;
-        char *prefix = "", *combine;
-        char **pPrevPath = NULL;
 
         len = FILENAME_MAX - 1;
         if (len > instruction->eops->stringlen)
             len = instruction->eops->stringlen;
         strncpy(fname, instruction->eops->stringval, len);
         fname[len] = '\0';
-
-	/* added by alexfru: 'incbin' uses include paths */
-        while (1) {
-            combine = nasm_malloc(strlen(prefix) + len + 1);
-            strcpy(combine, prefix);
-            strcat(combine, fname);
-
-            if ((fp = fopen(combine, "rb")) != NULL) {
-                nasm_free(combine);
-                break;
-            }
-
-            nasm_free(combine);
-            pPrevPath = pp_get_include_path_ptr(pPrevPath);
-            if (pPrevPath == NULL)
-                break;
-            prefix = *pPrevPath;
-        }
-
-        if (fp == NULL)
+	
+	fp = fopen(fname, "rb");
+	if (!fp)
             error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);
         else if (fseek(fp, 0L, SEEK_END) < 0)

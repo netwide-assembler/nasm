@@ -17,6 +17,7 @@
 %assign
 %clear
 %define
+%depend
 %elif*
 %else
 %endif
@@ -34,6 +35,7 @@
 %line
 %local
 %macro
+%pathsearch
 %pop
 %push
 %rep
