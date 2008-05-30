@@ -16,7 +16,11 @@
 \IR{-F} \c{-F} option
 \IR{-I} \c{-I} option
 \IR{-M} \c{-M} option
+\IR{-MD} \c{-MD} option
+\IR{-MF} \c{-MF} option
 \IR{-MG} \c{-MG} option
+\IR{-MQ} \c{-MQ} option
+\IR{-MT} \c{-MT} option
 \IR{-On} \c{-On} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
@@ -569,6 +573,40 @@ This option can be used to generate makefile dependencies on stdout.
 This differs from the \c{-M} option in that if a nonexisting file is
 encountered, it is assumed to be a generated file and is added to the
 dependency list without a prefix.
+
+
+\S{opt-MF} The \i\c\{-MF} Option: Set Makefile Dependency File
+
+This option can be used with the \c{-M} or \c{-MG} options to send the
+output to a file, rather than to stdout.  For example:
+
+\c nasm -M -MF myfile.dep myfile.asm
+
+
+\S{opt-MD} The \i\c{-MD} Option: Assemble and Generate Dependencies
+
+The \c{-MD} option acts as the combination of the \c{-M} and \c{-MF}
+options (i.e. a filename has to be specified.)  However, unlike the
+\c{-M} or \c{-MG} options, \c{-MD} does \e{not} inhibit the normal
+operation of the assembler.  Use this to automatically generate
+updated dependencies with every assembly session.  For example:
+
+\c nasm -f elf -o myfile.o -MD myfile.dep myfile.asm
+
+
+\S{opt-MT} The \i\c{-MT} Option: Dependency Target Name
+
+The \c{-MT} option can be used to override the default name of the
+dependency target.  This is normally the same as the output filename,
+specified by the \c{-o} option.
+
+
+\S{opt-MQ} The \i\c{-MQ} Option: Dependency Target Name (Quoted)
+
+The \c{-MQ} option acts as the \c{-MT} option, except it tries to
+quote characters that have special meaning in Makefile syntax.  This
+is not foolproof, as not all characters with special meaning are
+quotable in Make.
 
 
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
