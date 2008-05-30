@@ -144,7 +144,7 @@ __SECT__
 %endmacro
 
 %imacro incbin 1-2+.nolist 0
-%push _incbin
+%push incbin
 %pathsearch %$dep %1
 %depend %$dep
 	%? %$dep,%2
