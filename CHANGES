@@ -13,6 +13,7 @@
 * SAFESEH support for Win32, IMAGEREL for Win64 (SEH).
 * %? and %?? to refer to the name of a macro itself.  In particular,
   "%idefine keyword $%?" can be used to make a keyword "disappear".
+* New options for dependency generation: -MD, -MF, -MT, -MQ.
 
 2.02
 ----
