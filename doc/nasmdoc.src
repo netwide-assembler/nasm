@@ -704,12 +704,12 @@ See also the \c{-Z} option, \k{opt-Z}.
 
 \S{opt-i} The \i\c{-i}\I\c{-I} Option: Include File Search Directories
 
-When NASM sees the \i\c{%include} or \i\c{INCBIN} directive in 
-a source file (see \k{include} or \k{incbin}), 
-it will search for the given file not only in the
-current directory, but also in any directories specified on the
-command line by the use of the \c{-i} option. Therefore you can
-include files from a \i{macro library}, for example, by typing
+When NASM sees the \i\c{%include} or \i\c{%pathsearch} directive in a
+source file (see \k{include}, \k{pathsearch} or \k{incbin}), it will
+search for the given file not only in the current directory, but also
+in any directories specified on the command line by the use of the
+\c{-i} option. Therefore you can include files from a \i{macro
+library}, for example, by typing
 
 \c nasm -ic:\macrolib\ -f obj myfile.asm
 
@@ -1276,6 +1276,11 @@ these three ways:
 \c     incbin  "file.dat",1024        ; skip the first 1024 bytes
 \c     incbin  "file.dat",1024,512    ; skip the first 1024, and
 \c                                    ; actually include at most 512
+
+\c{INCBIN} is both a directive and a standard macro; the standard
+macro version searches for the file in the include file search path
+and adds the file to the dependency lists.  This macro can be
+overridden if desired.
 
 
 \S{equ} \i\c{EQU}: Defining Constants
@@ -2899,7 +2904,11 @@ multi-user systems) would typically cause all the system memory to
 be gradually used up and other applications to start crashing.
 
 
-\H{include} \i{Including Other Files}
+\H{files} Source Files and Dependencies
+
+These commands allow you to split your sources into multiple files.
+
+\S{include} \i\c{%include}: \i{Including Other Files} 
 
 Using, once again, a very similar syntax to the C preprocessor,
 NASM's preprocessor lets you include other source files into your
@@ -2933,6 +2942,41 @@ You can force a file to be included even if there is no \c{%include}
 directive that explicitly includes it, by using the \i\c{-p} option
 on the NASM command line (see \k{opt-p}).
 
+
+\S{pathsearch} \i\c{%pathsearch}: Search the Include Path
+
+The \c{%pathsearch} directive takes a single-line macro name and a
+filename, and declare or redefines the specified single-line macro to
+be the include-path-resolved verson of the filename, if the file
+exists (otherwise, it is passed unchanged.)
+
+For example,
+
+\c %pathsearch MyFoo "foo.bin"
+
+... with \c{-Ibins/} in the include path may end up defining the macro
+\c{MyFoo} to be \c{"bins/foo.bin"}.
+
+
+\S{depend} \i\c{%depend}: Add Dependent Files
+
+The \c{%depend} directive takes a filename and adds it to the list of
+files to be emitted as dependency generation when the \c{-M} options
+and its relatives (see \k{opt-M}) are used.  It produces no output.
+
+This is generally used in conjunction with \c{%pathsearch}.  For
+example, a simplified version of the standard macro wrapper for the
+\c{INCBIN} directive looks like:
+
+\c %imacro incbin 1-2+ 0
+\c %pathsearch dep %1
+\c %depend dep
+\c         incbin dep,%2
+\c %endmacro
+
+This first resolves the location of the file into the macro \c{dep},
+then adds it to the dependency lists, and finally issues the
+assembler-level \c{INCBIN} directive.
 
 \H{ctxstack} The \i{Context Stack}
 
