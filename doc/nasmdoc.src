@@ -704,7 +704,7 @@ See also the \c{-Z} option, \k{opt-Z}.
 
 \S{opt-i} The \i\c{-i}\I\c{-I} Option: Include File Search Directories
 
-When NASM sees the \i\c{%include} or \i\c{incbin} directive in 
+When NASM sees the \i\c{%include} or \i\c{INCBIN} directive in 
 a source file (see \k{include} or \k{incbin}), 
 it will search for the given file not only in the
 current directory, but also in any directories specified on the
