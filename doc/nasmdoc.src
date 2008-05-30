@@ -3262,58 +3262,52 @@ number of 16, 32 or 64. \c{__BITS__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
 
-\S{datetime} \i\c{__DATE__} and \i\c{__TIME__}: Assembly date and time
+\S{datetime} Assembly Date and Time Macros
 
-The \c{__DATE__} and \c{__TIME__} macros give the assembly date and
+NASM provides a variety of macros that represent the timestamp of the
+assembly session.
+
+\b The \i\c{__DATE__} and \i\c{__TIME__} macros give the assembly date and
 time as strings, in ISO 8601 format (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"},
 respectively.)
 
-All instances of time and date macros in the same assembly session
-produce consistent output.
-
-\S{datetimenum} \i\c{__DATE_NUM__} and \i\c{__TIME_NUM__}: Numeric
-assembly date and time
-
-The \c{__DATE_NUM__} and \c{__TIME_NUM__} macros give the assembly
+\b The \i\c{__DATE_NUM__} and \i\c{__TIME_NUM__} macros give the assembly
 date and time in numeric form; in the format \c{YYYYMMDD} and
 \c{HHMMSS} respectively.
 
-All instances of time and date macros in the same assembly session
-produce consistent output.
-
-\S{utcdatetime} \i\c{__UTC_DATE__} and \i\c{__UTC_TIME__}: Assembly UTC date and time
-
-The \c{__UTC_DATE__} and \c{__UTC_TIME__} macros give the assembly
+\b The \i\c{__UTC_DATE__} and \i\c{__UTC_TIME__} macros give the assembly
 date and time in universal time (UTC) as strings, in ISO 8601 format
 (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the host
 platform doesn't provide UTC time, these macros are undefined.
 
-All instances of time and date macros in the same assembly session
-produce consistent output.
-
-\S{utcdatetimenum} \i\c{__UTC_DATE_NUM__} and \i\c{__UTC_TIME_NUM__}: Numeric
-assembly UTC date and time
-
-The \c{__UTC_DATE_NUM__} and \c{__UTC_TIME_NUM__} macros give the
+\b The \i\c{__UTC_DATE_NUM__} and \i\c{__UTC_TIME_NUM__} macros give the
 assembly date and time universal time (UTC) in numeric form; in the
 format \c{YYYYMMDD} and \c{HHMMSS} respectively.  If the
 host platform doesn't provide UTC time, these macros are
 undefined.
 
-All instances of time and date macros in the same assembly session
-produce consistent output.
-
-\S{posixtime} \i\c{__POSIX_TIME__}: POSIX time constant
-
-The \c{__POSIX_TIME__} macro is defined as a number containing the
+\b The \c{__POSIX_TIME__} macro is defined as a number containing the
 number of seconds since the POSIX epoch, 1 January 1970 00:00:00 UTC;
-excluding any leap seconds.
-
-This is computed using UTC time if available on the host platform,
-otherwise it is computed using the local time as if it was UTC.
+excluding any leap seconds.  This is computed using UTC time if
+available on the host platform, otherwise it is computed using the
+local time as if it was UTC.
 
 All instances of time and date macros in the same assembly session
-produce consistent output.
+produce consistent output.  For example, in an assembly session
+started at 42 seconds after midnight on January 1, 2010 in Moscow
+(timezone UTC+3) these macros would have the following values,
+assuming, of course, a properly configured environment with a correct
+clock:
+
+\c __DATE__             "2010-01-01"
+\c __TIME__             "00:00:42"
+\c __DATE_NUM__         20100101
+\c __TIME_NUM__         000042
+\c __UTC_DATE__         "2009-12-31"
+\c __UTC_TIME__         "21:00:42"
+\c __UTC_DATE_NUM__     20091231
+\c __UTC_TIME_NUM__     210042
+\c __POSIX_TIME__       1262293242
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
