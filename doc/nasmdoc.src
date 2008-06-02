@@ -1431,6 +1431,9 @@ that the \I{$, prefix}\c{$} prefix does double duty as a prefix on
 identifiers (see \k{syntax}), so a hex number prefixed with a \c{$}
 sign must have a digit after the \c{$} rather than a letter.
 
+Numeric constants can have underscores (\c{_}) interspersed to break
+up long strings.
+
 Some examples:
 
 \c         mov     ax,100          ; decimal
@@ -1440,6 +1443,7 @@ Some examples:
 \c         mov     ax,777q         ; octal
 \c         mov     ax,777o         ; octal again
 \c         mov     ax,10010011b    ; binary
+\c         mov     ax,1001_0011b   ; same binary constant
 
 
 \S{chrconst} \i{Character Constants}
@@ -1535,6 +1539,9 @@ support C99-style hexadecimal floating-point: \c{0x}, hexadecimal
 digits, period, optionally more hexadeximal digits, then optionally a
 \c{P} followed by a \e{binary} (not hexadecimal) exponent in decimal
 notation.
+
+Underscores to break up groups of digits are permitted in
+floating-point constants as well.
 
 Some examples:
 
