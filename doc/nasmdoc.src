@@ -1445,10 +1445,12 @@ Some examples:
 \S{chrconst} \i{Character Constants}
 
 A character constant consists of up to four characters enclosed in
-either single or double quotes. The type of quote makes no
-difference to NASM, except of course that surrounding the constant
-with single quotes allows double quotes to appear within it and vice
-versa.
+either single quotes (\c{'...'}), double quotes (\c{"..."}) or
+backquotes (\c{`...`}).  Single or double quotes are equivalent to
+NASM (except of course that surrounding the constant with single
+quotes allows double quotes to appear within it and vice versa); the
+contents of those are represented verbatim.  Strings enclosed in
+backquotes support C-style \c{\\}-escapes for special characters.
 
 A character constant with more than one character will be arranged
 with \i{little-endian} order in mind: if you code
@@ -1461,6 +1463,31 @@ memory, it would read \c{abcd} rather than \c{dcba}. This is also
 the sense of character constants understood by the Pentium's
 \i\c{CPUID} instruction.
 \# (see \k{insCPUID})
+
+The following escape sequences are recognized by backquoted strings:
+
+\c       \'          single quote (')
+\c       \"          double quote (")
+\c       \`          backquote (`)
+\c       \\\          backslash (\)
+\c       \?          question mark (?)
+\c       \a          BEL (ASCII 7)
+\c       \b          BS  (ASCII 8)
+\c       \n          LF  (ASCII 10)
+\c       \v          VT  (ASCII 11)
+\c       \f          FF  (ASCII 12)
+\c       \r          CR  (ASCII 13)
+\c       \e          ESC (ASCII 27)
+\c       \377        Up to 3 octal digits - ASCII literal
+\c       \xFF        Up to 2 hexadecimal digits - ASCII literal
+\c       \u1234      4 hexadecimal digits - Unicode character
+\c       \U12345678  8 hexadecimal digits - Unicode character
+
+All other escape sequences are reserved.  Note that \c{\\0}, meaning a
+\c{NUL} character, is a special case of the octal escape sequence.
+
+Unicode characters specified with \c{\\u} or \c{\\U} are converted to
+UTF-8.
 
 
 \S{strconst} String Constants
@@ -2165,17 +2192,22 @@ assigned the value of 9.
 Individual letters in strings can be extracted using \c{%substr}.
 An example of its use is probably more useful than the description:
 
-\c %substr mychar  'xyz' 1         ; equivalent to %define mychar 'x'
-\c %substr mychar  'xyz' 2         ; equivalent to %define mychar 'y'
-\c %substr mychar  'xyz' 3         ; equivalent to %define mychar 'z'
+\c %substr mychar 'xyzw' 1       ; equivalent to %define mychar 'x'
+\c %substr mychar 'xyzw' 2       ; equivalent to %define mychar 'y'
+\c %substr mychar 'xyzw' 3       ; equivalent to %define mychar 'z'
+\c %substr mychar 'xyzw' 2,2     ; equivalent to %define mychar 'yz'
+\c %substr mychar 'xyzw' 2,-1    ; equivalent to %define mychar 'yzw'
+\c %substr mychar 'xyzw' 2,-2    ; equivalent to %define mychar 'yz'
 
-In this example, mychar gets the value of 'y'. As with \c{%strlen}
-(see \k{strlen}), the first parameter is the single-line macro to
-be created and the second is the string. The third parameter
-specifies which character is to be selected. Note that the first
-index is 1, not 0 and the last index is equal to the value that
-\c{%strlen} would assign given the same string. Index values out
-of range result in an empty string.
+As with \c{%strlen} (see \k{strlen}), the first parameter is the
+single-line macro to be created and the second is the string. The
+third parameter specifies the first character to be selected, and the
+optional fourth parameter preceeded by comma) is the length.  Note
+that the first index is 1, not 0 and the last index is equal to the
+value that \c{%strlen} would assign given the same string. Index
+values out of range result in an empty string.  A negative length
+means "until N-1 characters before the end of string", i.e. \c{-1}
+means until end of string, \c{-2} until one character before, etc.
 
 
 \H{mlmacro} \i{Multi-Line Macros}: \I\c{%imacro}\i\c{%macro}
