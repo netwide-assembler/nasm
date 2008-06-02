@@ -149,30 +149,57 @@ char *nasm_strndup(char *s, size_t len)
 #ifndef nasm_stricmp
 int nasm_stricmp(const char *s1, const char *s2)
 {
-    while (*s1 && tolower(*s1) == tolower(*s2))
-        s1++, s2++;
-    if (!*s1 && !*s2)
-        return 0;
-    else if (tolower(*s1) < tolower(*s2))
-        return -1;
-    else
-        return 1;
+    unsigned char c1, c2;
+    int d;
+
+    while (1) {
+	c1 = *s1++;
+	c2 = *s2++;
+	d = c1-c2;
+
+	if (d)
+	    return d;
+	if (!c1)
+	    break;
+    }
+    return 0;
 }
 #endif
 
 #ifndef nasm_strnicmp
-int nasm_strnicmp(const char *s1, const char *s2, int n)
+int nasm_strnicmp(const char *s1, const char *s2, size_t n)
 {
-    while (n > 0 && *s1 && tolower(*s1) == tolower(*s2))
-        s1++, s2++, n--;
-    if ((!*s1 && !*s2) || n == 0)
-        return 0;
-    else if (tolower(*s1) < tolower(*s2))
-        return -1;
-    else
-        return 1;
+    unsigned char c1, c2;
+    int d;
+
+    while (n--) {
+	c1 = *s1++;
+	c2 = *s2++;
+	d = c1-c2;
+
+	if (d)
+	    return d;
+	if (!c1)
+	    break;
+    }
+    return 0;
 }
 #endif
+
+int nasm_memicmp(const char *s1, const char *s2, size_t n)
+{
+    unsigned char c1, c2;
+    int d;
+
+    while (n--) {
+	c1 = tolower(*s1++);
+	c2 = tolower(*s2++);
+	d = c1-c2;
+	if (d)
+	    return d;
+    }
+    return 0;
+}
 
 #ifndef nasm_strsep
 char *nasm_strsep(char **stringp, const char *delim)

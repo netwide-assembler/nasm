@@ -122,8 +122,10 @@ int nasm_stricmp(const char *, const char *);
 #elif defined(HAVE_STRNICMP)
 #define nasm_strnicmp strnicmp
 #else
-int nasm_strnicmp(const char *, const char *, int);
+int nasm_strnicmp(const char *, const char *, size_t);
 #endif
+
+int nasm_memicmp(const char *, const char *, size_t);
 
 #if defined(HAVE_STRSEP)
 #define nasm_strsep strsep

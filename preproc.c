@@ -985,7 +985,8 @@ static void delete_Blocks(void)
  *  back to the caller.  It sets the type and text elements, and
  *  also the mac and next elements to NULL.
  */
-static Token *new_Token(Token * next, enum pp_token_type type, char *text, int txtlen)
+static Token *new_Token(Token * next, enum pp_token_type type,
+			char *text, int txtlen)
 {
     Token *t;
     int i;
@@ -1006,8 +1007,8 @@ static Token *new_Token(Token * next, enum pp_token_type type, char *text, int t
     } else {
         if (txtlen == 0)
             txtlen = strlen(text);
-        t->text = nasm_malloc(1 + txtlen);
-        strncpy(t->text, text, txtlen);
+        t->text = nasm_malloc(txtlen+1);
+        memcpy(t->text, text, txtlen);
         t->text[txtlen] = '\0';
     }
     return t;
@@ -1144,16 +1145,12 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 
     if (tline->type == TOK_STRING) {
 	bool rn_warn;
-        char q, *r;
-        int l;
+        size_t l;
 
-        r = tline->text;
-        q = *r++;
-        l = strlen(r);
+        l = nasm_unquote(tline->text);
+	/* TOKEN_ERRNUM if improperly quoted... */
 
-        if (l == 0 || r[l - 1] != q)
-            return tokval->t_type = TOKEN_ERRNUM;
-        tokval->t_integer = readstrnum(r, l - 1, &rn_warn);
+        tokval->t_integer = readstrnum(tline->text, l, &rn_warn);
         if (rn_warn)
             error(ERR_WARNING | ERR_PASS1, "character constant too long");
         tokval->t_charptr = NULL;
@@ -1202,6 +1199,16 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 static int mstrcmp(const char *p, const char *q, bool casesense)
 {
     return casesense ? strcmp(p, q) : nasm_stricmp(p, q);
+}
+
+/*
+ * Compare a string to the name of an existing macro; this is a
+ * simple wrapper which calls either strcmp or nasm_stricmp
+ * depending on the value of the `casesense' parameter.
+ */
+static int mmemcmp(const char *p, const char *q, size_t l, bool casesense)
+{
+    return casesense ? memcmp(p, q, l) : nasm_memicmp(p, q, l);
 }
 
 /*
@@ -1511,13 +1518,20 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 j = false;      /* found mismatching tokens */
                 break;
             }
-            /* Unify surrounding quotes for strings */
-	    /* XXX: this doesn't work anymore */
+            /* When comparing strings, need to unquote them first */
             if (t->type == TOK_STRING) {
-                tt->text[0] = t->text[0];
-                tt->text[strlen(tt->text) - 1] = t->text[0];
-            }
-            if (mstrcmp(tt->text, t->text, i == PPC_IFIDN) != 0) {
+		size_t l1 = nasm_unquote(t->text);
+		size_t l2 = nasm_unquote(tt->text);
+		
+		if (l1 != l2) {
+		    j = false;
+		    break;
+		}
+		if (mmemcmp(t->text, tt->text, l1, i == PPC_IFIDN)) {
+		    j = false;
+		    break;
+		}
+            } else if (mstrcmp(tt->text, t->text, i == PPC_IFIDN) != 0) {
                 j = false;      /* found mismatching tokens */
                 break;
             }

@@ -340,6 +340,23 @@ size_t nasm_unquote(char *str)
 		break;
 	    }
 	}
+	switch (state) {
+	case st_start:
+	case st_backslash:
+	    break;
+	case st_oct:
+	    *q++ = nval;
+	    break;
+	case st_hex:
+	    *q++ = ndig ? nval : *escp;
+	    break;
+	case st_ucs:
+	    if (ndig)
+		q = emit_utf8(q, nval);
+	    else
+		*q++ = *escp;
+	    break;
+	}
 	*q = '\0';
 	return q-str;
     }

@@ -8,6 +8,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "quote.h"
 #include "stdscan.h"
 #include "insns.h"
 
@@ -166,26 +167,30 @@ int stdscan(void *private_data, struct tokenval *tv)
 	    r = stdscan_copy(r, stdscan_bufptr - r);
 	    tv->t_integer = readnum(r, &rn_error);
 	    stdscan_pop();
-	    if (rn_error)
-		return tv->t_type = TOKEN_ERRNUM;   /* some malformation occurred */
+	    if (rn_error) {
+		/* some malformation occurred */
+		return tv->t_type = TOKEN_ERRNUM;
+	    }
 	    tv->t_charptr = NULL;
 	    return tv->t_type = TOKEN_NUM;
 	}
-    } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"') {
+    } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"' ||
+	       *stdscan_bufptr == '`') {
 	/* a char constant */
-        char quote = *stdscan_bufptr++, *r;
+	char s;
         bool rn_warn;
-        r = tv->t_charptr = stdscan_bufptr;
-        while (*stdscan_bufptr && *stdscan_bufptr != quote)
-            stdscan_bufptr++;
-        tv->t_inttwo = stdscan_bufptr - r;      /* store full version */
-        if (!*stdscan_bufptr)
+	stdscan_bufptr = nasm_skip_string(tv->t_charptr = stdscan_bufptr);
+	s = *stdscan_bufptr;
+	tv->t_inttwo = nasm_unquote(tv->t_charptr);
+        if (!s)
             return tv->t_type = TOKEN_ERRNUM;   /* unmatched quotes */
         stdscan_bufptr++;       /* skip over final quote */
-        tv->t_integer = readstrnum(r, tv->t_inttwo, &rn_warn);
-        /* rn_warn is not checked on purpose; it might not be a valid number */
+        tv->t_integer = readstrnum(tv->t_charptr, tv->t_inttwo, &rn_warn);
+	/* Issue: can't readily check rn_warn, because we might be in
+	   a db family context... */
         return tv->t_type = TOKEN_NUM;
-    } else if (*stdscan_bufptr == ';') {        /* a comment has happened - stay */
+    } else if (*stdscan_bufptr == ';') {
+        /* a comment has happened - stay */
         return tv->t_type = 0;
     } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '>') {
         stdscan_bufptr += 2;
