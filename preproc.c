@@ -2679,8 +2679,8 @@ static int do_directive(Token * tline)
         if (t->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%pathsearch' ignored");
-	p = tline->text;
-        if (tline->type != TOK_INTERNAL_STRING)
+	p = t->text;
+        if (t->type != TOK_INTERNAL_STRING)
 	    nasm_unquote(p);
 
 	fp = inc_fopen(p, &xsl, &xsl, true);
