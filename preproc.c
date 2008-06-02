@@ -48,6 +48,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "hashtbl.h"
+#include "quote.h"
 #include "stdscan.h"
 #include "tokens.h"
 #include "tables.h"
@@ -795,15 +796,12 @@ static Token *tokenize(char *line)
             p++;
             while (*p && isidchar(*p))
                 p++;
-        } else if (*p == '\'' || *p == '"') {
+        } else if (*p == '\'' || *p == '"' || *p == '`') {
             /*
              * A string token.
              */
-            char c = *p;
-            p++;
             type = TOK_STRING;
-            while (*p && *p != c)
-                p++;
+	    p = nasm_skip_string(p);
 
             if (*p) {
                 p++;
@@ -1514,6 +1512,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 break;
             }
             /* Unify surrounding quotes for strings */
+	    /* XXX: this doesn't work anymore */
             if (t->type == TOK_STRING) {
                 tt->text[0] = t->text[0];
                 tt->text[strlen(tt->text) - 1] = t->text[0];
@@ -2079,11 +2078,9 @@ static int do_directive(Token * tline)
         if (tline->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%depend' ignored");
-        if (tline->type != TOK_INTERNAL_STRING) {
-            p = tline->text + 1;        /* point past the quote to the name */
-            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
-        } else
-            p = tline->text;    /* internal_string is easier */
+	p = tline->text;
+        if (tline->type != TOK_INTERNAL_STRING)
+	    nasm_unquote(p);
 	if (dephead && !in_list(*dephead, p)) {
 	    StrList *sl = nasm_malloc(strlen(p)+1+sizeof sl->next);
 	    sl->next = NULL;
@@ -2107,11 +2104,9 @@ static int do_directive(Token * tline)
         if (tline->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%include' ignored");
-        if (tline->type != TOK_INTERNAL_STRING) {
-            p = tline->text + 1;        /* point past the quote to the name */
-            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
-        } else
-            p = tline->text;    /* internal_string is easier */
+	p = tline->text;
+        if (tline->type != TOK_INTERNAL_STRING)
+	    nasm_unquote(p);
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
@@ -2186,14 +2181,14 @@ static int do_directive(Token * tline)
         tline = tline->next;
         skip_white_(tline);
         if (tok_type_(tline, TOK_STRING)) {
-            p = tline->text + 1;        /* point past the quote to the name */
-            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
-	    expand_macros_in_string(&p);
+	    p = tline->text;
+	    nasm_unquote(p);
+	    expand_macros_in_string(&p); /* WHY? */
             error(ERR_NONFATAL, "%s", p);
             nasm_free(p);
         } else {
             p = detoken(tline, false);
-            error(ERR_WARNING, "%s", p);
+            error(ERR_WARNING, "%s", p); /* WARNING!??!! */
             nasm_free(p);
         }
         free_tlist(origline);
@@ -2670,11 +2665,9 @@ static int do_directive(Token * tline)
         if (t->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%pathsearch' ignored");
-        if (t->type != TOK_INTERNAL_STRING) {
-            p = t->text + 1;        /* point past the quote to the name */
-            p[strlen(p) - 1] = '\0';    /* remove the trailing quote */
-        } else
-            p = t->text;    /* internal_string is easier */
+	p = tline->text;
+        if (tline->type != TOK_INTERNAL_STRING)
+	    nasm_unquote(p);
 
 	fp = inc_fopen(p, &xsl, &xsl, true);
 	if (fp) {
@@ -2683,8 +2676,7 @@ static int do_directive(Token * tline)
 	}
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-	macro_start->text = nasm_strdup(p);
-	nasm_quote(&macro_start->text);
+	macro_start->text = nasm_quote(p, strlen(p));
 	macro_start->type = TOK_STRING;
         macro_start->mac = NULL;
 	if (xsl)
@@ -2736,7 +2728,7 @@ static int do_directive(Token * tline)
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        make_tok_num(macro_start, strlen(t->text) - 2);
+        make_tok_num(macro_start, nasm_unquote(t->text));
         macro_start->mac = NULL;
 
         /*
@@ -2750,6 +2742,10 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_SUBSTR:
+    {
+	int64_t a1, a2;
+	size_t len;
+	
 	casesense = true;
 
         tline = tline->next;
@@ -2786,29 +2782,50 @@ static int do_directive(Token * tline)
         tt = t->next;
         tptr = &tt;
         tokval.t_type = TOKEN_INVALID;
-        evalresult =
-            evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL,
+			      pass, error, NULL);
         if (!evalresult) {
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
-        }
-        if (!is_simple(evalresult)) {
+        } else if (!is_simple(evalresult)) {
             error(ERR_NONFATAL, "non-constant value given to `%%substr`");
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
+	a1 = evalresult->value-1;
+
+        while (tok_type_(tt, TOK_WHITESPACE))
+            tt = tt->next;
+	if (!tt) {
+	    a2 = 1;		/* Backwards compatibility: one character */
+	} else {
+	    tokval.t_type = TOKEN_INVALID;
+	    evalresult = evaluate(ppscan, tptr, &tokval, NULL,
+				  pass, error, NULL);
+	    if (!evalresult) {
+		free_tlist(tline);
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+	    } else if (!is_simple(evalresult)) {
+		error(ERR_NONFATAL, "non-constant value given to `%%substr`");
+		free_tlist(tline);
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+	    }
+	    a2 = evalresult->value;
+	}
+
+	len = nasm_unquote(t->text);
+	if (a2 < 0)
+	    a2 = a2+1+len-a1;
+	if (a1+a2 > (int64_t)len)
+	    a2 = len-a1;
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        macro_start->text = nasm_strdup("'''");
-        if (evalresult->value > 0
-            && evalresult->value < (int) strlen(t->text) - 1) {
-            macro_start->text[1] = t->text[evalresult->value];
-        } else {
-            macro_start->text[2] = '\0';
-        }
+        macro_start->text = nasm_quote((a1 < 0) ? "" : t->text+a1, a2);
         macro_start->type = TOK_STRING;
         macro_start->mac = NULL;
 
@@ -2821,6 +2838,7 @@ static int do_directive(Token * tline)
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+    }
 
     case PP_ASSIGN:
     case PP_IASSIGN:
@@ -3209,9 +3227,11 @@ again:
 		    if (!m->expansion) {
 			if (!strcmp("__FILE__", m->name)) {
 			    int32_t num = 0;
-			    src_get(&num, &(tline->text));
-			    nasm_quote(&(tline->text));
+			    char *file;
+			    src_get(&num, &file);
+			    tline->text = nasm_quote(file, strlen(file));
 			    tline->type = TOK_STRING;
+			    nasm_free(file);
 			    continue;
 			}
 			if (!strcmp("__LINE__", m->name)) {

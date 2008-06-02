@@ -65,7 +65,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
 	output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	preproc.$(O) pptok.$(O) macros.$(O) \
+	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
 	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) tokhash.$(O) \
 	regvals.$(O) regflags.$(O)
 

@@ -395,7 +395,6 @@ int32_t src_get_linnum(void);
  */
 int src_get(int32_t *xline, char **xname);
 
-void nasm_quote(char **str);
 char *nasm_strcat(char *one, char *two);
 
 void null_debug_routine(const char *directive, const char *params);
