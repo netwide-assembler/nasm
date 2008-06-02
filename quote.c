@@ -232,7 +232,7 @@ size_t nasm_unquote(char *str)
 
 	    case st_backslash:
 		state = st_start;
-		escp = p-1;
+		escp = p;	/* Beginning of argument sequence */
 		nval = 0;
 		switch (c) {
 		case 'a':
@@ -315,7 +315,7 @@ size_t nasm_unquote(char *str)
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    *q++ = (p > escp+1) ? nval : *escp;
+		    *q++ = (p > escp) ? nval : escp[-1];
 		    state = st_start;
 		}
 		break;
@@ -331,10 +331,10 @@ size_t nasm_unquote(char *str)
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    if (p > escp+1)
+		    if (p > escp)
 			q = emit_utf8(q, nval);
 		    else
-			*q++ = *escp;
+			*q++ = escp[-1];
 		    state = st_start;
 		}
 		break;
@@ -348,13 +348,13 @@ size_t nasm_unquote(char *str)
 	    *q++ = nval;
 	    break;
 	case st_hex:
-	    *q++ = (p > escp+1) ? nval : *escp;
+	    *q++ = (p > escp) ? nval : escp[-1];
 	    break;
 	case st_ucs:
-	    if (p > escp+1)
+	    if (p > escp)
 		q = emit_utf8(q, nval);
 	    else
-		*q++ = *escp;
+		*q++ = escp[-1];
 	    break;
 	}
 	*q = '\0';
