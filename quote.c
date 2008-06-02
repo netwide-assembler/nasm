@@ -377,11 +377,7 @@ char *nasm_skip_string(char *str)
     enum unq_state {
 	st_start,
 	st_backslash,
-	st_hex,
-	st_oct,
-	st_ucs,
     } state;
-    int ndig = 0;
 
     bq = str[0];
     if (bq == '\'' || bq == '\"') {
@@ -409,77 +405,13 @@ char *nasm_skip_string(char *str)
 		break;
 
 	    case st_backslash:
-		switch (c) {
-		case 'a':
-		case 'b':
-		case 'e':
-		case 'f':
-		case 'n':
-		case 'r':
-		case 't':
-		case 'v':
-		default:
-		    state = st_start;
-		    break;
-		case 'u':
-		    state = st_ucs;
-		    ndig = 4;
-		    break;
-		case 'U':
-		    state = st_ucs;
-		    ndig = 8;
-		    break;
-		case 'x':
-		case 'X':
-		    state = st_hex;
-		    ndig = 0;
-		    break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		    state = st_oct;
-		    ndig = 1;
-		    break;
-		}
-		break;
-
-	    case st_oct:
-		if (c >= '0' && c <= '7') {
-		    if (++ndig >= 3)
-			state = st_start;
-		} else {
-		    p--;	/* Process this character again */
-		    state = st_start;
-		}
-		break;
-
-	    case st_hex:
-		if ((c >= '0' && c <= '9') ||
-		    (c >= 'A' && c <= 'F') ||
-		    (c >= 'a' && c <= 'f')) {
-		    if (++ndig >= 2)
-			state = st_start;
-		} else {
-		    p--;	/* Process this character again */
-		    state = st_start;
-		}
-		break;
-
-	    case st_ucs:
-		if ((c >= '0' && c <= '9') ||
-		    (c >= 'A' && c <= 'F') ||
-		    (c >= 'a' && c <= 'f')) {
-		    if (!--ndig)
-			state = st_start;
-		} else {
-		    p--;	/* Process this character again */
-		    state = st_start;
-		}
+		/*
+		 * Note: for the purpose of finding the end of the string,
+		 * all successor states to st_backslash are functionally
+		 * equivalent to st_start, since either a backslash or
+		 * a backquote will force a return to the st_start state.
+		 */
+		state = st_start;
 		break;
 	    }
 	}
