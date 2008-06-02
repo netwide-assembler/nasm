@@ -1280,11 +1280,12 @@ sub write_hlp {
       # Code paragraph.
       print "\\keep\\f1\\sb120\n";
       foreach $i (@$pname) {
+	my $x = $i;
         warn "code line longer than 68 chars: $i\n" if length $i > 68;
-	$i =~ s/\\/\\\\/g;
-	$i =~ s/\{/\\\{/g;
-	$i =~ s/\}/\\\}/g;
-        print "$i\\par\\sb0\n";
+	$x =~ s/\\/\\\\/g;
+	$x =~ s/\{/\\\{/g;
+	$x =~ s/\}/\\\}/g;
+        print "$x\\par\\sb0\n";
       }
       $newpar = "\\pard\\f0\\sb120\n";
     } elsif ($ptype eq "bull" || $ptype eq "norm") {
