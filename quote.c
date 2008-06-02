@@ -90,31 +90,31 @@ char *nasm_quote(char *str, size_t len)
 		*q++ = '\\';
 		*q++ = c;
 		break;
-	    case '\a':
+	    case 7:
 		*q++ = '\\';
 		*q++ = 'a';
 		break;
-	    case '\b':
+	    case 8:
 		*q++ = '\\';
 		*q++ = 'b';
 		break;
-	    case '\t':
+	    case 9:
 		*q++ = '\\';
 		*q++ = 't';
 		break;
-	    case '\n':
+	    case 10:
 		*q++ = '\\';
 		*q++ = 'n';
 		break;
-	    case '\v':
+	    case 11:
 		*q++ = '\\';
 		*q++ = 'v';
 		break;
-	    case '\f':
+	    case 12:
 		*q++ = '\\';
 		*q++ = 'f';
 		break;
-	    case '\r':
+	    case 13:
 		*q++ = '\\';
 		*q++ = 'r';
 		break;
