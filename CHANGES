@@ -17,6 +17,9 @@
 * New preprocessor directives %pathsearch and %depend; INCBIN
   reimplemented as a macro.
 * %include now resolves macros in a sane manner.
+* %substr can now be used to get other than one-character substrings.
+* New type of character/string constants, using backquotes (`...`),
+  which support C-style escape sequences.
 
 2.02
 ----
