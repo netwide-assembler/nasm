@@ -1482,16 +1482,21 @@ The following escape sequences are recognized by backquoted strings:
 \c       \f          FF  (ASCII 12)
 \c       \r          CR  (ASCII 13)
 \c       \e          ESC (ASCII 27)
-\c       \377        Up to 3 octal digits - ASCII literal
-\c       \xFF        Up to 2 hexadecimal digits - ASCII literal
+\c       \377        Up to 3 octal digits - literal byte
+\c       \xFF        Up to 2 hexadecimal digits - literal byte
 \c       \u1234      4 hexadecimal digits - Unicode character
 \c       \U12345678  8 hexadecimal digits - Unicode character
 
 All other escape sequences are reserved.  Note that \c{\\0}, meaning a
-\c{NUL} character, is a special case of the octal escape sequence.
+\c{NUL} character (ASCII 0), is a special case of the octal escape
+sequence.
 
 Unicode characters specified with \c{\\u} or \c{\\U} are converted to
-UTF-8.
+UTF-8.  For example, the following lines are all equivalent:
+
+\c       db `\u263a`            ; UTF-8 smiley face
+\c       db `\xe2\x98\xba`      ; UTF-8 smiley face
+\c       db 0E2h, 098h, 0BAh    ; UTF-8 smiley face
 
 
 \S{strconst} String Constants
