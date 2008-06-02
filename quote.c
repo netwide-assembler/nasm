@@ -233,6 +233,7 @@ size_t nasm_unquote(char *str)
 	    case st_backslash:
 		state = st_start;
 		escp = p-1;
+		nval = 0;
 		switch (c) {
 		case 'a':
 		    *q++ = 7;
@@ -258,19 +259,18 @@ size_t nasm_unquote(char *str)
 		case 'u':
 		    state = st_ucs;
 		    ndig = 4;
-		    nval = 0;
 		    break;
 		case 'U':
 		    state = st_ucs;
 		    ndig = 8;
-		    nval = 0;
 		    break;
 		case 'v':
 		    *q++ = 11;
+		    break;
 		case 'x':
 		case 'X':
 		    state = st_hex;
-		    ndig = nval = 0;
+		    ndig = 2;
 		    break;
 		case '0':
 		case '1':
@@ -281,7 +281,7 @@ size_t nasm_unquote(char *str)
 		case '6':
 		case '7':
 		    state = st_oct;
-		    ndig = 1;
+		    ndig = 2;	/* Up to two more digits */
 		    nval = c - '0';
 		    break;
 		default:
@@ -293,7 +293,7 @@ size_t nasm_unquote(char *str)
 	    case st_oct:
 		if (c >= '0' && c <= '7') {
 		    nval = (nval << 3) + (c - '0');
-		    if (++ndig >= 3) {
+		    if (!--ndig) {
 			*q++ = nval;
 			state = st_start;
 		    }
@@ -309,13 +309,13 @@ size_t nasm_unquote(char *str)
 		    (c >= 'A' && c <= 'F') ||
 		    (c >= 'a' && c <= 'f')) {
 		    nval = (nval << 4) + numvalue(c);
-		    if (++ndig >= 2) {
+		    if (--ndig) {
 			*q++ = nval;
 			state = st_start;
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    *q++ = ndig ? nval : *escp;
+		    *q++ = (p > escp+1) ? nval : *escp;
 		    state = st_start;
 		}
 		break;
@@ -348,10 +348,10 @@ size_t nasm_unquote(char *str)
 	    *q++ = nval;
 	    break;
 	case st_hex:
-	    *q++ = ndig ? nval : *escp;
+	    *q++ = (p > escp+1) ? nval : *escp;
 	    break;
 	case st_ucs:
-	    if (ndig)
+	    if (p > escp+1)
 		q = emit_utf8(q, nval);
 	    else
 		*q++ = *escp;
