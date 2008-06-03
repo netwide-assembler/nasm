@@ -228,66 +228,16 @@ Object File Format
 
 \C{intro} Introduction
 
-\H{whatsnew} Documentation Changes for Version 2.00
-
-\S{p64Bit} 64-Bit Support
-
-\b Writing 64-bit Code \k{64bit}
-
-\b elf32 and elf64 output formats \k{elffmt}
-
-\b win64 output format \k{win64fmt}
-
-\b Numeric constants in DQ directive \k{db}
-
-\b oword, do and reso \k{db}
-
-\b Stack Relative Preprocessor Directives \k{stackrel}
-
-\S{fpenhance} Floating Point Enhancements
-
-\b 8-, 16- and 128-bit floating-point format \k{fltconst}
-
-\b Floating-point option control \k{FLOAT}
-
-\b Infinity and NaN \k{fltconst}
-
-\S{elfenhance} ELF Enhancements
-
-\b Symbol Visibility \k{elfglob}
-
-\b Setting OSABI value in ELF header \k{abisect}
-
-\b Debug Formats \k{elfdbg}
-
-\S{cmdenhance} Command Line Options
-
-\b Generate Makefile Dependencies \k{opt-MG}
-
-\b Send Errors to a File \k{opt-Z}
-
-\b Unlimited Optimization Passes \k{opt-On}
-
-\S{oenhance} Other Enhancements
-
-\b %IFN and %ELIFN \k{condasm}
-
-\b Logical Negation Operator \c{!} \k{expmul}
-
-\b Current BITS Mode \k{bitsm}
-
-\b Use of \c{%+} \k{concat%+}
-
 \H{whatsnasm} What Is NASM?
 
-The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed for
-portability and modularity. It supports a range of object file
-formats, including Linux and \c{*BSD} \c{a.out}, \c{ELF}, \c{COFF}, \c{Mach-O},
-Microsoft 16-bit \c{OBJ}, \c{Win32} and \c{Win64}. It will also output plain
-binary files. Its syntax is designed to be simple and easy to understand, similar
-to Intel's but less complex. It supports from the upto and including \c{Pentium},
-\c{P6}, \c{MMX}, \c{3DNow!}, \c{SSE}, \c{SSE2}, \c{SSE3} and \c{x64} opcodes. NASM has
-a strong support for macro conventions.
+The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed
+for portability and modularity. It supports a range of object file
+formats, including Linux and \c{*BSD} \c{a.out}, \c{ELF}, \c{COFF},
+\c{Mach-O}, Microsoft 16-bit \c{OBJ}, \c{Win32} and \c{Win64}. It will
+also output plain binary files. Its syntax is designed to be simple
+and easy to understand, similar to Intel's but less complex. It
+supports all currently known x86 architectural extensions, and has
+strong support for macros.
 
 
 \S{yaasm} Why Yet Another Assembler?
