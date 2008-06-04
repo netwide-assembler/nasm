@@ -1144,11 +1144,18 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     }
 
     if (tline->type == TOK_STRING) {
+	char bq, *ep;
+	bool errquote;
 	bool rn_warn;
         size_t l;
 
-        l = nasm_unquote(tline->text);
-	/* TOKEN_ERRNUM if improperly quoted... */
+	bq = tline->text[0];
+        l = nasm_unquote(tline->text, &ep);
+	if (ep[0] != bq || ep[1] != '\0')
+	    errquote = true;
+	
+	if (errquote)
+	    return tokval->t_type = TOKEN_ERRNUM;
 
         tokval->t_integer = readstrnum(tline->text, l, &rn_warn);
         if (rn_warn)
@@ -1520,8 +1527,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             }
             /* When comparing strings, need to unquote them first */
             if (t->type == TOK_STRING) {
-		size_t l1 = nasm_unquote(t->text);
-		size_t l2 = nasm_unquote(tt->text);
+		size_t l1 = nasm_unquote(t->text, NULL);
+		size_t l2 = nasm_unquote(tt->text, NULL);
 		
 		if (l1 != l2) {
 		    j = false;
@@ -2081,20 +2088,21 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_DEPEND:
-	tline = expand_smacro(tline->next);
-        skip_white_(tline);
-        if (!tline || (tline->type != TOK_STRING &&
-                       tline->type != TOK_INTERNAL_STRING)) {
+	t = tline->next = expand_smacro(tline->next);
+        skip_white_(t);
+        if (!t || (t->type != TOK_STRING &&
+                       t->type != TOK_INTERNAL_STRING)) {
             error(ERR_NONFATAL, "`%%depend' expects a file name");
+	    free_tlist(t);
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
-        if (tline->next)
+        if (t->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%depend' ignored");
-	p = tline->text;
-        if (tline->type != TOK_INTERNAL_STRING)
-	    nasm_unquote(p);
+	p = t->text;
+        if (t->type != TOK_INTERNAL_STRING)
+	    nasm_unquote(p, NULL);
 	if (dephead && !in_list(*dephead, p)) {
 	    StrList *sl = nasm_malloc(strlen(p)+1+sizeof sl->next);
 	    sl->next = NULL;
@@ -2102,25 +2110,26 @@ static int do_directive(Token * tline)
 	    *deptail = sl;
 	    deptail = &sl->next;
 	}
+	free_tlist(t);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_INCLUDE:
-	tline = expand_smacro(tline->next);
-        skip_white_(tline);
+	t = tline->next = expand_smacro(tline->next);
+        skip_white_(t);
 	
-        if (!tline || (tline->type != TOK_STRING &&
-                       tline->type != TOK_INTERNAL_STRING)) {
+        if (!t || (t->type != TOK_STRING &&
+                       t->type != TOK_INTERNAL_STRING)) {
             error(ERR_NONFATAL, "`%%include' expects a file name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
-        if (tline->next)
+        if (t->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%include' ignored");
-	p = tline->text;
-        if (tline->type != TOK_INTERNAL_STRING)
-	    nasm_unquote(p);
+	p = t->text;
+        if (t->type != TOK_INTERNAL_STRING)
+	    nasm_unquote(p, NULL);
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
@@ -2129,7 +2138,7 @@ static int do_directive(Token * tline)
 	    /* -MG given but file not found */
 	    nasm_free(inc);
 	} else {
-	    inc->fname = src_set_fname(p);
+	    inc->fname = src_set_fname(nasm_strdup(p));
 	    inc->lineno = src_set_linnum(0);
 	    inc->lineinc = 1;
 	    inc->expansion = NULL;
@@ -2196,7 +2205,7 @@ static int do_directive(Token * tline)
         skip_white_(tline);
         if (tok_type_(tline, TOK_STRING)) {
 	    p = tline->text;
-	    nasm_unquote(p);
+	    nasm_unquote(p, NULL);
 	    expand_macros_in_string(&p); /* WHY? */
             error(ERR_NONFATAL, "%s", p);
             nasm_free(p);
@@ -2681,7 +2690,7 @@ static int do_directive(Token * tline)
                   "trailing garbage after `%%pathsearch' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
-	    nasm_unquote(p);
+	    nasm_unquote(p, NULL);
 
 	fp = inc_fopen(p, &xsl, &xsl, true);
 	if (fp) {
@@ -2742,7 +2751,7 @@ static int do_directive(Token * tline)
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        make_tok_num(macro_start, nasm_unquote(t->text));
+        make_tok_num(macro_start, nasm_unquote(t->text, NULL));
         macro_start->mac = NULL;
 
         /*
@@ -2831,7 +2840,7 @@ static int do_directive(Token * tline)
 	    a2 = evalresult->value;
 	}
 
-	len = nasm_unquote(t->text);
+	len = nasm_unquote(t->text, NULL);
 	if (a2 < 0)
 	    a2 = a2+1+len-a1;
 	if (a1+a2 > (int64_t)len)

@@ -183,12 +183,13 @@ static char *emit_utf8(char *q, int32_t v)
  *
  * In-place replacement is possible since the unquoted length is always
  * shorter than or equal to the quoted length.
+ *
+ * *ep points to the final quote, or to the null if improperly quoted.
  */
-size_t nasm_unquote(char *str)
+size_t nasm_unquote(char *str, char **ep)
 {
-    size_t ln;
-    char bq, eq;
-    char *p, *q, *ep;
+    char bq;
+    char *p, *q;
     char *escp = NULL;
     char c;
     enum unq_state {
@@ -201,33 +202,42 @@ size_t nasm_unquote(char *str)
     int ndig = 0;
     int32_t nval = 0;
 
-    bq = str[0];
+    p = q = str;
+    
+    bq = *p++;
     if (!bq)
 	return 0;
-    ln = strlen(str);
-    eq = str[ln-1];
 
-    if ((bq == '\'' || bq == '\"') && bq == eq) {
+    switch (bq) {
+    case '\'':
+    case '\"':
 	/* '...' or "..." string */
-	memmove(str, str+1, ln-2);
-	str[ln-2] = '\0';
-	return ln-2;
-    }
-    if (bq == '`' || eq == '`') {
+	while ((c = *p) && c != bq) {
+	    p++;
+	    *q++ = c;
+	}
+	*q = '\0';
+	break;
+
+    case '`':
 	/* `...` string */
-	q = str;
-	p = str+1;
-	ep = str+ln-1;
 	state = st_start;
 
-	while (p < ep) {
-	    c = *p++;
+	while ((c = *p)) {
+	    p++;
 	    switch (state) {
 	    case st_start:
-		if (c == '\\')
+		switch (c) {
+		case '\\':
 		    state = st_backslash;
-		else
+		    break;
+		case '`':
+		    p--;
+		    goto out;
+		default:
 		    *q++ = c;
+		    break;
+		}
 		break;
 
 	    case st_backslash:
@@ -357,12 +367,18 @@ size_t nasm_unquote(char *str)
 		*q++ = escp[-1];
 	    break;
 	}
-	*q = '\0';
-	return q-str;
+    out:
+	break;
+
+    default:
+	/* Not a quoted string, just return the input... */
+	p = q = strchr(str, '\0');
+	break;
     }
 
-    /* Otherwise, just return the input... */
-    return ln;
+    if (ep)
+	*ep = p;
+    return q-str;
 }
 
 /*

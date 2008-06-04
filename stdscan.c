@@ -47,7 +47,7 @@ static char *stdscan_copy(char *p, int len)
     char *text;
 
     text = nasm_malloc(len + 1);
-    strncpy(text, p, len);
+    memcpy(text, p, len);
     text[len] = '\0';
 
     if (stdscan_templen >= stdscan_tempsize) {
@@ -176,15 +176,14 @@ int stdscan(void *private_data, struct tokenval *tv)
 	}
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"' ||
 	       *stdscan_bufptr == '`') {
-	/* a char constant */
-	char s;
+	/* a quoted string */
         bool rn_warn;
-	stdscan_bufptr = nasm_skip_string(tv->t_charptr = stdscan_bufptr);
-	s = *stdscan_bufptr;
-	tv->t_inttwo = nasm_unquote(tv->t_charptr);
-        if (!s)
-            return tv->t_type = TOKEN_ERRNUM;   /* unmatched quotes */
-        stdscan_bufptr++;       /* skip over final quote */
+	char start_quote = *stdscan_bufptr;
+	tv->t_charptr = stdscan_bufptr;
+	tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
+	if (*stdscan_bufptr != start_quote)
+	    return tv->t_type = TOKEN_ERRNUM;
+	stdscan_bufptr++;	/* Skip final quote */
         tv->t_integer = readstrnum(tv->t_charptr, tv->t_inttwo, &rn_warn);
 	/* Issue: can't readily check rn_warn, because we might be in
 	   a db family context... */
