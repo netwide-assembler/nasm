@@ -224,6 +224,9 @@ nasm.spec: nasm.spec.in version.sed
 splint:
 	splint -weak *.c
 
+test: nasm$(X)
+	cd test && $(PERL) performtest.pl --nasm=../nasm *.asm
+
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,
 # it's expected to be invoked manually.
