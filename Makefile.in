@@ -299,7 +299,6 @@ preproc.$(O): preproc.c compiler.h config.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h \
  version.h
 quote.$(O): quote.c compiler.h config.h nasmlib.h quote.h
-quotetest.$(O): quotetest.c compiler.h config.h nasmlib.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  regs.h tables.h version.h

@@ -26,6 +26,7 @@
 /doc/html
 /doc/info
 /insnsa.c
+/insnsb.c
 /insnsd.c
 /insnsi.h
 /insnsn.c
@@ -45,6 +46,7 @@
 /rdoff/rdflib
 /rdoff/rdx
 /regdis.c
+/regdis.h
 /regflags.c
 /regs.c
 /regs.h

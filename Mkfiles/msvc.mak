@@ -243,7 +243,6 @@ pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h version.h
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
-quotetest.$(O): quotetest.c compiler.h nasmlib.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h
