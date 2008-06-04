@@ -187,7 +187,6 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
      * are even possible, nor whether they are checked somewhere else
      */
 
-    (void)segment;              /* Don't warn that this parameter is unused */
     (void)special;              /* Don't warn that this parameter is unused */
     (void)is_norm;              /* Don't warn that this parameter is unused */
     (void)isextrn;              /* Don't warn that this parameter is unused */
@@ -212,6 +211,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
 
     global_offset_changed |= (lptr->defn.offset != offset);
     lptr->defn.offset = offset;
+    lptr->defn.segment = segment;
 
     if (pass0 == 1) {
         exi = !!(lptr->defn.is_global & GLOBAL_BIT);
