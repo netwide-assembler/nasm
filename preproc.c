@@ -1840,7 +1840,7 @@ static int do_directive(Token * tline)
     origline = tline;
 
     skip_white_(tline);
-    if (!tok_type_(tline, TOK_PREPROC_ID) ||
+    if (!tline || !tok_type_(tline, TOK_PREPROC_ID) ||
         (tline->text[1] == '%' || tline->text[1] == '$'
          || tline->text[1] == '!'))
         return NO_DIRECTIVE_FOUND;
@@ -2093,7 +2093,6 @@ static int do_directive(Token * tline)
         if (!t || (t->type != TOK_STRING &&
                        t->type != TOK_INTERNAL_STRING)) {
             error(ERR_NONFATAL, "`%%depend' expects a file name");
-	    free_tlist(t);
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
@@ -2110,7 +2109,6 @@ static int do_directive(Token * tline)
 	    *deptail = sl;
 	    deptail = &sl->next;
 	}
-	free_tlist(t);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
