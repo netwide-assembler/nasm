@@ -443,11 +443,12 @@ int main(int argc, char **argv)
                 cleanup_labels();
             } else {
                 /*
-                 * We had an fclose on the output file here, but we
-                 * actually do that in all the object file drivers as well,
-                 * so we're leaving out the one here.
-                 *     fclose (ofile);
+                 * Despite earlier comments, we need this fclose.
+                 * The object output drivers only fclose on cleanup,
+                 * and we just skipped that.
                  */
+                fclose (ofile);
+
                 remove(outname);
                 if (listname[0])
                     remove(listname);
