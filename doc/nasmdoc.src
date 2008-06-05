@@ -1957,7 +1957,7 @@ You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
 
-\S{xdefine} Enhancing %define: \I\c{%ixdefine}\i\c{%xdefine}
+\S{xdefine} Enhancing \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
 
 To have a reference to an embedded single-line macro resolved at the
 time that it is embedded, as opposed to when the calling macro is
@@ -2074,7 +2074,7 @@ instruction has been used as a label in older code.  For example:
 
 \c %idefine pause $%?                  ; Hide the PAUSE instruction
 
-\S{undef} Undefining macros: \i\c{%undef}
+\S{undef} Undefining Macros: \i\c{%undef}
 
 Single-line macros can be removed with the \c{%undef} command.  For
 example, the following sequence:
@@ -2119,6 +2119,27 @@ The expression passed to \c{%assign} is a \i{critical expression}
 (see \k{crit}), and must also evaluate to a pure number (rather than
 a relocatable reference such as a code or data address, or anything
 involving a register).
+
+
+\S{defstr} Defining Strings: \I\c{%idefstr}\i\c{%defstr}
+
+\c{%defstr}, and its case-insensitive counterpart \c{%idefstr}, define
+or redefine a single-line macro without parameters, but converts the
+entire right-hand side, after macro expansion, to a quoted string
+before definition.
+
+For example:
+
+\c %defstr test TEST
+
+is equivalent to
+
+\c %define test 'TEST'
+
+This can be used, for example, with the \c{%!} construct (see
+\k{getenv}):
+
+\c %defstr PATH %!PATH		; The operating system PATH variable
 
 
 \H{strlen} \i{String Handling in Macros}: \i\c{%strlen} and \i\c{%substr}
@@ -3637,18 +3658,9 @@ For example, suppose that you have an environment variable \c{FOO}, and
 you want the contents of \c{FOO} to be embedded in your program. You
 could do that as follows:
 
-\c %define FOO    %!FOO
-\c %define quote   '
-\c
-\c tmpstr  db      quote FOO quote
+\c %defstr FOO    %!FOO
 
-At the time of writing, this will generate an "unterminated string"
-warning at the time of defining "quote", and it will add a space
-before and after the string that is read in. I was unable to find
-a simple workaround (although a workaround can be created using a
-multi-line macro), so I believe that you will need to either learn how
-to create more complex macros, or allow for the extra spaces if you
-make use of this feature in that way.
+See \k{defstr} for notes on the \c{%defstr} directive.
 
 
 \C{directive} \i{Assembler Directives}
