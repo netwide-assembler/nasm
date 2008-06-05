@@ -17,6 +17,7 @@
 %assign
 %clear
 %define
+%defstr
 %depend
 %elif*
 %else
@@ -28,6 +29,7 @@
 %exitrep
 %iassign
 %idefine
+%idefstr
 %if*
 %imacro
 %include

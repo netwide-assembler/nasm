@@ -1028,7 +1028,7 @@ static Token *delete_Token(Token * t)
  * If expand_locals is not zero, identifiers of the form "%$*xxx"
  * will be transformed into ..@ctxnum.xxx
  */
-static char *detoken(Token * tlist, int expand_locals)
+static char *detoken(Token * tlist, bool expand_locals)
 {
     Token *t;
     int len;
@@ -2645,6 +2645,49 @@ static int do_directive(Token * tline)
         ctx = get_ctx(tline->text, false);
 	undef_smacro(ctx, tline->text);
 	free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+    case PP_DEFSTR:
+    case PP_IDEFSTR:
+	casesense = (i == PP_DEFSTR);
+
+        tline = tline->next;
+        skip_white_(tline);
+        tline = expand_id(tline);
+        if (!tline || (tline->type != TOK_ID &&
+                       (tline->type != TOK_PREPROC_ID ||
+                        tline->text[1] != '$'))) {
+            error(ERR_NONFATAL, "`%s' expects a macro identifier",
+		  pp_directives[i]);
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
+
+        ctx = get_ctx(tline->text, false);
+
+        mname = tline->text;
+        last = tline;
+        tline = expand_smacro(tline->next);
+	last->next = NULL;
+
+        while (tok_type_(tline, TOK_WHITESPACE))
+	    tline = delete_Token(tline);
+
+	p = detoken(tline, false);
+        macro_start = nasm_malloc(sizeof(*macro_start));
+        macro_start->next = NULL;
+	macro_start->text = nasm_quote(p, strlen(p));
+	macro_start->type = TOK_STRING;
+        macro_start->mac = NULL;
+	nasm_free(p);
+
+        /*
+         * We now have a macro name, an implicit parameter count of
+         * zero, and a string token to use as an expansion. Create
+         * and store an SMacro.
+         */
+	define_smacro(ctx, mname, casesense, 0, macro_start);
+        free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_PATHSEARCH:

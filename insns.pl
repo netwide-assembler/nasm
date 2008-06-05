@@ -184,6 +184,7 @@ if ( !defined($output) || $output eq 'd' ) {
     print D "};\n";
 
     foreach $h (sort(keys(%dinstables))) {
+	next if ($h eq '');	# Skip pseudo-instructions
 	print D "\nstatic const struct itemplate * const itable_${h}[] = {\n";
 	foreach $j (@{$dinstables{$h}}) {
 	    print D "    instrux + $j,\n";

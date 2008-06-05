@@ -20,6 +20,7 @@
 * %substr can now be used to get other than one-character substrings.
 * New type of character/string constants, using backquotes (`...`),
   which support C-style escape sequences.
+* %defstr and %idefstr to stringize macro definitions before creation.
 
 2.02
 ----
