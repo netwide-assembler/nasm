@@ -2124,7 +2124,7 @@ involving a register).
 \S{defstr} Defining Strings: \I\c{%idefstr}\i\c{%defstr}
 
 \c{%defstr}, and its case-insensitive counterpart \c{%idefstr}, define
-or redefine a single-line macro without parameters, but converts the
+or redefine a single-line macro without parameters but converts the
 entire right-hand side, after macro expansion, to a quoted string
 before definition.
 
