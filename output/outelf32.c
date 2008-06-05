@@ -1185,7 +1185,7 @@ static void elf_write(void)
             /* for dwarf debugging information, create the ten dwarf sections */
 
             /* this function call creates the dwarf sections in memory */
-            dwarf32_generate();
+            if (dwarf_fsect) dwarf32_generate();
 
             p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
