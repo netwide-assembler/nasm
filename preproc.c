@@ -1288,7 +1288,7 @@ static bool in_list(const StrList *list, const char *str)
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static FILE *inc_fopen(const char *file, StrList **dhead, StrList **dtail,
+static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
 		       bool missing_ok)
 {
     FILE *fp;
@@ -1305,8 +1305,8 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList **dtail,
         fp = fopen(sl->str, "r");
 	if (fp && dhead && !in_list(*dhead, sl->str)) {
 	    sl->next = NULL;
-	    *dtail = sl;
-	    dtail = &sl->next;
+	    **dtail = sl;
+	    *dtail = &sl->next;
         } else {
 	    nasm_free(sl);
 	}
@@ -1328,8 +1328,8 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList **dtail,
 		sl = nasm_malloc(len+1+sizeof sl->next);
 		sl->next = NULL;
 		strcpy(sl->str, file);
-		*dtail = sl;
-		dtail = &sl->next;
+		**dtail = sl;
+		*dtail = &sl->next;
 	    }
 	    return NULL;
 	}
@@ -2131,7 +2131,7 @@ static int do_directive(Token * tline)
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
-        inc->fp = inc_fopen(p, dephead, deptail, pass == 0);
+        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0);
 	if (!inc->fp) {
 	    /* -MG given but file not found */
 	    nasm_free(inc);
@@ -2694,6 +2694,7 @@ static int do_directive(Token * tline)
     {
 	FILE *fp;
 	StrList *xsl = NULL;
+	StrList **xst = &xsl;
 
 	casesense = true;
 
@@ -2733,7 +2734,7 @@ static int do_directive(Token * tline)
         if (t->type != TOK_INTERNAL_STRING)
 	    nasm_unquote(p, NULL);
 
-	fp = inc_fopen(p, &xsl, &xsl, true);
+	fp = inc_fopen(p, &xsl, &xst, true);
 	if (fp) {
 	    p = xsl->str;
 	    fclose(fp);		/* Don't actually care about the file */
