@@ -3269,6 +3269,7 @@ here'. You could then write a macro
 and then pepper your code with calls to \c{notdeadyet} until you
 find the crash point.
 
+
 \S{bitsm} \i\c{__BITS__}: Current BITS Mode
 
 The \c{__BITS__} standard macro is updated every time that the BITS mode is
@@ -3276,6 +3277,19 @@ set using the \c{BITS XX} or \c{[BITS XX]} directive, where XX is a valid mode
 number of 16, 32 or 64. \c{__BITS__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
+
+\S{ofmtm} \i\c{__OUTPUT_FORMAT__}: Current Output Format
+
+The \c{__OUTPUT_FORMAT__} standard macro holds the current Output Format,
+as given by the \c{-f} option or Nasm's default. Type \c{nasm -hf} for a
+list.
+
+\c %ifidn __OUTPUT_FORMAT__, win32
+\c  %define NEWLINE 13, 10
+\c %elifidn __OUTPUT_FORMAT__, elf32
+\c  %define NEWLINE 10
+\c %endif
+
 
 \S{datetime} Assembly Date and Time Macros
 
