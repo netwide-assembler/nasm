@@ -1396,9 +1396,9 @@ Some examples:
 \c         mov     ax,1001_0011b   ; same binary constant
 
 
-\S{chrconst} \i{Character Constants}
+\S{strings} \I{Strings}\i{Character Strings}
 
-A character constant consists of up to four characters enclosed in
+A character string consists of up to eight characters enclosed in
 either single quotes (\c{'...'}), double quotes (\c{"..."}) or
 backquotes (\c{`...`}).  Single or double quotes are equivalent to
 NASM (except of course that surrounding the constant with single
@@ -1406,17 +1406,6 @@ quotes allows double quotes to appear within it and vice versa); the
 contents of those are represented verbatim.  Strings enclosed in
 backquotes support C-style \c{\\}-escapes for special characters.
 
-A character constant with more than one character will be arranged
-with \i{little-endian} order in mind: if you code
-
-\c           mov eax,'abcd'
-
-then the constant generated is not \c{0x61626364}, but
-\c{0x64636261}, so that if you were then to store the value into
-memory, it would read \c{abcd} rather than \c{dcba}. This is also
-the sense of character constants understood by the Pentium's
-\i\c{CPUID} instruction.
-\# (see \k{insCPUID})
 
 The following escape sequences are recognized by backquoted strings:
 
@@ -1449,11 +1438,30 @@ UTF-8.  For example, the following lines are all equivalent:
 \c       db 0E2h, 098h, 0BAh    ; UTF-8 smiley face
 
 
-\S{strconst} String Constants
+\S{chrconst} \i{Character Constants}
 
-String constants are only acceptable to some pseudo-instructions,
-namely the \I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\I\c{DO}\I\c{DY}\i\c{DB}
-family and \i\c{INCBIN}.
+A character constant consists of a string up to eight bytes long, used
+in an expression context.  It is treated as if it was an integer.
+
+A character constant with more than one byte will be arranged
+with \i{little-endian} order in mind: if you code
+
+\c           mov eax,'abcd'
+
+then the constant generated is not \c{0x61626364}, but
+\c{0x64636261}, so that if you were then to store the value into
+memory, it would read \c{abcd} rather than \c{dcba}. This is also
+the sense of character constants understood by the Pentium's
+\i\c{CPUID} instruction.
+
+
+\S{strconst} \i{Character Constants}
+
+String constants are character strings used in the context of some
+pseudo-instructions, namely the
+\I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\I\c{DO}\I\c{DY}\i\c{DB} family and
+\i\c{INCBIN} (where it represents a filename.)  They are also used by
+certain preprocessor directives.
 
 A string constant looks like a character constant, only longer. It
 is treated as a concatenation of maximum-size character constants
@@ -1468,12 +1476,12 @@ And the following are also equivalent:
 \c       dd    'nine','char','s'     ; becomes three doublewords
 \c       db    'ninechars',0,0,0     ; and really looks like this
 
-Note that when used as operands to the \c{DB} family
-pseudo-instructions, quoted strings are treated as a string constants
-even if they are short enough to be a character constant, because
-otherwise \c{db 'ab'} would have the same effect as \c{db 'a'}, which
-would be silly. Similarly, three-character or four-character constants
-are treated as strings when they are operands to \c{DW}, and so forth.
+Note that when used in a string-supporting context, quoted strings are
+treated as a string constants even if they are short enough to be a
+character constant, because otherwise \c{db 'ab'} would have the same
+effect as \c{db 'a'}, which would be silly. Similarly, three-character
+or four-character constants are treated as strings when they are
+operands to \c{DW}, and so forth.
 
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
