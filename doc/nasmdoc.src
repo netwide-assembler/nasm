@@ -2824,7 +2824,7 @@ which case, all but the first two would be lumped together into
 The usual \c{%elifXXX}, \c{%ifnXXX} and \c{%elifnXXX} versions exist
 for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
 
-\S{iftoken} \i\c{%iftoken}: Test For A Single Token
+\S{iftoken} \i\c{%iftoken}: Test for a Single Token
 
 Some macros will want to do different things depending on if it is
 passed a single token (e.g. paste it to something else using \c{%+})
@@ -2840,7 +2840,7 @@ not (\c{-} being an operator.)
 The usual \i\c{%eliftoken}, \i\c\{%ifntoken}, and \i\c{%elifntoken}
 variants are also provided.
 
-\S{ifempty} \i\c{%ifempty}: Test For Empty Expansion
+\S{ifempty} \i\c{%ifempty}: Test for Empty Expansion
 
 The conditional assembly construct \c{%ifempty} assembles the
 subsequent code if and only if the expanded parameters do not contain
