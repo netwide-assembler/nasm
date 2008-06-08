@@ -2626,6 +2626,10 @@ The inverse forms \i\c{%ifn} and \i\c{%elifn} are also supported.
 The \i\c{%else} clause is optional, as is the \i\c{%elif} clause.
 You can have more than one \c{%elif} clause as well.
 
+There are a number of variants of the \c{%if} directive.  Each has its
+corresponding \c{%elif}, \c{%ifn}, and \c{%elifn} directives; for
+example, the equivalents to the \c{%ifdef} directive are \c{%elifdef},
+\c{%ifndef}, and \c{%elifndef}.
 
 \S{ifdef} \i\c{%ifdef}: Testing Single-Line Macro Existence\I{testing,
 single-line macro existence}
@@ -2731,7 +2735,7 @@ they always return either 0 or 1, and treat any non-zero input as 1
 is zero, and 0 otherwise). The relational operators also return 1
 for true and 0 for false.
 
-Like most other \c{%if} constructs, \c{%if} has a counterpart
+Like other \c{%if} constructs, \c{%if} has a counterpart
 \i\c{%elif}, and negative forms \i\c{%ifn} and \i\c{%elifn}.
 
 \S{ifidn} \i\c{%ifidn} and \i\c{%ifidni}: Testing Exact Text
@@ -2758,7 +2762,7 @@ stack, and allows you to treat \c{IP} as a real register:
 \c
 \c %endmacro
 
-Like most other \c{%if} constructs, \c{%ifidn} has a counterpart
+Like other \c{%if} constructs, \c{%ifidn} has a counterpart
 \i\c{%elifidn}, and negative forms \i\c{%ifnidn} and \i\c{%elifnidn}.
 Similarly, \c{%ifidni} has counterparts \i\c{%elifidni},
 \i\c{%ifnidni} and \i\c{%elifnidni}.
@@ -2819,10 +2823,10 @@ single string constant, and \c{db %2} would be adequate) or more (in
 which case, all but the first two would be lumped together into
 \c{%3}, and \c{db %2,%3} would be required).
 
-\I\c{%ifnid}\I\c{%elifid}\I\c{%elifnid}\I\c{%ifnnum}\I\c{%elifnum}
-\I\c{%elifnnum}\I\c{%ifnstr}\I\c{%elifstr}\I\c{%elifnstr}
-The usual \c{%elifXXX}, \c{%ifnXXX} and \c{%elifnXXX} versions exist
-for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
+The usual \I\c{%elifid}\I\c{%elifnum}\I\c{%elifstr}\c{%elif}...,
+\I\c{%ifnid}\I\c{%ifnnum}\I\c{%ifnstr}\c{%ifn}... and
+\I\c{%elifnid}\I\c{%elifnnum}\I\c{%elifnstr}\c{%elifn}... versions
+exist for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
 
 \S{iftoken} \i\c{%iftoken}: Test for a Single Token
 
