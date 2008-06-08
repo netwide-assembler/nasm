@@ -1458,7 +1458,7 @@ the sense of character constants understood by the Pentium's
 \i\c{CPUID} instruction.
 
 
-\S{strconst} \i{Character Constants}
+\S{strconst} \i{String Constants}
 
 String constants are character strings used in the context of some
 pseudo-instructions, namely the
