@@ -2834,8 +2834,16 @@ The conditional assembly construct \c{%iftoken} assembles the
 subsequent code if and only if the expanded parameters consist of
 exactly one token, possibly surrounded by whitespace.
 
-For example, \c{1} will assemble the subsequent code, but \c{-1} will
-not (\c{-} being an operator.)
+For example:
+
+\c %iftoken 1
+
+will assemble the subsequent code, but
+
+\c %iftoken -1
+
+will not, since \c{-1} contains two tokens: the unary minus operator,
+\c{-}, and the number \c{1}.
 
 The usual \i\c{%eliftoken}, \i\c\{%ifntoken}, and \i\c{%elifntoken}
 variants are also provided.
