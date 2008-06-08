@@ -1460,7 +1460,7 @@ the sense of character constants understood by the Pentium's
 String constants are character strings used in the context of some
 pseudo-instructions, namely the
 \I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\I\c{DO}\I\c{DY}\i\c{DB} family and
-\i\c{INCBIN} (where it represents a filename.)  They are also used by
+\i\c{INCBIN} (where it represents a filename.)  They are also used in
 certain preprocessor directives.
 
 A string constant looks like a character constant, only longer. It
