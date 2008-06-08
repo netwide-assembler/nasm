@@ -1407,7 +1407,7 @@ contents of those are represented verbatim.  Strings enclosed in
 backquotes support C-style \c{\\}-escapes for special characters.
 
 
-The following escape sequences are recognized by backquoted strings:
+The following \i{escape sequences} are recognized by backquoted strings:
 
 \c       \'          single quote (')
 \c       \"          double quote (")
@@ -1416,6 +1416,7 @@ The following escape sequences are recognized by backquoted strings:
 \c       \?          question mark (?)
 \c       \a          BEL (ASCII 7)
 \c       \b          BS  (ASCII 8)
+\c       \t          TAB (ASCII 9)
 \c       \n          LF  (ASCII 10)
 \c       \v          VT  (ASCII 11)
 \c       \f          FF  (ASCII 12)
