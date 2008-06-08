@@ -202,7 +202,9 @@ Object File Format
 \IR{test subdirectory} \c{test} subdirectory
 \IR{tlink} \c{TLINK}
 \IR{underscore, in c symbols} underscore, in C symbols
+\IR{unicode} Unicode
 \IR{unix} Unix
+\IR{utf-8} UTF-8
 \IA{sco unix}{unix, sco}
 \IR{unix, sco} Unix, SCO
 \IA{unix source archive}{unix, source archive}
@@ -1431,8 +1433,8 @@ All other escape sequences are reserved.  Note that \c{\\0}, meaning a
 \c{NUL} character (ASCII 0), is a special case of the octal escape
 sequence.
 
-Unicode characters specified with \c{\\u} or \c{\\U} are converted to
-UTF-8.  For example, the following lines are all equivalent:
+\i{Unicode} characters specified with \c{\\u} or \c{\\U} are converted to
+\i{UTF-8}.  For example, the following lines are all equivalent:
 
 \c       db `\u263a`            ; UTF-8 smiley face
 \c       db `\xe2\x98\xba`      ; UTF-8 smiley face
