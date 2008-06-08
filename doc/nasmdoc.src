@@ -1503,8 +1503,10 @@ Some examples:
 \c       db    -0.2                    ; "Quarter precision"
 \c       dw    -0.5                    ; IEEE 754r/SSE5 half precision
 \c       dd    1.2                     ; an easy one
+\c       dd    1.222_222_222           ; underscores are permitted
 \c       dd    0x1p+2                  ; 1.0x2^2 = 4.0
-\c       dq    1.e10                   ; 10,000,000,000
+\c       dq    0x1p+32                 ; 1.0x2^32 = 4 294 967 296.0
+\c       dq    1.e10                   ; 10 000 000 000.0
 \c       dq    1.e+10                  ; synonymous with 1.e10
 \c       dq    1.e-10                  ; 0.000 000 000 1
 \c       dt    3.141592653589793238462 ; pi
