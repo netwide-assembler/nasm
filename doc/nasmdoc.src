@@ -2824,7 +2824,7 @@ which case, all but the first two would be lumped together into
 \c{%3}, and \c{db %2,%3} would be required).
 
 The usual \I\c{%elifid}\I\c{%elifnum}\I\c{%elifstr}\c{%elif}...,
-\I\c{%ifnid}\I\c{%ifnnum}\I\c{%ifnstr}\c{%ifn}... and
+\I\c{%ifnid}\I\c{%ifnnum}\I\c{%ifnstr}\c{%ifn}..., and
 \I\c{%elifnid}\I\c{%elifnnum}\I\c{%elifnstr}\c{%elifn}... versions
 exist for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
 
