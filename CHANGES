@@ -21,6 +21,7 @@
 * New type of character/string constants, using backquotes (`...`),
   which support C-style escape sequences.
 * %defstr and %idefstr to stringize macro definitions before creation.
+* Fix forward references used in EQU statements.
 
 2.02
 ----
