@@ -1914,8 +1914,8 @@ void dwarf64_output(int type, void *param)
     /* check for file change */
     if (!(inx == dwarf_csect->file))
     {
-       WSAACHAR(plinep,DW_LNS_set_file);
-       WSAACHAR(plinep,inx);
+       saa_write8(plinep,DW_LNS_set_file);
+       saa_write8(plinep,inx);
        dwarf_csect->file = inx;
     }
     /* check for line change */
@@ -1926,18 +1926,18 @@ void dwarf64_output(int type, void *param)
        soc = (ln - line_base) + (line_range * aa) + opcode_base;
        if (ln >= line_base && ln < maxln && soc < 256)
        {
-          WSAACHAR(plinep,soc);
+          saa_write8(plinep,soc);
        }
        else
        {
           if (ln)
           {
-          WSAACHAR(plinep,DW_LNS_advance_line);
+          saa_write8(plinep,DW_LNS_advance_line);
           saa_wleb128s(plinep,ln);
           }
           if (aa)
           {
-          WSAACHAR(plinep,DW_LNS_advance_pc);
+          saa_write8(plinep,DW_LNS_advance_pc);
           saa_wleb128u(plinep,aa);
           }
        }
@@ -1965,14 +1965,14 @@ void dwarf64_generate(void)
     /* and build aranges section */
     paranges = saa_init(1L);
     parangesrel = saa_init(1L);
-    WSAASHORT(paranges,3);		/* dwarf version */
-    WSAADLONG(parangesrel, paranges->datalen+4);
-    WSAADLONG(parangesrel, (dwarf_infosym << 32) +  R_X86_64_32); /* reloc to info */
-    WSAADLONG(parangesrel, 0);
-    WSAALONG(paranges,0);		/* offset into info */
-    WSAACHAR(paranges,8);		/* pointer size */
-    WSAACHAR(paranges,0);		/* not segmented */
-    WSAALONG(paranges,0);		/* padding */
+    saa_write16(paranges,3);		/* dwarf version */
+    saa_write64(parangesrel, paranges->datalen+4);
+    saa_write64(parangesrel, (dwarf_infosym << 32) +  R_X86_64_32); /* reloc to info */
+    saa_write64(parangesrel, 0);
+    saa_write32(paranges,0);		/* offset into info */
+    saa_write8(paranges,8);		/* pointer size */
+    saa_write8(paranges,0);		/* not segmented */
+    saa_write32(paranges,0);		/* padding */
     /* iterate though sectlist entries */
      psect = dwarf_fsect;
      totlen = 0;
@@ -1981,25 +1981,25 @@ void dwarf64_generate(void)
      {
          plinep = psect->psaa;
          /* Line Number Program Epilogue */
-         WSAACHAR(plinep,2);			/* std op 2 */
-         WSAACHAR(plinep,(sects[psect->section]->len)-psect->offset);
-         WSAACHAR(plinep,DW_LNS_extended_op);
-         WSAACHAR(plinep,1);			/* operand length */
-         WSAACHAR(plinep,DW_LNE_end_sequence);
+         saa_write8(plinep,2);			/* std op 2 */
+         saa_write8(plinep,(sects[psect->section]->len)-psect->offset);
+         saa_write8(plinep,DW_LNS_extended_op);
+         saa_write8(plinep,1);			/* operand length */
+         saa_write8(plinep,DW_LNE_end_sequence);
          totlen += plinep->datalen;
          /* range table relocation entry */
-         WSAADLONG(parangesrel, paranges->datalen + 4);
-         WSAADLONG(parangesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
-         WSAADLONG(parangesrel, (uint64_t) 0);
+         saa_write64(parangesrel, paranges->datalen + 4);
+         saa_write64(parangesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+         saa_write64(parangesrel, (uint64_t) 0);
          /* range table entry */
-         WSAADLONG(paranges,0x0000);		/* range start */
-         WSAADLONG(paranges,sects[psect->section]->len);	/* range length */
+         saa_write64(paranges,0x0000);		/* range start */
+         saa_write64(paranges,sects[psect->section]->len);	/* range length */
          highaddr += sects[psect->section]->len;
          /* done with this entry */
          psect = psect->next;
      }
-    WSAADLONG(paranges,0);		/* null address */
-    WSAADLONG(paranges,0);		/* null length */
+    saa_write64(paranges,0);		/* null address */
+    saa_write64(paranges,0);		/* null length */
     saalen = paranges->datalen;
     arangeslen = saalen + 4;
     arangesbuf = pbuf = nasm_malloc(arangeslen);
@@ -2015,10 +2015,10 @@ void dwarf64_generate(void)
 
     /* build pubnames section */
     ppubnames = saa_init(1L);
-    WSAASHORT(ppubnames,3);			/* dwarf version */
-    WSAALONG(ppubnames,0);			/* offset into info */
-    WSAALONG(ppubnames,0);			/* space used in info */
-    WSAALONG(ppubnames,0);			/* end of list */
+    saa_write16(ppubnames,3);			/* dwarf version */
+    saa_write32(ppubnames,0);			/* offset into info */
+    saa_write32(ppubnames,0);			/* space used in info */
+    saa_write32(ppubnames,0);			/* end of list */
     saalen = ppubnames->datalen;
     pubnameslen = saalen + 4;
     pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
@@ -2029,35 +2029,35 @@ void dwarf64_generate(void)
     /* build info section */
     pinfo = saa_init(1L);
     pinforel = saa_init(1L);
-    WSAASHORT(pinfo,3);			/* dwarf version */
-    WSAADLONG(pinforel, pinfo->datalen + 4);
-    WSAADLONG(pinforel, (dwarf_abbrevsym << 32) +  R_X86_64_32); /* reloc to abbrev */
-    WSAADLONG(pinforel, 0);
-    WSAALONG(pinfo,0);			/* offset into abbrev */
-    WSAACHAR(pinfo,8);			/* pointer size */
-    WSAACHAR(pinfo,1);			/* abbrviation number LEB128u */
-    WSAADLONG(pinforel, pinfo->datalen + 4);
-    WSAADLONG(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
-    WSAADLONG(pinforel, 0);
-    WSAADLONG(pinfo,0);			/* DW_AT_low_pc */
-    WSAADLONG(pinforel, pinfo->datalen + 4);
-    WSAADLONG(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
-    WSAADLONG(pinforel, 0);
-    WSAADLONG(pinfo,highaddr);		/* DW_AT_high_pc */
-    WSAADLONG(pinforel, pinfo->datalen + 4);
-    WSAADLONG(pinforel, (dwarf_linesym << 32) +  R_X86_64_32); /* reloc to line */
-    WSAADLONG(pinforel, 0);
-    WSAALONG(pinfo,0);			/* DW_AT_stmt_list */
+    saa_write16(pinfo,3);			/* dwarf version */
+    saa_write64(pinforel, pinfo->datalen + 4);
+    saa_write64(pinforel, (dwarf_abbrevsym << 32) +  R_X86_64_32); /* reloc to abbrev */
+    saa_write64(pinforel, 0);
+    saa_write32(pinfo,0);			/* offset into abbrev */
+    saa_write8(pinfo,8);			/* pointer size */
+    saa_write8(pinfo,1);			/* abbrviation number LEB128u */
+    saa_write64(pinforel, pinfo->datalen + 4);
+    saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+    saa_write64(pinforel, 0);
+    saa_write64(pinfo,0);			/* DW_AT_low_pc */
+    saa_write64(pinforel, pinfo->datalen + 4);
+    saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+    saa_write64(pinforel, 0);
+    saa_write64(pinfo,highaddr);		/* DW_AT_high_pc */
+    saa_write64(pinforel, pinfo->datalen + 4);
+    saa_write64(pinforel, (dwarf_linesym << 32) +  R_X86_64_32); /* reloc to line */
+    saa_write64(pinforel, 0);
+    saa_write32(pinfo,0);			/* DW_AT_stmt_list */
     saa_wbytes(pinfo, elf_module, strlen(elf_module)+1);
     saa_wbytes(pinfo, nasm_signature, strlen(nasm_signature)+1);
-    WSAASHORT(pinfo,DW_LANG_Mips_Assembler);
-    WSAACHAR(pinfo,2);			/* abbrviation number LEB128u */
-    WSAADLONG(pinforel, pinfo->datalen + 4);
-    WSAADLONG(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
-    WSAADLONG(pinforel, 0);
-    WSAADLONG(pinfo,0);			/* DW_AT_low_pc */
-    WSAADLONG(pinfo,0);			/* DW_AT_frame_base */
-    WSAACHAR(pinfo,0);			/* end of entries */
+    saa_write16(pinfo,DW_LANG_Mips_Assembler);
+    saa_write8(pinfo,2);			/* abbrviation number LEB128u */
+    saa_write64(pinforel, pinfo->datalen + 4);
+    saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+    saa_write64(pinforel, 0);
+    saa_write64(pinfo,0);			/* DW_AT_low_pc */
+    saa_write64(pinfo,0);			/* DW_AT_frame_base */
+    saa_write8(pinfo,0);			/* end of entries */
     saalen = pinfo->datalen;
     infolen = saalen + 4;
     infobuf = pbuf = nasm_malloc(infolen);
@@ -2073,32 +2073,32 @@ void dwarf64_generate(void)
 
     /* build abbrev section */
     pabbrev = saa_init(1L);
-    WSAACHAR(pabbrev,1);			/* entry number LEB128u */
-    WSAACHAR(pabbrev,DW_TAG_compile_unit);	/* tag LEB128u */
-    WSAACHAR(pabbrev,1);			/* has children */
+    saa_write8(pabbrev,1);			/* entry number LEB128u */
+    saa_write8(pabbrev,DW_TAG_compile_unit);	/* tag LEB128u */
+    saa_write8(pabbrev,1);			/* has children */
     /* the following attributes and forms are all LEB128u values */
-    WSAACHAR(pabbrev,DW_AT_low_pc);
-    WSAACHAR(pabbrev,DW_FORM_addr);
-    WSAACHAR(pabbrev,DW_AT_high_pc);
-    WSAACHAR(pabbrev,DW_FORM_addr);
-    WSAACHAR(pabbrev,DW_AT_stmt_list);
-    WSAACHAR(pabbrev,DW_FORM_data4);
-    WSAACHAR(pabbrev,DW_AT_name);
-    WSAACHAR(pabbrev,DW_FORM_string);
-    WSAACHAR(pabbrev,DW_AT_producer);
-    WSAACHAR(pabbrev,DW_FORM_string);
-    WSAACHAR(pabbrev,DW_AT_language);
-    WSAACHAR(pabbrev,DW_FORM_data2);
-    WSAASHORT(pabbrev,0);			/* end of entry */
+    saa_write8(pabbrev,DW_AT_low_pc);
+    saa_write8(pabbrev,DW_FORM_addr);
+    saa_write8(pabbrev,DW_AT_high_pc);
+    saa_write8(pabbrev,DW_FORM_addr);
+    saa_write8(pabbrev,DW_AT_stmt_list);
+    saa_write8(pabbrev,DW_FORM_data4);
+    saa_write8(pabbrev,DW_AT_name);
+    saa_write8(pabbrev,DW_FORM_string);
+    saa_write8(pabbrev,DW_AT_producer);
+    saa_write8(pabbrev,DW_FORM_string);
+    saa_write8(pabbrev,DW_AT_language);
+    saa_write8(pabbrev,DW_FORM_data2);
+    saa_write16(pabbrev,0);			/* end of entry */
     /* LEB128u usage same as above */
-    WSAACHAR(pabbrev,2);			/* entry number */
-    WSAACHAR(pabbrev,DW_TAG_subprogram);
-    WSAACHAR(pabbrev,0);			/* no children */
-    WSAACHAR(pabbrev,DW_AT_low_pc);
-    WSAACHAR(pabbrev,DW_FORM_addr);
-    WSAACHAR(pabbrev,DW_AT_frame_base);
-    WSAACHAR(pabbrev,DW_FORM_data4);
-    WSAASHORT(pabbrev,0);			/* end of entry */
+    saa_write8(pabbrev,2);			/* entry number */
+    saa_write8(pabbrev,DW_TAG_subprogram);
+    saa_write8(pabbrev,0);			/* no children */
+    saa_write8(pabbrev,DW_AT_low_pc);
+    saa_write8(pabbrev,DW_FORM_addr);
+    saa_write8(pabbrev,DW_AT_frame_base);
+    saa_write8(pabbrev,DW_FORM_data4);
+    saa_write16(pabbrev,0);			/* end of entry */
     abbrevlen = saalen = pabbrev->datalen;
     abbrevbuf = pbuf = nasm_malloc(saalen);
     saa_rnbytes(pabbrev, pbuf, saalen);
@@ -2107,37 +2107,37 @@ void dwarf64_generate(void)
     /* build line section */
     /* prolog */
     plines = saa_init(1L);
-    WSAACHAR(plines,1);			/* Minimum Instruction Length */
-    WSAACHAR(plines,1);			/* Initial value of 'is_stmt' */
-    WSAACHAR(plines,line_base);		/* Line Base */
-    WSAACHAR(plines,line_range);	/* Line Range */
-    WSAACHAR(plines,opcode_base);	/* Opcode Base */
+    saa_write8(plines,1);			/* Minimum Instruction Length */
+    saa_write8(plines,1);			/* Initial value of 'is_stmt' */
+    saa_write8(plines,line_base);		/* Line Base */
+    saa_write8(plines,line_range);	/* Line Range */
+    saa_write8(plines,opcode_base);	/* Opcode Base */
     /* standard opcode lengths (# of LEB128u operands) */
-    WSAACHAR(plines,0);			/* Std opcode 1 length */
-    WSAACHAR(plines,1);			/* Std opcode 2 length */
-    WSAACHAR(plines,1);			/* Std opcode 3 length */
-    WSAACHAR(plines,1);			/* Std opcode 4 length */
-    WSAACHAR(plines,1);			/* Std opcode 5 length */
-    WSAACHAR(plines,0);			/* Std opcode 6 length */
-    WSAACHAR(plines,0);			/* Std opcode 7 length */
-    WSAACHAR(plines,0);			/* Std opcode 8 length */
-    WSAACHAR(plines,1);			/* Std opcode 9 length */
-    WSAACHAR(plines,0);			/* Std opcode 10 length */
-    WSAACHAR(plines,0);			/* Std opcode 11 length */
-    WSAACHAR(plines,1);			/* Std opcode 12 length */
+    saa_write8(plines,0);			/* Std opcode 1 length */
+    saa_write8(plines,1);			/* Std opcode 2 length */
+    saa_write8(plines,1);			/* Std opcode 3 length */
+    saa_write8(plines,1);			/* Std opcode 4 length */
+    saa_write8(plines,1);			/* Std opcode 5 length */
+    saa_write8(plines,0);			/* Std opcode 6 length */
+    saa_write8(plines,0);			/* Std opcode 7 length */
+    saa_write8(plines,0);			/* Std opcode 8 length */
+    saa_write8(plines,1);			/* Std opcode 9 length */
+    saa_write8(plines,0);			/* Std opcode 10 length */
+    saa_write8(plines,0);			/* Std opcode 11 length */
+    saa_write8(plines,1);			/* Std opcode 12 length */
     /* Directory Table */ 
-    WSAACHAR(plines,0);			/* End of table */
+    saa_write8(plines,0);			/* End of table */
     /* File Name Table */
     ftentry = dwarf_flist;
     for (indx = 0;indx<dwarf_numfiles;indx++)
     {
       saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
-      WSAACHAR(plines,0);			/* directory  LEB128u */
-      WSAACHAR(plines,0);			/* time LEB128u */
-      WSAACHAR(plines,0);			/* size LEB128u */
+      saa_write8(plines,0);			/* directory  LEB128u */
+      saa_write8(plines,0);			/* time LEB128u */
+      saa_write8(plines,0);			/* size LEB128u */
       ftentry = ftentry->next;
     }
-    WSAACHAR(plines,0);			/* End of table */
+    saa_write8(plines,0);			/* End of table */
     linepoff = plines->datalen;
     linelen = linepoff + totlen + 10;
     linebuf = pbuf = nasm_malloc(linelen);
@@ -2155,9 +2155,9 @@ void dwarf64_generate(void)
     psect = dwarf_fsect;
     for (indx = 0; indx < dwarf_nsections; indx++)
     {
-         WSAADLONG(plinesrel, linepoff);
-         WSAADLONG(plinesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
-         WSAADLONG(plinesrel, (uint64_t) 0);
+         saa_write64(plinesrel, linepoff);
+         saa_write64(plinesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+         saa_write64(plinesrel, (uint64_t) 0);
          plinep = psect->psaa;
          saalen = plinep->datalen;
          saa_rnbytes(plinep, pbuf, saalen);
@@ -2292,10 +2292,10 @@ void dwarf64_findsect(const int index)
      dwarf_csect->section = index;
      dwarf_csect->next = 0;
      /* set relocatable address at start of line program */
-     WSAACHAR(plinep,DW_LNS_extended_op);
-     WSAACHAR(plinep,9);			/* operand length */
-     WSAACHAR(plinep,DW_LNE_set_address);
-     WSAADLONG(plinep,0);		/* Start Address */
+     saa_write8(plinep,DW_LNS_extended_op);
+     saa_write8(plinep,9);			/* operand length */
+     saa_write8(plinep,DW_LNE_set_address);
+     saa_write64(plinep,0);		/* Start Address */
      /* if first entry */
      if (!dwarf_fsect)
      {

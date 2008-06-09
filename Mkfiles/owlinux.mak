@@ -55,7 +55,8 @@ X               = .exe
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -fo=$@ $<
 
-NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
+NASM =	nasm.$(O) nasmlib.$(O) wsaa.$(O) \
+	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) \
