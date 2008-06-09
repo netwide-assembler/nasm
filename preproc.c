@@ -393,7 +393,8 @@ static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
-static Token *new_Token(Token * next, enum pp_token_type type, char *text, int txtlen);
+static Token *new_Token(Token * next, enum pp_token_type type,
+			const char *text, int txtlen);
 static Token *delete_Token(Token * t);
 
 /*
@@ -986,7 +987,7 @@ static void delete_Blocks(void)
  *  also the mac and next elements to NULL.
  */
 static Token *new_Token(Token * next, enum pp_token_type type,
-			char *text, int txtlen)
+			const char *text, int txtlen)
 {
     Token *t;
     int i;
@@ -3752,6 +3753,7 @@ static int expand_mmacro(Token * tline)
     MMacro *m;
     Line *l, *ll;
     int i, nparam, *paramlen;
+    const char *mname;
 
     t = tline;
     skip_white_(t);
@@ -3760,7 +3762,9 @@ static int expand_mmacro(Token * tline)
         return 0;
     mtok = t;
     m = is_mmacro(t, &params);
-    if (!m) {
+    if (m) {
+	mname = t->text;
+    } else {
         Token *last;
         /*
          * We have an id which isn't a macro call. We'll assume
@@ -3781,6 +3785,7 @@ static int expand_mmacro(Token * tline)
         if (!tok_type_(t, TOK_ID) || (m = is_mmacro(t, &params)) == NULL)
             return 0;
         last->next = NULL;
+	mname = t->text;
         tline = t;
     }
 
@@ -3859,7 +3864,7 @@ static int expand_mmacro(Token * tline)
             Token *x = t;
 	    switch (t->type) {
 	    case TOK_PREPROC_Q:
-		tt = *tail = new_Token(NULL, TOK_ID, mtok->text, 0);
+		tt = *tail = new_Token(NULL, TOK_ID, mname, 0);
 		break;
 	    case TOK_PREPROC_QQ:
 		tt = *tail = new_Token(NULL, TOK_ID, m->name, 0);
