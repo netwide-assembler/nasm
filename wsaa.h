@@ -4,10 +4,7 @@
 #include "compiler.h"
 #include "nasmlib.h"
 
-/* XXX: only LITTLE_ENDIAN is actually needed here.  The way these
-   macros is written, it does not require that unaligned references
-   are permitted. */
-#if X86_MEMORY
+#ifdef WORDS_LITTEENDIAN
 
 #define WSAACHAR(s,v)				\
     do {					\

@@ -103,6 +103,9 @@ char *strsep(char **, const char *);
  */
 #if defined(__386__) || defined(__i386__) || defined(__x86_64__)
 # define X86_MEMORY 1
+# ifndef WORDS_LITTLEENDIAN
+#  define WORDS_LITTLEENDIAN 1
+# endif
 #else
 # define X86_MEMORY 0
 #endif

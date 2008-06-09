@@ -1,6 +1,6 @@
-dnl Process this file with autoconf 2.59 or later to produce
+dnl Process this file with autoconf 2.61 or later to produce
 dnl a configure script.
-AC_PREREQ(2.59)
+AC_PREREQ(2.61)
 AC_INIT(config.h.in)
 AC_CONFIG_HEADERS(config.h)
 
@@ -48,9 +48,7 @@ AC_PREFIX_PROGRAM(nasm)
 
 dnl Checks for programs.
 dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
-AC_GNU_SOURCE
-AC_ISC_POSIX
-AC_MINIX
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -95,6 +93,13 @@ AC_CHECK_HEADERS(stdbool.h)
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T
+AC_C_BIGENDIAN(AC_DEFINE(WORDS_BIGENDIAN),AC_DEFINE(WORDS_LITTLEENDIAN))
+AH_TEMPLATE(WORDS_BIGENDIAN,
+[Define to 1 if your processor stores words with the most significant
+byte first (like Motorola and SPARC, unlike Intel and VAX).])
+AH_TEMPLATE(WORDS_LITTLEENDIAN,
+[Define to 1 if your processor stores words with the most significant
+byte first (like Intel and VAX, unlike Motorola and SPARC).])
 
 dnl Checks for library functions.
 AC_SUBST(XOBJS)
