@@ -356,7 +356,7 @@ restart_parse:
             eop->type = EOT_NOTHING;
             oper_num++;
 
-            if (i == TOKEN_NUM && tokval.t_charptr && is_comma_next()) {
+            if (i == TOKEN_STR && is_comma_next()) {
                 eop->type = EOT_DB_STRING;
                 eop->stringval = tokval.t_charptr;
                 eop->stringlen = tokval.t_inttwo;

@@ -1134,10 +1134,11 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     if (tline->type == TOK_NUMBER) {
 	bool rn_error;
 	tokval->t_integer = readnum(tline->text, &rn_error);
-	if (rn_error)
-	    return tokval->t_type = TOKEN_ERRNUM;   /* some malformation occurred */
 	tokval->t_charptr = tline->text;
-	return tokval->t_type = TOKEN_NUM;
+	if (rn_error)
+	    return tokval->t_type = TOKEN_ERRNUM;
+	else
+	    return tokval->t_type = TOKEN_NUM;
     }
 
     if (tline->type == TOK_FLOAT) {
@@ -1146,23 +1147,15 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 
     if (tline->type == TOK_STRING) {
 	char bq, *ep;
-	bool errquote;
-	bool rn_warn;
-        size_t l;
 
 	bq = tline->text[0];
-        l = nasm_unquote(tline->text, &ep);
-	if (ep[0] != bq || ep[1] != '\0')
-	    errquote = true;
+        tokval->t_charptr = tline->text;
+        tokval->t_inttwo = nasm_unquote(tline->text, &ep);
 	
-	if (errquote)
-	    return tokval->t_type = TOKEN_ERRNUM;
-
-        tokval->t_integer = readstrnum(tline->text, l, &rn_warn);
-        if (rn_warn)
-            error(ERR_WARNING | ERR_PASS1, "character constant too long");
-        tokval->t_charptr = NULL;
-        return tokval->t_type = TOKEN_NUM;
+	if (ep[0] != bq || ep[1] != '\0')
+	    return tokval->t_type = TOKEN_ERRSTR;
+	else
+	    return tokval->t_type = TOKEN_STR;
     }
 
     if (tline->type == TOK_OTHER) {

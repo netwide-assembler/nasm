@@ -668,6 +668,8 @@ static expr *expr6(int critical)
     expr *e;
     int32_t label_seg;
     int64_t label_ofs;
+    int64_t tmpval;
+    bool rn_warn;
     char *scope;
 
     switch (i) {
@@ -741,6 +743,7 @@ static expr *expr6(int critical)
         return e;
 
     case TOKEN_NUM:
+    case TOKEN_STR:
     case TOKEN_REG:
     case TOKEN_ID:
     case TOKEN_INSN:		/* Opcodes that occur here are really labels */
@@ -751,6 +754,12 @@ static expr *expr6(int critical)
         case TOKEN_NUM:
             addtotemp(EXPR_SIMPLE, tokval->t_integer);
             break;
+	case TOKEN_STR:
+	    tmpval = readstrnum(tokval->t_charptr, tokval->t_inttwo, &rn_warn);
+	    if (rn_warn)
+		error(ERR_WARNING|ERR_PASS1, "character constant too long");
+            addtotemp(EXPR_SIMPLE, tmpval);
+	    break;
         case TOKEN_REG:
             addtotemp(tokval->t_integer, 1L);
             if (hint && hint->type == EAH_NOHINT)

@@ -165,8 +165,14 @@ enum token_type {		/* token types, other than chars */
     TOKEN_INVALID = -1,         /* a placeholder value */
     TOKEN_EOS = 0,              /* end of string */
     TOKEN_EQ = '=', TOKEN_GT = '>', TOKEN_LT = '<',     /* aliases */
-    TOKEN_ID = 256, TOKEN_NUM, TOKEN_REG, TOKEN_INSN,   /* major token types */
-    TOKEN_ERRNUM,               /* numeric constant with error in */
+    TOKEN_ID = 256,		/* identifier */
+    TOKEN_NUM,			/* numeric constant */
+    TOKEN_ERRNUM,		/* malformed numeric constant */
+    TOKEN_STR,			/* string constant */
+    TOKEN_ERRSTR,               /* unterminated string constant */
+    TOKEN_FLOAT,                /* floating-point constant */
+    TOKEN_REG,			/* register name */
+    TOKEN_INSN,			/* instruction name */
     TOKEN_HERE, TOKEN_BASE,     /* $ and $$ */
     TOKEN_SPECIAL,              /* BYTE, WORD, DWORD, QWORD, FAR, NEAR, etc */
     TOKEN_PREFIX,               /* A32, O16, LOCK, REPNZ, TIMES, etc */
@@ -175,7 +181,6 @@ enum token_type {		/* token types, other than chars */
     TOKEN_GE, TOKEN_LE, TOKEN_NE,       /* >=, <= and <> (!= is same as <>) */
     TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR, /* &&, || and ^^ */
     TOKEN_SEG, TOKEN_WRT,       /* SEG and WRT */
-    TOKEN_FLOAT,                /* floating-point constant */
     TOKEN_FLOATIZE,		/* __floatX__ */
 };
 

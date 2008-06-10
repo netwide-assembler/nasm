@@ -177,17 +177,13 @@ int stdscan(void *private_data, struct tokenval *tv)
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"' ||
 	       *stdscan_bufptr == '`') {
 	/* a quoted string */
-        bool rn_warn;
 	char start_quote = *stdscan_bufptr;
 	tv->t_charptr = stdscan_bufptr;
 	tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
 	if (*stdscan_bufptr != start_quote)
-	    return tv->t_type = TOKEN_ERRNUM;
+	    return tv->t_type = TOKEN_ERRSTR;
 	stdscan_bufptr++;	/* Skip final quote */
-        tv->t_integer = readstrnum(tv->t_charptr, tv->t_inttwo, &rn_warn);
-	/* Issue: can't readily check rn_warn, because we might be in
-	   a db family context... */
-        return tv->t_type = TOKEN_NUM;
+        return tv->t_type = TOKEN_STR;
     } else if (*stdscan_bufptr == ';') {
         /* a comment has happened - stay */
         return tv->t_type = 0;
