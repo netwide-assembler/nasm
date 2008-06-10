@@ -100,7 +100,7 @@ AH_TEMPLATE(WORDS_BIGENDIAN,
 [Define to 1 if your processor stores words with the most significant
 byte first (like Motorola and SPARC, unlike Intel and VAX).])
 AH_TEMPLATE(WORDS_LITTLEENDIAN,
-[Define to 1 if your processor stores words with the most significant
+[Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
 
 dnl Checks for library functions.
