@@ -385,7 +385,7 @@ int32_t seg_alloc(void)
     return (next_seg += 2) - 2;
 }
 
-#if X86_MEMORY
+#ifdef WORDS_LITTLEENDIAN
 
 void fwriteint16_t(uint16_t data, FILE * fp)
 {
@@ -407,7 +407,7 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
     fwrite(&data, 1, size, fp);
 }
 
-#else /* !X86_MEMORY */
+#else /* not WORDS_LITTLEENDIAN */
 
 void fwriteint16_t(uint16_t data, FILE * fp)
 {
