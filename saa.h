@@ -2,7 +2,6 @@
 #define NASM_SAA_H
 
 #include "compiler.h"
-#include "nasmlib.h"
 
 /*
  * Routines to manage a dynamic sequential-access array, under the
