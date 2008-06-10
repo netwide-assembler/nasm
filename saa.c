@@ -3,7 +3,8 @@
 #include "saa.h"
 
 /* Aggregate SAA components smaller than this */
-#define SAA_BLKLEN 65536
+#define SAA_BLKSHIFT	16
+#define SAA_BLKLEN	((size_t)1 << SAA_BLKSHIFT)
 
 struct SAA *saa_init(size_t elem_len)
 {
@@ -210,9 +211,14 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 	return;
     }
 
-    ix = posn / s->blk_len;
+    if (s->elem_len == 1) {
+	ix = posn >> SAA_BLKSHIFT;
+	s->rpos = posn & (SAA_BLKLEN-1);
+    } else {
+	ix = posn / s->blk_len;
+	s->rpos = posn % s->blk_len;
+    }
     s->rptr = posn;
-    s->rpos = posn % s->blk_len;
     s->rblk = &s->blk_ptrs[ix];
 
     saa_rnbytes(s, data, len);
@@ -229,9 +235,15 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 	return;
     }
 
-    ix = posn / s->blk_len;
+    
+    if (s->elem_len == 1) {
+	ix = posn >> SAA_BLKSHIFT;
+	s->wpos = posn & (SAA_BLKLEN-1);
+    } else {
+	ix = posn / s->blk_len;
+	s->wpos = posn % s->blk_len;
+    }
     s->wptr = posn;
-    s->wpos = posn % s->blk_len;
     s->wblk = &s->blk_ptrs[ix];
 
     if (!s->wpos) {
