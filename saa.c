@@ -211,7 +211,7 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 	return;
     }
 
-    if (s->elem_len == 1) {
+    if (s->blk_len == SAA_BLKLEN) {
 	ix = posn >> SAA_BLKSHIFT;
 	s->rpos = posn & (SAA_BLKLEN-1);
     } else {
@@ -234,9 +234,8 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fwrite");
 	return;
     }
-
     
-    if (s->elem_len == 1) {
+    if (s->blk_len == SAA_BLKLEN) {
 	ix = posn >> SAA_BLKSHIFT;
 	s->wpos = posn & (SAA_BLKLEN-1);
     } else {
