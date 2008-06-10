@@ -211,7 +211,7 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 	return;
     }
 
-    if (s->blk_len == SAA_BLKLEN) {
+    if (likely(s->blk_len == SAA_BLKLEN)) {
 	ix = posn >> SAA_BLKSHIFT;
 	s->rpos = posn & (SAA_BLKLEN-1);
     } else {
@@ -235,7 +235,7 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 	return;
     }
     
-    if (s->blk_len == SAA_BLKLEN) {
+    if (likely(s->blk_len == SAA_BLKLEN)) {
 	ix = posn >> SAA_BLKSHIFT;
 	s->wpos = posn & (SAA_BLKLEN-1);
     } else {

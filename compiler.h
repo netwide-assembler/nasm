@@ -110,4 +110,16 @@ char *strsep(char **, const char *);
 # define X86_MEMORY 0
 #endif
 
+/*
+ * Hints to the compiler that a particular branch of code is more or
+ * less likely to be taken.
+ */
+#if defined(__GNUC__) && __GNUC__ >= 3
+# define likely(x)	__builtin_expect(!!(x), 1)
+# define unlikely(x)	__builtin_expect(!!(x), 0)
+#else
+# define likely(x)	(!!(x))
+# define unlikely(x)	(!!(x))
+#endif
+
 #endif	/* NASM_COMPILER_H */
