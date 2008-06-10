@@ -22,7 +22,17 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
-#endif
+/* autoconf doesn't define these if they are redundant, but we want to
+   be able to #ifdef them... */
+#else
+/* Default these to unsupported unless we have config.h */
+# ifndef inline
+#  define inline
+# endif
+# ifndef restrict
+#  define restrict
+# endif
+#endif /* HAVE_CONFIG_H */
 
 /* This is required to get the standard <inttypes.h> macros when compiling
    with a C++ compiler.  This must be defined *before* <inttypes.h> is
@@ -71,7 +81,9 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # ifdef HAVE_STDBOOL_H
 #  include <stdbool.h>
 # else
-typedef enum { false, true } bool;
+/* This is sort of dangerous, since casts will behave different than
+   casting to the standard boolean type.  Always use !!, not (bool). */
+typedef enum bool { false, true } bool;
 # endif
 #endif
 
