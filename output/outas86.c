@@ -18,6 +18,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "saa.h"
+#include "raa.h"
 #include "outform.h"
 
 #ifdef OF_AS86

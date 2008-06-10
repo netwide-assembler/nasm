@@ -28,7 +28,7 @@ LDFLAGS+=-s
 
 O = o
 
-NASM =	nasm.$(O) nasmlib.$(O) saa.$(O) \
+NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
@@ -147,7 +147,7 @@ listing.o: listing.c compiler.h config.h insnsi.h listing.h nasm.h nasmlib.h \
 macros.o: macros.c compiler.h config.h insnsi.h tables.h
 nasm.o: nasm.c assemble.h compiler.h config.h eval.h float.h insns.h \
  insnsi.h labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h \
- preproc.h regs.h stdscan.h tokens.h version.h
+ preproc.h raa.h regs.h saa.h stdscan.h tokens.h version.h
 nasmlib.o: nasmlib.c compiler.h config.h insns.h insnsi.h nasm.h nasmlib.h \
  regs.h tokens.h version.h
 ndisasm.o: ndisasm.c compiler.h config.h disasm.h insns.h insnsi.h nasm.h \
@@ -155,23 +155,23 @@ ndisasm.o: ndisasm.c compiler.h config.h disasm.h insns.h insnsi.h nasm.h \
 outform.o: outform.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h version.h
 outaout.o: outaout.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
- regs.h saa.h stdscan.h version.h
+ raa.h regs.h saa.h stdscan.h version.h
 outas86.o: outas86.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
- regs.h saa.h version.h
+ raa.h regs.h saa.h version.h
 outbin.o: outbin.c compiler.h config.h eval.h insnsi.h labels.h nasm.h \
  nasmlib.h outform.h regs.h saa.h stdscan.h version.h
 outcoff.o: outcoff.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
- regs.h saa.h version.h
+ raa.h regs.h saa.h version.h
 outdbg.o: outdbg.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h version.h
 outelf32.o: outelf32.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h stdscan.h version.h
+ outform.h raa.h regs.h saa.h stdscan.h version.h
 outelf64.o: outelf64.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h stdscan.h version.h
+ outform.h raa.h regs.h saa.h stdscan.h version.h
 outieee.o: outieee.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h version.h
 outmacho.o: outmacho.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h version.h
+ outform.h raa.h regs.h saa.h version.h
 outobj.o: outobj.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h stdscan.h version.h
 outrdf.o: outrdf.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
@@ -184,6 +184,7 @@ pptok.o: pptok.c compiler.h config.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.o: preproc.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h version.h
 quote.o: quote.c compiler.h config.h nasmlib.h quote.h
+raa.o: raa.c compiler.h config.h nasmlib.h raa.h
 regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h

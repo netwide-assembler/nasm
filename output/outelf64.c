@@ -16,9 +16,10 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "saa.h"
+#include "raa.h"
 #include "stdscan.h"
 #include "outform.h"
-#include "saa.h"
 
 /* Definitions in lieu of elf.h */
 #define SHT_NULL 0			/* Inactive section header */

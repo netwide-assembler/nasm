@@ -18,6 +18,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "saa.h"
+#include "raa.h"
 #include "stdscan.h"
 #include "outform.h"
 

@@ -32,7 +32,7 @@ X               = .exe
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
 
-NASM =	nasm.$(O) nasmlib.$(O) saa.$(O) \
+NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
@@ -207,7 +207,7 @@ listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h \
 macros.$(O): macros.c compiler.h insnsi.h tables.h
 nasm.$(O): nasm.c assemble.h compiler.h eval.h float.h insns.h insnsi.h \
  labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h preproc.h \
- regs.h stdscan.h tokens.h version.h
+ raa.h regs.h saa.h stdscan.h tokens.h version.h
 nasmlib.$(O): nasmlib.c compiler.h insns.h insnsi.h nasm.h nasmlib.h regs.h \
  tokens.h version.h
 ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h \
@@ -215,23 +215,23 @@ ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h \
 outform.$(O): outform.c compiler.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h version.h
 output/outaout.$(O): output/outaout.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h stdscan.h version.h
+ outform.h raa.h regs.h saa.h stdscan.h version.h
 output/outas86.$(O): output/outas86.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h version.h
+ outform.h raa.h regs.h saa.h version.h
 output/outbin.$(O): output/outbin.c compiler.h eval.h insnsi.h labels.h \
  nasm.h nasmlib.h outform.h regs.h saa.h stdscan.h version.h
 output/outcoff.$(O): output/outcoff.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h version.h
+ outform.h raa.h regs.h saa.h version.h
 output/outdbg.$(O): output/outdbg.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h version.h
 output/outelf32.$(O): output/outelf32.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h stdscan.h version.h
+ outform.h raa.h regs.h saa.h stdscan.h version.h
 output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h stdscan.h version.h
+ outform.h raa.h regs.h saa.h stdscan.h version.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h version.h
 output/outmacho.$(O): output/outmacho.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h saa.h version.h
+ outform.h raa.h regs.h saa.h version.h
 output/outobj.$(O): output/outobj.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h stdscan.h version.h
 output/outrdf.$(O): output/outrdf.c compiler.h insnsi.h nasm.h nasmlib.h \
@@ -244,6 +244,7 @@ pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
 preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h version.h
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
+raa.$(O): raa.c compiler.h nasmlib.h raa.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h
