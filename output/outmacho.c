@@ -20,6 +20,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "saa.h"
 #include "outform.h"
 #include "compiler.h"
 

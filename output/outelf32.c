@@ -19,7 +19,7 @@
 #include "nasmlib.h"
 #include "stdscan.h"
 #include "outform.h"
-#include "wsaa.h"
+#include "saa.h"
 
 #ifdef OF_ELF32
 

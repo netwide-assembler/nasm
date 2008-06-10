@@ -55,7 +55,7 @@ X               = .exe
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -fo=$@ $<
 
-NASM =	nasm.$(O) nasmlib.$(O) wsaa.$(O) \
+NASM =	nasm.$(O) nasmlib.$(O) saa.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
@@ -254,29 +254,29 @@ ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h \
 outform.$(O): outform.c compiler.h insnsi.h nasm.h nasmlib.h outform.h \
  regs.h version.h
 output/outaout.$(O): output/outaout.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h stdscan.h version.h
+ outform.h regs.h saa.h stdscan.h version.h
 output/outas86.$(O): output/outas86.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h version.h
+ outform.h regs.h saa.h version.h
 output/outbin.$(O): output/outbin.c compiler.h eval.h insnsi.h labels.h \
- nasm.h nasmlib.h outform.h regs.h stdscan.h version.h
+ nasm.h nasmlib.h outform.h regs.h saa.h stdscan.h version.h
 output/outcoff.$(O): output/outcoff.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h version.h
+ outform.h regs.h saa.h version.h
 output/outdbg.$(O): output/outdbg.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h version.h
 output/outelf32.$(O): output/outelf32.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h stdscan.h version.h wsaa.h
+ outform.h regs.h saa.h stdscan.h version.h
 output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h stdscan.h version.h wsaa.h
+ outform.h regs.h saa.h stdscan.h version.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h version.h
 output/outmacho.$(O): output/outmacho.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h regs.h version.h
+ outform.h regs.h saa.h version.h
 output/outobj.$(O): output/outobj.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h stdscan.h version.h
 output/outrdf.$(O): output/outrdf.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h regs.h version.h
 output/outrdf2.$(O): output/outrdf2.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h rdoff/rdoff.h regs.h version.h
+ outform.h rdoff/rdoff.h regs.h saa.h version.h
 parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h \
  parser.h regs.h stdscan.h tables.h tokens.h version.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
@@ -288,6 +288,7 @@ regflags.$(O): regflags.c compiler.h insnsi.h nasm.h nasmlib.h regs.h \
  tables.h version.h
 regs.$(O): regs.c compiler.h insnsi.h tables.h
 regvals.$(O): regvals.c compiler.h insnsi.h tables.h
+saa.$(O): saa.c compiler.h nasmlib.h saa.h
 stdscan.$(O): stdscan.c compiler.h insns.h insnsi.h nasm.h nasmlib.h quote.h \
  regs.h stdscan.h tokens.h version.h
 sync.$(O): sync.c compiler.h nasmlib.h sync.h

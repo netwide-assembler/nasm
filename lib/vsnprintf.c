@@ -14,8 +14,6 @@
 
 #include "nasmlib.h"
 
-extern efunc nasm_malloc_error;
-
 #define BUFFER_SIZE	65536	/* Bigger than any string we might print... */
 
 static char snprintf_buffer[BUFFER_SIZE];

@@ -18,6 +18,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "saa.h"
 #include "outform.h"
 
 #if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
