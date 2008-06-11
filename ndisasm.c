@@ -67,6 +67,7 @@ int main(int argc, char **argv)
     int32_t offset;
     FILE *fp;
 
+    tolower_init();
     nasm_set_malloc_error(ndisasm_error);
 
     offset = 0;
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
         if (*p == '-' && p[1]) {
             p++;
             while (*p)
-                switch (tolower(*p)) {
+                switch (nasm_tolower(*p)) {
                 case 'a':      /* auto or intelligent sync */
                 case 'i':
                     autosync = true;

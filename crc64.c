@@ -1,6 +1,5 @@
 #include "compiler.h"
-#include <inttypes.h>
-#include <ctype.h>
+#include "nasmlib.h"
 
 static const uint64_t crc64_tab[256] = {
     UINT64_C(0x0000000000000000), UINT64_C(0x7ad870c830358979),
@@ -149,8 +148,7 @@ uint64_t crc64i(uint64_t crc, const char *str)
     uint8_t c;
 
     while ((c = *str++) != 0) {
-	c = tolower(c);
-	crc = crc64_tab[(uint8_t)crc ^ c] ^ (crc >> 8);
+	crc = crc64_tab[(uint8_t)crc ^ nasm_tolower(c)] ^ (crc >> 8);
     }
 
     return crc;

@@ -25,6 +25,21 @@ efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
 static FILE *logfp;
 #endif
 
+/*
+ * Prepare a table of tolower() results.  This avoids function calls
+ * on some platforms.
+ */
+
+unsigned char nasm_tolower_tab[256];
+
+void tolower_init(void)
+{
+    int i;
+
+    for (i = 0; i < 256; i++)
+	nasm_tolower_tab[i] = tolower(i);
+}
+
 void nasm_set_malloc_error(efunc error)
 {
     nasm_malloc_error = error;
@@ -192,8 +207,8 @@ int nasm_memicmp(const char *s1, const char *s2, size_t n)
     int d;
 
     while (n--) {
-	c1 = tolower(*s1++);
-	c2 = tolower(*s2++);
+	c1 = nasm_tolower(*s1++);
+	c2 = nasm_tolower(*s2++);
 	d = c1-c2;
 	if (d)
 	    return d;

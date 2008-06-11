@@ -97,7 +97,7 @@ int stdscan(void *private_data, struct tokenval *tv)
             return tv->t_type = TOKEN_ID;       /* bypass all other checks */
 
         for (s = tv->t_charptr, r = ourcopy; *s; s++)
-            *r++ = tolower(*s);
+            *r++ = nasm_tolower(*s);
         *r = '\0';
         /* right, so we have an identifier sitting in temp storage. now,
          * is it actually a register or instruction name, or what? */

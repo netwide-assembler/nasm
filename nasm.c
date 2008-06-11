@@ -298,6 +298,8 @@ int main(int argc, char **argv)
 
     error_file = stderr;
 
+    tolower_init();
+
     nasm_set_malloc_error(report_error);
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));

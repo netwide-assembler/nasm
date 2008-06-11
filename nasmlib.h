@@ -175,6 +175,14 @@ void standard_extension(char *inname, char *outname, char *extension,
 
 #define elements(x)     ( sizeof(x) / sizeof(*(x)) )
 
+/*
+ * tolower table -- avoids a function call on some platforms.
+ * NOTE: unlike the tolower() function in ctype, EOF is *NOT*
+ * a permitted value, for obvious reasons.
+ */
+void tolower_init(void);
+extern unsigned char nasm_tolower_tab[256];
+#define nasm_tolower(x) nasm_tolower_tab[(unsigned char)(x)]
 
 /*
  * some handy macros that will probably be of use in more than one
