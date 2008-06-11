@@ -1700,20 +1700,6 @@ fail:
 }
 
 /*
- * Expand macros in a string. Used in %error directives (and it should
- * almost certainly be removed from there, too.)
- *
- * First tokenize the string, apply "expand_smacro" and then de-tokenize back.
- * The returned variable should ALWAYS be freed after usage.
- */
-void expand_macros_in_string(char **p)
-{
-    Token *line = tokenize(*p);
-    line = expand_smacro(line);
-    *p = detoken(line, false);
-}
-
-/*
  * Common code for defining an smacro
  */
 static bool define_smacro(Context *ctx, char *mname, bool casesense,
