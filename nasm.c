@@ -1909,7 +1909,7 @@ static bool is_suppressed_warning(int severity)
 static void report_error_common(int severity, const char *fmt,
                                 va_list args)
 {
-    switch (severity & ERR_MASK) {
+    switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_WARNING:
         fputs("warning: ", error_file);
         break;
@@ -1925,6 +1925,8 @@ static void report_error_common(int severity, const char *fmt,
     case ERR_DEBUG:
         fputs("debug: ", error_file);
         break;
+    default:
+	break;
     }
 
     vfprintf(error_file, fmt, args);

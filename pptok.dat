@@ -47,4 +47,5 @@
 %strlen
 %substr
 %undef
+%warning
 %xdefine

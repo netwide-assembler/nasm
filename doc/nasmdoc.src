@@ -2874,19 +2874,19 @@ any tokens at all, whitespace excepted.
 The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
 variants are also provided.
 
-\S{pperror} \i\c{%error}: Reporting \i{User-Defined Errors}
+\S{pperror} \i\c{%error} and \i\c{%warning}: Reporting \i{User-Defined Errors}
 
 The preprocessor directive \c{%error} will cause NASM to report an
 error if it occurs in assembled code. So if other users are going to
-try to assemble your source files, you can ensure that they define
-the right macros by means of code like this:
+try to assemble your source files, you can ensure that they define the
+right macros by means of code like this:
 
-\c %ifdef SOME_MACRO
+\c %ifdef F1
 \c     ; do some setup
-\c %elifdef SOME_OTHER_MACRO
+\c %elifdef F2
 \c     ; do some different setup
 \c %else
-\c     %error Neither SOME_MACRO nor SOME_OTHER_MACRO was defined.
+\c     %error Neither F1 nor F2 was defined.
 \c %endif
 
 Then any user who fails to understand the way your code is supposed
@@ -2894,6 +2894,16 @@ to be assembled will be quickly warned of their mistake, rather than
 having to wait until the program crashes on being run and then not
 knowing what went wrong.
 
+Similarly, \c{%warning} issues a warning:
+
+\c %ifdef F1
+\c     ; do some setup
+\c %elifdef F2
+\c     ; do some different setup
+\c %else
+\c     %warning Neither F1 nor F2 was defined, assuming F1.
+\c     %define F1
+\c %endif
 
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 

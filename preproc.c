@@ -2192,22 +2192,30 @@ static int do_directive(Token * tline)
         break;
 
     case PP_ERROR:
+    case PP_WARNING:
+    {
+	int severity = PP_ERROR ? ERR_NONFATAL|ERR_NO_SEVERITY :
+	    ERR_WARNING|ERR_NO_SEVERITY;
+
         tline->next = expand_smacro(tline->next);
         tline = tline->next;
         skip_white_(tline);
-        if (tok_type_(tline, TOK_STRING)) {
+	t = tline ? tline->next : NULL;
+	skip_white_(t);
+        if (tok_type_(tline, TOK_STRING) && !t) {
+	    /* The line contains only a quoted string */
 	    p = tline->text;
 	    nasm_unquote(p, NULL);
-	    expand_macros_in_string(&p); /* WHY? */
-            error(ERR_NONFATAL, "%s", p);
-            nasm_free(p);
-        } else {
+	    error(severity, "%s: %s",  pp_directives[i], p);
+	} else {
+	    /* Not a quoted string, or more than a quoted string */
             p = detoken(tline, false);
-            error(ERR_WARNING, "%s", p); /* WARNING!??!! */
-            nasm_free(p);
-        }
+	    error(severity, "%s: %s",  pp_directives[i], p);
+	    nasm_free(p);
+	}	    
         free_tlist(origline);
         break;
+    }
 
     CASE_PP_IF:
         if (istk->conds && !emitting(istk->conds->state))
