@@ -4645,7 +4645,7 @@ qualifiers are:
 
 Any other section name is treated by default like \c{.text}.
 
-\S{win32safeseh} \c{win32}: safe structured exception handling
+\S{win32safeseh} \c{win32}: Safe Structured Exception Handling
 
 Among other improvements in Windows XP SP2 and Windows Server 2003
 Microsoft has introduced concept of "safe structured exception
@@ -4744,7 +4744,7 @@ with the exception that it is meant to target 64-bit code and the x86-64
 platform altogether. This object file is used exactly the same as the \c{win32}
 object format (\k{win32fmt}), in NASM, with regard to this exception.
 
-\S{win64pic} \c{win64}: writing position-independent code
+\S{win64pic} \c{win64}: Writing Position-Independent Code
 
 While \c{REL} takes good care of RIP-relative addressing, there is one
 aspect that is easy to overlook for a Win64 programmer: indirect
@@ -4812,7 +4812,7 @@ operand only:
 \c         mov     eax,label wrt ..imagebase       ; ok
 \c         mov     rax,label wrt ..imagebase       ; bad
 
-\S{win64seh} \c{win64}: structured exception handling
+\S{win64seh} \c{win64}: Structured Exception Handling
 
 Structured exception handing in Win64 is completely different matter
 from Win32. Upon exception program counter value is noted, and
