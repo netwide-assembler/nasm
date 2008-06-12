@@ -905,7 +905,7 @@ underscore to all global and external variables, as C sometimes
 (but not always) likes it.
 
 
-\S{nasmenv} The \c{NASMENV} \i{Environment} Variable
+\S{nasmenv} The \i\c{NASMENV} \i{Environment} Variable
 
 If you define an environment variable called \c{NASMENV}, the program
 will interpret it as a list of extra command-line options, which are
