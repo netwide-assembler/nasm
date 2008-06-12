@@ -585,7 +585,7 @@ format can be seen by issuing the command \i\c{nasm -f <format>
 
 This should not be confused with the \c{-f dbg} output format option which 
 is not built into NASM by default. For information on how
-to enable it when building from the sources, see \k{dbgfmt}
+to enable it when building from the sources, see \k{dbgfmt}.
 
 
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
