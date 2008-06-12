@@ -88,6 +88,8 @@ use IO::File;
 
 $diag = 1, shift @ARGV if $ARGV[0] eq "-d";
 
+($out_format) = @ARGV;
+
 $| = 1;
 
 $tstruct_previtem = $node = "Top";
@@ -101,7 +103,7 @@ print "Reading input...";
 $pname = "para000000";
 @pnames = @pflags = ();
 $para = undef;
-while (<>) {
+while (defined($_ = <STDIN>)) {
   &check_include($_);
 }
 &got_para($para);
@@ -125,21 +127,29 @@ if ($diag) {
 }
 
 # OK. Write out the various output files.
-print "Producing text output: ";
-&write_txt;
-print "done.\n";
-print "Producing HTML output: ";
-&write_html;
-print "done.\n";
-print "Producing Texinfo output: ";
-&write_texi;
-print "done.\n";
-print "Producing WinHelp output: ";
-&write_hlp;
-print "done.\n";
-print "Producing Documentation Intermediate Paragraphs: ";
-&write_dip;
-print "done.\n";
+if ($out_format eq 'txt') {
+    print "Producing text output: ";
+    &write_txt;
+    print "done.\n";
+} elsif ($out_format eq 'html') {
+    print "Producing HTML output: ";
+    &write_html;
+    print "done.\n";
+} elsif ($out_format eq 'texi') {
+    print "Producing Texinfo output: ";
+    &write_texi;
+    print "done.\n";
+} elsif ($out_format eq 'hlp') {
+    print "Producing WinHelp output: ";
+    &write_hlp;
+    print "done.\n";
+} elsif ($out_format eq 'dip') {
+    print "Producing Documentation Intermediate Paragraphs: ";
+    &write_dip;
+    print "done.\n";
+} else {
+    die "$0: unknown output format: $out_format\n";
+}
 
 sub check_include {
   local $_ = shift;
