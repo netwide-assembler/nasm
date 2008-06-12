@@ -3317,7 +3317,7 @@ mode-dependent macros.
 \S{ofmtm} \i\c{__OUTPUT_FORMAT__}: Current Output Format
 
 The \c{__OUTPUT_FORMAT__} standard macro holds the current Output Format,
-as given by the \c{-f} option or Nasm's default. Type \c{nasm -hf} for a
+as given by the \c{-f} option or NASM's default. Type \c{nasm -hf} for a
 list.
 
 \c %ifidn __OUTPUT_FORMAT__, win32
@@ -4238,7 +4238,7 @@ alignment has been specified.
 
 \b Sections may not overlap.
 
-\b Nasm creates the \c{section.<secname>.start} for each section, 
+\b NASM creates the \c{section.<secname>.start} for each section, 
 which may be used in your code.
 
 \S{map}\i{Map files}
