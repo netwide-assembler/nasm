@@ -581,10 +581,9 @@ if \c{-F} is specified.
 
 A complete list of the available debug file formats for an output
 format can be seen by issuing the command \i\c{nasm -f <format>
--y}. (As of 2.00, only "-f elf32", "-f elf64", "-f ieee", and "-f obj"
-provide debug information.)  See \k{opt-y}.
+-y}. Not all output formats currently support debugging output.
 
-This should not be confused with the "-f dbg" output format option which 
+This should not be confused with the \c{-f dbg} output format option which 
 is not built into NASM by default. For information on how
 to enable it when building from the sources, see \k{dbgfmt}
 
