@@ -345,8 +345,8 @@
 /pagel lmarg plmarg sub def
 /pager pagewidth rmarg sub prmarg add def
 
-/pageeven { pagel pagey moveto sfont0 setfont show } def
-/pageodd  { sfont0 setfont dup stringwidth pop pager exch sub
+/pageeven { pagel pagey moveto bfont1 setfont show } def
+/pageodd  { bfont1 setfont dup stringwidth pop pager exch sub
 	    pagey moveto show } def
 
 %
