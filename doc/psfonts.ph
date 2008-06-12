@@ -17,30 +17,30 @@ require 'metrics/phvbo8a.ph';	# Helvetica-BoldOblique
 # The order is: <normal> <emphatic> <code>
 
 %TitlFont = (name => 'tfont',
-	     leading => 20,
+	     leading => 22,
 	     fonts => [[20,\%PS_Times_Bold],
 		       [20,\%PS_Times_BoldItalic],
 		       [20,\%PS_Courier_Bold]]);
 %ChapFont = (name => 'cfont',
-             leading => 18,
+             leading => 19.2,
 	     fonts => [[18,\%PS_Times_Bold],
 		       [18,\%PS_Times_BoldItalic],
 		       [18,\%PS_Courier_Bold]]);
 %HeadFont = (name => 'hfont',
-	     leading => 14,
+	     leading => 15.4,
 	     fonts => [[14,\%PS_Times_Bold],
 		       [14,\%PS_Times_BoldItalic],
 		       [14,\%PS_Courier_Bold]]);
 %SubhFont = (name => 'sfont',
-	     leading => 12,
+	     leading => 13.2,
 	     fonts => [[12,\%PS_Times_Bold],
 		       [12,\%PS_Times_BoldItalic],
 		       [12,\%PS_Courier_Bold]]);
 %BodyFont = (name => 'bfont',
 	     leading => 11,
-	     fonts => [[11,\%PS_Times_Roman],
-		       [11,\%PS_Times_Italic],
-		       [11,\%PS_Courier]]);
+	     fonts => [[10,\%PS_Times_Roman],
+		       [10,\%PS_Times_Italic],
+		       [10,\%PS_Courier]]);
 
 #
 # List of all fontsets; used to compute the list of fonts needed
