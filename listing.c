@@ -220,7 +220,7 @@ static void list_output(int32_t offset, const void *data,
     {
         uint64_t d = *(int64_t *)data;
         char q[19];
-        uint8_t p[4], *r = p;
+        uint8_t p[8], *r = p;
         q[0] = '(';
         q[17] = ')';
         q[18] = '\0';
