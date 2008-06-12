@@ -722,6 +722,7 @@ static bool process_arg(char *p, char *q)
 			     " output format `%s'",
 			     param, ofmt->shortname);
 	    }
+	    using_debug_info = true;
 	    break;
 
 	case 'X':		/* specify error reporting format */
