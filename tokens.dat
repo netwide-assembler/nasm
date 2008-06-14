@@ -53,6 +53,10 @@ __float80e__
 __float128l__
 __float128h__
 
+% TOKEN_STRFUNC, 0, STRFUNC_{__*__}
+__utf16__
+__utf32__
+
 % TOKEN_*, 0, 0
 seg
 wrt

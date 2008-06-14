@@ -182,6 +182,7 @@ enum token_type {		/* token types, other than chars */
     TOKEN_DBL_AND, TOKEN_DBL_OR, TOKEN_DBL_XOR, /* &&, || and ^^ */
     TOKEN_SEG, TOKEN_WRT,       /* SEG and WRT */
     TOKEN_FLOATIZE,		/* __floatX__ */
+    TOKEN_STRFUNC,		/* __utf16__, __utf32__ */
 };
 
 enum floatize {
@@ -194,6 +195,14 @@ enum floatize {
     FLOAT_128L,
     FLOAT_128H,
 };
+
+/* Must match the list in string_transform(), in strfunc.c */
+enum strfunc {
+    STRFUNC_UTF16,
+    STRFUNC_UTF32,
+};
+
+size_t string_transform(char *, size_t, char **, enum strfunc);
 
 /*
  * The expression evaluator must be passed a scanner function; a
@@ -605,11 +614,14 @@ enum prefixes {			/* instruction prefixes */
     PREFIX_ENUM_LIMIT
 };
 
-enum {                          /* extended operand types */
-    EOT_NOTHING, EOT_DB_STRING, EOT_DB_NUMBER
+enum extop_type {		/* extended operand types */
+    EOT_NOTHING,
+    EOT_DB_STRING,		/* Byte string */
+    EOT_DB_STRING_FREE,		/* Byte string which should be nasm_free'd*/
+    EOT_DB_NUMBER,		/* Integer */
 };
 
-enum {                          /* special EA flags */
+enum ea_flags {			/* special EA flags */
     EAF_BYTEOFFS =  1,          /* force offset part to byte size */
     EAF_WORDOFFS =  2,          /* force offset part to [d]word size */
     EAF_TIMESTWO =  4,          /* really do EAX*2 not EAX+EAX */
@@ -643,12 +655,12 @@ typedef struct operand {	/* operand to an instruction */
 
 typedef struct extop {          /* extended operand */
     struct extop *next;         /* linked list */
-    int32_t type;               /* defined above */
-    char *stringval;          /* if it's a string, then here it is */
-    int stringlen;              /* ... and here's how long it is */
-    int32_t segment;            /* if it's a number/address, then... */
+    char *stringval;	        /* if it's a string, then here it is */
+    size_t stringlen;           /* ... and here's how long it is */
     int64_t offset;             /* ... it's given here ... */
+    int32_t segment;            /* if it's a number/address, then... */
     int32_t wrt;                /* ... and here */
+    enum extop_type type;	/* defined above */
 } extop;
 
 /* Prefix positions: each type of prefix goes in a specific slot.

@@ -334,6 +334,7 @@ restart_parse:
 	result->opcode == I_DY || result->opcode == I_INCBIN) {
         extop *eop, **tail = &result->eops, **fixptr;
         int oper_num = 0;
+	int32_t sign;
 
         result->eops_float = false;
 
@@ -355,85 +356,114 @@ restart_parse:
             eop->next = NULL;
             eop->type = EOT_NOTHING;
             oper_num++;
+	    sign = +1;
 
+	    /* is_comma_next() here is to distinguish this from
+	       a string used as part of an expression... */
             if (i == TOKEN_STR && is_comma_next()) {
                 eop->type = EOT_DB_STRING;
                 eop->stringval = tokval.t_charptr;
                 eop->stringlen = tokval.t_inttwo;
                 i = stdscan(NULL, &tokval);     /* eat the comma */
-                continue;
-            }
-
-            if ((i == TOKEN_FLOAT && is_comma_next())
-		|| i == '-' || i == '+') {
-                int32_t sign = +1;
-
-                if (i == '+' || i == '-') {
-                    char *save = stdscan_bufptr;
-		    int token = i;
-		    sign = (i == '-') ? -1 : 1;
-                    i = stdscan(NULL, &tokval);
-                    if (i != TOKEN_FLOAT || !is_comma_next()) {
-                        stdscan_bufptr = save;
-                        i = tokval.t_type = token;
-                    }
-                }
-
-                if (i == TOKEN_FLOAT) {
-                    eop->type = EOT_DB_STRING;
-                    result->eops_float = true;
-		    switch (result->opcode) {
-		    case I_DB:
-			eop->stringlen = 1;
-			break;
-		    case I_DW:
-			eop->stringlen = 2;
-			break;
-		    case I_DD:
-                        eop->stringlen = 4;
-			break;
-		    case I_DQ:
-                        eop->stringlen = 8;
-			break;
-		    case I_DT:
-                        eop->stringlen = 10;
-			break;
-		    case I_DO:
-                        eop->stringlen = 16;
-			break;
-		    case I_DY:
-                        error(ERR_NONFATAL, "floating-point constant"
-                              " encountered in DY instruction");
-			eop->stringlen = 0;
-			break;
-		    default:
-                        error(ERR_NONFATAL, "floating-point constant"
-                              " encountered in unknown instruction");
-                        /*
-                         * fix suggested by Pedro Gimeno... original line
-                         * was:
-                         * eop->type = EOT_NOTHING;
-                         */
-                        eop->stringlen = 0;
-			break;
-                    }
-                    eop = nasm_realloc(eop, sizeof(extop) + eop->stringlen);
-                    tail = &eop->next;
-                    *fixptr = eop;
-                    eop->stringval = (char *)eop + sizeof(extop);
-                    if (!eop->stringlen ||
-                        !float_const(tokval.t_charptr, sign,
-                                     (uint8_t *)eop->stringval,
-                                     eop->stringlen, error))
-                        eop->type = EOT_NOTHING;
-                    i = stdscan(NULL, &tokval); /* eat the comma */
-                    continue;
-                }
-            }
-
-            /* anything else */
-            {
+	    } else if (i == TOKEN_STRFUNC) {
+		bool parens = false;
+		const char *funcname = tokval.t_charptr;
+		enum strfunc func = tokval.t_integer;
+		i = stdscan(NULL, &tokval);
+		if (i == '(') {
+		    parens = true;
+		    i = stdscan(NULL, &tokval);
+		}
+		if (i != TOKEN_STR) {
+		    error(ERR_NONFATAL,
+			  "%s must be followed by a string constant",
+			  funcname);
+			eop->type = EOT_NOTHING;
+		} else {
+		    eop->type = EOT_DB_STRING_FREE;
+		    eop->stringlen =
+			string_transform(tokval.t_charptr, tokval.t_inttwo,
+					 &eop->stringval, func);
+		    if (eop->stringlen == (size_t)-1) {
+			error(ERR_NONFATAL, "invalid string for transform");
+			eop->type = EOT_NOTHING;
+		    }
+		}
+		if (parens && i && i != ')') {
+		    i = stdscan(NULL, &tokval);
+		    if (i != ')') {
+			error(ERR_NONFATAL, "unterminated %s function",
+			      funcname);
+		    }
+		}
+		if (i && i != ',')
+		    i = stdscan(NULL, &tokval);
+	    } else if (i == '-' || i == '+') {
+		char *save = stdscan_bufptr;
+		int token = i;
+		sign = (i == '-') ? -1 : 1;
+		i = stdscan(NULL, &tokval);
+		if (i != TOKEN_FLOAT) {
+		    stdscan_bufptr = save;
+		    i = tokval.t_type = token;
+		    goto is_expression;
+		} else {
+		    goto is_float;
+		}
+            } else if (i == TOKEN_FLOAT) {
+	    is_float:
+		eop->type = EOT_DB_STRING;
+		result->eops_float = true;
+		switch (result->opcode) {
+		case I_DB:
+		    eop->stringlen = 1;
+		    break;
+		case I_DW:
+		    eop->stringlen = 2;
+		    break;
+		case I_DD:
+		    eop->stringlen = 4;
+		    break;
+		case I_DQ:
+		    eop->stringlen = 8;
+		    break;
+		case I_DT:
+		    eop->stringlen = 10;
+		    break;
+		case I_DO:
+		    eop->stringlen = 16;
+		    break;
+		case I_DY:
+		    error(ERR_NONFATAL, "floating-point constant"
+			  " encountered in DY instruction");
+		    eop->stringlen = 0;
+		    break;
+		default:
+		    error(ERR_NONFATAL, "floating-point constant"
+			  " encountered in unknown instruction");
+		    /*
+		     * fix suggested by Pedro Gimeno... original line
+		     * was:
+		     * eop->type = EOT_NOTHING;
+		     */
+		    eop->stringlen = 0;
+		    break;
+		}
+		eop = nasm_realloc(eop, sizeof(extop) + eop->stringlen);
+		tail = &eop->next;
+		*fixptr = eop;
+		eop->stringval = (char *)eop + sizeof(extop);
+		if (!eop->stringlen ||
+		    !float_const(tokval.t_charptr, sign,
+				 (uint8_t *)eop->stringval,
+				 eop->stringlen, error))
+		    eop->type = EOT_NOTHING;
+		i = stdscan(NULL, &tokval); /* eat the comma */
+	    } else {
+		/* anything else, assume it is an expression */
                 expr *value;
+
+	    is_expression:
                 value = evaluate(stdscan, NULL, &tokval, NULL,
                                  critical, error, NULL);
                 i = tokval.t_type;

@@ -335,7 +335,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                         out(offset, segment, &e->offset,
                             OUT_ADDRESS, wsize, e->segment, e->wrt);
                     offset += wsize;
-                } else if (e->type == EOT_DB_STRING) {
+                } else if (e->type == EOT_DB_STRING ||
+			   e->type == EOT_DB_STRING_FREE) {
                     int align;
 
                     out(offset, segment, e->stringval,
@@ -348,6 +349,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                             OUT_RAWDATA, align, NO_SEG, NO_SEG);
                     }
                     offset += e->stringlen + align;
+		    if (e->type == EOT_DB_STRING_FREE)
+			nasm_free(e->stringval);
                 }
             }
             if (t > 0 && t == instruction->times - 1) {
@@ -365,15 +368,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     }
 
     if (instruction->opcode == I_INCBIN) {
-        static char fname[FILENAME_MAX];
+        const char *fname = instruction->eops->stringval;
         FILE *fp;
-        int32_t len;
-
-        len = FILENAME_MAX - 1;
-        if (len > instruction->eops->stringlen)
-            len = instruction->eops->stringlen;
-        strncpy(fname, instruction->eops->stringval, len);
-        fname[len] = '\0';
 
 	fp = fopen(fname, "rb");
 	if (!fp) {
@@ -383,17 +379,18 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
             error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
                   fname);
 	} else {
-            static char buf[2048];
-            int32_t t = instruction->times;
-            int32_t base = 0;
+            static char buf[4096];
+            size_t t = instruction->times;
+            size_t base = 0;
+	    size_t len;
 
             len = ftell(fp);
             if (instruction->eops->next) {
                 base = instruction->eops->next->offset;
                 len -= base;
                 if (instruction->eops->next->next &&
-                    len > instruction->eops->next->next->offset)
-                    len = instruction->eops->next->next->offset;
+                    len > (size_t)instruction->eops->next->next->offset)
+                    len = (size_t)instruction->eops->next->next->offset;
             }
             /*
              * Dummy call to list->output to give the offset to the
@@ -402,7 +399,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
             list->output(offset, NULL, OUT_RAWDATA, 0);
             list->uplevel(LIST_INCBIN);
             while (t--) {
-                int32_t l;
+                size_t l;
 
                 fseek(fp, base, SEEK_SET);
                 l = len;
@@ -660,7 +657,8 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
             osize = 0;
             if (e->type == EOT_DB_NUMBER)
                 osize = 1;
-            else if (e->type == EOT_DB_STRING)
+            else if (e->type == EOT_DB_STRING ||
+		     e->type == EOT_DB_STRING_FREE)
                 osize = e->stringlen;
 
             align = (-osize) % wsize;
@@ -672,16 +670,10 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     }
 
     if (instruction->opcode == I_INCBIN) {
-        char fname[FILENAME_MAX];
+	const char *fname = instruction->eops->stringval;
         FILE *fp;
-        int32_t len;
+        size_t len;
 
-        len = FILENAME_MAX - 1;
-        if (len > instruction->eops->stringlen)
-            len = instruction->eops->stringlen;
-        strncpy(fname, instruction->eops->stringval, len);
-        fname[len] = '\0';
-	
 	fp = fopen(fname, "rb");
 	if (!fp)
             error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
@@ -695,8 +687,8 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
             if (instruction->eops->next) {
                 len -= instruction->eops->next->offset;
                 if (instruction->eops->next->next &&
-                    len > instruction->eops->next->next->offset) {
-                    len = instruction->eops->next->next->offset;
+                    len > (size_t)instruction->eops->next->next->offset) {
+                    len = (size_t)instruction->eops->next->next->offset;
                 }
             }
             return instruction->times * len;
