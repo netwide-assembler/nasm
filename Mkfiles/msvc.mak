@@ -41,8 +41,8 @@ NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
-	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) tokhash.$(O) \
-	regvals.$(O) regflags.$(O)
+	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) strfunc.$(O) \
+	tokhash.$(O) regvals.$(O) regflags.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
