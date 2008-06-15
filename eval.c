@@ -662,6 +662,48 @@ static expr *eval_floatize(enum floatize type)
     return finishtemp();
 }
 
+static expr *eval_strfunc(enum strfunc type)
+{
+    char *string;
+    size_t string_len;
+    int64_t val;
+    bool parens, rn_warn;
+
+    i = scan(scpriv, tokval);
+    if (i == '(') {
+	parens = true;
+	i = scan(scpriv, tokval);
+    }
+    if (i != TOKEN_STR) {
+	error(ERR_NONFATAL, "expecting string");
+	return NULL;
+    }
+    string_len = string_transform(tokval->t_charptr, tokval->t_inttwo,
+				  &string, type);
+    if (string_len == (size_t)-1) {
+	error(ERR_NONFATAL, "invalid string for transform");
+	return NULL;
+    }
+
+    val = readstrnum(string, string_len, &rn_warn);
+    if (parens) {
+	i = scan(scpriv, tokval);
+	if (i != ')') {
+	    error(ERR_NONFATAL, "expecting `)'");
+	    return NULL;
+	}
+    }
+
+    if (rn_warn)
+	error(ERR_WARNING|ERR_PASS1, "character constant too long");
+
+    begintemp();
+    addtotemp(EXPR_SIMPLE, val);
+
+    i = scan(scpriv, tokval);
+    return finishtemp();
+}
+
 static expr *expr6(int critical)
 {
     int32_t type;
@@ -729,6 +771,9 @@ static expr *expr6(int critical)
 
     case TOKEN_FLOATIZE:
 	return eval_floatize(tokval->t_integer);
+
+    case TOKEN_STRFUNC:
+	return eval_strfunc(tokval->t_integer);
 
     case '(':
         i = scan(scpriv, tokval);
