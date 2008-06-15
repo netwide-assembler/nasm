@@ -158,10 +158,13 @@ size_t string_transform(char *str, size_t len, char **out, enum strfunc func)
     transform_func transform = str_transforms[func];
     size_t outlen;
     uint8_t *s = (uint8_t *)str;
+    char *buf;
 
     outlen = transform(s, len, NULL);
     if (outlen == (size_t)-1)
 	return -1;
 
-    return transform(s, len, *out = nasm_malloc(outlen));
+    *out = buf = nasm_malloc(outlen+1);
+    buf[outlen] = '\0';		/* Forcibly null-terminate the buffer */
+    return transform(s, len, buf);
 }
