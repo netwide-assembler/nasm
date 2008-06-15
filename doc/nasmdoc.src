@@ -205,6 +205,8 @@ Object File Format
 \IR{unicode} Unicode
 \IR{unix} Unix
 \IR{utf-8} UTF-8
+\IR{utf-16} UTF-16
+\IR{utf-32} UTF-32
 \IA{sco unix}{unix, sco}
 \IR{unix, sco} Unix, SCO
 \IA{unix source archive}{unix, source archive}
@@ -1174,7 +1176,7 @@ are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO} and
 prefix.
 
 
-\S{db} \c{DB} and friends: Declaring initialized Data
+\S{db} \c{DB} and Friends: Declaring Initialized Data
 
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO} and
 \i\c{DY} are used, much as in MASM, to declare initialized data in the
@@ -1198,7 +1200,7 @@ output file. They can be invoked in a wide range of ways:
 \c{DT}, \c{DO} and \c{DY} do not accept \i{numeric constants} as operands.
 
 
-\S{resb} \c{RESB} and friends: Declaring \i{Uninitialized} Data
+\S{resb} \c{RESB} and Friends: Declaring \i{Uninitialized} Data
 
 \i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO}
 and \i\c{RESY} are designed to be used in the BSS section of a module:
@@ -1487,6 +1489,23 @@ effect as \c{db 'a'}, which would be silly. Similarly, three-character
 or four-character constants are treated as strings when they are
 operands to \c{DW}, and so forth.
 
+\S{unicode} \I{UTF-16}\I{UTF-32}Unicode Strings
+
+The special operators \i\c{__utf16__} and \i\c{__utf32__} allows
+definition of Unicode strings.  They take a string in UTF-8 format and
+converts it to (littleendian) UTF-16 or UTF-32, respectively.
+
+For example:
+
+\c %define u(x) __utf16__(x)
+\c %define w(x) __utf32__(x)
+\c
+\c       dw u('C:\WINDOWS'), 0       ; Pathname in UTF-16
+\c       dd w(`A + B = \u206a`), 0   ; String in UTF-32
+
+\c{__utf16__} and \c{__utf32__} can be applied either to strings
+passed to the \c{DB} family instructions, or to character constants in
+an expression context.  
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
