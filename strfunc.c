@@ -46,7 +46,7 @@ static size_t utf8_to_16le(uint8_t *str, size_t len, char *op)
 
 	if (c < 0x80) {
 	    EMIT(c);
-	} else if (c < 0xa0 || c >= 0xfe) {
+	} else if (c < 0xc0 || c >= 0xfe) {
 	    /* Invalid UTF-8 */
 	    return -1;
 	} else if (c < 0xe0) {
@@ -110,7 +110,7 @@ static size_t utf8_to_32le(uint8_t *str, size_t len, char *op)
 
 	if (c < 0x80) {
 	    EMIT(c);
-	} else if (c < 0xa0 || c >= 0xfe) {
+	} else if (c < 0xc0 || c >= 0xfe) {
 	    /* Invalid UTF-8 */
 	    return -1;
 	} else if (c < 0xe0) {
