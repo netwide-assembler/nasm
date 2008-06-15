@@ -319,7 +319,7 @@ size_t nasm_unquote(char *str, char **ep)
 		    (c >= 'A' && c <= 'F') ||
 		    (c >= 'a' && c <= 'f')) {
 		    nval = (nval << 4) + numvalue(c);
-		    if (--ndig) {
+		    if (!--ndig) {
 			*q++ = nval;
 			state = st_start;
 		    }
