@@ -58,6 +58,7 @@ X               = @EXEEXT@
 .1.man:
 	$(NROFF) -man $< > $@
 
+#--- Begin File Lists ---#
 NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
@@ -72,6 +73,7 @@ NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+#--- End File Lists ---#
 
 all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man
 	cd rdoff && $(MAKE) all
@@ -224,6 +226,7 @@ splint:
 # it's expected to be invoked manually.
 #
 alldeps: perlreq
+	$(PERL) syncfiles.pl Makefile.in Mkfiles/*.mak
 	$(PERL) mkdep.pl -M Makefile.in Mkfiles/*.mak -- \
 		. output lib
 	./config.status
