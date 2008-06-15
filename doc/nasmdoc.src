@@ -1489,7 +1489,7 @@ effect as \c{db 'a'}, which would be silly. Similarly, three-character
 or four-character constants are treated as strings when they are
 operands to \c{DW}, and so forth.
 
-\S{unicode} \I{UTF-16}\I{UTF-32}Unicode Strings
+\S{unicode} \I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
 The special operators \i\c{__utf16__} and \i\c{__utf32__} allows
 definition of Unicode strings.  They take a string in UTF-8 format and
