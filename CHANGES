@@ -1,3 +1,8 @@
+2.03p1 (?)
+------
+* Fix buffer overflow in the listing module.
+* Fix the handling of hexadecimal escape codes in `...` strings.
+
 2.03
 ----
 * Add support for Intel AVX, CLMUL and FMA instructions,
