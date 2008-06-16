@@ -8,6 +8,8 @@
 	db `\u306a`
 	db `\xe3\x81\xaa`
 
+	dw __utf16__ "Hello, World!"
+
 	nop
 
 	mov ax,u(`a`)
@@ -16,3 +18,11 @@
 	mov eax,u(`ab`)
 	mov ebx,u(`\U0001abcd`)
 	mov ecx,w(`\U0001abcd`)
+
+%ifdef ERROR
+	dw __utf16__ 33
+	dw __utf16__, 46
+	dw __utf16__("Hello, World!",16)
+	dw __utf16__("Hello, World!",16
+	dw u(`\xff`)
+%endif
