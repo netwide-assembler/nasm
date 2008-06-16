@@ -3,13 +3,13 @@
 * Sanitize macro handing in the %error directive.
 * New %warning preprocessor directive.
 * The -F option now implies -g.
-* The Postscript/PDF documentation has been reformatted.
 * __utf16__ and __utf32__ operators to generate UTF-16 and UTF-32 strings.
 
 2.03.01
 -------
 * Fix buffer overflow in the listing module.
 * Fix the handling of hexadecimal escape codes in `...` strings.
+* The Postscript/PDF documentation has been reformatted.
 
 2.03
 ----
