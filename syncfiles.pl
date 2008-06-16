@@ -39,7 +39,7 @@ foreach $file (@ARGV) {
     # First, read the syntax hints
     %hints = %def_hints;
     while (defined($line = <FILE>)) {
-	if ($line =~ /^\#\s+\@(\S+)\:\s*\"([^\"]*)\"/) {
+	if ( $line =~ /^\s*\#\s*@([a-z0-9-]+):\s*\"([^\"]*)\"/ ) {
 	    $hints{$1} = $2;
 	}
     }
