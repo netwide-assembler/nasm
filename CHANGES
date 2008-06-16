@@ -2,6 +2,7 @@
 -------
 * Fix buffer overflow in the listing module.
 * Fix the handling of hexadecimal escape codes in `...` strings.
+* The Postscript/PDF documentation has been reformatted.
 
 2.03
 ----
