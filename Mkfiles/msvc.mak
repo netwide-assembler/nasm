@@ -32,6 +32,8 @@ X               = .exe
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
 
+#-- Begin File Lists --#
+# Edit in Makefile.in, not here!
 NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) output/outbin.$(O) \
@@ -45,6 +47,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+#-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X)
 	rem cd rdoff && $(MAKE) all

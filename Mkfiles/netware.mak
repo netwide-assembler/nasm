@@ -1,4 +1,4 @@
-# -* makefile -*- GNU Makefile for NetWare target
+# -*- makefile -*- GNU Makefile for NetWare target
 
 PROOT=.
 OBJDIR=release
@@ -28,19 +28,22 @@ LDFLAGS+=-s
 
 O = o
 
-NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) \
-	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
-	outform.$(O) output/outbin.$(O) \
-	output/outaout.$(O) output/outcoff.$(O) \
-	output/outelf32.$(O) output/outelf64.$(O) \
-	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
-	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) tokhash.$(O) \
-	regvals.$(O) regflags.$(O)
+#-- Begin File Lists --#
+# Edit in Makefile.in, not here!
+NASM =	nasm.o nasmlib.o float.o insnsa.o insnsb.o \
+	assemble.o labels.o hashtbl.o crc64.o parser.o \
+	outform.o outbin.o \
+	outaout.o outcoff.o \
+	outelf32.o outelf64.o \
+	outobj.o outas86.o outrdf2.o \
+	outdbg.o outieee.o outmacho.o \
+	preproc.o quote.o pptok.o macros.o \
+	listing.o eval.o exprlib.o stdscan.o tokhash.o \
+	regvals.o regflags.o
 
-NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) \
-	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+NDISASM = ndisasm.o disasm.o sync.o nasmlib.o \
+	insnsd.o insnsb.o insnsn.o regs.o regdis.o
+#-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)
 NDIS_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NDISASM))) $(EOLIST)

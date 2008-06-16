@@ -44,6 +44,8 @@ X               = .exe
 	$(CC) -c $(ALL_CFLAGS) -fo=$^@ $[@
 
 # Note: wcl386 is broken if forward slashes are used as path separators.
+#-- Begin File Lists --#
+# Edit in Makefile.in, not here!
 NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) &
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) &
 	outform.$(O) output\outbin.$(O) &
@@ -57,6 +59,7 @@ NASM =	nasm.$(O) nasmlib.$(O) float.$(O) insnsa.$(O) insnsb.$(O) &
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) &
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+#-- End File Lists --#
 
 what:	.SYMBOLIC
 	@echo Please build "dos", "win32" or "os2"
