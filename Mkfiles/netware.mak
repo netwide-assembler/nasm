@@ -28,7 +28,7 @@ LDFLAGS+=-s
 
 O = o
 
-#--- Begin File Lists ---#
+#-- Begin File Lists --#
 # Edit in Makefile.in, not here!
 NASM =	nasm.o nasmlib.o raa.o saa.o \
 	float.o insnsa.o insnsb.o \
@@ -44,7 +44,7 @@ NASM =	nasm.o nasmlib.o raa.o saa.o \
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o \
 	insnsd.o insnsb.o insnsn.o regs.o regdis.o
-#--- End File Lists ---#
+#-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)
 NDIS_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NDISASM))) $(EOLIST)

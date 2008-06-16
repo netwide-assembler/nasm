@@ -51,7 +51,7 @@ foreach $file (@ARGV) {
     while (defined($line = <FILE>)) {
 	chomp $line;
 	if ($processing) {
-	    if ($line eq '#--- End File Lists ---#') {
+	    if ($line eq '#-- End File Lists --#') {
 		push(@lines, $line."\n");
 		$processing = 0;
 	    } elsif ($first) {
@@ -68,7 +68,7 @@ foreach $file (@ARGV) {
 	    }
 	} else {
 	    push(@lines, $line."\n");
-	    if ($line eq '#--- Begin File Lists ---#') {
+	    if ($line eq '#-- Begin File Lists --#') {
 		$processing = 1;
 		if (!$first) {
 		    push(@lines, "# Edit in $first_file, not here!\n");
