@@ -18,7 +18,7 @@ sub do_transform($$) {
 
     if ($ps eq '') {
 	# Remove the path separator and the preceeding directory
-	$l =~ s/\S*\x02//g;
+	$l =~ s/[^\s\=]*\x02//g;
     } else {
 	# Convert the path separator
 	$l =~ s/\x02/$ps/g;
