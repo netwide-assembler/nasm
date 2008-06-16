@@ -349,8 +349,6 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                             OUT_RAWDATA, align, NO_SEG, NO_SEG);
                     }
                     offset += e->stringlen + align;
-		    if (e->type == EOT_DB_STRING_FREE)
-			nasm_free(e->stringval);
                 }
             }
             if (t > 0 && t == instruction->times - 1) {

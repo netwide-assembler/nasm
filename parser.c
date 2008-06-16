@@ -947,9 +947,10 @@ void cleanup_insn(insn * i)
 {
     extop *e;
 
-    while (i->eops) {
-        e = i->eops;
-        i->eops = i->eops->next;
+    while ((e = i->eops)) {
+        i->eops = e->next;
+	if (e->type == EOT_DB_STRING_FREE)
+	    nasm_free(e->stringval);
         nasm_free(e);
     }
 }
