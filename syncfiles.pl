@@ -4,7 +4,6 @@
 # Use the mkdep.pl parameters to get the filename syntax
 #
 # The first file is the source file; the other ones target.
-# The initial file is assumed to be in Unix notation.
 #
 %def_hints = ('object-ending' => '.o',
 	      'path-separator' => '/',
