@@ -33,11 +33,11 @@ O = o
 NASM =	nasm.o nasmlib.o raa.o saa.o \
 	float.o insnsa.o insnsb.o \
 	assemble.o labels.o hashtbl.o crc64.o parser.o \
-	outform.o output/outbin.o \
-	output/outaout.o output/outcoff.o \
-	output/outelf32.o output/outelf64.o \
-	output/outobj.o output/outas86.o output/outrdf2.o \
-	output/outdbg.o output/outieee.o output/outmacho.o \
+	outform.o outbin.o \
+	outaout.o outcoff.o \
+	outelf32.o outelf64.o \
+	outobj.o outas86.o outrdf2.o \
+	outdbg.o outieee.o outmacho.o \
 	preproc.o quote.o pptok.o macros.o \
 	listing.o eval.o exprlib.o stdscan.o strfunc.o \
 	tokhash.o regvals.o regflags.o

@@ -11,10 +11,18 @@
 
 sub do_transform($$) {
     my($l, $h) = @_;
+    my($ps) = $$h{'path-separator'};
 
     $l =~ s/\x01/$$h{'object-ending'}/g;
-    $l =~ s/\x02/$$h{'path-separator'}/g;
     $l =~ s/\x03/$$h{'continuation'}/g;
+
+    if ($ps eq '') {
+	# Remove the path separator and the preceeding directory
+	$l =~ s/\S*\x02//g;
+    } else {
+	# Convert the path separator
+	$l =~ s/\x02/$ps/g;
+    }
 
     return $l;
 }
@@ -31,7 +39,7 @@ foreach $file (@ARGV) {
     # First, read the syntax hints
     %hints = %def_hints;
     while (defined($line = <FILE>)) {
-	if ($line =~ /^\#\s+\@(\S+)\:\s*\"([^\"]+)\"/) {
+	if ($line =~ /^\#\s+\@(\S+)\:\s*\"([^\"]*)\"/) {
 	    $hints{$1} = $2;
 	}
     }
