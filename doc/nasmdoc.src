@@ -577,14 +577,14 @@ into the output file, to be used by a debugger (or \e{will} be). Use
 of this switch does \e{not} enable output of the selected debug info format.
 Use \c{-g}, see \k{opt-g}, to enable output.
 
-A complete list of the available debug file formats for an output format
-can be seen by issuing the command \i\c{nasm -f <format> -y}. (As of 2.00,
-only "-f elf32", "-f elf64", "-f ieee", and "-f obj" provide debug information.) 
+A complete list of the available debug file formats for an output
+format can be seen by issuing the command \i\c{nasm -f <format>
+-y}. Not all output formats currently support debugging output.
 See \k{opt-y}.
 
-This should not be confused with the "-f dbg" output format option which 
+This should not be confused with the \c{-f dbg} output format option which 
 is not built into NASM by default. For information on how
-to enable it when building from the sources, see \k{dbgfmt}
+to enable it when building from the sources, see \k{dbgfmt}.
 
 
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
