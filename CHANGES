@@ -1,5 +1,5 @@
-2.03p1 (?)
-------
+2.03.01
+-------
 * Fix buffer overflow in the listing module.
 * Fix the handling of hexadecimal escape codes in `...` strings.
 
