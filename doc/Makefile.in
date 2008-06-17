@@ -22,7 +22,7 @@ TEXI2DVI        = texi2dvi
 PS2PDF          = ps2pdf		# Part of GhostScript
 
 SRCS		= nasmdoc.src
-OUT		= info html nasmdoc.ps nasmdoc.pdf
+OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
 
 # exports
 export srcdir
