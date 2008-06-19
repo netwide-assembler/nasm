@@ -2158,7 +2158,7 @@ static int do_directive(Token * tline)
         if (!t || (t->type != TOK_STRING &&
 		   t->type != TOK_INTERNAL_STRING &&
 		   t->type != TOK_ID)) {
-            error(ERR_NONFATAL, "`%%use' expects a module name");
+            error(ERR_NONFATAL, "`%%use' expects a package name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
 	}
@@ -2168,9 +2168,9 @@ static int do_directive(Token * tline)
 	p = t->text;
 	if (t->type == TOK_STRING)
 	    nasm_unquote(p, NULL);
-	stdmacpos = nasm_stdmac_find_module(p);
+	stdmacpos = nasm_stdmac_find_package(p);
 	if (!stdmacpos)
-	    error(ERR_NONFATAL, "unknown `%%use' module: %s", p);
+	    error(ERR_NONFATAL, "unknown `%%use' package: %s", p);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
