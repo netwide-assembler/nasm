@@ -66,9 +66,11 @@ PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-std=c99])
 PA_ADD_CFLAGS([-pedantic])
 
-dnl Look for "nroff" or "groff"
-AC_CHECK_PROGS(NROFF, nroff, echo)
-AC_SUBST(NROFF)
+dnl Look for programs...
+AC_CHECK_PROGS(NROFF,    nroff,    echo)
+AC_CHECK_PROGS(ACRODIST, acrodist, false)
+AC_CHECK_PROGS(PS2PDF,   ps2pdf,   false)
+AC_CHECK_PROGS(PSTOPDF,  pstopdf,  false)
 
 dnl Checks for header files.
 AC_HEADER_STDC

@@ -19,7 +19,12 @@ INSTALL_DATA	= @INSTALL_DATA@
 PERL		= perl
 MAKEINFO	= makeinfo
 TEXI2DVI        = texi2dvi
-PS2PDF          = ps2pdf		# Part of GhostScript
+TEXI2IPF	= texi2ipf
+IPFC		= ipfc
+
+ACRODIST	= @ACRODIST@		# Acrobat Distiller
+PSTOPDF		= @PSTOPDF@		# BSD/MacOS X utility
+PS2PDF          = @PS2PDF@		# Part of GhostScript
 
 SRCS		= nasmdoc.src
 OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
@@ -57,7 +62,9 @@ nasmdoc.ps: nasmdoc.dip nasmlogo.eps $(srcdir)/../version genpsdriver.pl \
 	$(PERL) $(srcdir)/genpsdriver.pl > nasmdoc.ps
 
 nasmdoc.pdf: nasmdoc.ps
-	$(PS2PDF) nasmdoc.ps
+	$(ACRODIST) -n -q --nosecurity -o $@ $< || \
+	$(PS2PDF) $< $@ || \
+	$(PSTOPDF) $< -o $@ 
 
 .PHONY: info
 info: info/nasm.info
