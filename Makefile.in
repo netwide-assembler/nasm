@@ -114,9 +114,9 @@ version.sed: version version.pl
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
-
-macros.c: macros.pl standard.mac version.mac
-	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac
+macros.c: macros.pl standard.mac version.mac $(srcdir)/macros/*.mac
+	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
+		$(srcdir)/macros/*.mac
 
 # These source files are generated from regs.dat by yet another
 # perl script.
@@ -261,7 +261,8 @@ lib/snprintf.$(O): lib/snprintf.c compiler.h config.h nasmlib.h
 lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h config.h nasmlib.h
 listing.$(O): listing.c compiler.h config.h insnsi.h listing.h nasm.h \
  nasmlib.h regs.h version.h
-macros.$(O): macros.c compiler.h config.h insnsi.h tables.h
+macros.$(O): macros.c compiler.h config.h hashtbl.h insnsi.h nasmlib.h \
+ tables.h
 nasm.$(O): nasm.c assemble.h compiler.h config.h eval.h float.h insns.h \
  insnsi.h labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h \
  preproc.h raa.h regs.h saa.h stdscan.h tokens.h version.h

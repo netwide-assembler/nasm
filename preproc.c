@@ -333,6 +333,7 @@ static StrList **dephead, **deptail; /* Dependency list */
 static uint64_t unique;    /* unique identifier numbers */
 
 static Line *predef = NULL;
+static bool do_predef;
 
 static ListGen *list;
 
@@ -640,41 +641,41 @@ static char *read_line(void)
     int bufsize, continued_count;
 
     if (stdmacpos) {
-        if (*stdmacpos) {
-            char *ret = nasm_strdup(*stdmacpos++);
-            if (!*stdmacpos && any_extrastdmac) {
-                stdmacpos = extrastdmac;
-                any_extrastdmac = false;
-                return ret;
-            }
-            /*
-             * Nasty hack: here we push the contents of `predef' on
-             * to the top-level expansion stack, since this is the
-             * most convenient way to implement the pre-include and
-             * pre-define features.
-             */
-            if (!*stdmacpos) {
-                Line *pd, *l;
-                Token *head, **tail, *t;
+	char *ret = nasm_strdup(*stdmacpos++);
+	if (!*stdmacpos) {
+	    /* This was the last of the standard macro chain... */
+	    stdmacpos = NULL;
+	    if (any_extrastdmac) {
+		stdmacpos = extrastdmac;
+		any_extrastdmac = false;
+	    } else if (do_predef) {
+		Line *pd, *l;
+		Token *head, **tail, *t;
 
-                for (pd = predef; pd; pd = pd->next) {
-                    head = NULL;
-                    tail = &head;
-                    for (t = pd->first; t; t = t->next) {
-                        *tail = new_Token(NULL, t->type, t->text, 0);
-                        tail = &(*tail)->next;
-                    }
-                    l = nasm_malloc(sizeof(Line));
-                    l->next = istk->expansion;
-                    l->first = head;
-                    l->finishes = false;
-                    istk->expansion = l;
-                }
-            }
-            return ret;
-        } else {
-            stdmacpos = NULL;
-        }
+		/*
+		 * Nasty hack: here we push the contents of
+		 * `predef' on to the top-level expansion stack,
+		 * since this is the most convenient way to
+		 * implement the pre-include and pre-define
+		 * features.
+		 */
+		for (pd = predef; pd; pd = pd->next) {
+		    head = NULL;
+		    tail = &head;
+		    for (t = pd->first; t; t = t->next) {
+			*tail = new_Token(NULL, t->type, t->text, 0);
+			tail = &(*tail)->next;
+		    }
+		    l = nasm_malloc(sizeof(Line));
+		    l->next = istk->expansion;
+		    l->first = head;
+		    l->finishes = false;
+		    istk->expansion = l;
+		}
+		do_predef = false;
+	    }
+	}
+	return ret;
     }
 
     bufsize = BUF_DELTA;
@@ -1151,7 +1152,7 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 	bq = tline->text[0];
         tokval->t_charptr = tline->text;
         tokval->t_inttwo = nasm_unquote(tline->text, &ep);
-	
+
 	if (ep[0] != bq || ep[1] != '\0')
 	    return tokval->t_type = TOKEN_ERRSTR;
 	else
@@ -1523,7 +1524,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (t->type == TOK_STRING) {
 		size_t l1 = nasm_unquote(t->text, NULL);
 		size_t l2 = nasm_unquote(tt->text, NULL);
-		
+
 		if (l1 != l2) {
 		    j = false;
 		    break;
@@ -2095,7 +2096,7 @@ static int do_directive(Token * tline)
     case PP_INCLUDE:
 	t = tline->next = expand_smacro(tline->next);
         skip_white_(t);
-	
+
         if (!t || (t->type != TOK_STRING &&
                        t->type != TOK_INTERNAL_STRING)) {
             error(ERR_NONFATAL, "`%%include' expects a file name");
@@ -2124,6 +2125,29 @@ static int do_directive(Token * tline)
 	    istk = inc;
 	    list->uplevel(LIST_INCLUDE);
 	}
+	free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+    case PP_USE:
+	t = tline->next = expand_smacro(tline->next);
+	skip_white_(t);
+
+        if (!t || (t->type != TOK_STRING &&
+		   t->type != TOK_INTERNAL_STRING &&
+		   t->type != TOK_ID)) {
+            error(ERR_NONFATAL, "`%%use' expects a module name");
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;     /* but we did _something_ */
+	}
+        if (t->next)
+            error(ERR_WARNING,
+                  "trailing garbage after `%%use' ignored");
+	p = t->text;
+	if (t->type == TOK_STRING)
+	    nasm_unquote(p, NULL);
+	stdmacpos = nasm_stdmac_find_module(p);
+	if (!stdmacpos)
+	    error(ERR_NONFATAL, "unknown `%%use' module: %s", p);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2198,7 +2222,7 @@ static int do_directive(Token * tline)
             p = detoken(tline, false);
 	    error(severity, "%s: %s",  pp_directives[i], p);
 	    nasm_free(p);
-	}	    
+	}
         free_tlist(origline);
         break;
     }
@@ -2798,7 +2822,7 @@ static int do_directive(Token * tline)
     {
 	int64_t a1, a2;
 	size_t len;
-	
+
 	casesense = true;
 
         tline = tline->next;
@@ -3952,7 +3976,8 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     } else {
         stdmacpos = nasm_stdmac_after_tasm;
     }
-    any_extrastdmac = (extrastdmac != NULL);
+    any_extrastdmac = extrastdmac && *extrastdmac;
+    do_predef = true;
     list = listgen;
     evaluate = eval;
     pass = apass;
