@@ -114,7 +114,7 @@ version.sed: version version.pl
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
-macros.c: macros.pl standard.mac version.mac $(srcdir)/macros/*.mac
+macros.c: macros.pl pptok.ph standard.mac version.mac $(srcdir)/macros/*.mac
 	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
 		$(srcdir)/macros/*.mac
 
@@ -148,12 +148,14 @@ pptok.h: pptok.dat pptok.pl perllib/phash.ph
 	$(PERL) $(srcdir)/pptok.pl h $(srcdir)/pptok.dat pptok.h
 pptok.c: pptok.dat pptok.pl perllib/phash.ph
 	$(PERL) $(srcdir)/pptok.pl c $(srcdir)/pptok.dat pptok.c
+pptok.ph: pptok.dat pptok.pl perllib/phash.ph
+	$(PERL) $(srcdir)/pptok.pl ph $(srcdir)/pptok.dat pptok.ph
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
-	  tokhash.c tokens.h pptok.h pptok.c \
+	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
 	  version.h version.mac
 perlreq: $(PERLREQ)
 

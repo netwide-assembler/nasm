@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Produce pptok.c and pptok.h from pptok.dat
+# Produce pptok.c, pptok.h and pptok.ph from pptok.dat
 #
 
 require 'phash.ph';
@@ -54,14 +54,15 @@ $first_uncond = $pptok[0];
 @pptok = (@cptok, @pptok);
 
 open(OUT, "> $out") or die "$0: cannot open: $out\n";
-print OUT "/* Automatically generated from $in by $0 */\n";
-print OUT "/* Do not edit */\n";
-print OUT "\n";
 
 #
 # Output pptok.h
 #
 if ($what eq 'h') {
+    print OUT "/* Automatically generated from $in by $0 */\n";
+    print OUT "/* Do not edit */\n";
+    print OUT "\n";
+
     print OUT "enum preproc_token {\n";
     $n = 0;
     foreach $pt (@pptok) {
@@ -108,6 +109,10 @@ if ($what eq 'h') {
 # Output pptok.c
 #
 if ($what eq 'c') {
+    print OUT "/* Automatically generated from $in by $0 */\n";
+    print OUT "/* Do not edit */\n";
+    print OUT "\n";
+
     my %tokens = ();
     my @tokendata = ();
 
@@ -157,6 +162,12 @@ if ($what eq 'c') {
     }
     print OUT  "};\n";
 
+    printf OUT "const int pp_directives_len[%d] = {\n", scalar(@pptok);
+    foreach $d (@pptok) {
+	printf OUT "    %d,\n", defined($d) ? length($d)+1 : 0;
+    }
+    print OUT  "};\n";
+
     print OUT "enum preproc_token pp_token_hash(const char *token)\n";
     print OUT "{\n";
 
@@ -202,3 +213,25 @@ if ($what eq 'c') {
     print OUT  "    return ix;\n";
     print OUT  "}\n";
 }
+
+#
+# Output pptok.ph
+#
+if ($what eq 'ph') {
+    print OUT "# Automatically generated from $in by $0\n";
+    print OUT "# Do not edit\n";
+    print OUT "\n";
+    
+    print OUT "%pptok_hash = (\n";
+    $n = 0;
+    foreach $tok (@pptok) {
+	if (defined($tok)) {
+	    printf OUT "    '%%%s' => %d,\n", $tok, $n;
+	}
+	$n++;
+    }
+    print OUT ");\n";
+    print OUT "1;\n";
+}
+
+    

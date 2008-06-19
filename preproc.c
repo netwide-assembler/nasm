@@ -641,7 +641,30 @@ static char *read_line(void)
     int bufsize, continued_count;
 
     if (stdmacpos) {
-	char *ret = nasm_strdup(*stdmacpos++);
+	unsigned char c;
+	char *ret, *q;
+	const char *smac = *stdmacpos++, *p;
+	size_t len = 0;
+	p = smac;
+	while ((c = *p++)) {
+	    if (c >= 0x80)
+		len += pp_directives_len[c-0x80]+1;
+	    else
+		len++;
+	}
+	ret = nasm_malloc(len+1);
+	p = smac; q = ret;
+	while ((c = *p++)) {
+	    if (c >= 0x80) {
+		memcpy(q, pp_directives[c-0x80], pp_directives_len[c-0x80]);
+		q += pp_directives_len[c-0x80];
+		*q++ = ' ';
+	    } else {
+		*q++ = c;
+	    }
+	}
+	*q = '\0';
+
 	if (!*stdmacpos) {
 	    /* This was the last of the standard macro chain... */
 	    stdmacpos = NULL;

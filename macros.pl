@@ -8,12 +8,16 @@
 # distributed in the NASM archive.
 
 require 'phash.ph';
+require 'pptok.ph';
 
 my $fname;
 my $line = 0;
 my $index      = 0;
 my $tasm_count = 0;
 
+#
+# Generate macros.c
+#
 open(OUT,">macros.c") or die "unable to open macros.c\n";
 
 print OUT "/*\n";
@@ -53,12 +57,30 @@ foreach $fname ( @ARGV ) {
 	    $module_number{$module} = $nmodule++;
 	    $module_index{$module}  = $index;
 	} elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
-	    $_ = $1;
-	    s/(\s)\s+/$1/g;
-	    s/\\/\\\\/g;
-	    s/"/\\"/g;
-	    if (length > 0) {
-		printf OUT "        /* %4d */ \"%s\",\n", $index++, $_;
+	    my $s1, $s2, $pd, $ws;
+	    $s1 = $1;
+	    $s1 =~ s/(\s)\s+/$1/g;
+	    $s1 =~ s/\\/\\\\/g;
+	    $s1 =~ s/"/\\"/g;
+	    $s2 = '';
+	    print $s1, ":";
+	    while ($s1 =~ /^(.*)(\%[a-zA-Z_][a-zA-Z0-9_]*)(\s*)(.*)$/) {
+		$s2 .= $1;
+		$pd = $2;
+		$ws = $3;
+		$s1 = $4;
+		print " ", $pd;
+		if (defined($pptok_hash{$pd}) &&
+		    $pptok_hash{$pd} <= 127) {
+		    $s2 .= sprintf("\\x%02x\"\"", $pptok_hash{$pd}+128);
+		} else {
+		    $s2 .= $pd.$ws;
+		}
+	    }
+	    print "\n";
+	    $s2 .= $s1;
+	    if (length($s2) > 0) {
+		printf OUT "        /* %4d */ \"%s\",\n", $index++, $s2;
 	    }
 	} else {
 	    die "$fname:$line:  error unterminated quote";

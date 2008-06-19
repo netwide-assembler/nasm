@@ -12,6 +12,7 @@
 #include "pptok.h"
 
 extern const char * const pp_directives[];
+extern const int pp_directives_len[];
 
 enum preproc_token pp_token_hash(const char *token);
 void pp_include_path(char *);
