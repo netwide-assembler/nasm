@@ -80,10 +80,10 @@ nasmdoc.dvi: nasmdoc.texi
 
 # Rules for building an OS/2 book
 nasmdoc.ipf: nasmdoc.texi
-	texi2ipf $< >$@
+	$(TEXI2IPF) $< >$@
 
 nasm.inf: nasmdoc.ipf
-	ipfc -i -s $< $@
+	$(IPFC) -i -s $< $@
 
 clean:
 	-rm -f *.rtf *.hpj *.texi *.gid *.ipf *.dip
