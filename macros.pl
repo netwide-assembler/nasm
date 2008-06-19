@@ -63,11 +63,11 @@ foreach $fname ( @ARGV ) {
 	    $s1 =~ s/\\/\\\\/g;
 	    $s1 =~ s/"/\\"/g;
 	    $s2 = '';
-	    while ($s1 =~ /^(.*)(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
-		$s2 .= $1;
-		$pd = $2;
-		$ws = $4;
-		$s1 = $5;
+	    while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
+		$s2 .= "$'";
+		$pd = $1;
+		$ws = $3;
+		$s1 = $4;
 		if (defined($pptok_hash{$pd}) &&
 		    $pptok_hash{$pd} <= 127) {
 		    $s2 .= sprintf("\\x%02x\"\"", $pptok_hash{$pd}+128);
