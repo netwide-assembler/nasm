@@ -3048,6 +3048,22 @@ This first resolves the location of the file into the macro \c{dep},
 then adds it to the dependency lists, and finally issues the
 assembler-level \c{INCBIN} directive.
 
+
+\S{use} \i\c{%use}: Include Standard Macro Package
+
+The \c{%use} directive is similar to \c{%include}, but rather than
+including the contents of a file, it includes a named standard macro
+package.  The standard macro packages are part of NASM, and are
+described in \k{macropkg}.
+
+Unlike the \c{%include} directive, package names for the \c{%use}
+directive do not require quotes, but quotes are permitted; using
+quotes will prevent unwanted macro expansion.  Thus, the following
+lines are equivalent, unless \c{altreg} is defined as a macro:
+
+\c %use altreg
+\c %use 'altreg'
+
 \H{ctxstack} The \i{Context Stack}
 
 Having labels that are local to a macro definition is sometimes not
@@ -3234,6 +3250,184 @@ The block-\c{IF} macros handle nesting quite happily, by means of
 pushing another context, describing the inner \c{if}, on top of the
 one describing the outer \c{if}; thus \c{else} and \c{endif} always
 refer to the last unmatched \c{if} or \c{else}.
+
+
+\H{stackrel} \i{Stack Relative Preprocessor Directives}
+
+The following preprocessor directives provide a way to use
+labels to refer to local variables allocated on the stack.
+
+\b\c{%arg}  (see \k{arg})
+
+\b\c{%stacksize}  (see \k{stacksize})
+
+\b\c{%local}  (see \k{local})
+
+
+\S{arg} \i\c{%arg} Directive
+
+The \c{%arg} directive is used to simplify the handling of
+parameters passed on the stack. Stack based parameter passing
+is used by many high level languages, including C, C++ and Pascal.
+
+While NASM has macros which attempt to duplicate this
+functionality (see \k{16cmacro}), the syntax is not particularly
+convenient to use. and is not TASM compatible. Here is an example
+which shows the use of \c{%arg} without any external macros:
+
+\c some_function:
+\c
+\c     %push     mycontext        ; save the current context
+\c     %stacksize large           ; tell NASM to use bp
+\c     %arg      i:word, j_ptr:word
+\c
+\c         mov     ax,[i]
+\c         mov     bx,[j_ptr]
+\c         add     ax,[bx]
+\c         ret
+\c
+\c     %pop                       ; restore original context
+
+This is similar to the procedure defined in \k{16cmacro} and adds
+the value in i to the value pointed to by j_ptr and returns the
+sum in the ax register. See \k{pushpop} for an explanation of
+\c{push} and \c{pop} and the use of context stacks.
+
+
+\S{stacksize} \i\c{%stacksize} Directive
+
+The \c{%stacksize} directive is used in conjunction with the
+\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives.
+It tells NASM the default size to use for subsequent \c{%arg} and
+\c{%local} directives. The \c{%stacksize} directive takes one
+required argument which is one of \c{flat}, \c{flat64}, \c{large} or \c{small}.
+
+\c %stacksize flat
+
+This form causes NASM to use stack-based parameter addressing
+relative to \c{ebp} and it assumes that a near form of call was used
+to get to this label (i.e. that \c{eip} is on the stack).
+
+\c %stacksize flat64
+
+This form causes NASM to use stack-based parameter addressing
+relative to \c{rbp} and it assumes that a near form of call was used
+to get to this label (i.e. that \c{rip} is on the stack).
+
+\c %stacksize large
+
+This form uses \c{bp} to do stack-based parameter addressing and
+assumes that a far form of call was used to get to this address
+(i.e. that \c{ip} and \c{cs} are on the stack).
+
+\c %stacksize small
+
+This form also uses \c{bp} to address stack parameters, but it is
+different from \c{large} because it also assumes that the old value
+of bp is pushed onto the stack (i.e. it expects an \c{ENTER}
+instruction). In other words, it expects that \c{bp}, \c{ip} and
+\c{cs} are on the top of the stack, underneath any local space which
+may have been allocated by \c{ENTER}. This form is probably most
+useful when used in combination with the \c{%local} directive
+(see \k{local}).
+
+
+\S{local} \i\c{%local} Directive
+
+The \c{%local} directive is used to simplify the use of local
+temporary stack variables allocated in a stack frame. Automatic
+local variables in C are an example of this kind of variable. The
+\c{%local} directive is most useful when used with the \c{%stacksize}
+(see \k{stacksize} and is also compatible with the \c{%arg} directive
+(see \k{arg}). It allows simplified reference to variables on the
+stack which have been allocated typically by using the \c{ENTER}
+instruction.
+\# (see \k{insENTER} for a description of that instruction).
+An example of its use is the following:
+
+\c silly_swap:
+\c
+\c     %push mycontext             ; save the current context
+\c     %stacksize small            ; tell NASM to use bp
+\c     %assign %$localsize 0       ; see text for explanation
+\c     %local old_ax:word, old_dx:word
+\c
+\c         enter   %$localsize,0   ; see text for explanation
+\c         mov     [old_ax],ax     ; swap ax & bx
+\c         mov     [old_dx],dx     ; and swap dx & cx
+\c         mov     ax,bx
+\c         mov     dx,cx
+\c         mov     bx,[old_ax]
+\c         mov     cx,[old_dx]
+\c         leave                   ; restore old bp
+\c         ret                     ;
+\c
+\c     %pop                        ; restore original context
+
+The \c{%$localsize} variable is used internally by the
+\c{%local} directive and \e{must} be defined within the
+current context before the \c{%local} directive may be used.
+Failure to do so will result in one expression syntax error for
+each \c{%local} variable declared. It then may be used in
+the construction of an appropriately sized ENTER instruction
+as shown in the example.
+
+\H{otherpreproc} \i{Other Preprocessor Directives}
+
+NASM also has preprocessor directives which allow access to
+information from external sources. Currently they include:
+
+The following preprocessor directive is supported to allow NASM to
+correctly handle output of the cpp C language preprocessor.
+
+\b\c{%line} enables NAsM to correctly handle the output of the cpp
+C language preprocessor (see \k{line}).
+
+\b\c{%!} enables NASM to read in the value of an environment variable,
+which can then be used in your program (see \k{getenv}).
+
+\S{line} \i\c{%line} Directive
+
+The \c{%line} directive is used to notify NASM that the input line
+corresponds to a specific line number in another file.  Typically
+this other file would be an original source file, with the current
+NASM input being the output of a pre-processor.  The \c{%line}
+directive allows NASM to output messages which indicate the line
+number of the original source file, instead of the file that is being
+read by NASM.
+
+This preprocessor directive is not generally of use to programmers,
+by may be of interest to preprocessor authors.  The usage of the
+\c{%line} preprocessor directive is as follows:
+
+\c %line nnn[+mmm] [filename]
+
+In this directive, \c{nnn} identifies the line of the original source
+file which this line corresponds to.  \c{mmm} is an optional parameter
+which specifies a line increment value; each line of the input file
+read in is considered to correspond to \c{mmm} lines of the original
+source file.  Finally, \c{filename} is an optional parameter which
+specifies the file name of the original source file.
+
+After reading a \c{%line} preprocessor directive, NASM will report
+all file name and line numbers relative to the values specified
+therein.
+
+
+\S{getenv} \i\c{%!}\c{<env>}: Read an environment variable.
+
+The \c{%!<env>} directive makes it possible to read the value of an
+environment variable at assembly time. This could, for example, be used
+to store the contents of an environment variable into a string, which
+could be used at some other point in your code.
+
+For example, suppose that you have an environment variable \c{FOO}, and
+you want the contents of \c{FOO} to be embedded in your program. You
+could do that as follows:
+
+\c %defstr FOO    %!FOO
+
+See \k{defstr} for notes on the \c{%defstr} directive.
 
 
 \H{stdmac} \i{Standard Macros}
@@ -3554,182 +3748,35 @@ check that the section's alignment characteristics are sensible for
 the use of \c{ALIGN} or \c{ALIGNB}.
 
 
-\H{stackrel} \i{Stack Relative Preprocessor Directives}
+\C{macropkg} \i{Standard Macro Packages}
 
-The following preprocessor directives provide a way to use
-labels to refer to local variables allocated on the stack.
+The \i\c{%use} directive (see \k{use}) includes one of the standard
+macro packages included with the NASM distribution and compiled into
+the NASM binary.  It operates like the \c{%include} directive (see
+\k{include}), but the included contents is provided by NASM itself.
 
-\b\c{%arg}  (see \k{arg})
-
-\b\c{%stacksize}  (see \k{stacksize})
-
-\b\c{%local}  (see \k{local})
+The names of standard macro packages are case insensitive, and can be
+quoted or not.
 
 
-\S{arg} \i\c{%arg} Directive
+\H{pkg_altreg} \i\c{altreg}: \i{Alternate Register Names}
 
-The \c{%arg} directive is used to simplify the handling of
-parameters passed on the stack. Stack based parameter passing
-is used by many high level languages, including C, C++ and Pascal.
+The \c{altreg} standard macro package provides alternate register
+names.  It provides numeric register names for all registers (not just
+\c{R8}-\c{R15}), the Intel-defined aliases \c{R8L}-\c{R15L} for the
+low bytes of register (as opposed to the NASM/AMD standard names
+\c{R8B}-\c{R15B}), and the names \c{R0H}-\c{R3H} (by analogy with
+\c{R0L}-\c{R3L}) for \c{AH}, \c{CH}, \c{DH}, and \c{BH}.
 
-While NASM has macros which attempt to duplicate this
-functionality (see \k{16cmacro}), the syntax is not particularly
-convenient to use. and is not TASM compatible. Here is an example
-which shows the use of \c{%arg} without any external macros:
+Example use:
 
-\c some_function:
+\c %use altreg
 \c
-\c     %push     mycontext        ; save the current context
-\c     %stacksize large           ; tell NASM to use bp
-\c     %arg      i:word, j_ptr:word
-\c
-\c         mov     ax,[i]
-\c         mov     bx,[j_ptr]
-\c         add     ax,[bx]
-\c         ret
-\c
-\c     %pop                       ; restore original context
+\c proc:
+\c       mov r0l,r3h                    ; mov al,bh
+\c       ret
 
-This is similar to the procedure defined in \k{16cmacro} and adds
-the value in i to the value pointed to by j_ptr and returns the
-sum in the ax register. See \k{pushpop} for an explanation of
-\c{push} and \c{pop} and the use of context stacks.
-
-
-\S{stacksize} \i\c{%stacksize} Directive
-
-The \c{%stacksize} directive is used in conjunction with the
-\c{%arg} (see \k{arg}) and the \c{%local} (see \k{local}) directives.
-It tells NASM the default size to use for subsequent \c{%arg} and
-\c{%local} directives. The \c{%stacksize} directive takes one
-required argument which is one of \c{flat}, \c{flat64}, \c{large} or \c{small}.
-
-\c %stacksize flat
-
-This form causes NASM to use stack-based parameter addressing
-relative to \c{ebp} and it assumes that a near form of call was used
-to get to this label (i.e. that \c{eip} is on the stack).
-
-\c %stacksize flat64
-
-This form causes NASM to use stack-based parameter addressing
-relative to \c{rbp} and it assumes that a near form of call was used
-to get to this label (i.e. that \c{rip} is on the stack).
-
-\c %stacksize large
-
-This form uses \c{bp} to do stack-based parameter addressing and
-assumes that a far form of call was used to get to this address
-(i.e. that \c{ip} and \c{cs} are on the stack).
-
-\c %stacksize small
-
-This form also uses \c{bp} to address stack parameters, but it is
-different from \c{large} because it also assumes that the old value
-of bp is pushed onto the stack (i.e. it expects an \c{ENTER}
-instruction). In other words, it expects that \c{bp}, \c{ip} and
-\c{cs} are on the top of the stack, underneath any local space which
-may have been allocated by \c{ENTER}. This form is probably most
-useful when used in combination with the \c{%local} directive
-(see \k{local}).
-
-
-\S{local} \i\c{%local} Directive
-
-The \c{%local} directive is used to simplify the use of local
-temporary stack variables allocated in a stack frame. Automatic
-local variables in C are an example of this kind of variable. The
-\c{%local} directive is most useful when used with the \c{%stacksize}
-(see \k{stacksize} and is also compatible with the \c{%arg} directive
-(see \k{arg}). It allows simplified reference to variables on the
-stack which have been allocated typically by using the \c{ENTER}
-instruction.
-\# (see \k{insENTER} for a description of that instruction).
-An example of its use is the following:
-
-\c silly_swap:
-\c
-\c     %push mycontext             ; save the current context
-\c     %stacksize small            ; tell NASM to use bp
-\c     %assign %$localsize 0       ; see text for explanation
-\c     %local old_ax:word, old_dx:word
-\c
-\c         enter   %$localsize,0   ; see text for explanation
-\c         mov     [old_ax],ax     ; swap ax & bx
-\c         mov     [old_dx],dx     ; and swap dx & cx
-\c         mov     ax,bx
-\c         mov     dx,cx
-\c         mov     bx,[old_ax]
-\c         mov     cx,[old_dx]
-\c         leave                   ; restore old bp
-\c         ret                     ;
-\c
-\c     %pop                        ; restore original context
-
-The \c{%$localsize} variable is used internally by the
-\c{%local} directive and \e{must} be defined within the
-current context before the \c{%local} directive may be used.
-Failure to do so will result in one expression syntax error for
-each \c{%local} variable declared. It then may be used in
-the construction of an appropriately sized ENTER instruction
-as shown in the example.
-
-\H{otherpreproc} \i{Other Preprocessor Directives}
-
-NASM also has preprocessor directives which allow access to
-information from external sources. Currently they include:
-
-The following preprocessor directive is supported to allow NASM to
-correctly handle output of the cpp C language preprocessor.
-
-\b\c{%line} enables NAsM to correctly handle the output of the cpp
-C language preprocessor (see \k{line}).
-
-\b\c{%!} enables NASM to read in the value of an environment variable,
-which can then be used in your program (see \k{getenv}).
-
-\S{line} \i\c{%line} Directive
-
-The \c{%line} directive is used to notify NASM that the input line
-corresponds to a specific line number in another file.  Typically
-this other file would be an original source file, with the current
-NASM input being the output of a pre-processor.  The \c{%line}
-directive allows NASM to output messages which indicate the line
-number of the original source file, instead of the file that is being
-read by NASM.
-
-This preprocessor directive is not generally of use to programmers,
-by may be of interest to preprocessor authors.  The usage of the
-\c{%line} preprocessor directive is as follows:
-
-\c %line nnn[+mmm] [filename]
-
-In this directive, \c{nnn} identifies the line of the original source
-file which this line corresponds to.  \c{mmm} is an optional parameter
-which specifies a line increment value; each line of the input file
-read in is considered to correspond to \c{mmm} lines of the original
-source file.  Finally, \c{filename} is an optional parameter which
-specifies the file name of the original source file.
-
-After reading a \c{%line} preprocessor directive, NASM will report
-all file name and line numbers relative to the values specified
-therein.
-
-
-\S{getenv} \i\c{%!}\c{<env>}: Read an environment variable.
-
-The \c{%!<env>} directive makes it possible to read the value of an
-environment variable at assembly time. This could, for example, be used
-to store the contents of an environment variable into a string, which
-could be used at some other point in your code.
-
-For example, suppose that you have an environment variable \c{FOO}, and
-you want the contents of \c{FOO} to be embedded in your program. You
-could do that as follows:
-
-\c %defstr FOO    %!FOO
-
-See \k{defstr} for notes on the \c{%defstr} directive.
+See also \k{reg64}.
 
 
 \C{directive} \i{Assembler Directives}
@@ -6980,7 +7027,7 @@ loading a value into a 32-bit register (but not an 8- or 16-bit
 register), the upper 32 bits of the corresponding 64-bit register are
 set to zero.
 
-\H{reg64} Register names in 64-bit mode
+\H{reg64} Register Names in 64-bit Mode
 
 NASM uses the following names for general-purpose registers in 64-bit
 mode, for 8-, 16-, 32- and 64-bit references, respecitively:
@@ -6995,10 +7042,10 @@ assemblers.  The Intel documentation, however, uses the names
 \c{R8L-R15L} for 8-bit references to the higher registers.  It is
 possible to use those names by definiting them as macros; similarly,
 if one wants to use numeric names for the low 8 registers, define them
-as macros.  See the file \i\c{altreg.inc} in the \c{misc} directory of
-the NASM source distribution.
+as macros.  The standard macro package \c{altreg} (see \k{pkg_altreg})
+can be used for this purpose.
 
-\H{id64} Immediates and displacements in 64-bit mode
+\H{id64} Immediates and Displacements in 64-bit Mode
 
 In 64-bit mode, immediates and displacements are generally only 32
 bits wide.  NASM will therefore truncate most displacements and
