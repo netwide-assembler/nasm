@@ -4151,7 +4151,7 @@ static char *pp_getline(void)
                 if (i->next) {
                     src_set_linnum(i->lineno);
                     nasm_free(src_set_fname(i->fname));
-                }
+		}
                 istk = i->next;
                 list->downlevel(LIST_INCLUDE);
                 nasm_free(i);
@@ -4247,10 +4247,18 @@ static void pp_cleanup(int pass)
     }
     while (cstk)
         ctx_pop();
+    nasm_free(src_set_fname(NULL));
     if (pass == 0) {
+	IncPath *i;
         free_llist(predef);
         delete_Blocks();
-    }
+	while ((i = ipath)) {
+	    ipath = i->next;
+	    if (i->path)
+		nasm_free(i->path);
+	    nasm_free(i);
+	}
+    }   
 }
 
 void pp_include_path(char *path)
