@@ -2152,6 +2152,11 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
 
     case PP_USE:
+    {
+	static const char * const *use_pkg;
+	const char *s;
+	char *pkg_macro;
+
 	t = tline->next = expand_smacro(tline->next);
 	skip_white_(t);
 
@@ -2165,15 +2170,25 @@ static int do_directive(Token * tline)
         if (t->next)
             error(ERR_WARNING,
                   "trailing garbage after `%%use' ignored");
-	p = t->text;
 	if (t->type == TOK_STRING)
-	    nasm_unquote(p, NULL);
-	stdmacpos = nasm_stdmac_find_package(p);
-	if (!stdmacpos)
-	    error(ERR_NONFATAL, "unknown `%%use' package: %s", p);
+	    nasm_unquote(t->text, NULL);
+	use_pkg = nasm_stdmac_find_package(t->text);
+	if (!use_pkg)
+	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
+	p = pkg_macro = nasm_malloc(strlen(t->text) + 9);
+	strcpy(p, "__USE_"); p += 6;
+	for (s = t->text; *s; s++)
+	    *p++ = toupper(*s);
+	strcpy(p, "__");
+	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
+	    /* Not already included, go ahead and include it */
+	    define_smacro(NULL, pkg_macro, true, 0, NULL);
+	    stdmacpos = use_pkg;
+	}
+	nasm_free(pkg_macro);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
-
+    }
     case PP_PUSH:
         tline = tline->next;
         skip_white_(tline);

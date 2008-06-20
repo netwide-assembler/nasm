@@ -3064,6 +3064,10 @@ lines are equivalent, unless \c{altreg} is defined as a macro:
 \c %use altreg
 \c %use 'altreg'
 
+Standard macro packages are protected from multiple inclusion.  When a
+standard macro package is used, a testable single-line macro of the
+form \c{__USE_}\e{package}\c{__} is also defined, see \k{use_def}.
+
 \H{ctxstack} The \i{Context Stack}
 
 Having labels that are local to a macro definition is sometimes not
@@ -3586,6 +3590,19 @@ clock:
 \c __UTC_DATE_NUM__     20091231
 \c __UTC_TIME_NUM__     210042
 \c __POSIX_TIME__       1262293242
+
+
+\S{use_def} \I\c{__USE_*__}\c{__USE_}\e{package}\c{__}: Package
+Include Test
+
+When a standard macro package is included with the \c{%use} directive
+(see \k{use}), a single-line macro of the form
+\c{__USE_}\e{package}\c{__} is automatically defined.  This allows
+testing if a particular package is invoked or not.
+
+For example, if the \c{altreg} package is included (see
+\k{pkg_altreg}), then the macro \c{__USE_ALTREG__} is defined.
+
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
