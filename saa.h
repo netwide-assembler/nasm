@@ -18,29 +18,29 @@ struct SAA {
      * members `end' and `elem_len' are only valid in first link in
      * list; `rptr' and `rpos' are used for reading
      */
-    size_t elem_len;		/* Size of each element */
-    size_t blk_len;		/* Size of each allocation block */
-    size_t nblks;		/* Total number of allocated blocks */
-    size_t nblkptrs;		/* Total number of allocation block pointers */
-    size_t length;		/* Total allocated length of the array */
-    size_t datalen;		/* Total data length of the array */
-    char **wblk;		/* Write block pointer */
-    size_t wpos;		/* Write position inside block */
-    size_t wptr;		/* Absolute write position */
-    char **rblk;		/* Read block pointer */
-    size_t rpos;		/* Read position inside block */
-    size_t rptr;		/* Absolute read position */
-    char **blk_ptrs;		/* Pointer to pointer blocks */
+    size_t elem_len;            /* Size of each element */
+    size_t blk_len;             /* Size of each allocation block */
+    size_t nblks;               /* Total number of allocated blocks */
+    size_t nblkptrs;            /* Total number of allocation block pointers */
+    size_t length;              /* Total allocated length of the array */
+    size_t datalen;             /* Total data length of the array */
+    char **wblk;                /* Write block pointer */
+    size_t wpos;                /* Write position inside block */
+    size_t wptr;                /* Absolute write position */
+    char **rblk;                /* Read block pointer */
+    size_t rpos;                /* Read position inside block */
+    size_t rptr;                /* Absolute read position */
+    char **blk_ptrs;            /* Pointer to pointer blocks */
 };
 
-struct SAA *saa_init(size_t elem_len);    /* 1 == byte */
+struct SAA *saa_init(size_t elem_len);  /* 1 == byte */
 void saa_free(struct SAA *);
 void *saa_wstruct(struct SAA *);        /* return a structure of elem_len */
-void saa_wbytes(struct SAA *, const void *, size_t);      /* write arbitrary bytes */
+void saa_wbytes(struct SAA *, const void *, size_t);    /* write arbitrary bytes */
 void saa_rewind(struct SAA *);  /* for reading from beginning */
 void *saa_rstruct(struct SAA *);        /* return NULL on EOA */
 const void *saa_rbytes(struct SAA *, size_t *); /* return 0 on EOA */
-void saa_rnbytes(struct SAA *, void *, size_t);   /* read a given no. of bytes */
+void saa_rnbytes(struct SAA *, void *, size_t); /* read a given no. of bytes */
 /* random access */
 void saa_fread(struct SAA *, size_t, void *, size_t);
 void saa_fwrite(struct SAA *, size_t, const void *, size_t);
@@ -53,7 +53,7 @@ void saa_write8(struct SAA *s, uint8_t v);
 void saa_write16(struct SAA *s, uint16_t v);
 void saa_write32(struct SAA *s, uint32_t v);
 void saa_write64(struct SAA *s, uint64_t v);
-void saa_wleb128u(struct SAA *, int); /* write unsigned LEB128 value */
-void saa_wleb128s(struct SAA *, int); /* write signed LEB128 value */
+void saa_wleb128u(struct SAA *, int);   /* write unsigned LEB128 value */
+void saa_wleb128s(struct SAA *, int);   /* write signed LEB128 value */
 
-#endif /* NASM_SAA_H */
+#endif                          /* NASM_SAA_H */

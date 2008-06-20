@@ -14,9 +14,9 @@ struct SAA *saa_init(size_t elem_len)
     s = nasm_zalloc(sizeof(struct SAA));
 
     if (elem_len >= SAA_BLKLEN)
-	s->blk_len = elem_len;
+        s->blk_len = elem_len;
     else
-	s->blk_len = SAA_BLKLEN - (SAA_BLKLEN % elem_len);
+        s->blk_len = SAA_BLKLEN - (SAA_BLKLEN % elem_len);
 
     s->elem_len = elem_len;
     s->length = s->blk_len;
@@ -35,7 +35,7 @@ void saa_free(struct SAA *s)
     size_t n;
 
     for (p = s->blk_ptrs, n = s->nblks; n; p++, n--)
-	nasm_free(*p);
+        nasm_free(*p);
 
     nasm_free(s->blk_ptrs);
     nasm_free(s);
@@ -47,14 +47,15 @@ static void saa_extend(struct SAA *s)
     size_t blkn = s->nblks++;
 
     if (blkn >= s->nblkptrs) {
-	size_t rindex = s->rblk - s->blk_ptrs;
-	size_t windex = s->wblk - s->blk_ptrs;
+        size_t rindex = s->rblk - s->blk_ptrs;
+        size_t windex = s->wblk - s->blk_ptrs;
 
-	s->nblkptrs <<= 1;
-	s->blk_ptrs = nasm_realloc(s->blk_ptrs, s->nblkptrs*sizeof(char *));
+        s->nblkptrs <<= 1;
+        s->blk_ptrs =
+            nasm_realloc(s->blk_ptrs, s->nblkptrs * sizeof(char *));
 
-	s->rblk = s->blk_ptrs + rindex;
-	s->wblk = s->blk_ptrs + windex;
+        s->rblk = s->blk_ptrs + rindex;
+        s->wblk = s->blk_ptrs + windex;
     }
 
     s->blk_ptrs[blkn] = nasm_malloc(s->blk_len);
@@ -66,18 +67,18 @@ void *saa_wstruct(struct SAA *s)
     void *p;
 
     if (s->wpos % s->elem_len)
-	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
-			      "misaligned wpos in saa_wstruct");
+        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
+                          "misaligned wpos in saa_wstruct");
 
     if (s->wpos + s->elem_len > s->blk_len) {
-	if (s->wpos != s->blk_len)
-	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
-			      "unfilled block in saa_wstruct");
+        if (s->wpos != s->blk_len)
+            nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
+                              "unfilled block in saa_wstruct");
 
-	if (s->wptr + s->elem_len > s->length)
-	    saa_extend(s);
-	s->wblk++;
-	s->wpos = 0;
+        if (s->wptr + s->elem_len > s->length)
+            saa_extend(s);
+        s->wblk++;
+        s->wpos = 0;
     }
 
     p = *s->wblk + s->wpos;
@@ -85,7 +86,7 @@ void *saa_wstruct(struct SAA *s)
     s->wptr += s->elem_len;
 
     if (s->wptr > s->datalen)
-	s->datalen = s->wptr;
+        s->datalen = s->wptr;
 
     return p;
 }
@@ -105,18 +106,18 @@ void saa_wbytes(struct SAA *s, const void *data, size_t len)
             } else
                 memset(*s->wblk + s->wpos, 0, l);
             s->wpos += l;
-	    s->wptr += l;
+            s->wptr += l;
             len -= l;
 
-	    if (s->datalen < s->wptr)
-		s->datalen = s->wptr;
+            if (s->datalen < s->wptr)
+                s->datalen = s->wptr;
         }
         if (len) {
-	    if (s->wptr >= s->length)
-		saa_extend(s);
-	    s->wblk++;
-	    s->wpos = 0;
-	}
+            if (s->wptr >= s->length)
+                saa_extend(s);
+            s->wblk++;
+            s->wpos = 0;
+        }
     }
 }
 
@@ -131,15 +132,15 @@ void *saa_rstruct(struct SAA *s)
     void *p;
 
     if (s->rptr + s->elem_len > s->datalen)
-	return NULL;
+        return NULL;
 
     if (s->rpos % s->elem_len)
-	    nasm_malloc_error(ERR_PANIC|ERR_NOFILE,
-			      "misaligned rpos in saa_rstruct");
+        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
+                          "misaligned rpos in saa_rstruct");
 
     if (s->rpos + s->elem_len > s->blk_len) {
-	s->rblk++;
-	s->rpos = 0;
+        s->rblk++;
+        s->rpos = 0;
     }
 
     p = *s->rblk + s->rpos;
@@ -149,26 +150,26 @@ void *saa_rstruct(struct SAA *s)
     return p;
 }
 
-const void *saa_rbytes(struct SAA *s, size_t *lenp)
+const void *saa_rbytes(struct SAA *s, size_t * lenp)
 {
     const void *p;
     size_t len;
 
     if (s->rptr >= s->datalen) {
-	*lenp = 0;
-	return NULL;
+        *lenp = 0;
+        return NULL;
     }
 
     if (s->rpos >= s->blk_len) {
-	s->rblk++;
-	s->rpos = 0;
+        s->rblk++;
+        s->rpos = 0;
     }
 
     len = *lenp;
     if (len > s->datalen - s->rptr)
-	len = s->datalen - s->rptr;
+        len = s->datalen - s->rptr;
     if (len > s->blk_len - s->rpos)
-	len = s->blk_len - s->rpos;
+        len = s->blk_len - s->rpos;
 
     *lenp = len;
     p = *s->rblk + s->rpos;
@@ -184,20 +185,21 @@ void saa_rnbytes(struct SAA *s, void *data, size_t len)
     char *d = data;
 
     if (s->rptr + len > s->datalen) {
-	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_rnbytes");
-	return;
+        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
+                          "overrun in saa_rnbytes");
+        return;
     }
 
     while (len) {
         size_t l;
-	const void *p;
+        const void *p;
 
-	l = len;
-	p = saa_rbytes(s, &l);
+        l = len;
+        p = saa_rbytes(s, &l);
 
-	memcpy(d, p, l);
-	d   += l;
-	len -= l;
+        memcpy(d, p, l);
+        d += l;
+        len -= l;
     }
 }
 
@@ -206,17 +208,17 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 {
     size_t ix;
 
-    if (posn+len > s->datalen) {
-	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fread");
-	return;
+    if (posn + len > s->datalen) {
+        nasm_malloc_error(ERR_PANIC | ERR_NOFILE, "overrun in saa_fread");
+        return;
     }
 
     if (likely(s->blk_len == SAA_BLKLEN)) {
-	ix = posn >> SAA_BLKSHIFT;
-	s->rpos = posn & (SAA_BLKLEN-1);
+        ix = posn >> SAA_BLKSHIFT;
+        s->rpos = posn & (SAA_BLKLEN - 1);
     } else {
-	ix = posn / s->blk_len;
-	s->rpos = posn % s->blk_len;
+        ix = posn / s->blk_len;
+        s->rpos = posn % s->blk_len;
     }
     s->rptr = posn;
     s->rblk = &s->blk_ptrs[ix];
@@ -230,24 +232,24 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
     size_t ix;
 
     if (posn > s->datalen) {
-	/* Seek beyond the end of the existing array not supported */
-	nasm_malloc_error(ERR_PANIC|ERR_NOFILE, "overrun in saa_fwrite");
-	return;
+        /* Seek beyond the end of the existing array not supported */
+        nasm_malloc_error(ERR_PANIC | ERR_NOFILE, "overrun in saa_fwrite");
+        return;
     }
-    
+
     if (likely(s->blk_len == SAA_BLKLEN)) {
-	ix = posn >> SAA_BLKSHIFT;
-	s->wpos = posn & (SAA_BLKLEN-1);
+        ix = posn >> SAA_BLKSHIFT;
+        s->wpos = posn & (SAA_BLKLEN - 1);
     } else {
-	ix = posn / s->blk_len;
-	s->wpos = posn % s->blk_len;
+        ix = posn / s->blk_len;
+        s->wpos = posn % s->blk_len;
     }
     s->wptr = posn;
     s->wblk = &s->blk_ptrs[ix];
 
     if (!s->wpos) {
-	s->wpos = s->blk_len;
-	s->wblk--;
+        s->wpos = s->blk_len;
+        s->wblk--;
     }
 
     saa_wbytes(s, data, len);
@@ -285,7 +287,7 @@ void saa_write64(struct SAA *s, uint64_t v)
     saa_wbytes(s, &v, 8);
 }
 
-#else /* not WORDS_LITTLEENDIAN */
+#else                           /* not WORDS_LITTLEENDIAN */
 
 void saa_write16(struct SAA *s, uint16_t v)
 {
@@ -322,59 +324,57 @@ void saa_write64(struct SAA *s, uint64_t v)
     saa_wbytes(s, b, 8);
 }
 
-#endif	/* WORDS_LITTLEENDIAN */
+#endif                          /* WORDS_LITTLEENDIAN */
 
 /* write unsigned LEB128 value to SAA */
 void saa_wleb128u(struct SAA *psaa, int value)
 {
-  char temp[64], *ptemp;
-  uint8_t byte;
-  int len;
+    char temp[64], *ptemp;
+    uint8_t byte;
+    int len;
 
-  ptemp = temp;
-  len = 0;
-  do
-  {
-     byte = value & 127;
-     value >>= 7;
-     if (value != 0) /* more bytes to come */
-        byte |= 0x80;
-     *ptemp = byte;
-     ptemp++;
-     len++;
-  } while (value != 0);
-  saa_wbytes(psaa, temp, len);
+    ptemp = temp;
+    len = 0;
+    do {
+        byte = value & 127;
+        value >>= 7;
+        if (value != 0)         /* more bytes to come */
+            byte |= 0x80;
+        *ptemp = byte;
+        ptemp++;
+        len++;
+    } while (value != 0);
+    saa_wbytes(psaa, temp, len);
 }
 
 /* write signed LEB128 value to SAA */
 void saa_wleb128s(struct SAA *psaa, int value)
 {
-  char temp[64], *ptemp;
-  uint8_t byte;
-  bool more, negative;
-  int size, len;
+    char temp[64], *ptemp;
+    uint8_t byte;
+    bool more, negative;
+    int size, len;
 
-  ptemp = temp;
-  more = 1;
-  negative = (value < 0);
-  size = sizeof(int) * 8;
-  len = 0;
-  while(more)
-  {
-    byte = value & 0x7f;
-    value >>= 7;
-    if (negative)
-     /* sign extend */
-     value |= - (1 <<(size - 7));
-    /* sign bit of byte is second high order bit (0x40) */
-    if ((value == 0 && ! (byte & 0x40)) ||
-       ((value == -1) && (byte & 0x40)))
-       more = 0;
-    else
-      byte |= 0x80;
-    *ptemp = byte;
-    ptemp++;
-    len++;
-  }
-  saa_wbytes(psaa, temp, len);
+    ptemp = temp;
+    more = 1;
+    negative = (value < 0);
+    size = sizeof(int) * 8;
+    len = 0;
+    while (more) {
+        byte = value & 0x7f;
+        value >>= 7;
+        if (negative)
+            /* sign extend */
+            value |= -(1 << (size - 7));
+        /* sign bit of byte is second high order bit (0x40) */
+        if ((value == 0 && !(byte & 0x40)) ||
+            ((value == -1) && (byte & 0x40)))
+            more = 0;
+        else
+            byte |= 0x80;
+        *ptemp = byte;
+        ptemp++;
+        len++;
+    }
+    saa_wbytes(psaa, temp, len);
 }
