@@ -389,7 +389,7 @@ static Blocks blocks = { NULL, NULL };
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
-static Context *get_ctx(char *name, bool all_contexts);
+static Context *get_ctx(const char *name, bool all_contexts);
 static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
@@ -1246,7 +1246,7 @@ static int mmemcmp(const char *p, const char *q, size_t l, bool casesense)
  * only the context that directly results from the number of $'s
  * in variable's name.
  */
-static Context *get_ctx(char *name, bool all_contexts)
+static Context *get_ctx(const char *name, bool all_contexts)
 {
     Context *ctx;
     SMacro *m;
@@ -1379,7 +1379,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
  * is true, macro will be searched in outer contexts as well.
  */
 static bool
-smacro_defined(Context * ctx, char *name, int nparam, SMacro ** defn,
+smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
                bool nocase)
 {
     struct hash_table *smtbl;
@@ -2154,8 +2154,7 @@ static int do_directive(Token * tline)
     case PP_USE:
     {
 	static const char * const *use_pkg;
-	const char *s;
-	char *pkg_macro;
+	const char *pkg_macro;
 
 	t = tline->next = expand_smacro(tline->next);
 	skip_white_(t);
@@ -2175,17 +2174,12 @@ static int do_directive(Token * tline)
 	use_pkg = nasm_stdmac_find_package(t->text);
 	if (!use_pkg)
 	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
-	p = pkg_macro = nasm_malloc(strlen(t->text) + 9);
-	strcpy(p, "__USE_"); p += 6;
-	for (s = t->text; *s; s++)
-	    *p++ = toupper(*s);
-	strcpy(p, "__");
+	/* The first string will be <%define>__USE_*__ */
+	pkg_macro = *use_pkg + 1;
 	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
 	    /* Not already included, go ahead and include it */
-	    define_smacro(NULL, pkg_macro, true, 0, NULL);
 	    stdmacpos = use_pkg;
 	}
-	nasm_free(pkg_macro);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
     }

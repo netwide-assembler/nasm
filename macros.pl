@@ -56,6 +56,8 @@ foreach $fname ( @ARGV ) {
 	    push(@pkg_list, $pkg);
 	    $pkg_number{$pkg} = $npkg++;
 	    $pkg_index{$pkg}  = $index;
+	    printf OUT "        /* %4d */ \"\\x%02x\"\"%s\",\n",
+	    	$index++, $pptok_hash{'%define'}+128, "__USE_\U$pkg\E__";
 	} elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
 	    my $s1, $s2, $pd, $ws;
 	    $s1 = $1;
