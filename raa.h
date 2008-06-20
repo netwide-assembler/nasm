@@ -9,9 +9,9 @@
  * chunk.
  */
 
-#define RAA_BLKSHIFT	15	/* 2**this many longs allocated at once */
+#define RAA_BLKSHIFT	15      /* 2**this many longs allocated at once */
 #define RAA_BLKSIZE	(1 << RAA_BLKSHIFT)
-#define RAA_LAYERSHIFT	15	/* 2**this many _pointers_ allocated */
+#define RAA_LAYERSHIFT	15      /* 2**this many _pointers_ allocated */
 #define RAA_LAYERSIZE	(1 << RAA_LAYERSHIFT)
 
 typedef struct RAA RAA;
@@ -53,4 +53,4 @@ void raa_free(struct RAA *);
 int64_t raa_read(struct RAA *, int32_t);
 struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value);
 
-#endif /* NASM_RAA_H */
+#endif                          /* NASM_RAA_H */

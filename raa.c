@@ -19,7 +19,8 @@ static struct RAA *real_raa_init(int layers)
         r->layers = layers;
         for (i = 0; i < RAA_LAYERSIZE; i++)
             r->u.b.data[i] = NULL;
-        r->shift = (RAA_BLKSHIFT-RAA_LAYERSHIFT) + layers*RAA_LAYERSHIFT;
+        r->shift =
+            (RAA_BLKSHIFT - RAA_LAYERSHIFT) + layers * RAA_LAYERSHIFT;
     }
     return r;
 }
@@ -42,11 +43,11 @@ void raa_free(struct RAA *r)
 
 int64_t raa_read(struct RAA *r, int32_t posn)
 {
-    if ((uint32_t)posn >= (UINT32_C(1) << (r->shift + LAYERSHIFT(r))))
+    if ((uint32_t) posn >= (UINT32_C(1) << (r->shift + LAYERSHIFT(r))))
         return 0;               /* Return 0 for undefined entries */
     while (r->layers > 0) {
-	int32_t l = posn >> r->shift;
-	posn &= (UINT32_C(1) << r->shift)-1;
+        int32_t l = posn >> r->shift;
+        posn &= (UINT32_C(1) << r->shift) - 1;
         r = r->u.b.data[l];
         if (!r)
             return 0;           /* Return 0 for undefined entries */
@@ -61,7 +62,7 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
     if (posn < 0)
         nasm_malloc_error(ERR_PANIC, "negative position in raa_write");
 
-    while ((UINT32_C(1) << (r->shift+LAYERSHIFT(r))) <= (uint32_t)posn) {
+    while ((UINT32_C(1) << (r->shift + LAYERSHIFT(r))) <= (uint32_t) posn) {
         /*
          * Must add a layer.
          */
@@ -81,8 +82,8 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
 
     while (r->layers > 0) {
         struct RAA **s;
-	int32_t l = posn >> r->shift;
-	posn &= (UINT32_C(1) << r->shift)-1;
+        int32_t l = posn >> r->shift;
+        posn &= (UINT32_C(1) << r->shift) - 1;
         s = &r->u.b.data[l];
         if (!*s)
             *s = real_raa_init(r->layers - 1);
