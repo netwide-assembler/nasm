@@ -369,7 +369,7 @@ static const char * const *stdmacpos;
  * any.
  */
 static const char * const *extrastdmac = NULL;
-bool any_extrastdmac;
+static bool any_extrastdmac;
 
 /*
  * Tokens are allocated in blocks to improve speed
@@ -4345,7 +4345,7 @@ void pp_runtime(char *definition)
 
 }
 
-void pp_extra_stdmac(const char **macros)
+void pp_extra_stdmac(const macros_t *macros)
 {
     extrastdmac = macros;
 }

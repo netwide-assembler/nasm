@@ -1480,16 +1480,8 @@ static void elf_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *elf_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%macro __NASM_CDecl__ 1",
-    "%define $_%1 $%1",
-    "%endmacro",
-    "%macro osabi 1+.nolist",
-    "[osabi %1]",
-    "%endmacro",
-    NULL
-};
+extern macros_t elf_stdmac[];
+
 static int elf_set_info(enum geninfo type, char **val)
 {
     (void)type;

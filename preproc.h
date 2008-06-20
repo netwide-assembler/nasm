@@ -14,12 +14,15 @@
 extern const char * const pp_directives[];
 extern const int pp_directives_len[];
 
+/* Pointer to a macro chain */
+typedef const char * const macros_t;
+
 enum preproc_token pp_token_hash(const char *token);
 void pp_include_path(char *);
 void pp_pre_include(char *);
 void pp_pre_define(char *);
 void pp_pre_undefine(char *);
 void pp_runtime(char *);
-void pp_extra_stdmac(const char **);
+void pp_extra_stdmac(const macros_t *);
 
 #endif

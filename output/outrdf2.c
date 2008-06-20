@@ -746,18 +746,7 @@ static void rdf2_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".rdf", error);
 }
 
-static const char *rdf2_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%imacro library 1+.nolist",
-    "[library %1]",
-    "%endmacro",
-    "%imacro module 1+.nolist",
-    "[module %1]",
-    "%endmacro",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t rdf2_stdmac[];
 
 static int rdf2_set_info(enum geninfo type, char **val)
 {

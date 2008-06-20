@@ -114,9 +114,10 @@ version.sed: version version.pl
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
-macros.c: macros.pl pptok.ph standard.mac version.mac $(srcdir)/macros/*.mac
+macros.c: macros.pl pptok.ph standard.mac version.mac \
+	$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
-		$(srcdir)/macros/*.mac
+		$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 
 # These source files are generated from regs.dat by yet another
 # perl script.

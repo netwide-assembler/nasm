@@ -1,0 +1,10 @@
+OUT: rdf2
+%define __SECT__ [section .text]
+%imacro library 1+.nolist
+[library %1]
+%endmacro
+%imacro module 1+.nolist
+[module %1]
+%endmacro
+%macro __NASM_CDecl__ 1
+%endmacro

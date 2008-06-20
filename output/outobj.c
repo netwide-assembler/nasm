@@ -2292,24 +2292,7 @@ static void obj_fwrite(ObjRecord * orp)
     fputc((-cksum) & 0xFF, ofp);
 }
 
-static const char *obj_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%imacro group 1+.nolist",
-    "[group %1]",
-    "%endmacro",
-    "%imacro uppercase 0+.nolist",
-    "[uppercase %1]",
-    "%endmacro",
-    "%imacro export 1+.nolist",
-    "[export %1]",
-    "%endmacro",
-    "%imacro import 1+.nolist",
-    "[import %1]",
-    "%endmacro",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t obj_stdmac[];
 
 void dbgbi_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {

@@ -717,12 +717,7 @@ static void macho_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *macho_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t macho_stdmac[];
 
 /* Comparison function for qsort symbol layout.  */
 static int layout_compare (const struct symbol **s1,

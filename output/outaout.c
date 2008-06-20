@@ -905,12 +905,7 @@ static void aout_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *aout_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t aout_stdmac[];
 
 static int aout_set_info(enum geninfo type, char **val)
 {

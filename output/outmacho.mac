@@ -1,0 +1,4 @@
+OUT: macho win32 win64
+%define __SECT__ [section .text]
+%macro __NASM_CDecl__ 1
+%endmacro

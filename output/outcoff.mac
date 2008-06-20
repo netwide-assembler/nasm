@@ -1,0 +1,10 @@
+OUT: coff
+%define __SECT__ [section .text]
+%macro __NASM_CDecl__ 1
+%endmacro
+%imacro export 1+.nolist
+[export %1]
+%endmacro
+%imacro safeseh 1.nolist
+[safeseh %1]
+%endmacro

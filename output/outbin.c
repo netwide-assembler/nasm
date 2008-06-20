@@ -139,15 +139,7 @@ static int origin_defined;
 static int map_control = 0;
 static char *infile, *outfile;
 
-static const char *bin_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%imacro org 1+.nolist",
-    "[org %1]",
-    "%endmacro",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t bin_stdmac[];
 
 static void add_reloc(struct Section *s, int32_t bytes, int32_t secref,
                       int32_t secrel)

@@ -963,18 +963,7 @@ static void coff_win32_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".obj", error);
 }
 
-static const char *coff_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    "%imacro export 1+.nolist",
-    "[export %1]",
-    "%endmacro",
-    "%imacro safeseh 1.nolist",
-    "[safeseh %1]",
-    "%endmacro",
-    NULL
-};
+extern macros_t coff_stdmac[];
 
 static int coff_set_info(enum geninfo type, char **val)
 {

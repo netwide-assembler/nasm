@@ -1,0 +1,8 @@
+OUT: elf elf32 elf64
+%define __SECT__ [section .text]
+%macro __NASM_CDecl__ 1
+%define $_%1 $%1
+%endmacro
+%macro osabi 1+.nolist
+[osabi %1]
+%endmacro

@@ -603,12 +603,7 @@ static void as86_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-static const char *as86_stdmac[] = {
-    "%define __SECT__ [section .text]",
-    "%macro __NASM_CDecl__ 1",
-    "%endmacro",
-    NULL
-};
+extern macros_t as86_stdmac[];
 
 static int as86_set_info(enum geninfo type, char **val)
 {

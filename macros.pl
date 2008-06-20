@@ -34,25 +34,41 @@ print OUT "const char * const nasm_stdmac[] = {";
 my $npkg = 0;
 my @pkg_list   = ();
 my %pkg_number = ();
-my %pkg_index  = ();
 my $pkg;
+my @out_list   = ();
+my $outfmt;
+my $lastname;
 
 foreach $fname ( @ARGV ) {
     open(INPUT,$fname) or die "unable to open $fname\n";
-    print OUT "\n    /* From $fname */\n";
     while (<INPUT>) {
 	$line++;
 	chomp;
 	if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
 	    $tasm_count = $index;
 	    print OUT "    /* End of TASM macros */\n";
+	} elsif (m/^OUT:\s*(.*\S)\s*$/) {
+	    undef $pkg;
+	    my @out_alias = split(/\s+/, $1);
+	    printf OUT "        /* %4d */ NULL\n", $index++;
+	    print OUT "};\n";
+	    $index = 0;
+	    printf OUT "const char * const %s_stdmac[] = {\n", $out_alias[0];
+	    print  OUT "    /* From $fname */\n";
+	    $lastname = $fname;
+	    push(@out_list, $out_alias[0]);
+	    $out_index{$out_alias[0]} = $index;
 	} elsif (m/^USE:\s*(\S+)\s*$/) {
 	    $pkg = $1;
 	    if (defined($pkg_number{$pkg})) {
 		die "$0: $fname: duplicate package: $pkg\n";
 	    }
 	    printf OUT "        /* %4d */ NULL,\n", $index++;
-	    print OUT "    /* %use $pkg */\n";
+	    print OUT "};\n";
+	    $index = 0;
+	    printf OUT "static const char * const nasm_stdmac_%s[] = {\n", $pkg;
+	    print  OUT "    /* From $fname */\n";
+	    $lastname = $fname;
 	    push(@pkg_list, $pkg);
 	    $pkg_number{$pkg} = $npkg++;
 	    $pkg_index{$pkg}  = $index;
@@ -79,6 +95,10 @@ foreach $fname ( @ARGV ) {
 	    }
 	    $s2 .= $s1;
 	    if (length($s2) > 0) {
+		if ($lastname ne $fname) {
+		    print OUT "\n    /* From $fname */\n";
+		    $lastname = $fname;
+		}	
 		printf OUT "        /* %4d */ \"%s\",\n", $index++, $s2;
 	    }
 	} else {
@@ -107,8 +127,8 @@ print OUT "         const char *package;\n";
 print OUT "         const char * const *macros;\n";
 print OUT "    } packages[$npkg] = {\n";
 foreach $pkg (@pkg_list) {
-    printf OUT "        { \"%s\", nasm_stdmac+%d },\n",
-	$pkg, $pkg_index{$pkg};
+    printf OUT "        { \"%s\", nasm_stdmac_%s },\n",
+	$pkg, $pkg;
 }
 print OUT "    };\n";
 

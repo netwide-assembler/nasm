@@ -17,6 +17,7 @@
 #include <inttypes.h>
 #include "version.h"            /* generated NASM version macros */
 #include "nasmlib.h"
+#include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
 
 #define NO_SEG -1L              /* null segment value */
@@ -750,7 +751,7 @@ struct ofmt {
      * and user-level equivalents for any format-specific
      * directives).
      */
-    const char **stdmac;
+    const macros_t *stdmac;
 
     /*
      * This procedure is called at the start of an output session.
