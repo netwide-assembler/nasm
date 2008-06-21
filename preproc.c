@@ -882,7 +882,7 @@ static Token *tokenize(char *line)
 		    while (*r == '_')
 			r++;
 
-		    if (nasm_isdigit(*r) || (is_hex && isxdigit(*r)) ||
+		    if (nasm_isdigit(*r) || (is_hex && nasm_isxdigit(*r)) ||
 			(!is_hex && (*r == 'e' || *r == 'E')) ||
 			(*r == 'p' || *r == 'P')) {
 			p = r;

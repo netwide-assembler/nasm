@@ -354,10 +354,10 @@ extern Preproc nasmpp;
  * start.
  */
 
-#define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
+#define isidstart(c) ( nasm_isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
                                   || (c)=='@' )
-#define isidchar(c)  ( isidstart(c) || nasm_isdigit(c) || (c)=='$' || (c)=='#' \
-                                                  || (c)=='~' )
+#define isidchar(c)  ( isidstart(c) || nasm_isdigit(c) || \
+		       (c)=='$' || (c)=='#' || (c)=='~' )
 
 /* Ditto for numeric constants. */
 

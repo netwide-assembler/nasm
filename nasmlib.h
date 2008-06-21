@@ -29,9 +29,11 @@ extern unsigned char nasm_tolower_tab[256];
 
 /* Wrappers around <ctype.h> functions */
 /* These are only valid for values that cannot include EOF */
-#define nasm_isspace(x) isspace((unsigned char)(x))
-#define nasm_isalnum(x) isalnum((unsigned char)(x))
-#define nasm_isdigit(x) isdigit((unsigned char)(x))
+#define nasm_isspace(x)  isspace((unsigned char)(x))
+#define nasm_isalpha(x)  isalpha((unsigned char)(x))
+#define nasm_isdigit(x)  isdigit((unsigned char)(x))
+#define nasm_isalnum(x)  isalnum((unsigned char)(x))
+#define nasm_isxdigit(x) isxdigit((unsigned char)(x))
 
 /*
  * If this is defined, the wrappers around malloc et al will
