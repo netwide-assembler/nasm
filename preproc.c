@@ -362,13 +362,13 @@ static MMacro *defining;
  * The standard macro set: defined in macros.c in the array nasm_stdmac.
  * This gives our position in the macro set, when we're processing it.
  */
-static const char * const *stdmacpos;
+static const macros_t *stdmacpos;
 
 /*
  * The extra standard macros that come from the object format, if
  * any.
  */
-static const char * const *extrastdmac = NULL;
+static const macros_t *extrastdmac = NULL;
 static bool any_extrastdmac;
 
 /*
@@ -642,10 +642,9 @@ static char *read_line(void)
 
     if (stdmacpos) {
 	unsigned char c;
+	const char *p = stdmacpos;
 	char *ret, *q;
-	const char *smac = *stdmacpos++, *p;
 	size_t len = 0;
-	p = smac;
 	while ((c = *p++)) {
 	    if (c >= 0x80)
 		len += pp_directives_len[c-0x80]+1;
@@ -653,8 +652,8 @@ static char *read_line(void)
 		len++;
 	}
 	ret = nasm_malloc(len+1);
-	p = smac; q = ret;
-	while ((c = *p++)) {
+	q = ret;
+	while ((c = *stdmacpos++)) {
 	    if (c >= 0x80) {
 		memcpy(q, pp_directives[c-0x80], pp_directives_len[c-0x80]);
 		q += pp_directives_len[c-0x80];
@@ -663,6 +662,7 @@ static char *read_line(void)
 		*q++ = c;
 	    }
 	}
+	stdmacpos = p;
 	*q = '\0';
 
 	if (!*stdmacpos) {
@@ -2153,7 +2153,7 @@ static int do_directive(Token * tline)
 
     case PP_USE:
     {
-	static const char * const *use_pkg;
+	static const char *use_pkg;
 	const char *pkg_macro;
 
 	t = tline->next = expand_smacro(tline->next);
@@ -2175,7 +2175,7 @@ static int do_directive(Token * tline)
 	if (!use_pkg)
 	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
 	/* The first string will be <%define>__USE_*__ */
-	pkg_macro = *use_pkg + 1;
+	pkg_macro = use_pkg + 1;
 	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
 	    /* Not already included, go ahead and include it */
 	    stdmacpos = use_pkg;
