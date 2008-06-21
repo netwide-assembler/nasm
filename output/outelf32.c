@@ -420,21 +420,21 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     }
 
     p = name;
-    while (*p && !isspace(*p))
+    while (*p && !nasm_isspace(*p))
         p++;
     if (*p)
         *p++ = '\0';
     flags_and = flags_or = type = align = 0;
 
-    while (*p && isspace(*p))
+    while (*p && nasm_isspace(*p))
         p++;
     while (*p) {
         char *q = p;
-        while (*p && !isspace(*p))
+        while (*p && !nasm_isspace(*p))
             p++;
         if (*p)
             *p++ = '\0';
-        while (*p && isspace(*p))
+        while (*p && nasm_isspace(*p))
             p++;
 
         if (!nasm_strnicmp(q, "align=", 6)) {
@@ -550,9 +550,9 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 expr *e;
                 char *p = special;
 
-                while (*p && !isspace(*p))
+                while (*p && !nasm_isspace(*p))
                     p++;
-                while (*p && isspace(*p))
+                while (*p && nasm_isspace(*p))
                     p++;
                 stdscan_reset();
                 stdscan_bufptr = p;
@@ -669,7 +669,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                           n, special);
                 special += n;
 
-                while (isspace(*special))
+                while (nasm_isspace(*special))
                     ++special;
                 if (*special) {
                     n = strcspn(special, " \t");
@@ -692,7 +692,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                     int fwd = 0;
                     char *saveme = stdscan_bufptr;      /* bugfix? fbk 8/10/00 */
 
-                    while (special[n] && isspace(special[n]))
+                    while (special[n] && nasm_isspace(special[n]))
                         n++;
                     /*
                      * We have a size expression; attempt to

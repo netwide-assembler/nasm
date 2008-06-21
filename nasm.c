@@ -482,7 +482,7 @@ static char *get_param(char *p, char *q, bool *advance)
     *advance = false;
     if (p[2]) {                 /* the parameter's in the option */
         p += 2;
-        while (isspace(*p))
+        while (nasm_isspace(*p))
             p++;
         return p;
     }
@@ -1001,11 +1001,11 @@ static void process_respfile(FILE * rfile)
          */
         *(p = &buffer[strcspn(buffer, "\r\n\032")]) = '\0';
 
-        while (p > buffer && isspace(p[-1]))
+        while (p > buffer && nasm_isspace(p[-1]))
             *--p = '\0';
 
         p = buffer;
-        while (isspace(*p))
+        while (nasm_isspace(*p))
             p++;
 
         if (process_arg(prevarg, p))
@@ -1310,7 +1310,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         validid = true;
                         if (!isidstart(*p))
                             validid = false;
-                        while (*p && !isspace(*p)) {
+                        while (*p && !nasm_isspace(*p)) {
                             if (!isidchar(*p))
                                 validid = false;
                             p++;
@@ -1323,7 +1323,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         if (*p) {
                             int64_t size;
 
-                            while (*p && isspace(*p))
+                            while (*p && nasm_isspace(*p))
                                 *p++ = '\0';
                             q = p;
                             while (*q && *q != ':')
@@ -1348,7 +1348,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     } else if (pass0 == 2) {    /* pass == 2 */
                         q = value;
                         while (*q && *q != ':') {
-                            if (isspace(*q))
+                            if (nasm_isspace(*q))
                                 *q = '\0';
                             q++;
                         }
@@ -1388,7 +1388,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     validid = true;
                     if (!isidstart(*p))
                         validid = false;
-                    while (*p && !isspace(*p)) {
+                    while (*p && !nasm_isspace(*p)) {
                         if (!isidchar(*p))
                             validid = false;
                         *q++ = *p++;
@@ -1399,14 +1399,14 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                      "identifier expected after DEBUG");
                         break;
                     }
-                    while (*p && isspace(*p))
+                    while (*p && nasm_isspace(*p))
                         p++;
                     if (pass0 == 2)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
                 case D_WARNING:		/* [WARNING {+|-}warn-name] */
                     if (pass1 == 1) {
-                        while (*value && isspace(*value))
+                        while (*value && nasm_isspace(*value))
                             value++;
 
                         if (*value == '+' || *value == '-') {
@@ -1429,7 +1429,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     cpu = get_cpu(value);
                     break;
                 case D_LIST:		/* [LIST {+|-}] */
-                    while (*value && isspace(*value))
+                    while (*value && nasm_isspace(*value))
                         value++;
 
                     if (*value == '+') {
@@ -1783,7 +1783,7 @@ static enum directives getkw(char **directive, char **value)
     q = p++;
 
     while (*p && *p != ';') {
-        if (!isspace(*p))
+        if (!nasm_isspace(*p))
             return 0;
         p++;
     }
@@ -1797,7 +1797,7 @@ static enum directives getkw(char **directive, char **value)
         *value = buf;
     } else {
         *buf++ = '\0';
-        while (isspace(*buf))
+        while (nasm_isspace(*buf))
             buf++;              /* beppu - skip leading whitespace */
         *value = buf;
         while (*buf != ']')

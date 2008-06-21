@@ -274,7 +274,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
         return def_seg;
 
     p = name;
-    while (*p && !isspace(*p))
+    while (*p && !nasm_isspace(*p))
         p++;
     if (*p)
         *p++ = '\0';
@@ -285,15 +285,15 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
     }
     flags = 0;
 
-    while (*p && isspace(*p))
+    while (*p && nasm_isspace(*p))
         p++;
     while (*p) {
         char *q = p;
-        while (*p && !isspace(*p))
+        while (*p && !nasm_isspace(*p))
             p++;
         if (*p)
             *p++ = '\0';
-        while (*p && isspace(*p))
+        while (*p && nasm_isspace(*p))
             p++;
 
         if (!nasm_stricmp(q, "code") || !nasm_stricmp(q, "text")) {
@@ -696,11 +696,11 @@ static int coff_directives(char *directive, char *value, int pass)
         if (pass == 2)
             return 1;           /* ignore in pass two */
         name = q = value;
-        while (*q && !isspace(*q))
+        while (*q && !nasm_isspace(*q))
             q++;
-        if (isspace(*q)) {
+        if (nasm_isspace(*q)) {
             *q++ = '\0';
-            while (*q && isspace(*q))
+            while (*q && nasm_isspace(*q))
                 q++;
         }
 

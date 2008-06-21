@@ -1288,19 +1288,19 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         while (*name == '.')
             name++;             /* hack, but a documented one */
         p = name;
-        while (*p && !isspace(*p))
+        while (*p && !nasm_isspace(*p))
             p++;
         if (*p) {
             *p++ = '\0';
-            while (*p && isspace(*p))
+            while (*p && nasm_isspace(*p))
                 *p++ = '\0';
         }
         while (*p) {
-            while (*p && !isspace(*p))
+            while (*p && !nasm_isspace(*p))
                 p++;
             if (*p) {
                 *p++ = '\0';
-                while (*p && isspace(*p))
+                while (*p && nasm_isspace(*p))
                     *p++ = '\0';
             }
 
@@ -1522,11 +1522,11 @@ static int obj_directive(char *directive, char *value, int pass)
             while (*q == '.')
                 q++;            /* hack, but a documented one */
             v = q;
-            while (*q && !isspace(*q))
+            while (*q && !nasm_isspace(*q))
                 q++;
-            if (isspace(*q)) {
+            if (nasm_isspace(*q)) {
                 *q++ = '\0';
-                while (*q && isspace(*q))
+                while (*q && nasm_isspace(*q))
                     q++;
             }
             /*
@@ -1565,11 +1565,11 @@ static int obj_directive(char *directive, char *value, int pass)
 
             while (*q) {
                 p = q;
-                while (*q && !isspace(*q))
+                while (*q && !nasm_isspace(*q))
                     q++;
-                if (isspace(*q)) {
+                if (nasm_isspace(*q)) {
                     *q++ = '\0';
-                    while (*q && isspace(*q))
+                    while (*q && nasm_isspace(*q))
                         q++;
                 }
                 /*
@@ -1630,20 +1630,20 @@ static int obj_directive(char *directive, char *value, int pass)
         if (pass == 2)
             return 1;           /* ignore in pass two */
         extname = q = value;
-        while (*q && !isspace(*q))
+        while (*q && !nasm_isspace(*q))
             q++;
-        if (isspace(*q)) {
+        if (nasm_isspace(*q)) {
             *q++ = '\0';
-            while (*q && isspace(*q))
+            while (*q && nasm_isspace(*q))
                 q++;
         }
 
         libname = q;
-        while (*q && !isspace(*q))
+        while (*q && !nasm_isspace(*q))
             q++;
-        if (isspace(*q)) {
+        if (nasm_isspace(*q)) {
             *q++ = '\0';
-            while (*q && isspace(*q))
+            while (*q && nasm_isspace(*q))
                 q++;
         }
 
@@ -1679,20 +1679,20 @@ static int obj_directive(char *directive, char *value, int pass)
         if (pass == 2)
             return 1;           /* ignore in pass two */
         intname = q = value;
-        while (*q && !isspace(*q))
+        while (*q && !nasm_isspace(*q))
             q++;
-        if (isspace(*q)) {
+        if (nasm_isspace(*q)) {
             *q++ = '\0';
-            while (*q && isspace(*q))
+            while (*q && nasm_isspace(*q))
                 q++;
         }
 
         extname = q;
-        while (*q && !isspace(*q))
+        while (*q && !nasm_isspace(*q))
             q++;
-        if (isspace(*q)) {
+        if (nasm_isspace(*q)) {
             *q++ = '\0';
-            while (*q && isspace(*q))
+            while (*q && nasm_isspace(*q))
                 q++;
         }
 
@@ -1706,11 +1706,11 @@ static int obj_directive(char *directive, char *value, int pass)
         }
         while (*q) {
             v = q;
-            while (*q && !isspace(*q))
+            while (*q && !nasm_isspace(*q))
                 q++;
-            if (isspace(*q)) {
+            if (nasm_isspace(*q)) {
                 *q++ = '\0';
-                while (*q && isspace(*q))
+                while (*q && nasm_isspace(*q))
                     q++;
             }
             if (!nasm_stricmp(v, "resident"))

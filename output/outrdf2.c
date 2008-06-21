@@ -155,11 +155,11 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
 
     /* look for segment type code following segment name */
     p = name;
-    while (*p && !isspace(*p))
+    while (*p && !nasm_isspace(*p))
         p++;
     if (*p) {                   /* we're now in whitespace */
         *p++ = '\0';
-        while (*p && isspace(80))
+        while (*p && nasm_isspace(80))
             *p++ = '\0';
     }
     if (*p) {                   /* we're now in an attribute value */
@@ -418,7 +418,7 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
         }
 
         if (*special) {
-            while (isspace(*special))
+            while (nasm_isspace(*special))
                 special++;
             if (!nasm_stricmp(special, "far")) {
                 farsym = 1;

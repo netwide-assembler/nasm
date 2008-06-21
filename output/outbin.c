@@ -881,7 +881,7 @@ static int bin_read_attribute(char **line, int *attribute,
     char *exp;
 
     /* Skip whitespace. */
-    while (**line && isspace(**line))
+    while (**line && nasm_isspace(**line))
         (*line)++;
     if (!**line)
         return 0;
@@ -909,12 +909,12 @@ static int bin_read_attribute(char **line, int *attribute,
             *line += 9;
             return 1;
         } else if (!nasm_strnicmp(*line, "nobits", 6) &&
-                   (isspace((*line)[6]) || ((*line)[6] == '\0'))) {
+                   (nasm_isspace((*line)[6]) || ((*line)[6] == '\0'))) {
             *attribute = ATTRIB_NOBITS;
             *line += 6;
             return 1;
         } else if (!nasm_strnicmp(*line, "progbits", 8) &&
-                   (isspace((*line)[8]) || ((*line)[8] == '\0'))) {
+                   (nasm_isspace((*line)[8]) || ((*line)[8] == '\0'))) {
             *attribute = ATTRIB_PROGBITS;
             *line += 8;
             return 1;
@@ -927,7 +927,7 @@ static int bin_read_attribute(char **line, int *attribute,
     if ((*line)[attrib_name_size] != '(') {
         /* Single term (no parenthesis). */
         exp = *line += attrib_name_size;
-        while (**line && !isspace(**line))
+        while (**line && !nasm_isspace(**line))
             (*line)++;
         if (**line) {
             **line = '\0';
@@ -1017,7 +1017,7 @@ static void bin_assign_attributes(struct Section *sec, char *astring)
                 break;          /* End of line. */
             else {
                 p = astring;
-                while (*astring && !isspace(*astring))
+                while (*astring && !nasm_isspace(*astring))
                     astring++;
                 if (*astring) {
                     *astring = '\0';
@@ -1245,7 +1245,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
     /* Attempt to find the requested section.  If it does not
      * exist, create it. */
     p = name;
-    while (*p && !isspace(*p))
+    while (*p && !nasm_isspace(*p))
         p++;
     if (*p)
         *p++ = '\0';

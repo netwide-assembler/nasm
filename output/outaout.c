@@ -279,9 +279,9 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 expr *e;
                 char *p = special;
 
-                while (*p && !isspace(*p))
+                while (*p && !nasm_isspace(*p))
                     p++;
-                while (*p && isspace(*p))
+                while (*p && nasm_isspace(*p))
                     p++;
                 stdscan_reset();
                 stdscan_bufptr = p;
@@ -370,7 +370,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                     error(ERR_NONFATAL, "Linux a.out does not support"
                           " symbol size information");
                 } else {
-                    while (special[n] && isspace(special[n]))
+                    while (special[n] && nasm_isspace(special[n]))
                         n++;
                     /*
                      * We have a size expression; attempt to

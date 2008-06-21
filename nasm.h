@@ -356,13 +356,13 @@ extern Preproc nasmpp;
 
 #define isidstart(c) ( isalpha(c) || (c)=='_' || (c)=='.' || (c)=='?' \
                                   || (c)=='@' )
-#define isidchar(c)  ( isidstart(c) || isdigit(c) || (c)=='$' || (c)=='#' \
+#define isidchar(c)  ( isidstart(c) || nasm_isdigit(c) || (c)=='$' || (c)=='#' \
                                                   || (c)=='~' )
 
 /* Ditto for numeric constants. */
 
-#define isnumstart(c)  ( isdigit(c) || (c)=='$' )
-#define isnumchar(c)   ( isalnum(c) || (c)=='_' )
+#define isnumstart(c)  ( nasm_isdigit(c) || (c)=='$' )
+#define isnumchar(c)   ( nasm_isalnum(c) || (c)=='_' )
 
 /* This returns the numeric value of a given 'digit'. */
 

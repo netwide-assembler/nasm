@@ -68,7 +68,7 @@ int stdscan(void *private_data, struct tokenval *tv)
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
-    while (isspace(*stdscan_bufptr))
+    while (nasm_isspace(*stdscan_bufptr))
         stdscan_bufptr++;
     if (!*stdscan_bufptr)
         return tv->t_type = 0;

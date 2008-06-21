@@ -417,14 +417,14 @@ static char *check_tasm_directive(char *line)
     char *p = line, *oldline, oldchar;
 
     /* Skip whitespace */
-    while (isspace(*p) && *p != 0)
+    while (nasm_isspace(*p) && *p != 0)
         p++;
 
     /* Binary search for the directive name */
     i = -1;
     j = elements(tasm_directives);
     len = 0;
-    while (!isspace(p[len]) && p[len] != 0)
+    while (!nasm_isspace(p[len]) && p[len] != 0)
         len++;
     if (len) {
         oldchar = p[len];
@@ -778,13 +778,13 @@ static Token *tokenize(char *line)
         p = line;
         if (*p == '%') {
             p++;
-            if (isdigit(*p) ||
-                ((*p == '-' || *p == '+') && isdigit(p[1])) ||
-                ((*p == '+') && (isspace(p[1]) || !p[1]))) {
+            if (nasm_isdigit(*p) ||
+                ((*p == '-' || *p == '+') && nasm_isdigit(p[1])) ||
+                ((*p == '+') && (nasm_isspace(p[1]) || !p[1]))) {
                 do {
                     p++;
                 }
-                while (isdigit(*p));
+                while (nasm_isdigit(*p));
                 type = TOK_PREPROC_ID;
             } else if (*p == '{') {
                 p++;
@@ -882,7 +882,7 @@ static Token *tokenize(char *line)
 		    while (*r == '_')
 			r++;
 
-		    if (isdigit(*r) || (is_hex && isxdigit(*r)) ||
+		    if (nasm_isdigit(*r) || (is_hex && isxdigit(*r)) ||
 			(!is_hex && (*r == 'e' || *r == 'E')) ||
 			(*r == 'p' || *r == 'P')) {
 			p = r;
@@ -900,10 +900,10 @@ static Token *tokenize(char *line)
 	    }
 
 	    type = is_float ? TOK_FLOAT : TOK_NUMBER;
-        } else if (isspace(*p)) {
+        } else if (nasm_isspace(*p)) {
             type = TOK_WHITESPACE;
             p++;
-            while (*p && isspace(*p))
+            while (*p && nasm_isspace(*p))
                 p++;
             /*
              * Whitespace just before end-of-line is discarded by

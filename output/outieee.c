@@ -678,19 +678,19 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         while (*name == '.')
             name++;             /* hack, but a documented one */
         p = name;
-        while (*p && !isspace(*p))
+        while (*p && !nasm_isspace(*p))
             p++;
         if (*p) {
             *p++ = '\0';
-            while (*p && isspace(*p))
+            while (*p && nasm_isspace(*p))
                 *p++ = '\0';
         }
         while (*p) {
-            while (*p && !isspace(*p))
+            while (*p && !nasm_isspace(*p))
                 p++;
             if (*p) {
                 *p++ = '\0';
-                while (*p && isspace(*p))
+                while (*p && nasm_isspace(*p))
                     *p++ = '\0';
             }
 
