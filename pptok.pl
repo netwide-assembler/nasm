@@ -162,7 +162,7 @@ if ($what eq 'c') {
     }
     print OUT  "};\n";
 
-    printf OUT "const int pp_directives_len[%d] = {\n", scalar(@pptok);
+    printf OUT "const uint8_t pp_directives_len[%d] = {\n", scalar(@pptok);
     foreach $d (@pptok) {
 	printf OUT "    %d,\n", defined($d) ? length($d)+1 : 0;
     }

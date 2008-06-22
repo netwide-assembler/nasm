@@ -12,7 +12,7 @@
 #include "pptok.h"
 
 extern const char * const pp_directives[];
-extern const int pp_directives_len[];
+extern const uint8_t pp_directives_len[];
 
 /* Pointer to a macro chain */
 typedef const char macros_t;
