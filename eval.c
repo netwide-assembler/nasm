@@ -669,6 +669,7 @@ static expr *eval_strfunc(enum strfunc type)
     int64_t val;
     bool parens, rn_warn;
 
+    parens = false;
     i = scan(scpriv, tokval);
     if (i == '(') {
 	parens = true;
