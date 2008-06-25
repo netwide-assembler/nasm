@@ -642,7 +642,7 @@ static char *read_line(void)
 
     if (stdmacpos) {
 	unsigned char c;
-	const char *p = stdmacpos;
+	const unsigned char *p = stdmacpos;
 	char *ret, *q;
 	size_t len = 0;
 	while ((c = *p++)) {
@@ -2153,7 +2153,7 @@ static int do_directive(Token * tline)
 
     case PP_USE:
     {
-	static const char *use_pkg;
+	static const macros_t *use_pkg;
 	const char *pkg_macro;
 
 	t = tline->next = expand_smacro(tline->next);
@@ -2175,7 +2175,7 @@ static int do_directive(Token * tline)
 	if (!use_pkg)
 	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
 	/* The first string will be <%define>__USE_*__ */
-	pkg_macro = use_pkg + 1;
+	pkg_macro = (char *)use_pkg + 1;
 	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
 	    /* Not already included, go ahead and include it */
 	    stdmacpos = use_pkg;

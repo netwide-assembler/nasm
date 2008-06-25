@@ -26,7 +26,7 @@ sub charcify(@) {
     foreach $o (unpack("C*", join('',@_))) {
 	$c = pack("C", $o);
 	if ($o < 32 || $o > 126 || $c eq '"' || $c eq "\\") {
-	    $l .= sprintf("(char)%3d,", $o);
+	    $l .= sprintf("%3d,", $o);
 	} else {
 	    $l .= "\'".$c."\',";
 	}
@@ -48,7 +48,7 @@ print OUT "#include \"tables.h\"\n";
 print OUT "#include \"nasmlib.h\"\n";
 print OUT "#include \"hashtbl.h\"\n";
 print OUT "\n";
-print OUT "const char nasm_stdmac[] = {";
+print OUT "const unsigned char nasm_stdmac[] = {";
 
 my $npkg = 0;
 my @pkg_list   = ();
@@ -73,7 +73,7 @@ foreach $fname ( @ARGV ) {
 	    printf OUT "        /* %4d */ 0\n", $index++;
 	    print OUT "};\n";
 	    $index = 0;
-	    printf OUT "const char %s_stdmac[] = {\n", $out_alias[0];
+	    printf OUT "const unsigned char %s_stdmac[] = {\n", $out_alias[0];
 	    print  OUT "    /* From $fname */\n";
 	    $lastname = $fname;
 	    push(@out_list, $out_alias[0]);
@@ -86,7 +86,7 @@ foreach $fname ( @ARGV ) {
 	    printf OUT "        /* %4d */ 0\n", $index++;
 	    print OUT "};\n";
 	    $index = 0;
-	    printf OUT "static const char nasm_stdmac_%s[] = {\n", $pkg;
+	    printf OUT "static const unsigned char nasm_stdmac_%s[] = {\n", $pkg;
 	    print  OUT "    /* From $fname */\n";
 	    $lastname = $fname;
 	    push(@pkg_list, $pkg);
@@ -127,7 +127,7 @@ foreach $fname ( @ARGV ) {
     close(INPUT);
 }
 printf OUT "        /* %4d */ 0\n};\n\n", $index++;
-print OUT "const char * const nasm_stdmac_after_tasm = ",
+print OUT "const unsigned char * const nasm_stdmac_after_tasm = ",
     "&nasm_stdmac[$tasm_count];\n\n";
 
 my @hashinfo = gen_perfect_hash(\%pkg_number);
@@ -139,11 +139,11 @@ verify_hash_table(\%pkg_number, \@hashinfo);
 my ($n, $sv, $g) = @hashinfo;
 die if ($n & ($n-1));
 
-print OUT "const char *nasm_stdmac_find_package(const char *package)\n";
+print OUT "const unsigned char *nasm_stdmac_find_package(const char *package)\n";
 print OUT "{\n";
 print OUT "    static const struct {\n";
 print OUT "         const char *package;\n";
-print OUT "         const char *macros;\n";
+print OUT "         const unsigned char *macros;\n";
 print OUT "    } packages[$npkg] = {\n";
 foreach $pkg (@pkg_list) {
     printf OUT "        { \"%s\", nasm_stdmac_%s },\n",

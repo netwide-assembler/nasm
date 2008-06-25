@@ -14,9 +14,9 @@
 /* --- From standard.mac via macros.pl: --- */
 
 /* macros.c */
-extern const char nasm_stdmac[];
-extern const char * const nasm_stdmac_after_tasm;
-const char *nasm_stdmac_find_package(const char *);
+extern const unsigned char nasm_stdmac[];
+extern const unsigned char * const nasm_stdmac_after_tasm;
+const unsigned char *nasm_stdmac_find_package(const char *);
 
 /* --- From insns.dat via insns.pl: --- */
 

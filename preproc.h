@@ -15,7 +15,7 @@ extern const char * const pp_directives[];
 extern const uint8_t pp_directives_len[];
 
 /* Pointer to a macro chain */
-typedef const char macros_t;
+typedef const unsigned char macros_t;
 
 enum preproc_token pp_token_hash(const char *token);
 void pp_include_path(char *);
