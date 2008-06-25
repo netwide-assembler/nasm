@@ -5,8 +5,8 @@
 ; they are followed by a colon.
 ;
 
-do:	jmp incbin+2
-	dw do, add, sub, incbin
+do:	jmp dq+2
+	dw do, add, sub, dq
 add:	jmp add-2
 sub:	jmp do+2
-incbin:	dw $-sub
+dq:	dw $-sub

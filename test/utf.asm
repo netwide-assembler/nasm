@@ -1,3 +1,5 @@
+;Testname=test;  Arguments=-fbin -outf.bin;         Files=.stdout .stderr utf.bin
+;Testname=error; Arguments=-fbin -outf.bin -DERROR; Files=.stdout .stderr utf.bin
 %define u(x) __utf16__(x)
 %define w(x) __utf32__(x)
 
