@@ -2181,13 +2181,12 @@ MOVBE		mem32,reg32			[mr:	o32 0f 38 f1 /r]			NEHALEM,SM
 MOVBE		mem64,reg64			[mr:	o64 0f 38 f1 /r]			NEHALEM,SM
 
 ;# Intel AES instructions
-; Is NEHALEM right here?
-AESENC		xmmreg,xmmrm			[rm:	66 0f 38 dc /r]				NEHALEM,SO
-AESENCLAST	xmmreg,xmmrm			[rm:	66 0f 38 dd /r]				NEHALEM,SO
-AESDEC		xmmreg,xmmrm			[rm:	66 0f 38 de /r]				NEHALEM,SO
-AESDECLAST	xmmreg,xmmrm			[rm:	66 0f 38 df /r]				NEHALEM,SO
-AESIMC		xmmreg,xmmrm			[rm:	66 0f 38 db /r]				NEHALEM,SO
-AESKEYGENASSIST	xmmreg,xmmrm,imm		[rmi:	66 0f 3a df /r ib]			NEHALEM,SO
+AESENC		xmmreg,xmmrm			[rm:	66 0f 38 dc /r]				WESTMERE,SO
+AESENCLAST	xmmreg,xmmrm			[rm:	66 0f 38 dd /r]				WESTMERE,SO
+AESDEC		xmmreg,xmmrm			[rm:	66 0f 38 de /r]				WESTMERE,SO
+AESDECLAST	xmmreg,xmmrm			[rm:	66 0f 38 df /r]				WESTMERE,SO
+AESIMC		xmmreg,xmmrm			[rm:	66 0f 38 db /r]				WESTMERE,SO
+AESKEYGENASSIST	xmmreg,xmmrm,imm		[rmi:	66 0f 3a df /r ib]			WESTMERE,SO
 
 ;# Intel AVX instructions
 VADDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
