@@ -168,8 +168,8 @@ int nasm_stricmp(const char *s1, const char *s2)
     int d;
 
     while (1) {
-	c1 = *s1++;
-	c2 = *s2++;
+	c1 = nasm_tolower(*s1++);
+	c2 = nasm_tolower(*s2++);
 	d = c1-c2;
 
 	if (d)
@@ -188,8 +188,8 @@ int nasm_strnicmp(const char *s1, const char *s2, size_t n)
     int d;
 
     while (n--) {
-	c1 = *s1++;
-	c2 = *s2++;
+	c1 = nasm_tolower(*s1++);
+	c2 = nasm_tolower(*s2++);
 	d = c1-c2;
 
 	if (d)
