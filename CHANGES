@@ -2,7 +2,11 @@
 ----
 * Sanitize macro handing in the %error directive.
 * New %warning preprocessor directive.
-* __utf16__ and __utf32__ operators to generate UTF-16 and UTF-32 strings.
+* __utf16__ and __utf32__ operators to generate UTF-16 and UTF-32
+  strings.
+* Fix bug in case-insensitive matching when compiled on platforms that
+  don't use the "configure" script.  Of the official release binaries,
+  that only affects the OS/2 binary.
 
 2.03.01
 -------
