@@ -692,7 +692,7 @@ static char *read_line(void)
 		    l = nasm_malloc(sizeof(Line));
 		    l->next = istk->expansion;
 		    l->first = head;
-		    l->finishes = false;
+		    l->finishes = NULL;
 		    istk->expansion = l;
 		}
 		do_predef = false;
@@ -4187,7 +4187,7 @@ static char *pp_getline(void)
             Line *l = nasm_malloc(sizeof(Line));
             l->next = defining->expansion;
             l->first = tline;
-            l->finishes = false;
+            l->finishes = NULL;
             defining->expansion = l;
             continue;
         } else if (istk->conds && !emitting(istk->conds->state)) {
@@ -4291,7 +4291,7 @@ void pp_pre_include(char *fname)
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = inc;
-    l->finishes = false;
+    l->finishes = NULL;
     predef = l;
 }
 
@@ -4313,7 +4313,7 @@ void pp_pre_define(char *definition)
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
-    l->finishes = false;
+    l->finishes = NULL;
     predef = l;
 }
 
@@ -4329,7 +4329,7 @@ void pp_pre_undefine(char *definition)
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
-    l->finishes = false;
+    l->finishes = NULL;
     predef = l;
 }
 
