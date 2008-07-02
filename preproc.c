@@ -2883,6 +2883,10 @@ static int do_directive(Token * tline)
 	    case TOK_STRING:
 		len += t->a.len = nasm_unquote(t->text, NULL);
 		break;
+	    case TOK_OTHER:
+		if (!strcmp(t->text, ",")) /* permit comma separators */
+		    break;
+		/* else fall through */
 	    default:
 		error(ERR_NONFATAL,
 		      "non-string passed to `%%strcat' (%d)", t->type);
