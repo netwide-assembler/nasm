@@ -166,7 +166,10 @@ enum pp_token_type {
 struct Token {
     Token *next;
     char *text;
-    SMacro *mac;                /* associated macro for TOK_SMAC_END */
+    union {
+	SMacro *mac;	        /* associated macro for TOK_SMAC_END */
+	size_t len;		/* scratch length field */
+    } a;			/* Auxiliary data */
     enum pp_token_type type;
 };
 
@@ -1008,7 +1011,7 @@ static void delete_Blocks(void)
 /*
  *  this function creates a new Token and passes a pointer to it
  *  back to the caller.  It sets the type and text elements, and
- *  also the mac and next elements to NULL.
+ *  also the a.mac and next elements to NULL.
  */
 static Token *new_Token(Token * next, enum pp_token_type type,
 			const char *text, int txtlen)
@@ -1025,7 +1028,7 @@ static Token *new_Token(Token * next, enum pp_token_type type,
     t = freeTokens;
     freeTokens = t->next;
     t->next = next;
-    t->mac = NULL;
+    t->a.mac = NULL;
     t->type = type;
     if (type == TOK_WHITESPACE || text == NULL) {
         t->text = NULL;
@@ -1829,7 +1832,7 @@ static int do_directive(Token * tline)
     bool casesense;
     int k, m;
     int offset;
-    char *p, *mname;
+    char *p, *pp, *mname;
     Include *inc;
     Context *ctx;
     Cond *cond;
@@ -1840,6 +1843,7 @@ static int do_directive(Token * tline)
     expr *evalresult;
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
     int64_t count;
+    size_t len;
 
     origline = tline;
 
@@ -2722,7 +2726,7 @@ static int do_directive(Token * tline)
         macro_start->next = NULL;
 	macro_start->text = nasm_quote(p, strlen(p));
 	macro_start->type = TOK_STRING;
-        macro_start->mac = NULL;
+        macro_start->a.mac = NULL;
 	nasm_free(p);
 
         /*
@@ -2787,7 +2791,7 @@ static int do_directive(Token * tline)
         macro_start->next = NULL;
 	macro_start->text = nasm_quote(p, strlen(p));
 	macro_start->type = TOK_STRING;
-        macro_start->mac = NULL;
+        macro_start->a.mac = NULL;
 	if (xsl)
 	    nasm_free(xsl);
 
@@ -2838,13 +2842,73 @@ static int do_directive(Token * tline)
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
         make_tok_num(macro_start, nasm_unquote(t->text, NULL));
-        macro_start->mac = NULL;
+        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
+	define_smacro(ctx, mname, casesense, 0, macro_start);
+        free_tlist(tline);
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+    case PP_STRCAT:
+	casesense = true;
+
+        tline = tline->next;
+        skip_white_(tline);
+        tline = expand_id(tline);
+        if (!tline || (tline->type != TOK_ID &&
+                       (tline->type != TOK_PREPROC_ID ||
+                        tline->text[1] != '$'))) {
+            error(ERR_NONFATAL,
+                  "`%%strcat' expects a macro identifier as first parameter");
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
+        ctx = get_ctx(tline->text, false);
+
+        mname = tline->text;
+        last = tline;
+        tline = expand_smacro(tline->next);
+        last->next = NULL;
+
+	len = 0;
+	for (t = tline; t; t = t->next) {
+	    switch (t->type) {
+	    case TOK_WHITESPACE:
+		break;
+	    case TOK_STRING:
+		len += t->a.len = nasm_unquote(t->text, NULL);
+		break;
+	    default:
+		error(ERR_NONFATAL,
+		      "non-string passed to `%%strcat' (%d)", t->type);
+		free_tlist(tline);
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+	    }
+	}
+
+	p = pp = nasm_malloc(len);
+	t = tline;
+	for (t = tline; t; t = t->next) {
+	    if (t->type == TOK_STRING) {
+		memcpy(p, t->text, t->a.len);
+		p += t->a.len;
+	    }
+	}
+
+        /*
+         * We now have a macro name, an implicit parameter count of
+         * zero, and a numeric token to use as an expansion. Create
+         * and store an SMacro.
+         */
+	macro_start = new_Token(NULL, TOK_STRING, NULL, 0);
+	macro_start->text = nasm_quote(pp, len);
+	nasm_free(pp);
 	define_smacro(ctx, mname, casesense, 0, macro_start);
         free_tlist(tline);
         free_tlist(origline);
@@ -2936,7 +3000,7 @@ static int do_directive(Token * tline)
         macro_start->next = NULL;
         macro_start->text = nasm_quote((a1 < 0) ? "" : t->text+a1, a2);
         macro_start->type = TOK_STRING;
-        macro_start->mac = NULL;
+        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -2998,7 +3062,7 @@ static int do_directive(Token * tline)
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
         make_tok_num(macro_start, reloc_value(evalresult));
-        macro_start->mac = NULL;
+        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3213,13 +3277,13 @@ static Token *expand_mmac_params(Token * tline)
                 t->type = type;
                 nasm_free(t->text);
                 t->text = text;
-                t->mac = NULL;
+                t->a.mac = NULL;
             }
             continue;
         } else {
             t = *tail = tline;
             tline = tline->next;
-            t->mac = NULL;
+            t->a.mac = NULL;
             tail = &t->next;
         }
     }
@@ -3288,7 +3352,7 @@ static Token *expand_smacro(Token * tline)
         tline =
             new_Token(org_tline->next, org_tline->type, org_tline->text,
                       0);
-        tline->mac = org_tline->mac;
+        tline->a.mac = org_tline->a.mac;
         nasm_free(org_tline->text);
         org_tline->text = NULL;
     }
@@ -3370,7 +3434,7 @@ again:
                     do {
                         t = tline->next;
                         while (tok_type_(t, TOK_SMAC_END)) {
-                            t->mac->in_progress = false;
+                            t->a.mac->in_progress = false;
                             t->text = NULL;
                             t = tline->next = delete_Token(t);
                         }
@@ -3400,7 +3464,7 @@ again:
                              */
                             t = tline->next;
                             while (tok_type_(t, TOK_SMAC_END)) {
-                                t->mac->in_progress = false;
+                                t->a.mac->in_progress = false;
                                 t->text = NULL;
                                 t = tline->next = delete_Token(t);
                             }
@@ -3504,7 +3568,7 @@ again:
                         t->next = NULL;
                     }
                     tt = new_Token(tline, TOK_SMAC_END, NULL, 0);
-                    tt->mac = m;
+                    tt->a.mac = m;
                     m->in_progress = true;
                     tline = tt;
                     for (t = m->expansion; t; t = t->next) {
@@ -3548,12 +3612,12 @@ again:
         }
 
         if (tline->type == TOK_SMAC_END) {
-            tline->mac->in_progress = false;
+            tline->a.mac->in_progress = false;
             tline = delete_Token(tline);
         } else {
             t = *tail = tline;
             tline = tline->next;
-            t->mac = NULL;
+            t->a.mac = NULL;
             t->next = NULL;
             tail = &t->next;
         }

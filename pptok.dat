@@ -44,6 +44,7 @@
 %repl
 %rotate
 %stacksize
+%strcat
 %strlen
 %substr
 %undef
