@@ -1491,7 +1491,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 free_tlist(origline);
                 return -1;
             }
-            if (!nasm_stricmp(tline->text, cstk->name))
+            if (cstk->name && !nasm_stricmp(tline->text, cstk->name))
                 j = true;
             tline = tline->next;
         }
@@ -2191,17 +2191,22 @@ static int do_directive(Token * tline)
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
-        if (!tok_type_(tline, TOK_ID)) {
-            error(ERR_NONFATAL, "`%%push' expects a context identifier");
-            free_tlist(origline);
-            return DIRECTIVE_FOUND;     /* but we did _something_ */
-        }
-        if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%push' ignored");
+	if (tline) {
+	    if (!tok_type_(tline, TOK_ID)) {
+		error(ERR_NONFATAL, "`%%push' expects a context identifier");
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;     /* but we did _something_ */
+	    }
+	    if (tline->next)
+		error(ERR_WARNING, "trailing garbage after `%%push' ignored");
+	    p = nasm_strdup(tline->text);
+	} else {
+	    p = NULL;		/* Anonymous context */
+	}
         ctx = nasm_malloc(sizeof(Context));
         ctx->next = cstk;
         hash_init(&ctx->localmac, HASH_SMALL);
-        ctx->name = nasm_strdup(tline->text);
+        ctx->name = p;
         ctx->number = unique++;
         cstk = ctx;
         free_tlist(origline);
@@ -2211,18 +2216,23 @@ static int do_directive(Token * tline)
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
-        if (!tok_type_(tline, TOK_ID)) {
-            error(ERR_NONFATAL, "`%%repl' expects a context identifier");
-            free_tlist(origline);
-            return DIRECTIVE_FOUND;     /* but we did _something_ */
-        }
-        if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%repl' ignored");
+	if (tline) {
+	    if (!tok_type_(tline, TOK_ID)) {
+		error(ERR_NONFATAL, "`%%repl' expects a context identifier");
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;     /* but we did _something_ */
+	    }
+	    if (tline->next)
+		error(ERR_WARNING, "trailing garbage after `%%repl' ignored");
+	    p = nasm_strdup(tline->text);
+	} else {
+	    p = NULL;
+	}
         if (!cstk)
             error(ERR_NONFATAL, "`%%repl': context stack is empty");
         else {
             nasm_free(cstk->name);
-            cstk->name = nasm_strdup(tline->text);
+            cstk->name = p;
         }
         free_tlist(origline);
         break;
@@ -4326,7 +4336,7 @@ static void pp_cleanup(int pass)
 		nasm_free(i->path);
 	    nasm_free(i);
 	}
-    }   
+    }
 }
 
 void pp_include_path(char *path)
