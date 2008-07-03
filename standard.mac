@@ -40,7 +40,7 @@
 %endmacro
 
 %imacro struc 1.nolist
-%push struc
+%push
 %define %$strucname %1
 [absolute 0]
 %$strucname:			; allow definition of `.member' to work sanely
@@ -52,7 +52,7 @@ __SECT__
 %endmacro
 
 %imacro istruc 1.nolist
-%push istruc
+%push
 %define %$strucname %1
 %$strucstart:
 %endmacro
@@ -144,7 +144,7 @@ __SECT__
 %endmacro
 
 %imacro incbin 1-2+.nolist 0
-%push incbin
+%push
 %pathsearch %$dep %1
 %depend %$dep
 	%? %$dep,%2
