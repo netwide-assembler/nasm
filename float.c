@@ -638,14 +638,13 @@ enum floats {
     FL_SNAN
 };
 
-static int to_packed_bcd(const char *str, const char *strend,
+static int to_packed_bcd(const char *str, const char *p,
 			 int s, uint8_t *result,
 			 const struct ieee_format *fmt)
 {
     int n = 0;
     char c;
     int tv = -1;
-    const char *p = strend-2;
 
     if (fmt != &ieee_80) {
 	error(ERR_NONFATAL|ERR_PASS1,
@@ -715,7 +714,7 @@ static int to_float(const char *str, int s, uint8_t *result,
 
     strend = strchr(str, '\0');
     if (strend[-1] == 'P' || strend[-1] == 'p')
-	return to_packed_bcd(str, strend, s, result, fmt);
+	return to_packed_bcd(str, strend-2, s, result, fmt);
 
     if (str[0] == '_') {
 	/* Special tokens */
@@ -760,6 +759,8 @@ static int to_float(const char *str, int s, uint8_t *result,
 	    case 't': case 'T':
 		ok = ieee_flconvert(str+2, mant, &exponent);
 		break;
+	    case 'p': case 'P':
+		return to_packed_bcd(str+2, strend-1, s, result, fmt);
 	    default:
 		/* Leading zero was just a zero? */
 		ok = ieee_flconvert(str, mant, &exponent);
