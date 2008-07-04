@@ -492,7 +492,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
     int32_t twopwr;
     bool seendot, seendigit;
     unsigned char c;
-    int radix = 1 << bits;
+    const int radix = 1 << bits;
     fp_limb v;
 
     twopwr = 0;
@@ -638,21 +638,84 @@ enum floats {
     FL_SNAN
 };
 
-static int to_float(const char *str, int s, uint8_t * result,
+static int to_packed_bcd(const char *str, const char *strend,
+			 int s, uint8_t *result,
+			 const struct ieee_format *fmt)
+{
+    int n = 0;
+    char c;
+    int tv = -1;
+    const char *p = strend-2;
+
+    if (fmt != &ieee_80) {
+	error(ERR_NONFATAL|ERR_PASS1,
+	      "packed BCD requires an 80-bit format");
+	return 0;
+    }
+
+    while (p >= str) {
+	c = *p--;
+	if (c >= '0' && c <= '9') {
+	    if (tv < 0) {
+		if (n == 9) {
+		    error(ERR_WARNING|ERR_PASS1,
+			  "packed BCD truncated to 18 digits");
+		}
+		tv = c-'0';
+	    } else {
+		if (n < 9)
+		    *result++ = tv + ((c-'0') << 4);
+		n++;
+		tv = -1;
+	    }
+	} else if (c == '_') {
+	    /* do nothing */
+	} else {
+	    error(ERR_NONFATAL|ERR_PASS1,
+		  "invalid character `%c' in packed BCD constant", c);
+	    return 0;
+	}
+    }
+    if (tv >= 0) {
+	if (n < 9)
+	    *result++ = tv;
+	n++;
+    }
+    while (n < 9) {
+	*result++ = 0;
+	n++;
+    }
+    *result = (s < 0) ? 0x80 : 0;
+
+    return 1;			/* success */
+}
+
+static int to_float(const char *str, int s, uint8_t *result,
                     const struct ieee_format *fmt)
 {
     fp_limb mant[MANT_LIMBS];
     int32_t exponent = 0;
-    int32_t expmax = 1 << (fmt->exponent - 1);
+    const int32_t expmax = 1 << (fmt->exponent - 1);
     fp_limb one_mask = LIMB_TOP_BIT >>
 	((fmt->exponent+fmt->explicit) % LIMB_BITS);
-    int one_pos = (fmt->exponent+fmt->explicit)/LIMB_BITS;
+    const int one_pos = (fmt->exponent+fmt->explicit)/LIMB_BITS;
     int i;
     int shift;
     enum floats type;
     bool ok;
-    bool minus = s < 0;
-    int bits = fmt->bytes * 8;
+    const bool minus = s < 0;
+    const int bits = fmt->bytes * 8;
+    const char *strend;
+
+    if (!str[0]) {
+	error(ERR_PANIC,
+	      "internal errror: empty string passed to float_const");
+	return 0;
+    }
+
+    strend = strchr(str, '\0');
+    if (strend[-1] == 'P' || strend[-1] == 'p')
+	return to_packed_bcd(str, strend, s, result, fmt);
 
     if (str[0] == '_') {
 	/* Special tokens */
@@ -810,7 +873,7 @@ static int to_float(const char *str, int s, uint8_t * result,
     return 1;                   /* success */
 }
 
-int float_const(const char *number, int sign, uint8_t * result,
+int float_const(const char *number, int sign, uint8_t *result,
                 int bytes, efunc err)
 {
     error = err;
