@@ -556,10 +556,10 @@ static bool ieee_flconvert_bin(const char *string, int bits,
     }
 
     if (!seendigit) {
-        memset(mant, 0, sizeof mult); /* Zero */
+        memset(mant, 0, MANT_LIMBS*sizeof(fp_limb)); /* Zero */
         *exponent = 0;
     } else {
-        memcpy(mant, mult, sizeof mult);
+        memcpy(mant, mult, MANT_LIMBS*sizeof(fp_limb));
         *exponent = twopwr;
     }
 
