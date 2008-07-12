@@ -356,6 +356,9 @@ static struct hash_table smacros;
  */
 static MMacro *defining;
 
+static uint64_t nested_mac_count;
+static uint64_t nested_rep_count;
+
 /*
  * The number of macro parameters to allocate space for at a time.
  */
@@ -1879,6 +1882,29 @@ static int do_directive(Token * tline)
         return NO_DIRECTIVE_FOUND;
     }
 
+    if (defining) {
+        if (i == PP_MACRO || i == PP_IMACRO) {
+            nested_mac_count++;
+            return NO_DIRECTIVE_FOUND;
+        } else if (nested_mac_count > 0) {
+            if (i == PP_ENDMACRO) {
+                nested_mac_count--;
+                return NO_DIRECTIVE_FOUND;
+            }
+        }
+        if (!defining->name) {
+            if (i == PP_REP) {
+                nested_rep_count++;
+                return NO_DIRECTIVE_FOUND;
+            } else if (nested_rep_count > 0) {
+                if (i == PP_ENDREP) {
+                    nested_rep_count--;
+                    return NO_DIRECTIVE_FOUND;
+                }
+            }
+        }
+    }
+
     switch (i) {
     case PP_INVALID:
         error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
@@ -2581,7 +2607,7 @@ static int do_directive(Token * tline)
                 break;
 
         if (l)
-            l->finishes->in_progress = 0;
+            l->finishes->in_progress = 1;
         else
             error(ERR_NONFATAL, "`%%exitrep' not within `%%rep' block");
         free_tlist(origline);
@@ -4079,6 +4105,8 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
         error(ERR_FATAL | ERR_NOFILE, "unable to open input file `%s'",
               file);
     defining = NULL;
+    nested_mac_count = 0;
+    nested_rep_count = 0;
     init_macros();
     unique = 0;
     if (tasm_compatible_mode) {
@@ -4248,7 +4276,8 @@ static char *pp_getline(void)
          * condition, in which case we don't want to meddle with
          * anything.
          */
-        if (!defining && !(istk->conds && !emitting(istk->conds->state)))
+        if (!defining && !(istk->conds && !emitting(istk->conds->state))
+            && !(istk->mstk && !istk->mstk->in_progress))
             tline = expand_mmac_params(tline);
 
         /*
