@@ -2916,37 +2916,6 @@ any tokens at all, whitespace excepted.
 The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
 variants are also provided.
 
-\S{pperror} \i\c{%error} and \i\c{%warning}: Reporting \i{User-Defined Errors}
-
-The preprocessor directive \c{%error} will cause NASM to report an
-error if it occurs in assembled code. So if other users are going to
-try to assemble your source files, you can ensure that they define the
-right macros by means of code like this:
-
-\c %ifdef F1
-\c     ; do some setup
-\c %elifdef F2
-\c     ; do some different setup
-\c %else
-\c     %error Neither F1 nor F2 was defined.
-\c %endif
-
-Then any user who fails to understand the way your code is supposed
-to be assembled will be quickly warned of their mistake, rather than
-having to wait until the program crashes on being run and then not
-knowing what went wrong.
-
-Similarly, \c{%warning} issues a warning:
-
-\c %ifdef F1
-\c     ; do some setup
-\c %elifdef F2
-\c     ; do some different setup
-\c %else
-\c     %warning Neither F1 nor F2 was defined, assuming F1.
-\c     %define F1
-\c %endif
-
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 
 NASM's \c{TIMES} prefix, though useful, cannot be used to invoke a
@@ -3398,6 +3367,42 @@ each \c{%local} variable declared. It then may be used in
 the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
+
+\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error} and \i\c{%warning}
+
+The preprocessor directive \c{%error} will cause NASM to report an
+error if it occurs in assembled code. So if other users are going to
+try to assemble your source files, you can ensure that they define the
+right macros by means of code like this:
+
+\c %ifdef F1
+\c     ; do some setup
+\c %elifdef F2
+\c     ; do some different setup
+\c %else
+\c     %error "Neither F1 nor F2 was defined."
+\c %endif
+
+Then any user who fails to understand the way your code is supposed
+to be assembled will be quickly warned of their mistake, rather than
+having to wait until the program crashes on being run and then not
+knowing what went wrong.
+
+Similarly, \c{%warning} issues a warning, but allows assembly to continue:
+
+\c %ifdef F1
+\c     ; do some setup
+\c %elifdef F2
+\c     ; do some different setup
+\c %else
+\c     %warning "Neither F1 nor F2 was defined, assuming F1."
+\c     %define F1
+\c %endif
+
+It is optional for the message string after \c{%error} or \c{%warning}
+to be quoted.
+
+
 \H{otherpreproc} \i{Other Preprocessor Directives}
 
 NASM also has preprocessor directives which allow access to
@@ -3406,7 +3411,7 @@ information from external sources. Currently they include:
 The following preprocessor directive is supported to allow NASM to
 correctly handle output of the cpp C language preprocessor.
 
-\b\c{%line} enables NAsM to correctly handle the output of the cpp
+\b\c{%line} enables NASM to correctly handle the output of the cpp
 C language preprocessor (see \k{line}).
 
 \b\c{%!} enables NASM to read in the value of an environment variable,
