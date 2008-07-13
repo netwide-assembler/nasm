@@ -108,8 +108,8 @@ version.mac: version version.pl
 	$(PERL) $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
 version.sed: version version.pl
 	$(PERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
-version.make: version version.pl
-	$(PERL) $(srcdir)/version.pl make < $(srcdir)/version > version.make
+version.mak: version version.pl
+	$(PERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
@@ -157,7 +157,7 @@ pptok.ph: pptok.dat pptok.pl perllib/phash.ph
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
 	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
-	  version.h version.mac version.make
+	  version.h version.mac version.mak
 perlreq: $(PERLREQ)
 
 install: nasm$(X) ndisasm$(X)

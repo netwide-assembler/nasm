@@ -3,7 +3,7 @@
 PROOT=.
 OBJDIR=release
 
--include $(OBJDIR)/version.inc
+-include $(OBJDIR)/version.mak
 
 TARGETS=nasm.nlm ndisasm.nlm
 
@@ -113,7 +113,7 @@ clean:
 distclean: clean
 	-$(RM) $(TARGETS)
 
-$(OBJDIR)/version.inc: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
+$(OBJDIR)/version.mak: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
 	@$(PERL) $(PROOT)/version.pl make < $< > $@
 
 #-- Magic hints to mkdep.pl --#
