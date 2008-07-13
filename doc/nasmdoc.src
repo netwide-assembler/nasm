@@ -127,6 +127,8 @@ in \c{elf}
 \IR{executable and linkable format} Executable and Linkable Format
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
 \IR{extern, rdf extensions to} \c{EXTERN}, \c{rdf} extensions to
+\IR{floating-point, constants} floating-point, constants
+\IR{floating-point, packed bcd constants} floating-point, packed BCD constants
 \IR{freebsd} FreeBSD
 \IR{freelink} FreeLink
 \IR{functions, c calling convention} functions, C calling convention
@@ -1586,6 +1588,23 @@ respectively.  These are normally used as macros:
 \c %define NaN __QNaN__
 \c
 \c       dq    +1.5, -Inf, NaN         ; Double-precision constants
+
+\S{bcdconst} \I{floating-point, packed BCD constants}Packed BCD Constants
+
+x87-style packed BCD constants can be used in the same contexts as
+80-bit floating-point numbers.  They are suffixed with \c{p} or
+prefixed with \c{0p}, and can include up to 18 decimal digits.
+
+As with other numeric constants, underscores can be used to separate
+digits.
+
+For example:
+
+\c       dt 12_345_678_901_245_678p
+\c       dt -12_345_678_901_245_678p
+\c       dt +0p33
+\c       dt 33p
+
 
 \H{expr} \i{Expressions}
 
