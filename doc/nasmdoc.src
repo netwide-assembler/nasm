@@ -3475,16 +3475,18 @@ described in \k{directive}. The rest of the standard macro set is
 described here.
 
 
-\S{stdmacver} \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__},
-\i\c{__NASM_SUBMINOR__} and \i\c{___NASM_PATCHLEVEL__}: \i{NASM Version}
+\S{stdmacver} \i{NASM Version} Macros
 
-The single-line macros \c{__NASM_MAJOR__}, \c{__NASM_MINOR__},
-\c{__NASM_SUBMINOR__} and \c{___NASM_PATCHLEVEL__} expand to the
+The single-line macros \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__},
+\i\c{__NASM_SUBMINOR__} and \i\c{___NASM_PATCHLEVEL__} expand to the
 major, minor, subminor and patch level parts of the \i{version
 number of NASM} being used. So, under NASM 0.98.32p1 for
 example, \c{__NASM_MAJOR__} would be defined to be 0, \c{__NASM_MINOR__}
 would be defined as 98, \c{__NASM_SUBMINOR__} would be defined to 32,
 and \c{___NASM_PATCHLEVEL__} would be defined as 1.
+
+Additionally, the macro \i\c{__NASM_SNAPSHOT__} is defined for
+automatically generated snapshot releases \e{only}.
 
 
 \S{stdmacverid} \i\c{__NASM_VERSION_ID__}: \i{NASM Version ID}
