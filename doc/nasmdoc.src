@@ -2175,19 +2175,40 @@ This can be used, for example, with the \c{%!} construct (see
 \c %defstr PATH %!PATH		; The operating system PATH variable
 
 
-\H{strlen} \i{String Handling in Macros}: \i\c{%strlen} and \i\c{%substr}
+\H{strlen} \i{String Manipulation in Macros}
 
 It's often useful to be able to handle strings in macros. NASM
 supports two simple string handling macro operators from which
 more complex operations can be constructed.
 
+All the string operators define or redefine a value (either a string
+or a numeric value) to a single-line macro.
+
+\S{strcat} \i{Concatenating Strings}: \i\c{%strcat}
+
+The \{%strcat} operator concatenates quoted strings and assign them to
+a single-line macro.  In doing so, it may change the type of quotes
+and possibly use \c{\}-escapes inside \c{`}-quoted strings in order to
+make sure the string is still a valid quoted string.
+
+For example:
+
+\c %strcat alpha "Alpha: ", '12" screen'
+
+... would assign the value \c{'Alpha: 12" screen'} to \c{alpha}.
+Similarly:
+
+\c %strcat beta '"', "'"
+
+... would assign the value \c{`"'`} to \c{beta}.
+
+The use of commas to separate strings are permitted but optional.
+
 
 \S{strlen} \i{String Length}: \i\c{%strlen}
 
-The \c{%strlen} macro is like \c{%assign} macro in that it creates
-(or redefines) a numeric value to a macro. The difference is that
-with \c{%strlen}, the numeric value is the length of a string. An
-example of the use of this would be:
+The \c{%strlen} operator assigns the length of a string to a macro.
+For example:
 
 \c %strlen charcnt 'my string'
 
@@ -2203,10 +2224,11 @@ As in the first case, this would result in \c{charcnt} being
 assigned the value of 9.
 
 
-\S{substr} \i{Sub-strings}: \i\c{%substr}
+\S{substr} \i{Extracting Substrings}: \i\c{%substr}
 
-Individual letters in strings can be extracted using \c{%substr}.
-An example of its use is probably more useful than the description:
+Individual letters or substrings in strings can be extracted using the
+\c{%substr} operator.  An example of its use is probably more useful
+than the description:
 
 \c %substr mychar 'xyzw' 1       ; equivalent to %define mychar 'x'
 \c %substr mychar 'xyzw' 2       ; equivalent to %define mychar 'y'
