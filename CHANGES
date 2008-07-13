@@ -7,6 +7,12 @@
 * Fix bug in case-insensitive matching when compiled on platforms that
   don't use the "configure" script.  Of the official release binaries,
   that only affects the OS/2 binary.
+* Correct the handling of nested %reps.
+* Support for x87 packed BCD constants.
+* New %warning directive to issue user-controlled warnings.
+* New %strcat directive to join strings together.
+* Correct the LTR instruction in 64-bit mode.
+* Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
 
 2.03.01
 -------
