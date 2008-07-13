@@ -2276,8 +2276,9 @@ static int do_directive(Token * tline)
     case PP_ERROR:
     case PP_WARNING:
     {
-	int severity = PP_ERROR ? ERR_NONFATAL|ERR_NO_SEVERITY :
-	    ERR_WARNING|ERR_NO_SEVERITY;
+	int severity = (i == PP_ERROR)
+	    ? ERR_NONFATAL|ERR_NO_SEVERITY
+	    : ERR_WARNING|ERR_NO_SEVERITY;
 
         tline->next = expand_smacro(tline->next);
         tline = tline->next;
