@@ -727,8 +727,8 @@ LSL		reg64,reg64			\324\2\x0F\x03\110				X64,PROT
 LSS		reg16,mem			\320\2\x0F\xB2\110				386
 LSS		reg32,mem			\321\2\x0F\xB2\110				386
 LTR		mem				\2\x0F\x00\203					286,PROT,PRIV
-LTR		mem16				\2\x0F\x00\203					286,PROT,PRIV,NOLONG
-LTR		reg16				\2\x0F\x00\203					286,PROT,PRIV,NOLONG
+LTR		mem16				\2\x0F\x00\203					286,PROT,PRIV
+LTR		reg16				\2\x0F\x00\203					286,PROT,PRIV
 MFENCE		void				\3\x0F\xAE\xF0					X64,AMD
 MONITOR		void				\3\x0F\x01\xC8					PRESCOTT
 MONITOR		reg_eax,reg_ecx,reg_edx		\3\x0F\x01\xC8					PRESCOTT,ND
