@@ -26,7 +26,7 @@ ACRODIST	= @ACRODIST@		# Acrobat Distiller
 PSTOPDF		= @PSTOPDF@		# BSD/MacOS X utility
 PS2PDF          = @PS2PDF@		# Part of GhostScript
 
-SRCS		= nasmdoc.src
+SRCS		= nasmdoc.src inslist.src changes.src
 OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
 
 # exports
@@ -43,18 +43,18 @@ inslist.src: inslist.pl ../insns.dat
 .PHONY: html
 html: html/nasmdoc0.html
 
-html/nasmdoc0.html: nasmdoc.src rdsrc.pl inslist.src
+html/nasmdoc0.html: $(SRCS) rdsrc.pl
 	mkdir -p html
 	$(PERL) $(srcdir)/rdsrc.pl html < $<
 	mv -f *.html html
 
-nasmdoc.dip: nasmdoc.src rdsrc.pl inslist.src
+nasmdoc.dip: $(SRCS) rdsrc.pl
 	$(PERL) $(srcdir)/rdsrc.pl dip < $<
 
-nasmdoc.texi: nasmdoc.src rdsrc.pl inslist.src
+nasmdoc.texi: $(SRCS) rdsrc.pl
 	$(PERL) $(srcdir)/rdsrc.pl texi < $<
 
-nasmdoc.txt: nasmdoc.src rdsrc.pl inslist.src
+nasmdoc.txt: $(SRCS) rdsrc.pl
 	$(PERL) $(srcdir)/rdsrc.pl txt < $<
 
 nasmdoc.ps: nasmdoc.dip nasmlogo.eps $(srcdir)/../version genpsdriver.pl \

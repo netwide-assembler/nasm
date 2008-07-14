@@ -7607,3 +7607,7 @@ column shows the processor type in which the instruction was introduced and,
 
 \& inslist.src
 
+\A{changelog} \i{NASM Version History}
+
+\& changes.src
+
