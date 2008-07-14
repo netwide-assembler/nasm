@@ -21,7 +21,7 @@ since 2007.
   don't use the \c{configure} script.  Of the official release binaries,
   that only affects the OS/2 binary.
 
-\b Correct the handling of nested %reps.
+\b Correct the handling of nested \c{%reps}.
 
 \b Support for x87 packed BCD constants.
 
@@ -111,11 +111,11 @@ creation.
 
 \b New compile date and time standard macros.
 
-\b %ifnum now returns true for negative numbers.
+\b \c{%ifnum} now returns true for negative numbers.
 
-\b New %iftoken test for a single token.
+\b New \c{%iftoken} test for a single token.
 
-\b New %ifempty test for empty expansion.
+\b New \c{%ifempty} test for empty expansion.
 
 \b Add support for the \c{XSAVE} instruction group.
 
@@ -347,14 +347,14 @@ If you mean the latter, please say so! :)
 
 \b Add -Ov option to get verbose information about optimizations.
 
-\b Undo a braindead change which broke %elif directives.
+\b Undo a braindead change which broke \c{%elif} directives.
 
 \b Makefile updates.
 
 
 \S{cl-0.98.32} Version 0.98.32
 
-\b Fix NASM crashing when %macro directives were left unterminated.
+\b Fix NASM crashing when \c{%macro} directives were left unterminated.
 
 \b Lots of documentation updates.
 
@@ -383,7 +383,7 @@ If you mean the latter, please say so! :)
 
 \b Lots of Makefile updates and bug fixes.
 
-\b New %ifmacro directive to test for multiline macros.
+\b New \c{%ifmacro} directive to test for multiline macros.
 
 \b Documentation updates.
 
@@ -555,7 +555,7 @@ it 0.98.28 to not confuse poor little apt-get.
 
 \S{cl-0.98.08} Version 0.98.08
 
-\b Add "%strlen" and "%substr" macro operators
+\b Add "\c{%strlen}" and "\c{%substr}" macro operators
 
 \b Fixed broken c16.mac.
 
@@ -737,17 +737,17 @@ line (response file is @resp rather than -@resp for NASM format).
 \b parser.c: Added support for TASM style memory references (ie: mov
 [DWORD eax],10 rather than the NASM style mov DWORD [eax],10).
 
-\b preproc.c: Added new directives, %arg, %local, %stacksize to directives
+\b preproc.c: Added new directives, \c{%arg}, \c{%local}, \c{%stacksize} to directives
 table
 
 \b Added support for TASM style directives without a leading % symbol.
 
 \b Integrated a block of changes from Andrew Zabolotny <bit@eltech.ru>:
 
-\b A new keyword %xdefine and its case-insensitive counterpart %ixdefine.
-They work almost the same way as %define and %idefine but expand
+\b A new keyword \c{%xdefine} and its case-insensitive counterpart \c{%ixdefine}.
+They work almost the same way as \c{%define} and \c{%idefine} but expand
 the definition immediately, not on the invocation. Something like a cross
-between %define and %assign. The "x" suffix stands for "eXpand", so
+between \c{%define} and \c{%assign}. The "x" suffix stands for "eXpand", so
 "xdefine" can be deciphered as "expand-and-define". Thus you can do
 things like this:
 
@@ -783,14 +783,14 @@ in macros etc. For example:
     to work without warnings even in no context.
 
 \b Added a check for "cstk" in %if*ctx and %elif*ctx directives -
-    this allows to use %ifctx without excessive warnings. If there is
-    no active context, %ifctx goes through "false" branch.
+    this allows to use \c{%ifctx} without excessive warnings. If there is
+    no active context, \c{%ifctx} goes through "false" branch.
 
-\b Removed "user error: " prefix with %error directive: it just clobbers the
+\b Removed "user error: " prefix with \c{%error} directive: it just clobbers the
     output and has absolutely no functionality. Besides, this allows to write
     macros that does not differ from built-in functions in any way.
 
-\b Added expansion of string that is output by %error directive. Now you
+\b Added expansion of string that is output by \c{%error} directive. Now you
     can do things like:
 
 \c      %define hello(x) Hello, x!
@@ -798,7 +798,7 @@ in macros etc. For example:
 \c      %define %$name andy
 \c      %error "hello(%$name)"
 
-    Same happened with %include directive.
+    Same happened with \c{%include} directive.
 
 \b Now all directives that expect an identifier will try to expand and
     concatenate everything without whitespaces in between before usage.
@@ -813,7 +813,7 @@ in macros etc. For example:
 \c      hello goodbyehello
 
     Not quite what you expected, eh? :-) The answer is that preprocessor
-    treats the %define construct as if it would be
+    treats the \c{%define} construct as if it would be
 
 \c      %define __ %$abc goodbye
 
@@ -827,8 +827,8 @@ in macros etc. For example:
     is more logical (and allows more advanced macro usage :-).
 
     Same change was applied to:
-        %push,%macro,%imacro,%define,%idefine,%xdefine,%ixdefine,
-        %assign,%iassign,%undef
+        \c{%push},\c{%macro},\c{%imacro},\c{%define},\c{%idefine},\c{%xdefine},\c{%ixdefine},
+        \c{%assign},\c{%iassign},\c{%undef}
 
 \b A new directive [WARNING {+|-}warning-id] have been added. It works only
     if the assembly phase is enabled (i.e. it doesn't work with nasm -e).
@@ -893,7 +893,7 @@ in macros etc. For example:
     %$a inside the "inner" context, it will take precedence over outer
     definition. However, this modification has been applied only to
     expand_smacro and not to smacro_define: as a consequence expansion
-    looks in outer contexts, but %ifdef won't look in outer contexts.
+    looks in outer contexts, but \c{%ifdef} won't look in outer contexts.
 
     This behaviour is needed because we don't want nested contexts to
     act on already defined local macros. Example:
@@ -908,7 +908,7 @@ in macros etc. For example:
     is not valid anymore inside "if". Of course it could be worked around
     by using explicitely %$$arg1 but this is ugly IMHO.
 
-\b Fixed memory leak in %undef. The origline wasn't freed before
+\b Fixed memory leak in \c{%undef}. The origline wasn't freed before
     exiting on success.
 
 \b Fixed trap in preprocessor when line expanded to empty set of tokens.
@@ -981,7 +981,7 @@ All changes since NASM 0.98p3 have been produced by H. Peter Anvin <hpa@zytor.co
 \b Fixed opcodes with a third byte-sized immediate argument to not
   complain if given "byte" on the immediate.
 
-\b Allow %undef to remove single-line macros with arguments.  This
+\b Allow \c{%undef} to remove single-line macros with arguments.  This
   matches the behaviour of #undef in the C preprocessor.
 
 \b Allow -d, -u, -i and -p to be specified as -D, -U, -I and -P for
@@ -1023,14 +1023,14 @@ All changes since NASM 0.98p3 have been produced by H. Peter Anvin <hpa@zytor.co
 \b -M option to generate Makefile dependencies (based on code from Alex
   Verstak.)
 
-\b %undef preprocessor directive, and -u option, that undefines a
+\b \c{%undef} preprocessor directive, and -u option, that undefines a
   single-line macro.
 
 \b OS/2 Makefile (Mkfiles/Makefile.os2) for Borland under OS/2; from
   Chuck Crayne.
 
 \b Various minor bugfixes (reported by):
-  - Dangling %s in preproc.c (Martin Junker)
+  - Dangling \c{%s} in preproc.c (Martin Junker)
 
 \b THERE ARE KNOWN BUGS IN SSE AND THE OTHER KATMAI INSTRUCTIONS.  I am
   on a trip and didn't bring the Katmai instruction reference, so I
@@ -1099,7 +1099,7 @@ All changes since NASM 0.98p3 have been produced by H. Peter Anvin <hpa@zytor.co
 
 \S{cl-0.98p3.3} Version 0.98p3.3
 
-\b Patch from Conan Brink to allow nesting of %rep directives.
+\b Patch from Conan Brink to allow nesting of \c{%rep} directives.
 
 \b If we're going to allow INT01 as an alias for INT1/ICEBP (one of
   Jules 0.98p3 changes), then we should allow INT03 as an alias for INT3
@@ -1212,9 +1212,9 @@ filename.
 
 \b ndisasm wasn't outputting the TO keyword. Fixed.
 
-\b Fixed error cascade on bogus expression in %if - an error in
-evaluation was causing the entire %if to be discarded, thus creating
-trouble later when the %else or %endif was encountered.
+\b Fixed error cascade on bogus expression in \c{%if} - an error in
+evaluation was causing the entire \c{%if} to be discarded, thus creating
+trouble later when the \c{%else} or \c{%endif} was encountered.
 
 \b Forward reference tracking was instruction-granular not operand-
 granular, which was causing 286-specific code to be generated
@@ -1238,7 +1238,7 @@ than after.
 \b Reformatted a lot of the source code to be more readable. Included
 'coding.txt' as a guideline for how to format code for contributors.
 
-\b Stopped nested %reps causing a panic - they now cause a slightly more
+\b Stopped nested \c{%reps} causing a panic - they now cause a slightly more
 friendly error message instead.
 
 \b Fixed floating point constant problems (patch by Pedro Gimeno)
@@ -1295,7 +1295,7 @@ missing in 0.96 *blush*
 specifically objtest.asm. *blush again*
 
 \b Fixed seg-faults and bogus error messages caused by mismatching
-%rep and %endrep within multi-line macro definitions.
+\c{%rep} and \c{%endrep} within multi-line macro definitions.
 
 \b Fixed a problem with buffer overrun in OBJ, which was causing
 corruption at ends of long PUBDEF records.
@@ -1348,7 +1348,7 @@ be tested thoroughly.
 \b Fixed some buffer overrun problems with large OBJ output files.
 Thanks to DJ Delorie for the bug report and fix.
 
-\b Made preprocess-only mode actually listen to the %line markers as it
+\b Made preprocess-only mode actually listen to the \c{%line} markers as it
 prints them, so that it can report errors more sanely.
 
 \b Re-designed the evaluator to keep more sensible track of expressions
@@ -1391,14 +1391,14 @@ work.
 \b Added the ability to specify sections' alignment requirements in
 Win32 object files and pure binary files.
 
-\b Added preprocess-time expression evaluation: the %assign (and
-%iassign) directive and the bare %if (and %elif) conditional. Added
-relational operators to the evaluator, for use only in %if
+\b Added preprocess-time expression evaluation: the \c{%assign} (and
+\c{%iassign}) directive and the bare \c{%if} (and \c{%elif}) conditional. Added
+relational operators to the evaluator, for use only in \c{%if}
 constructs: the standard relationals = < > <= >= <> (and C-like
 synonyms == and !=) plus low-precedence logical operators &&, ^^ and
 ||.
 
-\b Added a preprocessor repeat construct: %rep / %exitrep / %endrep.
+\b Added a preprocessor repeat construct: \c{%rep} / \c{%exitrep} / \c{%endrep}.
 
 \b Added the __FILE__ and __LINE__ standard macros.
 
@@ -1419,8 +1419,8 @@ COMMON to take more than one argument.
 \b Added the IMPORT and EXPORT directives in OBJ format, to deal with
 Windows DLLs.
 
-\b Added some more preprocessor %if constructs: %ifidn / %ifidni (exact
-textual identity), and %ifid / %ifnum / %ifstr (token type testing).
+\b Added some more preprocessor \c{%if} constructs: \c{%ifidn} / \c{%ifidni} (exact
+textual identity), and \c{%ifid} / \c{%ifnum} / \c{%ifstr} (token type testing).
 
 \b Added the ability to distinguish SHL AX,1 (the 8086 version) from
 SHL AX,BYTE 1 (the 286-and-upwards version whose constant happens to
