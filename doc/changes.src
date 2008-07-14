@@ -10,9 +10,9 @@ since 2007.
 
 \S{cl-2.04} Version 2.04
 
-\b Sanitize macro handing in the %error directive.
+\b Sanitize macro handing in the \c{%error} directive.
 
-\b New \c{%warning} preprocessor directive.
+\b New \c{%warning} directive to issue user-controlled warnings.
 
 \b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
   strings.
@@ -25,9 +25,7 @@ since 2007.
 
 \b Support for x87 packed BCD constants.
 
-\b New %warning directive to issue user-controlled warnings.
-
-\b New %strcat directive to join strings together.
+\b New \c{%strcat} directive to join strings together.
 
 \b Correct the \c{LTR} instruction in 64-bit mode.
 
