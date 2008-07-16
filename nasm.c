@@ -102,10 +102,11 @@ static const char *depend_file = NULL;
  * Which of the suppressible warnings are suppressed. Entry zero
  * isn't an actual warning, but it used for -w+error/-Werror.
  */
-static bool suppressed[ERR_WARN_MAX+1] = {
+static bool suppressed[ERR_WARN_MAX+1];
+
+static bool suppressed_global[ERR_WARN_MAX+1] = {
     true, false, true, false, false, true, false, true, true, false
 };
-
 /*
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
@@ -770,7 +771,7 @@ static bool process_arg(char *p, char *q)
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
                        suppressed_names[i], suppressed_what[i],
-                       suppressed[i] ? "off" : "on");
+                       suppressed_global[i] ? "off" : "on");
             printf
                 ("\nresponse files should contain command line parameters"
                  ", one per line.\n");
@@ -841,13 +842,13 @@ static bool process_arg(char *p, char *q)
 		if (!nasm_stricmp(param, suppressed_names[i]))
 		    break;
 	    if (i <= ERR_WARN_MAX)
-		suppressed[i] = suppress;
+		suppressed_global[i] = suppress;
 	    else if (!nasm_stricmp(param, "all"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed[i] = suppress;
+		    suppressed_global[i] = suppress;
 	    else if (!nasm_stricmp(param, "none"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed[i] = !suppress;
+		    suppressed_global[i] = !suppress;
 	    else
 		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			     "invalid warning `%s'", param);
@@ -1194,7 +1195,8 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         }
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist,
 		       pass1 == 2 ? depend_ptr : NULL);
-	    
+        memcpy(suppressed, suppressed_global, (ERR_WARN_MAX+1) * sizeof(bool));
+
         globallineno = 0;
         if (passn == 1)
             location.known = true;
@@ -1405,22 +1407,33 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     if (pass0 == 2)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
-                case D_WARNING:		/* [WARNING {+|-}warn-name] */
+                case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
                     if (pass1 == 1) {
                         while (*value && nasm_isspace(*value))
                             value++;
 
-                        if (*value == '+' || *value == '-') {
-                            validid = (*value == '-') ? true : false;
-                            value++;
-                        } else
-                            validid = false;
+                        switch(*value) {
+                            case '-': validid = 0; value++; break;
+                            case '+': validid = 1; value++; break;
+                            case '*': validid = 2; value++; break;
+                            default: /*
+                                       * Should this error out?
+                                       * I'll keep it so nothing breaks.
+                                       */
+                                      validid = 1; break;
+                        }
 
                         for (i = 1; i <= ERR_WARN_MAX; i++)
                             if (!nasm_stricmp(value, suppressed_names[i]))
                                 break;
-                        if (i <= ERR_WARN_MAX)
-                            suppressed[i] = validid;
+                        if (i <= ERR_WARN_MAX) {
+                            switch(validid) {
+                                case 0: suppressed[i] = true; break;
+                                case 1: suppressed[i] = false; break;
+                                case 2: suppressed[i] = suppressed_global[i];
+                                        break;
+                            }
+                        }
                         else
                             report_error(ERR_NONFATAL,
                                          "invalid warning id in WARNING directive");

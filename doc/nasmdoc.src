@@ -874,10 +874,11 @@ enabled by default.
 are used in \c{-f elf} format. The GNU extensions allow this. 
 This warning class is enabled by default.
 
-\b In addition, warning classes may be enabled or disabled across 
-sections of source code with \i\c{[warning +warning-name]} or 
-\i\c{[warning -warning-name]}. No "user form" (without the 
-brackets) exists. 
+\b In addition, you can set warning classes across sections.
+Warning classes may be enabled with \i\c{[warning +warning-name]},
+disabled with \i\c{[warning -warning-name]} or reset to their
+original value with \i\c{[warning *warning-name]}. No "user form"
+(without the brackets) exists.
 
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
