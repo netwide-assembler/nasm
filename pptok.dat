@@ -48,6 +48,8 @@
 %strlen
 %substr
 %undef
+%unimacro
+%unmacro
 %use
 %warning
 %xdefine

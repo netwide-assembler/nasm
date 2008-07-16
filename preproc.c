@@ -1802,6 +1802,82 @@ static void undef_smacro(Context *ctx, const char *mname)
 }
 
 /*
+ * Parse a mmacro specification.
+ */
+static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
+{
+    bool err;
+
+    tline = tline->next;
+    skip_white_(tline);
+    tline = expand_id(tline);
+    if (!tok_type_(tline, TOK_ID)) {
+	error(ERR_NONFATAL, "`%s' expects a macro name", directive);
+	return false;
+    }
+    def->name = nasm_strdup(tline->text);
+    def->plus = false;
+    def->nolist = false;
+    def->in_progress = 0;
+    def->rep_nest = NULL;
+    tline = expand_smacro(tline->next);
+    skip_white_(tline);
+    if (!tok_type_(tline, TOK_NUMBER)) {
+	error(ERR_NONFATAL, "`%s' expects a parameter count", directive);
+	def->nparam_min = def->nparam_max = 0;
+    } else {
+	def->nparam_min = def->nparam_max =
+	    readnum(tline->text, &err);
+	if (err)
+	    error(ERR_NONFATAL,
+		  "unable to parse parameter count `%s'", tline->text);
+    }
+    if (tline && tok_is_(tline->next, "-")) {
+	tline = tline->next->next;
+	if (tok_is_(tline, "*")) {
+	    def->nparam_max = INT_MAX;
+	} else if (!tok_type_(tline, TOK_NUMBER)) {
+	    error(ERR_NONFATAL,
+		  "`%s' expects a parameter count after `-'", directive);
+	} else {
+	    def->nparam_max = readnum(tline->text, &err);
+	    if (err) {
+		error(ERR_NONFATAL, "unable to parse parameter count `%s'",
+		      tline->text);
+	    }
+	    if (def->nparam_min > def->nparam_max) {
+		error(ERR_NONFATAL, "minimum parameter count exceeds maximum");
+	    }
+	}
+    }
+    if (tline && tok_is_(tline->next, "+")) {
+	tline = tline->next;
+	def->plus = true;
+    }
+    if (tline && tok_type_(tline->next, TOK_ID) &&
+	!nasm_stricmp(tline->next->text, ".nolist")) {
+	tline = tline->next;
+	def->nolist = true;
+    }
+
+    /*
+     * Handle default parameters.
+     */
+    if (tline && tline->next) {
+	def->dlist = tline->next;
+	tline->next = NULL;
+	count_mmac_params(def->dlist, &def->ndefs, &def->defaults);
+    } else {
+	def->dlist = NULL;
+	def->defaults = NULL;
+    }
+    def->expansion = NULL;
+
+    return true;
+}
+
+
+/*
  * Decode a size directive
  */
 static int parse_size(const char *str) {
@@ -2235,7 +2311,7 @@ static int do_directive(Token * tline)
         ctx->number = unique++;
         cstk = ctx;
         free_tlist(origline);
-        break;
+	return DIRECTIVE_FOUND;
 
     case PP_REPL:
         tline = tline->next;
@@ -2260,7 +2336,7 @@ static int do_directive(Token * tline)
             cstk->name = p;
         }
         free_tlist(origline);
-        break;
+	return DIRECTIVE_FOUND;
 
     case PP_POP:
         if (tline->next)
@@ -2270,7 +2346,7 @@ static int do_directive(Token * tline)
         else
             ctx_pop();
         free_tlist(origline);
-        break;
+	return DIRECTIVE_FOUND;
 
     case PP_ERROR:
     case PP_WARNING:
@@ -2296,7 +2372,7 @@ static int do_directive(Token * tline)
 	    nasm_free(p);
 	}
         free_tlist(origline);
-        break;
+	return DIRECTIVE_FOUND;
     }
 
     CASE_PP_IF:
@@ -2363,68 +2439,20 @@ static int do_directive(Token * tline)
 
     case PP_MACRO:
     case PP_IMACRO:
-        if (defining)
+        if (defining) {
             error(ERR_FATAL,
                   "`%%%smacro': already defining a macro",
                   (i == PP_IMACRO ? "i" : ""));
-        tline = tline->next;
-        skip_white_(tline);
-        tline = expand_id(tline);
-        if (!tok_type_(tline, TOK_ID)) {
-            error(ERR_NONFATAL,
-                  "`%%%smacro' expects a macro name",
-                  (i == PP_IMACRO ? "i" : ""));
-            return DIRECTIVE_FOUND;
-        }
+	    return DIRECTIVE_FOUND;
+	}
         defining = nasm_malloc(sizeof(MMacro));
-        defining->name = nasm_strdup(tline->text);
-        defining->casesense = (i == PP_MACRO);
-        defining->plus = false;
-        defining->nolist = false;
-        defining->in_progress = 0;
-        defining->rep_nest = NULL;
-        tline = expand_smacro(tline->next);
-        skip_white_(tline);
-        if (!tok_type_(tline, TOK_NUMBER)) {
-            error(ERR_NONFATAL,
-                  "`%%%smacro' expects a parameter count",
-                  (i == PP_IMACRO ? "i" : ""));
-            defining->nparam_min = defining->nparam_max = 0;
-        } else {
-            defining->nparam_min = defining->nparam_max =
-                readnum(tline->text, &err);
-            if (err)
-                error(ERR_NONFATAL,
-                      "unable to parse parameter count `%s'", tline->text);
-        }
-        if (tline && tok_is_(tline->next, "-")) {
-            tline = tline->next->next;
-            if (tok_is_(tline, "*"))
-                defining->nparam_max = INT_MAX;
-            else if (!tok_type_(tline, TOK_NUMBER))
-                error(ERR_NONFATAL,
-                      "`%%%smacro' expects a parameter count after `-'",
-                      (i == PP_IMACRO ? "i" : ""));
-            else {
-                defining->nparam_max = readnum(tline->text, &err);
-                if (err)
-                    error(ERR_NONFATAL,
-                          "unable to parse parameter count `%s'",
-                          tline->text);
-                if (defining->nparam_min > defining->nparam_max)
-                    error(ERR_NONFATAL,
-                          "minimum parameter count exceeds maximum");
-            }
-        }
-        if (tline && tok_is_(tline->next, "+")) {
-            tline = tline->next;
-            defining->plus = true;
-        }
-        if (tline && tok_type_(tline->next, TOK_ID) &&
-            !nasm_stricmp(tline->next->text, ".nolist")) {
-            tline = tline->next;
-            defining->nolist = true;
-        }
+	defining->casesense = (i == PP_MACRO);
+	if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
+	    nasm_free(defining);
+	    defining = NULL;
+	    return DIRECTIVE_FOUND;
+	}
+
         mmac = (MMacro *) hash_findix(&mmacros, defining->name);
         while (mmac) {
             if (!strcmp(mmac->name, defining->name) &&
@@ -2434,23 +2462,10 @@ static int do_directive(Token * tline)
                     || mmac->plus)) {
                 error(ERR_WARNING,
                       "redefining multi-line macro `%s'", defining->name);
-                break;
+		return DIRECTIVE_FOUND;
             }
             mmac = mmac->next;
         }
-        /*
-         * Handle default parameters.
-         */
-        if (tline && tline->next) {
-            defining->dlist = tline->next;
-            tline->next = NULL;
-            count_mmac_params(defining->dlist, &defining->ndefs,
-                              &defining->defaults);
-        } else {
-            defining->dlist = NULL;
-            defining->defaults = NULL;
-        }
-        defining->expansion = NULL;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2466,6 +2481,35 @@ static int do_directive(Token * tline)
         defining = NULL;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+
+    case PP_UNMACRO:
+    case PP_UNIMACRO:
+    {
+	MMacro **mmac_p;
+	MMacro spec;
+
+	spec.casesense = (i == PP_UNMACRO);
+	if (!parse_mmacro_spec(tline, &spec, pp_directives[i])) {
+	    return DIRECTIVE_FOUND;
+	}
+        mmac_p = (MMacro **) hash_findi(&mmacros, spec.name, NULL);
+        while (mmac_p && *mmac_p) {
+	    mmac = *mmac_p;
+            if (mmac->casesense == spec.casesense &&
+		!mstrcmp(mmac->name, spec.name, spec.casesense) &&
+                mmac->nparam_min == spec.nparam_min &&
+                mmac->nparam_max == spec.nparam_max &&
+		mmac->plus == spec.plus) {
+		*mmac_p = mmac->next;
+		free_mmacro(mmac);
+	    } else {
+		mmac_p = &mmac->next;
+	    }
+	}
+	free_tlist(origline);
+	free_tlist(spec.dlist);
+	return DIRECTIVE_FOUND;
+    }
 
     case PP_ROTATE:
         if (tline->next && tline->next->type == TOK_WHITESPACE)
@@ -2604,7 +2648,7 @@ static int do_directive(Token * tline)
          */
         for (l = istk->expansion; l; l = l->next)
             if (l->finishes && !l->finishes->name)
-                break;
+		return DIRECTIVE_FOUND;
 
         if (l)
             l->finishes->in_progress = 1;
@@ -2675,7 +2719,7 @@ static int do_directive(Token * tline)
                     free_tlist(origline);
                     return DIRECTIVE_FOUND;
                 }
-                break;
+                return DIRECTIVE_FOUND;
             }
             last = tline;
             tline = tline->next;
@@ -3150,9 +3194,8 @@ static int do_directive(Token * tline)
         error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
               pp_directives[i]);
-        break;
+	return DIRECTIVE_FOUND;
     }
-    return DIRECTIVE_FOUND;
 }
 
 /*
