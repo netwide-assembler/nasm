@@ -1712,7 +1712,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 	    goto fail;
         }
         j = reloc_value(evalresult) != 0;
-        return j;
+	break;
 
     default:
         error(ERR_FATAL,
