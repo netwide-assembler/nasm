@@ -1871,10 +1871,9 @@ static int do_directive(Token * tline)
 
     /*
      * If we're defining a macro or reading a %rep block, we should
-     * ignore all directives except for %macro/%imacro (which
-     * generate an error), %endm/%endmacro, and (only if we're in a
-     * %rep block) %endrep. If we're in a %rep block, another %rep
-     * causes an error, so should be let through.
+     * ignore all directives except for %macro/%imacro (which nest),
+     * %endm/%endmacro, and (only if we're in a %rep block) %endrep.
+     * If we're in a %rep block, another %rep nests, so should be let through.
      */
     if (defining && i != PP_MACRO && i != PP_IMACRO &&
         i != PP_ENDMACRO && i != PP_ENDM &&
@@ -2457,7 +2456,7 @@ static int do_directive(Token * tline)
 
     case PP_ENDM:
     case PP_ENDMACRO:
-        if (!defining) {
+        if (! (defining && defining->name)) {
             error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
             return DIRECTIVE_FOUND;
         }
@@ -4339,8 +4338,14 @@ static char *pp_getline(void)
 static void pp_cleanup(int pass)
 {
     if (defining) {
-        error(ERR_NONFATAL, "end of file while still defining macro `%s'",
-              defining->name);
+        if(defining->name) {
+            error(ERR_NONFATAL,
+                  "end of file while still defining macro `%s'",
+                  defining->name);
+        } else {
+            error(ERR_NONFATAL, "end of file while still in %%rep");
+        }
+
         free_mmacro(defining);
     }
     while (cstk)
