@@ -4,8 +4,9 @@
 USE: smartalign
 
 %imacro alignmode 1-2.nolist
-  %define __ALIGN_JMP_THRESHOLD__ 17
   %ifidni %1,nop
+    %define __ALIGN_JMP_THRESHOLD__ 16
+
     %define __ALIGN_16BIT_1B__ 0x90
     %define __ALIGN_16BIT_2B__ 0x90,0x90
     %define __ALIGN_16BIT_3B__ 0x90,0x90,0x90
@@ -33,6 +34,8 @@ USE: smartalign
     %define __ALIGN_64BIT_7B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_64BIT_8B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90
   %elifidni %1,generic
+    %define __ALIGN_JMP_THRESHOLD__ 8
+
     %define __ALIGN_16BIT_1B__ 0x90
     %define __ALIGN_16BIT_2B__ 0x89,0xf6
     %define __ALIGN_16BIT_3B__ 0x8d,0x74,0x00
@@ -60,6 +63,8 @@ USE: smartalign
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
   %elifidni %1,k8
+    %define __ALIGN_JMP_THRESHOLD__ 16
+
     %define __ALIGN_16BIT_1B__ 0x90
     %define __ALIGN_16BIT_2B__ 0x66,0x90
     %define __ALIGN_16BIT_3B__ 0x66,0x66,0x90
@@ -87,6 +92,8 @@ USE: smartalign
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
   %elifidni %1,k7
+    %define __ALIGN_JMP_THRESHOLD__ 16
+
     %define __ALIGN_16BIT_1B__ 0x90
     %define __ALIGN_16BIT_2B__ 0x66,0x90
     %define __ALIGN_16BIT_3B__ 0x66,0x66,0x90
@@ -114,6 +121,8 @@ USE: smartalign
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
   %elifidni %1,p6
+    %define __ALIGN_JMP_THRESHOLD__ 16
+
     %define __ALIGN_16BIT_1B__ 0x90
     %define __ALIGN_16BIT_2B__ 0x66,0x90
     %define __ALIGN_16BIT_3B__ 0x0f,0x1f,0x00
@@ -156,7 +165,7 @@ USE: smartalign
   %else
     %push
     %assign %$pad ($$-$) % %1
-    %if %$pad >= __ALIGN_JMP_THRESHOLD__
+    %if %$pad > __ALIGN_JMP_THRESHOLD__
       jmp %%end
       ; We can't re-use %$pad here as $ will have changed!
       times ($$-$) % %1 db 90h
