@@ -166,10 +166,10 @@ USE: smartalign
     %push
     %assign %$pad ($$-$) % %1
     %if %$pad > __ALIGN_JMP_THRESHOLD__
-      jmp %%end
+      jmp %$end
       ; We can't re-use %$pad here as $ will have changed!
       times ($$-$) % %1 db 90h
-%%end:
+%$end:
     %else
       %if __BITS__ == 16
         %ifdef __ALIGN_16BIT_8B__
