@@ -68,10 +68,7 @@ __SECT__
 %imacro align 1-2+.nolist nop
 	  times ($$-$) % (%1) %2
 %endmacro
-%imacro alignb 1-2+.nolist resb 1
-	  times ($$-$) % (%1) %2
-%endmacro
-%imacro alignr 1-2+.nolist
+%imacro alignb 1-2+.nolist
 	  %ifempty %2
 	  	resb ($$-$) % (%1)
 	  %else
