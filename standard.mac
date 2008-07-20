@@ -71,6 +71,13 @@ __SECT__
 %imacro alignb 1-2+.nolist resb 1
 	  times ($$-$) % (%1) %2
 %endmacro
+%imacro alignr 1-2+.nolist
+	  %ifempty %2
+	  	resb ($$-$) % (%1)
+	  %else
+		times ($$-$) % (%1) %2
+	  %endif
+%endmacro
 
 %imacro extern 1-*.nolist
 %rep %0
