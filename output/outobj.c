@@ -346,8 +346,11 @@ static ObjRecord *obj_x(ObjRecord * orp, uint32_t val)
         orp->x_size = 32;
     if (val > 0xFFFF)
         orp = obj_force(orp, 32);
-    if (orp->x_size == 32)
-        return (obj_dword(orp, val));
+    if (orp->x_size == 32) {
+	ObjRecord *nxt = obj_dword(orp, val);
+	nxt->x_size = 32;	/* x_size is cleared when a record overflows */
+	return nxt;
+    }
     orp->x_size = 16;
     return (obj_word(orp, val));
 }
