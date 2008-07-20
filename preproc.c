@@ -368,13 +368,13 @@ static uint64_t nested_rep_count;
  * The standard macro set: defined in macros.c in the array nasm_stdmac.
  * This gives our position in the macro set, when we're processing it.
  */
-static const macros_t *stdmacpos;
+static macros_t *stdmacpos;
 
 /*
  * The extra standard macros that come from the object format, if
  * any.
  */
-static const macros_t *extrastdmac = NULL;
+static macros_t *extrastdmac = NULL;
 static bool any_extrastdmac;
 
 /*
@@ -2258,7 +2258,7 @@ static int do_directive(Token * tline)
 
     case PP_USE:
     {
-	static const macros_t *use_pkg;
+	static macros_t *use_pkg;
 	const char *pkg_macro;
 
 	t = tline->next = expand_smacro(tline->next);
@@ -4509,7 +4509,7 @@ void pp_runtime(char *definition)
 
 }
 
-void pp_extra_stdmac(const macros_t *macros)
+void pp_extra_stdmac(macros_t *macros)
 {
     extrastdmac = macros;
 }

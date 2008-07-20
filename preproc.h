@@ -23,6 +23,6 @@ void pp_pre_include(char *);
 void pp_pre_define(char *);
 void pp_pre_undefine(char *);
 void pp_runtime(char *);
-void pp_extra_stdmac(const macros_t *);
+void pp_extra_stdmac(macros_t *);
 
 #endif

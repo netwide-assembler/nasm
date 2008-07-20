@@ -751,7 +751,7 @@ struct ofmt {
      * and user-level equivalents for any format-specific
      * directives).
      */
-    const macros_t *stdmac;
+    macros_t *stdmac;
 
     /*
      * This procedure is called at the start of an output session.
