@@ -143,7 +143,7 @@ static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, int32_t, int);
 static int op_rexflags(const operand *, int);
-static ea *process_ea(operand *, ea *, int, int, int, int32_t, int);
+static ea *process_ea(operand *, ea *, int, int, int, int32_t);
 static void add_asp(insn *, int);
 
 static int has_prefix(insn * ins, enum prefix_pos pos, enum prefixes prefix)
@@ -744,49 +744,48 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     return -1;                  /* didn't match any instruction */
 }
 
-static bool possible_sbyte(insn * ins, int op)
+static bool possible_sbyte(operand *o)
 {
-    return !(ins->forw_ref && ins->oprs[op].opflags) &&
-        optimizing >= 0 &&
-        !(ins->oprs[op].type & STRICT) &&
-        ins->oprs[op].wrt == NO_SEG && ins->oprs[op].segment == NO_SEG;
+    return !(o->opflags & OPFLAG_FORWARD) &&
+	optimizing >= 0 && !(o->type & STRICT) &&
+	o->wrt == NO_SEG && o->segment == NO_SEG;
 }
 
 /* check that opn[op]  is a signed byte of size 16 or 32 */
-static bool is_sbyte16(insn * ins, int op)
+static bool is_sbyte16(operand *o)
 {
     int16_t v;
 
-    if (!possible_sbyte(ins, op))
+    if (!possible_sbyte(o))
 	return false;
 
-    v = ins->oprs[op].offset;
+    v = o->offset;
     return v >= -128 && v <= 127;
 }
 
-static bool is_sbyte32(insn * ins, int op)
+static bool is_sbyte32(operand *o)
 {
     int32_t v;
 
-    if (!possible_sbyte(ins, op))
+    if (!possible_sbyte(o))
 	return false;
 
-    v = ins->oprs[op].offset;
+    v = o->offset;
     return v >= -128 && v <= 127;
 }
 
 /* check that  opn[op]  is a signed byte of size 32; warn if this is not
    the original value when extended to 64 bits */
-static bool is_sbyte64(insn * ins, int op)
+static bool is_sbyte64(operand *o)
 {
     int64_t v64;
     int32_t v32;
 
     /* dead in the water on forward reference or External */
-    if (!possible_sbyte(ins, op))
+    if (!possible_sbyte(o))
 	return false;
 
-    v64 = ins->oprs[op].offset;
+    v64 = o->offset;
     v32 = (int32_t)v64;
 
     warn_overflow(32, v64);
@@ -920,7 +919,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0141:
         case 0142:
 	case 0143:
-            length += is_sbyte16(ins, c & 3) ? 1 : 2;
+            length += is_sbyte16(opx) ? 1 : 2;
             break;
         case 0144:
         case 0145:
@@ -933,7 +932,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0151:
         case 0152:
         case 0153:
-            length += is_sbyte32(ins, c & 3) ? 1 : 4;
+            length += is_sbyte32(opx) ? 1 : 4;
             break;
         case 0154:
         case 0155:
@@ -970,7 +969,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0251:
         case 0252:
         case 0253:
-            length += is_sbyte64(ins, c & 3) ? 1 : 4;
+            length += is_sbyte64(opx) ? 1 : 4;
             break;
 	case 0260:
 	case 0261:
@@ -1088,7 +1087,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
                 if (!process_ea
                     (&ins->oprs[(c >> 3) & 7], &ea_data, bits,
-		     ins->addr_size, rfield, rflags, ins->forw_ref)) {
+		     ins->addr_size, rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
                 } else {
@@ -1464,7 +1463,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0142:
 	case 0143:
             data = opx->offset;
-            if (is_sbyte16(ins, c & 3)) {
+            if (is_sbyte16(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1485,7 +1484,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0147:
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte16(ins, c & 3))
+            if (is_sbyte16(opx))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1496,7 +1495,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0152:
 	case 0153:
             data = opx->offset;
-            if (is_sbyte32(ins, c & 3)) {
+            if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1514,7 +1513,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0157:
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte32(ins, c & 3))
+            if (is_sbyte32(opx))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1583,7 +1582,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0253:
             data = opx->offset;
 	    /* is_sbyte32() is right here, we have already warned */
-            if (is_sbyte32(ins, c & 3)) {
+            if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1778,7 +1777,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
                 if (!process_ea
                     (&ins->oprs[(c >> 3) & 7], &ea_data, bits,
-		     ins->addr_size, rfield, rflags, ins->forw_ref)) {
+		     ins->addr_size, rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }
 
@@ -2064,8 +2063,10 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 }
 
 static ea *process_ea(operand * input, ea * output, int bits,
-		      int addrbits, int rfield, int32_t rflags, int forw_ref)
+		      int addrbits, int rfield, int32_t rflags)
 {
+    bool forw_ref = !!(input->opflags & OPFLAG_FORWARD);
+
     output->rip = false;
 
     /* REX flags for the rfield operand */
