@@ -750,9 +750,9 @@ MOV		reg32,reg_creg			\334\2\x0F\x20\101				386,PRIV,NOLONG
 MOV		reg64,reg_creg			\323\2\x0F\x20\101				X64,PRIV
 MOV		reg_creg,reg32			\334\2\x0F\x22\110				386,PRIV,NOLONG
 MOV		reg_creg,reg64			\323\2\x0F\x22\110				X64,PRIV
-MOV		reg32,reg_dreg			\2\x0F\x21\101					386,PRIV
+MOV		reg32,reg_dreg			\2\x0F\x21\101					386,PRIV,NOLONG
 MOV		reg64,reg_dreg			\323\2\x0F\x21\101				X64,PRIV
-MOV		reg_dreg,reg32			\2\x0F\x23\110					386,PRIV
+MOV		reg_dreg,reg32			\2\x0F\x23\110					386,PRIV,NOLONG
 MOV		reg_dreg,reg64			\323\2\x0F\x23\110				X64,PRIV
 MOV		reg32,reg_treg			\2\x0F\x24\101					386,NOLONG,ND
 MOV		reg_treg,reg32			\2\x0F\x26\110					386,NOLONG,ND
