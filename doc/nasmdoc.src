@@ -2206,9 +2206,9 @@ or a numeric value) to a single-line macro.
 
 \S{strcat} \i{Concatenating Strings}: \i\c{%strcat}
 
-The \{%strcat} operator concatenates quoted strings and assign them to
+The \c{%strcat} operator concatenates quoted strings and assign them to
 a single-line macro.  In doing so, it may change the type of quotes
-and possibly use \c{\}-escapes inside \c{`}-quoted strings in order to
+and possibly use \c{\\}-escapes inside \c{`}-quoted strings in order to
 make sure the string is still a valid quoted string.
 
 For example:
@@ -2222,7 +2222,7 @@ Similarly:
 
 ... would assign the value \c{`"'`} to \c{beta}.
 
-The use of commas to separate strings are permitted but optional.
+The use of commas to separate strings is permitted but optional.
 
 
 \S{strlen} \i{String Length}: \i\c{%strlen}
@@ -2773,10 +2773,10 @@ of \c{%ifmacro}. Additional tests can be performed in \c{%elif} blocks by using
 \S{ifctx} \i\c{%ifctx}: Testing the Context Stack\I{testing, context
 stack}
 
-The conditional-assembly construct \c{%ifctx ctxname} will cause the
+The conditional-assembly construct \c{%ifctx} will cause the
 subsequent code to be assembled if and only if the top context on
-the preprocessor's context stack has the name \c{ctxname}. As with
-\c{%ifdef}, the inverse and \c{%elif} forms \i\c{%ifnctx},
+the preprocessor's context stack has the same name as one of the arguments.
+As with \c{%ifdef}, the inverse and \c{%elif} forms \i\c{%ifnctx},
 \i\c{%elifctx} and \i\c{%elifnctx} are also supported.
 
 For more details of the context stack, see \k{ctxstack}. For a

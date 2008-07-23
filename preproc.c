@@ -1486,15 +1486,17 @@ static bool if_condition(Token * tline, enum preproc_token ct)
     switch (i) {
     case PPC_IFCTX:
         j = false;              /* have we matched yet? */
-        while (cstk && tline) {
+        while (true) {
             skip_white_(tline);
-            if (!tline || tline->type != TOK_ID) {
+            if (!tline)
+                break;
+            if (tline->type != TOK_ID) {
                 error(ERR_NONFATAL,
                       "`%s' expects context identifiers", pp_directives[ct]);
                 free_tlist(origline);
                 return -1;
             }
-            if (cstk->name && !nasm_stricmp(tline->text, cstk->name))
+            if (cstk && cstk->name && !nasm_stricmp(tline->text, cstk->name))
                 j = true;
             tline = tline->next;
         }
