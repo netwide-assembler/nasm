@@ -2658,7 +2658,7 @@ static int do_directive(Token * tline)
          */
         for (l = istk->expansion; l; l = l->next)
             if (l->finishes && !l->finishes->name)
-		return DIRECTIVE_FOUND;
+		break;
 
         if (l)
             l->finishes->in_progress = 1;
@@ -2721,15 +2721,15 @@ static int do_directive(Token * tline)
                 skip_white_(tline);
                 if (tok_is_(tline, ",")) {
                     tline = tline->next;
-                    continue;
-                }
-                if (!tok_is_(tline, ")")) {
-                    error(ERR_NONFATAL,
-                          "`)' expected to terminate macro template");
-                    free_tlist(origline);
-                    return DIRECTIVE_FOUND;
-                }
-                return DIRECTIVE_FOUND;
+                } else {
+		    if (!tok_is_(tline, ")")) {
+			error(ERR_NONFATAL,
+			      "`)' expected to terminate macro template");
+			free_tlist(origline);
+			return DIRECTIVE_FOUND;
+		    }
+		    break;
+		}
             }
             last = tline;
             tline = tline->next;
