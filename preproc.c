@@ -1647,6 +1647,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		}
 		mmac = mmac->next;
 	    }
+            if(tline && tline->next)
+                error(ERR_WARNING, "trailing garbage after %%ifmacro ignored");
             nasm_free(searching.name);
 	    j = found;
 	    break;
@@ -1817,16 +1819,19 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	error(ERR_NONFATAL, "`%s' expects a macro name", directive);
 	return false;
     }
+
     def->name = nasm_strdup(tline->text);
     def->plus = false;
     def->nolist = false;
     def->in_progress = 0;
     def->rep_nest = NULL;
+    def->nparam_min = 0;
+    def->nparam_max = 0;
+
     tline = expand_smacro(tline->next);
     skip_white_(tline);
     if (!tok_type_(tline, TOK_NUMBER)) {
 	error(ERR_NONFATAL, "`%s' expects a parameter count", directive);
-	def->nparam_min = def->nparam_max = 0;
     } else {
 	def->nparam_min = def->nparam_max =
 	    readnum(tline->text, &err);
@@ -1874,6 +1879,9 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	def->defaults = NULL;
     }
     def->expansion = NULL;
+
+    if(def->defaults && def->ndefs > def->nparam_max - def->nparam_min)
+        error(ERR_WARNING, "too much default macro parameters");
 
     return true;
 }
