@@ -1178,6 +1178,8 @@ SLDT		mem				\2\x0F\x00\200					286
 SLDT		mem16				\2\x0F\x00\200					286
 SLDT		reg16				\320\2\x0F\x00\200				286
 SLDT		reg32				\321\2\x0F\x00\200				386
+SLDT		reg64				\323\2\x0F\x00\200				X64,ND
+SLDT		reg64				\324\2\x0F\x00\200				X64
 SKINIT		void				\3\x0F\x01\xDE					X64
 SMI		void				\1\xF1						386,UNDOC
 SMINT		void				\2\x0F\x38					P6,CYRIX,ND
