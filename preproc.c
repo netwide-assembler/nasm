@@ -3493,7 +3493,7 @@ again:
 		    if (!m->expansion) {
 			if (!strcmp("__FILE__", m->name)) {
 			    int32_t num = 0;
-			    char *file;
+			    char *file = NULL;
 			    src_get(&num, &file);
 			    tline->text = nasm_quote(file, strlen(file));
 			    tline->type = TOK_STRING;
