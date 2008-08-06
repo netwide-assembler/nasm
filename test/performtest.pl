@@ -133,7 +133,7 @@ die "Please specify either --nasm or --clean. Use --help for help.\n"
 unless $nasm or $clean;
 die "Please specify the test files, e.g. *.asm\n" unless @ARGV;
 
-unless (-x $nasm) {
+unless (!defined $nasm or -x $nasm) {
   warn "Warning: $nasm may not be executable. Expect problems.\n\n";
   sleep 5;
 }
