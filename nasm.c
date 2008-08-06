@@ -105,16 +105,16 @@ static const char *depend_file = NULL;
 static bool suppressed[ERR_WARN_MAX+1];
 
 static bool suppressed_global[ERR_WARN_MAX+1] = {
-    true, false, true, false, false, true, false, true, true, false
+    true, false, true, false, false, false, true, false, true, true, false
 };
 /*
  * The option names for the suppressible warnings. As before, entry
  * zero does nothing.
  */
 static const char *suppressed_names[ERR_WARN_MAX+1] = {
-    "error", "macro-params", "macro-selfref", "orphan-labels",
-    "number-overflow", "gnu-elf-extensions", "float-overflow",
-    "float-denorm", "float-underflow", "float-toolong"
+    "error", "macro-params", "macro-selfref", "macro-defaults",
+    "orphan-labels", "number-overflow", "gnu-elf-extensions",
+    "float-overflow", "float-denorm", "float-underflow", "float-toolong"
 };
 
 /*
@@ -125,6 +125,7 @@ static const char *suppressed_what[ERR_WARN_MAX+1] = {
     "treat warnings as errors",
     "macro calls with wrong parameter count",
     "cyclic macro references",
+    "macros with more default than optional parameters",
     "labels alone on lines without trailing `:'",
     "numeric constants does not fit in 64 bits",
     "using 8- or 16-bit relocation in ELF32, a GNU extension",

@@ -1880,8 +1880,10 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     }
     def->expansion = NULL;
 
-    if(def->defaults && def->ndefs > def->nparam_max - def->nparam_min)
-        error(ERR_WARNING, "too much default macro parameters");
+        if(def->defaults &&
+           def->ndefs > def->nparam_max - def->nparam_min &&
+           !def->plus)
+         error(ERR_WARNING | ERR_WARN_MDP, "too many default macro parameters");
 
     return true;
 }

@@ -71,28 +71,29 @@ extern efunc nasm_malloc_error;
 #define ERR_NOFILE	0x00000010      /* don't give source file name/line */
 #define ERR_USAGE	0x00000020      /* print a usage message */
 #define ERR_PASS1	0x00000040      /* only print this error on pass one */
-#define ERR_NO_SEVERITY 0x00000080	/* suppress printing severity */
+#define ERR_NO_SEVERITY	0x00000080      /* suppress printing severity */
 
 /*
  * These codes define specific types of suppressible warning.
  */
 
 #define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR  8			/* how far to shift right */
+#define ERR_WARN_SHR 	8               /* how far to shift right */
 
 #define WARN(x) ((x) << ERR_WARN_SHR)
 
-#define ERR_WARN_MNP		WARN(1) /* macro-num-parameters warning */
-#define ERR_WARN_MSR		WARN(2) /* macro self-reference */
-#define ERR_WARN_OL		WARN(3)	/* orphan label (no colon, and
-                                         * alone on line) */
-#define ERR_WARN_NOV		WARN(4)	/* numeric overflow */
-#define ERR_WARN_GNUELF		WARN(5)	/* using GNU ELF extensions */
-#define ERR_WARN_FL_OVERFLOW	WARN(6) /* FP overflow */
-#define ERR_WARN_FL_DENORM	WARN(7) /* FP denormal */
-#define ERR_WARN_FL_UNDERFLOW	WARN(8)	/* FP underflow */
-#define ERR_WARN_FL_TOOLONG	WARN(9) /* FP too many digits */
-#define ERR_WARN_MAX	9		/* the highest numbered one */
+#define ERR_WARN_MNP		WARN( 1) /* macro-num-parameters warning */
+#define ERR_WARN_MSR		WARN( 2) /* macro self-reference */
+#define ERR_WARN_MDP		WARN( 3) /* macro default parameters check */
+#define ERR_WARN_OL 		WARN( 4) /* orphan label (no colon, and
+                                          * alone on line) */
+#define ERR_WARN_NOV		WARN( 5) /* numeric overflow */
+#define ERR_WARN_GNUELF		WARN( 6) /* using GNU ELF extensions */
+#define ERR_WARN_FL_OVERFLOW	WARN( 7) /* FP overflow */
+#define ERR_WARN_FL_DENORM	WARN( 8) /* FP denormal */
+#define ERR_WARN_FL_UNDERFLOW	WARN( 9) /* FP underflow */
+#define ERR_WARN_FL_TOOLONG	WARN(10) /* FP too many digits */
+#define ERR_WARN_MAX	10               /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
