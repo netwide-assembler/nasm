@@ -806,7 +806,8 @@ MOVSX		reg32,rm8			\321\2\x0F\xBE\110				386
 MOVSX		reg32,rm16			\321\2\x0F\xBF\110				386
 MOVSX		reg64,rm8			\324\2\x0F\xBE\110				X64
 MOVSX		reg64,rm16			\324\2\x0F\xBF\110				X64
-MOVSX		reg64,rm32			\324\1\x63\110					X64
+MOVSXD		reg64,rm32			\324\1\x63\110					X64
+MOVSX		reg64,rm32			\324\1\x63\110					X64,ND
 MOVZX		reg16,mem			\320\2\x0F\xB6\110				386,SB
 MOVZX		reg16,reg8			\320\2\x0F\xB6\110				386
 MOVZX		reg32,rm8			\321\2\x0F\xB6\110				386
