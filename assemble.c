@@ -975,14 +975,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	case 0261:
 	case 0262:
 	case 0263:
-	    length += 2;
 	    ins->rex |= REX_V;
 	    ins->drexdst = regval(opx);
 	    ins->vex_m = *codes++;
 	    ins->vex_wlp = *codes++;
 	    break;
 	case 0270:
-	    length += 2;
 	    ins->rex |= REX_V;
 	    ins->drexdst = 0;
 	    ins->vex_m = *codes++;
