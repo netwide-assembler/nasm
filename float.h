@@ -10,6 +10,8 @@
 #ifndef NASM_FLOAT_H
 #define NASM_FLOAT_H
 
+#include "nasm.h"
+
 enum float_round {
     FLOAT_RC_NEAR,
     FLOAT_RC_ZERO,
