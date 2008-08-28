@@ -2191,6 +2191,18 @@ AESDECLAST	xmmreg,xmmrm			[rm:	66 0f 38 df /r]				WESTMERE,SO
 AESIMC		xmmreg,xmmrm			[rm:	66 0f 38 db /r]				WESTMERE,SO
 AESKEYGENASSIST	xmmreg,xmmrm,imm		[rmi:	66 0f 3a df /r ib]			WESTMERE,SO
 
+;# Intel AVX AES instructions
+VAESENC		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE,SO
+VAESENC		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE,SO
+VAESENCLAST	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 dd /r]		AVX,SANDYBRIDGE,SO
+VAESENCLAST	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 dd /r]		AVX,SANDYBRIDGE,SO
+VAESDEC		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
+VAESDEC		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
+VAESDECLAST	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
+VAESDECLAST	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
+VAESIMC		xmmreg,xmmrm			[rm:	vex.128.66.0f38 db /r]			AVX,SANDYBRIDGE,SO
+VAESKEYGENASSIST	xmmreg,xmmrm,imm	[rmi:	vex.128.66.0f3a df /r ib]		AVX,SANDYBRIDGE,SO
+
 ;# Intel AVX instructions
 VADDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
 VADDPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
