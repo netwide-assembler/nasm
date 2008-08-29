@@ -1524,7 +1524,8 @@ MASKMOVDQU	xmmreg,xmmreg			\361\2\x0F\xF7\110				WILLAMETTE,SSE2
 ; CLFLUSH needs its own feature flag implemented one day
 CLFLUSH		mem				\2\x0F\xAE\207					WILLAMETTE,SSE2
 MOVNTDQ		mem,xmmreg			\361\2\x0F\xE7\101				WILLAMETTE,SSE2,SO
-MOVNTI		mem,reg32			\360\2\x0F\xC3\101				WILLAMETTE,SSE2,SD
+MOVNTI		mem,reg32			\360\2\x0F\xC3\101				WILLAMETTE,SD
+MOVNTI		mem,reg64			\324\360\2\x0F\xC3\101				X64,SQ
 MOVNTPD		mem,xmmreg			\361\2\x0F\x2B\101				WILLAMETTE,SSE2,SO
 LFENCE		void				\3\x0F\xAE\xE8					WILLAMETTE,SSE2
 MFENCE		void				\3\x0F\xAE\xF0					WILLAMETTE,SSE2
