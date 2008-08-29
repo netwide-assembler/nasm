@@ -1735,11 +1735,13 @@ VMLOAD		void				\3\x0F\x01\xDA					X64,VMX
 VMMCALL		void				\3\x0F\x01\xD9					X64,VMX
 VMPTRLD		mem				\2\x0F\xC7\206					VMX
 VMPTRST		mem				\2\x0F\xC7\207					VMX
-VMREAD		rm32,reg32			\360\2\x0F\x78\101				VMX
+VMREAD		rm32,reg32			\360\2\x0F\x78\101				VMX,NOLONG
+VMREAD		rm64,reg64			\323\360\2\x0F\x78\101				X64,VMX
 VMRESUME	void				\3\x0F\x01\xC3					VMX
 VMRUN		void				\3\x0F\x01\xD8					X64,VMX
 VMSAVE		void				\3\x0F\x01\xDB					X64,VMX
-VMWRITE		reg32,rm32			\360\2\x0F\x79\110				VMX
+VMWRITE		reg32,rm32			\360\2\x0F\x79\110				VMX,NOLONG
+VMWRITE		reg64,rm64			\323\360\2\x0F\x79\110				X64,VMX
 VMXOFF		void				\3\x0F\x01\xC4					VMX
 VMXON		mem				\363\2\x0F\xC7\206				VMX
 ;# Extended Page Tables VMX instructions
