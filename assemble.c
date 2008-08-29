@@ -93,6 +93,9 @@
  * \333          - REP prefix (0xF3 byte) used as opcode extension.
  * \334          - LOCK prefix used instead of REX.R
  * \335          - disassemble a rep (0xF3 byte) prefix as repe not rep.
+ * \336          - force a REP(E) prefix (0xF2) even if not specified.
+ * \337		 - force a REPNE prefix (0xF3) even if not specified.
+ *                 \336-\337 are still listed as prefixes in the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
  * \360		 - no SSE prefix (== \364\331)
@@ -1039,6 +1042,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    break;
         case 0335:
 	    break;
+	case 0336:
+	    if (!ins->prefixes[PPS_LREP])
+		ins->prefixes[PPS_LREP] = P_REP;
+	    break;
+	case 0337:
+	    if (!ins->prefixes[PPS_LREP])
+		ins->prefixes[PPS_LREP] = P_REPNE;
+	    break;
         case 0340:
             if (ins->oprs[0].segment != NO_SEG)
                 errfunc(ERR_NONFATAL, "attempt to reserve non-constant"
@@ -1703,6 +1714,10 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0335:
+	    break;
+
+        case 0336:
+        case 0337:
 	    break;
 
         case 0340:

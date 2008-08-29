@@ -882,6 +882,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 drep = P_REPE;
 	    break;
 
+	case 0336:
+	case 0337:
+	    break;
+
 	case 0340:
 	    return false;
 

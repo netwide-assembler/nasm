@@ -3333,14 +3333,15 @@ VFNMSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rsmv:	vex.nds.128.66.0f3a.w0 7e /r /is4]	F
 VFNMSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rsvm:	vex.nds.128.66.0f3a.w1 7e /r /is4]	FMA,SANDYBRIDGE,SD
 
 ;# VIA (Centaur) security instructions
-XSTORE		void				\360\3\x0F\xA7\xC0				PENT,CYRIX
-XCRYPTECB	void				\363\3\x0F\xA7\xC8				PENT,CYRIX
-XCRYPTCBC	void				\363\3\x0F\xA7\xD0				PENT,CYRIX
-XCRYPTCFB	void				\363\3\x0F\xA7\xE0				PENT,CYRIX
-XCRYPTOFB	void				\363\3\x0F\xA7\xE8				PENT,CYRIX
-MONTMUL		void				\363\3\x0F\xA6\xC0				PENT,CYRIX
-XSHA1		void				\363\3\x0F\xA6\xC8				PENT,CYRIX
-XSHA256		void				\363\3\x0F\xA6\xD0				PENT,CYRIX
+XSTORE		void				\3\x0F\xA7\xC0					PENT,CYRIX
+XCRYPTECB	void				\336\3\x0F\xA7\xC8				PENT,CYRIX
+XCRYPTCBC	void				\336\3\x0F\xA7\xD0				PENT,CYRIX
+XCRYPTCTR	void				\336\3\x0F\xA7\xD8				PENT,CYRIX
+XCRYPTCFB	void				\336\3\x0F\xA7\xE0				PENT,CYRIX
+XCRYPTOFB	void				\336\3\x0F\xA7\xE8				PENT,CYRIX
+MONTMUL		void				\336\3\x0F\xA6\xC0				PENT,CYRIX
+XSHA1		void				\336\3\x0F\xA6\xC8				PENT,CYRIX
+XSHA256		void				\336\3\x0F\xA6\xD0				PENT,CYRIX
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
