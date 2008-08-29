@@ -210,9 +210,11 @@ CALL		imm16:imm			\320\1\x9A\31\30				8086,NOLONG
 CALL		imm:imm16			\320\1\x9A\31\30				8086,NOLONG
 CALL		imm32:imm			\321\1\x9A\41\30				386,NOLONG
 CALL		imm:imm32			\321\1\x9A\41\30				386,NOLONG
-CALL		mem|far				\322\1\xFF\203					8086
+CALL		mem|far				\322\1\xFF\203					8086,NOLONG
+CALL		mem|far				\324\1\xFF\203					X64
 CALL		mem16|far			\320\1\xFF\203					8086
 CALL		mem32|far			\321\1\xFF\203					386
+CALL		mem64|far			\324\1\xFF\203					X64
 CALL		mem|near			\322\1\xFF\202					8086
 CALL		mem16|near			\320\1\xFF\202					8086
 CALL		mem32|near			\321\1\xFF\202					386,NOLONG
@@ -632,9 +634,11 @@ JMP		imm16:imm			\320\1\xEA\31\30				8086,NOLONG
 JMP		imm:imm16			\320\1\xEA\31\30				8086,NOLONG
 JMP		imm32:imm			\321\1\xEA\41\30				386,NOLONG
 JMP		imm:imm32			\321\1\xEA\41\30				386,NOLONG
-JMP		mem|far				\322\1\xFF\205					8086
+JMP		mem|far				\322\1\xFF\205					8086,NOLONG
+JMP		mem|far				\324\1\xFF\205					X64
 JMP		mem16|far			\320\1\xFF\205					8086
 JMP		mem32|far			\321\1\xFF\205					386
+JMP		mem64|far			\324\1\xFF\205					X64
 JMP		mem|near			\322\1\xFF\204					8086
 JMP		mem16|near			\320\1\xFF\204					8086
 JMP		mem32|near			\321\1\xFF\204					386,NOLONG
