@@ -9,6 +9,9 @@
 *.out
 *.rej
 *~
+\#*
+*.bak
+*.tmp
 /Makefile
 /config.h
 /config.h.in
