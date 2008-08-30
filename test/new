@@ -7,4 +7,3 @@ for f; do
   fi
   echo ";Testname=test; Arguments=-fbin -o$f.bin; Files=.stdout .stderr $f.bin" > "$f".asm
 done
-
