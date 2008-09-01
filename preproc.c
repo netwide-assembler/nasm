@@ -1434,7 +1434,8 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
     *nparam = paramsize = 0;
     *params = NULL;
     while (t) {
-        if (*nparam >= paramsize) {
+	/* +1: we need space for the final NULL */
+        if (*nparam+1 >= paramsize) {
             paramsize += PARAM_DELTA;
             *params = nasm_realloc(*params, sizeof(**params) * paramsize);
         }
