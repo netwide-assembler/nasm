@@ -410,6 +410,7 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     if (pos == -1)
         strcpy(sym->name, name);
     sym->is_global = !!is_global;
+    sym->type = 0;		/* Default to T_NULL (no type) */
     if (segment == NO_SEG)
         sym->section = -1;      /* absolute symbol */
     else {
