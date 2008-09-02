@@ -189,11 +189,11 @@ static void coff_gen_init(FILE * fp, efunc errfunc)
     error = errfunc;
     sects = NULL;
     nsects = sectlen = 0;
-    syms = saa_init((int32_t)sizeof(struct Symbol));
+    syms = saa_init(sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     symval = raa_init();
-    strs = saa_init(1L);
+    strs = saa_init(1);
     strslen = 0;
     def_seg = seg_alloc();
 }
@@ -231,7 +231,7 @@ static int coff_make_section(char *name, uint32_t flags)
     s = nasm_malloc(sizeof(*s));
 
     if (flags != BSS_FLAGS)
-        s->data = saa_init(1L);
+        s->data = saa_init(1);
     else
         s->data = NULL;
     s->head = NULL;
@@ -246,9 +246,10 @@ static int coff_make_section(char *name, uint32_t flags)
     s->name[8] = '\0';
     s->flags = flags;
 
-    if (nsects >= sectlen)
-        sects =
-            nasm_realloc(sects, (sectlen += SECT_DELTA) * sizeof(*sects));
+    if (nsects >= sectlen) {
+	sectlen += SECT_DELTA;
+        sects = nasm_realloc(sects, sectlen * sizeof(*sects));
+    }
     sects[nsects++] = s;
 
     return nsects - 1;
@@ -398,8 +399,9 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     }
 
     if (strlen(name) > 8) {
-        saa_wbytes(strs, name, (int32_t)(1 + strlen(name)));
-        strslen += 1 + strlen(name);
+	size_t nlen = strlen(name)+1;
+        saa_wbytes(strs, name, nlen);
+	strslen += nlen;
     } else
         pos = -1;
 
@@ -738,8 +740,8 @@ static int coff_directives(char *directive, char *value, int pass)
 		 * table is prefixed with table length */
 		if (sym->strpos >=4) {
 		    char *name = nasm_malloc(sym->namlen+1);
-		    saa_fread(strs,sym->strpos-4,name,sym->namlen);
-		    name[sym->namlen]='\0';
+		    saa_fread(strs, sym->strpos-4, name, sym->namlen);
+		    name[sym->namlen] = '\0';
 		    equals = !strcmp(value,name);
 		    nasm_free(name);
 		}
@@ -895,7 +897,7 @@ static void coff_symbol(char *name, int32_t strpos, int32_t value,
         strncpy(padname, name, 8);
         fwrite(padname, 8, 1, coffp);
     } else {
-        fwriteint32_t(0L, coffp);
+        fwriteint32_t(0, coffp);
         fwriteint32_t(strpos, coffp);
     }
     fwriteint32_t(value, coffp);
