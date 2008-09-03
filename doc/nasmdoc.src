@@ -197,6 +197,7 @@ Object File Format
 \IR{shift command} \c{shift} command
 \IA{sib}{sib byte}
 \IR{sib byte} SIB byte
+\IR{align, smart} \c{ALIGN}, smart
 \IR{solaris x86} Solaris x86
 \IA{standard section names}{standardized section names}
 \IR{symbols, exporting from dlls} symbols, exporting from DLLs
@@ -3868,6 +3869,8 @@ boundary, for example, is a waste of effort. Again, NASM does not
 check that the section's alignment characteristics are sensible for
 the use of \c{ALIGN} or \c{ALIGNB}.
 
+See also the \c{smartalign} standard macro package, \k{pkg_smartalign}.
+
 
 \C{macropkg} \i{Standard Macro Packages}
 
@@ -3898,6 +3901,48 @@ Example use:
 \c       ret
 
 See also \k{reg64}.
+
+
+\H{pkg_smartalign} \i\c{smartalign}\I{align, smart}: Smart \c{ALIGN} Macro
+
+The \c{smartalign} standard macro package provides for an \i\c{ALIGN}
+macro which is more powerful than the default (and
+backwards-compatible) one (see \k{align}).  When the \c{smartalign}
+package is enabled, when \c{ALIGN} is used without a second argument,
+NASM will generate a sequence of instructions more efficient than a
+series of \c{NOP}.  Furthermore, if the padding exceeds a specific
+threshold, then NASM will generate a jump over the entire padding
+sequence.
+
+The specific instructions generated can be controlled with the
+new \i\c{ALIGNMODE} macro.  This macro takes two parameters: one mode,
+and an optional jump threshold override.  The modes are as
+follows:
+
+\b \c{generic}: Works on all x86 CPUs and should have reasonable
+performance.  The default jump threshold is 8.  This is the
+default.
+
+\b \c{nop}: Pad out with \c{NOP} instructions.  The only difference
+compared to the standard \c{ALIGN} macro is that NASM can still jump
+over a large padding area.  The default jump threshold is 16.
+
+\b \c{k7}: Optimize for the AMD K7 (Athlon/Althon XP).  These
+instructions should still work on all x86 CPUs.  The default jump
+threshold is 16.
+
+\b \c{k8}: Optimize for the AMD K8 (Opteron/Althon 64).  These
+instructions should still work on all x86 CPUs.  The default jump
+threshold is 16.
+
+\b \c{p6}: Optimize for Intel CPUs.  This uses the long \c{NOP}
+instructions first introduced in Pentium Pro.  This is incompatible
+with all CPUs of family 5 or lower, as well as some VIA CPUs and
+several virtualization solutions.  The default jump threshold is 16.
+
+The macro \i\c{__ALIGNMODE__} is defined to contain the current
+alignment mode.  A number of other macros beginning with \c{__ALIGN_}
+are used internally by this macro package.
 
 
 \C{directive} \i{Assembler Directives}
