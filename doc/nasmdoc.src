@@ -2144,9 +2144,9 @@ instruction has been used as a label in older code.  For example:
 
 \c %idefine pause $%?                  ; Hide the PAUSE instruction
 
-\S{undef} Undefining Macros: \i\c{%undef}
+\S{undef} Undefining Single-Line Macros: \i\c{%undef}
 
-Single-line macros can be removed with the \c{%undef} command.  For
+Single-line macros can be removed with the \c{%undef} directive.  For
 example, the following sequence:
 
 \c %define foo bar
@@ -2712,6 +2712,30 @@ the number of parameters, like this:
 Or like this:
 
 \c %macro bar 1-5+.nolist a,b,c,d,e,f,g,h
+
+\S{unmacro} Undefining Multi-Line Macros: \i\c{%unmacro}
+
+Multi-line macros can be removed with the \c{%unmacro} directive.
+Unlike the \c{%undef} directive, however, \c{%unmacro} takes an
+argument specification, and will only remove \i{exact matches} with
+that argument specification.
+
+For example:
+
+\c %macro foo 1-3
+\c         ; Do something
+\c %endmacro
+\c %unmacro foo 1-3
+
+removes the previously defined macro \c{foo}, but
+
+\c %unmacro bar 1-3
+\c         ; Do something
+\c %endmacro
+\c %unmacro bar 1
+
+does \e{not} remove the macro \c{bar}, since the argument
+specification does not match exactly.
 
 \H{condasm} \i{Conditional Assembly}\I\c{%if}
 
