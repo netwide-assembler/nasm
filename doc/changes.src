@@ -21,15 +21,23 @@ since 2007.
   don't use the \c{configure} script.  Of the official release binaries,
   that only affects the OS/2 binary.
 
-\b Correct the handling of nested \c{%reps}.
+\b Correct the handling of nested \c{%rep}s.
 
 \b Support for x87 packed BCD constants.
 
-\b New \c{%strcat} directive to join strings together.
+\b New \c{%strcat} directive to join quoted strings together.
 
 \b Correct the \c{LTR} instruction in 64-bit mode.
 
 \b Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
+
+\b New \c{%use} macro directive to support standard macro directives.  See
+  \k{use}.
+
+\b Excess default parameters to \c{%macro} now issues a warning by default.
+  See \k{mlmacro}.
+
+\b Numerous bug fixes, especially to the AES, AVX and VTX instructions.
 
 
 \S{cl-2.03.01} Version 2.03.01
