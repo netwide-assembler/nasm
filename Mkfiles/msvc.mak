@@ -208,7 +208,8 @@ lib/snprintf.$(O): lib/snprintf.c compiler.h nasmlib.h
 lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h nasmlib.h
 listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h version.h
-macros.$(O): macros.c compiler.h hashtbl.h insnsi.h nasmlib.h tables.h
+macros.$(O): macros.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
+ outform.h pptok.h preproc.h regs.h tables.h version.h
 nasm.$(O): nasm.c assemble.h compiler.h eval.h float.h insns.h insnsi.h \
  labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h preproc.h \
  raa.h regs.h saa.h stdscan.h tokens.h version.h
