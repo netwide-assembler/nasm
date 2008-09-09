@@ -274,10 +274,10 @@ output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h version.h
-output/outmacho32.$(O): output/outmacho32.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
-output/outmacho64.$(O): output/outmacho64.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+output/outmacho32.$(O): output/outmacho32.c compiler.h insnsi.h nasm.h \
+ nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+output/outmacho64.$(O): output/outmacho64.c compiler.h insnsi.h nasm.h \
+ nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
 output/outobj.$(O): output/outobj.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h stdscan.h version.h
 output/outrdf.$(O): output/outrdf.c compiler.h insnsi.h nasm.h nasmlib.h \

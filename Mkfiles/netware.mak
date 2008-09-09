@@ -178,7 +178,8 @@ outieee.o: outieee.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
 outmacho32.o: outmacho32.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
 outmacho64.o: outmacho64.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.houtobj.o: outobj.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
+ outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+outobj.o: outobj.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h stdscan.h version.h
 outrdf.o: outrdf.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h version.h
