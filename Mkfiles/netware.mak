@@ -3,7 +3,7 @@
 PROOT=.
 OBJDIR=release
 
--include $(OBJDIR)/version.mak
+-include $(OBJDIR)/version.inc
 
 TARGETS=nasm.nlm ndisasm.nlm
 
@@ -37,7 +37,8 @@ NASM =	nasm.o nasmlib.o raa.o saa.o \
 	outaout.o outcoff.o \
 	outelf32.o outelf64.o \
 	outobj.o outas86.o outrdf2.o \
-	outdbg.o outieee.o outmacho.o \
+	outdbg.o outieee.o \
+	outmacho32.o outmacho64.o \
 	preproc.o quote.o pptok.o macros.o \
 	listing.o eval.o exprlib.o stdscan.o strfunc.o \
 	tokhash.o regvals.o regflags.o
@@ -113,7 +114,7 @@ clean:
 distclean: clean
 	-$(RM) $(TARGETS)
 
-$(OBJDIR)/version.mak: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
+$(OBJDIR)/version.inc: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
 	@$(PERL) $(PROOT)/version.pl make < $< > $@
 
 #-- Magic hints to mkdep.pl --#
@@ -174,9 +175,10 @@ outelf64.o: outelf64.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
 outieee.o: outieee.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h version.h
-outmacho.o: outmacho.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
+outmacho32.o: outmacho32.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
-outobj.o: outobj.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
+outmacho64.o: outmacho64.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
+ outform.h pptok.h preproc.h raa.h regs.h saa.h version.houtobj.o: outobj.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h stdscan.h version.h
 outrdf.o: outrdf.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h version.h

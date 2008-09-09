@@ -1,5 +1,5 @@
-/* outmacho.c	output routines for the Netwide Assembler to produce
- *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files
+/* outmacho32.c	output routines for the Netwide Assembler to produce
+ *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
  * Julian Hall. All rights reserved. The software is
@@ -25,7 +25,7 @@
 #include "outform.h"
 #include "compiler.h"
 
-#if defined(OF_MACHO)
+#if defined(OF_MACHO32)
 
 /* Mach-O in-file header structure sizes */
 #define MACHO_HEADER_SIZE	(28)
@@ -1306,8 +1306,26 @@ static void debug_section_relocs (struct section *s)
     }
 }
 
+struct ofmt of_macho32 = {
+    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
+    "macho32",
+    NULL,
+    null_debug_arr,
+    &null_debug_form,
+    macho_stdmac,
+    macho_init,
+    macho_setinfo,
+    macho_output,
+    macho_symdef,
+    macho_section,
+    macho_segbase,
+    macho_directive,
+    macho_filename,
+    macho_cleanup
+};
+
 struct ofmt of_macho = {
-    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files",
+    "MACHO (short name for MACHO32)",
     "macho",
     NULL,
     null_debug_arr,

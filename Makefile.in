@@ -66,7 +66,8 @@ NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
+	output/outdbg.$(O) output/outieee.$(O) \
+	output/outmacho32.$(O) output/outmacho64.$(O) \
 	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
 	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) strfunc.$(O) \
 	tokhash.$(O) regvals.$(O) regflags.$(O)
@@ -104,12 +105,12 @@ insnsn.c: insns.dat insns.pl
 # the version number.
 version.h: version version.pl
 	$(PERL) $(srcdir)/version.pl h < $(srcdir)/version > version.h
+
 version.mac: version version.pl
 	$(PERL) $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
+
 version.sed: version version.pl
 	$(PERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
-version.mak: version version.pl
-	$(PERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
@@ -157,7 +158,7 @@ pptok.ph: pptok.dat pptok.pl perllib/phash.ph
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
 	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
-	  version.h version.mac version.mak
+	  version.h version.mac
 perlreq: $(PERLREQ)
 
 install: nasm$(X) ndisasm$(X)
@@ -223,9 +224,6 @@ nasm.spec: nasm.spec.in version.sed
 
 splint:
 	splint -weak *.c
-
-test: nasm$(X)
-	cd test && $(PERL) performtest.pl --nasm=../nasm *.asm
 
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,
@@ -299,7 +297,9 @@ output/outelf64.$(O): output/outelf64.c compiler.h config.h insnsi.h nasm.h \
  version.h
 output/outieee.$(O): output/outieee.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h version.h
-output/outmacho.$(O): output/outmacho.c compiler.h config.h insnsi.h nasm.h \
+output/outmacho32.$(O): output/outmacho32.c compiler.h config.h insnsi.h nasm.h \
+ nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+output/outmacho64.$(O): output/outmacho64.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
 output/outobj.$(O): output/outobj.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h stdscan.h version.h
