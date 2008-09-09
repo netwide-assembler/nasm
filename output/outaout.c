@@ -905,7 +905,7 @@ static void aout_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-extern macros_t aout_stdmac[];
+extern macros_t generic_stdmac[];
 
 static int aout_set_info(enum geninfo type, char **val)
 {
@@ -923,7 +923,7 @@ struct ofmt of_aout = {
     NULL,
     null_debug_arr,
     &null_debug_form,
-    aout_stdmac,
+    generic_stdmac,
     aout_init,
     aout_set_info,
     aout_out,
@@ -945,7 +945,7 @@ struct ofmt of_aoutb = {
     NULL,
     null_debug_arr,
     &null_debug_form,
-    aout_stdmac,
+    generic_stdmac,
     aoutb_init,
     aout_set_info,
     aout_out,

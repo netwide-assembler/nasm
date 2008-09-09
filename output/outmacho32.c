@@ -717,7 +717,7 @@ static void macho_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-extern macros_t macho_stdmac[];
+extern macros_t generic_stdmac[];
 
 /* Comparison function for qsort symbol layout.  */
 static int layout_compare (const struct symbol **s1,
@@ -1312,7 +1312,7 @@ struct ofmt of_macho32 = {
     NULL,
     null_debug_arr,
     &null_debug_form,
-    macho_stdmac,
+    generic_stdmac,
     macho_init,
     macho_setinfo,
     macho_output,
@@ -1330,7 +1330,7 @@ struct ofmt of_macho = {
     NULL,
     null_debug_arr,
     &null_debug_form,
-    macho_stdmac,
+    generic_stdmac,
     macho_init,
     macho_setinfo,
     macho_output,

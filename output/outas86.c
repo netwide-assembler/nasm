@@ -603,7 +603,7 @@ static void as86_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-extern macros_t as86_stdmac[];
+extern macros_t generic_stdmac[];
 
 static int as86_set_info(enum geninfo type, char **val)
 {
@@ -626,7 +626,7 @@ struct ofmt of_as86 = {
     NULL,
     null_debug_arr,
     &null_debug_form,
-    as86_stdmac,
+    generic_stdmac,
     as86_init,
     as86_set_info,
     as86_out,
