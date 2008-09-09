@@ -148,7 +148,8 @@ snprintf.o: snprintf.c compiler.h config.h nasmlib.h
 vsnprintf.o: vsnprintf.c compiler.h config.h nasmlib.h
 listing.o: listing.c compiler.h config.h insnsi.h listing.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h version.h
-macros.o: macros.c compiler.h config.h hashtbl.h insnsi.h nasmlib.h tables.h
+macros.o: macros.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
+ outform.h pptok.h preproc.h regs.h tables.h version.h
 nasm.o: nasm.c assemble.h compiler.h config.h eval.h float.h insns.h \
  insnsi.h labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h \
  preproc.h raa.h regs.h saa.h stdscan.h tokens.h version.h
