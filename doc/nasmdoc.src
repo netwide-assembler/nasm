@@ -22,7 +22,7 @@
 \IR{-MP} \c{-MP} option
 \IR{-MQ} \c{-MQ} option
 \IR{-MT} \c{-MT} option
-\IR{-On} \c{-On} option
+\IR{-O} \c{-O} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
 \IR{-X} \c{-X} option
@@ -480,7 +480,7 @@ an intervening space. For example:
 \c nasm -f bin driver.asm -odriver.sys
 
 Note that this is a small o, and is different from a capital O , which
-is used to specify the number of optimisation passes required. See \k{opt-On}.
+is used to specify the number of optimisation passes required. See \k{opt-O}.
 
 
 \S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
@@ -781,7 +781,7 @@ argument, instructs NASM to replace its powerful \i{preprocessor}
 with a \i{stub preprocessor} which does nothing.
 
 
-\S{opt-On} The \i\c{-On} Option: Specifying \i{Multipass Optimization}.
+\S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
 
 NASM defaults to not optimizing operands which can fit into a signed byte.
 This means that if you want the shortest possible object code,
@@ -790,19 +790,19 @@ you have to enable optimization.
 Using the \c{-O} option, you can tell NASM to carry out different levels of optimization.
 The syntax is:
 
-\b \c{-O0} No optimization. All operands take their long forms,
+\b \c{-O0}: No optimization. All operands take their long forms,
         if a short form is not specified.
 
-\b \c{-O1} Minimal optimization. As above, but immediate operands
+\b \c{-O1}: Minimal optimization. As above, but immediate operands
         which will fit in a signed byte are optimized,
         unless the long form is specified.
 
-\b \c{-Ox} where \c{x} is the actual letter \c{x} Multi-pass optimization,
-        minimize branch offsets; also will
-        minimize signed immediate bytes, overriding size specification
-        unless the \c{strict} keyword has been used (see \k{strict}).
-        For compatability with earlier releases, the letter \c{x} may also be any
-        number greater than one. This number has no effect on the actual number of passes.
+\b \c{-Ox} (where \c{x} is the actual letter \c{x}): Multipass optimization.
+        Minimize branch offsets and signed immediate bytes,
+	overriding size specification unless the \c{strict} keyword
+	has been used (see \k{strict}).  For compatability with earlier
+	releases, the letter \c{x} may also be any number greater than
+	one. This number has no effect on the actual number of passes.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
@@ -1752,7 +1752,7 @@ invent one using the macro processor.
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
 When assembling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
+\k{opt-O}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
 \c{DWORD}, \c{QWORD}, \c{TWORD}, \c{OWORD} or \c{YWORD}), but will
 give them the smallest possible size. The keyword \c{STRICT} can be
 used to inhibit optimization and force a particular operand to be
@@ -7282,7 +7282,7 @@ instruction which leaves room for a 32-bit offset. You need to code
 \I\c{BYTE}\c{ADD ESP,BYTE 8} if you want the space-efficient form of
 the instruction. This isn't a bug, it's user error: if you prefer to
 have NASM produce the more efficient code automatically enable
-optimization with the \c{-On} option (see \k{opt-On}).
+optimization with the \c{-O} option (see \k{opt-O}).
 
 
 \S{jmprange} My Jumps are Out of Range\I{out of range, jumps}
@@ -7303,7 +7303,7 @@ over a \c{JMP NEAR}; this is a sensible solution for processors
 below a 386, but hardly efficient on processors which have good
 branch prediction \e{and} could have used \c{JNE NEAR} instead. So,
 once again, it's up to the user, not the assembler, to decide what
-instructions should be generated. See \k{opt-On}.
+instructions should be generated. See \k{opt-O}.
 
 
 \S{proborg} \i\c{ORG} Doesn't Work
