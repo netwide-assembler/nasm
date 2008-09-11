@@ -1973,7 +1973,7 @@ You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
 
-\S{xdefine} Enhancing \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
+\S{xdefine} Resolving \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
 
 To have a reference to an embedded single-line macro resolved at the
 time that it is embedded, as opposed to when the calling macro is
