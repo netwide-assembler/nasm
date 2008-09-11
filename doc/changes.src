@@ -39,6 +39,10 @@ since 2007.
 
 \b Numerous bug fixes, especially to the AES, AVX and VTX instructions.
 
+\b The optimizer now always runs until it converges.  It also runs even
+  when disabled, but doesn't optimize.  This allows most forward references
+  to be resolved properly.
+
 
 \S{cl-2.03.01} Version 2.03.01
 
