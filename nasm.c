@@ -1524,36 +1524,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                 fwinf->operand = i;
                             }
                         }
-                    } else {    /* passn > 1 */
-                        /*
-                         * Hack to prevent phase error in the code
-                         *   rol ax,x
-                         *   x equ 1
-                         *
-                         * If the second operand is a forward reference,
-                         * the UNITY property of the number 1 in that
-                         * operand is cancelled. Otherwise the above
-                         * sequence will cause a phase error.
-                         *
-                         * This hack means that the above code will
-                         * generate 286+ code.
-                         *
-                         * The forward reference will mean that the
-                         * operand will not have the UNITY property on
-                         * the first pass, so the pass behaviours will
-                         * be consistent.
-                         */
-
-                        if (output_ins.operands >= 2 &&
-                            (output_ins.oprs[1].opflags & OPFLAG_FORWARD) &&
-			    !(IMMEDIATE & ~output_ins.oprs[1].type))
-			{
-			    /* Remove special properties bits */
-			    output_ins.oprs[1].type &= ~REG_SMASK;
-                        }
-
                     }
-
                 }
 
                 /*  forw_ref */
