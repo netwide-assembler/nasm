@@ -1166,7 +1166,9 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         report_error(ERR_FATAL, "command line: "
                      "32-bit segment size requires a higher cpu");
 
-    pass_max = (INT_MAX >> 1) + 2; /* Almost unlimited */
+    pass_max = 1000; /* Always terminate in a reasonable time */
+                     /* No real program should need this many passes */
+
     for (passn = 1; pass0 <= 2; passn++) {
         int pass1, pass2;
         ldfunc def_label;
@@ -1730,9 +1732,17 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 usage();
             exit(1);
         }
-        if (passn >= pass_max - 2 ||
-	    (passn > 1 && !global_offset_changed))
+        if (passn > 1 && !global_offset_changed)
             pass0++;
+
+        if(passn >= pass_max)
+            /* We get here if the labels don't converge
+             * Example: FOO equ FOO + 1
+             */
+             report_error(ERR_NONFATAL,
+                          "Can't find valid values for all labels "
+                          "after %d passes, giving up. "
+                          "Possible cause: recursive equ's.", passn);
     }
 
     preproc->cleanup(0);
