@@ -249,13 +249,10 @@ static int jmp_match(int32_t segment, int64_t offset, int bits,
 
     if (c != 0370 && c != 0371)
         return 0;
-    if (ins->oprs[0].opflags & OPFLAG_FORWARD) {
-        if ((optimizing < 0 || (ins->oprs[0].type & STRICT))
-            && c == 0370)
-            return 1;
-        else
-            return (pass0 == 0);        /* match a forward reference */
-    }
+    if ((optimizing <= 0 || (ins->oprs[0].type & STRICT)))
+         {
+            return 0;
+         }
     isize = calcsize(segment, offset, bits, ins, code);
     if (ins->oprs[0].segment != segment)
         return 0;

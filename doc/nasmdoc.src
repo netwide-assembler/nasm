@@ -783,33 +783,26 @@ with a \i{stub preprocessor} which does nothing.
 
 \S{opt-On} The \i\c{-On} Option: Specifying \i{Multipass Optimization}.
 
-NASM defaults to being a two pass assembler. This means that if you
-have a complex source file which needs more than 2 passes to assemble
-optimally, you have to enable extra passes.
-
-Using the \c{-O} option, you can tell NASM to carry out multiple passes.
+NASM defaults to not optimizing operands which can fit into a signed byte.
+This means that if you want the shortest possible object code,
+you have to enable optimization.
+ 
+Using the \c{-O} option, you can tell NASM to carry out different levels of optimization.
 The syntax is:
 
-\b \c{-O0} strict two-pass assembly, JMP and Jcc are handled more
-        like v0.98, except that backward JMPs are short, if possible.
-        Immediate operands take their long forms if a short form is
-        not specified.
+\b \c{-O0} No optimization. All operands take their long forms,
+        if a short form is not specified.
 
-\b \c{-O1} strict two-pass assembly, but forward branches are assembled
-        with code guaranteed to reach; may produce larger code than
-        -O0, but will produce successful assembly more often if
-        branch offset sizes are not specified.
-        Additionally, immediate operands which will fit in a signed byte
-        are optimized, unless the long form is specified.
+\b \c{-O1} Minimal optimization. As above, but immediate operands
+        which will fit in a signed byte are optimized,
+        unless the long form is specified.
 
-\b \c{-On} multi-pass optimization, minimize branch offsets; also will
+\b \c{-Ox} where \c{x} is the actual letter \c{x} Multi-pass optimization,
+        minimize branch offsets; also will
         minimize signed immediate bytes, overriding size specification
         unless the \c{strict} keyword has been used (see \k{strict}).
-        The number specifies the maximum number of passes.  The more
-	passes, the better the code, but the slower is the assembly.
-
-\b \c{-Ox} where \c{x} is the actual letter \c{x}, indicates to NASM
-   	to do unlimited passes.
+        For compatability with earlier releases, the letter \c{x} may also be any
+        number greater than one. This number has no effect on the actual number of passes.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
@@ -1275,9 +1268,7 @@ redefined later. This is not a \i{preprocessor} definition either:
 the value of \c{msglen} is evaluated \e{once}, using the value of
 \c{$} (see \k{expr} for an explanation of \c{$}) at the point of
 definition, rather than being evaluated wherever it is referenced
-and using the value of \c{$} at the point of reference. Note that
-the operand to an \c{EQU} is also a \i{critical expression}
-(\k{crit}).
+and using the value of \c{$} at the point of reference.
 
 
 \S{times} \i\c{TIMES}: \i{Repeating} Instructions or Data
@@ -1306,8 +1297,7 @@ Note that there is no effective difference between \c{times 100 resb
 1} and \c{resb 100}, except that the latter will be assembled about
 100 times faster due to the internal structure of the assembler.
 
-The operand to \c{TIMES}, like that of \c{EQU} and those of \c{RESB}
-and friends, is a critical expression (\k{crit}).
+The operand to \c{TIMES} is a critical expression (\k{crit}).
 
 Note also that \c{TIMES} can't be applied to \i{macros}: the reason
 for this is that \c{TIMES} is processed after the macro phase, which
@@ -1813,52 +1803,7 @@ NASM rejects these examples by means of a concept called a
 \e{critical expression}, which is defined to be an expression whose
 value is required to be computable in the first pass, and which must
 therefore depend only on symbols defined before it. The argument to
-the \c{TIMES} prefix is a critical expression; for the same reason,
-the arguments to the \i\c{RESB} family of pseudo-instructions are
-also critical expressions.
-
-Critical expressions can crop up in other contexts as well: consider
-the following code.
-
-\c                 mov     ax,symbol1
-\c symbol1         equ     symbol2
-\c symbol2:
-
-On the first pass, NASM cannot determine the value of \c{symbol1},
-because \c{symbol1} is defined to be equal to \c{symbol2} which NASM
-hasn't seen yet. On the second pass, therefore, when it encounters
-the line \c{mov ax,symbol1}, it is unable to generate the code for
-it because it still doesn't know the value of \c{symbol1}. On the
-next line, it would see the \i\c{EQU} again and be able to determine
-the value of \c{symbol1}, but by then it would be too late.
-
-NASM avoids this problem by defining the right-hand side of an
-\c{EQU} statement to be a critical expression, so the definition of
-\c{symbol1} would be rejected in the first pass.
-
-There is a related issue involving \i{forward references}: consider
-this code fragment.
-
-\c         mov     eax,[ebx+offset]
-\c offset  equ     10
-
-NASM, on pass one, must calculate the size of the instruction \c{mov
-eax,[ebx+offset]} without knowing the value of \c{offset}. It has no
-way of knowing that \c{offset} is small enough to fit into a
-one-byte offset field and that it could therefore get away with
-generating a shorter form of the \i{effective-address} encoding; for
-all it knows, in pass one, \c{offset} could be a symbol in the code
-segment, and it might need the full four-byte form. So it is forced
-to compute the size of the instruction to accommodate a four-byte
-address part. In pass two, having made this decision, it is now
-forced to honour it and keep the instruction large, so the code
-generated in this case is not as small as it could have been. This
-problem can be solved by defining \c{offset} before using it, or by
-forcing byte size in the effective address by coding \c{[byte
-ebx+offset]}.
-
-Note that use of the \c{-On} switch (with n>=2) makes some of the above
-no longer true (see \k{opt-On}).
+the \c{TIMES} prefix is a critical expression.
 
 \H{locallab} \i{Local Labels}
 

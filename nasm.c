@@ -294,7 +294,7 @@ int main(int argc, char **argv)
 
     time(&official_compile_time);
 
-    pass0 = 1;
+    pass0 = 0;
     want_usage = terminate_after_phase = false;
     report_error = report_error_gnu;
 
@@ -1166,8 +1166,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         report_error(ERR_FATAL, "command line: "
                      "32-bit segment size requires a higher cpu");
 
-    pass_max = (optimizing > 0 ? optimizing : 0) + 2;   /* passes 1, optimizing, then 2 */
-    pass0 = !(optimizing > 0);  /* start at 1 if not optimizing */
+    pass_max = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
         int pass1, pass2;
         ldfunc def_label;
@@ -1500,7 +1499,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 parse_line(pass1, line, &output_ins,
                            report_error, evaluate, def_label);
 
-                if (!(optimizing > 0) && pass0 == 2) {
+                if (optimizing > 0) {
                     if (forwref != NULL && globallineno == forwref->lineno) {
                         output_ins.forw_ref = true;
                         do {
@@ -1513,7 +1512,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         output_ins.forw_ref = false;
                 }
 
-                if (!(optimizing > 0) && output_ins.forw_ref) {
+                if (optimizing > 0) {
                     if (passn == 1) {
                         for (i = 0; i < output_ins.operands; i++) {
                             if (output_ins.oprs[i].
@@ -1768,7 +1767,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     preproc->cleanup(0);
     nasmlist.cleanup();
 #if 1
-    if (optimizing > 0 && opt_verbose_info)     /*  -On and -Ov switches */
+    if (opt_verbose_info)     /*  -On and -Ov switches */
         fprintf(stdout,
                 "info:: assembly required 1+%d+1 passes\n", passn-3);
 #endif

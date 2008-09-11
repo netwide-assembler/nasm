@@ -308,21 +308,13 @@ restart_parse:
     result->condition = tokval.t_inttwo;
 
     /*
-     * RESB, RESW and RESD cannot be satisfied with incorrectly
+     * INCBIN cannot be satisfied with incorrectly
      * evaluated operands, since the correct values _must_ be known
      * on the first pass. Hence, even in pass one, we set the
      * `critical' flag on calling evaluate(), so that it will bomb
-     * out on undefined symbols. Nasty, but there's nothing we can
-     * do about it.
-     *
-     * For the moment, EQU has the same difficulty, so we'll
-     * include that.
+     * out on undefined symbols.
      */
-    if (result->opcode == I_RESB || result->opcode == I_RESW ||
-	result->opcode == I_RESD || result->opcode == I_RESQ ||
-	result->opcode == I_REST || result->opcode == I_RESO ||
-	result->opcode == I_RESY ||
-	result->opcode == I_INCBIN) {
+    if (result->opcode == I_INCBIN) {
         critical = (pass0 < 2 ? 1 : 2);
 
     } else
