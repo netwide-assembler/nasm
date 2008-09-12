@@ -73,7 +73,9 @@ int optimizing = -1;            /* number of optimization passes to take */
 static int sb, cmd_sb = 16;     /* by default */
 static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
 static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
-bool global_offset_changed;      /* referenced in labels.c */
+int64_t global_offset_changed;      /* referenced in labels.c */
+int64_t prev_offset_changed;
+int32_t stall_count;
 
 static struct location location;
 int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
@@ -1166,9 +1168,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         report_error(ERR_FATAL, "command line: "
                      "32-bit segment size requires a higher cpu");
 
-    pass_max = 1000; /* Always terminate in a reasonable time */
-                     /* No real program should need this many passes */
-
+    pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
         int pass1, pass2;
         ldfunc def_label;
@@ -1186,7 +1186,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 nasmlist.init(listname, report_error);
         }
         in_abs_seg = false;
-        global_offset_changed = false;  /* set by redefine_label */
+        global_offset_changed = 0;  /* set by redefine_label */
         location.segment = ofmt->section(NULL, pass2, &sb);
         globalbits = sb;
         if (passn > 1) {
@@ -1717,7 +1717,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             nasm_free(line);
             location.offset = offs = GET_CURR_OFFS;
         }                       /* end while (line = preproc->getline... */
-
         if (pass1 == 2 && global_offset_changed)
             report_error(ERR_NONFATAL,
                          "phase error detected at end of assembly.");
@@ -1732,26 +1731,30 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 usage();
             exit(1);
         }
+
         if (passn > 1 && !global_offset_changed)
             pass0++;
+        else if (global_offset_changed && global_offset_changed < prev_offset_changed) {
+            prev_offset_changed = global_offset_changed;
+            stall_count = 0;
+            }
+        else stall_count++;
 
-        if(passn >= pass_max)
+        if((stall_count > 997) || (passn >= pass_max))
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */
              report_error(ERR_NONFATAL,
                           "Can't find valid values for all labels "
-                          "after %d passes, giving up. "
-                          "Possible cause: recursive equ's.", passn);
+                          "after %d passes, giving up.\n"
+                          "                  Possible cause: recursive equ's.", passn);
     }
 
     preproc->cleanup(0);
     nasmlist.cleanup();
-#if 1
     if (opt_verbose_info)     /*  -On and -Ov switches */
         fprintf(stdout,
                 "info:: assembly required 1+%d+1 passes\n", passn-3);
-#endif
 }                               /* exit from assemble_file (...) */
 
 static enum directives getkw(char **directive, char **value)

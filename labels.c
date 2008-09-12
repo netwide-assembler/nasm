@@ -77,7 +77,7 @@ struct permts {                 /* permanent text storage */
     char data[PERMTS_SIZE];     /* ... the data block itself */
 };
 
-extern bool global_offset_changed;       /* defined in nasm.c */
+extern int64_t global_offset_changed;       /* defined in nasm.c */
 
 static struct hash_table ltab;		/* labels hash table */
 static union label *ldata;		/* all label data blocks */
@@ -209,7 +209,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
             prevlabel = lptr->defn.label;
     }
 
-    global_offset_changed |= (lptr->defn.offset != offset);
+    if (lptr->defn.offset != offset) global_offset_changed++;
     lptr->defn.offset = offset;
     lptr->defn.segment = segment;
 
