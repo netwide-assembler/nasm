@@ -253,14 +253,15 @@ enum {
      */
     COND_ELSE_TRUE, COND_ELSE_FALSE,
     /*
-     * This state means that we're not emitting now, and also that
-     * nothing until %endif will be emitted at all. It's for use in
-     * two circumstances: (i) when we've had our moment of emission
-     * and have now started seeing %elifs, and (ii) when the
-     * condition construct in question is contained within a
-     * non-emitting branch of a larger condition construct.
+     * These states mean that we're not emitting now, and also that
+     * nothing until %endif will be emitted at all. COND_DONE is
+     * used when we've had our moment of emission
+     * and have now started seeing %elifs. COND_NEVER is used when
+     * the condition construct in question is contained within a
+     * non-emitting branch of a larger condition construct,
+     * or if there is an error.
      */
-    COND_NEVER
+    COND_DONE, COND_NEVER
 };
 #define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
@@ -398,6 +399,7 @@ static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, bool all_contexts);
 static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
+static void error_precond(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
@@ -2406,42 +2408,69 @@ static int do_directive(Token * tline)
     CASE_PP_ELIF:
         if (!istk->conds)
             error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
-        if (emitting(istk->conds->state)
-            || istk->conds->state == COND_NEVER)
-            istk->conds->state = COND_NEVER;
-        else {
-            /*
-             * IMPORTANT: In the case of %if, we will already have
-             * called expand_mmac_params(); however, if we're
-             * processing an %elif we must have been in a
-             * non-emitting mode, which would have inhibited
-             * the normal invocation of expand_mmac_params().  Therefore,
-             * we have to do it explicitly here.
-             */
-            j = if_condition(expand_mmac_params(tline->next), i);
-            tline->next = NULL; /* it got freed */
-            istk->conds->state =
-                j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
+        switch(istk->conds->state) {
+            case COND_IF_TRUE:
+                istk->conds->state = COND_DONE;
+                break;
+
+            case COND_DONE:
+            case COND_NEVER:
+                break;
+
+            case COND_ELSE_TRUE:
+            case COND_ELSE_FALSE:
+                error_precond(ERR_WARNING, "`%%elif' after `%%else' ignored");
+                istk->conds->state = COND_NEVER;
+                break;
+
+            case COND_IF_FALSE:
+                /*
+                 * IMPORTANT: In the case of %if, we will already have
+                 * called expand_mmac_params(); however, if we're
+                 * processing an %elif we must have been in a
+                 * non-emitting mode, which would have inhibited
+                 * the normal invocation of expand_mmac_params().  Therefore,
+                 * we have to do it explicitly here.
+                 */
+                j = if_condition(expand_mmac_params(tline->next), i);
+                tline->next = NULL; /* it got freed */
+                istk->conds->state =
+                    j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
+                break;
         }
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_ELSE:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%else' ignored");
+            error_precond(ERR_WARNING, "trailing garbage after `%%else' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%else': no matching `%%if'");
-        if (emitting(istk->conds->state)
-            || istk->conds->state == COND_NEVER)
-            istk->conds->state = COND_ELSE_FALSE;
-        else
-            istk->conds->state = COND_ELSE_TRUE;
+        switch(istk->conds->state) {
+            case COND_IF_TRUE:
+            case COND_DONE:
+                istk->conds->state = COND_ELSE_FALSE;
+                break;
+
+            case COND_NEVER:
+                break;
+
+            case COND_IF_FALSE:
+                istk->conds->state = COND_ELSE_TRUE;
+                break;
+
+            case COND_ELSE_TRUE:
+            case COND_ELSE_FALSE:
+                error_precond(ERR_WARNING, "`%%else' after `%%else' ignored.");
+                istk->conds->state = COND_NEVER;
+                break;
+        }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_ENDIF:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%endif' ignored");
+            error_precond(ERR_WARNING, "trailing garbage after `%%endif' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%endif': no matching `%%if'");
         cond = istk->conds;
@@ -4115,6 +4144,20 @@ static int expand_mmacro(Token * tline)
     return 1;
 }
 
+/* The function that actually does the error reporting */
+static void verror(int severity, const char *fmt, va_list arg)
+{
+    char buff[1024];
+
+    vsnprintf(buff, sizeof(buff), fmt, arg);
+
+    if (istk && istk->mstk && istk->mstk->name)
+        _error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
+               istk->mstk->lineno, buff);
+    else
+        _error(severity | ERR_PASS1, "%s", buff);
+}
+
 /*
  * Since preprocessor always operate only on the line that didn't
  * arrived yet, we should always use ERR_OFFBY1. Also since user
@@ -4124,21 +4167,33 @@ static int expand_mmacro(Token * tline)
 static void error(int severity, const char *fmt, ...)
 {
     va_list arg;
-    char buff[1024];
 
     /* If we're in a dead branch of IF or something like it, ignore the error */
     if (istk && istk->conds && !emitting(istk->conds->state))
         return;
 
     va_start(arg, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, arg);
+    verror(severity, fmt, arg);
     va_end(arg);
+}
 
-    if (istk && istk->mstk && istk->mstk->name)
-        _error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
-               istk->mstk->lineno, buff);
-    else
-        _error(severity | ERR_PASS1, "%s", buff);
+/*
+ * Because %else etc are evaluated in the state context
+ * of the previous branch, errors might get lost with error():
+ *   %if 0 ... %else trailing garbage ... %endif
+ * So %else etc should report errors with this function.
+ */
+static void error_precond(int severity, const char *fmt, ...)
+{
+    va_list arg;
+
+    /* Only ignore the error if it's really in a dead branch */
+    if (istk && istk->conds && istk->conds->state == COND_NEVER)
+        return;
+
+    va_start(arg, fmt);
+    verror(severity, fmt, arg);
+    va_end(arg);
 }
 
 static void
