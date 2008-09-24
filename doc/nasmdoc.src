@@ -3435,8 +3435,8 @@ are expanded in it, which can be used to display more information to
 the user.  For example:
 
 \c %if foo > 64
-\c   %assign foo_over foo-64
-\c   %error foo is foo_over bytes too large
+\c     %assign foo_over foo-64
+\c     %error foo is foo_over bytes too large
 \c %endif
 
 
