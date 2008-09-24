@@ -1,4 +1,15 @@
-;Testname=test; Arguments=-fbin -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
+;Testname=error; Arguments=-fbin -DERROR -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
+;Testname=fatal; Arguments=-fbin -DFATAL -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
+;Testname=warning; Arguments=-fbin -DWARNING -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
+
+%ifndef ERROR
+  %ifndef FATAL
+    %ifndef WARNING
+      %define ERROR 1
+    %endif
+  %endif
+%endif
+	
 n0:	jmp n1
 n1:	jmp n2
 n2:	jmp n3
@@ -129,5 +140,11 @@ n126:	jmp n127
 n127:	jmp n0
 	
 %if ($-$$) > 257
-%fatal "Out of space!"
+  %ifdef FATAL
+    %fatal "Out of space!"
+  %elifdef ERROR
+    %error "Out of space!"
+  %elifdef WARNING
+    %warning "Out of space!"
+  %endif
 %endif
