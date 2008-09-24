@@ -839,7 +839,7 @@ static Token *tokenize(char *line)
             if (*p) {
                 p++;
             } else {
-                error(ERR_WARNING, "unterminated string");
+                error(ERR_WARNING|ERR_PASS1, "unterminated string");
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
             }
@@ -1651,7 +1651,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		mmac = mmac->next;
 	    }
             if(tline && tline->next)
-                error(ERR_WARNING, "trailing garbage after %%ifmacro ignored");
+                error(ERR_WARNING|ERR_PASS1,
+		      "trailing garbage after %%ifmacro ignored");
             nasm_free(searching.name);
 	    j = found;
 	    break;
@@ -1711,7 +1712,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         if (!evalresult)
             return -1;
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL,
@@ -1747,7 +1748,7 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
 	if (!smac) {
-	    error(ERR_WARNING,
+	    error(ERR_WARNING|ERR_PASS1,
 		  "single-line macro `%s' defined both with and"
 		  " without parameters", mname);
 
@@ -1886,7 +1887,8 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         if(def->defaults &&
            def->ndefs > def->nparam_max - def->nparam_min &&
            !def->plus)
-         error(ERR_WARNING | ERR_WARN_MDP, "too many default macro parameters");
+         error(ERR_WARNING|ERR_PASS1|ERR_WARN_MDP,
+	       "too many default macro parameters");
 
     return true;
 }
@@ -2206,7 +2208,8 @@ static int do_directive(Token * tline)
 
     case PP_CLEAR:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%clear' ignored");
+            error(ERR_WARNING|ERR_PASS1,
+		  "trailing garbage after `%%clear' ignored");
 	free_macros();
 	init_macros();
         free_tlist(origline);
@@ -2222,7 +2225,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%depend' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2248,7 +2251,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%include' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2288,7 +2291,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
 	}
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
 	if (t->type == TOK_STRING)
 	    nasm_unquote(t->text, NULL);
@@ -2315,7 +2318,8 @@ static int do_directive(Token * tline)
 		return DIRECTIVE_FOUND;     /* but we did _something_ */
 	    }
 	    if (tline->next)
-		error(ERR_WARNING, "trailing garbage after `%%push' ignored");
+		error(ERR_WARNING|ERR_PASS1,
+		      "trailing garbage after `%%push' ignored");
 	    p = nasm_strdup(tline->text);
 	} else {
 	    p = NULL;		/* Anonymous context */
@@ -2340,7 +2344,8 @@ static int do_directive(Token * tline)
 		return DIRECTIVE_FOUND;     /* but we did _something_ */
 	    }
 	    if (tline->next)
-		error(ERR_WARNING, "trailing garbage after `%%repl' ignored");
+		error(ERR_WARNING|ERR_PASS1,
+		      "trailing garbage after `%%repl' ignored");
 	    p = nasm_strdup(tline->text);
 	} else {
 	    p = NULL;
@@ -2356,7 +2361,8 @@ static int do_directive(Token * tline)
 
     case PP_POP:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%pop' ignored");
+            error(ERR_WARNING|ERR_PASS1,
+		  "trailing garbage after `%%pop' ignored");
         if (!cstk)
             error(ERR_NONFATAL, "`%%pop': context stack is already empty");
         else
@@ -2429,7 +2435,8 @@ static int do_directive(Token * tline)
 
             case COND_ELSE_TRUE:
             case COND_ELSE_FALSE:
-                error_precond(ERR_WARNING, "`%%elif' after `%%else' ignored");
+                error_precond(ERR_WARNING|ERR_PASS1,
+			      "`%%elif' after `%%else' ignored");
                 istk->conds->state = COND_NEVER;
                 break;
 
@@ -2453,7 +2460,8 @@ static int do_directive(Token * tline)
 
     case PP_ELSE:
         if (tline->next)
-            error_precond(ERR_WARNING, "trailing garbage after `%%else' ignored");
+            error_precond(ERR_WARNING|ERR_PASS1,
+			  "trailing garbage after `%%else' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%else': no matching `%%if'");
         switch(istk->conds->state) {
@@ -2471,7 +2479,8 @@ static int do_directive(Token * tline)
 
             case COND_ELSE_TRUE:
             case COND_ELSE_FALSE:
-                error_precond(ERR_WARNING, "`%%else' after `%%else' ignored.");
+                error_precond(ERR_WARNING|ERR_PASS1,
+			      "`%%else' after `%%else' ignored.");
                 istk->conds->state = COND_NEVER;
                 break;
         }
@@ -2480,7 +2489,8 @@ static int do_directive(Token * tline)
 
     case PP_ENDIF:
         if (tline->next)
-            error_precond(ERR_WARNING, "trailing garbage after `%%endif' ignored");
+            error_precond(ERR_WARNING|ERR_PASS1,
+			  "trailing garbage after `%%endif' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%endif': no matching `%%if'");
         cond = istk->conds;
@@ -2512,7 +2522,7 @@ static int do_directive(Token * tline)
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                error(ERR_WARNING,
+                error(ERR_WARNING|ERR_PASS1,
                       "redefining multi-line macro `%s'", defining->name);
 		return DIRECTIVE_FOUND;
             }
@@ -2583,7 +2593,7 @@ static int do_directive(Token * tline)
         if (!evalresult)
             return DIRECTIVE_FOUND;
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
@@ -2633,7 +2643,7 @@ static int do_directive(Token * tline)
                 return DIRECTIVE_FOUND;
             }
             if (tokval.t_type)
-                error(ERR_WARNING,
+                error(ERR_WARNING|ERR_PASS1,
                       "trailing garbage after expression ignored");
             if (!is_simple(evalresult)) {
                 error(ERR_NONFATAL, "non-constant value given to `%%rep'");
@@ -2817,7 +2827,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
         if (tline->next) {
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after macro name ignored");
         }
 
@@ -2908,7 +2918,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%pathsearch' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -3184,7 +3194,7 @@ static int do_directive(Token * tline)
         }
 
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
 
         if (!is_simple(evalresult)) {
@@ -3672,7 +3682,7 @@ again:
                                              m->casesense)))
                             m = m->next;
                         if (!m)
-                            error(ERR_WARNING | ERR_WARN_MNP,
+                            error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
                                   "macro `%s' exists, "
                                   "but not taking %d parameters",
                                   mstart->text, nparam);
@@ -3974,7 +3984,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    error(ERR_WARNING | ERR_WARN_MNP,
+    error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
           "macro `%s' exists, but not taking %d parameters",
           tline->text, nparam);
     nasm_free(params);
@@ -4162,17 +4172,15 @@ static void verror(int severity, const char *fmt, va_list arg)
     vsnprintf(buff, sizeof(buff), fmt, arg);
 
     if (istk && istk->mstk && istk->mstk->name)
-        _error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
+        _error(severity, "(%s:%d) %s", istk->mstk->name,
                istk->mstk->lineno, buff);
     else
-        _error(severity | ERR_PASS1, "%s", buff);
+        _error(severity, "%s", buff);
 }
 
 /*
  * Since preprocessor always operate only on the line that didn't
- * arrived yet, we should always use ERR_OFFBY1. Also since user
- * won't want to see same error twice (preprocessing is done once
- * per pass) we will want to show errors only during pass one.
+ * arrived yet, we should always use ERR_OFFBY1.
  */
 static void error(int severity, const char *fmt, ...)
 {
@@ -4223,7 +4231,7 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     src_set_linnum(0);
     istk->lineinc = 1;
     if (!istk->fp)
-        error(ERR_FATAL | ERR_NOFILE, "unable to open input file `%s'",
+        error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
               file);
     defining = NULL;
     nested_mac_count = 0;
