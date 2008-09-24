@@ -27,6 +27,7 @@
 %endrep
 %error
 %exitrep
+%fatal
 %iassign
 %idefine
 %idefstr

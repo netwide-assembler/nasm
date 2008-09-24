@@ -1938,6 +1938,7 @@ static int do_directive(Token * tline)
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
     int64_t count;
     size_t len;
+    int severity;
 
     origline = tline;
 
@@ -2363,12 +2364,21 @@ static int do_directive(Token * tline)
         free_tlist(origline);
 	return DIRECTIVE_FOUND;
 
+    case PP_FATAL:
+	severity = ERR_FATAL|ERR_NO_SEVERITY;
+	goto issue_error;
     case PP_ERROR:
+	severity = ERR_NONFATAL|ERR_NO_SEVERITY;
+	goto issue_error;
     case PP_WARNING:
+	severity = ERR_WARNING|ERR_NO_SEVERITY;
+	goto issue_error;
+
+    issue_error:
     {
-	int severity = (i == PP_ERROR)
-	    ? ERR_NONFATAL|ERR_NO_SEVERITY
-	    : ERR_WARNING|ERR_NO_SEVERITY;
+	/* Only error out if this is the final pass */
+	if (pass != 2 && i != PP_FATAL)
+	    return DIRECTIVE_FOUND;
 
         tline->next = expand_smacro(tline->next);
         tline = tline->next;

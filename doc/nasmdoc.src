@@ -3389,7 +3389,7 @@ the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
 
-\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error} and \i\c{%warning}
+\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error}, \i\c{%warning}, \i\c{%fatal}
 
 The preprocessor directive \c{%error} will cause NASM to report an
 error if it occurs in assembled code. So if other users are going to
@@ -3420,10 +3420,19 @@ Similarly, \c{%warning} issues a warning, but allows assembly to continue:
 \c     %define F1
 \c %endif
 
-It is optional for the message string after \c{%error} or \c{%warning}
-to be quoted.  If it is \e{not}, then single-line macros are expanded
-in it, which can be used to display more information to the user.  For
-example:
+\c{%error} and \c{%warning} are issued only on the final assembly
+pass.  This makes them safe to use in conjunction with tests that
+depend on symbol values.
+
+\c{%fatal} terminates assembly immediately, regardless of pass.  This
+is useful when there is no point in continuing the assembly further,
+and doing so is likely just going to cause a spew of confusing error
+messages.
+
+It is optional for the message string after \c{%error}, \c{%warning}
+or \c{%fatal} to be quoted.  If it is \e{not}, then single-line macros
+are expanded in it, which can be used to display more information to
+the user.  For example:
 
 \c %if foo > 64
 \c   %assign foo_over foo-64
