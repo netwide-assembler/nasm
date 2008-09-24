@@ -18,28 +18,49 @@ since 2007.
 
 \b New \c{%fatal} directive to immediately terminate assembly.
 
-\b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
-  strings.
-
-\b Fix bug in case-insensitive matching when compiled on platforms that
-  don't use the \c{configure} script.  Of the official release binaries,
-  that only affects the OS/2 binary.
-
-\b Correct the handling of nested \c{%rep}s.
-
-\b Support for x87 packed BCD constants.
-
 \b New \c{%strcat} directive to join quoted strings together.
-
-\b Correct the \c{LTR} instruction in 64-bit mode.
-
-\b Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
 
 \b New \c{%use} macro directive to support standard macro directives.  See
   \k{use}.
 
 \b Excess default parameters to \c{%macro} now issues a warning by default.
   See \k{mlmacro}.
+
+\b Fix \c{%ifn} and \c{%elifn}.
+
+\b Fix nested \c{%else} clauses.
+
+\b Correct the handling of nested \c{%rep}s.
+
+\b New \c{%unmacro} directive to undeclare a multi-line macro.
+  See \k{unmacro}.
+
+\b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
+  strings.  See \k{unicode}.
+
+\b Fix bug in case-insensitive matching when compiled on platforms that
+  don't use the \c{configure} script.  Of the official release binaries,
+  that only affected the OS/2 binary.
+
+\b Support for x87 packed BCD constants.  See \k{bcdconst}.
+
+\b Correct the \c{LTR} and \c{SLDT} instructions in 64-bit mode.
+
+\b Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
+
+\b Add AVX versions of the AES instructions (\c{VAES}...).
+
+\b Fix the 256-bit FMA instructions.
+
+\b Add 256-bit AVX stores per the latest AVX spec.
+
+\b VIA XCRYPT instructions can now be written either with or without
+  \c{REP}, apparently different versions of the VIA spec wrote them
+  differently.
+
+\b Add missing 64-bit \c{MOVNTI} instruction.
+
+\b Fix the operand size of \c{VMREAD} and \c{VMWRITE}.
 
 \b Numerous bug fixes, especially to the AES, AVX and VTX instructions.
 
