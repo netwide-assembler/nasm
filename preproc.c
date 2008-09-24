@@ -4218,6 +4218,8 @@ static void
 pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
          ListGen * listgen, StrList **deplist)
 {
+    Token *t;
+
     _error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
@@ -4256,6 +4258,15 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
 	*deptail = sl;
 	deptail = &sl->next;
     }
+
+    /* Define the __PASS__ macro.  This is defined here unlike
+       all the other builtins, because it is special -- it varies between
+       passes. */
+    t = nasm_malloc(sizeof(*t));
+    t->next = NULL;
+    make_tok_num(t, pass);
+    t->a.mac = NULL;
+    define_smacro(NULL, "__PASS__", true, 0, t);
 }
 
 static char *pp_getline(void)
