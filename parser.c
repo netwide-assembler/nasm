@@ -256,7 +256,7 @@ restart_parse:
                 result->times = 1L;
             } else {
                 result->times = value->value;
-                if (value->value < 0) {
+                if (value->value < 0 && pass0 == 2) {
                     error(ERR_NONFATAL, "TIMES value %d is negative",
                           value->value);
                     result->times = 0;
