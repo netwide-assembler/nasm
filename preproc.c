@@ -4249,7 +4249,14 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     do_predef = true;
     list = listgen;
     evaluate = eval;
-    pass = apass;
+
+    /*
+     * 0 for dependencies, 1 for preparatory passes, 2 for final pass.
+     * The caller, however, will also pass in 3 for preprocess-only so
+     * we can set __PASS__ accordingly.
+     */
+    pass = apass > 2 ? 2 : apass;
+
     dephead = deptail = deplist;
     if (deplist) {
 	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
@@ -4259,12 +4266,14 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
 	deptail = &sl->next;
     }
 
-    /* Define the __PASS__ macro.  This is defined here unlike
-       all the other builtins, because it is special -- it varies between
-       passes. */
+    /*
+     * Define the __PASS__ macro.  This is defined here unlike
+     * all the other builtins, because it is special -- it varies between
+     * passes.
+     */
     t = nasm_malloc(sizeof(*t));
     t->next = NULL;
-    make_tok_num(t, pass);
+    make_tok_num(t, apass);
     t->a.mac = NULL;
     define_smacro(NULL, "__PASS__", true, 0, t);
 }

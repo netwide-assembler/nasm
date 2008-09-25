@@ -382,7 +382,7 @@ int main(int argc, char **argv)
             location.known = false;
 
 	    /* pass = 1; */
-            preproc->reset(inname, 2, report_error, evaluate, &nasmlist,
+            preproc->reset(inname, 3, report_error, evaluate, &nasmlist,
 			   depend_ptr);
 
             while ((line = preproc->getline())) {
