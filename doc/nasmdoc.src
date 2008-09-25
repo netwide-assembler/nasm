@@ -3670,6 +3670,19 @@ For example, if the \c{altreg} package is included (see
 \k{pkg_altreg}), then the macro \c{__USE_ALTREG__} is defined.
 
 
+\S{pass_macro} \i\c{__PASS__}: Assembly Pass
+
+The macro \c{__PASS__} is defined to be \c{1} on preparatory passes,
+and \c{2} on the final pass.  In preprocess-only mode, it is set to
+\c{2} (there being only the final pass); when running only to generate
+dependencies (due to the \c{-M} or \c{-MG} option, see \k{opt-M}) it
+is set to \c{0}.
+
+\e{Avoid using this macro if at all possible.  It is tremendously easy
+to generate very strange errors by misusing it, and the semantics may
+change in future versions of NASM.}
+
+
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
 The core of NASM contains no intrinsic means of defining data

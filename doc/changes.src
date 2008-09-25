@@ -35,6 +35,9 @@ since 2007.
 \b New \c{%unmacro} directive to undeclare a multi-line macro.
   See \k{unmacro}.
 
+\b Builtin macro \c{__PASS__} which expands to the current assembly pass.
+  See \k{pass_macro}.
+
 \b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
   strings.  See \k{unicode}.
 
