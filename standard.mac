@@ -66,13 +66,13 @@ __SECT__
 %endmacro
 
 %imacro align 1-2+.nolist nop
-	  times ($$-$) % (%1) %2
+	  times ((%1) - (($-$$) % (%1))) %2
 %endmacro
 %imacro alignb 1-2+.nolist
 	  %ifempty %2
-	  	resb ($$-$) % (%1)
+	  	resb ((%1) - (($-$$) % (%1)))
 	  %else
-		times ($$-$) % (%1) %2
+		times ((%1) - (($-$$) % (%1))) %2
 	  %endif
 %endmacro
 
