@@ -645,7 +645,7 @@ JMP		mem32|near			\321\1\xFF\204					386,NOLONG
 JMP		mem64|near			\323\1\xFF\204					X64
 JMP		reg16				\320\1\xFF\204					8086
 JMP		reg32				\321\1\xFF\204					386,NOLONG
-JMP		reg64				\324\1\xFF\204					X64
+JMP		reg64				\323\1\xFF\204					X64
 JMP		mem				\322\1\xFF\204					8086
 JMP		mem16				\320\1\xFF\204					8086
 JMP		mem32				\321\1\xFF\204					386,NOLONG
