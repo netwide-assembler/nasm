@@ -1134,8 +1134,8 @@ and P6 instructions, FPU instructions, MMX instructions and even
 undocumented instructions are all supported. The instruction may be
 prefixed by \c{LOCK}, \c{REP}, \c{REPE}/\c{REPZ} or
 \c{REPNE}/\c{REPNZ}, in the usual way. Explicit \I{address-size
-prefixes}address-size and \i{operand-size prefixes} \c{A16},
-\c{A32}, \c{O16} and \c{O32} are provided - one example of their use
+prefixes}address-size and \i{operand-size prefixes} \i\c{A16},
+\i\c{A32}, \i\c{A64}, \i\c{O16} and \i\c{O32}, \i\c{O64} are provided - one example of their use
 is given in \k{mixsize}. You can also use the name of a \I{segment
 override}segment register as an instruction prefix: coding
 \c{es mov [bx],ax} is equivalent to coding \c{mov [es:bx],ax}. We
@@ -7086,7 +7086,7 @@ string instructions (\c{LODSx}, \c{STOSx} and so on) or the
 parameters, might seem to have no easy way to make them perform
 32-bit addressing when assembled in a 16-bit segment.
 
-This is the purpose of NASM's \i\c{a16} and \i\c{a32} prefixes. If
+This is the purpose of NASM's \i\c{a16}, \i\c{a32} and \i\c{a64} prefixes. If
 you are coding \c{LODSB} in a 16-bit segment but it is supposed to
 be accessing a string in a 32-bit segment, you should load the
 desired address into \c{ESI} and then code
@@ -7098,7 +7098,7 @@ The prefix forces the addressing size to 32 bits, meaning that
 a string in a 16-bit segment when coding in a 32-bit one, the
 corresponding \c{a16} prefix can be used.
 
-The \c{a16} and \c{a32} prefixes can be applied to any instruction
+The \c{a16}, \c{a32} and \c{a64} prefixes can be applied to any instruction
 in NASM's instruction table, but most of them can generate all the
 useful forms without them. The prefixes are necessary only for
 instructions with implicit addressing:
@@ -7110,8 +7110,8 @@ instructions with implicit addressing:
 \c{OUTSx}, and \c{XLATB}.
 Also, the
 various push and pop instructions (\c{PUSHA} and \c{POPF} as well as
-the more usual \c{PUSH} and \c{POP}) can accept \c{a16} or \c{a32}
-prefixes to force a particular one of \c{SP} or \c{ESP} to be used
+the more usual \c{PUSH} and \c{POP}) can accept \c{a16}, \c{a32} or \c{a64}
+prefixes to force a particular one of \c{SP}, \c{ESP} or \c{RSP} to be used
 as a stack pointer, in case the stack segment in use is a different
 size from the code segment.
 
