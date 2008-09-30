@@ -241,30 +241,25 @@ static void out(int64_t offset, int32_t segto, const void *data,
     outfmt->output(segto, data, type, size, segment, wrt);
 }
 
-static int jmp_match(int32_t segment, int64_t offset, int bits,
+static bool jmp_match(int32_t segment, int64_t offset, int bits,
                      insn * ins, const uint8_t *code)
 {
     int64_t isize;
     uint8_t c = code[0];
 
     if ((c != 0370 && c != 0371) || (ins->oprs[0].type & STRICT))
-        return 0;
-    if (optimizing == 0)
-         {
-            return 0;
-         }
-    if (optimizing < 0 && c == 0371 )
-         {
-            return 0;
-         }
+        return false;
+    if (!optimizing)
+	return false;
+    if (optimizing < 0 && c == 0371)
+	return false;
+
     isize = calcsize(segment, offset, bits, ins, code);
     if (ins->oprs[0].segment != segment)
-        return 0;
-    isize = ins->oprs[0].offset - offset - isize;       /* isize is now the delta */
-    if (isize >= -128L && isize <= 127L)
-        return 1;               /* it is byte size */
+        return false;
 
-    return 0;
+    isize = ins->oprs[0].offset - offset - isize; /* isize is delta */
+    return (isize >= -128 && isize <= 127); /* is it byte size? */
 }
 
 int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
@@ -449,11 +444,10 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
     for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){
         int m = matches(temp, instruction, bits);
-
-        if (m == 99)
-            m += jmp_match(segment, offset, bits, instruction, temp->code);
-
-        if (m == 100) {         /* matches! */
+	if (m == 100 ||
+	    (m == 99 && jmp_match(segment, offset, bits,
+				  instruction, temp->code))) {
+	    /* Matches! */
             const uint8_t *codes = temp->code;
             int64_t insn_size = calcsize(segment, offset, bits,
                                       instruction, codes);
@@ -582,7 +576,6 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
         } else if (m > 0 && m > size_prob) {
             size_prob = m;
         }
-//        temp++;
     }
 
     if (temp->opcode == -1) {   /* didn't match any instruction */
@@ -703,10 +696,9 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
     for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++) {
         int m = matches(temp, instruction, bits);
-        if (m == 99)
-            m += jmp_match(segment, offset, bits, instruction, temp->code);
-
-        if (m == 100) {
+        if (m == 100 ||
+	    (m == 99 && jmp_match(segment, offset, bits,
+				  instruction, temp->code))) {
             /* we've matched an instruction. */
             int64_t isize;
             const uint8_t *codes = temp->code;
