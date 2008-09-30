@@ -2377,7 +2377,7 @@ static int do_directive(Token * tline)
 	severity = ERR_NONFATAL|ERR_NO_SEVERITY;
 	goto issue_error;
     case PP_WARNING:
-	severity = ERR_WARNING|ERR_NO_SEVERITY;
+	severity = ERR_WARNING|ERR_NO_SEVERITY|ERR_WARN_USER;
 	goto issue_error;
 
     issue_error:

@@ -13,6 +13,9 @@ since 2007.
 \b Make the behaviour of \c{-O0} match NASM 0.98 legacy behavior.
   See \k{opt-O}.
 
+\b \c{-w-user} can be used to suppress the output of \c{%warning} directives.
+  See \k{opt-w}.
+
 
 \S{cl-2.04} Version 2.04
 

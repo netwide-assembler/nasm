@@ -93,7 +93,8 @@ extern efunc nasm_malloc_error;
 #define ERR_WARN_FL_DENORM	WARN( 8) /* FP denormal */
 #define ERR_WARN_FL_UNDERFLOW	WARN( 9) /* FP underflow */
 #define ERR_WARN_FL_TOOLONG	WARN(10) /* FP too many digits */
-#define ERR_WARN_MAX	10               /* the highest numbered one */
+#define ERR_WARN_USER		WARN(11) /* %warning directives */
+#define ERR_WARN_MAX		11	 /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will

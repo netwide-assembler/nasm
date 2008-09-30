@@ -889,6 +889,9 @@ Disabled by default.
 \b \i\c{float-toolong} warns about too many digits in floating-point numbers.
 Enabled by default.
 
+\b \i\c{user} controls \c{%warning} directives (see \k{pperror}).
+Enabled by default.
+
 In addition, you can set warning classes across sections.
 Warning classes may be enabled with \i\c{[warning +warning-name]},
 disabled with \i\c{[warning -warning-name]} or reset to their

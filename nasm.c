@@ -107,7 +107,8 @@ static const char *depend_file = NULL;
 static bool suppressed[ERR_WARN_MAX+1];
 
 static bool suppressed_global[ERR_WARN_MAX+1] = {
-    true, false, true, false, false, false, true, false, true, true, false
+    true, false, true, false, false, false, true, false, true, true, false,
+    true
 };
 /*
  * The option names for the suppressible warnings. As before, entry
@@ -116,7 +117,8 @@ static bool suppressed_global[ERR_WARN_MAX+1] = {
 static const char *suppressed_names[ERR_WARN_MAX+1] = {
     "error", "macro-params", "macro-selfref", "macro-defaults",
     "orphan-labels", "number-overflow", "gnu-elf-extensions",
-    "float-overflow", "float-denorm", "float-underflow", "float-toolong"
+    "float-overflow", "float-denorm", "float-underflow", "float-toolong",
+    "user"
 };
 
 /*
@@ -134,7 +136,8 @@ static const char *suppressed_what[ERR_WARN_MAX+1] = {
     "floating point overflow",
     "floating point denormal",
     "floating point underflow",
-    "too many digits in floating-point number"
+    "too many digits in floating-point number",
+    "%warning directives"
 };
 
 /*
