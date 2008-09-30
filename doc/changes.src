@@ -8,6 +8,12 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.05} Version 2.05
+
+\b Make the behaviour of \c{-O0} match NASM 0.98 legacy behavior.
+  See \k{opt-O}.
+
+
 \S{cl-2.04} Version 2.04
 
 \b Sanitize macro handing in the \c{%error} directive.

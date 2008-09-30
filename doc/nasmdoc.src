@@ -787,22 +787,26 @@ NASM defaults to not optimizing operands which can fit into a signed byte.
 This means that if you want the shortest possible object code,
 you have to enable optimization.
  
-Using the \c{-O} option, you can tell NASM to carry out different levels of optimization.
-The syntax is:
+Using the \c{-O} option, you can tell NASM to carry out different
+levels of optimization.  The syntax is:
 
 \b \c{-O0}: No optimization. All operands take their long forms,
-        if a short form is not specified.
+        if a short form is not specified, except conditional jumps.
+        This is intended to match NASM 0.98 behavior.
 
 \b \c{-O1}: Minimal optimization. As above, but immediate operands
         which will fit in a signed byte are optimized,
-        unless the long form is specified.
+        unless the long form is specified.  Conditional jumps default
+        to the long form unless otherwise specified.
 
 \b \c{-Ox} (where \c{x} is the actual letter \c{x}): Multipass optimization.
         Minimize branch offsets and signed immediate bytes,
-	overriding size specification unless the \c{strict} keyword
-	has been used (see \k{strict}).  For compatability with earlier
-	releases, the letter \c{x} may also be any number greater than
-	one. This number has no effect on the actual number of passes.
+        overriding size specification unless the \c{strict} keyword
+        has been used (see \k{strict}).  For compatability with earlier
+        releases, the letter \c{x} may also be any number greater than
+        one. This number has no effect on the actual number of passes.
+
+The \c{-Ox} mode is recommended for most uses.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
