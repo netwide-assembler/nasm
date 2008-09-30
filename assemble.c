@@ -247,9 +247,13 @@ static int jmp_match(int32_t segment, int64_t offset, int bits,
     int64_t isize;
     uint8_t c = code[0];
 
-    if (c != 0370 && c != 0371)
+    if ((c != 0370 && c != 0371) || (ins->oprs[0].type & STRICT))
         return 0;
-    if ((optimizing <= 0 || (ins->oprs[0].type & STRICT)))
+    if (optimizing == 0)
+         {
+            return 0;
+         }
+    if (optimizing < 0 && c == 0371 )
          {
             return 0;
          }
