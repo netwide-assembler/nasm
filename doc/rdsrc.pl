@@ -104,6 +104,7 @@ $pname = "para000000";
 @pnames = @pflags = ();
 $para = undef;
 while (defined($_ = <STDIN>)) {
+  $_ = &untabify($_);
   &check_include($_);
 }
 &got_para($para);
@@ -151,6 +152,26 @@ if ($out_format eq 'txt') {
     die "$0: unknown output format: $out_format\n";
 }
 
+sub untabify($) {
+  my($s) = @_;
+  my $o = '';
+  my($c, $i, $p);
+
+  $p = 0;
+  for ($i = 0; $i < length($s); $i++) {
+    $c = substr($s, $i, 1);
+    if ($c eq "\t") {
+      do {
+	$o .= ' ';
+	$p++;
+      } while ($p & 7);
+    } else {
+      $o .= $c;
+      $p++;
+    }
+  }
+  return $o;
+}
 sub check_include {
   local $_ = shift;
   if (/\\& (\S+)/) {
