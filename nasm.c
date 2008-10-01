@@ -104,40 +104,27 @@ static const char *depend_file = NULL;
  * Which of the suppressible warnings are suppressed. Entry zero
  * isn't an actual warning, but it used for -w+error/-Werror.
  */
-static bool suppressed[ERR_WARN_MAX+1];
 
-static bool suppressed_global[ERR_WARN_MAX+1] = {
-    true, false, true, false, false, false, true, false, true, true, false,
-    true
-};
-/*
- * The option names for the suppressible warnings. As before, entry
- * zero does nothing.
- */
-static const char *suppressed_names[ERR_WARN_MAX+1] = {
-    "error", "macro-params", "macro-selfref", "macro-defaults",
-    "orphan-labels", "number-overflow", "gnu-elf-extensions",
-    "float-overflow", "float-denorm", "float-underflow", "float-toolong",
-    "user"
-};
+static bool warning_on[ERR_WARN_MAX+1]; /* Current state */
+static bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state */
 
-/*
- * The explanations for the suppressible warnings. As before, entry
- * zero does nothing.
- */
-static const char *suppressed_what[ERR_WARN_MAX+1] = {
-    "treat warnings as errors",
-    "macro calls with wrong parameter count",
-    "cyclic macro references",
-    "macros with more default than optional parameters",
-    "labels alone on lines without trailing `:'",
-    "numeric constants does not fit in 64 bits",
-    "using 8- or 16-bit relocation in ELF32, a GNU extension",
-    "floating point overflow",
-    "floating point denormal",
-    "floating point underflow",
-    "too many digits in floating-point number",
-    "%warning directives"
+static const struct warning {
+    const char *name;
+    const char *help;
+    bool enabled;
+} warnings[ERR_WARN_MAX+1] = {
+    {"error", "treat warnings as errors", false},
+    {"macro-params", "macro calls with wrong parameter count", true},
+    {"macro-selfref", "cyclic macro references", false},
+    {"macro-defaults", "macros with more default than optional parameters", true},
+    {"orphan-labels", "labels alone on lines without trailing `:'", true},
+    {"number-overflow", "numeric constants does not fit in 64 bits", true},
+    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
+    {"float-overflow", "floating point overflow", true},
+    {"float-denorm", "floating point denormal", false},
+    {"float-underflow", "floating point underflow", false},
+    {"float-toolong", "too many digits in floating-point number", true},
+    {"user", "%warning directives", true},
 };
 
 /*
@@ -618,7 +605,7 @@ static bool process_arg(char *p, char *q)
     char *param;
     int i;
     bool advance = false;
-    bool suppress;
+    bool do_warn;
 
     if (!p || !p[0])
         return false;
@@ -776,8 +763,8 @@ static bool process_arg(char *p, char *q)
                  "Warnings:\n");
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
-                       suppressed_names[i], suppressed_what[i],
-                       suppressed_global[i] ? "off" : "on");
+                       warnings[i].name, warnings[i].help,
+                       warnings[i].enabled ? "on" : "off");
             printf
                 ("\nresponse files should contain command line parameters"
                  ", one per line.\n");
@@ -827,10 +814,10 @@ static bool process_arg(char *p, char *q)
 
 	case 'W':
 	    if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
-		suppress = true;
+		do_warn = false;
 		param += 3;
 	    } else {
-		suppress = false;
+		do_warn = true;
 	    }
 	    goto set_warning;
 
@@ -840,21 +827,21 @@ static bool process_arg(char *p, char *q)
                              "invalid option to `-w'");
 		break;
             }
-	    suppress = (param[0] == '-');
+	    do_warn = (param[0] == '+');
 	    param++;
 	    goto set_warning;
 	set_warning:
 	    for (i = 0; i <= ERR_WARN_MAX; i++)
-		if (!nasm_stricmp(param, suppressed_names[i]))
+		if (!nasm_stricmp(param, warnings[i].name))
 		    break;
 	    if (i <= ERR_WARN_MAX)
-		suppressed_global[i] = suppress;
+		warning_on[i] = do_warn;
 	    else if (!nasm_stricmp(param, "all"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed_global[i] = suppress;
+		    warning_on[i] = do_warn;
 	    else if (!nasm_stricmp(param, "none"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed_global[i] = !suppress;
+		    warning_on[i] = !do_warn;
 	    else
 		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			     "invalid warning `%s'", param);
@@ -1073,8 +1060,11 @@ static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
     char *envreal, *envcopy = NULL, *p, *arg;
+    int i;
 
     *inname = *outname = *listname = *errname = '\0';
+    for (i = 0; i <= ERR_WARN_MAX; i++)
+	warning_on_global[i] = warnings[i].enabled;
 
     /*
      * First, process the NASMENV environment variable.
@@ -1200,7 +1190,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         }
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist,
 		       pass1 == 2 ? depend_ptr : NULL);
-        memcpy(suppressed, suppressed_global, (ERR_WARN_MAX+1) * sizeof(bool));
+        memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
         globallineno = 0;
         if (passn == 1)
@@ -1418,25 +1408,26 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             value++;
 
                         switch(*value) {
-                            case '-': validid = 0; value++; break;
+                            case '-': validid = 1; value++; break;
                             case '+': validid = 1; value++; break;
                             case '*': validid = 2; value++; break;
-                            default: /*
-                                       * Should this error out?
-                                       * I'll keep it so nothing breaks.
-                                       */
-                                      validid = 1; break;
+                            default:  validid = 1; break;
                         }
 
                         for (i = 1; i <= ERR_WARN_MAX; i++)
-                            if (!nasm_stricmp(value, suppressed_names[i]))
+                            if (!nasm_stricmp(value, warnings[i].name))
                                 break;
                         if (i <= ERR_WARN_MAX) {
                             switch(validid) {
-                                case 0: suppressed[i] = true; break;
-                                case 1: suppressed[i] = false; break;
-                                case 2: suppressed[i] = suppressed_global[i];
-                                        break;
+			    case 0:
+				warning_on[i] = false;
+				break;
+			    case 1:
+				warning_on[i] = true;
+				break;
+			    case 2:
+				warning_on[i] = warning_on_global[i];
+				break;
                             }
                         }
                         else
@@ -1895,7 +1886,7 @@ static bool is_suppressed_warning(int severity)
      */
     return (severity & ERR_MASK) == ERR_WARNING &&
 	(((severity & ERR_WARN_MASK) != 0 &&
-	  suppressed[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
+	  !warning_on[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
 	 /* See if it's a pass-one only warning and we're not in pass one. */
 	 ((severity & ERR_PASS1) && pass0 != 1));
 }
@@ -1944,7 +1935,7 @@ static void report_error_common(int severity, const char *fmt,
         /* no further action, by definition */
         break;
     case ERR_WARNING:
-	if (!suppressed[0])	/* Treat warnings as errors */
+	if (warning_on[0])	/* Treat warnings as errors */
 	    terminate_after_phase = true;
 	break;
     case ERR_NONFATAL:
