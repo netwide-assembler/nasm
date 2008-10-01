@@ -10,6 +10,8 @@ since 2007.
 
 \S{cl-2.05} Version 2.05
 
+\b Fix redundant REX.W prefix on \c{JMP reg64}.
+
 \b Make the behaviour of \c{-O0} match NASM 0.98 legacy behavior.
   See \k{opt-O}.
 
