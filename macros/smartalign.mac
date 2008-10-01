@@ -161,14 +161,14 @@ USE: smartalign
 %unimacro align 1-2+.nolist
 %imacro align 1-2+.nolist
   %ifnempty %2
-    times ((%1) - (($-$$) % (%1))) %2
+    times (((%1) - (($-$$) % (%1))) % (%1)) %2
   %else
     %push
-    %assign %$pad (%1) - (($-$$) % (%1))
+    %assign %$pad (((%1) - (($-$$) % (%1))) % (%1))
     %if %$pad > __ALIGN_JMP_THRESHOLD__
       jmp %$end
       ; We can't re-use %$pad here as $ will have changed!
-      times ((%1) - (($-$$) % (%1))) nop
+      times (((%1) - (($-$$) % (%1))) % (%1)) nop
 %$end:
     %else
       %if __BITS__ == 16

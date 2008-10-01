@@ -11,5 +11,6 @@
 	inc eax
 	inc eax
 	align 13
+	align 13 ;should do nothing
 	inc eax
 	inc eax
