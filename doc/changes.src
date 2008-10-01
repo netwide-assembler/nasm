@@ -18,6 +18,13 @@ since 2007.
 \b \c{-w-user} can be used to suppress the output of \c{%warning} directives.
   See \k{opt-w}.
 
+\b Fix bug where \c{ALIGN} would issue a full alignment datum instead of
+  zero bytes.
+
+\b Fix offsets in list files.
+
+\b Fix \c{%include} inside multi-line macros or loops.
+
 
 \S{cl-2.04} Version 2.04
 
