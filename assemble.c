@@ -1805,6 +1805,13 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 s = p - bytes;
                 out(offset, segment, bytes, OUT_RAWDATA, s, NO_SEG, NO_SEG);
 
+                /*
+                 * Make sure the address gets the right offset in case
+                 * the line breaks in the .lst file (BR 1197827)
+                 */
+                offset += s;
+                s = 0;
+
                 switch (ea_data.bytes) {
                 case 0:
                     break;
