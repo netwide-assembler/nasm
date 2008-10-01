@@ -2162,7 +2162,7 @@ is equivalent to
 This can be used, for example, with the \c{%!} construct (see
 \k{getenv}):
 
-\c %defstr PATH %!PATH		; The operating system PATH variable
+\c %defstr PATH %!PATH          ; The operating system PATH variable
 
 
 \H{strlen} \i{String Manipulation in Macros}
