@@ -4412,6 +4412,8 @@ static char *pp_getline(void)
                 nasm_free(i);
                 if (!istk)
                     return NULL;
+                if (istk->expansion && istk->expansion->finishes)
+                    break;
             }
         }
 
