@@ -100,7 +100,7 @@ sub perform {
                 if($diff) {
                     for(@failedfiles) {
                         if($_ eq $stdoutfile or $_ eq $stderrfile) {
-                            system "diff golden/$testname/$subname/$_ $outputdir/$testname/$subname/$_";
+                            system "diff -u golden/$testname/$subname/$_ $outputdir/$testname/$subname/$_";
                             print "\n";
                         }
                     }
