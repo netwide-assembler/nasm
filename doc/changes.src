@@ -25,6 +25,9 @@ since 2007.
 
 \b Fix \c{%include} inside multi-line macros or loops.
 
+\b Fix error where NASM would generate a spurious warning on valid
+  optimizations of immediate values.
+
 
 \S{cl-2.04} Version 2.04
 

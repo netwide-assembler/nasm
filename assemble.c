@@ -1255,12 +1255,16 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 015:
         case 016:
 	case 017:
-	    /* XXX: warns for legitimate optimizer actions */
-            if (opx->offset < -128 || opx->offset > 127) {
+	    /* The test for BITS8 and SBYTE here is intended to avoid
+	       warning on optimizer actions due to SBYTE, while still
+	       warn on explicit BYTE directives.  Also warn, obviously,
+	       if the optimizer isn't enabled. */
+            if (((opx->type & BITS8) ||
+		 !(opx->type & (SBYTE16|SBYTE32|SBYTE64))) &&
+		(opx->offset < -128 || opx->offset > 127)) {
                 errfunc(ERR_WARNING | ERR_WARN_NOV,
 			"signed byte value exceeds bounds");
-            }
-
+	    }
             if (opx->segment != NO_SEG) {
                 data = opx->offset;
                 out(offset, segment, &data, OUT_ADDRESS, 1,
