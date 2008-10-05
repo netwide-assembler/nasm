@@ -31,6 +31,9 @@ golden: performtest.pl $(TESTS)
 test:	performtest.pl $(NASM) $(TESTS)
 	$(PERL) performtest.pl --nasm='$(NASM)' $(TESTS)
 
+diff:	performtest.pl $(NASM) $(TESTS)
+	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
+
 clean:
 	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst *.bin
 	rm -rf testresults
