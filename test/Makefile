@@ -1,8 +1,9 @@
 .SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
 
-NASM = ../nasm
+NASM	= ../nasm
 NASMOPT = -Ox -I../misc
-PERL = perl
+PERL	= perl
+TESTS	= $(wildcard *.asm)
 
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
@@ -24,5 +25,15 @@ PERL = perl
 
 all:
 
+golden: performtest.pl $(TESTS)
+	$(PERL) performtest.pl --golden --nasm='$(NASM)' $(TESTS)
+
+test:	performtest.pl $(NASM) $(TESTS)
+	$(PERL) performtest.pl --nasm='$(NASM)' $(TESTS)
+
 clean:
 	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst *.bin
+	rm -rf testresults
+
+spotless: clean
+	rm -rf golden
