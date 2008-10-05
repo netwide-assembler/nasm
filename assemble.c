@@ -140,7 +140,9 @@ static struct ofmt *outfmt;
 static ListGen *list;
 
 static int64_t calcsize(int32_t, int64_t, int, insn *, const uint8_t *);
-static void gencode(int32_t, int64_t, int, insn *, const uint8_t *, int64_t);
+static void gencode(int32_t segment, int64_t offset, int bits,
+                    insn * ins, const struct itemplate *temp,
+		    int64_t insn_end);
 static int matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
@@ -448,9 +450,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 	    (m == 99 && jmp_match(segment, offset, bits,
 				  instruction, temp->code))) {
 	    /* Matches! */
-            const uint8_t *codes = temp->code;
             int64_t insn_size = calcsize(segment, offset, bits,
-                                      instruction, codes);
+                                      instruction, temp->code);
             itimes = instruction->times;
             if (insn_size < 0)  /* shouldn't be, on pass two */
                 error(ERR_PANIC, "errors made it through from pass one");
@@ -558,8 +559,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                         }
                     }
                     insn_end = offset + insn_size;
-                    gencode(segment, offset, bits, instruction, codes,
-                            insn_end);
+                    gencode(segment, offset, bits, instruction,
+			    temp, insn_end);
                     offset += insn_size;
                     if (itimes > 0 && itimes == instruction->times - 1) {
                         /*
@@ -1175,7 +1176,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     }
 
 static void gencode(int32_t segment, int64_t offset, int bits,
-                    insn * ins, const uint8_t *codes, int64_t insn_end)
+                    insn * ins, const struct itemplate *temp,
+		    int64_t insn_end)
 {
     static char condval[] = {   /* conditional opcodes */
         0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
@@ -1187,6 +1189,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
     int64_t size;
     int64_t data;
     struct operand *opx;
+    const uint8_t *codes = temp->code;
 
     while (*codes) {
 	c = *codes++;
@@ -1260,7 +1263,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	       warn on explicit BYTE directives.  Also warn, obviously,
 	       if the optimizer isn't enabled. */
             if (((opx->type & BITS8) ||
-		 !(opx->type & (SBYTE16|SBYTE32|SBYTE64))) &&
+		 !(opx->type & temp->opd[c & 3] & BYTENESS)) &&
 		(opx->offset < -128 || opx->offset > 127)) {
                 errfunc(ERR_WARNING | ERR_WARN_NOV,
 			"signed byte value exceeds bounds");

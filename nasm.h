@@ -572,6 +572,7 @@ typedef uint32_t opflags_t;
 #define SBYTE16		0x00022000U   /* for op r16,immediate instrs. */
 #define SBYTE32		0x00042000U   /* for op r32,immediate instrs. */
 #define SBYTE64		0x00082000U   /* for op r64,immediate instrs. */
+#define BYTENESS	0x000e0000U   /* for testing for byteness */
 
 /* special flags */
 #define SAME_AS		0x40000000U
