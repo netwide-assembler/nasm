@@ -71,14 +71,15 @@ extern efunc nasm_malloc_error;
 #define ERR_NOFILE	0x00000010      /* don't give source file name/line */
 #define ERR_USAGE	0x00000020      /* print a usage message */
 #define ERR_PASS1	0x00000040      /* only print this error on pass one */
-#define ERR_NO_SEVERITY	0x00000080      /* suppress printing severity */
+#define ERR_PASS2	0x00000080
+#define ERR_NO_SEVERITY	0x00000100      /* suppress printing severity */
 
 /*
  * These codes define specific types of suppressible warning.
  */
 
-#define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR 	8               /* how far to shift right */
+#define ERR_WARN_MASK	0xFFFFF000      /* the mask for this feature */
+#define ERR_WARN_SHR 	12               /* how far to shift right */
 
 #define WARN(x) ((x) << ERR_WARN_SHR)
 

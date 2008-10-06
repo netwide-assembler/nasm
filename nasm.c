@@ -1888,7 +1888,8 @@ static bool is_suppressed_warning(int severity)
 	(((severity & ERR_WARN_MASK) != 0 &&
 	  !warning_on[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
 	 /* See if it's a pass-one only warning and we're not in pass one. */
-	 ((severity & ERR_PASS1) && pass0 != 1));
+	 ((severity & ERR_PASS1) && pass0 != 1) ||
+	 ((severity & ERR_PASS2) && pass0 != 2));
 }
 
 /**

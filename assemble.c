@@ -185,13 +185,14 @@ static const char *size_name(int size)
     }
 }
 
-static void warn_overflow(int size, int64_t data)
+static void warn_overflow(int size, const struct operand *o)
 {
-    if (size < 8) {
+    if (size < 8 && o->wrt == NO_SEG && o->segment == NO_SEG) {
 	int64_t lim = ((int64_t)1 << (size*8))-1;
+	int64_t data = o->offset;
 
 	if (data < ~lim || data > lim)
-	    errfunc(ERR_WARNING | ERR_WARN_NOV,
+	    errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 		    "%s data exceeds bounds", size_name(size));
     }
 }
@@ -474,21 +475,21 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                             break;
                         case R_CS:
                             if (bits == 64) {
-                                error(ERR_WARNING,
+                                error(ERR_WARNING | ERR_PASS2,
                                       "cs segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x2E;
                             break;
                         case R_DS:
                             if (bits == 64) {
-                                error(ERR_WARNING,
+                                error(ERR_WARNING | ERR_PASS2,
                                       "ds segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x3E;
                             break;
                         case R_ES:
                            if (bits == 64) {
-                                error(ERR_WARNING,
+                                error(ERR_WARNING | ERR_PASS2,
                                       "es segment base generated, but will be ignored in 64-bit mode");
                            }
                             c = 0x26;
@@ -501,7 +502,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                             break;
                         case R_SS:
                             if (bits == 64) {
-                                error(ERR_WARNING,
+                                error(ERR_WARNING | ERR_PASS2,
                                       "ss segment base generated, but will be ignored in 64-bit mode");
                             }
                             c = 0x36;
@@ -744,8 +745,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 static bool possible_sbyte(operand *o)
 {
     return !(o->opflags & OPFLAG_FORWARD) &&
-	optimizing >= 0 && !(o->type & STRICT) &&
-	o->wrt == NO_SEG && o->segment == NO_SEG;
+	optimizing >= 0 && !(o->type & STRICT);
 }
 
 /* check that opn[op]  is a signed byte of size 16 or 32 */
@@ -771,23 +771,29 @@ static bool is_sbyte32(operand *o)
     return v >= -128 && v <= 127;
 }
 
-/* check that  opn[op]  is a signed byte of size 32; warn if this is not
+/* check that opn[op] is a signed byte of size 32; warn if this is not
    the original value when extended to 64 bits */
 static bool is_sbyte64(operand *o)
 {
     int64_t v64;
-    int32_t v32;
+    int32_t v;
+
+    if (!(o->wrt == NO_SEG && o->segment == NO_SEG))
+	return false;		/* Not a pure immediate */
+
+    v64 = o->offset;
+    v = (int32_t)v64;
+
+    if (v64 != v)
+	errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+		"signed dword immediate exceeds bounds");
 
     /* dead in the water on forward reference or External */
     if (!possible_sbyte(o))
 	return false;
 
-    v64 = o->offset;
-    v32 = (int32_t)v64;
-
-    warn_overflow(32, v64);
-
-    return v32 >= -128 && v32 <= 127;
+    v = o->offset;
+    return v >= -128 && v <= 127;
 }
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                      insn * ins, const uint8_t *codes)
@@ -1265,7 +1271,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             if (((opx->type & BITS8) ||
 		 !(opx->type & temp->opd[c & 3] & BYTENESS)) &&
 		(opx->offset < -128 || opx->offset > 127)) {
-                errfunc(ERR_WARNING | ERR_WARN_NOV,
+                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			"signed byte value exceeds bounds");
 	    }
             if (opx->segment != NO_SEG) {
@@ -1285,7 +1291,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 022:
 	case 023:
             if (opx->offset < -256 || opx->offset > 255) {
-                errfunc(ERR_WARNING | ERR_WARN_NOV,
+                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			"byte value exceeds bounds");
             }
             if (opx->segment != NO_SEG) {
@@ -1305,7 +1311,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 026:
 	case 027:
             if (opx->offset < 0 || opx->offset > 255)
-                errfunc(ERR_WARNING | ERR_WARN_NOV,
+                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			"unsigned byte value exceeds bounds");
             if (opx->segment != NO_SEG) {
                 data = opx->offset;
@@ -1323,9 +1329,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 031:
         case 032:
 	case 033:
+	    warn_overflow(2, opx);
             data = opx->offset;
-            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
-		warn_overflow(2, data);
             out(offset, segment, &data, OUT_ADDRESS, 2,
                 opx->segment, opx->wrt);
             offset += 2;
@@ -1339,9 +1344,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
+	    warn_overflow(size, opx);
             data = opx->offset;
-            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
-		warn_overflow(size, data);
             out(offset, segment, &data, OUT_ADDRESS, size,
                 opx->segment, opx->wrt);
             offset += size;
@@ -1351,9 +1355,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 041:
         case 042:
 	case 043:
+	    warn_overflow(4, opx);
             data = opx->offset;
-            if (opx->segment == NO_SEG && opx->wrt == NO_SEG)
-		warn_overflow(4, data);
             out(offset, segment, &data, OUT_ADDRESS, 4,
                 opx->segment, opx->wrt);
             offset += 4;
@@ -1365,9 +1368,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 047:
             data = opx->offset;
             size = ins->addr_size >> 3;
-	    if (opx->segment == NO_SEG &&
-		opx->wrt == NO_SEG)
-		warn_overflow(size, data);
+	    warn_overflow(size, opx);
             out(offset, segment, &data, OUT_ADDRESS, size,
                 opx->segment, opx->wrt);
             offset += size;
@@ -1472,15 +1473,13 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0142:
 	case 0143:
             data = opx->offset;
+	    warn_overflow(2, opx);
             if (is_sbyte16(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
                 offset++;
             } else {
-                if (opx->segment == NO_SEG &&
-                    opx->wrt == NO_SEG)
-		    warn_overflow(2, data);
                 out(offset, segment, &data, OUT_ADDRESS, 2,
                     opx->segment, opx->wrt);
                 offset += 2;
@@ -1504,6 +1503,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0152:
 	case 0153:
             data = opx->offset;
+	    warn_overflow(4, opx);
             if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
@@ -1559,7 +1559,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 			c & 7);
 	    } else {
 		if (opx->offset & ~15) {
-		    errfunc(ERR_WARNING | ERR_WARN_NOV,
+		    errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			    "four-bit argument exceeds bounds");
 		}
 		bytes[0] |= opx->offset & 15;
@@ -1590,8 +1590,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0252:
 	case 0253:
             data = opx->offset;
-	    /* is_sbyte32() is right here, we have already warned */
-            if (is_sbyte32(opx)) {
+	    warn_overflow(4, opx);
+            if (is_sbyte64(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1839,7 +1839,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
-		    warn_overflow(ea_data.bytes, data);
+		    warn_overflow(ea_data.bytes, opx);
                     out(offset, segment, &data,
                         ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS,
 			ea_data.bytes,
