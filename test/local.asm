@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -olocal.bin; Files=.stdout .stderr local.bin
+;Testname=test; Arguments=-fbin -olocal.bin; Files=stdout stderr local.bin
 	bits 32
 
 %push bluttan

@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-fbin -omovimm.bin -O0; Files=.stdout .stderr movimm.bin
-;Testname=optimized;   Arguments=-fbin -omovimm.bin -Ox; Files=.stdout .stderr movimm.bin
+;Testname=unoptimized; Arguments=-fbin -omovimm.bin -O0; Files=stdout stderr movimm.bin
+;Testname=optimized;   Arguments=-fbin -omovimm.bin -Ox; Files=stdout stderr movimm.bin
 	bits 64
 
 	mov rax,1234567890abcdefh

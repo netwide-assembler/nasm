@@ -1,12 +1,12 @@
-;Testname=O0; Arguments=-O0 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=O1; Arguments=-O1 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=O2; Arguments=-O2 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=O3; Arguments=-O3 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=O4; Arguments=-O4 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=O5; Arguments=-O5 -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=Ox; Arguments=-Ox -fbin -oexpimp.bin; Files=.stdout .stderr expimp.bin
-;Testname=error-O0; Arguments=-O0 -fbin -oexpimp.bin -DERROR; Files=.stdout .stderr expimp.bin
-;Testname=error-Ox; Arguments=-Ox -fbin -oexpimp.bin -DERROR; Files=.stdout .stderr expimp.bin
+;Testname=O0; Arguments=-O0 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=O1; Arguments=-O1 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=O2; Arguments=-O2 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=O3; Arguments=-O3 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=O4; Arguments=-O4 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=O5; Arguments=-O5 -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=Ox; Arguments=-Ox -fbin -oexpimp.bin; Files=stdout stderr expimp.bin
+;Testname=error-O0; Arguments=-O0 -fbin -oexpimp.bin -DERROR; Files=stdout stderr expimp.bin
+;Testname=error-Ox; Arguments=-Ox -fbin -oexpimp.bin -DERROR; Files=stdout stderr expimp.bin
 
 ;
 ; Test of explicitly and implicitly sized operands

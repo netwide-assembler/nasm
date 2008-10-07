@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-fbin -ommxsize.bin -O0; Files=.stdout .stderr mmxsize.bin
-;Testname=optimized;   Arguments=-fbin -ommxsize.bin -Ox; Files=.stdout .stderr mmxsize.bin
+;Testname=unoptimized; Arguments=-fbin -ommxsize.bin -O0; Files=stdout stderr mmxsize.bin
+;Testname=optimized;   Arguments=-fbin -ommxsize.bin -Ox; Files=stdout stderr mmxsize.bin
 	bits 32
 	movd mm0,eax
 	movd mm0,[foo]

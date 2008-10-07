@@ -1,6 +1,6 @@
-;Testname=error; Arguments=-fbin -DERROR -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
-;Testname=fatal; Arguments=-fbin -DFATAL -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
-;Testname=warning; Arguments=-fbin -DWARNING -ofwdoptpp.bin; Files=.stdout .stderr fwdoptpp.bin
+;Testname=error; Arguments=-fbin -DERROR -ofwdoptpp.bin; Files=stdout stderr fwdoptpp.bin
+;Testname=fatal; Arguments=-fbin -DFATAL -ofwdoptpp.bin; Files=stdout stderr fwdoptpp.bin
+;Testname=warning; Arguments=-fbin -DWARNING -ofwdoptpp.bin; Files=stdout stderr fwdoptpp.bin
 
 %ifndef ERROR
   %ifndef FATAL

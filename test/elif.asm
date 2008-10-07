@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fobj -oelif.obj; Files=.stdout .stderr elif.obj
-;Testname=optimized;   Arguments=-Ox -fobj -oelif.obj; Files=.stdout .stderr elif.obj
+;Testname=unoptimized; Arguments=-O0 -fobj -oelif.obj; Files=stdout stderr elif.obj
+;Testname=optimized;   Arguments=-Ox -fobj -oelif.obj; Files=stdout stderr elif.obj
 
 %macro DosPrintMsg 1+
 %ifnid %1

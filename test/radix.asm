@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -oradix.bin; Files=.stdout .stderr radix.bin
+;Testname=test; Arguments=-fbin -oradix.bin; Files=stdout stderr radix.bin
 
 	;;  Integer constants...
 

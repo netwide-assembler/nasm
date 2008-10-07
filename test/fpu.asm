@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ofpu.bin; Files=.stdout .stderr fpu.bin
+;Testname=test; Arguments=-fbin -ofpu.bin; Files=stdout stderr fpu.bin
 
 ; relaxed encodings for FPU instructions, which NASM should support
 ; -----------------------------------------------------------------

@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-fbin -oloopoffs.bin -O0; Files=.stdout .stderr loopoffs.bin
-;Testname=optimized;   Arguments=-fbin -oloopoffs.bin -Ox; Files=.stdout .stderr loopoffs.bin
+;Testname=unoptimized; Arguments=-fbin -oloopoffs.bin -O0; Files=stdout stderr loopoffs.bin
+;Testname=optimized;   Arguments=-fbin -oloopoffs.bin -Ox; Files=stdout stderr loopoffs.bin
 	bits 16
 delay:	loop delay
 	loop $

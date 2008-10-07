@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-print ";Testname=unoptimized; Arguments=-fbin -oriprel.bin -O0; Files=.stdout .stderr riprel.bin\n";
-print ";Testname=optimized;   Arguments=-fbin -oriprel.bin -Ox; Files=.stdout .stderr riprel.bin\n";
+print ";Testname=unoptimized; Arguments=-fbin -oriprel.bin -O0; Files=stdout stderr riprel.bin\n";
+print ";Testname=optimized;   Arguments=-fbin -oriprel.bin -Ox; Files=stdout stderr riprel.bin\n";
 
 
 print "\tbits 64\n";

@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ovmread.bin; Files=.stdout .stderr vmread.bin
+;Testname=test; Arguments=-fbin -ovmread.bin; Files=stdout stderr vmread.bin
 
 	bits 32
 	vmread dword [0], eax

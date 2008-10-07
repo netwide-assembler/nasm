@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -felf -oelfso.o; Files=.stdout .stderr elfso.o
-;Testname=optimized;   Arguments=-Ox -felf -oelfso.o; Files=.stdout .stderr elfso.o
+;Testname=unoptimized; Arguments=-O0 -felf -oelfso.o; Files=stdout stderr elfso.o
+;Testname=optimized;   Arguments=-Ox -felf -oelfso.o; Files=stdout stderr elfso.o
 
 ; test source file for assembling to ELF shared library
 ; build with:

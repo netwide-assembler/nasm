@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -ofloatize.bin; Files=.stdout .stderr floatize.bin
-;Testname=optimized;   Arguments=-Ox -fbin -ofloatize.bin; Files=.stdout .stderr floatize.bin
+;Testname=unoptimized; Arguments=-O0 -fbin -ofloatize.bin; Files=stdout stderr floatize.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofloatize.bin; Files=stdout stderr floatize.bin
 
 %assign	x13	13+26
 %assign f16   __float16__(1.6e-7)

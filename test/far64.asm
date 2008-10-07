@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ofar64.bin; Files=.stdout .stderr far64.bin
+;Testname=test; Arguments=-fbin -ofar64.bin; Files=stdout stderr far64.bin
 ; BR 2039212
 	bits 64
 

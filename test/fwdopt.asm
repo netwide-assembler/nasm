@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ofwdopt.bin; Files=.stdout .stderr fwdopt.bin
+;Testname=test; Arguments=-fbin -ofwdopt.bin; Files=stdout stderr fwdopt.bin
 n0:	jmp n1
 n1:	jmp n2
 n2:	jmp n3

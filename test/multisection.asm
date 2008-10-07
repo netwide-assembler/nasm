@@ -1,12 +1,12 @@
-;Testname=aout;  Arguments=-faout  -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=aoutb; Arguments=-faoutb -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=as86;  Arguments=-fas86  -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=elf32; Arguments=-felf32 -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=elf64; Arguments=-felf64 -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=obj;   Arguments=-fobj   -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=rdf;   Arguments=-frdf   -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=win32; Arguments=-fwin32 -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
-;Testname=win64; Arguments=-fwin64 -olnxhello.o -Ox; Files=.stdout .stderr lnxhello.o
+;Testname=aout;  Arguments=-faout  -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=aoutb; Arguments=-faoutb -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=as86;  Arguments=-fas86  -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=elf32; Arguments=-felf32 -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=elf64; Arguments=-felf64 -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=obj;   Arguments=-fobj   -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=rdf;   Arguments=-frdf   -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=win32; Arguments=-fwin32 -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
+;Testname=win64; Arguments=-fwin64 -olnxhello.o -Ox; Files=stdout stderr lnxhello.o
 
 ; To test where code that is placed before any explicit SECTION
 ; gets placed, and what happens if a .text section has an ORG

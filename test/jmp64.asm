@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ojmp64.bin; Files=.stdout .stderr jmp64.bin
+;Testname=test; Arguments=-fbin -ojmp64.bin; Files=stdout stderr jmp64.bin
 
 	bits 64
 	jmp rcx

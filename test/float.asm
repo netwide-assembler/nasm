@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -ofloat.bin; Files=.stdout .stderr float.bin
-;Testname=optimized;   Arguments=-Ox -fbin -ofloat.bin; Files=.stdout .stderr float.bin
+;Testname=unoptimized; Arguments=-O0 -fbin -ofloat.bin; Files=stdout stderr float.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofloat.bin; Files=stdout stderr float.bin
 
 ;
 ; Test of floating-point formats

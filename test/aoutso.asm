@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -faoutb -oaoutso.o; Files=.stdout .stderr aoutso.o
-;Testname=optimized;   Arguments=-Ox -faoutb -oaoutso.o; Files=.stdout .stderr aoutso.o
+;Testname=unoptimized; Arguments=-O0 -faoutb -oaoutso.o; Files=stdout stderr aoutso.o
+;Testname=optimized;   Arguments=-Ox -faoutb -oaoutso.o; Files=stdout stderr aoutso.o
 
 ; test source file for assembling to NetBSD/FreeBSD a.out shared library
 ; build with:

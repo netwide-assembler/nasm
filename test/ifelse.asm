@@ -1,4 +1,4 @@
-;Testname=ifelse; Arguments=-fbin -oifelse.bin; Files=.stdout .stderr ifelse.bin
+;Testname=ifelse; Arguments=-fbin -oifelse.bin; Files=stdout stderr ifelse.bin
 
 ;No problems -> db 3
 %if 0

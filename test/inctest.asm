@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -oinctest.com; Files=.stdout .stderr inctest.com
+;Testname=test; Arguments=-fbin -oinctest.com; Files=stdout stderr inctest.com
 
 ; This file, plus inc1.asm and inc2.asm, test NASM's file inclusion
 ; mechanism.

@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -ofmsub.bin; Files=.stdout .stderr fmsub.bin
-;Testname=optimized;   Arguments=-Ox -fbin -ofmsub.bin; Files=.stdout .stderr fmsub.bin
+;Testname=unoptimized; Arguments=-O0 -fbin -ofmsub.bin; Files=stdout stderr fmsub.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofmsub.bin; Files=stdout stderr fmsub.bin
 
 	bits 64
 

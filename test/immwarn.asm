@@ -1,7 +1,7 @@
-;Testname=onowarn; Arguments=-Ox -DOPT=1 -DWARN=0 -fbin -oimmwarn.bin; Files=.stdout .stderr immwarn.bin
-;Testname=owarn; Arguments=-Ox -DOPT=1 -DWARN=1 -fbin -oimmwarn.bin; Files=.stdout .stderr immwarn.bin
-;Testname=nowarn; Arguments=-O0 -DOPT=0 -DWARN=0 -fbin -oimmwarn.bin; Files=.stdout .stderr immwarn.bin
-;Testname=warn; Arguments=-O0 -DOPT=1 -DWARN=1 -fbin -oimmwarn.bin; Files=.stdout .stderr immwarn.bin
+;Testname=onowarn; Arguments=-Ox -DOPT=1 -DWARN=0 -fbin -oimmwarn.bin; Files=stdout stderr immwarn.bin
+;Testname=owarn; Arguments=-Ox -DOPT=1 -DWARN=1 -fbin -oimmwarn.bin; Files=stdout stderr immwarn.bin
+;Testname=nowarn; Arguments=-O0 -DOPT=0 -DWARN=0 -fbin -oimmwarn.bin; Files=stdout stderr immwarn.bin
+;Testname=warn; Arguments=-O0 -DOPT=1 -DWARN=1 -fbin -oimmwarn.bin; Files=stdout stderr immwarn.bin
 
 %ifndef WARN
   %define WARN 1

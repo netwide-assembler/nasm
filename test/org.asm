@@ -1,5 +1,5 @@
-;Testname=elf64; Arguments=-Ox -felf64 -oorg.o; Files=.stdout .stderr org.o
-;Testname=win64; Arguments=-Ox -fwin64 -oorg.o; Files=.stdout .stderr org.o
+;Testname=elf64; Arguments=-Ox -felf64 -oorg.o; Files=stdout stderr org.o
+;Testname=win64; Arguments=-Ox -fwin64 -oorg.o; Files=stdout stderr org.o
 
 ;
 ; Simple test of a 64-bit org directive

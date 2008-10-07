@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -ofloatb.bin; Files=.stdout .stderr floatb.bin
-;Testname=optimized;   Arguments=-Ox -fbin -ofloatb.bin; Files=.stdout .stderr floatb.bin
+;Testname=unoptimized; Arguments=-O0 -fbin -ofloatb.bin; Files=stdout stderr floatb.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofloatb.bin; Files=stdout stderr floatb.bin
 
 	;; Known problematic floating-point numbers and their proper
 	;; encoding...
