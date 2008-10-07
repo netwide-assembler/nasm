@@ -1,4 +1,5 @@
-;Testname=test; Arguments=-fbin -oimul.bin; Files=stdout stderr imul.bin
+;Testname=nowarn; Arguments=-fbin -oimul.bin; Files=stdout stderr imul.bin
+;Testname=warn; Arguments=-DWARN -fbin -oimul.bin; Files=stdout stderr imul.bin
 
 %macro test 1-2 5
 	bits %1
@@ -56,7 +57,7 @@
 	imul eax,byte %2
 %if %1 == 64
 	imul rax,%2
-;	imul rax,byte %2	; ERROR
+	imul rax,byte %2	; ERROR
 %endif
 
 	imul ax,cx,0x1234
