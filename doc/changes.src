@@ -28,6 +28,8 @@ since 2007.
 \b Fix error where NASM would generate a spurious warning on valid
   optimizations of immediate values.
 
+\b Fix arguments to a number of the \c{CVT} SSE instructions.
+
 
 \S{cl-2.04} Version 2.04
 
