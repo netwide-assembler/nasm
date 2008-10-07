@@ -57,7 +57,7 @@
 	imul eax,byte %2
 %if %1 == 64
 	imul rax,%2
-	imul rax,byte %2	; ERROR
+	imul rax,byte %2
 %endif
 
 	imul ax,cx,0x1234
