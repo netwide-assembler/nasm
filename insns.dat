@@ -1416,13 +1416,18 @@ CMPPS		xmmreg,xmmreg,imm		\360\2\x0F\xC2\110\26				KATMAI,SSE,SB,AR2
 CMPSS		xmmreg,mem,imm			\363\2\x0F\xC2\110\26				KATMAI,SSE,SB,AR2
 CMPSS		xmmreg,xmmreg,imm		\363\2\x0F\xC2\110\26				KATMAI,SSE,SB,AR2
 COMISS		xmmreg,xmmrm			\360\2\x0F\x2F\110				KATMAI,SSE
-CVTPI2PS	xmmreg,mmxrm			\360\2\x0F\x2A\110				KATMAI,SSE,MMX
-CVTPS2PI	mmxreg,xmmrm			\360\2\x0F\x2D\110				KATMAI,SSE,MMX
-CVTSI2SS	xmmreg,mem			\363\2\x0F\x2A\110				KATMAI,SSE,SD,AR1
-CVTSI2SS	xmmreg,reg32			\363\2\x0F\x2A\110				KATMAI,SSE
-CVTSS2SI	reg32,xmmrm			\363\2\x0F\x2D\110				KATMAI,SSE
-CVTTPS2PI	mmxreg,xmmrm			\360\2\x0F\x2C\110				KATMAI,SSE,MMX
-CVTTSS2SI	reg32,xmmrm			\363\2\x0F\x2C\110				KATMAI,SSE
+CVTPI2PS	xmmreg,mmxrm			\360\2\x0F\x2A\110				KATMAI,SSE,MMX,SQ
+CVTPS2PI	mmxreg,xmmrm			\360\2\x0F\x2D\110				KATMAI,SSE,MMX,SQ
+CVTSI2SS	xmmreg,mem			\363\2\x0F\x2A\110				KATMAI,SSE,SD,AR1,ND
+CVTSI2SS	xmmreg,rm32			\363\2\x0F\x2A\110				KATMAI,SSE,SD,AR1
+CVTSI2SS	xmmreg,rm64			\324\363\2\x0F\x2A\110				X64,SSE,SQ,AR1
+CVTSS2SI	reg32,xmmreg			\363\2\x0F\x2D\110				KATMAI,SSE,SD,AR1
+CVTSS2SI	reg32,mem			\363\2\x0F\x2D\110				KATMAI,SSE,SD,AR1
+CVTSS2SI	reg64,xmmreg			\324\363\2\x0F\x2D\110				X64,SSE,SD,AR1
+CVTSS2SI	reg64,mem			\324\363\2\x0F\x2D\110				X64,SSE,SD,AR1
+CVTTPS2PI	mmxreg,xmmrm			\360\2\x0F\x2C\110				KATMAI,SSE,MMX,SQ
+CVTTSS2SI	reg32,xmmrm			\363\2\x0F\x2C\110				KATMAI,SSE,SD,AR1
+CVTTSS2SI	reg64,xmmrm			\324\363\2\x0F\x2C\110				X64,SSE,SD,AR1
 DIVPS		xmmreg,xmmrm			\360\2\x0F\x5E\110				KATMAI,SSE
 DIVSS		xmmreg,xmmrm			\363\2\x0F\x5E\110				KATMAI,SSE
 LDMXCSR		mem				\2\x0F\xAE\202					KATMAI,SSE,SD
@@ -1660,23 +1665,30 @@ CMPUNORDSD	xmmreg,xmmrm			\362\2\x0F\xC2\110\1\x03			WILLAMETTE,SSE2
 CMPPD		xmmreg,xmmrm,imm		\361\2\x0F\xC2\110\26				WILLAMETTE,SSE2,SM2,SB,AR2
 CMPSD		xmmreg,xmmrm,imm		\362\2\x0F\xC2\110\26				WILLAMETTE,SSE2,SB,AR2
 COMISD		xmmreg,xmmrm			\361\2\x0F\x2F\110				WILLAMETTE,SSE2
-CVTDQ2PD	xmmreg,xmmrm			\363\2\x0F\xE6\110				WILLAMETTE,SSE2
+CVTDQ2PD	xmmreg,xmmrm			\363\2\x0F\xE6\110				WILLAMETTE,SSE2,SQ
 CVTDQ2PS	xmmreg,xmmrm			\360\2\x0F\x5B\110				WILLAMETTE,SSE2,SO
 CVTPD2DQ	xmmreg,xmmrm			\362\2\x0F\xE6\110				WILLAMETTE,SSE2,SO
-CVTPD2PI	mmxreg,xmmrm			\361\2\x0F\x2D\110				WILLAMETTE,SSE2
+CVTPD2PI	mmxreg,xmmrm			\361\2\x0F\x2D\110				WILLAMETTE,SSE2,SO
 CVTPD2PS	xmmreg,xmmrm			\361\2\x0F\x5A\110				WILLAMETTE,SSE2,SO
-CVTPI2PD	xmmreg,mmxrm			\361\2\x0F\x2A\110				WILLAMETTE,SSE2
+CVTPI2PD	xmmreg,mmxrm			\361\2\x0F\x2A\110				WILLAMETTE,SSE2,SQ
 CVTPS2DQ	xmmreg,xmmrm			\361\2\x0F\x5B\110				WILLAMETTE,SSE2,SO
-CVTPS2PD	xmmreg,xmmrm			\360\2\x0F\x5A\110				WILLAMETTE,SSE2
-CVTSD2SI	reg32,xmmrm			\362\2\x0F\x2D\110				WILLAMETTE,SSE2
-CVTSD2SS	xmmreg,xmmrm			\362\2\x0F\x5A\110				WILLAMETTE,SSE2
-CVTSI2SD	xmmreg,reg32			\362\2\x0F\x2A\110				WILLAMETTE,SSE2
-CVTSI2SD	xmmreg,mem			\362\2\x0F\x2A\110				WILLAMETTE,SSE2
-CVTSS2SD	xmmreg,xmmrm			\363\2\x0F\x5A\110				WILLAMETTE,SSE2
-CVTTPD2PI	mmxreg,xmmrm			\361\2\x0F\x2C\110				WILLAMETTE,SSE2
+CVTPS2PD	xmmreg,xmmrm			\360\2\x0F\x5A\110				WILLAMETTE,SSE2,SQ
+CVTSD2SI	reg32,xmmreg			\362\2\x0F\x2D\110				WILLAMETTE,SSE2,SQ,AR1
+CVTSD2SI	reg32,mem			\362\2\x0F\x2D\110				WILLAMETTE,SSE2,SQ,AR1
+CVTSD2SI	reg64,xmmreg			\324\362\2\x0F\x2D\110				X64,SSE2,SQ,AR1
+CVTSD2SI	reg64,mem			\324\362\2\x0F\x2D\110				X64,SSE2,SQ,AR1
+CVTSD2SS	xmmreg,xmmrm			\362\2\x0F\x5A\110				WILLAMETTE,SSE2,SQ
+CVTSI2SD	xmmreg,mem			\362\2\x0F\x2A\110				WILLAMETTE,SSE2,SD,AR1,ND
+CVTSI2SD	xmmreg,rm32			\362\2\x0F\x2A\110				WILLAMETTE,SSE2,SD,AR1
+CVTSI2SD	xmmreg,rm64			\324\362\2\x0F\x2A\110				X64,SSE2,SQ,AR1
+CVTSS2SD	xmmreg,xmmrm			\363\2\x0F\x5A\110				WILLAMETTE,SSE2,SD
+CVTTPD2PI	mmxreg,xmmrm			\361\2\x0F\x2C\110				WILLAMETTE,SSE2,SO
 CVTTPD2DQ	xmmreg,xmmrm			\361\2\x0F\xE6\110				WILLAMETTE,SSE2,SO
 CVTTPS2DQ	xmmreg,xmmrm			\363\2\x0F\x5B\110				WILLAMETTE,SSE2,SO
-CVTTSD2SI	reg32,xmmrm			\362\2\x0F\x2C\110				WILLAMETTE,SSE2
+CVTTSD2SI	reg32,xmmreg			\362\2\x0F\x2C\110				WILLAMETTE,SSE2,SQ,AR1
+CVTTSD2SI	reg32,mem			\362\2\x0F\x2C\110				WILLAMETTE,SSE2,SQ,AR1
+CVTTSD2SI	reg64,xmmreg			\324\362\2\x0F\x2C\110				X64,SSE2,SQ,AR1
+CVTTSD2SI	reg64,mem			\324\362\2\x0F\x2C\110				X64,SSE2,SQ,AR1
 DIVPD		xmmreg,xmmrm			\361\2\x0F\x5E\110				WILLAMETTE,SSE2,SO
 DIVSD		xmmreg,xmmrm			\362\2\x0F\x5E\110				WILLAMETTE,SSE2
 MAXPD		xmmreg,xmmrm			\361\2\x0F\x5F\110				WILLAMETTE,SSE2,SO
@@ -2691,14 +2703,14 @@ VCVTSD2SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5a /r]		AVX,SANDYBRIDGE,S
 VCVTSD2SS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5a /r]		AVX,SANDYBRIDGE,SQ
 VCVTSI2SD	xmmreg,xmmreg,rm32		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE
 VCVTSI2SD	xmmreg,rm32			[r+vm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE
+VCVTSI2SD	xmmreg,xmmreg,mem		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
+VCVTSI2SD	xmmreg,mem			[r+vm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
 VCVTSI2SD	xmmreg,xmmreg,rm64		[rvm:	vex.nds.128.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
 VCVTSI2SD	xmmreg,rm64			[r+vm:	vex.nds.128.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSI2SD	xmmreg,xmmreg,rm32		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SD	xmmreg,rm32			[r+vm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SD	xmmreg,xmmreg,rm64		[rvm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSI2SD	xmmreg,rm64			[r+vm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
 VCVTSI2SS	xmmreg,xmmreg,rm32		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
 VCVTSI2SS	xmmreg,rm32			[r+vm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
+VCVTSI2SS	xmmreg,xmmreg,mem		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
+VCVTSI2SS	xmmreg,mem			[r+vm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
 VCVTSI2SS	xmmreg,xmmreg,rm64		[rvm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
 VCVTSI2SS	xmmreg,rm64			[r+vm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
 VCVTSS2SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5a /r]		AVX,SANDYBRIDGE,SD
