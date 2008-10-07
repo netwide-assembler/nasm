@@ -56,6 +56,7 @@
  * \250..\253    - same as \150..\153, except warn if the 64-bit operand
  *                 is not equal to the truncated and sign-extended 32-bit
  *                 operand; used for 32-bit immediates in 64-bit mode.
+ * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
  * \260..\263    - this instruction uses VEX rather than REX, with the
  *		   V field taken from operand 0..3.
  * \270		 - this instruction uses VEX rather than REX, with the
@@ -953,6 +954,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0253:
             length += is_sbyte32(opx) ? 1 : 4;
             break;
+        case 0254:
+        case 0255:
+        case 0256:
+        case 0257:
+	    length += 4;
+	    break;
 	case 0260:
 	case 0261:
 	case 0262:
@@ -1590,6 +1597,21 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     opx->segment, opx->wrt);
                 offset += 4;
             }
+            break;
+
+	case 0254:
+	case 0255:
+	case 0256:
+	case 0257:
+            data = opx->offset;
+	    if (opx->wrt == NO_SEG && opx->segment == NO_SEG &&
+		(int32_t)data != (int64_t)data) {
+		errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+			"signed dword immediate exceeds bounds");
+	    }
+	    out(offset, segment, &data, OUT_ADDRESS, 4,
+		opx->segment, opx->wrt);
+	    offset += 4;
             break;
 
 	case 0260:

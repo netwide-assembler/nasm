@@ -513,6 +513,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case4(040):
+	case4(0254):
             opx->offset = getu32(data);
 	    data += 4;
 	    break;

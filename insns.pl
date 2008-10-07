@@ -658,7 +658,7 @@ sub byte_code_compile($) {
 	    # This allows us to match the AMD documentation and still
 	    # do the right thing.
 	    unshift(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
-	} elsif ($op =~ /^(ib\,s|ib|ib\,w|iw|iwd|id|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
+	} elsif ($op =~ /^(ib\,s|ib|ibx|ib\,w|iw|iwd|id|idx|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$fname: $line: $op without 'i' operand\n";
 	    }
@@ -676,6 +676,8 @@ sub byte_code_compile($) {
 		push(@codes, 034+$oppos{'i'});
 	    } elsif ($op eq 'id') { # imm32
 		push(@codes, 040+$oppos{'i'});
+	    } elsif ($op eq 'idx') { # imm32 extended to 64 bits
+		push(@codes, 0254+$oppos{'i'});
 	    } elsif ($op eq 'iwdq') { # imm16/32/64, depending on opsize
 		push(@codes, 044+$oppos{'i'});
 	    } elsif ($op eq 'rel8') {

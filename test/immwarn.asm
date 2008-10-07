@@ -72,7 +72,7 @@
 	mov rax,7fffffffh
 	mov rax,80000000h
 %if WARN
-	mov rax,dword 80000000h	; XXX - missing
+	mov rax,dword 80000000h
 %endif
 	add rcx,0FFFFh
 %if WARN
