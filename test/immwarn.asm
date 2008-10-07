@@ -14,12 +14,29 @@
 %endif
 	push -1
 	push 0ffffh
+	push byte 0FFFFh	; XXX - inappropriate
 
 	add ax,0FFFFh
 %if WARN
 	add ax,0FFFFFFFFh
 %endif
 	add ax,-1
+	add ax,byte 0FFFFh	; XXX - inappropriate
+%if WARN
+	add ax,byte 0FFFFFFFFh
+%endif
+	add ax,-1
+
+	add cx,0FFFFh
+%if WARN
+	add cx,0FFFFFFFFh
+%endif
+	add cx,-1
+	add cx,byte 0FFFFh	; XXX - inappropriate
+%if WARN
+	add cx,byte 0FFFFFFFFh
+%endif
+	add cx,-1
 
 	bits 32
 	push 1
@@ -29,7 +46,7 @@
 
 	push byte 1
 %if WARN
-	push byte 0ffffffffh
+	push byte 0ffffh
 %endif
 	push byte -1
 
@@ -45,10 +62,29 @@
 	add eax,0FFFFFFFFh
 	add eax,-1
 
+	add ecx,0FFFFh
+	add ecx,0FFFFFFFFh
+	add ecx,-1
+
 	bits 64
 	mov rax,7fffffffh
 	mov rax,80000000h
-;	mov rax,dword 80000000h
-	add rax,0FFFFh
-	add rax,0FFFFFFFFh
-	add rax,-1
+%if WARN
+	mov rax,dword 80000000h	; XXX - missing
+%endif
+	add rcx,0FFFFh
+%if WARN
+	add rcx,0FFFFFFFFh	; XXX - double
+%endif
+	add rcx,-1
+
+	add ecx,0FFFFh
+	add ecx,0FFFFFFFFh
+	add ecx,-1
+
+	push byte 1
+%if WARN
+	push byte 0ffffffffh
+%endif
+	push byte -1
+
