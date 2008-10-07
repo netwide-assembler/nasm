@@ -74,7 +74,7 @@
 %endif
 	add rcx,0FFFFh
 %if WARN
-	add rcx,0FFFFFFFFh	; XXX - double
+	add rcx,0FFFFFFFFh
 %endif
 	add rcx,-1
 

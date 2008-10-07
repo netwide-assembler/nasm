@@ -775,7 +775,7 @@ static bool is_sbyte32(operand *o)
 
 /* check that opn[op] is a signed byte of size 32; warn if this is not
    the original value when extended to 64 bits */
-static bool is_sbyte64(operand *o)
+static bool is_sbyte64(operand *o, bool warn)
 {
     int64_t v64;
     int32_t v;
@@ -786,7 +786,7 @@ static bool is_sbyte64(operand *o)
     v64 = o->offset;
     v = (int32_t)v64;
 
-    if (v64 != v)
+    if (warn && v64 != v)
 	errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 		"signed dword immediate exceeds bounds");
 
@@ -974,7 +974,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0251:
         case 0252:
         case 0253:
-            length += is_sbyte64(opx) ? 1 : 4;
+            length += is_sbyte64(opx, false) ? 1 : 4;
             break;
 	case 0260:
 	case 0261:
@@ -1599,7 +1599,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case 0253:
             data = opx->offset;
 	    warn_overflow(4, opx);
-            if (is_sbyte64(opx)) {
+            if (is_sbyte64(opx, true)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
