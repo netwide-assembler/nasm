@@ -67,6 +67,8 @@
 	add ecx,-1
 
 	bits 64
+	mov eax,7fffffffh
+	mov eax,80000000h
 	mov rax,7fffffffh
 	mov rax,80000000h
 %if WARN
