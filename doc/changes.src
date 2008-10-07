@@ -30,6 +30,8 @@ since 2007.
 
 \b Fix arguments to a number of the \c{CVT} SSE instructions.
 
+\b Fix RIP-relative offsets when the instruction carries an immediate.
+
 
 \S{cl-2.04} Version 2.04
 
