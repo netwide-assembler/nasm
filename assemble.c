@@ -796,7 +796,7 @@ static bool is_sbyte64(operand *o)
     return v >= -128 && v <= 127;
 }
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
-                     insn * ins, const uint8_t *codes)
+			insn * ins, const uint8_t *codes)
 {
     int64_t length = 0;
     uint8_t c;
@@ -1777,6 +1777,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		int32_t rflags;
                 uint8_t *p;
                 int32_t s;
+		enum out_type type;
 
                 if (c <= 0177) {
 		    /* pick rfield from operand b */
@@ -1840,12 +1841,16 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
 		    warn_overflow(ea_data.bytes, opx);
-                    out(offset, segment, &data,
-                        ea_data.rip ?  OUT_REL4ADR : OUT_ADDRESS,
-			ea_data.bytes,
-                        ins->oprs[(c >> 3) & 7].segment,
-                        ins->oprs[(c >> 3) & 7].wrt);
                     s += ea_data.bytes;
+		    if (ea_data.rip) {
+			data -= insn_end - (offset+ea_data.bytes);
+			type = OUT_REL4ADR;
+		    } else {
+			type = OUT_ADDRESS;
+		    }
+		    out(offset, segment, &data, type, ea_data.bytes,
+			ins->oprs[(c >> 3) & 7].segment,
+			ins->oprs[(c >> 3) & 7].wrt);
                     break;
                 }
                 offset += s;
