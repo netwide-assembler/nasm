@@ -29,13 +29,13 @@
  * \64..\67      - select between \6[0-3] and \7[0-3] depending on 16/32 bit
  *                 assembly mode or the operand-size override on the operand
  * \70..\73      - a long relative operand, from operand 0..3
- * \74..\77       - a word constant, from the _segment_ part of operand 0..3
+ * \74..\77      - a word constant, from the _segment_ part of operand 0..3
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
  * \140..\143    - an immediate word or signed byte for operand 0..3
  * \144..\147    - or 2 (s-field) into opcode byte if operand 0..3
  *		    is a signed byte rather than a word.  Opcode byte follows.
- * \150..\153     - an immediate dword or signed byte for operand 0..3
+ * \150..\153    - an immediate dword or signed byte for operand 0..3
  * \154..\157    - or 2 (s-field) into opcode byte if operand 0..3
  *		    is a signed byte rather than a dword.  Opcode byte follows.
  * \160..\163    - this instruction uses DREX rather than REX, with the
@@ -70,6 +70,8 @@
  *                 [ww] ww = 3 for W used as REX.W
  *
  *
+ * \274..\277    - a signed byte immediate operand, from operand 0..3,
+ *                 which is to be extended to the operand size.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
@@ -989,6 +991,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    ins->vex_m = *codes++;
 	    ins->vex_wlp = *codes++;
 	    break;
+        case 0274:
+        case 0275:
+        case 0276:
+	case 0277:
+            length++;
+            break;
         case 0300:
         case 0301:
         case 0302:
@@ -1624,6 +1632,44 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		offset += 2;
 	    }
 	    break;
+
+        case 0274:
+        case 0275:
+        case 0276:
+	case 0277:
+	{
+	    uint64_t uv, um;
+	    int s;
+
+	    if (ins->rex & REX_W)
+		s = 64;
+	    else if (ins->prefixes[PPS_OSIZE] == P_O16)
+		s = 16;
+	    else if (ins->prefixes[PPS_OSIZE] == P_O32)
+		s = 32;
+	    else
+		s = bits;
+
+	    um = (uint64_t)2 << (s-1);
+	    uv = opx->offset;
+
+	    if (uv > 127 && uv < (uint64_t)-128 &&
+		(uv < um-128 || uv > um-1)) {
+                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+			"signed byte value exceeds bounds");
+	    }
+            if (opx->segment != NO_SEG) {
+                data = um;
+                out(offset, segment, &data, OUT_ADDRESS, 1,
+                    opx->segment, opx->wrt);
+            } else {
+                bytes[0] = um;
+                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
+                    NO_SEG);
+            }
+            offset += 1;
+            break;
+	}
 
         case 0300:
         case 0301:

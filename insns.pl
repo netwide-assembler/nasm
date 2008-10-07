@@ -670,6 +670,8 @@ sub byte_code_compile($) {
 		push(@codes, 024+$oppos{'i'});
 	    } elsif ($op eq 'iw') { # imm16
 		push(@codes, 030+$oppos{'i'});
+	    } elsif ($op eq 'ibx') { # imm8 sign-extended to opsize
+		push(@codes, 0274+$oppos{'i'});
 	    } elsif ($op eq 'iwd') { # imm16 or imm32, depending on opsize
 		push(@codes, 034+$oppos{'i'});
 	    } elsif ($op eq 'id') { # imm32

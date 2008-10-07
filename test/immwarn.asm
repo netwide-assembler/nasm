@@ -14,14 +14,14 @@
 %endif
 	push -1
 	push 0ffffh
-	push byte 0FFFFh	; XXX - inappropriate
+	push byte 0FFFFh
 
 	add ax,0FFFFh
 %if WARN
 	add ax,0FFFFFFFFh
 %endif
 	add ax,-1
-	add ax,byte 0FFFFh	; XXX - inappropriate
+	add ax,byte 0FFFFh
 %if WARN
 	add ax,byte 0FFFFFFFFh
 %endif
@@ -32,7 +32,7 @@
 	add cx,0FFFFFFFFh
 %endif
 	add cx,-1
-	add cx,byte 0FFFFh	; XXX - inappropriate
+	add cx,byte 0FFFFh
 %if WARN
 	add cx,byte 0FFFFFFFFh
 %endif
@@ -87,4 +87,3 @@
 	push byte 0ffffffffh
 %endif
 	push byte -1
-

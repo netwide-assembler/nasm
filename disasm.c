@@ -482,6 +482,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	}
 
 	case4(014):
+	case4(0274):
             opx->offset = (int8_t)*data++;
             opx->segment |= SEG_SIGNED;
 	    break;
