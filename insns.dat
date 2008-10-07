@@ -57,9 +57,9 @@ ADC		reg32,mem			\321\1\x13\110					386,SM
 ADC		reg32,reg32			\321\1\x13\110					386
 ADC		reg64,mem			\324\1\x13\110					X64,SM
 ADC		reg64,reg64			\324\1\x13\110					X64
-ADC		rm16,imm8			\320\1\x83\202\15				8086
-ADC		rm32,imm8			\321\1\x83\202\15				386
-ADC		rm64,imm8			\324\1\x83\202\15				X64
+ADC		rm16,imm8			\320\1\x83\202\275				8086
+ADC		rm32,imm8			\321\1\x83\202\275				386
+ADC		rm64,imm8			\324\1\x83\202\275				X64
 ADC		reg_al,imm			\1\x14\21					8086,SM
 ADC		reg_ax,imm			\320\1\x15\31					8086,SM
 ADC		reg_eax,imm			\321\1\x15\41					386,SM
@@ -117,9 +117,9 @@ AND		reg32,mem			\321\1\x23\110					386,SM
 AND		reg32,reg32			\321\1\x23\110					386
 AND		reg64,mem			\324\1\x23\110					X64,SM
 AND		reg64,reg64			\324\1\x23\110					X64
-AND		rm16,imm8			\320\1\x83\204\15				8086
-AND		rm32,imm8			\321\1\x83\204\15				386
-AND		rm64,imm8			\324\1\x83\204\15				X64
+AND		rm16,imm8			\320\1\x83\204\275				8086
+AND		rm32,imm8			\321\1\x83\204\275				386
+AND		rm64,imm8			\324\1\x83\204\275				X64
 AND		reg_al,imm			\1\x24\21					8086,SM
 AND		reg_ax,imm			\320\1\x25\31					8086,SM
 AND		reg_eax,imm			\321\1\x25\41					386,SM
