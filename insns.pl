@@ -23,6 +23,8 @@ for ($m = 0; $m < 32; $m++) {
 }
 @disasm_prefixes = (@vexlist, @disasm_prefixes);
 
+@bytecode_count = (0) x 256;
+
 print STDERR "Reading insns.dat...\n";
 
 @args   = ();
@@ -133,6 +135,20 @@ if ( !defined($output) || $output eq 'b') {
 	printf B "\n";
     }
     print B "};\n";
+
+    print B "\n";
+    print B "/*\n";
+    print B " * Bytecode frequencies (including reuse):\n";
+    print B " *\n";
+    for ($i = 0; $i < 32; $i++) {
+	print B " *";
+	for ($j = 0; $j < 256; $j += 32) {
+	    print B " |" if ($j);
+	    printf B " %3o:%4d", $i+$j, $bytecode_count[$i+$j];
+	}
+	print B "\n";
+    }
+    print B " */\n";
 
     close B;
 }
@@ -262,7 +278,7 @@ if ( !defined($output) || $output eq 'i' ) {
     foreach $i (@opcodes, @opcodes_cc) {
 	print I "\tI_${i},\n";
 	$len = length($i);
-	$len++ if ( $i =~ /cc$/ );	# Condition codes can be 3 characters long
+	$len++ if ( $i =~ /cc$/ ); # Condition codes can be 3 characters long
 	$maxlen = $len if ( $len > $maxlen );
     }
     print I "\tI_none = -1\n";
@@ -298,6 +314,31 @@ if ( !defined($output) || $output eq 'n' ) {
 }
 
 printf STDERR "Done: %d instructions\n", $insns;
+
+# Count primary bytecodes, for statistics
+sub count_bytecodes(@) {
+    my $skip = 0;
+    foreach my $bc (@_) {
+	if ($skip) {
+	    $skip--;
+	    next;
+	}
+	$bytecode_count[$bc]++;
+	if ($bc >= 01 && $bc <= 03) {
+	    $skip = $bc;
+	} elsif (($bc & ~03) == 010) {
+	    $skip = 1;
+	} elsif (($bc & ~013) == 0144) {
+	    $skip = 1;
+	} elsif ($bc == 0172) {
+	    $skip = 1;
+	} elsif ($bc >= 0260 && $bc <= 0270) {
+	    $skip = 2;
+	} elsif ($bc == 0330) {
+	    $skip = 1;
+	}
+    }
+}
 
 sub format_insn(@) {
     my ($opcode, $operands, $codes, $flags) = @_;
@@ -336,6 +377,7 @@ sub format_insn(@) {
     @bytecode = (decodify($codes), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
+    count_bytecodes(@bytecode);
 
     ("{I_$opcode, $num, {$operands}, \@\@CODES-$codes\@\@, $flags},", $nd);
 }
