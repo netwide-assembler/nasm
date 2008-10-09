@@ -830,65 +830,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0340:
 	    return false;
 
-	case 0344:
-            switch (*data++) {
-            case 0x06:
-                ins->oprs[0].basereg = 0;
-                break;
-            case 0x0E:
-                ins->oprs[0].basereg = 1;
-                break;
-            case 0x16:
-                ins->oprs[0].basereg = 2;
-                break;
-            case 0x1E:
-                ins->oprs[0].basereg = 3;
-                break;
-            default:
-                return false;
-            }
-	    break;
-
-	case 0345:
-            switch (*data++) {
-            case 0x07:
-                ins->oprs[0].basereg = 0;
-                break;
-            case 0x17:
-                ins->oprs[0].basereg = 2;
-                break;
-            case 0x1F:
-                ins->oprs[0].basereg = 3;
-                break;
-            default:
-                return false;
-            }
-	    break;
-
-	case 0346:
-            switch (*data++) {
-            case 0xA0:
-                ins->oprs[0].basereg = 4;
-                break;
-            case 0xA8:
-                ins->oprs[0].basereg = 5;
-                break;
-            default:
-                return false;
-            }
-	    break;
-
-	case 0347:
-            switch (*data++) {
-            case 0xA1:
-                ins->oprs[0].basereg = 4;
-                break;
-            case 0xA9:
-                ins->oprs[0].basereg = 5;
-                break;
-            default:
-                return false;
-	    }
+	case4(0344):
+	    ins->oprs[0].basereg = (*data++ >> 3) & 7;
 	    break;
 
 	case 0360:
