@@ -14,4 +14,4 @@
 	pop ss
 	pop es
 	pop ds
-	; pop cs		; 8086 only, not implemented
+	pop cs		; 8086 only, does not disassemble
