@@ -504,14 +504,6 @@ sub startseq($) {
 	  }
 
 	  unshift(@codes, $c0);
-      } elsif ($c0 == 04) {
-	  return addprefix($prefix, 0x07, 0x17, 0x1F);
-      } elsif ($c0 == 05) {
-	  return addprefix($prefix, 0xA1, 0xA9);
-      } elsif ($c0 == 06) {
-	  return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
-      } elsif ($c0 == 07) {
-	  return addprefix($prefix, 0xA0, 0xA8);
       } elsif ($c0 >= 010 && $c0 <= 013) {
 	  return addprefix($prefix, $c1..($c1+7));
       } elsif (($c0 & ~013) == 0144) {
@@ -520,6 +512,14 @@ sub startseq($) {
 	  return addprefix($prefix, $c1..($c1+15));
       } elsif ($c0 == 0 || $c0 == 0340) {
 	  return $prefix;
+      } elsif ($c0 == 0344) {
+	  return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
+      } elsif ($c0 == 0345) {
+	  return addprefix($prefix, 0x07, 0x17, 0x1F);
+      } elsif ($c0 == 0346) {
+	  return addprefix($prefix, 0xA0, 0xA8);
+      } elsif ($c0 == 0347) {
+	  return addprefix($prefix, 0xA1, 0xA9);
       } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
 	  my $m,$wlp,$vxp;
 	  $m   = shift(@codes);

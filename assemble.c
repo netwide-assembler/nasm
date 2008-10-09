@@ -8,10 +8,6 @@
  * the actual codes (C syntax, i.e. octal):
  * \0            - terminates the code. (Unless it's a literal of course.)
  * \1, \2, \3    - that many literal bytes follow in the code stream
- * \4, \6        - the POP/PUSH (respectively) codes for CS, DS, ES, SS
- *                 (POP is never used for CS) depending on operand 0
- * \5, \7        - the second byte of POP/PUSH codes for FS, GS, depending
- *                 on operand 0
  * \10..\13      - a literal byte follows in the code stream, to be added
  *                 to the register value of operand 0..3
  * \14..\17      - a signed byte immediate operand, from operand 0..3
@@ -101,6 +97,10 @@
  *                 \336-\337 are still listed as prefixes in the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
+ * \344,\345     - the PUSH/POP (respectively) codes for CS, DS, ES, SS
+ *                 (POP is never used for CS) depending on operand 0
+ * \346,\347     - the second byte of PUSH/POP codes for FS, GS, depending
+ *                 on operand 0
  * \360		 - no SSE prefix (== \364\331)
  * \361          - 66 SSE prefix (== \366\331)
  * \362          - F2 SSE prefix (== \364\332)
@@ -800,12 +800,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 03:
             codes += c, length += c;
             break;
-        case 04:
-        case 05:
-        case 06:
-        case 07:
-            length++;
-            break;
         case 010:
         case 011:
         case 012:
@@ -1049,6 +1043,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             else
                 length += ins->oprs[0].offset;
             break;
+        case 0344:
+        case 0345:
+        case 0346:
+        case 0347:
+            length++;
+            break;
 	case 0360:
 	    break;
 	case 0361:
@@ -1200,46 +1200,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG);
             codes += c;
             offset += c;
-            break;
-
-        case 04:
-        case 06:
-            switch (ins->oprs[0].basereg) {
-            case R_CS:
-                bytes[0] = 0x0E + (c == 0x04 ? 1 : 0);
-                break;
-            case R_DS:
-                bytes[0] = 0x1E + (c == 0x04 ? 1 : 0);
-                break;
-            case R_ES:
-                bytes[0] = 0x06 + (c == 0x04 ? 1 : 0);
-                break;
-            case R_SS:
-                bytes[0] = 0x16 + (c == 0x04 ? 1 : 0);
-                break;
-            default:
-                errfunc(ERR_PANIC,
-                        "bizarre 8086 segment register received");
-            }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
-
-        case 05:
-        case 07:
-            switch (ins->oprs[0].basereg) {
-            case R_FS:
-                bytes[0] = 0xA0 + (c == 0x05 ? 1 : 0);
-                break;
-            case R_GS:
-                bytes[0] = 0xA8 + (c == 0x05 ? 1 : 0);
-                break;
-            default:
-                errfunc(ERR_PANIC,
-                        "bizarre 386 segment register received");
-            }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
             break;
 
         case 010:
@@ -1779,6 +1739,48 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                         OUT_RESERVE, size, NO_SEG, NO_SEG);
                 offset += size;
             }
+            break;
+
+        case 0344:
+        case 0345:
+	    bytes[0] = c & 1;
+            switch (ins->oprs[0].basereg) {
+            case R_CS:
+                bytes[0] += 0x0E;
+                break;
+            case R_DS:
+                bytes[0] += 0x1E;
+                break;
+            case R_ES:
+                bytes[0] += 0x06;
+                break;
+            case R_SS:
+                bytes[0] += 0x16;
+                break;
+            default:
+                errfunc(ERR_PANIC,
+                        "bizarre 8086 segment register received");
+            }
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            offset++;
+            break;
+
+        case 0346:
+        case 0347:
+	    bytes[0] = c & 1;
+            switch (ins->oprs[0].basereg) {
+            case R_FS:
+                bytes[0] += 0xA0;
+                break;
+            case R_GS:
+                bytes[0] += 0xA8;
+                break;
+            default:
+                errfunc(ERR_PANIC,
+                        "bizarre 386 segment register received");
+            }
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            offset++;
             break;
 
 	case 0360:

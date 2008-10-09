@@ -923,8 +923,8 @@ POP		rm16				\320\1\x8F\200					8086
 POP		rm32				\321\1\x8F\200					386,NOLONG
 POP		rm64				\323\1\x8F\200					X64
 POP		reg_cs				\1\x0F						8086,UNDOC,ND
-POP		reg_dess			\4						8086,NOLONG
-POP		reg_fsgs			\1\x0F\5					386
+POP		reg_dess			\345						8086,NOLONG
+POP		reg_fsgs			\1\x0F\347					386
 POPA		void				\322\1\x61					186,NOLONG
 POPAD		void				\321\1\x61					386,NOLONG
 POPAW		void				\320\1\x61					186,NOLONG
@@ -971,9 +971,9 @@ PUSH		reg64				\323\10\x50					X64
 PUSH		rm16				\320\1\xFF\206					8086
 PUSH		rm32				\321\1\xFF\206					386,NOLONG
 PUSH		rm64				\323\1\xFF\206					X64
-PUSH		reg_cs				\6						8086,NOLONG
-PUSH		reg_dess			\6						8086,NOLONG
-PUSH		reg_fsgs			\1\x0F\7					386
+PUSH		reg_cs				\344						8086,NOLONG
+PUSH		reg_dess			\344						8086,NOLONG
+PUSH		reg_fsgs			\1\x0F\346					386
 PUSH		imm8				\1\x6A\274					186
 PUSH		imm16				\320\144\x68\140				186,AR0,SZ
 PUSH		imm32				\321\154\x68\150				386,NOLONG,AR0,SZ
