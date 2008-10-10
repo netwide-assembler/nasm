@@ -25,7 +25,7 @@
 #include "outform.h"
 #include "compiler.h"
 
-#if defined(OF_MACHO64)
+#ifdef OF_MACHO64
 
 /* Mach-O in-file header structure sizes */
 #define MACHO_HEADER64_SIZE		(32)
@@ -66,6 +66,7 @@ struct section {
     uint64_t size;         /* in-memory and -file size  */
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
+	uint32_t extreloc;     /* external relocations */
 };
 
 #define SECTION_TYPE	0x000000ff      /* section type mask */
@@ -182,7 +183,7 @@ static FILE *machofp;
 static efunc error;
 static evalfunc evaluate;
 
-extern struct ofmt of_macho;
+extern struct ofmt of_macho64;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
@@ -302,6 +303,13 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
     return NO_SECT;
 }
 
+/*
+ * Special section numbers which are used to define Mach-O special
+ * symbols, which can be used with WRT to provide PIC relocation
+ * types.
+ */
+static int32_t macho_gotpcrel_sect;
+
 static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
                        evalfunc eval)
 {
@@ -330,6 +338,11 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
     /* string table starts with a zero byte - don't ask why */
     saa_wbytes(strs, &zero, sizeof(char));
     strslen = 1;
+	
+	/* add special symbol for ..gotpcrel */
+	macho_gotpcrel_sect = seg_alloc();
+	macho_gotpcrel_sect ++;
+	ldef("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, error);
 }
 
 static int macho_setinfo(enum geninfo type, char **val)
@@ -392,6 +405,8 @@ static void add_reloc(struct section *sect, int32_t section,
 	/* relative relocation */
 	if (pcrel == 1) {
 
+//		r->type = 2;				// X86_64_RELOC_BRANCH
+
 		/* intra-section */
 		if (section == NO_SEG) {
 			r->type = 1;			// X86_64_RELOC_SIGNED
@@ -402,22 +417,28 @@ static void add_reloc(struct section *sect, int32_t section,
 
 			/* external */
 			if (fi == NO_SECT) {
-				r->snum = raa_read(extsyms, section);
+				sect->extreloc = 1;
+
+				r->pcrel = 0;		// presumed X86_64_RELOC_UNSIGNED ???
+//				r->snum = raa_read(extsyms, section);
 		
 			/* local */
 			} else {
+
 				r->type = 2;		// X86_64_RELOC_BRANCH
 				r->snum = fi;
-				
-				/* standard relocation */
-				r->type = 1;		// X86_64_RELOC_SIGNED
-
 			}
 		}
 		
 	/* subtractor */
-	} else if(pcrel == 2) {
+	} else if (pcrel == 2) {
+		r->pcrel = 0;
 		r->type = 5;				// X86_64_RELOC_SUBTRACTOR
+//		r->snum = macho_gotpcrel_sect;
+
+	/* gotpcrel */
+	} else if (pcrel == 3) {
+		r->type = 4;				// X86_64_RELOC_GOT
 	}
 	++sect->nreloc;
 }
@@ -427,14 +448,8 @@ static void macho_output(int32_t secto, const void *data,
                          int32_t section, int32_t wrt)
 {
     struct section *s, *sbss;
-    int32_t addr;
-    uint8_t mydata[8], *p;
-
-    if (wrt != NO_SEG) {
-        wrt = NO_SEG;
-        error(ERR_NONFATAL, "WRT not supported by Mach-O output format");
-        /* continue to do _something_ */
-    }
+    int64_t addr;
+    uint8_t mydata[16], *p;
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
@@ -509,13 +524,15 @@ static void macho_output(int32_t secto, const void *data,
             } else {
 				if (wrt == NO_SEG) {
 					if (size < 8) {
-//						add_reloc(s, section, 2, size);
-//						sect_write(s, data, size);
+						add_reloc(s, section, 2, size);
 					}
 					add_reloc(s, section, 0, size);
-				}else{
+				} else if (wrt == macho_gotpcrel_sect) {
+					addr += s->size;
+					add_reloc(s, section, 3, size);
+				} else {
 					error(ERR_NONFATAL, "Mach-O format does not support"
-						" this... um... thingy right now...");
+						" this use of WRT");
 				}
 			}
 		}
@@ -533,27 +550,44 @@ static void macho_output(int32_t secto, const void *data,
             error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else {
-            add_reloc(s, section, 1, 2);
+			if (wrt == NO_SEG) {
+				add_reloc(s, section, 2, 2);
+				add_reloc(s, section, 0, 2);
+			} else {
+				error(ERR_NONFATAL, "Unsupported non-32-bit"
+				  " Macho-O relocation [2]");
+			}
 		}
 
         p = mydata;
-        WRITESHORT(p, *(int32_t *)data - (size + s->size));
+        WRITESHORT(p, *(int64_t *)data - size);
         sect_write(s, mydata, 2L);
         break;
 
     case OUT_REL4ADR:
-//        if (section == secto)
-//            error(ERR_PANIC, "intra-section OUT_REL4ADR");
+        if (section == secto)
+            error(ERR_PANIC, "intra-section OUT_REL4ADR");
 
         if (section != NO_SEG && section % 2) {
             error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else {
-            add_reloc(s, section, 1, 4);
+			if (wrt == NO_SEG) {
+
+//add_reloc(s, section, 2, 4);
+				add_reloc(s, section, 1, 4);
+			} else if (wrt == macho_gotpcrel_sect) {
+				error(ERR_NONFATAL, "Mach-O format cannot produce PC-"
+					  "relative GOT references");
+			} else {
+				error(ERR_NONFATAL, "Mach-O format does not support"
+				    " this use of WRT");
+				wrt = NO_SEG;	/* we can at least _try_ to continue */
+			}
 		}
 
         p = mydata;
-        WRITELONG(p, *(int32_t *)data - (size + s->size));
+		WRITELONG(p, *(int64_t *)data - size);
         sect_write(s, mydata, 4L);
         break;
 
@@ -700,7 +734,18 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     sym->desc = 0;
     sym->value = offset;
     sym->initial_snum = -1;
-	
+
+	if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+        /*
+         * This is a NASM special symbol. We never allow it into
+         * the Macho-O symbol table, even if it's a valid one. If it
+         * _isn't_ a valid one, we should barf immediately.
+         */
+        if (strcmp(name, "..gotpcrel"))
+            error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+         return;
+    }
+
     /* external and common symbols get N_EXT */
     if (is_global != 0) {
         sym->type |= N_EXT;
@@ -967,7 +1012,11 @@ static uint32_t macho_write_segment (uint64_t offset)
             fwriteint32_t(0, machofp);
         }
 		
-		if(s->nreloc) s->flags |= S_ATTR_LOC_RELOC;
+		if (s->nreloc) {
+			s->flags |= S_ATTR_LOC_RELOC;
+			if (s->extreloc)
+				s->flags |= S_ATTR_EXT_RELOC;
+		}
         fwriteint32_t(s->flags, machofp);      /* flags */
         fwriteint32_t(0, machofp);     /* reserved */
         fwriteint32_t(0, machofp);     /* reserved */
@@ -998,7 +1047,6 @@ static void macho_write_relocs (struct reloc *r)
 	word2 |= r->ext << 27;
 	word2 |= r->type << 28;
 	fwriteint32_t(word2, machofp); /* reloc data */
-
 	r = r->next;
     }
 }
