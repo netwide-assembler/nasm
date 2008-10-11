@@ -7,7 +7,10 @@
  *
  * the actual codes (C syntax, i.e. octal):
  * \0            - terminates the code. (Unless it's a literal of course.)
- * \1, \2, \3    - that many literal bytes follow in the code stream
+ * \1..\4	 - that many literal bytes follow in the code stream
+ * \5            - add 4 to the primary operand number (b, low octdigit)
+ * \6            - add 4 to the secondary operand number (a, middle octdigit)
+ * \7            - add 4 to both the primary and the secondary operand number
  * \10..\13      - a literal byte follows in the code stream, to be added
  *                 to the register value of operand 0..3
  * \14..\17      - a signed byte immediate operand, from operand 0..3
@@ -784,7 +787,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     int64_t length = 0;
     uint8_t c;
     int rex_mask = ~0;
+    int op1, op2;
     struct operand *opx;
+    uint8_t opex = 0;
 
     ins->rex = 0;               /* Ensure REX is reset */
 
@@ -796,13 +801,24 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     while (*codes) {
 	c = *codes++;
-	opx = &ins->oprs[c & 3];
+	op1 = (c & 3) + ((opex & 1) << 2);
+	op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
+	opx = &ins->oprs[op1];
+	opex = 0;		/* For the next iteration */
+
         switch (c) {
         case 01:
         case 02:
         case 03:
+	case 04:
             codes += c, length += c;
             break;
+
+	case 05:
+	case 06:
+	case 07:
+	    opex = c;
+	    break;
 
 	case4(010):
 	    ins->rex |=
@@ -1060,16 +1076,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
 		if (c <= 0177) {
 		    /* pick rfield from operand b */
-		    rflags = regflag(&ins->oprs[c & 7]);
-		    rfield = nasm_regvals[ins->oprs[c & 7].basereg];
+		    rflags = regflag(&ins->oprs[op1]);
+		    rfield = nasm_regvals[ins->oprs[op1].basereg];
 		} else {
 		    rflags = 0;
 		    rfield = c & 7;
 		}
-
-                if (!process_ea
-                    (&ins->oprs[(c >> 3) & 7], &ea_data, bits,
-		     ins->addr_size, rfield, rflags)) {
+                if (!process_ea(&ins->oprs[op2], &ea_data, bits,
+				ins->addr_size, rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
                 } else {
@@ -1170,25 +1184,38 @@ static void gencode(int32_t segment, int64_t offset, int bits,
     uint8_t bytes[4];
     int64_t size;
     int64_t data;
+    int op1, op2;
     struct operand *opx;
     const uint8_t *codes = temp->code;
+    uint8_t opex = 0;
 
     while (*codes) {
 	c = *codes++;
-	opx = &ins->oprs[c & 3];
+	op1 = (c & 3) + ((opex & 1) << 2);
+	op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
+	opx = &ins->oprs[op1];
+	opex = 0;		/* For the next iteration */
+
         switch (c) {
         case 01:
         case 02:
         case 03:
+	case 04:
 	    EMIT_REX();
             out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG);
             codes += c;
             offset += c;
             break;
 
+	case 05:
+	case 06:
+	case 07:
+	    opex = c;
+	    break;
+
 	case4(010):
 	    EMIT_REX();
-            bytes[0] = *codes++ + ((regval(opx)) & 7);
+            bytes[0] = *codes++ + (regval(opx) & 7);
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
@@ -1199,7 +1226,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	       warn on explicit BYTE directives.  Also warn, obviously,
 	       if the optimizer isn't enabled. */
             if (((opx->type & BITS8) ||
-		 !(opx->type & temp->opd[c & 3] & BYTENESS)) &&
+		 !(opx->type & temp->opd[op1] & BYTENESS)) &&
 		(opx->offset < -128 || opx->offset > 127)) {
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			"signed byte value exceeds bounds");
@@ -1749,8 +1776,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
                 if (c <= 0177) {
 		    /* pick rfield from operand b */
-		    rflags = regflag(&ins->oprs[c & 7]);
-                    rfield = nasm_regvals[ins->oprs[c & 7].basereg];
+		    rflags = regflag(&ins->oprs[op1]);
+                    rfield = nasm_regvals[ins->oprs[op1].basereg];
 		} else {
 		    /* rfield is constant */
 		    rflags = 0;
@@ -1758,7 +1785,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		}
 
                 if (!process_ea
-                    (&ins->oprs[(c >> 3) & 7], &ea_data, bits,
+                    (&ins->oprs[op2], &ea_data, bits,
 		     ins->addr_size, rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }

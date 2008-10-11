@@ -402,6 +402,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 01:
 	case 02:
 	case 03:
+	case 04:
             while (c--)
                 if (*r++ != *data++)
                     return false;

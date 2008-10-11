@@ -324,7 +324,7 @@ sub count_bytecodes(@) {
 	    next;
 	}
 	$bytecode_count[$bc]++;
-	if ($bc >= 01 && $bc <= 03) {
+	if ($bc >= 01 && $bc <= 04) {
 	    $skip = $bc;
 	} elsif (($bc & ~03) == 010) {
 	    $skip = 1;
@@ -458,11 +458,11 @@ sub hexstr(@) {
 
 # Here we determine the range of possible starting bytes for a given
 # instruction. We need only consider the codes:
-# \1 \2 \3     mean literal bytes, of course
-# \4 \5 \6 \7  mean PUSH/POP of segment registers: special case
+# \[1234]      mean literal bytes, of course
 # \1[0123]     mean byte plus register value
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
+# \34[4567]    mean PUSH/POP of segment registers: special case
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
 sub startseq($) {
@@ -477,11 +477,11 @@ sub startseq($) {
 
   while ($c0 = shift(@codes)) {
       $c1 = $codes[0];
-      if ($c0 == 01 || $c0 == 02 || $c0 == 03) {
+      if ($c0 >= 01 && $c0 <= 04) {
 	  # Fixed byte string
 	  my $fbs = $prefix;
 	  while (1) {
-	      if ($c0 == 01 || $c0 == 02 || $c0 == 03) {
+	      if ($c0 >= 01 && $c0 <= 04) {
 		  while ($c0--) {
 		      $fbs .= sprintf("%02X", shift(@codes));
 		  }
@@ -565,6 +565,7 @@ sub byte_code_compile($) {
     my %oppos = ();
     my $i;
     my $op, $oq;
+    my $opex;
 
     unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
 	die "$fname: $line: cannot parse: [$str]\n";
@@ -618,7 +619,8 @@ sub byte_code_compile($) {
 		push(@codes, 0360);
 	    }
 	} elsif ($op =~ /^[0-9a-f]{2}$/) {
-	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes) {
+	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes &&
+		$codes[$litix] < 4) {
 		$codes[$litix]++;
 		push(@codes, hex $op);
 	    } else {
@@ -630,13 +632,17 @@ sub byte_code_compile($) {
 	    if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
 		die "$fname: $line: $op requires r and m operands\n";
 	    }
-	    push(@codes, 0100 + ($oppos{'m'} << 3) + $oppos{'r'});
+	    $opex = (($oppos{'m'} & 4) ? 06 : 0) |
+		    (($oppos{'r'} & 4) ? 05 : 0);
+	    push(@codes, $opex) if ($opex);
+	    push(@codes, 0100 + (($oppos{'m'} & 3) << 3) + ($oppos{'r'} & 3));
 	    $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-7])$:) {
 	    if (!defined($oppos{'m'})) {
 		die "$fname: $line: $op requires m operand\n";
 	    }
-	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1);
+	    push(@codes, 06) if ($oppos{'m'} & 4);
+	    push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^vex(|\..*)$/) {
 	    my ($m,$w,$l,$p) = (undef,2,undef,0);
@@ -685,7 +691,7 @@ sub byte_code_compile($) {
 	    if (defined($oppos{'v'}) && !$has_nds) {
 		die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
-	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
+	    push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
 		 $m, ($w << 3)+($l << 2)+$p);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^\/drex([01])$/) {
@@ -699,60 +705,79 @@ sub byte_code_compile($) {
 	    # this at (roughly) the position of the drex byte itself.
 	    # This allows us to match the AMD documentation and still
 	    # do the right thing.
-	    unshift(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
+	    unshift(@codes, 0160+($oppos{'d'} & 3)+($oc0 ? 4 : 0));
+	    unshift(@codes, 05) if ($oppos{'d'} & 4);
 	} elsif ($op =~ /^(ib\,s|ib|ibx|ib\,w|iw|iwd|id|idx|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    if ($op eq 'ib,s') { # Signed imm8
-		push(@codes, 014+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 014+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ib') { # imm8
-		push(@codes, 020+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 020+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ib,u') { # Unsigned imm8
-		push(@codes, 024+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 024+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iw') { # imm16
-		push(@codes, 030+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 030+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibx') { # imm8 sign-extended to opsize
-		push(@codes, 0274+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0274+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iwd') { # imm16 or imm32, depending on opsize
-		push(@codes, 034+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 034+($oppos{'i'} & 3));
 	    } elsif ($op eq 'id') { # imm32
-		push(@codes, 040+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 040+($oppos{'i'} & 3));
 	    } elsif ($op eq 'idx') { # imm32 extended to 64 bits
-		push(@codes, 0254+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0254+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iwdq') { # imm16/32/64, depending on opsize
-		push(@codes, 044+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 044+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel8') {
-		push(@codes, 050+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 050+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iq') {
-		push(@codes, 054+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 054+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel16') {
-		push(@codes, 060+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 060+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel') { # 16 or 32 bit relative operand
-		push(@codes, 064+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 064+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel32') {
-		push(@codes, 070+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 070+($oppos{'i'} & 3));
 	    } elsif ($op eq 'seg') {
-		push(@codes, 074+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 074+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibw') { # imm16 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0144;
-		push(@codes, 0140+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0140+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibd') { # imm32 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
-		push(@codes, 0150+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0150+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibd,s') {
 		# imm32 that can be bytified, sign extended to 64 bits
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
-		push(@codes, 0250+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0250+($oppos{'i'} & 3));
 	    }
 	    $prefix_ok = 0;
 	} elsif ($op eq '/is4') {
@@ -780,7 +805,8 @@ sub byte_code_compile($) {
 		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    $s_pos = scalar @codes;
-	    push(@codes, $oppos{'i'}, hex $1);
+	    push(@codes, 05) if ($oppos{'i'} & 4);
+	    push(@codes, $oppos{'i'} & 3, hex $1);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^([0-9a-f]{2})\+c$/) {
 	    push(@codes, 0330, hex $1);
