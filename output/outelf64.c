@@ -32,15 +32,46 @@
 #define SHN_ABS		0xfff1		/* Associated symbol is absolute */
 #define SHN_COMMON	0xfff2		/* Associated symbol is common */
 #define R_X86_64_NONE		0	/* No reloc */
-#define R_X86_64_64		1	/* Direct 64 bit address */
+#define R_X86_64_64		1	/* Direct 64 bit  */
 #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
 #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
 #define R_X86_64_PLT32		4	/* 32 bit PLT address */
-#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative */
+#define R_X86_64_COPY		5	/* Copy symbol at runtime */
+#define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+#define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+#define R_X86_64_RELATIVE	8	/* Adjust by program base */
+#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
+					   offset to GOT */
 #define R_X86_64_32		10	/* Direct 32 bit zero extended */
+#define R_X86_64_32S		11	/* Direct 32 bit sign extended */
 #define R_X86_64_16		12	/* Direct 16 bit zero extended */
 #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset */
+#define R_X86_64_8		14	/* Direct 8 bit sign extended  */
+#define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+#define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
+#define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
+#define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
+#define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
+					   to two GOT entries for GD symbol */
+#define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
+					   to two GOT entries for LD symbol */
+#define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
+#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
+					   to GOT entry for IE symbol */
+#define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
+#define R_X86_64_PC64		24 	/* word64 S + A - P */
+#define R_X86_64_GOTOFF64	25 	/* word64 S + A - GOT */
+#define R_X86_64_GOTPC32	26 	/* word32 GOT + A - P */
+#define R_X86_64_GOT64		27 	/* word64 G + A */
+#define R_X86_64_GOTPCREL64	28 	/* word64 G + GOT - P + A */
+#define R_X86_64_GOTPC64	29 	/* word64 GOT - P + A */
+#define R_X86_64_GOTPLT64	30 	/* word64 G + A */
+#define R_X86_64_PLTOFF64	31 	/* word64 L - GOT + A */
+#define R_X86_64_SIZE32		32 	/* word32 Z + A */
+#define R_X86_64_SIZE64		33 	/* word64 Z + A */
+#define R_X86_64_GOTPC32_TLSDESC 34 	/* word32 */
+#define R_X86_64_TLSDESC_CALL	35 	/* none */
+#define R_X86_64_TLSDESC	36 	/* word64×2 */
 #define ET_REL		1		/* Relocatable file */
 #define EM_X86_64	62		/* AMD x86-64 architecture */
 #define STT_NOTYPE	0		/* Symbol type is unspecified */
@@ -958,10 +989,11 @@ static void elf_out(int32_t segto, const void *data,
                      * need to fix up the data item by $-$$.
                      */
                     addr += s->len;
-                    elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
+                    elf_add_reloc(s, segment, R_X86_64_GOTPC32);
                 } else if (wrt == elf_gotoff_sect + 1) {
-                    elf_add_reloc(s, segment, R_X86_64_GOTTPOFF);
+                    elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
                 } else if (wrt == elf_got_sect + 1) {
+                   s->len,segment, addr);
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_X86_64_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
@@ -1026,20 +1058,21 @@ static void elf_out(int32_t segto, const void *data,
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
-            error(ERR_NONFATAL, "ELF format does not support"
+            error(ERR_NONFATAL, "ELF64 format does not support"
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, R_X86_64_PC32);
             } else if (wrt == elf_plt_sect + 1) {
                 elf_add_reloc(s, segment, R_X86_64_PLT32);
-            } else if (wrt == elf_gotpc_sect + 1 ||
-                       wrt == elf_gotoff_sect + 1 ||
-                       wrt == elf_got_sect + 1) {
-                error(ERR_NONFATAL, "ELF format cannot produce PC-"
-                      "relative GOT references");
+            } else if (wrt == elf_gotpc_sect + 1) {
+                elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
+            } else if (wrt == elf_gotoff_sect + 1) {
+                elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
+            } else if (wrt == elf_got_sect + 1) {
+                elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
             } else {
-                error(ERR_NONFATAL, "ELF format does not support this"
+                error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
                 wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
