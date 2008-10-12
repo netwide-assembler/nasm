@@ -993,7 +993,6 @@ static void elf_out(int32_t segto, const void *data,
                 } else if (wrt == elf_gotoff_sect + 1) {
                     elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
                 } else if (wrt == elf_got_sect + 1) {
-                   s->len,segment, addr);
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_X86_64_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
