@@ -924,7 +924,7 @@ is indicated by an asterisk. For example:
 
 The \c{--prefix} and \c{--postfix} options prepend or append 
 (respectively) the given argument to all \c{global} or
-\c{extern} variables. E.g. \c{--prefix_} will prepend the 
+\c{extern} variables. E.g. \c{--prefix _} will prepend the 
 underscore to all global and external variables, as C sometimes 
 (but not always) likes it.
 
