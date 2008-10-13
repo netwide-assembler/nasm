@@ -32,6 +32,8 @@ since 2007.
 
 \b Fix RIP-relative offsets when the instruction carries an immediate.
 
+\b Fix the generation of RIP-relative GOT relocations in ELF64.
+
 
 \S{cl-2.04} Version 2.04
 
