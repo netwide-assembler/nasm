@@ -374,7 +374,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int osize = prefix->osize;
     int asize = prefix->asize;
     int i, c;
+    int op1, op2;
     struct operand *opx;
+    uint8_t opex = 0;
     int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
     int regmask = (segsize == 64) ? 15 : 7;
@@ -396,7 +398,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
         drep = P_REP;
 
     while ((c = *r++) != 0) {
-	opx = &ins->oprs[c & 3];
+	op1 = (c & 3) + ((opex & 1) << 2);
+	op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
+	opx = &ins->oprs[op1];
+	opex = 0;
 
 	switch (c) {
 	case 01:
@@ -406,6 +411,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
             while (c--)
                 if (*r++ != *data++)
                     return false;
+	    break;
+
+	case 05:
+	case 06:
+	case 07:
+	    opex = c;
 	    break;
 
 	case4(010):
@@ -529,17 +540,15 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    int modrm = *data++;
             opx->segment |= SEG_RMREG;
-            data = do_ea(data, modrm, asize, segsize,
-			 &ins->oprs[(c >> 3) & 3], ins);
+            data = do_ea(data, modrm, asize, segsize, &ins->oprs[op2], ins);
 	    if (!data)
 		return false;
-            opx->basereg = ((modrm >> 3)&7)+
-		(ins->rex & REX_R ? 8 : 0);
+            opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
 	    break;
 	}
 
 	case4(0140):
-	    if (s_field_for == (c & 3)) {
+	    if (s_field_for == op1) {
 		opx->offset = gets8(data);
 		data++;
 	    } else {
@@ -550,13 +559,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	case4(0144):
 	case4(0154):
-	    s_field_for = (*data & 0x02) ? c & 3 : -1;
+	    s_field_for = (*data & 0x02) ? op1 : -1;
 	    if ((*data++ & ~0x02) != *r++)
 		return false;
 	    break;
 
 	case4(0150):
-	    if (s_field_for == (c & 3)) {
+	    if (s_field_for == op1) {
 		opx->offset = gets8(data);
 		data++;
 	    } else {
@@ -567,12 +576,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	case4(0160):
 	    ins->rex |= REX_D;
-	    ins->drexdst = c & 3;
+	    ins->drexdst = op1;
 	    break;
 
 	case4(0164):
 	    ins->rex |= REX_D|REX_OC;
-	    ins->drexdst = c & 3;
+	    ins->drexdst = op1;
 	    break;
 
 	case 0171:
@@ -626,8 +635,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return false;   /* spare field doesn't match up */
-            data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], ins);
+            data = do_ea(data, modrm, asize, segsize, &ins->oprs[op2], ins);
 	    if (!data)
 		return false;
 	    break;
