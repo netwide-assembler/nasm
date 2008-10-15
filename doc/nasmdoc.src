@@ -2611,6 +2611,8 @@ real names of macro-local labels means that the two usages
 \c{%\{%foo\}bar} and \c{%%foobar} would both expand to the same
 thing anyway; nevertheless, the capability is there.)
 
+See also the \c{%+} operator, \k{concat%+}.
+
 
 \S{mlmaccc} \i{Condition Codes as Macro Parameters}
 
