@@ -969,6 +969,9 @@ static void elf_out(int32_t segto, const void *data,
             } else {
                 if (wrt == NO_SEG) {
 		    switch ((int)size) {
+		    case 1:
+			elf_add_reloc(s, segment, R_X86_64_8);
+			break;
 		    case 2:
                         elf_add_reloc(s, segment, R_X86_64_16);
 			break;
@@ -991,14 +994,35 @@ static void elf_out(int32_t segto, const void *data,
                     addr += s->len;
                     elf_add_reloc(s, segment, R_X86_64_GOTPC32);
                 } else if (wrt == elf_gotoff_sect + 1) {
-                    elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
+		    if (size != 8) {
+			error(ERR_NONFATAL, "ELF64 requires ..gotoff "
+			      "references to be qword absolute");
+			wrt = NO_SEG;
+		    } else {
+			elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
+		    }
                 } else if (wrt == elf_got_sect + 1) {
-                    addr = elf_add_gsym_reloc(s, segment, addr,
-                                              R_X86_64_GOT32, true);
+		    switch ((int)size) {
+		    case 4:
+			addr = elf_add_gsym_reloc(s, segment, addr,
+						  R_X86_64_GOT32, true);
+			break;
+		    case 8:
+			addr = elf_add_gsym_reloc(s, segment, addr,
+						  R_X86_64_GOT64, true);
+			break;
+		    default:
+			error(ERR_NONFATAL, "invalid ..got reference");
+			wrt = NO_SEG;
+			break;
+		    }
                 } else if (wrt == elf_sym_sect + 1) {
 		    switch ((int)size) {
+		    case 1:
+                        addr = elf_add_gsym_reloc(s, segment, addr,
+                                                  R_X86_64_8, false);
+			break;
 		    case 2:
-                        gnu16 = true;
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_X86_64_16, false);
 			break;
@@ -1064,12 +1088,14 @@ static void elf_out(int32_t segto, const void *data,
                 elf_add_reloc(s, segment, R_X86_64_PC32);
             } else if (wrt == elf_plt_sect + 1) {
                 elf_add_reloc(s, segment, R_X86_64_PLT32);
-            } else if (wrt == elf_gotpc_sect + 1) {
+            } else if (wrt == elf_gotpc_sect + 1 ||
+		       wrt == elf_got_sect + 1) {
                 elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
-            } else if (wrt == elf_gotoff_sect + 1) {
-                elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
-            } else if (wrt == elf_got_sect + 1) {
-                elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
+            } else if (wrt == elf_gotoff_sect + 1 ||
+		       wrt == elf_got_sect + 1) {
+		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
+		      "qword absolute");
+		wrt = NO_SEG;
             } else {
                 error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
