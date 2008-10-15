@@ -1983,10 +1983,10 @@ the NASM command line: see \k{opt-d}.
 \S{xdefine} Resolving \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
 
 To have a reference to an embedded single-line macro resolved at the
-time that it is embedded, as opposed to when the calling macro is
-expanded, you need a different mechanism to the one offered by
-\c{%define}. The solution is to use \c{%xdefine}, or it's
-\I{case sensitive}case-insensitive counterpart \c{%ixdefine}.
+time that the embedding macro is \e{defined}, as opposed to when the
+embedding macro is \e{expanded}, you need a different mechanism to the
+one offered by \c{%define}. The solution is to use \c{%xdefine}, or
+it's \I{case sensitive}case-insensitive counterpart \c{%ixdefine}.
 
 Suppose you have the following code:
 
