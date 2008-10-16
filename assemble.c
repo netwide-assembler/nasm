@@ -1534,11 +1534,11 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 			"signed byte value exceeds bounds");
 	    }
             if (opx->segment != NO_SEG) {
-                data = um;
+                data = uv;
                 out(offset, segment, &data, OUT_ADDRESS, 1,
                     opx->segment, opx->wrt);
             } else {
-                bytes[0] = um;
+                bytes[0] = uv;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
             }
