@@ -1811,14 +1811,17 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		    warn_overflow(ea_data.bytes, opx);
                     s += ea_data.bytes;
 		    if (ea_data.rip) {
-			data -= insn_end - (offset+ea_data.bytes);
-			type = OUT_REL4ADR;
+			out(offset, segment, &data,
+			    OUT_REL4ADR, insn_end - offset,
+			    ins->oprs[(c >> 3) & 7].segment,
+			    ins->oprs[(c >> 3) & 7].wrt);
 		    } else {
 			type = OUT_ADDRESS;
+			out(offset, segment, &data,
+			    OUT_ADDRESS, ea_data.bytes,
+			    ins->oprs[(c >> 3) & 7].segment,
+			    ins->oprs[(c >> 3) & 7].wrt);
 		    }
-		    out(offset, segment, &data, type, ea_data.bytes,
-			ins->oprs[(c >> 3) & 7].segment,
-			ins->oprs[(c >> 3) & 7].wrt);
                     break;
                 }
                 offset += s;
