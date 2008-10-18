@@ -46,24 +46,24 @@ spotless: clean
 # Test for ELF32 shared libraries; assumes an x86 Linux system
 #
 elfso.o: elfso.asm $(NASM)
-	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf32 -F stabs -o $@ -l $*.lst $<
 
 elfso.so: elfso.o
 	$(LD) -m elf_i386 -shared -o $@ $<
 
 elftest: elftest.c elfso.so
-	$(CC) -m32 -o $@ $^
-	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest
+	$(CC) -g -m32 -o $@ $^
+	-env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest
 
 #
 # Test for ELF64 shared libraries; assumes an x86-64 Linux system
 #
 elf64so.o: elf64so.asm $(NASM)
-	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf64 -F dwarf -o $@ -l $*.lst $<
 
 elf64so.so: elf64so.o
 	$(LD) -shared -o $@ $<
 
 elftest64: elftest64.c elf64so.so
-	$(CC) -o $@ $^
-	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest64
+	$(CC) -g -o $@ $^
+	-env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest64
