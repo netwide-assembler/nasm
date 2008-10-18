@@ -114,16 +114,16 @@ typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
 typedef struct
 {
-  Elf64_Word	sh_name;		/* Section name (string tbl index) */
-  Elf64_Word	sh_type;		/* Section type */
-  Elf64_Xword	sh_flags;		/* Section flags */
-  Elf64_Addr	sh_addr;		/* Section virtual addr at execution */
-  Elf64_Off	sh_offset;		/* Section file offset */
-  Elf64_Xword	sh_size;		/* Section size in bytes */
-  Elf64_Word	sh_link;		/* Link to another section */
-  Elf64_Word	sh_info;		/* Additional section information */
-  Elf64_Xword	sh_addralign;		/* Section alignment */
-  Elf64_Xword	sh_entsize;		/* Entry size if section holds table */
+  Elf64_Word	sh_name;	/* Section name (string tbl index) */
+  Elf64_Word	sh_type;	/* Section type */
+  Elf64_Xword	sh_flags;	/* Section flags */
+  Elf64_Addr	sh_addr;	/* Section virtual addr at execution */
+  Elf64_Off	sh_offset;	/* Section file offset */
+  Elf64_Xword	sh_size;	/* Section size in bytes */
+  Elf64_Word	sh_link;	/* Link to another section */
+  Elf64_Word	sh_info;	/* Additional section information */
+  Elf64_Xword	sh_addralign;	/* Section alignment */
+  Elf64_Xword	sh_entsize;	/* Entry size if section holds table */
 } Elf64_Shdr;
 
 
@@ -132,22 +132,23 @@ typedef struct
 
 struct Reloc {
     struct Reloc *next;
-    int64_t address;               /* relative to _start_ of section */
-    int64_t symbol;                /* symbol index */
-    int type;                   /* type of relocation */
+    int64_t address;            /* relative to _start_ of section */
+    int64_t symbol;             /* symbol index */
+    int64_t offset;		/* symbol addend */
+    int type;			/* type of relocation */
 };
 
 struct Symbol {
-    int32_t strpos;                /* string table position of name */
-    int32_t section;               /* section ID of the symbol */
-    int type;                   /* symbol type */
-    int other;                     /* symbol visibility */
-    int64_t value;                 /* address, or COMMON variable align */
-    int32_t size;                  /* size of symbol */
-    int32_t globnum;               /* symbol table offset if global */
-    struct Symbol *next;        /* list of globals in each section */
+    int32_t strpos;             /* string table position of name */
+    int32_t section;            /* section ID of the symbol */
+    int type;			/* symbol type */
+    int other;                  /* symbol visibility */
+    int64_t value;              /* address, or COMMON variable align */
+    int32_t size;               /* size of symbol */
+    int32_t globnum;            /* symbol table offset if global */
+    struct Symbol *next;       	/* list of globals in each section */
     struct Symbol *nextfwd;     /* list of unresolved-size symbols */
-    char *name;                 /* used temporarily if in above list */
+    char *name;			/* used temporarily if in above list */
 };
 
 
@@ -155,10 +156,10 @@ struct Section {
     struct SAA *data;
     uint64_t len, size;
     uint32_t nrelocs;
-    int32_t index;	       /* index into sects array */
-    uint32_t type;             /* SHT_PROGBITS or SHT_NOBITS */
-    uint64_t align;            /* alignment: power of two */
-    uint64_t flags;            /* section flags */
+    int32_t index;	       	/* index into sects array */
+    uint32_t type;             	/* SHT_PROGBITS or SHT_NOBITS */
+    uint64_t align;            	/* alignment: power of two */
+    uint64_t flags;            	/* section flags */
     char *name;
     struct SAA *rel;
     uint64_t rellen;
@@ -224,7 +225,7 @@ static int elf_nsect, nsections;
 static int64_t elf_foffs;
 
 static void elf_write(void);
-static void elf_sect_write(struct Section *, const uint8_t *,
+static void elf_sect_write(struct Section *, const void *,
                            uint64_t);
 static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, int,
                                int, int);
@@ -771,7 +772,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
-static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
+static void elf_add_reloc(struct Section *sect, int32_t segment,
+			  int64_t offset, int type)
 {
     struct Reloc *r;
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -779,6 +781,7 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
     r->next = NULL;
 
     r->address = sect->len;
+    r->offset = offset;
     if (segment == NO_SEG)
         r->symbol = 0;
     else {
@@ -817,7 +820,7 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static int32_t elf_add_gsym_reloc(struct Section *sect,
+static int64_t elf_add_gsym_reloc(struct Section *sect,
                                int32_t segment, int64_t offset,
                                int type, bool exact)
 {
@@ -840,11 +843,7 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
             break;
         }
     if (!s) {
-        if (exact && offset != 0)
-            error(ERR_NONFATAL, "unable to find a suitable global symbol"
-                  " for this reference");
-        else
-            elf_add_reloc(sect, segment, type);
+	elf_add_reloc(sect, segment, offset, type);
         return offset;
     }
 
@@ -875,6 +874,7 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
     r->next = NULL;
 
     r->address = sect->len;
+    r->offset = offset - sym->value;
     r->symbol = GLOBAL_TEMP_BASE + sym->globnum;
     r->type = type;
 
@@ -888,10 +888,11 @@ static void elf_out(int32_t segto, const void *data,
                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int64_t addr;
-    uint8_t mydata[16], *p;
+    int64_t addr, zero;
     int i;
     static struct symlininfo sinfo;
+
+    zero = 0;
 
 #if defined(DEBUG) && DEBUG>2
     if (data) fprintf(stderr,
@@ -960,7 +961,6 @@ static void elf_out(int32_t segto, const void *data,
             error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
-        bool gnu16 = false;
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -970,16 +970,16 @@ static void elf_out(int32_t segto, const void *data,
                 if (wrt == NO_SEG) {
 		    switch ((int)size) {
 		    case 1:
-			elf_add_reloc(s, segment, R_X86_64_8);
+			elf_add_reloc(s, segment, addr, R_X86_64_8);
 			break;
 		    case 2:
-                        elf_add_reloc(s, segment, R_X86_64_16);
+                        elf_add_reloc(s, segment, addr, R_X86_64_16);
 			break;
 		    case 4:
-                        elf_add_reloc(s, segment, R_X86_64_32);
+                        elf_add_reloc(s, segment, addr, R_X86_64_32);
 			break;
 		    case 8:
-			elf_add_reloc(s, segment, R_X86_64_64);
+			elf_add_reloc(s, segment, addr, R_X86_64_64);
 			break;
 		    default:
 			error(ERR_PANIC, "internal error elf64-hpa-871");
@@ -992,24 +992,24 @@ static void elf_out(int32_t segto, const void *data,
                      * need to fix up the data item by $-$$.
                      */
                     addr += s->len;
-                    elf_add_reloc(s, segment, R_X86_64_GOTPC32);
+                    elf_add_reloc(s, segment, addr, R_X86_64_GOTPC32);
                 } else if (wrt == elf_gotoff_sect + 1) {
 		    if (size != 8) {
 			error(ERR_NONFATAL, "ELF64 requires ..gotoff "
 			      "references to be qword absolute");
 			wrt = NO_SEG;
 		    } else {
-			elf_add_reloc(s, segment, R_X86_64_GOTOFF64);
+			elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
 		    }
                 } else if (wrt == elf_got_sect + 1) {
 		    switch ((int)size) {
 		    case 4:
-			addr = elf_add_gsym_reloc(s, segment, addr,
-						  R_X86_64_GOT32, true);
+			elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_GOT32, true);
 			break;
 		    case 8:
-			addr = elf_add_gsym_reloc(s, segment, addr,
-						  R_X86_64_GOT64, true);
+			elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_GOT64, true);
 			break;
 		    default:
 			error(ERR_NONFATAL, "invalid ..got reference");
@@ -1019,20 +1019,20 @@ static void elf_out(int32_t segto, const void *data,
                 } else if (wrt == elf_sym_sect + 1) {
 		    switch ((int)size) {
 		    case 1:
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_X86_64_8, false);
+                        elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_8, false);
 			break;
 		    case 2:
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_X86_64_16, false);
+                        elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_16, false);
 			break;
 		    case 4:
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_X86_64_32, false);
+                        elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_32, false);
 			break;
 		    case 8:
-			addr = elf_add_gsym_reloc(s, segment, addr,
-						  R_X86_64_64, false);
+			elf_add_gsym_reloc(s, segment, addr,
+					   R_X86_64_64, false);
 			break;
 		    default:
 			error(ERR_PANIC, "internal error elf64-hpa-903");
@@ -1048,18 +1048,7 @@ static void elf_out(int32_t segto, const void *data,
                 }
             }
         }
-        p = mydata;
-        if (gnu16) {
-            WRITESHORT(p, addr);
-        } else {
-            if (size != 8 && size != 4 && segment != NO_SEG) {
-                error(ERR_NONFATAL,
-                      "Unsupported non-64-bit ELF relocation");
-            }
-            if (size == 4) WRITELONG(p, addr);
-            else WRITEDLONG(p, (int64_t)addr);
-        }
-        elf_sect_write(s, mydata, size);
+        elf_sect_write(s, &zero, size);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
@@ -1068,15 +1057,14 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, R_X86_64_PC16);
+                elf_add_reloc(s, segment,
+			      *(int64_t *)data - size, R_X86_64_PC16);
             } else {
                 error(ERR_NONFATAL,
                       "Unsupported non-32-bit ELF relocation [2]");
             }
         }
-        p = mydata;
-        WRITESHORT(p, *(int64_t *)data - size);
-        elf_sect_write(s, mydata, 2L);
+        elf_sect_write(s, &zero, 2);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
@@ -1085,12 +1073,15 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, R_X86_64_PC32);
+                elf_add_reloc(s, segment, *(int64_t *)data - size,
+			      R_X86_64_PC32);
             } else if (wrt == elf_plt_sect + 1) {
-                elf_add_reloc(s, segment, R_X86_64_PLT32);
+                elf_add_reloc(s, segment, *(int64_t *)data - size,
+			      R_X86_64_PLT32);
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-                elf_add_reloc(s, segment, R_X86_64_GOTPCREL);
+                elf_add_reloc(s, segment, *(int64_t *)data - size,
+			      R_X86_64_GOTPCREL);
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
 		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
@@ -1102,9 +1093,33 @@ static void elf_out(int32_t segto, const void *data,
                 wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-        p = mydata;
-        WRITELONG(p, *(int64_t *)data - size);
-        elf_sect_write(s, mydata, 4L);
+        elf_sect_write(s, &zero, 4);
+    } else if (type == OUT_REL8ADR) {
+        if (segment == segto)
+            error(ERR_PANIC, "intra-segment OUT_REL8ADR");
+        if (segment != NO_SEG && segment % 2) {
+            error(ERR_NONFATAL, "ELF64 format does not support"
+                  " segment base references");
+        } else {
+            if (wrt == NO_SEG) {
+                elf_add_reloc(s, segment, *(int64_t *)data - size,
+			      R_X86_64_PC64);
+            } else if (wrt == elf_gotpc_sect + 1 ||
+		       wrt == elf_got_sect + 1) {
+                elf_add_reloc(s, segment, *(int64_t *)data - size,
+			      R_X86_64_GOTPCREL64);
+            } else if (wrt == elf_gotoff_sect + 1 ||
+		       wrt == elf_got_sect + 1) {
+		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
+		      "qword absolute");
+		wrt = NO_SEG;
+            } else {
+                error(ERR_NONFATAL, "ELF64 format does not support this"
+                      " use of WRT");
+                wrt = NO_SEG;   /* we can at least _try_ to continue */
+            }
+        }
+        elf_sect_write(s, &zero, 8);
     }
 }
 
@@ -1464,7 +1479,7 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
         p = entry;
         WRITEDLONG(p, r->address);
         WRITEDLONG(p, (sym << 32) + r->type);
-	WRITEDLONG(p, (uint64_t) 0);
+	WRITEDLONG(p, r->offset);
         saa_wbytes(s, entry, 24L);
         *len += 24;
 
@@ -1513,8 +1528,7 @@ static void elf_write_sections(void)
         }
 }
 
-static void elf_sect_write(struct Section *sect,
-                           const uint8_t *data, uint64_t len)
+static void elf_sect_write(struct Section *sect, const void *data, size_t len)
 {
     saa_wbytes(sect->data, data, len);
     sect->len += len;
