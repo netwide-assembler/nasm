@@ -45,7 +45,7 @@ spotless: clean
 #
 # Test for ELF32 shared libraries; assumes an x86 Linux system
 #
-elfso.o: elfso.asm
+elfso.o: elfso.asm $(NASM)
 	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
 
 elfso.so: elfso.o
@@ -58,7 +58,7 @@ elftest: elftest.c elfso.so
 #
 # Test for ELF64 shared libraries; assumes an x86-64 Linux system
 #
-elf64so.o: elf64so.asm
+elf64so.o: elf64so.asm $(NASM)
 	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
 
 elf64so.so: elf64so.o
