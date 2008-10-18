@@ -1100,13 +1100,13 @@ static void elf_out(int32_t segto, const void *data,
 		addr = 0;
             } else if (wrt == elf_plt_sect + 1) {
                 elf_add_gsym_reloc(s, segment, addr, size,
-				   R_X86_64_PLT32, false);
+				   R_X86_64_PLT32, true);
 		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
 		printf("addr = %ld, pcrel = %ld\n", addr, size);
                 elf_add_gsym_reloc(s, segment, addr, size,
-				   R_X86_64_GOTPCREL, false);
+				   R_X86_64_GOTPCREL, true);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
@@ -1134,7 +1134,7 @@ static void elf_out(int32_t segto, const void *data,
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
                 elf_add_gsym_reloc(s, segment, addr, size,
-				   R_X86_64_GOTPCREL64, false);
+				   R_X86_64_GOTPCREL64, true);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
