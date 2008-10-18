@@ -1012,8 +1012,7 @@ static void elf_out(int32_t segto, const void *data,
 		    error(ERR_NONFATAL, "ELF64 requires ..gotoff "
 			  "references to be qword absolute");
 		} else {
-		    elf_add_gsym_reloc(s, segment, addr, 0,
-				       R_X86_64_GOTOFF64, false);
+		    elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
 		    addr = 0;
 		}
 	    } else if (wrt == elf_got_sect + 1) {
