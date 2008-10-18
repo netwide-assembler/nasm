@@ -1084,7 +1084,7 @@ static void elf_out(int32_t segto, const void *data,
                       "Unsupported non-32-bit ELF relocation [2]");
             }
         }
-	elf_sect_writeaddr(s, addr, size);
+	elf_sect_writeaddr(s, addr, 2);
     } else if (type == OUT_REL4ADR) {
 	addr = *(int64_t *)data;
         if (segment == segto)
@@ -1117,7 +1117,7 @@ static void elf_out(int32_t segto, const void *data,
                       " use of WRT");
             }
         }
-	elf_sect_writeaddr(s, addr, size);
+	elf_sect_writeaddr(s, addr, 4);
     } else if (type == OUT_REL8ADR) {
 	addr = *(int64_t *)data;
         if (segment == segto)
@@ -1145,7 +1145,7 @@ static void elf_out(int32_t segto, const void *data,
                       " use of WRT");
             }
         }
-        elf_sect_writeaddr(s, addr, size);
+        elf_sect_writeaddr(s, addr, 8);
     }
 }
 
