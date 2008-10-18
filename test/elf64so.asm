@@ -27,7 +27,8 @@
 
 	  BITS 64
 	  GLOBAL lrotate:function ; [1]
-	  GLOBAL greet:function	; [1]
+	  GLOBAL greet_s:function ; [1]
+	  GLOBAL greet_m:function ; [1]
 	  GLOBAL asmstr:data asmstr.end-asmstr ; [2]
 	  GLOBAL textptr:data 8	; [2]
 	  GLOBAL selfptr:data 8	; [2]
@@ -50,10 +51,14 @@ lrotate:			; [1]
 	  pop rbp
 	  ret
 
-; prototype: void greet(void);
-;;  rdi - rsi - rdx - rcx - r8 - r9
-;;  rbx, rbp, r12-r15 are saved
-greet:
+;; prototype: void greet_*(void);
+;; 
+;;  Arguments are:	rdi - rsi - rdx - rcx - r8 - r9
+;;  Registers:		rbx, rbp, r12-r15 are saved
+;; greet_s() is Small PIC model, greet_m() is Medium PIC model
+;; (Large model cannot be linked with other code)
+;;
+greet_s:
 	  mov rax,[rel commvar wrt ..got] ; &commvar
 	  mov rcx,[rax]			  ; commvar
 	  mov rax,[rel integer wrt ..got] ; &integer
@@ -64,6 +69,25 @@ greet:
 	  mov rdx,[rax]		 ; *localptr = localint
 	  lea rdi,[rel printfstr]
 	  xor eax,eax		; No fp arguments
+	  jmp printf wrt ..plt	; [10]
+
+greet_m:
+	  push r15		; Used by convention...
+	  lea r15,[rel _GLOBAL_OFFSET_TABLE_]
+	  mov rax,[rel commvar wrt ..got] ; &commvar
+	  mov rcx,[rax]			  ; commvar
+	  mov rax,[rel integer wrt ..got] ; &integer
+	  mov rsi,[rax]
+	  lea rdx,[rsi+1]
+	  mov rax,localint wrt ..gotoff	 ; &localint - r15
+	  mov [rax+r15],rdx	 ; localint = integer+1
+	  mov rax,localptr wrt ..gotoff ; &localptr - r15
+	  mov rax,[rax+r15]	 ; localptr
+	  mov rdx,[rax]		 ; *localptr = localint
+	  mov rdi,printfstr wrt ..gotoff ; &printfstr - r15
+	  add rdi,r15		; &printfstr 
+	  xor eax,eax		; No fp arguments
+	  pop r15
 	  jmp printf wrt ..plt	; [10]
 
 	  SECTION .data
@@ -77,7 +101,7 @@ printfstr db "integer=%ld, localint=%ld, commvar=%ld", 10, 0
 
 ; some pointers
 localptr  dq localint		; [5] [17]
-textptr	  dq greet wrt ..sym	; [15]
+textptr	  dq greet_s wrt ..sym	; [15]
 selfptr	  dq selfptr wrt ..sym	; [16]
 
 	  SECTION .bss

@@ -11,7 +11,8 @@
 #include <inttypes.h>
 
 extern long lrotate(long, int);
-extern void greet(void);
+extern void greet_s(void);
+extern void greet_m(void);
 extern int8_t asmstr[];
 extern void *selfptr;
 extern void *textptr;
@@ -31,10 +32,10 @@ int main(void)
     printf("The integers here should be 1234, 1235 and 4321:\n");
     integer = 1234;
     commvar = 4321;
+    greet_s();
+    greet_m();
 
-    greet();
-
-    printf("These pointers should be equal: %p and %p\n", &greet, textptr);
+    printf("These pointers should be equal: %p and %p\n", &greet_s, textptr);
 
     printf("So should these: %p and %p\n", selfptr, &selfptr);
 
