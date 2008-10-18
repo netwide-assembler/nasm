@@ -32,6 +32,7 @@
 	  GLOBAL asmstr:data asmstr.end-asmstr ; [2]
 	  GLOBAL textptr:data 8	; [2]
 	  GLOBAL selfptr:data 8	; [2]
+	  GLOBAL useless:data 8	; [3]
 	  GLOBAL integer:data 8	; [3]
 	  EXTERN printf		; [10]
 	  COMMON commvar 8:8	; [7]
@@ -59,6 +60,8 @@ lrotate:			; [1]
 ;; (Large model cannot be linked with other code)
 ;;
 greet_s:
+	  ;;  This instruction is useless, this is only a test...
+	  cmp qword [rel integer wrt ..got],0
 	  mov rax,[rel commvar wrt ..got] ; &commvar
 	  mov rcx,[rax]			  ; commvar
 	  mov rax,[rel integer wrt ..got] ; &integer
@@ -105,7 +108,9 @@ textptr	  dq greet_s wrt ..sym	; [15]
 selfptr	  dq selfptr wrt ..sym	; [16]
 
 	  SECTION .bss
-
+; a useless symbol
+useless	  resq 1
+	
 ; an integer
 integer	  resq 1		; [3]
 
