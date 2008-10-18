@@ -287,6 +287,11 @@ void saa_write64(struct SAA *s, uint64_t v)
     saa_wbytes(s, &v, 8);
 }
 
+void saa_writeaddr(struct SAA *s, uint64_t v, size_t len)
+{
+    saa_wbytes(s, &v, len);
+}
+
 #else                           /* not WORDS_LITTLEENDIAN */
 
 void saa_write16(struct SAA *s, uint16_t v)
@@ -322,6 +327,22 @@ void saa_write64(struct SAA *s, uint64_t v)
     b[6] = v >> 48;
     b[7] = v >> 56;
     saa_wbytes(s, b, 8);
+}
+
+void saa_writeaddr(struct SAA *s, uint64_t v, size_t len)
+{
+    uint8_t b[8];
+
+    b[0] = v;
+    b[1] = v >> 8;
+    b[2] = v >> 16;
+    b[3] = v >> 24;
+    b[4] = v >> 32;
+    b[5] = v >> 40;
+    b[6] = v >> 48;
+    b[7] = v >> 56;
+
+    saa_wbytes(s, &v, len);
 }
 
 #endif                          /* WORDS_LITTLEENDIAN */
