@@ -37,6 +37,33 @@ diff:	performtest.pl $(NASM) $(TESTS)
 clean:
 	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst *.bin
 	rm -rf testresults
+	rm -f elftest elftest64
 
 spotless: clean
 	rm -rf golden
+
+#
+# Test for ELF32 shared libraries; assumes an x86 Linux system
+#
+elfso.o: elfso.asm
+	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
+
+elfso.so: elfso.o
+	$(LD) -m elf_i386 -shared -o $@ $<
+
+elftest: elftest.c elfso.so
+	$(CC) -m32 -o $@ $^
+	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest
+
+#
+# Test for ELF64 shared libraries; assumes an x86-64 Linux system
+#
+elf64so.o: elf64so.asm
+	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
+
+elf64so.so: elf64so.o
+	$(LD) -shared -o $@ $<
+
+elftest64: elftest64.c elf64so.so
+	$(CC) -o $@ $^
+	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest64
