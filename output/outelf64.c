@@ -225,8 +225,8 @@ static int elf_nsect, nsections;
 static int64_t elf_foffs;
 
 static void elf_write(void);
-static void elf_sect_write(struct Section *, const void *,
-                           uint64_t);
+static void elf_sect_write(struct Section *, const void *, size_t);
+static void elf_sect_writeaddr(struct Section *, int64_t, size_t);
 static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, int,
                                int, int);
 static void elf_write_sections(void);
@@ -941,10 +941,19 @@ static void elf_out(int32_t segto, const void *data,
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
+	switch (type) {
+	case OUT_REL2ADR:
+	    size = 2;
+	    break;
+	case OUT_REL4ADR:
+	    size = 4;
+	    break;
+	case OUT_REL8ADR:
+	    size = 8;
+	    break;
+	default:
+	    break;		/* size is already set */
+	}
         s->len += size;
         return;
     }
@@ -962,164 +971,177 @@ static void elf_out(int32_t segto, const void *data,
         elf_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         addr = *(int64_t *)data;
-        if (segment != NO_SEG) {
-            if (segment % 2) {
-                error(ERR_NONFATAL, "ELF format does not support"
-                      " segment base references");
-            } else {
-                if (wrt == NO_SEG) {
-		    switch ((int)size) {
-		    case 1:
-			elf_add_reloc(s, segment, addr, R_X86_64_8);
-			break;
-		    case 2:
-                        elf_add_reloc(s, segment, addr, R_X86_64_16);
-			break;
-		    case 4:
-                        elf_add_reloc(s, segment, addr, R_X86_64_32);
-			break;
-		    case 8:
-			elf_add_reloc(s, segment, addr, R_X86_64_64);
-			break;
-		    default:
-			error(ERR_PANIC, "internal error elf64-hpa-871");
-			break;
-                    }
-                } else if (wrt == elf_gotpc_sect + 1) {
-                    /*
-                     * The user will supply GOT relative to $$. ELF
-                     * will let us have GOT relative to $. So we
-                     * need to fix up the data item by $-$$.
-                     */
-                    addr += s->len;
-                    elf_add_reloc(s, segment, addr, R_X86_64_GOTPC32);
-                } else if (wrt == elf_gotoff_sect + 1) {
-		    if (size != 8) {
-			error(ERR_NONFATAL, "ELF64 requires ..gotoff "
-			      "references to be qword absolute");
-			wrt = NO_SEG;
-		    } else {
-			elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
-		    }
-                } else if (wrt == elf_got_sect + 1) {
-		    switch ((int)size) {
-		    case 4:
-			elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_GOT32, true);
-			break;
-		    case 8:
-			elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_GOT64, true);
-			break;
-		    default:
-			error(ERR_NONFATAL, "invalid ..got reference");
-			wrt = NO_SEG;
-			break;
-		    }
-                } else if (wrt == elf_sym_sect + 1) {
-		    switch ((int)size) {
-		    case 1:
-                        elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_8, false);
-			break;
-		    case 2:
-                        elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_16, false);
-			break;
-		    case 4:
-                        elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_32, false);
-			break;
-		    case 8:
-			elf_add_gsym_reloc(s, segment, addr,
-					   R_X86_64_64, false);
-			break;
-		    default:
-			error(ERR_PANIC, "internal error elf64-hpa-903");
-			break;
-                    }
-                } else if (wrt == elf_plt_sect + 1) {
-                    error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
-                          "relative PLT references");
-                } else {
-                    error(ERR_NONFATAL, "ELF format does not support this"
-                          " use of WRT");
-                    wrt = NO_SEG;       /* we can at least _try_ to continue */
-                }
-            }
-        }
-        elf_sect_write(s, &zero, size);
+        if (segment == NO_SEG) {
+	    /* Do nothing */
+	} else if (segment % 2) {
+	    error(ERR_NONFATAL, "ELF format does not support"
+		  " segment base references");
+	} else {
+	    if (wrt == NO_SEG) {
+		switch ((int)size) {
+		case 1:
+		    elf_add_reloc(s, segment, addr, R_X86_64_8);
+		    break;
+		case 2:
+		    elf_add_reloc(s, segment, addr, R_X86_64_16);
+		    break;
+		case 4:
+		    elf_add_reloc(s, segment, addr, R_X86_64_32);
+		    break;
+		case 8:
+		    elf_add_reloc(s, segment, addr, R_X86_64_64);
+		    break;
+		default:
+		    error(ERR_PANIC, "internal error elf64-hpa-871");
+		    break;
+		}
+		addr = 0;
+	    } else if (wrt == elf_gotpc_sect + 1) {
+		/*
+		 * The user will supply GOT relative to $$. ELF
+		 * will let us have GOT relative to $. So we
+		 * need to fix up the data item by $-$$.
+		 */
+		addr += s->len;
+		elf_add_reloc(s, segment, addr, R_X86_64_GOTPC32);
+		addr = 0;
+	    } else if (wrt == elf_gotoff_sect + 1) {
+		if (size != 8) {
+		    error(ERR_NONFATAL, "ELF64 requires ..gotoff "
+			  "references to be qword absolute");
+		} else {
+		    elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
+		    addr = 0;
+		}
+	    } else if (wrt == elf_got_sect + 1) {
+		switch ((int)size) {
+		case 4:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_GOT32, true);
+		    addr = 0;
+		    break;
+		case 8:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_GOT64, true);
+		    addr = 0;
+		    break;
+		default:
+		    error(ERR_NONFATAL, "invalid ..got reference");
+		    break;
+		}
+	    } else if (wrt == elf_sym_sect + 1) {
+		switch ((int)size) {
+		case 1:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_8, false);
+		    addr = 0;
+		    break;
+		case 2:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_16, false);
+		    addr = 0;
+		    break;
+		case 4:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_32, false);
+		    addr = 0;
+		    break;
+		case 8:
+		    elf_add_gsym_reloc(s, segment, addr,
+				       R_X86_64_64, false);
+		    addr = 0;
+		    break;
+		default:
+		    error(ERR_PANIC, "internal error elf64-hpa-903");
+		    break;
+		}
+	    } else if (wrt == elf_plt_sect + 1) {
+		error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
+		      "relative PLT references");
+	    } else {
+		error(ERR_NONFATAL, "ELF format does not support this"
+		      " use of WRT");
+	    }
+	}
+	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL2ADR) {
+	addr = *(int64_t *)data - size;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
-        if (segment != NO_SEG && segment % 2) {
+        if (segment == NO_SEG) {
+	    /* Do nothing */
+	} else if (segment % 2) {
             error(ERR_NONFATAL, "ELF format does not support"
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment,
-			      *(int64_t *)data - size, R_X86_64_PC16);
+                elf_add_reloc(s, segment, addr, R_X86_64_PC16);
+		addr = 0;
             } else {
                 error(ERR_NONFATAL,
                       "Unsupported non-32-bit ELF relocation [2]");
             }
         }
-        elf_sect_write(s, &zero, 2);
+	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL4ADR) {
+	addr = *(int64_t *)data - size;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
-        if (segment != NO_SEG && segment % 2) {
+        if (segment == NO_SEG) {
+	    /* Do nothing */
+	} else if (segment % 2) {
             error(ERR_NONFATAL, "ELF64 format does not support"
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, *(int64_t *)data - size,
-			      R_X86_64_PC32);
+                elf_add_reloc(s, segment, addr, R_X86_64_PC32);
+		addr = 0;
             } else if (wrt == elf_plt_sect + 1) {
-                elf_add_reloc(s, segment, *(int64_t *)data - size,
-			      R_X86_64_PLT32);
+                elf_add_reloc(s, segment, addr, R_X86_64_PLT32);
+		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-                elf_add_reloc(s, segment, *(int64_t *)data - size,
-			      R_X86_64_GOTPCREL);
+                elf_add_reloc(s, segment, addr, R_X86_64_GOTPCREL);
+		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
 		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
 		      "qword absolute");
-		wrt = NO_SEG;
             } else {
                 error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
-                wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-        elf_sect_write(s, &zero, 4);
+	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL8ADR) {
+	addr = *(int64_t *)data - size;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL8ADR");
-        if (segment != NO_SEG && segment % 2) {
+        if (segment == NO_SEG) {
+	    /* Do nothing */
+	} else if (segment % 2) {
             error(ERR_NONFATAL, "ELF64 format does not support"
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, *(int64_t *)data - size,
 			      R_X86_64_PC64);
+		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
                 elf_add_reloc(s, segment, *(int64_t *)data - size,
 			      R_X86_64_GOTPCREL64);
+		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
 		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
 		      "qword absolute");
-		wrt = NO_SEG;
             } else {
                 error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
-                wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-        elf_sect_write(s, &zero, 8);
+        elf_sect_writeaddr(s, addr, size);
     }
 }
 
@@ -1531,6 +1553,11 @@ static void elf_write_sections(void)
 static void elf_sect_write(struct Section *sect, const void *data, size_t len)
 {
     saa_wbytes(sect->data, data, len);
+    sect->len += len;
+}
+static void elf_sect_writeaddr(struct Section *sect, int64_t data, size_t len)
+{
+    saa_writeaddr(sect->data, data, len);
     sect->len += len;
 }
 
