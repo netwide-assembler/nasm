@@ -1067,7 +1067,7 @@ static void elf_out(int32_t segto, const void *data,
 	}
 	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL2ADR) {
-	addr = *(int64_t *)data - size;
+	addr = *(int64_t *)data;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL2ADR");
         if (segment == NO_SEG) {
@@ -1077,7 +1077,7 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, addr, R_X86_64_PC16);
+                elf_add_reloc(s, segment, addr-size, R_X86_64_PC16);
 		addr = 0;
             } else {
                 error(ERR_NONFATAL,
@@ -1086,7 +1086,7 @@ static void elf_out(int32_t segto, const void *data,
         }
 	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL4ADR) {
-	addr = *(int64_t *)data - size;
+	addr = *(int64_t *)data;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment == NO_SEG) {
@@ -1096,17 +1096,16 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, addr, R_X86_64_PC32);
+                elf_add_reloc(s, segment, addr-size, R_X86_64_PC32);
 		addr = 0;
             } else if (wrt == elf_plt_sect + 1) {
-		int64_t pcrel = s->len + size;
-                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+                elf_add_gsym_reloc(s, segment, addr, size,
 				   R_X86_64_PLT32, false);
 		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-		int64_t pcrel = s->len + size;
-                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+		printf("addr = %ld, pcrel = %ld\n", addr, size);
+                elf_add_gsym_reloc(s, segment, addr, size,
 				   R_X86_64_GOTPCREL, false);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
@@ -1120,7 +1119,7 @@ static void elf_out(int32_t segto, const void *data,
         }
 	elf_sect_writeaddr(s, addr, size);
     } else if (type == OUT_REL8ADR) {
-	addr = *(int64_t *)data - size;
+	addr = *(int64_t *)data;
         if (segment == segto)
             error(ERR_PANIC, "intra-segment OUT_REL8ADR");
         if (segment == NO_SEG) {
@@ -1130,12 +1129,11 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, addr, R_X86_64_PC64);
+                elf_add_reloc(s, segment, addr-size, R_X86_64_PC64);
 		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-		int64_t pcrel = s->len + size;
-                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+                elf_add_gsym_reloc(s, segment, addr, size,
 				   R_X86_64_GOTPCREL64, false);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
