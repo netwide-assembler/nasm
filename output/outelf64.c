@@ -820,9 +820,9 @@ static void elf_add_reloc(struct Section *sect, int32_t segment,
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static int64_t elf_add_gsym_reloc(struct Section *sect,
-                               int32_t segment, int64_t offset,
-                               int type, bool exact)
+static void elf_add_gsym_reloc(struct Section *sect,
+                               int32_t segment, int64_t offset, int64_t pcrel,
+			       int type, bool exact)
 {
     struct Reloc *r;
     struct Section *s;
@@ -842,9 +842,13 @@ static int64_t elf_add_gsym_reloc(struct Section *sect,
             s = sects[i];
             break;
         }
+
     if (!s) {
-	elf_add_reloc(sect, segment, offset, type);
-        return offset;
+	if (exact && offset)
+	    error(ERR_NONFATAL, "invalid access to an external symbol");
+	else 
+	    elf_add_reloc(sect, segment, offset - pcrel, type);
+	return;
     }
 
     if (exact) {
@@ -854,6 +858,11 @@ static int64_t elf_add_gsym_reloc(struct Section *sect,
         for (sym = s->gsyms; sym; sym = sym->next)
             if (sym->value == offset)
                 break;
+	if (!sym) {
+	    error(ERR_NONFATAL, "unable to find a suitable global symbol"
+		  " for this reference");
+	    return;
+	}
     } else {
         /*
          * Find the nearest symbol below this one.
@@ -863,24 +872,17 @@ static int64_t elf_add_gsym_reloc(struct Section *sect,
             if (sm->value <= offset && (!sym || sm->value > sym->value))
                 sym = sm;
     }
-    if (!sym && exact) {
-        error(ERR_NONFATAL, "unable to find a suitable global symbol"
-              " for this reference");
-        return 0;
-    }
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
     r->next = NULL;
 
     r->address = sect->len;
-    r->offset = offset - sym->value;
+    r->offset = offset - pcrel - sym->value;
     r->symbol = GLOBAL_TEMP_BASE + sym->globnum;
     r->type = type;
 
     sect->nrelocs++;
-
-    return offset - sym->value;
 }
 
 static void elf_out(int32_t segto, const void *data,
@@ -1010,18 +1012,19 @@ static void elf_out(int32_t segto, const void *data,
 		    error(ERR_NONFATAL, "ELF64 requires ..gotoff "
 			  "references to be qword absolute");
 		} else {
-		    elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
+		    elf_add_gsym_reloc(s, segment, addr, 0,
+				       R_X86_64_GOTOFF64, true);
 		    addr = 0;
 		}
 	    } else if (wrt == elf_got_sect + 1) {
 		switch ((int)size) {
 		case 4:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_GOT32, true);
 		    addr = 0;
 		    break;
 		case 8:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_GOT64, true);
 		    addr = 0;
 		    break;
@@ -1032,22 +1035,22 @@ static void elf_out(int32_t segto, const void *data,
 	    } else if (wrt == elf_sym_sect + 1) {
 		switch ((int)size) {
 		case 1:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_8, false);
 		    addr = 0;
 		    break;
 		case 2:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_16, false);
 		    addr = 0;
 		    break;
 		case 4:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_32, false);
 		    addr = 0;
 		    break;
 		case 8:
-		    elf_add_gsym_reloc(s, segment, addr,
+		    elf_add_gsym_reloc(s, segment, addr, 0,
 				       R_X86_64_64, false);
 		    addr = 0;
 		    break;
@@ -1097,11 +1100,15 @@ static void elf_out(int32_t segto, const void *data,
                 elf_add_reloc(s, segment, addr, R_X86_64_PC32);
 		addr = 0;
             } else if (wrt == elf_plt_sect + 1) {
-                elf_add_reloc(s, segment, addr, R_X86_64_PLT32);
+		int64_t pcrel = s->len + size;
+                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+				   R_X86_64_PLT32, false);
 		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-                elf_add_reloc(s, segment, addr, R_X86_64_GOTPCREL);
+		int64_t pcrel = s->len + size;
+                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+				   R_X86_64_GOTPCREL, false);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
@@ -1124,13 +1131,13 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, *(int64_t *)data - size,
-			      R_X86_64_PC64);
+                elf_add_reloc(s, segment, addr, R_X86_64_PC64);
 		addr = 0;
             } else if (wrt == elf_gotpc_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
-                elf_add_reloc(s, segment, *(int64_t *)data - size,
-			      R_X86_64_GOTPCREL64);
+		int64_t pcrel = s->len + size;
+                elf_add_gsym_reloc(s, segment, addr+pcrel, pcrel,
+				   R_X86_64_GOTPCREL64, false);
 		addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
