@@ -66,6 +66,12 @@ foreach $fname ( @ARGV ) {
     while (<INPUT>) {
 	$line++;
 	chomp;
+	while (/^(.*)\\$/) {
+	    $_ = $1;
+	    $_ .= <INPUT>;
+	    chomp;
+	    $line++;
+	}
 	if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
 	    $tasm_count = $index;
 	    print OUT "    /* End of TASM macros */\n";
