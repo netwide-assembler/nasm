@@ -3901,7 +3901,8 @@ static Token *expand_id(Token * tline)
 }
 
 /*
- * Expand indirect tokens, %[...].
+ * Expand indirect tokens, %[...].  Just like expand_smacro(),
+ * the input is considered destroyed.
  */
 static Token *expand_indirect(Token * tline, int level)
 {
@@ -3914,42 +3915,44 @@ static Token *expand_indirect(Token * tline, int level)
 	error(ERR_NONFATAL, "interminable indirect expansion");
     } else {
 	thead = NULL;
-	for (tp = &tline; (t = *tp); thead = t, tp = &t->next) {
-	    if (t->type != TOK_INDIRECT)
-		continue;
-	    it = tokenize(t->text);
-	    it = expand_indirect(it, level+1);
-	    it = expand_smacro(it);
-	    while (it) {
-		skip = false;
-		switch (thead ? thead->type : TOK_NONE) {
-		case TOK_WHITESPACE:
-		    skip = (it->type == TOK_WHITESPACE);
-		    break;
-
-		case TOK_ID:
-		case TOK_NUMBER:
-		    if (it->type == thead->type || it->type == TOK_NUMBER) {
-			char *tmp = nasm_strcat(thead->text, it->text);
-			thead->text = tmp;
-			skip = true;
+	tp = &tline;
+	while ((t = *tp)) {
+	    if (t->type != TOK_INDIRECT) {
+		thead = t;
+		tp = &t->next;
+	    } else {
+		it = tokenize(t->text);
+		it = expand_indirect(it, level+1);
+		it = expand_smacro(it);
+		while (it) {
+		    skip = false;
+		    switch (thead ? thead->type : TOK_NONE) {
+		    case TOK_WHITESPACE:
+			skip = (it->type == TOK_WHITESPACE);
+			break;
+		    case TOK_ID:
+		    case TOK_NUMBER:
+			if (it->type == thead->type || it->type == TOK_NUMBER) {
+			    char *tmp = nasm_strcat(thead->text, it->text);
+			    nasm_free(thead->text);
+			    thead->text = tmp;
+			    skip = true;
+			}
+			break;
+		    default:
+			break;
 		    }
-		    break;
-		    
-		default:
-		    break;
+		    if (skip) {
+			it = delete_Token(it);
+		    } else {
+			*tp = thead = it;
+			tp = &it->next;
+			it = it->next;
+		    }
 		}
-
-		if (skip) {
-		    it = delete_Token(it);
-		} else {
-		    *tp = thead = it;
-		    tp = &it->next;
-		    it = it->next;
-		}
+		*tp = thead = t->next;
+		t = delete_Token(t);
 	    }
-	    *tp = t->next;
-	    delete_Token(t);
 	}
     }
     return tline;
