@@ -186,9 +186,8 @@ USE: smartalign
       times (((%1) - (($-$$) % (%1))) % (%1)) nop
 %$end:
     %else
-      %rep %$pad / __ALIGN_%[__BITS__]BIT_GROUP__
-        db __ALIGN_%[__BITS__]BIT_%[__ALIGN_%[__BITS__]BIT_GROUP__]B__
-      %endrep
+      times (%$pad / __ALIGN_%[__BITS__]BIT_GROUP__) \
+	db __ALIGN_%[__BITS__]BIT_%[__ALIGN_%[__BITS__]BIT_GROUP__]B__
       %assign %$pad %$pad % __ALIGN_%[__BITS__]BIT_GROUP__
       %if %$pad > 0
         db __ALIGN_%[__BITS__]BIT_%[%$pad]B__
