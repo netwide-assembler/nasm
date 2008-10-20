@@ -26,6 +26,7 @@
 /doc/*.texi
 /doc/*.txt
 /doc/Makefile
+/doc/inslist.src
 /doc/html
 /doc/info
 /insnsa.c
@@ -40,6 +41,7 @@
 /ndisasm.man
 /pptok.c
 /pptok.h
+/pptok.ph
 /rdoff/Makefile
 /rdoff/ldrdf
 /rdoff/rdf2bin
