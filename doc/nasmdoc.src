@@ -2026,6 +2026,24 @@ as that is what the embedded macro \c{isTrue} expanded to at
 the time that \c{isFalse} was defined.
 
 
+\S{indmacro} \i{Macro Indirection}: \I\c{%[}\c{%[...]}
+
+The \c{%[...]} construct can be used to expand macros in contexts
+where macro expansion would otherwise not occur, including in the
+names other macros.  For example, if you have a set of macros named
+\c{Foo16}, \c{Foo32} and \c{Foo64}, you could write:
+
+\c	mov ax,Foo%[__BITS__]	; The Foo value 
+
+to use the builtin macro \c{__BITS__} (see \k{bitsm}) to automatically
+select between them.  Similarly, the two statements:
+
+\c %xdefine Bar		Quux	; Expands due to %xdefine
+\c %define  Bar		%[Quux]	; Expands due to %[...]
+
+have, in fact, the exactly same effect.
+
+
 \S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
 
 Individual tokens in single line macros can be concatenated, to produce
@@ -2096,6 +2114,7 @@ can be used to make a keyword "disappear", for example in case a new
 instruction has been used as a label in older code.  For example:
 
 \c %idefine pause $%?                  ; Hide the PAUSE instruction
+
 
 \S{undef} Undefining Single-Line Macros: \i\c{%undef}
 
