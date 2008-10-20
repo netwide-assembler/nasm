@@ -21,6 +21,9 @@ foo%[n]*100
 	foo22
 	foo33
 
+%define foo33bar	999999
+	%[foo%[foo3]bar]
+	
 %assign bctr 0
 %macro bluttan 0
 %assign bctr bctr+1
