@@ -831,6 +831,8 @@ static Token *tokenize(char *line)
 		p--;
 		if (*p)
 		    *p++ = '\0';
+		if (lvl)
+		    error(ERR_NONFATAL, "unterminated %[ construct");
 		type = TOK_INDIRECT;
 	    } else if (*p == '?') {
 		type = TOK_PREPROC_Q; /* %? */
