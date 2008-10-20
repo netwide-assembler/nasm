@@ -3915,6 +3915,8 @@ static Token *expand_id(Token * tline)
 /*
  * Expand indirect tokens, %[...].  Just like expand_smacro(),
  * the input is considered destroyed.
+ *
+ * XXX: fix duplicated code in this function and in expand_mmac_params()
  */
 static Token *expand_indirect(Token * tline, int level)
 {
@@ -3962,7 +3964,33 @@ static Token *expand_indirect(Token * tline, int level)
 			it = it->next;
 		    }
 		}
-		*tp = thead = t->next;
+
+		skip = false;
+		it = t->next;
+		if (it) {
+		    switch (thead ? thead->type : TOK_NONE) {
+		    case TOK_WHITESPACE:
+			skip = (it->type == TOK_WHITESPACE);
+			break;
+		    case TOK_ID:
+		    case TOK_NUMBER:
+			if (it->type == thead->type || it->type == TOK_NUMBER) {
+			    char *tmp = nasm_strcat(thead->text, it->text);
+			    nasm_free(thead->text);
+			thead->text = tmp;
+			skip = true;
+			}
+			break;
+		    default:
+			break;
+		    }
+		}
+		if (skip) {
+		    *tp = thead = it->next;
+		    t = delete_Token(t);
+		} else {
+		    *tp = thead = it;
+		}
 		t = delete_Token(t);
 	    }
 	}
