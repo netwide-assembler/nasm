@@ -810,26 +810,25 @@ static Token *tokenize(char *line)
 		int lvl = 1;
 		line += 2;	/* Skip the leading %[ */
 		p++;
-		while (lvl && (c = *p)) {
+		while (lvl && (c = *p++)) {
 		    switch (c) {
 		    case ']':
 			lvl--;
 			break;
 		    case '%':
-			p++;
 			if (*p == '[')
 			    lvl++;
 			break;
 		    case '\'':
 		    case '\"':
 		    case '`':
-			p = nasm_skip_string(p);
+			p = nasm_skip_string(p)+1;
 			break;
 		    default:
 			break;
 		    }
-		    p++;
 		}
+		p--;
 		if (*p)
 		    *p++ = '\0';
 		type = TOK_INDIRECT;
