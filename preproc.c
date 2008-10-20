@@ -779,7 +779,7 @@ static char *read_line(void)
  */
 static Token *tokenize(char *line)
 {
-    char *p = line;
+    char c, *p = line;
     enum pp_token_type type;
     Token *list = NULL;
     Token *t, **tail = &list;
@@ -810,12 +810,23 @@ static Token *tokenize(char *line)
 		int lvl = 1;
 		line += 2;	/* Skip the leading %[ */
 		p++;
-		while (*p) {
-		    if (*p == ']') {
-			if (!--lvl)
-			    break;
-		    } else if (*p == '%' && p[1] == '[') {
-			lvl++;
+		while (lvl && (c = *p)) {
+		    switch (c) {
+		    case ']':
+			lvl--;
+			break;
+		    case '%':
+			p++;
+			if (*p == '[')
+			    lvl++;
+			break;
+		    case '\'':
+		    case '\"':
+		    case '`':
+			p = nasm_skip_string(p);
+			break;
+		    default:
+			break;
 		    }
 		    p++;
 		}
