@@ -2167,8 +2167,8 @@ ROUNDSD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
 GETSEC		void				\2\x0F\x37					KATMAI
 
 ;# Geode (Cyrix) 3DNow! additions
-PFRCP		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x86			PENT,3DNOW,SQ,CYRIX
-PFRSQRT		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x87			PENT,3DNOW,SQ,CYRIX
+PFRCPV		mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x86			PENT,3DNOW,SQ,CYRIX
+PFRSQRTV	mmxreg,mmxrm			\323\2\x0F\x0F\110\1\x87			PENT,3DNOW,SQ,CYRIX
 
 ;# Intel new instructions in ???
 ; Is NEHALEM right here?
