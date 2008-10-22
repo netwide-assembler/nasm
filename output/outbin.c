@@ -798,6 +798,7 @@ static void bin_out(int32_t segto, const void *data,
         s->length += size;
     } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
 	       type == OUT_REL8ADR) {
+	int64_t addr = *(int64_t *)data - size;
 	switch (type) {
 	case OUT_REL2ADR:
 	    size = 2;
@@ -824,7 +825,7 @@ static void bin_out(int32_t segto, const void *data,
         if (s->flags & TYPE_PROGBITS) {
             add_reloc(s, size, segment, segto);
             p = mydata;
-	    WRITEADDR(p, *(int64_t *)data - size - s->length, size);
+	    WRITEADDR(p, addr - s->length, size);
             saa_wbytes(s->contents, mydata, size);
         }
         s->length += size;
