@@ -1844,11 +1844,11 @@ ROUNDSD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x0B\110\26			SSE41
 ROUNDSS		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x0A\110\26			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			\362\3\x0F\x38\xF0\110				SSE42
-CRC32		reg32,rm16			\362\3\x0F\x38\xF1\110				SSE42
-CRC32		reg32,rm32			\362\3\x0F\x38\xF1\110				SSE42
-CRC32		reg64,rm8			\324\362\3\x0F\x38\xF0\110			SSE42,X64
-CRC32		reg64,rm64			\324\362\3\x0F\x38\xF1\110			SSE42,X64
+CRC32		reg32,rm8			\332\3\x0F\x38\xF0\110				SSE42
+CRC32		reg32,rm16			\320\332\3\x0F\x38\xF1\110			SSE42
+CRC32		reg32,rm32			\321\332\3\x0F\x38\xF1\110			SSE42
+CRC32		reg64,rm8			\324\332\3\x0F\x38\xF0\110			SSE42,X64
+CRC32		reg64,rm64			\324\332\3\x0F\x38\xF1\110			SSE42,X64
 PCMPESTRI	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x61\110\26			SSE42
 PCMPESTRM	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x60\110\26			SSE42
 PCMPISTRI	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x63\110\26			SSE42
