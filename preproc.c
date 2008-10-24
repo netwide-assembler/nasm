@@ -2338,68 +2338,56 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
     }
     case PP_PUSH:
-        tline = tline->next;
-        skip_white_(tline);
-        tline = expand_id(tline);
-	if (tline) {
-	    if (!tok_type_(tline, TOK_ID)) {
-		error(ERR_NONFATAL, "`%%push' expects a context identifier");
-		free_tlist(origline);
-		return DIRECTIVE_FOUND;     /* but we did _something_ */
-	    }
-	    if (tline->next)
-		error(ERR_WARNING|ERR_PASS1,
-		      "trailing garbage after `%%push' ignored");
-	    p = nasm_strdup(tline->text);
-	} else {
-	    p = NULL;		/* Anonymous context */
-	}
-        ctx = nasm_malloc(sizeof(Context));
-        ctx->next = cstk;
-        hash_init(&ctx->localmac, HASH_SMALL);
-        ctx->name = p;
-        ctx->number = unique++;
-        cstk = ctx;
-        free_tlist(origline);
-	return DIRECTIVE_FOUND;
-
     case PP_REPL:
+    case PP_POP:
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
 	if (tline) {
 	    if (!tok_type_(tline, TOK_ID)) {
-		error(ERR_NONFATAL, "`%%repl' expects a context identifier");
+		error(ERR_NONFATAL, "`%s' expects a context identifier",
+		      pp_directives[i]);
 		free_tlist(origline);
 		return DIRECTIVE_FOUND;     /* but we did _something_ */
 	    }
 	    if (tline->next)
 		error(ERR_WARNING|ERR_PASS1,
-		      "trailing garbage after `%%repl' ignored");
+		      "trailing garbage after `%s' ignored",
+		      pp_directives[i]);
 	    p = nasm_strdup(tline->text);
 	} else {
-	    p = NULL;
+	    p = NULL;		/* Anonymous */
 	}
-        if (!cstk)
-            error(ERR_NONFATAL, "`%%repl': context stack is empty");
-        else {
-            nasm_free(cstk->name);
-            cstk->name = p;
-        }
+
+	if (i == PP_PUSH) {
+	    ctx = nasm_malloc(sizeof(Context));
+	    ctx->next = cstk;
+	    hash_init(&ctx->localmac, HASH_SMALL);
+	    ctx->name = p;
+	    ctx->number = unique++;
+	    cstk = ctx;
+	} else {
+	    /* %pop or %repl */
+	    if (!cstk) {
+		error(ERR_NONFATAL, "`%s': context stack is empty",
+		      pp_directives[i]);
+	    } else if (i == PP_POP) {
+		if (p && (!cstk->name || nasm_stricmp(p, cstk->name)))
+		    error(ERR_NONFATAL, "`%%pop' in wrong context: %s, "
+			  "expected %s",
+			  cstk->name ? cstk->name : "anonymous", p);
+		else
+		    ctx_pop();
+	    } else {
+		/* i == PP_REPL */
+		nasm_free(cstk->name);
+		cstk->name = p;
+		p = NULL;
+	    }
+	    nasm_free(p);
+	}
         free_tlist(origline);
 	return DIRECTIVE_FOUND;
-
-    case PP_POP:
-        if (tline->next)
-            error(ERR_WARNING|ERR_PASS1,
-		  "trailing garbage after `%%pop' ignored");
-        if (!cstk)
-            error(ERR_NONFATAL, "`%%pop': context stack is already empty");
-        else
-            ctx_pop();
-        free_tlist(origline);
-	return DIRECTIVE_FOUND;
-
     case PP_FATAL:
 	severity = ERR_FATAL|ERR_NO_SEVERITY;
 	goto issue_error;
