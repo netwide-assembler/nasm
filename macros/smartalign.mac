@@ -15,6 +15,7 @@ USE: smartalign
     %define __ALIGN_16BIT_6B__ 0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_16BIT_7B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_16BIT_8B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90
+    %define __ALIGN_16BIT_GROUP__ 8
 
     %define __ALIGN_32BIT_1B__ 0x90
     %define __ALIGN_32BIT_2B__ 0x90,0x90
@@ -24,6 +25,7 @@ USE: smartalign
     %define __ALIGN_32BIT_6B__ 0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_32BIT_7B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_32BIT_8B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90
+    %define __ALIGN_32BIT_GROUP__ 8
 
     %define __ALIGN_64BIT_1B__ 0x90
     %define __ALIGN_64BIT_2B__ 0x90,0x90
@@ -33,6 +35,7 @@ USE: smartalign
     %define __ALIGN_64BIT_6B__ 0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_64BIT_7B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90
     %define __ALIGN_64BIT_8B__ 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90
+    %define __ALIGN_64BIT_GROUP__ 8
   %elifidni %1,generic
     %define __ALIGN_JMP_THRESHOLD__ 8
 
@@ -44,6 +47,7 @@ USE: smartalign
     %define __ALIGN_16BIT_6B__ 0x89,0xf6,0x8d,0xbd,0x00,0x00
     %define __ALIGN_16BIT_7B__ 0x8d,0x74,0x00,0x8d,0xbd,0x00,0x00
     %define __ALIGN_16BIT_8B__ 0x8d,0xb4,0x00,0x00,0x8d,0xbd,0x00,0x00
+    %define __ALIGN_16BIT_GROUP__ 8
 
     %define __ALIGN_32BIT_1B__ 0x90
     %define __ALIGN_32BIT_2B__ 0x89,0xf6
@@ -53,6 +57,7 @@ USE: smartalign
     %define __ALIGN_32BIT_6B__ 0x8d,0xb6,0x00,0x00,0x00,0x00
     %define __ALIGN_32BIT_7B__ 0x8d,0xb4,0x26,0x00,0x00,0x00,0x00
     %undef  __ALIGN_32BIT_8B__
+    %define __ALIGN_32BIT_GROUP__ 7
 
     %define __ALIGN_64BIT_1B__ 0x90
     %define __ALIGN_64BIT_2B__ 0x66,0x90
@@ -62,6 +67,7 @@ USE: smartalign
     %define __ALIGN_64BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_64BIT_GROUP__ 8
   %elifidni %1,k8
     %define __ALIGN_JMP_THRESHOLD__ 16
 
@@ -73,6 +79,7 @@ USE: smartalign
     %define __ALIGN_16BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_16BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_16BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_16BIT_GROUP__ 8
 
     %define __ALIGN_32BIT_1B__ 0x90
     %define __ALIGN_32BIT_2B__ 0x66,0x90
@@ -82,6 +89,7 @@ USE: smartalign
     %define __ALIGN_32BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_32BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_32BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_32BIT_GROUP__ 8
 
     %define __ALIGN_64BIT_1B__ 0x90
     %define __ALIGN_64BIT_2B__ 0x66,0x90
@@ -91,6 +99,7 @@ USE: smartalign
     %define __ALIGN_64BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_64BIT_GROUP__ 8
   %elifidni %1,k7
     %define __ALIGN_JMP_THRESHOLD__ 16
 
@@ -102,6 +111,7 @@ USE: smartalign
     %define __ALIGN_16BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_16BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_16BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_64BIT_GROUP__ 8
 
     %define __ALIGN_32BIT_1B__ 0x90
     %define __ALIGN_32BIT_2B__ 0x8b,0xc0
@@ -111,6 +121,7 @@ USE: smartalign
     %define __ALIGN_32BIT_6B__ 0x8d,0x80,0x00,0x00,0x00,0x00
     %define __ALIGN_32BIT_7B__ 0x8d,0x04,0x05,0x00,0x00,0x00,0x00
     %undef  __ALIGN_32BIT_8B__
+    %define __ALIGN_32BIT_GROUP__ 7
 
     %define __ALIGN_64BIT_1B__ 0x90
     %define __ALIGN_64BIT_2B__ 0x66,0x90
@@ -120,6 +131,7 @@ USE: smartalign
     %define __ALIGN_64BIT_6B__ 0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_7B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x90
     %define __ALIGN_64BIT_8B__ 0x66,0x66,0x66,0x90,0x66,0x66,0x66,0x90
+    %define __ALIGN_64BIT_GROUP__ 8
   %elifidni %1,p6
     %define __ALIGN_JMP_THRESHOLD__ 16
 
@@ -131,6 +143,7 @@ USE: smartalign
     %define __ALIGN_16BIT_6B__ 0x0f,0x1f,0x00,0x0f,0x1f,0x00
     %define __ALIGN_16BIT_7B__ 0x0f,0x1f,0x00,0x0f,0x1f,0x40,0x00
     %define __ALIGN_16BIT_8B__ 0x0f,0x1f,0x40,0x00,0x0f,0x1f,0x40,0x00
+    %define __ALIGN_16BIT_GROUP__ 8
 
     %define __ALIGN_32BIT_1B__ 0x90
     %define __ALIGN_32BIT_2B__ 0x66,0x90
@@ -140,6 +153,7 @@ USE: smartalign
     %define __ALIGN_32BIT_6B__ 0x66,0x0f,0x1f,0x44,0x00,0x00
     %define __ALIGN_32BIT_7B__ 0x0f,0x1f,0x80,0x00,0x00,0x00,0x00
     %define __ALIGN_32BIT_8B__ 0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
+    %define __ALIGN_32BIT_GROUP__ 8
 
     %define __ALIGN_64BIT_1B__ 0x90
     %define __ALIGN_64BIT_2B__ 0x66,0x90
@@ -149,6 +163,7 @@ USE: smartalign
     %define __ALIGN_64BIT_6B__ 0x66,0x0f,0x1f,0x44,0x00,0x00
     %define __ALIGN_64BIT_7B__ 0x0f,0x1f,0x80,0x00,0x00,0x00,0x00
     %define __ALIGN_64BIT_8B__ 0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
+    %define __ALIGN_64BIT_GROUP__ 8
   %else
     %error unknown alignment mode: %1
   %endif
@@ -171,89 +186,11 @@ USE: smartalign
       times (((%1) - (($-$$) % (%1))) % (%1)) nop
 %$end:
     %else
-      %if __BITS__ == 16
-        %ifdef __ALIGN_16BIT_8B__
-          %rep %$pad / 8
-            db __ALIGN_16BIT_8B__
-          %endrep
-          %assign %$pad %$pad % 8
-        %else
-          %rep %$pad / 7
-            db __ALIGN_16BIT_7B__
-          %endrep
-          %assign %$pad %$pad % 7
-        %endif
-        %if %$pad == 1
-          db __ALIGN_16BIT_1B__
-        %elif %$pad == 2
-          db __ALIGN_16BIT_2B__
-        %elif %$pad == 3
-          db __ALIGN_16BIT_3B__
-        %elif %$pad == 4
-          db __ALIGN_16BIT_4B__
-        %elif %$pad == 5
-          db __ALIGN_16BIT_5B__
-        %elif %$pad == 6
-          db __ALIGN_16BIT_6B__
-        %elif %$pad == 7
-          db __ALIGN_16BIT_7B__
-        %endif
-      %elif __BITS__ == 32
-        %ifdef __ALIGN_32BIT_8B__
-          %rep %$pad / 8
-            db __ALIGN_32BIT_8B__
-          %endrep
-          %assign %$pad %$pad % 8
-        %else
-          %rep %$pad / 7
-            db __ALIGN_32BIT_7B__
-          %endrep
-          %assign %$pad %$pad % 7
-        %endif
-        %if %$pad == 1
-          db __ALIGN_32BIT_1B__
-        %elif %$pad == 2
-          db __ALIGN_32BIT_2B__
-        %elif %$pad == 3
-          db __ALIGN_32BIT_3B__
-        %elif %$pad == 4
-          db __ALIGN_32BIT_4B__
-        %elif %$pad == 5
-          db __ALIGN_32BIT_5B__
-        %elif %$pad == 6
-          db __ALIGN_32BIT_6B__
-        %elif %$pad == 7
-          db __ALIGN_32BIT_7B__
-        %endif
-      %elif __BITS__ == 64
-        %ifdef __ALIGN_64BIT_8B__
-          %rep %$pad / 8
-            db __ALIGN_64BIT_8B__
-          %endrep
-          %assign %$pad %$pad % 8
-        %else
-          %rep %$pad / 7
-            db __ALIGN_64BIT_7B__
-          %endrep
-          %assign %$pad %$pad % 7
-        %endif
-        %if %$pad == 1
-          db __ALIGN_64BIT_1B__
-        %elif %$pad == 2
-          db __ALIGN_64BIT_2B__
-        %elif %$pad == 3
-          db __ALIGN_64BIT_3B__
-        %elif %$pad == 4
-          db __ALIGN_64BIT_4B__
-        %elif %$pad == 5
-          db __ALIGN_64BIT_5B__
-        %elif %$pad == 6
-          db __ALIGN_64BIT_6B__
-        %elif %$pad == 7
-          db __ALIGN_64BIT_7B__
-        %endif
-      %else
-        %error "Invalid __BITS__ value"
+      times (%$pad / __ALIGN_%[__BITS__]BIT_GROUP__) \
+	db __ALIGN_%[__BITS__]BIT_%[__ALIGN_%[__BITS__]BIT_GROUP__]B__
+      %assign %$pad %$pad % __ALIGN_%[__BITS__]BIT_GROUP__
+      %if %$pad > 0
+        db __ALIGN_%[__BITS__]BIT_%[%$pad]B__
       %endif
     %endif
     %pop
