@@ -2041,7 +2041,7 @@ select between them.  Similarly, the two statements:
 \c %xdefine Bar		Quux	; Expands due to %xdefine
 \c %define  Bar		%[Quux]	; Expands due to %[...]
 
-have, in fact, the exactly same effect.
+have, in fact, exactly the same effect.
 
 
 \S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
