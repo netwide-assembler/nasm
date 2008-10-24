@@ -112,6 +112,9 @@ since 2007.
   when disabled, but doesn't optimize.  This allows most forward references
   to be resolved properly.
 
+\b \c{%push} no longer needs a context identifier; omitting the context
+  identifier results in an anonymous context.
+
 
 \S{cl-2.03.01} Version 2.03.01
 
