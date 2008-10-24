@@ -2310,24 +2310,25 @@ static int do_directive(Token * tline)
 	static macros_t *use_pkg;
 	const char *pkg_macro;
 
-	t = tline->next = expand_smacro(tline->next);
-	skip_white_(t);
+	tline = tline->next;
+	skip_white_(tline);
+	tline = expand_id(tline);
 
-        if (!t || (t->type != TOK_STRING &&
-		   t->type != TOK_INTERNAL_STRING &&
-		   t->type != TOK_ID)) {
+        if (!tline || (tline->type != TOK_STRING &&
+		       tline->type != TOK_INTERNAL_STRING &&
+		       tline->type != TOK_ID)) {
             error(ERR_NONFATAL, "`%%use' expects a package name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
 	}
-        if (t->next)
+        if (tline->next)
             error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
-	if (t->type == TOK_STRING)
-	    nasm_unquote(t->text, NULL);
-	use_pkg = nasm_stdmac_find_package(t->text);
+	if (tline->type == TOK_STRING)
+	    nasm_unquote(tline->text, NULL);
+	use_pkg = nasm_stdmac_find_package(tline->text);
 	if (!use_pkg)
-	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
+	    error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
 	/* The first string will be <%define>__USE_*__ */
 	pkg_macro = (char *)use_pkg + 1;
 	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {

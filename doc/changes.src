@@ -14,6 +14,9 @@ since 2007.
 
 \b \c{%pop} can now take an argument, see \k{pushpop}.
 
+\b The argument to \c{%use} is no longer macro-expanded.  Use
+  \c{%[...]} if macro expansion is desired.
+
 
 \S{cl-2.05} Version 2.05
 

@@ -3097,9 +3097,9 @@ package.  The standard macro packages are part of NASM, and are
 described in \k{macropkg}.
 
 Unlike the \c{%include} directive, package names for the \c{%use}
-directive do not require quotes, but quotes are permitted; using
-quotes will prevent unwanted macro expansion.  Thus, the following
-lines are equivalent, unless \c{altreg} is defined as a macro:
+directive do not require quotes, but quotes are permitted.  In NASM
+2.04 and 2.05 the unquoted form would be macro-expanded; this is no
+longer true.  Thus, the following lines are equivalent:
 
 \c %use altreg
 \c %use 'altreg'
