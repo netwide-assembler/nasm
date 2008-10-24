@@ -3129,14 +3129,16 @@ define labels that are local to a particular context on the stack.
 contexts}\I{removing contexts}Creating and Removing Contexts
 
 The \c{%push} directive is used to create a new context and place it
-on the top of the context stack. \c{%push} requires one argument,
+on the top of the context stack. \c{%push} takes an optional argument,
 which is the name of the context. For example:
 
 \c %push    foobar
 
-This pushes a new context called \c{foobar} on the stack. You can
-have several contexts on the stack with the same name: they can
-still be distinguished.
+This pushes a new context called \c{foobar} on the stack. You can have
+several contexts on the stack with the same name: they can still be
+distinguished.  If no name is given, the context is unnamed (this is
+normally used when both the \c{%push} and the \c{%pop} are inside a
+single macro definition.)
 
 The directive \c{%pop}, requiring no arguments, removes the top
 context from the context stack and destroys it, along with any
