@@ -1808,7 +1808,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 2:
                 case 4:
                     data = ins->oprs[(c >> 3) & 7].offset;
-		    warn_overflow(ea_data.bytes, opx);
+		    warn_overflow(ea_data.bytes, &ins->oprs[(c >> 3) & 7]);
                     s += ea_data.bytes;
 		    if (ea_data.rip) {
 			if (ins->oprs[(c >> 3) & 7].segment == segment) {
