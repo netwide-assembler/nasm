@@ -1773,20 +1773,20 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 uint8_t *p;
                 int32_t s;
 		enum out_type type;
+		struct operand *opy = &ins->oprs[op2];
 
                 if (c <= 0177) {
-		    /* pick rfield from operand b */
-		    rflags = regflag(&ins->oprs[op1]);
-                    rfield = nasm_regvals[ins->oprs[op1].basereg];
+		    /* pick rfield from operand b (opx) */
+		    rflags = regflag(opx);
+                    rfield = nasm_regvals[opx->basereg];
 		} else {
 		    /* rfield is constant */
 		    rflags = 0;
                     rfield = c & 7;
 		}
 
-                if (!process_ea
-                    (&ins->oprs[op2], &ea_data, bits,
-		     ins->addr_size, rfield, rflags)) {
+                if (!process_ea(opy, &ea_data, bits, ins->addr_size,
+				rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }
 
@@ -1798,10 +1798,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
 		/* DREX suffixes come between the SIB and the displacement */
 		if (ins->rex & REX_D) {
-		    *p++ =
-			(ins->drexdst << 4) |
-			(ins->rex & REX_OC ? 0x08 : 0) |
-			(ins->rex & (REX_R|REX_X|REX_B));
+		    *p++ = (ins->drexdst << 4) |
+			   (ins->rex & REX_OC ? 0x08 : 0) |
+			   (ins->rex & (REX_R|REX_X|REX_B));
 		    ins->rex = 0;
 		}
 
@@ -1819,13 +1818,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 0:
                     break;
                 case 1:
-                    if (ins->oprs[(c >> 3) & 7].segment != NO_SEG) {
-                        data = ins->oprs[(c >> 3) & 7].offset;
+                    if (opy->segment != NO_SEG) {
+                        data = opy->offset;
                         out(offset, segment, &data, OUT_ADDRESS, 1,
-                            ins->oprs[(c >> 3) & 7].segment,
-                            ins->oprs[(c >> 3) & 7].wrt);
+                            opy->segment, opy->wrt);
                     } else {
-                        *bytes = ins->oprs[(c >> 3) & 7].offset;
+                        *bytes = opy->offset;
                         out(offset, segment, bytes, OUT_RAWDATA, 1,
                             NO_SEG, NO_SEG);
                     }
@@ -1834,27 +1832,22 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 8:
                 case 2:
                 case 4:
-                    data = ins->oprs[(c >> 3) & 7].offset;
-		    warn_overflow(ea_data.bytes, &ins->oprs[(c >> 3) & 7]);
+                    data = opy->offset;
+		    warn_overflow(ea_data.bytes, opy);
                     s += ea_data.bytes;
 		    if (ea_data.rip) {
-			if (ins->oprs[(c >> 3) & 7].segment == segment) {
+			if (opy->segment == segment) {
 			    data -= insn_end;
-			    out(offset, segment, &data,
-				OUT_ADDRESS, ea_data.bytes,
-				NO_SEG, NO_SEG);
+			    out(offset, segment, &data, OUT_ADDRESS,
+				ea_data.bytes, NO_SEG, NO_SEG);
 			} else {
-			    out(offset, segment, &data,
-				OUT_REL4ADR, insn_end - offset,
-				ins->oprs[(c >> 3) & 7].segment,
-				ins->oprs[(c >> 3) & 7].wrt);
+			    out(offset, segment, &data,	OUT_REL4ADR,
+				insn_end - offset, opy->segment, opy->wrt);
 			}
 		    } else {
 			type = OUT_ADDRESS;
-			out(offset, segment, &data,
-			    OUT_ADDRESS, ea_data.bytes,
-			    ins->oprs[(c >> 3) & 7].segment,
-			    ins->oprs[(c >> 3) & 7].wrt);
+			out(offset, segment, &data, OUT_ADDRESS,
+			    ea_data.bytes, opy->segment, opy->wrt);
 		    }
                     break;
                 }
