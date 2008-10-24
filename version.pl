@@ -86,7 +86,8 @@ if ($is_rc) {
 
 $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
-$mangled_ver = sprintf("%d.%02d.%02d", $nmaj, $nmin, $nsmin);
+$mangled_ver = sprintf("%d.%02d", $nmaj, $nmin);
+$mangled_ver .= sprintf(".%02d", $nsmin) if ($nsmin || $nplvl);
 $mangled_ver .= '.'.$nplvl if ($nplvl != 0);
 ($mtail = $tail) =~ tr/-/./;
 $mangled_ver .= $mtail;
