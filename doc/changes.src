@@ -34,6 +34,10 @@ since 2007.
 
 \b Massive overhaul of the ELF64 backend for spec compliance.
 
+\b Fix the Geode \c{PFRCPV} and \c{PFRSQRTV} instruction.
+
+\b Fix the SSE 4.2 \c{CRC32} instruction.
+
 
 \S{cl-2.04} Version 2.04
 
