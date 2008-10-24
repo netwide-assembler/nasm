@@ -8,6 +8,11 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.06} Version 2.06
+
+\b Support for indirect macro expansion (\c{%[...]}).  See \k{indmacro}.
+
+
 \S{cl-2.05} Version 2.05
 
 \b Fix redundant REX.W prefix on \c{JMP reg64}.
