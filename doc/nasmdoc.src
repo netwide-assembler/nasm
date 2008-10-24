@@ -3140,9 +3140,10 @@ distinguished.  If no name is given, the context is unnamed (this is
 normally used when both the \c{%push} and the \c{%pop} are inside a
 single macro definition.)
 
-The directive \c{%pop}, requiring no arguments, removes the top
+The directive \c{%pop}, taking one optional argument, removes the top
 context from the context stack and destroys it, along with any
-labels associated with it.
+labels associated with it.  If an argument is given, it must match the
+name of the current context, otherwise it will issue an error.
 
 
 \S{ctxlocal} \i{Context-Local Labels}
