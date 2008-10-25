@@ -29,6 +29,7 @@
 #define SHF_WRITE	     (1 << 0)	/* Writable */
 #define SHF_ALLOC	     (1 << 1)	/* Occupies memory during execution */
 #define SHF_EXECINSTR	     (1 << 2)	/* Executable */
+#define SHF_TLS		     (1 << 10)	/* Section hold thread-local data.  */
 #define SHN_ABS		0xfff1		/* Associated symbol is absolute */
 #define SHN_COMMON	0xfff2		/* Associated symbol is common */
 #define R_X86_64_NONE		0	/* No reloc */
@@ -505,6 +506,9 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         } else if (!nasm_stricmp(q, "write")) {
             flags_and |= SHF_WRITE;
             flags_or |= SHF_WRITE;
+        } else if (!nasm_stricmp(q, "tls")) {
+            flags_and |= SHF_TLS;
+            flags_or |= SHF_TLS;
         } else if (!nasm_stricmp(q, "nowrite")) {
             flags_and |= SHF_WRITE;
             flags_or &= ~SHF_WRITE;
@@ -538,6 +542,12 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         else if (!strcmp(name, ".bss"))
             i = elf_make_section(name, SHT_NOBITS,
                                  SHF_ALLOC | SHF_WRITE, 4);
+        else if (!strcmp(name, ".tdata"))
+            i = elf_make_section(name, SHT_PROGBITS,
+                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
+        else if (!strcmp(name, ".tbss"))
+            i = elf_make_section(name, SHT_NOBITS,
+                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
         else
             i = elf_make_section(name, SHT_PROGBITS, SHF_ALLOC, 1);
         if (type)
