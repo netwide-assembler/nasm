@@ -375,7 +375,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int asize = prefix->asize;
     int i, c;
     int op1, op2;
-    struct operand *opx;
+    struct operand *opx, *opy;
     uint8_t opex = 0;
     int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
@@ -401,6 +401,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	op1 = (c & 3) + ((opex & 1) << 2);
 	op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
 	opx = &ins->oprs[op1];
+	opy = &ins->oprs[op2];
 	opex = 0;
 
 	switch (c) {
@@ -540,7 +541,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    int modrm = *data++;
             opx->segment |= SEG_RMREG;
-            data = do_ea(data, modrm, asize, segsize, &ins->oprs[op2], ins);
+            data = do_ea(data, modrm, asize, segsize, opy, ins);
 	    if (!data)
 		return false;
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
@@ -635,7 +636,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return false;   /* spare field doesn't match up */
-            data = do_ea(data, modrm, asize, segsize, &ins->oprs[op2], ins);
+            data = do_ea(data, modrm, asize, segsize, opy, ins);
 	    if (!data)
 		return false;
 	    break;
