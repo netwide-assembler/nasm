@@ -1072,17 +1072,19 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 ea ea_data;
                 int rfield;
 		int32_t rflags;
+		struct operand *opy = &ins->oprs[op2];
+
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
 
 		if (c <= 0177) {
-		    /* pick rfield from operand b */
-		    rflags = regflag(&ins->oprs[op1]);
-		    rfield = nasm_regvals[ins->oprs[op1].basereg];
+		    /* pick rfield from operand b (opx) */
+		    rflags = regflag(opx);
+		    rfield = nasm_regvals[opx->basereg];
 		} else {
 		    rflags = 0;
 		    rfield = c & 7;
 		}
-                if (!process_ea(&ins->oprs[op2], &ea_data, bits,
+                if (!process_ea(opy, &ea_data, bits,
 				ins->addr_size, rfield, rflags)) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
