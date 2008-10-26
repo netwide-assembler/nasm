@@ -772,6 +772,14 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 }
                 special_used = true;
             }
+            /*
+             * If TLS segment, mark symbol accordingly.
+             */
+            if (sects[sym->section - 1]->flags & SHF_TLS) {
+                error(ERR_DEBUG, "marked %s as TLS",name);
+                sym->type &= 0xf0;
+                sym->type |= STT_TLS;
+            }
         }
         sym->globnum = nglobs;
         nglobs++;
