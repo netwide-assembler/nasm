@@ -118,7 +118,7 @@ static const struct warning {
     {"macro-selfref", "cyclic macro references", false},
     {"macro-defaults", "macros with more default than optional parameters", true},
     {"orphan-labels", "labels alone on lines without trailing `:'", true},
-    {"number-overflow", "numeric constants does not fit in 64 bits", true},
+    {"number-overflow", "numeric constant does not fit", true},
     {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
     {"float-overflow", "floating point overflow", true},
     {"float-denorm", "floating point denormal", false},
