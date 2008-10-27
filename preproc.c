@@ -397,7 +397,6 @@ static Blocks blocks = { NULL, NULL };
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
-static Token *expand_indirect(Token * tline, int level);
 static Context *get_ctx(const char *name, bool all_contexts);
 static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
@@ -2465,13 +2464,10 @@ static int do_directive(Token * tline)
                  * called expand_mmac_params(); however, if we're
                  * processing an %elif we must have been in a
                  * non-emitting mode, which would have inhibited
-                 * the normal invocation of expand_indirect() and
-		 * expand_mmac_params().  Therefore, we have to do it
-		 * explicitly here.
+                 * the normal invocation of expand_mmac_params().
+		 * Therefore, we have to do it explicitly here.
                  */
-		t = expand_indirect(tline->next,0);
-		t = expand_mmac_params(t);
-                j = if_condition(expand_mmac_params(t), i);
+                j = if_condition(expand_mmac_params(tline->next), i);
                 tline->next = NULL; /* it got freed */
                 istk->conds->state =
                     j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
@@ -3324,7 +3320,8 @@ static int find_cc(Token * t)
 
 /*
  * Expand MMacro-local things: parameter references (%0, %n, %+n,
- * %-n) and MMacro-local identifiers (%%foo).
+ * %-n) and MMacro-local identifiers (%%foo) as well as
+ * macro indirection (%[...]).
  */
 static Token *expand_mmac_params(Token * tline)
 {
@@ -3393,8 +3390,7 @@ static Token *expand_mmac_params(Token * tline)
                                   conditions[cc]);
                             text = NULL;
                         } else
-                            text =
-                                nasm_strdup(conditions[inverse_ccs[cc]]);
+                            text = nasm_strdup(conditions[inverse_ccs[cc]]);
                     }
                     break;
                 case '+':
@@ -3447,6 +3443,19 @@ static Token *expand_mmac_params(Token * tline)
                 t->a.mac = NULL;
             }
             continue;
+	} else if (tline->type == TOK_INDIRECT) {
+	    t = tline;
+	    tline = tline->next;
+	    tt = tokenize(t->text);
+	    tt = expand_mmac_params(tt);
+	    tt = expand_smacro(tt);
+	    *tail = tt;
+	    while (tt) {
+		tt->a.mac = NULL; /* Necessary? */
+		tail = &tt->next;
+		tt = tt->next;
+	    }
+	    delete_Token(t);
         } else {
             t = *tail = tline;
             tline = tline->next;
@@ -3455,13 +3464,17 @@ static Token *expand_mmac_params(Token * tline)
         }
     }
     *tail = NULL;
+
+    /* Now handle token pasting... */
     t = thead;
-    for (; t && (tt = t->next) != NULL; t = t->next)
+    while (t && (tt = t->next)) {
         switch (t->type) {
         case TOK_WHITESPACE:
             if (tt->type == TOK_WHITESPACE) {
                 t->next = delete_Token(tt);
-            }
+            } else {
+		t = tt;
+	    }
             break;
         case TOK_ID:
         case TOK_NUMBER:
@@ -3470,12 +3483,15 @@ static Token *expand_mmac_params(Token * tline)
                 nasm_free(t->text);
                 t->text = tmp;
                 t->next = delete_Token(tt);
-            }
+            } else {
+		t = tt;
+	    }
             break;
 	default:
+	    t = tt;
 	    break;
         }
-
+    }
     return thead;
 }
 
@@ -3898,92 +3914,6 @@ static Token *expand_id(Token * tline)
             cur->next = oldnext;
     }
 
-    return tline;
-}
-
-/*
- * Expand indirect tokens, %[...].  Just like expand_smacro(),
- * the input is considered destroyed.
- *
- * XXX: fix duplicated code in this function and in expand_mmac_params()
- */
-static Token *expand_indirect(Token * tline, int level)
-{
-    const int max_indirect_level = 1000;
-    Token *t, *thead, **tp;
-    Token *it;
-    bool skip;
-
-    if (level >= max_indirect_level) {
-	error(ERR_NONFATAL, "interminable indirect expansion");
-    } else {
-	thead = NULL;
-	tp = &tline;
-	while ((t = *tp)) {
-	    if (t->type != TOK_INDIRECT) {
-		thead = t;
-		tp = &t->next;
-	    } else {
-		it = tokenize(t->text);
-		it = expand_indirect(it, level+1);
-		it = expand_smacro(it);
-		while (it) {
-		    skip = false;
-		    switch (thead ? thead->type : TOK_NONE) {
-		    case TOK_WHITESPACE:
-			skip = (it->type == TOK_WHITESPACE);
-			break;
-		    case TOK_ID:
-		    case TOK_NUMBER:
-			if (it->type == thead->type || it->type == TOK_NUMBER) {
-			    char *tmp = nasm_strcat(thead->text, it->text);
-			    nasm_free(thead->text);
-			    thead->text = tmp;
-			    skip = true;
-			}
-			break;
-		    default:
-			break;
-		    }
-		    if (skip) {
-			it = delete_Token(it);
-		    } else {
-			*tp = thead = it;
-			tp = &it->next;
-			it = it->next;
-		    }
-		}
-
-		skip = false;
-		it = t->next;
-		if (it) {
-		    switch (thead ? thead->type : TOK_NONE) {
-		    case TOK_WHITESPACE:
-			skip = (it->type == TOK_WHITESPACE);
-			break;
-		    case TOK_ID:
-		    case TOK_NUMBER:
-			if (it->type == thead->type || it->type == TOK_NUMBER) {
-			    char *tmp = nasm_strcat(thead->text, it->text);
-			    nasm_free(thead->text);
-			thead->text = tmp;
-			skip = true;
-			}
-			break;
-		    default:
-			break;
-		    }
-		}
-		if (skip) {
-		    *tp = thead = it->next;
-		    t = delete_Token(t);
-		} else {
-		    *tp = thead = it;
-		}
-		t = delete_Token(t);
-	    }
-	}
-    }
     return tline;
 }
 
@@ -4530,7 +4460,6 @@ static char *pp_getline(void)
          */
         if (!defining && !(istk->conds && !emitting(istk->conds->state))
             && !(istk->mstk && !istk->mstk->in_progress)) {
-	    tline = expand_indirect(tline,0);
             tline = expand_mmac_params(tline);
 	}
 
