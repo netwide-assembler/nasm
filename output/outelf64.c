@@ -335,6 +335,7 @@ void dwarf64_findsect(const int);
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
 static int32_t elf_sym_sect;
+static int32_t elf_gottpoff_sect;
 
 static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -372,6 +373,9 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
          error);
     elf_sym_sect = seg_alloc();
     ldef("..sym", elf_sym_sect + 1, 0L, NULL, false, false, &of_elf64,
+         error);
+    elf_gottpoff_sect = seg_alloc();
+    ldef("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false, &of_elf64,
          error);
 
     def_seg = seg_alloc();
@@ -587,7 +591,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          */
         if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
             strcmp(name, "..got") && strcmp(name, "..plt") &&
-            strcmp(name, "..sym"))
+            strcmp(name, "..sym") && strcmp(name, "..gottpoff"))
             error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
         return;
     }
@@ -776,7 +780,6 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
              * If TLS segment, mark symbol accordingly.
              */
             if (sects[sym->section - 1]->flags & SHF_TLS) {
-                error(ERR_DEBUG, "marked %s as TLS",name);
                 sym->type &= 0xf0;
                 sym->type |= STT_TLS;
             }
@@ -1028,7 +1031,7 @@ static void elf_out(int32_t segto, const void *data,
 	    } else if (wrt == elf_gotoff_sect + 1) {
 		if (size != 8) {
 		    error(ERR_NONFATAL, "ELF64 requires ..gotoff "
-			  "references to be qword absolute");
+			  "references to be qword");
 		} else {
 		    elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
 		    addr = 0;
@@ -1129,6 +1132,10 @@ static void elf_out(int32_t segto, const void *data,
 		       wrt == elf_got_sect + 1) {
 		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
 		      "qword absolute");
+            } else if (wrt == elf_gottpoff_sect + 1) {
+                elf_add_gsym_reloc(s, segment, addr+size, size,
+				   R_X86_64_GOTTPOFF, true);
+		addr = 0;
             } else {
                 error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
@@ -1156,7 +1163,10 @@ static void elf_out(int32_t segto, const void *data,
             } else if (wrt == elf_gotoff_sect + 1 ||
 		       wrt == elf_got_sect + 1) {
 		error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
-		      "qword absolute");
+		      "absolute");
+            } else if (wrt == elf_gottpoff_sect + 1) {
+		error(ERR_NONFATAL, "ELF64 requires ..gottpoff references to be "
+		      "dword");
             } else {
                 error(ERR_NONFATAL, "ELF64 format does not support this"
                       " use of WRT");
