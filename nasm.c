@@ -118,7 +118,7 @@ static const struct warning {
     {"macro-selfref", "cyclic macro references", false},
     {"macro-defaults", "macros with more default than optional parameters", true},
     {"orphan-labels", "labels alone on lines without trailing `:'", true},
-    {"number-overflow", "numeric constants does not fit in 64 bits", true},
+    {"number-overflow", "numeric constant does not fit", true},
     {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
     {"float-overflow", "floating point overflow", true},
     {"float-denorm", "floating point denormal", false},
@@ -835,13 +835,13 @@ static bool process_arg(char *p, char *q)
 		if (!nasm_stricmp(param, warnings[i].name))
 		    break;
 	    if (i <= ERR_WARN_MAX)
-		warning_on[i] = do_warn;
+		warning_on_global[i] = do_warn;
 	    else if (!nasm_stricmp(param, "all"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    warning_on[i] = do_warn;
+		    warning_on_global[i] = do_warn;
 	    else if (!nasm_stricmp(param, "none"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    warning_on[i] = !do_warn;
+		    warning_on_global[i] = !do_warn;
 	    else
 		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			     "invalid warning `%s'", param);
