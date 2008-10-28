@@ -23,7 +23,7 @@
 #include "saa.h"
 #include "raa.h"
 #include "outform.h"
-#include "compiler.h"
+#include "outlib.h"
 
 #if defined(OF_MACHO)
 
@@ -427,21 +427,7 @@ static void macho_output(int32_t secto, const void *data,
     if (s == sbss && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
-
-        switch (type) {
-        case OUT_REL2ADR:
-            size = 2;
-            break;
-
-        case OUT_REL4ADR:
-            size = 4;
-            break;
-
-        default:
-            break;
-        }
-
-        s->size += size;
+        s->size += realsize(type, size);
         return;
     }
 

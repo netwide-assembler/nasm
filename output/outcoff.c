@@ -21,6 +21,7 @@
 #include "saa.h"
 #include "raa.h"
 #include "outform.h"
+#include "outlib.h"
 
 #if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
 
@@ -527,11 +528,7 @@ static void coff_out(int32_t segto, const void *data,
     if (!s->data && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        s->len += size;
+        s->len += realsize(type, size);
         return;
     }
 

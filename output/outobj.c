@@ -1068,8 +1068,7 @@ static void obj_out(int32_t segto, const void *data,
         if (type == OUT_REL2ADR) {
             ldata += (size - 2);
             size = 2;
-        }
-        if (type == OUT_REL4ADR) {
+        } else if (type == OUT_REL4ADR) {
             ldata += (size - 4);
             size = 4;
         }

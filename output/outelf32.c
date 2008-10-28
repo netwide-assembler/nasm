@@ -21,6 +21,7 @@
 #include "raa.h"
 #include "stdscan.h"
 #include "outform.h"
+#include "outlib.h"
 
 #ifdef OF_ELF32
 
@@ -889,11 +890,7 @@ static void elf_out(int32_t segto, const void *data,
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        s->len += size;
+	s->len += realsize(type, size);
         return;
     }
 

@@ -20,6 +20,7 @@
 #include "raa.h"
 #include "stdscan.h"
 #include "outform.h"
+#include "outlib.h"
 
 /* Definitions in lieu of elf.h */
 #define SHT_NULL 0			/* Inactive section header */
@@ -964,20 +965,7 @@ static void elf_out(int32_t segto, const void *data,
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-	switch (type) {
-	case OUT_REL2ADR:
-	    size = 2;
-	    break;
-	case OUT_REL4ADR:
-	    size = 4;
-	    break;
-	case OUT_REL8ADR:
-	    size = 8;
-	    break;
-	default:
-	    break;		/* size is already set */
-	}
-        s->len += size;
+        s->len += realsize(type, size);
         return;
     }
 
