@@ -5275,7 +5275,7 @@ Like the \c{obj} format, \c{elf} allows you to specify additional
 information on the \c{SECTION} directive line, to control the type
 and properties of sections you declare. Section types and properties
 are generated automatically by NASM for the \i{standard section
-names} \i\c{.text}, \i\c{.data} and \i\c{.bss}, but may still be
+names}, but may still be
 overridden by these qualifiers.
 
 The available qualifiers are:
@@ -5301,17 +5301,25 @@ contents given, such as a BSS section.
 \I{section alignment, in elf}\I{alignment, in elf sections}alignment
 requirements of the section.
 
+\b \i\c{tls} defines the section to be one which contains
+thread local variables.
+
 The defaults assumed by NASM if you do not specify the above
 qualifiers are:
+
+\I\c{.text} \I\c{.data} \I\c{.bss} \I\c{.rodata} \I\c{.tdata} \I\c{.tbss}
 
 \c section .text    progbits  alloc  exec    nowrite  align=16
 \c section .rodata  progbits  alloc  noexec  nowrite  align=4
 \c section .data    progbits  alloc  noexec  write    align=4
 \c section .bss     nobits    alloc  noexec  write    align=4
+\c section .tdata   progbits  alloc  noexec  write    align=4    tls
+\c section .tbss    nobits    alloc  noexec  write    align=4    tls
 \c section other    progbits  alloc  noexec  nowrite  align=1
 
-(Any section name other than \c{.text}, \c{.rodata}, \c{.data} and
-\c{.bss} is treated by default like \c{other} in the above code.)
+(Any section name other than those in the above table
+ is treated by default like \c{other} in the above table.
+ Please note that section names are case sensitive.)
 
 
 \S{elfwrt} \i{Position-Independent Code}\I{PIC}: \c{elf} Special
@@ -5320,7 +5328,7 @@ Symbols and \i\c{WRT}
 The \c{ELF} specification contains enough features to allow
 position-independent code (PIC) to be written, which makes \i{ELF
 shared libraries} very flexible. However, it also means NASM has to
-be able to generate a variety of strange relocation types in ELF
+be able to generate a variety of ELF specific relocation types in ELF
 object files, if it is to be an assembler which can write PIC.
 
 Since \c{ELF} does not support segment-base references, the \c{WRT}
@@ -5371,6 +5379,20 @@ peculiarity of the dynamic linker.
 A fuller explanation of how to use these relocation types to write
 shared libraries entirely in NASM is given in \k{picdll}.
 
+\S{elftls} \i{Thread Local Storage}\I{TLS}: \c{elf} Special
+Symbols and \i\c{WRT}
+
+
+
+\b Referring to an external or global symbol using \c{wrt ..gottpoff} \I\c{..gottpoff}
+causes the linker to build an entry \e{in} the GOT containing the
+offset of the symbol within the TLS block, so you can access the value
+of the symbol with code such as:
+
+\c 	  mov	rax,[rel tid wrt ..gottpoff]
+\c	  mov	rcx, [fs:rax]
+
+(Please note that this feature is currently implemented only for ELF64.)
 
 \S{elfglob} \c{elf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
 elf extensions to}\I{GLOBAL, aoutb extensions to}
