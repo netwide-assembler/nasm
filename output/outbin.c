@@ -59,6 +59,7 @@
 #include "labels.h"
 #include "eval.h"
 #include "outform.h"
+#include "outlib.h"
 
 #ifdef OF_BIN
 
@@ -799,20 +800,7 @@ static void bin_out(int32_t segto, const void *data,
     } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
 	       type == OUT_REL8ADR) {
 	int64_t addr = *(int64_t *)data - size;
-	switch (type) {
-	case OUT_REL2ADR:
-	    size = 2;
-	    break;
-	case OUT_REL4ADR:
-	    size = 4;
-	    break;
-	case OUT_REL8ADR:
-	    size = 8;
-	    break;
-	default:
-	    size = 0;		/* Shut up warning */
-	    break;
-	}
+	size = realsize(type, size);
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 error(ERR_NONFATAL, "binary output format does not support"

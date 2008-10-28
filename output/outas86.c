@@ -20,6 +20,7 @@
 #include "saa.h"
 #include "raa.h"
 #include "outform.h"
+#include "outlib.h"
 
 #ifdef OF_AS86
 
@@ -294,11 +295,7 @@ static void as86_out(int32_t segto, const void *data,
     if (!s && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        bsslen += size;
+	bsslen += realsize(type, size);
         return;
     }
 

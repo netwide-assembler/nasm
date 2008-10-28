@@ -21,6 +21,7 @@
 #include "raa.h"
 #include "stdscan.h"
 #include "outform.h"
+#include "outlib.h"
 
 #if defined OF_AOUT || defined OF_AOUTB
 
@@ -603,11 +604,7 @@ static void aout_out(int32_t segto, const void *data,
     if (!s && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        sbss.len += size;
+        sbss.len += realsize(type, size);
         return;
     }
 

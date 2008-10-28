@@ -62,7 +62,7 @@ X               = @EXEEXT@
 NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
-	outform.$(O) output/outbin.$(O) \
+	outform.$(O) outlib.$(O) output/outbin.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
@@ -279,6 +279,8 @@ ndisasm.$(O): ndisasm.c compiler.h config.h disasm.h insns.h insnsi.h nasm.h \
  nasmlib.h pptok.h preproc.h regs.h sync.h tokens.h version.h
 outform.$(O): outform.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h version.h
+outlib.$(O): outlib.c compiler.h config.h insnsi.h nasm.h nasmlib.h outlib.h \
+ pptok.h preproc.h regs.h version.h
 output/outaout.$(O): output/outaout.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
  version.h
@@ -292,7 +294,7 @@ output/outcoff.$(O): output/outcoff.c compiler.h config.h insnsi.h nasm.h \
 output/outdbg.$(O): output/outdbg.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h version.h
 output/outelf32.$(O): output/outelf32.c compiler.h config.h insnsi.h nasm.h \
- nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
+ nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
  version.h
 output/outelf64.$(O): output/outelf64.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
