@@ -8,6 +8,11 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.05.01} Version 2.05.01
+
+\b Fix the \c{-w}/\c{-W} option parsing, which was broken in NASM 2.05.
+
+
 \S{cl-2.05} Version 2.05
 
 \b Fix redundant REX.W prefix on \c{JMP reg64}.
