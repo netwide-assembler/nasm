@@ -813,7 +813,7 @@ Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
 
 
-\S{opt-t} The \i\c{-t} option: Enable TASM Compatibility Mode
+\S{opt-t} The \i\c{-t} Option: Enable TASM Compatibility Mode
 
 NASM includes a limited form of compatibility with Borland's \i\c{TASM}.
 When NASM's \c{-t} option is used, the following changes are made:
