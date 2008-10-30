@@ -275,6 +275,14 @@ creation.
 
 \b Significant performance improvements.
 
+\b \c{-w+warning} and \c{-w-warning} can now be written as -Wwarning and
+ -Wno-warning, respectively.  See \k{opt-w}.
+
+\b Add \c{-w+error} to treat warnings as errors.  See \k{opt-w}.
+
+\b Add \c{-w+all} and \c{-w-all} to enable or disable all suppressible
+ warnings.  See \k{opt-w}.
+
 
 \H{cl-0.98.xx} NASM 0.98 Series
 
