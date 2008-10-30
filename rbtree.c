@@ -3,15 +3,14 @@
  *
  * Simple implementation of a left-leaning red-black tree with 64-bit
  * integer keys.  The search operation will return the highest node <=
- * the key; only search, insert, and full-tree deletion is supported,
- * but additional standard llrbtree operations can be coded up at will.
+ * the key; only search and insert are supported, but additional
+ * standard llrbtree operations can be coded up at will.
  *
  * See http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf for
  * information about left-leaning red-black trees.
  */
 
 #include "rbtree.h"
-#include "nasmlib.h"
 
 const struct rbtree *rb_search(const struct rbtree *tree, uint64_t key)
 {
@@ -62,24 +61,20 @@ static void color_flip(struct rbtree *h)
     h->right->red = !h->right->red;
 }
 
-struct rbtree *rb_insert(struct rbtree *tree, uint64_t key, void *data)
+struct rbtree *rb_insert(struct rbtree *tree, struct rbtree *node)
 {
     if (!tree) {
-	struct rbtree *node = nasm_malloc(sizeof *node);
-    
-	node->key   = key;
-	node->data  = data;
-	node->red   = true;
+	node->red = true;
 	return node;
     }
 
     if (is_red(tree->left) && is_red(tree->right))
 	color_flip(tree);
 
-    if (key < tree->key)
-	tree->left = rb_insert(tree->left, key, data);
+    if (node->key < tree->key)
+	tree->left = rb_insert(tree->left, node);
     else
-	tree->right = rb_insert(tree->right, key, data);
+	tree->right = rb_insert(tree->right, node);
 
     if (is_red(tree->right))
 	tree = rotate_left(tree);
@@ -88,13 +83,4 @@ struct rbtree *rb_insert(struct rbtree *tree, uint64_t key, void *data)
 	tree = rotate_right(tree);
 
     return tree;
-}
-
-void rb_free(struct rbtree *tree)
-{
-    if (tree) {
-	rb_free(tree->left);
-	rb_free(tree->right);
-	nasm_free(tree);
-    }
 }

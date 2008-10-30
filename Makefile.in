@@ -319,7 +319,7 @@ preproc.$(O): preproc.c compiler.h config.h hashtbl.h insnsi.h nasm.h \
  version.h
 quote.$(O): quote.c compiler.h config.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h config.h nasmlib.h raa.h
-rbtree.$(O): rbtree.c compiler.h config.h nasmlib.h rbtree.h
+rbtree.$(O): rbtree.c compiler.h config.h rbtree.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h tables.h version.h

@@ -4,15 +4,16 @@
 #include "compiler.h"
 #include <inttypes.h>
 
+/* This structure should be embedded in a larger data structure;
+   the final output from rb_search() can then be converted back
+   to the larger data structure via container_of(). */
 struct rbtree {
     uint64_t key;
-    void *data;
     struct rbtree *left, *right;
     bool red;
 };
 
-struct rbtree *rb_insert(struct rbtree *, uint64_t, void *);
+struct rbtree *rb_insert(struct rbtree *, struct rbtree *);
 const struct rbtree *rb_search(const struct rbtree *, uint64_t);
-void rb_free(struct rbtree *);
 
 #endif /* NASM_RBTREE_H */
