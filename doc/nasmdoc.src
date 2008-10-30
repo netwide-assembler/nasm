@@ -38,6 +38,7 @@
 \IR{-s} \c{-s} option
 \IR{-u} \c{-u} option
 \IR{-v} \c{-v} option
+\IR{-W} \c{-W} option
 \IR{-w} \c{-w} option
 \IR{-y} \c{-y} option
 \IR{-Z} \c{-Z} option
@@ -830,7 +831,7 @@ the instruction.
 \c{else}, \c{endif}, \c{if}, \c{ifdef}, \c{ifdifi}, \c{ifndef},
 \c{include}, \c{local})
 
-\S{opt-w} The \i\c{-w} Option: Enable or Disable Assembly \i{Warnings}
+\S{opt-w} The \i\c{-w} and \i\c{-W} Options: Enable or Disable Assembly \i{Warnings}
 
 NASM can observe many conditions during the course of assembly which
 are worth mentioning to the user, but not a sufficiently severe
@@ -892,11 +893,21 @@ Enabled by default.
 \b \i\c{user} controls \c{%warning} directives (see \k{pperror}).
 Enabled by default.
 
+\b \i\c{error} causes warnings to be treated as errors.  Disabled by
+default.
+
+\b \i\c{all} is an alias for \e{all} suppressible warning classes (not
+including \c{error}).  Thus, \c{-w+all} enables all available warnings.
+
 In addition, you can set warning classes across sections.
 Warning classes may be enabled with \i\c{[warning +warning-name]},
 disabled with \i\c{[warning -warning-name]} or reset to their
 original value with \i\c{[warning *warning-name]}. No "user form"
 (without the brackets) exists.
+
+Since version 2.00, NASM has also supported the gcc-like syntax
+\c{-Wwarning} and \c{-Wno-warning} instead of \c{-w+warning} and
+\c{-w-warning}, respectively.
 
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
