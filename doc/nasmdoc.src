@@ -2711,7 +2711,7 @@ For example:
 
 removes the previously defined macro \c{foo}, but
 
-\c %unmacro bar 1-3
+\c %macro bar 1-3
 \c         ; Do something
 \c %endmacro
 \c %unmacro bar 1
