@@ -46,7 +46,7 @@ X               = .exe
 # Note: wcl386 is broken if forward slashes are used as path separators.
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
-NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) &
+NASM =	nasm.$(O) nasmlib.$(O) raa.$(O) saa.$(O) rbtree.$(O) &
 	float.$(O) insnsa.$(O) insnsb.$(O) &
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) &
 	outform.$(O) outlib.$(O) output\outbin.$(O) &
@@ -281,6 +281,7 @@ preproc.$(O): preproc.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h &
  pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h version.h
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h nasmlib.h raa.h
+rbtree.$(O): rbtree.c compiler.h nasmlib.h rbtree.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h insnsi.h nasm.h nasmlib.h pptok.h &
  preproc.h regs.h tables.h version.h

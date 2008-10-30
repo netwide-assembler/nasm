@@ -30,7 +30,7 @@ O = o
 
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
-NASM =	nasm.o nasmlib.o raa.o saa.o \
+NASM =	nasm.o nasmlib.o raa.o saa.o rbtree.o \
 	float.o insnsa.o insnsb.o \
 	assemble.o labels.o hashtbl.o crc64.o parser.o \
 	outform.o outlib.o outbin.o \
@@ -194,6 +194,7 @@ preproc.o: preproc.c compiler.h config.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h version.h
 quote.o: quote.c compiler.h config.h nasmlib.h quote.h
 raa.o: raa.c compiler.h config.h nasmlib.h raa.h
+rbtree.o: rbtree.c compiler.h config.h nasmlib.h rbtree.h
 regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h insnsi.h nasm.h nasmlib.h pptok.h \
  preproc.h regs.h tables.h version.h
