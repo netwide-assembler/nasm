@@ -2051,6 +2051,9 @@ select between them.  Similarly, the two statements:
 
 have, in fact, exactly the same effect.
 
+\c{%[...]} concatenates to adjacent tokens in the same way that
+multi-line macro parameters do, see \k{concat} for details.
+
 
 \S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
 
@@ -2588,11 +2591,11 @@ iterated through in reverse order.
 
 \S{concat} \i{Concatenating Macro Parameters}
 
-NASM can concatenate macro parameters on to other text surrounding
-them. This allows you to declare a family of symbols, for example,
-in a macro definition. If, for example, you wanted to generate a
-table of key codes along with offsets into the table, you could code
-something like
+NASM can concatenate macro parameters and macro indirection constructs
+on to other text surrounding them. This allows you to declare a family
+of symbols, for example, in a macro definition. If, for example, you
+wanted to generate a table of key codes along with offsets into the
+table, you could code something like
 
 \c %macro keytab_entry 2
 \c
@@ -2637,6 +2640,10 @@ literal text in braces: so \c{%\{%foo\}bar} concatenates the text
 real names of macro-local labels means that the two usages
 \c{%\{%foo\}bar} and \c{%%foobar} would both expand to the same
 thing anyway; nevertheless, the capability is there.)
+
+The single-line macro indirection construct, \c{%[...]}
+(\k{indmacro}), behaves the same way as macro parameters for the
+purpose of concatenation.
 
 See also the \c{%+} operator, \k{concat%+}.
 
