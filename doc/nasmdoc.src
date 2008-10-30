@@ -851,9 +851,6 @@ disable it by \c{-w-orphan-labels}.
 
 The \i{suppressible warning} classes are:
 
-\b \i\c{error} decides if warnings should be treated as errors.
-It is disabled by default.
-
 \b \i\c{macro-params} covers warnings about \i{multi-line macros}
 being invoked with the wrong number of parameters. This warning
 class is enabled by default; see \k{mlmacover} for an example of why
