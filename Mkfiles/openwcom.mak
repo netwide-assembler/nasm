@@ -250,24 +250,24 @@ outform.$(O): outform.c compiler.h insnsi.h nasm.h nasmlib.h outform.h &
 outlib.$(O): outlib.c compiler.h insnsi.h nasm.h nasmlib.h outlib.h pptok.h &
  preproc.h regs.h version.h
 output\outaout.$(O): output\outaout.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
+ outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
 output\outas86.$(O): output\outas86.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+ outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h version.h
 output\outbin.$(O): output\outbin.c compiler.h eval.h insnsi.h labels.h &
- nasm.h nasmlib.h outform.h pptok.h preproc.h regs.h saa.h stdscan.h &
- version.h
+ nasm.h nasmlib.h outform.h outlib.h pptok.h preproc.h regs.h saa.h &
+ stdscan.h version.h
 output\outcoff.$(O): output\outcoff.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+ outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h version.h
 output\outdbg.$(O): output\outdbg.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h pptok.h preproc.h regs.h version.h
 output\outelf32.$(O): output\outelf32.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
 output\outelf64.$(O): output\outelf64.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
+ outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h version.h
 output\outieee.$(O): output\outieee.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h pptok.h preproc.h regs.h version.h
 output\outmacho.$(O): output\outmacho.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h raa.h regs.h saa.h version.h
+ outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h version.h
 output\outobj.$(O): output\outobj.c compiler.h insnsi.h nasm.h nasmlib.h &
  outform.h pptok.h preproc.h regs.h stdscan.h version.h
 output\outrdf.$(O): output\outrdf.c compiler.h insnsi.h nasm.h nasmlib.h &
