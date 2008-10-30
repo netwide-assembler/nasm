@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2007 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2008 The NASM Authors - All Rights Reserved
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the license given in the file "LICENSE"
@@ -85,6 +85,19 @@ int vsnprintf(char *, size_t, const char *, va_list);
    casting to the standard boolean type.  Always use !!, not (bool). */
 typedef enum bool { false, true } bool;
 # endif
+#endif
+
+/* Provide a substitute for offsetof() if we don't have one.  This
+   variant works on most (but not *all*) systems... */
+#ifndef offsetof
+# define offsetof(t,m) ((size_t)&(((t *)0)->m))
+#endif
+
+/* The container_of construct: if p is a pointer to member m of
+   container class c, then return a pointer to the container of which
+   *p is a member. */
+#ifndef container_of
+# define container_of(p, c, m) ((c *)((char *)(p) - offsetof(c,m)))
 #endif
 
 /* Some misguided platforms hide the defs for these */
