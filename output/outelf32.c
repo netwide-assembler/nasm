@@ -1097,8 +1097,7 @@ static void elf_write(void)
      * Do the comment.
      */
     *comment = '\0';
-    commlen =
-        2 + sprintf(comment + 1, "The Netwide Assembler %s", NASM_VER);
+    commlen = 2 + snprintf(comment+1, sizeof comment-1, "%s", nasm_comment);
 
     /*
      * Output the ELF header.
@@ -1940,7 +1939,6 @@ void dwarf32_output(int type, void *param)
 
 void dwarf32_generate(void)
 {
-    static const char nasm_signature[] = "NASM " NASM_VER;
     uint8_t *pbuf;
     int indx;
     struct linelist *ftentry;

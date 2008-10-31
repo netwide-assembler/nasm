@@ -861,7 +861,6 @@ static void ieee_write_file(int debuginfo)
     struct ieeeObjData *data;
     struct ieeeFixupp *fix;
     struct Array *arr;
-    static char boast[] = "The Netwide Assembler " NASM_VER;
     int i;
 
     /*
@@ -872,7 +871,7 @@ static void ieee_write_file(int debuginfo)
     /*
      * Write the NASM boast comment.
      */
-    ieee_putascii("CO0,%02X%s.\r\n", strlen(boast), boast);
+    ieee_putascii("CO0,%02X%s.\r\n", strlen(nasm_comment), nasm_comment);
 
     /*
      * write processor-specific information

@@ -385,7 +385,7 @@ static ObjRecord *obj_value(ObjRecord * orp, uint32_t val)
 /*
  * Writes a counted string
  */
-static ObjRecord *obj_name(ObjRecord * orp, char *name)
+static ObjRecord *obj_name(ObjRecord * orp, const char *name)
 {
     int len = strlen(name);
     uint8_t *ptr;
@@ -1817,7 +1817,6 @@ static void obj_write_file(int debuginfo)
     struct External *ext;
     struct ImpDef *imp;
     struct ExpDef *export;
-    static char boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx;
     ObjRecord *orp;
 
@@ -1834,7 +1833,7 @@ static void obj_write_file(int debuginfo)
      */
     orp->type = COMENT;
     obj_rword(orp, 0);          /* comment type zero */
-    obj_name(orp, boast);
+    obj_name(orp, nasm_comment);
     obj_emit2(orp);
 
     orp->type = COMENT;

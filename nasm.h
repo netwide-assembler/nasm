@@ -15,7 +15,6 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "version.h"            /* generated NASM version macros */
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
@@ -1031,5 +1030,14 @@ extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;		/* default to relative addressing? */
 extern int maxbits;		/* max bits supported by output */
+
+/*
+ * NASM version strings, defined in ver.c
+ */
+extern const char nasm_version[];
+extern const char nasm_date[];
+extern const char nasm_compile_options[];
+extern const char nasm_comment[];
+extern const char nasm_signature[];
 
 #endif
