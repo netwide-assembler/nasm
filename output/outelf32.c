@@ -72,6 +72,7 @@ struct Symbol {
 #define SHF_WRITE 1
 #define SHF_ALLOC 2
 #define SHF_EXECINSTR 4
+#define SHF_TLS   (1 << 10)	/* Section holds thread-local data.  */
 
 struct Section {
     struct SAA *data;
@@ -462,6 +463,9 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         } else if (!nasm_stricmp(q, "write")) {
             flags_and |= SHF_WRITE;
             flags_or |= SHF_WRITE;
+        } else if (!nasm_stricmp(q, "tls")) {
+            flags_and |= SHF_TLS;
+            flags_or |= SHF_TLS;
         } else if (!nasm_stricmp(q, "nowrite")) {
             flags_and |= SHF_WRITE;
             flags_or &= ~SHF_WRITE;
@@ -495,6 +499,12 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         else if (!strcmp(name, ".bss"))
             i = elf_make_section(name, SHT_NOBITS,
                                  SHF_ALLOC | SHF_WRITE, 4);
+        else if (!strcmp(name, ".tdata"))
+            i = elf_make_section(name, SHT_PROGBITS,
+                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
+        else if (!strcmp(name, ".tbss"))
+            i = elf_make_section(name, SHT_NOBITS,
+                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
         else
             i = elf_make_section(name, SHT_PROGBITS, SHF_ALLOC, 1);
         if (type)
@@ -718,6 +728,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                     stdscan_bufptr = saveme;    /* bugfix? fbk 8/10/00 */
                 }
                 special_used = true;
+            }
+            /*
+             * If TLS segment, mark symbol accordingly.
+             */
+            if (sects[sym->section - 1]->flags & SHF_TLS) {
+                sym->type &= 0xf0;
+                sym->type |= STT_TLS;
             }
         }
         sym->globnum = nglobs;
