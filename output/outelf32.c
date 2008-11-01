@@ -39,6 +39,9 @@ enum reloc_type {
     R_386_RELATIVE = 8,         /* ??? */
     R_386_GOTOFF = 9,           /* an offset from GOT base */
     R_386_GOTPC = 10,           /* a PC-relative offset _to_ GOT */
+    R_386_TLS_TPOFF = 14,      /* Offset in static TLS block */
+    R_386_TLS_IE = 15,         /* Address of GOT entry for static TLS
+                                          block offset */
     /* These are GNU extensions, but useful */
     R_386_16 = 20,              /* A 16-bit absolute relocation */
     R_386_PC16 = 21,            /* A 16-bit PC-relative relocation */
@@ -287,12 +290,12 @@ void saa_wleb128s(struct SAA *, int);
 
 /*
  * Special section numbers which are used to define ELF special
- * symbols, which can be used with WRT to provide PIC relocation
- * types.
+ * symbols, which can be used with WRT to provide PIC and TLS
+ * relocation types.
  */
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
-static int32_t elf_sym_sect;
+static int32_t elf_sym_sect, elf_tlsie_sect;
 
 static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -331,6 +334,9 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
          error);
     elf_sym_sect = seg_alloc();
     ldef("..sym", elf_sym_sect + 1, 0L, NULL, false, false, &of_elf32,
+         error);
+    elf_tlsie_sect = seg_alloc();
+    ldef("..tlsie", elf_tlsie_sect + 1, 0L, NULL, false, false, &of_elf32,
          error);
 
     def_seg = seg_alloc();
@@ -544,7 +550,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          */
         if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
             strcmp(name, "..got") && strcmp(name, "..plt") &&
-            strcmp(name, "..sym"))
+            strcmp(name, "..sym") && strcmp(name, "..tlsie"))
             error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
         return;
     }
@@ -947,6 +953,9 @@ static void elf_out(int32_t segto, const void *data,
                     elf_add_reloc(s, segment, R_386_GOTPC);
                 } else if (wrt == elf_gotoff_sect + 1) {
                     elf_add_reloc(s, segment, R_386_GOTOFF);
+                } else if (wrt == elf_tlsie_sect + 1) {
+                    addr = elf_add_gsym_reloc(s, segment, addr,
+                                              R_386_TLS_IE, true);
                 } else if (wrt == elf_got_sect + 1) {
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_386_GOT32, true);
