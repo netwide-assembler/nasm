@@ -60,7 +60,7 @@ if ( $line =~ /^([0-9]+)\.([0-9]+)(.*)$/ ) {
     die "$0: Invalid input format\n";
 }
 
-if ($tail =~ /^\-([0-9]+)/) {
+if ($tail =~ /^\-([0-9]+)$/) {
     $snapshot = $1;
 } else {
     undef $snapshot;
