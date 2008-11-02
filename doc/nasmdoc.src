@@ -5397,9 +5397,18 @@ shared libraries entirely in NASM is given in \k{picdll}.
 \S{elftls} \i{Thread Local Storage}\I{TLS}: \c{elf} Special
 Symbols and \i\c{WRT}
 
+\b In ELF32 mode, referring to an external or global symbol using
+\c{wrt ..tlsie} \I\c{..tlsie}
+causes the linker to build an entry \e{in} the GOT containing the
+offset of the symbol within the TLS block, so you can access the value
+of the symbol with code such as:
+
+\c 	  mov  eax,[tid wrt ..tlsie]
+\c 	  mov  dword [gs:eax],ebx
 
 
-\b Referring to an external or global symbol using \c{wrt ..gottpoff} \I\c{..gottpoff}
+\b In ELF64 mode, referring to an external or global symbol using
+\c{wrt ..gottpoff} \I\c{..gottpoff}
 causes the linker to build an entry \e{in} the GOT containing the
 offset of the symbol within the TLS block, so you can access the value
 of the symbol with code such as:
@@ -5407,7 +5416,6 @@ of the symbol with code such as:
 \c 	  mov	rax,[rel tid wrt ..gottpoff]
 \c	  mov	rcx, [fs:rax]
 
-(Please note that this feature is currently implemented only for ELF64.)
 
 \S{elfglob} \c{elf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
 elf extensions to}\I{GLOBAL, aoutb extensions to}
