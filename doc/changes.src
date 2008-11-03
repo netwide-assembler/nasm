@@ -17,6 +17,8 @@ since 2007.
 \b The argument to \c{%use} is no longer macro-expanded.  Use
   \c{%[...]} if macro expansion is desired.
 
+\b Support for thread-local storage in ELF32 and ELF64.  See \k{elftls}.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
