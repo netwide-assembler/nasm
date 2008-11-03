@@ -5404,7 +5404,7 @@ offset of the symbol within the TLS block, so you can access the value
 of the symbol with code such as:
 
 \c 	  mov  eax,[tid wrt ..tlsie]
-\c 	  mov  dword [gs:eax],ebx
+\c 	  mov  [gs:eax],ebx
 
 
 \b In ELF64 mode, referring to an external or global symbol using
@@ -5414,7 +5414,7 @@ offset of the symbol within the TLS block, so you can access the value
 of the symbol with code such as:
 
 \c 	  mov	rax,[rel tid wrt ..gottpoff]
-\c	  mov	rcx, [fs:rax]
+\c	  mov	rcx,[fs:rax]
 
 
 \S{elfglob} \c{elf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
