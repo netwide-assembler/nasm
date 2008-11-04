@@ -19,6 +19,8 @@ since 2007.
 
 \b Support for thread-local storage in ELF32 and ELF64.  See \k{elftls}.
 
+\b Fix crash on \c{%ifmacro} without an argument.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
