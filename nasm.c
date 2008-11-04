@@ -1719,7 +1719,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             exit(1);
         }
 
-        if (passn > 1 && !global_offset_changed)
+        if ((passn > 1 && !global_offset_changed) || pass0 == 2)
             pass0++;
         else if (global_offset_changed && global_offset_changed < prev_offset_changed) {
             prev_offset_changed = global_offset_changed;
