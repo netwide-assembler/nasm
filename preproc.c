@@ -1584,7 +1584,6 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             bool found = false;
             MMacro searching, *mmac;
 
-            tline = tline->next;
             skip_white_(tline);
             tline = expand_id(tline);
             if (!tok_type_(tline, TOK_ID)) {
