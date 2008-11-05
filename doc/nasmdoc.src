@@ -3491,11 +3491,8 @@ the user.  For example:
 NASM also has preprocessor directives which allow access to
 information from external sources. Currently they include:
 
-The following preprocessor directive is supported to allow NASM to
-correctly handle output of the cpp C language preprocessor.
-
-\b\c{%line} enables NASM to correctly handle the output of the cpp
-C language preprocessor (see \k{line}).
+\b\c{%line} enables NASM to correctly handle the output of another
+preprocessor (see \k{line}).
 
 \b\c{%!} enables NASM to read in the value of an environment variable,
 which can then be used in your program (see \k{getenv}).
