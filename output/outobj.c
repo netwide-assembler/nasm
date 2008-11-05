@@ -2524,7 +2524,7 @@ struct ofmt of_obj = {
     "obj",
     NULL,
     borland_debug_arr,
-    &null_debug_form,
+    &borland_debug_form,
     obj_stdmac,
     obj_init,
     obj_set_info,

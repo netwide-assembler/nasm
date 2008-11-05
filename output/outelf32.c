@@ -299,8 +299,6 @@ static int32_t elf_sym_sect, elf_tlsie_sect;
 
 static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
-    if (of_elf.current_dfmt != &null_debug_form)
-        of_elf32.current_dfmt = of_elf.current_dfmt;
     elffp = fp;
     error = errfunc;
     evaluate = eval;
@@ -340,6 +338,13 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
          error);
 
     def_seg = seg_alloc();
+}
+
+static void elf_init_hack(FILE * fp, efunc errfunc, ldfunc ldef,
+                           evalfunc eval)
+{
+    of_elf32.current_dfmt = of_elf.current_dfmt; /* Sync debugging format */
+    elf_init(fp, errfunc, ldef, eval);
 }
 
 static void elf_cleanup(int debuginfo)
@@ -1533,14 +1538,14 @@ static struct dfmt df_stabs = {
     stabs32_cleanup
 };
 
-struct dfmt *elf32_debugs_arr[3] = { &df_stabs, &df_dwarf, NULL };
+struct dfmt *elf32_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
 
 struct ofmt of_elf32 = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf32",
     NULL,
     elf32_debugs_arr,
-    &null_debug_form,
+    &df_stabs,
     elf_stdmac,
     elf_init,
     elf_set_info,
@@ -1558,9 +1563,9 @@ struct ofmt of_elf = {
     "elf",
     NULL,
     elf32_debugs_arr,
-    &null_debug_form,
+    &df_stabs,
     elf_stdmac,
-    elf_init,
+    elf_init_hack,
     elf_set_info,
     elf_out,
     elf_deflabel,

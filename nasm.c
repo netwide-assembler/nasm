@@ -632,8 +632,6 @@ static bool process_arg(char *p, char *q)
 		report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
 			     "unrecognised output format `%s' - "
 			     "use -hf for a list", param);
-	    } else {
-		ofmt->current_dfmt = ofmt->debug_formats[0];
 	    }
 	    break;
 

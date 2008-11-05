@@ -1659,14 +1659,14 @@ static struct dfmt df_stabs = {
     stabs64_cleanup
 };
 
-struct dfmt *elf64_debugs_arr[3] = { &df_stabs, &df_dwarf, NULL };
+struct dfmt *elf64_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
 
 struct ofmt of_elf64 = {
     "ELF64 (x86_64) object files (e.g. Linux)",
     "elf64",
     NULL,
     elf64_debugs_arr,
-    &null_debug_form,
+    &df_stabs,
     elf_stdmac,
     elf_init,
     elf_set_info,

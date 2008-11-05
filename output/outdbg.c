@@ -231,7 +231,7 @@ struct ofmt of_dbg = {
     "dbg",
     NULL,
     debug_debug_arr,
-    &null_debug_form,
+    &debug_debug_form,
     NULL,
     dbg_init,
     dbg_set_info,

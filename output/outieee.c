@@ -1473,7 +1473,7 @@ struct ofmt of_ieee = {
     "ieee",
     NULL,
     ladsoft_debug_arr,
-    &null_debug_form,
+    &ladsoft_debug_form,
     NULL,
     ieee_init,
     ieee_set_info,
