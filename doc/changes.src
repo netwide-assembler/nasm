@@ -21,6 +21,8 @@ since 2007.
 
 \b Fix crash on \c{%ifmacro} without an argument.
 
+\b Correct the arguments to the \c{POPCNT} instruction.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
