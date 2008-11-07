@@ -12,9 +12,9 @@
 
 #include "rbtree.h"
 
-const struct rbtree *rb_search(const struct rbtree *tree, uint64_t key)
+struct rbtree *rb_search(struct rbtree *tree, uint64_t key)
 {
-    const struct rbtree *best = NULL;
+    struct rbtree *best = NULL;
 
     while (tree) {
 	if (tree->key == key)

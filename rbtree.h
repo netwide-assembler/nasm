@@ -14,6 +14,6 @@ struct rbtree {
 };
 
 struct rbtree *rb_insert(struct rbtree *, struct rbtree *);
-const struct rbtree *rb_search(const struct rbtree *, uint64_t);
+struct rbtree *rb_search(struct rbtree *, uint64_t);
 
 #endif /* NASM_RBTREE_H */
