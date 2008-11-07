@@ -233,9 +233,9 @@ output/outcoff.$(O): output/outcoff.c compiler.h insnsi.h nasm.h nasmlib.h \
 output/outdbg.$(O): output/outdbg.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h
 output/outelf32.$(O): output/outelf32.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
+ outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
+ outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h
 output/outmacho.$(O): output/outmacho.c compiler.h insnsi.h nasm.h nasmlib.h \

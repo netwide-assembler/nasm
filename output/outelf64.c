@@ -21,6 +21,7 @@
 #include "stdscan.h"
 #include "outform.h"
 #include "outlib.h"
+#include "rbtree.h"
 
 /* Definitions in lieu of elf.h */
 #define SHT_NULL 0			/* Inactive section header */
@@ -141,18 +142,16 @@ struct Reloc {
 };
 
 struct Symbol {
+    struct rbtree symv;	        /* symbol value and rbtree of globals */
     int32_t strpos;             /* string table position of name */
     int32_t section;            /* section ID of the symbol */
     int type;			/* symbol type */
     int other;                  /* symbol visibility */
-    int64_t value;              /* address, or COMMON variable align */
     int32_t size;               /* size of symbol */
     int32_t globnum;            /* symbol table offset if global */
-    struct Symbol *next;       	/* list of globals in each section */
     struct Symbol *nextfwd;     /* list of unresolved-size symbols */
     char *name;			/* used temporarily if in above list */
 };
-
 
 struct Section {
     struct SAA *data;
@@ -166,7 +165,7 @@ struct Section {
     struct SAA *rel;
     uint64_t rellen;
     struct Reloc *head, **tail;
-    struct Symbol *gsyms;       /* global symbols in section */
+    struct rbtree *gsyms;       /* global symbols in section */
 };
 
 #define SECT_DELTA 32
@@ -666,7 +665,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
 
     if (is_global == 2) {
         sym->size = offset;
-        sym->value = 0;
+        sym->symv.key = 0;
         sym->section = SHN_COMMON;
         /*
          * We have a common variable. Check the special text to see
@@ -675,17 +674,18 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          */
         if (special) {
             bool err;
-            sym->value = readnum(special, &err);
+            sym->symv.key = readnum(special, &err);
             if (err)
                 error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " valid number", special);
-            else if ((sym->value | (sym->value - 1)) != 2 * sym->value - 1)
+            else if ((sym->symv.key | (sym->symv.key - 1))
+		     != 2 * sym->symv.key - 1)
                 error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " power of two", special);
         }
         special_used = true;
     } else
-        sym->value = (sym->section == SHN_UNDEF ? 0 : offset);
+        sym->symv.key = (sym->section == SHN_UNDEF ? 0 : offset);
 
     if (sym->type == SYM_GLOBAL) {
         /*
@@ -702,16 +702,14 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             bsym = raa_write(bsym, segment, nglobs);
         } else if (sym->section != SHN_ABS) {
             /*
-             * This is a global symbol; so we must add it to the linked
-             * list of global symbols in its section. We'll push it on
-             * the beginning of the list, because it doesn't matter
-             * much which end we put it on and it's easier like this.
+             * This is a global symbol; so we must add it to the rbtree
+             * of global symbols in its section.
              *
              * In addition, we check the special text for symbol
              * type and size information.
              */
-            sym->next = sects[sym->section - 1]->gsyms;
-            sects[sym->section - 1]->gsyms = sym;
+	    sects[sym->section-1]->gsyms =
+		rb_insert(sects[sym->section-1]->gsyms, &sym->symv);
 
             if (special) {
                 int n = strcspn(special, " \t");
@@ -843,12 +841,13 @@ static void elf_add_reloc(struct Section *sect, int32_t segment,
  * isn't even necessarily sorted.
  */
 static void elf_add_gsym_reloc(struct Section *sect,
-                               int32_t segment, int64_t offset, int64_t pcrel,
+                               int32_t segment, uint64_t offset, int64_t pcrel,
 			       int type, bool exact)
 {
     struct Reloc *r;
     struct Section *s;
-    struct Symbol *sym, *sm;
+    struct Symbol *sym;
+    struct rbtree *srb;
     int i;
 
     /*
@@ -873,34 +872,20 @@ static void elf_add_gsym_reloc(struct Section *sect,
 	return;
     }
 
-    if (exact) {
-        /*
-         * Find a symbol pointing _exactly_ at this one.
-         */
-        for (sym = s->gsyms; sym; sym = sym->next)
-            if (sym->value == offset)
-                break;
-	if (!sym) {
-	    error(ERR_NONFATAL, "unable to find a suitable global symbol"
-		  " for this reference");
-	    return;
-	}
-    } else {
-        /*
-         * Find the nearest symbol below this one.
-         */
-        sym = NULL;
-        for (sm = s->gsyms; sm; sm = sm->next)
-            if (sm->value <= offset && (!sym || sm->value > sym->value))
-                sym = sm;
+    srb = rb_search(s->gsyms, offset);
+    if (!srb || (exact && srb->key != offset)) {
+	error(ERR_NONFATAL, "unable to find a suitable global symbol"
+	      " for this reference");
+	return;
     }
+    sym = container_of(srb, struct Symbol, symv);
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
     r->next = NULL;
 
     r->address = sect->len;
-    r->offset = offset - pcrel - sym->value;
+    r->offset = offset - pcrel - sym->symv.key;
     r->symbol = GLOBAL_TEMP_BASE + sym->globnum;
     r->type = type;
 
@@ -1432,7 +1417,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITECHAR(p, sym->type);        /* type and binding */
         WRITECHAR(p, sym->other);	/* visibility */
         WRITESHORT(p, sym->section);    /* index into section header table */
-        WRITEDLONG(p, (int64_t)sym->value); /* value of symbol */
+        WRITEDLONG(p, (int64_t)sym->symv.key); /* value of symbol */
         WRITEDLONG(p, (int64_t)sym->size);  /* size of symbol */
         saa_wbytes(s, entry, 24L);
         *len += 24;
@@ -1487,7 +1472,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         WRITECHAR(p, sym->type);        /* type and binding */
         WRITECHAR(p, sym->other);       /* visibility */
         WRITESHORT(p, sym->section);
-        WRITEDLONG(p, (int64_t)sym->value);
+        WRITEDLONG(p, (int64_t)sym->symv.key);
         WRITEDLONG(p, (int64_t)sym->size);
         saa_wbytes(s, entry, 24L);
         *len += 24;

@@ -172,9 +172,9 @@ outcoff.o: outcoff.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
 outdbg.o: outdbg.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h
 outelf32.o: outelf32.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
+ outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 outelf64.o: outelf64.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
+ outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 outieee.o: outieee.c compiler.h config.h insnsi.h nasm.h nasmlib.h outform.h \
  pptok.h preproc.h regs.h
 outmacho.o: outmacho.c compiler.h config.h insnsi.h nasm.h nasmlib.h \
