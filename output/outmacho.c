@@ -63,6 +63,7 @@ struct section {
     /* data that goes into the file */
     char sectname[16];          /* what this section is called */
     char segname[16];           /* segment this section will be in */
+    uint32_t addr;         /* in-memory address (subject to alignment) */
     uint32_t size;         /* in-memory and -file size  */
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
@@ -815,11 +816,24 @@ static void macho_calculate_sizes (void)
 
     /* count sections and calculate in-memory and in-file offsets */
     for (s = sects; s != NULL; s = s->next) {
+        uint32_t pad = 0;
+
         /* zerofill sections aren't actually written to the file */
         if ((s->flags & SECTION_TYPE) != S_ZEROFILL)
             seg_filesize += s->size;
 
-        seg_vmsize += s->size;
+        /* recalculate segment address based on alignment and vm size */
+        s->addr = seg_vmsize;
+        /* we need section alignment to calculate final section address */
+        if (s->align == -1)
+            s->align = DEFAULT_SECTION_ALIGNMENT;
+        if(s->align) {
+            uint32_t newaddr = align(s->addr, 1 << s->align);
+            pad = newaddr - s->addr;
+            s->addr = newaddr;
+        }
+
+        seg_vmsize += s->size + pad;
         ++seg_nsects;
     }
 
@@ -854,7 +868,6 @@ static void macho_write_header (void)
 
 static uint32_t macho_write_segment (uint32_t offset)
 {
-    uint32_t s_addr = 0;
     uint32_t rel_base = alignint32_t (offset + seg_filesize);
     uint32_t s_reloff = 0;
     struct section *s;
@@ -881,7 +894,7 @@ static uint32_t macho_write_segment (uint32_t offset)
     for (s = sects; s != NULL; s = s->next) {
 	fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
 	fwrite(s->segname, sizeof(s->segname), 1, machofp);
-	fwriteint32_t(s_addr, machofp);
+	fwriteint32_t(s->addr, machofp);
 	fwriteint32_t(s->size, machofp);
 
 	/* dummy data for zerofill sections or proper values */
@@ -909,8 +922,6 @@ static uint32_t macho_write_segment (uint32_t offset)
 	fwriteint32_t(s->flags, machofp);      /* flags */
 	fwriteint32_t(0, machofp);     /* reserved */
 	fwriteint32_t(0, machofp);     /* reserved */
-
-	s_addr += s->size;
     }
 
     rel_padcnt = rel_base - offset;
@@ -946,7 +957,7 @@ static void macho_write_section (void)
     struct section *s, *s2;
     struct reloc *r;
     char *rel_paddata = "\0\0\0";
-    uint8_t fi, *p, *q, blk[4];
+    uint8_t *p, *q, blk[4];
     int32_t l;
 
     for (s = sects; s != NULL; s = s->next) {
@@ -980,10 +991,10 @@ static void macho_write_section (void)
 	       offset which we already have. The linker takes care
 	       of the rest of the address.  */
 	    if (!r->ext) {
-           /* add sizes of previous sections to current offset */
-           for (s2 = sects, fi = 1;
-                s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
-               l += s2->size;
+            /* generate final address by section address and offset */
+            s2 = get_section_by_index(r->snum);
+            if(s2)
+                l += s2->addr; // else what?!?
 	    }
 
 	    /* write new offset back */
