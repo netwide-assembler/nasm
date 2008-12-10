@@ -1820,20 +1820,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 0:
                     break;
                 case 1:
-                    if (opy->segment != NO_SEG) {
-                        data = opy->offset;
-                        out(offset, segment, &data, OUT_ADDRESS, 1,
-                            opy->segment, opy->wrt);
-                    } else {
-                        *bytes = opy->offset;
-                        out(offset, segment, bytes, OUT_RAWDATA, 1,
-                            NO_SEG, NO_SEG);
-                    }
-                    s++;
-                    break;
-                case 8:
                 case 2:
                 case 4:
+                case 8:
                     data = opy->offset;
 		    warn_overflow(ea_data.bytes, opy);
                     s += ea_data.bytes;
@@ -1851,6 +1840,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 			out(offset, segment, &data, OUT_ADDRESS,
 			    ea_data.bytes, opy->segment, opy->wrt);
 		    }
+                    break;
+                default:
+                    /* Impossible! */
+                    errfunc(ERR_PANIC,
+                            "Invalid amount of bytes (%d) for offset?!",
+                            ea_data.bytes);
                     break;
                 }
                 offset += s;
