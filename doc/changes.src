@@ -23,6 +23,8 @@ since 2007.
 
 \b Correct the arguments to the \c{POPCNT} instruction.
 
+\b Fix section alignment in the Mach-O format.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
