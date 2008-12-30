@@ -449,7 +449,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    size_prob = false;
+    size_prob = 0;
 
     for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){
         int m = matches(temp, instruction, bits);
@@ -598,7 +598,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
             error(ERR_NONFATAL, "no instruction for this cpu level");
 	    break;
 	case 4:
-            error(ERR_NONFATAL, "instruction not supported in 64-bit mode");
+            error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
+		  bits);
 	    break;
 	default:
             error(ERR_NONFATAL,
@@ -2071,9 +2072,9 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
         return 3;
 
     /*
-     * Check if instruction is available in long mode
+     * Verify the appropriate long mode flag.
      */
-    if ((itemp->flags & IF_NOLONG) && (bits == 64))
+    if ((itemp->flags & (bits == 64 ? IF_NOLONG : IF_LONG)))
         return 4;
 
     /*
