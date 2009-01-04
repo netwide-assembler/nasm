@@ -179,7 +179,7 @@ static int as86_add_string(char *name)
 static void as86_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
-    int is_start = 0;
+    bool is_start = false;
     struct Symbol *sym;
 
     if (special)
@@ -188,12 +188,12 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
 
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-      if(strcmp(name, "..start")) {
-        error(ERR_NONFATAL, "custom unrecognised special symbol `%s'", name);
-        return;
-      } else {
-  is_start = 1;
-      }
+	if (strcmp(name, "..start")) {
+	    error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	    return;
+	} else {
+	    is_start = true;
+	}
     }
 
     sym = saa_wstruct(syms);
@@ -201,7 +201,7 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
     sym->strpos = as86_add_string(name);
     sym->flags = 0;
 
-    if(is_start)
+    if (is_start)
       sym->flags = SYM_ENTRY;
 
     if (segment == NO_SEG)
