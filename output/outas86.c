@@ -179,21 +179,31 @@ static int as86_add_string(char *name)
 static void as86_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
+    int is_start = 0;
     struct Symbol *sym;
 
     if (special)
         error(ERR_NONFATAL, "as86 format does not support any"
               " special symbol types");
 
+
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+      if(strcmp(name, "..start")) {
+        error(ERR_NONFATAL, "custom unrecognised special symbol `%s'", name);
         return;
+      } else {
+  is_start = 1;
+      }
     }
 
     sym = saa_wstruct(syms);
 
     sym->strpos = as86_add_string(name);
     sym->flags = 0;
+
+    if(is_start)
+      sym->flags = SYM_ENTRY;
+
     if (segment == NO_SEG)
         sym->flags |= SYM_ABSOLUTE, sym->segment = 0;
     else if (segment == stext.index)
