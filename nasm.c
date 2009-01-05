@@ -1394,37 +1394,35 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
                 case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
-                    if (pass1 == 1) {
-                        while (*value && nasm_isspace(*value))
-                            value++;
+		    while (*value && nasm_isspace(*value))
+			value++;
 
-                        switch(*value) {
-                            case '-': validid = 1; value++; break;
-                            case '+': validid = 1; value++; break;
-                            case '*': validid = 2; value++; break;
-                            default:  validid = 1; break;
-                        }
+		    switch(*value) {
+		    case '-': validid = 0; value++; break;
+		    case '+': validid = 1; value++; break;
+		    case '*': validid = 2; value++; break;
+		    default:  validid = 1; break;
+		    }
 
-                        for (i = 1; i <= ERR_WARN_MAX; i++)
-                            if (!nasm_stricmp(value, warnings[i].name))
-                                break;
-                        if (i <= ERR_WARN_MAX) {
-                            switch(validid) {
-			    case 0:
-				warning_on[i] = false;
-				break;
-			    case 1:
-				warning_on[i] = true;
-				break;
-			    case 2:
-				warning_on[i] = warning_on_global[i];
-				break;
-                            }
-                        }
-                        else
-                            report_error(ERR_NONFATAL,
-                                         "invalid warning id in WARNING directive");
-                    }
+		    for (i = 1; i <= ERR_WARN_MAX; i++)
+			if (!nasm_stricmp(value, warnings[i].name))
+			    break;
+		    if (i <= ERR_WARN_MAX) {
+			switch(validid) {
+			case 0:
+			    warning_on[i] = false;
+			    break;
+			case 1:
+			    warning_on[i] = true;
+			    break;
+			case 2:
+			    warning_on[i] = warning_on_global[i];
+			    break;
+			}
+		    }
+		    else
+			report_error(ERR_NONFATAL,
+				     "invalid warning id in WARNING directive");
                     break;
                 case D_CPU:		/* [CPU] */
                     cpu = get_cpu(value);
