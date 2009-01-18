@@ -484,7 +484,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
             type = SHT_PROGBITS;
         } else if (!nasm_stricmp(q, "nobits")) {
             type = SHT_NOBITS;
-        }
+        } else if (pass == 1) error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
+                  " declaration of section `%s'", q, name);
     }
 
     if (!strcmp(name, ".comment") ||
