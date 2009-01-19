@@ -2208,18 +2208,18 @@ This can be used, for example, with the \c{%!} construct (see
 \H{strlen} \i{String Manipulation in Macros}
 
 It's often useful to be able to handle strings in macros. NASM
-supports two simple string handling macro operators from which
+supports a few simple string handling macro operators from which
 more complex operations can be constructed.
 
 All the string operators define or redefine a value (either a string
-or a numeric value) to a single-line macro.
+or a numeric value) to a single-line macro.  When producing a string
+value, it may change the style of quoting of the input string or
+strings, and possibly use \c{\\}-escapes inside \c{`}-quoted strings.
 
 \S{strcat} \i{Concatenating Strings}: \i\c{%strcat}
 
 The \c{%strcat} operator concatenates quoted strings and assign them to
-a single-line macro.  In doing so, it may change the type of quotes
-and possibly use \c{\\}-escapes inside \c{`}-quoted strings in order to
-make sure the string is still a valid quoted string.
+a single-line macro.
 
 For example:
 
@@ -2228,9 +2228,9 @@ For example:
 ... would assign the value \c{'Alpha: 12" screen'} to \c{alpha}.
 Similarly:
 
-\c %strcat beta '"', "'"
+\c %strcat beta '"foo"\', "'bar'"
 
-... would assign the value \c{`"'`} to \c{beta}.
+... would assign the value \c{`"foo"\\'bar'`} to \c{beta}.
 
 The use of commas to separate strings is permitted but optional.
 
