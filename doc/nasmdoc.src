@@ -3082,7 +3082,7 @@ on the NASM command line (see \k{opt-p}).
 
 The \c{%pathsearch} directive takes a single-line macro name and a
 filename, and declare or redefines the specified single-line macro to
-be the include-path-resolved verson of the filename, if the file
+be the include-path-resolved version of the filename, if the file
 exists (otherwise, it is passed unchanged.)
 
 For example,
