@@ -3700,15 +3700,15 @@ started at 42 seconds after midnight on January 1, 2010 in Moscow
 assuming, of course, a properly configured environment with a correct
 clock:
 
-\c __DATE__             "2010-01-01"
-\c __TIME__             "00:00:42"
-\c __DATE_NUM__         20100101
-\c __TIME_NUM__         000042
-\c __UTC_DATE__         "2009-12-31"
-\c __UTC_TIME__         "21:00:42"
-\c __UTC_DATE_NUM__     20091231
-\c __UTC_TIME_NUM__     210042
-\c __POSIX_TIME__       1262293242
+\c       __DATE__             "2010-01-01"
+\c       __TIME__             "00:00:42"
+\c       __DATE_NUM__         20100101
+\c       __TIME_NUM__         000042
+\c       __UTC_DATE__         "2009-12-31"
+\c       __UTC_TIME__         "21:00:42"
+\c       __UTC_DATE_NUM__     20091231
+\c       __UTC_TIME_NUM__     210042
+\c       __POSIX_TIME__       1262293242
 
 
 \S{use_def} \I\c{__USE_*__}\c{__USE_}\e{package}\c{__}: Package
