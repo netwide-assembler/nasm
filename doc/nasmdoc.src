@@ -1405,27 +1405,37 @@ character, string and floating-point.
 
 A numeric constant is simply a number. NASM allows you to specify
 numbers in a variety of number bases, in a variety of ways: you can
-suffix \c{H}, \c{Q} or \c{O}, and \c{B} for \i{hex}, \i{octal} and \i{binary},
-or you can prefix \c{0x} for hex in the style of C, or you can
-prefix \c{$} for hex in the style of Borland Pascal. Note, though,
-that the \I{$, prefix}\c{$} prefix does double duty as a prefix on
-identifiers (see \k{syntax}), so a hex number prefixed with a \c{$}
-sign must have a digit after the \c{$} rather than a letter.
+suffix \c{H} or \c{X}, \c{Q} or \c{O}, and \c{B} for \i{hexadecimal},
+\i{octal} and \i{binary} respectively, or you can prefix \c{0x} for
+hexadecimal in the style of C, or you can prefix \c{$} for hexadecimal
+in the style of Borland Pascal. Note, though, that the \I{$,
+prefix}\c{$} prefix does double duty as a prefix on identifiers (see
+\k{syntax}), so a hex number prefixed with a \c{$} sign must have a
+digit after the \c{$} rather than a letter.  In addition, current
+versions of NASM accept the prefix \c{0h} for hexadecimal, \c{0o} or
+\c{0q} for octal, and \c{0b} for binary.  Please note that unlike C, a
+\c{0} prefix by itself does \e{not} imply an octal constant!
 
 Numeric constants can have underscores (\c{_}) interspersed to break
 up long strings.
 
-Some examples:
+Some examples (all producing exactly the same code):
 
-\c         mov     ax,100          ; decimal
-\c         mov     ax,0a2h         ; hex
-\c         mov     ax,$0a2         ; hex again: the 0 is required
-\c         mov     ax,0xa2         ; hex yet again
-\c         mov     ax,777q         ; octal
-\c         mov     ax,777o         ; octal again
-\c         mov     ax,10010011b    ; binary
-\c         mov     ax,1001_0011b   ; same binary constant
-
+\c         mov     ax,200          ; decimal
+\c         mov     ax,0200         ; still decimal
+\c         mov     ax,0200d        ; explicitly decimal
+\c         mov     ax,0d200        ; also decimal
+\c         mov     ax,0c8h         ; hex
+\c         mov     ax,$0c8         ; hex again: the 0 is required
+\c         mov     ax,0xc8         ; hex yet again
+\c         mov     ax,0hc8         ; still hex
+\c         mov     ax,310q         ; octal
+\c         mov     ax,310o         ; octal again
+\c         mov     ax,0o310        ; octal yet again
+\c         mov     ax,0q310        ; hex yet again
+\c         mov     ax,11001000b    ; binary
+\c         mov     ax,1100_1000b   ; same binary constant
+\c         mov     ax,0b1100_1000  ; same binary constant yet again
 
 \S{strings} \I{Strings}\i{Character Strings}
 
