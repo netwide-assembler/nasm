@@ -5558,10 +5558,10 @@ NASM supports this format, just in case it is useful, as \c{as86}.
 \c{as86} provides a default output file-name extension of \c{.o}.
 
 \c{as86} is a very simple object format (from the NASM user's point
-of view). It supports no special directives, no special symbols, no
-use of \c{SEG} or \c{WRT}, and no extensions to any standard
-directives. It supports only the three \i{standard section names}
-\i\c{.text}, \i\c{.data} and \i\c{.bss}.
+of view). It supports no special directives, no use of \c{SEG} or \c{WRT},
+and no extensions to any standard directives. It supports only the three
+\i{standard section names} \i\c{.text}, \i\c{.data} and \i\c{.bss}.  The
+only special symbol supported is \c{..start}.
 
 
 \H{rdffmt} \I{RDOFF}\i\c{rdf}: \i{Relocatable Dynamic Object File
