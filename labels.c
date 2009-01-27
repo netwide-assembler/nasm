@@ -362,7 +362,7 @@ void declare_as_global(char *label, char *special, efunc error)
     case GLOBAL_SYMBOL:
         break;
     case LOCAL_SYMBOL:
-        if (!lptr->defn.is_global & EXTERN_BIT)
+        if (!(lptr->defn.is_global & EXTERN_BIT))
             error(ERR_NONFATAL, "symbol `%s': GLOBAL directive must"
                   " appear before symbol definition", label);
         break;
