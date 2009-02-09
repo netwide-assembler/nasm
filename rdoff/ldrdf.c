@@ -37,6 +37,7 @@
 #include "collectn.h"
 #include "rdlib.h"
 #include "segtab.h"
+#include "nasmlib.h"
 
 #define LDRDF_VERSION "1.07"
 
@@ -1119,7 +1120,7 @@ void write_output(const char *filename)
         fwrite(outputseg[i].data, outputseg[i].length, 1, f);
     }
 
-    fwrite("\0\0\0\0\0\0\0\0\0\0", 10, 1, f);
+    fwritezero(10, f);
 }
 
 /* =========================================================================

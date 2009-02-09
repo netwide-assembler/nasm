@@ -25,6 +25,9 @@ efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
 static FILE *logfp;
 #endif
 
+/* Uninitialized -> all zero by C spec */
+const uint8_t zero_buffer[ZERO_BUF_SIZE];
+
 /*
  * Prepare a table of tolower() results.  This avoids function calls
  * on some platforms.
@@ -453,6 +456,26 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 }
 
 #endif
+
+size_t fwritezero(size_t bytes, FILE *fp)
+{
+    size_t count = 0;
+    size_t blksize;
+    size_t rv;
+
+    while (bytes) {
+	blksize = (bytes < ZERO_BUF_SIZE) ? bytes : ZERO_BUF_SIZE;
+
+	rv = fwrite(zero_buffer, 1, blksize, fp);
+	if (!rv)
+	    break;
+
+	count += rv;
+	bytes -= rv;
+    }
+
+    return count;
+}
 
 void standard_extension(char *inname, char *outname, char *extension,
                         efunc error)

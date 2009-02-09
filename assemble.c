@@ -130,9 +130,6 @@
 #include "insns.h"
 #include "tables.h"
 
-/* Initialized to zero by the C standard */
-static const uint8_t const_zero_buf[256];
-
 typedef struct {
     int sib_present;                 /* is a SIB byte necessary? */
     int bytes;                       /* # of bytes of offset needed */
@@ -353,7 +350,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
                     if (align) {
                         align = wsize - align;
-                        out(offset, segment, const_zero_buf,
+                        out(offset, segment, zero_buffer,
                             OUT_RAWDATA, align, NO_SEG, NO_SEG);
                     }
                     offset += e->stringlen + align;

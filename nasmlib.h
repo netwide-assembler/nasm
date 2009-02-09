@@ -329,4 +329,8 @@ extern struct dfmt *null_debug_arr[2];
 
 const char *prefix_name(int);
 
+#define ZERO_BUF_SIZE	4096
+extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
+size_t fwritezero(size_t bytes, FILE *fp);
+
 #endif

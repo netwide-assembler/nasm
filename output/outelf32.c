@@ -1106,7 +1106,7 @@ static void elf_write(void)
     fwrite("\177ELF\1\1\1", 7, 1, elffp);
     fputc(elf_osabi, elffp);
     fputc(elf_abiver, elffp);
-    fwrite("\0\0\0\0\0\0\0", 7, 1, elffp);
+    fwritezero(7, elffp);
     fwriteint16_t(1, elffp);      /* ET_REL relocatable file */
     fwriteint16_t(3, elffp);      /* EM_386 processor ID */
     fwriteint32_t(1L, elffp);      /* EV_CURRENT file format version */

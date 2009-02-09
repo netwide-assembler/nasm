@@ -880,7 +880,7 @@ static uint32_t macho_write_segment (uint32_t offset)
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
-    fwrite("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16, 1, machofp);
+    fwritezero(16, machofp);
     fwriteint32_t(0, machofp); /* in-memory offset */
     fwriteint32_t(seg_vmsize, machofp);        /* in-memory size */
     fwriteint32_t(offset, machofp);    /* in-file offset to data */
@@ -956,7 +956,6 @@ static void macho_write_section (void)
 {
     struct section *s, *s2;
     struct reloc *r;
-    char *rel_paddata = "\0\0\0";
     uint8_t *p, *q, blk[4];
     int32_t l;
 
@@ -1013,7 +1012,7 @@ static void macho_write_section (void)
     }
 
     /* pad last section up to reloc entries on int32_t boundary */
-    fwrite(rel_paddata, rel_padcnt, 1, machofp);
+    fwritezero(rel_padcnt, machofp);
 
     /* emit relocation entries */
     for (s = sects; s != NULL; s = s->next)
