@@ -789,8 +789,8 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'v':
-	    fprintf(stderr, "NASM version %s compiled on %s%s\n",
-		    nasm_version, nasm_date, nasm_compile_options);
+	    printf("NASM version %s compiled on %s%s\n",
+		   nasm_version, nasm_date, nasm_compile_options);
 	    exit(0);        /* never need usage message here */
             break;
 
