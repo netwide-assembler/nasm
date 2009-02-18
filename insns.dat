@@ -1758,9 +1758,9 @@ VMWRITE		reg64,rm64			\323\360\2\x0F\x79\110				X64,VMX,SQ
 VMXOFF		void				\3\x0F\x01\xC4					VMX
 VMXON		mem				\363\2\x0F\xC7\206				VMX
 ;# Extended Page Tables VMX instructions
-INVEPT		reg32,mem			[rm: 66 0f 38 80 /r]			VMX,SO,NOLONG
+INVEPT		reg32,mem			[rm: 66 0f 38 80 /r]				VMX,SO,NOLONG
 INVEPT		reg64,mem			[rm: o64nw 66 0f 38 80 /r]			VMX,SO,LONG
-INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]			VMX,SO,NOLONG
+INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]				VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
 
 ;# Tejas New Instructions (SSSE3)
@@ -2221,7 +2221,7 @@ VAESDEC		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
 VAESDECLAST	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
 VAESDECLAST	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
 VAESIMC		xmmreg,xmmrm			[rm:	vex.128.66.0f38 db /r]			AVX,SANDYBRIDGE,SO
-VAESKEYGENASSIST	xmmreg,xmmrm,imm	[rmi:	vex.128.66.0f3a df /r ib]		AVX,SANDYBRIDGE,SO
+VAESKEYGENASSIST xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a df /r ib]		AVX,SANDYBRIDGE,SO
 
 ;# Intel AVX instructions
 VADDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
