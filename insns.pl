@@ -676,7 +676,7 @@ sub byte_code_compile($) {
 		    $m = 3;
 		} elsif ($oq =~ /^m([0-9]+)$/) {
 		    $m = $1+0;
-		} elsif ($oq eq 'nds' || $oq eq 'ndd') {
+		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
 		    if (!defined($oppos{'v'})) {
 			die "$fname: $line: vex.$oq without 'v' operand\n";
 		    }
