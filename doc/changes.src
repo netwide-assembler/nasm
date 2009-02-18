@@ -25,6 +25,8 @@ since 2007.
 
 \b Fix section alignment in the Mach-O format.
 
+\b Update AVX support to version 5 of the Intel specification.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
