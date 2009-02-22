@@ -3273,12 +3273,11 @@ VZEROALL	void				[	vex.256.0f 77]				AVX,SANDYBRIDGE
 VZEROUPPER	void				[	vex.128.0f 77]				AVX,SANDYBRIDGE
 
 ;# Intel Carry-Less Multiplication instructions (CLMUL)
-; Again, no idea what CPU flag for these...
-PCLMULLQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 00]			SSE,SANDYBRIDGE,SO
-PCLMULHQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 01]			SSE,SANDYBRIDGE,SO
-PCLMULLQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 10]			SSE,SANDYBRIDGE,SO
-PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 11]			SSE,SANDYBRIDGE,SO
-PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,SANDYBRIDGE,SO
+PCLMULLQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 00]			SSE,WESTMERE,SO
+PCLMULHQLQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 01]			SSE,WESTMERE,SO
+PCLMULLQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 10]			SSE,WESTMERE,SO
+PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 11]			SSE,WESTMERE,SO
+PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,WESTMERE,SO
 
 ;# Intel Fused Multiply-Add instructions (FMA)
 VFMADD132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
