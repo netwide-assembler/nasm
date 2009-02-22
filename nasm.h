@@ -612,6 +612,7 @@ enum prefixes {			/* instruction prefixes */
     P_A16 = PREFIX_ENUM_START, P_A32, P_A64, P_ASP,
     P_LOCK, P_O16, P_O32, P_O64, P_OSP,
     P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES,
+    P_WAIT,
     PREFIX_ENUM_LIMIT
 };
 
@@ -673,6 +674,7 @@ typedef struct extop {          /* extended operand */
    Note that LOCK and REP are in the same slot.  This is
    an x86 architectural constraint. */
 enum prefix_pos {
+    PPS_WAIT,			/* WAIT (technically not a prefix!) */
     PPS_LREP,			/* Lock or REP prefix */
     PPS_SEG,			/* Segment override prefix */
     PPS_OSIZE,			/* Operand size prefix */

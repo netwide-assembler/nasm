@@ -511,8 +511,8 @@ void standard_extension(char *inname, char *outname, char *extension,
  * Common list of prefix names
  */
 static const char *prefix_names[] = {
-    "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
-    "repnz", "repz", "times"
+    "a16", "a32", "a64", "asp", "lock", "o16", "o32", "o64", "osp",
+    "rep", "repe", "repne", "repnz", "repz", "times", "wait"
 };
 
 const char *prefix_name(int token)

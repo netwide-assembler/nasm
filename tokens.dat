@@ -18,6 +18,7 @@ repne
 repnz
 repz
 times
+wait
 
 % TOKEN_SPECIAL, 0, S_*
 abs

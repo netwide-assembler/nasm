@@ -46,6 +46,7 @@ struct prefix_info {
     uint8_t asp;		/* Address size prefix present */
     uint8_t rep;		/* Rep prefix present */
     uint8_t seg;		/* Segment override prefix present */
+    uint8_t wait;		/* WAIT "prefix" present */
     uint8_t lock;		/* Lock prefix present */
     uint8_t vex[3];		/* VEX prefix present */
     uint8_t vex_m;		/* VEX.M field */
@@ -370,6 +371,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     uint8_t *origdata = data;
     bool a_used = false, o_used = false;
     enum prefixes drep = 0;
+    enum prefixes dwait = 0;
     uint8_t lock = prefix->lock;
     int osize = prefix->osize;
     int asize = prefix->asize;
@@ -396,6 +398,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
         drep = P_REPNE;
     else if (prefix->rep == 0xF3)
         drep = P_REP;
+
+    dwait = prefix->wait ? P_WAIT : 0;
 
     while ((c = *r++) != 0) {
 	op1 = (c & 3) + ((opex & 1) << 2);
@@ -840,6 +844,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	case 0340:
 	    return false;
 
+	case 0341:
+	    if (prefix->wait != 0x9B)
+		return false;
+	    dwait = 0;
+	    break;
+
 	case4(0344):
 	    ins->oprs[0].basereg = (*data++ >> 3) & 7;
 	    break;
@@ -919,6 +929,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    return false;
         ins->prefixes[PPS_LREP] = drep;
     }
+    ins->prefixes[PPS_WAIT] = dwait;
     if (!o_used) {
 	if (osize != ((segsize == 16) ? 16 : 32)) {
 	    enum prefixes pfx = 0;
@@ -993,6 +1004,10 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	case 0xF2:
 	case 0xF3:
             prefix.rep = *data++;
+	    break;
+
+	case 0x9B:
+	    prefix.wait = *data++;
 	    break;
 
 	case 0xF0:
@@ -1173,41 +1188,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
      *      the return value is "sane."  Maybe a macro wrapper could
      *      be used for that purpose.
      */
-    for (i = 0; i < MAXPREFIX; i++)
-        switch (ins.prefixes[i]) {
-	case P_LOCK:
-	    slen += snprintf(output + slen, outbufsize - slen, "lock ");
-	    break;
-        case P_REP:
-            slen += snprintf(output + slen, outbufsize - slen, "rep ");
-            break;
-        case P_REPE:
-            slen += snprintf(output + slen, outbufsize - slen, "repe ");
-            break;
-        case P_REPNE:
-            slen += snprintf(output + slen, outbufsize - slen, "repne ");
-            break;
-        case P_A16:
-            slen += snprintf(output + slen, outbufsize - slen, "a16 ");
-            break;
-        case P_A32:
-            slen += snprintf(output + slen, outbufsize - slen, "a32 ");
-            break;
-        case P_A64:
-            slen += snprintf(output + slen, outbufsize - slen, "a64 ");
-            break;
-        case P_O16:
-            slen += snprintf(output + slen, outbufsize - slen, "o16 ");
-            break;
-        case P_O32:
-            slen += snprintf(output + slen, outbufsize - slen, "o32 ");
-            break;
-        case P_O64:
-            slen += snprintf(output + slen, outbufsize - slen, "o64 ");
-            break;
-	default:
-	    break;
-        }
+    for (i = 0; i < MAXPREFIX; i++) {
+	const char *prefix = prefix_name(ins.prefixes[i]);
+	if (prefix)
+	    slen += snprintf(output+slen, outbufsize-slen, "%s ", prefix);
+    }
 
     i = (*p)->opcode;
     if (i >= FIRST_COND_OPCODE)

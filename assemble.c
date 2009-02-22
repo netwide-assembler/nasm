@@ -100,6 +100,7 @@
  *                 \336-\337 are still listed as prefixes in the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
+ * \341		 - this instruction needs a WAIT "prefix"
  * \344,\345     - the PUSH/POP (respectively) codes for CS, DS, ES, SS
  *                 (POP is never used for CS) depending on operand 0
  * \346,\347     - the second byte of PUSH/POP codes for FS, GS, depending
@@ -464,6 +465,9 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                     for (j = 0; j < MAXPREFIX; j++) {
                         uint8_t c = 0;
                         switch (instruction->prefixes[j]) {
+			case P_WAIT:
+			    c = 0x9B;
+			    break;
                         case P_LOCK:
                             c = 0xF0;
                             break;
@@ -1022,6 +1026,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             else
                 length += ins->oprs[0].offset;
             break;
+
+	case 0341:
+	    if (!ins->prefixes[PPS_WAIT])
+		ins->prefixes[PPS_WAIT] = P_WAIT;
+	    break;
 
 	case4(0344):
             length++;
@@ -1673,6 +1682,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 offset += size;
             }
             break;
+
+	case 0341:
+	    break;
 
         case 0344:
         case 0345:

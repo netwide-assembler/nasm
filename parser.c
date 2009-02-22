@@ -46,6 +46,8 @@ void parser_global_info(struct ofmt *output, struct location * locp)
 static int prefix_slot(enum prefixes prefix)
 {
     switch (prefix) {
+    case P_WAIT:
+	return PPS_WAIT;
     case R_CS:
     case R_DS:
     case R_SS:
