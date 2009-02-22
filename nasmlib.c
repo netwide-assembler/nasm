@@ -597,7 +597,7 @@ int src_get(int32_t *xline, char **xname)
     return 0;
 }
 
-char *nasm_strcat(char *one, char *two)
+char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;
     int l1 = strlen(one);

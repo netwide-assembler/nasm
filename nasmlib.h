@@ -321,7 +321,7 @@ int32_t src_get_linnum(void);
  */
 int src_get(int32_t *xline, char **xname);
 
-char *nasm_strcat(char *one, char *two);
+char *nasm_strcat(const char *one, const char *two);
 
 void null_debug_routine(const char *directive, const char *params);
 extern struct dfmt null_debug_form;
