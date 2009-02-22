@@ -175,8 +175,6 @@ extern struct ofmt of_elf;
 
 #define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
 
-static const char align_str[SEG_ALIGN] = "";    /* ANSI will pad this with 0s */
-
 static struct ELF_SECTDATA {
     void *data;
     int32_t len;
@@ -1233,7 +1231,7 @@ static void elf_write(void)
                                loclen, 0, 0, 1, 0);
 
     }
-    fwrite(align_str, align, 1, elffp);
+    fwritezero(align, elffp);
 
     /*
      * Now output the sections.
@@ -1434,7 +1432,7 @@ static void elf_write_sections(void)
                 saa_fpwrite(elf_sects[i].data, elffp);
             else
                 fwrite(elf_sects[i].data, len, 1, elffp);
-            fwrite(align_str, align, 1, elffp);
+            fwritezero(align, elffp);
         }
 }
 
