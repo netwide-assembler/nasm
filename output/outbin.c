@@ -365,12 +365,12 @@ static void bin_cleanup(int debuginfo)
 
     /* Make sure we have an origin and a start address for the first section. */
     if (origin_defined) {
-	if (section->flags & START_DEFINED) {
+	if (sections->flags & START_DEFINED) {
             /* Make sure this section doesn't begin before the origin. */
             if (sections->start < origin)
                 error(ERR_FATAL|ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
-	} else if (section->flags & ALIGN_DEFINED) {
+	} else if (sections->flags & ALIGN_DEFINED) {
             sections->start = ((origin + sections->align - 1) &
                                ~(sections->align - 1));
 	} else {
