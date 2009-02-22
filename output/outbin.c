@@ -247,10 +247,9 @@ static void bin_cleanup(int debuginfo)
         }
         /* Do some special pre-processing on nobits sections' attributes. */
         if (s->flags & (START_DEFINED | ALIGN_DEFINED | FOLLOWS_DEFINED)) {     /* Check for a mixture of real and virtual section attributes. */
-            if (s->
-                flags & (VSTART_DEFINED | VALIGN_DEFINED |
-                         VFOLLOWS_DEFINED))
-                error(ERR_FATAL,
+            if (s->flags & (VSTART_DEFINED | VALIGN_DEFINED |
+			    VFOLLOWS_DEFINED))
+                error(ERR_FATAL|ERR_NOFILE,
                       "cannot mix real and virtual attributes"
                       " in nobits section (%s)", s->name);
             /* Real and virtual attributes mean the same thing for nobits sections. */
@@ -321,11 +320,11 @@ static void bin_cleanup(int debuginfo)
              s && strcmp(s->name, g->follows);
              sp = &s->next, s = s->next) ;
         if (!s)
-            error(ERR_FATAL, "section %s follows an invalid or"
+            error(ERR_FATAL|ERR_NOFILE, "section %s follows an invalid or"
                   " unknown section (%s)", g->name, g->follows);
         if (s->next && (s->next->flags & FOLLOWS_DEFINED) &&
             !strcmp(s->name, s->next->follows))
-            error(ERR_FATAL, "sections %s and %s can't both follow"
+            error(ERR_FATAL|ERR_NOFILE, "sections %s and %s can't both follow"
                   " section %s", g->name, s->next->name, s->name);
         /* Find the end of the current follows group (gs). */
         for (gsp = &g->next, gs = g->next;
@@ -365,21 +364,18 @@ static void bin_cleanup(int debuginfo)
     /* Step 3: Compute start addresses for all progbits sections. */
 
     /* Make sure we have an origin and a start address for the first section. */
-    if (origin_defined)
-        switch (sections->flags & (START_DEFINED | ALIGN_DEFINED)) {
-        case START_DEFINED | ALIGN_DEFINED:
-        case START_DEFINED:
+    if (origin_defined) {
+	if (section->flags & START_DEFINED) {
             /* Make sure this section doesn't begin before the origin. */
             if (sections->start < origin)
-                error(ERR_FATAL, "section %s begins"
+                error(ERR_FATAL|ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
-            break;
-        case ALIGN_DEFINED:
+	} else if (section->flags & ALIGN_DEFINED) {
             sections->start = ((origin + sections->align - 1) &
                                ~(sections->align - 1));
-            break;
-        case 0:
+	} else {
             sections->start = origin;
+	}
     } else {
         if (!(sections->flags & START_DEFINED))
             sections->start = 0;
@@ -428,11 +424,14 @@ static void bin_cleanup(int debuginfo)
         pend = g->start + g->length;
         /* Check for section overlap. */
         if (s) {
-            if (g->start > s->start)
-                error(ERR_FATAL, "sections %s ~ %s and %s overlap!",
+	    if (s->start < origin)
+		error(ERR_FATAL|ERR_NOFILE, "section %s beings before program origin",
+		      s->name);
+	    if (g->start > s->start)
+                error(ERR_FATAL|ERR_NOFILE, "sections %s ~ %s and %s overlap!",
                       gs->name, g->name, s->name);
             if (pend > s->start)
-                error(ERR_FATAL, "sections %s and %s overlap!",
+                error(ERR_FATAL|ERR_NOFILE, "sections %s and %s overlap!",
                       g->name, s->name);
         }
         /* Remember this section as the latest >0 length section. */
@@ -445,11 +444,13 @@ static void bin_cleanup(int debuginfo)
     for (s = sections; s->next; s = s->next) ;
     s->next = nobits;
     last_progbits = s;
-    /* Scan for sections that don't have a vstart address.  If we find one we'll
-     * attempt to compute its vstart.  If we can't compute the vstart, we leave
-     * it alone and come back to it in a subsequent scan.  We continue scanning
-     * and re-scanning until we've gone one full cycle without computing any
-     * vstarts. */
+    /*
+     * Scan for sections that don't have a vstart address.  If we find
+     * one we'll attempt to compute its vstart.  If we can't compute
+     * the vstart, we leave it alone and come back to it in a
+     * subsequent scan.  We continue scanning and re-scanning until
+     * we've gone one full cycle without computing any vstarts.
+     */
     do {                        /* Do one full scan of the sections list. */
         for (h = 0, g = sections; g; g = g->next) {
             if (g->flags & VSTART_DEFINED)
@@ -459,13 +460,14 @@ static void bin_cleanup(int debuginfo)
                 for (s = sections; s && strcmp(g->vfollows, s->name);
                      s = s->next) ;
                 if (!s)
-                    error(ERR_FATAL,
+                    error(ERR_FATAL|ERR_NOFILE,
                           "section %s vfollows unknown section (%s)",
                           g->name, g->vfollows);
             } else if (g->ifollows != NULL)
                 for (s = sections; s && (s != g->ifollows); s = s->next) ;
-            /* The .bss section is the only one with ifollows = NULL.  In this case we
-             * implicitly follow the last progbits section.  */
+            /* The .bss section is the only one with ifollows = NULL.
+	       In this case we implicitly follow the last progbits
+	       section.  */
             else
                 s = last_progbits;
 
@@ -476,9 +478,8 @@ static void bin_cleanup(int debuginfo)
                     g->flags |= VALIGN_DEFINED;
                 }
                 /* Compute the vstart address. */
-                g->vstart =
-                    (s->vstart + s->length + g->valign - 1) & ~(g->valign -
-                                                                1);
+                g->vstart = (s->vstart + s->length + g->valign - 1)
+		    & ~(g->valign - 1);
                g->flags |= VSTART_DEFINED;
                 h++;
                 /* Start and vstart mean the same thing for nobits sections. */
@@ -499,7 +500,7 @@ static void bin_cleanup(int debuginfo)
         }
     }
     if (h)
-        error(ERR_FATAL, "circular vfollows path detected");
+        error(ERR_FATAL|ERR_NOFILE, "circular vfollows path detected");
 
 #ifdef DEBUG
     fprintf(stdout,
