@@ -1548,7 +1548,7 @@ MOVDQU		xmmreg,xmmreg			\363\2\x0F\x6F\110				WILLAMETTE,SSE2
 MOVDQU		mem,xmmreg			\363\2\x0F\x7F\101				WILLAMETTE,SSE2,SO
 MOVDQU		xmmreg,mem			\363\2\x0F\x6F\110				WILLAMETTE,SSE2,SO
 MOVDQU		xmmreg,xmmreg			\363\2\x0F\x7F\110				WILLAMETTE,SSE2
-MOVDQ2Q		mmxreg,xmmreg			\360\332\2\x0F\xD6\110				WILLAMETTE,SSE2
+MOVDQ2Q		mmxreg,xmmreg			\362\2\x0F\xD6\110				WILLAMETTE,SSE2
 MOVQ		xmmreg,xmmreg			\363\2\x0F\x7E\110				WILLAMETTE,SSE2
 MOVQ		xmmreg,xmmreg			\361\2\x0F\xD6\110				WILLAMETTE,SSE2
 MOVQ		mem,xmmreg			\361\2\x0F\xD6\101				WILLAMETTE,SSE2,SQ
@@ -1562,7 +1562,7 @@ PACKUSWB	xmmreg,xmmrm			\361\2\x0F\x67\110				WILLAMETTE,SSE2,SO
 PADDB		xmmreg,xmmrm			\361\2\x0F\xFC\110				WILLAMETTE,SSE2,SO
 PADDW		xmmreg,xmmrm			\361\2\x0F\xFD\110				WILLAMETTE,SSE2,SO
 PADDD		xmmreg,xmmrm			\361\2\x0F\xFE\110				WILLAMETTE,SSE2,SO
-PADDQ		mmxreg,mmxrm			\360\323\2\x0F\xD4\110				WILLAMETTE,SSE2,SO
+PADDQ		mmxreg,mmxrm			\360\2\x0F\xD4\110				WILLAMETTE,MMX,SQ
 PADDQ		xmmreg,xmmrm			\361\2\x0F\xD4\110				WILLAMETTE,SSE2,SO
 PADDSB		xmmreg,xmmrm			\361\2\x0F\xEC\110				WILLAMETTE,SSE2,SO
 PADDSW		xmmreg,xmmrm			\361\2\x0F\xED\110				WILLAMETTE,SSE2,SO
@@ -1600,8 +1600,8 @@ PSHUFD		xmmreg,xmmreg,imm		\361\2\x0F\x70\110\22				WILLAMETTE,SSE2,SB,AR2
 PSHUFD		xmmreg,mem,imm			\361\2\x0F\x70\110\22				WILLAMETTE,SSE2,SM2,SB,AR2
 PSHUFHW		xmmreg,xmmreg,imm		\363\2\x0F\x70\110\22				WILLAMETTE,SSE2,SB,AR2
 PSHUFHW		xmmreg,mem,imm			\363\2\x0F\x70\110\22				WILLAMETTE,SSE2,SM2,SB,AR2
-PSHUFLW		xmmreg,xmmreg,imm		\360\332\2\x0F\x70\110\22			WILLAMETTE,SSE2,SB,AR2
-PSHUFLW		xmmreg,mem,imm			\360\332\2\x0F\x70\110\22			WILLAMETTE,SSE2,SM2,SB,AR2
+PSHUFLW		xmmreg,xmmreg,imm		\362\2\x0F\x70\110\22				WILLAMETTE,SSE2,SB,AR2
+PSHUFLW		xmmreg,mem,imm			\362\2\x0F\x70\110\22				WILLAMETTE,SSE2,SM2,SB,AR2
 PSLLDQ		xmmreg,imm			\361\2\x0F\x73\207\25				WILLAMETTE,SSE2,SB,AR1
 PSLLW		xmmreg,xmmrm			\361\2\x0F\xF1\110				WILLAMETTE,SSE2,SO
 PSLLW		xmmreg,imm			\361\2\x0F\x71\206\25				WILLAMETTE,SSE2,SB,AR1
@@ -1805,9 +1805,9 @@ MOVNTSD		mem,xmmreg			\362\2\x0F\x2B\101				SSE4A,AMD,SQ
 MOVNTSS		mem,xmmreg			\363\2\x0F\x2B\101				SSE4A,AMD,SD
 
 ;# New instructions in Barcelona
-LZCNT		reg16,rm16			\320\363\2\x0F\xBD\110				P6,AMD
-LZCNT		reg32,rm32			\321\363\2\x0F\xBD\110				P6,AMD
-LZCNT		reg64,rm64			\324\363\2\x0F\xBD\110				P6,AMD
+LZCNT		reg16,rm16			\320\333\2\x0F\xBD\110				P6,AMD
+LZCNT		reg32,rm32			\321\333\2\x0F\xBD\110				P6,AMD
+LZCNT		reg64,rm64			\324\333\2\x0F\xBD\110				X64,AMD
 
 ;# Penryn New Instructions (SSE4.1)
 BLENDPD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x0D\110\26			SSE41
@@ -1877,9 +1877,9 @@ PCMPESTRM	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x60\110\26			SSE42
 PCMPISTRI	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x63\110\26			SSE42
 PCMPISTRM	xmmreg,xmmrm,imm		\361\3\x0F\x3A\x62\110\26			SSE42
 PCMPGTQ		xmmreg,xmmrm			\361\3\x0F\x38\x37\110				SSE42
-POPCNT		reg16,rm16			\320\363\2\x0F\xB8\110				NEHALEM,SW
-POPCNT		reg32,rm32			\321\363\2\x0F\xB8\110				NEHALEM,SD
-POPCNT		reg64,rm64			\324\363\2\x0F\xB8\110				NEHALEM,SQ,X64
+POPCNT		reg16,rm16			\320\333\2\x0F\xB8\110				NEHALEM,SW
+POPCNT		reg32,rm32			\321\333\2\x0F\xB8\110				NEHALEM,SD
+POPCNT		reg64,rm64			\324\333\2\x0F\xB8\110				NEHALEM,SQ,X64
 
 ;# AMD SSE5 instructions
 
