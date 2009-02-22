@@ -27,6 +27,12 @@ since 2007.
 
 \b Update AVX support to version 5 of the Intel specification.
 
+\b Fix the handling of accesses to context-local macros from higher
+  levels in the context stack.
+
+\b Treat \c{WAIT} as a prefix rather than as an instruction, thereby
+  allowing constructs like \c{O16 FSAVE} to work correctly.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
