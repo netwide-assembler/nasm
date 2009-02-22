@@ -123,6 +123,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_NEHALEM 0x0B000000UL  /* Nehalem instruction */
 #define IF_WESTMERE 0x0C000000UL   /* Westmere instruction */
 #define IF_SANDYBRIDGE 0x0D000000UL /* Sandy Bridge instruction */
+#define IF_FUTURE 0x0E000000UL	/* Future processor (not yet disclosed) */
 #define IF_X64	  (IF_LONG|IF_X86_64)
 #define IF_IA64   0x0F000000UL  /* IA64 instructions (in x86 mode) */
 #define IF_CYRIX  0x10000000UL  /* Cyrix-specific instruction */

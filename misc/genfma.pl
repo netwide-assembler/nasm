@@ -30,13 +30,13 @@ foreach $pi ( sort(keys(%packed_insns)) ) {
 		"${mm}reg,${mm}reg,${mm}rm",
 		sprintf("[rvm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
 			$ww, $w, $op),
-		"FMA,SANDYBRIDGE,${sx}";
+		"FMA,FUTURE,${sx}";
 		printf "%-15s %-31s %-47s %s\n",
 		"\U${pi}${o}${suf}",
 		"${mm}reg,${mm}rm",
 		sprintf("[r+vm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
 			$ww, $w, $op),
-		"FMA,SANDYBRIDGE,${sx}";
+		"FMA,FUTURE,${sx}";
 	    }
 	}
 	$op++;
@@ -58,13 +58,13 @@ foreach $si ( sort(keys(%scalar_insns)) ) {
 		"${mm}reg,${mm}reg,${mm}rm",
 		sprintf("[rvm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
 			$ww, $w, $op),
-		"FMA,SANDYBRIDGE,${sx}";
+		"FMA,FUTURE,${sx}";
 		printf "%-15s %-31s %-47s %s\n",
 		"\U${si}${o}${suf}",
 		"${mm}reg,${mm}rm",
 		sprintf("[r+vm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
 			$ww, $w, $op),
-		"FMA,SANDYBRIDGE,${sx}";
+		"FMA,FUTURE,${sx}";
 	    }
 	}
 	$op++;
