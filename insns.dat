@@ -3279,6 +3279,18 @@ PCLMULLQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 10]			SSE,WESTMERE,SO
 PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 11]			SSE,WESTMERE,SO
 PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,WESTMERE,SO
 
+;# Intel AVX Carry-Less Multiplication instructions (CLMUL)
+VPCLMULLQLQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE,SO
+VPCLMULLQLQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE,SO
+VPCLMULHQLQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 01]		AVX,SANDYBRIDGE,SO
+VPCLMULHQLQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 01]		AVX,SANDYBRIDGE,SO
+VPCLMULLQHQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,SANDYBRIDGE,SO
+VPCLMULLQHQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,SANDYBRIDGE,SO
+VPCLMULHQHQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE,SO
+VPCLMULHQHQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE,SO
+VPCLMULQDQ	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE,SO
+VPCLMULQDQ	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE,SO
+
 ;# Intel Fused Multiply-Add instructions (FMA)
 VFMADD132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
 VFMADD132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
