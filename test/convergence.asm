@@ -32,3 +32,6 @@ corge1:
 add eax, corge2 - corge1
 times 124 nop
 corge2:
+
+; this needs to actually *work*...
+jmp 12345
