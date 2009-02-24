@@ -263,7 +263,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
 
     isize = calcsize(segment, offset, bits, ins, code);
 
-    if (ins->oprs[0].segment == NO_SEG)
+    if (passn == 1 && ins->oprs[0].segment == NO_SEG)
         /* Be optimistic in pass 1 */
         return true;
 
