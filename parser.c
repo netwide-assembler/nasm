@@ -737,6 +737,7 @@ restart_parse:
                     return result;
                 } else {
                     if (e->type == EXPR_UNKNOWN) {
+                        result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
                         o = 0;  /* doesn't matter what */
                         result->oprs[operand].wrt = NO_SEG;     /* nor this */
                         result->oprs[operand].segment = NO_SEG; /* or this */
@@ -818,9 +819,16 @@ restart_parse:
 
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 result->oprs[operand].type |= IMMEDIATE;
+                result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
                 result->oprs[operand].offset = 0;       /* don't care */
                 result->oprs[operand].segment = NO_SEG; /* don't care again */
                 result->oprs[operand].wrt = NO_SEG;     /* still don't care */
+
+                if(optimizing >= 0 && !(result->oprs[operand].type & STRICT))
+                {
+                    /* Be optimistic */
+                    result->oprs[operand].type |= SBYTE16 | SBYTE32 | SBYTE64;
+                }
             } else if (is_reloc(value)) {       /* it's immediate */
                 result->oprs[operand].type |= IMMEDIATE;
                 result->oprs[operand].offset = reloc_value(value);

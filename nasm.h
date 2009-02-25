@@ -654,6 +654,8 @@ typedef struct operand {	/* operand to an instruction */
 
 #define OPFLAG_FORWARD		1       /* operand is a forward reference */
 #define OPFLAG_EXTERN		2       /* operand is an external reference */
+#define OPFLAG_UNKNOWN		4	/* operand is an unknown reference */
+					/* (always a forward reference also) */
 
 typedef struct extop {          /* extended operand */
     struct extop *next;         /* linked list */
