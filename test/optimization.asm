@@ -1,6 +1,6 @@
-;Testname=O0; Arguments=-O0 -fbin -oconvergence.bin; Files=stdout stderr convergence.bin
-;Testname=O1; Arguments=-O1 -fbin -oconvergence.bin; Files=stdout stderr convergence.bin
-;Testname=Ox; Arguments=-Ox -fbin -oconvergence.bin; Files=stdout stderr convergence.bin
+;Testname=O0; Arguments=-O0 -fbin -ooptimization.bin; Files=stdout stderr optimization.bin
+;Testname=O1; Arguments=-O1 -fbin -ooptimization.bin; Files=stdout stderr optimization.bin
+;Testname=Ox; Arguments=-Ox -fbin -ooptimization.bin; Files=stdout stderr optimization.bin
 
 BITS 32
 
