@@ -46,5 +46,29 @@ times 127 - 3 nop
 calog2:
 
 
+; Simple
+lea eax, [eax+dolug2-dolug1]
+dolug1:
+times 127 nop
+dolug2:
+
+; Must start short
+ealog1:
+lea eax, [eax+ealog2-ealog1]
+times 127 - 3 nop
+ealog2:
+
+; Must stay long!
+lea eax, [eax+folug2-folug1]
+folug1:
+times 128 nop
+folug2:
+
+; Must stay long!
+galog1:
+lea eax, [eax+galog2-galog1]
+times 128 - 3 nop
+galog2:
+
 ; Do not confuse forward references and segmentless addresses!
 jmp 12345
