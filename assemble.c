@@ -2103,7 +2103,7 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 static ea *process_ea(operand * input, ea * output, int bits,
 		      int addrbits, int rfield, int32_t rflags)
 {
-    bool forw_ref = !!(input->opflags & OPFLAG_FORWARD);
+    bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
 
     output->rip = false;
 
