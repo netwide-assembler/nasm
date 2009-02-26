@@ -1539,23 +1539,17 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                           false, isext, ofmt,
                                           report_error);
                             } else if (output_ins.operands == 2
-                                       && (output_ins.oprs[0].
-                                           type & IMMEDIATE)
+                                       && (output_ins.oprs[0].type & IMMEDIATE)
                                        && (output_ins.oprs[0].type & COLON)
-                                       && output_ins.oprs[0].segment ==
-                                       NO_SEG
+                                       && output_ins.oprs[0].segment == NO_SEG
                                        && output_ins.oprs[0].wrt == NO_SEG
-                                       && (output_ins.oprs[1].
-                                           type & IMMEDIATE)
-                                       && output_ins.oprs[1].segment ==
-                                       NO_SEG
-                                       && output_ins.oprs[1].wrt ==
-                                       NO_SEG) {
+                                       && (output_ins.oprs[1].type & IMMEDIATE)
+                                       && output_ins.oprs[1].segment == NO_SEG
+                                       && output_ins.oprs[1].wrt == NO_SEG) {
                                 def_label(output_ins.label,
-                                          output_ins.oprs[0].
-                                          offset | SEG_ABS,
-                                          output_ins.oprs[1].offset, NULL,
-                                          false, false, ofmt,
+                                          output_ins.oprs[0].offset | SEG_ABS,
+                                          output_ins.oprs[1].offset,
+					  NULL, false, false, ofmt,
                                           report_error);
                             } else
                                 report_error(ERR_NONFATAL,
