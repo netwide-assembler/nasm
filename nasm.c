@@ -1530,9 +1530,8 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             if (output_ins.operands == 1 &&
                                 (output_ins.oprs[0].type & IMMEDIATE) &&
                                 output_ins.oprs[0].wrt == NO_SEG) {
-                                int isext =
-                                    output_ins.oprs[0].
-                                    opflags & OPFLAG_EXTERN;
+                                bool isext = !!(output_ins.oprs[0].opflags
+						& OPFLAG_EXTERN);
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].segment,
                                           output_ins.oprs[0].offset, NULL,
