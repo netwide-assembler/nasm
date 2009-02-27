@@ -88,5 +88,17 @@ add ecx,onetwentynine		; not sbyte (backward)
 onetwentyseven	equ 127
 onetwentyeight	equ 128
 
+; Simple
+add eax, holug2-holug1
+holug1:
+times 127 nop
+holug2:
+
+; Must start short
+ialog1:
+add eax, ialog2-ialog1
+times 127 - 3 nop
+ialog2:
+	
 ; Do not confuse forward references and segmentless addresses!
 jmp 12345
