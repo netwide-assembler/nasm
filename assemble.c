@@ -758,7 +758,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 static bool possible_sbyte(operand *o)
 {
     return o->wrt == NO_SEG && o->segment == NO_SEG &&
-	!(o->opflags & OPFLAG_FORWARD) &&
+	!(o->opflags & OPFLAG_UNKNOWN) &&
 	optimizing >= 0 && !(o->type & STRICT);
 }
 
