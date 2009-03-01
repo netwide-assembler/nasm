@@ -1109,7 +1109,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
 	default:
 	    errfunc(ERR_PANIC, "internal instruction table corrupt"
-		    ": instruction code 0x%02X given", c);
+		    ": instruction code \\%o (0x%02X) given", c, c);
 	    break;
 	}
     }
@@ -1869,7 +1869,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
 	default:
 	    errfunc(ERR_PANIC, "internal instruction table corrupt"
-		    ": instruction code 0x%02X given", c);
+		    ": instruction code \\%o (0x%02X) given", c, c);
 	    break;
         }
     }
