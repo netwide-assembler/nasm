@@ -78,7 +78,7 @@ int vsnprintf(char *, size_t, const char *, va_list);
 #endif
 
 #ifndef __cplusplus		/* C++ has false, true, bool as keywords */
-# ifdef HAVE_STDBOOL_H
+# if defined(HAVE_STDBOOL_H) && defined(HAVE_WORKING_BOOL)
 #  include <stdbool.h>
 # else
 /* This is sort of dangerous, since casts will behave different than
