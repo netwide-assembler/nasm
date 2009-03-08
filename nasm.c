@@ -1495,20 +1495,20 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                  && forwref->lineno == globallineno);
                     } else
                         output_ins.forw_ref = false;
-                }
-
-                if (optimizing > 0) {
-                    if (passn == 1) {
-                        for (i = 0; i < output_ins.operands; i++) {
-                            if (output_ins.oprs[i].
-                                opflags & OPFLAG_FORWARD) {
-                                struct forwrefinfo *fwinf =
-                                    (struct forwrefinfo *)
-                                    saa_wstruct(forwrefs);
-                                fwinf->lineno = globallineno;
+		    
+		    if (output_ins.forw_ref) {
+			if (passn == 1) {
+			    for (i = 0; i < output_ins.operands; i++) {
+				if (output_ins.oprs[i].
+				    opflags & OPFLAG_FORWARD) {
+				    struct forwrefinfo *fwinf =
+					(struct forwrefinfo *)
+					saa_wstruct(forwrefs);
+				    fwinf->lineno = globallineno;
                                 fwinf->operand = i;
-                            }
-                        }
+				}
+			    }
+			}
                     }
                 }
 
