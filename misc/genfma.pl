@@ -11,8 +11,8 @@
 %scalar_insns = (
     'vfmadd'    => 0x99,
     'vfmsub'    => 0x9b,
-    'vfmnadd'   => 0x9c,
-    'vfmnsub'   => 0x9f
+    'vfnmadd'   => 0x9c,
+    'vfnmsub'   => 0x9f
     );
 
 foreach $pi ( sort(keys(%packed_insns)) ) {
