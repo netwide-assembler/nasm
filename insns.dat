@@ -1829,7 +1829,7 @@ PEXTRB		reg32,xmmreg,imm		\361\3\x0F\x3A\x14\101\26			SSE41
 PEXTRB		mem8,xmmreg,imm			\361\3\x0F\x3A\x14\101\26			SSE41
 PEXTRB		reg64,xmmreg,imm		\324\361\3\x0F\x3A\x14\101\26			SSE41,X64
 PEXTRD		rm32,xmmreg,imm			\361\3\x0F\x3A\x16\101\26			SSE41
-PEXTRQ		rm64,xmmreg,imm			\361\3\x0F\x3A\x16\101\26			SSE41,X64
+PEXTRQ		rm64,xmmreg,imm			\324\361\3\x0F\x3A\x16\101\26			SSE41,X64
 PEXTRW		reg32,xmmreg,imm		\361\3\x0F\x3A\x15\101\26			SSE41
 PEXTRW		mem16,xmmreg,imm		\361\3\x0F\x3A\x15\101\26			SSE41
 PEXTRW		reg64,xmmreg,imm		\324\361\3\x0F\x3A\x15\101\26			SSE41,X64
