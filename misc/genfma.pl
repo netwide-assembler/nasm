@@ -21,22 +21,25 @@ foreach $pi ( sort(keys(%packed_insns)) ) {
 	$xorder = substr($order,1,1).substr($order,0,1).substr($order,2,1);
 	foreach $o ($order, $xorder) {
 	    for ($w = 0; $w < 2; $w++) {
-		$suf = $w ? 'pd' : 'ps';
-		$mm  = $w ? 'ymm' : 'xmm';
-		$sx  = $w ? 'SY' : 'SO';
-		$ww  = $w ? 256 : 128;
-		printf "%-15s %-31s %-47s %s\n",
-		"\U${pi}${o}${suf}",
-		"${mm}reg,${mm}reg,${mm}rm",
-		sprintf("[rvm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
-			$ww, $w, $op),
-		"FMA,FUTURE,${sx}";
-		printf "%-15s %-31s %-47s %s\n",
-		"\U${pi}${o}${suf}",
-		"${mm}reg,${mm}rm",
-		sprintf("[r+vm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
-			$ww, $w, $op),
-		"FMA,FUTURE,${sx}";
+		$suf = $w  ? 'pd' : 'ps';
+		for ($l = 128; $l <= 256; $l <<= 1) {
+		    $sx  = ($l == 256) ? 'SY' : 'SO';
+		    $mm  = ($l == 256) ? 'ymm' : 'xmm';
+		    printf "%-15s %-31s %-8s%-39s %s\n",
+		    	"\U${pi}${o}${suf}",
+			"${mm}reg,${mm}reg,${mm}rm",
+		    	"[rvm:",
+		        sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
+			    $l, $w, $op),
+		    "FMA,FUTURE,${sx}";
+		    printf "%-15s %-31s %-8s%-39s %s\n",
+		    	"\U${pi}${o}${suf}",
+		    	"${mm}reg,${mm}rm",
+		        "[r+vm:",
+		        sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
+			    $l, $w, $op),
+		    "FMA,FUTURE,${sx}";
+		}
 	    }
 	}
 	$op++;
@@ -50,20 +53,22 @@ foreach $si ( sort(keys(%scalar_insns)) ) {
 	foreach $o ($order, $xorder) {
 	    for ($w = 0; $w < 2; $w++) {
 		$suf = $w ? 'sd' : 'ss';
-		$mm  = 'xmm';
 		$sx  = $w ? 'SQ' : 'SD';
-		$ww  = 128;
-		printf "%-15s %-31s %-47s %s\n",
+		$l  = 128;
+		$mm  = 'xmm';
+		printf "%-15s %-31s %-8s%-39s %s\n",
 		"\U${si}${o}${suf}",
 		"${mm}reg,${mm}reg,${mm}rm",
-		sprintf("[rvm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
-			$ww, $w, $op),
+		'[rvm:',
+		sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
+			$l, $w, $op),
 		"FMA,FUTURE,${sx}";
-		printf "%-15s %-31s %-47s %s\n",
+		printf "%-15s %-31s %-8s%-39s %s\n",
 		"\U${si}${o}${suf}",
 		"${mm}reg,${mm}rm",
-		sprintf("[r+vm:\tvex.dds.%d.66.0f38.w%d %02x /r]",
-			$ww, $w, $op),
+		'[r+vm:',
+		sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
+			$l, $w, $op),
 		"FMA,FUTURE,${sx}";
 	    }
 	}
