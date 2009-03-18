@@ -726,7 +726,9 @@ static int coff_directives(char *directive, char *value, int pass)
 	    else
 		sxseg = i;
 	}
-	if (pass==2) {
+	/* pass0 == 2 is the only time when the full set of symbols are
+	   guaranteed to be present; it is the final output pass. */
+	if (pass0 == 2) {
 	    uint32_t n;
 	    saa_rewind(syms);
 	    for (n = 0; n < nsyms; n++) {
