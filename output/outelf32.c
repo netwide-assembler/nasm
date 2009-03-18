@@ -602,6 +602,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
 
     lastsym = sym = saa_wstruct(syms);
 
+    memset(&sym->symv, 0, sizeof(struct rbtree));
+
     sym->strpos = pos;
     sym->type = is_global ? SYM_GLOBAL : 0;
     sym->other = STV_DEFAULT;
