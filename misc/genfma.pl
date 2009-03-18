@@ -11,7 +11,7 @@
 %scalar_insns = (
     'vfmadd'    => 0x99,
     'vfmsub'    => 0x9b,
-    'vfnmadd'   => 0x9c,
+    'vfnmadd'   => 0x9d,
     'vfnmsub'   => 0x9f
     );
 
@@ -42,7 +42,7 @@ foreach $pi ( sort(keys(%packed_insns)) ) {
 		}
 	    }
 	}
-	$op++;
+	$op += 0x10;
     }
 }
 
@@ -72,6 +72,6 @@ foreach $si ( sort(keys(%scalar_insns)) ) {
 		"FMA,FUTURE,${sx}";
 	    }
 	}
-	$op++;
+	$op += 0x10;
     }
 }
