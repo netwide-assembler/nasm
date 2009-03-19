@@ -1432,10 +1432,10 @@ int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize)
     
     switch (byte) {
     case 0xF2:
-	str = "rep";
+	str = "repne";
 	break;
     case 0xF3:
-	str = "repne";
+	str = "rep";
 	break;
     case 0x9B:
 	str = "wait";
