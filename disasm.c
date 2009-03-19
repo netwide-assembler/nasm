@@ -1420,8 +1420,86 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     return length;
 }
 
-int32_t eatbyte(uint8_t *data, char *output, int outbufsize)
+/*
+ * This is called when we don't have a complete instruction.  If it
+ * is a standalone *single-byte* prefix show it as such, otherwise
+ * print it as a literal.
+ */
+int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize)
 {
-    snprintf(output, outbufsize, "db 0x%02X", *data);
+    uint8_t byte = *data;
+    const char *str = NULL;
+    
+    switch (byte) {
+    case 0xF2:
+	str = "rep";
+	break;
+    case 0xF3:
+	str = "repne";
+	break;
+    case 0x9B:
+	str = "wait";
+	break;
+    case 0xF0:
+	str = "lock";
+	break;
+    case 0x2E:
+	str = "cs";
+	break;
+    case 0x36:
+	str = "ss";
+	break;
+    case 0x3E:
+	str = "ss";
+	break;
+    case 0x26:
+	str = "es";
+	break;
+    case 0x64:
+	str = "fs";
+	break;
+    case 0x65:
+	str = "gs";
+	break;
+    case 0x66:
+	str = (segsize == 16) ? "o32" : "o16";
+	break;
+    case 0x67:
+	str = (segsize == 32) ? "a16" : "a32";
+	break;
+    case REX_P + 0x0:
+    case REX_P + 0x1:
+    case REX_P + 0x2:
+    case REX_P + 0x3:
+    case REX_P + 0x4:
+    case REX_P + 0x5:
+    case REX_P + 0x6:
+    case REX_P + 0x7:
+    case REX_P + 0x8:
+    case REX_P + 0x9:
+    case REX_P + 0xA:
+    case REX_P + 0xB:
+    case REX_P + 0xC:
+    case REX_P + 0xD:
+    case REX_P + 0xE:
+    case REX_P + 0xF:
+	if (segsize == 64) {
+	    snprintf(output, outbufsize, "rex%s%s%s%s%s",
+		     (byte == REX_P) ? "" : ".",
+		     (byte & REX_W) ? "w" : "",
+		     (byte & REX_R) ? "r" : "",
+		     (byte & REX_X) ? "x" : "",
+		     (byte & REX_B) ? "b" : "");
+	    break;
+	}
+	/* else fall through */
+    default:
+	snprintf(output, outbufsize, "db 0x%02x", byte);
+	break;
+    }
+
+    if (str)
+	strcpy(output, str);
+
     return 1;
 }

@@ -13,6 +13,6 @@
 
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             int32_t offset, int autosync, uint32_t prefer);
-int32_t eatbyte(uint8_t *data, char *output, int outbufsize);
+int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize);
 
 #endif
