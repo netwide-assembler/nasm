@@ -39,14 +39,14 @@
 	  __SECT__
 %endmacro
 
-%imacro struc 1.nolist
+%imacro struc 1-2.nolist 0
 %push
 %define %$strucname %1
-[absolute 0]
+[absolute %2]
 %$strucname:			; allow definition of `.member' to work sanely
-%endmacro 
+%endmacro
 %imacro endstruc 0.nolist
-%{$strucname}_size:
+%{$strucname}_size equ ($-%$strucname)
 %pop
 __SECT__
 %endmacro
@@ -57,7 +57,7 @@ __SECT__
 %$strucstart:
 %endmacro
 %imacro at 1-2+.nolist
-	  times %1-($-%$strucstart) db 0
+	  times (%1-%$strucname)-($-%$strucstart) db 0
 	  %2
 %endmacro
 %imacro iend 0.nolist

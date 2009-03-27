@@ -511,10 +511,10 @@ right. For example:
 
 \c nasm -f elf myfile.asm -l myfile.lst
 
-If a list file is selected, you may turn off listing for a 
+If a list file is selected, you may turn off listing for a
 section of your source with \c{[list -]}, and turn it back on
-with \c{[list +]}, (the default, obviously). There is no "user 
-form" (without the brackets). This can be used to list only 
+with \c{[list +]}, (the default, obviously). There is no "user
+form" (without the brackets). This can be used to list only
 sections of interest, avoiding excessively long listings.
 
 
@@ -589,7 +589,7 @@ A complete list of the available debug file formats for an output
 format can be seen by issuing the command \c{nasm -f <format> -y}.  Not
 all output formats currently support debugging output.  See \k{opt-y}.
 
-This should not be confused with the \c{-f dbg} output format option which 
+This should not be confused with the \c{-f dbg} output format option which
 is not built into NASM by default. For information on how
 to enable it when building from the sources, see \k{dbgfmt}.
 
@@ -597,25 +597,25 @@ to enable it when building from the sources, see \k{dbgfmt}.
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
 
 This option can be used to generate debugging information in the specified
-format. See \k{opt-F}. Using \c{-g} without \c{-F} results in emitting 
+format. See \k{opt-F}. Using \c{-g} without \c{-F} results in emitting
 debug info in the default format, if any, for the selected output format.
-If no debug information is currently implemented in the selected output 
+If no debug information is currently implemented in the selected output
 format, \c{-g} is \e{silently ignored}.
 
 
 \S{opt-X} The \i\c{-X} Option: Selecting an \i{Error Reporting Format}
 
-This option can be used to select an error reporting format for any 
+This option can be used to select an error reporting format for any
 error messages that might be produced by NASM.
 
 Currently, two error reporting formats may be selected.  They are
-the \c{-Xvc} option and the \c{-Xgnu} option.  The GNU format is 
+the \c{-Xvc} option and the \c{-Xgnu} option.  The GNU format is
 the default and looks like this:
 
-\c filename.asm:65: error: specific error message 
+\c filename.asm:65: error: specific error message
 
 where \c{filename.asm} is the name of the source file in which the
-error was detected, \c{65} is the source file line number on which 
+error was detected, \c{65} is the source file line number on which
 the error was detected, \c{error} is the severity of the error (this
 could be \c{warning}), and \c{specific error message} is a more
 detailed text message which should help pinpoint the exact problem.
@@ -626,7 +626,7 @@ Visual C++ and some other programs.  It looks like this:
 \c filename.asm(65) : error: specific error message
 
 where the only difference is that the line number is in parentheses
-instead of being delimited by colons.  
+instead of being delimited by colons.
 
 See also the \c{Visual C++} output format, \k{win32fmt}.
 
@@ -787,7 +787,7 @@ with a \i{stub preprocessor} which does nothing.
 NASM defaults to not optimizing operands which can fit into a signed byte.
 This means that if you want the shortest possible object code,
 you have to enable optimization.
- 
+
 Using the \c{-O} option, you can tell NASM to carry out different
 levels of optimization.  The syntax is:
 
@@ -856,7 +856,7 @@ being invoked with the wrong number of parameters. This warning
 class is enabled by default; see \k{mlmacover} for an example of why
 you might want to disable it.
 
-\b \i\c{macro-selfref} warns if a macro references itself. This 
+\b \i\c{macro-selfref} warns if a macro references itself. This
 warning class is disabled by default.
 
 \b\i\c{macro-defaults} warns when a macro has more default
@@ -871,8 +871,8 @@ see \k{syntax} for more information.
 \b \i\c{number-overflow} covers warnings about numeric constants which
 don't fit in 64 bits. This warning class is enabled by default.
 
-\b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations 
-are used in \c{-f elf} format. The GNU extensions allow this. 
+\b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations
+are used in \c{-f elf} format. The GNU extensions allow this.
 This warning class is disabled by default.
 
 \b \i\c{float-overflow} warns about floating point overflow.
@@ -916,8 +916,8 @@ You will need the version number if you report a bug.
 
 \S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
 
-Typing \c{nasm -f <option> -y} will display a list of the available 
-debug info formats for the given output format. The default format 
+Typing \c{nasm -f <option> -y} will display a list of the available
+debug info formats for the given output format. The default format
 is indicated by an asterisk. For example:
 
 \c nasm -f elf -y
@@ -930,10 +930,10 @@ is indicated by an asterisk. For example:
 
 \S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
 
-The \c{--prefix} and \c{--postfix} options prepend or append 
+The \c{--prefix} and \c{--postfix} options prepend or append
 (respectively) the given argument to all \c{global} or
-\c{extern} variables. E.g. \c{--prefix _} will prepend the 
-underscore to all global and external variables, as C sometimes 
+\c{extern} variables. E.g. \c{--prefix _} will prepend the
+underscore to all global and external variables, as C sometimes
 (but not always) likes it.
 
 
@@ -1141,7 +1141,7 @@ An identifier may also be prefixed with a \I{$, prefix}\c{$} to
 indicate that it is intended to be read as an identifier and not a
 reserved word; thus, if some other module you are linking with
 defines a symbol called \c{eax}, you can refer to \c{$eax} in NASM
-code to distinguish the symbol from the register. Maximum length of 
+code to distinguish the symbol from the register. Maximum length of
 an identifier is 4095 characters.
 
 The instruction field may contain any machine instruction: Pentium
@@ -1541,7 +1541,7 @@ For example:
 
 \c{__utf16__} and \c{__utf32__} can be applied either to strings
 passed to the \c{DB} family instructions, or to character constants in
-an expression context.  
+an expression context.
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
@@ -2051,7 +2051,7 @@ where macro expansion would otherwise not occur, including in the
 names other macros.  For example, if you have a set of macros named
 \c{Foo16}, \c{Foo32} and \c{Foo64}, you could write:
 
-\c	mov ax,Foo%[__BITS__]	; The Foo value 
+\c	mov ax,Foo%[__BITS__]	; The Foo value
 
 to use the builtin macro \c{__BITS__} (see \k{bitsm}) to automatically
 select between them.  Similarly, the two statements:
@@ -3043,7 +3043,7 @@ be gradually used up and other applications to start crashing.
 
 These commands allow you to split your sources into multiple files.
 
-\S{include} \i\c{%include}: \i{Including Other Files} 
+\S{include} \i\c{%include}: \i{Including Other Files}
 
 Using, once again, a very similar syntax to the C preprocessor,
 NASM's preprocessor lets you include other source files into your
@@ -3742,13 +3742,15 @@ structures; instead, the preprocessor is sufficiently powerful that
 data structures can be implemented as a set of macros. The macros
 \c{STRUC} and \c{ENDSTRUC} are used to define a structure data type.
 
-\c{STRUC} takes one parameter, which is the name of the data type.
-This name is defined as a symbol with the value zero, and also has
-the suffix \c{_size} appended to it and is then defined as an
-\c{EQU} giving the size of the structure. Once \c{STRUC} has been
-issued, you are defining the structure, and should define fields
-using the \c{RESB} family of pseudo-instructions, and then invoke
-\c{ENDSTRUC} to finish the definition.
+\c{STRUC} takes one or two parameters. The first parameter is the name
+of the data type. The second, optional parameter is the base offset of
+the structure. The name of the data type is defined as a symbol with
+the value of the base offset, and the name of the data type with the
+suffix \c{_size} appended to it is defined as an \c{EQU} giving the
+size of the structure. Once \c{STRUC} has been issued, you are
+defining the structure, and should define fields using the \c{RESB}
+family of pseudo-instructions, and then invoke \c{ENDSTRUC} to finish
+the definition.
 
 For example, to define a structure called \c{mytype} containing a
 longword, a word, a byte and a string of bytes, you might code
@@ -3767,8 +3769,8 @@ from the beginning of a \c{mytype} structure to the longword field),
 \c{mt_word} as 4, \c{mt_byte} as 6, \c{mt_str} as 7, \c{mytype_size}
 as 39, and \c{mytype} itself as zero.
 
-The reason why the structure type name is defined at zero is a side
-effect of allowing structures to work with the local label
+The reason why the structure type name is defined at zero by default
+is a side effect of allowing structures to work with the local label
 mechanism: if your structure members tend to have the same names in
 more than one structure, you can define the above structure like this:
 
@@ -3791,6 +3793,26 @@ so code such as \c{mov ax,[mystruc.mt_word]} is not valid.
 \c{mt_word} is a constant just like any other constant, so the
 correct syntax is \c{mov ax,[mystruc+mt_word]} or \c{mov
 ax,[mystruc+mytype.word]}.
+
+Sometimes you only have the address of the structure displaced by an
+offset. For example, consider this standard stack frame setup:
+
+\c push ebp
+\c mov ebp, esp
+\c sub esp, 40
+
+In this case, you could access an element by subtracting the offset:
+
+\c mov [ebp - 40 + mytype.word], ax
+
+However, if you do not want to repeat this offset, you can use -40 as
+a base offset:
+
+\c struc mytype, -40
+
+And access an element this way:
+
+\c mov [ebp + mytype.word], ax
 
 
 \S{istruc} \i\c{ISTRUC}, \i\c{AT} and \i\c{IEND}: Declaring
@@ -4458,52 +4480,52 @@ bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 \S{multisec} \i\c{Multisection}\I{bin, multisection} support for the BIN format.
 
-The \c{bin} format allows the use of multiple sections, of arbitrary names, 
+The \c{bin} format allows the use of multiple sections, of arbitrary names,
 besides the "known" \c{.text}, \c{.data}, and \c{.bss} names.
 
-\b Sections may be designated \i\c{progbits} or \i\c{nobits}. Default 
-is \c{progbits} (except \c{.bss}, which defaults to \c{nobits}, 
+\b Sections may be designated \i\c{progbits} or \i\c{nobits}. Default
+is \c{progbits} (except \c{.bss}, which defaults to \c{nobits},
 of course).
 
-\b Sections can be aligned at a specified boundary following the previous 
-section with \c{align=}, or at an arbitrary byte-granular position with 
+\b Sections can be aligned at a specified boundary following the previous
+section with \c{align=}, or at an arbitrary byte-granular position with
 \i\c{start=}.
 
-\b Sections can be given a virtual start address, which will be used 
-for the calculation of all memory references within that section 
+\b Sections can be given a virtual start address, which will be used
+for the calculation of all memory references within that section
 with \i\c{vstart=}.
 
-\b Sections can be ordered using \i\c{follows=}\c{<section>} or 
-\i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit 
+\b Sections can be ordered using \i\c{follows=}\c{<section>} or
+\i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit
 start address.
 
-\b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are 
-critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)} 
+\b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are
+critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)}
 - \c{ALIGN_SHIFT} must be defined before it is used here.
 
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
 
-\b If an \c{ORG} statement is not given, \c{ORG 0} is used 
+\b If an \c{ORG} statement is not given, \c{ORG 0} is used
 by default.
 
-\b The \c{.bss} section will be placed after the last \c{progbits} 
-section, unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=} 
+\b The \c{.bss} section will be placed after the last \c{progbits}
+section, unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=}
 has been specified.
 
-\b All sections are aligned on dword boundaries, unless a different 
+\b All sections are aligned on dword boundaries, unless a different
 alignment has been specified.
 
 \b Sections may not overlap.
 
-\b NASM creates the \c{section.<secname>.start} for each section, 
+\b NASM creates the \c{section.<secname>.start} for each section,
 which may be used in your code.
 
 \S{map}\i{Map files}
 
-Map files can be generated in \c{-f bin} format by means of the \c{[map]} 
-option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments}, 
-or \c{symbols} may be specified. Output may be directed to \c{stdout} 
+Map files can be generated in \c{-f bin} format by means of the \c{[map]}
+option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments},
+or \c{symbols} may be specified. Output may be directed to \c{stdout}
 (default), \c{stderr}, or a specified file. E.g.
 \c{[map symbols myfile.map]}. No "user form" exists, the square
 brackets must be used.
@@ -4951,7 +4973,7 @@ still be perfectly possible.
 Registering custom exception handler on the other hand requires certain
 "magic." As of version 2.03 additional directive is implemented,
 \c{safeseh}, which instructs the assembler to produce appropriately
-formatted input data for above mentioned "safe exception handler 
+formatted input data for above mentioned "safe exception handler
 table." Its typical use would be:
 
 \c section .text
@@ -4980,14 +5002,14 @@ table." Its typical use would be:
 \c         ret
 \c text:   db      'OK to rethrow, CANCEL to generate core dump',0
 \c caption:db      'SEGV',0
-\c 
+\c
 \c section .drectve info
 \c         db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
 
 As you might imagine, it's perfectly possible to produce .exe binary
 with "safe exception handler table" and yet engage unregistered
 exception handler. Indeed, handler is engaged by simply manipulating
-\c{[fs:0]} location at run-time, something linker has no power over, 
+\c{[fs:0]} location at run-time, something linker has no power over,
 run-time that is. It should be explicitly mentioned that such failure
 to register handler's entry point with \c{safeseh} directive has
 undesired side effect at run-time. If exception is raised and
@@ -5007,7 +5029,7 @@ later can still be linked by earlier versions or non-Microsoft linkers.
 
 \H{win64fmt} \i\c{win64}: Microsoft Win64 Object Files
 
-The \c{win64} output format generates Microsoft Win64 object files, 
+The \c{win64} output format generates Microsoft Win64 object files,
 which is nearly 100% identical to the \c{win32} object format (\k{win32fmt})
 with the exception that it is meant to target 64-bit code and the x86-64
 platform altogether. This object file is used exactly the same as the \c{win32}
@@ -5165,7 +5187,7 @@ leaf function:
 \c main_end:
 \c text:   db      'OK to rethrow, CANCEL to generate core dump',0
 \c caption:db      'SEGV',0
-\c 
+\c
 \c section .pdata  rdata align=4
 \c         dd      main wrt ..imagebase
 \c         dd      main_end wrt ..imagebase
@@ -5245,7 +5267,7 @@ custom language-specific exception handler would look like this:
 \c         context->R15 = rsp[-1];
 \c     }
 \c     context->Rsp = (ULONG64)rsp;
-\c 
+\c
 \c     memcpy (disp->ContextRecord,context,sizeof(CONTEXT));
 \c     RtlVirtualUnwind(UNW_FLAG_NHANDLER,disp->ImageBase,
 \c         dips->ControlPc,disp->FunctionEntry,disp->ContextRecord,
@@ -5641,7 +5663,7 @@ or \i\c{object} to the directive:
 \S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} directive\I{EXTERN,
 rdf extensions to}
 
-By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external" 
+By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external"
 symbol (i.e. the static linker will complain if such a symbol is not resolved).
 To declare an "imported" symbol, which must be resolved later during a dynamic
 linking phase, \c{RDOFF} offers an additional \c{import} modifier. As in
