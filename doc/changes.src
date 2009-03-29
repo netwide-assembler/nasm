@@ -33,6 +33,8 @@ since 2007.
 \b Treat \c{WAIT} as a prefix rather than as an instruction, thereby
   allowing constructs like \c{O16 FSAVE} to work correctly.
 
+\b Support for structures with a non-zero base offset. See \k{struc}.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
