@@ -804,6 +804,7 @@ is_expression:
                     }
                 }
             } else {
+                result->oprs[operand].eaflags |= EAF_NO_OFFS;
                 o = 0;
                 result->oprs[operand].wrt = NO_SEG;
                 result->oprs[operand].segment = NO_SEG;

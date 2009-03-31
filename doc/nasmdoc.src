@@ -345,7 +345,7 @@ notice, this list of conditions and the following disclaimer.
 \b Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
-      
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -539,7 +539,7 @@ an intervening space. For example:
 \c nasm -f bin driver.asm -odriver.sys
 
 Note that this is a small o, and is different from a capital O , which
-is used to specify the number of optimisation passes required. See \k{opt-O}.
+is used to specify the optimization level. See \k{opt-O}.
 
 
 \S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
@@ -840,28 +840,30 @@ argument, instructs NASM to replace its powerful \i{preprocessor}
 with a \i{stub preprocessor} which does nothing.
 
 
-\S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
-
-NASM defaults to not optimizing operands which can fit into a signed byte.
-This means that if you want the shortest possible object code,
-you have to enable optimization.
+\S{opt-O} The \i\c{-O} Option: Specifying \i{Code Size Optimization}
 
 Using the \c{-O} option, you can tell NASM to carry out different
-levels of optimization.  The syntax is:
+levels of optimization. NASM defaults to full optimization.
+The syntax is:
 
 \b \c{-O0}: No optimization. All operands take their long forms,
         if a short form is not specified, except conditional jumps.
+
+\b \c{-OL}: Legacy optimization. Like \c{-O0}, but displacements
+        which will fit in a signed byte and do not contain references
+        to labels later in the file are optimized, unless the long form
+        is specified.
         This is intended to match NASM 0.98 behavior.
 
-\b \c{-O1}: Minimal optimization. As above, but immediate operands
+\b \c{-O1}: Minimal optimization. Like \c{-O0}, but immediate operands
         which will fit in a signed byte are optimized,
         unless the long form is specified.  Conditional jumps default
         to the long form unless otherwise specified.
 
-\b \c{-Ox} (where \c{x} is the actual letter \c{x}): Multipass optimization.
-        Minimize branch offsets and signed immediate bytes,
+\b \c{-Ox} (where \c{x} is the actual letter \c{x}): Full optimization.
+        Minimize branch offsets, displacements and immediates,
         overriding size specification unless the \c{strict} keyword
-        has been used (see \k{strict}).  For compatability with earlier
+        has been used (see \k{strict}). For compatibility with earlier
         releases, the letter \c{x} may also be any number greater than
         one. This number has no effect on the actual number of passes.
 
@@ -1843,8 +1845,8 @@ invent one using the macro processor.
 
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
-When assembling with the optimizer set to level 2 or higher (see
-\k{opt-O}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
+When assembling with the optimizer set to full (see \k{opt-O}),
+NASM will use size specifiers (\c{BYTE}, \c{WORD},
 \c{DWORD}, \c{QWORD}, \c{TWORD}, \c{OWORD} or \c{YWORD}), but will
 give them the smallest possible size. The keyword \c{STRICT} can be
 used to inhibit optimization and force a particular operand to be
@@ -4952,7 +4954,7 @@ be specified, even if it is the same as the internal name. The
 available attributes are:
 
 \b \c{resident} indicates that the exported name is to be kept
-resident by the system loader. This is an optimisation for
+resident by the system loader. This is an optimization for
 frequently used symbols imported by name.
 
 \b \c{nodata} indicates that the exported symbol is a function which

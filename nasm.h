@@ -480,7 +480,8 @@ enum ea_flags {			/* special EA flags */
     EAF_TIMESTWO =  4,          /* really do EAX*2 not EAX+EAX */
     EAF_REL	 =  8,		/* IP-relative addressing */
     EAF_ABS      = 16,		/* non-IP-relative addressing */
-    EAF_FSGS	 = 32		/* fs/gs segment override present */
+    EAF_FSGS	 = 32,		/* fs/gs segment override present */
+    EAF_NO_OFFS  = 64           /* no explicit offset in source */
 };
 
 enum eval_hint {                /* values for `hinttype' */
