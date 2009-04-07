@@ -135,6 +135,12 @@ if ( $what eq 'h' ) {
     printf "NASM_MINOR_VER=%d\n", $nmin;
     printf "NASM_SUBMINOR_VER=%d\n", $nsmin;
     printf "NASM_PATCHLEVEL_VER=%d\n", $nplvl;
+} elsif ( $what eq 'nsis' ) {
+    printf "!define VERSION \"%s\"\n", $line;
+    printf "!define MAJOR_VER %d\n", $nmin;
+    printf "!define MINOR_VER %d\n", $nmin;
+    printf "!define SUBMINOR_VER %d\n", $nsmin;
+    printf "!define PATCHLEVEL_VER %d\n", $nplvl;
 } elsif ( $what eq 'id' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {

@@ -22,9 +22,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+!include "version.nsh"
 !define PRODUCT_NAME "Netwide Assembler"
 !define PRODUCT_SHORT_NAME "nasm"
-!define VERSION "2.06rc7"
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
@@ -50,16 +50,16 @@ Section "${PACKAGE_NAME}"
   SectionIn RO
 
   SetOutPath "$INSTDIR\."
-  File "ldrdf.exe"
   File "nasm.exe"
-#  File "nasmdoc.pdf"
   File "ndisasm.exe"
-  File "rdf2bin.exe"
-#  File "rdf2com.exe"
-  File "rdf2ihx.exe"
-  File "rdfdump.exe"
-  File "rdflib.exe"
-  File "rdx.exe"
+  File "doc/nasmdoc.pdf"
+  File "rdoff/ldrdf.exe"
+  File "rdoff/rdf2bin.exe"
+  File "rdoff/rdf2com.exe"
+  File "rdoff/rdf2ihx.exe"
+  File "rdoff/rdfdump.exe"
+  File "rdoff/rdflib.exe"
+  File "rdoff/rdx.exe"
   FileOpen $0 "nasmpath.bat" w
   IfErrors skip
   FileWrite $0 "@set path=%path%;$INSTDIR$\r$\n"
@@ -71,7 +71,8 @@ SectionEnd
 Section "Start Menu Shortcuts"
   CreateDirectory "$SMPROGRAMS\${PACKAGE_NAME}"
   CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\Uninstall ${PACKAGE_NAME}.lnk" "$INSTDIR\Uninstall ${PACKAGE_NAME}.exe" "" "$INSTDIR\Uninstall ${PACKAGE_NAME}.exe" 0
-  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\NASM.lnk" "$INSTDIR\nasmpath.bat" "" "$INSTDIR\nasmpath.bat" 0
+  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\NASM Shell.lnk" "$INSTDIR\nasmpath.bat" "" "$INSTDIR\nasmpath.bat" 0
+  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\NASM Manual.lnk" "$INSTDIR\nasmdoc.pdf" "" "$INSTDIR\nasmdoc.pdf" 0
 SectionEnd
 
 Section "Desktop Icons"
@@ -80,7 +81,8 @@ SectionEnd
 
 Section "Uninstall"
   Delete /rebootok "$DESKTOP\NASM.lnk"
-  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\NASM.lnk"
+  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\NASM Shell.lnk"
+  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\NASM Manual.lnk"
   Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\Uninstall ${PACKAGE_NAME}.lnk"
   RMDir "$SMPROGRAMS\${PACKAGE_NAME}"
 
