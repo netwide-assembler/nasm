@@ -3327,6 +3327,7 @@ static int find_cc(Token * t)
 static Token *expand_mmac_params(Token * tline)
 {
     Token *t, *tt, **tail, *thead;
+    bool changed = false;
 
     tail = &thead;
     thead = NULL;
@@ -3443,6 +3444,7 @@ static Token *expand_mmac_params(Token * tline)
                 t->text = text;
                 t->a.mac = NULL;
             }
+	    changed = true;
             continue;
 	} else if (tline->type == TOK_INDIRECT) {
 	    t = tline;
@@ -3457,6 +3459,7 @@ static Token *expand_mmac_params(Token * tline)
 		tt = tt->next;
 	    }
 	    delete_Token(t);
+	    changed = true;
         } else {
             t = *tail = tline;
             tline = tline->next;
@@ -3465,6 +3468,9 @@ static Token *expand_mmac_params(Token * tline)
         }
     }
     *tail = NULL;
+
+    if (!changed)
+	return thead;
 
     /* Now handle token pasting... */
     tail = &thead;
@@ -3486,7 +3492,7 @@ static Token *expand_mmac_params(Token * tline)
 
 	    while (tt &&
 		   (tt->type == TOK_ID || tt->type == TOK_NUMBER ||
-		    tt->type == TOK_FLOAT)) {
+		    tt->type == TOK_FLOAT || tt->type == TOK_OTHER)) {
 		len += strlen(tt->text);
 		tt = tt->next;
 	    }

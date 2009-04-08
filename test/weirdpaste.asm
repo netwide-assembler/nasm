@@ -12,3 +12,14 @@
 %endmacro
 
 	dx foo, bar
+
+%macro df 2
+%assign xy __float32__(%1e+%2)
+	dd xy
+	dd %1e+%2
+%endmacro
+
+	df 1, 36
+	df 33, 20
+	df 0, 2
+	df 1.2, 5
