@@ -35,6 +35,9 @@ since 2007.
 
 \b Support for structures with a non-zero base offset. See \k{struc}.
 
+\b Correctly handle preprocessor token concatenation (see \k{concat})
+   involving floating-point numbers.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
