@@ -159,7 +159,7 @@ enum pp_token_type {
     TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
     TOK_INTERNAL_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
-    TOK_INDIRECT,	   	/* %[...] */
+    TOK_INDIRECT,		/* %[...] */
     TOK_SMAC_PARAM,		/* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX		/* Keep compiler from reducing the range */
 };
@@ -3467,29 +3467,56 @@ static Token *expand_mmac_params(Token * tline)
     *tail = NULL;
 
     /* Now handle token pasting... */
-    t = thead;
-    while (t && (tt = t->next)) {
+    tail = &thead;
+    while ((t = *tail) && (tt = t->next)) {
         switch (t->type) {
         case TOK_WHITESPACE:
             if (tt->type == TOK_WHITESPACE) {
                 t->next = delete_Token(tt);
             } else {
-		t = tt;
+		tail = &t->next;
 	    }
             break;
         case TOK_ID:
         case TOK_NUMBER:
-            if (tt->type == t->type || tt->type == TOK_NUMBER) {
-                char *tmp = nasm_strcat(t->text, tt->text);
-                nasm_free(t->text);
-                t->text = tmp;
-                t->next = delete_Token(tt);
-            } else {
-		t = tt;
+	case TOK_FLOAT:
+	{
+	    size_t len = 0;
+	    char *tmp, *p;
+
+	    while (tt &&
+		   (tt->type == TOK_ID || tt->type == TOK_NUMBER ||
+		    tt->type == TOK_FLOAT)) {
+		len += strlen(tt->text);
+		tt = tt->next;
 	    }
-            break;
+
+	    /* Now tt points to the first token after the potential
+	       paste area... */
+	    if (tt != t->next) {
+		/* We have at least two tokens... */
+		len += strlen(t->text);
+		p = tmp = nasm_malloc(len+1);
+
+		while (t != tt) {
+		    strcpy(p, t->text);
+		    p = strchr(p, '\0');
+		    t = delete_Token(t);
+		}
+
+		t = *tail = tokenize(tmp);
+		nasm_free(tmp);
+
+		while (t->next)
+		    t = t->next;
+
+		t->next = tt;	/* Attach the remaining token chain */
+	    }
+	    tail = &t->next;
+	    break;
+	}
 	default:
-	    t = tt;
+	    tail = &t->next;
 	    break;
         }
     }
