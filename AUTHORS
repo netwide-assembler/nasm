@@ -7,6 +7,7 @@ N: Name Here
 E: Email Here
 D: Description Here
 D: Additional Description Here.... and so on
+C: Copyright information
 
 Such is life.
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -51,7 +52,8 @@ D: RDOFF support
 
 N: H. Peter Anvin
 E: hpa@zytor.com
-D: Organized 0.98 release and Linux binaries; new CVS tree.
+D: Primary maintainer for the 0.98, late 0.98.x and 2.x releases.
+C: Contributions since 2008-12-15 are Copyright Intel Corporation.
 
 N: John Fine
 E: johnfine@earthlink.net
