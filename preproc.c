@@ -873,6 +873,9 @@ static Token *tokenize(char *line)
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
             }
+        } else if (p[0] == '$' && p[1] == '$') {
+            type = TOK_NUMBER;
+            p += 2;
         } else if (isnumstart(*p)) {
 	    bool is_hex = false;
 	    bool is_float = false;
