@@ -874,7 +874,7 @@ static Token *tokenize(char *line)
                 /* type = -1; */
             }
         } else if (p[0] == '$' && p[1] == '$') {
-            type = TOK_NUMBER;
+            type = TOK_OTHER;	/* TOKEN_BASE */
             p += 2;
         } else if (isnumstart(*p)) {
 	    bool is_hex = false;
@@ -935,12 +935,16 @@ static Token *tokenize(char *line)
 	    }
 	    p--;	/* Point to first character beyond number */
 
-	    if (has_e && !is_hex) {
-		/* 1e13 is floating-point, but 1e13h is not */
-		is_float = true;
+	    if (p == line+1 && *line == '$') {
+		type = TOK_OTHER; /* TOKEN_HERE */
+	    } else {
+		if (has_e && !is_hex) {
+		    /* 1e13 is floating-point, but 1e13h is not */
+		    is_float = true;
+		}
+		
+		type = is_float ? TOK_FLOAT : TOK_NUMBER;
 	    }
-
-	    type = is_float ? TOK_FLOAT : TOK_NUMBER;
         } else if (nasm_isspace(*p)) {
             type = TOK_WHITESPACE;
             p++;
