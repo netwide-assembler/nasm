@@ -159,6 +159,7 @@ enum pp_token_type {
     TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
     TOK_INTERNAL_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
+    TOK_PASTE,			/* %+ */
     TOK_INDIRECT,		/* %[...] */
     TOK_SMAC_PARAM,		/* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX		/* Keep compiler from reducing the range */
@@ -788,9 +789,11 @@ static Token *tokenize(char *line)
         p = line;
         if (*p == '%') {
             p++;
-            if (nasm_isdigit(*p) ||
-                ((*p == '-' || *p == '+') && nasm_isdigit(p[1])) ||
-                ((*p == '+') && (nasm_isspace(p[1]) || !p[1]))) {
+	    if (*p == '+' && !nasm_isdigit(p[1])) {
+		p++;
+		type = TOK_PASTE;
+	    } else if (nasm_isdigit(*p) ||
+		       ((*p == '-' || *p == '+') && nasm_isdigit(p[1]))) {
                 do {
                     p++;
                 }
@@ -942,7 +945,7 @@ static Token *tokenize(char *line)
 		    /* 1e13 is floating-point, but 1e13h is not */
 		    is_float = true;
 		}
-		
+
 		type = is_float ? TOK_FLOAT : TOK_NUMBER;
 	    }
         } else if (nasm_isspace(*p)) {
@@ -3326,6 +3329,109 @@ static int find_cc(Token * t)
     return i;
 }
 
+static bool paste_tokens(Token **head, bool handle_paste_tokens)
+{
+    Token **tail, *t, *tt;
+    Token **paste_head;
+    bool did_paste = false;
+    char *tmp;
+
+    /* Now handle token pasting... */
+    paste_head = NULL;
+    tail = head;
+    while ((t = *tail) && (tt = t->next)) {
+        switch (t->type) {
+        case TOK_WHITESPACE:
+            if (tt->type == TOK_WHITESPACE) {
+		/* Zap adjacent whitespace tokens */
+                t->next = delete_Token(tt);
+            } else {
+		/* Do not advance paste_head here */
+		tail = &t->next;
+	    }
+            break;
+        case TOK_ID:
+	case TOK_PREPROC_ID:
+        case TOK_NUMBER:
+	case TOK_FLOAT:
+	{
+	    size_t len = 0;
+	    char *tmp, *p;
+
+	    while (tt && (tt->type == TOK_ID || tt->type == TOK_PREPROC_ID ||
+			  tt->type == TOK_NUMBER || tt->type == TOK_FLOAT ||
+			  tt->type == TOK_OTHER)) {
+		len += strlen(tt->text);
+		tt = tt->next;
+	    }
+
+	    /* Now tt points to the first token after the potential
+	       paste area... */
+	    if (tt != t->next) {
+		/* We have at least two tokens... */
+		len += strlen(t->text);
+		p = tmp = nasm_malloc(len+1);
+
+		while (t != tt) {
+		    strcpy(p, t->text);
+		    p = strchr(p, '\0');
+		    t = delete_Token(t);
+		}
+
+		t = *tail = tokenize(tmp);
+		nasm_free(tmp);
+
+		while (t->next) {
+		    tail = &t->next;
+		    t = t->next;
+		}
+		t->next = tt;	/* Attach the remaining token chain */
+
+		did_paste = true;
+	    }
+	    paste_head = tail;
+	    tail = &t->next;
+	    break;
+	}
+	case TOK_PASTE:		/* %+ */
+	    if (handle_paste_tokens) {
+		/* Zap %+ and whitespace tokens to the right */
+		while (t && (t->type == TOK_WHITESPACE ||
+			     t->type == TOK_PASTE))
+		    t = *tail = delete_Token(t);
+		if (!paste_head || !t)
+		    break;	/* Nothing to paste with */
+		tail = paste_head;
+		t = *tail;
+		tt = t->next;
+		while (tok_type_(tt, TOK_WHITESPACE))
+		    tt = t->next = delete_Token(tt);
+
+		if (tt) {
+		    tmp = nasm_strcat(t->text, tt->text);
+		    delete_Token(t);
+		    tt = delete_Token(tt);
+		    t = *tail = tokenize(tmp);
+		    nasm_free(tmp);
+		    while (t->next) {
+			tail = &t->next;
+			t = t->next;
+		    }
+		    t->next = tt; /* Attach the remaining token chain */
+		    did_paste = true;
+		}
+		paste_head = tail;
+		tail = &t->next;
+		break;
+	    }
+	    /* else fall through */
+	default:
+	    tail = paste_head = &t->next;
+	    break;
+        }
+    }
+    return did_paste;
+}
 /*
  * Expand MMacro-local things: parameter references (%0, %n, %+n,
  * %-n) and MMacro-local identifiers (%%foo) as well as
@@ -3476,63 +3582,9 @@ static Token *expand_mmac_params(Token * tline)
     }
     *tail = NULL;
 
-    if (!changed)
-	return thead;
+    if (changed)
+	paste_tokens(&thead, false);
 
-    /* Now handle token pasting... */
-    tail = &thead;
-    while ((t = *tail) && (tt = t->next)) {
-        switch (t->type) {
-        case TOK_WHITESPACE:
-            if (tt->type == TOK_WHITESPACE) {
-                t->next = delete_Token(tt);
-            } else {
-		tail = &t->next;
-	    }
-            break;
-        case TOK_ID:
-        case TOK_NUMBER:
-	case TOK_FLOAT:
-	{
-	    size_t len = 0;
-	    char *tmp, *p;
-
-	    while (tt &&
-		   (tt->type == TOK_ID || tt->type == TOK_NUMBER ||
-		    tt->type == TOK_FLOAT || tt->type == TOK_OTHER)) {
-		len += strlen(tt->text);
-		tt = tt->next;
-	    }
-
-	    /* Now tt points to the first token after the potential
-	       paste area... */
-	    if (tt != t->next) {
-		/* We have at least two tokens... */
-		len += strlen(t->text);
-		p = tmp = nasm_malloc(len+1);
-
-		while (t != tt) {
-		    strcpy(p, t->text);
-		    p = strchr(p, '\0');
-		    t = delete_Token(t);
-		}
-
-		t = *tail = tokenize(tmp);
-		nasm_free(tmp);
-
-		while (t->next)
-		    t = t->next;
-
-		t->next = tt;	/* Attach the remaining token chain */
-	    }
-	    tail = &t->next;
-	    break;
-	}
-	default:
-	    tail = &t->next;
-	    break;
-        }
-    }
     return thead;
 }
 
@@ -3553,11 +3605,12 @@ static Token *expand_smacro(Token * tline)
     Token **params;
     int *paramsize;
     unsigned int nparam, sparam;
-    int brackets, rescan;
+    int brackets;
     Token *org_tline = tline;
     Context *ctx;
     const char *mname;
     int deadman = DEADMAN_LIMIT;
+    bool expanded;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3577,6 +3630,7 @@ static Token *expand_smacro(Token * tline)
 again:
     tail = &thead;
     thead = NULL;
+    expanded = false;
 
     while (tline) {             /* main token loop */
 	if (!--deadman) {
@@ -3821,6 +3875,7 @@ again:
                     nasm_free(params);
                     nasm_free(paramsize);
                     free_tlist(mstart);
+		    expanded = true;
                     continue;   /* main token loop */
                 }
             }
@@ -3845,37 +3900,8 @@ again:
      * Also we look for %+ tokens and concatenate the tokens before and after
      * them (without white spaces in between).
      */
-    t = thead;
-    rescan = 0;
-    while (t) {
-        while (t && t->type != TOK_ID && t->type != TOK_PREPROC_ID)
-            t = t->next;
-        if (!t || !t->next)
-            break;
-        if (t->next->type == TOK_ID ||
-            t->next->type == TOK_PREPROC_ID ||
-            t->next->type == TOK_NUMBER) {
-            char *p = nasm_strcat(t->text, t->next->text);
-            nasm_free(t->text);
-            t->next = delete_Token(t->next);
-            t->text = p;
-            rescan = 1;
-        } else if (t->next->type == TOK_WHITESPACE && t->next->next &&
-                   t->next->next->type == TOK_PREPROC_ID &&
-                   strcmp(t->next->next->text, "%+") == 0) {
-            /* free the next whitespace, the %+ token and next whitespace */
-            int i;
-            for (i = 1; i <= 3; i++) {
-                if (!t->next
-                    || (i != 2 && t->next->type != TOK_WHITESPACE))
-                    break;
-                t->next = delete_Token(t->next);
-            }                   /* endfor */
-        } else
-            t = t->next;
-    }
-    /* If we concatenaded something, re-scan the line for macros */
-    if (rescan) {
+    if (expanded && paste_tokens(&thead, true)) {
+	/* If we concatenated something, re-scan the line for macros */
         tline = thead;
         goto again;
     }
