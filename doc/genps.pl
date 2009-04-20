@@ -217,7 +217,8 @@ sub string2array($)
     my($s) = @_;
     my(@a) = ();
 
-    $s =~ s/ \- / $charcode{'endash'} /g;	# Replace " - " with en dash
+    $s =~ s/\B\-\-\B/$charcode{'emdash'}/g;
+    $s =~ s/\B\-\B/ $charcode{'endash'} /g;
 
     while ( $s =~ /^(\s+|\S+)(.*)$/ ) {
 	push(@a, [0,$1]);
@@ -594,11 +595,16 @@ unshift(@ptypes, @tocptypes); undef @tocptypes;
 #
 # Add copyright notice to the beginning
 #
-unshift(@paras,
-	[[0, $charcode{'copyright'}], [0, ' '], [0,$metadata{'year'}],
-	 [0, ' '], string2array($metadata{'author'})],
-	[string2array($metadata{'license'})]);
-unshift(@ptypes, 'norm', 'norm');
+@copyright_page =
+([[0, $charcode{'copyright'}],
+  [0, ' '], [0, $metadata{'year'}],
+  [0, ' '], string2array($metadata{'author'}),
+  [0, ' '], string2array($metadata{'copyright_tail'})],
+ [string2array($metadata{'license'})],
+ [string2array($metadata{'auxinfo'})]);
+
+unshift(@paras, @copyright_page);
+unshift(@ptypes, ('norm') x scalar(@copyright_page));
 
 $npara = scalar(@paras);
 

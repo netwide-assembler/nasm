@@ -3,9 +3,11 @@
 \#
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{2009}
+\M{year}{1996-2009}
 \M{author}{The NASM Development Team}
-\M{license}{All rights reserved. This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
+\M{copyright_tail}{-- All Rights Reserved}
+\M{license}{This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
+\M{auxinfo}{This release is dedicated to the memory of Charles A. Crayne.  We miss you, Chuck.}
 \M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
