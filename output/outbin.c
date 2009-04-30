@@ -582,7 +582,7 @@ static void bin_cleanup(int debuginfo)
     /* Step 7: Generate the map file. */
 
     if (map_control) {
-        const char *not_defined = { "not defined" };
+        static const char not_defined[] = "not defined";
 
         /* Display input and output file names. */
         fprintf(rf, "\n- NASM Map file ");
@@ -636,22 +636,22 @@ static void bin_cleanup(int debuginfo)
                 if (s->flags & ALIGN_DEFINED)
                     fprintf(rf, "%16"PRIX64"", s->align);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nfollows:   ");
                 if (s->flags & FOLLOWS_DEFINED)
                     fprintf(rf, "%s", s->follows);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nvstart:    %16"PRIX64"\nvalign:    ", s->vstart);
                 if (s->flags & VALIGN_DEFINED)
                     fprintf(rf, "%16"PRIX64"", s->valign);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nvfollows:  ");
                 if (s->flags & VFOLLOWS_DEFINED)
                     fprintf(rf, "%s", s->vfollows);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\n\n");
             }
         }
