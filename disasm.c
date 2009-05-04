@@ -49,6 +49,7 @@ struct prefix_info {
     uint8_t wait;		/* WAIT "prefix" present */
     uint8_t lock;		/* Lock prefix present */
     uint8_t vex[3];		/* VEX prefix present */
+    uint8_t vex_c;		/* VEX "class" (VEX, XOP, ...) */
     uint8_t vex_m;		/* VEX.M field */
     uint8_t vex_v;
     uint8_t vex_lp;		/* VEX.LP fields */
@@ -1049,6 +1050,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex[1] = *data++;
 
 		prefix.rex = REX_V;
+		prefix.vex_c = 0;
 
 		if (prefix.vex[0] == 0xc4) {
 		    prefix.vex[2] = *data++;
@@ -1064,7 +1066,28 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    prefix.vex_lp = prefix.vex[1] & 7;
 		}
 
-		ix = itable_VEX[prefix.vex_m][prefix.vex_lp];
+		ix = itable_VEX[0][prefix.vex_m][prefix.vex_lp];
+	    }
+	    end_prefix = true;
+	    break;
+
+	case 0x8F:
+	    if ((data[1] & 030) != 0 &&
+		(segsize == 64 || (data[1] & 0xc0) == 0xc0)) {
+		prefix.vex[0] = *data++;
+		prefix.vex[1] = *data++;
+		prefix.vex[2] = *data++;
+
+		prefix.rex = REX_V;
+		prefix.vex_c = 1;
+
+		prefix.rex |= (~prefix.vex[1] >> 5) & 7; /* REX_RXB */
+		prefix.rex |= (prefix.vex[2] >> (7-3)) & REX_W;
+		prefix.vex_m = prefix.vex[1] & 0x1f;
+		prefix.vex_v = (~prefix.vex[2] >> 3) & 15;
+		prefix.vex_lp = prefix.vex[2] & 7;
+
+		ix = itable_VEX[1][prefix.vex_m][prefix.vex_lp];
 	    }
 	    end_prefix = true;
 	    break;

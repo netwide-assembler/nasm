@@ -56,19 +56,20 @@
  *                 is not equal to the truncated and sign-extended 32-bit
  *                 operand; used for 32-bit immediates in 64-bit mode.
  * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
- * \260..\263    - this instruction uses VEX rather than REX, with the
+ * \260..\263    - this instruction uses VEX/XOP rather than REX, with the
  *		   V field taken from operand 0..3.
- * \270		 - this instruction uses VEX rather than REX, with the
+ * \270		 - this instruction uses VEX/XOP rather than REX, with the
  *		   V field set to 1111b.
  *
- * VEX prefixes are followed by the sequence:
- * \mm\wlp         where mm is the M field; and wlp is:
+ * VEX/XOP prefixes are followed by the sequence:
+ * \tmm\wlp        where mm is the M field; and wlp is:
  *                 00 0ww lpp
  *                 [w0] ww = 0 for W = 0
  *                 [w1] ww = 1 for W = 1
  *                 [wx] ww = 2 for W don't care (always assembled as 0)
  *                 [ww] ww = 3 for W used as REX.W
  *
+ * t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
  *
  * \274..\277    - a signed byte immediate operand, from operand 0..3,
  *                 which is to be extended to the operand size.
@@ -936,14 +937,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	case4(0260):
 	    ins->rex |= REX_V;
 	    ins->drexdst = regval(opx);
-	    ins->vex_m = *codes++;
+	    ins->vex_cm = *codes++;
 	    ins->vex_wlp = *codes++;
 	    break;
 
 	case 0270:
 	    ins->rex |= REX_V;
 	    ins->drexdst = 0;
-	    ins->vex_m = *codes++;
+	    ins->vex_cm = *codes++;
 	    ins->vex_wlp = *codes++;
 	    break;
 
@@ -1141,7 +1142,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
 	    return -1;
 	}
-	if (ins->vex_m != 1 || (ins->rex & (REX_W|REX_R|REX_B)))
+	if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_R|REX_B)))
 	    length += 3;
 	else
 	    length += 2;
@@ -1536,9 +1537,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(0260):
 	case 0270:
 	    codes += 2;
-	    if (ins->vex_m != 1 || (ins->rex & (REX_W|REX_X|REX_B))) {
-		bytes[0] = 0xc4;
-		bytes[1] = ins->vex_m | ((~ins->rex & 7) << 5);
+	    if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B))) {
+		bytes[0] = (ins->vex_cm >> 6) ? 0x8f : 0xc4;
+		bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
 		bytes[2] = ((ins->rex & REX_W) << (7-3)) |
 		    ((~ins->drexdst & 15)<< 3) | (ins->vex_wlp & 07);
 		out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);

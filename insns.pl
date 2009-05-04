@@ -14,11 +14,17 @@
 # This should match MAX_OPERANDS from nasm.h
 $MAX_OPERANDS = 5;
 
-# Add VEX prefixes
+# Add VEX/XOP prefixes
+@vex_class = ( 'VEX', 'XOP' );
+$vex_classes = scalar(@vex_class);
 @vexlist = ();
-for ($m = 0; $m < 32; $m++) {
-    for ($lp = 0; $lp < 8; $lp++) {
-	push(@vexlist, sprintf("VEX%02X%01X", $m, $lp));
+%vexmap = ();
+for ($c = 0; $c < $vex_classes; $c++) {
+    $vexmap{"\L$vex_class[$c]"} = $c;
+    for ($m = 0; $m < 32; $m++) {
+	for ($lp = 0; $lp < 8; $lp++) {
+	    push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $lp));
+	}
     }
 }
 @disasm_prefixes = (@vexlist, @disasm_prefixes);
@@ -243,20 +249,26 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
-    print D "\nconst struct disasm_index * const itable_VEX[32][8] = {\n   ";
-    for ($m = 0; $m < 32; $m++) {
-	print D " {\n";
-	for ($lp = 0; $lp < 8; $lp++) {
-	    $vp = sprintf("VEX%02X%01X", $m, $lp);
-	    if ($is_prefix{$vp}) {
-		printf D "        itable_%s,\n", $vp;
-	    } else {
-		print  D "        NULL,\n";
+    printf D "\nconst struct disasm_index * const itable_VEX[%d][32][8] =\n",
+        $vex_classes;
+    print D "{\n";
+    for ($c = 0; $c < $vex_classes; $c++) {
+	print D "    {\n";
+	for ($m = 0; $m < 32; $m++) {
+	    print D "        {\n";
+	    for ($lp = 0; $lp < 8; $lp++) {
+		$vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $lp);
+		if ($is_prefix{$vp}) {
+		    printf D "            itable_%s,\n", $vp;
+		} else {
+		    print  D "            NULL,\n";
+		}
 	    }
+	    print D "        },\n";
 	}
-	print D "    },";
+	print D "    },\n";
     }
-    print D "\n};\n";
+    print D "};\n";
 
     close D;
 }
@@ -521,10 +533,12 @@ sub startseq($) {
       } elsif ($c0 == 0347) {
 	  return addprefix($prefix, 0xA1, 0xA9);
       } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
-	  my $m,$wlp,$vxp;
+	  my $c,$m,$wlp;
 	  $m   = shift(@codes);
 	  $wlp = shift(@codes);
-	  $prefix .= sprintf('VEX%02X%01X', $m, $wlp & 7);
+	  $c = ($m >> 6);
+	  $m = $m & 31;
+	  $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 7);
       } elsif ($c0 >= 0172 && $c0 <= 174) {
 	  shift(@codes);	# Skip is4 control byte
       } else {
@@ -644,13 +658,14 @@ sub byte_code_compile($) {
 	    push(@codes, 06) if ($oppos{'m'} & 4);
 	    push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
 	    $prefix_ok = 0;
-	} elsif ($op =~ /^vex(|\..*)$/) {
+	} elsif ($op =~ /^(vex|xop)(|\..*)$/) {
+	    my $c = $vexmap{$1};
 	    my ($m,$w,$l,$p) = (undef,2,undef,0);
 	    my $has_nds = 0;
-	    foreach $oq (split(/\./, $op)) {
-		if ($oq eq 'vex') {
-		    # prefix
-		} elsif ($oq eq '128' || $oq eq 'l0') {
+	    my @subops = split(/\./, $op);
+	    shift @subops;	# Drop prefix
+	    foreach $oq (@subops) {
+		if ($oq eq '128' || $oq eq 'l0') {
 		    $l = 0;
 		} elsif ($oq eq '256' || $oq eq 'l1') {
 		    $l = 1;
@@ -692,7 +707,7 @@ sub byte_code_compile($) {
 		die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
 	    push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
-		 $m, ($w << 3)+($l << 2)+$p);
+		 ($c << 6)+$m, ($w << 3)+($l << 2)+$p);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^\/drex([01])$/) {
 	    my $oc0 = $1;

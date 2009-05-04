@@ -599,7 +599,7 @@ enum ccode {			/* condition code names */
 #define REX_H		0x80	/* High register present, REX forbidden */
 #define REX_D		0x0100	/* Instruction uses DREX instead of REX */
 #define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
-#define REX_V		0x0400	/* Instruction uses VEX instead of REX */
+#define REX_V		0x0400	/* Instruction uses VEX/XOP instead of REX */
 
 /*
  * Note that because segment registers may be used as instruction
@@ -702,7 +702,7 @@ typedef struct insn {		/* an instruction itself */
     bool forw_ref;              /* is there a forward reference? */
     int rex;			/* Special REX Prefix */
     int drexdst;		/* Destination register for DREX/VEX suffix */
-    int vex_m;			/* M register for VEX prefix */
+    int vex_cm;			/* Class and M field for VEX prefix */
     int vex_wlp;		/* W, P and L information for VEX prefix */
 } insn;
 
