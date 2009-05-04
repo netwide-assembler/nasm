@@ -15,12 +15,12 @@
 $MAX_OPERANDS = 5;
 
 # Add VEX/XOP prefixes
-@vex_class = ( 'VEX', 'XOP' );
+@vex_class = ( 'vex', 'xop' );
 $vex_classes = scalar(@vex_class);
 @vexlist = ();
 %vexmap = ();
 for ($c = 0; $c < $vex_classes; $c++) {
-    $vexmap{"\L$vex_class[$c]"} = $c;
+    $vexmap{$vex_class[$c]} = $c;
     for ($m = 0; $m < 32; $m++) {
 	for ($lp = 0; $lp < 8; $lp++) {
 	    push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $lp));
@@ -249,7 +249,7 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
-    printf D "\nconst struct disasm_index * const itable_VEX[%d][32][8] =\n",
+    printf D "\nconst struct disasm_index * const itable_vex[%d][32][8] =\n",
         $vex_classes;
     print D "{\n";
     for ($c = 0; $c < $vex_classes; $c++) {
