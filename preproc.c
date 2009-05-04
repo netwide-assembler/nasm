@@ -3583,7 +3583,7 @@ static Token *expand_mmac_params(Token * tline)
     *tail = NULL;
 
     if (changed)
-	paste_tokens(&thead, false);
+	paste_tokens(&thead, true);
 
     return thead;
 }
