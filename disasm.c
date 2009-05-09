@@ -1050,7 +1050,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex[1] = *data++;
 
 		prefix.rex = REX_V;
-		prefix.vex_c = 0;
+		prefix.vex_c = RV_VEX;
 
 		if (prefix.vex[0] == 0xc4) {
 		    prefix.vex[2] = *data++;
@@ -1066,7 +1066,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    prefix.vex_lp = prefix.vex[1] & 7;
 		}
 
-		ix = itable_vex[0][prefix.vex_m][prefix.vex_lp];
+		ix = itable_vex[RV_VEX][prefix.vex_m][prefix.vex_lp];
 	    }
 	    end_prefix = true;
 	    break;
@@ -1079,7 +1079,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex[2] = *data++;
 
 		prefix.rex = REX_V;
-		prefix.vex_c = 1;
+		prefix.vex_c = RV_XOP;
 
 		prefix.rex |= (~prefix.vex[1] >> 5) & 7; /* REX_RXB */
 		prefix.rex |= (prefix.vex[2] >> (7-3)) & REX_W;
@@ -1087,7 +1087,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex_v = (~prefix.vex[2] >> 3) & 15;
 		prefix.vex_lp = prefix.vex[2] & 7;
 
-		ix = itable_vex[1][prefix.vex_m][prefix.vex_lp];
+		ix = itable_vex[RV_XOP][prefix.vex_m][prefix.vex_lp];
 	    }
 	    end_prefix = true;
 	    break;

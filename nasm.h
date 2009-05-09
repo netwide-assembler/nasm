@@ -602,6 +602,14 @@ enum ccode {			/* condition code names */
 #define REX_V		0x0400	/* Instruction uses VEX/XOP instead of REX */
 
 /*
+ * REX_V "classes" (prefixes which behave like VEX)
+ */
+enum vex_class {
+    RV_VEX		= 0,	/* C4/C5 */
+    RV_XOP		= 1	/* 8F */
+};
+
+/*
  * Note that because segment registers may be used as instruction
  * prefixes, we must ensure the enumerations for prefixes and
  * register names do not overlap.
