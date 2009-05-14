@@ -677,11 +677,13 @@ sub byte_code_compile($) {
 		    $w = 2;
 		} elsif ($oq eq 'ww') {
 		    $w = 3;
-		} elsif ($oq eq '66') {
+		} elsif ($oq eq 'p0') {
+		    $p = 0;
+		} elsif ($oq eq '66' || $oq eq 'p1') {
 		    $p = 1;
-		} elsif ($oq eq 'f3') {
+		} elsif ($oq eq 'f3' || $oq eq 'p2') {
 		    $p = 2;
-		} elsif ($oq eq 'f2') {
+		} elsif ($oq eq 'f2' || $oq eq 'p3') {
 		    $p = 3;
 		} elsif ($oq eq '0f') {
 		    $m = 1;
