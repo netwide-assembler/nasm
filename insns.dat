@@ -3688,6 +3688,205 @@ MONTMUL		void				\336\3\x0F\xA6\xC0				PENT,CYRIX
 XSHA1		void				\336\3\x0F\xA6\xC8				PENT,CYRIX
 XSHA256		void				\336\3\x0F\xA6\xD0				PENT,CYRIX
 
+;# AMD XOP, FMA4 and CVT16 instructions (SSE5)
+;
+; based on pub number 43479 revision 3.03 date May 2009
+;
+VCVTPH2PS	xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0 a0 /r ib]	AMD,SSE5,SQ
+VCVTPH2PS	ymmreg,xmmrm,imm		[rmi:	xop.m8.w0.l1 a0 /r ib]	AMD,SSE5,SO
+
+VCVTPS2PH	xmmrm,xmmreg,imm		[mri:	xop.m8.w0.l0 a1 /r ib]	AMD,SSE5,SQ
+VCVTPS2PH	xmmrm,ymmreg,imm		[mri:	xop.m8.w0.l1 a1 /r ib]	AMD,SSE5,SO
+
+VFMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 69 /r /is4]	AMD,SSE5,SO
+VFMADDPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 69 /r /is4]	AMD,SSE5,SY
+VFMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 69 /r /is4]	AMD,SSE5,SO
+VFMADDPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 69 /r /is4]	AMD,SSE5,SY
+
+VFMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 68 /r /is4]	AMD,SSE5,SO
+VFMADDPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 68 /r /is4]	AMD,SSE5,SY
+VFMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 68 /r /is4]	AMD,SSE5,SO
+VFMADDPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 68 /r /is4]	AMD,SSE5,SY
+
+VFMADDSD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6b /r /is4]	AMD,SSE5,SQ
+VFMADDSD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6b /r /is4]	AMD,SSE5,SQ
+
+VFMADDSS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6a /r /is4]	AMD,SSE5,SD
+VFMADDSS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6a /r /is4]	AMD,SSE5,SD
+
+VFMADDSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 5d /r /is4]	AMD,SSE5,SO
+VFMADDSUBPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 5d /r /is4]	AMD,SSE5,SY
+VFMADDSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 5d /r /is4]	AMD,SSE5,SO
+VFMADDSUBPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 5d /r /is4]	AMD,SSE5,SY
+
+VFMADDSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 5c /r /is4]	AMD,SSE5,SO
+VFMADDSUBPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 5c /r /is4]	AMD,SSE5,SY
+VFMADDSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 5c /r /is4]	AMD,SSE5,SO
+VFMADDSUBPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 5c /r /is4]	AMD,SSE5,SY
+
+VFMSUBADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 5f /r /is4]	AMD,SSE5,SO
+VFMSUBADDPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 5f /r /is4]	AMD,SSE5,SY
+VFMSUBADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 5f /r /is4]	AMD,SSE5,SO
+VFMSUBADDPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 5f /r /is4]	AMD,SSE5,SY
+
+VFMSUBADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 5e /r /is4]	AMD,SSE5,SO
+VFMSUBADDPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 5e /r /is4]	AMD,SSE5,SY
+VFMSUBADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 5e /r /is4]	AMD,SSE5,SO
+VFMSUBADDPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 5e /r /is4]	AMD,SSE5,SY
+
+VFMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6d /r /is4]	AMD,SSE5,SO
+VFMSUBPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 6d /r /is4]	AMD,SSE5,SY
+VFMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6d /r /is4]	AMD,SSE5,SO
+VFMSUBPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 6d /r /is4]	AMD,SSE5,SY
+
+VFMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6c /r /is4]	AMD,SSE5,SO
+VFMSUBPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 6c /r /is4]	AMD,SSE5,SY
+VFMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6c /r /is4]	AMD,SSE5,SO
+VFMSUBPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 6c /r /is4]	AMD,SSE5,SY
+
+VFMSUBSD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6f /r /is4]	AMD,SSE5,SQ
+VFMSUBSD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6f /r /is4]	AMD,SSE5,SQ
+
+VFMSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 6e /r /is4]	AMD,SSE5,SD
+VFMSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 6e /r /is4]	AMD,SSE5,SD
+
+VFNMADDPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 79 /r /is4]	AMD,SSE5,SO
+VFNMADDPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 79 /r /is4]	AMD,SSE5,SY
+VFNMADDPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 79 /r /is4]	AMD,SSE5,SO
+VFNMADDPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 79 /r /is4]	AMD,SSE5,SY
+
+VFNMADDPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 78 /r /is4]	AMD,SSE5,SO
+VFNMADDPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 78 /r /is4]	AMD,SSE5,SY
+VFNMADDPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 78 /r /is4]	AMD,SSE5,SO
+VFNMADDPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 78 /r /is4]	AMD,SSE5,SY
+
+VFNMADDSD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7b /r /is4]	AMD,SSE5,SQ
+VFNMADDSD	xmmreg,xmmreg,xmmreg,xmmrm	[rvms:	vex.m3.w1.nds.l0.p1 7b /r /is4]	AMD,SSE5,SQ
+
+VFNMADDSS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7a /r /is4]	AMD,SSE5,SD
+VFNMADDSS	xmmreg,xmmreg,xmmreg,xmmrm	[rvms:	vex.m3.w1.nds.l0.p1 7a /r /is4]	AMD,SSE5,SD
+
+VFNMSUBPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7d /r /is4]	AMD,SSE5,SO
+VFNMSUBPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 7d /r /is4]	AMD,SSE5,SY
+VFNMSUBPD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 7d /r /is4]	AMD,SSE5,SO
+VFNMSUBPD	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 7d /r /is4]	AMD,SSE5,SY
+
+VFNMSUBPS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7c /r /is4]	AMD,SSE5,SO
+VFNMSUBPS	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 7c /r /is4]	AMD,SSE5,SY
+VFNMSUBPS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 7c /r /is4]	AMD,SSE5,SO
+VFNMSUBPS	ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	vex.m3.w1.nds.l1.p1 7c /r /is4]	AMD,SSE5,SY
+
+VFNMSUBSD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7f /r /is4]	AMD,SSE5,SQ
+VFNMSUBSD	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 7f /r /is4]	AMD,SSE5,SQ
+
+VFNMSUBSS	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7e /r /is4]	AMD,SSE5,SD
+VFNMSUBSS	xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	vex.m3.w1.nds.l0.p1 7e /r /is4]	AMD,SSE5,SD
+
+VFRCZPD		xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 81 /r]		AMD,SSE5,SO
+VFRCZPD		ymmreg,ymmrm			[rm:	xop.m9.w0.l1.p0 81 /r]		AMD,SSE5,SY
+
+VFRCZPS		xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 80 /r]		AMD,SSE5,SO
+VFRCZPS		ymmreg,ymmrm			[rm:	xop.m9.w0.l1.p0 80 /r]		AMD,SSE5,SY
+
+VFRCZSD		xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 83 /r]		AMD,SSE5,SQ
+
+VFRCZSS		xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 82 /r]		AMD,SSE5,SD
+;
+; fixed: spec mention imm[7:4] though it should be /is4 even in spec
+VPCMOV		xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 a2 /r /is4]	AMD,SSE5,SO
+VPCMOV		ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	xop.m8.w0.nds.l1.p0 a2 /r /is4]	AMD,SSE5,SY
+VPCMOV		xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	xop.m8.w1.nds.l0.p0 a2 /r /is4]	AMD,SSE5,SO
+VPCMOV		ymmreg,ymmreg,ymmreg,ymmrm	[rvsm:	xop.m8.w1.nds.l1.p0 a2 /r /is4]	AMD,SSE5,SY
+
+VPCOMB		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 cc /r ib]	AMD,SSE5,SO
+VPCOMD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ce /r ib]	AMD,SSE5,SO
+VPCOMQ		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 cf /r ib]	AMD,SSE5,SO
+;
+; fixed: spec mention only 3 operands in mnemonics
+VPCOMUB		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ec /r ib]	AMD,SSE5,SO
+VPCOMUD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ee /r ib]	AMD,SSE5,SO
+VPCOMUQ		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ef /r ib]	AMD,SSE5,SO
+VPCOMB		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ed /r ib]	AMD,SSE5,SO
+VPCOMW		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 cd /r ib]	AMD,SSE5,SO
+
+VPHADDBD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c2 /r]		AMD,SSE5,SO
+VPHADDBQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c3 /r]		AMD,SSE5,SO
+VPHADDBW	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c1 /r]		AMD,SSE5,SO
+VPHADDDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 cb /r]		AMD,SSE5,SO
+VPHADDUBD	ymmreg,ymmrm			[rm:	xop.m9.w0.l0.p0 d2 /r]		AMD,SSE5,SO
+VPHADDUBQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d3 /r]		AMD,SSE5,SO
+VPHADDUBWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d1 /r]		AMD,SSE5,SO
+;
+; fixed: opcode db
+VPHADDUDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 db /r]		AMD,SSE5,SO
+VPHADDUWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d6 /r]		AMD,SSE5,SO
+VPHADDUWQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d7 /r]		AMD,SSE5,SO
+VPHADDWD	ymmreg,ymmrm			[rm:	xop.m9.w0.l0.p0 c6 /r]		AMD,SSE5,SO
+VPHADDWQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d7 /r]		AMD,SSE5,SO
+
+VPHSUBBW	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e1 /r]		AMD,SSE5,SO
+VPHSUBDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e3 /r]		AMD,SSE5,SO
+VPHSUBWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e2 /r]		AMD,SSE5,SO
+
+VPMACSDD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9e /r /is4]		AMD,SSE5,SO
+VPMACSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5,SO
+VPMACSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5,SO
+VPMACSSDD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8e /r /is4]		AMD,SSE5,SO
+VPMACSSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8f /r /is4]		AMD,SSE5,SO
+PMACSSDQL	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 87 /r /is4]		AMD,SSE5,SO
+VPMACSSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 86 /r /is4]		AMD,SSE5,SO
+PMACSSWW	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 85 /r /is4]		AMD,SSE5,SO
+VPMACSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 96 /r /is4]		AMD,SSE5,SO
+VPMACSWW	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 95 /r /is4]		AMD,SSE5,SO
+VPMADCSSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 a6 /r /is4]		AMD,SSE5,SO
+PMADCSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 b6 /r /is4]		AMD,SSE5,SO
+
+VPPERM		xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	xop.m8.w1.nds.l0.p0 a3 /r /is4]		AMD,SSE5,SO
+VPPERM		xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 a3 /r /is4]		AMD,SSE5,SO
+
+VPROTB		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 90 /r]		AMD,SSE5,SO
+VPROTB		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 90 /r]		AMD,SSE5,SO
+VPROTB		xmmreg,xmmreg,imm		[rmi:	xop.m8.w0.l0.p0 c0 /r ib]		AMD,SSE5
+
+VPROTD		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 92 /r]		AMD,SSE5,SO
+VPROTD		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 92 /r]		AMD,SSE5,SO
+;
+; FIXME: spec error /r is needed
+VPROTD		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c2 /r ib]		AMD,SSE5,SO
+VPROTQ		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 93 /r]		AMD,SSE5,SO
+VPROTQ		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 93 /r]		AMD,SSE5,SO
+;
+; FIXME: spec error /r is needed
+VPROTQ		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c3 /r ib]		AMD,SSE5,SO
+VPROTW		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 91 /r]		AMD,SSE5,SO
+VPROTW		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 91 /r]		AMD,SSE5,SO
+VPROTW		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c1 /r ib]		AMD,SSE5,SO
+
+VPSHAB		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 98 /r]		AMD,SSE5,SO
+VPSHAB		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 98 /r]		AMD,SSE5,SO
+
+VPSHAD		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 9a /r]		AMD,SSE5,SO
+VPSHAD		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 9a /r]		AMD,SSE5,SO
+
+VPSHAQ		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 9b /r]		AMD,SSE5,SO
+VPSHAQ		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 9b /r]		AMD,SSE5,SO
+
+VPSHAW		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 99 /r]		AMD,SSE5,SO
+VPSHAW		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 99 /r]		AMD,SSE5,SO
+
+VPSHLB		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 94 /r]		AMD,SSE5,SO
+VPSHLB		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 94 /r]		AMD,SSE5,SO
+
+VPSHLD		ymmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 96 /r]		AMD,SSE5,SO
+VPSHLD		ymmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 96 /r]		AMD,SSE5,SO
+
+VPSHLQ		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 97 /r]		AMD,SSE5,SO
+VPSHLQ		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 97 /r]		AMD,SSE5,SO
+
+VPSHLW		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 95 /r]		AMD,SSE5,SO
+VPSHLW		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 95 /r]		AMD,SSE5,SO
+
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				\320\2\x0F\x18\200				P6,UNDOC
