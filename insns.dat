@@ -3806,14 +3806,18 @@ VPCOMQ		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 cf /r ib]	AMD,SSE5,S
 VPCOMUB		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ec /r ib]	AMD,SSE5,SO
 VPCOMUD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ee /r ib]	AMD,SSE5,SO
 VPCOMUQ		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ef /r ib]	AMD,SSE5,SO
-VPCOMB		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ed /r ib]	AMD,SSE5,SO
+;
+; fixed: spec point wrong VPCOMB in mnemonic
+VPCOMUW		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 ed /r ib]	AMD,SSE5,SO
 VPCOMW		xmmreg,xmmreg,xmmrm,imm		[rvmi:	xop.m8.w0.nds.l0.p0 cd /r ib]	AMD,SSE5,SO
 
 VPHADDBD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c2 /r]		AMD,SSE5,SO
 VPHADDBQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c3 /r]		AMD,SSE5,SO
 VPHADDBW	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c1 /r]		AMD,SSE5,SO
 VPHADDDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 cb /r]		AMD,SSE5,SO
-VPHADDUBD	ymmreg,ymmrm			[rm:	xop.m9.w0.l0.p0 d2 /r]		AMD,SSE5,SO
+;
+; fixed: spec has ymmreg for l0
+VPHADDUBD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d2 /r]		AMD,SSE5,SO
 VPHADDUBQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d3 /r]		AMD,SSE5,SO
 VPHADDUBWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d1 /r]		AMD,SSE5,SO
 ;
@@ -3821,7 +3825,9 @@ VPHADDUBWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d1 /r]		AMD,SSE5,SO
 VPHADDUDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 db /r]		AMD,SSE5,SO
 VPHADDUWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d6 /r]		AMD,SSE5,SO
 VPHADDUWQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d7 /r]		AMD,SSE5,SO
-VPHADDWD	ymmreg,ymmrm			[rm:	xop.m9.w0.l0.p0 c6 /r]		AMD,SSE5,SO
+;
+; fixed: spec has ymmreg for l0
+VPHADDWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 c6 /r]		AMD,SSE5,SO
 VPHADDWQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 d7 /r]		AMD,SSE5,SO
 
 VPHSUBBW	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e1 /r]		AMD,SSE5,SO
@@ -3829,34 +3835,36 @@ VPHSUBDQ	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e3 /r]		AMD,SSE5,SO
 VPHSUBWD	xmmreg,xmmrm			[rm:	xop.m9.w0.l0.p0 e2 /r]		AMD,SSE5,SO
 
 VPMACSDD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9e /r /is4]		AMD,SSE5,SO
-VPMACSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5,SO
-VPMACSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5,SO
+VPMACSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 97 /r /is4]		AMD,SSE5,SO
+VPMACSDQL	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5,SO
 VPMACSSDD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8e /r /is4]		AMD,SSE5,SO
 VPMACSSDQH	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8f /r /is4]		AMD,SSE5,SO
-PMACSSDQL	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 87 /r /is4]		AMD,SSE5,SO
+VPMACSSDQL	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 87 /r /is4]		AMD,SSE5,SO
 VPMACSSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 86 /r /is4]		AMD,SSE5,SO
-PMACSSWW	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 85 /r /is4]		AMD,SSE5,SO
+VPMACSSWW	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 85 /r /is4]		AMD,SSE5,SO
 VPMACSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 96 /r /is4]		AMD,SSE5,SO
 VPMACSWW	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 95 /r /is4]		AMD,SSE5,SO
 VPMADCSSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 a6 /r /is4]		AMD,SSE5,SO
-PMADCSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 b6 /r /is4]		AMD,SSE5,SO
+VPMADCSWD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 b6 /r /is4]		AMD,SSE5,SO
 
 VPPERM		xmmreg,xmmreg,xmmreg,xmmrm	[rvsm:	xop.m8.w1.nds.l0.p0 a3 /r /is4]		AMD,SSE5,SO
 VPPERM		xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 a3 /r /is4]		AMD,SSE5,SO
 
 VPROTB		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 90 /r]		AMD,SSE5,SO
 VPROTB		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 90 /r]		AMD,SSE5,SO
-VPROTB		xmmreg,xmmreg,imm		[rmi:	xop.m8.w0.l0.p0 c0 /r ib]		AMD,SSE5
+;
+; fixed: spec point xmmreg instead of reg/mem
+VPROTB		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c0 /r ib]		AMD,SSE5
 
 VPROTD		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 92 /r]		AMD,SSE5,SO
 VPROTD		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 92 /r]		AMD,SSE5,SO
 ;
-; FIXME: spec error /r is needed
+; fixed: spec error /r is needed
 VPROTD		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c2 /r ib]		AMD,SSE5,SO
 VPROTQ		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 93 /r]		AMD,SSE5,SO
 VPROTQ		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 93 /r]		AMD,SSE5,SO
 ;
-; FIXME: spec error /r is needed
+; fixed: spec error /r is needed
 VPROTQ		xmmreg,xmmrm,imm		[rmi:	xop.m8.w0.l0.p0 c3 /r ib]		AMD,SSE5,SO
 VPROTW		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 91 /r]		AMD,SSE5,SO
 VPROTW		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 91 /r]		AMD,SSE5,SO
@@ -3877,8 +3885,10 @@ VPSHAW		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 99 /r]		AMD,SSE5,SO
 VPSHLB		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 94 /r]		AMD,SSE5,SO
 VPSHLB		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 94 /r]		AMD,SSE5,SO
 
-VPSHLD		ymmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 96 /r]		AMD,SSE5,SO
-VPSHLD		ymmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 96 /r]		AMD,SSE5,SO
+;
+; fixed: spec has ymmreg for l0
+VPSHLD		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 96 /r]		AMD,SSE5,SO
+VPSHLD		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 96 /r]		AMD,SSE5,SO
 
 VPSHLQ		xmmreg,xmmrm,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 97 /r]		AMD,SSE5,SO
 VPSHLQ		xmmreg,xmmreg,xmmrm		[rvm:	xop.m9.w1.nds.l0.p0 97 /r]		AMD,SSE5,SO
