@@ -7357,7 +7357,7 @@ Integer return values are passed in \c{RAX} and \c{RDX}, in that order.
 Floating point is done using SSE registers, except for \c{long
 double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM7};
 return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed on the
-stack, and returned in \c{ST(0)} and \c{ST(1)}.
+stack, and returned in \c{ST0} and \c{ST1}.
 
 All SSE and x87 registers are destroyed by function calls.
 
