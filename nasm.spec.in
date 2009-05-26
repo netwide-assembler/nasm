@@ -6,8 +6,8 @@ Version: @@NASM_MANGLED_VER@@
 Release: 1
 License: LGPL
 Group: Development/Languages
-Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{nasm_version}.tar.bz2
-URL: http://nasm.sourceforge.net/
+Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.bz2
+URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 BuildPrereq: perl
