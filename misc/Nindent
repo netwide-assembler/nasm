@@ -1,5 +1,5 @@
 #!/bin/sh
-PARAM="-npro -kr -i4 -ts8 -sob -l80 -ss -ncs -cp1"
+PARAM="-npro -kr -i4 -ts8 -nut -sob -l80 -ss -ncs -cp1"
 RES=`indent --version`
 V1=`echo $RES | cut -d' ' -f3 | cut -d'.' -f1`
 V2=`echo $RES | cut -d' ' -f3 | cut -d'.' -f2`
