@@ -174,6 +174,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
     int j;
     bool first;
     bool insn_is_label = false;
+    bool recover;
 
 restart_parse:
     first = true;
@@ -679,7 +680,7 @@ restart_parse:
             }
         }
 
-        bool recover = false;
+        recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
                 error(ERR_NONFATAL, "parser: expecting ]");
