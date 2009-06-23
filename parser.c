@@ -678,23 +678,31 @@ restart_parse:
                 return result;  /* ignore this instruction */
             }
         }
+
+        bool recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
                 error(ERR_NONFATAL, "parser: expecting ]");
-                do {            /* error recovery again */
-                    i = stdscan(NULL, &tokval);
-                } while (i != 0 && i != ',');
-            } else              /* we got the required ] */
+                recover = true;
+            } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
+                if (i != 0 && i != ',') {
+                    error(ERR_NONFATAL, "comma or end of line expected");
+                    recover = true;
+                }
+            }
         } else {                /* immediate operand */
             if (i != 0 && i != ',' && i != ':') {
-                error(ERR_NONFATAL, "comma or end of line expected");
-                do {            /* error recovery */
-                    i = stdscan(NULL, &tokval);
-                } while (i != 0 && i != ',');
+                error(ERR_NONFATAL, "comma, colon or end of line expected");
+                recover = true;
             } else if (i == ':') {
                 result->oprs[operand].type |= COLON;
             }
+        }
+        if (recover) {
+            do {                /* error recovery */
+                i = stdscan(NULL, &tokval);
+            } while (i != 0 && i != ',');
         }
 
         /* now convert the exprs returned from evaluate() into operand
