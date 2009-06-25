@@ -1504,10 +1504,9 @@ PAVGW		mmxreg,mmxrm			\360\323\2\x0F\xE3\110				KATMAI,MMX,SQ
 PEXTRW		reg32,mmxreg,imm		\360\2\x0F\xC5\110\26				KATMAI,MMX,SB,AR2
 ; PINSRW is documented as using a reg32, but it's really using only 16 bit
 ; -- accept either, but be truthful in disassembly
-PINSRW		mmxreg,reg16,imm		\360\2\x0F\xC4\110\26				KATMAI,MMX,SB,AR2
-PINSRW		mmxreg,reg32,imm		\360\2\x0F\xC4\110\26				KATMAI,MMX,SB,AR2,ND
-PINSRW		mmxreg,mem,imm			\360\2\x0F\xC4\110\26				KATMAI,MMX,SB,AR2
-PINSRW		mmxreg,mem16,imm		\360\2\x0F\xC4\110\26				KATMAI,MMX,SB,AR2,ND
+PINSRW		mmxreg,reg16,imm		\360\2\x0F\xC4\110\26				KATMAI,MMX
+PINSRW		mmxreg,reg32,imm		\360\2\x0F\xC4\110\26				KATMAI,MMX,ND
+PINSRW		mmxreg,mem,imm			\360\2\x0F\xC4\110\26				KATMAI,MMX,SW,AR1
 PMAXSW		mmxreg,mmxrm			\360\323\2\x0F\xEE\110				KATMAI,MMX,SQ
 PMAXUB		mmxreg,mmxrm			\360\323\2\x0F\xDE\110				KATMAI,MMX,SQ
 PMINSW		mmxreg,mmxrm			\360\323\2\x0F\xEA\110				KATMAI,MMX,SQ
@@ -1582,7 +1581,7 @@ PEXTRW		reg32,xmmreg,imm		\361\2\x0F\xC5\110\26				WILLAMETTE,SSE2,SB,AR2
 PINSRW		xmmreg,reg16,imm		\361\2\x0F\xC4\110\26				WILLAMETTE,SSE2,SB,AR2
 PINSRW		xmmreg,reg32,imm		\361\2\x0F\xC4\110\26				WILLAMETTE,SSE2,SB,AR2,ND
 PINSRW		xmmreg,mem,imm			\361\2\x0F\xC4\110\26				WILLAMETTE,SSE2,SB,AR2
-PINSRW		xmmreg,mem16,imm		\361\2\x0F\xC4\110\26				WILLAMETTE,SSE2,SB,AR2,ND
+PINSRW		xmmreg,mem16,imm		\361\2\x0F\xC4\110\26				WILLAMETTE,SSE2,SB,AR2
 PMADDWD		xmmreg,xmmrm			\361\2\x0F\xF5\110				WILLAMETTE,SSE2,SO
 PMAXSW		xmmreg,xmmrm			\361\2\x0F\xEE\110				WILLAMETTE,SSE2,SO
 PMAXUB		xmmreg,xmmrm			\361\2\x0F\xDE\110				WILLAMETTE,SSE2,SO
@@ -1834,10 +1833,13 @@ PEXTRW		reg32,xmmreg,imm		\361\3\x0F\x3A\x15\101\26			SSE41
 PEXTRW		mem16,xmmreg,imm		\361\3\x0F\x3A\x15\101\26			SSE41
 PEXTRW		reg64,xmmreg,imm		\324\361\3\x0F\x3A\x15\101\26			SSE41,X64
 PHMINPOSUW	xmmreg,xmmrm			\361\3\x0F\x38\x41\110				SSE41
-PINSRB		xmmreg,reg32,imm		\361\3\x0F\x3A\x20\110\26			SSE41
-PINSRB		xmmreg,mem8,imm			\361\3\x0F\x3A\x20\110\26			SSE41
-PINSRD		xmmreg,rm32,imm			\361\3\x0F\x3A\x22\110\26			SSE41
-PINSRQ		xmmreg,rm64,imm			\324\361\3\x0F\x3A\x22\110\26			SSE41,X64
+PINSRB		xmmreg,mem,imm			\361\3\x0F\x3A\x20\110\26			SSE41,SB,AR2
+PINSRB		xmmreg,rm8,imm			\325\361\3\x0F\x3A\x20\110\26			SSE41,SB,AR2
+PINSRB		xmmreg,reg32,imm		\361\3\x0F\x3A\x20\110\26			SSE41,SB,AR2
+PINSRD		xmmreg,mem,imm			\361\3\x0F\x3A\x22\110\26			SSE41,SB,AR2
+PINSRD		xmmreg,rm32,imm			\361\3\x0F\x3A\x22\110\26			SSE41,SB,AR2
+PINSRQ		xmmreg,mem,imm			\324\361\3\x0F\x3A\x22\110\26			SSE41,X64,SB,AR2
+PINSRQ		xmmreg,rm64,imm			\324\361\3\x0F\x3A\x22\110\26			SSE41,X64,SB,AR2
 PMAXSB		xmmreg,xmmrm			\361\3\x0F\x38\x3C\110				SSE41
 PMAXSD		xmmreg,xmmrm			\361\3\x0F\x38\x3D\110				SSE41
 PMAXUD		xmmreg,xmmrm			\361\3\x0F\x38\x3F\110				SSE41
@@ -2723,15 +2725,16 @@ VPHMINPOSUW	xmmreg,xmmrm			[rm:	vex.128.66.0f38 41 /r]			AVX,SANDYBRIDGE,SO
 VPHSUBW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 05 /r]		AVX,SANDYBRIDGE,SO
 VPHSUBD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 06 /r]		AVX,SANDYBRIDGE,SO
 VPHSUBSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 07 /r]		AVX,SANDYBRIDGE,SO
-VPINSRB		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE
-VPINSRB		xmmreg,xmmreg,mem,imm		[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB
-VPINSRB		xmmreg,reg32,mem,imm		[r+vmi: vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB
-VPINSRW		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE
-VPINSRW		xmmreg,xmmreg,mem,imm		[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SW
-VPINSRW		xmmreg,reg32,mem,imm		[r+vmi: vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SW
-VPINSRD		xmmreg,xmmreg*,rm32,imm		[rvmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SD
-VPINSRQ		xmmreg,xmmreg,rm64,imm		[rvmi:	vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SQ,LONG
-VPINSRQ		xmmreg,rm64,imm			[r+vmi: vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SD,LONG
+VPINSRB		xmmreg,xmmreg*,mem,imm		[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRB		xmmreg,xmmreg*,rm8,imm		[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRB		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRW		xmmreg,xmmreg*,mem,imm		[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRW		xmmreg,xmmreg*,rm16,imm		[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRW		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SB,AR3
+VPINSRD		xmmreg,xmmreg*,mem,imm		[rvmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SB,AR3
+VPINSRD		xmmreg,xmmreg*,rm32,imm		[rvmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SB,AR3
+VPINSRQ		xmmreg,xmmreg*,mem,imm		[rvmi:	vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SB,AR3,LONG
+VPINSRQ		xmmreg,xmmreg*,rm64,imm		[rvmi:	vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SB,AR3,LONG
 VPMADDWD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f5 /r]		AVX,SANDYBRIDGE,SO
 VPMADDUBSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 04 /r]		AVX,SANDYBRIDGE,SO
 VPMAXSB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3c /r]		AVX,SANDYBRIDGE,SO
