@@ -10,9 +10,9 @@
 
 #include "nasm.h"
 
-#include "elfcommon.h"
-#include "dwarf.h"
-#include "outelf.h"
+#include "output/elfcommon.h"
+#include "output/dwarf.h"
+#include "output/outelf.h"
 
 const struct elf_known_section elf_known_sections[] = {
     { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },

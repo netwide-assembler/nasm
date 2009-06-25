@@ -40,7 +40,7 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	outform.$(O) outlib.$(O) output/outbin.$(O) \
 	output/outaout.$(O) output/outcoff.$(O) \
-	output/outelf32.$(O) output/outelf64.$(O) \
+	output/outelf.$(O) output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
@@ -232,10 +232,14 @@ output/outcoff.$(O): output/outcoff.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
 output/outdbg.$(O): output/outdbg.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h
+output/outelf.$(O): output/outelf.c compiler.h insnsi.h nasm.h nasmlib.h \
+ output/dwarf.h output/elfcommon.h output/outelf.h pptok.h preproc.h regs.h
 output/outelf32.$(O): output/outelf32.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+ outform.h outlib.h output/dwarf.h output/elf32.h output/elfcommon.h \
+ output/outelf.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
- outform.h outlib.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+ outform.h outlib.h output/dwarf.h output/elf64.h output/elfcommon.h \
+ output/outelf.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  outform.h pptok.h preproc.h regs.h
 output/outmacho.$(O): output/outmacho.c compiler.h insnsi.h nasm.h nasmlib.h \

@@ -1,7 +1,7 @@
 #ifndef OUTPUT_ELF64_H
 #define OUTPUT_ELF64_H
 
-#include "elfcommon.h"
+#include "output/elfcommon.h"
 
 /* ELF standard typedefs (yet more proof that <stdint.h> was way overdue) */
 typedef uint16_t Elf64_Half;

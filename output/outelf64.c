@@ -23,9 +23,9 @@
 #include "outlib.h"
 #include "rbtree.h"
 
-#include "elf64.h"
-#include "dwarf.h"
-#include "outelf.h"
+#include "output/elf64.h"
+#include "output/dwarf.h"
+#include "output/outelf.h"
 
 #ifdef OF_ELF64
 
