@@ -32,13 +32,6 @@ foreach $pi ( sort(keys(%packed_insns)) ) {
 		        sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
 			    $l, $w, $op),
 		    "FMA,FUTURE,${sx}";
-		    printf "%-15s %-31s %-8s%-39s %s\n",
-		    	"\U${pi}${o}${suf}",
-		    	"${mm}reg,${mm}rm",
-		        "[r+vm:",
-		        sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
-			    $l, $w, $op),
-		    "FMA,FUTURE,${sx}";
 		}
 	    }
 	}
@@ -57,17 +50,10 @@ foreach $si ( sort(keys(%scalar_insns)) ) {
 		$l  = 128;
 		$mm  = 'xmm';
 		printf "%-15s %-31s %-8s%-39s %s\n",
-		"\U${si}${o}${suf}",
-		"${mm}reg,${mm}reg,${mm}rm",
-		'[rvm:',
-		sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
-			$l, $w, $op),
-		"FMA,FUTURE,${sx}";
-		printf "%-15s %-31s %-8s%-39s %s\n",
-		"\U${si}${o}${suf}",
-		"${mm}reg,${mm}rm",
-		'[r+vm:',
-		sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
+		    "\U${si}${o}${suf}",
+		    "${mm}reg,${mm}reg,${mm}rm",
+		    '[rvm:',
+		    sprintf("vex.dds.%d.66.0f38.w%d %02x /r]",
 			$l, $w, $op),
 		"FMA,FUTURE,${sx}";
 	    }
