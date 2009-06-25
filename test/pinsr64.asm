@@ -1,24 +1,29 @@
 	bits 64
 
+	pinsrw mm0,eax,0
+	pinsrw mm1,si,0
+	pinsrw mm2,[rcx],0
+	pinsrw mm3,word [rcx],0
+
 	pinsrb xmm0,eax,0
-	pinsrb xmm1,sil,0		; BROKEN
-;	pinsrb xmm1,bh,0		; BROKEN
+	pinsrb xmm1,sil,0
+;	pinsrb xmm1,bh,0
 	pinsrb xmm2,[rcx],0
-	pinsrb xmm3,byte [rcx],0	; BROKEN
+	pinsrb xmm3,byte [rcx],0
 
 	pinsrw xmm0,eax,0
 	pinsrw xmm1,si,0
 	pinsrw xmm2,[rcx],0
-	pinsrw xmm3,word [rcx],0	; BROKEN
+	pinsrw xmm3,word [rcx],0
 
 	pinsrd xmm0,eax,0
 	pinsrd xmm1,esi,0
-	pinsrd xmm2,[rcx],0		; BROKEN
+	pinsrd xmm2,[rcx],0
 	pinsrd xmm3,dword [rcx],0
 
 	pinsrq xmm0,rax,0
 	pinsrq xmm1,rsi,0
-	pinsrq xmm2,[rcx],0		; BROKEN
+	pinsrq xmm2,[rcx],0
 	pinsrq xmm3,qword [rcx],0
 
 	vpinsrb xmm0,eax,0

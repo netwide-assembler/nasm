@@ -1,5 +1,10 @@
 	bits 32
 
+	pinsrw mm0,eax,0
+	pinsrw mm1,si,0
+	pinsrw mm2,[ecx],0
+	pinsrw mm3,word [ecx],0
+
 	pinsrb xmm0,eax,0
 	pinsrb xmm1,sil,0
 ;	pinsrb xmm1,bh,0
