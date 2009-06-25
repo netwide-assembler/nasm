@@ -2211,62 +2211,36 @@ AESIMC		xmmreg,xmmrm			[rm:	66 0f 38 db /r]				SSE,WESTMERE,SO
 AESKEYGENASSIST	xmmreg,xmmrm,imm		[rmi:	66 0f 3a df /r ib]			SSE,WESTMERE,SO
 
 ;# Intel AVX AES instructions
-VAESENC		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE,SO
-VAESENC		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE,SO
-VAESENCLAST	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 dd /r]		AVX,SANDYBRIDGE,SO
-VAESENCLAST	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 dd /r]		AVX,SANDYBRIDGE,SO
-VAESDEC		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
-VAESDEC		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
-VAESDECLAST	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
-VAESDECLAST	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
+VAESENC		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE,SO
+VAESENCLAST	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 dd /r]		AVX,SANDYBRIDGE,SO
+VAESDEC		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 de /r]		AVX,SANDYBRIDGE,SO
+VAESDECLAST	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 df /r]		AVX,SANDYBRIDGE,SO
 VAESIMC		xmmreg,xmmrm			[rm:	vex.128.66.0f38 db /r]			AVX,SANDYBRIDGE,SO
 VAESKEYGENASSIST xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a df /r ib]		AVX,SANDYBRIDGE,SO
 
 ;# Intel AVX instructions
-VADDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
-VADDPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
-VADDPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 58 /r]		AVX,SANDYBRIDGE,SY
-VADDPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 58 /r]		AVX,SANDYBRIDGE,SY
-VADDPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 58 /r]			AVX,SANDYBRIDGE,SO
-VADDPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 58 /r]			AVX,SANDYBRIDGE,SO
-VADDPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 58 /r]			AVX,SANDYBRIDGE,SY
-VADDPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 58 /r]			AVX,SANDYBRIDGE,SY
-VADDSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 58 /r]		AVX,SANDYBRIDGE,SQ
-VADDSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 58 /r]		AVX,SANDYBRIDGE,SQ
-VADDSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 58 /r]		AVX,SANDYBRIDGE,SD
-VADDSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 58 /r]		AVX,SANDYBRIDGE,SD
-VADDSUBPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d0 /r]		AVX,SANDYBRIDGE,SO
-VADDSUBPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d0 /r]		AVX,SANDYBRIDGE,SO
-VADDSUBPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f d0 /r]		AVX,SANDYBRIDGE,SY
-VADDSUBPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f d0 /r]		AVX,SANDYBRIDGE,SY
-VADDSUBPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f d0 /r]		AVX,SANDYBRIDGE,SO
-VADDSUBPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f d0 /r]		AVX,SANDYBRIDGE,SO
-VADDSUBPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.f2.0f d0 /r]		AVX,SANDYBRIDGE,SY
-VADDSUBPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.f2.0f d0 /r]		AVX,SANDYBRIDGE,SY
-VANDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 54 /r]		AVX,SANDYBRIDGE,SO
-VANDPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 54 /r]		AVX,SANDYBRIDGE,SO
-VANDPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 54 /r]		AVX,SANDYBRIDGE,SY
-VANDPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 54 /r]		AVX,SANDYBRIDGE,SY
-VANDPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 54 /r]			AVX,SANDYBRIDGE,SO
-VANDPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 54 /r]			AVX,SANDYBRIDGE,SO
-VANDPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 54 /r]			AVX,SANDYBRIDGE,SY
-VANDPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 54 /r]			AVX,SANDYBRIDGE,SY
-VANDNPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 55 /r]		AVX,SANDYBRIDGE,SO
-VANDNPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 55 /r]		AVX,SANDYBRIDGE,SO
-VANDNPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 55 /r]		AVX,SANDYBRIDGE,SY
-VANDNPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 55 /r]		AVX,SANDYBRIDGE,SY
-VANDNPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 55 /r]			AVX,SANDYBRIDGE,SO
-VANDNPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 55 /r]			AVX,SANDYBRIDGE,SO
-VANDNPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 55 /r]			AVX,SANDYBRIDGE,SY
-VANDNPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 55 /r]			AVX,SANDYBRIDGE,SY
-VBLENDPD	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SO
-VBLENDPD	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SO
-VBLENDPD	ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SY
-VBLENDPD	ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SY
-VBLENDPS	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SO
-VBLENDPS	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SO
-VBLENDPS	ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SY
-VBLENDPS	ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SY
+VADDPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 58 /r]		AVX,SANDYBRIDGE,SO
+VADDPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 58 /r]		AVX,SANDYBRIDGE,SY
+VADDPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 58 /r]			AVX,SANDYBRIDGE,SO
+VADDPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 58 /r]			AVX,SANDYBRIDGE,SY
+VADDSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 58 /r]		AVX,SANDYBRIDGE,SQ
+VADDSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 58 /r]		AVX,SANDYBRIDGE,SD
+VADDSUBPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d0 /r]		AVX,SANDYBRIDGE,SO
+VADDSUBPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f d0 /r]		AVX,SANDYBRIDGE,SY
+VADDSUBPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f d0 /r]		AVX,SANDYBRIDGE,SO
+VADDSUBPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.f2.0f d0 /r]		AVX,SANDYBRIDGE,SY
+VANDPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 54 /r]		AVX,SANDYBRIDGE,SO
+VANDPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 54 /r]		AVX,SANDYBRIDGE,SY
+VANDPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 54 /r]			AVX,SANDYBRIDGE,SO
+VANDPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 54 /r]			AVX,SANDYBRIDGE,SY
+VANDNPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 55 /r]		AVX,SANDYBRIDGE,SO
+VANDNPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 55 /r]		AVX,SANDYBRIDGE,SY
+VANDNPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 55 /r]			AVX,SANDYBRIDGE,SO
+VANDNPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 55 /r]			AVX,SANDYBRIDGE,SY
+VBLENDPD	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SO
+VBLENDPD	ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE,SY
+VBLENDPS	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SO
+VBLENDPS	ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE,SY
 VBLENDVPD	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.nds.128.66.0f3a 4b /r /is4]		AVX,SANDYBRIDGE,SO
 VBLENDVPD	xmmreg,xmmrm,xmm0		[rm-:	vex.128.66.0f38 15 /r]			AVX,SANDYBRIDGE,SO
 VBLENDVPD	ymmreg,ymmreg,ymmrm,ymmreg	[rvms:	vex.nds.256.66.0f3a 4b /r /is4]		AVX,SANDYBRIDGE,SY
@@ -2280,405 +2254,209 @@ VBROADCASTSS	ymmreg,mem			[rm:	vex.256.66.0f38 18 /r]			AVX,SANDYBRIDGE,SD
 VBROADCASTSD	ymmreg,mem			[rm:	vex.256.66.0f38 19 /r]			AVX,SANDYBRIDGE,SQ
 VBROADCASTF128	ymmreg,mem			[rm:	vex.256.66.0f38 1a /r]			AVX,SANDYBRIDGE,SO
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
-VCMPEQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
-VCMPEQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
-VCMPEQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
-VCMPLTPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
-VCMPLTPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
-VCMPLTPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
-VCMPLTPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
-VCMPLEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
-VCMPLEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
-VCMPLEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
-VCMPLEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
-VCMPUNORDPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
-VCMPUNORDPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
-VCMPUNORDPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
-VCMPUNORDPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
-VCMPNEQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
-VCMPNEQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
-VCMPNEQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
-VCMPNEQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
-VCMPNLTPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
-VCMPNLTPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
-VCMPNLTPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
-VCMPNLTPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
-VCMPNLEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
-VCMPNLEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
-VCMPNLEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
-VCMPNLEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
-VCMPORDPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
-VCMPORDPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
-VCMPORDPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
-VCMPORDPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
-VCMPEQ_UQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
-VCMPEQ_UQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
-VCMPEQ_UQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
-VCMPEQ_UQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
-VCMPNGEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
-VCMPNGEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
-VCMPNGEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
-VCMPNGEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
-VCMPNGTPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
-VCMPNGTPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
-VCMPNGTPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
-VCMPNGTPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
-VCMPFALSEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
-VCMPFALSEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
-VCMPFALSEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
-VCMPFALSEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
-VCMPGEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
-VCMPGEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
-VCMPGEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
-VCMPGEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
-VCMPGTPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
-VCMPGTPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
-VCMPGTPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
-VCMPGTPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
-VCMPTRUEPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
-VCMPTRUEPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
-VCMPTRUEPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
-VCMPTRUEPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
-VCMPEQ_OSPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
-VCMPEQ_OSPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
-VCMPEQ_OSPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
-VCMPEQ_OSPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
-VCMPLT_OQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
-VCMPLT_OQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
-VCMPLT_OQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
-VCMPLT_OQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
-VCMPLE_OQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
-VCMPLE_OQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
-VCMPLE_OQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
-VCMPLE_OQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
-VCMPUNORD_SPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
-VCMPUNORD_SPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
-VCMPUNORD_SPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
-VCMPUNORD_SPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_USPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_USPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_USPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_USPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
-VCMPNLT_UQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
-VCMPNLT_UQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
-VCMPNLT_UQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
-VCMPNLT_UQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
-VCMPNLE_UQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
-VCMPNLE_UQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
-VCMPNLE_UQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
-VCMPNLE_UQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
-VCMPORD_SPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
-VCMPORD_SPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
+VCMPEQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
+VCMPEQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
+VCMPLTPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
+VCMPLTPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
+VCMPLEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
+VCMPLEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
+VCMPUNORDPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
+VCMPUNORDPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
+VCMPNEQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
+VCMPNEQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
+VCMPNLTPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
+VCMPNLTPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
+VCMPNLEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
+VCMPNLEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
+VCMPORDPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
+VCMPORDPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
+VCMPEQ_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
+VCMPEQ_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
+VCMPNGEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
+VCMPNGEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
+VCMPNGTPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
+VCMPNGTPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
+VCMPFALSEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
+VCMPFALSEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_OQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_OQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
+VCMPGEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
+VCMPGEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
+VCMPGTPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
+VCMPGTPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
+VCMPTRUEPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
+VCMPTRUEPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
+VCMPEQ_OSPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
+VCMPEQ_OSPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
+VCMPLT_OQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
+VCMPLT_OQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
+VCMPLE_OQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
+VCMPLE_OQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
+VCMPUNORD_SPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
+VCMPUNORD_SPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_USPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_USPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
+VCMPNLT_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
+VCMPNLT_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
+VCMPNLE_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
+VCMPNLE_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
+VCMPORD_SPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
 VCMPORD_SPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
-VCMPORS_SPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
-VCMPEQ_USPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
-VCMPEQ_USPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
-VCMPEQ_USPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
-VCMPEQ_USPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
-VCMPNGE_UQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
-VCMPNGE_UQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
-VCMPNGE_UQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
-VCMPNGE_UQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
-VCMPNGT_UQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
-VCMPNGT_UQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
-VCMPNGT_UQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
-VCMPNGT_UQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
-VCMPFALSE_OSPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
-VCMPFALSE_OSPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
-VCMPFALSE_OSPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
-VCMPFALSE_OSPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OSPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OSPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OSPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OSPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
-VCMPGE_OQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
-VCMPGE_OQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
-VCMPGE_OQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
-VCMPGE_OQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
-VCMPGT_OQPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
-VCMPGT_OQPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
-VCMPGT_OQPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
-VCMPGT_OQPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
-VCMPTRUE_USPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
-VCMPTRUE_USPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
-VCMPTRUE_USPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
-VCMPTRUE_USPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
-VCMPPD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
-VCMPPD		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
-VCMPPD		ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
-VCMPPD		ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
+VCMPORS_SPD	ymmreg,ymmrm			[r+vm:	 vex.nds.256.66.0f c2 /r 17]		 AVX,SANDYBRIDGE,SY
+VCMPEQ_USPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
+VCMPEQ_USPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
+VCMPNGE_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
+VCMPNGE_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
+VCMPNGT_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
+VCMPNGT_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
+VCMPFALSE_OSPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
+VCMPFALSE_OSPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_OSPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_OSPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
+VCMPGE_OQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
+VCMPGE_OQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
+VCMPGT_OQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
+VCMPGT_OQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
+VCMPTRUE_USPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
+VCMPTRUE_USPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
+VCMPPD		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
+VCMPPD		ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.66.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
-VCMPEQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
-VCMPEQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
-VCMPEQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
-VCMPLTPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
-VCMPLTPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
-VCMPLTPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
-VCMPLTPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
-VCMPLEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
-VCMPLEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
-VCMPLEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
-VCMPLEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
-VCMPUNORDPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
-VCMPUNORDPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
-VCMPUNORDPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
-VCMPUNORDPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
-VCMPNEQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
-VCMPNEQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
-VCMPNEQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
-VCMPNEQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
-VCMPNLTPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
-VCMPNLTPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
-VCMPNLTPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
-VCMPNLTPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
-VCMPNLEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
-VCMPNLEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
-VCMPNLEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
-VCMPNLEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
-VCMPORDPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
-VCMPORDPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
-VCMPORDPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
-VCMPORDPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
-VCMPEQ_UQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
-VCMPEQ_UQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
-VCMPEQ_UQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
-VCMPEQ_UQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
-VCMPNGEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
-VCMPNGEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
-VCMPNGEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
-VCMPNGEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
-VCMPNGTPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
-VCMPNGTPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
-VCMPNGTPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
-VCMPNGTPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
-VCMPFALSEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
-VCMPFALSEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
-VCMPFALSEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
-VCMPFALSEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
-VCMPGEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
-VCMPGEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
-VCMPGEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
-VCMPGEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
-VCMPGTPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
-VCMPGTPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
-VCMPGTPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
-VCMPGTPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
-VCMPTRUEPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
-VCMPTRUEPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
-VCMPTRUEPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
-VCMPTRUEPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
-VCMPEQ_OSPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
-VCMPEQ_OSPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
-VCMPEQ_OSPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
-VCMPEQ_OSPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
-VCMPLT_OQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
-VCMPLT_OQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
-VCMPLT_OQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
-VCMPLT_OQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
-VCMPLE_OQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
-VCMPLE_OQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
-VCMPLE_OQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
-VCMPLE_OQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
-VCMPUNORD_SPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
-VCMPUNORD_SPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
-VCMPUNORD_SPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
-VCMPUNORD_SPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_USPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_USPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_USPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_USPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
-VCMPNLT_UQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
-VCMPNLT_UQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
-VCMPNLT_UQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
-VCMPNLT_UQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
-VCMPNLE_UQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
-VCMPNLE_UQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
-VCMPNLE_UQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
-VCMPNLE_UQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
-VCMPORD_SPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
-VCMPORD_SPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
+VCMPEQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 00]		AVX,SANDYBRIDGE,SO
+VCMPEQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 00]		AVX,SANDYBRIDGE,SY
+VCMPLTPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 01]		AVX,SANDYBRIDGE,SO
+VCMPLTPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 01]		AVX,SANDYBRIDGE,SY
+VCMPLEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 02]		AVX,SANDYBRIDGE,SO
+VCMPLEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 02]		AVX,SANDYBRIDGE,SY
+VCMPUNORDPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 03]		AVX,SANDYBRIDGE,SO
+VCMPUNORDPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 03]		AVX,SANDYBRIDGE,SY
+VCMPNEQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 04]		AVX,SANDYBRIDGE,SO
+VCMPNEQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 04]		AVX,SANDYBRIDGE,SY
+VCMPNLTPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 05]		AVX,SANDYBRIDGE,SO
+VCMPNLTPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 05]		AVX,SANDYBRIDGE,SY
+VCMPNLEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 06]		AVX,SANDYBRIDGE,SO
+VCMPNLEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 06]		AVX,SANDYBRIDGE,SY
+VCMPORDPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 07]		AVX,SANDYBRIDGE,SO
+VCMPORDPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 07]		AVX,SANDYBRIDGE,SY
+VCMPEQ_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 08]		AVX,SANDYBRIDGE,SO
+VCMPEQ_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 08]		AVX,SANDYBRIDGE,SY
+VCMPNGEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 09]		AVX,SANDYBRIDGE,SO
+VCMPNGEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 09]		AVX,SANDYBRIDGE,SY
+VCMPNGTPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0a]		AVX,SANDYBRIDGE,SO
+VCMPNGTPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0a]		AVX,SANDYBRIDGE,SY
+VCMPFALSEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0b]		AVX,SANDYBRIDGE,SO
+VCMPFALSEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0b]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_OQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0c]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_OQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0c]		AVX,SANDYBRIDGE,SY
+VCMPGEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0d]		AVX,SANDYBRIDGE,SO
+VCMPGEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0d]		AVX,SANDYBRIDGE,SY
+VCMPGTPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0e]		AVX,SANDYBRIDGE,SO
+VCMPGTPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0e]		AVX,SANDYBRIDGE,SY
+VCMPTRUEPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 0f]		AVX,SANDYBRIDGE,SO
+VCMPTRUEPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 0f]		AVX,SANDYBRIDGE,SY
+VCMPEQ_OSPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 10]		AVX,SANDYBRIDGE,SO
+VCMPEQ_OSPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 10]		AVX,SANDYBRIDGE,SY
+VCMPLT_OQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 11]		AVX,SANDYBRIDGE,SO
+VCMPLT_OQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 11]		AVX,SANDYBRIDGE,SY
+VCMPLE_OQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 12]		AVX,SANDYBRIDGE,SO
+VCMPLE_OQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 12]		AVX,SANDYBRIDGE,SY
+VCMPUNORD_SPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 13]		AVX,SANDYBRIDGE,SO
+VCMPUNORD_SPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 13]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_USPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 14]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_USPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 14]		AVX,SANDYBRIDGE,SY
+VCMPNLT_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 15]		AVX,SANDYBRIDGE,SO
+VCMPNLT_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 15]		AVX,SANDYBRIDGE,SY
+VCMPNLE_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
+VCMPNLE_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
+VCMPORD_SPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
 VCMPORD_SPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
 VCMPORS_SPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
-VCMPEQ_USPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
-VCMPEQ_USPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
-VCMPEQ_USPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
-VCMPEQ_USPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
-VCMPNGE_UQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
-VCMPNGE_UQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
-VCMPNGE_UQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
-VCMPNGE_UQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
-VCMPNGT_UQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
-VCMPNGT_UQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
-VCMPNGT_UQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
-VCMPNGT_UQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
-VCMPFALSE_OSPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
-VCMPFALSE_OSPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
-VCMPFALSE_OSPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
-VCMPFALSE_OSPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OSPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OSPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
-VCMPNEQ_OSPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
-VCMPNEQ_OSPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
-VCMPGE_OQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
-VCMPGE_OQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
-VCMPGE_OQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
-VCMPGE_OQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
-VCMPGT_OQPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
-VCMPGT_OQPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
-VCMPGT_OQPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
-VCMPGT_OQPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
-VCMPTRUE_USPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
-VCMPTRUE_USPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
-VCMPTRUE_USPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
-VCMPTRUE_USPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
-VCMPPS		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
-VCMPPS		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
-VCMPPS		ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
-VCMPPS		ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
+VCMPEQ_USPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
+VCMPEQ_USPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
+VCMPNGE_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
+VCMPNGE_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 19]		AVX,SANDYBRIDGE,SY
+VCMPNGT_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1a]		AVX,SANDYBRIDGE,SO
+VCMPNGT_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1a]		AVX,SANDYBRIDGE,SY
+VCMPFALSE_OSPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1b]		AVX,SANDYBRIDGE,SO
+VCMPFALSE_OSPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1b]		AVX,SANDYBRIDGE,SY
+VCMPNEQ_OSPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1c]		AVX,SANDYBRIDGE,SO
+VCMPNEQ_OSPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1c]		AVX,SANDYBRIDGE,SY
+VCMPGE_OQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1d]		AVX,SANDYBRIDGE,SO
+VCMPGE_OQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1d]		AVX,SANDYBRIDGE,SY
+VCMPGT_OQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1e]		AVX,SANDYBRIDGE,SO
+VCMPGT_OQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1e]		AVX,SANDYBRIDGE,SY
+VCMPTRUE_USPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 1f]		AVX,SANDYBRIDGE,SO
+VCMPTRUE_USPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 1f]		AVX,SANDYBRIDGE,SY
+VCMPPS		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.0f c2 /r ib]		AVX,SANDYBRIDGE,SO
+VCMPPS		ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.0f c2 /r ib]		AVX,SANDYBRIDGE,SY
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 00]		AVX,SANDYBRIDGE,SQ
-VCMPEQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 00]		AVX,SANDYBRIDGE,SQ
-VCMPLTSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 01]		AVX,SANDYBRIDGE,SQ
-VCMPLTSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 01]		AVX,SANDYBRIDGE,SQ
-VCMPLESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 02]		AVX,SANDYBRIDGE,SQ
-VCMPLESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 02]		AVX,SANDYBRIDGE,SQ
-VCMPUNORDSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 03]		AVX,SANDYBRIDGE,SQ
-VCMPUNORDSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 03]		AVX,SANDYBRIDGE,SQ
-VCMPNEQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 04]		AVX,SANDYBRIDGE,SQ
-VCMPNEQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 04]		AVX,SANDYBRIDGE,SQ
-VCMPNLTSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 05]		AVX,SANDYBRIDGE,SQ
-VCMPNLTSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 05]		AVX,SANDYBRIDGE,SQ
-VCMPNLESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 06]		AVX,SANDYBRIDGE,SQ
-VCMPNLESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 06]		AVX,SANDYBRIDGE,SQ
-VCMPORDSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 07]		AVX,SANDYBRIDGE,SQ
-VCMPORDSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 07]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_UQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 08]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_UQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 08]		AVX,SANDYBRIDGE,SQ
-VCMPNGESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 09]		AVX,SANDYBRIDGE,SQ
-VCMPNGESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 09]		AVX,SANDYBRIDGE,SQ
-VCMPNGTSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0a]		AVX,SANDYBRIDGE,SQ
-VCMPNGTSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0a]		AVX,SANDYBRIDGE,SQ
-VCMPFALSESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0b]		AVX,SANDYBRIDGE,SQ
-VCMPFALSESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0b]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_OQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0c]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_OQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0c]		AVX,SANDYBRIDGE,SQ
-VCMPGESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0d]		AVX,SANDYBRIDGE,SQ
-VCMPGESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0d]		AVX,SANDYBRIDGE,SQ
-VCMPGTSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0e]		AVX,SANDYBRIDGE,SQ
-VCMPGTSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0e]		AVX,SANDYBRIDGE,SQ
-VCMPTRUESD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0f]		AVX,SANDYBRIDGE,SQ
-VCMPTRUESD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 0f]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_OSSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 10]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_OSSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 10]		AVX,SANDYBRIDGE,SQ
-VCMPLT_OQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 11]		AVX,SANDYBRIDGE,SQ
-VCMPLT_OQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 11]		AVX,SANDYBRIDGE,SQ
-VCMPLE_OQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 12]		AVX,SANDYBRIDGE,SQ
-VCMPLE_OQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 12]		AVX,SANDYBRIDGE,SQ
-VCMPUNORD_SSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 13]		AVX,SANDYBRIDGE,SQ
-VCMPUNORD_SSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 13]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_USSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 14]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_USSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 14]		AVX,SANDYBRIDGE,SQ
-VCMPNLT_UQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 15]		AVX,SANDYBRIDGE,SQ
-VCMPNLT_UQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 15]		AVX,SANDYBRIDGE,SQ
-VCMPNLE_UQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 16]		AVX,SANDYBRIDGE,SQ
-VCMPNLE_UQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 16]		AVX,SANDYBRIDGE,SQ
-VCMPORD_SSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 17]		AVX,SANDYBRIDGE,SQ
-VCMPORD_SSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 17]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_USSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 18]		AVX,SANDYBRIDGE,SQ
-VCMPEQ_USSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 18]		AVX,SANDYBRIDGE,SQ
-VCMPNGE_UQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 19]		AVX,SANDYBRIDGE,SQ
-VCMPNGE_UQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 19]		AVX,SANDYBRIDGE,SQ
-VCMPNGT_UQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1a]		AVX,SANDYBRIDGE,SQ
-VCMPNGT_UQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1a]		AVX,SANDYBRIDGE,SQ
-VCMPFALSE_OSSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1b]		AVX,SANDYBRIDGE,SQ
-VCMPFALSE_OSSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1b]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_OSSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1c]		AVX,SANDYBRIDGE,SQ
-VCMPNEQ_OSSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1c]		AVX,SANDYBRIDGE,SQ
-VCMPGE_OQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1d]		AVX,SANDYBRIDGE,SQ
-VCMPGE_OQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1d]		AVX,SANDYBRIDGE,SQ
-VCMPGT_OQSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1e]		AVX,SANDYBRIDGE,SQ
-VCMPGT_OQSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1e]		AVX,SANDYBRIDGE,SQ
-VCMPTRUE_USSD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1f]		AVX,SANDYBRIDGE,SQ
-VCMPTRUE_USSD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f c2 /r 1f]		AVX,SANDYBRIDGE,SQ
-VCMPSD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.f2.0f c2 /r ib]		AVX,SANDYBRIDGE,SQ
-VCMPSD		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.f2.0f c2 /r ib]		AVX,SANDYBRIDGE,SQ
+VCMPEQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 00]		AVX,SANDYBRIDGE,SQ
+VCMPLTSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 01]		AVX,SANDYBRIDGE,SQ
+VCMPLESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 02]		AVX,SANDYBRIDGE,SQ
+VCMPUNORDSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 03]		AVX,SANDYBRIDGE,SQ
+VCMPNEQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 04]		AVX,SANDYBRIDGE,SQ
+VCMPNLTSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 05]		AVX,SANDYBRIDGE,SQ
+VCMPNLESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 06]		AVX,SANDYBRIDGE,SQ
+VCMPORDSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 07]		AVX,SANDYBRIDGE,SQ
+VCMPEQ_UQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 08]		AVX,SANDYBRIDGE,SQ
+VCMPNGESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 09]		AVX,SANDYBRIDGE,SQ
+VCMPNGTSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0a]		AVX,SANDYBRIDGE,SQ
+VCMPFALSESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0b]		AVX,SANDYBRIDGE,SQ
+VCMPNEQ_OQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0c]		AVX,SANDYBRIDGE,SQ
+VCMPGESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0d]		AVX,SANDYBRIDGE,SQ
+VCMPGTSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0e]		AVX,SANDYBRIDGE,SQ
+VCMPTRUESD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 0f]		AVX,SANDYBRIDGE,SQ
+VCMPEQ_OSSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 10]		AVX,SANDYBRIDGE,SQ
+VCMPLT_OQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 11]		AVX,SANDYBRIDGE,SQ
+VCMPLE_OQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 12]		AVX,SANDYBRIDGE,SQ
+VCMPUNORD_SSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 13]		AVX,SANDYBRIDGE,SQ
+VCMPNEQ_USSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 14]		AVX,SANDYBRIDGE,SQ
+VCMPNLT_UQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 15]		AVX,SANDYBRIDGE,SQ
+VCMPNLE_UQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 16]		AVX,SANDYBRIDGE,SQ
+VCMPORD_SSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 17]		AVX,SANDYBRIDGE,SQ
+VCMPEQ_USSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 18]		AVX,SANDYBRIDGE,SQ
+VCMPNGE_UQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 19]		AVX,SANDYBRIDGE,SQ
+VCMPNGT_UQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1a]		AVX,SANDYBRIDGE,SQ
+VCMPFALSE_OSSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1b]		AVX,SANDYBRIDGE,SQ
+VCMPNEQ_OSSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1c]		AVX,SANDYBRIDGE,SQ
+VCMPGE_OQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1d]		AVX,SANDYBRIDGE,SQ
+VCMPGT_OQSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1e]		AVX,SANDYBRIDGE,SQ
+VCMPTRUE_USSD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f c2 /r 1f]		AVX,SANDYBRIDGE,SQ
+VCMPSD		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.f2.0f c2 /r ib]		AVX,SANDYBRIDGE,SQ
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 00]		AVX,SANDYBRIDGE,SD
-VCMPEQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 00]		AVX,SANDYBRIDGE,SD
-VCMPLTSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 01]		AVX,SANDYBRIDGE,SD
-VCMPLTSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 01]		AVX,SANDYBRIDGE,SD
-VCMPLESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 02]		AVX,SANDYBRIDGE,SD
-VCMPLESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 02]		AVX,SANDYBRIDGE,SD
-VCMPUNORDSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 03]		AVX,SANDYBRIDGE,SD
-VCMPUNORDSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 03]		AVX,SANDYBRIDGE,SD
-VCMPNEQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 04]		AVX,SANDYBRIDGE,SD
-VCMPNEQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 04]		AVX,SANDYBRIDGE,SD
-VCMPNLTSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 05]		AVX,SANDYBRIDGE,SD
-VCMPNLTSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 05]		AVX,SANDYBRIDGE,SD
-VCMPNLESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 06]		AVX,SANDYBRIDGE,SD
-VCMPNLESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 06]		AVX,SANDYBRIDGE,SD
-VCMPORDSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 07]		AVX,SANDYBRIDGE,SD
-VCMPORDSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 07]		AVX,SANDYBRIDGE,SD
-VCMPEQ_UQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 08]		AVX,SANDYBRIDGE,SD
-VCMPEQ_UQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 08]		AVX,SANDYBRIDGE,SD
-VCMPNGESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 09]		AVX,SANDYBRIDGE,SD
-VCMPNGESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 09]		AVX,SANDYBRIDGE,SD
-VCMPNGTSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0a]		AVX,SANDYBRIDGE,SD
-VCMPNGTSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0a]		AVX,SANDYBRIDGE,SD
-VCMPFALSESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0b]		AVX,SANDYBRIDGE,SD
-VCMPFALSESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0b]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_OQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0c]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_OQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0c]		AVX,SANDYBRIDGE,SD
-VCMPGESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0d]		AVX,SANDYBRIDGE,SD
-VCMPGESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0d]		AVX,SANDYBRIDGE,SD
-VCMPGTSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0e]		AVX,SANDYBRIDGE,SD
-VCMPGTSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0e]		AVX,SANDYBRIDGE,SD
-VCMPTRUESS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0f]		AVX,SANDYBRIDGE,SD
-VCMPTRUESS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 0f]		AVX,SANDYBRIDGE,SD
-VCMPEQ_OSSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 10]		AVX,SANDYBRIDGE,SD
-VCMPEQ_OSSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 10]		AVX,SANDYBRIDGE,SD
-VCMPLT_OQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 11]		AVX,SANDYBRIDGE,SD
-VCMPLT_OQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 11]		AVX,SANDYBRIDGE,SD
-VCMPLE_OQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 12]		AVX,SANDYBRIDGE,SD
-VCMPLE_OQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 12]		AVX,SANDYBRIDGE,SD
-VCMPUNORD_SSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 13]		AVX,SANDYBRIDGE,SD
-VCMPUNORD_SSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 13]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_USSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 14]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_USSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 14]		AVX,SANDYBRIDGE,SD
-VCMPNLT_UQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 15]		AVX,SANDYBRIDGE,SD
-VCMPNLT_UQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 15]		AVX,SANDYBRIDGE,SD
-VCMPNLE_UQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 16]		AVX,SANDYBRIDGE,SD
-VCMPNLE_UQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 16]		AVX,SANDYBRIDGE,SD
-VCMPORD_SSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 17]		AVX,SANDYBRIDGE,SD
-VCMPORD_SSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 17]		AVX,SANDYBRIDGE,SD
-VCMPEQ_USSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 18]		AVX,SANDYBRIDGE,SD
-VCMPEQ_USSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 18]		AVX,SANDYBRIDGE,SD
-VCMPNGE_UQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 19]		AVX,SANDYBRIDGE,SD
-VCMPNGE_UQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 19]		AVX,SANDYBRIDGE,SD
-VCMPNGT_UQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1a]		AVX,SANDYBRIDGE,SD
-VCMPNGT_UQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1a]		AVX,SANDYBRIDGE,SD
-VCMPFALSE_OSSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1b]		AVX,SANDYBRIDGE,SD
-VCMPFALSE_OSSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1b]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_OSSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1c]		AVX,SANDYBRIDGE,SD
-VCMPNEQ_OSSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1c]		AVX,SANDYBRIDGE,SD
-VCMPGE_OQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1d]		AVX,SANDYBRIDGE,SD
-VCMPGE_OQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1d]		AVX,SANDYBRIDGE,SD
-VCMPGT_OQSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1e]		AVX,SANDYBRIDGE,SD
-VCMPGT_OQSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1e]		AVX,SANDYBRIDGE,SD
-VCMPTRUE_USSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1f]		AVX,SANDYBRIDGE,SD
-VCMPTRUE_USSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f c2 /r 1f]		AVX,SANDYBRIDGE,SD
-VCMPSS		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.f3.0f c2 /r ib]		AVX,SANDYBRIDGE,SD
-VCMPSS		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.f3.0f c2 /r ib]		AVX,SANDYBRIDGE,SD
+VCMPEQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 00]		AVX,SANDYBRIDGE,SD
+VCMPLTSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 01]		AVX,SANDYBRIDGE,SD
+VCMPLESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 02]		AVX,SANDYBRIDGE,SD
+VCMPUNORDSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 03]		AVX,SANDYBRIDGE,SD
+VCMPNEQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 04]		AVX,SANDYBRIDGE,SD
+VCMPNLTSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 05]		AVX,SANDYBRIDGE,SD
+VCMPNLESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 06]		AVX,SANDYBRIDGE,SD
+VCMPORDSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 07]		AVX,SANDYBRIDGE,SD
+VCMPEQ_UQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 08]		AVX,SANDYBRIDGE,SD
+VCMPNGESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 09]		AVX,SANDYBRIDGE,SD
+VCMPNGTSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0a]		AVX,SANDYBRIDGE,SD
+VCMPFALSESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0b]		AVX,SANDYBRIDGE,SD
+VCMPNEQ_OQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0c]		AVX,SANDYBRIDGE,SD
+VCMPGESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0d]		AVX,SANDYBRIDGE,SD
+VCMPGTSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0e]		AVX,SANDYBRIDGE,SD
+VCMPTRUESS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 0f]		AVX,SANDYBRIDGE,SD
+VCMPEQ_OSSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 10]		AVX,SANDYBRIDGE,SD
+VCMPLT_OQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 11]		AVX,SANDYBRIDGE,SD
+VCMPLE_OQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 12]		AVX,SANDYBRIDGE,SD
+VCMPUNORD_SSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 13]		AVX,SANDYBRIDGE,SD
+VCMPNEQ_USSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 14]		AVX,SANDYBRIDGE,SD
+VCMPNLT_UQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 15]		AVX,SANDYBRIDGE,SD
+VCMPNLE_UQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 16]		AVX,SANDYBRIDGE,SD
+VCMPORD_SSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 17]		AVX,SANDYBRIDGE,SD
+VCMPEQ_USSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 18]		AVX,SANDYBRIDGE,SD
+VCMPNGE_UQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 19]		AVX,SANDYBRIDGE,SD
+VCMPNGT_UQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1a]		AVX,SANDYBRIDGE,SD
+VCMPFALSE_OSSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1b]		AVX,SANDYBRIDGE,SD
+VCMPNEQ_OSSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1c]		AVX,SANDYBRIDGE,SD
+VCMPGE_OQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1d]		AVX,SANDYBRIDGE,SD
+VCMPGT_OQSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1e]		AVX,SANDYBRIDGE,SD
+VCMPTRUE_USSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f c2 /r 1f]		AVX,SANDYBRIDGE,SD
+VCMPSS		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.f3.0f c2 /r ib]		AVX,SANDYBRIDGE,SD
 VCOMISD		xmmreg,xmmrm			[rm:	vex.128.66.0f 2f /r]			AVX,SANDYBRIDGE,SQ
 VCOMISS		xmmreg,xmmrm			[rm:	vex.128.0f 2f /r]			AVX,SANDYBRIDGE,SD
 VCVTDQ2PD	xmmreg,xmmrm			[rm:	vex.128.f3.0f e6 /r]			AVX,SANDYBRIDGE,SQ
@@ -2699,22 +2477,14 @@ VCVTPS2PD	xmmreg,xmmrm			[rm:	vex.128.0f 5a /r]			AVX,SANDYBRIDGE,SQ
 VCVTPS2PD	ymmreg,xmmrm			[rm:	vex.256.0f 5a /r]			AVX,SANDYBRIDGE,SO
 VCVTSD2SI	reg32,xmmrm			[rm:	vex.128.f2.0f.w0 2d /r]			AVX,SANDYBRIDGE,SQ
 VCVTSD2SI	reg64,xmmrm			[rm:	vex.128.f2.0f.w1 2d /r]			AVX,SANDYBRIDGE,SQ,LONG
-VCVTSD2SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5a /r]		AVX,SANDYBRIDGE,SQ
-VCVTSD2SS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5a /r]		AVX,SANDYBRIDGE,SQ
-VCVTSI2SD	xmmreg,xmmreg,rm32		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SD	xmmreg,rm32			[r+vm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SD	xmmreg,xmmreg,mem		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
-VCVTSI2SD	xmmreg,mem			[r+vm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
-VCVTSI2SD	xmmreg,xmmreg,rm64		[rvm:	vex.nds.128.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSI2SD	xmmreg,rm64			[r+vm:	vex.nds.128.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSI2SS	xmmreg,xmmreg,rm32		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SS	xmmreg,rm32			[r+vm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
-VCVTSI2SS	xmmreg,xmmreg,mem		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
-VCVTSI2SS	xmmreg,mem			[r+vm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
-VCVTSI2SS	xmmreg,xmmreg,rm64		[rvm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSI2SS	xmmreg,rm64			[r+vm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
-VCVTSS2SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5a /r]		AVX,SANDYBRIDGE,SD
-VCVTSS2SD	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 5a /r]		AVX,SANDYBRIDGE,SD
+VCVTSD2SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 5a /r]		AVX,SANDYBRIDGE,SQ
+VCVTSI2SD	xmmreg,xmmreg*,rm32		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE
+VCVTSI2SD	xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
+VCVTSI2SD	xmmreg,xmmreg*,rm64		[rvm:	vex.nds.128.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
+VCVTSI2SS	xmmreg,xmmreg*,rm32		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE
+VCVTSI2SS	xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.f3.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD,AR2,ND
+VCVTSI2SS	xmmreg,xmmreg*,rm64		[rvm:	vex.nds.128.f3.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG
+VCVTSS2SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 5a /r]		AVX,SANDYBRIDGE,SD
 VCVTSS2SI	reg32,xmmrm			[rm:	vex.128.f3.0f.w0 2d /r]			AVX,SANDYBRIDGE,SD
 VCVTSS2SI	reg64,xmmrm			[rm:	vex.128.f3.0f.w1 2d /r]			AVX,SANDYBRIDGE,SD,LONG
 VCVTTPD2DQ	xmmreg,xmmreg			[rm:	vex.128.66.0f e6 /r]			AVX,SANDYBRIDGE
@@ -2727,45 +2497,27 @@ VCVTTSD2SI	reg32,xmmrm			[rm:	vex.128.f2.0f.w0 2c /r]			AVX,SANDYBRIDGE,SQ
 VCVTTSD2SI	reg64,xmmrm			[rm:	vex.128.f2.0f.w1 2c /r]			AVX,SANDYBRIDGE,SQ,LONG
 VCVTTSS2SI	reg32,xmmrm			[rm:	vex.128.f3.0f.w0 2c /r]			AVX,SANDYBRIDGE,SD
 VCVTTSS2SI	reg64,xmmrm			[rm:	vex.128.f3.0f.w1 2c /r]			AVX,SANDYBRIDGE,SD,LONG
-VDIVPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 5e /r]		AVX,SANDYBRIDGE,SO
-VDIVPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 5e /r]		AVX,SANDYBRIDGE,SO
-VDIVPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 5e /r]		AVX,SANDYBRIDGE,SY
-VDIVPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 5e /r]		AVX,SANDYBRIDGE,SY
-VDIVPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 5e /r]			AVX,SANDYBRIDGE,SO
-VDIVPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 5e /r]			AVX,SANDYBRIDGE,SO
-VDIVPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 5e /r]			AVX,SANDYBRIDGE,SY
-VDIVPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 5e /r]			AVX,SANDYBRIDGE,SY
-VDIVSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5e /r]		AVX,SANDYBRIDGE,SQ
-VDIVSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5e /r]		AVX,SANDYBRIDGE,SQ
-VDIVSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5e /r]		AVX,SANDYBRIDGE,SD
-VDIVSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 5e /r]		AVX,SANDYBRIDGE,SD
-VDPPD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 41 /r ib]		AVX,SANDYBRIDGE,SO
-VDPPD		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 41 /r ib]		AVX,SANDYBRIDGE,SO
-VDPPS		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SO
-VDPPS		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SO
-VDPPS		ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SY
-VDPPS		ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SY
+VDIVPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 5e /r]		AVX,SANDYBRIDGE,SO
+VDIVPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 5e /r]		AVX,SANDYBRIDGE,SY
+VDIVPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 5e /r]			AVX,SANDYBRIDGE,SO
+VDIVPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 5e /r]			AVX,SANDYBRIDGE,SY
+VDIVSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 5e /r]		AVX,SANDYBRIDGE,SQ
+VDIVSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 5e /r]		AVX,SANDYBRIDGE,SD
+VDPPD		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 41 /r ib]		AVX,SANDYBRIDGE,SO
+VDPPS		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SO
+VDPPS		ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE,SY
 VEXTRACTF128	xmmrm,xmmreg,imm		[mri:	vex.256.66.0f3a 19 /r ib]		AVX,SANDYBRIDGE,SO
 VEXTRACTPS	rm32,xmmreg,imm			[mri:	vex.128.66.0f3a 17 /r ib]		AVX,SANDYBRIDGE,SD
-VHADDPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 7c /r]		AVX,SANDYBRIDGE,SO
-VHADDPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 7c /r]		AVX,SANDYBRIDGE,SO
-VHADDPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 7c /r]		AVX,SANDYBRIDGE,SY
-VHADDPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 7c /r]		AVX,SANDYBRIDGE,SY
-VHADDPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 7c /r]		AVX,SANDYBRIDGE,SO
-VHADDPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 7c /r]		AVX,SANDYBRIDGE,SO
-VHADDPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.f2.0f 7c /r]		AVX,SANDYBRIDGE,SY
-VHADDPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.f2.0f 7c /r]		AVX,SANDYBRIDGE,SY
-VHSUBPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 7d /r]		AVX,SANDYBRIDGE,SO
-VHSUBPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 7d /r]		AVX,SANDYBRIDGE,SO
-VHSUBPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 7d /r]		AVX,SANDYBRIDGE,SY
-VHSUBPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 7d /r]		AVX,SANDYBRIDGE,SY
-VHSUBPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 7d /r]		AVX,SANDYBRIDGE,SO
-VHSUBPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 7d /r]		AVX,SANDYBRIDGE,SO
-VHSUBPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.f2.0f 7d /r]		AVX,SANDYBRIDGE,SY
-VHSUBPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.f2.0f 7d /r]		AVX,SANDYBRIDGE,SY
+VHADDPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 7c /r]		AVX,SANDYBRIDGE,SO
+VHADDPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 7c /r]		AVX,SANDYBRIDGE,SY
+VHADDPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 7c /r]		AVX,SANDYBRIDGE,SO
+VHADDPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.f2.0f 7c /r]		AVX,SANDYBRIDGE,SY
+VHSUBPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 7d /r]		AVX,SANDYBRIDGE,SO
+VHSUBPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 7d /r]		AVX,SANDYBRIDGE,SY
+VHSUBPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 7d /r]		AVX,SANDYBRIDGE,SO
+VHSUBPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.f2.0f 7d /r]		AVX,SANDYBRIDGE,SY
 VINSERTF128	ymmreg,ymmreg,xmmrm,imm		[rvmi:	vex.nds.256.66.0f3a 18 /r ib]		AVX,SANDYBRIDGE,SO
-VINSERTPS	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 21 /r ib]		AVX,SANDYBRIDGE,SD
-VINSERTPS	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 21 /r ib]		AVX,SANDYBRIDGE,SD
+VINSERTPS	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 21 /r ib]		AVX,SANDYBRIDGE,SD
 VLDDQU		xmmreg,mem			[rm:	vex.128.f2.0f f0 /r]			AVX,SANDYBRIDGE,SO
 VLDQQU		ymmreg,mem			[rm:	vex.256.f2.0f f0 /r]			AVX,SANDYBRIDGE,SY
 VLDDQU		ymmreg,mem			[rm:	vex.256.f2.0f f0 /r]			AVX,SANDYBRIDGE,SY
@@ -2779,30 +2531,18 @@ VMASKMOVPD	xmmreg,xmmreg,mem		[rvm:	vex.nds.128.66.0f38 2d /r]		AVX,SANDYBRIDGE,
 VMASKMOVPD	ymmreg,ymmreg,mem		[rvm:	vex.nds.256.66.0f38 2d /r]		AVX,SANDYBRIDGE,SY
 VMASKMOVPD	mem,xmmreg,xmmreg		[mvr:	vex.nds.128.66.0f38 2f /r]		AVX,SANDYBRIDGE,SO
 VMASKMOVPD	mem,ymmreg,ymmreg		[mvr:	vex.nds.256.66.0f38 2f /r]		AVX,SANDYBRIDGE,SY
-VMAXPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 5f /r]		AVX,SANDYBRIDGE,SO
-VMAXPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 5f /r]		AVX,SANDYBRIDGE,SO
-VMAXPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 5f /r]		AVX,SANDYBRIDGE,SY
-VMAXPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 5f /r]		AVX,SANDYBRIDGE,SY
-VMAXPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 5f /r]			AVX,SANDYBRIDGE,SO
-VMAXPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 5f /r]			AVX,SANDYBRIDGE,SO
-VMAXPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 5f /r]			AVX,SANDYBRIDGE,SY
-VMAXPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 5f /r]			AVX,SANDYBRIDGE,SY
-VMAXSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5f /r]		AVX,SANDYBRIDGE,SQ
-VMAXSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5f /r]		AVX,SANDYBRIDGE,SQ
-VMAXSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5f /r]		AVX,SANDYBRIDGE,SD
-VMAXSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 5f /r]		AVX,SANDYBRIDGE,SD
-VMINPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 5d /r]		AVX,SANDYBRIDGE,SO
-VMINPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 5d /r]		AVX,SANDYBRIDGE,SO
-VMINPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 5d /r]		AVX,SANDYBRIDGE,SY
-VMINPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 5d /r]		AVX,SANDYBRIDGE,SY
-VMINPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 5d /r]			AVX,SANDYBRIDGE,SO
-VMINPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 5d /r]			AVX,SANDYBRIDGE,SO
-VMINPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 5d /r]			AVX,SANDYBRIDGE,SY
-VMINPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 5d /r]			AVX,SANDYBRIDGE,SY
-VMINSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5d /r]		AVX,SANDYBRIDGE,SQ
-VMINSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5d /r]		AVX,SANDYBRIDGE,SQ
-VMINSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5d /r]		AVX,SANDYBRIDGE,SD
-VMINSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 5d /r]		AVX,SANDYBRIDGE,SD
+VMAXPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 5f /r]		AVX,SANDYBRIDGE,SO
+VMAXPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 5f /r]		AVX,SANDYBRIDGE,SY
+VMAXPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 5f /r]			AVX,SANDYBRIDGE,SO
+VMAXPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 5f /r]			AVX,SANDYBRIDGE,SY
+VMAXSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 5f /r]		AVX,SANDYBRIDGE,SQ
+VMAXSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 5f /r]		AVX,SANDYBRIDGE,SD
+VMINPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 5d /r]		AVX,SANDYBRIDGE,SO
+VMINPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 5d /r]		AVX,SANDYBRIDGE,SY
+VMINPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 5d /r]			AVX,SANDYBRIDGE,SO
+VMINPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 5d /r]			AVX,SANDYBRIDGE,SY
+VMINSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 5d /r]		AVX,SANDYBRIDGE,SQ
+VMINSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 5d /r]		AVX,SANDYBRIDGE,SD
 VMOVAPD		xmmreg,xmmrm			[rm:	vex.128.66.0f 28 /r]			AVX,SANDYBRIDGE,SO
 VMOVAPD		xmmrm,xmmreg			[mr:	vex.128.66.0f 29 /r]			AVX,SANDYBRIDGE,SO
 VMOVAPD		ymmreg,ymmrm			[rm:	vex.256.66.0f 28 /r]			AVX,SANDYBRIDGE,SY
@@ -2833,21 +2573,15 @@ VMOVQQU		ymmreg,ymmrm			[rm:	vex.256.f3.0f 6f /r]			AVX,SANDYBRIDGE,SY
 VMOVQQU		ymmrm,ymmreg			[mr:	vex.256.f3.0f 7f /r]			AVX,SANDYBRIDGE,SY
 VMOVDQU		ymmreg,ymmrm			[rm:	vex.256.f3.0f 6f /r]			AVX,SANDYBRIDGE,SY
 VMOVDQU		ymmrm,ymmreg			[mr:	vex.256.f3.0f 7f /r]			AVX,SANDYBRIDGE,SY
-VMOVHLPS	xmmreg,xmmreg,xmmreg		[rvm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE
-VMOVHLPS	xmmreg,xmmreg			[r+vm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE
-VMOVHPD		xmmreg,xmmreg,mem		[rvm:	vex.nds.128.66.0f 16 /r]		AVX,SANDYBRIDGE,SQ
-VMOVHPD		xmmreg,mem			[r+vm:	vex.nds.128.66.0f 16 /r]		AVX,SANDYBRIDGE,SQ
+VMOVHLPS	xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE
+VMOVHPD		xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.66.0f 16 /r]		AVX,SANDYBRIDGE,SQ
 VMOVHPD		mem,xmmreg			[mr:	vex.128.66.0f 17 /r]			AVX,SANDYBRIDGE,SQ
-VMOVHPS		xmmreg,xmmreg,mem		[rvm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE,SQ
-VMOVHPS		xmmreg,mem			[r+vm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE,SQ
+VMOVHPS		xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE,SQ
 VMOVHPS		mem,xmmreg			[mr:	vex.128.0f 17 /r]			AVX,SANDYBRIDGE,SQ
-VMOVLHPS	xmmreg,xmmreg,xmmreg		[rvm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE
-VMOVLHPS	xmmreg,xmmreg			[r+vm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE
-VMOVLPD		xmmreg,xmmreg,mem		[rvm:	vex.nds.128.66.0f 12 /r]		AVX,SANDYBRIDGE,SQ
-VMOVLPD		xmmreg,mem			[r+vm:	vex.nds.128.66.0f 12 /r]		AVX,SANDYBRIDGE,SQ
+VMOVLHPS	xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.128.0f 16 /r]			AVX,SANDYBRIDGE
+VMOVLPD		xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.66.0f 12 /r]		AVX,SANDYBRIDGE,SQ
 VMOVLPD		mem,xmmreg			[mr:	vex.128.66.0f 13 /r]			AVX,SANDYBRIDGE,SQ
-VMOVLPS		xmmreg,xmmreg,mem		[rvm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE,SQ
-VMOVLPS		xmmreg,mem			[r+vm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE,SQ
+VMOVLPS		xmmreg,xmmreg*,mem		[rvm:	vex.nds.128.0f 12 /r]			AVX,SANDYBRIDGE,SQ
 VMOVLPS		mem,xmmreg			[mr:	vex.128.0f 13 /r]			AVX,SANDYBRIDGE,SQ
 VMOVMSKPD	reg64,xmmreg			[rm:	vex.128.66.0f 50 /r]			AVX,SANDYBRIDGE,LONG
 VMOVMSKPD	reg32,xmmreg			[rm:	vex.128.66.0f 50 /r]			AVX,SANDYBRIDGE
@@ -2866,21 +2600,17 @@ VMOVNTPD	mem,xmmreg			[mr:	vex.128.66.0f 2b /r]			AVX,SANDYBRIDGE,SO
 VMOVNTPD	mem,ymmreg			[mr:	vex.256.66.0f 2b /r]			AVX,SANDYBRIDGE,SY
 VMOVNTPS	mem,xmmreg			[mr:	vex.128.0f 2b /r]			AVX,SANDYBRIDGE,SO
 VMOVNTPS	mem,ymmreg			[mr:	vex.256.0f 2b /r]			AVX,SANDYBRIDGE,SO
-VMOVSD		xmmreg,xmmreg,xmmreg		[rvm:	vex.nds.128.f2.0f 10 /r]		AVX,SANDYBRIDGE
-VMOVSD		xmmreg,xmmreg			[r+vm:	vex.nds.128.f2.0f 10 /r]		AVX,SANDYBRIDGE
+VMOVSD		xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.128.f2.0f 10 /r]		AVX,SANDYBRIDGE
 VMOVSD		xmmreg,mem			[rm:	vex.128.f2.0f 10 /r]			AVX,SANDYBRIDGE,SQ
-VMOVSD		xmmreg,xmmreg,xmmreg		[mvr:	vex.nds.128.f2.0f 11 /r]		AVX,SANDYBRIDGE
-VMOVSD		xmmreg,xmmreg			[m+vr:	vex.nds.128.f2.0f 11 /r]		AVX,SANDYBRIDGE
+VMOVSD		xmmreg,xmmreg*,xmmreg		[mvr:	vex.nds.128.f2.0f 11 /r]		AVX,SANDYBRIDGE
 VMOVSD		mem,xmmreg			[mr:	vex.128.f2.0f 11 /r]			AVX,SANDYBRIDGE,SQ
 VMOVSHDUP	xmmreg,xmmrm			[rm:	vex.128.f3.0f 16 /r]			AVX,SANDYBRIDGE,SO
 VMOVSHDUP	ymmreg,ymmrm			[rm:	vex.256.f3.0f 16 /r]			AVX,SANDYBRIDGE,SY
 VMOVSLDUP	xmmreg,xmmrm			[rm:	vex.128.f3.0f 12 /r]			AVX,SANDYBRIDGE,SO
 VMOVSLDUP	ymmreg,ymmrm			[rm:	vex.256.f3.0f 12 /r]			AVX,SANDYBRIDGE,SY
-VMOVSS		xmmreg,xmmreg,xmmreg		[rvm:	vex.nds.128.f3.0f 10 /r]		AVX,SANDYBRIDGE
-VMOVSS		xmmreg,xmmreg			[r+vm:	vex.nds.128.f3.0f 10 /r]		AVX,SANDYBRIDGE
+VMOVSS		xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.128.f3.0f 10 /r]		AVX,SANDYBRIDGE
 VMOVSS		xmmreg,mem			[rm:	vex.128.f3.0f 10 /r]			AVX,SANDYBRIDGE,SQ
-VMOVSS		xmmreg,xmmreg,xmmreg		[mvr:	vex.nds.128.f3.0f 11 /r]		AVX,SANDYBRIDGE
-VMOVSS		xmmreg,xmmreg			[m+vr:	vex.nds.128.f3.0f 11 /r]		AVX,SANDYBRIDGE
+VMOVSS		xmmreg,xmmreg*,xmmreg		[mvr:	vex.nds.128.f3.0f 11 /r]		AVX,SANDYBRIDGE
 VMOVSS		mem,xmmreg			[mr:	vex.128.f3.0f 11 /r]			AVX,SANDYBRIDGE,SQ
 VMOVUPD		xmmreg,xmmrm			[rm:	vex.128.66.0f 10 /r]			AVX,SANDYBRIDGE,SO
 VMOVUPD		xmmrm,xmmreg			[mr:	vex.128.66.0f 11 /r]			AVX,SANDYBRIDGE,SO
@@ -2890,89 +2620,51 @@ VMOVUPS		xmmreg,xmmrm			[rm:	vex.128.0f 10 /r]			AVX,SANDYBRIDGE,SO
 VMOVUPS		xmmrm,xmmreg			[mr:	vex.128.0f 11 /r]			AVX,SANDYBRIDGE,SO
 VMOVUPS		ymmreg,ymmrm			[rm:	vex.256.0f 10 /r]			AVX,SANDYBRIDGE,SY
 VMOVUPS		ymmrm,ymmreg			[mr:	vex.256.0f 11 /r]			AVX,SANDYBRIDGE,SY
-VMPSADBW	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 42 /r ib]		AVX,SANDYBRIDGE,SO
-VMPSADBW	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 42 /r ib]		AVX,SANDYBRIDGE,SO
-VMULPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 59 /r]		AVX,SANDYBRIDGE,SO
-VMULPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 59 /r]		AVX,SANDYBRIDGE,SO
-VMULPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 59 /r]		AVX,SANDYBRIDGE,SY
-VMULPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 59 /r]		AVX,SANDYBRIDGE,SY
-VMULPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 59 /r]			AVX,SANDYBRIDGE,SO
-VMULPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 59 /r]			AVX,SANDYBRIDGE,SO
-VMULPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE,SY
-VMULPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE,SY
-VMULSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 59 /r]		AVX,SANDYBRIDGE,SQ
-VMULSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 59 /r]		AVX,SANDYBRIDGE,SQ
-VMULSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 59 /r]		AVX,SANDYBRIDGE,SD
-VMULSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 59 /r]		AVX,SANDYBRIDGE,SD
-VORPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE,SO
-VORPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE,SO
-VORPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 56 /r]		AVX,SANDYBRIDGE,SY
-VORPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 56 /r]		AVX,SANDYBRIDGE,SY
-VORPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE,SO
-VORPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE,SO
-VORPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE,SY
-VORPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE,SY
+VMPSADBW	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 42 /r ib]		AVX,SANDYBRIDGE,SO
+VMULPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 59 /r]		AVX,SANDYBRIDGE,SO
+VMULPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 59 /r]		AVX,SANDYBRIDGE,SY
+VMULPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 59 /r]			AVX,SANDYBRIDGE,SO
+VMULPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE,SY
+VMULSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 59 /r]		AVX,SANDYBRIDGE,SQ
+VMULSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 59 /r]		AVX,SANDYBRIDGE,SD
+VORPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE,SO
+VORPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 56 /r]		AVX,SANDYBRIDGE,SY
+VORPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE,SO
+VORPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE,SY
 VPABSB		xmmreg,xmmrm			[rm:	vex.128.66.0f38 1c /r]			AVX,SANDYBRIDGE,SO
 VPABSW		xmmreg,xmmrm			[rm:	vex.128.66.0f38 1d /r]			AVX,SANDYBRIDGE,SO
 VPABSD		xmmreg,xmmrm			[rm:	vex.128.66.0f38 1e /r]			AVX,SANDYBRIDGE,SO
-VPACKSSWB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 63 /r]		AVX,SANDYBRIDGE,SO
-VPACKSSWB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 63 /r]		AVX,SANDYBRIDGE,SO
-VPACKSSDW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE,SO
-VPACKSSDW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE,SO
-VPACKUSWB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE,SO
-VPACKUSWB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE,SO
-VPACKUSDW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE,SO
-VPACKUSDW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE,SO
-VPADDB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE,SO
-VPADDB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE,SO
-VPADDW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f fd /r]		AVX,SANDYBRIDGE,SO
-VPADDW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f fd /r]		AVX,SANDYBRIDGE,SO
-VPADDD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f fe /r]		AVX,SANDYBRIDGE,SO
-VPADDD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f fe /r]		AVX,SANDYBRIDGE,SO
-VPADDQ		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d4 /r]		AVX,SANDYBRIDGE,SO
-VPADDQ		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d4 /r]		AVX,SANDYBRIDGE,SO
-VPADDSB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f ec /r]		AVX,SANDYBRIDGE,SO
-VPADDSB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f ec /r]		AVX,SANDYBRIDGE,SO
-VPADDSW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f ed /r]		AVX,SANDYBRIDGE,SO
-VPADDSW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f ed /r]		AVX,SANDYBRIDGE,SO
-VPADDUSB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f dc /r]		AVX,SANDYBRIDGE,SO
-VPADDUSB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f dc /r]		AVX,SANDYBRIDGE,SO
-VPADDUSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f dd /r]		AVX,SANDYBRIDGE,SO
-VPADDUSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f dd /r]		AVX,SANDYBRIDGE,SO
-VPALIGNR	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0f /r ib]		AVX,SANDYBRIDGE,SO
-VPALIGNR	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0f /r ib]		AVX,SANDYBRIDGE,SO
-VPAND		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f db /r]		AVX,SANDYBRIDGE,SO
-VPAND		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f db /r]		AVX,SANDYBRIDGE,SO
-VPANDN		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f df /r]		AVX,SANDYBRIDGE,SO
-VPANDN		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f df /r]		AVX,SANDYBRIDGE,SO
-VPAVGB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e0 /r]		AVX,SANDYBRIDGE,SO
-VPAVGB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e0 /r]		AVX,SANDYBRIDGE,SO
-VPAVGW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e3 /r]		AVX,SANDYBRIDGE,SO
-VPAVGW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e3 /r]		AVX,SANDYBRIDGE,SO
-VPBLENDVB	xmmreg,xmmreg,xmmrm,xmmreg	[rvms:	vex.nds.128.66.0f3a 4c /r /is4]		AVX,SANDYBRIDGE,SO
-VPBLENDVB	xmmreg,xmmrm,xmmreg		[r+vms:	vex.nds.128.66.0f3a 4c /r /is4]		AVX,SANDYBRIDGE,SO
-VPBLENDW	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0e /r ib]		AVX,SANDYBRIDGE,SO
-VPBLENDW	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0e /r ib]		AVX,SANDYBRIDGE,SO
+VPACKSSWB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 63 /r]		AVX,SANDYBRIDGE,SO
+VPACKSSDW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE,SO
+VPACKUSWB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE,SO
+VPACKUSDW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE,SO
+VPADDB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE,SO
+VPADDW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f fd /r]		AVX,SANDYBRIDGE,SO
+VPADDD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f fe /r]		AVX,SANDYBRIDGE,SO
+VPADDQ		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d4 /r]		AVX,SANDYBRIDGE,SO
+VPADDSB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f ec /r]		AVX,SANDYBRIDGE,SO
+VPADDSW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f ed /r]		AVX,SANDYBRIDGE,SO
+VPADDUSB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f dc /r]		AVX,SANDYBRIDGE,SO
+VPADDUSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f dd /r]		AVX,SANDYBRIDGE,SO
+VPALIGNR	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0f /r ib]		AVX,SANDYBRIDGE,SO
+VPAND		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f db /r]		AVX,SANDYBRIDGE,SO
+VPANDN		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f df /r]		AVX,SANDYBRIDGE,SO
+VPAVGB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e0 /r]		AVX,SANDYBRIDGE,SO
+VPAVGW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e3 /r]		AVX,SANDYBRIDGE,SO
+VPBLENDVB	xmmreg,xmmreg*,xmmrm,xmmreg	[rvms:	vex.nds.128.66.0f3a 4c /r /is4]		AVX,SANDYBRIDGE,SO
+VPBLENDW	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0e /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPESTRI	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 61 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPESTRM	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 60 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPISTRI	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 63 /r ib]		AVX,SANDYBRIDGE,SO
 VPCMPISTRM	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 62 /r ib]		AVX,SANDYBRIDGE,SO
-VPCMPEQB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 74 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 74 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 75 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 75 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 76 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 76 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 29 /r]		AVX,SANDYBRIDGE,SO
-VPCMPEQQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 29 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 64 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 64 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 65 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 65 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 66 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 66 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 37 /r]		AVX,SANDYBRIDGE,SO
-VPCMPGTQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 37 /r]		AVX,SANDYBRIDGE,SO
+VPCMPEQB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 74 /r]		AVX,SANDYBRIDGE,SO
+VPCMPEQW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 75 /r]		AVX,SANDYBRIDGE,SO
+VPCMPEQD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 76 /r]		AVX,SANDYBRIDGE,SO
+VPCMPEQQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 29 /r]		AVX,SANDYBRIDGE,SO
+VPCMPGTB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 64 /r]		AVX,SANDYBRIDGE,SO
+VPCMPGTW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 65 /r]		AVX,SANDYBRIDGE,SO
+VPCMPGTD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 66 /r]		AVX,SANDYBRIDGE,SO
+VPCMPGTQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 37 /r]		AVX,SANDYBRIDGE,SO
 VPERMILPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 0d /r]		AVX,SANDYBRIDGE,SO
 VPERMILPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f38 0d /r]		AVX,SANDYBRIDGE,SY
 VPERMILPD	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 05 /r ib]		AVX,SANDYBRIDGE,SO
@@ -3026,59 +2718,36 @@ VPEXTRW		mem,xmmreg,imm			[mri:	vex.128.66.0f3a.w0 15 /r ib]		AVX,SANDYBRIDGE,SW
 VPEXTRD		reg64,xmmreg,imm		[mri:	vex.128.66.0f3a.w0 16 /r ib]		AVX,SANDYBRIDGE,LONG
 VPEXTRD		rm32,xmmreg,imm			[mri:	vex.128.66.0f3a.w0 16 /r ib]		AVX,SANDYBRIDGE,SD
 VPEXTRQ		rm64,xmmreg,imm			[mri:	vex.128.66.0f3a.w1 16 /r ib]		AVX,SANDYBRIDGE,SQ,LONG
-VPHADDW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 01 /r]		AVX,SANDYBRIDGE,SO
-VPHADDW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 01 /r]		AVX,SANDYBRIDGE,SO
-VPHADDD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 02 /r]		AVX,SANDYBRIDGE,SO
-VPHADDD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 02 /r]		AVX,SANDYBRIDGE,SO
-VPHADDSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 03 /r]		AVX,SANDYBRIDGE,SO
-VPHADDSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 03 /r]		AVX,SANDYBRIDGE,SO
+VPHADDW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 01 /r]		AVX,SANDYBRIDGE,SO
+VPHADDD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 02 /r]		AVX,SANDYBRIDGE,SO
+VPHADDSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 03 /r]		AVX,SANDYBRIDGE,SO
 VPHMINPOSUW	xmmreg,xmmrm			[rm:	vex.128.66.0f38 41 /r]			AVX,SANDYBRIDGE,SO
-VPHSUBW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 05 /r]		AVX,SANDYBRIDGE,SO
-VPHSUBW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 05 /r]		AVX,SANDYBRIDGE,SO
-VPHSUBD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 06 /r]		AVX,SANDYBRIDGE,SO
-VPHSUBD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 06 /r]		AVX,SANDYBRIDGE,SO
-VPHSUBSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 07 /r]		AVX,SANDYBRIDGE,SO
-VPHSUBSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 07 /r]		AVX,SANDYBRIDGE,SO
-VPINSRB		xmmreg,xmmreg,reg32,imm		[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE
-VPINSRB		xmmreg,reg32,imm		[r+vmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE
+VPHSUBW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 05 /r]		AVX,SANDYBRIDGE,SO
+VPHSUBD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 06 /r]		AVX,SANDYBRIDGE,SO
+VPHSUBSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 07 /r]		AVX,SANDYBRIDGE,SO
+VPINSRB		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE
 VPINSRB		xmmreg,xmmreg,mem,imm		[rvmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB
-VPINSRB		xmmreg,reg32,mem,imm		[r+vmi:	vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB
-VPINSRW		xmmreg,xmmreg,reg32,imm		[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE
-VPINSRW		xmmreg,reg32,imm		[r+vmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE
+VPINSRB		xmmreg,reg32,mem,imm		[r+vmi: vex.nds.128.66.0f3a 20 /r ib]		AVX,SANDYBRIDGE,SB
+VPINSRW		xmmreg,xmmreg*,reg32,imm	[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE
 VPINSRW		xmmreg,xmmreg,mem,imm		[rvmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SW
-VPINSRW		xmmreg,reg32,mem,imm		[r+vmi:	vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SW
-VPINSRD		xmmreg,xmmreg,rm32,imm		[rvmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SD
-VPINSRD		xmmreg,rm32,imm			[r+vmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SD
+VPINSRW		xmmreg,reg32,mem,imm		[r+vmi: vex.nds.128.66.0f c4 /r ib]		AVX,SANDYBRIDGE,SW
+VPINSRD		xmmreg,xmmreg*,rm32,imm		[rvmi:	vex.nds.128.66.0f3a.w0 22 /r ib]	AVX,SANDYBRIDGE,SD
 VPINSRQ		xmmreg,xmmreg,rm64,imm		[rvmi:	vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SQ,LONG
-VPINSRQ		xmmreg,rm64,imm			[r+vmi:	vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SD,LONG
-VPMADDWD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f5 /r]		AVX,SANDYBRIDGE,SO
-VPMADDWD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f5 /r]		AVX,SANDYBRIDGE,SO
-VPMADDUBSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 04 /r]		AVX,SANDYBRIDGE,SO
-VPMADDUBSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 04 /r]		AVX,SANDYBRIDGE,SO
-VPMAXSB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3c /r]		AVX,SANDYBRIDGE,SO
-VPMAXSB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3c /r]		AVX,SANDYBRIDGE,SO
-VPMAXSW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f ee /r]		AVX,SANDYBRIDGE,SO
-VPMAXSW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f ee /r]		AVX,SANDYBRIDGE,SO
-VPMAXSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3d /r]		AVX,SANDYBRIDGE,SO
-VPMAXSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3d /r]		AVX,SANDYBRIDGE,SO
-VPMAXUB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f de /r]		AVX,SANDYBRIDGE,SO
-VPMAXUB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f de /r]		AVX,SANDYBRIDGE,SO
-VPMAXUW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3e /r]		AVX,SANDYBRIDGE,SO
-VPMAXUW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3e /r]		AVX,SANDYBRIDGE,SO
-VPMAXUD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3f /r]		AVX,SANDYBRIDGE,SO
-VPMAXUD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3f /r]		AVX,SANDYBRIDGE,SO
-VPMINSB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 38 /r]		AVX,SANDYBRIDGE,SO
-VPMINSB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 38 /r]		AVX,SANDYBRIDGE,SO
-VPMINSW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f ea /r]		AVX,SANDYBRIDGE,SO
-VPMINSW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f ea /r]		AVX,SANDYBRIDGE,SO
-VPMINSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 39 /r]		AVX,SANDYBRIDGE,SO
-VPMINSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 39 /r]		AVX,SANDYBRIDGE,SO
-VPMINUB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f da /r]		AVX,SANDYBRIDGE,SO
-VPMINUB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f da /r]		AVX,SANDYBRIDGE,SO
-VPMINUW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3a /r]		AVX,SANDYBRIDGE,SO
-VPMINUW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3a /r]		AVX,SANDYBRIDGE,SO
-VPMINUD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 3b /r]		AVX,SANDYBRIDGE,SO
-VPMINUD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 3b /r]		AVX,SANDYBRIDGE,SO
+VPINSRQ		xmmreg,rm64,imm			[r+vmi: vex.nds.128.66.0f3a.w1 22 /r ib]	AVX,SANDYBRIDGE,SD,LONG
+VPMADDWD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f5 /r]		AVX,SANDYBRIDGE,SO
+VPMADDUBSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 04 /r]		AVX,SANDYBRIDGE,SO
+VPMAXSB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3c /r]		AVX,SANDYBRIDGE,SO
+VPMAXSW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f ee /r]		AVX,SANDYBRIDGE,SO
+VPMAXSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3d /r]		AVX,SANDYBRIDGE,SO
+VPMAXUB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f de /r]		AVX,SANDYBRIDGE,SO
+VPMAXUW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3e /r]		AVX,SANDYBRIDGE,SO
+VPMAXUD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3f /r]		AVX,SANDYBRIDGE,SO
+VPMINSB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 38 /r]		AVX,SANDYBRIDGE,SO
+VPMINSW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f ea /r]		AVX,SANDYBRIDGE,SO
+VPMINSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 39 /r]		AVX,SANDYBRIDGE,SO
+VPMINUB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f da /r]		AVX,SANDYBRIDGE,SO
+VPMINUW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3a /r]		AVX,SANDYBRIDGE,SO
+VPMINUD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 3b /r]		AVX,SANDYBRIDGE,SO
 VPMOVMSKB	reg64,xmmreg			[rm:	vex.128.66.0f d7 /r]			AVX,SANDYBRIDGE,LONG
 VPMOVMSKB	reg32,xmmreg			[rm:	vex.128.66.0f d7 /r]			AVX,SANDYBRIDGE
 VPMOVSXBW	xmmreg,xmmrm			[rm:	vex.128.66.0f38 20 /r]			AVX,SANDYBRIDGE,SQ
@@ -3093,182 +2762,106 @@ VPMOVZXBQ	xmmreg,xmmrm			[rm:	vex.128.66.0f38 32 /r]			AVX,SANDYBRIDGE,SW
 VPMOVZXWD	xmmreg,xmmrm			[rm:	vex.128.66.0f38 33 /r]			AVX,SANDYBRIDGE,SQ
 VPMOVZXWQ	xmmreg,xmmrm			[rm:	vex.128.66.0f38 34 /r]			AVX,SANDYBRIDGE,SD
 VPMOVZXDQ	xmmreg,xmmrm			[rm:	vex.128.66.0f38 35 /r]			AVX,SANDYBRIDGE,SQ
-VPMULHUW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e4 /r]		AVX,SANDYBRIDGE,SO
-VPMULHUW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e4 /r]		AVX,SANDYBRIDGE,SO
-VPMULHRSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 0b /r]		AVX,SANDYBRIDGE,SO
-VPMULHRSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 0b /r]		AVX,SANDYBRIDGE,SO
-VPMULHW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e5 /r]		AVX,SANDYBRIDGE,SO
-VPMULHW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e5 /r]		AVX,SANDYBRIDGE,SO
-VPMULLW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d5 /r]		AVX,SANDYBRIDGE,SO
-VPMULLW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d5 /r]		AVX,SANDYBRIDGE,SO
-VPMULLD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 40 /r]		AVX,SANDYBRIDGE,SO
-VPMULLD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 40 /r]		AVX,SANDYBRIDGE,SO
-VPMULUDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f4 /r]		AVX,SANDYBRIDGE,SO
-VPMULUDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f4 /r]		AVX,SANDYBRIDGE,SO
-VPMULDQ		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 28 /r]		AVX,SANDYBRIDGE,SO
-VPMULDQ		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 28 /r]		AVX,SANDYBRIDGE,SO
-VPOR		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f eb /r]		AVX,SANDYBRIDGE,SO
-VPOR		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f eb /r]		AVX,SANDYBRIDGE,SO
-VPSADBW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f6 /r]		AVX,SANDYBRIDGE,SO
-VPSADBW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f6 /r]		AVX,SANDYBRIDGE,SO
-VPSHUFB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 00 /r]		AVX,SANDYBRIDGE,SO
-VPSHUFB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 00 /r]		AVX,SANDYBRIDGE,SO
+VPMULHUW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e4 /r]		AVX,SANDYBRIDGE,SO
+VPMULHRSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 0b /r]		AVX,SANDYBRIDGE,SO
+VPMULHW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e5 /r]		AVX,SANDYBRIDGE,SO
+VPMULLW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d5 /r]		AVX,SANDYBRIDGE,SO
+VPMULLD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 40 /r]		AVX,SANDYBRIDGE,SO
+VPMULUDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f4 /r]		AVX,SANDYBRIDGE,SO
+VPMULDQ		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 28 /r]		AVX,SANDYBRIDGE,SO
+VPOR		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f eb /r]		AVX,SANDYBRIDGE,SO
+VPSADBW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f6 /r]		AVX,SANDYBRIDGE,SO
+VPSHUFB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 00 /r]		AVX,SANDYBRIDGE,SO
 VPSHUFD		xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
 VPSHUFHW	xmmreg,xmmrm,imm		[rmi:	vex.128.f3.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
 VPSHUFLW	xmmreg,xmmrm,imm		[rmi:	vex.128.f2.0f 70 /r ib]			AVX,SANDYBRIDGE,SO
-VPSIGNB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 08 /r]		AVX,SANDYBRIDGE,SO
-VPSIGNB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 08 /r]		AVX,SANDYBRIDGE,SO
-VPSIGNW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 09 /r]		AVX,SANDYBRIDGE,SO
-VPSIGNW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 09 /r]		AVX,SANDYBRIDGE,SO
-VPSIGND		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f38 0a /r]		AVX,SANDYBRIDGE,SO
-VPSIGND		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f38 0a /r]		AVX,SANDYBRIDGE,SO
-VPSLLDQ		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 73 /7 ib]		AVX,SANDYBRIDGE
-VPSLLDQ		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 73 /7 ib]		AVX,SANDYBRIDGE
-VPSRLDQ		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 73 /3 ib]		AVX,SANDYBRIDGE
-VPSRLDQ		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 73 /3 ib]		AVX,SANDYBRIDGE
-VPSLLW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f1 /r]		AVX,SANDYBRIDGE,SO
-VPSLLW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f1 /r]		AVX,SANDYBRIDGE,SO
-VPSLLW		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 71 /6 ib]		AVX,SANDYBRIDGE
-VPSLLW		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 71 /6 ib]		AVX,SANDYBRIDGE
-VPSLLD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f2 /r]		AVX,SANDYBRIDGE,SO
-VPSLLD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f2 /r]		AVX,SANDYBRIDGE,SO
-VPSLLD		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 72 /6 ib]		AVX,SANDYBRIDGE
-VPSLLD		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 72 /6 ib]		AVX,SANDYBRIDGE
-VPSLLQ		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f3 /r]		AVX,SANDYBRIDGE,SO
-VPSLLQ		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f3 /r]		AVX,SANDYBRIDGE,SO
-VPSLLQ		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 73 /6 ib]		AVX,SANDYBRIDGE
-VPSLLQ		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 73 /6 ib]		AVX,SANDYBRIDGE
-VPSRAW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e1 /r]		AVX,SANDYBRIDGE,SO
-VPSRAW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e1 /r]		AVX,SANDYBRIDGE,SO
-VPSRAW		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 71 /4 ib]		AVX,SANDYBRIDGE
-VPSRAW		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 71 /4 ib]		AVX,SANDYBRIDGE
-VPSRAD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e2 /r]		AVX,SANDYBRIDGE,SO
-VPSRAD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e2 /r]		AVX,SANDYBRIDGE,SO
-VPSRAD		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 72 /4 ib]		AVX,SANDYBRIDGE
-VPSRAD		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 72 /4 ib]		AVX,SANDYBRIDGE
-VPSRLW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d1 /r]		AVX,SANDYBRIDGE,SO
-VPSRLW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d1 /r]		AVX,SANDYBRIDGE,SO
-VPSRLW		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 71 /2 ib]		AVX,SANDYBRIDGE
-VPSRLW		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 71 /2 ib]		AVX,SANDYBRIDGE
-VPSRLD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d2 /r]		AVX,SANDYBRIDGE,SO
-VPSRLD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d2 /r]		AVX,SANDYBRIDGE,SO
-VPSRLD		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 72 /2 ib]		AVX,SANDYBRIDGE
-VPSRLD		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 72 /2 ib]		AVX,SANDYBRIDGE
-VPSRLQ		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d3 /r]		AVX,SANDYBRIDGE,SO
-VPSRLQ		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d3 /r]		AVX,SANDYBRIDGE,SO
-VPSRLQ		xmmreg,xmmreg,imm		[vmi:	vex.ndd.128.66.0f 73 /2 ib]		AVX,SANDYBRIDGE
-VPSRLQ		xmmreg,imm			[v+mi:	vex.ndd.128.66.0f 73 /2 ib]		AVX,SANDYBRIDGE
+VPSIGNB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 08 /r]		AVX,SANDYBRIDGE,SO
+VPSIGNW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 09 /r]		AVX,SANDYBRIDGE,SO
+VPSIGND		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f38 0a /r]		AVX,SANDYBRIDGE,SO
+VPSLLDQ		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 73 /7 ib]		AVX,SANDYBRIDGE
+VPSRLDQ		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 73 /3 ib]		AVX,SANDYBRIDGE
+VPSLLW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f1 /r]		AVX,SANDYBRIDGE,SO
+VPSLLW		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 71 /6 ib]		AVX,SANDYBRIDGE
+VPSLLD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f2 /r]		AVX,SANDYBRIDGE,SO
+VPSLLD		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 72 /6 ib]		AVX,SANDYBRIDGE
+VPSLLQ		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f3 /r]		AVX,SANDYBRIDGE,SO
+VPSLLQ		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 73 /6 ib]		AVX,SANDYBRIDGE
+VPSRAW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e1 /r]		AVX,SANDYBRIDGE,SO
+VPSRAW		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 71 /4 ib]		AVX,SANDYBRIDGE
+VPSRAD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e2 /r]		AVX,SANDYBRIDGE,SO
+VPSRAD		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 72 /4 ib]		AVX,SANDYBRIDGE
+VPSRLW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d1 /r]		AVX,SANDYBRIDGE,SO
+VPSRLW		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 71 /2 ib]		AVX,SANDYBRIDGE
+VPSRLD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d2 /r]		AVX,SANDYBRIDGE,SO
+VPSRLD		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 72 /2 ib]		AVX,SANDYBRIDGE
+VPSRLQ		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d3 /r]		AVX,SANDYBRIDGE,SO
+VPSRLQ		xmmreg,xmmreg*,imm		[vmi:	vex.ndd.128.66.0f 73 /2 ib]		AVX,SANDYBRIDGE
 VPTEST		xmmreg,xmmrm			[rm:	vex.128.66.0f38 17 /r]			AVX,SANDYBRIDGE,SO
 VPTEST		ymmreg,ymmrm			[rm:	vex.256.66.0f38 17 /r]			AVX,SANDYBRIDGE,SY
-VPSUBB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f f9 /r]		AVX,SANDYBRIDGE,SO
-VPSUBW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f f9 /r]		AVX,SANDYBRIDGE,SO
-VPSUBD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f fa /r]		AVX,SANDYBRIDGE,SO
-VPSUBD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f fa /r]		AVX,SANDYBRIDGE,SO
-VPSUBQ		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f fb /r]		AVX,SANDYBRIDGE,SO
-VPSUBQ		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f fb /r]		AVX,SANDYBRIDGE,SO
-VPSUBSB		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBSB		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBSW		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f e9 /r]		AVX,SANDYBRIDGE,SO
-VPSUBSW		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f e9 /r]		AVX,SANDYBRIDGE,SO
-VPSUBUSB	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBUSB	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d8 /r]		AVX,SANDYBRIDGE,SO
-VPSUBUSW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f d9 /r]		AVX,SANDYBRIDGE,SO
-VPSUBUSW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f d9 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHBW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 68 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHBW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 68 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHWD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 69 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHWD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 69 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 6a /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 6a /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 6d /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKHQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 6d /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLBW	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 60 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLBW	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 60 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLWD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 61 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLWD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 61 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 62 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 62 /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 6c /r]		AVX,SANDYBRIDGE,SO
-VPUNPCKLQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 6c /r]		AVX,SANDYBRIDGE,SO
-VPXOR		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f ef /r]		AVX,SANDYBRIDGE,SO
-VPXOR		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f ef /r]		AVX,SANDYBRIDGE,SO
+VPSUBB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f8 /r]		AVX,SANDYBRIDGE,SO
+VPSUBW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f f9 /r]		AVX,SANDYBRIDGE,SO
+VPSUBD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f fa /r]		AVX,SANDYBRIDGE,SO
+VPSUBQ		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f fb /r]		AVX,SANDYBRIDGE,SO
+VPSUBSB		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e8 /r]		AVX,SANDYBRIDGE,SO
+VPSUBSW		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f e9 /r]		AVX,SANDYBRIDGE,SO
+VPSUBUSB	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d8 /r]		AVX,SANDYBRIDGE,SO
+VPSUBUSW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f d9 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKHBW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 68 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKHWD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 69 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKHDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 6a /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKHQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 6d /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKLBW	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 60 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKLWD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 61 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKLDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 62 /r]		AVX,SANDYBRIDGE,SO
+VPUNPCKLQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 6c /r]		AVX,SANDYBRIDGE,SO
+VPXOR		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f ef /r]		AVX,SANDYBRIDGE,SO
 VRCPPS		xmmreg,xmmrm			[rm:	vex.128.0f 53 /r]			AVX,SANDYBRIDGE,SO
 VRCPPS		ymmreg,ymmrm			[rm:	vex.256.0f 53 /r]			AVX,SANDYBRIDGE,SY
-VRCPSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 53 /r]		AVX,SANDYBRIDGE,SD
-VRCPSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 53 /r]		AVX,SANDYBRIDGE,SD
+VRCPSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 53 /r]		AVX,SANDYBRIDGE,SD
 VRSQRTPS	xmmreg,xmmrm			[rm:	vex.128.0f 52 /r]			AVX,SANDYBRIDGE,SO
 VRSQRTPS	ymmreg,ymmrm			[rm:	vex.256.0f 52 /r]			AVX,SANDYBRIDGE,SY
-VRSQRTSS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 52 /r]		AVX,SANDYBRIDGE,SD
-VRSQRTSS	xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 52 /r]		AVX,SANDYBRIDGE,SD
+VRSQRTSS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 52 /r]		AVX,SANDYBRIDGE,SD
 VROUNDPD	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 09 /r ib]		AVX,SANDYBRIDGE,SO
 VROUNDPD	ymmreg,ymmrm,imm		[rmi:	vex.256.66.0f3a 09 /r ib]		AVX,SANDYBRIDGE,SY
 VROUNDPS	xmmreg,xmmrm,imm		[rmi:	vex.128.66.0f3a 08 /r ib]		AVX,SANDYBRIDGE,SO
 VROUNDPS	ymmreg,ymmrm,imm		[rmi:	vex.256.66.0f3a 08 /r ib]		AVX,SANDYBRIDGE,SY
-VROUNDSD	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0b /r ib]		AVX,SANDYBRIDGE,SQ
-VROUNDSD	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0b /r ib]		AVX,SANDYBRIDGE,SQ
-VROUNDSS	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 0a /r ib]		AVX,SANDYBRIDGE,SD
-VROUNDSS	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 0a /r ib]		AVX,SANDYBRIDGE,SD
-VSHUFPD		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
-VSHUFPD		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
-VSHUFPD		ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
-VSHUFPD		ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
-VSHUFPS		xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
-VSHUFPS		xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
-VSHUFPS		ymmreg,ymmreg,ymmrm,imm		[rvmi:	vex.nds.256.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
-VSHUFPS		ymmreg,ymmrm,imm		[r+vmi:	vex.nds.256.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
+VROUNDSD	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0b /r ib]		AVX,SANDYBRIDGE,SQ
+VROUNDSS	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 0a /r ib]		AVX,SANDYBRIDGE,SD
+VSHUFPD		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
+VSHUFPD		ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.66.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
+VSHUFPS		xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.0f c6 /r ib]		AVX,SANDYBRIDGE,SO
+VSHUFPS		ymmreg,ymmreg*,ymmrm,imm	[rvmi:	vex.nds.256.0f c6 /r ib]		AVX,SANDYBRIDGE,SY
 VSQRTPD		xmmreg,xmmrm			[rm:	vex.128.66.0f 51 /r]			AVX,SANDYBRIDGE,SO
 VSQRTPD		ymmreg,ymmrm			[rm:	vex.256.66.0f 51 /r]			AVX,SANDYBRIDGE,SY
 VSQRTPS		xmmreg,xmmrm			[rm:	vex.128.0f 51 /r]			AVX,SANDYBRIDGE,SO
 VSQRTPS		ymmreg,ymmrm			[rm:	vex.256.0f 51 /r]			AVX,SANDYBRIDGE,SY
-VSQRTSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 51 /r]		AVX,SANDYBRIDGE,SQ
-VSQRTSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 51 /r]		AVX,SANDYBRIDGE,SQ
-VSQRTSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 51 /r]		AVX,SANDYBRIDGE,SD
-VSQRTSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 51 /r]		AVX,SANDYBRIDGE,SD
+VSQRTSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 51 /r]		AVX,SANDYBRIDGE,SQ
+VSQRTSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 51 /r]		AVX,SANDYBRIDGE,SD
 VSTMXCSR	mem				[m:	vex.128.0f ae /3]			AVX,SANDYBRIDGE,SD
-VSUBPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 5c /r]		AVX,SANDYBRIDGE,SO
-VSUBPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 5c /r]		AVX,SANDYBRIDGE,SO
-VSUBPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 5c /r]		AVX,SANDYBRIDGE,SY
-VSUBPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 5c /r]		AVX,SANDYBRIDGE,SY
-VSUBPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 5c /r]			AVX,SANDYBRIDGE,SO
-VSUBPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 5c /r]			AVX,SANDYBRIDGE,SO
-VSUBPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 5c /r]			AVX,SANDYBRIDGE,SY
-VSUBPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 5c /r]			AVX,SANDYBRIDGE,SY
-VSUBSD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f2.0f 5c /r]		AVX,SANDYBRIDGE,SQ
-VSUBSD		xmmreg,xmmrm			[r+vm:	vex.nds.128.f2.0f 5c /r]		AVX,SANDYBRIDGE,SQ
-VSUBSS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.f3.0f 5c /r]		AVX,SANDYBRIDGE,SD
-VSUBSS		xmmreg,xmmrm			[r+vm:	vex.nds.128.f3.0f 5c /r]		AVX,SANDYBRIDGE,SD
+VSUBPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 5c /r]		AVX,SANDYBRIDGE,SO
+VSUBPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 5c /r]		AVX,SANDYBRIDGE,SY
+VSUBPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 5c /r]			AVX,SANDYBRIDGE,SO
+VSUBPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 5c /r]			AVX,SANDYBRIDGE,SY
+VSUBSD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f2.0f 5c /r]		AVX,SANDYBRIDGE,SQ
+VSUBSS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.f3.0f 5c /r]		AVX,SANDYBRIDGE,SD
 VTESTPS		xmmreg,xmmrm			[rm:	vex.128.66.0f38 0e /r]			AVX,SANDYBRIDGE,SO
 VTESTPS		ymmreg,ymmrm			[rm:	vex.256.66.0f38 0e /r]			AVX,SANDYBRIDGE,SY
 VTESTPD		xmmreg,xmmrm			[rm:	vex.128.66.0f38 0f /r]			AVX,SANDYBRIDGE,SO
 VTESTPD		ymmreg,ymmrm			[rm:	vex.256.66.0f38 0f /r]			AVX,SANDYBRIDGE,SY
 VUCOMISD	xmmreg,xmmrm			[rm:	vex.128.66.0f 2e /r]			AVX,SANDYBRIDGE,SQ
 VUCOMISS	xmmreg,xmmrm			[rm:	vex.128.0f 2e /r]			AVX,SANDYBRIDGE,SD
-VUNPCKHPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 15 /r]		AVX,SANDYBRIDGE,SO
-VUNPCKHPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 15 /r]		AVX,SANDYBRIDGE,SO
-VUNPCKHPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 15 /r]		AVX,SANDYBRIDGE,SY
-VUNPCKHPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 15 /r]		AVX,SANDYBRIDGE,SY
-VUNPCKHPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 15 /r]			AVX,SANDYBRIDGE,SO
-VUNPCKHPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 15 /r]			AVX,SANDYBRIDGE,SO
-VUNPCKHPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 15 /r]			AVX,SANDYBRIDGE,SY
-VUNPCKHPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 15 /r]			AVX,SANDYBRIDGE,SY
-VUNPCKLPD	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 14 /r]		AVX,SANDYBRIDGE,SO
-VUNPCKLPD	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 14 /r]		AVX,SANDYBRIDGE,SO
-VUNPCKLPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 14 /r]		AVX,SANDYBRIDGE,SY
-VUNPCKLPD	ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 14 /r]		AVX,SANDYBRIDGE,SY
-VUNPCKLPS	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 14 /r]			AVX,SANDYBRIDGE,SO
-VUNPCKLPS	xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 14 /r]			AVX,SANDYBRIDGE,SO
-VUNPCKLPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 14 /r]			AVX,SANDYBRIDGE,SY
-VUNPCKLPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 14 /r]			AVX,SANDYBRIDGE,SY
-VXORPD		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f 57 /r]		AVX,SANDYBRIDGE,SO
-VXORPD		xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f 57 /r]		AVX,SANDYBRIDGE,SO
-VXORPD		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f 57 /r]		AVX,SANDYBRIDGE,SY
-VXORPD		ymmreg,ymmrm			[r+vm:	vex.nds.256.66.0f 57 /r]		AVX,SANDYBRIDGE,SY
-VXORPS		xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.0f 57 /r]			AVX,SANDYBRIDGE,SO
-VXORPS		xmmreg,xmmrm			[r+vm:	vex.nds.128.0f 57 /r]			AVX,SANDYBRIDGE,SO
-VXORPS		ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f 57 /r]			AVX,SANDYBRIDGE,SY
-VXORPS		ymmreg,ymmrm			[r+vm:	vex.nds.256.0f 57 /r]			AVX,SANDYBRIDGE,SY
+VUNPCKHPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 15 /r]		AVX,SANDYBRIDGE,SO
+VUNPCKHPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 15 /r]		AVX,SANDYBRIDGE,SY
+VUNPCKHPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 15 /r]			AVX,SANDYBRIDGE,SO
+VUNPCKHPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 15 /r]			AVX,SANDYBRIDGE,SY
+VUNPCKLPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 14 /r]		AVX,SANDYBRIDGE,SO
+VUNPCKLPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 14 /r]		AVX,SANDYBRIDGE,SY
+VUNPCKLPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 14 /r]			AVX,SANDYBRIDGE,SO
+VUNPCKLPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 14 /r]			AVX,SANDYBRIDGE,SY
+VXORPD		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f 57 /r]		AVX,SANDYBRIDGE,SO
+VXORPD		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f 57 /r]		AVX,SANDYBRIDGE,SY
+VXORPS		xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f 57 /r]			AVX,SANDYBRIDGE,SO
+VXORPS		ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f 57 /r]			AVX,SANDYBRIDGE,SY
 VZEROALL	void				[	vex.256.0f 77]				AVX,SANDYBRIDGE
 VZEROUPPER	void				[	vex.128.0f 77]				AVX,SANDYBRIDGE
 
@@ -3280,402 +2873,205 @@ PCLMULHQHQDQ	xmmreg,xmmrm			[rm:	66 0f 3a 44 /r 11]			SSE,WESTMERE,SO
 PCLMULQDQ	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 44 /r ib]			SSE,WESTMERE,SO
 
 ;# Intel AVX Carry-Less Multiplication instructions (CLMUL)
-VPCLMULLQLQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE,SO
-VPCLMULLQLQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE,SO
-VPCLMULHQLQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 01]		AVX,SANDYBRIDGE,SO
-VPCLMULHQLQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 01]		AVX,SANDYBRIDGE,SO
-VPCLMULLQHQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,SANDYBRIDGE,SO
-VPCLMULLQHQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,SANDYBRIDGE,SO
-VPCLMULHQHQDQ	xmmreg,xmmreg,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE,SO
-VPCLMULHQHQDQ	xmmreg,xmmrm			[r+vm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE,SO
-VPCLMULQDQ	xmmreg,xmmreg,xmmrm,imm		[rvmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE,SO
-VPCLMULQDQ	xmmreg,xmmrm,imm		[r+vmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE,SO
+VPCLMULLQLQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE,SO
+VPCLMULHQLQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 01]		AVX,SANDYBRIDGE,SO
+VPCLMULLQHQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,SANDYBRIDGE,SO
+VPCLMULHQHQDQ	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE,SO
+VPCLMULQDQ	xmmreg,xmmreg*,xmmrm,imm	[rvmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE,SO
 
 ;# Intel Fused Multiply-Add instructions (FMA)
-VFMADD132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
-VFMADD132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
-VFMADD132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
-VFMADD132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
-VFMADD132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
-VFMADD132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
-VFMADD132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
-VFMADD132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
-VFMADD312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
-VFMADD312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
-VFMADD312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
-VFMADD312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
-VFMADD312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
-VFMADD312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
-VFMADD312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
-VFMADD312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
-VFMADD213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
-VFMADD213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
-VFMADD213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
-VFMADD213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
-VFMADD213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
-VFMADD213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
-VFMADD213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
-VFMADD213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
-VFMADD123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
-VFMADD123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
-VFMADD123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
-VFMADD123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
-VFMADD123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
-VFMADD123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
-VFMADD123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
-VFMADD123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
-VFMADD231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
-VFMADD231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
-VFMADD231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
-VFMADD231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
-VFMADD231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
-VFMADD231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
-VFMADD231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
-VFMADD231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
-VFMADD321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
-VFMADD321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
-VFMADD321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
-VFMADD321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
-VFMADD321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
-VFMADD321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
-VFMADD321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
-VFMADD321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
-VFMADDSUB132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
-VFMADDSUB132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
-VFMADDSUB132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
-VFMADDSUB132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
-VFMADDSUB132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
-VFMADDSUB132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
-VFMADDSUB132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
-VFMADDSUB132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
-VFMADDSUB312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
-VFMADDSUB312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
-VFMADDSUB312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
-VFMADDSUB312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
-VFMADDSUB312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
-VFMADDSUB312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
-VFMADDSUB312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
-VFMADDSUB312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
-VFMADDSUB213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
-VFMADDSUB123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
-VFMADDSUB231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
-VFMADDSUB321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
-VFMADDSUB321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
-VFMSUB132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
-VFMSUB132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
-VFMSUB132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
-VFMSUB132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
-VFMSUB132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
-VFMSUB132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
-VFMSUB132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
-VFMSUB132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
-VFMSUB312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
-VFMSUB312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
-VFMSUB312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
-VFMSUB312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
-VFMSUB312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
-VFMSUB312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
-VFMSUB312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
-VFMSUB312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
-VFMSUB213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
-VFMSUB213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
-VFMSUB213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
-VFMSUB213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
-VFMSUB213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
-VFMSUB213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
-VFMSUB213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
-VFMSUB213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
-VFMSUB123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
-VFMSUB123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
-VFMSUB123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
-VFMSUB123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
-VFMSUB123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
-VFMSUB123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
-VFMSUB123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
-VFMSUB123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
-VFMSUB231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
-VFMSUB231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
-VFMSUB231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
-VFMSUB231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
-VFMSUB231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
-VFMSUB231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
-VFMSUB231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
-VFMSUB231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
-VFMSUB321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
-VFMSUB321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
-VFMSUB321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
-VFMSUB321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
-VFMSUB321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
-VFMSUB321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
-VFMSUB321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
-VFMSUB321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
-VFMSUBADD132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
-VFMSUBADD132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
-VFMSUBADD132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
-VFMSUBADD132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
-VFMSUBADD132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
-VFMSUBADD132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
-VFMSUBADD132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
-VFMSUBADD132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
-VFMSUBADD312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
-VFMSUBADD312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
-VFMSUBADD312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
-VFMSUBADD312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
-VFMSUBADD312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
-VFMSUBADD312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
-VFMSUBADD312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
-VFMSUBADD312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
-VFMSUBADD213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
-VFMSUBADD123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
-VFMSUBADD231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
-VFMSUBADD321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
-VFMSUBADD321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
-VFNMADD132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
-VFNMADD132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
-VFNMADD132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
-VFNMADD132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
-VFNMADD132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
-VFNMADD132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
-VFNMADD132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
-VFNMADD132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
-VFNMADD312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
-VFNMADD312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
-VFNMADD312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
-VFNMADD312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
-VFNMADD312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
-VFNMADD312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
-VFNMADD312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
-VFNMADD312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
-VFNMADD213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
-VFNMADD213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
-VFNMADD213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
-VFNMADD213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
-VFNMADD213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
-VFNMADD213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
-VFNMADD213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
-VFNMADD213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
-VFNMADD123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
-VFNMADD123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
-VFNMADD123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
-VFNMADD123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
-VFNMADD123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
-VFNMADD123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
-VFNMADD123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
-VFNMADD123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
-VFNMADD231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
-VFNMADD231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
-VFNMADD231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
-VFNMADD231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
-VFNMADD231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
-VFNMADD231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
-VFNMADD231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
-VFNMADD231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
-VFNMADD321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
-VFNMADD321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
-VFNMADD321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
-VFNMADD321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
-VFNMADD321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
-VFNMADD321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
-VFNMADD321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
-VFNMADD321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
-VFNMSUB132PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
-VFNMSUB132PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
-VFNMSUB132PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
-VFNMSUB132PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
-VFNMSUB132PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
-VFNMSUB132PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
-VFNMSUB132PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
-VFNMSUB132PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
-VFNMSUB312PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
-VFNMSUB312PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
-VFNMSUB312PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
-VFNMSUB312PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
-VFNMSUB312PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
-VFNMSUB312PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
-VFNMSUB312PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
-VFNMSUB312PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
-VFNMSUB213PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
-VFNMSUB213PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
-VFNMSUB213PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
-VFNMSUB213PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
-VFNMSUB213PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
-VFNMSUB213PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
-VFNMSUB213PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
-VFNMSUB213PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
-VFNMSUB123PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
-VFNMSUB123PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
-VFNMSUB123PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
-VFNMSUB123PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
-VFNMSUB123PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
-VFNMSUB123PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
-VFNMSUB123PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
-VFNMSUB123PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
-VFNMSUB231PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
-VFNMSUB231PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
-VFNMSUB231PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
-VFNMSUB231PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
-VFNMSUB231PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
-VFNMSUB231PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
-VFNMSUB231PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
-VFNMSUB231PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
-VFNMSUB321PS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
-VFNMSUB321PS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
-VFNMSUB321PS	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
-VFNMSUB321PS	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
-VFNMSUB321PD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
-VFNMSUB321PD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
-VFNMSUB321PD	ymmreg,ymmreg,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
-VFNMSUB321PD	ymmreg,ymmrm			[r+vm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
-VFMADD132SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
-VFMADD132SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
-VFMADD132SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
-VFMADD132SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
-VFMADD312SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
-VFMADD312SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
-VFMADD312SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
-VFMADD312SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
-VFMADD213SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
-VFMADD213SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
-VFMADD213SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
-VFMADD213SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
-VFMADD123SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
-VFMADD123SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
-VFMADD123SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
-VFMADD123SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
-VFMADD231SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
-VFMADD231SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
-VFMADD231SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
-VFMADD231SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
-VFMADD321SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
-VFMADD321SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
-VFMADD321SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
-VFMADD321SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
-VFMSUB132SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
-VFMSUB132SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
-VFMSUB132SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
-VFMSUB132SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
-VFMSUB312SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
-VFMSUB312SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
-VFMSUB312SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
-VFMSUB312SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
-VFMSUB213SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
-VFMSUB213SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
-VFMSUB213SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
-VFMSUB213SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
-VFMSUB123SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
-VFMSUB123SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
-VFMSUB123SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
-VFMSUB123SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
-VFMSUB231SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
-VFMSUB231SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
-VFMSUB231SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
-VFMSUB231SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
-VFMSUB321SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
-VFMSUB321SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
-VFMSUB321SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
-VFMSUB321SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
-VFNMADD132SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
-VFNMADD132SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
-VFNMADD132SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
-VFNMADD132SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
-VFNMADD312SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
-VFNMADD312SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
-VFNMADD312SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
-VFNMADD312SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
-VFNMADD213SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
-VFNMADD213SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
-VFNMADD213SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
-VFNMADD213SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
-VFNMADD123SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
-VFNMADD123SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
-VFNMADD123SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
-VFNMADD123SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
-VFNMADD231SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
-VFNMADD231SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
-VFNMADD231SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
-VFNMADD231SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
-VFNMADD321SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
-VFNMADD321SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
-VFNMADD321SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
-VFNMADD321SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
-VFNMSUB132SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
-VFNMSUB132SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
-VFNMSUB132SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
-VFNMSUB132SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
-VFNMSUB312SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
-VFNMSUB312SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
-VFNMSUB312SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
-VFNMSUB312SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
-VFNMSUB213SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
-VFNMSUB213SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
-VFNMSUB213SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
-VFNMSUB213SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
-VFNMSUB123SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
-VFNMSUB123SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
-VFNMSUB123SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
-VFNMSUB123SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
-VFNMSUB231SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
-VFNMSUB231SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
-VFNMSUB231SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
-VFNMSUB231SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
-VFNMSUB321SS	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
-VFNMSUB321SS	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
-VFNMSUB321SD	xmmreg,xmmreg,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
-VFNMSUB321SD	xmmreg,xmmrm			[r+vm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
+VFMADD132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
+VFMADD132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
+VFMADD132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
+VFMADD132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
+VFMADD312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE,SO
+VFMADD312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE,SY
+VFMADD312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 98 /r]		FMA,FUTURE,SO
+VFMADD312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 98 /r]		FMA,FUTURE,SY
+VFMADD213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
+VFMADD213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
+VFMADD213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
+VFMADD213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
+VFMADD123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a8 /r]		FMA,FUTURE,SO
+VFMADD123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a8 /r]		FMA,FUTURE,SY
+VFMADD123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a8 /r]		FMA,FUTURE,SO
+VFMADD123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a8 /r]		FMA,FUTURE,SY
+VFMADD231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
+VFMADD231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
+VFMADD231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
+VFMADD231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
+VFMADD321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b8 /r]		FMA,FUTURE,SO
+VFMADD321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b8 /r]		FMA,FUTURE,SY
+VFMADD321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b8 /r]		FMA,FUTURE,SO
+VFMADD321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b8 /r]		FMA,FUTURE,SY
+VFMADDSUB132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
+VFMADDSUB132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
+VFMADDSUB132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
+VFMADDSUB132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
+VFMADDSUB312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 96 /r]		FMA,FUTURE,SO
+VFMADDSUB312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 96 /r]		FMA,FUTURE,SY
+VFMADDSUB312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 96 /r]		FMA,FUTURE,SO
+VFMADDSUB312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 96 /r]		FMA,FUTURE,SY
+VFMADDSUB213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
+VFMADDSUB213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
+VFMADDSUB213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
+VFMADDSUB213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
+VFMADDSUB123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a6 /r]		FMA,FUTURE,SO
+VFMADDSUB123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a6 /r]		FMA,FUTURE,SY
+VFMADDSUB123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a6 /r]		FMA,FUTURE,SO
+VFMADDSUB123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a6 /r]		FMA,FUTURE,SY
+VFMADDSUB231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
+VFMADDSUB231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
+VFMADDSUB231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
+VFMADDSUB231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
+VFMADDSUB321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b6 /r]		FMA,FUTURE,SO
+VFMADDSUB321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b6 /r]		FMA,FUTURE,SY
+VFMADDSUB321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b6 /r]		FMA,FUTURE,SO
+VFMADDSUB321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b6 /r]		FMA,FUTURE,SY
+VFMSUB132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
+VFMSUB132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
+VFMSUB132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
+VFMSUB132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
+VFMSUB312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9a /r]		FMA,FUTURE,SO
+VFMSUB312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9a /r]		FMA,FUTURE,SY
+VFMSUB312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9a /r]		FMA,FUTURE,SO
+VFMSUB312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9a /r]		FMA,FUTURE,SY
+VFMSUB213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
+VFMSUB213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
+VFMSUB213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
+VFMSUB213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
+VFMSUB123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 aa /r]		FMA,FUTURE,SO
+VFMSUB123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 aa /r]		FMA,FUTURE,SY
+VFMSUB123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 aa /r]		FMA,FUTURE,SO
+VFMSUB123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 aa /r]		FMA,FUTURE,SY
+VFMSUB231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
+VFMSUB231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
+VFMSUB231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
+VFMSUB231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
+VFMSUB321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ba /r]		FMA,FUTURE,SO
+VFMSUB321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ba /r]		FMA,FUTURE,SY
+VFMSUB321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ba /r]		FMA,FUTURE,SO
+VFMSUB321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ba /r]		FMA,FUTURE,SY
+VFMSUBADD132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
+VFMSUBADD132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
+VFMSUBADD132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
+VFMSUBADD132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
+VFMSUBADD312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 97 /r]		FMA,FUTURE,SO
+VFMSUBADD312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 97 /r]		FMA,FUTURE,SY
+VFMSUBADD312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 97 /r]		FMA,FUTURE,SO
+VFMSUBADD312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 97 /r]		FMA,FUTURE,SY
+VFMSUBADD213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
+VFMSUBADD213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
+VFMSUBADD213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
+VFMSUBADD213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
+VFMSUBADD123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a7 /r]		FMA,FUTURE,SO
+VFMSUBADD123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 a7 /r]		FMA,FUTURE,SY
+VFMSUBADD123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a7 /r]		FMA,FUTURE,SO
+VFMSUBADD123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 a7 /r]		FMA,FUTURE,SY
+VFMSUBADD231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
+VFMSUBADD231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
+VFMSUBADD231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
+VFMSUBADD231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
+VFMSUBADD321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b7 /r]		FMA,FUTURE,SO
+VFMSUBADD321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 b7 /r]		FMA,FUTURE,SY
+VFMSUBADD321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b7 /r]		FMA,FUTURE,SO
+VFMSUBADD321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 b7 /r]		FMA,FUTURE,SY
+VFNMADD132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
+VFNMADD132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
+VFNMADD132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
+VFNMADD132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
+VFNMADD312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9c /r]		FMA,FUTURE,SO
+VFNMADD312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9c /r]		FMA,FUTURE,SY
+VFNMADD312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9c /r]		FMA,FUTURE,SO
+VFNMADD312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9c /r]		FMA,FUTURE,SY
+VFNMADD213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
+VFNMADD213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
+VFNMADD213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
+VFNMADD213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
+VFNMADD123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ac /r]		FMA,FUTURE,SO
+VFNMADD123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ac /r]		FMA,FUTURE,SY
+VFNMADD123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ac /r]		FMA,FUTURE,SO
+VFNMADD123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ac /r]		FMA,FUTURE,SY
+VFNMADD231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
+VFNMADD231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
+VFNMADD231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
+VFNMADD231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
+VFNMADD321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bc /r]		FMA,FUTURE,SO
+VFNMADD321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 bc /r]		FMA,FUTURE,SY
+VFNMADD321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bc /r]		FMA,FUTURE,SO
+VFNMADD321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 bc /r]		FMA,FUTURE,SY
+VFNMSUB132PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
+VFNMSUB132PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
+VFNMSUB132PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
+VFNMSUB132PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
+VFNMSUB312PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9e /r]		FMA,FUTURE,SO
+VFNMSUB312PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 9e /r]		FMA,FUTURE,SY
+VFNMSUB312PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9e /r]		FMA,FUTURE,SO
+VFNMSUB312PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 9e /r]		FMA,FUTURE,SY
+VFNMSUB213PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
+VFNMSUB213PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
+VFNMSUB213PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
+VFNMSUB213PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
+VFNMSUB123PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ae /r]		FMA,FUTURE,SO
+VFNMSUB123PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 ae /r]		FMA,FUTURE,SY
+VFNMSUB123PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ae /r]		FMA,FUTURE,SO
+VFNMSUB123PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 ae /r]		FMA,FUTURE,SY
+VFNMSUB231PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
+VFNMSUB231PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
+VFNMSUB231PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
+VFNMSUB231PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
+VFNMSUB321PS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 be /r]		FMA,FUTURE,SO
+VFNMSUB321PS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w0 be /r]		FMA,FUTURE,SY
+VFNMSUB321PD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 be /r]		FMA,FUTURE,SO
+VFNMSUB321PD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.dds.256.66.0f38.w1 be /r]		FMA,FUTURE,SY
+VFMADD132SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
+VFMADD132SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
+VFMADD312SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 99 /r]		FMA,FUTURE,SD
+VFMADD312SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 99 /r]		FMA,FUTURE,SQ
+VFMADD213SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
+VFMADD213SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
+VFMADD123SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 a9 /r]		FMA,FUTURE,SD
+VFMADD123SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 a9 /r]		FMA,FUTURE,SQ
+VFMADD231SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
+VFMADD231SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
+VFMADD321SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 b9 /r]		FMA,FUTURE,SD
+VFMADD321SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 b9 /r]		FMA,FUTURE,SQ
+VFMSUB132SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
+VFMSUB132SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
+VFMSUB312SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9b /r]		FMA,FUTURE,SD
+VFMSUB312SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9b /r]		FMA,FUTURE,SQ
+VFMSUB213SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
+VFMSUB213SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
+VFMSUB123SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ab /r]		FMA,FUTURE,SD
+VFMSUB123SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ab /r]		FMA,FUTURE,SQ
+VFMSUB231SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
+VFMSUB231SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
+VFMSUB321SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bb /r]		FMA,FUTURE,SD
+VFMSUB321SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bb /r]		FMA,FUTURE,SQ
+VFNMADD132SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
+VFNMADD132SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
+VFNMADD312SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9d /r]		FMA,FUTURE,SD
+VFNMADD312SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9d /r]		FMA,FUTURE,SQ
+VFNMADD213SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
+VFNMADD213SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
+VFNMADD123SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 ad /r]		FMA,FUTURE,SD
+VFNMADD123SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 ad /r]		FMA,FUTURE,SQ
+VFNMADD231SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
+VFNMADD231SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
+VFNMADD321SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bd /r]		FMA,FUTURE,SD
+VFNMADD321SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bd /r]		FMA,FUTURE,SQ
+VFNMSUB132SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
+VFNMSUB132SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
+VFNMSUB312SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 9f /r]		FMA,FUTURE,SD
+VFNMSUB312SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 9f /r]		FMA,FUTURE,SQ
+VFNMSUB213SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
+VFNMSUB213SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
+VFNMSUB123SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 af /r]		FMA,FUTURE,SD
+VFNMSUB123SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 af /r]		FMA,FUTURE,SQ
+VFNMSUB231SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
+VFNMSUB231SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
+VFNMSUB321SS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE,SD
+VFNMSUB321SD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE,SQ
 
 ;# VIA (Centaur) security instructions
 XSTORE		void				\3\x0F\xA7\xC0					PENT,CYRIX
