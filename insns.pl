@@ -65,28 +65,68 @@ while (<F>) {
       next;
   }
   @fields = ($1, $2, $3, $4);
-  ($formatted, $nd) = format_insn(@fields);
-  if ($formatted) {
-    $insns++;
-    $aname = "aa_$fields[0]";
-    push @$aname, $formatted;
+  @field_list = ([@fields, 0]);
+
+  if ($fields[1] =~ /\*/) {
+      # This instruction has relaxed form(s)
+      if ($fields[2] !~ /^\[/) {
+	  warn "line $line has an * operand but uses raw bytecodes\n";
+	  next;
+      }
+      
+      $opmask = 0;
+      @ops = split(/,/, $fields[1]);
+      for ($oi = 0; $oi < scalar @ops; $oi++) {
+	  if ($ops[$oi] =~ /\*$/) {
+	      if ($oi == 0) {
+		  warn "line $line has a first operand with a *\n";
+		  next;
+	      }
+	      $opmask |= 1 << $oi;
+	  }
+      }
+
+      for ($oi = 1; $oi < (1 << scalar @ops); $oi++) {
+	  if (($oi & ~$opmask) == 0) {
+	      my @xops = ();
+	      my $omask = ~$oi;
+	      for ($oj = 0; $oj < scalar(@ops); $oj++) {
+		  if ($omask & 1) {
+		      push(@xops, $ops[$oj]);
+		  }
+		  $omask >>= 1;
+	      }
+	      push(@field_list, [$fields[0], join(',', @xops),
+				 $fields[2], $fields[3], $oi]);
+	  }
+      }
   }
-  if ( $fields[0] =~ /cc$/ ) {
-      # Conditional instruction
-      $k_opcodes_cc{$fields[0]}++;
-  } else {
-      # Unconditional instruction
-      $k_opcodes{$fields[0]}++;
-  }
-  if ($formatted && !$nd) {
-    push @big, $formatted;
-    my @sseq = startseq($fields[2]);
-    foreach $i (@sseq) {
-	if (!defined($dinstables{$i})) {
-	    $dinstables{$i} = [];
-	}
-	push(@{$dinstables{$i}}, $#big);
-    }
+
+  foreach $fptr (@field_list) {
+      @fields = @$fptr;
+      ($formatted, $nd) = format_insn(@fields);
+      if ($formatted) {
+	  $insns++;
+	  $aname = "aa_$fields[0]";
+	  push @$aname, $formatted;
+      }
+      if ( $fields[0] =~ /cc$/ ) {
+	  # Conditional instruction
+	  $k_opcodes_cc{$fields[0]}++;
+      } else {
+	  # Unconditional instruction
+	  $k_opcodes{$fields[0]}++;
+      }
+      if ($formatted && !$nd) {
+	  push @big, $formatted;
+	  my @sseq = startseq($fields[2], $fields[4]);
+	  foreach $i (@sseq) {
+	      if (!defined($dinstables{$i})) {
+		  $dinstables{$i} = [];
+	      }
+	      push(@{$dinstables{$i}}, $#big);
+	  }
+      }
   }
 }
 
@@ -352,14 +392,15 @@ sub count_bytecodes(@) {
     }
 }
 
-sub format_insn(@) {
-    my ($opcode, $operands, $codes, $flags) = @_;
+sub format_insn($$$$$) {
+    my ($opcode, $operands, $codes, $flags, $relax) = @_;
     my $num, $nd = 0;
     my @bytecode;
 
     return (undef, undef) if $operands eq "ignore";
 
     # format the operands
+    $operands =~ s/\*//g;
     $operands =~ s/:/|colon,/g;
     $operands =~ s/mem(\d+)/mem|bits$1/g;
     $operands =~ s/mem/memory/g;
@@ -386,7 +427,7 @@ sub format_insn(@) {
     $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
     $flags = "IF_" . $flags;
 
-    @bytecode = (decodify($codes), 0);
+    @bytecode = (decodify($codes, $relax), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
@@ -427,14 +468,14 @@ sub addprefix ($@) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($) {
+sub decodify($$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($codestr) = @_;
+    my($codestr, $relax) = @_;
 
     if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-	return byte_code_compile($1);
+	return byte_code_compile($1, $relax);
     }
 
     my $c = $codestr;
@@ -477,15 +518,15 @@ sub hexstr(@) {
 # \34[4567]    mean PUSH/POP of segment registers: special case
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
-sub startseq($) {
-  my ($codestr) = @_;
+sub startseq($$) {
+  my ($codestr, $relax) = @_;
   my $word, @range;
   my @codes = ();
   my $c = $codestr;
   my $c0, $c1, $i;
   my $prefix = '';
 
-  @codes = decodify($codestr);
+  @codes = decodify($codestr, $relax);
 
   while ($c0 = shift(@codes)) {
       $c1 = $codes[0];
@@ -570,8 +611,8 @@ sub startseq($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($) {
-    my($str) = @_;
+sub byte_code_compile($$) {
+    my($str, $relax) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -593,6 +634,10 @@ sub byte_code_compile($) {
 	if ($c eq '+') {
 	    $op--;
 	} else {
+	    if ($relax & 1) {
+		$op--;
+	    }
+	    $relax >>= 1;
 	    $oppos{$c} = $op++;
 	}
     }
