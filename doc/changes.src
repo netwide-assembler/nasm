@@ -38,6 +38,12 @@ since 2007.
 \b Correctly handle preprocessor token concatenation (see \k{concat})
    involving floating-point numbers.
 
+\b The \c{PINSR} series of instructions have been corrected and
+   rationalized.
+
+\b Removed AMD SSE5, replaced with the new XOP/FMA4/CVT16 (rev 3.03)
+   spec.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
