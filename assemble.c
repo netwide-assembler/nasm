@@ -88,13 +88,14 @@
  *                 generates no code in the assembler)
  * \323          - indicates fixed 64-bit operand size, REX on extensions only.
  * \324          - indicates 64-bit operand size requiring REX prefix.
+ * \325		 - instruction which always uses spl/bpl/sil/dil
  * \330          - a literal byte follows in the code stream, to be added
  *                 to the condition code value of the instruction.
  * \331          - instruction not valid with REP prefix.  Hint for
  *                 disassembler only; for SSE instructions.
  * \332          - REP prefix (0xF2 byte) used as opcode extension.
  * \333          - REP prefix (0xF3 byte) used as opcode extension.
- * \334          - LOCK prefix used instead of REX.R
+ * \334          - LOCK prefix used as REX.R (used in non-64-bit mode)
  * \335          - disassemble a rep (0xF3 byte) prefix as repe not rep.
  * \336          - force a REP(E) prefix (0xF2) even if not specified.
  * \337		 - force a REPNE prefix (0xF3) even if not specified.
@@ -996,6 +997,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    ins->rex |= REX_W;
             break;
 
+	case 0325:
+	    ins->rex |= REX_NH;
+	    break;
+
         case 0330:
             codes++, length++;
             break;
@@ -1116,6 +1121,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     }
 
     ins->rex &= rex_mask;
+
+    if (ins->rex & REX_NH) {
+	if (ins->rex & REX_H) {
+	    errfunc(ERR_NONFATAL, "instruction cannot use high registers");
+	    return -1;
+	}
+	ins->rex &= ~REX_P;	/* Don't force REX prefix due to high reg */
+    }
 
     if (ins->rex & REX_V) {
 	int bad32 = REX_R|REX_W|REX_X|REX_B;
@@ -1644,6 +1657,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0324:
             ins->rex |= REX_W;
             break;
+
+	case 0325:
+	    break;
 
         case 0330:
             *bytes = *codes++ ^ condval[ins->condition];

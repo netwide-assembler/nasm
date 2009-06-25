@@ -135,7 +135,7 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
         return 0;
 
     if (!(REG8 & ~regflags)) {
-	if (rex & REX_P)
+	if (rex & (REX_P|REX_NH))
 	    return nasm_rd_reg8_rex[regval];
 	else
 	    return nasm_rd_reg8[regval];
@@ -153,7 +153,7 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
     if (!(REG_DREG & ~regflags))
         return nasm_rd_dreg[regval];
     if (!(REG_TREG & ~regflags)) {
-	if (rex & REX_P)
+	if (regval > 7)
 	    return 0;		/* TR registers are ill-defined with rex */
         return nasm_rd_treg[regval];
     }
@@ -797,6 +797,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
 		return false;
 	    o_used = true;
+	    break;
+
+	case 0325:
+	    ins->rex |= REX_NH;
 	    break;
 
 	case 0330:

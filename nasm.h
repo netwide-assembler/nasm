@@ -600,6 +600,7 @@ enum ccode {			/* condition code names */
 #define REX_D		0x0100	/* Instruction uses DREX instead of REX */
 #define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
 #define REX_V		0x0400	/* Instruction uses VEX/XOP instead of REX */
+#define REX_NH		0x0800	/* Instruction which doesn't use high regs */
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
