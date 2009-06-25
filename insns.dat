@@ -2301,8 +2301,7 @@ VCMPNLT_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 15]		AVX,SANDYB
 VCMPNLE_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
 VCMPNLE_UQPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
 VCMPORD_SPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
-VCMPORD_SPD	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
-VCMPORS_SPD	ymmreg,ymmrm			[r+vm:	 vex.nds.256.66.0f c2 /r 17]		 AVX,SANDYBRIDGE,SY
+VCMPORD_SPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
 VCMPEQ_USPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
 VCMPEQ_USPD	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.66.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
 VCMPNGE_UQPD	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.66.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
@@ -2369,8 +2368,7 @@ VCMPNLT_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 15]		AVX,SANDYBRID
 VCMPNLE_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 16]		AVX,SANDYBRIDGE,SO
 VCMPNLE_UQPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 16]		AVX,SANDYBRIDGE,SY
 VCMPORD_SPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 17]		AVX,SANDYBRIDGE,SO
-VCMPORD_SPS	ymmreg,ymmreg,ymmrm		[rvm:	vex.nds.256.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
-VCMPORS_SPS	ymmreg,ymmrm			[r+vm:	vex.nds.256.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
+VCMPORD_SPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 17]		AVX,SANDYBRIDGE,SY
 VCMPEQ_USPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 18]		AVX,SANDYBRIDGE,SO
 VCMPEQ_USPS	ymmreg,ymmreg*,ymmrm		[rvm:	vex.nds.256.0f c2 /r 18]		AVX,SANDYBRIDGE,SY
 VCMPNGE_UQPS	xmmreg,xmmreg*,xmmrm		[rvm:	vex.nds.128.0f c2 /r 19]		AVX,SANDYBRIDGE,SO
