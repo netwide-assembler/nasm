@@ -5353,15 +5353,20 @@ thread local variables.
 The defaults assumed by NASM if you do not specify the above
 qualifiers are:
 
-\I\c{.text} \I\c{.data} \I\c{.bss} \I\c{.rodata} \I\c{.tdata} \I\c{.tbss}
+\I\c{.text} \I\c{.rodata} \I\c{.lrodata} \I\c{.data} \I\c{.ldata}
+\I\c{.bss} \I\c{.lbss} \I\c{.tdata} \I\c{.tbss} \I\c\{.comment}
 
-\c section .text    progbits  alloc  exec    nowrite  align=16
-\c section .rodata  progbits  alloc  noexec  nowrite  align=4
-\c section .data    progbits  alloc  noexec  write    align=4
-\c section .bss     nobits    alloc  noexec  write    align=4
-\c section .tdata   progbits  alloc  noexec  write    align=4    tls
-\c section .tbss    nobits    alloc  noexec  write    align=4    tls
-\c section other    progbits  alloc  noexec  nowrite  align=1
+\c section .text    progbits  alloc   exec    nowrite  align=16
+\c section .rodata  progbits  alloc   noexec  nowrite  align=4
+\c section .lrodata progbits  alloc   noexec  nowrite  align=4
+\c section .data    progbits  alloc   noexec  write    align=4
+\c section .ldata   progbits  alloc   noexec  write    align=4
+\c section .bss     nobits    alloc   noexec  write    align=4
+\c section .lbss    nobits    alloc   noexec  write    align=4
+\c section .tdata   progbits  alloc   noexec  write    align=4    tls
+\c section .tbss    nobits    alloc   noexec  write    align=4    tls
+\c section .comment progbits  noalloc noexec  nowrite  align=1
+\c section other    progbits  alloc   noexec  nowrite  align=1
 
 (Any section name other than those in the above table
  is treated by default like \c{other} in the above table.

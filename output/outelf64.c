@@ -23,115 +23,13 @@
 #include "outlib.h"
 #include "rbtree.h"
 
-/* Definitions in lieu of elf.h */
-#define SHT_NULL 0			/* Inactive section header */
-#define SHT_PROGBITS 1			/* Program defined content */
-#define SHT_RELA	  4		/* Relocation entries with addends */
-#define SHT_NOBITS 8			/* Section requires no space in file */
-#define SHF_WRITE	     (1 << 0)	/* Writable */
-#define SHF_ALLOC	     (1 << 1)	/* Occupies memory during execution */
-#define SHF_EXECINSTR	     (1 << 2)	/* Executable */
-#define SHF_TLS		     (1 << 10)	/* Section hold thread-local data.  */
-#define SHN_ABS		0xfff1		/* Associated symbol is absolute */
-#define SHN_COMMON	0xfff2		/* Associated symbol is common */
-#define R_X86_64_NONE		0	/* No reloc */
-#define R_X86_64_64		1	/* Direct 64 bit  */
-#define R_X86_64_PC32		2	/* PC relative 32 bit signed */
-#define R_X86_64_GOT32		3	/* 32 bit GOT entry */
-#define R_X86_64_PLT32		4	/* 32 bit PLT address */
-#define R_X86_64_COPY		5	/* Copy symbol at runtime */
-#define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
-#define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
-#define R_X86_64_RELATIVE	8	/* Adjust by program base */
-#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
-					   offset to GOT */
-#define R_X86_64_32		10	/* Direct 32 bit zero extended */
-#define R_X86_64_32S		11	/* Direct 32 bit sign extended */
-#define R_X86_64_16		12	/* Direct 16 bit zero extended */
-#define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-#define R_X86_64_8		14	/* Direct 8 bit sign extended  */
-#define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
-#define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
-#define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
-#define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
-#define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
-					   to two GOT entries for GD symbol */
-#define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
-					   to two GOT entries for LD symbol */
-#define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
-#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
-					   to GOT entry for IE symbol */
-#define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
-#define R_X86_64_PC64		24 	/* word64 S + A - P */
-#define R_X86_64_GOTOFF64	25 	/* word64 S + A - GOT */
-#define R_X86_64_GOTPC32	26 	/* word32 GOT + A - P */
-#define R_X86_64_GOT64		27 	/* word64 G + A */
-#define R_X86_64_GOTPCREL64	28 	/* word64 G + GOT - P + A */
-#define R_X86_64_GOTPC64	29 	/* word64 GOT - P + A */
-#define R_X86_64_GOTPLT64	30 	/* word64 G + A */
-#define R_X86_64_PLTOFF64	31 	/* word64 L - GOT + A */
-#define R_X86_64_SIZE32		32 	/* word32 Z + A */
-#define R_X86_64_SIZE64		33 	/* word64 Z + A */
-#define R_X86_64_GOTPC32_TLSDESC 34 	/* word32 */
-#define R_X86_64_TLSDESC_CALL	35 	/* none */
-#define R_X86_64_TLSDESC	36 	/* word64×2 */
-#define ET_REL		1		/* Relocatable file */
-#define EM_X86_64	62		/* AMD x86-64 architecture */
-#define STT_NOTYPE	0		/* Symbol type is unspecified */
-#define STT_OBJECT	1		/* Symbol is a data object */
-#define STT_FUNC	2		/* Symbol is a code object */
-#define STT_SECTION	3		/* Symbol associated with a section */
-#define STT_FILE	4		/* Symbol's name is file name */
-#define STT_COMMON	5		/* Symbol is a common data object */
-#define STT_TLS		6		/* Symbol is thread-local data object*/
-#define	STT_NUM		7		/* Number of defined types.  */
-
-/* Definitions in lieu of dwarf.h */
-#define    DW_TAG_compile_unit   0x11
-#define    DW_TAG_subprogram   0x2e
-#define    DW_AT_name   0x03
-#define    DW_AT_stmt_list   0x10
-#define    DW_AT_low_pc   0x11
-#define    DW_AT_high_pc   0x12
-#define    DW_AT_language  0x13
-#define    DW_AT_producer   0x25
-#define    DW_AT_frame_base   0x40
-#define    DW_FORM_addr   0x01
-#define    DW_FORM_data2   0x05
-#define    DW_FORM_data4   0x06
-#define    DW_FORM_string   0x08
-#define    DW_LNS_extended_op  0
-#define    DW_LNS_advance_pc   2
-#define    DW_LNS_advance_line   3
-#define    DW_LNS_set_file   4
-#define    DW_LNE_end_sequence   1
-#define    DW_LNE_set_address   2
-#define    DW_LNE_define_file   3
-#define    DW_LANG_Mips_Assembler  0x8001
-
-#define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
-
-typedef uint32_t Elf64_Word;
-typedef uint64_t Elf64_Xword;
-typedef uint64_t Elf64_Addr;
-typedef uint64_t Elf64_Off;
-typedef struct
-{
-  Elf64_Word	sh_name;	/* Section name (string tbl index) */
-  Elf64_Word	sh_type;	/* Section type */
-  Elf64_Xword	sh_flags;	/* Section flags */
-  Elf64_Addr	sh_addr;	/* Section virtual addr at execution */
-  Elf64_Off	sh_offset;	/* Section file offset */
-  Elf64_Xword	sh_size;	/* Section size in bytes */
-  Elf64_Word	sh_link;	/* Link to another section */
-  Elf64_Word	sh_info;	/* Additional section information */
-  Elf64_Xword	sh_addralign;	/* Section alignment */
-  Elf64_Xword	sh_entsize;	/* Entry size if section holds table */
-} Elf64_Shdr;
-
+#include "elf64.h"
+#include "dwarf.h"
+#include "outelf.h"
 
 #ifdef OF_ELF64
 
+#define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
 
 struct Reloc {
     struct Reloc *next;
@@ -198,22 +96,6 @@ static uint8_t elf_osabi = 0;	/* Default OSABI = 0 (System V or Linux) */
 static uint8_t elf_abiver = 0;	/* Current ABI version */
 
 extern struct ofmt of_elf64;
-
-#define SHN_UNDEF 0
-
-#define SYM_GLOBAL 0x10
-
-#define STV_DEFAULT 0
-#define STV_INTERNAL 1
-#define STV_HIDDEN 2
-#define STV_PROTECTED 3
-
-#define GLOBAL_TEMP_BASE 1048576     /* bigger than any reasonable sym id */
-
-#define SEG_ALIGN 16            /* alignment of sections in file */
-#define SEG_ALIGN_1 (SEG_ALIGN-1)
-
-#define TY_DEBUGSYMLIN 0x40     /* internal call to debug_out */
 
 static struct ELF_SECTDATA {
     void *data;
@@ -454,9 +336,9 @@ static int elf_make_section(char *name, int type, int flags, int align)
 static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
-    unsigned flags_and, flags_or;
-    uint64_t type, align;
-    int i;
+    uint32_t flags, flags_and, flags_or;
+    uint64_t align;
+    int type, i;
 
     /*
      * Default is 64 bits.
@@ -522,9 +404,9 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
                   " declaration of section `%s'", q, name);
     }
 
-    if (!strcmp(name, ".comment") ||
-        !strcmp(name, ".shstrtab") ||
-        !strcmp(name, ".symtab") || !strcmp(name, ".strtab")) {
+    if (!strcmp(name, ".shstrtab") ||
+        !strcmp(name, ".symtab") ||
+        !strcmp(name, ".strtab")) {
         error(ERR_NONFATAL, "attempt to redefine reserved section"
               "name `%s'", name);
         return NO_SEG;
@@ -534,31 +416,19 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         if (!strcmp(name, sects[i]->name))
             break;
     if (i == nsects) {
-        if (!strcmp(name, ".text"))
-            i = elf_make_section(name, SHT_PROGBITS,
-                                 SHF_ALLOC | SHF_EXECINSTR, 16);
-        else if (!strcmp(name, ".rodata"))
-            i = elf_make_section(name, SHT_PROGBITS, SHF_ALLOC, 4);
-        else if (!strcmp(name, ".data"))
-            i = elf_make_section(name, SHT_PROGBITS,
-                                 SHF_ALLOC | SHF_WRITE, 4);
-        else if (!strcmp(name, ".bss"))
-            i = elf_make_section(name, SHT_NOBITS,
-                                 SHF_ALLOC | SHF_WRITE, 4);
-        else if (!strcmp(name, ".tdata"))
-            i = elf_make_section(name, SHT_PROGBITS,
-                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
-        else if (!strcmp(name, ".tbss"))
-            i = elf_make_section(name, SHT_NOBITS,
-                                 SHF_ALLOC | SHF_WRITE | SHF_TLS, 4);
-        else
-            i = elf_make_section(name, SHT_PROGBITS, SHF_ALLOC, 1);
-        if (type)
-            sects[i]->type = type;
-        if (align)
-            sects[i]->align = align;
-        sects[i]->flags &= ~flags_and;
-        sects[i]->flags |= flags_or;
+	const struct elf_known_section *ks = elf_known_sections;
+
+	while (ks->name) {
+	    if (!strcmp(name, ks->name))
+		break;
+	    ks++;
+	}
+
+	type = type ? type : ks->type;
+	align = align ? align : ks->align;
+	flags = (ks->flags & ~flags_and) | flags_or;
+
+	i = elf_make_section(name, type, flags, align);
     } else if (pass == 1) {
           if ((type && sects[i]->type != type)
              || (align && sects[i]->align != align)
@@ -1155,8 +1025,6 @@ static void elf_write(void)
     int align;
     int scount;
     char *p;
-    int commlen;
-    char comment[64];
     int i;
 
     struct SAA *symtab;
@@ -1164,18 +1032,16 @@ static void elf_write(void)
 
     /*
      * Work out how many sections we will have. We have SHN_UNDEF,
-     * then the flexible user sections, then the four fixed
-     * sections `.comment', `.shstrtab', `.symtab' and `.strtab',
-     * then optionally relocation sections for the user sections.
+     * then the flexible user sections, then the fixed sections
+     * `.shstrtab', `.symtab' and `.strtab', then optionally
+     * relocation sections for the user sections.
      */
+    nsections = 4;
     if (of_elf64.current_dfmt == &df_stabs)
-        nsections = 8;
+        nsections += 3;
     else if (of_elf64.current_dfmt == &df_dwarf)
-        nsections = 15;
-    else
-        nsections = 5;          /* SHN_UNDEF and the fixed ones */
+        nsections += 10;
 
-    add_sectname("", ".comment");
     add_sectname("", ".shstrtab");
     add_sectname("", ".symtab");
     add_sectname("", ".strtab");
@@ -1213,12 +1079,6 @@ static void elf_write(void)
         add_sectname("", ".debug_frame");
         add_sectname("", ".debug_loc");
     }
-
-    /*
-     * Do the comment.
-     */
-    *comment = '\0';
-    commlen = 2 + snprintf(comment+1, sizeof comment-1, "%s", nasm_comment);
 
     /*
      * Output the ELF header.
@@ -1272,9 +1132,6 @@ static void elf_write(void)
         p += strlen(p) + 1;
         scount++;               /* ditto */
     }
-    elf_section_header(p - shstrtab, 1, 0, comment, false, (int32_t)commlen, 0, 0, 1, 0);  /* .comment */
-    scount++;                   /* ditto */
-    p += strlen(p) + 1;
     elf_section_header(p - shstrtab, 3, 0, shstrtab, false, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
     scount++;                   /* ditto */
     p += strlen(p) + 1;
@@ -1623,7 +1480,7 @@ static int elf_set_info(enum geninfo type, char **val)
     return 0;
 }
 static struct dfmt df_dwarf = {
-    "ELF64 (X86_64) dwarf debug format for Linux",
+    "ELF64 (x86-64) dwarf debug format for Linux/Unix",
     "dwarf",
     debug64_init,
     dwarf64_linenum,
@@ -1634,7 +1491,7 @@ static struct dfmt df_dwarf = {
     dwarf64_cleanup
 };
 static struct dfmt df_stabs = {
-    "ELF64 (X86_64) stabs debug format for Linux",
+    "ELF64 (x86-64) stabs debug format for Linux/Unix",
     "stabs",
     debug64_init,
     stabs64_linenum,

@@ -44,6 +44,8 @@ since 2007.
 \b Removed AMD SSE5, replaced with the new XOP/FMA4/CVT16 (rev 3.03)
    spec.
 
+\b The ELF backends no longer automatically generate a \c{.comment} section.
+
 
 \S{cl-2.05.01} Version 2.05.01
 
