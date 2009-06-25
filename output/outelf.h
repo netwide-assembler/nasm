@@ -31,4 +31,33 @@ struct elf_known_section {
 };
 extern const struct elf_known_section elf_known_sections[];
 
+/*
+ * Special ELF sections (after the real sections but before debugging ones)
+ */
+#define sec_shstrtab		(nsects + 1)
+#define sec_symtab		(nsects + 2)
+#define sec_strtab		(nsects + 3)
+#define sec_numspecial  	3
+
+/*
+ * Debugging ELF sections (last in the file)
+ */
+
+/* stabs */
+#define sec_stab		(nsections-3)
+#define sec_stabstr		(nsections-2)
+#define sec_rel_stab		(nsections-1)
+
+/* dwarf */
+#define sec_debug_aranges	(nsections-10)
+#define sec_rela_debug_aranges	(nsections-9)
+#define sec_debug_pubnames	(nsections-8)
+#define sec_debug_info		(nsections-7)
+#define sec_rela_debug_info	(nsections-6)
+#define sec_debug_abbrev	(nsections-5)
+#define sec_debug_line		(nsections-4)
+#define sec_rela_debug_line	(nsections-3)
+#define sec_debug_frame		(nsections-2)
+#define sec_debug_loc		(nsections-1)
+
 #endif /* OUTPUT_OUTELF_H */

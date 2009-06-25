@@ -56,7 +56,7 @@ struct Section {
     uint64_t len, size;
     uint32_t nrelocs;
     int32_t index;	       	/* index into sects array */
-    uint32_t type;             	/* SHT_PROGBITS or SHT_NOBITS */
+    int type;             	/* SHT_PROGBITS or SHT_NOBITS */
     uint64_t align;            	/* alignment: power of two */
     uint64_t flags;            	/* section flags */
     char *name;
@@ -326,8 +326,7 @@ static int elf_make_section(char *name, int type, int flags, int align)
     s->gsyms = NULL;
 
     if (nsects >= sectlen)
-        sects =
-            nasm_realloc(sects, (sectlen += SECT_DELTA) * sizeof(*sects));
+        sects = nasm_realloc(sects, (sectlen += SECT_DELTA) * sizeof(*sects));
     sects[nsects++] = s;
 
     return nsects - 1;
@@ -1023,7 +1022,6 @@ static void elf_out(int32_t segto, const void *data,
 static void elf_write(void)
 {
     int align;
-    int scount;
     char *p;
     int i;
 
@@ -1036,7 +1034,7 @@ static void elf_write(void)
      * `.shstrtab', `.symtab' and `.strtab', then optionally
      * relocation sections for the user sections.
      */
-    nsections = 4;
+    nsections = sec_numspecial + 1;
     if (of_elf64.current_dfmt == &df_stabs)
         nsections += 3;
     else if (of_elf64.current_dfmt == &df_dwarf)
@@ -1100,8 +1098,8 @@ static void elf_write(void)
     fwriteint16_t(0, elffp);      /* still no program header table */
     fwriteint16_t(sizeof(Elf64_Shdr), elffp);   /* size of section header */
     fwriteint16_t(nsections, elffp);      /* number of sections */
-    fwriteint16_t(nsects + 2, elffp);     /* string table section index for
-                                         * section header table */
+    fwriteint16_t(sec_shstrtab, elffp);   /* string table section index for
+					   * section header table */
 
     /*
      * Build the symbol table and relocation tables.
@@ -1121,30 +1119,43 @@ static void elf_write(void)
     elf_foffs += align;
     elf_nsect = 0;
     elf_sects = nasm_malloc(sizeof(*elf_sects) * nsections);
-    elf_section_header(0, 0, 0, NULL, false, 0L, 0, 0, 0, 0);   /* SHN_UNDEF */
-    scount = 1;                 /* needed for the stabs debugging to track the symtable section */
+
+    /* SHN_UNDEF */
+    elf_section_header(0, SHT_NULL, 0, NULL, false, 0, SHN_UNDEF, 0, 0, 0);
     p = shstrtab + 1;
+
+    /* The normal sections */
     for (i = 0; i < nsects; i++) {
         elf_section_header(p - shstrtab, sects[i]->type, sects[i]->flags,
                            (sects[i]->type == SHT_PROGBITS ?
                             sects[i]->data : NULL), true,
                            sects[i]->len, 0, 0, sects[i]->align, 0);
         p += strlen(p) + 1;
-        scount++;               /* ditto */
     }
-    elf_section_header(p - shstrtab, 3, 0, shstrtab, false, (int32_t)shstrtablen, 0, 0, 1, 0);     /* .shstrtab */
-    scount++;                   /* ditto */
+
+    /* .shstrtab */
+    elf_section_header(p - shstrtab, SHT_STRTAB, 0, shstrtab, false,
+		       shstrtablen, 0, 0, 1, 0);
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 2, 0, symtab, true, symtablen, nsects + 4, symtablocal, 4, 24);    /* .symtab */
-    symtabsection = scount;     /* now we got the symtab section index in the ELF file */
+
+    /* .symtab */
+    elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
+		       symtablen, sec_strtab, symtablocal, 4, 24);
     p += strlen(p) + 1;
-    elf_section_header(p - shstrtab, 3, 0, strs, true, strslen, 0, 0, 1, 0);    /* .strtab */
+
+    /* .strtab */
+    elf_section_header(p - shstrtab, SHT_SYMTAB, 0, strs, true,
+		       strslen, 0, 0, 1, 0);
+    p += strlen(p) + 1;
+
+    /* The relocation sections */
     for (i = 0; i < nsects; i++)
         if (sects[i]->head) {
+            elf_section_header(p - shstrtab, SHT_RELA, 0, sects[i]->rel, true,
+                               sects[i]->rellen, sec_symtab, i + 1, 4, 24);
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab,SHT_RELA, 0, sects[i]->rel, true,
-                               sects[i]->rellen, nsects + 3, i + 1, 4, 24);
         }
+
     if (of_elf64.current_dfmt == &df_stabs) {
         /* for debugging information, create the last three sections
            which are the .stab , .stabstr and .rel.stab sections respectively */
@@ -1152,59 +1163,67 @@ static void elf_write(void)
         /* this function call creates the stab sections in memory */
         stabs64_generate();
 
-        if ((stabbuf) && (stabstrbuf) && (stabrelbuf)) {
+        if (stabbuf && stabstrbuf && stabrelbuf) {
+            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, stabbuf, false,
+			       stablen, sec_stabstr, 0, 4, 12);
             p += strlen(p) + 1;
-            elf_section_header(p - shstrtab, 1, 0, stabbuf, false, stablen,
-                               nsections - 2, 0, 4, 12);
 
-            p += strlen(p) + 1;
-            elf_section_header(p - shstrtab, 3, 0, stabstrbuf, false,
+            elf_section_header(p - shstrtab, SHT_STRTAB, 0, stabstrbuf, false,
                                stabstrlen, 0, 0, 4, 0);
-
             p += strlen(p) + 1;
+
             /* link -> symtable  info -> section to refer to */
-            elf_section_header(p - shstrtab, 9, 0, stabrelbuf, false,
-                               stabrellen, symtabsection, nsections - 3, 4,
-                               16);
+            elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
+                               stabrellen, symtabsection, sec_stab, 4, 16);
+            p += strlen(p) + 1;
         }
     }
     else if (of_elf64.current_dfmt == &df_dwarf) {
             /* for dwarf debugging information, create the ten dwarf sections */
 
             /* this function call creates the dwarf sections in memory */
-            if (dwarf_fsect) dwarf64_generate();
+            if (dwarf_fsect)
+		dwarf64_generate();
 
-            p += strlen(p) + 1;
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
                                arangeslen, 0, 0, 1, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
                                arangesrellen, symtabsection, debug_aranges, 1, 24);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf, false,
                                pubnameslen, 0, 0, 1, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, infobuf, false,
                                infolen, 0, 0, 1, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
                                inforellen, symtabsection, debug_info, 1, 24);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
                                abbrevlen, 0, 0, 1, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, linebuf, false,
                                linelen, 0, 0, 1, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
                                linerellen, symtabsection, debug_line, 1, 24);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
                                framelen, 0, 0, 8, 0);
             p += strlen(p) + 1;
+
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, locbuf, false,
                                loclen, 0, 0, 1, 0);
-
+            p += strlen(p) + 1;
     }
     fwritezero(align, elffp);
 
@@ -1356,8 +1375,9 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
         if (sym >= GLOBAL_TEMP_BASE)
         {
            if (of_elf64.current_dfmt == &df_dwarf)
-              sym += -GLOBAL_TEMP_BASE + (nsects + 5) + nlocals;
-           else   sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
+	       sym += -GLOBAL_TEMP_BASE + (nsects + 5) + nlocals;
+           else
+	       sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
         }
         p = entry;
         WRITEDLONG(p, r->address);
