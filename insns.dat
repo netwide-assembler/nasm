@@ -619,6 +619,7 @@ IRETQ		void				\324\1\xCF					X64
 IRETW		void				\320\1\xCF					8086
 JCXZ		imm				\310\1\xE3\50					8086,NOLONG
 JECXZ		imm				\311\1\xE3\50					386
+JRCXZ		imm				\313\1\xE3\50					X64
 JMP		imm|short			\1\xEB\50					8086
 JMP		imm				\371\1\xEB\50					8086,ND
 JMP		imm				\322\1\xE9\64					8086
@@ -656,7 +657,6 @@ JMPE		imm16				\320\2\x0F\xB8\64				IA64
 JMPE		imm32				\321\2\x0F\xB8\64				IA64
 JMPE		rm16				\320\2\x0F\x00\206				IA64
 JMPE		rm32				\321\2\x0F\x00\206				IA64
-JRCXZ		imm				\1\xE3\50					X64
 LAHF		void				\1\x9F						8086
 LAR		reg16,mem			\320\2\x0F\x02\110				286,PROT,SW
 LAR		reg16,reg16			\320\2\x0F\x02\110				286,PROT

@@ -726,7 +726,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case 0311:
-            if (asize == 16)
+            if (asize != 32)
                 return false;
             else
                 a_used = true;

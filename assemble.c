@@ -75,7 +75,7 @@
  *                 which is to be extended to the operand size.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
- * \312          - (disassembler only) marker on LOOP, LOOPxx instructions.
+ * \312          - (disassembler only) invalid with non-default address size.
  * \313          - indicates fixed 64-bit address size, 0x67 invalid.
  * \314          - (disassembler only) invalid with REX.B
  * \315          - (disassembler only) invalid with REX.X
