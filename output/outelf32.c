@@ -181,27 +181,25 @@ static struct dfmt df_stabs;
 static struct Symbol *lastsym;
 
 /* common debugging routines */
-void debug32_typevalue(int32_t);
-void debug32_deflabel(char *, int32_t, int64_t, int, char *);
-void debug32_directive(const char *, const char *);
+static void debug32_typevalue(int32_t);
+static void debug32_deflabel(char *, int32_t, int64_t, int, char *);
+static void debug32_directive(const char *, const char *);
 
 /* stabs debugging routines */
-void stabs32_init(struct ofmt *, void *, FILE *, efunc);
-void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
-void stabs32_output(int, void *);
-void stabs32_generate(void);
-void stabs32_cleanup(void);
+static void stabs32_init(struct ofmt *, void *, FILE *, efunc);
+static void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
+static void stabs32_output(int, void *);
+static void stabs32_generate(void);
+static void stabs32_cleanup(void);
 
 /* dwarf debugging routines */
-void dwarf32_init(struct ofmt *, void *, FILE *, efunc);
-void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t);
-void dwarf32_output(int, void *);
-void dwarf32_generate(void);
-void dwarf32_cleanup(void);
-void dwarf32_findfile(const char *);
-void dwarf32_findsect(const int);
-void saa_wleb128u(struct SAA *, int);
-void saa_wleb128s(struct SAA *, int);
+static void dwarf32_init(struct ofmt *, void *, FILE *, efunc);
+static void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t);
+static void dwarf32_output(int, void *);
+static void dwarf32_generate(void);
+static void dwarf32_cleanup(void);
+static void dwarf32_findfile(const char *);
+static void dwarf32_findsect(const int);
 
 /*
  * Special NASM section numbers which are used to define ELF special
@@ -400,8 +398,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
             type = SHT_PROGBITS;
         } else if (!nasm_stricmp(q, "nobits")) {
             type = SHT_NOBITS;
-        } else if (pass == 1) error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
+        } else if (pass == 1) {
+	    error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
                   " declaration of section `%s'", q, name);
+	}
     }
 
     if (!strcmp(name, ".shstrtab") ||
@@ -1479,7 +1479,7 @@ struct ofmt of_elf = {
 };
 /* again, the stabs debugging stuff (code) */
 
-void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+static void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
     (void)of;
     (void)id;
@@ -1487,7 +1487,8 @@ void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
     (void)error;
 }
 
-void stabs32_linenum(const char *filename, int32_t linenumber, int32_t segto)
+static void stabs32_linenum(const char *filename, int32_t linenumber,
+			    int32_t segto)
 {
     (void)segto;
 
@@ -1510,7 +1511,7 @@ void stabs32_linenum(const char *filename, int32_t linenumber, int32_t segto)
     currentline = linenumber;
 }
 
-void debug32_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
+static void debug32_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
                     char *special)
 {
    (void)name;
@@ -1520,13 +1521,13 @@ void debug32_deflabel(char *name, int32_t segment, int64_t offset, int is_global
    (void)special;
 }
 
-void debug32_directive(const char *directive, const char *params)
+static void debug32_directive(const char *directive, const char *params)
 {
    (void)directive;
    (void)params;
 }
 
-void debug32_typevalue(int32_t type)
+static void debug32_typevalue(int32_t type)
 {
     int32_t stype, ssize;
     switch (TYM_TYPE(type)) {
@@ -1589,7 +1590,7 @@ void debug32_typevalue(int32_t type)
     }
 }
 
-void stabs32_output(int type, void *param)
+static void stabs32_output(int type, void *param)
 {
     struct symlininfo *s;
     struct linelist *el;
@@ -1629,7 +1630,7 @@ void stabs32_output(int type, void *param)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
-void stabs32_generate(void)
+static void stabs32_generate(void)
 {
     int i, numfiles, strsize, numstabs = 0, currfile, mainfileindex;
     uint8_t *sbuf, *ssbuf, *rbuf, *sptr, *rptr;
@@ -1760,7 +1761,7 @@ void stabs32_generate(void)
     stabstrbuf = ssbuf;
 }
 
-void stabs32_cleanup(void)
+static void stabs32_cleanup(void)
 {
     struct linelist *ptr, *del;
     if (!stabslines)
@@ -1781,7 +1782,7 @@ void stabs32_cleanup(void)
 
 /* dwarf routines */
 
-void dwarf32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+static void dwarf32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
     (void)of;
     (void)id;
@@ -1791,7 +1792,8 @@ void dwarf32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
     ndebugs = 3;		/* 3 debug symbols */
 }
 
-void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t segto)
+static void dwarf32_linenum(const char *filename, int32_t linenumber,
+			    int32_t segto)
 {
     (void)segto;
     dwarf32_findfile(filename);
@@ -1800,7 +1802,7 @@ void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t segto)
 }
 
 /* called from elf_out with type == TY_DEBUGSYMLIN */
-void dwarf32_output(int type, void *param)
+static void dwarf32_output(int type, void *param)
 {
   int ln, aa, inx, maxln, soc;
   struct symlininfo *s;
@@ -1863,7 +1865,7 @@ void dwarf32_output(int type, void *param)
 }
 
 
-void dwarf32_generate(void)
+static void dwarf32_generate(void)
 {
     uint8_t *pbuf;
     int indx;
@@ -2099,7 +2101,7 @@ void dwarf32_generate(void)
     WRITELONG(pbuf,0);		/* null  ending offset */
 }
 
-void dwarf32_cleanup(void)
+static void dwarf32_cleanup(void)
 {
     if (arangesbuf)
         nasm_free(arangesbuf);
@@ -2122,7 +2124,7 @@ void dwarf32_cleanup(void)
     if (locbuf)
         nasm_free(locbuf);
 }
-void dwarf32_findfile(const char * fname)
+static void dwarf32_findfile(const char * fname)
 {
    int finx;
    struct linelist *match;
@@ -2167,7 +2169,7 @@ void dwarf32_findfile(const char * fname)
    }
 }
 /*  */
-void dwarf32_findsect(const int index)
+static void dwarf32_findsect(const int index)
 {
    int sinx;
    struct sectlist *match;
