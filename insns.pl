@@ -666,6 +666,8 @@ sub byte_code_compile($$) {
 	    push(@codes, 0334);
 	} elsif ($op eq 'repe') {
 	    push(@codes, 0335);
+	} elsif ($op eq 'nohi') { # Use spl/bpl/sil/dil even without REX
+	    push(@codes, 0325);
 	} elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
 	    # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
 	    if ($op eq '66') {
