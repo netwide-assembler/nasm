@@ -131,3 +131,7 @@ D: Website Maintenance @ http://nasm.sourceforge.net/
 N: Chuck Crayne
 E: ccrayne@users.sourceforge.net
 D: elf64 (x86_64) output format
+
+N: Cyrill Gorcunov
+E: gorcunov@gmail.com
+D: AMD XOP/FMA4/CVT16 instructions
