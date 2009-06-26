@@ -73,7 +73,7 @@ while (<F>) {
 	    warn "line $line has an * operand but uses raw bytecodes\n";
 	    next;
 	}
-	
+
 	$opmask = 0;
 	@ops = split(/,/, $fields[1]);
 	for ($oi = 0; $oi < scalar @ops; $oi++) {
