@@ -56,78 +56,78 @@ open (F, $fname) || die "unable to open $fname";
 $line = 0;
 $insns = 0;
 while (<F>) {
-  $line++;
-  chomp;
-  next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
+    $line++;
+    chomp;
+    next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
 
-  unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
-      warn "line $line does not contain four fields\n";
-      next;
-  }
-  @fields = ($1, $2, $3, $4);
-  @field_list = ([@fields, 0]);
+    unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
+	warn "line $line does not contain four fields\n";
+	next;
+    }
+    @fields = ($1, $2, $3, $4);
+    @field_list = ([@fields, 0]);
 
-  if ($fields[1] =~ /\*/) {
-      # This instruction has relaxed form(s)
-      if ($fields[2] !~ /^\[/) {
-	  warn "line $line has an * operand but uses raw bytecodes\n";
-	  next;
-      }
-      
-      $opmask = 0;
-      @ops = split(/,/, $fields[1]);
-      for ($oi = 0; $oi < scalar @ops; $oi++) {
-	  if ($ops[$oi] =~ /\*$/) {
-	      if ($oi == 0) {
-		  warn "line $line has a first operand with a *\n";
-		  next;
-	      }
-	      $opmask |= 1 << $oi;
-	  }
-      }
+    if ($fields[1] =~ /\*/) {
+	# This instruction has relaxed form(s)
+	if ($fields[2] !~ /^\[/) {
+	    warn "line $line has an * operand but uses raw bytecodes\n";
+	    next;
+	}
+	
+	$opmask = 0;
+	@ops = split(/,/, $fields[1]);
+	for ($oi = 0; $oi < scalar @ops; $oi++) {
+	    if ($ops[$oi] =~ /\*$/) {
+		if ($oi == 0) {
+		    warn "line $line has a first operand with a *\n";
+		    next;
+		}
+		$opmask |= 1 << $oi;
+	    }
+	}
 
-      for ($oi = 1; $oi < (1 << scalar @ops); $oi++) {
-	  if (($oi & ~$opmask) == 0) {
-	      my @xops = ();
-	      my $omask = ~$oi;
-	      for ($oj = 0; $oj < scalar(@ops); $oj++) {
-		  if ($omask & 1) {
-		      push(@xops, $ops[$oj]);
-		  }
-		  $omask >>= 1;
-	      }
-	      push(@field_list, [$fields[0], join(',', @xops),
-				 $fields[2], $fields[3], $oi]);
-	  }
-      }
-  }
+	for ($oi = 1; $oi < (1 << scalar @ops); $oi++) {
+	    if (($oi & ~$opmask) == 0) {
+		my @xops = ();
+		my $omask = ~$oi;
+		for ($oj = 0; $oj < scalar(@ops); $oj++) {
+		    if ($omask & 1) {
+			push(@xops, $ops[$oj]);
+		    }
+		    $omask >>= 1;
+		}
+		push(@field_list, [$fields[0], join(',', @xops),
+				   $fields[2], $fields[3], $oi]);
+	    }
+	}
+    }
 
-  foreach $fptr (@field_list) {
-      @fields = @$fptr;
-      ($formatted, $nd) = format_insn(@fields);
-      if ($formatted) {
-	  $insns++;
-	  $aname = "aa_$fields[0]";
-	  push @$aname, $formatted;
-      }
-      if ( $fields[0] =~ /cc$/ ) {
-	  # Conditional instruction
-	  $k_opcodes_cc{$fields[0]}++;
-      } else {
-	  # Unconditional instruction
-	  $k_opcodes{$fields[0]}++;
-      }
-      if ($formatted && !$nd) {
-	  push @big, $formatted;
-	  my @sseq = startseq($fields[2], $fields[4]);
-	  foreach $i (@sseq) {
-	      if (!defined($dinstables{$i})) {
-		  $dinstables{$i} = [];
-	      }
-	      push(@{$dinstables{$i}}, $#big);
-	  }
-      }
-  }
+    foreach $fptr (@field_list) {
+	@fields = @$fptr;
+	($formatted, $nd) = format_insn(@fields);
+	if ($formatted) {
+	    $insns++;
+	    $aname = "aa_$fields[0]";
+	    push @$aname, $formatted;
+	}
+	if ( $fields[0] =~ /cc$/ ) {
+	    # Conditional instruction
+	    $k_opcodes_cc{$fields[0]}++;
+	} else {
+	    # Unconditional instruction
+	    $k_opcodes{$fields[0]}++;
+	}
+	if ($formatted && !$nd) {
+	    push @big, $formatted;
+	    my @sseq = startseq($fields[2], $fields[4]);
+	    foreach $i (@sseq) {
+		if (!defined($dinstables{$i})) {
+		    $dinstables{$i} = [];
+		}
+		push(@{$dinstables{$i}}, $#big);
+	    }
+	}
+    }
 }
 
 close F;
@@ -519,75 +519,75 @@ sub hexstr(@) {
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
 sub startseq($$) {
-  my ($codestr, $relax) = @_;
-  my $word, @range;
-  my @codes = ();
-  my $c = $codestr;
-  my $c0, $c1, $i;
-  my $prefix = '';
+    my ($codestr, $relax) = @_;
+    my $word, @range;
+    my @codes = ();
+    my $c = $codestr;
+    my $c0, $c1, $i;
+    my $prefix = '';
 
-  @codes = decodify($codestr, $relax);
+    @codes = decodify($codestr, $relax);
 
-  while ($c0 = shift(@codes)) {
-      $c1 = $codes[0];
-      if ($c0 >= 01 && $c0 <= 04) {
-	  # Fixed byte string
-	  my $fbs = $prefix;
-	  while (1) {
-	      if ($c0 >= 01 && $c0 <= 04) {
-		  while ($c0--) {
-		      $fbs .= sprintf("%02X", shift(@codes));
-		  }
-	      } else {
-		  last;
-	      }
-	      $c0 = shift(@codes);
-	  }
+    while ($c0 = shift(@codes)) {
+	$c1 = $codes[0];
+	if ($c0 >= 01 && $c0 <= 04) {
+	    # Fixed byte string
+	    my $fbs = $prefix;
+	    while (1) {
+		if ($c0 >= 01 && $c0 <= 04) {
+		    while ($c0--) {
+			$fbs .= sprintf("%02X", shift(@codes));
+		    }
+		} else {
+		    last;
+		}
+		$c0 = shift(@codes);
+	    }
 
-	  foreach $pfx (@disasm_prefixes) {
-	      if (substr($fbs, 0, length($pfx)) eq $pfx) {
-		  $prefix = $pfx;
-		  $fbs = substr($fbs, length($pfx));
-		  last;
-	      }
-	  }
+	    foreach $pfx (@disasm_prefixes) {
+		if (substr($fbs, 0, length($pfx)) eq $pfx) {
+		    $prefix = $pfx;
+		    $fbs = substr($fbs, length($pfx));
+		    last;
+		}
+	    }
 
-	  if ($fbs ne '') {
-	      return ($prefix.substr($fbs,0,2));
-	  }
+	    if ($fbs ne '') {
+		return ($prefix.substr($fbs,0,2));
+	    }
 
-	  unshift(@codes, $c0);
-      } elsif ($c0 >= 010 && $c0 <= 013) {
-	  return addprefix($prefix, $c1..($c1+7));
-      } elsif (($c0 & ~013) == 0144) {
-	  return addprefix($prefix, $c1, $c1|2);
-      } elsif ($c0 == 0330) {
-	  return addprefix($prefix, $c1..($c1+15));
-      } elsif ($c0 == 0 || $c0 == 0340) {
-	  return $prefix;
-      } elsif ($c0 == 0344) {
-	  return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
-      } elsif ($c0 == 0345) {
-	  return addprefix($prefix, 0x07, 0x17, 0x1F);
-      } elsif ($c0 == 0346) {
-	  return addprefix($prefix, 0xA0, 0xA8);
-      } elsif ($c0 == 0347) {
-	  return addprefix($prefix, 0xA1, 0xA9);
-      } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
-	  my $c,$m,$wlp;
-	  $m   = shift(@codes);
-	  $wlp = shift(@codes);
-	  $c = ($m >> 6);
-	  $m = $m & 31;
-	  $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 7);
-      } elsif ($c0 >= 0172 && $c0 <= 174) {
-	  shift(@codes);	# Skip is4 control byte
-      } else {
-	  # We really need to be able to distinguish "forbidden"
-	  # and "ignorable" codes here
-      }
-  }
-  return $prefix;
+	    unshift(@codes, $c0);
+	} elsif ($c0 >= 010 && $c0 <= 013) {
+	    return addprefix($prefix, $c1..($c1+7));
+	} elsif (($c0 & ~013) == 0144) {
+	    return addprefix($prefix, $c1, $c1|2);
+	} elsif ($c0 == 0330) {
+	    return addprefix($prefix, $c1..($c1+15));
+	} elsif ($c0 == 0 || $c0 == 0340) {
+	    return $prefix;
+	} elsif ($c0 == 0344) {
+	    return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
+	} elsif ($c0 == 0345) {
+	    return addprefix($prefix, 0x07, 0x17, 0x1F);
+	} elsif ($c0 == 0346) {
+	    return addprefix($prefix, 0xA0, 0xA8);
+	} elsif ($c0 == 0347) {
+	    return addprefix($prefix, 0xA1, 0xA9);
+	} elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	    my $c,$m,$wlp;
+	    $m   = shift(@codes);
+	    $wlp = shift(@codes);
+	    $c = ($m >> 6);
+	    $m = $m & 31;
+	    $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 7);
+	} elsif ($c0 >= 0172 && $c0 <= 174) {
+	    shift(@codes);	# Skip is4 control byte
+	} else {
+	    # We really need to be able to distinguish "forbidden"
+	    # and "ignorable" codes here
+	}
+    }
+    return $prefix;
 }
 
 #
