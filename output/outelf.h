@@ -6,7 +6,7 @@
 
 #define SYM_GLOBAL 0x10
 
-#define GLOBAL_TEMP_BASE 1048576     /* bigger than any reasonable sym id */
+#define GLOBAL_TEMP_BASE  0x40000000 /* bigger than any sane symbol index */
 
 #define SEG_ALIGN 16            /* alignment of sections in file */
 #define SEG_ALIGN_1 (SEG_ALIGN-1)
