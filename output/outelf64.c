@@ -75,7 +75,7 @@ static char *shstrtab;
 static int shstrtablen, shstrtabsize;
 
 static struct SAA *syms;
-static uint32_t nlocals, nglobs;
+static uint32_t nlocals, nglobs, ndebugs;
 
 static int32_t def_seg;
 
@@ -189,17 +189,18 @@ static struct Symbol *lastsym;
 
 /* common debugging routines */
 void debug64_typevalue(int32_t);
-void debug64_init(struct ofmt *, void *, FILE *, efunc);
 void debug64_deflabel(char *, int32_t, int64_t, int, char *);
 void debug64_directive(const char *, const char *);
 
 /* stabs debugging routines */
+void stabs64_init(struct ofmt *, void *, FILE *, efunc);
 void stabs64_linenum(const char *filename, int32_t linenumber, int32_t);
 void stabs64_output(int, void *);
 void stabs64_generate(void);
 void stabs64_cleanup(void);
 
 /* dwarf debugging routines */
+void dwarf64_init(struct ofmt *, void *, FILE *, efunc);
 void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t);
 void dwarf64_output(int, void *);
 void dwarf64_generate(void);
@@ -227,7 +228,7 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     sects = NULL;
     nsects = sectlen = 0;
     syms = saa_init((int32_t)sizeof(struct Symbol));
-    nlocals = nglobs = 0;
+    nlocals = nglobs = ndebugs = 0;
     bsym = raa_init();
     strs = saa_init(1L);
     saa_wbytes(strs, "\0", 1L);
@@ -1370,18 +1371,19 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
     *len = 0;
 
     while (r) {
-        int64_t sym = r->symbol;
+        int32_t sym = r->symbol;
 
+	/*
+	 * Create a real symbol index; the +2 refers to the two special
+	 * entries, the null entry and the filename entry.
+	 */
         if (sym >= GLOBAL_TEMP_BASE)
-        {
-           if (of_elf64.current_dfmt == &df_dwarf)
-	       sym += -GLOBAL_TEMP_BASE + (nsects + 5) + nlocals;
-           else
-	       sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
-        }
+	    sym += -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
+
         p = entry;
         WRITEDLONG(p, r->address);
-        WRITEDLONG(p, (sym << 32) + r->type);
+	WRITELONG(p, r->type);
+	WRITELONG(p, sym);
 	WRITEDLONG(p, r->offset);
         saa_wbytes(s, entry, 24L);
         *len += 24;
@@ -1502,7 +1504,7 @@ static int elf_set_info(enum geninfo type, char **val)
 static struct dfmt df_dwarf = {
     "ELF64 (x86-64) dwarf debug format for Linux/Unix",
     "dwarf",
-    debug64_init,
+    dwarf64_init,
     dwarf64_linenum,
     debug64_deflabel,
     debug64_directive,
@@ -1513,7 +1515,7 @@ static struct dfmt df_dwarf = {
 static struct dfmt df_stabs = {
     "ELF64 (x86-64) stabs debug format for Linux/Unix",
     "stabs",
-    debug64_init,
+    stabs64_init,
     stabs64_linenum,
     debug64_deflabel,
     debug64_directive,
@@ -1543,13 +1545,6 @@ struct ofmt of_elf64 = {
 };
 
 /* common debugging routines */
-void debug64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
-{
-    (void)of;
-    (void)id;
-    (void)fp;
-    (void)error;
-}
 void debug64_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
                     char *special)
 {
@@ -1630,6 +1625,13 @@ void debug64_typevalue(int32_t type)
 }
 
 /* stabs debugging routines */
+void stabs64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+{
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
+}
 
 
 void stabs64_linenum(const char *filename, int32_t linenumber, int32_t segto)
@@ -1849,7 +1851,15 @@ void stabs64_cleanup(void)
         nasm_free(stabstrbuf);
 }
 /* dwarf routines */
+void dwarf64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+{
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
 
+    ndebugs = 3;		/* 3 debug symbols */
+}
 
 void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {

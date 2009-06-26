@@ -75,7 +75,7 @@ static char *shstrtab;
 static int shstrtablen, shstrtabsize;
 
 static struct SAA *syms;
-static uint32_t nlocals, nglobs;
+static uint32_t nlocals, nglobs, ndebugs; /* Symbol counts */
 
 static int32_t def_seg;
 
@@ -182,17 +182,18 @@ static struct Symbol *lastsym;
 
 /* common debugging routines */
 void debug32_typevalue(int32_t);
-void debug32_init(struct ofmt *, void *, FILE *, efunc);
 void debug32_deflabel(char *, int32_t, int64_t, int, char *);
 void debug32_directive(const char *, const char *);
 
 /* stabs debugging routines */
+void stabs32_init(struct ofmt *, void *, FILE *, efunc);
 void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
 void stabs32_output(int, void *);
 void stabs32_generate(void);
 void stabs32_cleanup(void);
 
 /* dwarf debugging routines */
+void dwarf32_init(struct ofmt *, void *, FILE *, efunc);
 void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t);
 void dwarf32_output(int, void *);
 void dwarf32_generate(void);
@@ -220,7 +221,7 @@ static void elf_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     sects = NULL;
     nsects = sectlen = 0;
     syms = saa_init((int32_t)sizeof(struct Symbol));
-    nlocals = nglobs = 0;
+    nlocals = nglobs = ndebugs = 0;
     bsym = raa_init();
     strs = saa_init(1L);
     saa_wbytes(strs, "\0", 1L);
@@ -1286,13 +1287,12 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
     while (r) {
         int32_t sym = r->symbol;
 
+	/*
+	 * Create a real symbol index; the +2 refers to the two special
+	 * entries, the null entry and the filename entry.
+	 */
         if (sym >= GLOBAL_TEMP_BASE)
-        {
-           if (of_elf32.current_dfmt == &df_dwarf)
-	       sym += -GLOBAL_TEMP_BASE + (nsects + 5) + nlocals;
-	   else
-	       sym += -GLOBAL_TEMP_BASE + (nsects + 2) + nlocals;
-        }
+	    sym += -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
 
         p = entry;
         WRITELONG(p, r->address);
@@ -1412,7 +1412,7 @@ static int elf_set_info(enum geninfo type, char **val)
 static struct dfmt df_dwarf = {
     "ELF32 (i386) dwarf debug format for Linux/Unix",
     "dwarf",
-    debug32_init,
+    dwarf32_init,
     dwarf32_linenum,
     debug32_deflabel,
     debug32_directive,
@@ -1423,7 +1423,7 @@ static struct dfmt df_dwarf = {
 static struct dfmt df_stabs = {
     "ELF32 (i386) stabs debug format for Linux/Unix",
     "stabs",
-    debug32_init,
+    stabs32_init,
     stabs32_linenum,
     debug32_deflabel,
     debug32_directive,
@@ -1471,7 +1471,7 @@ struct ofmt of_elf = {
 };
 /* again, the stabs debugging stuff (code) */
 
-void debug32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
 {
     (void)of;
     (void)id;
@@ -1770,8 +1770,18 @@ void stabs32_cleanup(void)
     if (stabstrbuf)
         nasm_free(stabstrbuf);
 }
+
 /* dwarf routines */
 
+void dwarf32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+{
+    (void)of;
+    (void)id;
+    (void)fp;
+    (void)error;
+
+    ndebugs = 3;		/* 3 debug symbols */
+}
 
 void dwarf32_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
