@@ -1363,6 +1363,7 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
 {
     struct SAA *s;
     uint8_t *p, entry[24];
+    int32_t global_offset;
 
     if (!r)
         return NULL;
@@ -1370,15 +1371,18 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct Reloc *r)
     s = saa_init(1L);
     *len = 0;
 
+    /*
+     * How to onvert from a global placeholder to a real symbol index;
+     * the +2 refers to the two special entries, the null entry and
+     * the filename entry.
+     */
+    global_offset = -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
+
     while (r) {
         int32_t sym = r->symbol;
 
-	/*
-	 * Create a real symbol index; the +2 refers to the two special
-	 * entries, the null entry and the filename entry.
-	 */
         if (sym >= GLOBAL_TEMP_BASE)
-	    sym += -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
+	    sym += global_offset;
 
         p = entry;
         WRITEDLONG(p, r->address);
