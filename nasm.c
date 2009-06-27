@@ -150,8 +150,8 @@ static Preproc no_pp = {
 #define SET_CURR_OFFS(x) (in_abs_seg?(void)(abs_offset=(x)):\
 			 (void)(offsets=raa_write(offsets,location.segment,(x))))
 
-static int want_usage;
-static int terminate_after_phase;
+static bool want_usage;
+static bool terminate_after_phase;
 int user_nolist = 0;            /* fbk 9/2/00 */
 
 static void nasm_fputs(const char *line, FILE * outfile)
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
         break;
     }
 
-    if (depend_list)
+    if (depend_list && !terminate_after_phase)
 	emit_dependencies(depend_list);
 
     if (want_usage)
@@ -462,10 +462,7 @@ int main(int argc, char **argv)
     eval_cleanup();
     stdscan_cleanup();
 
-    if (terminate_after_phase)
-        return 1;
-    else
-        return 0;
+    return terminate_after_phase;
 }
 
 /*
@@ -1700,38 +1697,40 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         if (pass1 == 1)
             preproc->cleanup(1);
 
-        if (pass1 == 1 && terminate_after_phase) {
-            fclose(ofile);
-            remove(outname);
-            if (want_usage)
-                usage();
-            exit(1);
-        }
-
-        if ((passn > 1 && !global_offset_changed) || pass0 == 2)
+        if ((passn > 1 && !global_offset_changed) || pass0 == 2) {
             pass0++;
-        else if (global_offset_changed && global_offset_changed < prev_offset_changed) {
+	} else if (global_offset_changed &&
+		 global_offset_changed < prev_offset_changed) {
             prev_offset_changed = global_offset_changed;
             stall_count = 0;
-            }
-        else stall_count++;
+	} else {
+	    stall_count++;
+	}
 
-        if((stall_count > 997) || (passn >= pass_max))
+	if (terminate_after_phase)
+	    break;
+
+        if ((stall_count > 997) || (passn >= pass_max)) {
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */
              report_error(ERR_NONFATAL,
                           "Can't find valid values for all labels "
-                          "after %d passes, giving up.\n"
-                          "                  Possible cause: recursive equ's.", passn);
+                          "after %d passes, giving up.", passn);
+	     report_error(ERR_NONFATAL,
+			  "Possible causes: recursive EQUs, macro abuse.");
+	     terminate_after_phase = true;
+	     break;
+	}
     }
 
     preproc->cleanup(0);
     nasmlist.cleanup();
-    if (opt_verbose_info)     /*  -On and -Ov switches */
-        fprintf(stdout,
-                "info:: assembly required 1+%d+1 passes\n", passn-3);
-}                               /* exit from assemble_file (...) */
+    if (!terminate_after_phase && opt_verbose_info) {
+	/*  -On and -Ov switches */
+        fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
+    }
+}
 
 static enum directives getkw(char **directive, char **value)
 {
