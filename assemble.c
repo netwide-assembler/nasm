@@ -415,9 +415,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                 fseek(fp, base, SEEK_SET);
                 l = len;
                 while (l > 0) {
-                    int32_t m =
-                        fread(buf, 1, (l > (int32_t) sizeof(buf) ? (int32_t) sizeof(buf) : l),
-                              fp);
+                    int32_t m;
+		    m = fread(buf, 1, l > sizeof(buf) ? sizeof(buf) : l, fp);
                     if (!m) {
                         /*
                          * This shouldn't happen unless the file
