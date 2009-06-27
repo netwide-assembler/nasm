@@ -453,12 +453,13 @@ static char *check_tasm_directive(char *line)
                 line = nasm_malloc(len + 2);
                 line[0] = '%';
                 if (k == TM_IFDIFI) {
-                    /* NASM does not recognise IFDIFI, so we convert it to
-                     * %ifdef BOGUS. This is not used in NASM comaptible
-                     * code, but does need to parse for the TASM macro
-                     * package.
+                    /*
+		     * NASM does not recognise IFDIFI, so we convert
+		     * it to %if 0. This is not used in NASM
+		     * compatible code, but does need to parse for the
+		     * TASM macro package.
                      */
-                    strcpy(line + 1, "ifdef BOGUS");
+                    strcpy(line + 1, "if 0");
                 } else {
                     memcpy(line + 1, p, len + 1);
                 }
