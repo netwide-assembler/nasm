@@ -156,8 +156,11 @@ void *hash_iterate(const struct hash_table *head,
     struct hash_tbl_node *np = *iterator;
     struct hash_tbl_node *ep = head->table + head->size;
 
-    if (!np)
+    if (!np) {
 	np = head->table;
+	if (!np)
+	    return NULL;	/* Uninitialized table */
+    }
 
     while (np < ep) {
 	if (np->key) {
