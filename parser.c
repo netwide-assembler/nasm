@@ -825,7 +825,6 @@ restart_parse:
             result->oprs[operand].scale = s;
             result->oprs[operand].offset = o;
         } else {                /* it's not a memory reference */
-
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 result->oprs[operand].type |= IMMEDIATE;
                 result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
