@@ -1189,8 +1189,10 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 	    enum directives d;
             globallineno++;
 
-            /* here we parse our directives; this is not handled by the 'real'
-             * parser. */
+            /*
+	     * Here we parse our directives; this is not handled by the
+	     * 'real' parser.  This really should be a separate function.
+	     */
             directive = line;
 	    d = getkw(&directive, &value);
             if (d) {
@@ -1289,61 +1291,59 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     }           /* pass == 1 */
                     break;
                 case D_COMMON:		/* [COMMON symbol size:special] */
+		{
+		    int64_t size;
+
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
-                    if (pass0 == 1) {
-                        p = value;
-                        validid = true;
-                        if (!isidstart(*p))
-                            validid = false;
-                        while (*p && !nasm_isspace(*p)) {
-                            if (!isidchar(*p))
-                                validid = false;
-                            p++;
-                        }
-                        if (!validid) {
-                            report_error(ERR_NONFATAL,
-                                         "identifier expected after COMMON");
-                            break;
-                        }
-                        if (*p) {
-                            int64_t size;
+		    p = value;
+		    validid = true;
+		    if (!isidstart(*p))
+			validid = false;
+		    while (*p && !nasm_isspace(*p)) {
+			if (!isidchar(*p))
+			    validid = false;
+			p++;
+		    }
+		    if (!validid) {
+			report_error(ERR_NONFATAL,
+				     "identifier expected after COMMON");
+			break;
+		    }
+		    if (*p) {
+			while (*p && nasm_isspace(*p))
+			    *p++ = '\0';
+			q = p;
+			while (*q && *q != ':')
+			    q++;
+			if (*q == ':') {
+			    *q++ = '\0';
+			    special = q;
+			} else {
+			    special = NULL;
+			}
+			size = readnum(p, &rn_error);
+			if (rn_error) {
+			    report_error(ERR_NONFATAL,
+					 "invalid size specified"
+					 " in COMMON declaration");
+			    break;
+			}
+		    } else {
+			report_error(ERR_NONFATAL,
+				     "no size specified in"
+				     " COMMON declaration");
+			break;
+		    }
 
-                            while (*p && nasm_isspace(*p))
-                                *p++ = '\0';
-                            q = p;
-                            while (*q && *q != ':')
-                                q++;
-                            if (*q == ':') {
-                                *q++ = '\0';
-                                special = q;
-                            } else
-                                special = NULL;
-                            size = readnum(p, &rn_error);
-                            if (rn_error)
-                                report_error(ERR_NONFATAL,
-                                             "invalid size specified"
-                                             " in COMMON declaration");
-                            else
-                                define_common(value, seg_alloc(), size,
-                                              special, ofmt, report_error);
-                        } else
-                            report_error(ERR_NONFATAL,
-                                         "no size specified in"
-                                         " COMMON declaration");
-                    } else if (pass0 == 2) {    /* pass == 2 */
-                        q = value;
-                        while (*q && *q != ':') {
-                            if (nasm_isspace(*q))
-                                *q = '\0';
-                            q++;
-                        }
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            ofmt->symdef(value, 0L, 0L, 3, q);
-                        }
+                    if (pass0 < 2) {
+			define_common(value, seg_alloc(), size,
+				      special, ofmt, report_error);
+                    } else if (pass0 == 2) {
+			ofmt->symdef(value, 0L, 0L, 3, special);
                     }
                     break;
+		}
                 case D_ABSOLUTE:		/* [ABSOLUTE address] */
                     stdscan_reset();
                     stdscan_bufptr = value;
@@ -1690,9 +1690,10 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             nasm_free(line);
             location.offset = offs = GET_CURR_OFFS;
         }                       /* end while (line = preproc->getline... */
-        if (pass1 == 2 && global_offset_changed)
+
+        if (pass0 && global_offset_changed)
             report_error(ERR_NONFATAL,
-                         "phase error detected at end of assembly.");
+			 "phase error detected at end of assembly.");
 
         if (pass1 == 1)
             preproc->cleanup(1);

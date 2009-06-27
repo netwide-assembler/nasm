@@ -47,9 +47,10 @@
 #endif
 
 /* values for label.defn.is_global */
-#define DEFINED_BIT 1
-#define GLOBAL_BIT 2
-#define EXTERN_BIT 4
+#define DEFINED_BIT	1
+#define GLOBAL_BIT	2
+#define EXTERN_BIT	4
+#define COMMON_BIT	8
 
 #define NOT_DEFINED_YET 0
 #define TYPE_MASK 3
@@ -209,7 +210,9 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
             prevlabel = lptr->defn.label;
     }
 
-    if (lptr->defn.offset != offset) global_offset_changed++;
+    if (lptr->defn.offset != offset)
+	global_offset_changed++;
+
     lptr->defn.offset = offset;
     lptr->defn.segment = segment;
 
@@ -270,9 +273,10 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
     if (isextrn)
         lptr->defn.is_global |= EXTERN_BIT;
 
-    if (!islocalchar(label[0]) && is_norm)      /* not local, but not special either */
+    if (!islocalchar(label[0]) && is_norm) {
+	/* not local, but not special either */
         prevlabel = lptr->defn.label;
-    else if (islocal(label) && !*prevlabel) {
+    } else if (islocal(label) && !*prevlabel) {
         error(ERR_NONFATAL, "attempt to define a local label before any"
               " non-local labels");
     }
@@ -321,26 +325,32 @@ void define_common(char *label, int32_t segment, int32_t size, char *special,
     union label *lptr;
 
     lptr = find_label(label, 1);
-    if (lptr->defn.is_global & DEFINED_BIT) {
-        error(ERR_NONFATAL, "symbol `%s' redefined", label);
-        return;
+    if ((lptr->defn.is_global & DEFINED_BIT) &&
+	(passn == 1 || !(lptr->defn.is_global & COMMON_BIT))) {
+	    error(ERR_NONFATAL, "symbol `%s' redefined", label);
+	    return;
     }
-    lptr->defn.is_global |= DEFINED_BIT;
+    lptr->defn.is_global |= DEFINED_BIT|COMMON_BIT;
 
-    if (!islocalchar(label[0])) /* not local, but not special either */
+    if (!islocalchar(label[0])) {
         prevlabel = lptr->defn.label;
-    else
+    } else {
         error(ERR_NONFATAL, "attempt to define a local label as a "
               "common variable");
+	return;
+    }
 
     lptr->defn.segment = segment;
     lptr->defn.offset = 0;
 
+    if (pass0 == 0)
+	return;
+
     ofmt->symdef(lptr->defn.label, segment, size, 2,
-                 special ? special : lptr->defn.special);
+		 special ? special : lptr->defn.special);
     ofmt->current_dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
-                                       special ? special : lptr->defn.
-                                       special);
+				       special ? special : lptr->defn.
+				       special);
 }
 
 void declare_as_global(char *label, char *special, efunc error)
