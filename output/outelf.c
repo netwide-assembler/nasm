@@ -9,10 +9,13 @@
 #include <inttypes.h>
 
 #include "nasm.h"
+#include "outform.h"
 
 #include "output/elfcommon.h"
 #include "output/dwarf.h"
 #include "output/outelf.h"
+
+#if defined(OF_ELF32) || defined(OF_ELF64)
 
 const struct elf_known_section elf_known_sections[] = {
     { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },
@@ -27,3 +30,5 @@ const struct elf_known_section elf_known_sections[] = {
     { ".comment", SHT_PROGBITS, 0,                            1 },
     { NULL,       SHT_PROGBITS, SHF_ALLOC,                    1 } /* default */
 };
+
+#endif /* defined(OF_ELF32) || defined(OF_ELF64) */
