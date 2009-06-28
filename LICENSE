@@ -1,4 +1,8 @@
-NASM is licensed under the GNU Lesser General Public License (LGPL).
+NASM is licensed under the GNU Lesser General Public License (LGPL)
+version 2.1 or, at your option, any later version.
+
+We are trying to shift the license to the 2-clause BSD license, so any
+patches submitted are required to be dual-licensed under those two licenses.
 
 Please read the "COPYING" file in the archive root, or visit
 http://www.gnu.org/licenses/lgpl.html, for information about the LGPL.
