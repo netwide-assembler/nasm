@@ -20,6 +20,9 @@ TESTS	= $(wildcard *.asm)
 %.obj64: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
 
+%.dbg: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
+
 %.asm: %.pl
 	$(PERL) $< > $@
 
