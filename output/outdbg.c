@@ -40,8 +40,6 @@ static void dbg_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     dbgsect = NULL;
     (void)ldef;
     fprintf(fp, "NASM Output format debug dump\n");
-    of_dbg.current_dfmt->init(&of_dbg, 0, fp, errfunc);
-
 }
 
 static void dbg_cleanup(int debuginfo)

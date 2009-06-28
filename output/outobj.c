@@ -634,8 +634,6 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     obj_use32 = false;
     passtwo = 0;
     current_seg = NULL;
-
-    of_obj.current_dfmt->init(&of_obj, NULL, fp, errfunc);
 }
 
 static int obj_set_info(enum geninfo type, char **val)

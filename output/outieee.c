@@ -196,8 +196,8 @@ static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     ieee_entry_seg = NO_SEG;
     ieee_uppercase = false;
     checksum = 0;
-    of_ieee.current_dfmt->init(&of_ieee, NULL, fp, errfunc);
 }
+
 static int ieee_set_info(enum geninfo type, char **val)
 {
     (void)type;

@@ -429,6 +429,7 @@ int main(int argc, char **argv)
             init_labels();
 
             ofmt->init(ofile, report_error, define_label, evaluate);
+            ofmt->current_dfmt->init(ofmt, NULL, ofile, report_error);
 
             assemble_file(inname, depend_ptr);
 
