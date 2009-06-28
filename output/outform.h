@@ -1,4 +1,4 @@
-/* outform.h	header file for binding output format drivers to the
+/* output/outform.h	header file for binding output format drivers to the
  *              remainder of the code in the Netwide Assembler
  *
  * The Netwide Assembler is copyright (C) 1996 Simon Tatham and

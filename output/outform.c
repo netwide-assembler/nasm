@@ -16,7 +16,7 @@
 #include <inttypes.h>
 
 #define BUILD_DRIVERS_ARRAY
-#include "outform.h"
+#include "output/outform.h"
 
 static int ndrivers = 0;
 

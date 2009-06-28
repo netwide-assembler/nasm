@@ -9,7 +9,7 @@
 #include <inttypes.h>
 
 #include "nasm.h"
-#include "outform.h"
+#include "output/outform.h"
 
 #include "output/elfcommon.h"
 #include "output/dwarf.h"

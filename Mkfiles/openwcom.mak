@@ -50,8 +50,8 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) &
 	raa.$(O) saa.$(O) rbtree.$(O) &
 	float.$(O) insnsa.$(O) insnsb.$(O) &
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) &
-	outform.$(O) outlib.$(O) output\outbin.$(O) &
-	output\outaout.$(O) output\outcoff.$(O) &
+	output\outform.$(O) output\outlib.$(O) output\nulldbg.$(O) &
+	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) &
 	output\outelf.$(O) output\outelf32.$(O) output\outelf64.$(O) &
 	output\outobj.$(O) output\outas86.$(O) output\outrdf2.$(O) &
 	output\outdbg.$(O) output\outieee.$(O) output\outmacho.$(O) &
@@ -238,47 +238,53 @@ lib\vsnprintf.$(O): lib\vsnprintf.c compiler.h nasmlib.h
 listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h &
  pptok.h preproc.h regs.h
 macros.$(O): macros.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h regs.h tables.h
+ output\outform.h pptok.h preproc.h regs.h tables.h
 nasm.$(O): nasm.c assemble.h compiler.h eval.h float.h insns.h insnsi.h &
- labels.h listing.h nasm.h nasmlib.h outform.h parser.h pptok.h preproc.h &
- raa.h regs.h saa.h stdscan.h tokens.h
+ labels.h listing.h nasm.h nasmlib.h output\outform.h parser.h pptok.h &
+ preproc.h raa.h regs.h saa.h stdscan.h tokens.h
 nasmlib.$(O): nasmlib.c compiler.h insns.h insnsi.h nasm.h nasmlib.h pptok.h &
  preproc.h regs.h tokens.h
 ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h &
  nasmlib.h pptok.h preproc.h regs.h sync.h tokens.h
-outform.$(O): outform.c compiler.h insnsi.h nasm.h nasmlib.h outform.h &
- pptok.h preproc.h regs.h
-outlib.$(O): outlib.c compiler.h insnsi.h nasm.h nasmlib.h outlib.h pptok.h &
- preproc.h regs.h
+output\nulldbg.$(O): output\nulldbg.c
 output\outaout.$(O): output\outaout.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
-output\outas86.$(O): output\outas86.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
-output\outbin.$(O): output\outbin.c compiler.h eval.h insnsi.h labels.h &
- nasm.h nasmlib.h outform.h outlib.h pptok.h preproc.h regs.h saa.h &
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h regs.h saa.h &
  stdscan.h
+output\outas86.$(O): output\outas86.c compiler.h insnsi.h nasm.h nasmlib.h &
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h regs.h saa.h
+output\outbin.$(O): output\outbin.c compiler.h eval.h insnsi.h labels.h &
+ nasm.h nasmlib.h output\outform.h output\outlib.h pptok.h preproc.h regs.h &
+ saa.h stdscan.h
 output\outcoff.$(O): output\outcoff.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h regs.h saa.h
 output\outdbg.$(O): output\outdbg.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h regs.h
+ output\outform.h pptok.h preproc.h regs.h
 output\outelf.$(O): output\outelf.c compiler.h insnsi.h nasm.h nasmlib.h &
- output\dwarf.h output\elfcommon.h output\outelf.h pptok.h preproc.h regs.h
+ output\dwarf.h output\elfcommon.h output\outelf.h output\outform.h pptok.h &
+ preproc.h regs.h
 output\outelf32.$(O): output\outelf32.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h output\dwarf.h output\elf32.h output\elfcommon.h &
- output\outelf.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+ output\dwarf.h output\elf32.h output\elfcommon.h output\outelf.h &
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h rbtree.h regs.h &
+ saa.h stdscan.h
 output\outelf64.$(O): output\outelf64.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h output\dwarf.h output\elf64.h output\elfcommon.h &
- output\outelf.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+ output\dwarf.h output\elf64.h output\elfcommon.h output\outelf.h &
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h rbtree.h regs.h &
+ saa.h stdscan.h
+output\outform.$(O): output\outform.c compiler.h insnsi.h nasm.h nasmlib.h &
+ output\outform.h pptok.h preproc.h regs.h
 output\outieee.$(O): output\outieee.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h regs.h
+ output\outform.h pptok.h preproc.h regs.h
+output\outlib.$(O): output\outlib.c compiler.h insnsi.h nasm.h nasmlib.h &
+ output\outlib.h pptok.h preproc.h regs.h
 output\outmacho.$(O): output\outmacho.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
+ output\outform.h output\outlib.h pptok.h preproc.h raa.h regs.h saa.h
 output\outobj.$(O): output\outobj.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h regs.h stdscan.h
+ output\outform.h pptok.h preproc.h regs.h stdscan.h
 output\outrdf.$(O): output\outrdf.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h regs.h
+ output\outform.h pptok.h preproc.h regs.h
 output\outrdf2.$(O): output\outrdf2.c compiler.h insnsi.h nasm.h nasmlib.h &
- outform.h pptok.h preproc.h rdoff\rdoff.h regs.h saa.h
+ output\outform.h pptok.h preproc.h rdoff\rdoff.h regs.h saa.h
+owtest.$(O): owtest.c
 parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h &
  parser.h pptok.h preproc.h regs.h stdscan.h tables.h tokens.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h

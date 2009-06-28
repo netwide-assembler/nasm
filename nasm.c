@@ -29,7 +29,7 @@
 #include "eval.h"
 #include "assemble.h"
 #include "labels.h"
-#include "outform.h"
+#include "output/outform.h"
 #include "listing.h"
 
 struct forwrefinfo {            /* info held on forward refs. */

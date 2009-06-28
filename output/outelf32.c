@@ -20,8 +20,8 @@
 #include "saa.h"
 #include "raa.h"
 #include "stdscan.h"
-#include "outform.h"
-#include "outlib.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 #include "rbtree.h"
 
 #include "output/elf32.h"

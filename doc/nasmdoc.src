@@ -5690,7 +5690,7 @@ a hint as to where to find requested symbols.
 
 The \c{dbg} output format is not built into NASM in the default
 configuration. If you are building your own NASM executable from the
-sources, you can define \i\c{OF_DBG} in \c{outform.h} or on the
+sources, you can define \i\c{OF_DBG} in \c{output/outform.h} or on the
 compiler command line, and obtain the \c{dbg} output format.
 
 The \c{dbg} format does not output an object file as such; instead,

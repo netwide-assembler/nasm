@@ -20,8 +20,8 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "raa.h"
-#include "outform.h"
-#include "outlib.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
 

@@ -47,7 +47,7 @@ print OUT "\n";
 print OUT "#include \"tables.h\"\n";
 print OUT "#include \"nasmlib.h\"\n";
 print OUT "#include \"hashtbl.h\"\n";
-print OUT "#include \"outform.h\"\n";
+print OUT "#include \"output/outform.h\"\n";
 print OUT "\n";
 print OUT "#if 1\n";
 print OUT "const unsigned char nasm_stdmac[] = {";
