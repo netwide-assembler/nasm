@@ -19,6 +19,7 @@
 #include "nasmlib.h"
 #include "stdscan.h"
 #include "output/outform.h"
+#include "output/outlib.h"
 
 #ifdef OF_OBJ
 

@@ -22,6 +22,7 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "output/outform.h"
+#include "output/outlib.h"
 
 /* VERBOSE_WARNINGS: define this to add some extra warnings... */
 #define VERBOSE_WARNINGS

@@ -49,6 +49,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "output/outform.h"
+#include "output/outlib.h"
 
 #ifdef OF_IEEE
 
