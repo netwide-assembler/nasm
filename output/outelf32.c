@@ -186,7 +186,6 @@ static void debug32_deflabel(char *, int32_t, int64_t, int, char *);
 static void debug32_directive(const char *, const char *);
 
 /* stabs debugging routines */
-static void stabs32_init(struct ofmt *, void *, FILE *, efunc);
 static void stabs32_linenum(const char *filename, int32_t linenumber, int32_t);
 static void stabs32_output(int, void *);
 static void stabs32_generate(void);
@@ -1431,7 +1430,7 @@ static struct dfmt df_dwarf = {
 static struct dfmt df_stabs = {
     "ELF32 (i386) stabs debug format for Linux/Unix",
     "stabs",
-    stabs32_init,
+    null_debug_init,
     stabs32_linenum,
     debug32_deflabel,
     debug32_directive,
@@ -1478,14 +1477,6 @@ struct ofmt of_elf = {
     elf_cleanup
 };
 /* again, the stabs debugging stuff (code) */
-
-static void stabs32_init(struct ofmt *of, void *id, FILE * fp, efunc error)
-{
-    (void)of;
-    (void)id;
-    (void)fp;
-    (void)error;
-}
 
 static void stabs32_linenum(const char *filename, int32_t linenumber,
 			    int32_t segto)

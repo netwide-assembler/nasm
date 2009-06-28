@@ -193,7 +193,6 @@ static void debug64_deflabel(char *, int32_t, int64_t, int, char *);
 static void debug64_directive(const char *, const char *);
 
 /* stabs debugging routines */
-static void stabs64_init(struct ofmt *, void *, FILE *, efunc);
 static void stabs64_linenum(const char *filename, int32_t linenumber, int32_t);
 static void stabs64_output(int, void *);
 static void stabs64_generate(void);
@@ -1521,7 +1520,7 @@ static struct dfmt df_dwarf = {
 static struct dfmt df_stabs = {
     "ELF64 (x86-64) stabs debug format for Linux/Unix",
     "stabs",
-    stabs64_init,
+    null_debug_init,
     stabs64_linenum,
     debug64_deflabel,
     debug64_directive,
@@ -1631,14 +1630,6 @@ static void debug64_typevalue(int32_t type)
 }
 
 /* stabs debugging routines */
-static void stabs64_init(struct ofmt *of, void *id, FILE * fp, efunc error)
-{
-    (void)of;
-    (void)id;
-    (void)fp;
-    (void)error;
-}
-
 
 static void stabs64_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
