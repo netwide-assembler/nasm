@@ -107,6 +107,9 @@
 #ifndef OF_MACHO
 #define OF_MACHO
 #endif
+#ifndef OF_DBG
+#define OF_DBG
+#endif
 #endif                          /* OF_ALL */
 
 /* turn on groups of formats specified.... */
@@ -203,6 +206,9 @@
 #endif
 #ifdef OF_NO_MACHO
 #undef OF_MACHO
+#endif
+#ifdef OF_NO_DBG
+#undef OF_DBG
 #endif
 
 #ifndef OF_DEFAULT
