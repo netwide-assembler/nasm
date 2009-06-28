@@ -93,10 +93,10 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
     return seg;
 }
 
-static void dbg_deflabel(char *name, int32_t segment, int32_t offset,
+static void dbg_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
-    fprintf(dbgf, "deflabel %s := %08lx:%08lx %s (%d)%s%s\n",
+    fprintf(dbgf, "deflabel %s := %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
             name, segment, offset,
             is_global == 2 ? "common" : is_global ? "global" : "local",
             is_global, special ? ": " : "", special);
@@ -109,7 +109,7 @@ static void dbg_out(int32_t segto, const void *data,
     int32_t ldata;
     int id;
 
-    fprintf(dbgf, "out to %lx, len = %ld: ", segto, size);
+    fprintf(dbgf, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
 
     switch (type) {
     case OUT_RESERVE:
@@ -126,15 +126,15 @@ static void dbg_out(int32_t segto, const void *data,
         break;
     case OUT_ADDRESS:
 	ldata = *(int64_t *)data;
-        fprintf(dbgf, "addr %08lx (seg %08lx, wrt %08lx)\n", ldata,
+        fprintf(dbgf, "addr %08"PRIx32" (seg %08"PRIx32", wrt %08"PRIx32")\n", ldata,
                 segment, wrt);
         break;
     case OUT_REL2ADR:
-        fprintf(dbgf, "rel2adr %04x (seg %08lx)\n", (int)*(int16_t *)data,
+        fprintf(dbgf, "rel2adr %04x (seg %08"PRIx32")\n", (int)*(int16_t *)data,
                 segment);
         break;
     case OUT_REL4ADR:
-        fprintf(dbgf, "rel4adr %08lx (seg %08lx)\n", *(int32_t *)data,
+        fprintf(dbgf, "rel4adr %08"PRIx32" (seg %08"PRIx32")\n", *(int32_t *)data,
                 segment);
         break;
     default:
@@ -184,12 +184,13 @@ static void dbgdbg_cleanup(void)
 
 static void dbgdbg_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
-    fprintf(dbgf, "dbglinenum %s(%ld) := %08lx\n", lnfname, lineno, segto);
+    fprintf(dbgf, "dbglinenum %s(%"PRId32") := %08"PRIx32"\n",
+	    lnfname, lineno, segto);
 }
 static void dbgdbg_deflabel(char *name, int32_t segment,
-                            int32_t offset, int is_global, char *special)
+                            int64_t offset, int is_global, char *special)
 {
-    fprintf(dbgf, "dbglabel %s := %08lx:%08lx %s (%d)%s%s\n",
+    fprintf(dbgf, "dbglabel %s := %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
             name,
             segment, offset,
             is_global == 2 ? "common" : is_global ? "global" : "local",
@@ -206,7 +207,7 @@ static void dbgdbg_output(int output_type, void *param)
 }
 static void dbgdbg_typevalue(int32_t type)
 {
-    fprintf(dbgf, "new type: %s(%lX)\n",
+    fprintf(dbgf, "new type: %s(%"PRIX32")\n",
             types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
 }
 static struct dfmt debug_debug_form = {
@@ -226,6 +227,7 @@ static struct dfmt *debug_debug_arr[3] = {
     &null_debug_form,
     NULL
 };
+
 struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
