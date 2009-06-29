@@ -10,6 +10,10 @@ since 2007.
 
 \S{cl-2.06} Version 2.06
 
+\b This release is dedicated to the memory of Charles A. Crayne, long
+  time NASM developer as well as moderator of \c{comp.lang.asm.x86} and
+  author of the book \e{Serious Assembler}.  We miss you, Chuck.
+
 \b Support for indirect macro expansion (\c{%[...]}).  See \k{indmacro}.
 
 \b \c{%pop} can now take an argument, see \k{pushpop}.
