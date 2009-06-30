@@ -1176,7 +1176,7 @@ static void elf_write(void)
     p += strlen(p) + 1;
 
     /* .strtab */
-    elf_section_header(p - shstrtab, SHT_SYMTAB, 0, strs, true,
+    elf_section_header(p - shstrtab, SHT_STRTAB, 0, strs, true,
 		       strslen, 0, 0, 1, 0);
     p += strlen(p) + 1;
 
