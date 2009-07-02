@@ -1733,7 +1733,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             location.offset = offs = GET_CURR_OFFS;
         }                       /* end while (line = preproc->getline... */
 
-        if (pass0 && global_offset_changed)
+        if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
             report_error(ERR_NONFATAL,
 			 "phase error detected at end of assembly.");
 
@@ -1762,7 +1762,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                           "after %d passes, giving up.", passn);
 	     report_error(ERR_NONFATAL,
 			  "Possible causes: recursive EQUs, macro abuse.");
-	     terminate_after_phase = true;
 	     break;
 	}
     }
@@ -1841,19 +1840,22 @@ static enum directives getkw(char **directive, char **value)
 static void report_error_gnu(int severity, const char *fmt, ...)
 {
     va_list ap;
+    char *currentfile = NULL;
+    int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
         return;
 
-    if (severity & ERR_NOFILE)
-        fputs("nasm: ", error_file);
-    else {
-        char *currentfile = NULL;
-        int32_t lineno = 0;
+    if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
-        fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-        nasm_free(currentfile);
+
+    if (currentfile) {
+	fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
+	nasm_free(currentfile);
+    } else {
+	fputs("nasm: ", error_file);
     }
+
     va_start(ap, fmt);
     report_error_common(severity, fmt, ap);
     va_end(ap);
@@ -1877,19 +1879,22 @@ static void report_error_gnu(int severity, const char *fmt, ...)
 static void report_error_vc(int severity, const char *fmt, ...)
 {
     va_list ap;
+    char *currentfile = NULL;
+    int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
         return;
 
-    if (severity & ERR_NOFILE)
-        fputs("nasm: ", error_file);
-    else {
-        char *currentfile = NULL;
-        int32_t lineno = 0;
+    if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
+
+    if (currentfile) {
         fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
         nasm_free(currentfile);
+    } else {
+        fputs("nasm: ", error_file);
     }
+
     va_start(ap, fmt);
     report_error_common(severity, fmt, ap);
     va_end(ap);
