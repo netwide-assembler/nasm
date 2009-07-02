@@ -1808,14 +1808,22 @@ static int32_t obj_segbase(int32_t segment)
         }
         if (eb) {
             e = eb->exts[i];
-            if (e->defwrt_type == DEFWRT_NONE)
+	    if (!e) {
+		nasm_assert(pass0 == 0);
+		/* Not available - can happen during optimization */
+		return NO_SEG;
+	    }
+
+	    switch (e->defwrt_type) {
+	    case DEFWRT_NONE:
                 return segment; /* fine */
-            else if (e->defwrt_type == DEFWRT_SEGMENT)
+	    case DEFWRT_SEGMENT:
                 return e->defwrt_ptr.seg->index + 1;
-            else if (e->defwrt_type == DEFWRT_GROUP)
+	    case DEFWRT_GROUP:
                 return e->defwrt_ptr.grp->index + 1;
-            else
+	    default:
                 return NO_SEG;  /* can't tell what it is */
+	    }
         }
 
         return segment;         /* not one of ours - leave it alone */
