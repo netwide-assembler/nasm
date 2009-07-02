@@ -95,7 +95,7 @@ void nasm_set_malloc_error(efunc error)
 }
 
 #ifdef LOGALLOC
-void *nasm_malloc_log(char *file, int line, size_t size)
+void *nasm_malloc_log(const char *file, int line, size_t size)
 #else
 void *nasm_malloc(size_t size)
 #endif
@@ -112,7 +112,7 @@ void *nasm_malloc(size_t size)
 }
 
 #ifdef LOGALLOC
-void *nasm_zalloc_log(char *file, int line, size_t size)
+void *nasm_zalloc_log(const char *file, int line, size_t size)
 #else
 void *nasm_zalloc(size_t size)
 #endif
@@ -129,7 +129,7 @@ void *nasm_zalloc(size_t size)
 }
 
 #ifdef LOGALLOC
-void *nasm_realloc_log(char *file, int line, void *q, size_t size)
+void *nasm_realloc_log(const char *file, int line, void *q, size_t size)
 #else
 void *nasm_realloc(void *q, size_t size)
 #endif
@@ -149,7 +149,7 @@ void *nasm_realloc(void *q, size_t size)
 }
 
 #ifdef LOGALLOC
-void nasm_free_log(char *file, int line, void *q)
+void nasm_free_log(const char *file, int line, void *q)
 #else
 void nasm_free(void *q)
 #endif
@@ -163,7 +163,7 @@ void nasm_free(void *q)
 }
 
 #ifdef LOGALLOC
-char *nasm_strdup_log(char *file, int line, const char *s)
+char *nasm_strdup_log(const char *file, int line, const char *s)
 #else
 char *nasm_strdup(const char *s)
 #endif
@@ -184,9 +184,9 @@ char *nasm_strdup(const char *s)
 }
 
 #ifdef LOGALLOC
-char *nasm_strndup_log(char *file, int line, char *s, size_t len)
+char *nasm_strndup_log(const char *file, int line, const char *s, size_t len)
 #else
-char *nasm_strndup(char *s, size_t len)
+char *nasm_strndup(const char *s, size_t len)
 #endif
 {
     char *p;
@@ -203,6 +203,13 @@ char *nasm_strndup(char *s, size_t len)
     strncpy(p, s, len);
     p[len] = '\0';
     return p;
+}
+
+noreturn nasm_assert_failed(const char *file, int line, const char *msg)
+{
+    nasm_malloc_error(ERR_FATAL, "assertion %s failed at %s:%d",
+		      msg, file, line);
+    exit(1);
 }
 
 #ifndef nasm_stricmp

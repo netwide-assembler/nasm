@@ -152,14 +152,14 @@ void *nasm_zalloc(size_t);
 void *nasm_realloc(void *, size_t);
 void nasm_free(void *);
 char *nasm_strdup(const char *);
-char *nasm_strndup(char *, size_t);
+char *nasm_strndup(const char *, size_t);
 #else
-void *nasm_malloc_log(char *, int, size_t);
-void *nasm_zalloc_log(char *, int, size_t);
-void *nasm_realloc_log(char *, int, void *, size_t);
-void nasm_free_log(char *, int, void *);
-char *nasm_strdup_log(char *, int, const char *);
-char *nasm_strndup_log(char *, int, char *, size_t);
+void *nasm_malloc_log(const char *, int, size_t);
+void *nasm_zalloc_log(const char *, int, size_t);
+void *nasm_realloc_log(const char *, int, void *, size_t);
+void nasm_free_log(const char *, int, void *);
+char *nasm_strdup_log(const char *, int, const char *);
+char *nasm_strndup_log(const char *, int, const char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_zalloc(x) nasm_zalloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
@@ -167,6 +167,13 @@ char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
 #define nasm_strndup(x,y) nasm_strndup_log(__FILE__,__LINE__,x,y)
 #endif
+
+/*
+ * NASM assert failure
+ */
+noreturn nasm_assert_failed(const char *, int, const char *);
+#define nasm_assert(x) \
+    do { if (!(x)) nasm_assert_failed(__FILE__,__LINE__,#x); } while (0)
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or
