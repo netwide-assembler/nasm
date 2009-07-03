@@ -37,7 +37,7 @@ O               = @OBJEXT@
 X               = @EXEEXT@
 
 PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
-	   rdf2bin$(X) rdf2com$(X) rdf2ihx$(X)
+	   rdf2bin$(X) rdf2com$(X) rdf2ith$(X) rdf2ihx$(X) rdf2srec$(X)
 
 .SUFFIXES: .c .i .s .$(O) .1 .man
 
@@ -58,8 +58,12 @@ rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
 	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
 rdf2com$(X):
 	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
-rdf2ihx$(X): rdf2ihx.$(O) $(RDXLIBS) nasmlib.$(O)
-	$(CC) $(LDFLAGS) -o rdf2ihx$(X) rdf2ihx.$(O) $(RDXLIBS) nasmlib.$(O)
+rdf2ith$(X):
+	rm -f rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
+rdf2ihx$(X):
+	rm -f rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
+rdf2srec$(X):
+	rm -f rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
 
 rdf2ihx.$(O): rdf2ihx.c
 rdf2bin.$(O): rdf2bin.c
