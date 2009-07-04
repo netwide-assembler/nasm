@@ -172,8 +172,11 @@ char *nasm_strndup_log(const char *, int, const char *, size_t);
  * NASM assert failure
  */
 noreturn nasm_assert_failed(const char *, int, const char *);
-#define nasm_assert(x) \
-    do { if (!(x)) nasm_assert_failed(__FILE__,__LINE__,#x); } while (0)
+#define nasm_assert(x)						\
+    do {							\
+	if (unlikely(!(x)))					\
+	    nasm_assert_failed(__FILE__,__LINE__,#x);		\
+    } while (0)
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or
