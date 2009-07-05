@@ -4572,7 +4572,7 @@ The \c{ith} file format produces Intel Hex-format files.  Just as the
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
 
-All options supported by the \c{bin} file format is also supported by
+All extensions supported by the \c{bin} file format is also supported by
 the \c{ith} file format.
 
 \c{ith} provides a default output file-name extension of \c{.ith}.
@@ -4585,7 +4585,7 @@ The \c{srec} file format produces Intel Hex-format files.  Just as the
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
 
-All options supported by the \c{bin} file format is also supported by
+All extensions supported by the \c{bin} file format is also supported by
 the \c{srec} file format.
 
 \c{srec} provides a default output file-name extension of \c{.srec}.
