@@ -1534,6 +1534,7 @@ static void do_output_ith(void)
 
 	addr   = s->start;
 	length = s->length;
+	saa_rewind(s->contents);
 
 	while (length) {
 	    if ((addr^last) & 0xffff0000) {
@@ -1652,6 +1653,7 @@ static void do_output_srec(void)
 
 	addr   = s->start;
 	length = s->length;
+	saa_rewind(s->contents);
 
 	while (length) {
 	    chunk = 32 - (addr & 31);
