@@ -8,6 +8,12 @@ TESTS	= $(wildcard *.asm)
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
 
+%.ith: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
+
+%.srec: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
+
 %.o: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
 
