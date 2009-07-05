@@ -4567,7 +4567,7 @@ brackets must be used.
 
 \H{ithfmt} \i\c{ith}: \i{Intel Hex} Output
 
-The \c{ith} file format produces Intel Hex-format files.  Just as the
+The \c{ith} file format produces Intel hex-format files.  Just as the
 \c{bin} format, this is a flat memory image format with no support for
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
@@ -4578,9 +4578,9 @@ the \c{ith} file format.
 \c{ith} provides a default output file-name extension of \c{.ith}.
 
 
-\H{srecfmt} \i\c{srec}: \i{Motorola S-Record} Output
+\H{srecfmt} \i\c{srec}: \i{Motorola S-Records} Output
 
-The \c{srec} file format produces Motorola S-record files.  Just as the
+The \c{srec} file format produces Motorola S-records files.  Just as the
 \c{bin} format, this is a flat memory image format with no support for
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
