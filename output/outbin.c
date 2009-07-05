@@ -92,10 +92,10 @@
 
 #ifdef OF_BIN
 
-struct ofmt *bin_get_ofmt();    /* Prototype goes here since no header file. */
-
 static FILE *fp, *rf = NULL;
 static efunc error;
+static struct ofmt *my_ofmt;
+static void (*do_output)(void);
 
 /* Section flags keep track of which attributes the user has defined. */
 #define START_DEFINED       0x001
@@ -592,26 +592,8 @@ static void bin_cleanup(int debuginfo)
     }
 
     /* Step 6: Write the section data to the output file. */
-
-    /* Write the progbits sections to the output file. */
-    pend = origin;
-    for (s = sections; s; s = s->next) {
-	/* Skip non-progbits sections */
-	if (!(s->flags & TYPE_PROGBITS))
-	    continue;
-	/* Skip zero-length sections */
-	if (s->length == 0)
-            continue;
-        /* Pad the space between sections. */
-        for (h = s->start - pend; h; h--)
-            fputc('\0', fp);
-        /* Write the section to the output file. */
-        if (s->length > 0)
-            saa_fpwrite(s->contents, fp);
-        pend = s->start + s->length;
-    }
-    /* Done writing the file, so close it. */
-    fclose(fp);
+    do_output();
+    fclose(fp);			/* Done with the output file */
 
     /* Step 7: Generate the map file. */
 
@@ -1227,12 +1209,12 @@ static void bin_define_section_labels(void)
         /* section.<name>.start */
         strcpy(label_name + base_len, ".start");
         define_label(label_name, sec->start_index, 0L,
-                     NULL, 0, 0, bin_get_ofmt(), error);
+                     NULL, 0, 0, my_ofmt, error);
 
         /* section.<name>.vstart */
         strcpy(label_name + base_len, ".vstart");
         define_label(label_name, sec->vstart_index, 0L,
-                     NULL, 0, 0, bin_get_ofmt(), error);
+                     NULL, 0, 0, my_ofmt, error);
 
         nasm_free(label_name);
     }
@@ -1394,6 +1376,20 @@ static void bin_filename(char *inname, char *outname, efunc error)
     outfile = outname;
 }
 
+static void ith_filename(char *inname, char *outname, efunc error)
+{
+    standard_extension(inname, outname, ".ith", error);
+    infile = inname;
+    outfile = outname;
+}
+
+static void srec_filename(char *inname, char *outname, efunc error)
+{
+    standard_extension(inname, outname, ".srec", error);
+    infile = inname;
+    outfile = outname;
+}
+
 static int32_t bin_segbase(int32_t segment)
 {
     return segment;
@@ -1406,7 +1402,34 @@ static int bin_set_info(enum geninfo type, char **val)
     return 0;
 }
 
+static void binfmt_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval);
+struct ofmt of_bin, of_ith, of_srec;
+static void do_output_bin(void);
+static void do_output_ith(void);
+static void do_output_srec(void);
+
 static void bin_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_bin;
+    do_output = do_output_bin;
+    binfmt_init(afp, errfunc, ldef, eval);
+}
+
+static void ith_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_ith;
+    do_output = do_output_ith;
+    binfmt_init(afp, errfunc, ldef, eval);
+}    
+    
+static void srec_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_srec;
+    do_output = do_output_srec;
+    binfmt_init(afp, errfunc, ldef, eval);
+}
+
+static void binfmt_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
     fp = afp;
     error = errfunc;
@@ -1438,6 +1461,213 @@ static void bin_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
     last_section->vstart_index = current_section = seg_alloc();
 }
 
+/* Generate binary file output */
+static void do_output_bin(void)
+{
+    struct Section *s;
+    uint64_t addr = origin;
+
+    /* Write the progbits sections to the output file. */
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+        /* Pad the space between sections. */
+	fwritezero(s->start - addr, fp);
+
+        /* Write the section to the output file. */
+	saa_fpwrite(s->contents, fp);
+        
+	/* Keep track of the current file position */
+	addr = s->start + s->length;
+    }
+}
+
+/* Generate Intel hex file output */
+static int write_ith_record(unsigned int len, uint16_t addr,
+			    uint8_t type, void *data)
+{
+    char buf[1+2+4+2+255*2+2+2];
+    char *p = buf;
+    uint8_t csum, *dptr = data;
+    unsigned int i;
+
+    nasm_assert(len <= 255);
+
+    csum = len + addr + (addr >> 8) + type;
+    for (i = 0; i < len; i++)
+	csum += dptr[i];
+    csum = -csum;
+
+    p += sprintf(p, ":%02X%04X%02X", len, addr, type);
+    for (i = 0; i < len; i++)
+	p += sprintf(p, "%02X", dptr[i]);
+    p += sprintf(p, "%02X\n", csum);
+
+    if (fwrite(buf, 1, p-buf, fp) != (size_t)(p-buf))
+	return -1;
+
+    return 0;
+}
+
+static void do_output_ith(void)
+{
+    uint8_t buf[32];
+    struct Section *s;
+    uint64_t addr, last;
+    uint64_t length;
+    unsigned int chunk;
+
+    /* Write the progbits sections to the output file. */
+    last = 0;
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr   = s->start;
+	length = s->length;
+
+	while (length) {
+	    if ((addr^last) & 0xffff0000) {
+		buf[0] = addr >> 24;
+		buf[1] = addr >> 16;
+		write_ith_record(2, 0, 4, buf);
+	    }
+
+	    chunk = 32 - (addr & 31);
+	    if (length < chunk)
+		chunk = length;
+
+	    saa_rnbytes(s->contents, buf, chunk);
+	    write_ith_record(chunk, (uint16_t)addr, 0, buf);
+
+	    last = addr + chunk - 1;
+	    addr += chunk;
+	    length -= chunk;
+	}
+    }
+
+    /* Write closing record */
+    write_ith_record(0, 0, 1, NULL);
+}
+
+/* Generate Motorola S-records */
+static int write_srecord(unsigned int len,  unsigned int alen,
+			 uint32_t addr, uint8_t type, void *data)
+{
+    char buf[2+2+8+255*2+2+2];
+    char *p = buf;
+    uint8_t csum, *dptr = data;
+    unsigned int i;
+
+    nasm_assert(len <= 255);
+
+    switch (alen) {
+    case 2:
+	addr &= 0xffff;
+	break;
+    case 3:
+	addr &= 0xffffff;
+	break;
+    case 4:
+	break;
+    default:
+	nasm_assert(0);
+	break;
+    }
+
+    csum = (len+alen+1) + addr + (addr >> 8) + (addr >> 16) + (addr >> 24);
+    for (i = 0; i < len; i++)
+	csum += dptr[i];
+    csum = 0xff-csum;
+
+    p += sprintf(p, "S%c%02X%0*X", type, len+alen+1, alen*2, addr);
+    for (i = 0; i < len; i++)
+	p += sprintf(p, "%02X", dptr[i]);
+    p += sprintf(p, "%02X\n", csum);
+
+    if (fwrite(buf, 1, p-buf, fp) != (size_t)(p-buf))
+	return -1;
+
+    return 0;
+}
+
+static void do_output_srec(void)
+{
+    uint8_t buf[32];
+    struct Section *s;
+    uint64_t addr, maxaddr;
+    uint64_t length;
+    int alen;
+    unsigned int chunk;
+    char dtype, etype;
+
+    maxaddr = 0;
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr = s->start + s->length - 1;
+	if (addr > maxaddr)
+	    maxaddr = addr;
+    }
+
+    if (maxaddr <= 0xffff) {
+	alen  = 2;
+	dtype = '1';		/* S1 = 16-bit data */
+	etype = '9';		/* S9 = 16-bit end */
+    } else if (maxaddr <= 0xffffff) {
+	alen = 3;
+	dtype = '2';		/* S2 = 24-bit data */
+	etype = '8';		/* S8 = 24-bit end */
+    } else {
+	alen = 4;
+	dtype = '3';		/* S3 = 32-bit data */
+	etype = '7';		/* S7 = 32-bit end */
+    }
+
+    /* Write the progbits sections to the output file. */
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr   = s->start;
+	length = s->length;
+
+	while (length) {
+	    chunk = 32 - (addr & 31);
+	    if (length < chunk)
+		chunk = length;
+
+	    saa_rnbytes(s->contents, buf, chunk);
+	    write_srecord(chunk, alen, (uint32_t)addr, dtype, buf);
+
+	    addr += chunk;
+	    length -= chunk;
+	}
+    }
+
+    /* Write closing record */
+    write_srecord(0, alen, 0, etype, NULL);
+}
+
+
 struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
@@ -1456,10 +1686,40 @@ struct ofmt of_bin = {
     bin_cleanup
 };
 
-/* This is needed for bin_define_section_labels() */
-struct ofmt *bin_get_ofmt(void)
-{
-    return &of_bin;
-}
+struct ofmt of_ith = {
+    "Intel Hex",
+    "ith",
+    OFMT_TEXT,
+    null_debug_arr,
+    &null_debug_form,
+    bin_stdmac,
+    ith_init,
+    bin_set_info,
+    bin_out,
+    bin_deflabel,
+    bin_secname,
+    bin_segbase,
+    bin_directive,
+    ith_filename,
+    bin_cleanup
+};
+
+struct ofmt of_srec = {
+    "Motorola S-records",
+    "srec",
+    0,
+    null_debug_arr,
+    &null_debug_form,
+    bin_stdmac,
+    srec_init,
+    bin_set_info,
+    bin_out,
+    bin_deflabel,
+    bin_secname,
+    bin_segbase,
+    bin_directive,
+    srec_filename,
+    bin_cleanup
+};
 
 #endif                          /* #ifdef OF_BIN */

@@ -4565,6 +4565,32 @@ or \c{symbols} may be specified. Output may be directed to \c{stdout}
 brackets must be used.
 
 
+\H{ithfmt} \i\c{ith}: \i{Intel Hex} Output
+
+The \c{ith} file format produces Intel Hex-format files.  Just as the
+\c{bin} format, this is a flat memory image format with no support for
+relocation or linking.  It is usually used with ROM programmers and
+similar utilities.
+
+All options supported by the \c{bin} file format is also supported by
+the \c{ith} file format.
+
+\c{ith} provides a default output file-name extension of \c{.ith}.
+
+
+\H{srecfmt} \i\c{srec}: \i{Motorola S-Record} Output
+
+The \c{srec} file format produces Intel Hex-format files.  Just as the
+\c{bin} format, this is a flat memory image format with no support for
+relocation or linking.  It is usually used with ROM programmers and
+similar utilities.
+
+All options supported by the \c{bin} file format is also supported by
+the \c{srec} file format.
+
+\c{srec} provides a default output file-name extension of \c{.srec}.
+
+
 \H{objfmt} \i\c{obj}: \i{Microsoft OMF}\I{OMF} Object Files
 
 The \c{obj} file format (NASM calls it \c{obj} rather than \c{omf}

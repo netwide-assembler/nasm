@@ -250,6 +250,8 @@
  * array based on the above defines */
 
 extern struct ofmt of_bin;
+extern struct ofmt of_ith;
+extern struct ofmt of_srec;
 extern struct ofmt of_aout;
 extern struct ofmt of_aoutb;
 extern struct ofmt of_coff;
@@ -268,6 +270,8 @@ extern struct ofmt of_dbg;
 struct ofmt *drivers[] = {
 #ifdef OF_BIN
     &of_bin,
+    &of_ith,
+    &of_srec,
 #endif
 #ifdef OF_AOUT
     &of_aout,
