@@ -1638,6 +1638,9 @@ static void do_output_srec(void)
 	etype = '7';		/* S7 = 32-bit end */
     }
 
+    /* Write head record */
+    write_srecord(0, 2, 0, '0', NULL);
+
     /* Write the progbits sections to the output file. */
     for (s = sections; s; s = s->next) {
 	/* Skip non-progbits sections */
