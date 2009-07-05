@@ -4457,7 +4457,7 @@ is also useful for \i{operating system} and \i{boot loader}
 development.
 
 The \c{bin} format supports \i{multiple section names}. For details of
-how nasm handles sections in the \c{bin} format, see \k{multisec}.
+how NASM handles sections in the \c{bin} format, see \k{multisec}.
 
 Using the \c{bin} format puts NASM by default into 16-bit mode (see
 \k{bits}). In order to use \c{bin} to write 32-bit or 64-bit code,
