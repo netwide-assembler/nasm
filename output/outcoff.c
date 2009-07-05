@@ -1009,7 +1009,7 @@ static int coff_set_info(enum geninfo type, char **val)
 struct ofmt of_coff = {
     "COFF (i386) object files (e.g. DJGPP for DOS)",
     "coff",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,
@@ -1031,7 +1031,7 @@ struct ofmt of_coff = {
 struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
     "win32",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,
@@ -1053,7 +1053,7 @@ struct ofmt of_win32 = {
 struct ofmt of_win64 = {
     "Microsoft Win64 (x86-64) object files",
     "win64",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,

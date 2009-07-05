@@ -594,8 +594,13 @@ static void bin_cleanup(int debuginfo)
     /* Step 6: Write the section data to the output file. */
 
     /* Write the progbits sections to the output file. */
-    for (pend = origin, s = sections; s && (s->flags & TYPE_PROGBITS); s = s->next) {   /* Skip zero-length sections. */
-        if (s->length == 0)
+    pend = origin;
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
             continue;
         /* Pad the space between sections. */
         for (h = s->start - pend; h; h--)
@@ -1401,7 +1406,7 @@ static int bin_set_info(enum geninfo type, char **val)
     return 0;
 }
 
-static void bin_init(FILE * afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void bin_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
     fp = afp;
     error = errfunc;
@@ -1436,7 +1441,7 @@ static void bin_init(FILE * afp, efunc errfunc, ldfunc ldef, evalfunc eval)
 struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     bin_stdmac,

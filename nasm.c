@@ -456,7 +456,7 @@ int main(int argc, char **argv)
              */
             ofmt->filename(inname, outname, report_error);
 
-            ofile = fopen(outname, "wb");
+            ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
             if (!ofile) {
                 report_error(ERR_FATAL | ERR_NOFILE,
                              "unable to open output file `%s'", outname);

@@ -258,7 +258,7 @@ static struct dfmt *debug_debug_arr[3] = {
 struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
-    NULL,
+    OFMT_TEXT,
     debug_debug_arr,
     &debug_debug_form,
     NULL,

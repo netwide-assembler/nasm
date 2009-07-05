@@ -946,7 +946,7 @@ static int aout_set_info(enum geninfo type, char **val)
 struct ofmt of_aout = {
     "Linux a.out object files",
     "aout",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     aout_stdmac,
@@ -968,7 +968,7 @@ struct ofmt of_aout = {
 struct ofmt of_aoutb = {
     "NetBSD/FreeBSD a.out object files",
     "aoutb",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     aout_stdmac,

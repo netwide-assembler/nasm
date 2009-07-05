@@ -1334,7 +1334,7 @@ static void debug_section_relocs (struct section *s)
 struct ofmt of_macho = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files",
     "macho",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     macho_stdmac,

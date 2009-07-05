@@ -774,13 +774,11 @@ struct ofmt {
      */
     const char *shortname;
 
-
     /*
-     * this is reserved for out module specific help.
-     * It is set to NULL in all the out modules and is not implemented
-     * in the main program
+     * Output format flags.
      */
-    const char *helpstring;
+#define OFMT_TEXT	1	/* Text file format */
+    unsigned int flags;
 
     /*
      * this is a pointer to the first element of the debug information

@@ -787,7 +787,7 @@ static int rdf2_set_info(enum geninfo type, char **val)
 struct ofmt of_rdf2 = {
     "Relocatable Dynamic Object File Format v2.0",
     "rdf",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     rdf2_stdmac,

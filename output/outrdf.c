@@ -552,7 +552,7 @@ struct ofmt of_rdf = {
 #else
     "rdf",
 #endif
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     rdf_stdmac,

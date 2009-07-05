@@ -2558,7 +2558,7 @@ static struct dfmt *borland_debug_arr[3] = {
 struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
-    NULL,
+    0,
     borland_debug_arr,
     &borland_debug_form,
     obj_stdmac,

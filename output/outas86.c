@@ -659,7 +659,7 @@ void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     as86_stdmac,

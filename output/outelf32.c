@@ -1473,7 +1473,7 @@ struct dfmt *elf32_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
 struct ofmt of_elf32 = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf32",
-    NULL,
+    0,
     elf32_debugs_arr,
     &df_stabs,
     elf_stdmac,
@@ -1491,7 +1491,7 @@ struct ofmt of_elf32 = {
 struct ofmt of_elf = {
     "ELF (short name for ELF32) ",
     "elf",
-    NULL,
+    0,
     elf32_debugs_arr,
     &df_stabs,
     elf_stdmac,

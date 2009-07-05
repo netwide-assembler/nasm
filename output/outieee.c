@@ -896,24 +896,24 @@ static void ieee_write_file(int debuginfo)
     /*
      * Write the module header
      */
-    ieee_putascii("MBFNASM,%02X%s.\r\n", strlen(ieee_infile), ieee_infile);
+    ieee_putascii("MBFNASM,%02X%s.\n", strlen(ieee_infile), ieee_infile);
 
     /*
      * Write the NASM boast comment.
      */
-    ieee_putascii("CO0,%02X%s.\r\n", strlen(nasm_comment), nasm_comment);
+    ieee_putascii("CO0,%02X%s.\n", strlen(nasm_comment), nasm_comment);
 
     /*
      * write processor-specific information
      */
-    ieee_putascii("AD8,4,L.\r\n");
+    ieee_putascii("AD8,4,L.\n");
 
     /*
      * date and time
      */
     time(&reltime);
     thetime = localtime(&reltime);
-    ieee_putascii("DT%04d%02d%02d%02d%02d%02d.\r\n",
+    ieee_putascii("DT%04d%02d%02d%02d%02d%02d.\n",
                   1900 + thetime->tm_year, thetime->tm_mon + 1,
                   thetime->tm_mday, thetime->tm_hour, thetime->tm_min,
                   thetime->tm_sec);
@@ -921,10 +921,10 @@ static void ieee_write_file(int debuginfo)
      * if debugging, dump file names
      */
     for (fn = fnhead; fn && debuginfo; fn = fn->next) {
-        ieee_putascii("C0105,%02X%s.\r\n", strlen(fn->name), fn->name);
+        ieee_putascii("C0105,%02X%s.\n", strlen(fn->name), fn->name);
     }
 
-    ieee_putascii("CO101,07ENDHEAD.\r\n");
+    ieee_putascii("CO101,07ENDHEAD.\n");
     /*
      * the standard doesn't specify when to put checksums,
      * we'll just do it periodically.
@@ -954,15 +954,15 @@ static void ieee_write_file(int debuginfo)
         }
         ieee_unqualified_name(buf, seg->name);
         if (seg->align >= SEG_ABS) {
-            ieee_putascii("ST%X,A,%02X%s.\r\n", seg->ieee_index,
+            ieee_putascii("ST%X,A,%02X%s.\n", seg->ieee_index,
                           strlen(buf), buf);
-            ieee_putascii("ASL%X,%lX.\r\n", seg->ieee_index,
+            ieee_putascii("ASL%X,%lX.\n", seg->ieee_index,
                           (seg->align - SEG_ABS) * 16);
         } else {
-            ieee_putascii("ST%X,%c,%02X%s.\r\n", seg->ieee_index, attrib,
+            ieee_putascii("ST%X,%c,%02X%s.\n", seg->ieee_index, attrib,
                           strlen(buf), buf);
-            ieee_putascii("SA%X,%lX.\r\n", seg->ieee_index, seg->align);
-            ieee_putascii("ASS%X,%X.\r\n", seg->ieee_index,
+            ieee_putascii("SA%X,%lX.\n", seg->ieee_index, seg->align);
+            ieee_putascii("ASS%X,%X.\n", seg->ieee_index,
                           seg->currentpos);
         }
         seg = seg->next;
@@ -977,7 +977,7 @@ static void ieee_write_file(int debuginfo)
         if (!seg)
             error(ERR_PANIC, "Start address records are incorrect");
         else
-            ieee_putascii("ASG,R%X,%lX,+.\r\n", seg->ieee_index,
+            ieee_putascii("ASG,R%X,%lX,+.\n", seg->ieee_index,
                           ieee_entry_ofs);
     }
 
@@ -990,18 +990,18 @@ static void ieee_write_file(int debuginfo)
         for (pub = seg->pubhead; pub; pub = pub->next) {
             char buf[256];
             ieee_unqualified_name(buf, pub->name);
-            ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
+            ieee_putascii("NI%X,%02X%s.\n", i, strlen(buf), buf);
             if (pub->segment == -1)
-                ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,
+                ieee_putascii("ASI%X,R%X,%lX,+.\n", i, pub->index,
                               pub->offset);
             else
-                ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment * 16,
+                ieee_putascii("ASI%X,%lX,%lX,+.\n", i, pub->segment * 16,
                               pub->offset);
             if (debuginfo) {
                 if (pub->type >= 0x100)
-                    ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
+                    ieee_putascii("ATI%X,T%X.\n", i, pub->type - 0x100);
                 else
-                    ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+                    ieee_putascii("ATI%X,%X.\n", i, pub->type);
             }
             i++;
         }
@@ -1011,18 +1011,18 @@ static void ieee_write_file(int debuginfo)
     while (pub) {
         char buf[256];
         ieee_unqualified_name(buf, pub->name);
-        ieee_putascii("NI%X,%02X%s.\r\n", i, strlen(buf), buf);
+        ieee_putascii("NI%X,%02X%s.\n", i, strlen(buf), buf);
         if (pub->segment == -1)
-            ieee_putascii("ASI%X,R%X,%lX,+.\r\n", i, pub->index,
+            ieee_putascii("ASI%X,R%X,%lX,+.\n", i, pub->index,
                           pub->offset);
         else
-            ieee_putascii("ASI%X,%lX,%lX,+.\r\n", i, pub->segment * 16,
+            ieee_putascii("ASI%X,%lX,%lX,+.\n", i, pub->segment * 16,
                           pub->offset);
         if (debuginfo) {
             if (pub->type >= 0x100)
-                ieee_putascii("ATI%X,T%X.\r\n", i, pub->type - 0x100);
+                ieee_putascii("ATI%X,T%X.\n", i, pub->type - 0x100);
             else
-                ieee_putascii("ATI%X,%X.\r\n", i, pub->type);
+                ieee_putascii("ATI%X,%X.\n", i, pub->type);
         }
         i++;
         pub = pub->next;
@@ -1035,7 +1035,7 @@ static void ieee_write_file(int debuginfo)
     while (ext) {
         char buf[256];
         ieee_unqualified_name(buf, ext->name);
-        ieee_putascii("NX%X,%02X%s.\r\n", i++, strlen(buf), buf);
+        ieee_putascii("NX%X,%02X%s.\n", i++, strlen(buf), buf);
         ext = ext->next;
     }
     ieee_putcs(false);
@@ -1044,14 +1044,14 @@ static void ieee_write_file(int debuginfo)
      * IEEE doesn't have a standard pass break record
      * so use the ladsoft variant
      */
-    ieee_putascii("CO100,06ENDSYM.\r\n");
+    ieee_putascii("CO100,06ENDSYM.\n");
 
     /*
      * now put types
      */
     i = ARRAY_BOT;
     for (arr = arrhead; arr && debuginfo; arr = arr->next) {
-        ieee_putascii("TY%X,20,%X,%lX.\r\n", i++, arr->basetype,
+        ieee_putascii("TY%X,20,%X,%lX.\n", i++, arr->basetype,
                       arr->size);
     }
     /*
@@ -1062,18 +1062,18 @@ static void ieee_write_file(int debuginfo)
         for (loc = seg->lochead; loc; loc = loc->next) {
             char buf[256];
             ieee_unqualified_name(buf, loc->name);
-            ieee_putascii("NN%X,%02X%s.\r\n", i, strlen(buf), buf);
+            ieee_putascii("NN%X,%02X%s.\n", i, strlen(buf), buf);
             if (loc->segment == -1)
-                ieee_putascii("ASN%X,R%X,%lX,+.\r\n", i, loc->index,
+                ieee_putascii("ASN%X,R%X,%lX,+.\n", i, loc->index,
                               loc->offset);
             else
-                ieee_putascii("ASN%X,%lX,%lX,+.\r\n", i, loc->segment * 16,
+                ieee_putascii("ASN%X,%lX,%lX,+.\n", i, loc->segment * 16,
                               loc->offset);
             if (debuginfo) {
                 if (loc->type >= 0x100)
-                    ieee_putascii("ATN%X,T%X.\r\n", i, loc->type - 0x100);
+                    ieee_putascii("ATN%X,T%X.\n", i, loc->type - 0x100);
                 else
-                    ieee_putascii("ATN%X,%X.\r\n", i, loc->type);
+                    ieee_putascii("ATN%X,%X.\n", i, loc->type);
             }
             i++;
         }
@@ -1089,7 +1089,7 @@ static void ieee_write_file(int debuginfo)
         if (seg->currentpos) {
             int32_t size, org = 0;
             data = seg->data;
-            ieee_putascii("SB%X.\r\n", seg->ieee_index);
+            ieee_putascii("SB%X.\n", seg->ieee_index);
             fix = seg->fptr;
             while (fix) {
                 size = HUNKSIZE - (org % HUNKSIZE);
@@ -1120,7 +1120,7 @@ static void ieee_write_file(int debuginfo)
     /*
      * module end record
      */
-    ieee_putascii("ME.\r\n");
+    ieee_putascii("ME.\n");
 }
 
 static void ieee_write_byte(struct ieeeSection *seg, int data)
@@ -1154,7 +1154,7 @@ static void ieee_putascii(char *format, ...)
     vsnprintf(buffer, sizeof(buffer), format, ap);
     l = strlen(buffer);
     for (i = 0; i < l; i++)
-        if ((buffer[i] & 0xff) > 31)
+        if ((uint8_t)buffer[i] > 31)
             checksum += buffer[i];
     va_end(ap);
     fprintf(ofp, buffer);
@@ -1165,11 +1165,11 @@ static void ieee_putascii(char *format, ...)
 static void ieee_putcs(int toclear)
 {
     if (toclear) {
-        ieee_putascii("CS.\r\n");
+        ieee_putascii("CS.\n");
     } else {
         checksum += 'C';
         checksum += 'S';
-        ieee_putascii("CS%02X.\r\n", checksum & 127);
+        ieee_putascii("CS%02X.\n", checksum & 127);
     }
     checksum = 0;
 }
@@ -1188,7 +1188,7 @@ static int32_t ieee_putld(int32_t start, int32_t end, uint8_t *buf)
             ieee_putascii("%02X", buf[val++]);
             start++;
         }
-        ieee_putascii(".\r\n");
+        ieee_putascii(".\n");
     }
     /* if no partial lines */
     if (start == end)
@@ -1199,7 +1199,7 @@ static int32_t ieee_putld(int32_t start, int32_t end, uint8_t *buf)
         ieee_putascii("%02X", buf[val++]);
         start++;
     }
-    ieee_putascii(".\r\n");
+    ieee_putascii(".\n");
     return (start);
 }
 static int32_t ieee_putlr(struct ieeeFixupp *p)
@@ -1264,7 +1264,7 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
             sprintf(buf, "X%"PRIX32",Y%"PRIX32",+,L%"PRIX32",-", p->id2, p->id2, p->id1);
         break;
     }
-    ieee_putascii("LR(%s,%"PRIX32").\r\n", buf, size);
+    ieee_putascii("LR(%s,%"PRIX32").\n", buf, size);
 
     return (size);
 }
@@ -1501,7 +1501,7 @@ static struct dfmt *ladsoft_debug_arr[3] = {
 struct ofmt of_ieee = {
     "IEEE-695 (LADsoft variant) object file format",
     "ieee",
-    NULL,
+    OFMT_TEXT,
     ladsoft_debug_arr,
     &ladsoft_debug_form,
     NULL,
