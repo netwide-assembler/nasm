@@ -4580,7 +4580,7 @@ the \c{ith} file format.
 
 \H{srecfmt} \i\c{srec}: \i{Motorola S-Record} Output
 
-The \c{srec} file format produces Intel Hex-format files.  Just as the
+The \c{srec} file format produces Motorola S-record files.  Just as the
 \c{bin} format, this is a flat memory image format with no support for
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
