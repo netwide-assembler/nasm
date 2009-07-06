@@ -93,10 +93,7 @@ static void int32_ttolocal(int32_t *l)
  */
 void show_version(void)
 {
-    puts("New RDOFF2 librarian/archiver, version " PROGRAM_VERSION "\n"
-         "Copyright (c) 2002 RET & COM Research.\n"
-         "This program is free software and distributed under GPL (version 2 or later);\n"
-         "see http://www.gnu.org/copyleft/gpl.html for details.");
+    puts("New RDOFF2 librarian/archiver, version " PROGRAM_VERSION);
 }
 
 /*
