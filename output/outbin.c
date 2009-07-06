@@ -1477,6 +1477,7 @@ static void do_output_bin(void)
             continue;
 
         /* Pad the space between sections. */
+	nasm_assert(addr <= s->start);
 	fwritezero(s->start - addr, fp);
 
         /* Write the section to the output file. */
@@ -1518,12 +1519,12 @@ static void do_output_ith(void)
 {
     uint8_t buf[32];
     struct Section *s;
-    uint64_t addr, last;
+    uint64_t addr, hiaddr, hilba;
     uint64_t length;
     unsigned int chunk;
 
     /* Write the progbits sections to the output file. */
-    last = 0;
+    hilba = 0;
     for (s = sections; s; s = s->next) {
 	/* Skip non-progbits sections */
 	if (!(s->flags & TYPE_PROGBITS))
@@ -1537,10 +1538,12 @@ static void do_output_ith(void)
 	saa_rewind(s->contents);
 
 	while (length) {
-	    if ((addr^last) & 0xffff0000) {
-		buf[0] = addr >> 24;
-		buf[1] = addr >> 16;
+	    hiaddr = addr >> 16;
+	    if (hiaddr != hilba) {
+		buf[0] = hiaddr >> 8;
+		buf[1] = hiaddr;
 		write_ith_record(2, 0, 4, buf);
+		hilba = hiaddr;
 	    }
 
 	    chunk = 32 - (addr & 31);
@@ -1550,7 +1553,6 @@ static void do_output_ith(void)
 	    saa_rnbytes(s->contents, buf, chunk);
 	    write_ith_record(chunk, (uint16_t)addr, 0, buf);
 
-	    last = addr + chunk - 1;
 	    addr += chunk;
 	    length -= chunk;
 	}
