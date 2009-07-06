@@ -8,6 +8,26 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.07} Version 2.07
+
+\b NASM is now under the 2-clause BSD license.  See \k{legal}.
+
+\b Fix the section type for the \c{.strtab} section in the \c{elf64}
+  output format.
+
+\b Fix the handling of \c{COMMON} directives in the \c{obj} output format.
+
+\b New \c{ith} and \c{srec} output formats; these are variants of the
+  \c{bin} output format which output Intel hex and Motorola S-records,
+  respectively.  See \k{ithfmt} and \k{srecfmt}.
+
+\b \c{rdf2ihx} replaced with an enhanced \c{rdf2bin}, which can output
+  binary, COM, Intel hex or Motorola S-records.
+
+\b The Windows installer now puts the NASM directory first in the
+  \c{PATH} of the "NASM Shell".
+
+
 \S{cl-2.06} Version 2.06
 
 \b This release is dedicated to the memory of Charles A. Crayne, long
