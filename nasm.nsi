@@ -32,7 +32,7 @@ Name "${PACKAGE_NAME}"
 OutFile "${PACKAGE_SHORT_NAME}-installer.exe"
 InstallDir "$PROGRAMFILES\NASM"
 InstallDirRegKey HKLM "SOFTWARE\${PACKAGE_SHORT_NAME}" "InstallDir"
-SetCompressor bzip2
+SetCompressor lzma
 
 XPStyle on
 
