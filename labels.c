@@ -82,9 +82,9 @@
 #define END_BLOCK -2
 #define BOGUS_VALUE -4
 
-#define PERMTS_SIZE  4096       /* size of text blocks */
-#if (PERMTS_SIZE > IDLEN_MAX)
-#error "IPERMTS_SIZE must be less than or equal to IDLEN_MAX"
+#define PERMTS_SIZE  16384	/* size of text blocks */
+#if (PERMTS_SIZE < IDLEN_MAX)
+#error "IPERMTS_SIZE must be greater than or equal to IDLEN_MAX"
 #endif
 
 /* values for label.defn.is_global */
@@ -480,6 +480,8 @@ static char *perm_copy(const char *string)
 {
     char *p;
     int len = strlen(string)+1;
+
+    nasm_assert(len <= PERMTS_SIZE);
 
     if (perm_tail->size - perm_tail->usage < len) {
         perm_tail->next =
