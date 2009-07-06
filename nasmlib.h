@@ -171,7 +171,7 @@ char *nasm_strndup_log(const char *, int, const char *, size_t);
 /*
  * NASM assert failure
  */
-noreturn nasm_assert_failed(const char *, int, const char *);
+no_return nasm_assert_failed(const char *, int, const char *);
 #define nasm_assert(x)						\
     do {							\
 	if (unlikely(!(x)))					\

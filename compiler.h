@@ -174,9 +174,9 @@ char *strsep(char **, const char *);
  * How to tell the compiler that a function doesn't return
  */
 #ifdef __GNUC__
-# define noreturn void __attribute__((noreturn))
+# define no_return void __attribute__((noreturn))
 #else
-# define noreturn void
+# define no_return void
 #endif
 
 #endif	/* NASM_COMPILER_H */

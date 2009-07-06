@@ -205,7 +205,7 @@ char *nasm_strndup(const char *s, size_t len)
     return p;
 }
 
-noreturn nasm_assert_failed(const char *file, int line, const char *msg)
+no_return nasm_assert_failed(const char *file, int line, const char *msg)
 {
     nasm_malloc_error(ERR_FATAL, "assertion %s failed at %s:%d",
 		      msg, file, line);
