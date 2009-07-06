@@ -253,14 +253,25 @@ static struct output_format output_formats[] = {
 static const char *getformat(const char *pathname)
 {
     const char *p;
+    static char fmt_buf[16];
 
-    /* Search backwards for the first non-alphabetic character */
-
+    /* 
+     * Search backwards for the string "rdf2" followed by a string
+     * of alphanumeric characters.  This should handle path prefixes,
+     * as well as extensions (e.g. C:\FOO\RDF2SREC.EXE).
+     */
     for (p = strchr(pathname, '\0')-1 ; p >= pathname ; p--) {
-	if (!isalpha(*p))
-	    break;
-    }
-    return p+1;
+	if (!nasm_stricmp(p, "rdf2")) {
+	    const char *q = p+4;
+	    char *r = fmt_buf;
+	    while (isalnum(*q) && r < fmt_buf+sizeof fmt_buf-1)
+		*r++ = *q++;
+	    *r = '\0';
+	    if (fmt_buf[0])
+		return fmt_buf;
+	}
+     }
+    return NULL;
 }
 
 static void usage(void)
@@ -347,13 +358,21 @@ int main(int argc, char **argv)
 
     if (!format)
 	format = getformat(progname);
+
+    if (!format) {
+	fprintf(stderr, "%s: unable to determine desired output format\n",
+		progname);
+	return 1;
+    }
+
     for (fmt = output_formats; fmt->name; fmt++) {
 	if (!nasm_stricmp(format, fmt->name))
 	    break;
     }
+
     if (!fmt->name) {
 	fprintf(stderr, "%s: unknown output format: %s\n", progname, format);
-	return -1;
+	return 1;
     }
 
     m = rdfload(*argv);
