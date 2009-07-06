@@ -65,7 +65,7 @@ Section "${PACKAGE_NAME}"
   File "rdoff/rdx.exe"
   FileOpen $0 "nasmpath.bat" w
   IfErrors skip
-  FileWrite $0 "@set path=%path%;$INSTDIR$\r$\n"
+  FileWrite $0 "@set path=$INSTDIR;%path%$\r$\n"
   FileWrite $0 "@%comspec%"
   FileClose $0
   skip:
