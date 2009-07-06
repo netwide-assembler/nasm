@@ -50,7 +50,7 @@ Section "${PACKAGE_NAME}"
   SectionIn RO
 
   SetOutPath "$INSTDIR\."
-  File "COPYING"
+  File "LICENSE"
   File "nasm.exe"
   File "ndisasm.exe"
   File "doc/nasmdoc.pdf"
@@ -102,7 +102,7 @@ Section "Uninstall"
   Delete /rebootok "$INSTDIR\nasmdoc.pdf"
   Delete /rebootok "$INSTDIR\nasm.exe"
   Delete /rebootok "$INSTDIR\ldrdf.exe"
-  Delete /rebootok "$INSTDIR\COPYING"
+  Delete /rebootok "$INSTDIR\LICENSE"
   RMDir "$INSTDIR"
 SectionEnd
 
