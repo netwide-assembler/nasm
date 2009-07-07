@@ -30,6 +30,8 @@ since 2007.
 \b Revert the early expansion behavior of \c{%+} to pre-2.06 behavior:
   \c{%+} is only expanded late.
 
+\b Yet another Mach-O alignment fix.
+
 
 \S{cl-2.06} Version 2.06
 
