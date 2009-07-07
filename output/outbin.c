@@ -1694,7 +1694,7 @@ struct ofmt of_bin = {
 };
 
 struct ofmt of_ith = {
-    "Intel Hex",
+    "Intel hex",
     "ith",
     OFMT_TEXT,
     null_debug_arr,
