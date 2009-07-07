@@ -27,6 +27,9 @@ since 2007.
 \b The Windows installer now puts the NASM directory first in the
   \c{PATH} of the "NASM Shell".
 
+\b Revert the early expansion behavior of \c{%+} to pre-2.06 behavior:
+  \c{%+} is only expanded late.
+
 
 \S{cl-2.06} Version 2.06
 
