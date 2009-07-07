@@ -474,8 +474,6 @@ int main(int argc, char **argv)
                 fclose (ofile);
 
                 remove(outname);
-                if (listname[0])
-                    remove(listname);
             }
         }
         break;
@@ -1922,28 +1920,36 @@ static bool is_suppressed_warning(int severity)
 static void report_error_common(int severity, const char *fmt,
                                 va_list args)
 {
+    char msg[1024];
+    const char *pfx;
+    
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_WARNING:
-        fputs("warning: ", error_file);
+        pfx = "warning: ";
         break;
     case ERR_NONFATAL:
-        fputs("error: ", error_file);
+        pfx = "error: ";
         break;
     case ERR_FATAL:
-        fputs("fatal: ", error_file);
+        pfx = "fatal: ";
         break;
     case ERR_PANIC:
-        fputs("panic: ", error_file);
+        pfx = "panic: ";
         break;
     case ERR_DEBUG:
-        fputs("debug: ", error_file);
+        pfx = "debug: ";
         break;
     default:
+	pfx = "";
 	break;
     }
 
-    vfprintf(error_file, fmt, args);
-    putc('\n', error_file);
+    vsnprintf(msg, sizeof msg, fmt, args);
+
+    fprintf(error_file, "%s%s\n", pfx, msg);
+
+    if (*listname)
+	nasmlist.error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;

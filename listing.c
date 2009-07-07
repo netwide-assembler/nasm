@@ -65,7 +65,9 @@ static char xdigit[] = "0123456789ABCDEF";
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
 static char listline[LIST_MAX_LEN];
-static int listlinep;
+static bool listlinep;
+
+static char listerror[LIST_MAX_LEN];
 
 static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
@@ -82,6 +84,8 @@ static FILE *listfp;
 
 static void list_emit(void)
 {
+    int i;
+
     if (!listlinep && !listdata[0])
         return;
 
@@ -105,18 +109,35 @@ static void list_emit(void)
     putc('\n', listfp);
     listlinep = false;
     listdata[0] = '\0';
+
+    if (listerror[0]) {
+	fprintf(listfp, "%6"PRId32"          ", ++listlineno);
+	for (i = 0; i < LIST_HEXBIT; i++)
+	    putc('*', listfp);
+	
+	if (listlevel_e)
+	    fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
+		    listlevel_e);
+	else
+	    fprintf(listfp, "     ");
+
+	fprintf(listfp, "  %s\n", listerror);
+	listerror[0] = '\0';
+    }
 }
 
 static void list_init(char *fname, efunc error)
 {
     listfp = fopen(fname, "w");
     if (!listfp) {
-        error(ERR_NONFATAL, "unable to open listing file `%s'", fname);
+        error(ERR_NONFATAL, "unable to open listing file `%s'",
+	      fname);
         return;
     }
 
     *listline = '\0';
     listlineno = 0;
+    *listerror = '\0';
     listp = true;
     listlevel = 0;
     suppress = 0;
@@ -343,11 +364,24 @@ static void list_downlevel(int type)
     }
 }
 
+static void list_error(int severity, const char *pfx, const char *msg)
+{
+    if (!listfp)
+	return;
+
+    snprintf(listerror, sizeof listerror, "%s%s", pfx, msg);
+
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+	list_emit();
+}
+
+
 ListGen nasmlist = {
     list_init,
     list_cleanup,
     list_output,
     list_line,
     list_uplevel,
-    list_downlevel
+    list_downlevel,
+    list_error
 };
