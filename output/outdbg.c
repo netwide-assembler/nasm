@@ -157,12 +157,17 @@ static void dbg_out(int32_t segto, const void *data,
                 segment, wrt);
         break;
     case OUT_REL2ADR:
-        fprintf(dbgf, "rel2adr %04x (seg %08"PRIx32")\n", (int)*(int16_t *)data,
-                segment);
+        fprintf(dbgf, "rel2adr %04x (seg %08"PRIx32")\n",
+		(uint16_t)*(int64_t *)data, segment);
         break;
     case OUT_REL4ADR:
-        fprintf(dbgf, "rel4adr %08"PRIx32" (seg %08"PRIx32")\n", *(int32_t *)data,
+        fprintf(dbgf, "rel4adr %08"PRIx32" (seg %08"PRIx32")\n",
+		(uint32_t)*(int64_t *)data,
                 segment);
+        break;
+    case OUT_REL8ADR:
+        fprintf(dbgf, "rel8adr %016"PRIx64" (seg %08"PRIx32")\n",
+		(uint64_t)*(int64_t *)data, segment);
         break;
     default:
         fprintf(dbgf, "unknown\n");
