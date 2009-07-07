@@ -2442,13 +2442,13 @@ static int do_directive(Token * tline)
         free_tlist(origline);
 	return DIRECTIVE_FOUND;
     case PP_FATAL:
-	severity = ERR_FATAL|ERR_NO_SEVERITY;
+	severity = ERR_FATAL;
 	goto issue_error;
     case PP_ERROR:
-	severity = ERR_NONFATAL|ERR_NO_SEVERITY;
+	severity = ERR_NONFATAL;
 	goto issue_error;
     case PP_WARNING:
-	severity = ERR_WARNING|ERR_NO_SEVERITY|ERR_WARN_USER;
+	severity = ERR_WARNING|ERR_WARN_USER;
 	goto issue_error;
 
     issue_error:
@@ -2466,11 +2466,11 @@ static int do_directive(Token * tline)
 	    /* The line contains only a quoted string */
 	    p = tline->text;
 	    nasm_unquote(p, NULL);
-	    error(severity, "%s: %s",  pp_directives[i], p);
+	    error(severity, "%s",  p);
 	} else {
 	    /* Not a quoted string, or more than a quoted string */
             p = detoken(tline, false);
-	    error(severity, "%s: %s",  pp_directives[i], p);
+	    error(severity, "%s",  p);
 	    nasm_free(p);
 	}
         free_tlist(origline);
