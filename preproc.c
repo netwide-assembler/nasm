@@ -3638,7 +3638,7 @@ static Token *expand_smacro(Token * tline)
     Context *ctx;
     const char *mname;
     int deadman = DEADMAN_LIMIT;
-    bool expanded, pasted;
+    bool expanded;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3655,10 +3655,11 @@ static Token *expand_smacro(Token * tline)
         org_tline->text = NULL;
     }
 
+    expanded = true;		/* Always expand %+ at least once */
+
 again:
     tail = &thead;
     thead = NULL;
-    expanded = false;
 
     while (tline) {             /* main token loop */
 	if (!--deadman) {
@@ -3928,13 +3929,13 @@ again:
      * Also we look for %+ tokens and concatenate the tokens before and after
      * them (without white spaces in between).
      */
-    pasted = paste_tokens(&thead, true);
-    if (expanded && pasted) {
+    if (expanded && paste_tokens(&thead, true)) {
 	/*
 	 * If we concatenated something, *and* we had previously expanded
 	 * an actual macro, scan the lines again for macros...
 	 */
         tline = thead;
+	expanded = false;
         goto again;
     }
 
