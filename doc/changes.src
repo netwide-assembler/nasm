@@ -32,6 +32,9 @@ since 2007.
 
 \b Yet another Mach-O alignment fix.
 
+\b Don't delete the list file on errors.  Also, include error and
+  warning information in the list file.
+
 
 \S{cl-2.06} Version 2.06
 
