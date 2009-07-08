@@ -33,4 +33,6 @@ int main(void)
     printf("These pointers should be equal: %p and %p\n", &greet, textptr);
 
     printf("So should these: %p and %p\n", selfptr, &selfptr);
+
+    return 0;
 }

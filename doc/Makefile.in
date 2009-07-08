@@ -95,6 +95,7 @@ spotless: clean
 	-rm -f nasmdoc*.ps inslist.src
 
 install: all
+	mkdir -p $(INSTALLROOT)$(infodir)
 	$(INSTALL_DATA) info/* $(INSTALLROOT)$(infodir)
 	mkdir -p $(INSTALLROOT)$(docdir)/html
 	$(INSTALL_DATA) html/* $(INSTALLROOT)$(docdir)/html

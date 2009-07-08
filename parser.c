@@ -1,11 +1,38 @@
-/* parser.c   source line parser for the Netwide Assembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- * initial version 27/iii/95 by Simon Tatham
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * parser.c   source line parser for the Netwide Assembler
  */
 
 #include "compiler.h"
@@ -46,6 +73,8 @@ void parser_global_info(struct ofmt *output, struct location * locp)
 static int prefix_slot(enum prefixes prefix)
 {
     switch (prefix) {
+    case P_WAIT:
+	return PPS_WAIT;
     case R_CS:
     case R_DS:
     case R_SS:
@@ -172,6 +201,7 @@ insn *parse_line(int pass, char *buffer, insn * result,
     int j;
     bool first;
     bool insn_is_label = false;
+    bool recover;
 
 restart_parse:
     first = true;
@@ -256,7 +286,7 @@ restart_parse:
                 result->times = 1L;
             } else {
                 result->times = value->value;
-                if (value->value < 0) {
+                if (value->value < 0 && pass0 == 2) {
                     error(ERR_NONFATAL, "TIMES value %d is negative",
                           value->value);
                     result->times = 0;
@@ -308,21 +338,13 @@ restart_parse:
     result->condition = tokval.t_inttwo;
 
     /*
-     * RESB, RESW and RESD cannot be satisfied with incorrectly
+     * INCBIN cannot be satisfied with incorrectly
      * evaluated operands, since the correct values _must_ be known
      * on the first pass. Hence, even in pass one, we set the
      * `critical' flag on calling evaluate(), so that it will bomb
-     * out on undefined symbols. Nasty, but there's nothing we can
-     * do about it.
-     *
-     * For the moment, EQU has the same difficulty, so we'll
-     * include that.
+     * out on undefined symbols.
      */
-    if (result->opcode == I_RESB || result->opcode == I_RESW ||
-	result->opcode == I_RESD || result->opcode == I_RESQ ||
-	result->opcode == I_REST || result->opcode == I_RESO ||
-	result->opcode == I_RESY ||
-	result->opcode == I_INCBIN) {
+    if (result->opcode == I_INCBIN) {
         critical = (pass0 < 2 ? 1 : 2);
 
     } else
@@ -684,23 +706,31 @@ restart_parse:
                 return result;  /* ignore this instruction */
             }
         }
+
+        recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
                 error(ERR_NONFATAL, "parser: expecting ]");
-                do {            /* error recovery again */
-                    i = stdscan(NULL, &tokval);
-                } while (i != 0 && i != ',');
-            } else              /* we got the required ] */
+                recover = true;
+            } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
+                if (i != 0 && i != ',') {
+                    error(ERR_NONFATAL, "comma or end of line expected");
+                    recover = true;
+                }
+            }
         } else {                /* immediate operand */
             if (i != 0 && i != ',' && i != ':') {
-                error(ERR_NONFATAL, "comma or end of line expected");
-                do {            /* error recovery */
-                    i = stdscan(NULL, &tokval);
-                } while (i != 0 && i != ',');
+                error(ERR_NONFATAL, "comma, colon or end of line expected");
+                recover = true;
             } else if (i == ':') {
                 result->oprs[operand].type |= COLON;
             }
+        }
+        if (recover) {
+            do {                /* error recovery */
+                i = stdscan(NULL, &tokval);
+            } while (i != 0 && i != ',');
         }
 
         /* now convert the exprs returned from evaluate() into operand
@@ -743,6 +773,7 @@ restart_parse:
                     return result;
                 } else {
                     if (e->type == EXPR_UNKNOWN) {
+                        result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
                         o = 0;  /* doesn't matter what */
                         result->oprs[operand].wrt = NO_SEG;     /* nor this */
                         result->oprs[operand].segment = NO_SEG; /* or this */
@@ -821,12 +852,18 @@ restart_parse:
             result->oprs[operand].scale = s;
             result->oprs[operand].offset = o;
         } else {                /* it's not a memory reference */
-
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 result->oprs[operand].type |= IMMEDIATE;
+                result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
                 result->oprs[operand].offset = 0;       /* don't care */
                 result->oprs[operand].segment = NO_SEG; /* don't care again */
                 result->oprs[operand].wrt = NO_SEG;     /* still don't care */
+
+                if(optimizing >= 0 && !(result->oprs[operand].type & STRICT))
+                {
+                    /* Be optimistic */
+                    result->oprs[operand].type |= SBYTE16 | SBYTE32 | SBYTE64;
+                }
             } else if (is_reloc(value)) {       /* it's immediate */
                 result->oprs[operand].type |= IMMEDIATE;
                 result->oprs[operand].offset = reloc_value(value);

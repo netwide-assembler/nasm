@@ -1,15 +1,44 @@
-/* outrdf.c	output routines for the Netwide Assembler to produce
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * outrdf.c	output routines for the Netwide Assembler to produce
  *		RDOFF format object files (which are intended mainly
  *		for use in proprietary projects, as the code to load and
  *		execute them is very simple). They will also be used
  *		for device drivers and possibly some executable files
  *		in the MOSCOW operating system. See Rdoff.txt for
  *		details.
- *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
  */
 
 #include "compiler.h"
@@ -22,7 +51,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
-#include "outform.h"
+#include "output/outform.h"
 
 /* VERBOSE_WARNINGS: define this to add some extra warnings... */
 #define VERBOSE_WARNINGS
@@ -523,7 +552,7 @@ struct ofmt of_rdf = {
 #else
     "rdf",
 #endif
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     rdf_stdmac,

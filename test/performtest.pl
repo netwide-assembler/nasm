@@ -18,7 +18,7 @@ use File::Path qw(mkpath rmtree);
 #Process one testfile
 sub perform {
     my ($clean, $diff, $golden, $nasm, $quiet, $testpath) = @_;
-    my ($stdoutfile, $stderrfile) = (".stdout", ".stderr");
+    my ($stdoutfile, $stderrfile) = ("stdout", "stderr");
 
     my ($testname, $ignoredpath, $ignoredsuffix) = fileparse($testpath, ".asm");
     debugprint $testname;
@@ -100,7 +100,7 @@ sub perform {
                 if($diff) {
                     for(@failedfiles) {
                         if($_ eq $stdoutfile or $_ eq $stderrfile) {
-                            system "diff golden/$testname/$subname/$_ $outputdir/$testname/$subname/$_";
+                            system "diff -u golden/$testname/$subname/$_ $outputdir/$testname/$subname/$_";
                             print "\n";
                         }
                     }
@@ -156,7 +156,7 @@ with "golden" output files.
 
  Options:
      --clean     Clean up test results (or golden files with --golden)
-     --diff      Execute diff when .stdout or .stderr don't match
+     --diff      Execute diff when stdout or stderr don't match
      --golden    Create golden files
      --help      Get this help
      --nasm=file Specify the file name for the NASM executable, e.g. ../nasm
@@ -178,7 +178,7 @@ with "golden" output files.
     an output file specifier (-o) etc.
     The output files should be a space seperated list of files that will
     be checked for regressions. This should often be the output file
-    and the special files .stdout and .stderr.
+    and the special files stdout and stderr.
 
 Any mismatch could be a regression,
 but it doesn't have to be. COFF files have a timestamp which

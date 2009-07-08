@@ -1,5 +1,5 @@
-;Testname=warning;    Arguments=-fbin -omacdef.bin -w+macro-defaults; Files=.stdout .stderr macdef.bin
-;Testname=nonwarning; Arguments=-fbin -omacdef.bin -w-macro-defaults; Files=.stdout .stderr macdef.bin
+;Testname=warning;    Arguments=-fbin -omacdef.bin -w+macro-defaults; Files=stdout stderr macdef.bin
+;Testname=nonwarning; Arguments=-fbin -omacdef.bin -w-macro-defaults; Files=stdout stderr macdef.bin
 
 %MACRO mmac_fix 1 a
  ; While defined to take one parameter, any invocation will

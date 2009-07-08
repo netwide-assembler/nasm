@@ -1,10 +1,39 @@
-/* outobj.c	output routines for the Netwide Assembler to produce
- *		.OBJ object files
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * outobj.c	output routines for the Netwide Assembler to produce
+ *		.OBJ object files
  */
 
 #include "compiler.h"
@@ -18,7 +47,8 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "stdscan.h"
-#include "outform.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #ifdef OF_OBJ
 
@@ -385,7 +415,7 @@ static ObjRecord *obj_value(ObjRecord * orp, uint32_t val)
 /*
  * Writes a counted string
  */
-static ObjRecord *obj_name(ObjRecord * orp, char *name)
+static ObjRecord *obj_name(ObjRecord * orp, const char *name)
 {
     int len = strlen(name);
     uint8_t *ptr;
@@ -634,8 +664,6 @@ static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     obj_use32 = false;
     passtwo = 0;
     current_seg = NULL;
-
-    of_obj.current_dfmt->init(&of_obj, NULL, fp, errfunc);
 }
 
 static int obj_set_info(enum geninfo type, char **val)
@@ -1068,8 +1096,7 @@ static void obj_out(int32_t segto, const void *data,
         if (type == OUT_REL2ADR) {
             ldata += (size - 2);
             size = 2;
-        }
-        if (type == OUT_REL4ADR) {
+        } else if (type == OUT_REL4ADR) {
             ldata += (size - 4);
             size = 4;
         }
@@ -1781,14 +1808,22 @@ static int32_t obj_segbase(int32_t segment)
         }
         if (eb) {
             e = eb->exts[i];
-            if (e->defwrt_type == DEFWRT_NONE)
+	    if (!e) {
+		nasm_assert(pass0 == 0);
+		/* Not available - can happen during optimization */
+		return NO_SEG;
+	    }
+
+	    switch (e->defwrt_type) {
+	    case DEFWRT_NONE:
                 return segment; /* fine */
-            else if (e->defwrt_type == DEFWRT_SEGMENT)
+	    case DEFWRT_SEGMENT:
                 return e->defwrt_ptr.seg->index + 1;
-            else if (e->defwrt_type == DEFWRT_GROUP)
+	    case DEFWRT_GROUP:
                 return e->defwrt_ptr.grp->index + 1;
-            else
+	    default:
                 return NO_SEG;  /* can't tell what it is */
+	    }
         }
 
         return segment;         /* not one of ours - leave it alone */
@@ -1818,7 +1853,6 @@ static void obj_write_file(int debuginfo)
     struct External *ext;
     struct ImpDef *imp;
     struct ExpDef *export;
-    static char boast[] = "The Netwide Assembler " NASM_VER;
     int lname_idx;
     ObjRecord *orp;
 
@@ -1835,7 +1869,7 @@ static void obj_write_file(int debuginfo)
      */
     orp->type = COMENT;
     obj_rword(orp, 0);          /* comment type zero */
-    obj_name(orp, boast);
+    obj_name(orp, nasm_comment);
     obj_emit2(orp);
 
     orp->type = COMENT;
@@ -2524,9 +2558,9 @@ static struct dfmt *borland_debug_arr[3] = {
 struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
-    NULL,
+    0,
     borland_debug_arr,
-    &null_debug_form,
+    &borland_debug_form,
     obj_stdmac,
     obj_init,
     obj_set_info,

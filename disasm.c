@@ -1,11 +1,38 @@
-/* disasm.c   where all the _work_ gets done in the Netwide Disassembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- * initial version 27/iii/95 by Simon Tatham
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * disasm.c   where all the _work_ gets done in the Netwide Disassembler
  */
 
 #include "compiler.h"
@@ -46,8 +73,10 @@ struct prefix_info {
     uint8_t asp;		/* Address size prefix present */
     uint8_t rep;		/* Rep prefix present */
     uint8_t seg;		/* Segment override prefix present */
+    uint8_t wait;		/* WAIT "prefix" present */
     uint8_t lock;		/* Lock prefix present */
     uint8_t vex[3];		/* VEX prefix present */
+    uint8_t vex_c;		/* VEX "class" (VEX, XOP, ...) */
     uint8_t vex_m;		/* VEX.M field */
     uint8_t vex_v;
     uint8_t vex_lp;		/* VEX.LP fields */
@@ -133,7 +162,7 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
         return 0;
 
     if (!(REG8 & ~regflags)) {
-	if (rex & REX_P)
+	if (rex & (REX_P|REX_NH))
 	    return nasm_rd_reg8_rex[regval];
 	else
 	    return nasm_rd_reg8[regval];
@@ -151,7 +180,7 @@ static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
     if (!(REG_DREG & ~regflags))
         return nasm_rd_dreg[regval];
     if (!(REG_TREG & ~regflags)) {
-	if (rex & REX_P)
+	if (regval > 7)
 	    return 0;		/* TR registers are ill-defined with rex */
         return nasm_rd_treg[regval];
     }
@@ -370,11 +399,14 @@ static int matches(const struct itemplate *t, uint8_t *data,
     uint8_t *origdata = data;
     bool a_used = false, o_used = false;
     enum prefixes drep = 0;
+    enum prefixes dwait = 0;
     uint8_t lock = prefix->lock;
     int osize = prefix->osize;
     int asize = prefix->asize;
     int i, c;
-    struct operand *opx;
+    int op1, op2;
+    struct operand *opx, *opy;
+    uint8_t opex = 0;
     int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
     int regmask = (segsize == 64) ? 15 : 7;
@@ -395,77 +427,29 @@ static int matches(const struct itemplate *t, uint8_t *data,
     else if (prefix->rep == 0xF3)
         drep = P_REP;
 
+    dwait = prefix->wait ? P_WAIT : 0;
+
     while ((c = *r++) != 0) {
-	opx = &ins->oprs[c & 3];
+	op1 = (c & 3) + ((opex & 1) << 2);
+	op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
+	opx = &ins->oprs[op1];
+	opy = &ins->oprs[op2];
+	opex = 0;
 
 	switch (c) {
 	case 01:
 	case 02:
 	case 03:
+	case 04:
             while (c--)
                 if (*r++ != *data++)
                     return false;
 	    break;
 
-	case 04:
-            switch (*data++) {
-            case 0x07:
-                ins->oprs[0].basereg = 0;
-                break;
-            case 0x17:
-                ins->oprs[0].basereg = 2;
-                break;
-            case 0x1F:
-                ins->oprs[0].basereg = 3;
-                break;
-            default:
-                return false;
-            }
-	    break;
-
 	case 05:
-            switch (*data++) {
-            case 0xA1:
-                ins->oprs[0].basereg = 4;
-                break;
-            case 0xA9:
-                ins->oprs[0].basereg = 5;
-                break;
-            default:
-                return false;
-	    }
-	    break;
-
 	case 06:
-            switch (*data++) {
-            case 0x06:
-                ins->oprs[0].basereg = 0;
-                break;
-            case 0x0E:
-                ins->oprs[0].basereg = 1;
-                break;
-            case 0x16:
-                ins->oprs[0].basereg = 2;
-                break;
-            case 0x1E:
-                ins->oprs[0].basereg = 3;
-                break;
-            default:
-                return false;
-            }
-	    break;
-
 	case 07:
-            switch (*data++) {
-            case 0xA0:
-                ins->oprs[0].basereg = 4;
-                break;
-            case 0xA8:
-                ins->oprs[0].basereg = 5;
-                break;
-            default:
-                return false;
-            }
+	    opex = c;
 	    break;
 
 	case4(010):
@@ -482,6 +466,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	}
 
 	case4(014):
+	case4(0274):
             opx->offset = (int8_t)*data++;
             opx->segment |= SEG_SIGNED;
 	    break;
@@ -512,6 +497,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case4(040):
+	case4(0254):
             opx->offset = getu32(data);
 	    data += 4;
 	    break;
@@ -587,17 +573,15 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    int modrm = *data++;
             opx->segment |= SEG_RMREG;
-            data = do_ea(data, modrm, asize, segsize,
-			 &ins->oprs[(c >> 3) & 3], ins);
+            data = do_ea(data, modrm, asize, segsize, opy, ins);
 	    if (!data)
 		return false;
-            opx->basereg = ((modrm >> 3)&7)+
-		(ins->rex & REX_R ? 8 : 0);
+            opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
 	    break;
 	}
 
 	case4(0140):
-	    if (s_field_for == (c & 3)) {
+	    if (s_field_for == op1) {
 		opx->offset = gets8(data);
 		data++;
 	    } else {
@@ -608,13 +592,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	case4(0144):
 	case4(0154):
-	    s_field_for = (*data & 0x02) ? c & 3 : -1;
+	    s_field_for = (*data & 0x02) ? op1 : -1;
 	    if ((*data++ & ~0x02) != *r++)
 		return false;
 	    break;
 
 	case4(0150):
-	    if (s_field_for == (c & 3)) {
+	    if (s_field_for == op1) {
 		opx->offset = gets8(data);
 		data++;
 	    } else {
@@ -625,12 +609,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	case4(0160):
 	    ins->rex |= REX_D;
-	    ins->drexdst = c & 3;
+	    ins->drexdst = op1;
 	    break;
 
 	case4(0164):
 	    ins->rex |= REX_D|REX_OC;
-	    ins->drexdst = c & 3;
+	    ins->drexdst = op1;
 	    break;
 
 	case 0171:
@@ -684,8 +668,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return false;   /* spare field doesn't match up */
-            data = do_ea(data, modrm, asize, segsize,
-                         &ins->oprs[(c >> 3) & 07], ins);
+            data = do_ea(data, modrm, asize, segsize, opy, ins);
 	    if (!data)
 		return false;
 	    break;
@@ -770,7 +753,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case 0311:
-            if (asize == 16)
+            if (asize != 32)
                 return false;
             else
                 a_used = true;
@@ -843,6 +826,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    o_used = true;
 	    break;
 
+	case 0325:
+	    ins->rex |= REX_NH;
+	    break;
+
 	case 0330:
 	{
             int t = *r++, d = *data++;
@@ -888,6 +875,16 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
 	case 0340:
 	    return false;
+
+	case 0341:
+	    if (prefix->wait != 0x9B)
+		return false;
+	    dwait = 0;
+	    break;
+
+	case4(0344):
+	    ins->oprs[0].basereg = (*data++ >> 3) & 7;
+	    break;
 
 	case 0360:
 	    if (prefix->osp || prefix->rep)
@@ -964,6 +961,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    return false;
         ins->prefixes[PPS_LREP] = drep;
     }
+    ins->prefixes[PPS_WAIT] = dwait;
     if (!o_used) {
 	if (osize != ((segsize == 16) ? 16 : 32)) {
 	    enum prefixes pfx = 0;
@@ -1040,6 +1038,10 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             prefix.rep = *data++;
 	    break;
 
+	case 0x9B:
+	    prefix.wait = *data++;
+	    break;
+
 	case 0xF0:
             prefix.lock = *data++;
 	    break;
@@ -1079,6 +1081,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex[1] = *data++;
 
 		prefix.rex = REX_V;
+		prefix.vex_c = RV_VEX;
 
 		if (prefix.vex[0] == 0xc4) {
 		    prefix.vex[2] = *data++;
@@ -1094,7 +1097,28 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    prefix.vex_lp = prefix.vex[1] & 7;
 		}
 
-		ix = itable_VEX[prefix.vex_m][prefix.vex_lp];
+		ix = itable_vex[RV_VEX][prefix.vex_m][prefix.vex_lp];
+	    }
+	    end_prefix = true;
+	    break;
+
+	case 0x8F:
+	    if ((data[1] & 030) != 0 &&
+		(segsize == 64 || (data[1] & 0xc0) == 0xc0)) {
+		prefix.vex[0] = *data++;
+		prefix.vex[1] = *data++;
+		prefix.vex[2] = *data++;
+
+		prefix.rex = REX_V;
+		prefix.vex_c = RV_XOP;
+
+		prefix.rex |= (~prefix.vex[1] >> 5) & 7; /* REX_RXB */
+		prefix.rex |= (prefix.vex[2] >> (7-3)) & REX_W;
+		prefix.vex_m = prefix.vex[1] & 0x1f;
+		prefix.vex_v = (~prefix.vex[2] >> 3) & 15;
+		prefix.vex_lp = prefix.vex[2] & 7;
+
+		ix = itable_vex[RV_XOP][prefix.vex_m][prefix.vex_lp];
 	    }
 	    end_prefix = true;
 	    break;
@@ -1218,41 +1242,11 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
      *      the return value is "sane."  Maybe a macro wrapper could
      *      be used for that purpose.
      */
-    for (i = 0; i < MAXPREFIX; i++)
-        switch (ins.prefixes[i]) {
-	case P_LOCK:
-	    slen += snprintf(output + slen, outbufsize - slen, "lock ");
-	    break;
-        case P_REP:
-            slen += snprintf(output + slen, outbufsize - slen, "rep ");
-            break;
-        case P_REPE:
-            slen += snprintf(output + slen, outbufsize - slen, "repe ");
-            break;
-        case P_REPNE:
-            slen += snprintf(output + slen, outbufsize - slen, "repne ");
-            break;
-        case P_A16:
-            slen += snprintf(output + slen, outbufsize - slen, "a16 ");
-            break;
-        case P_A32:
-            slen += snprintf(output + slen, outbufsize - slen, "a32 ");
-            break;
-        case P_A64:
-            slen += snprintf(output + slen, outbufsize - slen, "a64 ");
-            break;
-        case P_O16:
-            slen += snprintf(output + slen, outbufsize - slen, "o16 ");
-            break;
-        case P_O32:
-            slen += snprintf(output + slen, outbufsize - slen, "o32 ");
-            break;
-        case P_O64:
-            slen += snprintf(output + slen, outbufsize - slen, "o64 ");
-            break;
-	default:
-	    break;
-        }
+    for (i = 0; i < MAXPREFIX; i++) {
+	const char *prefix = prefix_name(ins.prefixes[i]);
+	if (prefix)
+	    slen += snprintf(output+slen, outbufsize-slen, "%s ", prefix);
+    }
 
     i = (*p)->opcode;
     if (i >= FIRST_COND_OPCODE)
@@ -1480,8 +1474,86 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     return length;
 }
 
-int32_t eatbyte(uint8_t *data, char *output, int outbufsize)
+/*
+ * This is called when we don't have a complete instruction.  If it
+ * is a standalone *single-byte* prefix show it as such, otherwise
+ * print it as a literal.
+ */
+int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize)
 {
-    snprintf(output, outbufsize, "db 0x%02X", *data);
+    uint8_t byte = *data;
+    const char *str = NULL;
+    
+    switch (byte) {
+    case 0xF2:
+	str = "repne";
+	break;
+    case 0xF3:
+	str = "rep";
+	break;
+    case 0x9B:
+	str = "wait";
+	break;
+    case 0xF0:
+	str = "lock";
+	break;
+    case 0x2E:
+	str = "cs";
+	break;
+    case 0x36:
+	str = "ss";
+	break;
+    case 0x3E:
+	str = "ss";
+	break;
+    case 0x26:
+	str = "es";
+	break;
+    case 0x64:
+	str = "fs";
+	break;
+    case 0x65:
+	str = "gs";
+	break;
+    case 0x66:
+	str = (segsize == 16) ? "o32" : "o16";
+	break;
+    case 0x67:
+	str = (segsize == 32) ? "a16" : "a32";
+	break;
+    case REX_P + 0x0:
+    case REX_P + 0x1:
+    case REX_P + 0x2:
+    case REX_P + 0x3:
+    case REX_P + 0x4:
+    case REX_P + 0x5:
+    case REX_P + 0x6:
+    case REX_P + 0x7:
+    case REX_P + 0x8:
+    case REX_P + 0x9:
+    case REX_P + 0xA:
+    case REX_P + 0xB:
+    case REX_P + 0xC:
+    case REX_P + 0xD:
+    case REX_P + 0xE:
+    case REX_P + 0xF:
+	if (segsize == 64) {
+	    snprintf(output, outbufsize, "rex%s%s%s%s%s",
+		     (byte == REX_P) ? "" : ".",
+		     (byte & REX_W) ? "w" : "",
+		     (byte & REX_R) ? "r" : "",
+		     (byte & REX_X) ? "x" : "",
+		     (byte & REX_B) ? "b" : "");
+	    break;
+	}
+	/* else fall through */
+    default:
+	snprintf(output, outbufsize, "db 0x%02x", byte);
+	break;
+    }
+
+    if (str)
+	strcpy(output, str);
+
     return 1;
 }

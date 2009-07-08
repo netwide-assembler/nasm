@@ -1,9 +1,38 @@
-/* labels.c  label handling for the Netwide Assembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * labels.c  label handling for the Netwide Assembler
  */
 
 #include "compiler.h"
@@ -41,15 +70,16 @@
 #define END_BLOCK -2
 #define BOGUS_VALUE -4
 
-#define PERMTS_SIZE  4096       /* size of text blocks */
-#if (PERMTS_SIZE > IDLEN_MAX)
-#error "IPERMTS_SIZE must be less than or equal to IDLEN_MAX"
+#define PERMTS_SIZE  16384	/* size of text blocks */
+#if (PERMTS_SIZE < IDLEN_MAX)
+#error "IPERMTS_SIZE must be greater than or equal to IDLEN_MAX"
 #endif
 
 /* values for label.defn.is_global */
-#define DEFINED_BIT 1
-#define GLOBAL_BIT 2
-#define EXTERN_BIT 4
+#define DEFINED_BIT	1
+#define GLOBAL_BIT	2
+#define EXTERN_BIT	4
+#define COMMON_BIT	8
 
 #define NOT_DEFINED_YET 0
 #define TYPE_MASK 3
@@ -77,7 +107,7 @@ struct permts {                 /* permanent text storage */
     char data[PERMTS_SIZE];     /* ... the data block itself */
 };
 
-extern bool global_offset_changed;       /* defined in nasm.c */
+extern int64_t global_offset_changed;       /* defined in nasm.c */
 
 static struct hash_table ltab;		/* labels hash table */
 static union label *ldata;		/* all label data blocks */
@@ -209,7 +239,9 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
             prevlabel = lptr->defn.label;
     }
 
-    global_offset_changed |= (lptr->defn.offset != offset);
+    if (lptr->defn.offset != offset)
+	global_offset_changed++;
+
     lptr->defn.offset = offset;
     lptr->defn.segment = segment;
 
@@ -270,9 +302,10 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
     if (isextrn)
         lptr->defn.is_global |= EXTERN_BIT;
 
-    if (!islocalchar(label[0]) && is_norm)      /* not local, but not special either */
+    if (!islocalchar(label[0]) && is_norm) {
+	/* not local, but not special either */
         prevlabel = lptr->defn.label;
-    else if (islocal(label) && !*prevlabel) {
+    } else if (islocal(label) && !*prevlabel) {
         error(ERR_NONFATAL, "attempt to define a local label before any"
               " non-local labels");
     }
@@ -321,26 +354,32 @@ void define_common(char *label, int32_t segment, int32_t size, char *special,
     union label *lptr;
 
     lptr = find_label(label, 1);
-    if (lptr->defn.is_global & DEFINED_BIT) {
-        error(ERR_NONFATAL, "symbol `%s' redefined", label);
-        return;
+    if ((lptr->defn.is_global & DEFINED_BIT) &&
+	(passn == 1 || !(lptr->defn.is_global & COMMON_BIT))) {
+	    error(ERR_NONFATAL, "symbol `%s' redefined", label);
+	    return;
     }
-    lptr->defn.is_global |= DEFINED_BIT;
+    lptr->defn.is_global |= DEFINED_BIT|COMMON_BIT;
 
-    if (!islocalchar(label[0])) /* not local, but not special either */
+    if (!islocalchar(label[0])) {
         prevlabel = lptr->defn.label;
-    else
+    } else {
         error(ERR_NONFATAL, "attempt to define a local label as a "
               "common variable");
+	return;
+    }
 
     lptr->defn.segment = segment;
     lptr->defn.offset = 0;
 
+    if (pass0 == 0)
+	return;
+
     ofmt->symdef(lptr->defn.label, segment, size, 2,
-                 special ? special : lptr->defn.special);
+		 special ? special : lptr->defn.special);
     ofmt->current_dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
-                                       special ? special : lptr->defn.
-                                       special);
+				       special ? special : lptr->defn.
+				       special);
 }
 
 void declare_as_global(char *label, char *special, efunc error)
@@ -362,9 +401,11 @@ void declare_as_global(char *label, char *special, efunc error)
     case GLOBAL_SYMBOL:
         break;
     case LOCAL_SYMBOL:
-        if (!lptr->defn.is_global & EXTERN_BIT)
-            error(ERR_NONFATAL, "symbol `%s': GLOBAL directive must"
-                  " appear before symbol definition", label);
+        if (!(lptr->defn.is_global & EXTERN_BIT)) {
+            error(ERR_WARNING, "symbol `%s': GLOBAL directive "
+                  "after symbol definition is an experimental feature", label);
+            lptr->defn.is_global = GLOBAL_SYMBOL;
+        }
         break;
     }
 }
@@ -427,6 +468,8 @@ static char *perm_copy(const char *string)
 {
     char *p;
     int len = strlen(string)+1;
+
+    nasm_assert(len <= PERMTS_SIZE);
 
     if (perm_tail->size - perm_tail->usage < len) {
         perm_tail->next =

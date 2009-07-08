@@ -19,9 +19,9 @@
 typedef struct RDFModuleStruct {
     rdffile f;                  /* file structure */
     uint8_t *t, *d, *b;   /* text, data, and bss segments */
-    int32_t textrel;
-    int32_t datarel;
-    int32_t bssrel;
+    uint32_t textrel;
+    uint32_t datarel;
+    uint32_t bssrel;
     void *symtab;
 } rdfmodule;
 

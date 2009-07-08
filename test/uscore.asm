@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ouscore.bin; Files=.stdout .stderr uscore.bin
+;Testname=test; Arguments=-fbin -ouscore.bin; Files=stdout stderr uscore.bin
 	dd 0x1234_5678
 	dd 305_419_896		; Same number as above it
 	dd 0x1e16		; NOT a floating-point number!

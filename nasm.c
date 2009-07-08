@@ -1,9 +1,38 @@
-/* The Netwide Assembler main program module
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * The Netwide Assembler main program module
  */
 
 #include "compiler.h"
@@ -29,7 +58,7 @@
 #include "eval.h"
 #include "assemble.h"
 #include "labels.h"
-#include "outform.h"
+#include "output/outform.h"
 #include "listing.h"
 
 struct forwrefinfo {            /* info held on forward refs. */
@@ -73,7 +102,9 @@ int optimizing = -1;            /* number of optimization passes to take */
 static int sb, cmd_sb = 16;     /* by default */
 static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
 static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
-bool global_offset_changed;      /* referenced in labels.c */
+int64_t global_offset_changed;      /* referenced in labels.c */
+int64_t prev_offset_changed;
+int32_t stall_count;
 
 static struct location location;
 int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
@@ -102,37 +133,27 @@ static const char *depend_file = NULL;
  * Which of the suppressible warnings are suppressed. Entry zero
  * isn't an actual warning, but it used for -w+error/-Werror.
  */
-static bool suppressed[ERR_WARN_MAX+1];
 
-static bool suppressed_global[ERR_WARN_MAX+1] = {
-    true, false, true, false, false, false, true, false, true, true, false
-};
-/*
- * The option names for the suppressible warnings. As before, entry
- * zero does nothing.
- */
-static const char *suppressed_names[ERR_WARN_MAX+1] = {
-    "error", "macro-params", "macro-selfref", "macro-defaults",
-    "orphan-labels", "number-overflow", "gnu-elf-extensions",
-    "float-overflow", "float-denorm", "float-underflow", "float-toolong"
-};
+static bool warning_on[ERR_WARN_MAX+1]; /* Current state */
+static bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state */
 
-/*
- * The explanations for the suppressible warnings. As before, entry
- * zero does nothing.
- */
-static const char *suppressed_what[ERR_WARN_MAX+1] = {
-    "treat warnings as errors",
-    "macro calls with wrong parameter count",
-    "cyclic macro references",
-    "macros with more default than optional parameters",
-    "labels alone on lines without trailing `:'",
-    "numeric constants does not fit in 64 bits",
-    "using 8- or 16-bit relocation in ELF32, a GNU extension",
-    "floating point overflow",
-    "floating point denormal",
-    "floating point underflow",
-    "too many digits in floating-point number"
+static const struct warning {
+    const char *name;
+    const char *help;
+    bool enabled;
+} warnings[ERR_WARN_MAX+1] = {
+    {"error", "treat warnings as errors", false},
+    {"macro-params", "macro calls with wrong parameter count", true},
+    {"macro-selfref", "cyclic macro references", false},
+    {"macro-defaults", "macros with more default than optional parameters", true},
+    {"orphan-labels", "labels alone on lines without trailing `:'", true},
+    {"number-overflow", "numeric constant does not fit", true},
+    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
+    {"float-overflow", "floating point overflow", true},
+    {"float-denorm", "floating point denormal", false},
+    {"float-underflow", "floating point underflow", false},
+    {"float-toolong", "too many digits in floating-point number", true},
+    {"user", "%warning directives", true},
 };
 
 /*
@@ -158,8 +179,8 @@ static Preproc no_pp = {
 #define SET_CURR_OFFS(x) (in_abs_seg?(void)(abs_offset=(x)):\
 			 (void)(offsets=raa_write(offsets,location.segment,(x))))
 
-static int want_usage;
-static int terminate_after_phase;
+static bool want_usage;
+static bool terminate_after_phase;
 int user_nolist = 0;            /* fbk 9/2/00 */
 
 static void nasm_fputs(const char *line, FILE * outfile)
@@ -294,7 +315,7 @@ int main(int argc, char **argv)
 
     time(&official_compile_time);
 
-    pass0 = 1;
+    pass0 = 0;
     want_usage = terminate_after_phase = false;
     report_error = report_error_gnu;
 
@@ -380,7 +401,7 @@ int main(int argc, char **argv)
             location.known = false;
 
 	    /* pass = 1; */
-            preproc->reset(inname, 2, report_error, evaluate, &nasmlist,
+            preproc->reset(inname, 3, report_error, evaluate, &nasmlist,
 			   depend_ptr);
 
             while ((line = preproc->getline())) {
@@ -423,7 +444,7 @@ int main(int argc, char **argv)
              */
             ofmt->filename(inname, outname, report_error);
 
-            ofile = fopen(outname, "wb");
+            ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
             if (!ofile) {
                 report_error(ERR_FATAL | ERR_NOFILE,
                              "unable to open output file `%s'", outname);
@@ -437,6 +458,7 @@ int main(int argc, char **argv)
             init_labels();
 
             ofmt->init(ofile, report_error, define_label, evaluate);
+            ofmt->current_dfmt->init(ofmt, NULL, ofile, report_error);
 
             assemble_file(inname, depend_ptr);
 
@@ -452,14 +474,12 @@ int main(int argc, char **argv)
                 fclose (ofile);
 
                 remove(outname);
-                if (listname[0])
-                    remove(listname);
             }
         }
         break;
     }
 
-    if (depend_list)
+    if (depend_list && !terminate_after_phase)
 	emit_dependencies(depend_list);
 
     if (want_usage)
@@ -470,10 +490,7 @@ int main(int argc, char **argv)
     eval_cleanup();
     stdscan_cleanup();
 
-    if (terminate_after_phase)
-        return 1;
-    else
-        return 0;
+    return terminate_after_phase;
 }
 
 /*
@@ -613,7 +630,7 @@ static bool process_arg(char *p, char *q)
     char *param;
     int i;
     bool advance = false;
-    bool suppress;
+    bool do_warn;
 
     if (!p || !p[0])
         return false;
@@ -640,8 +657,6 @@ static bool process_arg(char *p, char *q)
 		report_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
 			     "unrecognised output format `%s' - "
 			     "use -hf for a list", param);
-	    } else {
-		ofmt->current_dfmt = ofmt->debug_formats[0];
 	    }
 	    break;
 
@@ -771,8 +786,8 @@ static bool process_arg(char *p, char *q)
                  "Warnings:\n");
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
-                       suppressed_names[i], suppressed_what[i],
-                       suppressed_global[i] ? "off" : "on");
+                       warnings[i].name, warnings[i].help,
+                       warnings[i].enabled ? "on" : "off");
             printf
                 ("\nresponse files should contain command line parameters"
                  ", one per line.\n");
@@ -799,16 +814,9 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'v':
-            {
-                const char *nasm_version_string =
-                    "NASM version " NASM_VER " compiled on " __DATE__
-#ifdef DEBUG
-                    " with -DDEBUG"
-#endif
-                    ;
-                puts(nasm_version_string);
-                exit(0);        /* never need usage message here */
-            }
+	    printf("NASM version %s compiled on %s%s\n",
+		   nasm_version, nasm_date, nasm_compile_options);
+	    exit(0);        /* never need usage message here */
             break;
 
         case 'e':              /* preprocess only */
@@ -822,10 +830,10 @@ static bool process_arg(char *p, char *q)
 
 	case 'W':
 	    if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
-		suppress = true;
+		do_warn = false;
 		param += 3;
 	    } else {
-		suppress = false;
+		do_warn = true;
 	    }
 	    goto set_warning;
 
@@ -835,21 +843,21 @@ static bool process_arg(char *p, char *q)
                              "invalid option to `-w'");
 		break;
             }
-	    suppress = (param[0] == '-');
+	    do_warn = (param[0] == '+');
 	    param++;
 	    goto set_warning;
 	set_warning:
 	    for (i = 0; i <= ERR_WARN_MAX; i++)
-		if (!nasm_stricmp(param, suppressed_names[i]))
+		if (!nasm_stricmp(param, warnings[i].name))
 		    break;
 	    if (i <= ERR_WARN_MAX)
-		suppressed_global[i] = suppress;
+		warning_on_global[i] = do_warn;
 	    else if (!nasm_stricmp(param, "all"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed_global[i] = suppress;
+		    warning_on_global[i] = do_warn;
 	    else if (!nasm_stricmp(param, "none"))
 		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    suppressed_global[i] = !suppress;
+		    warning_on_global[i] = !do_warn;
 	    else
 		report_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
 			     "invalid warning `%s'", param);
@@ -1068,8 +1076,11 @@ static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
     char *envreal, *envcopy = NULL, *p, *arg;
+    int i;
 
     *inname = *outname = *listname = *errname = '\0';
+    for (i = 0; i <= ERR_WARN_MAX; i++)
+	warning_on_global[i] = warnings[i].enabled;
 
     /*
      * First, process the NASMENV environment variable.
@@ -1166,8 +1177,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         report_error(ERR_FATAL, "command line: "
                      "32-bit segment size requires a higher cpu");
 
-    pass_max = (optimizing > 0 ? optimizing : 0) + 2;   /* passes 1, optimizing, then 2 */
-    pass0 = !(optimizing > 0);  /* start at 1 if not optimizing */
+    pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
         int pass1, pass2;
         ldfunc def_label;
@@ -1185,7 +1195,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 nasmlist.init(listname, report_error);
         }
         in_abs_seg = false;
-        global_offset_changed = false;  /* set by redefine_label */
+        global_offset_changed = 0;  /* set by redefine_label */
         location.segment = ofmt->section(NULL, pass2, &sb);
         globalbits = sb;
         if (passn > 1) {
@@ -1196,7 +1206,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         }
         preproc->reset(fname, pass1, report_error, evaluate, &nasmlist,
 		       pass1 == 2 ? depend_ptr : NULL);
-        memcpy(suppressed, suppressed_global, (ERR_WARN_MAX+1) * sizeof(bool));
+        memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
         globallineno = 0;
         if (passn == 1)
@@ -1207,8 +1217,10 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 	    enum directives d;
             globallineno++;
 
-            /* here we parse our directives; this is not handled by the 'real'
-             * parser. */
+            /*
+	     * Here we parse our directives; this is not handled by the
+	     * 'real' parser.  This really should be a separate function.
+	     */
             directive = line;
 	    d = getkw(&directive, &value);
             if (d) {
@@ -1307,61 +1319,59 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     }           /* pass == 1 */
                     break;
                 case D_COMMON:		/* [COMMON symbol size:special] */
+		{
+		    int64_t size;
+
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
-                    if (pass0 == 1) {
-                        p = value;
-                        validid = true;
-                        if (!isidstart(*p))
-                            validid = false;
-                        while (*p && !nasm_isspace(*p)) {
-                            if (!isidchar(*p))
-                                validid = false;
-                            p++;
-                        }
-                        if (!validid) {
-                            report_error(ERR_NONFATAL,
-                                         "identifier expected after COMMON");
-                            break;
-                        }
-                        if (*p) {
-                            int64_t size;
+		    p = value;
+		    validid = true;
+		    if (!isidstart(*p))
+			validid = false;
+		    while (*p && !nasm_isspace(*p)) {
+			if (!isidchar(*p))
+			    validid = false;
+			p++;
+		    }
+		    if (!validid) {
+			report_error(ERR_NONFATAL,
+				     "identifier expected after COMMON");
+			break;
+		    }
+		    if (*p) {
+			while (*p && nasm_isspace(*p))
+			    *p++ = '\0';
+			q = p;
+			while (*q && *q != ':')
+			    q++;
+			if (*q == ':') {
+			    *q++ = '\0';
+			    special = q;
+			} else {
+			    special = NULL;
+			}
+			size = readnum(p, &rn_error);
+			if (rn_error) {
+			    report_error(ERR_NONFATAL,
+					 "invalid size specified"
+					 " in COMMON declaration");
+			    break;
+			}
+		    } else {
+			report_error(ERR_NONFATAL,
+				     "no size specified in"
+				     " COMMON declaration");
+			break;
+		    }
 
-                            while (*p && nasm_isspace(*p))
-                                *p++ = '\0';
-                            q = p;
-                            while (*q && *q != ':')
-                                q++;
-                            if (*q == ':') {
-                                *q++ = '\0';
-                                special = q;
-                            } else
-                                special = NULL;
-                            size = readnum(p, &rn_error);
-                            if (rn_error)
-                                report_error(ERR_NONFATAL,
-                                             "invalid size specified"
-                                             " in COMMON declaration");
-                            else
-                                define_common(value, seg_alloc(), size,
-                                              special, ofmt, report_error);
-                        } else
-                            report_error(ERR_NONFATAL,
-                                         "no size specified in"
-                                         " COMMON declaration");
-                    } else if (pass0 == 2) {    /* pass == 2 */
-                        q = value;
-                        while (*q && *q != ':') {
-                            if (nasm_isspace(*q))
-                                *q = '\0';
-                            q++;
-                        }
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            ofmt->symdef(value, 0L, 0L, 3, q);
-                        }
+                    if (pass0 < 2) {
+			define_common(value, seg_alloc(), size,
+				      special, ofmt, report_error);
+                    } else if (pass0 == 2) {
+			ofmt->symdef(value, 0L, 0L, 3, special);
                     }
                     break;
+		}
                 case D_ABSOLUTE:		/* [ABSOLUTE address] */
                     stdscan_reset();
                     stdscan_bufptr = value;
@@ -1409,36 +1419,35 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         ofmt->current_dfmt->debug_directive(debugid, p);
                     break;
                 case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
-                    if (pass1 == 1) {
-                        while (*value && nasm_isspace(*value))
-                            value++;
+		    while (*value && nasm_isspace(*value))
+			value++;
 
-                        switch(*value) {
-                            case '-': validid = 0; value++; break;
-                            case '+': validid = 1; value++; break;
-                            case '*': validid = 2; value++; break;
-                            default: /*
-                                       * Should this error out?
-                                       * I'll keep it so nothing breaks.
-                                       */
-                                      validid = 1; break;
-                        }
+		    switch(*value) {
+		    case '-': validid = 0; value++; break;
+		    case '+': validid = 1; value++; break;
+		    case '*': validid = 2; value++; break;
+		    default:  validid = 1; break;
+		    }
 
-                        for (i = 1; i <= ERR_WARN_MAX; i++)
-                            if (!nasm_stricmp(value, suppressed_names[i]))
-                                break;
-                        if (i <= ERR_WARN_MAX) {
-                            switch(validid) {
-                                case 0: suppressed[i] = true; break;
-                                case 1: suppressed[i] = false; break;
-                                case 2: suppressed[i] = suppressed_global[i];
-                                        break;
-                            }
-                        }
-                        else
-                            report_error(ERR_NONFATAL,
-                                         "invalid warning id in WARNING directive");
-                    }
+		    for (i = 1; i <= ERR_WARN_MAX; i++)
+			if (!nasm_stricmp(value, warnings[i].name))
+			    break;
+		    if (i <= ERR_WARN_MAX) {
+			switch(validid) {
+			case 0:
+			    warning_on[i] = false;
+			    break;
+			case 1:
+			    warning_on[i] = true;
+			    break;
+			case 2:
+			    warning_on[i] = warning_on_global[i];
+			    break;
+			}
+		    }
+		    else
+			report_error(ERR_NONFATAL,
+				     "invalid warning id in WARNING directive");
                     break;
                 case D_CPU:		/* [CPU] */
                     cpu = get_cpu(value);
@@ -1500,7 +1509,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                 parse_line(pass1, line, &output_ins,
                            report_error, evaluate, def_label);
 
-                if (!(optimizing > 0) && pass0 == 2) {
+                if (optimizing > 0) {
                     if (forwref != NULL && globallineno == forwref->lineno) {
                         output_ins.forw_ref = true;
                         do {
@@ -1511,50 +1520,21 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                  && forwref->lineno == globallineno);
                     } else
                         output_ins.forw_ref = false;
-                }
-
-                if (!(optimizing > 0) && output_ins.forw_ref) {
-                    if (passn == 1) {
-                        for (i = 0; i < output_ins.operands; i++) {
-                            if (output_ins.oprs[i].
-                                opflags & OPFLAG_FORWARD) {
-                                struct forwrefinfo *fwinf =
-                                    (struct forwrefinfo *)
-                                    saa_wstruct(forwrefs);
-                                fwinf->lineno = globallineno;
+		    
+		    if (output_ins.forw_ref) {
+			if (passn == 1) {
+			    for (i = 0; i < output_ins.operands; i++) {
+				if (output_ins.oprs[i].
+				    opflags & OPFLAG_FORWARD) {
+				    struct forwrefinfo *fwinf =
+					(struct forwrefinfo *)
+					saa_wstruct(forwrefs);
+				    fwinf->lineno = globallineno;
                                 fwinf->operand = i;
-                            }
-                        }
-                    } else {    /* passn > 1 */
-                        /*
-                         * Hack to prevent phase error in the code
-                         *   rol ax,x
-                         *   x equ 1
-                         *
-                         * If the second operand is a forward reference,
-                         * the UNITY property of the number 1 in that
-                         * operand is cancelled. Otherwise the above
-                         * sequence will cause a phase error.
-                         *
-                         * This hack means that the above code will
-                         * generate 286+ code.
-                         *
-                         * The forward reference will mean that the
-                         * operand will not have the UNITY property on
-                         * the first pass, so the pass behaviours will
-                         * be consistent.
-                         */
-
-                        if (output_ins.operands >= 2 &&
-                            (output_ins.oprs[1].opflags & OPFLAG_FORWARD) &&
-			    !(IMMEDIATE & ~output_ins.oprs[1].type))
-			{
-			    /* Remove special properties bits */
-			    output_ins.oprs[1].type &= ~REG_SMASK;
-                        }
-
+				}
+			    }
+			}
                     }
-
                 }
 
                 /*  forw_ref */
@@ -1575,32 +1555,25 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             if (output_ins.operands == 1 &&
                                 (output_ins.oprs[0].type & IMMEDIATE) &&
                                 output_ins.oprs[0].wrt == NO_SEG) {
-                                int isext =
-                                    output_ins.oprs[0].
-                                    opflags & OPFLAG_EXTERN;
+                                bool isext = !!(output_ins.oprs[0].opflags
+						& OPFLAG_EXTERN);
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].segment,
                                           output_ins.oprs[0].offset, NULL,
                                           false, isext, ofmt,
                                           report_error);
                             } else if (output_ins.operands == 2
-                                       && (output_ins.oprs[0].
-                                           type & IMMEDIATE)
+                                       && (output_ins.oprs[0].type & IMMEDIATE)
                                        && (output_ins.oprs[0].type & COLON)
-                                       && output_ins.oprs[0].segment ==
-                                       NO_SEG
+                                       && output_ins.oprs[0].segment == NO_SEG
                                        && output_ins.oprs[0].wrt == NO_SEG
-                                       && (output_ins.oprs[1].
-                                           type & IMMEDIATE)
-                                       && output_ins.oprs[1].segment ==
-                                       NO_SEG
-                                       && output_ins.oprs[1].wrt ==
-                                       NO_SEG) {
+                                       && (output_ins.oprs[1].type & IMMEDIATE)
+                                       && output_ins.oprs[1].segment == NO_SEG
+                                       && output_ins.oprs[1].wrt == NO_SEG) {
                                 def_label(output_ins.label,
-                                          output_ins.oprs[0].
-                                          offset | SEG_ABS,
-                                          output_ins.oprs[1].offset, NULL,
-                                          false, false, ofmt,
+                                          output_ins.oprs[0].offset | SEG_ABS,
+                                          output_ins.oprs[1].offset,
+					  NULL, false, false, ofmt,
                                           report_error);
                             } else
                                 report_error(ERR_NONFATAL,
@@ -1746,33 +1719,46 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             location.offset = offs = GET_CURR_OFFS;
         }                       /* end while (line = preproc->getline... */
 
-        if (pass1 == 2 && global_offset_changed)
+        if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
             report_error(ERR_NONFATAL,
-                         "phase error detected at end of assembly.");
+			 "phase error detected at end of assembly.");
 
         if (pass1 == 1)
             preproc->cleanup(1);
 
-        if (pass1 == 1 && terminate_after_phase) {
-            fclose(ofile);
-            remove(outname);
-            if (want_usage)
-                usage();
-            exit(1);
-        }
-        if (passn >= pass_max - 2 ||
-	    (passn > 1 && !global_offset_changed))
+        if ((passn > 1 && !global_offset_changed) || pass0 == 2) {
             pass0++;
+	} else if (global_offset_changed &&
+		 global_offset_changed < prev_offset_changed) {
+            prev_offset_changed = global_offset_changed;
+            stall_count = 0;
+	} else {
+	    stall_count++;
+	}
+
+	if (terminate_after_phase)
+	    break;
+
+        if ((stall_count > 997) || (passn >= pass_max)) {
+            /* We get here if the labels don't converge
+             * Example: FOO equ FOO + 1
+             */
+             report_error(ERR_NONFATAL,
+                          "Can't find valid values for all labels "
+                          "after %d passes, giving up.", passn);
+	     report_error(ERR_NONFATAL,
+			  "Possible causes: recursive EQUs, macro abuse.");
+	     break;
+	}
     }
 
     preproc->cleanup(0);
     nasmlist.cleanup();
-#if 1
-    if (optimizing > 0 && opt_verbose_info)     /*  -On and -Ov switches */
-        fprintf(stdout,
-                "info:: assembly required 1+%d+1 passes\n", passn-3);
-#endif
-}                               /* exit from assemble_file (...) */
+    if (!terminate_after_phase && opt_verbose_info) {
+	/*  -On and -Ov switches */
+        fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
+    }
+}
 
 static enum directives getkw(char **directive, char **value)
 {
@@ -1840,19 +1826,22 @@ static enum directives getkw(char **directive, char **value)
 static void report_error_gnu(int severity, const char *fmt, ...)
 {
     va_list ap;
+    char *currentfile = NULL;
+    int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
         return;
 
-    if (severity & ERR_NOFILE)
-        fputs("nasm: ", error_file);
-    else {
-        char *currentfile = NULL;
-        int32_t lineno = 0;
+    if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
-        fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-        nasm_free(currentfile);
+
+    if (currentfile) {
+	fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
+	nasm_free(currentfile);
+    } else {
+	fputs("nasm: ", error_file);
     }
+
     va_start(ap, fmt);
     report_error_common(severity, fmt, ap);
     va_end(ap);
@@ -1876,19 +1865,22 @@ static void report_error_gnu(int severity, const char *fmt, ...)
 static void report_error_vc(int severity, const char *fmt, ...)
 {
     va_list ap;
+    char *currentfile = NULL;
+    int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
         return;
 
-    if (severity & ERR_NOFILE)
-        fputs("nasm: ", error_file);
-    else {
-        char *currentfile = NULL;
-        int32_t lineno = 0;
+    if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
+
+    if (currentfile) {
         fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
         nasm_free(currentfile);
+    } else {
+        fputs("nasm: ", error_file);
     }
+
     va_start(ap, fmt);
     report_error_common(severity, fmt, ap);
     va_end(ap);
@@ -1909,9 +1901,10 @@ static bool is_suppressed_warning(int severity)
      */
     return (severity & ERR_MASK) == ERR_WARNING &&
 	(((severity & ERR_WARN_MASK) != 0 &&
-	  suppressed[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
+	  !warning_on[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
 	 /* See if it's a pass-one only warning and we're not in pass one. */
-	 ((severity & ERR_PASS1) && pass0 != 1));
+	 ((severity & ERR_PASS1) && pass0 != 1) ||
+	 ((severity & ERR_PASS2) && pass0 != 2));
 }
 
 /**
@@ -1927,28 +1920,36 @@ static bool is_suppressed_warning(int severity)
 static void report_error_common(int severity, const char *fmt,
                                 va_list args)
 {
+    char msg[1024];
+    const char *pfx;
+    
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_WARNING:
-        fputs("warning: ", error_file);
+        pfx = "warning: ";
         break;
     case ERR_NONFATAL:
-        fputs("error: ", error_file);
+        pfx = "error: ";
         break;
     case ERR_FATAL:
-        fputs("fatal: ", error_file);
+        pfx = "fatal: ";
         break;
     case ERR_PANIC:
-        fputs("panic: ", error_file);
+        pfx = "panic: ";
         break;
     case ERR_DEBUG:
-        fputs("debug: ", error_file);
+        pfx = "debug: ";
         break;
     default:
+	pfx = "";
 	break;
     }
 
-    vfprintf(error_file, fmt, args);
-    putc('\n', error_file);
+    vsnprintf(msg, sizeof msg, fmt, args);
+
+    fprintf(error_file, "%s%s\n", pfx, msg);
+
+    if (*listname)
+	nasmlist.error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
@@ -1958,7 +1959,7 @@ static void report_error_common(int severity, const char *fmt,
         /* no further action, by definition */
         break;
     case ERR_WARNING:
-	if (!suppressed[0])	/* Treat warnings as errors */
+	if (warning_on[0])	/* Treat warnings as errors */
 	    terminate_after_phase = true;
 	break;
     case ERR_NONFATAL:

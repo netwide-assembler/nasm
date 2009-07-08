@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-fbin -oxchg.bin -O0; Files=.stdout .stderr xchg.bin
-;Testname=optimized;   Arguments=-fbin -oxchg.bin -Ox; Files=.stdout .stderr xchg.bin
+;Testname=unoptimized; Arguments=-fbin -oxchg.bin -O0; Files=stdout stderr xchg.bin
+;Testname=optimized;   Arguments=-fbin -oxchg.bin -Ox; Files=stdout stderr xchg.bin
 
 %macro x 2
 	xchg %1,%2

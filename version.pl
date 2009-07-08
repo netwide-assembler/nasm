@@ -1,4 +1,37 @@
 #!/usr/bin/perl
+## --------------------------------------------------------------------------
+##   
+##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   See the file AUTHORS included with the NASM distribution for
+##   the specific copyright holders.
+##
+##   Redistribution and use in source and binary forms, with or without
+##   modification, are permitted provided that the following
+##   conditions are met:
+##
+##   * Redistributions of source code must retain the above copyright
+##     notice, this list of conditions and the following disclaimer.
+##   * Redistributions in binary form must reproduce the above
+##     copyright notice, this list of conditions and the following
+##     disclaimer in the documentation and/or other materials provided
+##     with the distribution.
+##     
+##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+##     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+##     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+##     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+##     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+##     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+##     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+##     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+##     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+##     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+##     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+## --------------------------------------------------------------------------
+
 #
 # version.pl
 #
@@ -60,7 +93,7 @@ if ( $line =~ /^([0-9]+)\.([0-9]+)(.*)$/ ) {
     die "$0: Invalid input format\n";
 }
 
-if ($tail =~ /^\-([0-9]+)/) {
+if ($tail =~ /^\-([0-9]+)$/) {
     $snapshot = $1;
 } else {
     undef $snapshot;
@@ -86,8 +119,13 @@ if ($is_rc) {
 
 $nasm_id = ($nmaj << 24)+($nmin << 16)+($nsmin << 8)+$nplvl;
 
-$mangled_ver = sprintf("%d.%02d.%02d", $nmaj, $nmin, $nsmin);
-$mangled_ver .= '.'.$nplvl if ($nplvl != 0);
+$mangled_ver = sprintf("%d.%02d", $nmaj, $nmin);
+if ($nsmin || $nplvl || defined($snapshot)) {
+    $mangled_ver .= sprintf(".%02d", $nsmin);
+    if ($nplvl || defined($snapshot)) {
+	$mangled_ver .= '.'.$nplvl;
+    }
+}
 ($mtail = $tail) =~ tr/-/./;
 $mangled_ver .= $mtail;
 
@@ -130,6 +168,12 @@ if ( $what eq 'h' ) {
     printf "NASM_MINOR_VER=%d\n", $nmin;
     printf "NASM_SUBMINOR_VER=%d\n", $nsmin;
     printf "NASM_PATCHLEVEL_VER=%d\n", $nplvl;
+} elsif ( $what eq 'nsis' ) {
+    printf "!define VERSION \"%s\"\n", $line;
+    printf "!define MAJOR_VER %d\n", $nmin;
+    printf "!define MINOR_VER %d\n", $nmin;
+    printf "!define SUBMINOR_VER %d\n", $nsmin;
+    printf "!define PATCHLEVEL_VER %d\n", $nplvl;
 } elsif ( $what eq 'id' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {

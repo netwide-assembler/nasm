@@ -4,10 +4,10 @@ Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@NASM_MANGLED_VER@@
 Release: 1
-License: LGPL
+License: BSD
 Group: Development/Languages
-Source: ftp://download.sourceforge.net/pub/sourceforge/nasm/nasm-%{nasm_version}.tar.bz2
-URL: http://nasm.sourceforge.net/
+Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.bz2
+URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 BuildPrereq: perl
@@ -88,12 +88,17 @@ fi
 %{_bindir}/rdf2bin
 %{_bindir}/rdf2com
 %{_bindir}/rdf2ihx
+%{_bindir}/rdf2ith
+%{_bindir}/rdf2srec
 %{_bindir}/rdfdump
 %{_bindir}/rdflib
 %{_bindir}/rdx
 %{_mandir}/man1/ldrdf.1*
 %{_mandir}/man1/rdf2bin.1*
 %{_mandir}/man1/rdf2com.1*
+%{_mandir}/man1/rdf2ihx.1*
+%{_mandir}/man1/rdf2ith.1*
+%{_mandir}/man1/rdf2srec.1*
 %{_mandir}/man1/rdfdump.1*
 %{_mandir}/man1/rdflib.1*
 %{_mandir}/man1/rdx.1*

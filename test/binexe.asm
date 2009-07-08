@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -obinexe.exe -i../misc/; Files=.stdout .stderr binexe.exe
-;Testname=optimized;   Arguments=-Ox -fbin -obinexe.exe -i../misc/; Files=.stdout .stderr binexe.exe
+;Testname=unoptimized; Arguments=-O0 -fbin -obinexe.exe -i../misc/; Files=stdout stderr binexe.exe
+;Testname=optimized;   Arguments=-Ox -fbin -obinexe.exe -i../misc/; Files=stdout stderr binexe.exe
 
 ; Demonstration of how to write an entire .EXE format program by using
 ; the `exebin.mac' macro package.

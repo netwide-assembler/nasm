@@ -1,10 +1,39 @@
-/* outaout.c	output routines for the Netwide Assembler to produce
- *		Linux a.out object files
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * outaout.c	output routines for the Netwide Assembler to produce
+ *		Linux a.out object files
  */
 
 #include "compiler.h"
@@ -20,7 +49,8 @@
 #include "saa.h"
 #include "raa.h"
 #include "stdscan.h"
-#include "outform.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #if defined OF_AOUT || defined OF_AOUTB
 
@@ -603,11 +633,7 @@ static void aout_out(int32_t segto, const void *data,
     if (!s && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        sbss.len += size;
+        sbss.len += realsize(type, size);
         return;
     }
 
@@ -905,7 +931,7 @@ static void aout_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-extern macros_t generic_stdmac[];
+extern macros_t aout_stdmac[];
 
 static int aout_set_info(enum geninfo type, char **val)
 {
@@ -920,10 +946,10 @@ static int aout_set_info(enum geninfo type, char **val)
 struct ofmt of_aout = {
     "Linux a.out object files",
     "aout",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
-    generic_stdmac,
+    aout_stdmac,
     aout_init,
     aout_set_info,
     aout_out,
@@ -942,10 +968,10 @@ struct ofmt of_aout = {
 struct ofmt of_aoutb = {
     "NetBSD/FreeBSD a.out object files",
     "aoutb",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
-    generic_stdmac,
+    aout_stdmac,
     aoutb_init,
     aout_set_info,
     aout_out,

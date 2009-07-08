@@ -1,11 +1,38 @@
-/* listing.c    listing file generator for the Netwide Assembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- * initial version 2/vii/97 by Simon Tatham
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * listing.c    listing file generator for the Netwide Assembler
  */
 
 #include "compiler.h"
@@ -38,7 +65,9 @@ static char xdigit[] = "0123456789ABCDEF";
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
 static char listline[LIST_MAX_LEN];
-static int listlinep;
+static bool listlinep;
+
+static char listerror[LIST_MAX_LEN];
 
 static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
@@ -55,6 +84,8 @@ static FILE *listfp;
 
 static void list_emit(void)
 {
+    int i;
+
     if (!listlinep && !listdata[0])
         return;
 
@@ -78,18 +109,35 @@ static void list_emit(void)
     putc('\n', listfp);
     listlinep = false;
     listdata[0] = '\0';
+
+    if (listerror[0]) {
+	fprintf(listfp, "%6"PRId32"          ", ++listlineno);
+	for (i = 0; i < LIST_HEXBIT; i++)
+	    putc('*', listfp);
+	
+	if (listlevel_e)
+	    fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
+		    listlevel_e);
+	else
+	    fprintf(listfp, "     ");
+
+	fprintf(listfp, "  %s\n", listerror);
+	listerror[0] = '\0';
+    }
 }
 
 static void list_init(char *fname, efunc error)
 {
     listfp = fopen(fname, "w");
     if (!listfp) {
-        error(ERR_NONFATAL, "unable to open listing file `%s'", fname);
+        error(ERR_NONFATAL, "unable to open listing file `%s'",
+	      fname);
         return;
     }
 
     *listline = '\0';
     listlineno = 0;
+    *listerror = '\0';
     listp = true;
     listlevel = 0;
     suppress = 0;
@@ -316,11 +364,24 @@ static void list_downlevel(int type)
     }
 }
 
+static void list_error(int severity, const char *pfx, const char *msg)
+{
+    if (!listfp)
+	return;
+
+    snprintf(listerror, sizeof listerror, "%s%s", pfx, msg);
+
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+	list_emit();
+}
+
+
 ListGen nasmlist = {
     list_init,
     list_cleanup,
     list_output,
     list_line,
     list_uplevel,
-    list_downlevel
+    list_downlevel,
+    list_error
 };

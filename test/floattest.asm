@@ -1,4 +1,4 @@
-;Testname=optimized; Arguments=-Ox -felf -ofloattest.o; Files=.stdout .stderr floattest.o
+;Testname=optimized; Arguments=-Ox -felf -ofloattest.o; Files=stdout stderr floattest.o
 
 ; nasm -O99 -f elf32 floattest.asm
 ; ld -m elf_i386 -o floattest floattest.o -I/lib/ld-linux.so.2 -lc

@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -ofloat8.bin; Files=.stdout .stderr float8.bin
-;Testname=optimized;   Arguments=-Ox -fbin -ofloat8.bin; Files=.stdout .stderr float8.bin
+;Testname=unoptimized; Arguments=-O0 -fbin -ofloat8.bin; Files=stdout stderr float8.bin
+;Testname=optimized;   Arguments=-Ox -fbin -ofloat8.bin; Files=stdout stderr float8.bin
 
 ; Test of 8-bit floating-point constants
 

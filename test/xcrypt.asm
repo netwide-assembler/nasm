@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -oxcrypt.bin; Files=.stdout .stderr xcrypt.bin
+;Testname=test; Arguments=-fbin -oxcrypt.bin; Files=stdout stderr xcrypt.bin
 ; BR 2029829
 
 	bits 32

@@ -1,10 +1,39 @@
-/* outbin.c output routines for the Netwide Assembler to produce
- *    flat-form binary files
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * outbin.c output routines for the Netwide Assembler to produce
+ *    flat-form binary files
  */
 
 /* This is the extended version of NASM's original binary output
@@ -58,14 +87,15 @@
 #include "stdscan.h"
 #include "labels.h"
 #include "eval.h"
-#include "outform.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #ifdef OF_BIN
 
-struct ofmt *bin_get_ofmt();    /* Prototype goes here since no header file. */
-
 static FILE *fp, *rf = NULL;
 static efunc error;
+static struct ofmt *my_ofmt;
+static void (*do_output)(void);
 
 /* Section flags keep track of which attributes the user has defined. */
 #define START_DEFINED       0x001
@@ -246,10 +276,9 @@ static void bin_cleanup(int debuginfo)
         }
         /* Do some special pre-processing on nobits sections' attributes. */
         if (s->flags & (START_DEFINED | ALIGN_DEFINED | FOLLOWS_DEFINED)) {     /* Check for a mixture of real and virtual section attributes. */
-            if (s->
-                flags & (VSTART_DEFINED | VALIGN_DEFINED |
-                         VFOLLOWS_DEFINED))
-                error(ERR_FATAL,
+            if (s->flags & (VSTART_DEFINED | VALIGN_DEFINED |
+			    VFOLLOWS_DEFINED))
+                error(ERR_FATAL|ERR_NOFILE,
                       "cannot mix real and virtual attributes"
                       " in nobits section (%s)", s->name);
             /* Real and virtual attributes mean the same thing for nobits sections. */
@@ -320,11 +349,11 @@ static void bin_cleanup(int debuginfo)
              s && strcmp(s->name, g->follows);
              sp = &s->next, s = s->next) ;
         if (!s)
-            error(ERR_FATAL, "section %s follows an invalid or"
+            error(ERR_FATAL|ERR_NOFILE, "section %s follows an invalid or"
                   " unknown section (%s)", g->name, g->follows);
         if (s->next && (s->next->flags & FOLLOWS_DEFINED) &&
             !strcmp(s->name, s->next->follows))
-            error(ERR_FATAL, "sections %s and %s can't both follow"
+            error(ERR_FATAL|ERR_NOFILE, "sections %s and %s can't both follow"
                   " section %s", g->name, s->next->name, s->name);
         /* Find the end of the current follows group (gs). */
         for (gsp = &g->next, gs = g->next;
@@ -364,21 +393,18 @@ static void bin_cleanup(int debuginfo)
     /* Step 3: Compute start addresses for all progbits sections. */
 
     /* Make sure we have an origin and a start address for the first section. */
-    if (origin_defined)
-        switch (sections->flags & (START_DEFINED | ALIGN_DEFINED)) {
-        case START_DEFINED | ALIGN_DEFINED:
-        case START_DEFINED:
+    if (origin_defined) {
+	if (sections->flags & START_DEFINED) {
             /* Make sure this section doesn't begin before the origin. */
             if (sections->start < origin)
-                error(ERR_FATAL, "section %s begins"
+                error(ERR_FATAL|ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
-            break;
-        case ALIGN_DEFINED:
+	} else if (sections->flags & ALIGN_DEFINED) {
             sections->start = ((origin + sections->align - 1) &
                                ~(sections->align - 1));
-            break;
-        case 0:
+	} else {
             sections->start = origin;
+	}
     } else {
         if (!(sections->flags & START_DEFINED))
             sections->start = 0;
@@ -427,11 +453,14 @@ static void bin_cleanup(int debuginfo)
         pend = g->start + g->length;
         /* Check for section overlap. */
         if (s) {
-            if (g->start > s->start)
-                error(ERR_FATAL, "sections %s ~ %s and %s overlap!",
+	    if (s->start < origin)
+		error(ERR_FATAL|ERR_NOFILE, "section %s beings before program origin",
+		      s->name);
+	    if (g->start > s->start)
+                error(ERR_FATAL|ERR_NOFILE, "sections %s ~ %s and %s overlap!",
                       gs->name, g->name, s->name);
             if (pend > s->start)
-                error(ERR_FATAL, "sections %s and %s overlap!",
+                error(ERR_FATAL|ERR_NOFILE, "sections %s and %s overlap!",
                       g->name, s->name);
         }
         /* Remember this section as the latest >0 length section. */
@@ -444,11 +473,13 @@ static void bin_cleanup(int debuginfo)
     for (s = sections; s->next; s = s->next) ;
     s->next = nobits;
     last_progbits = s;
-    /* Scan for sections that don't have a vstart address.  If we find one we'll
-     * attempt to compute its vstart.  If we can't compute the vstart, we leave
-     * it alone and come back to it in a subsequent scan.  We continue scanning
-     * and re-scanning until we've gone one full cycle without computing any
-     * vstarts. */
+    /*
+     * Scan for sections that don't have a vstart address.  If we find
+     * one we'll attempt to compute its vstart.  If we can't compute
+     * the vstart, we leave it alone and come back to it in a
+     * subsequent scan.  We continue scanning and re-scanning until
+     * we've gone one full cycle without computing any vstarts.
+     */
     do {                        /* Do one full scan of the sections list. */
         for (h = 0, g = sections; g; g = g->next) {
             if (g->flags & VSTART_DEFINED)
@@ -458,13 +489,14 @@ static void bin_cleanup(int debuginfo)
                 for (s = sections; s && strcmp(g->vfollows, s->name);
                      s = s->next) ;
                 if (!s)
-                    error(ERR_FATAL,
+                    error(ERR_FATAL|ERR_NOFILE,
                           "section %s vfollows unknown section (%s)",
                           g->name, g->vfollows);
             } else if (g->ifollows != NULL)
                 for (s = sections; s && (s != g->ifollows); s = s->next) ;
-            /* The .bss section is the only one with ifollows = NULL.  In this case we
-             * implicitly follow the last progbits section.  */
+            /* The .bss section is the only one with ifollows = NULL.
+	       In this case we implicitly follow the last progbits
+	       section.  */
             else
                 s = last_progbits;
 
@@ -475,9 +507,8 @@ static void bin_cleanup(int debuginfo)
                     g->flags |= VALIGN_DEFINED;
                 }
                 /* Compute the vstart address. */
-                g->vstart =
-                    (s->vstart + s->length + g->valign - 1) & ~(g->valign -
-                                                                1);
+                g->vstart = (s->vstart + s->length + g->valign - 1)
+		    & ~(g->valign - 1);
                g->flags |= VSTART_DEFINED;
                 h++;
                 /* Start and vstart mean the same thing for nobits sections. */
@@ -498,7 +529,7 @@ static void bin_cleanup(int debuginfo)
         }
     }
     if (h)
-        error(ERR_FATAL, "circular vfollows path detected");
+        error(ERR_FATAL|ERR_NOFILE, "circular vfollows path detected");
 
 #ifdef DEBUG
     fprintf(stdout,
@@ -561,26 +592,13 @@ static void bin_cleanup(int debuginfo)
     }
 
     /* Step 6: Write the section data to the output file. */
-
-    /* Write the progbits sections to the output file. */
-    for (pend = origin, s = sections; s && (s->flags & TYPE_PROGBITS); s = s->next) {   /* Skip zero-length sections. */
-        if (s->length == 0)
-            continue;
-        /* Pad the space between sections. */
-        for (h = s->start - pend; h; h--)
-            fputc('\0', fp);
-        /* Write the section to the output file. */
-        if (s->length > 0)
-            saa_fpwrite(s->contents, fp);
-        pend = s->start + s->length;
-    }
-    /* Done writing the file, so close it. */
-    fclose(fp);
+    do_output();
+    fclose(fp);			/* Done with the output file */
 
     /* Step 7: Generate the map file. */
 
     if (map_control) {
-        const char *not_defined = { "not defined" };
+        static const char not_defined[] = "not defined";
 
         /* Display input and output file names. */
         fprintf(rf, "\n- NASM Map file ");
@@ -634,22 +652,22 @@ static void bin_cleanup(int debuginfo)
                 if (s->flags & ALIGN_DEFINED)
                     fprintf(rf, "%16"PRIX64"", s->align);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nfollows:   ");
                 if (s->flags & FOLLOWS_DEFINED)
                     fprintf(rf, "%s", s->follows);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nvstart:    %16"PRIX64"\nvalign:    ", s->vstart);
                 if (s->flags & VALIGN_DEFINED)
                     fprintf(rf, "%16"PRIX64"", s->valign);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\nvfollows:  ");
                 if (s->flags & VFOLLOWS_DEFINED)
                     fprintf(rf, "%s", s->vfollows);
                 else
-                    fprintf(rf, not_defined);
+                    fputs(not_defined, rf);
                 fprintf(rf, "\n\n");
             }
         }
@@ -798,20 +816,8 @@ static void bin_out(int32_t segto, const void *data,
         s->length += size;
     } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
 	       type == OUT_REL8ADR) {
-	switch (type) {
-	case OUT_REL2ADR:
-	    size = 2;
-	    break;
-	case OUT_REL4ADR:
-	    size = 4;
-	    break;
-	case OUT_REL8ADR:
-	    size = 8;
-	    break;
-	default:
-	    size = 0;		/* Shut up warning */
-	    break;
-	}
+	int64_t addr = *(int64_t *)data - size;
+	size = realsize(type, size);
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 error(ERR_NONFATAL, "binary output format does not support"
@@ -824,7 +830,7 @@ static void bin_out(int32_t segto, const void *data,
         if (s->flags & TYPE_PROGBITS) {
             add_reloc(s, size, segment, segto);
             p = mydata;
-	    WRITEADDR(p, *(int64_t *)data - size - s->length, size);
+	    WRITEADDR(p, addr - s->length, size);
             saa_wbytes(s->contents, mydata, size);
         }
         s->length += size;
@@ -1203,12 +1209,12 @@ static void bin_define_section_labels(void)
         /* section.<name>.start */
         strcpy(label_name + base_len, ".start");
         define_label(label_name, sec->start_index, 0L,
-                     NULL, 0, 0, bin_get_ofmt(), error);
+                     NULL, 0, 0, my_ofmt, error);
 
         /* section.<name>.vstart */
         strcpy(label_name + base_len, ".vstart");
         define_label(label_name, sec->vstart_index, 0L,
-                     NULL, 0, 0, bin_get_ofmt(), error);
+                     NULL, 0, 0, my_ofmt, error);
 
         nasm_free(label_name);
     }
@@ -1370,6 +1376,20 @@ static void bin_filename(char *inname, char *outname, efunc error)
     outfile = outname;
 }
 
+static void ith_filename(char *inname, char *outname, efunc error)
+{
+    standard_extension(inname, outname, ".ith", error);
+    infile = inname;
+    outfile = outname;
+}
+
+static void srec_filename(char *inname, char *outname, efunc error)
+{
+    standard_extension(inname, outname, ".srec", error);
+    infile = inname;
+    outfile = outname;
+}
+
 static int32_t bin_segbase(int32_t segment)
 {
     return segment;
@@ -1382,7 +1402,34 @@ static int bin_set_info(enum geninfo type, char **val)
     return 0;
 }
 
-static void bin_init(FILE * afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void binfmt_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval);
+struct ofmt of_bin, of_ith, of_srec;
+static void do_output_bin(void);
+static void do_output_ith(void);
+static void do_output_srec(void);
+
+static void bin_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_bin;
+    do_output = do_output_bin;
+    binfmt_init(afp, errfunc, ldef, eval);
+}
+
+static void ith_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_ith;
+    do_output = do_output_ith;
+    binfmt_init(afp, errfunc, ldef, eval);
+}    
+    
+static void srec_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
+{
+    my_ofmt   = &of_srec;
+    do_output = do_output_srec;
+    binfmt_init(afp, errfunc, ldef, eval);
+}
+
+static void binfmt_init(FILE *afp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
     fp = afp;
     error = errfunc;
@@ -1414,10 +1461,224 @@ static void bin_init(FILE * afp, efunc errfunc, ldfunc ldef, evalfunc eval)
     last_section->vstart_index = current_section = seg_alloc();
 }
 
+/* Generate binary file output */
+static void do_output_bin(void)
+{
+    struct Section *s;
+    uint64_t addr = origin;
+
+    /* Write the progbits sections to the output file. */
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+        /* Pad the space between sections. */
+	nasm_assert(addr <= s->start);
+	fwritezero(s->start - addr, fp);
+
+        /* Write the section to the output file. */
+	saa_fpwrite(s->contents, fp);
+        
+	/* Keep track of the current file position */
+	addr = s->start + s->length;
+    }
+}
+
+/* Generate Intel hex file output */
+static int write_ith_record(unsigned int len, uint16_t addr,
+			    uint8_t type, void *data)
+{
+    char buf[1+2+4+2+255*2+2+2];
+    char *p = buf;
+    uint8_t csum, *dptr = data;
+    unsigned int i;
+
+    nasm_assert(len <= 255);
+
+    csum = len + addr + (addr >> 8) + type;
+    for (i = 0; i < len; i++)
+	csum += dptr[i];
+    csum = -csum;
+
+    p += sprintf(p, ":%02X%04X%02X", len, addr, type);
+    for (i = 0; i < len; i++)
+	p += sprintf(p, "%02X", dptr[i]);
+    p += sprintf(p, "%02X\n", csum);
+
+    if (fwrite(buf, 1, p-buf, fp) != (size_t)(p-buf))
+	return -1;
+
+    return 0;
+}
+
+static void do_output_ith(void)
+{
+    uint8_t buf[32];
+    struct Section *s;
+    uint64_t addr, hiaddr, hilba;
+    uint64_t length;
+    unsigned int chunk;
+
+    /* Write the progbits sections to the output file. */
+    hilba = 0;
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr   = s->start;
+	length = s->length;
+	saa_rewind(s->contents);
+
+	while (length) {
+	    hiaddr = addr >> 16;
+	    if (hiaddr != hilba) {
+		buf[0] = hiaddr >> 8;
+		buf[1] = hiaddr;
+		write_ith_record(2, 0, 4, buf);
+		hilba = hiaddr;
+	    }
+
+	    chunk = 32 - (addr & 31);
+	    if (length < chunk)
+		chunk = length;
+
+	    saa_rnbytes(s->contents, buf, chunk);
+	    write_ith_record(chunk, (uint16_t)addr, 0, buf);
+
+	    addr += chunk;
+	    length -= chunk;
+	}
+    }
+
+    /* Write closing record */
+    write_ith_record(0, 0, 1, NULL);
+}
+
+/* Generate Motorola S-records */
+static int write_srecord(unsigned int len,  unsigned int alen,
+			 uint32_t addr, uint8_t type, void *data)
+{
+    char buf[2+2+8+255*2+2+2];
+    char *p = buf;
+    uint8_t csum, *dptr = data;
+    unsigned int i;
+
+    nasm_assert(len <= 255);
+
+    switch (alen) {
+    case 2:
+	addr &= 0xffff;
+	break;
+    case 3:
+	addr &= 0xffffff;
+	break;
+    case 4:
+	break;
+    default:
+	nasm_assert(0);
+	break;
+    }
+
+    csum = (len+alen+1) + addr + (addr >> 8) + (addr >> 16) + (addr >> 24);
+    for (i = 0; i < len; i++)
+	csum += dptr[i];
+    csum = 0xff-csum;
+
+    p += sprintf(p, "S%c%02X%0*X", type, len+alen+1, alen*2, addr);
+    for (i = 0; i < len; i++)
+	p += sprintf(p, "%02X", dptr[i]);
+    p += sprintf(p, "%02X\n", csum);
+
+    if (fwrite(buf, 1, p-buf, fp) != (size_t)(p-buf))
+	return -1;
+
+    return 0;
+}
+
+static void do_output_srec(void)
+{
+    uint8_t buf[32];
+    struct Section *s;
+    uint64_t addr, maxaddr;
+    uint64_t length;
+    int alen;
+    unsigned int chunk;
+    char dtype, etype;
+
+    maxaddr = 0;
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr = s->start + s->length - 1;
+	if (addr > maxaddr)
+	    maxaddr = addr;
+    }
+
+    if (maxaddr <= 0xffff) {
+	alen  = 2;
+	dtype = '1';		/* S1 = 16-bit data */
+	etype = '9';		/* S9 = 16-bit end */
+    } else if (maxaddr <= 0xffffff) {
+	alen = 3;
+	dtype = '2';		/* S2 = 24-bit data */
+	etype = '8';		/* S8 = 24-bit end */
+    } else {
+	alen = 4;
+	dtype = '3';		/* S3 = 32-bit data */
+	etype = '7';		/* S7 = 32-bit end */
+    }
+
+    /* Write head record */
+    write_srecord(0, 2, 0, '0', NULL);
+
+    /* Write the progbits sections to the output file. */
+    for (s = sections; s; s = s->next) {
+	/* Skip non-progbits sections */
+	if (!(s->flags & TYPE_PROGBITS))
+	    continue;
+	/* Skip zero-length sections */
+	if (s->length == 0)
+            continue;
+
+	addr   = s->start;
+	length = s->length;
+	saa_rewind(s->contents);
+
+	while (length) {
+	    chunk = 32 - (addr & 31);
+	    if (length < chunk)
+		chunk = length;
+
+	    saa_rnbytes(s->contents, buf, chunk);
+	    write_srecord(chunk, alen, (uint32_t)addr, dtype, buf);
+
+	    addr += chunk;
+	    length -= chunk;
+	}
+    }
+
+    /* Write closing record */
+    write_srecord(0, alen, 0, etype, NULL);
+}
+
+
 struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     bin_stdmac,
@@ -1432,10 +1693,40 @@ struct ofmt of_bin = {
     bin_cleanup
 };
 
-/* This is needed for bin_define_section_labels() */
-struct ofmt *bin_get_ofmt(void)
-{
-    return &of_bin;
-}
+struct ofmt of_ith = {
+    "Intel hex",
+    "ith",
+    OFMT_TEXT,
+    null_debug_arr,
+    &null_debug_form,
+    bin_stdmac,
+    ith_init,
+    bin_set_info,
+    bin_out,
+    bin_deflabel,
+    bin_secname,
+    bin_segbase,
+    bin_directive,
+    ith_filename,
+    bin_cleanup
+};
+
+struct ofmt of_srec = {
+    "Motorola S-records",
+    "srec",
+    0,
+    null_debug_arr,
+    &null_debug_form,
+    bin_stdmac,
+    srec_init,
+    bin_set_info,
+    bin_out,
+    bin_deflabel,
+    bin_secname,
+    bin_segbase,
+    bin_directive,
+    srec_filename,
+    bin_cleanup
+};
 
 #endif                          /* #ifdef OF_BIN */

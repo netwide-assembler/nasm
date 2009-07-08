@@ -1,3 +1,36 @@
+;; --------------------------------------------------------------------------
+;;   
+;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+;;   See the file AUTHORS included with the NASM distribution for
+;;   the specific copyright holders.
+;;
+;;   Redistribution and use in source and binary forms, with or without
+;;   modification, are permitted provided that the following
+;;   conditions are met:
+;;
+;;   * Redistributions of source code must retain the above copyright
+;;     notice, this list of conditions and the following disclaimer.
+;;   * Redistributions in binary form must reproduce the above
+;;     copyright notice, this list of conditions and the following
+;;     disclaimer in the documentation and/or other materials provided
+;;     with the distribution.
+;;     
+;;     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+;;     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+;;     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+;;     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+;;     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+;;     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+;;     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+;;     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+;;     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+;;     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+;;     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+;;     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+;;     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;;
+;; --------------------------------------------------------------------------
+
 ; Standard macro set for NASM -*- nasm -*-
 
 ; Macros to make NASM ignore some TASM directives before the first include
@@ -39,14 +72,14 @@
 	  __SECT__
 %endmacro
 
-%imacro struc 1.nolist
+%imacro struc 1-2.nolist 0
 %push
 %define %$strucname %1
-[absolute 0]
+[absolute %2]
 %$strucname:			; allow definition of `.member' to work sanely
-%endmacro 
+%endmacro
 %imacro endstruc 0.nolist
-%{$strucname}_size:
+%{$strucname}_size equ ($-%$strucname)
 %pop
 __SECT__
 %endmacro
@@ -57,7 +90,7 @@ __SECT__
 %$strucstart:
 %endmacro
 %imacro at 1-2+.nolist
-	  times %1-($-%$strucstart) db 0
+	  times (%1-%$strucname)-($-%$strucstart) db 0
 	  %2
 %endmacro
 %imacro iend 0.nolist
@@ -66,13 +99,13 @@ __SECT__
 %endmacro
 
 %imacro align 1-2+.nolist nop
-	  times ($$-$) % (%1) %2
+	  times (((%1) - (($-$$) % (%1))) % (%1)) %2
 %endmacro
 %imacro alignb 1-2+.nolist
 	  %ifempty %2
-	  	resb ($$-$) % (%1)
+		resb (((%1) - (($-$$) % (%1))) % (%1))
 	  %else
-		times ($$-$) % (%1) %2
+		times (((%1) - (($-$$) % (%1))) % (%1)) %2
 	  %endif
 %endmacro
 

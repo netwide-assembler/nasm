@@ -1,9 +1,38 @@
-/* nasmlib.h	header file for nasmlib.c
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * nasmlib.h	header file for nasmlib.c
  */
 
 #ifndef NASM_NASMLIB_H
@@ -71,14 +100,15 @@ extern efunc nasm_malloc_error;
 #define ERR_NOFILE	0x00000010      /* don't give source file name/line */
 #define ERR_USAGE	0x00000020      /* print a usage message */
 #define ERR_PASS1	0x00000040      /* only print this error on pass one */
-#define ERR_NO_SEVERITY	0x00000080      /* suppress printing severity */
+#define ERR_PASS2	0x00000080
+#define ERR_NO_SEVERITY	0x00000100      /* suppress printing severity */
 
 /*
  * These codes define specific types of suppressible warning.
  */
 
-#define ERR_WARN_MASK	0x0000FF00      /* the mask for this feature */
-#define ERR_WARN_SHR 	8               /* how far to shift right */
+#define ERR_WARN_MASK	0xFFFFF000      /* the mask for this feature */
+#define ERR_WARN_SHR 	12               /* how far to shift right */
 
 #define WARN(x) ((x) << ERR_WARN_SHR)
 
@@ -93,7 +123,8 @@ extern efunc nasm_malloc_error;
 #define ERR_WARN_FL_DENORM	WARN( 8) /* FP denormal */
 #define ERR_WARN_FL_UNDERFLOW	WARN( 9) /* FP underflow */
 #define ERR_WARN_FL_TOOLONG	WARN(10) /* FP too many digits */
-#define ERR_WARN_MAX	10               /* the highest numbered one */
+#define ERR_WARN_USER		WARN(11) /* %warning directives */
+#define ERR_WARN_MAX		11	 /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
@@ -109,14 +140,14 @@ void *nasm_zalloc(size_t);
 void *nasm_realloc(void *, size_t);
 void nasm_free(void *);
 char *nasm_strdup(const char *);
-char *nasm_strndup(char *, size_t);
+char *nasm_strndup(const char *, size_t);
 #else
-void *nasm_malloc_log(char *, int, size_t);
-void *nasm_zalloc_log(char *, int, size_t);
-void *nasm_realloc_log(char *, int, void *, size_t);
-void nasm_free_log(char *, int, void *);
-char *nasm_strdup_log(char *, int, const char *);
-char *nasm_strndup_log(char *, int, char *, size_t);
+void *nasm_malloc_log(const char *, int, size_t);
+void *nasm_zalloc_log(const char *, int, size_t);
+void *nasm_realloc_log(const char *, int, void *, size_t);
+void nasm_free_log(const char *, int, void *);
+char *nasm_strdup_log(const char *, int, const char *);
+char *nasm_strndup_log(const char *, int, const char *, size_t);
 #define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
 #define nasm_zalloc(x) nasm_zalloc_log(__FILE__,__LINE__,x)
 #define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
@@ -124,6 +155,16 @@ char *nasm_strndup_log(char *, int, char *, size_t);
 #define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
 #define nasm_strndup(x,y) nasm_strndup_log(__FILE__,__LINE__,x,y)
 #endif
+
+/*
+ * NASM assert failure
+ */
+no_return nasm_assert_failed(const char *, int, const char *);
+#define nasm_assert(x)						\
+    do {							\
+	if (unlikely(!(x)))					\
+	    nasm_assert_failed(__FILE__,__LINE__,#x);		\
+    } while (0)
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or
@@ -319,12 +360,12 @@ int32_t src_get_linnum(void);
  */
 int src_get(int32_t *xline, char **xname);
 
-char *nasm_strcat(char *one, char *two);
-
-void null_debug_routine(const char *directive, const char *params);
-extern struct dfmt null_debug_form;
-extern struct dfmt *null_debug_arr[2];
+char *nasm_strcat(const char *one, const char *two);
 
 const char *prefix_name(int);
+
+#define ZERO_BUF_SIZE	4096
+extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
+size_t fwritezero(size_t bytes, FILE *fp);
 
 #endif

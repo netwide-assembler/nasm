@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -omovnti.bin; Files=.stdout .stderr movnti.bin
+;Testname=test; Arguments=-fbin -omovnti.bin; Files=stdout stderr movnti.bin
 ; BR 2028995
 
 	bits 16

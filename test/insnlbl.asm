@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -oinsnlbl.bin; Files=.stdout .stderr insnlbl.bin
+;Testname=test; Arguments=-fbin -oinsnlbl.bin; Files=stdout stderr insnlbl.bin
 
 ;
 ; Test "instruction as label" -- make opcodes legal as labels if

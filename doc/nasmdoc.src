@@ -1,11 +1,45 @@
+\# --------------------------------------------------------------------------
+\#   
+\#   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+\#   See the file AUTHORS included with the NASM distribution for
+\#   the specific copyright holders.
+\#
+\#   Redistribution and use in source and binary forms, with or without
+\#   modification, are permitted provided that the following
+\#   conditions are met:
+\#
+\#   * Redistributions of source code must retain the above copyright
+\#     notice, this list of conditions and the following disclaimer.
+\#   * Redistributions in binary form must reproduce the above
+\#     copyright notice, this list of conditions and the following
+\#     disclaimer in the documentation and/or other materials provided
+\#     with the distribution.
+\#     
+\#     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+\#     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+\#     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+\#     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+\#     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+\#     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+\#     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+\#     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+\#     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+\#     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+\#     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+\#     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+\#     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\#
+\# --------------------------------------------------------------------------
 \#
 \# Source code to NASM documentation
 \#
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{2008}
+\M{year}{1996-2009}
 \M{author}{The NASM Development Team}
-\M{license}{All rights reserved. This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
+\M{copyright_tail}{-- All Rights Reserved}
+\M{license}{This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
+\M{auxinfo}{This release is dedicated to the memory of Charles A. Crayne.  We miss you, Chuck.}
 \M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
@@ -22,7 +56,7 @@
 \IR{-MP} \c{-MP} option
 \IR{-MQ} \c{-MQ} option
 \IR{-MT} \c{-MT} option
-\IR{-On} \c{-On} option
+\IR{-O} \c{-O} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
 \IR{-X} \c{-X} option
@@ -38,6 +72,7 @@
 \IR{-s} \c{-s} option
 \IR{-u} \c{-u} option
 \IR{-v} \c{-v} option
+\IR{-W} \c{-W} option
 \IR{-w} \c{-w} option
 \IR{-y} \c{-y} option
 \IR{-Z} \c{-Z} option
@@ -285,12 +320,39 @@ know who you are), and we'll improve it out of all recognition.
 Again.
 
 
-\S{legal} License Conditions
+\S{legal} \i{License} Conditions
 
-Please see the file \c{COPYING}, supplied as part of any NASM
-distribution archive, for the \i{license} conditions under which you
-may use NASM.  NASM is now under the so-called GNU Lesser General
-Public License, LGPL.
+Please see the file \c{LICENSE}, supplied as part of any NASM
+distribution archive, for the license conditions under which you may
+use NASM.  NASM is now under the so-called 2-clause BSD license, also
+known as the simplified BSD license.
+
+Copyright 1996-2009 the NASM Authors - All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+\b Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+\b Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+      
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 \H{contact} Contact Information
@@ -300,32 +362,20 @@ team of developers, accessible through the \c{nasm-devel} mailing list
 (see below for the link).
 If you want to report a bug, please read \k{bugs} first.
 
-NASM has a \i{WWW page} at
-\W{http://nasm.sourceforge.net}\c{http://nasm.sourceforge.net}. If it's
-not there, google for us!
+NASM has a \i{website} at
+\W{http://www.nasm.us/}\c{http://www.nasm.us/}. If it's not there,
+google for us!
 
-
-The original authors are \i{e\-mail}able as
-\W{mailto:jules@dsf.org.uk}\c{jules@dsf.org.uk} and
-\W{mailto:anakin@pobox.com}\c{anakin@pobox.com}.
-The latter is no longer involved in the development team.
-
-\i{New releases} of NASM are uploaded to the official sites
-\W{http://nasm.sourceforge.net}\c{http://nasm.sourceforge.net}
-and to
-\W{ftp://ftp.kernel.org/pub/software/devel/nasm/}\i\c{ftp.kernel.org}
-and
-\W{ftp://ibiblio.org/pub/Linux/devel/lang/assemblers/}\i\c{ibiblio.org}.
+\i{New releases} of NASM are available from the official web site.
 
 Announcements are posted to
 \W{news:comp.lang.asm.x86}\i\c{comp.lang.asm.x86},
-\W{news:alt.lang.asm}\i\c{alt.lang.asm} and
-\W{news:comp.os.linux.announce}\i\c{comp.os.linux.announce}
+and to the web site
+\W{http://www.freshmeat.net/}\c{http://www.freshmeat.net/}.
 
 If you want information about NASM beta releases, and the current
-development status, please subscribe to the \i\c{nasm-devel} email list
-by registering at
-\W{http://sourceforge.net/projects/nasm}\c{http://sourceforge.net/projects/nasm}.
+development status, please subscribe to the \i\c{nasm-devel} email
+list; see link from the website.
 
 
 \H{install} Installation
@@ -480,7 +530,7 @@ an intervening space. For example:
 \c nasm -f bin driver.asm -odriver.sys
 
 Note that this is a small o, and is different from a capital O , which
-is used to specify the number of optimisation passes required. See \k{opt-On}.
+is used to specify the number of optimisation passes required. See \k{opt-O}.
 
 
 \S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
@@ -510,10 +560,10 @@ right. For example:
 
 \c nasm -f elf myfile.asm -l myfile.lst
 
-If a list file is selected, you may turn off listing for a 
+If a list file is selected, you may turn off listing for a
 section of your source with \c{[list -]}, and turn it back on
-with \c{[list +]}, (the default, obviously). There is no "user 
-form" (without the brackets). This can be used to list only 
+with \c{[list +]}, (the default, obviously). There is no "user
+form" (without the brackets). This can be used to list only
 sections of interest, avoiding excessively long listings.
 
 
@@ -588,7 +638,7 @@ A complete list of the available debug file formats for an output
 format can be seen by issuing the command \c{nasm -f <format> -y}.  Not
 all output formats currently support debugging output.  See \k{opt-y}.
 
-This should not be confused with the \c{-f dbg} output format option which 
+This should not be confused with the \c{-f dbg} output format option which
 is not built into NASM by default. For information on how
 to enable it when building from the sources, see \k{dbgfmt}.
 
@@ -596,25 +646,25 @@ to enable it when building from the sources, see \k{dbgfmt}.
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
 
 This option can be used to generate debugging information in the specified
-format. See \k{opt-F}. Using \c{-g} without \c{-F} results in emitting 
+format. See \k{opt-F}. Using \c{-g} without \c{-F} results in emitting
 debug info in the default format, if any, for the selected output format.
-If no debug information is currently implemented in the selected output 
+If no debug information is currently implemented in the selected output
 format, \c{-g} is \e{silently ignored}.
 
 
 \S{opt-X} The \i\c{-X} Option: Selecting an \i{Error Reporting Format}
 
-This option can be used to select an error reporting format for any 
+This option can be used to select an error reporting format for any
 error messages that might be produced by NASM.
 
 Currently, two error reporting formats may be selected.  They are
-the \c{-Xvc} option and the \c{-Xgnu} option.  The GNU format is 
+the \c{-Xvc} option and the \c{-Xgnu} option.  The GNU format is
 the default and looks like this:
 
-\c filename.asm:65: error: specific error message 
+\c filename.asm:65: error: specific error message
 
 where \c{filename.asm} is the name of the source file in which the
-error was detected, \c{65} is the source file line number on which 
+error was detected, \c{65} is the source file line number on which
 the error was detected, \c{error} is the severity of the error (this
 could be \c{warning}), and \c{specific error message} is a more
 detailed text message which should help pinpoint the exact problem.
@@ -625,7 +675,7 @@ Visual C++ and some other programs.  It looks like this:
 \c filename.asm(65) : error: specific error message
 
 where the only difference is that the line number is in parentheses
-instead of being delimited by colons.  
+instead of being delimited by colons.
 
 See also the \c{Visual C++} output format, \k{win32fmt}.
 
@@ -781,41 +831,38 @@ argument, instructs NASM to replace its powerful \i{preprocessor}
 with a \i{stub preprocessor} which does nothing.
 
 
-\S{opt-On} The \i\c{-On} Option: Specifying \i{Multipass Optimization}.
+\S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
 
-NASM defaults to being a two pass assembler. This means that if you
-have a complex source file which needs more than 2 passes to assemble
-optimally, you have to enable extra passes.
+NASM defaults to not optimizing operands which can fit into a signed byte.
+This means that if you want the shortest possible object code,
+you have to enable optimization.
 
-Using the \c{-O} option, you can tell NASM to carry out multiple passes.
-The syntax is:
+Using the \c{-O} option, you can tell NASM to carry out different
+levels of optimization.  The syntax is:
 
-\b \c{-O0} strict two-pass assembly, JMP and Jcc are handled more
-        like v0.98, except that backward JMPs are short, if possible.
-        Immediate operands take their long forms if a short form is
-        not specified.
+\b \c{-O0}: No optimization. All operands take their long forms,
+        if a short form is not specified, except conditional jumps.
+        This is intended to match NASM 0.98 behavior.
 
-\b \c{-O1} strict two-pass assembly, but forward branches are assembled
-        with code guaranteed to reach; may produce larger code than
-        -O0, but will produce successful assembly more often if
-        branch offset sizes are not specified.
-        Additionally, immediate operands which will fit in a signed byte
-        are optimized, unless the long form is specified.
+\b \c{-O1}: Minimal optimization. As above, but immediate operands
+        which will fit in a signed byte are optimized,
+        unless the long form is specified.  Conditional jumps default
+        to the long form unless otherwise specified.
 
-\b \c{-On} multi-pass optimization, minimize branch offsets; also will
-        minimize signed immediate bytes, overriding size specification
-        unless the \c{strict} keyword has been used (see \k{strict}).
-        The number specifies the maximum number of passes.  The more
-	passes, the better the code, but the slower is the assembly.
+\b \c{-Ox} (where \c{x} is the actual letter \c{x}): Multipass optimization.
+        Minimize branch offsets and signed immediate bytes,
+        overriding size specification unless the \c{strict} keyword
+        has been used (see \k{strict}).  For compatability with earlier
+        releases, the letter \c{x} may also be any number greater than
+        one. This number has no effect on the actual number of passes.
 
-\b \c{-Ox} where \c{x} is the actual letter \c{x}, indicates to NASM
-   	to do unlimited passes.
+The \c{-Ox} mode is recommended for most uses.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
 
 
-\S{opt-t} The \i\c{-t} option: Enable TASM Compatibility Mode
+\S{opt-t} The \i\c{-t} Option: Enable TASM Compatibility Mode
 
 NASM includes a limited form of compatibility with Borland's \i\c{TASM}.
 When NASM's \c{-t} option is used, the following changes are made:
@@ -833,7 +880,7 @@ the instruction.
 \c{else}, \c{endif}, \c{if}, \c{ifdef}, \c{ifdifi}, \c{ifndef},
 \c{include}, \c{local})
 
-\S{opt-w} The \i\c{-w} Option: Enable or Disable Assembly \i{Warnings}
+\S{opt-w} The \i\c{-w} and \i\c{-W} Options: Enable or Disable Assembly \i{Warnings}
 
 NASM can observe many conditions during the course of assembly which
 are worth mentioning to the user, but not a sufficiently severe
@@ -853,15 +900,12 @@ disable it by \c{-w-orphan-labels}.
 
 The \i{suppressible warning} classes are:
 
-\b \i\c{error} decides if warnings should be treated as errors.
-It is disabled by default.
-
 \b \i\c{macro-params} covers warnings about \i{multi-line macros}
 being invoked with the wrong number of parameters. This warning
 class is enabled by default; see \k{mlmacover} for an example of why
 you might want to disable it.
 
-\b \i\c{macro-selfref} warns if a macro references itself. This 
+\b \i\c{macro-selfref} warns if a macro references itself. This
 warning class is disabled by default.
 
 \b\i\c{macro-defaults} warns when a macro has more default
@@ -876,8 +920,8 @@ see \k{syntax} for more information.
 \b \i\c{number-overflow} covers warnings about numeric constants which
 don't fit in 64 bits. This warning class is enabled by default.
 
-\b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations 
-are used in \c{-f elf} format. The GNU extensions allow this. 
+\b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations
+are used in \c{-f elf} format. The GNU extensions allow this.
 This warning class is disabled by default.
 
 \b \i\c{float-overflow} warns about floating point overflow.
@@ -892,11 +936,24 @@ Disabled by default.
 \b \i\c{float-toolong} warns about too many digits in floating-point numbers.
 Enabled by default.
 
+\b \i\c{user} controls \c{%warning} directives (see \k{pperror}).
+Enabled by default.
+
+\b \i\c{error} causes warnings to be treated as errors.  Disabled by
+default.
+
+\b \i\c{all} is an alias for \e{all} suppressible warning classes (not
+including \c{error}).  Thus, \c{-w+all} enables all available warnings.
+
 In addition, you can set warning classes across sections.
 Warning classes may be enabled with \i\c{[warning +warning-name]},
 disabled with \i\c{[warning -warning-name]} or reset to their
 original value with \i\c{[warning *warning-name]}. No "user form"
 (without the brackets) exists.
+
+Since version 2.00, NASM has also supported the gcc-like syntax
+\c{-Wwarning} and \c{-Wno-warning} instead of \c{-w+warning} and
+\c{-w-warning}, respectively.
 
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
@@ -908,8 +965,8 @@ You will need the version number if you report a bug.
 
 \S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
 
-Typing \c{nasm -f <option> -y} will display a list of the available 
-debug info formats for the given output format. The default format 
+Typing \c{nasm -f <option> -y} will display a list of the available
+debug info formats for the given output format. The default format
 is indicated by an asterisk. For example:
 
 \c nasm -f elf -y
@@ -922,10 +979,10 @@ is indicated by an asterisk. For example:
 
 \S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
 
-The \c{--prefix} and \c{--postfix} options prepend or append 
+The \c{--prefix} and \c{--postfix} options prepend or append
 (respectively) the given argument to all \c{global} or
-\c{extern} variables. E.g. \c{--prefix_} will prepend the 
-underscore to all global and external variables, as C sometimes 
+\c{extern} variables. E.g. \c{--prefix _} will prepend the
+underscore to all global and external variables, as C sometimes
 (but not always) likes it.
 
 
@@ -1133,7 +1190,7 @@ An identifier may also be prefixed with a \I{$, prefix}\c{$} to
 indicate that it is intended to be read as an identifier and not a
 reserved word; thus, if some other module you are linking with
 defines a symbol called \c{eax}, you can refer to \c{$eax} in NASM
-code to distinguish the symbol from the register. Maximum length of 
+code to distinguish the symbol from the register. Maximum length of
 an identifier is 4095 characters.
 
 The instruction field may contain any machine instruction: Pentium
@@ -1141,8 +1198,8 @@ and P6 instructions, FPU instructions, MMX instructions and even
 undocumented instructions are all supported. The instruction may be
 prefixed by \c{LOCK}, \c{REP}, \c{REPE}/\c{REPZ} or
 \c{REPNE}/\c{REPNZ}, in the usual way. Explicit \I{address-size
-prefixes}address-size and \i{operand-size prefixes} \c{A16},
-\c{A32}, \c{O16} and \c{O32} are provided - one example of their use
+prefixes}address-size and \i{operand-size prefixes} \i\c{A16},
+\i\c{A32}, \i\c{A64}, \i\c{O16} and \i\c{O32}, \i\c{O64} are provided - one example of their use
 is given in \k{mixsize}. You can also use the name of a \I{segment
 override}segment register as an instruction prefix: coding
 \c{es mov [bx],ax} is equivalent to coding \c{mov [es:bx],ax}. We
@@ -1275,9 +1332,7 @@ redefined later. This is not a \i{preprocessor} definition either:
 the value of \c{msglen} is evaluated \e{once}, using the value of
 \c{$} (see \k{expr} for an explanation of \c{$}) at the point of
 definition, rather than being evaluated wherever it is referenced
-and using the value of \c{$} at the point of reference. Note that
-the operand to an \c{EQU} is also a \i{critical expression}
-(\k{crit}).
+and using the value of \c{$} at the point of reference.
 
 
 \S{times} \i\c{TIMES}: \i{Repeating} Instructions or Data
@@ -1306,8 +1361,7 @@ Note that there is no effective difference between \c{times 100 resb
 1} and \c{resb 100}, except that the latter will be assembled about
 100 times faster due to the internal structure of the assembler.
 
-The operand to \c{TIMES}, like that of \c{EQU} and those of \c{RESB}
-and friends, is a critical expression (\k{crit}).
+The operand to \c{TIMES} is a critical expression (\k{crit}).
 
 Note also that \c{TIMES} can't be applied to \i{macros}: the reason
 for this is that \c{TIMES} is processed after the macro phase, which
@@ -1400,27 +1454,37 @@ character, string and floating-point.
 
 A numeric constant is simply a number. NASM allows you to specify
 numbers in a variety of number bases, in a variety of ways: you can
-suffix \c{H}, \c{Q} or \c{O}, and \c{B} for \i{hex}, \i{octal} and \i{binary},
-or you can prefix \c{0x} for hex in the style of C, or you can
-prefix \c{$} for hex in the style of Borland Pascal. Note, though,
-that the \I{$, prefix}\c{$} prefix does double duty as a prefix on
-identifiers (see \k{syntax}), so a hex number prefixed with a \c{$}
-sign must have a digit after the \c{$} rather than a letter.
+suffix \c{H} or \c{X}, \c{Q} or \c{O}, and \c{B} for \i{hexadecimal},
+\i{octal} and \i{binary} respectively, or you can prefix \c{0x} for
+hexadecimal in the style of C, or you can prefix \c{$} for hexadecimal
+in the style of Borland Pascal. Note, though, that the \I{$,
+prefix}\c{$} prefix does double duty as a prefix on identifiers (see
+\k{syntax}), so a hex number prefixed with a \c{$} sign must have a
+digit after the \c{$} rather than a letter.  In addition, current
+versions of NASM accept the prefix \c{0h} for hexadecimal, \c{0o} or
+\c{0q} for octal, and \c{0b} for binary.  Please note that unlike C, a
+\c{0} prefix by itself does \e{not} imply an octal constant!
 
 Numeric constants can have underscores (\c{_}) interspersed to break
 up long strings.
 
-Some examples:
+Some examples (all producing exactly the same code):
 
-\c         mov     ax,100          ; decimal
-\c         mov     ax,0a2h         ; hex
-\c         mov     ax,$0a2         ; hex again: the 0 is required
-\c         mov     ax,0xa2         ; hex yet again
-\c         mov     ax,777q         ; octal
-\c         mov     ax,777o         ; octal again
-\c         mov     ax,10010011b    ; binary
-\c         mov     ax,1001_0011b   ; same binary constant
-
+\c         mov     ax,200          ; decimal
+\c         mov     ax,0200         ; still decimal
+\c         mov     ax,0200d        ; explicitly decimal
+\c         mov     ax,0d200        ; also decimal
+\c         mov     ax,0c8h         ; hex
+\c         mov     ax,$0c8         ; hex again: the 0 is required
+\c         mov     ax,0xc8         ; hex yet again
+\c         mov     ax,0hc8         ; still hex
+\c         mov     ax,310q         ; octal
+\c         mov     ax,310o         ; octal again
+\c         mov     ax,0o310        ; octal yet again
+\c         mov     ax,0q310        ; hex yet again
+\c         mov     ax,11001000b    ; binary
+\c         mov     ax,1100_1000b   ; same binary constant
+\c         mov     ax,0b1100_1000  ; same binary constant yet again
 
 \S{strings} \I{Strings}\i{Character Strings}
 
@@ -1526,7 +1590,7 @@ For example:
 
 \c{__utf16__} and \c{__utf32__} can be applied either to strings
 passed to the \c{DB} family instructions, or to character constants in
-an expression context.  
+an expression context.
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 
@@ -1762,7 +1826,7 @@ invent one using the macro processor.
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
 When assembling with the optimizer set to level 2 or higher (see
-\k{opt-On}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
+\k{opt-O}), NASM will use size specifiers (\c{BYTE}, \c{WORD},
 \c{DWORD}, \c{QWORD}, \c{TWORD}, \c{OWORD} or \c{YWORD}), but will
 give them the smallest possible size. The keyword \c{STRICT} can be
 used to inhibit optimization and force a particular operand to be
@@ -1813,52 +1877,7 @@ NASM rejects these examples by means of a concept called a
 \e{critical expression}, which is defined to be an expression whose
 value is required to be computable in the first pass, and which must
 therefore depend only on symbols defined before it. The argument to
-the \c{TIMES} prefix is a critical expression; for the same reason,
-the arguments to the \i\c{RESB} family of pseudo-instructions are
-also critical expressions.
-
-Critical expressions can crop up in other contexts as well: consider
-the following code.
-
-\c                 mov     ax,symbol1
-\c symbol1         equ     symbol2
-\c symbol2:
-
-On the first pass, NASM cannot determine the value of \c{symbol1},
-because \c{symbol1} is defined to be equal to \c{symbol2} which NASM
-hasn't seen yet. On the second pass, therefore, when it encounters
-the line \c{mov ax,symbol1}, it is unable to generate the code for
-it because it still doesn't know the value of \c{symbol1}. On the
-next line, it would see the \i\c{EQU} again and be able to determine
-the value of \c{symbol1}, but by then it would be too late.
-
-NASM avoids this problem by defining the right-hand side of an
-\c{EQU} statement to be a critical expression, so the definition of
-\c{symbol1} would be rejected in the first pass.
-
-There is a related issue involving \i{forward references}: consider
-this code fragment.
-
-\c         mov     eax,[ebx+offset]
-\c offset  equ     10
-
-NASM, on pass one, must calculate the size of the instruction \c{mov
-eax,[ebx+offset]} without knowing the value of \c{offset}. It has no
-way of knowing that \c{offset} is small enough to fit into a
-one-byte offset field and that it could therefore get away with
-generating a shorter form of the \i{effective-address} encoding; for
-all it knows, in pass one, \c{offset} could be a symbol in the code
-segment, and it might need the full four-byte form. So it is forced
-to compute the size of the instruction to accommodate a four-byte
-address part. In pass two, having made this decision, it is now
-forced to honour it and keep the instruction large, so the code
-generated in this case is not as small as it could have been. This
-problem can be solved by defining \c{offset} before using it, or by
-forcing byte size in the effective address by coding \c{[byte
-ebx+offset]}.
-
-Note that use of the \c{-On} switch (with n>=2) makes some of the above
-no longer true (see \k{opt-On}).
+the \c{TIMES} prefix is a critical expression.
 
 \H{locallab} \i{Local Labels}
 
@@ -2028,13 +2047,13 @@ You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
 
 
-\S{xdefine} Enhancing \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
+\S{xdefine} Resolving \c{%define}: \I\c{%ixdefine}\i\c{%xdefine}
 
 To have a reference to an embedded single-line macro resolved at the
-time that it is embedded, as opposed to when the calling macro is
-expanded, you need a different mechanism to the one offered by
-\c{%define}. The solution is to use \c{%xdefine}, or it's
-\I{case sensitive}case-insensitive counterpart \c{%ixdefine}.
+time that the embedding macro is \e{defined}, as opposed to when the
+embedding macro is \e{expanded}, you need a different mechanism to the
+one offered by \c{%define}. The solution is to use \c{%xdefine}, or
+it's \I{case sensitive}case-insensitive counterpart \c{%ixdefine}.
 
 Suppose you have the following code:
 
@@ -2072,6 +2091,27 @@ you need to change the above code to use \c{%xdefine}.
 Now, each time that \c{isFalse} is called, it expands to 1,
 as that is what the embedded macro \c{isTrue} expanded to at
 the time that \c{isFalse} was defined.
+
+
+\S{indmacro} \i{Macro Indirection}: \I\c{%[}\c{%[...]}
+
+The \c{%[...]} construct can be used to expand macros in contexts
+where macro expansion would otherwise not occur, including in the
+names other macros.  For example, if you have a set of macros named
+\c{Foo16}, \c{Foo32} and \c{Foo64}, you could write:
+
+\c	mov ax,Foo%[__BITS__]	; The Foo value
+
+to use the builtin macro \c{__BITS__} (see \k{bitsm}) to automatically
+select between them.  Similarly, the two statements:
+
+\c %xdefine Bar		Quux	; Expands due to %xdefine
+\c %define  Bar		%[Quux]	; Expands due to %[...]
+
+have, in fact, exactly the same effect.
+
+\c{%[...]} concatenates to adjacent tokens in the same way that
+multi-line macro parameters do, see \k{concat} for details.
 
 
 \S{concat%+} Concatenating Single Line Macro Tokens: \i\c{%+}
@@ -2145,6 +2185,7 @@ instruction has been used as a label in older code.  For example:
 
 \c %idefine pause $%?                  ; Hide the PAUSE instruction
 
+
 \S{undef} Undefining Single-Line Macros: \i\c{%undef}
 
 Single-line macros can be removed with the \c{%undef} directive.  For
@@ -2210,24 +2251,24 @@ is equivalent to
 This can be used, for example, with the \c{%!} construct (see
 \k{getenv}):
 
-\c %defstr PATH %!PATH		; The operating system PATH variable
+\c %defstr PATH %!PATH          ; The operating system PATH variable
 
 
 \H{strlen} \i{String Manipulation in Macros}
 
 It's often useful to be able to handle strings in macros. NASM
-supports two simple string handling macro operators from which
+supports a few simple string handling macro operators from which
 more complex operations can be constructed.
 
 All the string operators define or redefine a value (either a string
-or a numeric value) to a single-line macro.
+or a numeric value) to a single-line macro.  When producing a string
+value, it may change the style of quoting of the input string or
+strings, and possibly use \c{\\}-escapes inside \c{`}-quoted strings.
 
 \S{strcat} \i{Concatenating Strings}: \i\c{%strcat}
 
 The \c{%strcat} operator concatenates quoted strings and assign them to
-a single-line macro.  In doing so, it may change the type of quotes
-and possibly use \c{\\}-escapes inside \c{`}-quoted strings in order to
-make sure the string is still a valid quoted string.
+a single-line macro.
 
 For example:
 
@@ -2236,9 +2277,9 @@ For example:
 ... would assign the value \c{'Alpha: 12" screen'} to \c{alpha}.
 Similarly:
 
-\c %strcat beta '"', "'"
+\c %strcat beta '"foo"\', "'bar'"
 
-... would assign the value \c{`"'`} to \c{beta}.
+... would assign the value \c{`"foo"\\'bar'`} to \c{beta}.
 
 The use of commas to separate strings is permitted but optional.
 
@@ -2609,11 +2650,11 @@ iterated through in reverse order.
 
 \S{concat} \i{Concatenating Macro Parameters}
 
-NASM can concatenate macro parameters on to other text surrounding
-them. This allows you to declare a family of symbols, for example,
-in a macro definition. If, for example, you wanted to generate a
-table of key codes along with offsets into the table, you could code
-something like
+NASM can concatenate macro parameters and macro indirection constructs
+on to other text surrounding them. This allows you to declare a family
+of symbols, for example, in a macro definition. If, for example, you
+wanted to generate a table of key codes along with offsets into the
+table, you could code something like
 
 \c %macro keytab_entry 2
 \c
@@ -2658,6 +2699,12 @@ literal text in braces: so \c{%\{%foo\}bar} concatenates the text
 real names of macro-local labels means that the two usages
 \c{%\{%foo\}bar} and \c{%%foobar} would both expand to the same
 thing anyway; nevertheless, the capability is there.)
+
+The single-line macro indirection construct, \c{%[...]}
+(\k{indmacro}), behaves the same way as macro parameters for the
+purpose of concatenation.
+
+See also the \c{%+} operator, \k{concat%+}.
 
 
 \S{mlmaccc} \i{Condition Codes as Macro Parameters}
@@ -2730,7 +2777,7 @@ For example:
 
 removes the previously defined macro \c{foo}, but
 
-\c %unmacro bar 1-3
+\c %macro bar 1-3
 \c         ; Do something
 \c %endmacro
 \c %unmacro bar 1
@@ -3045,7 +3092,7 @@ be gradually used up and other applications to start crashing.
 
 These commands allow you to split your sources into multiple files.
 
-\S{include} \i\c{%include}: \i{Including Other Files} 
+\S{include} \i\c{%include}: \i{Including Other Files}
 
 Using, once again, a very similar syntax to the C preprocessor,
 NASM's preprocessor lets you include other source files into your
@@ -3084,7 +3131,7 @@ on the NASM command line (see \k{opt-p}).
 
 The \c{%pathsearch} directive takes a single-line macro name and a
 filename, and declare or redefines the specified single-line macro to
-be the include-path-resolved verson of the filename, if the file
+be the include-path-resolved version of the filename, if the file
 exists (otherwise, it is passed unchanged.)
 
 For example,
@@ -3124,9 +3171,9 @@ package.  The standard macro packages are part of NASM, and are
 described in \k{macropkg}.
 
 Unlike the \c{%include} directive, package names for the \c{%use}
-directive do not require quotes, but quotes are permitted; using
-quotes will prevent unwanted macro expansion.  Thus, the following
-lines are equivalent, unless \c{altreg} is defined as a macro:
+directive do not require quotes, but quotes are permitted.  In NASM
+2.04 and 2.05 the unquoted form would be macro-expanded; this is no
+longer true.  Thus, the following lines are equivalent:
 
 \c %use altreg
 \c %use 'altreg'
@@ -3156,18 +3203,21 @@ define labels that are local to a particular context on the stack.
 contexts}\I{removing contexts}Creating and Removing Contexts
 
 The \c{%push} directive is used to create a new context and place it
-on the top of the context stack. \c{%push} requires one argument,
+on the top of the context stack. \c{%push} takes an optional argument,
 which is the name of the context. For example:
 
 \c %push    foobar
 
-This pushes a new context called \c{foobar} on the stack. You can
-have several contexts on the stack with the same name: they can
-still be distinguished.
+This pushes a new context called \c{foobar} on the stack. You can have
+several contexts on the stack with the same name: they can still be
+distinguished.  If no name is given, the context is unnamed (this is
+normally used when both the \c{%push} and the \c{%pop} are inside a
+single macro definition.)
 
-The directive \c{%pop}, requiring no arguments, removes the top
+The directive \c{%pop}, taking one optional argument, removes the top
 context from the context stack and destroys it, along with any
-labels associated with it.
+labels associated with it.  If an argument is given, it must match the
+name of the current context, otherwise it will issue an error.
 
 
 \S{ctxlocal} \i{Context-Local Labels}
@@ -3444,7 +3494,7 @@ the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
 
-\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error} and \i\c{%warning}
+\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error}, \i\c{%warning}, \i\c{%fatal}
 
 The preprocessor directive \c{%error} will cause NASM to report an
 error if it occurs in assembled code. So if other users are going to
@@ -3475,8 +3525,24 @@ Similarly, \c{%warning} issues a warning, but allows assembly to continue:
 \c     %define F1
 \c %endif
 
-It is optional for the message string after \c{%error} or \c{%warning}
-to be quoted.
+\c{%error} and \c{%warning} are issued only on the final assembly
+pass.  This makes them safe to use in conjunction with tests that
+depend on symbol values.
+
+\c{%fatal} terminates assembly immediately, regardless of pass.  This
+is useful when there is no point in continuing the assembly further,
+and doing so is likely just going to cause a spew of confusing error
+messages.
+
+It is optional for the message string after \c{%error}, \c{%warning}
+or \c{%fatal} to be quoted.  If it is \e{not}, then single-line macros
+are expanded in it, which can be used to display more information to
+the user.  For example:
+
+\c %if foo > 64
+\c     %assign foo_over foo-64
+\c     %error foo is foo_over bytes too large
+\c %endif
 
 
 \H{otherpreproc} \i{Other Preprocessor Directives}
@@ -3484,11 +3550,8 @@ to be quoted.
 NASM also has preprocessor directives which allow access to
 information from external sources. Currently they include:
 
-The following preprocessor directive is supported to allow NASM to
-correctly handle output of the cpp C language preprocessor.
-
-\b\c{%line} enables NASM to correctly handle the output of the cpp
-C language preprocessor (see \k{line}).
+\b\c{%line} enables NASM to correctly handle the output of another
+preprocessor (see \k{line}).
 
 \b\c{%!} enables NASM to read in the value of an environment variable,
 which can then be used in your program (see \k{getenv}).
@@ -3686,27 +3749,39 @@ started at 42 seconds after midnight on January 1, 2010 in Moscow
 assuming, of course, a properly configured environment with a correct
 clock:
 
-\c __DATE__             "2010-01-01"
-\c __TIME__             "00:00:42"
-\c __DATE_NUM__         20100101
-\c __TIME_NUM__         000042
-\c __UTC_DATE__         "2009-12-31"
-\c __UTC_TIME__         "21:00:42"
-\c __UTC_DATE_NUM__     20091231
-\c __UTC_TIME_NUM__     210042
-\c __POSIX_TIME__       1262293242
+\c       __DATE__             "2010-01-01"
+\c       __TIME__             "00:00:42"
+\c       __DATE_NUM__         20100101
+\c       __TIME_NUM__         000042
+\c       __UTC_DATE__         "2009-12-31"
+\c       __UTC_TIME__         "21:00:42"
+\c       __UTC_DATE_NUM__     20091231
+\c       __UTC_TIME_NUM__     210042
+\c       __POSIX_TIME__       1262293242
 
 
 \S{use_def} \I\c{__USE_*__}\c{__USE_}\e{package}\c{__}: Package
 Include Test
 
-When a standard macro package is included with the \c{%use} directive
-(see \k{use}), a single-line macro of the form
+When a standard macro package (see \k{macropkg}) is included with the
+\c{%use} directive (see \k{use}), a single-line macro of the form
 \c{__USE_}\e{package}\c{__} is automatically defined.  This allows
 testing if a particular package is invoked or not.
 
 For example, if the \c{altreg} package is included (see
 \k{pkg_altreg}), then the macro \c{__USE_ALTREG__} is defined.
+
+
+\S{pass_macro} \i\c{__PASS__}: Assembly Pass
+
+The macro \c{__PASS__} is defined to be \c{1} on preparatory passes,
+and \c{2} on the final pass.  In preprocess-only mode, it is set to
+\c{3}, and when running only to generate dependencies (due to the
+\c{-M} or \c{-MG} option, see \k{opt-M}) it is set to \c{0}.
+
+\e{Avoid using this macro if at all possible.  It is tremendously easy
+to generate very strange errors by misusing it, and the semantics may
+change in future versions of NASM.}
 
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
@@ -3716,13 +3791,15 @@ structures; instead, the preprocessor is sufficiently powerful that
 data structures can be implemented as a set of macros. The macros
 \c{STRUC} and \c{ENDSTRUC} are used to define a structure data type.
 
-\c{STRUC} takes one parameter, which is the name of the data type.
-This name is defined as a symbol with the value zero, and also has
-the suffix \c{_size} appended to it and is then defined as an
-\c{EQU} giving the size of the structure. Once \c{STRUC} has been
-issued, you are defining the structure, and should define fields
-using the \c{RESB} family of pseudo-instructions, and then invoke
-\c{ENDSTRUC} to finish the definition.
+\c{STRUC} takes one or two parameters. The first parameter is the name
+of the data type. The second, optional parameter is the base offset of
+the structure. The name of the data type is defined as a symbol with
+the value of the base offset, and the name of the data type with the
+suffix \c{_size} appended to it is defined as an \c{EQU} giving the
+size of the structure. Once \c{STRUC} has been issued, you are
+defining the structure, and should define fields using the \c{RESB}
+family of pseudo-instructions, and then invoke \c{ENDSTRUC} to finish
+the definition.
 
 For example, to define a structure called \c{mytype} containing a
 longword, a word, a byte and a string of bytes, you might code
@@ -3741,8 +3818,8 @@ from the beginning of a \c{mytype} structure to the longword field),
 \c{mt_word} as 4, \c{mt_byte} as 6, \c{mt_str} as 7, \c{mytype_size}
 as 39, and \c{mytype} itself as zero.
 
-The reason why the structure type name is defined at zero is a side
-effect of allowing structures to work with the local label
+The reason why the structure type name is defined at zero by default
+is a side effect of allowing structures to work with the local label
 mechanism: if your structure members tend to have the same names in
 more than one structure, you can define the above structure like this:
 
@@ -3765,6 +3842,26 @@ so code such as \c{mov ax,[mystruc.mt_word]} is not valid.
 \c{mt_word} is a constant just like any other constant, so the
 correct syntax is \c{mov ax,[mystruc+mt_word]} or \c{mov
 ax,[mystruc+mytype.word]}.
+
+Sometimes you only have the address of the structure displaced by an
+offset. For example, consider this standard stack frame setup:
+
+\c push ebp
+\c mov ebp, esp
+\c sub esp, 40
+
+In this case, you could access an element by subtracting the offset:
+
+\c mov [ebp - 40 + mytype.word], ax
+
+However, if you do not want to repeat this offset, you can use -40 as
+a base offset:
+
+\c struc mytype, -40
+
+And access an element this way:
+
+\c mov [ebp + mytype.word], ax
 
 
 \S{istruc} \i\c{ISTRUC}, \i\c{AT} and \i\c{IEND}: Declaring
@@ -4375,7 +4472,7 @@ is also useful for \i{operating system} and \i{boot loader}
 development.
 
 The \c{bin} format supports \i{multiple section names}. For details of
-how nasm handles sections in the \c{bin} format, see \k{multisec}.
+how NASM handles sections in the \c{bin} format, see \k{multisec}.
 
 Using the \c{bin} format puts NASM by default into 16-bit mode (see
 \k{bits}). In order to use \c{bin} to write 32-bit or 64-bit code,
@@ -4432,55 +4529,81 @@ bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 \S{multisec} \i\c{Multisection}\I{bin, multisection} support for the BIN format.
 
-The \c{bin} format allows the use of multiple sections, of arbitrary names, 
+The \c{bin} format allows the use of multiple sections, of arbitrary names,
 besides the "known" \c{.text}, \c{.data}, and \c{.bss} names.
 
-\b Sections may be designated \i\c{progbits} or \i\c{nobits}. Default 
-is \c{progbits} (except \c{.bss}, which defaults to \c{nobits}, 
+\b Sections may be designated \i\c{progbits} or \i\c{nobits}. Default
+is \c{progbits} (except \c{.bss}, which defaults to \c{nobits},
 of course).
 
-\b Sections can be aligned at a specified boundary following the previous 
-section with \c{align=}, or at an arbitrary byte-granular position with 
+\b Sections can be aligned at a specified boundary following the previous
+section with \c{align=}, or at an arbitrary byte-granular position with
 \i\c{start=}.
 
-\b Sections can be given a virtual start address, which will be used 
-for the calculation of all memory references within that section 
+\b Sections can be given a virtual start address, which will be used
+for the calculation of all memory references within that section
 with \i\c{vstart=}.
 
-\b Sections can be ordered using \i\c{follows=}\c{<section>} or 
-\i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit 
+\b Sections can be ordered using \i\c{follows=}\c{<section>} or
+\i\c{vfollows=}\c{<section>} as an alternative to specifying an explicit
 start address.
 
-\b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are 
-critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)} 
+\b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are
+critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)}
 - \c{ALIGN_SHIFT} must be defined before it is used here.
 
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
 
-\b If an \c{ORG} statement is not given, \c{ORG 0} is used 
+\b If an \c{ORG} statement is not given, \c{ORG 0} is used
 by default.
 
-\b The \c{.bss} section will be placed after the last \c{progbits} 
-section, unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=} 
+\b The \c{.bss} section will be placed after the last \c{progbits}
+section, unless \c{start=}, \c{vstart=}, \c{follows=}, or \c{vfollows=}
 has been specified.
 
-\b All sections are aligned on dword boundaries, unless a different 
+\b All sections are aligned on dword boundaries, unless a different
 alignment has been specified.
 
 \b Sections may not overlap.
 
-\b NASM creates the \c{section.<secname>.start} for each section, 
+\b NASM creates the \c{section.<secname>.start} for each section,
 which may be used in your code.
 
 \S{map}\i{Map files}
 
-Map files can be generated in \c{-f bin} format by means of the \c{[map]} 
-option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments}, 
-or \c{symbols} may be specified. Output may be directed to \c{stdout} 
+Map files can be generated in \c{-f bin} format by means of the \c{[map]}
+option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments},
+or \c{symbols} may be specified. Output may be directed to \c{stdout}
 (default), \c{stderr}, or a specified file. E.g.
 \c{[map symbols myfile.map]}. No "user form" exists, the square
 brackets must be used.
+
+
+\H{ithfmt} \i\c{ith}: \i{Intel Hex} Output
+
+The \c{ith} file format produces Intel hex-format files.  Just as the
+\c{bin} format, this is a flat memory image format with no support for
+relocation or linking.  It is usually used with ROM programmers and
+similar utilities.
+
+All extensions supported by the \c{bin} file format is also supported by
+the \c{ith} file format.
+
+\c{ith} provides a default output file-name extension of \c{.ith}.
+
+
+\H{srecfmt} \i\c{srec}: \i{Motorola S-Records} Output
+
+The \c{srec} file format produces Motorola S-records files.  Just as the
+\c{bin} format, this is a flat memory image format with no support for
+relocation or linking.  It is usually used with ROM programmers and
+similar utilities.
+
+All extensions supported by the \c{bin} file format is also supported by
+the \c{srec} file format.
+
+\c{srec} provides a default output file-name extension of \c{.srec}.
 
 
 \H{objfmt} \i\c{obj}: \i{Microsoft OMF}\I{OMF} Object Files
@@ -4925,7 +5048,7 @@ still be perfectly possible.
 Registering custom exception handler on the other hand requires certain
 "magic." As of version 2.03 additional directive is implemented,
 \c{safeseh}, which instructs the assembler to produce appropriately
-formatted input data for above mentioned "safe exception handler 
+formatted input data for above mentioned "safe exception handler
 table." Its typical use would be:
 
 \c section .text
@@ -4954,14 +5077,14 @@ table." Its typical use would be:
 \c         ret
 \c text:   db      'OK to rethrow, CANCEL to generate core dump',0
 \c caption:db      'SEGV',0
-\c 
+\c
 \c section .drectve info
 \c         db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
 
 As you might imagine, it's perfectly possible to produce .exe binary
 with "safe exception handler table" and yet engage unregistered
 exception handler. Indeed, handler is engaged by simply manipulating
-\c{[fs:0]} location at run-time, something linker has no power over, 
+\c{[fs:0]} location at run-time, something linker has no power over,
 run-time that is. It should be explicitly mentioned that such failure
 to register handler's entry point with \c{safeseh} directive has
 undesired side effect at run-time. If exception is raised and
@@ -4981,7 +5104,7 @@ later can still be linked by earlier versions or non-Microsoft linkers.
 
 \H{win64fmt} \i\c{win64}: Microsoft Win64 Object Files
 
-The \c{win64} output format generates Microsoft Win64 object files, 
+The \c{win64} output format generates Microsoft Win64 object files,
 which is nearly 100% identical to the \c{win32} object format (\k{win32fmt})
 with the exception that it is meant to target 64-bit code and the x86-64
 platform altogether. This object file is used exactly the same as the \c{win32}
@@ -5139,7 +5262,7 @@ leaf function:
 \c main_end:
 \c text:   db      'OK to rethrow, CANCEL to generate core dump',0
 \c caption:db      'SEGV',0
-\c 
+\c
 \c section .pdata  rdata align=4
 \c         dd      main wrt ..imagebase
 \c         dd      main_end wrt ..imagebase
@@ -5219,7 +5342,7 @@ custom language-specific exception handler would look like this:
 \c         context->R15 = rsp[-1];
 \c     }
 \c     context->Rsp = (ULONG64)rsp;
-\c 
+\c
 \c     memcpy (disp->ContextRecord,context,sizeof(CONTEXT));
 \c     RtlVirtualUnwind(UNW_FLAG_NHANDLER,disp->ImageBase,
 \c         dips->ControlPc,disp->FunctionEntry,disp->ContextRecord,
@@ -5271,7 +5394,7 @@ Like the \c{obj} format, \c{elf} allows you to specify additional
 information on the \c{SECTION} directive line, to control the type
 and properties of sections you declare. Section types and properties
 are generated automatically by NASM for the \i{standard section
-names} \i\c{.text}, \i\c{.data} and \i\c{.bss}, but may still be
+names}, but may still be
 overridden by these qualifiers.
 
 The available qualifiers are:
@@ -5297,17 +5420,30 @@ contents given, such as a BSS section.
 \I{section alignment, in elf}\I{alignment, in elf sections}alignment
 requirements of the section.
 
+\b \i\c{tls} defines the section to be one which contains
+thread local variables.
+
 The defaults assumed by NASM if you do not specify the above
 qualifiers are:
 
-\c section .text    progbits  alloc  exec    nowrite  align=16
-\c section .rodata  progbits  alloc  noexec  nowrite  align=4
-\c section .data    progbits  alloc  noexec  write    align=4
-\c section .bss     nobits    alloc  noexec  write    align=4
-\c section other    progbits  alloc  noexec  nowrite  align=1
+\I\c{.text} \I\c{.rodata} \I\c{.lrodata} \I\c{.data} \I\c{.ldata}
+\I\c{.bss} \I\c{.lbss} \I\c{.tdata} \I\c{.tbss} \I\c\{.comment}
 
-(Any section name other than \c{.text}, \c{.rodata}, \c{.data} and
-\c{.bss} is treated by default like \c{other} in the above code.)
+\c section .text    progbits  alloc   exec    nowrite  align=16
+\c section .rodata  progbits  alloc   noexec  nowrite  align=4
+\c section .lrodata progbits  alloc   noexec  nowrite  align=4
+\c section .data    progbits  alloc   noexec  write    align=4
+\c section .ldata   progbits  alloc   noexec  write    align=4
+\c section .bss     nobits    alloc   noexec  write    align=4
+\c section .lbss    nobits    alloc   noexec  write    align=4
+\c section .tdata   progbits  alloc   noexec  write    align=4    tls
+\c section .tbss    nobits    alloc   noexec  write    align=4    tls
+\c section .comment progbits  noalloc noexec  nowrite  align=1
+\c section other    progbits  alloc   noexec  nowrite  align=1
+
+(Any section name other than those in the above table
+ is treated by default like \c{other} in the above table.
+ Please note that section names are case sensitive.)
 
 
 \S{elfwrt} \i{Position-Independent Code}\I{PIC}: \c{elf} Special
@@ -5316,7 +5452,7 @@ Symbols and \i\c{WRT}
 The \c{ELF} specification contains enough features to allow
 position-independent code (PIC) to be written, which makes \i{ELF
 shared libraries} very flexible. However, it also means NASM has to
-be able to generate a variety of strange relocation types in ELF
+be able to generate a variety of ELF specific relocation types in ELF
 object files, if it is to be an assembler which can write PIC.
 
 Since \c{ELF} does not support segment-base references, the \c{WRT}
@@ -5366,6 +5502,28 @@ peculiarity of the dynamic linker.
 
 A fuller explanation of how to use these relocation types to write
 shared libraries entirely in NASM is given in \k{picdll}.
+
+\S{elftls} \i{Thread Local Storage}\I{TLS}: \c{elf} Special
+Symbols and \i\c{WRT}
+
+\b In ELF32 mode, referring to an external or global symbol using
+\c{wrt ..tlsie} \I\c{..tlsie}
+causes the linker to build an entry \e{in} the GOT containing the
+offset of the symbol within the TLS block, so you can access the value
+of the symbol with code such as:
+
+\c 	  mov  eax,[tid wrt ..tlsie]
+\c 	  mov  [gs:eax],ebx
+
+
+\b In ELF64 mode, referring to an external or global symbol using
+\c{wrt ..gottpoff} \I\c{..gottpoff}
+causes the linker to build an entry \e{in} the GOT containing the
+offset of the symbol within the TLS block, so you can access the value
+of the symbol with code such as:
+
+\c 	  mov	rax,[rel tid wrt ..gottpoff]
+\c	  mov	rcx,[fs:rax]
 
 
 \S{elfglob} \c{elf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
@@ -5502,10 +5660,10 @@ NASM supports this format, just in case it is useful, as \c{as86}.
 \c{as86} provides a default output file-name extension of \c{.o}.
 
 \c{as86} is a very simple object format (from the NASM user's point
-of view). It supports no special directives, no special symbols, no
-use of \c{SEG} or \c{WRT}, and no extensions to any standard
-directives. It supports only the three \i{standard section names}
-\i\c{.text}, \i\c{.data} and \i\c{.bss}.
+of view). It supports no special directives, no use of \c{SEG} or \c{WRT},
+and no extensions to any standard directives. It supports only the three
+\i{standard section names} \i\c{.text}, \i\c{.data} and \i\c{.bss}.  The
+only special symbol supported is \c{..start}.
 
 
 \H{rdffmt} \I{RDOFF}\i\c{rdf}: \i{Relocatable Dynamic Object File
@@ -5585,7 +5743,7 @@ or \i\c{object} to the directive:
 \S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} directive\I{EXTERN,
 rdf extensions to}
 
-By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external" 
+By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external"
 symbol (i.e. the static linker will complain if such a symbol is not resolved).
 To declare an "imported" symbol, which must be resolved later during a dynamic
 linking phase, \c{RDOFF} offers an additional \c{import} modifier. As in
@@ -5605,7 +5763,7 @@ a hint as to where to find requested symbols.
 
 The \c{dbg} output format is not built into NASM in the default
 configuration. If you are building your own NASM executable from the
-sources, you can define \i\c{OF_DBG} in \c{outform.h} or on the
+sources, you can define \i\c{OF_DBG} in \c{output/outform.h} or on the
 compiler command line, and obtain the \c{dbg} output format.
 
 The \c{dbg} format does not output an object file as such; instead,
@@ -7113,7 +7271,7 @@ string instructions (\c{LODSx}, \c{STOSx} and so on) or the
 parameters, might seem to have no easy way to make them perform
 32-bit addressing when assembled in a 16-bit segment.
 
-This is the purpose of NASM's \i\c{a16} and \i\c{a32} prefixes. If
+This is the purpose of NASM's \i\c{a16}, \i\c{a32} and \i\c{a64} prefixes. If
 you are coding \c{LODSB} in a 16-bit segment but it is supposed to
 be accessing a string in a 32-bit segment, you should load the
 desired address into \c{ESI} and then code
@@ -7125,7 +7283,7 @@ The prefix forces the addressing size to 32 bits, meaning that
 a string in a 16-bit segment when coding in a 32-bit one, the
 corresponding \c{a16} prefix can be used.
 
-The \c{a16} and \c{a32} prefixes can be applied to any instruction
+The \c{a16}, \c{a32} and \c{a64} prefixes can be applied to any instruction
 in NASM's instruction table, but most of them can generate all the
 useful forms without them. The prefixes are necessary only for
 instructions with implicit addressing:
@@ -7137,8 +7295,8 @@ instructions with implicit addressing:
 \c{OUTSx}, and \c{XLATB}.
 Also, the
 various push and pop instructions (\c{PUSHA} and \c{POPF} as well as
-the more usual \c{PUSH} and \c{POP}) can accept \c{a16} or \c{a32}
-prefixes to force a particular one of \c{SP} or \c{ESP} to be used
+the more usual \c{PUSH} and \c{POP}) can accept \c{a16}, \c{a32} or \c{a64}
+prefixes to force a particular one of \c{SP}, \c{ESP} or \c{RSP} to be used
 as a stack pointer, in case the stack segment in use is a different
 size from the code segment.
 
@@ -7277,7 +7435,7 @@ Integer return values are passed in \c{RAX} and \c{RDX}, in that order.
 Floating point is done using SSE registers, except for \c{long
 double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM7};
 return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed on the
-stack, and returned in \c{ST(0)} and \c{ST(1)}.
+stack, and returned in \c{ST0} and \c{ST1}.
 
 All SSE and x87 registers are destroyed by function calls.
 
@@ -7337,7 +7495,7 @@ instruction which leaves room for a 32-bit offset. You need to code
 \I\c{BYTE}\c{ADD ESP,BYTE 8} if you want the space-efficient form of
 the instruction. This isn't a bug, it's user error: if you prefer to
 have NASM produce the more efficient code automatically enable
-optimization with the \c{-On} option (see \k{opt-On}).
+optimization with the \c{-O} option (see \k{opt-O}).
 
 
 \S{jmprange} My Jumps are Out of Range\I{out of range, jumps}
@@ -7358,7 +7516,7 @@ over a \c{JMP NEAR}; this is a sensible solution for processors
 below a 386, but hardly efficient on processors which have good
 branch prediction \e{and} could have used \c{JNE NEAR} instead. So,
 once again, it's up to the user, not the assembler, to decide what
-instructions should be generated. See \k{opt-On}.
+instructions should be generated. See \k{opt-O}.
 
 
 \S{proborg} \i\c{ORG} Doesn't Work

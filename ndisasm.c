@@ -1,9 +1,38 @@
-/* ndisasm.c   the Netwide Disassembler main module
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * ndisasm.c   the Netwide Disassembler main module
  */
 
 #include "compiler.h"
@@ -90,8 +119,8 @@ int main(int argc, char **argv)
                 case 'r':
                 case 'v':
                     fprintf(stderr,
-                            "NDISASM version %s compiled " __DATE__ "\n",
-                            NASM_VER);
+                            "NDISASM version %s compiled on %s\n",
+			    nasm_version, nasm_date);
                     return 0;
                 case 'u':	/* -u for -b 32, -uu for -b 64 */
 		    if (bits < 64)
@@ -273,7 +302,8 @@ int main(int argc, char **argv)
         if ((nextsync || synclen) &&
 	    (uint32_t)offset == nextsync) {
             if (synclen) {
-                fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n", offset, synclen);
+                fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n",
+			offset, synclen);
                 offset += synclen;
                 skip(synclen, fp);
             }
@@ -282,12 +312,12 @@ int main(int argc, char **argv)
         }
         while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
             lendis =
-                disasm((uint8_t *) q, outbuf, sizeof(outbuf), bits, offset, autosync,
-                       prefer);
+                disasm((uint8_t *) q, outbuf, sizeof(outbuf), bits,
+		       offset, autosync, prefer);
             if (!lendis || lendis > (p - q)
                 || ((nextsync || synclen) &&
 		    (uint32_t)lendis > nextsync - offset))
-                lendis = eatbyte((uint8_t *) q, outbuf, sizeof(outbuf));
+                lendis = eatbyte((uint8_t *) q, outbuf, sizeof(outbuf), bits);
             output_ins(offset, (uint8_t *) q, lendis, outbuf);
             q += lendis;
             offset += lendis;

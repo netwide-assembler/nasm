@@ -1,10 +1,39 @@
-/* outas86.c	output routines for the Netwide Assembler to produce
- *		Linux as86 (bin86-0.3) object files
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * outas86.c	output routines for the Netwide Assembler to produce
+ *		Linux as86 (bin86-0.3) object files
  */
 
 #include "compiler.h"
@@ -19,7 +48,8 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "raa.h"
-#include "outform.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #ifdef OF_AS86
 
@@ -178,21 +208,31 @@ static int as86_add_string(char *name)
 static void as86_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
+    bool is_start = false;
     struct Symbol *sym;
 
     if (special)
         error(ERR_NONFATAL, "as86 format does not support any"
               " special symbol types");
 
+
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
-        return;
+	if (strcmp(name, "..start")) {
+	    error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	    return;
+	} else {
+	    is_start = true;
+	}
     }
 
     sym = saa_wstruct(syms);
 
     sym->strpos = as86_add_string(name);
     sym->flags = 0;
+
+    if (is_start)
+      sym->flags = SYM_ENTRY;
+
     if (segment == NO_SEG)
         sym->flags |= SYM_ABSOLUTE, sym->segment = 0;
     else if (segment == stext.index)
@@ -294,11 +334,7 @@ static void as86_out(int32_t segto, const void *data,
     if (!s && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        bsslen += size;
+	bsslen += realsize(type, size);
         return;
     }
 
@@ -603,7 +639,7 @@ static void as86_filename(char *inname, char *outname, efunc error)
     standard_extension(inname, outname, ".o", error);
 }
 
-extern macros_t generic_stdmac[];
+extern macros_t as86_stdmac[];
 
 static int as86_set_info(enum geninfo type, char **val)
 {
@@ -623,10 +659,10 @@ void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
-    generic_stdmac,
+    as86_stdmac,
     as86_init,
     as86_set_info,
     as86_out,

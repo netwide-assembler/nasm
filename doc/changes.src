@@ -8,28 +8,127 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.07} Version 2.07
+
+\b NASM is now under the 2-clause BSD license.  See \k{legal}.
+
+\b Fix the section type for the \c{.strtab} section in the \c{elf64}
+  output format.
+
+\b Fix the handling of \c{COMMON} directives in the \c{obj} output format.
+
+\b New \c{ith} and \c{srec} output formats; these are variants of the
+  \c{bin} output format which output Intel hex and Motorola S-records,
+  respectively.  See \k{ithfmt} and \k{srecfmt}.
+
+\b \c{rdf2ihx} replaced with an enhanced \c{rdf2bin}, which can output
+  binary, COM, Intel hex or Motorola S-records.
+
+\b The Windows installer now puts the NASM directory first in the
+  \c{PATH} of the "NASM Shell".
+
+\b Revert the early expansion behavior of \c{%+} to pre-2.06 behavior:
+  \c{%+} is only expanded late.
+
+\b Yet another Mach-O alignment fix.
+
+\b Don't delete the list file on errors.  Also, include error and
+  warning information in the list file.
+
+
+\S{cl-2.06} Version 2.06
+
+\b This release is dedicated to the memory of Charles A. Crayne, long
+  time NASM developer as well as moderator of \c{comp.lang.asm.x86} and
+  author of the book \e{Serious Assembler}.  We miss you, Chuck.
+
+\b Support for indirect macro expansion (\c{%[...]}).  See \k{indmacro}.
+
+\b \c{%pop} can now take an argument, see \k{pushpop}.
+
+\b The argument to \c{%use} is no longer macro-expanded.  Use
+  \c{%[...]} if macro expansion is desired.
+
+\b Support for thread-local storage in ELF32 and ELF64.  See \k{elftls}.
+
+\b Fix crash on \c{%ifmacro} without an argument.
+
+\b Correct the arguments to the \c{POPCNT} instruction.
+
+\b Fix section alignment in the Mach-O format.
+
+\b Update AVX support to version 5 of the Intel specification.
+
+\b Fix the handling of accesses to context-local macros from higher
+  levels in the context stack.
+
+\b Treat \c{WAIT} as a prefix rather than as an instruction, thereby
+  allowing constructs like \c{O16 FSAVE} to work correctly.
+
+\b Support for structures with a non-zero base offset. See \k{struc}.
+
+\b Correctly handle preprocessor token concatenation (see \k{concat})
+   involving floating-point numbers.
+
+\b The \c{PINSR} series of instructions have been corrected and
+   rationalized.
+
+\b Removed AMD SSE5, replaced with the new XOP/FMA4/CVT16 (rev 3.03)
+   spec.
+
+\b The ELF backends no longer automatically generate a \c{.comment} section.
+
+\b Add additional "well-known" ELF sections with default attributes.  See
+   \k{elfsect}.
+
+
+\S{cl-2.05.01} Version 2.05.01
+
+\b Fix the \c{-w}/\c{-W} option parsing, which was broken in NASM 2.05.
+
+
+\S{cl-2.05} Version 2.05
+
+\b Fix redundant REX.W prefix on \c{JMP reg64}.
+
+\b Make the behaviour of \c{-O0} match NASM 0.98 legacy behavior.
+  See \k{opt-O}.
+
+\b \c{-w-user} can be used to suppress the output of \c{%warning} directives.
+  See \k{opt-w}.
+
+\b Fix bug where \c{ALIGN} would issue a full alignment datum instead of
+  zero bytes.
+
+\b Fix offsets in list files.
+
+\b Fix \c{%include} inside multi-line macros or loops.
+
+\b Fix error where NASM would generate a spurious warning on valid
+  optimizations of immediate values.
+
+\b Fix arguments to a number of the \c{CVT} SSE instructions.
+
+\b Fix RIP-relative offsets when the instruction carries an immediate.
+
+\b Massive overhaul of the ELF64 backend for spec compliance.
+
+\b Fix the Geode \c{PFRCPV} and \c{PFRSQRTV} instruction.
+
+\b Fix the SSE 4.2 \c{CRC32} instruction.
+
+
 \S{cl-2.04} Version 2.04
 
 \b Sanitize macro handing in the \c{%error} directive.
 
 \b New \c{%warning} directive to issue user-controlled warnings.
 
-\b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
-  strings.
+\b \c{%error} directives are now deferred to the final assembly phase.
 
-\b Fix bug in case-insensitive matching when compiled on platforms that
-  don't use the \c{configure} script.  Of the official release binaries,
-  that only affects the OS/2 binary.
-
-\b Correct the handling of nested \c{%rep}s.
-
-\b Support for x87 packed BCD constants.
+\b New \c{%fatal} directive to immediately terminate assembly.
 
 \b New \c{%strcat} directive to join quoted strings together.
-
-\b Correct the \c{LTR} instruction in 64-bit mode.
-
-\b Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
 
 \b New \c{%use} macro directive to support standard macro directives.  See
   \k{use}.
@@ -37,7 +136,53 @@ since 2007.
 \b Excess default parameters to \c{%macro} now issues a warning by default.
   See \k{mlmacro}.
 
+\b Fix \c{%ifn} and \c{%elifn}.
+
+\b Fix nested \c{%else} clauses.
+
+\b Correct the handling of nested \c{%rep}s.
+
+\b New \c{%unmacro} directive to undeclare a multi-line macro.
+  See \k{unmacro}.
+
+\b Builtin macro \c{__PASS__} which expands to the current assembly pass.
+  See \k{pass_macro}.
+
+\b \c{__utf16__} and \c{__utf32__} operators to generate UTF-16 and UTF-32
+  strings.  See \k{unicode}.
+
+\b Fix bug in case-insensitive matching when compiled on platforms that
+  don't use the \c{configure} script.  Of the official release binaries,
+  that only affected the OS/2 binary.
+
+\b Support for x87 packed BCD constants.  See \k{bcdconst}.
+
+\b Correct the \c{LTR} and \c{SLDT} instructions in 64-bit mode.
+
+\b Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.
+
+\b Add AVX versions of the AES instructions (\c{VAES}...).
+
+\b Fix the 256-bit FMA instructions.
+
+\b Add 256-bit AVX stores per the latest AVX spec.
+
+\b VIA XCRYPT instructions can now be written either with or without
+  \c{REP}, apparently different versions of the VIA spec wrote them
+  differently.
+
+\b Add missing 64-bit \c{MOVNTI} instruction.
+
+\b Fix the operand size of \c{VMREAD} and \c{VMWRITE}.
+
 \b Numerous bug fixes, especially to the AES, AVX and VTX instructions.
+
+\b The optimizer now always runs until it converges.  It also runs even
+  when disabled, but doesn't optimize.  This allows most forward references
+  to be resolved properly.
+
+\b \c{%push} no longer needs a context identifier; omitting the context
+  identifier results in an anonymous context.
 
 
 \S{cl-2.03.01} Version 2.03.01
@@ -95,8 +240,8 @@ creation.
 
 \b Fix forward references used in \c{EQU} statements.
 
-\S{cl-2.02} Version 2.02
 
+\S{cl-2.02} Version 2.02
 
 \b Additional fixes for MMX operands with explicit \c{qword}, as well as
   (hopefully) SSE operands with \c{oword}.
@@ -133,8 +278,8 @@ creation.
 
 \b Autogenerated instruction list added to the documentation.
 
-\S{cl-2.01} Version 2.01
 
+\S{cl-2.01} Version 2.01
 
 \b Fix the handling of MMX registers with explicit \c{qword} tags on
   memory (broken in 2.00 due to 64-bit changes.)
@@ -206,6 +351,14 @@ creation.
 \b Added a large number of additional instructions.
 
 \b Significant performance improvements.
+
+\b \c{-w+warning} and \c{-w-warning} can now be written as -Wwarning and
+ -Wno-warning, respectively.  See \k{opt-w}.
+
+\b Add \c{-w+error} to treat warnings as errors.  See \k{opt-w}.
+
+\b Add \c{-w+all} and \c{-w-all} to enable or disable all suppressible
+ warnings.  See \k{opt-w}.
 
 
 \H{cl-0.98.xx} NASM 0.98 Series

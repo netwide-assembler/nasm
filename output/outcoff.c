@@ -1,10 +1,39 @@
-/* outcoff.c	output routines for the Netwide Assembler to produce
- *		COFF object files (for DJGPP and Win32)
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * outcoff.c	output routines for the Netwide Assembler to produce
+ *		COFF object files (for DJGPP and Win32)
  */
 
 #include "compiler.h"
@@ -20,7 +49,8 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "raa.h"
-#include "outform.h"
+#include "output/outform.h"
+#include "output/outlib.h"
 
 #if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
 
@@ -527,11 +557,7 @@ static void coff_out(int32_t segto, const void *data,
     if (!s->data && type != OUT_RESERVE) {
         error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-        if (type == OUT_REL2ADR)
-            size = 2;
-        else if (type == OUT_REL4ADR)
-            size = 4;
-        s->len += size;
+        s->len += realsize(type, size);
         return;
     }
 
@@ -729,7 +755,9 @@ static int coff_directives(char *directive, char *value, int pass)
 	    else
 		sxseg = i;
 	}
-	if (pass==2) {
+	/* pass0 == 2 is the only time when the full set of symbols are
+	   guaranteed to be present; it is the final output pass. */
+	if (pass0 == 2) {
 	    uint32_t n;
 	    saa_rewind(syms);
 	    for (n = 0; n < nsyms; n++) {
@@ -981,7 +1009,7 @@ static int coff_set_info(enum geninfo type, char **val)
 struct ofmt of_coff = {
     "COFF (i386) object files (e.g. DJGPP for DOS)",
     "coff",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,
@@ -1003,7 +1031,7 @@ struct ofmt of_coff = {
 struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
     "win32",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,
@@ -1025,7 +1053,7 @@ struct ofmt of_win32 = {
 struct ofmt of_win64 = {
     "Microsoft Win64 (x86-64) object files",
     "win64",
-    NULL,
+    0,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,

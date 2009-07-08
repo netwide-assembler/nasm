@@ -1,10 +1,39 @@
-/* outdbg.c	output routines for the Netwide Assembler to produce
- *		a debugging trace
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * outdbg.c	output routines for the Netwide Assembler to produce
+ *		a debugging trace
  */
 
 #include "compiler.h"
@@ -17,7 +46,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
-#include "outform.h"
+#include "output/outform.h"
 
 #ifdef OF_DBG
 
@@ -40,8 +69,6 @@ static void dbg_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     dbgsect = NULL;
     (void)ldef;
     fprintf(fp, "NASM Output format debug dump\n");
-    of_dbg.current_dfmt->init(&of_dbg, 0, fp, errfunc);
-
 }
 
 static void dbg_cleanup(int debuginfo)
@@ -93,10 +120,10 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
     return seg;
 }
 
-static void dbg_deflabel(char *name, int32_t segment, int32_t offset,
+static void dbg_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
-    fprintf(dbgf, "deflabel %s := %08lx:%08lx %s (%d)%s%s\n",
+    fprintf(dbgf, "deflabel %s := %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
             name, segment, offset,
             is_global == 2 ? "common" : is_global ? "global" : "local",
             is_global, special ? ": " : "", special);
@@ -109,7 +136,7 @@ static void dbg_out(int32_t segto, const void *data,
     int32_t ldata;
     int id;
 
-    fprintf(dbgf, "out to %lx, len = %ld: ", segto, size);
+    fprintf(dbgf, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
 
     switch (type) {
     case OUT_RESERVE:
@@ -126,16 +153,21 @@ static void dbg_out(int32_t segto, const void *data,
         break;
     case OUT_ADDRESS:
 	ldata = *(int64_t *)data;
-        fprintf(dbgf, "addr %08lx (seg %08lx, wrt %08lx)\n", ldata,
+        fprintf(dbgf, "addr %08"PRIx32" (seg %08"PRIx32", wrt %08"PRIx32")\n", ldata,
                 segment, wrt);
         break;
     case OUT_REL2ADR:
-        fprintf(dbgf, "rel2adr %04x (seg %08lx)\n", (int)*(int16_t *)data,
-                segment);
+        fprintf(dbgf, "rel2adr %04"PRIx16" (seg %08"PRIx32")\n",
+		(uint16_t)*(int64_t *)data, segment);
         break;
     case OUT_REL4ADR:
-        fprintf(dbgf, "rel4adr %08lx (seg %08lx)\n", *(int32_t *)data,
+        fprintf(dbgf, "rel4adr %08"PRIx32" (seg %08"PRIx32")\n",
+		(uint32_t)*(int64_t *)data,
                 segment);
+        break;
+    case OUT_REL8ADR:
+        fprintf(dbgf, "rel8adr %016"PRIx64" (seg %08"PRIx32")\n",
+		(uint64_t)*(int64_t *)data, segment);
         break;
     default:
         fprintf(dbgf, "unknown\n");
@@ -184,12 +216,13 @@ static void dbgdbg_cleanup(void)
 
 static void dbgdbg_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
-    fprintf(dbgf, "dbglinenum %s(%ld) := %08lx\n", lnfname, lineno, segto);
+    fprintf(dbgf, "dbglinenum %s(%"PRId32") := %08"PRIx32"\n",
+	    lnfname, lineno, segto);
 }
 static void dbgdbg_deflabel(char *name, int32_t segment,
-                            int32_t offset, int is_global, char *special)
+                            int64_t offset, int is_global, char *special)
 {
-    fprintf(dbgf, "dbglabel %s := %08lx:%08lx %s (%d)%s%s\n",
+    fprintf(dbgf, "dbglabel %s := %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
             name,
             segment, offset,
             is_global == 2 ? "common" : is_global ? "global" : "local",
@@ -206,7 +239,7 @@ static void dbgdbg_output(int output_type, void *param)
 }
 static void dbgdbg_typevalue(int32_t type)
 {
-    fprintf(dbgf, "new type: %s(%lX)\n",
+    fprintf(dbgf, "new type: %s(%"PRIX32")\n",
             types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
 }
 static struct dfmt debug_debug_form = {
@@ -226,12 +259,13 @@ static struct dfmt *debug_debug_arr[3] = {
     &null_debug_form,
     NULL
 };
+
 struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
-    NULL,
+    OFMT_TEXT,
     debug_debug_arr,
-    &null_debug_form,
+    &debug_debug_form,
     NULL,
     dbg_init,
     dbg_set_info,

@@ -1,9 +1,38 @@
-/* nasmlib.c	library routines for the Netwide Assembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * nasmlib.c	library routines for the Netwide Assembler
  */
 
 #include "compiler.h"
@@ -24,6 +53,9 @@ efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
 #ifdef LOGALLOC
 static FILE *logfp;
 #endif
+
+/* Uninitialized -> all zero by C spec */
+const uint8_t zero_buffer[ZERO_BUF_SIZE];
 
 /*
  * Prepare a table of tolower() results.  This avoids function calls
@@ -51,7 +83,7 @@ void nasm_set_malloc_error(efunc error)
 }
 
 #ifdef LOGALLOC
-void *nasm_malloc_log(char *file, int line, size_t size)
+void *nasm_malloc_log(const char *file, int line, size_t size)
 #else
 void *nasm_malloc(size_t size)
 #endif
@@ -68,7 +100,7 @@ void *nasm_malloc(size_t size)
 }
 
 #ifdef LOGALLOC
-void *nasm_zalloc_log(char *file, int line, size_t size)
+void *nasm_zalloc_log(const char *file, int line, size_t size)
 #else
 void *nasm_zalloc(size_t size)
 #endif
@@ -85,7 +117,7 @@ void *nasm_zalloc(size_t size)
 }
 
 #ifdef LOGALLOC
-void *nasm_realloc_log(char *file, int line, void *q, size_t size)
+void *nasm_realloc_log(const char *file, int line, void *q, size_t size)
 #else
 void *nasm_realloc(void *q, size_t size)
 #endif
@@ -105,7 +137,7 @@ void *nasm_realloc(void *q, size_t size)
 }
 
 #ifdef LOGALLOC
-void nasm_free_log(char *file, int line, void *q)
+void nasm_free_log(const char *file, int line, void *q)
 #else
 void nasm_free(void *q)
 #endif
@@ -119,7 +151,7 @@ void nasm_free(void *q)
 }
 
 #ifdef LOGALLOC
-char *nasm_strdup_log(char *file, int line, const char *s)
+char *nasm_strdup_log(const char *file, int line, const char *s)
 #else
 char *nasm_strdup(const char *s)
 #endif
@@ -140,9 +172,9 @@ char *nasm_strdup(const char *s)
 }
 
 #ifdef LOGALLOC
-char *nasm_strndup_log(char *file, int line, char *s, size_t len)
+char *nasm_strndup_log(const char *file, int line, const char *s, size_t len)
 #else
-char *nasm_strndup(char *s, size_t len)
+char *nasm_strndup(const char *s, size_t len)
 #endif
 {
     char *p;
@@ -159,6 +191,13 @@ char *nasm_strndup(char *s, size_t len)
     strncpy(p, s, len);
     p[len] = '\0';
     return p;
+}
+
+no_return nasm_assert_failed(const char *file, int line, const char *msg)
+{
+    nasm_malloc_error(ERR_FATAL, "assertion %s failed at %s:%d",
+		      msg, file, line);
+    exit(1);
 }
 
 #ifndef nasm_stricmp
@@ -454,6 +493,26 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 
 #endif
 
+size_t fwritezero(size_t bytes, FILE *fp)
+{
+    size_t count = 0;
+    size_t blksize;
+    size_t rv;
+
+    while (bytes) {
+	blksize = (bytes < ZERO_BUF_SIZE) ? bytes : ZERO_BUF_SIZE;
+
+	rv = fwrite(zero_buffer, 1, blksize, fp);
+	if (!rv)
+	    break;
+
+	count += rv;
+	bytes -= rv;
+    }
+
+    return count;
+}
+
 void standard_extension(char *inname, char *outname, char *extension,
                         efunc error)
 {
@@ -488,8 +547,8 @@ void standard_extension(char *inname, char *outname, char *extension,
  * Common list of prefix names
  */
 static const char *prefix_names[] = {
-    "a16", "a32", "lock", "o16", "o32", "rep", "repe", "repne",
-    "repnz", "repz", "times"
+    "a16", "a32", "a64", "asp", "lock", "o16", "o32", "o64", "osp",
+    "rep", "repe", "repne", "repnz", "repz", "times", "wait"
 };
 
 const char *prefix_name(int token)
@@ -574,7 +633,7 @@ int src_get(int32_t *xline, char **xname)
     return 0;
 }
 
-char *nasm_strcat(char *one, char *two)
+char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;
     int l1 = strlen(one);
@@ -583,57 +642,3 @@ char *nasm_strcat(char *one, char *two)
     strcpy(rslt + l1, two);
     return rslt;
 }
-
-void null_debug_init(struct ofmt *of, void *id, FILE * fp, efunc error)
-{
-	(void)of;
-	(void)id;
-	(void)fp;
-	(void)error;
-}
-void null_debug_linenum(const char *filename, int32_t linenumber, int32_t segto)
-{
-	(void)filename;
-	(void)linenumber;
-	(void)segto;
-}
-void null_debug_deflabel(char *name, int32_t segment, int64_t offset,
-                         int is_global, char *special)
-{
-	(void)name;
-	(void)segment;
-	(void)offset;
-	(void)is_global;
-	(void)special;
-}
-void null_debug_routine(const char *directive, const char *params)
-{
-	(void)directive;
-	(void)params;
-}
-void null_debug_typevalue(int32_t type)
-{
-	(void)type;
-}
-void null_debug_output(int type, void *param)
-{
-	(void)type;
-	(void)param;
-}
-void null_debug_cleanup(void)
-{
-}
-
-struct dfmt null_debug_form = {
-    "Null debug format",
-    "null",
-    null_debug_init,
-    null_debug_linenum,
-    null_debug_deflabel,
-    null_debug_routine,
-    null_debug_typevalue,
-    null_debug_output,
-    null_debug_cleanup
-};
-
-struct dfmt *null_debug_arr[2] = { &null_debug_form, NULL };

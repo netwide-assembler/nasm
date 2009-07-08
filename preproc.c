@@ -1,11 +1,38 @@
-/* preproc.c   macro preprocessor for the Netwide Assembler
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- * initial version 18/iii/97 by Simon Tatham
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/*
+ * preproc.c   macro preprocessor for the Netwide Assembler
  */
 
 /* Typical flow of text through preproc
@@ -159,6 +186,8 @@ enum pp_token_type {
     TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
     TOK_INTERNAL_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
+    TOK_PASTE,			/* %+ */
+    TOK_INDIRECT,		/* %[...] */
     TOK_SMAC_PARAM,		/* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX		/* Keep compiler from reducing the range */
 };
@@ -253,14 +282,15 @@ enum {
      */
     COND_ELSE_TRUE, COND_ELSE_FALSE,
     /*
-     * This state means that we're not emitting now, and also that
-     * nothing until %endif will be emitted at all. It's for use in
-     * two circumstances: (i) when we've had our moment of emission
-     * and have now started seeing %elifs, and (ii) when the
-     * condition construct in question is contained within a
-     * non-emitting branch of a larger condition construct.
+     * These states mean that we're not emitting now, and also that
+     * nothing until %endif will be emitted at all. COND_DONE is
+     * used when we've had our moment of emission
+     * and have now started seeing %elifs. COND_NEVER is used when
+     * the condition construct in question is contained within a
+     * non-emitting branch of a larger condition construct,
+     * or if there is an error.
      */
-    COND_NEVER
+    COND_DONE, COND_NEVER
 };
 #define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
@@ -395,9 +425,11 @@ static Blocks blocks = { NULL, NULL };
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
-static Context *get_ctx(const char *name, bool all_contexts);
+static Context *get_ctx(const char *name, const char **namep,
+			bool all_contexts);
 static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
+static void error_precond(int severity, const char *fmt, ...);
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
@@ -448,12 +480,13 @@ static char *check_tasm_directive(char *line)
                 line = nasm_malloc(len + 2);
                 line[0] = '%';
                 if (k == TM_IFDIFI) {
-                    /* NASM does not recognise IFDIFI, so we convert it to
-                     * %ifdef BOGUS. This is not used in NASM comaptible
-                     * code, but does need to parse for the TASM macro
-                     * package.
+                    /*
+		     * NASM does not recognise IFDIFI, so we convert
+		     * it to %if 0. This is not used in NASM
+		     * compatible code, but does need to parse for the
+		     * TASM macro package.
                      */
-                    strcpy(line + 1, "ifdef BOGUS");
+                    strcpy(line + 1, "if 0");
                 } else {
                     memcpy(line + 1, p, len + 1);
                 }
@@ -775,7 +808,7 @@ static char *read_line(void)
  */
 static Token *tokenize(char *line)
 {
-    char *p = line;
+    char c, *p = line;
     enum pp_token_type type;
     Token *list = NULL;
     Token *t, **tail = &list;
@@ -784,9 +817,11 @@ static Token *tokenize(char *line)
         p = line;
         if (*p == '%') {
             p++;
-            if (nasm_isdigit(*p) ||
-                ((*p == '-' || *p == '+') && nasm_isdigit(p[1])) ||
-                ((*p == '+') && (nasm_isspace(p[1]) || !p[1]))) {
+	    if (*p == '+' && !nasm_isdigit(p[1])) {
+		p++;
+		type = TOK_PASTE;
+	    } else if (nasm_isdigit(*p) ||
+		       ((*p == '-' || *p == '+') && nasm_isdigit(p[1]))) {
                 do {
                     p++;
                 }
@@ -802,6 +837,34 @@ static Token *tokenize(char *line)
                 if (*p)
                     p++;
                 type = TOK_PREPROC_ID;
+	    } else if (*p == '[') {
+		int lvl = 1;
+		line += 2;	/* Skip the leading %[ */
+		p++;
+		while (lvl && (c = *p++)) {
+		    switch (c) {
+		    case ']':
+			lvl--;
+			break;
+		    case '%':
+			if (*p == '[')
+			    lvl++;
+			break;
+		    case '\'':
+		    case '\"':
+		    case '`':
+			p = nasm_skip_string(p)+1;
+			break;
+		    default:
+			break;
+		    }
+		}
+		p--;
+		if (*p)
+		    *p++ = '\0';
+		if (lvl)
+		    error(ERR_NONFATAL, "unterminated %[ construct");
+		type = TOK_INDIRECT;
 	    } else if (*p == '?') {
 		type = TOK_PREPROC_Q; /* %? */
 		p++;
@@ -837,10 +900,13 @@ static Token *tokenize(char *line)
             if (*p) {
                 p++;
             } else {
-                error(ERR_WARNING, "unterminated string");
+                error(ERR_WARNING|ERR_PASS1, "unterminated string");
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
             }
+        } else if (p[0] == '$' && p[1] == '$') {
+            type = TOK_OTHER;	/* TOKEN_BASE */
+            p += 2;
         } else if (isnumstart(*p)) {
 	    bool is_hex = false;
 	    bool is_float = false;
@@ -900,12 +966,16 @@ static Token *tokenize(char *line)
 	    }
 	    p--;	/* Point to first character beyond number */
 
-	    if (has_e && !is_hex) {
-		/* 1e13 is floating-point, but 1e13h is not */
-		is_float = true;
-	    }
+	    if (p == line+1 && *line == '$') {
+		type = TOK_OTHER; /* TOKEN_HERE */
+	    } else {
+		if (has_e && !is_hex) {
+		    /* 1e13 is floating-point, but 1e13h is not */
+		    is_float = true;
+		}
 
-	    type = is_float ? TOK_FLOAT : TOK_NUMBER;
+		type = is_float ? TOK_FLOAT : TOK_NUMBER;
+	    }
         } else if (nasm_isspace(*p)) {
             type = TOK_WHITESPACE;
             p++;
@@ -1080,12 +1150,11 @@ static char *detoken(Token * tlist, bool expand_locals)
         if (expand_locals &&
             t->type == TOK_PREPROC_ID && t->text &&
             t->text[0] == '%' && t->text[1] == '$') {
-            Context *ctx = get_ctx(t->text, false);
+	    const char *q;
+	    char *p;
+            Context *ctx = get_ctx(t->text, &q, false);
             if (ctx) {
                 char buffer[40];
-                char *p, *q = t->text + 2;
-
-                q += strspn(q, "$");
                 snprintf(buffer, sizeof(buffer), "..@%"PRIu32".", ctx->number);
                 p = nasm_strcat(buffer, q);
                 nasm_free(t->text);
@@ -1251,12 +1320,19 @@ static int mmemcmp(const char *p, const char *q, size_t l, bool casesense)
  * also scanned for such smacro, until it is found; if not -
  * only the context that directly results from the number of $'s
  * in variable's name.
+ *
+ * If "namep" is non-NULL, set it to the pointer to the macro name
+ * tail, i.e. the part beyond %$...
  */
-static Context *get_ctx(const char *name, bool all_contexts)
+static Context *get_ctx(const char *name, const char **namep,
+			bool all_contexts)
 {
     Context *ctx;
     SMacro *m;
     int i;
+
+    if (namep)
+	*namep = name;
 
     if (!name || name[0] != '%' || name[1] != '$')
         return NULL;
@@ -1266,15 +1342,23 @@ static Context *get_ctx(const char *name, bool all_contexts)
         return NULL;
     }
 
-    for (i = strspn(name + 2, "$"), ctx = cstk; (i > 0) && ctx; i--) {
-        ctx = ctx->next;
-/*        i--;  Lino - 02/25/02 */
+    name += 2;
+    ctx = cstk;
+    i = 0;
+    while (ctx && *name == '$') {
+	name++;
+	i++;
+	ctx = ctx->next;
     }
     if (!ctx) {
         error(ERR_NONFATAL, "`%s': context stack is only"
-              " %d level%s deep", name, i - 1, (i == 2 ? "" : "s"));
+              " %d level%s deep", name, i, (i == 1 ? "" : "s"));
         return NULL;
     }
+
+    if (namep)
+	*namep = name;
+
     if (!all_contexts)
         return ctx;
 
@@ -1395,7 +1479,7 @@ smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
 	smtbl = &ctx->localmac;
     } else if (name[0] == '%' && name[1] == '$') {
 	if (cstk)
-            ctx = get_ctx(name, false);
+            ctx = get_ctx(name, &name, false);
         if (!ctx)
             return false;       /* got to return _something_ */
 	smtbl = &ctx->localmac;
@@ -1582,7 +1666,6 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             bool found = false;
             MMacro searching, *mmac;
 
-            tline = tline->next;
             skip_white_(tline);
             tline = expand_id(tline);
             if (!tok_type_(tline, TOK_ID)) {
@@ -1649,7 +1732,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 		mmac = mmac->next;
 	    }
             if(tline && tline->next)
-                error(ERR_WARNING, "trailing garbage after %%ifmacro ignored");
+                error(ERR_WARNING|ERR_PASS1,
+		      "trailing garbage after %%ifmacro ignored");
             nasm_free(searching.name);
 	    j = found;
 	    break;
@@ -1709,7 +1793,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         if (!evalresult)
             return -1;
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL,
@@ -1737,7 +1821,7 @@ fail:
 /*
  * Common code for defining an smacro
  */
-static bool define_smacro(Context *ctx, char *mname, bool casesense,
+static bool define_smacro(Context *ctx, const char *mname, bool casesense,
 			  int nparam, Token *expansion)
 {
     SMacro *smac, **smhead;
@@ -1745,7 +1829,7 @@ static bool define_smacro(Context *ctx, char *mname, bool casesense,
 
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
 	if (!smac) {
-	    error(ERR_WARNING,
+	    error(ERR_WARNING|ERR_PASS1,
 		  "single-line macro `%s' defined both with and"
 		  " without parameters", mname);
 
@@ -1884,7 +1968,8 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         if(def->defaults &&
            def->ndefs > def->nparam_max - def->nparam_min &&
            !def->plus)
-         error(ERR_WARNING | ERR_WARN_MDP, "too many default macro parameters");
+         error(ERR_WARNING|ERR_PASS1|ERR_WARN_MDP,
+	       "too many default macro parameters");
 
     return true;
 }
@@ -1924,7 +2009,8 @@ static int do_directive(Token * tline)
     bool casesense;
     int k, m;
     int offset;
-    char *p, *pp, *mname;
+    char *p, *pp;
+    const char *mname;
     Include *inc;
     Context *ctx;
     Cond *cond;
@@ -1936,6 +2022,7 @@ static int do_directive(Token * tline)
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
     int64_t count;
     size_t len;
+    int severity;
 
     origline = tline;
 
@@ -2203,7 +2290,8 @@ static int do_directive(Token * tline)
 
     case PP_CLEAR:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%clear' ignored");
+            error(ERR_WARNING|ERR_PASS1,
+		  "trailing garbage after `%%clear' ignored");
 	free_macros();
 	init_macros();
         free_tlist(origline);
@@ -2219,7 +2307,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%depend' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2245,7 +2333,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%include' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2274,24 +2362,25 @@ static int do_directive(Token * tline)
 	static macros_t *use_pkg;
 	const char *pkg_macro;
 
-	t = tline->next = expand_smacro(tline->next);
-	skip_white_(t);
+	tline = tline->next;
+	skip_white_(tline);
+	tline = expand_id(tline);
 
-        if (!t || (t->type != TOK_STRING &&
-		   t->type != TOK_INTERNAL_STRING &&
-		   t->type != TOK_ID)) {
+        if (!tline || (tline->type != TOK_STRING &&
+		       tline->type != TOK_INTERNAL_STRING &&
+		       tline->type != TOK_ID)) {
             error(ERR_NONFATAL, "`%%use' expects a package name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
 	}
-        if (t->next)
-            error(ERR_WARNING,
+        if (tline->next)
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
-	if (t->type == TOK_STRING)
-	    nasm_unquote(t->text, NULL);
-	use_pkg = nasm_stdmac_find_package(t->text);
+	if (tline->type == TOK_STRING)
+	    nasm_unquote(tline->text, NULL);
+	use_pkg = nasm_stdmac_find_package(tline->text);
 	if (!use_pkg)
-	    error(ERR_NONFATAL, "unknown `%%use' package: %s", t->text);
+	    error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
 	/* The first string will be <%define>__USE_*__ */
 	pkg_macro = (char *)use_pkg + 1;
 	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
@@ -2302,71 +2391,71 @@ static int do_directive(Token * tline)
         return DIRECTIVE_FOUND;
     }
     case PP_PUSH:
-        tline = tline->next;
-        skip_white_(tline);
-        tline = expand_id(tline);
-	if (tline) {
-	    if (!tok_type_(tline, TOK_ID)) {
-		error(ERR_NONFATAL, "`%%push' expects a context identifier");
-		free_tlist(origline);
-		return DIRECTIVE_FOUND;     /* but we did _something_ */
-	    }
-	    if (tline->next)
-		error(ERR_WARNING, "trailing garbage after `%%push' ignored");
-	    p = nasm_strdup(tline->text);
-	} else {
-	    p = NULL;		/* Anonymous context */
-	}
-        ctx = nasm_malloc(sizeof(Context));
-        ctx->next = cstk;
-        hash_init(&ctx->localmac, HASH_SMALL);
-        ctx->name = p;
-        ctx->number = unique++;
-        cstk = ctx;
-        free_tlist(origline);
-	return DIRECTIVE_FOUND;
-
     case PP_REPL:
+    case PP_POP:
         tline = tline->next;
         skip_white_(tline);
         tline = expand_id(tline);
 	if (tline) {
 	    if (!tok_type_(tline, TOK_ID)) {
-		error(ERR_NONFATAL, "`%%repl' expects a context identifier");
+		error(ERR_NONFATAL, "`%s' expects a context identifier",
+		      pp_directives[i]);
 		free_tlist(origline);
 		return DIRECTIVE_FOUND;     /* but we did _something_ */
 	    }
 	    if (tline->next)
-		error(ERR_WARNING, "trailing garbage after `%%repl' ignored");
+		error(ERR_WARNING|ERR_PASS1,
+		      "trailing garbage after `%s' ignored",
+		      pp_directives[i]);
 	    p = nasm_strdup(tline->text);
 	} else {
-	    p = NULL;
+	    p = NULL;		/* Anonymous */
 	}
-        if (!cstk)
-            error(ERR_NONFATAL, "`%%repl': context stack is empty");
-        else {
-            nasm_free(cstk->name);
-            cstk->name = p;
-        }
+
+	if (i == PP_PUSH) {
+	    ctx = nasm_malloc(sizeof(Context));
+	    ctx->next = cstk;
+	    hash_init(&ctx->localmac, HASH_SMALL);
+	    ctx->name = p;
+	    ctx->number = unique++;
+	    cstk = ctx;
+	} else {
+	    /* %pop or %repl */
+	    if (!cstk) {
+		error(ERR_NONFATAL, "`%s': context stack is empty",
+		      pp_directives[i]);
+	    } else if (i == PP_POP) {
+		if (p && (!cstk->name || nasm_stricmp(p, cstk->name)))
+		    error(ERR_NONFATAL, "`%%pop' in wrong context: %s, "
+			  "expected %s",
+			  cstk->name ? cstk->name : "anonymous", p);
+		else
+		    ctx_pop();
+	    } else {
+		/* i == PP_REPL */
+		nasm_free(cstk->name);
+		cstk->name = p;
+		p = NULL;
+	    }
+	    nasm_free(p);
+	}
         free_tlist(origline);
 	return DIRECTIVE_FOUND;
-
-    case PP_POP:
-        if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%pop' ignored");
-        if (!cstk)
-            error(ERR_NONFATAL, "`%%pop': context stack is already empty");
-        else
-            ctx_pop();
-        free_tlist(origline);
-	return DIRECTIVE_FOUND;
-
+    case PP_FATAL:
+	severity = ERR_FATAL;
+	goto issue_error;
     case PP_ERROR:
+	severity = ERR_NONFATAL;
+	goto issue_error;
     case PP_WARNING:
+	severity = ERR_WARNING|ERR_WARN_USER;
+	goto issue_error;
+
+    issue_error:
     {
-	int severity = (i == PP_ERROR)
-	    ? ERR_NONFATAL|ERR_NO_SEVERITY
-	    : ERR_WARNING|ERR_NO_SEVERITY;
+	/* Only error out if this is the final pass */
+	if (pass != 2 && i != PP_FATAL)
+	    return DIRECTIVE_FOUND;
 
         tline->next = expand_smacro(tline->next);
         tline = tline->next;
@@ -2377,11 +2466,11 @@ static int do_directive(Token * tline)
 	    /* The line contains only a quoted string */
 	    p = tline->text;
 	    nasm_unquote(p, NULL);
-	    error(severity, "%s: %s",  pp_directives[i], p);
+	    error(severity, "%s",  p);
 	} else {
 	    /* Not a quoted string, or more than a quoted string */
             p = detoken(tline, false);
-	    error(severity, "%s: %s",  pp_directives[i], p);
+	    error(severity, "%s",  p);
 	    nasm_free(p);
 	}
         free_tlist(origline);
@@ -2406,42 +2495,73 @@ static int do_directive(Token * tline)
     CASE_PP_ELIF:
         if (!istk->conds)
             error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
-        if (emitting(istk->conds->state)
-            || istk->conds->state == COND_NEVER)
-            istk->conds->state = COND_NEVER;
-        else {
-            /*
-             * IMPORTANT: In the case of %if, we will already have
-             * called expand_mmac_params(); however, if we're
-             * processing an %elif we must have been in a
-             * non-emitting mode, which would have inhibited
-             * the normal invocation of expand_mmac_params().  Therefore,
-             * we have to do it explicitly here.
-             */
-            j = if_condition(expand_mmac_params(tline->next), i);
-            tline->next = NULL; /* it got freed */
-            istk->conds->state =
-                j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
+        switch(istk->conds->state) {
+            case COND_IF_TRUE:
+                istk->conds->state = COND_DONE;
+                break;
+
+            case COND_DONE:
+            case COND_NEVER:
+                break;
+
+            case COND_ELSE_TRUE:
+            case COND_ELSE_FALSE:
+                error_precond(ERR_WARNING|ERR_PASS1,
+			      "`%%elif' after `%%else' ignored");
+                istk->conds->state = COND_NEVER;
+                break;
+
+            case COND_IF_FALSE:
+                /*
+                 * IMPORTANT: In the case of %if, we will already have
+                 * called expand_mmac_params(); however, if we're
+                 * processing an %elif we must have been in a
+                 * non-emitting mode, which would have inhibited
+                 * the normal invocation of expand_mmac_params().
+		 * Therefore, we have to do it explicitly here.
+                 */
+                j = if_condition(expand_mmac_params(tline->next), i);
+                tline->next = NULL; /* it got freed */
+                istk->conds->state =
+                    j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
+                break;
         }
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_ELSE:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%else' ignored");
+            error_precond(ERR_WARNING|ERR_PASS1,
+			  "trailing garbage after `%%else' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%else': no matching `%%if'");
-        if (emitting(istk->conds->state)
-            || istk->conds->state == COND_NEVER)
-            istk->conds->state = COND_ELSE_FALSE;
-        else
-            istk->conds->state = COND_ELSE_TRUE;
+        switch(istk->conds->state) {
+            case COND_IF_TRUE:
+            case COND_DONE:
+                istk->conds->state = COND_ELSE_FALSE;
+                break;
+
+            case COND_NEVER:
+                break;
+
+            case COND_IF_FALSE:
+                istk->conds->state = COND_ELSE_TRUE;
+                break;
+
+            case COND_ELSE_TRUE:
+            case COND_ELSE_FALSE:
+                error_precond(ERR_WARNING|ERR_PASS1,
+			      "`%%else' after `%%else' ignored.");
+                istk->conds->state = COND_NEVER;
+                break;
+        }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
     case PP_ENDIF:
         if (tline->next)
-            error(ERR_WARNING, "trailing garbage after `%%endif' ignored");
+            error_precond(ERR_WARNING|ERR_PASS1,
+			  "trailing garbage after `%%endif' ignored");
         if (!istk->conds)
             error(ERR_FATAL, "`%%endif': no matching `%%if'");
         cond = istk->conds;
@@ -2473,7 +2593,7 @@ static int do_directive(Token * tline)
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                error(ERR_WARNING,
+                error(ERR_WARNING|ERR_PASS1,
                       "redefining multi-line macro `%s'", defining->name);
 		return DIRECTIVE_FOUND;
             }
@@ -2544,7 +2664,7 @@ static int do_directive(Token * tline)
         if (!evalresult)
             return DIRECTIVE_FOUND;
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
@@ -2594,7 +2714,7 @@ static int do_directive(Token * tline)
                 return DIRECTIVE_FOUND;
             }
             if (tokval.t_type)
-                error(ERR_WARNING,
+                error(ERR_WARNING|ERR_PASS1,
                       "trailing garbage after expression ignored");
             if (!is_simple(evalresult)) {
                 error(ERR_NONFATAL, "non-constant value given to `%%rep'");
@@ -2688,9 +2808,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
 
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         param_start = tline = tline->next;
         nparam = 0;
@@ -2778,13 +2896,13 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
         if (tline->next) {
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after macro name ignored");
         }
 
         /* Find the context that symbol belongs to */
-        ctx = get_ctx(tline->text, false);
-	undef_smacro(ctx, tline->text);
+        ctx = get_ctx(tline->text, &mname, false);
+	undef_smacro(ctx, mname);
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2804,9 +2922,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
 
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
 	last->next = NULL;
@@ -2850,9 +2966,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -2869,7 +2983,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%pathsearch' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2913,9 +3027,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -2961,9 +3073,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3029,9 +3139,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3126,9 +3234,7 @@ static int do_directive(Token * tline)
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, false);
-
-        mname = tline->text;
+        ctx = get_ctx(tline->text, &mname, false);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3145,7 +3251,7 @@ static int do_directive(Token * tline)
         }
 
         if (tokval.t_type)
-            error(ERR_WARNING,
+            error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
 
         if (!is_simple(evalresult)) {
@@ -3251,13 +3357,118 @@ static int find_cc(Token * t)
     return i;
 }
 
+static bool paste_tokens(Token **head, bool handle_paste_tokens)
+{
+    Token **tail, *t, *tt;
+    Token **paste_head;
+    bool did_paste = false;
+    char *tmp;
+
+    /* Now handle token pasting... */
+    paste_head = NULL;
+    tail = head;
+    while ((t = *tail) && (tt = t->next)) {
+        switch (t->type) {
+        case TOK_WHITESPACE:
+            if (tt->type == TOK_WHITESPACE) {
+		/* Zap adjacent whitespace tokens */
+                t->next = delete_Token(tt);
+            } else {
+		/* Do not advance paste_head here */
+		tail = &t->next;
+	    }
+            break;
+        case TOK_ID:
+	case TOK_PREPROC_ID:
+        case TOK_NUMBER:
+	case TOK_FLOAT:
+	{
+	    size_t len = 0;
+	    char *tmp, *p;
+
+	    while (tt && (tt->type == TOK_ID || tt->type == TOK_PREPROC_ID ||
+			  tt->type == TOK_NUMBER || tt->type == TOK_FLOAT ||
+			  tt->type == TOK_OTHER)) {
+		len += strlen(tt->text);
+		tt = tt->next;
+	    }
+
+	    /* Now tt points to the first token after the potential
+	       paste area... */
+	    if (tt != t->next) {
+		/* We have at least two tokens... */
+		len += strlen(t->text);
+		p = tmp = nasm_malloc(len+1);
+
+		while (t != tt) {
+		    strcpy(p, t->text);
+		    p = strchr(p, '\0');
+		    t = delete_Token(t);
+		}
+
+		t = *tail = tokenize(tmp);
+		nasm_free(tmp);
+
+		while (t->next) {
+		    tail = &t->next;
+		    t = t->next;
+		}
+		t->next = tt;	/* Attach the remaining token chain */
+
+		did_paste = true;
+	    }
+	    paste_head = tail;
+	    tail = &t->next;
+	    break;
+	}
+	case TOK_PASTE:		/* %+ */
+	    if (handle_paste_tokens) {
+		/* Zap %+ and whitespace tokens to the right */
+		while (t && (t->type == TOK_WHITESPACE ||
+			     t->type == TOK_PASTE))
+		    t = *tail = delete_Token(t);
+		if (!paste_head || !t)
+		    break;	/* Nothing to paste with */
+		tail = paste_head;
+		t = *tail;
+		tt = t->next;
+		while (tok_type_(tt, TOK_WHITESPACE))
+		    tt = t->next = delete_Token(tt);
+
+		if (tt) {
+		    tmp = nasm_strcat(t->text, tt->text);
+		    delete_Token(t);
+		    tt = delete_Token(tt);
+		    t = *tail = tokenize(tmp);
+		    nasm_free(tmp);
+		    while (t->next) {
+			tail = &t->next;
+			t = t->next;
+		    }
+		    t->next = tt; /* Attach the remaining token chain */
+		    did_paste = true;
+		}
+		paste_head = tail;
+		tail = &t->next;
+		break;
+	    }
+	    /* else fall through */
+	default:
+	    tail = paste_head = &t->next;
+	    break;
+        }
+    }
+    return did_paste;
+}
 /*
  * Expand MMacro-local things: parameter references (%0, %n, %+n,
- * %-n) and MMacro-local identifiers (%%foo).
+ * %-n) and MMacro-local identifiers (%%foo) as well as
+ * macro indirection (%[...]).
  */
 static Token *expand_mmac_params(Token * tline)
 {
     Token *t, *tt, **tail, *thead;
+    bool changed = false;
 
     tail = &thead;
     thead = NULL;
@@ -3322,8 +3533,7 @@ static Token *expand_mmac_params(Token * tline)
                                   conditions[cc]);
                             text = NULL;
                         } else
-                            text =
-                                nasm_strdup(conditions[inverse_ccs[cc]]);
+                            text = nasm_strdup(conditions[inverse_ccs[cc]]);
                     }
                     break;
                 case '+':
@@ -3375,7 +3585,22 @@ static Token *expand_mmac_params(Token * tline)
                 t->text = text;
                 t->a.mac = NULL;
             }
+	    changed = true;
             continue;
+	} else if (tline->type == TOK_INDIRECT) {
+	    t = tline;
+	    tline = tline->next;
+	    tt = tokenize(t->text);
+	    tt = expand_mmac_params(tt);
+	    tt = expand_smacro(tt);
+	    *tail = tt;
+	    while (tt) {
+		tt->a.mac = NULL; /* Necessary? */
+		tail = &tt->next;
+		tt = tt->next;
+	    }
+	    delete_Token(t);
+	    changed = true;
         } else {
             t = *tail = tline;
             tline = tline->next;
@@ -3384,33 +3609,9 @@ static Token *expand_mmac_params(Token * tline)
         }
     }
     *tail = NULL;
-    t = thead;
-    for (; t && (tt = t->next) != NULL; t = t->next)
-        switch (t->type) {
-        case TOK_WHITESPACE:
-            if (tt->type == TOK_WHITESPACE) {
-                t->next = delete_Token(tt);
-            }
-            break;
-        case TOK_ID:
-            if (tt->type == TOK_ID || tt->type == TOK_NUMBER) {
-                char *tmp = nasm_strcat(t->text, tt->text);
-                nasm_free(t->text);
-                t->text = tmp;
-                t->next = delete_Token(tt);
-            }
-            break;
-        case TOK_NUMBER:
-            if (tt->type == TOK_NUMBER) {
-                char *tmp = nasm_strcat(t->text, tt->text);
-                nasm_free(t->text);
-                t->text = tmp;
-                t->next = delete_Token(tt);
-            }
-            break;
-	default:
-	    break;
-        }
+
+    if (changed)
+	paste_tokens(&thead, false);
 
     return thead;
 }
@@ -3432,11 +3633,12 @@ static Token *expand_smacro(Token * tline)
     Token **params;
     int *paramsize;
     unsigned int nparam, sparam;
-    int brackets, rescan;
+    int brackets;
     Token *org_tline = tline;
     Context *ctx;
-    char *mname;
+    const char *mname;
     int deadman = DEADMAN_LIMIT;
+    bool expanded;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -3453,6 +3655,8 @@ static Token *expand_smacro(Token * tline)
         org_tline->text = NULL;
     }
 
+    expanded = true;		/* Always expand %+ at least once */
+
 again:
     tail = &thead;
     thead = NULL;
@@ -3465,13 +3669,11 @@ again:
 
         if ((mname = tline->text)) {
             /* if this token is a local macro, look in local context */
-	    ctx = NULL;
-	    smtbl = &smacros;
-            if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID) {
-                ctx = get_ctx(mname, true);
-		if (ctx)
-		    smtbl = &ctx->localmac;
-	    }
+            if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID)
+                ctx = get_ctx(mname, &mname, true);
+	    else
+		ctx = NULL;
+	    smtbl = ctx ? &ctx->localmac : &smacros;
 	    head = (SMacro *) hash_findix(smtbl, mname);
 
             /*
@@ -3633,7 +3835,7 @@ again:
                                              m->casesense)))
                             m = m->next;
                         if (!m)
-                            error(ERR_WARNING | ERR_WARN_MNP,
+                            error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
                                   "macro `%s' exists, "
                                   "but not taking %d parameters",
                                   mstart->text, nparam);
@@ -3702,6 +3904,7 @@ again:
                     nasm_free(params);
                     nasm_free(paramsize);
                     free_tlist(mstart);
+		    expanded = true;
                     continue;   /* main token loop */
                 }
             }
@@ -3726,38 +3929,13 @@ again:
      * Also we look for %+ tokens and concatenate the tokens before and after
      * them (without white spaces in between).
      */
-    t = thead;
-    rescan = 0;
-    while (t) {
-        while (t && t->type != TOK_ID && t->type != TOK_PREPROC_ID)
-            t = t->next;
-        if (!t || !t->next)
-            break;
-        if (t->next->type == TOK_ID ||
-            t->next->type == TOK_PREPROC_ID ||
-            t->next->type == TOK_NUMBER) {
-            char *p = nasm_strcat(t->text, t->next->text);
-            nasm_free(t->text);
-            t->next = delete_Token(t->next);
-            t->text = p;
-            rescan = 1;
-        } else if (t->next->type == TOK_WHITESPACE && t->next->next &&
-                   t->next->next->type == TOK_PREPROC_ID &&
-                   strcmp(t->next->next->text, "%+") == 0) {
-            /* free the next whitespace, the %+ token and next whitespace */
-            int i;
-            for (i = 1; i <= 3; i++) {
-                if (!t->next
-                    || (i != 2 && t->next->type != TOK_WHITESPACE))
-                    break;
-                t->next = delete_Token(t->next);
-            }                   /* endfor */
-        } else
-            t = t->next;
-    }
-    /* If we concatenaded something, re-scan the line for macros */
-    if (rescan) {
+    if (expanded && paste_tokens(&thead, true)) {
+	/*
+	 * If we concatenated something, *and* we had previously expanded
+	 * an actual macro, scan the lines again for macros...
+	 */
         tline = thead;
+	expanded = false;
         goto again;
     }
 
@@ -3935,7 +4113,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    error(ERR_WARNING | ERR_WARN_MNP,
+    error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
           "macro `%s' exists, but not taking %d parameters",
           tline->text, nparam);
     nasm_free(params);
@@ -4115,36 +4293,62 @@ static int expand_mmacro(Token * tline)
     return 1;
 }
 
+/* The function that actually does the error reporting */
+static void verror(int severity, const char *fmt, va_list arg)
+{
+    char buff[1024];
+
+    vsnprintf(buff, sizeof(buff), fmt, arg);
+
+    if (istk && istk->mstk && istk->mstk->name)
+        _error(severity, "(%s:%d) %s", istk->mstk->name,
+               istk->mstk->lineno, buff);
+    else
+        _error(severity, "%s", buff);
+}
+
 /*
  * Since preprocessor always operate only on the line that didn't
- * arrived yet, we should always use ERR_OFFBY1. Also since user
- * won't want to see same error twice (preprocessing is done once
- * per pass) we will want to show errors only during pass one.
+ * arrived yet, we should always use ERR_OFFBY1.
  */
 static void error(int severity, const char *fmt, ...)
 {
     va_list arg;
-    char buff[1024];
 
     /* If we're in a dead branch of IF or something like it, ignore the error */
     if (istk && istk->conds && !emitting(istk->conds->state))
         return;
 
     va_start(arg, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, arg);
+    verror(severity, fmt, arg);
     va_end(arg);
+}
 
-    if (istk && istk->mstk && istk->mstk->name)
-        _error(severity | ERR_PASS1, "(%s:%d) %s", istk->mstk->name,
-               istk->mstk->lineno, buff);
-    else
-        _error(severity | ERR_PASS1, "%s", buff);
+/*
+ * Because %else etc are evaluated in the state context
+ * of the previous branch, errors might get lost with error():
+ *   %if 0 ... %else trailing garbage ... %endif
+ * So %else etc should report errors with this function.
+ */
+static void error_precond(int severity, const char *fmt, ...)
+{
+    va_list arg;
+
+    /* Only ignore the error if it's really in a dead branch */
+    if (istk && istk->conds && istk->conds->state == COND_NEVER)
+        return;
+
+    va_start(arg, fmt);
+    verror(severity, fmt, arg);
+    va_end(arg);
 }
 
 static void
 pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
          ListGen * listgen, StrList **deplist)
 {
+    Token *t;
+
     _error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
@@ -4158,7 +4362,7 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     src_set_linnum(0);
     istk->lineinc = 1;
     if (!istk->fp)
-        error(ERR_FATAL | ERR_NOFILE, "unable to open input file `%s'",
+        error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
               file);
     defining = NULL;
     nested_mac_count = 0;
@@ -4174,7 +4378,14 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     do_predef = true;
     list = listgen;
     evaluate = eval;
-    pass = apass;
+
+    /*
+     * 0 for dependencies, 1 for preparatory passes, 2 for final pass.
+     * The caller, however, will also pass in 3 for preprocess-only so
+     * we can set __PASS__ accordingly.
+     */
+    pass = apass > 2 ? 2 : apass;
+
     dephead = deptail = deplist;
     if (deplist) {
 	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
@@ -4183,6 +4394,17 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
 	*deptail = sl;
 	deptail = &sl->next;
     }
+
+    /*
+     * Define the __PASS__ macro.  This is defined here unlike
+     * all the other builtins, because it is special -- it varies between
+     * passes.
+     */
+    t = nasm_malloc(sizeof(*t));
+    t->next = NULL;
+    make_tok_num(t, apass);
+    t->a.mac = NULL;
+    define_smacro(NULL, "__PASS__", true, 0, t);
 }
 
 static char *pp_getline(void)
@@ -4319,6 +4541,8 @@ static char *pp_getline(void)
                 nasm_free(i);
                 if (!istk)
                     return NULL;
+                if (istk->expansion && istk->expansion->finishes)
+                    break;
             }
         }
 
@@ -4333,8 +4557,9 @@ static char *pp_getline(void)
          * anything.
          */
         if (!defining && !(istk->conds && !emitting(istk->conds->state))
-            && !(istk->mstk && !istk->mstk->in_progress))
+            && !(istk->mstk && !istk->mstk->in_progress)) {
             tline = expand_mmac_params(tline);
+	}
 
         /*
          * Check the line to see if it's a preprocessor directive.

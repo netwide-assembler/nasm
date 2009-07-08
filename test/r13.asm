@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -or13.bin; Files=.stdout .stderr r13.bin
+;Testname=test; Arguments=-fbin -or13.bin; Files=stdout stderr r13.bin
 
 	bits 64
 	mov rax,[rbx]

@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -ozerobyte.bin; Files=.stdout .stderr zerobyte.bin
+;Testname=test; Arguments=-fbin -ozerobyte.bin; Files=stdout stderr zerobyte.bin
 	bits 64
 
 	mov eax,bar-foo

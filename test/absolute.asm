@@ -1,4 +1,4 @@
-;Testname=bin; Arguments=-fbin -oabsolute.bin; Files=.stdout .stderr absolute.bin
+;Testname=bin; Arguments=-fbin -oabsolute.bin; Files=stdout stderr absolute.bin
 	org 7c00h
 init_foo:
 	jmp init_bar

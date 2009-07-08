@@ -1,11 +1,41 @@
 #!/usr/bin/perl
+## --------------------------------------------------------------------------
+##   
+##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   See the file AUTHORS included with the NASM distribution for
+##   the specific copyright holders.
+##
+##   Redistribution and use in source and binary forms, with or without
+##   modification, are permitted provided that the following
+##   conditions are met:
+##
+##   * Redistributions of source code must retain the above copyright
+##     notice, this list of conditions and the following disclaimer.
+##   * Redistributions in binary form must reproduce the above
+##     copyright notice, this list of conditions and the following
+##     disclaimer in the documentation and/or other materials provided
+##     with the distribution.
+##     
+##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+##     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+##     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+##     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+##     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+##     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+##     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+##     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+##     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+##     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+##     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+## --------------------------------------------------------------------------
+
 #
-# insns.pl   produce insnsa.c, insnsd.c, insnsi.h, insnsn.c from insns.dat
+# insns.pl
 #
-# The Netwide Assembler is copyright (C) 1996 Simon Tatham and
-# Julian Hall. All rights reserved. The software is
-# redistributable under the license given in the file "LICENSE"
-# distributed in the NASM archive.
+# Parse insns.dat and produce generated source code files
 
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
@@ -14,14 +44,22 @@
 # This should match MAX_OPERANDS from nasm.h
 $MAX_OPERANDS = 5;
 
-# Add VEX prefixes
+# Add VEX/XOP prefixes
+@vex_class = ( 'vex', 'xop' );
+$vex_classes = scalar(@vex_class);
 @vexlist = ();
-for ($m = 0; $m < 32; $m++) {
-    for ($lp = 0; $lp < 8; $lp++) {
-	push(@vexlist, sprintf("VEX%02X%01X", $m, $lp));
+%vexmap = ();
+for ($c = 0; $c < $vex_classes; $c++) {
+    $vexmap{$vex_class[$c]} = $c;
+    for ($m = 0; $m < 32; $m++) {
+	for ($lp = 0; $lp < 8; $lp++) {
+	    push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $lp));
+	}
     }
 }
 @disasm_prefixes = (@vexlist, @disasm_prefixes);
+
+@bytecode_count = (0) x 256;
 
 print STDERR "Reading insns.dat...\n";
 
@@ -48,38 +86,78 @@ open (F, $fname) || die "unable to open $fname";
 $line = 0;
 $insns = 0;
 while (<F>) {
-  $line++;
-  chomp;
-  next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
+    $line++;
+    chomp;
+    next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
 
-  unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
-      warn "line $line does not contain four fields\n";
-      next;
-  }
-  @fields = ($1, $2, $3, $4);
-  ($formatted, $nd) = format_insn(@fields);
-  if ($formatted) {
-    $insns++;
-    $aname = "aa_$fields[0]";
-    push @$aname, $formatted;
-  }
-  if ( $fields[0] =~ /cc$/ ) {
-      # Conditional instruction
-      $k_opcodes_cc{$fields[0]}++;
-  } else {
-      # Unconditional instruction
-      $k_opcodes{$fields[0]}++;
-  }
-  if ($formatted && !$nd) {
-    push @big, $formatted;
-    my @sseq = startseq($fields[2]);
-    foreach $i (@sseq) {
-	if (!defined($dinstables{$i})) {
-	    $dinstables{$i} = [];
-	}
-	push(@{$dinstables{$i}}, $#big);
+    unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
+	warn "line $line does not contain four fields\n";
+	next;
     }
-  }
+    @fields = ($1, $2, $3, $4);
+    @field_list = ([@fields, 0]);
+
+    if ($fields[1] =~ /\*/) {
+	# This instruction has relaxed form(s)
+	if ($fields[2] !~ /^\[/) {
+	    warn "line $line has an * operand but uses raw bytecodes\n";
+	    next;
+	}
+
+	$opmask = 0;
+	@ops = split(/,/, $fields[1]);
+	for ($oi = 0; $oi < scalar @ops; $oi++) {
+	    if ($ops[$oi] =~ /\*$/) {
+		if ($oi == 0) {
+		    warn "line $line has a first operand with a *\n";
+		    next;
+		}
+		$opmask |= 1 << $oi;
+	    }
+	}
+
+	for ($oi = 1; $oi < (1 << scalar @ops); $oi++) {
+	    if (($oi & ~$opmask) == 0) {
+		my @xops = ();
+		my $omask = ~$oi;
+		for ($oj = 0; $oj < scalar(@ops); $oj++) {
+		    if ($omask & 1) {
+			push(@xops, $ops[$oj]);
+		    }
+		    $omask >>= 1;
+		}
+		push(@field_list, [$fields[0], join(',', @xops),
+				   $fields[2], $fields[3], $oi]);
+	    }
+	}
+    }
+
+    foreach $fptr (@field_list) {
+	@fields = @$fptr;
+	($formatted, $nd) = format_insn(@fields);
+	if ($formatted) {
+	    $insns++;
+	    $aname = "aa_$fields[0]";
+	    push @$aname, $formatted;
+	}
+	if ( $fields[0] =~ /cc$/ ) {
+	    # Conditional instruction
+	    $k_opcodes_cc{$fields[0]}++;
+	} else {
+	    # Unconditional instruction
+	    $k_opcodes{$fields[0]}++;
+	}
+	if ($formatted && !$nd) {
+	    push @big, $formatted;
+	    my @sseq = startseq($fields[2], $fields[4]);
+	    foreach $i (@sseq) {
+		if (!defined($dinstables{$i})) {
+		    $dinstables{$i} = [];
+		}
+		push(@{$dinstables{$i}}, $#big);
+	    }
+	}
+    }
 }
 
 close F;
@@ -133,6 +211,20 @@ if ( !defined($output) || $output eq 'b') {
 	printf B "\n";
     }
     print B "};\n";
+
+    print B "\n";
+    print B "/*\n";
+    print B " * Bytecode frequencies (including reuse):\n";
+    print B " *\n";
+    for ($i = 0; $i < 32; $i++) {
+	print B " *";
+	for ($j = 0; $j < 256; $j += 32) {
+	    print B " |" if ($j);
+	    printf B " %3o:%4d", $i+$j, $bytecode_count[$i+$j];
+	}
+	print B "\n";
+    }
+    print B " */\n";
 
     close B;
 }
@@ -227,20 +319,26 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
-    print D "\nconst struct disasm_index * const itable_VEX[32][8] = {\n   ";
-    for ($m = 0; $m < 32; $m++) {
-	print D " {\n";
-	for ($lp = 0; $lp < 8; $lp++) {
-	    $vp = sprintf("VEX%02X%01X", $m, $lp);
-	    if ($is_prefix{$vp}) {
-		printf D "        itable_%s,\n", $vp;
-	    } else {
-		print  D "        NULL,\n";
+    printf D "\nconst struct disasm_index * const itable_vex[%d][32][8] =\n",
+        $vex_classes;
+    print D "{\n";
+    for ($c = 0; $c < $vex_classes; $c++) {
+	print D "    {\n";
+	for ($m = 0; $m < 32; $m++) {
+	    print D "        {\n";
+	    for ($lp = 0; $lp < 8; $lp++) {
+		$vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $lp);
+		if ($is_prefix{$vp}) {
+		    printf D "            itable_%s,\n", $vp;
+		} else {
+		    print  D "            NULL,\n";
+		}
 	    }
+	    print D "        },\n";
 	}
-	print D "    },";
+	print D "    },\n";
     }
-    print D "\n};\n";
+    print D "};\n";
 
     close D;
 }
@@ -262,7 +360,7 @@ if ( !defined($output) || $output eq 'i' ) {
     foreach $i (@opcodes, @opcodes_cc) {
 	print I "\tI_${i},\n";
 	$len = length($i);
-	$len++ if ( $i =~ /cc$/ );	# Condition codes can be 3 characters long
+	$len++ if ( $i =~ /cc$/ ); # Condition codes can be 3 characters long
 	$maxlen = $len if ( $len > $maxlen );
     }
     print I "\tI_none = -1\n";
@@ -299,14 +397,40 @@ if ( !defined($output) || $output eq 'n' ) {
 
 printf STDERR "Done: %d instructions\n", $insns;
 
-sub format_insn(@) {
-    my ($opcode, $operands, $codes, $flags) = @_;
+# Count primary bytecodes, for statistics
+sub count_bytecodes(@) {
+    my $skip = 0;
+    foreach my $bc (@_) {
+	if ($skip) {
+	    $skip--;
+	    next;
+	}
+	$bytecode_count[$bc]++;
+	if ($bc >= 01 && $bc <= 04) {
+	    $skip = $bc;
+	} elsif (($bc & ~03) == 010) {
+	    $skip = 1;
+	} elsif (($bc & ~013) == 0144) {
+	    $skip = 1;
+	} elsif ($bc == 0172) {
+	    $skip = 1;
+	} elsif ($bc >= 0260 && $bc <= 0270) {
+	    $skip = 2;
+	} elsif ($bc == 0330) {
+	    $skip = 1;
+	}
+    }
+}
+
+sub format_insn($$$$$) {
+    my ($opcode, $operands, $codes, $flags, $relax) = @_;
     my $num, $nd = 0;
     my @bytecode;
 
     return (undef, undef) if $operands eq "ignore";
 
     # format the operands
+    $operands =~ s/\*//g;
     $operands =~ s/:/|colon,/g;
     $operands =~ s/mem(\d+)/mem|bits$1/g;
     $operands =~ s/mem/memory/g;
@@ -333,9 +457,10 @@ sub format_insn(@) {
     $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
     $flags = "IF_" . $flags;
 
-    @bytecode = (decodify($codes), 0);
+    @bytecode = (decodify($codes, $relax), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
+    count_bytecodes(@bytecode);
 
     ("{I_$opcode, $num, {$operands}, \@\@CODES-$codes\@\@, $flags},", $nd);
 }
@@ -373,14 +498,14 @@ sub addprefix ($@) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($) {
+sub decodify($$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($codestr) = @_;
+    my($codestr, $relax) = @_;
 
     if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-	return byte_code_compile($1);
+	return byte_code_compile($1, $relax);
     }
 
     my $c = $codestr;
@@ -416,81 +541,83 @@ sub hexstr(@) {
 
 # Here we determine the range of possible starting bytes for a given
 # instruction. We need only consider the codes:
-# \1 \2 \3     mean literal bytes, of course
-# \4 \5 \6 \7  mean PUSH/POP of segment registers: special case
+# \[1234]      mean literal bytes, of course
 # \1[0123]     mean byte plus register value
 # \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
+# \34[4567]    mean PUSH/POP of segment registers: special case
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
-sub startseq($) {
-  my ($codestr) = @_;
-  my $word, @range;
-  my @codes = ();
-  my $c = $codestr;
-  my $c0, $c1, $i;
-  my $prefix = '';
+sub startseq($$) {
+    my ($codestr, $relax) = @_;
+    my $word, @range;
+    my @codes = ();
+    my $c = $codestr;
+    my $c0, $c1, $i;
+    my $prefix = '';
 
-  @codes = decodify($codestr);
+    @codes = decodify($codestr, $relax);
 
-  while ($c0 = shift(@codes)) {
-      $c1 = $codes[0];
-      if ($c0 == 01 || $c0 == 02 || $c0 == 03) {
-	  # Fixed byte string
-	  my $fbs = $prefix;
-	  while (1) {
-	      if ($c0 == 01 || $c0 == 02 || $c0 == 03) {
-		  while ($c0--) {
-		      $fbs .= sprintf("%02X", shift(@codes));
-		  }
-	      } else {
-		  last;
-	      }
-	      $c0 = shift(@codes);
-	  }
+    while ($c0 = shift(@codes)) {
+	$c1 = $codes[0];
+	if ($c0 >= 01 && $c0 <= 04) {
+	    # Fixed byte string
+	    my $fbs = $prefix;
+	    while (1) {
+		if ($c0 >= 01 && $c0 <= 04) {
+		    while ($c0--) {
+			$fbs .= sprintf("%02X", shift(@codes));
+		    }
+		} else {
+		    last;
+		}
+		$c0 = shift(@codes);
+	    }
 
-	  foreach $pfx (@disasm_prefixes) {
-	      if (substr($fbs, 0, length($pfx)) eq $pfx) {
-		  $prefix = $pfx;
-		  $fbs = substr($fbs, length($pfx));
-		  last;
-	      }
-	  }
+	    foreach $pfx (@disasm_prefixes) {
+		if (substr($fbs, 0, length($pfx)) eq $pfx) {
+		    $prefix = $pfx;
+		    $fbs = substr($fbs, length($pfx));
+		    last;
+		}
+	    }
 
-	  if ($fbs ne '') {
-	      return ($prefix.substr($fbs,0,2));
-	  }
+	    if ($fbs ne '') {
+		return ($prefix.substr($fbs,0,2));
+	    }
 
-	  unshift(@codes, $c0);
-      } elsif ($c0 == 04) {
-	  return addprefix($prefix, 0x07, 0x17, 0x1F);
-      } elsif ($c0 == 05) {
-	  return addprefix($prefix, 0xA1, 0xA9);
-      } elsif ($c0 == 06) {
-	  return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
-      } elsif ($c0 == 07) {
-	  return addprefix($prefix, 0xA0, 0xA8);
-      } elsif ($c0 >= 010 && $c0 <= 013) {
-	  return addprefix($prefix, $c1..($c1+7));
-      } elsif (($c0 & ~013) == 0144) {
-	  return addprefix($prefix, $c1, $c1|2);
-      } elsif ($c0 == 0330) {
-	  return addprefix($prefix, $c1..($c1+15));
-      } elsif ($c0 == 0 || $c0 == 0340) {
-	  return $prefix;
-      } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
-	  my $m,$wlp,$vxp;
-	  $m   = shift(@codes);
-	  $wlp = shift(@codes);
-	  $prefix .= sprintf('VEX%02X%01X', $m, $wlp & 7);
-      } elsif ($c0 >= 0172 && $c0 <= 174) {
-	  shift(@codes);	# Skip is4 control byte
-      } else {
-	  # We really need to be able to distinguish "forbidden"
-	  # and "ignorable" codes here
-      }
-  }
-  return $prefix;
+	    unshift(@codes, $c0);
+	} elsif ($c0 >= 010 && $c0 <= 013) {
+	    return addprefix($prefix, $c1..($c1+7));
+	} elsif (($c0 & ~013) == 0144) {
+	    return addprefix($prefix, $c1, $c1|2);
+	} elsif ($c0 == 0330) {
+	    return addprefix($prefix, $c1..($c1+15));
+	} elsif ($c0 == 0 || $c0 == 0340) {
+	    return $prefix;
+	} elsif ($c0 == 0344) {
+	    return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
+	} elsif ($c0 == 0345) {
+	    return addprefix($prefix, 0x07, 0x17, 0x1F);
+	} elsif ($c0 == 0346) {
+	    return addprefix($prefix, 0xA0, 0xA8);
+	} elsif ($c0 == 0347) {
+	    return addprefix($prefix, 0xA1, 0xA9);
+	} elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	    my $c,$m,$wlp;
+	    $m   = shift(@codes);
+	    $wlp = shift(@codes);
+	    $c = ($m >> 6);
+	    $m = $m & 31;
+	    $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 7);
+	} elsif ($c0 >= 0172 && $c0 <= 174) {
+	    shift(@codes);	# Skip is4 control byte
+	} else {
+	    # We really need to be able to distinguish "forbidden"
+	    # and "ignorable" codes here
+	}
+    }
+    return $prefix;
 }
 
 #
@@ -514,8 +641,8 @@ sub startseq($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($) {
-    my($str) = @_;
+sub byte_code_compile($$) {
+    my($str, $relax) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -523,6 +650,7 @@ sub byte_code_compile($) {
     my %oppos = ();
     my $i;
     my $op, $oq;
+    my $opex;
 
     unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
 	die "$fname: $line: cannot parse: [$str]\n";
@@ -536,6 +664,10 @@ sub byte_code_compile($) {
 	if ($c eq '+') {
 	    $op--;
 	} else {
+	    if ($relax & 1) {
+		$op--;
+	    }
+	    $relax >>= 1;
 	    $oppos{$c} = $op++;
 	}
     }
@@ -564,6 +696,8 @@ sub byte_code_compile($) {
 	    push(@codes, 0334);
 	} elsif ($op eq 'repe') {
 	    push(@codes, 0335);
+	} elsif ($op eq 'nohi') { # Use spl/bpl/sil/dil even without REX
+	    push(@codes, 0325);
 	} elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
 	    # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
 	    if ($op eq '66') {
@@ -576,7 +710,8 @@ sub byte_code_compile($) {
 		push(@codes, 0360);
 	    }
 	} elsif ($op =~ /^[0-9a-f]{2}$/) {
-	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes) {
+	    if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes &&
+		$codes[$litix] < 4) {
 		$codes[$litix]++;
 		push(@codes, hex $op);
 	    } else {
@@ -588,21 +723,26 @@ sub byte_code_compile($) {
 	    if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
 		die "$fname: $line: $op requires r and m operands\n";
 	    }
-	    push(@codes, 0100 + ($oppos{'m'} << 3) + $oppos{'r'});
+	    $opex = (($oppos{'m'} & 4) ? 06 : 0) |
+		    (($oppos{'r'} & 4) ? 05 : 0);
+	    push(@codes, $opex) if ($opex);
+	    push(@codes, 0100 + (($oppos{'m'} & 3) << 3) + ($oppos{'r'} & 3));
 	    $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-7])$:) {
 	    if (!defined($oppos{'m'})) {
 		die "$fname: $line: $op requires m operand\n";
 	    }
-	    push(@codes, 0200 + ($oppos{'m'} << 3) + $1);
+	    push(@codes, 06) if ($oppos{'m'} & 4);
+	    push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
 	    $prefix_ok = 0;
-	} elsif ($op =~ /^vex(|\..*)$/) {
+	} elsif ($op =~ /^(vex|xop)(|\..*)$/) {
+	    my $c = $vexmap{$1};
 	    my ($m,$w,$l,$p) = (undef,2,undef,0);
 	    my $has_nds = 0;
-	    foreach $oq (split(/\./, $op)) {
-		if ($oq eq 'vex') {
-		    # prefix
-		} elsif ($oq eq '128' || $oq eq 'l0') {
+	    my @subops = split(/\./, $op);
+	    shift @subops;	# Drop prefix
+	    foreach $oq (@subops) {
+		if ($oq eq '128' || $oq eq 'l0') {
 		    $l = 0;
 		} elsif ($oq eq '256' || $oq eq 'l1') {
 		    $l = 1;
@@ -614,11 +754,13 @@ sub byte_code_compile($) {
 		    $w = 2;
 		} elsif ($oq eq 'ww') {
 		    $w = 3;
-		} elsif ($oq eq '66') {
+		} elsif ($oq eq 'p0') {
+		    $p = 0;
+		} elsif ($oq eq '66' || $oq eq 'p1') {
 		    $p = 1;
-		} elsif ($oq eq 'f3') {
+		} elsif ($oq eq 'f3' || $oq eq 'p2') {
 		    $p = 2;
-		} elsif ($oq eq 'f2') {
+		} elsif ($oq eq 'f2' || $oq eq 'p3') {
 		    $p = 3;
 		} elsif ($oq eq '0f') {
 		    $m = 1;
@@ -628,7 +770,7 @@ sub byte_code_compile($) {
 		    $m = 3;
 		} elsif ($oq =~ /^m([0-9]+)$/) {
 		    $m = $1+0;
-		} elsif ($oq eq 'nds' || $oq eq 'ndd') {
+		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
 		    if (!defined($oppos{'v'})) {
 			die "$fname: $line: vex.$oq without 'v' operand\n";
 		    }
@@ -643,8 +785,8 @@ sub byte_code_compile($) {
 	    if (defined($oppos{'v'}) && !$has_nds) {
 		die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
-	    push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
-		 $m, ($w << 3)+($l << 2)+$p);
+	    push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
+		 ($c << 6)+$m, ($w << 3)+($l << 2)+$p);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^\/drex([01])$/) {
 	    my $oc0 = $1;
@@ -657,56 +799,79 @@ sub byte_code_compile($) {
 	    # this at (roughly) the position of the drex byte itself.
 	    # This allows us to match the AMD documentation and still
 	    # do the right thing.
-	    unshift(@codes, 0160+$oppos{'d'}+($oc0 ? 4 : 0));
-	} elsif ($op =~ /^(ib\,s|ib|ib\,w|iw|iwd|id|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
+	    unshift(@codes, 0160+($oppos{'d'} & 3)+($oc0 ? 4 : 0));
+	    unshift(@codes, 05) if ($oppos{'d'} & 4);
+	} elsif ($op =~ /^(ib\,s|ib|ibx|ib\,w|iw|iwd|id|idx|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
 	    if (!defined($oppos{'i'})) {
 		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    if ($op eq 'ib,s') { # Signed imm8
-		push(@codes, 014+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 014+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ib') { # imm8
-		push(@codes, 020+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 020+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ib,u') { # Unsigned imm8
-		push(@codes, 024+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 024+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iw') { # imm16
-		push(@codes, 030+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 030+($oppos{'i'} & 3));
+	    } elsif ($op eq 'ibx') { # imm8 sign-extended to opsize
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0274+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iwd') { # imm16 or imm32, depending on opsize
-		push(@codes, 034+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 034+($oppos{'i'} & 3));
 	    } elsif ($op eq 'id') { # imm32
-		push(@codes, 040+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 040+($oppos{'i'} & 3));
+	    } elsif ($op eq 'idx') { # imm32 extended to 64 bits
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0254+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iwdq') { # imm16/32/64, depending on opsize
-		push(@codes, 044+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 044+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel8') {
-		push(@codes, 050+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 050+($oppos{'i'} & 3));
 	    } elsif ($op eq 'iq') {
-		push(@codes, 054+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 054+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel16') {
-		push(@codes, 060+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 060+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel') { # 16 or 32 bit relative operand
-		push(@codes, 064+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 064+($oppos{'i'} & 3));
 	    } elsif ($op eq 'rel32') {
-		push(@codes, 070+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 070+($oppos{'i'} & 3));
 	    } elsif ($op eq 'seg') {
-		push(@codes, 074+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 074+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibw') { # imm16 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0144;
-		push(@codes, 0140+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0140+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibd') { # imm32 that can be bytified
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
-		push(@codes, 0150+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0150+($oppos{'i'} & 3));
 	    } elsif ($op eq 'ibd,s') {
 		# imm32 that can be bytified, sign extended to 64 bits
 		if (!defined($s_pos)) {
 		    die "$fname: $line: $op without a +s byte\n";
 		}
 		$codes[$s_pos] += 0154;
-		push(@codes, 0250+$oppos{'i'});
+		push(@codes, 05) if ($oppos{'i'} & 4);
+		push(@codes, 0250+($oppos{'i'} & 3));
 	    }
 	    $prefix_ok = 0;
 	} elsif ($op eq '/is4') {
@@ -734,7 +899,8 @@ sub byte_code_compile($) {
 		die "$fname: $line: $op without 'i' operand\n";
 	    }
 	    $s_pos = scalar @codes;
-	    push(@codes, $oppos{'i'}, hex $1);
+	    push(@codes, 05) if ($oppos{'i'} & 4);
+	    push(@codes, $oppos{'i'} & 3, hex $1);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^([0-9a-f]{2})\+c$/) {
 	    push(@codes, 0330, hex $1);

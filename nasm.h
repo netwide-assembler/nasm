@@ -1,11 +1,38 @@
-/* nasm.h   main header file for the Netwide Assembler: inter-module interface
+/* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- * The Netwide Assembler is copyright (C) 1996 Simon Tatham and
- * Julian Hall. All rights reserved. The software is
- * redistributable under the license given in the file "LICENSE"
- * distributed in the NASM archive.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- * initial version: 27/iii/95 by Simon Tatham
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ----------------------------------------------------------------------- */
+
+/* 
+ * nasm.h   main header file for the Netwide Assembler: inter-module interface
  */
 
 #ifndef NASM_NASM_H
@@ -15,7 +42,6 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "version.h"            /* generated NASM version macros */
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
@@ -156,6 +182,11 @@ typedef struct {
      * Reverse the effects of uplevel.
      */
     void (*downlevel) (int);
+
+    /*
+     * Called on a warning or error, with the error message.
+     */
+    void (*error)(int severity, const char *pfx, const char *msg);
 } ListGen;
 
 /*
@@ -572,6 +603,7 @@ typedef uint32_t opflags_t;
 #define SBYTE16		0x00022000U   /* for op r16,immediate instrs. */
 #define SBYTE32		0x00042000U   /* for op r32,immediate instrs. */
 #define SBYTE64		0x00082000U   /* for op r64,immediate instrs. */
+#define BYTENESS	0x000e0000U   /* for testing for byteness */
 
 /* special flags */
 #define SAME_AS		0x40000000U
@@ -599,7 +631,16 @@ enum ccode {			/* condition code names */
 #define REX_H		0x80	/* High register present, REX forbidden */
 #define REX_D		0x0100	/* Instruction uses DREX instead of REX */
 #define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
-#define REX_V		0x0400	/* Instruction uses VEX instead of REX */
+#define REX_V		0x0400	/* Instruction uses VEX/XOP instead of REX */
+#define REX_NH		0x0800	/* Instruction which doesn't use high regs */
+
+/*
+ * REX_V "classes" (prefixes which behave like VEX)
+ */
+enum vex_class {
+    RV_VEX		= 0,	/* C4/C5 */
+    RV_XOP		= 1	/* 8F */
+};
 
 /*
  * Note that because segment registers may be used as instruction
@@ -612,6 +653,7 @@ enum prefixes {			/* instruction prefixes */
     P_A16 = PREFIX_ENUM_START, P_A32, P_A64, P_ASP,
     P_LOCK, P_O16, P_O32, P_O64, P_OSP,
     P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES,
+    P_WAIT,
     PREFIX_ENUM_LIMIT
 };
 
@@ -653,6 +695,8 @@ typedef struct operand {	/* operand to an instruction */
 
 #define OPFLAG_FORWARD		1       /* operand is a forward reference */
 #define OPFLAG_EXTERN		2       /* operand is an external reference */
+#define OPFLAG_UNKNOWN		4	/* operand is an unknown reference */
+					/* (always a forward reference also) */
 
 typedef struct extop {          /* extended operand */
     struct extop *next;         /* linked list */
@@ -673,6 +717,7 @@ typedef struct extop {          /* extended operand */
    Note that LOCK and REP are in the same slot.  This is
    an x86 architectural constraint. */
 enum prefix_pos {
+    PPS_WAIT,			/* WAIT (technically not a prefix!) */
     PPS_LREP,			/* Lock or REP prefix */
     PPS_SEG,			/* Segment override prefix */
     PPS_OSIZE,			/* Operand size prefix */
@@ -698,7 +743,7 @@ typedef struct insn {		/* an instruction itself */
     bool forw_ref;              /* is there a forward reference? */
     int rex;			/* Special REX Prefix */
     int drexdst;		/* Destination register for DREX/VEX suffix */
-    int vex_m;			/* M register for VEX prefix */
+    int vex_cm;			/* Class and M field for VEX prefix */
     int vex_wlp;		/* W, P and L information for VEX prefix */
 } insn;
 
@@ -722,13 +767,11 @@ struct ofmt {
      */
     const char *shortname;
 
-
     /*
-     * this is reserved for out module specific help.
-     * It is set to NULL in all the out modules and is not implemented
-     * in the main program
+     * Output format flags.
      */
-    const char *helpstring;
+#define OFMT_TEXT	1	/* Text file format */
+    unsigned int flags;
 
     /*
      * this is a pointer to the first element of the debug information
@@ -903,7 +946,6 @@ struct ofmt {
  */
 
 struct dfmt {
-
     /*
      * This is a short (one-liner) description of the type of
      * output generated by the driver.
@@ -1030,5 +1072,14 @@ extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;		/* default to relative addressing? */
 extern int maxbits;		/* max bits supported by output */
+
+/*
+ * NASM version strings, defined in ver.c
+ */
+extern const char nasm_version[];
+extern const char nasm_date[];
+extern const char nasm_compile_options[];
+extern const char nasm_comment[];
+extern const char nasm_signature[];
 
 #endif

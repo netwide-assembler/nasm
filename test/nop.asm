@@ -1,5 +1,5 @@
-;Testname=unoptimized; Arguments=-fbin -onop.bin;     Files=.stdout .stderr nop.bin
-;Testname=optimized;   Arguments=-fbin -onop.bin -Ox; Files=.stdout .stderr nop.bin
+;Testname=unoptimized; Arguments=-fbin -onop.bin;     Files=stdout stderr nop.bin
+;Testname=optimized;   Arguments=-fbin -onop.bin -Ox; Files=stdout stderr nop.bin
 
 	bits 64
 

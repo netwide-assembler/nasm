@@ -1,10 +1,33 @@
 /* ----------------------------------------------------------------------- *
+ *   
+ *   Copyright 2007-2009 The NASM Authors - All Rights Reserved
+ *   See the file AUTHORS included with the NASM distribution for
+ *   the specific copyright holders.
  *
- *   Copyright 2007 The NASM Authors - All Rights Reserved
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following
+ *   conditions are met:
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the license given in the file "LICENSE"
- *   distributed in the NASM archive.
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *     
+ *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * ----------------------------------------------------------------------- */
 
@@ -78,13 +101,26 @@ int vsnprintf(char *, size_t, const char *, va_list);
 #endif
 
 #ifndef __cplusplus		/* C++ has false, true, bool as keywords */
-# ifdef HAVE_STDBOOL_H
+# if defined(HAVE_STDBOOL_H) && defined(HAVE_WORKING_BOOL)
 #  include <stdbool.h>
 # else
 /* This is sort of dangerous, since casts will behave different than
    casting to the standard boolean type.  Always use !!, not (bool). */
 typedef enum bool { false, true } bool;
 # endif
+#endif
+
+/* Provide a substitute for offsetof() if we don't have one.  This
+   variant works on most (but not *all*) systems... */
+#ifndef offsetof
+# define offsetof(t,m) ((size_t)&(((t *)0)->m))
+#endif
+
+/* The container_of construct: if p is a pointer to member m of
+   container class c, then return a pointer to the container of which
+   *p is a member. */
+#ifndef container_of
+# define container_of(p, c, m) ((c *)((char *)(p) - offsetof(c,m)))
 #endif
 
 /* Some misguided platforms hide the defs for these */
@@ -132,6 +168,15 @@ char *strsep(char **, const char *);
 #else
 # define likely(x)	(!!(x))
 # define unlikely(x)	(!!(x))
+#endif
+
+/*
+ * How to tell the compiler that a function doesn't return
+ */
+#ifdef __GNUC__
+# define no_return void __attribute__((noreturn))
+#else
+# define no_return void
 #endif
 
 #endif	/* NASM_COMPILER_H */
