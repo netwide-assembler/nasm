@@ -1020,9 +1020,13 @@ static void macho_write_section (void)
 	       of the rest of the address.  */
 	    if (!r->ext) {
             /* generate final address by section address and offset */
-            for (s2 = sects, fi = 1;
-                 s2 != NULL && fi < r->snum; s2 = s2->next, fi++)
-                l += s2->size;
+			for (s2 = sects, fi = 1;
+				s2 != NULL; s2 = s2->next, fi++){
+				if(fi == r->snum){
+					l += s2->addr;
+					break;
+				}
+			}
 	    }
 
 	    /* write new offset back */
