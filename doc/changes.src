@@ -35,6 +35,8 @@ since 2007.
 \b Don't delete the list file on errors.  Also, include error and
   warning information in the list file.
 
+\b Support for 64-bit Mach-O output, see \k{machofmt}.
+
 
 \S{cl-2.06} Version 2.06
 
