@@ -133,8 +133,11 @@
 #ifndef OF_IEEE
 #define OF_IEEE
 #endif
-#ifndef OF_MACHO
-#define OF_MACHO
+#ifndef OF_MACHO32
+#define OF_MACHO32
+#endif
+#ifndef OF_MACHO64
+#define OF_MACHO64
 #endif
 #ifndef OF_DBG
 #define OF_DBG
@@ -191,8 +194,11 @@
 #ifndef OF_IEEE
 #define OF_IEEE
 #endif
-#ifndef OF_MACHO
-#define OF_MACHO
+#ifndef OF_MACHO32
+#define OF_MACHO32
+#endif
+#ifndef OF_MACHO64
+#define OF_MACHO64
 #endif
 #endif
 
@@ -233,8 +239,11 @@
 #ifdef OF_NO_IEEE
 #undef OF_IEEE
 #endif
-#ifdef OF_NO_MACHO
-#undef OF_MACHO
+#ifdef OF_NO_MACHO32
+#undef OF_MACHO32
+#endif
+#ifdef OF_NO_MACHO64
+#undef OF_MACHO64
 #endif
 #ifdef OF_NO_DBG
 #undef OF_DBG
@@ -264,7 +273,9 @@ extern struct ofmt of_win32;
 extern struct ofmt of_win64;
 extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
+extern struct ofmt of_macho32;
 extern struct ofmt of_macho;
+extern struct ofmt of_macho64;
 extern struct ofmt of_dbg;
 
 struct ofmt *drivers[] = {
@@ -307,8 +318,12 @@ struct ofmt *drivers[] = {
 #ifdef OF_IEEE
     &of_ieee,
 #endif
-#ifdef OF_MACHO
-    &of_macho,
+#ifdef OF_MACHO32
+    &of_macho32,
+	&of_macho,
+#endif
+#ifdef OF_MACHO64
+    &of_macho64,
 #endif
 #ifdef OF_DBG
     &of_dbg,

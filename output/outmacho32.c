@@ -54,7 +54,7 @@
 #include "output/outform.h"
 #include "output/outlib.h"
 
-#if defined(OF_MACHO)
+#if defined(OF_MACHO32)
 
 /* Mach-O in-file header structure sizes */
 #define MACHO_HEADER_SIZE	(28)
@@ -1020,13 +1020,13 @@ static void macho_write_section (void)
 	       of the rest of the address.  */
 	    if (!r->ext) {
             /* generate final address by section address and offset */
-			for (s2 = sects, fi = 1;
-				s2 != NULL; s2 = s2->next, fi++){
-				if(fi == r->snum){
-					l += s2->addr;
-					break;
-				}
-			}
+		    for (s2 = sects, fi = 1;
+		        s2 != NULL; s2 = s2->next, fi++) {
+		        if (fi == r->snum) {
+		            l += s2->addr;
+		            break;
+		        }
+		    }
 	    }
 
 	    /* write new offset back */
@@ -1335,8 +1335,26 @@ static void debug_section_relocs (struct section *s)
     }
 }
 
+struct ofmt of_macho32 = {
+    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
+    "macho32",
+    0,
+    null_debug_arr,
+    &null_debug_form,
+    macho_stdmac,
+    macho_init,
+    macho_setinfo,
+    macho_output,
+    macho_symdef,
+    macho_section,
+    macho_segbase,
+    macho_directive,
+    macho_filename,
+    macho_cleanup
+};
+
 struct ofmt of_macho = {
-    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files",
+    "MACHO (short name for MACHO32)",
     "macho",
     0,
     null_debug_arr,

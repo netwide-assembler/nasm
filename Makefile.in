@@ -67,10 +67,10 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf.$(O) output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
-	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) strfunc.$(O) \
-	tokhash.$(O) regvals.$(O) regflags.$(O)
+	output/outdbg.$(O) output/outieee.$(O) output/outmacho32.$(O) \
+	output/outmacho64.$(O) preproc.$(O) quote.$(O) pptok.$(O) \
+	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
+	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
@@ -312,9 +312,12 @@ output/outieee.$(O): output/outieee.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h regs.h
 output/outlib.$(O): output/outlib.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h output/outlib.h pptok.h preproc.h regs.h
-output/outmacho.$(O): output/outmacho.c compiler.h config.h insnsi.h nasm.h \
- nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h regs.h \
- saa.h
+output/outmacho32.$(O): output/outmacho32.c compiler.h config.h insnsi.h \
+ nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
+ regs.h saa.h
+output/outmacho64.$(O): output/outmacho64.c compiler.h config.h insnsi.h \
+ nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
+ regs.h saa.h
 output/outobj.$(O): output/outobj.c compiler.h config.h insnsi.h nasm.h \
  nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h regs.h \
  stdscan.h
