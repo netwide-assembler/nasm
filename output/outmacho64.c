@@ -387,7 +387,7 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
 	/* add special symbol for ..gotpcrel */
 	macho_gotpcrel_sect = seg_alloc();
 	macho_gotpcrel_sect ++;
-//	ldef("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, error);
+	ldef("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, error);
 }
 
 static int macho_setinfo(enum geninfo type, char **val)
@@ -501,13 +501,16 @@ static int32_t add_reloc(struct section *sect, int32_t section,
 	} else if (pcrel == 2) {
 		r->pcrel = 0;
 		r->type = 5;				// X86_64_RELOC_SUBTRACTOR
-//		r->snum = macho_gotpcrel_sect;
 
 	/* gotpcrel */
 	} else if (pcrel == 3) {
 		r->type = 4;				// X86_64_RELOC_GOT
+		r->snum = macho_gotpcrel_sect;
+
+	/* gotpcrel MOVQ load */
 	} else if (pcrel == 4) {
 		r->type = 3;				// X86_64_RELOC_GOT_LOAD
+		r->snum = macho_gotpcrel_sect;
 	}
 
 	++sect->nreloc;
@@ -521,7 +524,7 @@ static void macho_output(int32_t secto, const void *data,
 {
     struct section *s, *sbss;
     int64_t addr;
-    uint8_t mydata[16], *p;
+    uint8_t mydata[16], *p, gotload;
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
@@ -589,11 +592,8 @@ static void macho_output(int32_t secto, const void *data,
 					 making it impractical for use in intermediate object files
 					 */
 					} else {
-						addr -= add_reloc(s, section, 0, size, addr);
+						addr -= add_reloc(s, section, 0, size, addr);					// X86_64_RELOC_UNSIGNED
 					}
-				} else if (wrt == macho_gotpcrel_sect) {
-					addr += s->size;
-					add_reloc(s, section, 3, size, addr);				// X86_64_RELOC_GOT
 				} else {
 					error(ERR_NONFATAL, "Mach-O format does not support"
 						" this use of WRT");
@@ -613,17 +613,14 @@ static void macho_output(int32_t secto, const void *data,
         if (section == secto)
             error(ERR_PANIC, "intra-section OUT_REL2ADR");
 
-        if (section != NO_SEG && section % 2) {
+		if (section == NO_SEG) {
+			/* Do nothing */
+        } else if (section % 2) {
             error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else {
-			if (wrt == NO_SEG) {
-				*mydata -= add_reloc(s, section, 2, 2, (int64_t)*mydata);
-				*mydata -= add_reloc(s, section, 0, 2, (int64_t)*mydata);
-			} else {
-				error(ERR_NONFATAL, "Unsupported non-32-bit"
+			error(ERR_NONFATAL, "Unsupported non-32-bit"
 				  " Macho-O relocation [2]");
-			}
 		}
 
         sect_write(s, mydata, 2L);
@@ -641,10 +638,18 @@ static void macho_output(int32_t secto, const void *data,
                   " section base references");
         } else {
 			if (wrt == NO_SEG) {
-				*mydata -= add_reloc(s, section, 1, 4, (int64_t)*mydata);				// X86_64_RELOC_UNSIGNED/SIGNED/BRANCH
+				*mydata -= add_reloc(s, section, 1, 4, (int64_t)*mydata);				// X86_64_RELOC_SIGNED/BRANCH
 			} else if (wrt == macho_gotpcrel_sect) {
-				error(ERR_NONFATAL, "Mach-O format cannot produce PC-"
-					  "relative GOT references");
+				if (s->data->datalen > 1) {
+					saa_fread(s->data, s->data->datalen-2, &gotload, 1);				// Retrieve Instruction Opcode
+				} else {
+					gotload = 0;
+				}
+				if (gotload == 0x8B) {													// Check for MOVQ Opcode
+					*mydata -= add_reloc(s, section, 4, 4, (int64_t)*mydata);			// X86_64_GOT_LOAD (MOVQ load)
+				} else {
+					*mydata -= add_reloc(s, section, 3, 4, (int64_t)*mydata);			// X86_64_GOT
+				}
 			} else {
 				error(ERR_NONFATAL, "Mach-O format does not support"
 				    " this use of WRT");
@@ -788,17 +793,6 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         return;
     }
 
-    sym = *symstail = nasm_malloc(sizeof(struct symbol));
-    sym->next = NULL;
-    symstail = &sym->next;
-
-    sym->name = name;
-    sym->strx = strslen;
-    sym->type = 0;
-    sym->desc = 0;
-    sym->value = offset;
-    sym->initial_snum = -1;
-
 	if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         /*
          * This is a NASM special symbol. We never allow it into
@@ -809,6 +803,17 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
             error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
          return;
     }
+
+    sym = *symstail = nasm_malloc(sizeof(struct symbol));
+    sym->next = NULL;
+    symstail = &sym->next;
+
+    sym->name = name;
+    sym->strx = strslen;
+    sym->type = 0;
+    sym->desc = 0;
+    sym->value = offset;
+    sym->initial_snum = -1;
 
     /* external and common symbols get N_EXT */
     if (is_global != 0) {
