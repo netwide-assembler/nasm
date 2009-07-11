@@ -3211,7 +3211,6 @@ static int do_directive(Token * tline)
 	}
 
 	p = pp = nasm_malloc(len);
-	t = tline;
 	for (t = tline; t; t = t->next) {
 	    if (t->type == TOK_STRING) {
 		memcpy(p, t->text, t->a.len);
