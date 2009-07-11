@@ -2042,7 +2042,6 @@ static int do_directive(Token * tline)
     int64_t count;
     size_t len;
     int severity;
-	bool is_recursive = false;
 
     origline = tline;
 
@@ -2592,18 +2591,18 @@ static int do_directive(Token * tline)
 		
 	case PP_RMACRO:
 	case PP_RIMACRO:
-		is_recursive = true;
     case PP_MACRO:
     case PP_IMACRO:
         if (defining) {
             error(ERR_FATAL,
                   "`%%%smacro': already defining a macro",
                   (i == PP_IMACRO ? "i" : ""));
+				  /* todo: change the above as well... */
 	    return DIRECTIVE_FOUND;
 	}
-        defining = nasm_malloc(sizeof(MMacro));
-		defining->max_depth = (is_recursive ? 65536 : 0); /* remove/change this??? */
-	defining->casesense = (i == PP_MACRO);
+    defining = nasm_malloc(sizeof(MMacro));
+	defining->max_depth = (((i == PP_RMACRO) || (i == PP_RIMACRO)) ? 65536 : 0);
+	defining->casesense = ((i == PP_MACRO) || (i == PP_RMACRO));
 	if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
 	    nasm_free(defining);
 	    defining = NULL;
