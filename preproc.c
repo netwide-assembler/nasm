@@ -2768,6 +2768,7 @@ static int do_directive(Token * tline)
 
         tmp_defining = defining;
         defining = nasm_malloc(sizeof(MMacro));
+		defining->prev = NULL;
         defining->name = NULL;  /* flags this macro as a %rep block */
         defining->casesense = false;
         defining->plus = false;
