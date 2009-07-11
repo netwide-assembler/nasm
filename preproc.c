@@ -1928,7 +1928,6 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     def->plus = false;
     def->nolist = false;
     def->in_progress = 0;
-	def->max_depth = 0;
     def->rep_nest = NULL;
     def->nparam_min = 0;
     def->nparam_max = 0;
@@ -1972,25 +1971,6 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	def->nolist = true;
     }
 	
-	/*
-	 * Handle maximum recursion depth.
-	 */
-	if (tline && tok_is_(tline->next, ",")) {
-	    tline = tline->next->next;
-		if (tok_is_(tline, "*")) {
-			def->max_depth = 65536;		/* should we eliminate this? */
-		} else if (!tok_type_(tline, TOK_NUMBER)) {
-	        error(ERR_NONFATAL,
-		      "`%s' expects a maximum recursion depth after `,'", directive);
-		} else {
-		    def->max_depth = readnum(tline->text, &err);
-			if (err) {
-                error(ERR_NONFATAL, "unable to parse maximum recursion depth `%s'",
-                      tline->text);
-			}
-		}
-	}
-
     /*
      * Handle default parameters.
      */
@@ -2062,6 +2042,7 @@ static int do_directive(Token * tline)
     int64_t count;
     size_t len;
     int severity;
+	bool is_recursive = false;
 
     origline = tline;
 
@@ -2608,7 +2589,10 @@ static int do_directive(Token * tline)
         nasm_free(cond);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
-
+		
+	case PP_RMACRO:
+	case PP_RIMACRO:
+		is_recursive = true;
     case PP_MACRO:
     case PP_IMACRO:
         if (defining) {
@@ -2618,6 +2602,7 @@ static int do_directive(Token * tline)
 	    return DIRECTIVE_FOUND;
 	}
         defining = nasm_malloc(sizeof(MMacro));
+		defining->max_depth = (is_recursive ? 65536 : 0); /* remove/change this??? */
 	defining->casesense = (i == PP_MACRO);
 	if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
 	    nasm_free(defining);

@@ -59,6 +59,7 @@
 %endmacro
 %endrep
 %error
+%exitmacro
 %exitrep
 %fatal
 %iassign
@@ -76,6 +77,8 @@
 %push
 %rep
 %repl
+%rimacro
+%rmacro
 %rotate
 %stacksize
 %strcat
