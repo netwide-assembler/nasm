@@ -234,6 +234,18 @@ void standard_extension(char *inname, char *outname, char *extension);
 #define elements(x)     ( sizeof(x) / sizeof(*(x)) )
 
 /*
+ * List handling
+ *
+ *  list_for_each - regular iterator over list
+ *  list_for_each_safe - the same but safe against list items removal
+ */
+#define list_for_each(pos, head) \
+	for (pos = head; pos; pos = pos->next)
+#define list_for_each_safe(pos, n, head) \
+	for (pos = head, n = (pos ? pos->next : NULL); pos; \
+		pos = n, n = (n ? n->next : NULL))
+
+/*
  * some handy macros that will probably be of use in more than one
  * output format: convert integers into little-endian byte packed
  * format in memory
