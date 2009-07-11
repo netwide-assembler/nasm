@@ -82,6 +82,7 @@
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
+typedef struct MMacroInvocation MMacroInvocation;
 typedef struct Context Context;
 typedef struct Token Token;
 typedef struct Blocks Blocks;
@@ -130,12 +131,14 @@ struct SMacro {
  */
 struct MMacro {
     MMacro *next;
+	MMacroInvocation *prev;      /* previous invocation */
     char *name;
     int nparam_min, nparam_max;
     bool casesense;
     bool plus;                   /* is the last parameter greedy? */
     bool nolist;                 /* is this macro listing-inhibited? */
-    int64_t in_progress;
+    int64_t in_progress;         /* is this macro currently being expanded? */
+	int64_t max_depth;           /* maximum number of recursive expansions allowed */
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
@@ -150,6 +153,20 @@ struct MMacro {
     uint64_t unique;
     int lineno;                 /* Current line number on expansion */
 };
+
+
+/* Store the definition of a multi-line macro, as defined in a
+ * previous recursive macro expansion.
+ */
+struct MMacroInvocation {
+	MMacroInvocation *prev;     /* previous invocation */
+	Token **params;             /* actual parameters */
+	Token *iline;               /* invocation line */
+    unsigned int nparam, rotate;
+    int *paramlen;
+    uint64_t unique;
+};
+
 
 /*
  * The context stack is composed of a linked list of these.
@@ -1678,6 +1695,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             searching.plus = false;
             searching.nolist = false;
             searching.in_progress = 0;
+			searching.max_depth = 0;
             searching.rep_nest = NULL;
             searching.nparam_min = 0;
             searching.nparam_max = INT_MAX;
@@ -1905,10 +1923,12 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	return false;
     }
 
+	def->prev = NULL;
     def->name = nasm_strdup(tline->text);
     def->plus = false;
     def->nolist = false;
     def->in_progress = 0;
+	def->max_depth = 0;
     def->rep_nest = NULL;
     def->nparam_min = 0;
     def->nparam_max = 0;
@@ -1951,6 +1971,25 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	tline = tline->next;
 	def->nolist = true;
     }
+	
+	/*
+	 * Handle maximum recursion depth.
+	 */
+	if (tline && tok_is_(tline->next, ",")) {
+	    tline = tline->next->next;
+		if (tok_is_(tline, "*")) {
+			def->max_depth = 65536;		/* should we eliminate this? */
+		} else if (!tok_type_(tline, TOK_NUMBER)) {
+	        error(ERR_NONFATAL,
+		      "`%s' expects a maximum recursion depth after `,'", directive);
+		} else {
+		    def->max_depth = readnum(tline->text, &err);
+			if (err) {
+                error(ERR_NONFATAL, "unable to parse maximum recursion depth `%s'",
+                      tline->text);
+			}
+		}
+	}
 
     /*
      * Handle default parameters.
@@ -2734,6 +2773,7 @@ static int do_directive(Token * tline)
         defining->plus = false;
         defining->nolist = nolist;
         defining->in_progress = count;
+		defining->max_depth = 0;
         defining->nparam_min = defining->nparam_max = 0;
         defining->defaults = NULL;
         defining->dlist = NULL;
@@ -4060,14 +4100,15 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
              * This one is right. Just check if cycle removal
              * prohibits us using it before we actually celebrate...
              */
-            if (m->in_progress) {
-#if 0
-                error(ERR_NONFATAL,
-                      "self-reference in multi-line macro `%s'", m->name);
-#endif
-                nasm_free(params);
-                return NULL;
-            }
+              if (m->in_progress > m->max_depth) {
+			      if (m->max_depth > 0) {
+                      error(ERR_WARNING,
+							"reached maximum recursion depth of %i",
+                            m->max_depth);
+                  }
+                  nasm_free(params);
+                  return NULL;
+              }
             /*
              * It's right, and we can use it. Add its default
              * parameters to the end of our list if necessary.
@@ -4120,6 +4161,49 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
     return NULL;
 }
 
+
+/*
+ * Save MMacro invocation specific fields in
+ * preparation for a recursive macro expansion
+ */
+static void push_mmacro(MMacro *m)
+{
+    MMacroInvocation *i;
+
+	i = nasm_malloc(sizeof(MMacroInvocation));
+	i->prev = m->prev;
+	i->params = m->params;
+	i->iline = m->iline;
+	i->nparam = m->nparam;
+	i->rotate = m->rotate;
+	i->paramlen = m->paramlen;
+	i->unique = m->unique;
+	m->prev = i;
+}
+
+
+/*
+ * Restore MMacro invocation specific fields that were
+ * saved during a previous recursive macro expansion
+ */
+static void pop_mmacro(MMacro *m)
+{
+    MMacroInvocation *i;
+
+	if(m->prev != NULL){
+		i = m->prev;
+		m->prev = i->prev;
+		m->params = i->params;
+		m->iline = i->iline;
+		m->nparam = i->nparam;
+		m->rotate = i->rotate;
+		m->paramlen = i->paramlen;
+		m->unique = i->unique;
+		nasm_free(i);
+	}
+}
+
+
 /*
  * Expand the multi-line macro call made by the given line, if
  * there is one to be expanded. If there is, push the expansion on
@@ -4166,7 +4250,7 @@ static int expand_mmacro(Token * tline)
         if (!tok_type_(t, TOK_ID) || (m = is_mmacro(t, &params)) == NULL)
             return 0;
         last->next = NULL;
-	mname = t->text;
+        mname = t->text;
         tline = t;
     }
 
@@ -4219,8 +4303,15 @@ static int expand_mmacro(Token * tline)
     ll->finishes = m;
     ll->first = NULL;
     istk->expansion = ll;
+	
+	/*
+	 * Save the previous MMacro expansion in the case of
+	 * macro recursion
+	 */
+	if (m->max_depth && m->in_progress)
+	    push_mmacro(m);
 
-    m->in_progress = true;
+    m->in_progress ++;
     m->params = params;
     m->iline = tline;
     m->nparam = nparam;
@@ -4488,10 +4579,14 @@ static char *pp_getline(void)
                          * therefore the parameter information needs to
                          * be freed.
                          */
-                        nasm_free(m->params);
-                        free_tlist(m->iline);
-                        nasm_free(m->paramlen);
-                        l->finishes->in_progress = false;
+						if (m->prev != NULL) {
+							pop_mmacro(m);
+						} else {
+                            nasm_free(m->params);
+                            free_tlist(m->iline);
+							nasm_free(m->paramlen);
+						}
+                        l->finishes->in_progress --;
                     } else
                         free_mmacro(m);
                 }
