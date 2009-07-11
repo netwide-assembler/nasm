@@ -58,6 +58,13 @@ static struct Sync {
 } *synx;
 static int max_synx, nsynx;
 
+static inline void swap_sync(uint32_t dst, uint32_t src)
+{
+    struct Sync t = synx[dst];
+    synx[dst] = synx[src];
+    synx[src] = t;
+}
+
 void init_sync(void)
 {
     max_synx = SYNC_MAX-1;
@@ -79,12 +86,8 @@ void add_sync(uint32_t pos, uint32_t length)
     synx[nsynx].length = length;
 
     for (i = nsynx; i > 1; i /= 2) {
-        if (synx[i / 2].pos > synx[i].pos) {
-            struct Sync t;
-            t = synx[i / 2];    /* structure copy */
-            synx[i / 2] = synx[i];      /* structure copy again */
-            synx[i] = t;        /* another structure copy */
-        }
+        if (synx[i / 2].pos > synx[i].pos)
+            swap_sync(i / 2, i);
     }
 }
 
@@ -92,11 +95,8 @@ uint32_t next_sync(uint32_t position, uint32_t *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
         int i, j;
-        struct Sync t;
-        t = synx[nsynx];        /* structure copy */
-        synx[nsynx] = synx[1];  /* structure copy */
-        synx[1] = t;            /* ditto */
 
+        swap_sync(nsynx, 1);
         nsynx--;
 
         i = 1;
@@ -104,14 +104,10 @@ uint32_t next_sync(uint32_t position, uint32_t *length)
             j = i * 2;
             if (synx[j].pos < synx[i].pos &&
                 (j + 1 > nsynx || synx[j + 1].pos > synx[j].pos)) {
-                t = synx[j];    /* structure copy */
-                synx[j] = synx[i];      /* lots of these... */
-                synx[i] = t;    /* ...aren't there? */
+                swap_sync(j, i);
                 i = j;
             } else if (j + 1 <= nsynx && synx[j + 1].pos < synx[i].pos) {
-                t = synx[j + 1];        /* structure copy */
-                synx[j + 1] = synx[i];  /* structure <yawn> copy */
-                synx[i] = t;    /* structure copy <zzzz....> */
+                swap_sync(j + 1, i);
                 i = j + 1;
             } else
                 break;
