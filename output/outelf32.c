@@ -1392,13 +1392,14 @@ static int32_t elf_segbase(int32_t segment)
     return segment;
 }
 
-static int elf_directive(char *directive, char *value, int pass)
+static int elf_directive(enum directives directive, char *value, int pass)
 {
     bool err;
     int64_t n;
     char *p;
 
-    if (!strcmp(directive, "osabi")) {
+    switch (directive) {
+    case D_OSABI:
 	if (pass == 2)
 	    return 1;		/* ignore in pass 2 */
 
@@ -1425,9 +1426,10 @@ static int elf_directive(char *directive, char *value, int pass)
 	
 	elf_abiver = n;
 	return 1;
+    
+    default:
+	return 0;
     }
-	
-    return 0;
 }
 
 static void elf_filename(char *inname, char *outname, efunc error)

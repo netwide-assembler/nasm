@@ -179,10 +179,10 @@ static int32_t dbg_segbase(int32_t segment)
     return segment;
 }
 
-static int dbg_directive(char *directive, char *value, int pass)
+static int dbg_directive(enum directives directive, char *value, int pass)
 {
     fprintf(dbgf, "directive [%s] value [%s] (pass %d)\n",
-            directive, value, pass);
+            directives[directive], value, pass);
     return 1;
 }
 

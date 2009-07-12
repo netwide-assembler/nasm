@@ -357,13 +357,6 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
     strslen = 1;
 }
 
-static int macho_setinfo(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-
 static void sect_write(struct section *sect,
                        const uint8_t *data, uint32_t len)
 {
@@ -718,14 +711,6 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 static int32_t macho_segbase(int32_t section)
 {
     return section;
-}
-
-static int macho_directive(char *directive, char *value, int pass)
-{
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return 0;
 }
 
 static void macho_filename(char *inname, char *outname, efunc error)
@@ -1340,12 +1325,12 @@ struct ofmt of_macho32 = {
     &null_debug_form,
     macho_stdmac,
     macho_init,
-    macho_setinfo,
+    null_setinfo,
     macho_output,
     macho_symdef,
     macho_section,
     macho_segbase,
-    macho_directive,
+    null_directive,
     macho_filename,
     macho_cleanup
 };
@@ -1358,12 +1343,12 @@ struct ofmt of_macho = {
     &null_debug_form,
     macho_stdmac,
     macho_init,
-    macho_setinfo,
+    null_setinfo,
     macho_output,
     macho_symdef,
     macho_section,
     macho_segbase,
-    macho_directive,
+    null_directive,
     macho_filename,
     macho_cleanup
 };

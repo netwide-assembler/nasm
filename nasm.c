@@ -60,7 +60,6 @@
 #include "labels.h"
 #include "output/outform.h"
 #include "listing.h"
-#include "directives.h"
 
 struct forwrefinfo {            /* info held on forward refs. */
     int lineno;
@@ -1488,10 +1487,11 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 		    }
 		    break;
                 default:
-                    if (!ofmt->directive(directive, value, pass2))
+		    if (!d || !ofmt->directive(d, value, pass2))
                         report_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
                                      "unrecognised directive [%s]",
                                      directive);
+		    break;
                 }
 		if (err) {
 		    report_error(ERR_NONFATAL,

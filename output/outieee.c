@@ -835,16 +835,20 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
 /*
  * directives supported
  */
-static int ieee_directive(char *directive, char *value, int pass)
+static int ieee_directive(enum directives directive, char *value, int pass)
 {
 
     (void)value;
     (void)pass;
-    if (!strcmp(directive, "uppercase")) {
+
+    switch (directive) {
+    case D_UPPERCASE:
         ieee_uppercase = true;
         return 1;
+	
+    default:
+	return 0;
     }
-    return 0;
 }
 
 /*

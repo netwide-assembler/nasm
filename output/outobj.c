@@ -633,7 +633,7 @@ static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
 static void obj_write_file(int debuginfo);
-static int obj_directive(char *, char *, int);
+static int obj_directive(enum directives, char *, int);
 
 static void obj_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 {
@@ -1417,7 +1417,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                     if (!strcmp(grp->name, "FLAT"))
                         break;
                 if (!grp) {
-                    obj_directive("group", "FLAT", 1);
+                    obj_directive(D_GROUP, "FLAT", 1);
                     for (grp = grphead; grp; grp = grp->next)
                         if (!strcmp(grp->name, "FLAT"))
                             break;
@@ -1538,9 +1538,11 @@ static int32_t obj_segment(char *name, int pass, int *bits)
     }
 }
 
-static int obj_directive(char *directive, char *value, int pass)
+static int obj_directive(enum directives directive, char *value, int pass)
 {
-    if (!strcmp(directive, "group")) {
+    switch (directive) {
+    case D_GROUP:
+    {
         char *p, *q, *v;
         if (pass == 1) {
             struct Group *grp;
@@ -1650,11 +1652,12 @@ static int obj_directive(char *directive, char *value, int pass)
         }
         return 1;
     }
-    if (!strcmp(directive, "uppercase")) {
+    case D_UPPERCASE:
         obj_uppercase = true;
         return 1;
-    }
-    if (!strcmp(directive, "import")) {
+
+    case D_IMPORT:
+    {
         char *q, *extname, *libname, *impname;
 
         if (pass == 2)
@@ -1700,7 +1703,8 @@ static int obj_directive(char *directive, char *value, int pass)
 
         return 1;
     }
-    if (!strcmp(directive, "export")) {
+    case D_EXPORT:
+    {
         char *q, *extname, *intname, *v;
         struct ExpDef *export;
         int flags = 0;
@@ -1777,7 +1781,9 @@ static int obj_directive(char *directive, char *value, int pass)
 
         return 1;
     }
-    return 0;
+    default:
+	return 0;
+    }
 }
 
 static int32_t obj_segbase(int32_t segment)

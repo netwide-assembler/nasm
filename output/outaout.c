@@ -917,14 +917,6 @@ static int32_t aout_segbase(int32_t segment)
     return segment;
 }
 
-static int aout_directive(char *directive, char *value, int pass)
-{
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return 0;
-}
-
 static void aout_filename(char *inname, char *outname, efunc error)
 {
     standard_extension(inname, outname, ".o", error);
@@ -932,12 +924,6 @@ static void aout_filename(char *inname, char *outname, efunc error)
 
 extern macros_t aout_stdmac[];
 
-static int aout_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
 #endif                          /* OF_AOUT || OF_AOUTB */
 
 #ifdef OF_AOUT
@@ -950,12 +936,12 @@ struct ofmt of_aout = {
     &null_debug_form,
     aout_stdmac,
     aout_init,
-    aout_set_info,
+    null_setinfo,
     aout_out,
     aout_deflabel,
     aout_section_names,
     aout_segbase,
-    aout_directive,
+    null_directive,
     aout_filename,
     aout_cleanup
 };
@@ -972,12 +958,12 @@ struct ofmt of_aoutb = {
     &null_debug_form,
     aout_stdmac,
     aoutb_init,
-    aout_set_info,
+    null_setinfo,
     aout_out,
     aout_deflabel,
     aout_section_names,
     aout_segbase,
-    aout_directive,
+    null_directive,
     aout_filename,
     aout_cleanup
 };

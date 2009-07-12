@@ -31,11 +31,7 @@
 ;;
 ;; --------------------------------------------------------------------------
 ;;
-;; List of global NASM directives (independent of the backend)
-;;
-;; Note: we may want to consider hashing even backend-dependent
-;; directives, and invoke the backend with an already-decoded directive
-;; number.
+;; List of global NASM directives (including backend-specific ones)
 ;;
 absolute
 bits
@@ -43,10 +39,20 @@ common
 cpu
 debug
 default
+export
 extern
 float
 global
+group
+import
+library
 list
+map
+module
+org
+osabi
+safeseh
 section
 segment
+uppercase
 warning

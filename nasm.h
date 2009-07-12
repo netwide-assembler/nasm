@@ -45,6 +45,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
+#include "directives.h"		/* For enum directive */
 
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
@@ -904,7 +905,7 @@ struct ofmt {
      * should also return non-zero if it correctly processes the
      * directive.
      */
-    int (*directive) (char *directive, char *value, int pass);
+    int (*directive)(enum directives directive, char *value, int pass);
 
     /*
      * This procedure is called before anything else - even before

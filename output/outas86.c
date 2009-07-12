@@ -617,14 +617,6 @@ static int32_t as86_segbase(int32_t segment)
     return segment;
 }
 
-static int as86_directive(char *directive, char *value, int pass)
-{
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return 0;
-}
-
 static void as86_filename(char *inname, char *outname, efunc error)
 {
     char *p;
@@ -640,21 +632,6 @@ static void as86_filename(char *inname, char *outname, efunc error)
 
 extern macros_t as86_stdmac[];
 
-static int as86_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
-                     int lineno)
-{
-    (void)name;
-    (void)segment;
-    (void)offset;
-    (void)is_main;
-    (void)lineno;
-}
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
@@ -663,12 +640,12 @@ struct ofmt of_as86 = {
     &null_debug_form,
     as86_stdmac,
     as86_init,
-    as86_set_info,
+    null_setinfo,
     as86_out,
     as86_deflabel,
     as86_section_names,
     as86_segbase,
-    as86_directive,
+    null_directive,
     as86_filename,
     as86_cleanup
 };

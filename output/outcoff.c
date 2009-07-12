@@ -716,9 +716,11 @@ void BuildExportTable(void)
     Exports = NULL;
 }
 
-static int coff_directives(char *directive, char *value, int pass)
+static int coff_directives(enum directives directive, char *value, int pass)
 {
-    if (!strcmp(directive, "export")) {
+    switch (directive) {
+    case D_EXPORT:
+    {
         char *q, *name;
 
         if (pass == 2)
@@ -742,9 +744,15 @@ static int coff_directives(char *directive, char *value, int pass)
         }
         AddExport(name);
         return 1;
-    } else if (win32 && !strcmp(directive,"safeseh")) {
+    }
+    case D_SAFESEH:
+    {
 	static int sxseg=-1;
 	int i;
+
+	if (!win32)		/* Only applicable for -f win32 */
+	    return 0;
+
 	if (sxseg==-1)
 	{   for (i = 0; i < nsects; i++)
 		if (!strcmp(".sxdata",sects[i]->name))
@@ -793,7 +801,9 @@ static int coff_directives(char *directive, char *value, int pass)
 	}
 	return 1;
     }
-    return 0;
+    default:
+	return 0;
+    }
 }
 
 static void coff_write(void)

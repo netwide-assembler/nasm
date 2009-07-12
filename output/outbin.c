@@ -1286,10 +1286,11 @@ static int32_t bin_secname(char *name, int pass, int *bits)
     return current_section;
 }
 
-static int bin_directive(char *directive, char *args, int pass)
+static int bin_directive(enum directives directive, char *args, int pass)
 {
-    /* Handle ORG directive */
-    if (!nasm_stricmp(directive, "org")) {
+    switch (directive) {
+    case D_ORG:
+    {
         struct tokenval tokval;
         uint64_t value;
         expr *e;
@@ -1317,12 +1318,12 @@ static int bin_directive(char *directive, char *args, int pass)
                   " in ORG directive.");
         return 1;
     }
-
+    case D_MAP:
+    {
     /* The 'map' directive allows the user to generate section
      * and symbol information to stdout, stderr, or to a file. */
-    else if (format_mode && !nasm_stricmp(directive, "map")) {
-        char *p;
-
+	char *p;
+	
         if (pass != 1)
             return 1;
         args += strspn(args, " \t");
@@ -1365,7 +1366,9 @@ static int bin_directive(char *directive, char *args, int pass)
             rf = stdout;
         return 1;
     }
-    return 0;
+    default:
+	return 0;
+    }
 }
 
 static void bin_filename(char *inname, char *outname, efunc error)

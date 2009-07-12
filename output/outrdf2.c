@@ -733,17 +733,17 @@ static int32_t rdf2_segbase(int32_t segment)
 /*
  * Handle RDOFF2 specific directives
  */
-static int rdf2_directive(char *directive, char *value, int pass)
+static int rdf2_directive(enum directives directive, char *value, int pass)
 {
-    int n;
+    size_t n;
 
-    /* Check if the name length is OK */
-    if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
-        error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
-        return 0;
-    }
-
-    if (!strcmp(directive, "library")) {
+    switch (directive) {
+    case D_LIBRARY:
+	n = strlen(value);
+	if (n >= MODLIB_NAME_MAX) {
+	    error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
+	    return 1;
+	}
         if (pass == 1) {
             struct DLLRec r;
             r.type = RDFREC_DLL;
@@ -752,9 +752,12 @@ static int rdf2_directive(char *directive, char *value, int pass)
             write_dll_rec(&r);
         }
         return 1;
-    }
-
-    if (!strcmp(directive, "module")) {
+	
+    case D_MODULE:
+	if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
+	    error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
+	    return 1;
+	}
         if (pass == 1) {
             struct ModRec r;
             r.type = RDFREC_MODNAME;
@@ -763,9 +766,10 @@ static int rdf2_directive(char *directive, char *value, int pass)
             write_modname_rec(&r);
         }
         return 1;
-    }
 
-    return 0;
+    default:
+	return 0;
+    }
 }
 
 static void rdf2_filename(char *inname, char *outname, efunc error)
