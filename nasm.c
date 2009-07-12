@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * The Netwide Assembler main program module
  */
 
@@ -60,6 +60,7 @@
 #include "labels.h"
 #include "output/outform.h"
 #include "listing.h"
+#include "directives.h"
 
 struct forwrefinfo {            /* info held on forward refs. */
     int lineno;
@@ -284,7 +285,7 @@ static void emit_dependencies(StrList *list)
     } else {
 	deps = stdout;
     }
-    
+
     linepos = fprintf(deps, "%s:", depend_target);
     for (l = list; l; l = l->next) {
 	len = strlen(l->str);
@@ -296,11 +297,11 @@ static void emit_dependencies(StrList *list)
 	linepos += len+1;
     }
     fprintf(deps, "\n\n");
-    
+
     for (l = list; l; l = nl) {
 	if (depend_emit_phony)
 	    fprintf(deps, "%s:\n\n", l->str);
-	    
+
 	nl = l->next;
 	nasm_free(l);
     }
@@ -1150,15 +1151,6 @@ static void parse_cmdline(int argc, char **argv)
     }
 }
 
-/* List of directives */
-enum directives {
-    D_NONE, D_ABSOLUTE, D_BITS, D_COMMON, D_CPU, D_DEBUG, D_DEFAULT,
-    D_EXTERN, D_FLOAT, D_GLOBAL, D_LIST, D_SECTION, D_SEGMENT, D_WARNING
-};
-static const char *directives[] = {
-    "", "absolute", "bits", "common", "cpu", "debug", "default",
-    "extern", "float", "global", "list", "section", "segment", "warning"
-};
 static enum directives getkw(char **directive, char **value);
 
 static void assemble_file(char *fname, StrList **depend_ptr)
@@ -1520,7 +1512,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                  && forwref->lineno == globallineno);
                     } else
                         output_ins.forw_ref = false;
-		    
+
 		    if (output_ins.forw_ref) {
 			if (passn == 1) {
 			    for (i = 0; i < output_ins.operands; i++) {
@@ -1806,7 +1798,7 @@ static enum directives getkw(char **directive, char **value)
         *buf++ = '\0';
     }
 
-    return bsii(*directive, directives, elements(directives));
+    return find_directive(*directive);
 }
 
 /**
@@ -1922,7 +1914,7 @@ static void report_error_common(int severity, const char *fmt,
 {
     char msg[1024];
     const char *pfx;
-    
+
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_WARNING:
         pfx = "warning: ";

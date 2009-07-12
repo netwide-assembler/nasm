@@ -60,15 +60,16 @@ X               = .exe
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	raa.$(O) saa.$(O) rbtree.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
+	directives.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
 	output/outform.$(O) output/outlib.$(O) output/nulldbg.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf.$(O) output/outelf32.$(O) output/outelf64.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	preproc.$(O) quote.$(O) pptok.$(O) macros.$(O) \
-	listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) strfunc.$(O) \
-	tokhash.$(O) regvals.$(O) regflags.$(O)
+	output/outdbg.$(O) output/outieee.$(O) output/outmacho32.$(O) \
+	output/outmacho64.$(O) preproc.$(O) quote.$(O) pptok.$(O) \
+	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
+	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
@@ -224,6 +225,8 @@ everything: all doc rdf
 assemble.$(O): assemble.c assemble.h compiler.h insns.h insnsi.h nasm.h \
  nasmlib.h pptok.h preproc.h regs.h tables.h tokens.h
 crc64.$(O): crc64.c compiler.h nasmlib.h
+directives.$(O): directives.c compiler.h directives.h hashtbl.h insnsi.h \
+ nasm.h nasmlib.h pptok.h preproc.h regs.h
 disasm.$(O): disasm.c compiler.h disasm.h insns.h insnsi.h nasm.h nasmlib.h \
  pptok.h preproc.h regdis.h regs.h sync.h tables.h tokens.h
 eval.$(O): eval.c compiler.h eval.h float.h insnsi.h labels.h nasm.h \
@@ -249,9 +252,9 @@ listing.$(O): listing.c compiler.h insnsi.h listing.h nasm.h nasmlib.h \
  pptok.h preproc.h regs.h
 macros.$(O): macros.c compiler.h hashtbl.h insnsi.h nasm.h nasmlib.h \
  output/outform.h pptok.h preproc.h regs.h tables.h
-nasm.$(O): nasm.c assemble.h compiler.h eval.h float.h insns.h insnsi.h \
- labels.h listing.h nasm.h nasmlib.h output/outform.h parser.h pptok.h \
- preproc.h raa.h regs.h saa.h stdscan.h tokens.h
+nasm.$(O): nasm.c assemble.h compiler.h directives.h eval.h float.h insns.h \
+ insnsi.h labels.h listing.h nasm.h nasmlib.h output/outform.h parser.h \
+ pptok.h preproc.h raa.h regs.h saa.h stdscan.h tokens.h
 nasmlib.$(O): nasmlib.c compiler.h insns.h insnsi.h nasm.h nasmlib.h pptok.h \
  preproc.h regs.h tokens.h
 ndisasm.$(O): ndisasm.c compiler.h disasm.h insns.h insnsi.h nasm.h \
@@ -281,14 +284,20 @@ output/outelf64.$(O): output/outelf64.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/dwarf.h output/elf64.h output/elfcommon.h output/outelf.h \
  output/outform.h output/outlib.h pptok.h preproc.h raa.h rbtree.h regs.h \
  saa.h stdscan.h
+output/outexe.$(O): output/outexe.c compiler.h insnsi.h nasm.h nasmlib.h \
+ output/outform.h pptok.h preproc.h regs.h
 output/outform.$(O): output/outform.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/outform.h pptok.h preproc.h regs.h
 output/outieee.$(O): output/outieee.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/outform.h output/outlib.h pptok.h preproc.h regs.h
 output/outlib.$(O): output/outlib.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/outlib.h pptok.h preproc.h regs.h
-output/outmacho.$(O): output/outmacho.c compiler.h insnsi.h nasm.h nasmlib.h \
- output/outform.h output/outlib.h pptok.h preproc.h raa.h regs.h saa.h
+output/outmacho32.$(O): output/outmacho32.c compiler.h insnsi.h nasm.h \
+ nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h regs.h \
+ saa.h
+output/outmacho64.$(O): output/outmacho64.c compiler.h insnsi.h nasm.h \
+ nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h regs.h \
+ saa.h
 output/outobj.$(O): output/outobj.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/outform.h output/outlib.h pptok.h preproc.h regs.h stdscan.h
 output/outrdf.$(O): output/outrdf.c compiler.h insnsi.h nasm.h nasmlib.h \
@@ -296,7 +305,6 @@ output/outrdf.$(O): output/outrdf.c compiler.h insnsi.h nasm.h nasmlib.h \
 output/outrdf2.$(O): output/outrdf2.c compiler.h insnsi.h nasm.h nasmlib.h \
  output/outform.h output/outlib.h pptok.h preproc.h rdoff/rdoff.h regs.h \
  saa.h
-owtest.$(O): owtest.c
 parser.$(O): parser.c compiler.h float.h insns.h insnsi.h nasm.h nasmlib.h \
  parser.h pptok.h preproc.h regs.h stdscan.h tables.h tokens.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h

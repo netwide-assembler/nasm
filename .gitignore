@@ -18,6 +18,8 @@
 /config.log
 /config.status
 /configure
+/directives.c
+/directives.h
 /doc/*.dip
 /doc/*.hpj
 /doc/*.pdf
