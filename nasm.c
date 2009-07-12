@@ -431,6 +431,7 @@ int main(int argc, char **argv)
                 fclose(ofile);
             if (ofile && terminate_after_phase)
                 remove(outname);
+	    ofile = NULL;
         }
         break;
 
@@ -466,16 +467,17 @@ int main(int argc, char **argv)
             if (!terminate_after_phase) {
                 ofmt->cleanup(using_debug_info);
                 cleanup_labels();
-            } else {
-                /*
-                 * Despite earlier comments, we need this fclose.
-                 * The object output drivers only fclose on cleanup,
-                 * and we just skipped that.
-                 */
-                fclose (ofile);
+		fflush(ofile);
+		if (ferror(ofile)) {
+		    report_error(ERR_NONFATAL|ERR_NOFILE,
+				 "write error on output file `%s'", outname);
+		}
+	    }
 
+	    fclose(ofile);
+	    if (ofile && terminate_after_phase)
                 remove(outname);
-            }
+	    ofile = NULL;
         }
         break;
     }
@@ -1961,6 +1963,7 @@ static void report_error_common(int severity, const char *fmt,
         if (ofile) {
             fclose(ofile);
             remove(outname);
+	    ofile = NULL;
         }
         if (want_usage)
             usage();

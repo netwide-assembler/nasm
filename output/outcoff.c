@@ -236,7 +236,6 @@ static void coff_cleanup(int debuginfo)
     (void)debuginfo;
 
     coff_write();
-    fclose(coffp);
     for (i = 0; i < nsects; i++) {
         if (sects[i]->data)
             saa_free(sects[i]->data);

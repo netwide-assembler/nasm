@@ -300,7 +300,6 @@ static void elf_cleanup(int debuginfo)
     (void)debuginfo;
 
     elf_write();
-    fclose(elffp);
     for (i = 0; i < nsects; i++) {
         if (sects[i]->type != SHT_NOBITS)
             saa_free(sects[i]->data);

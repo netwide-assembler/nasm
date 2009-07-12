@@ -152,7 +152,6 @@ static void as86_cleanup(int debuginfo)
     (void)debuginfo;
 
     as86_write();
-    fclose(as86fp);
     saa_free(stext.data);
     while (stext.head) {
         p = stext.head;

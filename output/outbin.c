@@ -593,7 +593,6 @@ static void bin_cleanup(int debuginfo)
 
     /* Step 6: Write the section data to the output file. */
     do_output();
-    fclose(fp);			/* Done with the output file */
 
     /* Step 7: Generate the map file. */
 

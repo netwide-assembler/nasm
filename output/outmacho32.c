@@ -1280,9 +1280,6 @@ static void macho_cleanup(int debuginfo)
     macho_calculate_sizes();
     macho_write();
 
-    /* done - yay! */
-    fclose(machofp);
-
     /* free up everything */
     while (sects->next) {
         s = sects;

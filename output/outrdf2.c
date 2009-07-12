@@ -723,8 +723,6 @@ static void rdf2_cleanup(int debuginfo)
     fwriteint32_t(0, ofile);
     fwriteint32_t(0, ofile);
     fwriteint16_t(0, ofile);
-
-    fclose(ofile);
 }
 
 static int32_t rdf2_segbase(int32_t segment)

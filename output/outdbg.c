@@ -81,7 +81,6 @@ static void dbg_cleanup(int debuginfo)
         nasm_free(tmp->name);
         nasm_free(tmp);
     }
-    fclose(dbgf);
 }
 
 static int32_t dbg_section_names(char *name, int pass, int *bits)

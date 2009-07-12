@@ -235,7 +235,6 @@ static void aout_cleanup(int debuginfo)
     aout_fixup_relocs(&stext);
     aout_fixup_relocs(&sdata);
     aout_write();
-    fclose(aoutfp);
     saa_free(stext.data);
     while (stext.head) {
         r = stext.head;

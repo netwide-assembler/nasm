@@ -243,7 +243,6 @@ static void ieee_cleanup(int debuginfo)
 {
     ieee_write_file(debuginfo);
     of_ieee.current_dfmt->cleanup();
-    fclose(ofp);
     while (seghead) {
         struct ieeeSection *segtmp = seghead;
         seghead = seghead->next;
