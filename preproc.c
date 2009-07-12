@@ -138,7 +138,7 @@ struct MMacro {
     bool plus;                   /* is the last parameter greedy? */
     bool nolist;                 /* is this macro listing-inhibited? */
     int64_t in_progress;         /* is this macro currently being expanded? */
-	int64_t max_depth;           /* maximum number of recursive expansions allowed */
+	int32_t max_depth;           /* maximum number of recursive expansions allowed */
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
@@ -316,6 +316,12 @@ enum {
  */
 #define NO_DIRECTIVE_FOUND  0
 #define DIRECTIVE_FOUND	    1
+
+/*
+ * This define sets the upper limit for smacro and recursive mmacro
+ * expansions
+ */
+#define DEADMAN_LIMIT (1 << 20)
 
 /*
  * Condition codes. Note that we use c_ prefix not C_ because C_ is
@@ -2071,13 +2077,15 @@ static int do_directive(Token * tline)
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
     if (defining && i != PP_MACRO && i != PP_IMACRO &&
+	    i != PP_RMACRO &&  i != PP_RIMACRO &&
         i != PP_ENDMACRO && i != PP_ENDM &&
         (defining->name || (i != PP_ENDREP && i != PP_REP))) {
         return NO_DIRECTIVE_FOUND;
     }
 
     if (defining) {
-        if (i == PP_MACRO || i == PP_IMACRO) {
+        if (i == PP_MACRO || i == PP_IMACRO ||
+		    i == PP_RMACRO || i == PP_RIMACRO) {
             nested_mac_count++;
             return NO_DIRECTIVE_FOUND;
         } else if (nested_mac_count > 0) {
@@ -2596,12 +2604,14 @@ static int do_directive(Token * tline)
         if (defining) {
             error(ERR_FATAL,
                   "`%%%smacro': already defining a macro",
-                  (i == PP_IMACRO ? "i" : ""));
-				  /* todo: change the above as well... */
+                  (i == PP_IMACRO ? "i" :
+				   i == PP_RMACRO ? "r" :
+				   i == PP_RIMACRO ? "ri" : ""));
 	    return DIRECTIVE_FOUND;
 	}
     defining = nasm_malloc(sizeof(MMacro));
-	defining->max_depth = (((i == PP_RMACRO) || (i == PP_RIMACRO)) ? 65536 : 0);
+	defining->max_depth = (((i == PP_RMACRO) || (i == PP_RIMACRO))
+							? (DEADMAN_LIMIT)  : 0);
 	defining->casesense = ((i == PP_MACRO) || (i == PP_RMACRO));
 	if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
 	    nasm_free(defining);
@@ -2631,10 +2641,28 @@ static int do_directive(Token * tline)
             error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
             return DIRECTIVE_FOUND;
         }
-	mmhead = (MMacro **) hash_findi_add(&mmacros, defining->name);
+        mmhead = (MMacro **) hash_findi_add(&mmacros, defining->name);
         defining->next = *mmhead;
-	*mmhead = defining;
+        *mmhead = defining;
         defining = NULL;
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+	case PP_EXITMACRO:
+        /*
+         * We must search along istk->expansion until we hit a
+         * macro-end marker for a macro with a name. Then we set
+         * its `in_progress' flag to 0.
+         */
+		for (l = istk->expansion; l; l = l->next)
+            if (l->finishes && l->finishes->name)
+		break;
+
+        if (l) {
+			l->finishes->in_progress = 0;
+        } else {
+            error(ERR_NONFATAL, "`%%exitmacro' not within `%%macro' block");
+		}
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -3648,7 +3676,6 @@ static Token *expand_mmac_params(Token * tline)
  * Tokens from input to output a lot of the time, rather than
  * actually bothering to destroy and replicate.)
  */
-#define DEADMAN_LIMIT (1 << 20)
 
 static Token *expand_smacro(Token * tline)
 {
@@ -4566,12 +4593,13 @@ static char *pp_getline(void)
                          */
 						if (m->prev != NULL) {
 							pop_mmacro(m);
+							l->finishes->in_progress --;
 						} else {
                             nasm_free(m->params);
                             free_tlist(m->iline);
 							nasm_free(m->paramlen);
+							l->finishes->in_progress = 0;
 						}
-                        l->finishes->in_progress --;
                     } else
                         free_mmacro(m);
                 }
