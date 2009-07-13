@@ -33,26 +33,30 @@
 ;;
 ;; List of global NASM directives (including backend-specific ones)
 ;;
+
+; --- Global directives
 absolute
 bits
 common
 cpu
 debug
 default
-export
 extern
 float
 global
-group
-import
-library
 list
-map
-module
-org
-osabi
-safeseh
 section
 segment
-uppercase
 warning
+
+; --- Format-specific directives
+export				; outcoff, outobj
+group				; outobj
+import				; outobj
+library				; outrdf2
+map				; outbin
+module				; outrdf2
+org				; outbin
+osabi				; outelf
+safeseh				; outcoff
+uppercase			; outieee, outobj
