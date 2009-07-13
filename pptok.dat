@@ -50,6 +50,7 @@
 %assign
 %clear
 %define
+%defid
 %defstr
 %depend
 %elif*
@@ -64,6 +65,7 @@
 %fatal
 %iassign
 %idefine
+%idefid
 %idefstr
 %if*
 %imacro

@@ -2959,6 +2959,47 @@ static int do_directive(Token * tline)
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
+	case PP_DEFID:
+	case PP_IDEFID:
+		casesense = (i == PP_IDEFID);
+
+		tline = tline->next;
+		skip_white_(tline);
+		tline = expand_id(tline);
+		if (!tline || (tline->type != TOK_ID &&
+			(tline->type != TOK_PREPROC_ID ||
+			 tline->text[1] != '$'))) {
+				error(ERR_NONFATAL, "`%s' expects a macro identifier",
+				pp_directives[i]);
+				free_tlist(origline);
+				return DIRECTIVE_FOUND;
+		}
+
+		ctx = get_ctx(tline->text, &mname, false);
+		last = tline;
+		tline = expand_smacro(tline->next);
+		last->next = NULL;
+
+		while (tok_type_(tline, TOK_WHITESPACE))
+			tline = delete_Token(tline);
+			
+		p = detoken(tline, false);
+		if (tok_type_(tline, TOK_STRING)) {
+			macro_start = new_Token(NULL, TOK_ID, p+1, strlen(p)-2);
+		} else {
+			macro_start = new_Token(NULL, TOK_ID, p, strlen(p));
+		}
+		nasm_free(p);
+
+		/*
+		 * We now have a macro name, an implicit parameter count of
+		 * zero, and an id token to use as an expansion. Create
+		 * and store an SMacro.
+		 */
+		define_smacro(ctx, mname, casesense, 0, macro_start);
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+
     case PP_DEFSTR:
     case PP_IDEFSTR:
 	casesense = (i == PP_DEFSTR);
