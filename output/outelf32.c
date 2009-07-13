@@ -1580,7 +1580,7 @@ static void debug32_typevalue(int32_t type)
             stype = STT_OBJECT;
             break;
         case TY_OWORD:
-            ssize = 8;
+            ssize = 16;
             stype = STT_OBJECT;
             break;
         case TY_COMMON:
