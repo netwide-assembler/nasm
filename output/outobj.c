@@ -677,7 +677,6 @@ static void obj_cleanup(int debuginfo)
 {
     obj_write_file(debuginfo);
     of_obj.current_dfmt->cleanup();
-    fclose(ofp);
     while (seghead) {
         struct Segment *segtmp = seghead;
         seghead = seghead->next;
