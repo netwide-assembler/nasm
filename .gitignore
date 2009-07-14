@@ -1,4 +1,5 @@
 *.bin
+*.dbg
 *.exe
 *.lst
 *.o
@@ -58,7 +59,9 @@
 /regs.c
 /regs.h
 /regvals.c
+/test/golden
 /test/perf/*.asm
+/test/testresults
 /tokens.h
 /tokhash.c
 /version.h
