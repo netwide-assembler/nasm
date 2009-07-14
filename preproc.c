@@ -2999,6 +2999,53 @@ static int do_directive(Token * tline)
 	define_smacro(ctx, mname, casesense, 0, macro_start);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+		
+	case PP_DEFTOK:
+	case PP_IDEFTOK:
+	casesense = (i == PP_DEFTOK);
+
+        tline = tline->next;
+        skip_white_(tline);
+        tline = expand_id(tline);
+        if (!tline || (tline->type != TOK_ID &&
+                       (tline->type != TOK_PREPROC_ID ||
+                        tline->text[1] != '$'))) {
+            error(ERR_NONFATAL,
+                  "`%s' expects a macro identifier as first parameter",
+			pp_directives[i]);
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
+        ctx = get_ctx(tline->text, &mname, false);
+        last = tline;
+        tline = expand_smacro(tline->next);
+        last->next = NULL;
+
+        t = tline;
+        while (tok_type_(t, TOK_WHITESPACE))
+            t = t->next;
+        /* t should now point to the string */
+        if (t->type != TOK_STRING) {
+            error(ERR_NONFATAL,
+                  "`%s` requires string as second parameter",
+			pp_directives[i]);
+            free_tlist(tline);
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
+
+		nasm_unquote(t->text, NULL);
+		macro_start = tokenize(t->text);
+
+        /*
+         * We now have a macro name, an implicit parameter count of
+         * zero, and a numeric token to use as an expansion. Create
+         * and store an SMacro.
+         */
+	define_smacro(ctx, mname, casesense, 0, macro_start);
+        free_tlist(tline);
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
 
     case PP_PATHSEARCH:
     {
