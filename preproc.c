@@ -2023,7 +2023,8 @@ static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
     size_t clen = strlen(qstr);
 
     if (len != clen)
-	error(ERR_NONFATAL, "NUL character in `%s' directive", directive);
+	error(ERR_NONFATAL, "NUL character in `%s' directive",
+	      pp_directives[directive]);
 
     return clen;
 }
