@@ -3000,8 +3000,11 @@ static int do_directive(Token * tline)
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 		
-	case PP_DEFTOK:
-	case PP_IDEFTOK:
+    case PP_DEFTOK:
+    case PP_IDEFTOK:
+    {
+	size_t len;
+
 	casesense = (i == PP_DEFTOK);
 
         tline = tline->next;
@@ -3034,8 +3037,11 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
 
-		nasm_unquote(t->text, NULL);
-		macro_start = tokenize(t->text);
+	len = nasm_unquote(t->text, NULL);
+	if (memchr(t->text, '\0', len))
+	    error(ERR_NONFATAL, "NUL character in `%s' directive",
+		  pp_directives[i]);
+	macro_start = tokenize(t->text);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3046,6 +3052,7 @@ static int do_directive(Token * tline)
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+    }
 
     case PP_PATHSEARCH:
     {
