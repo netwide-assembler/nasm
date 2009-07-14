@@ -2012,6 +2012,22 @@ static int parse_size(const char *str) {
     return sizes[bsii(str, size_names, elements(size_names))+1];
 }
 
+/*
+ * nasm_unquote with error if the string contains NUL characters.
+ * If the string contains NUL characters, issue an error and return
+ * the C len, i.e. truncate at the NUL.
+ */
+static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
+{
+    size_t len = nasm_unquote(qstr, NULL);
+    size_t clen = strlen(qstr);
+
+    if (len != clen)
+	error(ERR_NONFATAL, "NUL character in `%s' directive", directive);
+
+    return clen;
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -2338,7 +2354,7 @@ static int do_directive(Token * tline)
                   "trailing garbage after `%%depend' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
-	    nasm_unquote(p, NULL);
+	    nasm_unquote_cstr(p, i);
 	if (dephead && !in_list(*dephead, p)) {
 	    StrList *sl = nasm_malloc(strlen(p)+1+sizeof sl->next);
 	    sl->next = NULL;
@@ -2364,7 +2380,7 @@ static int do_directive(Token * tline)
                   "trailing garbage after `%%include' ignored");
 	p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
-	    nasm_unquote(p, NULL);
+	    nasm_unquote_cstr(p, i);
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
@@ -2404,7 +2420,7 @@ static int do_directive(Token * tline)
             error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
 	if (tline->type == TOK_STRING)
-	    nasm_unquote(tline->text, NULL);
+	    nasm_unquote_cstr(tline->text, i);
 	use_pkg = nasm_stdmac_find_package(tline->text);
 	if (!use_pkg)
 	    error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
@@ -2492,7 +2508,7 @@ static int do_directive(Token * tline)
         if (tok_type_(tline, TOK_STRING) && !t) {
 	    /* The line contains only a quoted string */
 	    p = tline->text;
-	    nasm_unquote(p, NULL);
+	    nasm_unquote(p, NULL); /* Ignore NUL character truncation */
 	    error(severity, "%s",  p);
 	} else {
 	    /* Not a quoted string, or more than a quoted string */
@@ -3002,9 +3018,6 @@ static int do_directive(Token * tline)
 		
     case PP_DEFTOK:
     case PP_IDEFTOK:
-    {
-	size_t len;
-
 	casesense = (i == PP_DEFTOK);
 
         tline = tline->next;
@@ -3037,10 +3050,7 @@ static int do_directive(Token * tline)
             return DIRECTIVE_FOUND;
         }
 
-	len = nasm_unquote(t->text, NULL);
-	if (memchr(t->text, '\0', len))
-	    error(ERR_NONFATAL, "NUL character in `%s' directive",
-		  pp_directives[i]);
+	nasm_unquote_cstr(t->text, i);
 	macro_start = tokenize(t->text);
 
         /*
@@ -3052,7 +3062,6 @@ static int do_directive(Token * tline)
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
-    }
 
     case PP_PATHSEARCH:
     {
