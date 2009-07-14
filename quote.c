@@ -85,12 +85,15 @@ char *nasm_quote(char *str, size_t len)
 		    break;
 		default:
 		    c1 = (p+1 < ep) ? p[1] : 0;
-		    if (c > 077 || (c1 >= '0' && c1 <= '7'))
-			qlen += 4; /* Must use the full form */
-		    else if (c > 07)
-			qlen += 3;
+		    if (c1 >= '0' && c1 <= '7')
+			c1 = 0377; /* Must use the full form */
 		    else
-			qlen += 2;
+			c1 = c;
+		    if (c1 > 077)
+			qlen++;
+		    if (c1 > 07)
+			qlen++;
+		    qlen += 2;
 		    break;
 		}
 	    } else {
@@ -155,9 +158,16 @@ char *nasm_quote(char *str, size_t len)
 		if (c < ' ' || c > '~') {
 		    c1 = (p+1 < ep) ? p[1] : 0;
 		    if (c1 >= '0' && c1 <= '7')
-			q += sprintf(q, "\\%03o", (unsigned char)c);
+			c1 = 0377; /* Must use the full form */
 		    else
-			q += sprintf(q, "\\%o", (unsigned char)c);
+			c1 = c;
+		    *q++ = '\\';
+		    if (c1 > 077)
+			*q++ = (c >> 6) + '0';
+		    if (c1 > 07)
+			*q++ = ((c >> 3) & 7) + '0';
+		    *q++ = (c & 7) + '0';
+		    break;
 		} else {
 		    *q++ = c;
 		}
