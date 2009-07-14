@@ -61,8 +61,8 @@
 /regs.c
 /regs.h
 /regvals.c
-/test/perf/*.asm
 /test/golden
+/test/perf/*.asm
 /test/testresults
 /tokens.h
 /tokhash.c
