@@ -473,10 +473,12 @@ int main(int argc, char **argv)
 		}
 	    }
 
-	    fclose(ofile);
-	    if (ofile && terminate_after_phase)
-                remove(outname);
-	    ofile = NULL;
+	    if (ofile) {
+		fclose(ofile);
+		if (terminate_after_phase)
+		    remove(outname);
+		ofile = NULL;
+	    }
         }
         break;
     }
