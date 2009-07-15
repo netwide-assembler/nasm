@@ -4535,7 +4535,7 @@ given may be any power of two.\I{section alignment, in
 bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 
-\S{multisec} \i{Multisection}\I{bin, multisection} support for the \c{bin} format.
+\S{multisec} \i{Multisection}\I{bin, multisection} Support for the \c{bin} Format
 
 The \c{bin} format allows the use of multiple sections, of arbitrary names,
 besides the "known" \c{.text}, \c{.data}, and \c{.bss} names.
@@ -4578,7 +4578,7 @@ alignment has been specified.
 \b NASM creates the \c{section.<secname>.start} for each section,
 which may be used in your code.
 
-\S{map}\i{Map files}
+\S{map}\i{Map Files}
 
 Map files can be generated in \c{-f bin} format by means of the \c{[map]}
 option. Map types of \c{all} (default), \c{brief}, \c{sections}, \c{segments},
@@ -5724,7 +5724,7 @@ To avoid it, you should start module names with \I{$, prefix}\c{$}, like:
 \c     module  $kernel.core
 
 
-\S{rdfglob} \c{rdf} Extensions to the \c{GLOBAL} directive\I{GLOBAL,
+\S{rdfglob} \c{rdf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
 rdf extensions to}
 
 \c{RDOFF} global symbols can contain additional information needed by
@@ -5749,7 +5749,7 @@ or \i\c{object} to the directive:
 \c     global  kernel_ticks:export data
 
 
-\S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} directive\I{EXTERN,
+\S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} Directive\I{EXTERN,
 rdf extensions to}
 
 By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external"
