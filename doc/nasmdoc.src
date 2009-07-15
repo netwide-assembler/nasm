@@ -4535,7 +4535,7 @@ given may be any power of two.\I{section alignment, in
 bin}\I{segment alignment, in bin}\I{alignment, in bin sections}
 
 
-\S{multisec} \i\c{Multisection}\I{bin, multisection} support for the BIN format.
+\S{multisec} \i{Multisection}\I{bin, multisection} support for the \c{bin} format.
 
 The \c{bin} format allows the use of multiple sections, of arbitrary names,
 besides the "known" \c{.text}, \c{.data}, and \c{.bss} names.
