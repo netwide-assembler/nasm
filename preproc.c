@@ -2094,7 +2094,7 @@ static int do_directive(Token * tline)
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
     if (defining && i != PP_MACRO && i != PP_IMACRO &&
-	    i != PP_RMACRO &&  i != PP_IRMACRO &&
+	i != PP_RMACRO &&  i != PP_IRMACRO &&
         i != PP_ENDMACRO && i != PP_ENDM &&
         (defining->name || (i != PP_ENDREP && i != PP_REP))) {
         return NO_DIRECTIVE_FOUND;
@@ -2102,7 +2102,7 @@ static int do_directive(Token * tline)
 
     if (defining) {
         if (i == PP_MACRO || i == PP_IMACRO ||
-		    i == PP_RMACRO || i == PP_IRMACRO) {
+	    i == PP_RMACRO || i == PP_IRMACRO) {
             nested_mac_count++;
             return NO_DIRECTIVE_FOUND;
         } else if (nested_mac_count > 0) {
@@ -2614,22 +2614,19 @@ static int do_directive(Token * tline)
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 		
-	case PP_RMACRO:
-	case PP_IRMACRO:
+    case PP_RMACRO:
+    case PP_IRMACRO:
     case PP_MACRO:
     case PP_IMACRO:
         if (defining) {
-            error(ERR_FATAL,
-                  "`%%%smacro': already defining a macro",
-                  (i == PP_IMACRO ? "i" :
-				   i == PP_RMACRO ? "r" :
-				   i == PP_IRMACRO ? "ri" : ""));
+            error(ERR_FATAL, "`%s': already defining a macro",
+		  pp_directives[i]);
 	    return DIRECTIVE_FOUND;
 	}
-    defining = nasm_malloc(sizeof(MMacro));
-	defining->max_depth = (((i == PP_RMACRO) || (i == PP_IRMACRO))
-							? (DEADMAN_LIMIT)  : 0);
-	defining->casesense = ((i == PP_MACRO) || (i == PP_RMACRO));
+	defining = nasm_malloc(sizeof(MMacro));
+	defining->max_depth =
+	    (i == PP_RMACRO) || (i == PP_IRMACRO) ? DEADMAN_LIMIT : 0;
+	defining->casesense = (i == PP_MACRO) || (i == PP_RMACRO);
 	if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
 	    nasm_free(defining);
 	    defining = NULL;
