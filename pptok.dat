@@ -69,6 +69,7 @@
 %ideftok
 %if*
 %imacro
+%irmacro
 %include
 %ixdefine
 %line
@@ -79,7 +80,6 @@
 %push
 %rep
 %repl
-%rimacro
 %rmacro
 %rotate
 %stacksize
