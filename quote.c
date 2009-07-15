@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-#include <assert.h>
 #include <stdlib.h>
 
 #include "nasmlib.h"
@@ -177,7 +176,7 @@ char *nasm_quote(char *str, size_t len)
 	}
 	*q++ = '`';
 	*q++ = '\0';
-	assert((size_t)(q-nstr) == qlen+3);
+	nasm_assert((size_t)(q-nstr) == qlen+3);
     }
     return nstr;
 }
