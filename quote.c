@@ -48,6 +48,7 @@
 char *nasm_quote(char *str, size_t len)
 {
     char c, c1, *p, *q, *nstr, *ep;
+    unsigned char uc;
     bool sq_ok, dq_ok;
     size_t qlen;
 
@@ -86,12 +87,12 @@ char *nasm_quote(char *str, size_t len)
 		default:
 		    c1 = (p+1 < ep) ? p[1] : 0;
 		    if (c1 >= '0' && c1 <= '7')
-			c1 = 0377; /* Must use the full form */
+			uc = 0377; /* Must use the full form */
 		    else
-			c1 = c;
-		    if (c1 > 077)
+			uc = c;
+		    if (uc > 077)
 			qlen++;
-		    if (c1 > 07)
+		    if (uc > 07)
 			qlen++;
 		    qlen += 2;
 		    break;
@@ -158,15 +159,15 @@ char *nasm_quote(char *str, size_t len)
 		if (c < ' ' || c > '~') {
 		    c1 = (p+1 < ep) ? p[1] : 0;
 		    if (c1 >= '0' && c1 <= '7')
-			c1 = 0377; /* Must use the full form */
+			uc = 0377; /* Must use the full form */
 		    else
-			c1 = c;
+			uc = c;
 		    *q++ = '\\';
-		    if (c1 > 077)
-			*q++ = (c >> 6) + '0';
-		    if (c1 > 07)
-			*q++ = ((c >> 3) & 7) + '0';
-		    *q++ = (c & 7) + '0';
+		    if (uc > 077)
+			*q++ = ((unsigned char)c >> 6) + '0';
+		    if (uc > 07)
+			*q++ = (((unsigned char)c >> 3) & 7) + '0';
+		    *q++ = ((unsigned char)c & 7) + '0';
 		    break;
 		} else {
 		    *q++ = c;
