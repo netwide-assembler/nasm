@@ -37,8 +37,8 @@ since 2007.
 
 \b Support for 64-bit Mach-O output, see \k{machofmt}.
 
-\b Fix assert failure on certain operations that involve high-bit
-  characters that don't form valid UTF-8 sequences.
+\b Fix assert failure on certain operations that involve strings with
+  high-bit bytes.
 
 
 \S{cl-2.06} Version 2.06
