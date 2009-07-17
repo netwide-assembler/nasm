@@ -1368,7 +1368,8 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 			define_common(value, seg_alloc(), size,
 				      special, ofmt, report_error);
                     } else if (pass0 == 2) {
-			ofmt->symdef(value, 0L, 0L, 3, special);
+			if (special)
+			    ofmt->symdef(value, 0L, 0L, 3, special);
                     }
                     break;
 		}
