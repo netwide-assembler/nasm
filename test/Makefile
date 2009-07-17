@@ -21,10 +21,22 @@ TESTS	= $(wildcard *.asm)
 	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
 
 %.obj: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
+
+%.coff: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
+
+%.win32: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
 
-%.obj64: %.asm $(NASM)
+%.win64: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
+
+%.mo32: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
+
+%.mo64: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
 
 %.dbg: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
@@ -44,7 +56,8 @@ diff:	performtest.pl $(NASM) $(TESTS)
 	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
 
 clean:
-	rm -f *.com *.o *.o64 *.obj *.obj64 *.exe *.lst *.bin
+	rm -f *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
+	rm -f *.dbg *.coff *.ith *.srec *.mo32 *.mo64
 	rm -rf testresults
 	rm -f elftest elftest64
 
