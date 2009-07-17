@@ -419,8 +419,8 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     struct Symbol *sym;
 
     if (special)
-        error(ERR_NONFATAL, "binary format does not support any"
-              " special symbol types");
+        error(ERR_NONFATAL, "COFF format does not support any"
+              " special symbol types", ofmt->name);
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (strcmp(name,WRT_IMAGEBASE))
