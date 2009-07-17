@@ -45,9 +45,9 @@
  * OF_ONLY                -- only include specified object formats
  * OF_name                -- ensure that output format 'name' is included
  * OF_NO_name             -- remove output format 'name'
- * OF_DOS                 -- ensure that 'obj', 'bin' & 'win32' are included.
- * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf32' 'elf64' are in.
- * OF_OTHERS              -- ensure that 'bin', 'as86' & 'rdf' are in.
+ * OF_DOS                 -- ensure that 'obj', 'bin', 'win32' & 'win64' are included.
+ * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf32' & 'elf64' are in.
+ * OF_OTHERS              -- ensure that 'bin', 'as86', 'rdf' 'macho32' & 'macho64' are in.
  * OF_ALL                 -- ensure that all formats are included.
  *                           note that this doesn't include 'dbg', which is
  *                           only really useful if you're doing development
@@ -86,7 +86,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,elf32,elf64,aout,aoutb,coff,win32,as86,rdf2,macho */
+ * bin,obj,elf32,elf64,aout,aoutb,coff,win32,as86,rdf2,macho32,macho64 */
 
 /* process options... */
 
