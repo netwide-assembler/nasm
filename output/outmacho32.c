@@ -51,6 +51,7 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "raa.h"
+#include "eval.h"
 #include "output/outform.h"
 #include "output/outlib.h"
 
@@ -207,9 +208,7 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-static FILE *machofp;
 static efunc error;
-static evalfunc evaluate;
 
 extern struct ofmt of_macho;
 
@@ -328,16 +327,9 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
     return NO_SECT;
 }
 
-static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
-                       evalfunc eval)
+static void macho_init(void)
 {
     char zero = 0;
-
-    machofp = fp;
-    error = errfunc;
-    evaluate = eval;
-
-    (void)ldef;                 /* placate optimisers */
 
     sects = NULL;
     sectstail = &sects;
@@ -713,9 +705,9 @@ static int32_t macho_segbase(int32_t section)
     return section;
 }
 
-static void macho_filename(char *inname, char *outname, efunc error)
+static void macho_filename(char *inname, char *outname)
 {
-    standard_extension(inname, outname, ".o", error);
+    standard_extension(inname, outname, ".o");
 }
 
 extern macros_t macho_stdmac[];
@@ -869,13 +861,13 @@ static void macho_calculate_sizes (void)
 
 static void macho_write_header (void)
 {
-    fwriteint32_t(MH_MAGIC, machofp);	/* magic */
-    fwriteint32_t(CPU_TYPE_I386, machofp);	/* CPU type */
-    fwriteint32_t(CPU_SUBTYPE_I386_ALL, machofp);	/* CPU subtype */
-    fwriteint32_t(MH_OBJECT, machofp);	/* Mach-O file type */
-    fwriteint32_t(head_ncmds, machofp);	/* number of load commands */
-    fwriteint32_t(head_sizeofcmds, machofp);	/* size of load commands */
-    fwriteint32_t(0, machofp);	/* no flags */
+    fwriteint32_t(MH_MAGIC, ofile);	/* magic */
+    fwriteint32_t(CPU_TYPE_I386, ofile);	/* CPU type */
+    fwriteint32_t(CPU_SUBTYPE_I386_ALL, ofile);	/* CPU subtype */
+    fwriteint32_t(MH_OBJECT, ofile);	/* Mach-O file type */
+    fwriteint32_t(head_ncmds, ofile);	/* number of load commands */
+    fwriteint32_t(head_sizeofcmds, ofile);	/* size of load commands */
+    fwriteint32_t(0, ofile);	/* no flags */
 }
 
 /* Write out the segment load command at offset.  */
@@ -886,56 +878,56 @@ static uint32_t macho_write_segment (uint32_t offset)
     uint32_t s_reloff = 0;
     struct section *s;
 
-    fwriteint32_t(LC_SEGMENT, machofp);        /* cmd == LC_SEGMENT */
+    fwriteint32_t(LC_SEGMENT, ofile);        /* cmd == LC_SEGMENT */
 
     /* size of load command including section load commands */
     fwriteint32_t(MACHO_SEGCMD_SIZE + seg_nsects *
-	       MACHO_SECTCMD_SIZE, machofp);
+	       MACHO_SECTCMD_SIZE, ofile);
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
-    fwritezero(16, machofp);
-    fwriteint32_t(0, machofp); /* in-memory offset */
-    fwriteint32_t(seg_vmsize, machofp);        /* in-memory size */
-    fwriteint32_t(offset, machofp);    /* in-file offset to data */
-    fwriteint32_t(seg_filesize, machofp);      /* in-file size */
-    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
-    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
-    fwriteint32_t(seg_nsects, machofp);        /* number of sections */
-    fwriteint32_t(0, machofp); /* no flags */
+    fwritezero(16, ofile);
+    fwriteint32_t(0, ofile); /* in-memory offset */
+    fwriteint32_t(seg_vmsize, ofile);        /* in-memory size */
+    fwriteint32_t(offset, ofile);    /* in-file offset to data */
+    fwriteint32_t(seg_filesize, ofile);      /* in-file size */
+    fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* maximum vm protection */
+    fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* initial vm protection */
+    fwriteint32_t(seg_nsects, ofile);        /* number of sections */
+    fwriteint32_t(0, ofile); /* no flags */
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
-	fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
-	fwrite(s->segname, sizeof(s->segname), 1, machofp);
-	fwriteint32_t(s->addr, machofp);
-	fwriteint32_t(s->size, machofp);
+	fwrite(s->sectname, sizeof(s->sectname), 1, ofile);
+	fwrite(s->segname, sizeof(s->segname), 1, ofile);
+	fwriteint32_t(s->addr, ofile);
+	fwriteint32_t(s->size, ofile);
 
 	/* dummy data for zerofill sections or proper values */
 	if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
-	    fwriteint32_t(offset, machofp);
+	    fwriteint32_t(offset, ofile);
 	    /* Write out section alignment, as a power of two.
 	       e.g. 32-bit word alignment would be 2 (2^^2 = 4).  */
 	    if (s->align == -1)
 		s->align = DEFAULT_SECTION_ALIGNMENT;
-	    fwriteint32_t(s->align, machofp);
+	    fwriteint32_t(s->align, ofile);
 	    /* To be compatible with cctools as we emit
 	       a zero reloff if we have no relocations.  */
-	    fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, machofp);
-	    fwriteint32_t(s->nreloc, machofp);
+	    fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, ofile);
+	    fwriteint32_t(s->nreloc, ofile);
 
 	    offset += s->size;
 	    s_reloff += s->nreloc * MACHO_RELINFO_SIZE;
 	} else {
-	    fwriteint32_t(0, machofp);
-	    fwriteint32_t(0, machofp);
-	    fwriteint32_t(0, machofp);
-	    fwriteint32_t(0, machofp);
+	    fwriteint32_t(0, ofile);
+	    fwriteint32_t(0, ofile);
+	    fwriteint32_t(0, ofile);
+	    fwriteint32_t(0, ofile);
 	}
 
-	fwriteint32_t(s->flags, machofp);      /* flags */
-	fwriteint32_t(0, machofp);     /* reserved */
-	fwriteint32_t(0, machofp);     /* reserved */
+	fwriteint32_t(s->flags, ofile);      /* flags */
+	fwriteint32_t(0, ofile);     /* reserved */
+	fwriteint32_t(0, ofile);     /* reserved */
     }
 
     rel_padcnt = rel_base - offset;
@@ -952,14 +944,14 @@ static void macho_write_relocs (struct reloc *r)
     while (r) {
 	uint32_t word2;
 
-	fwriteint32_t(r->addr, machofp); /* reloc offset */
+	fwriteint32_t(r->addr, ofile); /* reloc offset */
 
 	word2 = r->snum;
 	word2 |= r->pcrel << 24;
 	word2 |= r->length << 25;
 	word2 |= r->ext << 27;
 	word2 |= r->type << 28;
-	fwriteint32_t(word2, machofp); /* reloc data */
+	fwriteint32_t(word2, ofile); /* reloc data */
 
 	r = r->next;
     }
@@ -1026,11 +1018,11 @@ static void macho_write_section (void)
 	}
 
 	/* dump the section data to file */
-	saa_fpwrite(s->data, machofp);
+	saa_fpwrite(s->data, ofile);
     }
 
     /* pad last section up to reloc entries on int32_t boundary */
-    fwritezero(rel_padcnt, machofp);
+    fwritezero(rel_padcnt, ofile);
 
     /* emit relocation entries */
     for (s = sects; s != NULL; s = s->next)
@@ -1050,10 +1042,10 @@ static void macho_write_symtab (void)
 
     for (sym = syms; sym != NULL; sym = sym->next) {
 	if ((sym->type & N_EXT) == 0) {
-	    fwriteint32_t(sym->strx, machofp);		/* string table entry number */
-	    fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	    fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	    fwriteint16_t(sym->desc, machofp);	/* description */
+	    fwriteint32_t(sym->strx, ofile);		/* string table entry number */
+	    fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	    fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	    fwriteint16_t(sym->desc, ofile);	/* description */
 
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
@@ -1063,16 +1055,16 @@ static void macho_write_symtab (void)
 		    sym->value += s->size;
 	    }
 
-	    fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
+	    fwriteint32_t(sym->value, ofile);	/* value (i.e. offset) */
 	}
     }
 
     for (i = 0; i < nextdefsym; i++) {
 	sym = extdefsyms[i];
-	fwriteint32_t(sym->strx, machofp);
-	fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	fwriteint16_t(sym->desc, machofp);	/* description */
+	fwriteint32_t(sym->strx, ofile);
+	fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	fwriteint16_t(sym->desc, ofile);	/* description */
 
 	/* Fix up the symbol value now that we know the final section
 	   sizes.  */
@@ -1082,15 +1074,15 @@ static void macho_write_symtab (void)
 		sym->value += s->size;
 	}
 
-	fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
+	fwriteint32_t(sym->value, ofile);	/* value (i.e. offset) */
     }
 
      for (i = 0; i < nundefsym; i++) {
 	 sym = undefsyms[i];
-	 fwriteint32_t(sym->strx, machofp);
-	 fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	 fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	 fwriteint16_t(sym->desc, machofp);	/* description */
+	 fwriteint32_t(sym->strx, ofile);
+	 fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	 fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	 fwriteint16_t(sym->desc, ofile);	/* description */
 
 	 /* Fix up the symbol value now that we know the final section
 	    sizes.  */
@@ -1100,7 +1092,7 @@ static void macho_write_symtab (void)
 		 sym->value += s->size;
 	 }
 
-	 fwriteint32_t(sym->value, machofp);	/* value (i.e. offset) */
+	 fwriteint32_t(sym->value, ofile);	/* value (i.e. offset) */
      }
 }
 
@@ -1217,15 +1209,15 @@ static void macho_write (void)
 
     if (nsyms > 0) {
         /* write out symbol command */
-        fwriteint32_t(LC_SYMTAB, machofp); /* cmd == LC_SYMTAB */
-        fwriteint32_t(MACHO_SYMCMD_SIZE, machofp); /* size of load command */
-        fwriteint32_t(offset, machofp);    /* symbol table offset */
-        fwriteint32_t(nsyms, machofp);     /* number of symbol
+        fwriteint32_t(LC_SYMTAB, ofile); /* cmd == LC_SYMTAB */
+        fwriteint32_t(MACHO_SYMCMD_SIZE, ofile); /* size of load command */
+        fwriteint32_t(offset, ofile);    /* symbol table offset */
+        fwriteint32_t(nsyms, ofile);     /* number of symbol
                                          ** table entries */
 
         offset += nsyms * MACHO_NLIST_SIZE;
-        fwriteint32_t(offset, machofp);    /* string table offset */
-        fwriteint32_t(strslen, machofp);   /* string table size */
+        fwriteint32_t(offset, ofile);    /* string table offset */
+        fwriteint32_t(strslen, ofile);   /* string table size */
     }
 
     /* emit section data */
@@ -1239,7 +1231,7 @@ static void macho_write (void)
     /* we don't need to pad here since MACHO_NLIST_SIZE == 12 */
 
     /* emit string table */
-    saa_fpwrite(strs, machofp);
+    saa_fpwrite(strs, ofile);
 }
 /* We do quite a bit here, starting with finalizing all of the data
    for the object file, writing, and then freeing all of the data from

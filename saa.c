@@ -99,15 +99,10 @@ void *saa_wstruct(struct SAA *s)
 {
     void *p;
 
-    if (s->wpos % s->elem_len)
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
-                          "misaligned wpos in saa_wstruct");
+    nasm_assert((s->wpos % s->elem_len) == 0);
 
     if (s->wpos + s->elem_len > s->blk_len) {
-        if (s->wpos != s->blk_len)
-            nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
-                              "unfilled block in saa_wstruct");
-
+        nasm_assert(s->wpos == s->blk_len);
         if (s->wptr + s->elem_len > s->length)
             saa_extend(s);
         s->wblk++;
@@ -167,9 +162,7 @@ void *saa_rstruct(struct SAA *s)
     if (s->rptr + s->elem_len > s->datalen)
         return NULL;
 
-    if (s->rpos % s->elem_len)
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
-                          "misaligned rpos in saa_rstruct");
+    nasm_assert((s->rpos % s->elem_len) == 0);
 
     if (s->rpos + s->elem_len > s->blk_len) {
         s->rblk++;
@@ -217,11 +210,7 @@ void saa_rnbytes(struct SAA *s, void *data, size_t len)
 {
     char *d = data;
 
-    if (s->rptr + len > s->datalen) {
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE,
-                          "overrun in saa_rnbytes");
-        return;
-    }
+    nasm_assert(s->rptr + len <= s->datalen);
 
     while (len) {
         size_t l;
@@ -241,10 +230,7 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 {
     size_t ix;
 
-    if (posn + len > s->datalen) {
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE, "overrun in saa_fread");
-        return;
-    }
+    nasm_assert(posn + len <= s->datalen);
 
     if (likely(s->blk_len == SAA_BLKLEN)) {
         ix = posn >> SAA_BLKSHIFT;
@@ -264,11 +250,8 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 {
     size_t ix;
 
-    if (posn > s->datalen) {
-        /* Seek beyond the end of the existing array not supported */
-        nasm_malloc_error(ERR_PANIC | ERR_NOFILE, "overrun in saa_fwrite");
-        return;
-    }
+    /* Seek beyond the end of the existing array not supported */
+    nasm_assert(posn <= s->datalen);
 
     if (likely(s->blk_len == SAA_BLKLEN)) {
         ix = posn >> SAA_BLKSHIFT;

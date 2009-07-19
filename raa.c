@@ -92,8 +92,7 @@ struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value)
 {
     struct RAA *result;
 
-    if (posn < 0)
-        nasm_malloc_error(ERR_PANIC, "negative position in raa_write");
+    nasm_assert(posn >= 0);
 
     while ((UINT32_C(1) << (r->shift + LAYERSHIFT(r))) <= (uint32_t) posn) {
         /*

@@ -209,10 +209,6 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-static FILE *machofp;
-static efunc error;
-static evalfunc evaluate;
-
 extern struct ofmt of_macho64;
 
 /* Global file information. This should be cleaned up into either
@@ -327,7 +323,7 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
             return i;
 
     if (i == MAX_SECT)
-        error(ERR_WARNING,
+        nasm_error(ERR_WARNING,
               "too many sections (>255) - clipped by fileindex");
 
     return NO_SECT;
@@ -355,17 +351,11 @@ static struct symbol *get_closest_section_symbol_by_offset(uint8_t fileindex, in
  */
 static int32_t macho_gotpcrel_sect;
 
-static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
-                       evalfunc eval)
+static void macho_init(void)
 {
     char zero = 0;
 
-	maxbits = 64;
-    machofp = fp;
-    error = errfunc;
-    evaluate = eval;
-
-    (void)ldef;                 /* placate optimizers */
+    maxbits = 64;
 
     sects = NULL;
     sectstail = &sects;
@@ -387,7 +377,7 @@ static void macho_init(FILE * fp, efunc errfunc, ldfunc ldef,
 	/* add special symbol for ..gotpcrel */
 	macho_gotpcrel_sect = seg_alloc();
 	macho_gotpcrel_sect ++;
-	ldef("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, error);
+	define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, nasm_error);
 }
 
 static void sect_write(struct section *sect,
@@ -521,7 +511,7 @@ static void macho_output(int32_t secto, const void *data,
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
-            error(ERR_NONFATAL, "attempt to assemble code in "
+            nasm_error(ERR_NONFATAL, "attempt to assemble code in "
                   "[ABSOLUTE] space");
 
         return;
@@ -530,19 +520,19 @@ static void macho_output(int32_t secto, const void *data,
     s = get_section_by_index(secto);
 
     if (s == NULL) {
-        error(ERR_WARNING, "attempt to assemble code in"
+        nasm_error(ERR_WARNING, "attempt to assemble code in"
               " section %d: defaulting to `.text'", secto);
         s = get_section_by_name("__TEXT", "__text");
 
         /* should never happen */
         if (s == NULL)
-            error(ERR_PANIC, "text section not found");
+            nasm_error(ERR_PANIC, "text section not found");
     }
 
     sbss = get_section_by_name("__DATA", "__bss");
 
     if (s == sbss && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialize memory in the"
+        nasm_error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         s->size += realsize(type, size);
         return;
@@ -551,7 +541,7 @@ static void macho_output(int32_t secto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s != sbss) {
-            error(ERR_WARNING, "uninitialized space declared in"
+            nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   get_section_name_by_index(secto));
 
@@ -563,7 +553,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_RAWDATA:
         if (section != NO_SEG)
-            error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
         sect_write(s, data, size);
         break;
@@ -572,12 +562,12 @@ static void macho_output(int32_t secto, const void *data,
         addr = *(int64_t *)data;
         if (section != NO_SEG) {
             if (section % 2) {
-                error(ERR_NONFATAL, "Mach-O format does not support"
+                nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                       " section base references");
             } else {
 				if (wrt == NO_SEG) {
 					if (size < 8) {
-						error(ERR_NONFATAL, "Mach-O 64-bit format does not support"
+						nasm_error(ERR_NONFATAL, "Mach-O 64-bit format does not support"
 							" 32-bit absolute addresses");
 					/*
 					 Seemingly, Mach-O's X86_64_RELOC_SUBTRACTOR would require
@@ -588,7 +578,7 @@ static void macho_output(int32_t secto, const void *data,
 						addr -= add_reloc(s, section, 0, size, addr);					// X86_64_RELOC_UNSIGNED
 					}
 				} else {
-					error(ERR_NONFATAL, "Mach-O format does not support"
+					nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 						" this use of WRT");
 				}
 			}
@@ -604,15 +594,15 @@ static void macho_output(int32_t secto, const void *data,
         WRITESHORT(p, *(int64_t *)data);
 
         if (section == secto)
-            error(ERR_PANIC, "intra-section OUT_REL2ADR");
+            nasm_error(ERR_PANIC, "intra-section OUT_REL2ADR");
 
 		if (section == NO_SEG) {
 			/* Do nothing */
         } else if (section % 2) {
-            error(ERR_NONFATAL, "Mach-O format does not support"
+            nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else {
-			error(ERR_NONFATAL, "Unsupported non-32-bit"
+			nasm_error(ERR_NONFATAL, "Unsupported non-32-bit"
 				  " Macho-O relocation [2]");
 		}
 
@@ -624,10 +614,10 @@ static void macho_output(int32_t secto, const void *data,
 		WRITELONG(p, *(int64_t *)data);
 
         if (section == secto)
-            error(ERR_PANIC, "intra-section OUT_REL4ADR");
+            nasm_error(ERR_PANIC, "intra-section OUT_REL4ADR");
 
         if (section != NO_SEG && section % 2) {
-            error(ERR_NONFATAL, "Mach-O format does not support"
+            nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else {
 			if (wrt == NO_SEG) {
@@ -644,7 +634,7 @@ static void macho_output(int32_t secto, const void *data,
 					*mydata -= add_reloc(s, section, 3, 4, (int64_t)*mydata);			// X86_64_GOT
 				}
 			} else {
-				error(ERR_NONFATAL, "Mach-O format does not support"
+				nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 				    " this use of WRT");
 				wrt = NO_SEG;	/* we can at least _try_ to continue */
 			}
@@ -654,7 +644,7 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     default:
-        error(ERR_PANIC, "unknown output type?");
+        nasm_error(ERR_PANIC, "unknown output type?");
         break;
     }
 }
@@ -720,14 +710,14 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         newAlignment = exact_log2(value);
 
                         if (0 != *end) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "unknown or missing alignment value \"%s\" "
                                       "specified for section \"%s\"",
                                   currentAttribute + 6,
                                   name);
                             return NO_SEG;
                         } else if (0 > newAlignment) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "alignment of %d (for section \"%s\") is not "
                                       "a power of two",
                                   value,
@@ -738,7 +728,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         if ((-1 != originalIndex)
                             && (s->align != newAlignment)
                            && (s->align != -1)) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "section \"%s\" has already been specified "
                                       "with alignment %d, conflicts with new "
                                       "alignment of %d",
@@ -752,7 +742,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                     } else if (!nasm_stricmp("data", currentAttribute)) {
                         /* Do nothing; 'data' is implicit */
                     } else {
-                        error(ERR_PANIC,
+                        nasm_error(ERR_PANIC,
                               "unknown section attribute %s for section %s",
                               currentAttribute,
                               name);
@@ -765,7 +755,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
         }
     }
 
-    error(ERR_PANIC, "invalid section name %s", name);
+    nasm_error(ERR_PANIC, "invalid section name %s", name);
     return NO_SEG;
 }
 
@@ -775,13 +765,13 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     struct symbol *sym;
 
     if (special) {
-        error(ERR_NONFATAL, "The Mach-O output format does "
+        nasm_error(ERR_NONFATAL, "The Mach-O output format does "
               "not support any special symbol types");
         return;
     }
 
     if (is_global == 3) {
-        error(ERR_NONFATAL, "The Mach-O format does not "
+        nasm_error(ERR_NONFATAL, "The Mach-O format does not "
               "(yet) support forward reference fixups.");
         return;
     }
@@ -793,7 +783,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
          * _isn't_ a valid one, we should barf immediately.
          */
         if (strcmp(name, "..gotpcrel"))
-            error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
+            nasm_error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
          return;
     }
 
@@ -847,7 +837,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 /* give an error on unfound section if it's not an
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
-                error(ERR_PANIC, "in-file index for section %d not found",
+                nasm_error(ERR_PANIC, "in-file index for section %d not found",
                       section);
             }
         }
@@ -860,9 +850,9 @@ static int32_t macho_segbase(int32_t section)
     return section;
 }
 
-static void macho_filename(char *inname, char *outname, efunc error)
+static void macho_filename(char *inname, char *outname)
 {
-    standard_extension(inname, outname, ".o", error);
+    standard_extension(inname, outname, ".o");
 }
 
 extern macros_t macho_stdmac[];
@@ -1018,14 +1008,14 @@ static void macho_calculate_sizes (void)
 
 static void macho_write_header (void)
 {
-    fwriteint32_t(MH_MAGIC_64, machofp);	/* magic */
-    fwriteint32_t(CPU_TYPE_X86_64, machofp);	/* CPU type */
-    fwriteint32_t(CPU_SUBTYPE_I386_ALL, machofp);	/* CPU subtype */
-    fwriteint32_t(MH_OBJECT, machofp);	/* Mach-O file type */
-    fwriteint32_t(head_ncmds64, machofp);	/* number of load commands */
-    fwriteint32_t(head_sizeofcmds64, machofp);	/* size of load commands */
-    fwriteint32_t(0, machofp);	/* no flags */
-	fwriteint32_t(0, machofp); /* reserved for future use */
+    fwriteint32_t(MH_MAGIC_64, ofile);	/* magic */
+    fwriteint32_t(CPU_TYPE_X86_64, ofile);	/* CPU type */
+    fwriteint32_t(CPU_SUBTYPE_I386_ALL, ofile);	/* CPU subtype */
+    fwriteint32_t(MH_OBJECT, ofile);	/* Mach-O file type */
+    fwriteint32_t(head_ncmds64, ofile);	/* number of load commands */
+    fwriteint32_t(head_sizeofcmds64, ofile);	/* size of load commands */
+    fwriteint32_t(0, ofile);	/* no flags */
+	fwriteint32_t(0, ofile); /* reserved for future use */
 }
 
 /* Write out the segment load command at offset.  */
@@ -1036,51 +1026,51 @@ static uint32_t macho_write_segment (uint64_t offset)
     uint32_t s_reloff = 0;
     struct section *s;
 
-    fwriteint32_t(LC_SEGMENT_64, machofp);        /* cmd == LC_SEGMENT_64 */
+    fwriteint32_t(LC_SEGMENT_64, ofile);        /* cmd == LC_SEGMENT_64 */
 
     /* size of load command including section load commands */
     fwriteint32_t(MACHO_SEGCMD64_SIZE + seg_nsects64 *
-	       MACHO_SECTCMD64_SIZE, machofp);
+	       MACHO_SECTCMD64_SIZE, ofile);
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
-    fwritezero(16, machofp);
-    fwriteint64_t(0, machofp); /* in-memory offset */
-    fwriteint64_t(seg_vmsize64, machofp);        /* in-memory size */
-    fwriteint64_t(offset, machofp);    /* in-file offset to data */
-    fwriteint64_t(seg_filesize64, machofp);      /* in-file size */
-    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* maximum vm protection */
-    fwriteint32_t(VM_PROT_DEFAULT, machofp);   /* initial vm protection */
-    fwriteint32_t(seg_nsects64, machofp);        /* number of sections */
-    fwriteint32_t(0, machofp); /* no flags */
+    fwritezero(16, ofile);
+    fwriteint64_t(0, ofile); /* in-memory offset */
+    fwriteint64_t(seg_vmsize64, ofile);        /* in-memory size */
+    fwriteint64_t(offset, ofile);    /* in-file offset to data */
+    fwriteint64_t(seg_filesize64, ofile);      /* in-file size */
+    fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* maximum vm protection */
+    fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* initial vm protection */
+    fwriteint32_t(seg_nsects64, ofile);        /* number of sections */
+    fwriteint32_t(0, ofile); /* no flags */
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
-        fwrite(s->sectname, sizeof(s->sectname), 1, machofp);
-        fwrite(s->segname, sizeof(s->segname), 1, machofp);
-        fwriteint64_t(s->addr, machofp);
-        fwriteint64_t(s->size, machofp);
+        fwrite(s->sectname, sizeof(s->sectname), 1, ofile);
+        fwrite(s->segname, sizeof(s->segname), 1, ofile);
+        fwriteint64_t(s->addr, ofile);
+        fwriteint64_t(s->size, ofile);
 
         /* dummy data for zerofill sections or proper values */
         if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
-            fwriteint32_t(offset, machofp);
+            fwriteint32_t(offset, ofile);
             /* Write out section alignment, as a power of two.
             e.g. 32-bit word alignment would be 2 (2^2 = 4).  */
             if (s->align == -1)
                 s->align = DEFAULT_SECTION_ALIGNMENT;
-            fwriteint32_t(s->align, machofp);
+            fwriteint32_t(s->align, ofile);
             /* To be compatible with cctools as we emit
             a zero reloff if we have no relocations.  */
-            fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, machofp);
-            fwriteint32_t(s->nreloc, machofp);
+            fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, ofile);
+            fwriteint32_t(s->nreloc, ofile);
 
             offset += s->size;
             s_reloff += s->nreloc * MACHO_RELINFO64_SIZE;
         } else {
-            fwriteint32_t(0, machofp);
-            fwriteint32_t(0, machofp);
-            fwriteint32_t(0, machofp);
-            fwriteint32_t(0, machofp);
+            fwriteint32_t(0, ofile);
+            fwriteint32_t(0, ofile);
+            fwriteint32_t(0, ofile);
+            fwriteint32_t(0, ofile);
         }
 		
 		if (s->nreloc) {
@@ -1089,11 +1079,11 @@ static uint32_t macho_write_segment (uint64_t offset)
 				s->flags |= S_ATTR_EXT_RELOC;
 		}
 
-        fwriteint32_t(s->flags, machofp);      /* flags */
-        fwriteint32_t(0, machofp);     /* reserved */
-        fwriteint32_t(0, machofp);     /* reserved */
+        fwriteint32_t(s->flags, ofile);      /* flags */
+        fwriteint32_t(0, ofile);     /* reserved */
+        fwriteint32_t(0, ofile);     /* reserved */
 		
-		fwriteint32_t(0, machofp);     /* align */
+		fwriteint32_t(0, ofile);     /* align */
     }
 
     rel_padcnt64 = rel_base - offset;
@@ -1110,14 +1100,14 @@ static void macho_write_relocs (struct reloc *r)
     while (r) {
 	uint32_t word2;
 
-	fwriteint32_t(r->addr, machofp); /* reloc offset */
+	fwriteint32_t(r->addr, ofile); /* reloc offset */
 
 	word2 = r->snum;
 	word2 |= r->pcrel << 24;
 	word2 |= r->length << 25;
 	word2 |= r->ext << 27;
 	word2 |= r->type << 28;
-	fwriteint32_t(word2, machofp); /* reloc data */
+	fwriteint32_t(word2, ofile); /* reloc data */
 	r = r->next;
     }
 }
@@ -1197,11 +1187,11 @@ static void macho_write_section (void)
 	}
 
 	/* dump the section data to file */
-	saa_fpwrite(s->data, machofp);
+	saa_fpwrite(s->data, ofile);
     }
 
     /* pad last section up to reloc entries on int64_t boundary */
-    fwritezero(rel_padcnt64, machofp);
+    fwritezero(rel_padcnt64, ofile);
 
     /* emit relocation entries */
     for (s = sects; s != NULL; s = s->next)
@@ -1221,10 +1211,10 @@ static void macho_write_symtab (void)
 
     for (sym = syms; sym != NULL; sym = sym->next) {
 	if ((sym->type & N_EXT) == 0) {
-	    fwriteint32_t(sym->strx, machofp);		/* string table entry number */
-	    fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	    fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	    fwriteint16_t(sym->desc, machofp);	/* description */
+	    fwriteint32_t(sym->strx, ofile);		/* string table entry number */
+	    fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	    fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	    fwriteint16_t(sym->desc, ofile);	/* description */
 
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
@@ -1234,16 +1224,16 @@ static void macho_write_symtab (void)
 		    sym->value += s->size;
 	    }
 
-	    fwriteint64_t(sym->value, machofp);	/* value (i.e. offset) */
+	    fwriteint64_t(sym->value, ofile);	/* value (i.e. offset) */
 	}
     }
 
     for (i = 0; i < nextdefsym; i++) {
 	sym = extdefsyms[i];
-	fwriteint32_t(sym->strx, machofp);
-	fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	fwriteint16_t(sym->desc, machofp);	/* description */
+	fwriteint32_t(sym->strx, ofile);
+	fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	fwriteint16_t(sym->desc, ofile);	/* description */
 
 	/* Fix up the symbol value now that we know the final section
 	   sizes.  */
@@ -1253,15 +1243,15 @@ static void macho_write_symtab (void)
 		sym->value += s->size;
 	}
 
-	fwriteint64_t(sym->value, machofp);	/* value (i.e. offset) */
+	fwriteint64_t(sym->value, ofile);	/* value (i.e. offset) */
     }
 
      for (i = 0; i < nundefsym; i++) {
 	 sym = undefsyms[i];
-	 fwriteint32_t(sym->strx, machofp);
-	 fwrite(&sym->type, 1, 1, machofp);	/* symbol type */
-	 fwrite(&sym->sect, 1, 1, machofp);	/* section */
-	 fwriteint16_t(sym->desc, machofp);	/* description */
+	 fwriteint32_t(sym->strx, ofile);
+	 fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
+	 fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	 fwriteint16_t(sym->desc, ofile);	/* description */
 
 	 // Fix up the symbol value now that we know the final section sizes.
 	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
@@ -1270,7 +1260,7 @@ static void macho_write_symtab (void)
 		 sym->value += s->size;
 	 }
 
-	 fwriteint64_t(sym->value, machofp);	// value (i.e. offset)
+	 fwriteint64_t(sym->value, ofile);	// value (i.e. offset)
      }
 
 }
@@ -1382,19 +1372,19 @@ static void macho_write (void)
     if (seg_nsects64 > 0)
 	offset = macho_write_segment (offset);
     else
-        error(ERR_WARNING, "no sections?");
+        nasm_error(ERR_WARNING, "no sections?");
 
     if (nsyms > 0) {
         /* write out symbol command */
-        fwriteint32_t(LC_SYMTAB, machofp); /* cmd == LC_SYMTAB */
-        fwriteint32_t(MACHO_SYMCMD_SIZE, machofp); /* size of load command */
-        fwriteint32_t(offset, machofp);    /* symbol table offset */
-        fwriteint32_t(nsyms, machofp);     /* number of symbol
+        fwriteint32_t(LC_SYMTAB, ofile); /* cmd == LC_SYMTAB */
+        fwriteint32_t(MACHO_SYMCMD_SIZE, ofile); /* size of load command */
+        fwriteint32_t(offset, ofile);    /* symbol table offset */
+        fwriteint32_t(nsyms, ofile);     /* number of symbol
                                          ** table entries */
 
         offset += nsyms * MACHO_NLIST64_SIZE;
-        fwriteint32_t(offset, machofp);    /* string table offset */
-        fwriteint32_t(strslen, machofp);   /* string table size */
+        fwriteint32_t(offset, ofile);    /* string table offset */
+        fwriteint32_t(strslen, ofile);   /* string table size */
     }
 
     /* emit section data */
@@ -1408,7 +1398,7 @@ static void macho_write (void)
     /* we don't need to pad here since MACHO_NLIST64_SIZE == 16 */
 
     /* emit string table */
-    saa_fpwrite(strs, machofp);
+    saa_fpwrite(strs, ofile);
 }
 /* We do quite a bit here, starting with finalizing all of the data
    for the object file, writing, and then freeing all of the data from

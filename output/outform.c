@@ -47,55 +47,46 @@
 #define BUILD_DRIVERS_ARRAY
 #include "output/outform.h"
 
-static int ndrivers = 0;
-
 struct ofmt *ofmt_find(char *name)
 {                               /* find driver */
-    int i;
+    struct ofmt **ofp, *of;
 
-    for (i = 0; i < ndrivers; i++)
-        if (!strcmp(name, drivers[i]->shortname))
-            return drivers[i];
-
+    for (ofp = drivers; (of = *ofp); ofp++) {
+        if (!nasm_stricmp(name, of->shortname))
+            return of;
+    }
     return NULL;
 }
+
 struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
 {                               /* find driver */
-    struct dfmt **dfmt = ofmt->debug_formats;
-    while (*dfmt) {
-        if (!strcmp(name, (*dfmt)->shortname))
-            return (*dfmt);
-        dfmt++;
+    struct dfmt **dfp, *df;
+
+    for (dfp = ofmt->debug_formats; (df = *dfp); dfp++) {
+        if (!nasm_stricmp(name, df->shortname))
+            return df;
     }
     return NULL;
 }
 
 void ofmt_list(struct ofmt *deffmt, FILE * fp)
 {
-    int i;
-    for (i = 0; i < ndrivers; i++)
+    struct ofmt **ofp, *of;
+
+    for (ofp = drivers; (of = *ofp); ofp++) {
         fprintf(fp, "  %c %-10s%s\n",
-                drivers[i] == deffmt ? '*' : ' ',
-                drivers[i]->shortname, drivers[i]->fullname);
-}
-void dfmt_list(struct ofmt *ofmt, FILE * fp)
-{
-    struct dfmt **drivers = ofmt->debug_formats;
-    while (*drivers) {
-        fprintf(fp, "  %c %-10s%s\n",
-                drivers[0] == ofmt->current_dfmt ? '*' : ' ',
-                drivers[0]->shortname, drivers[0]->fullname);
-        drivers++;
+                of == deffmt ? '*' : ' ',
+                of->shortname, of->fullname);
     }
 }
-struct ofmt *ofmt_register(efunc error)
+
+void dfmt_list(struct ofmt *ofmt, FILE *fp)
 {
-    for (ndrivers = 0; drivers[ndrivers] != NULL; ndrivers++) ;
+    struct dfmt **dfp, *df;
 
-    if (ndrivers == 0) {
-        error(ERR_PANIC | ERR_NOFILE,
-              "No output drivers given at compile time");
+    for (dfp = ofmt->debug_formats; (df = *dfp); dfp++) {
+        fprintf(fp, "  %c %-10s%s\n",
+                df == ofmt->current_dfmt ? '*' : ' ',
+                df->shortname, df->fullname);
     }
-
-    return (&OF_DEFAULT);
 }

@@ -97,10 +97,6 @@ static int segmenttypenumbers[COUNT_SEGTYPES] = {
 static struct SAA *seg[RDF_MAXSEGS];    /* seg 0 = code, seg 1 = data */
 static struct SAA *header;      /* relocation/import/export records */
 
-static FILE *ofile;
-
-static efunc error;
-
 static struct seginfo {
     char *segname;
     int segnumber;
@@ -114,12 +110,9 @@ static int nsegments;
 static int32_t bsslength;
 static int32_t headerlength;
 
-static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void rdf2_init(void)
 {
     int segtext, segdata, segbss;
-
-    (void)ldef;
-    (void)eval;
 
     maxbits = 64;
 
@@ -144,9 +137,6 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
 
     nsegments = 3;
 
-    ofile = fp;
-    error = errfunc;
-
     seg[0] = saa_init(1L);
     seg[1] = saa_init(1L);
     seg[2] = NULL;              /* special case! */
@@ -157,7 +147,7 @@ static void rdf2_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
     segdata = seg_alloc();
     segbss = seg_alloc();
     if (segtext != 0 || segdata != 2 || segbss != 4)
-        error(ERR_PANIC,
+        nasm_error(ERR_PANIC,
               "rdf segment numbers not allocated as expected (%d,%d,%d)",
               segtext, segdata, segbss);
     bsslength = 0;
@@ -200,7 +190,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
 
             reserved = readnum(q, &err);
             if (err) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "value following comma must be numeric");
                 reserved = 0;
             }
@@ -217,7 +207,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
         if (code == -1) {       /* didn't find anything */
             code = readnum(p, &err);
             if (err) {
-                error(ERR_NONFATAL, "unrecognised RDF segment type (%s)",
+                nasm_error(ERR_NONFATAL, "unrecognised RDF segment type (%s)",
                       p);
                 code = 3;
             }
@@ -226,7 +216,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
     for (i = 0; i < nsegments; i++) {
         if (!strcmp(name, segments[i].segname)) {
             if (code != -1 || reserved != 0)
-                error(ERR_NONFATAL, "segment attributes specified on"
+                nasm_error(ERR_NONFATAL, "segment attributes specified on"
                       " redeclaration of segment");
             return segments[i].segnumber * 2;
         }
@@ -235,11 +225,11 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
     /* declaring a new segment! */
 
     if (code == -1) {
-        error(ERR_NONFATAL, "new segment declared without type code");
+        nasm_error(ERR_NONFATAL, "new segment declared without type code");
         code = 3;
     }
     if (nsegments == RDF_MAXSEGS) {
-        error(ERR_FATAL, "reached compiled-in maximum segment limit (%d)",
+        nasm_error(ERR_FATAL, "reached compiled-in maximum segment limit (%d)",
               RDF_MAXSEGS);
         return NO_SEG;
     }
@@ -247,7 +237,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
     segments[nsegments].segname = nasm_strdup(name);
     i = seg_alloc();
     if (i % 2 != 0)
-        error(ERR_PANIC, "seg_alloc() returned odd number");
+        nasm_error(ERR_PANIC, "seg_alloc() returned odd number");
     segments[nsegments].segnumber = i >> 1;
     segments[nsegments].segtype = code;
     segments[nsegments].segreserved = reserved;
@@ -396,11 +386,11 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
 
     /* Check if the label length is OK */
     if ((len = strlen(name)) >= EXIM_LABEL_MAX) {
-        error(ERR_NONFATAL, "label size exceeds %d bytes", EXIM_LABEL_MAX);
+        nasm_error(ERR_NONFATAL, "label size exceeds %d bytes", EXIM_LABEL_MAX);
         return;
     }
     if (!len) {
-        error(ERR_NONFATAL, "zero-length label");
+        nasm_error(ERR_NONFATAL, "zero-length label");
         return;
     }
 
@@ -421,10 +411,10 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
             bool err;
             ci.align = readnum(special, &err);
             if (err)
-                error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+                nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " valid number", special);
             else if ((ci.align | (ci.align - 1)) != 2 * ci.align - 1)
-                error(ERR_NONFATAL, "alignment constraint `%s' is not a"
+                nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " power of two", special);
         }
         write_common_rec(&ci);
@@ -460,13 +450,13 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
                        !nasm_stricmp(special, "object")) {
                 symflags |= SYM_DATA;
             } else
-                error(ERR_NONFATAL, "unrecognised symbol type `%s'",
+                nasm_error(ERR_NONFATAL, "unrecognised symbol type `%s'",
                       special);
         }
     }
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+        nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
         return;
     }
 
@@ -478,7 +468,7 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
     if (i >= nsegments) {       /* EXTERN declaration */
         ri.type = farsym ? RDFREC_FARIMPORT : RDFREC_IMPORT;
         if (symflags & SYM_GLOBAL)
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "symbol type conflict - EXTERN cannot be EXPORT");
         ri.flags = symflags;
         ri.segment = segment;
@@ -488,7 +478,7 @@ static void rdf2_deflabel(char *name, int32_t segment, int64_t offset,
     } else if (is_global) {
         r.type = RDFREC_GLOBAL; /* GLOBAL declaration */
         if (symflags & SYM_IMPORT)
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "symbol type conflict - GLOBAL cannot be IMPORT");
         r.flags = symflags;
         r.segment = segment;
@@ -509,7 +499,7 @@ static void membufwrite(int segment, const void *data, int bytes)
             break;
     }
     if (i == nsegments)
-        error(ERR_PANIC, "can't find segment %d", segment);
+        nasm_error(ERR_PANIC, "can't find segment %d", segment);
 
     if (bytes < 0) {
         b = buf;
@@ -532,7 +522,7 @@ static int getsegmentlength(int segment)
             break;
     }
     if (i == nsegments)
-        error(ERR_PANIC, "can't find segment %d", segment);
+        nasm_error(ERR_PANIC, "can't find segment %d", segment);
 
     return segments[i].seglength;
 }
@@ -547,7 +537,7 @@ static void rdf2_out(int32_t segto, const void *data,
 
     if (segto == NO_SEG) {
         if (type != OUT_RESERVE)
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "attempt to assemble code in ABSOLUTE space");
         return;
     }
@@ -559,18 +549,18 @@ static void rdf2_out(int32_t segto, const void *data,
             break;
     }
     if (seg >= nsegments) {
-        error(ERR_NONFATAL,
+        nasm_error(ERR_NONFATAL,
               "specified segment not supported by rdf output format");
         return;
     }
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
-        error(ERR_NONFATAL, "WRT not supported by rdf output format");
+        nasm_error(ERR_NONFATAL, "WRT not supported by rdf output format");
     }
 
     if (segto == 2 && type != OUT_RESERVE) {
-        error(ERR_NONFATAL, "BSS segments may not be initialized");
+        nasm_error(ERR_NONFATAL, "BSS segments may not be initialized");
 
         /* just reserve the space for now... */
 
@@ -589,7 +579,7 @@ static void rdf2_out(int32_t segto, const void *data,
                 membufwrite(segto, databuf, 1);
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
         membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
@@ -617,7 +607,7 @@ static void rdf2_out(int32_t segto, const void *data,
         membufwrite(segto, databuf, size);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
-            error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
 
         rr.reclen = 8;
         rr.offset = getsegmentlength(segto);    /* current offset */
@@ -649,9 +639,9 @@ static void rdf2_out(int32_t segto, const void *data,
         membufwrite(segto, &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
         if ((segment == segto) && (globalbits != 64))
-            error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
-            error(ERR_PANIC, "erm... 4 byte segment base ref?");
+            nasm_error(ERR_PANIC, "erm... 4 byte segment base ref?");
         }
 
         rr.type = RDFREC_RELOC; /* type signature */
@@ -741,7 +731,7 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
     case D_LIBRARY:
 	n = strlen(value);
 	if (n >= MODLIB_NAME_MAX) {
-	    error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
+	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
 	    return 1;
 	}
         if (pass == 1) {
@@ -755,7 +745,7 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
 	
     case D_MODULE:
 	if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
-	    error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
+	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
 	    return 1;
 	}
         if (pass == 1) {
@@ -772,9 +762,9 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
     }
 }
 
-static void rdf2_filename(char *inname, char *outname, efunc error)
+static void rdf2_filename(char *inname, char *outname)
 {
-    standard_extension(inname, outname, ".rdf", error);
+    standard_extension(inname, outname, ".rdf");
 }
 
 extern macros_t rdf2_stdmac[];
