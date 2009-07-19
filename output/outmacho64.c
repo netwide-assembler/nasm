@@ -373,11 +373,11 @@ static void macho_init(void)
     /* string table starts with a zero byte - don't ask why */
     saa_wbytes(strs, &zero, sizeof(char));
     strslen = 1;
-	
-	/* add special symbol for ..gotpcrel */
-	macho_gotpcrel_sect = seg_alloc();
-	macho_gotpcrel_sect ++;
-	define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false, &of_macho64, nasm_error);
+
+    /* add special symbol for ..gotpcrel */
+    macho_gotpcrel_sect = seg_alloc();
+    macho_gotpcrel_sect++;
+    define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false);
 }
 
 static void sect_write(struct section *sect,
@@ -391,9 +391,9 @@ static int32_t add_reloc(struct section *sect, int32_t section,
                       int pcrel, int bytes, int64_t reloff)
 {
     struct reloc *r;
-	struct symbol *sym;
+    struct symbol *sym;
     int32_t fi;
-	int32_t adjustment = 0;
+    int32_t adjustment = 0;
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a

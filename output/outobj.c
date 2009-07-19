@@ -1478,10 +1478,10 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         obj_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
             define_label(name, NO_SEG, seg->align - SEG_ABS,
-                     NULL, false, false, &of_obj, nasm_error);
+			 NULL, false, false);
         else
             define_label(name, seg->index + 1, 0L,
-                     NULL, false, false, &of_obj, nasm_error);
+			 NULL, false, false);
         obj_seg_needs_update = NULL;
 
         /*
@@ -1495,9 +1495,9 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                     grp->segs[grp->nindices++].index = seg->obj_index;
                     if (seg->grp)
                         nasm_error(ERR_WARNING,
-                              "segment `%s' is already part of"
-                              " a group: first one takes precedence",
-                              seg->name);
+				   "segment `%s' is already part of"
+				   " a group: first one takes precedence",
+				   seg->name);
                     else
                         seg->grp = grp;
                 }
@@ -1583,8 +1583,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
             grp->name = NULL;
 
             obj_grp_needs_update = grp;
-            define_label(v, grp->index + 1, 0L,
-                     NULL, false, false, &of_obj, nasm_error);
+            define_label(v, grp->index + 1, 0L, NULL, false, false);
             obj_grp_needs_update = NULL;
 
             while (*q) {

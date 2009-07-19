@@ -61,12 +61,10 @@ static int is_comma_next(void);
 static int i;
 static struct tokenval tokval;
 static efunc error;
-static struct ofmt *outfmt;     /* Structure of addresses of output routines */
 static struct location *location;         /* Pointer to current line's segment,offset */
 
-void parser_global_info(struct ofmt *output, struct location * locp)
+void parser_global_info(struct location * locp)
 {
-    outfmt = output;
     location = locp;
 }
 
@@ -248,7 +246,7 @@ restart_parse:
              * am still not certain.
              */
             ldef(result->label, in_abs_seg ? abs_seg : location->segment,
-                 location->offset, NULL, true, false, outfmt, errfunc);
+                 location->offset, NULL, true, false);
         }
     }
 

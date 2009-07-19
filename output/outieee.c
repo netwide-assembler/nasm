@@ -811,10 +811,9 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         ieee_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
             define_label(name, NO_SEG, seg->align - SEG_ABS,
-                     NULL, false, false, &of_ieee, nasm_error);
+			 NULL, false, false);
         else
-            define_label(name, seg->index + 1, 0L,
-                     NULL, false, false, &of_ieee, nasm_error);
+            define_label(name, seg->index + 1, 0L, NULL, false, false);
         ieee_seg_needs_update = NULL;
 
         if (seg->use32)

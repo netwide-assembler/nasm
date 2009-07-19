@@ -193,8 +193,7 @@ static void coff_win64_init(void)
     win64 = true;
     coff_gen_init();
     imagebase_sect = seg_alloc()+1;
-    define_label(WRT_IMAGEBASE, imagebase_sect, 0, NULL, false, false,
-		 ofmt, nasm_error);
+    define_label(WRT_IMAGEBASE, imagebase_sect, 0, NULL, false, false);
 }
 
 static void coff_std_init(void)

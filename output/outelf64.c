@@ -263,23 +263,17 @@ static void elf_init(void)
     fwds = NULL;
 
     elf_gotpc_sect = seg_alloc();
-    define_label("..gotpc", elf_gotpc_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..gotpc", elf_gotpc_sect + 1, 0L, NULL, false, false);
     elf_gotoff_sect = seg_alloc();
-    define_label("..gotoff", elf_gotoff_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..gotoff", elf_gotoff_sect + 1, 0L, NULL, false, false);
     elf_got_sect = seg_alloc();
-    define_label("..got", elf_got_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..got", elf_got_sect + 1, 0L, NULL, false, false);
     elf_plt_sect = seg_alloc();
-    define_label("..plt", elf_plt_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..plt", elf_plt_sect + 1, 0L, NULL, false, false);
     elf_sym_sect = seg_alloc();
-    define_label("..sym", elf_sym_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..sym", elf_sym_sect + 1, 0L, NULL, false, false);
     elf_gottpoff_sect = seg_alloc();
-    define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false, &of_elf64,
-         nasm_error);
+    define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false);
 
     def_seg = seg_alloc();
 

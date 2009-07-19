@@ -348,7 +348,7 @@ int main(int argc, char **argv)
 
     if (ofmt->stdmac)
         pp_extra_stdmac(ofmt->stdmac);
-    parser_global_info(ofmt, &location);
+    parser_global_info(&location);
     eval_global_info(ofmt, lookup_label, &location);
 
     /* define some macros dependent of command-line */
@@ -1265,10 +1265,9 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         if (!is_extern(value)) {        /* allow re-EXTERN to be ignored */
                             int temp = pass0;
                             pass0 = 1;  /* fake pass 1 in labels.c */
-                            declare_as_global(value, special,
-                                              nasm_error);
+                            declare_as_global(value, special);
                             define_label(value, seg_alloc(), 0L, NULL,
-                                         false, true, ofmt, nasm_error);
+                                         false, true);
                             pass0 = temp;
                         }
                     }           /* else  pass0 == 1 */
@@ -1307,7 +1306,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             special = q;
                         } else
                             special = NULL;
-                        declare_as_global(value, special, nasm_error);
+                        declare_as_global(value, special);
                     }           /* pass == 1 */
                     break;
                 case D_COMMON:		/* [COMMON symbol size:special] */
@@ -1357,8 +1356,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 		    }
 
                     if (pass0 < 2) {
-			define_common(value, seg_alloc(), size,
-				      special, ofmt, nasm_error);
+			define_common(value, seg_alloc(), size, special);
                     } else if (pass0 == 2) {
 			if (special)
 			    ofmt->symdef(value, 0L, 0L, 3, special);
@@ -1554,8 +1552,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].segment,
                                           output_ins.oprs[0].offset, NULL,
-                                          false, isext, ofmt,
-                                          nasm_error);
+                                          false, isext);
                             } else if (output_ins.operands == 2
                                        && (output_ins.oprs[0].type & IMMEDIATE)
                                        && (output_ins.oprs[0].type & COLON)
@@ -1567,8 +1564,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].offset | SEG_ABS,
                                           output_ins.oprs[1].offset,
-					  NULL, false, false, ofmt,
-                                          nasm_error);
+					  NULL, false, false);
                             } else
                                 nasm_error(ERR_NONFATAL,
                                              "bad syntax for EQU");
@@ -1586,8 +1582,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                 define_label(output_ins.label,
                                              output_ins.oprs[0].segment,
                                              output_ins.oprs[0].offset,
-                                             NULL, false, false, ofmt,
-                                             nasm_error);
+                                             NULL, false, false);
                             } else if (output_ins.operands == 2
                                        && (output_ins.oprs[0].
                                            type & IMMEDIATE)
@@ -1602,8 +1597,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                              output_ins.oprs[0].
                                              offset | SEG_ABS,
                                              output_ins.oprs[1].offset,
-                                             NULL, false, false, ofmt,
-                                             nasm_error);
+                                             NULL, false, false);
                             } else
                                 nasm_error(ERR_NONFATAL,
                                              "bad syntax for EQU");

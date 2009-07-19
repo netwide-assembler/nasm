@@ -123,11 +123,9 @@ typedef bool (*lfunc) (char *label, int32_t *segment, int64_t *offset);
  * an EQU or a segment-base symbol, which shouldn't.
  */
 typedef void (*ldfunc)(char *label, int32_t segment, int64_t offset,
-		       char *special, bool is_norm, bool isextrn,
-		       struct ofmt * ofmt, efunc error);
+		       char *special, bool is_norm, bool isextrn);
 void define_label(char *label, int32_t segment, int64_t offset,
-		       char *special, bool is_norm, bool isextrn,
-		       struct ofmt * ofmt, efunc error);
+		  char *special, bool is_norm, bool isextrn);
 
 /*
  * List-file generators should look like this:

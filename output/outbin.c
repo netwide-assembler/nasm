@@ -1205,13 +1205,11 @@ static void bin_define_section_labels(void)
 
         /* section.<name>.start */
         strcpy(label_name + base_len, ".start");
-        define_label(label_name, sec->start_index, 0L,
-                     NULL, 0, 0, ofmt, nasm_error);
+        define_label(label_name, sec->start_index, 0L, NULL, 0, 0);
 
         /* section.<name>.vstart */
         strcpy(label_name + base_len, ".vstart");
-        define_label(label_name, sec->vstart_index, 0L,
-                     NULL, 0, 0, ofmt, nasm_error);
+        define_label(label_name, sec->vstart_index, 0L, NULL, 0, 0);
 
         nasm_free(label_name);
     }
