@@ -1497,9 +1497,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 				 directive);
 		}
             } else {            /* it isn't a directive */
-
-                parse_line(pass1, line, &output_ins,
-                           nasm_error, evaluate, def_label);
+                parse_line(pass1, line, &output_ins, def_label);
 
                 if (optimizing > 0) {
                     if (forwref != NULL && globallineno == forwref->lineno) {

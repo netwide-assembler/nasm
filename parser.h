@@ -39,9 +39,8 @@
 #ifndef NASM_PARSER_H
 #define NASM_PARSER_H
 
-void parser_global_info(struct location * locp);
-insn *parse_line(int pass, char *buffer, insn * result,
-                 efunc error, evalfunc evaluate, ldfunc ldef);
-void cleanup_insn(insn * instruction);
+void parser_global_info(struct location *locp);
+insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef);
+void cleanup_insn(insn *instruction);
 
 #endif
