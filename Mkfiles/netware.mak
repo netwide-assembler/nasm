@@ -166,25 +166,25 @@ nulldbg.o: nulldbg.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h pptok.h preproc.h regs.h
 nullout.o: nullout.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outlib.h pptok.h preproc.h regs.h
-outaout.o: outaout.c compiler.h config.h directives.h insnsi.h nasm.h \
+outaout.o: outaout.c compiler.h config.h directives.h eval.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h
 outas86.o: outas86.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
 outbin.o: outbin.c compiler.h config.h directives.h eval.h insnsi.h labels.h \
  nasm.h nasmlib.h outform.h outlib.h pptok.h preproc.h regs.h saa.h \
  stdscan.h
-outcoff.o: outcoff.c compiler.h config.h directives.h insnsi.h nasm.h \
+outcoff.o: outcoff.c compiler.h config.h directives.h eval.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
 outdbg.o: outdbg.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h
 outelf.o: outelf.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h dwarf.h elfcommon.h outelf.h outform.h pptok.h preproc.h regs.h
-outelf32.o: outelf32.c compiler.h config.h directives.h insnsi.h nasm.h \
- nasmlib.h dwarf.h elf32.h elfcommon.h outelf.h outform.h outlib.h pptok.h \
- preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
-outelf64.o: outelf64.c compiler.h config.h directives.h insnsi.h nasm.h \
- nasmlib.h dwarf.h elf64.h elfcommon.h outelf.h outform.h outlib.h pptok.h \
- preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+outelf32.o: outelf32.c compiler.h config.h directives.h eval.h insnsi.h \
+ nasm.h nasmlib.h dwarf.h elf32.h elfcommon.h outelf.h outform.h outlib.h \
+ pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+outelf64.o: outelf64.c compiler.h config.h directives.h eval.h insnsi.h \
+ nasm.h nasmlib.h dwarf.h elf64.h elfcommon.h outelf.h outform.h outlib.h \
+ pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 outexe.o: outexe.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h
 outform.o: outform.c compiler.h config.h directives.h insnsi.h nasm.h \
@@ -193,11 +193,11 @@ outieee.o: outieee.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h regs.h
 outlib.o: outlib.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outlib.h pptok.h preproc.h regs.h
-outmacho32.o: outmacho32.c compiler.h config.h directives.h insnsi.h nasm.h \
- nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
+outmacho32.o: outmacho32.c compiler.h config.h directives.h eval.h insnsi.h \
+ nasm.h nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
 outmacho64.o: outmacho64.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
-outobj.o: outobj.c compiler.h config.h directives.h insnsi.h nasm.h \
+outobj.o: outobj.c compiler.h config.h directives.h eval.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h regs.h stdscan.h
 outrdf.o: outrdf.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h

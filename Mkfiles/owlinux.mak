@@ -264,29 +264,29 @@ output/nulldbg.$(O): output/nulldbg.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h pptok.h preproc.h regs.h
 output/nullout.$(O): output/nullout.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outlib.h pptok.h preproc.h regs.h
-output/outaout.$(O): output/outaout.c compiler.h directives.h insnsi.h \
- nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
- regs.h saa.h stdscan.h
+output/outaout.$(O): output/outaout.c compiler.h directives.h eval.h \
+ insnsi.h nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h \
+ preproc.h raa.h regs.h saa.h stdscan.h
 output/outas86.$(O): output/outas86.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  regs.h saa.h
 output/outbin.$(O): output/outbin.c compiler.h directives.h eval.h insnsi.h \
  labels.h nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h \
  preproc.h regs.h saa.h stdscan.h
-output/outcoff.$(O): output/outcoff.c compiler.h directives.h insnsi.h \
- nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
- regs.h saa.h
+output/outcoff.$(O): output/outcoff.c compiler.h directives.h eval.h \
+ insnsi.h nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h \
+ preproc.h raa.h regs.h saa.h
 output/outdbg.$(O): output/outdbg.c compiler.h directives.h insnsi.h nasm.h \
  nasmlib.h output/outform.h pptok.h preproc.h regs.h
 output/outelf.$(O): output/outelf.c compiler.h directives.h insnsi.h nasm.h \
  nasmlib.h output/dwarf.h output/elfcommon.h output/outelf.h \
  output/outform.h pptok.h preproc.h regs.h
-output/outelf32.$(O): output/outelf32.c compiler.h directives.h insnsi.h \
- nasm.h nasmlib.h output/dwarf.h output/elf32.h output/elfcommon.h \
+output/outelf32.$(O): output/outelf32.c compiler.h directives.h eval.h \
+ insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf32.h output/elfcommon.h \
  output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  rbtree.h regs.h saa.h stdscan.h
-output/outelf64.$(O): output/outelf64.c compiler.h directives.h insnsi.h \
- nasm.h nasmlib.h output/dwarf.h output/elf64.h output/elfcommon.h \
+output/outelf64.$(O): output/outelf64.c compiler.h directives.h eval.h \
+ insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf64.h output/elfcommon.h \
  output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  rbtree.h regs.h saa.h stdscan.h
 output/outexe.$(O): output/outexe.c compiler.h directives.h insnsi.h nasm.h \
@@ -297,14 +297,14 @@ output/outieee.$(O): output/outieee.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h regs.h
 output/outlib.$(O): output/outlib.c compiler.h directives.h insnsi.h nasm.h \
  nasmlib.h output/outlib.h pptok.h preproc.h regs.h
-output/outmacho32.$(O): output/outmacho32.c compiler.h directives.h insnsi.h \
- nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
- regs.h saa.h
+output/outmacho32.$(O): output/outmacho32.c compiler.h directives.h eval.h \
+ insnsi.h nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h \
+ preproc.h raa.h regs.h saa.h
 output/outmacho64.$(O): output/outmacho64.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  regs.h saa.h
-output/outobj.$(O): output/outobj.c compiler.h directives.h insnsi.h nasm.h \
- nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h regs.h \
+output/outobj.$(O): output/outobj.c compiler.h directives.h eval.h insnsi.h \
+ nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h regs.h \
  stdscan.h
 output/outrdf.$(O): output/outrdf.c compiler.h directives.h insnsi.h nasm.h \
  nasmlib.h output/outform.h pptok.h preproc.h regs.h
