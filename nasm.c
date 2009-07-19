@@ -160,7 +160,7 @@ static const struct warning {
  * not preprocess their source file.
  */
 
-static void no_pp_reset(char *, int, efunc, evalfunc, ListGen *, StrList **);
+static void no_pp_reset(char *, int, ListGen *, StrList **);
 static char *no_pp_getline(void);
 static void no_pp_cleanup(int);
 static Preproc no_pp = {
@@ -367,8 +367,7 @@ int main(int argc, char **argv)
 	    if (depend_missing_ok)
 		pp_include_path(NULL);	/* "assume generated" */
 
-            preproc->reset(inname, 0, nasm_error, evaluate, &nasmlist,
-			   depend_ptr);
+            preproc->reset(inname, 0, &nasmlist, depend_ptr);
             if (outname[0] == '\0')
                 ofmt->filename(inname, outname);
             ofile = NULL;
@@ -397,8 +396,7 @@ int main(int argc, char **argv)
             location.known = false;
 
 	    /* pass = 1; */
-            preproc->reset(inname, 3, nasm_error, evaluate, &nasmlist,
-			   depend_ptr);
+            preproc->reset(inname, 3, &nasmlist, depend_ptr);
 
             while ((line = preproc->getline())) {
                 /*
@@ -1196,7 +1194,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             raa_free(offsets);
             offsets = raa_init();
         }
-        preproc->reset(fname, pass1, nasm_error, evaluate, &nasmlist,
+        preproc->reset(fname, pass1, &nasmlist,
 		       pass1 == 2 ? depend_ptr : NULL);
         memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
@@ -1969,24 +1967,21 @@ static void usage(void)
 #define BUF_DELTA 512
 
 static FILE *no_pp_fp;
-static efunc no_pp_err;
 static ListGen *no_pp_list;
 static int32_t no_pp_lineinc;
 
-static void no_pp_reset(char *file, int pass, efunc error, evalfunc eval,
-                        ListGen * listgen, StrList **deplist)
+static void no_pp_reset(char *file, int pass, ListGen * listgen,
+			StrList **deplist)
 {
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
     no_pp_lineinc = 1;
-    no_pp_err = error;
     no_pp_fp = fopen(file, "r");
     if (!no_pp_fp)
-        no_pp_err(ERR_FATAL | ERR_NOFILE,
-                  "unable to open input file `%s'", file);
+        nasm_error(ERR_FATAL | ERR_NOFILE,
+		   "unable to open input file `%s'", file);
     no_pp_list = listgen;
     (void)pass;                 /* placate compilers */
-    (void)eval;                 /* placate compilers */
 
     if (deplist) {
 	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);

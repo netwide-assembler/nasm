@@ -77,6 +77,7 @@
 #include "hashtbl.h"
 #include "quote.h"
 #include "stdscan.h"
+#include "eval.h"
 #include "tokens.h"
 #include "tables.h"
 
@@ -379,9 +380,6 @@ static int LocalOffset = 0;
 static Context *cstk;
 static Include *istk;
 static IncPath *ipath = NULL;
-
-static efunc _error;            /* Pointer to client-provided error reporting function */
-static evalfunc evaluate;
 
 static int pass;                /* HACK: pass 0 = generate dependencies only */
 static StrList **dephead, **deptail; /* Dependency list */
@@ -4464,10 +4462,10 @@ static void verror(int severity, const char *fmt, va_list arg)
     vsnprintf(buff, sizeof(buff), fmt, arg);
 
     if (istk && istk->mstk && istk->mstk->name)
-        _error(severity, "(%s:%d) %s", istk->mstk->name,
+        nasm_error(severity, "(%s:%d) %s", istk->mstk->name,
                istk->mstk->lineno, buff);
     else
-        _error(severity, "%s", buff);
+        nasm_error(severity, "%s", buff);
 }
 
 /*
@@ -4507,12 +4505,10 @@ static void error_precond(int severity, const char *fmt, ...)
 }
 
 static void
-pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
-         ListGen * listgen, StrList **deplist)
+pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
 {
     Token *t;
 
-    _error = errfunc;
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
     istk->next = NULL;
@@ -4540,7 +4536,6 @@ pp_reset(char *file, int apass, efunc errfunc, evalfunc eval,
     any_extrastdmac = extrastdmac && *extrastdmac;
     do_predef = true;
     list = listgen;
-    evaluate = eval;
 
     /*
      * 0 for dependencies, 1 for preparatory passes, 2 for final pass.

@@ -355,7 +355,7 @@ typedef struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, efunc, evalfunc, ListGen *, StrList **);
+    void (*reset) (char *, int, ListGen *, StrList **);
 
     /*
      * Called to fetch a line of preprocessed source. The line
