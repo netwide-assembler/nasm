@@ -107,21 +107,14 @@ static uint32_t strslen;
 
 static int as86_reloc_size;
 
-static FILE *as86fp;
-static efunc error;
-
 static void as86_write(void);
 static void as86_write_section(struct Section *, int);
 static int as86_add_string(char *name);
 static void as86_sect_write(struct Section *, const uint8_t *,
                             uint32_t);
 
-static void as86_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void as86_init(void)
 {
-    as86fp = fp;
-    error = errfunc;
-    (void)ldef;                 /* placate optimisers */
-    (void)eval;
     stext.data = saa_init(1L);
     stext.datalen = 0L;
     stext.head = stext.last = NULL;
@@ -152,7 +145,6 @@ static void as86_cleanup(int debuginfo)
     (void)debuginfo;
 
     as86_write();
-    fclose(as86fp);
     saa_free(stext.data);
     while (stext.head) {
         p = stext.head;
@@ -212,13 +204,13 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
     struct Symbol *sym;
 
     if (special)
-        error(ERR_NONFATAL, "as86 format does not support any"
+        nasm_error(ERR_NONFATAL, "as86 format does not support any"
               " special symbol types");
 
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (strcmp(name, "..start")) {
-	    error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	    nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
 	    return;
 	} else {
 	    is_start = true;
@@ -306,7 +298,7 @@ static void as86_out(int32_t segto, const void *data,
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
-        error(ERR_NONFATAL, "WRT not supported by as86 output format");
+        nasm_error(ERR_NONFATAL, "WRT not supported by as86 output format");
     }
 
     /*
@@ -314,7 +306,7 @@ static void as86_out(int32_t segto, const void *data,
      */
     if (segto == NO_SEG) {
         if (type != OUT_RESERVE)
-            error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
+            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
                   " space");
         return;
     }
@@ -326,13 +318,13 @@ static void as86_out(int32_t segto, const void *data,
     else if (segto == bssindex)
         s = NULL;
     else {
-        error(ERR_WARNING, "attempt to assemble code in"
+        nasm_error(ERR_WARNING, "attempt to assemble code in"
               " segment %d: defaulting to `.text'", segto);
         s = &stext;
     }
 
     if (!s && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialize memory in the"
+        nasm_error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
 	bsslen += realsize(type, size);
         return;
@@ -340,7 +332,7 @@ static void as86_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            error(ERR_WARNING, "uninitialized space declared in"
+            nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   (segto == stext.index ? "code" : "data"));
             as86_sect_write(s, NULL, size);
@@ -349,13 +341,13 @@ static void as86_out(int32_t segto, const void *data,
             bsslen += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         as86_sect_write(s, data, size);
         as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
         if (segment != NO_SEG) {
             if (segment % 2) {
-                error(ERR_NONFATAL, "as86 format does not support"
+                nasm_error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
                 offset = *(int64_t *)data;
@@ -369,10 +361,10 @@ static void as86_out(int32_t segto, const void *data,
         }
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
-            error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
-                error(ERR_NONFATAL, "as86 format does not support"
+                nasm_error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
                 offset = *(int64_t *)data;
@@ -382,10 +374,10 @@ static void as86_out(int32_t segto, const void *data,
         }
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
-            error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
-                error(ERR_NONFATAL, "as86 format does not support"
+                nasm_error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
                 offset = *(int64_t *)data;
@@ -440,23 +432,23 @@ static void as86_write(void)
     /*
      * Emit the as86 header.
      */
-    fwriteint32_t(0x000186A3L, as86fp);
-    fputc(0x2A, as86fp);
-    fwriteint32_t(27 + symlen + seglen + strslen, as86fp); /* header length */
-    fwriteint32_t(stext.len + sdata.len + bsslen, as86fp);
-    fwriteint16_t(strslen, as86fp);
-    fwriteint16_t(0, as86fp);     /* class = revision = 0 */
-    fwriteint32_t(0x55555555L, as86fp);    /* segment max sizes: always this */
-    fwriteint32_t(segsize, as86fp);        /* segment size descriptors */
+    fwriteint32_t(0x000186A3L, ofile);
+    fputc(0x2A, ofile);
+    fwriteint32_t(27 + symlen + seglen + strslen, ofile); /* header length */
+    fwriteint32_t(stext.len + sdata.len + bsslen, ofile);
+    fwriteint16_t(strslen, ofile);
+    fwriteint16_t(0, ofile);     /* class = revision = 0 */
+    fwriteint32_t(0x55555555L, ofile);    /* segment max sizes: always this */
+    fwriteint32_t(segsize, ofile);        /* segment size descriptors */
     if (segsize & 0x01000000L)
-        fwriteint32_t(stext.len, as86fp);
+        fwriteint32_t(stext.len, ofile);
     else
-        fwriteint16_t(stext.len, as86fp);
+        fwriteint16_t(stext.len, ofile);
     if (segsize & 0x40000000L)
-        fwriteint32_t(sdata.len + bsslen, as86fp);
+        fwriteint32_t(sdata.len + bsslen, ofile);
     else
-        fwriteint16_t(sdata.len + bsslen, as86fp);
-    fwriteint16_t(nsyms, as86fp);
+        fwriteint16_t(sdata.len + bsslen, ofile);
+    fwriteint16_t(nsyms, ofile);
 
     /*
      * Write the symbol table.
@@ -464,19 +456,19 @@ static void as86_write(void)
     saa_rewind(syms);
     for (i = 0; i < nsyms; i++) {
         struct Symbol *sym = saa_rstruct(syms);
-        fwriteint16_t(sym->strpos, as86fp);
-        fwriteint16_t(sym->flags, as86fp);
+        fwriteint16_t(sym->strpos, ofile);
+        fwriteint16_t(sym->flags, ofile);
         switch (sym->flags & (3 << 14)) {
         case 0 << 14:
             break;
         case 1 << 14:
-            fputc(sym->value, as86fp);
+            fputc(sym->value, ofile);
             break;
         case 2 << 14:
-            fwriteint16_t(sym->value, as86fp);
+            fwriteint16_t(sym->value, ofile);
             break;
         case 3 << 14:
-            fwriteint32_t(sym->value, as86fp);
+            fwriteint32_t(sym->value, ofile);
             break;
         }
     }
@@ -484,7 +476,7 @@ static void as86_write(void)
     /*
      * Write out the string table.
      */
-    saa_fpwrite(strs, as86fp);
+    saa_fpwrite(strs, ofile);
 
     /*
      * Write the program text.
@@ -496,17 +488,17 @@ static void as86_write(void)
      * Append the BSS section to the .data section
      */
     if (bsslen > 65535L) {
-        fputc(0x13, as86fp);
-        fwriteint32_t(bsslen, as86fp);
+        fputc(0x13, ofile);
+        fwriteint32_t(bsslen, ofile);
     } else if (bsslen > 255) {
-        fputc(0x12, as86fp);
-        fwriteint16_t(bsslen, as86fp);
+        fputc(0x12, ofile);
+        fwriteint16_t(bsslen, ofile);
     } else if (bsslen) {
-        fputc(0x11, as86fp);
-        fputc(bsslen, as86fp);
+        fputc(0x11, ofile);
+        fputc(bsslen, ofile);
     }
 
-    fputc(0, as86fp);           /* termination */
+    fputc(0, ofile);           /* termination */
 }
 
 static void as86_set_rsize(int size)
@@ -514,16 +506,17 @@ static void as86_set_rsize(int size)
     if (as86_reloc_size != size) {
         switch (as86_reloc_size = size) {
         case 1:
-            fputc(0x01, as86fp);
+            fputc(0x01, ofile);
             break;
         case 2:
-            fputc(0x02, as86fp);
+            fputc(0x02, ofile);
             break;
         case 4:
-            fputc(0x03, as86fp);
+            fputc(0x03, ofile);
             break;
         default:
-            error(ERR_PANIC, "bizarre relocation size %d", size);
+            nasm_error(ERR_PANIC, "bizarre relocation size %d", size);
+	    break;
         }
     }
 }
@@ -534,7 +527,7 @@ static void as86_write_section(struct Section *sect, int index)
     uint32_t s;
     int32_t length;
 
-    fputc(0x20 + index, as86fp);        /* select the right section */
+    fputc(0x20 + index, ofile);        /* select the right section */
 
     saa_rewind(sect->data);
 
@@ -549,9 +542,9 @@ static void as86_write_section(struct Section *sect, int index)
             do {
                 char buf[64];
                 int32_t tmplen = (length > 64 ? 64 : length);
-                fputc(0x40 | (tmplen & 0x3F), as86fp);
+                fputc(0x40 | (tmplen & 0x3F), ofile);
                 saa_rnbytes(sect->data, buf, tmplen);
-                fwrite(buf, 1, tmplen, as86fp);
+                fwrite(buf, 1, tmplen, ofile);
                 length -= tmplen;
             } while (length > 0);
             break;
@@ -562,11 +555,11 @@ static void as86_write_section(struct Section *sect, int index)
             if (p->number == SECT_BSS)
                 p->number = SECT_DATA, p->offset += sdata.len;
             as86_set_rsize(p->bytes);
-            fputc(0x80 | (p->relative ? 0x20 : 0) | p->number, as86fp);
+            fputc(0x80 | (p->relative ? 0x20 : 0) | p->number, ofile);
             if (as86_reloc_size == 2)
-                fwriteint16_t(p->offset, as86fp);
+                fwriteint16_t(p->offset, ofile);
             else
-                fwriteint32_t(p->offset, as86fp);
+                fwriteint32_t(p->offset, ofile);
             break;
         case 2:
             /*
@@ -584,22 +577,22 @@ static void as86_write_section(struct Section *sect, int index)
                 s = 0;
             fputc(0xC0 |
                   (p->relative ? 0x20 : 0) |
-                  (p->number > 255 ? 0x04 : 0) | s, as86fp);
+                  (p->number > 255 ? 0x04 : 0) | s, ofile);
             if (p->number > 255)
-                fwriteint16_t(p->number, as86fp);
+                fwriteint16_t(p->number, ofile);
             else
-                fputc(p->number, as86fp);
+                fputc(p->number, ofile);
             switch ((int)s) {
             case 0:
                 break;
             case 1:
-                fputc(p->offset, as86fp);
+                fputc(p->offset, ofile);
                 break;
             case 2:
-                fwriteint16_t(p->offset, as86fp);
+                fwriteint16_t(p->offset, ofile);
                 break;
             case 3:
-                fwriteint32_t(p->offset, as86fp);
+                fwriteint32_t(p->offset, ofile);
                 break;
             }
             break;
@@ -618,15 +611,7 @@ static int32_t as86_segbase(int32_t segment)
     return segment;
 }
 
-static int as86_directive(char *directive, char *value, int pass)
-{
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return 0;
-}
-
-static void as86_filename(char *inname, char *outname, efunc error)
+static void as86_filename(char *inname, char *outname)
 {
     char *p;
 
@@ -636,26 +621,11 @@ static void as86_filename(char *inname, char *outname, efunc error)
     } else
         strcpy(as86_module, inname);
 
-    standard_extension(inname, outname, ".o", error);
+    standard_extension(inname, outname, ".o");
 }
 
 extern macros_t as86_stdmac[];
 
-static int as86_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-void as86_linenumber(char *name, int32_t segment, int32_t offset, int is_main,
-                     int lineno)
-{
-    (void)name;
-    (void)segment;
-    (void)offset;
-    (void)is_main;
-    (void)lineno;
-}
 struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
@@ -664,12 +634,12 @@ struct ofmt of_as86 = {
     &null_debug_form,
     as86_stdmac,
     as86_init,
-    as86_set_info,
+    null_setinfo,
     as86_out,
     as86_deflabel,
     as86_section_names,
     as86_segbase,
-    as86_directive,
+    null_directive,
     as86_filename,
     as86_cleanup
 };

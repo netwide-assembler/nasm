@@ -83,7 +83,9 @@ extern unsigned char nasm_tolower_tab[256];
  * An error reporting function should look like this.
  */
 typedef void (*efunc) (int severity, const char *fmt, ...);
-extern efunc nasm_malloc_error;
+typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
+void nasm_error(int severity, const char *fmt, ...);
+void nasm_set_verror(vefunc);
 
 /*
  * These are the error severity codes which get passed as the first
@@ -133,7 +135,7 @@ extern efunc nasm_malloc_error;
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
-void nasm_set_malloc_error(efunc);
+void nasm_init_malloc_error(void);
 #ifndef LOGALLOC
 void *nasm_malloc(size_t);
 void *nasm_zalloc(size_t);
@@ -220,10 +222,7 @@ int32_t seg_alloc(void);
  * many output formats will be able to make use of this: a standard
  * function to add an extension to the name of the input file
  */
-#ifdef NASM_NASM_H
-void standard_extension(char *inname, char *outname, char *extension,
-                        efunc error);
-#endif
+void standard_extension(char *inname, char *outname, char *extension);
 
 /*
  * Utility macros...

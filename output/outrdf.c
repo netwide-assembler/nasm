@@ -509,7 +509,6 @@ static void rdf_cleanup(int debuginfo)
     freemembuf(header);
     freemembuf(seg[0]);
     freemembuf(seg[1]);
-    fclose(ofile);
 }
 
 static int32_t rdf_segbase(int32_t segment)

@@ -253,11 +253,6 @@
 #define OF_DEFAULT of_bin
 #endif
 
-#ifdef BUILD_DRIVERS_ARRAY      /* only if included from outform.c */
-
-/* pull in the externs for the different formats, then make the *drivers
- * array based on the above defines */
-
 extern struct ofmt of_bin;
 extern struct ofmt of_ith;
 extern struct ofmt of_srec;
@@ -278,7 +273,12 @@ extern struct ofmt of_macho;
 extern struct ofmt of_macho64;
 extern struct ofmt of_dbg;
 
-struct ofmt *drivers[] = {
+#ifdef BUILD_DRIVERS_ARRAY      /* only if included from outform.c */
+
+/* pull in the externs for the different formats, then make the *drivers
+ * array based on the above defines */
+
+static struct ofmt *drivers[] = {
 #ifdef OF_BIN
     &of_bin,
     &of_ith,

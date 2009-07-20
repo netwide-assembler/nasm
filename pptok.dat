@@ -51,6 +51,7 @@
 %clear
 %define
 %defstr
+%deftok
 %depend
 %elif*
 %else
@@ -59,13 +60,16 @@
 %endmacro
 %endrep
 %error
+%exitmacro
 %exitrep
 %fatal
 %iassign
 %idefine
 %idefstr
+%ideftok
 %if*
 %imacro
+%irmacro
 %include
 %ixdefine
 %line
@@ -76,6 +80,7 @@
 %push
 %rep
 %repl
+%rmacro
 %rotate
 %stacksize
 %strcat

@@ -48,7 +48,7 @@
 #include "insns.h"
 
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
-efunc nasm_malloc_error;	/* Exported for the benefit of vsnprintf.c */
+static vefunc nasm_verror;	/* Global error handling function */
 
 #ifdef LOGALLOC
 static FILE *logfp;
@@ -72,9 +72,22 @@ void tolower_init(void)
 	nasm_tolower_tab[i] = tolower(i);
 }
 
-void nasm_set_malloc_error(efunc error)
+void nasm_set_verror(vefunc ve)
 {
-    nasm_malloc_error = error;
+    nasm_verror = ve;
+}
+
+void nasm_error(int severity, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    nasm_verror(severity, fmt, ap);
+    va_end(ap);
+}
+
+void nasm_init_malloc_error(void)
+{
 #ifdef LOGALLOC
     logfp = fopen("malloc.log", "w");
     setvbuf(logfp, NULL, _IOLBF, BUFSIZ);
@@ -90,7 +103,7 @@ void *nasm_malloc(size_t size)
 {
     void *p = malloc(size);
     if (!p)
-        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
@@ -107,7 +120,7 @@ void *nasm_zalloc(size_t size)
 {
     void *p = calloc(size, 1);
     if (!p)
-        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d calloc(%ld, 1) returns %p\n",
@@ -124,7 +137,7 @@ void *nasm_realloc(void *q, size_t size)
 {
     void *p = q ? realloc(q, size) : malloc(size);
     if (!p)
-        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
 #ifdef LOGALLOC
     else if (q)
         fprintf(logfp, "%s %d realloc(%p,%ld) returns %p\n",
@@ -161,7 +174,7 @@ char *nasm_strdup(const char *s)
 
     p = malloc(size);
     if (!p)
-        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strdup(%ld) returns %p\n",
@@ -182,7 +195,7 @@ char *nasm_strndup(const char *s, size_t len)
 
     p = malloc(size);
     if (!p)
-        nasm_malloc_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
 #ifdef LOGALLOC
     else
         fprintf(logfp, "%s %d strndup(%ld) returns %p\n",
@@ -195,8 +208,7 @@ char *nasm_strndup(const char *s, size_t len)
 
 no_return nasm_assert_failed(const char *file, int line, const char *msg)
 {
-    nasm_malloc_error(ERR_FATAL, "assertion %s failed at %s:%d",
-		      msg, file, line);
+    nasm_error(ERR_FATAL, "assertion %s failed at %s:%d", msg, file, line);
     exit(1);
 }
 
@@ -396,9 +408,9 @@ int64_t readnum(char *str, bool *error)
     }
 
     if (warn)
-        nasm_malloc_error(ERR_WARNING | ERR_PASS1 | ERR_WARN_NOV,
-                          "numeric constant %s does not fit in 64 bits",
-                          str);
+        nasm_error(ERR_WARNING | ERR_PASS1 | ERR_WARN_NOV,
+		   "numeric constant %s does not fit in 64 bits",
+		   str);
 
     return result * sign;
 }
@@ -513,8 +525,7 @@ size_t fwritezero(size_t bytes, FILE *fp)
     return count;
 }
 
-void standard_extension(char *inname, char *outname, char *extension,
-                        efunc error)
+void standard_extension(char *inname, char *outname, char *extension)
 {
     char *p, *q;
 
@@ -531,13 +542,13 @@ void standard_extension(char *inname, char *outname, char *extension,
             p++;                /* go back to end if none found */
     if (!strcmp(p, extension)) {        /* is the extension already there? */
         if (*extension)
-            error(ERR_WARNING | ERR_NOFILE,
-                  "file name already ends in `%s': "
-                  "output will be in `nasm.out'", extension);
+            nasm_error(ERR_WARNING | ERR_NOFILE,
+		       "file name already ends in `%s': "
+		       "output will be in `nasm.out'", extension);
         else
-            error(ERR_WARNING | ERR_NOFILE,
-                  "file name already has no extension: "
-                  "output will be in `nasm.out'");
+            nasm_error(ERR_WARNING | ERR_NOFILE,
+		       "file name already has no extension: "
+		       "output will be in `nasm.out'");
         strcpy(outname, "nasm.out");
     } else
         strcpy(p, extension);

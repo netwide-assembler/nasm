@@ -48,6 +48,7 @@
 #include "insns.h"
 #include "nasmlib.h"
 #include "stdscan.h"
+#include "eval.h"
 #include "parser.h"
 #include "float.h"
 #include "tables.h"
@@ -60,13 +61,10 @@ static int is_comma_next(void);
 
 static int i;
 static struct tokenval tokval;
-static efunc error;
-static struct ofmt *outfmt;     /* Structure of addresses of output routines */
 static struct location *location;         /* Pointer to current line's segment,offset */
 
-void parser_global_info(struct ofmt *output, struct location * locp)
+void parser_global_info(struct location * locp)
 {
-    outfmt = output;
     location = locp;
 }
 
@@ -100,7 +98,7 @@ static int prefix_slot(enum prefixes prefix)
     case P_ASP:
 	return PPS_ASIZE;
     default:
-	error(ERR_PANIC, "Invalid value %d passed to prefix_slot()", prefix);
+	nasm_error(ERR_PANIC, "Invalid value %d passed to prefix_slot()", prefix);
 	return -1;
     }
 }
@@ -141,7 +139,7 @@ static void process_size_override(insn * result, int operand)
 	    result->oprs[operand].type |= BITS128;
 	    break;
 	default:
-	    error(ERR_NONFATAL,
+	    nasm_error(ERR_NONFATAL,
 		  "invalid operand size specification");
 	    break;
 	}
@@ -166,7 +164,7 @@ static void process_size_override(insn * result, int operand)
 	case P_A64:
 	    if (result->prefixes[PPS_ASIZE] &&
 		result->prefixes[PPS_ASIZE] != tokval.t_integer)
-		error(ERR_NONFATAL,
+		nasm_error(ERR_NONFATAL,
 		      "conflicting address size specifications");
 	    else
 		result->prefixes[PPS_ASIZE] = tokval.t_integer;
@@ -185,15 +183,14 @@ static void process_size_override(insn * result, int operand)
 	    result->oprs[operand].eaflags |= EAF_WORDOFFS;
 	    break;
 	default:
-	    error(ERR_NONFATAL, "invalid size specification in"
+	    nasm_error(ERR_NONFATAL, "invalid size specification in"
 		  " effective address");
 	    break;
 	}
     }
 }
 
-insn *parse_line(int pass, char *buffer, insn * result,
-                 efunc errfunc, evalfunc evaluate, ldfunc ldef)
+insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
 {
     int operand;
     int critical;
@@ -206,7 +203,6 @@ insn *parse_line(int pass, char *buffer, insn * result,
 restart_parse:
     first = true;
     result->forw_ref = false;
-    error = errfunc;
 
     stdscan_reset();
     stdscan_bufptr = buffer;
@@ -222,7 +218,7 @@ restart_parse:
     }
     if (i != TOKEN_ID && i != TOKEN_INSN && i != TOKEN_PREFIX &&
         (i != TOKEN_REG || (REG_SREG & ~nasm_reg_flags[tokval.t_integer]))) {
-        error(ERR_NONFATAL, "label or instruction expected"
+        nasm_error(ERR_NONFATAL, "label or instruction expected"
               " at start of line");
         result->opcode = -1;
         return result;
@@ -236,7 +232,7 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
-            error(ERR_WARNING | ERR_WARN_OL | ERR_PASS1,
+            nasm_error(ERR_WARNING | ERR_WARN_OL | ERR_PASS1,
                   "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
@@ -248,7 +244,7 @@ restart_parse:
              * am still not certain.
              */
             ldef(result->label, in_abs_seg ? abs_seg : location->segment,
-                 location->offset, NULL, true, false, outfmt, errfunc);
+                 location->offset, NULL, true, false);
         }
     }
 
@@ -274,20 +270,20 @@ restart_parse:
 
             i = stdscan(NULL, &tokval);
             value =
-                evaluate(stdscan, NULL, &tokval, NULL, pass0, error, NULL);
+                evaluate(stdscan, NULL, &tokval, NULL, pass0, nasm_error, NULL);
             i = tokval.t_type;
             if (!value) {       /* but, error in evaluator */
                 result->opcode = -1;    /* unrecoverable parse error: */
                 return result;  /* ignore this instruction */
             }
             if (!is_simple(value)) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "non-constant argument supplied to TIMES");
                 result->times = 1L;
             } else {
                 result->times = value->value;
                 if (value->value < 0 && pass0 == 2) {
-                    error(ERR_NONFATAL, "TIMES value %d is negative",
+                    nasm_error(ERR_NONFATAL, "TIMES value %d is negative",
                           value->value);
                     result->times = 0;
                 }
@@ -296,10 +292,10 @@ restart_parse:
 	    int slot = prefix_slot(tokval.t_integer);
 	    if (result->prefixes[slot]) {
                if (result->prefixes[slot] == tokval.t_integer)
-		    error(ERR_WARNING,
+		    nasm_error(ERR_WARNING,
 		      "instruction has redundant prefixes");
                else
-		    error(ERR_NONFATAL,
+		    nasm_error(ERR_NONFATAL,
 		      "instruction has conflicting prefixes");
 	    }
 	    result->prefixes[slot] = tokval.t_integer;
@@ -328,7 +324,7 @@ restart_parse:
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             return result;
         } else {
-            error(ERR_NONFATAL, "parser: instruction expected");
+            nasm_error(ERR_NONFATAL, "parser: instruction expected");
             result->opcode = -1;
             return result;
         }
@@ -397,7 +393,7 @@ restart_parse:
 		    i = stdscan(NULL, &tokval);
 		}
 		if (i != TOKEN_STR) {
-		    error(ERR_NONFATAL,
+		    nasm_error(ERR_NONFATAL,
 			  "%s must be followed by a string constant",
 			  funcname);
 			eop->type = EOT_NOTHING;
@@ -407,14 +403,14 @@ restart_parse:
 			string_transform(tokval.t_charptr, tokval.t_inttwo,
 					 &eop->stringval, func);
 		    if (eop->stringlen == (size_t)-1) {
-			error(ERR_NONFATAL, "invalid string for transform");
+			nasm_error(ERR_NONFATAL, "invalid string for transform");
 			eop->type = EOT_NOTHING;
 		    }
 		}
 		if (parens && i && i != ')') {
 		    i = stdscan(NULL, &tokval);
 		    if (i != ')') {
-			error(ERR_NONFATAL, "unterminated %s function",
+			nasm_error(ERR_NONFATAL, "unterminated %s function",
 			      funcname);
 		    }
 		}
@@ -456,12 +452,12 @@ restart_parse:
 		    eop->stringlen = 16;
 		    break;
 		case I_DY:
-		    error(ERR_NONFATAL, "floating-point constant"
+		    nasm_error(ERR_NONFATAL, "floating-point constant"
 			  " encountered in DY instruction");
 		    eop->stringlen = 0;
 		    break;
 		default:
-		    error(ERR_NONFATAL, "floating-point constant"
+		    nasm_error(ERR_NONFATAL, "floating-point constant"
 			  " encountered in unknown instruction");
 		    /*
 		     * fix suggested by Pedro Gimeno... original line
@@ -478,7 +474,7 @@ restart_parse:
 		if (!eop->stringlen ||
 		    !float_const(tokval.t_charptr, sign,
 				 (uint8_t *)eop->stringval,
-				 eop->stringlen, error))
+				 eop->stringlen, nasm_error))
 		    eop->type = EOT_NOTHING;
 		i = stdscan(NULL, &tokval); /* eat the comma */
 	    } else {
@@ -487,7 +483,7 @@ restart_parse:
 
 	    is_expression:
                 value = evaluate(stdscan, NULL, &tokval, NULL,
-                                 critical, error, NULL);
+                                 critical, nasm_error, NULL);
                 i = tokval.t_type;
                 if (!value) {   /* error in evaluator */
                     result->opcode = -1;        /* unrecoverable parse error: */
@@ -503,7 +499,7 @@ restart_parse:
                     eop->segment = reloc_seg(value);
                     eop->wrt = reloc_wrt(value);
                 } else {
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "operand %d: expression is not simple"
                           " or relocatable", oper_num);
                 }
@@ -518,7 +514,7 @@ restart_parse:
             if (i == 0)         /* also could be EOL */
                 break;
             if (i != ',') {
-                error(ERR_NONFATAL, "comma expected after operand %d",
+                nasm_error(ERR_NONFATAL, "comma expected after operand %d",
                       oper_num);
                 result->opcode = -1;    /* unrecoverable parse error: */
                 return result;  /* ignore this instruction */
@@ -532,18 +528,18 @@ restart_parse:
              * operands.
              */
             if (!result->eops || result->eops->type != EOT_DB_STRING)
-                error(ERR_NONFATAL, "`incbin' expects a file name");
+                nasm_error(ERR_NONFATAL, "`incbin' expects a file name");
             else if (result->eops->next &&
                      result->eops->next->type != EOT_DB_NUMBER)
-                error(ERR_NONFATAL, "`incbin': second parameter is",
+                nasm_error(ERR_NONFATAL, "`incbin': second parameter is",
                       " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->type != EOT_DB_NUMBER)
-                error(ERR_NONFATAL, "`incbin': third parameter is",
+                nasm_error(ERR_NONFATAL, "`incbin': third parameter is",
                       " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->next)
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`incbin': more than three parameters");
             else
                 return result;
@@ -554,7 +550,7 @@ restart_parse:
             result->opcode = -1;
             return result;
         } else /* DB ... */ if (oper_num == 0)
-            error(ERR_WARNING | ERR_PASS1,
+            nasm_error(ERR_WARNING | ERR_PASS1,
                   "no operand for data declaration");
         else
             result->operands = oper_num;
@@ -638,7 +634,7 @@ restart_parse:
                 result->oprs[operand].type |= SHORT;
                 break;
             default:
-                error(ERR_NONFATAL, "invalid operand size specification");
+                nasm_error(ERR_NONFATAL, "invalid operand size specification");
             }
             i = stdscan(NULL, &tokval);
         }
@@ -658,17 +654,17 @@ restart_parse:
 
         if ((result->oprs[operand].type & FAR) && !mref &&
             result->opcode != I_JMP && result->opcode != I_CALL) {
-            error(ERR_NONFATAL, "invalid use of FAR operand specifier");
+            nasm_error(ERR_NONFATAL, "invalid use of FAR operand specifier");
         }
 
         value = evaluate(stdscan, NULL, &tokval,
                          &result->oprs[operand].opflags,
-                         critical, error, &hints);
+                         critical, nasm_error, &hints);
         i = tokval.t_type;
         if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
             result->forw_ref = true;
         }
-        if (!value) {           /* error in evaluator */
+        if (!value) {           /* nasm_error in evaluator */
             result->opcode = -1;        /* unrecoverable parse error: */
             return result;      /* ignore this instruction */
         }
@@ -678,9 +674,9 @@ restart_parse:
              */
             if (value[1].type != 0 || value->value != 1 ||
                 REG_SREG & ~nasm_reg_flags[value->type])
-                error(ERR_NONFATAL, "invalid segment override");
+                nasm_error(ERR_NONFATAL, "invalid segment override");
             else if (result->prefixes[PPS_SEG])
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "instruction has conflicting segment overrides");
             else {
 		result->prefixes[PPS_SEG] = value->type;
@@ -695,7 +691,7 @@ restart_parse:
             }
             value = evaluate(stdscan, NULL, &tokval,
                              &result->oprs[operand].opflags,
-                             critical, error, &hints);
+                             critical, nasm_error, &hints);
             i = tokval.t_type;
             if (result->oprs[operand].opflags & OPFLAG_FORWARD) {
                 result->forw_ref = true;
@@ -710,18 +706,18 @@ restart_parse:
         recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
-                error(ERR_NONFATAL, "parser: expecting ]");
+                nasm_error(ERR_NONFATAL, "parser: expecting ]");
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
                 if (i != 0 && i != ',') {
-                    error(ERR_NONFATAL, "comma or end of line expected");
+                    nasm_error(ERR_NONFATAL, "comma or end of line expected");
                     recover = true;
                 }
             }
         } else {                /* immediate operand */
             if (i != 0 && i != ',' && i != ':') {
-                error(ERR_NONFATAL, "comma, colon or end of line expected");
+                nasm_error(ERR_NONFATAL, "comma, colon or end of line expected");
                 recover = true;
             } else if (i == ':') {
                 result->oprs[operand].type |= COLON;
@@ -757,7 +753,7 @@ restart_parse:
                     i = e->type, s = e->value;  /* second has to be indexreg */
 
                 else if (e->value != 1) {       /* If both want to be index */
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "beroset-p-592-invalid effective address");
                     result->opcode = -1;
                     return result;
@@ -767,7 +763,7 @@ restart_parse:
             }
             if (e->type != 0) { /* is there an offset? */
                 if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "beroset-p-603-invalid effective address");
                     result->opcode = -1;
                     return result;
@@ -793,7 +789,7 @@ restart_parse:
                          * Look for a segment base type.
                          */
                         if (e->type && e->type < EXPR_SEGBASE) {
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "beroset-p-630-invalid effective address");
                             result->opcode = -1;
                             return result;
@@ -801,7 +797,7 @@ restart_parse:
                         while (e->type && e->value == 0)
                             e++;
                         if (e->type && e->value != 1) {
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "beroset-p-637-invalid effective address");
                             result->opcode = -1;
                             return result;
@@ -815,7 +811,7 @@ restart_parse:
                         while (e->type && e->value == 0)
                             e++;
                         if (e->type) {
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "beroset-p-650-invalid effective address");
                             result->opcode = -1;
                             return result;
@@ -829,7 +825,7 @@ restart_parse:
             }
 
             if (e->type != 0) { /* there'd better be nothing left! */
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "beroset-p-663-invalid effective address");
                 result->opcode = -1;
                 return result;
@@ -890,7 +886,7 @@ restart_parse:
 		unsigned int rs;
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
-                    error(ERR_NONFATAL, "invalid operand type");
+                    nasm_error(ERR_NONFATAL, "invalid operand type");
                     result->opcode = -1;
                     return result;
                 }
@@ -900,7 +896,7 @@ restart_parse:
                  */
                 for (i = 1; value[i].type; i++)
                     if (value[i].value) {
-                        error(ERR_NONFATAL, "invalid operand type");
+                        nasm_error(ERR_NONFATAL, "invalid operand type");
                         result->opcode = -1;
                         return result;
                     }
@@ -921,7 +917,7 @@ restart_parse:
                 result->oprs[operand].basereg = value->type;
 
                 if (rs && (result->oprs[operand].type & SIZE_MASK) != rs)
-                    error(ERR_WARNING | ERR_PASS1,
+                    nasm_error(ERR_WARNING | ERR_PASS1,
                           "register size specification ignored");
             }
         }

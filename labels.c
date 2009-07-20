@@ -206,8 +206,7 @@ bool is_extern(char *label)
 }
 
 void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
-                    bool is_norm, bool isextrn, struct ofmt *ofmt,
-                    efunc error)
+                    bool is_norm, bool isextrn)
 {
     union label *lptr;
     int exi;
@@ -220,19 +219,18 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
     (void)special;              /* Don't warn that this parameter is unused */
     (void)is_norm;              /* Don't warn that this parameter is unused */
     (void)isextrn;              /* Don't warn that this parameter is unused */
-    (void)ofmt;                 /* Don't warn that this parameter is unused */
 
 #ifdef DEBUG
 #if DEBUG<3
     if (!strncmp(label, "debugdump", 9))
 #endif
-        error(ERR_DEBUG, "redefine_label (%s, %ld, %08lx, %s, %d, %d)",
+        nasm_error(ERR_DEBUG, "redefine_label (%s, %ld, %08lx, %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
 
     lptr = find_label(label, 1);
     if (!lptr)
-        error(ERR_PANIC, "can't find label `%s' on pass two", label);
+        nasm_error(ERR_PANIC, "can't find label `%s' on pass two", label);
 
     if (!islocal(label)) {
         if (!islocalchar(*label) && lptr->defn.is_norm)
@@ -281,7 +279,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
 }
 
 void define_label(char *label, int32_t segment, int64_t offset, char *special,
-                  bool is_norm, bool isextrn, struct ofmt *ofmt, efunc error)
+                  bool is_norm, bool isextrn)
 {
     union label *lptr;
     int exi;
@@ -290,12 +288,12 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
 #if DEBUG<3
     if (!strncmp(label, "debugdump", 9))
 #endif
-        error(ERR_DEBUG, "define_label (%s, %ld, %08lx, %s, %d, %d)",
+        nasm_error(ERR_DEBUG, "define_label (%s, %ld, %08lx, %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
     lptr = find_label(label, 1);
     if (lptr->defn.is_global & DEFINED_BIT) {
-        error(ERR_NONFATAL, "symbol `%s' redefined", label);
+        nasm_error(ERR_NONFATAL, "symbol `%s' redefined", label);
         return;
     }
     lptr->defn.is_global |= DEFINED_BIT;
@@ -306,7 +304,7 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
 	/* not local, but not special either */
         prevlabel = lptr->defn.label;
     } else if (islocal(label) && !*prevlabel) {
-        error(ERR_NONFATAL, "attempt to define a local label before any"
+        nasm_error(ERR_NONFATAL, "attempt to define a local label before any"
               " non-local labels");
     }
 
@@ -348,15 +346,14 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
     }                           /* if (pass0 == 1) */
 }
 
-void define_common(char *label, int32_t segment, int32_t size, char *special,
-                   struct ofmt *ofmt, efunc error)
+void define_common(char *label, int32_t segment, int32_t size, char *special)
 {
     union label *lptr;
 
     lptr = find_label(label, 1);
     if ((lptr->defn.is_global & DEFINED_BIT) &&
 	(passn == 1 || !(lptr->defn.is_global & COMMON_BIT))) {
-	    error(ERR_NONFATAL, "symbol `%s' redefined", label);
+	    nasm_error(ERR_NONFATAL, "symbol `%s' redefined", label);
 	    return;
     }
     lptr->defn.is_global |= DEFINED_BIT|COMMON_BIT;
@@ -364,7 +361,7 @@ void define_common(char *label, int32_t segment, int32_t size, char *special,
     if (!islocalchar(label[0])) {
         prevlabel = lptr->defn.label;
     } else {
-        error(ERR_NONFATAL, "attempt to define a local label as a "
+        nasm_error(ERR_NONFATAL, "attempt to define a local label as a "
               "common variable");
 	return;
     }
@@ -382,12 +379,12 @@ void define_common(char *label, int32_t segment, int32_t size, char *special,
 				       special);
 }
 
-void declare_as_global(char *label, char *special, efunc error)
+void declare_as_global(char *label, char *special)
 {
     union label *lptr;
 
     if (islocal(label)) {
-        error(ERR_NONFATAL, "attempt to declare local symbol `%s' as"
+        nasm_error(ERR_NONFATAL, "attempt to declare local symbol `%s' as"
               " global", label);
         return;
     }
@@ -402,7 +399,7 @@ void declare_as_global(char *label, char *special, efunc error)
         break;
     case LOCAL_SYMBOL:
         if (!(lptr->defn.is_global & EXTERN_BIT)) {
-            error(ERR_WARNING, "symbol `%s': GLOBAL directive "
+            nasm_error(ERR_WARNING, "symbol `%s': GLOBAL directive "
                   "after symbol definition is an experimental feature", label);
             lptr->defn.is_global = GLOBAL_SYMBOL;
         }

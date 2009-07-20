@@ -19,6 +19,8 @@
 /config.log
 /config.status
 /configure
+/directives.c
+/directives.h
 /doc/*.dip
 /doc/*.hpj
 /doc/*.pdf
@@ -66,4 +68,6 @@
 /tokhash.c
 /version.h
 /version.mac
+/version.mak
+/version.nsh
 /version.sed

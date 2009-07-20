@@ -45,6 +45,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
+#include "directives.h"		/* For enum directive */
 
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
@@ -121,9 +122,10 @@ typedef bool (*lfunc) (char *label, int32_t *segment, int64_t *offset);
  * should affect the local-label system), or something odder like
  * an EQU or a segment-base symbol, which shouldn't.
  */
-typedef void (*ldfunc) (char *label, int32_t segment, int64_t offset,
-                        char *special, bool is_norm, bool isextrn,
-                        struct ofmt * ofmt, efunc error);
+typedef void (*ldfunc)(char *label, int32_t segment, int64_t offset,
+		       char *special, bool is_norm, bool isextrn);
+void define_label(char *label, int32_t segment, int64_t offset,
+		  char *special, bool is_norm, bool isextrn);
 
 /*
  * List-file generators should look like this:
@@ -353,7 +355,7 @@ typedef struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, efunc, evalfunc, ListGen *, StrList **);
+    void (*reset) (char *, int, ListGen *, StrList **);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -785,7 +787,7 @@ struct ofmt {
      * an output format, be sure to set this to whatever default you want
      *
      */
-    struct dfmt *current_dfmt;
+    const struct dfmt *current_dfmt;
 
     /*
      * This, if non-NULL, is a NULL-terminated list of `char *'s
@@ -797,13 +799,10 @@ struct ofmt {
     macros_t *stdmac;
 
     /*
-     * This procedure is called at the start of an output session.
-     * It tells the output format what file it will be writing to,
-     * what routine to report errors through, and how to interface
-     * to the label manager and expression evaluator if necessary.
-     * It also gives it a chance to do other initialisation.
+     * This procedure is called at the start of an output session to set
+     * up internal parameters.
      */
-    void (*init) (FILE * fp, efunc error, ldfunc ldef, evalfunc eval);
+    void (*init)(void);
 
     /*
      * This procedure is called to pass generic information to the
@@ -904,7 +903,7 @@ struct ofmt {
      * should also return non-zero if it correctly processes the
      * directive.
      */
-    int (*directive) (char *directive, char *value, int pass);
+    int (*directive)(enum directives directive, char *value, int pass);
 
     /*
      * This procedure is called before anything else - even before
@@ -923,7 +922,7 @@ struct ofmt {
      * The parameter `outname' points to an area of storage
      * guaranteed to be at least FILENAME_MAX in size.
      */
-    void (*filename) (char *inname, char *outname, efunc error);
+    void (*filename) (char *inname, char *outname);
 
     /*
      * This procedure is called after assembly finishes, to allow
@@ -937,6 +936,8 @@ struct ofmt {
     void (*cleanup) (int debuginfo);
 };
 
+extern struct ofmt *ofmt;
+extern FILE *ofile;
 
 /*
  * ------------------------------------------------------------
@@ -958,17 +959,15 @@ struct dfmt {
     const char *shortname;
 
     /*
-     * init - called initially to set up local pointer to object format,
-     * void pointer to implementation defined data, file pointer (which
-     * probably won't be used, but who knows?), and error function.
+     * init - called initially to set up local pointer to object format.
      */
-    void (*init) (struct ofmt * of, void *id, FILE * fp, efunc error);
+    void (*init)(void);
 
     /*
      * linenum - called any time there is output with a change of
      * line number or file.
      */
-    void (*linenum) (const char *filename, int32_t linenumber, int32_t segto);
+    void (*linenum)(const char *filename, int32_t linenumber, int32_t segto);
 
     /*
      * debug_deflabel - called whenever a label is defined. Parameters
@@ -976,8 +975,8 @@ struct dfmt {
      * would be called before the output format version.
      */
 
-    void (*debug_deflabel) (char *name, int32_t segment, int64_t offset,
-                            int is_global, char *special);
+    void (*debug_deflabel)(char *name, int32_t segment, int64_t offset,
+			   int is_global, char *special);
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
      * is encountered. 'directive' contains the first parameter to the
@@ -986,27 +985,29 @@ struct dfmt {
      * function with 'directive' equal to "VAR" and 'params' equal to
      * "_somevar:int".
      */
-    void (*debug_directive) (const char *directive, const char *params);
+    void (*debug_directive)(const char *directive, const char *params);
 
     /*
      * typevalue - called whenever the assembler wishes to register a type
      * for the last defined label.  This routine MUST detect if a type was
      * already registered and not re-register it.
      */
-    void (*debug_typevalue) (int32_t type);
+    void (*debug_typevalue)(int32_t type);
 
     /*
      * debug_output - called whenever output is required
      * 'type' is the type of info required, and this is format-specific
      */
-    void (*debug_output) (int type, void *param);
+    void (*debug_output)(int type, void *param);
 
     /*
      * cleanup - called after processing of file is complete
      */
-    void (*cleanup) (void);
-
+    void (*cleanup)(void);
 };
+
+extern const struct dfmt *dfmt;
+
 /*
  * The type definition macros
  * for debugging

@@ -68,11 +68,8 @@ static const char *help =
 static void output_ins(uint32_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
-static void ndisasm_error(int severity, const char *fmt, ...)
+static void ndisasm_verror(int severity, const char *fmt, va_list va)
 {
-    va_list va;
-
-    va_start(va, fmt);
     vfprintf(stderr, fmt, va);
 
     if (severity & ERR_FATAL)
@@ -97,7 +94,8 @@ int main(int argc, char **argv)
     FILE *fp;
 
     tolower_init();
-    nasm_set_malloc_error(ndisasm_error);
+    nasm_set_verror(ndisasm_verror);
+    nasm_init_malloc_error();
 
     offset = 0;
     init_sync();

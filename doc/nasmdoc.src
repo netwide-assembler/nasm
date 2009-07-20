@@ -2262,6 +2262,21 @@ This can be used, for example, with the \c{%!} construct (see
 \c %defstr PATH %!PATH          ; The operating system PATH variable
 
 
+\S{deftok} Defining Tokens: \I\c{%ideftok}\i\c{%deftok}
+
+\c{%deftok}, and its case-insensitive counterpart \c{%ideftok}, define
+or redefine a single-line macro without parameters but converts the
+second parameter, after string conversion, to a sequence of tokens.
+
+For example:
+
+\c %deftok test 'TEST'
+
+is equivalent to
+
+\c %define test TEST
+
+
 \H{strlen} \i{String Manipulation in Macros}
 
 It's often useful to be able to handle strings in macros. NASM
@@ -2384,6 +2399,22 @@ things like
 \c         silly 'a', letter_a             ; letter_a:  db 'a'
 \c         silly 'ab', string_ab           ; string_ab: db 'ab'
 \c         silly {13,10}, crlf             ; crlf:      db 13,10
+
+
+\S{mlrmacro} \i{Recursive Multi-Line Macros}: \I\c{%irmacro}\i\c{%rmacro}
+
+A multi-line macro cannot be referenced within itself, in order to
+prevent accidental infinite recursion.
+
+Recursive multi-line macros allow for self-referencing, with the
+caveat that the user is aware of the existence, use and purpose of
+recursive multi-line macros. There is also a generous, but sane, upper
+limit to the number of recursions, in order to prevent run-away memory
+consumption in case of accidental infinite recursion.
+
+As with non-recursive multi-line macros, recursive multi-line macros are
+\i{case-sensitive}, unless you define them using the alternative
+directive \c{%irmacro}.
 
 
 \S{mlmacover} Overloading Multi-Line Macros\I{overloading, multi-line macros}

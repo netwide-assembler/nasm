@@ -87,9 +87,6 @@
 static char ieee_infile[FILENAME_MAX];
 static int ieee_uppercase;
 
-static efunc error;
-static ldfunc deflabel;
-static FILE *ofp;
 static bool any_segs;
 static int arrindex;
 
@@ -207,12 +204,8 @@ static void ieee_unqualified_name(char *, char *);
 /*
  * pup init
  */
-static void ieee_init(FILE * fp, efunc errfunc, ldfunc ldef, evalfunc eval)
+static void ieee_init(void)
 {
-    (void)eval;
-    ofp = fp;
-    error = errfunc;
-    deflabel = ldef;
     any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;
@@ -243,7 +236,6 @@ static void ieee_cleanup(int debuginfo)
 {
     ieee_write_file(debuginfo);
     of_ieee.current_dfmt->cleanup();
-    fclose(ofp);
     while (seghead) {
         struct ieeeSection *segtmp = seghead;
         seghead = seghead->next;
@@ -307,7 +299,7 @@ static void ieee_deflabel(char *name, int32_t segment,
     int i;
 
     if (special) {
-        error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
+        nasm_error(ERR_NONFATAL, "unrecognised symbol type `%s'", special);
     }
     /*
      * First check for the double-period, signifying something
@@ -415,7 +407,7 @@ static void ieee_out(int32_t segto, const void *data,
      */
     if (segto == NO_SEG) {
         if (type != OUT_RESERVE)
-            error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
+            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
                   " space");
         return;
     }
@@ -427,7 +419,7 @@ static void ieee_out(int32_t segto, const void *data,
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-            error(ERR_PANIC, "strange segment conditions in IEEE driver");
+            nasm_error(ERR_PANIC, "strange segment conditions in IEEE driver");
     }
 
     /*
@@ -437,7 +429,7 @@ static void ieee_out(int32_t segto, const void *data,
         if (seg->index == segto)
             break;
     if (!seg)
-        error(ERR_PANIC, "code directed to nonexistent segment?");
+        nasm_error(ERR_PANIC, "code directed to nonexistent segment?");
 
     if (type == OUT_RAWDATA) {
         ucdata = data;
@@ -446,7 +438,7 @@ static void ieee_out(int32_t segto, const void *data,
     } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
                type == OUT_REL4ADR) {
         if (segment == NO_SEG && type != OUT_ADDRESS)
-            error(ERR_NONFATAL, "relative call to absolute address not"
+            nasm_error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");
         ldata = *(int64_t *)data;
         if (type == OUT_REL2ADR)
@@ -536,15 +528,15 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                             s.addend = 0;
                             s.id2 = eb->index[i];
                         } else
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "Source of WRT must be an offset");
                     }
 
                 } else
-                    error(ERR_PANIC,
+                    nasm_error(ERR_PANIC,
                           "unrecognised WRT value in ieee_write_fixup");
             } else
-                error(ERR_NONFATAL, "target of WRT must be a section ");
+                nasm_error(ERR_NONFATAL, "target of WRT must be a section ");
         }
         s.size = size;
         ieee_install_fixup(segto, &s);
@@ -583,7 +575,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                  */
                 if (eb) {
                     if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-                        error(ERR_PANIC,
+                        nasm_error(ERR_PANIC,
                               "Segment of a rel not supported in ieee_write_fixup");
                     } else {
                         /* If we want the segment */
@@ -594,7 +586,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    error(ERR_PANIC,
+                    nasm_error(ERR_PANIC,
                           "unrecognised segment value in ieee_write_fixup");
             }
 
@@ -649,12 +641,12 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    error(ERR_PANIC,
+                    nasm_error(ERR_PANIC,
                           "unrecognised segment value in ieee_write_fixup");
             }
         }
         if (size != 2 && s.ftype == FT_SEG)
-            error(ERR_NONFATAL, "IEEE format can only handle 2-byte"
+            nasm_error(ERR_NONFATAL, "IEEE format can only handle 2-byte"
                   " segment base references");
         s.size = size;
         ieee_install_fixup(segto, &s);
@@ -732,7 +724,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
             ieee_idx++;
             if (!strcmp(seg->name, name)) {
                 if (attrs > 0 && pass == 1)
-                    error(ERR_WARNING, "segment attributes specified on"
+                    nasm_error(ERR_WARNING, "segment attributes specified on"
                           " redeclaration of segment: ignoring");
                 if (seg->use32)
                     *bits = 32;
@@ -788,7 +780,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
                     seg->align = 1;
                 if (rn_error) {
                     seg->align = 1;
-                    error(ERR_NONFATAL, "segment alignment should be"
+                    nasm_error(ERR_NONFATAL, "segment alignment should be"
                           " numeric");
                 }
                 switch ((int)seg->align) {
@@ -803,7 +795,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
                 case 128:
                     break;
                 default:
-                    error(ERR_NONFATAL, "invalid alignment value %d",
+                    nasm_error(ERR_NONFATAL, "invalid alignment value %d",
                           seg->align);
                     seg->align = 1;
                     break;
@@ -811,18 +803,17 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
             } else if (!nasm_strnicmp(p, "absolute=", 9)) {
                 seg->align = SEG_ABS + readnum(p + 9, &rn_error);
                 if (rn_error)
-                    error(ERR_NONFATAL, "argument to `absolute' segment"
+                    nasm_error(ERR_NONFATAL, "argument to `absolute' segment"
                           " attribute should be numeric");
             }
         }
 
         ieee_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
-            deflabel(name, NO_SEG, seg->align - SEG_ABS,
-                     NULL, false, false, &of_ieee, error);
+            define_label(name, NO_SEG, seg->align - SEG_ABS,
+			 NULL, false, false);
         else
-            deflabel(name, seg->index + 1, 0L,
-                     NULL, false, false, &of_ieee, error);
+            define_label(name, seg->index + 1, 0L, NULL, false, false);
         ieee_seg_needs_update = NULL;
 
         if (seg->use32)
@@ -836,16 +827,20 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
 /*
  * directives supported
  */
-static int ieee_directive(char *directive, char *value, int pass)
+static int ieee_directive(enum directives directive, char *value, int pass)
 {
 
     (void)value;
     (void)pass;
-    if (!strcmp(directive, "uppercase")) {
+
+    switch (directive) {
+    case D_UPPERCASE:
         ieee_uppercase = true;
         return 1;
+	
+    default:
+	return 0;
     }
-    return 0;
 }
 
 /*
@@ -874,10 +869,10 @@ static int32_t ieee_segbase(int32_t segment)
 /*
  * filename
  */
-static void ieee_filename(char *inname, char *outname, efunc error)
+static void ieee_filename(char *inname, char *outname)
 {
     strcpy(ieee_infile, inname);
-    standard_extension(inname, outname, ".o", error);
+    standard_extension(inname, outname, ".o");
 }
 
 static void ieee_write_file(int debuginfo)
@@ -975,7 +970,7 @@ static void ieee_write_file(int debuginfo)
             if (seg->index == ieee_entry_seg)
                 break;
         if (!seg)
-            error(ERR_PANIC, "Start address records are incorrect");
+            nasm_error(ERR_PANIC, "Start address records are incorrect");
         else
             ieee_putascii("ASG,R%X,%lX,+.\n", seg->ieee_index,
                           ieee_entry_ofs);
@@ -1157,7 +1152,7 @@ static void ieee_putascii(char *format, ...)
         if ((uint8_t)buffer[i] > 31)
             checksum += buffer[i];
     va_end(ap);
-    fprintf(ofp, buffer);
+    fprintf(ofile, buffer);
 }
 
 /*
@@ -1280,13 +1275,9 @@ static void ieee_unqualified_name(char *dest, char *source)
     } else
         strcpy(dest, source);
 }
-void dbgls_init(struct ofmt *of, void *id, FILE * fp, efunc error)
+void dbgls_init(void)
 {
     int tempint;
-    (void)of;
-    (void)id;
-    (void)fp;
-    (void)error;
 
     fnhead = NULL;
     fntail = &fnhead;
@@ -1342,7 +1333,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-            error(ERR_PANIC, "strange segment conditions in OBJ driver");
+            nasm_error(ERR_PANIC, "strange segment conditions in OBJ driver");
     }
 
     /*
@@ -1352,7 +1343,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
         if (seg->index == segto)
             break;
     if (!seg)
-        error(ERR_PANIC, "lineno directed to nonexistent segment?");
+        nasm_error(ERR_PANIC, "lineno directed to nonexistent segment?");
 
     for (fn = fnhead; fn; fn = fn->next) {
         if (!nasm_stricmp(lnfname, fn->name))
