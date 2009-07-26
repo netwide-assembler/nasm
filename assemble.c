@@ -2052,10 +2052,8 @@ done:
 static enum match_result matches(const struct itemplate *itemp,
 				 insn *instruction, int bits)
 {
-    int i, size[MAX_OPERANDS], asize, oprs, ret;
+    int i, size[MAX_OPERANDS], asize, oprs;
     bool opsizemissing = false;
-
-    ret = MOK_GOOD;
 
     /*
      * Check the opcode
@@ -2079,83 +2077,50 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Process size flags
      */
+    switch (itemp->flags & IF_SMASK) {
+    case IF_SB:
+	asize = BITS8;
+	break;
+    case IF_SW:
+	asize = BITS16;
+	break;
+    case IF_SD:
+	asize = BITS32;
+	break;
+    case IF_SQ:
+	asize = BITS64;
+	break;
+    case IF_SO:
+	asize = BITS128;
+	break;
+    case IF_SY:
+	asize = BITS256;
+	break;
+    case IF_SZ:
+	switch (bits) {
+	case 16:
+	    asize = BITS16;
+	    break;
+	case 32:
+	    asize = BITS32;
+	    break;
+	case 64:
+	    asize = BITS64;
+	    break;
+	}
+	break;
+    default:
+	asize = 0;
+	break;
+    }
+
     if (itemp->flags & IF_ARMASK) {
-	memset(size, 0, sizeof size);
-
+	/* S- flags only apply to a specific operand */
 	i = ((itemp->flags & IF_ARMASK) >> IF_ARSHFT) - 1;
-
-	switch (itemp->flags & IF_SMASK) {
-	case IF_SB:
-            size[i] = BITS8;
-	    break;
-	case IF_SW:
-            size[i] = BITS16;
-	    break;
-	case IF_SD:
-            size[i] = BITS32;
-	    break;
-	case IF_SQ:
-            size[i] = BITS64;
-	    break;
-	case IF_SO:
-	    size[i] = BITS128;
-	    break;
-	case IF_SY:
-	    size[i] = BITS256;
-	    break;
-	case IF_SZ:
-	    switch (bits) {
-	    case 16:
-		size[i] = BITS16;
-		break;
-	    case 32:
-		size[i] = BITS32;
-		break;
-	    case 64:
-		size[i] = BITS64;
-		break;
-	    }
-	    break;
-	default:
-	    break;
-        }
+	memset(size, 0, sizeof size);
+	size[i] = asize;
     } else {
-        asize = 0;
-	switch (itemp->flags & IF_SMASK) {
-	case IF_SB:
-            asize = BITS8;
-	    break;
-	case IF_SW:
-            asize = BITS16;
-	    break;
-	case IF_SD:
-            asize = BITS32;
-	    break;
-	case IF_SQ:
-            asize = BITS64;
-	    break;
-	case IF_SO:
-            asize = BITS128;
-	    break;
-	case IF_SY:
-            asize = BITS256;
-	    break;
-	case IF_SZ:
-	    switch (bits) {
-	    case 16:
-		asize = BITS16;
-		break;
-	    case 32:
-		asize = BITS32;
-		break;
-	    case 64:
-		asize = BITS64;
-		break;
-	    }
-	    break;
-	default:
-	    break;
-        }
+	/* S- flags apply to all operands */
 	for (i = 0; i < MAX_OPERANDS; i++)
 	    size[i] = asize;
     }
@@ -2225,10 +2190,10 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check if special handling needed for Jumps
      */
-    if ((uint8_t)(itemp->code[0]) >= 0370)
-        return MOK_JUMP;
+    if ((itemp->code[0] & 0374) == 0370)
+	return MOK_JUMP;
 
-    return ret;
+    return MOK_GOOD;
 }
 
 static ea *process_ea(operand * input, ea * output, int bits,
