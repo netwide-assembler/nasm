@@ -661,16 +661,16 @@ void AddExport(char *name)
     strcpy(newS->String, name);
     if (rvp == NULL) {
         int i;
-        for (i = 0; i < nsects; i++)
 
+        for (i = 0; i < nsects; i++) {
             if (!strcmp(EXPORT_SECTION_NAME, sects[i]->name))
                 break;
+	}
+
         if (i == nsects)
-            directive_sec =
-                sects[coff_make_section
-                      (EXPORT_SECTION_NAME, EXPORT_SECTION_FLAGS)];
-        else
-            directive_sec = sects[i];
+	    i = coff_make_section(EXPORT_SECTION_NAME, EXPORT_SECTION_FLAGS);
+
+	directive_sec = sects[i];
         Exports = newS;
     } else {
         while (rvp->Next) {
