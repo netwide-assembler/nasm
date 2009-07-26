@@ -77,17 +77,20 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SQ     0x00000010UL  /* unsized operands can't be non-qword */
 #define IF_SO     0x00000014UL  /* unsized operands can't be non-oword */
 #define IF_SY     0x00000018UL  /* unsized operands can't be non-yword */
-#define IF_SZ     0x0000001CUL  /* unsized operands must match the bitsize */
-#define IF_SMASK  0x0000001CUL  /* mask for unsized argument size */
-#define IF_AR0	  0x00000020UL  /* SB, SW, SD applies to argument 0 */
-#define IF_AR1	  0x00000040UL  /* SB, SW, SD applies to argument 1 */
-#define IF_AR2	  0x00000060UL  /* SB, SW, SD applies to argument 2 */
-#define IF_AR3	  0x00000080UL  /* SB, SW, SD applies to argument 3 */
-#define IF_ARMASK 0x000000E0UL  /* mask for unsized argument spec */
-#define IF_ARSHFT 5		/* LSB in IF_ARMASK */
-#define IF_PRIV   0x00000100UL  /* it's a privileged instruction */
-#define IF_SMM    0x00000200UL  /* it's only valid in SMM */
-#define IF_PROT   0x00000400UL  /* it's protected mode only */
+#define IF_SZ     0x00000038UL  /* unsized operands must match the bitsize */
+#define IF_SX	  0x0000003CUL	/* unsized operands not allowed */
+#define IF_SMASK  0x0000003CUL  /* mask for unsized argument size */
+#define IF_AR0	  0x00000040UL  /* SB, SW, SD applies to argument 0 */
+#define IF_AR1	  0x00000080UL  /* SB, SW, SD applies to argument 1 */
+#define IF_AR2	  0x000000C0UL  /* SB, SW, SD applies to argument 2 */
+#define IF_AR3	  0x00000100UL  /* SB, SW, SD applies to argument 3 */
+#define IF_AR4	  0x00000140UL  /* SB, SW, SD applies to argument 4 */
+#define IF_ARMASK 0x000001C0UL  /* mask for unsized argument spec */
+#define IF_ARSHFT 6		/* LSB in IF_ARMASK */
+/* The next 3 bits aren't actually used for anything */
+#define IF_PRIV   0x00000000UL  /* it's a privileged instruction */
+#define IF_SMM    0x00000000UL  /* it's only valid in SMM */
+#define IF_PROT   0x00000000UL  /* it's protected mode only */
 #define IF_NOLONG 0x00000800UL  /* it's not available in long mode */
 #define IF_UNDOC  0x00001000UL  /* it's an undocumented instruction */
 #define IF_FPU    0x00002000UL  /* it's an FPU instruction */

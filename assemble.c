@@ -1983,9 +1983,52 @@ static enum match_result find_match(const struct itemplate **tempp,
 {
     const struct itemplate *temp;
     enum match_result m, merr;
+    int32_t xsizeflags[MAX_OPERANDS];
+    bool opsizemissing = false;
+    int i;
+
+    for (i = 0; i < instruction->operands; i++)
+	xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
 
     merr = MERR_INVALOP;
 
+    for (temp = nasm_instructions[instruction->opcode];
+	 temp->opcode != I_none; temp++) {
+	m = matches(temp, instruction, bits);
+	if (m == MOK_JUMP) {
+	    if (jmp_match(segment, offset, bits, instruction, temp->code))
+		m = MOK_GOOD;
+	    else
+		m = MERR_INVALOP;
+	} else if (m == MERR_OPSIZEMISSING &&
+		   (temp->flags & IF_SMASK) != IF_SX) {
+	    /*
+	     * Missing operand size and a candidate for fuzzy matching...
+	     */
+	    for (i = 0; i < temp->operands; i++)
+		xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
+
+	    opsizemissing = true;
+	}
+	if (m > merr)
+	    merr = m;
+	if (merr == MOK_GOOD)
+	    goto done;
+    }
+
+    /* No match, but see if we can get a fuzzy operand size match... */
+    if (!opsizemissing)
+	goto done;
+
+    for (i = 0; i < instruction->operands; i++) {
+	/* This tests if xsizeflags[i] has more than one bit set */
+	if ((xsizeflags[i] & (xsizeflags[i]-1)))
+	    goto done;		/* No luck */
+
+	instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
+    }
+
+    /* Try matching again... */
     for (temp = nasm_instructions[instruction->opcode];
 	 temp->opcode != I_none; temp++) {
 	m = matches(temp, instruction, bits);
@@ -1998,9 +2041,10 @@ static enum match_result find_match(const struct itemplate **tempp,
 	if (m > merr)
 	    merr = m;
 	if (merr == MOK_GOOD)
-	    break;
+	    goto done;
     }
 
+done:
     *tempp = temp;
     return merr;
 }
@@ -2131,8 +2175,7 @@ static enum match_result matches(const struct itemplate *itemp,
 	} else if (itemp->opd[i] & ~type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
-            if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
-                (type & SIZE_MASK))
+            if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK))
                 return MERR_INVALOP;
             else
                 return MERR_OPSIZEMISSING;
