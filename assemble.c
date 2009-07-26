@@ -195,6 +195,9 @@ static int64_t calcsize(int32_t, int64_t, int, insn *, const uint8_t *);
 static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
 		    int64_t insn_end);
+static enum match_result find_match(const struct itemplate **tempp,
+				    insn *instruction,
+				    int32_t segment, int64_t offset, int bits);
 static enum match_result matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
@@ -328,7 +331,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 {
     const struct itemplate *temp;
     int j;
-    enum match_result size_prob;
+    enum match_result m;
     int64_t insn_end;
     int32_t itimes;
     int64_t start = offset;
@@ -499,149 +502,140 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    size_prob = MERR_INVALOP;
+    m = find_match(&temp, instruction, segment, offset, bits);
 
-    for (temp = nasm_instructions[instruction->opcode];
-	 temp->opcode != -1; temp++){
-        enum match_result m = matches(temp, instruction, bits);
-	if (m == MOK_GOOD ||
-	    (m == MOK_JUMP && jmp_match(segment, offset, bits,
-					instruction, temp->code))) {
-	    /* Matches! */
-            int64_t insn_size = calcsize(segment, offset, bits,
-					 instruction, temp->code);
-            itimes = instruction->times;
-            if (insn_size < 0)  /* shouldn't be, on pass two */
-                error(ERR_PANIC, "errors made it through from pass one");
-            else
-                while (itimes--) {
-                    for (j = 0; j < MAXPREFIX; j++) {
-                        uint8_t c = 0;
-                        switch (instruction->prefixes[j]) {
-			case P_WAIT:
-			    c = 0x9B;
-			    break;
-                        case P_LOCK:
-                            c = 0xF0;
-                            break;
-                        case P_REPNE:
-                        case P_REPNZ:
-                            c = 0xF2;
-                            break;
-                        case P_REPE:
-                        case P_REPZ:
-                        case P_REP:
-                            c = 0xF3;
-                            break;
-                        case R_CS:
-                            if (bits == 64) {
-                                error(ERR_WARNING | ERR_PASS2,
-                                      "cs segment base generated, but will be ignored in 64-bit mode");
-                            }
-                            c = 0x2E;
-                            break;
-                        case R_DS:
-                            if (bits == 64) {
-                                error(ERR_WARNING | ERR_PASS2,
-                                      "ds segment base generated, but will be ignored in 64-bit mode");
-                            }
-                            c = 0x3E;
-                            break;
-                        case R_ES:
-                           if (bits == 64) {
-                                error(ERR_WARNING | ERR_PASS2,
-                                      "es segment base generated, but will be ignored in 64-bit mode");
-                           }
-                            c = 0x26;
-                            break;
-                        case R_FS:
-                            c = 0x64;
-                            break;
-                        case R_GS:
-                            c = 0x65;
-                            break;
-                        case R_SS:
-                            if (bits == 64) {
-                                error(ERR_WARNING | ERR_PASS2,
-                                      "ss segment base generated, but will be ignored in 64-bit mode");
-                            }
-                            c = 0x36;
-                            break;
-                        case R_SEGR6:
-                        case R_SEGR7:
-                            error(ERR_NONFATAL,
-                                  "segr6 and segr7 cannot be used as prefixes");
-                            break;
-                        case P_A16:
-                            if (bits == 64) {
-                                error(ERR_NONFATAL,
-				      "16-bit addressing is not supported "
-				      "in 64-bit mode");
-                            } else if (bits != 16)
-                                c = 0x67;
-                            break;
-                        case P_A32:
-                            if (bits != 32)
-                                c = 0x67;
-                            break;
-			case P_A64:
-			    if (bits != 64) {
-				error(ERR_NONFATAL,
-				      "64-bit addressing is only supported "
-				      "in 64-bit mode");
-			    }
-			    break;
-			case P_ASP:
+    if (m == MOK_GOOD) {
+	/* Matches! */
+	int64_t insn_size = calcsize(segment, offset, bits,
+				     instruction, temp->code);
+	itimes = instruction->times;
+	if (insn_size < 0)  /* shouldn't be, on pass two */
+	    error(ERR_PANIC, "errors made it through from pass one");
+	else
+	    while (itimes--) {
+		for (j = 0; j < MAXPREFIX; j++) {
+		    uint8_t c = 0;
+		    switch (instruction->prefixes[j]) {
+		    case P_WAIT:
+			c = 0x9B;
+			break;
+		    case P_LOCK:
+			c = 0xF0;
+			break;
+		    case P_REPNE:
+		    case P_REPNZ:
+			c = 0xF2;
+			break;
+		    case P_REPE:
+		    case P_REPZ:
+		    case P_REP:
+			c = 0xF3;
+			break;
+		    case R_CS:
+			if (bits == 64) {
+			    error(ERR_WARNING | ERR_PASS2,
+				  "cs segment base generated, but will be ignored in 64-bit mode");
+			}
+			c = 0x2E;
+			break;
+		    case R_DS:
+			if (bits == 64) {
+			    error(ERR_WARNING | ERR_PASS2,
+				  "ds segment base generated, but will be ignored in 64-bit mode");
+			}
+			c = 0x3E;
+			break;
+		    case R_ES:
+			if (bits == 64) {
+			    error(ERR_WARNING | ERR_PASS2,
+				  "es segment base generated, but will be ignored in 64-bit mode");
+			}
+			c = 0x26;
+			break;
+		    case R_FS:
+			c = 0x64;
+			break;
+		    case R_GS:
+			c = 0x65;
+			break;
+		    case R_SS:
+			if (bits == 64) {
+			    error(ERR_WARNING | ERR_PASS2,
+				  "ss segment base generated, but will be ignored in 64-bit mode");
+			}
+			c = 0x36;
+			break;
+		    case R_SEGR6:
+		    case R_SEGR7:
+			error(ERR_NONFATAL,
+			      "segr6 and segr7 cannot be used as prefixes");
+			break;
+		    case P_A16:
+			if (bits == 64) {
+			    error(ERR_NONFATAL,
+				  "16-bit addressing is not supported "
+				  "in 64-bit mode");
+			} else if (bits != 16)
 			    c = 0x67;
-			    break;
-                        case P_O16:
-                            if (bits != 16)
-                                c = 0x66;
-                            break;
-                        case P_O32:
-                            if (bits == 16)
-                                c = 0x66;
-                            break;
-			case P_O64:
-			    /* REX.W */
-			    break;
-			case P_OSP:
+			break;
+		    case P_A32:
+			if (bits != 32)
+			    c = 0x67;
+			break;
+		    case P_A64:
+			if (bits != 64) {
+			    error(ERR_NONFATAL,
+				  "64-bit addressing is only supported "
+				  "in 64-bit mode");
+			}
+			break;
+		    case P_ASP:
+			c = 0x67;
+			break;
+		    case P_O16:
+			if (bits != 16)
 			    c = 0x66;
-			    break;
-			case P_none:
-			    break;
-                        default:
-                            error(ERR_PANIC, "invalid instruction prefix");
-                        }
-                        if (c != 0) {
-                            out(offset, segment, &c, OUT_RAWDATA, 1,
-                                NO_SEG, NO_SEG);
-                            offset++;
-                        }
-                    }
-                    insn_end = offset + insn_size;
-                    gencode(segment, offset, bits, instruction,
-			    temp, insn_end);
-                    offset += insn_size;
-                    if (itimes > 0 && itimes == instruction->times - 1) {
-                        /*
-                         * Dummy call to list->output to give the offset to the
-                         * listing module.
-                         */
-                        list->output(offset, NULL, OUT_RAWDATA, 0);
-                        list->uplevel(LIST_TIMES);
-                    }
-                }
-            if (instruction->times > 1)
-                list->downlevel(LIST_TIMES);
-            return offset - start;
-        } else if (m > 0 && m > size_prob) {
-            size_prob = m;
-        }
-    }
-
-    if (temp->opcode == -1) {   /* didn't match any instruction */
-	switch (size_prob) {
+			break;
+		    case P_O32:
+			if (bits == 16)
+			    c = 0x66;
+			break;
+		    case P_O64:
+			/* REX.W */
+			break;
+		    case P_OSP:
+			c = 0x66;
+			break;
+		    case P_none:
+			break;
+		    default:
+			error(ERR_PANIC, "invalid instruction prefix");
+		    }
+		    if (c != 0) {
+			out(offset, segment, &c, OUT_RAWDATA, 1,
+			    NO_SEG, NO_SEG);
+			offset++;
+		    }
+		}
+		insn_end = offset + insn_size;
+		gencode(segment, offset, bits, instruction,
+			temp, insn_end);
+		offset += insn_size;
+		if (itimes > 0 && itimes == instruction->times - 1) {
+		    /*
+		     * Dummy call to list->output to give the offset to the
+		     * listing module.
+		     */
+		    list->output(offset, NULL, OUT_RAWDATA, 0);
+		    list->uplevel(LIST_TIMES);
+		}
+	    }
+	if (instruction->times > 1)
+	    list->downlevel(LIST_TIMES);
+	return offset - start;
+    } else {
+	/* No match */
+	switch (m) {
 	case MERR_OPSIZEMISSING:
 	    error(ERR_NONFATAL, "operation size not specified");
 	    break;
@@ -668,6 +662,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 		  insn * instruction, efunc error)
 {
     const struct itemplate *temp;
+    enum match_result m;
 
     errfunc = error;            /* to pass to other functions */
     cpu = cp;
@@ -757,51 +752,47 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    for (temp = nasm_instructions[instruction->opcode];
-	 temp->opcode != -1; temp++) {
-        enum match_result m = matches(temp, instruction, bits);
-        if (m == MOK_GOOD ||
-	    (m == MOK_JUMP && jmp_match(segment, offset, bits,
-					instruction, temp->code))) {
-            /* we've matched an instruction. */
-            int64_t isize;
-            const uint8_t *codes = temp->code;
-            int j;
-
-            isize = calcsize(segment, offset, bits, instruction, codes);
-            if (isize < 0)
-                return -1;
-            for (j = 0; j < MAXPREFIX; j++) {
-		switch (instruction->prefixes[j]) {
-		case P_A16:
-		    if (bits != 16)
-			isize++;
-		    break;
-		case P_A32:
-		    if (bits != 32)
-			isize++;
-		    break;
-		case P_O16:
-		    if (bits != 16)
-			isize++;
-		    break;
-		case P_O32:
-		    if (bits == 16)
-			isize++;
-		    break;
-		case P_A64:
-		case P_O64:
-		case P_none:
-		    break;
-		default:
+    m = find_match(&temp, instruction, segment, offset, bits);
+    if (m == MOK_GOOD) {
+	/* we've matched an instruction. */
+	int64_t isize;
+	const uint8_t *codes = temp->code;
+	int j;
+	
+	isize = calcsize(segment, offset, bits, instruction, codes);
+	if (isize < 0)
+	    return -1;
+	for (j = 0; j < MAXPREFIX; j++) {
+	    switch (instruction->prefixes[j]) {
+	    case P_A16:
+		if (bits != 16)
 		    isize++;
-		    break;
-		}
-            }
-            return isize * instruction->times;
-        }
+		break;
+	    case P_A32:
+		if (bits != 32)
+		    isize++;
+		break;
+	    case P_O16:
+		if (bits != 16)
+		    isize++;
+		break;
+	    case P_O32:
+		if (bits == 16)
+		    isize++;
+		break;
+	    case P_A64:
+	    case P_O64:
+	    case P_none:
+		break;
+	    default:
+		isize++;
+		break;
+	    }
+	}
+	return isize * instruction->times;
+    } else {
+	return -1;                  /* didn't match any instruction */
     }
-    return -1;                  /* didn't match any instruction */
 }
 
 static bool possible_sbyte(operand *o)
@@ -1984,6 +1975,34 @@ static int rexflags(int val, int32_t flags, int mask)
 	rex |= REX_P;
 
     return rex & mask;
+}
+
+static enum match_result find_match(const struct itemplate **tempp,
+				    insn *instruction,
+				    int32_t segment, int64_t offset, int bits)
+{
+    const struct itemplate *temp;
+    enum match_result m, merr;
+
+    merr = MERR_INVALOP;
+
+    for (temp = nasm_instructions[instruction->opcode];
+	 temp->opcode != I_none; temp++) {
+	m = matches(temp, instruction, bits);
+	if (m == MOK_JUMP) {
+	    if (jmp_match(segment, offset, bits, instruction, temp->code))
+		m = MOK_GOOD;
+	    else
+		m = MERR_INVALOP;
+	}
+	if (m > merr)
+	    merr = m;
+	if (merr == MOK_GOOD)
+	    break;
+    }
+
+    *tempp = temp;
+    return merr;
 }
 
 static enum match_result matches(const struct itemplate *itemp,
