@@ -5,9 +5,10 @@ Many many developers all over the net respect NASM for what it is
 flexible and mature assembler tool with support for many output
 formats (thus netwide!!).
 
-Now we have good news for you: NASM is licensed under LGPL.
-This means its development is open to even wider society of
-programmers wishing to improve their lovely assembler.
+Now we have good news for you: NASM is licensed under the "simplified"
+(2-clause) BSD license.  This means its development is open to even
+wider society of programmers wishing to improve their lovely
+assembler.
 
 The NASM project is now situated at SourceForge.net, the most
 popular Open Source development site on the Internet.
