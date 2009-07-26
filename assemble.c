@@ -2053,6 +2053,7 @@ static enum match_result matches(const struct itemplate *itemp,
 				 insn *instruction, int bits)
 {
     int i, size[MAX_OPERANDS], asize, oprs, ret;
+    bool opsizemissing = false;
 
     ret = MOK_GOOD;
 
@@ -2178,9 +2179,12 @@ static enum match_result matches(const struct itemplate *itemp,
             if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK))
                 return MERR_INVALOP;
             else
-                return MERR_OPSIZEMISSING;
+		opsizemissing = true;
         }
     }
+
+    if (opsizemissing)
+	return MERR_OPSIZEMISSING;
 
     /*
      * Check operand sizes
