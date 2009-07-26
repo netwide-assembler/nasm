@@ -426,25 +426,44 @@ sub format_insn($$$$$) {
     my ($opcode, $operands, $codes, $flags, $relax) = @_;
     my $num, $nd = 0;
     my @bytecode;
+    my $op, @ops, $opp, @opx, @oppx;
 
     return (undef, undef) if $operands eq "ignore";
 
     # format the operands
     $operands =~ s/\*//g;
     $operands =~ s/:/|colon,/g;
-    $operands =~ s/mem(\d+)/mem|bits$1/g;
-    $operands =~ s/mem/memory/g;
-    $operands =~ s/memory_offs/mem_offs/g;
-    $operands =~ s/imm(\d+)/imm|bits$1/g;
-    $operands =~ s/imm/immediate/g;
-    $operands =~ s/rm(\d+)/rm_gpr|bits$1/g;
-    $operands =~ s/(mmx|xmm|ymm)rm/rm_$1/g;
-    $operands =~ s/\=([0-9]+)/same_as|$1/g;
-    if ($operands eq 'void') {
-	@ops = ();
-    } else {
-	@ops = split(/\,/, $operands);
+    @ops = ();
+    if ($operands ne 'void') {
+	foreach $op (split(/,/, $operands)) {
+	    if ($op =~ /^\=([0-9]+)$/) {
+		$op = "same_as|$1";
+	    } else {
+		@opx = ();
+		foreach $opp (split(/\|/, $op)) {
+		    @oppx = ();
+		    if ($opp =~ /^(.*[^\d])(8|16|32|64|80|128|256)$/) {
+			my $ox = $1;
+			my $on = $2;
+			if ($ox !~ /^sbyte$/) {
+			    $opp = $ox;
+			    push(@oppx, "bits$on");
+			}
+		    }
+		    $opp =~ s/^mem$/memory/;
+		    $opp =~ s/^memory_offs$/mem_offs/;
+		    $opp =~ s/^imm$/immediate/;
+		    $opp =~ s/^([a-z]+)rm$/rm_$1/;
+		    $opp =~ s/^rm$/rm_gpr/;
+		    $opp =~ s/^reg$/reg_gpr/;
+		    push(@opx, $opp, @oppx);
+		}
+		$op = join('|', @opx);
+	    }
+	    push(@ops, $op);
+	}
     }
+
     $num = scalar(@ops);
     while (scalar(@ops) < $MAX_OPERANDS) {
 	push(@ops, '0');
