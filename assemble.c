@@ -162,6 +162,23 @@
 #include "insns.h"
 #include "tables.h"
 
+enum match_result {
+    /*
+     * Matching errors.  These should be sorted so that more specific
+     * errors come later in the sequence.
+     */
+    MERR_INVALOP,
+    MERR_OPSIZEMISSING,
+    MERR_OPSIZEMISMATCH,
+    MERR_BADCPU,
+    MERR_BADMODE,
+    /*
+     * Matching success; the conditional ones first
+     */
+    MOK_JUMP,			/* Matching OK but needs jmp_match() */
+    MOK_GOOD			/* Matching unconditionally OK */
+};
+
 typedef struct {
     int sib_present;                 /* is a SIB byte necessary? */
     int bytes;                       /* # of bytes of offset needed */
@@ -178,7 +195,7 @@ static int64_t calcsize(int32_t, int64_t, int, insn *, const uint8_t *);
 static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
 		    int64_t insn_end);
-static int matches(const struct itemplate *, insn *, int bits);
+static enum match_result matches(const struct itemplate *, insn *, int bits);
 static int32_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, int32_t, int);
@@ -306,12 +323,12 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
 }
 
 int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
-              insn * instruction, struct ofmt *output, efunc error,
-              ListGen * listgen)
+		 insn * instruction, struct ofmt *output, efunc error,
+		 ListGen * listgen)
 {
     const struct itemplate *temp;
     int j;
-    int size_prob;
+    enum match_result size_prob;
     int64_t insn_end;
     int32_t itimes;
     int64_t start = offset;
@@ -482,16 +499,17 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    size_prob = 0;
+    size_prob = MERR_INVALOP;
 
-    for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++){
-        int m = matches(temp, instruction, bits);
-	if (m == 100 ||
-	    (m == 99 && jmp_match(segment, offset, bits,
-				  instruction, temp->code))) {
+    for (temp = nasm_instructions[instruction->opcode];
+	 temp->opcode != -1; temp++){
+        enum match_result m = matches(temp, instruction, bits);
+	if (m == MOK_GOOD ||
+	    (m == MOK_JUMP && jmp_match(segment, offset, bits,
+					instruction, temp->code))) {
 	    /* Matches! */
             int64_t insn_size = calcsize(segment, offset, bits,
-                                      instruction, temp->code);
+					 instruction, temp->code);
             itimes = instruction->times;
             if (insn_size < 0)  /* shouldn't be, on pass two */
                 error(ERR_PANIC, "errors made it through from pass one");
@@ -624,16 +642,16 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
     if (temp->opcode == -1) {   /* didn't match any instruction */
 	switch (size_prob) {
-	case 1:
+	case MERR_OPSIZEMISSING:
 	    error(ERR_NONFATAL, "operation size not specified");
 	    break;
-	case 2:
+	case MERR_OPSIZEMISMATCH:
             error(ERR_NONFATAL, "mismatch in operand sizes");
 	    break;
-	case 3:
+	case MERR_BADCPU:
             error(ERR_NONFATAL, "no instruction for this cpu level");
 	    break;
-	case 4:
+	case MERR_BADMODE:
             error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
 		  bits);
 	    break;
@@ -647,7 +665,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 }
 
 int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
-               insn * instruction, efunc error)
+		  insn * instruction, efunc error)
 {
     const struct itemplate *temp;
 
@@ -739,11 +757,12 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     /* Check to see if we need an address-size prefix */
     add_asp(instruction, bits);
 
-    for (temp = nasm_instructions[instruction->opcode]; temp->opcode != -1; temp++) {
-        int m = matches(temp, instruction, bits);
-        if (m == 100 ||
-	    (m == 99 && jmp_match(segment, offset, bits,
-				  instruction, temp->code))) {
+    for (temp = nasm_instructions[instruction->opcode];
+	 temp->opcode != -1; temp++) {
+        enum match_result m = matches(temp, instruction, bits);
+        if (m == MOK_GOOD ||
+	    (m == MOK_JUMP && jmp_match(segment, offset, bits,
+					instruction, temp->code))) {
             /* we've matched an instruction. */
             int64_t isize;
             const uint8_t *codes = temp->code;
@@ -1967,30 +1986,31 @@ static int rexflags(int val, int32_t flags, int mask)
     return rex & mask;
 }
 
-static int matches(const struct itemplate *itemp, insn * instruction, int bits)
+static enum match_result matches(const struct itemplate *itemp,
+				 insn *instruction, int bits)
 {
     int i, size[MAX_OPERANDS], asize, oprs, ret;
 
-    ret = 100;
+    ret = MOK_GOOD;
 
     /*
      * Check the opcode
      */
     if (itemp->opcode != instruction->opcode)
-        return 0;
+        return MERR_INVALOP;
 
     /*
      * Count the operands
      */
     if (itemp->operands != instruction->operands)
-        return 0;
+        return MERR_INVALOP;
 
     /*
      * Check that no spurious colons or TOs are present
      */
     for (i = 0; i < itemp->operands; i++)
         if (instruction->oprs[i].type & ~itemp->opd[i] & (COLON | TO))
-            return 0;
+            return MERR_INVALOP;
 
     /*
      * Process size flags
@@ -2088,15 +2108,15 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
 	    int j = itemp->opd[i] & ~SAME_AS;
 	    if (type != instruction->oprs[j].type ||
 		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
-		return 0;
+		return MERR_INVALOP;
 	} else if (itemp->opd[i] & ~type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
                 (type & SIZE_MASK))
-                return 0;
+                return MERR_INVALOP;
             else
-                return 1;
+                return MERR_OPSIZEMISSING;
         }
     }
 
@@ -2121,26 +2141,26 @@ static int matches(const struct itemplate *itemp, insn * instruction, int bits)
     for (i = 0; i < itemp->operands; i++) {
         if (!(itemp->opd[i] & SIZE_MASK) &&
             (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
-            return 2;
+            return MERR_OPSIZEMISMATCH;
     }
 
     /*
      * Check template is okay at the set cpu level
      */
     if (((itemp->flags & IF_PLEVEL) > cpu))
-        return 3;
+        return MERR_BADCPU;
 
     /*
      * Verify the appropriate long mode flag.
      */
     if ((itemp->flags & (bits == 64 ? IF_NOLONG : IF_LONG)))
-        return 4;
+        return MERR_BADMODE;
 
     /*
      * Check if special handling needed for Jumps
      */
     if ((uint8_t)(itemp->code[0]) >= 0370)
-        return 99;
+        return MOK_JUMP;
 
     return ret;
 }
