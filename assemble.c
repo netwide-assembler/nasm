@@ -2107,6 +2107,9 @@ static enum match_result matches(const struct itemplate *itemp,
 	case 64:
 	    asize = BITS64;
 	    break;
+	default:
+	    asize = 0;
+	    break;
 	}
 	break;
     default:
