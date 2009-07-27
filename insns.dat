@@ -3118,13 +3118,13 @@ XSHA256		void				\336\3\x0F\xA6\xD0				PENT,CYRIX
 ;
 ; based on pub number 43479 revision 3.03 date May 2009
 ;
-VCVTPH2PS	xmmreg,xmmrm64*,imm		[rmi:	xop.m8.w0.l0 a0 /r ib]			AMD,SSE5
-VCVTPH2PS	ymmreg,xmmrm128,imm		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
-VCVTPH2PS	ymmreg,ymmrm128*,imm		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
+VCVTPH2PS	xmmreg,xmmrm64*,imm8		[rmi:	xop.m8.w0.l0 a0 /r ib]			AMD,SSE5
+VCVTPH2PS	ymmreg,xmmrm128,imm8		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
+VCVTPH2PS	ymmreg,ymmrm128*,imm8		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
 
-VCVTPS2PH	xmmrm64,xmmreg*,imm		[mri:	xop.m8.w0.l0 a1 /r ib]			AMD,SSE5
-VCVTPS2PH	xmmrm128,ymmreg,imm		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
-VCVTPS2PH	ymmrm128,ymmreg*,imm		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
+VCVTPS2PH	xmmrm64,xmmreg*,imm8		[mri:	xop.m8.w0.l0 a1 /r ib]			AMD,SSE5
+VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
+VCVTPS2PH	ymmrm128,ymmreg*,imm8		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
 
 VFMADDPD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 69 /r /is4]		AMD,SSE5
 VFMADDPD	ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 69 /r /is4]		AMD,SSE5
@@ -3226,18 +3226,18 @@ VPCMOV		ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	xop.m8.w0.nds.l1.p0 a2 /r /is4]		A
 VPCMOV		xmmreg,xmmreg*,xmmreg,xmmrm128	[rvsm:	xop.m8.w1.nds.l0.p0 a2 /r /is4]		AMD,SSE5
 VPCMOV		ymmreg,ymmreg*,ymmreg,ymmrm256	[rvsm:	xop.m8.w1.nds.l1.p0 a2 /r /is4]		AMD,SSE5
 
-VPCOMB		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 cc /r ib]		AMD,SSE5
-VPCOMD		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 ce /r ib]		AMD,SSE5
-VPCOMQ		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 cf /r ib]		AMD,SSE5
+VPCOMB		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 cc /r ib]		AMD,SSE5
+VPCOMD		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 ce /r ib]		AMD,SSE5
+VPCOMQ		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 cf /r ib]		AMD,SSE5
 ;
 ; fixed: spec mention only 3 operands in mnemonics
-VPCOMUB		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 ec /r ib]		AMD,SSE5
-VPCOMUD		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 ee /r ib]		AMD,SSE5
-VPCOMUQ		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 ef /r ib]		AMD,SSE5
+VPCOMUB		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 ec /r ib]		AMD,SSE5
+VPCOMUD		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 ee /r ib]		AMD,SSE5
+VPCOMUQ		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 ef /r ib]		AMD,SSE5
 ;
 ; fixed: spec point wrong VPCOMB in mnemonic
-VPCOMUW		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 ed /r ib]		AMD,SSE5
-VPCOMW		xmmreg,xmmreg*,xmmrm128,imm	[rvmi:	xop.m8.w0.nds.l0.p0 cd /r ib]		AMD,SSE5
+VPCOMUW		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 ed /r ib]		AMD,SSE5
+VPCOMW		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	xop.m8.w0.nds.l0.p0 cd /r ib]		AMD,SSE5
 
 VPHADDBD	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 c2 /r]			AMD,SSE5
 VPHADDBQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 c3 /r]			AMD,SSE5
@@ -3282,21 +3282,21 @@ VPROTB		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 90 /r]		AMD,SSE5
 VPROTB		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 90 /r]		AMD,SSE5
 ;
 ; fixed: spec point xmmreg instead of reg/mem
-VPROTB		xmmreg,xmmrm128*,imm		[rmi:	xop.m8.w0.l0.p0 c0 /r ib]		AMD,SSE5
+VPROTB		xmmreg,xmmrm128*,imm8		[rmi:	xop.m8.w0.l0.p0 c0 /r ib]		AMD,SSE5
 
 VPROTD		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 92 /r]		AMD,SSE5
 VPROTD		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 92 /r]		AMD,SSE5
 ;
 ; fixed: spec error /r is needed
-VPROTD		xmmreg,xmmrm128*,imm		[rmi:	xop.m8.w0.l0.p0 c2 /r ib]		AMD,SSE5
+VPROTD		xmmreg,xmmrm128*,imm8		[rmi:	xop.m8.w0.l0.p0 c2 /r ib]		AMD,SSE5
 VPROTQ		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 93 /r]		AMD,SSE5
 VPROTQ		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 93 /r]		AMD,SSE5
 ;
 ; fixed: spec error /r is needed
-VPROTQ		xmmreg,xmmrm128*,imm		[rmi:	xop.m8.w0.l0.p0 c3 /r ib]		AMD,SSE5
+VPROTQ		xmmreg,xmmrm128*,imm8		[rmi:	xop.m8.w0.l0.p0 c3 /r ib]		AMD,SSE5
 VPROTW		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 91 /r]		AMD,SSE5
 VPROTW		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 91 /r]		AMD,SSE5
-VPROTW		xmmreg,xmmrm128*,imm		[rmi:	xop.m8.w0.l0.p0 c1 /r ib]		AMD,SSE5
+VPROTW		xmmreg,xmmrm128*,imm8		[rmi:	xop.m8.w0.l0.p0 c1 /r ib]		AMD,SSE5
 
 VPSHAB		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 98 /r]		AMD,SSE5
 VPSHAB		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 98 /r]		AMD,SSE5
