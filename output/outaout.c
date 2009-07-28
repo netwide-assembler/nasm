@@ -508,7 +508,7 @@ static int32_t aout_add_gsym_reloc(struct Section *sect,
         /*
          * Find a symbol pointing _exactly_ at this one.
          */
-        for (sym = shead; sym; sym = sym->next)
+        list_for_each(sym, shead)
             if (sym->value == offset)
                 break;
     } else {
@@ -516,7 +516,7 @@ static int32_t aout_add_gsym_reloc(struct Section *sect,
          * Find the nearest symbol below this one.
          */
         sym = NULL;
-        for (sm = shead; sm; sm = sm->next)
+        list_for_each(sm, shead)
             if (sm->value <= offset && (!sym || sm->value > sym->value))
                 sym = sm;
     }
@@ -774,7 +774,7 @@ static void aout_fixup_relocs(struct Section *sect)
     struct Reloc *r;
 
     saa_rewind(sect->data);
-    for (r = sect->head; r; r = r->next) {
+    list_for_each(r, sect->head) {
         uint8_t *p, *q, blk[4];
         int32_t l;
 
@@ -843,7 +843,7 @@ static void aout_write(void)
 
 static void aout_write_relocs(struct Reloc *r)
 {
-    while (r) {
+    list_for_each(r, r) {
         uint32_t word2;
 
         fwriteint32_t(r->address, ofile);
@@ -856,8 +856,6 @@ static void aout_write_relocs(struct Reloc *r)
         word2 |= (r->bytes == 1 ? 0 :
                   r->bytes == 2 ? 0x2000000L : 0x4000000L);
         fwriteint32_t(word2, ofile);
-
-        r = r->next;
     }
 }
 
