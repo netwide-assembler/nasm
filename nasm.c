@@ -764,12 +764,17 @@ static bool process_arg(char *p, char *q)
                  "            [options...] [--] filename\n"
                  "    or nasm -v   for version info\n\n"
                  "    -t          assemble in SciTech TASM compatible mode\n"
-                 "    -g          generate debug information in selected format.\n");
+                 "    -g          generate debug information in selected format\n");
             printf
                 ("    -E (or -e)  preprocess only (writes output to stdout by default)\n"
                  "    -a          don't preprocess (assemble only)\n"
                  "    -M          generate Makefile dependencies on stdout\n"
-                 "    -MG         d:o, missing files assumed generated\n\n"
+                 "    -MG         d:o, missing files assumed generated\n"
+                 "    -MF <file>  set Makefile dependency file\n"
+                 "    -MD <file>  assemble and generate dependencies\n"
+                 "    -MT <file>  dependency target name\n"
+                 "    -MQ <file>  dependency target name (quoted)\n"
+                 "    -MP         emit phony target\n\n"
                  "    -Z<file>    redirect error messages to file\n"
                  "    -s          redirect error messages to stdout\n\n"
                  "    -F format   select a debugging format\n\n"
@@ -781,7 +786,10 @@ static bool process_arg(char *p, char *q)
                  "    -U<macro>   undefines a macro\n"
                  "    -X<format>  specifies error reporting format (gnu or vc)\n"
                  "    -w+foo      enables warning foo (equiv. -Wfoo)\n"
-		 "    -w-foo      disable warning foo (equiv. -Wno-foo)\n"
+                 "    -w-foo      disable warning foo (equiv. -Wno-foo)\n\n"
+                 "--prefix,--postfix\n"
+                 "  this options prepend or append the given argument to all\n"
+                 "  extern and global variables\n\n"
                  "Warnings:\n");
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
