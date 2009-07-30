@@ -284,7 +284,7 @@ static void emit_dependencies(StrList *list)
     }
 
     linepos = fprintf(deps, "%s:", depend_target);
-    for (l = list; l; l = l->next) {
+    list_for_each(l, list) {
 	len = strlen(l->str);
 	if (linepos + len > 62) {
 	    fprintf(deps, " \\\n ");
@@ -295,11 +295,9 @@ static void emit_dependencies(StrList *list)
     }
     fprintf(deps, "\n\n");
 
-    for (l = list; l; l = nl) {
+    list_for_each_safe(l, nl, list) {
 	if (depend_emit_phony)
 	    fprintf(deps, "%s:\n\n", l->str);
-
-	nl = l->next;
 	nasm_free(l);
     }
 

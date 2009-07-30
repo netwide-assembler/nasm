@@ -378,7 +378,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                     "instruction->times < 0 (%ld) in assemble()", t);
 
         while (t--) {           /* repeat TIMES times */
-            for (e = instruction->eops; e; e = e->next) {
+            list_for_each(e, instruction->eops) {
                 if (e->type == EOT_DB_NUMBER) {
                     if (wsize == 1) {
                         if (e->segment != NO_SEG)
@@ -704,7 +704,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 	    break;
         }
 
-        for (e = instruction->eops; e; e = e->next) {
+        list_for_each(e, instruction->eops) {
             int32_t align;
 
             osize = 0;
