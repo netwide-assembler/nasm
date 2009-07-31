@@ -778,7 +778,10 @@ static bool process_arg(char *p, char *q)
                  "    -F format   select a debugging format\n\n"
                  "    -I<path>    adds a pathname to the include file path\n");
             printf
-                ("    -O<digit>   optimize branch offsets (-O0 disables, default)\n"
+                ("    -O<digit>   optimize branch offsets\n"
+                 "                -O0: No optimisation (default)\n"
+                 "                -O1: Minimal optimization\n"
+                 "                -Ox: Multipass optimization (recommended)\n\n"
                  "    -P<file>    pre-includes a file\n"
                  "    -D<macro>[=<value>] pre-defines a macro\n"
                  "    -U<macro>   undefines a macro\n"
