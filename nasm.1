@@ -112,8 +112,51 @@ Causes
 to output Makefile-style dependencies to stdout; normal output is
 suppressed.
 .TP
+.BI \-MG " file"
+Same as
+.B \-M
+but assumes that missing Makefile dependecies are generated and added
+to dependency list without a prefix.
+.TP
+.BI \-MF " file"
+Output Makefile-style dependencies to the specified file.
+.TP
+.BI \-MD " file"
+Same as a combination of
+.B \-M
+and
+.B \-MF
+options.
+.TP
+.BI \-MT " file"
+Override the default name of the dependency target
+dependency target name. This is normally the same
+as the output filename, specified by the
+.B \-o
+option.
+.TP
+.BI \-MQ " file"
+The same as
+.B \-MT
+except it tries to quote characters that have special
+meaning in Makefile syntax. This is not foolproof,
+as not all characters with special meaning are quotable
+in Make.
+.TP
+.BI \-MP
+Emit phony target
+.TP
 .BI \-O " number"
-optimize branch offsets (-O0 disables, default).
+Optimize branch offsets.
+.ti
+.B \-O0
+:No optimization (default)
+.ti
+.B \-O1
+:Minimal optimization
+.ti
+.B \-Ox
+:Multipass optimization (recommended)
 .TP
 .BI \-o " outfile"
 Specifies a precise name for the output file, overriding
@@ -180,6 +223,12 @@ to redirect error messages to
 .IR filename .
 This option exists to support operating systems on which stderr is not
 easily redirected.
+.TP
+.BI \-\-prefix
+.TP
+.BI \-\-postfix
+Prepend or append (respectively) the given argument to all
+global or extern variables.
 .PP
 .RE
 .SS SYNTAX
