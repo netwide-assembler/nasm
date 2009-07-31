@@ -779,7 +779,7 @@ static bool process_arg(char *p, char *q)
                  "    -I<path>    adds a pathname to the include file path\n");
             printf
                 ("    -O<digit>   optimize branch offsets\n"
-                 "                -O0: No optimisation (default)\n"
+                 "                -O0: No optimization (default)\n"
                  "                -O1: Minimal optimization\n"
                  "                -Ox: Multipass optimization (recommended)\n\n"
                  "    -P<file>    pre-includes a file\n"
