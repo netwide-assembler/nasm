@@ -188,7 +188,7 @@ static struct Section *find_section_by_name(const char *name)
 {
     struct Section *s;
 
-    for (s = sections; s; s = s->next)
+    list_for_each(s, sections)
         if (!strcmp(s->name, name))
             break;
     return s;
@@ -198,7 +198,7 @@ static struct Section *find_section_by_index(int32_t index)
 {
     struct Section *s;
 
-    for (s = sections; s; s = s->next)
+    list_for_each(s, sections)
         if ((index == s->vstart_index) || (index == s->start_index))
             break;
     return s;
@@ -540,10 +540,10 @@ static void bin_cleanup(int debuginfo)
     /* Step 5: Apply relocations. */
 
     /* Prepare the sections for relocating. */
-    for (s = sections; s; s = s->next)
+    list_for_each(s, sections)
         saa_rewind(s->contents);
     /* Apply relocations. */
-    for (r = relocs; r; r = r->next) {
+    list_for_each(r, relocs) {
         uint8_t *p, *q, mydata[8];
         int64_t l;
 
@@ -617,7 +617,7 @@ static void bin_cleanup(int debuginfo)
                 fputc('-', rf);
             fprintf(rf, "\n\nVstart            Start             Stop              "
                     "Length    Class     Name\n");
-            for (s = sections; s; s = s->next) {
+            list_for_each(s, sections) {
                 fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %16"PRIX64"  %08"PRIX64"  ",
                         s->vstart, s->start, s->start + s->length,
                         s->length);
@@ -635,7 +635,7 @@ static void bin_cleanup(int debuginfo)
             for (h = 56; h; h--)
                 fputc('-', rf);
             fprintf(rf, "\n\n");
-            for (s = sections; s; s = s->next) {
+            list_for_each(s, sections) {
                 fprintf(rf, "---- Section %s ", s->name);
                 for (h = 65 - strlen(s->name); h; h--)
                     fputc('-', rf);
@@ -682,19 +682,19 @@ static void bin_cleanup(int debuginfo)
                 for (h = 63; h; h--)
                     fputc('-', rf);
                 fprintf(rf, "\n\nValue     Name\n");
-                for (l = no_seg_labels; l; l = l->next) {
+                list_for_each(l, no_seg_labels) {
                     lookup_label(l->name, &segment, &offset);
                     fprintf(rf, "%08"PRIX64"  %s\n", offset, l->name);
                 }
                 fprintf(rf, "\n\n");
             }
-            for (s = sections; s; s = s->next) {
+            list_for_each(s, sections) {
                 if (s->labels) {
                     fprintf(rf, "---- Section %s ", s->name);
                     for (h = 65 - strlen(s->name); h; h--)
                         fputc('-', rf);
                     fprintf(rf, "\n\nReal              Virtual           Name\n");
-                    for (l = s->labels; l; l = l->next) {
+                    list_for_each(l, s->labels) {
                         lookup_label(l->name, &segment, &offset);
                         fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %s\n",
                                 s->start + offset, s->vstart + offset,
@@ -1197,7 +1197,7 @@ static void bin_define_section_labels(void)
 
     if (labels_defined)
         return;
-    for (sec = sections; sec; sec = sec->next) {
+    list_for_each(sec, sections) {
         base_len = strlen(sec->name) + 8;
         label_name = nasm_malloc(base_len + 8);
         strcpy(label_name, "section.");
@@ -1227,7 +1227,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
      */
     if (!name) {                /* Reset ORG and section attributes at the start of each pass. */
         origin_defined = 0;
-        for (sec = sections; sec; sec = sec->next)
+        list_for_each(sec, sections)
             sec->flags &= ~(START_DEFINED | VSTART_DEFINED |
                             ALIGN_DEFINED | VALIGN_DEFINED);
 
@@ -1457,7 +1457,7 @@ static void do_output_bin(void)
     uint64_t addr = origin;
 
     /* Write the progbits sections to the output file. */
-    for (s = sections; s; s = s->next) {
+    list_for_each(s, sections) {
 	/* Skip non-progbits sections */
 	if (!(s->flags & TYPE_PROGBITS))
 	    continue;
@@ -1514,7 +1514,7 @@ static void do_output_ith(void)
 
     /* Write the progbits sections to the output file. */
     hilba = 0;
-    for (s = sections; s; s = s->next) {
+    list_for_each(s, sections) {
 	/* Skip non-progbits sections */
 	if (!(s->flags & TYPE_PROGBITS))
 	    continue;
@@ -1603,7 +1603,7 @@ static void do_output_srec(void)
     char dtype, etype;
 
     maxaddr = 0;
-    for (s = sections; s; s = s->next) {
+    list_for_each(s, sections) {
 	/* Skip non-progbits sections */
 	if (!(s->flags & TYPE_PROGBITS))
 	    continue;
@@ -1634,7 +1634,7 @@ static void do_output_srec(void)
     write_srecord(0, 2, 0, '0', NULL);
 
     /* Write the progbits sections to the output file. */
-    for (s = sections; s; s = s->next) {
+    list_for_each(s, sections) {
 	/* Skip non-progbits sections */
 	if (!(s->flags & TYPE_PROGBITS))
 	    continue;
