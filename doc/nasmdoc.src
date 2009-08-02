@@ -373,16 +373,18 @@ NASM has a \i{website} at
 \W{http://www.nasm.us/}\c{http://www.nasm.us/}. If it's not there,
 google for us!
 
-\i{New releases} of NASM are available from the official web site.
+\i{New releases}, \i{release candidates}, and \I{snapshots, daily
+development}\i{daily development snapshots} of NASM are available from
+the official web site.
 
 Announcements are posted to
 \W{news:comp.lang.asm.x86}\i\c{comp.lang.asm.x86},
 and to the web site
 \W{http://www.freshmeat.net/}\c{http://www.freshmeat.net/}.
 
-If you want information about NASM beta releases, and the current
-development status, please subscribe to the \i\c{nasm-devel} email
-list; see link from the website.
+If you want information about the current development status, please
+subscribe to the \i\c{nasm-devel} email list; see link from the
+website.
 
 
 \H{install} Installation
@@ -2302,7 +2304,7 @@ Similarly:
 
 \c %strcat beta '"foo"\', "'bar'"
 
-... would assign the value \c{`"foo"\\'bar'`} to \c{beta}.
+... would assign the value \c{`"foo"\\\\'bar'`} to \c{beta}.
 
 The use of commas to separate strings is permitted but optional.
 
