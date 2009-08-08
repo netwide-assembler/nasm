@@ -364,7 +364,7 @@ if ( !defined($output) || $output eq 'i' ) {
 	$maxlen = $len if ( $len > $maxlen );
     }
     print I "\tI_none = -1\n";
-    print I "\n};\n\n";
+    print I "};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n";
     print I "#define FIRST_COND_OPCODE I_", $opcodes_cc[0], "\n\n";
     print I "#endif /* NASM_INSNSI_H */\n";
