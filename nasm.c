@@ -1162,7 +1162,7 @@ static enum directives getkw(char **directive, char **value);
 
 static void assemble_file(char *fname, StrList **depend_ptr)
 {
-    char *directive, *value, *p, *q, *special, *line, debugid[80];
+    char *directive, *value, *p, *q, *special, *line;
     insn output_ins;
     int i, validid;
     bool rn_error;
@@ -1395,27 +1395,43 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     location.segment = NO_SEG;
                     break;
                 case D_DEBUG:		/* [DEBUG] */
+		{
+		    char debugid[128];
+		    bool badid, overlong;
+
                     p = value;
                     q = debugid;
-                    validid = true;
-                    if (!isidstart(*p))
-                        validid = false;
-                    while (*p && !nasm_isspace(*p)) {
-                        if (!isidchar(*p))
-                            validid = false;
-                        *q++ = *p++;
-                    }
-                    *q++ = 0;
-                    if (!validid) {
-                        nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                     "identifier expected after DEBUG");
-                        break;
-                    }
+		    badid = overlong = false;
+                    if (!isidstart(*p)) {
+                        badid = true;
+		    } else {
+			while (*p && !nasm_isspace(*p)) {
+			    if (q >= debugid + sizeof debugid - 1) {
+				overlong = true;
+				break;
+			    }
+			    if (!isidchar(*p))
+				badid = true;
+			    *q++ = *p++;
+			}
+			*q = 0;
+		    }
+                    if (badid) {
+			nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+				   "identifier expected after DEBUG");
+			break;
+		    }
+		    if (overlong) {
+			nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+				   "DEBUG identifier too long");
+			break;
+		    }
                     while (*p && nasm_isspace(*p))
                         p++;
                     if (pass0 == 2)
                         dfmt->debug_directive(debugid, p);
                     break;
+		}
                 case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
 		    while (*value && nasm_isspace(*value))
 			value++;
