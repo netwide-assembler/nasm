@@ -55,7 +55,7 @@ void null_debug_deflabel(char *name, int32_t segment, int64_t offset,
 	(void)special;
 }
 
-void null_debug_routine(const char *directive, const char *params)
+void null_debug_directive(const char *directive, const char *params)
 {
 	(void)directive;
 	(void)params;
@@ -82,7 +82,7 @@ struct dfmt null_debug_form = {
     null_debug_init,
     null_debug_linenum,
     null_debug_deflabel,
-    null_debug_routine,
+    null_debug_directive,
     null_debug_typevalue,
     null_debug_output,
     null_debug_cleanup

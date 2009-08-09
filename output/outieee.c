@@ -1479,7 +1479,7 @@ static struct dfmt ladsoft_debug_form = {
     dbgls_init,
     dbgls_linnum,
     dbgls_deflabel,
-    null_debug_routine,
+    null_debug_directive,
     dbgls_typevalue,
     dbgls_output,
     dbgls_cleanup,
