@@ -1553,7 +1553,7 @@ int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize)
     }
 
     if (str)
-	strcpy(output, str);
+	snprintf(output, outbufsize, "%s", str);
 
     return 1;
 }
