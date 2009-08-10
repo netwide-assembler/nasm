@@ -100,6 +100,10 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # endif
 #endif
 
+#if !defined(HAVE_STRLCPY) || !HAVE_DECL_STRLCPY
+size_t strlcpy(char *, const char *, size_t);
+#endif
+
 #ifndef __cplusplus		/* C++ has false, true, bool as keywords */
 # if defined(HAVE_STDBOOL_H) && defined(HAVE_WORKING_BOOL)
 #  include <stdbool.h>

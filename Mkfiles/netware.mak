@@ -43,7 +43,8 @@ NASM =	nasm.o nasmlib.o ver.o \
 	outdbg.o outieee.o outmacho32.o \
 	outmacho64.o preproc.o quote.o pptok.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
-	strfunc.o tokhash.o regvals.o regflags.o
+	strfunc.o tokhash.o regvals.o regflags.o \
+	strlcpy.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o ver.o \
 	insnsd.o insnsb.o insnsn.o regs.o regdis.o
@@ -150,6 +151,7 @@ insnsn.o: insnsn.c compiler.h config.h insnsi.h tables.h
 labels.o: labels.c compiler.h config.h directives.h hashtbl.h insnsi.h \
  nasm.h nasmlib.h pptok.h preproc.h regs.h
 snprintf.o: snprintf.c compiler.h config.h nasmlib.h
+strlcpy.o: strlcpy.c compiler.h config.h
 vsnprintf.o: vsnprintf.c compiler.h config.h nasmlib.h
 listing.o: listing.c compiler.h config.h directives.h insnsi.h listing.h \
  nasm.h nasmlib.h pptok.h preproc.h regs.h
@@ -185,8 +187,6 @@ outelf32.o: outelf32.c compiler.h config.h directives.h eval.h insnsi.h \
 outelf64.o: outelf64.c compiler.h config.h directives.h eval.h insnsi.h \
  nasm.h nasmlib.h dwarf.h elf64.h elfcommon.h outelf.h outform.h outlib.h \
  pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
-outexe.o: outexe.c compiler.h config.h directives.h insnsi.h nasm.h \
- nasmlib.h outform.h pptok.h preproc.h regs.h
 outform.o: outform.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h
 outieee.o: outieee.c compiler.h config.h directives.h insnsi.h nasm.h \
@@ -203,13 +203,13 @@ outrdf.o: outrdf.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h pptok.h preproc.h regs.h
 outrdf2.o: outrdf2.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h outform.h outlib.h pptok.h preproc.h rdoff.h regs.h saa.h
-parser.o: parser.c compiler.h config.h directives.h float.h insns.h insnsi.h \
- nasm.h nasmlib.h parser.h pptok.h preproc.h regs.h stdscan.h tables.h \
- tokens.h
+parser.o: parser.c compiler.h config.h directives.h eval.h float.h insns.h \
+ insnsi.h nasm.h nasmlib.h parser.h pptok.h preproc.h regs.h stdscan.h \
+ tables.h tokens.h
 pptok.o: pptok.c compiler.h config.h hashtbl.h nasmlib.h pptok.h preproc.h
-preproc.o: preproc.c compiler.h config.h directives.h hashtbl.h insnsi.h \
- nasm.h nasmlib.h pptok.h preproc.h quote.h regs.h stdscan.h tables.h \
- tokens.h
+preproc.o: preproc.c compiler.h config.h directives.h eval.h hashtbl.h \
+ insnsi.h nasm.h nasmlib.h pptok.h preproc.h quote.h regs.h stdscan.h \
+ tables.h tokens.h
 quote.o: quote.c compiler.h config.h nasmlib.h quote.h
 raa.o: raa.c compiler.h config.h nasmlib.h raa.h
 rbtree.o: rbtree.c compiler.h config.h rbtree.h

@@ -70,7 +70,8 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho32.$(O) \
 	output/outmacho64.$(O) preproc.$(O) quote.$(O) pptok.$(O) \
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
-	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O)
+	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
+	lib/strlcpy.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
@@ -248,6 +249,7 @@ insnsn.$(O): insnsn.c compiler.h insnsi.h tables.h
 labels.$(O): labels.c compiler.h directives.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h pptok.h preproc.h regs.h
 lib/snprintf.$(O): lib/snprintf.c compiler.h nasmlib.h
+lib/strlcpy.$(O): lib/strlcpy.c compiler.h
 lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h nasmlib.h
 listing.$(O): listing.c compiler.h directives.h insnsi.h listing.h nasm.h \
  nasmlib.h pptok.h preproc.h regs.h
@@ -289,8 +291,6 @@ output/outelf64.$(O): output/outelf64.c compiler.h directives.h eval.h \
  insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf64.h output/elfcommon.h \
  output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  rbtree.h regs.h saa.h stdscan.h
-output/outexe.$(O): output/outexe.c compiler.h directives.h insnsi.h nasm.h \
- nasmlib.h output/outform.h pptok.h preproc.h regs.h
 output/outform.$(O): output/outform.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outform.h pptok.h preproc.h regs.h
 output/outieee.$(O): output/outieee.c compiler.h directives.h insnsi.h \
@@ -311,12 +311,13 @@ output/outrdf.$(O): output/outrdf.c compiler.h directives.h insnsi.h nasm.h \
 output/outrdf2.$(O): output/outrdf2.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h output/outform.h output/outlib.h pptok.h preproc.h \
  rdoff/rdoff.h regs.h saa.h
-parser.$(O): parser.c compiler.h directives.h float.h insns.h insnsi.h \
- nasm.h nasmlib.h parser.h pptok.h preproc.h regs.h stdscan.h tables.h \
- tokens.h
+parser.$(O): parser.c compiler.h directives.h eval.h float.h insns.h \
+ insnsi.h nasm.h nasmlib.h parser.h pptok.h preproc.h regs.h stdscan.h \
+ tables.h tokens.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
-preproc.$(O): preproc.c compiler.h directives.h hashtbl.h insnsi.h nasm.h \
- nasmlib.h pptok.h preproc.h quote.h regs.h stdscan.h tables.h tokens.h
+preproc.$(O): preproc.c compiler.h directives.h eval.h hashtbl.h insnsi.h \
+ nasm.h nasmlib.h pptok.h preproc.h quote.h regs.h stdscan.h tables.h \
+ tokens.h
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h nasmlib.h raa.h
 rbtree.$(O): rbtree.c compiler.h rbtree.h
