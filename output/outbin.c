@@ -241,7 +241,7 @@ static void bin_cleanup(int debuginfo)
     (void)debuginfo;      /* placate optimizers */
 
 #ifdef DEBUG
-    fprintf(stdout,
+    nasm_error(ERR_DEBUG,
             "bin_cleanup: Sections were initially referenced in this order:\n");
     for (h = 0, s = sections; s; h++, s = s->next)
         fprintf(stdout, "%i. %s\n", h, s->name);
@@ -530,7 +530,7 @@ static void bin_cleanup(int debuginfo)
         nasm_error(ERR_FATAL|ERR_NOFILE, "circular vfollows path detected");
 
 #ifdef DEBUG
-    fprintf(stdout,
+    nasm_error(ERR_DEBUG,
             "bin_cleanup: Confirm final section order for output file:\n");
     for (h = 0, s = sections; s && (s->flags & TYPE_PROGBITS);
          h++, s = s->next)

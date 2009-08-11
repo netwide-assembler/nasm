@@ -386,7 +386,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
             if (align == 0)
                 align = 1;
             if ((align - 1) & align) {  /* means it's not a power of two */
-                nasm_error(ERR_NONFATAL, "section alignment %d is not"
+                nasm_error(ERR_NONFATAL, "section alignment %"PRId64" is not"
                       " a power of two", align);
                 align = 1;
             }
@@ -465,8 +465,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     bool special_used = false;
 
 #if defined(DEBUG) && DEBUG>2
-    fprintf(stderr,
-            " elf_deflabel: %s, seg=%x, off=%x, is_global=%d, %s\n",
+    nasm_error(ERR_DEBUG,
+            " elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
             name, segment, offset, is_global, special);
 #endif
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
@@ -792,12 +792,14 @@ static void elf_out(int32_t segto, const void *data,
     zero = 0;
 
 #if defined(DEBUG) && DEBUG>2
-    if (data) fprintf(stderr,
-            " elf_out line: %d type: %x seg: %d segto: %d bytes: %x data: %"PRIx64"\n",
-               currentline, type, segment, segto, size, *(int64_t *)data);
-    else fprintf(stderr,
-            " elf_out line: %d type: %x seg: %d segto: %d bytes: %x\n",
-               currentline, type, segment, segto, size);
+    if (data)
+        nasm_error(ERR_DEBUG,
+                   " elf_out line: %d type: %x seg: %"PRIx32" segto: %"PRIx32" bytes: %"PRIx64" data: %"PRIx64"\n",
+                   currentline, type, segment, segto, size, *(int64_t *)data);
+    else
+        nasm_error(ERR_DEBUG,
+                   " elf_out line: %d type: %x seg: %"PRIx32" segto: %"PRIx32" bytes: %"PRIx64"\n",
+                   currentline, type, segment, segto, size);
 #endif
 
     /*

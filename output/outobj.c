@@ -774,8 +774,8 @@ static void obj_deflabel(char *name, int32_t segment,
     bool used_special = false;   /* have we used the special text? */
 
 #if defined(DEBUG) && DEBUG>2
-    fprintf(stderr,
-            " obj_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
+    nasm_error(ERR_DEBUG,
+            " obj_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
             name, segment, offset, is_global, special);
 #endif
 
@@ -1288,7 +1288,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
      * by sponging off the label manager.
      */
 #if defined(DEBUG) && DEBUG>=3
-    fprintf(stderr, " obj_segment: < %s >, pass=%d, *bits=%d\n",
+    nasm_error(ERR_DEBUG, " obj_segment: < %s >, pass=%d, *bits=%d\n",
             name, pass, *bits);
 #endif
     if (!name) {

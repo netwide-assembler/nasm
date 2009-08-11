@@ -224,7 +224,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
 #if DEBUG<3
     if (!strncmp(label, "debugdump", 9))
 #endif
-        nasm_error(ERR_DEBUG, "redefine_label (%s, %ld, %08lx, %s, %d, %d)",
+        nasm_error(ERR_DEBUG, "redefine_label (%s, %"PRIx32", %"PRIx64", %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
 
@@ -288,7 +288,7 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
 #if DEBUG<3
     if (!strncmp(label, "debugdump", 9))
 #endif
-        nasm_error(ERR_DEBUG, "define_label (%s, %ld, %08lx, %s, %d, %d)",
+        nasm_error(ERR_DEBUG, "define_label (%s, %"PRIx32", %"PRIx64", %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
     lptr = find_label(label, 1);

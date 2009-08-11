@@ -283,7 +283,7 @@ restart_parse:
             } else {
                 result->times = value->value;
                 if (value->value < 0 && pass0 == 2) {
-                    nasm_error(ERR_NONFATAL, "TIMES value %d is negative",
+                    nasm_error(ERR_NONFATAL, "TIMES value %"PRId64" is negative",
                           value->value);
                     result->times = 0;
                 }
@@ -531,11 +531,11 @@ restart_parse:
                 nasm_error(ERR_NONFATAL, "`incbin' expects a file name");
             else if (result->eops->next &&
                      result->eops->next->type != EOT_DB_NUMBER)
-                nasm_error(ERR_NONFATAL, "`incbin': second parameter is",
+                nasm_error(ERR_NONFATAL, "`incbin': second parameter is"
                       " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->type != EOT_DB_NUMBER)
-                nasm_error(ERR_NONFATAL, "`incbin': third parameter is",
+                nasm_error(ERR_NONFATAL, "`incbin': third parameter is"
                       " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->next)

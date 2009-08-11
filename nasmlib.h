@@ -84,7 +84,11 @@ extern unsigned char nasm_tolower_tab[256];
  */
 typedef void (*efunc) (int severity, const char *fmt, ...);
 typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
+#ifdef __GNUC__
+void nasm_error(int severity, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+#else
 void nasm_error(int severity, const char *fmt, ...);
+#endif
 void nasm_set_verror(vefunc);
 
 /*

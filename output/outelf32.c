@@ -461,8 +461,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     bool special_used = false;
 
 #if defined(DEBUG) && DEBUG>2
-    fprintf(stderr,
-            " elf_deflabel: %s, seg=%ld, off=%ld, is_global=%d, %s\n",
+    nasm_error(ERR_DEBUG,
+            " elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
             name, segment, offset, is_global, special);
 #endif
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
