@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
     if (argc < 3 || !strncmp(argv[1], "-h", 2)
         || !strncmp(argv[1], "--h", 3)) {
-        printf(usage);
+        fputs(usage, stdout);
         exit(1);
     }
 

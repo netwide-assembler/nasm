@@ -1152,7 +1152,7 @@ static void ieee_putascii(char *format, ...)
         if ((uint8_t)buffer[i] > 31)
             checksum += buffer[i];
     va_end(ap);
-    fprintf(ofile, buffer);
+    fputs(buffer, ofile);
 }
 
 /*

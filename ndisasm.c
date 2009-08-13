@@ -112,7 +112,7 @@ int main(int argc, char **argv)
                     p++;
                     break;
                 case 'h':
-                    fprintf(stderr, help);
+                    fputs(help, stderr);
                     return 0;
                 case 'r':
                 case 'v':
