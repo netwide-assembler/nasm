@@ -667,7 +667,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     errfunc = error;            /* to pass to other functions */
     cpu = cp;
 
-    if (instruction->opcode == -1)
+    if (instruction->opcode == I_none)
         return 0;
 
     if (instruction->opcode == I_DB || instruction->opcode == I_DW ||

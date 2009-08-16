@@ -213,14 +213,14 @@ restart_parse:
     result->operands = 0;       /* must initialize this */
 
     if (i == 0) {               /* blank line - ignore */
-        result->opcode = -1;    /* and no instruction either */
+        result->opcode = I_none;    /* and no instruction either */
         return result;
     }
     if (i != TOKEN_ID && i != TOKEN_INSN && i != TOKEN_PREFIX &&
         (i != TOKEN_REG || (REG_SREG & ~nasm_reg_flags[tokval.t_integer]))) {
         nasm_error(ERR_NONFATAL, "label or instruction expected"
               " at start of line");
-        result->opcode = -1;
+        result->opcode = I_none;
         return result;
     }
 
@@ -249,7 +249,7 @@ restart_parse:
     }
 
     if (i == 0) {
-        result->opcode = -1;    /* this line contains just a label */
+        result->opcode = I_none;    /* this line contains just a label */
         return result;
     }
 
@@ -273,7 +273,7 @@ restart_parse:
                 evaluate(stdscan, NULL, &tokval, NULL, pass0, nasm_error, NULL);
             i = tokval.t_type;
             if (!value) {       /* but, error in evaluator */
-                result->opcode = -1;    /* unrecoverable parse error: */
+                result->opcode = I_none;    /* unrecoverable parse error: */
                 return result;  /* ignore this instruction */
             }
             if (!is_simple(value)) {
@@ -325,7 +325,7 @@ restart_parse:
             return result;
         } else {
             nasm_error(ERR_NONFATAL, "parser: instruction expected");
-            result->opcode = -1;
+            result->opcode = I_none;
             return result;
         }
     }
@@ -486,7 +486,7 @@ restart_parse:
                                  critical, nasm_error, NULL);
                 i = tokval.t_type;
                 if (!value) {   /* error in evaluator */
-                    result->opcode = -1;        /* unrecoverable parse error: */
+                    result->opcode = I_none;        /* unrecoverable parse error: */
                     return result;      /* ignore this instruction */
                 }
                 if (is_unknown(value)) {
@@ -516,7 +516,7 @@ restart_parse:
             if (i != ',') {
                 nasm_error(ERR_NONFATAL, "comma expected after operand %d",
                       oper_num);
-                result->opcode = -1;    /* unrecoverable parse error: */
+                result->opcode = I_none;    /* unrecoverable parse error: */
                 return result;  /* ignore this instruction */
             }
         }
@@ -547,7 +547,7 @@ restart_parse:
              * If we reach here, one of the above errors happened.
              * Throw the instruction away.
              */
-            result->opcode = -1;
+            result->opcode = I_none;
             return result;
         } else /* DB ... */ if (oper_num == 0)
             nasm_error(ERR_WARNING | ERR_PASS1,
@@ -665,7 +665,7 @@ restart_parse:
             result->forw_ref = true;
         }
         if (!value) {           /* nasm_error in evaluator */
-            result->opcode = -1;        /* unrecoverable parse error: */
+            result->opcode = I_none;        /* unrecoverable parse error: */
             return result;      /* ignore this instruction */
         }
         if (i == ':' && mref) { /* it was seg:offset */
@@ -698,7 +698,7 @@ restart_parse:
             }
             /* and get the offset */
             if (!value) {       /* but, error in evaluator */
-                result->opcode = -1;    /* unrecoverable parse error: */
+                result->opcode = I_none;    /* unrecoverable parse error: */
                 return result;  /* ignore this instruction */
             }
         }
@@ -755,7 +755,7 @@ restart_parse:
                 else if (e->value != 1) {       /* If both want to be index */
                     nasm_error(ERR_NONFATAL,
                           "beroset-p-592-invalid effective address");
-                    result->opcode = -1;
+                    result->opcode = I_none;
                     return result;
                 } else
                     b = e->type;
@@ -765,7 +765,7 @@ restart_parse:
                 if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
                     nasm_error(ERR_NONFATAL,
                           "beroset-p-603-invalid effective address");
-                    result->opcode = -1;
+                    result->opcode = I_none;
                     return result;
                 } else {
                     if (e->type == EXPR_UNKNOWN) {
@@ -791,7 +791,7 @@ restart_parse:
                         if (e->type && e->type < EXPR_SEGBASE) {
                             nasm_error(ERR_NONFATAL,
                                   "beroset-p-630-invalid effective address");
-                            result->opcode = -1;
+                            result->opcode = I_none;
                             return result;
                         }
                         while (e->type && e->value == 0)
@@ -799,7 +799,7 @@ restart_parse:
                         if (e->type && e->value != 1) {
                             nasm_error(ERR_NONFATAL,
                                   "beroset-p-637-invalid effective address");
-                            result->opcode = -1;
+                            result->opcode = I_none;
                             return result;
                         }
                         if (e->type) {
@@ -813,7 +813,7 @@ restart_parse:
                         if (e->type) {
                             nasm_error(ERR_NONFATAL,
                                   "beroset-p-650-invalid effective address");
-                            result->opcode = -1;
+                            result->opcode = I_none;
                             return result;
                         }
                     }
@@ -827,7 +827,7 @@ restart_parse:
             if (e->type != 0) { /* there'd better be nothing left! */
                 nasm_error(ERR_NONFATAL,
                       "beroset-p-663-invalid effective address");
-                result->opcode = -1;
+                result->opcode = I_none;
                 return result;
             }
 
@@ -887,7 +887,7 @@ restart_parse:
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
                     nasm_error(ERR_NONFATAL, "invalid operand type");
-                    result->opcode = -1;
+                    result->opcode = I_none;
                     return result;
                 }
 
@@ -897,7 +897,7 @@ restart_parse:
                 for (i = 1; value[i].type; i++)
                     if (value[i].value) {
                         nasm_error(ERR_NONFATAL, "invalid operand type");
-                        result->opcode = -1;
+                        result->opcode = I_none;
                         return result;
                     }
 
