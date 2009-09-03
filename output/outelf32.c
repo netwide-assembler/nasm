@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -32,8 +32,8 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * outelf32.c	output routines for the Netwide Assembler to produce
- *		ELF32 (i386 of course) object file format
+ * outelf32.c   output routines for the Netwide Assembler to produce
+ *              ELF32 (i386 of course) object file format
  */
 
 #include "compiler.h"
@@ -65,21 +65,21 @@
  */
 struct Reloc {
     struct Reloc *next;
-    int32_t address;               /* relative to _start_ of section */
-    int32_t symbol;                /*  symbol index */
+    int32_t address;            /* relative to _start_ of section */
+    int32_t symbol;             /*  symbol index */
     int type;                   /* type of relocation */
 };
 
 struct Symbol {
-    struct rbtree symv;	       /* symbol value and symbol rbtree */
-    int32_t strpos;	       /* string table position of name */
-    int32_t section;	       /* section ID of the symbol */
-    int type;                  /* symbol type */
-    int other;		       /* symbol visibility */
-    int32_t size;	       /* size of symbol */
-    int32_t globnum;	       /* symbol table offset if global */
-    struct Symbol *nextfwd;    /* list of unresolved-size symbols */
-    char *name;		       /* used temporarily if in above list */
+    struct rbtree symv;         /* symbol value and symbol rbtree */
+    int32_t strpos;             /* string table position of name */
+    int32_t section;            /* section ID of the symbol */
+    int type;                   /* symbol type */
+    int other;                  /* symbol visibility */
+    int32_t size;               /* size of symbol */
+    int32_t globnum;            /* symbol table offset if global */
+    struct Symbol *nextfwd;     /* list of unresolved-size symbols */
+    char *name;                 /* used temporarily if in above list */
 };
 
 struct Section {
@@ -88,7 +88,7 @@ struct Section {
     int32_t index;
     int type;                   /* SHT_PROGBITS or SHT_NOBITS */
     uint32_t align;             /* alignment: power of two */
-    uint32_t flags;		/* section flags */
+    uint32_t flags;             /* section flags */
     char *name;
     struct SAA *rel;
     int32_t rellen;
@@ -118,8 +118,8 @@ static struct Symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
-static uint8_t elf_osabi = 0;	/* Default OSABI = 0 (System V or Linux) */
-static uint8_t elf_abiver = 0;	/* Current ABI version */
+static uint8_t elf_osabi = 0;   /* Default OSABI = 0 (System V or Linux) */
+static uint8_t elf_abiver = 0;  /* Current ABI version */
 
 extern struct ofmt of_elf32;
 extern struct ofmt of_elf;
@@ -412,9 +412,9 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         } else if (!nasm_stricmp(q, "nobits")) {
             type = SHT_NOBITS;
         } else if (pass == 1) {
-	    nasm_error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
+            nasm_error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
                   " declaration of section `%s'", q, name);
-	}
+        }
     }
 
     if (!strcmp(name, ".shstrtab") ||
@@ -429,23 +429,23 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         if (!strcmp(name, sects[i]->name))
             break;
     if (i == nsects) {
-	const struct elf_known_section *ks = elf_known_sections;
+        const struct elf_known_section *ks = elf_known_sections;
 
-	while (ks->name) {
-	    if (!strcmp(name, ks->name))
-		break;
-	    ks++;
-	}
+        while (ks->name) {
+            if (!strcmp(name, ks->name))
+                break;
+            ks++;
+        }
 
-	type = type ? type : ks->type;
-	align = align ? align : ks->align;
-	flags = (ks->flags & ~flags_and) | flags_or;
+        type = type ? type : ks->type;
+        align = align ? align : ks->align;
+        flags = (ks->flags & ~flags_and) | flags_or;
 
-	i = elf_make_section(name, type, flags, align);
+        i = elf_make_section(name, type, flags, align);
     } else if (pass == 1) {
           if ((type && sects[i]->type != type)
-	      || (align && sects[i]->align != align)
-             || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
+              || (align && sects[i]->align != align)
+              || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
             nasm_error(ERR_WARNING, "section attributes ignored on"
                   " redeclaration of section `%s'", name);
     }
@@ -562,8 +562,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             if (err)
                 nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " valid number", special);
-            else if ((sym->symv.key | (sym->symv.key - 1))
-		     != 2 * sym->symv.key - 1)
+            else if ((sym->symv.key | (sym->symv.key - 1)) != 2 * sym->symv.key - 1)
                 nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
                       " power of two", special);
         }
@@ -592,8 +591,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
              * In addition, we check the special text for symbol
              * type and size information.
              */
-	    sects[sym->section-1]->gsyms =
-		rb_insert(sects[sym->section-1]->gsyms, &sym->symv);
+            sects[sym->section-1]->gsyms =
+                rb_insert(sects[sym->section-1]->gsyms, &sym->symv);
 
             if (special) {
                 int n = strcspn(special, " \t");
@@ -757,9 +756,9 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
 
     srb = rb_search(s->gsyms, offset);
     if (!srb || (exact && srb->key != offset)) {
-	nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
-	      " for this reference");
-	return 0;
+        nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
+                    " for this reference");
+        return 0;
     }
     sym = container_of(srb, struct Symbol, symv);
 
@@ -777,7 +776,7 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
 }
 
 static void elf_out(int32_t segto, const void *data,
-		    enum out_type type, uint64_t size,
+                    enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
@@ -824,7 +823,7 @@ static void elf_out(int32_t segto, const void *data,
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
         nasm_error(ERR_WARNING, "attempt to initialize memory in"
               " BSS section `%s': ignored", s->name);
-	s->len += realsize(type, size);
+        s->len += realsize(type, size);
         return;
     }
 
@@ -1009,22 +1008,22 @@ static void elf_write(void)
     fputc(elf_osabi, ofile);
     fputc(elf_abiver, ofile);
     fwritezero(7, ofile);
-    fwriteint16_t(1, ofile);      /* ET_REL relocatable file */
-    fwriteint16_t(3, ofile);      /* EM_386 processor ID */
-    fwriteint32_t(1L, ofile);      /* EV_CURRENT file format version */
-    fwriteint32_t(0L, ofile);      /* no entry point */
-    fwriteint32_t(0L, ofile);      /* no program header table */
-    fwriteint32_t(0x40L, ofile);   /* section headers straight after
-				    * ELF header plus alignment */
-    fwriteint32_t(0L, ofile);      /* 386 defines no special flags */
-    fwriteint16_t(0x34, ofile);   /* size of ELF header */
-    fwriteint16_t(0, ofile);      /* no program header table, again */
-    fwriteint16_t(0, ofile);      /* still no program header table */
-    fwriteint16_t(0x28, ofile);   /* size of section header */
+    fwriteint16_t(1, ofile);        /* ET_REL relocatable file */
+    fwriteint16_t(3, ofile);        /* EM_386 processor ID */
+    fwriteint32_t(1L, ofile);       /* EV_CURRENT file format version */
+    fwriteint32_t(0L, ofile);       /* no entry point */
+    fwriteint32_t(0L, ofile);       /* no program header table */
+    fwriteint32_t(0x40L, ofile);    /* section headers straight after
+                                     * ELF header plus alignment */
+    fwriteint32_t(0L, ofile);       /* 386 defines no special flags */
+    fwriteint16_t(0x34, ofile);     /* size of ELF header */
+    fwriteint16_t(0, ofile);        /* no program header table, again */
+    fwriteint16_t(0, ofile);        /* still no program header table */
+    fwriteint16_t(0x28, ofile);     /* size of section header */
     fwriteint16_t(nsections, ofile);      /* number of sections */
     fwriteint16_t(sec_shstrtab, ofile);   /* string table section index for
-					   * section header table */
-    fwriteint32_t(0L, ofile);      /* align to 0x40 bytes */
+                                           * section header table */
+    fwriteint32_t(0L, ofile);       /* align to 0x40 bytes */
     fwriteint32_t(0L, ofile);
     fwriteint32_t(0L, ofile);
 
@@ -1062,17 +1061,17 @@ static void elf_write(void)
 
     /* .shstrtab */
     elf_section_header(p - shstrtab, SHT_STRTAB, 0, shstrtab, false,
-		       shstrtablen, 0, 0, 1, 0);
+                        shstrtablen, 0, 0, 1, 0);
     p += strlen(p) + 1;
 
     /* .symtab */
     elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
-		       symtablen, sec_strtab, symtablocal, 4, 16);
+                        symtablen, sec_strtab, symtablocal, 4, 16);
     p += strlen(p) + 1;
 
     /* .strtab */
     elf_section_header(p - shstrtab, SHT_STRTAB, 0, strs, true,
-		       strslen, 0, 0, 1, 0);
+                        strslen, 0, 0, 1, 0);
     p += strlen(p) + 1;
 
     /* The relocation sections */
@@ -1081,7 +1080,6 @@ static void elf_write(void)
             elf_section_header(p - shstrtab, SHT_REL, 0, sects[i]->rel, true,
                                sects[i]->rellen, sec_symtab, i + 1, 4, 8);
             p += strlen(p) + 1;
-	    
         }
 
     if (of_elf32.current_dfmt == &df_stabs) {
@@ -1093,7 +1091,7 @@ static void elf_write(void)
 
         if (stabbuf && stabstrbuf && stabrelbuf) {
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, stabbuf, false,
-			       stablen, sec_stabstr, 0, 4, 12);
+                                stablen, sec_stabstr, 0, 4, 12);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_STRTAB, 0, stabstrbuf, false,
@@ -1102,7 +1100,7 @@ static void elf_write(void)
 
             /* link -> symtable  info -> section to refer to */
             elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
-			       stabrellen, sec_symtab, sec_stab, 4, 8);
+                                stabrellen, sec_symtab, sec_stab, 4, 8);
             p += strlen(p) + 1;
         }
     } else if (of_elf32.current_dfmt == &df_dwarf) {
@@ -1110,7 +1108,7 @@ static void elf_write(void)
 
             /* this function call creates the dwarf sections in memory */
             if (dwarf_fsect)
-		dwarf32_generate();
+                dwarf32_generate();
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
                                arangeslen, 0, 0, 1, 0);
@@ -1118,11 +1116,11 @@ static void elf_write(void)
 
             elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
                                arangesrellen, sec_symtab, sec_debug_aranges,
-			       1, 12);
+                               1, 12);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf,
-			       false, pubnameslen, 0, 0, 1, 0);
+                               false, pubnameslen, 0, 0, 1, 0);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, infobuf, false,
@@ -1236,20 +1234,20 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         dwarf_infosym = *local;
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */
-        WRITELONG(p, (uint32_t) 0);        /* offset zero */
-        WRITELONG(p, (uint32_t) 0);        /* size zero */
-        WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-        WRITESHORT(p, sec_debug_info);       /* section id */
+        WRITELONG(p, (uint32_t) 0);         /* offset zero */
+        WRITELONG(p, (uint32_t) 0);         /* size zero */
+        WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
+        WRITESHORT(p, sec_debug_info);      /* section id */
         saa_wbytes(s, entry, 16L);
         *len += 16;
         (*local)++;
         dwarf_abbrevsym = *local;
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */
-        WRITELONG(p, (uint32_t) 0);        /* offset zero */
-        WRITELONG(p, (uint32_t) 0);        /* size zero */
-        WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-        WRITESHORT(p, sec_debug_abbrev);       /* section id */
+        WRITELONG(p, (uint32_t) 0);         /* offset zero */
+        WRITELONG(p, (uint32_t) 0);         /* size zero */
+        WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
+        WRITESHORT(p, sec_debug_abbrev);    /* section id */
         saa_wbytes(s, entry, 16L);
         *len += 16;
         (*local)++;
@@ -1308,12 +1306,12 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
     while (r) {
         int32_t sym = r->symbol;
 
-	/*
-	 * Create a real symbol index; the +2 refers to the two special
-	 * entries, the null entry and the filename entry.
-	 */
+        /*
+         * Create a real symbol index; the +2 refers to the two special
+         * entries, the null entry and the filename entry.
+         */
         if (sym >= GLOBAL_TEMP_BASE)
-	    sym += global_offset;
+            sym += global_offset;
 
         p = entry;
         WRITELONG(p, r->address);
@@ -1386,35 +1384,35 @@ static int elf_directive(enum directives directive, char *value, int pass)
 
     switch (directive) {
     case D_OSABI:
-	if (pass == 2)
-	    return 1;		/* ignore in pass 2 */
+        if (pass == 2)
+            return 1; /* ignore in pass 2 */
 
-	n = readnum(value, &err);
-	if (err) {
-	    nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
-	    return 1;
-	}
-	if (n < 0 || n > 255) {
-	    nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
-	    return 1;
-	}
-	elf_osabi  = n;
-	elf_abiver = 0;
+        n = readnum(value, &err);
+        if (err) {
+            nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
+            return 1;
+        }
+        if (n < 0 || n > 255) {
+            nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
+            return 1;
+        }
+        elf_osabi  = n;
+        elf_abiver = 0;
 
-	if ((p = strchr(value,',')) == NULL)
-	    return 1;
+        if ((p = strchr(value,',')) == NULL)
+            return 1;
 
-	n = readnum(p+1, &err);
-	if (err || n < 0 || n > 255) {
-	    nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
-	    return 1;
-	}
-	
-	elf_abiver = n;
-	return 1;
-    
+        n = readnum(p+1, &err);
+        if (err || n < 0 || n > 255) {
+            nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
+            return 1;
+        }
+
+        elf_abiver = n;
+        return 1;
+
     default:
-	return 0;
+        return 0;
     }
 }
 
@@ -1495,7 +1493,7 @@ struct ofmt of_elf = {
 /* again, the stabs debugging stuff (code) */
 
 static void stabs32_linenum(const char *filename, int32_t linenumber,
-			    int32_t segto)
+                            int32_t segto)
 {
     (void)segto;
 
@@ -1504,9 +1502,11 @@ static void stabs32_linenum(const char *filename, int32_t linenumber,
         strcpy(stabs_filename, filename);
     } else {
         if (strcmp(stabs_filename, filename)) {
-            /* yep, a memory leak...this program is one-shot anyway, so who cares...
-               in fact, this leak comes in quite handy to maintain a list of files
-               encountered so far in the symbol lines... */
+            /*
+             * yep, a memory leak...this program is one-shot anyway, so who cares...
+             * in fact, this leak comes in quite handy to maintain a list of files
+             * encountered so far in the symbol lines...
+             */
 
             /* why not nasm_free(stabs_filename); we're done with the old one */
 
@@ -1571,9 +1571,9 @@ static void debug32_typevalue(int32_t type)
             stype = STT_OBJECT;
             break;
         case TY_YWORD:
-	    ssize = 32;
-	    stype = STT_OBJECT;
-	    break;
+            ssize = 32;
+            stype = STT_OBJECT;
+            break;
         case TY_COMMON:
             ssize = 0;
             stype = STT_COMMON;
@@ -1609,7 +1609,7 @@ static void stabs32_output(int type, void *param)
         if (debug_immcall) {
             s = (struct symlininfo *)param;
             if (!(sects[s->section]->flags & SHF_EXECINSTR))
-                return;         /* we are only interested in the text stuff */
+                return; /* we are only interested in the text stuff */
             numlinestabs++;
             el = (struct linelist *)nasm_malloc(sizeof(struct linelist));
             el->info.offset = s->offset;
@@ -1630,14 +1630,14 @@ static void stabs32_output(int type, void *param)
     debug_immcall = 0;
 }
 
-#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value) \
-  do {\
-    WRITELONG(p,n_strx); \
-    WRITECHAR(p,n_type); \
-    WRITECHAR(p,n_other); \
-    WRITESHORT(p,n_desc); \
-    WRITELONG(p,n_value); \
-  } while (0)
+#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
+    do {                                                    \
+        WRITELONG(p,n_strx);                                \
+        WRITECHAR(p,n_type);                                \
+        WRITECHAR(p,n_other);                               \
+        WRITESHORT(p,n_desc);                               \
+        WRITELONG(p,n_value);                               \
+    } while (0)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
@@ -1686,8 +1686,9 @@ static void stabs32_generate(void)
         }
     }
 
-    /* worst case size of the stab buffer would be:
-       the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
+    /*
+     * worst case size of the stab buffer would be:
+     * the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
      */
     sbuf =
         (uint8_t *)nasm_malloc((numlinestabs * 2 + 3) *
@@ -1703,17 +1704,18 @@ static void stabs32_generate(void)
     }
     ssbuf[0] = 0;
 
-    stabstrlen = strsize;       /* set global variable for length of stab strings */
+    stabstrlen = strsize; /* set global variable for length of stab strings */
 
     sptr = sbuf;
     ptr = stabslines;
     numstabs = 0;
 
     if (ptr) {
-        /* this is the first stab, its strx points to the filename of the
-        the source-file, the n_desc field should be set to the number
-        of remaining stabs
-        */
+        /*
+         * this is the first stab, its strx points to the filename of the
+         * the source-file, the n_desc field should be set to the number
+         * of remaining stabs
+         */
         WRITE_STAB(sptr, fileidx[0], 0, 0, 0, strlen(allfiles[0] + 12));
 
         /* this is the stab for the main source file */
@@ -1721,9 +1723,11 @@ static void stabs32_generate(void)
 
         /* relocation table entry */
 
-        /* Since the symbol table has two entries before */
-        /* the section symbols, the index in the info.section */
-        /* member must be adjusted by adding 2 */
+        /*
+         * Since the symbol table has two entries before
+         * the section symbols, the index in the info.section
+         * member must be adjusted by adding 2
+         */
 
         WRITELONG(rptr, (sptr - sbuf) - 4);
         WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_386_32);
@@ -1795,11 +1799,11 @@ static void stabs32_cleanup(void)
 
 static void dwarf32_init(void)
 {
-    ndebugs = 3;		/* 3 debug symbols */
+    ndebugs = 3; /* 3 debug symbols */
 }
 
 static void dwarf32_linenum(const char *filename, int32_t linenumber,
-			    int32_t segto)
+                            int32_t segto)
 {
     (void)segto;
     dwarf32_findfile(filename);
@@ -1810,64 +1814,57 @@ static void dwarf32_linenum(const char *filename, int32_t linenumber,
 /* called from elf_out with type == TY_DEBUGSYMLIN */
 static void dwarf32_output(int type, void *param)
 {
-  int ln, aa, inx, maxln, soc;
-  struct symlininfo *s;
-  struct SAA *plinep;
+    int ln, aa, inx, maxln, soc;
+    struct symlininfo *s;
+    struct SAA *plinep;
 
-  (void)type;
+    (void)type;
 
-  s = (struct symlininfo *)param;
-   /* line number info is only gathered for executable sections */
-   if (!(sects[s->section]->flags & SHF_EXECINSTR))
-     return;
-  /* Check if section index has changed */
-  if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
-  {
-     dwarf32_findsect(s->section);
-  }
-  /* do nothing unless line or file has changed */
-  if (debug_immcall)
-  {
-    ln = currentline - dwarf_csect->line;
-    aa = s->offset - dwarf_csect->offset;
-    inx = dwarf_clist->line;
-    plinep = dwarf_csect->psaa;
-    /* check for file change */
-    if (!(inx == dwarf_csect->file))
-    {
-       saa_write8(plinep,DW_LNS_set_file);
-       saa_write8(plinep,inx);
-       dwarf_csect->file = inx;
-    }
-    /* check for line change */
-    if (ln)
-    {
-       /* test if in range of special op code */
-       maxln = line_base + line_range;
-       soc = (ln - line_base) + (line_range * aa) + opcode_base;
-       if (ln >= line_base && ln < maxln && soc < 256)
-       {
-          saa_write8(plinep,soc);
-       }
-       else
-       {
-          if (ln)
-          {
-          saa_write8(plinep,DW_LNS_advance_line);
-          saa_wleb128s(plinep,ln);
-          }
-          if (aa)
-          {
-          saa_write8(plinep,DW_LNS_advance_pc);
-          saa_wleb128u(plinep,aa);
-          }
-       }
-       dwarf_csect->line = currentline;
-       dwarf_csect->offset = s->offset;
-    }
-    /* show change handled */
-    debug_immcall = 0;
-  }
+    s = (struct symlininfo *)param;
+
+    /* line number info is only gathered for executable sections */
+    if (!(sects[s->section]->flags & SHF_EXECINSTR))
+        return;
+
+    /* Check if section index has changed */
+    if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
+        dwarf32_findsect(s->section);
+
+    /* do nothing unless line or file has changed */
+    if (debug_immcall) {
+        ln = currentline - dwarf_csect->line;
+        aa = s->offset - dwarf_csect->offset;
+        inx = dwarf_clist->line;
+        plinep = dwarf_csect->psaa;
+        /* check for file change */
+        if (!(inx == dwarf_csect->file)) {
+            saa_write8(plinep,DW_LNS_set_file);
+            saa_write8(plinep,inx);
+            dwarf_csect->file = inx;
+        }
+        /* check for line change */
+        if (ln) {
+           /* test if in range of special op code */
+           maxln = line_base + line_range;
+           soc = (ln - line_base) + (line_range * aa) + opcode_base;
+           if (ln >= line_base && ln < maxln && soc < 256) {
+              saa_write8(plinep,soc);
+           } else {
+              if (ln) {
+                  saa_write8(plinep,DW_LNS_advance_line);
+                  saa_wleb128s(plinep,ln);
+              }
+              if (aa) {
+                  saa_write8(plinep,DW_LNS_advance_pc);
+                  saa_wleb128u(plinep,aa);
+              }
+           }
+           dwarf_csect->line = currentline;
+           dwarf_csect->offset = s->offset;
+        }
+        /* show change handled */
+        debug_immcall = 0;
+      }
 }
 
 
@@ -1885,45 +1882,44 @@ static void dwarf32_generate(void)
     /* and build aranges section */
     paranges = saa_init(1L);
     parangesrel = saa_init(1L);
-    saa_write16(paranges,2);		/* dwarf version */
+    saa_write16(paranges,2);    /* dwarf version */
     saa_write32(parangesrel, paranges->datalen+4);
     saa_write32(parangesrel, (dwarf_infosym << 8) +  R_386_32); /* reloc to info */
     saa_write32(parangesrel, 0);
-    saa_write32(paranges,0);		/* offset into info */
-    saa_write8(paranges,4);		/* pointer size */
-    saa_write8(paranges,0);		/* not segmented */
-    saa_write32(paranges,0);		/* padding */
+    saa_write32(paranges,0);    /* offset into info */
+    saa_write8(paranges,4);     /* pointer size */
+    saa_write8(paranges,0);     /* not segmented */
+    saa_write32(paranges,0);    /* padding */
     /* iterate though sectlist entries */
-     psect = dwarf_fsect;
-     totlen = 0;
-     highaddr = 0;
-     for (indx = 0; indx < dwarf_nsections; indx++)
-     {
-         plinep = psect->psaa;
-         /* Line Number Program Epilogue */
-         saa_write8(plinep,2);			/* std op 2 */
-         saa_write8(plinep,(sects[psect->section]->len)-psect->offset);
-         saa_write8(plinep,DW_LNS_extended_op);
-         saa_write8(plinep,1);			/* operand length */
-         saa_write8(plinep,DW_LNE_end_sequence);
-         totlen += plinep->datalen;
-         /* range table relocation entry */
-         saa_write32(parangesrel, paranges->datalen + 4);
-         saa_write32(parangesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
-         saa_write32(parangesrel, (uint32_t) 0);
-         /* range table entry */
-         saa_write32(paranges,0x0000);		/* range start */
-         saa_write32(paranges,sects[psect->section]->len);	/* range length */
-         highaddr += sects[psect->section]->len;
-         /* done with this entry */
-         psect = psect->next;
-     }
-    saa_write32(paranges,0);		/* null address */
-    saa_write32(paranges,0);		/* null length */
+    psect = dwarf_fsect;
+    totlen = 0;
+    highaddr = 0;
+    for (indx = 0; indx < dwarf_nsections; indx++) {
+        plinep = psect->psaa;
+        /* Line Number Program Epilogue */
+        saa_write8(plinep,2);           /* std op 2 */
+        saa_write8(plinep,(sects[psect->section]->len)-psect->offset);
+        saa_write8(plinep,DW_LNS_extended_op);
+        saa_write8(plinep,1);           /* operand length */
+        saa_write8(plinep,DW_LNE_end_sequence);
+        totlen += plinep->datalen;
+        /* range table relocation entry */
+        saa_write32(parangesrel, paranges->datalen + 4);
+        saa_write32(parangesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
+        saa_write32(parangesrel, (uint32_t) 0);
+        /* range table entry */
+        saa_write32(paranges,0x0000);   /* range start */
+        saa_write32(paranges,sects[psect->section]->len); /* range length */
+        highaddr += sects[psect->section]->len;
+        /* done with this entry */
+        psect = psect->next;
+    }
+    saa_write32(paranges,0);    /* null address */
+    saa_write32(paranges,0);    /* null length */
     saalen = paranges->datalen;
     arangeslen = saalen + 4;
     arangesbuf = pbuf = nasm_malloc(arangeslen);
-    WRITELONG(pbuf,saalen);			/* initial length */
+    WRITELONG(pbuf,saalen);     /* initial length */
     saa_rnbytes(paranges, pbuf, saalen);
     saa_free(paranges);
 
@@ -1935,53 +1931,53 @@ static void dwarf32_generate(void)
 
     /* build pubnames section */
     ppubnames = saa_init(1L);
-    saa_write16(ppubnames,3);			/* dwarf version */
-    saa_write32(ppubnames,0);			/* offset into info */
-    saa_write32(ppubnames,0);			/* space used in info */
-    saa_write32(ppubnames,0);			/* end of list */
+    saa_write16(ppubnames,3);   /* dwarf version */
+    saa_write32(ppubnames,0);   /* offset into info */
+    saa_write32(ppubnames,0);   /* space used in info */
+    saa_write32(ppubnames,0);   /* end of list */
     saalen = ppubnames->datalen;
     pubnameslen = saalen + 4;
     pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
-    WRITELONG(pbuf,saalen);	/* initial length */
+    WRITELONG(pbuf,saalen);     /* initial length */
     saa_rnbytes(ppubnames, pbuf, saalen);
     saa_free(ppubnames);
 
     /* build info section */
     pinfo = saa_init(1L);
     pinforel = saa_init(1L);
-    saa_write16(pinfo,2);			/* dwarf version */
+    saa_write16(pinfo,2);       /* dwarf version */
     saa_write32(pinforel, pinfo->datalen + 4);
     saa_write32(pinforel, (dwarf_abbrevsym << 8) +  R_386_32); /* reloc to abbrev */
     saa_write32(pinforel, 0);
-    saa_write32(pinfo,0);			/* offset into abbrev */
-    saa_write8(pinfo,4);			/* pointer size */
-    saa_write8(pinfo,1);			/* abbrviation number LEB128u */
+    saa_write32(pinfo,0);       /* offset into abbrev */
+    saa_write8(pinfo,4);        /* pointer size */
+    saa_write8(pinfo,1);        /* abbrviation number LEB128u */
     saa_write32(pinforel, pinfo->datalen + 4);
     saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
     saa_write32(pinforel, 0);
-    saa_write32(pinfo,0);			/* DW_AT_low_pc */
+    saa_write32(pinfo,0);       /* DW_AT_low_pc */
     saa_write32(pinforel, pinfo->datalen + 4);
     saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
     saa_write32(pinforel, 0);
-    saa_write32(pinfo,highaddr);		/* DW_AT_high_pc */
+    saa_write32(pinfo,highaddr);    /* DW_AT_high_pc */
     saa_write32(pinforel, pinfo->datalen + 4);
     saa_write32(pinforel, (dwarf_linesym << 8) +  R_386_32); /* reloc to line */
     saa_write32(pinforel, 0);
-    saa_write32(pinfo,0);			/* DW_AT_stmt_list */
+    saa_write32(pinfo,0);       /* DW_AT_stmt_list */
     saa_wbytes(pinfo, elf_module, strlen(elf_module)+1);
     saa_wbytes(pinfo, nasm_signature, strlen(nasm_signature)+1);
     saa_write16(pinfo,DW_LANG_Mips_Assembler);
-    saa_write8(pinfo,2);			/* abbrviation number LEB128u */
+    saa_write8(pinfo,2);        /* abbrviation number LEB128u */
     saa_write32(pinforel, pinfo->datalen + 4);
     saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
     saa_write32(pinforel, 0);
-    saa_write32(pinfo,0);			/* DW_AT_low_pc */
-    saa_write32(pinfo,0);			/* DW_AT_frame_base */
-    saa_write8(pinfo,0);			/* end of entries */
+    saa_write32(pinfo,0);       /* DW_AT_low_pc */
+    saa_write32(pinfo,0);       /* DW_AT_frame_base */
+    saa_write8(pinfo,0);        /* end of entries */
     saalen = pinfo->datalen;
     infolen = saalen + 4;
     infobuf = pbuf = nasm_malloc(infolen);
-    WRITELONG(pbuf,saalen);		/* initial length */
+    WRITELONG(pbuf,saalen);     /* initial length */
     saa_rnbytes(pinfo, pbuf, saalen);
     saa_free(pinfo);
 
@@ -1989,13 +1985,13 @@ static void dwarf32_generate(void)
     inforellen = saalen = pinforel->datalen;
     inforelbuf = pbuf = nasm_malloc(inforellen);
     saa_rnbytes(pinforel, pbuf, saalen);
-    saa_free(pinforel); 
+    saa_free(pinforel);
 
     /* build abbrev section */
     pabbrev = saa_init(1L);
-    saa_write8(pabbrev,1);			/* entry number LEB128u */
-    saa_write8(pabbrev,DW_TAG_compile_unit);	/* tag LEB128u */
-    saa_write8(pabbrev,1);			/* has children */
+    saa_write8(pabbrev,1);      /* entry number LEB128u */
+    saa_write8(pabbrev,DW_TAG_compile_unit);    /* tag LEB128u */
+    saa_write8(pabbrev,1);      /* has children */
     /* the following attributes and forms are all LEB128u values */
     saa_write8(pabbrev,DW_AT_low_pc);
     saa_write8(pabbrev,DW_FORM_addr);
@@ -2009,16 +2005,16 @@ static void dwarf32_generate(void)
     saa_write8(pabbrev,DW_FORM_string);
     saa_write8(pabbrev,DW_AT_language);
     saa_write8(pabbrev,DW_FORM_data2);
-    saa_write16(pabbrev,0);			/* end of entry */
+    saa_write16(pabbrev,0);     /* end of entry */
     /* LEB128u usage same as above */
-    saa_write8(pabbrev,2);			/* entry number */
+    saa_write8(pabbrev,2);      /* entry number */
     saa_write8(pabbrev,DW_TAG_subprogram);
-    saa_write8(pabbrev,0);			/* no children */
+    saa_write8(pabbrev,0);      /* no children */
     saa_write8(pabbrev,DW_AT_low_pc);
     saa_write8(pabbrev,DW_FORM_addr);
     saa_write8(pabbrev,DW_AT_frame_base);
     saa_write8(pabbrev,DW_FORM_data4);
-    saa_write16(pabbrev,0);			/* end of entry */
+    saa_write16(pabbrev,0);     /* end of entry */
     abbrevlen = saalen = pabbrev->datalen;
     abbrevbuf = pbuf = nasm_malloc(saalen);
     saa_rnbytes(pabbrev, pbuf, saalen);
@@ -2027,43 +2023,42 @@ static void dwarf32_generate(void)
     /* build line section */
     /* prolog */
     plines = saa_init(1L);
-    saa_write8(plines,1);			/* Minimum Instruction Length */
-    saa_write8(plines,1);			/* Initial value of 'is_stmt' */
-    saa_write8(plines,line_base);		/* Line Base */
-    saa_write8(plines,line_range);	/* Line Range */
-    saa_write8(plines,opcode_base);	/* Opcode Base */
+    saa_write8(plines,1);           /* Minimum Instruction Length */
+    saa_write8(plines,1);           /* Initial value of 'is_stmt' */
+    saa_write8(plines,line_base);   /* Line Base */
+    saa_write8(plines,line_range);  /* Line Range */
+    saa_write8(plines,opcode_base); /* Opcode Base */
     /* standard opcode lengths (# of LEB128u operands) */
-    saa_write8(plines,0);			/* Std opcode 1 length */
-    saa_write8(plines,1);			/* Std opcode 2 length */
-    saa_write8(plines,1);			/* Std opcode 3 length */
-    saa_write8(plines,1);			/* Std opcode 4 length */
-    saa_write8(plines,1);			/* Std opcode 5 length */
-    saa_write8(plines,0);			/* Std opcode 6 length */
-    saa_write8(plines,0);			/* Std opcode 7 length */
-    saa_write8(plines,0);			/* Std opcode 8 length */
-    saa_write8(plines,1);			/* Std opcode 9 length */
-    saa_write8(plines,0);			/* Std opcode 10 length */
-    saa_write8(plines,0);			/* Std opcode 11 length */
-    saa_write8(plines,1);			/* Std opcode 12 length */
-    /* Directory Table */ 
-    saa_write8(plines,0);			/* End of table */
+    saa_write8(plines,0);           /* Std opcode 1 length */
+    saa_write8(plines,1);           /* Std opcode 2 length */
+    saa_write8(plines,1);           /* Std opcode 3 length */
+    saa_write8(plines,1);           /* Std opcode 4 length */
+    saa_write8(plines,1);           /* Std opcode 5 length */
+    saa_write8(plines,0);           /* Std opcode 6 length */
+    saa_write8(plines,0);           /* Std opcode 7 length */
+    saa_write8(plines,0);           /* Std opcode 8 length */
+    saa_write8(plines,1);           /* Std opcode 9 length */
+    saa_write8(plines,0);           /* Std opcode 10 length */
+    saa_write8(plines,0);           /* Std opcode 11 length */
+    saa_write8(plines,1);           /* Std opcode 12 length */
+    /* Directory Table */
+    saa_write8(plines,0);           /* End of table */
     /* File Name Table */
     ftentry = dwarf_flist;
-    for (indx = 0;indx<dwarf_numfiles;indx++)
-    {
-      saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
-      saa_write8(plines,0);			/* directory  LEB128u */
-      saa_write8(plines,0);			/* time LEB128u */
-      saa_write8(plines,0);			/* size LEB128u */
-      ftentry = ftentry->next;
+    for (indx = 0;indx<dwarf_numfiles;indx++) {
+        saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
+        saa_write8(plines,0);       /* directory  LEB128u */
+        saa_write8(plines,0);       /* time LEB128u */
+        saa_write8(plines,0);       /* size LEB128u */
+        ftentry = ftentry->next;
     }
-    saa_write8(plines,0);			/* End of table */
+    saa_write8(plines,0);           /* End of table */
     linepoff = plines->datalen;
     linelen = linepoff + totlen + 10;
     linebuf = pbuf = nasm_malloc(linelen);
-    WRITELONG(pbuf,linelen-4);		/* initial length */
-    WRITESHORT(pbuf,3);			/* dwarf version */
-    WRITELONG(pbuf,linepoff);		/* offset to line number program */
+    WRITELONG(pbuf,linelen-4);      /* initial length */
+    WRITESHORT(pbuf,3);             /* dwarf version */
+    WRITELONG(pbuf,linepoff);       /* offset to line number program */
     /* write line header */
     saalen = linepoff;
     saa_rnbytes(plines, pbuf, saalen);   /* read a given no. of bytes */
@@ -2073,38 +2068,37 @@ static void dwarf32_generate(void)
     linepoff += 13;
     plinesrel = saa_init(1L);
     psect = dwarf_fsect;
-    for (indx = 0; indx < dwarf_nsections; indx++)
-    {
-         saa_write32(plinesrel, linepoff);
-         saa_write32(plinesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
-         saa_write32(plinesrel, (uint32_t) 0);
-         plinep = psect->psaa;
-         saalen = plinep->datalen;
-         saa_rnbytes(plinep, pbuf, saalen);
-         pbuf += saalen;
-         linepoff += saalen;
-         saa_free(plinep);
-         /* done with this entry */
-         psect = psect->next;
+    for (indx = 0; indx < dwarf_nsections; indx++) {
+        saa_write32(plinesrel, linepoff);
+        saa_write32(plinesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
+        saa_write32(plinesrel, (uint32_t) 0);
+        plinep = psect->psaa;
+        saalen = plinep->datalen;
+        saa_rnbytes(plinep, pbuf, saalen);
+        pbuf += saalen;
+        linepoff += saalen;
+        saa_free(plinep);
+        /* done with this entry */
+        psect = psect->next;
     }
 
 
     /* build rela.lines section */
     linerellen =saalen = plinesrel->datalen;
-    linerelbuf = pbuf = nasm_malloc(linerellen); 
+    linerelbuf = pbuf = nasm_malloc(linerellen);
     saa_rnbytes(plinesrel, pbuf, saalen);
     saa_free(plinesrel);
 
     /* build frame section */
     framelen = 4;
     framebuf = pbuf = nasm_malloc(framelen);
-    WRITELONG(pbuf,framelen-4);		/* initial length */
+    WRITELONG(pbuf,framelen-4); /* initial length */
 
     /* build loc section */
     loclen = 16;
     locbuf = pbuf = nasm_malloc(loclen);
-    WRITELONG(pbuf,0);		/* null  beginning offset */
-    WRITELONG(pbuf,0);		/* null  ending offset */
+    WRITELONG(pbuf,0);  /* null  beginning offset */
+    WRITELONG(pbuf,0);  /* null  ending offset */
 }
 
 static void dwarf32_cleanup(void)
@@ -2132,103 +2126,86 @@ static void dwarf32_cleanup(void)
 }
 static void dwarf32_findfile(const char * fname)
 {
-   int finx;
-   struct linelist *match;
+    int finx;
+    struct linelist *match;
 
-   /* return if fname is current file name */
-   if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename))) return;
-   /* search for match */
-   else 
-   {
-     match = 0;
-     if (dwarf_flist)
-     {
-       match = dwarf_flist;
-       for (finx = 0; finx < dwarf_numfiles; finx++)
-       {
-         if (!(strcmp(fname, match->filename)))
-         {
-	   dwarf_clist = match;
-           return;
-         }
-       }
-     }
-     /* add file name to end of list */
-     dwarf_clist =  (struct linelist *)nasm_malloc(sizeof(struct linelist));
-     dwarf_numfiles++;
-     dwarf_clist->line = dwarf_numfiles;
-     dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
-     strcpy(dwarf_clist->filename,fname);
-     dwarf_clist->next = 0;
-     /* if first entry */
-     if (!dwarf_flist)
-     {
-       dwarf_flist = dwarf_elist = dwarf_clist;
-       dwarf_clist->last = 0;
-     }
-     /* chain to previous entry */
-     else
-     {
-       dwarf_elist->next = dwarf_clist;
-       dwarf_elist = dwarf_clist;
-     }
-   }
+    /* return if fname is current file name */
+    if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename)))
+        return;
+    /* search for match */
+    else {
+        match = 0;
+        if (dwarf_flist) {
+            match = dwarf_flist;
+            for (finx = 0; finx < dwarf_numfiles; finx++) {
+                if (!(strcmp(fname, match->filename))) {
+                    dwarf_clist = match;
+                   return;
+                }
+            }
+        }
+        /* add file name to end of list */
+        dwarf_clist = (struct linelist *)nasm_malloc(sizeof(struct linelist));
+        dwarf_numfiles++;
+        dwarf_clist->line = dwarf_numfiles;
+        dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
+        strcpy(dwarf_clist->filename,fname);
+        dwarf_clist->next = 0;
+        if (!dwarf_flist) {     /* if first entry */
+            dwarf_flist = dwarf_elist = dwarf_clist;
+            dwarf_clist->last = 0;
+        } else {                /* chain to previous entry */
+            dwarf_elist->next = dwarf_clist;
+            dwarf_elist = dwarf_clist;
+        }
+    }
 }
-/*  */
+
 static void dwarf32_findsect(const int index)
 {
-   int sinx;
-   struct sectlist *match;
-   struct SAA *plinep;
-   /* return if index is current section index */
-   if (dwarf_csect && (dwarf_csect->section == index))
-   {
-      return;
-   }
-   /* search for match */
-   else 
-   {
-     match = 0;
-     if (dwarf_fsect)
-     {
-       match = dwarf_fsect;
-       for (sinx = 0; sinx < dwarf_nsections; sinx++)
-       {
-         if ((match->section == index))
-         {
-	   dwarf_csect = match;
-           return;
-         }
-        match = match->next;
-       }
-     }
-     /* add entry to end of list */
-     dwarf_csect =  (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
-     dwarf_nsections++;
-     dwarf_csect->psaa = plinep = saa_init(1L);
-     dwarf_csect->line = 1;
-     dwarf_csect->offset = 0;
-     dwarf_csect->file = 1;
-     dwarf_csect->section = index;
-     dwarf_csect->next = 0;
-     /* set relocatable address at start of line program */
-     saa_write8(plinep,DW_LNS_extended_op);
-     saa_write8(plinep,5);			/* operand length */
-     saa_write8(plinep,DW_LNE_set_address);
-     saa_write32(plinep,0);		/* Start Address */
-     /* if first entry */
-     if (!dwarf_fsect)
-     {
-       dwarf_fsect = dwarf_esect = dwarf_csect;
-       dwarf_csect->last = 0;
-     }
-     /* chain to previous entry */
-     else
-     {
-       dwarf_esect->next = dwarf_csect;
-       dwarf_esect = dwarf_csect;
-     }
-   }
+    int sinx;
+    struct sectlist *match;
+    struct SAA *plinep;
+
+    /* return if index is current section index */
+    if (dwarf_csect && (dwarf_csect->section == index))
+        return;
+    /* search for match */
+    else {
+        match = 0;
+        if (dwarf_fsect) {
+            match = dwarf_fsect;
+            for (sinx = 0; sinx < dwarf_nsections; sinx++) {
+                if ((match->section == index)) {
+                    dwarf_csect = match;
+                    return;
+                }
+                match = match->next;
+            }
+        }
+        /* add entry to end of list */
+        dwarf_csect = (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
+        dwarf_nsections++;
+        dwarf_csect->psaa = plinep = saa_init(1L);
+        dwarf_csect->line = 1;
+        dwarf_csect->offset = 0;
+        dwarf_csect->file = 1;
+        dwarf_csect->section = index;
+        dwarf_csect->next = 0;
+        /* set relocatable address at start of line program */
+        saa_write8(plinep,DW_LNS_extended_op);
+        saa_write8(plinep,5);   /* operand length */
+        saa_write8(plinep,DW_LNE_set_address);
+        saa_write32(plinep,0);  /* Start Address */
+
+        if (!dwarf_fsect) { /* if first entry */
+            dwarf_fsect = dwarf_esect = dwarf_csect;
+            dwarf_csect->last = 0;
+        } else {            /* chain to previous entry */
+            dwarf_esect->next = dwarf_csect;
+            dwarf_esect = dwarf_csect;
+        }
+    }
 }
 
-#endif                          /* OF_ELF */
+#endif /* OF_ELF */
