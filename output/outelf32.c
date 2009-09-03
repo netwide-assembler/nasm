@@ -1781,18 +1781,17 @@ static void stabs32_cleanup(void)
     struct linelist *ptr, *del;
     if (!stabslines)
         return;
+
     ptr = stabslines;
     while (ptr) {
         del = ptr;
         ptr = ptr->next;
         nasm_free(del);
     }
-    if (stabbuf)
-        nasm_free(stabbuf);
-    if (stabrelbuf)
-        nasm_free(stabrelbuf);
-    if (stabstrbuf)
-        nasm_free(stabstrbuf);
+
+    nasm_free(stabbuf);
+    nasm_free(stabrelbuf);
+    nasm_free(stabstrbuf);
 }
 
 /* dwarf routines */
@@ -1831,40 +1830,42 @@ static void dwarf32_output(int type, void *param)
         dwarf32_findsect(s->section);
 
     /* do nothing unless line or file has changed */
-    if (debug_immcall) {
-        ln = currentline - dwarf_csect->line;
-        aa = s->offset - dwarf_csect->offset;
-        inx = dwarf_clist->line;
-        plinep = dwarf_csect->psaa;
-        /* check for file change */
-        if (!(inx == dwarf_csect->file)) {
-            saa_write8(plinep,DW_LNS_set_file);
-            saa_write8(plinep,inx);
-            dwarf_csect->file = inx;
-        }
-        /* check for line change */
-        if (ln) {
-           /* test if in range of special op code */
-           maxln = line_base + line_range;
-           soc = (ln - line_base) + (line_range * aa) + opcode_base;
-           if (ln >= line_base && ln < maxln && soc < 256) {
-              saa_write8(plinep,soc);
-           } else {
-              if (ln) {
-                  saa_write8(plinep,DW_LNS_advance_line);
-                  saa_wleb128s(plinep,ln);
-              }
-              if (aa) {
-                  saa_write8(plinep,DW_LNS_advance_pc);
-                  saa_wleb128u(plinep,aa);
-              }
-           }
-           dwarf_csect->line = currentline;
-           dwarf_csect->offset = s->offset;
-        }
-        /* show change handled */
-        debug_immcall = 0;
-      }
+    if (!debug_immcall)
+        return;
+
+    ln = currentline - dwarf_csect->line;
+    aa = s->offset - dwarf_csect->offset;
+    inx = dwarf_clist->line;
+    plinep = dwarf_csect->psaa;
+    /* check for file change */
+    if (!(inx == dwarf_csect->file)) {
+        saa_write8(plinep,DW_LNS_set_file);
+        saa_write8(plinep,inx);
+        dwarf_csect->file = inx;
+    }
+    /* check for line change */
+    if (ln) {
+       /* test if in range of special op code */
+       maxln = line_base + line_range;
+       soc = (ln - line_base) + (line_range * aa) + opcode_base;
+       if (ln >= line_base && ln < maxln && soc < 256) {
+          saa_write8(plinep,soc);
+       } else {
+          if (ln) {
+              saa_write8(plinep,DW_LNS_advance_line);
+              saa_wleb128s(plinep,ln);
+          }
+          if (aa) {
+              saa_write8(plinep,DW_LNS_advance_pc);
+              saa_wleb128u(plinep,aa);
+          }
+       }
+       dwarf_csect->line = currentline;
+       dwarf_csect->offset = s->offset;
+    }
+
+    /* show change handled */
+    debug_immcall = 0;
 }
 
 
@@ -2103,27 +2104,18 @@ static void dwarf32_generate(void)
 
 static void dwarf32_cleanup(void)
 {
-    if (arangesbuf)
-        nasm_free(arangesbuf);
-    if (arangesrelbuf)
-        nasm_free(arangesrelbuf);
-    if (pubnamesbuf)
-        nasm_free(pubnamesbuf);
-    if (infobuf)
-        nasm_free(infobuf);
-    if (inforelbuf)
-        nasm_free(inforelbuf);
-    if (abbrevbuf)
-        nasm_free(abbrevbuf);
-    if (linebuf)
-        nasm_free(linebuf);
-    if (linerelbuf)
-        nasm_free(linerelbuf);
-    if (framebuf)
-        nasm_free(framebuf);
-    if (locbuf)
-        nasm_free(locbuf);
+    nasm_free(arangesbuf);
+    nasm_free(arangesrelbuf);
+    nasm_free(pubnamesbuf);
+    nasm_free(infobuf);
+    nasm_free(inforelbuf);
+    nasm_free(abbrevbuf);
+    nasm_free(linebuf);
+    nasm_free(linerelbuf);
+    nasm_free(framebuf);
+    nasm_free(locbuf);
 }
+
 static void dwarf32_findfile(const char * fname)
 {
     int finx;
@@ -2132,33 +2124,34 @@ static void dwarf32_findfile(const char * fname)
     /* return if fname is current file name */
     if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename)))
         return;
+
     /* search for match */
-    else {
-        match = 0;
-        if (dwarf_flist) {
-            match = dwarf_flist;
-            for (finx = 0; finx < dwarf_numfiles; finx++) {
-                if (!(strcmp(fname, match->filename))) {
-                    dwarf_clist = match;
-                   return;
-                }
+    match = 0;
+    if (dwarf_flist) {
+        match = dwarf_flist;
+        for (finx = 0; finx < dwarf_numfiles; finx++) {
+            if (!(strcmp(fname, match->filename))) {
+                dwarf_clist = match;
+               return;
             }
         }
-        /* add file name to end of list */
-        dwarf_clist = (struct linelist *)nasm_malloc(sizeof(struct linelist));
-        dwarf_numfiles++;
-        dwarf_clist->line = dwarf_numfiles;
-        dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
-        strcpy(dwarf_clist->filename,fname);
-        dwarf_clist->next = 0;
-        if (!dwarf_flist) {     /* if first entry */
-            dwarf_flist = dwarf_elist = dwarf_clist;
-            dwarf_clist->last = 0;
-        } else {                /* chain to previous entry */
-            dwarf_elist->next = dwarf_clist;
-            dwarf_elist = dwarf_clist;
-        }
     }
+
+    /* add file name to end of list */
+    dwarf_clist = (struct linelist *)nasm_malloc(sizeof(struct linelist));
+    dwarf_numfiles++;
+    dwarf_clist->line = dwarf_numfiles;
+    dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
+    strcpy(dwarf_clist->filename,fname);
+    dwarf_clist->next = 0;
+    if (!dwarf_flist) {     /* if first entry */
+        dwarf_flist = dwarf_elist = dwarf_clist;
+        dwarf_clist->last = 0;
+    } else {                /* chain to previous entry */
+        dwarf_elist->next = dwarf_clist;
+        dwarf_elist = dwarf_clist;
+    }
+
 }
 
 static void dwarf32_findsect(const int index)
@@ -2170,41 +2163,41 @@ static void dwarf32_findsect(const int index)
     /* return if index is current section index */
     if (dwarf_csect && (dwarf_csect->section == index))
         return;
-    /* search for match */
-    else {
-        match = 0;
-        if (dwarf_fsect) {
-            match = dwarf_fsect;
-            for (sinx = 0; sinx < dwarf_nsections; sinx++) {
-                if ((match->section == index)) {
-                    dwarf_csect = match;
-                    return;
-                }
-                match = match->next;
-            }
-        }
-        /* add entry to end of list */
-        dwarf_csect = (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
-        dwarf_nsections++;
-        dwarf_csect->psaa = plinep = saa_init(1L);
-        dwarf_csect->line = 1;
-        dwarf_csect->offset = 0;
-        dwarf_csect->file = 1;
-        dwarf_csect->section = index;
-        dwarf_csect->next = 0;
-        /* set relocatable address at start of line program */
-        saa_write8(plinep,DW_LNS_extended_op);
-        saa_write8(plinep,5);   /* operand length */
-        saa_write8(plinep,DW_LNE_set_address);
-        saa_write32(plinep,0);  /* Start Address */
 
-        if (!dwarf_fsect) { /* if first entry */
-            dwarf_fsect = dwarf_esect = dwarf_csect;
-            dwarf_csect->last = 0;
-        } else {            /* chain to previous entry */
-            dwarf_esect->next = dwarf_csect;
-            dwarf_esect = dwarf_csect;
+    /* search for match */
+    match = 0;
+    if (dwarf_fsect) {
+        match = dwarf_fsect;
+        for (sinx = 0; sinx < dwarf_nsections; sinx++) {
+            if ((match->section == index)) {
+                dwarf_csect = match;
+                return;
+            }
+            match = match->next;
         }
+    }
+
+    /* add entry to end of list */
+    dwarf_csect = (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
+    dwarf_nsections++;
+    dwarf_csect->psaa = plinep = saa_init(1L);
+    dwarf_csect->line = 1;
+    dwarf_csect->offset = 0;
+    dwarf_csect->file = 1;
+    dwarf_csect->section = index;
+    dwarf_csect->next = 0;
+    /* set relocatable address at start of line program */
+    saa_write8(plinep,DW_LNS_extended_op);
+    saa_write8(plinep,5);   /* operand length */
+    saa_write8(plinep,DW_LNE_set_address);
+    saa_write32(plinep,0);  /* Start Address */
+
+    if (!dwarf_fsect) { /* if first entry */
+        dwarf_fsect = dwarf_esect = dwarf_csect;
+        dwarf_csect->last = 0;
+    } else {            /* chain to previous entry */
+        dwarf_esect->next = dwarf_csect;
+        dwarf_esect = dwarf_csect;
     }
 }
 
