@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -53,15 +53,15 @@ typedef uint16_t Elf32_Section;
 typedef struct elf32_dyn {
     Elf32_Sword d_tag;
     union {
-	Elf32_Sword d_val;
-	Elf32_Addr d_ptr;
+        Elf32_Sword d_val;
+        Elf32_Addr d_ptr;
     } d_un;
 } Elf32_Dyn;
 
 /* Relocations */
 
-#define ELF32_R_SYM(x)	((x) >> 8)
-#define ELF32_R_TYPE(x)	((x) & 0xff)
+#define ELF32_R_SYM(x)  ((x) >> 8)
+#define ELF32_R_TYPE(x) ((x) & 0xff)
 
 typedef struct elf32_rel {
     Elf32_Addr r_offset;
@@ -75,7 +75,7 @@ typedef struct elf32_rela {
 } Elf32_Rela;
 
 enum reloc32_type {
-    R_386_32		=  1,   /* ordinary absolute relocation */
+    R_386_32            =  1,   /* ordinary absolute relocation */
     R_386_PC32          =  2,   /* PC-relative relocation */
     R_386_GOT32         =  3,   /* an offset into GOT */
     R_386_PLT32         =  4,   /* a PC-relative offset into PLT */
@@ -155,13 +155,13 @@ typedef struct elf32_shdr {
 
 /* Note header */
 typedef struct elf32_note {
-    Elf32_Word n_namesz;	/* Name size */
-    Elf32_Word n_descsz;	/* Content size */
-    Elf32_Word n_type;	/* Content type */
+    Elf32_Word n_namesz;    /* Name size */
+    Elf32_Word n_descsz;    /* Content size */
+    Elf32_Word n_type;      /* Content type */
 } Elf32_Nhdr;
 
 /* How to extract and insert information held in the st_info field.  */
-#define ELF32_ST_BIND(val)		(((unsigned char) (val)) >> 4)
-#define ELF32_ST_TYPE(val)		((val) & 0xf)
+#define ELF32_ST_BIND(val)  (((unsigned char) (val)) >> 4)
+#define ELF32_ST_TYPE(val)  ((val) & 0xf)
 
-#endif	/* OUTPUT_ELF32_H */
+#endif /* OUTPUT_ELF32_H */
