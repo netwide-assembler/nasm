@@ -1763,21 +1763,19 @@ static void stabs64_generate(void)
         }
     }
 
-    /* worst case size of the stab buffer would be:
-       the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
+    /*
+     * worst case size of the stab buffer would be:
+     * the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
+     * plus one "ending" entry
      */
-    sbuf =
-        (uint8_t *)nasm_malloc((numlinestabs * 2 + 3) *
-                                     sizeof(struct stabentry));
-
+    sbuf = (uint8_t *)nasm_malloc((numlinestabs * 2 + 4) *
+                                    sizeof(struct stabentry));
     ssbuf = (uint8_t *)nasm_malloc(strsize);
-
     rbuf = (uint8_t *)nasm_malloc(numlinestabs * 16 * (2 + 3));
     rptr = rbuf;
 
-    for (i = 0; i < numfiles; i++) {
+    for (i = 0; i < numfiles; i++)
         strcpy((char *)ssbuf + fileidx[i], allfiles[i]);
-    }
     ssbuf[0] = 0;
 
     stabstrlen = strsize;       /* set global variable for length of stab strings */
@@ -1840,6 +1838,10 @@ static void stabs64_generate(void)
         ptr = ptr->next;
 
     }
+
+    /* this is an "ending" token */
+    WRITE_STAB(sptr, 0, N_SO, 0, 0, 0);
+    numstabs++;
 
     ((struct stabentry *)sbuf)->n_desc = numstabs;
 
