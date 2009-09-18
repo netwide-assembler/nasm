@@ -1772,47 +1772,38 @@ static enum directives getkw(char **directive, char **value)
 {
     char *p, *q, *buf;
 
-    buf = *directive;
+    buf = nasm_skip_spaces(*directive);
 
-    /*  allow leading spaces or tabs */
-    while (*buf == ' ' || *buf == '\t')
-        buf++;
-
+    /* it should be enclosed in [ ] */
     if (*buf != '[')
-        return 0;
+        return D_NONE;
+    q = strchr(buf, ']');
+    if (!q)
+        return D_NONE;
 
-    p = buf;
-
-    while (*p && *p != ']')
-        p++;
-
-    if (!*p)
-        return 0;
-
-    q = p++;
-
-    while (*p && *p != ';') {
-        if (!nasm_isspace(*p))
-            return 0;
-        p++;
+    /* stip off the comments */
+    p = strchr(buf, ';');
+    if (p) {
+        if (p < q) /* ouch! somwhere inside */
+            return D_NONE;
+        *p = '\0';
     }
-    q[1] = '\0';
 
-    *directive = p = buf + 1;
-    while (*buf && *buf != ' ' && *buf != ']' && *buf != '\t')
-        buf++;
-    if (*buf == ']') {
-        *buf = '\0';
-        *value = buf;
-    } else {
-        *buf++ = '\0';
-        while (nasm_isspace(*buf))
-            buf++;              /* beppu - skip leading whitespace */
-        *value = buf;
-        while (*buf != ']')
-            buf++;
-        *buf++ = '\0';
-    }
+    /* no brace, no trailing spaces */
+    *q = '\0';
+    nasm_zap_spaces_rev(--q);
+
+    /* directive */
+    p = nasm_skip_spaces(++buf);
+    q = nasm_skip_word(p);
+    if (!q)
+        return D_NONE; /* sigh... no value there */
+    *q = '\0';
+    *directive = p;
+
+    /* and value finally */
+    p = nasm_skip_spaces(++q);
+    *value = p;
 
     return find_directive(*directive);
 }
