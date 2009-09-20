@@ -240,17 +240,26 @@ static const char *size_name(int size)
     }
 }
 
-static void warn_overflow(int size, const struct operand *o)
+static void warn_overflow(int pass, int size)
+{
+    errfunc(ERR_WARNING | pass | ERR_WARN_NOV,
+            "%s data exceeds bounds", size_name(size));
+}
+
+static void warn_overflow_const(int64_t data, int size)
+{
+    if (overflow_general(data, size))
+        warn_overflow(ERR_PASS1, size);
+}
+
+static void warn_overflow_opd(const struct operand *o, int size)
 {
     if (size < 8 && o->wrt == NO_SEG && o->segment == NO_SEG) {
-	int64_t lim = ((int64_t)1 << (size*8))-1;
-	int64_t data = o->offset;
-
-	if (data < ~lim || data > lim)
-	    errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-		    "%s data exceeds bounds", size_name(size));
+        if (overflow_general(o->offset, size))
+            warn_overflow(ERR_PASS2, size);
     }
 }
+
 /*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
@@ -708,10 +717,11 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
             int32_t align;
 
             osize = 0;
-            if (e->type == EOT_DB_NUMBER)
+            if (e->type == EOT_DB_NUMBER) {
                 osize = 1;
-            else if (e->type == EOT_DB_STRING ||
-		     e->type == EOT_DB_STRING_FREE)
+                warn_overflow_const(e->offset, wsize);
+            } else if (e->type == EOT_DB_STRING ||
+                       e->type == EOT_DB_STRING_FREE)
                 osize = e->stringlen;
 
             align = (-osize) % wsize;
@@ -1343,7 +1353,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
 	case4(030):
-	    warn_overflow(2, opx);
+            warn_overflow_opd(opx, 2);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, 2,
                 opx->segment, opx->wrt);
@@ -1355,7 +1365,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
-	    warn_overflow(size, opx);
+            warn_overflow_opd(opx, size);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, size,
                 opx->segment, opx->wrt);
@@ -1363,7 +1373,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
 	case4(040):
-	    warn_overflow(4, opx);
+            warn_overflow_opd(opx, 4);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, 4,
                 opx->segment, opx->wrt);
@@ -1373,7 +1383,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(044):
             data = opx->offset;
             size = ins->addr_size >> 3;
-	    warn_overflow(size, opx);
+            warn_overflow_opd(opx, size);
             out(offset, segment, &data, OUT_ADDRESS, size,
                 opx->segment, opx->wrt);
             offset += size;
@@ -1457,7 +1467,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
 	case4(0140):
             data = opx->offset;
-	    warn_overflow(2, opx);
+            warn_overflow_opd(opx, 2);
             if (is_sbyte16(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
@@ -1481,7 +1491,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
 	case4(0150):
             data = opx->offset;
-	    warn_overflow(4, opx);
+            warn_overflow_opd(opx, 4);
             if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
@@ -1894,7 +1904,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 4:
                 case 8:
                     data = opy->offset;
-		    warn_overflow(ea_data.bytes, opy);
+                    warn_overflow_opd(opy, ea_data.bytes);
                     s += ea_data.bytes;
 		    if (ea_data.rip) {
 			if (opy->segment == segment) {
