@@ -47,7 +47,7 @@
 
 ;Name and file
 Name "${PACKAGE_NAME}"
-OutFile "${PACKAGE_NAME}-mui-installer.exe"
+OutFile "${PACKAGE_NAME}-installer.exe"
 
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
@@ -64,8 +64,8 @@ Var CmdFailed
 ;--------------------------------
 ;Interface Settings
 Caption "${PACKAGE_SHORT_NAME} installation"
-Icon "nsis\nasm.ico"
-UninstallIcon "nsis\nasm-un.ico"
+Icon "nsis/nasm.ico"
+UninstallIcon "nsis/nasm-un.ico"
 
 !define MUI_ABORTWARNING
 
@@ -95,11 +95,10 @@ UninstallIcon "nsis\nasm-un.ico"
 Section "NASM" SecNasm
     Sectionin RO
     SetOutPath "$INSTDIR"
-    File "nasm.exe"
     File "LICENSE"
     File "nasm.exe"
     File "ndisasm.exe"
-    File "nsis\nasm.ico"
+    File "nsis/nasm.ico"
 
     ;Store installation folder
     WriteRegStr HKCU "Software\${PRODUCT_SHORT_NAME}" "" $INSTDIR
@@ -136,20 +135,20 @@ SectionEnd
 Section "RDOFF" SecRdoff
     CreateDirectory "$INSTDIR\rdoff"
     SetOutPath "$INSTDIR\rdoff"
-    File "rdoff\ldrdf.exe"
-    File "rdoff\rdf2bin.exe"
-    File "rdoff\rdf2com.exe"
-    File "rdoff\rdf2ith.exe"
-    File "rdoff\rdf2ihx.exe"
-    File "rdoff\rdf2srec.exe"
-    File "rdoff\rdfdump.exe"
-    File "rdoff\rdflib.exe"
-    File "rdoff\rdx.exe"
+    File "rdoff/ldrdf.exe"
+    File "rdoff/rdf2bin.exe"
+    File "rdoff/rdf2com.exe"
+    File "rdoff/rdf2ith.exe"
+    File "rdoff/rdf2ihx.exe"
+    File "rdoff/rdf2srec.exe"
+    File "rdoff/rdfdump.exe"
+    File "rdoff/rdflib.exe"
+    File "rdoff/rdx.exe"
 SectionEnd
 
 Section "Manual" SecManual
     SetOutPath "$INSTDIR"
-    File "doc\nasmdoc.pdf"
+    File "doc/nasmdoc.pdf"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\manual.pdf"
 SectionEnd
 
