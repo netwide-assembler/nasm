@@ -1,7 +1,11 @@
 #!Nsis Installer Command Script
 
+#
 # Copyright (c) 2009, Shao Miller (shao.miller@yrdsb.edu.on.ca)
+# Copyright (c) 2009, Cyrill Gorcunov (gorcunov@gmail.com)
 # All rights reserved.
+#
+# The script requires NSIS v2.45 (or any later)
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,88 +29,171 @@
 !include "version.nsh"
 !define PRODUCT_NAME "Netwide Assembler"
 !define PRODUCT_SHORT_NAME "nasm"
+!define VERSION "${__NASM_VER__}"
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_MUI
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_INSTDIR "${PRODUCT_SHORT_NAME}"
+!include MultiUser.nsh
+
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
+!insertmacro MULTIUSER_INSTALLMODEPAGE_INTERFACE
+
+;--------------------------------
+;General
+
+;Name and file
 Name "${PACKAGE_NAME}"
-OutFile "${PACKAGE_SHORT_NAME}-installer.exe"
-InstallDir "$PROGRAMFILES\NASM"
-InstallDirRegKey HKLM "SOFTWARE\${PACKAGE_SHORT_NAME}" "InstallDir"
-SetCompressor lzma
+OutFile "${PACKAGE_NAME}-installer.exe"
 
-XPStyle on
+;Get installation folder from registry if available
+InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
 
-DirText "Please select the installation folder."
-Page directory
+;Request application privileges for Windows Vista
+RequestExecutionLevel user
 
-ComponentText "Select which optional components you want to install."
-Page components
+;--------------------------------
+;Variables
 
-ShowInstDetails hide
-ShowUninstDetails hide
-Page instfiles
+Var StartMenuFolder
+Var CmdFailed
 
-Section "${PACKAGE_NAME}"
-  SectionIn RO
+;--------------------------------
+;Interface Settings
+Caption "${PACKAGE_SHORT_NAME} installation"
+Icon "nsis/nasm.ico"
+UninstallIcon "nsis/nasm-un.ico"
 
-  SetOutPath "$INSTDIR\."
-  File "LICENSE"
-  File "nasm.exe"
-  File "ndisasm.exe"
-  File "doc/nasmdoc.pdf"
-  File "rdoff/ldrdf.exe"
-  File "rdoff/rdf2bin.exe"
-  File "rdoff/rdf2com.exe"
-  File "rdoff/rdf2ith.exe"
-  File "rdoff/rdf2ihx.exe"
-  File "rdoff/rdf2srec.exe"
-  File "rdoff/rdfdump.exe"
-  File "rdoff/rdflib.exe"
-  File "rdoff/rdx.exe"
-  FileOpen $0 "nasmpath.bat" w
-  IfErrors skip
-  FileWrite $0 "@set path=$INSTDIR;%path%$\r$\n"
-  FileWrite $0 "@%comspec%"
-  FileClose $0
-  skip:
+!define MUI_ABORTWARNING
+
+;--------------------------------
+;Pages
+
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+
+;Start Menu Folder Page Configuration
+!define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
+!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${PRODUCT_SHORT_NAME}"
+!define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${PRODUCT_SHORT_NAME}"
+
+!insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
+
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+;--------------------------------
+;Installer Sections
+
+!insertmacro MUI_LANGUAGE English
+
+Section "NASM" SecNasm
+    Sectionin RO
+    SetOutPath "$INSTDIR"
+    File "LICENSE"
+    File "nasm.exe"
+    File "ndisasm.exe"
+    File "nsis/nasm.ico"
+
+    ;Store installation folder
+    WriteRegStr HKCU "Software\${PRODUCT_SHORT_NAME}" "" $INSTDIR
+
+    ;Store shortcuts folder
+    WriteRegStr HKCU "Software\${PRODUCT_SHORT_NAME}\" "lnk" $SMPROGRAMS\$StartMenuFolder
+
+    ;
+    ; the bat we need
+    StrCpy $CmdFailed "true"
+    FileOpen $0 "nasmpath.bat" w
+    IfErrors skip
+    StrCpy $CmdFailed "false"
+    FileWrite $0 "@set path=$INSTDIR;%path%$\r$\n"
+    FileWrite $0 "@%comspec%"
+    FileClose $0
+    CreateShortCut "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk" "$INSTDIR\nasmpath.bat" "" "$INSTDIR\nasm.ico" 0
+skip:
+    ;Create uninstaller
+    WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+    !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+
+    ;Create shortcuts
+    CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+    StrCmp $CmdFailed "true" +2
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${PRODUCT_SHORT_NAME}-shell.lnk" "$INSTDIR\nasmpath.bat"
+    CreateShortCut  "$SMPROGRAMS\$StartMenuFolder\${PRODUCT_SHORT_NAME}.lnk" "$INSTDIR\nasm.exe" "" "$INSTDIR\nasm.ico" 0
+    CreateShortCut  "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+
+    !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
-Section "Start Menu Shortcuts"
-  CreateDirectory "$SMPROGRAMS\${PACKAGE_NAME}"
-  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\Uninstall ${PACKAGE_NAME}.lnk" "$INSTDIR\Uninstall ${PACKAGE_NAME}.exe" "" "$INSTDIR\Uninstall ${PACKAGE_NAME}.exe" 0
-  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\NASM Shell.lnk" "$INSTDIR\nasmpath.bat" "" "$INSTDIR\nasmpath.bat" 0
-  CreateShortCut "$SMPROGRAMS\${PACKAGE_NAME}\NASM Manual.lnk" "$INSTDIR\nasmdoc.pdf" "" "$INSTDIR\nasmdoc.pdf" 0
+Section "RDOFF" SecRdoff
+    CreateDirectory "$INSTDIR\rdoff"
+    SetOutPath "$INSTDIR\rdoff"
+    File "rdoff/ldrdf.exe"
+    File "rdoff/rdf2bin.exe"
+    File "rdoff/rdf2com.exe"
+    File "rdoff/rdf2ith.exe"
+    File "rdoff/rdf2ihx.exe"
+    File "rdoff/rdf2srec.exe"
+    File "rdoff/rdfdump.exe"
+    File "rdoff/rdflib.exe"
+    File "rdoff/rdx.exe"
 SectionEnd
 
-Section "Desktop Icons"
-  CreateShortCut "$DESKTOP\NASM.lnk" "$INSTDIR\nasmpath.bat" "" "$INSTDIR\nasmpath.bat" 0
+Section "Manual" SecManual
+    SetOutPath "$INSTDIR"
+    File "doc/nasmdoc.pdf"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\manual.pdf"
 SectionEnd
+
+;--------------------------------
+;Descriptions
+
+    ;Language strings
+    LangString DESC_SecNasm ${LANG_ENGLISH}     "NASM assembler and disassember modules"
+    LangString DESC_SecManual ${LANG_ENGLISH}   "Complete NASM manual (pdf file)"
+    LangString DESC_SecRdoff ${LANG_ENGLISH}    "RDOFF utilities (you may not need it if you don't know what is it)"
+
+    ;Assign language strings to sections
+    !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecNasm} $(DESC_SecNasm)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecRdoff} $(DESC_SecRdoff)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecManual} $(DESC_SecManual)
+    !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;--------------------------------
+;Uninstaller Section
 
 Section "Uninstall"
-  Delete /rebootok "$DESKTOP\NASM.lnk"
-  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\NASM Shell.lnk"
-  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\NASM Manual.lnk"
-  Delete /rebootok "$SMPROGRAMS\${PACKAGE_NAME}\Uninstall ${PACKAGE_NAME}.lnk"
-  RMDir "$SMPROGRAMS\${PACKAGE_NAME}"
-
-  Delete /rebootok "$INSTDIR\nasmpath.bat"
-  Delete /rebootok "$INSTDIR\rdx.exe"
-  Delete /rebootok "$INSTDIR\rdflib.exe"
-  Delete /rebootok "$INSTDIR\rdfdump.exe"
-  Delete /rebootok "$INSTDIR\rdf2srec.exe"
-  Delete /rebootok "$INSTDIR\rdf2ihx.exe"
-  Delete /rebootok "$INSTDIR\rdf2ith.exe"
-  Delete /rebootok "$INSTDIR\rdf2com.exe"
-  Delete /rebootok "$INSTDIR\rdf2bin.exe"
-  Delete /rebootok "$INSTDIR\ndisasm.exe"
-  Delete /rebootok "$INSTDIR\nasmdoc.pdf"
-  Delete /rebootok "$INSTDIR\nasm.exe"
-  Delete /rebootok "$INSTDIR\ldrdf.exe"
-  Delete /rebootok "$INSTDIR\LICENSE"
-  RMDir "$INSTDIR"
+    ;
+    ; files on HDD
+    Delete /rebootok "$INSTDIR\rdoff\*"
+    RMDir "$INSTDIR\rdoff"
+    Delete /rebootok "$INSTDIR\doc\*"
+    RMDir "$INSTDIR\doc"
+    Delete /rebootok "$INSTDIR\*"
+    RMDir "$INSTDIR"
+    Delete /rebootok "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk"
+    ;
+    ; Start Menu folder
+    ReadRegStr $0 HKCU Software\${PRODUCT_SHORT_NAME} "lnk"
+    Delete /rebootok "$0\*"
+    RMDir "$0"
+    DeleteRegKey /ifempty HKCU "Software\${PRODUCT_SHORT_NAME}"
 SectionEnd
 
-Section -post
-  WriteUninstaller "$INSTDIR\Uninstall ${PACKAGE_NAME}.exe"
-SectionEnd
+;
+; MUI requires this hooks
+Function .onInit
+    !insertmacro MULTIUSER_INIT
+FunctionEnd
 
+Function un.onInit
+    !insertmacro MULTIUSER_UNINIT
+FunctionEnd
