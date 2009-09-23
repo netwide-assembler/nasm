@@ -150,7 +150,7 @@ SectionEnd
 Section "Manual" SecManual
     SetOutPath "$INSTDIR"
     File "doc/nasmdoc.pdf"
-    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\manual.pdf"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\nasmdoc.pdf"
 SectionEnd
 
 ;--------------------------------
