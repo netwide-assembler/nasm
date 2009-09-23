@@ -46,7 +46,8 @@
 
 ;Name and file
 Name "${PACKAGE_NAME}"
-OutFile "${PACKAGE_NAME}-installer.exe"
+OutFile "${PRODUCT_SHORT_NAME}-installer.exe"
+SetCompressor lzma
 
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
