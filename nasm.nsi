@@ -32,6 +32,8 @@
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
+SetCompressor lzma
+
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_MUI
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
@@ -47,7 +49,6 @@
 ;Name and file
 Name "${PACKAGE_NAME}"
 OutFile "${PRODUCT_SHORT_NAME}-installer.exe"
-SetCompressor lzma
 
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
