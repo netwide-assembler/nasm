@@ -29,7 +29,6 @@
 !include "version.nsh"
 !define PRODUCT_NAME "Netwide Assembler"
 !define PRODUCT_SHORT_NAME "nasm"
-!define VERSION "${__NASM_VER__}"
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
