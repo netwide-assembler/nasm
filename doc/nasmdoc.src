@@ -1005,7 +1005,7 @@ standard search directories for include files, by putting \c{-i}
 options in the \c{NASMENV} variable.
 
 The value of the variable is split up at white space, so that the
-value \c{-s -ic:\\nasmlib} will be treated as two separate options.
+value \c{-s -ic:\\nasmlib\\} will be treated as two separate options.
 However, that means that the value \c{-dNAME="my name"} won't do
 what you might want, because it will be split at the space and the
 NASM command-line processing will get confused by the two
@@ -1015,8 +1015,8 @@ To get round this, NASM provides a feature whereby, if you begin the
 \c{NASMENV} environment variable with some character that isn't a minus
 sign, then NASM will treat this character as the \i{separator
 character} for options. So setting the \c{NASMENV} variable to the
-value \c{!-s!-ic:\\nasmlib} is equivalent to setting it to \c{-s
--ic:\\nasmlib}, but \c{!-dNAME="my name"} will work.
+value \c{!-s!-ic:\\nasmlib\\} is equivalent to setting it to \c{-s
+-ic:\\nasmlib\\}, but \c{!-dNAME="my name"} will work.
 
 This environment variable was previously called \c{NASM}. This was
 changed with version 0.98.31.
