@@ -153,6 +153,13 @@ Section "Manual" SecManual
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\nasmdoc.pdf"
 SectionEnd
 
+Section "VS8 integration" SecVS8
+    CreateDirectory "$INSTDIR\contrib\VSrules"
+    SetOutPath "$INSTDIR\contrib\VSrules"
+    File "contrib/VSrules/nasm.README"
+    File "contrib/VSrules/nasm.rules"
+SectionEnd
+
 ;--------------------------------
 ;Descriptions
 
@@ -160,12 +167,14 @@ SectionEnd
     LangString DESC_SecNasm ${LANG_ENGLISH}     "NASM assembler and disassember modules"
     LangString DESC_SecManual ${LANG_ENGLISH}   "Complete NASM manual (pdf file)"
     LangString DESC_SecRdoff ${LANG_ENGLISH}    "RDOFF utilities (you may not need it if you don't know what is it)"
+    LangString DESC_SecVS8 ${LANG_ENGLISH}      "Visual Studio 2008 NASM integration (rules file)"
 
     ;Assign language strings to sections
     !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecNasm} $(DESC_SecNasm)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecRdoff} $(DESC_SecRdoff)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecManual} $(DESC_SecManual)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS8} $(DESC_SecVS8)
     !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
@@ -178,6 +187,7 @@ Section "Uninstall"
     RMDir "$INSTDIR\rdoff"
     Delete /rebootok "$INSTDIR\doc\*"
     RMDir "$INSTDIR\doc"
+    Delete /r /rebootok "$INSTDIR\contrib"
     Delete /rebootok "$INSTDIR\*"
     RMDir "$INSTDIR"
     Delete /rebootok "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk"
