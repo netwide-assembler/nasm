@@ -183,13 +183,7 @@ SectionEnd
 Section "Uninstall"
     ;
     ; files on HDD
-    Delete /rebootok "$INSTDIR\rdoff\*"
-    RMDir "$INSTDIR\rdoff"
-    Delete /rebootok "$INSTDIR\doc\*"
-    RMDir "$INSTDIR\doc"
-    Delete /r /rebootok "$INSTDIR\contrib"
-    Delete /rebootok "$INSTDIR\*"
-    RMDir "$INSTDIR"
+    RMDir /r /rebootok "$INSTDIR"
     Delete /rebootok "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk"
     ;
     ; Start Menu folder
