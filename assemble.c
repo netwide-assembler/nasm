@@ -2005,9 +2005,10 @@ static enum match_result find_match(const struct itemplate **tempp,
 	    /*
 	     * Missing operand size and a candidate for fuzzy matching...
 	     */
-	    for (i = 0; i < temp->operands; i++)
-		xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
-
+	    for (i = 0; i < temp->operands; i++) {
+		if ((temp->opd[i] & SAME_AS) == 0)
+		    xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
+	    }
 	    opsizemissing = true;
 	}
 	if (m > merr)
@@ -2021,6 +2022,14 @@ static enum match_result find_match(const struct itemplate **tempp,
 	goto done;
 
     for (i = 0; i < instruction->operands; i++) {
+	/*
+	 * We ignore extrinsic operand sizes on registers, so we should
+	 * never try to fuzzy-match on them.  This also resolves the case
+	 * when we have e.g. "xmmrm128" in two different positions.
+	 */
+	if ((REGISTER & ~instruction->oprs[i].type) == 0)
+	    continue;
+
 	/* This tests if xsizeflags[i] has more than one bit set */
 	if ((xsizeflags[i] & (xsizeflags[i]-1)))
 	    goto done;		/* No luck */
@@ -2144,10 +2153,16 @@ static enum match_result matches(const struct itemplate *itemp,
 	} else if (itemp->opd[i] & ~type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
-            if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK))
+            if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK)) {
                 return MERR_INVALOP;
-            else
+	    } else if (!(REGISTER & ~type)) {
+		/*
+		 * Note: we don't honor extrinsic operand sizes for registers,
+		 * so "missing operand size" for a register should be
+		 * considered a wildcard match rather than an error.
+		 */
 		opsizemissing = true;
+	    }
         }
     }
 
