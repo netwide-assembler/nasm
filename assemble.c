@@ -2155,7 +2155,7 @@ static enum match_result matches(const struct itemplate *itemp,
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK)) {
                 return MERR_INVALOP;
-	    } else if (!(REGISTER & ~type)) {
+	    } else if ((REGISTER & type) != REGISTER) {
 		/*
 		 * Note: we don't honor extrinsic operand sizes for registers,
 		 * so "missing operand size" for a register should be
