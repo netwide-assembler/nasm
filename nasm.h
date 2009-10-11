@@ -682,7 +682,7 @@ enum eval_hint {                /* values for `hinttype' */
 };
 
 typedef struct operand {	/* operand to an instruction */
-    int32_t type;               /* type of operand */
+    opflags_t type;             /* type of operand */
     int disp_size;              /* 0 means default; 16; 32; 64 */
     enum reg_enum basereg, indexreg; /* address registers */
     int scale;			/* index scale */

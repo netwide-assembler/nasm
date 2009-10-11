@@ -2141,7 +2141,7 @@ static enum match_result matches(const struct itemplate *itemp,
      * Check that the operand flags all match up
      */
     for (i = 0; i < itemp->operands; i++) {
-	int32_t type = instruction->oprs[i].type;
+	opflags_t type = instruction->oprs[i].type;
 	if (!(type & SIZE_MASK))
 	    type |= size[i];
 
