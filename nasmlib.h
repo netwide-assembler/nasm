@@ -377,6 +377,11 @@ int src_get(int32_t *xline, char **xname);
 
 char *nasm_strcat(const char *one, const char *two);
 
+char *nasm_skip_spaces(const char *p);
+char *nasm_skip_word(const char *p);
+char *nasm_zap_spaces(char *p);
+char *nasm_zap_spaces_rev(char *p);
+
 const char *prefix_name(int);
 
 #define ZERO_BUF_SIZE 4096

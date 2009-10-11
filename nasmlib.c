@@ -653,3 +653,39 @@ char *nasm_strcat(const char *one, const char *two)
     strcpy(rslt + l1, two);
     return rslt;
 }
+
+/* skip leading spaces */
+char *nasm_skip_spaces(const char *p)
+{
+    if (p)
+        while (*p && nasm_isspace(*p))
+            p++;
+    return (char *)p;
+}
+
+/* skip leading non-spaces */
+char *nasm_skip_word(const char *p)
+{
+    if (p)
+        while (*p && !nasm_isspace(*p))
+            p++;
+    return (char *)p;
+}
+
+/* zap leading spaces with zero */
+char *nasm_zap_spaces(char *p)
+{
+    if (p)
+        while (*p && nasm_isspace(*p))
+            *p++ = 0x0;
+    return p;
+}
+
+/* zap spaces with zero in reverse order */
+char *nasm_zap_spaces_rev(char *p)
+{
+    if (p)
+        while (*p && nasm_isspace(*p))
+            *p-- = 0x0;
+    return p;
+}
