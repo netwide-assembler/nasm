@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,8 +31,8 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
- * nasmlib.h	header file for nasmlib.c
+/*
+ * nasmlib.h    header file for nasmlib.c
  */
 
 #ifndef NASM_NASMLIB_H
@@ -96,41 +96,41 @@ void nasm_set_verror(vefunc);
  * argument to an efunc.
  */
 
-#define ERR_DEBUG	0x00000008      /* put out debugging message */
-#define ERR_WARNING	0x00000000      /* warn only: no further action */
-#define ERR_NONFATAL	0x00000001      /* terminate assembly after phase */
-#define ERR_FATAL	0x00000002      /* instantly fatal: exit with error */
-#define ERR_PANIC	0x00000003      /* internal error: panic instantly
+#define ERR_DEBUG       0x00000008      /* put out debugging message */
+#define ERR_WARNING     0x00000000      /* warn only: no further action */
+#define ERR_NONFATAL    0x00000001      /* terminate assembly after phase */
+#define ERR_FATAL       0x00000002      /* instantly fatal: exit with error */
+#define ERR_PANIC       0x00000003      /* internal error: panic instantly
                                          * and dump core for reference */
-#define ERR_MASK	0x0000000F      /* mask off the above codes */
-#define ERR_NOFILE	0x00000010      /* don't give source file name/line */
-#define ERR_USAGE	0x00000020      /* print a usage message */
-#define ERR_PASS1	0x00000040      /* only print this error on pass one */
-#define ERR_PASS2	0x00000080
-#define ERR_NO_SEVERITY	0x00000100      /* suppress printing severity */
+#define ERR_MASK        0x0000000F      /* mask off the above codes */
+#define ERR_NOFILE      0x00000010      /* don't give source file name/line */
+#define ERR_USAGE       0x00000020      /* print a usage message */
+#define ERR_PASS1       0x00000040      /* only print this error on pass one */
+#define ERR_PASS2       0x00000080
+#define ERR_NO_SEVERITY 0x00000100      /* suppress printing severity */
 
 /*
  * These codes define specific types of suppressible warning.
  */
 
-#define ERR_WARN_MASK	0xFFFFF000      /* the mask for this feature */
-#define ERR_WARN_SHR 	12               /* how far to shift right */
+#define ERR_WARN_MASK   0xFFFFF000      /* the mask for this feature */
+#define ERR_WARN_SHR    12              /* how far to shift right */
 
 #define WARN(x) ((x) << ERR_WARN_SHR)
 
-#define ERR_WARN_MNP		WARN( 1) /* macro-num-parameters warning */
-#define ERR_WARN_MSR		WARN( 2) /* macro self-reference */
-#define ERR_WARN_MDP		WARN( 3) /* macro default parameters check */
-#define ERR_WARN_OL 		WARN( 4) /* orphan label (no colon, and
+#define ERR_WARN_MNP            WARN( 1) /* macro-num-parameters warning */
+#define ERR_WARN_MSR            WARN( 2) /* macro self-reference */
+#define ERR_WARN_MDP            WARN( 3) /* macro default parameters check */
+#define ERR_WARN_OL             WARN( 4) /* orphan label (no colon, and
                                           * alone on line) */
-#define ERR_WARN_NOV		WARN( 5) /* numeric overflow */
-#define ERR_WARN_GNUELF		WARN( 6) /* using GNU ELF extensions */
-#define ERR_WARN_FL_OVERFLOW	WARN( 7) /* FP overflow */
-#define ERR_WARN_FL_DENORM	WARN( 8) /* FP denormal */
-#define ERR_WARN_FL_UNDERFLOW	WARN( 9) /* FP underflow */
-#define ERR_WARN_FL_TOOLONG	WARN(10) /* FP too many digits */
-#define ERR_WARN_USER		WARN(11) /* %warning directives */
-#define ERR_WARN_MAX		11	 /* the highest numbered one */
+#define ERR_WARN_NOV            WARN( 5) /* numeric overflow */
+#define ERR_WARN_GNUELF         WARN( 6) /* using GNU ELF extensions */
+#define ERR_WARN_FL_OVERFLOW    WARN( 7) /* FP overflow */
+#define ERR_WARN_FL_DENORM      WARN( 8) /* FP denormal */
+#define ERR_WARN_FL_UNDERFLOW   WARN( 9) /* FP underflow */
+#define ERR_WARN_FL_TOOLONG     WARN(10) /* FP too many digits */
+#define ERR_WARN_USER           WARN(11) /* %warning directives */
+#define ERR_WARN_MAX            11       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
@@ -166,10 +166,10 @@ char *nasm_strndup_log(const char *, int, const char *, size_t);
  * NASM assert failure
  */
 no_return nasm_assert_failed(const char *, int, const char *);
-#define nasm_assert(x)						\
-    do {							\
-	if (unlikely(!(x)))					\
-	    nasm_assert_failed(__FILE__,__LINE__,#x);		\
+#define nasm_assert(x)                                          \
+    do {                                                        \
+        if (unlikely(!(x)))                                     \
+            nasm_assert_failed(__FILE__,__LINE__,#x);           \
     } while (0)
 
 /*
@@ -243,11 +243,11 @@ void standard_extension(char *inname, char *outname, char *extension);
  *  list_for_each - regular iterator over list
  *  list_for_each_safe - the same but safe against list items removal
  */
-#define list_for_each(pos, head) \
-	for (pos = head; pos; pos = pos->next)
-#define list_for_each_safe(pos, n, head) \
-	for (pos = head, n = (pos ? pos->next : NULL); pos; \
-		pos = n, n = (n ? n->next : NULL))
+#define list_for_each(pos, head)                        \
+    for (pos = head; pos; pos = pos->next)
+#define list_for_each_safe(pos, n, head)                \
+    for (pos = head, n = (pos ? pos->next : NULL); pos; \
+        pos = n, n = (n ? n->next : NULL))
 
 /*
  * some handy macros that will probably be of use in more than one
@@ -257,90 +257,90 @@ void standard_extension(char *inname, char *outname, char *extension);
 
 #if X86_MEMORY
 
-#define WRITECHAR(p,v)				\
-    do {					\
-	*(uint8_t *)(p) = (v);			\
-	(p) += 1;				\
+#define WRITECHAR(p,v)                          \
+    do {                                        \
+        *(uint8_t *)(p) = (v);                  \
+        (p) += 1;                               \
     } while (0)
 
-#define WRITESHORT(p,v)				\
-    do {					\
-	*(uint16_t *)(p) = (v);			\
-	(p) += 2;				\
+#define WRITESHORT(p,v)                         \
+    do {                                        \
+        *(uint16_t *)(p) = (v);                 \
+        (p) += 2;                               \
     } while (0)
 
-#define WRITELONG(p,v)				\
-    do {					\
-	*(uint32_t *)(p) = (v);			\
-	(p) += 4;				\
+#define WRITELONG(p,v)                          \
+    do {                                        \
+        *(uint32_t *)(p) = (v);                 \
+        (p) += 4;                               \
     } while (0)
 
-#define WRITEDLONG(p,v)				\
-    do {					\
-	*(uint64_t *)(p) = (v);			\
-	(p) += 8;				\
+#define WRITEDLONG(p,v)                         \
+    do {                                        \
+        *(uint64_t *)(p) = (v);                 \
+        (p) += 8;                               \
     } while (0)
 
-#define WRITEADDR(p,v,s)			\
-    do {					\
-	uint64_t _wa_v = (v);			\
-	memcpy((p), &_wa_v, (s));		\
-	(p) += (s);				\
+#define WRITEADDR(p,v,s)                        \
+    do {                                        \
+        uint64_t _wa_v = (v);                   \
+        memcpy((p), &_wa_v, (s));               \
+        (p) += (s);                             \
     } while (0)
 
 #else /* !X86_MEMORY */
 
-#define WRITECHAR(p,v)				\
-    do {					\
-	uint8_t *_wc_p = (uint8_t *)(p);	\
-	uint8_t _wc_v = (v);			\
-	_wc_p[0] = _wc_v;			\
-	(p) = (void *)(_wc_p + 1);		\
+#define WRITECHAR(p,v)                          \
+    do {                                        \
+        uint8_t *_wc_p = (uint8_t *)(p);        \
+        uint8_t _wc_v = (v);                    \
+        _wc_p[0] = _wc_v;                       \
+        (p) = (void *)(_wc_p + 1);              \
     } while (0)
 
-#define WRITESHORT(p,v)				\
-    do {					\
-	uint8_t *_ws_p = (uint8_t *)(p);	\
-	uint16_t _ws_v = (v);			\
-	_ws_p[0] = _ws_v;			\
-	_ws_p[1] = _ws_v >> 8;			\
-	(p) = (void *)(_ws_p + 2);		\
+#define WRITESHORT(p,v)                         \
+    do {                                        \
+        uint8_t *_ws_p = (uint8_t *)(p);        \
+        uint16_t _ws_v = (v);                   \
+        _ws_p[0] = _ws_v;                       \
+        _ws_p[1] = _ws_v >> 8;                  \
+        (p) = (void *)(_ws_p + 2);              \
     } while (0)
 
-#define WRITELONG(p,v)				\
-    do {					\
-	uint8_t *_wl_p = (uint8_t *)(p);	\
-	uint32_t _wl_v = (v);			\
-	_wl_p[0] = _wl_v;			\
-	_wl_p[1] = _wl_v >> 8;			\
-	_wl_p[2] = _wl_v >> 16;			\
-	_wl_p[3] = _wl_v >> 24;			\
-	(p) = (void *)(_wl_p + 4);		\
+#define WRITELONG(p,v)                          \
+    do {                                        \
+        uint8_t *_wl_p = (uint8_t *)(p);        \
+        uint32_t _wl_v = (v);                   \
+        _wl_p[0] = _wl_v;                       \
+        _wl_p[1] = _wl_v >> 8;                  \
+        _wl_p[2] = _wl_v >> 16;                 \
+        _wl_p[3] = _wl_v >> 24;                 \
+        (p) = (void *)(_wl_p + 4);              \
     } while (0)
 
-#define WRITEDLONG(p,v)				\
-    do {					\
-	uint8_t *_wq_p = (uint8_t *)(p);	\
-	uint64_t _wq_v = (v);			\
-	_wq_p[0] = _wq_v;			\
-	_wq_p[1] = _wq_v >> 8;			\
-	_wq_p[2] = _wq_v >> 16;			\
-	_wq_p[3] = _wq_v >> 24;			\
-	_wq_p[4] = _wq_v >> 32;			\
-	_wq_p[5] = _wq_v >> 40;			\
-	_wq_p[6] = _wq_v >> 48;			\
-	_wq_p[7] = _wq_v >> 56;			\
-	(p) = (void *)(_wq_p + 8);		\
+#define WRITEDLONG(p,v)                         \
+    do {                                        \
+        uint8_t *_wq_p = (uint8_t *)(p);        \
+        uint64_t _wq_v = (v);                   \
+        _wq_p[0] = _wq_v;                       \
+        _wq_p[1] = _wq_v >> 8;                  \
+        _wq_p[2] = _wq_v >> 16;                 \
+        _wq_p[3] = _wq_v >> 24;                 \
+        _wq_p[4] = _wq_v >> 32;                 \
+        _wq_p[5] = _wq_v >> 40;                 \
+        _wq_p[6] = _wq_v >> 48;                 \
+        _wq_p[7] = _wq_v >> 56;                 \
+        (p) = (void *)(_wq_p + 8);              \
     } while (0)
 
-#define WRITEADDR(p,v,s)			\
-    do {					\
-	int _wa_s = (s);			\
-	uint64_t _wa_v = (v);			\
-	while (_wa_s--) {			\
-	    WRITECHAR(p,_wa_v);			\
-	    _wa_v >>= 8;			\
-	}					\
+#define WRITEADDR(p,v,s)                        \
+    do {                                        \
+        int _wa_s = (s);                        \
+        uint64_t _wa_v = (v);                   \
+        while (_wa_s--) {                       \
+            WRITECHAR(p,_wa_v);                 \
+            _wa_v >>= 8;                        \
+        }                                       \
     } while(0)
 
 #endif
@@ -379,7 +379,7 @@ char *nasm_strcat(const char *one, const char *two);
 
 const char *prefix_name(int);
 
-#define ZERO_BUF_SIZE	4096
+#define ZERO_BUF_SIZE 4096
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
 size_t fwritezero(size_t bytes, FILE *fp);
 

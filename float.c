@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -65,12 +65,12 @@ static enum float_round rc = FLOAT_RC_NEAR;     /* rounding control */
 typedef uint32_t fp_limb;
 typedef uint64_t fp_2limb;
 
-#define LIMB_BITS	32
+#define LIMB_BITS       32
 #define LIMB_BYTES      (LIMB_BITS/8)
-#define LIMB_TOP_BIT	((fp_limb)1 << (LIMB_BITS-1))
-#define LIMB_MASK	((fp_limb)(~0))
-#define LIMB_ALL_BYTES	((fp_limb)0x01010101)
-#define LIMB_BYTE(x)	((x)*LIMB_ALL_BYTES)
+#define LIMB_TOP_BIT    ((fp_limb)1 << (LIMB_BITS-1))
+#define LIMB_MASK       ((fp_limb)(~0))
+#define LIMB_ALL_BYTES  ((fp_limb)0x01010101)
+#define LIMB_BYTE(x)    ((x)*LIMB_ALL_BYTES)
 
 /* 112 bits + 64 bits for accuracy + 16 bits for rounding */
 #define MANT_LIMBS 6
@@ -82,8 +82,8 @@ typedef uint64_t fp_2limb;
 #define MANT_FMT "%08x_%08x_%08x_%08x_%08x_%08x"
 #define MANT_ARG SOME_ARG(mant, 0)
 
-#define SOME_ARG(a,i) (a)[(i)+0], (a)[(i)+1], (a)[(i)+2], (a)[(i)+3],	\
-	(a)[(i)+4], (a)[(i)+5]
+#define SOME_ARG(a,i) (a)[(i)+0], (a)[(i)+1], (a)[(i)+2], \
+                      (a)[(i)+3], (a)[(i)+4], (a)[(i)+5]
 
 /*
  * ---------------------------------------------------------------------------
@@ -93,9 +93,9 @@ typedef uint64_t fp_2limb;
 
 #ifdef DEBUG_FLOAT
 #define dprintf(x) printf x
-#else                           /*  */
+#else
 #define dprintf(x) do { } while (0)
-#endif                          /*  */
+#endif
 
 /*
  * ---------------------------------------------------------------------------
@@ -159,36 +159,36 @@ static int32_t read_exponent(const char *string, int32_t max)
     bool neg = false;
 
     if (*string == '+') {
-	string++;
+        string++;
     } else if (*string == '-') {
-	neg = true;
-	string++;
+        neg = true;
+        string++;
     }
     while (*string) {
-	if (*string >= '0' && *string <= '9') {
-	    i = (i * 10) + (*string - '0');
+        if (*string >= '0' && *string <= '9') {
+            i = (i * 10) + (*string - '0');
 
-	    /*
-	     * To ensure that underflows and overflows are
-	     * handled properly we must avoid wraparounds of
-	     * the signed integer value that is used to hold
-	     * the exponent. Therefore we cap the exponent at
-	     * +/-5000, which is slightly more/less than
-	     * what's required for normal and denormal numbers
-	     * in single, double, and extended precision, but
-	     * sufficient to avoid signed integer wraparound.
-	     */
-	    if (i > max)
-		i = max;
-	} else if (*string == '_') {
-	    /* do nothing */
-	} else {
-	    error(ERR_NONFATAL|ERR_PASS1,
-		  "invalid character in floating-point constant %s: '%c'",
-		  "exponent", *string);
-	    return INT32_MAX;
-	}
-	string++;
+            /*
+             * To ensure that underflows and overflows are
+             * handled properly we must avoid wraparounds of
+             * the signed integer value that is used to hold
+             * the exponent. Therefore we cap the exponent at
+             * +/-5000, which is slightly more/less than
+             * what's required for normal and denormal numbers
+             * in single, double, and extended precision, but
+             * sufficient to avoid signed integer wraparound.
+             */
+            if (i > max)
+                i = max;
+        } else if (*string == '_') {
+            /* do nothing */
+        } else {
+            error(ERR_NONFATAL|ERR_PASS1,
+                  "invalid character in floating-point constant %s: '%c'",
+                  "exponent", *string);
+            return INT32_MAX;
+        }
+        string++;
     }
 
     return neg ? -i : i;
@@ -257,13 +257,13 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
     }
 
     if (*string) {
-	int32_t e;
+        int32_t e;
 
         string++;               /* eat the E */
-	e = read_exponent(string, 5000);
-	if (e == INT32_MAX)
-	    return false;
-	tenpwr += e;
+        e = read_exponent(string, 5000);
+        if (e == INT32_MAX)
+            return false;
+        tenpwr += e;
     }
 
     /*
@@ -419,8 +419,8 @@ static bool is_zero(const fp_limb *mant)
     int i;
 
     for (i = 0; i < MANT_LIMBS; i++)
-	if (mant[i])
-	    return false;
+        if (mant[i])
+            return false;
 
     return true;
 }
@@ -431,29 +431,29 @@ static bool is_zero(const fp_limb *mant)
  * ---------------------------------------------------------------------------
  */
 
-#define ROUND_COLLECT_BITS			\
-    do {					\
-	m = mant[i] & (2*bit-1);		\
-	for (j = i+1; j < MANT_LIMBS; j++)	\
-	    m = m | mant[j];			\
+#define ROUND_COLLECT_BITS                      \
+    do {                                        \
+        m = mant[i] & (2*bit-1);                \
+        for (j = i+1; j < MANT_LIMBS; j++)      \
+            m = m | mant[j];                    \
     } while (0)
 
-#define ROUND_ABS_DOWN				\
-    do {					\
-	mant[i] &= ~(bit-1);			\
-	for (j = i+1; j < MANT_LIMBS; j++)	\
-	    mant[j] = 0;			\
-	return false;				\
+#define ROUND_ABS_DOWN                          \
+    do {                                        \
+        mant[i] &= ~(bit-1);                    \
+        for (j = i+1; j < MANT_LIMBS; j++)      \
+            mant[j] = 0;                        \
+        return false;                           \
     } while (0)
 
-#define ROUND_ABS_UP				\
-    do {					\
-	mant[i] = (mant[i] & ~(bit-1)) + bit;	\
-	for (j = i+1; j < MANT_LIMBS; j++)	\
-	    mant[j] = 0;			\
-	while (i > 0 && !mant[i])		\
-	    ++mant[--i];			\
-	return !mant[0];			\
+#define ROUND_ABS_UP                            \
+    do {                                        \
+        mant[i] = (mant[i] & ~(bit-1)) + bit;   \
+        for (j = i+1; j < MANT_LIMBS; j++)      \
+            mant[j] = 0;                        \
+        while (i > 0 && !mant[i])               \
+            ++mant[--i];                        \
+        return !mant[0];                        \
     } while (0)
 
 static bool ieee_round(bool minus, fp_limb *mant, int bits)
@@ -465,34 +465,34 @@ static bool ieee_round(bool minus, fp_limb *mant, int bits)
     fp_limb bit = LIMB_TOP_BIT >> p;
 
     if (rc == FLOAT_RC_NEAR) {
-	if (mant[i] & bit) {
-	    mant[i] &= ~bit;
-	    ROUND_COLLECT_BITS;
-	    mant[i] |= bit;
-	    if (m) {
-		ROUND_ABS_UP;
-	    } else {
-		if (test_bit(mant, bits-1)) {
-		    ROUND_ABS_UP;
-		} else {
-		    ROUND_ABS_DOWN;
-		}
-	    }
-	} else {
-	    ROUND_ABS_DOWN;
-	}
+        if (mant[i] & bit) {
+            mant[i] &= ~bit;
+            ROUND_COLLECT_BITS;
+            mant[i] |= bit;
+            if (m) {
+                ROUND_ABS_UP;
+            } else {
+                if (test_bit(mant, bits-1)) {
+                    ROUND_ABS_UP;
+                } else {
+                    ROUND_ABS_DOWN;
+                }
+            }
+        } else {
+            ROUND_ABS_DOWN;
+        }
     } else if (rc == FLOAT_RC_ZERO ||
-	       rc == (minus ? FLOAT_RC_UP : FLOAT_RC_DOWN)) {
-	ROUND_ABS_DOWN;
+               rc == (minus ? FLOAT_RC_UP : FLOAT_RC_DOWN)) {
+        ROUND_ABS_DOWN;
     } else {
-	/* rc == (minus ? FLOAT_RC_DOWN : FLOAT_RC_UP) */
-	/* Round toward +/- infinity */
-	ROUND_COLLECT_BITS;
-	if (m) {
-	    ROUND_ABS_UP;
-	} else {
-	    ROUND_ABS_DOWN;
-	}
+        /* rc == (minus ? FLOAT_RC_DOWN : FLOAT_RC_UP) */
+        /* Round toward +/- infinity */
+        ROUND_COLLECT_BITS;
+        if (m) {
+            ROUND_ABS_UP;
+        } else {
+            ROUND_ABS_DOWN;
+        }
     }
     return false;
 }
@@ -510,7 +510,7 @@ static unsigned int hexval(char c)
 
 /* Handle floating-point numbers with radix 2^bits and binary exponent */
 static bool ieee_flconvert_bin(const char *string, int bits,
-			       fp_limb *mant, int32_t *exponent)
+                               fp_limb *mant, int32_t *exponent)
 {
     static const int log2tbl[16] =
         { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
@@ -567,14 +567,14 @@ static bool ieee_flconvert_bin(const char *string, int bits,
                     twopwr -= bits;
             }
         } else if (c == 'p' || c == 'P') {
-	    int32_t e;
-	    e = read_exponent(string, 20000);
-	    if (e == INT32_MAX)
-		return false;
-	    twopwr += e;
+            int32_t e;
+            e = read_exponent(string, 20000);
+            if (e == INT32_MAX)
+                return false;
+            twopwr += e;
             break;
-	} else if (c == '_') {
-	    /* ignore */
+        } else if (c == '_') {
+            /* ignore */
         } else {
             error(ERR_NONFATAL|ERR_PASS1,
                   "floating-point constant: `%c' is invalid character", c);
@@ -606,20 +606,20 @@ static void ieee_shr(fp_limb *mant, int i)
     offs = i/LIMB_BITS;
 
     if (sr == 0) {
-	if (offs)
-	    for (j = MANT_LIMBS-1; j >= offs; j--)
-		mant[j] = mant[j-offs];
+        if (offs)
+            for (j = MANT_LIMBS-1; j >= offs; j--)
+                mant[j] = mant[j-offs];
     } else {
-	n = mant[MANT_LIMBS-1-offs] >> sr;
-	for (j = MANT_LIMBS-1; j > offs; j--) {
-	    m = mant[j-offs-1];
-	    mant[j] = (m << sl) | n;
-	    n = m >> sr;
-	}
-	mant[j--] = n;
+        n = mant[MANT_LIMBS-1-offs] >> sr;
+        for (j = MANT_LIMBS-1; j > offs; j--) {
+            m = mant[j-offs-1];
+            mant[j] = (m << sl) | n;
+            n = m >> sr;
+        }
+        mant[j--] = n;
     }
     while (j >= 0)
-	mant[j--] = 0;
+        mant[j--] = 0;
 }
 
 /* Produce standard IEEE formats, with implicit or explicit integer
@@ -633,7 +633,7 @@ static void ieee_shr(fp_limb *mant, int i)
 struct ieee_format {
     int bytes;
     int mantissa;               /* Fractional bits in the mantissa */
-    int explicit;		/* Explicit integer */
+    int explicit;               /* Explicit integer */
     int exponent;               /* Bits in the exponent */
 };
 
@@ -666,54 +666,54 @@ enum floats {
 };
 
 static int to_packed_bcd(const char *str, const char *p,
-			 int s, uint8_t *result,
-			 const struct ieee_format *fmt)
+                         int s, uint8_t *result,
+                         const struct ieee_format *fmt)
 {
     int n = 0;
     char c;
     int tv = -1;
 
     if (fmt != &ieee_80) {
-	error(ERR_NONFATAL|ERR_PASS1,
-	      "packed BCD requires an 80-bit format");
-	return 0;
+        error(ERR_NONFATAL|ERR_PASS1,
+              "packed BCD requires an 80-bit format");
+        return 0;
     }
 
     while (p >= str) {
-	c = *p--;
-	if (c >= '0' && c <= '9') {
-	    if (tv < 0) {
-		if (n == 9) {
-		    error(ERR_WARNING|ERR_PASS1,
-			  "packed BCD truncated to 18 digits");
-		}
-		tv = c-'0';
-	    } else {
-		if (n < 9)
-		    *result++ = tv + ((c-'0') << 4);
-		n++;
-		tv = -1;
-	    }
-	} else if (c == '_') {
-	    /* do nothing */
-	} else {
-	    error(ERR_NONFATAL|ERR_PASS1,
-		  "invalid character `%c' in packed BCD constant", c);
-	    return 0;
-	}
+        c = *p--;
+        if (c >= '0' && c <= '9') {
+            if (tv < 0) {
+                if (n == 9) {
+                    error(ERR_WARNING|ERR_PASS1,
+                          "packed BCD truncated to 18 digits");
+                }
+                tv = c-'0';
+            } else {
+                if (n < 9)
+                    *result++ = tv + ((c-'0') << 4);
+                n++;
+                tv = -1;
+            }
+        } else if (c == '_') {
+            /* do nothing */
+        } else {
+            error(ERR_NONFATAL|ERR_PASS1,
+                  "invalid character `%c' in packed BCD constant", c);
+            return 0;
+        }
     }
     if (tv >= 0) {
-	if (n < 9)
-	    *result++ = tv;
-	n++;
+        if (n < 9)
+            *result++ = tv;
+        n++;
     }
     while (n < 9) {
-	*result++ = 0;
-	n++;
+        *result++ = 0;
+        n++;
     }
     *result = (s < 0) ? 0x80 : 0;
 
-    return 1;			/* success */
+    return 1;                   /* success */
 }
 
 static int to_float(const char *str, int s, uint8_t *result,
@@ -723,7 +723,7 @@ static int to_float(const char *str, int s, uint8_t *result,
     int32_t exponent = 0;
     const int32_t expmax = 1 << (fmt->exponent - 1);
     fp_limb one_mask = LIMB_TOP_BIT >>
-	((fmt->exponent+fmt->explicit) % LIMB_BITS);
+        ((fmt->exponent+fmt->explicit) % LIMB_BITS);
     const int one_pos = (fmt->exponent+fmt->explicit)/LIMB_BITS;
     int i;
     int shift;
@@ -734,169 +734,169 @@ static int to_float(const char *str, int s, uint8_t *result,
     const char *strend;
 
     if (!str[0]) {
-	error(ERR_PANIC,
-	      "internal errror: empty string passed to float_const");
-	return 0;
+        error(ERR_PANIC,
+              "internal errror: empty string passed to float_const");
+        return 0;
     }
 
     strend = strchr(str, '\0');
     if (strend[-1] == 'P' || strend[-1] == 'p')
-	return to_packed_bcd(str, strend-2, s, result, fmt);
+        return to_packed_bcd(str, strend-2, s, result, fmt);
 
     if (str[0] == '_') {
-	/* Special tokens */
+        /* Special tokens */
 
         switch (str[2]) {
         case 'n':              /* __nan__ */
         case 'N':
         case 'q':              /* __qnan__ */
         case 'Q':
-	    type = FL_QNAN;
+            type = FL_QNAN;
             break;
         case 's':              /* __snan__ */
         case 'S':
-	    type = FL_SNAN;
+            type = FL_SNAN;
             break;
         case 'i':              /* __infinity__ */
         case 'I':
-	    type = FL_INFINITY;
+            type = FL_INFINITY;
             break;
-	default:
-	    error(ERR_NONFATAL|ERR_PASS1,
-		  "internal error: unknown FP constant token `%s'\n", str);
-	    type = FL_QNAN;
-	    break;
+        default:
+            error(ERR_NONFATAL|ERR_PASS1,
+                  "internal error: unknown FP constant token `%s'\n", str);
+            type = FL_QNAN;
+            break;
         }
     } else {
         if (str[0] == '0') {
-	    switch (str[1]) {
-	    case 'x': case 'X':
-	    case 'h': case 'H':
-		ok = ieee_flconvert_bin(str+2, 4, mant, &exponent);
-		break;
-	    case 'o': case 'O':
-	    case 'q': case 'Q':
-		ok = ieee_flconvert_bin(str+2, 3, mant, &exponent);
-		break;
-	    case 'b': case 'B':
-	    case 'y': case 'Y':
-		ok = ieee_flconvert_bin(str+2, 1, mant, &exponent);
-		break;
-	    case 'd': case 'D':
-	    case 't': case 'T':
-		ok = ieee_flconvert(str+2, mant, &exponent);
-		break;
-	    case 'p': case 'P':
-		return to_packed_bcd(str+2, strend-1, s, result, fmt);
-	    default:
-		/* Leading zero was just a zero? */
-		ok = ieee_flconvert(str, mant, &exponent);
-		break;
-	    }
-	} else if (str[0] == '$') {
-	    ok = ieee_flconvert_bin(str+1, 4, mant, &exponent);
-	} else {
+            switch (str[1]) {
+            case 'x': case 'X':
+            case 'h': case 'H':
+                ok = ieee_flconvert_bin(str+2, 4, mant, &exponent);
+                break;
+            case 'o': case 'O':
+            case 'q': case 'Q':
+                ok = ieee_flconvert_bin(str+2, 3, mant, &exponent);
+                break;
+            case 'b': case 'B':
+            case 'y': case 'Y':
+                ok = ieee_flconvert_bin(str+2, 1, mant, &exponent);
+                break;
+            case 'd': case 'D':
+            case 't': case 'T':
+                ok = ieee_flconvert(str+2, mant, &exponent);
+                break;
+            case 'p': case 'P':
+                return to_packed_bcd(str+2, strend-1, s, result, fmt);
+            default:
+                /* Leading zero was just a zero? */
+                ok = ieee_flconvert(str, mant, &exponent);
+                break;
+            }
+        } else if (str[0] == '$') {
+            ok = ieee_flconvert_bin(str+1, 4, mant, &exponent);
+        } else {
             ok = ieee_flconvert(str, mant, &exponent);
-	}
+        }
 
-	if (!ok) {
-	    type = FL_QNAN;
-	} else if (mant[0] & LIMB_TOP_BIT) {
+        if (!ok) {
+            type = FL_QNAN;
+        } else if (mant[0] & LIMB_TOP_BIT) {
             /*
              * Non-zero.
              */
             exponent--;
             if (exponent >= 2 - expmax && exponent <= expmax) {
-		type = FL_NORMAL;
+                type = FL_NORMAL;
             } else if (exponent > 0) {
-		if (pass0 == 1)
-		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
-			  "overflow in floating-point constant");
-		type = FL_INFINITY;
-	    } else {
-		/* underflow or denormal; the denormal code handles
-		   actual underflow. */
-		type = FL_DENORMAL;
-	    }
-	} else {
-	    /* Zero */
-	    type = FL_ZERO;
-	}
+                if (pass0 == 1)
+                    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
+                          "overflow in floating-point constant");
+                type = FL_INFINITY;
+            } else {
+                /* underflow or denormal; the denormal code handles
+                   actual underflow. */
+                type = FL_DENORMAL;
+            }
+        } else {
+            /* Zero */
+            type = FL_ZERO;
+        }
     }
 
     switch (type) {
     case FL_ZERO:
     zero:
-	memset(mant, 0, sizeof mant);
-	break;
+        memset(mant, 0, sizeof mant);
+        break;
 
     case FL_DENORMAL:
     {
-	shift = -(exponent + expmax - 2 - fmt->exponent)
-	    + fmt->explicit;
-	ieee_shr(mant, shift);
-	ieee_round(minus, mant, bits);
-	if (mant[one_pos] & one_mask) {
-	    /* One's position is set, we rounded up into normal range */
-	    exponent = 1;
-	    if (!fmt->explicit)
-		mant[one_pos] &= ~one_mask;	/* remove explicit one */
-	    mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
-	} else {
-	    if (daz || is_zero(mant)) {
-		/* Flush denormals to zero */
-		error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW|ERR_PASS1,
-		      "underflow in floating-point constant");
-		goto zero;
-	    } else {
-		error(ERR_WARNING|ERR_WARN_FL_DENORM|ERR_PASS1,
-		      "denormal floating-point constant");
-	    }
-	}
-	break;
+        shift = -(exponent + expmax - 2 - fmt->exponent)
+            + fmt->explicit;
+        ieee_shr(mant, shift);
+        ieee_round(minus, mant, bits);
+        if (mant[one_pos] & one_mask) {
+            /* One's position is set, we rounded up into normal range */
+            exponent = 1;
+            if (!fmt->explicit)
+                mant[one_pos] &= ~one_mask;     /* remove explicit one */
+            mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
+        } else {
+            if (daz || is_zero(mant)) {
+                /* Flush denormals to zero */
+                error(ERR_WARNING|ERR_WARN_FL_UNDERFLOW|ERR_PASS1,
+                      "underflow in floating-point constant");
+                goto zero;
+            } else {
+                error(ERR_WARNING|ERR_WARN_FL_DENORM|ERR_PASS1,
+                      "denormal floating-point constant");
+            }
+        }
+        break;
     }
 
     case FL_NORMAL:
-	exponent += expmax - 1;
-	ieee_shr(mant, fmt->exponent+fmt->explicit);
-	ieee_round(minus, mant, bits);
-	/* did we scale up by one? */
-	if (test_bit(mant, fmt->exponent+fmt->explicit-1)) {
-	    ieee_shr(mant, 1);
-	    exponent++;
-	    if (exponent >= (expmax << 1)-1) {
-		    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
-			  "overflow in floating-point constant");
-		type = FL_INFINITY;
-		goto overflow;
-	    }
-	}
+        exponent += expmax - 1;
+        ieee_shr(mant, fmt->exponent+fmt->explicit);
+        ieee_round(minus, mant, bits);
+        /* did we scale up by one? */
+        if (test_bit(mant, fmt->exponent+fmt->explicit-1)) {
+            ieee_shr(mant, 1);
+            exponent++;
+            if (exponent >= (expmax << 1)-1) {
+                    error(ERR_WARNING|ERR_WARN_FL_OVERFLOW|ERR_PASS1,
+                          "overflow in floating-point constant");
+                type = FL_INFINITY;
+                goto overflow;
+            }
+        }
 
-	if (!fmt->explicit)
-	    mant[one_pos] &= ~one_mask;	/* remove explicit one */
-	mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
-	break;
+        if (!fmt->explicit)
+            mant[one_pos] &= ~one_mask; /* remove explicit one */
+        mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
+        break;
 
     case FL_INFINITY:
     case FL_QNAN:
     case FL_SNAN:
     overflow:
-	memset(mant, 0, sizeof mant);
-	mant[0] = (((fp_limb)1 << fmt->exponent)-1)
-	    << (LIMB_BITS-1 - fmt->exponent);
-	if (fmt->explicit)
-	    mant[one_pos] |= one_mask;
-	if (type == FL_QNAN)
-	    set_bit(mant, fmt->exponent+fmt->explicit+1);
-	else if (type == FL_SNAN)
-	    set_bit(mant, fmt->exponent+fmt->explicit+fmt->mantissa);
-	break;
+        memset(mant, 0, sizeof mant);
+        mant[0] = (((fp_limb)1 << fmt->exponent)-1)
+            << (LIMB_BITS-1 - fmt->exponent);
+        if (fmt->explicit)
+            mant[one_pos] |= one_mask;
+        if (type == FL_QNAN)
+            set_bit(mant, fmt->exponent+fmt->explicit+1);
+        else if (type == FL_SNAN)
+            set_bit(mant, fmt->exponent+fmt->explicit+fmt->mantissa);
+        break;
     }
 
     mant[0] |= minus ? LIMB_TOP_BIT : 0;
 
     for (i = fmt->bytes - 1; i >= 0; i--)
-	*result++ = mant[i/LIMB_BYTES] >> (((LIMB_BYTES-1)-(i%LIMB_BYTES))*8);
+        *result++ = mant[i/LIMB_BYTES] >> (((LIMB_BYTES-1)-(i%LIMB_BYTES))*8);
 
     return 1;                   /* success */
 }
@@ -929,28 +929,28 @@ int float_const(const char *number, int sign, uint8_t *result,
 int float_option(const char *option)
 {
     if (!nasm_stricmp(option, "daz")) {
-	daz = true;
-	return 0;
+        daz = true;
+        return 0;
     } else if (!nasm_stricmp(option, "nodaz")) {
-	daz = false;
-	return 0;
+        daz = false;
+        return 0;
     } else if (!nasm_stricmp(option, "near")) {
-	rc = FLOAT_RC_NEAR;
-	return 0;
+        rc = FLOAT_RC_NEAR;
+        return 0;
     } else if (!nasm_stricmp(option, "down")) {
-	rc = FLOAT_RC_DOWN;
-	return 0;
+        rc = FLOAT_RC_DOWN;
+        return 0;
     } else if (!nasm_stricmp(option, "up")) {
-	rc = FLOAT_RC_UP;
-	return 0;
+        rc = FLOAT_RC_UP;
+        return 0;
     } else if (!nasm_stricmp(option, "zero")) {
-	rc = FLOAT_RC_ZERO;
-	return 0;
+        rc = FLOAT_RC_ZERO;
+        return 0;
     } else if (!nasm_stricmp(option, "default")) {
-	rc = FLOAT_RC_NEAR;
-	daz = false;
-	return 0;
+        rc = FLOAT_RC_NEAR;
+        daz = false;
+        return 0;
     } else {
-	return -1;		/* Unknown option */
+        return -1;              /* Unknown option */
     }
 }

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -44,7 +44,7 @@
 #include "nasm.h"
 #include "hashtbl.h"
 
-#define HASH_MAX_LOAD		2 /* Higher = more memory-efficient, slower */
+#define HASH_MAX_LOAD   2 /* Higher = more memory-efficient, slower */
 
 static struct hash_tbl_node *alloc_table(size_t newsize)
 {
@@ -75,26 +75,26 @@ void hash_init(struct hash_table *head, size_t size)
  * structure.
  */
 void **hash_find(struct hash_table *head, const char *key,
-		struct hash_insert *insert)
+                 struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
     uint64_t hash = crc64(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
     size_t mask = head->size-1;
     size_t pos  = hash & mask;
-    size_t inc  = ((hash >> 32) & mask) | 1;	/* Always odd */
+    size_t inc  = ((hash >> 32) & mask) | 1;    /* Always odd */
 
     while ((np = &tbl[pos])->key) {
-	if (hash == np->hash && !strcmp(key, np->key))
-	    return &np->data;
-	pos = (pos+inc) & mask;
+        if (hash == np->hash && !strcmp(key, np->key))
+            return &np->data;
+        pos = (pos+inc) & mask;
     }
 
     /* Not found.  Store info for insert if requested. */
     if (insert) {
-	insert->head  = head;
-	insert->hash  = hash;
-	insert->where = np;
+        insert->head  = head;
+        insert->hash  = hash;
+        insert->where = np;
     }
     return NULL;
 }
@@ -103,26 +103,26 @@ void **hash_find(struct hash_table *head, const char *key,
  * Same as hash_find, but for case-insensitive hashing.
  */
 void **hash_findi(struct hash_table *head, const char *key,
-		  struct hash_insert *insert)
+                  struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
     uint64_t hash = crc64i(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
     size_t mask = head->size-1;
     size_t pos  = hash & mask;
-    size_t inc  = ((hash >> 32) & mask) | 1;	/* Always odd */
+    size_t inc  = ((hash >> 32) & mask) | 1;    /* Always odd */
 
     while ((np = &tbl[pos])->key) {
-	if (hash == np->hash && !nasm_stricmp(key, np->key))
-	    return &np->data;
-	pos = (pos+inc) & mask;
+        if (hash == np->hash && !nasm_stricmp(key, np->key))
+            return &np->data;
+        pos = (pos+inc) & mask;
     }
 
     /* Not found.  Store info for insert if requested. */
     if (insert) {
-	insert->head  = head;
-	insert->hash  = hash;
-	insert->where = np;
+        insert->head  = head;
+        insert->hash  = hash;
+        insert->where = np;
     }
     return NULL;
 }
@@ -143,35 +143,35 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
     np->data = data;
 
     if (++head->load > head->max_load) {
-	/* Need to expand the table */
-	size_t newsize = head->size << 1;
-	struct hash_tbl_node *newtbl = alloc_table(newsize);
-	size_t mask = newsize-1;
+        /* Need to expand the table */
+        size_t newsize = head->size << 1;
+        struct hash_tbl_node *newtbl = alloc_table(newsize);
+        size_t mask = newsize-1;
 
-	if (head->table) {
-	    struct hash_tbl_node *op, *xp;
-	    size_t i;
+        if (head->table) {
+            struct hash_tbl_node *op, *xp;
+            size_t i;
 
-	    /* Rebalance all the entries */
-	    for (i = 0, op = head->table; i < head->size; i++, op++) {
-		if (op->key) {
-		    size_t pos = op->hash & mask;
-		    size_t inc = ((op->hash >> 32) & mask) | 1;
+            /* Rebalance all the entries */
+            for (i = 0, op = head->table; i < head->size; i++, op++) {
+                if (op->key) {
+                    size_t pos = op->hash & mask;
+                    size_t inc = ((op->hash >> 32) & mask) | 1;
 
-		    while ((xp = &newtbl[pos])->key)
-			pos = (pos+inc) & mask;
+                    while ((xp = &newtbl[pos])->key)
+                        pos = (pos+inc) & mask;
 
-		    *xp = *op;
-		    if (op == np)
-			np = xp;
-		}
-	    }
-	    nasm_free(head->table);
-	}
+                    *xp = *op;
+                    if (op == np)
+                        np = xp;
+                }
+            }
+            nasm_free(head->table);
+        }
 
-	head->table    = newtbl;
-	head->size     = newsize;
-	head->max_load = newsize*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
+        head->table    = newtbl;
+        head->size     = newsize;
+        head->max_load = newsize*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
     }
 
     return &np->data;
@@ -183,31 +183,31 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
  * or NULL on failure.
  */
 void *hash_iterate(const struct hash_table *head,
-		   struct hash_tbl_node **iterator,
-		   const char **key)
+                   struct hash_tbl_node **iterator,
+                   const char **key)
 {
     struct hash_tbl_node *np = *iterator;
     struct hash_tbl_node *ep = head->table + head->size;
 
     if (!np) {
-	np = head->table;
-	if (!np)
-	    return NULL;	/* Uninitialized table */
+        np = head->table;
+        if (!np)
+            return NULL;        /* Uninitialized table */
     }
 
     while (np < ep) {
-	if (np->key) {
-	    *iterator = np+1;
-	    if (key)
-		*key = np->key;
-	    return np->data;
-	}
-	np++;
+        if (np->key) {
+            *iterator = np+1;
+            if (key)
+                *key = np->key;
+            return np->data;
+        }
+        np++;
     }
 
     *iterator = NULL;
     if (key)
-	*key = NULL;
+        *key = NULL;
     return NULL;
 }
 
