@@ -383,4 +383,31 @@ const char *prefix_name(int);
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
 size_t fwritezero(size_t bytes, FILE *fp);
 
+static inline bool overflow_general(int64_t value, int bytes)
+{
+    int sbit = (bytes << 3) - 1;
+    int64_t vmax =  ((int64_t)2 << sbit) - 1;
+    int64_t vmin = -((int64_t)1 << sbit);
+
+    return value < vmin || value > vmax;
+}
+
+static inline bool overflow_signed(int64_t value, int bytes)
+{
+    int sbit = (bytes << 3) - 1;
+    int64_t vmax =  ((int64_t)1 << sbit) - 1;
+    int64_t vmin = -((int64_t)1 << sbit);
+
+    return value < vmin || value > vmax;
+}
+
+static inline bool overflow_unsigned(int64_t value, int bytes)
+{
+    int sbit = (bytes << 3) - 1;
+    int64_t vmax = ((int64_t)2 << sbit) - 1;
+    int64_t vmin = 0;
+
+    return value < vmin || value > vmax;
+}
+
 #endif
