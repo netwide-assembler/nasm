@@ -473,18 +473,15 @@ static Token *delete_Token(Token * t);
 static char *check_tasm_directive(char *line)
 {
     int32_t i, j, k, m, len;
-    char *p = line, *oldline, oldchar;
+    char *p, *q, *oldline, oldchar;
 
-    /* Skip whitespace */
-    while (nasm_isspace(*p) && *p != 0)
-        p++;
+    p = nasm_skip_spaces(line);
 
     /* Binary search for the directive name */
     i = -1;
     j = elements(tasm_directives);
-    len = 0;
-    while (!nasm_isspace(p[len]) && p[len] != 0)
-        len++;
+    q = nasm_skip_word(p);
+    len = q - p;
     if (len) {
         oldchar = p[len];
         p[len] = 0;
@@ -999,9 +996,7 @@ static Token *tokenize(char *line)
 	    }
         } else if (nasm_isspace(*p)) {
             type = TOK_WHITESPACE;
-            p++;
-            while (*p && nasm_isspace(*p))
-                p++;
+            p = nasm_skip_spaces(p);
             /*
              * Whitespace just before end-of-line is discarded by
              * pretending it's a comment; whitespace just before a
