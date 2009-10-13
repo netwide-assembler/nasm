@@ -497,12 +497,8 @@ int main(int argc, char **argv)
 static char *get_param(char *p, char *q, bool *advance)
 {
     *advance = false;
-    if (p[2]) {                 /* the parameter's in the option */
-        p += 2;
-        while (nasm_isspace(*p))
-            p++;
-        return p;
-    }
+    if (p[2]) /* the parameter's in the option */
+        return nasm_skip_spaces(p + 2);
     if (q && q[0]) {
         *advance = true;
         return q;
@@ -1023,9 +1019,7 @@ static void process_respfile(FILE * rfile)
         while (p > buffer && nasm_isspace(p[-1]))
             *--p = '\0';
 
-        p = buffer;
-        while (nasm_isspace(*p))
-            p++;
+        p = nasm_skip_spaces(buffer);
 
         if (process_arg(prevarg, p))
             *p = '\0';
@@ -1337,8 +1331,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 			break;
 		    }
 		    if (*p) {
-			while (*p && nasm_isspace(*p))
-			    *p++ = '\0';
+                        p = nasm_zap_spaces(p);
 			q = p;
 			while (*q && *q != ':')
 			    q++;
@@ -1426,16 +1419,13 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 				   "DEBUG identifier too long");
 			break;
 		    }
-                    while (*p && nasm_isspace(*p))
-                        p++;
+                    p = nasm_skip_spaces(p);
                     if (pass0 == 2)
                         dfmt->debug_directive(debugid, p);
                     break;
 		}
                 case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
-		    while (*value && nasm_isspace(*value))
-			value++;
-
+                    value = nasm_skip_spaces(value);
 		    switch(*value) {
 		    case '-': validid = 0; value++; break;
 		    case '+': validid = 1; value++; break;
@@ -1467,9 +1457,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     cpu = get_cpu(value);
                     break;
                 case D_LIST:		/* [LIST {+|-}] */
-                    while (*value && nasm_isspace(*value))
-                        value++;
-
+                    value = nasm_skip_spaces(value);
                     if (*value == '+') {
                         user_nolist = 0;
                     } else {
