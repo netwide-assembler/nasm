@@ -2027,7 +2027,7 @@ static enum match_result find_match(const struct itemplate **tempp,
 	 * never try to fuzzy-match on them.  This also resolves the case
 	 * when we have e.g. "xmmrm128" in two different positions.
 	 */
-	if ((REGISTER & ~instruction->oprs[i].type) == 0)
+	if (is_class(REGISTER, instruction->oprs[i].type))
 	    continue;
 
 	/* This tests if xsizeflags[i] has more than one bit set */
@@ -2155,7 +2155,7 @@ static enum match_result matches(const struct itemplate *itemp,
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK)) {
                 return MERR_INVALOP;
-	    } else if ((REGISTER & type) != REGISTER) {
+	    } else if (!is_class(REGISTER, type)) {
 		/*
 		 * Note: we don't honor extrinsic operand sizes for registers,
 		 * so "missing operand size" for a register should be
@@ -2224,7 +2224,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
     /* REX flags for the rfield operand */
     output->rex |= rexflags(rfield, rflags, REX_R|REX_P|REX_W|REX_H);
 
-    if (!(REGISTER & ~input->type)) {   /* register direct */
+    if (is_class(REGISTER, input->type)) {  /* register direct */
         int i;
 	int32_t f;
 
