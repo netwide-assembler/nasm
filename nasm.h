@@ -539,6 +539,8 @@ typedef uint32_t opflags_t;
 #define MEMORY		0x0000c000U
 #define REGMEM		0x00008000U   /* for r/m, ie EA, operands */
 
+#define is_class(class, op)     (!((opflags_t)(class) & ~(opflags_t)(op)))
+
 /* Register classes */
 #define REG_EA		0x00009000U   /* 'normal' reg, qualifies as EA */
 #define RM_GPR		0x00208000U   /* integer operand */
