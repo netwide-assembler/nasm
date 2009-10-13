@@ -673,7 +673,7 @@ char *nasm_skip_word(const char *p)
 }
 
 /* zap leading spaces with zero */
-char *nasm_zap_spaces(char *p)
+char *nasm_zap_spaces_fwd(char *p)
 {
     if (p)
         while (*p && nasm_isspace(*p))

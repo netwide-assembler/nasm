@@ -1331,7 +1331,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 			break;
 		    }
 		    if (*p) {
-                        p = nasm_zap_spaces(p);
+                        p = nasm_zap_spaces_fwd(p);
 			q = p;
 			while (*q && *q != ':')
 			    q++;
