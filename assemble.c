@@ -1993,7 +1993,7 @@ static enum match_result find_match(const struct itemplate **tempp,
 {
     const struct itemplate *temp;
     enum match_result m, merr;
-    int32_t xsizeflags[MAX_OPERANDS];
+    opflags_t xsizeflags[MAX_OPERANDS];
     bool opsizemissing = false;
     int i;
 
