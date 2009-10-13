@@ -151,7 +151,7 @@ if ( $fmt eq 'h' ) {
     print "/* automatically generated from $file - do not edit */\n\n";
     print "#include \"tables.h\"\n";
     print "#include \"nasm.h\"\n\n";
-    print "const int32_t nasm_reg_flags[] = {\n";
+    print "const opflags_t nasm_reg_flags[] = {\n";
     printf "    0,\n";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	# Print the class of the register

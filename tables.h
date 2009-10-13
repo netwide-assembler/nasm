@@ -37,12 +37,13 @@
  * Declarations for auto-generated tables
  */
 
-#ifndef TABLES_H
-#define TABLES_H
+#ifndef NASM_TABLES_H
+#define NASM_TABLES_H
 
 #include "compiler.h"
 #include <inttypes.h>
 #include "insnsi.h"		/* For enum opcode */
+#include "opflags.h"		/* For opflags_t */
 
 /* --- From standard.mac via macros.pl: --- */
 
@@ -61,8 +62,8 @@ extern const char * const nasm_insn_names[];
 /* regs.c */
 extern const char * const nasm_reg_names[];
 /* regflags.c */
-extern const int32_t nasm_reg_flags[];
+extern const opflags_t nasm_reg_flags[];
 /* regvals.c */
 extern const int nasm_regvals[];
 
-#endif /* TABLES_H */
+#endif /* NASM_TABLES_H */

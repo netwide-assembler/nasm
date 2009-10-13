@@ -110,7 +110,7 @@ static uint64_t getu64(uint8_t *data)
 #define gets64(x) ((int64_t)getu64(x))
 
 /* Important: regval must already have been adjusted for rex extensions */
-static enum reg_enum whichreg(int32_t regflags, int regval, int rex)
+static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
 {
     if (!(regflags & (REGISTER|REGMEM)))
 	return 0;		/* Registers not permissible?! */

@@ -199,11 +199,11 @@ static enum match_result find_match(const struct itemplate **tempp,
 				    insn *instruction,
 				    int32_t segment, int64_t offset, int bits);
 static enum match_result matches(const struct itemplate *, insn *, int bits);
-static int32_t regflag(const operand *);
+static opflags_t regflag(const operand *);
 static int32_t regval(const operand *);
-static int rexflags(int, int32_t, int);
+static int rexflags(int, opflags_t, int);
 static int op_rexflags(const operand *, int);
-static ea *process_ea(operand *, ea *, int, int, int, int32_t);
+static ea *process_ea(operand *, ea *, int, int, int, opflags_t);
 static void add_asp(insn *, int);
 
 static int has_prefix(insn * ins, enum prefix_pos pos, enum prefixes prefix)
@@ -1137,7 +1137,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    {
                 ea ea_data;
                 int rfield;
-		int32_t rflags;
+		opflags_t rflags;
 		struct operand *opy = &ins->oprs[op2];
 
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
@@ -1851,7 +1851,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	    {
                 ea ea_data;
                 int rfield;
-		int32_t rflags;
+		opflags_t rflags;
                 uint8_t *p;
                 int32_t s;
 		enum out_type type;
@@ -1940,7 +1940,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
     }
 }
 
-static int32_t regflag(const operand * o)
+static opflags_t regflag(const operand * o)
 {
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
         errfunc(ERR_PANIC, "invalid operand passed to regflag()");
@@ -1958,7 +1958,7 @@ static int32_t regval(const operand * o)
 
 static int op_rexflags(const operand * o, int mask)
 {
-    int32_t flags;
+    opflags_t flags;
     int val;
 
     if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
@@ -1971,7 +1971,7 @@ static int op_rexflags(const operand * o, int mask)
     return rexflags(val, flags, mask);
 }
 
-static int rexflags(int val, int32_t flags, int mask)
+static int rexflags(int val, opflags_t flags, int mask)
 {
     int rex = 0;
 
@@ -2225,7 +2225,7 @@ static enum match_result matches(const struct itemplate *itemp,
 }
 
 static ea *process_ea(operand * input, ea * output, int bits,
-		      int addrbits, int rfield, int32_t rflags)
+		      int addrbits, int rfield, opflags_t rflags)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
 
@@ -2236,7 +2236,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 
     if (is_class(REGISTER, input->type)) {  /* register direct */
         int i;
-	int32_t f;
+	opflags_t f;
 
         if (input->basereg < EXPR_REG_START /* Verify as Register */
             || input->basereg >= REG_ENUM_LIMIT)
@@ -2276,9 +2276,8 @@ static ea *process_ea(operand * input, ea * output, int bits,
             int i = input->indexreg, b = input->basereg, s = input->scale;
             int32_t o = input->offset, seg = input->segment;
             int hb = input->hintbase, ht = input->hinttype;
-            int t;
-            int it, bt;
-	    int32_t ix, bx;	/* register flags */
+            int t, it, bt;	 	/* register numbers */
+	    opflags_t x, ix, bx;	/* register flags */
 
             if (s == 0)
                 i = -1;         /* make this easy, at least */
@@ -2336,7 +2335,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                      || (hb == i && ht == EAH_MAKEBASE))) {
 		    /* swap if hints say so */
                     t = bt, bt = it, it = t;
-		    t = bx, bx = ix, ix = t;
+		    x = bx, bx = ix, ix = x;
 		}
                 if (bt == it)     /* convert EAX+2*EAX to 3*EAX */
                     bt = -1, bx = 0, s++;
@@ -2355,7 +2354,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 if (s == 1 && it == REG_NUM_ESP) {
 		    /* swap ESP into base if scale is 1 */
                     t = it, it = bt, bt = t;
-		    t = ix, ix = bx, bx = t;
+		    x = ix, ix = bx, bx = x;
 		}
                 if (it == REG_NUM_ESP
                     || (s != 1 && s != 2 && s != 4 && s != 8 && it != -1))
@@ -2559,7 +2558,7 @@ static void add_asp(insn *ins, int addrbits)
 
     for (j = 0; j < ins->operands; j++) {
 	if (!(MEMORY & ~ins->oprs[j].type)) {
-	    int32_t i, b;
+	    opflags_t i, b;
 
 	    /* Verify as Register */
 	    if (ins->oprs[j].indexreg < EXPR_REG_START
