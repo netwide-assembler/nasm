@@ -925,9 +925,9 @@ restart_parse:
 
     result->operands = operand; /* set operand count */
 
-/* clear remaining operands */
-while (operand < MAX_OPERANDS)
-    result->oprs[operand++].type = 0;
+    /* clear remaining operands */
+    while (operand < MAX_OPERANDS)
+        result->oprs[operand++].type = 0;
 
     /*
      * Transform RESW, RESD, RESQ, REST, RESO, RESY into RESB.
