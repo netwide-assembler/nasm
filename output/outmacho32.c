@@ -1050,9 +1050,12 @@ static void macho_write_symtab (void)
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
 	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-		for (s = sects, fi = 1;
-		     s != NULL && fi < sym->sect; s = s->next, ++fi)
-		    sym->value += s->size;
+		    for (s = sects, fi = 1; s != NULL; s = s->next, fi++) {
+		        if (fi == sym->sect) {
+		            sym->value += s->addr;
+		            break;
+		        }
+		    }
 	    }
 
 	    fwriteint32_t(sym->value, ofile);	/* value (i.e. offset) */
