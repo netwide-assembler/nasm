@@ -7,6 +7,23 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.08rc1} Version 2.08rc1
+
+\b A number of enhancements/fixes in macros area.
+
+\b Fuzzy operand size logic introduced.
+
+\b Fix crashes with -fwin32 on file with many exports.
+
+\b Fix stack overrun for too long [DEBUG id].
+
+\b Append ending token for \c{.stabs} records in the ELF output format.
+
+\b New NSIS script which uses ModernUI and MultiUser approach.
+
+\b Visual Studio 2008 NASM integration (rules file).
+
+\b Warn a user if a constant too long (and as a result will be stripped).
 
 \S{cl-2.07} Version 2.07
 
