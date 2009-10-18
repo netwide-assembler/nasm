@@ -1180,7 +1180,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 			/* If it's a mem-only EA but we have a
 			   register, die. */
 			((tmp_ins.oprs[i].segment & SEG_RMREG) &&
-			 !(MEMORY & ~(*p)->opd[i])) ||
+			 is_class(MEMORY, (*p)->opd[i])) ||
 			/* If it's a reg-only EA but we have a memory
 			   ref, die. */
 			(!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
@@ -1343,7 +1343,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 			  o->disp_size == 32 ? "dword " :
 			  o->disp_size == 16 ? "word " : ""), offs);
             segover = NULL;
-        } else if (!(REGMEM & ~t)) {
+        } else if (is_class(REGMEM, t)) {
             int started = false;
             if (t & BITS8)
                 slen +=

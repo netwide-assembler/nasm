@@ -2557,7 +2557,7 @@ static void add_asp(insn *ins, int addrbits)
     }
 
     for (j = 0; j < ins->operands; j++) {
-	if (!(MEMORY & ~ins->oprs[j].type)) {
+	if (is_class(MEMORY, ins->oprs[j].type)) {
 	    opflags_t i, b;
 
 	    /* Verify as Register */
