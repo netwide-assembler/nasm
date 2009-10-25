@@ -153,6 +153,7 @@ struct MMacro {
     int *paramlen;
     uint64_t unique;
     int lineno;                 /* Current line number on expansion */
+	uint64_t condcnt;           /* number of if blocks... */
 };
 
 
@@ -166,6 +167,7 @@ struct MMacroInvocation {
     unsigned int nparam, rotate;
     int *paramlen;
     uint64_t unique;
+    uint64_t condcnt;
 };
 
 
@@ -2525,6 +2527,8 @@ static int do_directive(Token * tline)
         cond->next = istk->conds;
         cond->state = j;
         istk->conds = cond;
+		if(istk->mstk)
+            istk->mstk->condcnt ++;
 	free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2603,6 +2607,8 @@ static int do_directive(Token * tline)
         cond = istk->conds;
         istk->conds = cond->next;
         nasm_free(cond);
+		if(istk->mstk)
+            istk->mstk->condcnt --;
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 		
@@ -2657,15 +2663,24 @@ static int do_directive(Token * tline)
     case PP_EXITMACRO:
         /*
          * We must search along istk->expansion until we hit a
-         * macro-end marker for a macro with a name. Then we set
-         * its `in_progress' flag to 0.
+         * macro-end marker for a macro with a name. Then we 
+         * bypass all lines between exitmacro and endmacro.
          */
 	for (l = istk->expansion; l; l = l->next)
             if (l->finishes && l->finishes->name)
 		break;
 
         if (l) {
-	    l->finishes->in_progress = 0;
+	    /*
+	     * Remove all conditional entries relative to this
+	     * macro invocation. (safe to do in this context)
+	     */
+            for ( ; l->finishes->condcnt > 0; l->finishes->condcnt --) {
+                cond = istk->conds;
+                istk->conds = cond->next;
+                nasm_free(cond);
+            }
+            istk->expansion = l;
         } else {
             error(ERR_NONFATAL, "`%%exitmacro' not within `%%macro' block");
 	}
@@ -4242,6 +4257,7 @@ static void push_mmacro(MMacro *m)
     i->rotate = m->rotate;
     i->paramlen = m->paramlen;
     i->unique = m->unique;
+	i->condcnt = m->condcnt;
     m->prev = i;
 }
 
@@ -4263,6 +4279,7 @@ static void pop_mmacro(MMacro *m)
 	m->rotate = i->rotate;
 	m->paramlen = i->paramlen;
 	m->unique = i->unique;
+	m->condcnt = i->condcnt;
 	nasm_free(i);
     }
 }
@@ -4383,6 +4400,7 @@ static int expand_mmacro(Token * tline)
     m->paramlen = paramlen;
     m->unique = unique++;
     m->lineno = 0;
+    m->condcnt = 0;
 
     m->next_active = istk->mstk;
     istk->mstk = m;
