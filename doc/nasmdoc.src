@@ -2826,6 +2826,22 @@ removes the previously defined macro \c{foo}, but
 does \e{not} remove the macro \c{bar}, since the argument
 specification does not match exactly.
 
+
+\S{exitmacro} Exiting Multi-Line Macros: \i\c{%exitmacro}
+
+Multi-line macro expansions can be arbitrarily terminated with
+the \c{%exitmacro} directive.
+
+For example:
+
+\c %macro foo 1-3
+\c         ; Do something
+\c     %if<condition>
+\c         %exitmacro
+\c     %endif
+\c         ; Do something
+\c %endmacro
+
 \H{condasm} \i{Conditional Assembly}\I\c{%if}
 
 Similarly to the C preprocessor, NASM allows sections of a source

@@ -11,7 +11,17 @@ since 2007.
 
 \b A number of enhancements/fixes in macros area.
 
+\b Support for arbitrarily terminating macro expansions \c{%exitmacro}.
+  See \k{exitmacro}.
+
+\b Support for recursive macro expansion \c{%rmacro/irmacro}.
+  See \k{mlrmacro}.
+
+\b Support for converting strings to tokens.  See \k{deftok}.
+
 \b Fuzzy operand size logic introduced.
+
+\b Fix Macho-O alignment bug.
 
 \b Fix crashes with -fwin32 on file with many exports.
 
@@ -24,6 +34,7 @@ since 2007.
 \b Visual Studio 2008 NASM integration (rules file).
 
 \b Warn a user if a constant too long (and as a result will be stripped).
+
 
 \S{cl-2.07} Version 2.07
 
