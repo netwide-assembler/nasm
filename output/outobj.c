@@ -966,7 +966,7 @@ static void obj_deflabel(char *name, int32_t segment,
                 struct tokenval tokval;
 
                 stdscan_reset();
-                stdscan_bufptr = special;
+                stdscan_set(special);
                 tokval.t_type = TOKEN_INVALID;
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
                 if (e) {
@@ -976,7 +976,7 @@ static void obj_deflabel(char *name, int32_t segment,
                     else
                         ext->commonelem = reloc_value(e);
                 }
-                special = stdscan_bufptr;
+                special = stdscan_get();
             } else {
                 nasm_error(ERR_NONFATAL,
                       "`%s': element-size specifications only"

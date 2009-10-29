@@ -1365,7 +1365,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 		}
                 case D_ABSOLUTE:		/* [ABSOLUTE address] */
                     stdscan_reset();
-                    stdscan_bufptr = value;
+                    stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
                     e = evaluate(stdscan, NULL, &tokval, NULL, pass2,
                                  nasm_error, NULL);
@@ -1470,7 +1470,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     break;
 		case D_DEFAULT:		/* [DEFAULT] */
 		    stdscan_reset();
-                    stdscan_bufptr = value;
+                    stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
 		    if (stdscan(NULL, &tokval) == TOKEN_SPECIAL) {
 			switch ((int)tokval.t_integer) {

@@ -205,7 +205,7 @@ restart_parse:
     result->forw_ref = false;
 
     stdscan_reset();
-    stdscan_bufptr = buffer;
+    stdscan_set(buffer);
     i = stdscan(NULL, &tokval);
 
     result->label = NULL;       /* Assume no label */
@@ -417,12 +417,12 @@ restart_parse:
 		if (i && i != ',')
 		    i = stdscan(NULL, &tokval);
 	    } else if (i == '-' || i == '+') {
-		char *save = stdscan_bufptr;
+		char *save = stdscan_get();
 		int token = i;
 		sign = (i == '-') ? -1 : 1;
 		i = stdscan(NULL, &tokval);
 		if (i != TOKEN_FLOAT) {
-		    stdscan_bufptr = save;
+		    stdscan_set(save);
 		    i = tokval.t_type = token;
 		    goto is_expression;
 		} else {
@@ -952,9 +952,9 @@ static int is_comma_next(void)
     int i;
     struct tokenval tv;
 
-    p = stdscan_bufptr;
+    p = stdscan_get();
     i = stdscan(NULL, &tv);
-    stdscan_bufptr = p;
+    stdscan_set(p);
     return (i == ',' || i == ';' || !i);
 }
 

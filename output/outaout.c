@@ -299,7 +299,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 while (*p && nasm_isspace(*p))
                     p++;
                 stdscan_reset();
-                stdscan_bufptr = p;
+                stdscan_set(p);
                 tokval.t_type = TOKEN_INVALID;
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
                 if (e) {
@@ -379,7 +379,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 struct tokenval tokval;
                 expr *e;
                 int fwd = false;
-                char *saveme = stdscan_bufptr;  /* bugfix? fbk 8/10/00 */
+                char *saveme = stdscan_get();  /* bugfix? fbk 8/10/00 */
 
                 if (!bsd) {
                     nasm_error(ERR_NONFATAL, "Linux a.out does not support"
@@ -393,7 +393,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                      */
                     sym->type |= SYM_WITH_SIZE;
                     stdscan_reset();
-                    stdscan_bufptr = special + n;
+                    stdscan_set(special + n);
                     tokval.t_type = TOKEN_INVALID;
                     e = evaluate(stdscan, NULL, &tokval, &fwd, 0, nasm_error,
                                  NULL);
@@ -409,7 +409,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                             sym->size = reloc_value(e);
                     }
                 }
-                stdscan_bufptr = saveme;        /* bugfix? fbk 8/10/00 */
+                stdscan_set(saveme);            /* bugfix? fbk 8/10/00 */
             }
             special_used = true;
         }

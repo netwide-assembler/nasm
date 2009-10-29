@@ -152,8 +152,6 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
-extern char *stdscan_bufptr;
-
 static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
 static int32_t current_section;    /* only really needed if format_mode = 0 */
 static uint64_t origin;
@@ -985,7 +983,7 @@ static int bin_read_attribute(char **line, int *attribute,
 
     /* Read and evaluate the expression. */
     stdscan_reset();
-    stdscan_bufptr = exp;
+    stdscan_set(exp);
     tokval.t_type = TOKEN_INVALID;
     e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
     if (e) {
@@ -1292,7 +1290,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
         expr *e;
 
         stdscan_reset();
-        stdscan_bufptr = args;
+        stdscan_set(args);
         tokval.t_type = TOKEN_INVALID;
         e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
         if (e) {

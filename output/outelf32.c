@@ -495,7 +495,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 while (*p && nasm_isspace(*p))
                     p++;
                 stdscan_reset();
-                stdscan_bufptr = p;
+                stdscan_set(p);
                 tokval.t_type = TOKEN_INVALID;
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
                 if (e) {
@@ -630,7 +630,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                     struct tokenval tokval;
                     expr *e;
                     int fwd = 0;
-                    char *saveme = stdscan_bufptr;      /* bugfix? fbk 8/10/00 */
+                    char *saveme = stdscan_get();       /* bugfix? fbk 8/10/00 */
 
                     while (special[n] && nasm_isspace(special[n]))
                         n++;
@@ -639,7 +639,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                      * evaluate it.
                      */
                     stdscan_reset();
-                    stdscan_bufptr = special + n;
+                    stdscan_set(special + n);
                     tokval.t_type = TOKEN_INVALID;
                     e = evaluate(stdscan, NULL, &tokval, &fwd, 0, nasm_error,
                                  NULL);
@@ -654,7 +654,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                         else
                             sym->size = reloc_value(e);
                     }
-                    stdscan_bufptr = saveme;    /* bugfix? fbk 8/10/00 */
+                    stdscan_set(saveme);                /* bugfix? fbk 8/10/00 */
                 }
                 special_used = true;
             }

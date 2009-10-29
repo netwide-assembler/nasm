@@ -50,9 +50,20 @@
  * formats. It keeps a succession of temporary-storage strings in
  * stdscan_tempstorage, which can be cleared using stdscan_reset.
  */
+static char *stdscan_bufptr = NULL;
 static char **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
+
+void stdscan_set(char *str)
+{
+	stdscan_bufptr = str;
+}
+
+char *stdscan_get(void)
+{
+	return stdscan_bufptr;
+}
 
 static void stdscan_pop(void)
 {
@@ -94,7 +105,6 @@ static char *stdscan_copy(char *p, int len)
     return text;
 }
 
-char *stdscan_bufptr = NULL;
 int stdscan(void *private_data, struct tokenval *tv)
 {
     char ourcopy[MAX_KEYWORD + 1], *r, *s;
