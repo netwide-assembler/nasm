@@ -379,7 +379,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 struct tokenval tokval;
                 expr *e;
                 int fwd = false;
-                char *saveme = stdscan_get();  /* bugfix? fbk 8/10/00 */
+                char *saveme = stdscan_get();
 
                 if (!bsd) {
                     nasm_error(ERR_NONFATAL, "Linux a.out does not support"
@@ -409,7 +409,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                             sym->size = reloc_value(e);
                     }
                 }
-                stdscan_set(saveme);            /* bugfix? fbk 8/10/00 */
+                stdscan_set(saveme);
             }
             special_used = true;
         }

@@ -630,7 +630,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                     struct tokenval tokval;
                     expr *e;
                     int fwd = 0;
-                    char *saveme = stdscan_get();       /* bugfix? fbk 8/10/00 */
+                    char *saveme = stdscan_get();
 
                     while (special[n] && nasm_isspace(special[n]))
                         n++;
@@ -654,7 +654,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                         else
                             sym->size = reloc_value(e);
                     }
-                    stdscan_set(saveme);                /* bugfix? fbk 8/10/00 */
+                    stdscan_set(saveme);
                 }
                 special_used = true;
             }
