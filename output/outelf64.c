@@ -363,23 +363,18 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         return def_seg;
     }
 
-    p = name;
-    while (*p && !nasm_isspace(*p))
-        p++;
+    p = nasm_skip_word(name);
     if (*p)
         *p++ = '\0';
     flags_and = flags_or = type = align = 0;
 
-    while (*p && nasm_isspace(*p))
-        p++;
+    p = nasm_skip_spaces(p);
     while (*p) {
         char *q = p;
-        while (*p && !nasm_isspace(*p))
-            p++;
+        p = nasm_skip_word(p);
         if (*p)
             *p++ = '\0';
-        while (*p && nasm_isspace(*p))
-            p++;
+        p = nasm_skip_spaces(p);
 
         if (!nasm_strnicmp(q, "align=", 6)) {
             align = atoi(q + 6);
@@ -492,12 +487,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             if (!strcmp((*s)->name, name)) {
                 struct tokenval tokval;
                 expr *e;
-                char *p = special;
+                char *p = nasm_skip_spaces(nasm_skip_word(special));
 
-                while (*p && !nasm_isspace(*p))
-                    p++;
-                while (*p && nasm_isspace(*p))
-                    p++;
                 stdscan_reset();
                 stdscan_set(p);
                 tokval.t_type = TOKEN_INVALID;
@@ -614,8 +605,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                           n, special);
                 special += n;
 
-                while (nasm_isspace(*special))
-                    ++special;
+                special = nasm_skip_spaces(special);
                 if (*special) {
                     n = strcspn(special, " \t");
                     if (!nasm_strnicmp(special, "default", n))
