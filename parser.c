@@ -429,44 +429,25 @@ restart_parse:
 		    goto is_float;
 		}
             } else if (i == TOKEN_FLOAT) {
-	    is_float:
+is_float:
 		eop->type = EOT_DB_STRING;
 		result->eops_float = true;
-		switch (result->opcode) {
-		case I_DB:
-		    eop->stringlen = 1;
-		    break;
-		case I_DW:
-		    eop->stringlen = 2;
-		    break;
-		case I_DD:
-		    eop->stringlen = 4;
-		    break;
-		case I_DQ:
-		    eop->stringlen = 8;
-		    break;
-		case I_DT:
-		    eop->stringlen = 10;
-		    break;
-		case I_DO:
-		    eop->stringlen = 16;
-		    break;
-		case I_DY:
-		    nasm_error(ERR_NONFATAL, "floating-point constant"
-			  " encountered in DY instruction");
-		    eop->stringlen = 0;
-		    break;
-		default:
-		    nasm_error(ERR_NONFATAL, "floating-point constant"
-			  " encountered in unknown instruction");
-		    /*
-		     * fix suggested by Pedro Gimeno... original line
-		     * was:
-		     * eop->type = EOT_NOTHING;
-		     */
-		    eop->stringlen = 0;
-		    break;
-		}
+
+                eop->stringlen = idata_bytes(result->opcode);
+                if (eop->stringlen > 16) {
+                    nasm_error(ERR_NONFATAL, "floating-point constant"
+                               " encountered in DY instruction");
+                    eop->stringlen = 0;
+                } else if (eop->stringlen < 1) {
+                    nasm_error(ERR_NONFATAL, "floating-point constant"
+                               " encountered in unknown instruction");
+                    /*
+                     * fix suggested by Pedro Gimeno... original line was:
+                     * eop->type = EOT_NOTHING;
+                     */
+                    eop->stringlen = 0;
+                }
+
 		eop = nasm_realloc(eop, sizeof(extop) + eop->stringlen);
 		tail = &eop->next;
 		*fixptr = eop;
@@ -481,7 +462,7 @@ restart_parse:
 		/* anything else, assume it is an expression */
                 expr *value;
 
-	    is_expression:
+is_expression:
                 value = evaluate(stdscan, NULL, &tokval, NULL,
                                  critical, nasm_error, NULL);
                 i = tokval.t_type;

@@ -415,4 +415,6 @@ static inline bool overflow_unsigned(int64_t value, int bytes)
     return value < vmin || value > vmax;
 }
 
+int idata_bytes(int opcode);
+
 #endif

@@ -689,3 +689,41 @@ char *nasm_zap_spaces_rev(char *p)
             *p-- = 0x0;
     return p;
 }
+
+/*
+ * initialized data bytes length from opcode
+ */
+int idata_bytes(int opcode)
+{
+    int ret;
+    switch (opcode) {
+    case I_DB:
+        ret = 1;
+        break;
+    case I_DW:
+        ret = 2;
+        break;
+    case I_DD:
+        ret = 4;
+        break;
+    case I_DQ:
+        ret = 8;
+        break;
+    case I_DT:
+        ret = 10;
+        break;
+    case I_DO:
+        ret = 16;
+        break;
+    case I_DY:
+        ret = 32;
+        break;
+    case I_none:
+        ret = -1;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+    return ret;
+}

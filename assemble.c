@@ -344,40 +344,16 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     int64_t insn_end;
     int32_t itimes;
     int64_t start = offset;
-    int64_t wsize = 0;             /* size for DB etc. */
+    int64_t wsize;              /* size for DB etc. */
 
     errfunc = error;            /* to pass to other functions */
     cpu = cp;
     outfmt = output;            /* likewise */
     list = listgen;             /* and again */
 
-    switch (instruction->opcode) {
-    case -1:
+    wsize = idata_bytes(instruction->opcode);
+    if (wsize == -1)
         return 0;
-    case I_DB:
-        wsize = 1;
-        break;
-    case I_DW:
-        wsize = 2;
-        break;
-    case I_DD:
-        wsize = 4;
-        break;
-    case I_DQ:
-        wsize = 8;
-        break;
-    case I_DT:
-        wsize = 10;
-        break;
-    case I_DO:
-	wsize = 16;
-	break;
-    case I_DY:
-	wsize = 32;
-	break;
-    default:
-	break;
-    }
 
     if (wsize) {
         extop *e;
@@ -684,34 +660,10 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 	instruction->opcode == I_DT || instruction->opcode == I_DO ||
 	instruction->opcode == I_DY) {
         extop *e;
-        int32_t isize, osize, wsize = 0;   /* placate gcc */
+        int32_t isize, osize, wsize;
 
         isize = 0;
-        switch (instruction->opcode) {
-        case I_DB:
-            wsize = 1;
-            break;
-        case I_DW:
-            wsize = 2;
-            break;
-        case I_DD:
-            wsize = 4;
-            break;
-        case I_DQ:
-            wsize = 8;
-            break;
-        case I_DT:
-            wsize = 10;
-            break;
-	case I_DO:
-	    wsize = 16;
-	    break;
-	case I_DY:
-	    wsize = 32;
-	    break;
-	default:
-	    break;
-        }
+        wsize = idata_bytes(instruction->opcode);
 
         list_for_each(e, instruction->eops) {
             int32_t align;
