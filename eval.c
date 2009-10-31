@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -77,8 +77,8 @@ static int *opflags;
 static struct eval_hints *hint;
 
 extern int in_abs_seg;          /* ABSOLUTE segment flag */
-extern int32_t abs_seg;            /* ABSOLUTE segment */
-extern int32_t abs_offset;         /* ABSOLUTE segment offset */
+extern int32_t abs_seg;         /* ABSOLUTE segment */
+extern int32_t abs_offset;      /* ABSOLUTE segment offset */
 
 /*
  * Unimportant cleanup is done to avoid confusing people who are trying
@@ -635,18 +635,18 @@ static expr *expr5(int critical)
 
 static expr *eval_floatize(enum floatize type)
 {
-    uint8_t result[16], *p;	/* Up to 128 bits */
+    uint8_t result[16], *p;     /* Up to 128 bits */
     static const struct {
-	int bytes, start, len;
+        int bytes, start, len;
     } formats[] = {
-	{  1, 0, 1 },		/* FLOAT_8 */
-	{  2, 0, 2 },		/* FLOAT_16 */
-	{  4, 0, 4 },		/* FLOAT_32 */
-	{  8, 0, 8 },		/* FLOAT_64 */
-	{ 10, 0, 8 },		/* FLOAT_80M */
-	{ 10, 8, 2 },		/* FLOAT_80E */
-	{ 16, 0, 8 },		/* FLOAT_128L */
-	{ 16, 8, 8 },		/* FLOAT_128H */
+        {  1, 0, 1 },           /* FLOAT_8 */
+        {  2, 0, 2 },           /* FLOAT_16 */
+        {  4, 0, 4 },           /* FLOAT_32 */
+        {  8, 0, 8 },           /* FLOAT_64 */
+        { 10, 0, 8 },           /* FLOAT_80M */
+        { 10, 8, 2 },           /* FLOAT_80E */
+        { 16, 0, 8 },           /* FLOAT_128L */
+        { 16, 8, 8 },           /* FLOAT_128H */
     };
     int sign = 1;
     int64_t val;
@@ -654,32 +654,32 @@ static expr *eval_floatize(enum floatize type)
 
     i = scan(scpriv, tokval);
     if (i != '(') {
-	error(ERR_NONFATAL, "expecting `('");
-	return NULL;
+        error(ERR_NONFATAL, "expecting `('");
+        return NULL;
     }
     i = scan(scpriv, tokval);
     if (i == '-' || i == '+') {
-	sign = (i == '-') ? -1 : 1;
-	i = scan(scpriv, tokval);
+        sign = (i == '-') ? -1 : 1;
+        i = scan(scpriv, tokval);
     }
     if (i != TOKEN_FLOAT) {
-	error(ERR_NONFATAL, "expecting floating-point number");
-	return NULL;
+        error(ERR_NONFATAL, "expecting floating-point number");
+        return NULL;
     }
     if (!float_const(tokval->t_charptr, sign, result,
-		     formats[type].bytes, error))
-	return NULL;
+                     formats[type].bytes, error))
+        return NULL;
     i = scan(scpriv, tokval);
     if (i != ')') {
-	error(ERR_NONFATAL, "expecting `)'");
-	return NULL;
+        error(ERR_NONFATAL, "expecting `)'");
+        return NULL;
     }
 
     p = result+formats[type].start+formats[type].len;
     val = 0;
     for (j = formats[type].len; j; j--) {
-	p--;
-	val = (val << 8) + *p;
+        p--;
+        val = (val << 8) + *p;
     }
 
     begintemp();
@@ -699,31 +699,31 @@ static expr *eval_strfunc(enum strfunc type)
     parens = false;
     i = scan(scpriv, tokval);
     if (i == '(') {
-	parens = true;
-	i = scan(scpriv, tokval);
+        parens = true;
+        i = scan(scpriv, tokval);
     }
     if (i != TOKEN_STR) {
-	error(ERR_NONFATAL, "expecting string");
-	return NULL;
+        error(ERR_NONFATAL, "expecting string");
+        return NULL;
     }
     string_len = string_transform(tokval->t_charptr, tokval->t_inttwo,
-				  &string, type);
+                                  &string, type);
     if (string_len == (size_t)-1) {
-	error(ERR_NONFATAL, "invalid string for transform");
-	return NULL;
+        error(ERR_NONFATAL, "invalid string for transform");
+        return NULL;
     }
 
     val = readstrnum(string, string_len, &rn_warn);
     if (parens) {
-	i = scan(scpriv, tokval);
-	if (i != ')') {
-	    error(ERR_NONFATAL, "expecting `)'");
-	    return NULL;
-	}
+        i = scan(scpriv, tokval);
+        if (i != ')') {
+            error(ERR_NONFATAL, "expecting `)'");
+            return NULL;
+        }
     }
 
     if (rn_warn)
-	error(ERR_WARNING|ERR_PASS1, "character constant too long");
+        error(ERR_WARNING|ERR_PASS1, "character constant too long");
 
     begintemp();
     addtotemp(EXPR_SIMPLE, val);
@@ -749,7 +749,6 @@ static expr *expr6(int critical)
         if (!e)
             return NULL;
         return scalar_mult(e, -1L, false);
-
 
     case '+':
         i = scan(scpriv, tokval);
@@ -798,10 +797,10 @@ static expr *expr6(int critical)
         return e;
 
     case TOKEN_FLOATIZE:
-	return eval_floatize(tokval->t_integer);
+        return eval_floatize(tokval->t_integer);
 
     case TOKEN_STRFUNC:
-	return eval_strfunc(tokval->t_integer);
+        return eval_strfunc(tokval->t_integer);
 
     case '(':
         i = scan(scpriv, tokval);
@@ -819,7 +818,7 @@ static expr *expr6(int critical)
     case TOKEN_STR:
     case TOKEN_REG:
     case TOKEN_ID:
-    case TOKEN_INSN:		/* Opcodes that occur here are really labels */
+    case TOKEN_INSN:            /* Opcodes that occur here are really labels */
     case TOKEN_HERE:
     case TOKEN_BASE:
         begintemp();
@@ -827,19 +826,19 @@ static expr *expr6(int critical)
         case TOKEN_NUM:
             addtotemp(EXPR_SIMPLE, tokval->t_integer);
             break;
-	case TOKEN_STR:
-	    tmpval = readstrnum(tokval->t_charptr, tokval->t_inttwo, &rn_warn);
-	    if (rn_warn)
-		error(ERR_WARNING|ERR_PASS1, "character constant too long");
+        case TOKEN_STR:
+            tmpval = readstrnum(tokval->t_charptr, tokval->t_inttwo, &rn_warn);
+            if (rn_warn)
+                error(ERR_WARNING|ERR_PASS1, "character constant too long");
             addtotemp(EXPR_SIMPLE, tmpval);
-	    break;
+            break;
         case TOKEN_REG:
             addtotemp(tokval->t_integer, 1L);
             if (hint && hint->type == EAH_NOHINT)
                 hint->base = tokval->t_integer, hint->type = EAH_MAKEBASE;
             break;
         case TOKEN_ID:
-	case TOKEN_INSN:
+        case TOKEN_INSN:
         case TOKEN_HERE:
         case TOKEN_BASE:
             /*
@@ -850,9 +849,9 @@ static expr *expr6(int critical)
             if (!location->known) {
                 error(ERR_NONFATAL,
                       "%s not supported in preprocess-only mode",
-		      (i == TOKEN_HERE ? "`$'" :
-		       i == TOKEN_BASE ? "`$$'" :
-		       "symbol references"));
+                      (i == TOKEN_HERE ? "`$'" :
+                       i == TOKEN_BASE ? "`$$'" :
+                       "symbol references"));
                 addtotemp(EXPR_UNKNOWN, 1L);
                 break;
             }

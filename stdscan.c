@@ -57,12 +57,12 @@ static int stdscan_tempsize = 0, stdscan_templen = 0;
 
 void stdscan_set(char *str)
 {
-	stdscan_bufptr = str;
+        stdscan_bufptr = str;
 }
 
 char *stdscan_get(void)
 {
-	return stdscan_bufptr;
+        return stdscan_bufptr;
 }
 
 static void stdscan_pop(void)
@@ -144,7 +144,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         *r = '\0';
         /* right, so we have an identifier sitting in temp storage. now,
          * is it actually a register or instruction name, or what? */
-	return nasm_token_hash(ourcopy, tv);
+        return nasm_token_hash(ourcopy, tv);
     } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
@@ -160,72 +160,74 @@ int stdscan(void *private_data, struct tokenval *tv)
         return tv->t_type = TOKEN_HERE;
     } else if (isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
         bool rn_error;
-	bool is_hex = false;
-	bool is_float = false;
-	bool has_e = false;
-	char c;
+        bool is_hex = false;
+        bool is_float = false;
+        bool has_e = false;
+        char c;
 
         r = stdscan_bufptr;
 
-	if (*stdscan_bufptr == '$') {
-	    stdscan_bufptr++;
-	    is_hex = true;
-	}
+        if (*stdscan_bufptr == '$') {
+            stdscan_bufptr++;
+            is_hex = true;
+        }
 
-	for (;;) {
-	    c = *stdscan_bufptr++;
+        for (;;) {
+            c = *stdscan_bufptr++;
 
-	    if (!is_hex && (c == 'e' || c == 'E')) {
-		has_e = true;
-		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-') {
-		    /* e can only be followed by +/- if it is either a
-		       prefixed hex number or a floating-point number */
-		    is_float = true;
-		    stdscan_bufptr++;
-		}
-	    } else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
-		is_hex = true;
-	    } else if (c == 'P' || c == 'p') {
-		is_float = true;
-		if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
-		    stdscan_bufptr++;
-	    } else if (isnumchar(c) || c == '_')
-		; /* just advance */
-	    else if (c == '.')
-		is_float = true;
-	    else
-		break;
-	}
-	stdscan_bufptr--;	/* Point to first character beyond number */
+            if (!is_hex && (c == 'e' || c == 'E')) {
+                has_e = true;
+                if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-') {
+                    /*
+                     * e can only be followed by +/- if it is either a
+                     * prefixed hex number or a floating-point number
+                     */
+                    is_float = true;
+                    stdscan_bufptr++;
+                }
+            } else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
+                is_hex = true;
+            } else if (c == 'P' || c == 'p') {
+                is_float = true;
+                if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
+                    stdscan_bufptr++;
+            } else if (isnumchar(c) || c == '_')
+                ; /* just advance */
+            else if (c == '.')
+                is_float = true;
+            else
+                break;
+        }
+        stdscan_bufptr--;       /* Point to first character beyond number */
 
-	if (has_e && !is_hex) {
-	    /* 1e13 is floating-point, but 1e13h is not */
-	    is_float = true;
-	}
+        if (has_e && !is_hex) {
+            /* 1e13 is floating-point, but 1e13h is not */
+            is_float = true;
+        }
 
-	if (is_float) {
-	    tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
-	    return tv->t_type = TOKEN_FLOAT;
-	} else {
-	    r = stdscan_copy(r, stdscan_bufptr - r);
-	    tv->t_integer = readnum(r, &rn_error);
-	    stdscan_pop();
-	    if (rn_error) {
-		/* some malformation occurred */
-		return tv->t_type = TOKEN_ERRNUM;
-	    }
-	    tv->t_charptr = NULL;
-	    return tv->t_type = TOKEN_NUM;
-	}
+        if (is_float) {
+            tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+            return tv->t_type = TOKEN_FLOAT;
+        } else {
+            r = stdscan_copy(r, stdscan_bufptr - r);
+            tv->t_integer = readnum(r, &rn_error);
+            stdscan_pop();
+            if (rn_error) {
+                /* some malformation occurred */
+                return tv->t_type = TOKEN_ERRNUM;
+            }
+            tv->t_charptr = NULL;
+            return tv->t_type = TOKEN_NUM;
+        }
     } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"' ||
-	       *stdscan_bufptr == '`') {
-	/* a quoted string */
-	char start_quote = *stdscan_bufptr;
-	tv->t_charptr = stdscan_bufptr;
-	tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
-	if (*stdscan_bufptr != start_quote)
-	    return tv->t_type = TOKEN_ERRSTR;
-	stdscan_bufptr++;	/* Skip final quote */
+               *stdscan_bufptr == '`') {
+        /* a quoted string */
+        char start_quote = *stdscan_bufptr;
+        tv->t_charptr = stdscan_bufptr;
+        tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
+        if (*stdscan_bufptr != start_quote)
+            return tv->t_type = TOKEN_ERRSTR;
+        stdscan_bufptr++;       /* Skip final quote */
         return tv->t_type = TOKEN_STR;
     } else if (*stdscan_bufptr == ';') {
         /* a comment has happened - stay */
