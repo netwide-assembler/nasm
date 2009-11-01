@@ -840,10 +840,11 @@ is_expression:
                 result->oprs[operand].segment = NO_SEG; /* don't care again */
                 result->oprs[operand].wrt = NO_SEG;     /* still don't care */
 
-                /* Be optimistic */
                 if(optimizing >= 0 && !(result->oprs[operand].type & STRICT))
+                {
+                    /* Be optimistic */
                     result->oprs[operand].type |= SBYTE16 | SBYTE32 | SBYTE64;
-
+                }
             } else if (is_reloc(value)) {       /* it's immediate */
                 result->oprs[operand].type |= IMMEDIATE;
                 result->oprs[operand].offset = reloc_value(value);
@@ -858,14 +859,12 @@ is_expression:
                         int32_t v32 = (int32_t)v64;
                         int16_t v16 = (int16_t)v32;
 
-                        if (v64 >= -128 && v64 <= 127)
+			if (v64 >= -128 && v64 <= 127)
                             result->oprs[operand].type |= SBYTE64;
-                        if (!overflow_signed(v64, sizeof(v32)))
-                            if (v32 >= -128 && v32 <= 127)
-                                result->oprs[operand].type |= SBYTE32;
-                        if (!overflow_signed(v64, sizeof(v16)))
-                            if (v16 >= -128 && v16 <= 127)
-                                result->oprs[operand].type |= SBYTE16;
+			if (v32 >= -128 && v32 <= 127)
+                            result->oprs[operand].type |= SBYTE32;
+			if (v16 >= -128 && v16 <= 127)
+                            result->oprs[operand].type |= SBYTE16;
                     }
                 }
             } else {            /* it's a register */
