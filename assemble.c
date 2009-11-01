@@ -2136,12 +2136,11 @@ static enum match_result matches(const struct itemplate *itemp,
      */
     if (itemp->flags & (IF_SM | IF_SM2)) {
         oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
-        asize = 0;
         for (i = 0; i < oprs; i++) {
-            if ((asize = itemp->opd[i] & SIZE_MASK) != 0) {
-                int j;
-                for (j = 0; j < oprs; j++)
-                    size[j] = asize;
+            asize = itemp->opd[i] & SIZE_MASK;
+            if (asize) {
+                for (i = 0; i < oprs; i++)
+                    size[i] = asize;
                 break;
             }
         }
