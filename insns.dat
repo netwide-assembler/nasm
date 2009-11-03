@@ -583,7 +583,7 @@ IMUL		reg16,mem,sbyte16		\320\1\x6B\110\16				186,SM,ND
 IMUL		reg16,mem,imm16			\320\1\x69\110\32				186,SM
 IMUL		reg16,mem,imm			\320\146\x69\110\142				186,SM,ND
 IMUL		reg16,reg16,imm8		\320\1\x6B\110\16				186
-IMUL		reg16,reg16,sbyte32		\320\1\x6B\110\16				186,SM,ND
+IMUL		reg16,reg16,sbyte16		\320\1\x6B\110\16				186,SM,ND
 IMUL		reg16,reg16,imm16		\320\1\x69\110\32				186
 IMUL		reg16,reg16,imm			\320\146\x69\110\142				186,SM,ND
 IMUL		reg32,mem,imm8			\321\1\x6B\110\16				386,SM
@@ -591,7 +591,7 @@ IMUL		reg32,mem,sbyte64		\321\1\x6B\110\16				386,SM,ND
 IMUL		reg32,mem,imm32			\321\1\x69\110\42				386,SM
 IMUL		reg32,mem,imm			\321\156\x69\110\152				386,SM,ND
 IMUL		reg32,reg32,imm8		\321\1\x6B\110\16				386
-IMUL		reg32,reg32,sbyte16		\321\1\x6B\110\16				386,SM,ND
+IMUL		reg32,reg32,sbyte32		\321\1\x6B\110\16				386,SM,ND
 IMUL		reg32,reg32,imm32		\321\1\x69\110\42				386
 IMUL		reg32,reg32,imm			\321\156\x69\110\152				386,SM,ND
 IMUL		reg64,mem,imm8			\324\1\x6B\110\16				X64,SM
