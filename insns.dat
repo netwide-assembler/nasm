@@ -1,5 +1,5 @@
 ;; --------------------------------------------------------------------------
-;;   
+;;
 ;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
@@ -14,7 +14,7 @@
 ;;     copyright notice, this list of conditions and the following
 ;;     disclaimer in the documentation and/or other materials provided
 ;;     with the distribution.
-;;     
+;;
 ;;     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ;;     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ;;     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -595,7 +595,7 @@ IMUL		reg32,reg32,sbyte32		\321\1\x6B\110\16				386,SM,ND
 IMUL		reg32,reg32,imm32		\321\1\x69\110\42				386
 IMUL		reg32,reg32,imm			\321\156\x69\110\152				386,SM,ND
 IMUL		reg64,mem,imm8			\324\1\x6B\110\16				X64,SM
-IMUL		reg64,mem,sbyte32		\324\1\x6B\110\16				X64,SM,ND
+IMUL		reg64,mem,sbyte64		\324\1\x6B\110\16				X64,SM,ND
 IMUL		reg64,mem,imm32			\324\1\x69\110\42				X64,SM
 IMUL		reg64,mem,imm			\324\156\x69\110\252				X64,SM,ND
 IMUL		reg64,reg64,imm8		\324\1\x6B\110\16				X64
