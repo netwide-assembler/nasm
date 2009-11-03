@@ -77,6 +77,33 @@
 %if %1 == 64
 	imul rax,0x12345678
 %endif
+
+	imul ax,cx,0xfffe
+	imul ax,MEM,0xfffe
+	imul ax,word MEM,0xfffe
+	imul ax,cx,0xfe
+	imul ax,MEM,0xfe
+	imul ax,word MEM,0xfe
+	imul eax,ecx,0xfffffffe
+	imul eax,MEM,0xfffffffe
+	imul eax,dword MEM,0xfffffffe
+	imul eax,ecx,0xfffe
+	imul eax,MEM,0xfffe
+	imul eax,dword MEM,0xfffe
+%if %1 == 64
+	imul rax,rcx,0xfffffffe
+	imul rax,MEM,0xfffffffe
+	imul rax,qword MEM,0xfffffffe
+	imul rax,rcx,0xfffe
+	imul rax,MEM,0xfffe
+	imul rax,qword MEM,0xfffe
+%endif
+
+	imul ax,0xfffe
+	imul eax,0xfffffffe
+%if %1 == 64
+	imul rax,0xfffffffe
+%endif
 %endmacro
 
 	test 16
