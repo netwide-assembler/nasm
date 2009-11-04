@@ -1,7 +1,7 @@
 ;Testname=nowarn; Arguments=-fbin -oimul.bin; Files=stdout stderr imul.bin
 ;Testname=warn; Arguments=-DWARN -fbin -oimul.bin; Files=stdout stderr imul.bin
 
-%macro test 1-2 5
+%macro test 1-3 5 -2
 	bits %1
 
 %undef MEM
@@ -91,9 +91,9 @@
 	imul eax,MEM,0xfffe
 	imul eax,dword MEM,0xfffe
 %if %1 == 64
-	imul rax,rcx,0xfffffffe
-	imul rax,MEM,0xfffffffe
-	imul rax,qword MEM,0xfffffffe
+	imul rax,rcx,%3
+	imul rax,MEM,%3
+	imul rax,qword MEM,%3
 	imul rax,rcx,0xfffe
 	imul rax,MEM,0xfffe
 	imul rax,qword MEM,0xfffe
@@ -102,7 +102,7 @@
 	imul ax,0xfffe
 	imul eax,0xfffffffe
 %if %1 == 64
-	imul rax,0xfffffffe
+	imul rax,%3
 %endif
 %endmacro
 
@@ -113,5 +113,5 @@
 %ifdef WARN
 	test 16,0x999
 	test 32,0x999999
-	test 64,0x999999999
+	test 64,0x999999999,0xfffffffe
 %endif
