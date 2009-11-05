@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -2021,7 +2021,7 @@ done:
 }
 
 static enum match_result matches(const struct itemplate *itemp,
-				 insn *instruction, int bits)
+                                 insn *instruction, int bits)
 {
     int i, size[MAX_OPERANDS], asize, oprs;
     bool opsizemissing = false;
@@ -2050,86 +2050,109 @@ static enum match_result matches(const struct itemplate *itemp,
      */
     switch (itemp->flags & IF_SMASK) {
     case IF_SB:
-	asize = BITS8;
-	break;
+        asize = BITS8;
+        break;
     case IF_SW:
-	asize = BITS16;
-	break;
+        asize = BITS16;
+        break;
     case IF_SD:
-	asize = BITS32;
-	break;
+        asize = BITS32;
+        break;
     case IF_SQ:
-	asize = BITS64;
-	break;
+        asize = BITS64;
+        break;
     case IF_SO:
-	asize = BITS128;
-	break;
+        asize = BITS128;
+        break;
     case IF_SY:
-	asize = BITS256;
-	break;
+        asize = BITS256;
+        break;
     case IF_SZ:
-	switch (bits) {
-	case 16:
-	    asize = BITS16;
-	    break;
-	case 32:
-	    asize = BITS32;
-	    break;
-	case 64:
-	    asize = BITS64;
-	    break;
-	default:
-	    asize = 0;
-	    break;
-	}
-	break;
+        switch (bits) {
+        case 16:
+            asize = BITS16;
+            break;
+        case 32:
+            asize = BITS32;
+            break;
+        case 64:
+            asize = BITS64;
+            break;
+        default:
+            asize = 0;
+            break;
+        }
+        break;
     default:
-	asize = 0;
-	break;
+        asize = 0;
+        break;
     }
 
     if (itemp->flags & IF_ARMASK) {
-	/* S- flags only apply to a specific operand */
-	i = ((itemp->flags & IF_ARMASK) >> IF_ARSHFT) - 1;
-	memset(size, 0, sizeof size);
-	size[i] = asize;
+        /* S- flags only apply to a specific operand */
+        i = ((itemp->flags & IF_ARMASK) >> IF_ARSHFT) - 1;
+        memset(size, 0, sizeof size);
+        size[i] = asize;
     } else {
-	/* S- flags apply to all operands */
-	for (i = 0; i < MAX_OPERANDS; i++)
-	    size[i] = asize;
+        /* S- flags apply to all operands */
+        for (i = 0; i < MAX_OPERANDS; i++)
+            size[i] = asize;
     }
 
     /*
-     * Check that the operand flags all match up
+     * Check that the operand flags all match up,
+     * it's a bit tricky so lets be verbose:
+     *
+     * 1) Find out the size of operand. If instruction
+     *    doesn't have one specified -- we're trying to
+     *    guess it either from template (IF_S* flag) or
+     *    from code bits.
+     *
+     * 2) If template operand (i) has SAME_AS flag [used for registers only]
+     *    (ie the same operand as was specified somewhere in template, and
+     *    this referred operand index is being achieved via ~SAME_AS)
+     *    we are to be sure that both registers (in template and instruction)
+     *    do exactly match.
+     *
+     * 3) If template operand do not match the instruction OR
+     *    template has an operand size specified AND this size differ
+     *    from which instruction has (perhaps we got it from code bits)
+     *    we are:
+     *      a)  Check that only size of instruction and operand is differ
+     *          other characteristics do match
+     *      b)  Perhaps it's a register specified in instruction so
+     *          for such a case we just mark that operand as "size
+     *          missing" and this will turn on fuzzy operand size
+     *          logic facility (handled by a caller)
      */
     for (i = 0; i < itemp->operands; i++) {
-	opflags_t type = instruction->oprs[i].type;
-	if (!(type & SIZE_MASK))
-	    type |= size[i];
+        opflags_t type = instruction->oprs[i].type;
+        if (!(type & SIZE_MASK))
+            type |= size[i];
 
-	if (itemp->opd[i] & SAME_AS) {
-	    int j = itemp->opd[i] & ~SAME_AS;
-	    if (type != instruction->oprs[j].type ||
-		instruction->oprs[i].basereg != instruction->oprs[j].basereg)
-		return MERR_INVALOP;
-	} else if (itemp->opd[i] & ~type ||
+        if (itemp->opd[i] & SAME_AS) {
+            int j = itemp->opd[i] & ~SAME_AS;
+            if (type != instruction->oprs[j].type ||
+                instruction->oprs[i].basereg != instruction->oprs[j].basereg)
+                return MERR_INVALOP;
+        } else if (itemp->opd[i] & ~type ||
             ((itemp->opd[i] & SIZE_MASK) &&
              ((itemp->opd[i] ^ type) & SIZE_MASK))) {
             if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK)) {
                 return MERR_INVALOP;
-	    } else if (!is_class(REGISTER, type)) {
-		/*
-		 * Note: we don't honor extrinsic operand sizes for registers,
-		 * so "missing operand size" for a register should be
-		 * considered a wildcard match rather than an error.
-		 */
-		opsizemissing = true;
-	    }
+            } else if (!is_class(REGISTER, type)) {
+                /*
+                 * Note: we don't honor extrinsic operand sizes for registers,
+                 * so "missing operand size" for a register should be
+                 * considered a wildcard match rather than an error.
+                 */
+                opsizemissing = true;
+            }
         }
     }
 
     if (opsizemissing)
-	return MERR_OPSIZEMISSING;
+        return MERR_OPSIZEMISSING;
 
     /*
      * Check operand sizes
@@ -2170,7 +2193,7 @@ static enum match_result matches(const struct itemplate *itemp,
      * Check if special handling needed for Jumps
      */
     if ((itemp->code[0] & 0374) == 0370)
-	return MOK_JUMP;
+        return MOK_JUMP;
 
     return MOK_GOOD;
 }
