@@ -173,6 +173,11 @@ no_return nasm_assert_failed(const char *, int, const char *);
     } while (0)
 
 /*
+ * NASM failure at build time if x != 0
+ */
+#define nasm_build_assert(x) (void)(sizeof(char[1-2*!!(x)]))
+
+/*
  * ANSI doesn't guarantee the presence of `stricmp' or
  * `strcasecmp'.
  */
