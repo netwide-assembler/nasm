@@ -1691,7 +1691,7 @@ static void stabs32_generate(void)
         strcpy((char *)ssbuf + fileidx[i], allfiles[i]);
     ssbuf[0] = 0;
 
-    stabstrlen = strsize; /* set global variable for length of stab strings */
+    stabstrlen = strsize;       /* set global variable for length of stab strings */
 
     sptr = sbuf;
     ptr = stabslines;
@@ -1836,21 +1836,21 @@ static void dwarf32_output(int type, void *param)
     }
     /* check for line change */
     if (ln) {
-       /* test if in range of special op code */
-       maxln = line_base + line_range;
-       soc = (ln - line_base) + (line_range * aa) + opcode_base;
-       if (ln >= line_base && ln < maxln && soc < 256) {
-          saa_write8(plinep,soc);
-       } else {
-          saa_write8(plinep,DW_LNS_advance_line);
-          saa_wleb128s(plinep,ln);
-          if (aa) {
-              saa_write8(plinep,DW_LNS_advance_pc);
-              saa_wleb128u(plinep,aa);
-          }
-       }
-       dwarf_csect->line = currentline;
-       dwarf_csect->offset = s->offset;
+        /* test if in range of special op code */
+        maxln = line_base + line_range;
+        soc = (ln - line_base) + (line_range * aa) + opcode_base;
+        if (ln >= line_base && ln < maxln && soc < 256) {
+            saa_write8(plinep,soc);
+        } else {
+            saa_write8(plinep,DW_LNS_advance_line);
+            saa_wleb128s(plinep,ln);
+            if (aa) {
+                saa_write8(plinep,DW_LNS_advance_pc);
+                saa_wleb128u(plinep,aa);
+            }
+        }
+        dwarf_csect->line = currentline;
+        dwarf_csect->offset = s->offset;
     }
 
     /* show change handled */
@@ -2121,7 +2121,7 @@ static void dwarf32_findfile(const char * fname)
         for (finx = 0; finx < dwarf_numfiles; finx++) {
             if (!(strcmp(fname, match->filename))) {
                 dwarf_clist = match;
-               return;
+                return;
             }
         }
     }
@@ -2140,7 +2140,6 @@ static void dwarf32_findfile(const char * fname)
         dwarf_elist->next = dwarf_clist;
         dwarf_elist = dwarf_clist;
     }
-
 }
 
 static void dwarf32_findsect(const int index)

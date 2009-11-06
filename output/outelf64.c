@@ -1697,14 +1697,14 @@ static void stabs64_output(int type, void *param)
     debug_immcall = 0;
 }
 
-#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value) \
-  do {\
-    WRITELONG(p,n_strx); \
-    WRITECHAR(p,n_type); \
-    WRITECHAR(p,n_other); \
-    WRITESHORT(p,n_desc); \
-    WRITELONG(p,n_value); \
-  } while (0)
+#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
+    do {                                                    \
+        WRITELONG(p,n_strx);                                \
+        WRITECHAR(p,n_type);                                \
+        WRITECHAR(p,n_other);                               \
+        WRITESHORT(p,n_desc);                               \
+        WRITELONG(p,n_value);                               \
+    } while (0)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
@@ -1719,7 +1719,7 @@ static void stabs64_generate(void)
 
     ptr = stabslines;
 
-    allfiles = (char **)nasm_malloc(numlinestabs * sizeof(int8_t *));
+    allfiles = (char **)nasm_malloc(numlinestabs * sizeof(char *));
     for (i = 0; i < numlinestabs; i++)
         allfiles[i] = 0;
     numfiles = 0;
@@ -1775,10 +1775,11 @@ static void stabs64_generate(void)
     numstabs = 0;
 
     if (ptr) {
-        /* this is the first stab, its strx points to the filename of the
-        the source-file, the n_desc field should be set to the number
-        of remaining stabs
-        */
+        /*
+         * this is the first stab, its strx points to the filename of the
+         * the source-file, the n_desc field should be set to the number
+         * of remaining stabs
+         */
         WRITE_STAB(sptr, fileidx[0], 0, 0, 0, strlen(allfiles[0] + 12));
 
         /* this is the stab for the main source file */
@@ -1786,9 +1787,11 @@ static void stabs64_generate(void)
 
         /* relocation table entry */
 
-        /* Since the symbol table has two entries before */
-        /* the section symbols, the index in the info.section */
-        /* member must be adjusted by adding 2 */
+        /*
+         * Since the symbol table has two entries before
+         * the section symbols, the index in the info.section
+         * member must be adjusted by adding 2
+         */
 
         WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
 	WRITELONG(rptr, R_X86_64_32);
@@ -1850,20 +1853,24 @@ static void stabs64_cleanup(void)
     struct linelist *ptr, *del;
     if (!stabslines)
         return;
+
     ptr = stabslines;
     while (ptr) {
         del = ptr;
         ptr = ptr->next;
         nasm_free(del);
     }
+
     nasm_free(stabbuf);
     nasm_free(stabrelbuf);
     nasm_free(stabstrbuf);
 }
+
 /* dwarf routines */
+
 static void dwarf64_init(void)
 {
-    ndebugs = 3;		/* 3 debug symbols */
+    ndebugs = 3; /* 3 debug symbols */
 }
 
 static void dwarf64_linenum(const char *filename, int32_t linenumber,
@@ -1885,9 +1892,11 @@ static void dwarf64_output(int type, void *param)
     (void)type;
 
     s = (struct symlininfo *)param;
+
     /* line number info is only gathered for executable sections */
     if (!(sects[s->section]->flags & SHF_EXECINSTR))
         return;
+
     /* Check if section index has changed */
     if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
         dwarf64_findsect(s->section);
@@ -1902,9 +1911,9 @@ static void dwarf64_output(int type, void *param)
     plinep = dwarf_csect->psaa;
     /* check for file change */
     if (!(inx == dwarf_csect->file)) {
-       saa_write8(plinep,DW_LNS_set_file);
-       saa_write8(plinep,inx);
-       dwarf_csect->file = inx;
+        saa_write8(plinep,DW_LNS_set_file);
+        saa_write8(plinep,inx);
+        dwarf_csect->file = inx;
     }
     /* check for line change */
     if (ln) {
@@ -1924,6 +1933,7 @@ static void dwarf64_output(int type, void *param)
         dwarf_csect->line = currentline;
         dwarf_csect->offset = s->offset;
     }
+
     /* show change handled */
     debug_immcall = 0;
 }
@@ -1993,14 +2003,14 @@ static void dwarf64_generate(void)
 
     /* build pubnames section */
     ppubnames = saa_init(1L);
-    saa_write16(ppubnames,3);			/* dwarf version */
-    saa_write32(ppubnames,0);			/* offset into info */
-    saa_write32(ppubnames,0);			/* space used in info */
-    saa_write32(ppubnames,0);			/* end of list */
+    saa_write16(ppubnames,3);   /* dwarf version */
+    saa_write32(ppubnames,0);   /* offset into info */
+    saa_write32(ppubnames,0);   /* space used in info */
+    saa_write32(ppubnames,0);   /* end of list */
     saalen = ppubnames->datalen;
     pubnameslen = saalen + 4;
     pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
-    WRITELONG(pbuf,saalen);	/* initial length */
+    WRITELONG(pbuf,saalen);     /* initial length */
     saa_rnbytes(ppubnames, pbuf, saalen);
     saa_free(ppubnames);
 
@@ -2039,7 +2049,7 @@ static void dwarf64_generate(void)
     saalen = pinfo->datalen;
     infolen = saalen + 4;
     infobuf = pbuf = nasm_malloc(infolen);
-    WRITELONG(pbuf,saalen);		/* initial length */
+    WRITELONG(pbuf,saalen);     /* initial length */
     saa_rnbytes(pinfo, pbuf, saalen);
     saa_free(pinfo);
 
@@ -2047,13 +2057,13 @@ static void dwarf64_generate(void)
     inforellen = saalen = pinforel->datalen;
     inforelbuf = pbuf = nasm_malloc(inforellen);
     saa_rnbytes(pinforel, pbuf, saalen);
-    saa_free(pinforel); 
+    saa_free(pinforel);
 
     /* build abbrev section */
     pabbrev = saa_init(1L);
-    saa_write8(pabbrev,1);			/* entry number LEB128u */
-    saa_write8(pabbrev,DW_TAG_compile_unit);	/* tag LEB128u */
-    saa_write8(pabbrev,1);			/* has children */
+    saa_write8(pabbrev,1);      /* entry number LEB128u */
+    saa_write8(pabbrev,DW_TAG_compile_unit);    /* tag LEB128u */
+    saa_write8(pabbrev,1);      /* has children */
     /* the following attributes and forms are all LEB128u values */
     saa_write8(pabbrev,DW_AT_low_pc);
     saa_write8(pabbrev,DW_FORM_addr);
@@ -2067,16 +2077,16 @@ static void dwarf64_generate(void)
     saa_write8(pabbrev,DW_FORM_string);
     saa_write8(pabbrev,DW_AT_language);
     saa_write8(pabbrev,DW_FORM_data2);
-    saa_write16(pabbrev,0);			/* end of entry */
+    saa_write16(pabbrev,0);     /* end of entry */
     /* LEB128u usage same as above */
-    saa_write8(pabbrev,2);			/* entry number */
+    saa_write8(pabbrev,2);      /* entry number */
     saa_write8(pabbrev,DW_TAG_subprogram);
-    saa_write8(pabbrev,0);			/* no children */
+    saa_write8(pabbrev,0);      /* no children */
     saa_write8(pabbrev,DW_AT_low_pc);
     saa_write8(pabbrev,DW_FORM_addr);
     saa_write8(pabbrev,DW_AT_frame_base);
     saa_write8(pabbrev,DW_FORM_data4);
-    saa_write16(pabbrev,0);			/* end of entry */
+    saa_write16(pabbrev,0);     /* end of entry */
     abbrevlen = saalen = pabbrev->datalen;
     abbrevbuf = pbuf = nasm_malloc(saalen);
     saa_rnbytes(pabbrev, pbuf, saalen);
@@ -2131,38 +2141,37 @@ static void dwarf64_generate(void)
     linepoff += 13;
     plinesrel = saa_init(1L);
     psect = dwarf_fsect;
-    for (indx = 0; indx < dwarf_nsections; indx++)
-    {
-         saa_write64(plinesrel, linepoff);
-         saa_write64(plinesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
-         saa_write64(plinesrel, (uint64_t) 0);
-         plinep = psect->psaa;
-         saalen = plinep->datalen;
-         saa_rnbytes(plinep, pbuf, saalen);
-         pbuf += saalen;
-         linepoff += saalen;
-         saa_free(plinep);
-         /* done with this entry */
-         psect = psect->next;
+    for (indx = 0; indx < dwarf_nsections; indx++) {
+        saa_write64(plinesrel, linepoff);
+        saa_write64(plinesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+        saa_write64(plinesrel, (uint64_t) 0);
+        plinep = psect->psaa;
+        saalen = plinep->datalen;
+        saa_rnbytes(plinep, pbuf, saalen);
+        pbuf += saalen;
+        linepoff += saalen;
+        saa_free(plinep);
+        /* done with this entry */
+        psect = psect->next;
     }
 
 
     /* build rela.lines section */
     linerellen =saalen = plinesrel->datalen;
-    linerelbuf = pbuf = nasm_malloc(linerellen); 
+    linerelbuf = pbuf = nasm_malloc(linerellen);
     saa_rnbytes(plinesrel, pbuf, saalen);
     saa_free(plinesrel);
 
     /* build frame section */
     framelen = 4;
     framebuf = pbuf = nasm_malloc(framelen);
-    WRITELONG(pbuf,framelen-4);		/* initial length */
+    WRITELONG(pbuf,framelen-4); /* initial length */
 
     /* build loc section */
     loclen = 16;
     locbuf = pbuf = nasm_malloc(loclen);
-    WRITEDLONG(pbuf,0);		/* null  beginning offset */
-    WRITEDLONG(pbuf,0);		/* null  ending offset */
+    WRITEDLONG(pbuf,0);  /* null  beginning offset */
+    WRITEDLONG(pbuf,0);  /* null  ending offset */
 }
 
 static void dwarf64_cleanup(void)
@@ -2178,105 +2187,89 @@ static void dwarf64_cleanup(void)
     nasm_free(framebuf);
     nasm_free(locbuf);
 }
+
 static void dwarf64_findfile(const char * fname)
 {
-   int finx;
-   struct linelist *match;
+    int finx;
+    struct linelist *match;
 
-   /* return if fname is current file name */
-   if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename))) return;
-   /* search for match */
-   else 
-   {
-     match = 0;
-     if (dwarf_flist)
-     {
-       match = dwarf_flist;
-       for (finx = 0; finx < dwarf_numfiles; finx++)
-       {
-         if (!(strcmp(fname, match->filename)))
-         {
-	   dwarf_clist = match;
-           return;
-         }
-       }
-     }
-     /* add file name to end of list */
-     dwarf_clist =  (struct linelist *)nasm_malloc(sizeof(struct linelist));
-     dwarf_numfiles++;
-     dwarf_clist->line = dwarf_numfiles;
-     dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
-     strcpy(dwarf_clist->filename,fname);
-     dwarf_clist->next = 0;
-     /* if first entry */
-     if (!dwarf_flist)
-     {
-       dwarf_flist = dwarf_elist = dwarf_clist;
-       dwarf_clist->last = 0;
-     }
-     /* chain to previous entry */
-     else
-     {
-       dwarf_elist->next = dwarf_clist;
-       dwarf_elist = dwarf_clist;
-     }
-   }
+    /* return if fname is current file name */
+    if (dwarf_clist && !(strcmp(fname, dwarf_clist->filename)))
+        return;
+
+    /* search for match */
+    match = 0;
+    if (dwarf_flist) {
+        match = dwarf_flist;
+        for (finx = 0; finx < dwarf_numfiles; finx++) {
+            if (!(strcmp(fname, match->filename))) {
+                dwarf_clist = match;
+                return;
+            }
+        }
+    }
+
+    /* add file name to end of list */
+    dwarf_clist = (struct linelist *)nasm_malloc(sizeof(struct linelist));
+    dwarf_numfiles++;
+    dwarf_clist->line = dwarf_numfiles;
+    dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
+    strcpy(dwarf_clist->filename,fname);
+    dwarf_clist->next = 0;
+    if (!dwarf_flist) {     /* if first entry */
+        dwarf_flist = dwarf_elist = dwarf_clist;
+        dwarf_clist->last = 0;
+    } else {                /* chain to previous entry */
+        dwarf_elist->next = dwarf_clist;
+        dwarf_elist = dwarf_clist;
+    }
 }
-/*  */
+
 static void dwarf64_findsect(const int index)
 {
-   int sinx;
-   struct sectlist *match;
-   struct SAA *plinep;
-   /* return if index is current section index */
-   if (dwarf_csect && (dwarf_csect->section == index))
-   {
-      return;
-   }
-   /* search for match */
-   else 
-   {
-     match = 0;
-     if (dwarf_fsect)
-     {
-       match = dwarf_fsect;
-       for (sinx = 0; sinx < dwarf_nsections; sinx++)
-       {
-         if ((match->section == index))
-         {
-	   dwarf_csect = match;
-           return;
-         }
-        match = match->next;
-       }
-     }
-     /* add entry to end of list */
-     dwarf_csect =  (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
-     dwarf_nsections++;
-     dwarf_csect->psaa = plinep = saa_init(1L);
-     dwarf_csect->line = 1;
-     dwarf_csect->offset = 0;
-     dwarf_csect->file = 1;
-     dwarf_csect->section = index;
-     dwarf_csect->next = 0;
-     /* set relocatable address at start of line program */
-     saa_write8(plinep,DW_LNS_extended_op);
-     saa_write8(plinep,9);			/* operand length */
-     saa_write8(plinep,DW_LNE_set_address);
-     saa_write64(plinep,0);		/* Start Address */
-     /* if first entry */
-     if (!dwarf_fsect)
-     {
-       dwarf_fsect = dwarf_esect = dwarf_csect;
-       dwarf_csect->last = 0;
-     }
-     /* chain to previous entry */
-     else
-     {
-       dwarf_esect->next = dwarf_csect;
-       dwarf_esect = dwarf_csect;
-     }
-   }
+    int sinx;
+    struct sectlist *match;
+    struct SAA *plinep;
+
+    /* return if index is current section index */
+    if (dwarf_csect && (dwarf_csect->section == index))
+        return;
+
+    /* search for match */
+    match = 0;
+    if (dwarf_fsect) {
+        match = dwarf_fsect;
+        for (sinx = 0; sinx < dwarf_nsections; sinx++) {
+            if ((match->section == index)) {
+                dwarf_csect = match;
+                return;
+            }
+            match = match->next;
+        }
+    }
+
+    /* add entry to end of list */
+    dwarf_csect = (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
+    dwarf_nsections++;
+    dwarf_csect->psaa = plinep = saa_init(1L);
+    dwarf_csect->line = 1;
+    dwarf_csect->offset = 0;
+    dwarf_csect->file = 1;
+    dwarf_csect->section = index;
+    dwarf_csect->next = 0;
+    /* set relocatable address at start of line program */
+    saa_write8(plinep,DW_LNS_extended_op);
+    saa_write8(plinep,9);   /* operand length */
+    saa_write8(plinep,DW_LNE_set_address);
+    saa_write64(plinep,0);  /* Start Address */
+
+    if (!dwarf_fsect) { /* if first entry */
+        dwarf_fsect = dwarf_esect = dwarf_csect;
+        dwarf_csect->last = 0;
+    } else {            /* chain to previous entry */
+        dwarf_esect->next = dwarf_csect;
+        dwarf_esect = dwarf_csect;
+    }
 }
 
-#endif                          /* OF_ELF */
+#endif /* OF_ELF */
