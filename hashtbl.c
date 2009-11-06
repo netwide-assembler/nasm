@@ -46,12 +46,19 @@
 
 #define HASH_MAX_LOAD   2 /* Higher = more memory-efficient, slower */
 
+#define hash_calc(key)          crc64(CRC64_INIT, (key))
+#define hash_calci(key)         crc64i(CRC64_INIT, (key))
+#define hash_max_load(size)     ((size) * (HASH_MAX_LOAD - 1) / HASH_MAX_LOAD)
+#define hash_expand(size)       ((size) << 1)
+#define hash_mask(size)         ((size) - 1)
+#define hash_pos(hash, mask)    ((hash) & (mask))
+#define hash_inc(hash, mask)    ((((hash) >> 32) & (mask)) | 1) /* always odd */
+#define hash_pos_next(pos, inc, mask) (((pos) + (inc)) & (mask))
+
 static struct hash_tbl_node *alloc_table(size_t newsize)
 {
-    size_t bytes = newsize*sizeof(struct hash_tbl_node);
-    struct hash_tbl_node *newtbl = nasm_zalloc(bytes);
-
-    return newtbl;
+    size_t bytes = newsize * sizeof(struct hash_tbl_node);
+    return nasm_zalloc(bytes);
 }
 
 void hash_init(struct hash_table *head, size_t size)
@@ -59,7 +66,7 @@ void hash_init(struct hash_table *head, size_t size)
     head->table    = alloc_table(size);
     head->load     = 0;
     head->size     = size;
-    head->max_load = size*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
+    head->max_load = hash_max_load(size);
 }
 
 /*
@@ -78,16 +85,16 @@ void **hash_find(struct hash_table *head, const char *key,
                  struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
-    uint64_t hash = crc64(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
-    size_t mask = head->size-1;
-    size_t pos  = hash & mask;
-    size_t inc  = ((hash >> 32) & mask) | 1;    /* Always odd */
+    uint64_t hash = hash_calc(key);
+    size_t mask = hash_mask(head->size);
+    size_t pos = hash_pos(hash, mask);
+    size_t inc = hash_inc(hash, mask);
 
     while ((np = &tbl[pos])->key) {
         if (hash == np->hash && !strcmp(key, np->key))
             return &np->data;
-        pos = (pos+inc) & mask;
+        pos = hash_pos_next(pos, inc, mask);
     }
 
     /* Not found.  Store info for insert if requested. */
@@ -106,16 +113,16 @@ void **hash_findi(struct hash_table *head, const char *key,
                   struct hash_insert *insert)
 {
     struct hash_tbl_node *np;
-    uint64_t hash = crc64i(CRC64_INIT, key);
     struct hash_tbl_node *tbl = head->table;
-    size_t mask = head->size-1;
-    size_t pos  = hash & mask;
-    size_t inc  = ((hash >> 32) & mask) | 1;    /* Always odd */
+    uint64_t hash = hash_calci(key);
+    size_t mask = hash_mask(head->size);
+    size_t pos = hash_pos(hash, mask);
+    size_t inc = hash_inc(hash, mask);
 
     while ((np = &tbl[pos])->key) {
         if (hash == np->hash && !nasm_stricmp(key, np->key))
             return &np->data;
-        pos = (pos+inc) & mask;
+        pos = hash_pos_next(pos, inc, mask);
     }
 
     /* Not found.  Store info for insert if requested. */
@@ -136,17 +143,19 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
     struct hash_table *head  = insert->head;
     struct hash_tbl_node *np = insert->where;
 
-    /* Insert node.  We can always do this, even if we need to
-       rebalance immediately after. */
+    /*
+     * Insert node.  We can always do this, even if we need to
+     * rebalance immediately after.
+     */
     np->hash = insert->hash;
     np->key  = key;
     np->data = data;
 
     if (++head->load > head->max_load) {
         /* Need to expand the table */
-        size_t newsize = head->size << 1;
-        struct hash_tbl_node *newtbl = alloc_table(newsize);
-        size_t mask = newsize-1;
+        size_t newsize                  = hash_expand(head->size);
+        struct hash_tbl_node *newtbl    = alloc_table(newsize);
+        size_t mask                     = hash_mask(newsize);
 
         if (head->table) {
             struct hash_tbl_node *op, *xp;
@@ -155,11 +164,11 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
             /* Rebalance all the entries */
             for (i = 0, op = head->table; i < head->size; i++, op++) {
                 if (op->key) {
-                    size_t pos = op->hash & mask;
-                    size_t inc = ((op->hash >> 32) & mask) | 1;
+                    size_t pos = hash_pos(op->hash, mask);
+                    size_t inc = hash_inc(op->hash, mask);
 
                     while ((xp = &newtbl[pos])->key)
-                        pos = (pos+inc) & mask;
+                        pos = hash_pos_next(pos, inc, mask);
 
                     *xp = *op;
                     if (op == np)
@@ -171,7 +180,7 @@ void **hash_add(struct hash_insert *insert, const char *key, void *data)
 
         head->table    = newtbl;
         head->size     = newsize;
-        head->max_load = newsize*(HASH_MAX_LOAD-1)/HASH_MAX_LOAD;
+        head->max_load = hash_max_load(newsize);
     }
 
     return &np->data;
@@ -197,7 +206,7 @@ void *hash_iterate(const struct hash_table *head,
 
     while (np < ep) {
         if (np->key) {
-            *iterator = np+1;
+            *iterator = np + 1;
             if (key)
                 *key = np->key;
             return np->data;
