@@ -7,7 +7,8 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
-\S{cl-2.08rc1} Version 2.08rc1
+
+\S{cl-2.08rc2} Version 2.08rc2
 
 \b A number of enhancements/fixes in macros area.
 
@@ -26,6 +27,9 @@ since 2007.
 \b Fix crashes with -fwin32 on file with many exports.
 
 \b Fix stack overrun for too long [DEBUG id].
+
+\b Fix incorrect sbyte usage in IMUL (hit only if optimization
+  flag passed).
 
 \b Append ending token for \c{.stabs} records in the ELF output format.
 
