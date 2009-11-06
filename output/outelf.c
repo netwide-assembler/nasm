@@ -44,8 +44,8 @@
 #include "nasm.h"
 #include "output/outform.h"
 
-#include "output/elfcommon.h"
 #include "output/dwarf.h"
+#include "output/elf.h"
 #include "output/outelf.h"
 
 #if defined(OF_ELF32) || defined(OF_ELF64)

@@ -281,14 +281,14 @@ output/outcoff.$(O): output/outcoff.c compiler.h directives.h eval.h \
 output/outdbg.$(O): output/outdbg.c compiler.h directives.h insnsi.h nasm.h \
  nasmlib.h output/outform.h pptok.h preproc.h regs.h
 output/outelf.$(O): output/outelf.c compiler.h directives.h insnsi.h nasm.h \
- nasmlib.h output/dwarf.h output/elfcommon.h output/outelf.h \
+ nasmlib.h output/dwarf.h output/elf.h output/outelf.h \
  output/outform.h pptok.h preproc.h regs.h
 output/outelf32.$(O): output/outelf32.c compiler.h directives.h eval.h \
- insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf32.h output/elfcommon.h \
+ insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf.h \
  output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  rbtree.h regs.h saa.h stdscan.h
 output/outelf64.$(O): output/outelf64.c compiler.h directives.h eval.h \
- insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf64.h output/elfcommon.h \
+ insnsi.h nasm.h nasmlib.h output/dwarf.h output/elf.h \
  output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
  rbtree.h regs.h saa.h stdscan.h
 output/outform.$(O): output/outform.c compiler.h directives.h insnsi.h \

@@ -54,8 +54,8 @@
 #include "output/outlib.h"
 #include "rbtree.h"
 
-#include "output/elf32.h"
 #include "output/dwarf.h"
+#include "output/elf.h"
 #include "output/outelf.h"
 
 #ifdef OF_ELF32
