@@ -422,4 +422,7 @@ static inline bool overflow_unsigned(int64_t value, int bytes)
 
 int idata_bytes(int opcode);
 
+/* check if value is power of 2 */
+#define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
+
 #endif
