@@ -1564,10 +1564,10 @@ LFENCE		void				\3\x0F\xAE\xE8					WILLAMETTE,SSE2
 MFENCE		void				\3\x0F\xAE\xF0					WILLAMETTE,SSE2
 
 ;# Willamette MMX instructions (SSE2 SIMD Integer Instructions)
-MOVD		xmmreg,reg32			\361\2\x0F\x6E\110				WILLAMETTE,SSE2
-MOVD		reg32,xmmreg			\361\2\x0F\x7E\101				WILLAMETTE,SSE2
-MOVD		mem,xmmreg			\361\2\x0F\x7E\101				WILLAMETTE,SSE2,SD
-MOVD		xmmreg,mem			\361\2\x0F\x6E\110				WILLAMETTE,SSE2,SD
+MOVD		mem,xmmreg			\361\317\2\x0F\x7E\101				WILLAMETTE,SSE2,SD
+MOVD		xmmreg,mem			\361\317\2\x0F\x6E\110				WILLAMETTE,SSE2,SD
+MOVD		xmmreg,rm32			\361\317\2\x0F\x6E\110				WILLAMETTE,SSE2
+MOVD		rm32,xmmreg			\361\317\2\x0F\x7E\101				WILLAMETTE,SSE2
 MOVDQA		xmmreg,xmmreg			\361\2\x0F\x6F\110				WILLAMETTE,SSE2
 MOVDQA		mem,xmmreg			\361\2\x0F\x7F\101				WILLAMETTE,SSE2,SO
 MOVDQA		xmmreg,mem			\361\2\x0F\x6F\110				WILLAMETTE,SSE2,SO
