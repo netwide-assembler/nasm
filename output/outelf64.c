@@ -1856,12 +1856,9 @@ static void stabs64_cleanup(void)
         ptr = ptr->next;
         nasm_free(del);
     }
-    if (stabbuf)
-        nasm_free(stabbuf);
-    if (stabrelbuf)
-        nasm_free(stabrelbuf);
-    if (stabstrbuf)
-        nasm_free(stabstrbuf);
+    nasm_free(stabbuf);
+    nasm_free(stabrelbuf);
+    nasm_free(stabstrbuf);
 }
 /* dwarf routines */
 static void dwarf64_init(void)
@@ -2180,26 +2177,16 @@ static void dwarf64_generate(void)
 
 static void dwarf64_cleanup(void)
 {
-    if (arangesbuf)
-        nasm_free(arangesbuf);
-    if (arangesrelbuf)
-        nasm_free(arangesrelbuf);
-    if (pubnamesbuf)
-        nasm_free(pubnamesbuf);
-    if (infobuf)
-        nasm_free(infobuf);
-    if (inforelbuf)
-        nasm_free(inforelbuf);
-    if (abbrevbuf)
-        nasm_free(abbrevbuf);
-    if (linebuf)
-        nasm_free(linebuf);
-    if (linerelbuf)
-        nasm_free(linerelbuf);
-    if (framebuf)
-        nasm_free(framebuf);
-    if (locbuf)
-        nasm_free(locbuf);
+    nasm_free(arangesbuf);
+    nasm_free(arangesrelbuf);
+    nasm_free(pubnamesbuf);
+    nasm_free(infobuf);
+    nasm_free(inforelbuf);
+    nasm_free(abbrevbuf);
+    nasm_free(linebuf);
+    nasm_free(linerelbuf);
+    nasm_free(framebuf);
+    nasm_free(locbuf);
 }
 static void dwarf64_findfile(const char * fname)
 {
