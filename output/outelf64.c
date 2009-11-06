@@ -1878,64 +1878,54 @@ static void dwarf64_linenum(const char *filename, int32_t linenumber,
 /* called from elf_out with type == TY_DEBUGSYMLIN */
 static void dwarf64_output(int type, void *param)
 {
-  int ln, aa, inx, maxln, soc;
-  struct symlininfo *s;
-  struct SAA *plinep;
+    int ln, aa, inx, maxln, soc;
+    struct symlininfo *s;
+    struct SAA *plinep;
 
-  (void)type;
+    (void)type;
 
-  s = (struct symlininfo *)param;
-   /* line number info is only gathered for executable sections */
-   if (!(sects[s->section]->flags & SHF_EXECINSTR))
-     return;
-  /* Check if section index has changed */
-  if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
-  {
-     dwarf64_findsect(s->section);
-  }
-  /* do nothing unless line or file has changed */
-  if (debug_immcall)
-  {
+    s = (struct symlininfo *)param;
+    /* line number info is only gathered for executable sections */
+    if (!(sects[s->section]->flags & SHF_EXECINSTR))
+        return;
+    /* Check if section index has changed */
+    if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
+        dwarf64_findsect(s->section);
+
+    /* do nothing unless line or file has changed */
+    if (!debug_immcall)
+        return;
+
     ln = currentline - dwarf_csect->line;
     aa = s->offset - dwarf_csect->offset;
     inx = dwarf_clist->line;
     plinep = dwarf_csect->psaa;
     /* check for file change */
-    if (!(inx == dwarf_csect->file))
-    {
+    if (!(inx == dwarf_csect->file)) {
        saa_write8(plinep,DW_LNS_set_file);
        saa_write8(plinep,inx);
        dwarf_csect->file = inx;
     }
     /* check for line change */
-    if (ln)
-    {
-       /* test if in range of special op code */
-       maxln = line_base + line_range;
-       soc = (ln - line_base) + (line_range * aa) + opcode_base;
-       if (ln >= line_base && ln < maxln && soc < 256)
-       {
-          saa_write8(plinep,soc);
-       }
-       else
-       {
-          if (ln)
-          {
-          saa_write8(plinep,DW_LNS_advance_line);
-          saa_wleb128s(plinep,ln);
-          }
-          if (aa)
-          {
-          saa_write8(plinep,DW_LNS_advance_pc);
-          saa_wleb128u(plinep,aa);
-          }
-       }
-       dwarf_csect->line = currentline;
-       dwarf_csect->offset = s->offset;
+    if (ln) {
+        /* test if in range of special op code */
+        maxln = line_base + line_range;
+        soc = (ln - line_base) + (line_range * aa) + opcode_base;
+        if (ln >= line_base && ln < maxln && soc < 256) {
+            saa_write8(plinep,soc);
+        } else {
+            saa_write8(plinep,DW_LNS_advance_line);
+            saa_wleb128s(plinep,ln);
+            if (aa) {
+                saa_write8(plinep,DW_LNS_advance_pc);
+                saa_wleb128u(plinep,aa);
+            }
+        }
+        dwarf_csect->line = currentline;
+        dwarf_csect->offset = s->offset;
     }
     /* show change handled */
     debug_immcall = 0;
-  }
 }
 
 

@@ -1842,10 +1842,8 @@ static void dwarf32_output(int type, void *param)
        if (ln >= line_base && ln < maxln && soc < 256) {
           saa_write8(plinep,soc);
        } else {
-          if (ln) {
-              saa_write8(plinep,DW_LNS_advance_line);
-              saa_wleb128s(plinep,ln);
-          }
+          saa_write8(plinep,DW_LNS_advance_line);
+          saa_wleb128s(plinep,ln);
           if (aa) {
               saa_write8(plinep,DW_LNS_advance_pc);
               saa_wleb128u(plinep,aa);
