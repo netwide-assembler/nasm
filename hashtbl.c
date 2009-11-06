@@ -63,6 +63,7 @@ static struct hash_tbl_node *alloc_table(size_t newsize)
 
 void hash_init(struct hash_table *head, size_t size)
 {
+    nasm_assert(is_power2(size));
     head->table    = alloc_table(size);
     head->load     = 0;
     head->size     = size;
