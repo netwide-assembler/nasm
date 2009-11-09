@@ -8,7 +8,7 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
-\S{cl-2.08rc2} Version 2.08rc2
+\S{cl-2.08} Version 2.08
 
 \b A number of enhancements/fixes in macros area.
 
@@ -38,6 +38,9 @@ since 2007.
 \b Visual Studio 2008 NASM integration (rules file).
 
 \b Warn a user if a constant too long (and as a result will be stripped).
+
+\b The obsoleted pre-XOP AMD SSE5 instruction set which was never actualized
+  was removed.
 
 
 \S{cl-2.07} Version 2.07
