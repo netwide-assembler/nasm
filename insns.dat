@@ -1912,37 +1912,6 @@ POPCNT		reg16,rm16			\320\333\2\x0F\xB8\110				NEHALEM,SW
 POPCNT		reg32,rm32			\321\333\2\x0F\xB8\110				NEHALEM,SD
 POPCNT		reg64,rm64			\324\333\2\x0F\xB8\110				NEHALEM,SQ,X64
 
-;# AMD SSE5 instructions (verify that these still exist)
-FRCZPS		xmmreg,xmmrm			\360\3\x0F\x7A\x10\110				SSE5,AMD
-FRCZPD		xmmreg,xmmrm			\360\3\x0F\x7A\x11\110				SSE5,AMD
-FRCZSS		xmmreg,xmmrm			\360\3\x0F\x7A\x12\110				SSE5,AMD
-FRCZSD		xmmreg,xmmrm			\360\3\x0F\x7A\x13\110				SSE5,AMD
-CVTPH2PS	xmmreg,xmmrm			\360\3\x0F\x7A\x30\110				SSE5,AMD,SQ
-CVTPS2PH	xmmrm,xmmreg			\360\3\x0F\x7A\x31\101				SSE5,AMD,SQ
-PHADDBW		xmmreg,xmmrm			\360\3\x0F\x7A\x41\110				SSE5,AMD
-PHADDBD		xmmreg,xmmrm			\360\3\x0F\x7A\x42\110				SSE5,AMD
-PHADDBQ		xmmreg,xmmrm			\360\3\x0F\x7A\x43\110				SSE5,AMD
-PHADDWD		xmmreg,xmmrm			\360\3\x0F\x7A\x46\110				SSE5,AMD
-PHADDWQ		xmmreg,xmmrm			\360\3\x0F\x7A\x47\110				SSE5,AMD
-PHADDDQ		xmmreg,xmmrm			\360\3\x0F\x7A\x4B\110				SSE5,AMD
-PHADDUBW	xmmreg,xmmrm			\360\3\x0F\x7A\x51\110				SSE5,AMD
-PHADDUBD	xmmreg,xmmrm			\360\3\x0F\x7A\x52\110				SSE5,AMD
-PHADDUBQ	xmmreg,xmmrm			\360\3\x0F\x7A\x53\110				SSE5,AMD
-PHADDUWD	xmmreg,xmmrm			\360\3\x0F\x7A\x56\110				SSE5,AMD
-PHADDUWQ	xmmreg,xmmrm			\360\3\x0F\x7A\x57\110				SSE5,AMD
-PHADDUDQ	xmmreg,xmmrm			\360\3\x0F\x7A\x5B\110				SSE5,AMD
-PHSUBBW		xmmreg,xmmrm			\360\3\x0F\x7A\x61\110				SSE5,AMD
-PHSUBWD		xmmreg,xmmrm			\360\3\x0F\x7A\x62\110				SSE5,AMD
-PHSUBDQ		xmmreg,xmmrm			\360\3\x0F\x7A\x63\110				SSE5,AMD
-PROTB		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x40\110\26			SSE5,AMD
-PROTW		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x41\110\26			SSE5,AMD
-PROTD		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x42\110\26			SSE5,AMD
-PROTQ		xmmreg,xmmrm,imm		\360\3\x0F\x7B\x43\110\26			SSE5,AMD
-ROUNDPS		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
-ROUNDPD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
-ROUNDSS		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
-ROUNDSD		xmmreg,xmmrm,imm		\361\3\x0F\x3A\x08\110\26			SSE5,AMD
-
 ;# Intel SMX
 GETSEC		void				\2\x0F\x37					KATMAI
 
