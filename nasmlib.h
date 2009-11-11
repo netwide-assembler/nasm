@@ -395,27 +395,45 @@ size_t fwritezero(size_t bytes, FILE *fp);
 
 static inline bool overflow_general(int64_t value, int bytes)
 {
-    int sbit = (bytes << 3) - 1;
-    int64_t vmax =  ((int64_t)2 << sbit) - 1;
-    int64_t vmin = -((int64_t)1 << sbit);
+    int sbit;
+    int64_t vmax, vmin;
+
+    if (bytes >= 8)
+        return false;
+
+    sbit = (bytes << 3) - 1;
+    vmax =  ((int64_t)2 << sbit) - 1;
+    vmin = -((int64_t)1 << sbit);
 
     return value < vmin || value > vmax;
 }
 
 static inline bool overflow_signed(int64_t value, int bytes)
 {
-    int sbit = (bytes << 3) - 1;
-    int64_t vmax =  ((int64_t)1 << sbit) - 1;
-    int64_t vmin = -((int64_t)1 << sbit);
+    int sbit;
+    int64_t vmax, vmin;
+
+    if (bytes >= 8)
+        return false;
+
+    sbit = (bytes << 3) - 1;
+    vmax =  ((int64_t)1 << sbit) - 1;
+    vmin = -((int64_t)1 << sbit);
 
     return value < vmin || value > vmax;
 }
 
 static inline bool overflow_unsigned(int64_t value, int bytes)
 {
-    int sbit = (bytes << 3) - 1;
-    int64_t vmax = ((int64_t)2 << sbit) - 1;
-    int64_t vmin = 0;
+    int sbit;
+    int64_t vmax, vmin;
+
+    if (bytes >= 8)
+        return false;
+
+    sbit = (bytes << 3) - 1;
+    vmax = ((int64_t)2 << sbit) - 1;
+    vmin = 0;
 
     return value < vmin || value > vmax;
 }
