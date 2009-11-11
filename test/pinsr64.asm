@@ -1,3 +1,4 @@
+;Testname=test; Arguments=-O0 -fbin -opinsr64.bin; Files=stdout stderr pinsr64.bin
 	bits 64
 
 	pinsrw mm0,eax,0
@@ -65,4 +66,3 @@
 	vpinsrq xmm5,xmm1,rsi,0
 	vpinsrq xmm6,xmm2,[rcx],0
 	vpinsrq xmm7,xmm3,qword [rdx],0
-	

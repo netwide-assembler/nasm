@@ -3,7 +3,7 @@
 
 	mov eax,bar-foo
 
-foo:	
+foo:
 	add al,r10b
 bar:
 
@@ -20,6 +20,3 @@ bar:
 	verr r8w
 	verw ax
 	verw r8w
-
-	fmaddps xmm0,xmm0,xmm0,xmm0
-	fmaddps xmm8,xmm8,xmm8,xmm8

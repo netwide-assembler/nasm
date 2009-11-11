@@ -1,4 +1,4 @@
-;Testname=test; Arguments=-fbin -obr2148476.bin; Files=.stdout .stderr br2148476.bin
+;Testname=test; Arguments=-fbin -obr2148476.bin; Files=stdout stderr br2148476.bin
 
 	bits 64
 
@@ -87,7 +87,7 @@
 	cvttps2dq xmm0, xmm1
 	cvttps2dq xmm0, [rdi]
 	cvttps2dq xmm0, oword [rdi]
-	
+
 	cvttps2pi mm0, xmm1
 	cvttps2pi mm0, [rdi]
 	cvttps2pi mm0, qword [rdi]
@@ -105,7 +105,7 @@
 	cvttss2si rax, xmm1
 	cvttss2si rax, [rdi]
 	cvttss2si rax, dword [rdi]
-	
+
 	vcvtdq2pd xmm0, xmm1
 	vcvtdq2pd xmm0, [rdi]
 	vcvtdq2pd xmm0, qword [rdi]
@@ -205,7 +205,7 @@
 	vcvttps2dq ymm0, ymm1
 	vcvttps2dq ymm0, [rdi]
 	vcvttps2dq ymm0, yword [rdi]
-	
+
 	vcvttsd2si eax, xmm1
 	vcvttsd2si eax, [rdi]	; Compatibility
 	vcvttsd2si eax, qword [rdi]

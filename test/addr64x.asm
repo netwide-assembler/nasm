@@ -1,9 +1,5 @@
 ;Testname=O0; Arguments=-O0 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
 ;Testname=O1; Arguments=-O1 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
-;Testname=O2; Arguments=-O2 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
-;Testname=O3; Arguments=-O3 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
-;Testname=O4; Arguments=-O4 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
-;Testname=O5; Arguments=-O5 -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
 ;Testname=Ox; Arguments=-Ox -fbin -oaddr64.bin; Files=stdout stderr addr64.bin
 	bits	64
 	mov	rdx,[rax]

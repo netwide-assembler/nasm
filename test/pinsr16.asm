@@ -1,3 +1,4 @@
+;Testname=test; Arguments=-O0 -fbin -opinsr16.bin; Files=stdout stderr pinsr16.bin
 	bits 16
 
 	pinsrw mm0,eax,0
