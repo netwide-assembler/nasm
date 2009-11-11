@@ -15,6 +15,8 @@ use File::Path qw(mkpath rmtree);
 #sub debugprint { print (pop() . "\n"); }
  sub debugprint { }
 
+my $globalresult = 0;
+
 #Process one testfile
 sub perform {
     my ($clean, $diff, $golden, $nasm, $quiet, $testpath) = @_;
@@ -80,6 +82,7 @@ sub perform {
                     if($temp == 1) {
                         #different
                         $result = 1;
+                        $globalresult = 1;
                         push @failedfiles, $_;
                     } elsif($temp == -1) {
                         #error
@@ -89,6 +92,7 @@ sub perform {
                 } elsif (-f "golden/$testname/$subname/$_") {
                     #File exists in golden but not in output
                     $result = 1;
+                    $globalresult = 1;
                     push @failedfiles, $_;
                 }
             }
@@ -139,7 +143,7 @@ unless (!defined $nasm or -x $nasm) {
 }
 
 perform($clean, $diff, $golden, $nasm, ! $verbose, $_) foreach @ARGV;
-
+exit $globalresult;
 
 __END__
 
