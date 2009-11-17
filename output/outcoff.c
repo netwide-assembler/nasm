@@ -636,7 +636,7 @@ static void coff_sect_write(struct Section *sect,
 }
 
 typedef struct tagString {
-    struct tagString *Next;
+    struct tagString *next;
     int len;
     char *String;
 } STRING;
@@ -656,7 +656,7 @@ void AddExport(char *name)
 
     newS = (STRING *) nasm_malloc(sizeof(STRING));
     newS->len = strlen(name);
-    newS->Next = NULL;
+    newS->next = NULL;
     newS->String = (char *)nasm_malloc(newS->len + 1);
     strcpy(newS->String, name);
     if (rvp == NULL) {
@@ -673,35 +673,31 @@ void AddExport(char *name)
 	directive_sec = sects[i];
         Exports = newS;
     } else {
-        while (rvp->Next) {
+        while (rvp->next) {
             if (!strcmp(rvp->String, name))
                 return;
-            rvp = rvp->Next;
+            rvp = rvp->next;
         }
-        rvp->Next = newS;
+        rvp->next = newS;
     }
 }
 
-void BuildExportTable(void)
+static void BuildExportTable(STRING **rvp)
 {
-    STRING *rvp = Exports, *next;
-    uint8_t buf[256];
-    int len;
-    if (rvp == NULL)
+    STRING *p, *t;
+
+    if (!rvp || !*rvp)
         return;
-    while (rvp) {
-        len = sprintf((char *)buf, "-export:%s ", rvp->String);
-        coff_sect_write(directive_sec, buf, len);
-        rvp = rvp->Next;
+
+    list_for_each_safe(p, t, *rvp) {
+        coff_sect_write(directive_sec, (uint8_t *)"-export:", 8);
+        coff_sect_write(directive_sec, (uint8_t *)p->String, p->len);
+        coff_sect_write(directive_sec, (uint8_t *)" ", 1);
+	nasm_free(p->String);
+        nasm_free(p);
     }
 
-    next = Exports;
-    while ((rvp = next)) {
-        next = rvp->Next;
-        nasm_free(rvp->String);
-        nasm_free(rvp);
-    }
-    Exports = NULL;
+    *rvp = NULL;
 }
 
 static int coff_directives(enum directives directive, char *value, int pass)
@@ -799,7 +795,8 @@ static void coff_write(void)
     int32_t pos, sympos, vsize;
     int i;
 
-    BuildExportTable();         /* fill in the .drectve section with -export's */
+    /* fill in the .drectve section with -export's */
+    BuildExportTable(&Exports);
 
     if (win32) {
 	/* add default value for @feat.00, this allows to 'link /safeseh' */
