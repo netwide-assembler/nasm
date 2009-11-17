@@ -693,7 +693,7 @@ static void BuildExportTable(STRING **rvp)
         coff_sect_write(directive_sec, (uint8_t *)"-export:", 8);
         coff_sect_write(directive_sec, (uint8_t *)p->String, p->len);
         coff_sect_write(directive_sec, (uint8_t *)" ", 1);
-	nasm_free(p->String);
+        nasm_free(p->String);
         nasm_free(p);
     }
 
