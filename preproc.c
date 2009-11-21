@@ -3783,7 +3783,7 @@ again:
     while (tline) {             /* main token loop */
 	if (!--deadman) {
 	    error(ERR_NONFATAL, "interminable macro recursion");
-	    break;
+            goto err;
 	}
 
         if ((mname = tline->text)) {
@@ -4058,6 +4058,7 @@ again:
         goto again;
     }
 
+err:
     if (org_tline) {
         if (thead) {
             *org_tline = *thead;
