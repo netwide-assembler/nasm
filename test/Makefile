@@ -1,7 +1,7 @@
 .SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
 
 NASM	= ../nasm
-NASMOPT = -Ox -I../misc
+NASMOPT = -Ox -I../misc $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
 
