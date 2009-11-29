@@ -527,19 +527,20 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     else {
         int i;
         sym->section = SHN_UNDEF;
-        if (nsects == 0 && segment == def_seg) {
+        if (segment == def_seg) {
+            /* we have to be sure at least text section is there */
             int tempint;
-            if (segment != elf_section_names(".text", 2, &tempint))
-                nasm_error(ERR_PANIC,
-                      "strange segment conditions in ELF driver");
-            sym->section = nsects;
-        } else {
-            for (i = 0; i < nsects; i++)
-                if (segment == sects[i]->index) {
-                    sym->section = i + 1;
-                    break;
-                }
+            elf_section_names(".text", 2, &tempint);
         }
+        sym->section = nsects;
+        for (i = 0; i < nsects; i++) {
+            if (segment == sects[i]->index) {
+                sym->section = i + 1;
+                break;
+            }
+        }
+        if (nsects && i == nsects)
+            nasm_error(ERR_PANIC, "strange segment conditions in ELF driver");
     }
 
     if (is_global == 2) {
