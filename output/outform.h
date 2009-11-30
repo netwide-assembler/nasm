@@ -234,7 +234,7 @@
 #undef OF_AS86
 #endif
 #ifdef OF_NO_RDF2
-#undef OF_RDF
+#undef OF_RDF2
 #endif
 #ifdef OF_NO_IEEE
 #undef OF_IEEE
