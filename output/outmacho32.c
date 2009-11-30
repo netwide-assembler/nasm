@@ -208,8 +208,6 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-static efunc error;
-
 extern struct ofmt of_macho;
 
 /* Global file information. This should be cleaned up into either
@@ -321,7 +319,7 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
             return i;
 
     if (i == MAX_SECT)
-        error(ERR_WARNING,
+        nasm_error(ERR_WARNING,
               "too many sections (>255) - clipped by fileindex");
 
     return NO_SECT;
@@ -413,13 +411,13 @@ static void macho_output(int32_t secto, const void *data,
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;
-        error(ERR_NONFATAL, "WRT not supported by Mach-O output format");
+        nasm_error(ERR_NONFATAL, "WRT not supported by Mach-O output format");
         /* continue to do _something_ */
     }
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
-            error(ERR_NONFATAL, "attempt to assemble code in "
+            nasm_error(ERR_NONFATAL, "attempt to assemble code in "
                   "[ABSOLUTE] space");
 
         return;
@@ -428,19 +426,19 @@ static void macho_output(int32_t secto, const void *data,
     s = get_section_by_index(secto);
 
     if (s == NULL) {
-        error(ERR_WARNING, "attempt to assemble code in"
+        nasm_error(ERR_WARNING, "attempt to assemble code in"
               " section %d: defaulting to `.text'", secto);
         s = get_section_by_name("__TEXT", "__text");
 
         /* should never happen */
         if (s == NULL)
-            error(ERR_PANIC, "text section not found");
+            nasm_error(ERR_PANIC, "text section not found");
     }
 
     sbss = get_section_by_name("__DATA", "__bss");
 
     if (s == sbss && type != OUT_RESERVE) {
-        error(ERR_WARNING, "attempt to initialize memory in the"
+        nasm_error(ERR_WARNING, "attempt to initialize memory in the"
               " BSS section: ignored");
         s->size += realsize(type, size);
         return;
@@ -449,7 +447,7 @@ static void macho_output(int32_t secto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s != sbss) {
-            error(ERR_WARNING, "uninitialized space declared in"
+            nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing",
                   get_section_name_by_index(secto));
 
@@ -461,7 +459,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_RAWDATA:
         if (section != NO_SEG)
-            error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
 
         sect_write(s, data, size);
         break;
@@ -471,7 +469,7 @@ static void macho_output(int32_t secto, const void *data,
 
         if (section != NO_SEG) {
             if (section % 2) {
-                error(ERR_NONFATAL, "Mach-O format does not support"
+                nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                       " section base references");
             } else
                 add_reloc(s, section, 0, size);
@@ -484,10 +482,10 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_REL2ADR:
         if (section == secto)
-            error(ERR_PANIC, "intra-section OUT_REL2ADR");
+            nasm_error(ERR_PANIC, "intra-section OUT_REL2ADR");
 
         if (section != NO_SEG && section % 2) {
-            error(ERR_NONFATAL, "Mach-O format does not support"
+            nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else
             add_reloc(s, section, 1, 2);
@@ -499,10 +497,10 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_REL4ADR:
         if (section == secto)
-            error(ERR_PANIC, "intra-section OUT_REL4ADR");
+            nasm_error(ERR_PANIC, "intra-section OUT_REL4ADR");
 
         if (section != NO_SEG && section % 2) {
-            error(ERR_NONFATAL, "Mach-O format does not support"
+            nasm_error(ERR_NONFATAL, "Mach-O format does not support"
                   " section base references");
         } else
             add_reloc(s, section, 1, 4);
@@ -513,7 +511,7 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     default:
-        error(ERR_PANIC, "unknown output type?");
+        nasm_error(ERR_PANIC, "unknown output type?");
         break;
     }
 }
@@ -579,14 +577,14 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         newAlignment = exact_log2(value);
 
                         if (0 != *end) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "unknown or missing alignment value \"%s\" "
                                       "specified for section \"%s\"",
                                   currentAttribute + 6,
                                   name);
                             return NO_SEG;
                         } else if (0 > newAlignment) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "alignment of %d (for section \"%s\") is not "
                                       "a power of two",
                                   value,
@@ -597,7 +595,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         if ((-1 != originalIndex)
                             && (s->align != newAlignment)
                            && (s->align != -1)) {
-                            error(ERR_PANIC,
+                            nasm_error(ERR_PANIC,
                                   "section \"%s\" has already been specified "
                                       "with alignment %d, conflicts with new "
                                       "alignment of %d",
@@ -611,7 +609,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                     } else if (!nasm_stricmp("data", currentAttribute)) {
                         /* Do nothing; 'data' is implicit */
                     } else {
-                        error(ERR_PANIC,
+                        nasm_error(ERR_PANIC,
                               "unknown section attribute %s for section %s",
                               currentAttribute,
                               name);
@@ -624,7 +622,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
         }
     }
 
-    error(ERR_PANIC, "invalid section name %s", name);
+    nasm_error(ERR_PANIC, "invalid section name %s", name);
     return NO_SEG;
 }
 
@@ -634,13 +632,13 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     struct symbol *sym;
 
     if (special) {
-        error(ERR_NONFATAL, "The Mach-O output format does "
+        nasm_error(ERR_NONFATAL, "The Mach-O output format does "
               "not support any special symbol types");
         return;
     }
 
     if (is_global == 3) {
-        error(ERR_NONFATAL, "The Mach-O format does not "
+        nasm_error(ERR_NONFATAL, "The Mach-O format does not "
               "(yet) support forward reference fixups.");
         return;
     }
@@ -691,7 +689,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 /* give an error on unfound section if it's not an
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
-                error(ERR_PANIC, "in-file index for section %d not found",
+                nasm_error(ERR_PANIC, "in-file index for section %d not found",
                       section);
             }
         }
@@ -1208,7 +1206,7 @@ static void macho_write (void)
     if (seg_nsects > 0)
 	offset = macho_write_segment (offset);
     else
-        error(ERR_WARNING, "no sections?");
+        nasm_error(ERR_WARNING, "no sections?");
 
     if (nsyms > 0) {
         /* write out symbol command */
