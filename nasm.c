@@ -722,7 +722,7 @@ static bool process_arg(char *p, char *q)
 	    break;
 
 	case 'Z':			/* error messages file */
-	    strcpy(errname, param);
+	    copy_filename(errname, param);
 	    break;
 
 	case 'F':			/* specify debug format */
