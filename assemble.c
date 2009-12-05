@@ -687,6 +687,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     if (instruction->opcode == I_INCBIN) {
 	const char *fname = instruction->eops->stringval;
         FILE *fp;
+        int64_t val = 0;
         size_t len;
 
 	fp = fopen(fname, "rb");
@@ -698,7 +699,6 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
                   fname);
         else {
             len = ftell(fp);
-            fclose(fp);
             if (instruction->eops->next) {
                 len -= instruction->eops->next->offset;
                 if (instruction->eops->next->next &&
@@ -706,9 +706,11 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
                     len = (size_t)instruction->eops->next->next->offset;
                 }
             }
-            return instruction->times * len;
+            val = instruction->times * len;
         }
-        return 0;               /* if we're here, there's an error */
+        if (fp)
+            fclose(fp);
+        return val;
     }
 
     /* Check to see if we need an address-size prefix */
