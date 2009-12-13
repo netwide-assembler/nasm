@@ -22,6 +22,8 @@ since 2007.
 
 \b Fuzzy operand size logic introduced.
 
+\b Fix COFF stack overrun on too long export identifiers.
+
 \b Fix Macho-O alignment bug.
 
 \b Fix crashes with -fwin32 on file with many exports.
@@ -42,6 +44,7 @@ since 2007.
 \b The obsoleted pre-XOP AMD SSE5 instruction set which was never actualized
   was removed.
 
+\b Fix stack overrun on too long error file name passed from the command line.
 
 \S{cl-2.07} Version 2.07
 
