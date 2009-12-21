@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -56,6 +56,7 @@ static struct Sync {
     uint32_t pos;
     uint32_t length;
 } *synx;
+
 static int max_synx, nsynx;
 
 static inline void swap_sync(uint32_t dst, uint32_t src)
@@ -67,7 +68,7 @@ static inline void swap_sync(uint32_t dst, uint32_t src)
 
 void init_sync(void)
 {
-    max_synx = SYNC_MAX-1;
+    max_synx = SYNC_MAX - 1;
     synx = nasm_malloc(SYNC_MAX * sizeof(*synx));
     nsynx = 0;
 }
@@ -77,8 +78,8 @@ void add_sync(uint32_t pos, uint32_t length)
     int i;
 
     if (nsynx >= max_synx) {
-	max_synx = (max_synx << 1)+1;
-	synx = nasm_realloc(synx, (max_synx+1) * sizeof(*synx));
+        max_synx = (max_synx << 1) + 1;
+        synx = nasm_realloc(synx, (max_synx + 1) * sizeof(*synx));
     }
 
     nsynx++;
