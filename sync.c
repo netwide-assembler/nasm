@@ -45,7 +45,11 @@
 #include "nasmlib.h"
 #include "sync.h"
 
-#define SYNC_MAX 4096           /* max # of sync points (initial) */
+#define SYNC_MAX_SHIFT          31
+#define SYNC_MAX_SIZE           (1U << SYNC_MAX_SHIFT)
+
+/* initial # of sync points (*must* be power of two)*/
+#define SYNC_INITIAL_CHUNK      (1U << 12)
 
 /*
  * This lot manages the current set of sync points by means of a
@@ -57,7 +61,7 @@ static struct Sync {
     uint32_t length;
 } *synx;
 
-static int max_synx, nsynx;
+static uint32_t max_synx, nsynx;
 
 static inline void swap_sync(uint32_t dst, uint32_t src)
 {
@@ -68,17 +72,19 @@ static inline void swap_sync(uint32_t dst, uint32_t src)
 
 void init_sync(void)
 {
-    max_synx = SYNC_MAX - 1;
-    synx = nasm_malloc(SYNC_MAX * sizeof(*synx));
+    max_synx = SYNC_INITIAL_CHUNK;
+    synx = nasm_malloc((max_synx + 1) * sizeof(*synx));
     nsynx = 0;
 }
 
 void add_sync(uint32_t pos, uint32_t length)
 {
-    int i;
+    uint32_t i;
 
     if (nsynx >= max_synx) {
-        max_synx = (max_synx << 1) + 1;
+        if (max_synx >= SYNC_MAX_SIZE) /* too many sync points! */
+            return;
+        max_synx = (max_synx << 1);
         synx = nasm_realloc(synx, (max_synx + 1) * sizeof(*synx));
     }
 
@@ -95,7 +101,7 @@ void add_sync(uint32_t pos, uint32_t length)
 uint32_t next_sync(uint32_t position, uint32_t *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
-        int i, j;
+        uint32_t i, j;
 
         swap_sync(nsynx, 1);
         nsynx--;
