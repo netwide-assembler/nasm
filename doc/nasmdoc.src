@@ -7813,7 +7813,7 @@ ideal.
 
 To avoid this, you can specify a `\i\c{synchronisation}' point, or indeed
 as many synchronisation points as you like (although NDISASM can
-only handle 8192 sync points internally). The definition of a sync
+only handle 2147483647 sync points internally). The definition of a sync
 point is this: NDISASM guarantees to hit sync points exactly during
 disassembly. If it is thinking about generating an instruction which
 would cause it to jump over a sync point, it will discard that
