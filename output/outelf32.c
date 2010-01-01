@@ -1217,7 +1217,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
      /*
       * dwarf needs symbols for debug sections
       * which are relocation targets.
-      */  
+      */
 //*** fix for 32 bit
      if (of_elf32.current_dfmt == &df_dwarf) {
         dwarf_infosym = *local;
@@ -1243,10 +1243,10 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         dwarf_linesym = *local;
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */
-        WRITELONG(p, (uint32_t) 0);        /* offset zero */
-        WRITELONG(p, (uint32_t) 0);        /* size zero */
-        WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-        WRITESHORT(p, sec_debug_line);       /* section id */
+        WRITELONG(p, (uint32_t) 0);         /* offset zero */
+        WRITELONG(p, (uint32_t) 0);         /* size zero */
+        WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
+        WRITESHORT(p, sec_debug_line);      /* section id */
         saa_wbytes(s, entry, 16L);
         *len += 16;
         (*local)++;
@@ -1914,7 +1914,7 @@ static void dwarf32_generate(void)
 
     /* build rela.aranges section */
     arangesrellen = saalen = parangesrel->datalen;
-    arangesrelbuf = pbuf = nasm_malloc(arangesrellen); 
+    arangesrelbuf = pbuf = nasm_malloc(arangesrellen);
     saa_rnbytes(parangesrel, pbuf, saalen);
     saa_free(parangesrel);
 
@@ -2034,7 +2034,7 @@ static void dwarf32_generate(void)
     saa_write8(plines,0);           /* End of table */
     /* File Name Table */
     ftentry = dwarf_flist;
-    for (indx = 0;indx<dwarf_numfiles;indx++) {
+    for (indx = 0; indx < dwarf_numfiles; indx++) {
         saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
         saa_write8(plines,0);       /* directory  LEB128u */
         saa_write8(plines,0);       /* time LEB128u */
