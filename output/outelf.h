@@ -45,11 +45,6 @@
 #define SEG_ALIGN_1 (SEG_ALIGN-1)
 
 /* this stuff is needed for the stabs debugging format */
-#define N_SO 0x64               /* ID for main source file */
-#define N_SOL 0x84              /* ID for sub-source file */
-#define N_BINCL 0x82
-#define N_EINCL 0xA2
-#define N_SLINE 0x44
 #define TY_STABSSYMLIN 0x40     /* ouch */
 
 /* this stuff is needed for the dwarf debugging format */

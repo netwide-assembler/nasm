@@ -55,6 +55,7 @@
 #include "rbtree.h"
 
 #include "output/dwarf.h"
+#include "output/stabs.h"
 #include "output/elf.h"
 #include "output/outelf.h"
 
@@ -141,13 +142,6 @@ static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
 static struct SAA *elf_build_reltab(uint64_t *, struct Reloc *);
 static void add_sectname(char *, char *);
-
-/* type values for stabs debugging sections */
-#define N_SO 0x64               /* ID for main source file */
-#define N_SOL 0x84              /* ID for sub-source file */
-#define N_BINCL 0x82            /* not currently used */
-#define N_EINCL 0xA2            /* not currently used */
-#define N_SLINE 0x44
 
 struct stabentry {
     uint32_t n_strx;

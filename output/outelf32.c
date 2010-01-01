@@ -55,6 +55,7 @@
 #include "rbtree.h"
 
 #include "output/dwarf.h"
+#include "output/stabs.h"
 #include "output/elf.h"
 #include "output/outelf.h"
 
