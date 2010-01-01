@@ -251,6 +251,17 @@
 #define STV_HIDDEN      2       /* Sym unavailable in other modules */
 #define STV_PROTECTED   3       /* Not preemptible, not exported */
 
+/* Both Elf32_Sym and Elf64_Sym use the same one-byte st_info field  */
+#define ELF32_ST_BIND(i)      ((i) >> 4)
+#define ELF32_ST_MKBIND(i)    ((i) << 4)  /* just a helper */
+#define ELF32_ST_TYPE(i)      ((i) & 0xf)
+#define ELF32_ST_INFO(b, i)   (ELF_ST_MKBIND(b) + ELF_ST_TYPE(i))
+
+#define ELF64_ST_BIND(i)      ELF32_ST_BIND(i)
+#define ELF64_ST_MKBIND(i)    ELF32_ST_MKBIND(i)
+#define ELF64_ST_TYPE(i)      ELF32_ST_TYPE(i)
+#define ELF64_ST_INFO(b, i)   ELF32_ST_INFO(b, i)
+
 /*
  * ELF standard typedefs (yet more proof that <stdint.h> was way overdue)
  */
@@ -519,13 +530,5 @@ typedef struct elf64_note {
     Elf64_Word n_descsz;    /* Content size */
     Elf64_Word n_type;      /* Content type */
 } Elf64_Nhdr;
-
-/* How to extract and insert information held in the st_info field.  */
-#define ELF32_ST_BIND(val)  (((unsigned char) (val)) >> 4)
-#define ELF32_ST_TYPE(val)  ((val) & 0xf)
-
-/* Both Elf32_Sym and Elf64_Sym use the same one-byte st_info field.  */
-#define ELF64_ST_BIND(val)  ELF32_ST_BIND (val)
-#define ELF64_ST_TYPE(val)  ELF32_ST_TYPE (val)
 
 #endif /* OUTPUT_ELF_H */
