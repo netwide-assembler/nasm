@@ -37,7 +37,11 @@
 #ifndef OUTPUT_OUTELF_H
 #define OUTPUT_OUTELF_H
 
-#define SYM_GLOBAL 0x10
+#include "output/elf.h"
+
+/* symbol binding */
+#define SYM_GLOBAL      ELF32_ST_MKBIND(STB_GLOBAL)
+#define SYM_LOCAL       ELF32_ST_MKBIND(STB_LOCAL)
 
 #define GLOBAL_TEMP_BASE  0x40000000 /* bigger than any sane symbol index */
 

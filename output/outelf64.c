@@ -56,7 +56,6 @@
 
 #include "output/dwarf.h"
 #include "output/stabs.h"
-#include "output/elf.h"
 #include "output/outelf.h"
 
 #ifdef OF_ELF64
@@ -514,7 +513,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     memset(&sym->symv, 0, sizeof(struct rbtree));
 
     sym->strpos = pos;
-    sym->type = is_global ? SYM_GLOBAL : 0;
+    sym->type = is_global ? SYM_GLOBAL : SYM_LOCAL;
     sym->other = STV_DEFAULT;
     sym->size = 0;
     if (segment == NO_SEG)
