@@ -2942,7 +2942,9 @@ VPHADDDQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 cb /r]			AMD,SSE5
 ; fixed: spec has ymmreg for l0
 VPHADDUBD	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d2 /r]			AMD,SSE5
 VPHADDUBQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d3 /r]			AMD,SSE5
-VPHADDUBWD	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d1 /r]			AMD,SSE5
+;
+; fixed: spec has VPHADDUBWD
+VPHADDUBW	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d1 /r]			AMD,SSE5
 ;
 ; fixed: opcode db
 VPHADDUDQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 db /r]			AMD,SSE5
@@ -2951,15 +2953,19 @@ VPHADDUWQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d7 /r]			AMD,SSE5
 ;
 ; fixed: spec has ymmreg for l0
 VPHADDWD	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 c6 /r]			AMD,SSE5
-VPHADDWQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 d7 /r]			AMD,SSE5
+;
+; fixed: spec has d7 opcode
+VPHADDWQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 c7 /r]			AMD,SSE5
 
 VPHSUBBW	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 e1 /r]			AMD,SSE5
 VPHSUBDQ	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 e3 /r]			AMD,SSE5
 VPHSUBWD	xmmreg,xmmrm128*		[rm:	xop.m9.w0.l0.p0 e2 /r]			AMD,SSE5
 
 VPMACSDD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9e /r /is4]		AMD,SSE5
-VPMACSDQH	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 97 /r /is4]		AMD,SSE5
-VPMACSDQL	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5
+;
+; fixed: spec has 97,9f opcodes here
+VPMACSDQH	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 9f /r /is4]		AMD,SSE5
+VPMACSDQL	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 97 /r /is4]		AMD,SSE5
 VPMACSSDD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8e /r /is4]		AMD,SSE5
 VPMACSSDQH	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 8f /r /is4]		AMD,SSE5
 VPMACSSDQL	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	xop.m8.w0.nds.l0.p0 87 /r /is4]		AMD,SSE5
