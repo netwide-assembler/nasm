@@ -2884,10 +2884,10 @@ VFNMADDPS	xmmreg,xmmreg*,xmmreg,xmmrm128	[rvsm:	vex.m3.w1.nds.l0.p1 78 /r /is4]	
 VFNMADDPS	ymmreg,ymmreg*,ymmreg,ymmrm256	[rvsm:	vex.m3.w1.nds.l1.p1 78 /r /is4]		AMD,SSE5
 
 VFNMADDSD	xmmreg,xmmreg*,xmmrm64,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7b /r /is4]		AMD,SSE5
-VFNMADDSD	xmmreg,xmmreg*,xmmreg,xmmrm64	[rvms:	vex.m3.w1.nds.l0.p1 7b /r /is4]		AMD,SSE5
+VFNMADDSD	xmmreg,xmmreg*,xmmreg,xmmrm64	[rvsm:	vex.m3.w1.nds.l0.p1 7b /r /is4]		AMD,SSE5
 
 VFNMADDSS	xmmreg,xmmreg*,xmmrm32,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7a /r /is4]		AMD,SSE5
-VFNMADDSS	xmmreg,xmmreg*,xmmreg,xmmrm32	[rvms:	vex.m3.w1.nds.l0.p1 7a /r /is4]		AMD,SSE5
+VFNMADDSS	xmmreg,xmmreg*,xmmreg,xmmrm32	[rvsm:	vex.m3.w1.nds.l0.p1 7a /r /is4]		AMD,SSE5
 
 VFNMSUBPD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 7d /r /is4]		AMD,SSE5
 VFNMSUBPD	ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 7d /r /is4]		AMD,SSE5
