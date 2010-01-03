@@ -39,12 +39,21 @@ since 2007.
 
 \b Visual Studio 2008 NASM integration (rules file).
 
-\b Warn a user if a constant too long (and as a result will be stripped).
+\b Warn a user if a constant is too long (and as result will be stripped).
 
 \b The obsoleted pre-XOP AMD SSE5 instruction set which was never actualized
   was removed.
 
 \b Fix stack overrun on too long error file name passed from the command line.
+
+\b Bind symbols to the .text section by default (ie in case if SECTION
+  directive was omitted) in the ELF output format.
+
+\b Fix sync points array index wrapping.
+
+\b A few fixes for FMA4 and XOP instruction templates.
+
+\b Add AMD Lightweight Profiling (LWP) instructions.
 
 \S{cl-2.07} Version 2.07
 
