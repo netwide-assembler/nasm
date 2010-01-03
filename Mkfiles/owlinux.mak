@@ -287,12 +287,12 @@ output/outelf.$(O): output/outelf.c compiler.h directives.h insnsi.h nasm.h \
  output/outform.h pptok.h preproc.h regs.h
 output/outelf32.$(O): output/outelf32.c compiler.h directives.h eval.h \
  insnsi.h nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
- output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
- rbtree.h regs.h saa.h stdscan.h
+ output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
+ preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outelf64.$(O): output/outelf64.c compiler.h directives.h eval.h \
  insnsi.h nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
- output/outelf.h output/outform.h output/outlib.h pptok.h preproc.h raa.h \
- rbtree.h regs.h saa.h stdscan.h
+ output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
+ preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outform.$(O): output/outform.c compiler.h directives.h insnsi.h \
  nasm.h nasmlib.h opflags.h output/outform.h pptok.h preproc.h regs.h
 output/outieee.$(O): output/outieee.c compiler.h directives.h insnsi.h \
