@@ -2809,6 +2809,26 @@ MONTMUL		void				\336\3\x0F\xA6\xC0				PENT,CYRIX
 XSHA1		void				\336\3\x0F\xA6\xC8				PENT,CYRIX
 XSHA256		void				\336\3\x0F\xA6\xD0				PENT,CYRIX
 
+;# AMD Lightweight Profiling (LWP) instructions
+;
+; based on pub number 43724 revision 3.04 date August 2009
+;
+LLWPCB		reg16				[m: xop.m9.w0.l0.p0 12 /0]			AMD
+LLWPCB		reg32				[m: xop.m9.w0.l1.p0 12 /0]			AMD,386
+LLWPCB		reg64				[m: xop.m9.w1.l0.p0 12 /0]			AMD,X64
+
+SLWPCB		reg16				[m: xop.m9.w0.l0.p0 12 /1]			AMD
+SLWPCB		reg32				[m: xop.m9.w0.l1.p0 12 /1]			AMD,386
+SLWPCB		reg64				[m: xop.m9.w1.l0.p0 12 /1]			AMD,X64
+
+LWPVAL		reg16,rm32,imm16		[vmi: xop.m10.w0.ndd.l0.p0 12 /1 iw]		AMD,386
+LWPVAL		reg32,rm32,imm32		[vmi: xop.m10.w0.ndd.l1.p0 12 /1 id]		AMD,386
+LWPVAL		reg64,rm32,imm32		[vmi: xop.m10.w1.ndd.l0.p0 12 /1 id]		AMD,X64
+
+LWPINS		reg16,rm32,imm16		[vmi: xop.m10.w0.ndd.l0.p0 12 /0 iw]		AMD,386
+LWPINS		reg32,rm32,imm32		[vmi: xop.m10.w0.ndd.l1.p0 12 /0 id]		AMD,386
+LWPINS		reg64,rm32,imm32		[vmi: xop.m10.w1.ndd.l0.p0 12 /0 id]		AMD,X64
+
 ;# AMD XOP, FMA4 and CVT16 instructions (SSE5)
 ;
 ; based on pub number 43479 revision 3.03 date May 2009
