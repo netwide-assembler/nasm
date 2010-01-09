@@ -1514,8 +1514,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     if (forwref != NULL && globallineno == forwref->lineno) {
                         output_ins.forw_ref = true;
                         do {
-                            output_ins.oprs[forwref->operand].opflags |=
-                                OPFLAG_FORWARD;
+                            output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
                             forwref = saa_rstruct(forwrefs);
                         } while (forwref != NULL
                                  && forwref->lineno == globallineno);
@@ -1525,8 +1524,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 		    if (output_ins.forw_ref) {
 			if (passn == 1) {
 			    for (i = 0; i < output_ins.operands; i++) {
-				if (output_ins.oprs[i].
-				    opflags & OPFLAG_FORWARD) {
+				if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
 				    struct forwrefinfo *fwinf =
 					(struct forwrefinfo *)
 					saa_wstruct(forwrefs);
@@ -1593,18 +1591,13 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                              output_ins.oprs[0].offset,
                                              NULL, false, false);
                             } else if (output_ins.operands == 2
-                                       && (output_ins.oprs[0].
-                                           type & IMMEDIATE)
+                                       && (output_ins.oprs[0].type & IMMEDIATE)
                                        && (output_ins.oprs[0].type & COLON)
-                                       && output_ins.oprs[0].segment ==
-                                       NO_SEG
-                                       && (output_ins.oprs[1].
-                                           type & IMMEDIATE)
-                                       && output_ins.oprs[1].segment ==
-                                       NO_SEG) {
+                                       && output_ins.oprs[0].segment == NO_SEG
+                                       && (output_ins.oprs[1].type & IMMEDIATE)
+                                       && output_ins.oprs[1].segment == NO_SEG) {
                                 define_label(output_ins.label,
-                                             output_ins.oprs[0].
-                                             offset | SEG_ABS,
+                                             output_ins.oprs[0].offset | SEG_ABS,
                                              output_ins.oprs[1].offset,
                                              NULL, false, false);
                             } else
@@ -1628,38 +1621,31 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             switch (output_ins.opcode) {
                             case I_RESB:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_BYTE;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
                                 break;
                             case I_RESW:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_WORD;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
                                 break;
                             case I_RESD:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_DWORD;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
                                 break;
                             case I_RESQ:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_QWORD;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
                                 break;
                             case I_REST:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_TBYTE;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
                                 break;
                             case I_RESO:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_OWORD;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
                                 break;
                             case I_RESY:
                                 typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].
-                                                 offset) | TY_YWORD;
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
                                 break;
                             case I_DB:
                                 typeinfo |= TY_BYTE;
@@ -2132,5 +2118,3 @@ static int get_bits(char *value)
     }
     return i;
 }
-
-/* end of nasm.c */
