@@ -381,7 +381,7 @@ int64_t readnum(char *str, bool *error)
      * cheat: since we know that all radices we use are even, we
      * can divide 2**63 by radix/2 instead.
      */
-    checklimit = 0x8000000000000000ULL / (radix >> 1);
+    checklimit = UINT64_C(0x8000000000000000) / (radix >> 1);
 
     /*
      * Calculate the highest allowable value for the last digit of a
@@ -425,7 +425,7 @@ int64_t readstrnum(char *str, int length, bool *warn)
     str += length;
     if (globalbits == 64) {
         for (i = 0; i < length; i++) {
-            if (charconst & 0xFF00000000000000ULL)
+            if (charconst & UINT64_C(0xFF00000000000000))
                 *warn = true;
             charconst = (charconst << 8) + (uint8_t)*--str;
         }
