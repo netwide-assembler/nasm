@@ -254,7 +254,7 @@ static void warn_overflow_const(int64_t data, int size)
 
 static void warn_overflow_opd(const struct operand *o, int size)
 {
-    if (size < 8 && o->wrt == NO_SEG && o->segment == NO_SEG) {
+    if (o->wrt == NO_SEG && o->segment == NO_SEG) {
         if (overflow_general(o->offset, size))
             warn_overflow(ERR_PASS2, size);
     }
@@ -722,7 +722,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
 	int64_t isize;
 	const uint8_t *codes = temp->code;
 	int j;
-	
+
 	isize = calcsize(segment, offset, bits, instruction, codes);
 	if (isize < 0)
 	    return -1;
@@ -1858,18 +1858,25 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 4:
                 case 8:
                     data = opy->offset;
-                    warn_overflow_opd(opy, ea_data.bytes);
                     s += ea_data.bytes;
 		    if (ea_data.rip) {
 			if (opy->segment == segment) {
 			    data -= insn_end;
+                            if (overflow_signed(data, ea_data.bytes))
+                                warn_overflow(ERR_PASS2, ea_data.bytes);
 			    out(offset, segment, &data, OUT_ADDRESS,
 				ea_data.bytes, NO_SEG, NO_SEG);
 			} else {
+                            /* overflow check in output/linker? */
 			    out(offset, segment, &data,	OUT_REL4ADR,
 				insn_end - offset, opy->segment, opy->wrt);
 			}
 		    } else {
+                        if (overflow_general(opy->offset, ins->addr_size >> 3) ||
+                            signed_bits(opy->offset, ins->addr_size) !=
+                            signed_bits(opy->offset, ea_data.bytes * 8))
+                            warn_overflow(ERR_PASS2, ea_data.bytes);
+
 			type = OUT_ADDRESS;
 			out(offset, segment, &data, OUT_ADDRESS,
 			    ea_data.bytes, opy->segment, opy->wrt);
@@ -2232,6 +2239,20 @@ static ea *process_ea(operand * input, ea * output, int bits,
         if (input->basereg == -1
             && (input->indexreg == -1 || input->scale == 0)) {
             /* it's a pure offset */
+
+            if (bits == 64 && ((input->type & IP_REL) == IP_REL) &&
+                input->segment == NO_SEG) {
+                nasm_error(ERR_WARNING | ERR_PASS1, "absolute address can not be RIP-relative");
+                input->type &= ~IP_REL;
+                input->type |= MEMORY;
+            }
+
+            if (input->eaflags & EAF_BYTEOFFS ||
+                (input->eaflags & EAF_WORDOFFS &&
+                 input->disp_size != (addrbits != 16 ? 32 : 16))) {
+                nasm_error(ERR_WARNING | ERR_PASS1, "displacement size ignored on absolute address");
+            }
+
             if (bits == 64 && (~input->type & IP_REL)) {
               int scale, index, base;
               output->sib_present = true;
@@ -2250,7 +2271,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
             }
         } else {                /* it's an indirection */
             int i = input->indexreg, b = input->basereg, s = input->scale;
-            int32_t o = input->offset, seg = input->segment;
+            int32_t seg = input->segment;
             int hb = input->hintbase, ht = input->hinttype;
             int t, it, bt;	 	/* register numbers */
 	    opflags_t x, ix, bx;	/* register flags */
@@ -2278,7 +2299,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 	    if ((ix|bx) & (BITS32|BITS64)) {
                 /* it must be a 32/64-bit memory reference. Firstly we have
                  * to check that all registers involved are type E/Rxx. */
-		int32_t sok = BITS32|BITS64;
+		int32_t sok = BITS32|BITS64, o = input->offset;
 
                 if (it != -1) {
 		    if (!(REG64 & ~ix) || !(REG32 & ~ix))
@@ -2417,6 +2438,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 }
             } else {            /* it's 16-bit */
                 int mod, rm;
+                int16_t o = input->offset;
 
                 /* check for 64-bit long mode */
                 if (addrbits == 64)

@@ -445,6 +445,16 @@ static inline bool overflow_unsigned(int64_t value, int bytes)
     return value < vmin || value > vmax;
 }
 
+static inline int64_t signed_bits(int64_t value, int bits)
+{
+    if (bits < 64) {
+        value &= ((int64_t)1 << bits) - 1;
+        if (value & (int64_t)1 << (bits - 1))
+            value |= (int64_t)-1 << bits;
+    }
+    return value;
+}
+
 int idata_bytes(int opcode);
 
 /* check if value is power of 2 */
