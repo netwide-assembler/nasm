@@ -3450,7 +3450,7 @@ is used by many high level languages, including C, C++ and Pascal.
 
 While NASM has macros which attempt to duplicate this
 functionality (see \k{16cmacro}), the syntax is not particularly
-convenient to use. and is not TASM compatible. Here is an example
+convenient to use and is not TASM compatible. Here is an example
 which shows the use of \c{%arg} without any external macros:
 
 \c some_function:
