@@ -46,7 +46,6 @@
 #define GLOBAL_TEMP_BASE  0x40000000 /* bigger than any sane symbol index */
 
 #define SEG_ALIGN 16            /* alignment of sections in file */
-#define SEG_ALIGN_1 (SEG_ALIGN-1)
 
 /* this stuff is needed for the stabs debugging format */
 #define TY_STABSSYMLIN 0x40     /* ouch */
