@@ -3747,7 +3747,6 @@ static Token *expand_mmac_params(Token * tline)
 static Token *expand_smacro(Token * tline)
 {
     Token *t, *tt, *mstart, **tail, *thead;
-    struct hash_table *smtbl;
     SMacro *head = NULL, *m;
     Token **params;
     int *paramsize;
@@ -3788,12 +3787,13 @@ again:
 
         if ((mname = tline->text)) {
             /* if this token is a local macro, look in local context */
-            if (tline->type == TOK_ID || tline->type == TOK_PREPROC_ID)
+            if (tline->type == TOK_ID) {
+                head = (SMacro *)hash_findix(&smacros, mname);
+            } else if (tline->type == TOK_PREPROC_ID) {
                 ctx = get_ctx(mname, &mname, true);
-	    else
-		ctx = NULL;
-	    smtbl = ctx ? &ctx->localmac : &smacros;
-	    head = (SMacro *) hash_findix(smtbl, mname);
+                head = ctx ? (SMacro *)hash_findix(&ctx->localmac, mname) : NULL;
+            } else
+                head = NULL;
 
             /*
              * We've hit an identifier. As in is_mmacro below, we first
