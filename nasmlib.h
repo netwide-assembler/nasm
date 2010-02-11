@@ -255,6 +255,13 @@ void standard_extension(char *inname, char *outname, char *extension);
         pos = n, n = (n ? n->next : NULL))
 
 /*
+ * Power of 2 align helpers
+ */
+#define ALIGN_MASK(v, mask)     (((v) + (mask)) & ~(mask))
+#define ALIGN(v, a)             ALIGN_MASK(v, (a) - 1)
+#define IS_ALIGNED(v, a)        (((v) & ((a) - 1)) == 0)
+
+/*
  * some handy macros that will probably be of use in more than one
  * output format: convert integers into little-endian byte packed
  * format in memory
