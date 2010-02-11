@@ -396,7 +396,7 @@ static void bin_cleanup(int debuginfo)
                 nasm_error(ERR_FATAL|ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
 	} else if (sections->flags & ALIGN_DEFINED) {
-            sections->start = ALIGN(origin, sections->align - 1);
+            sections->start = ALIGN(origin, sections->align);
 	} else {
             sections->start = origin;
 	}
