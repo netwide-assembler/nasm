@@ -1117,7 +1117,7 @@ static void elf_write(void)
      */
 
     elf_foffs = 0x40 + sizeof(Elf64_Shdr) * nsections;
-    align = ((elf_foffs + SEG_ALIGN_1) & ~SEG_ALIGN_1) - elf_foffs;
+    align = ALIGN(elf_foffs, SEG_ALIGN) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
     elf_sects = nasm_malloc(sizeof(*elf_sects) * nsections);
@@ -1415,7 +1415,7 @@ static void elf_section_header(int name, int type, uint64_t flags,
     fwriteint64_t(type == 0 ? 0L : elf_foffs, ofile);
     fwriteint64_t(datalen, ofile);
     if (data)
-        elf_foffs += (datalen + SEG_ALIGN_1) & ~SEG_ALIGN_1;
+        elf_foffs += ALIGN(datalen, SEG_ALIGN);
     fwriteint32_t((int32_t)link, ofile);
     fwriteint32_t((int32_t)info, ofile);
     fwriteint64_t((int64_t)align, ofile);
@@ -1428,7 +1428,7 @@ static void elf_write_sections(void)
     for (i = 0; i < elf_nsect; i++)
         if (elf_sects[i].data) {
             int32_t len = elf_sects[i].len;
-            int32_t reallen = (len + SEG_ALIGN_1) & ~SEG_ALIGN_1;
+            int32_t reallen = ALIGN(len, SEG_ALIGN);
             int32_t align = reallen - len;
             if (elf_sects[i].is_saa)
                 saa_fpwrite(elf_sects[i].data, ofile);

@@ -396,8 +396,7 @@ static void bin_cleanup(int debuginfo)
                 nasm_error(ERR_FATAL|ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
 	} else if (sections->flags & ALIGN_DEFINED) {
-            sections->start = ((origin + sections->align - 1) &
-                               ~(sections->align - 1));
+            sections->start = ALIGN(origin, sections->align - 1);
 	} else {
             sections->start = origin;
 	}
@@ -424,7 +423,7 @@ static void bin_cleanup(int debuginfo)
                 g->flags |= ALIGN_DEFINED;
             }
             /* Set the section start address. */
-            g->start = (pend + g->align - 1) & ~(g->align - 1);
+            g->start = ALIGN(pend, g->align);
             g->flags |= START_DEFINED;
         }
         /* Ugly special case for progbits sections' virtual attributes:
@@ -437,7 +436,7 @@ static void bin_cleanup(int debuginfo)
          *   vstart equal to the start address.  */
         if (!(g->flags & (VSTART_DEFINED | VFOLLOWS_DEFINED))) {
             if (g->flags & VALIGN_DEFINED)
-                g->vstart = (pend + g->valign - 1) & ~(g->valign - 1);
+                g->vstart = ALIGN(pend, g->valign);
             else
                 g->vstart = g->start;
             g->flags |= VSTART_DEFINED;
@@ -503,9 +502,8 @@ static void bin_cleanup(int debuginfo)
                     g->flags |= VALIGN_DEFINED;
                 }
                 /* Compute the vstart address. */
-                g->vstart = (s->vstart + s->length + g->valign - 1)
-		    & ~(g->valign - 1);
-               g->flags |= VSTART_DEFINED;
+                g->vstart = ALIGN(s->vstart + s->length, g->valign);
+                g->flags |= VSTART_DEFINED;
                 h++;
                 /* Start and vstart mean the same thing for nobits sections. */
                 if (g->flags & TYPE_NOBITS)

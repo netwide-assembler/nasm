@@ -757,7 +757,7 @@ static void aout_pad_sections(void)
      */
     aout_sect_write(&stext, pad, (-(int32_t)stext.len) & 3);
     aout_sect_write(&sdata, pad, (-(int32_t)sdata.len) & 3);
-    sbss.len = (sbss.len + 3) & ~3;
+    sbss.len = ALIGN(sbss.len, 4);
 }
 
 /*

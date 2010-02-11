@@ -225,11 +225,8 @@ uint32_t rel_padcnt = 0;
     strncpy(xdst, xsrc, sizeof(xdst));	/* copy over string */		\
     xdst[sizeof(xdst) - 1] = '\0';      /* proper null-termination */
 
-#define align(x, y)							\
-    (((x) + (y) - 1) & ~((y) - 1))      /* align x to multiple of y */
-
 #define alignint32_t(x)							\
-    align(x, sizeof(int32_t))      /* align x to int32_t boundary */
+    ALIGN(x, sizeof(int32_t))      /* align x to int32_t boundary */
 
 static void debug_reloc (struct reloc *);
 static void debug_section_relocs (struct section *) _unused;
@@ -832,7 +829,7 @@ static void macho_calculate_sizes (void)
         if (s->align == -1)
             s->align = DEFAULT_SECTION_ALIGNMENT;
         if(s->align) {
-            uint32_t newaddr = align(s->addr, 1 << s->align);
+            uint32_t newaddr = ALIGN(s->addr, 1 << s->align);
             pad = newaddr - s->addr;
             s->addr = newaddr;
         }

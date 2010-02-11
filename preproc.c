@@ -2228,7 +2228,7 @@ static int do_directive(Token * tline)
             free_tlist(tt);
 
 	    /* Round up to even stack slots */
-	    size = (size+StackSize-1) & ~(StackSize-1);
+	    size = ALIGN(size, StackSize);
 
             /* Now define the macro for the argument */
             snprintf(directive, sizeof(directive), "%%define %s (%s+%d)",
@@ -2303,7 +2303,7 @@ static int do_directive(Token * tline)
             free_tlist(tt);
 
 	    /* Round up to even stack slots */
-	    size = (size+StackSize-1) & ~(StackSize-1);
+	    size = ALIGN(size, StackSize);
 
             offset += size;	/* Negative offset, increment before */
 
