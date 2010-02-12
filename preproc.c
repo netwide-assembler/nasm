@@ -2398,7 +2398,7 @@ static int do_directive(Token * tline)
     case PP_USE:
     {
 	static macros_t *use_pkg;
-	const char *pkg_macro;
+	const char *pkg_macro = NULL;
 
 	tline = tline->next;
 	skip_white_(tline);
@@ -2419,9 +2419,9 @@ static int do_directive(Token * tline)
 	use_pkg = nasm_stdmac_find_package(tline->text);
 	if (!use_pkg)
 	    error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
-	/* The first string will be <%define>__USE_*__ */
-	pkg_macro = (char *)use_pkg + 1;
-	if (!smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
+	else
+	    pkg_macro = (char *)use_pkg + 1; /* The first string will be <%define>__USE_*__ */
+	if (use_pkg && smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
 	    /* Not already included, go ahead and include it */
 	    stdmacpos = use_pkg;
 	}
