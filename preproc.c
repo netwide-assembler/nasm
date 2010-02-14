@@ -4804,6 +4804,7 @@ static void pp_cleanup(int pass)
         }
 
         free_mmacro(defining);
+        defining = NULL;
     }
     while (cstk)
         ctx_pop();
