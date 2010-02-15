@@ -15,7 +15,7 @@ since 2007.
 \b Support for arbitrarily terminating macro expansions \c{%exitmacro}.
   See \k{exitmacro}.
 
-\b Support for recursive macro expansion \c{%rmacro/irmacro}.
+\b Support for recursive macro expansion \c{%rmacro}/\c{%irmacro}.
   See \k{mlrmacro}.
 
 \b Support for converting strings to tokens.  See \k{deftok}.
@@ -54,6 +54,12 @@ since 2007.
 \b A few fixes for FMA4 and XOP instruction templates.
 
 \b Add AMD Lightweight Profiling (LWP) instructions.
+
+\b Fix the offset for \c{%arg} in 64-bit mode.
+
+\b An undefined local macro (\c{%$}) no longer matches a global macro
+  with the same name.
+
 
 \S{cl-2.07} Version 2.07
 
