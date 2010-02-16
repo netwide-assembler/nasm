@@ -2138,9 +2138,6 @@ static int do_directive(Token * tline)
         /* Directive to tell NASM what the default stack size is. The
          * default is for a 16-bit stack, and this can be overriden with
          * %stacksize large.
-         * the following form:
-         *
-         *      ARG arg1:WORD, arg2:DWORD, arg4:QWORD
          */
         tline = tline->next;
         if (tline && tline->type == TOK_WHITESPACE)
