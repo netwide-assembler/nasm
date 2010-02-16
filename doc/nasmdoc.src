@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#   
-\#   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2010 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -35,7 +35,7 @@
 \#
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{1996-2009}
+\M{year}{1996-2010}
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the file "COPYING" distributed in the NASM archive.}
@@ -334,7 +334,7 @@ distribution archive, for the license conditions under which you may
 use NASM.  NASM is now under the so-called 2-clause BSD license, also
 known as the simplified BSD license.
 
-Copyright 1996-2009 the NASM Authors - All rights reserved.
+Copyright 1996-2010 the NASM Authors - All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
