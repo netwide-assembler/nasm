@@ -1200,7 +1200,8 @@ An identifier may also be prefixed with a \I{$, prefix}\c{$} to
 indicate that it is intended to be read as an identifier and not a
 reserved word; thus, if some other module you are linking with
 defines a symbol called \c{eax}, you can refer to \c{$eax} in NASM
-code to distinguish the symbol from the register.
+code to distinguish the symbol from the register. Maximum length of
+an identifier is 4095 characters.
 
 The instruction field may contain any machine instruction: Pentium
 and P6 instructions, FPU instructions, MMX instructions and even
