@@ -3,8 +3,6 @@
 # Perfect Minimal Hash Generator written in Perl, which produces
 # C output.
 #
-# Requires the CPAN Graph module (tested against 0.81, 0.83, 0.84)
-#
 
 require 'random_sv_vectors.ph';
 require 'crc64.ph';
