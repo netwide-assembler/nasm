@@ -142,8 +142,11 @@ static union label *find_label(char *label, int create)
         prev = prevlabel;
 	prevlen = strlen(prev);
 	len = strlen(label);
-	if (prevlen+len >= IDLEN_MAX)
+	if (prevlen+len >= IDLEN_MAX) {
+            nasm_error(ERR_NONFATAL, "identifier length exceed %i bytes",
+                       IDLEN_MAX);
 	    return NULL;	/* Error... */
+        }
 	memcpy(label_str, prev, prevlen);
 	memcpy(label_str+prevlen, label, len+1);
 	label = label_str;
@@ -292,6 +295,8 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
               label, segment, offset, special, is_norm, isextrn);
 #endif
     lptr = find_label(label, 1);
+    if (!lptr)
+        return;
     if (lptr->defn.is_global & DEFINED_BIT) {
         nasm_error(ERR_NONFATAL, "symbol `%s' redefined", label);
         return;
@@ -351,6 +356,8 @@ void define_common(char *label, int32_t segment, int32_t size, char *special)
     union label *lptr;
 
     lptr = find_label(label, 1);
+    if (!lptr)
+        return;
     if ((lptr->defn.is_global & DEFINED_BIT) &&
 	(passn == 1 || !(lptr->defn.is_global & COMMON_BIT))) {
 	    nasm_error(ERR_NONFATAL, "symbol `%s' redefined", label);
@@ -389,6 +396,8 @@ void declare_as_global(char *label, char *special)
         return;
     }
     lptr = find_label(label, 1);
+    if (!lptr)
+        return;
     switch (lptr->defn.is_global & TYPE_MASK) {
     case NOT_DEFINED_YET:
         lptr->defn.is_global = GLOBAL_PLACEHOLDER;
