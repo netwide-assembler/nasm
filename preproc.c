@@ -2081,6 +2081,17 @@ static int do_directive(Token * tline)
     i = pp_token_hash(tline->text);
 
     /*
+     * FIXME: We zap execution of PP_RMACRO, PP_IRMACRO, PP_EXITMACRO
+     * since they are known to be buggy at moment, we need to fix them
+     * in future release (2.09-2.10)
+     */
+    if (i == PP_RMACRO || i == PP_RMACRO || i == PP_EXITMACRO) {
+        error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
+              tline->text);
+       return NO_DIRECTIVE_FOUND;
+    }
+
+    /*
      * If we're in a non-emitting branch of a condition construct,
      * or walking to the end of an already terminated %rep block,
      * we should ignore all directives except for condition
