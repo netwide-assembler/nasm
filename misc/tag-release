@@ -1,13 +1,30 @@
 #!/bin/sh
+
 version="$1"
+repo=""
+branch=""
+
 if [ -z "$version" ]; then
-  echo "Usage: $0 version" 1>&2
+  echo "Usage: $0 version [repo branch]" 1>&2
   exit 1
+fi
+
+tag="nasm-$version"
+
+if [ $# -eq 3 ]; then
+  repo="$2"
+  branch="$3"
 fi
 
 echo "$version" > version
 git add version
 git commit -m "NASM $version"
-git tag -a -m "NASM $version" nasm-"$version"
-git push
-git push --tags
+git tag -a -m "NASM $version" "$tag"
+
+if [ $# -eq 3 ]; then
+  git push "$repo" "$branch"
+  git push "$repo" "$tag"
+else
+  git push
+  git push --tags
+fi
