@@ -60,6 +60,7 @@ since 2007.
 \b An undefined local macro (\c{%$}) no longer matches a global macro
   with the same name.
 
+\b Fix NULL dereference on too long local labels.
 
 \S{cl-2.07} Version 2.07
 
