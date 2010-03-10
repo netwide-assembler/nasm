@@ -2439,7 +2439,7 @@ static int do_directive(Token * tline)
             error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
         else
             pkg_macro = (char *)use_pkg + 1; /* The first string will be <%define>__USE_*__ */
-        if (use_pkg && smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
+        if (use_pkg && ! smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
             /* Not already included, go ahead and include it */
             stdmacpos = use_pkg;
         }
