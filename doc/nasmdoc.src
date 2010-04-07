@@ -7481,7 +7481,7 @@ a zero-extended absolute displacement can access from 0 to 4 GB.
 
 On Unix, the 64-bit ABI is defined by the document:
 
-\W{http://www.x86-64.org/documentation/abi.pdf}\c{http://www.x86-64.org/documentation/abi.pdf}
+\W{http://www.nasm.us/links/unix64abi}\c{http://www.nasm.us/links/unix64abi}
 
 Although written for AT&T-syntax assembly, the concepts apply equally
 well for NASM-style assembly.  What follows is a simplified summary.
@@ -7513,7 +7513,7 @@ Integer and SSE register arguments are counted separately, so for the case of
 
 The Win64 ABI is described at:
 
-\W{http://msdn2.microsoft.com/en-gb/library/ms794533.aspx}\c{http://msdn2.microsoft.com/en-gb/library/ms794533.aspx}
+\W{http://www.nasm.us/links/win64abi}\c{http://www.nasm.us/links/win64abi}
 
 What follows is a simplified summary.
 
