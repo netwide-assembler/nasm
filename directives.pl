@@ -43,6 +43,7 @@ require 'phash.ph';
 my($output, $directives_dat, $outfile) = @ARGV;
 
 @directives = ();
+@specials   = ('none', 'unknown');
 
 open(DD, "< ${directives_dat}\0")
     or die "$0: cannot open: ${directives_dat}: $!\n";
@@ -68,15 +69,19 @@ if ($output eq 'h') {
     print H "#define NASM_DIRECTIVES_H\n";
     print H "\n";
 
-    print H "enum directives {\n";
-    print H "    D_none,\n";
-    print H "    D_unknown";
+    $c = '{';
+    print H "enum directives ";
+    foreach $d (@specials) {
+	print H "$c\n    D_$d";
+	$c = ',';
+    }
     foreach $d (@directives) {
-	print H ",\n    D_\U$d";
+	print H "$c\n    D_\U$d";
+	$c = ',';
     }
     print H "\n};\n\n";
     printf H "extern const char * const directives[%d];\n",
-        scalar(@directives)+2;
+        scalar(@directives)+scalar(@specials);
     print H "enum directives find_directive(const char *token);\n\n";
     print H "#endif /* NASM_DIRECTIVES_H */\n";
 } elsif ($output eq 'c') {
@@ -98,7 +103,6 @@ if ($output eq 'h') {
     verify_hash_table(\%directive, \@hashinfo);
 
     ($n, $sv, $g) = @hashinfo;
-    $sv2 = $sv+2;
 
     die if ($n & ($n-1));
 
@@ -118,12 +122,16 @@ if ($output eq 'h') {
     print C "#include \"directives.h\"\n";
     print C "\n";
 
-    printf C "const char * const directives[%d] = {\n",
-        scalar(@directives)+2;
-    print C "    NULL,\n";
-    print C "    NULL";
+    printf C "const char * const directives[%d] = \n",
+        scalar(@directives)+scalar(@specials);
+    $c = '{';
+    foreach $d (@specials) {
+	print C "$c\n    NULL";
+	$c = ',';
+    }
     foreach $d (@directives) {
-	print C ",\n    \"$d\"";
+	print C "$c\n    \"$d\"";
+	$c = ',';
     }
     print C "\n};\n\n";
 
@@ -164,7 +172,7 @@ if ($output eq 'h') {
     printf C "    if (ix >= %d)\n", scalar(@directives);
     print C  "        return D_unknown;\n";
     print C  "\n";
-    print C  "    ix++;\n";	# Account for D_NONE
+    printf C  "    ix += %d;\n", scalar(@specials);
     print C  "    if (nasm_stricmp(token, directives[ix]))\n";
     print C  "        return D_unknown;\n";
     print C  "\n";
