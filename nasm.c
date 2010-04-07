@@ -1496,10 +1496,13 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 		    }
 		    break;
                 default:
-		    if (!d || !ofmt->directive(d, value, pass2))
-                        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                     "unrecognised directive [%s]",
-                                     directive);
+		    if (ofmt->directive(d, value, pass2))
+			break;
+		    /* else fall through */
+		case D_unknown:
+		    nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+			       "unrecognised directive [%s]",
+			       directive);
 		    break;
                 }
 		if (err) {
