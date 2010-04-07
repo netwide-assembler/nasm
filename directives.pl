@@ -172,7 +172,7 @@ if ($output eq 'h') {
     printf C "    if (ix >= %d)\n", scalar(@directives);
     print C  "        return D_unknown;\n";
     print C  "\n";
-    printf C  "    ix += %d;\n", scalar(@specials);
+    printf C "    ix += %d;\n", scalar(@specials);
     print C  "    if (nasm_stricmp(token, directives[ix]))\n";
     print C  "        return D_unknown;\n";
     print C  "\n";
