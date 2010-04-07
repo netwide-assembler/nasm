@@ -1750,16 +1750,16 @@ static enum directives getkw(char **directive, char **value)
 
     /* it should be enclosed in [ ] */
     if (*buf != '[')
-        return D_NONE;
+        return D_none;
     q = strchr(buf, ']');
     if (!q)
-        return D_NONE;
+        return D_none;
 
     /* stip off the comments */
     p = strchr(buf, ';');
     if (p) {
         if (p < q) /* ouch! somwhere inside */
-            return D_NONE;
+            return D_none;
         *p = '\0';
     }
 
@@ -1771,7 +1771,7 @@ static enum directives getkw(char **directive, char **value)
     p = nasm_skip_spaces(++buf);
     q = nasm_skip_word(p);
     if (!q)
-        return D_NONE; /* sigh... no value there */
+        return D_none; /* sigh... no value there */
     *q = '\0';
     *directive = p;
 

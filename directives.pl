@@ -69,13 +69,14 @@ if ($output eq 'h') {
     print H "\n";
 
     print H "enum directives {\n";
-    print H "    D_NONE";
+    print H "    D_none,\n";
+    print H "    D_unknown";
     foreach $d (@directives) {
 	print H ",\n    D_\U$d";
     }
     print H "\n};\n\n";
     printf H "extern const char * const directives[%d];\n",
-        scalar(@directives)+1;
+        scalar(@directives)+2;
     print H "enum directives find_directive(const char *token);\n\n";
     print H "#endif /* NASM_DIRECTIVES_H */\n";
 } elsif ($output eq 'c') {
@@ -118,7 +119,8 @@ if ($output eq 'h') {
     print C "\n";
 
     printf C "const char * const directives[%d] = {\n",
-        scalar(@directives)+1;
+        scalar(@directives)+2;
+    print C "    NULL,\n";
     print C "    NULL";
     foreach $d (@directives) {
 	print C ",\n    \"$d\"";
@@ -160,11 +162,11 @@ if ($output eq 'h') {
     print C  "\n";
     printf C "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
     printf C "    if (ix >= %d)\n", scalar(@directives);
-    print C  "        return D_NONE;\n";
+    print C  "        return D_unknown;\n";
     print C  "\n";
     print C  "    ix++;\n";	# Account for D_NONE
     print C  "    if (nasm_stricmp(token, directives[ix]))\n";
-    print C  "        return D_NONE;\n";
+    print C  "        return D_unknown;\n";
     print C  "\n";
     print C  "    return ix;\n";
     print C  "}\n";
