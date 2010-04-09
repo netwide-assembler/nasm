@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -90,7 +90,12 @@ void nasm_init_malloc_error(void)
 {
 #ifdef LOGALLOC
     logfp = fopen("malloc.log", "w");
-    setvbuf(logfp, NULL, _IOLBF, BUFSIZ);
+    if (logfp) {
+        setvbuf(logfp, NULL, _IOLBF, BUFSIZ);
+    } else {
+        nasm_error(ERR_NONFATAL | ERR_NOFILE, "Unable to open %s", file);
+        logfp = stderr;
+    }
     fprintf(logfp, "null pointer is %p\n", NULL);
 #endif
 }
