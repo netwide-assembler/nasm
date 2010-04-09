@@ -124,8 +124,6 @@ static uint8_t elf_abiver = 0;  /* Current ABI version */
 extern struct ofmt of_elf32;
 extern struct ofmt of_elf;
 
-#define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
-
 static struct ELF_SECTDATA {
     void *data;
     int32_t len;

@@ -60,8 +60,6 @@
 
 #ifdef OF_ELF64
 
-#define SOC(ln,aa) ln - line_base + (line_range * aa) + opcode_base
-
 struct Reloc {
     struct Reloc *next;
     int64_t address;            /* relative to _start_ of section */
