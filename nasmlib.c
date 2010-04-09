@@ -690,6 +690,41 @@ char *nasm_zap_spaces_rev(char *p)
     return p;
 }
 
+/* zap leading and trailing spaces */
+char *nasm_trim_spaces(char *p)
+{
+    p = nasm_zap_spaces_fwd(p);
+    nasm_zap_spaces_fwd(nasm_skip_word(p));
+
+    return p;
+}
+
+/*
+ * extract option and value from a string formatted as "opt = val"
+ * and return pointer to the next string or NULL on empty string
+ * passed or if nothing left for handling
+ */
+char *nasm_opt_val(char *p, char **opt, char **val)
+{
+    char *q, *next;
+
+    p = nasm_skip_spaces(p);
+    if (!p || (p && !*p))
+        return NULL;
+
+    q = strchr(p, '=');
+    if (q) {
+        *q++ = '\0';
+        next = nasm_skip_spaces(nasm_skip_word(nasm_skip_spaces(q)));
+    } else
+        next = nasm_skip_spaces(nasm_skip_word(nasm_skip_spaces(p)));
+
+    *opt = nasm_trim_spaces(p);
+    *val = nasm_trim_spaces(q);
+
+    return next;
+}
+
 /*
  * initialized data bytes length from opcode
  */
