@@ -95,4 +95,13 @@ void section_attrib(char *name, char *attr, int pass,
                     uint32_t *flags_and, uint32_t *flags_or,
                     uint64_t *align, int *type);
 
+#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
+    do {                                                    \
+        WRITELONG(p, n_strx);                               \
+        WRITECHAR(p, n_type);                               \
+        WRITECHAR(p, n_other);                              \
+        WRITESHORT(p, n_desc);                              \
+        WRITELONG(p, n_value);                              \
+    } while (0)
+
 #endif /* OUTPUT_OUTELF_H */

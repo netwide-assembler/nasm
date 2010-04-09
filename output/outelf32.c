@@ -1572,15 +1572,6 @@ static void stabs32_output(int type, void *param)
     debug_immcall = 0;
 }
 
-#define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
-    do {                                                    \
-        WRITELONG(p,n_strx);                                \
-        WRITECHAR(p,n_type);                                \
-        WRITECHAR(p,n_other);                               \
-        WRITESHORT(p,n_desc);                               \
-        WRITELONG(p,n_value);                               \
-    } while (0)
-
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
 static void stabs32_generate(void)
