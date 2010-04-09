@@ -4421,7 +4421,7 @@ static int expand_mmacro(Token * tline)
     m->next_active = istk->mstk;
     istk->mstk = m;
 
-    for (l = m->expansion; l; l = l->next) {
+    list_for_each(l, m->expansion) {
         Token **tail;
 
         ll = nasm_malloc(sizeof(Line));
@@ -4430,7 +4430,7 @@ static int expand_mmacro(Token * tline)
         istk->expansion = ll;
         tail = &ll->first;
 
-        for (t = l->first; t; t = t->next) {
+        list_for_each(t, l->first) {
             Token *x = t;
             switch (t->type) {
             case TOK_PREPROC_Q:
