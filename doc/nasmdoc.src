@@ -14,7 +14,7 @@
 \#     copyright notice, this list of conditions and the following
 \#     disclaimer in the documentation and/or other materials provided
 \#     with the distribution.
-\#     
+\#
 \#     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 \#     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 \#     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -1952,7 +1952,11 @@ to the local label mechanism. So you could code
 
 NASM has the capacity to define other special symbols beginning with
 a double period: for example, \c{..start} is used to specify the
-entry point in the \c{obj} output format (see \k{dotdotstart}).
+entry point in the \c{obj} output format (see \k{dotdotstart}),
+\c{..imagebase} is used to find out the offset from a base address
+of the current image in the \c{win64} output format (see \k{win64pic}).
+So just keep in mind that symbols beginning with a double period are
+special.
 
 
 \C{preproc} The NASM \i{Preprocessor}
