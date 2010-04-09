@@ -60,6 +60,9 @@
 
 #ifdef OF_ELF64
 
+/*
+ * Relocation types.
+ */
 struct Reloc {
     struct Reloc *next;
     int64_t address;            /* relative to _start_ of section */
@@ -104,7 +107,7 @@ static char *shstrtab;
 static int shstrtablen, shstrtabsize;
 
 static struct SAA *syms;
-static uint32_t nlocals, nglobs, ndebugs;
+static uint32_t nlocals, nglobs, ndebugs; /* Symbol counts */
 
 static int32_t def_seg;
 
@@ -245,7 +248,7 @@ static void elf_init(void)
     bsym = raa_init();
     strs = saa_init(1L);
     saa_wbytes(strs, "\0", 1L);
-    saa_wbytes(strs, elf_module, (int32_t)(strlen(elf_module) + 1));
+    saa_wbytes(strs, elf_module, strlen(elf_module)+1);
     strslen = 2 + strlen(elf_module);
     shstrtab = NULL;
     shstrtablen = shstrtabsize = 0;;
@@ -762,7 +765,8 @@ static void elf_out(int32_t segto, const void *data,
             i = nsects - 1;
         }
     }
-    /* invoke current debug_output routine */
+
+    /* again some stabs debugging stuff */
     if (of_elf64.current_dfmt) {
         sinfo.offset = s->len;
         sinfo.section = i;
@@ -1132,8 +1136,7 @@ static void elf_write(void)
                                stabrellen, symtabsection, sec_stab, 4, 16);
             p += strlen(p) + 1;
         }
-    }
-    else if (of_elf64.current_dfmt == &df_dwarf) {
+    } else if (of_elf64.current_dfmt == &df_dwarf) {
             /* for dwarf debugging information, create the ten dwarf sections */
 
             /* this function call creates the dwarf sections in memory */

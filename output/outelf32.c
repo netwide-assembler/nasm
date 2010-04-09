@@ -341,7 +341,6 @@ static int elf_make_section(char *name, int type, int flags, int align)
     return nsects - 1;
 }
 
-
 static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
@@ -394,7 +393,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
           if ((type && sects[i]->type != type)
               || (align && sects[i]->align != align)
               || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
-            nasm_error(ERR_WARNING, "section attributes ignored on"
+            nasm_error(ERR_WARNING, "incompatible section attributes ignored on"
                   " redeclaration of section `%s'", name);
     }
 
@@ -1008,12 +1007,12 @@ static void elf_write(void)
 
     /* .symtab */
     elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
-                        symtablen, sec_strtab, symtablocal, 4, 16);
+                       symtablen, sec_strtab, symtablocal, 4, 16);
     p += strlen(p) + 1;
 
     /* .strtab */
     elf_section_header(p - shstrtab, SHT_STRTAB, 0, strs, true,
-                        strslen, 0, 0, 1, 0);
+                       strslen, 0, 0, 1, 0);
     p += strlen(p) + 1;
 
     /* The relocation sections */
@@ -1042,7 +1041,7 @@ static void elf_write(void)
 
             /* link -> symtable  info -> section to refer to */
             elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
-                                stabrellen, sec_symtab, sec_stab, 4, 8);
+                               stabrellen, sec_symtab, sec_stab, 4, 8);
             p += strlen(p) + 1;
         }
     } else if (of_elf32.current_dfmt == &df_dwarf) {
@@ -1551,7 +1550,7 @@ static void stabs32_output(int type, void *param)
         if (debug_immcall) {
             s = (struct symlininfo *)param;
             if (!(sects[s->section]->flags & SHF_EXECINSTR))
-                return; /* we are only interested in the text stuff */
+                return; /* line info is only collected for executable sections */
             numlinestabs++;
             el = (struct linelist *)nasm_malloc(sizeof(struct linelist));
             el->info.offset = s->offset;
