@@ -1159,12 +1159,11 @@ static Token *delete_Token(Token * t)
 static char *detoken(Token * tlist, bool expand_locals)
 {
     Token *t;
-    int len;
     char *line, *p;
     const char *q;
+    int len = 0;
 
-    len = 0;
-    for (t = tlist; t; t = t->next) {
+    list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
             char *p = getenv(t->text + 2);
             nasm_free(t->text);
@@ -1188,14 +1187,15 @@ static char *detoken(Token * tlist, bool expand_locals)
                 t->text = p;
             }
         }
-        if (t->type == TOK_WHITESPACE) {
+        if (t->type == TOK_WHITESPACE)
             len++;
-        } else if (t->text) {
+        else if (t->text)
             len += strlen(t->text);
-        }
     }
+
     p = line = nasm_malloc(len + 1);
-    for (t = tlist; t; t = t->next) {
+
+    list_for_each(t, tlist) {
         if (t->type == TOK_WHITESPACE) {
             *p++ = ' ';
         } else if (t->text) {
@@ -1205,6 +1205,7 @@ static char *detoken(Token * tlist, bool expand_locals)
         }
     }
     *p = '\0';
+
     return line;
 }
 
