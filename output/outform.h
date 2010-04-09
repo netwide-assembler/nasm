@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -153,7 +153,7 @@
 #define OF_BIN
 #endif
 #ifndef OF_COFF
-#define OF_COFF			/* COFF is used by DJGPP */
+#define OF_COFF                 /* COFF is used by DJGPP */
 #endif
 #ifndef OF_WIN32
 #define OF_WIN32
@@ -260,7 +260,6 @@ extern struct ofmt of_aout;
 extern struct ofmt of_aoutb;
 extern struct ofmt of_coff;
 extern struct ofmt of_elf32;
-extern struct ofmt of_elf;
 extern struct ofmt of_elf64;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
@@ -269,14 +268,15 @@ extern struct ofmt of_win64;
 extern struct ofmt of_rdf2;
 extern struct ofmt of_ieee;
 extern struct ofmt of_macho32;
-extern struct ofmt of_macho;
 extern struct ofmt of_macho64;
 extern struct ofmt of_dbg;
 
 #ifdef BUILD_DRIVERS_ARRAY      /* only if included from outform.c */
 
-/* pull in the externs for the different formats, then make the *drivers
- * array based on the above defines */
+/*
+ * pull in the externs for the different formats, then make the
+ * drivers array based on the above defines
+ */
 
 static struct ofmt *drivers[] = {
 #ifdef OF_BIN
@@ -295,7 +295,6 @@ static struct ofmt *drivers[] = {
 #endif
 #ifdef OF_ELF32
     &of_elf32,
-    &of_elf,
 #endif
 #ifdef OF_ELF64
     &of_elf64,
@@ -320,7 +319,6 @@ static struct ofmt *drivers[] = {
 #endif
 #ifdef OF_MACHO32
     &of_macho32,
-	&of_macho,
 #endif
 #ifdef OF_MACHO64
     &of_macho64,
@@ -332,7 +330,29 @@ static struct ofmt *drivers[] = {
     NULL
 };
 
-#endif                          /* BUILD_DRIVERS_ARRAY */
+static struct ofmt_alias {
+    const char *shortname;
+    const char *fullname;
+    struct ofmt *ofmt;
+} ofmt_aliases[] = {
+#ifdef OF_ELF32
+    {
+        "elf",
+        "ELF (short name for ELF32)",
+        &of_elf32,
+    },
+#endif
+#ifdef OF_MACHO32
+    {
+        "macho",
+        "MACHO (short name for MACHO32)",
+        &of_macho32,
+    },
+#endif
+    { NULL, NULL, NULL }
+};
+
+#endif /* BUILD_DRIVERS_ARRAY */
 
 struct ofmt *ofmt_find(char *);
 struct dfmt *dfmt_find(struct ofmt *, char *);
@@ -341,4 +361,4 @@ void dfmt_list(struct ofmt *ofmt, FILE * fp);
 struct ofmt *ofmt_register(efunc error);
 extern struct dfmt null_debug_form;
 
-#endif                          /* NASM_OUTFORM_H */
+#endif /* NASM_OUTFORM_H */

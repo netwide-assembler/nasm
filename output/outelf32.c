@@ -122,7 +122,6 @@ static uint8_t elf_osabi = 0;   /* Default OSABI = 0 (System V or Linux) */
 static uint8_t elf_abiver = 0;  /* Current ABI version */
 
 extern struct ofmt of_elf32;
-extern struct ofmt of_elf;
 
 static struct ELF_SECTDATA {
     void *data;
@@ -264,12 +263,6 @@ static void elf_init(void)
     define_label("..tlsie", elf_tlsie_sect + 1, 0L, NULL, false, false);
 
     def_seg = seg_alloc();
-}
-
-static void elf_init_hack(void)
-{
-    of_elf32.current_dfmt = of_elf.current_dfmt; /* Sync debugging format */
-    elf_init();
 }
 
 static void elf_cleanup(int debuginfo)
@@ -1414,23 +1407,6 @@ struct ofmt of_elf32 = {
     elf_cleanup
 };
 
-struct ofmt of_elf = {
-    "ELF (short name for ELF32) ",
-    "elf",
-    0,
-    elf32_debugs_arr,
-    &df_stabs,
-    elf_stdmac,
-    elf_init_hack,
-    elf_set_info,
-    elf_out,
-    elf_deflabel,
-    elf_section_names,
-    elf_segbase,
-    elf_directive,
-    elf_filename,
-    elf_cleanup
-};
 /* again, the stabs debugging stuff (code) */
 
 static void stabs32_linenum(const char *filename, int32_t linenumber,

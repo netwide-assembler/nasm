@@ -208,8 +208,6 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-extern struct ofmt of_macho;
-
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
 uint32_t head_ncmds = 0;
@@ -1310,24 +1308,6 @@ static void debug_section_relocs (struct section *s)
 struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
-    0,
-    null_debug_arr,
-    &null_debug_form,
-    macho_stdmac,
-    macho_init,
-    null_setinfo,
-    macho_output,
-    macho_symdef,
-    macho_section,
-    macho_segbase,
-    null_directive,
-    macho_filename,
-    macho_cleanup
-};
-
-struct ofmt of_macho = {
-    "MACHO (short name for MACHO32)",
-    "macho",
     0,
     null_debug_arr,
     &null_debug_form,
