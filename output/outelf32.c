@@ -348,7 +348,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
     uint32_t flags, flags_and, flags_or;
-    uint32_t align;
+    uint64_t align;
     int type, i;
 
     /*
@@ -364,53 +364,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     flags_and = flags_or = type = align = 0;
 
-    p = nasm_skip_spaces(p);
-    while (*p) {
-        char *q = p;
-        p = nasm_skip_word(p);
-        if (*p)
-            *p++ = '\0';
-        p = nasm_skip_spaces(p);
-
-        if (!nasm_strnicmp(q, "align=", 6)) {
-            align = atoi(q + 6);
-            if (align == 0)
-                align = 1;
-            if ((align - 1) & align) {  /* means it's not a power of two */
-                nasm_error(ERR_NONFATAL, "section alignment %d is not"
-                      " a power of two", align);
-                align = 1;
-            }
-        } else if (!nasm_stricmp(q, "alloc")) {
-            flags_and |= SHF_ALLOC;
-            flags_or |= SHF_ALLOC;
-        } else if (!nasm_stricmp(q, "noalloc")) {
-            flags_and |= SHF_ALLOC;
-            flags_or &= ~SHF_ALLOC;
-        } else if (!nasm_stricmp(q, "exec")) {
-            flags_and |= SHF_EXECINSTR;
-            flags_or |= SHF_EXECINSTR;
-        } else if (!nasm_stricmp(q, "noexec")) {
-            flags_and |= SHF_EXECINSTR;
-            flags_or &= ~SHF_EXECINSTR;
-        } else if (!nasm_stricmp(q, "write")) {
-            flags_and |= SHF_WRITE;
-            flags_or |= SHF_WRITE;
-        } else if (!nasm_stricmp(q, "tls")) {
-            flags_and |= SHF_TLS;
-            flags_or |= SHF_TLS;
-        } else if (!nasm_stricmp(q, "nowrite")) {
-            flags_and |= SHF_WRITE;
-            flags_or &= ~SHF_WRITE;
-        } else if (!nasm_stricmp(q, "progbits")) {
-            type = SHT_PROGBITS;
-        } else if (!nasm_stricmp(q, "nobits")) {
-            type = SHT_NOBITS;
-        } else if (pass == 1) {
-            nasm_error(ERR_WARNING, "Unknown section attribute '%s' ignored on"
-                  " declaration of section `%s'", q, name);
-        }
-    }
+    section_attrib(name, p, pass, &flags_and,
+                   &flags_or, &align, &type);
 
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -63,5 +63,60 @@ const struct elf_known_section elf_known_sections[] = {
     { ".comment", SHT_PROGBITS, 0,                            1 },
     { NULL,       SHT_PROGBITS, SHF_ALLOC,                    1 } /* default */
 };
+
+/* parse section attributes */
+void section_attrib(char *name, char *attr, int pass,
+                    uint32_t *flags_and, uint32_t *flags_or,
+                    uint64_t *align, int *type)
+{
+    char *p, *q, *v;
+
+    p = nasm_skip_spaces(attr);
+    if (!p || !*p)
+        return;
+
+    while ((p = nasm_opt_val(p, &q, &v))) {
+        if (!nasm_stricmp(q, "align")) {
+            *align = atoi(v);
+            if (*align == 0) {
+                *align = 1;
+            } else if (!is_power2(*align)) {
+                nasm_error(ERR_NONFATAL,
+                           "section alignment %"PRId64" is not a power of two",
+                           *align);
+                *align = 1;
+            }
+        } else if (!nasm_stricmp(q, "alloc")) {
+            *flags_and  |= SHF_ALLOC;
+            *flags_or   |= SHF_ALLOC;
+        } else if (!nasm_stricmp(q, "noalloc")) {
+            *flags_and  |= SHF_ALLOC;
+            *flags_or   &= ~SHF_ALLOC;
+        } else if (!nasm_stricmp(q, "exec")) {
+            *flags_and  |= SHF_EXECINSTR;
+            *flags_or   |= SHF_EXECINSTR;
+        } else if (!nasm_stricmp(q, "noexec")) {
+            *flags_and  |= SHF_EXECINSTR;
+            *flags_or   &= ~SHF_EXECINSTR;
+        } else if (!nasm_stricmp(q, "write")) {
+            *flags_and  |= SHF_WRITE;
+            *flags_or   |= SHF_WRITE;
+        } else if (!nasm_stricmp(q, "tls")) {
+            *flags_and  |= SHF_TLS;
+            *flags_or   |= SHF_TLS;
+        } else if (!nasm_stricmp(q, "nowrite")) {
+            *flags_and  |= SHF_WRITE;
+            *flags_or   &= ~SHF_WRITE;
+        } else if (!nasm_stricmp(q, "progbits")) {
+            *type = SHT_PROGBITS;
+        } else if (!nasm_stricmp(q, "nobits")) {
+            *type = SHT_NOBITS;
+        } else if (pass == 1) {
+            nasm_error(ERR_WARNING,
+                       "Unknown section attribute '%s' ignored on"
+                       " declaration of section `%s'", q, name);
+        }
+    }
+}
 
 #endif /* defined(OF_ELF32) || defined(OF_ELF64) */
