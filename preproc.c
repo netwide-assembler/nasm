@@ -3785,9 +3785,8 @@ static Token *expand_smacro(Token * tline)
      * routine we copy it back
      */
     if (org_tline) {
-        tline =
-            new_Token(org_tline->next, org_tline->type, org_tline->text,
-                      0);
+        tline = new_Token(org_tline->next, org_tline->type,
+                          org_tline->text, 0);
         tline->a.mac = org_tline->a.mac;
         nasm_free(org_tline->text);
         org_tline->text = NULL;
@@ -3796,8 +3795,8 @@ static Token *expand_smacro(Token * tline)
     expanded = true;            /* Always expand %+ at least once */
 
 again:
-    tail = &thead;
     thead = NULL;
+    tail = &thead;
 
     while (tline) {             /* main token loop */
         if (!--deadman) {
@@ -3927,13 +3926,9 @@ again:
                                     if (++nparam >= sparam) {
                                         sparam += PARAM_DELTA;
                                         params = nasm_realloc(params,
-                                                              sparam *
-                                                              sizeof(Token
-                                                                     *));
-                                        paramsize =
-                                            nasm_realloc(paramsize,
-                                                         sparam *
-                                                         sizeof(int));
+                                                        sparam * sizeof(Token *));
+                                        paramsize = nasm_realloc(paramsize,
+                                                        sparam * sizeof(int));
                                     }
                                     params[nparam] = tline->next;
                                     paramsize[nparam] = 0;
@@ -4015,11 +4010,10 @@ again:
                             int i;
 
                             ttt = params[t->type - TOK_SMAC_PARAM];
-                            for (i = paramsize[t->type - TOK_SMAC_PARAM];
-                                 --i >= 0;) {
-                                pt = *ptail =
-                                    new_Token(tline, ttt->type, ttt->text,
-                                              0);
+                            i = paramsize[t->type - TOK_SMAC_PARAM];
+                            while (--i >= 0) {
+                                pt = *ptail = new_Token(tline, ttt->type,
+                                                        ttt->text, 0);
                                 ptail = &pt->next;
                                 ttt = ttt->next;
                             }
