@@ -188,6 +188,9 @@
 #define SHN_COMMON      0xfff2
 #define SHN_HIRESERVE   0xffff
 
+/* Section align flag */
+#define SHA_ANY         1       /* No alignment constraint */
+
 /* Lenght of magic at the start of a file */
 #define EI_NIDENT       16
 

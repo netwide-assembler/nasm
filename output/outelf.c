@@ -79,12 +79,12 @@ void section_attrib(char *name, char *attr, int pass,
         if (!nasm_stricmp(q, "align")) {
             *align = atoi(v);
             if (*align == 0) {
-                *align = 1;
+                *align = SHA_ANY;
             } else if (!is_power2(*align)) {
                 nasm_error(ERR_NONFATAL,
                            "section alignment %"PRId64" is not a power of two",
                            *align);
-                *align = 1;
+                *align = SHA_ANY;
             }
         } else if (!nasm_stricmp(q, "alloc")) {
             *flags_and  |= SHF_ALLOC;
