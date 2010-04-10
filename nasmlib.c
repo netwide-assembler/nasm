@@ -705,6 +705,27 @@ char *nasm_trim_spaces(char *p)
 }
 
 /*
+ * return the word extracted from a stream
+ * or NULL if nothing left
+ */
+char *nasm_get_word(char *p, char **tail)
+{
+    char *word = nasm_skip_spaces(p);
+    char *next = nasm_skip_word(word);
+
+    if (word && *word) {
+        if (*next)
+            *next++ = '\0';
+    } else
+        word = next = NULL;
+
+    /* NOTE: the tail may start with spaces */
+    *tail = next;
+
+    return word;
+}
+
+/*
  * extract option and value from a string formatted as "opt = val"
  * and return pointer to the next string or NULL on empty string
  * passed or if nothing left for handling

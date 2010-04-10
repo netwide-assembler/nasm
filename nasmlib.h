@@ -394,6 +394,7 @@ char *nasm_skip_word(const char *p);
 char *nasm_zap_spaces_fwd(char *p);
 char *nasm_zap_spaces_rev(char *p);
 char *nasm_trim_spaces(char *p);
+char *nasm_get_word(char *p, char **tail);
 char *nasm_opt_val(char *p, char **opt, char **val);
 
 const char *prefix_name(int);
