@@ -69,15 +69,15 @@ void section_attrib(char *name, char *attr, int pass,
                     uint32_t *flags_and, uint32_t *flags_or,
                     uint64_t *align, int *type)
 {
-    char *p, *q, *v;
+    char *opt, *val, *next;
 
-    p = nasm_skip_spaces(attr);
-    if (!p || !*p)
+    opt = nasm_skip_spaces(attr);
+    if (!opt || !*opt)
         return;
 
-    while ((p = nasm_opt_val(p, &q, &v))) {
-        if (!nasm_stricmp(q, "align")) {
-            *align = atoi(v);
+    while ((opt = nasm_opt_val(opt, &val, &next))) {
+        if (!nasm_stricmp(opt, "align")) {
+            *align = atoi(val);
             if (*align == 0) {
                 *align = SHA_ANY;
             } else if (!is_power2(*align)) {
@@ -86,36 +86,37 @@ void section_attrib(char *name, char *attr, int pass,
                            *align);
                 *align = SHA_ANY;
             }
-        } else if (!nasm_stricmp(q, "alloc")) {
+        } else if (!nasm_stricmp(opt, "alloc")) {
             *flags_and  |= SHF_ALLOC;
             *flags_or   |= SHF_ALLOC;
-        } else if (!nasm_stricmp(q, "noalloc")) {
+        } else if (!nasm_stricmp(opt, "noalloc")) {
             *flags_and  |= SHF_ALLOC;
             *flags_or   &= ~SHF_ALLOC;
-        } else if (!nasm_stricmp(q, "exec")) {
+        } else if (!nasm_stricmp(opt, "exec")) {
             *flags_and  |= SHF_EXECINSTR;
             *flags_or   |= SHF_EXECINSTR;
-        } else if (!nasm_stricmp(q, "noexec")) {
+        } else if (!nasm_stricmp(opt, "noexec")) {
             *flags_and  |= SHF_EXECINSTR;
             *flags_or   &= ~SHF_EXECINSTR;
-        } else if (!nasm_stricmp(q, "write")) {
+        } else if (!nasm_stricmp(opt, "write")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   |= SHF_WRITE;
-        } else if (!nasm_stricmp(q, "tls")) {
+        } else if (!nasm_stricmp(opt, "tls")) {
             *flags_and  |= SHF_TLS;
             *flags_or   |= SHF_TLS;
-        } else if (!nasm_stricmp(q, "nowrite")) {
+        } else if (!nasm_stricmp(opt, "nowrite")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   &= ~SHF_WRITE;
-        } else if (!nasm_stricmp(q, "progbits")) {
+        } else if (!nasm_stricmp(opt, "progbits")) {
             *type = SHT_PROGBITS;
-        } else if (!nasm_stricmp(q, "nobits")) {
+        } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
         } else if (pass == 1) {
             nasm_error(ERR_WARNING,
                        "Unknown section attribute '%s' ignored on"
-                       " declaration of section `%s'", q, name);
+                       " declaration of section `%s'", opt, name);
         }
+        opt = next;
     }
 }
 
