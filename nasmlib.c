@@ -726,29 +726,48 @@ char *nasm_get_word(char *p, char **tail)
 }
 
 /*
- * extract option and value from a string formatted as "opt = val"
- * and return pointer to the next string or NULL on empty string
- * passed or if nothing left for handling
+ * Extract "opt=val" values from the stream and
+ * returns "opt"
+ *
+ * Exceptions:
+ * 1) If "=val" passed the NULL returned though
+ *    you may continue handling the tail via "next"
+ * 2) If "=" passed the NULL is returned and "val"
+ *    is set to NULL as well
  */
-char *nasm_opt_val(char *p, char **opt, char **val)
+char *nasm_opt_val(char *p, char **val, char **next)
 {
-    char *q, *next;
+    char *q, *opt, *nxt;
 
-    p = nasm_skip_spaces(p);
-    if (!p || (p && !*p))
+    opt = *val = *next = NULL;
+
+    p = nasm_get_word(p, &nxt);
+    if (!p)
         return NULL;
 
     q = strchr(p, '=');
     if (q) {
-        *q++ = '\0';
-        next = nasm_skip_spaces(nasm_skip_word(nasm_skip_spaces(q)));
-    } else
-        next = nasm_skip_spaces(nasm_skip_word(nasm_skip_spaces(p)));
+        if (q == p)
+            p = NULL;
+        *q++='\0';
+        if (*q) {
+            *val = q;
+        } else {
+            q = nasm_get_word(q + 1, &nxt);
+            if (q)
+                *val = q;
+        }
+    } else {
+        q = nasm_skip_spaces(nxt);
+        if (q && *q == '=') {
+            q = nasm_get_word(q + 1, &nxt);
+            if (q)
+                *val = q;
+        }
+    }
 
-    *opt = nasm_trim_spaces(p);
-    *val = nasm_trim_spaces(q);
-
-    return next;
+    *next = nxt;
+    return p;
 }
 
 /*
