@@ -349,6 +349,13 @@ static struct ofmt_alias {
         &of_macho32,
     },
 #endif
+#ifdef OF_WIN32
+    {
+        "win",
+        "WIN (short name for WIN32)",
+        &of_win32,
+    },
+#endif
     { NULL, NULL, NULL }
 };
 
