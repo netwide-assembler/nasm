@@ -1241,6 +1241,8 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                            "segment alignment `%s' is not power of two",
                                             value);
                             }
+                            /* callee should be able to handle all details */
+                            ofmt->segalign(location.segment, align);
                         }
                     }
                     break;

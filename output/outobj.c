@@ -2559,6 +2559,7 @@ struct ofmt of_obj = {
     obj_out,
     obj_deflabel,
     obj_segment,
+    null_segalign,
     obj_segbase,
     obj_directive,
     obj_filename,

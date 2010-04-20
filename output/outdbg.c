@@ -166,6 +166,12 @@ static void dbg_out(int32_t segto, const void *data,
     }
 }
 
+static void dbg_segalign(int32_t seg, int value)
+{
+    fprintf(ofile, "set alignment (%d) for segment (%d)\n",
+            seg, value);	
+}
+
 static int32_t dbg_segbase(int32_t segment)
 {
     return segment;
@@ -259,6 +265,7 @@ struct ofmt of_dbg = {
     dbg_out,
     dbg_deflabel,
     dbg_section_names,
+    dbg_segalign,
     dbg_segbase,
     dbg_directive,
     dbg_filename,

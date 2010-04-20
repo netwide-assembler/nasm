@@ -1501,6 +1501,7 @@ struct ofmt of_ieee = {
     ieee_out,
     ieee_deflabel,
     ieee_segment,
+    null_segalign,
     ieee_segbase,
     ieee_directive,
     ieee_filename,

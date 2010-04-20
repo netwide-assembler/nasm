@@ -49,3 +49,9 @@ int null_directive(enum directives directive, char *value, int pass)
     (void)pass;
     return 0;
 }
+
+void null_segalign(int32_t seg, int value)
+{
+    (void)seg;
+    (void)value;
+}

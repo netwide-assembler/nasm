@@ -1488,6 +1488,7 @@ struct ofmt of_macho64 = {
     macho_output,
     macho_symdef,
     macho_section,
+    null_segalign,
     macho_segbase,
     null_directive,
     macho_filename,

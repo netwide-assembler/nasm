@@ -41,6 +41,7 @@ uint64_t realsize(enum out_type type, uint64_t size);
 /* Do-nothing versions of some output routines */
 int null_setinfo(enum geninfo type, char **string);
 int null_directive(enum directives directive, char *value, int pass);
+void null_segalign(int32_t seg, int value);
 
 /* Do-nothing versions of all the debug routines */
 struct ofmt;

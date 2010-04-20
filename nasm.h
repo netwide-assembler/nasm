@@ -682,6 +682,12 @@ struct ofmt {
     int32_t (*section) (char *name, int pass, int *bits);
 
     /*
+     * This procedure is called to modify segment alignment,
+     * there is a trick, the alignment can only increase
+     */
+    void (*segalign)(int32_t seg, int value);
+
+    /*
      * This procedure is called to modify the segment base values
      * returned from the SEG operator. It is given a segment base
      * value (i.e. a segment value with the low bit set), and is

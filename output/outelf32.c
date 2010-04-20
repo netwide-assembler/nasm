@@ -1401,6 +1401,7 @@ struct ofmt of_elf32 = {
     elf_out,
     elf_deflabel,
     elf_section_names,
+    null_segalign,
     elf_segbase,
     elf_directive,
     elf_filename,
