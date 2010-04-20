@@ -1405,6 +1405,24 @@ static void elf_sect_writeaddr(struct Section *sect, int64_t data, size_t len)
     sect->len += len;
 }
 
+static void elf_segalign(int32_t seg, int value)
+{
+    struct Section *s = NULL;
+    int i;
+
+    for (i = 0; i < nsects; i++) {
+        if (sects[i]->index == seg) {
+            s = sects[i];
+            break;
+        }
+    }
+    if (!s || !is_power2(value))
+        return;
+
+    if ((unsigned int)value > s->align)
+        s->align = value;
+}
+
 static int32_t elf_segbase(int32_t segment)
 {
     return segment;
@@ -1501,7 +1519,7 @@ struct ofmt of_elf64 = {
     elf_out,
     elf_deflabel,
     elf_section_names,
-    null_segalign,
+    elf_segalign,
     elf_segbase,
     elf_directive,
     elf_filename,
