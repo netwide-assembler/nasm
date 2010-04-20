@@ -150,7 +150,11 @@ USE: smartalign
     %error unknown alignment mode: %1
   %endif
   %ifnempty %2
-    %xdefine __ALIGN_JMP_THRESHOLD__ %2
+    %ifidni %2,nojmp
+      %xdefine __ALIGN_JMP_THRESHOLD__ -1
+    %else
+      %xdefine __ALIGN_JMP_THRESHOLD__ %2
+    %endif
   %endif
   %xdefine __ALIGNMODE__ %1,__ALIGN_JMP_THRESHOLD__
 %endmacro
@@ -162,14 +166,14 @@ USE: smartalign
   %else
     %push
     %assign %$pad (((%1) - (($-$$) % (%1))) % (%1))
-    %if %$pad > __ALIGN_JMP_THRESHOLD__
+    %if __ALIGN_JMP_THRESHOLD__ != -1 && %$pad > __ALIGN_JMP_THRESHOLD__
       jmp %$end
       ; We can't re-use %$pad here as $ will have changed!
       times (((%1) - (($-$$) % (%1))) % (%1)) nop
 %$end:
     %else
       times (%$pad / __ALIGN_%[__BITS__]BIT_GROUP__) \
-	db __ALIGN_%[__BITS__]BIT_%[__ALIGN_%[__BITS__]BIT_GROUP__]B__
+        db __ALIGN_%[__BITS__]BIT_%[__ALIGN_%[__BITS__]BIT_GROUP__]B__
       %assign %$pad %$pad % __ALIGN_%[__BITS__]BIT_GROUP__
       %if %$pad > 0
         db __ALIGN_%[__BITS__]BIT_%[%$pad]B__

@@ -4073,8 +4073,9 @@ sequence.
 
 The specific instructions generated can be controlled with the
 new \i\c{ALIGNMODE} macro.  This macro takes two parameters: one mode,
-and an optional jump threshold override.  The modes are as
-follows:
+and an optional jump threshold override. If (for any reason) you need
+to turn off the jump completely just set jump threshold value to -1.
+The following modes are possible:
 
 \b \c{generic}: Works on all x86 CPUs and should have reasonable
 performance.  The default jump threshold is 8.  This is the
