@@ -193,8 +193,9 @@ bool lookup_label(char *label, int32_t *segment, int64_t *offset)
         *segment = lptr->defn.segment;
         *offset = lptr->defn.offset;
         return true;
-    } else
-        return false;
+    }
+
+    return false;
 }
 
 bool is_extern(char *label)
