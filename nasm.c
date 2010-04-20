@@ -849,8 +849,8 @@ static bool process_arg(char *p, char *q)
             }
 	    do_warn = (param[0] == '+');
 	    param++;
-	    goto set_warning;
-	set_warning:
+
+set_warning:
 	    for (i = 0; i <= ERR_WARN_MAX; i++)
 		if (!nasm_stricmp(param, warnings[i].name))
 		    break;
