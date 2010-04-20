@@ -1232,7 +1232,19 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         location.segment = seg;
                     }
                     break;
-                case D_EXTERN:		/* [EXTERN label:special] */
+                case D_SEGALIGN:        /* [SEGALIGN n] */
+                    {
+                        if (*value) {
+                            int align = atoi(value);
+                            if (!is_power2(align)) {
+                                nasm_error(ERR_NONFATAL,
+                                           "segment alignment `%s' is not power of two",
+                                            value);
+                            }
+                        }
+                    }
+                    break;
+                case D_EXTERN:              /* [EXTERN label:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 2) {
