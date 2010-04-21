@@ -102,9 +102,11 @@ __SECT__
 %endmacro
 
 %imacro align 1-2+.nolist nop
+	  sectalign %1
 	  times (((%1) - (($-$$) % (%1))) % (%1)) %2
 %endmacro
 %imacro alignb 1-2+.nolist
+	  sectalign %1
 	  %ifempty %2
 		resb (((%1) - (($-$$) % (%1))) % (%1))
 	  %else
