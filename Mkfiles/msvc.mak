@@ -238,7 +238,7 @@ output/outas86.$(O): output/outas86.c compiler.h directives.h insnsi.h \
 output/outbin.$(O): output/outbin.c compiler.h directives.h eval.h insnsi.h \
  labels.h nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h \
  pptok.h preproc.h regs.h saa.h stdscan.h
-output/outcoff.$(O): output/outcoff.c compiler.h directives.h eval.h \
+output/outcoff.$(O): output/outcoff.c output/pecoff.h compiler.h directives.h eval.h \
  insnsi.h nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h \
  pptok.h preproc.h raa.h regs.h saa.h
 output/outdbg.$(O): output/outdbg.c compiler.h directives.h insnsi.h nasm.h \

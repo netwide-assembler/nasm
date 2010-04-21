@@ -178,7 +178,7 @@ outas86.o: outas86.c compiler.h config.h directives.h insnsi.h nasm.h \
 outbin.o: outbin.c compiler.h config.h directives.h eval.h insnsi.h labels.h \
  nasm.h nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h \
  saa.h stdscan.h
-outcoff.o: outcoff.c compiler.h config.h directives.h eval.h insnsi.h nasm.h \
+outcoff.o: outcoff.c pecoff.h compiler.h config.h directives.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
 outdbg.o: outdbg.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h
