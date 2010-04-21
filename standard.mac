@@ -66,9 +66,8 @@
 %define __SECT__ [segment %1]
 	  __SECT__
 %endmacro
-%imacro segalign 1+.nolist
-%define __SECT__ [segalign %1]
-	  __SECT__
+%imacro sectalign 1.nolist
+	[sectalign %1]
 %endmacro
 
 %imacro absolute 1+.nolist

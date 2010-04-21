@@ -50,7 +50,7 @@ int null_directive(enum directives directive, char *value, int pass)
     return 0;
 }
 
-void null_segalign(int32_t seg, int value)
+void null_sectalign(int32_t seg, unsigned int value)
 {
     (void)seg;
     (void)value;

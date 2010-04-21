@@ -788,7 +788,7 @@ struct ofmt of_rdf2 = {
     rdf2_out,
     rdf2_deflabel,
     rdf2_section_names,
-    null_segalign,
+    null_sectalign,
     rdf2_segbase,
     rdf2_directive,
     rdf2_filename,

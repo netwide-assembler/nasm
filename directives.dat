@@ -48,7 +48,7 @@ list
 section
 segment
 warning
-segalign
+sectalign
 
 ; --- Format-specific directives
 export				; outcoff, outobj

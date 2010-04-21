@@ -161,7 +161,7 @@ USE: smartalign
 
 %unimacro align 1-2+.nolist
 %imacro align 1-2+.nolist
-  segalign %1   ; align a segment as well
+  sectalign %1   ; align a segment as well
   %ifnempty %2
     times (((%1) - (($-$$) % (%1))) % (%1)) %2
   %else

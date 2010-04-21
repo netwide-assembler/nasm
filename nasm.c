@@ -1232,17 +1232,17 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         location.segment = seg;
                     }
                     break;
-                case D_SEGALIGN:        /* [SEGALIGN n] */
+                case D_SECTALIGN:        /* [SECTALIGN n] */
                     {
                         if (*value) {
-                            int align = atoi(value);
+                            unsigned int align = atoi(value);
                             if (!is_power2(align)) {
                                 nasm_error(ERR_NONFATAL,
                                            "segment alignment `%s' is not power of two",
                                             value);
                             }
                             /* callee should be able to handle all details */
-                            ofmt->segalign(location.segment, align);
+                            ofmt->sectalign(location.segment, align);
                         }
                     }
                     break;
