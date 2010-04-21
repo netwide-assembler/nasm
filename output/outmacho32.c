@@ -229,35 +229,6 @@ uint32_t rel_padcnt = 0;
 static void debug_reloc (struct reloc *);
 static void debug_section_relocs (struct section *) _unused;
 
-static int exact_log2 (uint32_t align)
-{
-    if (align == 0) {
-	return 0;
-    } else if (align & (align-1)) {
-	return -1;		/* Not a power of 2 */
-    } else {
-#ifdef HAVE_GNUC_4
-	return __builtin_ctzl (align);
-#else
-	uint32_t result = 0;
-
-	/* We know exactly one bit is set at this point. */
-	if (align & 0xffff0000)
-	    result |= 16;
-	if (align & 0xff00ff00)
-	    result |= 8;
-	if (align & 0xf0f0f0f0)
-	    result |= 4;
-	if (align & 0xcccccccc)
-	    result |= 2;
-	if (align & 0xaaaaaaaa)
-	    result |= 1;
-
-	return result;
-#endif
-    }
-}
-
 static struct section *get_section_by_name(const char *segname,
                                            const char *sectname)
 {
@@ -569,7 +540,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         int newAlignment, value;
 
                         value = strtoul(currentAttribute + 6, (char**)&end, 0);
-                        newAlignment = exact_log2(value);
+                        newAlignment = alignlog2_32(value);
 
                         if (0 != *end) {
                             nasm_error(ERR_PANIC,

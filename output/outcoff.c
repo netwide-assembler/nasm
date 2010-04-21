@@ -391,13 +391,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
                               " to better than 64-byte boundaries");
                     else {
                         align_and = ~0x00F00000L;
-                        align_or = (align == 1 ? 0x00100000L :
-                                    align == 2 ? 0x00200000L :
-                                    align == 4 ? 0x00300000L :
-                                    align == 8 ? 0x00400000L :
-                                    align == 16 ? 0x00500000L :
-                                    align ==
-                                    32 ? 0x00600000L : 0x00700000L);
+			align_or  = ilog2_32(align) << 20;
                     }
                 }
             }
