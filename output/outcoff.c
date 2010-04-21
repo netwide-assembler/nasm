@@ -141,13 +141,56 @@ struct Section {
     int32_t pos, relpos;
 };
 
-#define TEXT_FLAGS      ((win32 | win64) ? 0x60500020L : 0x20L)
-#define DATA_FLAGS      ((win32 | win64) ? 0xC0300040L : 0x40L)
-#define BSS_FLAGS       ((win32 | win64) ? 0xC0300080L : 0x80L)
+/*
+ * Some common section flags by default
+ */
+#define TEXT_FLAGS_WIN                                  \
+        (IMAGE_SCN_CNT_CODE                     |       \
+         IMAGE_SCN_ALIGN_16BYTES                |       \
+         IMAGE_SCN_MEM_EXECUTE                  |       \
+         IMAGE_SCN_MEM_READ)
+#define TEXT_FLAGS_DOS                                  \
+        (IMAGE_SCN_CNT_CODE)
+
+#define DATA_FLAGS_WIN                                  \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA         |       \
+         IMAGE_SCN_ALIGN_4BYTES                 |       \
+         IMAGE_SCN_MEM_READ                     |       \
+         IMAGE_SCN_MEM_WRITE)
+#define DATA_FLAGS_DOS                                  \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA)
+
+#define BSS_FLAGS_WIN                                   \
+        (IMAGE_SCN_CNT_UNINITIALIZED_DATA       |       \
+         IMAGE_SCN_ALIGN_4BYTES                 |       \
+         IMAGE_SCN_MEM_READ                     |       \
+         IMAGE_SCN_MEM_WRITE)
+#define BSS_FLAGS_DOS                                   \
+        (IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+
+#define RDATA_FLAGS_WIN                                 \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA         |       \
+         IMAGE_SCN_ALIGN_8BYTES                 |       \
+         IMAGE_SCN_MEM_READ)
+
+#define RDATA_FLAGS_DOS                                 \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA)
+
+#define PDATA_FLAGS                                     \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA         |       \
+         IMAGE_SCN_ALIGN_4BYTES                 |       \
+         IMAGE_SCN_MEM_READ)
+
+#define XDATA_FLAGS                                     \
+        (IMAGE_SCN_CNT_INITIALIZED_DATA         |       \
+         IMAGE_SCN_ALIGN_8BYTES                 |       \
+         IMAGE_SCN_MEM_READ)    
+
+#define TEXT_FLAGS      ((win32 | win64) ? TEXT_FLAGS_WIN  : TEXT_FLAGS_DOS)
+#define DATA_FLAGS      ((win32 | win64) ? DATA_FLAGS_WIN  : DATA_FLAGS_DOS)
+#define BSS_FLAGS       ((win32 | win64) ? BSS_FLAGS_WIN   : BSS_FLAGS_DOS)
+#define RDATA_FLAGS     ((win32 | win64) ? RDATA_FLAGS_WIN : RDATA_FLAGS_DOS)
 #define INFO_FLAGS      0x00100A00L
-#define RDATA_FLAGS     ((win32 | win64) ? 0x40400040L : 0x40L)
-#define PDATA_FLAGS     (0x40300040)    /* rdata align=4 */
-#define XDATA_FLAGS     (0x40400040)    /* rdate align=8 */
 
 #define SECT_DELTA 32
 static struct Section **sects;
