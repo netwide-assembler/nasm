@@ -117,15 +117,6 @@ struct Reloc {
     int16_t type;
 };
 
-/* possible values for Reloc->type */
-#define IMAGE_REL_AMD64_ADDR64		0x0001
-#define IMAGE_REL_AMD64_ADDR32		0x0002
-#define IMAGE_REL_AMD64_ADDR32NB	0x0003
-#define IMAGE_REL_AMD64_REL32		0x0004
-#define IMAGE_REL_I386_DIR32		0x0006
-#define IMAGE_REL_I386_DIR32NB		0x0007
-#define IMAGE_REL_I386_REL32		0x0014
-
 struct Symbol {
     char name[9];
     int32_t strpos;		/* string table position of name */
@@ -150,11 +141,13 @@ struct Section {
     int32_t pos, relpos;
 };
 
-#define TEXT_FLAGS ((win32 | win64) ? 0x60500020L : 0x20L)
-#define DATA_FLAGS ((win32 | win64) ? 0xC0300040L : 0x40L)
-#define BSS_FLAGS ((win32 | win64) ? 0xC0300080L : 0x80L)
-#define INFO_FLAGS 0x00100A00L
-#define RDATA_FLAGS ((win32 | win64) ? 0x40400040L : 0x40L)
+#define TEXT_FLAGS      ((win32 | win64) ? 0x60500020L : 0x20L)
+#define DATA_FLAGS      ((win32 | win64) ? 0xC0300040L : 0x40L)
+#define BSS_FLAGS       ((win32 | win64) ? 0xC0300080L : 0x80L)
+#define INFO_FLAGS      0x00100A00L
+#define RDATA_FLAGS     ((win32 | win64) ? 0x40400040L : 0x40L)
+#define PDATA_FLAGS     (0x40300040)    /* rdata align=4 */
+#define XDATA_FLAGS     (0x40400040)    /* rdate align=8 */
 
 #define SECT_DELTA 32
 static struct Section **sects;
@@ -380,9 +373,9 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
             else if (!strcmp(name, ".bss"))
                 flags = BSS_FLAGS;
 	    else if (win64 && !strcmp(name, ".pdata"))
-		flags = 0x40300040; /* rdata align=4 */
+		flags = PDATA_FLAGS;
 	    else if (win64 && !strcmp(name, ".xdata"))
-		flags = 0x40400040; /* rdate align=8 */
+		flags = XDATA_FLAGS;
             else
                 flags = TEXT_FLAGS;
         }
