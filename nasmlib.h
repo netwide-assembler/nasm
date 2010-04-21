@@ -463,4 +463,16 @@ int idata_bytes(int opcode);
 /* check if value is power of 2 */
 #define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
 
+/*
+ * floor(log2(v))
+ */
+int ilog2_32(uint32_t v);
+int ilog2_64(uint64_t v);
+
+/*
+ * v == 0 ? 0 : is_power2(x) ? ilog2_X(v) : -1
+ */
+int alignlog2_32(uint32_t v);
+int alignlog2_64(uint64_t v);
+
 #endif

@@ -44,6 +44,7 @@ NASM =	nasm.o nasmlib.o ver.o \
 	outmacho64.o preproc.o quote.o pptok.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
 	strfunc.o tokhash.o regvals.o regflags.o \
+	ilog2.o \
 	strlcpy.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o ver.o \
@@ -142,6 +143,7 @@ float.o: float.c compiler.h config.h directives.h float.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h
 hashtbl.o: hashtbl.c compiler.h config.h directives.h hashtbl.h insnsi.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h
+ilog2.o: ilog2.c compiler.h config.h nasmlib.h
 insnsa.o: insnsa.c compiler.h config.h directives.h insns.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tokens.h
 insnsb.o: insnsb.c compiler.h config.h directives.h insns.h insnsi.h nasm.h \
@@ -178,8 +180,9 @@ outas86.o: outas86.c compiler.h config.h directives.h insnsi.h nasm.h \
 outbin.o: outbin.c compiler.h config.h directives.h eval.h insnsi.h labels.h \
  nasm.h nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h \
  saa.h stdscan.h
-outcoff.o: outcoff.c pecoff.h compiler.h config.h directives.h eval.h insnsi.h nasm.h \
- nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h
+outcoff.o: outcoff.c compiler.h config.h directives.h eval.h insnsi.h nasm.h \
+ nasmlib.h opflags.h outform.h outlib.h pecoff.h pptok.h preproc.h raa.h \
+ regs.h saa.h
 outdbg.o: outdbg.c compiler.h config.h directives.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h
 outelf.o: outelf.c compiler.h config.h directives.h insnsi.h nasm.h \

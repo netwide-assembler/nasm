@@ -60,6 +60,7 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) &
 	output\outmacho64.$(O) preproc.$(O) quote.$(O) pptok.$(O) &
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) &
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) &
+	ilog2.$(O) &
 	lib\strlcpy.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) &
@@ -234,6 +235,7 @@ float.$(O): float.c compiler.h directives.h float.h insnsi.h nasm.h &
  nasmlib.h opflags.h pptok.h preproc.h regs.h
 hashtbl.$(O): hashtbl.c compiler.h directives.h hashtbl.h insnsi.h nasm.h &
  nasmlib.h opflags.h pptok.h preproc.h regs.h
+ilog2.$(O): ilog2.c compiler.h nasmlib.h
 insnsa.$(O): insnsa.c compiler.h directives.h insns.h insnsi.h nasm.h &
  nasmlib.h opflags.h pptok.h preproc.h regs.h tokens.h
 insnsb.$(O): insnsb.c compiler.h directives.h insns.h insnsi.h nasm.h &
@@ -270,9 +272,9 @@ output\outas86.$(O): output\outas86.c compiler.h directives.h insnsi.h &
 output\outbin.$(O): output\outbin.c compiler.h directives.h eval.h insnsi.h &
  labels.h nasm.h nasmlib.h opflags.h output\outform.h output\outlib.h &
  pptok.h preproc.h regs.h saa.h stdscan.h
-output\outcoff.$(O): output\outcoff.c output\pecoff.h compiler.h directives.h eval.h &
+output\outcoff.$(O): output\outcoff.c compiler.h directives.h eval.h &
  insnsi.h nasm.h nasmlib.h opflags.h output\outform.h output\outlib.h &
- pptok.h preproc.h raa.h regs.h saa.h
+ output\pecoff.h pptok.h preproc.h raa.h regs.h saa.h
 output\outdbg.$(O): output\outdbg.c compiler.h directives.h insnsi.h nasm.h &
  nasmlib.h opflags.h output\outform.h pptok.h preproc.h regs.h
 output\outelf.$(O): output\outelf.c compiler.h directives.h insnsi.h nasm.h &
