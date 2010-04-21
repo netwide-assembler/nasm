@@ -183,6 +183,7 @@ install: nasm$(X) ndisasm$(X)
 
 clean:
 	$(RM) -f *.$(O) *.s *.i
+	$(RM) -f lib/*.$(O) lib/*.s lib/*.i
 	$(RM) -f output/*.$(O) output/*.s output/*.i
 	$(RM) -f nasm$(X) ndisasm$(X)
 	cd rdoff && $(MAKE) clean

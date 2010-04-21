@@ -161,6 +161,9 @@ clean: .SYMBOLIC
 	-del /f *.$(O)
 	-del /f *.s
 	-del /f *.i
+	-del /f lib\*.$(O)
+	-del /f lib\*.s
+	-del /f lib\*.i
 	-del /f output\*.$(O)
 	-del /f output\*.s
 	-del /f output\*.i

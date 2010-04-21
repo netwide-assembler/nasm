@@ -171,6 +171,9 @@ clean:
 	-rm -f *.$(O)
 	-rm -f *.s
 	-rm -f *.i
+	-rm -f lib/*.$(O)
+	-rm -f lib/*.s
+	-rm -f lib/*.i
 	-rm -f output/*.$(O)
 	-rm -f output/*.s
 	-rm -f output/*.i
