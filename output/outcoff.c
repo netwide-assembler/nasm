@@ -971,6 +971,34 @@ static void coff_write_symbols(void)
     }
 }
 
+static void coff_sectalign(int32_t seg, unsigned int value)
+{
+    struct Section *s = NULL;
+    uint32_t align;
+    int i;
+
+    for (i = 0; i < nsects; i++) {
+        if (sects[i]->index == seg) {
+            s = sects[i];
+            break;
+        }
+    }
+
+    if (!s || !is_power2(value) || value > 64)
+        return;
+
+    align = (s->flags & 0x00F00000L);
+    value = (value ==  1 ? 0x00100000L :
+             value ==  2 ? 0x00200000L :
+             value ==  4 ? 0x00300000L :
+             value ==  8 ? 0x00400000L :
+             value == 16 ? 0x00500000L :
+             value == 32 ? 0x00600000L : 0x00700000L);
+
+    if (value > align)
+        s->flags = (s->flags & ~0x00F00000L) | value;
+}
+
 static int32_t coff_segbase(int32_t segment)
 {
     return segment;
@@ -1012,7 +1040,7 @@ struct ofmt of_coff = {
     coff_out,
     coff_deflabel,
     coff_section_names,
-    null_sectalign,
+    coff_sectalign,
     coff_segbase,
     coff_directives,
     coff_std_filename,
@@ -1035,7 +1063,7 @@ struct ofmt of_win32 = {
     coff_out,
     coff_deflabel,
     coff_section_names,
-    null_sectalign,
+    coff_sectalign,
     coff_segbase,
     coff_directives,
     coff_win32_filename,
@@ -1058,7 +1086,7 @@ struct ofmt of_win64 = {
     coff_out,
     coff_deflabel,
     coff_section_names,
-    null_sectalign,
+    coff_sectalign,
     coff_segbase,
     coff_directives,
     coff_win32_filename,
