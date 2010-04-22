@@ -35,6 +35,13 @@
 #define PECOFF_H
 
 /*
+ * Microsoft Portable Executable and Common Object
+ * File Format Specification
+ *
+ * Revision 8.1 – February 15, 2008
+ */
+
+/*
  * Machine types
  */
 #define IMAGE_FILE_MACHINE_UNKNOWN      0x0000
@@ -198,11 +205,271 @@
 #define IMAGE_REL_I386_REL32            0x0014
 
 /*
- * TODO: Add other archs here?
+ * Relocation types ARM
  */
+#define IMAGE_REL_ARM_ABSOLUTE          0x0000
+#define IMAGE_REL_ARM_ADDR32            0x0001
+#define IMAGE_REL_ARM_ADDR32NB          0x0002
+#define IMAGE_REL_ARM_BRANCH24          0x0003
+#define IMAGE_REL_ARM_BRANCH11          0x0004
+#define IMAGE_REL_ARM_SECTION           0x000e
+#define IMAGE_REL_ARM_SECREL            0x000f
 
 /*
- * TODO: Append the rest definitions from spec
+ * Relocation types Hitachi SuperH
  */
+#define IMAGE_REL_SH3_ABSOLUTE          0x0000
+#define IMAGE_REL_SH3_DIRECT16          0x0001
+#define IMAGE_REL_SH3_DIRECT32          0x0002
+#define IMAGE_REL_SH3_DIRECT8           0x0003
+#define IMAGE_REL_SH3_DIRECT8_WORD      0x0004
+#define IMAGE_REL_SH3_DIRECT8_LONG      0x0005
+#define IMAGE_REL_SH3_DIRECT4           0x0006
+#define IMAGE_REL_SH3_DIRECT4_WORD      0x0007
+#define IMAGE_REL_SH3_DIRECT4_LONG      0x0008
+#define IMAGE_REL_SH3_PCREL8_WORD       0x0009
+#define IMAGE_REL_SH3_PCREL8_LONG       0x000a
+#define IMAGE_REL_SH3_PCREL12_WORD      0x000b
+#define IMAGE_REL_SH3_STARTOF_SECTION   0x000c
+#define IMAGE_REL_SH3_SIZEOF_SECTION    0x000d
+#define IMAGE_REL_SH3_SECTION           0x000e
+#define IMAGE_REL_SH3_SECREL            0x000f
+#define IMAGE_REL_SH3_DIRECT32_NB       0x0010
+#define IMAGE_REL_SH3_GPREL4_LONG       0x0011
+#define IMAGE_REL_SH3_TOKEN             0x0012
+#define IMAGE_REL_SHM_PCRELPT           0x0013
+#define IMAGE_REL_SHM_REFLO             0x0014
+#define IMAGE_REL_SHM_REFHALF           0x0015
+#define IMAGE_REL_SHM_RELLO             0x0016
+#define IMAGE_REL_SHM_RELHALF           0x0017
+#define IMAGE_REL_SHM_PAIR              0x0018
+#define IMAGE_REL_SHM_NOMODE            0x8000
+
+/*
+ * Relocation types IBM PowerPC processors
+ */
+#define IMAGE_REL_PPC_ABSOLUTE          0x0000
+#define IMAGE_REL_PPC_ADDR64            0x0001
+#define IMAGE_REL_PPC_ADDR32            0x0002
+#define IMAGE_REL_PPC_ADDR24            0x0003
+#define IMAGE_REL_PPC_ADDR16            0x0004
+#define IMAGE_REL_PPC_ADDR14            0x0005
+#define IMAGE_REL_PPC_REL24             0x0006
+#define IMAGE_REL_PPC_REL14             0x0007
+#define IMAGE_REL_PPC_ADDR32NB          0x000a
+#define IMAGE_REL_PPC_SECREL            0x000b
+#define IMAGE_REL_PPC_SECTION           0x000c
+#define IMAGE_REL_PPC_SECREL16          0x000f
+#define IMAGE_REL_PPC_REFHI             0x0010
+#define IMAGE_REL_PPC_REFLO             0x0011
+#define IMAGE_REL_PPC_PAIR              0x0012
+#define IMAGE_REL_PPC_SECRELLO          0x0013
+#define IMAGE_REL_PPC_GPREL             0x0015
+#define IMAGE_REL_PPC_TOKEN             0x0016
+
+/*
+ * Relocation types Intel Itanium processor family (IPF)
+ */
+#define IMAGE_REL_IA64_ABSOLUTE         0x0000
+#define IMAGE_REL_IA64_IMM14            0x0001
+#define IMAGE_REL_IA64_IMM22            0x0002
+#define IMAGE_REL_IA64_IMM64            0x0003
+#define IMAGE_REL_IA64_DIR32            0x0004
+#define IMAGE_REL_IA64_DIR64            0x0005
+#define IMAGE_REL_IA64_PCREL21B         0x0006
+#define IMAGE_REL_IA64_PCREL21M         0x0007
+#define IMAGE_REL_IA64_PCREL21F         0x0008
+#define IMAGE_REL_IA64_GPREL22          0x0009
+#define IMAGE_REL_IA64_LTOFF22          0x000a
+#define IMAGE_REL_IA64_SECTION          0x000b
+#define IMAGE_REL_IA64_SECREL22         0x000c
+#define IMAGE_REL_IA64_SECREL64I        0x000d
+#define IMAGE_REL_IA64_SECREL32         0x000e
+#define IMAGE_REL_IA64_DIR32NB          0x0010
+#define IMAGE_REL_IA64_SREL14           0x0011
+#define IMAGE_REL_IA64_SREL22           0x0012
+#define IMAGE_REL_IA64_SREL32           0x0013
+#define IMAGE_REL_IA64_UREL32           0x0014
+#define IMAGE_REL_IA64_PCREL60X         0x0015
+#define IMAGE_REL_IA64_PCREL 60B        0x0016
+#define IMAGE_REL_IA64_PCREL60F         0x0017
+#define IMAGE_REL_IA64_PCREL60I         0x0018
+#define IMAGE_REL_IA64_PCREL60M         0x0019
+#define IMAGE_REL_IA64_IMMGPREL64       0x001a
+#define IMAGE_REL_IA64_TOKEN            0x001b
+#define IMAGE_REL_IA64_GPREL32          0x001c
+#define IMAGE_REL_IA64_ADDEND           0x001f
+
+/*
+ * Relocation types MIPS Processors
+ */
+#define IMAGE_REL_MIPS_ABSOLUTE         0x0000
+#define IMAGE_REL_MIPS_REFHALF          0x0001
+#define IMAGE_REL_MIPS_REFWORD          0x0002
+#define IMAGE_REL_MIPS_JMPADDR          0x0003
+#define IMAGE_REL_MIPS_REFHI            0x0004
+#define IMAGE_REL_MIPS_REFLO            0x0005
+#define IMAGE_REL_MIPS_GPREL            0x0006
+#define IMAGE_REL_MIPS_LITERAL          0x0007
+#define IMAGE_REL_MIPS_SECTION          0x000a
+#define IMAGE_REL_MIPS_SECREL           0x000b
+#define IMAGE_REL_MIPS_SECRELLO         0x000c
+#define IMAGE_REL_MIPS_SECRELHI         0x000d
+#define IMAGE_REL_MIPS_JMPADDR16        0x0010
+#define IMAGE_REL_MIPS_REFWORDNB        0x0022
+#define IMAGE_REL_MIPS_PAIR             0x0025
+
+/*
+ * Relocation types Mitsubishi M32R
+ */
+#define IMAGE_REL_M32R_ABSOLUTE         0x0000
+#define IMAGE_REL_M32R_ADDR32           0x0001
+#define IMAGE_REL_M32R_ADDR32NB         0x0002
+#define IMAGE_REL_M32R_ADDR24           0x0003
+#define IMAGE_REL_M32R_GPREL16          0x0004
+#define IMAGE_REL_M32R_PCREL24          0x0005
+#define IMAGE_REL_M32R_PCREL16          0x0006
+#define IMAGE_REL_M32R_PCREL8           0x0007
+#define IMAGE_REL_M32R_REFHALF          0x0008
+#define IMAGE_REL_M32R_REFHI            0x0009
+#define IMAGE_REL_M32R_REFLO            0x000a
+#define IMAGE_REL_M32R_PAIR             0x000b
+#define IMAGE_REL_M32R_SECTION          0x000c
+#define IMAGE_REL_M32R_SECREL           0x000d
+#define IMAGE_REL_M32R_TOKEN            0x000e
+
+/*
+ * Section number values
+ */
+#define IMAGE_SYM_UNDEFINED      0
+#define IMAGE_SYM_ABSOLUTE      -1
+#define IMAGE_SYM_DEBUG         -2
+
+/*
+ * Type representation
+ */
+#define IMAGE_SYM_TYPE_NULL             0
+#define IMAGE_SYM_TYPE_VOID             1
+#define IMAGE_SYM_TYPE_CHAR             2
+#define IMAGE_SYM_TYPE_SHORT            3
+#define IMAGE_SYM_TYPE_INT              4
+#define IMAGE_SYM_TYPE_LONG             5
+#define IMAGE_SYM_TYPE_FLOAT            6
+#define IMAGE_SYM_TYPE_DOUBLE           7
+#define IMAGE_SYM_TYPE_STRUCT           8
+#define IMAGE_SYM_TYPE_UNION            9
+#define IMAGE_SYM_TYPE_ENUM             10
+#define IMAGE_SYM_TYPE_MOE              11
+#define IMAGE_SYM_TYPE_BYTE             12
+#define IMAGE_SYM_TYPE_WORD             13
+#define IMAGE_SYM_TYPE_UINT             14
+#define IMAGE_SYM_TYPE_DWORD            15
+
+#define IMAGE_SYM_DTYPE_NULL            0
+#define IMAGE_SYM_DTYPE_POINTER         1
+#define IMAGE_SYM_DTYPE_FUNCTION        2
+#define IMAGE_SYM_DTYPE_ARRAY           3
+
+/*
+ * Storage class
+ */
+#define IMAGE_SYM_CLASS_END_OF_FUNCTION         -1
+#define IMAGE_SYM_CLASS_NULL                    0
+#define IMAGE_SYM_CLASS_AUTOMATIC               1
+#define IMAGE_SYM_CLASS_EXTERNAL                2
+#define IMAGE_SYM_CLASS_STATIC                  3
+#define IMAGE_SYM_CLAS S_REGISTER               4
+#define IMAGE_SYM_CLASS_EXTERNAL_DEF            5
+#define IMAGE_SYM_CLASS_LABEL                   6
+#define IMAGE_SYM_CLASS_UNDEFINED_LABEL         7
+#define IMAGE_SYM_CLASS_MEMBER_OF_STRUCT        8
+#define IMAGE_SYM_CLASS_ARGUMENT                9
+#define IMAGE_SYM_CLASS_STRUCT_TAG              10
+#define IMAGE_SYM_CLASS_MEMBER_OF_UNION         11
+#define IMAGE_SYM_CLASS_UNION_TAG               12
+#define IMAGE_SYM_CLASS_TYPE_DEFINITION         13
+#define IMAGE_SYM_CLASS_UNDEFINED_STATIC        14
+#define IMAGE_SYM_CLASS_ENUM_TAG                15
+#define IMAGE_SYM_CLASS_MEMBER_OF_ENUM          16
+#define IMAGE_SYM_CLASS_REGISTER_PARAM          17
+#define IMAGE_SYM_CLASS_BIT_FIELD               18
+#define IMAGE_SYM_CLASS_BLOCK                   100
+#define IMAGE_SYM_CLASS_FUNCTION                101
+#define IMAGE_SYM_CLASS_END_OF_STRUCT           102
+#define IMAGE_SYM_CLASS_FILE                    103
+#define IMAGE_SYM_CLASS_SECTION                 104
+#define IMAGE_SYM_CLASS_WEAK_EXTERNAL           105
+#define IMAGE_SYM_CLASS_CLR_TOKEN               107
+
+/*
+ * COMDAT sections
+ */
+#define IMAGE_COMDAT_SELECT_NODUPLICATES        1
+#define IMAGE_COMDAT_SELECT_ANY                 2
+#define IMAGE_COMDAT_SELECT_SAME_SIZE           3
+#define IMAGE_COMDAT_SELECT_EXACT_MATCH         4
+#define IMAGE_COMDAT_SELECT_ASSOCIATIVE         5
+#define IMAGE_COMDAT_SELECT_LARGEST             6
+
+/*
+ * Attribute certificate table
+ */
+#define WIN_CERT_REVISION_1_0           0x0100
+#define WIN_CERT_REVISION_2_0           0x0200
+#define WIN_CERT_TYPE_X509              0x0001
+#define WIN_CERT_TYPE_PKCS_SIGNED_DATA  0x0002
+#define WIN_CERT_TYPE_RESERVED_1        0x0003
+#define WIN_CERT_TYPE_TS_STACK_SIGNED   0x0004
+
+/*
+ * Debug type
+ */
+#define IMAGE_DEBUG_TYPE_UNKNOWN        0
+#define IMAGE_DEBUG_TYPE_COFF           1
+#define IMAGE_DEBUG_TYPE_CODEVIEW       2
+#define IMAGE_DEBUG_TYPE_FPO            3
+#define IMAGE_DEBUG_TYPE_MISC           4
+#define IMAGE_DEBUG_TYPE_EXCEPTION      5
+#define IMAGE_DEBUG_TYPE_FIXUP          6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC    7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC  8
+#define IMAGE_DEBUG_TYP E_BORLAND       9
+#define IMAGE_DEBUG_TYPE_RESERVED10     10
+#define IMAGE_DEBUG_TYPE_CLSID          11
+
+/*
+ * Base relocation types
+ */
+#define IMAGE_REL_BASED_ABSOLUTE        0
+#define IMAGE_REL_BASED_HIGH            1
+#define IMAGE_REL_BASED_LOW             2
+#define IMAGE_REL_BASED_HIGHLOW         3
+#define IMAGE_REL_BASED_HIGHADJ         4
+#define IMAGE_REL_BASED_MIPS_JMPADDR    5
+#define IMAGE_REL_BASED_MIPS_JMPADDR16  9
+#define IMAGE_REL_BASED_DIR64           10
+
+/*
+ * TLS callback functions
+ */
+#define DLL_PROCESS_ATTACH      1
+#define DLL_THREAD_ATTACH       2
+#define DLL_THREAD_DETACH       3
+#define DLL_PROCESS_DETACH      0
+
+/*
+ * Import Type
+ */
+#define IMPORT_CODE     0
+#define IMPORT_DATA     1
+#define IMPORT_CONST    2
+
+/*
+ * Import name type
+ */
+#define IMPORT_ORDINAL          0
+#define IMPORT_NAME             1
+#define IMPORT_NAME_NOPREFIX    2
+#define IMPORT_NAME_UNDECORATE  3
 
 #endif /* PECOFF_H */
