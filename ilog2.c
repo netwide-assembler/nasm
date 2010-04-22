@@ -34,6 +34,14 @@
 #include "compiler.h"
 #include "nasmlib.h"
 
+#define ROUND(v, a, w)                      \
+    do {                                    \
+        if (v & (((1 << w) - 1) << w)) {    \
+            a  += w;                        \
+            v >>= w;                        \
+        }                                   \
+    } while (0)
+
 #if defined(__GNUC__) && defined(__x86_64__)
 
 int ilog2_32(uint32_t v)
@@ -75,26 +83,11 @@ int ilog2_32(uint32_t v)
 {
     int p = 0;
 
-    if (v & 0xffff0000) {
-        p += 16;
-        v >>= 16;
-    }
-    if (v & 0xff00) {
-        p += 8;
-        v >>= 8;
-    }
-    if (v & 0xf0) {
-        p += 4;
-        v >>= 4;
-    }
-    if (v & 0xc) {
-        p += 2;
-        v >>= 2;
-    }
-    if (v & 0x2) {
-        p += 1;
-        v >>= 1;
-    }
+    ROUND(v, p, 16);
+    ROUND(v, p,  8);
+    ROUND(v, p,  4);
+    ROUND(v, p,  2);
+    ROUND(v, p,  1);
 
     return p;
 }
@@ -130,31 +123,17 @@ int ilog2_64(uint64_t vv)
     int p = 0;
     uint32_t v;
 
-    if ((v = vv >> 32) != 0) {
+    v = vv >> 32;
+    if (v)
         p += 32;
-    } else {
+    else
         v = vv;
-    }
-    if (v & 0xffff0000) {
-        p += 16;
-        v >>= 16;
-    }
-    if (v & 0xff00) {
-        p += 8;
-        v >>= 8;
-    }
-    if (v & 0xf0) {
-        p += 4;
-        v >>= 4;
-    }
-    if (v & 0xc) {
-        p += 2;
-        v >>= 2;
-    }
-    if (v & 0x2) {
-        p += 1;
-        v >>= 1;
-    }
+
+    ROUND(v, p, 16);
+    ROUND(v, p,  8);
+    ROUND(v, p,  4);
+    ROUND(v, p,  2);
+    ROUND(v, p,  1);
 
     return p;
 }
