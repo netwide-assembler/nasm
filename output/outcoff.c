@@ -1042,10 +1042,10 @@ static void coff_sectalign(int32_t seg, unsigned int value)
     if (!(win32 | win64) && value > 64)
         return;
 
-    align = (s->flags & 0x00F00000L);
+    align = (s->flags & IMAGE_SCN_ALIGN_MASK);
     value = coff_sectalign_flags(value);
     if (value > align)
-        s->flags = (s->flags & ~0x00F00000L) | value;
+        s->flags = (s->flags & ~IMAGE_SCN_ALIGN_MASK) | value;
 }
 
 static int32_t coff_segbase(int32_t segment)
