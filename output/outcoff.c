@@ -312,6 +312,11 @@ static int coff_make_section(char *name, uint32_t flags)
     return nsects - 1;
 }
 
+static inline int32_t coff_sectalign_flags(unsigned int align)
+{
+    return (ilog2_32(align) + 1) << 20;
+}
+
 static int32_t coff_section_names(char *name, int pass, int *bits)
 {
     char *p;
@@ -394,7 +399,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
                               " to better than 64-byte boundaries");
                     else {
                         align_and = ~0x00F00000L;
-                        align_or  = ilog2_32(align) << 20;
+                        align_or  = coff_sectalign_flags(align);
                     }
                 }
             }
@@ -1034,13 +1039,7 @@ static void coff_sectalign(int32_t seg, unsigned int value)
         return;
 
     align = (s->flags & 0x00F00000L);
-    value = (value ==  1 ? 0x00100000L :
-             value ==  2 ? 0x00200000L :
-             value ==  4 ? 0x00300000L :
-             value ==  8 ? 0x00400000L :
-             value == 16 ? 0x00500000L :
-             value == 32 ? 0x00600000L : 0x00700000L);
-
+    value = coff_sectalign_flags(value);
     if (value > align)
         s->flags = (s->flags & ~0x00F00000L) | value;
 }
