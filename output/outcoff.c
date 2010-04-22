@@ -1035,7 +1035,11 @@ static void coff_sectalign(int32_t seg, unsigned int value)
         }
     }
 
-    if (!s || !is_power2(value) || value > 64)
+    if (!s || !is_power2(value))
+        return;
+
+    /* DOS has limitation on 64 bytes */
+    if (!(win32 | win64) && value > 64)
         return;
 
     align = (s->flags & 0x00F00000L);
