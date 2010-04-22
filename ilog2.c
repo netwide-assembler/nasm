@@ -48,9 +48,9 @@ int ilog2_32(uint32_t v)
 {
     int n;
 
-    __asm__("bsrl %1,%0 ; cmovel %2,%0"
-            : "=&r" (n)
-            : "rm" (v), "rm" (0));
+    __asm__("bsrl %1,%0"
+            : "=r" (n)
+            : "rm" (v), "0" (0));
     return n;
 }
 
@@ -100,9 +100,9 @@ int ilog2_64(uint64_t v)
 {
     uint64_t n;
 
-    __asm__("bsrq %1,%0 ; cmoveq %2,%0"
-            : "=&r" (n)
-            : "rm" (v), "rm" (UINT64_C(0)));
+    __asm__("bsrq %1,%0"
+            : "=r" (n)
+            : "rm" (v), "0" (UINT64_C(0)));
     return n;
 }
 
