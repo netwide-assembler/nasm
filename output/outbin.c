@@ -152,8 +152,7 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
-static uint8_t format_mode;       /* 0 = original bin, 1 = extended bin */
-static int32_t current_section;    /* only really needed if format_mode = 0 */
+static int32_t current_section;
 static uint64_t origin;
 static int origin_defined;
 
@@ -889,7 +888,7 @@ static int bin_read_attribute(char **line, int *attribute,
     if (!nasm_strnicmp(*line, "align=", 6)) {
         *attribute = ATTRIB_ALIGN;
         attrib_name_size = 6;
-    } else if (format_mode) {
+    } else {
         if (!nasm_strnicmp(*line, "start=", 6)) {
             *attribute = ATTRIB_START;
             attrib_name_size = 6;
@@ -919,8 +918,7 @@ static int bin_read_attribute(char **line, int *attribute,
             return 1;
         } else
             return 0;
-    } else
-        return 0;
+    }
 
     /* Find the end of the expression. */
     if ((*line)[attrib_name_size] != '(') {
@@ -1006,13 +1004,6 @@ static void bin_sectalign(int32_t seg, unsigned int value)
     if (!s || !is_power2(value))
         return;
 
-    /*
-     * Extended bin format non-default alignment
-     * is forbidden
-     */
-    if (!format_mode && (!strcmp(s->name, ".text")))
-        return;
-
     if (value > s->align)
         s->align = value;
 
@@ -1071,29 +1062,24 @@ static void bin_assign_attributes(struct Section *sec, char *astring)
 
             /* Handle align attribute. */
         case ATTRIB_ALIGN:
-            if (!format_mode && (!strcmp(sec->name, ".text")))
-                nasm_error(ERR_NONFATAL, "cannot specify an alignment"
-                      " to the .text section");
-            else {
-                if (!value || ((value - 1) & value))
-                    nasm_error(ERR_NONFATAL, "argument to `align' is not a"
-                          " power of two");
-                else {          /* Alignment is already satisfied if the previous
-                                 * align value is greater. */
-                    if ((sec->flags & ALIGN_DEFINED)
-                        && (value < sec->align))
-                        value = sec->align;
+            if (!value || ((value - 1) & value)) {
+                nasm_error(ERR_NONFATAL,
+                           "argument to `align' is not a power of two");
+            } else {
+                /*
+                 * Alignment is already satisfied if
+                 * the previous align value is greater
+                 */
+                if ((sec->flags & ALIGN_DEFINED) && (value < sec->align))
+                    value = sec->align;
 
-                    /* Don't allow a conflicting align value. */
-                    if ((sec->flags & START_DEFINED)
-                        && (sec->start & (value - 1)))
-                        nasm_error(ERR_NONFATAL,
-                              "`align' value conflicts "
-                              "with section start address");
-                    else {
-                        sec->align = value;
-                        sec->flags |= ALIGN_DEFINED;
-                    }
+                /* Don't allow a conflicting align value. */
+                if ((sec->flags & START_DEFINED) && (sec->start & (value - 1))) {
+                    nasm_error(ERR_NONFATAL,
+                              "`align' value conflicts with section start address");
+                } else {
+                    sec->align  = value;
+                    sec->flags |= ALIGN_DEFINED;
                 }
             }
             continue;
@@ -1249,7 +1235,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
                             ALIGN_DEFINED | VALIGN_DEFINED);
 
         /* Define section start and vstart labels. */
-        if (format_mode && (pass != 1))
+        if (pass != 1)
             bin_define_section_labels();
 
         /* Establish the default (.text) section. */
@@ -1275,10 +1261,6 @@ static int32_t bin_secname(char *name, int pass, int *bits)
         else if (!strcmp(name, ".bss")) {
             sec->flags |= TYPE_DEFINED | TYPE_NOBITS;
             sec->ifollows = NULL;
-        } else if (!format_mode) {
-            nasm_error(ERR_NONFATAL, "section name must be "
-                  ".text, .data, or .bss");
-            return current_section;
         }
     }
 
@@ -1449,8 +1431,6 @@ static void binfmt_init(void)
     origin_defined = 0;
     no_seg_labels = NULL;
     nsl_tail = &no_seg_labels;
-    format_mode = 1;            /* Extended bin format
-                                 * (set this to zero for old bin format). */
 
     /* Create default section (.text). */
     sections = last_section = nasm_malloc(sizeof(struct Section));
