@@ -999,6 +999,27 @@ static int bin_read_attribute(char **line, int *attribute,
     return 1;
 }
 
+static void bin_sectalign(int32_t seg, unsigned int value)
+{
+    struct Section *s = find_section_by_index(seg);
+
+    if (!s || !is_power2(value))
+        return;
+
+    /*
+     * Extended bin format non-default alignment
+     * is forbidden
+     */
+    if (!format_mode && (!strcmp(s->name, ".text")))
+        return;
+
+    if (value > s->align)
+        s->align = value;
+
+    if (!(s->flags & ALIGN_DEFINED))
+        s->flags |= ALIGN_DEFINED;
+}
+
 static void bin_assign_attributes(struct Section *sec, char *astring)
 {
     int attribute, check;
@@ -1672,7 +1693,7 @@ struct ofmt of_bin = {
     bin_out,
     bin_deflabel,
     bin_secname,
-    null_sectalign,
+    bin_sectalign,
     bin_segbase,
     bin_directive,
     bin_filename,
@@ -1691,7 +1712,7 @@ struct ofmt of_ith = {
     bin_out,
     bin_deflabel,
     bin_secname,
-    null_sectalign,
+    bin_sectalign,
     bin_segbase,
     bin_directive,
     ith_filename,
@@ -1710,7 +1731,7 @@ struct ofmt of_srec = {
     bin_out,
     bin_deflabel,
     bin_secname,
-    null_sectalign,
+    bin_sectalign,
     bin_segbase,
     bin_directive,
     srec_filename,
