@@ -41,8 +41,8 @@ int ilog2_32(uint32_t v)
     int n;
 
     __asm__("bsrl %1,%0 ; cmovel %2,%0"
-	    : "=&r" (n)
-	    : "rm" (v), "rm" (0));
+            : "=&r" (n)
+            : "rm" (v), "rm" (0));
     return n;
 }
 
@@ -53,9 +53,9 @@ int ilog2_32(uint32_t v)
     int n;
 
     __asm__("bsrl %1,%0 ; jnz 1f ; xorl %0,%0\n"
-	    "1:"
-	    : "=&r" (n)
-	    : "rm" (v));
+            "1:"
+            : "=&r" (n)
+            : "rm" (v));
     return n;
 }
 
@@ -64,39 +64,39 @@ int ilog2_32(uint32_t v)
 int ilog2_32(uint32_t v)
 {
     if (!v)
-	return 0;
-    else
-	return __builtin_clz(v) ^ 31;
+        return 0;
+
+    return __builtin_clz(v) ^ 31;
 }
 
 #else
 
 int ilog2_32(uint32_t v)
 {
-	int p = 0;
+    int p = 0;
 
-	if (v & 0xffff0000) {
-		p += 16;
-		v >>= 16;
-	}
-	if (v & 0xff00) {
-		p += 8;
-		v >>= 8;
-	}
-	if (v & 0xf0) {
-		p += 4;
-		v >>= 4;
-	}
-	if (v & 0xc) {
-		p += 2;
-		v >>= 2;
-	}
-	if (v & 0x2) {
-		p += 1;
-		v >>= 1;
-	}
+    if (v & 0xffff0000) {
+        p += 16;
+        v >>= 16;
+    }
+    if (v & 0xff00) {
+        p += 8;
+        v >>= 8;
+    }
+    if (v & 0xf0) {
+        p += 4;
+        v >>= 4;
+    }
+    if (v & 0xc) {
+        p += 2;
+        v >>= 2;
+    }
+    if (v & 0x2) {
+        p += 1;
+        v >>= 1;
+    }
 
-	return p;
+    return p;
 }
 
 #endif
@@ -108,8 +108,8 @@ int ilog2_64(uint64_t v)
     uint64_t n;
 
     __asm__("bsrq %1,%0 ; cmoveq %2,%0"
-	    : "=&r" (n)
-	    : "rm" (v), "rm" (UINT64_C(0)));
+            : "=&r" (n)
+            : "rm" (v), "rm" (UINT64_C(0)));
     return n;
 }
 
@@ -118,45 +118,45 @@ int ilog2_64(uint64_t v)
 int ilog2_64(uint64_t v)
 {
     if (!v)
-	return 0;
-    else
-	return __builtin_clzll(v) ^ 63;
+        return 0;
+
+    return __builtin_clzll(v) ^ 63;
 }
 
 #else
 
 int ilog2_64(uint64_t vv)
 {
-	int p = 0;
-	uint32_t v;
+    int p = 0;
+    uint32_t v;
 
-	if ((v = vv >> 32) != 0) {
-	    p += 32;
-	} else {
-	    v = vv;
-	}
-	if (v & 0xffff0000) {
-		p += 16;
-		v >>= 16;
-	}
-	if (v & 0xff00) {
-		p += 8;
-		v >>= 8;
-	}
-	if (v & 0xf0) {
-		p += 4;
-		v >>= 4;
-	}
-	if (v & 0xc) {
-		p += 2;
-		v >>= 2;
-	}
-	if (v & 0x2) {
-		p += 1;
-		v >>= 1;
-	}
+    if ((v = vv >> 32) != 0) {
+        p += 32;
+    } else {
+        v = vv;
+    }
+    if (v & 0xffff0000) {
+        p += 16;
+        v >>= 16;
+    }
+    if (v & 0xff00) {
+        p += 8;
+        v >>= 8;
+    }
+    if (v & 0xf0) {
+        p += 4;
+        v >>= 4;
+    }
+    if (v & 0xc) {
+        p += 2;
+        v >>= 2;
+    }
+    if (v & 0x2) {
+        p += 1;
+        v >>= 1;
+    }
 
-	return p;
+    return p;
 }
 
 #endif
@@ -167,7 +167,7 @@ int ilog2_64(uint64_t vv)
 int alignlog2_32(uint32_t v)
 {
     if (unlikely(v & (v-1)))
-	return -1;		/* invalid alignment */
+        return -1;              /* invalid alignment */
 
     return ilog2_32(v);
 }
@@ -175,7 +175,7 @@ int alignlog2_32(uint32_t v)
 int alignlog2_64(uint64_t v)
 {
     if (unlikely(v & (v-1)))
-	return -1;		/* invalid alignment */
+        return -1;              /* invalid alignment */
 
     return ilog2_64(v);
 }
