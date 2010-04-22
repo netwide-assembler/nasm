@@ -152,7 +152,6 @@ static struct Reloc {
     struct Section *target;
 } *relocs, **reloctail;
 
-static int32_t current_section;
 static uint64_t origin;
 static int origin_defined;
 
@@ -1242,8 +1241,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
         *bits = 16;
         sec = find_section_by_name(".text");
         sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
-        current_section = sec->vstart_index;
-        return current_section;
+        return sec->vstart_index;
     }
 
     /* Attempt to find the requested section.  If it does not
@@ -1276,9 +1274,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
         sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
 #endif
 
-    /* Set the current section and return. */
-    current_section = sec->vstart_index;
-    return current_section;
+    return sec->vstart_index;
 }
 
 static int bin_directive(enum directives directive, char *args, int pass)
@@ -1444,7 +1440,7 @@ static void binfmt_init(void)
     last_section->labels = NULL;
     last_section->labels_end = &(last_section->labels);
     last_section->start_index = seg_alloc();
-    last_section->vstart_index = current_section = seg_alloc();
+    last_section->vstart_index = seg_alloc();
 }
 
 /* Generate binary file output */
