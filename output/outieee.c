@@ -843,6 +843,28 @@ static int ieee_directive(enum directives directive, char *value, int pass)
     }
 }
 
+static void ieee_sectalign(int32_t seg, unsigned int value)
+{
+    struct ieeeSection *s;
+
+    list_for_each(s, seghead) {
+        if (s->index == seg - 1)
+            break;
+    }
+
+    /*
+     * 256 is maximum there, note it may happen
+     * that align is issued on "absolute" segment
+     * it's fine since SEG_ABS > 256 and we never
+     * get escape this test
+     */
+    if (!s || !is_power2(value) || value > 256)
+        return;
+
+    if ((unsigned int)s->align < value)
+        s->align = value;
+}
+
 /*
  * Return segment data
  */
@@ -1501,7 +1523,7 @@ struct ofmt of_ieee = {
     ieee_out,
     ieee_deflabel,
     ieee_segment,
-    null_sectalign,
+    ieee_sectalign,
     ieee_segbase,
     ieee_directive,
     ieee_filename,
