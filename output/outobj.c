@@ -1777,6 +1777,49 @@ static int obj_directive(enum directives directive, char *value, int pass)
     }
 }
 
+static void obj_sectalign(int32_t seg, unsigned int value)
+{
+    struct Segment *s;
+
+    list_for_each(s, seghead) {
+        if (s->index == seg)
+            break;
+    }
+
+    /*
+     * it should not be too big value
+     * and applied on non-absolute sections
+     */
+    if (!s || !is_power2(value) ||
+        value > 4096 || s->align >= SEG_ABS)
+        return;
+
+    /*
+     * FIXME: No code duplication please
+     * consider making helper for this
+     * mapping since section handler has
+     * to do the same
+     */
+    switch (value) {
+    case 8:
+        value = 16;
+        break;
+    case 32:
+    case 64:
+    case 128:
+        value = 256;
+        break;
+    case 512:
+    case 1024:
+    case 2048:
+        value = 4096;
+        break;
+    }
+
+    if (s->align < (int)value)
+        s->align = value;
+}
+
 static int32_t obj_segbase(int32_t segment)
 {
     struct Segment *seg;
@@ -2559,7 +2602,7 @@ struct ofmt of_obj = {
     obj_out,
     obj_deflabel,
     obj_segment,
-    null_sectalign,
+    obj_sectalign,
     obj_segbase,
     obj_directive,
     obj_filename,
