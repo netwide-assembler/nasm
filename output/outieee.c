@@ -848,7 +848,7 @@ static void ieee_sectalign(int32_t seg, unsigned int value)
     struct ieeeSection *s;
 
     list_for_each(s, seghead) {
-        if (s->index == seg - 1)
+        if (s->index == seg)
             break;
     }
 
