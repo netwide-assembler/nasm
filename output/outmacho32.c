@@ -664,7 +664,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     ++nsyms;
 }
 
-static void macho_setcalign(int32_t seg, unsigned int value)
+static void macho_sectalign(int32_t seg, unsigned int value)
 {
     struct section *s;
 
@@ -1305,7 +1305,7 @@ struct ofmt of_macho32 = {
     macho_output,
     macho_symdef,
     macho_section,
-    macho_setcalign,
+    macho_sectalign,
     macho_segbase,
     null_directive,
     macho_filename,
