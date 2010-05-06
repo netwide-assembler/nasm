@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1336,14 +1336,18 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
 	case4(050):
-            if (opx->segment != segment)
-                errfunc(ERR_NONFATAL,
-                        "short relative jump outside segment");
-            data = opx->offset - insn_end;
-            if (data > 127 || data < -128)
-                errfunc(ERR_NONFATAL, "short jump is out of range");
-            bytes[0] = data;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            if (opx->segment != segment) {
+                data = opx->offset;
+                out(offset, segment, &data,
+                    OUT_REL1ADR, insn_end - offset,
+                    opx->segment, opx->wrt);
+            } else {
+                data = opx->offset - insn_end;
+		if (data > 127 || data < -128)
+		    errfunc(ERR_NONFATAL, "short jump is out of range");
+                out(offset, segment, &data,
+                    OUT_ADDRESS, 1, NO_SEG, NO_SEG);
+            }
             offset += 1;
             break;
 
