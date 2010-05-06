@@ -173,9 +173,30 @@ static void list_out(int32_t offset, char *str)
     strcat(listdata, str);
 }
 
+static void list_address(int32_t offset, const char *brackets,
+			 int64_t addr, int size)
+{
+    char q[20];
+    char *r = q;
+
+    nasm_assert(size <= 8);
+
+    *r++ = brackets[0];
+    while (size--) {
+	HEX(r, addr);
+	addr >>= 8;
+	r += 2;
+    }
+    *r++ = brackets[1];
+    *r = '\0';
+    list_out(offset, q);
+}
+
 static void list_output(int32_t offset, const void *data,
 			enum out_type type, uint64_t size)
 {
+    char q[20];
+
     if (!listp || suppress || user_nolist)      /* fbk - 9/2/00 */
         return;
 
@@ -183,7 +204,7 @@ static void list_output(int32_t offset, const void *data,
     case OUT_RAWDATA:
     {
         uint8_t const *p = data;
-        char q[3];
+
 	if (size == 0 && !listdata[0])
 	    listoffset = offset;
         while (size--) {
@@ -195,98 +216,22 @@ static void list_output(int32_t offset, const void *data,
 	break;
     }
     case OUT_ADDRESS:
-    {
-        uint64_t d = *(int64_t *)data;
-        char q[20];
-        uint8_t p[8], *r = p;
-        if (size == 4) {
-            q[0] = '[';
-            q[9] = ']';
-            q[10] = '\0';
-            WRITELONG(r, d);
-            HEX(q + 1, p[0]);
-            HEX(q + 3, p[1]);
-            HEX(q + 5, p[2]);
-            HEX(q + 7, p[3]);
-            list_out(offset, q);
-        } else if (size == 8) {
-            q[0] = '[';
-            q[17] = ']';
-            q[18] = '\0';
-            WRITEDLONG(r, d);
-            HEX(q + 1,  p[0]);
-            HEX(q + 3,  p[1]);
-            HEX(q + 5,  p[2]);
-            HEX(q + 7,  p[3]);
-            HEX(q + 9,  p[4]);
-            HEX(q + 11, p[5]);
-            HEX(q + 13, p[6]);
-            HEX(q + 15, p[7]);
-            list_out(offset, q);
-        } else {
-            q[0] = '[';
-            q[5] = ']';
-            q[6] = '\0';
-            WRITESHORT(r, d);
-            HEX(q + 1, p[0]);
-            HEX(q + 3, p[1]);
-            list_out(offset, q);
-        }
+	list_address(offset, "[]", *(int64_t *)data, size);
 	break;
-    }
+    case OUT_REL1ADR:
+	list_address(offset, "()", *(int64_t *)data, 1);
+	break;
     case OUT_REL2ADR:
-    {
-        uint32_t d = *(int32_t *)data;
-        char q[11];
-        uint8_t p[4], *r = p;
-        q[0] = '(';
-        q[5] = ')';
-        q[6] = '\0';
-        WRITESHORT(r, d);
-        HEX(q + 1, p[0]);
-        HEX(q + 3, p[1]);
-        list_out(offset, q);
+	list_address(offset, "()", *(int64_t *)data, 2);
 	break;
-    }
     case OUT_REL4ADR:
-    {
-        uint32_t d = *(int32_t *)data;
-        char q[11];
-        uint8_t p[4], *r = p;
-        q[0] = '(';
-        q[9] = ')';
-        q[10] = '\0';
-        WRITELONG(r, d);
-        HEX(q + 1, p[0]);
-        HEX(q + 3, p[1]);
-        HEX(q + 5, p[2]);
-        HEX(q + 7, p[3]);
-        list_out(offset, q);
+	list_address(offset, "()", *(int64_t *)data, 4);
 	break;
-    }
     case OUT_REL8ADR:
-    {
-        uint64_t d = *(int64_t *)data;
-        char q[19];
-        uint8_t p[8], *r = p;
-        q[0] = '(';
-        q[17] = ')';
-        q[18] = '\0';
-        WRITEDLONG(r, d);
-        HEX(q + 1, p[0]);
-        HEX(q + 3, p[1]);
-        HEX(q + 5, p[2]);
-        HEX(q + 7, p[3]);
-        HEX(q + 9, p[4]);
-        HEX(q + 11, p[5]);
-        HEX(q + 13, p[6]);
-        HEX(q + 15, p[7]);
-        list_out(offset, q);
+	list_address(offset, "()", *(int64_t *)data, 8);
 	break;
-    }
     case OUT_RESERVE:
     {
-        char q[20];
         snprintf(q, sizeof(q), "<res %08"PRIX64">", size);
         list_out(offset, q);
 	break;

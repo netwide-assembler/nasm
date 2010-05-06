@@ -540,24 +540,13 @@ static void bin_cleanup(int debuginfo)
     list_for_each(r, relocs) {
         uint8_t *p, *q, mydata[8];
         int64_t l;
+	int b;
 
         saa_fread(r->target->contents, r->posn, mydata, r->bytes);
         p = q = mydata;
-        l = *p++;
-
-        if (r->bytes > 1) {
-            l += ((int64_t)*p++) << 8;
-            if (r->bytes >= 4) {
-                l += ((int64_t)*p++) << 16;
-                l += ((int64_t)*p++) << 24;
-            }
-            if (r->bytes == 8) {
-                l += ((int64_t)*p++) << 32;
-                l += ((int64_t)*p++) << 40;
-                l += ((int64_t)*p++) << 48;
-                l += ((int64_t)*p++) << 56;
-            }
-        }
+        l = 0;
+	for (b = 0; b < r->bytes; b++)
+	    l = (l << 8) + *p++;
 
         s = find_section_by_index(r->secref);
         if (s) {
@@ -574,12 +563,7 @@ static void bin_cleanup(int debuginfo)
                 l -= s->vstart;
         }
 
-        if (r->bytes >= 4)
-            WRITEDLONG(q, l);
-        else if (r->bytes == 2)
-            WRITESHORT(q, l);
-        else
-            *q++ = (uint8_t)(l & 0xFF);
+	WRITEADDR(q, l, r->bytes);
         saa_fwrite(r->target->contents, r->posn, mydata, r->bytes);
     }
 
@@ -776,7 +760,8 @@ static void bin_out(int32_t segto, const void *data,
         nasm_error(ERR_WARNING, "attempt to initialize memory in a"
               " nobits section: ignored");
 
-    if (type == OUT_ADDRESS) {
+    switch (type) {
+    case OUT_ADDRESS:
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 nasm_error(ERR_NONFATAL, "binary output format does not support"
@@ -793,20 +778,26 @@ static void bin_out(int32_t segto, const void *data,
 	    WRITEADDR(p, *(int64_t *)data, size);
             saa_wbytes(s->contents, mydata, size);
         }
-        s->length += size;
-    } else if (type == OUT_RAWDATA) {
+	break;
+
+    case OUT_RAWDATA:
         if (s->flags & TYPE_PROGBITS)
             saa_wbytes(s->contents, data, size);
-        s->length += size;
-    } else if (type == OUT_RESERVE) {
+	break;
+
+    case OUT_RESERVE:
         if (s->flags & TYPE_PROGBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " %s section: zeroing", s->name);
             saa_wbytes(s->contents, NULL, size);
         }
-        s->length += size;
-    } else if (type == OUT_REL2ADR || type == OUT_REL4ADR ||
-	       type == OUT_REL8ADR) {
+	break;
+
+    case OUT_REL1ADR:
+    case OUT_REL2ADR:
+    case OUT_REL4ADR:
+    case OUT_REL8ADR:
+    {
 	int64_t addr = *(int64_t *)data - size;
 	size = realsize(type, size);
         if (segment != NO_SEG && !find_section_by_index(segment)) {
@@ -824,8 +815,15 @@ static void bin_out(int32_t segto, const void *data,
 	    WRITEADDR(p, addr - s->length, size);
             saa_wbytes(s->contents, mydata, size);
         }
-        s->length += size;
+	break;
     }
+
+    default:
+	nasm_error(ERR_NONFATAL, "unsupported relocation type %d\n", type);
+	break;
+    }
+
+    s->length += size;
 }
 
 static void bin_deflabel(char *name, int32_t segment, int64_t offset,

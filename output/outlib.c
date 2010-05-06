@@ -44,6 +44,8 @@
 uint64_t realsize(enum out_type type, uint64_t size)
 {
     switch (type) {
+    case OUT_REL1ADR:
+	return 1;
     case OUT_REL2ADR:
 	return 2;
     case OUT_REL4ADR:

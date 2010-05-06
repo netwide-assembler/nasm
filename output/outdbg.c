@@ -147,6 +147,10 @@ static void dbg_out(int32_t segto, const void *data,
         fprintf(ofile, "addr %08"PRIx32" (seg %08"PRIx32", wrt %08"PRIx32")\n", ldata,
                 segment, wrt);
         break;
+    case OUT_REL1ADR:
+        fprintf(ofile, "rel1adr %02"PRIx8" (seg %08"PRIx32")\n",
+		(uint8_t)*(int64_t *)data, segment);
+        break;
     case OUT_REL2ADR:
         fprintf(ofile, "rel2adr %04"PRIx16" (seg %08"PRIx32")\n",
 		(uint16_t)*(int64_t *)data, segment);

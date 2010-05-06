@@ -365,23 +365,15 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
         while (t--) {           /* repeat TIMES times */
             list_for_each(e, instruction->eops) {
                 if (e->type == EOT_DB_NUMBER) {
-                    if (wsize == 1) {
-                        if (e->segment != NO_SEG)
-                            errfunc(ERR_NONFATAL,
-                                    "one-byte relocation attempted");
-                        else {
-                            uint8_t out_byte = e->offset;
-                            out(offset, segment, &out_byte,
-                                OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-                        }
-                    } else if (wsize > 8) {
+		    if (wsize > 8) {
                         errfunc(ERR_NONFATAL,
 				"integer supplied to a DT, DO or DY"
                                 " instruction");
-                    } else
+                    } else {
                         out(offset, segment, &e->offset,
                             OUT_ADDRESS, wsize, e->segment, e->wrt);
-                    offset += wsize;
+			offset += wsize;
+		    }
                 } else if (e->type == EOT_DB_STRING ||
 			   e->type == EOT_DB_STRING_FREE) {
                     int align;

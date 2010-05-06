@@ -101,6 +101,7 @@ enum out_type {
     OUT_RAWDATA,		/* Plain bytes */
     OUT_ADDRESS,		/* An address (symbol value) */
     OUT_RESERVE,		/* Reserved bytes (RESB et al) */
+    OUT_REL1ADR,		/* 1-byte relative address */
     OUT_REL2ADR,		/* 2-byte relative address */
     OUT_REL4ADR,		/* 4-byte relative address */
     OUT_REL8ADR,		/* 8-byte relative address */
