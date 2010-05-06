@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -715,7 +715,8 @@ static void elf_out(int32_t segto, const void *data,
 {
     struct Section *s;
     int32_t addr;
-    uint8_t mydata[4], *p;
+    uint8_t mydata[8], *p;
+    int reltype, bytes;
     int i;
     static struct symlininfo sinfo;
 
@@ -761,18 +762,24 @@ static void elf_out(int32_t segto, const void *data,
         return;
     }
 
-    if (type == OUT_RESERVE) {
+    switch (type) {
+    case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
             s->len += size;
-    } else if (type == OUT_RAWDATA) {
+	break;
+
+    case OUT_RAWDATA:
         if (segment != NO_SEG)
             nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, size);
-    } else if (type == OUT_ADDRESS) {
+	break;
+
+    case OUT_ADDRESS:
+    {
         bool gnu16 = false;
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
@@ -781,11 +788,20 @@ static void elf_out(int32_t segto, const void *data,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-                    if (size == 2) {
-                        gnu16 = true;
+		    switch (size) {
+		    case 1:
+			gnu16 = true;
+			elf_add_reloc(s, segment, R_386_8);
+			break;
+		    case 2:
+			gnu16 = true;
                         elf_add_reloc(s, segment, R_386_16);
-                    } else {
+			break;
+		    case 4:
                         elf_add_reloc(s, segment, R_386_32);
+			break;
+		    default:	/* Error issued further down */
+			break;
                     }
                 } else if (wrt == elf_gotpc_sect + 1) {
                     /*
@@ -825,36 +841,45 @@ static void elf_out(int32_t segto, const void *data,
         p = mydata;
         if (gnu16) {
             nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
-                  "16-bit relocations in ELF is a GNU extension");
-            WRITESHORT(p, addr);
-        } else {
-            if (size != 4 && segment != NO_SEG) {
-                nasm_error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
-            }
-            WRITELONG(p, addr);
+                  "8- or 16-bit relocations in ELF32 is a GNU extension");
+        } else if (size != 4 && segment != NO_SEG) {
+	    nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
         }
+	WRITEADDR(p, addr, size);
         elf_sect_write(s, mydata, size);
-    } else if (type == OUT_REL2ADR) {
-        if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+	break;
+    }
+
+    case OUT_REL1ADR:
+	bytes = 1;
+	reltype = R_386_PC8;
+	goto rel12adr;
+    case OUT_REL2ADR:
+	bytes = 2;
+	reltype = R_386_PC16;
+	goto rel12adr;
+
+    rel12adr:
+        nasm_assert(segment != segto);
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "ELF format does not support"
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
-                      "16-bit relocations in ELF is a GNU extension");
-                elf_add_reloc(s, segment, R_386_PC16);
+                      "8- or 16-bit relocations in ELF is a GNU extension");
+                elf_add_reloc(s, segment, reltype);
             } else {
                 nasm_error(ERR_NONFATAL,
                       "Unsupported non-32-bit ELF relocation");
             }
         }
-        p = mydata;
+	p = mydata;
         WRITESHORT(p, *(int64_t *)data - size);
-        elf_sect_write(s, mydata, 2L);
-    } else if (type == OUT_REL4ADR) {
+        elf_sect_write(s, mydata, bytes);
+	break;
+
+    case OUT_REL4ADR:
         if (segment == segto)
             nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
@@ -876,9 +901,18 @@ static void elf_out(int32_t segto, const void *data,
                 wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-        p = mydata;
+	p = mydata;
         WRITELONG(p, *(int64_t *)data - size);
         elf_sect_write(s, mydata, 4L);
+	break;
+
+    case OUT_REL8ADR:
+	nasm_error(ERR_NONFATAL,
+		   "32-bit ELF format does not support 64-bit relocations");
+	p = mydata;
+	WRITEDLONG(p, 0);
+	elf_sect_write(s, mydata, 8L);
+	break;
     }
 }
 
