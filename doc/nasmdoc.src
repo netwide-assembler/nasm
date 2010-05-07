@@ -1619,11 +1619,15 @@ Floating-point constants are expressed in the traditional form:
 digits, then a period, then optionally more digits, then optionally an
 \c{E} followed by an exponent. The period is mandatory, so that NASM
 can distinguish between \c{dd 1}, which declares an integer constant,
-and \c{dd 1.0} which declares a floating-point constant.  NASM also
-support C99-style hexadecimal floating-point: \c{0x}, hexadecimal
-digits, period, optionally more hexadeximal digits, then optionally a
-\c{P} followed by a \e{binary} (not hexadecimal) exponent in decimal
-notation.
+and \c{dd 1.0} which declares a floating-point constant.
+
+NASM also support C99-style hexadecimal floating-point: \c{0x},
+hexadecimal digits, period, optionally more hexadeximal digits, then
+optionally a \c{P} followed by a \e{binary} (not hexadecimal) exponent
+in decimal notation.  As an extension, NASM additionally supports the
+\c{0h} and \c{$} prefixes for hexadecimal, as well binary and octal
+floating-point, using the \c{0b} or \c{0y} and \c{0o} or \c{0q}
+prefixes, respectively.
 
 Underscores to break up groups of digits are permitted in
 floating-point constants as well.
