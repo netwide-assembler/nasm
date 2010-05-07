@@ -1163,9 +1163,9 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     struct External *e = NULL;
     ObjRecord *forp;
 
-    if (bytes == 1) {
+    if (bytes != 2 && bytes != 4) {
         nasm_error(ERR_NONFATAL, "`obj' output driver does not support"
-              " one-byte relocations");
+		   " %d-bit relocations", bytes << 3);
         return;
     }
 
