@@ -1060,7 +1060,8 @@ static void obj_out(int32_t segto, const void *data,
     orp = seg->orp;
     orp->parm[0] = seg->currentpos;
 
-    if (type == OUT_RAWDATA) {
+    switch (type) {
+    case OUT_RAWDATA:
         ucdata = data;
         while (size > 0) {
             unsigned int len;
@@ -1074,8 +1075,14 @@ static void obj_out(int32_t segto, const void *data,
             ucdata += len;
             size -= len;
         }
-    } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
-               type == OUT_REL4ADR) {
+	break;
+
+    case OUT_ADDRESS:
+    case OUT_REL1ADR:
+    case OUT_REL2ADR:
+    case OUT_REL4ADR:
+    case OUT_REL8ADR:
+    {
         int rsize;
 
         if (segment == NO_SEG && type != OUT_ADDRESS)
@@ -1084,18 +1091,28 @@ static void obj_out(int32_t segto, const void *data,
         if (segment >= SEG_ABS)
             nasm_error(ERR_NONFATAL, "far-absolute relocations not supported"
                   " by OBJ format");
+
         ldata = *(int64_t *)data;
-        if (type == OUT_REL2ADR) {
-            ldata += (size - 2);
-            size = 2;
-        } else if (type == OUT_REL4ADR) {
-            ldata += (size - 4);
-            size = 4;
+        if (type != OUT_ADDRESS) {
+            ldata += size;
+	    size = realsize(type, size);
+	    ldata -= size;
         }
-        if (size == 2)
+
+	switch (size) {
+	default:
+	    nasm_error(ERR_NONFATAL, "OBJ format can only handle 16- or "
+		       "32-byte relocations");
+	    segment = NO_SEG;	/* Don't actually generate a relocation */
+	    break;
+	case 2:
             orp = obj_word(orp, ldata);
-        else
+	    break;
+	case 4:
             orp = obj_dword(orp, ldata);
+	    break;
+	}
+
         rsize = size;
         if (segment < SEG_ABS && (segment != NO_SEG && segment % 2) &&
             size == 4) {
@@ -1116,10 +1133,19 @@ static void obj_out(int32_t segto, const void *data,
                             (type == OUT_ADDRESS ? 0x4000 : 0),
                             segment, wrt, seg);
         seg->currentpos += size;
-    } else if (type == OUT_RESERVE) {
+	break;
+    }
+
+    default:
+	nasm_error(ERR_NONFATAL,
+		   "Relocation type not supported by output format");
+	/* fall through */
+
+    case OUT_RESERVE:
         if (orp->committed)
             orp = obj_bump(orp);
         seg->currentpos += size;
+	break;
     }
     obj_commit(orp);
 }
