@@ -1465,7 +1465,7 @@ character, string and floating-point.
 A numeric constant is simply a number. NASM allows you to specify
 numbers in a variety of number bases, in a variety of ways: you can
 suffix \c{H} or \c{X}, \c{D} or \c{T}, \c{Q} or \c{O}, and \c{B} or
-\c{Y} for \i{hexadecimal}, \i{decimal} \i{octal} and \i{binary}
+\c{Y} for \i{hexadecimal}, \i{decimal}, \i{octal} and \i{binary}
 respectively, or you can prefix \c{0x}, for hexadecimal in the style
 of C, or you can prefix \c{$} for hexadecimal in the style of Borland
 Pascal or Motorola Assemblers. Note, though, that the \I{$,
