@@ -556,9 +556,8 @@ static char *prepreproc(char *line)
  */
 static void free_tlist(Token * list)
 {
-    while (list) {
+    while (list)
         list = delete_Token(list);
-    }
 }
 
 /*
@@ -566,10 +565,8 @@ static void free_tlist(Token * list)
  */
 static void free_llist(Line * list)
 {
-    Line *l;
-    while (list) {
-        l = list;
-        list = list->next;
+    Line *l, *tmp;
+    list_for_each_safe(l, tmp, list) {
         free_tlist(l->first);
         nasm_free(l);
     }
@@ -592,18 +589,16 @@ static void free_mmacro(MMacro * m)
  */
 static void free_smacro_table(struct hash_table *smt)
 {
-    SMacro *s;
+    SMacro *s, *tmp;
     const char *key;
     struct hash_tbl_node *it = NULL;
 
     while ((s = hash_iterate(smt, &it, &key)) != NULL) {
         nasm_free((void *)key);
-        while (s) {
-            SMacro *ns = s->next;
+        list_for_each_safe(s, tmp, s) {
             nasm_free(s->name);
             free_tlist(s->expansion);
             nasm_free(s);
-            s = ns;
         }
     }
     hash_free(smt);
@@ -611,18 +606,15 @@ static void free_smacro_table(struct hash_table *smt)
 
 static void free_mmacro_table(struct hash_table *mmt)
 {
-    MMacro *m;
+    MMacro *m, *tmp;
     const char *key;
     struct hash_tbl_node *it = NULL;
 
     it = NULL;
     while ((m = hash_iterate(mmt, &it, &key)) != NULL) {
         nasm_free((void *)key);
-        while (m) {
-            MMacro *nm = m->next;
+        list_for_each_safe(m ,tmp, m)
             free_mmacro(m);
-            m = nm;
-        }
     }
     hash_free(mmt);
 }
@@ -742,10 +734,10 @@ static char *read_line(void)
                  * implement the pre-include and pre-define
                  * features.
                  */
-                for (pd = predef; pd; pd = pd->next) {
+                list_for_each(pd, predef) {
                     head = NULL;
                     tail = &head;
-                    for (t = pd->first; t; t = t->next) {
+                    list_for_each(t, pd->first) {
                         *tail = new_Token(NULL, t->type, t->text, 0);
                         tail = &(*tail)->next;
                     }
@@ -1226,9 +1218,8 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     do {
         tline = *tlineptr;
         *tlineptr = tline ? tline->next : NULL;
-    }
-    while (tline && (tline->type == TOK_WHITESPACE ||
-                     tline->type == TOK_COMMENT));
+    } while (tline && (tline->type == TOK_WHITESPACE ||
+                       tline->type == TOK_COMMENT));
 
     if (!tline)
         return tokval->t_type = TOKEN_EOS;
@@ -2685,7 +2676,7 @@ issue_error:
          * macro-end marker for a macro with a name. Then we
          * bypass all lines between exitmacro and endmacro.
          */
-        for (l = istk->expansion; l; l = l->next)
+        list_for_each(l, istk->expansion)
             if (l->finishes && l->finishes->name)
                 break;
 
@@ -2872,7 +2863,7 @@ issue_error:
          * macro-end marker for a macro with no name. Then we set
          * its `in_progress' flag to 0.
          */
-        for (l = istk->expansion; l; l = l->next)
+        list_for_each(l, istk->expansion)
             if (l->finishes && !l->finishes->name)
                 break;
 
@@ -2955,7 +2946,7 @@ issue_error:
         t = tline;
         while (t) {
             if (t->type == TOK_ID) {
-                for (tt = param_start; tt; tt = tt->next)
+                list_for_each(tt, param_start)
                     if (tt->type >= TOK_SMAC_PARAM &&
                         !strcmp(tt->text, t->text))
                         t->type = tt->type;
@@ -3219,7 +3210,7 @@ issue_error:
         last->next = NULL;
 
         len = 0;
-        for (t = tline; t; t = t->next) {
+        list_for_each(t, tline) {
             switch (t->type) {
             case TOK_WHITESPACE:
                 break;
@@ -3240,7 +3231,7 @@ issue_error:
         }
 
         p = pp = nasm_malloc(len);
-        for (t = tline; t; t = t->next) {
+        list_for_each(t, tline) {
             if (t->type == TOK_STRING) {
                 memcpy(p, t->text, t->a.len);
                 p += t->a.len;
@@ -3848,7 +3839,7 @@ again:
              * all, then think about checking for parameters if
              * necessary.
              */
-            for (m = head; m; m = m->next)
+            list_for_each(m, head)
                 if (!mstrcmp(m->name, mname, m->casesense))
                     break;
             if (m) {
@@ -4031,7 +4022,7 @@ again:
                     tt->a.mac = m;
                     m->in_progress = true;
                     tline = tt;
-                    for (t = m->expansion; t; t = t->next) {
+                    list_for_each(t, m->expansion) {
                         if (t->type >= TOK_SMAC_PARAM) {
                             Token *pcopy = tline, **ptail = &pcopy;
                             Token *ttt, *pt;
@@ -4199,7 +4190,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * count the parameters, and then we look further along the
      * list if necessary to find the proper MMacro.
      */
-    for (m = head; m; m = m->next)
+    list_for_each(m, head)
         if (!mstrcmp(m->name, tline->text, m->casesense))
             break;
     if (!m)
@@ -4267,7 +4258,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
          * This one wasn't right: look for the next one with the
          * same name.
          */
-        for (m = m->next; m; m = m->next)
+        list_for_each(m, m->next)
             if (!mstrcmp(m->name, tline->text, m->casesense))
                 break;
     }
@@ -4650,7 +4641,7 @@ static char *pp_getline(void)
                  * if we did.
                  */
                 l->finishes->in_progress--;
-                for (l = l->finishes->expansion; l; l = l->next) {
+                list_for_each(l, l->finishes->expansion) {
                     Token *t, *tt, **tail;
 
                     ll = nasm_malloc(sizeof(Line));
@@ -4659,10 +4650,9 @@ static char *pp_getline(void)
                     ll->first = NULL;
                     tail = &ll->first;
 
-                    for (t = l->first; t; t = t->next) {
+                    list_for_each(t, l->first) {
                         if (t->text || t->type == TOK_WHITESPACE) {
-                            tt = *tail =
-                                new_Token(NULL, t->type, t->text, 0);
+                            tt = *tail = new_Token(NULL, t->type, t->text, 0);
                             tail = &tt->next;
                         }
                     }
