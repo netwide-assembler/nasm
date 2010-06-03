@@ -59,7 +59,7 @@ struct ofmt *ofmt_find(char *name)
     }
 
     /* lets walk thru aliases then */
-    for (i = 0; i < elements(ofmt_aliases); i++) {
+    for (i = 0; i < ARRAY_SIZE(ofmt_aliases); i++) {
         if (ofmt_aliases[i].shortname &&
             !nasm_stricmp(name, ofmt_aliases[i].shortname))
             return ofmt_aliases[i].ofmt;
@@ -92,7 +92,7 @@ void ofmt_list(struct ofmt *deffmt, FILE * fp)
     }
 
     /* lets walk through aliases then */
-    for (i = 0; i < elements(ofmt_aliases); i++) {
+    for (i = 0; i < ARRAY_SIZE(ofmt_aliases); i++) {
         if (!ofmt_aliases[i].shortname)
             continue;
         fprintf(fp, "    %-10s%s\n",

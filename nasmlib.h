@@ -239,8 +239,7 @@ void standard_extension(char *inname, char *outname, char *extension);
  * This is a useful #define which I keep meaning to use more often:
  * the number of elements of a statically defined array.
  */
-
-#define elements(x)     ( sizeof(x) / sizeof(*(x)) )
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 /*
  * List handling

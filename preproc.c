@@ -482,7 +482,7 @@ static char *check_tasm_directive(char *line)
 
     /* Binary search for the directive name */
     i = -1;
-    j = elements(tasm_directives);
+    j = ARRAY_SIZE(tasm_directives);
     q = nasm_skip_word(p);
     len = q - p;
     if (len) {
@@ -2005,7 +2005,7 @@ static int parse_size(const char *str) {
     static const int sizes[] =
         { 0, 1, 4, 16, 8, 10, 2, 32 };
 
-    return sizes[bsii(str, size_names, elements(size_names))+1];
+    return sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1];
 }
 
 /*
@@ -3469,7 +3469,7 @@ static int find_cc(Token * t)
         return -1;
 
     i = -1;
-    j = elements(conditions);
+    j = ARRAY_SIZE(conditions);
     while (j - i > 1) {
         k = (j + i) / 2;
         m = nasm_stricmp(t->text, conditions[k]);
