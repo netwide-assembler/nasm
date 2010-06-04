@@ -3617,8 +3617,10 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
         goto err;
 
     /* the values should be sane */
-    if ((fst > mac->nparam || fst < -(int)mac->nparam) ||
-        (lst > mac->nparam || lst < -(int)mac->nparam))
+    if ((fst > 0 && fst > mac->nparam)          ||
+        (fst < 0 && fst < -(int)mac->nparam)    ||
+        (lst > 0 && lst > mac->nparam)          ||
+        (lst < 0 && lst < -(int)mac->nparam))
         goto err;
 
     fst = fst < 0 ? fst + mac->nparam + 1: fst;
