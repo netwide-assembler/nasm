@@ -3607,9 +3607,9 @@ static Token *expand_mmac_params(Token * tline)
 
     while (tline) {
         if (tline->type == TOK_PREPROC_ID &&
-            (((tline->text[1] == '+' || tline->text[1] == '-')
-              && tline->text[2]) || tline->text[1] == '%'
-             || (tline->text[1] >= '0' && tline->text[1] <= '9'))) {
+            (((tline->text[1] == '+' || tline->text[1] == '-') && tline->text[2])   ||
+              (tline->text[1] >= '0' && tline->text[1] <= '9')                      ||
+               tline->text[1] == '%')) {
             char *text = NULL;
             int type = 0, cc;   /* type = 0 to placate optimisers */
             char tmpbuf[30];
