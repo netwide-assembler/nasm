@@ -43,6 +43,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -788,20 +789,27 @@ static void elf_out(int32_t segto, const void *data,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-		    switch (size) {
-		    case 1:
-			gnu16 = true;
-			elf_add_reloc(s, segment, R_386_8);
-			break;
-		    case 2:
-			gnu16 = true;
-                        elf_add_reloc(s, segment, R_386_16);
-			break;
-		    case 4:
-                        elf_add_reloc(s, segment, R_386_32);
-			break;
-		    default:	/* Error issued further down */
-			break;
+		    /* 
+		     * The if() is a hack to deal with compilers which
+		     * don't handle switch() statements with 64-bit
+		     * expressions.
+		     */
+		    if (size < UINT_MAX) {
+			switch ((unsigned int)size) {
+			case 1:
+			    gnu16 = true;
+			    elf_add_reloc(s, segment, R_386_8);
+			    break;
+			case 2:
+			    gnu16 = true;
+			    elf_add_reloc(s, segment, R_386_16);
+			    break;
+			case 4:
+			    elf_add_reloc(s, segment, R_386_32);
+			    break;
+			default:	/* Error issued further down */
+			    break;
+			}
                     }
                 } else if (wrt == elf_gotpc_sect + 1) {
                     /*
