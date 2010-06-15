@@ -159,45 +159,45 @@ PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c &
 perlreq: $(PERLREQ)
 
 clean: .SYMBOLIC
-	-del /f *.$(O)
-	-del /f *.s
-	-del /f *.i
-	-del /f lib\*.$(O)
-	-del /f lib\*.s
-	-del /f lib\*.i
-	-del /f output\*.$(O)
-	-del /f output\*.s
-	-del /f output\*.i
-	-del /f nasm$(X)
-	-del /f ndisasm$(X)
+	-del *.$(O)
+	-del *.s
+	-del *.i
+	-del lib\*.$(O)
+	-del lib\*.s
+	-del lib\*.i
+	-del output\*.$(O)
+	-del output\*.s
+	-del output\*.i
+	-del nasm$(X)
+	-del ndisasm$(X)
 	rem cd rdoff && $(MAKE) clean
 
 distclean: clean .SYMBOLIC
-	-del /f config.h
-	-del /f config.log
-	-del /f config.status
-	-del /f Makefile
-	-del /f *~
-	-del /f *.bak
-	-del /f *.lst
-	-del /f *.bin
-	-del /f output\*~
-	-del /f output\*.bak
-	-del /f test\*.lst
-	-del /f test\*.bin
-	-del /f test\*.$(O)
-	-del /f test\*.bin
-	-del /f/s autom4te*.cache
+	-del config.h
+	-del config.log
+	-del config.status
+	-del Makefile
+	-del *~
+	-del *.bak
+	-del *.lst
+	-del *.bin
+	-del output\*~
+	-del output\*.bak
+	-del test\*.lst
+	-del test\*.bin
+	-del test\*.$(O)
+	-del test\*.bin
+	-del /s autom4te*.cache
 	rem cd rdoff && $(MAKE) distclean
 
 cleaner: clean .SYMBOLIC
-	-del /f $(PERLREQ)
-	-del /f *.man
-	-del /f nasm.spec
+	-del $(PERLREQ)
+	-del *.man
+	-del nasm.spec
 	rem cd doc && $(MAKE) clean
 
 spotless: distclean cleaner .SYMBOLIC
-	-del /f doc\Makefile
+	-del doc\Makefile
 	-del doc\*~
 	-del doc\*.bak
 
