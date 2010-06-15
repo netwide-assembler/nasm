@@ -45,7 +45,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"		/* For enum opcode */
-#include "directives.h"		/* For enum directive */
+#include "directiv.h"		/* For enum directive */
 #include "opflags.h"
 
 #define NO_SEG -1L              /* null segment value */

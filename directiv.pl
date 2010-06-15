@@ -35,7 +35,7 @@
 #
 # Generate a perfect hash for directive parsing
 #
-# Usage: directives.pl directives.dat directives.c directives.h
+# Usage: directiv.pl directiv.dat directiv.c directiv.h
 #
 
 require 'phash.ph';
@@ -60,8 +60,8 @@ if ($output eq 'h') {
 	or die "$0: cannot create: ${outfile}: $!\n";
 
     print H "/*\n";
-    print H " * This	 file is generated from directives.dat\n";
-    print H " * by directives.pl; do not edit.\n";
+    print H " * This	 file is generated from directiv.dat\n";
+    print H " * by directiv.pl; do not edit.\n";
     print H " */\n";
     print H "\n";
 
@@ -110,8 +110,8 @@ if ($output eq 'h') {
 	or die "$0: cannot create: ${directives_c}: $!\n";
 
     print C "/*\n";
-    print C " * This file is generated from directives.dat\n";
-    print C " * by directives.pl; do not edit.\n";
+    print C " * This file is generated from directiv.dat\n";
+    print C " * by directiv.pl; do not edit.\n";
     print C " */\n";
     print C "\n";
 
@@ -119,7 +119,7 @@ if ($output eq 'h') {
     print C "#include <string.h>\n";
     print C "#include \"nasm.h\"\n";
     print C "#include \"hashtbl.h\"\n";
-    print C "#include \"directives.h\"\n";
+    print C "#include \"directiv.h\"\n";
     print C "\n";
 
     printf C "const char * const directives[%d] = \n",
