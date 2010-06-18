@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2010 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -710,9 +710,11 @@ LES		reg32,mem			\321\1\xC4\110					386,NOLONG
 LFENCE		void				\3\x0F\xAE\xE8					X64,AMD
 LFS		reg16,mem			\320\2\x0F\xB4\110				386
 LFS		reg32,mem			\321\2\x0F\xB4\110				386
+LFS		reg64,mem			\324\2\x0F\xB4\110				X64
 LGDT		mem				\2\x0F\x01\202					286,PRIV
 LGS		reg16,mem			\320\2\x0F\xB5\110				386
 LGS		reg32,mem			\321\2\x0F\xB5\110				386
+LGS		reg64,mem			\324\2\x0F\xB5\110				X64
 LIDT		mem				\2\x0F\x01\203					286,PRIV
 LLDT		mem				\2\x0F\x00\202					286,PROT,PRIV
 LLDT		mem16				\2\x0F\x00\202					286,PROT,PRIV
@@ -760,6 +762,7 @@ LSL		reg64,reg32			\324\2\x0F\x03\110				X64,PROT
 LSL		reg64,reg64			\324\2\x0F\x03\110				X64,PROT
 LSS		reg16,mem			\320\2\x0F\xB2\110				386
 LSS		reg32,mem			\321\2\x0F\xB2\110				386
+LSS		reg64,mem			\324\2\x0F\xB2\110				X64
 LTR		mem				\2\x0F\x00\203					286,PROT,PRIV
 LTR		mem16				\2\x0F\x00\203					286,PROT,PRIV
 LTR		reg16				\2\x0F\x00\203					286,PROT,PRIV
