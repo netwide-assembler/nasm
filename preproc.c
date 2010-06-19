@@ -3621,8 +3621,8 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
         (lst > (int)mac->nparam || lst < (-(int)mac->nparam)))
         goto err;
 
-    fst = fst < 0 ? fst + mac->nparam + 1: fst;
-    lst = lst < 0 ? lst + mac->nparam + 1: lst;
+    fst = fst < 0 ? fst + (int)mac->nparam + 1: fst;
+    lst = lst < 0 ? lst + (int)mac->nparam + 1: lst;
 
     /* counted from zero */
     fst--, lst--;
