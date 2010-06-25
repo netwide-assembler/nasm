@@ -88,11 +88,12 @@ nasm.inf: nasmdoc.ipf
 clean:
 	-rm -f *.rtf *.hpj *.texi *.gid *.ipf *.dip
 	-rm -f *.aux *.cp *.fn *.ky *.pg *.log *.toc *.tp *.vr
+	-rm -f inslist.src
 
 spotless: clean
 	-rm -rf html info
 	-rm -f *.hlp nasmdoc.txt *.inf *.pdf *.dvi
-	-rm -f nasmdoc*.ps inslist.src
+	-rm -f nasmdoc*.ps
 
 install: all
 	mkdir -p $(INSTALLROOT)$(infodir)
