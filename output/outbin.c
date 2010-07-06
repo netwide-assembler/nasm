@@ -545,8 +545,8 @@ static void bin_cleanup(int debuginfo)
         saa_fread(r->target->contents, r->posn, mydata, r->bytes);
         p = q = mydata;
         l = 0;
-	for (b = 0; b < r->bytes; b++)
-	    l = (l << 8) + *p++;
+        for (b = 0; b < r->bytes; b++)
+            l += p[b] << (b * 8);
 
         s = find_section_by_index(r->secref);
         if (s) {
