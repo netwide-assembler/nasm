@@ -7,6 +7,40 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.09} Version 2.09
+
+\b Updates of new AVX v7 Intel instruciotns.
+
+\b PUSH imm32 now officially documented.
+
+\b Fix for encoding the LFS, LGS and LSS in 64-bit mode.
+
+\b Fixes for compatibility with Watcom compilers and DOS 8.3 file format.
+
+\b Macros parameter range expansion introduced.
+
+\b Backward compatibility on expanging of local sigle macros restored.
+
+\b 8 bit relocations for ELF and BIN targets are introduced.
+
+\b Short intersegment jumps are permitted now.
+
+\b SECTALIGN directive introduced.
+
+\b No-jump mode introduced for smartaligns.
+
+\b Short target aliases such as win, elf, macho introduced.
+
+\b Various small improvements in documentation.
+
+\b No hang anymore if malloc.log fails on creation.
+
+\b The environments without vsnprintf function is able to compile nasm again.
+
+\b AMD LWP instructions updated.
+
+\b Tighten EA checks. We warn a user if there overflow in EA addressing.
+
 
 \S{cl-2.08} Version 2.08
 
