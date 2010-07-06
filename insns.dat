@@ -1060,9 +1060,16 @@ RCR		rm32,imm			\321\1\xC1\203\25				386,SB
 RCR		rm64,unity			\324\1\xD1\203					X64
 RCR		rm64,reg_cl			\324\1\xD3\203					X64
 RCR		rm64,imm			\324\1\xC1\203\25				X64,SB
+RDFSBASE	reg32				[m:	f3 0f ae /0]				X64,FUTURE
+RDFSBASE	reg64				[m:	o64 f3 0f ae /0]			X64,FUTURE
+RDGSBASE	reg32				[m:	f3 0f ae /1]				X64,FUTURE
+RDGSBASE	reg64				[m:	o64 f3 0f ae /1]			X64,FUTURE
 RDSHR		rm32				\321\2\x0F\x36\200				P6,CYRIX,SMM
 RDMSR		void				\2\x0F\x32					PENT,PRIV
 RDPMC		void				\2\x0F\x33					P6
+RDRAND		reg16				[m:	o16 0f c7 /6]				FUTURE
+RDRAND		reg32				[m:	o32 0f c7 /6]				FUTURE
+RDRAND		reg64				[m:	o64 0f c7 /6]				FUTURE
 RDTSC		void				\2\x0F\x31					PENT
 RDTSCP		void				\3\x0F\x01\xF9					X86_64
 RET		void				\1\xC3						8086
@@ -1331,6 +1338,10 @@ VERW		mem16				\2\x0F\x00\205					286,PROT
 VERW		reg16				\2\x0F\x00\205					286,PROT
 FWAIT		void				\341						8086
 WBINVD		void				\2\x0F\x09					486,PRIV
+WRFSBASE	reg32				[m:	f3 0f ae /2]				X64,FUTURE
+WRFSBASE	reg64				[m:	o64 f3 0f ae /2]			X64,FUTURE
+WRGSBASE	reg32				[m:	f3 0f ae /3]				X64,FUTURE
+WRGSBASE	reg64				[m:	o64 f3 0f ae /3]			X64,FUTURE
 WRSHR		rm32				\321\2\x0F\x37\200				P6,CYRIX,SMM
 WRMSR		void				\2\x0F\x30					PENT,PRIV
 XADD		mem,reg8			\2\x0F\xC0\101					486,SM
