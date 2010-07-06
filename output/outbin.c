@@ -538,15 +538,17 @@ static void bin_cleanup(int debuginfo)
         saa_rewind(s->contents);
     /* Apply relocations. */
     list_for_each(r, relocs) {
-        uint8_t *p, *q, mydata[8];
+        uint8_t *p, mydata[8];
         int64_t l;
-	int b;
+        int b;
+
+        nasm_assert(r->bytes <= 8);
 
         saa_fread(r->target->contents, r->posn, mydata, r->bytes);
-        p = q = mydata;
+        p = mydata;
         l = 0;
         for (b = r->bytes - 1; b >= 0; b--)
-            l = (l << 8) + p[b];
+            l = (l << 8) + mydata[b];
 
         s = find_section_by_index(r->secref);
         if (s) {
@@ -563,7 +565,7 @@ static void bin_cleanup(int debuginfo)
                 l -= s->vstart;
         }
 
-	WRITEADDR(q, l, r->bytes);
+        WRITEADDR(p, l, r->bytes);
         saa_fwrite(r->target->contents, r->posn, mydata, r->bytes);
     }
 
