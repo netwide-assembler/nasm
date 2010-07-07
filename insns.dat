@@ -2846,18 +2846,10 @@ LWPVAL		reg64,rm32,imm32		[vmi: xop.m10.w1.ndd.l0.p0 12 /1 id]		AMD,X64
 LWPINS		reg32,rm32,imm32		[vmi: xop.m10.w0.ndd.l0.p0 12 /0 id]		AMD,386
 LWPINS		reg64,rm32,imm32		[vmi: xop.m10.w1.ndd.l0.p0 12 /0 id]		AMD,X64
 
-;# AMD XOP, FMA4 and CVT16 instructions (SSE5)
+;# AMD XOP and FMA4 instructions (SSE5)
 ;
-; based on pub number 43479 revision 3.03 date May 2009
+; based on pub number 43479 revision 3.04 dated November 2009
 ;
-VCVTPH2PS	xmmreg,xmmrm64*,imm8		[rmi:	xop.m8.w0.l0 a0 /r ib]			AMD,SSE5
-VCVTPH2PS	ymmreg,xmmrm128,imm8		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
-VCVTPH2PS	ymmreg,ymmrm128*,imm8		[rmi:	xop.m8.w0.l1 a0 /r ib]			AMD,SSE5
-
-VCVTPS2PH	xmmrm64,xmmreg*,imm8		[mri:	xop.m8.w0.l0 a1 /r ib]			AMD,SSE5
-VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
-VCVTPS2PH	ymmrm128,ymmreg*,imm8		[mri:	xop.m8.w0.l1 a1 /r ib]			AMD,SSE5
-
 VFMADDPD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	vex.m3.w0.nds.l0.p1 69 /r /is4]		AMD,SSE5
 VFMADDPD	ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	vex.m3.w0.nds.l1.p1 69 /r /is4]		AMD,SSE5
 VFMADDPD	xmmreg,xmmreg*,xmmreg,xmmrm128	[rvsm:	vex.m3.w1.nds.l0.p1 69 /r /is4]		AMD,SSE5
