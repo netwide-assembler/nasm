@@ -1510,20 +1510,22 @@ UNPCKLPS	xmmreg,xmmrm			\360\2\x0F\x14\110				KATMAI,SSE
 XORPS		xmmreg,xmmrm			\360\2\x0F\x57\110				KATMAI,SSE
 
 ;# Introduced in Deschutes but necessary for SSE support
-FXRSTOR		mem				\2\x0F\xAE\201					P6,SSE,FPU
-FXSAVE		mem				\2\x0F\xAE\200					P6,SSE,FPU
+FXRSTOR		mem				[m:	0f ae /1]				P6,SSE,FPU
+FXRSTOR64	mem				[m:	o64 0f ae /1]				X64,SSE,FPU
+FXSAVE		mem				[m:	0f ae /0]				P6,SSE,FPU
+FXSAVE64	mem				[m:	o64 0f ae /0]				X64,SSE,FPU
 
 ;# XSAVE group (AVX and extended state)
 ; Introduced in late Penryn ... we really need to clean up the handling
 ; of CPU feature bits.
 XGETBV		void				\360\3\x0F\x01\xD0				NEHALEM
 XSETBV		void				\360\3\x0F\x01\xD1				NEHALEM,PRIV
-XSAVE		mem				[m:	np 0f ae /4]				NEHALEM
+XSAVE		mem				[m:	0f ae /4]				NEHALEM
 XSAVE64		mem				[m:	o64 0f ae /4]				LONG,NEHALEM
-XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE
-XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE
-XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM
-XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
+XSAVEOPT	mem				[m:	0f ae /6]				FUTURE
+XSAVEOPT64	mem				[m:	o64 0f ae /6]				LONG,FUTURE
+XRSTOR		mem				[m:	0f ae /5]				NEHALEM
+XRSTOR64	mem				[m:	o64 0f ae /5]				LONG,NEHALEM
 
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
