@@ -3822,7 +3822,14 @@ static Token *expand_mmac_params(Token * tline)
             changed = true;
         } else if (tline->type == TOK_PREPROC_ID &&
                    tline->text[0] == '%' && tline->text[1] == '$') {
-            /* expand local macro */
+            /*
+             * In a sake of backward compatibility we allow
+             * to expand local single macro that early before
+             * pasting token code have place
+             *
+             * NOTE: that new code MUST use %+ macro to obtain
+             * same result
+             */
             t = tline;
             tline = tline->next;
             tt = tokenize(t->text);
