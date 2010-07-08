@@ -3509,7 +3509,7 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             break;
         case TOK_ID:
-        case TOK_PREPROC_ID:
+	    // case TOK_PREPROC_ID:
         case TOK_NUMBER:
         case TOK_FLOAT:
         {
