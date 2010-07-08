@@ -1060,16 +1060,9 @@ RCR		rm32,imm			\321\1\xC1\203\25				386,SB
 RCR		rm64,unity			\324\1\xD1\203					X64
 RCR		rm64,reg_cl			\324\1\xD3\203					X64
 RCR		rm64,imm			\324\1\xC1\203\25				X64,SB
-RDFSBASE	reg32				[m:	f3 0f ae /0]				LONG,FUTURE
-RDFSBASE	reg64				[m:	o64 f3 0f ae /0]			LONG,FUTURE
-RDGSBASE	reg32				[m:	f3 0f ae /1]				LONG,FUTURE
-RDGSBASE	reg64				[m:	o64 f3 0f ae /1]			LONG,FUTURE
 RDSHR		rm32				\321\2\x0F\x36\200				P6,CYRIX,SMM
 RDMSR		void				\2\x0F\x32					PENT,PRIV
 RDPMC		void				\2\x0F\x33					P6
-RDRAND		reg16				[m:	o16 0f c7 /6]				FUTURE
-RDRAND		reg32				[m:	o32 0f c7 /6]				FUTURE
-RDRAND		reg64				[m:	o64 0f c7 /6]				LONG,FUTURE
 RDTSC		void				\2\x0F\x31					PENT
 RDTSCP		void				\3\x0F\x01\xF9					X86_64
 RET		void				\1\xC3						8086
@@ -1338,10 +1331,6 @@ VERW		mem16				\2\x0F\x00\205					286,PROT
 VERW		reg16				\2\x0F\x00\205					286,PROT
 FWAIT		void				\341						8086
 WBINVD		void				\2\x0F\x09					486,PRIV
-WRFSBASE	reg32				[m:	f3 0f ae /2]				LONG,FUTURE
-WRFSBASE	reg64				[m:	o64 f3 0f ae /2]			LONG,FUTURE
-WRGSBASE	reg32				[m:	f3 0f ae /3]				LONG,FUTURE
-WRGSBASE	reg64				[m:	o64 f3 0f ae /3]			LONG,FUTURE
 WRSHR		rm32				\321\2\x0F\x37\200				P6,CYRIX,SMM
 WRMSR		void				\2\x0F\x30					PENT,PRIV
 XADD		mem,reg8			\2\x0F\xC0\101					486,SM
@@ -1529,8 +1518,12 @@ FXSAVE		mem				\2\x0F\xAE\200					P6,SSE,FPU
 ; of CPU feature bits.
 XGETBV		void				\360\3\x0F\x01\xD0				NEHALEM
 XSETBV		void				\360\3\x0F\x01\xD1				NEHALEM,PRIV
-XSAVE		mem				\360\2\x0F\xAE\204				NEHALEM
-XRSTOR		mem				\360\2\x0F\xAE\205				NEHALEM
+XSAVE		mem				[m:	np 0f ae /4]				NEHALEM
+XSAVE64		mem				[m:	o64 0f ae /4]				LONG,NEHALEM
+XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE
+XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE
+XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM
+XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
 
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
@@ -2814,6 +2807,25 @@ VFNMSUB231SD	xmmreg,xmmreg,xmmrm64		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUT
 VFNMSUB321SS	xmmreg,xmmreg,xmmrm32		[rvm:	vex.dds.128.66.0f38.w0 bf /r]		FMA,FUTURE
 VFNMSUB321SD	xmmreg,xmmreg,xmmrm64		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUTURE
 
+;# Intel post-32 nm processor instructions
+;
+; Per AVX spec revision 7, document 319433-007
+RDFSBASE	reg32				[m:	f3 0f ae /0]				LONG,FUTURE
+RDFSBASE	reg64				[m:	o64 f3 0f ae /0]			LONG,FUTURE
+RDGSBASE	reg32				[m:	f3 0f ae /1]				LONG,FUTURE
+RDGSBASE	reg64				[m:	o64 f3 0f ae /1]			LONG,FUTURE
+RDRAND		reg16				[m:	o16 0f c7 /6]				FUTURE
+RDRAND		reg32				[m:	o32 0f c7 /6]				FUTURE
+RDRAND		reg64				[m:	o64 0f c7 /6]				LONG,FUTURE
+WRFSBASE	reg32				[m:	f3 0f ae /2]				LONG,FUTURE
+WRFSBASE	reg64				[m:	o64 f3 0f ae /2]			LONG,FUTURE
+WRGSBASE	reg32				[m:	f3 0f ae /3]				LONG,FUTURE
+WRGSBASE	reg64				[m:	o64 f3 0f ae /3]			LONG,FUTURE
+VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		AVX,FUTURE
+VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		AVX,FUTURE
+VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX,FUTURE
+VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX,FUTURE
+
 ;# VIA (Centaur) security instructions
 XSTORE		void				\3\x0F\xA7\xC0					PENT,CYRIX
 XCRYPTECB	void				\336\3\x0F\xA7\xC8				PENT,CYRIX
@@ -2832,7 +2844,7 @@ XSHA256		void				\336\3\x0F\xA6\xD0				PENT,CYRIX
 ; updated to match draft from AMD developer (patch has been
 ; sent to binutils
 ; 2010-03-22 Quentin Neill <quentin.neill@amd.com>
-;            Sebastian Pop  <sebastian.pop@amd.com>
+;	     Sebastian Pop  <sebastian.pop@amd.com>
 ;
 LLWPCB		reg32				[m: xop.m9.w0.l0.p0 12 /0]			AMD,386
 LLWPCB		reg64				[m: xop.m9.w1.l0.p0 12 /0]			AMD,X64
