@@ -3821,7 +3821,12 @@ static Token *expand_mmac_params(Token * tline)
             delete_Token(t);
             changed = true;
         } else if (tline->type == TOK_PREPROC_ID &&
-                   tline->text[0] == '%' && tline->text[1] == '$') {
+                   tline->text[0] == '%' && tline->text[1] == '$' &&
+                   (tok_type_(tline->next, TOK_ID)              ||
+                    tok_type_(tline->next, TOK_PREPROC_ID)      ||
+                    tok_type_(tline->next, TOK_FLOAT)           ||
+                    tok_type_(tline->next, TOK_NUMBER)          ||
+                    tok_type_(tline->next, TOK_OTHER))) {
             /*
              * In a sake of backward compatibility we allow
              * to expand local single macro that early before
