@@ -3586,7 +3586,9 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             /* else fall through */
         default:
-            tail = paste_head = &t->next;
+            tail = &t->next;
+            if (!tok_type_(t->next, TOK_WHITESPACE))
+                paste_head = tail;
             break;
         }
     }
