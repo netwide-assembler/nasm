@@ -7702,8 +7702,8 @@ We have never yet released a version of NASM with any \e{known}
 bugs. That doesn't usually stop there being plenty we didn't know
 about, though. Any that you find should be reported firstly via the
 \i\c{bugtracker} at
-\W{https://sourceforge.net/projects/nasm/}\c{https://sourceforge.net/projects/nasm/}
-(click on "Bugs"), or if that fails then through one of the
+\W{http://www.nasm.us/}\c{http://www.nasm.us/}
+(click on "Bug Tracker"), or if that fails then through one of the
 contacts in \k{contact}.
 
 Please read \k{qstart} first, and don't report the bug if it's
@@ -7963,7 +7963,7 @@ There are no known bugs. However, any you find, with patches if
 possible, should be sent to
 \W{mailto:nasm-bugs@lists.sourceforge.net}\c{nasm-bugs@lists.sourceforge.net}, or to the
 developer's site at
-\W{https://sourceforge.net/projects/nasm/}\c{https://sourceforge.net/projects/nasm/}
+\W{http://www.nasm.us/}\c{http://www.nasm.us/}
 and we'll try to fix them. Feel free to send contributions and
 new features as well.
 
