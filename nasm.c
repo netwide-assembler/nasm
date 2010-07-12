@@ -261,7 +261,7 @@ static void define_macros_late(void)
 {
     char temp[128];
 
-    snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s\n",
+    snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s",
 	     ofmt->shortname);
     pp_pre_define(temp);
 }
