@@ -11,31 +11,36 @@ since 2007.
 
 \b Updates of new AVX v7 Intel instruciotns.
 
-\b PUSH imm32 now officially documented.
+\b \c{PUSH imm32} is now officially documented.
 
 \b Fix for encoding the LFS, LGS and LSS in 64-bit mode.
 
-\b Fixes for compatibility with Watcom compilers and DOS 8.3 file format.
+\b Fixes for compatibility with OpenWatcom compiler and DOS 8.3 file format limitation.
 
-\b Macros parameter range expansion introduced.
+\b Macros parameters range expansion introduced. See \k{mlmacrange}.
 
 \b Backward compatibility on expanging of local sigle macros restored.
 
-\b 8 bit relocations for ELF and BIN targets are introduced.
+\b 8 bit relocations for \c{elf} and \c{bin} output formats are introduced.
 
 \b Short intersegment jumps are permitted now.
 
-\b SECTALIGN directive introduced.
+\b An alignment more then 64 bytes are allowed for \c{win32}, \c{win64} output formats.
 
-\b No-jump mode introduced for smartaligns.
+\b \c{SECTALIGN} directive introduced. In most cases invisible to user.
 
-\b Short target aliases such as win, elf, macho introduced.
+\b \c{nojmp} option introduced in \c{smartalign} package. See \k{pkg_smartalign}.
+
+\b Short aliases \c{win}, \c{elf} and \c{macho} for output formats are introduced.
+  Each stands for \c{win32}, \c{elf32} and \c{macho32} accordingly.
+
+\b Faster handling of missing directives implemented.
 
 \b Various small improvements in documentation.
 
-\b No hang anymore if malloc.log fails on creation.
+\b No hang anymore if unable to open malloc.log file.
 
-\b The environments without vsnprintf function is able to compile nasm again.
+\b The environments without vsnprintf function are able to build nasm again.
 
 \b AMD LWP instructions updated.
 
