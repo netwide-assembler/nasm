@@ -3509,7 +3509,6 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             break;
         case TOK_ID:
-        case TOK_PREPROC_ID:
         case TOK_NUMBER:
         case TOK_FLOAT:
         {
@@ -3586,7 +3585,9 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             /* else fall through */
         default:
-            tail = paste_head = &t->next;
+            tail = &t->next;
+            if (!tok_type_(t->next, TOK_WHITESPACE))
+                paste_head = tail;
             break;
         }
     }
@@ -3815,21 +3816,6 @@ static Token *expand_mmac_params(Token * tline)
             *tail = tt;
             while (tt) {
                 tt->a.mac = NULL; /* Necessary? */
-                tail = &tt->next;
-                tt = tt->next;
-            }
-            delete_Token(t);
-            changed = true;
-        } else if (tline->type == TOK_PREPROC_ID &&
-                   tline->text[0] == '%' && tline->text[1] == '$') {
-            /* expand local macro */
-            t = tline;
-            tline = tline->next;
-            tt = tokenize(t->text);
-            tt = expand_smacro(tt);
-            *tail = tt;
-            while (tt) {
-                tt->a.mac = NULL;
                 tail = &tt->next;
                 tt = tt->next;
             }
