@@ -1181,11 +1181,14 @@ static char *detoken(Token * tlist, bool expand_locals)
     list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
             char *p = getenv(t->text + 2);
-            nasm_free(t->text);
-            if (p)
+            char *q = t->text;
+            if (p) {
                 t->text = nasm_strdup(p);
-            else
-                t->text = NULL;
+            } else {
+                t->text = nasm_strdup("");
+                error(ERR_WARNING | ERR_PASS1, "`%s' is empty", q + 2);
+            }
+            nasm_free(q);
         }
         /* Expand local macros here and not during preprocessing */
         if (expand_locals &&
