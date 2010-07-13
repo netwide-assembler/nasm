@@ -3149,6 +3149,15 @@ any tokens at all, whitespace excepted.
 The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
 variants are also provided.
 
+\S{ifenv} \i\c{%ifenv}: Test If Environment Variable Exists
+
+The conditional assembly construct \c{%ifenv} assembles the
+subsequent code if and only if the environment variable referenced by
+the \c{%!<env>} directive exists.
+
+The usual \i\c{%elifenv}, \i\c\{%ifnenv}, and \i\c{%elifnenv}
+variants are also provided.
+
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 
 NASM's \c{TIMES} prefix, though useful, cannot be used to invoke a

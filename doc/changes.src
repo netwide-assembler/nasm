@@ -9,6 +9,8 @@ since 2007.
 
 \S{cl-2.09} Version 2.09
 
+\b \c{%ifenv}, \c{%elifenv}, \c{%ifnenv}, and \c{%elifnenv} directives introduced.
+
 \b Fixed NULL dereference if environment variable is missed.
 
 \b Updates of new AVX v7 Intel instruciotns.
