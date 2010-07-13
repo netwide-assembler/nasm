@@ -893,7 +893,7 @@ static Token *tokenize(char *line)
                     case '\'':
                     case '\"':
                     case '`':
-                        p = nasm_skip_string(p)+1;
+                        p = nasm_skip_string(p - 1) + 1;
                         break;
                     default:
                         break;
