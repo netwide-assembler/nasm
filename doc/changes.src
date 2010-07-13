@@ -9,6 +9,8 @@ since 2007.
 
 \S{cl-2.09} Version 2.09
 
+\b Fixed NULL dereference if environment variable is missed.
+
 \b Updates of new AVX v7 Intel instruciotns.
 
 \b \c{PUSH imm32} is now officially documented.
