@@ -1182,10 +1182,12 @@ static char *detoken(Token * tlist, bool expand_locals)
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
             char *p = getenv(t->text + 2);
             char *q = t->text;
-            if (p)
-                t->text = nasm_strdup(p);
-            else
-                error(ERR_FATAL, "`%s' is empty", q + 2);
+	    if (!p) {
+                error(ERR_NONFATAL | ERR_PASS1,
+		      "nonexistent environment variable `%s'", q + 2);
+		p = "";
+	    }
+	    t->text = nasm_strdup(p);
             nasm_free(q);
         }
         /* Expand local macros here and not during preprocessing */
