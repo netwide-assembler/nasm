@@ -1610,6 +1610,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
     struct tokenval tokval;
     expr *evalresult;
     enum pp_token_type needtype;
+    const char *p;
 
     origline = tline;
 
@@ -1645,6 +1646,26 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             }
             if (smacro_defined(NULL, tline->text, 0, NULL, true))
                 j = true;
+            tline = tline->next;
+        }
+        break;
+
+    case PPC_IFENV:
+	tline = expand_smacro(tline);
+        j = false;              /* have we matched yet? */
+        while (tline) {
+            skip_white_(tline);
+            if (!tline || (tline->type != TOK_ID &&
+                           (tline->type != TOK_PREPROC_ID ||
+			       tline->text[1] != '!'))) {
+                error(ERR_NONFATAL,
+                      "`%s' expects environment variable names",
+		      pp_directives[ct]);
+                goto fail;
+            }
+	    p = tline->type == TOK_ID ? tline->text : tline->text + 2;
+	    if (getenv(p))
+		j = true;
             tline = tline->next;
         }
         break;
