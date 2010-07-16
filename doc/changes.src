@@ -50,6 +50,9 @@ since 2007.
 
 \b Tighten EA checks. We warn a user if there overflow in EA addressing.
 
+\b Make \c{-Ox} the default optimization level.  For the legacy
+  behavior, specify \c{-O0} explicitly.  See \k{opt-O}.
+
 
 \S{cl-2.08} Version 2.08
 

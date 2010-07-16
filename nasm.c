@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -61,6 +61,13 @@
 #include "output/outform.h"
 #include "listing.h"
 
+/*
+ * This is the maximum number of optimization passes to do.  If we ever
+ * find a case where the optimizer doesn't naturally converge, we might
+ * have to drop this value so the assembler doesn't appear to just hang.
+ */
+#define MAX_OPTIMIZE (INT_MAX >> 1)
+
 struct forwrefinfo {            /* info held on forward refs. */
     int lineno;
     int operand;
@@ -96,8 +103,8 @@ const struct dfmt *dfmt;
 static FILE *error_file;        /* Where to write error messages */
 
 FILE *ofile = NULL;
-int optimizing = -1;            /* number of optimization passes to take */
-static int sb, cmd_sb = 16;     /* by default */
+int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
+static int sb, cmd_sb = 16;    /* by default */
 static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
 static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
 int64_t global_offset_changed;      /* referenced in labels.c */
@@ -659,7 +666,7 @@ static bool process_arg(char *p, char *q)
 
 	    if (!*param) {
 		/* Naked -O == -Ox */
-		optimizing = INT_MAX >> 1; /* Almost unlimited */
+		optimizing = MAX_OPTIMIZE;
 	    } else {
 		while (*param) {
 		    switch (*param) {
@@ -683,7 +690,7 @@ static bool process_arg(char *p, char *q)
 
 		    case 'x':
 			param++;
-			optimizing = INT_MAX >> 1; /* Almost unlimited */
+			optimizing = MAX_OPTIMIZE;
 			break;
 
 		    default:
@@ -693,6 +700,8 @@ static bool process_arg(char *p, char *q)
 			break;
 		    }
 		}
+		if (optimizing > MAX_OPTIMIZE)
+		    optimizing = MAX_OPTIMIZE;
 	    }
 	    break;
 	}

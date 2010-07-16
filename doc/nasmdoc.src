@@ -866,7 +866,8 @@ levels of optimization.  The syntax is:
         releases, the letter \c{x} may also be any number greater than
         one. This number has no effect on the actual number of passes.
 
-The \c{-Ox} mode is recommended for most uses.
+The \c{-Ox} mode is recommended for most uses, and is the default
+since NASM 2.09.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
