@@ -8,6 +8,16 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.08.02} Version 2.08.02
+
+\b Fix crash under certain circumstances when using the \c{%+} operator.
+
+
+\S{cl-2.08.01} Version 2.08.01
+
+\b Fix the \c{%use} statement, which was broken in 2.08.
+
+
 \S{cl-2.08} Version 2.08
 
 \b A number of enhancements/fixes in macros area.
