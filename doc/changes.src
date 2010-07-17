@@ -13,7 +13,7 @@ since 2007.
 
 \b Fixed NULL dereference if environment variable is missed.
 
-\b Updates of new AVX v7 Intel instruciotns.
+\b Updates of new AVX v7 Intel instructions.
 
 \b \c{PUSH imm32} is now officially documented.
 
