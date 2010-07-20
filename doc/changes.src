@@ -9,7 +9,8 @@ since 2007.
 
 \S{cl-2.09} Version 2.09
 
-\b \c{%ifenv}, \c{%elifenv}, \c{%ifnenv}, and \c{%elifnenv} directives introduced.
+\b \c{%ifenv}, \c{%elifenv}, \c{%ifnenv}, and \c{%elifnenv} directives
+  introduced.  See \k{ifenv}.
 
 \b Fixed NULL dereference if environment variable is missed.
 
@@ -19,7 +20,8 @@ since 2007.
 
 \b Fix for encoding the LFS, LGS and LSS in 64-bit mode.
 
-\b Fixes for compatibility with OpenWatcom compiler and DOS 8.3 file format limitation.
+\b Fixes for compatibility with OpenWatcom compiler and DOS 8.3 file
+  format limitation.
 
 \b Macros parameters range expansion introduced. See \k{mlmacrange}.
 
@@ -29,14 +31,17 @@ since 2007.
 
 \b Short intersegment jumps are permitted now.
 
-\b An alignment more then 64 bytes are allowed for \c{win32}, \c{win64} output formats.
+\b An alignment more then 64 bytes are allowed for \c{win32},
+  \c{win64} output formats.
 
 \b \c{SECTALIGN} directive introduced. In most cases invisible to user.
 
-\b \c{nojmp} option introduced in \c{smartalign} package. See \k{pkg_smartalign}.
+\b \c{nojmp} option introduced in \c{smartalign} package. See
+  \k{pkg_smartalign}.
 
-\b Short aliases \c{win}, \c{elf} and \c{macho} for output formats are introduced.
-  Each stands for \c{win32}, \c{elf32} and \c{macho32} accordingly.
+\b Short aliases \c{win}, \c{elf} and \c{macho} for output formats are
+  introduced.  Each stands for \c{win32}, \c{elf32} and \c{macho32}
+  accordingly.
 
 \b Faster handling of missing directives implemented.
 
@@ -52,6 +57,10 @@ since 2007.
 
 \b Make \c{-Ox} the default optimization level.  For the legacy
   behavior, specify \c{-O0} explicitly.  See \k{opt-O}.
+
+\b Environment variables read with \c{%!} or tested with \c{%ifenv}
+  can now contain non-identifier characters if surrounded by quotes.
+  See \k{getenv}.
 
 
 \S{cl-2.08.02} Version 2.08.02

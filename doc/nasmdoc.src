@@ -3158,6 +3158,10 @@ the \c{%!<env>} directive exists.
 The usual \i\c{%elifenv}, \i\c\{%ifnenv}, and \i\c{%elifnenv}
 variants are also provided.
 
+Just as for \c{%!<env>} the argument should be written as a string if
+it contains characters that would not be legal in an identifier.  See
+\k{getenv}.
+
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 
 NASM's \c{TIMES} prefix, though useful, cannot be used to invoke a
@@ -3714,9 +3718,15 @@ For example, suppose that you have an environment variable \c{FOO}, and
 you want the contents of \c{FOO} to be embedded in your program. You
 could do that as follows:
 
-\c %defstr FOO    %!FOO
+\c %defstr FOO          %!FOO
 
 See \k{defstr} for notes on the \c{%defstr} directive.
+
+If the name of the environment variable contains non-identifier
+characters, you can use string quotes to surround the name of the
+variable, for example:
+
+\c %defstr C_colon      %!'C:'
 
 
 \H{stdmac} \i{Standard Macros}

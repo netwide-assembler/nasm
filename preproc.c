@@ -468,6 +468,23 @@ static Token *delete_Token(Token * t);
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
 /*
+ * nasm_unquote with error if the string contains NUL characters.
+ * If the string contains NUL characters, issue an error and return
+ * the C len, i.e. truncate at the NUL.
+ */
+static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
+{
+    size_t len = nasm_unquote(qstr, NULL);
+    size_t clen = strlen(qstr);
+
+    if (len != clen)
+        error(ERR_NONFATAL, "NUL character in `%s' directive",
+              pp_directives[directive]);
+
+    return clen;
+}
+
+/*
  * Handle TASM specific directives, which do not contain a % in
  * front of them. We do it here because I could not find any other
  * place to do it for the moment, and it is a hack (ideally it would
@@ -912,6 +929,24 @@ static Token *tokenize(char *line)
                     type = TOK_PREPROC_QQ; /* %?? */
                     p++;
                 }
+	    } else if (*p == '!') {
+		type = TOK_PREPROC_ID;
+		p++;
+		if (isidchar(*p)) {
+		    do {
+			p++;
+		    }
+		    while (isidchar(*p));
+		} else if (*p == '\'' || *p == '\"' || *p == '`') {
+		    p = nasm_skip_string(p);
+		    if (*p)
+			p++;
+		    else
+			error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
+		} else {
+		    /* %! without string or identifier */
+		    type = TOK_OTHER; /* Legacy behavior... */
+		}
             } else if (isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
                         isidchar(p[1]))) {
@@ -1180,16 +1215,33 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
-            char *p = getenv(t->text + 2);
-            char *q = t->text;
-	    if (!p) {
-                error(ERR_NONFATAL | ERR_PASS1,
-		      "nonexistent environment variable `%s'", q + 2);
-		p = "";
+	    char *v;
+	    char *q = t->text;
+
+	    v = t->text + 2;
+	    if (*v == '\'' || *v == '\"' || *v == '`') {
+		size_t len = nasm_unquote(v, NULL);
+		size_t clen = strlen(v);
+
+		if (len != clen) {
+		    error(ERR_NONFATAL | ERR_PASS1,
+			  "NUL character in %! string");
+		    v = NULL;
+		}
 	    }
-	    t->text = nasm_strdup(p);
-            nasm_free(q);
+
+	    if (v) {
+		char *p = getenv(v);
+		if (!p) {
+		    error(ERR_NONFATAL | ERR_PASS1,
+			  "nonexistent environment variable `%s'", v);
+		    p = "";
+		}
+		t->text = nasm_strdup(p);
+	    }
+	    nasm_free(q);
         }
+
         /* Expand local macros here and not during preprocessing */
         if (expand_locals &&
             t->type == TOK_PREPROC_ID && t->text &&
@@ -1610,7 +1662,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
     struct tokenval tokval;
     expr *evalresult;
     enum pp_token_type needtype;
-    const char *p;
+    char *p;
 
     origline = tline;
 
@@ -1656,14 +1708,19 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         while (tline) {
             skip_white_(tline);
             if (!tline || (tline->type != TOK_ID &&
+			   tline->type != TOK_STRING &&
                            (tline->type != TOK_PREPROC_ID ||
-			       tline->text[1] != '!'))) {
+			    tline->text[1] != '!'))) {
                 error(ERR_NONFATAL,
                       "`%s' expects environment variable names",
 		      pp_directives[ct]);
                 goto fail;
             }
-	    p = tline->type == TOK_ID ? tline->text : tline->text + 2;
+	    p = tline->text;
+	    if (tline->type == TOK_PREPROC_ID)
+		p += 2;		/* Skip leading %! */
+	    if (*p == '\'' || *p == '\"' || *p == '`')
+		nasm_unquote_cstr(p, ct);
 	    if (getenv(p))
 		j = true;
             tline = tline->next;
@@ -2053,23 +2110,6 @@ static int parse_size(const char *str) {
         { 0, 1, 4, 16, 8, 10, 2, 32 };
 
     return sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1];
-}
-
-/*
- * nasm_unquote with error if the string contains NUL characters.
- * If the string contains NUL characters, issue an error and return
- * the C len, i.e. truncate at the NUL.
- */
-static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
-{
-    size_t len = nasm_unquote(qstr, NULL);
-    size_t clen = strlen(qstr);
-
-    if (len != clen)
-        error(ERR_NONFATAL, "NUL character in `%s' directive",
-              pp_directives[directive]);
-
-    return clen;
 }
 
 /**
