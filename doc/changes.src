@@ -9,6 +9,9 @@ since 2007.
 
 \S{cl-2.09} Version 2.09
 
+\b Fixed NULL dereference if argument of \c{%strlen} resolves
+  to whitespace. For example if nonexistent macro parameter is used.
+
 \b \c{%ifenv}, \c{%elifenv}, \c{%ifnenv}, and \c{%elifnenv} directives
   introduced.  See \k{ifenv}.
 
