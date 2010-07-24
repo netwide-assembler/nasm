@@ -843,8 +843,7 @@ with a \i{stub preprocessor} which does nothing.
 \S{opt-O} The \i\c{-O} Option: Specifying \i{Code Size Optimization}
 
 Using the \c{-O} option, you can tell NASM to carry out different
-levels of optimization. NASM defaults to full optimization.
-The syntax is:
+levels of optimization. The syntax is:
 
 \b \c{-O0}: No optimization. All operands take their long forms,
         if a short form is not specified, except conditional jumps.
