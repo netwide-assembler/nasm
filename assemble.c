@@ -1922,17 +1922,15 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
 static opflags_t regflag(const operand * o)
 {
-    if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
+    if (!is_register(o->basereg))
         errfunc(ERR_PANIC, "invalid operand passed to regflag()");
-    }
     return nasm_reg_flags[o->basereg];
 }
 
 static int32_t regval(const operand * o)
 {
-    if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
+    if (!is_register(o->basereg))
         errfunc(ERR_PANIC, "invalid operand passed to regval()");
-    }
     return nasm_regvals[o->basereg];
 }
 
@@ -1941,9 +1939,8 @@ static int op_rexflags(const operand * o, int mask)
     opflags_t flags;
     int val;
 
-    if (o->basereg < EXPR_REG_START || o->basereg >= REG_ENUM_LIMIT) {
+    if (!is_register(o->basereg))
         errfunc(ERR_PANIC, "invalid operand passed to op_rexflags()");
-    }
 
     flags = nasm_reg_flags[o->basereg];
     val = nasm_regvals[o->basereg];
@@ -2242,8 +2239,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
         int i;
 	opflags_t f;
 
-        if (input->basereg < EXPR_REG_START /* Verify as Register */
-            || input->basereg >= REG_ENUM_LIMIT)
+        if (!is_register(input->basereg))
             return NULL;
 	f = regflag(input);
         i = nasm_regvals[input->basereg];
@@ -2299,7 +2295,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
             if (s == 0)
                 i = -1;         /* make this easy, at least */
 
-            if (i >= EXPR_REG_START && i < REG_ENUM_LIMIT) {
+            if (is_register(i)) {
                 it = nasm_regvals[i];
 		ix = nasm_reg_flags[i];
 	    } else {
@@ -2307,7 +2303,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 		ix = 0;
 	    }
 
-	    if (b >= EXPR_REG_START && b < REG_ENUM_LIMIT) {
+	    if (is_register(b)) {
                 bt = nasm_regvals[b];
 		bx = nasm_reg_flags[b];
 	    } else {
@@ -2574,15 +2570,13 @@ static void add_asp(insn *ins, int addrbits)
 	    opflags_t i, b;
 
 	    /* Verify as Register */
-	    if (ins->oprs[j].indexreg < EXPR_REG_START
-		|| ins->oprs[j].indexreg >= REG_ENUM_LIMIT)
+            if (!is_register(ins->oprs[j].indexreg))
 		i = 0;
 	    else
 		i = nasm_reg_flags[ins->oprs[j].indexreg];
 
 	    /* Verify as Register */
-	    if (ins->oprs[j].basereg < EXPR_REG_START
-		|| ins->oprs[j].basereg >= REG_ENUM_LIMIT)
+            if (!is_register(ins->oprs[j].basereg))
 		b = 0;
 	    else
 		b = nasm_reg_flags[ins->oprs[j].basereg];
