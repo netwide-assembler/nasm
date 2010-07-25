@@ -47,6 +47,7 @@
 #include "insnsi.h"		/* For enum opcode */
 #include "directiv.h"		/* For enum directive */
 #include "opflags.h"
+#include "regs.h"
 
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
@@ -418,11 +419,8 @@ enum {
  * -----------------------------------------------------------
  */
 
-/* Register names automatically generated from regs.dat */
-#include "regs.h"
-
-/* verify value to be register */
-static inline int is_register(int reg)
+/* Verify value to be a valid register */
+static inline bool is_register(int reg)
 {
     return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
 }
