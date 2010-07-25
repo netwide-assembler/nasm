@@ -751,57 +751,34 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     }
 }
 
-static bool possible_sbyte(operand *o, int min_optimizing)
+static bool possible_sbyte(operand *o)
 {
     return o->wrt == NO_SEG && o->segment == NO_SEG &&
 	!(o->opflags & OPFLAG_UNKNOWN) &&
-	optimizing >= min_optimizing && !(o->type & STRICT);
+	optimizing >= 0 && !(o->type & STRICT);
 }
 
 /* check that opn[op]  is a signed byte of size 16 or 32 */
-static bool is_sbyte16(operand *o, int min_optimizing)
+static bool is_sbyte16(operand *o)
 {
     int16_t v;
 
-    if (!possible_sbyte(o, min_optimizing))
+    if (!possible_sbyte(o))
 	return false;
 
     v = o->offset;
     return v >= -128 && v <= 127;
 }
 
-static bool is_sbyte32(operand *o, int min_optimizing)
+static bool is_sbyte32(operand *o)
 {
     int32_t v;
 
-    if (!possible_sbyte(o, min_optimizing))
+    if (!possible_sbyte(o))
 	return false;
 
     v = o->offset;
     return v >= -128 && v <= 127;
-}
-
-/* Check if o is zero of size 16 or 32 */
-static bool is_zero16(operand *o, int min_optimizing)
-{
-    int16_t v;
-
-    if (!possible_sbyte(o, min_optimizing))
-	return false;
-
-    v = o->offset;
-    return v == 0;
-}
-
-static bool is_zero32(operand *o, int min_optimizing)
-{
-    int32_t v;
-
-    if (!possible_sbyte(o, min_optimizing))
-	return false;
-
-    v = o->offset;
-    return v == 0;
 }
 
 /* Common construct */
@@ -905,7 +882,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
 	case4(0140):
-            length += is_sbyte16(opx, 0) ? 1 : 2;
+            length += is_sbyte16(opx) ? 1 : 2;
             break;
 
 	case4(0144):
@@ -914,7 +891,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
 	case4(0150):
-            length += is_sbyte32(opx, 0) ? 1 : 4;
+            length += is_sbyte32(opx) ? 1 : 4;
             break;
 
 	case4(0154):
@@ -945,7 +922,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 	    break;
 
 	case4(0250):
-            length += is_sbyte32(opx, 0) ? 1 : 4;
+            length += is_sbyte32(opx) ? 1 : 4;
             break;
 
 	case4(0254):
@@ -1441,7 +1418,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(0140):
             data = opx->offset;
             warn_overflow_opd(opx, 2);
-            if (is_sbyte16(opx, 0)) {
+            if (is_sbyte16(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1456,7 +1433,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(0144):
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte16(opx, 0))
+            if (is_sbyte16(opx))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1465,7 +1442,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(0150):
             data = opx->offset;
             warn_overflow_opd(opx, 4);
-            if (is_sbyte32(opx, 0)) {
+            if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -1480,7 +1457,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 	case4(0154):
 	    EMIT_REX();
             bytes[0] = *codes++;
-            if (is_sbyte32(opx, 0))
+            if (is_sbyte32(opx))
                 bytes[0] |= 2;  /* s-bit */
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
@@ -1544,7 +1521,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 		errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
 			"signed dword immediate exceeds bounds");
 	    }
-            if (is_sbyte32(opx, 0)) {
+            if (is_sbyte32(opx)) {
                 bytes[0] = data;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
                     NO_SEG);
@@ -2226,9 +2203,7 @@ static enum match_result matches(const struct itemplate *itemp,
 static ea *process_ea(operand * input, ea * output, int bits,
 		      int addrbits, int rfield, opflags_t rflags)
 {
-    bool byte_offs = !!(input->eaflags & EAF_BYTEOFFS);
-    bool word_offs = !!(input->eaflags & EAF_WORDOFFS);
-    bool no_offs   = !!(input->eaflags & EAF_NO_OFFS);
+    bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
 
     output->rip = false;
 
@@ -2288,6 +2263,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
             }
         } else {                /* it's an indirection */
             int i = input->indexreg, b = input->basereg, s = input->scale;
+            int32_t seg = input->segment;
             int hb = input->hintbase, ht = input->hinttype;
             int t, it, bt;	 	/* register numbers */
 	    opflags_t x, ix, bx;	/* register flags */
@@ -2315,7 +2291,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
 	    if ((ix|bx) & (BITS32|BITS64)) {
                 /* it must be a 32/64-bit memory reference. Firstly we have
                  * to check that all registers involved are type E/Rxx. */
-		int32_t sok = BITS32|BITS64;
+		int32_t sok = BITS32|BITS64, o = input->offset;
 
                 if (it != -1) {
 		    if (!(REG64 & ~ix) || !(REG32 & ~ix))
@@ -2385,13 +2361,15 @@ static ea *process_ea(operand * input, ea * output, int bits,
                         mod = 0;
                     } else {
                         rm = (bt & 7);
-                        if (rm != REG_NUM_EBP &&
-                            (no_offs || is_zero32(input, -1)) &&
-                            !(byte_offs || word_offs))
+                        if (rm != REG_NUM_EBP && o == 0 &&
+                                seg == NO_SEG && !forw_ref &&
+                                !(input->eaflags &
+                                  (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
-                        else if (byte_offs ||
-                                 (! word_offs && is_sbyte32(input, -1)) ||
-                                 (rm == REG_NUM_EBP && no_offs))
+                        else if (input->eaflags & EAF_BYTEOFFS ||
+                                 (o >= -128 && o <= 127 && seg == NO_SEG
+                                  && !forw_ref
+                                  && !(input->eaflags & EAF_WORDOFFS)))
                             mod = 1;
                         else
                             mod = 2;
@@ -2431,13 +2409,15 @@ static ea *process_ea(operand * input, ea * output, int bits,
                         mod = 0;
                     } else {
                         base = (bt & 7);
-                        if (base != REG_NUM_EBP &&
-                            (no_offs || is_zero32(input, -1)) &&
-                            !(byte_offs || word_offs))
+                        if (base != REG_NUM_EBP && o == 0 &&
+                                    seg == NO_SEG && !forw_ref &&
+                                    !(input->eaflags &
+                                      (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
-                        else if (byte_offs ||
-                                 (! word_offs && is_sbyte32(input, -1)) ||
-                                 (base == REG_NUM_EBP && no_offs))
+                        else if (input->eaflags & EAF_BYTEOFFS ||
+                                 (o >= -128 && o <= 127 && seg == NO_SEG
+                                  && !forw_ref
+                                  && !(input->eaflags & EAF_WORDOFFS)))
                             mod = 1;
                         else
                             mod = 2;
@@ -2450,6 +2430,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 }
             } else {            /* it's 16-bit */
                 int mod, rm;
+                int16_t o = input->offset;
 
                 /* check for 64-bit long mode */
                 if (addrbits == 64)
@@ -2519,13 +2500,13 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 if (rm == -1)   /* can't happen, in theory */
                     return NULL;        /* so panic if it does */
 
-                if (rm != 6 &&
-                    (no_offs || is_zero16(input, -1)) &&
-                    !(byte_offs || word_offs))
+                if (o == 0 && seg == NO_SEG && !forw_ref && rm != 6 &&
+                    !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                     mod = 0;
-                else if (byte_offs ||
-                         (! word_offs && is_sbyte16(input, -1)) ||
-                         (rm == 6 && no_offs))
+                else if (input->eaflags & EAF_BYTEOFFS ||
+                         (o >= -128 && o <= 127 && seg == NO_SEG
+                          && !forw_ref
+                          && !(input->eaflags & EAF_WORDOFFS)))
                     mod = 1;
                 else
                     mod = 2;

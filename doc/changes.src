@@ -28,7 +28,7 @@ since 2007.
 
 \b Macros parameters range expansion introduced. See \k{mlmacrange}.
 
-\b Backward compatibility on expanding of local single line macros restored.
+\b Backward compatibility on expanging of local sigle macros restored.
 
 \b 8 bit relocations for \c{elf} and \c{bin} output formats are introduced.
 
@@ -59,10 +59,7 @@ since 2007.
 \b Tighten EA checks. We warn a user if there overflow in EA addressing.
 
 \b Make \c{-Ox} the default optimization level.  For the legacy
-  behavior, specify \c{-OL} explicitly.  See \k{opt-O}.
-
-\b Don't optimize displacements in \c{-O0}.  For the legacy
-  behavior, specify \c{-OL}.  See \k{opt-O}.
+  behavior, specify \c{-O0} explicitly.  See \k{opt-O}.
 
 \b Environment variables read with \c{%!} or tested with \c{%ifenv}
   can now contain non-identifier characters if surrounded by quotes.
@@ -861,7 +858,7 @@ it 0.98.28 to not confuse poor little apt-get.
 Changes from 0.98.07 release to 98.09b as of 28-Oct-2001
 
 \b More closely compatible with 0.98 when -O0 is implied
-or specified.  Not strictly identical, since backward
+or specified.  Not strictly identical, since backward 
 branches in range of short offsets are recognized, and signed
 byte values with no explicit size specification will be
 assembled as a single byte.
@@ -915,7 +912,7 @@ from the current BITS setting (16 or 32).
 
 
 \b       Removed the "outforms.h" file - it appears to be
-        someone's old backup of "outform.h". version "0.98.06e"
+        someone's old backup of "outform.h". version "0.98.06e" 
 
 01/09/01
 
@@ -951,9 +948,9 @@ from the current BITS setting (16 or 32).
 \S{cl-0.98bf (bug-fixed)} Version 0.98bf (bug-fixed)
 
 \b Fixed - elf and aoutb bug - shared libraries
-        - multiple "%include" bug in "-f obj"
+        - multiple "%include" bug in "-f obj"   
         - jcxz, jecxz bug
-        - unrecognized option bug in ndisasm
+        - unrecognized option bug in ndisasm 
 
 \S{cl-0.98.03 with John Coffman's changes released 27-Jul-2000} Version 0.98.03 with John Coffman's changes released 27-Jul-2000
 
@@ -976,7 +973,7 @@ This feature is controlled by a new command-line switch: "O",
 extra optimization passes, "-O1" allows up to 5 extra passes,
 and "-O2"(default), allows up to 10 extra optimization passes.
 
-\b Added a new directive:  'cpu XXX', where XXX is any of:
+\b Added a new directive:  'cpu XXX', where XXX is any of: 
 8086, 186, 286, 386, 486, 586, pentium, 686, PPro, P2, P3 or
 Katmai.  All are case insensitive.  All instructions will
 be selected only if they apply to the selected cpu or lower.
@@ -986,7 +983,7 @@ Corrected a couple of bugs in cpu-dependence in 'insns.dat'.
 the "bits 16/32" directive. This is nothing new, just conforms
 to a lot of other assemblers. (minor)
 
-\b Changed label allocation from 320/32 (10000 labels @ 200K+)
+\b Changed label allocation from 320/32 (10000 labels @ 200K+) 
 to 32/37 (1000 labels); makes running under DOS much easier.
 Since additional label space is allocated dynamically, this
 should have no effect on large programs with lots of labels.
@@ -1578,7 +1575,7 @@ on lines such as `dd 0.0,0.0,0.0,0.0,...'
 \b Fixed a subtle preprocessor bug whereby invoking one multi-line
 macro on the first line of the expansion of another, when the second
 had been invoked with a label defined before it, didn't expand the
-inner macro.
+inner macro. 
 
 \b Added internal.doc back in to the distribution archives - it was
 missing in 0.96 *blush*

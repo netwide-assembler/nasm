@@ -674,21 +674,13 @@ static bool process_arg(char *p, char *q)
 		    case '5': case '6': case '7': case '8': case '9':
 			opt = strtoul(param, &param, 10);
 
-                        if (opt == 0)
-                            /* no optimization */
-                            optimizing = -2;
-			else if (opt == 1)
-                            /* 0.98.09 behaviour */
-			    optimizing = 0;
+			/* -O0 -> optimizing == -1, 0.98 behaviour */
+			/* -O1 -> optimizing == 0, 0.98.09 behaviour */
+			if (opt < 2)
+			    optimizing = opt - 1;
 			else
 			    optimizing = opt;
 			break;
-
-                    case 'L':
-                        /* 0.98 behaviour */
-                        param++;
-                        optimizing = -1;
-                        break;
 
 		    case 'v':
 		    case '+':
@@ -791,11 +783,10 @@ static bool process_arg(char *p, char *q)
                  "    -F format   select a debugging format\n\n"
                  "    -I<path>    adds a pathname to the include file path\n");
             printf
-                ("    -O<digit>   optimize code size\n"
-                 "                -O0: No optimization\n"
-                 "                -OL: Legacy optimization\n"
+                ("    -O<digit>   optimize branch offsets\n"
+                 "                -O0: No optimization (default)\n"
                  "                -O1: Minimal optimization\n"
-                 "                -Ox: Full optimization (default)\n\n"
+                 "                -Ox: Multipass optimization (recommended)\n\n"
                  "    -P<file>    pre-includes a file\n"
                  "    -D<macro>[=<value>] pre-defines a macro\n"
                  "    -U<macro>   undefines a macro\n"
