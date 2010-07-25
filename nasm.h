@@ -421,6 +421,12 @@ enum {
 /* Register names automatically generated from regs.dat */
 #include "regs.h"
 
+/* verify value to be register */
+static inline int is_register(int reg)
+{
+    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
+}
+
 enum ccode {			/* condition code names */
     C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,
     C_NB, C_NBE, C_NC, C_NE, C_NG, C_NGE, C_NL, C_NLE, C_NO, C_NP,

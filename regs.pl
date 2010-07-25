@@ -134,13 +134,6 @@ if ( $fmt eq 'h' ) {
     foreach $reg ( sort(keys(%regs)) ) {
 	printf "#define %-15s %2d\n", "REG_NUM_\U${reg}", $regvals{$reg};
     }
-
-    print "\n";
-    print "static inline int is_register(int reg)\n";
-    print "{\n";
-    print "    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;\n";
-    print "}\n";
-
     print "\n\n#endif /* NASM_REGS_H */\n";
 } elsif ( $fmt eq 'c' ) {
     # Output regs.c
