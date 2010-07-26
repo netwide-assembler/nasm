@@ -7237,7 +7237,7 @@ functions by means of
 
 will give the user the address of the code you wrote, whereas
 
-\c funcptr:        dd      my_function wrt .sym
+\c funcptr:        dd      my_function wrt ..sym
 
 will give the address of the procedure linkage table for the
 function, which is where the calling program will \e{believe} the
