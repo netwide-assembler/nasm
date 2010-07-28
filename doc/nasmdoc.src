@@ -2561,9 +2561,9 @@ See \k{sectmac} for a better way to write the above macro.
 
 \S{mlmacrange} \i{Macro Parameters Range}
 
-NASM also allows you to expand parameters via special construction \c{%\{x:y\}}
+NASM allows you to expand parameters via special construction \c{%\{x:y\}}
 where \c{x} is the first parameter index and \c{y} is the last. Any index can
-be either negative or positive. Though the indices must never be zero.
+be either negative or positive but must never be zero.
 
 For example
 
@@ -2599,8 +2599,8 @@ expands to \c{6,5,4} range.
 
 Note that NASM uses \i{comma} to separate parameters being expanded.
 
-By the way, here is a trick - you might use the index \c{%{-1:-1}} gives
-you the \i{last} argument passed to a macro.
+By the way, here is a trick - you might use the index \c{%{-1:-1}}
+which gives you the \i{last} argument passed to a macro.
 
 \S{mlmacdef} \i{Default Macro Parameters}
 
