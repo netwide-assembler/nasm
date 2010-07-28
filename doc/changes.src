@@ -37,7 +37,7 @@ since 2007.
 \b An alignment more then 64 bytes are allowed for \c{win32},
   \c{win64} output formats.
 
-\b \c{SECTALIGN} directive introduced. In most cases invisible to user.
+\b \c{SECTALIGN} directive introduced. See \k{sectalign}.
 
 \b \c{nojmp} option introduced in \c{smartalign} package. See
   \k{pkg_smartalign}.
