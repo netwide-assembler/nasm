@@ -93,7 +93,7 @@ void nasm_init_malloc_error(void)
     if (logfp) {
         setvbuf(logfp, NULL, _IOLBF, BUFSIZ);
     } else {
-        nasm_error(ERR_NONFATAL | ERR_NOFILE, "Unable to open %s", file);
+        nasm_error(ERR_NONFATAL | ERR_NOFILE, "Unable to open %s", logfp);
         logfp = stderr;
     }
     fprintf(logfp, "null pointer is %p\n", NULL);
