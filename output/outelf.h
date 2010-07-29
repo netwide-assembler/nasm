@@ -80,6 +80,15 @@ extern const struct elf_known_section elf_known_sections[];
 #define sec_stabstr             (nsections-2)
 #define sec_rel_stab            (nsections-1)
 
+/* stabs symbol table format */
+struct stabentry {
+    uint32_t    n_strx;
+    uint8_t     n_type;
+    uint8_t     n_other;
+    uint16_t    n_desc;
+    uint32_t    n_value;
+};
+
 /* dwarf */
 #define sec_debug_aranges       (nsections-10)
 #define sec_rela_debug_aranges  (nsections-9)

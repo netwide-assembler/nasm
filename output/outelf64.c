@@ -143,14 +143,6 @@ static struct SAA *elf_build_symtab(int32_t *, int32_t *);
 static struct SAA *elf_build_reltab(uint64_t *, struct Reloc *);
 static void add_sectname(char *, char *);
 
-struct stabentry {
-    uint32_t n_strx;
-    uint8_t n_type;
-    uint8_t n_other;
-    uint16_t n_desc;
-    uint32_t n_value;
-};
-
 struct erel {
     int offset, info;
 };
