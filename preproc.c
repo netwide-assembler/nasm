@@ -82,7 +82,6 @@
 #include "tables.h"
 
 typedef struct SMacro SMacro;
-typedef struct MMacro MMacro;
 typedef struct ExpDef ExpDef;
 typedef struct ExpInv ExpInv;
 typedef struct Context Context;
@@ -166,26 +165,14 @@ struct Token {
 };
 
 /*
- * Multi-line macro definitions are stored as a linked list of
+ * Expansion definitions are stored as a linked list of
  * these, which is essentially a container to allow several linked
  * lists of Tokens.
  *
  * Note that in this module, linked lists are treated as stacks
  * wherever possible. For this reason, Lines are _pushed_ on to the
- * `expansion' field in MMacro structures, so that the linked list,
- * if walked, would give the macro lines in reverse order; this
- * means that we can walk the list when expanding a macro, and thus
- * push the lines on to the `expansion' field in _istk_ in reverse
- * order (so that when popped back off they are in the right
- * order). It may seem cockeyed, and it relies on my design having
- * an even number of steps in, but it works...
- *
- * Some of these structures, rather than being actual lines, are
- * markers delimiting the end of the expansion of a given macro.
- * This is for use in the cycle-tracking and %rep-handling code.
- * Such structures have `finishes' non-NULL, and `first' NULL. All
- * others have `finishes' NULL, but `first' may still be NULL if
- * the line is blank.
+ * `last' field in ExpDef structures, so that the linked list,
+ * if walked, would emit the expansion lines in the proper order.
  */
 struct Line {
     Line *next;
@@ -203,18 +190,14 @@ enum pp_exp_type {
 };
 
 /*
- * Store the definition of an expansion. This is also used to
- * store the interiors of `%rep...%endrep' blocks, which are
- * effectively self-re-invoking multi-line macros which simply
- * don't have a name or bother to appear in the hash tables. %rep
- * blocks are signified by having a NULL `name' field.
+ * Store the definition of an expansion, in which is any
+ * preprocessor directive that has an ending pair.
  *
- * In a ExpDef describing a `%rep' block, the `cur_depth' field
- * isn't merely boolean, but gives the number of repeats left to
- * run.
+ * This design allows for arbitrary expansion/recursion depth,
+ * upto the DEADMAN_LIMIT.
  *
  * The `next' field is used for storing ExpDef in hash tables; the
- * `prev' field is for the `expansions` linked-list.
+ * `prev' field is for the global `expansions` linked-list.
  */
 struct ExpDef {
     ExpDef *prev;               /* previous definition */
@@ -225,8 +208,8 @@ struct ExpDef {
     bool casesense;
     bool plus;                  /* is the last parameter greedy? */
     bool nolist;                /* is this expansion listing-inhibited? */
-    Token *dlist;               /* All defaults as one list */
-    Token **defaults;           /* Parameter default pointers */
+    Token *dlist;               /* all defaults as one list */
+    Token **defaults;           /* parameter default pointers */
     int ndefs;                  /* number of default parameters */
 	
 	Line *label;
@@ -333,8 +316,7 @@ enum {
 #define DIRECTIVE_FOUND     1
 
 /*
- * This define sets the upper limit for smacro and recursive mmacro
- * expansions
+ * This define sets the upper limit for smacro and expansions
  */
 #define DEADMAN_LIMIT (1 << 20)
 
@@ -632,7 +614,7 @@ static void free_smacro_table(struct hash_table *smt)
     hash_free(smt);
 }
 
-static void free_mmacro_table(struct hash_table *edt)
+static void free_expdef_table(struct hash_table *edt)
 {
     ExpDef *ed, *tmp;
     const char *key;
@@ -650,7 +632,7 @@ static void free_mmacro_table(struct hash_table *edt)
 static void free_macros(void)
 {
     free_smacro_table(&smacros);
-    free_mmacro_table(&expdefs);
+    free_expdef_table(&expdefs);
 }
 
 /*
@@ -4504,7 +4486,7 @@ static ExpDef *is_mmacro(Token * tline, Token *** params_array)
      * Efficiency: first we see if any macro exists with the given
      * name. If not, we can return NULL immediately. _Then_ we
      * count the parameters, and then we look further along the
-     * list if necessary to find the proper MMacro.
+     * list if necessary to find the proper ExpDef.
      */
     list_for_each(ed, head)
         if (!mstrcmp(ed->name, tline->text, ed->casesense))
@@ -4671,17 +4653,13 @@ static int expand_mmacro(Token * tline)
 	}
 
     /*
-     * OK, we have a MMacro structure together with a set of
-     * parameters. We must now go through the expansion and push
-     * copies of each Line on to istk->expansion. Substitution of
+     * OK, we have found a ExpDef structure representing a
+	 * previously defined mmacro. Create an expansion invocation
+	 * and point it back to the expansion definition. Substitution of
      * parameter tokens and macro-local tokens doesn't get done
      * until the single-line macro substitution process; this is
      * because delaying them allows us to change the semantics
      * later through %rotate.
-     *
-     * First, push an end marker on to istk->expansion, mark this
-     * macro as in progress, and set up its invocation-specific
-     * variables.
      */
 	ei = new_ExpInv();
 	ei->type = EXP_MMACRO;
