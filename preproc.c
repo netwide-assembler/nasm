@@ -185,7 +185,8 @@ struct Line {
 enum pp_exp_type {
     EXP_NONE = 0, EXP_PREDEF,
 	EXP_MMACRO, EXP_REP,
-    EXP_IF,
+    EXP_IF, EXP_WHILE,
+	EXP_COMMENT, EXP_FINAL,
     EXP_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
 
@@ -400,6 +401,12 @@ static ExpDef *defining = NULL;
 
 static uint64_t nested_mac_count;
 static uint64_t nested_rep_count;
+
+/*
+ * Linked-list of lines to preprocess, prior to cleanup
+ */
+static Line *finals = NULL;
+static bool in_final = false;
 
 /*
  * The number of macro parameters to allocate space for at a time.
@@ -2227,6 +2234,7 @@ static int do_directive(Token * tline)
     const char *mname;
     Include *inc;
     Context *ctx;
+	Line *l;
     Token *t, *tt, *param_start, *macro_start, *last, **tptr, *origline;
     struct tokenval tokval;
     expr *evalresult;
@@ -3668,6 +3676,164 @@ issue_error:
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+			
+	case PP_WHILE:
+		if (defining != NULL) {
+			if (defining->type == EXP_WHILE) {
+				defining->def_depth ++;
+			}
+			return NO_DIRECTIVE_FOUND;
+		}
+		l = NULL;
+		if ((istk->expansion != NULL) &&
+			(istk->expansion->emitting == false)) {
+			j = COND_NEVER;
+		} else {
+			l = new_Line();
+			l->first = copy_Token(tline->next);
+			j = if_condition(tline->next, i);
+			tline->next = NULL; /* it got freed */
+			j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
+		}			
+		ed = new_ExpDef();
+		ed->type = EXP_WHILE;
+		ed->state = j;
+		ed->cur_depth = 1;
+		ed->max_depth = DEADMAN_LIMIT;
+		ed->ignoring = ((ed->state == COND_IF_TRUE) ? false : true);
+		if (ed->ignoring == false) {
+			ed->line = l;
+			ed->last = l;
+		} else if (l != NULL) {
+			delete_Token(l->first);
+			nasm_free(l);
+			l = NULL;
+		}
+		ed->prev = defining;
+		defining = ed;
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+			
+	case PP_ENDWHILE:
+		if (defining != NULL) {
+			if (defining->type == EXP_WHILE) {
+				if (defining->def_depth > 0) {
+					defining->def_depth --;
+					return NO_DIRECTIVE_FOUND;
+				}
+			} else {
+				return NO_DIRECTIVE_FOUND;
+			}
+		}
+		if (tline->next != NULL) {
+			error_precond(ERR_WARNING|ERR_PASS1,
+						  "trailing garbage after `%%endwhile' ignored");
+		}
+		if ((defining == NULL) || (defining->type != EXP_WHILE)) {
+			error(ERR_NONFATAL, "`%%endwhile': no matching `%%while'");
+			return DIRECTIVE_FOUND;
+		}
+		ed = defining;
+		defining = ed->prev;
+		if (ed->ignoring == false) {
+			ed->prev = expansions;
+			expansions = ed;
+			ei = new_ExpInv();
+			ei->type = EXP_WHILE;
+			ei->def = ed;
+			ei->current = ed->line->next;
+			ei->emitting = true;
+			ei->prev = istk->expansion;
+			istk->expansion = ei;
+		} else {
+			nasm_free(ed);
+		}
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+
+	case PP_EXITWHILE:
+		if (defining != NULL) return NO_DIRECTIVE_FOUND;
+		/*
+		 * We must search along istk->expansion until we hit a
+		 * while invocation. Then we disable the emitting state(s)
+		 * between exitwhile and endwhile.
+		 */
+		for (ei = istk->expansion; ei != NULL; ei = ei->prev) {
+			if (ei->type == EXP_WHILE) {
+				break;
+			}
+		}
+			
+		if (ei != NULL) {
+			/*
+			 * Set all invocations leading back to the while
+			 * invocation to a non-emitting state.
+			 */
+			for (eei = istk->expansion; eei != ei; eei = eei->prev) {
+				eei->emitting = false;
+			}
+			eei->emitting = false;
+			eei->current = NULL;
+			eei->def->cur_depth = eei->def->max_depth;
+		} else {
+			error(ERR_NONFATAL, "`%%exitwhile' not within `%%while' block");
+		}
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+			
+	case PP_COMMENT:
+		if (defining != NULL) {
+			if (defining->type == EXP_COMMENT) {
+				defining->def_depth ++;
+			}
+			return NO_DIRECTIVE_FOUND;
+		}
+		ed = new_ExpDef();
+		ed->type = EXP_COMMENT;
+		ed->ignoring = true;
+		ed->prev = defining;
+		defining = ed;
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+		
+	case PP_ENDCOMMENT:
+		if (defining != NULL) {
+			if (defining->type == EXP_COMMENT) {
+				if (defining->def_depth > 0) {
+					defining->def_depth --;
+					return NO_DIRECTIVE_FOUND;
+				}
+			} else {
+				return NO_DIRECTIVE_FOUND;
+			}
+		}
+		if ((defining == NULL) || (defining->type != EXP_COMMENT)) {
+			error(ERR_NONFATAL, "`%%endignore': no matching `%%ignore'");
+			return DIRECTIVE_FOUND;
+		}
+		ed = defining;
+		defining = ed->prev;
+		nasm_free(ed);
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
+			
+	case PP_FINAL:
+		if (defining != NULL) return NO_DIRECTIVE_FOUND;
+		if (in_final != false) {
+			error(ERR_FATAL, "`%%final' cannot be used recursively");
+		}
+		tline = tline->next;
+		skip_white_(tline);
+		if (tline == NULL) {
+			error(ERR_NONFATAL, "`%%final' expects at least one parameter");
+		} else {	
+			l = new_Line();
+			l->first = copy_Token(tline);
+			l->next = finals;
+			finals = l;
+		}
+		free_tlist(origline);
+		return DIRECTIVE_FOUND;
 
     default:
         error(ERR_FATAL,
@@ -4816,6 +4982,8 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
         error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
               file);
     defining = NULL;
+	finals = NULL;
+	in_final = false;
     nested_mac_count = 0;
     nested_rep_count = 0;
     init_macros();
@@ -4886,7 +5054,9 @@ static char *pp_getline(void)
 					e->current = l->next;
 					e->lineno++;
 					tline = copy_Token(l->first);
-					if (((e->type == EXP_REP) || (e->type == EXP_MMACRO))
+					if (((e->type == EXP_REP) ||
+						 (e->type == EXP_MMACRO) ||
+						 (e->type == EXP_WHILE))
 						&& (e->def->nolist == false)) {
 						char *p = detoken(tline, false);
 						list->line(LIST_MACRO, p);
@@ -4899,10 +5069,33 @@ static char *pp_getline(void)
 					e->current = e->def->line;
 					e->lineno = 0;
 					continue;
+				} else if ((e->type == EXP_WHILE) &&
+						   (e->def->cur_depth < e->def->max_depth)) {
+					e->current = e->def->line;
+					e->lineno = 0;
+					tline = copy_Token(e->current->first);
+					int j = if_condition(tline, PP_WHILE);
+					tline = NULL;
+					j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
+					if (j == COND_IF_TRUE) {
+						e->current = e->current->next;
+						e->def->cur_depth ++;
+					} else {
+						e->emitting = false;
+						e->current = NULL;
+						e->def->cur_depth = e->def->max_depth;
+					}
+					continue;
 				} else {
 					istk->expansion = e->prev;
 					ExpDef *ed = e->def;
 					if (ed != NULL) {
+						if ((e->emitting == true) &&
+							(ed->max_depth == DEADMAN_LIMIT) &&
+							(ed->cur_depth == DEADMAN_LIMIT)
+							) {
+							error(ERR_FATAL, "runaway expansion detected, aborting");
+						}
 						if (ed->cur_depth > 0) {
 							ed->cur_depth --;
 						} else if ((ed->type != EXP_MMACRO) && (ed->type != EXP_IF)) {
@@ -4922,7 +5115,9 @@ static char *pp_getline(void)
 							nasm_free(ed);
 							*/
 						}
-						if ((e->type == EXP_REP) || (e->type == EXP_MMACRO)) {
+						if ((e->type == EXP_REP) ||
+							(e->type == EXP_MMACRO) ||
+							(e->type == EXP_WHILE)) {
 							list->downlevel(LIST_MACRO);
 						}
 					}
@@ -4957,16 +5152,30 @@ static char *pp_getline(void)
                     src_set_linnum(i->lineno);
                     nasm_free(src_set_fname(i->fname));
                 }
+				if ((i->next == NULL) && (finals != NULL)) {
+					in_final = true;
+					ExpInv *ei = new_ExpInv();
+					ei->type = EXP_FINAL;
+					ei->emitting = true;
+					ei->current = finals;
+					istk->expansion = ei;
+					finals = NULL;
+					continue;
+				}
                 istk = i->next;
                 list->downlevel(LIST_INCLUDE);
                 nasm_free(i);
                 if (istk == NULL) {
-                    return NULL;
+					if (finals != NULL) {
+						in_final = true;
+					} else {
+						return NULL;
+					}
 				}
 				continue;
             }
 		}
-		
+			
 		if (defining == NULL) {
 			tline = expand_mmac_params(tline);
 		}
