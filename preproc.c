@@ -3808,7 +3808,7 @@ issue_error:
 			}
 		}
 		if ((defining == NULL) || (defining->type != EXP_COMMENT)) {
-			error(ERR_NONFATAL, "`%%endignore': no matching `%%ignore'");
+			error(ERR_NONFATAL, "`%%endcomment': no matching `%%comment'");
 			return DIRECTIVE_FOUND;
 		}
 		ed = defining;
