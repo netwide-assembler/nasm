@@ -4929,14 +4929,6 @@ static void verror(int severity, const char *fmt, va_list arg)
 static void error(int severity, const char *fmt, ...)
 {
     va_list arg;
-
-    /* If we're in a dead branch of IF or something like it, ignore the error */
-	if ((istk != NULL) &&
-		(istk->expansion != NULL) &&
-		(istk->expansion->type == EXP_IF) &&
-		!emitting(istk->expansion->def->state))
-        return;
-
     va_start(arg, fmt);
     verror(severity, fmt, arg);
     va_end(arg);
