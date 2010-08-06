@@ -213,14 +213,15 @@ struct ExpDef {
     Token **defaults;           /* parameter default pointers */
     int ndefs;                  /* number of default parameters */
 	
+	int prepend;				/* label prepend state */
 	Line *label;
     Line *line;
 	Line *last;
 	
 	uint32_t def_depth;			/* current number of definition pairs deep */
     uint32_t cur_depth;         /* current number of expansions */
-    uint32_t max_depth;         /* maximum number of expansions allowed */	
-
+    uint32_t max_depth;         /* maximum number of expansions allowed */
+	
 	int state;					/* condition state */
 	bool ignoring;				/* ignoring definition lines */
 };
@@ -1336,6 +1337,7 @@ static ExpDef *new_ExpDef(void)
 	ed->nparam_max = 0;
 	ed->casesense = true;
 	ed->plus = false;
+	ed->prepend = 0;
 	ed->label = NULL;
 	ed->line = NULL;
 	ed->last = NULL;
@@ -4728,15 +4730,14 @@ static ExpDef *is_mmacro(Token * tline, Token *** params_array)
 /*
  * Expand the multi-line macro call made by the given line, if
  * there is one to be expanded. If there is, push the expansion on
- * istk->expansion and return 1. Otherwise return 0.
+ * istk->expansion and return true. Otherwise return false.
  */
-static int expand_mmacro(Token * tline)
+static bool expand_mmacro(Token * tline)
 {
-    Token *startline = tline;
     Token *label = NULL;
     int dont_prepend = 0;
-    Token **params, *t, *mtok, *tt;
-    Line *l;
+    Token **params, *t, *mtok;
+    Line *l = NULL;
 	ExpDef *ed;
 	ExpInv *ei;
     int i, nparam, *paramlen;
@@ -4746,7 +4747,7 @@ static int expand_mmacro(Token * tline)
     skip_white_(t);
     /*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
     if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
-        return 0;
+        return false;
     mtok = t;
 	ed = is_mmacro(t, &params);
     if (ed != NULL) {
@@ -4770,7 +4771,7 @@ static int expand_mmacro(Token * tline)
                 last = t, t = t->next;
         }
         if (!tok_type_(t, TOK_ID) || !(ed = is_mmacro(t, &params)))
-            return 0;
+            return false;
         last->next = NULL;
         mname = t->text;
         tline = t;
@@ -4813,7 +4814,7 @@ static int expand_mmacro(Token * tline)
 				  "reached maximum macro recursion depth of %i for %s",
 				  ed->max_depth,ed->name);
 		}
-		return 0;
+		return false;
 	} else {
 		ed->cur_depth ++;
 	}
@@ -4831,7 +4832,7 @@ static int expand_mmacro(Token * tline)
 	ei->type = EXP_MMACRO;
 	ei->def = ed;
 //	ei->label = label;
-	ei->label_text = detoken(label, false);
+//	ei->label_text = detoken(label, false);
 	ei->current = ed->line;
 	ei->emitting = true;
 //	ei->iline = tline;
@@ -4878,30 +4879,56 @@ static int expand_mmacro(Token * tline)
             tail = &tt->next;
         }
         *tail = NULL;
+	 }
     */
+	
+	/*
+	 * Special case: detect %00 on first invocation; if found,
+	 * avoid emitting any labels that precede the mmacro call.
+	 * ed->prepend is set to -1 when %00 is detected, else 1.
+	 */
+	if (ed->prepend == 0) {
+		for (l = ed->line; l != NULL; l = l->next) {
+			for (t = l->first; t != NULL; t = t->next) {
+				if ((t->type == TOK_PREPROC_ID) &&
+					(strlen(t->text) == 3) &&
+					(t->text[1] == '0') && (t->text[2] == '0')) {
+					dont_prepend = -1;
+					break;
+				}
+			}
+			if (dont_prepend < 0) {
+				break;
+			}
+		}
+		ed->prepend = ((dont_prepend < 0) ? -1 : 1);
+	}
 
     /*
      * If we had a label, push it on as the first line of
      * the macro expansion.
      */
-    if (label) {
-        if (dont_prepend < 0)
-            free_tlist(startline);
-        else {
-            l = new_Line();
-            ei->label = l;
-            l->first = startline;
-            if (!dont_prepend) {
-                while (label->next)
-                    label = label->next;
-                label->next = tt = new_Token(NULL, TOK_OTHER, ":", 0);
-            }
-        }
+    if (label != NULL) {
+		if (ed->prepend < 0) {
+			ei->label_text = detoken(label, false);
+		} else {
+			if (dont_prepend == 0) {
+				t = label;
+				while (t->next != NULL) {
+					t = t->next;
+				}
+				t->next = new_Token(NULL, TOK_OTHER, ":", 0);
+			}
+			Line *l = new_Line();
+			l->first = copy_Token(label);
+			l->next = ei->current;
+			ei->current = l;
+		}
     }
 
     list->uplevel(ed->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
-    return 1;
+    return true;
 }
 
 /* The function that actually does the error reporting */
@@ -5021,6 +5048,7 @@ static char *pp_getline(void)
 {
     char *line;
     Token *tline;
+	ExpInv *ei;
 	
     while (1) {
         /*
@@ -5034,55 +5062,54 @@ static char *pp_getline(void)
 			 * Fetch a tokenized line from the expansion buffer
 			 */
             if (istk->expansion != NULL) {
-				
-				ExpInv *e = istk->expansion;
-				if (e->current != NULL) {
-					if (e->emitting == false) {
-						e->current = NULL;
+				ei = istk->expansion;
+				if (ei->current != NULL) {
+					if (ei->emitting == false) {
+						ei->current = NULL;
 						continue;
 					}
 					Line *l = NULL;
-					l = e->current;
-					e->current = l->next;
-					e->lineno++;
+					l = ei->current;
+					ei->current = l->next;
+					ei->lineno++;
 					tline = copy_Token(l->first);
-					if (((e->type == EXP_REP) ||
-						 (e->type == EXP_MMACRO) ||
-						 (e->type == EXP_WHILE))
-						&& (e->def->nolist == false)) {
+					if (((ei->type == EXP_REP) ||
+						 (ei->type == EXP_MMACRO) ||
+						 (ei->type == EXP_WHILE))
+						&& (ei->def->nolist == false)) {
 						char *p = detoken(tline, false);
 						list->line(LIST_MACRO, p);
 						nasm_free(p);
 					}
 					break;
-				} else if ((e->type == EXP_REP) &&
-						   (e->def->cur_depth < e->def->max_depth)) {
-					e->def->cur_depth ++;
-					e->current = e->def->line;
-					e->lineno = 0;
+				} else if ((ei->type == EXP_REP) &&
+						   (ei->def->cur_depth < ei->def->max_depth)) {
+					ei->def->cur_depth ++;
+					ei->current = ei->def->line;
+					ei->lineno = 0;
 					continue;
-				} else if ((e->type == EXP_WHILE) &&
-						   (e->def->cur_depth < e->def->max_depth)) {
-					e->current = e->def->line;
-					e->lineno = 0;
-					tline = copy_Token(e->current->first);
+				} else if ((ei->type == EXP_WHILE) &&
+						   (ei->def->cur_depth < ei->def->max_depth)) {
+					ei->current = ei->def->line;
+					ei->lineno = 0;
+					tline = copy_Token(ei->current->first);
 					int j = if_condition(tline, PP_WHILE);
 					tline = NULL;
 					j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
 					if (j == COND_IF_TRUE) {
-						e->current = e->current->next;
-						e->def->cur_depth ++;
+						ei->current = ei->current->next;
+						ei->def->cur_depth ++;
 					} else {
-						e->emitting = false;
-						e->current = NULL;
-						e->def->cur_depth = e->def->max_depth;
+						ei->emitting = false;
+						ei->current = NULL;
+						ei->def->cur_depth = ei->def->max_depth;
 					}
 					continue;
 				} else {
-					istk->expansion = e->prev;
-					ExpDef *ed = e->def;
+					istk->expansion = ei->prev;
+					ExpDef *ed = ei->def;
 					if (ed != NULL) {
-						if ((e->emitting == true) &&
+						if ((ei->emitting == true) &&
 							(ed->max_depth == DEADMAN_LIMIT) &&
 							(ed->cur_depth == DEADMAN_LIMIT)
 							) {
@@ -5107,13 +5134,13 @@ static char *pp_getline(void)
 							nasm_free(ed);
 							*/
 						}
-						if ((e->type == EXP_REP) ||
-							(e->type == EXP_MMACRO) ||
-							(e->type == EXP_WHILE)) {
+						if ((ei->type == EXP_REP) ||
+							(ei->type == EXP_MMACRO) ||
+							(ei->type == EXP_WHILE)) {
 							list->downlevel(LIST_MACRO);
 						}
 					}
-					nasm_free(e);
+					nasm_free(ei);
 					continue;
 				}
 			}
@@ -5146,7 +5173,7 @@ static char *pp_getline(void)
                 }
 				if ((i->next == NULL) && (finals != NULL)) {
 					in_final = true;
-					ExpInv *ei = new_ExpInv();
+					ei = new_ExpInv();
 					ei->type = EXP_FINAL;
 					ei->emitting = true;
 					ei->current = finals;
@@ -5207,17 +5234,17 @@ static char *pp_getline(void)
 			free_tlist(tline);
             continue;
         } else {
-            tline = expand_smacro(tline);
-            if (!expand_mmacro(tline)) {
+			tline = expand_smacro(tline);
+            if (expand_mmacro(tline) != true) {
                 /*
                  * De-tokenize the line again, and emit it.
                  */
 				line = detoken(tline, true);
 				free_tlist(tline);
                 break;
-            } else {
-                continue;       /* expand_mmacro calls free_tlist */
-            }
+			} else {
+				continue;
+			}
         }
 	}
 	return line;
