@@ -3211,6 +3211,9 @@ infinite loop in the preprocessor, which (on multitasking or
 multi-user systems) would typically cause all the system memory to
 be gradually used up and other applications to start crashing.
 
+Note a maximum repeat count is limited by 62 bit number, though it
+is hardly possible that you ever need anything bigger.
+
 
 \H{files} Source Files and Dependencies
 

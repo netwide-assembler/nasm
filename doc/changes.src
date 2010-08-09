@@ -9,6 +9,9 @@ since 2007.
 
 \S{cl-2.09} Version 2.09
 
+\b Fixed assignment the magnitude of \c{%rep} counter. It is limited
+  to 62 bits now.
+
 \b Fixed NULL dereference if argument of \c{%strlen} resolves
   to whitespace. For example if nonexistent macro parameter is used.
 
