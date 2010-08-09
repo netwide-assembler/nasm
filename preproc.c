@@ -217,6 +217,7 @@ struct ExpDef {
 	Line *label;
     Line *line;
 	Line *last;
+	int linecount;				/* number of lines within expansion */
 	
 	uint32_t def_depth;			/* current number of definition pairs deep */
     uint32_t cur_depth;         /* current number of expansions */
@@ -250,6 +251,7 @@ struct ExpInv {
 	uint64_t unique;
     bool emitting;
     int lineno;                 /* current line number in expansion */
+	int linnum;					/* line number at invocation */
 };
 
 /*
@@ -263,6 +265,7 @@ struct Include {
     ExpInv *expansion;
     char *fname;
     int lineno, lineinc;
+	int mmac_depth;
 };
 
 /*
@@ -457,8 +460,8 @@ static Token *new_Token(Token * next, enum pp_token_type type,
 static Token *copy_Token(Token * tline);
 static Token *delete_Token(Token * t);
 static Line *new_Line(void);
-static ExpDef *new_ExpDef(void);
-static ExpInv *new_ExpInv(void);
+static ExpDef *new_ExpDef(int exp_type);
+static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 
 /*
  * Macros for safe checking of token pointers, avoid *(NULL)
@@ -761,8 +764,7 @@ static char *line_from_stdmac(void)
 
                 l = new_Line();
                 l->first = head;
-				ei = new_ExpInv();
-				ei->type = EXP_PREDEF;
+				ei = new_ExpInv(EXP_PREDEF, NULL);
 				ei->current = l;
 				ei->emitting = true;
 				ei->prev = istk->expansion;
@@ -841,8 +843,8 @@ static char *read_line(void)
         return NULL;
     }
 
-    src_set_linnum(src_get_linnum() + istk->lineinc +
-                   (continued_count * istk->lineinc));
+	src_set_linnum(src_get_linnum() + istk->lineinc +
+				   (continued_count * istk->lineinc));
 
     /*
      * Play safe: remove CRs as well as LFs, if any of either are
@@ -1326,12 +1328,12 @@ static Line *new_Line(void)
 /*
  * Initialize a new Expansion Definition
  */
-static ExpDef *new_ExpDef(void)
+static ExpDef *new_ExpDef(int exp_type)
 {
 	ExpDef *ed = nasm_malloc(sizeof(ExpDef));
 	ed->prev = NULL;
 	ed->next = NULL;
-	ed->type = EXP_NONE;
+	ed->type = exp_type;
 	ed->name = NULL;
 	ed->nparam_min = 0;
 	ed->nparam_max = 0;
@@ -1341,6 +1343,7 @@ static ExpDef *new_ExpDef(void)
 	ed->label = NULL;
 	ed->line = NULL;
 	ed->last = NULL;
+	ed->linecount = 0;
 	ed->dlist = NULL;
 	ed->defaults = NULL;
 	ed->ndefs = 0;
@@ -1357,13 +1360,13 @@ static ExpDef *new_ExpDef(void)
 /*
  * Initialize a new Expansion Instance
  */
-static ExpInv *new_ExpInv(void)
+static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 {
 	unique ++;
 	ExpInv *ei = nasm_malloc(sizeof(ExpInv));
 	ei->prev = NULL;
-	ei->type = EXP_NONE;
-	ei->def = NULL;
+	ei->type = exp_type;
+	ei->def = ed;
 	ei->label = NULL;
 	ei->label_text = NULL;
 	ei->current = NULL;
@@ -1375,6 +1378,17 @@ static ExpInv *new_ExpInv(void)
 	ei->unique = unique;
 	ei->emitting = false;
 	ei->lineno = 0;
+	if ((istk->mmac_depth < 1) &&
+		(istk->expansion == NULL) &&
+		(ed != NULL) &&
+		(ed->type != EXP_MMACRO) &&
+		(ed->type != EXP_REP) &&
+		(ed->type != EXP_WHILE)) {
+		ei->linnum = src_get_linnum();
+		src_set_linnum(ei->linnum - ed->linecount - 1);
+	} else {
+		ei->linnum = -1;
+	}
 	return ei;
 }
 
@@ -2673,8 +2687,7 @@ issue_error:
 			tline->next = NULL; /* it got freed */
 			j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
 		}
-		ed = new_ExpDef();
-		ed->type = EXP_IF;
+		ed = new_ExpDef(EXP_IF);
 		ed->state = j;
 		ed->nolist = NULL;
 		ed->def_depth = 0;
@@ -2793,9 +2806,7 @@ issue_error:
 		defining = ed->prev;
 		ed->prev = expansions;
 		expansions = ed;
-		ei = new_ExpInv();
-		ei->type = EXP_IF;
-		ei->def = ed;
+		ei = new_ExpInv(EXP_IF, ed);
 		ei->current = ed->line;
 		ei->emitting = true;
 		ei->prev = istk->expansion;
@@ -2813,7 +2824,7 @@ issue_error:
 			}
 			return NO_DIRECTIVE_FOUND;
 		}
-		ed = new_ExpDef();	
+		ed = new_ExpDef(EXP_MMACRO);	
 		ed->max_depth =
             (i == PP_RMACRO) || (i == PP_IRMACRO) ? DEADMAN_LIMIT : 0;
 		ed->casesense = (i == PP_MACRO) || (i == PP_RMACRO);
@@ -2822,7 +2833,6 @@ issue_error:
             ed = NULL;
             return DIRECTIVE_FOUND;
         }
-		ed->type = EXP_MMACRO;
 		ed->def_depth = 0;
 		ed->cur_depth = 0;
 		ed->max_depth = (ed->max_depth + 1);
@@ -3021,8 +3031,7 @@ issue_error:
             count = 0;
         }
         free_tlist(origline);
-		ed = new_ExpDef();
-		ed->type = EXP_REP;
+		ed = new_ExpDef(EXP_REP);
 		ed->nolist = nolist;
 		ed->def_depth = 0;
 		ed->cur_depth = 1;
@@ -3063,9 +3072,7 @@ issue_error:
 		defining = ed->prev;
 		ed->prev = expansions;
 		expansions = ed;
-		ei = new_ExpInv();
-		ei->type = EXP_REP;
-		ei->def = ed;
+		ei = new_ExpInv(EXP_REP, ed);
 		ei->current = ed->line;
 		ei->emitting = ((ed->max_depth > 0) ? true : false);
 		list->uplevel(ed->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
@@ -3697,8 +3704,7 @@ issue_error:
 			tline->next = NULL; /* it got freed */
 			j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
 		}			
-		ed = new_ExpDef();
-		ed->type = EXP_WHILE;
+		ed = new_ExpDef(EXP_WHILE);
 		ed->state = j;
 		ed->cur_depth = 1;
 		ed->max_depth = DEADMAN_LIMIT;
@@ -3740,9 +3746,7 @@ issue_error:
 		if (ed->ignoring == false) {
 			ed->prev = expansions;
 			expansions = ed;
-			ei = new_ExpInv();
-			ei->type = EXP_WHILE;
-			ei->def = ed;
+			ei = new_ExpInv(EXP_WHILE, ed);
 			ei->current = ed->line->next;
 			ei->emitting = true;
 			ei->prev = istk->expansion;
@@ -3790,8 +3794,7 @@ issue_error:
 			}
 			return NO_DIRECTIVE_FOUND;
 		}
-		ed = new_ExpDef();
-		ed->type = EXP_COMMENT;
+		ed = new_ExpDef(EXP_COMMENT);
 		ed->ignoring = true;
 		ed->prev = defining;
 		defining = ed;
@@ -4828,9 +4831,7 @@ static bool expand_mmacro(Token * tline)
      * because delaying them allows us to change the semantics
      * later through %rotate.
      */
-	ei = new_ExpInv();
-	ei->type = EXP_MMACRO;
-	ei->def = ed;
+	ei = new_ExpInv(EXP_MMACRO, ed);
 //	ei->label = label;
 //	ei->label_text = detoken(label, false);
 	ei->current = ed->line;
@@ -4928,6 +4929,7 @@ static bool expand_mmacro(Token * tline)
 
     list->uplevel(ed->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
+	istk->mmac_depth++;
     return true;
 }
 
@@ -4997,6 +4999,7 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
     istk->lineinc = 1;
+	istk->mmac_depth = 0;
     if (!istk->fp)
         error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
               file);
@@ -5081,6 +5084,9 @@ static char *pp_getline(void)
 						list->line(LIST_MACRO, p);
 						nasm_free(p);
 					}
+					if (ei->linnum > -1) {
+						src_set_linnum(src_get_linnum() + 1);
+					}
 					break;
 				} else if ((ei->type == EXP_REP) &&
 						   (ei->def->cur_depth < ei->def->max_depth)) {
@@ -5119,7 +5125,7 @@ static char *pp_getline(void)
 							ed->cur_depth --;
 						} else if ((ed->type != EXP_MMACRO) && (ed->type != EXP_IF)) {
 							/***** should this really be right here??? *****/
-							/*
+							/*	
 							Line *l = NULL, *ll = NULL;
 							for (l = ed->line; l != NULL;) {
 								if (l->first != NULL) {
@@ -5132,13 +5138,19 @@ static char *pp_getline(void)
 							}
 							expansions = ed->prev;
 							nasm_free(ed);
-							*/
+							 */
 						}
 						if ((ei->type == EXP_REP) ||
 							(ei->type == EXP_MMACRO) ||
 							(ei->type == EXP_WHILE)) {
 							list->downlevel(LIST_MACRO);
+							if (ei->type == EXP_MMACRO) {
+								istk->mmac_depth--;
+							}
 						}
+					}
+					if (ei->linnum > -1) {
+						src_set_linnum(ei->linnum);
 					}
 					nasm_free(ei);
 					continue;
@@ -5173,8 +5185,7 @@ static char *pp_getline(void)
                 }
 				if ((i->next == NULL) && (finals != NULL)) {
 					in_final = true;
-					ei = new_ExpInv();
-					ei->type = EXP_FINAL;
+					ei = new_ExpInv(EXP_FINAL, NULL);
 					ei->emitting = true;
 					ei->current = finals;
 					istk->expansion = ei;
@@ -5222,6 +5233,7 @@ static char *pp_getline(void)
 			} else {
 				//free_tlist(tline);	/***** sanity check: is this supposed to be here? *****/
 			}
+			defining->linecount++;
             continue;
         } else if ((istk->expansion != NULL) &&
 				   (istk->expansion->emitting != true)) {
