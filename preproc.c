@@ -1456,8 +1456,14 @@ static Context *get_ctx(const char *name, const char **namep,
     if (namep)
         *namep = name;
 
-    if (!all_contexts)
+    if (!all_contexts) {
         return ctx;
+	} else {
+		error(ERR_WARNING, "context-local label expansion"
+			  " to outer contexts will be deprecated"
+			  " starting in NASM 2.10, please update your"
+			  " code accordingly");
+	}
 
     do {
         /* Search for this smacro in found context */
