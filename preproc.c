@@ -2900,7 +2900,7 @@ issue_error:
             }
             count = reloc_value(evalresult);
             if (count >= REP_LIMIT) {
-                error(ERR_NONFATAL, "`%%rep' evalue exceeds limit");
+                error(ERR_NONFATAL, "`%%rep' value exceeds limit");
                 count = 0;
             } else
                 count++;
