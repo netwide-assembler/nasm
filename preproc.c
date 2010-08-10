@@ -4307,7 +4307,7 @@ again:
             if (tline->type == TOK_ID) {
                 head = (SMacro *)hash_findix(&smacros, mname);
             } else if (tline->type == TOK_PREPROC_ID) {
-                ctx = get_ctx(mname, &mname, true);
+                ctx = get_ctx(mname, &mname, false);
                 head = ctx ? (SMacro *)hash_findix(&ctx->localmac, mname) : NULL;
             } else
                 head = NULL;
