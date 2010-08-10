@@ -252,6 +252,7 @@ struct ExpInv {
     bool emitting;
     int lineno;                 /* current line number in expansion */
 	int linnum;					/* line number at invocation */
+	int relno;					/* relative line number at invocation */
 };
 
 /*
@@ -1388,6 +1389,15 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 		src_set_linnum(ei->linnum - ed->linecount - 1);
 	} else {
 		ei->linnum = -1;
+	}
+	if ((istk->expansion == NULL) ||
+		(ei->type == EXP_MMACRO)) {
+		ei->relno = 0;
+	} else {
+		ei->relno = istk->expansion->lineno;
+		if (ed != NULL) {
+			ei->relno -= (ed->linecount + 1);
+		}
 	}
 	return ei;
 }
@@ -4940,12 +4950,18 @@ static void verror(int severity, const char *fmt, va_list arg)
 
     vsnprintf(buff, sizeof(buff), fmt, arg);
 
-    if ((istk != NULL) &&
-		(istk->expansion != NULL) &&
-		(istk->expansion->type == EXP_MMACRO)) {
-		ExpDef *ed = istk->expansion->def;
-        nasm_error(severity, "(%s:%d) %s", ed->name,
-				   istk->expansion->lineno, buff);
+    if ((istk != NULL) && (istk->mmac_depth > 0)) {
+		ExpInv *ei = istk->expansion;
+		int lineno = ei->lineno;
+		while (ei != NULL) {
+			if (ei->type == EXP_MMACRO) {
+				break;
+			}
+			lineno += ei->relno;
+			ei = ei->prev;
+		}
+        nasm_error(severity, "(%s:%d) %s", ei->def->name,
+				   lineno, buff);
     } else {
         nasm_error(severity, "%s", buff);
 	}
