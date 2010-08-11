@@ -1462,24 +1462,42 @@ static Context *get_ctx(const char *name, const char **namep,
     if (!all_contexts)
         return ctx;
 
-    do {
+    /*
+     * NOTE: In 2.10 we will not need lookup in extarnal
+     * contexts, so this is a gentle way to inform users
+     * about their source code need to be updated
+     */
+
+    /* first round -- check the current context */
+    m = hash_findix(&ctx->localmac, name);
+    while (m) {
+        if (!mstrcmp(m->name, name, m->casesense))
+            return ctx;
+        m = m->next;
+    }
+
+    /* second round - external contexts */
+    while ((ctx = ctx->next)) {
         /* Search for this smacro in found context */
         m = hash_findix(&ctx->localmac, name);
         while (m) {
             if (!mstrcmp(m->name, name, m->casesense)) {
-				if ((i > 0) && (all_contexts == true)) {
-					error(ERR_WARNING, "context-local label expansion"
-						  " to outer contexts will be deprecated"
-						  " starting in NASM 2.10, please update your"
-						  " code accordingly");
-				}
+                /* NOTE: obsolete since 2.10 */
+                static int once = 0;
+                if (!once) {
+                    error(ERR_WARNING, "context-local macro expansion"
+                            " to outer contexts will be deprecated"
+                            " starting in NASM 2.10, please update your"
+                            " code accordingly");
+                    once = 1;
+                }
+                error(ERR_WARNING, "`%s': context through macro expansion", name);
                 return ctx;
-			}
+            }
             m = m->next;
         }
-        ctx = ctx->next;
     }
-    while (ctx);
+
     return NULL;
 }
 
