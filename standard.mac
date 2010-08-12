@@ -68,8 +68,19 @@
     __SECT__
 %endmacro
 
+%define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
 %imacro sectalign 1.nolist
-    [sectalign %1]
+    %ifnum %1
+        %if __SECTALIGN_ALIGN_UPDATES_SECTION__ = 1
+            [sectalign %1]
+        %endif
+    %else
+        %ifidni %1,off
+            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
+        %elifidni %1,on
+            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
+        %endif
+    %endif
 %endmacro
 
 %imacro absolute 1+.nolist

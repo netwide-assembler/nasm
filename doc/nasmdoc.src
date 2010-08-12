@@ -4099,26 +4099,35 @@ boundary, for example, is a waste of effort. Again, NASM does not
 check that the section's alignment characteristics are sensible for
 the use of \c{ALIGN} or \c{ALIGNB}.
 
+Both \c{ALIGN} and \c{ALIGNB} do call \c{SECTALIGN} macro implicitly.
+See \k{sectalign} for details.
+
 See also the \c{smartalign} standard macro package, \k{pkg_smartalign}.
 
 
 \S{sectalign} \i\c{SECTALIGN}: Section Alignment
 
 The \c{SECTALIGN} macros provides a way to modify alignment attribute
-of output file section. Unlike the \c{align=} attribute allowed at section
-definition only the \c{SECTALIGN} macro may be used any time you need it.
+of output file section. Unlike the \c{align=} attribute (which is allowed
+at section definition only) the \c{SECTALIGN} macro may be used at any time.
 
-For example the statement
+For example the directive
 
-\c
 \c SECTALIGN 16
-\c
 
-sets a section alignment requirement to 16 bytes. Note that once increased
-the section alignment can not be decreased, the magnitude can grow only.
+sets the section alignment requirements to 16 bytes. Once increased it can
+not be decreased, the magnitude may grow only.
 
-It must be also noted that \c{SECTALIGN} gets called implicitly inside \c{ALIGN}
-handler and as result \c{ALIGN} may update section alignment.
+Note that \c{ALIGN} (see \k{align}) calls the \c{SECTALIGN} macro implicitly
+so the active section alignment requirements may be updated. This is by default
+behaviour, if for some reason you want the \c{ALIGN} do not call \c{SECTALIGN}
+at all use the directive
+
+\c SECTALIGN OFF
+
+It is still possible to turn in on again by
+
+\c SECTALIGN ON
 
 
 \C{macropkg} \i{Standard Macro Packages}
