@@ -3397,6 +3397,44 @@ top context on the stack. Of course, after a subsequent \c{%push},
 it can then still be accessed by the name \c{%$$localmac}.
 
 
+\S{ctxfallthrough} \i{Context Fall-Through Lookup}
+
+By NASM version 2.10 context fall-through lookup for single macros
+definition is officially deprecated and not supported. It was a bad
+designed vague feature.
+
+A typical test case with context fall-through lookup is the following
+
+\c %macro ctxthru 0
+\c %push ctx1
+\c     %assign %$external 1
+\c         %push ctx2
+\c             %assign %$internal 1
+\c             mov eax, %$external
+\c             mov eax, %$internal
+\c         %pop
+\c %pop
+\c %endmacro
+
+As you may see \c{%$external} referred as being \c{ctx2}
+context local macro but in real it is defined in external context.
+This ugly trick will not work anymore. You have to declare that
+\c{external} is defined in external context \c{ctx1} explicitly by
+adding as many \c{$} as needed. For this case the correct code will
+look like
+
+\c %macro ctxthru 0
+\c %push ctx1
+\c     %assign %$external 1
+\c         %push ctx2
+\c             %assign %$internal 1
+\c             mov eax, %$$external
+\c             mov eax, %$internal
+\c         %pop
+\c %pop
+\c %endmacro
+
+
 \S{ctxrepl} \i\c{%repl}: \I{renaming contexts}Renaming a Context
 
 If you need to change the name of the top context on the stack (in
