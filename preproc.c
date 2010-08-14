@@ -1482,16 +1482,17 @@ static Context *get_ctx(const char *name, const char **namep,
         m = hash_findix(&ctx->localmac, name);
         while (m) {
             if (!mstrcmp(m->name, name, m->casesense)) {
-                /* NOTE: obsolete since 2.10 */
+                /* NOTE: deprecated as of 2.10 */
                 static int once = 0;
                 if (!once) {
                     error(ERR_WARNING, "context-local macro expansion"
-                            " to outer contexts will be deprecated"
-                            " starting in NASM 2.10, please update your"
-                            " code accordingly");
+                            " fall-through (automatic searching of outer"
+						    " contexts) will be deprecated starting in"
+						    " NASM 2.10, please see the NASM Manual for"
+						    " more information");
                     once = 1;
                 }
-                error(ERR_WARNING, "`%s': context through macro expansion", name);
+                error(ERR_WARNING, "`%s': context-local macro expansion fall-through", name);
                 return ctx;
             }
             m = m->next;
