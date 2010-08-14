@@ -3399,11 +3399,16 @@ it can then still be accessed by the name \c{%$$localmac}.
 
 \S{ctxfallthrough} \i{Context Fall-Through Lookup}
 
-By NASM version 2.10 context fall-through lookup for single macros
-definition is officially deprecated and not supported. It was a bad
-designed vague feature.
+Context fall-through lookup (automatic searching of outer contexts)
+is a feature that was added in NASM version 0.98.03. Unfortunately,
+this feature is unintuitive and can result in buggy code that would
+have otherwise been prevented by NASM's error reporting. As a result,
+this feature has been \e{deprecated}. NASM version 2.09 will issue a
+warning when usage of this \e{deprecated} feature is detected. Starting
+with NASM version 2.10, usage of this \e{deprecated} feature will simply
+result in an \e{expression syntax error}.
 
-A typical test case with context fall-through lookup is the following
+An example usage of this \e{deprecated} feature follows:
 
 \c %macro ctxthru 0
 \c %push ctx1
@@ -3416,12 +3421,17 @@ A typical test case with context fall-through lookup is the following
 \c %pop
 \c %endmacro
 
-As you may see \c{%$external} referred as being \c{ctx2}
-context local macro but in real it is defined in external context.
-This ugly trick will not work anymore. You have to declare that
-\c{external} is defined in external context \c{ctx1} explicitly by
-adding as many \c{$} as needed. For this case the correct code will
-look like
+As demonstrated, \c{%$external} is being defined in the \c{ctx1}
+context and referenced within the \c{ctx2} context. With context
+fall-through lookup, referencing an undefined context-local macro
+like this implicitly searches through all outer contexts until a match
+is made or isn't found in any context. As a result, \c{%$external}
+referenced within the \c{ctx2} context would implicitly use \c{%$external}
+as defined in \c{ctx1}. Most people would expect NASM to issue an error in
+this situation because \c{%$external} was never defined within \c{ctx2} and also
+isn't qualified with the proper context depth, \c{%$$external}.
+
+Here is a revision of the above example with proper context depth:
 
 \c %macro ctxthru 0
 \c %push ctx1
@@ -3433,6 +3443,12 @@ look like
 \c         %pop
 \c %pop
 \c %endmacro
+
+As demonstrated, \c{%$external} is still being defined in the \c{ctx1}
+context and referenced within the \c{ctx2} context. However, the
+reference to \c{%$external} within \c{ctx2} has been fully qualified with
+the proper context depth, \c{%$$external}, and thus is no longer ambiguous,
+unintuitive or erroneous.
 
 
 \S{ctxrepl} \i\c{%repl}: \I{renaming contexts}Renaming a Context
