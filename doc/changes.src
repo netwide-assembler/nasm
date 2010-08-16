@@ -37,7 +37,7 @@ since 2007.
 
 \b Short intersegment jumps are permitted now.
 
-\b An alignment more then 64 bytes are allowed for \c{win32},
+\b An alignment more than 64 bytes are allowed for \c{win32},
   \c{win64} output formats.
 
 \b \c{SECTALIGN} directive introduced. See \k{sectalign}.
