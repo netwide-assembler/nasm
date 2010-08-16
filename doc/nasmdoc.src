@@ -843,10 +843,6 @@ with a \i{stub preprocessor} which does nothing.
 
 \S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
 
-NASM defaults to not optimizing operands which can fit into a signed byte.
-This means that if you want the shortest possible object code,
-you have to enable optimization.
-
 Using the \c{-O} option, you can tell NASM to carry out different
 levels of optimization.  The syntax is:
 
