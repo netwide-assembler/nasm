@@ -769,7 +769,7 @@ sub byte_code_compile($$) {
 		    $w = 0;
 		} elsif ($oq eq 'w1') {
 		    $w = 1;
-		} elsif ($oq eq 'wx') {
+		} elsif ($oq eq 'wig') {
 		    $w = 2;
 		} elsif ($oq eq 'ww') {
 		    $w = 3;

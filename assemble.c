@@ -93,10 +93,10 @@
  * VEX/XOP prefixes are followed by the sequence:
  * \tmm\wlp        where mm is the M field; and wlp is:
  *                 00 0ww lpp
- *                 [w0] ww = 0 for W = 0
- *                 [w1] ww = 1 for W = 1
- *                 [wx] ww = 2 for W don't care (always assembled as 0)
- *                 [ww] ww = 3 for W used as REX.W
+ *                 [w0]  ww = 0 for W = 0
+ *                 [w1 ] ww = 1 for W = 1
+ *                 [wig] ww = 2 for W don't care (always assembled as 0)
+ *                 [ww]  ww = 3 for W used as REX.W
  *
  * t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
  *
