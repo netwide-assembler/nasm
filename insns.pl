@@ -761,10 +761,12 @@ sub byte_code_compile($$) {
 	    my @subops = split(/\./, $op);
 	    shift @subops;	# Drop prefix
 	    foreach $oq (@subops) {
-		if ($oq eq '128' || $oq eq 'l0') {
+		if ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz') {
 		    $l = 0;
 		} elsif ($oq eq '256' || $oq eq 'l1') {
 		    $l = 1;
+		} elsif ($oq eq 'lig') {
+		    $l = 2;
 		} elsif ($oq eq 'w0') {
 		    $w = 0;
 		} elsif ($oq eq 'w1') {
@@ -805,7 +807,7 @@ sub byte_code_compile($$) {
 		die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
 	    }
 	    push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
-		 ($c << 6)+$m, ($w << 3)+($l << 2)+$p);
+		 ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^\/drex([01])$/) {
 	    my $oc0 = $1;

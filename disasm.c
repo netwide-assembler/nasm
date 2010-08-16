@@ -678,6 +678,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    int vexm   = *r++;
 	    int vexwlp = *r++;
+
 	    ins->rex |= REX_V;
 	    if ((prefix->rex & (REX_V|REX_D|REX_P)) != REX_V)
 		return false;
@@ -685,24 +686,25 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    if ((vexm & 0x1f) != prefix->vex_m)
 		return false;
 
-	    switch (vexwlp & 030) {
+	    switch (vexwlp & 060) {
 	    case 000:
 		if (prefix->rex & REX_W)
 		    return false;
 		break;
-	    case 010:
+	    case 020:
 		if (!(prefix->rex & REX_W))
 		    return false;
 		ins->rex &= ~REX_W;
 		break;
-	    case 020:		/* VEX.W is a don't care */
+	    case 040:		/* VEX.W is a don't care */
 		ins->rex &= ~REX_W;
 		break;
-	    case 030:
+	    case 060:
 		break;
 	    }
 
-	    if ((vexwlp & 007) != prefix->vex_lp)
+	    /* The 010 bit of vexwlp is set if VEX.L is ignored */
+	    if ((vexwlp ^ prefix->vex_lp) & ((vexwlp & 010) ? 03 : 07))
 		return false;
 
 	    opx->segment |= SEG_RMREG;

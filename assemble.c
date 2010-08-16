@@ -92,7 +92,11 @@
  *
  * VEX/XOP prefixes are followed by the sequence:
  * \tmm\wlp        where mm is the M field; and wlp is:
- *                 00 0ww lpp
+ *                 00 wwl lpp
+ *		   [l0]  ll = 0 for L = 0 (.128, .lz)
+ *		   [l1]  ll = 1 for L = 1 (.256)
+ *		   [lig] ll = 2 for L don't care (always assembled as 0)
+ *
  *                 [w0]  ww = 0 for W = 0
  *                 [w1 ] ww = 1 for W = 1
  *                 [wig] ww = 2 for W don't care (always assembled as 0)
@@ -1130,16 +1134,16 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             errfunc(ERR_NONFATAL, "cannot use high register in vex instruction");
             return -1;
         }
-        switch (ins->vex_wlp & 030) {
+        switch (ins->vex_wlp & 060) {
         case 000:
         case 020:
             ins->rex &= ~REX_W;
             break;
-        case 010:
+        case 040:
             ins->rex |= REX_W;
             bad32 &= ~REX_W;
             break;
-        case 030:
+        case 060:
             /* Follow REX_W */
             break;
         }
