@@ -1978,10 +1978,10 @@ VBLENDPD	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 0d /r ib]		AVX,
 VBLENDPD	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 0d /r ib]		AVX,SANDYBRIDGE
 VBLENDPS	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE
 VBLENDPS	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 0c /r ib]		AVX,SANDYBRIDGE
-VBLENDVPD	xmmreg,xmmreg,xmmrm128,xmmreg	[rvms:	vex.nds.128.66.0f3a.w0 4b /r /is4]	AVX,SANDYBRIDGE
-VBLENDVPD	ymmreg,ymmreg,ymmrm256,ymmreg	[rvms:	vex.nds.256.66.0f3a.w0 4b /r /is4]	AVX,SANDYBRIDGE
-VBLENDVPS	xmmreg,xmmreg,xmmrm128,xmmreg	[rvms:	vex.nds.128.66.0f3a.w0 4a /r /is4]	AVX,SANDYBRIDGE
-VBLENDVPS	ymmreg,ymmreg,ymmrm256,ymmreg	[rvms:	vex.nds.256.66.0f3a.w0 4a /r /is4]	AVX,SANDYBRIDGE
+VBLENDVPD	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	vex.nds.128.66.0f3a.w0 4b /r /is4]	AVX,SANDYBRIDGE
+VBLENDVPD	ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	vex.nds.256.66.0f3a.w0 4b /r /is4]	AVX,SANDYBRIDGE
+VBLENDVPS	xmmreg,xmmreg*,xmmrm128,xmmreg	[rvms:	vex.nds.128.66.0f3a.w0 4a /r /is4]	AVX,SANDYBRIDGE
+VBLENDVPS	ymmreg,ymmreg*,ymmrm256,ymmreg	[rvms:	vex.nds.256.66.0f3a.w0 4a /r /is4]	AVX,SANDYBRIDGE
 VBROADCASTSS	xmmreg,mem32			[rm:	vex.128.66.0f38.w0 18 /r]		AVX,SANDYBRIDGE
 VBROADCASTSS	ymmreg,mem32			[rm:	vex.256.66.0f38.w0 18 /r]		AVX,SANDYBRIDGE
 VBROADCASTSD	ymmreg,mem64			[rm:	vex.256.66.0f38.w0 19 /r]		AVX,SANDYBRIDGE
