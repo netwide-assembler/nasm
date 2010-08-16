@@ -2292,7 +2292,7 @@ VCVTPS2PD	xmmreg,xmmrm64			[rm:	vex.128.0f 5a /r]			AVX,SANDYBRIDGE
 VCVTPS2PD	ymmreg,xmmrm128			[rm:	vex.256.0f 5a /r]			AVX,SANDYBRIDGE
 VCVTSD2SI	reg32,xmmrm64			[rm:	vex.lig.f2.0f.w0 2d /r]			AVX,SANDYBRIDGE
 VCVTSD2SI	reg64,xmmrm64			[rm:	vex.lig.f2.0f.w1 2d /r]			AVX,SANDYBRIDGE,LONG
-VCVTSD2SS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.lig.f2.0f 5a /r]			AVX,SANDYBRIDGE
+VCVTSD2SS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f 5a /r]		AVX,SANDYBRIDGE
 VCVTSI2SD	xmmreg,xmmreg*,rm32		[rvm:	vex.nds.lig.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,SD
 VCVTSI2SD	xmmreg,xmmreg*,mem32		[rvm:	vex.nds.lig.f2.0f.w0 2a /r]		AVX,SANDYBRIDGE,ND,SD
 VCVTSI2SD	xmmreg,xmmreg*,rm64		[rvm:	vex.nds.lig.f2.0f.w1 2a /r]		AVX,SANDYBRIDGE,LONG,SQ
