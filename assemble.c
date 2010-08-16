@@ -1136,10 +1136,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
         switch (ins->vex_wlp & 060) {
         case 000:
-        case 020:
+        case 040:
             ins->rex &= ~REX_W;
             break;
-        case 040:
+        case 020:
             ins->rex |= REX_W;
             bad32 &= ~REX_W;
             break;
