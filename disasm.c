@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -674,6 +674,16 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
+	case4(0250):
+	    if (s_field_for == op1) {
+		opx->offset = gets8(data);
+		data++;
+	    } else {
+		opx->offset = gets32(data);
+		data += 4;
+	    }
+	    break;
+
 	case4(0260):
 	{
 	    int vexm   = *r++;
@@ -823,7 +833,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case 0324:
-	    if (!(ins->rex & (REX_P|REX_W)) || osize != 64)
+	    if (osize != 64)
 		return false;
 	    o_used = true;
 	    break;
