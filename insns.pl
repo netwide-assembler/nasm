@@ -52,8 +52,8 @@ $vex_classes = scalar(@vex_class);
 for ($c = 0; $c < $vex_classes; $c++) {
     $vexmap{$vex_class[$c]} = $c;
     for ($m = 0; $m < 32; $m++) {
-	for ($lp = 0; $lp < 8; $lp++) {
-	    push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $lp));
+	for ($p = 0; $p < 4; $p++) {
+	    push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $p));
 	}
     }
 }
@@ -319,15 +319,15 @@ if ( !defined($output) || $output eq 'd' ) {
 	print D "};\n";
     }
 
-    printf D "\nconst struct disasm_index * const itable_vex[%d][32][8] =\n",
+    printf D "\nconst struct disasm_index * const itable_vex[%d][32][4] =\n",
         $vex_classes;
     print D "{\n";
     for ($c = 0; $c < $vex_classes; $c++) {
 	print D "    {\n";
 	for ($m = 0; $m < 32; $m++) {
 	    print D "        {\n";
-	    for ($lp = 0; $lp < 8; $lp++) {
-		$vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $lp);
+	    for ($p = 0; $p < 4; $p++) {
+		$vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $p);
 		if ($is_prefix{$vp}) {
 		    printf D "            itable_%s,\n", $vp;
 		} else {
@@ -628,7 +628,7 @@ sub startseq($$) {
 	    $wlp = shift(@codes);
 	    $c = ($m >> 6);
 	    $m = $m & 31;
-	    $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 7);
+	    $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 3);
 	} elsif ($c0 >= 0172 && $c0 <= 174) {
 	    shift(@codes);	# Skip is4 control byte
 	} else {
