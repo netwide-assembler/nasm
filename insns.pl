@@ -308,12 +308,12 @@ if ( !defined($output) || $output eq 'd' ) {
 	    if ($is_prefix{$nn}) {
 		die "$fname: ambiguous decoding of $nn\n"
 		    if (defined($dinstables{$nn}));
-		printf D "    { itable_%s, -1 },\n", $nn;
+		printf D "    /* 0x%02x */ { itable_%s, -1 },\n", $c, $nn;
 	    } elsif (defined($dinstables{$nn})) {
-		printf D "    { itable_%s, %u },\n",
-		$nn, scalar(@{$dinstables{$nn}});
+		printf D "    /* 0x%02x */ { itable_%s, %u },\n", $c,
+		    $nn, scalar(@{$dinstables{$nn}});
 	    } else {
-		printf D "    { NULL, 0 },\n";
+		printf D "    /* 0x%02x */ { NULL, 0 },\n", $c;
 	    }
 	}
 	print D "};\n";
@@ -325,16 +325,13 @@ if ( !defined($output) || $output eq 'd' ) {
     for ($c = 0; $c < $vex_classes; $c++) {
 	print D "    {\n";
 	for ($m = 0; $m < 32; $m++) {
-	    print D "        {\n";
+	    print D "        { ";
 	    for ($p = 0; $p < 4; $p++) {
 		$vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $p);
-		if ($is_prefix{$vp}) {
-		    printf D "            itable_%s,\n", $vp;
-		} else {
-		    print  D "            NULL,\n";
-		}
+		printf D "%-15s",
+		    ($is_prefix{$vp} ? sprintf("itable_%s,", $vp) : 'NULL,');
 	    }
-	    print D "        },\n";
+	    print D "},\n";
 	}
 	print D "    },\n";
     }
