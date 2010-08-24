@@ -7,6 +7,15 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10} Version 2.10
+
+\b When optimization is enabled, \c{mov r64,imm} now optimizes to the
+  shortest form possible between:
+
+\c      mov r32,imm32			;  5 bytes
+\c	mov r64,imm32			;  7 bytes
+\c	mov r64,imm64			; 10 bytes
+
 
 \S{cl-2.09} Version 2.09
 
