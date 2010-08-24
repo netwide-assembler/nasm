@@ -66,11 +66,10 @@
  * 23: 256 bits (YWORD)
  * 29: 128 bits (OWORD)
  *
- * Bits 8-11 modifiers
+ * Bits 8-10 modifiers
  *  8: TO
  *  9: COLON
  * 10: STRICT
- * 11: (reserved)
  *
  * Bits 12-15: type of operand
  * 12: REGISTER
@@ -78,7 +77,7 @@
  * 14: MEMORY (always has REGMEM attribute as well)
  * 15: REGMEM (valid EA operand)
  *
- * Bits 16-19, 28: subclasses
+ * Bits 11, 16-19, 28: subclasses
  * With REG_CDT:
  * 16: REG_CREG (CRx)
  * 17: REG_DREG (DRx)
@@ -115,6 +114,8 @@
  * 17: BYTENESS16 (-128..127)
  * 18: BYTENESS32 (-128..127)
  * 19: BYTENESS64 (-128..127)
+ * 28: SDWORD64 (-2^31..2^31-1)
+ * 11: UDWORD64 (0..2^32-1)
  *
  * Bits 20-22, 24-27: register classes
  * 20: REG_CDT (CRx, DRx, TRx)
@@ -124,8 +125,6 @@
  * 25: RM_MMX (MMXREG)
  * 26: RM_XMM (XMMREG)
  * 27: RM_YMM (YMMREG)
- *
- * Bit 31 is currently unallocated.
  *
  * 30: SAME_AS
  * Special flag only used in instruction patterns; means this operand
@@ -151,7 +150,7 @@ typedef uint32_t opflags_t;
 #define SIZE_MASK       0x208000FFU   /* all the size attributes */
 
 /* Modifiers */
-#define MODIFIER_MASK   0x00000f00U
+#define MODIFIER_MASK   0x00000700U
 #define TO              0x00000100U   /* reverse effect in FADD, FSUB &c */
 #define COLON           0x00000200U   /* operand is followed by a colon */
 #define STRICT          0x00000400U   /* do not optimize this operand */
@@ -197,7 +196,7 @@ typedef uint32_t opflags_t;
 #define REG_EIP         0x00801004U   /* EIP relative addressing */
 
 /* Special GPRs */
-#define REG_SMASK       0x100f0000U   /* a mask for the following */
+#define REG_SMASK       0x100f0800U   /* a mask for the following */
 #define REG_ACCUM       0x00219000U   /* accumulator: AL, AX, EAX, RAX */
 #define REG_AL          0x00219001U
 #define REG_AX          0x00219002U
@@ -232,6 +231,8 @@ typedef uint32_t opflags_t;
 #define SBYTE32         0x00042000U   /* for op r32,immediate instrs. */
 #define SBYTE64         0x00082000U   /* for op r64,immediate instrs. */
 #define BYTENESS        0x000e0000U   /* for testing for byteness */
+#define SDWORD64	0x10002000U   /* for op r64,simm32 instrs. */
+#define UDWORD64	0x00002800U   /* for op r64,uimm32 instrs. */
 
 /* special flags */
 #define SAME_AS         0x40000000U

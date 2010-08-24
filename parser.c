@@ -843,7 +843,8 @@ is_expression:
                 if(optimizing >= 0 && !(result->oprs[operand].type & STRICT))
                 {
                     /* Be optimistic */
-                    result->oprs[operand].type |= SBYTE16 | SBYTE32 | SBYTE64;
+                    result->oprs[operand].type |=
+			SBYTE16 | SBYTE32 | SBYTE64 | UDWORD64 | SDWORD64;
                 }
             } else if (is_reloc(value)) {       /* it's immediate */
                 result->oprs[operand].type |= IMMEDIATE;
@@ -865,6 +866,12 @@ is_expression:
                             result->oprs[operand].type |= SBYTE32;
 			if (v16 >= -128 && v16 <= 127)
                             result->oprs[operand].type |= SBYTE16;
+			if ((uint64_t)v64 <= UINT64_C(0xffffffff))
+			    result->oprs[operand].type |= UDWORD64;
+			if (v64 >= -INT64_C(2147483648) &&
+			    v64 <= INT64_C(2147483647))
+			    result->oprs[operand].type |= SDWORD64;
+
                     }
                 }
             } else {            /* it's a register */
