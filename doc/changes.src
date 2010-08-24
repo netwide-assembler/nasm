@@ -12,9 +12,9 @@ since 2007.
 \b When optimization is enabled, \c{mov r64,imm} now optimizes to the
   shortest form possible between:
 
-\c      mov r32,imm32			;  5 bytes
-\c	mov r64,imm32			;  7 bytes
-\c	mov r64,imm64			; 10 bytes
+\c      mov r32,imm32                   ;  5 bytes
+\c      mov r64,imm32                   ;  7 bytes
+\c      mov r64,imm64                   ; 10 bytes
 
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
