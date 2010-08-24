@@ -1687,6 +1687,9 @@ respectively.  These are normally used as macros:
 \c
 \c       dq    +1.5, -Inf, NaN         ; Double-precision constants
 
+The \c{%use fp} standard macro package contains a set of convenience
+macros.  See \k{pkg_fp}.
+
 \S{bcdconst} \I{floating-point, packed BCD constants}Packed BCD Constants
 
 x87-style packed BCD constants can be used in the same contexts as
@@ -4252,6 +4255,25 @@ several virtualization solutions.  The default jump threshold is 16.
 The macro \i\c{__ALIGNMODE__} is defined to contain the current
 alignment mode.  A number of other macros beginning with \c{__ALIGN_}
 are used internally by this macro package.
+
+
+\H{pkg_fp} \i\c\{fp}: Floating-point macros
+
+This packages contains the following floating-point convenience macros:
+
+\c %define Inf             __Infinity__
+\c %define NaN             __QNaN__
+\c %define QNaN            __QNaN__
+\c %define SNaN            __SNaN__
+\c 
+\c %define float8(x)       __float8__(x)
+\c %define float16(x)      __float16__(x)
+\c %define float32(x)      __float32__(x)
+\c %define float64(x)      __float64__(x)
+\c %define float80m(x)     __float80m__(x)
+\c %define float80e(x)     __float80e__(x)
+\c %define float128l(x)    __float128l__(x)
+\c %define float128h(x)    __float128h__(x)
 
 
 \C{directive} \i{Assembler Directives}

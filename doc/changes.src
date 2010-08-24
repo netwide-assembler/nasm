@@ -7,6 +7,7 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+
 \S{cl-2.09} Version 2.09
 
 \b Fixed assignment the magnitude of \c{%rep} counter. It is limited
@@ -67,6 +68,9 @@ since 2007.
 \b Environment variables read with \c{%!} or tested with \c{%ifenv}
   can now contain non-identifier characters if surrounded by quotes.
   See \k{getenv}.
+
+\b Add a new standard macro package \c{%use fp} for floating-point
+  convenience macros.  See \k{pkg_fp}.
 
 
 \S{cl-2.08.02} Version 2.08.02
