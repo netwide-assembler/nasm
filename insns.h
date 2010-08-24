@@ -87,6 +87,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_AR4	  0x00000140UL  /* SB, SW, SD applies to argument 4 */
 #define IF_ARMASK 0x000001C0UL  /* mask for unsized argument spec */
 #define IF_ARSHFT 6		/* LSB in IF_ARMASK */
+#define IF_OPT    0x00000200UL  /* optimizing assembly only */
 /* The next 3 bits aren't actually used for anything */
 #define IF_PRIV   0x00000000UL  /* it's a privileged instruction */
 #define IF_SMM    0x00000000UL  /* it's only valid in SMM */
@@ -111,7 +112,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
                                 /* also the highest possible processor */
-#define IF_PFMASK 0xF01FFF00UL  /* the mask for disassembly "prefer" */
+#define IF_PFMASK 0xF01FF800UL  /* the mask for disassembly "prefer" */
 #define IF_8086   0x00000000UL  /* 8086 instruction */
 #define IF_186    0x01000000UL  /* 186+ instruction */
 #define IF_286    0x02000000UL  /* 286+ instruction */

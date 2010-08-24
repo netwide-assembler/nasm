@@ -2046,6 +2046,12 @@ static enum match_result matches(const struct itemplate *itemp,
         return MERR_INVALOP;
 
     /*
+     * Is it legal?
+     */
+    if (!(optimizing > 0) && (itemp->flags & IF_OPT))
+	return MERR_INVALOP;
+
+    /*
      * Check that no spurious colons or TOs are present
      */
     for (i = 0; i < itemp->operands; i++)
