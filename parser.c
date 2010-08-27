@@ -868,10 +868,9 @@ is_expression:
                             result->oprs[operand].type |= SBYTE16;
 			if ((uint64_t)v64 <= UINT64_C(0xffffffff))
 			    result->oprs[operand].type |= UDWORD64;
-			if (v64 >= -INT64_C(2147483648) &&
-			    v64 <= INT64_C(2147483647))
+			if (v64 >= -INT64_C(0x80000000) &&
+			    v64 <=  INT64_C(0x7fffffff))
 			    result->oprs[operand].type |= SDWORD64;
-
                     }
                 }
             } else {            /* it's a register */
