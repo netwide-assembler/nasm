@@ -3177,7 +3177,7 @@ issue_error:
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
         /* t should now point to the string */
-        if (t->type != TOK_STRING) {
+        if (!tok_type_(t, TOK_STRING)) {
             error(ERR_NONFATAL,
                   "`%s` requires string as second parameter",
                   pp_directives[i]);
