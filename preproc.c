@@ -3395,12 +3395,13 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline->next;
+        if (tline) /* skip expanded id */
+            t = tline->next;
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
 
         /* t should now point to the string */
-        if (t->type != TOK_STRING) {
+        if (!tok_type_(t, TOK_STRING)) {
             error(ERR_NONFATAL,
                   "`%%substr` requires string as second parameter");
             free_tlist(tline);
