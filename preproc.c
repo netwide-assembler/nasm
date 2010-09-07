@@ -3374,7 +3374,7 @@ issue_error:
 
     case PP_SUBSTR:
     {
-        int64_t a1, a2;
+        int64_t start, count;
         size_t len;
 
         casesense = true;
@@ -3424,12 +3424,12 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        a1 = evalresult->value-1;
+        start = evalresult->value - 1;
 
         while (tok_type_(tt, TOK_WHITESPACE))
             tt = tt->next;
         if (!tt) {
-            a2 = 1;             /* Backwards compatibility: one character */
+            count = 1;  /* Backwards compatibility: one character */
         } else {
             tokval.t_type = TOKEN_INVALID;
             evalresult = evaluate(ppscan, tptr, &tokval, NULL,
@@ -3444,18 +3444,23 @@ issue_error:
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
-            a2 = evalresult->value;
+            count = evalresult->value;
         }
 
         len = nasm_unquote(t->text, NULL);
-        if (a2 < 0)
-            a2 = a2+1+len-a1;
-        if (a1+a2 > (int64_t)len)
-            a2 = len-a1;
+
+        /* check the values provided, on error -- empty string */
+        if (count < 0)
+            count = len + count + 1 - start;
+        if (start + count > (int64_t)len)
+            start = -1;
+
+        if (!len || count < 0 || start < 0)
+            start = -1, count = 0; /* empty string */
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        macro_start->text = nasm_quote((a1 < 0) ? "" : t->text+a1, a2);
+        macro_start->text = nasm_quote((start < 0) ? "" : t->text + start, count);
         macro_start->type = TOK_STRING;
         macro_start->a.mac = NULL;
 
