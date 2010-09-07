@@ -108,7 +108,8 @@ char *nasm_quote(char *str, size_t len)
 	nstr = nasm_malloc(len+3);
 	nstr[0] = nstr[len+1] = sq_ok ? '\'' : '\"';
 	nstr[len+2] = '\0';
-	memcpy(nstr+1, str, len);
+	if (len > 0)
+	    memcpy(nstr+1, str, len);
     } else {
 	/* Need to use `...` quoted syntax */
 	nstr = nasm_malloc(qlen+3);
