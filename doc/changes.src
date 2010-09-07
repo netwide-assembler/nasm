@@ -19,6 +19,13 @@ since 2007.
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 
+\S{cl-2.09.01} Version 2.09.01
+
+\b Fix NULL dereference on missed %deftok second parameter.
+
+\b Fix NULL dereference on invalid %substr parameters.
+
+
 \S{cl-2.09} Version 2.09
 
 \b Fixed assignment the magnitude of \c{%rep} counter. It is limited
