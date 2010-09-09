@@ -877,7 +877,7 @@ static expr *expr6(int critical)
                         return NULL;
                     } else {
                         if (opflags)
-                            *opflags |= 1;
+                            *opflags |= OPFLAG_FORWARD;
                         type = EXPR_UNKNOWN;
                         label_seg = NO_SEG;
                         label_ofs = 1;
