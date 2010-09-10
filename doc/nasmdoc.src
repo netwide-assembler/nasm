@@ -1490,7 +1490,7 @@ Some examples (all producing exactly the same code):
 \c         mov     ax,310q         ; octal
 \c         mov     ax,310o         ; octal again
 \c         mov     ax,0o310        ; octal yet again
-\c         mov     ax,0q310        ; hex yet again
+\c         mov     ax,0q310        ; octal yet again
 \c         mov     ax,11001000b    ; binary
 \c         mov     ax,1100_1000b   ; same binary constant
 \c         mov     ax,1100_1000y   ; same binary constant once more
