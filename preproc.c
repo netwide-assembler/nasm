@@ -4948,9 +4948,11 @@ static char *pp_getline(void)
             {
                 Include *i = istk;
                 fclose(i->fp);
-                if (i->conds)
-                    error(ERR_FATAL,
-                          "expected `%%endif' before end of file");
+                if (i->conds) {
+                    /* nasm_error can't be conditionally suppressed */
+                    nasm_error(ERR_FATAL,
+                               "expected `%%endif' before end of file");
+                }
                 /* only set line and file name if there's a next node */
                 if (i->next) {
                     src_set_linnum(i->lineno);
