@@ -932,24 +932,23 @@ static Token *tokenize(char *line)
                     type = TOK_PREPROC_QQ; /* %?? */
                     p++;
                 }
-	    } else if (*p == '!') {
-		type = TOK_PREPROC_ID;
-		p++;
-		if (isidchar(*p)) {
-		    do {
-			p++;
-		    }
-		    while (isidchar(*p));
-		} else if (*p == '\'' || *p == '\"' || *p == '`') {
-		    p = nasm_skip_string(p);
-		    if (*p)
-			p++;
-		    else
-			error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
-		} else {
-		    /* %! without string or identifier */
-		    type = TOK_OTHER; /* Legacy behavior... */
-		}
+            } else if (*p == '!') {
+                type = TOK_PREPROC_ID;
+                p++;
+                if (isidchar(*p)) {
+                    do {
+                        p++;
+                    } while (isidchar(*p));
+                } else if (*p == '\'' || *p == '\"' || *p == '`') {
+                    p = nasm_skip_string(p);
+                    if (*p)
+                        p++;
+                    else
+                        error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
+                } else {
+                    /* %! without string or identifier */
+                    type = TOK_OTHER; /* Legacy behavior... */
+                }
             } else if (isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
                         isidchar(p[1]))) {
@@ -1218,31 +1217,31 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
-	    char *v;
-	    char *q = t->text;
+            char *v;
+            char *q = t->text;
 
-	    v = t->text + 2;
-	    if (*v == '\'' || *v == '\"' || *v == '`') {
-		size_t len = nasm_unquote(v, NULL);
-		size_t clen = strlen(v);
+            v = t->text + 2;
+            if (*v == '\'' || *v == '\"' || *v == '`') {
+                size_t len = nasm_unquote(v, NULL);
+                size_t clen = strlen(v);
 
-		if (len != clen) {
-		    error(ERR_NONFATAL | ERR_PASS1,
-			  "NUL character in %! string");
-		    v = NULL;
-		}
-	    }
+                if (len != clen) {
+                    error(ERR_NONFATAL | ERR_PASS1,
+                          "NUL character in %! string");
+                    v = NULL;
+                }
+            }
 
-	    if (v) {
-		char *p = getenv(v);
-		if (!p) {
-		    error(ERR_NONFATAL | ERR_PASS1,
-			  "nonexistent environment variable `%s'", v);
-		    p = "";
-		}
-		t->text = nasm_strdup(p);
-	    }
-	    nasm_free(q);
+            if (v) {
+                char *p = getenv(v);
+                if (!p) {
+                    error(ERR_NONFATAL | ERR_PASS1,
+                          "nonexistent environment variable `%s'", v);
+                    p = "";
+                }
+                t->text = nasm_strdup(p);
+            }
+            nasm_free(q);
         }
 
         /* Expand local macros here and not during preprocessing */
@@ -1486,10 +1485,10 @@ static Context *get_ctx(const char *name, const char **namep,
                 static int once = 0;
                 if (!once) {
                     error(ERR_WARNING, "context-local macro expansion"
-                            " fall-through (automatic searching of outer"
-						    " contexts) will be deprecated starting in"
-						    " NASM 2.10, please see the NASM Manual for"
-						    " more information");
+                          " fall-through (automatic searching of outer"
+                          " contexts) will be deprecated starting in"
+                          " NASM 2.10, please see the NASM Manual for"
+                          " more information");
                     once = 1;
                 }
                 error(ERR_WARNING, "`%s': context-local macro expansion fall-through", name);
@@ -1732,26 +1731,26 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         break;
 
     case PPC_IFENV:
-	tline = expand_smacro(tline);
+        tline = expand_smacro(tline);
         j = false;              /* have we matched yet? */
         while (tline) {
             skip_white_(tline);
             if (!tline || (tline->type != TOK_ID &&
-			   tline->type != TOK_STRING &&
+                           tline->type != TOK_STRING &&
                            (tline->type != TOK_PREPROC_ID ||
-			    tline->text[1] != '!'))) {
+                            tline->text[1] != '!'))) {
                 error(ERR_NONFATAL,
                       "`%s' expects environment variable names",
-		      pp_directives[ct]);
+                      pp_directives[ct]);
                 goto fail;
             }
-	    p = tline->text;
-	    if (tline->type == TOK_PREPROC_ID)
-		p += 2;		/* Skip leading %! */
-	    if (*p == '\'' || *p == '\"' || *p == '`')
-		nasm_unquote_cstr(p, ct);
-	    if (getenv(p))
-		j = true;
+            p = tline->text;
+            if (tline->type == TOK_PREPROC_ID)
+                p += 2;         /* Skip leading %! */
+            if (*p == '\'' || *p == '\"' || *p == '`')
+                nasm_unquote_cstr(p, ct);
+            if (getenv(p))
+                j = true;
             tline = tline->next;
         }
         break;
