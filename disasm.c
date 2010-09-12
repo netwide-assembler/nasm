@@ -1102,7 +1102,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		prefix.vex_v = (~prefix.vex[2] >> 3) & 15;
 		prefix.vex_lp = prefix.vex[2] & 7;
 
-		ix = itable_vex[RV_XOP][prefix.vex_m][prefix.vex_lp];
+		ix = itable_vex[RV_XOP][prefix.vex_m][prefix.vex_lp & 3];
 	    }
 	    end_prefix = true;
 	    break;
