@@ -19,6 +19,11 @@ since 2007.
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 
+\S{cl-2.09.02} Version 2.09.02
+
+\b Fix reversed tokens when \c{%deftok} produces more than one output token.
+
+
 \S{cl-2.09.01} Version 2.09.01
 
 \b Fix NULL dereference on missed %deftok second parameter.
