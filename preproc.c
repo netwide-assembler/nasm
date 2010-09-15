@@ -3660,6 +3660,7 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             break;
         case TOK_ID:
+        case TOK_PREPROC_ID:
         case TOK_NUMBER:
         case TOK_FLOAT:
         {
@@ -3967,6 +3968,35 @@ static Token *expand_mmac_params(Token * tline)
             *tail = tt;
             while (tt) {
                 tt->a.mac = NULL; /* Necessary? */
+                tail = &tt->next;
+                tt = tt->next;
+            }
+            delete_Token(t);
+            changed = true;
+        } else if (tline->type == TOK_PREPROC_ID                &&
+                   tline->text[0] == '%'                        &&
+                   tline->text[1] == '$'                        &&
+                   !tok_type_(tline->next, TOK_WHITESPACE)      &&
+                   (tok_type_(tline->next, TOK_ID)              ||
+                    tok_type_(tline->next, TOK_PREPROC_ID)      ||
+                    tok_type_(tline->next, TOK_NUMBER)          ||
+                    tok_type_(tline->next, TOK_OTHER)           ||
+                    tok_type_(tline->next, TOK_FLOAT))) {
+            /*
+             * In a sake of backward compatibility we allow
+             * to expand local single macro that early before
+             * pasting token code have place
+             *
+             * NOTE: that new code MUST use %+ macro to obtain
+             * same result
+             */
+            t = tline;
+            tline = tline->next;
+            tt = tokenize(t->text);
+            tt = expand_smacro(tt);
+            *tail = tt;
+            while (tt) {
+                tt->a.mac = NULL;
                 tail = &tt->next;
                 tt = tt->next;
             }
