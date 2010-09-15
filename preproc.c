@@ -488,6 +488,24 @@ static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
 }
 
 /*
+ * In-place reverse a list of tokens.
+ */
+static Token *reverse_tokens(Token *t)
+{
+    Token *prev = NULL;
+    Token *next;
+
+    while (t) {
+	next = t->next;
+	t->next = prev;
+	prev = t;
+	t = next;
+    }
+
+    return prev;
+}
+
+/*
  * Handle TASM specific directives, which do not contain a % in
  * front of them. We do it here because I could not find any other
  * place to do it for the moment, and it is a hack (ideally it would
@@ -3186,8 +3204,13 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
+	/*
+	 * Convert the string to a token stream.  Note that smacros
+	 * are stored with the token stream reversed, so we have to
+	 * reverse the output of tokenize().
+	 */
         nasm_unquote_cstr(t->text, i);
-        macro_start = tokenize(t->text);
+        macro_start = reverse_tokens(tokenize(t->text));
 
         /*
          * We now have a macro name, an implicit parameter count of
