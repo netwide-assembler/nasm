@@ -12,6 +12,12 @@ since 2007.
 
 \b Fix reversed tokens when \c{%deftok} produces more than one output token.
 
+\b Fix segmentation fault on disassembling some VEX instructions.
+
+\b Missing \c{%endif} did not always cause error.
+
+\b Fix typo in documentation.
+
 
 \S{cl-2.09.01} Version 2.09.01
 
