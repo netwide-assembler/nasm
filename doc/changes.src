@@ -29,6 +29,10 @@ To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 \b Fix typo in documentation.
 
+\b Compound context local preprocessor single line macro identifiers
+  were not expanded early enough and as result lead to unresolved
+  symbols.
+
 
 \S{cl-2.09.01} Version 2.09.01
 
