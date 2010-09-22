@@ -170,32 +170,6 @@ sub gen_perfect_hash($) {
 }
 
 #
-# Read input file
-#
-sub read_input() {
-    my $key,$val;
-    my %out;
-    my $x = 0;
-
-    while (defined($l = <STDIN>)) {
-	chomp $l;
-	$l =~ s/\s*(\#.*|)$//;
-
-	next if ($l eq '');
-
-	if ($l =~ /^([^=]+)\=([^=]+)$/) {
-	    $out{$1} = $2;
-	    $x = $2;
-	} else {
-	    $out{$l} = $x;
-	}
-	$x++;
-    }
-
-    return %out;
-}
-
-#
 # Verify that the hash table is actually correct...
 #
 sub verify_hash_table($$)
