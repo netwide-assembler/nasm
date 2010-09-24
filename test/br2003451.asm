@@ -1,3 +1,5 @@
+;Testname=optimized; Arguments=-Ox -fbin -obr2003451.bin; Files=stdout stderr br2003451.bin
+
 	cpu 8086
 	org 0
 

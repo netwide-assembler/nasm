@@ -1,3 +1,5 @@
+;Testname=br3066383; Arguments=-Ox -fbin -obr3066383.bin; Files=stdout stderr br3066383.bin
+
 ;
 ; this is a for BR3005117
 ; http://sourceforge.net/tracker/?func=detail&aid=3005117&group_id=6208&atid=106208

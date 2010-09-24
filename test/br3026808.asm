@@ -1,3 +1,5 @@
+;Testname=br3026808; Arguments=-Ox -fbin -obr3026808.o; Files=stdout stderr br3026808.o
+
 %imacro proc 1
 	%push proc
 	%assign %$arg 1

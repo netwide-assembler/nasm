@@ -1,3 +1,5 @@
+;Testname=br3005117; Arguments=-Ox -felf -obr3005117.o; Files=stdout stderr br3005117.o
+
 %macro B_STRUC 1-*
 %push foo
 %define %$strucname %1

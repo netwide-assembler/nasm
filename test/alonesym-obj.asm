@@ -1,3 +1,6 @@
+;Testname=unoptimized; Arguments=-O0 -fobj -oalonesym-obj.obj; Files=stdout stderr alonesym-obj.obj
+;Testname=optimized; Arguments=-Ox -fobj -oalonesym-obj.obj; Files=stdout stderr alonesym-obj.obj
+
 section         DOS32DATA align=16 public use32 FLAT class=DOS32DATA
 
                 global sym0000

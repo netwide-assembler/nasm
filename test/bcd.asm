@@ -1,3 +1,5 @@
+;Testname=optimized; Arguments=-Ox -fbin -obcd.bin; Files=stdout stderr bcd.bin
+
 	dt 765432109876543210p
 	dt -765432109876543210p
 	dt +765432109876543210p
