@@ -4745,12 +4745,22 @@ static int expand_mmacro(Token * tline)
 static void verror(int severity, const char *fmt, va_list arg)
 {
     char buff[1024];
+    MMacro *mmac = NULL;
+    int delta = 0;
 
     vsnprintf(buff, sizeof(buff), fmt, arg);
 
-    if (istk && istk->mstk && istk->mstk->name)
-        nasm_error(severity, "(%s:%d) %s", istk->mstk->name,
-               istk->mstk->lineno, buff);
+    /* get %macro name */
+    if (istk && istk->mstk) {
+        mmac = istk->mstk;
+        /* but %rep blocks should be skipped */
+        while (mmac && !mmac->name)
+            mmac = mmac->next_active, delta++;
+    }
+
+    if (mmac)
+        nasm_error(severity, "(%s:%d) %s",
+                   mmac->name, mmac->lineno - delta, buff);
     else
         nasm_error(severity, "%s", buff);
 }
