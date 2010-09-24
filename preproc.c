@@ -212,6 +212,8 @@ enum pp_token_type {
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
 
+#define PP_CONCAT_MASK(x) (1 << (x))
+
 struct Token {
     Token *next;
     char *text;
@@ -3637,7 +3639,8 @@ static int find_cc(Token * t)
     return i;
 }
 
-static bool paste_tokens(Token **head, bool handle_paste_tokens)
+static bool paste_tokens(Token **head, int mask_head, int mask_tail,
+                         bool handle_paste_tokens)
 {
     Token **tail, *t, *tt;
     Token **paste_head;
@@ -3658,51 +3661,6 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
                 tail = &t->next;
             }
             break;
-        case TOK_ID:
-        case TOK_PREPROC_ID:
-        case TOK_NUMBER:
-        case TOK_FLOAT:
-        {
-            size_t len = 0;
-            char *tmp, *p;
-
-            while (tt && (tt->type == TOK_ID || tt->type == TOK_PREPROC_ID ||
-                          tt->type == TOK_NUMBER || tt->type == TOK_FLOAT ||
-                          tt->type == TOK_OTHER)) {
-                len += strlen(tt->text);
-                tt = tt->next;
-            }
-
-            /*
-             * Now tt points to the first token after
-             * the potential paste area...
-             */
-            if (tt != t->next) {
-                /* We have at least two tokens... */
-                len += strlen(t->text);
-                p = tmp = nasm_malloc(len+1);
-
-                while (t != tt) {
-                    strcpy(p, t->text);
-                    p = strchr(p, '\0');
-                    t = delete_Token(t);
-                }
-
-                t = *tail = tokenize(tmp);
-                nasm_free(tmp);
-
-                while (t->next) {
-                    tail = &t->next;
-                    t = t->next;
-                }
-                t->next = tt;   /* Attach the remaining token chain */
-
-                did_paste = true;
-            }
-            paste_head = tail;
-            tail = &t->next;
-            break;
-        }
         case TOK_PASTE:         /* %+ */
             if (handle_paste_tokens) {
                 /* Zap %+ and whitespace tokens to the right */
@@ -3716,7 +3674,6 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
                 tt = t->next;
                 while (tok_type_(tt, TOK_WHITESPACE))
                     tt = t->next = delete_Token(tt);
-
                 if (tt) {
                     tmp = nasm_strcat(t->text, tt->text);
                     delete_Token(t);
@@ -3736,9 +3693,51 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             /* else fall through */
         default:
-            tail = &t->next;
-            if (!tok_type_(t->next, TOK_WHITESPACE))
+            /*
+             * Concatenation of tokens might look nontrivial
+             * but in real it's pretty simple -- the caller
+             * prepares the masks of tokens to be concatenated
+             * and we simply find matched sequences and slip
+             * them together
+             */
+            if (PP_CONCAT_MASK(t->type) & mask_head) {
+                size_t len = 0;
+                char *tmp, *p;
+
+                while (tt && (PP_CONCAT_MASK(tt->type) & mask_tail)) {
+                    len += strlen(tt->text);
+                    tt = tt->next;
+                }
+
+                /*
+                 * Now tt points to the first token after
+                 * the potential paste area...
+                 */
+                if (tt != t->next) {
+                    /* We have at least two tokens... */
+                    len += strlen(t->text);
+                    p = tmp = nasm_malloc(len+1);
+                    while (t != tt) {
+                        strcpy(p, t->text);
+                        p = strchr(p, '\0');
+                        t = delete_Token(t);
+                    }
+                    t = *tail = tokenize(tmp);
+                    nasm_free(tmp);
+                    while (t->next) {
+                        tail = &t->next;
+                        t = t->next;
+                    }
+                    t->next = tt;   /* Attach the remaining token chain */
+                    did_paste = true;
+                }
                 paste_head = tail;
+                tail = &t->next;
+            } else {
+                tail = &t->next;
+                if (!tok_type_(t->next, TOK_WHITESPACE))
+                    paste_head = tail;
+            }
             break;
         }
     }
@@ -3972,35 +3971,6 @@ static Token *expand_mmac_params(Token * tline)
             }
             delete_Token(t);
             changed = true;
-        } else if (tline->type == TOK_PREPROC_ID                &&
-                   tline->text[0] == '%'                        &&
-                   tline->text[1] == '$'                        &&
-                   !tok_type_(tline->next, TOK_WHITESPACE)      &&
-                   (tok_type_(tline->next, TOK_ID)              ||
-                    tok_type_(tline->next, TOK_PREPROC_ID)      ||
-                    tok_type_(tline->next, TOK_NUMBER)          ||
-                    tok_type_(tline->next, TOK_OTHER)           ||
-                    tok_type_(tline->next, TOK_FLOAT))) {
-            /*
-             * In a sake of backward compatibility we allow
-             * to expand local single macro that early before
-             * pasting token code have place
-             *
-             * NOTE: that new code MUST use %+ macro to obtain
-             * same result
-             */
-            t = tline;
-            tline = tline->next;
-            tt = tokenize(t->text);
-            tt = expand_smacro(tt);
-            *tail = tt;
-            while (tt) {
-                tt->a.mac = NULL;
-                tail = &tt->next;
-                tt = tt->next;
-            }
-            delete_Token(t);
-            changed = true;
         } else {
             t = *tail = tline;
             tline = tline->next;
@@ -4010,8 +3980,16 @@ static Token *expand_mmac_params(Token * tline)
     }
     *tail = NULL;
 
-    if (changed)
-        paste_tokens(&thead, false);
+    if (changed) {
+        int mask_head = PP_CONCAT_MASK(TOK_ID)          |
+                        PP_CONCAT_MASK(TOK_NUMBER)      |
+                        PP_CONCAT_MASK(TOK_FLOAT);
+        int mask_tail = PP_CONCAT_MASK(TOK_ID)          |
+                        PP_CONCAT_MASK(TOK_NUMBER)      |
+                        PP_CONCAT_MASK(TOK_FLOAT)       |
+                        PP_CONCAT_MASK(TOK_OTHER);
+        paste_tokens(&thead, mask_head, mask_tail, false);
+    }
 
     return thead;
 }
@@ -4322,14 +4300,21 @@ again:
      * Also we look for %+ tokens and concatenate the tokens before and after
      * them (without white spaces in between).
      */
-    if (expanded && paste_tokens(&thead, true)) {
-        /*
-         * If we concatenated something, *and* we had previously expanded
-         * an actual macro, scan the lines again for macros...
-         */
-        tline = thead;
-        expanded = false;
-        goto again;
+    if (expanded) {
+        int mask_head = PP_CONCAT_MASK(TOK_ID)          |
+                        PP_CONCAT_MASK(TOK_PREPROC_ID);
+        int mask_tail = PP_CONCAT_MASK(TOK_ID)          |
+                        PP_CONCAT_MASK(TOK_PREPROC_ID)  |
+                        PP_CONCAT_MASK(TOK_NUMBER);
+        if (paste_tokens(&thead, mask_head, mask_tail, true)) {
+            /*
+             * If we concatenated something, *and* we had previously expanded
+             * an actual macro, scan the lines again for macros...
+             */
+            tline = thead;
+            expanded = false;
+            goto again;
+        }
     }
 
 err:
