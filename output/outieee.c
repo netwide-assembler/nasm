@@ -372,7 +372,7 @@ static void ieee_deflabel(char *name, int32_t segment,
         i = segment / 2;
         eb = ebhead;
         if (!eb) {
-            eb = *ebtail = nasm_malloc(sizeof(*eb));
+            eb = *ebtail = nasm_zalloc(sizeof(*eb));
             eb->next = NULL;
             ebtail = &eb->next;
         }
@@ -380,7 +380,7 @@ static void ieee_deflabel(char *name, int32_t segment,
             if (eb && eb->next)
                 eb = eb->next;
             else {
-                eb = *ebtail = nasm_malloc(sizeof(*eb));
+                eb = *ebtail = nasm_zalloc(sizeof(*eb));
                 eb->next = NULL;
                 ebtail = &eb->next;
             }
