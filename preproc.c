@@ -2811,6 +2811,7 @@ issue_error:
                           "trailing garbage after `%%endif' ignored");
 		if ((defining == NULL) || (defining->type != EXP_IF)) {
 			error(ERR_NONFATAL, "`%%endif': no matching `%%if'");
+			return DIRECTIVE_FOUND;
 		}
 		ed = defining;
 		defining = ed->prev;
