@@ -2673,6 +2673,13 @@ number of parameters. It can be used as an argument to \c{%rep}
 Examples are given in \k{rotate}.
 
 
+\S{percent00} \i\c{%00}: \I{label preceeding macro}Label Preceeding Macro
+
+\c{%00} will return the label preceeding the macro invocation, if any. The
+label must be on the same line as the macro invocation, may be a local label
+(see \k{locallab}), and need not end in a colon.
+
+
 \S{rotate} \i\c{%rotate}: \i{Rotating Macro Parameters}
 
 Unix shell programmers will be familiar with the \I{shift
