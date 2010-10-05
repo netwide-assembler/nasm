@@ -214,6 +214,11 @@ enum pp_token_type {
 
 #define PP_CONCAT_MASK(x) (1 << (x))
 
+struct tokseq_match {
+    int mask_head;
+    int mask_tail;
+};
+
 struct Token {
     Token *next;
     char *text;
@@ -3639,13 +3644,14 @@ static int find_cc(Token * t)
     return i;
 }
 
-static bool paste_tokens(Token **head, int mask_head, int mask_tail,
-                         bool handle_paste_tokens)
+static bool paste_tokens(Token **head, const struct tokseq_match *m,
+                         int mnum, bool handle_paste_tokens)
 {
     Token **tail, *t, *tt;
     Token **paste_head;
     bool did_paste = false;
     char *tmp;
+    int i;
 
     /* Now handle token pasting... */
     paste_head = NULL;
@@ -3696,44 +3702,48 @@ static bool paste_tokens(Token **head, int mask_head, int mask_tail,
             /*
              * Concatenation of tokens might look nontrivial
              * but in real it's pretty simple -- the caller
-             * prepares the masks of tokens to be concatenated
+             * prepares the masks of token types to be concatenated
              * and we simply find matched sequences and slip
              * them together
              */
-            if (PP_CONCAT_MASK(t->type) & mask_head) {
-                size_t len = 0;
-                char *tmp, *p;
+            for (i = 0; i < mnum; i++) {
+                if (PP_CONCAT_MASK(t->type) & m[i].mask_head) {
+                    size_t len = 0;
+                    char *tmp, *p;
 
-                while (tt && (PP_CONCAT_MASK(tt->type) & mask_tail)) {
-                    len += strlen(tt->text);
-                    tt = tt->next;
-                }
+                    while (tt && (PP_CONCAT_MASK(tt->type) & m[i].mask_tail)) {
+                        len += strlen(tt->text);
+                        tt = tt->next;
+                    }
 
-                /*
-                 * Now tt points to the first token after
-                 * the potential paste area...
-                 */
-                if (tt != t->next) {
-                    /* We have at least two tokens... */
-                    len += strlen(t->text);
-                    p = tmp = nasm_malloc(len+1);
-                    while (t != tt) {
-                        strcpy(p, t->text);
-                        p = strchr(p, '\0');
-                        t = delete_Token(t);
+                    /*
+                     * Now tt points to the first token after
+                     * the potential paste area...
+                     */
+                    if (tt != t->next) {
+                        /* We have at least two tokens... */
+                        len += strlen(t->text);
+                        p = tmp = nasm_malloc(len+1);
+                        while (t != tt) {
+                            strcpy(p, t->text);
+                            p = strchr(p, '\0');
+                            t = delete_Token(t);
+                        }
+                        t = *tail = tokenize(tmp);
+                        nasm_free(tmp);
+                        while (t->next) {
+                            tail = &t->next;
+                            t = t->next;
+                        }
+                        t->next = tt;   /* Attach the remaining token chain */
+                        did_paste = true;
                     }
-                    t = *tail = tokenize(tmp);
-                    nasm_free(tmp);
-                    while (t->next) {
-                        tail = &t->next;
-                        t = t->next;
-                    }
-                    t->next = tt;   /* Attach the remaining token chain */
-                    did_paste = true;
+                    paste_head = tail;
+                    tail = &t->next;
+                    break;
                 }
-                paste_head = tail;
-                tail = &t->next;
-            } else {
+            }
+            if (i >= mnum) {    /* no match */
                 tail = &t->next;
                 if (!tok_type_(t->next, TOK_WHITESPACE))
                     paste_head = tail;
@@ -3981,14 +3991,21 @@ static Token *expand_mmac_params(Token * tline)
     *tail = NULL;
 
     if (changed) {
-        int mask_head = PP_CONCAT_MASK(TOK_ID)          |
-                        PP_CONCAT_MASK(TOK_NUMBER)      |
-                        PP_CONCAT_MASK(TOK_FLOAT);
-        int mask_tail = PP_CONCAT_MASK(TOK_ID)          |
-                        PP_CONCAT_MASK(TOK_NUMBER)      |
-                        PP_CONCAT_MASK(TOK_FLOAT)       |
-                        PP_CONCAT_MASK(TOK_OTHER);
-        paste_tokens(&thead, mask_head, mask_tail, false);
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_FLOAT),          /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_NUMBER)      |
+                PP_CONCAT_MASK(TOK_FLOAT)       |
+                PP_CONCAT_MASK(TOK_OTHER)           /* tail */
+            },
+            {
+                PP_CONCAT_MASK(TOK_NUMBER),         /* head */
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        paste_tokens(&thead, t, ARRAY_SIZE(t), false);
     }
 
     return thead;
@@ -4301,12 +4318,16 @@ again:
      * them (without white spaces in between).
      */
     if (expanded) {
-        int mask_head = PP_CONCAT_MASK(TOK_ID)          |
-                        PP_CONCAT_MASK(TOK_PREPROC_ID);
-        int mask_tail = PP_CONCAT_MASK(TOK_ID)          |
-                        PP_CONCAT_MASK(TOK_PREPROC_ID)  |
-                        PP_CONCAT_MASK(TOK_NUMBER);
-        if (paste_tokens(&thead, mask_head, mask_tail, true)) {
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID),     /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID)  |
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        if (paste_tokens(&thead, t, ARRAY_SIZE(t), true)) {
             /*
              * If we concatenated something, *and* we had previously expanded
              * an actual macro, scan the lines again for macros...
