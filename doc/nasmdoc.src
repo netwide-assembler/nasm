@@ -858,7 +858,7 @@ levels of optimization.  The syntax is:
 \b \c{-Ox} (where \c{x} is the actual letter \c{x}): Multipass optimization.
         Minimize branch offsets and signed immediate bytes,
         overriding size specification unless the \c{strict} keyword
-        has been used (see \k{strict}).  For compatability with earlier
+        has been used (see \k{strict}).  For compatibility with earlier
         releases, the letter \c{x} may also be any number greater than
         one. This number has no effect on the actual number of passes.
 
