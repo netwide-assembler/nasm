@@ -914,10 +914,14 @@ static Token *tokenize(char *line)
                 type = TOK_PREPROC_ID;
             } else if (*p == '{') {
                 p++;
-                while (*p && *p != '}') {
+                while (*p) {
+                    if (*p == '}')
+                        break;
                     p[-1] = *p;
                     p++;
                 }
+                if (*p != '}')
+                    error(ERR_WARNING | ERR_PASS1, "unterminated %{ construct");
                 p[-1] = '\0';
                 if (*p)
                     p++;
