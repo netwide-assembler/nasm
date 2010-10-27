@@ -8,6 +8,21 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.09.03} Version 2.09.03
+
+\b Print \c{%macro} name inside \c{%rep} blocks on error.
+
+\b Fix preprocessor expansion behaviour. It happened sometime
+   too early and sometime simply wrong. Move behaviour back to
+   the origins (down to NASM 2.05.01).
+
+\b Fix unitialized data dereference on OMF output format.
+
+\b Issue warning on unterminated \c{%{} construct.
+
+\b Fix for documentation typo.
+
+
 \S{cl-2.09.02} Version 2.09.02
 
 \b Fix reversed tokens when \c{%deftok} produces more than one output token.
