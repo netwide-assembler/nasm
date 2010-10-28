@@ -43,7 +43,7 @@ X               = @EXEEXT@
 
 .SUFFIXES: .c .i .s .$(O) .1 .man
 
-.PHONY: all doc rdf install clean distclean cleaner spotless install_rdf
+.PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist
 
 .c.$(O):
