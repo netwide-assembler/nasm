@@ -36,6 +36,7 @@ MKDIR		= mkdir
 RM		= rm
 
 STRIP		= strip
+FIND		= find
 
 # Binary suffixes
 O               = @OBJEXT@
@@ -44,7 +45,7 @@ X               = @EXEEXT@
 .SUFFIXES: .c .i .s .$(O) .1 .man
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
-.PHONY: install_doc everything install_everything strip perlreq dist
+.PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -187,6 +188,7 @@ clean:
 	$(RM) -f lib/*.$(O) lib/*.s lib/*.i
 	$(RM) -f output/*.$(O) output/*.s output/*.i
 	$(RM) -f nasm$(X) ndisasm$(X)
+	$(RM) -f tags TAGS
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
@@ -209,6 +211,14 @@ strip:
 
 rdf:
 	cd rdoff && $(MAKE)
+
+TAGS:
+	$(RM) -f TAGS
+	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
+
+tags:
+	$(RM) -f tags
+	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
 
 rdf_install install_rdf:
 	cd rdoff && $(MAKE) install
