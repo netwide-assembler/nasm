@@ -939,6 +939,10 @@ static void coff_section_header(char *name, int32_t vsize,
     fwriteint32_t(datapos,      ofile);
     fwriteint32_t(relpos,       ofile);
     fwriteint32_t(0L,           ofile); /* no line numbers - we don't do 'em */
+
+    if (nrelocs >= IMAGE_SCN_MAX_RELOC)
+        nasm_error(ERR_FATAL, "Too many relocations (%d)\n", nrelocs);
+
     fwriteint16_t(nrelocs,      ofile);
     fwriteint16_t(0,            ofile); /* again, no line numbers */
     fwriteint32_t(flags,        ofile);
