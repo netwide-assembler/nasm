@@ -842,8 +842,8 @@ static inline void coff_adjust_relocs(struct Section *s)
 {
     if (s->nrelocs < IMAGE_SCN_MAX_RELOC)
         return;
-    else
 #ifdef OF_COFF
+    else
     {
         if (ofmt == &of_coff)
             nasm_error(ERR_FATAL,
