@@ -406,7 +406,7 @@ static expr *rexp3(int critical)
                        TOKEN_GE ? ">=" : ">"));
                 v = 0;          /* must set it to _something_ */
             } else {
-                int vv = reloc_value(e);
+                int64_t vv = reloc_value(e);
                 if (vv == 0)
                     v = (j == TOKEN_LE || j == TOKEN_GE);
                 else if (vv > 0)
