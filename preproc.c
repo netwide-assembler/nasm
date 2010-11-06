@@ -226,9 +226,9 @@ struct ExpDef {
 	Line *last;
 	int linecount;				/* number of lines within expansion */
 	
-	uint32_t def_depth;			/* current number of definition pairs deep */
-    uint32_t cur_depth;         /* current number of expansions */
-    uint32_t max_depth;         /* maximum number of expansions allowed */
+	int64_t def_depth;			/* current number of definition pairs deep */
+    int64_t cur_depth;          /* current number of expansions */
+    int64_t max_depth;          /* maximum number of expansions allowed */
 	
 	int state;					/* condition state */
 	bool ignoring;				/* ignoring definition lines */
@@ -332,6 +332,9 @@ enum {
  * This define sets the upper limit for smacro and expansions
  */
 #define DEADMAN_LIMIT (1 << 20)
+
+/* max reps */
+#define REP_LIMIT ((INT64_C(1) << 62))
 
 /*
  * Condition codes. Note that we use c_ prefix not C_ because C_ is
@@ -3060,7 +3063,12 @@ issue_error:
                 error(ERR_NONFATAL, "non-constant value given to `%%rep'");
                 return DIRECTIVE_FOUND;
             }
-            count = reloc_value(evalresult) + 1;
+            count = reloc_value(evalresult);
+            if (count >= REP_LIMIT) {
+                error(ERR_NONFATAL, "`%%rep' value exceeds limit");
+                count = 0;
+            } else
+                count++;
         } else {
             error(ERR_NONFATAL, "`%%rep' expects a repeat count");
             count = 0;
