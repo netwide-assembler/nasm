@@ -57,11 +57,13 @@ sub charcify(@) {
 	if ($o < 32 || $o > 126 || $c eq '"' || $c eq "\\") {
 	    $l .= sprintf("%3d,", $o);
 	} else {
+	    $c =~ s/\'/\\'/;	# << sanitize single quote. 
 	    $l .= "\'".$c."\',";
 	}
     }
     return $l;
 }
+
 
 #
 # Generate macros.c
