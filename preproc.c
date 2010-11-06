@@ -154,6 +154,13 @@ enum pp_token_type {
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
 
+#define PP_CONCAT_MASK(x) (1 << (x))
+
+struct tokseq_match {
+    int mask_head;
+    int mask_tail;
+};
+
 struct Token {
     Token *next;
     char *text;
@@ -487,6 +494,24 @@ static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
               pp_directives[directive]);
 
     return clen;
+}
+
+/*
+ * In-place reverse a list of tokens.
+ */
+static Token *reverse_tokens(Token *t)
+{
+    Token *prev = NULL;
+    Token *next;
+
+    while (t) {
+        next = t->next;
+        t->next = prev;
+        prev = t;
+        t = next;
+	}
+
+    return prev;
 }
 
 /*
@@ -936,24 +961,23 @@ static Token *tokenize(char *line)
                     type = TOK_PREPROC_QQ; /* %?? */
                     p++;
                 }
-	    } else if (*p == '!') {
-		type = TOK_PREPROC_ID;
-		p++;
-		if (isidchar(*p)) {
-		    do {
-			p++;
-		    }
-		    while (isidchar(*p));
-		} else if (*p == '\'' || *p == '\"' || *p == '`') {
-		    p = nasm_skip_string(p);
-		    if (*p)
-			p++;
-		    else
-			error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
-		} else {
-		    /* %! without string or identifier */
-		    type = TOK_OTHER; /* Legacy behavior... */
-		}
+            } else if (*p == '!') {
+                type = TOK_PREPROC_ID;
+                p++;
+                if (isidchar(*p)) {
+                    do {
+                        p++;
+                    } while (isidchar(*p));
+                } else if (*p == '\'' || *p == '\"' || *p == '`') {
+                    p = nasm_skip_string(p);
+                    if (*p)
+                        p++;
+                    else
+                        error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
+                } else {
+                    /* %! without string or identifier */
+                    type = TOK_OTHER; /* Legacy behavior... */
+                }
             } else if (isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
                         isidchar(p[1]))) {
@@ -1250,31 +1274,31 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
-	    char *v;
-	    char *q = t->text;
+            char *v;
+            char *q = t->text;
 
-	    v = t->text + 2;
-	    if (*v == '\'' || *v == '\"' || *v == '`') {
-		size_t len = nasm_unquote(v, NULL);
-		size_t clen = strlen(v);
+            v = t->text + 2;
+            if (*v == '\'' || *v == '\"' || *v == '`') {
+                size_t len = nasm_unquote(v, NULL);
+                size_t clen = strlen(v);
 
-		if (len != clen) {
-		    error(ERR_NONFATAL | ERR_PASS1,
-			  "NUL character in %! string");
-		    v = NULL;
-		}
-	    }
+                if (len != clen) {
+                    error(ERR_NONFATAL | ERR_PASS1,
+                          "NUL character in %! string");
+                    v = NULL;
+                }
+            }
 
-	    if (v) {
-		char *p = getenv(v);
-		if (!p) {
-		    error(ERR_NONFATAL | ERR_PASS1,
-			  "nonexistent environment variable `%s'", v);
-		    p = "";
-		}
-		t->text = nasm_strdup(p);
-	    }
-	    nasm_free(q);
+            if (v) {
+                char *p = getenv(v);
+                if (!p) {
+                    error(ERR_NONFATAL | ERR_PASS1,
+                          "nonexistent environment variable `%s'", v);
+                    p = "";
+                }
+                t->text = nasm_strdup(p);
+            }
+            nasm_free(q);
         }
 
         /* Expand local macros here and not during preprocessing */
@@ -1826,26 +1850,26 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         break;
 
     case PPC_IFENV:
-	tline = expand_smacro(tline);
+        tline = expand_smacro(tline);
         j = false;              /* have we matched yet? */
         while (tline) {
             skip_white_(tline);
             if (!tline || (tline->type != TOK_ID &&
-			   tline->type != TOK_STRING &&
+                           tline->type != TOK_STRING &&
                            (tline->type != TOK_PREPROC_ID ||
-			    tline->text[1] != '!'))) {
+                            tline->text[1] != '!'))) {
                 error(ERR_NONFATAL,
                       "`%s' expects environment variable names",
-		      pp_directives[ct]);
+                pp_directives[ct]);
                 goto fail;
             }
-	    p = tline->text;
-	    if (tline->type == TOK_PREPROC_ID)
-		p += 2;		/* Skip leading %! */
-	    if (*p == '\'' || *p == '\"' || *p == '`')
-		nasm_unquote_cstr(p, ct);
-	    if (getenv(p))
-		j = true;
+            p = tline->text;
+            if (tline->type == TOK_PREPROC_ID)
+                p += 2;         /* Skip leading %! */
+            if (*p == '\'' || *p == '\"' || *p == '`')
+                nasm_unquote_cstr(p, ct);
+            if (getenv(p))
+                j = true;
             tline = tline->next;
         }
         break;
@@ -3308,7 +3332,7 @@ issue_error:
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
         /* t should now point to the string */
-        if (t->type != TOK_STRING) {
+        if (!tok_type_(t, TOK_STRING)) {
             error(ERR_NONFATAL,
                   "`%s` requires string as second parameter",
                   pp_directives[i]);
@@ -3317,8 +3341,13 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
+        /*
+         * Convert the string to a token stream.  Note that smacros
+         * are stored with the token stream reversed, so we have to
+         * reverse the output of tokenize().
+         */
         nasm_unquote_cstr(t->text, i);
-        macro_start = tokenize(t->text);
+        macro_start = reverse_tokens(tokenize(t->text));
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3509,7 +3538,7 @@ issue_error:
     case PP_SUBSTR:
 		if (defining != NULL) return NO_DIRECTIVE_FOUND;
     {
-        int64_t a1, a2;
+        int64_t start, count;
         size_t len;
 
         casesense = true;
@@ -3530,12 +3559,13 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline->next;
+        if (tline) /* skip expanded id */
+			t = tline->next;
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
 
         /* t should now point to the string */
-        if (t->type != TOK_STRING) {
+        if (!tok_type_(t, TOK_STRING)) {
             error(ERR_NONFATAL,
                   "`%%substr` requires string as second parameter");
             free_tlist(tline);
@@ -3558,12 +3588,12 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        a1 = evalresult->value-1;
+        start = evalresult->value - 1;
 
         while (tok_type_(tt, TOK_WHITESPACE))
             tt = tt->next;
         if (!tt) {
-            a2 = 1;             /* Backwards compatibility: one character */
+            count = 1;             /* Backwards compatibility: one character */
         } else {
             tokval.t_type = TOKEN_INVALID;
             evalresult = evaluate(ppscan, tptr, &tokval, NULL,
@@ -3578,18 +3608,23 @@ issue_error:
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
-            a2 = evalresult->value;
+            count = evalresult->value;
         }
 
         len = nasm_unquote(t->text, NULL);
-        if (a2 < 0)
-            a2 = a2+1+len-a1;
-        if (a1+a2 > (int64_t)len)
-            a2 = len-a1;
+		/* make start and count being in range */
+		if (start < 0)
+			start = 0;
+		if (count < 0)
+			count = len + count + 1 - start;
+		if (start + count > (int64_t)len)
+			count = len - start;
+		if (!len || count < 0 || start >=(int64_t)len)
+			start = -1, count = 0; /* empty string */
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        macro_start->text = nasm_quote((a1 < 0) ? "" : t->text+a1, a2);
+        macro_start->text = nasm_quote((start < 0) ? "" : t->text + start, count);
         macro_start->type = TOK_STRING;
         macro_start->a.mac = NULL;
 
@@ -3899,12 +3934,14 @@ static int find_cc(Token * t)
     return i;
 }
 
-static bool paste_tokens(Token **head, bool handle_paste_tokens)
+static bool paste_tokens(Token **head, const struct tokseq_match *m,
+                         int mnum, bool handle_paste_tokens)
 {
     Token **tail, *t, *tt;
     Token **paste_head;
     bool did_paste = false;
     char *tmp;
+    int i;
 
     /* Now handle token pasting... */
     paste_head = NULL;
@@ -3920,50 +3957,6 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
                 tail = &t->next;
             }
             break;
-        case TOK_ID:
-        case TOK_NUMBER:
-        case TOK_FLOAT:
-        {
-            size_t len = 0;
-            char *tmp, *p;
-
-            while (tt && (tt->type == TOK_ID || tt->type == TOK_PREPROC_ID ||
-                          tt->type == TOK_NUMBER || tt->type == TOK_FLOAT ||
-                          tt->type == TOK_OTHER)) {
-                len += strlen(tt->text);
-                tt = tt->next;
-            }
-
-            /*
-             * Now tt points to the first token after
-             * the potential paste area...
-             */
-            if (tt != t->next) {
-                /* We have at least two tokens... */
-                len += strlen(t->text);
-                p = tmp = nasm_malloc(len+1);
-
-                while (t != tt) {
-                    strcpy(p, t->text);
-                    p = strchr(p, '\0');
-                    t = delete_Token(t);
-                }
-
-                t = *tail = tokenize(tmp);
-                nasm_free(tmp);
-
-                while (t->next) {
-                    tail = &t->next;
-                    t = t->next;
-                }
-                t->next = tt;   /* Attach the remaining token chain */
-
-                did_paste = true;
-            }
-            paste_head = tail;
-            tail = &t->next;
-            break;
-        }
         case TOK_PASTE:         /* %+ */
             if (handle_paste_tokens) {
                 /* Zap %+ and whitespace tokens to the right */
@@ -3977,7 +3970,6 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
                 tt = t->next;
                 while (tok_type_(tt, TOK_WHITESPACE))
                     tt = t->next = delete_Token(tt);
-
                 if (tt) {
                     tmp = nasm_strcat(t->text, tt->text);
                     delete_Token(t);
@@ -3997,9 +3989,55 @@ static bool paste_tokens(Token **head, bool handle_paste_tokens)
             }
             /* else fall through */
         default:
-            tail = &t->next;
-            if (!tok_type_(t->next, TOK_WHITESPACE))
-                paste_head = tail;
+            /*
+             * Concatenation of tokens might look nontrivial
+             * but in real it's pretty simple -- the caller
+             * prepares the masks of token types to be concatenated
+             * and we simply find matched sequences and slip
+             * them together
+             */
+            for (i = 0; i < mnum; i++) {
+                if (PP_CONCAT_MASK(t->type) & m[i].mask_head) {
+                    size_t len = 0;
+                    char *tmp, *p;
+
+                    while (tt && (PP_CONCAT_MASK(tt->type) & m[i].mask_tail)) {
+                         len += strlen(tt->text);
+                         tt = tt->next;
+                    }
+
+                    /*
+                     * Now tt points to the first token after
+                     * the potential paste area...
+                     */
+                    if (tt != t->next) {
+                        /* We have at least two tokens... */
+                        len += strlen(t->text);
+                        p = tmp = nasm_malloc(len+1);
+                        while (t != tt) {
+                            strcpy(p, t->text);
+                            p = strchr(p, '\0');
+                            t = delete_Token(t);
+                        }
+                        t = *tail = tokenize(tmp);
+                        nasm_free(tmp);
+                        while (t->next) {
+                            tail = &t->next;
+                            t = t->next;
+                        }
+                        t->next = tt;   /* Attach the remaining token chain */
+                        did_paste = true;
+                    }
+                    paste_head = tail;
+                    tail = &t->next;
+                    break;
+                }
+            }
+            if (i >= mnum) {    /* no match */
+                tail = &t->next;
+                if (!tok_type_(t->next, TOK_WHITESPACE))
+                    paste_head = tail;
+            }
             break;
         }
     }
@@ -4249,8 +4287,23 @@ static Token *expand_mmac_params(Token * tline)
     }
     *tail = NULL;
 
-    if (changed)
-        paste_tokens(&thead, false);
+    if (changed) {
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_FLOAT),          /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_NUMBER)      |
+                PP_CONCAT_MASK(TOK_FLOAT)       |
+                PP_CONCAT_MASK(TOK_OTHER)           /* tail */
+            },
+            {
+                PP_CONCAT_MASK(TOK_NUMBER),         /* head */
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        paste_tokens(&thead, t, ARRAY_SIZE(t), false);
+    }
 
     return thead;
 }
@@ -4561,14 +4614,25 @@ again:
      * Also we look for %+ tokens and concatenate the tokens before and after
      * them (without white spaces in between).
      */
-    if (expanded && paste_tokens(&thead, true)) {
-        /*
-         * If we concatenated something, *and* we had previously expanded
-         * an actual macro, scan the lines again for macros...
-         */
-        tline = thead;
-        expanded = false;
-        goto again;
+    if (expanded) {
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID),     /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID)  |
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        if (paste_tokens(&thead, t, ARRAY_SIZE(t), true)) {
+            /*
+             * If we concatenated something, *and* we had previously expanded
+             * an actual macro, scan the lines again for macros...
+             */
+            tline = thead;
+            expanded = false;
+            goto again;
+        }
     }
 
 err:
