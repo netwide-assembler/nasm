@@ -211,7 +211,7 @@ struct ExpDef {
     ExpDef *prev;               /* previous definition */
 	ExpDef *next;				/* next in hash table */
     enum pp_exp_type type;      /* expansion type */
-    char *name;
+    char *name;                 /* definition name */
     int nparam_min, nparam_max;
     bool casesense;
     bool plus;                  /* is the last parameter greedy? */
@@ -246,6 +246,7 @@ struct ExpInv {
     ExpInv *prev;               /* previous invocation */
     enum pp_exp_type type;      /* expansion type */
     ExpDef *def;                /* pointer to expansion definition */
+	char *name;                 /* invocation name */
 	Line *label;                /* pointer to label */
 	char *label_text;			/* pointer to label text */
     Line *current;              /* pointer to current line in invocation */
@@ -632,6 +633,18 @@ static void free_expdef(ExpDef * ed)
     nasm_free(ed->defaults);
     free_llist(ed->line);
     nasm_free(ed);
+}
+
+/*
+ * Free an ExpInv
+ */
+static void free_expinv(ExpInv * ei)
+{
+	if (ei->name != NULL)
+		nasm_free(ei->name);
+	if (ei->label_text != NULL)
+		nasm_free(ei->label_text);
+	nasm_free(ei);
 }
 
 /*
@@ -1319,6 +1332,25 @@ static char *detoken(Token * tlist, bool expand_locals)
                 t->text = p;
             }
         }
+
+        /* Expand %? and %?? directives */
+        if (expand_locals && (istk->expansion != NULL) &&
+			((t->type == TOK_PREPROC_Q) ||
+			 (t->type == TOK_PREPROC_QQ))) {
+            ExpInv *ei;
+			for (ei = istk->expansion; ei != NULL; ei = ei->prev){
+				if (ei->type == EXP_MMACRO) {
+					nasm_free(t->text);
+					if (t->type == TOK_PREPROC_Q) {
+						t->text = nasm_strdup(ei->name);
+					} else {
+						t->text = nasm_strdup(ei->def->name);
+					}
+					break;
+				}
+			}
+		}
+
         if (t->type == TOK_WHITESPACE)
             len++;
         else if (t->text)
@@ -1395,6 +1427,7 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 	ei->prev = NULL;
 	ei->type = exp_type;
 	ei->def = ed;
+	ei->name = NULL;
 	ei->label = NULL;
 	ei->label_text = NULL;
 	ei->current = NULL;
@@ -4915,6 +4948,7 @@ static bool expand_mmacro(Token * tline)
      * later through %rotate.
      */
 	ei = new_ExpInv(EXP_MMACRO, ed);
+	ei->name = nasm_strdup(mname);
 //	ei->label = label;
 //	ei->label_text = detoken(label, false);
 	ei->current = ed->line;
@@ -4928,43 +4962,6 @@ static bool expand_mmacro(Token * tline)
 
 	ei->prev = istk->expansion;
 	istk->expansion = ei;
-	
-	/***** todo: relocate %? (Q) and %?? (QQ); %00 already relocated *****/
-	/*
-    list_for_each(l, m->expansion) {
-        Token **tail;
-
-        l = new_Line();
-        l->next = istk->expansion;
-        istk->expansion = l;
-        tail = &l->first;
-
-        list_for_each(t, ei->current->first) {
-            Token *x = t;
-            switch (t->type) {
-            case TOK_PREPROC_Q:
-                tt = *tail = new_Token(NULL, TOK_ID, mname, 0);
-                break;
-            case TOK_PREPROC_QQ:
-                tt = *tail = new_Token(NULL, TOK_ID, m->name, 0);
-                break;
-            case TOK_PREPROC_ID:
-                if (t->text[1] == '0' && t->text[2] == '0') {
-                    dont_prepend = -1;
-                    x = label;
-                    if (!x)
-                        continue;
-                }
-                // fall through
-            default:
-                tt = *tail = new_Token(NULL, x->type, x->text, 0);
-                break;
-            }
-            tail = &tt->next;
-        }
-        *tail = NULL;
-	 }
-    */
 	
 	/*
 	 * Special case: detect %00 on first invocation; if found,
@@ -5241,7 +5238,7 @@ static char *pp_getline(void)
 					if (ei->linnum > -1) {
 						src_set_linnum(ei->linnum);
 					}
-					nasm_free(ei);
+					free_expinv(ei);
 					continue;
 				}
 			}
@@ -5355,7 +5352,11 @@ static void pp_cleanup(int pass)
 {
     if (defining != NULL) {
 		error(ERR_NONFATAL, "end of file while still defining an expansion");
-		nasm_free(defining);	/***** todo: free everything to avoid mem leaks *****/
+		while (defining != NULL) {
+			ExpDef *ed = defining;
+			defining = ed->prev;
+			free_expdef(ed);
+		}
 		defining = NULL;
     }
     while (cstk != NULL)
@@ -5367,6 +5368,11 @@ static void pp_cleanup(int pass)
         fclose(i->fp);
         nasm_free(i->fname);
         nasm_free(i);
+		while (i->expansion != NULL) {
+			ExpInv *ei = i->expansion;
+			i->expansion = ei->prev;
+			free_expinv(ei);
+		}
     }
     while (cstk)
         ctx_pop();
