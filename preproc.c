@@ -1860,7 +1860,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                             tline->text[1] != '!'))) {
                 error(ERR_NONFATAL,
                       "`%s' expects environment variable names",
-                pp_directives[ct]);
+                      pp_directives[ct]);
                 goto fail;
             }
             p = tline->text;
@@ -3612,15 +3612,15 @@ issue_error:
         }
 
         len = nasm_unquote(t->text, NULL);
-		/* make start and count being in range */
-		if (start < 0)
-			start = 0;
-		if (count < 0)
-			count = len + count + 1 - start;
-		if (start + count > (int64_t)len)
-			count = len - start;
-		if (!len || count < 0 || start >=(int64_t)len)
-			start = -1, count = 0; /* empty string */
+        /* make start and count being in range */
+        if (start < 0)
+            start = 0;
+        if (count < 0)
+            count = len + count + 1 - start;
+        if (start + count > (int64_t)len)
+            count = len - start;
+        if (!len || count < 0 || start >=(int64_t)len)
+            start = -1, count = 0; /* empty string */
 
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
