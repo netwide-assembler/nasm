@@ -837,6 +837,25 @@ static int coff_directives(enum directives directive, char *value, int pass)
     }
 }
 
+/* handle relocations storm, valid for win32/64 only */
+static inline void coff_adjust_relocs(struct Section *s)
+{
+    if (s->nrelocs < IMAGE_SCN_MAX_RELOC)
+        return;
+    else
+#ifdef OF_COFF
+    {
+        if (ofmt == &of_coff)
+            nasm_error(ERR_FATAL,
+                       "Too many relocations (%d) for section `%s'",
+                       s->nrelocs, s->name);
+    }
+#endif
+
+    s->flags |= IMAGE_SCN_LNK_NRELOC_OVFL;
+    s->nrelocs++;
+}
+
 static void coff_write(void)
 {
     int32_t pos, sympos, vsize;
@@ -860,13 +879,15 @@ static void coff_write(void)
     }
 
     /*
-     * Work out how big the file will get. Calculate the start of
-     * the `real' symbols at the same time.
+     * Work out how big the file will get.
+     * Calculate the start of the `real' symbols at the same time.
+     * Check for massive relocations.
      */
     pos = 0x14 + 0x28 * nsects;
     initsym = 3;                /* two for the file, one absolute */
     for (i = 0; i < nsects; i++) {
         if (sects[i]->data) {
+            coff_adjust_relocs(sects[i]);
             sects[i]->pos = pos;
             pos += sects[i]->len;
             sects[i]->relpos = pos;
@@ -940,10 +961,17 @@ static void coff_section_header(char *name, int32_t vsize,
     fwriteint32_t(relpos,       ofile);
     fwriteint32_t(0L,           ofile); /* no line numbers - we don't do 'em */
 
-    if (nrelocs >= IMAGE_SCN_MAX_RELOC)
-        nasm_error(ERR_FATAL, "Too many relocations (%d)\n", nrelocs);
+    /*
+     * a special case -- if there are too many relocs
+     * we have to put IMAGE_SCN_MAX_RELOC here and write
+     * the real relocs number into VirtualAddress of first
+     * relocation
+     */
+    if (flags & IMAGE_SCN_LNK_NRELOC_OVFL)
+        fwriteint16_t(IMAGE_SCN_MAX_RELOC, ofile);
+    else
+        fwriteint16_t(nrelocs,  ofile);
 
-    fwriteint16_t(nrelocs,      ofile);
     fwriteint16_t(0,            ofile); /* again, no line numbers */
     fwriteint32_t(flags,        ofile);
 }
@@ -951,6 +979,13 @@ static void coff_section_header(char *name, int32_t vsize,
 static void coff_write_relocs(struct Section *s)
 {
     struct Reloc *r;
+
+    /* a real number of relocations if needed */
+    if (s->flags & IMAGE_SCN_LNK_NRELOC_OVFL) {
+        fwriteint32_t(s->nrelocs, ofile);
+        fwriteint32_t(0, ofile);
+        fwriteint16_t(0, ofile);
+    }
 
     for (r = s->head; r; r = r->next) {
         fwriteint32_t(r->address, ofile);
