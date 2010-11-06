@@ -7,13 +7,13 @@
 
 top_srcdir	= .
 srcdir		= .
-VPATH		= .\output
+VPATH		= .\output;.\lib
 prefix		= C:\Program Files\NASM
 exec_prefix	= $(prefix)
 bindir		= $(prefix)\bin
 mandir		= $(prefix)\man
 
-CC		= wcl386
+CC		=*wcl386
 DEBUG		=
 CFLAGS		= -6 -ox -wx -ze -fpi $(DEBUG)
 BUILD_CFLAGS	= $(CFLAGS) $(TARGET_FLAGS) # -I$(srcdir)/inttypes
