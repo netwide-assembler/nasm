@@ -292,7 +292,7 @@ restart_parse:
             int slot = prefix_slot(tokval.t_integer);
             if (result->prefixes[slot]) {
                if (result->prefixes[slot] == tokval.t_integer)
-                    nasm_error(ERR_WARNING,
+                    nasm_error(ERR_WARNING | ERR_PASS1,
                                "instruction has redundant prefixes");
                else
                     nasm_error(ERR_NONFATAL,
