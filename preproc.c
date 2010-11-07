@@ -1390,7 +1390,7 @@ static Line *new_Line(void)
  */
 static ExpDef *new_ExpDef(int exp_type)
 {
-	ExpDef *ed = nasm_malloc(sizeof(ExpDef));
+	ExpDef *ed = (ExpDef*)nasm_malloc(sizeof(ExpDef));
 	ed->prev = NULL;
 	ed->next = NULL;
 	ed->type = exp_type;
@@ -1422,7 +1422,7 @@ static ExpDef *new_ExpDef(int exp_type)
  */
 static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 {
-	ExpInv *ei = nasm_malloc(sizeof(ExpInv));
+	ExpInv *ei = (ExpInv*)nasm_malloc(sizeof(ExpInv));
 	ei->prev = NULL;
 	ei->type = exp_type;
 	ei->def = ed;
