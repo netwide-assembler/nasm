@@ -1636,22 +1636,32 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0320:
-            if (bits != 16) {
+        {
+            enum prefixes pfx = ins->prefixes[PPS_OSIZE];
+            if (pfx != P_O16 && pfx != P_none)
+                nasm_error(ERR_WARNING, "Invalid operand size prefix");
+            if (pfx != P_O16 && bits != 16) {
+                ins->prefixes[PPS_OSIZE] = P_O16;
                 *bytes = 0x66;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
                 offset += 1;
-            } else
-                offset += 0;
+            }
             break;
+        }
 
         case 0321:
-            if (bits == 16) {
+        {
+            enum prefixes pfx = ins->prefixes[PPS_OSIZE];
+            if (pfx != P_O32 && pfx != P_none)
+                nasm_error(ERR_WARNING, "Invalid operand size prefix");
+            if (pfx != P_O32 && bits == 16) {
+                ins->prefixes[PPS_OSIZE] = P_O32;
                 *bytes = 0x66;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
                 offset += 1;
-            } else
-                offset += 0;
+            }
             break;
+        }
 
         case 0322:
         case 0323:
