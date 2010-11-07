@@ -164,7 +164,7 @@ if ($what eq 'c') {
     }
 
     my @hashinfo = gen_perfect_hash(\%tokens);
-    if (!defined(@hashinfo)) {
+    if (!@hashinfo) {
 	die "$0: no hash found\n";
     }
 

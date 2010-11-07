@@ -75,7 +75,7 @@ sub main() {
     %data = read_input();
     @hashinfo = gen_perfect_hash(\%data);
 
-    if (!defined(@hashinfo)) {
+    if (!@hashinfo) {
 	die "$0: no hash found\n";
     }
 

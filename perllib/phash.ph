@@ -161,7 +161,7 @@ sub gen_perfect_hash($) {
 	for ($j = 0; $j < $maxj; $j++) {
 	    $sv = $random_sv_vectors[$j];
 	    @hashinfo = gen_hash_n($n, $sv, $href, $run++);
-	    return @hashinfo if (defined(@hashinfo));
+	    return @hashinfo if (@hashinfo);
 	}
 	$n <<= 1;
     }
