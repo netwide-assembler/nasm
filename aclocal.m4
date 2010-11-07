@@ -21,8 +21,7 @@ dnl OpenWatcom 1.8 has a broken _Bool type that we don't want to use.
 dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_WORKING_BOOL,
 [AC_MSG_CHECKING([if $CC has a working bool type])
- AC_COMPILE_IFELSE(
- [
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
@@ -30,7 +29,7 @@ int foo(bool x, int y)
 {
 	return x+y;
 }
- ],
+ ])],
  [AC_MSG_RESULT([yes])
   AC_DEFINE(HAVE_WORKING_BOOL, 1,
     [Define to 1 if your compiler has a correct implementation of bool])],
