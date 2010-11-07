@@ -1422,7 +1422,6 @@ static ExpDef *new_ExpDef(int exp_type)
  */
 static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 {
-	unique ++;
 	ExpInv *ei = nasm_malloc(sizeof(ExpInv));
 	ei->prev = NULL;
 	ei->type = exp_type;
@@ -1436,7 +1435,7 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 	ei->nparam = 0;
 	ei->rotate = 0;
 	ei->paramlen = NULL;
-	ei->unique = unique;
+	ei->unique = ++unique;
 	ei->emitting = false;
 	ei->lineno = 0;
 	if ((istk->mmac_depth < 1) &&
