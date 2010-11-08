@@ -1253,7 +1253,7 @@ static Token *copy_Token(Token * tline)
 		t = freeTokens;
 		freeTokens = t->next;
 		t->next = NULL;
-		t->text = ((tt->text != NULL) ? strdup(tt->text) : NULL);
+		t->text = tt->text ? nasm_strdup(tt->text) : NULL;
 		t->a.mac = tt->a.mac;
 		t->a.len = tt->a.len;
 		t->type = tt->type;
