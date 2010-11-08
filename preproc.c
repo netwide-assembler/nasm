@@ -4999,7 +4999,7 @@ static bool expand_mmacro(Token * tline)
 				}
 				t->next = new_Token(NULL, TOK_OTHER, ":", 0);
 			}
-			Line *l = new_Line();
+			l = new_Line();
 			l->first = copy_Token(label);
 			l->next = ei->current;
 			ei->current = l;
@@ -5136,7 +5136,10 @@ static char *pp_getline(void)
 {
     char *line;
     Token *tline;
-	ExpInv *ei;
+    ExpDef *ed;
+    ExpInv *ei;
+    Line *l;
+    int j;
 	
     while (1) {
         /*
@@ -5156,7 +5159,6 @@ static char *pp_getline(void)
 						ei->current = NULL;
 						continue;
 					}
-					Line *l = NULL;
 					l = ei->current;
 					ei->current = l->next;
 					ei->lineno++;
@@ -5184,7 +5186,7 @@ static char *pp_getline(void)
 					ei->current = ei->def->line;
 					ei->lineno = 0;
 					tline = copy_Token(ei->current->first);
-					int j = if_condition(tline, PP_WHILE);
+					j = if_condition(tline, PP_WHILE);
 					tline = NULL;
 					j = (((j < 0) ? COND_NEVER : j) ? COND_IF_TRUE : COND_IF_FALSE);
 					if (j == COND_IF_TRUE) {
@@ -5198,7 +5200,7 @@ static char *pp_getline(void)
 					continue;
 				} else {
 					istk->expansion = ei->prev;
-					ExpDef *ed = ei->def;
+					ed = ei->def;
 					if (ed != NULL) {
 						if ((ei->emitting == true) &&
 							(ed->max_depth == DEADMAN_LIMIT) &&
