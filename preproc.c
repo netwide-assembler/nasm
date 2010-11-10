@@ -2601,7 +2601,7 @@ static int do_directive(Token * tline)
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
-        inc = nasm_malloc(sizeof(Include));
+        inc = nasm_zalloc(sizeof(Include));
         inc->next = istk;
         inc->fp = inc_fopen(p, dephead, &deptail, pass == 0);
         if (!inc->fp) {
@@ -5019,21 +5019,19 @@ static void verror(int severity, const char *fmt, va_list arg)
 
     vsnprintf(buff, sizeof(buff), fmt, arg);
 
-    if ((istk != NULL) && (istk->mmac_depth > 0)) {
-		ExpInv *ei = istk->expansion;
-		int lineno = ei->lineno;
-		while (ei != NULL) {
-			if (ei->type == EXP_MMACRO) {
-				break;
-			}
-			lineno += ei->relno;
-			ei = ei->prev;
-		}
+    if (istk && istk->mmac_depth > 0) {
+        ExpInv *ei = istk->expansion;
+        int lineno = ei->lineno;
+        while (ei) {
+            if (ei->type == EXP_MMACRO)
+                break;
+            lineno += ei->relno;
+            ei = ei->prev;
+        }
         nasm_error(severity, "(%s:%d) %s", ei->def->name,
-				   lineno, buff);
-    } else {
+                   lineno, buff);
+    } else
         nasm_error(severity, "%s", buff);
-	}
 }
 
 /*
