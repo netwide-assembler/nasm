@@ -1946,14 +1946,9 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                   "`%s' expects a macro name", pp_directives[ct]);
             goto fail;
         }
+        memset(&searching, 0, sizeof(searching));
         searching.name = nasm_strdup(tline->text);
         searching.casesense = true;
-        searching.plus = false;
-        searching.nolist = false;
-        //searching.in_progress = 0;
-        searching.max_depth = 0;
-        //searching.rep_nest = NULL;
-        searching.nparam_min = 0;
         searching.nparam_max = INT_MAX;
         tline = expand_smacro(tline->next);
         skip_white_(tline);
@@ -1995,11 +1990,9 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         }
         ed = (ExpDef *) hash_findix(&expdefs, searching.name);
         while (ed != NULL) {
-            if (!strcmp(ed->name, searching.name) &&
-                (ed->nparam_min <= searching.nparam_max
-                 || searching.plus)
-                && (searching.nparam_min <= ed->nparam_max
-                    || ed->plus)) {
+            if (!strcmp(ed->name, searching.name)                           &&
+                (ed->nparam_min <= searching.nparam_max || searching.plus)  &&
+                (searching.nparam_min <= ed->nparam_max || ed->plus)) {
                 found = true;
                 break;
             }
