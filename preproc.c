@@ -2117,7 +2117,7 @@ static bool define_smacro(Context *ctx, const char *mname, bool casesense,
     } else {
         smtbl  = ctx ? &ctx->localmac : &smacros;
         smhead = (SMacro **) hash_findi_add(smtbl, mname);
-        smac = nasm_malloc(sizeof(SMacro));
+        smac = nasm_zalloc(sizeof(SMacro));
         smac->next = *smhead;
         *smhead = smac;
     }
@@ -2637,7 +2637,7 @@ static int do_directive(Token * tline)
         }
 
         if (i == PP_PUSH) {
-            ctx = nasm_malloc(sizeof(Context));
+            ctx = nasm_zalloc(sizeof(Context));
             ctx->next = cstk;
             hash_init(&ctx->localmac, HASH_SMALL);
             ctx->name = p;
@@ -2873,11 +2873,9 @@ issue_error:
 
         eed = (ExpDef *) hash_findix(&expdefs, ed->name);
         while (eed) {
-            if (!strcmp(eed->name, ed->name) &&
-                (eed->nparam_min <= ed->nparam_max
-                 || ed->plus)
-                && (ed->nparam_min <= eed->nparam_max
-                    || eed->plus)) {
+            if (!strcmp(eed->name, ed->name)                    &&
+                (eed->nparam_min <= ed->nparam_max || ed->plus) &&
+                (ed->nparam_min <= eed->nparam_max || eed->plus)) {
                     error(ERR_WARNING|ERR_PASS1,
                           "redefining multi-line macro `%s'", ed->name);
                     return DIRECTIVE_FOUND;
