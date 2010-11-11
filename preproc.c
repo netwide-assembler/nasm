@@ -1387,29 +1387,11 @@ static inline Line *new_Line(void)
  */
 static ExpDef *new_ExpDef(int exp_type)
 {
-    ExpDef *ed = (ExpDef*)nasm_malloc(sizeof(ExpDef));
-    ed->prev = NULL;
-    ed->next = NULL;
-    ed->type = exp_type;
-    ed->name = NULL;
-    ed->nparam_min = 0;
-    ed->nparam_max = 0;
-    ed->casesense = true;
-    ed->plus = false;
-    ed->prepend = 0;
-    ed->label = NULL;
-    ed->line = NULL;
-    ed->last = NULL;
-    ed->linecount = 0;
-    ed->dlist = NULL;
-    ed->defaults = NULL;
-    ed->ndefs = 0;
-    ed->state = COND_NEVER;
-    ed->nolist = false;
-    ed->def_depth = 0;
-    ed->cur_depth = 0;
-    ed->max_depth = 0;
-    ed->ignoring = false;
+    ExpDef *ed      = (ExpDef*)nasm_zalloc(sizeof(ExpDef));
+    ed->type        = exp_type;
+    ed->casesense   = true;
+    ed->state       = COND_NEVER;
+
     return ed;
 }
 
@@ -1419,22 +1401,11 @@ static ExpDef *new_ExpDef(int exp_type)
  */
 static ExpInv *new_ExpInv(int exp_type, ExpDef *ed)
 {
-    ExpInv *ei = (ExpInv*)nasm_malloc(sizeof(ExpInv));
-    ei->prev = NULL;
-    ei->type = exp_type;
-    ei->def = ed;
-    ei->name = NULL;
-    ei->label = NULL;
-    ei->label_text = NULL;
-    ei->current = NULL;
-    ei->params = NULL;
-    ei->iline = NULL;
-    ei->nparam = 0;
-    ei->rotate = 0;
-    ei->paramlen = NULL;
-    ei->unique = ++unique;
-    ei->emitting = false;
-    ei->lineno = 0;
+    ExpInv *ei  = (ExpInv*)nasm_zalloc(sizeof(ExpInv));
+    ei->type    = exp_type;
+    ei->def     = ed;
+    ei->unique  = ++unique;
+
     if ((istk->mmac_depth < 1) &&
         (istk->expansion == NULL) &&
         (ed != NULL) &&
