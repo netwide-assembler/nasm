@@ -483,6 +483,24 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 #define tok_is_(x,v)    (tok_type_((x), TOK_OTHER) && !strcmp((x)->text,(v)))
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
+#ifdef NASM_TRACE
+
+#define dump_token(t) raw_dump_token(t, __FILE__, __LINE__, __func__);
+static void raw_dump_token(Token *token, const char *file, int line, const char *func)
+{
+    printf("---[%s (%s:%d): %p]---\n", func, file, line, (void *)token);
+    if (token) {
+        Token *t;
+        list_for_each(t, token) {
+            if (t->text)
+                printf("'%s' ", t->text);
+        }
+        printf("\n");
+    }
+}
+
+#endif
+
 /*
  * nasm_unquote with error if the string contains NUL characters.
  * If the string contains NUL characters, issue an error and return
