@@ -1396,7 +1396,10 @@ static char *detoken(Token * tlist, bool expand_locals)
  */
 static inline Line *new_Line(void)
 {
-    return (Line *)nasm_zalloc(sizeof(Line));
+    Line *l = nasm_malloc(sizeof(Line));
+    l->next = NULL;
+    l->first = NULL;
+    return l;
 }
 
 
