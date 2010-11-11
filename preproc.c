@@ -1655,11 +1655,11 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
 
     while (1) {
         sl = nasm_malloc(prefix_len+len+1+sizeof sl->next);
+        sl->next = NULL;
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
         fp = fopen(sl->str, "r");
         if (fp && dhead && !in_list(*dhead, sl->str)) {
-            sl->next = NULL;
             **dtail = sl;
             *dtail = &sl->next;
         } else {
