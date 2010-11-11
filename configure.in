@@ -152,5 +152,14 @@ if test $ac_cv_prog_make_vpathok = no; then
   done
 fi
 
+dnl
+dnl support cchace
+dnl
+AC_ARG_WITH([ccache],
+            [AC_HELP_STRING([--with-ccache],
+                            [Compile with ccache])],
+          [CC="ccache $CC"],
+          [])
+
 AC_OUTPUT_COMMANDS([mkdir -p output])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
