@@ -1352,7 +1352,7 @@ static char *detoken(Token * tlist, bool expand_locals)
         }
 
         /* Expand %? and %?? directives */
-        if (expand_locals && (istk->expansion != NULL) &&
+        if ((istk->expansion != NULL) &&
             ((t->type == TOK_PREPROC_Q) ||
              (t->type == TOK_PREPROC_QQ))) {
             ExpInv *ei;
