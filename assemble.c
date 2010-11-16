@@ -1152,7 +1152,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
             return -1;
         }
-        if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_R|REX_B)))
+        if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)))
             length += 3;
         else
             length += 2;
