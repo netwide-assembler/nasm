@@ -137,6 +137,8 @@
 #define IMAGE_SCN_LNK_REMOVE                    0x00000800
 #define IMAGE_SCN_LNK_COMDAT                    0x00001000
 
+#define IMAGE_SCN_MAX_RELOC			0xffff
+
 #define IMAGE_SCN_MEM_FARDATA                   0x00008000
 #define IMAGE_SCN_MEM_PURGEABLE                 0x00020000
 #define IMAGE_SCN_MEM_16BIT                     0x00020000
