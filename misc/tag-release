@@ -1,30 +1,50 @@
 #!/bin/sh
 
-version="$1"
+version=""
 repo=""
 branch=""
+push=1
+
+for opt in $*
+do
+    case "$opt" in
+    --ver=*)
+        version=`echo $opt | sed 's/[-a-zA-Z0-9]*=//'`
+        ;;
+    --repo=*)
+        repo=`echo $opt | sed 's/[-a-zA-Z0-9]*=//'`
+        ;;
+    --branch=*)
+        branch=`echo $opt | sed 's/[-a-zA-Z0-9]*=//'`
+        ;;
+    --no-push)
+        push=0
+        ;;
+    *)
+        version=$opt
+        ;;
+    esac
+done
 
 if [ -z "$version" ]; then
-  echo "Usage: $0 version [repo branch]" 1>&2
-  exit 1
+    echo "  Usage"
+    echo "      $0 --ver=num [--repo=name --branch=name --push]" 1>&2
+    echo "  Example"
+    echo "      $0 --ver=2.10rc1 --repo=git+ssh://user@repo.or.cz/nasm.git --branch=master --no-push" 1>&2
+    echo "  With --no-push the changes are not pushed out to remote repo"
+    exit 1
 fi
 
 tag="nasm-$version"
-
-if [ $# -eq 3 ]; then
-  repo="$2"
-  branch="$3"
-fi
 
 echo "$version" > version
 git add version
 git commit -m "NASM $version"
 git tag -a -m "NASM $version" "$tag"
 
-if [ $# -eq 3 ]; then
-  git push "$repo" "$branch"
-  git push "$repo" "$tag"
-else
-  git push
-  git push --tags
+if [ $push = 1 ]; then
+    echo "git push $repo $branch"
+    echo "git push $repo $tag"
+    echo "git push --tags $repo"
 fi
+

@@ -19,6 +19,18 @@ since 2007.
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 
+\S{cl-2.09.04} Version 2.09.04
+
+\b Fix incorrect labels offset for VEX intructions.
+
+\b Eliminate bogus warning on implicit operand size override.
+
+\b \c{%if} term could not handle 64 bit numbers.
+
+\b The COFF backend was limiting relocations number to 16 bits even if
+   in real there were a way more relocations.
+
+
 \S{cl-2.09.03} Version 2.09.03
 
 \b Print \c{%macro} name inside \c{%rep} blocks on error.
