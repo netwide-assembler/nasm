@@ -1470,7 +1470,7 @@ MAXSS		xmmreg,xmmrm32			\363\2\x0F\x5F\110				KATMAI,SSE
 MINPS		xmmreg,xmmrm128			\360\2\x0F\x5D\110				KATMAI,SSE
 MINSS		xmmreg,xmmrm32			\363\2\x0F\x5D\110				KATMAI,SSE
 MOVAPS		xmmreg,xmmrm128			\360\2\x0F\x28\110				KATMAI,SSE
-MOVAPS		mem128,xmmreg			\360\2\x0F\x29\101				KATMAI,SSE
+MOVAPS		xmmrm128,xmmreg			\360\2\x0F\x29\101				KATMAI,SSE
 MOVHPS		xmmreg,mem64			\360\2\x0F\x16\110				KATMAI,SSE
 MOVHPS		mem64,xmmreg			\360\2\x0F\x17\101				KATMAI,SSE
 MOVLHPS		xmmreg,xmmreg			\360\2\x0F\x16\110				KATMAI,SSE
@@ -1484,7 +1484,7 @@ MOVSS		xmmreg,xmmrm32			\363\2\x0F\x10\110				KATMAI,SSE
 MOVSS		mem32,xmmreg			\363\2\x0F\x11\101				KATMAI,SSE
 MOVSS		xmmreg,xmmreg			\363\2\x0F\x10\110				KATMAI,SSE
 MOVUPS		xmmreg,xmmrm128			\360\2\x0F\x10\110				KATMAI,SSE
-MOVUPS		mem128,xmmreg			\360\2\x0F\x11\101				KATMAI,SSE
+MOVUPS		xmmrm128,xmmreg			\360\2\x0F\x11\101				KATMAI,SSE
 MULPS		xmmreg,xmmrm128			\360\2\x0F\x59\110				KATMAI,SSE
 MULSS		xmmreg,xmmrm32			\363\2\x0F\x59\110				KATMAI,SSE
 ORPS		xmmreg,xmmrm128			\360\2\x0F\x56\110				KATMAI,SSE
