@@ -442,7 +442,7 @@ sub format_insn($$$$$) {
                     if ($opp =~ /^(.*[^\d])(8|16|32|64|80|128|256)$/) {
                         my $ox = $1;
                         my $on = $2;
-                        if ($ox !~ /^sbyte$/) {
+                        if ($ox !~ /^(sbyte|sdword|udword)$/) {
                             $opp = $ox;
                             push(@oppx, "bits$on");
                         }
