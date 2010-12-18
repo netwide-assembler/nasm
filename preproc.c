@@ -5296,7 +5296,7 @@ static char *pp_getline(void)
                     defining->last = l;
                 }
             } else {
-                //free_tlist(tline);    /***** sanity check: is this supposed to be here? *****/
+                free_tlist(tline);
             }
             defining->linecount++;
             continue;
