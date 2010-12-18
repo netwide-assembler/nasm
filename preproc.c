@@ -2981,7 +2981,7 @@ issue_error:
                 ed->nparam_max == spec.nparam_max &&
                 ed->plus == spec.plus) {
                 if (ed->cur_depth > 0) {
-                    error(ERR_NONFATAL, "`%s' ignored due to active macro",
+                    error(ERR_NONFATAL, "`%s' ignored on active macro",
                           pp_directives[i]);
                     break;
                 } else {
