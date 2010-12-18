@@ -2980,8 +2980,14 @@ issue_error:
                 ed->nparam_min == spec.nparam_min &&
                 ed->nparam_max == spec.nparam_max &&
                 ed->plus == spec.plus) {
-                *ed_p = ed->next;
-                free_expdef(ed);
+                if (ed->cur_depth > 0) {
+                    error(ERR_NONFATAL, "`%s' ignored due to active macro",
+                          pp_directives[i]);
+                    break;
+                } else {
+                    *ed_p = ed->next;
+                    free_expdef(ed);
+                }
             } else {
                 ed_p = &ed->next;
             }
