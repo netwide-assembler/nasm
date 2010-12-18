@@ -5189,8 +5189,8 @@ static char *pp_getline(void)
                         if (ed->cur_depth > 0) {
                             ed->cur_depth --;
                         } else if (ed->type != EXP_MMACRO) {
-							expansions = ed->prev;
-							free_expdef(ed);
+                            expansions = ed->prev;
+                            free_expdef(ed);
                         }
                         if ((ei->type == EXP_REP) ||
                             (ei->type == EXP_MMACRO) ||
