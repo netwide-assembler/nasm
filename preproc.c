@@ -985,7 +985,7 @@ static Token *tokenize(char *line)
                 p--;
                 if (*p)
                     *p++ = '\0';
-                if (lvl)
+                if (lvl && !defining)
                     error(ERR_NONFATAL, "unterminated %[ construct");
                 type = TOK_INDIRECT;
             } else if (*p == '?') {
@@ -1006,7 +1006,7 @@ static Token *tokenize(char *line)
                     p = nasm_skip_string(p);
                     if (*p)
                         p++;
-                    else
+                    else if(!defining)
                         error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
                 } else {
                     /* %! without string or identifier */
@@ -1039,7 +1039,7 @@ static Token *tokenize(char *line)
 
             if (*p) {
                 p++;
-            } else {
+            } else if(!defining) {
                 error(ERR_WARNING|ERR_PASS1, "unterminated string");
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
