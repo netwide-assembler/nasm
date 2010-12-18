@@ -5188,22 +5188,9 @@ static char *pp_getline(void)
                         }
                         if (ed->cur_depth > 0) {
                             ed->cur_depth --;
-                        } else if ((ed->type != EXP_MMACRO) && (ed->type != EXP_IF)) {
-                            /***** should this really be right here??? *****/
-                            /*
-                            Line *l = NULL, *ll = NULL;
-                            for (l = ed->line; l != NULL;) {
-                                if (l->first != NULL) {
-                                    free_tlist(l->first);
-                                    l->first = NULL;
-                                }
-                                ll = l;
-                                l = l->next;
-                                nasm_free(ll);
-                            }
-                            expansions = ed->prev;
-                            nasm_free(ed);
-                            */
+                        } else if (ed->type != EXP_MMACRO) {
+							expansions = ed->prev;
+							free_expdef(ed);
                         }
                         if ((ei->type == EXP_REP) ||
                             (ei->type == EXP_MMACRO) ||
