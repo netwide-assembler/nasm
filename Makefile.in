@@ -220,6 +220,11 @@ tags:
 	$(RM) -f tags
 	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
 
+cscope:
+	$(RM) -f cscope.out cscope.files
+	$(FIND) . -name '*.[hcS]' -print > cscope.files
+	cscope -b -f cscope.out
+
 rdf_install install_rdf:
 	cd rdoff && $(MAKE) install
 
