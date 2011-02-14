@@ -2495,7 +2495,6 @@ VPEXTRB		reg32,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 14 /r ib]		AVX,SANDYBRIDGE
 VPEXTRB		mem8,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 14 /r ib]		AVX,SANDYBRIDGE
 VPEXTRW		reg64,xmmreg,imm8		[rmi:	vex.128.66.0f.w0 c5 /r ib]		AVX,SANDYBRIDGE,LONG
 VPEXTRW		reg32,xmmreg,imm8		[rmi:	vex.128.66.0f.w0 c5 /r ib]		AVX,SANDYBRIDGE
-VPEXTRW		mem16,xmmreg,imm8		[mri:	vex.128.66.0f.w0 c5 /r ib]		AVX,SANDYBRIDGE
 VPEXTRW		reg64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 15 /r ib]		AVX,SANDYBRIDGE,LONG
 VPEXTRW		reg32,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 15 /r ib]		AVX,SANDYBRIDGE
 VPEXTRW		mem16,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 15 /r ib]		AVX,SANDYBRIDGE
