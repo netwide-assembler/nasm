@@ -10,7 +10,9 @@ since 2007.
 
 \S{cl-2.09.05} Version 2.09.05
 
-\b Fix arguments encodong for VPEXTRW instruction.
+\b Fix arguments encoding for VPEXTRW instruction.
+
+\b Remove invalid form of VPEXTRW instruction.
 
 
 \S{cl-2.09.04} Version 2.09.04
