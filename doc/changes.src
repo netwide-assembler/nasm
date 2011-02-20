@@ -8,6 +8,11 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.09.05} Version 2.09.05
+
+\b Fix arguments encodong for VPEXTRW instruction.
+
+
 \S{cl-2.09.04} Version 2.09.04
 
 \b Fix incorrect labels offset for VEX intructions.
