@@ -2334,6 +2334,7 @@ VHSUBPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.f2.0f 7d /r]		AVX,SANDYBRIDG
 VINSERTF128	ymmreg,ymmreg,xmmrm128,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 18 /r ib]	AVX,SANDYBRIDGE
 VINSERTPS	xmmreg,xmmreg*,xmmrm32,imm8	[rvmi:	vex.nds.128.66.0f3a 21 /r ib]		AVX,SANDYBRIDGE
 VLDDQU		xmmreg,mem128			[rm:	vex.128.f2.0f f0 /r]			AVX,SANDYBRIDGE
+VLDQQU		ymmreg,mem256			[rm:	vex.256.f2.0f f0 /r]			AVX,SANDYBRIDGE
 VLDDQU		ymmreg,mem256			[rm:	vex.256.f2.0f f0 /r]			AVX,SANDYBRIDGE
 VLDMXCSR	mem32				[m:	vex.lz.0f ae /2]			AVX,SANDYBRIDGE
 VMASKMOVDQU	xmmreg,xmmreg			[rm:	vex.128.66.0f f7 /r]			AVX,SANDYBRIDGE
