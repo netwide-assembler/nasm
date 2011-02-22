@@ -25,6 +25,9 @@ To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 \b Remove invalid form of VPEXTRW instruction.
 
+\b Add \c{VLDDQU} as alias for \c{VLDQQU} to
+   match specification.
+
 
 \S{cl-2.09.04} Version 2.09.04
 
