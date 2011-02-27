@@ -214,6 +214,10 @@ static struct Section *create_section(char *name)
     last_section->follows = last_section->vfollows = 0;
     last_section->length = 0;
     last_section->flags = 0;
+    last_section->align = 0;
+    last_section->valign = 0;
+    last_section->start = 0;
+    last_section->vstart = 0;
     last_section->next = NULL;
 
     /* Register our sections with NASM. */
