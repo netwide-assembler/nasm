@@ -285,16 +285,11 @@ static int coff_make_section(char *name, uint32_t flags)
 {
     struct Section *s;
 
-    s = nasm_malloc(sizeof(*s));
+    s = nasm_zalloc(sizeof(*s));
 
     if (flags != BSS_FLAGS)
         s->data = saa_init(1);
-    else
-        s->data = NULL;
-    s->head = NULL;
     s->tail = &s->head;
-    s->len = 0;
-    s->nrelocs = 0;
     if (!strcmp(name, ".text"))
         s->index = def_seg;
     else
