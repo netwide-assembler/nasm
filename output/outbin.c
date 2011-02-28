@@ -1427,18 +1427,13 @@ static void binfmt_init(void)
     nsl_tail = &no_seg_labels;
 
     /* Create default section (.text). */
-    sections = last_section = nasm_malloc(sizeof(struct Section));
-    last_section->next = NULL;
-    last_section->name = nasm_strdup(".text");
-    last_section->contents = saa_init(1L);
-    last_section->follows = last_section->vfollows = 0;
-    last_section->prev = NULL;
-    last_section->length = 0;
-    last_section->flags = TYPE_DEFINED | TYPE_PROGBITS;
-    last_section->labels = NULL;
-    last_section->labels_end = &(last_section->labels);
-    last_section->start_index = seg_alloc();
-    last_section->vstart_index = seg_alloc();
+    sections = last_section = nasm_zalloc(sizeof(struct Section));
+    last_section->name          = nasm_strdup(".text");
+    last_section->contents      = saa_init(1L);
+    last_section->flags         = TYPE_DEFINED | TYPE_PROGBITS;
+    last_section->labels_end    = &(last_section->labels);
+    last_section->start_index   = seg_alloc();
+    last_section->vstart_index  = seg_alloc();
 }
 
 /* Generate binary file output */
