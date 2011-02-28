@@ -1195,14 +1195,13 @@ static void *new_Block(size_t size)
     /* first, get to the end of the linked list */
     while (b->next)
         b = b->next;
+
     /* now allocate the requested chunk */
     b->chunk = nasm_malloc(size);
 
     /* now allocate a new block for the next request */
-    b->next = nasm_malloc(sizeof(Blocks));
-    /* and initialize the contents of the new block */
-    b->next->next = NULL;
-    b->next->chunk = NULL;
+    b->next = nasm_zalloc(sizeof(Blocks));
+
     return b->chunk;
 }
 
@@ -1401,10 +1400,7 @@ static char *detoken(Token * tlist, bool expand_locals)
  */
 static inline Line *new_Line(void)
 {
-    Line *l = nasm_malloc(sizeof(Line));
-    l->next = NULL;
-    l->first = NULL;
-    return l;
+    return (Line *)nasm_zalloc(sizeof(Line));
 }
 
 
@@ -3321,11 +3317,9 @@ issue_error:
             tline = delete_Token(tline);
 
         p = detoken(tline, false);
-        macro_start = nasm_malloc(sizeof(*macro_start));
-        macro_start->next = NULL;
+        macro_start = nasm_zalloc(sizeof(*macro_start));
         macro_start->text = nasm_quote(p, strlen(p));
         macro_start->type = TOK_STRING;
-        macro_start->a.mac = NULL;
         nasm_free(p);
 
         /*
@@ -3438,11 +3432,9 @@ issue_error:
             p = xsl->str;
             fclose(fp);         /* Don't actually care about the file */
         }
-        macro_start = nasm_malloc(sizeof(*macro_start));
-        macro_start->next = NULL;
+        macro_start = nasm_zalloc(sizeof(*macro_start));
         macro_start->text = nasm_quote(p, strlen(p));
         macro_start->type = TOK_STRING;
-        macro_start->a.mac = NULL;
         if (xsl)
             nasm_free(xsl);
 
@@ -3489,10 +3481,8 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
-        macro_start = nasm_malloc(sizeof(*macro_start));
-        macro_start->next = NULL;
+        macro_start = nasm_zalloc(sizeof(*macro_start));
         make_tok_num(macro_start, nasm_unquote(t->text, NULL));
-        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3653,11 +3643,9 @@ issue_error:
         if (!len || count < 0 || start >=(int64_t)len)
             start = -1, count = 0; /* empty string */
 
-        macro_start = nasm_malloc(sizeof(*macro_start));
-        macro_start->next = NULL;
+        macro_start = nasm_zalloc(sizeof(*macro_start));
         macro_start->text = nasm_quote((start < 0) ? "" : t->text + start, count);
         macro_start->type = TOK_STRING;
-        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3715,10 +3703,8 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
-        macro_start = nasm_malloc(sizeof(*macro_start));
-        macro_start->next = NULL;
+        macro_start = nasm_zalloc(sizeof(*macro_start));
         make_tok_num(macro_start, reloc_value(evalresult));
-        macro_start->a.mac = NULL;
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -5065,15 +5051,11 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
     Token *t;
 
     cstk = NULL;
-    istk = nasm_malloc(sizeof(Include));
-    istk->next = NULL;
-    istk->expansion = NULL;
+    istk = nasm_zalloc(sizeof(Include));
     istk->fp = fopen(file, "r");
-    istk->fname = NULL;
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
     istk->lineinc = 1;
-    istk->mmac_depth = 0;
     if (!istk->fp)
         error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
               file);
@@ -5114,10 +5096,8 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
      * all the other builtins, because it is special -- it varies between
      * passes.
      */
-    t = nasm_malloc(sizeof(*t));
-    t->next = NULL;
+    t = nasm_zalloc(sizeof(*t));
     make_tok_num(t, apass);
-    t->a.mac = NULL;
     define_smacro(NULL, "__PASS__", true, 0, t);
 }
 
@@ -5369,11 +5349,10 @@ static void pp_cleanup(int pass)
 
 void pp_include_path(char *path)
 {
-    IncPath *i;
+    IncPath *i = nasm_zalloc(sizeof(IncPath));
 
-    i = nasm_malloc(sizeof(IncPath));
-    i->path = path ? nasm_strdup(path) : NULL;
-    i->next = NULL;
+    if (path)
+        i->path = nasm_strdup(path);
 
     if (ipath) {
         IncPath *j = ipath;
