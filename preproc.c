@@ -5324,12 +5324,12 @@ static void pp_cleanup(int pass)
         istk = istk->next;
         fclose(i->fp);
         nasm_free(i->fname);
-        nasm_free(i);
         while (i->expansion != NULL) {
             ExpInv *ei = i->expansion;
             i->expansion = ei->prev;
             free_expinv(ei);
         }
+        nasm_free(i);
     }
     while (cstk)
         ctx_pop();
