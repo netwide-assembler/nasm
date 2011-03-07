@@ -2321,7 +2321,7 @@ VDIVSS		xmmreg,xmmreg*,xmmrm32		[rvm:	vex.nds.lig.f3.0f 5e /r]		AVX,SANDYBRIDGE
 VDPPD		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 41 /r ib]		AVX,SANDYBRIDGE
 VDPPS		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE
 VDPPS		ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 40 /r ib]		AVX,SANDYBRIDGE
-VEXTRACTF128	xmmrm128,xmmreg,imm8		[mri:	vex.256.66.0f3a.w0 19 /r ib]		AVX,SANDYBRIDGE
+VEXTRACTF128	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 19 /r ib]		AVX,SANDYBRIDGE
 VEXTRACTPS	rm32,xmmreg,imm8		[mri:	vex.128.66.0f3a 17 /r ib]		AVX,SANDYBRIDGE
 VHADDPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 7c /r]		AVX,SANDYBRIDGE
 VHADDPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 7c /r]		AVX,SANDYBRIDGE
@@ -2341,7 +2341,7 @@ VMASKMOVDQU	xmmreg,xmmreg			[rm:	vex.128.66.0f f7 /r]			AVX,SANDYBRIDGE
 VMASKMOVPS	xmmreg,xmmreg,mem128		[rvm:	vex.nds.128.66.0f38.w0 2c /r]		AVX,SANDYBRIDGE
 VMASKMOVPS	ymmreg,ymmreg,mem256		[rvm:	vex.nds.256.66.0f38.w0 2c /r]		AVX,SANDYBRIDGE
 VMASKMOVPS	mem128,xmmreg,xmmreg		[mvr:	vex.nds.128.66.0f38.w0 2e /r]		AVX,SANDYBRIDGE,SO
-VMASKMOVPS	mem256,xmmreg,xmmreg		[mvr:	vex.nds.256.66.0f38.w0 2e /r]		AVX,SANDYBRIDGE,SY
+VMASKMOVPS	mem256,ymmreg,ymmreg		[mvr:	vex.nds.256.66.0f38.w0 2e /r]		AVX,SANDYBRIDGE,SY
 VMASKMOVPD	xmmreg,xmmreg,mem128		[rvm:	vex.nds.128.66.0f38.w0 2d /r]		AVX,SANDYBRIDGE
 VMASKMOVPD	ymmreg,ymmreg,mem256		[rvm:	vex.nds.256.66.0f38.w0 2d /r]		AVX,SANDYBRIDGE
 VMASKMOVPD	mem128,xmmreg,xmmreg		[mvr:	vex.nds.128.66.0f38.w0 2f /r]		AVX,SANDYBRIDGE
