@@ -5006,7 +5006,7 @@ static char *pp_getline(void)
                 /* only set line and file name if there's a next node */
                 if (i->next) {
                     src_set_linnum(i->lineno);
-                    nasm_free(src_set_fname(i->fname));
+                    nasm_free(src_set_fname(nasm_strdup(i->fname)));
                 }
                 istk = i->next;
                 list->downlevel(LIST_INCLUDE);
