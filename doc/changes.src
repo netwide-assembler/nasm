@@ -7,9 +7,17 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
-\S{cl-2.09.05} Version 2.09.06
+
+\S{cl-2.09.07} Version 2.09.07
+
+\b Fix attempts to close same file several times
+   when \c{-a} option is used.
+
+
+\S{cl-2.09.06} Version 2.09.06
 
 \b Fix missed section attribute initialization in \c{bin} output target.
+
 
 \S{cl-2.09.05} Version 2.09.05
 
