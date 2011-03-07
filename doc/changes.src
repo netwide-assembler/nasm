@@ -13,6 +13,7 @@ since 2007.
 \b Fix attempts to close same file several times
    when \c{-a} option is used.
 
+\b Fixes for VEXTRACTF128, VMASKMOVPS encoding.
 
 \S{cl-2.09.06} Version 2.09.06
 
