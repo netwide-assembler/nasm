@@ -2069,7 +2069,10 @@ static char *no_pp_getline(void)
 static void no_pp_cleanup(int pass)
 {
     (void)pass;                     /* placate GCC */
-    fclose(no_pp_fp);
+    if (no_pp_fp) {
+        fclose(no_pp_fp);
+        no_pp_fp = NULL;
+    }
 }
 
 static uint32_t get_cpu(char *value)

@@ -19,7 +19,15 @@ since 2007.
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 
-\S{cl-2.09.05} Version 2.09.06
+\S{cl-2.09.07} Version 2.09.07
+
+\b Fix attempts to close same file several times
+   when \c{-a} option is used.
+
+\b Fixes for VEXTRACTF128, VMASKMOVPS encoding.
+
+
+\S{cl-2.09.06} Version 2.09.06
 
 \b Fix missed section attribute initialization in \c{bin} output target.
 
