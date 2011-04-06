@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -330,11 +330,7 @@ static struct ofmt *drivers[] = {
     NULL
 };
 
-static struct ofmt_alias {
-    const char *shortname;
-    const char *fullname;
-    struct ofmt *ofmt;
-} ofmt_aliases[] = {
+static struct ofmt_alias ofmt_aliases[] = {
 #ifdef OF_ELF32
     {
         "elf",
@@ -361,7 +357,7 @@ static struct ofmt_alias {
 
 #endif /* BUILD_DRIVERS_ARRAY */
 
-struct ofmt *ofmt_find(char *);
+struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias);
 struct dfmt *dfmt_find(struct ofmt *, char *);
 void ofmt_list(struct ofmt *, FILE *);
 void dfmt_list(struct ofmt *ofmt, FILE * fp);

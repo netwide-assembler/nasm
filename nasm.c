@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -98,6 +98,7 @@ static char errname[FILENAME_MAX];
 static int globallineno;        /* for forward-reference tracking */
 /* static int pass = 0; */
 struct ofmt *ofmt = &OF_DEFAULT;
+struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
 
 static FILE *error_file;        /* Where to write error messages */
@@ -268,8 +269,13 @@ static void define_macros_late(void)
 {
     char temp[128];
 
+    /*
+     * In case if output format is defined by alias
+     * we have to put shortname of the alias itself here
+     * otherwise ABI backward compatibility gets broken.
+     */
     snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s",
-	     ofmt->shortname);
+             ofmt_alias ? ofmt_alias->shortname : ofmt->shortname);
     pp_pre_define(temp);
 }
 
@@ -652,7 +658,7 @@ static bool process_arg(char *p, char *q)
 	    break;
 
 	case 'f':		/* output format */
-	    ofmt = ofmt_find(param);
+        ofmt = ofmt_find(param, &ofmt_alias);
 	    if (!ofmt) {
 		nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
 			     "unrecognised output format `%s' - "

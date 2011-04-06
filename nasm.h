@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -752,6 +752,15 @@ struct ofmt {
      * the output file pointer.
      */
     void (*cleanup) (int debuginfo);
+};
+
+/*
+ * Output format driver alias
+ */
+struct ofmt_alias {
+    const char  *shortname;
+    const char  *fullname;
+    struct ofmt *ofmt;
 };
 
 extern struct ofmt *ofmt;

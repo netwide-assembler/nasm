@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -47,10 +47,12 @@
 #define BUILD_DRIVERS_ARRAY
 #include "output/outform.h"
 
-struct ofmt *ofmt_find(char *name)
+struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias)
 {
     struct ofmt **ofp, *of;
     unsigned int i;
+
+    *ofmt_alias = NULL;
 
     /* primary targets first */
     for (ofp = drivers; (of = *ofp); ofp++) {
@@ -61,8 +63,10 @@ struct ofmt *ofmt_find(char *name)
     /* lets walk thru aliases then */
     for (i = 0; i < ARRAY_SIZE(ofmt_aliases); i++) {
         if (ofmt_aliases[i].shortname &&
-            !nasm_stricmp(name, ofmt_aliases[i].shortname))
+            !nasm_stricmp(name, ofmt_aliases[i].shortname)) {
+            *ofmt_alias = &ofmt_aliases[i];
             return ofmt_aliases[i].ofmt;
+        }
     }
 
     return NULL;
