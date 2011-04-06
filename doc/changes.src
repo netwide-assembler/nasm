@@ -8,12 +8,22 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.09.08} Version 2.09.08
+
+\b Fix \c{__OUTPUT_FORMAT__} assignment when output driver alias
+   is used. For example when \c{-f elf} is used \c{__OUTPUT_FORMAT__}
+   must be set to \c{elf}, if \c{-f elf32} is used \c{__OUTPUT_FORMAT__}
+   must be assigned accordingly, i.e. to \c{elf32}. The rule applies to
+   all output driver aliases. See \k{ofmtm}.
+
+
 \S{cl-2.09.07} Version 2.09.07
 
 \b Fix attempts to close same file several times
    when \c{-a} option is used.
 
 \b Fixes for VEXTRACTF128, VMASKMOVPS encoding.
+
 
 \S{cl-2.09.06} Version 2.09.06
 
