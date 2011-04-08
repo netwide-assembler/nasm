@@ -205,6 +205,11 @@ int nasm_memicmp(const char *, const char *, size_t);
 char *nasm_strsep(char **stringp, const char *delim);
 #endif
 
+/*
+ * Replace all instances of `str` with `sub` in `lin`
+ */
+char *nasm_strrep(const char *str, const char *sub, char *lin, bool casesense);
+
 
 /*
  * Convert a string into a number, using NASM number rules. Sets
