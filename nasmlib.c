@@ -295,7 +295,7 @@ char *nasm_strrep(const char *str, const char *sub, char *lin, bool casesense)
     char *outline = lin;
     char *temp1 = NULL;
     char *temp2 = NULL;
-    char *l, *lp, *lt, *ls;
+    char *l, *ll, *lp, *lt, *ls;
     int count = 0;
     int str_len, sub_len, lin_len;
     int i, c;
@@ -321,7 +321,7 @@ char *nasm_strrep(const char *str, const char *sub, char *lin, bool casesense)
             ls = (char *)str;
         }
 
-        lt = l;
+        ll = l;
 
         do {
             l = strstr(l, ls);
@@ -336,23 +336,25 @@ char *nasm_strrep(const char *str, const char *sub, char *lin, bool casesense)
             i += (count * sub_len);
             outline = nasm_zalloc(i);
 
-            l = lt;
+            l = ll;
+            lt = lin;
 
-            for (i = 0; i < count; i ++) {
+            for (i = 0; i < count; i++) {
                 lp = l;
                 l = strstr(l, ls);
-                c = (lp - l);
+                c = (l - lp);
                 if (c > 0) {
                     strncat(outline, lt, c);
+                    lt += c;
                 }
                 strncat(outline, sub, sub_len);
                 l += str_len;
                 lt += str_len;
             }
 
-            c = (l - lin);
+            c = (l - ll);
             if (c < lin_len) {
-                strcat(outline, lt);
+                strncat(outline, lt, (lin_len-c));
             }
 
             if (temp2 != NULL) {
