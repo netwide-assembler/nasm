@@ -1,6 +1,6 @@
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2011 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -31,72 +31,5 @@
 ##
 ## --------------------------------------------------------------------------
 
-#
-# A * at the end indicates a condition; the list of conditions are
-# on lines starting with *; the negatives are auto-generated
-#
-*
-*ctx
-*def
-*empty
-*env
-*id
-*idn
-*idni
-*macro
-*num
-*str
-*token
-%arg
-%assign
-%clear
-%comment
-%define
-%defstr
-%deftok
-%depend
-%elif*
-%else
-%endcomment
-%endif
-%endm
-%endmacro
-%endrep
-%endwhile
-%error
-%exitmacro
-%exitrep
-%exitwhile
-%fatal
-%final
-%iassign
-%idefine
-%idefstr
-%ideftok
-%if*
-%imacro
-%irmacro
-%include
-%ixdefine
-%line
-%local
-%macro
-%pathsearch
-%pop
-%pragma
-%push
-%rep
-%repl
-%rmacro
-%rotate
-%stacksize
-%strcat
-%strlen
-%substr
-%undef
-%unimacro
-%unmacro
-%use
-%warning
-%while*
-%xdefine
+# pragmas.dat    table of pragmas for the Netwide Assembler
+replace

@@ -39,14 +39,18 @@
 #define NASM_PREPROC_H
 
 #include "pptok.h"
+#include "prtok.h"
 
 extern const char * const pp_directives[];
 extern const uint8_t pp_directives_len[];
+extern const char * const pr_directives[];
+extern const uint8_t pr_directives_len[];
 
 /* Pointer to a macro chain */
 typedef const unsigned char macros_t;
 
 enum preproc_token pp_token_hash(const char *token);
+enum pragma_token pr_token_hash(const char *token);
 void pp_include_path(char *);
 void pp_pre_include(char *);
 void pp_pre_define(char *);

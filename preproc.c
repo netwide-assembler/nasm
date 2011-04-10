@@ -2277,6 +2277,36 @@ static int parse_size(const char *str) {
 }
 
 /**
+ * find and process pragma directive in passed line
+ * Find out if a line contains a pragma directive, and deal
+ * with it if so.
+ *
+ * @param tline a pointer to the current tokeninzed line linked list
+ * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
+ *
+ */
+static int do_pragma(Token * tline)
+{
+    enum pragma_token i;
+
+    i = pr_token_hash(tline->text);
+
+    switch (i) {
+    case PR_INVALID:
+        error(ERR_NONFATAL, "unknown pragma directive `%s'",
+              tline->text);
+        return NO_DIRECTIVE_FOUND;      /* didn't get it */
+
+    default:
+        error(ERR_FATAL,
+              "pragma directive `%s' not yet implemented",
+              pr_directives[i]);
+        return DIRECTIVE_FOUND;
+
+    }
+}
+
+/**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
  * with it if so.
@@ -3899,6 +3929,18 @@ issue_error:
             l->first = copy_Token(tline);
             l->next = finals;
             finals = l;
+        }
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
+    case PP_PRAGMA:
+        if (defining != NULL) return NO_DIRECTIVE_FOUND;
+        tline = tline->next;
+        skip_white_(tline);
+        if (tline == NULL) {
+            error(ERR_NONFATAL, "`%%pragma' expects at least one parameter");
+        } else {
+            do_pragma(tline);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
