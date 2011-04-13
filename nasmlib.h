@@ -258,6 +258,19 @@ void standard_extension(char *inname, char *outname, char *extension);
 #define list_last(pos, head)                            \
     for (pos = head; pos && pos->next; pos = pos->next) \
         ;
+#define list_reverse(head, prev, next)                  \
+    do {                                                \
+        if (!head || !head->next)                       \
+            break;                                      \
+        prev = NULL;                                    \
+        while (head) {                                  \
+            next = head->next;                          \
+            head->next = prev;                          \
+            prev = head;                                \
+            head = next;                                \
+        }                                               \
+        head = prev;                                    \
+    } while (0)
 
 /*
  * Power of 2 align helpers
