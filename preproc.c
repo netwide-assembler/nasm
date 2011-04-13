@@ -539,17 +539,11 @@ static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
  */
 static Token *reverse_tokens(Token *t)
 {
-    Token *prev = NULL;
-    Token *next;
+    Token *prev, *next;
 
-    while (t) {
-        next = t->next;
-        t->next = prev;
-        prev = t;
-        t = next;
-    }
+    list_reverse(t, prev, next);
 
-    return prev;
+    return t;
 }
 
 /*
