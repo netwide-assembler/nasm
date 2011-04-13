@@ -291,8 +291,7 @@ char *nasm_strsep(char **stringp, const char *delim)
 #endif
 
 
-#define lib_isnumchar(c)   (nasm_isalnum(c) || (c) == '$' || (c) == '_')
-#define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
+#define lib_isnumchar(c)    (nasm_isalnum(c) || (c) == '$' || (c) == '_')
 
 static int radix_letter(char c)
 {

@@ -42,8 +42,6 @@
 #include "nasmlib.h"
 #include "quote.h"
 
-#define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
-
 char *nasm_quote(char *str, size_t len)
 {
     char c, c1, *p, *q, *nstr, *ep;

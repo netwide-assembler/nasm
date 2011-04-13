@@ -400,10 +400,6 @@ extern Preproc nasmpp;
 #define isnumstart(c)  ( nasm_isdigit(c) || (c)=='$' )
 #define isnumchar(c)   ( nasm_isalnum(c) || (c)=='_' )
 
-/* This returns the numeric value of a given 'digit'. */
-
-#define numvalue(c)  ((c)>='a' ? (c)-'a'+10 : (c)>='A' ? (c)-'A'+10 : (c)-'0')
-
 /*
  * Data-type flags that get passed to listing-file routines.
  */
