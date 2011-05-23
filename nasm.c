@@ -1248,10 +1248,22 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     }
                     break;
                 case D_SECTALIGN:        /* [SECTALIGN n] */
-                    {
-                        if (*value) {
-                            unsigned int align = atoi(value);
-                            if (!is_power2(align)) {
+                    if (*value) {
+                        stdscan_reset();
+                        stdscan_set(value);
+                        tokval.t_type = TOKEN_INVALID;
+                        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, nasm_error, NULL);
+                        if (e) {
+                            unsigned int align = (unsigned int)e->value;
+                            if ((uint64_t)e->value > 0x7fffffff) {
+                                /*
+                                 * FIXME: Please make some sane message here
+                                 * ofmt should have some 'check' method which
+                                 * would report segment alignment bounds.
+                                 */
+                                nasm_error(ERR_FATAL,
+                                           "incorrect segment alignment `%s'", value);
+                            } else if (!is_power2(align)) {
                                 nasm_error(ERR_NONFATAL,
                                            "segment alignment `%s' is not power of two",
                                             value);
