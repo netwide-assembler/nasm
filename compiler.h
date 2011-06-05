@@ -183,4 +183,43 @@ char *strsep(char **, const char *);
 # define no_return void
 #endif
 
+/*
+ * Detect DOS Host/Target
+ */
+#ifndef __DOS__
+# ifdef DOS
+#  define __DOS__
+# endif
+# ifdef MSDOS
+#  define __DOS__
+# endif
+# ifdef __MSDOS__
+#  define __DOS__
+# endif
+# ifdef _MSDOS
+#  define __DOS__
+# endif
+#endif
+
+/*
+ * Detect Windows Host/Target
+ */
+#ifndef __WINDOWS__
+# ifdef _WIN32
+#  define __WINDOWS__
+# endif
+# ifdef __WIN32__
+#  define __WINDOWS__
+# endif
+# ifdef _WIN64
+#  define __WINDOWS__
+# endif
+# ifdef _MSC_VER
+#  define __WINDOWS__
+# endif
+# ifdef __TOS_WIN__
+#  define __WINDOWS__
+# endif
+#endif
+
 #endif	/* NASM_COMPILER_H */

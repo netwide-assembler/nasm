@@ -386,6 +386,8 @@ int32_t src_get_linnum(void);
  */
 int src_get(int32_t *xline, char **xname);
 
+int src_get_path(char **xname);
+
 char *nasm_strcat(const char *one, const char *two);
 
 char *nasm_skip_spaces(const char *p);

@@ -50,8 +50,9 @@
 ; here, not all of them are: the user-level form of a format-specific
 ; directive should be defined in the module for that directive.
 
-; These three need to be defined, though the actual definitions will
+; These need to be defined, though the actual definitions will
 ; be constantly updated during preprocessing.
+%define __PATH__
 %define __FILE__
 %define __LINE__
 %define __BITS__

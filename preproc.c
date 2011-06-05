@@ -4403,13 +4403,29 @@ again:
                      * expansion back on the to-do stack.
                      */
                     if (!m->expansion) {
+                        if (!strcmp("__PATH__", m->name)) {
+                            char *path = NULL;
+                            src_get_path(&path);
+                            if (path != NULL) {
+                                tline->text = nasm_quote(path, strlen(path));
+                                nasm_free(path);
+                            } else {
+                                tline->text = nasm_quote("", 0);
+                            }
+                            tline->type = TOK_STRING;
+                            continue;
+                        }
                         if (!strcmp("__FILE__", m->name)) {
                             int32_t num = 0;
                             char *file = NULL;
                             src_get(&num, &file);
-                            tline->text = nasm_quote(file, strlen(file));
+                            if (file != NULL) {
+                                tline->text = nasm_quote(file, strlen(file));
+                                nasm_free(file);
+                            } else {
+                                tline->text = nasm_quote("", 0);
+                            }
                             tline->type = TOK_STRING;
-                            nasm_free(file);
                             continue;
                         }
                         if (!strcmp("__LINE__", m->name)) {

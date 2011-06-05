@@ -649,6 +649,27 @@ int src_get(int32_t *xline, char **xname)
     return 0;
 }
 
+int src_get_path(char **xname)
+{
+    const char *path = NULL;
+
+    if (!file_name) {
+        return -1;
+    }
+
+    path = strrchr(file_name, '/');
+#if defined(__DOS__) || defined(__WINDOWS__)
+    if (!path)
+        path = strrchr(file_name, '\\');
+#endif
+
+    if (path != NULL) {
+        *xname = nasm_strndup(file_name, (path - file_name + 1));
+    }
+
+    return 0;
+}
+
 char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;
