@@ -80,8 +80,7 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
 #-- End File Lists --#
 
-all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man
-	cd rdoff && $(MAKE) all
+all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man rdf
 
 nasm$(X): $(NASM) $(XOBJS)
 	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(XOBJS) $(LIBS)
@@ -207,8 +206,8 @@ spotless: distclean cleaner
 strip:
 	$(STRIP) --strip-unneeded nasm$(X) ndisasm$(X)
 
-rdf:
-	cd rdoff && $(MAKE)
+rdf: nasmlib.$(O)
+	cd rdoff && $(MAKE) all
 
 rdf_install install_rdf:
 	cd rdoff && $(MAKE) install

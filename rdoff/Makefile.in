@@ -29,8 +29,10 @@ INSTALL_DATA	= @INSTALL_DATA@
 LN_S 		= @LN_S@
 MKDIR		= mkdir
 
-LDRDFLIBS 	= rdoff.o nasmlib.o symtab.o collectn.o rdlib.o segtab.o hash.o
-RDXLIBS 	= rdoff.o rdfload.o symtab.o collectn.o hash.o
+LDRDFLIBS 	= rdoff.$(O) symtab.$(O) collectn.$(O) \
+		  rdlib.$(O) segtab.$(O) hash.$(O)
+RDXLIBS 	= rdoff.$(O) rdfload.$(O) symtab.$(O) collectn.$(O) hash.$(O)
+NASMLIB		= ../nasmlib.$(O)
 
 # Binary suffixes
 O               = @OBJEXT@
@@ -49,13 +51,13 @@ all: $(PROGRAMS)
 rdfdump$(X): rdfdump.$(O) rdoff.$(O)
 	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O) rdoff.$(O)
 ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS)
-	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS)
-rdx$(X): rdx.$(O) $(RDXLIBS)
-	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(RDXLIBS)
+	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS) $(NASMLIB)
+rdx$(X): rdx.$(O) $(RDXLIBS) $(NASMLIB)
+	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(RDXLIBS) $(NASMLIB)
 rdflib$(X): rdflib.$(O)
 	$(CC) $(LDFLAGS) -o rdflib$(X) rdflib.$(O)
-rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
-	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) nasmlib.$(O)
+rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
+	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
 rdf2com$(X):
 	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
 rdf2ith$(X):
@@ -77,10 +79,6 @@ rdfload.$(O): rdfload.c rdfload.h rdoff.h collectn.h symtab.h
 rdlib.$(O): rdlib.c rdlib.h
 rdflib.$(O): rdflib.c
 segtab.$(O): segtab.c
-
-nasmlib.$(O): $(top_srcdir)/nasmlib.c
-	cd .. && $(MAKE) nasmlib.$(O)
-	cp ../nasmlib.$(O) .
 
 clean:
 	rm -f *.$(O) $(PROGRAMS)
