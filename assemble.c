@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -152,6 +152,8 @@
  *                 370 is used for Jcc, 371 is used for JMP.
  * \373          - assemble 0x03 if bits==16, 0x05 if bits==32;
  *                 used for conditional jump over longer jump
+ * \374          - this instruction takes an XMM VSIB memory EA
+ * \375          - this instruction takes an YMM VSIB memory EA
  */
 
 #include "compiler.h"
@@ -184,10 +186,11 @@ enum match_result {
 };
 
 typedef struct {
-    int sib_present;                 /* is a SIB byte necessary? */
-    int bytes;                       /* # of bytes of offset needed */
-    int size;                        /* lazy - this is sib+bytes+1 */
-    uint8_t modrm, sib, rex, rip;    /* the bytes themselves */
+    enum ea_type type;            /* what kind of EA is this? */
+    int sib_present;              /* is a SIB byte necessary? */
+    int bytes;                    /* # of bytes of offset needed */
+    int size;                     /* lazy - this is sib+bytes+1 */
+    uint8_t modrm, sib, rex, rip; /* the bytes themselves */
 } ea;
 
 static uint32_t cpu;            /* cpu level received from nasm.c */
@@ -207,8 +210,9 @@ static opflags_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, opflags_t, int);
 static int op_rexflags(const operand *, int);
-static ea *process_ea(operand *, ea *, int, int, int, opflags_t);
 static void add_asp(insn *, int);
+
+static enum ea_type process_ea(operand *, ea *, int, int, int, opflags_t);
 
 static int has_prefix(insn * ins, enum prefix_pos pos, enum prefixes prefix)
 {
@@ -796,8 +800,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     int op1, op2;
     struct operand *opx;
     uint8_t opex = 0;
+    enum ea_type eat;
 
     ins->rex = 0;               /* Ensure REX is reset */
+    eat = EA_SCALAR;            /* Expect a scalar EA */
 
     if (ins->prefixes[PPS_OSIZE] == P_O64)
         ins->rex |= REX_W;
@@ -1087,6 +1093,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
             break;
 
+        case 0374:
+            eat = EA_XMMVSIB;
+            break;
+
+        case 0375:
+            eat = EA_YMMVSIB;
+            break;
+
         case4(0100):
         case4(0110):
         case4(0120):
@@ -1115,8 +1129,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     rflags = 0;
                     rfield = c & 7;
                 }
-                if (!process_ea(opy, &ea_data, bits,
-                                ins->addr_size, rfield, rflags)) {
+                if (process_ea(opy, &ea_data, bits,ins->addr_size,
+                               rfield, rflags) != eat) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
                 } else {
@@ -1216,7 +1230,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
                     int64_t insn_end)
 {
-    static char condval[] = {   /* conditional opcodes */
+    static const char condval[] = {   /* conditional opcodes */
         0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
         0x3, 0x7, 0x3, 0x5, 0xE, 0xC, 0xD, 0xF, 0x1, 0xB, 0x9, 0x5,
         0x0, 0xA, 0xA, 0xB, 0x8, 0x4
@@ -1229,6 +1243,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
     struct operand *opx;
     const uint8_t *codes = temp->code;
     uint8_t opex = 0;
+    enum ea_type eat = EA_SCALAR;
 
     while (*codes) {
         c = *codes++;
@@ -1793,6 +1808,14 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset += 1;
             break;
 
+        case 0374:
+            eat = EA_XMMVSIB;
+            break;
+
+        case 0375:
+            eat = EA_YMMVSIB;
+            break;
+
         case4(0100):
         case4(0110):
         case4(0120):
@@ -1824,8 +1847,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     rfield = c & 7;
                 }
 
-                if (!process_ea(opy, &ea_data, bits, ins->addr_size,
-                                rfield, rflags)) {
+                if (process_ea(opy, &ea_data, bits, ins->addr_size,
+                               rfield, rflags) != eat) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                 }
 
@@ -2213,11 +2236,12 @@ static enum match_result matches(const struct itemplate *itemp,
     return MOK_GOOD;
 }
 
-static ea *process_ea(operand * input, ea * output, int bits,
-                      int addrbits, int rfield, opflags_t rflags)
+static enum ea_type process_ea(operand * input, ea * output, int bits,
+                               int addrbits, int rfield, opflags_t rflags)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
 
+    output->type = EA_SCALAR;
     output->rip = false;
 
     /* REX flags for the rfield operand */
@@ -2228,12 +2252,12 @@ static ea *process_ea(operand * input, ea * output, int bits,
         opflags_t f;
 
         if (!is_register(input->basereg))
-            return NULL;
+            goto err;
         f = regflag(input);
         i = nasm_regvals[input->basereg];
 
         if (REG_EA & ~f)
-            return NULL;        /* Invalid EA register */
+            goto err;
 
         output->rex |= op_rexflags(input, REX_B | REX_P | REX_W | REX_H);
 
@@ -2300,26 +2324,117 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 bx = 0;
             }
 
-            /* check for a 32/64-bit memory reference... */
-            if ((ix|bx) & (BITS32|BITS64)) {
+            /* if either one are a vector register... */
+            if ((ix|bx) & (XMMREG|YMMREG) & ~REG_EA) {
+                int32_t sok = BITS32 | BITS64;
+                int32_t o = input->offset;
+                int mod, scale, index, base;
+
+                printf("bt = %x, bx = %x, it = %x, ix = %x, s = %d\n",
+                       bt, bx, it, ix, s);
+
+                /*
+                 * For a vector SIB, one has to be a vector and the other,
+                 * if present, a GPR.  The vector must be the index operand.
+                 */
+                if (it == -1 || (bx & (XMMREG|YMMREG) & ~REG_EA)) {
+                    if (s == 0)
+                        s = 1;
+                    else if (s != 1)
+                        goto err;
+
+                    t = bt, bt = it, it = t;
+                    x = bx, bx = ix, ix = x;
+                }
+
+                if (bt != -1) {
+                    if (REG_GPR & ~bx)
+                        goto err;
+                    if (!(REG64 & ~bx) || !(REG32 & ~bx))
+                        sok &= bx;
+                    else
+                        goto err;
+                }
+
+                /*
+                 * While we're here, ensure the user didn't specify
+                 * WORD or QWORD
+                 */
+                if (input->disp_size == 16 || input->disp_size == 64)
+                    goto err;
+
+                if (addrbits == 16 ||
+                    (addrbits == 32 && !(sok & BITS32)) ||
+                    (addrbits == 64 && !(sok & BITS64)))
+                    goto err;
+
+                output->type = (ix & YMMREG & ~REG_EA)
+                    ? EA_YMMVSIB : EA_XMMVSIB;
+
+                output->rex |= rexflags(it, ix, REX_X);
+                output->rex |= rexflags(bt, bx, REX_B);
+
+                index = it & 7; /* it is known to be != -1 */
+
+                switch (s) {
+                case 1:
+                    scale = 0;
+                    break;
+                case 2:
+                    scale = 1;
+                    break;
+                case 4:
+                    scale = 2;
+                    break;
+                case 8:
+                    scale = 3;
+                    break;
+                default:   /* then what the smeg is it? */
+                    goto err;    /* panic */
+                }
+                
+                if (bt == -1) {
+                    base = 5;
+                    mod = 0;
+                } else {
+                    base = (bt & 7);
+                    if (base != REG_NUM_EBP && o == 0 &&
+                        seg == NO_SEG && !forw_ref &&
+                        !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
+                        mod = 0;
+                    else if (input->eaflags & EAF_BYTEOFFS ||
+                             (o >= -128 && o <= 127 &&
+                              seg == NO_SEG && !forw_ref &&
+                              !(input->eaflags & EAF_WORDOFFS)))
+                        mod = 1;
+                    else
+                        mod = 2;
+                }
+
+                output->sib_present = true;
+                output->bytes = (bt == -1 || mod == 2 ? 4 : mod);
+                output->modrm = (mod << 6) | ((rfield & 7) << 3) | 4;
+                output->sib = (scale << 6) | (index << 3) | base;
+            } else if ((ix|bx) & (BITS32|BITS64)) {
                 /*
                  * it must be a 32/64-bit memory reference. Firstly we have
                  * to check that all registers involved are type E/Rxx.
                  */
-                int32_t sok = BITS32 | BITS64, o = input->offset;
+                int32_t sok = BITS32 | BITS64;
+                int32_t o = input->offset;
 
                 if (it != -1) {
                     if (!(REG64 & ~ix) || !(REG32 & ~ix))
                         sok &= ix;
                     else
-                        return NULL;
+                        goto err;
                 }
 
                 if (bt != -1) {
                     if (REG_GPR & ~bx)
-                        return NULL; /* Invalid register */
+                        goto err; /* Invalid register */
                     if (~sok & bx & SIZE_MASK)
-                        return NULL; /* Invalid size */
+                        goto err; /* Invalid size */
                     sok &= bx;
                 }
 
@@ -2328,12 +2443,12 @@ static ea *process_ea(operand * input, ea * output, int bits,
                  * WORD or QWORD
                  */
                 if (input->disp_size == 16 || input->disp_size == 64)
-                    return NULL;
+                    goto err;
 
                 if (addrbits == 16 ||
                     (addrbits == 32 && !(sok & BITS32)) ||
                     (addrbits == 64 && !(sok & BITS64)))
-                    return NULL;
+                    goto err;
 
                 /* now reorganize base/index */
                 if (s == 1 && bt != it && bt != -1 && it != -1 &&
@@ -2363,7 +2478,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 }
                 if (it == REG_NUM_ESP ||
                     (s != 1 && s != 2 && s != 4 && s != 8 && it != -1))
-                    return NULL;        /* wrong, for various reasons */
+                    goto err;        /* wrong, for various reasons */
 
                 output->rex |= rexflags(it, ix, REX_X);
                 output->rex |= rexflags(bt, bx, REX_B);
@@ -2416,7 +2531,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                         scale = 3;
                         break;
                     default:   /* then what the smeg is it? */
-                        return NULL;    /* panic */
+                        goto err;    /* panic */
                     }
 
                     if (bt == -1) {
@@ -2448,19 +2563,19 @@ static ea *process_ea(operand * input, ea * output, int bits,
 
                 /* check for 64-bit long mode */
                 if (addrbits == 64)
-                    return NULL;
+                    goto err;
 
                 /* check all registers are BX, BP, SI or DI */
                 if ((b != -1 && b != R_BP && b != R_BX && b != R_SI && b != R_DI) ||
                     (i != -1 && i != R_BP && i != R_BX && i != R_SI && i != R_DI))
-                    return NULL;
+                    goto err;
 
                 /* ensure the user didn't specify DWORD/QWORD */
                 if (input->disp_size == 32 || input->disp_size == 64)
-                    return NULL;
+                    goto err;
 
                 if (s != 1 && i != -1)
-                    return NULL;        /* no can do, in 16-bit EA */
+                    goto err;        /* no can do, in 16-bit EA */
                 if (b == -1 && i != -1) {
                     int tmp = b;
                     b = i;
@@ -2473,12 +2588,12 @@ static ea *process_ea(operand * input, ea * output, int bits,
                 }
                 /* have BX/BP as base, SI/DI index */
                 if (b == i)
-                    return NULL;        /* shouldn't ever happen, in theory */
+                    goto err;        /* shouldn't ever happen, in theory */
                 if (i != -1 && b != -1 &&
                     (i == R_BP || i == R_BX || b == R_SI || b == R_DI))
-                    return NULL;        /* invalid combinations */
+                    goto err;        /* invalid combinations */
                 if (b == -1)            /* pure offset: handled above */
-                    return NULL;        /* so if it gets to here, panic! */
+                    goto err;        /* so if it gets to here, panic! */
 
                 rm = -1;
                 if (i != -1)
@@ -2511,7 +2626,7 @@ static ea *process_ea(operand * input, ea * output, int bits,
                         break;
                     }
                 if (rm == -1)           /* can't happen, in theory */
-                    return NULL;        /* so panic if it does */
+                    goto err;        /* so panic if it does */
 
                 if (o == 0 && seg == NO_SEG && !forw_ref && rm != 6 &&
                     !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
@@ -2531,7 +2646,10 @@ static ea *process_ea(operand * input, ea * output, int bits,
     }
 
     output->size = 1 + output->sib_present + output->bytes;
-    return output;
+    return output->type;
+
+err:
+    return output->type = EA_INVALID;
 }
 
 static void add_asp(insn *ins, int addrbits)

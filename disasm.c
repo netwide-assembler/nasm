@@ -218,7 +218,8 @@ static uint8_t *do_drex(uint8_t *data, insn *ins)
  * Process an effective address (ModRM) specification.
  */
 static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
-		      int segsize, operand * op, insn *ins)
+		      int segsize, enum ea_type type,
+                      operand *op, insn *ins)
 {
     int mod, rm, scale, index, base;
     int rex;
@@ -227,7 +228,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
     mod = (modrm >> 6) & 03;
     rm = modrm & 07;
 
-    if (mod != 3 && rm == 4 && asize != 16)
+    if (mod != 3 && asize != 16 && rm == 4)
 	sib = *data++;
 
     if (ins->rex & REX_D) {
@@ -253,6 +254,10 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
          * Exception: mod=0,rm=6 does not specify [BP] as one might
          * expect, but instead specifies [disp16].
          */
+
+        if (type != EA_SCALAR)
+            return NULL;
+
         op->indexreg = op->basereg = -1;
         op->scale = 1;          /* always, in 16 bits */
         switch (rm) {
@@ -341,6 +346,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 	    mod = 2;            /* fake disp32 */
         }
 
+
         if (rm == 4) {          /* process SIB */
             scale = (sib >> 6) & 03;
             index = (sib >> 3) & 07;
@@ -350,7 +356,11 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
 	    if (index == 4 && !(rex & REX_X))
 		op->indexreg = -1; /* ESP/RSP cannot be an index */
-	    else if (a64)
+	    else if (type == EA_XMMVSIB)
+		op->indexreg = nasm_rd_xmmreg[index | ((rex & REX_X) ? 8 : 0)];
+	    else if (type == EA_YMMVSIB)
+		op->indexreg = nasm_rd_ymmreg[index | ((rex & REX_X) ? 8 : 0)];
+            else if (a64)
 		op->indexreg = nasm_rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
 	    else
 		op->indexreg = nasm_rd_reg32[index | ((rex & REX_X) ? 8 : 0)];
@@ -365,6 +375,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
 	    if (segsize == 16)
 		op->disp_size = 32;
+        } else if (type != EA_SCALAR) {
+            /* Can't have VSIB without SIB */
+            return NULL;
         }
 
         switch (mod) {
@@ -410,6 +423,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
     int regmask = (segsize == 64) ? 15 : 7;
+    enum ea_type eat = EA_SCALAR;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
 	ins->oprs[i].segment = ins->oprs[i].disp_size =
@@ -573,7 +587,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	{
 	    int modrm = *data++;
             opx->segment |= SEG_RMREG;
-            data = do_ea(data, modrm, asize, segsize, opy, ins);
+            data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
 	    if (!data)
 		return false;
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
@@ -668,7 +682,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
                 return false;   /* spare field doesn't match up */
-            data = do_ea(data, modrm, asize, segsize, opy, ins);
+            data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
 	    if (!data)
 		return false;
 	    break;
@@ -914,6 +928,14 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
 	    a_used = true;
 	    break;
+
+        case 0374:
+            eat = EA_XMMVSIB;
+            break;
+
+        case 0375:
+            eat = EA_YMMVSIB;
+            break;
 
 	default:
 	    return false;	/* Unknown code */

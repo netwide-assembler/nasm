@@ -714,6 +714,11 @@ sub byte_code_compile($$) {
             push(@codes, 0335);
         } elsif ($op eq 'nohi') { # Use spl/bpl/sil/dil even without REX
             push(@codes, 0325);
+	} elsif ($op eq 'vsibx' || $op eq 'vm32x' || $op eq 'vm64x') {
+	    # This instruction takes XMM VSIB
+	    push(@codes, 0374);
+	} elsif ($op eq 'vsiby' || $op eq 'vm32y' || $op eq 'vm64y') {
+	    push(@codes, 0375);
         } elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
             # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
             if ($op eq '66') {

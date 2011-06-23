@@ -511,7 +511,6 @@ typedef struct operand {	/* operand to an instruction */
 #define OPFLAG_EXTERN		2       /* operand is an external reference */
 #define OPFLAG_UNKNOWN		4	/* operand is an unknown reference */
 					/* (always a forward reference also) */
-
 typedef struct extop {          /* extended operand */
     struct extop *next;         /* linked list */
     char *stringval;	        /* if it's a string, then here it is */
@@ -521,6 +520,13 @@ typedef struct extop {          /* extended operand */
     int32_t wrt;                /* ... and here */
     enum extop_type type;	/* defined above */
 } extop;
+
+enum ea_type {
+    EA_INVALID,                 /* Not a valid EA at all */
+    EA_SCALAR,                  /* Scalar EA */
+    EA_XMMVSIB,                 /* XMM vector EA */
+    EA_YMMVSIB,                 /* XMM vector EA */
+};
 
 /* Prefix positions: each type of prefix goes in a specific slot.
    This affects the final ordering of the assembled output, which
