@@ -50,7 +50,7 @@ all: $(PROGRAMS)
 
 rdfdump$(X): rdfdump.$(O) rdoff.$(O)
 	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O) rdoff.$(O)
-ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS)
+ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS) $(NASMLIB)
 	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS) $(NASMLIB)
 rdx$(X): rdx.$(O) $(RDXLIBS) $(NASMLIB)
 	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(RDXLIBS) $(NASMLIB)
