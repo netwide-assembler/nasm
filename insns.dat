@@ -3118,10 +3118,10 @@ VPSHLW		xmmreg,xmmrm128*,xmmreg		[rmv:	xop.m9.w0.nds.l0.p0 95 /r]		AMD,SSE5
 VPSHLW		xmmreg,xmmreg*,xmmrm128		[rvm:	xop.m9.w1.nds.l0.p0 95 /r]		AMD,SSE5
 
 ;# AVX2
-VGATHERDPD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 92 /r]	FUTURE,AVX
-VGATHERQPD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 93 /r]	FUTURE,AVX
-VGATHERDPD	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX
-VGATHERQPD	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX
+VGATHERDPD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 92 /r]	FUTURE,AVX2
+VGATHERQPD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 93 /r]	FUTURE,AVX2
+VGATHERDPD	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
+VGATHERQPD	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
