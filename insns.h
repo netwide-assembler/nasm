@@ -108,6 +108,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SSE42  0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_SSE5   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_AVX    0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX2   0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_FMA    0x00800000UL  /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK  0xFF000000UL  /* the mask for processor types */
 #define IF_PLEVEL 0x0F000000UL  /* the mask for processor instr. level */
