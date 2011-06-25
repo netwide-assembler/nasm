@@ -4827,7 +4827,7 @@ static bool expand_mmacro(Token * tline)
 {
     Token *label = NULL;
     int dont_prepend = 0;
-    Token **params, *t, *mtok;
+    Token **params, *t;
     Line *l = NULL;
     ExpDef *ed;
     ExpInv *ei;
@@ -4839,7 +4839,6 @@ static bool expand_mmacro(Token * tline)
     /*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
     if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
         return false;
-    mtok = t;
     ed = is_mmacro(t, &params);
     if (ed != NULL) {
         mname = t->text;
