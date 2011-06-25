@@ -501,20 +501,58 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 
 #ifdef NASM_TRACE
 
-#define dump_token(t) raw_dump_token(t, __FILE__, __LINE__, __func__);
-static void raw_dump_token(Token *token, const char *file, int line, const char *func)
+#define stringify(x)  #x
+
+#define nasm_trace(msg, ...)    printf("(%s:%d): " msg "\n", __func__, __LINE__, __VA_ARGS__)
+#define nasm_dump_token(t)      nasm_raw_dump_token(t, __FILE__, __LINE__, __func__);
+
+/* FIXME: we really need some compound type here instead of inplace code */
+static const char *nasm_get_tok_type_str(enum pp_token_type type)
+{
+#define SWITCH_TOK_NAME(type)       \
+    case (type):                    \
+        return stringify(type)
+
+    switch (type) {
+    SWITCH_TOK_NAME(TOK_NONE);
+    SWITCH_TOK_NAME(TOK_WHITESPACE);
+    SWITCH_TOK_NAME(TOK_COMMENT);
+    SWITCH_TOK_NAME(TOK_ID);
+    SWITCH_TOK_NAME(TOK_PREPROC_ID);
+    SWITCH_TOK_NAME(TOK_STRING);
+    SWITCH_TOK_NAME(TOK_NUMBER);
+    SWITCH_TOK_NAME(TOK_FLOAT);
+    SWITCH_TOK_NAME(TOK_SMAC_END);
+    SWITCH_TOK_NAME(TOK_OTHER);
+    SWITCH_TOK_NAME(TOK_INTERNAL_STRING);
+    SWITCH_TOK_NAME(TOK_PREPROC_Q);
+    SWITCH_TOK_NAME(TOK_PREPROC_QQ);
+    SWITCH_TOK_NAME(TOK_PASTE);
+    SWITCH_TOK_NAME(TOK_INDIRECT);
+    SWITCH_TOK_NAME(TOK_SMAC_PARAM);
+    SWITCH_TOK_NAME(TOK_MAX);
+    }
+
+    return NULL;
+}
+
+static void nasm_raw_dump_token(Token *token, const char *file, int line, const char *func)
 {
     printf("---[%s (%s:%d): %p]---\n", func, file, line, (void *)token);
     if (token) {
         Token *t;
         list_for_each(t, token) {
             if (t->text)
-                printf("'%s' ", t->text);
+                printf("'%s'(%s) ", t->text,
+                       nasm_get_tok_type_str(t->type));
         }
-        printf("\n");
+        printf("\n\n");
     }
 }
 
+#else
+#define nasm_trace(msg, ...)
+#define nasm_dump_token(t)
 #endif
 
 /*
@@ -947,6 +985,8 @@ static Token *tokenize(char *line)
     Token *t, **tail = &list;
     bool verbose = true;
 
+    nasm_trace("Tokenize for '%s'", line);
+
     if ((defining != NULL) && (defining->ignoring == true)) {
         verbose = false;
     }
@@ -1190,6 +1230,9 @@ static Token *tokenize(char *line)
         }
         line = p;
     }
+
+    nasm_dump_token(list);
+
     return list;
 }
 

@@ -42,6 +42,11 @@ FIND		= find
 O               = @OBJEXT@
 X               = @EXEEXT@
 
+# Debug stuff
+ifeq ($(TRACE),1)
+	CFLAGS += -DNASM_TRACE
+endif
+
 .SUFFIXES: .c .i .s .$(O) .1 .man
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
