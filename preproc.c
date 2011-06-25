@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -946,7 +946,7 @@ static Token *tokenize(char *line)
     Token *list = NULL;
     Token *t, **tail = &list;
     bool verbose = true;
-	
+
     if ((defining != NULL) && (defining->ignoring == true)) {
         verbose = false;
     }
@@ -2767,7 +2767,7 @@ issue_error:
                 return NO_DIRECTIVE_FOUND;
             }
         }
-        if ((defining == NULL) ||	(defining->type != EXP_IF)) {
+        if ((defining == NULL) || (defining->type != EXP_IF)) {
             error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
         }
         switch (defining->state) {
