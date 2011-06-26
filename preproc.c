@@ -505,6 +505,7 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 
 #define nasm_trace(msg, ...)    printf("(%s:%d): " msg "\n", __func__, __LINE__, ##__VA_ARGS__)
 #define nasm_dump_token(t)      nasm_raw_dump_token(t, __FILE__, __LINE__, __func__);
+#define nasm_dump_stream(t)     nasm_raw_dump_stream(t, __FILE__, __LINE__, __func__);
 
 /* FIXME: we really need some compound type here instead of inplace code */
 static const char *nasm_get_tok_type_str(enum pp_token_type type)
@@ -550,9 +551,21 @@ static void nasm_raw_dump_token(Token *token, const char *file, int line, const 
     }
 }
 
+static void nasm_raw_dump_stream(Token *token, const char *file, int line, const char *func)
+{
+    printf("---[%s (%s:%d): %p]---\n", func, file, line, (void *)token);
+    if (token) {
+        Token *t;
+        list_for_each(t, token)
+            printf("%s", t->text ? t->text : " ");
+        printf("\n\n");
+    }
+}
+
 #else
 #define nasm_trace(msg, ...)
 #define nasm_dump_token(t)
+#define nasm_dump_stream(t)
 #endif
 
 /*
@@ -4197,6 +4210,8 @@ static Token *expand_mmac_params(Token * tline)
     tail = &thead;
     thead = NULL;
 
+    nasm_dump_stream(tline);
+
     while (tline) {
         if (tline->type == TOK_PREPROC_ID &&
             (((tline->text[1] == '+' || tline->text[1] == '-') && tline->text[2])   ||
@@ -4361,6 +4376,8 @@ static Token *expand_mmac_params(Token * tline)
         paste_tokens(&thead, pp_concat_match,
                      ARRAY_SIZE(pp_concat_match),
                      false);
+
+    nasm_dump_token(thead);
 
     return thead;
 }
