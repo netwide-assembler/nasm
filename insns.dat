@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2011 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -2434,6 +2434,7 @@ VMOVUPS		xmmrm128,xmmreg			[mr:	vex.128.0f 11 /r]			AVX,SANDYBRIDGE
 VMOVUPS		ymmreg,ymmrm256			[rm:	vex.256.0f 10 /r]			AVX,SANDYBRIDGE
 VMOVUPS		ymmrm256,ymmreg			[mr:	vex.256.0f 11 /r]			AVX,SANDYBRIDGE
 VMPSADBW	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 42 /r ib]		AVX,SANDYBRIDGE
+VMPSADBW	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 42 /r ib]		AVX2,SANDYBRIDGE
 VMULPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 59 /r]		AVX,SANDYBRIDGE
 VMULPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 59 /r]		AVX,SANDYBRIDGE
 VMULPS		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f 59 /r]			AVX,SANDYBRIDGE
@@ -2441,14 +2442,17 @@ VMULPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE
 VMULSD		xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f 59 /r]		AVX,SANDYBRIDGE
 VMULSS		xmmreg,xmmreg*,xmmrm32		[rvm:	vex.nds.lig.f3.0f 59 /r]		AVX,SANDYBRIDGE
 VORPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE
-VORPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 56 /r]		AVX,SANDYBRIDGE
+VORPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 56 /r]		AVX2,SANDYBRIDGE
 VORPS		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE
 VORPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE
 VPABSB		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1c /r]			AVX,SANDYBRIDGE
+VPABSB		ymmreg,ymmrm256			[rm:	vex.256.66.0f38 1c /r]			AVX2,SANDYBRIDGE
 VPABSW		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1d /r]			AVX,SANDYBRIDGE
 VPABSD		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1e /r]			AVX,SANDYBRIDGE
 VPACKSSWB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 63 /r]		AVX,SANDYBRIDGE
+VPACKSSWB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 63 /r]		AVX2,SANDYBRIDGE
 VPACKSSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE
+VPACKSSDW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6b /r]		AVX2,SANDYBRIDGE
 VPACKUSWB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE
 VPACKUSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE
 VPADDB		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE
