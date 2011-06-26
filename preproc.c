@@ -4089,6 +4089,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                          tt = tt->next;
                     }
 
+                    nasm_dump_token(tt);
+
                     /*
                      * Now tt points to the first token after
                      * the potential paste area...
