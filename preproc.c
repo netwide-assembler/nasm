@@ -337,22 +337,6 @@ enum {
 /* max reps */
 #define REP_LIMIT ((INT64_C(1) << 62))
 
-const struct tokseq_match pp_concat_match[] = {
-    {
-        PP_CONCAT_MASK(TOK_ID)          |
-        PP_CONCAT_MASK(TOK_PREPROC_ID)  |
-        PP_CONCAT_MASK(TOK_NUMBER)      |
-        PP_CONCAT_MASK(TOK_FLOAT)       |
-        PP_CONCAT_MASK(TOK_OTHER),
-
-        PP_CONCAT_MASK(TOK_ID)          |
-        PP_CONCAT_MASK(TOK_PREPROC_ID)  |
-        PP_CONCAT_MASK(TOK_NUMBER)      |
-        PP_CONCAT_MASK(TOK_FLOAT)       |
-        PP_CONCAT_MASK(TOK_OTHER)
-    }
-};
-
 /*
  * Condition codes. Note that we use c_ prefix not C_ because C_ is
  * used in nasm.h for the "real" condition codes. At _this_ level,
@@ -4374,10 +4358,23 @@ static Token *expand_mmac_params(Token * tline)
     }
     *tail = NULL;
 
-    if (changed)
-        paste_tokens(&thead, pp_concat_match,
-                     ARRAY_SIZE(pp_concat_match),
-                     false);
+    if (changed) {
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_FLOAT),          /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_NUMBER)      |
+                PP_CONCAT_MASK(TOK_FLOAT)       |
+                PP_CONCAT_MASK(TOK_OTHER)           /* tail */
+            },
+            {
+                PP_CONCAT_MASK(TOK_NUMBER),         /* head */
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        paste_tokens(&thead, t, ARRAY_SIZE(t), false);
+    }
 
     nasm_dump_token(thead);
 
@@ -4691,9 +4688,16 @@ again:
      * them (without white spaces in between).
      */
     if (expanded) {
-        if (paste_tokens(&thead, pp_concat_match,
-                         ARRAY_SIZE(pp_concat_match),
-                         true)) {
+        const struct tokseq_match t[] = {
+            {
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID),     /* head */
+                PP_CONCAT_MASK(TOK_ID)          |
+                PP_CONCAT_MASK(TOK_PREPROC_ID)  |
+                PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
+            }
+        };
+        if (paste_tokens(&thead, t, ARRAY_SIZE(t), true)) {
             /*
              * If we concatenated something, *and* we had previously expanded
              * an actual macro, scan the lines again for macros...
