@@ -503,7 +503,7 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 
 #define stringify(x)  #x
 
-#define nasm_trace(msg, ...)    printf("(%s:%d): " msg "\n", __func__, __LINE__, __VA_ARGS__)
+#define nasm_trace(msg, ...)    printf("(%s:%d): " msg "\n", __func__, __LINE__, ##__VA_ARGS__)
 #define nasm_dump_token(t)      nasm_raw_dump_token(t, __FILE__, __LINE__, __func__);
 
 /* FIXME: we really need some compound type here instead of inplace code */
