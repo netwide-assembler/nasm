@@ -460,8 +460,7 @@ static Blocks blocks = { NULL, NULL };
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
-static Context *get_ctx(const char *name, const char **namep,
-                        bool all_contexts);
+static Context *get_ctx(const char *name, const char **namep);
 static void make_tok_num(Token * tok, int64_t val);
 static void error(int severity, const char *fmt, ...);
 static void error_precond(int severity, const char *fmt, ...);
@@ -1392,7 +1391,7 @@ static char *detoken(Token * tlist, bool expand_locals)
             t->text[0] == '%' && t->text[1] == '$') {
             const char *q;
             char *p;
-            Context *ctx = get_ctx(t->text, &q, false);
+            Context *ctx = get_ctx(t->text, &q);
             if (ctx) {
                 char buffer[40];
                 snprintf(buffer, sizeof(buffer), "..@%"PRIu32".", ctx->number);
@@ -1632,19 +1631,13 @@ static int mmemcmp(const char *p, const char *q, size_t l, bool casesense)
  * NULL, having _already_ reported an error condition, if the
  * context stack isn't deep enough for the supplied number of $
  * signs.
- * If all_contexts == true, contexts that enclose current are
- * also scanned for such smacro, until it is found; if not -
- * only the context that directly results from the number of $'s
- * in variable's name.
  *
  * If "namep" is non-NULL, set it to the pointer to the macro name
  * tail, i.e. the part beyond %$...
  */
-static Context *get_ctx(const char *name, const char **namep,
-                        bool all_contexts)
+static Context *get_ctx(const char *name, const char **namep)
 {
     Context *ctx;
-    SMacro *m;
     int i;
 
     if (namep)
@@ -1666,6 +1659,7 @@ static Context *get_ctx(const char *name, const char **namep,
         i++;
         ctx = ctx->next;
     }
+
     if (!ctx) {
         error(ERR_NONFATAL, "`%s': context stack is only"
               " %d level%s deep", name, i, (i == 1 ? "" : "s"));
@@ -1675,21 +1669,7 @@ static Context *get_ctx(const char *name, const char **namep,
     if (namep)
         *namep = name;
 
-    if (!all_contexts)
-        return ctx;
-
-    do {
-        /* Search for this smacro in found context */
-        m = hash_findix(&ctx->localmac, name);
-        while (m) {
-            if (!mstrcmp(m->name, name, m->casesense))
-                return ctx;
-            m = m->next;
-        }
-        ctx = ctx->next;
-    }
-    while (ctx);
-    return NULL;
+    return ctx;
 }
 
 /*
@@ -1795,7 +1775,7 @@ smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
         smtbl = &ctx->localmac;
     } else if (name[0] == '%' && name[1] == '$') {
         if (cstk)
-            ctx = get_ctx(name, &name, false);
+            ctx = get_ctx(name, &name);
         if (!ctx)
             return false;       /* got to return _something_ */
         smtbl = &ctx->localmac;
@@ -3239,7 +3219,7 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         param_start = tline = tline->next;
         nparam = 0;
@@ -3333,7 +3313,7 @@ issue_error:
         }
 
         /* Find the context that symbol belongs to */
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         undef_smacro(ctx, mname);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3355,7 +3335,7 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
 
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3395,7 +3375,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3451,7 +3431,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3510,7 +3490,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3555,7 +3535,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3621,7 +3601,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -3721,7 +3701,7 @@ issue_error:
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
-        ctx = get_ctx(tline->text, &mname, false);
+        ctx = get_ctx(tline->text, &mname);
         last = tline;
         tline = expand_smacro(tline->next);
         last->next = NULL;
@@ -4430,7 +4410,7 @@ again:
             if (tline->type == TOK_ID) {
                 head = (SMacro *)hash_findix(&smacros, mname);
             } else if (tline->type == TOK_PREPROC_ID) {
-                ctx = get_ctx(mname, &mname, false);
+                ctx = get_ctx(mname, &mname);
                 head = ctx ? (SMacro *)hash_findix(&ctx->localmac, mname) : NULL;
             } else
                 head = NULL;
