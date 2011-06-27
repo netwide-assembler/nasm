@@ -703,10 +703,8 @@ static void free_expdef(ExpDef * ed)
  */
 static void free_expinv(ExpInv * ei)
 {
-    if (ei->name != NULL)
-        nasm_free(ei->name);
-    if (ei->label_text != NULL)
-        nasm_free(ei->label_text);
+    nasm_free(ei->name);
+    nasm_free(ei->label_text);
     nasm_free(ei);
 }
 
@@ -1268,8 +1266,7 @@ static void delete_Blocks(void)
      * free it.
      */
     while (b) {
-        if (b->chunk)
-            nasm_free(b->chunk);
+        nasm_free(b->chunk);
         a = b;
         b = b->next;
         if (a != &blocks)
@@ -3485,8 +3482,7 @@ issue_error:
         macro_start = nasm_zalloc(sizeof(*macro_start));
         macro_start->text = nasm_quote(p, strlen(p));
         macro_start->type = TOK_STRING;
-        if (xsl)
-            nasm_free(xsl);
+        nasm_free(xsl);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -5395,8 +5391,7 @@ static void pp_cleanup(int pass)
         delete_Blocks();
         while ((i = ipath)) {
             ipath = i->next;
-            if (i->path)
-                nasm_free(i->path);
+            nasm_free(i->path);
             nasm_free(i);
         }
     }
