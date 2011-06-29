@@ -2434,7 +2434,7 @@ VMOVUPS		xmmrm128,xmmreg			[mr:	vex.128.0f 11 /r]			AVX,SANDYBRIDGE
 VMOVUPS		ymmreg,ymmrm256			[rm:	vex.256.0f 10 /r]			AVX,SANDYBRIDGE
 VMOVUPS		ymmrm256,ymmreg			[mr:	vex.256.0f 11 /r]			AVX,SANDYBRIDGE
 VMPSADBW	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 42 /r ib]		AVX,SANDYBRIDGE
-VMPSADBW	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 42 /r ib]		AVX2,SANDYBRIDGE
+VMPSADBW	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a 42 /r ib]		FUTURE,AVX2
 VMULPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 59 /r]		AVX,SANDYBRIDGE
 VMULPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 59 /r]		AVX,SANDYBRIDGE
 VMULPS		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f 59 /r]			AVX,SANDYBRIDGE
@@ -2442,17 +2442,17 @@ VMULPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE
 VMULSD		xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f 59 /r]		AVX,SANDYBRIDGE
 VMULSS		xmmreg,xmmreg*,xmmrm32		[rvm:	vex.nds.lig.f3.0f 59 /r]		AVX,SANDYBRIDGE
 VORPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE
-VORPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 56 /r]		AVX2,SANDYBRIDGE
+VORPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 56 /r]		FUTURE,AVX2
 VORPS		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE
 VORPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE
 VPABSB		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1c /r]			AVX,SANDYBRIDGE
-VPABSB		ymmreg,ymmrm256			[rm:	vex.256.66.0f38 1c /r]			AVX2,SANDYBRIDGE
+VPABSB		ymmreg,ymmrm256			[rm:	vex.256.66.0f38 1c /r]			FUTURE,AVX2
 VPABSW		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1d /r]			AVX,SANDYBRIDGE
 VPABSD		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1e /r]			AVX,SANDYBRIDGE
 VPACKSSWB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 63 /r]		AVX,SANDYBRIDGE
-VPACKSSWB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 63 /r]		AVX2,SANDYBRIDGE
+VPACKSSWB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 63 /r]		FUTURE,AVX2
 VPACKSSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE
-VPACKSSDW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6b /r]		AVX2,SANDYBRIDGE
+VPACKSSDW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6b /r]		FUTURE,AVX2
 VPACKUSWB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE
 VPACKUSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE
 VPADDB		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE
@@ -2482,7 +2482,7 @@ VPCMPGTB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 64 /r]		AVX,SANDYBRIDG
 VPCMPGTW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 65 /r]		AVX,SANDYBRIDGE
 VPCMPGTD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 66 /r]		AVX,SANDYBRIDGE
 VPCMPGTQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 37 /r]		AVX,SANDYBRIDGE
-VPERMD		ymmreg,ymmreg,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		AVX2,SANDYBRIDGE
+VPERMD		ymmreg,ymmreg,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX2
 VPERMILPD	xmmreg,xmmreg,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 0d /r]		AVX,SANDYBRIDGE
 VPERMILPD	ymmreg,ymmreg,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 0d /r]		AVX,SANDYBRIDGE
 VPERMILPD	xmmreg,xmmrm128,imm8		[rmi:	vex.128.66.0f3a.w0 05 /r ib]		AVX,SANDYBRIDGE
@@ -2491,7 +2491,7 @@ VPERMILPS	xmmreg,xmmreg,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 0c /r]		AVX,SANDY
 VPERMILPS	ymmreg,ymmreg,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 0c /r]		AVX,SANDYBRIDGE
 VPERMILPS	xmmreg,xmmrm128,imm8		[rmi:	vex.128.66.0f3a.w0 04 /r ib]		AVX,SANDYBRIDGE
 VPERMILPS	ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w0 04 /r ib]		AVX,SANDYBRIDGE
-VPERM2F128	ymmreg,ymmreg,ymmrm256,imm8		[rvmi:	vex.nds.256.66.0f3a.w0 06 /r ib]	AVX,SANDYBRIDGE
+VPERM2F128	ymmreg,ymmreg,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 06 /r ib]	AVX,SANDYBRIDGE
 VPEXTRB		reg64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 14 /r ib]		AVX,SANDYBRIDGE,LONG
 VPEXTRB		reg32,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 14 /r ib]		AVX,SANDYBRIDGE
 VPEXTRB		mem8,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 14 /r ib]		AVX,SANDYBRIDGE
