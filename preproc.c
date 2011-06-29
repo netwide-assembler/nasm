@@ -4632,18 +4632,21 @@ again:
                     list_for_each(t, m->expansion) {
                         if (is_smacro_param(t)) {
                             Token *pcopy = tline, **ptail = &pcopy;
-                            Token *ttt, *pt;
+                            Token *ttt;
                             int i, idx;
 
                             idx = smacro_get_param_idx(t);
                             ttt = params[idx];
-                            i   = paramsize[idx];
-                            while (--i >= 0) {
-                                pt = *ptail = new_Token(tline, ttt->type,
-                                                        ttt->text, 0);
-                                ptail = &pt->next;
+
+                            /*
+                             * We need smacro paramters appended.
+                             */
+                            for (i = paramsize[idx]; i > 0; i--) {
+                                *ptail = new_Token(tline, ttt->type, ttt->text, 0);
+                                ptail = &(*ptail)->next;
                                 ttt = ttt->next;
                             }
+
                             tline = pcopy;
                         } else if (t->type == TOK_PREPROC_Q) {
                             tt = new_Token(tline, TOK_ID, mname, 0);
