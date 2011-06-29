@@ -482,6 +482,28 @@ static ExpInv *new_ExpInv(int exp_type, ExpDef *ed);
 #define tok_is_(x,v)    (tok_type_((x), TOK_OTHER) && !strcmp((x)->text,(v)))
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
+/*
+ * A few helpers for single macros
+ */
+
+/* We might be not smacro parameter at all */
+static bool is_smacro_param(Token *t)
+{
+    return t->type >= TOK_SMAC_PARAM;
+}
+
+/* smacro parameters are counted in a special way */
+static int smacro_get_param_idx(Token *t)
+{
+    return t->type - TOK_SMAC_PARAM;
+}
+
+/* encode smacro parameter index */
+static int smacro_set_param_idx(Token *t, unsigned int index)
+{
+    return t->type = TOK_SMAC_PARAM + index;
+}
+
 #ifdef NASM_TRACE
 
 #define stringify(x)  #x
@@ -3248,7 +3270,10 @@ issue_error:
                     free_tlist(origline);
                     return DIRECTIVE_FOUND;
                 }
-                tline->type = TOK_SMAC_PARAM + nparam++;
+
+                smacro_set_param_idx(tline, nparam);
+                nparam++;
+
                 tline = tline->next;
                 skip_white_(tline);
                 if (tok_is_(tline, ",")) {
@@ -3274,7 +3299,7 @@ issue_error:
         while (t) {
             if (t->type == TOK_ID) {
                 list_for_each(tt, param_start)
-                    if (tt->type >= TOK_SMAC_PARAM &&
+                    if (is_smacro_param(tt) &&
                         !strcmp(tt->text, t->text))
                         t->type = tt->type;
             }
@@ -4605,13 +4630,14 @@ again:
                     m->in_progress = true;
                     tline = tt;
                     list_for_each(t, m->expansion) {
-                        if (t->type >= TOK_SMAC_PARAM) {
+                        if (is_smacro_param(t)) {
                             Token *pcopy = tline, **ptail = &pcopy;
                             Token *ttt, *pt;
-                            int i;
+                            int i, idx;
 
-                            ttt = params[t->type - TOK_SMAC_PARAM];
-                            i = paramsize[t->type - TOK_SMAC_PARAM];
+                            idx = smacro_get_param_idx(t);
+                            ttt = params[idx];
+                            i   = paramsize[idx];
                             while (--i >= 0) {
                                 pt = *ptail = new_Token(tline, ttt->type,
                                                         ttt->text, 0);
