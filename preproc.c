@@ -4733,9 +4733,9 @@ static Token *expand_id(Token * tline)
 
     cur = tline;
     while (cur->next &&
-           (cur->next->type == TOK_ID ||
-            cur->next->type == TOK_PREPROC_ID
-            || cur->next->type == TOK_NUMBER))
+           (cur->next->type == TOK_ID           ||
+            cur->next->type == TOK_PREPROC_ID   ||
+            cur->next->type == TOK_NUMBER))
         cur = cur->next;
 
     /* If identifier consists of just one token, don't expand */
