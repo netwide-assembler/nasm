@@ -352,28 +352,28 @@ typedef struct string_list {
 /*
  * preprocessors ought to look like this:
  */
-typedef struct preproc_ops {
+struct preproc_ops {
     /*
      * Called at the start of a pass; given a file name, the number
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset) (char *, int, ListGen *, StrList **);
+    void (*reset)(char *file, int pass, ListGen *listgen, StrList **deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
      * returned has been malloc'ed, and so should be freed after
      * use.
      */
-    char *(*getline) (void);
+    char *(*getline)(void);
 
     /*
      * Called at the end of a pass.
      */
-    void (*cleanup) (int);
-} Preproc;
+    void (*cleanup)(int pass);
+};
 
-extern Preproc nasmpp;
+extern struct preproc_ops nasmpp;
 
 /*
  * ----------------------------------------------------------------

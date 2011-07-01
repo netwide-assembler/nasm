@@ -122,7 +122,8 @@ static struct RAA *offsets;
 static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
-static Preproc *preproc;
+static struct preproc_ops *preproc;
+
 enum op_type {
     op_normal,                  /* Preprocess and assemble */
     op_preprocess,              /* Preprocess only */
@@ -168,10 +169,11 @@ static const struct warning {
  * not preprocess their source file.
  */
 
-static void no_pp_reset(char *, int, ListGen *, StrList **);
+static void no_pp_reset(char *file, int pass, ListGen *listgen, StrList **deplist);
 static char *no_pp_getline(void);
-static void no_pp_cleanup(int);
-static Preproc no_pp = {
+static void no_pp_cleanup(int pass);
+
+static struct preproc_ops no_pp = {
     no_pp_reset,
     no_pp_getline,
     no_pp_cleanup
