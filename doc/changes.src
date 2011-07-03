@@ -8,6 +8,13 @@ The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.09.09} Version 2.09.09
+
+\b Fix initialization of section attributes of \c{bin} output format.
+
+\b Fix \c{mach64} output format bug that crashes NASM due to NULL symbols.
+
+
 \S{cl-2.09.08} Version 2.09.08
 
 \b Fix \c{__OUTPUT_FORMAT__} assignment when output driver alias
