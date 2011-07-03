@@ -130,7 +130,7 @@ static struct Section {
 
     struct bin_label *labels;   /* linked-list of label handles for map output. */
     struct bin_label **labels_end;      /* Holds address of end of labels list. */
-    struct Section *ifollows;   /* Points to previous section (implicit follows). */
+    struct Section *prev;       /* Points to previous section (implicit follows). */
     struct Section *next;       /* This links sections with a defined start address. */
 
 /* The extended bin format allows for sections to have a "virtual"
@@ -201,28 +201,22 @@ static struct Section *find_section_by_index(int32_t index)
 }
 
 static struct Section *create_section(char *name)
-{                               /* Create a new section. */
-    last_section->next = nasm_malloc(sizeof(struct Section));
-    last_section->next->ifollows = last_section;
-    last_section = last_section->next;
-    last_section->labels = NULL;
-    last_section->labels_end = &(last_section->labels);
+{
+    struct Section *s = nasm_zalloc(sizeof(*s));
 
-    /* Initialize section attributes. */
-    last_section->name = nasm_strdup(name);
-    last_section->contents = saa_init(1L);
-    last_section->follows = last_section->vfollows = 0;
-    last_section->length = 0;
-    last_section->flags = 0;
-    last_section->align = 0;
-    last_section->valign = 0;
-    last_section->start = 0;
-    last_section->vstart = 0;
-    last_section->next = NULL;
+    s->prev         = last_section;
+    s->name         = nasm_strdup(name);
+    s->labels_end   = &(s->labels);
+    s->contents     = saa_init(1L);
 
     /* Register our sections with NASM. */
-    last_section->vstart_index = seg_alloc();
-    last_section->start_index = seg_alloc();
+    s->vstart_index = seg_alloc();
+    s->start_index  = seg_alloc();
+
+    /* FIXME: Append to a tail, we need some helper */
+    last_section->next = s;
+    last_section = s;
+
     return last_section;
 }
 
@@ -489,9 +483,9 @@ static void bin_cleanup(int debuginfo)
                     nasm_error(ERR_FATAL|ERR_NOFILE,
                           "section %s vfollows unknown section (%s)",
                           g->name, g->vfollows);
-            } else if (g->ifollows != NULL)
-                for (s = sections; s && (s != g->ifollows); s = s->next) ;
-            /* The .bss section is the only one with ifollows = NULL.
+            } else if (g->prev != NULL)
+                for (s = sections; s && (s != g->prev); s = s->next) ;
+            /* The .bss section is the only one with prev = NULL.
 	       In this case we implicitly follow the last progbits
 	       section.  */
             else
@@ -1262,7 +1256,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
             sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
         else if (!strcmp(name, ".bss")) {
             sec->flags |= TYPE_DEFINED | TYPE_NOBITS;
-            sec->ifollows = NULL;
+            sec->prev = NULL;
         }
     }
 
@@ -1433,18 +1427,13 @@ static void binfmt_init(void)
     nsl_tail = &no_seg_labels;
 
     /* Create default section (.text). */
-    sections = last_section = nasm_malloc(sizeof(struct Section));
-    last_section->next = NULL;
-    last_section->name = nasm_strdup(".text");
-    last_section->contents = saa_init(1L);
-    last_section->follows = last_section->vfollows = 0;
-    last_section->ifollows = NULL;
-    last_section->length = 0;
-    last_section->flags = TYPE_DEFINED | TYPE_PROGBITS;
-    last_section->labels = NULL;
-    last_section->labels_end = &(last_section->labels);
-    last_section->start_index = seg_alloc();
-    last_section->vstart_index = seg_alloc();
+    sections = last_section = nasm_zalloc(sizeof(struct Section));
+    last_section->name          = nasm_strdup(".text");
+    last_section->contents      = saa_init(1L);
+    last_section->flags         = TYPE_DEFINED | TYPE_PROGBITS;
+    last_section->labels_end    = &(last_section->labels);
+    last_section->start_index   = seg_alloc();
+    last_section->vstart_index  = seg_alloc();
 }
 
 /* Generate binary file output */
