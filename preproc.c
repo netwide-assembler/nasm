@@ -2790,10 +2790,6 @@ issue_error:
         }
         ed = new_ExpDef(EXP_IF);
         ed->state = j;
-        ed->nolist = NULL;
-        ed->def_depth = 0;
-        ed->cur_depth = 0;
-        ed->max_depth = 0;
         ed->ignoring = ((ed->state == COND_IF_TRUE) ? false : true);
         ed->prev = defining;
         defining = ed;
