@@ -183,11 +183,23 @@ SectionEnd
 Section "Uninstall"
     ;
     ; files on HDD
-    RMDir /r /rebootok "$INSTDIR"
+    IfFileExists "$INSTDIR" +3 +1
+        MessageBox MB_OK "No files found, aborting."
+        Abort
+        RMDir /r /rebootok "$INSTDIR"
+    ;
+    ; Links
     Delete /rebootok "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk"
     ;
-    ; Start Menu folder
+    ; Start menu folder
     ReadRegStr $0 HKCU Software\${PRODUCT_SHORT_NAME} "lnk"
+    StrCmp $0 0 +1 +3
+        MessageBox MB_OK "Invalid path to a lnk file, aborting"
+        Abort
+    IfFileExists $0 +3 +1
+        MessageBox MB_OK "No lnk files found, aborting."
+        Abort
+        RMDir /r /rebootok "$INSTDIR"	
     Delete /rebootok "$0\*"
     RMDir "$0"
     DeleteRegKey /ifempty HKCU "Software\${PRODUCT_SHORT_NAME}"
