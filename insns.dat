@@ -3153,7 +3153,7 @@ PDEP		reg64,reg64,rm64		[rvm: vex.nds.lz.f2.0f38.w1 f5 /r]		X64,FUTURE,BMI2
 PEXT		reg32,reg32,rm32		[rvm: vex.nds.lz.f3.0f38.w0 f5 /r]		FUTURE,BMI2
 PEXT		reg64,reg64,rm64		[rvm: vex.nds.lz.f3.0f38.w1 f5 /r]		X64,FUTURE,BMI2
 RORX		reg32,rm32,imm8			[rmi: vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2
-RORX		reg32,rm32,imm8			[rmi: vex.lz.f2.0f3a.w0 f0 /r ib]		X64,FUTURE,BMI2
+RORX		reg64,rm64,imm8			[rmi: vex.lz.f2.0f3a.w1 f0 /r ib]		X64,FUTURE,BMI2
 SARX		reg32,rm32,reg32		[rmv: vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2
 SARX		reg64,rm64,reg64		[rmv: vex.nds.lz.f3.0f38.w1 f7 /r]		X64,FUTURE,BMI2
 SHLX		reg32,rm32,reg32		[rmv: vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2
