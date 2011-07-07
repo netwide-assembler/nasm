@@ -66,13 +66,6 @@
  * \150..\153    - an immediate dword or signed byte for operand 0..3
  * \154..\157    - or 2 (s-field) into opcode byte if operand 0..3
  *                  is a signed byte rather than a dword.  Opcode byte follows.
- * \160..\163    - this instruction uses DREX rather than REX, with the
- *                 OC0 field set to 0, and the dest field taken from
- *                 operand 0..3.
- * \164..\167    - this instruction uses DREX rather than REX, with the
- *                 OC0 field set to 1, and the dest field taken from
- *                 operand 0..3.
- * \171          - placement of DREX suffix in the absence of an EA
  * \172\ab       - the register number from operand a in bits 7..4, with
  *                 the 4-bit immediate from operand b in bits 3..0.
  * \173\xab      - the register number from operand a in bits 7..4, with
@@ -908,21 +901,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
             break;
 
-        case4(0160):
-            length++;
-            ins->rex |= REX_D;
-            ins->drexdst = regval(opx);
-            break;
-
-        case4(0164):
-            length++;
-            ins->rex |= REX_D|REX_OC;
-            ins->drexdst = regval(opx);
-            break;
-
-        case 0171:
-            break;
-
         case 0172:
         case 0173:
         case 0174:
@@ -940,14 +918,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case4(0260):
             ins->rex |= REX_V;
-            ins->drexdst = regval(opx);
+            ins->vexreg = regval(opx);
             ins->vex_cm = *codes++;
             ins->vex_wlp = *codes++;
             break;
 
         case 0270:
             ins->rex |= REX_V;
-            ins->drexdst = 0;
+            ins->vexreg = 0;
             ins->vex_cm = *codes++;
             ins->vex_wlp = *codes++;
             break;
@@ -1178,7 +1156,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
         }
 
-        if (bits != 64 && ((ins->rex & bad32) || ins->drexdst > 7)) {
+        if (bits != 64 && ((ins->rex & bad32) || ins->vexreg > 7)) {
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
             return -1;
         }
@@ -1186,17 +1164,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 3;
         else
             length += 2;
-    } else if (ins->rex & REX_D) {
-        if (ins->rex & REX_H) {
-            errfunc(ERR_NONFATAL, "cannot use high register in drex instruction");
-            return -1;
-        }
-        if (bits != 64 && ((ins->rex & (REX_R|REX_W|REX_X|REX_B)) ||
-                           ins->drexdst > 7)) {
-            errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
-            return -1;
-        }
-        length++;
     } else if (ins->rex & REX_REAL) {
         if (ins->rex & REX_H) {
             errfunc(ERR_NONFATAL, "cannot use high register in rex instruction");
@@ -1219,7 +1186,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 }
 
 #define EMIT_REX()                                                              \
-    if (!(ins->rex & (REX_D|REX_V)) && (ins->rex & REX_REAL) && (bits == 64)) { \
+    if (!(ins->rex & REX_V) && (ins->rex & REX_REAL) && (bits == 64)) { \
         ins->rex = (ins->rex & REX_REAL)|REX_P;                                 \
         out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);        \
         ins->rex = 0;                                                           \
@@ -1499,20 +1466,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset++;
             break;
 
-        case4(0160):
-        case4(0164):
-            break;
-
-        case 0171:
-            bytes[0] =
-                (ins->drexdst << 4) |
-                (ins->rex & REX_OC ? 0x08 : 0) |
-                (ins->rex & (REX_R|REX_X|REX_B));
-            ins->rex = 0;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
-
         case 0172:
             c = *codes++;
             opx = &ins->oprs[c >> 3];
@@ -1588,13 +1541,13 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 bytes[0] = (ins->vex_cm >> 6) ? 0x8f : 0xc4;
                 bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
-                    ((~ins->drexdst & 15)<< 3) | (ins->vex_wlp & 07);
+                    ((~ins->vexreg & 15)<< 3) | (ins->vex_wlp & 07);
                 out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);
                 offset += 3;
             } else {
                 bytes[0] = 0xc5;
                 bytes[1] = ((~ins->rex & REX_R) << (7-2)) |
-                    ((~ins->drexdst & 15) << 3) | (ins->vex_wlp & 07);
+                    ((~ins->vexreg & 15) << 3) | (ins->vex_wlp & 07);
                 out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
                 offset += 2;
             }
@@ -1857,14 +1810,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
                     *p++ = ea_data.sib;
-
-                /* DREX suffixes come between the SIB and the displacement */
-                if (ins->rex & REX_D) {
-                    *p++ = (ins->drexdst << 4) |
-                           (ins->rex & REX_OC ? 0x08 : 0) |
-                           (ins->rex & (REX_R|REX_X|REX_B));
-                    ins->rex = 0;
-                }
 
                 s = p - bytes;
                 out(offset, segment, bytes, OUT_RAWDATA, s, NO_SEG, NO_SEG);

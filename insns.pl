@@ -649,7 +649,6 @@ sub startseq($$) {
 # r = register field in the modr/m
 # m = modr/m
 # v = VEX "v" field
-# d = DREX "dst" field
 # i = immediate
 # s = register field of is4/imz2 field
 # - = implicit (unencoded) operand
@@ -811,19 +810,6 @@ sub byte_code_compile($$) {
             push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
                  ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
             $prefix_ok = 0;
-        } elsif ($op =~ /^\/drex([01])$/) {
-            my $oc0 = $1;
-            if (!defined($oppos{'d'})) {
-                die "$fname: $line: DREX without a 'd' operand\n";
-            }
-            # Note the use of *unshift* here, as opposed to *push*.
-            # This is because NASM want this byte code at the start of
-            # the instruction sequence, but the AMD documentation puts
-            # this at (roughly) the position of the drex byte itself.
-            # This allows us to match the AMD documentation and still
-            # do the right thing.
-            unshift(@codes, 0160+($oppos{'d'} & 3)+($oc0 ? 4 : 0));
-            unshift(@codes, 05) if ($oppos{'d'} & 4);
         } elsif ($op =~ /^(ib\,s|ib|ibx|ib\,w|iw|iwd|id|idx|iwdq|rel|rel8|rel16|rel32|iq|seg|ibw|ibd|ibd,s)$/) {
             if (!defined($oppos{'i'})) {
                 die "$fname: $line: $op without 'i' operand\n";

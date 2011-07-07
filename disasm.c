@@ -197,24 +197,6 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
 }
 
 /*
- * Process a DREX suffix
- */
-static uint8_t *do_drex(uint8_t *data, insn *ins)
-{
-    uint8_t drex = *data++;
-    operand *dst = &ins->oprs[ins->drexdst];
-
-    if ((drex & 8) != ((ins->rex & REX_OC) ? 8 : 0))
-	return NULL;	/* OC0 mismatch */
-    ins->rex = (ins->rex & ~7) | (drex & 7);
-
-    dst->segment = SEG_RMREG;
-    dst->basereg = drex >> 4;
-    return data;
-}
-
-
-/*
  * Process an effective address (ModRM) specification.
  */
 static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
@@ -231,11 +213,6 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
     if (mod != 3 && asize != 16 && rm == 4)
 	sib = *data++;
 
-    if (ins->rex & REX_D) {
-	data = do_drex(data, ins);
-	if (!data)
-	    return NULL;
-    }
     rex = ins->rex;
 
     if (mod == 3) {             /* pure register version */
@@ -621,22 +598,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    }
 	    break;
 
-	case4(0160):
-	    ins->rex |= REX_D;
-	    ins->drexdst = op1;
-	    break;
-
-	case4(0164):
-	    ins->rex |= REX_D|REX_OC;
-	    ins->drexdst = op1;
-	    break;
-
-	case 0171:
-	    data = do_drex(data, ins);
-	    if (!data)
-		return false;
-	    break;
-
 	case 0172:
 	{
 	    uint8_t ximm = *data++;
@@ -705,7 +666,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    int vexwlp = *r++;
 
 	    ins->rex |= REX_V;
-	    if ((prefix->rex & (REX_V|REX_D|REX_P)) != REX_V)
+	    if ((prefix->rex & (REX_V|REX_P)) != REX_V)
 		return false;
 
 	    if ((vexm & 0x1f) != prefix->vex_m)
@@ -945,8 +906,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
     if (!vex_ok && (ins->rex & REX_V))
 	return false;
 
-    /* REX cannot be combined with DREX or VEX */
-    if ((ins->rex & (REX_D|REX_V)) && (prefix->rex & REX_P))
+    /* REX cannot be combined with VEX */
+    if ((ins->rex & REX_V) && (prefix->rex & REX_P))
 	return false;
 
     /*

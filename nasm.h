@@ -439,10 +439,8 @@ enum ccode {			/* condition code names */
 #define REX_L		0x20	/* Use LOCK prefix instead of REX.R */
 #define REX_P		0x40	/* REX prefix present/required */
 #define REX_H		0x80	/* High register present, REX forbidden */
-#define REX_D		0x0100	/* Instruction uses DREX instead of REX */
-#define REX_OC		0x0200	/* DREX suffix has the OC0 bit set */
-#define REX_V		0x0400	/* Instruction uses VEX/XOP instead of REX */
-#define REX_NH		0x0800	/* Instruction which doesn't use high regs */
+#define REX_V		0x0100	/* Instruction uses VEX/XOP instead of REX */
+#define REX_NH		0x0200	/* Instruction which doesn't use high regs */
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
@@ -558,7 +556,7 @@ typedef struct insn {		/* an instruction itself */
     int32_t times;              /* repeat count (TIMES prefix) */
     bool forw_ref;              /* is there a forward reference? */
     int rex;			/* Special REX Prefix */
-    int drexdst;		/* Destination register for DREX/VEX suffix */
+    int vexreg;			/* Register encoded in VEX prefix */
     int vex_cm;			/* Class and M field for VEX prefix */
     int vex_wlp;		/* W, P and L information for VEX prefix */
 } insn;
