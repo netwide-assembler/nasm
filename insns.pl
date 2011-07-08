@@ -409,7 +409,7 @@ sub count_bytecodes(@) {
             $skip = 1;
         } elsif (($bc & ~013) == 0144) {
             $skip = 1;
-        } elsif ($bc == 0172) {
+        } elsif ($bc == 0172 || $bc == 0173) {
             $skip = 1;
         } elsif ($bc >= 0260 && $bc <= 0270) {
             $skip = 2;
@@ -626,7 +626,7 @@ sub startseq($$) {
             $c = ($m >> 6);
             $m = $m & 31;
             $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 3);
-        } elsif ($c0 >= 0172 && $c0 <= 174) {
+        } elsif ($c0 >= 0172 && $c0 <= 173) {
             shift(@codes);	# Skip is4 control byte
         } else {
             # We really need to be able to distinguish "forbidden"
@@ -890,7 +890,8 @@ sub byte_code_compile($$) {
             if (defined($oppos{'i'})) {
                 push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
             } else {
-                push(@codes, 0174, $oppos{'s'});
+		push(@codes, 05) if ($oppos{'s'} & 4);
+                push(@codes, 0174+($oppos{'s'} & 3));
             }
             $prefix_ok = 0;
         } elsif ($op =~ /^\/is4\=([0-9]+)$/) {

@@ -70,7 +70,7 @@
  *                 the 4-bit immediate from operand b in bits 3..0.
  * \173\xab      - the register number from operand a in bits 7..4, with
  *                 the value b in bits 3..0.
- * \174\a        - the register number from operand a in bits 7..4, and
+ * \174..\177    - the register number from operand 0..3 in bits 7..4, and
  *                 an arbitrary value in bits 3..0 (assembled as zero.)
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
@@ -903,8 +903,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case 0172:
         case 0173:
-        case 0174:
             codes++;
+            length++;
+            break;
+
+        case4(0174):
             length++;
             break;
 
@@ -1495,9 +1498,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset++;
             break;
 
-        case 0174:
-            c = *codes++;
-            opx = &ins->oprs[c];
+        case4(0174):
             bytes[0] = nasm_regvals[opx->basereg] << 4;
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
