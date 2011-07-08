@@ -637,6 +637,8 @@ INT03		void				\1\xCC						8086,ND
 INT3		void				\1\xCC						8086
 INTO		void				\1\xCE						8086,NOLONG
 INVD		void				\2\x0F\x08					486,PRIV
+INVPCID		reg32,mem128			[rm:	66 0f 38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
+INVPCID		reg64,mem128			[rm:	66 0f 38 82 /r]				FUTURE,INVPCID,PRIV,LONG
 INVLPG		mem				\2\x0F\x01\207					486,PRIV
 INVLPGA		reg_ax,reg_ecx			\310\3\x0F\x01\xDF				X86_64,AMD,NOLONG
 INVLPGA		reg_eax,reg_ecx			\311\3\x0F\x01\xDF				X86_64,AMD
@@ -2454,11 +2456,17 @@ VPACKSSWB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 63 /r]		FUTURE,AVX2
 VPACKSSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 6b /r]		AVX,SANDYBRIDGE
 VPACKSSDW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6b /r]		FUTURE,AVX2
 VPACKUSWB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 67 /r]		AVX,SANDYBRIDGE
+VPACKUSWB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 67 /r]		FUTURE,AVX2
 VPACKUSDW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 2b /r]		AVX,SANDYBRIDGE
+VPACKUSDW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 2b /r]		FUTURE,AVX2
 VPADDB		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f fc /r]		AVX,SANDYBRIDGE
+VPADDB		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f fc /r]		FUTURE,AVX2
 VPADDW		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f fd /r]		AVX,SANDYBRIDGE
+VPADDW		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f fd /r]		FUTURE,AVX2
 VPADDD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f fe /r]		AVX,SANDYBRIDGE
+VPADDD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f fe /r]		FUTURE,AVX2
 VPADDQ		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f d4 /r]		AVX,SANDYBRIDGE
+VPADDQ		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f d4 /r]		FUTURE,AVX2
 VPADDSB		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f ec /r]		AVX,SANDYBRIDGE
 VPADDSW		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f ed /r]		AVX,SANDYBRIDGE
 VPADDUSB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f dc /r]		AVX,SANDYBRIDGE
