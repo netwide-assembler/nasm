@@ -186,7 +186,10 @@ Section "Uninstall"
     IfFileExists "$INSTDIR" +3 +1
         MessageBox MB_OK "No files found, aborting."
         Abort
-        RMDir /r /rebootok "$INSTDIR"
+        MessageBox MB_YESNO "The following directory will be deleted$\n$INSTDIR" IDYES rm_instdir_true IDNO rm_instdir_false
+        rm_instdir_true:
+            RMDir /r /rebootok "$INSTDIR"
+        rm_instdir_false:
     ;
     ; Links
     Delete /rebootok "$DESKTOP\${PRODUCT_SHORT_NAME}.lnk"
@@ -199,10 +202,12 @@ Section "Uninstall"
     IfFileExists $0 +3 +1
         MessageBox MB_OK "No lnk files found, aborting."
         Abort
-        RMDir /r /rebootok "$INSTDIR"	
-    Delete /rebootok "$0\*"
-    RMDir "$0"
-    DeleteRegKey /ifempty HKCU "Software\${PRODUCT_SHORT_NAME}"
+        MessageBox MB_YESNO "The following directory will be deleted$\n$0" IDYES rm_links_true IDNO rm_links_false
+        rm_links_true:
+            Delete /rebootok "$0\*"
+            RMDir "$0"
+        rm_links_false:
+   DeleteRegKey /ifempty HKCU "Software\${PRODUCT_SHORT_NAME}"
 SectionEnd
 
 ;
