@@ -709,12 +709,10 @@ static void elf_out(int32_t segto, const void *data,
                     int32_t segment, int32_t wrt)
 {
     struct Section *s;
-    int64_t addr, zero;
+    int64_t addr;
     int reltype, bytes;
     int i;
     static struct symlininfo sinfo;
-
-    zero = 0;
 
 #if defined(DEBUG) && DEBUG>2
     if (data)
