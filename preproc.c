@@ -105,12 +105,12 @@ typedef struct IncPath IncPath;
  * Store the definition of a single-line macro.
  */
 struct SMacro {
-    SMacro *next;
-    char *name;
-    bool casesense;
-    bool in_progress;
-    unsigned int nparam;
-    Token *expansion;
+    SMacro          *next;
+    char            *name;
+    Token           *expansion;
+    unsigned int    nparam;
+    bool            casesense;
+    bool            in_progress;
 };
 
 /*
