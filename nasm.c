@@ -1094,7 +1094,7 @@ static void process_response_file(const char *file)
 static void parse_cmdline(int argc, char **argv)
 {
     FILE *rfile;
-    char *envreal, *envcopy = NULL, *p, *arg;
+    char *envreal, *envcopy = NULL, *p;
     int i;
 
     *inname = *outname = *listname = *errname = '\0';
@@ -1105,7 +1105,6 @@ static void parse_cmdline(int argc, char **argv)
      * First, process the NASMENV environment variable.
      */
     envreal = getenv("NASMENV");
-    arg = NULL;
     if (envreal) {
         envcopy = nasm_strdup(envreal);
         process_args(envcopy);
