@@ -1788,7 +1788,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 opflags_t rflags;
                 uint8_t *p;
                 int32_t s;
-                enum out_type type;
                 struct operand *opy = &ins->oprs[op2];
 
                 if (c <= 0177) {
@@ -1849,7 +1848,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                             signed_bits(opy->offset, ea_data.bytes * 8))
                             warn_overflow(ERR_PASS2, ea_data.bytes);
 
-                        type = OUT_ADDRESS;
                         out(offset, segment, &data, OUT_ADDRESS,
                             ea_data.bytes, opy->segment, opy->wrt);
                     }
