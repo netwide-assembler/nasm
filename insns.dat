@@ -3222,6 +3222,18 @@ VPSRLD		ymmreg,ymmreg*,xmmrm128		[rvm:	vex.nds.256.66.0f d2 /r]		FUTURE,AVX2
 VPSRLD		ymmreg,ymmreg*,imm8		[vrmi:	vex.ndd.256.66.0f 72 /2 ib]		FUTURE,AVX2
 VPSRLQ		ymmreg,ymmreg*,xmmrm128		[rvm:	vex.nds.256.66.0f d3 /r]		FUTURE,AVX2
 VPSRLQ		ymmreg,ymmreg*,imm8		[vrmi:	vex.ndd.256.66.0f.wig 73 /2 ib]		FUTURE,AVX2
+VPSUBB		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f f8 /r]		FUTURE,AVX2
+VPSUBW		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f f9 /r]		FUTURE,AVX2
+VPSUBD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f fa /r]		FUTURE,AVX2
+VPSUBQ		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f fb /r]		FUTURE,AVX2
+VPSUBSB		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f e8 /r]		FUTURE,AVX2
+VPSUBSW		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f e9 /r]		FUTURE,AVX2
+VPSUBUSB	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f d8 /r]		FUTURE,AVX2
+VPSUBUSW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f d9 /r]		FUTURE,AVX2
+VPUNPCKHBW	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 68 /r]		FUTURE,AVX2
+VPUNPCKHWD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 69 /r]		FUTURE,AVX2
+VPUNPCKHDQ	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6a /r]		FUTURE,AVX2
+VPUNPCKHQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6d /r]		FUTURE,AVX2
 
 ; ------------
 VPERMD		ymmreg,ymmreg,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX2
