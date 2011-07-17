@@ -251,9 +251,9 @@ size_t string_transform(char *, size_t, char **, enum strfunc);
  * `t_type' field in the structure.
  */
 struct tokenval {
-    enum token_type t_type;
-    char *t_charptr;
-    int64_t t_integer, t_inttwo;
+    char                *t_charptr;
+    int64_t             t_integer, t_inttwo;
+    enum token_type     t_type;
 };
 typedef int (*scanner) (void *private_data, struct tokenval * tv);
 
