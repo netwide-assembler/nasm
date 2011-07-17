@@ -117,10 +117,10 @@ struct SMacro {
  * The context stack is composed of a linked list of these.
  */
 struct Context {
-    Context *next;
-    char *name;
-    struct hash_table localmac;
-    uint32_t number;
+    Context             *next;
+    char                *name;
+    struct hash_table   localmac;
+    uint32_t            number;
 };
 
 /*
@@ -162,13 +162,13 @@ struct tokseq_match {
 };
 
 struct Token {
-    Token *next;
-    char *text;
+    Token               *next;
+    char                *text;
     union {
-        SMacro *mac;        /* associated macro for TOK_SMAC_END */
-        size_t len;         /* scratch length field */
-    } a;                    /* Auxiliary data */
-    enum pp_token_type type;
+        SMacro  *mac;           /* associated macro for TOK_SMAC_END */
+        size_t  len;            /* scratch length field */
+    } a;                        /* Auxiliary data */
+    enum pp_token_type  type;
 };
 
 /*
@@ -182,8 +182,8 @@ struct Token {
  * if walked, would emit the expansion lines in the proper order.
  */
 struct Line {
-    Line *next;
-    Token *first;
+    Line    *next;
+    Token   *first;
 };
 
 /*
@@ -208,30 +208,31 @@ enum pp_exp_type {
  * `prev' field is for the global `expansions` linked-list.
  */
 struct ExpDef {
-    ExpDef *prev;               /* previous definition */
-    ExpDef *next;               /* next in hash table */
-    enum pp_exp_type type;      /* expansion type */
-    char *name;                 /* definition name */
-    int nparam_min, nparam_max;
-    bool casesense;
-    bool plus;                  /* is the last parameter greedy? */
-    bool nolist;                /* is this expansion listing-inhibited? */
-    Token *dlist;               /* all defaults as one list */
-    Token **defaults;           /* parameter default pointers */
-    int ndefs;                  /* number of default parameters */
+    ExpDef              *prev;          /* previous definition */
+    ExpDef              *next;          /* next in hash table */
+    enum pp_exp_type    type;           /* expansion type */
+    char                *name;          /* definition name */
+    int                 nparam_min;
+    int                 nparam_max;
+    bool                casesense;
+    bool                plus;           /* is the last parameter greedy? */
+    bool                nolist;         /* is this expansion listing-inhibited? */
+    Token               *dlist;         /* all defaults as one list */
+    Token               **defaults;     /* parameter default pointers */
+    int                 ndefs;          /* number of default parameters */
 
-    int prepend;                /* label prepend state */
-    Line *label;
-    Line *line;
-    Line *last;
-    int linecount;              /* number of lines within expansion */
+    int                 prepend;        /* label prepend state */
+    Line                *label;
+    Line                *line;
+    Line                *last;
+    int                 linecount;      /* number of lines within expansion */
 
-    int64_t def_depth;          /* current number of definition pairs deep */
-    int64_t cur_depth;          /* current number of expansions */
-    int64_t max_depth;          /* maximum number of expansions allowed */
+    int64_t             def_depth;      /* current number of definition pairs deep */
+    int64_t             cur_depth;      /* current number of expansions */
+    int64_t             max_depth;      /* maximum number of expansions allowed */
 
-    int state;                  /* condition state */
-    bool ignoring;              /* ignoring definition lines */
+    int                 state;          /* condition state */
+    bool                ignoring;       /* ignoring definition lines */
 };
 
 /*
@@ -269,13 +270,14 @@ struct ExpInv {
  * stack (ie linked list) of these things.
  */
 struct Include {
-    Include *next;
-    FILE *fp;
-    Cond *conds;
-    ExpInv *expansion;
-    char *fname;
-    int lineno, lineinc;
-    int mmac_depth;
+    Include     *next;
+    FILE        *fp;
+    Cond        *conds;
+    ExpInv      *expansion;
+    char        *fname;
+    int         lineno;
+    int         lineinc;
+    int         mmac_depth;
 };
 
 /*
@@ -284,8 +286,8 @@ struct Include {
  * attempt to find the file if it's not in the current directory.
  */
 struct IncPath {
-    IncPath *next;
-    char *path;
+    IncPath     *next;
+    char        *path;
 };
 
 /*
