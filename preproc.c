@@ -243,24 +243,25 @@ struct ExpDef {
  * `paramlen', `rotate' and `unique' are local to the invocation.
  */
 struct ExpInv {
-    ExpInv *prev;               /* previous invocation */
-    enum pp_exp_type type;      /* expansion type */
-    ExpDef *def;                /* pointer to expansion definition */
-    char *name;                 /* invocation name */
-    Line *label;                /* pointer to label */
-    char *label_text;           /* pointer to label text */
-    Line *current;              /* pointer to current line in invocation */
+    ExpInv              *prev;          /* previous invocation */
+    ExpDef              *def;           /* pointer to expansion definition */
+    char                *name;          /* invocation name */
+    Line                *label;         /* pointer to label */
+    char                *label_text;    /* pointer to label text */
+    Line                *current;       /* pointer to current line in invocation */
 
-    Token **params;             /* actual parameters */
-    Token *iline;               /* invocation line */
-    unsigned int nparam, rotate;
-    int *paramlen;
+    Token               **params;       /* actual parameters */
+    Token               *iline;         /* invocation line */
+    int                 *paramlen;
+    unsigned int        nparam;
+    unsigned int        rotate;
 
-    uint64_t unique;
-    bool emitting;
-    int lineno;                 /* current line number in expansion */
-    int linnum;                 /* line number at invocation */
-    int relno;                  /* relative line number at invocation */
+    uint64_t            unique;
+    int                 lineno;         /* current line number in expansion */
+    int                 linnum;         /* line number at invocation */
+    int                 relno;          /* relative line number at invocation */
+    enum pp_exp_type    type;           /* expansion type */
+    bool                emitting;
 };
 
 /*
