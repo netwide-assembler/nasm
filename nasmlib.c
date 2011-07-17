@@ -736,9 +736,9 @@ char *nasm_get_word(char *p, char **tail)
  */
 char *nasm_opt_val(char *p, char **val, char **next)
 {
-    char *q, *opt, *nxt;
+    char *q, *nxt;
 
-    opt = *val = *next = NULL;
+    *val = *next = NULL;
 
     p = nasm_get_word(p, &nxt);
     if (!p)
