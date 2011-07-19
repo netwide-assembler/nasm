@@ -3263,16 +3263,56 @@ VPBROADCASTQ	xmmreg,xmmreg			[rm:	vex.128.66.0f38.w0 59 /r]		FUTURE,AVX2
 VPBROADCASTQ	ymmreg,mem64			[rm:	vex.256.66.0f38.w0 59 /r]		FUTURE,AVX2
 VPBROADCASTQ	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 59 /r]		FUTURE,AVX2
 
-; FIXME
-;VPERMD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX2
-;VPERMD		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 01 /r ib]		FUTURE,AVX2
-;VPERMPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 16 /r]		FUTURE,AVX2
-;VPERMPD		ymmreg,ymmrm256,imm8		[rmi:	VEX.256.66.0F3A.W1 01 /r ib]
+VPERMD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX2
+VPERMD		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 01 /r ib]		FUTURE,AVX2
+VPERMPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 16 /r]		FUTURE,AVX2
+VPERMPQ		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 00 /r ib]		FUTURE,AVX2
+VPERM2I128	ymmreg,ymmreg,ymmrm256,imm8	[rvmi:	VEX.NDS.256.66.0F3A.W0 46 /r ib]	FUTURE,AVX2
+VEXTRACTI128	xmmrm128,ymmreg,imm8		[mri:	VEX.256.66.0F3A.W0 39 /r ib]		FUTURE,AVX2
+
+VINSERTI128	ymmreg,ymmreg*,xmmrm128,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 38 /r ib]	FUTURE,AVX2
+VPMASKMOVD	xmmreg,xmmreg*,mem128		[rvm:	vex.nds.128.66.0f38.w0 8c /r]		FUTURE,AVX2
+VPMASKMOVD	ymmreg,ymmreg*,mem256		[rvm:	vex.nds.256.66.0f38.w0 8c /r]		FUTURE,AVX2
+VPMASKMOVQ	xmmreg,xmmreg*,mem128		[rvm:	vex.nds.128.66.0f38.w1 8c /r]		FUTURE,AVX2
+VPMASKMOVQ	ymmreg,ymmreg*,mem256		[rvm:	vex.nds.256.66.0f38.w1 8c /r]		FUTURE,AVX2
+
+VPMASKMOVD	mem128,xmmreg*,xmmreg		[mvr:	vex.nds.128.66.0f38.w0 8e /r]		FUTURE,AVX2
+VPMASKMOVD	mem256,ymmreg*,ymmreg		[mvr:	vex.nds.256.66.0f38.w0 8e /r]		FUTURE,AVX2
+VPMASKMOVQ	mem128,xmmreg*,xmmreg		[mvr:	vex.nds.128.66.0f38.w1 8e /r]		FUTURE,AVX2
+VPMASKMOVQ	mem256,ymmreg*,ymmreg		[mvr:	vex.nds.256.66.0f38.w1 8e /r]		FUTURE,AVX2
+
+VPSLLVD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 47 /r]		FUTURE,AVX2
+VPSLLVQ		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w1 47 /r]		FUTURE,AVX2
+VPSLLVD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 47 /r]		FUTURE,AVX2
+VPSLLVQ		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w1 47 /r]		FUTURE,AVX2
+
+VPSRAVD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 46 /r]		FUTURE,AVX2
+VPSRAVD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 46 /r]		FUTURE,AVX2
+
+VPSRLVD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 45 /r]		FUTURE,AVX2
+VPSRLVQ		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w1 45 /r]		FUTURE,AVX2
+VPSRLVD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 45 /r]		FUTURE,AVX2
+VPSRLVQ		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w1 45 /r]		FUTURE,AVX2
 
 VGATHERDPD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 92 /r]	FUTURE,AVX2
 VGATHERQPD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 93 /r]	FUTURE,AVX2
 VGATHERDPD	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
 VGATHERQPD	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
+
+VGATHERDPS	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w0 92 /r]	FUTURE,AVX2
+VGATHERQPS	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 93 /r]	FUTURE,AVX2
+VGATHERDPS	ymmreg,mem32,ymmreg		[rmv:	vm32y vex.dds.256.66.0f38.w0 92 /r]	FUTURE,AVX2
+VGATHERQPS	xmmreg,mem64,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 93 /r]	FUTURE,AVX2
+
+VPGATHERDD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w0 90 /r]	FUTURE,AVX2
+VPGATHERQD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 91 /r]	FUTURE,AVX2
+VPGATHERDD	ymmreg,mem32,ymmreg		[rmv:	vm32y vex.dds.256.66.0f38.w0 90 /r]	FUTURE,AVX2
+VPGATHERQD	xmmreg,mem64,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 91 /r]	FUTURE,AVX2
+
+VPGATHERDQ	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 90 /r]	FUTURE,AVX2
+VPGATHERQQ	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 91 /r]	FUTURE,AVX2
+VPGATHERDQ	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
+VPGATHERQQ	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
 ;# Intel BMI1 and BMI2 instructions
 ;
