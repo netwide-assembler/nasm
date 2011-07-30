@@ -3233,6 +3233,20 @@ code to be replicated as long as certain conditions are met:
 \c     ; some code which only repeats while <condition> is met
 \c %endwhile
 
+\S{exitwhile} Exiting Conditional Loops: \i\c{%exitwhile}
+
+Conditional loops can be arbitrarily terminated with the
+\i\c{%exitwhile} directive.
+
+For example:
+
+\c %while<condition>
+\c    %if<some other condition>
+\c       %exitwhile
+\c    %endif
+\c    ; some code which only repeats while <condition> is met
+\c %endwhile
+
 
 \H{files} Source Files and Dependencies
 
@@ -3812,6 +3826,17 @@ The \c{%final} directive is used to delay preprocessing of a line
 until all other "normal" preprocessing is complete.  Multiple
 \c{%final} directives are processed in the opposite order of their
 declaration, last one first and first one last.
+
+
+\H{comment} Comment Blocks: \i\c{%comment}
+
+The \c{%comment} and \c{%endcomment} directives are used to specify
+a block of commented (i.e. unprocessed) code/text. Everything between
+\c{%comment} and \c{%endcomment} will be ignored by the preprocessor.
+
+\c %comment
+\c     ; some code, text or data to be ignored
+\c %endcomment
 
 
 \H{stdmac} \i{Standard Macros}
