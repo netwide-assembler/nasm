@@ -324,7 +324,6 @@ enum {
      */
     COND_DONE, COND_NEVER
 };
-#define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
 /*
  * These defines are used as the possible return values for do_directive
