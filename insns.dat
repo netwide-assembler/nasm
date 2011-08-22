@@ -3264,7 +3264,7 @@ VPBROADCASTQ	ymmreg,mem64			[rm:	vex.256.66.0f38.w0 59 /r]		FUTURE,AVX2
 VPBROADCASTQ	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 59 /r]		FUTURE,AVX2
 
 VPERMD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX2
-VPERMD		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 01 /r ib]		FUTURE,AVX2
+VPERMPD		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 01 /r ib]		FUTURE,AVX2
 VPERMPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 16 /r]		FUTURE,AVX2
 VPERMQ		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 00 /r ib]		FUTURE,AVX2
 VPERM2I128	ymmreg,ymmreg,ymmrm256,imm8	[rvmi:	VEX.NDS.256.66.0F3A.W0 46 /r ib]	FUTURE,AVX2
