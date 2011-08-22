@@ -3243,7 +3243,7 @@ VMOVNTDQA	ymmreg,mem128			[rm:	vex.256.66.0f38 2a /r]			FUTURE,AVX2
 VBROADCASTSS	xmmreg,xmmreg			[rm:	vex.128.66.0f38.w0 18 /r]		FUTURE,AVX2
 VBROADCASTSS	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 18 /r]		FUTURE,AVX2
 VBROADCASTSD	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 19 /r]		FUTURE,AVX2
-VBROADCASTI128	ymmreg,mem128			[rm:	VEX.256.66.0F38.W0 5A /r]		FUTURE,AVX2
+VBROADCASTI128	ymmreg,mem128			[rm:	vex.256.66.0f38.w0 5a /r]		FUTURE,AVX2
 VPBLENDD	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a.w0 02 /r ib]	FUTURE,AVX2
 VPBLENDD	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 02 /r ib]	FUTURE,AVX2
 VPBROADCASTB	xmmreg,mem8			[rm:	vex.128.66.0f38.w0 78 /r]		FUTURE,AVX2
@@ -3267,8 +3267,8 @@ VPERMD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 36 /r]		FUTURE,AVX
 VPERMPD		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 01 /r ib]		FUTURE,AVX2
 VPERMPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 16 /r]		FUTURE,AVX2
 VPERMQ		ymmreg,ymmrm256,imm8		[rmi:	vex.256.66.0f3a.w1 00 /r ib]		FUTURE,AVX2
-VPERM2I128	ymmreg,ymmreg,ymmrm256,imm8	[rvmi:	VEX.NDS.256.66.0F3A.W0 46 /r ib]	FUTURE,AVX2
-VEXTRACTI128	xmmrm128,ymmreg,imm8		[mri:	VEX.256.66.0F3A.W0 39 /r ib]		FUTURE,AVX2
+VPERM2I128	ymmreg,ymmreg,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 46 /r ib]	FUTURE,AVX2
+VEXTRACTI128	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 39 /r ib]		FUTURE,AVX2
 
 VINSERTI128	ymmreg,ymmreg*,xmmrm128,imm8	[rvmi:	vex.nds.256.66.0f3a.w0 38 /r ib]	FUTURE,AVX2
 VPMASKMOVD	xmmreg,xmmreg*,mem128		[rvm:	vex.nds.128.66.0f38.w0 8c /r]		FUTURE,AVX2
