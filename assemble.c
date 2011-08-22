@@ -2274,11 +2274,6 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
                 int32_t o = input->offset;
                 int mod, scale, index, base;
 
-#if 0
-                printf("bt = %x, bx = %x, it = %x, ix = %x, s = %d\n",
-                       bt, bx, it, ix, s);
-#endif
-
                 /*
                  * For a vector SIB, one has to be a vector and the other,
                  * if present, a GPR.  The vector must be the index operand.
