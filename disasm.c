@@ -331,12 +331,12 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
             op->scale = 1 << scale;
 
-	    if (index == 4 && !(rex & REX_X))
-		op->indexreg = -1; /* ESP/RSP cannot be an index */
-	    else if (type == EA_XMMVSIB)
+	    if (type == EA_XMMVSIB)
 		op->indexreg = nasm_rd_xmmreg[index | ((rex & REX_X) ? 8 : 0)];
 	    else if (type == EA_YMMVSIB)
 		op->indexreg = nasm_rd_ymmreg[index | ((rex & REX_X) ? 8 : 0)];
+	    else if (index == 4 && !(rex & REX_X))
+		op->indexreg = -1; /* ESP/RSP cannot be an index */
             else if (a64)
 		op->indexreg = nasm_rd_reg64[index | ((rex & REX_X) ? 8 : 0)];
 	    else
