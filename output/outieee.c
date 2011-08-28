@@ -139,22 +139,22 @@ static struct ExtBack {
 
 /* NOTE: the first segment MUST be the lineno segment */
 static struct ieeeSection {
-    struct ieeeObjData *data, *datacurr;
     struct ieeeSection *next;
+    char *name;
+    struct ieeeObjData *data, *datacurr;
     struct ieeeFixupp *fptr, *flptr;
     int32_t index;                 /* the NASM segment id */
     int32_t ieee_index;            /* the OBJ-file segment index */
     int32_t currentpos;
     int32_t align;                 /* can be SEG_ABS + absolute addr */
     int32_t startpos;
+    int32_t use32;                 /* is this segment 32-bit? */
+    struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
     enum {
         CMB_PRIVATE = 0,
         CMB_PUBLIC = 2,
         CMB_COMMON = 6
     } combine;
-    int32_t use32;                 /* is this segment 32-bit? */
-    struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
-    char *name;
 } *seghead, **segtail, *ieee_seg_needs_update;
 
 struct ieeeObjData {
