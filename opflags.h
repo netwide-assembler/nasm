@@ -164,6 +164,9 @@ typedef uint32_t opflags_t;
 
 #define is_class(class, op)     (!((opflags_t)(class) & ~(opflags_t)(op)))
 
+#define IS_SREG(op)             is_class(REG_SREG, nasm_reg_flags[(op)])
+#define IS_FSGS(op)             is_class(REG_FSGS, nasm_reg_flags[(op)])
+
 /* Register classes */
 #define REG_EA          0x00009000U   /* 'normal' reg, qualifies as EA */
 #define RM_GPR          0x00208000U   /* integer operand */

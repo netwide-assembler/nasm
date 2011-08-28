@@ -218,10 +218,12 @@ restart_parse:
         return result;
     }
 
-    if (i != TOKEN_ID && i != TOKEN_INSN && i != TOKEN_PREFIX &&
-        (i != TOKEN_REG || (REG_SREG & ~nasm_reg_flags[tokval.t_integer]))) {
-        nasm_error(ERR_NONFATAL, "label or instruction expected"
-              " at start of line");
+    if (i != TOKEN_ID       &&
+        i != TOKEN_INSN     &&
+        i != TOKEN_PREFIX   &&
+        (i != TOKEN_REG || !IS_SREG(tokval.t_integer))) {
+        nasm_error(ERR_NONFATAL,
+                   "label or instruction expected at start of line");
         result->opcode = I_none;
         return result;
     }
@@ -261,8 +263,7 @@ restart_parse:
     result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
-           (i == TOKEN_REG && !(REG_SREG & ~nasm_reg_flags[tokval.t_integer])))
-    {
+           (i == TOKEN_REG && IS_SREG(tokval.t_integer))) {
         first = false;
 
         /*
@@ -661,15 +662,16 @@ is_expression:
             /*
              * Process the segment override.
              */
-            if (value[1].type != 0 || value->value != 1 ||
-                REG_SREG & ~nasm_reg_flags[value->type])
+            if (value[1].type   != 0    ||
+                value->value    != 1    ||
+                !IS_SREG(value->type))
                 nasm_error(ERR_NONFATAL, "invalid segment override");
             else if (result->prefixes[PPS_SEG])
                 nasm_error(ERR_NONFATAL,
                       "instruction has conflicting segment overrides");
             else {
                 result->prefixes[PPS_SEG] = value->type;
-                if (!(REG_FSGS & ~nasm_reg_flags[value->type]))
+                if (IS_FSGS(value->type))
                     result->oprs[operand].eaflags |= EAF_FSGS;
             }
 
