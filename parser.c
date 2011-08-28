@@ -273,8 +273,7 @@ restart_parse:
             expr *value;
 
             i = stdscan(NULL, &tokval);
-            value =
-                evaluate(stdscan, NULL, &tokval, NULL, pass0, nasm_error, NULL);
+            value = evaluate(stdscan, NULL, &tokval, NULL, pass0, nasm_error, NULL);
             i = tokval.t_type;
             if (!value) {       /* but, error in evaluator */
                 result->opcode = I_none;    /* unrecoverable parse error: */
