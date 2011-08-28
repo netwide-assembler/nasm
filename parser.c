@@ -192,30 +192,32 @@ static void process_size_override(insn *result, int operand)
 
 insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
 {
+    bool insn_is_label = false;
+    struct eval_hints hints;
     int operand;
     int critical;
-    struct eval_hints hints;
-    int j;
     bool first;
-    bool insn_is_label = false;
     bool recover;
+    int j;
 
 restart_parse:
-    first = true;
-    result->forw_ref = false;
+    first               = true;
+    result->forw_ref    = false;
 
     stdscan_reset();
     stdscan_set(buffer);
     i = stdscan(NULL, &tokval);
 
-    result->label = NULL;       /* Assume no label */
-    result->eops = NULL;        /* must do this, whatever happens */
-    result->operands = 0;       /* must initialize this */
+    result->label       = NULL; /* Assume no label */
+    result->eops        = NULL; /* must do this, whatever happens */
+    result->operands    = 0;    /* must initialize this */
 
-    if (i == 0) {               /* blank line - ignore */
-        result->opcode = I_none;    /* and no instruction either */
+    /* Ignore blank lines */
+    if (i == TOKEN_EOS) {
+        result->opcode = I_none;
         return result;
     }
+
     if (i != TOKEN_ID && i != TOKEN_INSN && i != TOKEN_PREFIX &&
         (i != TOKEN_REG || (REG_SREG & ~nasm_reg_flags[tokval.t_integer]))) {
         nasm_error(ERR_NONFATAL, "label or instruction expected"
@@ -248,8 +250,9 @@ restart_parse:
         }
     }
 
-    if (i == 0) {
-        result->opcode = I_none;    /* this line contains just a label */
+    /* Just a label here */
+    if (i == TOKEN_EOS) {
+        result->opcode = I_none;
         return result;
     }
 
@@ -307,9 +310,10 @@ restart_parse:
         int j;
         enum prefixes pfx;
 
-        for (j = 0; j < MAXPREFIX; j++)
+        for (j = 0; j < MAXPREFIX; j++) {
             if ((pfx = result->prefixes[j]) != P_none)
                 break;
+        }
 
         if (i == 0 && pfx != P_none) {
             /*
@@ -317,10 +321,10 @@ restart_parse:
              * instruction. This is allowed: at this point we
              * invent a notional instruction of RESB 0.
              */
-            result->opcode = I_RESB;
-            result->operands = 1;
-            result->oprs[0].type = IMMEDIATE;
-            result->oprs[0].offset = 0L;
+            result->opcode          = I_RESB;
+            result->operands        = 1;
+            result->oprs[0].type    = IMMEDIATE;
+            result->oprs[0].offset  = 0L;
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             return result;
         } else {
@@ -361,7 +365,7 @@ restart_parse:
          */
         while (1) {
             i = stdscan(NULL, &tokval);
-            if (i == 0)
+            if (i == TOKEN_EOS)
                 break;
             else if (first && i == ':') {
                 insn_is_label = true;
@@ -381,9 +385,9 @@ restart_parse:
              * a string used as part of an expression...
              */
             if (i == TOKEN_STR && is_comma_next()) {
-                eop->type = EOT_DB_STRING;
-                eop->stringval = tokval.t_charptr;
-                eop->stringlen = tokval.t_inttwo;
+                eop->type       = EOT_DB_STRING;
+                eop->stringval  = tokval.t_charptr;
+                eop->stringlen  = tokval.t_inttwo;
                 i = stdscan(NULL, &tokval);     /* eat the comma */
             } else if (i == TOKEN_STRFUNC) {
                 bool parens = false;
@@ -494,13 +498,13 @@ is_expression:
              * arguments. However, we'd better check first that it
              * _is_ a comma.
              */
-            if (i == 0)         /* also could be EOL */
+            if (i == TOKEN_EOS) /* also could be EOL */
                 break;
             if (i != ',') {
                 nasm_error(ERR_NONFATAL, "comma expected after operand %d",
-                      oper_num);
-                result->opcode = I_none;    /* unrecoverable parse error: */
-                return result;  /* ignore this instruction */
+                           oper_num);
+                result->opcode = I_none;/* unrecoverable parse error: */
+                return result;          /* ignore this instruction */
             }
         }
 
@@ -515,15 +519,15 @@ is_expression:
             else if (result->eops->next &&
                      result->eops->next->type != EOT_DB_NUMBER)
                 nasm_error(ERR_NONFATAL, "`incbin': second parameter is"
-                      " non-numeric");
+                           " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->type != EOT_DB_NUMBER)
                 nasm_error(ERR_NONFATAL, "`incbin': third parameter is"
-                      " non-numeric");
+                           " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->next)
                 nasm_error(ERR_NONFATAL,
-                      "`incbin': more than three parameters");
+                           "`incbin': more than three parameters");
             else
                 return result;
             /*
@@ -541,8 +545,10 @@ is_expression:
         return result;
     }
 
-    /* right. Now we begin to parse the operands. There may be up to four
-     * of these, separated by commas, and terminated by a zero token. */
+    /*
+     * Now we begin to parse the operands. There may be up to four
+     * of these, separated by commas, and terminated by a zero token.
+     */
 
     for (operand = 0; operand < MAX_OPERANDS; operand++) {
         expr *value;            /* used most of the time */
@@ -551,11 +557,11 @@ is_expression:
         int setsize = 0;
 
         result->oprs[operand].disp_size = 0;    /* have to zero this whatever */
-        result->oprs[operand].eaflags = 0;      /* and this */
-        result->oprs[operand].opflags = 0;
+        result->oprs[operand].eaflags   = 0;    /* and this */
+        result->oprs[operand].opflags   = 0;
 
         i = stdscan(NULL, &tokval);
-        if (i == 0)
+        if (i == TOKEN_EOS)
             break;              /* end of operands: get out of here */
         else if (first && i == ':') {
             insn_is_label = true;
@@ -834,23 +840,23 @@ is_expression:
             result->oprs[operand].offset = o;
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
-                result->oprs[operand].type |= IMMEDIATE;
-                result->oprs[operand].opflags |= OPFLAG_UNKNOWN;
-                result->oprs[operand].offset = 0;       /* don't care */
-                result->oprs[operand].segment = NO_SEG; /* don't care again */
-                result->oprs[operand].wrt = NO_SEG;     /* still don't care */
+                result->oprs[operand].type      |= IMMEDIATE;
+                result->oprs[operand].opflags   |= OPFLAG_UNKNOWN;
+                result->oprs[operand].offset    = 0;        /* don't care */
+                result->oprs[operand].segment   = NO_SEG;   /* don't care again */
+                result->oprs[operand].wrt       = NO_SEG;   /* still don't care */
 
-                if(optimizing >= 0 && !(result->oprs[operand].type & STRICT))
-                {
+                if(optimizing >= 0 && !(result->oprs[operand].type & STRICT)) {
                     /* Be optimistic */
                     result->oprs[operand].type |=
-			SBYTE16 | SBYTE32 | SBYTE64 | UDWORD64 | SDWORD64;
+                            SBYTE16 | SBYTE32 | SBYTE64 | UDWORD64 | SDWORD64;
                 }
             } else if (is_reloc(value)) {       /* it's immediate */
-                result->oprs[operand].type |= IMMEDIATE;
-                result->oprs[operand].offset = reloc_value(value);
-                result->oprs[operand].segment = reloc_seg(value);
-                result->oprs[operand].wrt = reloc_wrt(value);
+                result->oprs[operand].type      |= IMMEDIATE;
+                result->oprs[operand].offset    = reloc_value(value);
+                result->oprs[operand].segment   = reloc_seg(value);
+                result->oprs[operand].wrt       = reloc_wrt(value);
+
                 if (is_simple(value)) {
                     if (reloc_value(value) == 1)
                         result->oprs[operand].type |= UNITY;
@@ -860,17 +866,17 @@ is_expression:
                         int32_t v32 = (int32_t)v64;
                         int16_t v16 = (int16_t)v32;
 
-			if (v64 >= -128 && v64 <= 127)
+                        if (v64 >= -128 && v64 <= 127)
                             result->oprs[operand].type |= SBYTE64;
-			if (v32 >= -128 && v32 <= 127)
+                        if (v32 >= -128 && v32 <= 127)
                             result->oprs[operand].type |= SBYTE32;
-			if (v16 >= -128 && v16 <= 127)
+                        if (v16 >= -128 && v16 <= 127)
                             result->oprs[operand].type |= SBYTE16;
-			if ((uint64_t)v64 <= UINT64_C(0xffffffff))
-			    result->oprs[operand].type |= UDWORD64;
-			if (v64 >= -INT64_C(0x80000000) &&
-			    v64 <=  INT64_C(0x7fffffff))
-			    result->oprs[operand].type |= SDWORD64;
+                        if ((uint64_t)v64 <= UINT64_C(0xffffffff))
+                            result->oprs[operand].type |= UDWORD64;
+                        if (v64 >= -INT64_C(0x80000000) &&
+                            v64 <=  INT64_C(0x7fffffff))
+                            result->oprs[operand].type |= SDWORD64;
                     }
                 }
             } else {            /* it's a register */
@@ -902,10 +908,10 @@ is_expression:
                 } else
                     rs = 0;
 
-                result->oprs[operand].type &= TO;
-                result->oprs[operand].type |= REGISTER;
-                result->oprs[operand].type |= nasm_reg_flags[value->type];
-                result->oprs[operand].basereg = value->type;
+                result->oprs[operand].type      &= TO;
+                result->oprs[operand].type      |= REGISTER;
+                result->oprs[operand].type      |= nasm_reg_flags[value->type];
+                result->oprs[operand].basereg   = value->type;
 
                 if (rs && (result->oprs[operand].type & SIZE_MASK) != rs)
                     nasm_error(ERR_WARNING | ERR_PASS1,
@@ -957,13 +963,14 @@ is_expression:
 
 static int is_comma_next(void)
 {
+    struct tokenval tv;
     char *p;
     int i;
-    struct tokenval tv;
 
     p = stdscan_get();
     i = stdscan(NULL, &tv);
     stdscan_set(p);
+
     return (i == ',' || i == ';' || !i);
 }
 
