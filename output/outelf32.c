@@ -153,11 +153,11 @@ struct symlininfo {
 };
 
 struct linelist {
-    struct symlininfo info;
-    int line;
-    char *filename;
     struct linelist *next;
     struct linelist *last;
+    struct symlininfo info;
+    char *filename;
+    int line;
 };
 
 struct sectlist {
