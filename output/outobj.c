@@ -570,11 +570,15 @@ static struct ExtBack {
 
 static struct Segment {
     struct Segment *next;
+    char *name;
     int32_t index;                 /* the NASM segment id */
     int32_t obj_index;             /* the OBJ-file segment index */
     struct Group *grp;          /* the group it beint32_ts to */
     uint32_t currentpos;
     int32_t align;                 /* can be SEG_ABS + absolute addr */
+    struct Public *pubhead, **pubtail, *lochead, **loctail;
+    char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
+    ObjRecord *orp;
     enum {
         CMB_PRIVATE = 0,
         CMB_PUBLIC = 2,
@@ -582,10 +586,6 @@ static struct Segment {
         CMB_COMMON = 6
     } combine;
     bool use32;                 /* is this segment 32-bit? */
-    struct Public *pubhead, **pubtail, *lochead, **loctail;
-    char *name;
-    char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
-    ObjRecord *orp;
 } *seghead, **segtail, *obj_seg_needs_update;
 
 static struct Group {
