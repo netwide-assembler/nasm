@@ -1801,10 +1801,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 }
 
                 if (process_ea(opy, &ea_data, bits, ins->addr_size,
-                               rfield, rflags) != eat) {
+                               rfield, rflags) != eat)
                     errfunc(ERR_NONFATAL, "invalid effective address");
-                }
-
 
                 p = bytes;
                 *p++ = ea_data.modrm;
