@@ -186,6 +186,12 @@ typedef struct {
     uint8_t modrm, sib, rex, rip; /* the bytes themselves */
 } ea;
 
+#define GEN_SIB(scale, index, base)                 \
+        (((scale) << 6) | ((index) << 3) | ((base)))
+
+#define GEN_MODRM(mod, reg, rm)                     \
+        (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
+
 static uint32_t cpu;            /* cpu level received from nasm.c */
 static efunc errfunc;
 static struct ofmt *outfmt;
@@ -2178,39 +2184,44 @@ static enum match_result matches(const struct itemplate *itemp,
     return MOK_GOOD;
 }
 
-static enum ea_type process_ea(operand * input, ea * output, int bits,
+static enum ea_type process_ea(operand *input, ea *output, int bits,
                                int addrbits, int rfield, opflags_t rflags)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
 
-    output->type = EA_SCALAR;
-    output->rip = false;
+    output->type    = EA_SCALAR;
+    output->rip     = false;
 
     /* REX flags for the rfield operand */
-    output->rex |= rexflags(rfield, rflags, REX_R | REX_P | REX_W | REX_H);
+    output->rex     |= rexflags(rfield, rflags, REX_R | REX_P | REX_W | REX_H);
 
-    if (is_class(REGISTER, input->type)) {  /* register direct */
-        int i;
+    if (is_class(REGISTER, input->type)) {
+        /*
+         * It's a direct register.
+         */
         opflags_t f;
 
         if (!is_register(input->basereg))
             goto err;
-        f = regflag(input);
-        i = nasm_regvals[input->basereg];
 
-        if (REG_EA & ~f)
+        f = regflag(input);
+
+        if (!is_class(REG_EA, f))
             goto err;
 
-        output->rex |= op_rexflags(input, REX_B | REX_P | REX_W | REX_H);
-
+        output->rex         |= op_rexflags(input, REX_B | REX_P | REX_W | REX_H);
         output->sib_present = false;    /* no SIB necessary */
-        output->bytes = 0;              /* no offset necessary either */
-        output->modrm = 0xC0 | ((rfield & 7) << 3) | (i & 7);
-    } else {                    /* it's a memory reference */
+        output->bytes       = 0;        /* no offset necessary either */
+        output->modrm       = GEN_MODRM(3, rfield, nasm_regvals[input->basereg]);
+    } else {
+        /*
+         * It's a memory reference.
+         */
         if (input->basereg == -1 &&
             (input->indexreg == -1 || input->scale == 0)) {
-            /* it's a pure offset */
-
+            /*
+             * It's a pure offset.
+             */
             if (bits == 64 && ((input->type & IP_REL) == IP_REL) &&
                 input->segment == NO_SEG) {
                 nasm_error(ERR_WARNING | ERR_PASS1, "absolute address can not be RIP-relative");
@@ -2225,22 +2236,21 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
             }
 
             if (bits == 64 && (~input->type & IP_REL)) {
-                int scale, index, base;
                 output->sib_present = true;
-                scale = 0;
-                index = 4;
-                base = 5;
-                output->sib = (scale << 6) | (index << 3) | base;
-                output->bytes = 4;
-                output->modrm = 4 | ((rfield & 7) << 3);
-                output->rip = false;
+                output->sib         = GEN_SIB(0, 4, 5);
+                output->bytes       = 4;
+                output->modrm       = GEN_MODRM(0, rfield, 4);
+                output->rip         = false;
             } else {
                 output->sib_present = false;
-                output->bytes = (addrbits != 16 ? 4 : 2);
-                output->modrm = (addrbits != 16 ? 5 : 6) | ((rfield & 7) << 3);
-                output->rip = bits == 64;
+                output->bytes       = (addrbits != 16 ? 4 : 2);
+                output->modrm       = GEN_MODRM(0, rfield, (addrbits != 16 ? 5 : 6));
+                output->rip         = bits == 64;
             }
-        } else {                /* it's an indirection */
+        } else {
+            /*
+             * It's an indirection.
+             */
             int i = input->indexreg, b = input->basereg, s = input->scale;
             int32_t seg = input->segment;
             int hb = input->hintbase, ht = input->hinttype;
@@ -2351,9 +2361,9 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
                 }
 
                 output->sib_present = true;
-                output->bytes = (bt == -1 || mod == 2 ? 4 : mod);
-                output->modrm = (mod << 6) | ((rfield & 7) << 3) | 4;
-                output->sib = (scale << 6) | (index << 3) | base;
+                output->bytes       = (bt == -1 || mod == 2 ? 4 : mod);
+                output->modrm       = GEN_MODRM(mod, rfield, 4);
+                output->sib         = GEN_SIB(scale, index, base);
             } else if ((ix|bx) & (BITS32|BITS64)) {
                 /*
                  * it must be a 32/64-bit memory reference. Firstly we have
@@ -2445,8 +2455,8 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
                     }
 
                     output->sib_present = false;
-                    output->bytes = (bt == -1 || mod == 2 ? 4 : mod);
-                    output->modrm = (mod << 6) | ((rfield & 7) << 3) | rm;
+                    output->bytes       = (bt == -1 || mod == 2 ? 4 : mod);
+                    output->modrm       = GEN_MODRM(mod, rfield, rm);
                 } else {
                     /* we need a SIB */
                     int mod, scale, index, base;
@@ -2492,9 +2502,9 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
                     }
 
                     output->sib_present = true;
-                    output->bytes = (bt == -1 || mod == 2 ? 4 : mod);
-                    output->modrm = (mod << 6) | ((rfield & 7) << 3) | 4;
-                    output->sib = (scale << 6) | (index << 3) | base;
+                    output->bytes       = (bt == -1 || mod == 2 ? 4 : mod);
+                    output->modrm       = GEN_MODRM(mod, rfield, 4);
+                    output->sib         = GEN_SIB(scale, index, base);
                 }
             } else {            /* it's 16-bit */
                 int mod, rm;
@@ -2578,8 +2588,8 @@ static enum ea_type process_ea(operand * input, ea * output, int bits,
                     mod = 2;
 
                 output->sib_present = false;    /* no SIB - it's 16-bit */
-                output->bytes = mod;            /* bytes of offset needed */
-                output->modrm = (mod << 6) | ((rfield & 7) << 3) | rm;
+                output->bytes       = mod;      /* bytes of offset needed */
+                output->modrm       = GEN_MODRM(mod, rfield, rm);
             }
         }
     }
