@@ -3294,24 +3294,24 @@ VPSRLVQ		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w1 45 /r]		FUTURE,AV
 VPSRLVD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w0 45 /r]		FUTURE,AVX2
 VPSRLVQ		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38.w1 45 /r]		FUTURE,AVX2
 
-VGATHERDPD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 92 /r]	FUTURE,AVX2
+VGATHERDPD	xmmreg,mem64,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 92 /r]	FUTURE,AVX2
 VGATHERQPD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 93 /r]	FUTURE,AVX2
-VGATHERDPD	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
+VGATHERDPD	ymmreg,mem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
 VGATHERQPD	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 92 /r]	FUTURE,AVX2
 
 VGATHERDPS	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w0 92 /r]	FUTURE,AVX2
-VGATHERQPS	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 93 /r]	FUTURE,AVX2
+VGATHERQPS	xmmreg,mem32,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 93 /r]	FUTURE,AVX2
 VGATHERDPS	ymmreg,mem32,ymmreg		[rmv:	vm32y vex.dds.256.66.0f38.w0 92 /r]	FUTURE,AVX2
-VGATHERQPS	xmmreg,mem64,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 93 /r]	FUTURE,AVX2
+VGATHERQPS	xmmreg,mem32,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 93 /r]	FUTURE,AVX2
 
 VPGATHERDD	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w0 90 /r]	FUTURE,AVX2
-VPGATHERQD	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 91 /r]	FUTURE,AVX2
+VPGATHERQD	xmmreg,mem32,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w0 91 /r]	FUTURE,AVX2
 VPGATHERDD	ymmreg,mem32,ymmreg		[rmv:	vm32y vex.dds.256.66.0f38.w0 90 /r]	FUTURE,AVX2
-VPGATHERQD	xmmreg,mem64,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 91 /r]	FUTURE,AVX2
+VPGATHERQD	xmmreg,mem32,xmmreg		[rmv:	vm64y vex.dds.256.66.0f38.w0 91 /r]	FUTURE,AVX2
 
-VPGATHERDQ	xmmreg,mem32,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 90 /r]	FUTURE,AVX2
+VPGATHERDQ	xmmreg,mem64,xmmreg		[rmv:	vm32x vex.dds.128.66.0f38.w1 90 /r]	FUTURE,AVX2
 VPGATHERQQ	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 91 /r]	FUTURE,AVX2
-VPGATHERDQ	ymmreg,mem32,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
+VPGATHERDQ	ymmreg,mem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
 VPGATHERQQ	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
 ;# Intel BMI1 and BMI2 instructions
