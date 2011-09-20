@@ -81,7 +81,7 @@ win32:  .SYMBOLIC
     @%make all
 
 os2:    .SYMBOLIC
-    @set TARGET_CFLAGS=-bt=NT -I"$(%WATCOM)/h" -I"$(%WATCOM)/h/os2"
+    @set TARGET_CFLAGS=-bt=OS2 -I"$(%WATCOM)/h" -I"$(%WATCOM)/h/os2"
     @set TARGET_LFLAGS=sys os2v2
     @%make all
 
