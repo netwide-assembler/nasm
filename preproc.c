@@ -1910,8 +1910,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 
     case PPC_IFDEF:
         j = false;              /* have we matched yet? */
-        while (tline) {
-            skip_white_(tline);
+        skip_white_(tline);
+        do {
             if (!tline || (tline->type != TOK_ID &&
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
@@ -1922,7 +1922,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (smacro_defined(NULL, tline->text, 0, NULL, true))
                 j = true;
             tline = tline->next;
-        }
+            skip_white_(tline);
+        } while (tline);
         break;
 
     case PPC_IFENV:
