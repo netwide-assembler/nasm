@@ -400,14 +400,14 @@ static int LocalOffset = 0;
 
 static Context *cstk;
 static Include *istk;
-static IncPath *ipath = NULL;
+static IncPath *ipath;
 
 static int pass;            /* HACK: pass 0 = generate dependencies only */
 static StrList **dephead, **deptail; /* Dependency list */
 
 static uint64_t unique;     /* unique identifier numbers */
 
-static Line *predef = NULL;
+static Line *predef;
 static bool do_predef;
 
 static ListGen *list;
@@ -425,12 +425,12 @@ static struct hash_table smacros;
 /*
  * Linked List of all active expansion definitions
  */
-struct ExpDef *expansions = NULL;
+struct ExpDef *expansions;
 
 /*
  * The expansion we are currently defining
  */
-static ExpDef *defining = NULL;
+static ExpDef *defining;
 
 static uint64_t nested_mac_count;
 static uint64_t nested_rep_count;
@@ -438,7 +438,7 @@ static uint64_t nested_rep_count;
 /*
  * Linked-list of lines to preprocess, prior to cleanup
  */
-static Line *finals = NULL;
+static Line *finals;
 static bool in_final = false;
 
 /*
@@ -456,20 +456,20 @@ static macros_t *stdmacpos;
  * The extra standard macros that come from the object format, if
  * any.
  */
-static macros_t *extrastdmac = NULL;
+static macros_t *extrastdmac;
 static bool any_extrastdmac;
 
 /*
  * Tokens are allocated in blocks to improve speed
  */
 #define TOKEN_BLOCKSIZE 4096
-static Token *freeTokens = NULL;
+static Token *freeTokens;
 struct Blocks {
     Blocks *next;
     void *chunk;
 };
 
-static Blocks blocks = { NULL, NULL };
+static Blocks blocks;
 
 /*
  * Forward declarations.
