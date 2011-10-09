@@ -143,11 +143,19 @@ struct Context {
  * quote to use on the filename we were passed.
  */
 enum pp_token_type {
-    TOK_NONE = 0, TOK_WHITESPACE, TOK_COMMENT, TOK_ID,
-    TOK_PREPROC_ID, TOK_STRING,
-    TOK_NUMBER, TOK_FLOAT, TOK_SMAC_END, TOK_OTHER,
+    TOK_NONE = 0,
+    TOK_WHITESPACE,
+    TOK_COMMENT,
+    TOK_ID,
+    TOK_PREPROC_ID,
+    TOK_STRING,
+    TOK_NUMBER,
+    TOK_FLOAT,
+    TOK_SMAC_END,
+    TOK_OTHER,
     TOK_INTERNAL_STRING,
-    TOK_PREPROC_Q, TOK_PREPROC_QQ,
+    TOK_PREPROC_Q,
+    TOK_PREPROC_QQ,
     TOK_PASTE,              /* %+ */
     TOK_INDIRECT,           /* %[...] */
     TOK_SMAC_PARAM,         /* MUST BE LAST IN THE LIST!!! */
@@ -190,10 +198,14 @@ struct Line {
  * Expansion Types
  */
 enum pp_exp_type {
-    EXP_NONE = 0, EXP_PREDEF,
-    EXP_MMACRO, EXP_REP,
-    EXP_IF, EXP_WHILE,
-    EXP_COMMENT, EXP_FINAL,
+    EXP_NONE = 0,
+    EXP_PREDEF,
+    EXP_MMACRO,
+    EXP_REP,
+    EXP_IF,
+    EXP_WHILE,
+    EXP_COMMENT,
+    EXP_FINAL,
     EXP_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
 
@@ -306,13 +318,15 @@ enum {
      * up. In these states, all directives are admissible: %elif,
      * %else and %endif. (And of course %if.)
      */
-    COND_IF_TRUE, COND_IF_FALSE,
+    COND_IF_TRUE,
+    COND_IF_FALSE,
     /*
      * These states come up after a %else: ELSE_TRUE means we're
      * emitting, and ELSE_FALSE means we're not. In ELSE_* states,
      * any %elif or %else will cause an error.
      */
-    COND_ELSE_TRUE, COND_ELSE_FALSE,
+    COND_ELSE_TRUE,
+    COND_ELSE_FALSE,
     /*
      * These states mean that we're not emitting now, and also that
      * nothing until %endif will be emitted at all. COND_DONE is
@@ -322,7 +336,8 @@ enum {
      * non-emitting branch of a larger condition construct,
      * or if there is an error.
      */
-    COND_DONE, COND_NEVER
+    COND_DONE,
+    COND_NEVER
 };
 
 /*
@@ -4937,7 +4952,8 @@ static bool expand_mmacro(Token * tline)
      * trailing whitespace, then stripping braces if they are
      * present.
      */
-    for (nparam = 0; params[nparam]; nparam++) ;
+    for (nparam = 0; params[nparam]; nparam++)
+        ;
     paramlen = nparam ? nasm_malloc(nparam * sizeof(*paramlen)) : NULL;
 
     for (i = 0; params[i]; i++) {
@@ -5014,9 +5030,8 @@ static bool expand_mmacro(Token * tline)
                     break;
                 }
             }
-            if (dont_prepend < 0) {
+            if (dont_prepend < 0)
                 break;
-            }
         }
         ed->prepend = ((dont_prepend < 0) ? -1 : 1);
     }
@@ -5067,8 +5082,9 @@ static void verror(int severity, const char *fmt, va_list arg)
         }
         nasm_error(severity, "(%s:%d) %s", ei->def->name,
                    lineno, buff);
-    } else
+    } else {
         nasm_error(severity, "%s", buff);
+    }
 }
 
 /*
@@ -5126,11 +5142,10 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
     nested_rep_count = 0;
     init_macros();
     unique = 0;
-    if (tasm_compatible_mode) {
+    if (tasm_compatible_mode)
         stdmacpos = nasm_stdmac;
-    } else {
+    else
         stdmacpos = nasm_stdmac_after_tasm;
-    }
     any_extrastdmac = extrastdmac && *extrastdmac;
     do_predef = true;
     list = listgen;
@@ -5299,19 +5314,17 @@ static char *pp_getline(void)
                 list->downlevel(LIST_INCLUDE);
                 nasm_free(i);
                 if (istk == NULL) {
-                    if (finals != NULL) {
+                    if (finals != NULL)
                         in_final = true;
-                    } else {
+                    else
                         return NULL;
-                    }
                 }
                 continue;
             }
         }
 
-        if (defining == NULL) {
+        if (defining == NULL)
             tline = expand_mmac_params(tline);
-        }
 
         /*
          * Check the line to see if it's a preprocessor directive.
