@@ -1998,8 +1998,8 @@ VBROADCASTSS	ymmreg,mem32			[rm:	vex.256.66.0f38.w0 18 /r]		AVX,SANDYBRIDGE
 VBROADCASTSD	ymmreg,mem64			[rm:	vex.256.66.0f38.w0 19 /r]		AVX,SANDYBRIDGE
 VBROADCASTF128	ymmreg,mem128			[rm:	vex.256.66.0f38.w0 1a /r]		AVX,SANDYBRIDGE
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQ_OSPD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f c2 /r 00]		AVX,SANDYBRIDGE
-VCMPEQ_OSPD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f c2 /r 00]		AVX,SANDYBRIDGE
+VCMPEQ_OSPD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f c2 /r 10]		AVX,SANDYBRIDGE
+VCMPEQ_OSPD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f c2 /r 10]		AVX,SANDYBRIDGE
 VCMPEQPD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPEQPD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPLT_OSPD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f c2 /r 01]		AVX,SANDYBRIDGE
@@ -2093,8 +2093,8 @@ VCMPTRUE_USPD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f c2 /r 1f]		AVX,SA
 VCMPPD		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f c2 /r ib]		AVX,SANDYBRIDGE
 VCMPPD		ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.66.0f c2 /r ib]		AVX,SANDYBRIDGE
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQ_OSPS	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f c2 /r 00]		AVX,SANDYBRIDGE
-VCMPEQ_OSPS	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f c2 /r 00]		AVX,SANDYBRIDGE
+VCMPEQ_OSPS	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f c2 /r 10]		AVX,SANDYBRIDGE
+VCMPEQ_OSPS	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f c2 /r 10]		AVX,SANDYBRIDGE
 VCMPEQPS	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPEQPS	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPLT_OSPS	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f c2 /r 01]		AVX,SANDYBRIDGE
@@ -2188,7 +2188,7 @@ VCMPTRUE_USPS	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f c2 /r 1f]		AVX,SANDY
 VCMPPS		xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.0f c2 /r ib]		AVX,SANDYBRIDGE
 VCMPPS		ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:	vex.nds.256.0f c2 /r ib]		AVX,SANDYBRIDGE
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQ_OSSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 00]		AVX,SANDYBRIDGE
+VCMPEQ_OSSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 10]		AVX,SANDYBRIDGE
 VCMPEQSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPLT_OSSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 01]		AVX,SANDYBRIDGE
 VCMPLTSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 01]		AVX,SANDYBRIDGE
@@ -2236,7 +2236,7 @@ VCMPGT_OQSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 1e]		AVX,SANDY
 VCMPTRUE_USSD	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f c2 /r 1f]		AVX,SANDYBRIDGE
 VCMPSD		xmmreg,xmmreg*,xmmrm64,imm8	[rvmi:	vex.nds.lig.f2.0f c2 /r ib]		AVX,SANDYBRIDGE
 ; Specific aliases first, then the generic version, to keep the disassembler happy...
-VCMPEQ_OSSS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f3.0f c2 /r 00]		AVX,SANDYBRIDGE
+VCMPEQ_OSSS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f3.0f c2 /r 10]		AVX,SANDYBRIDGE
 VCMPEQSS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f3.0f c2 /r 00]		AVX,SANDYBRIDGE
 VCMPLT_OSSS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f3.0f c2 /r 01]		AVX,SANDYBRIDGE
 VCMPLTSS	xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f3.0f c2 /r 01]		AVX,SANDYBRIDGE
