@@ -833,8 +833,8 @@ MOV		mem,imm8			[mi:	c6 /0 ib]				8086,SM
 MOV		mem,imm16			[mi:	o16 c7 /0 iw]				8086,SM
 MOV		mem,imm32			[mi:	o32 c7 /0 id]				386,SM
 
-MOVD		mmxreg,rm32			[rm:	np 0f 6e /r]				PENT,MMX,SSE2
-MOVD		rm32,mmxreg			[mr:	np 0f 7e /r]				PENT,MMX,SSE2
+MOVD		mmxreg,rm32			[rm:	np 0f 6e /r]				PENT,MMX
+MOVD		rm32,mmxreg			[mr:	np 0f 7e /r]				PENT,MMX
 MOVD		xmmreg,rm32			[rm:	np o16 0f 6e /r]			SSE2
 MOVD		rm32,xmmreg			[mr:	np o16 0f 7e /r]			SSE2
 MOVQ		mmxreg,mmxrm			[rm:	np o64nw 0f 6f /r]			PENT,MMX,SQ
