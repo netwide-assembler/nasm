@@ -68,7 +68,7 @@ void parser_global_info(struct location * locp)
     location = locp;
 }
 
-static int prefix_slot(enum prefixes prefix)
+static int prefix_slot(int prefix)
 {
     switch (prefix) {
     case P_WAIT:

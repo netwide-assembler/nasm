@@ -213,7 +213,7 @@ static void add_asp(insn *, int);
 
 static enum ea_type process_ea(operand *, ea *, int, int, int, opflags_t);
 
-static int has_prefix(insn * ins, enum prefix_pos pos, enum prefixes prefix)
+static int has_prefix(insn * ins, enum prefix_pos pos, int prefix)
 {
     return ins->prefixes[pos] == prefix;
 }

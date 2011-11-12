@@ -561,7 +561,7 @@ enum prefix_pos {
 
 typedef struct insn { /* an instruction itself */
     char            *label;                 /* the label defined, or NULL */
-    enum prefixes   prefixes[MAXPREFIX];    /* instruction prefixes, if any */
+    int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
     enum opcode     opcode;                 /* the opcode - not just the string */
     enum ccode      condition;              /* the condition code, if Jcc/SETcc */
     int             operands;               /* how many operands? 0-3 (more if db et al) */
