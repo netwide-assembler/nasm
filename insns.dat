@@ -2485,7 +2485,7 @@ VPCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	vex.128.66.0f3a 62 /r ib]		AVX,SANDYBRIDG
 VPCMPEQB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 74 /r]		AVX,SANDYBRIDGE
 VPCMPEQW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 75 /r]		AVX,SANDYBRIDGE
 VPCMPEQD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 76 /r]		AVX,SANDYBRIDGE
-VPCMPEQQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 29 /r]		AVX,SANDYBRIDGE
+VPCMPEQQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 29 /r]		AVX,SANDYBRIDGE
 VPCMPGTB	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 64 /r]		AVX,SANDYBRIDGE
 VPCMPGTW	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 65 /r]		AVX,SANDYBRIDGE
 VPCMPGTD	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 66 /r]		AVX,SANDYBRIDGE
