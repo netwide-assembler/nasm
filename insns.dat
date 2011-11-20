@@ -832,7 +832,6 @@ MOV		rm64,imm32			[mi:	o64 c7 /0 idx]				X64
 MOV		mem,imm8			[mi:	c6 /0 ib]				8086,SM
 MOV		mem,imm16			[mi:	o16 c7 /0 iw]				8086,SM
 MOV		mem,imm32			[mi:	o32 c7 /0 id]				386,SM
-
 MOVD		mmxreg,rm32			[rm:	np 0f 6e /r]				PENT,MMX
 MOVD		rm32,mmxreg			[mr:	np 0f 7e /r]				PENT,MMX
 MOVD		xmmreg,rm32			[rm:	np o16 0f 6e /r]			SSE2
@@ -841,16 +840,6 @@ MOVQ		mmxreg,mmxrm			[rm:	np o64nw 0f 6f /r]			PENT,MMX,SQ
 MOVQ		mmxrm,mmxreg			[mr:	np o64nw 0f 7f /r]			PENT,MMX,SQ
 MOVQ		mmxreg,rm64			[rm:	np 0f 6e /r]				X64,MMX
 MOVQ		rm64,mmxreg			[mr:	np 0f 7e /r]				X64,MMX
-;
-; AMD's notation uses MOVD for 64bit GPRs so in a sake of compatibility
-; we bring aliases here, note the order is important and they should be
-; placed after Intel's MOVD/MOVQ.
-;
-MOVD		mmxreg,mmxrm			[rm:	np o64nw 0f 6f /r]			PENT,MMX,SQ
-MOVD		mmxrm,mmxreg			[mr:	np o64nw 0f 7f /r]			PENT,MMX,SQ
-MOVD		mmxreg,rm64			[rm:	np 0f 6e /r]				X64,MMX
-MOVD		rm64,mmxreg			[mr:	np 0f 7e /r]				X64,MMX
-
 MOVSB		void				[	a4]					8086
 MOVSD		void				[	o32 a5]					386
 MOVSQ		void				[	o64 a5]					X64
