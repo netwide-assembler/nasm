@@ -4461,9 +4461,10 @@ again:
              * all, then think about checking for parameters if
              * necessary.
              */
-            list_for_each(m, head)
+            list_for_each(m, head) {
                 if (!mstrcmp(m->name, mname, m->casesense))
                     break;
+            }
             if (m) {
                 mstart = tline;
                 params = NULL;
@@ -4827,9 +4828,10 @@ static ExpDef *is_mmacro(Token * tline, Token *** params_array)
      * count the parameters, and then we look further along the
      * list if necessary to find the proper ExpDef.
      */
-    list_for_each(ed, head)
+    list_for_each(ed, head) {
         if (!mstrcmp(ed->name, tline->text, ed->casesense))
             break;
+    }
     if (!ed)
         return NULL;
 
@@ -4882,9 +4884,10 @@ static ExpDef *is_mmacro(Token * tline, Token *** params_array)
          * This one wasn't right: look for the next one with the
          * same name.
          */
-        list_for_each(ed, ed->next)
+        list_for_each(ed, ed->next) {
             if (!mstrcmp(ed->name, tline->text, ed->casesense))
                 break;
+        }
     }
 
     /*
