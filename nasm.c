@@ -1915,8 +1915,7 @@ static bool is_suppressed_warning(int severity)
 
     /* Might be a warning but suppresed explicitly */
     if (severity & ERR_WARN_MASK) {
-        int index = (severity & ERR_WARN_MASK) >> ERR_WARN_SHR;
-        if (warning_on[index])
+        if (warning_on[WARN_IDX(severity)])
             return false;
     }
 
@@ -1979,7 +1978,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         /* no further action, by definition */
         break;
     case ERR_WARNING:
-	if (warning_on[0])	/* Treat warnings as errors */
+	/* Treat warnings as errors */
+	if (warning_on[WARN_IDX(ERR_WARN_TERM)])
 	    terminate_after_phase = true;
 	break;
     case ERR_NONFATAL:

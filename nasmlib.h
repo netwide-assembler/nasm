@@ -116,8 +116,10 @@ void nasm_set_verror(vefunc);
 #define ERR_WARN_MASK   0xFFFFF000      /* the mask for this feature */
 #define ERR_WARN_SHR    12              /* how far to shift right */
 
-#define WARN(x) ((x) << ERR_WARN_SHR)
+#define WARN(x)         ((x) << ERR_WARN_SHR)
+#define WARN_IDX(x)     (((x) & ERR_WARN_MASK) >> ERR_WARN_SHR)
 
+#define ERR_WARN_TERM           WARN( 0) /* treat warnings as errors */
 #define ERR_WARN_MNP            WARN( 1) /* macro-num-parameters warning */
 #define ERR_WARN_MSR            WARN( 2) /* macro self-reference */
 #define ERR_WARN_MDP            WARN( 3) /* macro default parameters check */
