@@ -1100,8 +1100,9 @@ static void parse_cmdline(int argc, char **argv)
     int i;
 
     *inname = *outname = *listname = *errname = '\0';
+
     for (i = 0; i <= ERR_WARN_MAX; i++)
-	warning_on_global[i] = warnings[i].enabled;
+        warning_on_global[i] = warnings[i].enabled;
 
     /*
      * First, process the NASMENV environment variable.
@@ -1117,23 +1118,24 @@ static void parse_cmdline(int argc, char **argv)
      * Now process the actual command line.
      */
     while (--argc) {
-	bool advance;
+        bool advance;
         argv++;
         if (argv[0][0] == '@') {
-            /* We have a response file, so process this as a set of
+            /*
+             * We have a response file, so process this as a set of
              * arguments like the environment variable. This allows us
              * to have multiple arguments on a single line, which is
              * different to the -@resp file processing below for regular
              * NASM.
              */
-	    process_response_file(argv[0]+1);
+            process_response_file(argv[0]+1);
             argc--;
             argv++;
         }
         if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-	    p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &advance);
+            p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &advance);
             if (p) {
-		rfile = fopen(p, "r");
+                rfile = fopen(p, "r");
                 if (rfile) {
                     process_respfile(rfile);
                     fclose(rfile);
@@ -1146,27 +1148,29 @@ static void parse_cmdline(int argc, char **argv)
         argv += advance, argc -= advance;
     }
 
-    /* Look for basic command line typos.  This definitely doesn't
-       catch all errors, but it might help cases of fumbled fingers. */
+    /*
+     * Look for basic command line typos. This definitely doesn't
+     * catch all errors, but it might help cases of fumbled fingers.
+     */
     if (!*inname)
         nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                     "no input file specified");
-    else if (!strcmp(inname, errname) ||
-	     !strcmp(inname, outname) ||
-	     !strcmp(inname, listname) ||
-	     (depend_file && !strcmp(inname, depend_file)))
-	nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-		     "file `%s' is both input and output file",
-		     inname);
+                   "no input file specified");
+    else if (!strcmp(inname, errname)   ||
+             !strcmp(inname, outname)   ||
+             !strcmp(inname, listname)  ||
+             (depend_file && !strcmp(inname, depend_file)))
+        nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                   "file `%s' is both input and output file",
+                   inname);
 
     if (*errname) {
-	error_file = fopen(errname, "w");
-	if (!error_file) {
-	    error_file = stderr;        /* Revert to default! */
-	    nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-			 "cannot open file `%s' for error messages",
-			 errname);
-	}
+        error_file = fopen(errname, "w");
+        if (!error_file) {
+            error_file = stderr;        /* Revert to default! */
+            nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                       "cannot open file `%s' for error messages",
+                       errname);
+        }
     }
 }
 
