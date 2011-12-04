@@ -868,20 +868,22 @@ static bool process_arg(char *p, char *q)
 	    param++;
 
 set_warning:
-	    for (i = 0; i <= ERR_WARN_MAX; i++)
-		if (!nasm_stricmp(param, warnings[i].name))
-		    break;
-	    if (i <= ERR_WARN_MAX)
-		warning_on_global[i] = do_warn;
-	    else if (!nasm_stricmp(param, "all"))
-		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    warning_on_global[i] = do_warn;
-	    else if (!nasm_stricmp(param, "none"))
-		for (i = 1; i <= ERR_WARN_MAX; i++)
-		    warning_on_global[i] = !do_warn;
-	    else
-		nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-			     "invalid warning `%s'", param);
+            for (i = 0; i <= ERR_WARN_MAX; i++) {
+                if (!nasm_stricmp(param, warnings[i].name))
+                    break;
+            }
+            if (i <= ERR_WARN_MAX) {
+                warning_on_global[i] = do_warn;
+            } else if (!nasm_stricmp(param, "all")) {
+                for (i = 1; i <= ERR_WARN_MAX; i++)
+                    warning_on_global[i] = do_warn;
+            } else if (!nasm_stricmp(param, "none")) {
+                for (i = 1; i <= ERR_WARN_MAX; i++)
+                    warning_on_global[i] = !do_warn;
+            } else {
+                nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                           "invalid warning `%s'", param);
+            }
             break;
 
         case 'M':
