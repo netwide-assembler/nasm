@@ -408,8 +408,9 @@ int main(int argc, char **argv)
 
             location.known = false;
 
-	    /* pass = 1; */
+            /* pass = 1; */
             preproc->reset(inname, 3, &nasmlist, depend_ptr);
+            memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
             while ((line = preproc->getline())) {
                 /*
