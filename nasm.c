@@ -1908,15 +1908,24 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
  */
 static bool is_suppressed_warning(int severity)
 {
-    /*
-     * See if it's a suppressed warning.
-     */
-    return (severity & ERR_MASK) == ERR_WARNING &&
-	(((severity & ERR_WARN_MASK) != 0 &&
-	  !warning_on[(severity & ERR_WARN_MASK) >> ERR_WARN_SHR]) ||
-	 /* See if it's a pass-one only warning and we're not in pass one. */
-	 ((severity & ERR_PASS1) && pass0 != 1) ||
-	 ((severity & ERR_PASS2) && pass0 != 2));
+
+    /* Not a warning at all */
+    if ((severity & ERR_MASK) != ERR_WARNING)
+        return false;
+
+    /* Might be a warning but suppresed explicitly */
+    if (severity & ERR_WARN_MASK) {
+        int index = (severity & ERR_WARN_MASK) >> ERR_WARN_SHR;
+        if (warning_on[index])
+            return false;
+    }
+
+    /* See if it's a pass-one only warning and we're not in pass one. */
+    if (((severity & ERR_PASS1) && pass0 != 1) ||
+        ((severity & ERR_PASS2) && pass0 != 2))
+        return true;
+
+    return true;
 }
 
 /**
