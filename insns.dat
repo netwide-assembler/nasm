@@ -1746,8 +1746,8 @@ MOVMSKPD	reg32,xmmreg			[rm:	66 0f 50 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg64,xmmreg			[rm:	66 o64 0f 50 /r]			X64,SSE2
 MOVSD		xmmreg,xmmreg			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
 MOVSD		xmmreg,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
-MOVSD		mem,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
-MOVSD		xmmreg,mem			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
+MOVSD		mem64,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
+MOVSD		xmmreg,mem64			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
 MOVUPD		xmmreg,xmmreg			[rm:	66 0f 10 /r]				WILLAMETTE,SSE2
 MOVUPD		xmmreg,xmmreg			[mr:	66 0f 11 /r]				WILLAMETTE,SSE2
 MOVUPD		mem,xmmreg			[mr:	66 0f 11 /r]				WILLAMETTE,SSE2,SO
@@ -2424,9 +2424,9 @@ VMOVSHDUP	ymmreg,ymmrm256			[rm:	vex.256.f3.0f 16 /r]			AVX,SANDYBRIDGE
 VMOVSLDUP	xmmreg,xmmrm128			[rm:	vex.128.f3.0f 12 /r]			AVX,SANDYBRIDGE
 VMOVSLDUP	ymmreg,ymmrm256			[rm:	vex.256.f3.0f 12 /r]			AVX,SANDYBRIDGE
 VMOVSS		xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.lig.f3.0f 10 /r]		AVX,SANDYBRIDGE
-VMOVSS		xmmreg,mem64			[rm:	vex.lig.f3.0f 10 /r]			AVX,SANDYBRIDGE
+VMOVSS		xmmreg,mem32			[rm:	vex.lig.f3.0f 10 /r]			AVX,SANDYBRIDGE
 VMOVSS		xmmreg,xmmreg*,xmmreg		[mvr:	vex.nds.lig.f3.0f 11 /r]		AVX,SANDYBRIDGE
-VMOVSS		mem64,xmmreg			[mr:	vex.lig.f3.0f 11 /r]			AVX,SANDYBRIDGE
+VMOVSS		mem32,xmmreg			[mr:	vex.lig.f3.0f 11 /r]			AVX,SANDYBRIDGE
 VMOVUPD		xmmreg,xmmrm128			[rm:	vex.128.66.0f 10 /r]			AVX,SANDYBRIDGE
 VMOVUPD		xmmrm128,xmmreg			[mr:	vex.128.66.0f 11 /r]			AVX,SANDYBRIDGE
 VMOVUPD		ymmreg,ymmrm256			[rm:	vex.256.66.0f 10 /r]			AVX,SANDYBRIDGE
