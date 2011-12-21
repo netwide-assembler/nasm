@@ -1781,6 +1781,7 @@ MOVSLDUP	xmmreg,xmmrm			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
 ;# VMX Instructions
 VMCALL		void				[	0f 01 c1]				VMX
 VMCLEAR		mem				[m:	66 0f c7 /6]				VMX
+VMFUNC		void				[	0f 01 d4]				VMX
 VMLAUNCH	void				[	0f 01 c2]				VMX
 VMLOAD		void				[	0f 01 da]				X64,VMX
 VMMCALL		void				[	0f 01 d9]				X64,VMX
