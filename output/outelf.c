@@ -48,7 +48,7 @@
 #include "output/elf.h"
 #include "output/outelf.h"
 
-#if defined(OF_ELF32) || defined(OF_ELF64)
+#if defined(OF_ELF32) || defined(OF_ELF64) || defined(OF_ELFX32)
 
 const struct elf_known_section elf_known_sections[] = {
     { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },
@@ -120,4 +120,4 @@ void section_attrib(char *name, char *attr, int pass,
     }
 }
 
-#endif /* defined(OF_ELF32) || defined(OF_ELF64) */
+#endif /* defined(OF_ELF32) || defined(OF_ELF64) || defined(OF_ELFX32) */

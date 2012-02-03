@@ -106,6 +106,9 @@
 #ifndef OF_ELF32
 #define OF_ELF32
 #endif
+#ifndef OF_ELFX32
+#define OF_ELFX32
+#endif
 #ifndef OF_ELF64
 #define OF_ELF64
 #endif
@@ -179,6 +182,9 @@
 #ifndef OF_ELF64
 #define OF_ELF64
 #endif
+#ifndef OF_ELFX32
+#define OF_ELFX32
+#endif
 #endif
 
 #ifdef OF_OTHERS
@@ -214,6 +220,9 @@
 #endif
 #ifdef OF_NO_ELF64
 #undef OF_ELF64
+#endif
+#ifdef OF_NO_ELFX32
+#undef OF_ELFX32
 #endif
 #ifdef OF_NO_AOUT
 #undef OF_AOUT
@@ -260,6 +269,7 @@ extern struct ofmt of_aout;
 extern struct ofmt of_aoutb;
 extern struct ofmt of_coff;
 extern struct ofmt of_elf32;
+extern struct ofmt of_elfx32;
 extern struct ofmt of_elf64;
 extern struct ofmt of_as86;
 extern struct ofmt of_obj;
@@ -298,6 +308,9 @@ static struct ofmt *drivers[] = {
 #endif
 #ifdef OF_ELF64
     &of_elf64,
+#endif
+#ifdef OF_ELFX32
+    &of_elfx32,
 #endif
 #ifdef OF_AS86
     &of_as86,

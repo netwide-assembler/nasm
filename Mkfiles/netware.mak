@@ -39,6 +39,7 @@ NASM =	nasm.o nasmlib.o ver.o \
 	nullout.o \
 	outbin.o outaout.o outcoff.o \
 	outelf.o outelf32.o outelf64.o \
+	outelfx32.o \
 	outobj.o outas86.o outrdf2.o \
 	outdbg.o outieee.o outmac32.o \
 	outmac64.o preproc.o quote.o pptok.o \
@@ -193,6 +194,9 @@ outelf32.o: outelf32.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
 outelf64.o: outelf64.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h stabs.h \
  pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+outelfx32.o: outelfx32.c compiler.h config.h directiv.h eval.h insnsi.h \
+ nasm.h nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h \
+ stabs.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 outform.o: outform.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h
 outieee.o: outieee.c compiler.h config.h directiv.h insnsi.h nasm.h \

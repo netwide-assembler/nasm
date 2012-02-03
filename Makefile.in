@@ -74,6 +74,7 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/nullout.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf.$(O) output/outelf32.$(O) output/outelf64.$(O) \
+	output/outelfx32.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmac32.$(O) \
 	output/outmac64.$(O) preproc.$(O) quote.$(O) pptok.$(O) \
@@ -346,6 +347,10 @@ output/outelf32.$(O): output/outelf32.c compiler.h config.h directiv.h \
  output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
  preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
 output/outelf64.$(O): output/outelf64.c compiler.h config.h directiv.h \
+ eval.h insnsi.h nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
+ output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
+ preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
+output/outelfx32.$(O): output/outelfx32.c compiler.h config.h directiv.h \
  eval.h insnsi.h nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
  output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
  preproc.h raa.h rbtree.h regs.h saa.h stdscan.h
