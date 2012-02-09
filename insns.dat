@@ -3315,6 +3315,14 @@ VPGATHERQQ	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 91 /r]	FUTURE
 VPGATHERDQ	ymmreg,mem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
 VPGATHERQQ	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
+;
+; transactional synchronization extensions
+XABORT		imm8				[i:	c6 f8 ib]				FUTURE,HLE
+XBEGIN		imm16				[i:	c7 f8 iw]				FUTURE,HLE
+XBEGIN		imm32				[i:	c7 f8 id]				FUTURE,HLE
+XEND		void				[	0f 01 d5]				FUTURE,HLE
+XTEST		void				[	0f 01 d6]				FUTURE,HLE,RTM
+
 ;# Intel BMI1 and BMI2 instructions
 ;
 ; based on pub number 319433-011 dated July 2011
