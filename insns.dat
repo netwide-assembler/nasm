@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2011 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2012 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -225,33 +225,33 @@ BTS		reg64,reg64			[mr:	o64 0f ab /r]				X64
 BTS		rm16,imm			[mi:	o16 0f ba /5 ib,u]			386,SB
 BTS		rm32,imm			[mi:	o32 0f ba /5 ib,u]			386,SB
 BTS		rm64,imm			[mi:	o64 0f ba /5 ib,u]			X64,SB
-CALL		imm				[i:	\322 e8 rel]				8086
-CALL		imm|near			[i:	\322 e8 rel]				8086
-CALL		imm|far				[i:	\322 9a iwd seg]			8086,ND,NOLONG
+CALL		imm				[i:	odf e8 rel]				8086
+CALL		imm|near			[i:	odf e8 rel]				8086
+CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG
 CALL		imm16				[i:	o16 e8 rel]				8086
 CALL		imm16|near			[i:	o16 e8 rel]				8086
 CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG
 CALL		imm32				[i:	o32 e8 rel]				386
 CALL		imm32|near			[i:	o32 e8 rel]				386
 CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG
-CALL		imm:imm				[ji:	\322 9a iwd iw]				8086,NOLONG
+CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG
 CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG
 CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG
 CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG
 CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG
-CALL		mem|far				[m:	\322 ff /3]				8086,NOLONG
+CALL		mem|far				[m:	odf ff /3]				8086,NOLONG
 CALL		mem|far				[m:	o64 ff /3]				X64
 CALL		mem16|far			[m:	o16 ff /3]				8086
 CALL		mem32|far			[m:	o32 ff /3]				386
 CALL		mem64|far			[m:	o64 ff /3]				X64
-CALL		mem|near			[m:	\322 ff /2]				8086
+CALL		mem|near			[m:	odf ff /2]				8086
 CALL		mem16|near			[m:	o16 ff /2]				8086
 CALL		mem32|near			[m:	o32 ff /2]				386,NOLONG
 CALL		mem64|near			[m:	o64 ff /2]				X64
 CALL		reg16				[m:	o16 ff /2]				8086
 CALL		reg32				[m:	o32 ff /2]				386,NOLONG
 CALL		reg64				[m:	o64nw ff /2]				X64
-CALL		mem				[m:	\322 ff /2]				8086
+CALL		mem				[m:	odf ff /2]				8086
 CALL		mem16				[m:	o16 ff /2]				8086
 CALL		mem32				[m:	o32 ff /2]				386,NOLONG
 CALL		mem64				[m:	o64nw ff /2]				X64
@@ -644,7 +644,7 @@ INVLPGA		reg_ax,reg_ecx			[--:	a16 0f 01 df]				X86_64,AMD,NOLONG
 INVLPGA		reg_eax,reg_ecx			[--:	a32 0f 01 df]				X86_64,AMD
 INVLPGA		reg_rax,reg_ecx			[--:	o64nw a64 0f 01 df]			X64,AMD
 INVLPGA		void				[	0f 01 df]				X86_64,AMD
-IRET		void				[	\322 cf]				8086
+IRET		void				[	odf cf]					8086
 IRETD		void				[	o32 cf]					386
 IRETQ		void				[	o64 cf]					X64
 IRETW		void				[	o16 cf]					8086
@@ -653,37 +653,37 @@ JECXZ		imm				[i:	a32 e3 rel8]				386
 JRCXZ		imm				[i:	a64 e3 rel8]				X64
 JMP		imm|short			[i:	eb rel8]				8086
 JMP		imm				[i:	\371 eb rel8]				8086,ND
-JMP		imm				[i:	\322 e9 rel]				8086
-JMP		imm|near			[i:	\322 e9 rel]				8086,ND
-JMP		imm|far				[i:	\322 ea iwd seg]			8086,ND,NOLONG
+JMP		imm				[i:	odf e9 rel]				8086
+JMP		imm|near			[i:	odf e9 rel]				8086,ND
+JMP		imm|far				[i:	odf ea iwd seg]				8086,ND,NOLONG
 JMP		imm16				[i:	o16 e9 rel]				8086
 JMP		imm16|near			[i:	o16 e9 rel]				8086,ND
 JMP		imm16|far			[i:	o16 ea iwd seg]				8086,ND,NOLONG
 JMP		imm32				[i:	o32 e9 rel]				386
 JMP		imm32|near			[i:	o32 e9 rel]				386,ND
 JMP		imm32|far			[i:	o32 ea iwd seg]				386,ND,NOLONG
-JMP		imm:imm				[ji:	\322 ea iwd iw]				8086,NOLONG
+JMP		imm:imm				[ji:	odf ea iwd iw]				8086,NOLONG
 JMP		imm16:imm			[ji:	o16 ea iw iw]				8086,NOLONG
 JMP		imm:imm16			[ji:	o16 ea iw iw]				8086,NOLONG
 JMP		imm32:imm			[ji:	o32 ea id iw]				386,NOLONG
 JMP		imm:imm32			[ji:	o32 ea id iw]				386,NOLONG
-JMP		mem|far				[m:	\322 ff /5]				8086,NOLONG
+JMP		mem|far				[m:	odf ff /5]				8086,NOLONG
 JMP		mem|far				[m:	o64 ff /5]				X64
 JMP		mem16|far			[m:	o16 ff /5]				8086
 JMP		mem32|far			[m:	o32 ff /5]				386
 JMP		mem64|far			[m:	o64 ff /5]				X64
-JMP		mem|near			[m:	\322 ff /4]				8086
+JMP		mem|near			[m:	odf ff /4]				8086
 JMP		mem16|near			[m:	o16 ff /4]				8086
 JMP		mem32|near			[m:	o32 ff /4]				386,NOLONG
 JMP		mem64|near			[m:	o64nw ff /4]				X64
 JMP		reg16				[m:	o16 ff /4]				8086
 JMP		reg32				[m:	o32 ff /4]				386,NOLONG
 JMP		reg64				[m:	o64nw ff /4]				X64
-JMP		mem				[m:	\322 ff /4]				8086
+JMP		mem				[m:	odf ff /4]				8086
 JMP		mem16				[m:	o16 ff /4]				8086
 JMP		mem32				[m:	o32 ff /4]				386,NOLONG
 JMP		mem64				[m:	o64nw ff /4]				X64
-JMPE		imm				[i:	\322 0f b8 rel]				IA64
+JMPE		imm				[i:	odf 0f b8 rel]				IA64
 JMPE		imm16				[i:	o16 0f b8 rel]				IA64
 JMPE		imm32				[i:	o32 0f b8 rel]				IA64
 JMPE		rm16				[m:	o16 0f 00 /6]				IA64
@@ -979,10 +979,10 @@ POP		rm64				[m:	o64nw 8f /0]				X64
 POP		reg_cs				[-:	0f]					8086,UNDOC,ND
 POP		reg_dess			[-:	\345]					8086,NOLONG
 POP		reg_fsgs			[-:	0f \347]				386
-POPA		void				[	\322 61]				186,NOLONG
+POPA		void				[	odf 61]					186,NOLONG
 POPAD		void				[	o32 61]					386,NOLONG
 POPAW		void				[	o16 61]					186,NOLONG
-POPF		void				[	\322 9d]				8086
+POPF		void				[	odf 9d]					8086
 POPFD		void				[	o32 9d]					386,NOLONG
 POPFQ		void				[	o32 9d]					X64
 POPFW		void				[	o16 9d]					8086
@@ -1034,10 +1034,10 @@ PUSH		imm32				[i:	o32 68+s ibd]				386,NOLONG,AR0,SZ
 PUSH		imm32				[i:	o32 68+s ibd]				386,NOLONG,SD
 PUSH		imm32				[i:	o64nw 68+s ibd,s]			X64,AR0,SZ
 PUSH		imm64				[i:	o64nw 68+s ibd,s]			X64,AR0,SZ
-PUSHA		void				[	\322 60]				186,NOLONG
+PUSHA		void				[	odf 60]					186,NOLONG
 PUSHAD		void				[	o32 60]					386,NOLONG
 PUSHAW		void				[	o16 60]					186,NOLONG
-PUSHF		void				[	\322 9c]				8086
+PUSHF		void				[	odf 9c]					8086
 PUSHFD		void				[	o32 9c]					386,NOLONG
 PUSHFQ		void				[	o32 9c]					X64
 PUSHFW		void				[	o16 9c]					8086
@@ -1417,7 +1417,7 @@ CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
 CMOVcc		reg32,reg32			[rm:	o32 0f 40+c /r]				P6
 CMOVcc		reg64,mem			[rm:	o64 0f 40+c /r]				X64,SM
 CMOVcc		reg64,reg64			[rm:	o64 0f 40+c /r]				X64
-Jcc		imm|near			[i:	\322 0f 80+c rel]			386
+Jcc		imm|near			[i:	odf 0f 80+c rel]			386
 Jcc		imm16|near			[i:	o16 0f 80+c rel]			386
 Jcc		imm32|near			[i:	o32 0f 80+c rel]			386
 Jcc		imm|short			[i:	70+c rel8]				8086,ND

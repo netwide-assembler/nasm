@@ -720,6 +720,8 @@ sub byte_code_compile($$) {
             push(@codes, 0320);
         } elsif ($op eq 'o32') {
             push(@codes, 0321);
+	} elsif ($op eq 'odf') { # Operand size is default
+	    push(@codes, 0322);
         } elsif ($op eq 'o64') {  # 64-bit operand size requiring REX.W
             push(@codes, 0324);
         } elsif ($op eq 'o64nw') { # Implied 64-bit operand size (no REX.W)
