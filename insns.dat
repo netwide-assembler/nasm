@@ -3315,12 +3315,15 @@ VPGATHERQQ	xmmreg,mem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 91 /r]	FUTURE
 VPGATHERDQ	ymmreg,mem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
 VPGATHERQQ	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
-;
-; transactional synchronization extensions
-XABORT		imm8				[i:	c6 f8 ib]				FUTURE,HLE
-XBEGIN		imm16				[i:	c7 f8 iw]				FUTURE,HLE
-XBEGIN		imm32				[i:	c7 f8 id]				FUTURE,HLE
-XEND		void				[	0f 01 d5]				FUTURE,HLE
+;# Transactional Synchronization Extensions (TSX)
+XABORT		imm8				[i:	c6 f8 ib]				FUTURE,RTM
+XBEGIN		imm				[i:	odf c7 f8 rel]				FUTURE,RTM
+XBEGIN		imm|near			[i:	odf c7 f8 rel]				FUTURE,RTM
+XBEGIN		imm16				[i:	o16 c7 f8 rel]				FUTURE,RTM
+XBEGIN		imm16|near			[i:	o16 c7 f8 rel]				FUTURE,RTM
+XBEGIN		imm32				[i:	o32 c7 f8 rel]				FUTURE,RTM
+XBEGIN		imm32|near			[i:	o32 c7 f8 rel]				FUTURE,RTM
+XEND		void				[	0f 01 d5]				FUTURE,RTM
 XTEST		void				[	0f 01 d6]				FUTURE,HLE,RTM
 
 ;# Intel BMI1 and BMI2 instructions
