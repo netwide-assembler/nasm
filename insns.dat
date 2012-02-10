@@ -357,7 +357,7 @@ FBLD		mem				[m:	df /4]					8086,FPU
 FBSTP		mem80				[m:	df /6]					8086,FPU
 FBSTP		mem				[m:	df /6]					8086,FPU
 FCHS		void				[	d9 e0]					8086,FPU
-FCLEX		void				[	\341 db e2]				8086,FPU
+FCLEX		void				[	wait db e2]				8086,FPU
 FCMOVB		fpureg				[r:	da c0+r]				P6,FPU
 FCMOVB		fpu0,fpureg			[-r:	da c0+r]				P6,FPU
 FCMOVB		void				[	da c1]					P6,FPU,ND
@@ -401,7 +401,7 @@ FCOMP		void				[	d8 d9]					8086,FPU,ND
 FCOMPP		void				[	de d9]					8086,FPU
 FCOS		void				[	d9 ff]					386,FPU
 FDECSTP		void				[	d9 f6]					8086,FPU
-FDISI		void				[	\341 db e1]				8086,FPU
+FDISI		void				[	wait db e1]				8086,FPU
 FDIV		mem32				[m:	d8 /6]					8086,FPU
 FDIV		mem64				[m:	dc /6]					8086,FPU
 FDIV		fpureg|to			[r:	dc f8+r]				8086,FPU
@@ -423,7 +423,7 @@ FDIVRP		fpureg				[r:	de f0+r]				8086,FPU
 FDIVRP		fpureg,fpu0			[r-:	de f0+r]				8086,FPU
 FDIVRP		void				[	de f1]					8086,FPU,ND
 FEMMS		void				[	0f 0e]					PENT,3DNOW
-FENI		void				[	\341 db e0]				8086,FPU
+FENI		void				[	wait db e0]				8086,FPU
 FFREE		fpureg				[r:	dd c0+r]				8086,FPU
 FFREE		void				[	dd c1]					8086,FPU
 FFREEP		fpureg				[r:	df c0+r]				286,FPU,UNDOC
@@ -444,7 +444,7 @@ FILD		mem64				[m:	df /5]					8086,FPU
 FIMUL		mem32				[m:	da /1]					8086,FPU
 FIMUL		mem16				[m:	de /1]					8086,FPU
 FINCSTP		void				[	d9 f7]					8086,FPU
-FINIT		void				[	\341 db e3]				8086,FPU
+FINIT		void				[	wait db e3]				8086,FPU
 FIST		mem32				[m:	db /2]					8086,FPU
 FIST		mem16				[m:	df /2]					8086,FPU
 FISTP		mem32				[m:	db /3]					8086,FPU
@@ -497,7 +497,7 @@ FPREM1		void				[	d9 f5]					386,FPU
 FPTAN		void				[	d9 f2]					8086,FPU
 FRNDINT		void				[	d9 fc]					8086,FPU
 FRSTOR		mem				[m:	dd /4]					8086,FPU
-FSAVE		mem				[m:	\341 dd /6]				8086,FPU
+FSAVE		mem				[m:	wait dd /6]				8086,FPU
 FSCALE		void				[	d9 fd]					8086,FPU
 FSETPM		void				[	db e4]					286,FPU
 FSIN		void				[	d9 fe]					386,FPU
@@ -507,15 +507,15 @@ FST		mem32				[m:	d9 /2]					8086,FPU
 FST		mem64				[m:	dd /2]					8086,FPU
 FST		fpureg				[r:	dd d0+r]				8086,FPU
 FST		void				[	dd d1]					8086,FPU,ND
-FSTCW		mem				[m:	\341 d9 /7]				8086,FPU,SW
-FSTENV		mem				[m:	\341 d9 /6]				8086,FPU
+FSTCW		mem				[m:	wait d9 /7]				8086,FPU,SW
+FSTENV		mem				[m:	wait d9 /6]				8086,FPU
 FSTP		mem32				[m:	d9 /3]					8086,FPU
 FSTP		mem64				[m:	dd /3]					8086,FPU
 FSTP		mem80				[m:	db /7]					8086,FPU
 FSTP		fpureg				[r:	dd d8+r]				8086,FPU
 FSTP		void				[	dd d9]					8086,FPU,ND
-FSTSW		mem				[m:	\341 dd /7]				8086,FPU,SW
-FSTSW		reg_ax				[-:	\341 df e0]				286,FPU
+FSTSW		mem				[m:	wait dd /7]				8086,FPU,SW
+FSTSW		reg_ax				[-:	wait df e0]				286,FPU
 FSUB		mem32				[m:	d8 /4]					8086,FPU
 FSUB		mem64				[m:	dc /4]					8086,FPU
 FSUB		fpureg|to			[r:	dc e8+r]				8086,FPU
@@ -1335,7 +1335,7 @@ VERR		reg16				[m:	0f 00 /4]				286,PROT
 VERW		mem				[m:	0f 00 /5]				286,PROT
 VERW		mem16				[m:	0f 00 /5]				286,PROT
 VERW		reg16				[m:	0f 00 /5]				286,PROT
-FWAIT		void				[	\341]					8086
+FWAIT		void				[	wait]					8086
 WBINVD		void				[	0f 09]					486,PRIV
 WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM
 WRMSR		void				[	0f 30]					PENT,PRIV

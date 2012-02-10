@@ -742,6 +742,8 @@ sub byte_code_compile($$) {
             push(@codes, 0335);
         } elsif ($op eq 'nohi') { # Use spl/bpl/sil/dil even without REX
             push(@codes, 0325);
+	} elsif ($op eq 'wait') { # Needs a wait prefix
+	    push(@codes, 0341);
         } elsif ($op eq 'vsibx' || $op eq 'vm32x' || $op eq 'vm64x') {
             # This instruction takes XMM VSIB
             push(@codes, 0374);
