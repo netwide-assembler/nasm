@@ -602,18 +602,18 @@ IMUL		reg64,reg64,imm8		[rmi:	o64 6b /r ib,s]				X64
 IMUL		reg64,reg64,sbyte64		[rmi:	o64 6b /r ib,s]				X64,SM,ND
 IMUL		reg64,reg64,imm32		[rmi:	o64 69 /r id]				X64
 IMUL		reg64,reg64,imm			[rmi:	o64 69+s /r ibd,s]			X64,SM,ND
-IMUL		reg16,imm8			[-i:	o16 6b \100 ib,s]			186
-IMUL		reg16,sbyte16			[-i:	o16 6b \100 ib,s]			186,SM,ND
-IMUL		reg16,imm16			[-i:	o16 69 \100 iw]				186
-IMUL		reg16,imm			[-i:	o16 69+s \100 ibw]			186,SM,ND
-IMUL		reg32,imm8			[-i:	o32 6b \100 ib,s]			386
-IMUL		reg32,sbyte32			[-i:	o32 6b \100 ib,s]			386,SM,ND
-IMUL		reg32,imm32			[-i:	o32 69 \100 id]				386
-IMUL		reg32,imm			[-i:	o32 69+s \100 ibd]			386,SM,ND
-IMUL		reg64,imm8			[-i:	o64 6b \100 ib,s]			X64
-IMUL		reg64,sbyte64			[-i:	o64 6b \100 ib,s]			X64,SM,ND
-IMUL		reg64,imm32			[-i:	o64 69 \100 idx]			X64
-IMUL		reg64,imm			[-i:	o64 69+s \100 ibd,s]			X64,SM,ND
+IMUL		reg16,imm8			[r+mi:	o16 6b /r ib,s]				186
+IMUL		reg16,sbyte16			[r+mi:	o16 6b /r ib,s]				186,SM,ND
+IMUL		reg16,imm16			[r+mi:	o16 69 /r iw]				186
+IMUL		reg16,imm			[r+mi:	o16 69+s /r ibw]			186,SM,ND
+IMUL		reg32,imm8			[r+mi:	o32 6b /r ib,s]				386
+IMUL		reg32,sbyte32			[r+mi:	o32 6b /r ib,s]				386,SM,ND
+IMUL		reg32,imm32			[r+mi:	o32 69 /r id]				386
+IMUL		reg32,imm			[r+mi:	o32 69+s /r ibd]			386,SM,ND
+IMUL		reg64,imm8			[r+mi:	o64 6b /r ib,s]				X64
+IMUL		reg64,sbyte64			[r+mi:	o64 6b /r ib,s]				X64,SM,ND
+IMUL		reg64,imm32			[r+mi:	o64 69 /r idx]				X64
+IMUL		reg64,imm			[r+mi:	o64 69+s /r ibd,s]			X64,SM,ND
 IN		reg_al,imm			[-i:	e4 ib,u]				8086,SB
 IN		reg_ax,imm			[-i:	o16 e5 ib,u]				8086,SB
 IN		reg_eax,imm			[-i:	o32 e5 ib,u]				386,SB
