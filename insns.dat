@@ -103,13 +103,13 @@ ADC		rm64,imm			[mi:	o64 81+s /2 ibd,s]			X64,SM
 ADC		mem,imm8			[mi:	80 /2 ib]				8086,SM
 ADC		mem,imm16			[mi:	o16 81+s /2 ibw]			8086,SM
 ADC		mem,imm32			[mi:	o32 81+s /2 ibd]			386,SM
-ADD		mem,reg8			[mr:	00 /r]					8086,SM
+ADD		mem,reg8			[mr:	hle 00 /r]				8086,SM
 ADD		reg8,reg8			[mr:	00 /r]					8086
-ADD		mem,reg16			[mr:	o16 01 /r]				8086,SM
+ADD		mem,reg16			[mr:	hle o16 01 /r]				8086,SM
 ADD		reg16,reg16			[mr:	o16 01 /r]				8086
-ADD		mem,reg32			[mr:	o32 01 /r]				386,SM
+ADD		mem,reg32			[mr:	hle o32 01 /r]				386,SM
 ADD		reg32,reg32			[mr:	o32 01 /r]				386
-ADD		mem,reg64			[mr:	o64 01 /r]				X64,SM
+ADD		mem,reg64			[mr:	hle o64 01 /r]				X64,SM
 ADD		reg64,reg64			[mr:	o64 01 /r]				X64
 ADD		reg8,mem			[rm:	02 /r]					8086,SM
 ADD		reg8,reg8			[rm:	02 /r]					8086
@@ -119,9 +119,9 @@ ADD		reg32,mem			[rm:	o32 03 /r]				386,SM
 ADD		reg32,reg32			[rm:	o32 03 /r]				386
 ADD		reg64,mem			[rm:	o64 03 /r]				X64,SM
 ADD		reg64,reg64			[rm:	o64 03 /r]				X64
-ADD		rm16,imm8			[mi:	o16 83 /0 ibx]				8086
-ADD		rm32,imm8			[mi:	o32 83 /0 ibx]				386
-ADD		rm64,imm8			[mi:	o64 83 /0 ibx]				X64
+ADD		rm16,imm8			[mi:	hle o16 83 /0 ibx]			8086
+ADD		rm32,imm8			[mi:	hle o32 83 /0 ibx]			386
+ADD		rm64,imm8			[mi:	hle o64 83 /0 ibx]			X64
 ADD		reg_al,imm			[-i:	04 ib]					8086,SM
 ADD		reg_ax,sbyte16			[mi:	o16 83 /0 ibx]				8086,SM
 ADD		reg_ax,imm			[-i:	o16 05 iw]				8086,SM
@@ -129,13 +129,13 @@ ADD		reg_eax,sbyte32			[mi:	o32 83 /0 ibx]				386,SM
 ADD		reg_eax,imm			[-i:	o32 05 id]				386,SM
 ADD		reg_rax,sbyte64			[mi:	o64 83 /0 ibx]				X64,SM
 ADD		reg_rax,imm			[-i:	o64 05 idx]				X64,SM
-ADD		rm8,imm				[mi:	80 /0 ib]				8086,SM
-ADD		rm16,imm			[mi:	o16 81+s /0 ibw]			8086,SM
-ADD		rm32,imm			[mi:	o32 81+s /0 ibd]			386,SM
-ADD		rm64,imm			[mi:	o64 81+s /0 ibd,s]			X64,SM
-ADD		mem,imm8			[mi:	80 /0 ib]				8086,SM
-ADD		mem,imm16			[mi:	o16 81+s /0 ibw]			8086,SM
-ADD		mem,imm32			[mi:	o32 81+s /0 ibd]			386,SM
+ADD		rm8,imm				[mi:	hle 80 /0 ib]				8086,SM
+ADD		rm16,imm			[mi:	hle o16 81+s /0 ibw]			8086,SM
+ADD		rm32,imm			[mi:	hle o32 81+s /0 ibd]			386,SM
+ADD		rm64,imm			[mi:	hle o64 81+s /0 ibd,s]			X64,SM
+ADD		mem,imm8			[mi:	hle 80 /0 ib]				8086,SM
+ADD		mem,imm16			[mi:	hle o16 81+s /0 ibw]			8086,SM
+ADD		mem,imm32			[mi:	hle o32 81+s /0 ibd]			386,SM
 AND		mem,reg8			[mr:	20 /r]					8086,SM
 AND		reg8,reg8			[mr:	20 /r]					8086
 AND		mem,reg16			[mr:	o16 21 /r]				8086,SM
