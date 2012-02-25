@@ -788,10 +788,10 @@ MOV		reg_al,mem_offs			[-i:	a0 iwdq]				8086,SM
 MOV		reg_ax,mem_offs			[-i:	o16 a1 iwdq]				8086,SM
 MOV		reg_eax,mem_offs		[-i:	o32 a1 iwdq]				386,SM
 MOV		reg_rax,mem_offs		[-i:	o64 a1 iwdq]				X64,SM
-MOV		mem_offs,reg_al			[i-:	a2 iwdq]				8086,SM
-MOV		mem_offs,reg_ax			[i-:	o16 a3 iwdq]				8086,SM
-MOV		mem_offs,reg_eax		[i-:	o32 a3 iwdq]				386,SM
-MOV		mem_offs,reg_rax		[i-:	o64 a3 iwdq]				X64,SM
+MOV		mem_offs,reg_al			[i-:	nohle a2 iwdq]				8086,SM
+MOV		mem_offs,reg_ax			[i-:	nohle o16 a3 iwdq]			8086,SM
+MOV		mem_offs,reg_eax		[i-:	nohle o32 a3 iwdq]			386,SM
+MOV		mem_offs,reg_rax		[i-:	nohle o64 a3 iwdq]			X64,SM
 MOV		reg32,reg_creg			[mr:	rex.l 0f 20 /r]				386,PRIV,NOLONG
 MOV		reg64,reg_creg			[mr:	o64nw 0f 20 /r]				X64,PRIV
 MOV		reg_creg,reg32			[rm:	rex.l 0f 22 /r]				386,PRIV,NOLONG
