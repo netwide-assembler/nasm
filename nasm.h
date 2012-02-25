@@ -224,7 +224,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_SEG,          /* SEG */
     TOKEN_WRT,          /* WRT */
     TOKEN_FLOATIZE,     /* __floatX__ */
-    TOKEN_STRFUNC,      /* __utf16__, __utf32__ */
+    TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
 };
 
 enum floatize {
@@ -241,7 +241,11 @@ enum floatize {
 /* Must match the list in string_transform(), in strfunc.c */
 enum strfunc {
     STRFUNC_UTF16,
+    STRFUNC_UTF16LE,
+    STRFUNC_UTF16BE,
     STRFUNC_UTF32,
+    STRFUNC_UTF32LE,
+    STRFUNC_UTF32BE,
 };
 
 size_t string_transform(char *, size_t, char **, enum strfunc);

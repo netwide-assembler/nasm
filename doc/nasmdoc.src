@@ -1596,9 +1596,12 @@ operands to \c{DW}, and so forth.
 
 \S{unicode} \I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
-The special operators \i\c{__utf16__} and \i\c{__utf32__} allows
-definition of Unicode strings.  They take a string in UTF-8 format and
-converts it to (littleendian) UTF-16 or UTF-32, respectively.
+The special operators \i\c{__utf16__}, \i\c{__utf16le__},
+\i\c{__utf16be__}, \i\c{__utf32__}, \i\c{__utf32le__} and
+\i\c{__utf32be__} allows definition of Unicode strings.  They take a
+string in UTF-8 format and converts it to UTF-16 or UTF-32,
+respectively.  Unless the \c{be} forms are specified, the output is
+littleendian.
 
 For example:
 
@@ -1608,9 +1611,9 @@ For example:
 \c       dw u('C:\WINDOWS'), 0       ; Pathname in UTF-16
 \c       dd w(`A + B = \u206a`), 0   ; String in UTF-32
 
-\c{__utf16__} and \c{__utf32__} can be applied either to strings
-passed to the \c{DB} family instructions, or to character constants in
-an expression context.
+The UTF operators can be applied either to strings passed to the
+\c{DB} family instructions, or to character constants in an expression
+context.
 
 \S{fltconst} \I{floating-point, constants}Floating-Point Constants
 

@@ -91,7 +91,11 @@ __float128h__
 
 % TOKEN_STRFUNC, 0, STRFUNC_{__*__}
 __utf16__
+__utf16le__
+__utf16be__
 __utf32__
+__utf32le__
+__utf32be__
 
 % TOKEN_*, 0, 0
 seg
