@@ -136,13 +136,13 @@ ADD		rm64,imm			[mi:	hle o64 81+s /0 ibd,s]			X64,SM
 ADD		mem,imm8			[mi:	hle 80 /0 ib]				8086,SM
 ADD		mem,imm16			[mi:	hle o16 81+s /0 ibw]			8086,SM
 ADD		mem,imm32			[mi:	hle o32 81+s /0 ibd]			386,SM
-AND		mem,reg8			[mr:	20 /r]					8086,SM
+AND		mem,reg8			[mr:	hle 20 /r]				8086,SM
 AND		reg8,reg8			[mr:	20 /r]					8086
-AND		mem,reg16			[mr:	o16 21 /r]				8086,SM
+AND		mem,reg16			[mr:	hle o16 21 /r]				8086,SM
 AND		reg16,reg16			[mr:	o16 21 /r]				8086
-AND		mem,reg32			[mr:	o32 21 /r]				386,SM
+AND		mem,reg32			[mr:	hle o32 21 /r]				386,SM
 AND		reg32,reg32			[mr:	o32 21 /r]				386
-AND		mem,reg64			[mr:	o64 21 /r]				X64,SM
+AND		mem,reg64			[mr:	hle o64 21 /r]				X64,SM
 AND		reg64,reg64			[mr:	o64 21 /r]				X64
 AND		reg8,mem			[rm:	22 /r]					8086,SM
 AND		reg8,reg8			[rm:	22 /r]					8086
@@ -152,9 +152,9 @@ AND		reg32,mem			[rm:	o32 23 /r]				386,SM
 AND		reg32,reg32			[rm:	o32 23 /r]				386
 AND		reg64,mem			[rm:	o64 23 /r]				X64,SM
 AND		reg64,reg64			[rm:	o64 23 /r]				X64
-AND		rm16,imm8			[mi:	o16 83 /4 ibx]				8086
-AND		rm32,imm8			[mi:	o32 83 /4 ibx]				386
-AND		rm64,imm8			[mi:	o64 83 /4 ibx]				X64
+AND		rm16,imm8			[mi:	hle o16 83 /4 ibx]			8086
+AND		rm32,imm8			[mi:	hle o32 83 /4 ibx]			386
+AND		rm64,imm8			[mi:	hle o64 83 /4 ibx]			X64
 AND		reg_al,imm			[-i:	24 ib]					8086,SM
 AND		reg_ax,sbyte16			[mi:	o16 83 /4 ibx]				8086,SM
 AND		reg_ax,imm			[-i:	o16 25 iw]				8086,SM
@@ -162,13 +162,13 @@ AND		reg_eax,sbyte32			[mi:	o32 83 /4 ibx]				386,SM
 AND		reg_eax,imm			[-i:	o32 25 id]				386,SM
 AND		reg_rax,sbyte64			[mi:	o64 83 /4 ibx]				X64,SM
 AND		reg_rax,imm			[-i:	o64 25 idx]				X64,SM
-AND		rm8,imm				[mi:	80 /4 ib]				8086,SM
-AND		rm16,imm			[mi:	o16 81+s /4 ibw]			8086,SM
-AND		rm32,imm			[mi:	o32 81+s /4 ibd]			386,SM
-AND		rm64,imm			[mi:	o64 81+s /4 ibd,s]			X64,SM
-AND		mem,imm8			[mi:	80 /4 ib]				8086,SM
-AND		mem,imm16			[mi:	o16 81+s /4 ibw]			8086,SM
-AND		mem,imm32			[mi:	o32 81+s /4 ibd]			386,SM
+AND		rm8,imm				[mi:	hle 80 /4 ib]				8086,SM
+AND		rm16,imm			[mi:	hle o16 81+s /4 ibw]			8086,SM
+AND		rm32,imm			[mi:	hle o32 81+s /4 ibd]			386,SM
+AND		rm64,imm			[mi:	hle o64 81+s /4 ibd,s]			X64,SM
+AND		mem,imm8			[mi:	hle 80 /4 ib]				8086,SM
+AND		mem,imm16			[mi:	hle o16 81+s /4 ibw]			8086,SM
+AND		mem,imm32			[mi:	hle o32 81+s /4 ibd]			386,SM
 ARPL		mem,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 ARPL		reg16,reg16			[mr:	63 /r]					286,PROT,NOLONG
 BB0_RESET	void				[	0f 3a]					PENT,CYRIX,ND
