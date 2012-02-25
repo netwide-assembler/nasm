@@ -36,6 +36,11 @@ since 2007.
 
 To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
+\b Add support for the Intel AVX2 instruction set.
+
+\b Add support for Bit Manipulation Instructions 1 and 2.
+
+\b Add support for Intel Transactional Synchronization Extensions (TSX).
 
 \S{cl-2.09.10} Version 2.09.10
 
