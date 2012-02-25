@@ -70,13 +70,13 @@ AAD		imm				[i:	d5 ib,u]				8086,SB,NOLONG
 AAM		void				[	d4 0a]					8086,NOLONG
 AAM		imm				[i:	d4 ib,u]				8086,SB,NOLONG
 AAS		void				[	3f]					8086,NOLONG
-ADC		mem,reg8			[mr:	10 /r]					8086,SM
+ADC		mem,reg8			[mr:	hle 10 /r]				8086,SM
 ADC		reg8,reg8			[mr:	10 /r]					8086
-ADC		mem,reg16			[mr:	o16 11 /r]				8086,SM
+ADC		mem,reg16			[mr:	hle o16 11 /r]				8086,SM
 ADC		reg16,reg16			[mr:	o16 11 /r]				8086
-ADC		mem,reg32			[mr:	o32 11 /r]				386,SM
+ADC		mem,reg32			[mr:	hle o32 11 /r]				386,SM
 ADC		reg32,reg32			[mr:	o32 11 /r]				386
-ADC		mem,reg64			[mr:	o64 11 /r]				X64,SM
+ADC		mem,reg64			[mr:	hle o64 11 /r]				X64,SM
 ADC		reg64,reg64			[mr:	o64 11 /r]				X64
 ADC		reg8,mem			[rm:	12 /r]					8086,SM
 ADC		reg8,reg8			[rm:	12 /r]					8086
@@ -86,9 +86,9 @@ ADC		reg32,mem			[rm:	o32 13 /r]				386,SM
 ADC		reg32,reg32			[rm:	o32 13 /r]				386
 ADC		reg64,mem			[rm:	o64 13 /r]				X64,SM
 ADC		reg64,reg64			[rm:	o64 13 /r]				X64
-ADC		rm16,imm8			[mi:	o16 83 /2 ibx]				8086
-ADC		rm32,imm8			[mi:	o32 83 /2 ibx]				386
-ADC		rm64,imm8			[mi:	o64 83 /2 ibx]				X64
+ADC		rm16,imm8			[mi:	hle o16 83 /2 ibx]			8086
+ADC		rm32,imm8			[mi:	hle o32 83 /2 ibx]			386
+ADC		rm64,imm8			[mi:	hle o64 83 /2 ibx]			X64
 ADC		reg_al,imm			[-i:	14 ib]					8086,SM
 ADC		reg_ax,sbyte16			[mi:	o16 83 /2 ibx]				8086,SM
 ADC		reg_ax,imm			[-i:	o16 15 iw]				8086,SM
@@ -96,13 +96,13 @@ ADC		reg_eax,sbyte32			[mi:	o32 83 /2 ibx]				386,SM
 ADC		reg_eax,imm			[-i:	o32 15 id]				386,SM
 ADC		reg_rax,sbyte64			[mi:	o64 83 /2 ibx]				X64,SM
 ADC		reg_rax,imm			[-i:	o64 15 idx]				X64,SM
-ADC		rm8,imm				[mi:	80 /2 ib]				8086,SM
-ADC		rm16,imm			[mi:	o16 81+s /2 ibw]			8086,SM
-ADC		rm32,imm			[mi:	o32 81+s /2 ibd]			386,SM
-ADC		rm64,imm			[mi:	o64 81+s /2 ibd,s]			X64,SM
-ADC		mem,imm8			[mi:	80 /2 ib]				8086,SM
-ADC		mem,imm16			[mi:	o16 81+s /2 ibw]			8086,SM
-ADC		mem,imm32			[mi:	o32 81+s /2 ibd]			386,SM
+ADC		rm8,imm				[mi:	hle 80 /2 ib]				8086,SM
+ADC		rm16,imm			[mi:	hle o16 81+s /2 ibw]			8086,SM
+ADC		rm32,imm			[mi:	hle o32 81+s /2 ibd]			386,SM
+ADC		rm64,imm			[mi:	hle o64 81+s /2 ibd,s]			X64,SM
+ADC		mem,imm8			[mi:	hle 80 /2 ib]				8086,SM
+ADC		mem,imm16			[mi:	hle o16 81+s /2 ibw]			8086,SM
+ADC		mem,imm32			[mi:	hle o32 81+s /2 ibd]			386,SM
 ADD		mem,reg8			[mr:	hle 00 /r]				8086,SM
 ADD		reg8,reg8			[mr:	00 /r]					8086
 ADD		mem,reg16			[mr:	hle o16 01 /r]				8086,SM
