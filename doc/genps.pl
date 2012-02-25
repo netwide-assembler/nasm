@@ -1148,6 +1148,13 @@ if ( defined($metadata{epslogo}) &&
 	$x = ($psconf{pagewidth}-$width*$scale)/2;
 	$y = ($psconf{pageheight}-$height*$scale)/2;
 
+	if ( defined($metadata{logoxadj}) ) {
+	    $x += $metadata{logoxadj};
+	}
+	if ( defined($metadata{logoyadj}) ) {
+	    $y += $metadata{logoyadj};
+	}
+
 	print "BeginEPSF\n";
 	print $x, ' ', $y, " translate\n";
 	print $scale, " dup scale\n" unless ( $scale == 1 );
