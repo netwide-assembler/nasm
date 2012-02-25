@@ -301,13 +301,13 @@ CMPSB		void				[	repe a6]				8086
 CMPSD		void				[	repe o32 a7]				386
 CMPSQ		void				[	repe o64 a7]				X64
 CMPSW		void				[	repe o16 a7]				8086
-CMPXCHG		mem,reg8			[mr:	0f b0 /r]				PENT,SM
+CMPXCHG		mem,reg8			[mr:	hle 0f b0 /r]				PENT,SM
 CMPXCHG		reg8,reg8			[mr:	0f b0 /r]				PENT
-CMPXCHG		mem,reg16			[mr:	o16 0f b1 /r]				PENT,SM
+CMPXCHG		mem,reg16			[mr:	hle o16 0f b1 /r]			PENT,SM
 CMPXCHG		reg16,reg16			[mr:	o16 0f b1 /r]				PENT
-CMPXCHG		mem,reg32			[mr:	o32 0f b1 /r]				PENT,SM
+CMPXCHG		mem,reg32			[mr:	hle o32 0f b1 /r]			PENT,SM
 CMPXCHG		reg32,reg32			[mr:	o32 0f b1 /r]				PENT
-CMPXCHG		mem,reg64			[mr:	o64 0f b1 /r]				X64,SM
+CMPXCHG		mem,reg64			[mr:	hle o64 0f b1 /r]			X64,SM
 CMPXCHG		reg64,reg64			[mr:	o64 0f b1 /r]				X64
 CMPXCHG486	mem,reg8			[mr:	0f a6 /r]				486,SM,UNDOC,ND
 CMPXCHG486	reg8,reg8			[mr:	0f a6 /r]				486,UNDOC,ND
