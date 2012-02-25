@@ -648,6 +648,30 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
+        case 0240:
+            break;
+
+        case 0241:
+            if (prefix->rep == 0xF3)
+                drep = P_XRELEASE;
+            break;
+
+        case 0242:
+            if (prefix->rep == 0xF2)
+                drep = P_XACQUIRE;
+            else if (prefix->rep == 0xF3)
+                drep = P_XRELEASE;
+            break;
+
+        case 0243:
+            if (prefix->lock == 0xF0) {
+                if (prefix->rep == 0xF2)
+                    drep = P_XACQUIRE;
+                else if (prefix->rep == 0xF3)
+                    drep = P_XRELEASE;
+            }
+            break;
+
 	case4(0250):
 	    if (s_field_for == op1) {
 		opx->offset = gets8(data);
@@ -702,27 +726,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    vex_ok = true;
 	    break;
 	}
-
-        case 0271:
-            if (prefix->rep == 0xF3)
-                drep = P_XRELEASE;
-            break;
-
-        case 0272:
-            if (prefix->rep == 0xF2)
-                drep = P_XACQUIRE;
-            else if (prefix->rep == 0xF3)
-                drep = P_XRELEASE;
-            break;
-
-        case 0273:
-            if (prefix->lock == 0xF0) {
-                if (prefix->rep == 0xF2)
-                    drep = P_XACQUIRE;
-                else if (prefix->rep == 0xF3)
-                    drep = P_XRELEASE;
-            }
-            break;
 
 	case 0310:
             if (asize != 16)
