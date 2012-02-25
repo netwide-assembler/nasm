@@ -316,7 +316,7 @@ CMPXCHG486	reg16,reg16			[mr:	o16 0f a7 /r]				486,UNDOC,ND
 CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND
 CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND
 CMPXCHG8B	mem				[m:	hle 0f c7 /1]				PENT
-CMPXCHG16B	mem				[m:	o64 0f c7 /1]				X64
+CMPXCHG16B	mem				[m:	hle o64 0f c7 /1]			X64
 CPUID		void				[	0f a2]					PENT
 CPU_READ	void				[	0f 3d]					PENT,CYRIX
 CPU_WRITE	void				[	0f 3c]					PENT,CYRIX
