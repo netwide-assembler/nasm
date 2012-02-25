@@ -44,6 +44,7 @@
 \M{infofile}{nasm}
 \M{infotitle}{The Netwide Assembler for x86}
 \M{epslogo}{nasmlogo.eps}
+\M{logoyadj}{-72}
 \IR{-D} \c{-D} option
 \IR{-E} \c{-E} option
 \IR{-F} \c{-F} option
