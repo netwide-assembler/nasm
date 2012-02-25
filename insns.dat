@@ -216,15 +216,15 @@ BTR		reg64,reg64			[mr:	o64 0f b3 /r]				X64
 BTR		rm16,imm			[mi:	hle o16 0f ba /6 ib,u]			386,SB
 BTR		rm32,imm			[mi:	hle o32 0f ba /6 ib,u]			386,SB
 BTR		rm64,imm			[mi:	hle o64 0f ba /6 ib,u]			X64,SB
-BTS		mem,reg16			[mr:	o16 0f ab /r]				386,SM
+BTS		mem,reg16			[mr:	hle o16 0f ab /r]			386,SM
 BTS		reg16,reg16			[mr:	o16 0f ab /r]				386
-BTS		mem,reg32			[mr:	o32 0f ab /r]				386,SM
+BTS		mem,reg32			[mr:	hle o32 0f ab /r]			386,SM
 BTS		reg32,reg32			[mr:	o32 0f ab /r]				386
-BTS		mem,reg64			[mr:	o64 0f ab /r]				X64,SM
+BTS		mem,reg64			[mr:	hle o64 0f ab /r]			X64,SM
 BTS		reg64,reg64			[mr:	o64 0f ab /r]				X64
-BTS		rm16,imm			[mi:	o16 0f ba /5 ib,u]			386,SB
-BTS		rm32,imm			[mi:	o32 0f ba /5 ib,u]			386,SB
-BTS		rm64,imm			[mi:	o64 0f ba /5 ib,u]			X64,SB
+BTS		rm16,imm			[mi:	hle o16 0f ba /5 ib,u]			386,SB
+BTS		rm32,imm			[mi:	hle o32 0f ba /5 ib,u]			386,SB
+BTS		rm64,imm			[mi:	hle o64 0f ba /5 ib,u]			X64,SB
 CALL		imm				[i:	odf e8 rel]				8086
 CALL		imm|near			[i:	odf e8 rel]				8086
 CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG
