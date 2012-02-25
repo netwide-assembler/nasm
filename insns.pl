@@ -707,10 +707,10 @@ sub byte_code_compile($$) {
 	'repe' => 0335,
 	'nohi' => 0325,		# Use spl/bpl/sil/dil even without REX
 	'wait' => 0341,		# Needs a wait prefix
-	'nohle' => 0240,
-	'hlexr' => 0241,
-	'hlenl' => 0242,
-	'hle' => 0243,
+	'nohle' => 0264,
+	'hlexr' => 0265,
+	'hlenl' => 0266,
+	'hle' => 0267,
 	# This instruction takes XMM VSIB
 	'vsibx' => 0374,
 	'vm32x' => 0374,

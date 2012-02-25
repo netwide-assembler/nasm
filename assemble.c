@@ -74,16 +74,16 @@
  *                 an arbitrary value in bits 3..0 (assembled as zero.)
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
- * \240		 - skip this instruction pattern if HLE prefixes present
- * \241		 - instruction takes XRELEASE (F3) with or without lock
- * \242		 - instruction takes XACQUIRE/XRELEASE with or without lock
- * \243		 - instruction takes XACQUIRE/XRELEASE with lock only
  * \250..\253    - same as \150..\153, except warn if the 64-bit operand
  *                 is not equal to the truncated and sign-extended 32-bit
  *                 operand; used for 32-bit immediates in 64-bit mode.
  * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
  * \260..\263    - this instruction uses VEX/XOP rather than REX, with the
  *                 V field taken from operand 0..3.
+ * \264		 - skip this instruction pattern if HLE prefixes present
+ * \265		 - instruction takes XRELEASE (F3) with or without lock
+ * \266		 - instruction takes XACQUIRE/XRELEASE with or without lock
+ * \267		 - instruction takes XACQUIRE/XRELEASE with lock only
  * \270          - this instruction uses VEX/XOP rather than REX, with the
  *                 V field set to 1111b.
  *
@@ -959,18 +959,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
             break;
 
-        case 0240:
-            if (has_prefix(ins, PPS_REP, P_XACQUIRE) ||
-                has_prefix(ins, PPS_REP, P_XRELEASE))
-                return -1;
-            break;
-
-        case 0241:
-        case 0242:
-        case 0243:
-            hleok = c & 3;
-            break;
-
         case4(0250):
             length += is_sbyte32(opx) ? 1 : 4;
             break;
@@ -984,6 +972,18 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->vexreg = regval(opx);
             ins->vex_cm = *codes++;
             ins->vex_wlp = *codes++;
+            break;
+
+        case 0264:
+            if (has_prefix(ins, PPS_REP, P_XACQUIRE) ||
+                has_prefix(ins, PPS_REP, P_XRELEASE))
+                return -1;
+            break;
+
+        case 0265:
+        case 0266:
+        case 0267:
+            hleok = c & 3;
             break;
 
         case 0270:
@@ -1566,9 +1566,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset++;
             break;
 
-        case4(0240):
-            break;
-
         case4(0250):
             data = opx->offset;
             if (opx->wrt == NO_SEG && opx->segment == NO_SEG &&
@@ -1617,6 +1614,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
                 offset += 2;
             }
+            break;
+
+        case4(0264):
             break;
 
         case4(0274):
