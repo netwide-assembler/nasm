@@ -310,11 +310,11 @@ CMPXCHG		mem,reg32			[mr:	hle o32 0f b1 /r]			PENT,SM,LOCK
 CMPXCHG		reg32,reg32			[mr:	o32 0f b1 /r]				PENT
 CMPXCHG		mem,reg64			[mr:	hle o64 0f b1 /r]			X64,SM,LOCK
 CMPXCHG		reg64,reg64			[mr:	o64 0f b1 /r]				X64
-CMPXCHG486	mem,reg8			[mr:	0f a6 /r]				486,SM,UNDOC,ND
+CMPXCHG486	mem,reg8			[mr:	0f a6 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg8,reg8			[mr:	0f a6 /r]				486,UNDOC,ND
-CMPXCHG486	mem,reg16			[mr:	o16 0f a7 /r]				486,SM,UNDOC,ND
+CMPXCHG486	mem,reg16			[mr:	o16 0f a7 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg16,reg16			[mr:	o16 0f a7 /r]				486,UNDOC,ND
-CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND
+CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND
 CMPXCHG8B	mem				[m:	hle 0f c7 /1]				PENT,LOCK
 CMPXCHG16B	mem				[m:	hle o64 0f c7 /1]			X64,LOCK
