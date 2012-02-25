@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2011 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2012 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -35,7 +35,7 @@
 \#
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{1996-2011}
+\M{year}{1996-2012}
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the file "LICENSE" distributed in the NASM archive.}
