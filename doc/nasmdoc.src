@@ -161,6 +161,7 @@ in \c{elf}
 \IR{elf shared libraries} ELF, shared libraries
 \IR{elf32} \c{elf32}
 \IR{elf64} \c{elf64}
+\IR{elfx32} \c{elfx32}
 \IR{executable and linkable format} Executable and Linkable Format
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
 \IR{extern, rdf extensions to} \c{EXTERN}, \c{rdf} extensions to
@@ -521,11 +522,11 @@ For Microsoft object file formats (\c{obj}, \c{win32} and \c{win64}),
 it will remove the \c{.asm} \i{extension} (or whatever extension you
 like to use - NASM doesn't care) from your source file name and
 substitute \c{.obj}. For Unix object file formats (\c{aout}, \c{as86},
-\c{coff}, \c{elf32}, \c{elf64}, \c{ieee}, \c{macho32} and \c{macho64})
-it will substitute \c{.o}. For \c{dbg}, \c{rdf}, \c{ith} and \c{srec},
-it will use \c{.dbg}, \c{.rdf}, \c{.ith} and \c{.srec}, respectively,
-and for the \c{bin} format it will simply remove the extension, so
-that \c{myfile.asm} produces the output file \c{myfile}.
+\c{coff}, \c{elf32}, \c{elf64}, \c{elfx32}, \c{ieee}, \c{macho32} and
+\c{macho64}) it will substitute \c{.o}. For \c{dbg}, \c{rdf}, \c{ith}
+and \c{srec}, it will use \c{.dbg}, \c{.rdf}, \c{.ith} and \c{.srec},
+respectively, and for the \c{bin} format it will simply remove the
+extension, so that \c{myfile.asm} produces the output file \c{myfile}.
 
 If the output file already exists, NASM will overwrite it, unless it
 has the same name as the input file, in which case it will give a
@@ -5661,13 +5662,17 @@ object files suitable for linking with the \i{MacOS X} linker.
 
 \c{macho} provides a default output file-name extension of \c{.o}.
 
-\H{elffmt} \i\c{elf32} and \i\c{elf64}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
+\H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
 
-The \c{elf32} and \c{elf64} output formats generate \c{ELF32 and ELF64} (Executable and Linkable Format) object files, as used by Linux as well as \i{Unix System V},
-including \i{Solaris x86}, \i{UnixWare} and \i{SCO Unix}. \c{elf}
-provides a default output file-name extension of \c{.o}.
-\c{elf} is a synonym for \c{elf32}.
+The \c{elf32}, \c{elf64} and \c{elfx32} output formats generate
+\c{ELF32 and ELF64} (Executable and Linkable Format) object files, as
+used by Linux as well as \i{Unix System V}, including \i{Solaris x86},
+\i{UnixWare} and \i{SCO Unix}. \c{elf} provides a default output
+file-name extension of \c{.o}.  \c{elf} is a synonym for \c{elf32}.
+
+The \c{elfx32} format is used for the \i{x32} ABI, which is a 32-bit
+ABI with the CPU in 64-bit mode.
 
 \S{abisect} ELF specific directive \i\c{osabi}
 
@@ -5805,7 +5810,7 @@ of the symbol with code such as:
 \c 	  mov  [gs:eax],ebx
 
 
-\b In ELF64 mode, referring to an external or global symbol using
+\b In ELF64 or ELFx32 mode, referring to an external or global symbol using
 \c{wrt ..gottpoff} \I\c{..gottpoff}
 causes the linker to build an entry \e{in} the GOT containing the
 offset of the symbol within the TLS block, so you can access the value
@@ -5891,7 +5896,7 @@ these relocations is generated.
 \S{elfdbg} Debug formats and ELF
 \I{ELF, Debug formats and}
 
-\c{ELF32} and \c{ELF64} provide debug information in \c{STABS} and \c{DWARF} formats.
+ELF provides debug information in \c{STABS} and \c{DWARF} formats.
 Line number information is generated for all executable sections, but please
 note that only the ".text" section is executable by default.
 

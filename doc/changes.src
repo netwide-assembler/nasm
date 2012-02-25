@@ -42,13 +42,15 @@ To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 \b Add support for Intel Transactional Synchronization Extensions (TSX).
 
+\b Add support for x32 ELF (32-bit ELF with the CPU in 64-bit mode.)
+   See \k{elffmt}.
+
 \S{cl-2.09.10} Version 2.09.10
 
 \b Fix up NSIS script to protect uninstaller against registry keys
    absence or corruption. It brings in a few additional questions
    to a user during deinstallation procedure but still it is better
    than unpredictable file removal.
-
 
 \S{cl-2.09.09} Version 2.09.09
 
