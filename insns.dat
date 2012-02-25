@@ -876,13 +876,13 @@ NOT		rm8				[m:	hle f6 /2]				8086
 NOT		rm16				[m:	hle o16 f7 /2]				8086
 NOT		rm32				[m:	hle o32 f7 /2]				386
 NOT		rm64				[m:	hle o64 f7 /2]				X64
-OR		mem,reg8			[mr:	08 /r]					8086,SM
+OR		mem,reg8			[mr:	hle 08 /r]				8086,SM
 OR		reg8,reg8			[mr:	08 /r]					8086
-OR		mem,reg16			[mr:	o16 09 /r]				8086,SM
+OR		mem,reg16			[mr:	hle o16 09 /r]				8086,SM
 OR		reg16,reg16			[mr:	o16 09 /r]				8086
-OR		mem,reg32			[mr:	o32 09 /r]				386,SM
+OR		mem,reg32			[mr:	hle o32 09 /r]				386,SM
 OR		reg32,reg32			[mr:	o32 09 /r]				386
-OR		mem,reg64			[mr:	o64 09 /r]				X64,SM
+OR		mem,reg64			[mr:	hle o64 09 /r]				X64,SM
 OR		reg64,reg64			[mr:	o64 09 /r]				X64
 OR		reg8,mem			[rm:	0a /r]					8086,SM
 OR		reg8,reg8			[rm:	0a /r]					8086
@@ -892,9 +892,9 @@ OR		reg32,mem			[rm:	o32 0b /r]				386,SM
 OR		reg32,reg32			[rm:	o32 0b /r]				386
 OR		reg64,mem			[rm:	o64 0b /r]				X64,SM
 OR		reg64,reg64			[rm:	o64 0b /r]				X64
-OR		rm16,imm8			[mi:	o16 83 /1 ibx]				8086
-OR		rm32,imm8			[mi:	o32 83 /1 ibx]				386
-OR		rm64,imm8			[mi:	o64 83 /1 ibx]				X64
+OR		rm16,imm8			[mi:	hle o16 83 /1 ibx]			8086
+OR		rm32,imm8			[mi:	hle o32 83 /1 ibx]			386
+OR		rm64,imm8			[mi:	hle o64 83 /1 ibx]			X64
 OR		reg_al,imm			[-i:	0c ib]					8086,SM
 OR		reg_ax,sbyte16			[mi:	o16 83 /1 ibx]				8086,SM
 OR		reg_ax,imm			[-i:	o16 0d iw]				8086,SM
@@ -902,13 +902,13 @@ OR		reg_eax,sbyte32			[mi:	o32 83 /1 ibx]				386,SM
 OR		reg_eax,imm			[-i:	o32 0d id]				386,SM
 OR		reg_rax,sbyte64			[mi:	o64 83 /1 ibx]				X64,SM
 OR		reg_rax,imm			[-i:	o64 0d idx]				X64,SM
-OR		rm8,imm				[mi:	80 /1 ib]				8086,SM
-OR		rm16,imm			[mi:	o16 81+s /1 ibw]			8086,SM
-OR		rm32,imm			[mi:	o32 81+s /1 ibd]			386,SM
-OR		rm64,imm			[mi:	o64 81+s /1 ibd,s]			X64,SM
-OR		mem,imm8			[mi:	80 /1 ib]				8086,SM
-OR		mem,imm16			[mi:	o16 81+s /1 ibw]			8086,SM
-OR		mem,imm32			[mi:	o32 81+s /1 ibd]			386,SM
+OR		rm8,imm				[mi:	hle 80 /1 ib]				8086,SM
+OR		rm16,imm			[mi:	hle o16 81+s /1 ibw]			8086,SM
+OR		rm32,imm			[mi:	hle o32 81+s /1 ibd]			386,SM
+OR		rm64,imm			[mi:	hle o64 81+s /1 ibd,s]			X64,SM
+OR		mem,imm8			[mi:	hle 80 /1 ib]				8086,SM
+OR		mem,imm16			[mi:	hle o16 81+s /1 ibw]			8086,SM
+OR		mem,imm32			[mi:	hle o32 81+s /1 ibd]			386,SM
 OUT		imm,reg_al			[i-:	e6 ib,u]				8086,SB
 OUT		imm,reg_ax			[i-:	o16 e7 ib,u]				8086,SB
 OUT		imm,reg_eax			[i-:	o32 e7 ib,u]				386,SB
