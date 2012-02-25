@@ -207,15 +207,15 @@ BTC		reg64,reg64			[mr:	o64 0f bb /r]				X64
 BTC		rm16,imm			[mi:	hle o16 0f ba /7 ib,u]			386,SB
 BTC		rm32,imm			[mi:	hle o32 0f ba /7 ib,u]			386,SB
 BTC		rm64,imm			[mi:	hle o64 0f ba /7 ib,u]			X64,SB
-BTR		mem,reg16			[mr:	o16 0f b3 /r]				386,SM
+BTR		mem,reg16			[mr:	hle o16 0f b3 /r]			386,SM
 BTR		reg16,reg16			[mr:	o16 0f b3 /r]				386
-BTR		mem,reg32			[mr:	o32 0f b3 /r]				386,SM
+BTR		mem,reg32			[mr:	hle o32 0f b3 /r]			386,SM
 BTR		reg32,reg32			[mr:	o32 0f b3 /r]				386
-BTR		mem,reg64			[mr:	o64 0f b3 /r]				X64,SM
+BTR		mem,reg64			[mr:	hle o64 0f b3 /r]			X64,SM
 BTR		reg64,reg64			[mr:	o64 0f b3 /r]				X64
-BTR		rm16,imm			[mi:	o16 0f ba /6 ib,u]			386,SB
-BTR		rm32,imm			[mi:	o32 0f ba /6 ib,u]			386,SB
-BTR		rm64,imm			[mi:	o64 0f ba /6 ib,u]			X64,SB
+BTR		rm16,imm			[mi:	hle o16 0f ba /6 ib,u]			386,SB
+BTR		rm32,imm			[mi:	hle o32 0f ba /6 ib,u]			386,SB
+BTR		rm64,imm			[mi:	hle o64 0f ba /6 ib,u]			X64,SB
 BTS		mem,reg16			[mr:	o16 0f ab /r]				386,SM
 BTS		reg16,reg16			[mr:	o16 0f ab /r]				386
 BTS		mem,reg32			[mr:	o32 0f ab /r]				386,SM
