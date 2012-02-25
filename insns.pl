@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2012 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -692,6 +692,33 @@ sub byte_code_compile($$) {
         'ibd' => 0154,
         'ibd,s' => 0154
     );
+    my %plain_codes = (
+	'o16' => 0320,		# 16-bit operand size
+	'o32' => 0321,		# 32-bit operand size
+	'odf' => 0322,		# Operand size is default
+	'o64' => 0324,		# 64-bit operand size requiring REX.W
+	'o64nw' => 0323,	# Implied 64-bit operand size (no REX.W)
+	'a16' => 0310,
+	'a32' => 0311,
+	'a64' => 0313,
+	'!osp' => 0364,
+	'!asp' => 0365,
+	'rex.l' => 0334,
+	'repe' => 0335,
+	'nohi' => 0325,		# Use spl/bpl/sil/dil even without REX
+	'wait' => 0341,		# Needs a wait prefix
+	'hlexr' => 0271,
+	'hlenl' => 0272,
+	'hle' => 0273,
+	# This instruction takes XMM VSIB
+	'vsibx' => 0374,
+	'vm32x' => 0374,
+	'vm64x' => 0374,
+	# This instruction takes YMM VSIB
+	'vsiby' => 0375,
+	'vm32y' => 0375,
+	'vm64y' => 0375
+    );
 
     unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
         die "$fname: $line: cannot parse: [$str]\n";
@@ -716,45 +743,11 @@ sub byte_code_compile($$) {
     my $last_imm = 'h';
     my $prefix_ok = 1;
     foreach $op (split(/\s*(?:\s|(?=[\/\\]))/, $opc)) {
-        if ($op eq 'o16') {
-            push(@codes, 0320);
-        } elsif ($op eq 'o32') {
-            push(@codes, 0321);
-	} elsif ($op eq 'odf') { # Operand size is default
-	    push(@codes, 0322);
-        } elsif ($op eq 'o64') {  # 64-bit operand size requiring REX.W
-            push(@codes, 0324);
-        } elsif ($op eq 'o64nw') { # Implied 64-bit operand size (no REX.W)
-            push(@codes, 0323);
-        } elsif ($op eq 'a16') {
-            push(@codes, 0310);
-        } elsif ($op eq 'a32') {
-            push(@codes, 0311);
-        } elsif ($op eq 'a64') {
-            push(@codes, 0313);
-        } elsif ($op eq '!osp') {
-            push(@codes, 0364);
-        } elsif ($op eq '!asp') {
-            push(@codes, 0365);
-        } elsif ($op eq 'rex.l') {
-            push(@codes, 0334);
-        } elsif ($op eq 'repe') {
-            push(@codes, 0335);
-        } elsif ($op eq 'nohi') { # Use spl/bpl/sil/dil even without REX
-            push(@codes, 0325);
-	} elsif ($op eq 'wait') { # Needs a wait prefix
-	    push(@codes, 0341);
-	} elsif ($op eq 'hlexr') {
-	    push(@codes, 0271);
-	} elsif ($op eq 'hlenl') {
-	    push(@codes, 0272);
-	} elsif ($op eq 'hle') {
-	    push(@codes, 0273);
-        } elsif ($op eq 'vsibx' || $op eq 'vm32x' || $op eq 'vm64x') {
-            # This instruction takes XMM VSIB
-            push(@codes, 0374);
-        } elsif ($op eq 'vsiby' || $op eq 'vm32y' || $op eq 'vm64y') {
-            push(@codes, 0375);
+	my $pc = $plain_codes{$op};
+
+	if (defined $pc) {
+	    # Plain code
+	    push(@codes, $pc);
         } elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
             # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
             if ($op eq '66') {
