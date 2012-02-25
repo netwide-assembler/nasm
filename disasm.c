@@ -703,6 +703,27 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
+        case 0271:
+            if (prefix->rep == 0xF3)
+                drep = P_XRELEASE;
+            break;
+
+        case 0272:
+            if (prefix->rep == 0xF2)
+                drep = P_XACQUIRE;
+            else if (prefix->rep == 0xF3)
+                drep = P_XRELEASE;
+            break;
+
+        case 0273:
+            if (prefix->lock == 0xF0) {
+                if (prefix->rep == 0xF2)
+                    drep = P_XACQUIRE;
+                else if (prefix->rep == 0xF3)
+                    drep = P_XRELEASE;
+            }
+            break;
+
 	case 0310:
             if (asize != 16)
                 return false;

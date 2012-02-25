@@ -744,6 +744,12 @@ sub byte_code_compile($$) {
             push(@codes, 0325);
 	} elsif ($op eq 'wait') { # Needs a wait prefix
 	    push(@codes, 0341);
+	} elsif ($op eq 'hlexr') {
+	    push(@codes, 0271);
+	} elsif ($op eq 'hlenl') {
+	    push(@codes, 0272);
+	} elsif ($op eq 'hle') {
+	    push(@codes, 0273);
         } elsif ($op eq 'vsibx' || $op eq 'vm32x' || $op eq 'vm64x') {
             # This instruction takes XMM VSIB
             push(@codes, 0374);

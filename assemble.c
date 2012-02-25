@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -97,6 +97,9 @@
  *
  * t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
  *
+ * \271		 - instruction takes XRELEASE (F3) with or without lock
+ * \272		 - instruction takes XACQUIRE/XRELEASE with or without lock
+ * \273		 - instruction takes XACQUIRE/XRELEASE with lock only
  * \274..\277    - a signed byte immediate operand, from operand 0..3,
  *                 which is to be extended to the operand size.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
@@ -507,11 +510,13 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
                         break;
                     case P_REPNE:
                     case P_REPNZ:
+                    case P_XACQUIRE:
                         c = 0xF2;
                         break;
                     case P_REPE:
                     case P_REPZ:
                     case P_REP:
+                    case P_XRELEASE:
                         c = 0xF3;
                         break;
                     case R_CS:
@@ -787,6 +792,41 @@ static bool is_sbyte32(operand *o)
     return v >= -128 && v <= 127;
 }
 
+static void bad_hle_warn(const insn * ins, uint8_t hleok)
+{
+    enum prefixes rep_pfx = ins->prefixes[PPS_REP];
+    enum whatwarn { w_none, w_lock, w_inval };
+    static const enum whatwarn warn[2][4] =
+    {
+        { w_inval, w_inval, w_none, w_lock }, /* XACQUIRE */
+        { w_inval, w_none,  w_none, w_lock }, /* XRELEASE */
+    };
+    unsigned int n;
+
+    n = (unsigned int)rep_pfx - P_XACQUIRE;
+    if (n > 1)
+        return;                 /* Not XACQUIRE/XRELEASE */
+
+    switch (warn[n][hleok]) {
+    case w_none:
+        break;
+
+    case w_lock:
+        if (ins->prefixes[PPS_LOCK] != P_LOCK) {
+            errfunc(ERR_WARNING | ERR_PASS2,
+                    "%s with this instruction requires lock",
+                    prefix_name(rep_pfx));
+        }
+        break;
+
+    case w_inval:
+        errfunc(ERR_WARNING | ERR_PASS2,
+                "%s invalid with this instruction",
+                prefix_name(rep_pfx));
+        break;
+    }
+}
+
 /* Common construct */
 #define case4(x) case (x): case (x)+1: case (x)+2: case (x)+3
 
@@ -800,6 +840,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     struct operand *opx;
     uint8_t opex = 0;
     enum ea_type eat;
+    uint8_t hleok = 0;
 
     ins->rex = 0;               /* Ensure REX is reset */
     eat = EA_SCALAR;            /* Expect a scalar EA */
@@ -937,6 +978,12 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->vexreg = 0;
             ins->vex_cm = *codes++;
             ins->vex_wlp = *codes++;
+            break;
+
+        case 0271:
+        case 0272:
+        case 0273:
+            hleok = c & 3;
             break;
 
         case4(0274):
@@ -1190,6 +1237,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             return -1;
         }
     }
+    
+    bad_hle_warn(ins, hleok);
 
     return length;
 }

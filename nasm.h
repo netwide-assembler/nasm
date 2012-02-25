@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -473,7 +473,7 @@ enum prefixes { /* instruction prefixes */
     P_A16 = PREFIX_ENUM_START, P_A32, P_A64, P_ASP,
     P_LOCK, P_O16, P_O32, P_O64, P_OSP,
     P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES,
-    P_WAIT,
+    P_WAIT, P_XACQUIRE, P_XRELEASE,
     PREFIX_ENUM_LIMIT
 };
 
