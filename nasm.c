@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2011 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -161,6 +161,8 @@ static const struct warning {
     {"float-underflow", "floating point underflow", false},
     {"float-toolong", "too many digits in floating-point number", true},
     {"user", "%warning directives", true},
+    {"lock", "lock prefix on unlockable instructions", true},
+    {"hle", "invalid hle prefixes", true},
 };
 
 /*

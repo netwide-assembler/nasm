@@ -948,6 +948,13 @@ Enabled by default.
 \b \i\c{user} controls \c{%warning} directives (see \k{pperror}).
 Enabled by default.
 
+\b \i\c{lock} warns about \c{LOCK} prefixes on unlockable instructions.
+Enabled by default.
+
+\b \i\c{hle} warns about invalid use of the HLE \c{XACQUIRE} or \c{XRELEASE}
+prefixes.
+Enabled by default.
+
 \b \i\c{error} causes warnings to be treated as errors.  Disabled by
 default.
 

@@ -818,14 +818,14 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 
     case w_lock:
         if (ins->prefixes[PPS_LOCK] != P_LOCK) {
-            errfunc(ERR_WARNING | ERR_PASS2,
+            errfunc(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
                     "%s with this instruction requires lock",
                     prefix_name(rep_pfx));
         }
         break;
 
     case w_inval:
-        errfunc(ERR_WARNING | ERR_PASS2,
+        errfunc(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
                 "%s invalid with this instruction",
                 prefix_name(rep_pfx));
         break;
@@ -1254,7 +1254,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!(temp->flags & IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
-        errfunc(ERR_WARNING | ERR_PASS2,
+        errfunc(ERR_WARNING | ERR_WARN_LOCK | ERR_PASS2 ,
                 "instruction is not lockable");
     }
 

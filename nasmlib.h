@@ -132,7 +132,9 @@ void nasm_set_verror(vefunc);
 #define ERR_WARN_FL_UNDERFLOW   WARN( 9) /* FP underflow */
 #define ERR_WARN_FL_TOOLONG     WARN(10) /* FP too many digits */
 #define ERR_WARN_USER           WARN(11) /* %warning directives */
-#define ERR_WARN_MAX            11       /* the highest numbered one */
+#define ERR_WARN_LOCK		WARN(12) /* bad LOCK prefixes */
+#define ERR_WARN_HLE		WARN(13) /* bad HLE prefixes */
+#define ERR_WARN_MAX            13       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
