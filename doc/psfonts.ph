@@ -22,27 +22,27 @@ if ( 1 ) {
     # Times family fonts
 
     %TitlFont = (name => 'tfont',
-		 leading => 22,
+		 leading => 24,
 	     fonts => [[20,\%PS_Times_Bold],
 		       [20,\%PS_Times_BoldItalic],
 		       [20,\%PS_Courier_Bold]]);
     %ChapFont = (name => 'cfont',
-		 leading => 19.2,
+		 leading => 21.6,
 		 fonts => [[18,\%PS_Times_Bold],
 			   [18,\%PS_Times_BoldItalic],
 			   [18,\%PS_Courier_Bold]]);
     %HeadFont = (name => 'hfont',
-		 leading => 15.4,
+		 leading => 16.8,
 		 fonts => [[14,\%PS_Times_Bold],
 			   [14,\%PS_Times_BoldItalic],
 			   [14,\%PS_Courier_Bold]]);
     %SubhFont = (name => 'sfont',
-		 leading => 13.2,
+		 leading => 14.4,
 		 fonts => [[12,\%PS_Times_Bold],
 			   [12,\%PS_Times_BoldItalic],
 			   [12,\%PS_Courier_Bold]]);
     %BodyFont = (name => 'bfont',
-		 leading => 11,
+		 leading => 12,
 		 fonts => [[10,\%PS_Times_Roman],
 			   [10,\%PS_Times_Italic],
 			   [10,\%PS_Courier]]);
@@ -50,54 +50,54 @@ if ( 1 ) {
     # Helvetica family fonts
 
     %TitlFont = (name => 'tfont',
-		 leading => 22,
+		 leading => 24,
 		 fonts => [[20,\%PS_Helvetica_Bold],
 			   [20,\%PS_Helvetica_BoldOblique],
 			   [20,\%PS_Courier_Bold]]);
     %ChapFont = (name => 'cfont',
-		 leading => 19.2,
+		 leading => 21.6,
 		 fonts => [[18,\%PS_Helvetica_Bold],
 			   [18,\%PS_Helvetica_BoldOblique],
 			   [18,\%PS_Courier_Bold]]);
     %HeadFont = (name => 'hfont',
-		 leading => 15.4,
+		 leading => 16.8,
 		 fonts => [[14,\%PS_Helvetica_Bold],
 			   [14,\%PS_Helvetica_BoldOblique],
 			   [14,\%PS_Courier_Bold]]);
     %SubhFont = (name => 'sfont',
-		 leading => 13.2,
+		 leading => 14.4,
 		 fonts => [[12,\%PS_Helvetica_Bold],
 			   [12,\%PS_Helvetica_BoldOblique],
 			   [12,\%PS_Courier_Bold]]);
     %BodyFont = (name => 'bfont',
-		 leading => 11,
+		 leading => 12,
 		 fonts => [[10,\%PS_Helvetica],
 			   [10,\%PS_Helvetica_Oblique],
 			   [10,\%PS_Courier]]);
 } else {
     # Body text Times; headings Helvetica
     %TitlFont = (name => 'tfont',
-		 leading => 22,
+		 leading => 24,
 		 fonts => [[20,\%PS_Helvetica_Bold],
 			   [20,\%PS_Helvetica_BoldOblique],
 			   [20,\%PS_Courier_Bold]]);
     %ChapFont = (name => 'cfont',
-		 leading => 19.2,
+		 leading => 21.6,
 		 fonts => [[18,\%PS_Helvetica_Bold],
 			   [18,\%PS_Helvetica_BoldOblique],
 			   [18,\%PS_Courier_Bold]]);
     %HeadFont = (name => 'hfont',
-		 leading => 15.4,
+		 leading => 16.8,
 		 fonts => [[14,\%PS_Helvetica_Bold],
 			   [14,\%PS_Helvetica_BoldOblique],
 			   [14,\%PS_Courier_Bold]]);
     %SubhFont = (name => 'sfont',
-		 leading => 13.2,
+		 leading => 14.4,
 		 fonts => [[12,\%PS_Helvetica_Bold],
 			   [12,\%PS_Helvetica_BoldOblique],
 			   [12,\%PS_Courier_Bold]]);
     %BodyFont = (name => 'bfont',
-		 leading => 11,
+		 leading => 12,
 		 fonts => [[10,\%PS_Times_Roman],
 			   [10,\%PS_Times_Italic],
 			   [10,\%PS_Courier]]);
