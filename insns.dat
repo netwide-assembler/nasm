@@ -55,7 +55,7 @@ DQ		ignore				ignore						ignore
 DT		ignore				ignore						ignore
 DO		ignore				ignore						ignore
 DY		ignore				ignore						ignore
-RESB		imm				\340						8086
+RESB		imm				[	resb]					8086
 RESW		ignore				ignore						ignore
 RESD		ignore				ignore						ignore
 RESQ		ignore				ignore						ignore
@@ -338,8 +338,8 @@ DIV		rm64				[m:	o64 f7 /6]				X64
 DMINT		void				[	0f 39]					P6,CYRIX
 EMMS		void				[	0f 77]					PENT,MMX
 ENTER		imm,imm				[ij:	c8 iw ib,u]				186
-EQU		imm				\0						8086
-EQU		imm:imm				\0						8086
+EQU		imm				ignore						8086
+EQU		imm:imm				ignore						8086
 F2XM1		void				[	d9 f0]					8086,FPU
 FABS		void				[	d9 e1]					8086,FPU
 FADD		mem32				[m:	d8 /0]					8086,FPU
@@ -652,7 +652,7 @@ JCXZ		imm				[i:	a16 e3 rel8]				8086,NOLONG
 JECXZ		imm				[i:	a32 e3 rel8]				386
 JRCXZ		imm				[i:	a64 e3 rel8]				X64
 JMP		imm|short			[i:	eb rel8]				8086
-JMP		imm				[i:	\371 eb rel8]				8086,ND
+JMP		imm				[i:	jmp8 eb rel8]				8086,ND
 JMP		imm				[i:	odf e9 rel]				8086
 JMP		imm|near			[i:	odf e9 rel]				8086,ND
 JMP		imm|far				[i:	odf ea iwd seg]				8086,ND,NOLONG
@@ -730,23 +730,23 @@ LODSB		void				[	ac]					8086
 LODSD		void				[	o32 ad]					386
 LODSQ		void				[	o64 ad]					X64
 LODSW		void				[	o16 ad]					8086
-LOOP		imm				[i:	\312 e2 rel8]				8086
+LOOP		imm				[i:	adf e2 rel8]				8086
 LOOP		imm,reg_cx			[i-:	a16 e2 rel8]				8086,NOLONG
 LOOP		imm,reg_ecx			[i-:	a32 e2 rel8]				386
 LOOP		imm,reg_rcx			[i-:	a64 e2 rel8]				X64
-LOOPE		imm				[i:	\312 e1 rel8]				8086
+LOOPE		imm				[i:	adf e1 rel8]				8086
 LOOPE		imm,reg_cx			[i-:	a16 e1 rel8]				8086,NOLONG
 LOOPE		imm,reg_ecx			[i-:	a32 e1 rel8]				386
 LOOPE		imm,reg_rcx			[i-:	a64 e1 rel8]				X64
-LOOPNE		imm				[i:	\312 e0 rel8]				8086
+LOOPNE		imm				[i:	adf e0 rel8]				8086
 LOOPNE		imm,reg_cx			[i-:	a16 e0 rel8]				8086,NOLONG
 LOOPNE		imm,reg_ecx			[i-:	a32 e0 rel8]				386
 LOOPNE		imm,reg_rcx			[i-:	a64 e0 rel8]				X64
-LOOPNZ		imm				[i:	\312 e0 rel8]				8086
+LOOPNZ		imm				[i:	adf e0 rel8]				8086
 LOOPNZ		imm,reg_cx			[i-:	a16 e0 rel8]				8086,NOLONG
 LOOPNZ		imm,reg_ecx			[i-:	a32 e0 rel8]				386
 LOOPNZ		imm,reg_rcx			[i-:	a64 e0 rel8]				X64
-LOOPZ		imm				[i:	\312 e1 rel8]				8086
+LOOPZ		imm				[i:	adf e1 rel8]				8086
 LOOPZ		imm,reg_cx			[i-:	a16 e1 rel8]				8086,NOLONG
 LOOPZ		imm,reg_ecx			[i-:	a32 e1 rel8]				386
 LOOPZ		imm,reg_rcx			[i-:	a64 e1 rel8]				X64
@@ -868,7 +868,7 @@ NEG		rm8				[m:	f6 /3]					8086
 NEG		rm16				[m:	o16 f7 /3]				8086
 NEG		rm32				[m:	o32 f7 /3]				386
 NEG		rm64				[m:	o64 f7 /3]				X64
-NOP		void				[	\314 90]				8086
+NOP		void				[	norexb 90]				8086
 NOP		rm16				[m:	o16 0f 1f /0]				P6
 NOP		rm32				[m:	o32 0f 1f /0]				P6
 NOP		rm64				[m:	o64 0f 1f /0]				X64
@@ -931,7 +931,7 @@ PADDUSW		mmxreg,mmxrm			[rm:	np o64nw 0f dd /r]			PENT,MMX,SQ
 PADDW		mmxreg,mmxrm			[rm:	np o64nw 0f fd /r]			PENT,MMX,SQ
 PAND		mmxreg,mmxrm			[rm:	np o64nw 0f db /r]			PENT,MMX,SQ
 PANDN		mmxreg,mmxrm			[rm:	np o64nw 0f df /r]			PENT,MMX,SQ
-PAUSE		void				[	\314 \333 90]				8086
+PAUSE		void				[	norexb f3i 90]				8086
 PAVEB		mmxreg,mmxrm			[rm:	o64nw 0f 50 /r]				PENT,MMX,SQ,CYRIX
 PAVGUSB		mmxreg,mmxrm			[rm:	o64nw 0f 0f /r bf]			PENT,3DNOW,SQ
 PCMPEQB		mmxreg,mmxrm			[rm:	np o64nw 0f 74 /r]			PENT,MMX,SQ
@@ -977,8 +977,8 @@ POP		rm16				[m:	o16 8f /0]				8086
 POP		rm32				[m:	o32 8f /0]				386,NOLONG
 POP		rm64				[m:	o64nw 8f /0]				X64
 POP		reg_cs				[-:	0f]					8086,UNDOC,ND
-POP		reg_dess			[-:	\345]					8086,NOLONG
-POP		reg_fsgs			[-:	0f \347]				386
+POP		reg_dess			[-:	popseg]					8086,NOLONG
+POP		reg_fsgs			[-:	0f popseg2]				386
 POPA		void				[	odf 61]					186,NOLONG
 POPAD		void				[	o32 61]					386,NOLONG
 POPAW		void				[	o16 61]					186,NOLONG
@@ -1025,9 +1025,9 @@ PUSH		reg64				[r:	o64nw 50+r]				X64
 PUSH		rm16				[m:	o16 ff /6]				8086
 PUSH		rm32				[m:	o32 ff /6]				386,NOLONG
 PUSH		rm64				[m:	o64nw ff /6]				X64
-PUSH		reg_cs				[-:	\344]					8086,NOLONG
-PUSH		reg_dess			[-:	\344]					8086,NOLONG
-PUSH		reg_fsgs			[-:	0f \346]				386
+PUSH		reg_cs				[-:	pushseg]				8086,NOLONG
+PUSH		reg_dess			[-:	pushseg]				8086,NOLONG
+PUSH		reg_fsgs			[-:	0f pushseg2]				386
 PUSH		imm8				[i:	6a ibx]					186
 PUSH		imm16				[i:	o16 68+s ibw]				186,AR0,SZ
 PUSH		imm32				[i:	o32 68+s ibd]				386,NOLONG,AR0,SZ
@@ -1421,9 +1421,9 @@ Jcc		imm|near			[i:	odf 0f 80+c rel]			386
 Jcc		imm16|near			[i:	o16 0f 80+c rel]			386
 Jcc		imm32|near			[i:	o32 0f 80+c rel]			386
 Jcc		imm|short			[i:	70+c rel8]				8086,ND
-Jcc		imm				[i:	\370 70+c rel8]				8086,ND
+Jcc		imm				[i:	jcc8 70+c rel8]				8086,ND
 Jcc		imm				[i:	0f 80+c rel]				386,ND
-Jcc		imm				[i:	71+c \373 e9 rel]			8086,ND
+Jcc		imm				[i:	71+c jlen e9 rel]			8086,ND
 Jcc		imm				[i:	70+c rel8]				8086
 SETcc		mem				[m:	0f 90+c /0]				386,SB
 SETcc		reg8				[m:	0f 90+c /0]				386
@@ -1575,10 +1575,10 @@ LFENCE		void				[	0f ae e8]				WILLAMETTE,SSE2
 MFENCE		void				[	0f ae f0]				WILLAMETTE,SSE2
 
 ;# Willamette MMX instructions (SSE2 SIMD Integer Instructions)
-MOVD		mem,xmmreg			[mr:	66 \317 0f 7e /r]			WILLAMETTE,SSE2,SD
-MOVD		xmmreg,mem			[rm:	66 \317 0f 6e /r]			WILLAMETTE,SSE2,SD
-MOVD		xmmreg,rm32			[rm:	66 \317 0f 6e /r]			WILLAMETTE,SSE2
-MOVD		rm32,xmmreg			[mr:	66 \317 0f 7e /r]			WILLAMETTE,SSE2
+MOVD		mem,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2,SD
+MOVD		xmmreg,mem			[rm:	66 norexw 0f 6e /r]			WILLAMETTE,SSE2,SD
+MOVD		xmmreg,rm32			[rm:	66 norexw 0f 6e /r]			WILLAMETTE,SSE2
+MOVD		rm32,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2
 MOVDQA		xmmreg,xmmreg			[rm:	66 0f 6f /r]				WILLAMETTE,SSE2
 MOVDQA		mem,xmmreg			[mr:	66 0f 7f /r]				WILLAMETTE,SSE2,SO
 MOVDQA		xmmreg,mem			[rm:	66 0f 6f /r]				WILLAMETTE,SSE2,SO
@@ -1845,9 +1845,9 @@ MOVNTSD		mem,xmmreg			[mr:	f2 0f 2b /r]				SSE4A,AMD,SQ
 MOVNTSS		mem,xmmreg			[mr:	f3 0f 2b /r]				SSE4A,AMD,SD
 
 ;# New instructions in Barcelona
-LZCNT		reg16,rm16			[rm:	o16 \333 0f bd /r]			P6,AMD
-LZCNT		reg32,rm32			[rm:	o32 \333 0f bd /r]			P6,AMD
-LZCNT		reg64,rm64			[rm:	o64 \333 0f bd /r]			X64,AMD
+LZCNT		reg16,rm16			[rm:	o16 f3i 0f bd /r]			P6,AMD
+LZCNT		reg32,rm32			[rm:	o32 f3i 0f bd /r]			P6,AMD
+LZCNT		reg64,rm64			[rm:	o64 f3i 0f bd /r]			X64,AMD
 
 ;# Penryn New Instructions (SSE4.1)
 BLENDPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0d /r ib,u]			SSE41
@@ -1910,19 +1910,19 @@ ROUNDSD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0b /r ib,u]			SSE41
 ROUNDSS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			[rm:	\332 0f 38 f0 /r]			SSE42
-CRC32		reg32,rm16			[rm:	o16 \332 0f 38 f1 /r]			SSE42
-CRC32		reg32,rm32			[rm:	o32 \332 0f 38 f1 /r]			SSE42
-CRC32		reg64,rm8			[rm:	o64 \332 0f 38 f0 /r]			SSE42,X64
-CRC32		reg64,rm64			[rm:	o64 \332 0f 38 f1 /r]			SSE42,X64
+CRC32		reg32,rm8			[rm:	f2i 0f 38 f0 /r]			SSE42
+CRC32		reg32,rm16			[rm:	o16 f2i 0f 38 f1 /r]			SSE42
+CRC32		reg32,rm32			[rm:	o32 f2i 0f 38 f1 /r]			SSE42
+CRC32		reg64,rm8			[rm:	o64 f2i 0f 38 f0 /r]			SSE42,X64
+CRC32		reg64,rm64			[rm:	o64 f2i 0f 38 f1 /r]			SSE42,X64
 PCMPESTRI	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 61 /r ib,u]			SSE42
 PCMPESTRM	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 60 /r ib,u]			SSE42
 PCMPISTRI	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 63 /r ib,u]			SSE42
 PCMPISTRM	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 62 /r ib,u]			SSE42
 PCMPGTQ		xmmreg,xmmrm			[rm:	66 0f 38 37 /r]				SSE42
-POPCNT		reg16,rm16			[rm:	o16 \333 0f b8 /r]			NEHALEM,SW
-POPCNT		reg32,rm32			[rm:	o32 \333 0f b8 /r]			NEHALEM,SD
-POPCNT		reg64,rm64			[rm:	o64 \333 0f b8 /r]			NEHALEM,SQ,X64
+POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
+POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
+POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,X64
 
 ;# Intel SMX
 GETSEC		void				[	0f 37]					KATMAI
@@ -2877,14 +2877,14 @@ VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX,FUTURE
 
 ;# VIA (Centaur) security instructions
 XSTORE		void				[	0f a7 c0]				PENT,CYRIX
-XCRYPTECB	void				[	\336 0f a7 c8]				PENT,CYRIX
-XCRYPTCBC	void				[	\336 0f a7 d0]				PENT,CYRIX
-XCRYPTCTR	void				[	\336 0f a7 d8]				PENT,CYRIX
-XCRYPTCFB	void				[	\336 0f a7 e0]				PENT,CYRIX
-XCRYPTOFB	void				[	\336 0f a7 e8]				PENT,CYRIX
-MONTMUL		void				[	\336 0f a6 c0]				PENT,CYRIX
-XSHA1		void				[	\336 0f a6 c8]				PENT,CYRIX
-XSHA256		void				[	\336 0f a6 d0]				PENT,CYRIX
+XCRYPTECB	void				[	mustrep 0f a7 c8]			PENT,CYRIX
+XCRYPTCBC	void				[	mustrep 0f a7 d0]			PENT,CYRIX
+XCRYPTCTR	void				[	mustrep 0f a7 d8]			PENT,CYRIX
+XCRYPTCFB	void				[	mustrep 0f a7 e0]			PENT,CYRIX
+XCRYPTOFB	void				[	mustrep 0f a7 e8]			PENT,CYRIX
+MONTMUL		void				[	mustrep 0f a6 c0]			PENT,CYRIX
+XSHA1		void				[	mustrep 0f a6 c8]			PENT,CYRIX
+XSHA256		void				[	mustrep 0f a6 d0]			PENT,CYRIX
 
 ;# AMD Lightweight Profiling (LWP) instructions
 ;

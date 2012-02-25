@@ -127,8 +127,8 @@
  * \333          - REP prefix (0xF3 byte) used as opcode extension.
  * \334          - LOCK prefix used as REX.R (used in non-64-bit mode)
  * \335          - disassemble a rep (0xF3 byte) prefix as repe not rep.
- * \336          - force a REP(E) prefix (0xF2) even if not specified.
- * \337          - force a REPNE prefix (0xF3) even if not specified.
+ * \336          - force a REP(E) prefix (0xF3) even if not specified.
+ * \337          - force a REPNE prefix (0xF2) even if not specified.
  *                 \336-\337 are still listed as prefixes in the disassembler.
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
@@ -145,7 +145,7 @@
  * \365          - address-size prefix (0x67) not permitted
  * \366          - operand-size prefix (0x66) used as opcode extension
  * \367          - address-size prefix (0x67) used as opcode extension
- * \370,\371,\372 - match only if operand 0 meets byte jump criteria.
+ * \370,\371     - match only if operand 0 meets byte jump criteria.
  *                 370 is used for Jcc, 371 is used for JMP.
  * \373          - assemble 0x03 if bits==16, 0x05 if bits==32;
  *                 used for conditional jump over longer jump
@@ -326,7 +326,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     const uint8_t *code = temp->code;
     uint8_t c = code[0];
 
-    if ((c != 0370 && c != 0371) || (ins->oprs[0].type & STRICT))
+    if (((c & ~1) != 0370) || (ins->oprs[0].type & STRICT))
         return false;
     if (!optimizing)
         return false;
@@ -1831,7 +1831,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0370:
         case 0371:
-        case 0372:
             break;
 
         case 0373:
@@ -2250,7 +2249,7 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check if special handling needed for Jumps
      */
-    if ((itemp->code[0] & 0374) == 0370)
+    if ((itemp->code[0] & ~1) == 0370)
         return MOK_JUMP;
 
     return MOK_GOOD;

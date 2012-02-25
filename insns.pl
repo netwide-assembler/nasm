@@ -527,18 +527,20 @@ sub decodify($$) {
     my $c = $codestr;
     my @codes = ();
 
-    while ($c ne '') {
-        if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
-            push(@codes, hex $1);
-            $c = $2;
-            next;
-        } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
-            push(@codes, oct $1);
-            $c = $2;
-            next;
-        } else {
-            die "$fname: unknown code format in \"$codestr\"\n";
-        }
+    unless ($codestr eq 'ignore') {
+	while ($c ne '') {
+	    if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
+		push(@codes, hex $1);
+		$c = $2;
+		next;
+	    } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
+		push(@codes, oct $1);
+		$c = $2;
+		next;
+	    } else {
+		die "$fname: unknown code format in \"$codestr\"\n";
+	    }
+	}
     }
 
     return @codes;
@@ -700,13 +702,30 @@ sub byte_code_compile($$) {
 	'o64nw' => 0323,	# Implied 64-bit operand size (no REX.W)
 	'a16' => 0310,
 	'a32' => 0311,
+	'adf' => 0312,		# Address size is default
 	'a64' => 0313,
 	'!osp' => 0364,
 	'!asp' => 0365,
+	'f2i' => 0332,		# F2 prefix, but 66 for operand size is OK
+	'f3i' => 0333,		# F3 prefix, but 66 for operand size is OK
+	'pushseg' => 0344,
+	'popseg' => 0345,
+	'pushseg2' => 0346,
+	'popseg2' => 0347,
+	'mustrep' => 0336,
+	'mustrepne' => 0337,
 	'rex.l' => 0334,
+	'norexb' => 0314,
+	'norexx' => 0315,
+	'norexr' => 0316,
+	'norexw' => 0317,
 	'repe' => 0335,
 	'nohi' => 0325,		# Use spl/bpl/sil/dil even without REX
 	'wait' => 0341,		# Needs a wait prefix
+	'resb' => 0340,
+	'jcc8' => 0370,		# Match only if Jcc possible with single byte
+	'jmp8' => 0371,		# Match only if JMP possible with single byte
+	'jlen' => 0373, 	# Length of jump
 	'nohle' => 0264,
 	'hlexr' => 0265,
 	'hlenl' => 0266,
