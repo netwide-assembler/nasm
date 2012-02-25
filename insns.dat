@@ -327,10 +327,10 @@ DAA		void				[	27]					8086,NOLONG
 DAS		void				[	2f]					8086,NOLONG
 DEC		reg16				[r:	o16 48+r]				8086,NOLONG
 DEC		reg32				[r:	o32 48+r]				386,NOLONG
-DEC		rm8				[m:	fe /1]					8086
-DEC		rm16				[m:	o16 ff /1]				8086
-DEC		rm32				[m:	o32 ff /1]				386
-DEC		rm64				[m:	o64 ff /1]				X64
+DEC		rm8				[m:	hle fe /1]				8086
+DEC		rm16				[m:	hle o16 ff /1]				8086
+DEC		rm32				[m:	hle o32 ff /1]				386
+DEC		rm64				[m:	hle o64 ff /1]				X64
 DIV		rm8				[m:	f6 /6]					8086
 DIV		rm16				[m:	o16 f7 /6]				8086
 DIV		rm32				[m:	o32 f7 /6]				386
