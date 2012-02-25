@@ -544,12 +544,13 @@ enum ea_type {
  * preferences, you can change this.  REX prefixes are handled
  * differently for the time being.
  *
- * Note that LOCK and REP are in the same slot.  This is
- * an x86 architectural constraint.
+ * LOCK and REP used to be one slot; this is no longer the case since
+ * the introduction of HLE.
  */
 enum prefix_pos {
     PPS_WAIT,   /* WAIT (technically not a prefix!) */
-    PPS_LREP,   /* Lock or REP prefix */
+    PPS_REP,    /* REP/HLE prefix */
+    PPS_LOCK,   /* LOCK prefix */
     PPS_SEG,    /* Segment override prefix */
     PPS_OSIZE,  /* Operand size prefix */
     PPS_ASIZE,  /* Address size prefix */

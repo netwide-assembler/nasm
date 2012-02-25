@@ -1027,13 +1027,13 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0336:
-            if (!ins->prefixes[PPS_LREP])
-                ins->prefixes[PPS_LREP] = P_REP;
+            if (!ins->prefixes[PPS_REP])
+                ins->prefixes[PPS_REP] = P_REP;
             break;
 
         case 0337:
-            if (!ins->prefixes[PPS_LREP])
-                ins->prefixes[PPS_LREP] = P_REPNE;
+            if (!ins->prefixes[PPS_REP])
+                ins->prefixes[PPS_REP] = P_REPNE;
             break;
 
         case 0340:
@@ -1183,7 +1183,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                    !(ins->rex & (REX_P|REX_W|REX_X|REX_B)) &&
                    cpu >= IF_X86_64) {
             /* LOCK-as-REX.R */
-            assert_no_prefix(ins, PPS_LREP);
+            assert_no_prefix(ins, PPS_LOCK);
             length++;
         } else {
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");

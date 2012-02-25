@@ -918,14 +918,14 @@ static int matches(const struct itemplate *t, uint8_t *data,
     }
 
     if (lock) {
-	if (ins->prefixes[PPS_LREP])
+	if (ins->prefixes[PPS_LOCK])
 	    return false;
-	ins->prefixes[PPS_LREP] = P_LOCK;
+	ins->prefixes[PPS_LOCK] = P_LOCK;
     }
     if (drep) {
-	if (ins->prefixes[PPS_LREP])
+	if (ins->prefixes[PPS_REP])
 	    return false;
-        ins->prefixes[PPS_LREP] = drep;
+        ins->prefixes[PPS_REP] = drep;
     }
     ins->prefixes[PPS_WAIT] = dwait;
     if (!o_used) {
