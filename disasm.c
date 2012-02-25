@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -912,6 +912,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
 	    a_used = true;
 	    break;
+
+        case 0370:
+        case 0371:
+            break;
 
         case 0374:
             eat = EA_XMMVSIB;
