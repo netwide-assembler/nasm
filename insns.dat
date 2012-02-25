@@ -1378,13 +1378,13 @@ XCHG		mem,reg64			[mr:	o64 87 /r]				X64,SM
 XCHG		reg64,reg64			[mr:	o64 87 /r]				X64
 XLATB		void				[	d7]					8086
 XLAT		void				[	d7]					8086
-XOR		mem,reg8			[mr:	30 /r]					8086,SM
+XOR		mem,reg8			[mr:	hle 30 /r]				8086,SM
 XOR		reg8,reg8			[mr:	30 /r]					8086
-XOR		mem,reg16			[mr:	o16 31 /r]				8086,SM
+XOR		mem,reg16			[mr:	hle o16 31 /r]				8086,SM
 XOR		reg16,reg16			[mr:	o16 31 /r]				8086
-XOR		mem,reg32			[mr:	o32 31 /r]				386,SM
+XOR		mem,reg32			[mr:	hle o32 31 /r]				386,SM
 XOR		reg32,reg32			[mr:	o32 31 /r]				386
-XOR		mem,reg64			[mr:	o64 31 /r]				X64,SM
+XOR		mem,reg64			[mr:	hle o64 31 /r]				X64,SM
 XOR		reg64,reg64			[mr:	o64 31 /r]				X64
 XOR		reg8,mem			[rm:	32 /r]					8086,SM
 XOR		reg8,reg8			[rm:	32 /r]					8086
@@ -1394,9 +1394,9 @@ XOR		reg32,mem			[rm:	o32 33 /r]				386,SM
 XOR		reg32,reg32			[rm:	o32 33 /r]				386
 XOR		reg64,mem			[rm:	o64 33 /r]				X64,SM
 XOR		reg64,reg64			[rm:	o64 33 /r]				X64
-XOR		rm16,imm8			[mi:	o16 83 /6 ibx]				8086
-XOR		rm32,imm8			[mi:	o32 83 /6 ibx]				386
-XOR		rm64,imm8			[mi:	o64 83 /6 ibx]				X64
+XOR		rm16,imm8			[mi:	hle o16 83 /6 ibx]			8086
+XOR		rm32,imm8			[mi:	hle o32 83 /6 ibx]			386
+XOR		rm64,imm8			[mi:	hle o64 83 /6 ibx]			X64
 XOR		reg_al,imm			[-i:	34 ib]					8086,SM
 XOR		reg_ax,sbyte16			[mi:	o16 83 /6 ibx]				8086,SM
 XOR		reg_ax,imm			[-i:	o16 35 iw]				8086,SM
@@ -1404,13 +1404,13 @@ XOR		reg_eax,sbyte32			[mi:	o32 83 /6 ibx]				386,SM
 XOR		reg_eax,imm			[-i:	o32 35 id]				386,SM
 XOR		reg_rax,sbyte64			[mi:	o64 83 /6 ibx]				X64,SM
 XOR		reg_rax,imm			[-i:	o64 35 idx]				X64,SM
-XOR		rm8,imm				[mi:	80 /6 ib]				8086,SM
-XOR		rm16,imm			[mi:	o16 81+s /6 ibw]			8086,SM
-XOR		rm32,imm			[mi:	o32 81+s /6 ibd]			386,SM
-XOR		rm64,imm			[mi:	o64 81+s /6 ibd,s]			X64,SM
-XOR		mem,imm8			[mi:	80 /6 ib]				8086,SM
-XOR		mem,imm16			[mi:	o16 81+s /6 ibw]			8086,SM
-XOR		mem,imm32			[mi:	o32 81+s /6 ibd]			386,SM
+XOR		rm8,imm				[mi:	hle 80 /6 ib]				8086,SM
+XOR		rm16,imm			[mi:	hle o16 81+s /6 ibw]			8086,SM
+XOR		rm32,imm			[mi:	hle o32 81+s /6 ibd]			386,SM
+XOR		rm64,imm			[mi:	hle o64 81+s /6 ibd,s]			X64,SM
+XOR		mem,imm8			[mi:	hle 80 /6 ib]				8086,SM
+XOR		mem,imm16			[mi:	hle o16 81+s /6 ibw]			8086,SM
+XOR		mem,imm32			[mi:	hle o32 81+s /6 ibd]			386,SM
 CMOVcc		reg16,mem			[rm:	o16 0f 40+c /r]				P6,SM
 CMOVcc		reg16,reg16			[rm:	o16 0f 40+c /r]				P6
 CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
