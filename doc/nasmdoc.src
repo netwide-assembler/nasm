@@ -5415,20 +5415,21 @@ While \c{REL} takes good care of RIP-relative addressing, there is one
 aspect that is easy to overlook for a Win64 programmer: indirect
 references. Consider a switch dispatch table:
 
-\c         jmp     QWORD[dsptch+rax*8]
+\c         jmp     qword [dsptch+rax*8]
 \c         ...
 \c dsptch: dq      case0
 \c         dq      case1
 \c         ...
 
-Even novice Win64 assembler programmer will soon realize that the code
+Even a novice Win64 assembler programmer will soon realize that the code
 is not 64-bit savvy. Most notably linker will refuse to link it with
-"\c{'ADDR32' relocation to '.text' invalid without
-/LARGEADDRESSAWARE:NO}". So [s]he will have to split jmp instruction as
-following:
+
+\c 'ADDR32' relocation to '.text' invalid without /LARGEADDRESSAWARE:NO
+
+So [s]he will have to split jmp instruction as following:
 
 \c         lea     rbx,[rel dsptch]
-\c         jmp     QWORD[rbx+rax*8]
+\c         jmp     qword [rbx+rax*8]
 
 What happens behind the scene is that effective address in \c{lea} is
 encoded relative to instruction pointer, or in perfectly
@@ -5441,7 +5442,7 @@ to current process, which kind of undermines the idea of sharing .dll.
 But no worry, it's trivial to fix:
 
 \c         lea     rbx,[rel dsptch]
-\c         add     rbx,QWORD[rbx+rax*8]
+\c         add     rbx,[rbx+rax*8]
 \c         jmp     rbx
 \c         ...
 \c dsptch: dq      case0-dsptch
@@ -5456,7 +5457,7 @@ acquainted with PE-COFF format base address denotes start of
 these image-relative references:
 
 \c         lea     rbx,[rel dsptch]
-\c         mov     eax,DWORD[rbx+rax*4]
+\c         mov     eax,[rbx+rax*4]
 \c         sub     rbx,dsptch wrt ..imagebase
 \c         add     rbx,rax
 \c         jmp     rbx
