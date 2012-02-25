@@ -244,16 +244,17 @@ CALL		mem|far				[m:	o64 ff /3]				X64
 CALL		mem16|far			[m:	o16 ff /3]				8086
 CALL		mem32|far			[m:	o32 ff /3]				386
 CALL		mem64|far			[m:	o64 ff /3]				X64
-CALL		mem|near			[m:	odf ff /2]				8086
-CALL		mem16|near			[m:	o16 ff /2]				8086
-CALL		mem32|near			[m:	o32 ff /2]				386,NOLONG
-CALL		mem64|near			[m:	o64 ff /2]				X64
+CALL		mem|near			[m:	odf ff /2]				8086,ND
+CALL		mem16|near			[m:	o16 ff /2]				8086,ND
+CALL		mem32|near			[m:	o32 ff /2]				386,NOLONG,ND
+CALL		mem64|near			[m:	o64nw ff /2]				X64,ND
 CALL		reg16				[m:	o16 ff /2]				8086
 CALL		reg32				[m:	o32 ff /2]				386,NOLONG
 CALL		reg64				[m:	o64nw ff /2]				X64
 CALL		mem				[m:	odf ff /2]				8086
 CALL		mem16				[m:	o16 ff /2]				8086
 CALL		mem32				[m:	o32 ff /2]				386,NOLONG
+CALL		mem				[m:	o64nw ff /2]				X64
 CALL		mem64				[m:	o64nw ff /2]				X64
 CBW		void				[	o16 98]					8086
 CDQ		void				[	o32 99]					386
@@ -672,16 +673,17 @@ JMP		mem|far				[m:	o64 ff /5]				X64
 JMP		mem16|far			[m:	o16 ff /5]				8086
 JMP		mem32|far			[m:	o32 ff /5]				386
 JMP		mem64|far			[m:	o64 ff /5]				X64
-JMP		mem|near			[m:	odf ff /4]				8086
-JMP		mem16|near			[m:	o16 ff /4]				8086
-JMP		mem32|near			[m:	o32 ff /4]				386,NOLONG
-JMP		mem64|near			[m:	o64nw ff /4]				X64
+JMP		mem|near			[m:	odf ff /4]				8086,ND
+JMP		mem16|near			[m:	o16 ff /4]				8086,ND
+JMP		mem32|near			[m:	o32 ff /4]				386,NOLONG,ND
+JMP		mem64|near			[m:	o64nw ff /4]				X64,ND
 JMP		reg16				[m:	o16 ff /4]				8086
 JMP		reg32				[m:	o32 ff /4]				386,NOLONG
 JMP		reg64				[m:	o64nw ff /4]				X64
 JMP		mem				[m:	odf ff /4]				8086
 JMP		mem16				[m:	o16 ff /4]				8086
 JMP		mem32				[m:	o32 ff /4]				386,NOLONG
+JMP		mem				[m:	o64nw ff /4]				X64
 JMP		mem64				[m:	o64nw ff /4]				X64
 JMPE		imm				[i:	odf 0f b8 rel]				IA64
 JMPE		imm16				[i:	o16 0f b8 rel]				IA64
@@ -3316,6 +3318,7 @@ VPGATHERDQ	ymmreg,mem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE
 VPGATHERQQ	ymmreg,mem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
 ;# Transactional Synchronization Extensions (TSX)
+XABORT		imm				[i:	c6 f8 ib]				FUTURE,RTM
 XABORT		imm8				[i:	c6 f8 ib]				FUTURE,RTM
 XBEGIN		imm				[i:	odf c7 f8 rel]				FUTURE,RTM
 XBEGIN		imm|near			[i:	odf c7 f8 rel]				FUTURE,RTM
