@@ -864,10 +864,10 @@ MUL		rm32				[m:	o32 f7 /4]				386
 MUL		rm64				[m:	o64 f7 /4]				X64
 MWAIT		void				[	0f 01 c9]				PRESCOTT
 MWAIT		reg_eax,reg_ecx			[--:	0f 01 c9]				PRESCOTT,ND
-NEG		rm8				[m:	f6 /3]					8086
-NEG		rm16				[m:	o16 f7 /3]				8086
-NEG		rm32				[m:	o32 f7 /3]				386
-NEG		rm64				[m:	o64 f7 /3]				X64
+NEG		rm8				[m:	hle f6 /3]				8086
+NEG		rm16				[m:	hle o16 f7 /3]				8086
+NEG		rm32				[m:	hle o32 f7 /3]				386
+NEG		rm64				[m:	hle o64 f7 /3]				X64
 NOP		void				[	norexb 90]				8086
 NOP		rm16				[m:	o16 0f 1f /0]				P6
 NOP		rm32				[m:	o32 0f 1f /0]				P6
