@@ -802,13 +802,13 @@ MOV		reg_dreg,reg32			[rm:	0f 23 /r]				386,PRIV,NOLONG
 MOV		reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X64,PRIV
 MOV		reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND
 MOV		reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND
-MOV		mem,reg8			[mr:	88 /r]					8086,SM
+MOV		mem,reg8			[mr:	hlexr 88 /r]				8086,SM
 MOV		reg8,reg8			[mr:	88 /r]					8086
-MOV		mem,reg16			[mr:	o16 89 /r]				8086,SM
+MOV		mem,reg16			[mr:	hlexr o16 89 /r]			8086,SM
 MOV		reg16,reg16			[mr:	o16 89 /r]				8086
-MOV		mem,reg32			[mr:	o32 89 /r]				386,SM
+MOV		mem,reg32			[mr:	hlexr o32 89 /r]			386,SM
 MOV		reg32,reg32			[mr:	o32 89 /r]				386
-MOV		mem,reg64			[mr:	o64 89 /r]				X64,SM
+MOV		mem,reg64			[mr:	hlexr o64 89 /r]			X64,SM
 MOV		reg64,reg64			[mr:	o64 89 /r]				X64
 MOV		reg8,mem			[rm:	8a /r]					8086,SM
 MOV		reg8,reg8			[rm:	8a /r]					8086
@@ -824,14 +824,14 @@ MOV		reg32,imm			[ri:	o32 b8+r id]				386,SM
 MOV		reg64,udword64			[ri:	o64nw b8+r id]				X64,SM,OPT,ND
 MOV		reg64,sdword64			[mi:	o64 c7 /0 idx]				X64,SM,OPT,ND
 MOV		reg64,imm			[ri:	o64 b8+r iq]				X64,SM
-MOV		rm8,imm				[mi:	c6 /0 ib]				8086,SM
-MOV		rm16,imm			[mi:	o16 c7 /0 iw]				8086,SM
-MOV		rm32,imm			[mi:	o32 c7 /0 id]				386,SM
-MOV		rm64,imm			[mi:	o64 c7 /0 idx]				X64,SM
-MOV		rm64,imm32			[mi:	o64 c7 /0 idx]				X64
-MOV		mem,imm8			[mi:	c6 /0 ib]				8086,SM
-MOV		mem,imm16			[mi:	o16 c7 /0 iw]				8086,SM
-MOV		mem,imm32			[mi:	o32 c7 /0 id]				386,SM
+MOV		rm8,imm				[mi:	hlexr c6 /0 ib]				8086,SM
+MOV		rm16,imm			[mi:	hlexr o16 c7 /0 iw]			8086,SM
+MOV		rm32,imm			[mi:	hlexr o32 c7 /0 id]			386,SM
+MOV		rm64,imm			[mi:	hlexr o64 c7 /0 idx]			X64,SM
+MOV		rm64,imm32			[mi:	hlexr o64 c7 /0 idx]			X64
+MOV		mem,imm8			[mi:	hlexr c6 /0 ib]				8086,SM
+MOV		mem,imm16			[mi:	hlexr o16 c7 /0 iw]			8086,SM
+MOV		mem,imm32			[mi:	hlexr o32 c7 /0 id]			386,SM
 MOVD		mmxreg,rm32			[rm:	np 0f 6e /r]				PENT,MMX
 MOVD		rm32,mmxreg			[mr:	np 0f 7e /r]				PENT,MMX
 MOVD		xmmreg,rm32			[rm:	np o16 0f 6e /r]			SSE2
