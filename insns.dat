@@ -622,10 +622,10 @@ IN		reg_ax,reg_dx			[--:	o16 ed]					8086
 IN		reg_eax,reg_dx			[--:	o32 ed]					386
 INC		reg16				[r:	o16 40+r]				8086,NOLONG
 INC		reg32				[r:	o32 40+r]				386,NOLONG
-INC		rm8				[m:	fe /0]					8086
-INC		rm16				[m:	o16 ff /0]				8086
-INC		rm32				[m:	o32 ff /0]				386
-INC		rm64				[m:	o64 ff /0]				X64
+INC		rm8				[m:	hle fe /0]				8086
+INC		rm16				[m:	hle o16 ff /0]				8086
+INC		rm32				[m:	hle o32 ff /0]				386
+INC		rm64				[m:	hle o64 ff /0]				X64
 INCBIN		ignore				ignore						ignore
 INSB		void				[	6c]					186
 INSD		void				[	o32 6d]					386
