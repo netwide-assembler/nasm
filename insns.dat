@@ -1339,13 +1339,13 @@ FWAIT		void				[	wait]					8086
 WBINVD		void				[	0f 09]					486,PRIV
 WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM
 WRMSR		void				[	0f 30]					PENT,PRIV
-XADD		mem,reg8			[mr:	0f c0 /r]				486,SM
+XADD		mem,reg8			[mr:	hle 0f c0 /r]				486,SM
 XADD		reg8,reg8			[mr:	0f c0 /r]				486
-XADD		mem,reg16			[mr:	o16 0f c1 /r]				486,SM
+XADD		mem,reg16			[mr:	hle o16 0f c1 /r]			486,SM
 XADD		reg16,reg16			[mr:	o16 0f c1 /r]				486
-XADD		mem,reg32			[mr:	o32 0f c1 /r]				486,SM
+XADD		mem,reg32			[mr:	hle o32 0f c1 /r]			486,SM
 XADD		reg32,reg32			[mr:	o32 0f c1 /r]				486
-XADD		mem,reg64			[mr:	o64 0f c1 /r]				X64,SM
+XADD		mem,reg64			[mr:	hle o64 0f c1 /r]			X64,SM
 XADD		reg64,reg64			[mr:	o64 0f c1 /r]				X64
 XBTS		reg16,mem			[rm:	o16 0f a6 /r]				386,SW,UNDOC,ND
 XBTS		reg16,reg16			[rm:	o16 0f a6 /r]				386,UNDOC,ND
