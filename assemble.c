@@ -201,7 +201,8 @@ static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
 
-static int64_t calcsize(int32_t, int64_t, int, insn *, const uint8_t *);
+static int64_t calcsize(int32_t, int64_t, int, insn *,
+                        const struct itemplate *);
 static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
                     int64_t insn_end);
@@ -319,9 +320,10 @@ static void out(int64_t offset, int32_t segto, const void *data,
 }
 
 static bool jmp_match(int32_t segment, int64_t offset, int bits,
-                     insn * ins, const uint8_t *code)
+                      insn * ins, const struct itemplate *temp)
 {
     int64_t isize;
+    const uint8_t *code = temp->code;
     uint8_t c = code[0];
 
     if ((c != 0370 && c != 0371) || (ins->oprs[0].type & STRICT))
@@ -331,7 +333,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     if (optimizing < 0 && c == 0371)
         return false;
 
-    isize = calcsize(segment, offset, bits, ins, code);
+    isize = calcsize(segment, offset, bits, ins, temp);
 
     if (ins->oprs[0].opflags & OPFLAG_UNKNOWN)
         /* Be optimistic in pass 1 */
@@ -493,8 +495,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
 
     if (m == MOK_GOOD) {
         /* Matches! */
-        int64_t insn_size = calcsize(segment, offset, bits,
-                                     instruction, temp->code);
+        int64_t insn_size = calcsize(segment, offset, bits, instruction, temp);
         itimes = instruction->times;
         if (insn_size < 0)  /* shouldn't be, on pass two */
             error(ERR_PANIC, "errors made it through from pass one");
@@ -724,10 +725,9 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     if (m == MOK_GOOD) {
         /* we've matched an instruction. */
         int64_t isize;
-        const uint8_t *codes = temp->code;
         int j;
 
-        isize = calcsize(segment, offset, bits, instruction, codes);
+        isize = calcsize(segment, offset, bits, instruction, temp);
         if (isize < 0)
             return -1;
         for (j = 0; j < MAXPREFIX; j++) {
@@ -796,7 +796,7 @@ static bool is_sbyte32(operand *o)
 static void bad_hle_warn(const insn * ins, uint8_t hleok)
 {
     enum prefixes rep_pfx = ins->prefixes[PPS_REP];
-    enum whatwarn { w_none, w_lock, w_inval };
+    enum whatwarn { w_none, w_lock, w_inval } ww;
     static const enum whatwarn warn[2][4] =
     {
         { w_inval, w_inval, w_none, w_lock }, /* XACQUIRE */
@@ -808,7 +808,11 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
     if (n > 1)
         return;                 /* Not XACQUIRE/XRELEASE */
 
-    switch (warn[n][hleok]) {
+    ww = warn[n][hleok];
+    if (!is_class(MEMORY, ins->oprs[0].type))
+        ww = w_inval;           /* HLE requires operand 0 to be memory */
+
+    switch (ww) {
     case w_none:
         break;
 
@@ -832,8 +836,9 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 #define case4(x) case (x): case (x)+1: case (x)+2: case (x)+3
 
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
-                        insn * ins, const uint8_t *codes)
+                        insn * ins, const struct itemplate *temp)
 {
+    const uint8_t *codes = temp->code;
     int64_t length = 0;
     uint8_t c;
     int rex_mask = ~0;
@@ -842,6 +847,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     uint8_t opex = 0;
     enum ea_type eat;
     uint8_t hleok = 0;
+    bool lockcheck = true;
 
     ins->rex = 0;               /* Ensure REX is reset */
     eat = EA_SCALAR;            /* Expect a scalar EA */
@@ -1238,13 +1244,20 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                    cpu >= IF_X86_64) {
             /* LOCK-as-REX.R */
             assert_no_prefix(ins, PPS_LOCK);
+            lockcheck = false;  /* Already errored, no need for warning */
             length++;
         } else {
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
             return -1;
         }
     }
-    
+
+    if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
+        (!(temp->flags & IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
+        errfunc(ERR_WARNING | ERR_PASS2,
+                "instruction is not lockable");
+    }
+
     bad_hle_warn(ins, hleok);
 
     return length;
@@ -1997,7 +2010,7 @@ static enum match_result find_match(const struct itemplate **tempp,
          temp->opcode != I_none; temp++) {
         m = matches(temp, instruction, bits);
         if (m == MOK_JUMP) {
-            if (jmp_match(segment, offset, bits, instruction, temp->code))
+            if (jmp_match(segment, offset, bits, instruction, temp))
                 m = MOK_GOOD;
             else
                 m = MERR_INVALOP;
@@ -2043,7 +2056,7 @@ static enum match_result find_match(const struct itemplate **tempp,
          temp->opcode != I_none; temp++) {
         m = matches(temp, instruction, bits);
         if (m == MOK_JUMP) {
-            if (jmp_match(segment, offset, bits, instruction, temp->code))
+            if (jmp_match(segment, offset, bits, instruction, temp))
                 m = MOK_GOOD;
             else
                 m = MERR_INVALOP;

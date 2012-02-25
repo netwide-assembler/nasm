@@ -95,6 +95,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_PRIV         0x00000000UL    /* it's a privileged instruction */
 #define IF_SMM          0x00000000UL    /* it's only valid in SMM */
 #define IF_PROT         0x00000000UL    /* it's protected mode only */
+#define IF_LOCK         0x00000400UL    /* lockable if operand 0 is memory */
 #define IF_NOLONG       0x00000800UL    /* it's not available in long mode */
 #define IF_UNDOC        0x00001000UL    /* it's an undocumented instruction */
 #define IF_FPU          0x00002000UL    /* it's an FPU instruction */
