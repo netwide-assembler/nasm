@@ -1248,13 +1248,13 @@ STR		mem16				[m:	0f 00 /1]				286,PROT
 STR		reg16				[m:	o16 0f 00 /1]				286,PROT
 STR		reg32				[m:	o32 0f 00 /1]				386,PROT
 STR		reg64				[m:	o64 0f 00 /1]				X64
-SUB		mem,reg8			[mr:	28 /r]					8086,SM
+SUB		mem,reg8			[mr:	hle 28 /r]				8086,SM
 SUB		reg8,reg8			[mr:	28 /r]					8086
-SUB		mem,reg16			[mr:	o16 29 /r]				8086,SM
+SUB		mem,reg16			[mr:	hle o16 29 /r]				8086,SM
 SUB		reg16,reg16			[mr:	o16 29 /r]				8086
-SUB		mem,reg32			[mr:	o32 29 /r]				386,SM
+SUB		mem,reg32			[mr:	hle o32 29 /r]				386,SM
 SUB		reg32,reg32			[mr:	o32 29 /r]				386
-SUB		mem,reg64			[mr:	o64 29 /r]				X64,SM
+SUB		mem,reg64			[mr:	hle o64 29 /r]				X64,SM
 SUB		reg64,reg64			[mr:	o64 29 /r]				X64
 SUB		reg8,mem			[rm:	2a /r]					8086,SM
 SUB		reg8,reg8			[rm:	2a /r]					8086
@@ -1264,9 +1264,9 @@ SUB		reg32,mem			[rm:	o32 2b /r]				386,SM
 SUB		reg32,reg32			[rm:	o32 2b /r]				386
 SUB		reg64,mem			[rm:	o64 2b /r]				X64,SM
 SUB		reg64,reg64			[rm:	o64 2b /r]				X64
-SUB		rm16,imm8			[mi:	o16 83 /5 ibx]				8086
-SUB		rm32,imm8			[mi:	o32 83 /5 ibx]				386
-SUB		rm64,imm8			[mi:	o64 83 /5 ibx]				X64
+SUB		rm16,imm8			[mi:	hle o16 83 /5 ibx]			8086
+SUB		rm32,imm8			[mi:	hle o32 83 /5 ibx]			386
+SUB		rm64,imm8			[mi:	hle o64 83 /5 ibx]			X64
 SUB		reg_al,imm			[-i:	2c ib]					8086,SM
 SUB		reg_ax,sbyte16			[mi:	o16 83 /5 ibx]				8086,SM
 SUB		reg_ax,imm			[-i:	o16 2d iw]				8086,SM
@@ -1274,13 +1274,13 @@ SUB		reg_eax,sbyte32			[mi:	o32 83 /5 ibx]				386,SM
 SUB		reg_eax,imm			[-i:	o32 2d id]				386,SM
 SUB		reg_rax,sbyte64			[mi:	o64 83 /5 ibx]				X64,SM
 SUB		reg_rax,imm			[-i:	o64 2d idx]				X64,SM
-SUB		rm8,imm				[mi:	80 /5 ib]				8086,SM
-SUB		rm16,imm			[mi:	o16 81+s /5 ibw]			8086,SM
-SUB		rm32,imm			[mi:	o32 81+s /5 ibd]			386,SM
-SUB		rm64,imm			[mi:	o64 81+s /5 ibd,s]			X64,SM
-SUB		mem,imm8			[mi:	80 /5 ib]				8086,SM
-SUB		mem,imm16			[mi:	o16 81+s /5 ibw]			8086,SM
-SUB		mem,imm32			[mi:	o32 81+s /5 ibd]			386,SM
+SUB		rm8,imm				[mi:	hle 80 /5 ib]				8086,SM
+SUB		rm16,imm			[mi:	hle o16 81+s /5 ibw]			8086,SM
+SUB		rm32,imm			[mi:	hle o32 81+s /5 ibd]			386,SM
+SUB		rm64,imm			[mi:	hle o64 81+s /5 ibd,s]			X64,SM
+SUB		mem,imm8			[mi:	hle 80 /5 ib]				8086,SM
+SUB		mem,imm16			[mi:	hle o16 81+s /5 ibw]			8086,SM
+SUB		mem,imm32			[mi:	hle o32 81+s /5 ibd]			386,SM
 SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
 SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
 SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
