@@ -6,7 +6,7 @@ Version: @@NASM_MANGLED_VER@@
 Release: 1
 License: BSD
 Group: Development/Languages
-Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.bz2
+Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
