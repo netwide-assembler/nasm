@@ -317,7 +317,7 @@ CMPXCHG486	reg16,reg16			[mr:	o16 0f a7 /r]				486,UNDOC,ND
 CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND
 CMPXCHG8B	mem				[m:	hle 0f c7 /1]				PENT,LOCK
-CMPXCHG16B	mem				[m:	hle o64 0f c7 /1]			X64,LOCK
+CMPXCHG16B	mem				[m:	o64 0f c7 /1]				X64,LOCK
 CPUID		void				[	0f a2]					PENT
 CPU_READ	void				[	0f 3d]					PENT,CYRIX
 CPU_WRITE	void				[	0f 3c]					PENT,CYRIX
@@ -804,13 +804,13 @@ MOV		reg_dreg,reg32			[rm:	0f 23 /r]				386,PRIV,NOLONG
 MOV		reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X64,PRIV
 MOV		reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND
 MOV		reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND
-MOV		mem,reg8			[mr:	hlexr 88 /r]				8086,SM,LOCK
+MOV		mem,reg8			[mr:	hlexr 88 /r]				8086,SM
 MOV		reg8,reg8			[mr:	88 /r]					8086
-MOV		mem,reg16			[mr:	hlexr o16 89 /r]			8086,SM,LOCK
+MOV		mem,reg16			[mr:	hlexr o16 89 /r]			8086,SM
 MOV		reg16,reg16			[mr:	o16 89 /r]				8086
-MOV		mem,reg32			[mr:	hlexr o32 89 /r]			386,SM,LOCK
+MOV		mem,reg32			[mr:	hlexr o32 89 /r]			386,SM
 MOV		reg32,reg32			[mr:	o32 89 /r]				386
-MOV		mem,reg64			[mr:	hlexr o64 89 /r]			X64,SM,LOCK
+MOV		mem,reg64			[mr:	hlexr o64 89 /r]			X64,SM
 MOV		reg64,reg64			[mr:	o64 89 /r]				X64
 MOV		reg8,mem			[rm:	8a /r]					8086,SM
 MOV		reg8,reg8			[rm:	8a /r]					8086
