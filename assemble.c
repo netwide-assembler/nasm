@@ -175,6 +175,7 @@ enum match_result {
     MERR_OPSIZEMISMATCH,
     MERR_BADCPU,
     MERR_BADMODE,
+    MERR_BADHLE,
     /*
      * Matching success; the conditional ones first
      */
@@ -980,12 +981,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->vex_wlp = *codes++;
             break;
 
-        case 0264:
-            if (has_prefix(ins, PPS_REP, P_XACQUIRE) ||
-                has_prefix(ins, PPS_REP, P_XRELEASE))
-                return -1;
-            break;
-
         case 0265:
         case 0266:
         case 0267:
@@ -1629,7 +1624,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             }
             break;
 
-        case4(0264):
+        case 0265:
+        case 0266:
+        case 0267:
             break;
 
         case4(0274):
@@ -2245,6 +2242,14 @@ static enum match_result matches(const struct itemplate *itemp,
      */
     if ((itemp->flags & (bits == 64 ? IF_NOLONG : IF_LONG)))
         return MERR_BADMODE;
+
+    /*
+     * If we have a HLE prefix, look for the NOHLE flag
+     */
+    if ((itemp->flags & IF_NOHLE) &&
+        (has_prefix(instruction, PPS_REP, P_XACQUIRE) ||
+         has_prefix(instruction, PPS_REP, P_XRELEASE)))
+        return MERR_BADHLE;
 
     /*
      * Check if special handling needed for Jumps

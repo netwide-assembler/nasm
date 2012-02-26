@@ -703,9 +703,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
-        case 0264:
-            break;
-
         case 0265:
             if (prefix->rep == 0xF3)
                 drep = P_XRELEASE;

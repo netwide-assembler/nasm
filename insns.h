@@ -97,28 +97,30 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_PROT         0x00000000UL    /* it's protected mode only */
 #define IF_LOCK         0x00000400UL    /* lockable if operand 0 is memory */
 #define IF_NOLONG       0x00000800UL    /* it's not available in long mode */
-#define IF_UNDOC        0x00001000UL    /* it's an undocumented instruction */
-#define IF_FPU          0x00002000UL    /* it's an FPU instruction */
-#define IF_MMX          0x00004000UL    /* it's an MMX instruction */
-#define IF_3DNOW        0x00008000UL    /* it's a 3DNow! instruction */
-#define IF_SSE          0x00010000UL    /* it's a SSE (KNI, MMX2) instruction */
-#define IF_SSE2         0x00020000UL    /* it's a SSE2 instruction */
-#define IF_SSE3         0x00040000UL    /* it's a SSE3 (PNI) instruction */
-#define IF_VMX          0x00080000UL    /* it's a VMX instruction */
-#define IF_LONG         0x00100000UL    /* long mode instruction */
-#define IF_SSSE3        0x00200000UL    /* it's an SSSE3 instruction */
-#define IF_SSE4A        0x00400000UL    /* AMD SSE4a */
-#define IF_SSE41        0x00800000UL    /* it's an SSE4.1 instruction */
-#define IF_SSE42        0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_SSE5         0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_AVX          0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_AVX2         0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_FMA          0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_BMI1         0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_BMI2         0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_HLE          0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_RTM          0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_INVPCID      0x00800000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_LONG         0x00001000UL    /* long mode instruction */
+#define IF_NOHLE	0x00002000UL    /* HLE prefixes forbidden */
+/* These flags are currently not used for anything - intended for insn set */
+#define IF_UNDOC        0x00000000UL    /* it's an undocumented instruction */
+#define IF_FPU          0x00000000UL    /* it's an FPU instruction */
+#define IF_MMX          0x00000000UL    /* it's an MMX instruction */
+#define IF_3DNOW        0x00000000UL    /* it's a 3DNow! instruction */
+#define IF_SSE          0x00000000UL    /* it's a SSE (KNI, MMX2) instruction */
+#define IF_SSE2         0x00000000UL    /* it's a SSE2 instruction */
+#define IF_SSE3         0x00000000UL    /* it's a SSE3 (PNI) instruction */
+#define IF_VMX          0x00000000UL    /* it's a VMX instruction */
+#define IF_SSSE3        0x00000000UL    /* it's an SSSE3 instruction */
+#define IF_SSE4A        0x00000000UL    /* AMD SSE4a */
+#define IF_SSE41        0x00000000UL    /* it's an SSE4.1 instruction */
+#define IF_SSE42        0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_SSE5         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX2         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_FMA          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_BMI1         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_BMI2         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_HLE          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_RTM          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_INVPCID      0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_PMASK        0xFF000000UL    /* the mask for processor types */
 #define IF_PLEVEL       0x0F000000UL    /* the mask for processor instr. level */
                                         /* also the highest possible processor */
