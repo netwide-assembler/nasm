@@ -1623,9 +1623,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             }
             break;
 
-        case 0265:
-        case 0266:
-        case 0267:
+        case 0271:
+        case 0272:
+        case 0273:
             break;
 
         case4(0274):
