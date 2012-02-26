@@ -80,10 +80,6 @@
  * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
  * \260..\263    - this instruction uses VEX/XOP rather than REX, with the
  *                 V field taken from operand 0..3.
- * \264		 - skip this instruction pattern if HLE prefixes present
- * \265		 - instruction takes XRELEASE (F3) with or without lock
- * \266		 - instruction takes XACQUIRE/XRELEASE with or without lock
- * \267		 - instruction takes XACQUIRE/XRELEASE with lock only
  * \270          - this instruction uses VEX/XOP rather than REX, with the
  *                 V field set to 1111b.
  *
@@ -101,6 +97,9 @@
  *
  * t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
  *
+ * \271		 - instruction takes XRELEASE (F3) with or without lock
+ * \272		 - instruction takes XACQUIRE/XRELEASE with or without lock
+ * \273          - instruction takes XACQUIRE/XRELEASE with lock only
  * \274..\277    - a signed byte immediate operand, from operand 0..3,
  *                 which is to be extended to the operand size.
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
@@ -981,17 +980,17 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->vex_wlp = *codes++;
             break;
 
-        case 0265:
-        case 0266:
-        case 0267:
-            hleok = c & 3;
-            break;
-
         case 0270:
             ins->rex |= REX_V;
             ins->vexreg = 0;
             ins->vex_cm = *codes++;
             ins->vex_wlp = *codes++;
+            break;
+
+        case 0271:
+        case 0272:
+        case 0273:
+            hleok = c & 3;
             break;
 
         case4(0274):

@@ -726,9 +726,9 @@ sub byte_code_compile($$) {
 	'jcc8' => 0370,		# Match only if Jcc possible with single byte
 	'jmp8' => 0371,		# Match only if JMP possible with single byte
 	'jlen' => 0373, 	# Length of jump
-	'hlexr' => 0265,
-	'hlenl' => 0266,
-	'hle' => 0267,
+	'hlexr' => 0271,
+	'hlenl' => 0272,
+	'hle' => 0273,
 	# This instruction takes XMM VSIB
 	'vsibx' => 0374,
 	'vm32x' => 0374,
