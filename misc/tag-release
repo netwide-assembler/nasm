@@ -43,8 +43,10 @@ git commit -m "NASM $version"
 git tag -a -m "NASM $version" "$tag"
 
 if [ $push = 1 ]; then
-    echo "git push $repo $branch"
-    echo "git push $repo $tag"
-    echo "git push --tags $repo"
+    set -x
+    git push $repo $branch
+    git push $repo $tag
+    git push --tags $repo
+    set +x
 fi
 
