@@ -4026,6 +4026,9 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
     char *tmp;
     int i;
 
+    nasm_dump_stream(*head);
+    nasm_dump_token(*head);
+
     /* Now handle token pasting... */
     paste_head = NULL;
     tail = head;
@@ -4046,8 +4049,13 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                 while (t && (t->type == TOK_WHITESPACE ||
                              t->type == TOK_PASTE))
                     t = *tail = delete_Token(t);
-                if (!paste_head || !t)
-                    break;      /* Nothing to paste with */
+                if (!t) { /* Dangling %+ term */
+                    if (paste_head)
+                        (*paste_head)->next = NULL;
+                    else
+                        *head = NULL;
+                    return did_paste;
+                }
                 tail = paste_head;
                 t = *tail;
                 tt = t->next;
