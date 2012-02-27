@@ -47,6 +47,8 @@ To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 \b Add support for bigendian UTF-16 and UTF-32.  See \k{unicode}.
 
+\b Fixed problem with paste of an empty ending token. See \k{concat%+}.
+
 \S{cl-2.09.10} Version 2.09.10
 
 \b Fix up NSIS script to protect uninstaller against registry keys
