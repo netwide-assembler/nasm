@@ -89,7 +89,6 @@ typedef struct Token Token;
 typedef struct Blocks Blocks;
 typedef struct Line Line;
 typedef struct Include Include;
-typedef struct Cond Cond;
 typedef struct IncPath IncPath;
 
 /*
@@ -284,7 +283,6 @@ struct ExpInv {
 struct Include {
     Include     *next;
     FILE        *fp;
-    Cond        *conds;
     ExpInv      *expansion;
     char        *fname;
     int         lineno;
