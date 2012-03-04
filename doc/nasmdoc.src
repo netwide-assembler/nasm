@@ -2427,22 +2427,6 @@ things like
 \c         silly {13,10}, crlf             ; crlf:      db 13,10
 
 
-\S{mlrmacro} \i{Recursive Multi-Line Macros}: \I\c{%irmacro}\i\c{%rmacro}
-
-A multi-line macro cannot be referenced within itself, in order to
-prevent accidental infinite recursion and allow instruction overloading.
-
-Recursive multi-line macros allow for self-referencing, with the
-caveat that the user is aware of the existence, use and purpose of
-recursive multi-line macros. There is also a generous, but sane, upper
-limit to the number of recursions, in order to prevent run-away memory
-consumption in case of accidental infinite recursion.
-
-As with non-recursive multi-line macros, recursive multi-line macros are
-\i{case-sensitive}, unless you define them using the alternative
-directive \c{%irmacro}.
-
-
 \S{mlmacover} Overloading Multi-Line Macros\I{overloading, multi-line macros}
 
 As with single-line macros, multi-line macros can be overloaded by
@@ -2900,22 +2884,6 @@ does \e{not} remove the macro \c{bar}, since the argument
 specification does not match exactly.
 
 
-\S{exitmacro} Exiting Multi-Line Macros: \i\c{%exitmacro}
-
-Multi-line macro expansions can be arbitrarily terminated with
-the \c{%exitmacro} directive.
-
-For example:
-
-\c %macro foo 1-3
-\c         ; Do something
-\c     %if<condition>
-\c         %exitmacro
-\c     %endif
-\c         ; Do something
-\c %endmacro
-
-
 \H{condasm} \i{Conditional Assembly}\I\c{%if}
 
 Similarly to the C preprocessor, NASM allows sections of a source
@@ -3233,31 +3201,6 @@ be gradually used up and other applications to start crashing.
 
 Note a maximum repeat count is limited by 62 bit number, though it
 is hardly possible that you ever need anything bigger.
-
-
-\H{while} \i{Conditional Loops}: \i\c{%while}
-
-The directives \c{%while} and \i\c{%endwhile} combine preprocessor
-loops with conditional assembly, allowing the enclosed chunk of
-code to be replicated as long as certain conditions are met:
-
-\c %while<condition>
-\c     ; some code which only repeats while <condition> is met
-\c %endwhile
-
-\S{exitwhile} Exiting Conditional Loops: \i\c{%exitwhile}
-
-Conditional loops can be arbitrarily terminated with the
-\i\c{%exitwhile} directive.
-
-For example:
-
-\c %while<condition>
-\c    %if<some other condition>
-\c       %exitwhile
-\c    %endif
-\c    ; some code which only repeats while <condition> is met
-\c %endwhile
 
 
 \H{files} Source Files and Dependencies
@@ -3830,14 +3773,6 @@ characters, you can use string quotes to surround the name of the
 variable, for example:
 
 \c %defstr C_colon      %!'C:'
-
-
-\S{final} \i\c{%final} Directive
-
-The \c{%final} directive is used to delay preprocessing of a line
-until all other "normal" preprocessing is complete.  Multiple
-\c{%final} directives are processed in the opposite order of their
-declaration, last one first and first one last.
 
 
 \H{comment} Comment Blocks: \i\c{%comment}

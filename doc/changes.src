@@ -9,24 +9,6 @@ since 2007.
 
 \S{cl-2.10} Version 2.10
 
-\b Support for delayed preprocessing \c{%final}
-  See \k{final}.
-
-\b Support for comment blocks \c{%comment}.
-  See \k{comment}.
-
-\b Support for arbitrarily terminating conditional loops \c{%exitwhile}.
-  See \k{exitwhile}.
-
-\b Support for conditional loops \c{%while}.
-  See \k{while}.
-
-\b Support for arbitrarily terminating macro expansions \c{%exitmacro}.
-  See \k{exitmacro}.
-
-\b Support for recursive macro expansion \c{%rmacro}/\c{%irmacro}.
-  See \k{mlrmacro}.
-
 \b When optimization is enabled, \c{mov r64,imm} now optimizes to the
   shortest form possible between:
 
@@ -46,8 +28,6 @@ To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
    See \k{elffmt}.
 
 \b Add support for bigendian UTF-16 and UTF-32.  See \k{unicode}.
-
-\b Fixed problem with paste of an empty ending token. See \k{concat%+}.
 
 \S{cl-2.09.10} Version 2.09.10
 
