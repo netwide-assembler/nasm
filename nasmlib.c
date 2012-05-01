@@ -775,35 +775,24 @@ char *nasm_opt_val(char *p, char **val, char **next)
  */
 int idata_bytes(int opcode)
 {
-    int ret;
     switch (opcode) {
     case I_DB:
-        ret = 1;
-        break;
+        return 1;
     case I_DW:
-        ret = 2;
-        break;
+        return 2;
     case I_DD:
-        ret = 4;
-        break;
+        return 4;
     case I_DQ:
-        ret = 8;
-        break;
+        return 8;
     case I_DT:
-        ret = 10;
-        break;
+        return 10;
     case I_DO:
-        ret = 16;
-        break;
+        return 16;
     case I_DY:
-        ret = 32;
-        break;
+        return 32;
     case I_none:
-        ret = -1;
-        break;
+        return -1;
     default:
-        ret = 0;
-        break;
+        return 0;
     }
-    return ret;
 }
