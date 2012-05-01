@@ -3570,7 +3570,6 @@ issue_error:
 static int find_cc(Token * t)
 {
     Token *tt;
-    int i, j, k, m;
 
     if (!t)
         return -1;              /* Probably a %+ without a space */
@@ -3583,23 +3582,7 @@ static int find_cc(Token * t)
     if (tt && (tt->type != TOK_OTHER || strcmp(tt->text, ",")))
         return -1;
 
-    i = -1;
-    j = ARRAY_SIZE(conditions);
-    while (j - i > 1) {
-        k = (j + i) / 2;
-        m = nasm_stricmp(t->text, conditions[k]);
-        if (m == 0) {
-            i = k;
-            j = -2;
-            break;
-        } else if (m < 0) {
-            j = k;
-        } else
-            i = k;
-    }
-    if (j != -2)
-        return -1;
-    return i;
+    return bsii(t->text, (const char **)conditions,  ARRAY_SIZE(conditions));
 }
 
 static bool paste_tokens(Token **head, const struct tokseq_match *m,
