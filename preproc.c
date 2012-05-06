@@ -5140,26 +5140,6 @@ void pp_pre_undefine(char *definition)
     predef = l;
 }
 
-/*
- * Added by Keith Kanios:
- *
- * This function is used to assist with "runtime" preprocessor
- * directives. (e.g. pp_runtime("%define __BITS__ 64");)
- *
- * ERRORS ARE IGNORED HERE, SO MAKE COMPLETELY SURE THAT YOU
- * PASS A VALID STRING TO THIS FUNCTION!!!!!
- */
-
-void pp_runtime(char *definition)
-{
-    Token *def;
-
-    def = tokenize(definition);
-    if (do_directive(def) == NO_DIRECTIVE_FOUND)
-        free_tlist(def);
-
-}
-
 void pp_extra_stdmac(macros_t *macros)
 {
     extrastdmac = macros;
