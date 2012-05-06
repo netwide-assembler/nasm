@@ -174,11 +174,21 @@ static const struct warning {
 static void no_pp_reset(char *file, int pass, ListGen *listgen, StrList **deplist);
 static char *no_pp_getline(void);
 static void no_pp_cleanup(int pass);
+static void no_pp_extra_stdmac(macros_t *macros);
+static void no_pp_pre_define(char *definition);
+static void no_pp_pre_undefine(char *definition);
+static void no_pp_pre_include(char *fname);
+static void no_pp_include_path(char *path);
 
 static struct preproc_ops no_pp = {
     no_pp_reset,
     no_pp_getline,
-    no_pp_cleanup
+    no_pp_cleanup,
+    no_pp_extra_stdmac,
+    no_pp_pre_define,
+    no_pp_pre_undefine,
+    no_pp_pre_include,
+    no_pp_include_path
 };
 
 /*
@@ -233,13 +243,13 @@ static void define_macros_early(void)
 	lt = *lt_p;
 
 	strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
     }
 
     gm_p = gmtime(&official_compile_time);
@@ -247,13 +257,13 @@ static void define_macros_early(void)
 	gm = *gm_p;
 
 	strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
 	strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
     }
 
     if (gm_p)
@@ -265,7 +275,7 @@ static void define_macros_early(void)
 
     if (posix_time) {
 	snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
-	pp_pre_define(temp);
+	preproc->pre_define(temp);
     }
 }
 
@@ -280,7 +290,7 @@ static void define_macros_late(void)
      */
     snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s",
              ofmt_alias ? ofmt_alias->shortname : ofmt->shortname);
-    pp_pre_define(temp);
+    preproc->pre_define(temp);
 }
 
 static void emit_dependencies(StrList *list)
@@ -362,7 +372,7 @@ int main(int argc, char **argv)
         ofmt->current_dfmt = &null_debug_form;
 
     if (ofmt->stdmac)
-        pp_extra_stdmac(ofmt->stdmac);
+        preproc->extra_stdmac(ofmt->stdmac);
     parser_global_info(&location);
     eval_global_info(ofmt, lookup_label, &location);
 
@@ -380,7 +390,7 @@ int main(int argc, char **argv)
             char *line;
 
 	    if (depend_missing_ok)
-		pp_include_path(NULL);	/* "assume generated" */
+		preproc->include_path(NULL);	/* "assume generated" */
 
             preproc->reset(inname, 0, &nasmlist, depend_ptr);
             if (outname[0] == '\0')
@@ -719,22 +729,22 @@ static bool process_arg(char *p, char *q)
 
 	case 'p':			/* pre-include */
 	case 'P':
-	    pp_pre_include(param);
+	    preproc->pre_include(param);
 	    break;
 
 	case 'd':			/* pre-define */
 	case 'D':
-	    pp_pre_define(param);
+	    preproc->pre_define(param);
 	    break;
 
 	case 'u':			/* un-define */
 	case 'U':
-	    pp_pre_undefine(param);
+	    preproc->pre_undefine(param);
 	    break;
 
 	case 'i':			/* include search path */
 	case 'I':
-	    pp_include_path(param);
+	    preproc->include_path(param);
 	    break;
 
 	case 'l':			/* listing file */
@@ -2107,6 +2117,31 @@ static void no_pp_cleanup(int pass)
         fclose(no_pp_fp);
         no_pp_fp = NULL;
     }
+}
+
+static void no_pp_extra_stdmac(macros_t *macros)
+{
+    (void)macros;
+}
+
+static void no_pp_pre_define(char *definition)
+{
+    (void)definition;
+}
+
+static void no_pp_pre_undefine(char *definition)
+{
+    (void)definition;
+}
+
+static void no_pp_pre_include(char *fname)
+{
+    (void)fname;
+}
+
+static void no_pp_include_path(char *path)
+{
+    (void)path;
 }
 
 static uint32_t get_cpu(char *value)

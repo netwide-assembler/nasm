@@ -378,6 +378,19 @@ struct preproc_ops {
 
     /* Called at the end of a pass */
     void (*cleanup)(int pass);
+
+    /* Additional macros specific to output format */
+    void (*extra_stdmac)(macros_t *macros);
+
+    /* Early definitions and undefinitions for macros */
+    void (*pre_define)(char *definition);
+    void (*pre_undefine)(char *definition);
+
+    /* Include file from command line */
+    void (*pre_include)(char *fname);
+
+    /* Include path from command line */
+    void (*include_path)(char *path);
 };
 
 extern struct preproc_ops nasmpp;

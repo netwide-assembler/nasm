@@ -5068,7 +5068,7 @@ static void pp_cleanup(int pass)
     }
 }
 
-void pp_include_path(char *path)
+static void pp_include_path(char *path)
 {
     IncPath *i;
 
@@ -5086,7 +5086,7 @@ void pp_include_path(char *path)
     }
 }
 
-void pp_pre_include(char *fname)
+static void pp_pre_include(char *fname)
 {
     Token *inc, *space, *name;
     Line *l;
@@ -5102,7 +5102,7 @@ void pp_pre_include(char *fname)
     predef = l;
 }
 
-void pp_pre_define(char *definition)
+static void pp_pre_define(char *definition)
 {
     Token *def, *space;
     Line *l;
@@ -5124,7 +5124,7 @@ void pp_pre_define(char *definition)
     predef = l;
 }
 
-void pp_pre_undefine(char *definition)
+static void pp_pre_undefine(char *definition)
 {
     Token *def, *space;
     Line *l;
@@ -5140,7 +5140,7 @@ void pp_pre_undefine(char *definition)
     predef = l;
 }
 
-void pp_extra_stdmac(macros_t *macros)
+static void pp_extra_stdmac(macros_t *macros)
 {
     extrastdmac = macros;
 }
@@ -5156,5 +5156,10 @@ static void make_tok_num(Token * tok, int64_t val)
 struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
-    pp_cleanup
+    pp_cleanup,
+    pp_extra_stdmac,
+    pp_pre_define,
+    pp_pre_undefine,
+    pp_pre_include,
+    pp_include_path
 };
