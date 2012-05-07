@@ -166,32 +166,6 @@ static const struct warning {
 };
 
 /*
- * This is a null preprocessor which just copies lines from input
- * to output. It's used when someone explicitly requests that NASM
- * not preprocess their source file.
- */
-
-static void no_pp_reset(char *file, int pass, ListGen *listgen, StrList **deplist);
-static char *no_pp_getline(void);
-static void no_pp_cleanup(int pass);
-static void no_pp_extra_stdmac(macros_t *macros);
-static void no_pp_pre_define(char *definition);
-static void no_pp_pre_undefine(char *definition);
-static void no_pp_pre_include(char *fname);
-static void no_pp_include_path(char *path);
-
-static struct preproc_ops no_pp = {
-    no_pp_reset,
-    no_pp_getline,
-    no_pp_cleanup,
-    no_pp_extra_stdmac,
-    no_pp_pre_define,
-    no_pp_pre_undefine,
-    no_pp_pre_include,
-    no_pp_include_path
-};
-
-/*
  * get/set current offset...
  */
 #define GET_CURR_OFFS (in_abs_seg?abs_offset:\
@@ -859,7 +833,7 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'a':              /* assemble only - don't preprocess */
-            preproc = &no_pp;
+            preproc = &preproc_nop;
             break;
 
 	case 'W':
@@ -2022,126 +1996,6 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 static void usage(void)
 {
     fputs("type `nasm -h' for help\n", error_file);
-}
-
-#define BUF_DELTA 512
-
-static FILE *no_pp_fp;
-static ListGen *no_pp_list;
-static int32_t no_pp_lineinc;
-
-static void no_pp_reset(char *file, int pass, ListGen * listgen,
-			StrList **deplist)
-{
-    src_set_fname(nasm_strdup(file));
-    src_set_linnum(0);
-    no_pp_lineinc = 1;
-    no_pp_fp = fopen(file, "r");
-    if (!no_pp_fp)
-        nasm_error(ERR_FATAL | ERR_NOFILE,
-		   "unable to open input file `%s'", file);
-    no_pp_list = listgen;
-    (void)pass;                 /* placate compilers */
-
-    if (deplist) {
-	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
-	sl->next = NULL;
-	strcpy(sl->str, file);
-	*deplist = sl;
-    }
-}
-
-static char *no_pp_getline(void)
-{
-    char *buffer, *p, *q;
-    int bufsize;
-
-    bufsize = BUF_DELTA;
-    buffer = nasm_malloc(BUF_DELTA);
-    src_set_linnum(src_get_linnum() + no_pp_lineinc);
-
-    while (1) {                 /* Loop to handle %line */
-
-        p = buffer;
-        while (1) {             /* Loop to handle long lines */
-            q = fgets(p, bufsize - (p - buffer), no_pp_fp);
-            if (!q)
-                break;
-            p += strlen(p);
-            if (p > buffer && p[-1] == '\n')
-                break;
-            if (p - buffer > bufsize - 10) {
-                int offset;
-                offset = p - buffer;
-                bufsize += BUF_DELTA;
-                buffer = nasm_realloc(buffer, bufsize);
-                p = buffer + offset;
-            }
-        }
-
-        if (!q && p == buffer) {
-            nasm_free(buffer);
-            return NULL;
-        }
-
-        /*
-         * Play safe: remove CRs, LFs and any spurious ^Zs, if any of
-         * them are present at the end of the line.
-         */
-        buffer[strcspn(buffer, "\r\n\032")] = '\0';
-
-        if (!nasm_strnicmp(buffer, "%line", 5)) {
-            int32_t ln;
-            int li;
-            char *nm = nasm_malloc(strlen(buffer));
-            if (sscanf(buffer + 5, "%"PRId32"+%d %s", &ln, &li, nm) == 3) {
-                nasm_free(src_set_fname(nm));
-                src_set_linnum(ln);
-                no_pp_lineinc = li;
-                continue;
-            }
-            nasm_free(nm);
-        }
-        break;
-    }
-
-    no_pp_list->line(LIST_READ, buffer);
-
-    return buffer;
-}
-
-static void no_pp_cleanup(int pass)
-{
-    (void)pass;                     /* placate GCC */
-    if (no_pp_fp) {
-        fclose(no_pp_fp);
-        no_pp_fp = NULL;
-    }
-}
-
-static void no_pp_extra_stdmac(macros_t *macros)
-{
-    (void)macros;
-}
-
-static void no_pp_pre_define(char *definition)
-{
-    (void)definition;
-}
-
-static void no_pp_pre_undefine(char *definition)
-{
-    (void)definition;
-}
-
-static void no_pp_pre_include(char *fname)
-{
-    (void)fname;
-}
-
-static void no_pp_include_path(char *path)
-{
-    (void)path;
 }
 
 static uint32_t get_cpu(char *value)

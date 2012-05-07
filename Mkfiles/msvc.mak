@@ -50,7 +50,8 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
 	ilog2.$(O) \
-	lib/strlcpy.$(O)
+	lib/strlcpy.$(O) \
+	preproc-nop.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
@@ -286,6 +287,8 @@ parser.$(O): parser.c compiler.h directiv.h eval.h float.h insns.h insnsi.h \
  nasm.h nasmlib.h opflags.h parser.h pptok.h preproc.h regs.h stdscan.h \
  tables.h tokens.h
 pptok.$(O): pptok.c compiler.h hashtbl.h nasmlib.h pptok.h preproc.h
+preproc-nop.$(O): preproc-nop.c compiler.h directiv.h insnsi.h nasm.h \
+ nasmlib.h opflags.h pptok.h preproc.h regs.h
 preproc.$(O): preproc.c compiler.h directiv.h eval.h hashtbl.h insnsi.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h quote.h regs.h stdscan.h \
  tables.h tokens.h

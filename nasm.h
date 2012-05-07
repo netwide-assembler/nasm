@@ -394,6 +394,7 @@ struct preproc_ops {
 };
 
 extern struct preproc_ops nasmpp;
+extern struct preproc_ops preproc_nop;
 
 /*
  * Some lexical properties of the NASM source language, included
