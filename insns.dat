@@ -3172,6 +3172,7 @@ VPMINSD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 39 /r]		FUTURE,AVX2
 VPMINUB		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f da /r]		FUTURE,AVX2
 VPMINUW		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 3a /r]		FUTURE,AVX2
 VPMINUD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 3b /r]		FUTURE,AVX2
+VPMOVMSKB	reg32,ymmreg			[rm:	vex.256.66.0f d7 /r]			FUTURE,AVX2
 VPMOVMSKB	reg64,ymmreg			[rm:	vex.256.66.0f d7 /r]			FUTURE,AVX2
 VPMOVSXBW	ymmreg,xmmrm128			[rm:	vex.256.66.0f38 20 /r]			FUTURE,AVX2
 VPMOVSXBD	ymmreg,mem64			[rm:	vex.256.66.0f38 21 /r]			FUTURE,AVX2
