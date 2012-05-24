@@ -7,6 +7,10 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.01} Version 2.10.01
+
+\b Add missing VPMOVMSKB instruction with reg32, ymmreg operands.
+
 \S{cl-2.10} Version 2.10
 
 \b When optimization is enabled, \c{mov r64,imm} now optimizes to the
