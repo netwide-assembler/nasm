@@ -225,6 +225,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_WRT,          /* WRT */
     TOKEN_FLOATIZE,     /* __floatX__ */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
+    TOKEN_IFUNC,        /* __ilog2*__ */
 };
 
 enum floatize {
@@ -246,6 +247,13 @@ enum strfunc {
     STRFUNC_UTF32,
     STRFUNC_UTF32LE,
     STRFUNC_UTF32BE,
+};
+
+enum ifunc {
+    IFUNC_ILOG2E,
+    IFUNC_ILOG2W,
+    IFUNC_ILOG2F,
+    IFUNC_ILOG2C,
 };
 
 size_t string_transform(char *, size_t, char **, enum strfunc);

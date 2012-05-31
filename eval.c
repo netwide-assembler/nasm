@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -274,7 +274,7 @@ static expr *segment_part(expr * e)
  * expr3 : expr4 [ {<<,>>} expr4...]
  * expr4 : expr5 [ {+,-} expr5...]
  * expr5 : expr6 [ {*,/,%,//,%%} expr6...]
- * expr6 : { ~,+,-,SEG } expr6
+ * expr6 : { ~,+,-,IFUNC,SEG } expr6
  *       | (bexpr)
  *       | symbol
  *       | $
@@ -732,6 +732,37 @@ static expr *eval_strfunc(enum strfunc type)
     return finishtemp();
 }
 
+static int64_t eval_ifunc(int64_t val, enum ifunc func)
+{
+    int errtype;
+    uint64_t uval = (uint64_t)val;
+    int64_t rv;
+
+    switch (func) {
+    case IFUNC_ILOG2E:
+    case IFUNC_ILOG2W:
+        errtype = (func == IFUNC_ILOG2E) ? ERR_NONFATAL : ERR_WARNING;
+        
+        if ((!uval) | (uval & (uval-1)))
+            error(errtype, "ilog2 argument is not a power of two");
+        /* fall through */
+    case IFUNC_ILOG2F:
+        rv = ilog2_64(uval);
+        break;
+
+    case IFUNC_ILOG2C:
+        rv = (uval < 2) ? 0 : ilog2_64(uval-1) + 1;
+        break;
+
+    default:
+        error(ERR_PANIC, "invalid IFUNC token %d", func);
+        rv = 0;
+        break;
+    }
+
+    return rv;
+}
+
 static expr *expr6(int critical)
 {
     int32_t type;
@@ -781,6 +812,23 @@ static expr *expr6(int critical)
             return NULL;
         }
         return scalarvect(!reloc_value(e));
+
+    case TOKEN_IFUNC:
+    {
+        enum ifunc func = tokval->t_integer;
+        i = scan(scpriv, tokval);
+        e = expr6(critical);
+        if (!e)
+            return NULL;
+        if (is_just_unknown(e))
+            return unknown_expr();
+        else if (!is_simple(e)) {
+            error(ERR_NONFATAL, "function may only be applied to"
+                  " scalar values");
+            return NULL;
+        }
+        return scalarvect(eval_ifunc(reloc_value(e), func));
+    }
 
     case TOKEN_SEG:
         i = scan(scpriv, tokval);

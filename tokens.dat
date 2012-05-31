@@ -97,6 +97,12 @@ __utf32__
 __utf32le__
 __utf32be__
 
+% TOKEN_IFUNC, 0, IFUNC_{__*__}
+__ilog2e__
+__ilog2w__
+__ilog2f__
+__ilog2c__
+
 % TOKEN_*, 0, 0
 seg
 wrt
