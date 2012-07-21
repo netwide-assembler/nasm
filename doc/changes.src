@@ -7,6 +7,13 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.02} Version 2.10.02
+
+\b Add the \c{ifunc} macro package with integer functions, currently
+only integer logarithms.  See \k{pkg_ifunc}.
+
+\b Add the \c{RDSEED}, \c{ADCX} and \c{ADOX} instructions.
+
 \S{cl-2.10.01} Version 2.10.01
 
 \b Add missing VPMOVMSKB instruction with reg32, ymmreg operands.
