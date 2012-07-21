@@ -1787,15 +1787,23 @@ Since the \c{%} character is used extensively by the macro
 modulo operators are followed by white space wherever they appear.
 
 
-\S{expmul} \i{Unary Operators}: \I{+ opunary}\c{+}, \I{- opunary}\c{-},
-\i\c{~}, \I{! opunary}\c{!} and \i\c{SEG}
+\S{expmul} \i{Unary Operators}
 
-The highest-priority operators in NASM's expression grammar are
-those which only apply to one argument. \c{-} negates its operand,
-\c{+} does nothing (it's provided for symmetry with \c{-}), \c{~}
-computes the \i{one's complement} of its operand, \c{!} is the
-\i{logical negation} operator, and \c{SEG} provides the \i{segment address}
+The highest-priority operators in NASM's expression grammar are those
+which only apply to one argument.  These are \I{+ opunary}\c{+}, \I{-
+opunary}\c{-}, \i\c{~}, \I{! opunary}\c{!}, \i\c{SEG}, and the
+\i{integer functions} operators.
+
+\c{-} negates its operand, \c{+} does nothing (it's provided for
+symmetry with \c{-}), \c{~} computes the \i{one's complement} of its
+operand, \c{!} is the \i{logical negation} operator.
+
+\c{SEG} provides the \i{segment address}
 of its operand (explained in more detail in \k{segwrt}).
+
+A set of additional operators with leading and trailing double
+underscores are used to implement the integer functions of the
+\c{ifunc} macro package, see \k{pkg_ifunc}.
 
 
 \H{segwrt} \i\c{SEG} and \i\c{WRT}
@@ -4274,6 +4282,34 @@ This packages contains the following floating-point convenience macros:
 \c %define float80e(x)     __float80e__(x)
 \c %define float128l(x)    __float128l__(x)
 \c %define float128h(x)    __float128h__(x)
+
+
+\H{pkg_ifunc} \i\c{ifunc}: \i{Integer functions}
+
+This package contains a set of macros which implement integer
+functions.  These are actually implemented as special operators, but
+are most conveniently accessed via this macro package.
+
+The macros provided are:
+
+\S{ilog2} \i{Integer logarithms}
+
+These functions calculate the integer logarithm base 2 of their
+argument, considered as an unsigned integer.  The only differences
+between the functions is their behavior if the argument provided is
+not a power of two.
+
+The function \i\c{ilog2e()} (alias \i\c{ilog2()}) generate an error if
+the argument is not a power of two.
+
+The function \i\c{ilog2w()} generate a warning if the argument is not
+a power of two.
+
+The function \i\c{ilog2f()} rounds the argument down to the nearest
+power of two; if the argument is zero it returns zero.
+
+The function \i\c{ilog2c()} rounds the argument up to the nearest
+power of two.
 
 
 \C{directive} \i{Assembler Directives}
