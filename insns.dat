@@ -2861,16 +2861,16 @@ VFNMSUB321SD	xmmreg,xmmreg,xmmrm64		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUT
 ;# Intel post-32 nm processor instructions
 ;
 ; Per AVX spec revision 7, document 319433-007
-RDFSBASE	reg32				[m:	f3 0f ae /0]				LONG,FUTURE
+RDFSBASE	reg32				[m:	norexw f3 0f ae /0]			LONG,FUTURE
 RDFSBASE	reg64				[m:	o64 f3 0f ae /0]			LONG,FUTURE
-RDGSBASE	reg32				[m:	f3 0f ae /1]				LONG,FUTURE
+RDGSBASE	reg32				[m:	norexw f3 0f ae /1]			LONG,FUTURE
 RDGSBASE	reg64				[m:	o64 f3 0f ae /1]			LONG,FUTURE
 RDRAND		reg16				[m:	o16 0f c7 /6]				FUTURE
 RDRAND		reg32				[m:	o32 0f c7 /6]				FUTURE
 RDRAND		reg64				[m:	o64 0f c7 /6]				LONG,FUTURE
-WRFSBASE	reg32				[m:	f3 0f ae /2]				LONG,FUTURE
+WRFSBASE	reg32				[m:	norexw f3 0f ae /2]			LONG,FUTURE
 WRFSBASE	reg64				[m:	o64 f3 0f ae /2]			LONG,FUTURE
-WRGSBASE	reg32				[m:	f3 0f ae /3]				LONG,FUTURE
+WRGSBASE	reg32				[m:	norexw f3 0f ae /3]			LONG,FUTURE
 WRGSBASE	reg64				[m:	o64 f3 0f ae /3]			LONG,FUTURE
 VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		AVX,FUTURE
 VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		AVX,FUTURE
@@ -2878,9 +2878,9 @@ VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX,FUTURE
 VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX,FUTURE
 
 ; Per AVX spec revision 13, document 319433-013
-ADCX		reg32,rm32			[rm:	66 0f 38 f6 /r]				FUTURE
+ADCX		reg32,rm32			[rm:	norexw 66 0f 38 f6 /r]			FUTURE
 ADCX		reg64,rm64			[rm:	o64 66 0f 38 f6 /r]			LONG,FUTURE
-ADOX		reg32,rm32			[rm:	f3 0f 38 f6 /r]				FUTURE
+ADOX		reg32,rm32			[rm:	norexw f3 0f 38 f6 /r]			FUTURE
 ADOX		reg64,rm64			[rm:	o64 f3 0f 38 f6 /r]			LONG,FUTURE
 RDSEED		reg16				[m:	o16 0f c7 /7]				FUTURE
 RDSEED		reg32				[m:	o32 0f c7 /7]				FUTURE
