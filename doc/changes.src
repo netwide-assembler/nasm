@@ -7,6 +7,16 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.03} Version 2.10.03
+
+\b Correct the assembly of the instruction:
+
+\c XRELEASE MOV [absolute],AL
+
+Previous versions would incorrectly generate \c{F3 A2} for this
+instruction and issue a warning; correct behavior is to emit \c{F3 88
+05}.
+
 \S{cl-2.10.02} Version 2.10.02
 
 \b Add the \c{ifunc} macro package with integer functions, currently
