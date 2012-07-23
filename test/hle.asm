@@ -12,4 +12,8 @@
 	xrelease mov [sym],eax
 	xacquire mov [sym],eax
 
+	mov [sym],al
+	xrelease mov [sym],al
+	xacquire mov [sym],al
+
 sym	dd 0
