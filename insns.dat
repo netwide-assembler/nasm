@@ -103,6 +103,7 @@ ADC		rm64,imm			[mi:	hle o64 81+s /2 ibd,s]			X64,SM,LOCK
 ADC		mem,imm8			[mi:	hle 80 /2 ib]				8086,SM,LOCK
 ADC		mem,imm16			[mi:	hle o16 81+s /2 ibw]			8086,SM,LOCK
 ADC		mem,imm32			[mi:	hle o32 81+s /2 ibd]			386,SM,LOCK
+ADC		rm8,imm				[mi:	hle 82 /2 ib]				8086,SM,LOCK,ND,NOLONG
 ADD		mem,reg8			[mr:	hle 00 /r]				8086,SM,LOCK
 ADD		reg8,reg8			[mr:	00 /r]					8086
 ADD		mem,reg16			[mr:	hle o16 01 /r]				8086,SM,LOCK
@@ -136,6 +137,7 @@ ADD		rm64,imm			[mi:	hle o64 81+s /0 ibd,s]			X64,SM,LOCK
 ADD		mem,imm8			[mi:	hle 80 /0 ib]				8086,SM,LOCK
 ADD		mem,imm16			[mi:	hle o16 81+s /0 ibw]			8086,SM,LOCK
 ADD		mem,imm32			[mi:	hle o32 81+s /0 ibd]			386,SM,LOCK
+ADD		rm8,imm				[mi:	hle 82 /0 ib]				8086,SM,LOCK,ND,NOLONG
 AND		mem,reg8			[mr:	hle 20 /r]				8086,SM,LOCK
 AND		reg8,reg8			[mr:	20 /r]					8086
 AND		mem,reg16			[mr:	hle o16 21 /r]				8086,SM,LOCK
@@ -169,6 +171,7 @@ AND		rm64,imm			[mi:	hle o64 81+s /4 ibd,s]			X64,SM,LOCK
 AND		mem,imm8			[mi:	hle 80 /4 ib]				8086,SM,LOCK
 AND		mem,imm16			[mi:	hle o16 81+s /4 ibw]			8086,SM,LOCK
 AND		mem,imm32			[mi:	hle o32 81+s /4 ibd]			386,SM,LOCK
+AND		rm8,imm				[mi:	hle 82 /4 ib]				8086,SM,LOCK,ND,NOLONG
 ARPL		mem,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 ARPL		reg16,reg16			[mr:	63 /r]					286,PROT,NOLONG
 BB0_RESET	void				[	0f 3a]					PENT,CYRIX,ND
@@ -298,6 +301,7 @@ CMP		rm64,imm			[mi:	o64 81+s /7 ibd,s]			X64,SM
 CMP		mem,imm8			[mi:	80 /7 ib]				8086,SM
 CMP		mem,imm16			[mi:	o16 81+s /7 ibw]			8086,SM
 CMP		mem,imm32			[mi:	o32 81+s /7 ibd]			386,SM
+CMP		rm8,imm				[mi:	82 /7 ib]				8086,SM,ND,NOLONG
 CMPSB		void				[	repe a6]				8086
 CMPSD		void				[	repe o32 a7]				386
 CMPSQ		void				[	repe o64 a7]				X64
@@ -911,6 +915,7 @@ OR		rm64,imm			[mi:	hle o64 81+s /1 ibd,s]			X64,SM,LOCK
 OR		mem,imm8			[mi:	hle 80 /1 ib]				8086,SM,LOCK
 OR		mem,imm16			[mi:	hle o16 81+s /1 ibw]			8086,SM,LOCK
 OR		mem,imm32			[mi:	hle o32 81+s /1 ibd]			386,SM,LOCK
+OR		rm8,imm				[mi:	hle 82 /1 ib]				8086,SM,LOCK,ND,NOLONG
 OUT		imm,reg_al			[i-:	e6 ib,u]				8086,SB
 OUT		imm,reg_ax			[i-:	o16 e7 ib,u]				8086,SB
 OUT		imm,reg_eax			[i-:	o32 e7 ib,u]				386,SB
@@ -1167,6 +1172,7 @@ SBB		rm64,imm			[mi:	hle o64 81+s /3 ibd,s]			X64,SM,LOCK
 SBB		mem,imm8			[mi:	hle 80 /3 ib]				8086,SM,LOCK
 SBB		mem,imm16			[mi:	hle o16 81+s /3 ibw]			8086,SM,LOCK
 SBB		mem,imm32			[mi:	hle o32 81+s /3 ibd]			386,SM,LOCK
+SBB		rm8,imm				[mi:	hle 82 /3 ib]				8086,SM,LOCK,ND,NOLONG
 SCASB		void				[	repe ae]				8086
 SCASD		void				[	repe o32 af]				386
 SCASQ		void				[	repe o64 af]				X64
@@ -1283,6 +1289,7 @@ SUB		rm64,imm			[mi:	hle o64 81+s /5 ibd,s]			X64,SM,LOCK
 SUB		mem,imm8			[mi:	hle 80 /5 ib]				8086,SM,LOCK
 SUB		mem,imm16			[mi:	hle o16 81+s /5 ibw]			8086,SM,LOCK
 SUB		mem,imm32			[mi:	hle o32 81+s /5 ibd]			386,SM,LOCK
+SUB		rm8,imm				[mi:	hle 82 /5 ib]				8086,SM,LOCK,ND,NOLONG
 SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
 SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
 SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
@@ -1413,6 +1420,7 @@ XOR		rm64,imm			[mi:	hle o64 81+s /6 ibd,s]			X64,SM,LOCK
 XOR		mem,imm8			[mi:	hle 80 /6 ib]				8086,SM,LOCK
 XOR		mem,imm16			[mi:	hle o16 81+s /6 ibw]			8086,SM,LOCK
 XOR		mem,imm32			[mi:	hle o32 81+s /6 ibd]			386,SM,LOCK
+XOR		rm8,imm				[mi:	hle 82 /6 ib]				8086,SM,LOCK,ND,NOLONG
 CMOVcc		reg16,mem			[rm:	o16 0f 40+c /r]				P6,SM
 CMOVcc		reg16,reg16			[rm:	o16 0f 40+c /r]				P6
 CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
