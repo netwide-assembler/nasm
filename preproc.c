@@ -213,6 +213,7 @@ enum pp_token_type {
 };
 
 #define PP_CONCAT_MASK(x) (1 << (x))
+#define PP_CONCAT_MATCH(t, mask) (PP_CONCAT_MASK((t)->type) & mask)
 
 struct tokseq_match {
     int mask_head;
@@ -3585,119 +3586,157 @@ static int find_cc(Token * t)
     return bsii(t->text, (const char **)conditions,  ARRAY_SIZE(conditions));
 }
 
+/*
+ * This routines walks over tokens strem and hadnles tokens
+ * pasting, if @handle_explicit passed then explicit pasting
+ * term is handled, otherwise -- implicit pastings only.
+ */
 static bool paste_tokens(Token **head, const struct tokseq_match *m,
-                         int mnum, bool handle_paste_tokens)
+                         size_t mnum, bool handle_explicit)
 {
-    Token **tail, *t, *tt;
-    Token **paste_head;
-    bool did_paste = false;
-    char *tmp;
-    int i;
+    Token *tok, *next, **prev_next, **prev_nonspace;
+    bool pasted = false;
+    char *buf, *p;
+    size_t len, i;
 
-    /* Now handle token pasting... */
-    paste_head = NULL;
-    tail = head;
-    while ((t = *tail) && (tt = t->next)) {
-        switch (t->type) {
+    /*
+     * The last token before pasting. We need it
+     * to be able to connect new handled tokens.
+     * In other words if there were a tokens stream
+     *
+     * A -> B -> C -> D
+     *
+     * and we've joined tokens B and C, the resulting
+     * stream should be
+     *
+     * A -> BC -> D
+     */
+    tok = *head;
+    prev_next = NULL;
+
+    if (!tok_type_(tok, TOK_WHITESPACE) && !tok_type_(tok, TOK_PASTE))
+        prev_nonspace = head;
+    else
+        prev_nonspace = NULL;
+
+    while (tok && (next = tok->next)) {
+
+        switch (tok->type) {
         case TOK_WHITESPACE:
-            if (tt->type == TOK_WHITESPACE) {
-                /* Zap adjacent whitespace tokens */
-                t->next = delete_Token(tt);
-            } else {
-                /* Do not advance paste_head here */
-                tail = &t->next;
-            }
+            /* Zap redundant whitespaces */
+            while (tok_type_(next, TOK_WHITESPACE))
+                next = delete_Token(next);
+            tok->next = next;
             break;
-        case TOK_PASTE:         /* %+ */
-            if (handle_paste_tokens) {
-                /* Zap %+ and whitespace tokens to the right */
-                while (t && (t->type == TOK_WHITESPACE ||
-                             t->type == TOK_PASTE))
-                    t = *tail = delete_Token(t);
-                if (!t) { /* Dangling %+ term */
-                    if (paste_head)
-                        (*paste_head)->next = NULL;
-                    else
-                        *head = NULL;
-                    return did_paste;
-                }
-                tail = paste_head;
-                t = *tail;
-                tt = t->next;
-                while (tok_type_(tt, TOK_WHITESPACE))
-                    tt = t->next = delete_Token(tt);
-                if (tt) {
-                    tmp = nasm_strcat(t->text, tt->text);
-                    delete_Token(t);
-                    tt = delete_Token(tt);
-                    t = *tail = tokenize(tmp);
-                    nasm_free(tmp);
-                    while (t->next) {
-                        tail = &t->next;
-                        t = t->next;
-                    }
-                    t->next = tt; /* Attach the remaining token chain */
-                    did_paste = true;
-                }
-                paste_head = tail;
-                tail = &t->next;
+
+        case TOK_PASTE:
+            /* Explicit pasting */
+            if (!handle_explicit)
                 break;
-            }
-            /* else fall through */
+            next = delete_Token(tok);
+
+            while (tok_type_(next, TOK_WHITESPACE))
+                next = delete_Token(next);
+
+            if (!pasted)
+                pasted = true;
+
+            /* No ending token */
+            if (!next)
+                error(ERR_FATAL, "No rvalue found on pasting");
+
+            /* Left pasting token is start of line */
+            if (!prev_nonspace)
+                error(ERR_FATAL, "No lvalue found on pasting");
+
+            tok = *prev_nonspace;
+            while (tok_type_(tok, TOK_WHITESPACE))
+                tok = delete_Token(tok);
+            len  = strlen(tok->text);
+            len += strlen(next->text);
+
+            p = buf = nasm_malloc(len + 1);
+            strcpy(p, tok->text);
+            p = strchr(p, '\0');
+            strcpy(p, next->text);
+
+            delete_Token(tok);
+
+            tok = tokenize(buf);
+            nasm_free(buf);
+
+            *prev_nonspace = tok;
+            while (tok && tok->next)
+                tok = tok->next;
+
+            tok->next = delete_Token(next);
+
+            /* Restart from pasted tokens head */
+            tok = *prev_nonspace;
+            break;
+
         default:
-            /*
-             * Concatenation of tokens might look nontrivial
-             * but in real it's pretty simple -- the caller
-             * prepares the masks of token types to be concatenated
-             * and we simply find matched sequences and slip
-             * them together
-             */
+            /* implicit pasting */
             for (i = 0; i < mnum; i++) {
-                if (PP_CONCAT_MASK(t->type) & m[i].mask_head) {
-                    size_t len = 0;
-                    char *tmp, *p;
+                if (!(PP_CONCAT_MATCH(tok, m[i].mask_head)))
+                    continue;
 
-                    while (tt && (PP_CONCAT_MASK(tt->type) & m[i].mask_tail)) {
-                        len += strlen(tt->text);
-                        tt = tt->next;
-                    }
-
-                    /*
-                     * Now tt points to the first token after
-                     * the potential paste area...
-                     */
-                    if (tt != t->next) {
-                        /* We have at least two tokens... */
-                        len += strlen(t->text);
-                        p = tmp = nasm_malloc(len+1);
-                        while (t != tt) {
-                            strcpy(p, t->text);
-                            p = strchr(p, '\0');
-                            t = delete_Token(t);
-                        }
-                        t = *tail = tokenize(tmp);
-                        nasm_free(tmp);
-                        while (t->next) {
-                            tail = &t->next;
-                            t = t->next;
-                        }
-                        t->next = tt;   /* Attach the remaining token chain */
-                        did_paste = true;
-                    }
-                    paste_head = tail;
-                    tail = &t->next;
-                    break;
+                len = 0;
+                while (next && PP_CONCAT_MATCH(next, m[i].mask_tail)) {
+                    len += strlen(next->text);
+                    next = next->next;
                 }
+
+                /* No match */
+                if (tok == next)
+                    break;
+
+                len += strlen(tok->text);
+                p = buf = nasm_malloc(len + 1);
+
+                while (tok != next) {
+                    strcpy(p, tok->text);
+                    p = strchr(p, '\0');
+                    tok = delete_Token(tok);
+                }
+
+                tok = tokenize(buf);
+                nasm_free(buf);
+
+                if (prev_next)
+                    *prev_next = tok;
+                else
+                    *head = tok;
+
+                /*
+                 * Connect pasted into original stream,
+                 * ie A -> new-tokens -> B
+                 */
+                while (tok && tok->next)
+                    tok = tok->next;
+                tok->next = next;
+
+                if (!pasted)
+                    pasted = true;
+
+                /* Restart from pasted tokens head */
+                tok = prev_next ? *prev_next : *head;
             }
-            if (i >= mnum) {    /* no match */
-                tail = &t->next;
-                if (!tok_type_(t->next, TOK_WHITESPACE))
-                    paste_head = tail;
-            }
+
             break;
         }
+
+        prev_next = &tok->next;
+
+        if (tok->next &&
+            !tok_type_(tok->next, TOK_WHITESPACE) &&
+            !tok_type_(tok->next, TOK_PASTE))
+            prev_nonspace = prev_next;
+
+        tok = tok->next;
     }
-    return did_paste;
+
+    return pasted;
 }
 
 /*
