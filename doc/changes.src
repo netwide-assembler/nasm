@@ -7,6 +7,18 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.04} Version 2.10.04
+
+\b Add back the inadvertently deleted 256-bit version of the \c{VORPD}
+instruction.
+
+\b Correct disassembly of instructions starting with byte \c{82} hex.
+
+\b Fix corner cases in token pasting, for example:
+
+\c    %define N 1e%++%+ 5
+\c            dd N, 1e+5
+
 \S{cl-2.10.03} Version 2.10.03
 
 \b Correct the assembly of the instruction:
