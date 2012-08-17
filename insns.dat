@@ -2454,6 +2454,7 @@ VMULPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 59 /r]			AVX,SANDYBRIDGE
 VMULSD		xmmreg,xmmreg*,xmmrm64		[rvm:	vex.nds.lig.f2.0f 59 /r]		AVX,SANDYBRIDGE
 VMULSS		xmmreg,xmmreg*,xmmrm32		[rvm:	vex.nds.lig.f3.0f 59 /r]		AVX,SANDYBRIDGE
 VORPD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f 56 /r]		AVX,SANDYBRIDGE
+VORPD		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 56 /r]		AVX,SANDYBRIDGE
 VORPS		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.0f 56 /r]			AVX,SANDYBRIDGE
 VORPS		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.0f 56 /r]			AVX,SANDYBRIDGE
 VPABSB		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 1c /r]			AVX,SANDYBRIDGE
