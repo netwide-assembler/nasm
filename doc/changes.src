@@ -7,6 +7,10 @@
 The NASM 2 series support x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.05} Version 2.10.05
+
+\b Add the \c{CLAC} and \c{STAC} instructions.
+
 \S{cl-2.10.04} Version 2.10.04
 
 \b Add back the inadvertently deleted 256-bit version of the \c{VORPD}
