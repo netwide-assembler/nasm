@@ -4,7 +4,7 @@
 
 \H{cl-2.xx} NASM 2 Series
 
-The NASM 2 series support x86-64, and is the production version of NASM
+The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
 \S{cl-2.10.05} Version 2.10.05
