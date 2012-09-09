@@ -884,7 +884,7 @@ is_expression:
                     }
                 }
             } else {            /* it's a register */
-                unsigned int rs;
+                opflags_t rs;
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
                     nasm_error(ERR_NONFATAL, "invalid operand type");

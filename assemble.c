@@ -2070,8 +2070,9 @@ done:
 static enum match_result matches(const struct itemplate *itemp,
                                  insn *instruction, int bits)
 {
-    int i, size[MAX_OPERANDS], asize, oprs;
+    opflags_t size[MAX_OPERANDS], asize;
     bool opsizemissing = false;
+    int i, oprs;
 
     /*
      * Check the opcode
@@ -2353,7 +2354,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
             /* if either one are a vector register... */
             if ((ix|bx) & (XMMREG|YMMREG) & ~REG_EA) {
-                int32_t sok = BITS32 | BITS64;
+                opflags_t sok = BITS32 | BITS64;
                 int32_t o = input->offset;
                 int mod, scale, index, base;
 
@@ -2444,7 +2445,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                  * it must be a 32/64-bit memory reference. Firstly we have
                  * to check that all registers involved are type E/Rxx.
                  */
-                int32_t sok = BITS32 | BITS64;
+                opflags_t sok = BITS32 | BITS64;
                 int32_t o = input->offset;
 
                 if (it != -1) {

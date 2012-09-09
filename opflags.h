@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -132,35 +132,35 @@
  * for registers.
  */
 
-typedef uint32_t opflags_t;
+typedef uint64_t opflags_t;
 
 /* Size, and other attributes, of the operand */
-#define BITS8           0x00000001U
-#define BITS16          0x00000002U
-#define BITS32          0x00000004U
-#define BITS64          0x00000008U   /* x64 and FPU only */
-#define BITS80          0x00000010U   /* FPU only */
-#define BITS128         0x20000000U
-#define BITS256         0x00800000U
-#define FAR             0x00000020U   /* grotty: this means 16:16 or */
-                                       /* 16:32, like in CALL/JMP */
-#define NEAR            0x00000040U
-#define SHORT           0x00000080U   /* and this means what it says :) */
+#define BITS8           UINT64_C(0x00000001)
+#define BITS16          UINT64_C(0x00000002)
+#define BITS32          UINT64_C(0x00000004)
+#define BITS64          UINT64_C(0x00000008)    /* x64 and FPU only */
+#define BITS80          UINT64_C(0x00000010)    /* FPU only */
+#define BITS128         UINT64_C(0x20000000)
+#define BITS256         UINT64_C(0x00800000)
+#define FAR             UINT64_C(0x00000020)    /* grotty: this means 16:16 or */
+                                                /* 16:32, like in CALL/JMP */
+#define NEAR            UINT64_C(0x00000040)
+#define SHORT           UINT64_C(0x00000080)    /* and this means what it says :) */
 
-#define SIZE_MASK       0x208000FFU   /* all the size attributes */
+#define SIZE_MASK       UINT64_C(0x208000FF)    /* all the size attributes */
 
 /* Modifiers */
-#define MODIFIER_MASK   0x00000700U
-#define TO              0x00000100U   /* reverse effect in FADD, FSUB &c */
-#define COLON           0x00000200U   /* operand is followed by a colon */
-#define STRICT          0x00000400U   /* do not optimize this operand */
+#define MODIFIER_MASK   UINT64_C(0x00000700)
+#define TO              UINT64_C(0x00000100)    /* reverse effect in FADD, FSUB &c */
+#define COLON           UINT64_C(0x00000200)    /* operand is followed by a colon */
+#define STRICT          UINT64_C(0x00000400)    /* do not optimize this operand */
 
 /* Type of operand: memory reference, register, etc. */
-#define OPTYPE_MASK     0x0000f000U
-#define REGISTER        0x00001000U   /* register number in 'basereg' */
-#define IMMEDIATE       0x00002000U
-#define MEMORY          0x0000c000U
-#define REGMEM          0x00008000U   /* for r/m, ie EA, operands */
+#define OPTYPE_MASK     UINT64_C(0x0000f000)
+#define REGISTER        UINT64_C(0x00001000)    /* register number in 'basereg' */
+#define IMMEDIATE       UINT64_C(0x00002000)
+#define MEMORY          UINT64_C(0x0000c000)
+#define REGMEM          UINT64_C(0x00008000)    /* for r/m, ie EA, operands */
 
 #define is_class(class, op)     (!((opflags_t)(class) & ~(opflags_t)(op)))
 
@@ -168,76 +168,76 @@ typedef uint32_t opflags_t;
 #define IS_FSGS(op)             is_class(REG_FSGS, nasm_reg_flags[(op)])
 
 /* Register classes */
-#define REG_EA          0x00009000U   /* 'normal' reg, qualifies as EA */
-#define RM_GPR          0x00208000U   /* integer operand */
-#define REG_GPR         0x00209000U   /* integer register */
-#define REG8            0x00209001U   /*  8-bit GPR  */
-#define REG16           0x00209002U   /* 16-bit GPR */
-#define REG32           0x00209004U   /* 32-bit GPR */
-#define REG64           0x00209008U   /* 64-bit GPR */
-#define FPUREG          0x01001000U   /* floating point stack registers */
-#define FPU0            0x01011000U   /* FPU stack register zero */
-#define RM_MMX          0x02008000U   /* MMX operand */
-#define MMXREG          0x02009000U   /* MMX register */
-#define RM_XMM          0x04008000U   /* XMM (SSE) operand */
-#define XMMREG          0x04009000U   /* XMM (SSE) register */
-#define XMM0            0x04019000U   /* XMM register zero */
-#define RM_YMM          0x08008000U   /* YMM (AVX) operand */
-#define YMMREG          0x08009000U   /* YMM (AVX) register */
-#define YMM0            0x08019000U   /* YMM register zero */
-#define REG_CDT         0x00101004U   /* CRn, DRn and TRn */
-#define REG_CREG        0x00111004U   /* CRn */
-#define REG_DREG        0x00121004U   /* DRn */
-#define REG_TREG        0x00141004U   /* TRn */
-#define REG_SREG        0x00401002U   /* any segment register */
-#define REG_CS          0x00411002U   /* CS */
-#define REG_DESS        0x00421002U   /* DS, ES, SS */
-#define REG_FSGS        0x00441002U   /* FS, GS */
-#define REG_SEG67       0x00481002U   /* Unimplemented segment registers */
+#define REG_EA          UINT64_C(0x00009000)    /* 'normal' reg, qualifies as EA */
+#define RM_GPR          UINT64_C(0x00208000)    /* integer operand */
+#define REG_GPR         UINT64_C(0x00209000)    /* integer register */
+#define REG8            UINT64_C(0x00209001)    /*  8-bit GPR  */
+#define REG16           UINT64_C(0x00209002)    /* 16-bit GPR */
+#define REG32           UINT64_C(0x00209004)    /* 32-bit GPR */
+#define REG64           UINT64_C(0x00209008)    /* 64-bit GPR */
+#define FPUREG          UINT64_C(0x01001000)    /* floating point stack registers */
+#define FPU0            UINT64_C(0x01011000)    /* FPU stack register zero */
+#define RM_MMX          UINT64_C(0x02008000)    /* MMX operand */
+#define MMXREG          UINT64_C(0x02009000)    /* MMX register */
+#define RM_XMM          UINT64_C(0x04008000)    /* XMM (SSE) operand */
+#define XMMREG          UINT64_C(0x04009000)    /* XMM (SSE) register */
+#define XMM0            UINT64_C(0x04019000)    /* XMM register zero */
+#define RM_YMM          UINT64_C(0x08008000)    /* YMM (AVX) operand */
+#define YMMREG          UINT64_C(0x08009000)    /* YMM (AVX) register */
+#define YMM0            UINT64_C(0x08019000)    /* YMM register zero */
+#define REG_CDT         UINT64_C(0x00101004)    /* CRn, DRn and TRn */
+#define REG_CREG        UINT64_C(0x00111004)    /* CRn */
+#define REG_DREG        UINT64_C(0x00121004)    /* DRn */
+#define REG_TREG        UINT64_C(0x00141004)    /* TRn */
+#define REG_SREG        UINT64_C(0x00401002)    /* any segment register */
+#define REG_CS          UINT64_C(0x00411002)    /* CS */
+#define REG_DESS        UINT64_C(0x00421002)    /* DS, ES, SS */
+#define REG_FSGS        UINT64_C(0x00441002)    /* FS, GS */
+#define REG_SEG67       UINT64_C(0x00481002)    /* Unimplemented segment registers */
 
-#define REG_RIP         0x00801008U   /* RIP relative addressing */
-#define REG_EIP         0x00801004U   /* EIP relative addressing */
+#define REG_RIP         UINT64_C(0x00801008)    /* RIP relative addressing */
+#define REG_EIP         UINT64_C(0x00801004)    /* EIP relative addressing */
 
 /* Special GPRs */
-#define REG_SMASK       0x100f0800U   /* a mask for the following */
-#define REG_ACCUM       0x00219000U   /* accumulator: AL, AX, EAX, RAX */
-#define REG_AL          0x00219001U
-#define REG_AX          0x00219002U
-#define REG_EAX         0x00219004U
-#define REG_RAX         0x00219008U
-#define REG_COUNT       0x10229000U   /* counter: CL, CX, ECX, RCX */
-#define REG_CL          0x10229001U
-#define REG_CX          0x10229002U
-#define REG_ECX         0x10229004U
-#define REG_RCX         0x10229008U
-#define REG_DL          0x10249001U   /* data: DL, DX, EDX, RDX */
-#define REG_DX          0x10249002U
-#define REG_EDX         0x10249004U
-#define REG_RDX         0x10249008U
-#define REG_HIGH        0x10289001U   /* high regs: AH, CH, DH, BH */
-#define REG_NOTACC      0x10000000U   /* non-accumulator register */
-#define REG8NA          0x10209001U   /*  8-bit non-acc GPR  */
-#define REG16NA         0x10209002U   /* 16-bit non-acc GPR */
-#define REG32NA         0x10209004U   /* 32-bit non-acc GPR */
-#define REG64NA         0x10209008U   /* 64-bit non-acc GPR */
+#define REG_SMASK       UINT64_C(0x100f0800)    /* a mask for the following */
+#define REG_ACCUM       UINT64_C(0x00219000)    /* accumulator: AL, AX, EAX, RAX */
+#define REG_AL          UINT64_C(0x00219001)
+#define REG_AX          UINT64_C(0x00219002)
+#define REG_EAX         UINT64_C(0x00219004)
+#define REG_RAX         UINT64_C(0x00219008)
+#define REG_COUNT       UINT64_C(0x10229000)    /* counter: CL, CX, ECX, RCX */
+#define REG_CL          UINT64_C(0x10229001)
+#define REG_CX          UINT64_C(0x10229002)
+#define REG_ECX         UINT64_C(0x10229004)
+#define REG_RCX         UINT64_C(0x10229008)
+#define REG_DL          UINT64_C(0x10249001)    /* data: DL, DX, EDX, RDX */
+#define REG_DX          UINT64_C(0x10249002)
+#define REG_EDX         UINT64_C(0x10249004)
+#define REG_RDX         UINT64_C(0x10249008)
+#define REG_HIGH        UINT64_C(0x10289001)    /* high regs: AH, CH, DH, BH */
+#define REG_NOTACC      UINT64_C(0x10000000)    /* non-accumulator register */
+#define REG8NA          UINT64_C(0x10209001)    /*  8-bit non-acc GPR  */
+#define REG16NA         UINT64_C(0x10209002)    /* 16-bit non-acc GPR */
+#define REG32NA         UINT64_C(0x10209004)    /* 32-bit non-acc GPR */
+#define REG64NA         UINT64_C(0x10209008)    /* 64-bit non-acc GPR */
 
 /* special types of EAs */
-#define MEM_OFFS        0x0001c000U   /* simple [address] offset - absolute! */
-#define IP_REL          0x0002c000U   /* IP-relative offset */
+#define MEM_OFFS        UINT64_C(0x0001c000)    /* simple [address] offset - absolute! */
+#define IP_REL          UINT64_C(0x0002c000)    /* IP-relative offset */
 
 /* memory which matches any type of r/m operand */
 #define MEMORY_ANY      (MEMORY|RM_GPR|RM_MMX|RM_XMM|RM_YMM)
 
 /* special type of immediate operand */
-#define UNITY           0x00012000U   /* for shift/rotate instructions */
-#define SBYTE16         0x00022000U   /* for op r16,immediate instrs. */
-#define SBYTE32         0x00042000U   /* for op r32,immediate instrs. */
-#define SBYTE64         0x00082000U   /* for op r64,immediate instrs. */
-#define BYTENESS        0x000e0000U   /* for testing for byteness */
-#define SDWORD64	0x10002000U   /* for op r64,simm32 instrs. */
-#define UDWORD64	0x00002800U   /* for op r64,uimm32 instrs. */
+#define UNITY           UINT64_C(0x00012000)    /* for shift/rotate instructions */
+#define SBYTE16         UINT64_C(0x00022000)    /* for op r16,immediate instrs. */
+#define SBYTE32         UINT64_C(0x00042000)    /* for op r32,immediate instrs. */
+#define SBYTE64         UINT64_C(0x00082000)    /* for op r64,immediate instrs. */
+#define BYTENESS        UINT64_C(0x000e0000)    /* for testing for byteness */
+#define SDWORD64	UINT64_C(0x10002000)    /* for op r64,simm32 instrs. */
+#define UDWORD64	UINT64_C(0x00002800)    /* for op r64,uimm32 instrs. */
 
 /* special flags */
-#define SAME_AS         0x40000000U
+#define SAME_AS         UINT64_C(0x40000000)
 
 #endif /* NASM_OPFLAGS_H */
