@@ -177,6 +177,8 @@ static bool want_usage;
 static bool terminate_after_phase;
 int user_nolist = 0;            /* fbk 9/2/00 */
 
+static char *quote_for_make(const char *str);
+
 static void nasm_fputs(const char *line, FILE * outfile)
 {
     if (outfile) {
@@ -286,13 +288,15 @@ static void emit_dependencies(StrList *list)
 
     linepos = fprintf(deps, "%s:", depend_target);
     list_for_each(l, list) {
-	len = strlen(l->str);
-	if (linepos + len > 62) {
+        char *file = quote_for_make(l->str);
+	len = strlen(file);
+	if (linepos + len > 62 && linepos > 1) {
 	    fprintf(deps, " \\\n ");
 	    linepos = 1;
 	}
-	fprintf(deps, " %s", l->str);
+	fprintf(deps, " %s", file);
 	linepos += len+1;
+        nasm_free(file);
     }
     fprintf(deps, "\n\n");
 
@@ -356,7 +360,7 @@ int main(int argc, char **argv)
     depend_ptr = (depend_file || (operating_mode == op_depend))
 	? &depend_list : NULL;
     if (!depend_target)
-	depend_target = outname;
+	depend_target = quote_for_make(outname);
 
     switch (operating_mode) {
     case op_depend:

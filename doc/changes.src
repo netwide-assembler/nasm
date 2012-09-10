@@ -7,6 +7,14 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.06} Version 2.10.06
+
+\b Always quote the dependency source names when using the automatic
+dependency generation options.
+
+\b If no dependency target name is specified via the \c{-MT} or
+\c{-MQ} options, quote the default output name.
+
 \S{cl-2.10.05} Version 2.10.05
 
 \b Add the \c{CLAC} and \c{STAC} instructions.

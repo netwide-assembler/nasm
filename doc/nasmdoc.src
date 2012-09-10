@@ -626,7 +626,8 @@ specified by the \c{-o} option.
 The \c{-MQ} option acts as the \c{-MT} option, except it tries to
 quote characters that have special meaning in Makefile syntax.  This
 is not foolproof, as not all characters with special meaning are
-quotable in Make.
+quotable in Make.  The default output (if no \c{-MT} or \c{-MQ} option
+is specified) is automatically quoted.
 
 
 \S{opt-MP} The \i\c{-MP} Option: Emit phony targets
