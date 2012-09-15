@@ -195,9 +195,6 @@ typedef uint64_t opflags_t;
 #define REG_FSGS        UINT64_C(0x00441002)    /* FS, GS */
 #define REG_SEG67       UINT64_C(0x00481002)    /* Unimplemented segment registers */
 
-#define REG_RIP         UINT64_C(0x00801008)    /* RIP relative addressing */
-#define REG_EIP         UINT64_C(0x00801004)    /* EIP relative addressing */
-
 /* Special GPRs */
 #define REG_SMASK       UINT64_C(0x100f0800)    /* a mask for the following */
 #define REG_ACCUM       UINT64_C(0x00219000)    /* accumulator: AL, AX, EAX, RAX */
