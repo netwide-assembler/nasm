@@ -134,6 +134,10 @@
 
 typedef uint64_t opflags_t;
 
+#define OP_GENMASK(bits, shift)         (((UINT64_C(1) << (bits)) - 1) << (shift))
+#define OP_GENBIT(bit, shift)           (UINT64_C(1) << ((shift) + (bit)))
+
+
 /* Size, and other attributes, of the operand */
 #define BITS8           UINT64_C(0x00000001)
 #define BITS16          UINT64_C(0x00000002)
