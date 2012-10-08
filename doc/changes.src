@@ -15,6 +15,13 @@ dependency generation options.
 \b If no dependency target name is specified via the \c{-MT} or
 \c{-MQ} options, quote the default output name.
 
+\b Fix assembly of shift operations in \c{CPU 8086} mode.
+
+\b Fix incorrect generation of explicit immediate byte for shift by 1
+under certain circumstances.
+
+\b Fix assembly of the \c{VPCMPGTQ} instruction.
+
 \S{cl-2.10.05} Version 2.10.05
 
 \b Add the \c{CLAC} and \c{STAC} instructions.
