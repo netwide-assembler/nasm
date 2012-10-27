@@ -799,81 +799,80 @@ static char *line_from_stdmac(void)
     return line;
 }
 
-#define BUF_DELTA 512
-/*
- * Read a line from the top file in istk, handling multiple CR/LFs
- * at the end of the line read, and handling spurious ^Zs. Will
- * return lines from the standard macro set if this has not already
- * been done.
- */
 static char *read_line(void)
 {
-    char *buffer, *p, *q;
-    int bufsize, continued_count;
+    unsigned int size, c, next;
+    const unsigned int delta = 512;
+    const unsigned int pad = 8;
+    unsigned int nr_cont = 0;
+    bool cont = false;
+    char *buffer, *p;
 
-    /*
-     * standart macros set (predefined) goes first
-     */
+    /* Standart macros set (predefined) goes first */
     p = line_from_stdmac();
     if (p)
         return p;
 
-    /*
-     * regular read from a file
-     */
-    bufsize = BUF_DELTA;
-    buffer = nasm_malloc(BUF_DELTA);
-    p = buffer;
-    continued_count = 0;
-    while (1) {
-        q = fgets(p, bufsize - (p - buffer), istk->fp);
-        if (!q)
+    size = delta;
+    p = buffer = nasm_malloc(size);
+
+    for (;;) {
+        c = fgetc(istk->fp);
+        if ((int)(c) == EOF) {
+            p[0] = 0;
             break;
-        p += strlen(p);
-        if (p > buffer && p[-1] == '\n') {
-            /*
-             * Convert backslash-CRLF line continuation sequences into
-             * nothing at all (for DOS and Windows)
-             */
-            if (((p - 2) > buffer) && (p[-3] == '\\') && (p[-2] == '\r')) {
-                p -= 3;
-                *p = 0;
-                continued_count++;
-            }
-            /*
-             * Also convert backslash-LF line continuation sequences into
-             * nothing at all (for Unix)
-             */
-            else if (((p - 1) > buffer) && (p[-2] == '\\')) {
-                p -= 2;
-                *p = 0;
-                continued_count++;
-            } else {
-                break;
-            }
         }
-        if (p - buffer > bufsize - 10) {
-            int32_t offset = p - buffer;
-            bufsize += BUF_DELTA;
-            buffer = nasm_realloc(buffer, bufsize);
-            p = buffer + offset;        /* prevent stale-pointer problems */
+
+        switch (c) {
+        case '\r':
+            next = fgetc(istk->fp);
+            if (next != '\n')
+                ungetc(next, istk->fp);
+            if (cont) {
+                cont = false;
+                continue;
+            }
+            break;
+
+        case '\n':
+            if (cont) {
+                cont = false;
+                continue;
+            }
+            break;
+
+        case '\\':
+            next = fgetc(istk->fp);
+            ungetc(next, istk->fp);
+            if (next == ' ' || next == '\r' || next == '\n') {
+                cont = true;
+                nr_cont++;
+                continue;
+            }
+            break;
         }
+
+        if (c == '\r' || c == '\n') {
+            *p++ = 0;
+            break;
+        }
+
+        if (p >= (buffer + size - pad)) {
+            buffer = nasm_realloc(buffer, size + delta);
+            p = buffer + size - pad;
+            size += delta;
+        }
+
+        *p++ = (unsigned char)c;
     }
 
-    if (!q && p == buffer) {
+    if (p == buffer) {
         nasm_free(buffer);
         return NULL;
     }
 
     src_set_linnum(src_get_linnum() + istk->lineinc +
-                   (continued_count * istk->lineinc));
-
-    /*
-     * Play safe: remove CRs as well as LFs, if any of either are
-     * present at the end of the line.
-     */
-    while (--p >= buffer && (*p == '\n' || *p == '\r'))
-        *p = '\0';
+                   (nr_cont * istk->lineinc));
 
     /*
      * Handle spurious ^Z, which may be inserted into source files
