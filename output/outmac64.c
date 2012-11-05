@@ -299,36 +299,19 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
 
 static struct symbol *get_closest_section_symbol_by_offset(uint8_t fileindex, int64_t offset)
 {
-    struct symbol *sym;
     struct symbol *nearest = NULL;
-    int64_t sval, nval, sdiff, ndiff;
+    struct symbol *sym;
 
-    for (sym = syms; sym != NULL; sym = sym->next) {
-        if ((sym->sect != NO_SECT) && (sym->sect == fileindex)){
-            if(nearest == NULL){
-                nearest = sym;
-            }else{
-                sval = (int64_t)sym->value;
-                nval = (int64_t)nearest->value;
-
-                sdiff = ((sval >= offset) ? (sval - offset) : (offset - sval));
-                ndiff = ((nval >= offset) ? (nval - offset) : (offset - nval));
-
-                if(sdiff <= ndiff){
-                    nearest = sym;
-                }
-
-                /* Symbols should be in order, so this optimization should be OK */
-                if((int64_t)nearest->value >= offset){
-		    break;
-                }
-            }
+    for (sym = syms; sym; sym = sym->next) {
+        if ((sym->sect != NO_SECT) && (sym->sect == fileindex)) {
+            if ((int64_t)sym->value > offset)
+                break;
+            nearest = sym;
         }
     }
 
     return nearest;
 }
-
 
 /*
  * Special section numbers which are used to define Mach-O special
