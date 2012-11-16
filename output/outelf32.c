@@ -664,8 +664,9 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
             s = sects[i];
             break;
         }
+
     if (!s) {
-        if (exact && offset != 0)
+        if (exact && offset)
             nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
                   " for this reference");
         else
@@ -1021,7 +1022,7 @@ static void elf_write(void)
 
     /* .shstrtab */
     elf_section_header(p - shstrtab, SHT_STRTAB, 0, shstrtab, false,
-                        shstrtablen, 0, 0, 1, 0);
+                       shstrtablen, 0, 0, 1, 0);
     p += strlen(p) + 1;
 
     /* .symtab */
@@ -1266,10 +1267,6 @@ static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
     while (r) {
         int32_t sym = r->symbol;
 
-        /*
-         * Create a real symbol index; the +2 refers to the two special
-         * entries, the null entry and the filename entry.
-         */
         if (sym >= GLOBAL_TEMP_BASE)
             sym += global_offset;
 

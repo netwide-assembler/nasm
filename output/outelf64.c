@@ -1406,6 +1406,7 @@ static void elf_sect_write(struct Section *sect, const void *data, size_t len)
     saa_wbytes(sect->data, data, len);
     sect->len += len;
 }
+
 static void elf_sect_writeaddr(struct Section *sect, int64_t data, size_t len)
 {
     saa_writeaddr(sect->data, data, len);
@@ -1444,7 +1445,7 @@ static int elf_directive(enum directives directive, char *value, int pass)
     switch (directive) {
     case D_OSABI:
         if (pass == 2)
-            return 1;           /* ignore in pass 2 */
+            return 1; /* ignore in pass 2 */
 
         n = readnum(value, &err);
         if (err) {
@@ -2058,26 +2059,26 @@ static void dwarf64_generate(void)
     /* build line section */
     /* prolog */
     plines = saa_init(1L);
-    saa_write8(plines,1);			/* Minimum Instruction Length */
-    saa_write8(plines,1);			/* Initial value of 'is_stmt' */
-    saa_write8(plines,line_base);		/* Line Base */
-    saa_write8(plines,line_range);	/* Line Range */
-    saa_write8(plines,opcode_base);	/* Opcode Base */
+    saa_write8(plines,1);           /* Minimum Instruction Length */
+    saa_write8(plines,1);           /* Initial value of 'is_stmt' */
+    saa_write8(plines,line_base);   /* Line Base */
+    saa_write8(plines,line_range);  /* Line Range */
+    saa_write8(plines,opcode_base); /* Opcode Base */
     /* standard opcode lengths (# of LEB128u operands) */
-    saa_write8(plines,0);			/* Std opcode 1 length */
-    saa_write8(plines,1);			/* Std opcode 2 length */
-    saa_write8(plines,1);			/* Std opcode 3 length */
-    saa_write8(plines,1);			/* Std opcode 4 length */
-    saa_write8(plines,1);			/* Std opcode 5 length */
-    saa_write8(plines,0);			/* Std opcode 6 length */
-    saa_write8(plines,0);			/* Std opcode 7 length */
-    saa_write8(plines,0);			/* Std opcode 8 length */
-    saa_write8(plines,1);			/* Std opcode 9 length */
-    saa_write8(plines,0);			/* Std opcode 10 length */
-    saa_write8(plines,0);			/* Std opcode 11 length */
-    saa_write8(plines,1);			/* Std opcode 12 length */
-    /* Directory Table */ 
-    saa_write8(plines,0);			/* End of table */
+    saa_write8(plines,0);           /* Std opcode 1 length */
+    saa_write8(plines,1);           /* Std opcode 2 length */
+    saa_write8(plines,1);           /* Std opcode 3 length */
+    saa_write8(plines,1);           /* Std opcode 4 length */
+    saa_write8(plines,1);           /* Std opcode 5 length */
+    saa_write8(plines,0);           /* Std opcode 6 length */
+    saa_write8(plines,0);           /* Std opcode 7 length */
+    saa_write8(plines,0);           /* Std opcode 8 length */
+    saa_write8(plines,1);           /* Std opcode 9 length */
+    saa_write8(plines,0);           /* Std opcode 10 length */
+    saa_write8(plines,0);           /* Std opcode 11 length */
+    saa_write8(plines,1);           /* Std opcode 12 length */
+    /* Directory Table */
+    saa_write8(plines,0);           /* End of table */
     /* File Name Table */
     ftentry = dwarf_flist;
     for (indx = 0;indx<dwarf_numfiles;indx++)
