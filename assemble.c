@@ -2131,14 +2131,10 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
         /*
          * It's a direct register.
          */
-        opflags_t f;
-
         if (!is_register(input->basereg))
             goto err;
 
-        f = regflag(input);
-
-        if (!is_class(REG_EA, f))
+        if (!is_class(REG_EA, regflag(input)))
             goto err;
 
         output->rex         |= op_rexflags(input, REX_B | REX_P | REX_W | REX_H);
