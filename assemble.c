@@ -806,7 +806,8 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 }
 
 /* Common construct */
-#define case4(x) case (x): case (x)+1: case (x)+2: case (x)+3
+#define case3(x) case (x): case (x)+1: case (x)+2
+#define case4(x) case3(x): case (x)+3
 
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                         insn * ins, const struct itemplate *temp)
