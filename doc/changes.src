@@ -22,6 +22,8 @@ under certain circumstances.
 
 \b Fix assembly of the \c{VPCMPGTQ} instruction.
 
+\b Fix RIP-relative relocations in the \c{macho64} backend.
+
 \S{cl-2.10.05} Version 2.10.05
 
 \b Add the \c{CLAC} and \c{STAC} instructions.
