@@ -7,6 +7,11 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.07} Version 2.10.07
+
+\b Fix line continuation parsing being broken in previous version.
+
+
 \S{cl-2.10.06} Version 2.10.06
 
 \b Always quote the dependency source names when using the automatic
