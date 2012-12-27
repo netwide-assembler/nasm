@@ -844,7 +844,7 @@ static char *read_line(void)
         case '\\':
             next = fgetc(istk->fp);
             ungetc(next, istk->fp);
-            if (next == ' ' || next == '\r' || next == '\n') {
+            if (next == '\r' || next == '\n') {
                 cont = true;
                 nr_cont++;
                 continue;
