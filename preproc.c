@@ -3640,13 +3640,34 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             if (!pasted)
                 pasted = true;
 
-            /* No ending token */
-            if (!next)
-                error(ERR_FATAL, "No rvalue found on pasting");
-
             /* Left pasting token is start of line */
             if (!prev_nonspace)
                 error(ERR_FATAL, "No lvalue found on pasting");
+
+            /*
+             * No ending token, this might happen in two
+             * cases
+             *
+             *  1) There indeed no right token at all
+             *  2) There is a bare "%define ID" statement,
+             *     and @ID does expand to whitespace.
+             *
+             * So technically we need to do a grammar analysis
+             * in another stage of parsing, but for now lets don't
+             * change the behaviour people used to. Simply allow
+             * whitespace after paste token.
+             */
+            if (!next) {
+                /*
+                 * Zap ending space tokens and that's all.
+                 */
+                tok = (*prev_nonspace)->next;
+                while (tok_type_(tok, TOK_WHITESPACE))
+                    tok = delete_Token(tok);
+                tok = *prev_nonspace;
+                tok->next = NULL;
+                break;
+            }
 
             tok = *prev_nonspace;
             while (tok_type_(tok, TOK_WHITESPACE))
