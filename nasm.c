@@ -216,42 +216,42 @@ static void define_macros_early(void)
 
     lt_p = localtime(&official_compile_time);
     if (lt_p) {
-	lt = *lt_p;
+        lt = *lt_p;
 
-	strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
-	preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
+        preproc->pre_define(temp);
     }
 
     gm_p = gmtime(&official_compile_time);
     if (gm_p) {
-	gm = *gm_p;
+        gm = *gm_p;
 
-	strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
-	preproc->pre_define(temp);
-	strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
-	preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
+        preproc->pre_define(temp);
+        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
+        preproc->pre_define(temp);
     }
 
     if (gm_p)
-	posix_time = posix_mktime(&gm);
+        posix_time = posix_mktime(&gm);
     else if (lt_p)
-	posix_time = posix_mktime(&lt);
+        posix_time = posix_mktime(&lt);
     else
-	posix_time = 0;
+        posix_time = 0;
 
     if (posix_time) {
-	snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
-	preproc->pre_define(temp);
+        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
+        preproc->pre_define(temp);
     }
 }
 
