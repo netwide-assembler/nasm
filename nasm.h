@@ -496,10 +496,24 @@ enum vex_class {
 enum prefixes { /* instruction prefixes */
     P_none = 0,
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
-    P_A16 = PREFIX_ENUM_START, P_A32, P_A64, P_ASP,
-    P_LOCK, P_O16, P_O32, P_O64, P_OSP,
-    P_REP, P_REPE, P_REPNE, P_REPNZ, P_REPZ, P_TIMES,
-    P_WAIT, P_XACQUIRE, P_XRELEASE,
+    P_A16 = PREFIX_ENUM_START,
+    P_A32,
+    P_A64,
+    P_ASP,
+    P_LOCK,
+    P_O16,
+    P_O32,
+    P_O64,
+    P_OSP,
+    P_REP,
+    P_REPE,
+    P_REPNE,
+    P_REPNZ,
+    P_REPZ,
+    P_TIMES,
+    P_WAIT,
+    P_XACQUIRE,
+    P_XRELEASE,
     PREFIX_ENUM_LIMIT
 };
 
