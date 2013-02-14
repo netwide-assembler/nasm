@@ -1953,8 +1953,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         pfx = "debug: ";
         break;
     default:
-	pfx = "";
-	break;
+        pfx = "";
+        break;
     }
 
     vsnprintf(msg, sizeof msg, fmt, args);
@@ -1962,7 +1962,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     fprintf(error_file, "%s%s\n", pfx, msg);
 
     if (*listname)
-	nasmlist.error(severity, pfx, msg);
+        nasmlist.error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
@@ -1972,10 +1972,10 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         /* no further action, by definition */
         break;
     case ERR_WARNING:
-	/* Treat warnings as errors */
-	if (warning_on[WARN_IDX(ERR_WARN_TERM)])
-	    terminate_after_phase = true;
-	break;
+        /* Treat warnings as errors */
+        if (warning_on[WARN_IDX(ERR_WARN_TERM)])
+            terminate_after_phase = true;
+        break;
     case ERR_NONFATAL:
         terminate_after_phase = true;
         break;
@@ -1983,7 +1983,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         if (ofile) {
             fclose(ofile);
             remove(outname);
-	    ofile = NULL;
+            ofile = NULL;
         }
         if (want_usage)
             usage();
@@ -1991,7 +1991,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;                  /* placate silly compilers */
     case ERR_PANIC:
         fflush(NULL);
-        /*	abort();	*//* halt, catch fire, and dump core */
+        /* abort(); */          /* halt, catch fire, and dump core */
         exit(3);
         break;
     }
