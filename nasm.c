@@ -1188,7 +1188,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         int pass1, pass2;
         ldfunc def_label;
 
-        pass1 = pass0 == 2 ? 2 : 1;	/* 1, 1, 1, ..., 1, 2 */
+        pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
         /* pass0                           0, 0, 0, ..., 1, 2 */
 
@@ -1211,7 +1211,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             offsets = raa_init();
         }
         preproc->reset(fname, pass1, &nasmlist,
-		       pass1 == 2 ? depend_ptr : NULL);
+                       pass1 == 2 ? depend_ptr : NULL);
         memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
         globallineno = 0;
@@ -1220,21 +1220,21 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         location.offset = offs = GET_CURR_OFFS;
 
         while ((line = preproc->getline())) {
-	    enum directives d;
+            enum directives d;
             globallineno++;
 
             /*
-	     * Here we parse our directives; this is not handled by the
-	     * 'real' parser.  This really should be a separate function.
-	     */
+             * Here we parse our directives; this is not handled by the
+             * 'real' parser.  This really should be a separate function.
+             */
             directive = line;
-	    d = getkw(&directive, &value);
+            d = getkw(&directive, &value);
             if (d) {
-		int err = 0;
+                int err = 0;
 
                 switch (d) {
-                case D_SEGMENT:		/* [SEGMENT n] */
-		case D_SECTION:
+                case D_SEGMENT:         /* [SEGMENT n] */
+                case D_SECTION:
                     seg = ofmt->section(value, pass2, &sb);
                     if (seg == NO_SEG) {
                         nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
@@ -1245,7 +1245,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         location.segment = seg;
                     }
                     break;
-                case D_SECTALIGN:        /* [SECTALIGN n] */
+                case D_SECTALIGN:       /* [SECTALIGN n] */
                     if (*value) {
                         stdscan_reset();
                         stdscan_set(value);
@@ -1271,7 +1271,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         }
                     }
                     break;
-                case D_EXTERN:              /* [EXTERN label:special] */
+                case D_EXTERN:          /* [EXTERN label:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 2) {
@@ -1312,10 +1312,10 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         }
                     }           /* else  pass0 == 1 */
                     break;
-                case D_BITS:		/* [BITS bits] */
+                case D_BITS:            /* [BITS bits] */
                     globalbits = sb = get_bits(value);
                     break;
-                case D_GLOBAL:		/* [GLOBAL symbol:special] */
+                case D_GLOBAL:          /* [GLOBAL symbol:special] */
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
                     if (pass0 == 2) {   /* pass 2 */
@@ -1349,60 +1349,60 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         declare_as_global(value, special);
                     }           /* pass == 1 */
                     break;
-                case D_COMMON:		/* [COMMON symbol size:special] */
-		{
-		    int64_t size;
+                case D_COMMON:          /* [COMMON symbol size:special] */
+                {
+                    int64_t size;
 
                     if (*value == '$')
                         value++;        /* skip initial $ if present */
-		    p = value;
-		    validid = true;
-		    if (!isidstart(*p))
-			validid = false;
-		    while (*p && !nasm_isspace(*p)) {
-			if (!isidchar(*p))
-			    validid = false;
-			p++;
-		    }
-		    if (!validid) {
-			nasm_error(ERR_NONFATAL,
-				     "identifier expected after COMMON");
-			break;
-		    }
-		    if (*p) {
+                    p = value;
+                    validid = true;
+                    if (!isidstart(*p))
+                        validid = false;
+                    while (*p && !nasm_isspace(*p)) {
+                        if (!isidchar(*p))
+                            validid = false;
+                        p++;
+                    }
+                    if (!validid) {
+                        nasm_error(ERR_NONFATAL,
+                                   "identifier expected after COMMON");
+                        break;
+                    }
+                    if (*p) {
                         p = nasm_zap_spaces_fwd(p);
-			q = p;
-			while (*q && *q != ':')
-			    q++;
-			if (*q == ':') {
-			    *q++ = '\0';
-			    special = q;
-			} else {
-			    special = NULL;
-			}
-			size = readnum(p, &rn_error);
-			if (rn_error) {
-			    nasm_error(ERR_NONFATAL,
-					 "invalid size specified"
-					 " in COMMON declaration");
-			    break;
-			}
-		    } else {
-			nasm_error(ERR_NONFATAL,
-				     "no size specified in"
-				     " COMMON declaration");
-			break;
-		    }
+                        q = p;
+                        while (*q && *q != ':')
+                            q++;
+                        if (*q == ':') {
+                            *q++ = '\0';
+                            special = q;
+                        } else {
+                            special = NULL;
+                        }
+                        size = readnum(p, &rn_error);
+                        if (rn_error) {
+                            nasm_error(ERR_NONFATAL,
+                                       "invalid size specified"
+                                       " in COMMON declaration");
+                            break;
+                        }
+                    } else {
+                        nasm_error(ERR_NONFATAL,
+                                   "no size specified in"
+                                   " COMMON declaration");
+                        break;
+                    }
 
                     if (pass0 < 2) {
-			define_common(value, seg_alloc(), size, special);
+                        define_common(value, seg_alloc(), size, special);
                     } else if (pass0 == 2) {
-			if (special)
-			    ofmt->symdef(value, 0L, 0L, 3, special);
+                        if (special)
+                            ofmt->symdef(value, 0L, 0L, 3, special);
                     }
                     break;
-		}
-                case D_ABSOLUTE:		/* [ABSOLUTE address] */
+                }
+                case D_ABSOLUTE:        /* [ABSOLUTE address] */
                     stdscan_reset();
                     stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
@@ -1426,76 +1426,75 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     in_abs_seg = true;
                     location.segment = NO_SEG;
                     break;
-                case D_DEBUG:		/* [DEBUG] */
-		{
-		    char debugid[128];
-		    bool badid, overlong;
+                case D_DEBUG:           /* [DEBUG] */
+                {
+                    char debugid[128];
+                    bool badid, overlong;
 
                     p = value;
                     q = debugid;
-		    badid = overlong = false;
+                    badid = overlong = false;
                     if (!isidstart(*p)) {
                         badid = true;
-		    } else {
-			while (*p && !nasm_isspace(*p)) {
-			    if (q >= debugid + sizeof debugid - 1) {
-				overlong = true;
-				break;
-			    }
-			    if (!isidchar(*p))
-				badid = true;
-			    *q++ = *p++;
-			}
-			*q = 0;
-		    }
+                    } else {
+                        while (*p && !nasm_isspace(*p)) {
+                            if (q >= debugid + sizeof debugid - 1) {
+                                overlong = true;
+                                break;
+                            }
+                            if (!isidchar(*p))
+                                badid = true;
+                            *q++ = *p++;
+                        }
+                        *q = 0;
+                    }
                     if (badid) {
-			nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-				   "identifier expected after DEBUG");
-			break;
-		    }
-		    if (overlong) {
-			nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-				   "DEBUG identifier too long");
-			break;
-		    }
+                        nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+                                   "identifier expected after DEBUG");
+                        break;
+                    }
+                    if (overlong) {
+                        nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+                                   "DEBUG identifier too long");
+                        break;
+                    }
                     p = nasm_skip_spaces(p);
                     if (pass0 == 2)
                         dfmt->debug_directive(debugid, p);
                     break;
-		}
-                case D_WARNING:		/* [WARNING {+|-|*}warn-name] */
+                }
+                case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
                     value = nasm_skip_spaces(value);
-		    switch(*value) {
-		    case '-': validid = 0; value++; break;
-		    case '+': validid = 1; value++; break;
-		    case '*': validid = 2; value++; break;
-		    default:  validid = 1; break;
-		    }
+                    switch(*value) {
+                        case '-': validid = 0; value++; break;
+                        case '+': validid = 1; value++; break;
+                        case '*': validid = 2; value++; break;
+                        default:  validid = 1; break;
+                    }
 
-		    for (i = 1; i <= ERR_WARN_MAX; i++)
-			if (!nasm_stricmp(value, warnings[i].name))
-			    break;
-		    if (i <= ERR_WARN_MAX) {
-			switch(validid) {
-			case 0:
-			    warning_on[i] = false;
-			    break;
-			case 1:
-			    warning_on[i] = true;
-			    break;
-			case 2:
-			    warning_on[i] = warning_on_global[i];
-			    break;
-			}
-		    }
-		    else
-			nasm_error(ERR_NONFATAL,
-				     "invalid warning id in WARNING directive");
+                    for (i = 1; i <= ERR_WARN_MAX; i++)
+                        if (!nasm_stricmp(value, warnings[i].name))
+                            break;
+                    if (i <= ERR_WARN_MAX) {
+                        switch(validid) {
+                        case 0:
+                            warning_on[i] = false;
+                            break;
+                        case 1:
+                            warning_on[i] = true;
+                            break;
+                        case 2:
+                            warning_on[i] = warning_on_global[i];
+                            break;
+                        }
+                    } else
+                        nasm_error(ERR_NONFATAL,
+                                   "invalid warning id in WARNING directive");
                     break;
-                case D_CPU:		/* [CPU] */
+                case D_CPU:         /* [CPU] */
                     cpu = get_cpu(value);
                     break;
-                case D_LIST:		/* [LIST {+|-}] */
+                case D_LIST:        /* [LIST {+|-}] */
                     value = nasm_skip_spaces(value);
                     if (*value == '+') {
                         user_nolist = 0;
@@ -1503,52 +1502,52 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         if (*value == '-') {
                             user_nolist = 1;
                         } else {
-			    err = 1;
+                            err = 1;
                         }
                     }
                     break;
-		case D_DEFAULT:		/* [DEFAULT] */
-		    stdscan_reset();
+                case D_DEFAULT:         /* [DEFAULT] */
+                    stdscan_reset();
                     stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
-		    if (stdscan(NULL, &tokval) == TOKEN_SPECIAL) {
-			switch ((int)tokval.t_integer) {
-			case S_REL:
-			    globalrel = 1;
-			    break;
-			case S_ABS:
-			    globalrel = 0;
-			    break;
-			default:
-			    err = 1;
-			    break;
-			}
-		    } else {
-			err = 1;
-		    }
-		    break;
-		case D_FLOAT:
-		    if (float_option(value)) {
-			nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-				     "unknown 'float' directive: %s",
-				     value);
-		    }
-		    break;
+                    if (stdscan(NULL, &tokval) == TOKEN_SPECIAL) {
+                        switch ((int)tokval.t_integer) {
+                        case S_REL:
+                            globalrel = 1;
+                            break;
+                        case S_ABS:
+                            globalrel = 0;
+                            break;
+                        default:
+                            err = 1;
+                            break;
+                        }
+                    } else {
+                        err = 1;
+                    }
+                    break;
+                case D_FLOAT:
+                    if (float_option(value)) {
+                        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+                                   "unknown 'float' directive: %s",
+                                   value);
+                    }
+                    break;
                 default:
-		    if (ofmt->directive(d, value, pass2))
-			break;
-		    /* else fall through */
-		case D_unknown:
-		    nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-			       "unrecognised directive [%s]",
-			       directive);
-		    break;
+                    if (ofmt->directive(d, value, pass2))
+                        break;
+                    /* else fall through */
+                case D_unknown:
+                    nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+                               "unrecognised directive [%s]",
+                               directive);
+                    break;
                 }
-		if (err) {
-		    nasm_error(ERR_NONFATAL,
-				 "invalid parameter to [%s] directive",
-				 directive);
-		}
+                if (err) {
+                    nasm_error(ERR_NONFATAL,
+                               "invalid parameter to [%s] directive",
+                               directive);
+                }
             } else {            /* it isn't a directive */
                 parse_line(pass1, line, &output_ins, def_label);
 
@@ -1563,18 +1562,16 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     } else
                         output_ins.forw_ref = false;
 
-		    if (output_ins.forw_ref) {
-			if (passn == 1) {
-			    for (i = 0; i < output_ins.operands; i++) {
-				if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
-				    struct forwrefinfo *fwinf =
-					(struct forwrefinfo *)
-					saa_wstruct(forwrefs);
-				    fwinf->lineno = globallineno;
-                                fwinf->operand = i;
-				}
-			    }
-			}
+                    if (output_ins.forw_ref) {
+                        if (passn == 1) {
+                            for (i = 0; i < output_ins.operands; i++) {
+                                if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
+                                    struct forwrefinfo *fwinf = (struct forwrefinfo *)saa_wstruct(forwrefs);
+                                    fwinf->lineno = globallineno;
+                                    fwinf->operand = i;
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1596,8 +1593,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             if (output_ins.operands == 1 &&
                                 (output_ins.oprs[0].type & IMMEDIATE) &&
                                 output_ins.oprs[0].wrt == NO_SEG) {
-                                bool isext = !!(output_ins.oprs[0].opflags
-						& OPFLAG_EXTERN);
+                                bool isext = !!(output_ins.oprs[0].opflags & OPFLAG_EXTERN);
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].segment,
                                           output_ins.oprs[0].offset, NULL,
@@ -1613,7 +1609,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                 def_label(output_ins.label,
                                           output_ins.oprs[0].offset | SEG_ABS,
                                           output_ins.oprs[1].offset,
-					  NULL, false, false);
+                                          NULL, false, false);
                             } else
                                 nasm_error(ERR_NONFATAL,
                                              "bad syntax for EQU");
@@ -1707,12 +1703,12 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             case I_DT:
                                 typeinfo |= TY_TBYTE;
                                 break;
-			    case I_DO:
-				typeinfo |= TY_OWORD;
-				break;
-			    case I_DY:
-				typeinfo |= TY_YWORD;
-				break;
+                            case I_DO:
+                                typeinfo |= TY_OWORD;
+                                break;
+                            case I_DY:
+                                typeinfo |= TY_YWORD;
+                                break;
                             default:
                                 typeinfo = TY_LABEL;
 
@@ -1745,23 +1741,23 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
         if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
             nasm_error(ERR_NONFATAL,
-			 "phase error detected at end of assembly.");
+                       "phase error detected at end of assembly.");
 
         if (pass1 == 1)
             preproc->cleanup(1);
 
         if ((passn > 1 && !global_offset_changed) || pass0 == 2) {
             pass0++;
-	} else if (global_offset_changed &&
-		 global_offset_changed < prev_offset_changed) {
+        } else if (global_offset_changed &&
+                   global_offset_changed < prev_offset_changed) {
             prev_offset_changed = global_offset_changed;
             stall_count = 0;
-	} else {
-	    stall_count++;
-	}
+        } else {
+            stall_count++;
+        }
 
-	if (terminate_after_phase)
-	    break;
+        if (terminate_after_phase)
+            break;
 
         if ((stall_count > 997) || (passn >= pass_max)) {
             /* We get here if the labels don't converge
@@ -1770,16 +1766,16 @@ static void assemble_file(char *fname, StrList **depend_ptr)
              nasm_error(ERR_NONFATAL,
                           "Can't find valid values for all labels "
                           "after %d passes, giving up.", passn);
-	     nasm_error(ERR_NONFATAL,
-			  "Possible causes: recursive EQUs, macro abuse.");
-	     break;
-	}
+             nasm_error(ERR_NONFATAL,
+                        "Possible causes: recursive EQUs, macro abuse.");
+             break;
+        }
     }
 
     preproc->cleanup(0);
     nasmlist.cleanup();
     if (!terminate_after_phase && opt_verbose_info) {
-	/*  -On and -Ov switches */
+        /*  -On and -Ov switches */
         fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
     }
 }
