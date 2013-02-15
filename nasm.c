@@ -357,18 +357,17 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
-    depend_ptr = (depend_file || (operating_mode == op_depend))
-	? &depend_list : NULL;
+    depend_ptr = (depend_file || (operating_mode == op_depend)) ? &depend_list : NULL;
     if (!depend_target)
-	depend_target = quote_for_make(outname);
+        depend_target = quote_for_make(outname);
 
     switch (operating_mode) {
     case op_depend:
         {
             char *line;
 
-	    if (depend_missing_ok)
-		preproc->include_path(NULL);	/* "assume generated" */
+            if (depend_missing_ok)
+                preproc->include_path(NULL);    /* "assume generated" */
 
             preproc->reset(inname, 0, &nasmlist, depend_ptr);
             if (outname[0] == '\0')
@@ -428,7 +427,7 @@ int main(int argc, char **argv)
                 fclose(ofile);
             if (ofile && terminate_after_phase)
                 remove(outname);
-	    ofile = NULL;
+            ofile = NULL;
         }
         break;
 
@@ -457,7 +456,7 @@ int main(int argc, char **argv)
             init_labels();
 
             ofmt->init();
-	    dfmt = ofmt->current_dfmt;
+            dfmt = ofmt->current_dfmt;
             dfmt->init();
 
             assemble_file(inname, depend_ptr);
@@ -465,25 +464,25 @@ int main(int argc, char **argv)
             if (!terminate_after_phase) {
                 ofmt->cleanup(using_debug_info);
                 cleanup_labels();
-		fflush(ofile);
-		if (ferror(ofile)) {
-		    nasm_error(ERR_NONFATAL|ERR_NOFILE,
-				 "write error on output file `%s'", outname);
-		}
-	    }
+                fflush(ofile);
+                if (ferror(ofile)) {
+                    nasm_error(ERR_NONFATAL|ERR_NOFILE,
+                               "write error on output file `%s'", outname);
+                }
+            }
 
-	    if (ofile) {
-		fclose(ofile);
-		if (terminate_after_phase)
-		    remove(outname);
-		ofile = NULL;
-	    }
+            if (ofile) {
+                fclose(ofile);
+                if (terminate_after_phase)
+                    remove(outname);
+                ofile = NULL;
+            }
         }
         break;
     }
 
     if (depend_list && !terminate_after_phase)
-	emit_dependencies(depend_list);
+        emit_dependencies(depend_list);
 
     if (want_usage)
         usage();
