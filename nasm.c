@@ -1075,11 +1075,11 @@ static void process_response_file(const char *file)
     char str[2048];
     FILE *f = fopen(file, "r");
     if (!f) {
-	perror(file);
-	exit(-1);
+        perror(file);
+        exit(-1);
     }
     while (fgets(str, sizeof str, f)) {
-	process_args(str);
+        process_args(str);
     }
     fclose(f);
 }
