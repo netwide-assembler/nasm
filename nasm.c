@@ -522,8 +522,8 @@ static void copy_filename(char *dst, const char *src)
     size_t len = strlen(src);
 
     if (len >= (size_t)FILENAME_MAX) {
-	nasm_error(ERR_FATAL | ERR_NOFILE, "file name too long");
-	return;
+        nasm_error(ERR_FATAL | ERR_NOFILE, "file name too long");
+        return;
     }
     strncpy(dst, src, FILENAME_MAX);
 }
