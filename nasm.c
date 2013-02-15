@@ -635,124 +635,124 @@ static bool process_arg(char *p, char *q)
         return false;
 
     if (p[0] == '-' && !stopoptions) {
-	if (strchr("oOfpPdDiIlFXuUZwW", p[1])) {
-	    /* These parameters take values */
-	    if (!(param = get_param(p, q, &advance)))
-		return advance;
-	}
+        if (strchr("oOfpPdDiIlFXuUZwW", p[1])) {
+            /* These parameters take values */
+            if (!(param = get_param(p, q, &advance)))
+                return advance;
+        }
 
         switch (p[1]) {
         case 's':
             error_file = stdout;
             break;
 
-	case 'o':		/* output file */
-	    copy_filename(outname, param);
-	    break;
+        case 'o':       /* output file */
+            copy_filename(outname, param);
+            break;
 
-	case 'f':		/* output format */
-        ofmt = ofmt_find(param, &ofmt_alias);
-	    if (!ofmt) {
-		nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-			     "unrecognised output format `%s' - "
-			     "use -hf for a list", param);
-	    }
-	    break;
+        case 'f':       /* output format */
+            ofmt = ofmt_find(param, &ofmt_alias);
+            if (!ofmt) {
+                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                           "unrecognised output format `%s' - "
+                           "use -hf for a list", param);
+            }
+            break;
 
-	case 'O':		/* Optimization level */
-	{
-	    int opt;
+        case 'O':       /* Optimization level */
+        {
+            int opt;
 
-	    if (!*param) {
-		/* Naked -O == -Ox */
-		optimizing = MAX_OPTIMIZE;
-	    } else {
-		while (*param) {
-		    switch (*param) {
-		    case '0': case '1': case '2': case '3': case '4':
-		    case '5': case '6': case '7': case '8': case '9':
-			opt = strtoul(param, &param, 10);
+            if (!*param) {
+                /* Naked -O == -Ox */
+                optimizing = MAX_OPTIMIZE;
+            } else {
+                while (*param) {
+                    switch (*param) {
+                    case '0': case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8': case '9':
+                        opt = strtoul(param, &param, 10);
 
-			/* -O0 -> optimizing == -1, 0.98 behaviour */
-			/* -O1 -> optimizing == 0, 0.98.09 behaviour */
-			if (opt < 2)
-			    optimizing = opt - 1;
-			else
-			    optimizing = opt;
-			break;
+                        /* -O0 -> optimizing == -1, 0.98 behaviour */
+                        /* -O1 -> optimizing == 0, 0.98.09 behaviour */
+                        if (opt < 2)
+                            optimizing = opt - 1;
+                        else
+                            optimizing = opt;
+                        break;
 
-		    case 'v':
-		    case '+':
-			param++;
-			opt_verbose_info = true;
-			break;
+                    case 'v':
+                    case '+':
+                        param++;
+                        opt_verbose_info = true;
+                        break;
 
-		    case 'x':
-			param++;
-			optimizing = MAX_OPTIMIZE;
-			break;
+                    case 'x':
+                        param++;
+                        optimizing = MAX_OPTIMIZE;
+                        break;
 
-		    default:
-			nasm_error(ERR_FATAL,
-				     "unknown optimization option -O%c\n",
-				     *param);
-			break;
-		    }
-		}
-		if (optimizing > MAX_OPTIMIZE)
-		    optimizing = MAX_OPTIMIZE;
-	    }
-	    break;
-	}
+                    default:
+                        nasm_error(ERR_FATAL,
+                                   "unknown optimization option -O%c\n",
+                                   *param);
+                        break;
+                    }
+                }
+                if (optimizing > MAX_OPTIMIZE)
+                    optimizing = MAX_OPTIMIZE;
+            }
+            break;
+        }
 
-	case 'p':			/* pre-include */
-	case 'P':
-	    preproc->pre_include(param);
-	    break;
+        case 'p':       /* pre-include */
+        case 'P':
+            preproc->pre_include(param);
+            break;
 
-	case 'd':			/* pre-define */
-	case 'D':
-	    preproc->pre_define(param);
-	    break;
+        case 'd':       /* pre-define */
+        case 'D':
+            preproc->pre_define(param);
+            break;
 
-	case 'u':			/* un-define */
-	case 'U':
-	    preproc->pre_undefine(param);
-	    break;
+        case 'u':       /* un-define */
+        case 'U':
+            preproc->pre_undefine(param);
+            break;
 
-	case 'i':			/* include search path */
-	case 'I':
-	    preproc->include_path(param);
-	    break;
+        case 'i':       /* include search path */
+        case 'I':
+            preproc->include_path(param);
+            break;
 
-	case 'l':			/* listing file */
-	    copy_filename(listname, param);
-	    break;
+        case 'l':       /* listing file */
+            copy_filename(listname, param);
+            break;
 
-	case 'Z':			/* error messages file */
-	    copy_filename(errname, param);
-	    break;
+        case 'Z':       /* error messages file */
+            copy_filename(errname, param);
+            break;
 
-	case 'F':			/* specify debug format */
-	    ofmt->current_dfmt = dfmt_find(ofmt, param);
-	    if (!ofmt->current_dfmt) {
-		nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-			     "unrecognized debug format `%s' for"
-			     " output format `%s'",
-			     param, ofmt->shortname);
-	    }
-	    using_debug_info = true;
-	    break;
+        case 'F':       /* specify debug format */
+            ofmt->current_dfmt = dfmt_find(ofmt, param);
+            if (!ofmt->current_dfmt) {
+                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                           "unrecognized debug format `%s' for"
+                           " output format `%s'",
+                           param, ofmt->shortname);
+            }
+            using_debug_info = true;
+            break;
 
-	case 'X':		/* specify error reporting format */
-	    if (nasm_stricmp("vc", param) == 0)
-		nasm_set_verror(nasm_verror_vc);
-	    else if (nasm_stricmp("gnu", param) == 0)
-		nasm_set_verror(nasm_verror_gnu);
-	    else
-		nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
-			     "unrecognized error reporting format `%s'",
-			     param);
+        case 'X':       /* specify error reporting format */
+            if (nasm_stricmp("vc", param) == 0)
+                nasm_set_verror(nasm_verror_vc);
+            else if (nasm_stricmp("gnu", param) == 0)
+                nasm_set_verror(nasm_verror_gnu);
+            else
+                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                           "unrecognized error reporting format `%s'",
+                           param);
             break;
 
         case 'g':
@@ -811,7 +811,7 @@ static bool process_arg(char *p, char *q)
                 printf("\nFor a list of valid output formats, use -hf.\n");
                 printf("For a list of debug formats, use -f <form> -y.\n");
             }
-            exit(0);            /* never need usage message here */
+            exit(0);    /* never need usage message here */
             break;
 
         case 'y':
@@ -826,37 +826,37 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'v':
-	    printf("NASM version %s compiled on %s%s\n",
-		   nasm_version, nasm_date, nasm_compile_options);
-	    exit(0);        /* never need usage message here */
+            printf("NASM version %s compiled on %s%s\n",
+                   nasm_version, nasm_date, nasm_compile_options);
+            exit(0);    /* never need usage message here */
             break;
 
-        case 'e':              /* preprocess only */
-	case 'E':
+        case 'e':       /* preprocess only */
+        case 'E':
             operating_mode = op_preprocess;
             break;
 
-        case 'a':              /* assemble only - don't preprocess */
+        case 'a':       /* assemble only - don't preprocess */
             preproc = &preproc_nop;
             break;
 
-	case 'W':
-	    if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
-		do_warn = false;
-		param += 3;
-	    } else {
-		do_warn = true;
-	    }
-	    goto set_warning;
+        case 'W':
+            if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
+                do_warn = false;
+                param += 3;
+            } else {
+                do_warn = true;
+            }
+            goto set_warning;
 
         case 'w':
             if (param[0] != '+' && param[0] != '-') {
                 nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                              "invalid option to `-w'");
-		break;
+                break;
             }
-	    do_warn = (param[0] == '+');
-	    param++;
+            do_warn = (param[0] == '+');
+            param++;
 
 set_warning:
             for (i = 0; i <= ERR_WARN_MAX; i++) {
@@ -878,39 +878,39 @@ set_warning:
             break;
 
         case 'M':
-	    switch (p[2]) {
-	    case 0:
-		operating_mode = op_depend;
-		break;
-	    case 'G':
-		operating_mode = op_depend;
-		depend_missing_ok = true;
-		break;
-	    case 'P':
-		depend_emit_phony = true;
-		break;
-	    case 'D':
-		depend_file = q;
-		advance = true;
-		break;
-	    case 'T':
-		depend_target = q;
-		advance = true;
-		break;
-	    case 'Q':
-		depend_target = quote_for_make(q);
-		advance = true;
-		break;
-	    default:
-		nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-			     "unknown dependency option `-M%c'", p[2]);
-		break;
-	    }
-	    if (advance && (!q || !q[0])) {
-		nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-			     "option `-M%c' requires a parameter", p[2]);
-		break;
-	    }
+            switch (p[2]) {
+            case 0:
+                operating_mode = op_depend;
+                break;
+            case 'G':
+                operating_mode = op_depend;
+                depend_missing_ok = true;
+                break;
+            case 'P':
+                depend_emit_phony = true;
+                break;
+            case 'D':
+                depend_file = q;
+                advance = true;
+                break;
+            case 'T':
+                depend_target = q;
+                advance = true;
+                break;
+            case 'Q':
+                depend_target = quote_for_make(q);
+                advance = true;
+                break;
+            default:
+                nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+                           "unknown dependency option `-M%c'", p[2]);
+                break;
+            }
+            if (advance && (!q || !q[0])) {
+                nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+                           "option `-M%c' requires a parameter", p[2]);
+                break;
+            }
             break;
 
         case '-':
@@ -976,7 +976,7 @@ set_warning:
                          "more than one input file specified");
         } else {
             copy_filename(inname, p);
-	}
+        }
     }
 
     return advance;
