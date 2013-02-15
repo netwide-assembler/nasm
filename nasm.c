@@ -276,38 +276,38 @@ static void emit_dependencies(StrList *list)
     StrList *l, *nl;
 
     if (depend_file && strcmp(depend_file, "-")) {
-	deps = fopen(depend_file, "w");
-	if (!deps) {
-	    nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-			 "unable to write dependency file `%s'", depend_file);
-	    return;
-	}
+        deps = fopen(depend_file, "w");
+        if (!deps) {
+            nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+                       "unable to write dependency file `%s'", depend_file);
+            return;
+        }
     } else {
-	deps = stdout;
+        deps = stdout;
     }
 
     linepos = fprintf(deps, "%s:", depend_target);
     list_for_each(l, list) {
         char *file = quote_for_make(l->str);
-	len = strlen(file);
-	if (linepos + len > 62 && linepos > 1) {
-	    fprintf(deps, " \\\n ");
-	    linepos = 1;
-	}
-	fprintf(deps, " %s", file);
-	linepos += len+1;
+        len = strlen(file);
+        if (linepos + len > 62 && linepos > 1) {
+            fprintf(deps, " \\\n ");
+            linepos = 1;
+        }
+        fprintf(deps, " %s", file);
+        linepos += len+1;
         nasm_free(file);
     }
     fprintf(deps, "\n\n");
 
     list_for_each_safe(l, nl, list) {
-	if (depend_emit_phony)
-	    fprintf(deps, "%s:\n\n", l->str);
-	nasm_free(l);
+        if (depend_emit_phony)
+            fprintf(deps, "%s:\n\n", l->str);
+        nasm_free(l);
     }
 
     if (deps != stdout)
-	fclose(deps);
+        fclose(deps);
 }
 
 int main(int argc, char **argv)
