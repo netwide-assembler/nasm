@@ -165,19 +165,24 @@ static const struct warning {
     {"hle", "invalid hle prefixes", true},
 };
 
-/*
- * get/set current offset...
- */
-#define GET_CURR_OFFS (in_abs_seg?abs_offset:\
-		      raa_read(offsets,location.segment))
-#define SET_CURR_OFFS(x) (in_abs_seg?(void)(abs_offset=(x)):\
-			 (void)(offsets=raa_write(offsets,location.segment,(x))))
-
 static bool want_usage;
 static bool terminate_after_phase;
 int user_nolist = 0;            /* fbk 9/2/00 */
 
 static char *quote_for_make(const char *str);
+
+static int64_t get_curr_offs(void)
+{
+    return in_abs_seg ? abs_offset : raa_read(offsets, location.segment);
+}
+
+static void set_curr_offs(int64_t l_off)
+{
+        if (in_abs_seg)
+            abs_offset = l_off;
+        else
+            offsets = raa_write(offsets, location.segment, l_off);
+}
 
 static void nasm_fputs(const char *line, FILE * outfile)
 {
@@ -1216,7 +1221,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         globallineno = 0;
         if (passn == 1)
             location.known = true;
-        location.offset = offs = GET_CURR_OFFS;
+        location.offset = offs = get_curr_offs();
 
         while ((line = preproc->getline())) {
             enum directives d;
@@ -1717,7 +1722,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         }
                         if (l != -1) {
                             offs += l;
-                            SET_CURR_OFFS(offs);
+                            set_curr_offs(offs);
                         }
                         /*
                          * else l == -1 => invalid instruction, which will be
@@ -1728,14 +1733,14 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         offs += assemble(location.segment, offs, sb, cpu,
                                          &output_ins, ofmt, nasm_error,
                                          &nasmlist);
-                        SET_CURR_OFFS(offs);
+                        set_curr_offs(offs);
 
                     }
                 }               /* not an EQU */
                 cleanup_insn(&output_ins);
             }
             nasm_free(line);
-            location.offset = offs = GET_CURR_OFFS;
+            location.offset = offs = get_curr_offs();
         }                       /* end while (line = preproc->getline... */
 
         if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
