@@ -92,7 +92,7 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
 #-- End File Lists --#
 
-all: nasm$(X) ndisasm$(X) nasm.man ndisasm.man rdf
+all: nasm$(X) ndisasm$(X) nasm.1 ndisasm.1 rdf
 
 nasm$(X): $(NASM) $(XOBJS)
 	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(XOBJS) $(LIBS)
@@ -210,7 +210,7 @@ distclean: clean
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
-	$(RM) -f $(PERLREQ) *.man nasm.spec
+	$(RM) -f $(PERLREQ) *.1 nasm.spec
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
