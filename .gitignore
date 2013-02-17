@@ -9,10 +9,16 @@
 *.orig
 *.out
 *.rej
+*.xml
+*.swp
+.*swo
 *~
 \#*
 *.bak
 *.tmp
+cscope*
+tags
+TAGS
 /Makefile
 /config.h
 /config.h.in
