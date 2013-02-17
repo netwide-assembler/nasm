@@ -742,8 +742,8 @@ static int64_t eval_ifunc(int64_t val, enum ifunc func)
     case IFUNC_ILOG2E:
     case IFUNC_ILOG2W:
         errtype = (func == IFUNC_ILOG2E) ? ERR_NONFATAL : ERR_WARNING;
-        
-        if ((!uval) | (uval & (uval-1)))
+
+        if (!is_power2(uval))
             error(errtype, "ilog2 argument is not a power of two");
         /* fall through */
     case IFUNC_ILOG2F:
