@@ -31,6 +31,8 @@ INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
 NROFF		= @NROFF@
+ASCIIDOC	= @ASCIIDOC@
+XMLTO		= @XMLTO@
 
 MKDIR		= mkdir
 RM		= rm
@@ -47,7 +49,7 @@ ifeq ($(TRACE),1)
 	CFLAGS += -DNASM_TRACE
 endif
 
-.SUFFIXES: .c .i .s .$(O) .1 .man
+.SUFFIXES: .c .i .s .$(O) .1 .txt
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
@@ -61,8 +63,10 @@ endif
 .c.i:
 	$(CC) -E $(ALL_CFLAGS) -o $@ $<
 
-.1.man:
-	$(NROFF) -man $< > $@
+.txt.1:
+	$(ASCIIDOC) -b docbook -d manpage -o $(patsubst %.1,%.xml,$@) $<
+	$(XMLTO) man --skip-validation $(patsubst %.1,%.xml,$@) 2>/dev/null
+
 
 #-- Begin File Lists --#
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
