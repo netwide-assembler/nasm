@@ -118,6 +118,8 @@
  * \323          - indicates fixed 64-bit operand size, REX on extensions only.
  * \324          - indicates 64-bit operand size requiring REX prefix.
  * \325          - instruction which always uses spl/bpl/sil/dil
+ * \326          - instruction not valid with 0xF3 REP prefix.  Hint for
+                   disassembler only; for SSE instructions.
  * \330          - a literal byte follows in the code stream, to be added
  *                 to the condition code value of the instruction.
  * \331          - instruction not valid with REP prefix.  Hint for
@@ -1061,6 +1063,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->rex |= REX_NH;
             break;
 
+        case 0326:
+            break;
+
         case 0330:
             codes++, length++;
             break;
@@ -1707,6 +1712,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0325:
+            break;
+
+        case 0326:
             break;
 
         case 0330:

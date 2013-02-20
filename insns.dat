@@ -178,18 +178,18 @@ BB0_RESET	void				[	0f 3a]					PENT,CYRIX,ND
 BB1_RESET	void				[	0f 3b]					PENT,CYRIX,ND
 BOUND		reg16,mem			[rm:	o16 62 /r]				186,NOLONG
 BOUND		reg32,mem			[rm:	o32 62 /r]				386,NOLONG
-BSF		reg16,mem			[rm:	o16 0f bc /r]				386,SM
-BSF		reg16,reg16			[rm:	o16 0f bc /r]				386
-BSF		reg32,mem			[rm:	o32 0f bc /r]				386,SM
-BSF		reg32,reg32			[rm:	o32 0f bc /r]				386
-BSF		reg64,mem			[rm:	o64 0f bc /r]				X64,SM
-BSF		reg64,reg64			[rm:	o64 0f bc /r]				X64
-BSR		reg16,mem			[rm:	o16 0f bd /r]				386,SM
-BSR		reg16,reg16			[rm:	o16 0f bd /r]				386
-BSR		reg32,mem			[rm:	o32 0f bd /r]				386,SM
-BSR		reg32,reg32			[rm:	o32 0f bd /r]				386
-BSR		reg64,mem			[rm:	o64 0f bd /r]				X64,SM
-BSR		reg64,reg64			[rm:	o64 0f bd /r]				X64
+BSF		reg16,mem			[rm:	o16 nof3 0f bc /r]			386,SM
+BSF		reg16,reg16			[rm:	o16 nof3 0f bc /r]			386
+BSF		reg32,mem			[rm:	o32 nof3 0f bc /r]			386,SM
+BSF		reg32,reg32			[rm:	o32 nof3 0f bc /r]			386
+BSF		reg64,mem			[rm:	o64 nof3 0f bc /r]			X64,SM
+BSF		reg64,reg64			[rm:	o64 nof3 0f bc /r]			X64
+BSR		reg16,mem			[rm:	o16 nof3 0f bd /r]			386,SM
+BSR		reg16,reg16			[rm:	o16 nof3 0f bd /r]			386
+BSR		reg32,mem			[rm:	o32 nof3 0f bd /r]			386,SM
+BSR		reg32,reg32			[rm:	o32 nof3 0f bd /r]			386
+BSR		reg64,mem			[rm:	o64 nof3 0f bd /r]			X64,SM
+BSR		reg64,reg64			[rm:	o64 nof3 0f bd /r]			X64
 BSWAP		reg32				[r:	o32 0f c8+r]				486
 BSWAP		reg64				[r:	o64 0f c8+r]				X64
 BT		mem,reg16			[mr:	o16 0f a3 /r]				386,SM
@@ -320,7 +320,7 @@ CMPXCHG486	mem,reg16			[mr:	o16 0f a7 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg16,reg16			[mr:	o16 0f a7 /r]				486,UNDOC,ND
 CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND,LOCK
 CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND
-CMPXCHG8B	mem				[m:	hle 0f c7 /1]				PENT,LOCK
+CMPXCHG8B	mem				[m:	hle norexw 0f c7 /1]			PENT,LOCK
 CMPXCHG16B	mem				[m:	o64 0f c7 /1]				X64,LOCK
 CPUID		void				[	0f a2]					PENT
 CPU_READ	void				[	0f 3d]					PENT,CYRIX
@@ -715,7 +715,7 @@ LEA		reg64,mem			[rm:	o64 8d /r]				X64
 LEAVE		void				[	c9]					186
 LES		reg16,mem			[rm:	o16 c4 /r]				8086,NOLONG
 LES		reg32,mem			[rm:	o32 c4 /r]				386,NOLONG
-LFENCE		void				[	0f ae e8]				X64,AMD
+LFENCE		void				[	np 0f ae e8]				X64,AMD
 LFS		reg16,mem			[rm:	o16 0f b4 /r]				386
 LFS		reg32,mem			[rm:	o32 0f b4 /r]				386
 LFS		reg64,mem			[rm:	o64 0f b4 /r]				X64
@@ -774,9 +774,9 @@ LSS		reg64,mem			[rm:	o64 0f b2 /r]				X64
 LTR		mem				[m:	0f 00 /3]				286,PROT,PRIV
 LTR		mem16				[m:	0f 00 /3]				286,PROT,PRIV
 LTR		reg16				[m:	0f 00 /3]				286,PROT,PRIV
-MFENCE		void				[	0f ae f0]				X64,AMD
+MFENCE		void				[	np 0f ae f0]				X64,AMD
 MONITOR		void				[	0f 01 c8]				PRESCOTT
-MONITOR		reg_eax,reg_ecx,reg_edx		[---:	0f 01 c8]				PRESCOTT,ND
+MONITOR		reg_eax,reg_ecx,reg_edx		[---:	0f 01 c8]				PRESCOTT,NOLONG,ND
 MONITOR		reg_rax,reg_ecx,reg_edx		[---:	0f 01 c8]				X64,ND
 MOV		mem,reg_sreg			[mr:	8c /r]					8086,SW
 MOV		reg16,reg_sreg			[mr:	o16 8c /r]				8086
@@ -874,7 +874,7 @@ NEG		rm8				[m:	hle f6 /3]				8086,LOCK
 NEG		rm16				[m:	hle o16 f7 /3]				8086,LOCK
 NEG		rm32				[m:	hle o32 f7 /3]				386,LOCK
 NEG		rm64				[m:	hle o64 f7 /3]				X64,LOCK
-NOP		void				[	norexb 90]				8086
+NOP		void				[	norexb nof3 90]				8086
 NOP		rm16				[m:	o16 0f 1f /0]				P6
 NOP		rm32				[m:	o32 0f 1f /0]				P6
 NOP		rm64				[m:	o64 0f 1f /0]				X64
@@ -938,7 +938,7 @@ PADDUSW		mmxreg,mmxrm			[rm:	np o64nw 0f dd /r]			PENT,MMX,SQ
 PADDW		mmxreg,mmxrm			[rm:	np o64nw 0f fd /r]			PENT,MMX,SQ
 PAND		mmxreg,mmxrm			[rm:	np o64nw 0f db /r]			PENT,MMX,SQ
 PANDN		mmxreg,mmxrm			[rm:	np o64nw 0f df /r]			PENT,MMX,SQ
-PAUSE		void				[	norexb f3i 90]				8086
+PAUSE		void				[	f3i 90]					8086
 PAVEB		mmxreg,mmxrm			[rm:	o64nw 0f 50 /r]				PENT,MMX,SQ,CYRIX
 PAVGUSB		mmxreg,mmxrm			[rm:	o64nw 0f 0f /r bf]			PENT,3DNOW,SQ
 PCMPEQB		mmxreg,mmxrm			[rm:	np o64nw 0f 74 /r]			PENT,MMX,SQ
@@ -1177,7 +1177,7 @@ SCASB		void				[	repe ae]				8086
 SCASD		void				[	repe o32 af]				386
 SCASQ		void				[	repe o64 af]				X64
 SCASW		void				[	repe o16 af]				8086
-SFENCE		void				[	0f ae f8]				X64,AMD
+SFENCE		void				[	np 0f ae f8]				X64,AMD
 SGDT		mem				[m:	0f 01 /0]				286
 SHL		rm8,unity			[m-:	d0 /4]					8086
 SHL		rm8,reg_cl			[m-:	d2 /4]					8086
@@ -1480,7 +1480,7 @@ CVTTSS2SI	reg32,xmmrm			[rm:	f3 0f 2c /r]				KATMAI,SSE,SD,AR1
 CVTTSS2SI	reg64,xmmrm			[rm:	o64 f3 0f 2c /r]			X64,SSE,SD,AR1
 DIVPS		xmmreg,xmmrm128			[rm:	np 0f 5e /r]				KATMAI,SSE
 DIVSS		xmmreg,xmmrm32			[rm:	f3 0f 5e /r]				KATMAI,SSE
-LDMXCSR		mem32				[m:	0f ae /2]				KATMAI,SSE
+LDMXCSR		mem32				[m:	np 0f ae /2]				KATMAI,SSE
 MAXPS		xmmreg,xmmrm128			[rm:	np 0f 5f /r]				KATMAI,SSE
 MAXSS		xmmreg,xmmrm32			[rm:	f3 0f 5f /r]				KATMAI,SSE
 MINPS		xmmreg,xmmrm128			[rm:	np 0f 5d /r]				KATMAI,SSE
@@ -1511,7 +1511,7 @@ RSQRTSS		xmmreg,xmmrm32			[rm:	f3 0f 52 /r]				KATMAI,SSE
 SHUFPS		xmmreg,xmmrm128,imm8		[rmi:	np 0f c6 /r ib,u]			KATMAI,SSE
 SQRTPS		xmmreg,xmmrm128			[rm:	np 0f 51 /r]				KATMAI,SSE
 SQRTSS		xmmreg,xmmrm32			[rm:	f3 0f 51 /r]				KATMAI,SSE
-STMXCSR		mem32				[m:	0f ae /3]				KATMAI,SSE
+STMXCSR		mem32				[m:	np 0f ae /3]				KATMAI,SSE
 SUBPS		xmmreg,xmmrm128			[rm:	np 0f 5c /r]				KATMAI,SSE
 SUBSS		xmmreg,xmmrm32			[rm:	f3 0f 5c /r]				KATMAI,SSE
 UCOMISS		xmmreg,xmmrm32			[rm:	np 0f 2e /r]				KATMAI,SSE
@@ -1520,22 +1520,22 @@ UNPCKLPS	xmmreg,xmmrm128			[rm:	np 0f 14 /r]				KATMAI,SSE
 XORPS		xmmreg,xmmrm128			[rm:	np 0f 57 /r]				KATMAI,SSE
 
 ;# Introduced in Deschutes but necessary for SSE support
-FXRSTOR		mem				[m:	0f ae /1]				P6,SSE,FPU
-FXRSTOR64	mem				[m:	o64 0f ae /1]				X64,SSE,FPU
-FXSAVE		mem				[m:	0f ae /0]				P6,SSE,FPU
-FXSAVE64	mem				[m:	o64 0f ae /0]				X64,SSE,FPU
+FXRSTOR		mem				[m:	np 0f ae /1]				P6,SSE,FPU
+FXRSTOR64	mem				[m:	o64 np 0f ae /1]			X64,SSE,FPU
+FXSAVE		mem				[m:	np 0f ae /0]				P6,SSE,FPU
+FXSAVE64	mem				[m:	o64 np 0f ae /0]			X64,SSE,FPU
 
 ;# XSAVE group (AVX and extended state)
 ; Introduced in late Penryn ... we really need to clean up the handling
 ; of CPU feature bits.
-XGETBV		void				[	np 0f 01 d0]				NEHALEM
-XSETBV		void				[	np 0f 01 d1]				NEHALEM,PRIV
-XSAVE		mem				[m:	0f ae /4]				NEHALEM
-XSAVE64		mem				[m:	o64 0f ae /4]				LONG,NEHALEM
-XSAVEOPT	mem				[m:	0f ae /6]				FUTURE
-XSAVEOPT64	mem				[m:	o64 0f ae /6]				LONG,FUTURE
-XRSTOR		mem				[m:	0f ae /5]				NEHALEM
-XRSTOR64	mem				[m:	o64 0f ae /5]				LONG,NEHALEM
+XGETBV		void				[	0f 01 d0]				NEHALEM
+XSETBV		void				[	0f 01 d1]				NEHALEM,PRIV
+XSAVE		mem				[m:	np 0f ae /4]				NEHALEM
+XSAVE64		mem				[m:	o64 np 0f ae /4]			LONG,NEHALEM
+XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE
+XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE
+XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM
+XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
 
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
@@ -1544,7 +1544,7 @@ PREFETCHNTA	mem				[m:	0f 18 /0]				KATMAI
 PREFETCHT0	mem				[m:	0f 18 /1]				KATMAI
 PREFETCHT1	mem				[m:	0f 18 /2]				KATMAI
 PREFETCHT2	mem				[m:	0f 18 /3]				KATMAI
-SFENCE		void				[	0f ae f8]				KATMAI
+SFENCE		void				[	np 0f ae f8]				KATMAI
 
 ;# New MMX instructions introduced in Katmai
 MASKMOVQ	mmxreg,mmxreg			[rm:	np 0f f7 /r]				KATMAI,MMX
@@ -1576,13 +1576,13 @@ PSWAPD		mmxreg,mmxrm			[rm:	o64nw 0f 0f /r bb]			PENT,3DNOW,SQ
 ;# Willamette SSE2 Cacheability Instructions
 MASKMOVDQU	xmmreg,xmmreg			[rm:	66 0f f7 /r]				WILLAMETTE,SSE2
 ; CLFLUSH needs its own feature flag implemented one day
-CLFLUSH		mem				[m:	0f ae /7]				WILLAMETTE,SSE2
+CLFLUSH		mem				[m:	np 0f ae /7]				WILLAMETTE,SSE2
 MOVNTDQ		mem,xmmreg			[mr:	66 0f e7 /r]				WILLAMETTE,SSE2,SO
 MOVNTI		mem,reg32			[mr:	np 0f c3 /r]				WILLAMETTE,SD
 MOVNTI		mem,reg64			[mr:	o64 np 0f c3 /r]			X64,SQ
 MOVNTPD		mem,xmmreg			[mr:	66 0f 2b /r]				WILLAMETTE,SSE2,SO
-LFENCE		void				[	0f ae e8]				WILLAMETTE,SSE2
-MFENCE		void				[	0f ae f0]				WILLAMETTE,SSE2
+LFENCE		void				[	np 0f ae e8]				WILLAMETTE,SSE2
+MFENCE		void				[	np 0f ae f0]				WILLAMETTE,SSE2
 
 ;# Willamette MMX instructions (SSE2 SIMD Integer Instructions)
 MOVD		mem,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2,SD
@@ -1722,20 +1722,20 @@ CVTPD2PS	xmmreg,xmmrm			[rm:	66 0f 5a /r]				WILLAMETTE,SSE2,SO
 CVTPI2PD	xmmreg,mmxrm			[rm:	66 0f 2a /r]				WILLAMETTE,SSE2,SQ
 CVTPS2DQ	xmmreg,xmmrm			[rm:	66 0f 5b /r]				WILLAMETTE,SSE2,SO
 CVTPS2PD	xmmreg,xmmrm			[rm:	np 0f 5a /r]				WILLAMETTE,SSE2,SQ
-CVTSD2SI	reg32,xmmreg			[rm:	f2 0f 2d /r]				WILLAMETTE,SSE2,SQ,AR1
-CVTSD2SI	reg32,mem			[rm:	f2 0f 2d /r]				WILLAMETTE,SSE2,SQ,AR1
+CVTSD2SI	reg32,xmmreg			[rm:	norexw f2 0f 2d /r]			WILLAMETTE,SSE2,SQ,AR1
+CVTSD2SI	reg32,mem			[rm:	norexw f2 0f 2d /r]			WILLAMETTE,SSE2,SQ,AR1
 CVTSD2SI	reg64,xmmreg			[rm:	o64 f2 0f 2d /r]			X64,SSE2,SQ,AR1
 CVTSD2SI	reg64,mem			[rm:	o64 f2 0f 2d /r]			X64,SSE2,SQ,AR1
 CVTSD2SS	xmmreg,xmmrm			[rm:	f2 0f 5a /r]				WILLAMETTE,SSE2,SQ
 CVTSI2SD	xmmreg,mem			[rm:	f2 0f 2a /r]				WILLAMETTE,SSE2,SD,AR1,ND
-CVTSI2SD	xmmreg,rm32			[rm:	f2 0f 2a /r]				WILLAMETTE,SSE2,SD,AR1
+CVTSI2SD	xmmreg,rm32			[rm:	norexw f2 0f 2a /r]			WILLAMETTE,SSE2,SD,AR1
 CVTSI2SD	xmmreg,rm64			[rm:	o64 f2 0f 2a /r]			X64,SSE2,SQ,AR1
 CVTSS2SD	xmmreg,xmmrm			[rm:	f3 0f 5a /r]				WILLAMETTE,SSE2,SD
 CVTTPD2PI	mmxreg,xmmrm			[rm:	66 0f 2c /r]				WILLAMETTE,SSE2,SO
 CVTTPD2DQ	xmmreg,xmmrm			[rm:	66 0f e6 /r]				WILLAMETTE,SSE2,SO
 CVTTPS2DQ	xmmreg,xmmrm			[rm:	f3 0f 5b /r]				WILLAMETTE,SSE2,SO
-CVTTSD2SI	reg32,xmmreg			[rm:	f2 0f 2c /r]				WILLAMETTE,SSE2,SQ,AR1
-CVTTSD2SI	reg32,mem			[rm:	f2 0f 2c /r]				WILLAMETTE,SSE2,SQ,AR1
+CVTTSD2SI	reg32,xmmreg			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2,SQ,AR1
+CVTTSD2SI	reg32,mem			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2,SQ,AR1
 CVTTSD2SI	reg64,xmmreg			[rm:	o64 f2 0f 2c /r]			X64,SSE2,SQ,AR1
 CVTTSD2SI	reg64,mem			[rm:	o64 f2 0f 2c /r]			X64,SSE2,SQ,AR1
 DIVPD		xmmreg,xmmrm			[rm:	66 0f 5e /r]				WILLAMETTE,SSE2,SO
@@ -1795,8 +1795,8 @@ VMFUNC		void				[	0f 01 d4]				VMX
 VMLAUNCH	void				[	0f 01 c2]				VMX
 VMLOAD		void				[	0f 01 da]				X64,VMX
 VMMCALL		void				[	0f 01 d9]				X64,VMX
-VMPTRLD		mem				[m:	0f c7 /6]				VMX
-VMPTRST		mem				[m:	0f c7 /7]				VMX
+VMPTRLD		mem				[m:	np 0f c7 /6]				VMX
+VMPTRST		mem				[m:	np 0f c7 /7]				VMX
 VMREAD		rm32,reg32			[mr:	np 0f 78 /r]				VMX,NOLONG,SD
 VMREAD		rm64,reg64			[mr:	o64nw np 0f 78 /r]			X64,VMX,SQ
 VMRESUME	void				[	0f 01 c3]				VMX
@@ -1878,7 +1878,7 @@ PCMPEQQ		xmmreg,xmmrm			[rm:	66 0f 38 29 /r]				SSE41
 PEXTRB		reg32,xmmreg,imm		[mri:	66 0f 3a 14 /r ib,u]			SSE41
 PEXTRB		mem8,xmmreg,imm			[mri:	66 0f 3a 14 /r ib,u]			SSE41
 PEXTRB		reg64,xmmreg,imm		[mri:	o64 66 0f 3a 14 /r ib,u]		SSE41,X64
-PEXTRD		rm32,xmmreg,imm			[mri:	66 0f 3a 16 /r ib,u]			SSE41
+PEXTRD		rm32,xmmreg,imm			[mri:	norexw 66 0f 3a 16 /r ib,u]			SSE41
 PEXTRQ		rm64,xmmreg,imm			[mri:	o64 66 0f 3a 16 /r ib,u]		SSE41,X64
 PEXTRW		reg32,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
 PEXTRW		mem16,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
@@ -1887,8 +1887,8 @@ PHMINPOSUW	xmmreg,xmmrm			[rm:	66 0f 38 41 /r]				SSE41
 PINSRB		xmmreg,mem,imm			[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
 PINSRB		xmmreg,rm8,imm			[rmi:	nohi 66 0f 3a 20 /r ib,u]		SSE41,SB,AR2
 PINSRB		xmmreg,reg32,imm		[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,mem,imm			[rmi:	66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,rm32,imm			[rmi:	66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
+PINSRD		xmmreg,mem,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
+PINSRD		xmmreg,rm32,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
 PINSRQ		xmmreg,mem,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X64,SB,AR2
 PINSRQ		xmmreg,rm64,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X64,SB,AR2
 PMAXSB		xmmreg,xmmrm			[rm:	66 0f 38 3c /r]				SSE41
@@ -1943,12 +1943,12 @@ PFRSQRTV	mmxreg,mmxrm			[rm:	o64nw 0f 0f /r 87]			PENT,3DNOW,SQ,CYRIX
 
 ;# Intel new instructions in ???
 ; Is NEHALEM right here?
-MOVBE		reg16,mem16			[rm:	o16 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		reg32,mem32			[rm:	o32 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		reg64,mem64			[rm:	o64 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		mem16,reg16			[mr:	o16 0f 38 f1 /r]			NEHALEM,SM
-MOVBE		mem32,reg32			[mr:	o32 0f 38 f1 /r]			NEHALEM,SM
-MOVBE		mem64,reg64			[mr:	o64 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		reg16,mem16			[rm:	o16 norep 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		reg32,mem32			[rm:	o32 norep 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		reg64,mem64			[rm:	o64 norep 0f 38 f0 /r]			NEHALEM,SM
+MOVBE		mem16,reg16			[mr:	o16 norep 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		mem32,reg32			[mr:	o32 norep 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		mem64,reg64			[mr:	o64 norep 0f 38 f1 /r]			NEHALEM,SM
 
 ;# Intel AES instructions
 AESENC		xmmreg,xmmrm128			[rm:	66 0f 38 dc /r]				SSE,WESTMERE
@@ -3356,9 +3356,9 @@ XTEST		void				[	0f 01 d6]				FUTURE,HLE,RTM
 ;
 ; based on pub number 319433-011 dated July 2011
 ;
-TZCNT		reg16,rm16			[rm:	o16 f3 0f bc /r]			FUTURE,BMI1
-TZCNT		reg32,rm32			[rm:	o32 f3 0f bc /r]			FUTURE,BMI1
-TZCNT		reg64,rm64			[rm:	o64 f3 0f bc /r]			LONG,FUTURE,BMI1
+TZCNT		reg16,rm16			[rm:	o16 f3i 0f bc /r]			FUTURE,BMI1
+TZCNT		reg32,rm32			[rm:	o32 f3i 0f bc /r]			FUTURE,BMI1
+TZCNT		reg64,rm64			[rm:	o64 f3i 0f bc /r]			LONG,FUTURE,BMI1
 ANDN		reg32,reg32,rm32		[rvm:	vex.nds.lz.0f38.w0 f2 /r]		FUTURE,BMI1
 ANDN		reg64,reg64,rm64		[rvm:	vex.nds.lz.0f38.w1 f2 /r]		LONG,FUTURE,BMI1
 BEXTR		reg32,rm32,reg32		[rmv:	vex.nds.lz.0f38.w0 f7 /r]		FUTURE,BMI1

@@ -721,6 +721,8 @@ sub byte_code_compile($$) {
 	'norexw' => 0317,
 	'repe' => 0335,
 	'nohi' => 0325,		# Use spl/bpl/sil/dil even without REX
+	'nof3' => 0326,		# No REP 0xF3 prefix permitted
+	'norep' => 0331,	# No REP prefix permitted
 	'wait' => 0341,		# Needs a wait prefix
 	'resb' => 0340,
 	'jcc8' => 0370,		# Match only if Jcc possible with single byte

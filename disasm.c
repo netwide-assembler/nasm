@@ -819,6 +819,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
+        case 0326:
+            if (prefix->rep == 0xF3)
+                return false;
+            break;
+
 	case 0331:
             if (prefix->rep)
                 return false;
