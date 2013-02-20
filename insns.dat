@@ -263,7 +263,6 @@ CDQ		void				[	o32 99]					386
 CDQE		void				[	o64 98]					X64
 CLC		void				[	f8]					8086
 CLD		void				[	fc]					8086
-CLGI		void				[	0f 01 dd]				X64,AMD
 CLI		void				[	fa]					8086
 CLTS		void				[	0f 06]					286,PRIV
 CMC		void				[	f5]					8086
@@ -1243,7 +1242,6 @@ SMSW		reg16				[m:	o16 0f 01 /4]				286
 SMSW		reg32				[m:	o32 0f 01 /4]				386
 STC		void				[	f9]					8086
 STD		void				[	fd]					8086
-STGI		void				[	0f 01 dc]				X64
 STI		void				[	fb]					8086
 STOSB		void				[	aa]					8086
 STOSD		void				[	o32 ab]					386
@@ -1787,20 +1785,22 @@ MOVDDUP		xmmreg,xmmrm			[rm:	f2 0f 12 /r]				PRESCOTT,SSE3
 MOVSHDUP	xmmreg,xmmrm			[rm:	f3 0f 16 /r]				PRESCOTT,SSE3
 MOVSLDUP	xmmreg,xmmrm			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
 
-;# VMX Instructions
+;# VMX/SVM Instructions
+CLGI		void				[	0f 01 dd]				VMX,AMD
+STGI		void				[	0f 01 dc]				VMX,AMD
 VMCALL		void				[	0f 01 c1]				VMX
 VMCLEAR		mem				[m:	66 0f c7 /6]				VMX
 VMFUNC		void				[	0f 01 d4]				VMX
 VMLAUNCH	void				[	0f 01 c2]				VMX
-VMLOAD		void				[	0f 01 da]				X64,VMX
-VMMCALL		void				[	0f 01 d9]				X64,VMX
+VMLOAD		void				[	0f 01 da]				VMX,AMD
+VMMCALL		void				[	0f 01 d9]				VMX,AMD
 VMPTRLD		mem				[m:	np 0f c7 /6]				VMX
 VMPTRST		mem				[m:	np 0f c7 /7]				VMX
 VMREAD		rm32,reg32			[mr:	np 0f 78 /r]				VMX,NOLONG,SD
 VMREAD		rm64,reg64			[mr:	o64nw np 0f 78 /r]			X64,VMX,SQ
 VMRESUME	void				[	0f 01 c3]				VMX
-VMRUN		void				[	0f 01 d8]				X64,VMX
-VMSAVE		void				[	0f 01 db]				X64,VMX
+VMRUN		void				[	0f 01 d8]				VMX,AMD
+VMSAVE		void				[	0f 01 db]				VMX,AMD
 VMWRITE		reg32,rm32			[rm:	np 0f 79 /r]				VMX,NOLONG,SD
 VMWRITE		reg64,rm64			[rm:	o64nw np 0f 79 /r]			X64,VMX,SQ
 VMXOFF		void				[	0f 01 c4]				VMX
