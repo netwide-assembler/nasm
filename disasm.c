@@ -532,22 +532,21 @@ static int matches(const struct itemplate *t, uint8_t *data,
             opx->segment &= ~SEG_32BIT;
 	    break;
 
-	case4(064):
+	case4(064):  /* rel */
             opx->segment |= SEG_RELATIVE;
-	    if (osize == 16) {
-		opx->offset = gets16(data);
-		data += 2;
-                opx->segment &= ~(SEG_32BIT|SEG_64BIT);
-	    } else if (osize == 32) {
-		opx->offset = gets32(data);
-		data += 4;
-                opx->segment &= ~SEG_64BIT;
-                opx->segment |= SEG_32BIT;
-	    }
-            if (segsize != osize) {
-                opx->type =
-                    (opx->type & ~SIZE_MASK)
-                    | ((osize == 16) ? BITS16 : BITS32);
+            /* In long mode rel is always 32 bits, sign extended. */
+            if (segsize == 64 || osize == 32) {
+                opx->offset = gets32(data);
+                data += 4;
+                if (segsize != 64)
+                    opx->segment |= SEG_32BIT;
+                opx->type = (opx->type & ~SIZE_MASK)
+                    | (segsize == 64 ? BITS64 : BITS32);
+            } else {
+                opx->offset = gets16(data);
+                data += 2;
+                opx->segment &= ~SEG_32BIT;
+                opx->type = (opx->type & ~SIZE_MASK) | BITS16;
             }
 	    break;
 
