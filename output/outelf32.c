@@ -2117,7 +2117,7 @@ static void dwarf32_findsect(const int index)
     if (dwarf_fsect) {
         match = dwarf_fsect;
         for (sinx = 0; sinx < dwarf_nsections; sinx++) {
-            if ((match->section == index)) {
+            if (match->section == index) {
                 dwarf_csect = match;
                 return;
             }
