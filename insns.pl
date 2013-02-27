@@ -433,25 +433,21 @@ sub format_insn($$$$$) {
     @ops = ();
     if ($operands ne 'void') {
         foreach $op (split(/,/, $operands)) {
-            if ($op =~ /^\=([0-9]+)$/) {
-                $op = "same_as|$1";
-            } else {
-                @opx = ();
-                foreach $opp (split(/\|/, $op)) {
-                    @oppx = ();
-                    if ($opp =~ s/(?<=\D)(8|16|32|64|80|128|256)$//) {
-                        push(@oppx, "bits$1");
-                    }
-                    $opp =~ s/^mem$/memory/;
-                    $opp =~ s/^memory_offs$/mem_offs/;
-                    $opp =~ s/^imm$/immediate/;
-                    $opp =~ s/^([a-z]+)rm$/rm_$1/;
-                    $opp =~ s/^rm$/rm_gpr/;
-                    $opp =~ s/^reg$/reg_gpr/;
-                    push(@opx, $opp, @oppx);
+            @opx = ();
+            foreach $opp (split(/\|/, $op)) {
+                @oppx = ();
+                if ($opp =~ s/(?<=\D)(8|16|32|64|80|128|256)$//) {
+                    push(@oppx, "bits$1");
                 }
-                $op = join('|', @opx);
+                $opp =~ s/^mem$/memory/;
+                $opp =~ s/^memory_offs$/mem_offs/;
+                $opp =~ s/^imm$/immediate/;
+                $opp =~ s/^([a-z]+)rm$/rm_$1/;
+                $opp =~ s/^rm$/rm_gpr/;
+                $opp =~ s/^reg$/reg_gpr/;
+                push(@opx, $opp, @oppx);
             }
+            $op = join('|', @opx);
             push(@ops, $op);
         }
     }

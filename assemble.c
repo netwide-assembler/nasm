@@ -1810,10 +1810,8 @@ static enum match_result find_match(const struct itemplate **tempp,
             /*
              * Missing operand size and a candidate for fuzzy matching...
              */
-            for (i = 0; i < temp->operands; i++) {
-                if ((temp->opd[i] & SAME_AS) == 0)
-                    xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
-            }
+            for (i = 0; i < temp->operands; i++)
+                xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
             opsizemissing = true;
         }
         if (m > merr)
@@ -1958,13 +1956,7 @@ static enum match_result matches(const struct itemplate *itemp,
      *    guess it either from template (IF_S* flag) or
      *    from code bits.
      *
-     * 2) If template operand (i) has SAME_AS flag [used for registers only]
-     *    (ie the same operand as was specified somewhere in template, and
-     *    this referred operand index is being achieved via ~SAME_AS)
-     *    we are to be sure that both registers (in template and instruction)
-     *    do exactly match.
-     *
-     * 3) If template operand do not match the instruction OR
+     * 2) If template operand do not match the instruction OR
      *    template has an operand size specified AND this size differ
      *    from which instruction has (perhaps we got it from code bits)
      *    we are:
@@ -1980,12 +1972,7 @@ static enum match_result matches(const struct itemplate *itemp,
         if (!(type & SIZE_MASK))
             type |= size[i];
 
-        if (itemp->opd[i] & SAME_AS) {
-            int j = itemp->opd[i] & ~SAME_AS;
-            if (type != instruction->oprs[j].type ||
-                instruction->oprs[i].basereg != instruction->oprs[j].basereg)
-                return MERR_INVALOP;
-        } else if (itemp->opd[i] & ~type & ~SIZE_MASK) {
+        if (itemp->opd[i] & ~type & ~SIZE_MASK) {
             return MERR_INVALOP;
         } else if ((itemp->opd[i] & SIZE_MASK) &&
                    (itemp->opd[i] & SIZE_MASK) != (type & SIZE_MASK)) {

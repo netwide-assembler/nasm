@@ -239,7 +239,4 @@ typedef uint64_t opflags_t;
 #define SDWORD                  (GEN_SUBCLASS(3) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
 #define UDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
 
-/* special flags */
-#define SAME_AS                 GEN_SPECIAL(0)
-
 #endif /* NASM_OPFLAGS_H */

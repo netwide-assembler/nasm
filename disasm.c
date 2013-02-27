@@ -1124,8 +1124,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	     * XXX: Need to make sure this is actually correct.
              */
             for (i = 0; i < (*p)->operands; i++) {
-                if (!((*p)->opd[i] & SAME_AS) &&
-		    (
+                if (
 			/* If it's a mem-only EA but we have a
 			   register, die. */
 			((tmp_ins.oprs[i].segment & SEG_RMREG) &&
@@ -1141,7 +1140,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 			  (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
 			 !whichreg((*p)->opd[i],
 				   tmp_ins.oprs[i].basereg, tmp_ins.rex))
-			)) {
+			) {
                     works = false;
                     break;
                 }
@@ -1211,11 +1210,6 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 	opflags_t t = (*p)->opd[i];
 	const operand *o = &ins.oprs[i];
 	int64_t offs;
-
-	if (t & SAME_AS) {
-	    o = &ins.oprs[t & ~SAME_AS];
-	    t = (*p)->opd[t & ~SAME_AS];
-	}
 
         output[slen++] = (colon ? ':' : i == 0 ? ' ' : ',');
 
