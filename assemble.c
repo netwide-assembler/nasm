@@ -1200,13 +1200,19 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     return length;
 }
 
-#define EMIT_REX()                                                              \
-    if (!(ins->rex & REX_V) && (ins->rex & REX_REAL) && (bits == 64)) { \
-        ins->rex = (ins->rex & REX_REAL)|REX_P;                                 \
-        out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);        \
-        ins->rex = 0;                                                           \
-        offset += 1;                                                            \
+static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, int bits)
+{
+    if (bits == 64) {
+        if ((ins->rex & REX_REAL) && !(ins->rex & REX_V)) {
+            ins->rex = (ins->rex & REX_REAL) | REX_P;
+            out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            ins->rex = 0;
+            return 1;
+        }
     }
+
+    return 0;
+}
 
 static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
@@ -1239,7 +1245,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 02:
         case 03:
         case 04:
-            EMIT_REX();
+            offset += emit_rex(ins, segment, offset, bits);
             out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG);
             codes += c;
             offset += c;
@@ -1252,7 +1258,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case4(010):
-            EMIT_REX();
+            offset += emit_rex(ins, segment, offset, bits);
             bytes[0] = *codes++ + (regval(opx) & 7);
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset += 1;
