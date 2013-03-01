@@ -523,19 +523,19 @@ sub decodify($$) {
     my @codes = ();
 
     unless ($codestr eq 'ignore') {
-	while ($c ne '') {
-	    if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
-		push(@codes, hex $1);
-		$c = $2;
-		next;
-	    } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
-		push(@codes, oct $1);
-		$c = $2;
-		next;
-	    } else {
-		die "$fname: unknown code format in \"$codestr\"\n";
-	    }
-	}
+        while ($c ne '') {
+            if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
+                push(@codes, hex $1);
+                $c = $2;
+                next;
+            } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
+                push(@codes, oct $1);
+                $c = $2;
+                next;
+            } else {
+                die "$fname: unknown code format in \"$codestr\"\n";
+            }
+        }
     }
 
     return @codes;
@@ -665,66 +665,68 @@ sub byte_code_compile($$) {
     my $opex;
 
     my %imm_codes = (
-        'ib' => 020,    # imm8
-        'ib,u' => 024,  # Unsigned imm8
-        'iw' => 030,    # imm16
-        'ib,s' => 0274, # imm8 sign-extended to opsize or bits
-        'iwd' => 034,   # imm16 or imm32, depending on opsize
-        'id' => 040,    # imm32
-        'id,s' => 0254, # imm32 sign-extended to 64 bits
-        'iwdq' => 044,  # imm16/32/64, depending on addrsize
-        'rel8' => 050,
-        'iq' => 054,
-        'rel16' => 060,
-        'rel' => 064,   # 16 or 32 bit relative operand
-        'rel32' => 070,
-        'seg' => 074,
+        'ib'        => 020,     # imm8
+        'ib,u'      => 024,     # Unsigned imm8
+        'iw'        => 030,     # imm16
+        'ib,s'      => 0274,    # imm8 sign-extended to opsize or bits
+        'iwd'       => 034,     # imm16 or imm32, depending on opsize
+        'id'        => 040,     # imm32
+        'id,s'      => 0254,    # imm32 sign-extended to 64 bits
+        'iwdq'      => 044,     # imm16/32/64, depending on addrsize
+        'rel8'      => 050,
+        'iq'        => 054,
+        'rel16'     => 060,
+        'rel'       => 064,     # 16 or 32 bit relative operand
+        'rel32'     => 070,
+        'seg'       => 074,
     );
     my %plain_codes = (
-	'o16' => 0320,		# 16-bit operand size
-	'o32' => 0321,		# 32-bit operand size
-	'odf' => 0322,		# Operand size is default
-	'o64' => 0324,		# 64-bit operand size requiring REX.W
-	'o64nw' => 0323,	# Implied 64-bit operand size (no REX.W)
-	'a16' => 0310,
-	'a32' => 0311,
-	'adf' => 0312,		# Address size is default
-	'a64' => 0313,
-	'!osp' => 0364,
-	'!asp' => 0365,
-	'f2i' => 0332,		# F2 prefix, but 66 for operand size is OK
-	'f3i' => 0333,		# F3 prefix, but 66 for operand size is OK
-	'pushseg' => 0344,
-	'popseg' => 0345,
-	'pushseg2' => 0346,
-	'popseg2' => 0347,
-	'mustrep' => 0336,
-	'mustrepne' => 0337,
-	'rex.l' => 0334,
-	'norexb' => 0314,
-	'norexx' => 0315,
-	'norexr' => 0316,
-	'norexw' => 0317,
-	'repe' => 0335,
-	'nohi' => 0325,		# Use spl/bpl/sil/dil even without REX
-	'nof3' => 0326,		# No REP 0xF3 prefix permitted
-	'norep' => 0331,	# No REP prefix permitted
-	'wait' => 0341,		# Needs a wait prefix
-	'resb' => 0340,
-	'jcc8' => 0370,		# Match only if Jcc possible with single byte
-	'jmp8' => 0371,		# Match only if JMP possible with single byte
-	'jlen' => 0373, 	# Length of jump
-	'hlexr' => 0271,
-	'hlenl' => 0272,
-	'hle' => 0273,
-	# This instruction takes XMM VSIB
-	'vsibx' => 0374,
-	'vm32x' => 0374,
-	'vm64x' => 0374,
-	# This instruction takes YMM VSIB
-	'vsiby' => 0375,
-	'vm32y' => 0375,
-	'vm64y' => 0375
+        'o16'       => 0320,    # 16-bit operand size
+        'o32'       => 0321,    # 32-bit operand size
+        'odf'       => 0322,    # Operand size is default
+        'o64'       => 0324,    # 64-bit operand size requiring REX.W
+        'o64nw'     => 0323,    # Implied 64-bit operand size (no REX.W)
+        'a16'       => 0310,
+        'a32'       => 0311,
+        'adf'       => 0312,    # Address size is default
+        'a64'       => 0313,
+        '!osp'      => 0364,
+        '!asp'      => 0365,
+        'f2i'       => 0332,    # F2 prefix, but 66 for operand size is OK
+        'f3i'       => 0333,    # F3 prefix, but 66 for operand size is OK
+        'pushseg'   => 0344,
+        'popseg'    => 0345,
+        'pushseg2'  => 0346,
+        'popseg2'   => 0347,
+        'mustrep'   => 0336,
+        'mustrepne' => 0337,
+        'rex.l'     => 0334,
+        'norexb'    => 0314,
+        'norexx'    => 0315,
+        'norexr'    => 0316,
+        'norexw'    => 0317,
+        'repe'      => 0335,
+        'nohi'      => 0325,    # Use spl/bpl/sil/dil even without REX
+        'nof3'      => 0326,    # No REP 0xF3 prefix permitted
+        'norep'     => 0331,    # No REP prefix permitted
+        'wait'      => 0341,    # Needs a wait prefix
+        'resb'      => 0340,
+        'jcc8'      => 0370,    # Match only if Jcc possible with single byte
+        'jmp8'      => 0371,    # Match only if JMP possible with single byte
+        'jlen'      => 0373,    # Length of jump
+        'hlexr'     => 0271,
+        'hlenl'     => 0272,
+        'hle'       => 0273,
+
+        # This instruction takes XMM VSIB
+        'vsibx'     => 0374,
+        'vm32x'     => 0374,
+        'vm64x'     => 0374,
+
+        # This instruction takes YMM VSIB
+        'vsiby'     => 0375,
+        'vm32y'     => 0375,
+        'vm64y'     => 0375
     );
 
     unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
@@ -750,11 +752,11 @@ sub byte_code_compile($$) {
     my $last_imm = 'h';
     my $prefix_ok = 1;
     foreach $op (split(/\s*(?:\s|(?=[\/\\]))/, $opc)) {
-	my $pc = $plain_codes{$op};
+        my $pc = $plain_codes{$op};
 
-	if (defined $pc) {
-	    # Plain code
-	    push(@codes, $pc);
+        if (defined $pc) {
+            # Plain code
+            push(@codes, $pc);
         } elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
             # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
             if ($op eq '66') {
