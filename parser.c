@@ -853,7 +853,7 @@ is_expression:
                 if(optimizing >= 0 && !(result->oprs[operand].type & STRICT)) {
                     /* Be optimistic */
                     result->oprs[operand].type |=
-                            SBYTE16 | SBYTE32 | SBYTE64 | UDWORD64 | SDWORD64;
+                        UNITY | SBYTEWORD | SBYTEDWORD | UDWORD | SDWORD;
                 }
             } else if (is_reloc(value)) {       /* it's immediate */
                 result->oprs[operand].type      |= IMMEDIATE;
@@ -862,25 +862,19 @@ is_expression:
                 result->oprs[operand].wrt       = reloc_wrt(value);
 
                 if (is_simple(value)) {
-                    if (reloc_value(value) == 1)
+                    uint64_t n = reloc_value(value);
+                    if (n == 1)
                         result->oprs[operand].type |= UNITY;
                     if (optimizing >= 0 &&
                         !(result->oprs[operand].type & STRICT)) {
-                        int64_t v64 = reloc_value(value);
-                        int32_t v32 = (int32_t)v64;
-                        int16_t v16 = (int16_t)v32;
-
-                        if (v64 >= -128 && v64 <= 127)
-                            result->oprs[operand].type |= SBYTE64;
-                        if (v32 >= -128 && v32 <= 127)
-                            result->oprs[operand].type |= SBYTE32;
-                        if (v16 >= -128 && v16 <= 127)
-                            result->oprs[operand].type |= SBYTE16;
-                        if ((uint64_t)v64 <= UINT64_C(0xffffffff))
-                            result->oprs[operand].type |= UDWORD64;
-                        if (v64 >= -INT64_C(0x80000000) &&
-                            v64 <=  INT64_C(0x7fffffff))
-                            result->oprs[operand].type |= SDWORD64;
+                        if ((uint32_t) (n + 128) <= 255)
+                            result->oprs[operand].type |= SBYTEDWORD;
+                        if ((uint16_t) (n + 128) <= 255)
+                            result->oprs[operand].type |= SBYTEWORD;
+                        if (n <= 0xFFFFFFFF)
+                            result->oprs[operand].type |= UDWORD;
+                        if (n + 0x80000000 <= 0xFFFFFFFF)
+                            result->oprs[operand].type |= SDWORD;
                     }
                 }
             } else {            /* it's a register */

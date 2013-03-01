@@ -42,9 +42,8 @@
  * \7            - add 4 to both the primary and the secondary operand number
  * \10..\13      - a literal byte follows in the code stream, to be added
  *                 to the register value of operand 0..3
- * \14..\17      - a signed byte immediate operand, from operand 0..3
  * \20..\23      - a byte immediate operand, from operand 0..3
- * \24..\27      - an unsigned byte immediate operand, from operand 0..3
+ * \24..\27      - a zero-extended byte immediate operand, from operand 0..3
  * \30..\33      - a word immediate operand, from operand 0..3
  * \34..\37      - select between \3[0-3] and \4[0-3] depending on 16/32 bit
  *                 assembly mode or the operand-size override on the operand
@@ -60,12 +59,6 @@
  * \74..\77      - a word constant, from the _segment_ part of operand 0..3
  * \1ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field the register value of operand b.
- * \140..\143    - an immediate word or signed byte for operand 0..3
- * \144..\147    - or 2 (s-field) into opcode byte if operand 0..3
- *                  is a signed byte rather than a word.  Opcode byte follows.
- * \150..\153    - an immediate dword or signed byte for operand 0..3
- * \154..\157    - or 2 (s-field) into opcode byte if operand 0..3
- *                  is a signed byte rather than a dword.  Opcode byte follows.
  * \172\ab       - the register number from operand a in bits 7..4, with
  *                 the 4-bit immediate from operand b in bits 3..0.
  * \173\xab      - the register number from operand a in bits 7..4, with
@@ -74,9 +67,6 @@
  *                 an arbitrary value in bits 3..0 (assembled as zero.)
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
- * \250..\253    - same as \150..\153, except warn if the 64-bit operand
- *                 is not equal to the truncated and sign-extended 32-bit
- *                 operand; used for 32-bit immediates in 64-bit mode.
  * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
  * \260..\263    - this instruction uses VEX/XOP rather than REX, with the
  *                 V field taken from operand 0..3.
@@ -100,8 +90,8 @@
  * \271		 - instruction takes XRELEASE (F3) with or without lock
  * \272		 - instruction takes XACQUIRE/XRELEASE with or without lock
  * \273          - instruction takes XACQUIRE/XRELEASE with lock only
- * \274..\277    - a signed byte immediate operand, from operand 0..3,
- *                 which is to be extended to the operand size.
+ * \274..\277    - a byte immediate operand, from operand 0..3, sign-extended
+ *                 to the operand size (if o16/o32/o64 present) or the bit size
  * \310          - indicates fixed 16-bit address size, i.e. optional 0x67.
  * \311          - indicates fixed 32-bit address size, i.e. optional 0x67.
  * \312          - (disassembler only) invalid with non-default address size.
@@ -319,6 +309,17 @@ static void out(int64_t offset, int32_t segto, const void *data,
         outfmt->current_dfmt->linenum(lnfname, lineno, segto);
 
     outfmt->output(segto, data, type, size, segment, wrt);
+}
+
+static void out_imm8(int64_t offset, int32_t segment, struct operand *opx)
+{
+    if (opx->segment != NO_SEG) {
+        uint64_t data = opx->offset;
+        out(offset, segment, &data, OUT_ADDRESS, 1, opx->segment, opx->wrt);
+    } else {
+        uint8_t byte = opx->offset;
+        out(offset, segment, &byte, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+    }
 }
 
 static bool jmp_match(int32_t segment, int64_t offset, int bits,
@@ -765,36 +766,6 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
     }
 }
 
-static bool possible_sbyte(operand *o)
-{
-    return o->wrt == NO_SEG && o->segment == NO_SEG &&
-        !(o->opflags & OPFLAG_UNKNOWN) &&
-        optimizing >= 0 && !(o->type & STRICT);
-}
-
-/* check that opn[op]  is a signed byte of size 16 or 32 */
-static bool is_sbyte16(operand *o)
-{
-    int16_t v;
-
-    if (!possible_sbyte(o))
-        return false;
-
-    v = o->offset;
-    return v >= -128 && v <= 127;
-}
-
-static bool is_sbyte32(operand *o)
-{
-    int32_t v;
-
-    if (!possible_sbyte(o))
-        return false;
-
-    v = o->offset;
-    return v >= -128 && v <= 127;
-}
-
 static void bad_hle_warn(const insn * ins, uint8_t hleok)
 {
     enum prefixes rep_pfx = ins->prefixes[PPS_REP];
@@ -887,7 +858,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             codes++, length++;
             break;
 
-        case4(014):
         case4(020):
         case4(024):
             length++;
@@ -939,24 +909,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 2;
             break;
 
-        case4(0140):
-            length += is_sbyte16(opx) ? 1 : 2;
-            break;
-
-        case4(0144):
-            codes++;
-            length++;
-            break;
-
-        case4(0150):
-            length += is_sbyte32(opx) ? 1 : 4;
-            break;
-
-        case4(0154):
-            codes++;
-            length++;
-            break;
-
         case 0172:
         case 0173:
             codes++;
@@ -965,10 +917,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case4(0174):
             length++;
-            break;
-
-        case4(0250):
-            length += is_sbyte32(opx) ? 1 : 4;
             break;
 
         case4(0254):
@@ -1320,45 +1268,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset += 1;
             break;
 
-        case4(014):
-            /*
-             * The test for BITS8 and SBYTE here is intended to avoid
-             * warning on optimizer actions due to SBYTE, while still
-             * warn on explicit BYTE directives.  Also warn, obviously,
-             * if the optimizer isn't enabled.
-             */
-            if (((opx->type & BITS8) ||
-                 !(opx->type & temp->opd[op1] & BYTENESS)) &&
-                (opx->offset < -128 || opx->offset > 127)) {
-                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "signed byte value exceeds bounds");
-            }
-            if (opx->segment != NO_SEG) {
-                data = opx->offset;
-                out(offset, segment, &data, OUT_ADDRESS, 1,
-                    opx->segment, opx->wrt);
-            } else {
-                bytes[0] = opx->offset;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-            }
-            offset += 1;
-            break;
-
         case4(020):
             if (opx->offset < -256 || opx->offset > 255) {
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "byte value exceeds bounds");
             }
-            if (opx->segment != NO_SEG) {
-                data = opx->offset;
-                out(offset, segment, &data, OUT_ADDRESS, 1,
-                    opx->segment, opx->wrt);
-            } else {
-                bytes[0] = opx->offset;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-            }
+            out_imm8(offset, segment, opx);
             offset += 1;
             break;
 
@@ -1366,15 +1281,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             if (opx->offset < 0 || opx->offset > 255)
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "unsigned byte value exceeds bounds");
-            if (opx->segment != NO_SEG) {
-                data = opx->offset;
-                out(offset, segment, &data, OUT_ADDRESS, 1,
-                    opx->segment, opx->wrt);
-            } else {
-                bytes[0] = opx->offset;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-            }
+            out_imm8(offset, segment, opx);
             offset += 1;
             break;
 
@@ -1495,54 +1402,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset += 2;
             break;
 
-        case4(0140):
-            data = opx->offset;
-            warn_overflow_opd(opx, 2);
-            if (is_sbyte16(opx)) {
-                bytes[0] = data;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-                offset++;
-            } else {
-                out(offset, segment, &data, OUT_ADDRESS, 2,
-                    opx->segment, opx->wrt);
-                offset += 2;
-            }
-            break;
-
-        case4(0144):
-            EMIT_REX();
-            bytes[0] = *codes++;
-            if (is_sbyte16(opx))
-                bytes[0] |= 2;  /* s-bit */
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
-
-        case4(0150):
-            data = opx->offset;
-            warn_overflow_opd(opx, 4);
-            if (is_sbyte32(opx)) {
-                bytes[0] = data;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-                offset++;
-            } else {
-                out(offset, segment, &data, OUT_ADDRESS, 4,
-                    opx->segment, opx->wrt);
-                offset += 4;
-            }
-            break;
-
-        case4(0154):
-            EMIT_REX();
-            bytes[0] = *codes++;
-            if (is_sbyte32(opx))
-                bytes[0] |= 2;  /* s-bit */
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
-
         case 0172:
             c = *codes++;
             opx = &ins->oprs[c >> 3];
@@ -1576,25 +1435,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             bytes[0] = nasm_regvals[opx->basereg] << 4;
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
-            break;
-
-        case4(0250):
-            data = opx->offset;
-            if (opx->wrt == NO_SEG && opx->segment == NO_SEG &&
-                (int32_t)data != (int64_t)data) {
-                errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "signed dword immediate exceeds bounds");
-            }
-            if (is_sbyte32(opx)) {
-                bytes[0] = data;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-                offset++;
-            } else {
-                out(offset, segment, &data, OUT_ADDRESS, 4,
-                    opx->segment, opx->wrt);
-                offset += 4;
-            }
             break;
 
         case4(0254):
@@ -1652,8 +1492,15 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
             if (uv > 127 && uv < (uint64_t)-128 &&
                 (uv < um-128 || uv > um-1)) {
+                /* If this wasn't explicitly byte-sized, warn as though we
+                 * had fallen through to the imm16/32/64 case.
+                 */
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "signed byte value exceeds bounds");
+                        "%s value exceeds bounds",
+                        (opx->type & BITS8) ? "signed byte" :
+                        s == 16 ? "word" :
+                        s == 32 ? "dword" :
+                        "signed dword");
             }
             if (opx->segment != NO_SEG) {
                 data = uv;
@@ -2197,10 +2044,11 @@ static enum match_result matches(const struct itemplate *itemp,
             if (type != instruction->oprs[j].type ||
                 instruction->oprs[i].basereg != instruction->oprs[j].basereg)
                 return MERR_INVALOP;
-        } else if (itemp->opd[i] & ~type ||
-            ((itemp->opd[i] & SIZE_MASK) &&
-             ((itemp->opd[i] ^ type) & SIZE_MASK))) {
-            if ((itemp->opd[i] & ~type & ~SIZE_MASK) || (type & SIZE_MASK)) {
+        } else if (itemp->opd[i] & ~type & ~SIZE_MASK) {
+            return MERR_INVALOP;
+        } else if ((itemp->opd[i] & SIZE_MASK) &&
+                   (itemp->opd[i] & SIZE_MASK) != (type & SIZE_MASK)) {
+            if (type & SIZE_MASK) {
                 return MERR_INVALOP;
             } else if (!is_class(REGISTER, type)) {
                 /*

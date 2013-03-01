@@ -226,17 +226,12 @@ typedef uint64_t opflags_t;
 /* memory which matches any type of r/m operand */
 #define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM)
 
-/* special type of immediate operand */
-#define UNITY                   (GEN_SUBCLASS(1) | IMMEDIATE)   /* for shift/rotate instructions */
-#define SBYTE16                 (GEN_SUBCLASS(2) | IMMEDIATE)   /* for op r16,immediate instrs. */
-#define SBYTE32                 (GEN_SUBCLASS(3) | IMMEDIATE)   /* for op r32,immediate instrs. */
-#define SBYTE64                 (GEN_SUBCLASS(4) | IMMEDIATE)   /* for op r64,immediate instrs. */
-#define SDWORD64	        (GEN_SUBCLASS(5) | IMMEDIATE)   /* for op r64,simm32 instrs. */
-#define UDWORD64	        (GEN_SUBCLASS(0) | IMMEDIATE)   /* for op r64,uimm32 instrs. */
-
-#define BYTENESS                (GEN_SUBCLASS(2) | \
-                                 GEN_SUBCLASS(3) | \
-                                 GEN_SUBCLASS(4))               /* for testing for byteness */
+/* special immediate values */
+#define UNITY                   (GEN_SUBCLASS(0) | IMMEDIATE)   /* operand equals 1 */
+#define SBYTEWORD               (GEN_SUBCLASS(1) | IMMEDIATE)   /* operand is in the range -128..127 mod 2^16 */
+#define SBYTEDWORD              (GEN_SUBCLASS(2) | IMMEDIATE)   /* operand is in the range -128..127 mod 2^32 */
+#define SDWORD                  (GEN_SUBCLASS(3) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
+#define UDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
 
 /* special flags */
 #define SAME_AS                 GEN_SPECIAL(0)

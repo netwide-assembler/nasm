@@ -397,7 +397,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
     int op1, op2;
     struct operand *opx, *opy;
     uint8_t opex = 0;
-    int s_field_for = -1;	/* No 144/154 series code encountered */
     bool vex_ok = false;
     int regmask = (segsize == 64) ? 15 : 7;
     enum ea_type eat = EA_SCALAR;
@@ -456,7 +455,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
-	case4(014):
 	case4(0274):
             opx->offset = (int8_t)*data++;
             opx->segment |= SEG_SIGNED;
@@ -488,10 +486,14 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 
 	case4(040):
-	case4(0254):
             opx->offset = getu32(data);
 	    data += 4;
 	    break;
+
+        case4(0254):
+            opx->offset = gets32(data);
+            data += 4;
+            break;
 
 	case4(044):
 	    switch (asize) {
@@ -570,33 +572,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    break;
 	}
 
-	case4(0140):
-	    if (s_field_for == op1) {
-		opx->offset = gets8(data);
-		data++;
-	    } else {
-		opx->offset = getu16(data);
-		data += 2;
-	    }
-	    break;
-
-	case4(0144):
-	case4(0154):
-	    s_field_for = (*data & 0x02) ? op1 : -1;
-	    if ((*data++ & ~0x02) != *r++)
-		return false;
-	    break;
-
-	case4(0150):
-	    if (s_field_for == op1) {
-		opx->offset = gets8(data);
-		data++;
-	    } else {
-		opx->offset = getu32(data);
-		data += 4;
-	    }
-	    break;
-
 	case 0172:
 	{
 	    uint8_t ximm = *data++;
@@ -646,16 +621,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 		return false;
 	    break;
 	}
-
-	case4(0250):
-	    if (s_field_for == op1) {
-		opx->offset = gets8(data);
-		data++;
-	    } else {
-		opx->offset = gets32(data);
-		data += 4;
-	    }
-	    break;
 
 	case4(0260):
 	case 0270:

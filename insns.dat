@@ -86,23 +86,28 @@ ADC		reg32,mem			[rm:	o32 13 /r]				386,SM
 ADC		reg32,reg32			[rm:	o32 13 /r]				386
 ADC		reg64,mem			[rm:	o64 13 /r]				X64,SM
 ADC		reg64,reg64			[rm:	o64 13 /r]				X64
-ADC		rm16,imm8			[mi:	hle o16 83 /2 ibx]			8086,LOCK
-ADC		rm32,imm8			[mi:	hle o32 83 /2 ibx]			386,LOCK
-ADC		rm64,imm8			[mi:	hle o64 83 /2 ibx]			X64,LOCK
+ADC		rm16,imm8			[mi:	hle o16 83 /2 ib,s]			8086,LOCK
+ADC		rm32,imm8			[mi:	hle o32 83 /2 ib,s]			386,LOCK
+ADC		rm64,imm8			[mi:	hle o64 83 /2 ib,s]			X64,LOCK
 ADC		reg_al,imm			[-i:	14 ib]					8086,SM
-ADC		reg_ax,sbyte16			[mi:	o16 83 /2 ibx]				8086,SM
+ADC		reg_ax,sbyteword		[mi:	o16 83 /2 ib,s]				8086,SM,ND
 ADC		reg_ax,imm			[-i:	o16 15 iw]				8086,SM
-ADC		reg_eax,sbyte32			[mi:	o32 83 /2 ibx]				386,SM
+ADC		reg_eax,sbytedword		[mi:	o32 83 /2 ib,s]				386,SM,ND
 ADC		reg_eax,imm			[-i:	o32 15 id]				386,SM
-ADC		reg_rax,sbyte64			[mi:	o64 83 /2 ibx]				X64,SM
-ADC		reg_rax,imm			[-i:	o64 15 idx]				X64,SM
+ADC		reg_rax,sbytedword		[mi:	o64 83 /2 ib,s]				X64,SM,ND
+ADC		reg_rax,imm			[-i:	o64 15 id,s]				X64,SM
 ADC		rm8,imm				[mi:	hle 80 /2 ib]				8086,SM,LOCK
-ADC		rm16,imm			[mi:	hle o16 81+s /2 ibw]			8086,SM,LOCK
-ADC		rm32,imm			[mi:	hle o32 81+s /2 ibd]			386,SM,LOCK
-ADC		rm64,imm			[mi:	hle o64 81+s /2 ibd,s]			X64,SM,LOCK
-ADC		mem,imm8			[mi:	hle 80 /2 ib]				8086,SM,LOCK
-ADC		mem,imm16			[mi:	hle o16 81+s /2 ibw]			8086,SM,LOCK
-ADC		mem,imm32			[mi:	hle o32 81+s /2 ibd]			386,SM,LOCK
+ADC		rm16,sbyteword			[mi:	hle o16 83 /2 ib,s]			8086,SM,LOCK,ND
+ADC		rm16,imm			[mi:	hle o16 81 /2 iw]			8086,SM,LOCK
+ADC		rm32,sbytedword			[mi:	hle o32 83 /2 ib,s]			386,SM,LOCK,ND
+ADC		rm32,imm			[mi:	hle o32 81 /2 id]			386,SM,LOCK
+ADC		rm64,sbytedword			[mi:	hle o64 83 /2 ib,s]			X64,SM,LOCK,ND
+ADC		rm64,imm			[mi:	hle o64 81 /2 id,s]			X64,SM,LOCK
+ADC		mem,imm8			[mi:	hle 80 /2 ib]				8086,SM,LOCK,ND
+ADC		mem,sbyteword16			[mi:	hle o16 83 /2 ib,s]			8086,SM,LOCK,ND
+ADC		mem,imm16			[mi:	hle o16 81 /2 iw]			8086,SM,LOCK
+ADC		mem,sbytedword32		[mi:	hle o32 83 /2 ib,s]			386,SM,LOCK,ND
+ADC		mem,imm32			[mi:	hle o32 81 /2 id]			386,SM,LOCK
 ADC		rm8,imm				[mi:	hle 82 /2 ib]				8086,SM,LOCK,ND,NOLONG
 ADD		mem,reg8			[mr:	hle 00 /r]				8086,SM,LOCK
 ADD		reg8,reg8			[mr:	00 /r]					8086
@@ -120,23 +125,28 @@ ADD		reg32,mem			[rm:	o32 03 /r]				386,SM
 ADD		reg32,reg32			[rm:	o32 03 /r]				386
 ADD		reg64,mem			[rm:	o64 03 /r]				X64,SM
 ADD		reg64,reg64			[rm:	o64 03 /r]				X64
-ADD		rm16,imm8			[mi:	hle o16 83 /0 ibx]			8086,LOCK
-ADD		rm32,imm8			[mi:	hle o32 83 /0 ibx]			386,LOCK
-ADD		rm64,imm8			[mi:	hle o64 83 /0 ibx]			X64,LOCK
+ADD		rm16,imm8			[mi:	hle o16 83 /0 ib,s]			8086,LOCK
+ADD		rm32,imm8			[mi:	hle o32 83 /0 ib,s]			386,LOCK
+ADD		rm64,imm8			[mi:	hle o64 83 /0 ib,s]			X64,LOCK
 ADD		reg_al,imm			[-i:	04 ib]					8086,SM
-ADD		reg_ax,sbyte16			[mi:	o16 83 /0 ibx]				8086,SM
+ADD		reg_ax,sbyteword		[mi:	o16 83 /0 ib,s]				8086,SM,ND
 ADD		reg_ax,imm			[-i:	o16 05 iw]				8086,SM
-ADD		reg_eax,sbyte32			[mi:	o32 83 /0 ibx]				386,SM
+ADD		reg_eax,sbytedword		[mi:	o32 83 /0 ib,s]				386,SM,ND
 ADD		reg_eax,imm			[-i:	o32 05 id]				386,SM
-ADD		reg_rax,sbyte64			[mi:	o64 83 /0 ibx]				X64,SM
-ADD		reg_rax,imm			[-i:	o64 05 idx]				X64,SM
+ADD		reg_rax,sbytedword		[mi:	o64 83 /0 ib,s]				X64,SM,ND
+ADD		reg_rax,imm			[-i:	o64 05 id,s]				X64,SM
 ADD		rm8,imm				[mi:	hle 80 /0 ib]				8086,SM,LOCK
-ADD		rm16,imm			[mi:	hle o16 81+s /0 ibw]			8086,SM,LOCK
-ADD		rm32,imm			[mi:	hle o32 81+s /0 ibd]			386,SM,LOCK
-ADD		rm64,imm			[mi:	hle o64 81+s /0 ibd,s]			X64,SM,LOCK
+ADD		rm16,sbyteword			[mi:	hle o16 83 /0 ib,s]			8086,SM,LOCK,ND
+ADD		rm16,imm			[mi:	hle o16 81 /0 iw]			8086,SM,LOCK
+ADD		rm32,sbytedword			[mi:	hle o32 83 /0 ib,s]			386,SM,LOCK,ND
+ADD		rm32,imm			[mi:	hle o32 81 /0 id]			386,SM,LOCK
+ADD		rm64,sbytedword			[mi:	hle o64 83 /0 ib,s]			X64,SM,LOCK,ND
+ADD		rm64,imm			[mi:	hle o64 81 /0 id,s]			X64,SM,LOCK
 ADD		mem,imm8			[mi:	hle 80 /0 ib]				8086,SM,LOCK
-ADD		mem,imm16			[mi:	hle o16 81+s /0 ibw]			8086,SM,LOCK
-ADD		mem,imm32			[mi:	hle o32 81+s /0 ibd]			386,SM,LOCK
+ADD		mem,sbyteword16			[mi:	hle o16 83 /0 ib,s]			8086,SM,LOCK,ND
+ADD		mem,imm16			[mi:	hle o16 81 /0 iw]			8086,SM,LOCK
+ADD		mem,sbytedword32		[mi:	hle o32 83 /0 ib,s]			386,SM,LOCK,ND
+ADD		mem,imm32			[mi:	hle o32 81 /0 id]			386,SM,LOCK
 ADD		rm8,imm				[mi:	hle 82 /0 ib]				8086,SM,LOCK,ND,NOLONG
 AND		mem,reg8			[mr:	hle 20 /r]				8086,SM,LOCK
 AND		reg8,reg8			[mr:	20 /r]					8086
@@ -154,23 +164,28 @@ AND		reg32,mem			[rm:	o32 23 /r]				386,SM
 AND		reg32,reg32			[rm:	o32 23 /r]				386
 AND		reg64,mem			[rm:	o64 23 /r]				X64,SM
 AND		reg64,reg64			[rm:	o64 23 /r]				X64
-AND		rm16,imm8			[mi:	hle o16 83 /4 ibx]			8086,LOCK
-AND		rm32,imm8			[mi:	hle o32 83 /4 ibx]			386,LOCK
-AND		rm64,imm8			[mi:	hle o64 83 /4 ibx]			X64,LOCK
+AND		rm16,imm8			[mi:	hle o16 83 /4 ib,s]			8086,LOCK
+AND		rm32,imm8			[mi:	hle o32 83 /4 ib,s]			386,LOCK
+AND		rm64,imm8			[mi:	hle o64 83 /4 ib,s]			X64,LOCK
 AND		reg_al,imm			[-i:	24 ib]					8086,SM
-AND		reg_ax,sbyte16			[mi:	o16 83 /4 ibx]				8086,SM
+AND		reg_ax,sbyteword		[mi:	o16 83 /4 ib,s]				8086,SM,ND
 AND		reg_ax,imm			[-i:	o16 25 iw]				8086,SM
-AND		reg_eax,sbyte32			[mi:	o32 83 /4 ibx]				386,SM
+AND		reg_eax,sbytedword		[mi:	o32 83 /4 ib,s]				386,SM,ND
 AND		reg_eax,imm			[-i:	o32 25 id]				386,SM
-AND		reg_rax,sbyte64			[mi:	o64 83 /4 ibx]				X64,SM
-AND		reg_rax,imm			[-i:	o64 25 idx]				X64,SM
+AND		reg_rax,sbytedword		[mi:	o64 83 /4 ib,s]				X64,SM,ND
+AND		reg_rax,imm			[-i:	o64 25 id,s]				X64,SM
 AND		rm8,imm				[mi:	hle 80 /4 ib]				8086,SM,LOCK
-AND		rm16,imm			[mi:	hle o16 81+s /4 ibw]			8086,SM,LOCK
-AND		rm32,imm			[mi:	hle o32 81+s /4 ibd]			386,SM,LOCK
-AND		rm64,imm			[mi:	hle o64 81+s /4 ibd,s]			X64,SM,LOCK
+AND		rm16,sbyteword			[mi:	hle o16 83 /4 ib,s]			8086,SM,LOCK,ND
+AND		rm16,imm			[mi:	hle o16 81 /4 iw]			8086,SM,LOCK
+AND		rm32,sbytedword			[mi:	hle o32 83 /4 ib,s]			386,SM,LOCK,ND
+AND		rm32,imm			[mi:	hle o32 81 /4 id]			386,SM,LOCK
+AND		rm64,sbytedword			[mi:	hle o64 83 /4 ib,s]			X64,SM,LOCK,ND
+AND		rm64,imm			[mi:	hle o64 81 /4 id,s]			X64,SM,LOCK
 AND		mem,imm8			[mi:	hle 80 /4 ib]				8086,SM,LOCK
-AND		mem,imm16			[mi:	hle o16 81+s /4 ibw]			8086,SM,LOCK
-AND		mem,imm32			[mi:	hle o32 81+s /4 ibd]			386,SM,LOCK
+AND		mem,sbyteword16			[mi:	hle o16 83 /4 ib,s]			8086,SM,LOCK,ND
+AND		mem,imm16			[mi:	hle o16 81 /4 iw]			8086,SM,LOCK
+AND		mem,sbytedword32		[mi:	hle o32 83 /4 ib,s]			386,SM,LOCK,ND
+AND		mem,imm32			[mi:	hle o32 81 /4 id]			386,SM,LOCK
 AND		rm8,imm				[mi:	hle 82 /4 ib]				8086,SM,LOCK,ND,NOLONG
 ARPL		mem,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 ARPL		reg16,reg16			[mr:	63 /r]					286,PROT,NOLONG
@@ -282,23 +297,28 @@ CMP		reg32,mem			[rm:	o32 3b /r]				386,SM
 CMP		reg32,reg32			[rm:	o32 3b /r]				386
 CMP		reg64,mem			[rm:	o64 3b /r]				X64,SM
 CMP		reg64,reg64			[rm:	o64 3b /r]				X64
-CMP		rm16,imm8			[mi:	o16 83 /7 ibx]				8086
-CMP		rm32,imm8			[mi:	o32 83 /7 ibx]				386
-CMP		rm64,imm8			[mi:	o64 83 /7 ibx]				X64
+CMP		rm16,imm8			[mi:	o16 83 /7 ib,s]				8086
+CMP		rm32,imm8			[mi:	o32 83 /7 ib,s]				386
+CMP		rm64,imm8			[mi:	o64 83 /7 ib,s]				X64
 CMP		reg_al,imm			[-i:	3c ib]					8086,SM
-CMP		reg_ax,sbyte16			[mi:	o16 83 /7 ibx]				8086,SM
+CMP		reg_ax,sbyteword		[mi:	o16 83 /7 ib,s]				8086,SM,ND
 CMP		reg_ax,imm			[-i:	o16 3d iw]				8086,SM
-CMP		reg_eax,sbyte32			[mi:	o32 83 /7 ibx]				386,SM
+CMP		reg_eax,sbytedword		[mi:	o32 83 /7 ib,s]				386,SM,ND
 CMP		reg_eax,imm			[-i:	o32 3d id]				386,SM
-CMP		reg_rax,sbyte64			[mi:	o64 83 /7 ibx]				X64,SM
-CMP		reg_rax,imm			[-i:	o64 3d idx]				X64,SM
+CMP		reg_rax,sbytedword		[mi:	o64 83 /7 ib,s]				X64,SM,ND
+CMP		reg_rax,imm			[-i:	o64 3d id,s]				X64,SM
 CMP		rm8,imm				[mi:	80 /7 ib]				8086,SM
-CMP		rm16,imm			[mi:	o16 81+s /7 ibw]			8086,SM
-CMP		rm32,imm			[mi:	o32 81+s /7 ibd]			386,SM
-CMP		rm64,imm			[mi:	o64 81+s /7 ibd,s]			X64,SM
+CMP		rm16,sbyteword			[mi:	o16 83 /7 ib,s]				8086,SM,ND
+CMP		rm16,imm			[mi:	o16 81 /7 iw]				8086,SM
+CMP		rm32,sbytedword			[mi:	o32 83 /7 ib,s]				386,SM,ND
+CMP		rm32,imm			[mi:	o32 81 /7 id]				386,SM
+CMP		rm64,sbytedword			[mi:	o64 83 /7 ib,s]				X64,SM,ND
+CMP		rm64,imm			[mi:	o64 81 /7 id,s]				X64,SM
 CMP		mem,imm8			[mi:	80 /7 ib]				8086,SM
-CMP		mem,imm16			[mi:	o16 81+s /7 ibw]			8086,SM
-CMP		mem,imm32			[mi:	o32 81+s /7 ibd]			386,SM
+CMP		mem,sbyteword16			[mi:	o16 83 /7 ib,s]				8086,SM,ND
+CMP		mem,imm16			[mi:	o16 81 /7 iw]				8086,SM
+CMP		mem,sbytedword32		[mi:	o32 83 /7 ib,s]				386,SM,ND
+CMP		mem,imm32			[mi:	o32 81 /7 id]				386,SM
 CMP		rm8,imm				[mi:	82 /7 ib]				8086,SM,ND,NOLONG
 CMPSB		void				[	repe a6]				8086
 CMPSD		void				[	repe o32 a7]				386
@@ -582,41 +602,41 @@ IMUL		reg32,reg32			[rm:	o32 0f af /r]				386
 IMUL		reg64,mem			[rm:	o64 0f af /r]				X64,SM
 IMUL		reg64,reg64			[rm:	o64 0f af /r]				X64
 IMUL		reg16,mem,imm8			[rmi:	o16 6b /r ib,s]				186,SM
-IMUL		reg16,mem,sbyte16		[rmi:	o16 6b /r ib,s]				186,SM,ND
+IMUL		reg16,mem,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
 IMUL		reg16,mem,imm16			[rmi:	o16 69 /r iw]				186,SM
-IMUL		reg16,mem,imm			[rmi:	o16 69+s /r ibw]			186,SM,ND
+IMUL		reg16,mem,imm			[rmi:	o16 69 /r iw]				186,SM,ND
 IMUL		reg16,reg16,imm8		[rmi:	o16 6b /r ib,s]				186
-IMUL		reg16,reg16,sbyte16		[rmi:	o16 6b /r ib,s]				186,SM,ND
+IMUL		reg16,reg16,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
 IMUL		reg16,reg16,imm16		[rmi:	o16 69 /r iw]				186
-IMUL		reg16,reg16,imm			[rmi:	o16 69+s /r ibw]			186,SM,ND
+IMUL		reg16,reg16,imm			[rmi:	o16 69 /r iw]				186,SM,ND
 IMUL		reg32,mem,imm8			[rmi:	o32 6b /r ib,s]				386,SM
-IMUL		reg32,mem,sbyte32		[rmi:	o32 6b /r ib,s]				386,SM,ND
+IMUL		reg32,mem,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
 IMUL		reg32,mem,imm32			[rmi:	o32 69 /r id]				386,SM
-IMUL		reg32,mem,imm			[rmi:	o32 69+s /r ibd]			386,SM,ND
+IMUL		reg32,mem,imm			[rmi:	o32 69 /r id]				386,SM,ND
 IMUL		reg32,reg32,imm8		[rmi:	o32 6b /r ib,s]				386
-IMUL		reg32,reg32,sbyte32		[rmi:	o32 6b /r ib,s]				386,SM,ND
+IMUL		reg32,reg32,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
 IMUL		reg32,reg32,imm32		[rmi:	o32 69 /r id]				386
-IMUL		reg32,reg32,imm			[rmi:	o32 69+s /r ibd]			386,SM,ND
+IMUL		reg32,reg32,imm			[rmi:	o32 69 /r id]				386,SM,ND
 IMUL		reg64,mem,imm8			[rmi:	o64 6b /r ib,s]				X64,SM
-IMUL		reg64,mem,sbyte64		[rmi:	o64 6b /r ib,s]				X64,SM,ND
+IMUL		reg64,mem,sbytedword		[rmi:	o64 6b /r ib,s]				X64,SM,ND
 IMUL		reg64,mem,imm32			[rmi:	o64 69 /r id]				X64,SM
-IMUL		reg64,mem,imm			[rmi:	o64 69+s /r ibd,s]			X64,SM,ND
+IMUL		reg64,mem,imm			[rmi:	o64 69 /r id,s]				X64,SM,ND
 IMUL		reg64,reg64,imm8		[rmi:	o64 6b /r ib,s]				X64
-IMUL		reg64,reg64,sbyte64		[rmi:	o64 6b /r ib,s]				X64,SM,ND
+IMUL		reg64,reg64,sbytedword		[rmi:	o64 6b /r ib,s]				X64,SM,ND
 IMUL		reg64,reg64,imm32		[rmi:	o64 69 /r id]				X64
-IMUL		reg64,reg64,imm			[rmi:	o64 69+s /r ibd,s]			X64,SM,ND
+IMUL		reg64,reg64,imm			[rmi:	o64 69 /r id,s]				X64,SM,ND
 IMUL		reg16,imm8			[r+mi:	o16 6b /r ib,s]				186
-IMUL		reg16,sbyte16			[r+mi:	o16 6b /r ib,s]				186,SM,ND
+IMUL		reg16,sbyteword			[r+mi:	o16 6b /r ib,s]				186,SM,ND
 IMUL		reg16,imm16			[r+mi:	o16 69 /r iw]				186
-IMUL		reg16,imm			[r+mi:	o16 69+s /r ibw]			186,SM,ND
+IMUL		reg16,imm			[r+mi:	o16 69 /r iw]				186,SM,ND
 IMUL		reg32,imm8			[r+mi:	o32 6b /r ib,s]				386
-IMUL		reg32,sbyte32			[r+mi:	o32 6b /r ib,s]				386,SM,ND
+IMUL		reg32,sbytedword		[r+mi:	o32 6b /r ib,s]				386,SM,ND
 IMUL		reg32,imm32			[r+mi:	o32 69 /r id]				386
-IMUL		reg32,imm			[r+mi:	o32 69+s /r ibd]			386,SM,ND
+IMUL		reg32,imm			[r+mi:	o32 69 /r id]				386,SM,ND
 IMUL		reg64,imm8			[r+mi:	o64 6b /r ib,s]				X64
-IMUL		reg64,sbyte64			[r+mi:	o64 6b /r ib,s]				X64,SM,ND
-IMUL		reg64,imm32			[r+mi:	o64 69 /r idx]				X64
-IMUL		reg64,imm			[r+mi:	o64 69+s /r ibd,s]			X64,SM,ND
+IMUL		reg64,sbytedword		[r+mi:	o64 6b /r ib,s]				X64,SM,ND
+IMUL		reg64,imm32			[r+mi:	o64 69 /r id,s]				X64
+IMUL		reg64,imm			[r+mi:	o64 69 /r id,s]				X64,SM,ND
 IN		reg_al,imm			[-i:	e4 ib,u]				8086,SB
 IN		reg_ax,imm			[-i:	o16 e5 ib,u]				8086,SB
 IN		reg_eax,imm			[-i:	o32 e5 ib,u]				386,SB
@@ -824,14 +844,14 @@ MOV		reg64,reg64			[rm:	o64 8b /r]				X64
 MOV		reg8,imm			[ri:	b0+r ib]				8086,SM
 MOV		reg16,imm			[ri:	o16 b8+r iw]				8086,SM
 MOV		reg32,imm			[ri:	o32 b8+r id]				386,SM
-MOV		reg64,udword64			[ri:	o64nw b8+r id]				X64,SM,OPT,ND
-MOV		reg64,sdword64			[mi:	o64 c7 /0 idx]				X64,SM,OPT,ND
+MOV		reg64,udword			[ri:	o64nw b8+r id]				X64,SM,OPT,ND
+MOV		reg64,sdword			[mi:	o64 c7 /0 id,s]				X64,SM,OPT,ND
 MOV		reg64,imm			[ri:	o64 b8+r iq]				X64,SM
 MOV		rm8,imm				[mi:	hlexr c6 /0 ib]				8086,SM
 MOV		rm16,imm			[mi:	hlexr o16 c7 /0 iw]			8086,SM
 MOV		rm32,imm			[mi:	hlexr o32 c7 /0 id]			386,SM
-MOV		rm64,imm			[mi:	hlexr o64 c7 /0 idx]			X64,SM
-MOV		rm64,imm32			[mi:	hlexr o64 c7 /0 idx]			X64
+MOV		rm64,imm			[mi:	hlexr o64 c7 /0 id,s]			X64,SM
+MOV		rm64,imm32			[mi:	hlexr o64 c7 /0 id,s]			X64
 MOV		mem,imm8			[mi:	hlexr c6 /0 ib]				8086,SM
 MOV		mem,imm16			[mi:	hlexr o16 c7 /0 iw]			8086,SM
 MOV		mem,imm32			[mi:	hlexr o32 c7 /0 id]			386,SM
@@ -895,23 +915,28 @@ OR		reg32,mem			[rm:	o32 0b /r]				386,SM
 OR		reg32,reg32			[rm:	o32 0b /r]				386
 OR		reg64,mem			[rm:	o64 0b /r]				X64,SM
 OR		reg64,reg64			[rm:	o64 0b /r]				X64
-OR		rm16,imm8			[mi:	hle o16 83 /1 ibx]			8086,LOCK
-OR		rm32,imm8			[mi:	hle o32 83 /1 ibx]			386,LOCK
-OR		rm64,imm8			[mi:	hle o64 83 /1 ibx]			X64,LOCK
+OR		rm16,imm8			[mi:	hle o16 83 /1 ib,s]			8086,LOCK
+OR		rm32,imm8			[mi:	hle o32 83 /1 ib,s]			386,LOCK
+OR		rm64,imm8			[mi:	hle o64 83 /1 ib,s]			X64,LOCK
 OR		reg_al,imm			[-i:	0c ib]					8086,SM
-OR		reg_ax,sbyte16			[mi:	o16 83 /1 ibx]				8086,SM
+OR		reg_ax,sbyteword		[mi:	o16 83 /1 ib,s]				8086,SM,ND
 OR		reg_ax,imm			[-i:	o16 0d iw]				8086,SM
-OR		reg_eax,sbyte32			[mi:	o32 83 /1 ibx]				386,SM
+OR		reg_eax,sbytedword		[mi:	o32 83 /1 ib,s]				386,SM,ND
 OR		reg_eax,imm			[-i:	o32 0d id]				386,SM
-OR		reg_rax,sbyte64			[mi:	o64 83 /1 ibx]				X64,SM
-OR		reg_rax,imm			[-i:	o64 0d idx]				X64,SM
+OR		reg_rax,sbytedword		[mi:	o64 83 /1 ib,s]				X64,SM,ND
+OR		reg_rax,imm			[-i:	o64 0d id,s]				X64,SM
 OR		rm8,imm				[mi:	hle 80 /1 ib]				8086,SM,LOCK
-OR		rm16,imm			[mi:	hle o16 81+s /1 ibw]			8086,SM,LOCK
-OR		rm32,imm			[mi:	hle o32 81+s /1 ibd]			386,SM,LOCK
-OR		rm64,imm			[mi:	hle o64 81+s /1 ibd,s]			X64,SM,LOCK
+OR		rm16,sbyteword			[mi:	hle o16 83 /1 ib,s]			8086,SM,LOCK,ND
+OR		rm16,imm			[mi:	hle o16 81 /1 iw]			8086,SM,LOCK
+OR		rm32,sbytedword			[mi:	hle o32 83 /1 ib,s]			386,SM,LOCK,ND
+OR		rm32,imm			[mi:	hle o32 81 /1 id]			386,SM,LOCK
+OR		rm64,sbytedword			[mi:	hle o64 83 /1 ib,s]			X64,SM,LOCK,ND
+OR		rm64,imm			[mi:	hle o64 81 /1 id,s]			X64,SM,LOCK
 OR		mem,imm8			[mi:	hle 80 /1 ib]				8086,SM,LOCK
-OR		mem,imm16			[mi:	hle o16 81+s /1 ibw]			8086,SM,LOCK
-OR		mem,imm32			[mi:	hle o32 81+s /1 ibd]			386,SM,LOCK
+OR		mem,sbyteword16			[mi:	hle o16 83 /1 ib,s]			8086,SM,LOCK,ND
+OR		mem,imm16			[mi:	hle o16 81 /1 iw]			8086,SM,LOCK
+OR		mem,sbytedword32		[mi:	hle o32 83 /1 ib,s]			386,SM,LOCK,ND
+OR		mem,imm32			[mi:	hle o32 81 /1 id]			386,SM,LOCK
 OR		rm8,imm				[mi:	hle 82 /1 ib]				8086,SM,LOCK,ND,NOLONG
 OUT		imm,reg_al			[i-:	e6 ib,u]				8086,SB
 OUT		imm,reg_ax			[i-:	o16 e7 ib,u]				8086,SB
@@ -1032,12 +1057,17 @@ PUSH		rm64				[m:	o64nw ff /6]				X64
 PUSH		reg_cs				[-:	pushseg]				8086,NOLONG
 PUSH		reg_dess			[-:	pushseg]				8086,NOLONG
 PUSH		reg_fsgs			[-:	0f pushseg2]				386
-PUSH		imm8				[i:	6a ibx]					186
-PUSH		imm16				[i:	o16 68+s ibw]				186,AR0,SZ
-PUSH		imm32				[i:	o32 68+s ibd]				386,NOLONG,AR0,SZ
-PUSH		imm32				[i:	o32 68+s ibd]				386,NOLONG,SD
-PUSH		imm32				[i:	o64nw 68+s ibd,s]			X64,AR0,SZ
-PUSH		imm64				[i:	o64nw 68+s ibd,s]			X64,AR0,SZ
+PUSH		imm8				[i:	6a ib,s]					186
+PUSH		sbyteword16			[i:	o16 6a ib,s]				186,AR0,SZ,ND
+PUSH		imm16				[i:	o16 68 iw]				186,AR0,SZ
+PUSH		sbytedword32			[i:	o32 6a ib,s]				386,NOLONG,AR0,SZ,ND
+PUSH		imm32				[i:	o32 68 id]				386,NOLONG,AR0,SZ
+PUSH		sbytedword32			[i:	o32 6a ib,s]				386,NOLONG,SD,ND
+PUSH		imm32				[i:	o32 68 id]				386,NOLONG,SD
+PUSH		sbytedword64			[i:	o64nw 6a ib,s]				X64,AR0,SZ,ND
+PUSH		imm64				[i:	o64nw 68 id,s]				X64,AR0,SZ
+PUSH		sbytedword32			[i:	o64nw 6a ib,s]				X64,AR0,SZ,ND
+PUSH		imm32				[i:	o64nw 68 id,s]				X64,AR0,SZ
 PUSHA		void				[	odf 60]					186,NOLONG
 PUSHAD		void				[	o32 60]					386,NOLONG
 PUSHAW		void				[	o16 60]					186,NOLONG
@@ -1152,23 +1182,28 @@ SBB		reg32,mem			[rm:	o32 1b /r]				386,SM
 SBB		reg32,reg32			[rm:	o32 1b /r]				386
 SBB		reg64,mem			[rm:	o64 1b /r]				X64,SM
 SBB		reg64,reg64			[rm:	o64 1b /r]				X64
-SBB		rm16,imm8			[mi:	hle o16 83 /3 ibx]			8086,LOCK
-SBB		rm32,imm8			[mi:	hle o32 83 /3 ibx]			386,LOCK
-SBB		rm64,imm8			[mi:	hle o64 83 /3 ibx]			X64,LOCK
+SBB		rm16,imm8			[mi:	hle o16 83 /3 ib,s]			8086,LOCK
+SBB		rm32,imm8			[mi:	hle o32 83 /3 ib,s]			386,LOCK
+SBB		rm64,imm8			[mi:	hle o64 83 /3 ib,s]			X64,LOCK
 SBB		reg_al,imm			[-i:	1c ib]					8086,SM
-SBB		reg_ax,sbyte16			[mi:	o16 83 /3 ibx]				8086,SM
+SBB		reg_ax,sbyteword		[mi:	o16 83 /3 ib,s]				8086,SM,ND
 SBB		reg_ax,imm			[-i:	o16 1d iw]				8086,SM
-SBB		reg_eax,sbyte32			[mi:	o32 83 /3 ibx]				386,SM
+SBB		reg_eax,sbytedword		[mi:	o32 83 /3 ib,s]				386,SM,ND
 SBB		reg_eax,imm			[-i:	o32 1d id]				386,SM
-SBB		reg_rax,sbyte64			[mi:	o64 83 /3 ibx]				X64,SM
-SBB		reg_rax,imm			[-i:	o64 1d idx]				X64,SM
+SBB		reg_rax,sbytedword		[mi:	o64 83 /3 ib,s]				X64,SM,ND
+SBB		reg_rax,imm			[-i:	o64 1d id,s]				X64,SM
 SBB		rm8,imm				[mi:	hle 80 /3 ib]				8086,SM,LOCK
-SBB		rm16,imm			[mi:	hle o16 81+s /3 ibw]			8086,SM,LOCK
-SBB		rm32,imm			[mi:	hle o32 81+s /3 ibd]			386,SM,LOCK
-SBB		rm64,imm			[mi:	hle o64 81+s /3 ibd,s]			X64,SM,LOCK
+SBB		rm16,sbyteword			[mi:	hle o16 83 /3 ib,s]			8086,SM,LOCK,ND
+SBB		rm16,imm			[mi:	hle o16 81 /3 iw]			8086,SM,LOCK
+SBB		rm32,sbytedword			[mi:	hle o32 83 /3 ib,s]			386,SM,LOCK,ND
+SBB		rm32,imm			[mi:	hle o32 81 /3 id]			386,SM,LOCK
+SBB		rm64,sbytedword			[mi:	hle o64 83 /3 ib,s]			X64,SM,LOCK,ND
+SBB		rm64,imm			[mi:	hle o64 81 /3 id,s]			X64,SM,LOCK
 SBB		mem,imm8			[mi:	hle 80 /3 ib]				8086,SM,LOCK
-SBB		mem,imm16			[mi:	hle o16 81+s /3 ibw]			8086,SM,LOCK
-SBB		mem,imm32			[mi:	hle o32 81+s /3 ibd]			386,SM,LOCK
+SBB		mem,sbyteword16			[mi:	hle o16 83 /3 ib,s]			8086,SM,LOCK,ND
+SBB		mem,imm16			[mi:	hle o16 81 /3 iw]			8086,SM,LOCK
+SBB		mem,sbytedword32		[mi:	hle o32 83 /3 ib,s]			386,SM,LOCK,ND
+SBB		mem,imm32			[mi:	hle o32 81 /3 id]			386,SM,LOCK
 SBB		rm8,imm				[mi:	hle 82 /3 ib]				8086,SM,LOCK,ND,NOLONG
 SCASB		void				[	repe ae]				8086
 SCASD		void				[	repe o32 af]				386
@@ -1268,23 +1303,28 @@ SUB		reg32,mem			[rm:	o32 2b /r]				386,SM
 SUB		reg32,reg32			[rm:	o32 2b /r]				386
 SUB		reg64,mem			[rm:	o64 2b /r]				X64,SM
 SUB		reg64,reg64			[rm:	o64 2b /r]				X64
-SUB		rm16,imm8			[mi:	hle o16 83 /5 ibx]			8086,LOCK
-SUB		rm32,imm8			[mi:	hle o32 83 /5 ibx]			386,LOCK
-SUB		rm64,imm8			[mi:	hle o64 83 /5 ibx]			X64,LOCK
+SUB		rm16,imm8			[mi:	hle o16 83 /5 ib,s]			8086,LOCK
+SUB		rm32,imm8			[mi:	hle o32 83 /5 ib,s]			386,LOCK
+SUB		rm64,imm8			[mi:	hle o64 83 /5 ib,s]			X64,LOCK
 SUB		reg_al,imm			[-i:	2c ib]					8086,SM
-SUB		reg_ax,sbyte16			[mi:	o16 83 /5 ibx]				8086,SM
+SUB		reg_ax,sbyteword		[mi:	o16 83 /5 ib,s]				8086,SM,ND
 SUB		reg_ax,imm			[-i:	o16 2d iw]				8086,SM
-SUB		reg_eax,sbyte32			[mi:	o32 83 /5 ibx]				386,SM
+SUB		reg_eax,sbytedword		[mi:	o32 83 /5 ib,s]				386,SM,ND
 SUB		reg_eax,imm			[-i:	o32 2d id]				386,SM
-SUB		reg_rax,sbyte64			[mi:	o64 83 /5 ibx]				X64,SM
-SUB		reg_rax,imm			[-i:	o64 2d idx]				X64,SM
+SUB		reg_rax,sbytedword		[mi:	o64 83 /5 ib,s]				X64,SM,ND
+SUB		reg_rax,imm			[-i:	o64 2d id,s]				X64,SM
 SUB		rm8,imm				[mi:	hle 80 /5 ib]				8086,SM,LOCK
-SUB		rm16,imm			[mi:	hle o16 81+s /5 ibw]			8086,SM,LOCK
-SUB		rm32,imm			[mi:	hle o32 81+s /5 ibd]			386,SM,LOCK
-SUB		rm64,imm			[mi:	hle o64 81+s /5 ibd,s]			X64,SM,LOCK
+SUB		rm16,sbyteword			[mi:	hle o16 83 /5 ib,s]			8086,SM,LOCK,ND
+SUB		rm16,imm			[mi:	hle o16 81 /5 iw]			8086,SM,LOCK
+SUB		rm32,sbytedword			[mi:	hle o32 83 /5 ib,s]			386,SM,LOCK,ND
+SUB		rm32,imm			[mi:	hle o32 81 /5 id]			386,SM,LOCK
+SUB		rm64,sbytedword			[mi:	hle o64 83 /5 ib,s]			X64,SM,LOCK,ND
+SUB		rm64,imm			[mi:	hle o64 81 /5 id,s]			X64,SM,LOCK
 SUB		mem,imm8			[mi:	hle 80 /5 ib]				8086,SM,LOCK
-SUB		mem,imm16			[mi:	hle o16 81+s /5 ibw]			8086,SM,LOCK
-SUB		mem,imm32			[mi:	hle o32 81+s /5 ibd]			386,SM,LOCK
+SUB		mem,sbyteword16			[mi:	hle o16 83 /5 ib,s]			8086,SM,LOCK,ND
+SUB		mem,imm16			[mi:	hle o16 81 /5 iw]			8086,SM,LOCK
+SUB		mem,sbytedword32		[mi:	hle o32 83 /5 ib,s]			386,SM,LOCK,ND
+SUB		mem,imm32			[mi:	hle o32 81 /5 id]			386,SM,LOCK
 SUB		rm8,imm				[mi:	hle 82 /5 ib]				8086,SM,LOCK,ND,NOLONG
 SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
 SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
@@ -1309,11 +1349,11 @@ TEST		reg64,mem			[rm:	o64 85 /r]				X64,SM
 TEST		reg_al,imm			[-i:	a8 ib]					8086,SM
 TEST		reg_ax,imm			[-i:	o16 a9 iw]				8086,SM
 TEST		reg_eax,imm			[-i:	o32 a9 id]				386,SM
-TEST		reg_rax,imm			[-i:	o64 a9 idx]				X64,SM
+TEST		reg_rax,imm			[-i:	o64 a9 id,s]				X64,SM
 TEST		rm8,imm				[mi:	f6 /0 ib]				8086,SM
 TEST		rm16,imm			[mi:	o16 f7 /0 iw]				8086,SM
 TEST		rm32,imm			[mi:	o32 f7 /0 id]				386,SM
-TEST		rm64,imm			[mi:	o64 f7 /0 idx]				X64,SM
+TEST		rm64,imm			[mi:	o64 f7 /0 id,s]				X64,SM
 TEST		mem,imm8			[mi:	f6 /0 ib]				8086,SM
 TEST		mem,imm16			[mi:	o16 f7 /0 iw]				8086,SM
 TEST		mem,imm32			[mi:	o32 f7 /0 id]				386,SM
@@ -1399,23 +1439,28 @@ XOR		reg32,mem			[rm:	o32 33 /r]				386,SM
 XOR		reg32,reg32			[rm:	o32 33 /r]				386
 XOR		reg64,mem			[rm:	o64 33 /r]				X64,SM
 XOR		reg64,reg64			[rm:	o64 33 /r]				X64
-XOR		rm16,imm8			[mi:	hle o16 83 /6 ibx]			8086,LOCK
-XOR		rm32,imm8			[mi:	hle o32 83 /6 ibx]			386,LOCK
-XOR		rm64,imm8			[mi:	hle o64 83 /6 ibx]			X64,LOCK
+XOR		rm16,imm8			[mi:	hle o16 83 /6 ib,s]			8086,LOCK
+XOR		rm32,imm8			[mi:	hle o32 83 /6 ib,s]			386,LOCK
+XOR		rm64,imm8			[mi:	hle o64 83 /6 ib,s]			X64,LOCK
 XOR		reg_al,imm			[-i:	34 ib]					8086,SM
-XOR		reg_ax,sbyte16			[mi:	o16 83 /6 ibx]				8086,SM
+XOR		reg_ax,sbyteword		[mi:	o16 83 /6 ib,s]				8086,SM,ND
 XOR		reg_ax,imm			[-i:	o16 35 iw]				8086,SM
-XOR		reg_eax,sbyte32			[mi:	o32 83 /6 ibx]				386,SM
+XOR		reg_eax,sbytedword		[mi:	o32 83 /6 ib,s]				386,SM,ND
 XOR		reg_eax,imm			[-i:	o32 35 id]				386,SM
-XOR		reg_rax,sbyte64			[mi:	o64 83 /6 ibx]				X64,SM
-XOR		reg_rax,imm			[-i:	o64 35 idx]				X64,SM
+XOR		reg_rax,sbytedword		[mi:	o64 83 /6 ib,s]				X64,SM,ND
+XOR		reg_rax,imm			[-i:	o64 35 id,s]				X64,SM
 XOR		rm8,imm				[mi:	hle 80 /6 ib]				8086,SM,LOCK
-XOR		rm16,imm			[mi:	hle o16 81+s /6 ibw]			8086,SM,LOCK
-XOR		rm32,imm			[mi:	hle o32 81+s /6 ibd]			386,SM,LOCK
-XOR		rm64,imm			[mi:	hle o64 81+s /6 ibd,s]			X64,SM,LOCK
+XOR		rm16,sbyteword			[mi:	hle o16 83 /6 ib,s]			8086,SM,LOCK,ND
+XOR		rm16,imm			[mi:	hle o16 81 /6 iw]			8086,SM,LOCK
+XOR		rm32,sbytedword			[mi:	hle o32 83 /6 ib,s]			386,SM,LOCK,ND
+XOR		rm32,imm			[mi:	hle o32 81 /6 id]			386,SM,LOCK
+XOR		rm64,sbytedword			[mi:	hle o64 83 /6 ib,s]			X64,SM,LOCK,ND
+XOR		rm64,imm			[mi:	hle o64 81 /6 id,s]			X64,SM,LOCK
 XOR		mem,imm8			[mi:	hle 80 /6 ib]				8086,SM,LOCK
-XOR		mem,imm16			[mi:	hle o16 81+s /6 ibw]			8086,SM,LOCK
-XOR		mem,imm32			[mi:	hle o32 81+s /6 ibd]			386,SM,LOCK
+XOR		mem,sbyteword16			[mi:	hle o16 83 /6 ib,s]			8086,SM,LOCK,ND
+XOR		mem,imm16			[mi:	hle o16 81 /6 iw]			8086,SM,LOCK
+XOR		mem,sbytedword32		[mi:	hle o32 83 /6 ib,s]			386,SM,LOCK,ND
+XOR		mem,imm32			[mi:	hle o32 81 /6 id]			386,SM,LOCK
 XOR		rm8,imm				[mi:	hle 82 /6 ib]				8086,SM,LOCK,ND,NOLONG
 CMOVcc		reg16,mem			[rm:	o16 0f 40+c /r]				P6,SM
 CMOVcc		reg16,reg16			[rm:	o16 0f 40+c /r]				P6

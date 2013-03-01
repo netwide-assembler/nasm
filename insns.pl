@@ -439,13 +439,8 @@ sub format_insn($$$$$) {
                 @opx = ();
                 foreach $opp (split(/\|/, $op)) {
                     @oppx = ();
-                    if ($opp =~ /^(.*[^\d])(8|16|32|64|80|128|256)$/) {
-                        my $ox = $1;
-                        my $on = $2;
-                        if ($ox !~ /^(sbyte|sdword|udword)$/) {
-                            $opp = $ox;
-                            push(@oppx, "bits$on");
-                        }
+                    if ($opp =~ s/(?<=\D)(8|16|32|64|80|128|256)$//) {
+                        push(@oppx, "bits$1");
                     }
                     $opp =~ s/^mem$/memory/;
                     $opp =~ s/^memory_offs$/mem_offs/;
@@ -670,29 +665,20 @@ sub byte_code_compile($$) {
     my $opex;
 
     my %imm_codes = (
-        'ib,s' => 014,  # Signed imm8
         'ib' => 020,    # imm8
         'ib,u' => 024,  # Unsigned imm8
         'iw' => 030,    # imm16
-        'ibx' => 0274,  # imm8 sign-extended to opsize
+        'ib,s' => 0274, # imm8 sign-extended to opsize or bits
         'iwd' => 034,   # imm16 or imm32, depending on opsize
         'id' => 040,    # imm32
-        'idx' => 0254,  # imm32 extended to 64 bits
-        'iwdq' => 044,  # imm16/32/64, depending on opsize
+        'id,s' => 0254, # imm32 sign-extended to 64 bits
+        'iwdq' => 044,  # imm16/32/64, depending on addrsize
         'rel8' => 050,
         'iq' => 054,
         'rel16' => 060,
         'rel' => 064,   # 16 or 32 bit relative operand
         'rel32' => 070,
         'seg' => 074,
-        'ibw' => 0140,  # imm16 that can be bytified
-        'ibd' => 0150,  # imm32 that can be bytified
-        'ibd,s' => 0250 # imm32 that can be bytified, sign extended to 64 bits
-    );
-    my %imm_codes_bytifiers = (
-        'ibw' => 0144,
-        'ibd' => 0154,
-        'ibd,s' => 0154
     );
     my %plain_codes = (
 	'o16' => 0320,		# 16-bit operand size
@@ -877,12 +863,6 @@ sub byte_code_compile($$) {
             }
             push(@codes, 05) if ($oppos{$last_imm} & 4);
             push(@codes, $imm_codes{$op} + ($oppos{$last_imm} & 3));
-            if (defined $imm_codes_bytifiers{$op}) {
-                if (!defined($s_pos)) {
-                    die "$fname: $line: $op without a +s byte\n";
-                }
-                $codes[$s_pos] += $imm_codes_bytifiers{$op};
-            }
             $prefix_ok = 0;
         } elsif ($op eq '/is4') {
             if (!defined($oppos{'s'})) {
@@ -904,14 +884,6 @@ sub byte_code_compile($$) {
                 die "$fname: $line: invalid imm4 value for $op: $imm\n";
             }
             push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
-            $prefix_ok = 0;
-        } elsif ($op =~ /^([0-9a-f]{2})\+s$/) {
-            if (!defined($oppos{'i'})) {
-                die "$fname: $line: $op without 'i' operand\n";
-            }
-            $s_pos = scalar @codes;
-            push(@codes, 05) if ($oppos{'i'} & 4);
-            push(@codes, $oppos{'i'} & 3, hex $1);
             $prefix_ok = 0;
         } elsif ($op =~ /^([0-9a-f]{2})\+c$/) {
             push(@codes, 0330, hex $1);
