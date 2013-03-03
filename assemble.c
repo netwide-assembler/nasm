@@ -1218,11 +1218,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     insn * ins, const struct itemplate *temp,
                     int64_t insn_end)
 {
-    static const char condval[] = {   /* conditional opcodes */
-        0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xF, 0xD, 0xC, 0xE, 0x6, 0x2,
-        0x3, 0x7, 0x3, 0x5, 0xE, 0xC, 0xD, 0xF, 0x1, 0xB, 0x9, 0x5,
-        0x0, 0xA, 0xA, 0xB, 0x8, 0x4
-    };
     uint8_t c;
     uint8_t bytes[4];
     int64_t size;
@@ -1561,7 +1556,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0330:
-            *bytes = *codes++ ^ condval[ins->condition];
+            *bytes = *codes++ ^ get_cond_opcode(ins->condition);
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset += 1;
             break;
