@@ -1005,9 +1005,12 @@ POP		reg64				[r:	o64nw 58+r]				X64
 POP		rm16				[m:	o16 8f /0]				8086
 POP		rm32				[m:	o32 8f /0]				386,NOLONG
 POP		rm64				[m:	o64nw 8f /0]				X64
+POP		reg_es				[-:	07]					8086,NOLONG
 POP		reg_cs				[-:	0f]					8086,UNDOC,ND
-POP		reg_dess			[-:	popseg]					8086,NOLONG
-POP		reg_fsgs			[-:	0f popseg2]				386
+POP		reg_ss				[-:	17]					8086,NOLONG
+POP		reg_ds				[-:	1f]					8086,NOLONG
+POP		reg_fs				[-:	0f a1]					386
+POP		reg_gs				[-:	0f a9]					386
 POPA		void				[	odf 61]					186,NOLONG
 POPAD		void				[	o32 61]					386,NOLONG
 POPAW		void				[	o16 61]					186,NOLONG
@@ -1054,9 +1057,12 @@ PUSH		reg64				[r:	o64nw 50+r]				X64
 PUSH		rm16				[m:	o16 ff /6]				8086
 PUSH		rm32				[m:	o32 ff /6]				386,NOLONG
 PUSH		rm64				[m:	o64nw ff /6]				X64
-PUSH		reg_cs				[-:	pushseg]				8086,NOLONG
-PUSH		reg_dess			[-:	pushseg]				8086,NOLONG
-PUSH		reg_fsgs			[-:	0f pushseg2]				386
+PUSH		reg_es				[-:	06]					8086,NOLONG
+PUSH		reg_cs				[-:	0e]					8086,NOLONG
+PUSH		reg_ss				[-:	16]					8086,NOLONG
+PUSH		reg_ds				[-:	1e]					8086,NOLONG
+PUSH		reg_fs				[-:	0f a0]					386
+PUSH		reg_gs				[-:	0f a8]					386
 PUSH		imm8				[i:	6a ib,s]					186
 PUSH		sbyteword16			[i:	o16 6a ib,s]				186,AR0,SZ,ND
 PUSH		imm16				[i:	o16 68 iw]				186,AR0,SZ

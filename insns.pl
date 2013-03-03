@@ -608,14 +608,6 @@ sub startseq($$) {
             return addprefix($prefix, $c1..($c1+15));
         } elsif ($c0 == 0 || $c0 == 0340) {
             return $prefix;
-        } elsif ($c0 == 0344) {
-            return addprefix($prefix, 0x06, 0x0E, 0x16, 0x1E);
-        } elsif ($c0 == 0345) {
-            return addprefix($prefix, 0x07, 0x17, 0x1F);
-        } elsif ($c0 == 0346) {
-            return addprefix($prefix, 0xA0, 0xA8);
-        } elsif ($c0 == 0347) {
-            return addprefix($prefix, 0xA1, 0xA9);
         } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
             my $c,$m,$wlp;
             $m   = shift(@codes);
@@ -694,10 +686,6 @@ sub byte_code_compile($$) {
         '!asp'      => 0365,
         'f2i'       => 0332,    # F2 prefix, but 66 for operand size is OK
         'f3i'       => 0333,    # F3 prefix, but 66 for operand size is OK
-        'pushseg'   => 0344,
-        'popseg'    => 0345,
-        'pushseg2'  => 0346,
-        'popseg2'   => 0347,
         'mustrep'   => 0336,
         'mustrepne' => 0337,
         'rex.l'     => 0334,

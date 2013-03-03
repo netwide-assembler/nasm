@@ -112,50 +112,43 @@ static uint64_t getu64(uint8_t *data)
 /* Important: regval must already have been adjusted for rex extensions */
 static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
 {
+    size_t i;
+
+    static const struct {
+        opflags_t       flags;
+        enum reg_enum   reg;
+    } specific_registers[] = {
+        {REG_AL,  R_AL},
+        {REG_AX,  R_AX},
+        {REG_EAX, R_EAX},
+        {REG_RAX, R_RAX},
+        {REG_DL,  R_DL},
+        {REG_DX,  R_DX},
+        {REG_EDX, R_EDX},
+        {REG_RDX, R_RDX},
+        {REG_CL,  R_CL},
+        {REG_CX,  R_CX},
+        {REG_ECX, R_ECX},
+        {REG_RCX, R_RCX},
+        {FPU0,    R_ST0},
+        {XMM0,    R_XMM0},
+        {YMM0,    R_YMM0},
+        {REG_ES,  R_ES},
+        {REG_CS,  R_CS},
+        {REG_SS,  R_SS},
+        {REG_DS,  R_DS},
+        {REG_FS,  R_FS},
+        {REG_GS,  R_GS}
+    };
+
     if (!(regflags & (REGISTER|REGMEM)))
 	return 0;		/* Registers not permissible?! */
 
     regflags |= REGISTER;
 
-    if (!(REG_AL & ~regflags))
-        return R_AL;
-    if (!(REG_AX & ~regflags))
-        return R_AX;
-    if (!(REG_EAX & ~regflags))
-        return R_EAX;
-    if (!(REG_RAX & ~regflags))
-	return R_RAX;
-    if (!(REG_DL & ~regflags))
-        return R_DL;
-    if (!(REG_DX & ~regflags))
-        return R_DX;
-    if (!(REG_EDX & ~regflags))
-        return R_EDX;
-    if (!(REG_RDX & ~regflags))
-        return R_RDX;
-    if (!(REG_CL & ~regflags))
-        return R_CL;
-    if (!(REG_CX & ~regflags))
-        return R_CX;
-    if (!(REG_ECX & ~regflags))
-        return R_ECX;
-    if (!(REG_RCX & ~regflags))
-        return R_RCX;
-    if (!(FPU0 & ~regflags))
-        return R_ST0;
-    if (!(XMM0 & ~regflags))
-	return R_XMM0;
-    if (!(YMM0 & ~regflags))
-	return R_YMM0;
-    if (!(REG_CS & ~regflags))
-        return (regval == 1) ? R_CS : 0;
-    if (!(REG_DESS & ~regflags))
-        return (regval == 0 || regval == 2
-                || regval == 3 ? nasm_rd_sreg[regval] : 0);
-    if (!(REG_FSGS & ~regflags))
-        return (regval == 4 || regval == 5 ? nasm_rd_sreg[regval] : 0);
-    if (!(REG_SEG67 & ~regflags))
-        return (regval == 6 || regval == 7 ? nasm_rd_sreg[regval] : 0);
+    for (i = 0; i < ARRAY_SIZE(specific_registers); i++)
+        if (!(specific_registers[i].flags & ~regflags))
+            return specific_registers[i].reg;
 
     /* All the entries below look up regval in an 16-entry array */
     if (regval < 0 || regval > 15)
@@ -828,10 +821,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 	    if (prefix->wait != 0x9B)
 		return false;
 	    dwait = 0;
-	    break;
-
-	case4(0344):
-	    ins->oprs[0].basereg = (*data++ >> 3) & 7;
 	    break;
 
 	case 0360:

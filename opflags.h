@@ -191,10 +191,16 @@ typedef uint64_t opflags_t;
 #define REG_DREG                (GEN_SUBCLASS(2) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* DRn */
 #define REG_TREG                (GEN_SUBCLASS(3) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* TRn */
 #define REG_SREG                (                  REG_CLASS_SREG   | BITS16           | REGISTER)      /* any segment register */
-#define REG_CS                  (GEN_SUBCLASS(1) | REG_CLASS_SREG   | BITS16           | REGISTER)      /* CS */
-#define REG_DESS                (GEN_SUBCLASS(2) | REG_CLASS_SREG   | BITS16           | REGISTER)      /* DS, ES, SS */
-#define REG_FSGS                (GEN_SUBCLASS(3) | REG_CLASS_SREG   | BITS16           | REGISTER)      /* FS, GS */
-#define REG_SEG67               (GEN_SUBCLASS(4) | REG_CLASS_SREG   | BITS16           | REGISTER)      /* Unimplemented segment registers */
+
+/* Segment registers */
+#define REG_ES                  (GEN_SUBCLASS(0) | GEN_SUBCLASS(2) | REG_CLASS_SREG | BITS16 | REGISTER)      /* ES */
+#define REG_CS                  (GEN_SUBCLASS(1) | GEN_SUBCLASS(2) | REG_CLASS_SREG | BITS16 | REGISTER)      /* CS */
+#define REG_SS                  (GEN_SUBCLASS(0) | GEN_SUBCLASS(3) | REG_CLASS_SREG | BITS16 | REGISTER)      /* SS */
+#define REG_DS                  (GEN_SUBCLASS(1) | GEN_SUBCLASS(3) | REG_CLASS_SREG | BITS16 | REGISTER)      /* DS */
+#define REG_FS                  (GEN_SUBCLASS(0) | GEN_SUBCLASS(4) | REG_CLASS_SREG | BITS16 | REGISTER)      /* FS */
+#define REG_GS                  (GEN_SUBCLASS(1) | GEN_SUBCLASS(4) | REG_CLASS_SREG | BITS16 | REGISTER)      /* GS */
+#define REG_FSGS                (                  GEN_SUBCLASS(4) | REG_CLASS_SREG | BITS16 | REGISTER)      /* FS or GS */
+#define REG_SEG67               (                  GEN_SUBCLASS(5) | REG_CLASS_SREG | BITS16 | REGISTER)      /* Unimplemented segment registers */
 
 /* Special GPRs */
 #define REG_SMASK               SUBCLASS_MASK                                                                           /* a mask for the following */

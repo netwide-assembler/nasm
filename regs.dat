@@ -86,12 +86,12 @@ r8-15d	REG32NA		reg32		8
 r8-15	REG64NA		reg64		8
 
 # Segment registers
+es	REG_ES		sreg		0
 cs	REG_CS		sreg		1
-ds	REG_DESS	sreg		3
-es	REG_DESS	sreg		0
-ss	REG_DESS	sreg		2
-fs	REG_FSGS	sreg		4
-gs	REG_FSGS	sreg		5
+ss	REG_SS		sreg		2
+ds	REG_DS		sreg		3
+fs	REG_FS		sreg		4
+gs	REG_GS		sreg		5
 segr6-7	REG_SEG67	sreg		6
 
 # Control registers

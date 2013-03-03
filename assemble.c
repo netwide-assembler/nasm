@@ -124,10 +124,6 @@
  * \340          - reserve <operand 0> bytes of uninitialized storage.
  *                 Operand 0 had better be a segmentless constant.
  * \341          - this instruction needs a WAIT "prefix"
- * \344,\345     - the PUSH/POP (respectively) codes for CS, DS, ES, SS
- *                 (POP is never used for CS) depending on operand 0
- * \346,\347     - the second byte of PUSH/POP codes for FS, GS, depending
- *                 on operand 0
  * \360          - no SSE prefix (== \364\331)
  * \361          - 66 SSE prefix (== \366\331)
  * \362          - F2 SSE prefix (== \364\332)
@@ -1050,10 +1046,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 ins->prefixes[PPS_WAIT] = P_WAIT;
             break;
 
-        case4(0344):
-            length++;
-            break;
-
         case 0360:
             break;
 
@@ -1600,48 +1592,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0341:
-            break;
-
-        case 0344:
-        case 0345:
-            bytes[0] = c & 1;
-            switch (ins->oprs[0].basereg) {
-            case R_CS:
-                bytes[0] += 0x0E;
-                break;
-            case R_DS:
-                bytes[0] += 0x1E;
-                break;
-            case R_ES:
-                bytes[0] += 0x06;
-                break;
-            case R_SS:
-                bytes[0] += 0x16;
-                break;
-            default:
-                errfunc(ERR_PANIC,
-                        "bizarre 8086 segment register received");
-            }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
-
-        case 0346:
-        case 0347:
-            bytes[0] = c & 1;
-            switch (ins->oprs[0].basereg) {
-            case R_FS:
-                bytes[0] += 0xA0;
-                break;
-            case R_GS:
-                bytes[0] += 0xA8;
-                break;
-            default:
-                errfunc(ERR_PANIC,
-                        "bizarre 386 segment register received");
-            }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
             break;
 
         case 0360:
