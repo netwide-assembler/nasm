@@ -126,8 +126,6 @@
  * \341          - this instruction needs a WAIT "prefix"
  * \360          - no SSE prefix (== \364\331)
  * \361          - 66 SSE prefix (== \366\331)
- * \362          - F2 SSE prefix (== \364\332)
- * \363          - F3 SSE prefix (== \364\333)
  * \364          - operand-size prefix (0x66) not permitted
  * \365          - address-size prefix (0x67) not permitted
  * \366          - operand-size prefix (0x66) used as opcode extension
@@ -1049,7 +1047,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0360:
             break;
 
-        case3(0361):
+        case 0361:
             length++;
             break;
 
@@ -1599,13 +1597,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0361:
             bytes[0] = 0x66;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
-            break;
-
-        case 0362:
-        case 0363:
-            bytes[0] = c - 0362 + 0xf2;
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset += 1;
             break;

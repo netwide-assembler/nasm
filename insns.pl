@@ -746,9 +746,9 @@ sub byte_code_compile($$) {
             if ($op eq '66') {
                 push(@codes, 0361);
             } elsif ($op eq 'f2') {
-                push(@codes, 0362);
+                push(@codes, 0332);
             } elsif ($op eq 'f3') {
-                push(@codes, 0363);
+                push(@codes, 0333);
             } else {
                 push(@codes, 0360);
             }
