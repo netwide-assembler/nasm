@@ -59,7 +59,7 @@ char *rdl_errors[5] = {
 
 int rdl_verify(const char *filename)
 {
-    FILE *fp = fopen(filename, "rb");
+    FILE *fp;
     char buf[257];
     int i;
     int32_t length;
@@ -69,6 +69,7 @@ int rdl_verify(const char *filename)
     if (lastresult != -1 && !strcmp(filename, lastverified))
         return lastresult;
 
+    fp = fopen(filename, "rb");
     strcpy(lastverified, filename);
 
     if (!fp)

@@ -1275,12 +1275,14 @@ int main(int argc, char **argv)
                     if ((p = strchr(buf, '\n')) != NULL)
                         *p = '\0';
                     if (i >= 128) {
+                        fclose(f);
                         fprintf(stderr, "ldrdf: too many input files\n");
                         exit(1);
                     }
                     *(respstrings + i) = newstr(buf);
                     argc++, i++;
                 }
+                fclose(f);
                 break;
             }
         case '2':

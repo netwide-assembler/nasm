@@ -424,6 +424,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
         } else if (fseek(fp, 0L, SEEK_END) < 0) {
             error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
                   fname);
+            fclose(fp);
         } else {
             static char buf[4096];
             size_t t = instruction->times;

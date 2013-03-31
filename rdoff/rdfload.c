@@ -94,6 +94,7 @@ rdfmodule *rdfload(const char *filename)
         if (f->d)
             free(f->d);
         free(f);
+        free(hdr);
         return NULL;
     }
 
