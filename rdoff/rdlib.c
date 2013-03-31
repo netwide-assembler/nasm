@@ -99,8 +99,10 @@ int rdl_verify(const char *filename)
             fread(buf, 6, 1, fp);
             buf[6] = 0;
             if (strncmp(buf, "RDOFF", 5)) {
+                fclose(fp);
                 return rdl_error = lastresult = 2;
             } else if (buf[5] != '2') {
+                fclose(fp);
                 return rdl_error = lastresult = 3;
             }
         }
