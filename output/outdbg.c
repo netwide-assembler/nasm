@@ -172,8 +172,8 @@ static void dbg_out(int32_t segto, const void *data,
 
 static void dbg_sectalign(int32_t seg, unsigned int value)
 {
-    fprintf(ofile, "set alignment (%d) for segment (%d)\n",
-            seg, value);	
+    fprintf(ofile, "set alignment (%d) for segment (%u)\n",
+            seg, value);
 }
 
 static int32_t dbg_segbase(int32_t segment)
