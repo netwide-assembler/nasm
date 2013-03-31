@@ -78,7 +78,7 @@ int rdl_verify(const char *filename)
     while (!feof(fp)) {
         i = 0;
 
-        while (fread(buf + i, 1, 1, fp) == 1 && buf[i] && i < 257)
+        while (fread(buf + i, 1, 1, fp) == 1 && i < 257 && buf[i])
             i++;
         if (feof(fp))
             break;
@@ -162,7 +162,7 @@ int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
         i = strlen(lib->name);
         buf[i++] = '.';
         t = i;
-        while (fread(buf + i, 1, 1, lib->fp) == 1 && buf[i] && i < 512)
+        while (fread(buf + i, 1, 1, lib->fp) == 1 && i < 512 && buf[i])
             i++;
 
         buf[i] = 0;
@@ -239,7 +239,7 @@ int rdl_openmodule(struct librarynode *lib, int moduleno, rdffile * f)
         i = strlen(buf);
         buf[i++] = '.';
         t = i;
-        while (fread(buf + i, 1, 1, lib->fp) == 1 && buf[i] && i < 512)
+        while (fread(buf + i, 1, 1, lib->fp) == 1 && i < 512 && buf[i])
             i++;
         buf[i] = 0;
         if (feof(lib->fp))
