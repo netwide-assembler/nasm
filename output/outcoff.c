@@ -945,7 +945,6 @@ static void coff_section_header(char *name, int32_t vsize,
 
     (void)vsize;
 
-    memset(padname, 0, 8);
     strncpy(padname, name, 8);
     fwrite(padname, 8, 1, ofile);
 
@@ -998,7 +997,6 @@ static void coff_symbol(char *name, int32_t strpos, int32_t value,
     char padname[8];
 
     if (name) {
-        memset(padname, 0, 8);
         strncpy(padname, name, 8);
         fwrite(padname, 8, 1, ofile);
     } else {
@@ -1023,7 +1021,6 @@ static void coff_write_symbols(void)
      * The `.file' record, and the file name auxiliary record.
      */
     coff_symbol(".file", 0L, 0L, -2, 0, 0x67, 1);
-    memset(filename, 0, 18);
     strncpy(filename, coff_infile, 18);
     fwrite(filename, 18, 1, ofile);
 
