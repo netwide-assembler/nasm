@@ -33,7 +33,7 @@ OPTIONS
 *-D*|*-d* 'macro[=value]'::
 	Pre-defines a single-line macro.
 
-*-e*::
+*-E*|*-e*::
 	Causes *nasm* to preprocess the given input file, and write the output to
 	'stdout' (or the specified output file name), and not actually assemble
 	anything.
@@ -42,8 +42,12 @@ OPTIONS
 	Specifies the output file format. To see a list of valid output formats,
 	use the *-hf* option.
 
+*-F* 'format'::
+	Specifies the debug information format. To see a list of valid output
+	formats, use the *-y* option (for example *-felf -y*).
+
 *-g*::
-	Causes *nasm* to generate debug information in selected format
+	Causes *nasm* to generate debug information in selected format.
 
 *-h*::
 	Causes *nasm* to exit immediately, after giving a summary of its
@@ -123,6 +127,9 @@ OPTIONS
 
 *-X* 'format'::
 	Specifies error reporting format (gnu or vc).
+
+*-y*::
+	Causes *nasm* to list supported debug formats.
 
 *-Z* 'filename'::
 	Causes *nasm* to redirect error messages to 'filename'. This option exists
