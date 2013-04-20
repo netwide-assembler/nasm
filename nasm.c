@@ -784,6 +784,9 @@ static bool process_arg(char *p, char *q)
                  "    -Z<file>    redirect error messages to file\n"
                  "    -s          redirect error messages to stdout\n\n"
                  "    -F format   select a debugging format\n\n"
+                 "    -o outfile  write output to an outfile\n\n"
+                 "    -f format   select an output format\n\n"
+                 "    -l listfile write listing to a listfile\n\n"
                  "    -I<path>    adds a pathname to the include file path\n");
             printf
                 ("    -O<digit>   optimize branch offsets\n"
@@ -796,6 +799,7 @@ static bool process_arg(char *p, char *q)
                  "    -X<format>  specifies error reporting format (gnu or vc)\n"
                  "    -w+foo      enables warning foo (equiv. -Wfoo)\n"
                  "    -w-foo      disable warning foo (equiv. -Wno-foo)\n\n"
+                 "    -h          show invocation summary and exit\n\n"
                  "--prefix,--postfix\n"
                  "  this options prepend or append the given argument to all\n"
                  "  extern and global variables\n\n"
