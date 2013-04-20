@@ -25,7 +25,7 @@ OPTIONS
 	Causes *ndisasm* to exit immediately, after giving a summary
 	of its invocation options.
 
-*-r*::
+*-r*|*-v*::
 	Causes *ndisasm* to exit immediately, after displaying its
 	version number.
 
