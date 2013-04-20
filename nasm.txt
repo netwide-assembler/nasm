@@ -121,6 +121,10 @@ OPTIONS
 *-v*::
 	Causes *nasm* to exit immediately, after displaying its version number.
 
+*-W[no-]foo'::
+	Causes *nasm* to enable or disable certain classes of warning messages,
+	in gcc-like style, for example *-Worphan-labels* or *-Wno-orphan-labels*.
+
 *-w*'[+-]foo'::
 	Causes *nasm* to enable or disable certain classes of warning messages,
 	for example *-w+orphan-labels* or *-w-macro-params*.
