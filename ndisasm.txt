@@ -11,7 +11,7 @@ ndisasm - the Netwide Disassembler, an 80x86 binary file disassembler
 SYNOPSIS
 --------
 *ndisasm* [ *-o* origin ] [ *-s* sync-point [...]] [ *-a* | *-i* ]
-	[ *-b* bits ] [ *-u* ] [ *-e* hdrlen ]
+	[ *-b* bits ] [ *-u* ] [ *-e* hdrlen ] [ *-p* vendor ]
 	[ *-k* offset,length [...]] infile
 
 DESCRIPTION
