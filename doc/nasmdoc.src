@@ -7631,7 +7631,7 @@ set to zero.
 \H{reg64} Register Names in 64-bit Mode
 
 NASM uses the following names for general-purpose registers in 64-bit
-mode, for 8-, 16-, 32- and 64-bit references, respecitively:
+mode, for 8-, 16-, 32- and 64-bit references, respectively:
 
 \c      AL/AH, CL/CH, DL/DH, BL/BH, SPL, BPL, SIL, DIL, R8B-R15B
 \c      AX, CX, DX, BX, SP, BP, SI, DI, R8W-R15W
