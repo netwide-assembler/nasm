@@ -1588,10 +1588,10 @@ XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
 ; and work even if CR4.OSFXFR == 0
-PREFETCHNTA	mem				[m:	0f 18 /0]				KATMAI
-PREFETCHT0	mem				[m:	0f 18 /1]				KATMAI
-PREFETCHT1	mem				[m:	0f 18 /2]				KATMAI
-PREFETCHT2	mem				[m:	0f 18 /3]				KATMAI
+PREFETCHNTA	mem8				[m:	0f 18 /0]				KATMAI
+PREFETCHT0	mem8				[m:	0f 18 /1]				KATMAI
+PREFETCHT1	mem8				[m:	0f 18 /2]				KATMAI
+PREFETCHT2	mem8				[m:	0f 18 /3]				KATMAI
 SFENCE		void				[	np 0f ae f8]				KATMAI
 
 ;# New MMX instructions introduced in Katmai
