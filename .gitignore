@@ -16,6 +16,7 @@
 \#*
 *.bak
 *.tmp
+.git-ignore
 cscope*
 tags
 TAGS
