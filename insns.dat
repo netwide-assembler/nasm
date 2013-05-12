@@ -3439,7 +3439,9 @@ TZCNT		reg32,rm32			[rm:	o32 f3i 0f bc /r]			FUTURE,BMI1
 TZCNT		reg64,rm64			[rm:	o64 f3i 0f bc /r]			LONG,FUTURE,BMI1
 TZMSK		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /4]			FUTURE,TBM
 TZMSK		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /4]			LONG,FUTURE,TBM
-
+T1MSKC		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /7]			FUTURE,TBM
+T1MSKC		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /7]			LONG,FUTURE,TBM
++
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
