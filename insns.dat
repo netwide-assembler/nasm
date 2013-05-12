@@ -3414,6 +3414,8 @@ BEXTR		reg32,rm32,reg32		[rmv:	vex.nds.lz.0f38.w0 f7 /r]		FUTURE,BMI1
 BEXTR		reg64,rm64,reg64		[rmv:	vex.nds.lz.0f38.w1 f7 /r]		LONG,FUTURE,BMI1
 BEXTR		reg32,rm32,imm32		[rmi:	xop.m10.lz.w0 10 /r id]			FUTURE,TBM
 BEXTR		reg64,rm64,imm32		[rmi:	xop.m10.lz.w1 10 /r id]			LONG,FUTURE,TBM
+BLCI		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 02 /6]			FUTURE,TBM
+BLCI		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 02 /6]			LONG,FUTURE,TBM
 BLSI		reg32,rm32			[vm:	vex.ndd.lz.0f38.w0 f3 /3]		FUTURE,BMI1
 BLSI		reg64,rm64			[vm:	vex.ndd.lz.0f38.w1 f3 /3]		LONG,FUTURE,BMI1
 BLSIC		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /6]			FUTURE,TBM
