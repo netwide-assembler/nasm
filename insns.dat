@@ -3422,6 +3422,8 @@ BLSI		reg32,rm32			[vm:	vex.ndd.lz.0f38.w0 f3 /3]		FUTURE,BMI1
 BLSI		reg64,rm64			[vm:	vex.ndd.lz.0f38.w1 f3 /3]		LONG,FUTURE,BMI1
 BLSIC		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /6]			FUTURE,TBM
 BLSIC		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /6]			LONG,FUTURE,TBM
+BLCFILL		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /1]			FUTURE,TBM
+BLCFILL		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /1]			LONG,FUTURE,TBM
 BLSMSK		reg32,rm32			[vm:	vex.ndd.lz.0f38.w0 f3 /2]		FUTURE,BMI1
 BLSMSK		reg64,rm64			[vm:	vex.ndd.lz.0f38.w1 f3 /2]		LONG,FUTURE,BMI1
 BLSR		reg32,rm32			[vm:	vex.ndd.lz.0f38.w0 f3 /1]		FUTURE,BMI1
