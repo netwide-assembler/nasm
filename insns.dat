@@ -3404,7 +3404,7 @@ XBEGIN		imm64|near			[i:	o64nw c7 f8 rel]				FUTURE,RTM,LONG,ND
 XEND		void				[	0f 01 d5]				FUTURE,RTM
 XTEST		void				[	0f 01 d6]				FUTURE,HLE,RTM
 
-;# Intel BMI1 and BMI2 instructions
+;# Intel BMI1 and BMI2 instructions, AMD TBM instructions
 ;
 ; based on pub number 319433-011 dated July 2011
 ;
