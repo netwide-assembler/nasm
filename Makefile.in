@@ -49,7 +49,7 @@ ifeq ($(TRACE),1)
 	CFLAGS += -DNASM_TRACE
 endif
 
-.SUFFIXES: .c .i .s .$(O) .1 .txt
+.SUFFIXES: .c .i .s .$(O) .1 .txt .xml
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
@@ -63,9 +63,11 @@ endif
 .c.i:
 	$(CC) -E $(ALL_CFLAGS) -o $@ $<
 
-.txt.1:
-	$(ASCIIDOC) -b docbook -d manpage -o $(patsubst %.1,%.xml,$@) $<
-	$(XMLTO) man --skip-validation $(patsubst %.1,%.xml,$@) 2>/dev/null
+.txt.xml:
+	$(ASCIIDOC) -b docbook -d manpage -o $@ $<
+
+.xml.1:
+	$(XMLTO) man --skip-validation $< 2>/dev/null
 
 
 #-- Begin File Lists --#
