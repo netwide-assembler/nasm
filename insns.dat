@@ -3250,7 +3250,7 @@ VPMOVSXBW	ymmreg,xmmrm128			[rm:	vex.256.66.0f38 20 /r]			FUTURE,AVX2
 VPMOVSXBD	ymmreg,mem64			[rm:	vex.256.66.0f38 21 /r]			FUTURE,AVX2
 VPMOVSXBD	ymmreg,xmmreg			[rm:	vex.256.66.0f38 21 /r]			FUTURE,AVX2
 VPMOVSXBQ	ymmreg,mem32			[rm:	vex.256.66.0f38 22 /r]			FUTURE,AVX2
-VPMOVSXBD	ymmreg,xmmreg			[rm:	vex.256.66.0f38 22 /r]			FUTURE,AVX2
+VPMOVSXBQ	ymmreg,xmmreg			[rm:	vex.256.66.0f38 22 /r]			FUTURE,AVX2
 VPMOVSXWD	ymmreg,xmmrm128			[rm:	vex.256.66.0f38 23 /r]			FUTURE,AVX2
 VPMOVSXWQ	ymmreg,mem64			[rm:	vex.256.66.0f38 24 /r]			FUTURE,AVX2
 VPMOVSXWQ	ymmreg,xmmreg			[rm:	vex.256.66.0f38 24 /r]			FUTURE,AVX2
