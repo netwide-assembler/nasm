@@ -3281,7 +3281,7 @@ VPSIGNB		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 08 /r]		FUTURE,AVX2
 VPSIGNW		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 09 /r]		FUTURE,AVX2
 VPSIGND		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f38 0a /r]		FUTURE,AVX2
 VPSLLDQ		ymmreg,ymmreg*,imm8		[vmi:	vex.ndd.256.66.0f 73 /7 ib]		FUTURE,AVX2
-VPSLLW		ymmreg,ymmreg*,xmmrm128		[vrm:	vex.nds.256.66.0f f1 /r]		FUTURE,AVX2
+VPSLLW		ymmreg,ymmreg*,xmmrm128		[rvm:	vex.nds.256.66.0f f1 /r]		FUTURE,AVX2
 VPSLLW		ymmreg,ymmreg*,imm8		[vmi:	vex.ndd.256.66.0f 71 /6 ib]		FUTURE,AVX2
 VPSLLD		ymmreg,ymmreg*,xmmrm128		[rvm:	vex.nds.256.66.0f f2 /r]		FUTURE,AVX2
 VPSLLD		ymmreg,ymmreg*,imm8		[vmi:	vex.ndd.256.66.0f 72 /6 ib]		FUTURE,AVX2
