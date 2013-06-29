@@ -45,7 +45,7 @@ my($what, $in, $out) = @ARGV;
 #
 open(IN, "< $in") or die "$0: cannot open: $in\n";
 while (defined($line = <IN>)) {
-    chomp $line;
+    $line =~ s/\r?\n$//;	# Remove trailing \r\n or \n
     $line =~ s/^\s+//;		# Remove leading whitespace
     $line =~ s/\s*\#.*$//;	# Remove comments and trailing whitespace
     next if ($line eq '');

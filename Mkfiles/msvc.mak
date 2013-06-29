@@ -94,8 +94,10 @@ version.mac: version version.pl
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
 
-macros.c: macros.pl standard.mac version.mac
-	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac
+macros.c: macros.pl pptok.ph standard.mac version.mac \
+	$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
+	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
+		$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 
 # These source files are generated from regs.dat by yet another
 # perl script.
@@ -105,6 +107,8 @@ regflags.c: regs.dat regs.pl
 	$(PERL) $(srcdir)/regs.pl fc $(srcdir)/regs.dat > regflags.c
 regdis.c: regs.dat regs.pl
 	$(PERL) $(srcdir)/regs.pl dc $(srcdir)/regs.dat > regdis.c
+regdis.h: regs.dat regs.pl
+	$(PERL) $(srcdir)/regs.pl dh $(srcdir)/regs.dat > regdis.h
 regvals.c: regs.dat regs.pl
 	$(PERL) $(srcdir)/regs.pl vc $(srcdir)/regs.dat > regvals.c
 regs.h: regs.dat regs.pl
@@ -125,6 +129,14 @@ pptok.h: pptok.dat pptok.pl perllib/phash.ph
 	$(PERL) $(srcdir)/pptok.pl h $(srcdir)/pptok.dat pptok.h
 pptok.c: pptok.dat pptok.pl perllib/phash.ph
 	$(PERL) $(srcdir)/pptok.pl c $(srcdir)/pptok.dat pptok.c
+pptok.ph: pptok.dat pptok.pl perllib/phash.ph
+	$(PERL) $(srcdir)/pptok.pl ph $(srcdir)/pptok.dat pptok.ph
+
+# Directives hash
+directiv.h: directiv.dat directiv.pl perllib/phash.ph
+	$(PERL) $(srcdir)/directiv.pl h $(srcdir)/directiv.dat directiv.h
+directiv.c: directiv.dat directiv.pl perllib/phash.ph
+	$(PERL) $(srcdir)/directiv.pl c $(srcdir)/directiv.dat directiv.c
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
