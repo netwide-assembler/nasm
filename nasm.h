@@ -585,7 +585,7 @@ enum ea_type {
     EA_INVALID,     /* Not a valid EA at all */
     EA_SCALAR,      /* Scalar EA */
     EA_XMMVSIB,     /* XMM vector EA */
-    EA_YMMVSIB,     /* XMM vector EA */
+    EA_YMMVSIB,     /* YMM vector EA */
 };
 
 /*
