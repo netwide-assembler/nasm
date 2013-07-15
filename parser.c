@@ -201,7 +201,6 @@ insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
     int critical;
     bool first;
     bool recover;
-    int j;
 
 restart_parse:
     first               = true;
@@ -261,8 +260,8 @@ restart_parse:
         return result;
     }
 
-    for (j = 0; j < MAXPREFIX; j++)
-        result->prefixes[j] = P_none;
+    nasm_build_assert(P_none != 0);
+    memset(result->prefixes, P_none, sizeof(result->prefixes));
     result->times = 1L;
 
     while (i == TOKEN_PREFIX ||
