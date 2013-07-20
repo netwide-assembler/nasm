@@ -7,10 +7,32 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.08} Version 2.10.08
+
+\b Fix collision for \c{VGATHERQPS}, \c{VPGATHERQD} instructions.
+
+\b Fix \c{VPMOVSXBQ}, \c{VGATHERQPD}, \c{VSPLLW} instructions.
+
+\b Add a bunch of AMD TBM instructions.
+
+\b Fix potential stack overwrite in numbers conversion.
+
+\b Allow byte size in \c{PREFETCHTx} instructions.
+
+\b Make manual pages up to date.
+
+\b Make \c{F3} and \c{F2} SSE prefixes to override \c{66}.
+
+\b Support of AMD SVM instructions in 32 bit mode.
+
+\b Fix near offsets code generation for \c{JMP}, \c{CALL} instrictions
+in long mode.
+
+\b Fix preprocessor parse regression when id is expanding to a whitespace.
+
 \S{cl-2.10.07} Version 2.10.07
 
 \b Fix line continuation parsing being broken in previous version.
-
 
 \S{cl-2.10.06} Version 2.10.06
 
