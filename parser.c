@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -736,19 +736,24 @@ is_expression:
             result->oprs[operand].hinttype = hints.type;
 
             if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
-                if (e->value == 1)      /* in fact it can be basereg */
-                    b = e->type;
-                else            /* no, it has to be indexreg */
+                bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+                
+                if (is_gpr && e->value == 1)
+                    b = e->type;	/* It can be basereg */
+                else            	/* No, it has to be indexreg */
                     i = e->type, s = e->value;
                 e++;
             }
             if (e->type && e->type <= EXPR_REG_END) {   /* it's a 2nd register */
+                bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+
                 if (b != -1)    /* If the first was the base, ... */
                     i = e->type, s = e->value;  /* second has to be indexreg */
 
-                else if (e->value != 1) {       /* If both want to be index */
+                else if (!is_gpr || e->value != 1) {
+                    /* If both want to be index */
                     nasm_error(ERR_NONFATAL,
-                          "beroset-p-592-invalid effective address");
+                               "invalid effective address: two index registers");
                     result->opcode = I_none;
                     return result;
                 } else
@@ -837,6 +842,16 @@ is_expression:
 
                 result->oprs[operand].type |= is_rel ? IP_REL : MEM_OFFS;
             }
+
+            if (i != -1) {
+                opflags_t iclass = nasm_reg_flags[i];
+
+                if (is_class(XMMREG,iclass))
+                    result->oprs[operand].type |= XMEM;
+                else if (is_class(YMMREG,iclass))
+                    result->oprs[operand].type |= YMEM;
+            }
+
             result->oprs[operand].basereg = b;
             result->oprs[operand].indexreg = i;
             result->oprs[operand].scale = s;

@@ -228,6 +228,8 @@ typedef uint64_t opflags_t;
 /* special types of EAs */
 #define MEM_OFFS                (GEN_SUBCLASS(1) | MEMORY)      /* simple [address] offset - absolute! */
 #define IP_REL                  (GEN_SUBCLASS(2) | MEMORY)      /* IP-relative offset */
+#define XMEM                    (GEN_SUBCLASS(3) | MEMORY)      /* 128-bit vector SIB */
+#define YMEM                    (GEN_SUBCLASS(4) | MEMORY)      /* 256-bit vector SIB */
 
 /* memory which matches any type of r/m operand */
 #define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM)
