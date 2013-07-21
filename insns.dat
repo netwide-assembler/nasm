@@ -3315,7 +3315,7 @@ VPUNPCKLWD	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 61 /r]		FUTURE,AVX2
 VPUNPCKLDQ	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 62 /r]		FUTURE,AVX2
 VPUNPCKLQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f 6c /r]		FUTURE,AVX2
 VPXOR		ymmreg,ymmreg*,ymmrm256		[rvm:	vex.nds.256.66.0f ef /r]		FUTURE,AVX2
-VMOVNTDQA	ymmreg,mem128			[rm:	vex.256.66.0f38 2a /r]			FUTURE,AVX2
+VMOVNTDQA	ymmreg,mem256			[rm:	vex.256.66.0f38 2a /r]			FUTURE,AVX2
 VBROADCASTSS	xmmreg,xmmreg			[rm:	vex.128.66.0f38.w0 18 /r]		FUTURE,AVX2
 VBROADCASTSS	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 18 /r]		FUTURE,AVX2
 VBROADCASTSD	ymmreg,xmmreg			[rm:	vex.256.66.0f38.w0 19 /r]		FUTURE,AVX2
