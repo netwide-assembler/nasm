@@ -9,6 +9,8 @@ since 2007.
 
 \S{cl-2.10.08} Version 2.10.08
 
+\b Fix \c{VMOVNTDQA}, \c{MOVNTDQA} and \c{MOVLPD} instructions.
+
 \b Fix collision for \c{VGATHERQPS}, \c{VPGATHERQD} instructions.
 
 \b Fix \c{VPMOVSXBQ}, \c{VGATHERQPD}, \c{VSPLLW} instructions.
