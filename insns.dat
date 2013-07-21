@@ -1798,8 +1798,8 @@ MOVAPD		mem,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2,SO
 MOVAPD		xmmreg,mem			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2,SO
 MOVHPD		mem,xmmreg			[mr:	66 0f 17 /r]				WILLAMETTE,SSE2
 MOVHPD		xmmreg,mem			[rm:	66 0f 16 /r]				WILLAMETTE,SSE2
-MOVLPD		mem,xmmreg			[mr:	66 0f 13 /r]				WILLAMETTE,SSE2
-MOVLPD		xmmreg,mem			[rm:	66 0f 12 /r]				WILLAMETTE,SSE2
+MOVLPD		mem64,xmmreg			[mr:	66 0f 13 /r]				WILLAMETTE,SSE2
+MOVLPD		xmmreg,mem64			[rm:	66 0f 12 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg32,xmmreg			[rm:	66 0f 50 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg64,xmmreg			[rm:	66 o64 0f 50 /r]			X64,SSE2
 MOVSD		xmmreg,xmmreg			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
