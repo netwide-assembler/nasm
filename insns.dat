@@ -1919,7 +1919,7 @@ DPPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
 EXTRACTPS	rm32,xmmreg,imm			[mri:	66 0f 3a 17 /r ib,u]			SSE41
 EXTRACTPS	reg64,xmmreg,imm		[mri:	o64 66 0f 3a 17 /r ib,u]		SSE41,X64
 INSERTPS	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 21 /r ib,u]			SSE41,SD
-MOVNTDQA	xmmreg,mem			[rm:	66 0f 38 2a /r]				SSE41
+MOVNTDQA	xmmreg,mem128			[rm:	66 0f 38 2a /r]				SSE41
 MPSADBW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
 PACKUSDW	xmmreg,xmmrm			[rm:	66 0f 38 2b /r]				SSE41
 PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 10 /r]				SSE41
