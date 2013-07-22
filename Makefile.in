@@ -63,11 +63,6 @@ endif
 .c.i:
 	$(CC) -E $(ALL_CFLAGS) -o $@ $<
 
-.txt.xml:
-	$(ASCIIDOC) -b docbook -d manpage -o $@ $<
-
-.xml.1:
-	$(XMLTO) man --skip-validation $< 2>/dev/null
 
 
 #-- Begin File Lists --#
