@@ -7,6 +7,10 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.10.09} Version 2.10.09
+
+\b Pregenerate man pages.
+
 \S{cl-2.10.08} Version 2.10.08
 
 \b Fix \c{VMOVNTDQA}, \c{MOVNTDQA} and \c{MOVLPD} instructions.
