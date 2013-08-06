@@ -226,6 +226,8 @@ enum token_type { /* token types, other than chars */
     TOKEN_FLOATIZE,     /* __floatX__ */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
+    TOKEN_DECORATOR,    /* decorators such as {...} */
+    TOKEN_OPMASK,       /* translated token for opmask registers */
 };
 
 enum floatize {
@@ -272,6 +274,7 @@ struct tokenval {
     int64_t             t_integer;
     int64_t             t_inttwo;
     enum token_type     t_type;
+    int8_t              t_flag;
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
 
@@ -352,11 +355,14 @@ typedef expr *(*evalfunc)(scanner sc, void *scprivate,
 /*
  * Special values for expr->type.
  * These come after EXPR_REG_END as defined in regs.h.
+ * Expr types : 0 ~ EXPR_REG_END, EXPR_UNKNOWN, EXPR_...., EXPR_RDSAE,
+ *              EXPR_SEGBASE ~ EXPR_SEGBASE + SEG_ABS, ...
  */
 #define EXPR_UNKNOWN    (EXPR_REG_END+1) /* forward references */
 #define EXPR_SIMPLE     (EXPR_REG_END+2)
 #define EXPR_WRT        (EXPR_REG_END+3)
-#define EXPR_SEGBASE    (EXPR_REG_END+4)
+#define EXPR_RDSAE      (EXPR_REG_END+4)
+#define EXPR_SEGBASE    (EXPR_REG_END+5)
 
 /*
  * Linked list of strings
@@ -466,6 +472,14 @@ enum ccode { /* condition code names */
     C_none = -1
 };
 
+/*
+ * token flags
+ */
+#define TFLAG_BRC       (1 << 0)    /* valid only with braces. {1to8}, {rd-sae}, ...*/
+#define TFLAG_BRC_OPT   (1 << 1)    /* may or may not have braces. opmasks {k1} */
+#define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
+#define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
+
 static inline uint8_t get_cond_opcode(enum ccode c)
 {
     static const uint8_t ccode_opcodes[] = {
@@ -563,6 +577,7 @@ typedef struct operand { /* operand to an instruction */
     int32_t         wrt;        /* segment base it's relative to */
     int             eaflags;    /* special EA flags */
     int             opflags;    /* see OPFLAG_* defines below */
+    decoflags_t     decoflags;  /* decorator flags such as {...} */
 } operand;
 
 #define OPFLAG_FORWARD      1   /* operand is a forward reference */
@@ -627,6 +642,7 @@ typedef struct insn { /* an instruction itself */
     int             vexreg;                 /* Register encoded in VEX prefix */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
+    int             evex_rm;                /* static rounding mode for AVX3 (EVEX) */
 } insn;
 
 enum geninfo { GI_SWITCH };
@@ -950,6 +966,96 @@ enum special_tokens {
     S_YWORD,
     SPECIAL_ENUM_LIMIT
 };
+
+enum decorator_tokens {
+    DECORATOR_ENUM_START    = SPECIAL_ENUM_LIMIT,
+    BRC_1TO8                = DECORATOR_ENUM_START,
+    BRC_1TO16,
+    BRC_RN,
+    BRC_RU,
+    BRC_RD,
+    BRC_RZ,
+    BRC_SAE,
+    BRC_Z,
+    DECORATOR_ENUM_LIMIT
+};
+
+/*
+ * AVX512 Decorator (decoflags_t) bits distribution (counted from 0)
+ *  3         2         1
+ * 10987654321098765432109876543210
+ *                |
+ *                | word boundary
+ * ............................1111 opmask
+ * ...........................1.... zeroing / merging
+ * ..........................1..... broadcast
+ * .........................1...... static rounding
+ * ........................1....... SAE
+ */
+
+/*
+ * Opmask register number
+ * identical to EVEX.aaa
+ *
+ * Bits: 0 - 3
+ */
+#define OPMASK_SHIFT            (0)
+#define OPMASK_BITS             (4)
+#define OPMASK_MASK             OP_GENMASK(OPMASK_BITS, OPMASK_SHIFT)
+#define GEN_OPMASK(bit)         OP_GENBIT(bit, OPMASK_SHIFT)
+#define VAL_OPMASK(val)         OP_GENVAL(val, OPMASK_BITS, OPMASK_SHIFT)
+
+/*
+ * zeroing / merging control available
+ * matching to EVEX.z
+ *
+ * Bits: 4
+ */
+#define Z_SHIFT                 (4)
+#define Z_BITS                  (1)
+#define Z_MASK                  OP_GENMASK(Z_BITS, Z_SHIFT)
+#define GEN_Z(bit)              OP_GENBIT(bit, Z_SHIFT)
+#define VAL_Z(val)              OP_GENVAL(val, Z_BITS, Z_SHIFT)
+
+/*
+ * broadcast - Whether this operand can be broadcasted
+ *
+ * Bits: 5
+ */
+#define BRDCAST_SHIFT           (5)
+#define BRDCAST_BITS            (1)
+#define BRDCAST_MASK            OP_GENMASK(BRDCAST_BITS, BRDCAST_SHIFT)
+#define GEN_BRDCAST(bit)        OP_GENBIT(bit, BRDCAST_SHIFT)
+#define VAL_BRDCAST(val)        OP_GENVAL(val, BRDCAST_BITS, BRDCAST_SHIFT)
+
+/*
+ * Whether this instruction can have a static rounding mode.
+ * It goes with the last simd operand because the static rounding mode
+ * decorator is located between the last simd operand and imm8 (if any).
+ *
+ * Bits: 6
+ */
+#define STATICRND_SHIFT         (6)
+#define STATICRND_BITS          (1)
+#define STATICRND_MASK          OP_GENMASK(STATICRND_BITS, STATICRND_SHIFT)
+#define GEN_STATICRND(bit)      OP_GENBIT(bit, STATICRND_SHIFT)
+
+/*
+ * SAE(Suppress all exception) available
+ *
+ * Bits: 7
+ */
+#define SAE_SHIFT               (7)
+#define SAE_BITS                (1)
+#define SAE_MASK                OP_GENMASK(SAE_BITS, SAE_SHIFT)
+#define GEN_SAE(bit)            OP_GENBIT(bit, SAE_SHIFT)
+
+#define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
+#define Z                       Z_MASK
+#define B32                     BRDCAST_MASK            /* {1to16} : load+op instruction can broadcast when it is reg-reg operation */
+#define B64                     BRDCAST_MASK            /* {1to8}  : There are two definitions just for conforming to SDM */
+#define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
+#define SAE                     SAE_MASK                /* SAE(Suppress All Exception) */
 
 /*
  * Global modes

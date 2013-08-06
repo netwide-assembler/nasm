@@ -43,7 +43,6 @@
 #include "compiler.h"
 #include <inttypes.h>
 #include "insnsi.h"		/* For enum opcode */
-#include "opflags.h"		/* For opflags_t */
 
 /* --- From standard.mac via macros.pl: --- */
 
@@ -62,6 +61,8 @@ extern const char * const nasm_insn_names[];
 /* regs.c */
 extern const char * const nasm_reg_names[];
 /* regflags.c */
+typedef uint64_t opflags_t;
+typedef uint8_t  decoflags_t;
 extern const opflags_t nasm_reg_flags[];
 /* regvals.c */
 extern const int nasm_regvals[];

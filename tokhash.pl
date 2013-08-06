@@ -65,14 +65,14 @@ while (defined($line = <ID>)) {
 	    # Single instruction token
 	    if (!defined($tokens{$token})) {
 		$tokens{$token} = scalar @tokendata;
-		push(@tokendata, "\"${token}\", TOKEN_INSN, C_none, I_${insn}");
+		push(@tokendata, "\"${token}\", TOKEN_INSN, C_none, 0, I_${insn}");
 	    }
 	} else {
 	    # Conditional instruction
 	    foreach $cc (@conditions) {
 		if (!defined($tokens{$token.$cc})) {
 		    $tokens{$token.$cc} = scalar @tokendata;
-		    push(@tokendata, "\"${token}${cc}\", TOKEN_INSN, C_\U$cc\E, I_${insn}");
+		    push(@tokendata, "\"${token}${cc}\", TOKEN_INSN, C_\U$cc\E, 0, I_${insn}");
 		}
 	    }
 	}
@@ -85,8 +85,9 @@ close(ID);
 #
 open(RD, "< ${regs_dat}") or die "$0: cannot open $regs_dat: $!\n";
 while (defined($line = <RD>)) {
-    if ($line =~ /^([a-z0-9_-]+)\s/) {
+    if ($line =~ /^([a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(\S*)/) {
 	$reg = $1;
+	$reg_flag = $2;
 
 	if ($reg =~ /^(.*[^0-9])([0-9]+)\-([0-9]+)(|[^0-9].*)$/) {
 	    $nregs = $3-$2+1;
@@ -104,7 +105,11 @@ while (defined($line = <RD>)) {
 		die "Duplicate definition: $reg\n";
 	    }
 	    $tokens{$reg} = scalar @tokendata;
-	    push(@tokendata, "\"${reg}\", TOKEN_REG, 0, R_\U${reg}\E");
+	    if ($reg_flag eq '') {
+	        push(@tokendata, "\"${reg}\", TOKEN_REG, 0, 0, R_\U${reg}\E");
+	    } else {
+	        push(@tokendata, "\"${reg}\", TOKEN_REG, 0, ${reg_flag}, R_\U${reg}\E");
+	    }
 
 	    if (defined($reg_prefix)) {
 		$reg_nr++;
@@ -214,7 +219,8 @@ if ($output eq 'h') {
     print "struct tokendata {\n";
     print "    const char *string;\n";
     print "    int16_t tokentype;\n";
-    print "    int16_t aux;\n";
+    print "    int8_t aux;\n";
+    print "    int8_t tokflag;\n";
     print "    int32_t num;\n";
     print "};\n";
     print "\n";
@@ -270,6 +276,7 @@ if ($output eq 'h') {
     print  "\n";
     print  "    tv->t_integer = data->num;\n";
     print  "    tv->t_inttwo  = data->aux;\n";
+    print  "    tv->t_flag    = data->tokflag;\n";
     print  "    return tv->t_type = data->tokentype;\n";
     print  "}\n";
 }

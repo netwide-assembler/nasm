@@ -39,6 +39,7 @@
 #define NASM_OPFLAGS_H
 
 #include "compiler.h"
+#include "tables.h"     /* for opflags_t and nasm_reg_flags[] */
 
 /*
  * Here we define the operand types. These are implemented as bit
@@ -53,10 +54,9 @@
  * if and only if "operand" belongs to class type "class".
  */
 
-typedef uint64_t opflags_t;
-
 #define OP_GENMASK(bits, shift)         (((UINT64_C(1) << (bits)) - 1) << (shift))
 #define OP_GENBIT(bit, shift)           (UINT64_C(1) << ((shift) + (bit)))
+#define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
 /*
  * Type of operand: memory reference, register, etc.
@@ -162,11 +162,14 @@ typedef uint64_t opflags_t;
 #define REG_CLASS_RM_MMX        GEN_REG_CLASS(4)
 #define REG_CLASS_RM_XMM        GEN_REG_CLASS(5)
 #define REG_CLASS_RM_YMM        GEN_REG_CLASS(6)
+#define REG_CLASS_RM_ZMM        GEN_REG_CLASS(7)
+#define REG_CLASS_OPMASK        GEN_REG_CLASS(8)
 
-#define is_class(class, op)     (!((opflags_t)(class) & ~(opflags_t)(op)))
+#define is_class(class, op)         (!((opflags_t)(class) & ~(opflags_t)(op)))
+#define is_reg_class(class, reg)    is_class((class), nasm_reg_flags[(reg)])
 
-#define IS_SREG(op)             is_class(REG_SREG, nasm_reg_flags[(op)])
-#define IS_FSGS(op)             is_class(REG_FSGS, nasm_reg_flags[(op)])
+#define IS_SREG(op)                 is_reg_class(REG_SREG, (op))
+#define IS_FSGS(op)                 is_reg_class(REG_FSGS, (op))
 
 /* Register classes */
 #define REG_EA                  (                                               REGMEM | REGISTER)      /* 'normal' reg, qualifies as EA */
@@ -186,6 +189,12 @@ typedef uint64_t opflags_t;
 #define RM_YMM                  (                  REG_CLASS_RM_YMM           | REGMEM)                 /* YMM (AVX) operand */
 #define YMMREG                  (                  REG_CLASS_RM_YMM           | REGMEM | REGISTER)      /* YMM (AVX) register */
 #define YMM0                    (GEN_SUBCLASS(1) | REG_CLASS_RM_YMM           | REGMEM | REGISTER)      /* YMM register zero */
+#define RM_ZMM                  (                  REG_CLASS_RM_ZMM           | REGMEM)                 /* ZMM (AVX512) operand */
+#define ZMMREG                  (                  REG_CLASS_RM_ZMM           | REGMEM | REGISTER)      /* ZMM (AVX512) register */
+#define ZMM0                    (GEN_SUBCLASS(1) | REG_CLASS_RM_ZMM           | REGMEM | REGISTER)      /* ZMM register zero */
+#define RM_OPMASK               (                  REG_CLASS_OPMASK           | REGMEM)                 /* Opmask operand */
+#define OPMASKREG               (                  REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register */
+#define OPMASK0                 (GEN_SUBCLASS(1) | REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register zero (k0) */
 #define REG_CDT                 (                  REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn, DRn and TRn */
 #define REG_CREG                (GEN_SUBCLASS(1) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn */
 #define REG_DREG                (GEN_SUBCLASS(2) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* DRn */
@@ -232,7 +241,7 @@ typedef uint64_t opflags_t;
 #define YMEM                    (GEN_SUBCLASS(4) | MEMORY)      /* 256-bit vector SIB */
 
 /* memory which matches any type of r/m operand */
-#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM)
+#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM | RM_ZMM)
 
 /* special immediate values */
 #define UNITY                   (GEN_SUBCLASS(0) | IMMEDIATE)   /* operand equals 1 */
