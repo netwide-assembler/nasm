@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -504,6 +504,18 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 #define REX_H       0x80    /* High register present, REX forbidden */
 #define REX_V       0x0100  /* Instruction uses VEX/XOP instead of REX */
 #define REX_NH      0x0200  /* Instruction which doesn't use high regs */
+#define REX_EV      0x0400  /* Instruction uses EVEX instead of REX */
+
+/*
+ * EVEX bit field
+ */
+#define EVEX_P0RP       0x10        /* EVEX P[4] : High-16 reg            */
+#define EVEX_P0X        0x40        /* EVEX P[6] : High-16 rm             */
+#define EVEX_P2AAA      0x07        /* EVEX P[18:16] : Embedded opmask    */
+#define EVEX_P2VP       0x08        /* EVEX P[19] : High-16 NDS reg       */
+#define EVEX_P2B        0x10        /* EVEX P[20] : Broadcast / RC / SAE  */
+#define EVEX_P2LL       0x60        /* EVEX P[22:21] : Vector length / RC */
+#define EVEX_P2Z        0x80        /* EVEX P[23] : Zeroing/Merging       */
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
@@ -601,6 +613,7 @@ enum ea_type {
     EA_SCALAR,      /* Scalar EA */
     EA_XMMVSIB,     /* XMM vector EA */
     EA_YMMVSIB,     /* YMM vector EA */
+    EA_ZMMVSIB,     /* ZMM vector EA */
 };
 
 /*
@@ -623,6 +636,37 @@ enum prefix_pos {
     MAXPREFIX   /* Total number of prefix slots */
 };
 
+/*
+ * Tuple types that are used when determining Disp8*N eligibility
+ * The order must match with a hash %tuple_codes in insns.pl
+ */
+enum ttypes {
+    FV    = 001,
+    HV    = 002,
+    FVM   = 003,
+    T1S8  = 004,
+    T1S16 = 005,
+    T1S   = 006,
+    T1F32 = 007,
+    T1F64 = 010,
+    T2    = 011,
+    T4    = 012,
+    T8    = 013,
+    HVM   = 014,
+    QVM   = 015,
+    OVM   = 016,
+    M128  = 017,
+    DUP   = 020,
+};
+
+/* EVEX.L'L : Vector length on vector insns */
+enum vectlens {
+    VL128 = 0,
+    VL256 = 1,
+    VL512 = 2,
+    VLMAX = 3,
+};
+
 /* If you need to change this, also change it in insns.pl */
 #define MAX_OPERANDS 5
 
@@ -642,6 +686,9 @@ typedef struct insn { /* an instruction itself */
     int             vexreg;                 /* Register encoded in VEX prefix */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
+    uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
+                                            /* EVEX.P2: [z,L'L,b,V',aaa] */
+    enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX3 (EVEX) */
 } insn;
 
@@ -972,8 +1019,8 @@ enum decorator_tokens {
     BRC_1TO8                = DECORATOR_ENUM_START,
     BRC_1TO16,
     BRC_RN,
-    BRC_RU,
     BRC_RD,
+    BRC_RU,
     BRC_RZ,
     BRC_SAE,
     BRC_Z,
@@ -992,6 +1039,7 @@ enum decorator_tokens {
  * .........................1...... static rounding
  * ........................1....... SAE
  */
+#define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
 /*
  * Opmask register number
@@ -1015,7 +1063,6 @@ enum decorator_tokens {
 #define Z_BITS                  (1)
 #define Z_MASK                  OP_GENMASK(Z_BITS, Z_SHIFT)
 #define GEN_Z(bit)              OP_GENBIT(bit, Z_SHIFT)
-#define VAL_Z(val)              OP_GENVAL(val, Z_BITS, Z_SHIFT)
 
 /*
  * broadcast - Whether this operand can be broadcasted
@@ -1026,7 +1073,6 @@ enum decorator_tokens {
 #define BRDCAST_BITS            (1)
 #define BRDCAST_MASK            OP_GENMASK(BRDCAST_BITS, BRDCAST_SHIFT)
 #define GEN_BRDCAST(bit)        OP_GENBIT(bit, BRDCAST_SHIFT)
-#define VAL_BRDCAST(val)        OP_GENVAL(val, BRDCAST_BITS, BRDCAST_SHIFT)
 
 /*
  * Whether this instruction can have a static rounding mode.

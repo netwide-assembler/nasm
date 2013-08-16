@@ -12,10 +12,12 @@
 #include "nasm.h"
 #include "tokens.h"
 
+/* if changed, ITEMPLATE_END should be also changed accordingly */
 struct itemplate {
     enum opcode     opcode;             /* the token, passed from "parser.c" */
     int             operands;           /* number of operands */
     opflags_t       opd[MAX_OPERANDS];  /* bit flags for operand types */
+    decoflags_t     deco[MAX_OPERANDS]; /* bit flags for operand decorators */
     const uint8_t   *code;              /* the code it assembles to */
     uint32_t        flags;              /* some flags */
 };
@@ -35,7 +37,7 @@ struct disasm_index {
 /* Tables for the assembler and disassembler, respectively */
 extern const struct itemplate * const nasm_instructions[];
 extern const struct disasm_index itable[256];
-extern const struct disasm_index * const itable_vex[2][32][4];
+extern const struct disasm_index * const itable_vex[NASM_VEX_CLASSES][32][4];
 
 /* Common table for the byte codes */
 extern const uint8_t nasm_bytecodes[];
@@ -43,7 +45,7 @@ extern const uint8_t nasm_bytecodes[];
 /*
  * this define is used to signify the end of an itemplate
  */
-#define ITEMPLATE_END {-1,-1,{-1,-1,-1},NULL,0}
+#define ITEMPLATE_END {-1,-1,{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1},NULL,0}
 
 /*
  * Instruction template flags. These specify which processor
@@ -80,7 +82,8 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SQ           0x00000010UL    /* unsized operands can't be non-qword */
 #define IF_SO           0x00000014UL    /* unsized operands can't be non-oword */
 #define IF_SY           0x00000018UL    /* unsized operands can't be non-yword */
-#define IF_SZ           0x00000038UL    /* unsized operands must match the bitsize */
+#define IF_SZ           0x0000001CUL    /* unsized operands can't be non-zword */
+#define IF_SIZE         0x00000038UL    /* unsized operands must match the bitsize */
 #define IF_SX           0x0000003CUL    /* unsized operands not allowed */
 #define IF_SMASK        0x0000003CUL    /* mask for unsized argument size */
 #define IF_AR0          0x00000040UL    /* SB, SW, SD applies to argument 0 */
@@ -115,6 +118,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SSE5         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_AVX          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_AVX2         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX512       0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_FMA          0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_BMI1         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_BMI2         0x00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */

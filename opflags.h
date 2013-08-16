@@ -56,7 +56,6 @@
 
 #define OP_GENMASK(bits, shift)         (((UINT64_C(1) << (bits)) - 1) << (shift))
 #define OP_GENBIT(bit, shift)           (UINT64_C(1) << ((shift) + (bit)))
-#define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
 /*
  * Type of operand: memory reference, register, etc.
@@ -168,8 +167,8 @@
 #define is_class(class, op)         (!((opflags_t)(class) & ~(opflags_t)(op)))
 #define is_reg_class(class, reg)    is_class((class), nasm_reg_flags[(reg)])
 
-#define IS_SREG(op)                 is_reg_class(REG_SREG, (op))
-#define IS_FSGS(op)                 is_reg_class(REG_FSGS, (op))
+#define IS_SREG(reg)                is_reg_class(REG_SREG, (reg))
+#define IS_FSGS(reg)                is_reg_class(REG_FSGS, (reg))
 
 /* Register classes */
 #define REG_EA                  (                                               REGMEM | REGISTER)      /* 'normal' reg, qualifies as EA */
@@ -239,6 +238,7 @@
 #define IP_REL                  (GEN_SUBCLASS(2) | MEMORY)      /* IP-relative offset */
 #define XMEM                    (GEN_SUBCLASS(3) | MEMORY)      /* 128-bit vector SIB */
 #define YMEM                    (GEN_SUBCLASS(4) | MEMORY)      /* 256-bit vector SIB */
+#define ZMEM                    (GEN_SUBCLASS(5) | MEMORY)      /* 512-bit vector SIB */
 
 /* memory which matches any type of r/m operand */
 #define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM | RM_ZMM)

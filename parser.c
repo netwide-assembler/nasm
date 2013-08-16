@@ -223,6 +223,10 @@ static bool parse_braces(decoflags_t *decoflags)
                  */
                 *decoflags |= GEN_Z(0);
                 break;
+            default:
+                nasm_error(ERR_NONFATAL, "{%s} is not an expected decorator",
+                                         tokval.t_charptr);
+                break;
             }
         } else if (i == ',' || i == TOKEN_EOS){
             break;
@@ -917,6 +921,8 @@ is_expression:
                     result->oprs[operand].type |= XMEM;
                 else if (is_class(YMMREG,iclass))
                     result->oprs[operand].type |= YMEM;
+                else if (is_class(ZMMREG,iclass))
+                    result->oprs[operand].type |= ZMEM;
             }
 
             result->oprs[operand].basereg = b;

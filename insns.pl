@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2013 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -45,7 +45,7 @@
 $MAX_OPERANDS = 5;
 
 # Add VEX/XOP prefixes
-@vex_class = ( 'vex', 'xop' );
+@vex_class = ( 'vex', 'xop', 'evex' );
 $vex_classes = scalar(@vex_class);
 @vexlist = ();
 %vexmap = ();
@@ -319,8 +319,7 @@ if ( !defined($output) || $output eq 'd' ) {
         print D "};\n";
     }
 
-    printf D "\nconst struct disasm_index * const itable_vex[%d][32][4] =\n",
-        $vex_classes;
+    printf D "\nconst struct disasm_index * const itable_vex[NASM_VEX_CLASSES][32][4] =\n";
     print D "{\n";
     for ($c = 0; $c < $vex_classes; $c++) {
         print D "    {\n";
@@ -363,6 +362,8 @@ if ( !defined($output) || $output eq 'i' ) {
     print I "\tI_none = -1\n";
     print I "};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n";
+    print I "#define NASM_VEX_CLASSES ", $vex_classes, "\n";
+    print I "#define NO_DECORATOR\t{", join(',',(0) x $MAX_OPERANDS), "}\n";
     print I "#define FIRST_COND_OPCODE I_", $opcodes_cc[0], "\n\n";
     print I "#endif /* NASM_INSNSI_H */\n";
 
@@ -411,8 +412,10 @@ sub count_bytecodes(@) {
             $skip = 1;
         } elsif ($bc == 0172 || $bc == 0173) {
             $skip = 1;
-        } elsif ($bc >= 0260 && $bc <= 0270) {
+        } elsif (($bc & ~3) == 0260 || $bc == 0270) {   # VEX
             $skip = 2;
+        } elsif (($bc & ~3) == 0240 || $bc == 0250) {   # EVEX
+            $skip = 3;
         } elsif ($bc == 0330) {
             $skip = 1;
         }
@@ -423,7 +426,7 @@ sub format_insn($$$$$) {
     my ($opcode, $operands, $codes, $flags, $relax) = @_;
     my $num, $nd = 0;
     my @bytecode;
-    my $op, @ops, $opp, @opx, @oppx;
+    my $op, @ops, $opp, @opx, @oppx, @decos, @opevex;
 
     return (undef, undef) if $operands eq "ignore";
 
@@ -431,12 +434,18 @@ sub format_insn($$$$$) {
     $operands =~ s/\*//g;
     $operands =~ s/:/|colon,/g;
     @ops = ();
+    @decos = ();
     if ($operands ne 'void') {
         foreach $op (split(/,/, $operands)) {
             @opx = ();
+            @opevex = ();
             foreach $opp (split(/\|/, $op)) {
                 @oppx = ();
-                if ($opp =~ s/(?<=\D)(8|16|32|64|80|128|256)$//) {
+                if ($opp =~ s/^(b(32|64)|mask|z|er|sae)$//) {
+                    push(@opevex, $1);
+                }
+
+                if ($opp =~ s/(?<!\d)(8|16|32|64|80|128|256|512)$//) {
                     push(@oppx, "bits$1");
                 }
                 $opp =~ s/^mem$/memory/;
@@ -445,19 +454,27 @@ sub format_insn($$$$$) {
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^rm$/rm_gpr/;
                 $opp =~ s/^reg$/reg_gpr/;
-                push(@opx, $opp, @oppx);
+                push(@opx, $opp, @oppx) if $opp;
             }
             $op = join('|', @opx);
             push(@ops, $op);
+            push(@decos, (@opevex ? join('|', @opevex) : '0'));
         }
     }
 
     $num = scalar(@ops);
     while (scalar(@ops) < $MAX_OPERANDS) {
         push(@ops, '0');
+        push(@decos, '0');
     }
     $operands = join(',', @ops);
     $operands =~ tr/a-z/A-Z/;
+
+    $decorators = "{" . join(',', @decos) . "}";
+    if ($decorators =~ /^{(0,)+0}$/) {
+        $decorators = "NO_DECORATOR";
+    }
+    $decorators =~ tr/a-z/A-Z/;
 
     # format the flags
     $flags =~ s/,/|IF_/g;
@@ -469,7 +486,7 @@ sub format_insn($$$$$) {
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
 
-    ("{I_$opcode, $num, {$operands}, \@\@CODES-$codes\@\@, $flags},", $nd);
+    ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flags},", $nd);
 }
 
 #
@@ -557,6 +574,7 @@ sub hexstr(@) {
 # \34[4567]    mean PUSH/POP of segment registers: special case
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
+# \24x \250    skip EVEX control bytes
 sub startseq($$) {
     my ($codestr, $relax) = @_;
     my $word, @range;
@@ -604,13 +622,17 @@ sub startseq($$) {
             return addprefix($prefix, $c1..($c1+15));
         } elsif ($c0 == 0 || $c0 == 0340) {
             return $prefix;
-        } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+        } elsif (($c0 & ~3) == 0260 || $c0 == 0270 ||
+                 ($c0 & ~3) == 0240 || $c0 == 0250) {
             my $c,$m,$wlp;
             $m   = shift(@codes);
             $wlp = shift(@codes);
             $c = ($m >> 6);
             $m = $m & 31;
             $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 3);
+            if ($c0 < 0260) {
+                my $tuple = shift(@codes);
+            }
         } elsif ($c0 >= 0172 && $c0 <= 173) {
             shift(@codes);      # Skip is4 control byte
         } else {
@@ -619,6 +641,36 @@ sub startseq($$) {
         }
     }
     return $prefix;
+}
+
+# EVEX tuple types offset is 0300. e.g. 0301 is for full vector(fv).
+sub tupletype($) {
+    my ($tuplestr) = @_;
+    my %tuple_codes = (
+        ''      => 000,
+        'fv'    => 001,
+        'hv'    => 002,
+        'fvm'   => 003,
+        't1s8'  => 004,
+        't1s16' => 005,
+        't1s'   => 006,
+        't1f32' => 007,
+        't1f64' => 010,
+        't2'    => 011,
+        't4'    => 012,
+        't8'    => 013,
+        'hvm'   => 014,
+        'qvm'   => 015,
+        'ovm'   => 016,
+        'm128'  => 017,
+        'dup'   => 020,
+    );
+
+    if (defined $tuple_codes{$tuplestr}) {
+        return 0300 + $tuple_codes{$tuplestr};
+    } else {
+        die "Undefined tuple type : $tuplestr\n";
+    }
 }
 
 #
@@ -710,14 +762,20 @@ sub byte_code_compile($$) {
         # This instruction takes YMM VSIB
         'vsiby'     => 0375,
         'vm32y'     => 0375,
-        'vm64y'     => 0375
+        'vm64y'     => 0375,
+
+        # This instruction takes ZMM VSIB
+        'vsibz'     => 0376,
+        'vm32z'     => 0376,
+        'vm64z'     => 0376,
     );
 
-    unless ($str =~ /^(([^\s:]*)\:|)\s*(.*\S)\s*$/) {
+    unless ($str =~ /^(([^\s:]*)\:*([^\s:]*)\:|)\s*(.*\S)\s*$/) {
         die "$fname: $line: cannot parse: [$str]\n";
     }
     $opr = "\L$2";
-    $opc = "\L$3";
+    $tuple = "\L$3";    # Tuple type for AVX512
+    $opc = "\L$4";
 
     my $op = 0;
     for ($i = 0; $i < length($opr); $i++) {
@@ -732,6 +790,7 @@ sub byte_code_compile($$) {
             $oppos{$c} = $op++;
         }
     }
+    $tup = tupletype($tuple);
 
     my $last_imm = 'h';
     my $prefix_ok = 1;
@@ -832,6 +891,61 @@ sub byte_code_compile($$) {
             }
             push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
                  ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
+            $prefix_ok = 0;
+        } elsif ($op =~ /^(evex)(|\..*)$/) {
+            my $c = $vexmap{$1};
+            my ($m,$w,$l,$p) = (undef,2,undef,0);
+            my $has_nds = 0;
+            my @subops = split(/\./, $op);
+            shift @subops;      # Drop prefix
+                foreach $oq (@subops) {
+                    if ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz' || $oq eq 'lig') {
+                        $l = 0;
+                    } elsif ($oq eq '256' || $oq eq 'l1') {
+                        $l = 1;
+                    } elsif ($oq eq '512' || $oq eq 'l2') {
+                        $l = 2;
+                    } elsif ($oq eq 'w0') {
+                        $w = 0;
+                    } elsif ($oq eq 'w1') {
+                        $w = 1;
+                    } elsif ($oq eq 'wig') {
+                        $w = 2;
+                    } elsif ($oq eq 'ww') {
+                        $w = 3;
+                    } elsif ($oq eq 'p0') {
+                        $p = 0;
+                    } elsif ($oq eq '66' || $oq eq 'p1') {
+                        $p = 1;
+                    } elsif ($oq eq 'f3' || $oq eq 'p2') {
+                        $p = 2;
+                    } elsif ($oq eq 'f2' || $oq eq 'p3') {
+                        $p = 3;
+                    } elsif ($oq eq '0f') {
+                        $m = 1;
+                    } elsif ($oq eq '0f38') {
+                        $m = 2;
+                    } elsif ($oq eq '0f3a') {
+                        $m = 3;
+                    } elsif ($oq =~ /^m([0-9]+)$/) {
+                        $m = $1+0;
+                    } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
+                        if (!defined($oppos{'v'})) {
+                            die "$fname: $line: evex.$oq without 'v' operand\n";
+                        }
+                        $has_nds = 1;
+                    } else {
+                        die "$fname: $line: undefined EVEX subcode: $oq\n";
+                    }
+                }
+            if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
+                die "$fname: $line: missing fields in EVEX specification\n";
+            }
+            if (defined($oppos{'v'}) && !$has_nds) {
+                die "$fname: $line: 'v' operand without evex.nds or evex.ndd\n";
+            }
+            push(@codes, defined($oppos{'v'}) ? 0240+($oppos{'v'} & 3) : 0250,
+                 ($c << 6)+$m, ($w << 4)+($l << 2)+$p, $tup);
             $prefix_ok = 0;
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {

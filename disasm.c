@@ -328,6 +328,8 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 		op->indexreg = nasm_rd_xmmreg[index | ((rex & REX_X) ? 8 : 0)];
 	    else if (type == EA_YMMVSIB)
 		op->indexreg = nasm_rd_ymmreg[index | ((rex & REX_X) ? 8 : 0)];
+	    else if (type == EA_ZMMVSIB)
+		op->indexreg = nasm_rd_zmmreg[index | ((rex & REX_X) ? 8 : 0)];
 	    else if (index == 4 && !(rex & REX_X))
 		op->indexreg = -1; /* ESP/RSP cannot be an index */
             else if (a64)
@@ -866,6 +868,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case 0375:
             eat = EA_YMMVSIB;
+            break;
+
+        case 0376:
+            eat = EA_ZMMVSIB;
             break;
 
 	default:
