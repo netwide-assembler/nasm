@@ -196,7 +196,7 @@ static void process_size_override(insn *result, int operand)
 /*
  * when two or more decorators follow a register operand,
  * consecutive decorators are parsed here.
- * the order of decorators does not matter.
+ * opmask and zeroing decorators can be placed in any order.
  * e.g. zmm1 {k2}{z} or zmm2 {z,k3}
  * decorator(s) are placed at the end of an operand.
  */
