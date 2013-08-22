@@ -758,17 +758,20 @@ is_expression:
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
-                if (i == TOKEN_DECORATOR) {
+                if ((i == TOKEN_DECORATOR) || (i == TOKEN_OPMASK)) {
                     /*
-                     * according to AVX512 spec, only broacast decorator is
-                     * expected for memory reference operands
+                     * according to AVX512 spec, broacast or opmask decorator
+                     * is expected for memory reference operands
                      */
                     if (tokval.t_flag & TFLAG_BRDCAST) {
                         brace_flags |= GEN_BRDCAST(0);
                         i = stdscan(NULL, &tokval);
+                    } else if (i == TOKEN_OPMASK) {
+                        brace_flags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
+                        i = stdscan(NULL, &tokval);
                     } else {
-                        nasm_error(ERR_NONFATAL, "broadcast decorator"
-                                   "expected inside braces");
+                        nasm_error(ERR_NONFATAL, "broadcast or opmask "
+                                   "decorator expected inside braces");
                         recover = true;
                     }
                 }
