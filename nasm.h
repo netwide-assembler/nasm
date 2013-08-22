@@ -1011,6 +1011,7 @@ enum special_tokens {
     S_TWORD,
     S_WORD,
     S_YWORD,
+    S_ZWORD,
     SPECIAL_ENUM_LIMIT
 };
 

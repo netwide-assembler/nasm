@@ -72,6 +72,7 @@ to
 tword
 word
 yword
+zword
 
 % TOKEN_FLOAT, 0, 0, 0
 __infinity__

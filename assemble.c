@@ -265,6 +265,8 @@ static const char *size_name(int size)
         return "oword";
     case 32:
         return "yword";
+    case 64:
+        return "zword";
     default:
         return "???";
     }

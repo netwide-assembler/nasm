@@ -660,6 +660,11 @@ is_expression:
                     result->oprs[operand].type |= BITS256;
                 setsize = 1;
                 break;
+            case S_ZWORD:
+                if (!setsize)
+                    result->oprs[operand].type |= BITS512;
+                setsize = 1;
+                break;
             case S_TO:
                 result->oprs[operand].type |= TO;
                 break;
