@@ -1038,6 +1038,7 @@ enum decorator_tokens {
  * ..........................1..... broadcast
  * .........................1...... static rounding
  * ........................1....... SAE
+ * ......................11........ broadcast element size
  */
 #define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
@@ -1096,10 +1097,23 @@ enum decorator_tokens {
 #define SAE_MASK                OP_GENMASK(SAE_BITS, SAE_SHIFT)
 #define GEN_SAE(bit)            OP_GENBIT(bit, SAE_SHIFT)
 
+/*
+ * Broadcasting element size.
+ *
+ * Bits: 8 - 9
+ */
+#define BRSIZE_SHIFT            (8)
+#define BRSIZE_BITS             (2)
+#define BRSIZE_MASK             OP_GENMASK(BRSIZE_BITS, BRSIZE_SHIFT)
+#define GEN_BRSIZE(bit)         OP_GENBIT(bit, BRSIZE_SHIFT)
+
+#define BR_BITS32               GEN_BRSIZE(0)
+#define BR_BITS64               GEN_BRSIZE(1)
+
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK
-#define B32                     BRDCAST_MASK            /* {1to16} : load+op instruction can broadcast when it is reg-reg operation */
-#define B64                     BRDCAST_MASK            /* {1to8}  : There are two definitions just for conforming to SDM */
+#define B32                     (BRDCAST_MASK|BR_BITS32) /* {1to16} : broadcast 32b * 16 to zmm(512b) */ 
+#define B64                     (BRDCAST_MASK|BR_BITS64) /* {1to8}  : broadcast 64b *  8 to zmm(512b) */
 #define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
 #define SAE                     SAE_MASK                /* SAE(Suppress All Exception) */
 

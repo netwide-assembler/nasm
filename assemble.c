@@ -1915,10 +1915,22 @@ static enum match_result find_match(const struct itemplate **tempp,
     enum match_result m, merr;
     opflags_t xsizeflags[MAX_OPERANDS];
     bool opsizemissing = false;
+    int8_t broadcast = -1;
     int i;
 
+    /* find the position of broadcasting operand */
     for (i = 0; i < instruction->operands; i++)
-        xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
+        if (instruction->oprs[i].decoflags & BRDCAST_MASK) {
+            broadcast = i;
+            break;
+        }
+
+    /* broadcasting uses a different data element size */
+    for (i = 0; i < instruction->operands; i++)
+        if (i == broadcast)
+            xsizeflags[i] = instruction->oprs[i].decoflags & BRSIZE_MASK;
+        else
+            xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
 
     merr = MERR_INVALOP;
 
@@ -1936,7 +1948,10 @@ static enum match_result find_match(const struct itemplate **tempp,
              * Missing operand size and a candidate for fuzzy matching...
              */
             for (i = 0; i < temp->operands; i++)
-                xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
+                if (i == broadcast)
+                    xsizeflags[i] |= temp->deco[i] & BRSIZE_MASK;
+                else
+                    xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
             opsizemissing = true;
         }
         if (m > merr)
@@ -1962,7 +1977,10 @@ static enum match_result find_match(const struct itemplate **tempp,
         if ((xsizeflags[i] & (xsizeflags[i]-1)))
             goto done;                /* No luck */
 
-        instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
+        if (i == broadcast)
+            instruction->oprs[i].decoflags |= xsizeflags[i];
+        else
+            instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
     }
 
     /* Try matching again... */
@@ -2107,7 +2125,16 @@ static enum match_result matches(const struct itemplate *itemp,
         } else if ((itemp->opd[i] & SIZE_MASK) &&
                    (itemp->opd[i] & SIZE_MASK) != (type & SIZE_MASK)) {
             if (type & SIZE_MASK) {
-                return MERR_INVALOP;
+                /*
+                 * when broadcasting, the element size depends on
+                 * the instruction type. decorator flag should match.
+                 */
+#define MATCH_BRSZ(bits) (((type & SIZE_MASK) == BITS##bits) &&             \
+                          ((itemp->deco[i] & BRSIZE_MASK) == BR_BITS##bits))
+                if (!((deco & BRDCAST_MASK) &&
+                      (MATCH_BRSZ(32) || MATCH_BRSZ(64)))) {
+                    return MERR_INVALOP;
+                }
             } else if (!is_class(REGISTER, type)) {
                 /*
                  * Note: we don't honor extrinsic operand sizes for registers,
