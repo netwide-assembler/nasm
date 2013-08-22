@@ -208,6 +208,7 @@ enum pp_token_type {
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
     TOK_PASTE,              /* %+ */
     TOK_INDIRECT,           /* %[...] */
+    TOK_BRACE,              /* \{...\} */
     TOK_SMAC_PARAM,         /* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
@@ -1103,6 +1104,10 @@ static Token *tokenize(char *line)
             type = TOK_COMMENT;
             while (*p)
                 p++;
+        } else if (p[0] == '\\' && (p[1] == '{' || p[1] == '}')) {
+            type = TOK_BRACE;
+            p += 2;
+            line++;
         } else {
             /*
              * Anything else is an operator of some kind. We check
