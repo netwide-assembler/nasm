@@ -21,6 +21,9 @@ def setup():
     parser.add_option('-b', dest='bits', action='store',
             default="",
             help='Bits for output ASM file.')
+    parser.add_option('-r', dest='raw_output', action='store',
+            default="",
+            help='Name for raw output bytes in text')
     (options, args) =  parser.parse_args()
     return options
 
@@ -77,10 +80,18 @@ def write(data, options):
                 outstr = outstrfmt % tuple(insn)
                 out.write(outstr)
 
+def write_rawbytes(data, options):
+    if options.raw_output:
+        with open(options.raw_output, 'wb') as out:
+            for insn in data:
+                out.write(insn[0] + '\n')
+
 if __name__ == "__main__":
     options = setup()
     recs = read(options)
     print "AVX3.1 instructions"
+
+    write_rawbytes(recs, options)
 
     recs = commas(recs)
 
