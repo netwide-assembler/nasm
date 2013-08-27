@@ -1159,6 +1159,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     rfield = nasm_regvals[opx->basereg];
                     /* find the last SIMD operand where ER decorator resides */
                     oplast = &ins->oprs[op1 > op2 ? op1 : op2];
+                    while (oplast && is_class(REG_CLASS_GPR, oplast->type))
+                        oplast--;
                 } else {
                     rflags = 0;
                     rfield = c & 7;
