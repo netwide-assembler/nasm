@@ -1514,8 +1514,8 @@ CMPPS		xmmreg,xmmreg,imm		[rmi:	np 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
 CMPSS		xmmreg,mem,imm			[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
 CMPSS		xmmreg,xmmreg,imm		[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
 COMISS		xmmreg,xmmrm32			[rm:	np 0f 2f /r]				KATMAI,SSE
-CVTPI2PS	xmmreg,mmxrm64			[rm:	np 0f 2a /r]				KATMAI,SSE,MMX
-CVTPS2PI	mmxreg,xmmrm64			[rm:	np 0f 2d /r]				KATMAI,SSE,MMX
+CVTPI2PS	xmmreg,mmxrm64			[rm:	np 0f 2a /r]				KATMAI,SSE
+CVTPS2PI	mmxreg,xmmrm64			[rm:	np 0f 2d /r]				KATMAI,SSE
 CVTSI2SS	xmmreg,mem			[rm:	f3 0f 2a /r]				KATMAI,SSE,SD,AR1,ND
 CVTSI2SS	xmmreg,rm32			[rm:	f3 0f 2a /r]				KATMAI,SSE,SD,AR1
 CVTSI2SS	xmmreg,rm64			[rm:	o64 f3 0f 2a /r]			X64,SSE,SQ,AR1
@@ -1523,7 +1523,7 @@ CVTSS2SI	reg32,xmmreg			[rm:	f3 0f 2d /r]				KATMAI,SSE,SD,AR1
 CVTSS2SI	reg32,mem			[rm:	f3 0f 2d /r]				KATMAI,SSE,SD,AR1
 CVTSS2SI	reg64,xmmreg			[rm:	o64 f3 0f 2d /r]			X64,SSE,SD,AR1
 CVTSS2SI	reg64,mem			[rm:	o64 f3 0f 2d /r]			X64,SSE,SD,AR1
-CVTTPS2PI	mmxreg,xmmrm			[rm:	np 0f 2c /r]				KATMAI,SSE,MMX,SQ
+CVTTPS2PI	mmxreg,xmmrm			[rm:	np 0f 2c /r]				KATMAI,SSE,SQ
 CVTTSS2SI	reg32,xmmrm			[rm:	f3 0f 2c /r]				KATMAI,SSE,SD,AR1
 CVTTSS2SI	reg64,xmmrm			[rm:	o64 f3 0f 2c /r]			X64,SSE,SD,AR1
 DIVPS		xmmreg,xmmrm128			[rm:	np 0f 5e /r]				KATMAI,SSE
@@ -1568,10 +1568,10 @@ UNPCKLPS	xmmreg,xmmrm128			[rm:	np 0f 14 /r]				KATMAI,SSE
 XORPS		xmmreg,xmmrm128			[rm:	np 0f 57 /r]				KATMAI,SSE
 
 ;# Introduced in Deschutes but necessary for SSE support
-FXRSTOR		mem				[m:	np 0f ae /1]				P6,SSE,FPU
-FXRSTOR64	mem				[m:	o64 np 0f ae /1]			X64,SSE,FPU
-FXSAVE		mem				[m:	np 0f ae /0]				P6,SSE,FPU
-FXSAVE64	mem				[m:	o64 np 0f ae /0]			X64,SSE,FPU
+FXRSTOR		mem				[m:	np 0f ae /1]				P6,SSE
+FXRSTOR64	mem				[m:	o64 np 0f ae /1]			X64,SSE
+FXSAVE		mem				[m:	np 0f ae /0]				P6,SSE
+FXSAVE64	mem				[m:	o64 np 0f ae /0]			X64,SSE
 
 ;# XSAVE group (AVX and extended state)
 ; Introduced in late Penryn ... we really need to clean up the handling
@@ -1863,37 +1863,37 @@ INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]				VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
 
 ;# Tejas New Instructions (SSSE3)
-PABSB		mmxreg,mmxrm			[rm:	np 0f 38 1c /r]				SSSE3,MMX,SQ
+PABSB		mmxreg,mmxrm			[rm:	np 0f 38 1c /r]				SSSE3,SQ
 PABSB		xmmreg,xmmrm			[rm:	66 0f 38 1c /r]				SSSE3
-PABSW		mmxreg,mmxrm			[rm:	np 0f 38 1d /r]				SSSE3,MMX,SQ
+PABSW		mmxreg,mmxrm			[rm:	np 0f 38 1d /r]				SSSE3,SQ
 PABSW		xmmreg,xmmrm			[rm:	66 0f 38 1d /r]				SSSE3
-PABSD		mmxreg,mmxrm			[rm:	np 0f 38 1e /r]				SSSE3,MMX,SQ
+PABSD		mmxreg,mmxrm			[rm:	np 0f 38 1e /r]				SSSE3,SQ
 PABSD		xmmreg,xmmrm			[rm:	66 0f 38 1e /r]				SSSE3
-PALIGNR		mmxreg,mmxrm,imm		[rmi:	np 0f 3a 0f /r ib,u]			SSSE3,MMX,SQ
+PALIGNR		mmxreg,mmxrm,imm		[rmi:	np 0f 3a 0f /r ib,u]			SSSE3,SQ
 PALIGNR		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0f /r ib,u]			SSSE3
-PHADDW		mmxreg,mmxrm			[rm:	np 0f 38 01 /r]				SSSE3,MMX,SQ
+PHADDW		mmxreg,mmxrm			[rm:	np 0f 38 01 /r]				SSSE3,SQ
 PHADDW		xmmreg,xmmrm			[rm:	66 0f 38 01 /r]				SSSE3
-PHADDD		mmxreg,mmxrm			[rm:	np 0f 38 02 /r]				SSSE3,MMX,SQ
+PHADDD		mmxreg,mmxrm			[rm:	np 0f 38 02 /r]				SSSE3,SQ
 PHADDD		xmmreg,xmmrm			[rm:	66 0f 38 02 /r]				SSSE3
-PHADDSW		mmxreg,mmxrm			[rm:	np 0f 38 03 /r]				SSSE3,MMX,SQ
+PHADDSW		mmxreg,mmxrm			[rm:	np 0f 38 03 /r]				SSSE3,SQ
 PHADDSW		xmmreg,xmmrm			[rm:	66 0f 38 03 /r]				SSSE3
-PHSUBW		mmxreg,mmxrm			[rm:	np 0f 38 05 /r]				SSSE3,MMX,SQ
+PHSUBW		mmxreg,mmxrm			[rm:	np 0f 38 05 /r]				SSSE3,SQ
 PHSUBW		xmmreg,xmmrm			[rm:	66 0f 38 05 /r]				SSSE3
-PHSUBD		mmxreg,mmxrm			[rm:	np 0f 38 06 /r]				SSSE3,MMX,SQ
+PHSUBD		mmxreg,mmxrm			[rm:	np 0f 38 06 /r]				SSSE3,SQ
 PHSUBD		xmmreg,xmmrm			[rm:	66 0f 38 06 /r]				SSSE3
-PHSUBSW		mmxreg,mmxrm			[rm:	np 0f 38 07 /r]				SSSE3,MMX,SQ
+PHSUBSW		mmxreg,mmxrm			[rm:	np 0f 38 07 /r]				SSSE3,SQ
 PHSUBSW		xmmreg,xmmrm			[rm:	66 0f 38 07 /r]				SSSE3
-PMADDUBSW	mmxreg,mmxrm			[rm:	np 0f 38 04 /r]				SSSE3,MMX,SQ
+PMADDUBSW	mmxreg,mmxrm			[rm:	np 0f 38 04 /r]				SSSE3,SQ
 PMADDUBSW	xmmreg,xmmrm			[rm:	66 0f 38 04 /r]				SSSE3
-PMULHRSW	mmxreg,mmxrm			[rm:	np 0f 38 0b /r]				SSSE3,MMX,SQ
+PMULHRSW	mmxreg,mmxrm			[rm:	np 0f 38 0b /r]				SSSE3,SQ
 PMULHRSW	xmmreg,xmmrm			[rm:	66 0f 38 0b /r]				SSSE3
-PSHUFB		mmxreg,mmxrm			[rm:	np 0f 38 00 /r]				SSSE3,MMX,SQ
+PSHUFB		mmxreg,mmxrm			[rm:	np 0f 38 00 /r]				SSSE3,SQ
 PSHUFB		xmmreg,xmmrm			[rm:	66 0f 38 00 /r]				SSSE3
-PSIGNB		mmxreg,mmxrm			[rm:	np 0f 38 08 /r]				SSSE3,MMX,SQ
+PSIGNB		mmxreg,mmxrm			[rm:	np 0f 38 08 /r]				SSSE3,SQ
 PSIGNB		xmmreg,xmmrm			[rm:	66 0f 38 08 /r]				SSSE3
-PSIGNW		mmxreg,mmxrm			[rm:	np 0f 38 09 /r]				SSSE3,MMX,SQ
+PSIGNW		mmxreg,mmxrm			[rm:	np 0f 38 09 /r]				SSSE3,SQ
 PSIGNW		xmmreg,xmmrm			[rm:	66 0f 38 09 /r]				SSSE3
-PSIGND		mmxreg,mmxrm			[rm:	np 0f 38 0a /r]				SSSE3,MMX,SQ
+PSIGND		mmxreg,mmxrm			[rm:	np 0f 38 0a /r]				SSSE3,SQ
 PSIGND		xmmreg,xmmrm			[rm:	66 0f 38 0a /r]				SSSE3
 
 ;# AMD SSE4A

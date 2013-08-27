@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     bool autosync = false;
     int bits = 16, b;
     bool eof = false;
-    uint32_t prefer = 0;
+    iflags_t prefer = 0;
     bool rn_error;
     int32_t offset;
     FILE *fp;

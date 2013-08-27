@@ -944,7 +944,7 @@ static const char * const condition_name[16] = {
 };
 
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
-            int32_t offset, int autosync, uint32_t prefer)
+            int32_t offset, int autosync, iflags_t prefer)
 {
     const struct itemplate * const *p, * const *best_p;
     const struct disasm_index *ix;
@@ -955,7 +955,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
-    uint32_t goodness, best;
+    iflags_t goodness, best;
     int best_pref;
     struct prefix_info prefix;
     bool end_prefix;

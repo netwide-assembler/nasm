@@ -213,7 +213,7 @@ typedef struct {
 #define GEN_MODRM(mod, reg, rm)                     \
         (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
 
-static uint32_t cpu;            /* cpu level received from nasm.c */
+static iflags_t cpu;            /* cpu level received from nasm.c */
 static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
@@ -377,7 +377,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return (isize >= -128 && isize <= 127); /* is it byte size? */
 }
 
-int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
+int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
                  insn * instruction, struct ofmt *output, efunc error,
                  ListGen * listgen)
 {
@@ -680,7 +680,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     return 0;
 }
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
+int64_t insn_size(int32_t segment, int64_t offset, int bits, iflags_t cp,
                   insn * instruction, efunc error)
 {
     const struct itemplate *temp;

@@ -427,6 +427,10 @@ sub format_insn($$$$$) {
     my $num, $nd = 0;
     my @bytecode;
     my $op, @ops, $opp, @opx, @oppx, @decos, @opevex;
+    my @iflags = (  "FPU", "MMX", "3DNOW", "SSE", "SSE2",
+                    "SSE3", "VMX", "SSSE3", "SSE4A", "SSE41",
+                    "SSE42", "SSE5", "AVX", "AVX2", "AVX512",
+                    "FMA", "BMI1", "BMI2", "TBM", "RTM", "INVPCID");
 
     return (undef, undef) if $operands eq "ignore";
 
@@ -475,6 +479,17 @@ sub format_insn($$$$$) {
         $decorators = "NO_DECORATOR";
     }
     $decorators =~ tr/a-z/A-Z/;
+
+    # check if two different insn set types are set
+    $cnt = 0;
+    foreach $fla (split(/,/, $flags)) {
+        if ($fla ~~ @iflags) {
+            $cnt++;
+            if ($cnt >= 2) {
+                die "Too many insn set flags in $flags\n";
+            }
+        }
+    }
 
     # format the flags
     $flags =~ s/,/|IF_/g;

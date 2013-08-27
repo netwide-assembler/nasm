@@ -694,6 +694,8 @@ typedef struct insn { /* an instruction itself */
 
 enum geninfo { GI_SWITCH };
 
+typedef uint64_t iflags_t;
+
 /*
  * The data structure defining an output format driver, and the
  * interfaces to the functions therein.
