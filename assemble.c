@@ -2257,7 +2257,7 @@ static bool is_disp8n(operand *input, insn *ins, int8_t *compdisp)
         if (vectlen + 7 <= (evex_w + 5) + (tuple - T2 + 1))
             n = 0;
         else
-            n = 1 << (tuple - T2 + evex_w + 4);
+            n = 1 << (tuple - T2 + evex_w + 3);
         break;
     case HVM:
     case QVM:
