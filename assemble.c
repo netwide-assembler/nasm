@@ -191,6 +191,7 @@ enum match_result {
     MERR_BADCPU,
     MERR_BADMODE,
     MERR_BADHLE,
+    MERR_ENCMISMATCH,
     /*
      * Matching success; the conditional ones first
      */
@@ -1233,6 +1234,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         if (bits != 64 && ((ins->rex & bad32) || ins->vexreg > 7)) {
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
             return -1;
+        } else if (!(ins->rex & REX_EV) &&
+                   ((ins->vexreg > 15) || (ins->evex_p[0] & 0xf0))) {
+            errfunc(ERR_NONFATAL, "invalid high-16 register in non-AVX-512");
+            return -1;
         }
         if (ins->rex & REX_EV)
             length += 4;
@@ -2147,6 +2152,9 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 opsizemissing = true;
             }
+        } else if (instruction->oprs[i].basereg >= 16 &&
+                   (itemp->flags & IF_INSMASK) != IF_AVX512) {
+            return MERR_ENCMISMATCH;
         }
     }
 
