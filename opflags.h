@@ -194,6 +194,8 @@
 #define RM_OPMASK               (                  REG_CLASS_OPMASK           | REGMEM)                 /* Opmask operand */
 #define OPMASKREG               (                  REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register */
 #define OPMASK0                 (GEN_SUBCLASS(1) | REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register zero (k0) */
+#define RM_K                    RM_OPMASK
+#define KREG                    OPMASKREG
 #define REG_CDT                 (                  REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn, DRn and TRn */
 #define REG_CREG                (GEN_SUBCLASS(1) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn */
 #define REG_DREG                (GEN_SUBCLASS(2) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* DRn */
@@ -241,7 +243,7 @@
 #define ZMEM                    (GEN_SUBCLASS(5) | MEMORY)      /* 512-bit vector SIB */
 
 /* memory which matches any type of r/m operand */
-#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM | RM_ZMM)
+#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM | RM_ZMM | RM_OPMASK)
 
 /* special immediate values */
 #define UNITY                   (GEN_SUBCLASS(0) | IMMEDIATE)   /* operand equals 1 */
