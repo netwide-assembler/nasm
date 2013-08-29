@@ -1117,7 +1117,7 @@ enum decorator_tokens {
 
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK
-#define B32                     (BRDCAST_MASK|BR_BITS32) /* {1to16} : broadcast 32b * 16 to zmm(512b) */ 
+#define B32                     (BRDCAST_MASK|BR_BITS32) /* {1to16} : broadcast 32b * 16 to zmm(512b) */
 #define B64                     (BRDCAST_MASK|BR_BITS64) /* {1to8}  : broadcast 64b *  8 to zmm(512b) */
 #define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
 #define SAE                     SAE_MASK                /* SAE(Suppress All Exception) */
