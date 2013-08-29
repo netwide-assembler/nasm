@@ -1150,7 +1150,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 int rfield;
                 opflags_t rflags;
                 struct operand *opy = &ins->oprs[op2];
-                struct operand *oplast;
+                struct operand *op_er_sae;
 
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
 
@@ -1158,24 +1158,23 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     /* pick rfield from operand b (opx) */
                     rflags = regflag(opx);
                     rfield = nasm_regvals[opx->basereg];
-                    /* find the last SIMD operand where ER decorator resides */
-                    oplast = &ins->oprs[op1 > op2 ? op1 : op2];
-                    while (oplast && is_class(REG_CLASS_GPR, oplast->type))
-                        oplast--;
                 } else {
                     rflags = 0;
                     rfield = c & 7;
-                    oplast = opy;
                 }
 
-                if (oplast->decoflags & ER) {
+                /* EVEX.b1 : evex_brerop contains the operand position */
+                op_er_sae = (ins->evex_brerop >= 0 ?
+                             &ins->oprs[ins->evex_brerop] : NULL);
+
+                if (op_er_sae && (op_er_sae->decoflags & ER)) {
                     /* set EVEX.RC (rounding control) and b */
                     ins->evex_p[2] |= (((ins->evex_rm - BRC_RN) << 5) & EVEX_P2LL) |
                                       EVEX_P2B;
                 } else {
                     /* set EVEX.L'L (vector length) */
                     ins->evex_p[2] |= ((ins->vex_wlp << (5 - 2)) & EVEX_P2LL);
-                    if ((oplast->decoflags & SAE) ||
+                    if ((op_er_sae && (op_er_sae->decoflags & SAE)) ||
                         (opy->decoflags & BRDCAST_MASK)) {
                         /* set EVEX.b */
                         ins->evex_p[2] |= EVEX_P2B;
@@ -1924,15 +1923,8 @@ static enum match_result find_match(const struct itemplate **tempp,
     enum match_result m, merr;
     opflags_t xsizeflags[MAX_OPERANDS];
     bool opsizemissing = false;
-    int8_t broadcast = -1;
+    int8_t broadcast = instruction->evex_brerop;
     int i;
-
-    /* find the position of broadcasting operand */
-    for (i = 0; i < instruction->operands; i++)
-        if (instruction->oprs[i].decoflags & BRDCAST_MASK) {
-            broadcast = i;
-            break;
-        }
 
     /* broadcasting uses a different data element size */
     for (i = 0; i < instruction->operands; i++)

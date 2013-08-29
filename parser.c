@@ -262,6 +262,8 @@ restart_parse:
     result->label       = NULL; /* Assume no label */
     result->eops        = NULL; /* must do this, whatever happens */
     result->operands    = 0;    /* must initialize this */
+    result->evex_rm     = 0;    /* Ensure EVEX rounding mode is reset */
+    result->evex_brerop = -1;   /* Reset EVEX broadcasting/ER op position */
 
     /* Ignore blank lines */
     if (i == TOKEN_EOS) {
@@ -1034,6 +1036,10 @@ is_expression:
                           "register size specification ignored");
             }
         }
+
+        /* remember the position of operand having broadcasting/ER mode */
+        if (result->oprs[operand].decoflags & (BRDCAST_MASK | ER | SAE))
+            result->evex_brerop = operand;
     }
 
     result->operands = operand; /* set operand count */

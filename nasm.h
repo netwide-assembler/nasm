@@ -690,6 +690,7 @@ typedef struct insn { /* an instruction itself */
                                             /* EVEX.P2: [z,L'L,b,V',aaa] */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX3 (EVEX) */
+    int8_t          evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
 enum geninfo { GI_SWITCH };
