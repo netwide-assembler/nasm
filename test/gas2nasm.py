@@ -39,7 +39,7 @@ def read(options):
                 l = strr[0].strip()
                 r = strr[2].strip()
                 # Filter out Pseudo-op / vex instructions until those are added in insns.dat
-                if not (re.match('vcmp.+[ps][ds]', r) or re.match('vpcmp[^u]+u?[dq]', r) or r[0] == 'k'):
+                if not (re.match('vcmp.+[ps][ds]', r) or re.match('vpcmp[^u]+u?[dq]', r)):
                     d.append(l)
                     d.append(r)
                     recs.append(d)
