@@ -2144,7 +2144,7 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 opsizemissing = true;
             }
-        } else if (instruction->oprs[i].basereg >= 16 &&
+        } else if (nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
                    (itemp->flags & IF_INSMASK) != IF_AVX512) {
             return MERR_ENCMISMATCH;
         }
