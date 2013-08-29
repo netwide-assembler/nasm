@@ -132,7 +132,6 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_PMASK        0xFF000000UL    /* the mask for processor types */
 #define IF_PLEVEL       0x0F000000UL    /* the mask for processor instr. level */
                                         /* also the highest possible processor */
-#define IF_PFMASK       0xFFF0000000UL    /* the mask for disassembly "prefer" */
 #define IF_8086         0x00000000UL    /* 8086 instruction */
 #define IF_186          0x01000000UL    /* 186+ instruction */
 #define IF_286          0x02000000UL    /* 286+ instruction */
@@ -152,5 +151,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_IA64         0x0F000000UL    /* IA64 instructions (in x86 mode) */
 #define IF_CYRIX        0x10000000UL    /* Cyrix-specific instruction */
 #define IF_AMD          0x20000000UL    /* AMD-specific instruction */
+#define IF_SPMASK       0x30000000UL    /* specific processor types mask */
+#define IF_PFMASK       (IF_INSMASK|IF_SPMASK) /* disassembly "prefer" mask */
 
 #endif /* NASM_INSNS_H */
