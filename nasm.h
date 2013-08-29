@@ -689,12 +689,13 @@ typedef struct insn { /* an instruction itself */
     uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
                                             /* EVEX.P2: [z,L'L,b,V',aaa] */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
-    int             evex_rm;                /* static rounding mode for AVX3 (EVEX) */
+    int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
     int8_t          evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
 enum geninfo { GI_SWITCH };
 
+/* Instruction flags type: IF_* flags are defined in insns.h */
 typedef uint64_t iflags_t;
 
 /*

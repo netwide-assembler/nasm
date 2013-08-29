@@ -123,7 +123,7 @@ xmm1-31	XMMREG		xmmreg		1
 ymm0	YMM0		ymmreg		0
 ymm1-31	YMMREG		ymmreg		1
 
-# AVX3 registers
+# AVX512 registers
 zmm0	ZMM0		zmmreg		0
 zmm1-31	ZMMREG		zmmreg		1
 

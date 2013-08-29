@@ -89,7 +89,6 @@ def write_rawbytes(data, options):
 if __name__ == "__main__":
     options = setup()
     recs = read(options)
-    print "AVX3.1 instructions"
 
     write_rawbytes(recs, options)
 
