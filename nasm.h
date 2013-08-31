@@ -514,7 +514,8 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 #define EVEX_P2AAA      0x07        /* EVEX P[18:16] : Embedded opmask    */
 #define EVEX_P2VP       0x08        /* EVEX P[19] : High-16 NDS reg       */
 #define EVEX_P2B        0x10        /* EVEX P[20] : Broadcast / RC / SAE  */
-#define EVEX_P2LL       0x60        /* EVEX P[22:21] : Vector length / RC */
+#define EVEX_P2LL       0x60        /* EVEX P[22:21] : Vector length      */
+#define EVEX_P2RC       EVEX_P2LL   /* EVEX P[22:21] : Rounding control   */
 #define EVEX_P2Z        0x80        /* EVEX P[23] : Zeroing/Merging       */
 
 /*

@@ -1167,15 +1167,18 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 op_er_sae = (ins->evex_brerop >= 0 ?
                              &ins->oprs[ins->evex_brerop] : NULL);
 
-                if (op_er_sae && (op_er_sae->decoflags & ER)) {
-                    /* set EVEX.RC (rounding control) and b */
-                    ins->evex_p[2] |= (((ins->evex_rm - BRC_RN) << 5) & EVEX_P2LL) |
-                                      EVEX_P2B;
+                if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
+                    /* set EVEX.b */
+                    ins->evex_p[2] |= EVEX_P2B;
+                    if (op_er_sae->decoflags & ER) {
+                        /* set EVEX.RC (rounding control) */
+                        ins->evex_p[2] |= ((ins->evex_rm - BRC_RN) << 5)
+                                          & EVEX_P2RC;
+                    }
                 } else {
                     /* set EVEX.L'L (vector length) */
                     ins->evex_p[2] |= ((ins->vex_wlp << (5 - 2)) & EVEX_P2LL);
-                    if ((op_er_sae && (op_er_sae->decoflags & SAE)) ||
-                        (opy->decoflags & BRDCAST_MASK)) {
+                    if (opy->decoflags & BRDCAST_MASK) {
                         /* set EVEX.b */
                         ins->evex_p[2] |= EVEX_P2B;
                     }
