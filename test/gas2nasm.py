@@ -38,11 +38,9 @@ def read(options):
                     strr = line[16:].partition('\t')
                 l = strr[0].strip()
                 r = strr[2].strip()
-                # Filter out Pseudo-op / vex instructions until those are added in insns.dat
-                if not (re.match('vcmp.+[ps][ds]', r) or re.match('vpcmp[^u]+u?[dq]', r)):
-                    d.append(l)
-                    d.append(r)
-                    recs.append(d)
+                d.append(l)
+                d.append(r)
+                recs.append(d)
     return recs
 
 def commas(recs):
