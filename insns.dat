@@ -4063,6 +4063,17 @@ VPLZCNTD         zmmreg|mask|z,zmmrm512|b32      [rm:fv:          evex.512.66.0f
 VPLZCNTQ         zmmreg|mask|z,zmmrm512|b64      [rm:fv:          evex.512.66.0f38.w1 44 /r ]  AVX512CD,FUTURE
 VPTESTNMD        kreg|mask,zmmreg,zmmrm512|b32   [rvm:fv:     evex.nds.512.f3.0f38.w0 27 /r ]  AVX512CD,FUTURE
 VPTESTNMQ        kreg|mask,zmmreg,zmmrm512|b64   [rvm:fv:     evex.nds.512.f3.0f38.w1 27 /r ]  AVX512CD,FUTURE
+; AVX-512ER (Exponential and Reciprocal) instructions
+VEXP2PD      zmmreg|mask|z,zmmrm512|b64|sae    [rm:fv:          evex.512.66.0f38.w1 c8 /r ]  AVX512ER,FUTURE
+VEXP2PS      zmmreg|mask|z,zmmrm512|b32|sae    [rm:fv:          evex.512.66.0f38.w0 c8 /r ]  AVX512ER,FUTURE
+VRCP28PD     zmmreg|mask|z,zmmrm512|b64|sae    [rm:fv:          evex.512.66.0f38.w1 ca /r ]  AVX512ER,FUTURE
+VRCP28PS     zmmreg|mask|z,zmmrm512|b32|sae    [rm:fv:          evex.512.66.0f38.w0 ca /r ]  AVX512ER,FUTURE
+VRCP28SD     xmmreg|mask|z,xmmreg,xmmrm64|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w1 cb /r ]  AVX512ER,FUTURE
+VRCP28SS     xmmreg|mask|z,xmmreg,xmmrm32|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w0 cb /r ]  AVX512ER,FUTURE
+VRSQRT28PD   zmmreg|mask|z,zmmrm512|b64|sae    [rm:fv:          evex.512.66.0f38.w1 cc /r ]  AVX512ER,FUTURE
+VRSQRT28PS   zmmreg|mask|z,zmmrm512|b32|sae    [rm:fv:          evex.512.66.0f38.w0 cc /r ]  AVX512ER,FUTURE
+VRSQRT28SD   xmmreg|mask|z,xmmreg,xmmrm64|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w1 cd /r ]  AVX512ER,FUTURE
+VRSQRT28SS   xmmreg|mask|z,xmmreg,xmmrm32|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w0 cd /r ]  AVX512ER,FUTURE
 
 
 ;# Systematic names for the hinting nop instructions

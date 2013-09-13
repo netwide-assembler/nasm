@@ -107,6 +107,7 @@ extern const uint8_t nasm_bytecodes[];
 /* These flags are currently not used for anything - intended for insn set */
 #define IF_UNDOC        0x8000000000UL    /* it's an undocumented instruction */
 #define IF_HLE          0x4000000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX512       0x2000000000UL    /* it's an AVX-512F (512b) instruction */
 #define IF_FPU          0x0100000000UL    /* it's an FPU instruction */
 #define IF_MMX          0x0200000000UL    /* it's an MMX instruction */
 #define IF_3DNOW        0x0300000000UL    /* it's a 3DNow! instruction */
@@ -121,14 +122,14 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_SSE5         0x0C00000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_AVX          0x0D00000000UL    /* it's an AVX     (128b) instruction */
 #define IF_AVX2         0x0E00000000UL    /* it's an AVX2    (256b) instruction */
-#define IF_AVX512       0x0F00000000UL    /* it's an AVX-512 (512b) instruction */
 #define IF_FMA          0x1000000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_BMI1         0x1100000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_BMI2         0x1200000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_TBM          0x1300000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_RTM          0x1400000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_INVPCID      0x1500000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
-#define IF_AVX512CD     0x1600000000UL    /* AVX-512 Conflict Detection insns */
+#define IF_AVX512CD     (0x1600000000UL|IF_AVX512) /* AVX-512 Conflict Detection insns */
+#define IF_AVX512ER     (0x1700000000UL|IF_AVX512) /* AVX-512 Exponential and Reciprocal */
 #define IF_INSMASK      0xFF00000000UL    /* the mask for instruction set types */
 #define IF_PMASK        0xFF000000UL    /* the mask for processor types */
 #define IF_PLEVEL       0x0F000000UL    /* the mask for processor instr. level */
