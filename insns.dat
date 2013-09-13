@@ -4054,6 +4054,16 @@ KUNPCKBW  kreg,kreg,kreg  [rvm:    vex.nds.l1.66.0f.w0 4b /r ]  AVX512,FUTURE
 KXNORW    kreg,kreg,kreg  [rvm:       vex.nds.l1.0f.w0 46 /r ]  AVX512,FUTURE
 KXORW     kreg,kreg,kreg  [rvm:       vex.nds.l1.0f.w0 47 /r ]  AVX512,FUTURE
 
+; AVX-512CD (Conflict Detection) instructions
+VPBROADCASTMB2Q  zmmreg,kreg                     [rm:             evex.512.f3.0f38.w1 2a /r ]  AVX512CD,FUTURE
+VPBROADCASTMW2D  zmmreg,kreg                     [rm:             evex.512.f3.0f38.w0 3a /r ]  AVX512CD,FUTURE
+VPCONFLICTD      zmmreg|mask|z,zmmrm512|b32      [rm:fv:          evex.512.66.0f38.w0 c4 /r ]  AVX512CD,FUTURE
+VPCONFLICTQ      zmmreg|mask|z,zmmrm512|b64      [rm:fv:          evex.512.66.0f38.w1 c4 /r ]  AVX512CD,FUTURE
+VPLZCNTD         zmmreg|mask|z,zmmrm512|b32      [rm:fv:          evex.512.66.0f38.w0 44 /r ]  AVX512CD,FUTURE
+VPLZCNTQ         zmmreg|mask|z,zmmrm512|b64      [rm:fv:          evex.512.66.0f38.w1 44 /r ]  AVX512CD,FUTURE
+VPTESTNMD        kreg|mask,zmmreg,zmmrm512|b32   [rvm:fv:     evex.nds.512.f3.0f38.w0 27 /r ]  AVX512CD,FUTURE
+VPTESTNMQ        kreg|mask,zmmreg,zmmrm512|b64   [rvm:fv:     evex.nds.512.f3.0f38.w1 27 /r ]  AVX512CD,FUTURE
+
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

@@ -128,6 +128,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_TBM          0x1300000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_RTM          0x1400000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
 #define IF_INVPCID      0x1500000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
+#define IF_AVX512CD     0x1600000000UL    /* AVX-512 Conflict Detection insns */
 #define IF_INSMASK      0xFF00000000UL    /* the mask for instruction set types */
 #define IF_PMASK        0xFF000000UL    /* the mask for processor types */
 #define IF_PLEVEL       0x0F000000UL    /* the mask for processor instr. level */
