@@ -4074,6 +4074,24 @@ VRSQRT28PD   zmmreg|mask|z,zmmrm512|b64|sae    [rm:fv:          evex.512.66.0f38
 VRSQRT28PS   zmmreg|mask|z,zmmrm512|b32|sae    [rm:fv:          evex.512.66.0f38.w0 cc /r ]  AVX512ER,FUTURE
 VRSQRT28SD   xmmreg|mask|z,xmmreg,xmmrm64|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w1 cd /r ]  AVX512ER,FUTURE
 VRSQRT28SS   xmmreg|mask|z,xmmreg,xmmrm32|sae  [rvm:t1s:    evex.nds.lig.66.0f38.w0 cd /r ]  AVX512ER,FUTURE
+; AVX-512PF (Prefetch) instructions
+VGATHERPF0DPD   ymem64|mask  [m:t1s:    vsiby evex.512.66.0f38.w1 c6 /1 ]  AVX512PF,FUTURE
+VGATHERPF0DPS   zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c6 /1 ]  AVX512PF,FUTURE
+VGATHERPF0QPD   zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /1 ]  AVX512PF,FUTURE
+VGATHERPF0QPS   zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /1 ]  AVX512PF,FUTURE
+VGATHERPF1DPD   ymem64|mask  [m:t1s:    vsiby evex.512.66.0f38.w1 c6 /2 ]  AVX512PF,FUTURE
+VGATHERPF1DPS   zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c6 /2 ]  AVX512PF,FUTURE
+VGATHERPF1QPD   zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /2 ]  AVX512PF,FUTURE
+VGATHERPF1QPS   zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /2 ]  AVX512PF,FUTURE
+VSCATTERPF0DPD  ymem64|mask  [m:t1s:    vsiby evex.512.66.0f38.w1 c6 /5 ]  AVX512PF,FUTURE
+VSCATTERPF0DPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c6 /5 ]  AVX512PF,FUTURE
+VSCATTERPF0QPD  zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /5 ]  AVX512PF,FUTURE
+VSCATTERPF0QPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /5 ]  AVX512PF,FUTURE
+VSCATTERPF1DPD  ymem64|mask  [m:t1s:    vsiby evex.512.66.0f38.w1 c6 /6 ]  AVX512PF,FUTURE
+VSCATTERPF1DPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c6 /6 ]  AVX512PF,FUTURE
+VSCATTERPF1QPD  zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /6 ]  AVX512PF,FUTURE
+VSCATTERPF1QPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /6 ]  AVX512PF,FUTURE
+PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  FUTURE
 
 
 ;# Systematic names for the hinting nop instructions
