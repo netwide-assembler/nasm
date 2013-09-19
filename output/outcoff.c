@@ -442,9 +442,42 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
         sects[i]->flags &= align_and;
         sects[i]->flags |= align_or;
     } else if (pass == 1) {
-        if (flags)
-            nasm_error(ERR_WARNING, "section attributes ignored on"
-                  " redeclaration of section `%s'", name);
+        /* Check if any flags are specified */
+        if (flags) {
+            unsigned int align_flags = flags & IMAGE_SCN_ALIGN_MASK;
+
+            /* Warn if non-alignment flags differ */
+            if ((flags ^ sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK) {
+                nasm_error(ERR_WARNING, "section attributes ignored on"
+                    " redeclaration of section `%s'", name);
+            }
+            /* Check if alignment might be needed */
+            if (align_flags > IMAGE_SCN_ALIGN_1BYTES) {
+                unsigned int sect_align_flags = sects[i]->flags & IMAGE_SCN_ALIGN_MASK;
+
+                /* Compute the actual alignment */
+                unsigned int align = 1u << ((align_flags - IMAGE_SCN_ALIGN_1BYTES) >> 20);
+
+                /* Update section header as needed */
+                if (align_flags > sect_align_flags) {
+                    sects[i]->flags = (sects[i]->flags & ~IMAGE_SCN_ALIGN_MASK) | align_flags;
+                }
+                /* Check if not already aligned */
+                if (sects[i]->len % align) {
+                    unsigned int padding = (align - sects[i]->len) % align;
+                    /* We need to write at most 8095 bytes */
+                    char buffer[8095];
+                    if (sects[i]->flags & IMAGE_SCN_CNT_CODE) {
+                        /* Fill with INT 3 instructions */
+                        memset(buffer, 0xCC, padding);
+                    } else {
+                        memset(buffer, 0x00, padding);
+                    }
+                    saa_wbytes(sects[i]->data, buffer, padding);
+                    sects[i]->len += padding;
+                }
+            }
+        }
     }
 
     return sects[i]->index;
