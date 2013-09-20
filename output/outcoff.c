@@ -137,7 +137,8 @@ struct Section {
     int32_t index;
     struct Reloc *head, **tail;
     uint32_t flags;             /* section flags */
-    char name[9];
+    char *name;
+    int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
 };
 
@@ -215,7 +216,7 @@ static uint32_t strslen;
 static void coff_gen_init(void);
 static void coff_sect_write(struct Section *, const uint8_t *, uint32_t);
 static void coff_write(void);
-static void coff_section_header(char *, int32_t, int32_t, int32_t, int32_t, int, int32_t);
+static void coff_section_header(char *, int32_t, int32_t, int32_t, int32_t, int32_t, int, int32_t);
 static void coff_write_relocs(struct Section *);
 static void coff_write_symbols(void);
 
@@ -272,6 +273,7 @@ static void coff_cleanup(int debuginfo)
             sects[i]->head = sects[i]->head->next;
             nasm_free(r);
         }
+        nasm_free(sects[i]->name);
         nasm_free(sects[i]);
     }
     nasm_free(sects);
@@ -284,6 +286,7 @@ static void coff_cleanup(int debuginfo)
 static int coff_make_section(char *name, uint32_t flags)
 {
     struct Section *s;
+    size_t namelen;
 
     s = nasm_zalloc(sizeof(*s));
 
@@ -294,8 +297,20 @@ static int coff_make_section(char *name, uint32_t flags)
         s->index = def_seg;
     else
         s->index = seg_alloc();
-    strncpy(s->name, name, 8);
-    s->name[8] = '\0';
+    s->namepos = -1;
+    namelen = strlen(name);
+    if (namelen > 8) {
+        if (win32 || win64) {
+            s->namepos = strslen + 4;
+            saa_wbytes(strs, name, namelen + 1);
+            strslen += namelen + 1;
+        } else {
+            namelen = 8;
+        }
+    }
+    s->name = nasm_malloc(namelen + 1);
+    strncpy(s->name, name, namelen);
+    s->name[namelen] = '\0';
     s->flags = flags;
 
     if (nsects >= sectlen) {
@@ -337,9 +352,11 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
     if (*p)
         *p++ = '\0';
     if (strlen(name) > 8) {
-        nasm_error(ERR_WARNING, "COFF section names limited to 8 characters:"
-              " truncating");
-        name[8] = '\0';
+        if (!win32 && !win64) {
+            nasm_error(ERR_WARNING,
+                       "COFF section names limited to 8 characters:  truncating");
+            name[8] = '\0';
+        }
     }
     flags = 0;
 
@@ -914,7 +931,7 @@ static void coff_write(void)
      */
     vsize = 0L;
     for (i = 0; i < nsects; i++) {
-        coff_section_header(sects[i]->name, vsize, sects[i]->len,
+        coff_section_header(sects[i]->name, sects[i]->namepos, vsize, sects[i]->len,
                             sects[i]->pos, sects[i]->relpos,
                             sects[i]->nrelocs, sects[i]->flags);
         vsize += sects[i]->len;
@@ -937,7 +954,7 @@ static void coff_write(void)
     saa_fpwrite(strs, ofile);
 }
 
-static void coff_section_header(char *name, int32_t vsize,
+static void coff_section_header(char *name, int32_t namepos, int32_t vsize,
                                 int32_t datalen, int32_t datapos,
                                 int32_t relpos, int nrelocs, int32_t flags)
 {
@@ -945,8 +962,32 @@ static void coff_section_header(char *name, int32_t vsize,
 
     (void)vsize;
 
-    strncpy(padname, name, 8);
-    fwrite(padname, 8, 1, ofile);
+    if (namepos == -1) {
+        strncpy(padname, name, 8);
+        fwrite(padname, 8, 1, ofile);
+    } else {
+        /*
+         * If name is longer than 8 bytes, write '/' followed
+         * by offset into the strings table represented as
+         * decimal number.
+         */
+        namepos = namepos % 100000000;
+        padname[0] = '/';
+        padname[1] = '0' + (namepos / 1000000);
+        namepos = namepos % 1000000;
+        padname[2] = '0' + (namepos / 100000);
+        namepos = namepos % 100000;
+        padname[3] = '0' + (namepos / 10000);
+        namepos = namepos % 10000;
+        padname[4] = '0' + (namepos / 1000);
+        namepos = namepos % 1000;
+        padname[5] = '0' + (namepos / 100);
+        namepos = namepos % 100;
+        padname[6] = '0' + (namepos / 10);
+        namepos = namepos % 10;
+        padname[7] = '0' + (namepos);
+        fwrite(padname, 8, 1, ofile);
+    }
 
     fwriteint32_t(0,            ofile); /* Virtual size field - set to 0 or vsize */
     fwriteint32_t(0L,           ofile); /* RVA/offset - we ignore */
