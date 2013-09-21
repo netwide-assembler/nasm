@@ -1,4 +1,5 @@
-; AVX-512 testcases from gas
+;Testname=avx512f; Arguments=-fbin -oavx512f.bin -O0 -DSRC; Files=stdout stderr avx512f.bin
+; AVX-512F testcases from gas
 ;------------------------
 ;
 ; This file is taken from there

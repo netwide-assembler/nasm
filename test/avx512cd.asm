@@ -1,3 +1,4 @@
+;Testname=avx512cd; Arguments=-fbin -oavx512cd.bin -O0 -DSRC; Files=stdout stderr avx512cd.bin
 ; AVX-512CD testcases from gas
 ;------------------------
 ;
