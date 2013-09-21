@@ -2147,7 +2147,8 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 opsizemissing = true;
             }
-        } else if (nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
+        } else if (is_register(instruction->oprs[i].basereg) &&
+                   nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
                    !(itemp->flags & IF_AVX512)) {
             return MERR_ENCMISMATCH;
         }
@@ -2313,6 +2314,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
     output->type    = EA_SCALAR;
     output->rip     = false;
+    output->disp8   = 0;
 
     /* REX flags for the rfield operand */
     output->rex     |= rexflags(rfield, rflags, REX_R | REX_P | REX_W | REX_H);
