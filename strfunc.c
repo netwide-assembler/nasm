@@ -53,56 +53,56 @@ static size_t utf8_to_16le(uint8_t *str, size_t len, char *op)
     uint32_t v = 0, vmin = 0;
 
     while (len--) {
-	c = *str++;
+        c = *str++;
 
-	if (expect) {
-	    if ((c & 0xc0) != 0x80) {
-		expect = 0;
-		return -1;
-	    } else {
-		v = (v << 6) | (c & 0x3f);
-		if (!--expect) {
-		    if (v < vmin || v > 0x10ffff ||
-			(v >= 0xd800 && v <= 0xdfff)) {
-			return -1;
-		    } else if (v > 0xffff) {
-			v -= 0x10000;
-			EMIT(0xd800 | (v >> 10));
-			EMIT(0xdc00 | (v & 0x3ff));
-		    } else {
-			EMIT(v);
-		    }
-		}
-		continue;
-	    }
-	}
+        if (expect) {
+            if ((c & 0xc0) != 0x80) {
+                expect = 0;
+                return -1;
+            } else {
+                v = (v << 6) | (c & 0x3f);
+                if (!--expect) {
+                    if (v < vmin || v > 0x10ffff ||
+                        (v >= 0xd800 && v <= 0xdfff)) {
+                        return -1;
+                    } else if (v > 0xffff) {
+                        v -= 0x10000;
+                        EMIT(0xd800 | (v >> 10));
+                        EMIT(0xdc00 | (v & 0x3ff));
+                    } else {
+                        EMIT(v);
+                    }
+                }
+                continue;
+            }
+        }
 
-	if (c < 0x80) {
-	    EMIT(c);
-	} else if (c < 0xc0 || c >= 0xfe) {
-	    /* Invalid UTF-8 */
-	    return -1;
-	} else if (c < 0xe0) {
-	    v = c & 0x1f;
-	    expect = 1;
-	    vmin = 0x80;
-	} else if (c < 0xf0) {
-	    v = c & 0x0f;
-	    expect = 2;
-	    vmin = 0x800;
-	} else if (c < 0xf8) {
-	    v = c & 0x07;
-	    expect = 3;
-	    vmin = 0x10000;
-	} else if (c < 0xfc) {
-	    v = c & 0x03;
-	    expect = 4;
-	    vmin = 0x200000;
-	} else {
-	    v = c & 0x01;
-	    expect = 5;
-	    vmin = 0x4000000;
-	}
+        if (c < 0x80) {
+            EMIT(c);
+        } else if (c < 0xc0 || c >= 0xfe) {
+            /* Invalid UTF-8 */
+            return -1;
+        } else if (c < 0xe0) {
+            v = c & 0x1f;
+            expect = 1;
+            vmin = 0x80;
+        } else if (c < 0xf0) {
+            v = c & 0x0f;
+            expect = 2;
+            vmin = 0x800;
+        } else if (c < 0xf8) {
+            v = c & 0x07;
+            expect = 3;
+            vmin = 0x10000;
+        } else if (c < 0xfc) {
+            v = c & 0x03;
+            expect = 4;
+            vmin = 0x200000;
+        } else {
+            v = c & 0x01;
+            expect = 5;
+            vmin = 0x4000000;
+        }
     }
 
     return expect ? (size_t)-1 : outlen << 1;
@@ -131,56 +131,56 @@ static size_t utf8_to_16be(uint8_t *str, size_t len, char *op)
     uint32_t v = 0, vmin = 0;
 
     while (len--) {
-	c = *str++;
+        c = *str++;
 
-	if (expect) {
-	    if ((c & 0xc0) != 0x80) {
-		expect = 0;
-		return -1;
-	    } else {
-		v = (v << 6) | (c & 0x3f);
-		if (!--expect) {
-		    if (v < vmin || v > 0x10ffff ||
-			(v >= 0xd800 && v <= 0xdfff)) {
-			return -1;
-		    } else if (v > 0xffff) {
-			v -= 0x10000;
-			EMIT(0xdc00 | (v & 0x3ff));
-			EMIT(0xd800 | (v >> 10));
-		    } else {
-			EMIT(v);
-		    }
-		}
-		continue;
-	    }
-	}
+        if (expect) {
+            if ((c & 0xc0) != 0x80) {
+                expect = 0;
+                return -1;
+            } else {
+                v = (v << 6) | (c & 0x3f);
+                if (!--expect) {
+                    if (v < vmin || v > 0x10ffff ||
+                        (v >= 0xd800 && v <= 0xdfff)) {
+                        return -1;
+                    } else if (v > 0xffff) {
+                        v -= 0x10000;
+                        EMIT(0xdc00 | (v & 0x3ff));
+                        EMIT(0xd800 | (v >> 10));
+                    } else {
+                        EMIT(v);
+                    }
+                }
+                continue;
+            }
+        }
 
-	if (c < 0x80) {
-	    EMIT(c);
-	} else if (c < 0xc0 || c >= 0xfe) {
-	    /* Invalid UTF-8 */
-	    return -1;
-	} else if (c < 0xe0) {
-	    v = c & 0x1f;
-	    expect = 1;
-	    vmin = 0x80;
-	} else if (c < 0xf0) {
-	    v = c & 0x0f;
-	    expect = 2;
-	    vmin = 0x800;
-	} else if (c < 0xf8) {
-	    v = c & 0x07;
-	    expect = 3;
-	    vmin = 0x10000;
-	} else if (c < 0xfc) {
-	    v = c & 0x03;
-	    expect = 4;
-	    vmin = 0x200000;
-	} else {
-	    v = c & 0x01;
-	    expect = 5;
-	    vmin = 0x4000000;
-	}
+        if (c < 0x80) {
+            EMIT(c);
+        } else if (c < 0xc0 || c >= 0xfe) {
+            /* Invalid UTF-8 */
+            return -1;
+        } else if (c < 0xe0) {
+            v = c & 0x1f;
+            expect = 1;
+            vmin = 0x80;
+        } else if (c < 0xf0) {
+            v = c & 0x0f;
+            expect = 2;
+            vmin = 0x800;
+        } else if (c < 0xf8) {
+            v = c & 0x07;
+            expect = 3;
+            vmin = 0x10000;
+        } else if (c < 0xfc) {
+            v = c & 0x03;
+            expect = 4;
+            vmin = 0x200000;
+        } else {
+            v = c & 0x01;
+            expect = 5;
+            vmin = 0x4000000;
+        }
     }
 
     return expect ? (size_t)-1 : outlen << 1;
@@ -201,50 +201,50 @@ static size_t utf8_to_32le(uint8_t *str, size_t len, char *op)
     uint32_t v = 0, vmin = 0;
 
     while (len--) {
-	c = *str++;
+        c = *str++;
 
-	if (expect) {
-	    if ((c & 0xc0) != 0x80) {
-		return -1;
-	    } else {
-		v = (v << 6) | (c & 0x3f);
-		if (!--expect) {
-		    if (v < vmin || (v >= 0xd800 && v <= 0xdfff)) {
-			return -1;
-		    } else {
-			EMIT(v);
-		    }
-		}
-		continue;
-	    }
-	}
+        if (expect) {
+            if ((c & 0xc0) != 0x80) {
+                return -1;
+            } else {
+                v = (v << 6) | (c & 0x3f);
+                if (!--expect) {
+                    if (v < vmin || (v >= 0xd800 && v <= 0xdfff)) {
+                        return -1;
+                    } else {
+                        EMIT(v);
+                    }
+                }
+                continue;
+            }
+        }
 
-	if (c < 0x80) {
-	    EMIT(c);
-	} else if (c < 0xc0 || c >= 0xfe) {
-	    /* Invalid UTF-8 */
-	    return -1;
-	} else if (c < 0xe0) {
-	    v = c & 0x1f;
-	    expect = 1;
-	    vmin = 0x80;
-	} else if (c < 0xf0) {
-	    v = c & 0x0f;
-	    expect = 2;
-	    vmin = 0x800;
-	} else if (c < 0xf8) {
-	    v = c & 0x07;
-	    expect = 3;
-	    vmin = 0x10000;
-	} else if (c < 0xfc) {
-	    v = c & 0x03;
-	    expect = 4;
-	    vmin = 0x200000;
-	} else {
-	    v = c & 0x01;
-	    expect = 5;
-	    vmin = 0x4000000;
-	}
+        if (c < 0x80) {
+            EMIT(c);
+        } else if (c < 0xc0 || c >= 0xfe) {
+            /* Invalid UTF-8 */
+            return -1;
+        } else if (c < 0xe0) {
+            v = c & 0x1f;
+            expect = 1;
+            vmin = 0x80;
+        } else if (c < 0xf0) {
+            v = c & 0x0f;
+            expect = 2;
+            vmin = 0x800;
+        } else if (c < 0xf8) {
+            v = c & 0x07;
+            expect = 3;
+            vmin = 0x10000;
+        } else if (c < 0xfc) {
+            v = c & 0x03;
+            expect = 4;
+            vmin = 0x200000;
+        } else {
+            v = c & 0x01;
+            expect = 5;
+            vmin = 0x4000000;
+        }
     }
 
     return expect ? (size_t)-1 : outlen << 2;
@@ -275,50 +275,50 @@ static size_t utf8_to_32be(uint8_t *str, size_t len, char *op)
     uint32_t v = 0, vmin = 0;
 
     while (len--) {
-	c = *str++;
+        c = *str++;
 
-	if (expect) {
-	    if ((c & 0xc0) != 0x80) {
-		return -1;
-	    } else {
-		v = (v << 6) | (c & 0x3f);
-		if (!--expect) {
-		    if (v < vmin || (v >= 0xd800 && v <= 0xdfff)) {
-			return -1;
-		    } else {
-			EMIT(v);
-		    }
-		}
-		continue;
-	    }
-	}
+        if (expect) {
+            if ((c & 0xc0) != 0x80) {
+                return -1;
+            } else {
+                v = (v << 6) | (c & 0x3f);
+                if (!--expect) {
+                    if (v < vmin || (v >= 0xd800 && v <= 0xdfff)) {
+                        return -1;
+                    } else {
+                        EMIT(v);
+                    }
+                }
+                continue;
+            }
+        }
 
-	if (c < 0x80) {
-	    EMIT(c);
-	} else if (c < 0xc0 || c >= 0xfe) {
-	    /* Invalid UTF-8 */
-	    return -1;
-	} else if (c < 0xe0) {
-	    v = c & 0x1f;
-	    expect = 1;
-	    vmin = 0x80;
-	} else if (c < 0xf0) {
-	    v = c & 0x0f;
-	    expect = 2;
-	    vmin = 0x800;
-	} else if (c < 0xf8) {
-	    v = c & 0x07;
-	    expect = 3;
-	    vmin = 0x10000;
-	} else if (c < 0xfc) {
-	    v = c & 0x03;
-	    expect = 4;
-	    vmin = 0x200000;
-	} else {
-	    v = c & 0x01;
-	    expect = 5;
-	    vmin = 0x4000000;
-	}
+        if (c < 0x80) {
+            EMIT(c);
+        } else if (c < 0xc0 || c >= 0xfe) {
+            /* Invalid UTF-8 */
+            return -1;
+        } else if (c < 0xe0) {
+            v = c & 0x1f;
+            expect = 1;
+            vmin = 0x80;
+        } else if (c < 0xf0) {
+            v = c & 0x0f;
+            expect = 2;
+            vmin = 0x800;
+        } else if (c < 0xf8) {
+            v = c & 0x07;
+            expect = 3;
+            vmin = 0x10000;
+        } else if (c < 0xfc) {
+            v = c & 0x03;
+            expect = 4;
+            vmin = 0x200000;
+        } else {
+            v = c & 0x01;
+            expect = 5;
+            vmin = 0x4000000;
+        }
     }
 
     return expect ? (size_t)-1 : outlen << 2;
@@ -337,12 +337,12 @@ size_t string_transform(char *str, size_t len, char **out, enum strfunc func)
 {
     /* This should match enum strfunc in nasm.h */
     static const transform_func str_transforms[] = {
-	utf8_to_16le,
-	utf8_to_16le,
-	utf8_to_16be,
-	utf8_to_32le,
-	utf8_to_32le,
-	utf8_to_32be,
+        utf8_to_16le,
+        utf8_to_16le,
+        utf8_to_16be,
+        utf8_to_32le,
+        utf8_to_32le,
+        utf8_to_32be,
     };
     transform_func transform = str_transforms[func];
     size_t outlen;
@@ -351,9 +351,9 @@ size_t string_transform(char *str, size_t len, char **out, enum strfunc func)
 
     outlen = transform(s, len, NULL);
     if (outlen == (size_t)-1)
-	return -1;
+        return -1;
 
     *out = buf = nasm_malloc(outlen+1);
-    buf[outlen] = '\0';		/* Forcibly null-terminate the buffer */
+    buf[outlen] = '\0'; /* Forcibly null-terminate the buffer */
     return transform(s, len, buf);
 }
