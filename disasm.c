@@ -955,7 +955,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
-    iflags_t goodness, best;
+    iflags_t goodness, best, flags;
     int best_pref;
     struct prefix_info prefix;
     bool end_prefix;
@@ -1174,6 +1174,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     /* Pick the best match */
     p = best_p;
     length = best_length;
+    flags = (*p)->flags;
 
     slen = 0;
 
@@ -1331,7 +1332,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                                  nasm_reg_names[(o->basereg-EXPR_REG_START)]);
                 started = true;
             }
-            if (o->indexreg != -1) {
+            if (o->indexreg != -1 && !(flags & IF_MIB)) {
                 if (started)
                     output[slen++] = '+';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
@@ -1395,6 +1396,18 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 				 "%s0x%"PRIx32"", prefix, offset);
 		}
             }
+
+            if (o->indexreg != -1 && (flags & IF_MIB)) {
+                output[slen++] = ',';
+                slen += snprintf(output + slen, outbufsize - slen, "%s",
+                                 nasm_reg_names[(o->indexreg-EXPR_REG_START)]);
+                if (o->scale > 1)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "*%d",
+                                 o->scale);
+                started = true;
+            }
+
             output[slen++] = ']';
         } else {
             slen +=

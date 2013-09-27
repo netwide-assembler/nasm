@@ -104,6 +104,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_NOLONG       0x00000800UL    /* it's not available in long mode */
 #define IF_LONG         0x00001000UL    /* long mode instruction */
 #define IF_NOHLE	0x00002000UL    /* HLE prefixes forbidden */
+#define IF_MIB		0x00004000UL    /* Disassemble with split EA */
 /* These flags are currently not used for anything - intended for insn set */
 #define IF_UNDOC        0x8000000000UL    /* it's an undocumented instruction */
 #define IF_HLE          0x4000000000UL    /* HACK NEED TO REORGANIZE THESE BITS */
