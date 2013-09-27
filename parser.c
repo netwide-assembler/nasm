@@ -242,6 +242,137 @@ static bool parse_braces(decoflags_t *decoflags)
     return recover;
 }
 
+static int parse_mref(operand *op, const expr *e,
+                      const struct eval_hints *hints, decoflags_t brace_flags)
+{
+    int b, i, s;        /* basereg, indexreg, scale */
+    int64_t o;          /* offset */
+
+    b = i = -1, o = s = 0;
+    op->hintbase = hints->base;
+    op->hinttype = hints->type;
+
+    if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
+        bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+
+        if (is_gpr && e->value == 1)
+            b = e->type;	/* It can be basereg */
+        else            	/* No, it has to be indexreg */
+            i = e->type, s = e->value;
+        e++;
+    }
+    if (e->type && e->type <= EXPR_REG_END) {   /* it's a 2nd register */
+        bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+
+        if (b != -1)    /* If the first was the base, ... */
+            i = e->type, s = e->value;  /* second has to be indexreg */
+
+        else if (!is_gpr || e->value != 1) {
+            /* If both want to be index */
+            nasm_error(ERR_NONFATAL,
+                       "invalid effective address: two index registers");
+            return -1;
+        } else
+            b = e->type;
+        e++;
+    }
+    if (e->type != 0) { /* is there an offset? */
+        if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
+            nasm_error(ERR_NONFATAL,
+                       "beroset-p-603-invalid effective address");
+            return -1;
+        } else {
+            if (e->type == EXPR_UNKNOWN) {
+                op->opflags |= OPFLAG_UNKNOWN;
+                o = 0;  /* doesn't matter what */
+                op->wrt = NO_SEG;     /* nor this */
+                op->segment = NO_SEG; /* or this */
+                while (e->type)
+                    e++;        /* go to the end of the line */
+            } else {
+                if (e->type == EXPR_SIMPLE) {
+                    o = e->value;
+                    e++;
+                }
+                if (e->type == EXPR_WRT) {
+                    op->wrt = e->value;
+                    e++;
+                } else
+                    op->wrt = NO_SEG;
+                /*
+                 * Look for a segment base type.
+                 */
+                if (e->type && e->type < EXPR_SEGBASE) {
+                    nasm_error(ERR_NONFATAL,
+                               "beroset-p-630-invalid effective address");
+                    return -1;
+                }
+                while (e->type && e->value == 0)
+                    e++;
+                if (e->type && e->value != 1) {
+                    nasm_error(ERR_NONFATAL,
+                               "beroset-p-637-invalid effective address");
+                    return -1;
+                }
+                if (e->type) {
+                    op->segment =
+                        e->type - EXPR_SEGBASE;
+                    e++;
+                } else
+                    op->segment = NO_SEG;
+                while (e->type && e->value == 0)
+                    e++;
+                if (e->type) {
+                    nasm_error(ERR_NONFATAL,
+                               "beroset-p-650-invalid effective address");
+                    return -1;
+                }
+            }
+        }
+    } else {
+        o = 0;
+        op->wrt = NO_SEG;
+        op->segment = NO_SEG;
+    }
+
+    if (e->type != 0) { /* there'd better be nothing left! */
+        nasm_error(ERR_NONFATAL,
+                   "beroset-p-663-invalid effective address");
+        return -1;
+    }
+
+    /* It is memory, but it can match any r/m operand */
+    op->type |= MEMORY_ANY;
+
+    if (b == -1 && (i == -1 || s == 0)) {
+        int is_rel = globalbits == 64 &&
+            !(op->eaflags & EAF_ABS) &&
+            ((globalrel &&
+              !(op->eaflags & EAF_FSGS)) ||
+             (op->eaflags & EAF_REL));
+
+        op->type |= is_rel ? IP_REL : MEM_OFFS;
+    }
+
+    if (i != -1) {
+        opflags_t iclass = nasm_reg_flags[i];
+
+        if (is_class(XMMREG,iclass))
+            op->type |= XMEM;
+        else if (is_class(YMMREG,iclass))
+            op->type |= YMEM;
+        else if (is_class(ZMMREG,iclass))
+            op->type |= ZMEM;
+    }
+
+    op->basereg = b;
+    op->indexreg = i;
+    op->scale = s;
+    op->offset = o;
+    op->decoflags |= brace_flags;
+    return 0;
+}
+
 insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
 {
     bool insn_is_label = false;
@@ -794,132 +925,8 @@ is_expression:
          */
 
         if (mref) {             /* it's a memory reference */
-            expr *e = value;
-            int b, i, s;        /* basereg, indexreg, scale */
-            int64_t o;          /* offset */
-
-            b = i = -1, o = s = 0;
-            op->hintbase = hints.base;
-            op->hinttype = hints.type;
-
-            if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
-                bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
-                
-                if (is_gpr && e->value == 1)
-                    b = e->type;	/* It can be basereg */
-                else            	/* No, it has to be indexreg */
-                    i = e->type, s = e->value;
-                e++;
-            }
-            if (e->type && e->type <= EXPR_REG_END) {   /* it's a 2nd register */
-                bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
-
-                if (b != -1)    /* If the first was the base, ... */
-                    i = e->type, s = e->value;  /* second has to be indexreg */
-
-                else if (!is_gpr || e->value != 1) {
-                    /* If both want to be index */
-                    nasm_error(ERR_NONFATAL,
-                               "invalid effective address: two index registers");
-                    goto fail;
-                } else
-                    b = e->type;
-                e++;
-            }
-            if (e->type != 0) { /* is there an offset? */
-                if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
-                    nasm_error(ERR_NONFATAL,
-                          "beroset-p-603-invalid effective address");
-                    goto fail;
-                } else {
-                    if (e->type == EXPR_UNKNOWN) {
-                        op->opflags |= OPFLAG_UNKNOWN;
-                        o = 0;  /* doesn't matter what */
-                        op->wrt = NO_SEG;     /* nor this */
-                        op->segment = NO_SEG; /* or this */
-                        while (e->type)
-                            e++;        /* go to the end of the line */
-                    } else {
-                        if (e->type == EXPR_SIMPLE) {
-                            o = e->value;
-                            e++;
-                        }
-                        if (e->type == EXPR_WRT) {
-                            op->wrt = e->value;
-                            e++;
-                        } else
-                            op->wrt = NO_SEG;
-                        /*
-                         * Look for a segment base type.
-                         */
-                        if (e->type && e->type < EXPR_SEGBASE) {
-                            nasm_error(ERR_NONFATAL,
-                                  "beroset-p-630-invalid effective address");
-                            goto fail;
-                        }
-                        while (e->type && e->value == 0)
-                            e++;
-                        if (e->type && e->value != 1) {
-                            nasm_error(ERR_NONFATAL,
-                                  "beroset-p-637-invalid effective address");
-                            goto fail;
-                        }
-                        if (e->type) {
-                            op->segment =
-                                e->type - EXPR_SEGBASE;
-                            e++;
-                        } else
-                            op->segment = NO_SEG;
-                        while (e->type && e->value == 0)
-                            e++;
-                        if (e->type) {
-                            nasm_error(ERR_NONFATAL,
-                                  "beroset-p-650-invalid effective address");
-                            goto fail;
-                        }
-                    }
-                }
-            } else {
-                o = 0;
-                op->wrt = NO_SEG;
-                op->segment = NO_SEG;
-            }
-
-            if (e->type != 0) { /* there'd better be nothing left! */
-                nasm_error(ERR_NONFATAL,
-                      "beroset-p-663-invalid effective address");
+            if (parse_mref(op, value, &hints, brace_flags))
                 goto fail;
-            }
-
-            /* It is memory, but it can match any r/m operand */
-            op->type |= MEMORY_ANY;
-
-            if (b == -1 && (i == -1 || s == 0)) {
-                int is_rel = globalbits == 64 &&
-                    !(op->eaflags & EAF_ABS) &&
-                    ((globalrel &&
-                      !(op->eaflags & EAF_FSGS)) ||
-                     (op->eaflags & EAF_REL));
-
-                op->type |= is_rel ? IP_REL : MEM_OFFS;
-            }
-
-            if (i != -1) {
-                opflags_t iclass = nasm_reg_flags[i];
-
-                if (is_class(XMMREG,iclass))
-                    op->type |= XMEM;
-                else if (is_class(YMMREG,iclass))
-                    op->type |= YMEM;
-                else if (is_class(ZMMREG,iclass))
-                    op->type |= ZMEM;
-            }
-
-            op->basereg = b;
-            op->indexreg = i;
-            op->scale = s;
-            op->offset = o;
-            op->decoflags |= brace_flags;
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 op->type      |= IMMEDIATE;
