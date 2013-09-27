@@ -242,15 +242,13 @@ static bool parse_braces(decoflags_t *decoflags)
     return recover;
 }
 
-static int parse_mref(operand *op, const expr *e,
-                      const struct eval_hints *hints, decoflags_t brace_flags)
+static int parse_mref(operand *op, const expr *e)
 {
     int b, i, s;        /* basereg, indexreg, scale */
     int64_t o;          /* offset */
 
-    b = i = -1, o = s = 0;
-    op->hintbase = hints->base;
-    op->hinttype = hints->type;
+    b = i = -1;
+    o = s = 0;
 
     if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
         bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
@@ -315,8 +313,7 @@ static int parse_mref(operand *op, const expr *e,
                     return -1;
                 }
                 if (e->type) {
-                    op->segment =
-                        e->type - EXPR_SEGBASE;
+                    op->segment = e->type - EXPR_SEGBASE;
                     e++;
                 } else
                     op->segment = NO_SEG;
@@ -341,6 +338,19 @@ static int parse_mref(operand *op, const expr *e,
         return -1;
     }
 
+    op->basereg = b;
+    op->indexreg = i;
+    op->scale = s;
+    op->offset = o;
+    return 0;
+}
+
+static void mref_set_optype(operand *op)
+{
+    int b = op->basereg;
+    int i = op->indexreg;
+    int s = op->scale;
+
     /* It is memory, but it can match any r/m operand */
     op->type |= MEMORY_ANY;
 
@@ -364,13 +374,6 @@ static int parse_mref(operand *op, const expr *e,
         else if (is_class(ZMMREG,iclass))
             op->type |= ZMEM;
     }
-
-    op->basereg = b;
-    op->indexreg = i;
-    op->scale = s;
-    op->offset = o;
-    op->decoflags |= brace_flags;
-    return 0;
 }
 
 insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
@@ -726,8 +729,9 @@ is_expression:
     for (opnum = 0; opnum < MAX_OPERANDS; opnum++) {
         operand *op = &result->oprs[opnum];
         expr *value;            /* used most of the time */
-        int mref;               /* is this going to be a memory ref? */
-        int bracket;            /* is it a [] mref, or a & mref? */
+        bool mref;              /* is this going to be a memory ref? */
+        bool bracket;           /* is it a [] mref, or a & mref? */
+        bool mib;               /* compound (mib) mref? */
         int setsize = 0;
         decoflags_t brace_flags = 0;    /* flags for decorators in braces */
 
@@ -870,6 +874,56 @@ is_expression:
                 goto fail;
         }
 
+        mib = false;
+        if (mref && bracket && i == ',') {
+            /* [seg:base+offset,index*scale] syntax (mib) */
+
+            operand o1, o2;     /* Partial operands */
+
+            if (parse_mref(&o1, value))
+                goto fail;
+
+            i = stdscan(NULL, &tokval); /* Eat comma */
+            value = evaluate(stdscan, NULL, &tokval, &op->opflags,
+                             critical, nasm_error, &hints);
+            i = tokval.t_type;
+
+            if (parse_mref(&o2, value))
+                goto fail;
+
+            if (o2.basereg != -1 && o2.indexreg == -1) {
+                o2.indexreg = o2.basereg;
+                o2.scale = 1;
+                o2.basereg = -1;
+            }
+
+            if (o1.indexreg != -1 || o2.basereg != -1 || o2.offset != 0 ||
+                o2.segment != NO_SEG || o2.wrt != NO_SEG) {
+                nasm_error(ERR_NONFATAL, "invalid mib expression");
+                goto fail;
+            }
+
+            op->basereg = o1.basereg;
+            op->indexreg = o2.indexreg;
+            op->scale = o2.scale;
+            op->offset = o1.offset;
+            op->segment = o1.segment;
+            op->wrt = o1.wrt;
+
+            if (op->basereg != -1) {
+                op->hintbase = op->basereg;
+                op->hinttype = EAH_MAKEBASE;
+            } else if (op->indexreg != -1) {
+                op->hintbase = op->indexreg;
+                op->hinttype = EAH_NOTBASE;
+            } else {
+                op->hintbase = -1;
+                op->hinttype = EAH_NOHINT;
+            }
+
+            mib = true;
+        }
+
         recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
@@ -923,10 +977,17 @@ is_expression:
          * now convert the exprs returned from evaluate()
          * into operand descriptions...
          */
+        op->decoflags |= brace_flags;
 
         if (mref) {             /* it's a memory reference */
-            if (parse_mref(op, value, &hints, brace_flags))
-                goto fail;
+            /* A mib reference was fully parsed already */
+            if (!mib) {
+                if (parse_mref(op, value))
+                    goto fail;
+                op->hintbase = hints.base;
+                op->hinttype = hints.type;
+            }
+            mref_set_optype(op);
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 op->type      |= IMMEDIATE;
