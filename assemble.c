@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -67,6 +67,35 @@
  *                 an arbitrary value in bits 3..0 (assembled as zero.)
  * \2ab          - a ModRM, calculated on EA in operand a, with the spare
  *                 field equal to digit b.
+ *
+ * \240..\243    - this instruction uses EVEX rather than REX or VEX/XOP, with the
+ *                 V field taken from operand 0..3.
+ * \250          - this instruction uses EVEX rather than REX or VEX/XOP, with the
+ *                 V field set to 1111b.
+ * EVEX prefixes are followed by the sequence:
+ * \cm\wlp\tup    where cm is:
+ *                  cc 000 0mm
+ *                  c = 2 for EVEX and m is the legacy escape (0f, 0f38, 0f3a)
+ *                and wlp is:
+ *                  00 wwl lpp
+ *                  [l0]  ll = 0 (.128, .lz)
+ *                  [l1]  ll = 1 (.256)
+ *                  [l2]  ll = 2 (.512)
+ *                  [lig] ll = 3 for EVEX.L'L don't care (always assembled as 0)
+ *
+ *                  [w0]  ww = 0 for W = 0
+ *                  [w1]  ww = 1 for W = 1
+ *                  [wig] ww = 2 for W don't care (always assembled as 0)
+ *                  [ww]  ww = 3 for W used as REX.W
+ *
+ *                  [p0]  pp = 0 for no prefix
+ *                  [60]  pp = 1 for legacy prefix 60
+ *                  [f3]  pp = 2
+ *                  [f2]  pp = 3
+ *
+ *                tup is tuple type for Disp8*N from %tuple_codes in insns.pl
+ *                    (compressed displacement encoding)
+ *
  * \254..\257    - a signed 32-bit operand to be extended to 64 bits.
  * \260..\263    - this instruction uses VEX/XOP rather than REX, with the
  *                 V field taken from operand 0..3.
@@ -76,9 +105,9 @@
  * VEX/XOP prefixes are followed by the sequence:
  * \tmm\wlp        where mm is the M field; and wlp is:
  *                 00 wwl lpp
- *		   [l0]  ll = 0 for L = 0 (.128, .lz)
- *		   [l1]  ll = 1 for L = 1 (.256)
- *		   [lig] ll = 2 for L don't care (always assembled as 0)
+ *                 [l0]  ll = 0 for L = 0 (.128, .lz)
+ *                 [l1]  ll = 1 for L = 1 (.256)
+ *                 [lig] ll = 2 for L don't care (always assembled as 0)
  *
  *                 [w0]  ww = 0 for W = 0
  *                 [w1 ] ww = 1 for W = 1
@@ -136,6 +165,7 @@
  *                 used for conditional jump over longer jump
  * \374          - this instruction takes an XMM VSIB memory EA
  * \375          - this instruction takes an YMM VSIB memory EA
+ * \376          - this instruction takes an ZMM VSIB memory EA
  */
 
 #include "compiler.h"
@@ -161,6 +191,7 @@ enum match_result {
     MERR_BADCPU,
     MERR_BADMODE,
     MERR_BADHLE,
+    MERR_ENCMISMATCH,
     /*
      * Matching success; the conditional ones first
      */
@@ -174,6 +205,7 @@ typedef struct {
     int bytes;                    /* # of bytes of offset needed */
     int size;                     /* lazy - this is sib+bytes+1 */
     uint8_t modrm, sib, rex, rip; /* the bytes themselves */
+    int8_t disp8;                  /* compressed displacement for EVEX */
 } ea;
 
 #define GEN_SIB(scale, index, base)                 \
@@ -182,7 +214,7 @@ typedef struct {
 #define GEN_MODRM(mod, reg, rm)                     \
         (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
 
-static uint32_t cpu;            /* cpu level received from nasm.c */
+static iflags_t cpu;            /* cpu level received from nasm.c */
 static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
@@ -200,9 +232,10 @@ static opflags_t regflag(const operand *);
 static int32_t regval(const operand *);
 static int rexflags(int, opflags_t, int);
 static int op_rexflags(const operand *, int);
+static int op_evexflags(const operand *, int, uint8_t);
 static void add_asp(insn *, int);
 
-static enum ea_type process_ea(operand *, ea *, int, int, int, opflags_t);
+static enum ea_type process_ea(operand *, ea *, int, int, opflags_t, insn *);
 
 static int has_prefix(insn * ins, enum prefix_pos pos, int prefix)
 {
@@ -233,6 +266,8 @@ static const char *size_name(int size)
         return "oword";
     case 32:
         return "yword";
+    case 64:
+        return "zword";
     default:
         return "???";
     }
@@ -343,7 +378,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return (isize >= -128 && isize <= 127); /* is it byte size? */
 }
 
-int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
+int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
                  insn * instruction, struct ofmt *output, efunc error,
                  ListGen * listgen)
 {
@@ -646,7 +681,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, uint32_t cp,
     return 0;
 }
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, uint32_t cp,
+int64_t insn_size(int32_t segment, int64_t offset, int bits, iflags_t cp,
                   insn * instruction, efunc error)
 {
     const struct itemplate *temp;
@@ -820,6 +855,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     ins->rex = 0;               /* Ensure REX is reset */
     eat = EA_SCALAR;            /* Expect a scalar EA */
+    memset(ins->evex_p, 0, 3);  /* Ensure EVEX is reset */
 
     if (ins->prefixes[PPS_OSIZE] == P_O64)
         ins->rex |= REX_W;
@@ -908,6 +944,23 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case4(0174):
             length++;
+            break;
+
+        case4(0240):
+            ins->rex |= REX_EV;
+            ins->vexreg = regval(opx);
+            ins->evex_p[2] |= op_evexflags(opx, EVEX_P2VP, 2); /* High-16 NDS */
+            ins->vex_cm = *codes++;
+            ins->vex_wlp = *codes++;
+            ins->evex_tuple = (*codes++ - 0300);
+            break;
+
+        case 0250:
+            ins->rex |= REX_EV;
+            ins->vexreg = 0;
+            ins->vex_cm = *codes++;
+            ins->vex_wlp = *codes++;
+            ins->evex_tuple = (*codes++ - 0300);
             break;
 
         case4(0254):
@@ -1076,6 +1129,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             eat = EA_YMMVSIB;
             break;
 
+        case 0376:
+            eat = EA_ZMMVSIB;
+            break;
+
         case4(0100):
         case4(0110):
         case4(0120):
@@ -1093,6 +1150,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 int rfield;
                 opflags_t rflags;
                 struct operand *opy = &ins->oprs[op2];
+                struct operand *op_er_sae;
 
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
 
@@ -1104,8 +1162,30 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     rflags = 0;
                     rfield = c & 7;
                 }
-                if (process_ea(opy, &ea_data, bits,ins->addr_size,
-                               rfield, rflags) != eat) {
+
+                /* EVEX.b1 : evex_brerop contains the operand position */
+                op_er_sae = (ins->evex_brerop >= 0 ?
+                             &ins->oprs[ins->evex_brerop] : NULL);
+
+                if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
+                    /* set EVEX.b */
+                    ins->evex_p[2] |= EVEX_P2B;
+                    if (op_er_sae->decoflags & ER) {
+                        /* set EVEX.RC (rounding control) */
+                        ins->evex_p[2] |= ((ins->evex_rm - BRC_RN) << 5)
+                                          & EVEX_P2RC;
+                    }
+                } else {
+                    /* set EVEX.L'L (vector length) */
+                    ins->evex_p[2] |= ((ins->vex_wlp << (5 - 2)) & EVEX_P2LL);
+                    if (opy->decoflags & BRDCAST_MASK) {
+                        /* set EVEX.b */
+                        ins->evex_p[2] |= EVEX_P2B;
+                    }
+                }
+
+                if (process_ea(opy, &ea_data, bits,
+                               rfield, rflags, ins) != eat) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
                     return -1;
                 } else {
@@ -1132,11 +1212,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
     }
 
-    if (ins->rex & REX_V) {
+    if (ins->rex & (REX_V | REX_EV)) {
         int bad32 = REX_R|REX_W|REX_X|REX_B;
 
         if (ins->rex & REX_H) {
-            errfunc(ERR_NONFATAL, "cannot use high register in vex instruction");
+            errfunc(ERR_NONFATAL, "cannot use high register in AVX instruction");
             return -1;
         }
         switch (ins->vex_wlp & 060) {
@@ -1156,8 +1236,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         if (bits != 64 && ((ins->rex & bad32) || ins->vexreg > 7)) {
             errfunc(ERR_NONFATAL, "invalid operands in non-64-bit mode");
             return -1;
+        } else if (!(ins->rex & REX_EV) &&
+                   ((ins->vexreg > 15) || (ins->evex_p[0] & 0xf0))) {
+            errfunc(ERR_NONFATAL, "invalid high-16 register in non-AVX-512");
+            return -1;
         }
-        if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)))
+        if (ins->rex & REX_EV)
+            length += 4;
+        else if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)))
             length += 3;
         else
             length += 2;
@@ -1194,7 +1280,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, int bits)
 {
     if (bits == 64) {
-        if ((ins->rex & REX_REAL) && !(ins->rex & REX_V)) {
+        if ((ins->rex & REX_REAL) && !(ins->rex & (REX_V | REX_EV))) {
             ins->rex = (ins->rex & REX_REAL) | REX_P;
             out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             ins->rex = 0;
@@ -1431,6 +1517,25 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset += 4;
             break;
 
+        case4(0240):
+        case 0250:
+            codes += 3;
+            ins->evex_p[2] |= op_evexflags(&ins->oprs[0],
+                                           EVEX_P2Z | EVEX_P2AAA, 2);
+            ins->evex_p[2] ^= EVEX_P2VP;        /* 1's complement */
+            bytes[0] = 0x62;
+            /* EVEX.X can be set by either REX or EVEX for different reasons */
+            bytes[1] = (~(((ins->rex & 7) << 5) |
+                          (ins->evex_p[0] & (EVEX_P0X | EVEX_P0RP))) & 0xf0) |
+                        (ins->vex_cm & 3);
+            bytes[2] = ((ins->rex & REX_W) << (7 - 3)) |
+                       ((~ins->vexreg & 15) << 3) |
+                       (1 << 2) | (ins->vex_wlp & 3);
+            bytes[3] = ins->evex_p[2];
+            out(offset, segment, &bytes, OUT_RAWDATA, 4, NO_SEG, NO_SEG);
+            offset += 4;
+            break;
+
         case4(0260):
         case 0270:
             codes += 2;
@@ -1631,6 +1736,10 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             eat = EA_YMMVSIB;
             break;
 
+        case 0376:
+            eat = EA_ZMMVSIB;
+            break;
+
         case4(0100):
         case4(0110):
         case4(0120):
@@ -1661,8 +1770,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     rfield = c & 7;
                 }
 
-                if (process_ea(opy, &ea_data, bits, ins->addr_size,
-                               rfield, rflags) != eat)
+                if (process_ea(opy, &ea_data, bits,
+                               rfield, rflags, ins) != eat)
                     errfunc(ERR_NONFATAL, "invalid effective address");
 
                 p = bytes;
@@ -1687,7 +1796,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 case 2:
                 case 4:
                 case 8:
-                    data = opy->offset;
+                    /* use compressed displacement, if available */
+                    data = ea_data.disp8 ? ea_data.disp8 : opy->offset;
                     s += ea_data.bytes;
                     if (ea_data.rip) {
                         if (opy->segment == segment) {
@@ -1702,9 +1812,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                                 insn_end - offset, opy->segment, opy->wrt);
                         }
                     } else {
-                        if (overflow_general(opy->offset, ins->addr_size >> 3) ||
-                            signed_bits(opy->offset, ins->addr_size) !=
-                            signed_bits(opy->offset, ea_data.bytes * 8))
+                        if (overflow_general(data, ins->addr_size >> 3) ||
+                            signed_bits(data, ins->addr_size) !=
+                            signed_bits(data, ea_data.bytes * 8))
                             warn_overflow(ERR_PASS2, ea_data.bytes);
 
                         out(offset, segment, &data, OUT_ADDRESS,
@@ -1774,6 +1884,40 @@ static int rexflags(int val, opflags_t flags, int mask)
     return rex & mask;
 }
 
+static int evexflags(int val, decoflags_t deco,
+                     int mask, uint8_t byte)
+{
+    int evex = 0;
+
+    switch(byte) {
+    case 0:
+        if (val >= 16)
+            evex |= (EVEX_P0RP | EVEX_P0X);
+        break;
+    case 2:
+        if (val >= 16)
+            evex |= EVEX_P2VP;
+        if (deco & Z)
+            evex |= EVEX_P2Z;
+        if (deco & OPMASK_MASK)
+            evex |= deco & EVEX_P2AAA;
+        break;
+    }
+    return evex & mask;
+}
+
+static int op_evexflags(const operand * o, int mask, uint8_t byte)
+{
+    int val;
+
+    if (!is_register(o->basereg))
+        errfunc(ERR_PANIC, "invalid operand passed to op_evexflags()");
+
+    val = nasm_regvals[o->basereg];
+
+    return evexflags(val, o->decoflags, mask, byte);
+}
+
 static enum match_result find_match(const struct itemplate **tempp,
                                     insn *instruction,
                                     int32_t segment, int64_t offset, int bits)
@@ -1782,10 +1926,15 @@ static enum match_result find_match(const struct itemplate **tempp,
     enum match_result m, merr;
     opflags_t xsizeflags[MAX_OPERANDS];
     bool opsizemissing = false;
+    int8_t broadcast = instruction->evex_brerop;
     int i;
 
+    /* broadcasting uses a different data element size */
     for (i = 0; i < instruction->operands; i++)
-        xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
+        if (i == broadcast)
+            xsizeflags[i] = instruction->oprs[i].decoflags & BRSIZE_MASK;
+        else
+            xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
 
     merr = MERR_INVALOP;
 
@@ -1803,7 +1952,10 @@ static enum match_result find_match(const struct itemplate **tempp,
              * Missing operand size and a candidate for fuzzy matching...
              */
             for (i = 0; i < temp->operands; i++)
-                xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
+                if (i == broadcast)
+                    xsizeflags[i] |= temp->deco[i] & BRSIZE_MASK;
+                else
+                    xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
             opsizemissing = true;
         }
         if (m > merr)
@@ -1829,7 +1981,10 @@ static enum match_result find_match(const struct itemplate **tempp,
         if ((xsizeflags[i] & (xsizeflags[i]-1)))
             goto done;                /* No luck */
 
-        instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
+        if (i == broadcast)
+            instruction->oprs[i].decoflags |= xsizeflags[i];
+        else
+            instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
     }
 
     /* Try matching again... */
@@ -1908,6 +2063,9 @@ static enum match_result matches(const struct itemplate *itemp,
         asize = BITS256;
         break;
     case IF_SZ:
+        asize = BITS512;
+        break;
+    case IF_SIZE:
         switch (bits) {
         case 16:
             asize = BITS16;
@@ -1961,15 +2119,26 @@ static enum match_result matches(const struct itemplate *itemp,
      */
     for (i = 0; i < itemp->operands; i++) {
         opflags_t type = instruction->oprs[i].type;
+        decoflags_t deco = instruction->oprs[i].decoflags;
         if (!(type & SIZE_MASK))
             type |= size[i];
 
-        if (itemp->opd[i] & ~type & ~SIZE_MASK) {
+        if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
+            (itemp->deco[i] & deco) != deco) {
             return MERR_INVALOP;
         } else if ((itemp->opd[i] & SIZE_MASK) &&
                    (itemp->opd[i] & SIZE_MASK) != (type & SIZE_MASK)) {
             if (type & SIZE_MASK) {
-                return MERR_INVALOP;
+                /*
+                 * when broadcasting, the element size depends on
+                 * the instruction type. decorator flag should match.
+                 */
+#define MATCH_BRSZ(bits) (((type & SIZE_MASK) == BITS##bits) &&             \
+                          ((itemp->deco[i] & BRSIZE_MASK) == BR_BITS##bits))
+                if (!((deco & BRDCAST_MASK) &&
+                      (MATCH_BRSZ(32) || MATCH_BRSZ(64)))) {
+                    return MERR_INVALOP;
+                }
             } else if (!is_class(REGISTER, type)) {
                 /*
                  * Note: we don't honor extrinsic operand sizes for registers,
@@ -1978,6 +2147,10 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 opsizemissing = true;
             }
+        } else if (is_register(instruction->oprs[i].basereg) &&
+                   nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
+                   !(itemp->flags & IF_AVX512)) {
+            return MERR_ENCMISMATCH;
         }
     }
 
@@ -2036,16 +2209,117 @@ static enum match_result matches(const struct itemplate *itemp,
     return MOK_GOOD;
 }
 
+/*
+ * Check if offset is a multiple of N with corresponding tuple type
+ * if Disp8*N is available, compressed displacement is stored in compdisp
+ */
+static bool is_disp8n(operand *input, insn *ins, int8_t *compdisp)
+{
+    const uint8_t fv_n[2][2][VLMAX] = {{{16, 32, 64}, {4, 4, 4}},
+                                       {{16, 32, 64}, {8, 8, 8}}};
+    const uint8_t hv_n[2][VLMAX]    =  {{8, 16, 32}, {4, 4, 4}};
+    const uint8_t dup_n[VLMAX]      =   {8, 32, 64};
+
+    bool evex_b           = input->decoflags & BRDCAST_MASK;
+    enum ttypes   tuple   = ins->evex_tuple;
+    /* vex_wlp composed as [wwllpp] */
+    enum vectlens vectlen = (ins->vex_wlp & 0x0c) >> 2;
+    /* wig(=2) is treated as w0(=0) */
+    bool evex_w           = (ins->vex_wlp & 0x10) >> 4;
+    int32_t off           = input->offset;
+    uint8_t n = 0;
+    int32_t disp8;
+
+    switch(tuple) {
+    case FV:
+        n = fv_n[evex_w][evex_b][vectlen];
+        break;
+    case HV:
+        n = hv_n[evex_b][vectlen];
+        break;
+
+    case FVM:
+        /* 16, 32, 64 for VL 128, 256, 512 respectively*/
+        n = 1 << (vectlen + 4);
+        break;
+    case T1S8:  /* N = 1 */
+    case T1S16: /* N = 2 */
+        n = tuple - T1S8 + 1;
+        break;
+    case T1S:
+        /* N = 4 for 32bit, 8 for 64bit */
+        n = evex_w ? 8 : 4;
+        break;
+    case T1F32:
+    case T1F64:
+        /* N = 4 for 32bit, 8 for 64bit */
+        n = (tuple == T1F32 ? 4 : 8);
+        break;
+    case T2:
+    case T4:
+    case T8:
+        if (vectlen + 7 <= (evex_w + 5) + (tuple - T2 + 1))
+            n = 0;
+        else
+            n = 1 << (tuple - T2 + evex_w + 3);
+        break;
+    case HVM:
+    case QVM:
+    case OVM:
+        n = 1 << (OVM - tuple + vectlen + 1);
+        break;
+    case M128:
+        n = 16;
+        break;
+    case DUP:
+        n = dup_n[vectlen];
+        break;
+
+    default:
+        break;
+    }
+
+    if (n && !(off & (n - 1))) {
+        disp8 = off / n;
+        /* if it fits in Disp8 */
+        if (disp8 >= -128 && disp8 <= 127) {
+            *compdisp = disp8;
+            return true;
+        }
+    }
+
+    *compdisp = 0;
+    return false;
+}
+
+/*
+ * Check if ModR/M.mod should/can be 01.
+ * - EAF_BYTEOFFS is set
+ * - offset can fit in a byte when EVEX is not used
+ * - offset can be compressed when EVEX is used
+ */
+#define IS_MOD_01()     (input->eaflags & EAF_BYTEOFFS ||       \
+                         (o >= -128 && o <= 127 &&              \
+                          seg == NO_SEG && !forw_ref &&         \
+                          !(input->eaflags & EAF_WORDOFFS) &&   \
+                          !(ins->rex & REX_EV)) ||              \
+                         (ins->rex & REX_EV &&                  \
+                          is_disp8n(input, ins, &output->disp8)))
+
 static enum ea_type process_ea(operand *input, ea *output, int bits,
-                               int addrbits, int rfield, opflags_t rflags)
+                               int rfield, opflags_t rflags, insn *ins)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
+    int addrbits = ins->addr_size;
 
     output->type    = EA_SCALAR;
     output->rip     = false;
+    output->disp8   = 0;
 
     /* REX flags for the rfield operand */
     output->rex     |= rexflags(rfield, rflags, REX_R | REX_P | REX_W | REX_H);
+    /* EVEX.R' flag for the REG operand */
+    ins->evex_p[0]  |= evexflags(rfield, 0, EVEX_P0RP, 0);
 
     if (is_class(REGISTER, input->type)) {
         /*
@@ -2054,10 +2328,17 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
         if (!is_register(input->basereg))
             goto err;
 
-        if (!is_class(REG_EA, regflag(input)))
+        if (!is_reg_class(REG_EA, input->basereg))
             goto err;
 
+        /* broadcasting is not available with a direct register operand. */
+        if (input->decoflags & BRDCAST_MASK) {
+            nasm_error(ERR_NONFATAL, "Broadcasting not allowed from a register");
+            goto err;
+        }
+
         output->rex         |= op_rexflags(input, REX_B | REX_P | REX_W | REX_H);
+        ins->evex_p[0]      |= op_evexflags(input, EVEX_P0X, 0);
         output->sib_present = false;    /* no SIB necessary */
         output->bytes       = 0;        /* no offset necessary either */
         output->modrm       = GEN_MODRM(3, rfield, nasm_regvals[input->basereg]);
@@ -2065,6 +2346,14 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
         /*
          * It's a memory reference.
          */
+
+        /* Embedded rounding or SAE is not available with a mem ref operand. */
+        if (input->decoflags & (ER | SAE)) {
+            nasm_error(ERR_NONFATAL,
+                       "Embedded rounding is available only with reg-reg op.");
+            return -1;
+        }
+
         if (input->basereg == -1 &&
             (input->indexreg == -1 || input->scale == 0)) {
             /*
@@ -2125,7 +2414,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             }
 
             /* if either one are a vector register... */
-            if ((ix|bx) & (XMMREG|YMMREG) & ~REG_EA) {
+            if ((ix|bx) & (XMMREG|YMMREG|ZMMREG) & ~REG_EA) {
                 opflags_t sok = BITS32 | BITS64;
                 int32_t o = input->offset;
                 int mod, scale, index, base;
@@ -2134,7 +2423,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                  * For a vector SIB, one has to be a vector and the other,
                  * if present, a GPR.  The vector must be the index operand.
                  */
-                if (it == -1 || (bx & (XMMREG|YMMREG) & ~REG_EA)) {
+                if (it == -1 || (bx & (XMMREG|YMMREG|ZMMREG) & ~REG_EA)) {
                     if (s == 0)
                         s = 1;
                     else if (s != 1)
@@ -2165,11 +2454,13 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     (addrbits == 64 && !(sok & BITS64)))
                     goto err;
 
-                output->type = (ix & YMMREG & ~REG_EA)
-                    ? EA_YMMVSIB : EA_XMMVSIB;
+                output->type = ((ix & ZMMREG & ~REG_EA) ? EA_ZMMVSIB
+                                : ((ix & YMMREG & ~REG_EA)
+                                ? EA_YMMVSIB : EA_XMMVSIB));
 
-                output->rex |= rexflags(it, ix, REX_X);
-                output->rex |= rexflags(bt, bx, REX_B);
+                output->rex    |= rexflags(it, ix, REX_X);
+                output->rex    |= rexflags(bt, bx, REX_B);
+                ins->evex_p[2] |= evexflags(it, 0, EVEX_P2VP, 2);
 
                 index = it & 7; /* it is known to be != -1 */
 
@@ -2199,10 +2490,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                         seg == NO_SEG && !forw_ref &&
                         !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                         mod = 0;
-                    else if (input->eaflags & EAF_BYTEOFFS ||
-                             (o >= -128 && o <= 127 &&
-                              seg == NO_SEG && !forw_ref &&
-                              !(input->eaflags & EAF_WORDOFFS)))
+                    else if (IS_MOD_01())
                         mod = 1;
                     else
                         mod = 2;
@@ -2293,10 +2581,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                             seg == NO_SEG && !forw_ref &&
                             !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
-                        else if (input->eaflags & EAF_BYTEOFFS ||
-                                 (o >= -128 && o <= 127 &&
-                                  seg == NO_SEG && !forw_ref &&
-                                  !(input->eaflags & EAF_WORDOFFS)))
+                        else if (IS_MOD_01())
                             mod = 1;
                         else
                             mod = 2;
@@ -2340,10 +2625,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                             seg == NO_SEG && !forw_ref &&
                             !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
-                        else if (input->eaflags & EAF_BYTEOFFS ||
-                                 (o >= -128 && o <= 127 &&
-                                  seg == NO_SEG && !forw_ref &&
-                                  !(input->eaflags & EAF_WORDOFFS)))
+                        else if (IS_MOD_01())
                             mod = 1;
                         else
                             mod = 2;
@@ -2428,9 +2710,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 if (o == 0 && seg == NO_SEG && !forw_ref && rm != 6 &&
                     !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                     mod = 0;
-                else if (input->eaflags & EAF_BYTEOFFS ||
-                         (o >= -128 && o <= 127 && seg == NO_SEG &&
-                          !forw_ref && !(input->eaflags & EAF_WORDOFFS)))
+                else if (IS_MOD_01())
                     mod = 1;
                 else
                     mod = 2;

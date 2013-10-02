@@ -193,6 +193,55 @@ static void process_size_override(insn *result, int operand)
     }
 }
 
+/*
+ * when two or more decorators follow a register operand,
+ * consecutive decorators are parsed here.
+ * opmask and zeroing decorators can be placed in any order.
+ * e.g. zmm1 {k2}{z} or zmm2 {z,k3}
+ * decorator(s) are placed at the end of an operand.
+ */
+static bool parse_braces(decoflags_t *decoflags)
+{
+    int i;
+    bool recover = false;
+
+    i = tokval.t_type;
+    do {
+        if (i == TOKEN_OPMASK) {
+            if (*decoflags & OPMASK_MASK) {
+                nasm_error(ERR_NONFATAL, "opmask k%lu is already set",
+                           *decoflags & OPMASK_MASK);
+                *decoflags &= ~OPMASK_MASK;
+            }
+            *decoflags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
+        } else if (i == TOKEN_DECORATOR) {
+            switch (tokval.t_integer) {
+            case BRC_Z:
+                /*
+                 * according to AVX512 spec, only zeroing/merging decorator
+                 * is supported with opmask
+                 */
+                *decoflags |= GEN_Z(0);
+                break;
+            default:
+                nasm_error(ERR_NONFATAL, "{%s} is not an expected decorator",
+                                         tokval.t_charptr);
+                break;
+            }
+        } else if (i == ',' || i == TOKEN_EOS){
+            break;
+        } else {
+            nasm_error(ERR_NONFATAL, "only a series of valid decorators"
+                                     " expected");
+            recover = true;
+            break;
+        }
+        i = stdscan(NULL, &tokval);
+    } while(1);
+
+    return recover;
+}
+
 insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
 {
     bool insn_is_label = false;
@@ -213,6 +262,8 @@ restart_parse:
     result->label       = NULL; /* Assume no label */
     result->eops        = NULL; /* must do this, whatever happens */
     result->operands    = 0;    /* must initialize this */
+    result->evex_rm     = 0;    /* Ensure EVEX rounding mode is reset */
+    result->evex_brerop = -1;   /* Reset EVEX broadcasting/ER op position */
 
     /* Ignore blank lines */
     if (i == TOKEN_EOS) {
@@ -557,10 +608,12 @@ is_expression:
         int mref;               /* is this going to be a memory ref? */
         int bracket;            /* is it a [] mref, or a & mref? */
         int setsize = 0;
+        decoflags_t brace_flags = 0;    /* flags for decorators in braces */
 
         result->oprs[operand].disp_size = 0;    /* have to zero this whatever */
         result->oprs[operand].eaflags   = 0;    /* and this */
         result->oprs[operand].opflags   = 0;
+        result->oprs[operand].decoflags = 0;
 
         i = stdscan(NULL, &tokval);
         if (i == TOKEN_EOS)
@@ -607,6 +660,11 @@ is_expression:
             case S_YWORD:
                 if (!setsize)
                     result->oprs[operand].type |= BITS256;
+                setsize = 1;
+                break;
+            case S_ZWORD:
+                if (!setsize)
+                    result->oprs[operand].type |= BITS512;
                 setsize = 1;
                 break;
             case S_TO:
@@ -702,17 +760,40 @@ is_expression:
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
+                if ((i == TOKEN_DECORATOR) || (i == TOKEN_OPMASK)) {
+                    /*
+                     * according to AVX512 spec, broacast or opmask decorator
+                     * is expected for memory reference operands
+                     */
+                    if (tokval.t_flag & TFLAG_BRDCAST) {
+                        brace_flags |= GEN_BRDCAST(0);
+                        i = stdscan(NULL, &tokval);
+                    } else if (i == TOKEN_OPMASK) {
+                        brace_flags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
+                        i = stdscan(NULL, &tokval);
+                    } else {
+                        nasm_error(ERR_NONFATAL, "broadcast or opmask "
+                                   "decorator expected inside braces");
+                        recover = true;
+                    }
+                }
+
                 if (i != 0 && i != ',') {
                     nasm_error(ERR_NONFATAL, "comma or end of line expected");
                     recover = true;
                 }
             }
         } else {                /* immediate operand */
-            if (i != 0 && i != ',' && i != ':') {
-                nasm_error(ERR_NONFATAL, "comma, colon or end of line expected");
+            if (i != 0 && i != ',' && i != ':' &&
+                i != TOKEN_DECORATOR && i != TOKEN_OPMASK) {
+                nasm_error(ERR_NONFATAL, "comma, colon, decorator or end of "
+                                         "line expected after operand");
                 recover = true;
             } else if (i == ':') {
                 result->oprs[operand].type |= COLON;
+            } else if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
+                /* parse opmask (and zeroing) after an operand */
+                recover = parse_braces(&brace_flags);
             }
         }
         if (recover) {
@@ -850,12 +931,15 @@ is_expression:
                     result->oprs[operand].type |= XMEM;
                 else if (is_class(YMMREG,iclass))
                     result->oprs[operand].type |= YMEM;
+                else if (is_class(ZMMREG,iclass))
+                    result->oprs[operand].type |= ZMEM;
             }
 
             result->oprs[operand].basereg = b;
             result->oprs[operand].indexreg = i;
             result->oprs[operand].scale = s;
             result->oprs[operand].offset = o;
+            result->oprs[operand].decoflags |= brace_flags;
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 result->oprs[operand].type      |= IMMEDIATE;
@@ -891,6 +975,27 @@ is_expression:
                             result->oprs[operand].type |= SDWORD;
                     }
                 }
+            } else if(value->type == EXPR_RDSAE) {
+                /*
+                 * it's not an operand but a rounding or SAE decorator.
+                 * put the decorator information in the (opflag_t) type field
+                 * of previous operand.
+                 */
+                operand --;
+                switch (value->value) {
+                case BRC_RN:
+                case BRC_RU:
+                case BRC_RD:
+                case BRC_RZ:
+                case BRC_SAE:
+                    result->oprs[operand].decoflags  |=
+                                        (value->value == BRC_SAE ? SAE : ER);
+                    result->evex_rm = value->value;
+                    break;
+                default:
+                    nasm_error(ERR_NONFATAL, "invalid decorator");
+                    break;
+                }
             } else {            /* it's a register */
                 opflags_t rs;
 
@@ -923,6 +1028,7 @@ is_expression:
                 result->oprs[operand].type      &= TO;
                 result->oprs[operand].type      |= REGISTER;
                 result->oprs[operand].type      |= nasm_reg_flags[value->type];
+                result->oprs[operand].decoflags |= brace_flags;
                 result->oprs[operand].basereg   = value->type;
 
                 if (rs && (result->oprs[operand].type & SIZE_MASK) != rs)
@@ -930,6 +1036,10 @@ is_expression:
                           "register size specification ignored");
             }
         }
+
+        /* remember the position of operand having broadcasting/ER mode */
+        if (result->oprs[operand].decoflags & (BRDCAST_MASK | ER | SAE))
+            result->evex_brerop = operand;
     }
 
     result->operands = operand; /* set operand count */

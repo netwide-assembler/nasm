@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -226,6 +226,8 @@ enum token_type { /* token types, other than chars */
     TOKEN_FLOATIZE,     /* __floatX__ */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
+    TOKEN_DECORATOR,    /* decorators such as {...} */
+    TOKEN_OPMASK,       /* translated token for opmask registers */
 };
 
 enum floatize {
@@ -272,6 +274,7 @@ struct tokenval {
     int64_t             t_integer;
     int64_t             t_inttwo;
     enum token_type     t_type;
+    int8_t              t_flag;
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
 
@@ -352,11 +355,14 @@ typedef expr *(*evalfunc)(scanner sc, void *scprivate,
 /*
  * Special values for expr->type.
  * These come after EXPR_REG_END as defined in regs.h.
+ * Expr types : 0 ~ EXPR_REG_END, EXPR_UNKNOWN, EXPR_...., EXPR_RDSAE,
+ *              EXPR_SEGBASE ~ EXPR_SEGBASE + SEG_ABS, ...
  */
 #define EXPR_UNKNOWN    (EXPR_REG_END+1) /* forward references */
 #define EXPR_SIMPLE     (EXPR_REG_END+2)
 #define EXPR_WRT        (EXPR_REG_END+3)
-#define EXPR_SEGBASE    (EXPR_REG_END+4)
+#define EXPR_RDSAE      (EXPR_REG_END+4)
+#define EXPR_SEGBASE    (EXPR_REG_END+5)
 
 /*
  * Linked list of strings
@@ -466,6 +472,14 @@ enum ccode { /* condition code names */
     C_none = -1
 };
 
+/*
+ * token flags
+ */
+#define TFLAG_BRC       (1 << 0)    /* valid only with braces. {1to8}, {rd-sae}, ...*/
+#define TFLAG_BRC_OPT   (1 << 1)    /* may or may not have braces. opmasks {k1} */
+#define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
+#define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
+
 static inline uint8_t get_cond_opcode(enum ccode c)
 {
     static const uint8_t ccode_opcodes[] = {
@@ -490,6 +504,19 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 #define REX_H       0x80    /* High register present, REX forbidden */
 #define REX_V       0x0100  /* Instruction uses VEX/XOP instead of REX */
 #define REX_NH      0x0200  /* Instruction which doesn't use high regs */
+#define REX_EV      0x0400  /* Instruction uses EVEX instead of REX */
+
+/*
+ * EVEX bit field
+ */
+#define EVEX_P0RP       0x10        /* EVEX P[4] : High-16 reg            */
+#define EVEX_P0X        0x40        /* EVEX P[6] : High-16 rm             */
+#define EVEX_P2AAA      0x07        /* EVEX P[18:16] : Embedded opmask    */
+#define EVEX_P2VP       0x08        /* EVEX P[19] : High-16 NDS reg       */
+#define EVEX_P2B        0x10        /* EVEX P[20] : Broadcast / RC / SAE  */
+#define EVEX_P2LL       0x60        /* EVEX P[22:21] : Vector length      */
+#define EVEX_P2RC       EVEX_P2LL   /* EVEX P[22:21] : Rounding control   */
+#define EVEX_P2Z        0x80        /* EVEX P[23] : Zeroing/Merging       */
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
@@ -563,6 +590,7 @@ typedef struct operand { /* operand to an instruction */
     int32_t         wrt;        /* segment base it's relative to */
     int             eaflags;    /* special EA flags */
     int             opflags;    /* see OPFLAG_* defines below */
+    decoflags_t     decoflags;  /* decorator flags such as {...} */
 } operand;
 
 #define OPFLAG_FORWARD      1   /* operand is a forward reference */
@@ -586,6 +614,7 @@ enum ea_type {
     EA_SCALAR,      /* Scalar EA */
     EA_XMMVSIB,     /* XMM vector EA */
     EA_YMMVSIB,     /* YMM vector EA */
+    EA_ZMMVSIB,     /* ZMM vector EA */
 };
 
 /*
@@ -608,6 +637,37 @@ enum prefix_pos {
     MAXPREFIX   /* Total number of prefix slots */
 };
 
+/*
+ * Tuple types that are used when determining Disp8*N eligibility
+ * The order must match with a hash %tuple_codes in insns.pl
+ */
+enum ttypes {
+    FV    = 001,
+    HV    = 002,
+    FVM   = 003,
+    T1S8  = 004,
+    T1S16 = 005,
+    T1S   = 006,
+    T1F32 = 007,
+    T1F64 = 010,
+    T2    = 011,
+    T4    = 012,
+    T8    = 013,
+    HVM   = 014,
+    QVM   = 015,
+    OVM   = 016,
+    M128  = 017,
+    DUP   = 020,
+};
+
+/* EVEX.L'L : Vector length on vector insns */
+enum vectlens {
+    VL128 = 0,
+    VL256 = 1,
+    VL512 = 2,
+    VLMAX = 3,
+};
+
 /* If you need to change this, also change it in insns.pl */
 #define MAX_OPERANDS 5
 
@@ -627,9 +687,17 @@ typedef struct insn { /* an instruction itself */
     int             vexreg;                 /* Register encoded in VEX prefix */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
+    uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
+                                            /* EVEX.P2: [z,L'L,b,V',aaa] */
+    enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
+    int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
+    int8_t          evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
 enum geninfo { GI_SWITCH };
+
+/* Instruction flags type: IF_* flags are defined in insns.h */
+typedef uint64_t iflags_t;
 
 /*
  * The data structure defining an output format driver, and the
@@ -948,8 +1016,112 @@ enum special_tokens {
     S_TWORD,
     S_WORD,
     S_YWORD,
+    S_ZWORD,
     SPECIAL_ENUM_LIMIT
 };
+
+enum decorator_tokens {
+    DECORATOR_ENUM_START    = SPECIAL_ENUM_LIMIT,
+    BRC_1TO8                = DECORATOR_ENUM_START,
+    BRC_1TO16,
+    BRC_RN,
+    BRC_RD,
+    BRC_RU,
+    BRC_RZ,
+    BRC_SAE,
+    BRC_Z,
+    DECORATOR_ENUM_LIMIT
+};
+
+/*
+ * AVX512 Decorator (decoflags_t) bits distribution (counted from 0)
+ *  3         2         1
+ * 10987654321098765432109876543210
+ *                |
+ *                | word boundary
+ * ............................1111 opmask
+ * ...........................1.... zeroing / merging
+ * ..........................1..... broadcast
+ * .........................1...... static rounding
+ * ........................1....... SAE
+ * ......................11........ broadcast element size
+ */
+#define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
+
+/*
+ * Opmask register number
+ * identical to EVEX.aaa
+ *
+ * Bits: 0 - 3
+ */
+#define OPMASK_SHIFT            (0)
+#define OPMASK_BITS             (4)
+#define OPMASK_MASK             OP_GENMASK(OPMASK_BITS, OPMASK_SHIFT)
+#define GEN_OPMASK(bit)         OP_GENBIT(bit, OPMASK_SHIFT)
+#define VAL_OPMASK(val)         OP_GENVAL(val, OPMASK_BITS, OPMASK_SHIFT)
+
+/*
+ * zeroing / merging control available
+ * matching to EVEX.z
+ *
+ * Bits: 4
+ */
+#define Z_SHIFT                 (4)
+#define Z_BITS                  (1)
+#define Z_MASK                  OP_GENMASK(Z_BITS, Z_SHIFT)
+#define GEN_Z(bit)              OP_GENBIT(bit, Z_SHIFT)
+
+/*
+ * broadcast - Whether this operand can be broadcasted
+ *
+ * Bits: 5
+ */
+#define BRDCAST_SHIFT           (5)
+#define BRDCAST_BITS            (1)
+#define BRDCAST_MASK            OP_GENMASK(BRDCAST_BITS, BRDCAST_SHIFT)
+#define GEN_BRDCAST(bit)        OP_GENBIT(bit, BRDCAST_SHIFT)
+
+/*
+ * Whether this instruction can have a static rounding mode.
+ * It goes with the last simd operand because the static rounding mode
+ * decorator is located between the last simd operand and imm8 (if any).
+ *
+ * Bits: 6
+ */
+#define STATICRND_SHIFT         (6)
+#define STATICRND_BITS          (1)
+#define STATICRND_MASK          OP_GENMASK(STATICRND_BITS, STATICRND_SHIFT)
+#define GEN_STATICRND(bit)      OP_GENBIT(bit, STATICRND_SHIFT)
+
+/*
+ * SAE(Suppress all exception) available
+ *
+ * Bits: 7
+ */
+#define SAE_SHIFT               (7)
+#define SAE_BITS                (1)
+#define SAE_MASK                OP_GENMASK(SAE_BITS, SAE_SHIFT)
+#define GEN_SAE(bit)            OP_GENBIT(bit, SAE_SHIFT)
+
+/*
+ * Broadcasting element size.
+ *
+ * Bits: 8 - 9
+ */
+#define BRSIZE_SHIFT            (8)
+#define BRSIZE_BITS             (2)
+#define BRSIZE_MASK             OP_GENMASK(BRSIZE_BITS, BRSIZE_SHIFT)
+#define GEN_BRSIZE(bit)         OP_GENBIT(bit, BRSIZE_SHIFT)
+
+#define BR_BITS32               GEN_BRSIZE(0)
+#define BR_BITS64               GEN_BRSIZE(1)
+
+#define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
+#define Z                       Z_MASK
+#define B32                     (BRDCAST_MASK|BR_BITS32) /* {1to16} : broadcast 32b * 16 to zmm(512b) */
+#define B64                     (BRDCAST_MASK|BR_BITS64) /* {1to8}  : broadcast 64b *  8 to zmm(512b) */
+#define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
+#define SAE                     SAE_MASK                /* SAE(Suppress All Exception) */
 
 /*
  * Global modes

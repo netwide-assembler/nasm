@@ -869,6 +869,7 @@ static expr *expr6(int critical)
     case TOKEN_INSN:            /* Opcodes that occur here are really labels */
     case TOKEN_HERE:
     case TOKEN_BASE:
+    case TOKEN_DECORATOR:
         begintemp();
         switch (i) {
         case TOKEN_NUM:
@@ -937,6 +938,9 @@ static expr *expr6(int critical)
             addtotemp(type, label_ofs);
             if (label_seg != NO_SEG)
                 addtotemp(EXPR_SEGBASE + label_seg, 1L);
+            break;
+        case TOKEN_DECORATOR:
+            addtotemp(EXPR_RDSAE, tokval->t_integer);
             break;
         }
         i = scan(scpriv, tokval);

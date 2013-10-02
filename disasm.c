@@ -328,6 +328,8 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 		op->indexreg = nasm_rd_xmmreg[index | ((rex & REX_X) ? 8 : 0)];
 	    else if (type == EA_YMMVSIB)
 		op->indexreg = nasm_rd_ymmreg[index | ((rex & REX_X) ? 8 : 0)];
+	    else if (type == EA_ZMMVSIB)
+		op->indexreg = nasm_rd_zmmreg[index | ((rex & REX_X) ? 8 : 0)];
 	    else if (index == 4 && !(rex & REX_X))
 		op->indexreg = -1; /* ESP/RSP cannot be an index */
             else if (a64)
@@ -868,6 +870,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
             eat = EA_YMMVSIB;
             break;
 
+        case 0376:
+            eat = EA_ZMMVSIB;
+            break;
+
 	default:
 	    return false;	/* Unknown code */
 	}
@@ -938,7 +944,7 @@ static const char * const condition_name[16] = {
 };
 
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
-            int32_t offset, int autosync, uint32_t prefer)
+            int32_t offset, int autosync, iflags_t prefer)
 {
     const struct itemplate * const *p, * const *best_p;
     const struct disasm_index *ix;
@@ -949,7 +955,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
-    uint32_t goodness, best;
+    iflags_t goodness, best;
     int best_pref;
     struct prefix_info prefix;
     bool end_prefix;
@@ -1297,6 +1303,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             if (t & BITS256)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "yword ");
+            if (t & BITS512)
+                slen +=
+                    snprintf(output + slen, outbufsize - slen, "zword ");
             if (t & FAR)
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
             if (t & NEAR)

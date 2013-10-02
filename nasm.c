@@ -74,7 +74,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 };
 
 static int get_bits(char *value);
-static uint32_t get_cpu(char *cpu_str);
+static iflags_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
 static void assemble_file(char *, StrList **);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
@@ -106,8 +106,8 @@ static FILE *error_file;        /* Where to write error messages */
 FILE *ofile = NULL;
 int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
 static int sb, cmd_sb = 16;    /* by default */
-static uint32_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
-static uint32_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
+static iflags_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
+static iflags_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
 int64_t global_offset_changed;      /* referenced in labels.c */
 int64_t prev_offset_changed;
 int32_t stall_count;
@@ -2006,7 +2006,7 @@ static void usage(void)
     fputs("type `nasm -h' for help\n", error_file);
 }
 
-static uint32_t get_cpu(char *value)
+static iflags_t get_cpu(char *value)
 {
     if (!strcmp(value, "8086"))
         return IF_8086;

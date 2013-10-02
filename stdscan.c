@@ -53,6 +53,8 @@
 static char *stdscan_bufptr = NULL;
 static char **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
+static int brace = 0;               /* nested brace counter */
+static bool brace_opened = false;   /* if brace is just opened */
 #define STDSCAN_TEMP_DELTA 256
 
 void stdscan_set(char *str)
@@ -105,6 +107,40 @@ static char *stdscan_copy(char *p, int len)
     return text;
 }
 
+/*
+ * a token is enclosed with braces. proper token type will be assigned
+ * accordingly with the token flag.
+ * a closing brace is treated as an ending character of corresponding token.
+ */
+static int stdscan_handle_brace(struct tokenval *tv)
+{
+    if (!(tv->t_flag & TFLAG_BRC_ANY)) {
+        /* invalid token is put inside braces */
+        nasm_error(ERR_NONFATAL,
+                    "%s is not a valid decorator with braces", tv->t_charptr);
+        tv->t_type = TOKEN_INVALID;
+    } else if (tv->t_flag & TFLAG_BRC_OPT) {
+        if (is_reg_class(OPMASKREG, tv->t_integer)) {
+            /* within braces, opmask register is now used as a mask */
+            tv->t_type = TOKEN_OPMASK;
+        }
+    }
+
+    stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+
+    if (stdscan_bufptr[0] == '}') {
+        stdscan_bufptr ++;      /* skip the closing brace */
+        brace --;
+    } else if (stdscan_bufptr[0] != ',') {
+        /* treat {foo,bar} as {foo}{bar}
+         * by regarding ',' as a mere separator between decorators
+         */
+        nasm_error(ERR_NONFATAL, "closing brace expected");
+        tv->t_type = TOKEN_INVALID;
+    }
+    return tv->t_type;
+}
+
 int stdscan(void *private_data, struct tokenval *tv)
 {
     char ourcopy[MAX_KEYWORD + 1], *r, *s;
@@ -112,14 +148,22 @@ int stdscan(void *private_data, struct tokenval *tv)
     (void)private_data;         /* Don't warn that this parameter is unused */
 
     stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
-    if (!*stdscan_bufptr)
+    if (!*stdscan_bufptr) {
+        /* nested brace shouldn't affect following lines */
+        brace = 0;
         return tv->t_type = TOKEN_EOS;
+    }
 
     /* we have a token; either an id, a number or a char */
     if (isidstart(*stdscan_bufptr) ||
-        (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
+        (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1])) ||
+        (brace && isidchar(*stdscan_bufptr))) {     /* because of {1to8} */
         /* now we've got an identifier */
         bool is_sym = false;
+        int token_type;
+
+        /* opening brace is followed by any letter */
+        brace_opened = false;
 
         if (*stdscan_bufptr == '$') {
             is_sym = true;
@@ -128,7 +172,8 @@ int stdscan(void *private_data, struct tokenval *tv)
 
         r = stdscan_bufptr++;
         /* read the entire buffer to advance the buffer pointer but... */
-        while (isidchar(*stdscan_bufptr))
+        /* {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens. */
+        while (isidchar(*stdscan_bufptr) || (brace && *stdscan_bufptr == '-'))
             stdscan_bufptr++;
 
         /* ... copy only up to IDLEN_MAX-1 characters */
@@ -143,7 +188,19 @@ int stdscan(void *private_data, struct tokenval *tv)
         *r = '\0';
         /* right, so we have an identifier sitting in temp storage. now,
          * is it actually a register or instruction name, or what? */
-        return nasm_token_hash(ourcopy, tv);
+        token_type = nasm_token_hash(ourcopy, tv);
+
+        if (likely(!brace)) {
+            if (likely(!(tv->t_flag & TFLAG_BRC))) {
+                /* most of the tokens fall into this case */
+                return token_type;
+            } else {
+                return tv->t_type = TOKEN_ID;
+            }
+        } else {
+            /* handle tokens inside braces */
+            return stdscan_handle_brace(tv);
+        }
     } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
@@ -267,6 +324,35 @@ int stdscan(void *private_data, struct tokenval *tv)
     } else if (stdscan_bufptr[0] == '|' && stdscan_bufptr[1] == '|') {
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_DBL_OR;
+    } else if (stdscan_bufptr[0] == '{') {
+        stdscan_bufptr ++;      /* skip the opening brace */
+        brace ++;               /* in case of nested braces */
+        brace_opened = true;    /* brace is just opened */
+        return stdscan(private_data, tv);
+    } else if (stdscan_bufptr[0] == ',' && brace) {
+        /*
+         * a comma inside braces should be treated just as a separator.
+         * this is almost same as an opening brace except increasing counter.
+         */
+        stdscan_bufptr ++;
+        brace_opened = true;    /* brace is just opened */
+        return stdscan(private_data, tv);
+    } else if (stdscan_bufptr[0] == '}') {
+        stdscan_bufptr ++;      /* skip the closing brace */
+        if (brace) {
+            /* unhandled nested closing brace */
+            brace --;
+            /* if brace is closed without any content in it */
+            if (brace_opened) {
+                brace_opened = false;
+                nasm_error(ERR_NONFATAL, "nothing inside braces");
+            }
+            return stdscan(private_data, tv);
+        } else {
+            /* redundant closing brace */
+            return tv->t_type = TOKEN_INVALID;
+        }
+        return stdscan(private_data, tv);
     } else                      /* just an ordinary char */
         return tv->t_type = (uint8_t)(*stdscan_bufptr++);
 }
