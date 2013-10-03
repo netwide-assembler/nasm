@@ -55,6 +55,7 @@ DQ		ignore				ignore						ignore
 DT		ignore				ignore						ignore
 DO		ignore				ignore						ignore
 DY		ignore				ignore						ignore
+DZ		ignore				ignore						ignore
 RESB		imm				[	resb]					8086
 RESW		ignore				ignore						ignore
 RESD		ignore				ignore						ignore
@@ -62,6 +63,7 @@ RESQ		ignore				ignore						ignore
 REST		ignore				ignore						ignore
 RESO		ignore				ignore						ignore
 RESY		ignore				ignore						ignore
+RESZ		ignore				ignore						ignore
 
 ;# Conventional instructions
 AAA		void				[	37]					8086,NOLONG

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -790,6 +790,8 @@ int idata_bytes(int opcode)
         return 16;
     case I_DY:
         return 32;
+    case I_DZ:
+        return 64;
     case I_none:
         return -1;
     default:

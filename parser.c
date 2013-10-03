@@ -406,7 +406,8 @@ restart_parse:
     if (result->opcode == I_DB || result->opcode == I_DW ||
         result->opcode == I_DD || result->opcode == I_DQ ||
         result->opcode == I_DT || result->opcode == I_DO ||
-        result->opcode == I_DY || result->opcode == I_INCBIN) {
+        result->opcode == I_DY || result->opcode == I_DZ ||
+        result->opcode == I_INCBIN) {
         extop *eop, **tail = &result->eops, **fixptr;
         int oper_num = 0;
         int32_t sign;
@@ -414,7 +415,7 @@ restart_parse:
         result->eops_float = false;
 
         /*
-         * Begin to read the DB/DW/DD/DQ/DT/DO/INCBIN operands.
+         * Begin to read the DB/DW/DD/DQ/DT/DO/DY/DZ/INCBIN operands.
          */
         while (1) {
             i = stdscan(NULL, &tokval);
@@ -495,7 +496,7 @@ is_float:
                 eop->stringlen = idata_bytes(result->opcode);
                 if (eop->stringlen > 16) {
                     nasm_error(ERR_NONFATAL, "floating-point constant"
-                               " encountered in DY instruction");
+                               " encountered in DY or DZ instruction");
                     eop->stringlen = 0;
                 } else if (eop->stringlen < 1) {
                     nasm_error(ERR_NONFATAL, "floating-point constant"
@@ -1049,7 +1050,7 @@ is_expression:
         result->oprs[operand++].type = 0;
 
     /*
-     * Transform RESW, RESD, RESQ, REST, RESO, RESY into RESB.
+     * Transform RESW, RESD, RESQ, REST, RESO, RESY, RESZ into RESB.
      */
     switch (result->opcode) {
     case I_RESW:
@@ -1075,6 +1076,10 @@ is_expression:
     case I_RESY:
         result->opcode = I_RESB;
         result->oprs[0].offset *= 32;
+        break;
+    case I_RESZ:
+        result->opcode = I_RESB;
+        result->oprs[0].offset *= 64;
         break;
     default:
         break;
