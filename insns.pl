@@ -483,7 +483,7 @@ sub format_insn($$$$$) {
     # check if two different insn set types are set
     $cnt = 0;
     foreach $fla (split(/,/, $flags)) {
-        if ($fla ~~ @iflags) {
+        if (grep(/$fla/, @iflags)) {
             $cnt++;
             if ($cnt >= 2) {
                 die "Too many insn set flags in $flags\n";
