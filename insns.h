@@ -132,6 +132,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_AVX512CD     (0x1600000000UL|IF_AVX512) /* AVX-512 Conflict Detection insns */
 #define IF_AVX512ER     (0x1700000000UL|IF_AVX512) /* AVX-512 Exponential and Reciprocal */
 #define IF_AVX512PF     (0x1800000000UL|IF_AVX512) /* AVX-512 Prefetch instructions */
+#define IF_MPX          0x1900000000UL    /* MPX instructions */
 #define IF_INSMASK      0xFF00000000UL    /* the mask for instruction set types */
 #define IF_PMASK        0xFF000000UL    /* the mask for processor types */
 #define IF_PLEVEL       0x0F000000UL    /* the mask for processor instr. level */

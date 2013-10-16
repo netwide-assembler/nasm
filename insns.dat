@@ -4095,6 +4095,27 @@ VSCATTERPF1QPD  zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /6 ]  AVX51
 VSCATTERPF1QPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /6 ]  AVX512PF,FUTURE
 PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  FUTURE
 
+; MPX instructions
+BNDMK       bndreg,mem32           [rm:     o32 f3 0f 1b /r ]  MPX,SD,FUTURE
+BNDMK       bndreg,mem64           [rm:   o64nw f3 0f 1b /r ]  MPX,SQ,FUTURE
+BNDCL       bndreg,rm32            [rm:     o32 f3 0f 1a /r ]  MPX,SD,FUTURE
+BNDCL       bndreg,rm64            [rm:   o64nw f3 0f 1a /r ]  MPX,SQ,FUTURE
+BNDCU       bndreg,rm32            [rm:     o32 f2 0f 1a /r ]  MPX,SD,FUTURE
+BNDCU       bndreg,rm64            [rm:   o64nw f2 0f 1a /r ]  MPX,SQ,FUTURE
+BNDCN       bndreg,rm32            [rm:     o32 f2 0f 1b /r ]  MPX,SD,FUTURE
+BNDCN       bndreg,rm64            [rm:   o64nw f2 0f 1b /r ]  MPX,SQ,FUTURE
+BNDMOV      bndreg,bndrm64         [rm:         66 0f 1a /r ]  MPX,SQ,FUTURE
+BNDMOV      bndreg,bndrm128        [rm:         66 0f 1a /r ]  MPX,SO,FUTURE
+BNDMOV      bndrm64,bndreg         [mr:         66 0f 1b /r ]  MPX,SQ,FUTURE
+BNDMOV      bndrm128,bndreg        [mr:         66 0f 1b /r ]  MPX,SO,FUTURE
+BNDLDX      bndreg,mem128          [rm:            0f 1a /r ]  MPX,MIB,FUTURE
+BNDLDX      bndreg,mem128,reg64    [rmx:           0f 1a /r ]  MPX,MIB,FUTURE
+BNDSTX      mem64,bndreg           [mr:            0f 1b /r ]  MPX,MIB,SQ,FUTURE
+BNDSTX      mem64,reg32,bndreg     [mxr:           0f 1b /r ]  MPX,MIB,FUTURE
+BNDSTX      mem64,bndreg,reg32     [mrx:           0f 1b /r ]  MPX,MIB,FUTURE
+BNDSTX      mem128,bndreg          [mr:            0f 1b /r ]  MPX,MIB,SO,FUTURE
+BNDSTX      mem128,reg64,bndreg    [mxr:           0f 1b /r ]  MPX,MIB,FUTURE
+BNDSTX      mem128,bndreg,reg64    [mrx:           0f 1b /r ]  MPX,MIB,FUTURE
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

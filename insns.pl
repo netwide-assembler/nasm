@@ -704,6 +704,7 @@ sub tupletype($) {
 # i = immediate
 # s = register field of is4/imz2 field
 # - = implicit (unencoded) operand
+# x = indeX register of mib. 014..017 bytecodes are used.
 #
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
@@ -843,6 +844,8 @@ sub byte_code_compile($$) {
             $opex = (($oppos{'m'} & 4) ? 06 : 0) |
                 (($oppos{'r'} & 4) ? 05 : 0);
             push(@codes, $opex) if ($opex);
+            # if mib is composed with two separate operands - ICC style
+            push(@codes, 014 + ($oppos{'x'} & 3)) if (defined($oppos{'x'}));
             push(@codes, 0100 + (($oppos{'m'} & 3) << 3) + ($oppos{'r'} & 3));
             $prefix_ok = 0;
         } elsif ($op =~ m:^/([0-7])$:) {

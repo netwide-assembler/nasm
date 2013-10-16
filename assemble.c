@@ -42,6 +42,7 @@
  * \7            - add 4 to both the primary and the secondary operand number
  * \10..\13      - a literal byte follows in the code stream, to be added
  *                 to the register value of operand 0..3
+ * \14..\17      - the position of index register operand in MIB (BND insns)
  * \20..\23      - a byte immediate operand, from operand 0..3
  * \24..\27      - a zero-extended byte immediate operand, from operand 0..3
  * \30..\33      - a word immediate operand, from operand 0..3
@@ -852,6 +853,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     enum ea_type eat;
     uint8_t hleok = 0;
     bool lockcheck = true;
+    enum reg_enum mib_index = R_none;   /* For a separate index MIB reg form */
 
     ins->rex = 0;               /* Ensure REX is reset */
     eat = EA_SCALAR;            /* Expect a scalar EA */
@@ -883,6 +885,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->rex |=
                 op_rexflags(opx, REX_B|REX_H|REX_P|REX_W);
             codes++, length++;
+            break;
+
+        case4(014):
+            /* this is an index reg of MIB operand */
+            mib_index = opx->basereg;
             break;
 
         case4(020):
@@ -1184,6 +1191,17 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     }
                 }
 
+                /*
+                 * if a separate form of MIB (ICC style) is used,
+                 * the index reg info is merged into mem operand
+                 */
+                if (mib_index != R_none) {
+                    opy->indexreg = mib_index;
+                    opy->scale = 1;
+                    opy->hintbase = mib_index;
+                    opy->hinttype = EAH_NOTBASE;
+                }
+
                 if (process_ea(opy, &ea_data, bits,
                                rfield, rflags, ins) != eat) {
                     errfunc(ERR_NONFATAL, "invalid effective address");
@@ -1334,6 +1352,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             bytes[0] = *codes++ + (regval(opx) & 7);
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset += 1;
+            break;
+
+        case4(014):
             break;
 
         case4(020):
@@ -2545,7 +2566,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 }
                 if (bt == it)     /* convert EAX+2*EAX to 3*EAX */
                     bt = -1, bx = 0, s++;
-                if (bt == -1 && s == 1 && !(hb == it && ht == EAH_NOTBASE)) {
+                if (bt == -1 && s == 1 && !(hb == i && ht == EAH_NOTBASE)) {
                     /* make single reg base, unless hint */
                     bt = it, bx = ix, it = -1, ix = 0;
                 }

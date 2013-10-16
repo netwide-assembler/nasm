@@ -130,3 +130,6 @@ zmm1-31	ZMMREG		zmmreg		1
 # Opmask registers
 k0	OPMASK0		opmaskreg	0
 k1-7	OPMASKREG	opmaskreg	1   TFLAG_BRC_OPT
+
+# Bounds registers
+bnd0-3	BNDREG		bndreg		0

@@ -821,6 +821,13 @@ is_expression:
                 process_size_override(result, op);
                 i = stdscan(NULL, &tokval);
             }
+            /* when a comma follows an opening bracket - [ , eax*4] */
+            if (i == ',') {
+                /* treat as if there is a zero displacement virtually */
+                tokval.t_type = TOKEN_NUM;
+                tokval.t_integer = 0;
+                stdscan_set(stdscan_get() - 1);     /* rewind the comma */
+            }
         } else {                /* immediate operand, or register */
             mref = false;
             bracket = false;    /* placate optimisers */
