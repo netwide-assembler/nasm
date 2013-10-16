@@ -4171,6 +4171,15 @@ BNDSTX      mem128,bndreg          [mr:            0f 1b /r ]  MPX,MIB,SO,FUTURE
 BNDSTX      mem128,reg64,bndreg    [mxr:           0f 1b /r ]  MPX,MIB,FUTURE
 BNDSTX      mem128,bndreg,reg64    [mrx:           0f 1b /r ]  MPX,MIB,FUTURE
 
+; SHA instructions
+SHA1RNDS4   xmmreg,xmmrm128,imm8    [rmi:    0f 3a cc /r ib ]    SHA,FUTURE
+SHA1NEXTE   xmmreg,xmmrm128         [rm:        0f 38 c8 /r ]    SHA,FUTURE
+SHA1MSG1    xmmreg,xmmrm128         [rm:        0f 38 c9 /r ]    SHA,FUTURE
+SHA1MSG2    xmmreg,xmmrm128         [rm:        0f 38 ca /r ]    SHA,FUTURE
+SHA256RNDS2 xmmreg,xmmrm128,xmm0    [rm-:       0f 38 cb /r ]    SHA,FUTURE
+SHA256MSG1  xmmreg,xmmrm128         [rm:        0f 38 cc /r ]    SHA,FUTURE
+SHA256MSG2  xmmreg,xmmrm128         [rm:        0f 38 cd /r ]    SHA,FUTURE
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
