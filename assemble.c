@@ -162,6 +162,7 @@
  * \367          - address-size prefix (0x67) used as opcode extension
  * \370,\371     - match only if operand 0 meets byte jump criteria.
  *                 370 is used for Jcc, 371 is used for JMP.
+ * \372          - BND prefix (0xF2 byte) used for preserving bnd0..3
  * \373          - assemble 0x03 if bits==16, 0x05 if bits==32;
  *                 used for conditional jump over longer jump
  * \374          - this instruction takes an XMM VSIB memory EA
@@ -193,6 +194,7 @@ enum match_result {
     MERR_BADMODE,
     MERR_BADHLE,
     MERR_ENCMISMATCH,
+    MERR_BADBND,
     /*
      * Matching success; the conditional ones first
      */
@@ -547,6 +549,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
                     case P_REPNE:
                     case P_REPNZ:
                     case P_XACQUIRE:
+                    case P_BND:
                         c = 0xF2;
                         break;
                     case P_REPE:
@@ -1739,8 +1742,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             offset += 1;
             break;
 
-        case 0370:
-        case 0371:
+        case3(0370):
             break;
 
         case 0373:
@@ -2226,6 +2228,13 @@ static enum match_result matches(const struct itemplate *itemp,
      */
     if ((itemp->code[0] & ~1) == 0370)
         return MOK_JUMP;
+
+    /*
+     * Check if BND prefix is allowed
+     */
+    if ((itemp->code[0] != 0372) &&
+        has_prefix(instruction, PPS_REP, P_BND))
+        return MERR_BADBND;
 
     return MOK_GOOD;
 }

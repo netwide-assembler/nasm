@@ -275,6 +275,24 @@ CALL		mem				[m:	odf ff /2]				8086
 CALL		rm16				[m:	o16 ff /2]				8086,NOLONG
 CALL		rm32				[m:	o32 ff /2]				386,NOLONG
 CALL		rm64				[m:	o64nw ff /2]				X64
+; BND + CALL
+CALL		imm				[i:	bnd odf e8 rel]				8086,MPX
+CALL		imm|near			[i:	bnd odf e8 rel]				8086,ND,MPX
+CALL		imm16				[i:	bnd o16 e8 rel]				8086,NOLONG,MPX
+CALL		imm16|near			[i:	bnd o16 e8 rel]				8086,ND,NOLONG,MPX
+CALL		imm32				[i:	bnd o32 e8 rel]				386,NOLONG,MPX
+CALL		imm32|near			[i:	bnd o32 e8 rel]				386,ND,NOLONG,MPX
+CALL		imm64				[i:	bnd o64nw e8 rel]			X64,MPX
+CALL		imm64|near			[i:	bnd o64nw e8 rel]			X64,ND,MPX
+CALL		mem|near			[m:	bnd odf ff /2]				8086,ND,MPX
+CALL		rm16|near			[m:	bnd o16 ff /2]				8086,NOLONG,ND,MPX
+CALL		rm32|near			[m:	bnd o32 ff /2]				386,NOLONG,ND,MPX
+CALL		rm64|near			[m:	bnd o64nw ff /2]			X64,ND,MPX
+CALL		mem				[m:	bnd odf ff /2]				8086,MPX
+CALL		rm16				[m:	bnd o16 ff /2]				8086,NOLONG,MPX
+CALL		rm32				[m:	bnd o32 ff /2]				386,NOLONG,MPX
+CALL		rm64				[m:	bnd o64nw ff /2]			X64,MPX
+
 CBW		void				[	o16 98]					8086
 CDQ		void				[	o32 99]					386
 CDQE		void				[	o64 98]					X64
@@ -708,6 +726,24 @@ JMP		mem				[m:	odf ff /4]				8086
 JMP		rm16				[m:	o16 ff /4]				8086,NOLONG
 JMP		rm32				[m:	o32 ff /4]				386,NOLONG
 JMP		rm64				[m:	o64nw ff /4]				X64
+; BND + JMP
+JMP		imm				[i:	bnd odf e9 rel]				8086,MPX
+JMP		imm|near			[i:	bnd odf e9 rel]				8086,ND,MPX
+JMP		imm16				[i:	bnd o16 e9 rel]				8086,NOLONG,MPX
+JMP		imm16|near			[i:	bnd o16 e9 rel]				8086,ND,NOLONG,MPX
+JMP		imm32				[i:	bnd o32 e9 rel]				386,NOLONG,MPX
+JMP		imm32|near			[i:	bnd o32 e9 rel]				386,ND,NOLONG,MPX
+JMP		imm64				[i:	bnd o64nw e9 rel]			X64,MPX
+JMP		imm64|near			[i:	bnd o64nw e9 rel]			X64,ND,MPX
+JMP		mem|near			[m:	bnd odf ff /4]				8086,ND,MPX
+JMP		rm16|near			[m:	bnd o16 ff /4]				8086,NOLONG,ND,MPX
+JMP		rm32|near			[m:	bnd o32 ff /4]				386,NOLONG,ND,MPX
+JMP		rm64|near			[m:	bnd o64nw ff /4]			X64,ND,MPX
+JMP		mem				[m:	bnd odf ff /4]				8086,MPX
+JMP		rm16				[m:	bnd o16 ff /4]				8086,NOLONG,MPX
+JMP		rm32				[m:	bnd o32 ff /4]				386,NOLONG,MPX
+JMP		rm64				[m:	bnd o64nw ff /4]			X64,MPX
+
 JMPE		imm				[i:	odf 0f b8 rel]				IA64
 JMPE		imm16				[i:	o16 0f b8 rel]				IA64
 JMPE		imm32				[i:	o32 0f b8 rel]				IA64
@@ -1119,6 +1155,12 @@ RETF		void				[	cb]					8086
 RETF		imm				[i:	ca iw]					8086,SW
 RETN		void				[	c3]					8086
 RETN		imm				[i:	c2 iw]					8086,SW
+; BND + RET
+RET		void				[	bnd c3]					8086,MPX
+RET		imm				[i:	bnd c2 iw]				8086,SW,MPX
+RETN		void				[	bnd c3]					8086,MPX
+RETN		imm				[i:	bnd c2 iw]				8086,SW,MPX
+
 ROL		rm8,unity			[m-:	d0 /0]					8086
 ROL		rm8,reg_cl			[m-:	d2 /0]					8086
 ROL		rm8,imm8			[mi:	c0 /0 ib,u]				186
@@ -1485,6 +1527,18 @@ Jcc		imm				[i:	jcc8 70+c rel8]				8086,ND
 Jcc		imm				[i:	0f 80+c rel]				386,ND
 Jcc		imm				[i:	71+c jlen e9 rel]			8086,ND
 Jcc		imm				[i:	70+c rel8]				8086
+; BND + Jcc
+Jcc		imm|near			[i:	bnd odf 0f 80+c rel]		386,MPX
+Jcc		imm16|near			[i:	bnd o16 0f 80+c rel]		386,NOLONG,MPX
+Jcc		imm32|near			[i:	bnd o32 0f 80+c rel]		386,NOLONG,MPX
+Jcc		imm64|near			[i:	bnd o64nw 0f 80+c rel]		X64,MPX
+Jcc		imm|short			[i:	bnd 70+c rel8]			8086,ND,MPX
+; TODO: check if bnd and jcc8 can be used together
+;Jcc		imm				[i:	bnd jcc8 70+c rel8]		8086,ND,MPX
+Jcc		imm				[i:	bnd 0f 80+c rel]		386,ND,MPX
+Jcc		imm				[i:	bnd 71+c jlen e9 rel]		8086,ND,MPX
+Jcc		imm				[i:	bnd 70+c rel8]			8086,MPX
+
 SETcc		mem				[m:	0f 90+c /0]				386,SB
 SETcc		reg8				[m:	0f 90+c /0]				386
 

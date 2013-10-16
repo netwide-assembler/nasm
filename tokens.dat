@@ -54,6 +54,7 @@ times
 wait
 xacquire
 xrelease
+bnd
 
 % TOKEN_SPECIAL, 0, 0, S_*
 abs

@@ -765,6 +765,7 @@ sub byte_code_compile($$) {
         'resb'      => 0340,
         'jcc8'      => 0370,    # Match only if Jcc possible with single byte
         'jmp8'      => 0371,    # Match only if JMP possible with single byte
+        'bnd'       => 0372,    # BND (0xF2) prefix available
         'jlen'      => 0373,    # Length of jump
         'hlexr'     => 0271,
         'hlenl'     => 0272,

@@ -862,6 +862,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
         case 0371:
             break;
 
+        case 0372:
+            if (prefix->rep == 0xF2)
+                drep = P_BND;
+            break;
+
         case 0374:
             eat = EA_XMMVSIB;
             break;

@@ -552,6 +552,7 @@ enum prefixes { /* instruction prefixes */
     P_WAIT,
     P_XACQUIRE,
     P_XRELEASE,
+    P_BND,
     PREFIX_ENUM_LIMIT
 };
 
