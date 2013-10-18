@@ -4046,6 +4046,8 @@ VPTERNLOGD       zmmreg|mask|z,zmmreg,zmmrm512|b32,imm8        [rvmi:fv:   evex.
 VPTERNLOGQ       zmmreg|mask|z,zmmreg,zmmrm512|b64,imm8        [rvmi:fv:   evex.nds.512.66.0f3a.w1 25 /r ib ]  AVX512,FUTURE
 VPTESTMD         kreg|mask,zmmreg,zmmrm512|b32                 [rvm:fv:       evex.nds.512.66.0f38.w0 27 /r ]  AVX512,FUTURE
 VPTESTMQ         kreg|mask,zmmreg,zmmrm512|b64                 [rvm:fv:       evex.nds.512.66.0f38.w1 27 /r ]  AVX512,FUTURE
+VPTESTNMD        kreg|mask,zmmreg,zmmrm512|b32                 [rvm:fv:       evex.nds.512.f3.0f38.w0 27 /r ]  AVX512,FUTURE
+VPTESTNMQ        kreg|mask,zmmreg,zmmrm512|b64                 [rvm:fv:       evex.nds.512.f3.0f38.w1 27 /r ]  AVX512,FUTURE
 VPUNPCKHDQ       zmmreg|mask|z,zmmreg,zmmrm512|b32             [rvm:fv:         evex.nds.512.66.0f.w0 6a /r ]  AVX512,FUTURE
 VPUNPCKHQDQ      zmmreg|mask|z,zmmreg,zmmrm512|b64             [rvm:fv:         evex.nds.512.66.0f.w1 6d /r ]  AVX512,FUTURE
 VPUNPCKLDQ       zmmreg|mask|z,zmmreg,zmmrm512|b32             [rvm:fv:         evex.nds.512.66.0f.w0 62 /r ]  AVX512,FUTURE
@@ -4116,8 +4118,6 @@ VPCONFLICTD      zmmreg|mask|z,zmmrm512|b32      [rm:fv:          evex.512.66.0f
 VPCONFLICTQ      zmmreg|mask|z,zmmrm512|b64      [rm:fv:          evex.512.66.0f38.w1 c4 /r ]  AVX512CD,FUTURE
 VPLZCNTD         zmmreg|mask|z,zmmrm512|b32      [rm:fv:          evex.512.66.0f38.w0 44 /r ]  AVX512CD,FUTURE
 VPLZCNTQ         zmmreg|mask|z,zmmrm512|b64      [rm:fv:          evex.512.66.0f38.w1 44 /r ]  AVX512CD,FUTURE
-VPTESTNMD        kreg|mask,zmmreg,zmmrm512|b32   [rvm:fv:     evex.nds.512.f3.0f38.w0 27 /r ]  AVX512CD,FUTURE
-VPTESTNMQ        kreg|mask,zmmreg,zmmrm512|b64   [rvm:fv:     evex.nds.512.f3.0f38.w1 27 /r ]  AVX512CD,FUTURE
 ; AVX-512ER (Exponential and Reciprocal) instructions
 VEXP2PD      zmmreg|mask|z,zmmrm512|b64|sae    [rm:fv:          evex.512.66.0f38.w1 c8 /r ]  AVX512ER,FUTURE
 VEXP2PS      zmmreg|mask|z,zmmrm512|b32|sae    [rm:fv:          evex.512.66.0f38.w0 c8 /r ]  AVX512ER,FUTURE
