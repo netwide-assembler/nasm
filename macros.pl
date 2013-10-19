@@ -52,8 +52,30 @@ my $tasm_count = 0;
 sub charcify(@) {
     my $l = '';
     my $c, $o;
+    my $space = 1;
+    my $quote = 0;
+
     foreach $o (unpack("C*", join('',@_))) {
 	$c = pack("C", $o);
+	if ($quote) {
+	    if ($o == $quote) {
+		$quote = 0;
+	    }
+	} elsif ($c =~ /^[\'\"\`]$/) {
+	    $quote = $o;
+	} else {
+	    if ($c =~ /\s/) {
+		next if ($space);
+		$o = 32;
+		$c = ' ';
+		$space = 1;
+	    } elsif ($o > 126) {
+		$space = 1;	# Implicit space after compacted directive
+	    } else {
+		$space = 0;
+	    }
+	}
+
 	if ($o < 32 || $o > 126 || $c eq '"' || $c eq "\\") {
 	    $l .= sprintf("%3d,", $o);
 	} else {
