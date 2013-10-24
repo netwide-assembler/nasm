@@ -135,6 +135,7 @@ extern const uint8_t nasm_bytecodes[];
 #define IF_AVX512PF     (UINT64_C(0x1800000000)|IF_AVX512) /* AVX-512 Prefetch instructions */
 #define IF_MPX          UINT64_C(0x1900000000)    /* MPX instructions */
 #define IF_SHA          UINT64_C(0x1A00000000)    /* SHA instructions */
+#define IF_PREFETCHWT1  UINT64_C(0x1F00000000)    /* PREFETCHWT1 instructions */
 #define IF_INSMASK      UINT64_C(0xFF00000000)    /* the mask for instruction set types */
 #define IF_PMASK        UINT64_C(0xFF000000)    /* the mask for processor types */
 #define IF_PLEVEL       UINT64_C(0x0F000000)    /* the mask for processor instr. level */

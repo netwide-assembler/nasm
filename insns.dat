@@ -4146,7 +4146,7 @@ VSCATTERPF1DPD  ymem64|mask  [m:t1s:    vsiby evex.512.66.0f38.w1 c6 /6 ]  AVX51
 VSCATTERPF1DPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c6 /6 ]  AVX512PF,FUTURE
 VSCATTERPF1QPD  zmem64|mask  [m:t1s:    vsibz evex.512.66.0f38.w1 c7 /6 ]  AVX512PF,FUTURE
 VSCATTERPF1QPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /6 ]  AVX512PF,FUTURE
-PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  FUTURE
+PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  PREFETCHWT1,FUTURE
 
 ; MPX instructions
 BNDMK       bndreg,mem32           [rm:     o32 f3 0f 1b /r ]  MPX,SD,FUTURE
