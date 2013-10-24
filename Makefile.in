@@ -53,6 +53,7 @@ endif
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
+.PHONY: manpages
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -94,7 +95,7 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
 #-- End File Lists --#
 
-all: nasm$(X) ndisasm$(X) nasm.1 ndisasm.1 rdf
+all: nasm$(X) ndisasm$(X) manpages rdf
 
 nasm$(X): $(NASM) $(XOBJS)
 	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(XOBJS) $(LIBS)
@@ -187,6 +188,9 @@ PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  version.h version.mac version.mak version.nsh
 perlreq: $(PERLREQ)
 
+# Generated manpages, also pregenerated for distribution
+manpages: nasm.1 ndisasm.1
+
 install: nasm$(X) ndisasm$(X)
 	$(MKDIR) -p $(INSTALLROOT)$(bindir)
 	$(INSTALL_PROGRAM) nasm$(X) $(INSTALLROOT)$(bindir)/nasm$(X)
@@ -250,7 +254,7 @@ everything: all doc rdf
 
 install_everything: everything install install_doc install_rdf
 
-dist: spotless perlreq spec
+dist: spotless perlreq manpages spec
 	autoheader
 	autoconf
 	$(RM) -rf ./autom4te*.cache
