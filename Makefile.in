@@ -254,7 +254,9 @@ everything: all doc rdf
 
 install_everything: everything install install_doc install_rdf
 
-dist: spotless perlreq manpages spec
+dist:
+	$(MAKE) alldeps
+	$(MAKE) spotless perlreq manpages spec
 	autoheader
 	autoconf
 	$(RM) -rf ./autom4te*.cache
