@@ -632,6 +632,9 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
                     case P_OSP:
                         c = 0x66;
                         break;
+                    case P_EVEX:
+                        /* EVEX */
+                        break;
                     case P_none:
                         break;
                     default:
@@ -786,6 +789,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflags_t cp,
                 break;
             case P_A64:
             case P_O64:
+            case P_EVEX:
             case P_none:
                 break;
             default:
@@ -2184,6 +2188,9 @@ static enum match_result matches(const struct itemplate *itemp,
             }
         } else if (is_register(instruction->oprs[i].basereg) &&
                    nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
+                   !(itemp->flags & IF_AVX512)) {
+            return MERR_ENCMISMATCH;
+        } else if (instruction->prefixes[PPS_EVEX] &&
                    !(itemp->flags & IF_AVX512)) {
             return MERR_ENCMISMATCH;
         }

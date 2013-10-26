@@ -122,3 +122,6 @@ rz-sae
 % TOKEN_DECORATOR, 0, TFLAG_BRC, BRC_*
 sae
 z
+
+% TOKEN_PREFIX, 0, TFLAG_BRC, P_*
+evex
