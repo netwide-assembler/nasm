@@ -179,13 +179,15 @@ directiv.h: directiv.dat directiv.pl perllib/phash.ph
 directiv.c: directiv.dat directiv.pl perllib/phash.ph
 	$(PERL) $(srcdir)/directiv.pl c $(srcdir)/directiv.dat directiv.c
 
+
+
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
 	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
 	  directiv.c directiv.h \
-	  version.h version.mac version.mak version.nsh
+	  version.h version.mac version.mak version.sed version.nsh
 perlreq: $(PERLREQ)
 
 # Generated manpages, also pregenerated for distribution
@@ -205,6 +207,7 @@ clean:
 	$(RM) -f output/*.$(O) output/*.s output/*.i
 	$(RM) -f nasm$(X) ndisasm$(X)
 	$(RM) -f tags TAGS
+	$(RM) -f $(PERLREQ)
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
