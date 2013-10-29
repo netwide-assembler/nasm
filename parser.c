@@ -212,7 +212,7 @@ static bool parse_braces(decoflags_t *decoflags)
     do {
         if (i == TOKEN_OPMASK) {
             if (*decoflags & OPMASK_MASK) {
-                nasm_error(ERR_NONFATAL, "opmask k%lu is already set",
+                nasm_error(ERR_NONFATAL, "opmask k%"PRIu64" is already set",
                            *decoflags & OPMASK_MASK);
                 *decoflags &= ~OPMASK_MASK;
             }

@@ -2156,7 +2156,7 @@ static int do_directive(Token * tline)
     Context *ctx;
     Cond *cond;
     MMacro *mmac, **mmhead;
-    Token *t, *tt, *param_start, *macro_start, *last, **tptr, *origline;
+    Token *t = NULL, *tt, *param_start, *macro_start, *last, **tptr, *origline;
     Line *l;
     struct tokenval tokval;
     expr *evalresult;
