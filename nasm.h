@@ -1048,6 +1048,7 @@ enum decorator_tokens {
  * .........................1...... static rounding
  * ........................1....... SAE
  * ......................11........ broadcast element size
+ * ....................11.......... number of broadcast elements
  */
 #define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
@@ -1118,6 +1119,19 @@ enum decorator_tokens {
 
 #define BR_BITS32               GEN_BRSIZE(0)
 #define BR_BITS64               GEN_BRSIZE(1)
+
+/*
+ * Number of broadcasting elements
+ *
+ * Bits: 10 - 11
+ */
+#define BRNUM_SHIFT             (10)
+#define BRNUM_BITS              (2)
+#define BRNUM_MASK              OP_GENMASK(BRNUM_BITS, BRNUM_SHIFT)
+#define VAL_BRNUM(val)          OP_GENVAL(val, BRNUM_BITS, BRNUM_SHIFT)
+
+#define BR_1TO8                 VAL_BRNUM(0)
+#define BR_1TO16                VAL_BRNUM(1)
 
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK

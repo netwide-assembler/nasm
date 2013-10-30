@@ -947,7 +947,8 @@ is_expression:
                      * is expected for memory reference operands
                      */
                     if (tokval.t_flag & TFLAG_BRDCAST) {
-                        brace_flags |= GEN_BRDCAST(0);
+                        brace_flags |= GEN_BRDCAST(0) |
+                                       VAL_BRNUM(tokval.t_integer - BRC_1TO8);
                         i = stdscan(NULL, &tokval);
                     } else if (i == TOKEN_OPMASK) {
                         brace_flags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);

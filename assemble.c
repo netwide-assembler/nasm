@@ -189,6 +189,7 @@ enum match_result {
     MERR_INVALOP,
     MERR_OPSIZEMISSING,
     MERR_OPSIZEMISMATCH,
+    MERR_BRNUMMISMATCH,
     MERR_BADCPU,
     MERR_BADMODE,
     MERR_BADHLE,
@@ -670,6 +671,10 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
             break;
         case MERR_OPSIZEMISMATCH:
             error(ERR_NONFATAL, "mismatch in operand sizes");
+            break;
+        case MERR_BRNUMMISMATCH:
+            error(ERR_NONFATAL,
+                  "mismatch in the number of broadcasting elements");
             break;
         case MERR_BADCPU:
             error(ERR_NONFATAL, "no instruction for this cpu level");
@@ -2163,6 +2168,7 @@ static enum match_result matches(const struct itemplate *itemp,
         opflags_t type = instruction->oprs[i].type;
         decoflags_t deco = instruction->oprs[i].decoflags;
         bool is_broadcast = deco & BRDCAST_MASK;
+        uint8_t brcast_num = 0;
         opflags_t template_opsize, insn_opsize;
 
         if (!(type & SIZE_MASK))
@@ -2180,13 +2186,16 @@ static enum match_result matches(const struct itemplate *itemp,
 
             if (deco_brsize) {
                 template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
+                /* calculate the proper number : {1to<brcast_num>} */
+                brcast_num = (itemp->opd[i] & SIZE_MASK) / BITS128 *
+                                BITS64 / template_opsize * 2;
             } else {
                 template_opsize = 0;
             }
         }
 
         if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
-            (itemp->deco[i] & deco) != deco) {
+            (deco & ~itemp->deco[i] & ~BRNUM_MASK)) {
             return MERR_INVALOP;
         } else if (template_opsize) {
             if (template_opsize != insn_opsize) {
@@ -2200,6 +2209,16 @@ static enum match_result matches(const struct itemplate *itemp,
                      */
                     opsizemissing = true;
                 }
+            } else if (is_broadcast &&
+                       (brcast_num !=
+                        (8U << ((deco & BRNUM_MASK) >> BRNUM_SHIFT)))) {
+                /*
+                 * broadcasting opsize matches but the number of repeated memory
+                 * element does not match.
+                 * if 64b double precision float is broadcasted to zmm (512b),
+                 * broadcasting decorator must be {1to8}.
+                 */
+                return MERR_BRNUMMISMATCH;
             }
         } else if (is_register(instruction->oprs[i].basereg) &&
                    nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
