@@ -2020,10 +2020,13 @@ static enum match_result find_match(const struct itemplate **tempp,
         if ((xsizeflags[i] & (xsizeflags[i]-1)))
             goto done;                /* No luck */
 
-        if (i == broadcast)
+        if (i == broadcast) {
             instruction->oprs[i].decoflags |= xsizeflags[i];
-        else
+            instruction->oprs[i].type |= (xsizeflags[i] == BR_BITS32 ?
+                                          BITS32 : BITS64);
+        } else {
             instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
+        }
     }
 
     /* Try matching again... */
@@ -2159,32 +2162,44 @@ static enum match_result matches(const struct itemplate *itemp,
     for (i = 0; i < itemp->operands; i++) {
         opflags_t type = instruction->oprs[i].type;
         decoflags_t deco = instruction->oprs[i].decoflags;
+        bool is_broadcast = deco & BRDCAST_MASK;
+        opflags_t template_opsize, insn_opsize;
+
         if (!(type & SIZE_MASK))
             type |= size[i];
+
+        insn_opsize     = type & SIZE_MASK;
+        if (!is_broadcast) {
+            template_opsize = itemp->opd[i] & SIZE_MASK;
+        } else {
+            decoflags_t deco_brsize = itemp->deco[i] & BRSIZE_MASK;
+            /*
+             * when broadcasting, the element size depends on
+             * the instruction type. decorator flag should match.
+             */
+
+            if (deco_brsize) {
+                template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
+            } else {
+                template_opsize = 0;
+            }
+        }
 
         if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
             (itemp->deco[i] & deco) != deco) {
             return MERR_INVALOP;
-        } else if ((itemp->opd[i] & SIZE_MASK) &&
-                   (itemp->opd[i] & SIZE_MASK) != (type & SIZE_MASK)) {
-            if (type & SIZE_MASK) {
-                /*
-                 * when broadcasting, the element size depends on
-                 * the instruction type. decorator flag should match.
-                 */
-#define MATCH_BRSZ(bits) (((type & SIZE_MASK) == BITS##bits) &&             \
-                          ((itemp->deco[i] & BRSIZE_MASK) == BR_BITS##bits))
-                if (!((deco & BRDCAST_MASK) &&
-                      (MATCH_BRSZ(32) || MATCH_BRSZ(64)))) {
+        } else if (template_opsize) {
+            if (template_opsize != insn_opsize) {
+                if (insn_opsize) {
                     return MERR_INVALOP;
+                } else if (!is_class(REGISTER, type)) {
+                    /*
+                     * Note: we don't honor extrinsic operand sizes for registers,
+                     * so "missing operand size" for a register should be
+                     * considered a wildcard match rather than an error.
+                     */
+                    opsizemissing = true;
                 }
-            } else if (!is_class(REGISTER, type)) {
-                /*
-                 * Note: we don't honor extrinsic operand sizes for registers,
-                 * so "missing operand size" for a register should be
-                 * considered a wildcard match rather than an error.
-                 */
-                opsizemissing = true;
             }
         } else if (is_register(instruction->oprs[i].basereg) &&
                    nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
