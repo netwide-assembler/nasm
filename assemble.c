@@ -1525,9 +1525,9 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             ins->evex_p[2] ^= EVEX_P2VP;        /* 1's complement */
             bytes[0] = 0x62;
             /* EVEX.X can be set by either REX or EVEX for different reasons */
-            bytes[1] = (~(((ins->rex & 7) << 5) |
-                          (ins->evex_p[0] & (EVEX_P0X | EVEX_P0RP))) & 0xf0) |
-                        (ins->vex_cm & 3);
+            bytes[1] = ((((ins->rex & 7) << 5) |
+                         (ins->evex_p[0] & (EVEX_P0X | EVEX_P0RP))) ^ 0xf0) |
+                       (ins->vex_cm & 3);
             bytes[2] = ((ins->rex & REX_W) << (7 - 3)) |
                        ((~ins->vexreg & 15) << 3) |
                        (1 << 2) | (ins->vex_wlp & 3);
@@ -1872,7 +1872,7 @@ static int rexflags(int val, opflags_t flags, int mask)
 {
     int rex = 0;
 
-    if (val >= 8)
+    if (val >= 0 && val & 8)
         rex |= REX_B|REX_X|REX_R;
     if (flags & BITS64)
         rex |= REX_W;
@@ -1889,13 +1889,13 @@ static int evexflags(int val, decoflags_t deco,
 {
     int evex = 0;
 
-    switch(byte) {
+    switch (byte) {
     case 0:
-        if (val >= 16)
+        if (val >= 0 && val & 16)
             evex |= (EVEX_P0RP | EVEX_P0X);
         break;
     case 2:
-        if (val >= 16)
+        if (val >= 0 && val & 16)
             evex |= EVEX_P2VP;
         if (deco & Z)
             evex |= EVEX_P2Z;
