@@ -1872,7 +1872,7 @@ static int rexflags(int val, opflags_t flags, int mask)
 {
     int rex = 0;
 
-    if (val >= 0 && val & 8)
+    if (val >= 0 && (val & 8))
         rex |= REX_B|REX_X|REX_R;
     if (flags & BITS64)
         rex |= REX_W;
@@ -1891,11 +1891,11 @@ static int evexflags(int val, decoflags_t deco,
 
     switch (byte) {
     case 0:
-        if (val >= 0 && val & 16)
+        if (val >= 0 && (val & 16))
             evex |= (EVEX_P0RP | EVEX_P0X);
         break;
     case 2:
-        if (val >= 0 && val & 16)
+        if (val >= 0 && (val & 16))
             evex |= EVEX_P2VP;
         if (deco & Z)
             evex |= EVEX_P2Z;
