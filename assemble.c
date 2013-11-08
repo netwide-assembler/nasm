@@ -1205,6 +1205,18 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     opy->hinttype = EAH_NOTBASE;
                 }
 
+                /*
+                 * only for mib operands, make a single reg index [reg*1].
+                 * gas uses this form to explicitly denote index register.
+                 */
+                if ((temp->flags & IF_MIB) &&
+                    (opy->indexreg == -1 && opy->hintbase == opy->basereg &&
+                     opy->hinttype == EAH_NOTBASE)) {
+                    opy->indexreg = opy->basereg;
+                    opy->basereg  = -1;
+                    opy->scale    = 1;
+                }
+
                 if (process_ea(opy, &ea_data, bits,
                                rfield, rflags, ins) != eat) {
                     errfunc(ERR_NONFATAL, "invalid effective address");

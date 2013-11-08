@@ -81,16 +81,16 @@ BITS 64
 	bndstx [rax+0x3], bnd0, rbx	; ICC-1
 	bndstx [rax+0x3], rbx, bnd0	; ICC-2
 
-	; GAS's confusing EA - rcx is base reg in NASM
-	bndstx [rcx*1], bnd2
-	; next 4 lines should be parsed same
+	; next 5 lines should be parsed same
 	bndstx [,rcx*1], bnd2		; NASM
 	bndstx [0,rcx*1], bnd2		; NASM
 	bndstx [0], bnd2, rcx		; ICC-1
 	bndstx [0], rcx, bnd2		; ICC-2
+	bndstx [rcx*1], bnd2		; GAS - rcx is encoded as index only when it is mib
 
-	bndstx [1*r12+3], bnd2		; GAS's confusing EA again
+	; next 3 lines should be parsed same
 	bndstx [3,1*r12], bnd2		; NASM
+	bndstx [1*r12+3], bnd2		; GAS
 	bndstx [3], r12, bnd2		; ICC
 
 	bndstx [r12+0x399], bnd3
