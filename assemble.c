@@ -162,7 +162,6 @@
  * \367          - address-size prefix (0x67) used as opcode extension
  * \370,\371     - match only if operand 0 meets byte jump criteria.
  *                 370 is used for Jcc, 371 is used for JMP.
- * \372          - BND prefix (0xF2 byte) used for preserving bnd0..3
  * \373          - assemble 0x03 if bits==16, 0x05 if bits==32;
  *                 used for conditional jump over longer jump
  * \374          - this instruction takes an XMM VSIB memory EA
@@ -1124,7 +1123,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
             break;
 
-        case3(0370):
+        case 0370:
+        case 0371:
             break;
 
         case 0373:
@@ -2244,7 +2244,7 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check if BND prefix is allowed
      */
-    if ((itemp->code[0] != 0372) &&
+    if ((IF_BND & ~itemp->flags) &&
         has_prefix(instruction, PPS_REP, P_BND))
         return MERR_BADBND;
 

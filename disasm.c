@@ -408,7 +408,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
         return false;
 
     if (prefix->rep == 0xF2)
-        drep = P_REPNE;
+        drep = (t->flags & IF_BND ? P_BND : P_REPNE);
     else if (prefix->rep == 0xF3)
         drep = P_REP;
 
@@ -860,11 +860,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case 0370:
         case 0371:
-            break;
-
-        case 0372:
-            if (prefix->rep == 0xF2)
-                drep = P_BND;
             break;
 
         case 0374:
