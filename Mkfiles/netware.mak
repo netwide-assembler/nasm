@@ -47,10 +47,11 @@ NASM =	nasm.o nasmlib.o ver.o \
 	strfunc.o tokhash.o regvals.o regflags.o \
 	ilog2.o \
 	strlcpy.o \
-	preproc-nop.o
+	preproc-nop.o \
+	iflag.o
 
 NDISASM = ndisasm.o disasm.o sync.o nasmlib.o ver.o \
-	insnsd.o insnsb.o insnsn.o regs.o regdis.o
+	insnsd.o insnsb.o insnsn.o regs.o regdis.o iflag.o
 #-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)

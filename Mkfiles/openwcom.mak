@@ -63,10 +63,11 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) &
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) &
 	ilog2.$(O) &
 	lib/strlcpy.$(O) &
-	preproc-nop.$(O)
+	preproc-nop.$(O) &
+	iflag.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) &
-	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) iflag.$(O)
 #-- End File Lists --#
 
 what:   .SYMBOLIC
@@ -106,6 +107,10 @@ ndisasm$(X): $(NDISASM)
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
 
+insns.pl: insns-iflags.pl
+
+iflag.c iflag.h: insns.dat insns.pl
+    $(PERL) $(srcdir)/insns.pl -t $(srcdir)/insns.dat
 insnsb.c: insns.dat insns.pl
     $(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
 insnsa.c: insns.dat insns.pl
@@ -177,7 +182,8 @@ PERLREQ = pptok.ph macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c &
       regs.c regs.h regflags.c regdis.c regdis.h regvals.c &
       tokhash.c tokens.h pptok.h pptok.c &
       directiv.c directiv.h &
-      version.h version.mac
+      version.h version.mac &
+      iflag.c iflag.h
 perlreq: $(PERLREQ) .SYMBOLIC
 
 clean: .SYMBOLIC

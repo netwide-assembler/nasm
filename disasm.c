@@ -501,11 +501,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
     ins->rex = prefix->rex;
     memset(ins->prefixes, 0, sizeof ins->prefixes);
 
-    if (t->flags & (segsize == 64 ? IF_NOLONG : IF_LONG))
+    if (itemp_has(t, (segsize == 64 ? IF_NOLONG : IF_LONG)))
         return false;
 
     if (prefix->rep == 0xF2)
-        drep = (t->flags & IF_BND ? P_BND : P_REPNE);
+        drep = (itemp_has(t, IF_BND) ? P_BND : P_REPNE);
     else if (prefix->rep == 0xF3)
         drep = P_REP;
 
@@ -1099,7 +1099,7 @@ static const char * const condition_name[16] = {
 };
 
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
-               int32_t offset, int autosync, iflags_t prefer)
+            int32_t offset, int autosync, iflag_t *prefer)
 {
     const struct itemplate * const *p, * const *best_p;
     const struct disasm_index *ix;
@@ -1110,7 +1110,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     uint8_t *origdata;
     int works;
     insn tmp_ins, ins;
-    iflags_t goodness, best, flags;
+    iflag_t goodness, best;
     int best_pref;
     struct prefix_info prefix;
     bool end_prefix;
@@ -1277,7 +1277,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         }
     }
 
-    best = -1;            /* Worst possible */
+    iflag_set_all(&best); /* Worst possible */
     best_p = NULL;
     best_pref = INT_MAX;
 
@@ -1331,13 +1331,14 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
              */
             if (works) {
                 int i, nprefix;
-                goodness = ((*p)->flags & IF_PFMASK) ^ prefer;
-                nprefix = 0;
-                for (i = 0; i < MAXPREFIX; i++)
-                    if (tmp_ins.prefixes[i])
-                        nprefix++;
+                goodness = iflag_pfmask(*p);
+                goodness = iflag_xor(&goodness, prefer);
+		nprefix = 0;
+		for (i = 0; i < MAXPREFIX; i++)
+		    if (tmp_ins.prefixes[i])
+			nprefix++;
                 if (nprefix < best_pref ||
-                        (nprefix == best_pref && goodness < best)) {
+		    (nprefix == best_pref && iflag_cmp(&goodness, &best) == -1)) {
                     /* This is the best one found so far */
                     best = goodness;
                     best_p = p;
@@ -1355,7 +1356,6 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     /* Pick the best match */
     p = best_p;
     length = best_length;
-    flags = (*p)->flags;
 
     slen = 0;
 
@@ -1528,7 +1528,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                         nasm_reg_names[(o->basereg-EXPR_REG_START)]);
                 started = true;
             }
-            if (o->indexreg != -1 && !(flags & IF_MIB)) {
+            if (o->indexreg != -1 && !itemp_has(*best_p, IF_MIB)) {
                 if (started)
                     output[slen++] = '+';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
@@ -1607,7 +1607,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 }
             }
 
-            if (o->indexreg != -1 && (flags & IF_MIB)) {
+            if (o->indexreg != -1 && itemp_has(*best_p, IF_MIB)) {
                 output[slen++] = ',';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                         nasm_reg_names[(o->indexreg-EXPR_REG_START)]);

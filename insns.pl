@@ -37,6 +37,8 @@
 #
 # Parse insns.dat and produce generated source code files
 
+require 'insns-iflags.pl';
+
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
 @disasm_prefixes = qw(0F24 0F25 0F38 0F3A 0F7A 0FA6 0FA7 0F);
@@ -67,7 +69,7 @@ print STDERR "Reading insns.dat...\n";
 undef $output;
 foreach $arg ( @ARGV ) {
     if ( $arg =~ /^\-/ ) {
-        if  ( $arg =~ /^\-([abdin])$/ ) {
+        if  ( $arg =~ /^\-([abdint])$/ ) {
             $output = $1;
         } else {
             die "$0: Unknown option: ${arg}\n";
@@ -393,6 +395,10 @@ if ( !defined($output) || $output eq 'n' ) {
     close N;
 }
 
+if ( !defined($output) || $output eq 't') {
+    write_iflags();
+}
+
 printf STDERR "Done: %d instructions\n", $insns;
 
 # Count primary bytecodes, for statistics
@@ -424,7 +430,7 @@ sub count_bytecodes(@) {
 
 sub format_insn($$$$$) {
     my ($opcode, $operands, $codes, $flags, $relax) = @_;
-    my $num, $nd = 0;
+    my $num, $nd = 0, $rawflags, $flagsindex;
     my @bytecode;
     my $op, @ops, $opp, @opx, @oppx, @decos, @opevex;
     my @iflags = (  "FPU", "MMX", "3DNOW", "SSE", "SSE2",
@@ -492,16 +498,23 @@ sub format_insn($$$$$) {
     }
 
     # format the flags
-    $flags =~ s/,/|IF_/g;
-    $flags =~ s/(\|IF_ND|IF_ND\|)//, $nd = 1 if $flags =~ /IF_ND/;
-    $flags = "IF_" . $flags;
+    $nd = 1 if $flags =~ /(^|\,)ND($|\,)/;
+    $flags =~ s/(^|\,)ND($|\,)/\1/g;
+    $flags =~ s/(^|\,)X64($|\,)/\1LONG,X86_64\2/g;
+    $flags =~ s/(^|\,)AVX512CD($|\,)/\1AVX512CD,AVX512\2/g;
+    $flags =~ s/(^|\,)AVX512ER($|\,)/\1AVX512ER,AVX512\2/g;
+    $flags =~ s/(^|\,)AVX512PF($|\,)/\1AVX512PF,AVX512\2/g;
+    $rawflags = $flags;
+    $flagsindex = insns_flag_index(split(',',$flags));
+
+    die "Error in flags $rawflags" if not defined($flagsindex);
 
     @bytecode = (decodify($codes, $relax), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
 
-    ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flags},", $nd);
+    ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
 
 #

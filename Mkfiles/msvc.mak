@@ -51,10 +51,11 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
 	ilog2.$(O) \
 	lib/strlcpy.$(O) \
-	preproc-nop.$(O)
+	preproc-nop.$(O) \
+	iflag.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
-	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) iflag.$(O)
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X)
@@ -71,6 +72,10 @@ ndisasm$(X): $(NDISASM)
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
 
+insns.pl: insns-iflags.pl
+
+iflag.c iflag.h: insns.dat insns.pl
+	$(PERL) $(srcdir)/insns.pl -t $(srcdir)/insns.dat
 insnsb.c: insns.dat insns.pl
 	$(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
 insnsa.c: insns.dat insns.pl
@@ -142,7 +147,7 @@ directiv.c: directiv.dat directiv.pl perllib/phash.ph
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regvals.c tokhash.c tokens.h \
-	  version.h version.mac pptok.h pptok.c
+	  version.h version.mac pptok.h pptok.c iflag.c iflag.h
 perlreq: $(PERLREQ)
 
 clean:

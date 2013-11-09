@@ -60,6 +60,7 @@
 #include "labels.h"
 #include "output/outform.h"
 #include "listing.h"
+#include "iflag.h"
 
 /*
  * This is the maximum number of optimization passes to do.  If we ever
@@ -74,7 +75,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 };
 
 static int get_bits(char *value);
-static iflags_t get_cpu(char *cpu_str);
+static iflag_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
 static void assemble_file(char *, StrList **);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
@@ -106,8 +107,10 @@ static FILE *error_file;        /* Where to write error messages */
 FILE *ofile = NULL;
 int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
 static int sb, cmd_sb = 16;    /* by default */
-static iflags_t cmd_cpu = IF_PLEVEL;       /* highest level by default */
-static iflags_t cpu = IF_PLEVEL;   /* passed to insn_size & assemble.c */
+
+static iflag_t cpu;
+static iflag_t cmd_cpu;
+
 int64_t global_offset_changed;      /* referenced in labels.c */
 int64_t prev_offset_changed;
 int32_t stall_count;
@@ -320,6 +323,9 @@ int main(int argc, char **argv)
     StrList *depend_list = NULL, **depend_ptr;
 
     time(&official_compile_time);
+
+    iflag_set(&cpu, IF_PLEVEL);
+    iflag_set(&cmd_cpu, IF_PLEVEL);
 
     pass0 = 0;
     want_usage = terminate_after_phase = false;
@@ -1187,7 +1193,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     expr *e;
     int pass_max;
 
-    if (cmd_sb == 32 && cmd_cpu < IF_386)
+    if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
         nasm_error(ERR_FATAL, "command line: "
                      "32-bit segment size requires a higher cpu");
 
@@ -2006,44 +2012,53 @@ static void usage(void)
     fputs("type `nasm -h' for help\n", error_file);
 }
 
-static iflags_t get_cpu(char *value)
+static iflag_t get_cpu(char *value)
 {
+    iflag_t r;
+
+    iflag_clear_all(&r);
+
     if (!strcmp(value, "8086"))
-        return IF_8086;
-    if (!strcmp(value, "186"))
-        return IF_186;
-    if (!strcmp(value, "286"))
-        return IF_286;
-    if (!strcmp(value, "386"))
-        return IF_386;
-    if (!strcmp(value, "486"))
-        return IF_486;
-    if (!strcmp(value, "586") || !nasm_stricmp(value, "pentium"))
-        return IF_PENT;
-    if (!strcmp(value, "686") ||
-        !nasm_stricmp(value, "ppro") ||
-        !nasm_stricmp(value, "pentiumpro") || !nasm_stricmp(value, "p2"))
-        return IF_P6;
-    if (!nasm_stricmp(value, "p3") || !nasm_stricmp(value, "katmai"))
-        return IF_KATMAI;
-    if (!nasm_stricmp(value, "p4") ||   /* is this right? -- jrc */
-        !nasm_stricmp(value, "willamette"))
-        return IF_WILLAMETTE;
-    if (!nasm_stricmp(value, "prescott"))
-        return IF_PRESCOTT;
-    if (!nasm_stricmp(value, "x64") ||
-        !nasm_stricmp(value, "x86-64"))
-        return IF_X86_64;
-    if (!nasm_stricmp(value, "ia64") ||
-        !nasm_stricmp(value, "ia-64") ||
-        !nasm_stricmp(value, "itanium") ||
-        !nasm_stricmp(value, "itanic") || !nasm_stricmp(value, "merced"))
-        return IF_IA64;
-
-    nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                 "unknown 'cpu' type");
-
-    return IF_PLEVEL;           /* the maximum level */
+        iflag_set(&r, IF_8086);
+    else if (!strcmp(value, "186"))
+        iflag_set(&r, IF_186);
+    else if (!strcmp(value, "286"))
+        iflag_set(&r, IF_286);
+    else if (!strcmp(value, "386"))
+        iflag_set(&r, IF_386);
+    else if (!strcmp(value, "486"))
+        iflag_set(&r, IF_486);
+    else if (!strcmp(value, "586") ||
+             !nasm_stricmp(value, "pentium"))
+        iflag_set(&r, IF_PENT);
+    else if (!strcmp(value, "686")              ||
+             !nasm_stricmp(value, "ppro")       ||
+             !nasm_stricmp(value, "pentiumpro") ||
+             !nasm_stricmp(value, "p2"))
+        iflag_set(&r, IF_P6);
+    else if (!nasm_stricmp(value, "p3") ||
+             !nasm_stricmp(value, "katmai"))
+        iflag_set(&r, IF_KATMAI);
+    else if (!nasm_stricmp(value, "p4") ||   /* is this right? -- jrc */
+             !nasm_stricmp(value, "willamette"))
+        iflag_set(&r, IF_WILLAMETTE);
+    else if (!nasm_stricmp(value, "prescott"))
+        iflag_set(&r, IF_PRESCOTT);
+    else if (!nasm_stricmp(value, "x64") ||
+             !nasm_stricmp(value, "x86-64"))
+        iflag_set(&r, IF_X86_64);
+    else if (!nasm_stricmp(value, "ia64")   ||
+             !nasm_stricmp(value, "ia-64")  ||
+             !nasm_stricmp(value, "itanium")||
+             !nasm_stricmp(value, "itanic") ||
+             !nasm_stricmp(value, "merced"))
+        iflag_set(&r, IF_IA64);
+    else {
+        iflag_set(&r, IF_PLEVEL);
+        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
+                   "unknown 'cpu' type");
+    }
+    return r;
 }
 
 static int get_bits(char *value)
@@ -2053,13 +2068,13 @@ static int get_bits(char *value)
     if ((i = atoi(value)) == 16)
         return i;               /* set for a 16-bit segment */
     else if (i == 32) {
-        if (cpu < IF_386) {
+        if (iflag_ffs(&cpu) < IF_386) {
             nasm_error(ERR_NONFATAL,
                          "cannot specify 32-bit segment on processor below a 386");
             i = 16;
         }
     } else if (i == 64) {
-        if (cpu < IF_X86_64) {
+        if (iflag_ffs(&cpu) < IF_X86_64) {
             nasm_error(ERR_NONFATAL,
                          "cannot specify 64-bit segment on processor below an x86-64");
             i = 16;

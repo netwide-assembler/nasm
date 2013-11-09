@@ -218,7 +218,7 @@ typedef struct {
 #define GEN_MODRM(mod, reg, rm)                     \
         (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
 
-static iflags_t cpu;            /* cpu level received from nasm.c */
+static iflag_t cpu;             /* cpu level received from nasm.c */
 static efunc errfunc;
 static struct ofmt *outfmt;
 static ListGen *list;
@@ -390,7 +390,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return is_byte;
 }
 
-int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
+int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                  insn * instruction, struct ofmt *output, efunc error,
                  ListGen * listgen)
 {
@@ -704,7 +704,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
     return 0;
 }
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, iflags_t cp,
+int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
                   insn * instruction, efunc error)
 {
     const struct itemplate *temp;
@@ -1231,7 +1231,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                  * only for mib operands, make a single reg index [reg*1].
                  * gas uses this form to explicitly denote index register.
                  */
-                if ((temp->flags & IF_MIB) &&
+                if (itemp_has(temp, IF_MIB) &&
                     (opy->indexreg == -1 && opy->hintbase == opy->basereg &&
                      opy->hinttype == EAH_NOTBASE)) {
                     opy->indexreg = opy->basereg;
@@ -1310,7 +1310,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
         } else if ((ins->rex & REX_L) &&
                    !(ins->rex & (REX_P|REX_W|REX_X|REX_B)) &&
-                   cpu >= IF_X86_64) {
+                   iflag_ffs(&cpu) >= IF_X86_64) {
             /* LOCK-as-REX.R */
             assert_no_prefix(ins, PPS_LOCK);
             lockcheck = false;  /* Already errored, no need for warning */
@@ -1322,7 +1322,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     }
 
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
-        (!(temp->flags & IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
+        (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
         errfunc(ERR_WARNING | ERR_WARN_LOCK | ERR_PASS2 ,
                 "instruction is not lockable");
     }
@@ -2003,8 +2003,7 @@ static enum match_result find_match(const struct itemplate **tempp,
                 m = MOK_GOOD;
             else
                 m = MERR_INVALOP;
-        } else if (m == MERR_OPSIZEMISSING &&
-                   (temp->flags & IF_SMASK) != IF_SX) {
+        } else if (m == MERR_OPSIZEMISSING && !itemp_has(temp, IF_SX)) {
             /*
              * Missing operand size and a candidate for fuzzy matching...
              */
@@ -2090,7 +2089,7 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Is it legal?
      */
-    if (!(optimizing > 0) && (itemp->flags & IF_OPT))
+    if (!(optimizing > 0) && itemp_has(itemp, IF_OPT))
 	return MERR_INVALOP;
 
     /*
@@ -2103,29 +2102,29 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Process size flags
      */
-    switch (itemp->flags & IF_SMASK) {
-    case IF_SB:
+    switch (itemp_smask(itemp)) {
+    case IF_GENBIT(IF_SB):
         asize = BITS8;
         break;
-    case IF_SW:
+    case IF_GENBIT(IF_SW):
         asize = BITS16;
         break;
-    case IF_SD:
+    case IF_GENBIT(IF_SD):
         asize = BITS32;
         break;
-    case IF_SQ:
+    case IF_GENBIT(IF_SQ):
         asize = BITS64;
         break;
-    case IF_SO:
+    case IF_GENBIT(IF_SO):
         asize = BITS128;
         break;
-    case IF_SY:
+    case IF_GENBIT(IF_SY):
         asize = BITS256;
         break;
-    case IF_SZ:
+    case IF_GENBIT(IF_SZ):
         asize = BITS512;
         break;
-    case IF_SIZE:
+    case IF_GENBIT(IF_SIZE):
         switch (bits) {
         case 16:
             asize = BITS16;
@@ -2146,9 +2145,9 @@ static enum match_result matches(const struct itemplate *itemp,
         break;
     }
 
-    if (itemp->flags & IF_ARMASK) {
+    if (itemp_armask(itemp)) {
         /* S- flags only apply to a specific operand */
-        i = ((itemp->flags & IF_ARMASK) >> IF_ARSHFT) - 1;
+        i = itemp_arg(itemp);
         memset(size, 0, sizeof size);
         size[i] = asize;
     } else {
@@ -2235,10 +2234,10 @@ static enum match_result matches(const struct itemplate *itemp,
             }
         } else if (is_register(instruction->oprs[i].basereg) &&
                    nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
-                   !(itemp->flags & IF_AVX512)) {
+                   !itemp_has(itemp, IF_AVX512)) {
             return MERR_ENCMISMATCH;
         } else if (instruction->prefixes[PPS_EVEX] &&
-                   !(itemp->flags & IF_AVX512)) {
+                   !itemp_has(itemp, IF_AVX512)) {
             return MERR_ENCMISMATCH;
         }
     }
@@ -2249,8 +2248,8 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check operand sizes
      */
-    if (itemp->flags & (IF_SM | IF_SM2)) {
-        oprs = (itemp->flags & IF_SM2 ? 2 : itemp->operands);
+    if (itemp_has(itemp, IF_SM) || itemp_has(itemp, IF_SM2)) {
+        oprs = (itemp_has(itemp, IF_SM2) ? 2 : itemp->operands);
         for (i = 0; i < oprs; i++) {
             asize = itemp->opd[i] & SIZE_MASK;
             if (asize) {
@@ -2272,19 +2271,19 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check template is okay at the set cpu level
      */
-    if (((itemp->flags & IF_PLEVEL) > cpu))
+    if (iflag_cmp_cpu_level(&insns_flags[itemp->iflag_idx], &cpu) > 0)
         return MERR_BADCPU;
 
     /*
      * Verify the appropriate long mode flag.
      */
-    if ((itemp->flags & (bits == 64 ? IF_NOLONG : IF_LONG)))
+    if (itemp_has(itemp, (bits == 64 ? IF_NOLONG : IF_LONG)))
         return MERR_BADMODE;
 
     /*
      * If we have a HLE prefix, look for the NOHLE flag
      */
-    if ((itemp->flags & IF_NOHLE) &&
+    if (itemp_has(itemp, IF_NOHLE) &&
         (has_prefix(instruction, PPS_REP, P_XACQUIRE) ||
          has_prefix(instruction, PPS_REP, P_XRELEASE)))
         return MERR_BADHLE;
@@ -2298,7 +2297,7 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Check if BND prefix is allowed
      */
-    if ((IF_BND & ~itemp->flags) &&
+    if (!itemp_has(itemp, IF_BND) &&
         has_prefix(instruction, PPS_REP, P_BND))
         return MERR_BADBND;
 

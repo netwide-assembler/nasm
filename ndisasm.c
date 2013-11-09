@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     bool autosync = false;
     int bits = 16, b;
     bool eof = false;
-    iflags_t prefer = 0;
+    iflag_t prefer;
     bool rn_error;
     int32_t offset;
     FILE *fp;
@@ -96,6 +96,7 @@ int main(int argc, char **argv)
     tolower_init();
     nasm_set_verror(ndisasm_verror);
     nasm_init_malloc_error();
+    iflag_clear_all(&prefer);
 
     offset = 0;
     init_sync();
@@ -229,14 +230,20 @@ int main(int argc, char **argv)
                         return 1;
                     }
                     if (!strcmp(v, "intel")) {
-                        prefer = 0;     /* Default */
+                        iflag_clear_all(&prefer); /* default */
                     } else if (!strcmp(v, "amd")) {
-                        prefer = IF_AMD | IF_3DNOW;
+                        iflag_clear_all(&prefer);
+                        iflag_set(&prefer, IF_AMD);
+                        iflag_set(&prefer, IF_3DNOW);
                     } else if (!strcmp(v, "cyrix")) {
-                        prefer = IF_CYRIX | IF_3DNOW;
-                    } else if (!strcmp(v, "idt") || !strcmp(v, "centaur")
-                               || !strcmp(v, "winchip")) {
-                        prefer = IF_3DNOW;
+                        iflag_clear_all(&prefer);
+                        iflag_set(&prefer, IF_CYRIX);
+                        iflag_set(&prefer, IF_3DNOW);
+                    } else if (!strcmp(v, "idt") ||
+                               !strcmp(v, "centaur") ||
+                               !strcmp(v, "winchip")) {
+                        iflag_clear_all(&prefer);
+                        iflag_set(&prefer, IF_3DNOW);
                     } else {
                         fprintf(stderr,
                                 "%s: unknown vendor `%s' specified with `-p'\n",
@@ -311,7 +318,7 @@ int main(int argc, char **argv)
         while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
             lendis =
                 disasm((uint8_t *) q, outbuf, sizeof(outbuf), bits,
-		       offset, autosync, prefer);
+		       offset, autosync, &prefer);
             if (!lendis || lendis > (p - q)
                 || ((nextsync || synclen) &&
 		    (uint32_t)lendis > nextsync - offset))
