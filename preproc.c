@@ -3799,19 +3799,28 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
     fst--, lst--;
 
     /*
-     * it will be at least one token
+     * It will be at least one token. Note we
+     * need to scan params until separator, otherwise
+     * only first token will be passed.
      */
     tm = mac->params[(fst + mac->rotate) % mac->nparam];
-    t = new_Token(NULL, tm->type, tm->text, 0);
-    head = t, tt = &t->next;
+    head = new_Token(NULL, tm->type, tm->text, 0);
+    tt = &head->next, tm = tm->next;
+    while (tok_isnt_(tm, ",")) {
+        t = new_Token(NULL, tm->type, tm->text, 0);
+        *tt = t, tt = &t->next, tm = tm->next;
+    }
+
     if (fst < lst) {
         for (i = fst + 1; i <= lst; i++) {
             t = new_Token(NULL, TOK_OTHER, ",", 0);
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
             tm = mac->params[j];
-            t = new_Token(NULL, tm->type, tm->text, 0);
-            *tt = t, tt = &t->next;
+            while (tok_isnt_(tm, ",")) {
+                t = new_Token(NULL, tm->type, tm->text, 0);
+                *tt = t, tt = &t->next, tm = tm->next;
+            }
         }
     } else {
         for (i = fst - 1; i >= lst; i--) {
@@ -3819,8 +3828,10 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
             tm = mac->params[j];
-            t = new_Token(NULL, tm->type, tm->text, 0);
-            *tt = t, tt = &t->next;
+            while (tok_isnt_(tm, ",")) {
+                t = new_Token(NULL, tm->type, tm->text, 0);
+                *tt = t, tt = &t->next, tm = tm->next;
+            }
         }
     }
 
