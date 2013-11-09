@@ -78,3 +78,5 @@ TAGS
 /version.mak
 /version.nsh
 /version.sed
+/iflag.c
+/iflag.h
