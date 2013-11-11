@@ -81,6 +81,7 @@ struct prefix_info {
     uint8_t vex_v;
     uint8_t vex_lp;     /* VEX.LP fields */
     uint32_t rex;       /* REX prefix present */
+    uint8_t evex[3];    /* EVEX prefix present */
 };
 
 #define getu8(x) (*(uint8_t *)(x))
@@ -133,12 +134,14 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
         {FPU0,    R_ST0},
         {XMM0,    R_XMM0},
         {YMM0,    R_YMM0},
+        {ZMM0,    R_ZMM0},
         {REG_ES,  R_ES},
         {REG_CS,  R_CS},
         {REG_SS,  R_SS},
         {REG_DS,  R_DS},
         {REG_FS,  R_FS},
-        {REG_GS,  R_GS}
+        {REG_GS,  R_GS},
+        {OPMASK0, R_K0},
     };
 
     if (!(regflags & (REGISTER|REGMEM)))
@@ -151,7 +154,7 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
             return specific_registers[i].reg;
 
     /* All the entries below look up regval in an 16-entry array */
-    if (regval < 0 || regval > 15)
+    if (regval < 0 || regval > (rex & REX_EV ? 31 : 15))
         return 0;
 
     if (!(REG8 & ~regflags)) {
@@ -185,6 +188,10 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
         return nasm_rd_xmmreg[regval];
     if (!(YMMREG & ~regflags))
         return nasm_rd_ymmreg[regval];
+    if (!(ZMMREG & ~regflags))
+        return nasm_rd_zmmreg[regval];
+    if (!(OPMASKREG & ~regflags))
+        return nasm_rd_opmaskreg[regval];
 
     return 0;
 }
@@ -198,7 +205,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 {
     int mod, rm, scale, index, base;
     int rex;
+    uint8_t *evex;
     uint8_t sib = 0;
+    bool is_evex = !!(ins->rex & REX_EV);
 
     mod = (modrm >> 6) & 03;
     rm = modrm & 07;
@@ -206,11 +215,15 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
     if (mod != 3 && asize != 16 && rm == 4)
         sib = *data++;
 
-    rex = ins->rex;
+    rex  = ins->rex;
+    evex = ins->evex_p;
 
     if (mod == 3) {             /* pure register version */
         op->basereg = rm+(rex & REX_B ? 8 : 0);
         op->segment |= SEG_RMREG;
+        if (is_evex && segsize == 64) {
+            op->basereg += (evex[0] & EVEX_P0X ? 0 : 16);
+        }
         return data;
     }
 
@@ -564,6 +577,8 @@ static int matches(const struct itemplate *t, uint8_t *data,
             if (!data)
                 return false;
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
+            if ((ins->rex & REX_EV) && (segsize == 64))
+                opx->basereg += (ins->evex_p[0] & EVEX_P0RP ? 0 : 16);
             break;
         }
 
@@ -614,6 +629,55 @@ static int matches(const struct itemplate *t, uint8_t *data,
             data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
             if (!data)
                 return false;
+            break;
+        }
+
+        case4(0240):
+        case 0250:
+        {
+            uint8_t evexm   = *r++;
+            uint8_t evexwlp = *r++;
+            ins->evex_tuple = *r++ - 0300;
+
+            ins->rex |= REX_EV;
+            if ((prefix->rex & (REX_EV|REX_V|REX_P)) != REX_EV)
+                return false;
+
+            if ((evexm & 0x1f) != prefix->vex_m)
+                return false;
+
+            switch (evexwlp & 060) {
+            case 000:
+                if (prefix->rex & REX_W)
+                    return false;
+                break;
+            case 020:
+                if (!(prefix->rex & REX_W))
+                    return false;
+                ins->rex |= REX_W;
+                break;
+            case 040:        /* VEX.W is a don't care */
+                ins->rex &= ~REX_W;
+                break;
+            case 060:
+                break;
+            }
+
+            /* If EVEX.b is set, EVEX.L'L can be rounding control bits */
+            if ((evexwlp ^ prefix->vex_lp) &
+                ((prefix->evex[2] & EVEX_P2B) ? 0x03 : 0x0f))
+                return false;
+
+            if (c == 0250) {
+                if ((prefix->vex_v != 0) || !(prefix->evex[2] & EVEX_P2VP))
+                    return false;
+            } else {
+                opx->segment |= SEG_RMREG;
+                opx->basereg = ((~prefix->evex[2] & EVEX_P2VP) << (4 - 3) ) |
+                                prefix->vex_v;
+            }
+            vex_ok = true;
+            memcpy(ins->evex_p, prefix->evex, 3);
             break;
         }
 
@@ -879,7 +943,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
         }
     }
 
-    if (!vex_ok && (ins->rex & REX_V))
+    if (!vex_ok && (ins->rex & (REX_V | REX_EV)))
         return false;
 
     /* REX cannot be combined with VEX */
@@ -1044,6 +1108,31 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             }
             end_prefix = true;
             break;
+
+        case 0x62:
+        {
+            uint8_t evex_p0 = data[1] & 0x0f;
+            if (segsize == 64 ||
+                ((evex_p0 >= 0x01) && (evex_p0 <= 0x03))) {
+                data++;        /* 62h EVEX prefix */
+                prefix.evex[0] = *data++;
+                prefix.evex[1] = *data++;
+                prefix.evex[2] = *data++;
+
+                prefix.rex    = REX_EV;
+                prefix.vex_c  = RV_EVEX;
+                prefix.rex   |= (~prefix.evex[0] >> 5) & 7; /* REX_RXB */
+                prefix.rex   |= (prefix.evex[1] >> (7-3)) & REX_W;
+                prefix.vex_m  = prefix.evex[0] & EVEX_P0MM;
+                prefix.vex_v  = (~prefix.evex[1] & EVEX_P1VVVV) >> 3;
+                prefix.vex_lp = ((prefix.evex[2] & EVEX_P2LL) >> (5-2)) |
+                                (prefix.evex[1] & EVEX_P1PP);
+
+                ix = itable_vex[prefix.vex_c][prefix.vex_m][prefix.vex_lp & 3];
+            }
+            end_prefix = true;
+            break;
+        }
 
         case 0x8F:
             if ((data[1] & 030) != 0 &&

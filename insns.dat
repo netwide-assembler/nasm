@@ -3730,8 +3730,8 @@ VEXTRACTI32X4    mem128|mask,zmmreg,imm8                       [mri:t4:        e
 VEXTRACTI32X4    xmmreg|mask|z,zmmreg,imm8                     [mri:           evex.512.66.0f3a.w0 39 /r ib ]  AVX512,FUTURE
 VEXTRACTI64X4    ymmreg|mask|z,zmmreg,imm8                     [mri:           evex.512.66.0f3a.w1 3b /r ib ]  AVX512,FUTURE
 VEXTRACTI64X4    mem256|mask,zmmreg,imm8                       [mri:t4:        evex.512.66.0f3a.w1 3b /r ib ]  AVX512,FUTURE
-VEXTRACTPS       rm32,xmmreg,imm8                              [mri:t1s:      evex.128.66.0f3a.wig 17 /r ib ]  AVX512,FUTURE
 VEXTRACTPS       rm64,xmmreg,imm8                              [mri:t1s:       evex.128.66.0f3a.w1 17 /r ib ]  AVX512,FUTURE
+VEXTRACTPS       rm32,xmmreg,imm8                              [mri:t1s:      evex.128.66.0f3a.wig 17 /r ib ]  AVX512,FUTURE
 VFIXUPIMMPD      zmmreg|mask|z,zmmreg,zmmrm512|b64|sae,imm8    [rvmi:fv:   evex.nds.512.66.0f3a.w1 54 /r ib ]  AVX512,FUTURE
 VFIXUPIMMPS      zmmreg|mask|z,zmmreg,zmmrm512|b32|sae,imm8    [rvmi:fv:   evex.nds.512.66.0f3a.w0 54 /r ib ]  AVX512,FUTURE
 VFIXUPIMMSD      xmmreg|mask|z,xmmreg,xmmrm64|sae,imm8         [rvmi:t1s:  evex.nds.lig.66.0f3a.w1 55 /r ib ]  AVX512,FUTURE

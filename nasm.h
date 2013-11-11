@@ -509,8 +509,12 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 /*
  * EVEX bit field
  */
+#define EVEX_P0MM       0x03        /* EVEX P[1:0] : Legacy escape        */
 #define EVEX_P0RP       0x10        /* EVEX P[4] : High-16 reg            */
 #define EVEX_P0X        0x40        /* EVEX P[6] : High-16 rm             */
+#define EVEX_P1PP       0x03        /* EVEX P[9:8] : Legacy prefix        */
+#define EVEX_P1VVVV     0x78        /* EVEX P[14:11] : NDS register       */
+#define EVEX_P1W        0x80        /* EVEX P[15] : Osize extension       */
 #define EVEX_P2AAA      0x07        /* EVEX P[18:16] : Embedded opmask    */
 #define EVEX_P2VP       0x08        /* EVEX P[19] : High-16 NDS reg       */
 #define EVEX_P2B        0x10        /* EVEX P[20] : Broadcast / RC / SAE  */
@@ -523,7 +527,8 @@ static inline uint8_t get_cond_opcode(enum ccode c)
  */
 enum vex_class {
     RV_VEX      = 0,    /* C4/C5 */
-    RV_XOP      = 1     /* 8F */
+    RV_XOP      = 1,    /* 8F */
+    RV_EVEX     = 2,    /* 62 */
 };
 
 /*
