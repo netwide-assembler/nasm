@@ -197,6 +197,76 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
 }
 
 /*
+ * Find N value for compressed displacement (disp8 * N)
+ */
+static uint8_t get_disp8N(insn *ins)
+{
+    const uint8_t fv_n[2][2][VLMAX] = {{{16, 32, 64}, {4, 4, 4}},
+                                       {{16, 32, 64}, {8, 8, 8}}};
+    const uint8_t hv_n[2][VLMAX]    =  {{8, 16, 32}, {4, 4, 4}};
+    const uint8_t dup_n[VLMAX]      =   {8, 32, 64};
+
+    bool evex_b           = (ins->evex_p[2] & EVEX_P2B) >> 4;
+    enum ttypes   tuple   = ins->evex_tuple;
+    /* vex_wlp composed as [wwllpp] */
+    enum vectlens vectlen = (ins->evex_p[2] & EVEX_P2LL) >> 5;
+    /* wig(=2) is treated as w0(=0) */
+    bool evex_w           = (ins->evex_p[1] & EVEX_P1W) >> 7;
+    uint8_t n = 0;
+
+    switch(tuple) {
+    case FV:
+        n = fv_n[evex_w][evex_b][vectlen];
+        break;
+    case HV:
+        n = hv_n[evex_b][vectlen];
+        break;
+
+    case FVM:
+        /* 16, 32, 64 for VL 128, 256, 512 respectively*/
+        n = 1 << (vectlen + 4);
+        break;
+    case T1S8:  /* N = 1 */
+    case T1S16: /* N = 2 */
+        n = tuple - T1S8 + 1;
+        break;
+    case T1S:
+        /* N = 4 for 32bit, 8 for 64bit */
+        n = evex_w ? 8 : 4;
+        break;
+    case T1F32:
+    case T1F64:
+        /* N = 4 for 32bit, 8 for 64bit */
+        n = (tuple == T1F32 ? 4 : 8);
+        break;
+    case T2:
+    case T4:
+    case T8:
+        if (vectlen + 7 <= (evex_w + 5) + (tuple - T2 + 1))
+            n = 0;
+        else
+            n = 1 << (tuple - T2 + evex_w + 3);
+        break;
+    case HVM:
+    case QVM:
+    case OVM:
+        n = 1 << (OVM - tuple + vectlen + 1);
+        break;
+    case M128:
+        n = 16;
+        break;
+    case DUP:
+        n = dup_n[vectlen];
+        break;
+
+    default:
+        break;
+    }
+
+    return n;
+}
+
+/*
  * Process an effective address (ModRM) specification.
  */
 static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
@@ -285,7 +355,12 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = (int8_t)*data++;
+            if (ins->evex_tuple != 0) {
+                op->offset = gets8(data) * get_disp8N(ins);
+            } else {
+                op->offset = gets8(data);
+            }
+            data++;
             break;
         case 2:
             op->segment |= SEG_DISP16;
@@ -371,7 +446,11 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = gets8(data);
+            if (ins->evex_tuple != 0) {
+                op->offset = gets8(data) * get_disp8N(ins);
+            } else {
+                op->offset = gets8(data);
+            }
             data++;
             break;
         case 2:
@@ -414,6 +493,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             (segsize == 64 ? SEG_64BIT : segsize == 32 ? SEG_32BIT : 0);
     }
     ins->condition = -1;
+    ins->evex_tuple = 0;
     ins->rex = prefix->rex;
     memset(ins->prefixes, 0, sizeof ins->prefixes);
 
@@ -1023,6 +1103,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     int best_pref;
     struct prefix_info prefix;
     bool end_prefix;
+    bool is_evex;
 
     memset(&ins, 0, sizeof ins);
 
@@ -1289,6 +1370,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                         nasm_insn_names[i]);
 
     colon = false;
+    is_evex = !!(ins.rex & REX_EV);
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
         opflags_t t = (*p)->opd[i];
@@ -1435,17 +1517,31 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 
 
             if (o->segment & SEG_DISP8) {
-                const char *prefix;
-                uint8_t offset = offs;
-                if ((int8_t)offset < 0) {
-                    prefix = "-";
-                    offset = -offset;
+                if (is_evex) {
+                    const char *prefix;
+                    uint32_t offset = offs;
+                    if ((int32_t)offset < 0) {
+                        prefix = "-";
+                        offset = -offset;
+                    } else {
+                        prefix = "+";
+                    }
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx32"",
+                                prefix, offset);
                 } else {
-                    prefix = "+";
+                    const char *prefix;
+                    uint8_t offset = offs;
+                    if ((int8_t)offset < 0) {
+                        prefix = "-";
+                        offset = -offset;
+                    } else {
+                        prefix = "+";
+                    }
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx8"",
+                                prefix, offset);
                 }
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx8"",
-                            prefix, offset);
             } else if (o->segment & SEG_DISP16) {
                 const char *prefix;
                 uint16_t offset = offs;
