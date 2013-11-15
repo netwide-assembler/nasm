@@ -406,18 +406,24 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
 
         if (rm == 4) {          /* process SIB */
+            uint8_t vsib_hi = 0;
             scale = (sib >> 6) & 03;
             index = (sib >> 3) & 07;
             base = sib & 07;
 
             op->scale = 1 << scale;
 
+            if (segsize == 64) {
+                vsib_hi = (rex & REX_X ? 8 : 0) |
+                          (evex[2] & EVEX_P2VP ? 0 : 16);
+            }
+
             if (type == EA_XMMVSIB)
-                op->indexreg = nasm_rd_xmmreg[index | ((rex & REX_X) ? 8 : 0)];
+                op->indexreg = nasm_rd_xmmreg[index | vsib_hi];
             else if (type == EA_YMMVSIB)
-                op->indexreg = nasm_rd_ymmreg[index | ((rex & REX_X) ? 8 : 0)];
+                op->indexreg = nasm_rd_ymmreg[index | vsib_hi];
             else if (type == EA_ZMMVSIB)
-                op->indexreg = nasm_rd_zmmreg[index | ((rex & REX_X) ? 8 : 0)];
+                op->indexreg = nasm_rd_zmmreg[index | vsib_hi];
             else if (index == 4 && !(rex & REX_X))
                 op->indexreg = -1; /* ESP/RSP cannot be an index */
             else if (a64)
@@ -749,7 +755,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 return false;
 
             if (c == 0250) {
-                if ((prefix->vex_v != 0) || !(prefix->evex[2] & EVEX_P2VP))
+                if ((prefix->vex_v != 0) ||
+                    (!(prefix->evex[2] & EVEX_P2VP) &&
+                     ((eat < EA_XMMVSIB) || (eat > EA_ZMMVSIB))))
                     return false;
             } else {
                 opx->segment |= SEG_RMREG;
