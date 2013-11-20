@@ -266,6 +266,71 @@ static uint8_t get_disp8N(insn *ins)
     return n;
 }
 
+static uint32_t append_evex_reg_deco(char *buf, uint32_t num,
+                                    decoflags_t deco, uint8_t *evex)
+{
+    const char * const er_names[] = {"rn-sae", "rd-sae", "ru-sae", "rz-sae"};
+    uint32_t num_chars = 0;
+
+    if ((deco & MASK) && (evex[2] & EVEX_P2AAA)) {
+        enum reg_enum opmasknum = nasm_rd_opmaskreg[evex[2] & EVEX_P2AAA];
+        const char * regname = nasm_reg_names[opmasknum - EXPR_REG_START];
+
+        num_chars += snprintf(buf + num_chars, num - num_chars,
+                              "{%s}", regname);
+
+        if ((deco & Z) && (evex[2] & EVEX_P2Z)) {
+            num_chars += snprintf(buf + num_chars, num - num_chars,
+                                  "{z}");
+        }
+    }
+
+    if (evex[2] & EVEX_P2B) {
+        if (deco & ER) {
+            uint8_t er_type = (evex[2] & EVEX_P2LL) >> 5;
+            num_chars += snprintf(buf + num_chars, num - num_chars,
+                                  ",{%s}", er_names[er_type]);
+        } else if (deco & SAE) {
+            num_chars += snprintf(buf + num_chars, num - num_chars,
+                                  ",{sae}");
+        }
+    }
+
+    return num_chars;
+}
+
+static uint32_t append_evex_mem_deco(char *buf, uint32_t num, opflags_t type,
+                                     decoflags_t deco, uint8_t *evex)
+{
+    uint32_t num_chars = 0;
+
+    if ((evex[2] & EVEX_P2B) && (deco & BRDCAST_MASK)) {
+        decoflags_t deco_brsize = deco & BRSIZE_MASK;
+        opflags_t template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
+        uint8_t br_num = (type & SIZE_MASK) / BITS128 *
+                         BITS64 / template_opsize * 2;
+
+        num_chars += snprintf(buf + num_chars, num - num_chars,
+                              "{1to%d}", br_num);
+    }
+
+    if ((deco & MASK) && (evex[2] & EVEX_P2AAA)) {
+        enum reg_enum opmasknum = nasm_rd_opmaskreg[evex[2] & EVEX_P2AAA];
+        const char * regname = nasm_reg_names[opmasknum - EXPR_REG_START];
+
+        num_chars += snprintf(buf + num_chars, num - num_chars,
+                              "{%s}", regname);
+
+        if ((deco & Z) && (evex[2] & EVEX_P2Z)) {
+            num_chars += snprintf(buf + num_chars, num - num_chars,
+                                  "{z}");
+        }
+    }
+
+
+    return num_chars;
+}
+
 /*
  * Process an effective address (ModRM) specification.
  */
@@ -1382,6 +1447,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
     length += data - origdata;  /* fix up for prefixes */
     for (i = 0; i < (*p)->operands; i++) {
         opflags_t t = (*p)->opd[i];
+        decoflags_t deco = (*p)->deco[i];
         const operand *o = &ins.oprs[i];
         int64_t offs;
 
@@ -1418,6 +1484,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
             slen += snprintf(output + slen, outbufsize - slen, "%s",
                     nasm_reg_names[reg-EXPR_REG_START]);
+            if (is_evex && deco)
+                slen += append_evex_reg_deco(output + slen, outbufsize - slen,
+                                             deco, ins.evex_p);
         } else if (!(UNITY & ~t)) {
             output[slen++] = '1';
         } else if (t & IMMEDIATE) {
@@ -1477,15 +1546,25 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             if (t & BITS80)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "tword ");
-            if (t & BITS128)
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "oword ");
-            if (t & BITS256)
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "yword ");
-            if (t & BITS512)
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "zword ");
+            if ((ins.evex_p[2] & EVEX_P2B) && (deco & BRDCAST_MASK)) {
+                /* when broadcasting, each element size should be used */
+                if (deco & BR_BITS32)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "dword ");
+                else if (deco & BR_BITS64)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "qword ");
+            } else {
+                if (t & BITS128)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "oword ");
+                if (t & BITS256)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "yword ");
+                if (t & BITS512)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "zword ");
+            }
             if (t & FAR)
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
             if (t & NEAR)
@@ -1602,6 +1681,10 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             }
 
             output[slen++] = ']';
+
+            if (is_evex && deco)
+                slen += append_evex_mem_deco(output + slen, outbufsize - slen,
+                                             t, deco, ins.evex_p);
         } else {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "<operand%d>",
