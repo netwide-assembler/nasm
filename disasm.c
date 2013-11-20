@@ -192,6 +192,8 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
         return nasm_rd_zmmreg[regval];
     if (!(OPMASKREG & ~regflags))
         return nasm_rd_opmaskreg[regval];
+    if (!(BNDREG & ~regflags))
+        return nasm_rd_bndreg[regval];
 
     return 0;
 }
@@ -613,6 +615,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
             }
             break;
         }
+
+        case4(014):
+            /* this is an separate index reg position of MIB operand (ICC) */
+            /* Disassembler uses NASM's split EA form only                 */
+            break;
 
         case4(0274):
             opx->offset = (int8_t)*data++;
