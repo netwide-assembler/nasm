@@ -89,10 +89,10 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
 	ilog2.$(O) \
 	lib/strlcpy.$(O) \
-	preproc-nop.$(O)
+	preproc-nop.$(O) disp8.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
-	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O)
+	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) disp8.$(O)
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) manpages rdf
