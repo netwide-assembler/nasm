@@ -111,7 +111,10 @@ BITS 64
 	; bnd
 	bnd ret
 	bnd call      foo
-	bnd jmp       foo
+	bnd jmp       foo	; when it becomes a Jb form - short jmp (eb),
+				; bnd prefix is silently dropped
+	bnd jmp       near 0	; near jmp (opcode e9)
+;	bnd jmp       short 0	; explicit short jmp (opcode eb) : error
 	bnd jno       foo
 
 foo:	bnd ret

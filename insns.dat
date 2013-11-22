@@ -245,18 +245,18 @@ BTS		reg64,reg64			[mr:	o64 0f ab /r]				X64
 BTS		rm16,imm			[mi:	hle o16 0f ba /5 ib,u]			386,SB,LOCK
 BTS		rm32,imm			[mi:	hle o32 0f ba /5 ib,u]			386,SB,LOCK
 BTS		rm64,imm			[mi:	hle o64 0f ba /5 ib,u]			X64,SB,LOCK
-CALL		imm				[i:	odf e8 rel]				8086
-CALL		imm|near			[i:	odf e8 rel]				8086,ND
+CALL		imm				[i:	odf e8 rel]				8086,BND
+CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND
 CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG
 ; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG
-CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG
+CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND
+CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND
 CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG
-CALL		imm32				[i:	o32 e8 rel]				386,NOLONG
-CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG
+CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND
+CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND
 CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG
-CALL		imm64				[i:	o64nw e8 rel]				X64
-CALL		imm64|near			[i:	o64nw e8 rel]				X64,ND
+CALL		imm64				[i:	o64nw e8 rel]				X64,BND
+CALL		imm64|near			[i:	o64nw e8 rel]				X64,ND,BND
 CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG
 CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG
 CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG
@@ -267,31 +267,14 @@ CALL		mem|far				[m:	o64 ff /3]				X64
 CALL		mem16|far			[m:	o16 ff /3]				8086
 CALL		mem32|far			[m:	o32 ff /3]				386
 CALL		mem64|far			[m:	o64 ff /3]				X64
-CALL		mem|near			[m:	odf ff /2]				8086,ND
-CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND
-CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND
-CALL		rm64|near			[m:	o64nw ff /2]				X64,ND
-CALL		mem				[m:	odf ff /2]				8086
-CALL		rm16				[m:	o16 ff /2]				8086,NOLONG
-CALL		rm32				[m:	o32 ff /2]				386,NOLONG
-CALL		rm64				[m:	o64nw ff /2]				X64
-; BND + CALL
-CALL		imm				[i:	odf e8 rel]				8086,MPX,BND
-CALL		imm|near			[i:	odf e8 rel]				8086,ND,MPX,BND
-CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,MPX,BND
-CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,MPX,BND
-CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,MPX,BND
-CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,MPX,BND
-CALL		imm64				[i:	o64nw e8 rel]				X64,MPX,BND
-CALL		imm64|near			[i:	o64nw e8 rel]				X64,ND,MPX,BND
-CALL		mem|near			[m:	odf ff /2]				8086,ND,MPX,BND
-CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,MPX,BND
-CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,MPX,BND
-CALL		rm64|near			[m:	o64nw ff /2]				X64,ND,MPX,BND
-CALL		mem				[m:	odf ff /2]				8086,MPX,BND
-CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,MPX,BND
-CALL		rm32				[m:	o32 ff /2]				386,NOLONG,MPX,BND
-CALL		rm64				[m:	o64nw ff /2]				X64,MPX,BND
+CALL		mem|near			[m:	odf ff /2]				8086,ND,BND
+CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND
+CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND
+CALL		rm64|near			[m:	o64nw ff /2]				X64,ND,BND
+CALL		mem				[m:	odf ff /2]				8086,BND
+CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,BND
+CALL		rm32				[m:	o32 ff /2]				386,NOLONG,BND
+CALL		rm64				[m:	o64nw ff /2]				X64,BND
 
 CBW		void				[	o16 98]					8086
 CDQ		void				[	o32 99]					386
@@ -696,18 +679,18 @@ JECXZ		imm				[i:	a32 e3 rel8]				386
 JRCXZ		imm				[i:	a64 e3 rel8]				X64
 JMP		imm|short			[i:	eb rel8]				8086
 JMP		imm				[i:	jmp8 eb rel8]				8086,ND
-JMP		imm				[i:	odf e9 rel]				8086
-JMP		imm|near			[i:	odf e9 rel]				8086,ND
+JMP		imm				[i:	odf e9 rel]				8086,BND
+JMP		imm|near			[i:	odf e9 rel]				8086,ND,BND
 JMP		imm|far				[i:	odf ea iwd seg]				8086,ND,NOLONG
 ; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-JMP		imm16				[i:	o16 e9 rel]				8086,NOLONG
-JMP		imm16|near			[i:	o16 e9 rel]				8086,ND,NOLONG
+JMP		imm16				[i:	o16 e9 rel]				8086,NOLONG,BND
+JMP		imm16|near			[i:	o16 e9 rel]				8086,ND,NOLONG,BND
 JMP		imm16|far			[i:	o16 ea iwd seg]				8086,ND,NOLONG
-JMP		imm32				[i:	o32 e9 rel]				386,NOLONG
-JMP		imm32|near			[i:	o32 e9 rel]				386,ND,NOLONG
+JMP		imm32				[i:	o32 e9 rel]				386,NOLONG,BND
+JMP		imm32|near			[i:	o32 e9 rel]				386,ND,NOLONG,BND
 JMP		imm32|far			[i:	o32 ea iwd seg]				386,ND,NOLONG
-JMP		imm64				[i:	o64nw e9 rel]				X64
-JMP		imm64|near			[i:	o64nw e9 rel]				X64,ND
+JMP		imm64				[i:	o64nw e9 rel]				X64,BND
+JMP		imm64|near			[i:	o64nw e9 rel]				X64,ND,BND
 JMP		imm:imm				[ji:	odf ea iwd iw]				8086,NOLONG
 JMP		imm16:imm			[ji:	o16 ea iw iw]				8086,NOLONG
 JMP		imm:imm16			[ji:	o16 ea iw iw]				8086,NOLONG
@@ -718,31 +701,14 @@ JMP		mem|far				[m:	o64 ff /5]				X64
 JMP		mem16|far			[m:	o16 ff /5]				8086
 JMP		mem32|far			[m:	o32 ff /5]				386
 JMP		mem64|far			[m:	o64 ff /5]				X64
-JMP		mem|near			[m:	odf ff /4]				8086,ND
-JMP		rm16|near			[m:	o16 ff /4]				8086,NOLONG,ND
-JMP		rm32|near			[m:	o32 ff /4]				386,NOLONG,ND
-JMP		rm64|near			[m:	o64nw ff /4]				X64,ND
-JMP		mem				[m:	odf ff /4]				8086
-JMP		rm16				[m:	o16 ff /4]				8086,NOLONG
-JMP		rm32				[m:	o32 ff /4]				386,NOLONG
-JMP		rm64				[m:	o64nw ff /4]				X64
-; BND + JMP
-JMP		imm				[i:	odf e9 rel]				8086,MPX,BND
-JMP		imm|near			[i:	odf e9 rel]				8086,ND,MPX,BND
-JMP		imm16				[i:	o16 e9 rel]				8086,NOLONG,MPX,BND
-JMP		imm16|near			[i:	o16 e9 rel]				8086,ND,NOLONG,MPX,BND
-JMP		imm32				[i:	o32 e9 rel]				386,NOLONG,MPX,BND
-JMP		imm32|near			[i:	o32 e9 rel]				386,ND,NOLONG,MPX,BND
-JMP		imm64				[i:	o64nw e9 rel]				X64,MPX,BND
-JMP		imm64|near			[i:	o64nw e9 rel]				X64,ND,MPX,BND
-JMP		mem|near			[m:	odf ff /4]				8086,ND,MPX,BND
-JMP		rm16|near			[m:	o16 ff /4]				8086,NOLONG,ND,MPX,BND
-JMP		rm32|near			[m:	o32 ff /4]				386,NOLONG,ND,MPX,BND
-JMP		rm64|near			[m:	o64nw ff /4]				X64,ND,MPX,BND
-JMP		mem				[m:	odf ff /4]				8086,MPX,BND
-JMP		rm16				[m:	o16 ff /4]				8086,NOLONG,MPX,BND
-JMP		rm32				[m:	o32 ff /4]				386,NOLONG,MPX,BND
-JMP		rm64				[m:	o64nw ff /4]				X64,MPX,BND
+JMP		mem|near			[m:	odf ff /4]				8086,ND,BND
+JMP		rm16|near			[m:	o16 ff /4]				8086,NOLONG,ND,BND
+JMP		rm32|near			[m:	o32 ff /4]				386,NOLONG,ND,BND
+JMP		rm64|near			[m:	o64nw ff /4]				X64,ND,BND
+JMP		mem				[m:	odf ff /4]				8086,BND
+JMP		rm16				[m:	o16 ff /4]				8086,NOLONG,BND
+JMP		rm32				[m:	o32 ff /4]				386,NOLONG,BND
+JMP		rm64				[m:	o64nw ff /4]				X64,BND
 
 JMPE		imm				[i:	odf 0f b8 rel]				IA64
 JMPE		imm16				[i:	o16 0f b8 rel]				IA64
@@ -1149,17 +1115,12 @@ RDMSR		void				[	0f 32]					PENT,PRIV
 RDPMC		void				[	0f 33]					P6
 RDTSC		void				[	0f 31]					PENT
 RDTSCP		void				[	0f 01 f9]				X86_64
-RET		void				[	c3]					8086
-RET		imm				[i:	c2 iw]					8086,SW
+RET		void				[	c3]					8086,BND
+RET		imm				[i:	c2 iw]					8086,SW,BND
 RETF		void				[	cb]					8086
 RETF		imm				[i:	ca iw]					8086,SW
-RETN		void				[	c3]					8086
-RETN		imm				[i:	c2 iw]					8086,SW
-; BND + RET
-RET		void				[	c3]					8086,MPX,BND
-RET		imm				[i:	c2 iw]					8086,SW,MPX,BND
-RETN		void				[	c3]					8086,MPX,BND
-RETN		imm				[i:	c2 iw]					8086,SW,MPX,BND
+RETN		void				[	c3]					8086,BND
+RETN		imm				[i:	c2 iw]					8086,SW,BND
 
 ROL		rm8,unity			[m-:	d0 /0]					8086
 ROL		rm8,reg_cl			[m-:	d2 /0]					8086
@@ -1518,25 +1479,15 @@ CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
 CMOVcc		reg32,reg32			[rm:	o32 0f 40+c /r]				P6
 CMOVcc		reg64,mem			[rm:	o64 0f 40+c /r]				X64,SM
 CMOVcc		reg64,reg64			[rm:	o64 0f 40+c /r]				X64
-Jcc		imm|near			[i:	odf 0f 80+c rel]			386
-Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG
-Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG
-Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X64
-Jcc		imm|short			[i:	70+c rel8]				8086,ND
-Jcc		imm				[i:	jcc8 70+c rel8]				8086,ND
-Jcc		imm				[i:	0f 80+c rel]				386,ND
-Jcc		imm				[i:	71+c jlen e9 rel]			8086,ND
-Jcc		imm				[i:	70+c rel8]				8086
-; BND + Jcc
-Jcc		imm|near			[i:	odf 0f 80+c rel]		386,MPX,BND
-Jcc		imm16|near			[i:	o16 0f 80+c rel]		386,NOLONG,MPX,BND
-Jcc		imm32|near			[i:	o32 0f 80+c rel]		386,NOLONG,MPX,BND
-Jcc		imm64|near			[i:	o64nw 0f 80+c rel]		X64,MPX,BND
-Jcc		imm|short			[i:	70+c rel8]			8086,ND,MPX,BND
-Jcc		imm				[i:	jcc8 70+c rel8]			8086,ND,MPX,BND
-Jcc		imm				[i:	0f 80+c rel]			386,ND,MPX,BND
-Jcc		imm				[i:	71+c jlen e9 rel]		8086,ND,MPX,BND
-Jcc		imm				[i:	70+c rel8]			8086,MPX,BND
+Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND
+Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,BND
+Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG,BND
+Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X64,BND
+Jcc		imm|short			[i:	70+c rel8]				8086,ND,BND
+Jcc		imm				[i:	jcc8 70+c rel8]				8086,ND,BND
+Jcc		imm				[i:	0f 80+c rel]				386,ND,BND
+Jcc		imm				[i:	71+c jlen e9 rel]			8086,ND,BND
+Jcc		imm				[i:	70+c rel8]				8086,BND
 
 SETcc		mem				[m:	0f 90+c /0]				386,SB
 SETcc		reg8				[m:	0f 90+c /0]				386

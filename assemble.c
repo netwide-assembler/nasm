@@ -361,6 +361,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     int64_t isize;
     const uint8_t *code = temp->code;
     uint8_t c = code[0];
+    bool is_byte;
 
     if (((c & ~1) != 0370) || (ins->oprs[0].type & STRICT))
         return false;
@@ -379,7 +380,14 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
         return false;
 
     isize = ins->oprs[0].offset - offset - isize; /* isize is delta */
-    return (isize >= -128 && isize <= 127); /* is it byte size? */
+    is_byte = (isize >= -128 && isize <= 127); /* is it byte size? */
+
+    if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
+        /* jmp short (opcode eb) cannot be used with bnd prefix. */
+        ins->prefixes[PPS_REP] = P_none;
+    }
+
+    return is_byte;
 }
 
 int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
@@ -683,6 +691,9 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflags_t cp,
         case MERR_BADMODE:
             error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
                   bits);
+            break;
+        case MERR_BADBND:
+            error(ERR_NONFATAL, "bnd prefix is not allowed");
             break;
         default:
             error(ERR_NONFATAL,
