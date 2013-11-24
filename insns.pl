@@ -69,7 +69,7 @@ print STDERR "Reading insns.dat...\n";
 undef $output;
 foreach $arg ( @ARGV ) {
     if ( $arg =~ /^\-/ ) {
-        if  ( $arg =~ /^\-([abdint])$/ ) {
+        if  ( $arg =~ /^\-([abdin]|f[hc])$/ ) {
             $output = $1;
         } else {
             die "$0: Unknown option: ${arg}\n";
@@ -395,8 +395,12 @@ if ( !defined($output) || $output eq 'n' ) {
     close N;
 }
 
-if ( !defined($output) || $output eq 't') {
-    write_iflags();
+if ( !defined($output) || $output eq 'fh') {
+    write_iflaggen_h();
+}
+
+if ( !defined($output) || $output eq 'fc') {
+    write_iflag_c();
 }
 
 printf STDERR "Done: %d instructions\n", $insns;

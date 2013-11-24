@@ -110,20 +110,21 @@ ndisasm$(X): $(NDISASM) $(XOBJS)
 # instruction-table file by a Perl script. They're distributed,
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
+INSDEP = insns.dat insns.pl insns-iflags.pl
 
-insns.pl: insns-iflags.pl
-
-iflag.c iflag.h: insns.dat insns.pl
-	$(PERL) $(srcdir)/insns.pl -t $(srcdir)/insns.dat
-insnsb.c: insns.dat insns.pl
+iflag.c: $(INSDEP)
+	$(PERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat
+iflaggen.h: $(INSDEP)
+	$(PERL) $(srcdir)/insns.pl -fh $(srcdir)/insns.dat
+insnsb.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
-insnsa.c: insns.dat insns.pl
+insnsa.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
-insnsd.c: insns.dat insns.pl
+insnsd.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -d $(srcdir)/insns.dat
-insnsi.h: insns.dat insns.pl
+insnsi.h: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -i $(srcdir)/insns.dat
-insnsn.c: insns.dat insns.pl
+insnsn.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -n $(srcdir)/insns.dat
 
 # These files contains all the standard macros that are derived from
@@ -193,7 +194,7 @@ PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
 	  directiv.c directiv.h \
 	  version.h version.mac version.mak version.nsh \
-	  iflag.c iflag.h
+	  iflag.c iflaggen.h
 perlreq: $(PERLREQ)
 
 # Generated manpages, also pregenerated for distribution

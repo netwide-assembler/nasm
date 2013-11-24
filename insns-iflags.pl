@@ -178,220 +178,29 @@ sub insns_flag_index(@) {
     return $insns_flag_hash{$key};
 }
 
-sub write_iflags() {
-    print STDERR "Writing iflag.h ...\n";
+sub write_iflaggen_h() {
+    print STDERR "Writing iflaggen.h ...\n";
 
-    open N, ">iflag.h";
+    open(N, ">iflaggen.h") or die "$0: $!\n";
 
     print N "/* This file is auto-generated. Don't edit. */\n";
-    print N "#ifndef NASM_IFLAG_H__\n";
-    print N "#define NASM_IFLAG_H__\n\n";
+    print N "#ifndef NASM_IFLAGGEN_H\n";
+    print N "#define NASM_IFLAGGEN_H 1\n\n";
 
-    print N "#include <inttypes.h>\n\n";
-    print N "#include <string.h>\n\n";
-
-    print N "#include \"compiler.h\"\n";
-
-    print N "extern int ilog2_32(uint32_t v);\n\n";
-
-    print N "/*\n";
-    print N " * Instruction template flags. These specify which processor\n";
-    print N " * targets the instruction is eligible for, whether it is\n";
-    print N " * privileged or undocumented, and also specify extra error\n";
-    print N " * checking on the matching of the instruction.\n";
-    print N " *\n";
-    print N " * IF_SM stands for Size Match: any operand whose size is not\n";
-    print N " * explicitly specified by the template is `really' intended to be\n";
-    print N " * the same size as the first size-specified operand.\n";
-    print N " * Non-specification is tolerated in the input instruction, but\n";
-    print N " * _wrong_ specification is not.\n";
-    print N " *\n";
-    print N " * IF_SM2 invokes Size Match on only the first _two_ operands, for\n";
-    print N " * three-operand instructions such as SHLD: it implies that the\n";
-    print N " * first two operands must match in size, but that the third is\n";
-    print N " * required to be _unspecified_.\n";
-    print N " *\n";
-    print N " * IF_SB invokes Size Byte: operands with unspecified size in the\n";
-    print N " * template are really bytes, and so no non-byte specification in\n";
-    print N " * the input instruction will be tolerated. IF_SW similarly invokes\n";
-    print N " * Size Word, and IF_SD invokes Size Doubleword.\n";
-    print N " *\n";
-    print N " * (The default state if neither IF_SM nor IF_SM2 is specified is\n";
-    print N " * that any operand with unspecified size in the template is\n";
-    print N " * required to have unspecified size in the instruction too...)\n";
-    print N " *\n";
-    print N " * iflag_t is defined to store these flags.\n";
-    print N " */\n";
     foreach my $key (sort { $insns_flag_bit{$a}[0] <=> $insns_flag_bit{$b}[0] } keys(%insns_flag_bit)) {
-        print N sprintf("#define IF_%-16s (%3d) /* %-64s */\n",
+        print N sprintf("#define IF_%-16s %3d /* %-64s */\n",
             $key, $insns_flag_bit{$key}[0], $insns_flag_bit{$key}[1]);
     }
 
     print N "\n";
-    print N "typedef struct {\n";
-    print N "    uint32_t field[4];\n";
-    print N "} iflag_t;\n\n";
+    print N sprintf("extern iflag_t insns_flags[%d];\n\n",
+		    $#insns_flag_values + 1);
 
-    print N "\n";
-    print N sprintf("extern iflag_t insns_flags[%d];\n\n", $#insns_flag_values + 1);
-
-    print N "#define IF_GENBIT(bit)          (UINT32_C(1) << (bit))\n\n";
-
-    print N "static inline unsigned int iflag_test(iflag_t *f,unsigned int bit)\n";
-    print N "{\n";
-    print N "    unsigned int index = bit / 32;\n";
-    print N "    return f->field[index] & (UINT32_C(1) << (bit - (index * 32)));\n";
-    print N "}\n\n";
-
-    print N "static inline void iflag_set(iflag_t *f, unsigned int bit)\n";
-    print N "{\n";
-    print N "    unsigned int index = bit / 32;\n";
-    print N "    f->field[index] |= (UINT32_C(1) << (bit - (index * 32)));\n";
-    print N "}\n\n";
-
-    print N "static inline void iflag_clear(iflag_t *f, unsigned int bit)\n";
-    print N "{\n";
-    print N "    unsigned int index = bit / 32;\n";
-    print N "    f->field[index] &= ~(UINT32_C(1) << (bit - (index * 32)));\n";
-    print N "}\n\n";
-
-    print N "static inline void iflag_clear_all(iflag_t *f)\n";
-    print N "{\n";
-    print N "     memset(f, 0, sizeof(*f));\n";
-    print N "}\n\n";
-
-    print N "static inline void iflag_set_all(iflag_t *f)\n";
-    print N "{\n";
-    print N "     memset(f, 0xff, sizeof(*f));\n";
-    print N "}\n\n";
-
-    print N "static inline int iflag_cmp(iflag_t *a, iflag_t *b)\n";
-    print N "{\n";
-    print N "    unsigned int i;\n";
-    print N "\n";
-    print N "    for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++) {\n";
-    print N "        if (a->field[i] < b->field[i])\n";
-    print N "            return -1;\n";
-    print N "        else if (a->field[i] > b->field[i])\n";
-    print N "            return 1;\n";
-    print N "    }\n";
-    print N "\n";
-    print N "    return 0;\n";
-    print N "}\n\n";
-
-    print N "static inline int iflag_cmp_cpu(iflag_t *a, iflag_t *b)\n";
-    print N "{\n";
-    print N "    if (a->field[3] < b->field[3])\n";
-    print N "        return -1;\n";
-    print N "    else if (a->field[3] > b->field[3])\n";
-    print N "        return 1;\n";
-    print N "    return 0;\n";
-    print N "}\n\n";
-
-    print N "static inline unsigned int iflag_ffs(iflag_t *a)\n";
-    print N "{\n";
-    print N "    unsigned int i;\n";
-    print N "\n";
-    print N "    for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++) {\n";
-    print N "        if (a->field[i])\n";
-    print N "            return ilog2_32(a->field[i]) + (i * 32);\n";
-    print N "    }\n";
-    print N "\n";
-    print N "    return 0;\n";
-    print N "}\n\n";
-
-    print N "#define IF_GEN_HELPER(name, op)                                         \\\n";
-    print N "    static inline iflag_t iflag_##name(iflag_t *a, iflag_t *b)          \\\n";
-    print N "    {                                                                   \\\n";
-    print N "        unsigned int i;                                                 \\\n";
-    print N "        iflag_t res;                                                    \\\n";
-    print N "                                                                        \\\n";
-    print N "        for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++)    \\\n";
-    print N "            res.field[i] = a->field[i] op b->field[i];                  \\\n";
-    print N "                                                                        \\\n";
-    print N "        return res;                                                     \\\n";
-    print N "    }\n";
-    print N "\n";
-    print N "IF_GEN_HELPER(xor, ^)\n";
-    print N "\n\n";
-
-    print N "/* Use this helper to test instruction template flags */\n";
-    print N "#define itemp_has(itemp, bit)   iflag_test(&insns_flags[(itemp)->iflag_idx], bit)\n\n";
-
-    print N "\n";
-    print N "/* Maximum processor level at moment */\n";
-    print N "#define IF_PLEVEL               IF_IA64\n";
-
-    print N "/* Some helpers which are to work with predefined masks */\n";
-    print N "#define IF_SMASK        \\\n";
-    print N "    (IF_GENBIT(IF_SB)  |\\\n";
-    print N "     IF_GENBIT(IF_SW)  |\\\n";
-    print N "     IF_GENBIT(IF_SD)  |\\\n";
-    print N "     IF_GENBIT(IF_SQ)  |\\\n";
-    print N "     IF_GENBIT(IF_SO)  |\\\n";
-    print N "     IF_GENBIT(IF_SY)  |\\\n";
-    print N "     IF_GENBIT(IF_SZ)  |\\\n";
-    print N "     IF_GENBIT(IF_SIZE))\n";
-    print N "#define IF_ARMASK       \\\n";
-    print N "    (IF_GENBIT(IF_AR0) |\\\n";
-    print N "     IF_GENBIT(IF_AR1) |\\\n";
-    print N "     IF_GENBIT(IF_AR2) |\\\n";
-    print N "     IF_GENBIT(IF_AR3) |\\\n";
-    print N "     IF_GENBIT(IF_AR4))\n";
-
-    print N "\n";
-    print N "#define __itemp_smask(idx)      (insns_flags[(idx)].field[0] & IF_SMASK)\n";
-    print N "#define __itemp_armask(idx)     (insns_flags[(idx)].field[0] & IF_ARMASK)\n";
-    print N "#define __itemp_arg(idx)        ((__itemp_armask(idx) >> IF_AR0) - 1)\n";
-    print N "\n";
-    print N "#define itemp_smask(itemp)      __itemp_smask((itemp)->iflag_idx)\n";
-    print N "#define itemp_arg(itemp)        __itemp_arg((itemp)->iflag_idx)\n";
-    print N "#define itemp_armask(itemp)     __itemp_armask((itemp)->iflag_idx)\n";
-
-    print N "\n";
-    print N "static inline int iflag_cmp_cpu_level(iflag_t *a, iflag_t *b)\n";
-    print N "{\n";
-    print N "    iflag_t v1 = *a;\n";
-    print N "    iflag_t v2 = *b;\n";
-    print N "\n";
-    print N "    iflag_clear(&v1, IF_CYRIX);\n";
-    print N "    iflag_clear(&v1, IF_AMD);\n";
-    print N "\n";
-    print N "    iflag_clear(&v2, IF_CYRIX);\n";
-    print N "    iflag_clear(&v2, IF_AMD);\n";
-    print N "\n";
-    print N "    if (v1.field[3] < v2.field[3])\n";
-    print N "        return -1;\n";
-    print N "    else if (v1.field[3] > v2.field[3])\n";
-    print N "        return 1;\n";
-    print N "\n";
-    print N "    return 0;\n";
-    print N "}\n";
-
-
-    print N "\n";
-    print N "static inline iflag_t __iflag_pfmask(iflag_t *a)\n";
-    print N "{\n";
-    print N "	iflag_t r = (iflag_t) {\n";
-    print N "		.field[1] = a->field[1],\n";
-    print N "		.field[2] = a->field[2],\n";
-    print N "	};\n";
-    print N "\n";
-    print N "	if (iflag_test(a, IF_CYRIX))\n";
-    print N "		iflag_set(&r, IF_CYRIX);\n";
-    print N "	if (iflag_test(a, IF_AMD))\n";
-    print N "		iflag_set(&r, IF_AMD);\n";
-    print N "\n";
-    print N "	return r;\n";
-    print N "}\n";
-
-    print N "\n";
-    print N "#define iflag_pfmask(itemp)	__iflag_pfmask(&insns_flags[(itemp)->iflag_idx])\n";
-
-    print N "\n";
-    print N "#endif /* NASM_IFLAG_H__ */\n";
+    print N "#endif /* NASM_IFLAGGEN_H */\n";
     close N;
+}
 
+sub write_iflag_c() {
     print STDERR "Writing iflag.c ...\n";
 
     open N, ">iflag.c";
