@@ -275,6 +275,9 @@ splint:
 test: nasm$(X)
 	cd test && $(PERL) performtest.pl --nasm=../nasm *.asm
 
+golden: nasm$(X)
+	cd test && $(PERL) performtest.pl --golden --nasm=../nasm *.asm
+
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,
 # it's expected to be invoked manually.
