@@ -37,10 +37,6 @@ int ilog2_32(uint32_t v);
  *
  * iflag_t is defined to store these flags.
  */
-typedef struct {
-    uint32_t field[4];
-} iflag_t;
-
 #include "iflaggen.h"
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << (bit))

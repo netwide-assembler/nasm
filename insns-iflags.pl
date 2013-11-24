@@ -135,6 +135,19 @@ my %insns_flag_bit = (
 
 my %insns_flag_hash = ();
 my @insns_flag_values = ();
+my $iflag_words;
+
+sub get_flag_words() {
+    my $max = -1;
+
+    foreach my $key (keys(%insns_flag_bit)) {
+	if (${$insns_flag_bit{$key}}[0] > $max) {
+	    $max = ${$insns_flag_bit{$key}}[0];
+	}
+    }
+
+    return int($max/32)+1;
+}
 
 sub insns_flag_index(@) {
     return undef if $_[0] eq "ignore";
@@ -143,34 +156,16 @@ sub insns_flag_index(@) {
     my $key = join("", @prekey);
 
     if (not defined($insns_flag_hash{$key})) {
-        my @newkey = ([], [], [], []);
-        my $str = "";
+        my @newkey = (0) x $iflag_words;
 
         for my $i (@prekey) {
             die "No key for $i\n" if not defined($insns_flag_bit{$i});
-            if ($insns_flag_bit{$i}[0] <       32) {
-                push @newkey[0], $insns_flag_bit{$i}[0] -  0;
-            } elsif ($insns_flag_bit{$i}[0] <  64) {
-                push @newkey[1], $insns_flag_bit{$i}[0] - 32;
-            } elsif ($insns_flag_bit{$i}[0] <  96) {
-                push @newkey[2], $insns_flag_bit{$i}[0] - 64;
-            } elsif ($insns_flag_bit{$i}[0] < 128) {
-                push @newkey[3], $insns_flag_bit{$i}[0] - 96;
-            } else {
-                die "Key value is too big ", $insns_flag_bit{$i}[0], "\n";
-            }
+	    $newkey[$insns_flag_bit{$i}[0]/32] |=
+		(1 << ($insns_flag_bit{$i}[0] % 32));
         }
 
-        for my $j (0 .. $#newkey) {
-            my $v = "";
-            if (scalar(@{$newkey[$j]})) {
-                $v = join(" | ", map { map { sprintf("(UINT32_C(1) << %d)", $_) } @$_; } $newkey[$j]);
-            } else {
-                $v = "0";
-            }
-            $str .= sprintf(".field[%d] = %s, ", $j, $v);
-        }
-
+	my $str = join(',', map { sprintf("UINT32_C(0x%08x)",$_) } @newkey);
+	
         push @insns_flag_values, $str;
         $insns_flag_hash{$key} = $#insns_flag_values;
     }
@@ -193,8 +188,12 @@ sub write_iflaggen_h() {
     }
 
     print N "\n";
-    print N sprintf("extern iflag_t insns_flags[%d];\n\n",
-		    $#insns_flag_values + 1);
+    print N "typedef struct {\n";
+    printf N "    uint32_t field[%d];\n", $iflag_words;
+    print N "} iflag_t;\n";
+
+    print N "\n";
+    printf N "extern iflag_t insns_flags[%d];\n\n", $#insns_flag_values + 1;
 
     print N "#endif /* NASM_IFLAGGEN_H */\n";
     close N;
@@ -210,10 +209,12 @@ sub write_iflag_c() {
     print N "/* Global flags referenced from instruction templates */\n";
     print N sprintf("iflag_t insns_flags[%d] = {\n", $#insns_flag_values + 1);
     foreach my $i (0 .. $#insns_flag_values) {
-        print N sprintf("    [%8d] = { %s },\n", $i, $insns_flag_values[$i]);
+        print N sprintf("    /* %4d */ {{ %s }},\n", $i, $insns_flag_values[$i]);
     }
     print N "};\n\n";
     close N;
 }
+
+$iflag_words = get_flag_words();
 
 1;
