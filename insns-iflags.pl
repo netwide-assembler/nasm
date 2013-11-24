@@ -33,15 +33,37 @@
 ## --------------------------------------------------------------------------
 
 #
-# Here we generate instrcution template flags. Note we assume that at moment
-# less than 128 bits are used for all flags. If needed it can be extended
-# arbitrary, but it'll be needed to extend arrays (they are 4 32 bit elements
-# by now).
-
+# Instruction template flags. These specify which processor
+# targets the instruction is eligible for, whether it is
+# privileged or undocumented, and also specify extra error
+# checking on the matching of the instruction.
+#
+# IF_SM stands for Size Match: any operand whose size is not
+# explicitly specified by the template is `really' intended to be
+# the same size as the first size-specified operand.
+# Non-specification is tolerated in the input instruction, but
+# _wrong_ specification is not.
+#
+# IF_SM2 invokes Size Match on only the first _two_ operands, for
+# three-operand instructions such as SHLD: it implies that the
+# first two operands must match in size, but that the third is
+# required to be _unspecified_.
+#
+# IF_SB invokes Size Byte: operands with unspecified size in the
+# template are really bytes, and so no non-byte specification in
+# the input instruction will be tolerated. IF_SW similarly invokes
+# Size Word, and IF_SD invokes Size Doubleword.
+#
+# (The default state if neither IF_SM nor IF_SM2 is specified is
+# that any operand with unspecified size in the template is
+# required to have unspecified size in the instruction too...)
+#
+# iflag_t is defined to store these flags.
 #
 # The order does matter here. We use some predefined masks to quick test
-# for a set of flags, so be carefull moving bits (and
+# for a set of flags, so be careful moving bits (and
 # don't forget to update C code generation then).
+#
 my %insns_flag_bit = (
     #
     # dword bound, index 0 - specific flags

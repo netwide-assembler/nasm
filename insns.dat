@@ -41,7 +41,7 @@
 ;
 ; For a detailed description of the code string (third field), please
 ; see insns.pl and the comment at the top of assemble.c. For a detailed
-; description of the flags (fourth field), please see insns.h.
+; description of the flags (fourth field), please see insns-iflag.pl.
 ;
 ; Comments with a pound sign after the semicolon generate section
 ; subheaders in the NASM documentation.
