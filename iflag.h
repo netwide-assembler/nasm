@@ -114,13 +114,13 @@ IF_GEN_HELPER(xor, ^)
      IF_GENBIT(IF_AR3) |\
      IF_GENBIT(IF_AR4))
 
-#define __itemp_smask(idx)      (insns_flags[(idx)].field[0] & IF_SMASK)
-#define __itemp_armask(idx)     (insns_flags[(idx)].field[0] & IF_ARMASK)
-#define __itemp_arg(idx)        ((__itemp_armask(idx) >> IF_AR0) - 1)
+#define _itemp_smask(idx)      (insns_flags[(idx)].field[0] & IF_SMASK)
+#define _itemp_armask(idx)     (insns_flags[(idx)].field[0] & IF_ARMASK)
+#define _itemp_arg(idx)        ((_itemp_armask(idx) >> IF_AR0) - 1)
 
-#define itemp_smask(itemp)      __itemp_smask((itemp)->iflag_idx)
-#define itemp_arg(itemp)        __itemp_arg((itemp)->iflag_idx)
-#define itemp_armask(itemp)     __itemp_armask((itemp)->iflag_idx)
+#define itemp_smask(itemp)      _itemp_smask((itemp)->iflag_idx)
+#define itemp_arg(itemp)        _itemp_arg((itemp)->iflag_idx)
+#define itemp_armask(itemp)     _itemp_armask((itemp)->iflag_idx)
 
 static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 {
@@ -141,7 +141,7 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
     return 0;
 }
 
-static inline iflag_t __iflag_pfmask(const iflag_t *a)
+static inline iflag_t _iflag_pfmask(const iflag_t *a)
 {
 	iflag_t r = (iflag_t) {
 		.field[1] = a->field[1],
@@ -156,6 +156,6 @@ static inline iflag_t __iflag_pfmask(const iflag_t *a)
 	return r;
 }
 
-#define iflag_pfmask(itemp)	__iflag_pfmask(&insns_flags[(itemp)->iflag_idx])
+#define iflag_pfmask(itemp)	_iflag_pfmask(&insns_flags[(itemp)->iflag_idx])
 
-#endif /* NASM_IFLAG_H__ */
+#endif /* NASM_IFLAG_H */
