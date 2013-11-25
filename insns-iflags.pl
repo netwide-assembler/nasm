@@ -215,7 +215,8 @@ sub write_iflaggen_h() {
     print N "} iflag_t;\n";
 
     print N "\n";
-    printf N "extern iflag_t insns_flags[%d];\n\n", $#insns_flag_values + 1;
+    printf N "extern const iflag_t insns_flags[%d];\n\n",
+    	$#insns_flag_values + 1;
 
     print N "#endif /* NASM_IFLAGGEN_H */\n";
     close N;
@@ -229,7 +230,8 @@ sub write_iflag_c() {
     print N "/* This file is auto-generated. Don't edit. */\n";
     print N "#include \"iflag.h\"\n\n";
     print N "/* Global flags referenced from instruction templates */\n";
-    print N sprintf("iflag_t insns_flags[%d] = {\n", $#insns_flag_values + 1);
+    printf N "const iflag_t insns_flags[%d] = {\n",
+        $#insns_flag_values + 1;
     foreach my $i (0 .. $#insns_flag_values) {
         print N sprintf("    /* %4d */ {{ %s }},\n", $i, $insns_flag_values[$i]);
     }

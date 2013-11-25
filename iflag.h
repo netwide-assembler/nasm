@@ -13,7 +13,7 @@ int ilog2_32(uint32_t v);
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << (bit))
 
-static inline unsigned int iflag_test(iflag_t *f,unsigned int bit)
+static inline unsigned int iflag_test(const iflag_t *f, unsigned int bit)
 {
     unsigned int index = bit / 32;
     return f->field[index] & (UINT32_C(1) << (bit - (index * 32)));
@@ -41,7 +41,7 @@ static inline void iflag_set_all(iflag_t *f)
      memset(f, 0xff, sizeof(*f));
 }
 
-static inline int iflag_cmp(iflag_t *a, iflag_t *b)
+static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
 {
     unsigned int i;
 
@@ -55,7 +55,7 @@ static inline int iflag_cmp(iflag_t *a, iflag_t *b)
     return 0;
 }
 
-static inline int iflag_cmp_cpu(iflag_t *a, iflag_t *b)
+static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
 {
     if (a->field[3] < b->field[3])
         return -1;
@@ -64,7 +64,7 @@ static inline int iflag_cmp_cpu(iflag_t *a, iflag_t *b)
     return 0;
 }
 
-static inline unsigned int iflag_ffs(iflag_t *a)
+static inline unsigned int iflag_ffs(const iflag_t *a)
 {
     unsigned int i;
 
@@ -77,7 +77,7 @@ static inline unsigned int iflag_ffs(iflag_t *a)
 }
 
 #define IF_GEN_HELPER(name, op)                                         \
-    static inline iflag_t iflag_##name(iflag_t *a, iflag_t *b)          \
+    static inline iflag_t iflag_##name(const iflag_t *a, const iflag_t *b) \
     {                                                                   \
         unsigned int i;                                                 \
         iflag_t res;                                                    \
@@ -122,7 +122,7 @@ IF_GEN_HELPER(xor, ^)
 #define itemp_arg(itemp)        __itemp_arg((itemp)->iflag_idx)
 #define itemp_armask(itemp)     __itemp_armask((itemp)->iflag_idx)
 
-static inline int iflag_cmp_cpu_level(iflag_t *a, iflag_t *b)
+static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 {
     iflag_t v1 = *a;
     iflag_t v2 = *b;
@@ -141,7 +141,7 @@ static inline int iflag_cmp_cpu_level(iflag_t *a, iflag_t *b)
     return 0;
 }
 
-static inline iflag_t __iflag_pfmask(iflag_t *a)
+static inline iflag_t __iflag_pfmask(const iflag_t *a)
 {
 	iflag_t r = (iflag_t) {
 		.field[1] = a->field[1],
