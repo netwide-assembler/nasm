@@ -135,6 +135,9 @@ my %insns_flag_bit = (
     #
     # dword bound, index 3 - cpu type flags
     #
+    # The CYRIX and AMD flags should have the highest bit values; the
+    # disassembler selection algorithm depends on it.
+    #
     "8086"              => [ 96, "8086"],
     "186"               => [ 97, "186+"],
     "286"               => [ 98, "286+"],
@@ -151,8 +154,8 @@ my %insns_flag_bit = (
     "SANDYBRIDGE"       => [109, "Sandy Bridge"],
     "FUTURE"            => [110, "Future processor (not yet disclosed)"],
     "IA64"              => [111, "IA64 (in x86 mode)"],
-    "CYRIX"             => [112, "Cyrix-specific"],
-    "AMD"               => [113, "AMD-specific"],
+    "CYRIX"             => [126, "Cyrix-specific"],
+    "AMD"               => [127, "AMD-specific"],
 );
 
 my %insns_flag_hash = ();

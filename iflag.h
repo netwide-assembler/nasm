@@ -43,9 +43,9 @@ static inline void iflag_set_all(iflag_t *f)
 
 static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
 {
-    unsigned int i;
+    int i;
 
-    for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++) {
+    for (i = sizeof(a->field) / sizeof(a->field[0]) - 1; i >= 0; i--) {
         if (a->field[i] < b->field[i])
             return -1;
         else if (a->field[i] > b->field[i])
