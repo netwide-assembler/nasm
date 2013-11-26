@@ -7,6 +7,63 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11} Version 2.11
+
+\b Instruction flags use bitvectors as 64-bit bitfields were doomed
+to be cramped soon. All possible bitvectors are sorted and hashed. So
+each unique bitvector occupies only one hash index.
+
+\b Add support for \c{DZ} and \c{RESZ}
+
+\b Better handling of section redefinition
+
+\b Generate manpages when running \c{'make dist'}
+
+\b Handle all token chains in mmacro params range
+
+\b Support split [base,index] effective address
+
+\c      mov eax,[eax+8,ecx*4]   ; eax=base, ecx=index, 4=scale, 8=disp
+
+\b Add support for MPX/SHA instructions
+
+\b Support \c{BND} prefix for branch instructions
+
+\b Add \c{{evex}} instruction prefix to have nasm encode the corresponding
+instruction line with EVEX
+
+\b Ndisasm supports AVX-512/MPX/SHA instructions
+
+\S{cl-2.11rc1} Version 2.11rc1
+
+\b Support for Intel AVX-512 instruction set. The document introducing these
+instrustions can be found at
+\W{http://download-software.intel.com/sites/default/files/319433-016.pdf}{intel.com}
+. Added features are as follows :
+
+\b 16 new, 512-bit SIMD registers. Total 32 \c{(ZMM0 ~ ZMM31)}
+
+\b 8 new opmask registers \c{(K0 ~ K7)}. One of 7 registers \c{(K1 ~ K7)} can
+be used as an opmask for conditional execution.
+
+\b A new EVEX encoding prefix. EVEX is based on VEX and provides more
+capabilities: opmasks, broadcasting, embedded rounding and compressed
+displacements.
+
+\c  - opmask
+\c      VDIVPD zmm0{k1}{z}, zmm1, zmm3  ; conditional vector operation
+\c                                      ; using opmask k1.
+\c                                      ; {z} is for zero-masking
+\c  - broadcasting
+\c      VDIVPS zmm4, zmm5, [rbx]{1to16} ; load single-precision float and
+\c                                      ; replicate it 16 times. 32 * 16 = 512
+\c  - embedded rounding
+\c      VCVTSI2SD xmm6, xmm7, {rz-sae}, rax ; round toward zero. note that it
+\c                                       ; is used as if a separate operand.
+\c                                       ; it comes after the last SIMD operand
+
+\b Support for section names longer than 8 bytes
+
 \S{cl-2.10.09} Version 2.10.09
 
 \b Pregenerate man pages.
