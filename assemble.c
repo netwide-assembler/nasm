@@ -1849,13 +1849,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 offset += s;
                 s = 0;
 
-                switch (ea_data.bytes) {
-                case 0:
-                    break;
-                case 1:
-                case 2:
-                case 4:
-                case 8:
+                if (ea_data.bytes) {
                     /* use compressed displacement, if available */
                     data = ea_data.disp8 ? ea_data.disp8 : opy->offset;
                     s += ea_data.bytes;
@@ -1872,21 +1866,25 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                                 insn_end - offset, opy->segment, opy->wrt);
                         }
                     } else {
-                        if (overflow_general(data, ins->addr_size >> 3) ||
+                        int asize = ins->addr_size >> 3;
+                        int atype = ea_data.bytes;
+
+                        if (overflow_general(data, asize) ||
                             signed_bits(data, ins->addr_size) !=
-                            signed_bits(data, ea_data.bytes * 8))
+                            signed_bits(data, ea_data.bytes << 3))
                             warn_overflow(ERR_PASS2, ea_data.bytes);
 
+                        if (asize > ea_data.bytes) {
+                            /*
+                             * If the address isn't the full width of
+                             * the address size, treat is as signed...
+                             */
+                            atype = -atype;
+                        }
+
                         out(offset, segment, &data, OUT_ADDRESS,
-                            -ea_data.bytes, opy->segment, opy->wrt);
+                            atype, opy->segment, opy->wrt);
                     }
-                    break;
-                default:
-                    /* Impossible! */
-                    errfunc(ERR_PANIC,
-                            "Invalid amount of bytes (%d) for offset?!",
-                            ea_data.bytes);
-                    break;
                 }
                 offset += s;
             }
