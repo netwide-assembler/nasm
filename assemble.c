@@ -173,6 +173,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include "nasm.h"
@@ -316,7 +317,8 @@ static void out(int64_t offset, int32_t segto, const void *data,
          * convert it into RAWDATA format.
          */
         uint8_t *q = p;
-
+        
+        size = abs((int)size);
         if (size > 8) {
             errfunc(ERR_PANIC, "OUT_ADDRESS with size > 8");
             return;
@@ -344,11 +346,12 @@ static void out(int64_t offset, int32_t segto, const void *data,
     outfmt->output(segto, data, type, size, segment, wrt);
 }
 
-static void out_imm8(int64_t offset, int32_t segment, struct operand *opx)
+static void out_imm8(int64_t offset, int32_t segment,
+                     struct operand *opx, int asize)
 {
     if (opx->segment != NO_SEG) {
         uint64_t data = opx->offset;
-        out(offset, segment, &data, OUT_ADDRESS, 1, opx->segment, opx->wrt);
+        out(offset, segment, &data, OUT_ADDRESS, asize, opx->segment, opx->wrt);
     } else {
         uint8_t byte = opx->offset;
         out(offset, segment, &byte, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
@@ -1399,7 +1402,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "byte value exceeds bounds");
             }
-            out_imm8(offset, segment, opx);
+            out_imm8(offset, segment, opx, -1);
             offset += 1;
             break;
 
@@ -1407,7 +1410,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             if (opx->offset < 0 || opx->offset > 255)
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "unsigned byte value exceeds bounds");
-            out_imm8(offset, segment, opx);
+            out_imm8(offset, segment, opx, 1);
             offset += 1;
             break;
 
@@ -1570,7 +1573,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 errfunc(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "signed dword immediate exceeds bounds");
             }
-            out(offset, segment, &data, OUT_ADDRESS, 4,
+            out(offset, segment, &data, OUT_ADDRESS, -4,
                 opx->segment, opx->wrt);
             offset += 4;
             break;
@@ -1865,7 +1868,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                                 ea_data.bytes, NO_SEG, NO_SEG);
                         } else {
                             /* overflow check in output/linker? */
-                            out(offset, segment, &data,        OUT_REL4ADR,
+                            out(offset, segment, &data, OUT_REL4ADR,
                                 insn_end - offset, opy->segment, opy->wrt);
                         }
                     } else {
@@ -1875,7 +1878,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                             warn_overflow(ERR_PASS2, ea_data.bytes);
 
                         out(offset, segment, &data, OUT_ADDRESS,
-                            ea_data.bytes, opy->segment, opy->wrt);
+                            -ea_data.bytes, opy->segment, opy->wrt);
                     }
                     break;
                 default:
