@@ -495,9 +495,7 @@ sub format_insn($$$$$) {
     $nd = 1 if $flags =~ /(^|\,)ND($|\,)/;
     $flags =~ s/(^|\,)ND($|\,)/\1/g;
     $flags =~ s/(^|\,)X64($|\,)/\1LONG,X86_64\2/g;
-    $flags =~ s/(^|\,)AVX512CD($|\,)/\1AVX512CD,AVX512\2/g;
-    $flags =~ s/(^|\,)AVX512ER($|\,)/\1AVX512ER,AVX512\2/g;
-    $flags =~ s/(^|\,)AVX512PF($|\,)/\1AVX512PF,AVX512\2/g;
+    $flags .= ",EVEX" if ($codes =~ /evex\./);
     $rawflags = $flags;
     $flagsindex = insns_flag_index(split(',',$flags));
 

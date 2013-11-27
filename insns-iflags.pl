@@ -120,6 +120,7 @@ my %insns_flag_bit = (
     "TBM"               => [ 60, ""],
     "RTM"               => [ 61, ""],
     "INVPCID"           => [ 62, ""],
+    "EVEX"              => [ 63, ""],
 
     #
     # dword bound, index 2 - instruction filtering flags

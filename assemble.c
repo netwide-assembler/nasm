@@ -692,6 +692,9 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
             error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
                   bits);
             break;
+        case MERR_ENCMISMATCH:
+            error(ERR_NONFATAL, "specific encoding scheme not available");
+            break;
         case MERR_BADBND:
             error(ERR_NONFATAL, "bnd prefix is not allowed");
             break;
@@ -2093,6 +2096,13 @@ static enum match_result matches(const struct itemplate *itemp,
 	return MERR_INVALOP;
 
     /*
+     * {evex} available?
+     */
+	if (instruction->prefixes[PPS_EVEX] && !itemp_has(itemp, IF_EVEX)) {
+        return MERR_ENCMISMATCH;
+    }
+
+    /*
      * Check that no spurious colons or TOs are present
      */
     for (i = 0; i < itemp->operands; i++)
@@ -2232,9 +2242,6 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 return MERR_BRNUMMISMATCH;
             }
-        } else if (instruction->prefixes[PPS_EVEX] &&
-                   !itemp_has(itemp, IF_AVX512)) {
-            return MERR_ENCMISMATCH;
         }
     }
 
