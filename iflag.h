@@ -46,10 +46,10 @@ static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
     int i;
 
     for (i = sizeof(a->field) / sizeof(a->field[0]) - 1; i >= 0; i--) {
-        if (a->field[i] < b->field[i])
-            return -1;
-        else if (a->field[i] > b->field[i])
-            return 1;
+        if (a->field[i] == b->field[i])
+            continue;
+
+        return (a->field[i] > b->field[i]) ? 1 : -1;
     }
 
     return 0;
