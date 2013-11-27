@@ -1338,7 +1338,8 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
 		    if (tmp_ins.prefixes[i])
 			nprefix++;
                 if (nprefix < best_pref ||
-		    (nprefix == best_pref && iflag_cmp(&goodness, &best) == -1)) {
+		    (nprefix == best_pref &&
+                     iflag_cmp(&goodness, &best) < 0)) {
                     /* This is the best one found so far */
                     best = goodness;
                     best_p = p;
