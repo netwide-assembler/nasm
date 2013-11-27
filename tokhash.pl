@@ -260,6 +260,7 @@ if ($output eq 'h') {
     print  "    uint16_t ix;\n";
     print  "    const struct tokendata *data;\n";
     print  "\n";
+    printf "    tv->t_flag = 0;\n";
     printf "    crc = crc64(UINT64_C(0x%08x%08x), token);\n",
 	$$sv[0], $$sv[1];
     print  "    k1 = (uint32_t)crc;\n";

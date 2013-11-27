@@ -200,7 +200,7 @@ static void process_size_override(insn *result, operand *op)
  * when two or more decorators follow a register operand,
  * consecutive decorators are parsed here.
  * opmask and zeroing decorators can be placed in any order.
- * e.g. zmm1 {k2}{z} or zmm2 {z,k3}
+ * e.g. zmm1 {k2}{z} or zmm2 {z}{k3}
  * decorator(s) are placed at the end of an operand.
  */
 static bool parse_braces(decoflags_t *decoflags)

@@ -65,6 +65,7 @@
 #endif
 
 #define IDLEN_MAX 4096
+#define DECOLEN_MAX 32
 
 /*
  * Name pollution problems: <time.h> on Digital UNIX pulls in some
@@ -421,6 +422,8 @@ extern struct preproc_ops preproc_nop;
  * identifier. E.g. a period may only appear at the start of an identifier
  * (for local labels), whereas a number may appear anywhere *but* at the
  * start.
+ * isbrcchar matches any character that may placed inside curly braces as a
+ * decorator. E.g. {rn-sae}, {1to8}, {k1}{z}
  */
 
 #define isidstart(c) (nasm_isalpha(c)   ||  \
@@ -434,6 +437,9 @@ extern struct preproc_ops preproc_nop;
                      (c) == '$'         ||  \
                      (c) == '#'         ||  \
                      (c) == '~')
+
+#define isbrcchar(c) (isidchar(c)       ||  \
+                      (c) == '-')
 
 /* Ditto for numeric constants. */
 
