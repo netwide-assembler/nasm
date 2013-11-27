@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -345,19 +345,20 @@ static void as86_out(int32_t segto, const void *data,
         as86_sect_write(s, data, size);
         as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
+        int asize = abs(size);
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"
                       " segment base references");
             } else {
                 offset = *(int64_t *)data;
-                as86_add_piece(s, 1, offset, segment, size, 0);
+                as86_add_piece(s, 1, offset, segment, asize, 0);
             }
         } else {
             p = mydata;
             WRITELONG(p, *(int64_t *)data);
-            as86_sect_write(s, data, size);
-            as86_add_piece(s, 0, 0L, 0L, size, 0);
+            as86_sect_write(s, data, asize);
+            as86_add_piece(s, 0, 0L, 0L, asize, 0);
         }
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)

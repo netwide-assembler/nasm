@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -528,6 +528,9 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     case OUT_ADDRESS:
+    {
+	int asize = abs(size);
+
         addr = *(int64_t *)data;
         if (section != NO_SEG) {
             if (section % 2) {
@@ -535,7 +538,7 @@ static void macho_output(int32_t secto, const void *data,
                       " section base references");
             } else {
 				if (wrt == NO_SEG) {
-					if (size < 8) {
+					if (asize < 8) {
 						nasm_error(ERR_NONFATAL, "Mach-O 64-bit format does not support"
 							" 32-bit absolute addresses");
 					/*
@@ -544,7 +547,7 @@ static void macho_output(int32_t secto, const void *data,
 					 making it impractical for use in intermediate object files
 					 */
 					} else {
-						addr -= add_reloc(s, section, 0, size, addr);					// X86_64_RELOC_UNSIGNED
+						addr -= add_reloc(s, section, 0, asize, addr);					// X86_64_RELOC_UNSIGNED
 					}
 				} else {
 					nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -554,9 +557,10 @@ static void macho_output(int32_t secto, const void *data,
 		}
 
         p = mydata;
-		WRITEADDR(p, addr, size);
-        sect_write(s, mydata, size);
+	WRITEADDR(p, addr, asize);
+        sect_write(s, mydata, asize);
         break;
+    }
 
     case OUT_REL2ADR:
         p = mydata;

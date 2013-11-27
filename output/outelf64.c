@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -785,6 +785,10 @@ static void elf_out(int32_t segto, const void *data,
 	break;
 
     case OUT_ADDRESS:
+    {
+        int isize = (int)size;
+        int asize = abs(size);
+
         addr = *(int64_t *)data;
         if (segment == NO_SEG) {
             /* Do nothing */
@@ -793,17 +797,23 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                switch ((int)size) {
+                switch (isize) {
                 case 1:
+                case -1:
                     elf_add_reloc(s, segment, addr, R_X86_64_8);
                     break;
                 case 2:
+                case -2:
                     elf_add_reloc(s, segment, addr, R_X86_64_16);
                     break;
                 case 4:
                     elf_add_reloc(s, segment, addr, R_X86_64_32);
                     break;
+                case -4:
+                    elf_add_reloc(s, segment, addr, R_X86_64_32S);
+                    break;
                 case 8:
+                case -8:
                     elf_add_reloc(s, segment, addr, R_X86_64_64);
                     break;
                 default:
@@ -821,7 +831,7 @@ static void elf_out(int32_t segto, const void *data,
                 elf_add_reloc(s, segment, addr, R_X86_64_GOTPC32);
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1) {
-                if (size != 8) {
+                if (asize != 8) {
                     nasm_error(ERR_NONFATAL, "ELF64 requires ..gotoff "
                           "references to be qword");
                 } else {
@@ -829,7 +839,7 @@ static void elf_out(int32_t segto, const void *data,
                     addr = 0;
                 }
             } else if (wrt == elf_got_sect + 1) {
-                switch ((int)size) {
+                switch (asize) {
                 case 4:
                     elf_add_gsym_reloc(s, segment, addr, 0,
                                        R_X86_64_GOT32, true);
@@ -845,13 +855,15 @@ static void elf_out(int32_t segto, const void *data,
                     break;
                 }
             } else if (wrt == elf_sym_sect + 1) {
-                switch ((int)size) {
+                switch (isize) {
                 case 1:
+                case -1:
                     elf_add_gsym_reloc(s, segment, addr, 0,
                                        R_X86_64_8, false);
                     addr = 0;
                     break;
                 case 2:
+                case -2:
                     elf_add_gsym_reloc(s, segment, addr, 0,
                                        R_X86_64_16, false);
                     addr = 0;
@@ -861,7 +873,13 @@ static void elf_out(int32_t segto, const void *data,
                                        R_X86_64_32, false);
                     addr = 0;
                     break;
+                case -4:
+                    elf_add_gsym_reloc(s, segment, addr, 0,
+                                       R_X86_64_32S, false);
+                    addr = 0;
+                    break;
                 case 8:
+                case -8:
                     elf_add_gsym_reloc(s, segment, addr, 0,
                                        R_X86_64_64, false);
                     addr = 0;
@@ -878,8 +896,9 @@ static void elf_out(int32_t segto, const void *data,
                       " use of WRT");
             }
         }
-        elf_sect_writeaddr(s, addr, size);
+        elf_sect_writeaddr(s, addr, asize);
 	break;
+    }
 
     case OUT_REL1ADR:
 	reltype = R_X86_64_PC8;
