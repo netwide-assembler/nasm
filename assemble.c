@@ -2232,10 +2232,6 @@ static enum match_result matches(const struct itemplate *itemp,
                  */
                 return MERR_BRNUMMISMATCH;
             }
-        } else if (is_register(instruction->oprs[i].basereg) &&
-                   nasm_regvals[instruction->oprs[i].basereg] >= 16 &&
-                   !itemp_has(itemp, IF_AVX512)) {
-            return MERR_ENCMISMATCH;
         } else if (instruction->prefixes[PPS_EVEX] &&
                    !itemp_has(itemp, IF_AVX512)) {
             return MERR_ENCMISMATCH;

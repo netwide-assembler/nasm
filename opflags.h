@@ -185,13 +185,10 @@
 #define MMXREG                  (                  REG_CLASS_RM_MMX           | REGMEM | REGISTER)      /* MMX register */
 #define RM_XMM                  (                  REG_CLASS_RM_XMM           | REGMEM)                 /* XMM (SSE) operand */
 #define XMMREG                  (                  REG_CLASS_RM_XMM           | REGMEM | REGISTER)      /* XMM (SSE) register */
-#define XMM0                    (GEN_SUBCLASS(1) | REG_CLASS_RM_XMM           | REGMEM | REGISTER)      /* XMM register zero */
 #define RM_YMM                  (                  REG_CLASS_RM_YMM           | REGMEM)                 /* YMM (AVX) operand */
 #define YMMREG                  (                  REG_CLASS_RM_YMM           | REGMEM | REGISTER)      /* YMM (AVX) register */
-#define YMM0                    (GEN_SUBCLASS(1) | REG_CLASS_RM_YMM           | REGMEM | REGISTER)      /* YMM register zero */
 #define RM_ZMM                  (                  REG_CLASS_RM_ZMM           | REGMEM)                 /* ZMM (AVX512) operand */
 #define ZMMREG                  (                  REG_CLASS_RM_ZMM           | REGMEM | REGISTER)      /* ZMM (AVX512) register */
-#define ZMM0                    (GEN_SUBCLASS(1) | REG_CLASS_RM_ZMM           | REGMEM | REGISTER)      /* ZMM register zero */
 #define RM_OPMASK               (                  REG_CLASS_OPMASK           | REGMEM)                 /* Opmask operand */
 #define OPMASKREG               (                  REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register */
 #define OPMASK0                 (GEN_SUBCLASS(1) | REG_CLASS_OPMASK           | REGMEM | REGISTER)      /* Opmask register zero (k0) */
@@ -246,7 +243,7 @@
 #define ZMEM                    (GEN_SUBCLASS(5) | MEMORY)      /* 512-bit vector SIB */
 
 /* memory which matches any type of r/m operand */
-#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM | RM_YMM | RM_ZMM | RM_OPMASK | RM_BND)
+#define MEMORY_ANY              (MEMORY | RM_GPR | RM_MMX | RM_XMM_L16 | RM_YMM_L16 | RM_ZMM_L16 | RM_OPMASK | RM_BND)
 
 /* special immediate values */
 #define UNITY                   (GEN_SUBCLASS(0) | IMMEDIATE)   /* operand equals 1 */
@@ -254,5 +251,27 @@
 #define SBYTEDWORD              (GEN_SUBCLASS(2) | IMMEDIATE)   /* operand is in the range -128..127 mod 2^32 */
 #define SDWORD                  (GEN_SUBCLASS(3) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
 #define UDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
+
+/*
+ * split vector registers - low 16 and high 16.
+ * avoid a conflict in subclass bitfield with any of special EA types.
+ */
+#define RM_XMM_L16              (GEN_SUBCLASS(6) | RM_XMM)                                              /* XMM r/m operand  0 ~ 15 */
+#define RM_XMM_H16              (                  RM_XMM)                                              /* XMM r/m operand 16 ~ 31 */
+#define XMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | XMMREG)                            /* XMM register   zero  */
+#define XMM_L16                 (                  GEN_SUBCLASS(6) | XMMREG)                            /* XMM register  0 ~ 15 */
+#define XMM_H16                 (                                    XMMREG)                            /* XMM register 16 ~ 31 */
+
+#define RM_YMM_L16              (GEN_SUBCLASS(6) | RM_YMM)                                              /* YMM r/m operand  0 ~ 15 */
+#define RM_YMM_H16              (                  RM_YMM)                                              /* YMM r/m operand 16 ~ 31 */
+#define YMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | YMMREG)                            /* YMM register   zero  */
+#define YMM_L16                 (                  GEN_SUBCLASS(6) | YMMREG)                            /* YMM register  0 ~ 15 */
+#define YMM_H16                 (                                    YMMREG)                            /* YMM register 16 ~ 31 */
+
+#define RM_ZMM_L16              (GEN_SUBCLASS(6) | RM_ZMM)                                              /* ZMM r/m operand  0 ~ 15 */
+#define RM_ZMM_H16              (                  RM_ZMM)                                              /* ZMM r/m operand 16 ~ 31 */
+#define ZMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | ZMMREG)                            /* ZMM register   zero  */
+#define ZMM_L16                 (                  GEN_SUBCLASS(6) | ZMMREG)                            /* ZMM register  0 ~ 15 */
+#define ZMM_H16                 (                                    ZMMREG)                            /* ZMM register 16 ~ 31 */
 
 #endif /* NASM_OPFLAGS_H */

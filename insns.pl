@@ -464,6 +464,11 @@ sub format_insn($$$$$) {
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^rm$/rm_gpr/;
                 $opp =~ s/^reg$/reg_gpr/;
+                # only for evex insns, high-16 regs are allowed
+                if ($codes !~ /(^|\s)evex\./) {
+                    $opp =~ s/^(rm_[xyz]mm)$/$1_l16/;
+                    $opp =~ s/^([xyz]mm)reg$/$1_l16/;
+                }
                 push(@opx, $opp, @oppx) if $opp;
             }
             $op = join('|', @opx);

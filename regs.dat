@@ -117,15 +117,18 @@ mm0-7	MMXREG		mmxreg		0
 
 # SSE registers
 xmm0	XMM0		xmmreg		0
-xmm1-31	XMMREG		xmmreg		1
+xmm1-15	XMM_L16		xmmreg		1
+xmm16-31	XMM_H16		xmmreg		16
 
 # AVX registers
 ymm0	YMM0		ymmreg		0
-ymm1-31	YMMREG		ymmreg		1
+ymm1-15	YMM_L16		ymmreg		1
+ymm16-31	YMM_H16		ymmreg		16
 
 # AVX512 registers
 zmm0	ZMM0		zmmreg		0
-zmm1-31	ZMMREG		zmmreg		1
+zmm1-15	ZMM_L16		zmmreg		1
+zmm16-31	ZMM_H16		zmmreg		16
 
 # Opmask registers
 k0	OPMASK0		opmaskreg	0
