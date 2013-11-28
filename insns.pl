@@ -495,7 +495,11 @@ sub format_insn($$$$$) {
     $nd = 1 if $flags =~ /(^|\,)ND($|\,)/;
     $flags =~ s/(^|\,)ND($|\,)/\1/g;
     $flags =~ s/(^|\,)X64($|\,)/\1LONG,X86_64\2/g;
-    $flags .= ",EVEX" if ($codes =~ /evex\./);
+    if ($codes =~ /evex\./) {
+	$flags .= ",EVEX";
+    } elsif ($codes =~ /(vex|xop)\./) {
+	$flags .= ",VEX";
+    }
     $rawflags = $flags;
     $flagsindex = insns_flag_index(split(',',$flags));
 

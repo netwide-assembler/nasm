@@ -565,6 +565,8 @@ enum prefixes { /* instruction prefixes */
     P_XRELEASE,
     P_BND,
     P_EVEX,
+    P_VEX3,
+    P_VEX2,
     PREFIX_ENUM_LIMIT
 };
 
@@ -647,7 +649,7 @@ enum prefix_pos {
     PPS_SEG,    /* Segment override prefix */
     PPS_OSIZE,  /* Operand size prefix */
     PPS_ASIZE,  /* Address size prefix */
-    PPS_EVEX,   /* EVEX prefix */
+    PPS_VEX,    /* VEX type */
     MAXPREFIX   /* Total number of prefix slots */
 };
 

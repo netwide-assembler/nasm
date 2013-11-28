@@ -643,8 +643,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                         c = 0x66;
                         break;
                     case P_EVEX:
-                        /* EVEX */
-                        break;
+                    case P_VEX3:
+                    case P_VEX2:
                     case P_none:
                         break;
                     default:
@@ -810,6 +810,8 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
             case P_A64:
             case P_O64:
             case P_EVEX:
+            case P_VEX3:
+            case P_VEX2:
             case P_none:
                 break;
             default:
@@ -1270,6 +1272,20 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
     }
 
+    switch (ins->prefixes[PPS_VEX]) {
+    case P_EVEX:
+        if (!(ins->rex & REX_EV))
+            return -1;
+        break;
+    case P_VEX3:
+    case P_VEX2:
+        if (!(ins->rex & REX_V))
+            return -1;
+        break;
+    default:
+        break;
+    }
+
     if (ins->rex & (REX_V | REX_EV)) {
         int bad32 = REX_R|REX_W|REX_X|REX_B;
 
@@ -1301,7 +1317,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
         if (ins->rex & REX_EV)
             length += 4;
-        else if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)))
+        else if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)) ||
+                 ins->prefixes[PPS_VEX] == P_VEX3)
             length += 3;
         else
             length += 2;
@@ -1600,7 +1617,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case4(0260):
         case 0270:
             codes += 2;
-            if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B))) {
+            if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)) ||
+                ins->prefixes[PPS_VEX] == P_VEX3) {
                 bytes[0] = (ins->vex_cm >> 6) ? 0x8f : 0xc4;
                 bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
@@ -2098,8 +2116,18 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * {evex} available?
      */
-	if (instruction->prefixes[PPS_EVEX] && !itemp_has(itemp, IF_EVEX)) {
-        return MERR_ENCMISMATCH;
+    switch (instruction->prefixes[PPS_VEX]) {
+    case P_EVEX:
+        if (!itemp_has(itemp, IF_EVEX))
+            return MERR_ENCMISMATCH;
+        break;
+    case P_VEX3:
+    case P_VEX2:
+        if (!itemp_has(itemp, IF_VEX))
+            return MERR_ENCMISMATCH;
+        break;
+    default:
+        break;
     }
 
     /*

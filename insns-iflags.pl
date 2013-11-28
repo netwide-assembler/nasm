@@ -120,7 +120,6 @@ my %insns_flag_bit = (
     "TBM"               => [ 60, ""],
     "RTM"               => [ 61, ""],
     "INVPCID"           => [ 62, ""],
-    "EVEX"              => [ 63, ""],
 
     #
     # dword bound, index 2 - instruction filtering flags
@@ -132,6 +131,8 @@ my %insns_flag_bit = (
     "MPX"               => [ 68	,"MPX"],
     "SHA"               => [ 69	,"SHA"],
     "PREFETCHWT1"       => [ 70	,"PREFETCHWT1"],
+    "VEX"               => [ 94, "VEX or XOP encoded instruction"],
+    "EVEX"              => [ 95, "EVEX encoded instruction"],
 
     #
     # dword bound, index 3 - cpu type flags
