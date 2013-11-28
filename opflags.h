@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -253,25 +253,19 @@
 #define UDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
 
 /*
- * split vector registers - low 16 and high 16.
- * avoid a conflict in subclass bitfield with any of special EA types.
+ * Subset of vector registers: register 0 only and registers 0-15.
+ * Avoid conflicts in subclass bitfield with any of special EA types!
  */
 #define RM_XMM_L16              (GEN_SUBCLASS(6) | RM_XMM)                                              /* XMM r/m operand  0 ~ 15 */
-#define RM_XMM_H16              (                  RM_XMM)                                              /* XMM r/m operand 16 ~ 31 */
 #define XMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | XMMREG)                            /* XMM register   zero  */
 #define XMM_L16                 (                  GEN_SUBCLASS(6) | XMMREG)                            /* XMM register  0 ~ 15 */
-#define XMM_H16                 (                                    XMMREG)                            /* XMM register 16 ~ 31 */
 
 #define RM_YMM_L16              (GEN_SUBCLASS(6) | RM_YMM)                                              /* YMM r/m operand  0 ~ 15 */
-#define RM_YMM_H16              (                  RM_YMM)                                              /* YMM r/m operand 16 ~ 31 */
 #define YMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | YMMREG)                            /* YMM register   zero  */
 #define YMM_L16                 (                  GEN_SUBCLASS(6) | YMMREG)                            /* YMM register  0 ~ 15 */
-#define YMM_H16                 (                                    YMMREG)                            /* YMM register 16 ~ 31 */
 
 #define RM_ZMM_L16              (GEN_SUBCLASS(6) | RM_ZMM)                                              /* ZMM r/m operand  0 ~ 15 */
-#define RM_ZMM_H16              (                  RM_ZMM)                                              /* ZMM r/m operand 16 ~ 31 */
 #define ZMM0                    (GEN_SUBCLASS(1) | GEN_SUBCLASS(6) | ZMMREG)                            /* ZMM register   zero  */
 #define ZMM_L16                 (                  GEN_SUBCLASS(6) | ZMMREG)                            /* ZMM register  0 ~ 15 */
-#define ZMM_H16                 (                                    ZMMREG)                            /* ZMM register 16 ~ 31 */
 
 #endif /* NASM_OPFLAGS_H */
