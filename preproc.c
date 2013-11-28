@@ -1632,19 +1632,24 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
             *params = nasm_realloc(*params, sizeof(**params) * paramsize);
         }
         skip_white_(t);
-        brace = false;
+        brace = 0;
         if (tok_is_(t, "{"))
-            brace = true;
+            brace++;
         (*params)[(*nparam)++] = t;
-        while (tok_isnt_(t, brace ? "}" : ","))
-            t = t->next;
-        if (t) {                /* got a comma/brace */
-            t = t->next;
-            if (brace) {
+        if (brace) {
+            while (brace && (t = t->next) != NULL) {
+                if (tok_is_(t, "{"))
+                    brace++;
+                else if (tok_is_(t, "}"))
+                    brace--;
+            }
+
+            if (t) {
                 /*
                  * Now we've found the closing brace, look further
                  * for the comma.
                  */
+                t = t->next;
                 skip_white_(t);
                 if (tok_isnt_(t, ",")) {
                     error(ERR_NONFATAL,
@@ -1652,9 +1657,13 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
                     while (tok_isnt_(t, ","))
                         t = t->next;
                 }
-                if (t)
-                    t = t->next;        /* eat the comma */
             }
+        } else {
+            while (tok_isnt_(t, ","))
+                t = t->next;
+        }
+        if (t) {                /* got a comma/brace */
+            t = t->next;        /* eat the comma */
         }
     }
 }
@@ -4640,13 +4649,13 @@ static int expand_mmacro(Token * tline)
     paramlen = nparam ? nasm_malloc(nparam * sizeof(*paramlen)) : NULL;
 
     for (i = 0; params[i]; i++) {
-        int brace = false;
+        int brace = 0;
         int comma = (!m->plus || i < nparam - 1);
 
         t = params[i];
         skip_white_(t);
         if (tok_is_(t, "{"))
-            t = t->next, brace = true, comma = false;
+            t = t->next, brace++, comma = false;
         params[i] = t;
         paramlen[i] = 0;
         while (t) {
@@ -4655,11 +4664,18 @@ static int expand_mmacro(Token * tline)
             if (comma && t->type == TOK_WHITESPACE
                 && tok_is_(t->next, ","))
                 break;          /* ... or a space then a comma */
-            if (brace && t->type == TOK_OTHER && !strcmp(t->text, "}"))
-                break;          /* ... or a brace */
+            if (brace && t->type == TOK_OTHER) {
+                if (t->text[0] == '{')
+                    brace++;            /* ... or a nested opening brace */
+                else if (t->text[0] == '}')
+                    if (!--brace)
+                        break;          /* ... or a brace */
+            }
             t = t->next;
             paramlen[i]++;
         }
+        if (brace)
+            error(ERR_NONFATAL, "macro params should be enclosed in braces");
     }
 
     /*
