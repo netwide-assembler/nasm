@@ -44,7 +44,7 @@ def read(options):
     return recs
 
 def commas(recs):
-    replace_tbl = {' PTR':'', '\\':'', 'MM':'', '{':'\{', '}':'\}', 'XWORD':'OWORD'}
+    replace_tbl = {' PTR':'', '\\':'', 'MM':'', 'XWORD':'OWORD'}
     reccommas = []
     for insn in recs:
         new = []
