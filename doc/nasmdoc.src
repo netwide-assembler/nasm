@@ -1462,9 +1462,10 @@ In 64-bit mode, NASM will by default generate absolute addresses.  The
 this is frequently the normally desired behaviour, see the \c{DEFAULT}
 directive (\k{default}). The keyword \i\c{ABS} overrides \i\c{REL}.
 
-A new form of split effective addres syntax is also supported. This is mainly
-intended for mib operand but can be used for any memory reference. The basic
-concept of this form is splitting base and index.
+A new form of split effective addres syntax is also supported. This is
+mainly intended for mib operands as used by MPX instructions, but can
+be used for any memory reference. The basic concept of this form is
+splitting base and index.
 
 \c      mov eax,[ebx+8,ecx*4]   ; ebx=base, ecx=index, 4=scale, 8=disp
 
