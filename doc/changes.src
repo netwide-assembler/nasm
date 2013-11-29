@@ -9,38 +9,7 @@ since 2007.
 
 \S{cl-2.11} Version 2.11
 
-\b Instruction flags use bitvectors as 64-bit bitfields were doomed
-to be cramped soon. All possible bitvectors are sorted and hashed. So
-each unique bitvector occupies only one hash index.
-
-\b Add support for \c{DZ} and \c{RESZ}
-
-\b Better handling of section redefinition
-
-\b Generate manpages when running \c{'make dist'}
-
-\b Handle all token chains in mmacro params range
-
-\b Support split [base,index] effective address
-
-\c      mov eax,[eax+8,ecx*4]   ; eax=base, ecx=index, 4=scale, 8=disp
-
-\b Add support for MPX/SHA instructions
-
-\b Support \c{BND} prefix for branch instructions
-
-\b Add \c{{evex}}, \c{{vex3}} and \c{{vex2}} instruction prefixes to
-have NASM encode the corresponding instruction, if possible, with an EVEX,
-3-byte VEX, or 2-byte VEX prefix, respectively.
-
-\b Ndisasm supports AVX-512/MPX/SHA instructions
-
-\S{cl-2.11rc1} Version 2.11rc1
-
-\b Support for Intel AVX-512 instruction set. The document introducing these
-instrustions can be found at
-\W{http://download-software.intel.com/sites/default/files/319433-016.pdf}{intel.com}
-. Added features are as follows :
+\b Add support for the Intel AVX-512 instruction set:
 
 \b 16 new, 512-bit SIMD registers. Total 32 \c{(ZMM0 ~ ZMM31)}
 
@@ -63,7 +32,30 @@ displacements.
 \c                                       ; is used as if a separate operand.
 \c                                       ; it comes after the last SIMD operand
 
-\b Support for section names longer than 8 bytes
+\b Add support for \c{ZWORD} (512 bits), \c{DZ} and \c{RESZ}.
+
+\b Add support for the MPX and SHA instruction sets.
+
+\b Better handling of section redefinition.
+
+\b Generate manpages when running \c{'make dist'}.
+
+\b Handle all token chains in mmacro params range.
+
+\b Support split [base,index] effective address:
+
+\c      mov eax,[eax+8,ecx*4]   ; eax=base, ecx=index, 4=scale, 8=disp
+
+This is expected to be most useful for the MPX instructions.
+
+\b Support \c{BND} prefix for branch instructions (for MPX).
+
+\b Add \c{{evex}}, \c{{vex3}} and \c{{vex2}} instruction prefixes to
+have NASM encode the corresponding instruction, if possible, with an EVEX,
+3-byte VEX, or 2-byte VEX prefix, respectively.
+
+
+\b Support for section names longer than 8 bytes in Win32/Win64 COFF.
 
 \S{cl-2.10.09} Version 2.10.09
 
