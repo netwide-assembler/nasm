@@ -385,6 +385,8 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
+        errfunc(ERR_WARNING | ERR_WARN_BND | ERR_PASS2 ,
+                "jmp short does not init bnd regs - bnd prefix dropped.");
     }
 
     return is_byte;

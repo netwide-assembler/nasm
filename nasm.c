@@ -166,6 +166,7 @@ static const struct warning {
     {"user", "%warning directives", true},
     {"lock", "lock prefix on unlockable instructions", true},
     {"hle", "invalid hle prefixes", true},
+    {"bnd", "invalid bnd prefixes", true},
 };
 
 static bool want_usage;
