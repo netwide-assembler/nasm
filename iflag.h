@@ -143,10 +143,9 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)
 {
-	iflag_t r = (iflag_t) {
-		.field[1] = a->field[1],
-		.field[2] = a->field[2],
-	};
+	iflag_t r;
+
+	memset(&r, 0, sizeof(r));
 
 	if (iflag_test(a, IF_CYRIX))
 		iflag_set(&r, IF_CYRIX);
