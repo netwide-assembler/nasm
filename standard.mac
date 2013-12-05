@@ -205,6 +205,19 @@
     [default %1]
 %endmacro
 
+%imacro userel 0.nolist
+    [default rel]
+%endmacro
+%imacro useabs 0.nolist
+    [default abs]
+%endmacro
+%imacro usebnd 0.nolist
+    [default bnd]
+%endmacro
+%imacro usenobnd 0.nolist
+    [default nobnd]
+%endmacro
+
 %imacro incbin 1-2+.nolist 0
     %push
         %pathsearch %$dep %1

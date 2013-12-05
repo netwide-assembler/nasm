@@ -89,6 +89,7 @@ bool tasm_compatible_mode = false;
 int pass0, passn;
 int maxbits = 0;
 int globalrel = 0;
+int globalbnd = 0;
 
 static time_t official_compile_time;
 
@@ -1525,13 +1526,19 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     stdscan_reset();
                     stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
-                    if (stdscan(NULL, &tokval) == TOKEN_SPECIAL) {
+                    if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
                         switch ((int)tokval.t_integer) {
                         case S_REL:
                             globalrel = 1;
                             break;
                         case S_ABS:
                             globalrel = 0;
+                            break;
+                        case P_BND:
+                            globalbnd = 1;
+                            break;
+                        case P_NOBND:
+                            globalbnd = 0;
                             break;
                         default:
                             err = 1;

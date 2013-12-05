@@ -196,6 +196,7 @@ enum match_result {
     MERR_BADHLE,
     MERR_ENCMISMATCH,
     MERR_BADBND,
+    MERR_BADREPNE,
     /*
      * Matching success; the conditional ones first
      */
@@ -647,6 +648,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     case P_EVEX:
                     case P_VEX3:
                     case P_VEX2:
+                    case P_NOBND:
                     case P_none:
                         break;
                     default:
@@ -699,6 +701,11 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
             break;
         case MERR_BADBND:
             error(ERR_NONFATAL, "bnd prefix is not allowed");
+            break;
+        case MERR_BADREPNE:
+            error(ERR_NONFATAL, "%s prefix is not allowed",
+                  (has_prefix(instruction, PPS_REP, P_REPNE) ?
+                   "repne" : "repnz"));
             break;
         default:
             error(ERR_NONFATAL,
@@ -814,6 +821,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
             case P_EVEX:
             case P_VEX3:
             case P_VEX2:
+            case P_NOBND:
             case P_none:
                 break;
             default:
@@ -1350,6 +1358,15 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     }
 
     bad_hle_warn(ins, hleok);
+
+    /*
+     * when BND prefix is set by DEFAULT directive,
+     * BND prefix is added to every appropriate instruction line
+     * unless it is overridden by NOBND prefix.
+     */
+    if (globalbnd &&
+        (itemp_has(temp, IF_BND) && !has_prefix(ins, PPS_REP, P_NOBND)))
+            ins->prefixes[PPS_REP] = P_BND;
 
     return length;
 }
@@ -2328,11 +2345,17 @@ static enum match_result matches(const struct itemplate *itemp,
         return MOK_JUMP;
 
     /*
-     * Check if BND prefix is allowed
+     * Check if BND prefix is allowed.
+     * Other 0xF2 (REPNE/REPNZ) prefix is prohibited.
      */
     if (!itemp_has(itemp, IF_BND) &&
-        has_prefix(instruction, PPS_REP, P_BND))
+        (has_prefix(instruction, PPS_REP, P_BND) ||
+         has_prefix(instruction, PPS_REP, P_NOBND)))
         return MERR_BADBND;
+    else if (itemp_has(itemp, IF_BND) &&
+             (has_prefix(instruction, PPS_REP, P_REPNE) ||
+              has_prefix(instruction, PPS_REP, P_REPNZ)))
+        return MERR_BADREPNE;
 
     return MOK_GOOD;
 }

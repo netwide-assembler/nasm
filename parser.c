@@ -90,6 +90,7 @@ static int prefix_slot(int prefix)
     case P_XACQUIRE:
     case P_XRELEASE:
     case P_BND:
+    case P_NOBND:
         return PPS_REP;
     case P_O16:
     case P_O32:

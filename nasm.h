@@ -564,6 +564,7 @@ enum prefixes { /* instruction prefixes */
     P_XACQUIRE,
     P_XRELEASE,
     P_BND,
+    P_NOBND,
     P_EVEX,
     P_VEX3,
     P_VEX2,
@@ -1172,6 +1173,7 @@ extern bool tasm_compatible_mode;
 extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
+extern int globalbnd;           /* default to using bnd prefix? */
 extern int maxbits;             /* max bits supported by output */
 
 /*

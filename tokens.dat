@@ -55,6 +55,7 @@ wait
 xacquire
 xrelease
 bnd
+nobnd
 
 % TOKEN_SPECIAL, 0, 0, S_*
 abs
