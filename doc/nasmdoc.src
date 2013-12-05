@@ -956,6 +956,10 @@ Enabled by default.
 prefixes.
 Enabled by default.
 
+\b \i\c{bnd} warns about ineffective use of the \c{BND} prefix when a relaxed
+form of jmp instruction becomes jmp short form.
+Enabled by default.
+
 \b \i\c{error} causes warnings to be treated as errors.  Disabled by
 default.
 
@@ -1214,7 +1218,7 @@ The instruction field may contain any machine instruction: Pentium
 and P6 instructions, FPU instructions, MMX instructions and even
 undocumented instructions are all supported. The instruction may be
 prefixed by \c{LOCK}, \c{REP}, \c{REPE}/\c{REPZ}, \c{REPNE}/\c{REPNZ},
-\c{XACQUIRE}/\c{XRELEASE} or \c{BND}, in the usual way. Explicit
+\c{XACQUIRE}/\c{XRELEASE} or \c{BND}/\c{NOBND}, in the usual way. Explicit
 \I{address-size prefixes}address-size and \i{operand-size prefixes} \i\c{A16},
 \i\c{A32}, \i\c{A64}, \i\c{O16} and \i\c{O32}, \i\c{O64} are provided - one example of their use
 is given in \k{mixsize}. You can also use the name of a \I{segment
@@ -4434,9 +4438,12 @@ specify most features directly.  However, this is occationally
 obnoxious, as the explicit form is pretty much the only one one wishes
 to use.
 
-Currently, the only \c{DEFAULT} that is settable is whether or not
-registerless instructions in 64-bit mode are \c{RIP}-relative or not.
-By default, they are absolute unless overridden with the \i\c{REL}
+Currently, \c{DEFAULT} can set \c{REL} & \c{ABS} and \c{BND} & \c{NOBND}.
+
+\S{REL & ABS} \i\c{REL} & \i\c{ABS}: RIP-relative addressing
+
+This sets whether registerless instructions in 64-bit mode are \c{RIP}-relative
+or not. By default, they are absolute unless overridden with the \i\c{REL}
 specifier (see \k{effaddr}).  However, if \c{DEFAULT REL} is
 specified, \c{REL} is default, unless overridden with the \c{ABS}
 specifier, \e{except when used with an FS or GS segment override}.
@@ -4447,6 +4454,19 @@ other special functions in 64-bit mode, and generating
 \c{RIP}-relative addresses would be extremely confusing.
 
 \c{DEFAULT REL} is disabled with \c{DEFAULT ABS}.
+
+\S{BND & NOBND} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
+
+If \c{DEFAULT BND} is set, all bnd-prefix available instructions following
+this directive are prefixed with bnd. To override it, \c{NOBND} prefix can
+be used.
+
+\c  DEFAULT BND
+\c      call foo            ; BND will be prefixed
+\c      nobnd call foo      ; BND will NOT be prefixed
+
+DEFAULT NOBND can disable DEFAULT BND and then \c{BND} prefix will be added
+only when explicitly specified in code.
 
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
 Sections}
