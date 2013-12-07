@@ -13,6 +13,8 @@ int ilog2_32(uint32_t v);
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << (bit))
 
+#define IFLAG_INIT              (iflag_t){ .field = { 0 }, }
+
 static inline unsigned int iflag_test(const iflag_t *f, unsigned int bit)
 {
     unsigned int index = bit / 32;
@@ -143,9 +145,7 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)
 {
-	iflag_t r;
-
-	memset(&r, 0, sizeof(r));
+	iflag_t r = IFLAG_INIT;
 
 	if (iflag_test(a, IF_CYRIX))
 		iflag_set(&r, IF_CYRIX);
