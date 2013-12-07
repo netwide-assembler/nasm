@@ -145,16 +145,16 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)
 {
-	iflag_t r = IFLAG_INIT;
+    iflag_t r = IFLAG_INIT;
 
-	if (iflag_test(a, IF_CYRIX))
-		iflag_set(&r, IF_CYRIX);
-	if (iflag_test(a, IF_AMD))
-		iflag_set(&r, IF_AMD);
+    if (iflag_test(a, IF_CYRIX))
+        iflag_set(&r, IF_CYRIX);
+    if (iflag_test(a, IF_AMD))
+        iflag_set(&r, IF_AMD);
 
-	return r;
+    return r;
 }
 
-#define iflag_pfmask(itemp)	_iflag_pfmask(&insns_flags[(itemp)->iflag_idx])
+#define iflag_pfmask(itemp)     _iflag_pfmask(&insns_flags[(itemp)->iflag_idx])
 
 #endif /* NASM_IFLAG_H */
