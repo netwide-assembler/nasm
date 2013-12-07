@@ -192,7 +192,7 @@ sub insns_flag_index(@) {
         }
 
 	my $str = join(',', map { sprintf("UINT32_C(0x%08x)",$_) } @newkey);
-	
+
         push @insns_flag_values, $str;
         $insns_flag_hash{$key} = $#insns_flag_values;
     }
@@ -221,7 +221,7 @@ sub write_iflaggen_h() {
 
     print N "\n";
     printf N "extern const iflag_t insns_flags[%d];\n\n",
-    	$#insns_flag_values + 1;
+	$#insns_flag_values + 1;
 
     print N "#endif /* NASM_IFLAGGEN_H */\n";
     close N;
