@@ -42,7 +42,7 @@ rm -rf nasm/.git nasm/.gitignore
 cd nasm
 ./autogen.sh
 ./configure --prefix=/usr/local
-make perlreq spec
+make perlreq spec manpages
 make alldeps
 make distclean
 cd ..
