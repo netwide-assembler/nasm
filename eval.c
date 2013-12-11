@@ -148,8 +148,11 @@ static expr *add_vectors(expr * p, expr * q)
             lasttype = p++->type;
         } else {                /* *p and *q have same type */
             int64_t sum = p->value + q->value;
-            if (sum)
+            if (sum) {
                 addtotemp(p->type, sum);
+                if (hint)
+                    hint->type = EAH_SUMMED;
+            }
             lasttype = p->type;
             p++, q++;
         }

@@ -584,13 +584,15 @@ enum ea_flags { /* special EA flags */
     EAF_TIMESTWO    =  4,   /* really do EAX*2 not EAX+EAX */
     EAF_REL         =  8,   /* IP-relative addressing */
     EAF_ABS         = 16,   /* non-IP-relative addressing */
-    EAF_FSGS        = 32    /* fs/gs segment override present */
+    EAF_FSGS        = 32,   /* fs/gs segment override present */
+    EAF_MIB         = 64,   /* mib operand */
 };
 
 enum eval_hint { /* values for `hinttype' */
     EAH_NOHINT   = 0,       /* no hint at all - our discretion */
     EAH_MAKEBASE = 1,       /* try to make given reg the base */
-    EAH_NOTBASE  = 2        /* try _not_ to make reg the base */
+    EAH_NOTBASE  = 2,       /* try _not_ to make reg the base */
+    EAH_SUMMED   = 3,       /* base and index are summed into index */
 };
 
 typedef struct operand { /* operand to an instruction */

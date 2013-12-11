@@ -1231,27 +1231,18 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     }
                 }
 
-                /*
-                 * if a separate form of MIB (ICC style) is used,
-                 * the index reg info is merged into mem operand
-                 */
-                if (mib_index != R_none) {
-                    opy->indexreg = mib_index;
-                    opy->scale = 1;
-                    opy->hintbase = mib_index;
-                    opy->hinttype = EAH_NOTBASE;
-                }
-
-                /*
-                 * only for mib operands, make a single reg index [reg*1].
-                 * gas uses this form to explicitly denote index register.
-                 */
-                if (itemp_has(temp, IF_MIB) &&
-                    (opy->indexreg == -1 && opy->hintbase == opy->basereg &&
-                     opy->hinttype == EAH_NOTBASE)) {
-                    opy->indexreg = opy->basereg;
-                    opy->basereg  = -1;
-                    opy->scale    = 1;
+                if (itemp_has(temp, IF_MIB)) {
+                    opy->eaflags |= EAF_MIB;
+                    /*
+                     * if a separate form of MIB (ICC style) is used,
+                     * the index reg info is merged into mem operand
+                     */
+                    if (mib_index != R_none) {
+                        opy->indexreg = mib_index;
+                        opy->scale = 1;
+                        opy->hintbase = mib_index;
+                        opy->hinttype = EAH_NOTBASE;
+                    }
                 }
 
                 if (process_ea(opy, &ea_data, bits,
@@ -2379,6 +2370,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
     int addrbits = ins->addr_size;
+    int eaflags = input->eaflags;
 
     output->type    = EA_SCALAR;
     output->rip     = false;
@@ -2434,8 +2426,8 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 input->type |= MEMORY;
             }
 
-            if (input->eaflags & EAF_BYTEOFFS ||
-                (input->eaflags & EAF_WORDOFFS &&
+            if (eaflags & EAF_BYTEOFFS ||
+                (eaflags & EAF_WORDOFFS &&
                  input->disp_size != (addrbits != 16 ? 32 : 16))) {
                 nasm_error(ERR_WARNING | ERR_PASS1, "displacement size ignored on absolute address");
             }
@@ -2556,7 +2548,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     base = (bt & 7);
                     if (base != REG_NUM_EBP && o == 0 &&
                         seg == NO_SEG && !forw_ref &&
-                        !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
+                        !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                         mod = 0;
                     else if (IS_MOD_01())
                         mod = 1;
@@ -2611,19 +2603,40 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     t = bt, bt = it, it = t;
                     x = bx, bx = ix, ix = x;
                 }
-                if (bt == it)     /* convert EAX+2*EAX to 3*EAX */
-                    bt = -1, bx = 0, s++;
+
                 if (bt == -1 && s == 1 && !(hb == i && ht == EAH_NOTBASE)) {
                     /* make single reg base, unless hint */
                     bt = it, bx = ix, it = -1, ix = 0;
                 }
-                if (((s == 2 && it != REG_NUM_ESP && !(input->eaflags & EAF_TIMESTWO)) ||
-                      s == 3 || s == 5 || s == 9) && bt == -1)
-                    bt = it, bx = ix, s--; /* convert 3*EAX to EAX+2*EAX */
-                if (it == -1 && (bt & 7) != REG_NUM_ESP &&
-                    (input->eaflags & EAF_TIMESTWO))
-                    it = bt, ix = bx, bt = -1, bx = 0, s = 1;
-                /* convert [NOSPLIT EAX] to sib format with 0x0 displacement */
+                if (eaflags & EAF_MIB) {
+                    /* only for mib operands */
+                    if (it == -1 && (hb == b && ht == EAH_NOTBASE)) {
+                        /*
+                         * make a single reg index [reg*1].
+                         * gas uses this form for an explicit index register.
+                         */
+                        it = bt, ix = bx, bt = -1, bx = 0, s = 1;
+                    }
+                    if ((ht == EAH_SUMMED) && bt == -1) {
+                        /* separate once summed index into [base, index] */
+                        bt = it, bx = ix, s--;
+                    }
+                } else {
+                    if (((s == 2 && it != REG_NUM_ESP &&
+                          !(eaflags & EAF_TIMESTWO)) ||
+                         s == 3 || s == 5 || s == 9) && bt == -1) {
+                        /* convert 3*EAX to EAX+2*EAX */
+                        bt = it, bx = ix, s--;
+                    }
+                    if (it == -1 && (bt & 7) != REG_NUM_ESP &&
+                        (eaflags & EAF_TIMESTWO)) {
+                        /*
+                         * convert [NOSPLIT EAX]
+                         * to sib format with 0x0 displacement - [EAX*1+0].
+                         */
+                        it = bt, ix = bx, bt = -1, bx = 0, s = 1;
+                    }
+                }
                 if (s == 1 && it == REG_NUM_ESP) {
                     /* swap ESP into base if scale is 1 */
                     t = it, it = bt, bt = t;
@@ -2647,7 +2660,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                         rm = (bt & 7);
                         if (rm != REG_NUM_EBP && o == 0 &&
                             seg == NO_SEG && !forw_ref &&
-                            !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
+                            !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
                         else if (IS_MOD_01())
                             mod = 1;
@@ -2691,7 +2704,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                         base = (bt & 7);
                         if (base != REG_NUM_EBP && o == 0 &&
                             seg == NO_SEG && !forw_ref &&
-                            !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
+                            !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                             mod = 0;
                         else if (IS_MOD_01())
                             mod = 1;
@@ -2776,7 +2789,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     goto err;        /* so panic if it does */
 
                 if (o == 0 && seg == NO_SEG && !forw_ref && rm != 6 &&
-                    !(input->eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
+                    !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
                     mod = 0;
                 else if (IS_MOD_01())
                     mod = 1;
