@@ -751,8 +751,8 @@ LLDT		reg16				[m:	0f 00 /2]				286,PROT,PRIV
 LMSW		mem				[m:	0f 01 /6]				286,PRIV
 LMSW		mem16				[m:	0f 01 /6]				286,PRIV
 LMSW		reg16				[m:	0f 01 /6]				286,PRIV
-LOADALL		void				[	0f 07]					386,UNDOC
-LOADALL286	void				[	0f 05]					286,UNDOC
+LOADALL		void				[	0f 07]					386,UNDOC,ND
+LOADALL286	void				[	0f 05]					286,UNDOC,ND
 LODSB		void				[	ac]					8086
 LODSD		void				[	o32 ad]					386
 LODSQ		void				[	o64 ad]					X64
