@@ -2635,9 +2635,10 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                         bt = it, bx = ix, s--;
                     }
                     if (it == -1 && (bt & 7) != REG_NUM_ESP &&
-                        (eaflags & EAF_TIMESTWO)) {
+                        (eaflags & EAF_TIMESTWO) &&
+                        (hb == b && ht == EAH_NOTBASE)) {
                         /*
-                         * convert [NOSPLIT EAX]
+                         * convert [NOSPLIT EAX*1]
                          * to sib format with 0x0 displacement - [EAX*1+0].
                          */
                         it = bt, ix = bx, bt = -1, bx = 0, s = 1;
