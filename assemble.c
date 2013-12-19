@@ -2426,6 +2426,12 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 input->type |= MEMORY;
             }
 
+            if (bits == 64 &&
+                !(IP_REL & ~input->type) && (eaflags & EAF_MIB)) {
+                nasm_error(ERR_NONFATAL, "RIP-relative addressing is prohibited for mib.");
+                return -1;
+            }
+
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
                  input->disp_size != (addrbits != 16 ? 32 : 16))) {
