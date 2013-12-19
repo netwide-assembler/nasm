@@ -4100,26 +4100,28 @@ VSCATTERPF1QPS  zmem32|mask  [m:t1s:    vsibz evex.512.66.0f38.w0 c7 /6 ]  AVX51
 PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  PREFETCHWT1,FUTURE
 
 ; MPX instructions
-BNDMK       bndreg,mem32           [rm:     o32 f3 0f 1b /r ]  MPX,SD,FUTURE
-BNDMK       bndreg,mem64           [rm:   o64nw f3 0f 1b /r ]  MPX,SQ,FUTURE
-BNDCL       bndreg,rm32            [rm:     o32 f3 0f 1a /r ]  MPX,SD,FUTURE
-BNDCL       bndreg,rm64            [rm:   o64nw f3 0f 1a /r ]  MPX,SQ,FUTURE
-BNDCU       bndreg,rm32            [rm:     o32 f2 0f 1a /r ]  MPX,SD,FUTURE
-BNDCU       bndreg,rm64            [rm:   o64nw f2 0f 1a /r ]  MPX,SQ,FUTURE
-BNDCN       bndreg,rm32            [rm:     o32 f2 0f 1b /r ]  MPX,SD,FUTURE
-BNDCN       bndreg,rm64            [rm:   o64nw f2 0f 1b /r ]  MPX,SQ,FUTURE
-BNDMOV      bndreg,bndrm64         [rm:         66 0f 1a /r ]  MPX,SQ,FUTURE
-BNDMOV      bndreg,bndrm128        [rm:         66 0f 1a /r ]  MPX,SO,FUTURE
-BNDMOV      bndrm64,bndreg         [mr:         66 0f 1b /r ]  MPX,SQ,FUTURE
-BNDMOV      bndrm128,bndreg        [mr:         66 0f 1b /r ]  MPX,SO,FUTURE
-BNDLDX      bndreg,mem128          [rm:            0f 1a /r ]  MPX,MIB,FUTURE
-BNDLDX      bndreg,mem128,reg64    [rmx:           0f 1a /r ]  MPX,MIB,FUTURE
-BNDSTX      mem64,bndreg           [mr:            0f 1b /r ]  MPX,MIB,SQ,FUTURE
-BNDSTX      mem64,reg32,bndreg     [mxr:           0f 1b /r ]  MPX,MIB,FUTURE
-BNDSTX      mem64,bndreg,reg32     [mrx:           0f 1b /r ]  MPX,MIB,FUTURE
-BNDSTX      mem128,bndreg          [mr:            0f 1b /r ]  MPX,MIB,SO,FUTURE
-BNDSTX      mem128,reg64,bndreg    [mxr:           0f 1b /r ]  MPX,MIB,FUTURE
-BNDSTX      mem128,bndreg,reg64    [mrx:           0f 1b /r ]  MPX,MIB,FUTURE
+BNDMK       bndreg,mem             [rm:         f3 0f 1b /r ]  MPX,MIB,FUTURE
+BNDCL       bndreg,mem             [rm:         f3 0f 1a /r ]  MPX,FUTURE
+BNDCL       bndreg,reg32           [rm:         f3 0f 1a /r ]  MPX,NOLONG,FUTURE
+BNDCL       bndreg,reg64           [rm:   o64nw f3 0f 1a /r ]  MPX,LONG,FUTURE
+BNDCU       bndreg,mem             [rm:         f2 0f 1a /r ]  MPX,FUTURE
+BNDCU       bndreg,reg32           [rm:         f2 0f 1a /r ]  MPX,NOLONG,FUTURE
+BNDCU       bndreg,reg64           [rm:   o64nw f2 0f 1a /r ]  MPX,LONG,FUTURE
+BNDCN       bndreg,mem             [rm:         f2 0f 1b /r ]  MPX,FUTURE
+BNDCN       bndreg,reg32           [rm:         f2 0f 1b /r ]  MPX,NOLONG,FUTURE
+BNDCN       bndreg,reg64           [rm:   o64nw f2 0f 1b /r ]  MPX,LONG,FUTURE
+BNDMOV      bndreg,bndreg          [rm:         66 0f 1a /r ]  MPX,FUTURE
+BNDMOV      bndreg,mem             [rm:         66 0f 1a /r ]  MPX,FUTURE
+BNDMOV      bndreg,bndreg          [mr:         66 0f 1b /r ]  MPX,FUTURE
+BNDMOV      mem,bndreg             [mr:         66 0f 1b /r ]  MPX,FUTURE
+BNDLDX      bndreg,mem             [rm:            0f 1a /r ]  MPX,MIB,FUTURE
+BNDLDX      bndreg,mem,reg32       [rmx:           0f 1a /r ]  MPX,MIB,NOLONG,FUTURE
+BNDLDX      bndreg,mem,reg64       [rmx:           0f 1a /r ]  MPX,MIB,LONG,FUTURE
+BNDSTX      mem,bndreg             [mr:            0f 1b /r ]  MPX,MIB,FUTURE
+BNDSTX      mem,reg32,bndreg       [mxr:           0f 1b /r ]  MPX,MIB,NOLONG,FUTURE
+BNDSTX      mem,reg64,bndreg       [mxr:           0f 1b /r ]  MPX,MIB,LONG,FUTURE
+BNDSTX      mem,bndreg,reg32       [mrx:           0f 1b /r ]  MPX,MIB,NOLONG,FUTURE
+BNDSTX      mem,bndreg,reg64       [mrx:           0f 1b /r ]  MPX,MIB,LONG,FUTURE
 
 ; SHA instructions
 SHA1RNDS4   xmmreg,xmmrm128,imm8    [rmi:    0f 3a cc /r ib ]    SHA,FUTURE

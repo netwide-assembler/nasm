@@ -74,6 +74,7 @@ BITS 32
 	bndldx bnd2, [ecx*1]
 	bndldx bnd3, [edx+0x399]
 	bndldx bnd2, [1*ebx+3]
+	bndldx bnd2, [3], ebx
 	bndldx bnd1, [edx]
 
 	; bnd
