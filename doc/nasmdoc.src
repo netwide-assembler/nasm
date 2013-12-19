@@ -1460,6 +1460,8 @@ fact, it will also split \c{[eax*2+offset]} into
 \c{[eax+eax+offset]}. You can combat this behaviour by the use of
 the \c{NOSPLIT} keyword: \c{[nosplit eax*2]} will force
 \c{[eax*2+0]} to be generated literally.
+However, \c{NOSPLIT} in \c{[nosplit eax+eax]} will be ignored because user's
+intention here is considered as \c{[eax+eax]}.
 
 In 64-bit mode, NASM will by default generate absolute addresses.  The
 \i\c{REL} keyword makes it produce \c{RIP}-relative addresses. Since
@@ -4465,8 +4467,8 @@ be used.
 \c      call foo            ; BND will be prefixed
 \c      nobnd call foo      ; BND will NOT be prefixed
 
-DEFAULT NOBND can disable DEFAULT BND and then \c{BND} prefix will be added
-only when explicitly specified in code.
+\c{DEFAULT NOBND} can disable \c{DEFAULT BND} and then \c{BND} prefix will be
+added only when explicitly specified in code.
 
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
 Sections}

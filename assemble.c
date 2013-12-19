@@ -2629,7 +2629,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     }
                 } else {
                     if (((s == 2 && it != REG_NUM_ESP &&
-                          !(eaflags & EAF_TIMESTWO)) ||
+                          (!(eaflags & EAF_TIMESTWO) || (ht == EAH_SUMMED))) ||
                          s == 3 || s == 5 || s == 9) && bt == -1) {
                         /* convert 3*EAX to EAX+2*EAX */
                         bt = it, bx = ix, s--;
