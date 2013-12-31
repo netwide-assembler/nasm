@@ -50,6 +50,11 @@ This is expected to be most useful for the MPX instructions.
 
 \b Support \c{BND} prefix for branch instructions (for MPX).
 
+\b The \c{DEFAULT} directive can now take \c{BND} and \c{NOBND}
+options to indicate whether all relevant branches should be getting
+\c{BND} prefixes.  This is expected to be the normal for use in MPX
+code.
+
 \b Add \c{{evex}}, \c{{vex3}} and \c{{vex2}} instruction prefixes to
 have NASM encode the corresponding instruction, if possible, with an EVEX,
 3-byte VEX, or 2-byte VEX prefix, respectively.

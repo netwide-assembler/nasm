@@ -4471,6 +4471,9 @@ be used.
 \c{DEFAULT NOBND} can disable \c{DEFAULT BND} and then \c{BND} prefix will be
 added only when explicitly specified in code.
 
+\c{DEFAULT BND} is expected to be the normal configuration for writing
+MPX-enabled code.
+
 \H{section} \i\c{SECTION} or \i\c{SEGMENT}: Changing and \i{Defining
 Sections}
 
