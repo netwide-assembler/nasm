@@ -54,8 +54,14 @@ This is expected to be most useful for the MPX instructions.
 have NASM encode the corresponding instruction, if possible, with an EVEX,
 3-byte VEX, or 2-byte VEX prefix, respectively.
 
-
 \b Support for section names longer than 8 bytes in Win32/Win64 COFF.
+
+\b The \c{NOSPLIT} directive by itself no longer forces a single
+register to become an index register, unless it has an explicit
+multiplier.
+
+\c      mov eax,[nosplit eax]       ; eax as base register
+\c      mov eax,[nosplit eax*1]     ; eax as index register
 
 \S{cl-2.10.09} Version 2.10.09
 
