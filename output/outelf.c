@@ -76,7 +76,7 @@ void section_attrib(char *name, char *attr, int pass,
         return;
 
     while ((opt = nasm_opt_val(opt, &val, &next))) {
-        if (!nasm_stricmp(opt, "align")) {
+        if (!nasm_stricmp(opt, "align") && val) {
             *align = atoi(val);
             if (*align == 0) {
                 *align = SHA_ANY;
