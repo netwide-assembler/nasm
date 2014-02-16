@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2014 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -1919,7 +1919,9 @@ LZCNT		reg64,rm64			[rm:	o64 f3i 0f bd /r]			X64,AMD
 BLENDPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0d /r ib,u]			SSE41
 BLENDPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0c /r ib,u]			SSE41
 BLENDVPD	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 15 /r]				SSE41
+BLENDVPD	xmmreg,xmmrm			[rm:	66 0f 38 15 /r]				SSE41
 BLENDVPS	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 14 /r]				SSE41
+BLENDVPS	xmmreg,xmmrm			[rm:	66 0f 38 14 /r]				SSE41
 DPPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 41 /r ib,u]			SSE41
 DPPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
 EXTRACTPS	rm32,xmmreg,imm			[mri:	66 0f 3a 17 /r ib,u]			SSE41
@@ -1929,6 +1931,7 @@ MOVNTDQA	xmmreg,mem128			[rm:	66 0f 38 2a /r]				SSE41
 MPSADBW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
 PACKUSDW	xmmreg,xmmrm			[rm:	66 0f 38 2b /r]				SSE41
 PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 10 /r]				SSE41
+PBLENDVB	xmmreg,xmmrm			[rm:	66 0f 38 10 /r]				SSE41
 PBLENDW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0e /r ib,u]			SSE41
 PCMPEQQ		xmmreg,xmmrm			[rm:	66 0f 38 29 /r]				SSE41
 PEXTRB		reg32,xmmreg,imm		[mri:	66 0f 3a 14 /r ib,u]			SSE41
@@ -4129,6 +4132,7 @@ SHA1NEXTE   xmmreg,xmmrm128         [rm:        0f 38 c8 /r ]    SHA,FUTURE
 SHA1MSG1    xmmreg,xmmrm128         [rm:        0f 38 c9 /r ]    SHA,FUTURE
 SHA1MSG2    xmmreg,xmmrm128         [rm:        0f 38 ca /r ]    SHA,FUTURE
 SHA256RNDS2 xmmreg,xmmrm128,xmm0    [rm-:       0f 38 cb /r ]    SHA,FUTURE
+SHA256RNDS2 xmmreg,xmmrm128         [rm:        0f 38 cb /r ]    SHA,FUTURE
 SHA256MSG1  xmmreg,xmmrm128         [rm:        0f 38 cc /r ]    SHA,FUTURE
 SHA256MSG2  xmmreg,xmmrm128         [rm:        0f 38 cd /r ]    SHA,FUTURE
 
