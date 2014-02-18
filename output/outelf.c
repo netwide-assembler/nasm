@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -76,15 +76,20 @@ void section_attrib(char *name, char *attr, int pass,
         return;
 
     while ((opt = nasm_opt_val(opt, &val, &next))) {
-        if (!nasm_stricmp(opt, "align") && val) {
-            *align = atoi(val);
-            if (*align == 0) {
-                *align = SHA_ANY;
-            } else if (!is_power2(*align)) {
+        if (!nasm_stricmp(opt, "align")) {
+            if (!val) {
                 nasm_error(ERR_NONFATAL,
-                           "section alignment %"PRId64" is not a power of two",
-                           *align);
-                *align = SHA_ANY;
+                           "section align without value specified");
+            } else {
+                *align = atoi(val);
+                if (*align == 0) {
+                    *align = SHA_ANY;
+                } else if (!is_power2(*align)) {
+                    nasm_error(ERR_NONFATAL,
+                               "section alignment %"PRId64" is not a power of two",
+                               *align);
+                    *align = SHA_ANY;
+                }
             }
         } else if (!nasm_stricmp(opt, "alloc")) {
             *flags_and  |= SHF_ALLOC;
