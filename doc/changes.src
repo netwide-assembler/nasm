@@ -7,6 +7,19 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.01} Version 2.11.01
+
+\b Allow instructions which implicitly uses \c{XMM0} (\c{VBLENDVPD},
+\c{VBLENDVPS}, \c{PBLENDVB} and \c{SHA256RNDS2}) to be specified
+without an explicit \c{xmm0} on the assembly line.  In other words,
+the following two lines produce the same output:
+
+\c      vblendvpd xmm2,xmm1,xmm0      ; Last operand is fixed xmm0
+\c      vblendvpd xmm2,xmm1           ; Implicit xmm0 omitted
+
+\b In the ELF backends, don't crash the assembler if \c{section align}
+is specified without a value.
+
 \S{cl-2.11} Version 2.11
 
 \b Add support for the Intel AVX-512 instruction set:
