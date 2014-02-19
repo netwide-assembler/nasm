@@ -4142,6 +4142,9 @@ SHA256RNDS2 xmmreg,xmmrm128         [rm:        0f 38 cb /r ]    SHA,FUTURE
 SHA256MSG1  xmmreg,xmmrm128         [rm:        0f 38 cc /r ]    SHA,FUTURE
 SHA256MSG2  xmmreg,xmmrm128         [rm:        0f 38 cd /r ]    SHA,FUTURE
 
+; New memory instructions
+CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC

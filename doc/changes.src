@@ -11,6 +11,8 @@ since 2007.
 
 \b Add the \c{XSAVEC}, \c{XSAVES} and \c{XRSTORS} family instructions.
 
+\b Add the \c{CLFLUSHOPT} instruction.
+
 \S{cl-2.11.01} Version 2.11.01
 
 \b Allow instructions which implicitly uses \c{XMM0} (\c{VBLENDVPD},
