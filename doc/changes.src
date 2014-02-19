@@ -7,6 +7,10 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.02} Version 2.11.02
+
+\b Add the \c{XSAVEC}, \c{XSAVES} and \c{XRSTORS} family instructions.
+
 \S{cl-2.11.01} Version 2.11.01
 
 \b Allow instructions which implicitly uses \c{XMM0} (\c{VBLENDVPD},

@@ -1586,10 +1586,16 @@ XGETBV		void				[	0f 01 d0]				NEHALEM
 XSETBV		void				[	0f 01 d1]				NEHALEM,PRIV
 XSAVE		mem				[m:	np 0f ae /4]				NEHALEM
 XSAVE64		mem				[m:	o64 np 0f ae /4]			LONG,NEHALEM
+XSAVEC		mem				[m:	np 0f c7 /4]				FUTURE
+XSAVEC64	mem				[m:	o64 np 0f c7 /4]			LONG,FUTURE
 XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE
 XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE
+XSAVES		mem				[m:	np 0f c7 /5]				FUTURE
+XSAVES64	mem				[m:	o64 np 0f c7 /5]			LONG,FUTURE
 XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM
 XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
+XRSTORS		mem				[m:	np 0f c7 /3]				FUTURE
+XRSTORS64	mem				[m:	o64 np 0f c7 /3]			LONG,FUTURE
 
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
