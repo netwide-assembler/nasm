@@ -1366,9 +1366,8 @@ static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, 
 {
     if (bits == 64) {
         if ((ins->rex & REX_REAL) && !(ins->rex & (REX_V | REX_EV))) {
-            ins->rex = (ins->rex & REX_REAL) | REX_P;
-            out(offset, segment, &ins->rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            ins->rex = 0;
+            int rex = (ins->rex & REX_REAL) | REX_P;
+            out(offset, segment, &rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             return 1;
         }
     }
