@@ -726,7 +726,9 @@ static int matches(const struct itemplate *t, uint8_t *data,
         {
             uint8_t evexm   = *r++;
             uint8_t evexwlp = *r++;
+            uint8_t modrm, valid_mask;
             ins->evex_tuple = *r++ - 0300;
+            modrm = *(origdata + 1);
 
             ins->rex |= REX_EV;
             if ((prefix->rex & (REX_EV|REX_V|REX_P)) != REX_EV)
@@ -752,9 +754,15 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 break;
             }
 
-            /* If EVEX.b is set, EVEX.L'L can be rounding control bits */
-            if ((evexwlp ^ prefix->vex_lp) &
-                ((prefix->evex[2] & EVEX_P2B) ? 0x03 : 0x0f))
+            /* If EVEX.b is set with reg-reg op,
+             * EVEX.L'L contains embedded rounding control info
+             */
+            if ((prefix->evex[2] & EVEX_P2B) && ((modrm >> 6) == 3)) {
+                valid_mask = 0x3;   /* prefix only */
+            } else {
+                valid_mask = 0xf;   /* vector length and prefix */
+            }
+            if ((evexwlp ^ prefix->vex_lp) & valid_mask)
                 return false;
 
             if (c == 0250) {
