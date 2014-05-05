@@ -1997,9 +1997,6 @@ static int op_evexflags(const operand * o, int mask, uint8_t byte)
 {
     int val;
 
-    if (!is_register(o->basereg))
-        errfunc(ERR_PANIC, "invalid operand passed to op_evexflags()");
-
     val = nasm_regvals[o->basereg];
 
     return evexflags(val, o->decoflags, mask, byte);
