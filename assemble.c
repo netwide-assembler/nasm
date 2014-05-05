@@ -1323,7 +1323,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 3;
         else
             length += 2;
-    } else if (ins->rex & REX_REAL) {
+    } else if (ins->rex & REX_MASK) {
         if (ins->rex & REX_H) {
             errfunc(ERR_NONFATAL, "cannot use high register in rex instruction");
             return -1;
@@ -1365,8 +1365,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, int bits)
 {
     if (bits == 64) {
-        if ((ins->rex & REX_REAL) && !(ins->rex & (REX_V | REX_EV))) {
-            int rex = (ins->rex & REX_REAL) | REX_P;
+        if ((ins->rex & REX_MASK) && !(ins->rex & (REX_V | REX_EV))) {
+            int rex = (ins->rex & REX_MASK) | REX_P;
             out(offset, segment, &rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             return 1;
         }

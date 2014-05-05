@@ -500,7 +500,7 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 /*
  * REX flags
  */
-#define REX_REAL    0x4f    /* Actual REX prefix bits */
+#define REX_MASK    0x4f    /* Actual REX prefix bits */
 #define REX_B       0x01    /* ModRM r/m extension */
 #define REX_X       0x02    /* SIB index extension */
 #define REX_R       0x04    /* ModRM reg extension */
