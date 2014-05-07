@@ -7,6 +7,17 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.04} Version 2.11.04
+
+\b Removed an invalid error checking code. Sometimes a memref only with
+a displacement can also set an evex flag. For example:
+
+\c       vmovdqu32 [0xabcd]{k1}, zmm0
+
+\b Fixed a bug in disassembler that EVEX.L'L vector length was not matched
+when EVEX.b was set because it was simply considered as EVEC.RC.
+Separated EVEX.L'L case from EVEX.RC which is ignored in matching.
+
 \S{cl-2.11.03} Version 2.11.03
 
 \b Fix a bug there REX prefixes were missing on instructions inside a
