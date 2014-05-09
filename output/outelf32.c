@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -767,6 +767,7 @@ static void elf_out(int32_t segto, const void *data,
     case OUT_ADDRESS:
     {
         bool gnu16 = false;
+        int asize = abs(size);
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -779,22 +780,20 @@ static void elf_out(int32_t segto, const void *data,
 		     * don't handle switch() statements with 64-bit
 		     * expressions.
 		     */
-		    if (size < UINT_MAX) {
-			switch ((unsigned int)size) {
-			case 1:
-			    gnu16 = true;
-			    elf_add_reloc(s, segment, R_386_8);
-			    break;
-			case 2:
-			    gnu16 = true;
-			    elf_add_reloc(s, segment, R_386_16);
-			    break;
-			case 4:
-			    elf_add_reloc(s, segment, R_386_32);
-			    break;
-			default:	/* Error issued further down */
-			    break;
-			}
+                    switch (asize) {
+                    case 1:
+                        gnu16 = true;
+                        elf_add_reloc(s, segment, R_386_8);
+                        break;
+                    case 2:
+                        gnu16 = true;
+                        elf_add_reloc(s, segment, R_386_16);
+                        break;
+                    case 4:
+                        elf_add_reloc(s, segment, R_386_32);
+                        break;
+                    default:	/* Error issued further down */
+                        break;
                     }
                 } else if (wrt == elf_gotpc_sect + 1) {
                     /*
@@ -813,13 +812,23 @@ static void elf_out(int32_t segto, const void *data,
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_386_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
-                    if (size == 2) {
+                    switch (asize) {
+                    case 1:
+                        gnu16 = true;
+                        addr = elf_add_gsym_reloc(s, segment, addr,
+                                                  R_386_8, false);
+                        break;
+                    case 2:
                         gnu16 = true;
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_386_16, false);
-                    } else {
+                        break;
+                    case 4:
                         addr = elf_add_gsym_reloc(s, segment, addr,
                                                   R_386_32, false);
+                        break;
+                    default:
+                        break;
                     }
                 } else if (wrt == elf_plt_sect + 1) {
                     nasm_error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
@@ -835,7 +844,7 @@ static void elf_out(int32_t segto, const void *data,
         if (gnu16) {
             nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
                   "8- or 16-bit relocations in ELF32 is a GNU extension");
-        } else if (size != 4 && segment != NO_SEG) {
+        } else if (asize != 4 && segment != NO_SEG) {
 	    nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
         }
 	WRITEADDR(p, addr, size);

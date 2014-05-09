@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -127,7 +127,10 @@ static void dbg_out(int32_t segto, const void *data,
     int32_t ldata;
     int id;
 
-    fprintf(ofile, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
+    if (type == OUT_ADDRESS)
+        fprintf(ofile, "out to %"PRIx32", len = %d: ", segto, (int)size);
+    else
+        fprintf(ofile, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
 
     switch (type) {
     case OUT_RESERVE:
@@ -144,8 +147,8 @@ static void dbg_out(int32_t segto, const void *data,
         break;
     case OUT_ADDRESS:
 	ldata = *(int64_t *)data;
-        fprintf(ofile, "addr %08"PRIx32" (seg %08"PRIx32", wrt %08"PRIx32")\n", ldata,
-                segment, wrt);
+        fprintf(ofile, "addr %08"PRIx32" (seg %08"PRIx32", wrt %08"PRIx32")\n",
+                ldata, segment, wrt);
         break;
     case OUT_REL1ADR:
         fprintf(ofile, "rel1adr %02"PRIx8" (seg %08"PRIx32")\n",

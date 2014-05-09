@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -431,20 +431,24 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     case OUT_ADDRESS:
-        addr = *(int64_t *)data;
-
-        if (section != NO_SEG) {
-            if (section % 2) {
-                nasm_error(ERR_NONFATAL, "Mach-O format does not support"
-                      " section base references");
-            } else
-                add_reloc(s, section, 0, size);
-        }
-
-        p = mydata;
-	WRITEADDR(p, addr, size);
-        sect_write(s, mydata, size);
-        break;
+    {
+	int asize = abs(size);
+	
+	addr = *(int64_t *)data;
+	
+	if (section != NO_SEG) {
+	    if (section % 2) {
+		nasm_error(ERR_NONFATAL, "Mach-O format does not support"
+			   " section base references");
+	    } else
+		add_reloc(s, section, 0, asize);
+	}
+	
+	p = mydata;
+	WRITEADDR(p, addr, asize);
+	sect_write(s, mydata, asize);
+	break;
+    }
 
     case OUT_REL2ADR:
         if (section == secto)

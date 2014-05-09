@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -646,8 +646,9 @@ static void coff_out(int32_t segto, const void *data,
             nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
-        if (!(win64)) {
-            if (size != 4 && (segment != NO_SEG || wrt != NO_SEG)) {
+        int asize = abs(size);
+        if (!win64) {
+            if (asize != 4 && (segment != NO_SEG || wrt != NO_SEG)) {
                 nasm_error(ERR_NONFATAL, "COFF format does not support non-32-bit"
                       " relocations");
             } else {
@@ -664,25 +665,25 @@ static void coff_out(int32_t segto, const void *data,
                 }
                 p = mydata;
                 WRITELONG(p, *(int64_t *)data + fix);
-                coff_sect_write(s, mydata, size);
+                coff_sect_write(s, mydata, asize);
             }
         } else {
             int32_t fix = 0;
             p = mydata;
-            if (size == 8) {
+            if (asize == 8) {
                 if (wrt == imagebase_sect) {
                     nasm_error(ERR_NONFATAL, "operand size mismatch: 'wrt "
                                WRT_IMAGEBASE "' is a 32-bit operand");
                 }
                 fix = coff_add_reloc(s, segment, IMAGE_REL_AMD64_ADDR64);
                 WRITEDLONG(p, *(int64_t *)data + fix);
-                coff_sect_write(s, mydata, size);
+                coff_sect_write(s, mydata, asize);
             } else {
                 fix = coff_add_reloc(s, segment,
                         wrt == imagebase_sect ?	IMAGE_REL_AMD64_ADDR32NB:
                                                 IMAGE_REL_AMD64_ADDR32);
                 WRITELONG(p, *(int64_t *)data + fix);
-                coff_sect_write(s, mydata, size);
+                coff_sect_write(s, mydata, asize);
             }
         }
     } else if (type == OUT_REL2ADR) {

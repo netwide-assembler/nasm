@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -762,6 +762,9 @@ static void bin_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_ADDRESS:
+    {
+        int asize = abs(size);
+
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)
                 nasm_error(ERR_NONFATAL, "binary output format does not support"
@@ -775,10 +778,11 @@ static void bin_out(int32_t segto, const void *data,
             if (segment != NO_SEG)
                 add_reloc(s, size, segment, -1L);
             p = mydata;
-	    WRITEADDR(p, *(int64_t *)data, size);
-            saa_wbytes(s->contents, mydata, size);
+	    WRITEADDR(p, *(int64_t *)data, asize);
+            saa_wbytes(s->contents, mydata, asize);
         }
 	break;
+    }
 
     case OUT_RAWDATA:
         if (s->flags & TYPE_PROGBITS)

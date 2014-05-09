@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1085,6 +1085,9 @@ static void obj_out(int32_t segto, const void *data,
     case OUT_REL8ADR:
     {
         int rsize;
+
+        if (type == OUT_ADDRESS)
+            size = abs(size);
 
         if (segment == NO_SEG && type != OUT_ADDRESS)
             nasm_error(ERR_NONFATAL, "relative call to absolute address not"

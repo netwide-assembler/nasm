@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -635,6 +635,7 @@ static void aout_out(int32_t segto, const void *data,
             nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
+        int asize = abs(size);
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -642,8 +643,7 @@ static void aout_out(int32_t segto, const void *data,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-                    aout_add_reloc(s, segment, RELTYPE_ABSOLUTE,
-                                   size);
+                    aout_add_reloc(s, segment, RELTYPE_ABSOLUTE, asize);
                 } else if (!bsd) {
                     nasm_error(ERR_NONFATAL,
                           "Linux a.out format does not support"
@@ -651,19 +651,17 @@ static void aout_out(int32_t segto, const void *data,
                     wrt = NO_SEG;       /* we can at least _try_ to continue */
                 } else if (wrt == aout_gotpc_sect + 1) {
                     is_pic = 0x40;
-                    aout_add_reloc(s, segment, RELTYPE_GOTPC, size);
+                    aout_add_reloc(s, segment, RELTYPE_GOTPC, asize);
                 } else if (wrt == aout_gotoff_sect + 1) {
                     is_pic = 0x40;
-                    addr = aout_add_gotoff_reloc(s, segment,
-                                                 addr, size);
+                    addr = aout_add_gotoff_reloc(s, segment, addr, asize);
                 } else if (wrt == aout_got_sect + 1) {
                     is_pic = 0x40;
-                    addr =
-                        aout_add_gsym_reloc(s, segment, addr, RELTYPE_GOT,
-                                            size, true);
+                    addr = aout_add_gsym_reloc(s, segment, addr, RELTYPE_GOT,
+                                               asize, true);
                 } else if (wrt == aout_sym_sect + 1) {
                     addr = aout_add_gsym_reloc(s, segment, addr,
-                                               RELTYPE_ABSOLUTE, size,
+                                               RELTYPE_ABSOLUTE, asize,
                                                false);
                 } else if (wrt == aout_plt_sect + 1) {
                     is_pic = 0x40;

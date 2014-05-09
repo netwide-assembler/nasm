@@ -216,7 +216,7 @@ static void list_output(int32_t offset, const void *data,
 	break;
     }
     case OUT_ADDRESS:
-	list_address(offset, "[]", *(int64_t *)data, size);
+	list_address(offset, "[]", *(int64_t *)data, abs(size));
 	break;
     case OUT_REL1ADR:
 	list_address(offset, "()", *(int64_t *)data, 1);

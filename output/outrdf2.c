@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -583,6 +583,7 @@ static void rdf2_out(int32_t segto, const void *data,
 
         membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
+        int asize = abs(size);
 
         /* if segment == NO_SEG then we are writing an address of an
            object within the same segment - do not produce reloc rec. */
@@ -597,14 +598,14 @@ static void rdf2_out(int32_t segto, const void *data,
             rr.reclen = 8;
             rr.segment = segto; /* segment we're currently in */
             rr.offset = getsegmentlength(segto);        /* current offset */
-            rr.length = size;  /* length of reference */
+            rr.length = asize; /* length of reference */
             rr.refseg = segment;        /* segment referred to */
             write_reloc_rec(&rr);
         }
 
         pd = databuf;           /* convert address to little-endian */
-	WRITEADDR(pd, *(int64_t *)data, size);
-        membufwrite(segto, databuf, size);
+	WRITEADDR(pd, *(int64_t *)data, asize);
+        membufwrite(segto, databuf, asize);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");

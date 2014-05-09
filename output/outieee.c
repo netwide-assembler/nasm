@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -437,7 +437,9 @@ static void ieee_out(int32_t segto, const void *data,
             ieee_write_byte(seg, *ucdata++);
     } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
                type == OUT_REL4ADR) {
-        if (segment == NO_SEG && type != OUT_ADDRESS)
+        if (type == OUT_ADDRESS)
+            size = abs(size);
+        else if (segment == NO_SEG)
             nasm_error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");
         ldata = *(int64_t *)data;
