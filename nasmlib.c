@@ -50,10 +50,6 @@
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
 static vefunc nasm_verror;	/* Global error handling function */
 
-#ifdef LOGALLOC
-static FILE *logfp;
-#endif
-
 /* Uninitialized -> all zero by C spec */
 const uint8_t zero_buffer[ZERO_BUF_SIZE];
 
@@ -86,93 +82,37 @@ void nasm_error(int severity, const char *fmt, ...)
     va_end(ap);
 }
 
-void nasm_init_malloc_error(void)
-{
-#ifdef LOGALLOC
-    logfp = fopen("malloc.log", "w");
-    if (logfp) {
-        setvbuf(logfp, NULL, _IOLBF, BUFSIZ);
-    } else {
-        nasm_error(ERR_NONFATAL | ERR_NOFILE, "Unable to open %s", logfp);
-        logfp = stderr;
-    }
-    fprintf(logfp, "null pointer is %p\n", NULL);
-#endif
-}
-
-#ifdef LOGALLOC
-void *nasm_malloc_log(const char *file, int line, size_t size)
-#else
 void *nasm_malloc(size_t size)
-#endif
 {
     void *p = malloc(size);
     if (!p)
         nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
-#ifdef LOGALLOC
-    else
-        fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (long)size, p);
-#endif
     return p;
 }
 
-#ifdef LOGALLOC
-void *nasm_zalloc_log(const char *file, int line, size_t size)
-#else
 void *nasm_zalloc(size_t size)
-#endif
 {
     void *p = calloc(size, 1);
     if (!p)
         nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
-#ifdef LOGALLOC
-    else
-        fprintf(logfp, "%s %d calloc(%ld, 1) returns %p\n",
-                file, line, (long)size, p);
-#endif
     return p;
 }
 
-#ifdef LOGALLOC
-void *nasm_realloc_log(const char *file, int line, void *q, size_t size)
-#else
 void *nasm_realloc(void *q, size_t size)
-#endif
 {
     void *p = q ? realloc(q, size) : malloc(size);
     if (!p)
         nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
-#ifdef LOGALLOC
-    else if (q)
-        fprintf(logfp, "%s %d realloc(%p,%ld) returns %p\n",
-                file, line, q, (long)size, p);
-    else
-        fprintf(logfp, "%s %d malloc(%ld) returns %p\n",
-                file, line, (long)size, p);
-#endif
     return p;
 }
 
-#ifdef LOGALLOC
-void nasm_free_log(const char *file, int line, void *q)
-#else
 void nasm_free(void *q)
-#endif
 {
-    if (q) {
-#ifdef LOGALLOC
-        fprintf(logfp, "%s %d free(%p)\n", file, line, q);
-#endif
+    if (q)
         free(q);
-    }
 }
 
-#ifdef LOGALLOC
-char *nasm_strdup_log(const char *file, int line, const char *s)
-#else
 char *nasm_strdup(const char *s)
-#endif
 {
     char *p;
     int size = strlen(s) + 1;
@@ -180,20 +120,11 @@ char *nasm_strdup(const char *s)
     p = malloc(size);
     if (!p)
         nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
-#ifdef LOGALLOC
-    else
-        fprintf(logfp, "%s %d strdup(%ld) returns %p\n",
-                file, line, (long)size, p);
-#endif
     strcpy(p, s);
     return p;
 }
 
-#ifdef LOGALLOC
-char *nasm_strndup_log(const char *file, int line, const char *s, size_t len)
-#else
 char *nasm_strndup(const char *s, size_t len)
-#endif
 {
     char *p;
     int size = len + 1;
@@ -201,11 +132,6 @@ char *nasm_strndup(const char *s, size_t len)
     p = malloc(size);
     if (!p)
         nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
-#ifdef LOGALLOC
-    else
-        fprintf(logfp, "%s %d strndup(%ld) returns %p\n",
-                file, line, (long)size, p);
-#endif
     strncpy(p, s, len);
     p[len] = '\0';
     return p;

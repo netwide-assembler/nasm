@@ -65,15 +65,6 @@ extern unsigned char nasm_tolower_tab[256];
 #define nasm_isxdigit(x) isxdigit((unsigned char)(x))
 
 /*
- * If this is defined, the wrappers around malloc et al will
- * transform into logging variants, which will cause NASM to create
- * a file called `malloc.log' when run, and spew details of all its
- * memory management into that. That can then be analysed to detect
- * memory leaks and potentially other problems too.
- */
-/* #define LOGALLOC */
-
-/*
  * -------------------------
  * Error reporting functions
  * -------------------------
@@ -144,28 +135,12 @@ void nasm_set_verror(vefunc);
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
-void nasm_init_malloc_error(void);
-#ifndef LOGALLOC
 void *nasm_malloc(size_t);
 void *nasm_zalloc(size_t);
 void *nasm_realloc(void *, size_t);
 void nasm_free(void *);
 char *nasm_strdup(const char *);
 char *nasm_strndup(const char *, size_t);
-#else
-void *nasm_malloc_log(const char *, int, size_t);
-void *nasm_zalloc_log(const char *, int, size_t);
-void *nasm_realloc_log(const char *, int, void *, size_t);
-void nasm_free_log(const char *, int, void *);
-char *nasm_strdup_log(const char *, int, const char *);
-char *nasm_strndup_log(const char *, int, const char *, size_t);
-#define nasm_malloc(x) nasm_malloc_log(__FILE__,__LINE__,x)
-#define nasm_zalloc(x) nasm_zalloc_log(__FILE__,__LINE__,x)
-#define nasm_realloc(x,y) nasm_realloc_log(__FILE__,__LINE__,x,y)
-#define nasm_free(x) nasm_free_log(__FILE__,__LINE__,x)
-#define nasm_strdup(x) nasm_strdup_log(__FILE__,__LINE__,x)
-#define nasm_strndup(x,y) nasm_strndup_log(__FILE__,__LINE__,x,y)
-#endif
 
 /*
  * NASM assert failure

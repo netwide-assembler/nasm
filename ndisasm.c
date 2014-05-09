@@ -95,7 +95,6 @@ int main(int argc, char **argv)
 
     tolower_init();
     nasm_set_verror(ndisasm_verror);
-    nasm_init_malloc_error();
     iflag_clear_all(&prefer);
 
     offset = 0;

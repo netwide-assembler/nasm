@@ -337,7 +337,6 @@ int main(int argc, char **argv)
 
     tolower_init();
 
-    nasm_init_malloc_error();
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
