@@ -634,6 +634,13 @@ struct textargs textopts[] = {
     {NULL, 0}
 };
 
+static void show_version(void)
+{
+    printf("NASM version %s compiled on %s%s\n",
+           nasm_version, nasm_date, nasm_compile_options);
+    exit(0);
+}
+
 static bool stopoptions = false;
 static bool process_arg(char *p, char *q)
 {
@@ -775,7 +782,7 @@ static bool process_arg(char *p, char *q)
                 ("usage: nasm [-@ response file] [-o outfile] [-f format] "
                  "[-l listfile]\n"
                  "            [options...] [--] filename\n"
-                 "    or nasm -v   for version info\n\n"
+                 "    or nasm -v (or --v) for version info\n\n"
                  "    -t          assemble in SciTech TASM compatible mode\n"
                  "    -g          generate debug information in selected format\n");
             printf
@@ -841,9 +848,7 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'v':
-            printf("NASM version %s compiled on %s%s\n",
-                   nasm_version, nasm_date, nasm_compile_options);
-            exit(0);    /* never need usage message here */
+            show_version();
             break;
 
         case 'e':       /* preprocess only */
@@ -936,6 +941,10 @@ set_warning:
                     stopoptions = 1;
                     break;
                 }
+
+                if (!nasm_stricmp(p, "--v"))
+                    show_version();
+
                 for (s = 0; textopts[s].label; s++) {
                     if (!nasm_stricmp(p + 2, textopts[s].label)) {
                         break;
