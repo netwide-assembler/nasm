@@ -984,6 +984,9 @@ and the date on which it was compiled.
 
 You will need the version number if you report a bug.
 
+For command-line compatibility with Yasm, the form \i\c{--v} is also
+accepted for this option.
+
 \S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
 
 Typing \c{nasm -f <option> -y} will display a list of the available

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -702,6 +702,7 @@ typedef struct insn { /* an instruction itself */
     int             eops_float;             /* true if DD and floating */
     int32_t         times;                  /* repeat count (TIMES prefix) */
     bool            forw_ref;               /* is there a forward reference? */
+    bool            rex_done;               /* REX prefix emitted? */
     int             rex;                    /* Special REX Prefix */
     int             vexreg;                 /* Register encoded in VEX prefix */
     int             vex_cm;                 /* Class and M field for VEX prefix */

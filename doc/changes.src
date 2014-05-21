@@ -7,6 +7,14 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.05} Version 2.11.05
+
+\b Add \c{--v} as an alias for \c{-v} (see \k{opt-v}), for
+command-line compatibility with Yasm.
+
+\b Fix a bug introduced in 2.11.03 whereby certain instructions would
+contain multiple REX prefixes, and thus be corrupt.
+
 \S{cl-2.11.04} Version 2.11.04
 
 \b Removed an invalid error checking code. Sometimes a memref only with
