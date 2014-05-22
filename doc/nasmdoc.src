@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2014 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -985,7 +985,7 @@ and the date on which it was compiled.
 You will need the version number if you report a bug.
 
 For command-line compatibility with Yasm, the form \i\c{--v} is also
-accepted for this option.
+accepted for this option starting in NASM version 2.11.05.
 
 \S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
 
