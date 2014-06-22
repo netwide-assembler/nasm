@@ -128,12 +128,11 @@ static const struct forwrefinfo *forwref;
 
 static struct preproc_ops *preproc;
 
-enum op_type {
-    OP_NORMAL,                  /* Preprocess and assemble */
-    OP_PREPROCESS,              /* Preprocess only */
-    OP_DEPEND,                  /* Generate dependencies */
-};
-static enum op_type operating_mode;
+#define OP_NORMAL           (1u << 0)
+#define OP_PREPROCESS       (1u << 1)
+#define OP_DEPEND           (1u << 2)
+
+static unsigned int operating_mode;
 
 /* Dependency flags */
 static bool depend_emit_phony = false;
@@ -374,9 +373,7 @@ int main(int argc, char **argv)
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
-    switch (operating_mode) {
-    case OP_DEPEND:
-        {
+    if (operating_mode & OP_DEPEND) {
             char *line;
 
             if (depend_missing_ok)
@@ -389,11 +386,7 @@ int main(int argc, char **argv)
             while ((line = preproc->getline()))
                 nasm_free(line);
             preproc->cleanup(0);
-        }
-        break;
-
-    case OP_PREPROCESS:
-        {
+    } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             char *file_name = NULL;
             int32_t prior_linnum = 0;
@@ -441,11 +434,7 @@ int main(int argc, char **argv)
             if (ofile && terminate_after_phase)
                 remove(outname);
             ofile = NULL;
-        }
-        break;
-
-    case OP_NORMAL:
-        {
+    } else if (operating_mode & OP_NORMAL) {
             /*
              * We must call ofmt->filename _anyway_, even if the user
              * has specified their own output file, because some
@@ -490,8 +479,6 @@ int main(int argc, char **argv)
                     remove(outname);
                 ofile = NULL;
             }
-        }
-        break;
     }
 
     if (depend_list && !terminate_after_phase)
