@@ -129,11 +129,12 @@ static const struct forwrefinfo *forwref;
 static struct preproc_ops *preproc;
 
 enum op_type {
-    op_normal,                  /* Preprocess and assemble */
-    op_preprocess,              /* Preprocess only */
-    op_depend,                  /* Generate dependencies */
+    OP_NORMAL,                  /* Preprocess and assemble */
+    OP_PREPROCESS,              /* Preprocess only */
+    OP_DEPEND,                  /* Generate dependencies */
 };
 static enum op_type operating_mode;
+
 /* Dependency flags */
 static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
@@ -341,7 +342,7 @@ int main(int argc, char **argv)
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
     preproc = &nasmpp;
-    operating_mode = op_normal;
+    operating_mode = OP_NORMAL;
 
     seg_init();
 
@@ -369,12 +370,12 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
-    depend_ptr = (depend_file || (operating_mode == op_depend)) ? &depend_list : NULL;
+    depend_ptr = (depend_file || (operating_mode == OP_DEPEND)) ? &depend_list : NULL;
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
     switch (operating_mode) {
-    case op_depend:
+    case OP_DEPEND:
         {
             char *line;
 
@@ -391,7 +392,7 @@ int main(int argc, char **argv)
         }
         break;
 
-    case op_preprocess:
+    case OP_PREPROCESS:
         {
             char *line;
             char *file_name = NULL;
@@ -443,7 +444,7 @@ int main(int argc, char **argv)
         }
         break;
 
-    case op_normal:
+    case OP_NORMAL:
         {
             /*
              * We must call ofmt->filename _anyway_, even if the user
@@ -853,7 +854,7 @@ static bool process_arg(char *p, char *q)
 
         case 'e':       /* preprocess only */
         case 'E':
-            operating_mode = op_preprocess;
+            operating_mode = OP_PREPROCESS;
             break;
 
         case 'a':       /* assemble only - don't preprocess */
@@ -900,10 +901,10 @@ set_warning:
         case 'M':
             switch (p[2]) {
             case 0:
-                operating_mode = op_depend;
+                operating_mode = OP_DEPEND;
                 break;
             case 'G':
-                operating_mode = op_depend;
+                operating_mode = OP_DEPEND;
                 depend_missing_ok = true;
                 break;
             case 'P':
