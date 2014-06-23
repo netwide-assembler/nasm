@@ -369,7 +369,7 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
-    depend_ptr = (depend_file || (operating_mode == OP_DEPEND)) ? &depend_list : NULL;
+    depend_ptr = (depend_file || (operating_mode & OP_DEPEND)) ? &depend_list : NULL;
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
@@ -434,51 +434,51 @@ int main(int argc, char **argv)
             if (ofile && terminate_after_phase)
                 remove(outname);
             ofile = NULL;
-    } else if (operating_mode & OP_NORMAL) {
-            /*
-             * We must call ofmt->filename _anyway_, even if the user
-             * has specified their own output file, because some
-             * formats (eg OBJ and COFF) use ofmt->filename to find out
-             * the name of the input file and then put that inside the
-             * file.
-             */
-            ofmt->filename(inname, outname);
+    }
 
-            ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
-            if (!ofile) {
-                nasm_error(ERR_FATAL | ERR_NOFILE,
-                             "unable to open output file `%s'", outname);
-            }
+    if (operating_mode & OP_NORMAL) {
+        /*
+         * We must call ofmt->filename _anyway_, even if the user
+         * has specified their own output file, because some
+         * formats (eg OBJ and COFF) use ofmt->filename to find out
+         * the name of the input file and then put that inside the
+         * file.
+         */
+        ofmt->filename(inname, outname);
 
-            /*
-             * We must call init_labels() before ofmt->init() since
-             * some object formats will want to define labels in their
-             * init routines. (eg OS/2 defines the FLAT group)
-             */
-            init_labels();
+        ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
+        if (!ofile)
+            nasm_error(ERR_FATAL | ERR_NOFILE,
+                       "unable to open output file `%s'", outname);
 
-            ofmt->init();
-            dfmt = ofmt->current_dfmt;
-            dfmt->init();
+        /*
+         * We must call init_labels() before ofmt->init() since
+         * some object formats will want to define labels in their
+         * init routines. (eg OS/2 defines the FLAT group)
+         */
+        init_labels();
 
-            assemble_file(inname, depend_ptr);
+        ofmt->init();
+        dfmt = ofmt->current_dfmt;
+        dfmt->init();
 
-            if (!terminate_after_phase) {
-                ofmt->cleanup(using_debug_info);
-                cleanup_labels();
-                fflush(ofile);
-                if (ferror(ofile)) {
-                    nasm_error(ERR_NONFATAL|ERR_NOFILE,
-                               "write error on output file `%s'", outname);
-                }
-            }
+        assemble_file(inname, depend_ptr);
 
-            if (ofile) {
-                fclose(ofile);
-                if (terminate_after_phase)
-                    remove(outname);
-                ofile = NULL;
-            }
+        if (!terminate_after_phase) {
+            ofmt->cleanup(using_debug_info);
+            cleanup_labels();
+            fflush(ofile);
+            if (ferror(ofile))
+                nasm_error(ERR_NONFATAL|ERR_NOFILE,
+                           "write error on output file `%s'", outname);
+        }
+
+        if (ofile) {
+            fclose(ofile);
+            if (terminate_after_phase)
+                remove(outname);
+            ofile = NULL;
+        }
     }
 
     if (depend_list && !terminate_after_phase)
@@ -898,6 +898,11 @@ set_warning:
                 depend_emit_phony = true;
                 break;
             case 'D':
+                operating_mode = OP_DEPEND | OP_NORMAL;
+                depend_file = q;
+                advance = true;
+                break;
+            case 'F':
                 depend_file = q;
                 advance = true;
                 break;
