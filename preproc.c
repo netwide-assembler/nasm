@@ -1160,10 +1160,7 @@ static void *new_Block(size_t size)
     b->chunk = nasm_malloc(size);
 
     /* now allocate a new block for the next request */
-    b->next = nasm_malloc(sizeof(Blocks));
-    /* and initialize the contents of the new block */
-    b->next->next = NULL;
-    b->next->chunk = NULL;
+    b->next = nasm_zalloc(sizeof(Blocks));
     return b->chunk;
 }
 
