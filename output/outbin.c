@@ -776,7 +776,7 @@ static void bin_out(int32_t segto, const void *data,
         }
         if (s->flags & TYPE_PROGBITS) {
             if (segment != NO_SEG)
-                add_reloc(s, size, segment, -1L);
+                add_reloc(s, asize, segment, -1L);
             p = mydata;
 	    WRITEADDR(p, *(int64_t *)data, asize);
             saa_wbytes(s->contents, mydata, asize);
