@@ -1184,6 +1184,7 @@ static void delete_Blocks(void)
         if (a != &blocks)
             nasm_free(a);
     }
+    memset(&blocks, 0, sizeof(blocks));
 }
 
 /*
@@ -5141,7 +5142,9 @@ static void pp_cleanup(int pass)
     if (pass == 0) {
         IncPath *i;
         free_llist(predef);
+        predef = NULL;
         delete_Blocks();
+        freeTokens = NULL;
         while ((i = ipath)) {
             ipath = i->next;
             if (i->path)
