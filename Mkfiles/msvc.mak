@@ -76,17 +76,21 @@ ndisasm$(X): $(NDISASM)
 
 insns.pl: insns-iflags.pl
 
-iflag.c iflag.h: insns.dat insns.pl
-	$(PERL) $(srcdir)/insns.pl -t $(srcdir)/insns.dat
-insnsb.c: insns.dat insns.pl
+INSDEP = insns.dat insns.pl insns-iflags.pl
+
+iflag.c: $(INSDEP)
+	$(PERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat
+iflaggen.h: $(INSDEP)
+	$(PERL) $(srcdir)/insns.pl -fh $(srcdir)/insns.dat
+insnsb.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
-insnsa.c: insns.dat insns.pl
+insnsa.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
-insnsd.c: insns.dat insns.pl
+insnsd.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -d $(srcdir)/insns.dat
-insnsi.h: insns.dat insns.pl
+insnsi.h: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -i $(srcdir)/insns.dat
-insnsn.c: insns.dat insns.pl
+insnsn.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -n $(srcdir)/insns.dat
 
 # These files contains all the standard macros that are derived from
