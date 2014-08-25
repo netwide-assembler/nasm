@@ -160,7 +160,7 @@
  * \340             resb                        reserve <operand 0> bytes of uninitialized storage.
  *                                              Operand 0 had better be a segmentless constant.
  * \341             wait                        this instruction needs a WAIT "prefix"
- * \360                                         no SSE prefix (== \364\331)
+ * \360             np                          no SSE prefix (== \364\331)
  * \361                                         66 SSE prefix (== \366\331)
  * \364             !osp                        operand-size prefix (0x66) not permitted
  * \365             !asp                        address-size prefix (0x67) not permitted

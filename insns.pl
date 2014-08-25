@@ -772,6 +772,7 @@ sub byte_code_compile($$) {
         'norep'     => 0331,    # No REP prefix permitted
         'wait'      => 0341,    # Needs a wait prefix
         'resb'      => 0340,
+        'np'        => 0360,    # No prefix
         'jcc8'      => 0370,    # Match only if Jcc possible with single byte
         'jmp8'      => 0371,    # Match only if JMP possible with single byte
         'jlen'      => 0373,    # Length of jump
@@ -825,16 +826,14 @@ sub byte_code_compile($$) {
         if (defined $pc) {
             # Plain code
             push(@codes, $pc);
-        } elsif ($prefix_ok && $op =~ /^(66|f2|f3|np)$/) {
-            # 66/F2/F3 prefix used as an opcode extension, or np = no prefix
+        } elsif ($prefix_ok && $op =~ /^(66|f2|f3)$/) {
+            # 66/F2/F3 prefix used as an opcode extension
             if ($op eq '66') {
                 push(@codes, 0361);
             } elsif ($op eq 'f2') {
                 push(@codes, 0332);
-            } elsif ($op eq 'f3') {
-                push(@codes, 0333);
             } else {
-                push(@codes, 0360);
+                push(@codes, 0333);
             }
         } elsif ($op =~ /^[0-9a-f]{2}$/) {
             if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes &&
