@@ -50,6 +50,9 @@
 
 #if defined(OF_ELF32) || defined(OF_ELF64) || defined(OF_ELFX32)
 
+uint8_t elf_osabi = 0;      /* Default OSABI = 0 (System V or Linux) */
+uint8_t elf_abiver = 0;     /* Current ABI version */
+
 const struct elf_known_section elf_known_sections[] = {
     { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },
     { ".rodata",  SHT_PROGBITS, SHF_ALLOC,                    4 },
@@ -122,6 +125,49 @@ void elf_section_attrib(char *name, char *attr, int pass,
                        " declaration of section `%s'", opt, name);
         }
         opt = next;
+    }
+}
+
+int elf_directive(enum directives directive, char *value, int pass)
+{
+    int64_t n;
+    bool err;
+    char *p;
+
+    switch (directive) {
+    case D_OSABI:
+        if (pass == 2)
+            return 1; /* ignore in pass 2 */
+
+        n = readnum(value, &err);
+        if (err) {
+            nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
+            return 1;
+        }
+
+        if (n < 0 || n > 255) {
+            nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
+            return 1;
+        }
+
+        elf_osabi  = n;
+        elf_abiver = 0;
+
+        p = strchr(value,',');
+        if (!p)
+            return 1;
+
+        n = readnum(p + 1, &err);
+        if (err || n < 0 || n > 255) {
+            nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
+            return 1;
+        }
+
+        elf_abiver = n;
+        return 1;
+
+    default:
+        return 0;
     }
 }
 

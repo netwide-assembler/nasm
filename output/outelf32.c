@@ -119,9 +119,6 @@ static struct Symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
-static uint8_t elf_osabi = 0;   /* Default OSABI = 0 (System V or Linux) */
-static uint8_t elf_abiver = 0;  /* Current ABI version */
-
 extern struct ofmt of_elf32;
 
 static struct ELF_SECTDATA {
@@ -1358,46 +1355,6 @@ static void elf_sectalign(int32_t seg, unsigned int value)
 static int32_t elf_segbase(int32_t segment)
 {
     return segment;
-}
-
-static int elf_directive(enum directives directive, char *value, int pass)
-{
-    bool err;
-    int64_t n;
-    char *p;
-
-    switch (directive) {
-    case D_OSABI:
-        if (pass == 2)
-            return 1; /* ignore in pass 2 */
-
-        n = readnum(value, &err);
-        if (err) {
-            nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
-            return 1;
-        }
-        if (n < 0 || n > 255) {
-            nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
-            return 1;
-        }
-        elf_osabi  = n;
-        elf_abiver = 0;
-
-        if ((p = strchr(value,',')) == NULL)
-            return 1;
-
-        n = readnum(p+1, &err);
-        if (err || n < 0 || n > 255) {
-            nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
-            return 1;
-        }
-
-        elf_abiver = n;
-        return 1;
-
-    default:
-        return 0;
-    }
 }
 
 static void elf_filename(char *inname, char *outname)

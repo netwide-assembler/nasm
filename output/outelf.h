@@ -101,6 +101,10 @@ struct stabentry {
 #define sec_debug_frame         (nsections-2)
 #define sec_debug_loc           (nsections-1)
 
+extern uint8_t elf_osabi;
+extern uint8_t elf_abiver;
+
+int elf_directive(enum directives directive, char *value, int pass);
 void elf_section_attrib(char *name, char *attr, int pass,
 			uint32_t *flags_and, uint32_t *flags_or,
 			uint64_t *align, int *type);
