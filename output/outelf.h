@@ -101,9 +101,9 @@ struct stabentry {
 #define sec_debug_frame         (nsections-2)
 #define sec_debug_loc           (nsections-1)
 
-void section_attrib(char *name, char *attr, int pass,
-                    uint32_t *flags_and, uint32_t *flags_or,
-                    uint64_t *align, int *type);
+void elf_section_attrib(char *name, char *attr, int pass,
+			uint32_t *flags_and, uint32_t *flags_or,
+			uint64_t *align, int *type);
 
 #define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
     do {                                                    \

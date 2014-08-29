@@ -65,9 +65,9 @@ const struct elf_known_section elf_known_sections[] = {
 };
 
 /* parse section attributes */
-void section_attrib(char *name, char *attr, int pass,
-                    uint32_t *flags_and, uint32_t *flags_or,
-                    uint64_t *align, int *type)
+void elf_section_attrib(char *name, char *attr, int pass,
+			uint32_t *flags_and, uint32_t *flags_or,
+			uint64_t *align, int *type)
 {
     char *opt, *val, *next;
 

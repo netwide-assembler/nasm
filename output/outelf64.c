@@ -351,8 +351,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     flags_and = flags_or = type = align = 0;
 
-    section_attrib(name, p, pass, &flags_and,
-                   &flags_or, &align, &type);
+    elf_section_attrib(name, p, pass, &flags_and,
+                       &flags_or, &align, &type);
 
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||
