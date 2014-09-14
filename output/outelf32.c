@@ -61,44 +61,8 @@
 
 #ifdef OF_ELF32
 
-/*
- * Relocation types.
- */
-struct Reloc {
-    struct Reloc *next;
-    int32_t address;            /* relative to _start_ of section */
-    int32_t symbol;             /*  symbol index */
-    int type;                   /* type of relocation */
-};
-
-struct Symbol {
-    struct rbtree symv;         /* symbol value and symbol rbtree */
-    int32_t strpos;             /* string table position of name */
-    int32_t section;            /* section ID of the symbol */
-    int type;                   /* symbol type */
-    int other;                  /* symbol visibility */
-    int32_t size;               /* size of symbol */
-    int32_t globnum;            /* symbol table offset if global */
-    struct Symbol *nextfwd;     /* list of unresolved-size symbols */
-    char *name;                 /* used temporarily if in above list */
-};
-
-struct Section {
-    struct SAA *data;
-    uint32_t len, size, nrelocs;
-    int32_t index;
-    int type;                   /* SHT_PROGBITS or SHT_NOBITS */
-    uint32_t align;             /* alignment: power of two */
-    uint32_t flags;             /* section flags */
-    char *name;
-    struct SAA *rel;
-    int32_t rellen;
-    struct Reloc *head, **tail;
-    struct rbtree *gsyms;       /* global symbols in section */
-};
-
 #define SECT_DELTA 32
-static struct Section **sects;
+static struct elf_section **sects;
 static int nsects, sectlen;
 
 #define SHSTR_DELTA 256
@@ -115,7 +79,7 @@ static struct RAA *bsym;
 static struct SAA *strs;
 static uint32_t strslen;
 
-static struct Symbol *fwds;
+static struct elf_symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
@@ -130,13 +94,13 @@ static int elf_nsect, nsections;
 static int32_t elf_foffs;
 
 static void elf_write(void);
-static void elf_sect_write(struct Section *, const uint8_t *,
+static void elf_sect_write(struct elf_section *, const uint8_t *,
                            uint32_t);
 static void elf_section_header(int, int, int, void *, bool, int32_t, int, int,
                                int, int);
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
-static struct SAA *elf_build_reltab(int32_t *, struct Reloc *);
+static struct SAA *elf_build_reltab(uint64_t *, struct elf_reloc *);
 static void add_sectname(char *, char *);
 
 struct erel {
@@ -191,7 +155,7 @@ static int32_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
 
 static struct dfmt df_dwarf;
 static struct dfmt df_stabs;
-static struct Symbol *lastsym;
+static struct elf_symbol *lastsym;
 
 /* common debugging routines */
 static void debug32_typevalue(int32_t);
@@ -226,7 +190,7 @@ static void elf_init(void)
 {
     sects = NULL;
     nsects = sectlen = 0;
-    syms = saa_init((int32_t)sizeof(struct Symbol));
+    syms = saa_init((int32_t)sizeof(struct elf_symbol));
     nlocals = nglobs = ndebugs = 0;
     bsym = raa_init();
     strs = saa_init(1L);
@@ -257,7 +221,7 @@ static void elf_init(void)
 
 static void elf_cleanup(int debuginfo)
 {
-    struct Reloc *r;
+    struct elf_reloc *r;
     int i;
 
     (void)debuginfo;
@@ -295,7 +259,7 @@ static void add_sectname(char *firsthalf, char *secondhalf)
 
 static int elf_make_section(char *name, int type, int flags, int align)
 {
-    struct Section *s;
+    struct elf_section *s;
 
     s = nasm_zalloc(sizeof(*s));
 
@@ -383,7 +347,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
     int pos = strslen;
-    struct Symbol *sym;
+    struct elf_symbol *sym;
     bool special_used = false;
 
 #if defined(DEBUG) && DEBUG>2
@@ -405,7 +369,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     }
 
     if (is_global == 3) {
-        struct Symbol **s;
+        struct elf_symbol **s;
         /*
          * Fix up a forward-reference symbol size from the first
          * pass.
@@ -595,11 +559,11 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         nasm_error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
-static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
+static void elf_add_reloc(struct elf_section *sect, int32_t segment, int type)
 {
-    struct Reloc *r;
+    struct elf_reloc *r;
 
-    r = *sect->tail = nasm_zalloc(sizeof(struct Reloc));
+    r = *sect->tail = nasm_zalloc(sizeof(struct elf_reloc));
     sect->tail = &r->next;
 
     r->address = sect->len;
@@ -638,13 +602,13 @@ static void elf_add_reloc(struct Section *sect, int32_t segment, int type)
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static int32_t elf_add_gsym_reloc(struct Section *sect,
+static int32_t elf_add_gsym_reloc(struct elf_section *sect,
                                int32_t segment, uint32_t offset,
                                int type, bool exact)
 {
-    struct Reloc *r;
-    struct Section *s;
-    struct Symbol *sym;
+    struct elf_reloc *r;
+    struct elf_section *s;
+    struct elf_symbol *sym;
     struct rbtree *srb;
     int i;
 
@@ -677,9 +641,9 @@ static int32_t elf_add_gsym_reloc(struct Section *sect,
                     " for this reference");
         return 0;
     }
-    sym = container_of(srb, struct Symbol, symv);
+    sym = container_of(srb, struct elf_symbol, symv);
 
-    r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
+    r = *sect->tail = nasm_malloc(sizeof(struct elf_reloc));
     sect->tail = &r->next;
 
     r->next     = NULL;
@@ -696,7 +660,7 @@ static void elf_out(int32_t segto, const void *data,
                     enum out_type type, uint64_t size,
                     int32_t segment, int32_t wrt)
 {
-    struct Section *s;
+    struct elf_section *s;
     int32_t addr;
     uint8_t mydata[8], *p;
     int reltype, bytes;
@@ -1001,7 +965,7 @@ static void elf_write(void)
     for (i = 0; i < nsects; i++)
         if (sects[i]->head)
             sects[i]->rel = elf_build_reltab(&sects[i]->rellen,
-                                             sects[i]->head);
+					     sects[i]->head);
 
     /*
      * Now output the section header table.
@@ -1132,7 +1096,7 @@ static void elf_write(void)
 static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
 {
     struct SAA *s = saa_init(1L);
-    struct Symbol *sym;
+    struct elf_symbol *sym;
     uint8_t entry[16], *p;
     int i;
 
@@ -1251,7 +1215,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
     return s;
 }
 
-static struct SAA *elf_build_reltab(int32_t *len, struct Reloc *r)
+static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
 {
     struct SAA *s;
     uint8_t *p, entry[8];
@@ -1327,7 +1291,7 @@ static void elf_write_sections(void)
         }
 }
 
-static void elf_sect_write(struct Section *sect,
+static void elf_sect_write(struct elf_section *sect,
                            const uint8_t *data, uint32_t len)
 {
     saa_wbytes(sect->data, data, len);
@@ -1336,7 +1300,7 @@ static void elf_sect_write(struct Section *sect,
 
 static void elf_sectalign(int32_t seg, unsigned int value)
 {
-    struct Section *s = NULL;
+    struct elf_section *s = NULL;
     int i;
 
     for (i = 0; i < nsects; i++) {
