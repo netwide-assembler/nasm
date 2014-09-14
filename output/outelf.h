@@ -38,6 +38,8 @@
 #define OUTPUT_OUTELF_H
 
 #include "output/elf.h"
+#include "rbtree.h"
+#include "saa.h"
 
 /* symbol binding */
 #define SYM_GLOBAL      ELF32_ST_MKBIND(STB_GLOBAL)
@@ -117,5 +119,42 @@ void elf_section_attrib(char *name, char *attr, int pass,
         WRITESHORT(p, n_desc);                              \
         WRITELONG(p, n_value);                              \
     } while (0)
+
+struct elf_reloc {
+    struct elf_reloc    *next;
+    int64_t             address;        /* relative to _start_ of section */
+    int64_t             symbol;         /* symbol index */
+    int64_t             offset;         /* symbol addend */
+    int                 type;           /* type of relocation */
+};
+
+struct elf_symbol {
+    struct rbtree       symv;           /* symbol value and symbol rbtree */
+    int32_t             strpos;         /* string table position of name */
+    int32_t             section;        /* section ID of the symbol */
+    int                 type;           /* symbol type */
+    int                 other;          /* symbol visibility */
+    int32_t             size;           /* size of symbol */
+    int32_t             globnum;        /* symbol table offset if global */
+    struct elf_symbol   *nextfwd;       /* list of unresolved-size symbols */
+    char                *name;          /* used temporarily if in above list */
+};
+
+struct elf_section {
+    struct SAA          *data;
+    uint64_t            len;
+    uint64_t            size;
+    uint64_t            nrelocs;
+    int32_t             index;
+    int                 type;           /* SHT_PROGBITS or SHT_NOBITS */
+    uint64_t            align;          /* alignment: power of two */
+    uint64_t            flags;          /* section flags */
+    char                *name;
+    struct SAA          *rel;
+    uint64_t             rellen;
+    struct elf_reloc    *head;
+    struct elf_reloc    **tail;
+    struct rbtree       *gsyms;         /* global symbols in section */
+};
 
 #endif /* OUTPUT_OUTELF_H */
