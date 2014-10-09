@@ -1042,7 +1042,9 @@ enum special_tokens {
 
 enum decorator_tokens {
     DECORATOR_ENUM_START    = SPECIAL_ENUM_LIMIT,
-    BRC_1TO8                = DECORATOR_ENUM_START,
+    BRC_1TO2                = DECORATOR_ENUM_START,
+    BRC_1TO4,
+    BRC_1TO8,
     BRC_1TO16,
     BRC_RN,
     BRC_RD,
@@ -1147,8 +1149,10 @@ enum decorator_tokens {
 #define BRNUM_MASK              OP_GENMASK(BRNUM_BITS, BRNUM_SHIFT)
 #define VAL_BRNUM(val)          OP_GENVAL(val, BRNUM_BITS, BRNUM_SHIFT)
 
-#define BR_1TO8                 VAL_BRNUM(0)
-#define BR_1TO16                VAL_BRNUM(1)
+#define BR_1TO2                 VAL_BRNUM(0)
+#define BR_1TO4                 VAL_BRNUM(1)
+#define BR_1TO8                 VAL_BRNUM(2)
+#define BR_1TO16                VAL_BRNUM(3)
 
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK

@@ -131,6 +131,11 @@ my %insns_flag_bit = (
     "MPX"               => [ 68	,"MPX"],
     "SHA"               => [ 69	,"SHA"],
     "PREFETCHWT1"       => [ 70	,"PREFETCHWT1"],
+    "AVX512VL"          => [ 71, "AVX-512 Vector Length Orthogonality"],
+    "AVX512DQ"          => [ 72, "AVX-512 Dword and Qword"],
+    "AVX512BW"          => [ 73, "AVX-512 Byte and Word"],
+    "AVX512IFMA"        => [ 74, "AVX-512 IFMA instructions"],
+    "AVX512VBMI"        => [ 75, "AVX-512 VBMI instructions"],
     "VEX"               => [ 94, "VEX or XOP encoded instruction"],
     "EVEX"              => [ 95, "EVEX encoded instruction"],
 

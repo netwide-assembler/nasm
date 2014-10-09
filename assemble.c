@@ -2106,6 +2106,31 @@ done:
     return merr;
 }
 
+static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
+{
+    opflags_t opsize = opflags & SIZE_MASK;
+    uint8_t brcast_num;
+
+    /*
+     * Due to discontinuity between BITS64 and BITS128 (BITS80),
+     * this cannot be a simple arithmetic calculation.
+     */
+    if (brsize > BITS64)
+        errfunc(ERR_FATAL,
+            "size of broadcasting element is greater than 64 bits");
+
+    switch (opsize) {
+    case BITS64:
+        brcast_num = BITS64 / brsize;
+        break;
+    default:
+        brcast_num = (opsize / BITS128) * (BITS64 / brsize) * 2;
+        break;
+    }
+
+    return brcast_num;
+}
+
 static enum match_result matches(const struct itemplate *itemp,
                                  insn *instruction, int bits)
 {
@@ -2255,8 +2280,7 @@ static enum match_result matches(const struct itemplate *itemp,
             if (deco_brsize) {
                 template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
                 /* calculate the proper number : {1to<brcast_num>} */
-                brcast_num = (itemp->opd[i] & SIZE_MASK) / BITS128 *
-                                BITS64 / template_opsize * 2;
+                brcast_num = get_broadcast_num(itemp->opd[i], template_opsize);
             } else {
                 template_opsize = 0;
             }
@@ -2279,12 +2303,12 @@ static enum match_result matches(const struct itemplate *itemp,
                 }
             } else if (is_broadcast &&
                        (brcast_num !=
-                        (8U << ((deco & BRNUM_MASK) >> BRNUM_SHIFT)))) {
+                        (2U << ((deco & BRNUM_MASK) >> BRNUM_SHIFT)))) {
                 /*
                  * broadcasting opsize matches but the number of repeated memory
                  * element does not match.
-                 * if 64b double precision float is broadcasted to zmm (512b),
-                 * broadcasting decorator must be {1to8}.
+                 * if 64b double precision float is broadcasted to ymm (256b),
+                 * broadcasting decorator must be {1to4}.
                  */
                 return MERR_BRNUMMISMATCH;
             }

@@ -111,6 +111,8 @@ seg
 wrt
 
 % TOKEN_DECORATOR, 0, TFLAG_BRC | TFLAG_BRDCAST , BRC_1TO{1to*}
+1to2
+1to4
 1to8
 1to16
 
