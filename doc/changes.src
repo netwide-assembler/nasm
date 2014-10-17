@@ -7,6 +7,15 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.06} Version 2.11.06
+
+\b Update AVX512 instructions based on the Extension Reference (319433-021 Sept
+2014).
+
+\b Fix the behavior of \c{-MF} and \c{-MD} options (Bugzilla 3392280)
+
+\b Updated Win32 Makefile to fix issue with build
+
 \S{cl-2.11.05} Version 2.11.05
 
 \b Add \c{--v} as an alias for \c{-v} (see \k{opt-v}), for
