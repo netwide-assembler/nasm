@@ -983,7 +983,7 @@ static void elf_write(void)
     /*
      * Output the ELF header.
      */
-    fwrite("\177ELF\1\1\1", 7, 1, ofile);
+    nasm_write("\177ELF\1\1\1", 7, ofile);
     fputc(elf_osabi, ofile);
     fputc(elf_abiver, ofile);
     fwritezero(7, ofile);
@@ -1334,7 +1334,7 @@ static void elf_write_sections(void)
             if (elf_sects[i].is_saa)
                 saa_fpwrite(elf_sects[i].data, ofile);
             else
-                fwrite(elf_sects[i].data, len, 1, ofile);
+                nasm_write(elf_sects[i].data, len, ofile);
             fwritezero(align, ofile);
         }
 }

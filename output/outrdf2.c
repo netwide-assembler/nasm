@@ -670,7 +670,7 @@ static void rdf2_cleanup(int debuginfo)
     /* should write imported & exported symbol declarations to header here */
 
     /* generate the output file... */
-    fwrite(RDOFF2Id, 6, 1, ofile);      /* file type magic number */
+    nasm_write(RDOFF2Id, 6, ofile); /* file type magic number */
 
     if (bsslength != 0) {       /* reserve BSS */
         bs.type = RDFREC_BSS;

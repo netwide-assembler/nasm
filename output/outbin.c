@@ -1468,8 +1468,8 @@ static void do_output_bin(void)
 }
 
 /* Generate Intel hex file output */
-static int write_ith_record(unsigned int len, uint16_t addr,
-			    uint8_t type, void *data)
+static void write_ith_record(unsigned int len, uint16_t addr,
+                             uint8_t type, void *data)
 {
     char buf[1+2+4+2+255*2+2+2];
     char *p = buf;
@@ -1488,10 +1488,7 @@ static int write_ith_record(unsigned int len, uint16_t addr,
 	p += sprintf(p, "%02X", dptr[i]);
     p += sprintf(p, "%02X\n", csum);
 
-    if (fwrite(buf, 1, p-buf, ofile) != (size_t)(p-buf))
-	return -1;
-
-    return 0;
+    nasm_write(buf, p-buf, ofile);
 }
 
 static void do_output_ith(void)
@@ -1542,8 +1539,8 @@ static void do_output_ith(void)
 }
 
 /* Generate Motorola S-records */
-static int write_srecord(unsigned int len,  unsigned int alen,
-			 uint32_t addr, uint8_t type, void *data)
+static void write_srecord(unsigned int len,  unsigned int alen,
+                          uint32_t addr, uint8_t type, void *data)
 {
     char buf[2+2+8+255*2+2+2];
     char *p = buf;
@@ -1576,10 +1573,7 @@ static int write_srecord(unsigned int len,  unsigned int alen,
 	p += sprintf(p, "%02X", dptr[i]);
     p += sprintf(p, "%02X\n", csum);
 
-    if (fwrite(buf, 1, p-buf, ofile) != (size_t)(p-buf))
-	return -1;
-
-    return 0;
+    nasm_write(buf, p-buf, ofile);
 }
 
 static void do_output_srec(void)

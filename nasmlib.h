@@ -143,6 +143,11 @@ char *nasm_strdup(const char *);
 char *nasm_strndup(const char *, size_t);
 
 /*
+ * Wrapper around fwrite() which fatal-errors on output failure.
+ */
+void nasm_write(const void *, size_t, FILE *);
+
+/*
  * NASM assert failure
  */
 no_return nasm_assert_failed(const char *, int, const char *);
@@ -399,7 +404,7 @@ const char *prefix_name(int);
 
 #define ZERO_BUF_SIZE 4096
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
-size_t fwritezero(size_t bytes, FILE *fp);
+void fwritezero(size_t bytes, FILE *fp);
 
 static inline bool overflow_general(int64_t value, int bytes)
 {

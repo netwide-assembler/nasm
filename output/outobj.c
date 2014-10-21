@@ -2396,7 +2396,7 @@ static void obj_fwrite(ObjRecord * orp)
     len = orp->committed + 1;
     cksum += (len & 0xFF) + ((len >> 8) & 0xFF);
     fwriteint16_t(len, ofile);
-    fwrite(orp->buf, 1, len - 1, ofile);
+    nasm_write(orp->buf, len-1, ofile);
     for (ptr = orp->buf; --len; ptr++)
         cksum += *ptr;
     fputc((-cksum) & 0xFF, ofile);

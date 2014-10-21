@@ -545,7 +545,7 @@ static void as86_write_section(struct Section *sect, int index)
                 int32_t tmplen = (length > 64 ? 64 : length);
                 fputc(0x40 | (tmplen & 0x3F), ofile);
                 saa_rnbytes(sect->data, buf, tmplen);
-                fwrite(buf, 1, tmplen, ofile);
+                nasm_write(buf, tmplen, ofile);
                 length -= tmplen;
             } while (length > 0);
             break;

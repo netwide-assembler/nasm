@@ -278,7 +278,7 @@ void saa_fpwrite(struct SAA *s, FILE * fp)
 
     saa_rewind(s);
     while (len = s->datalen, (data = saa_rbytes(s, &len)) != NULL)
-        fwrite(data, 1, len, fp);
+        nasm_write(data, len, fp);
 }
 
 void saa_write8(struct SAA *s, uint8_t v)

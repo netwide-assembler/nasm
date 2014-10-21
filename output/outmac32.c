@@ -883,8 +883,8 @@ static uint32_t macho_write_segment (uint32_t offset)
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
-	fwrite(s->sectname, sizeof(s->sectname), 1, ofile);
-	fwrite(s->segname, sizeof(s->segname), 1, ofile);
+	nasm_write(s->sectname, sizeof(s->sectname), ofile);
+	nasm_write(s->segname, sizeof(s->segname), ofile);
 	fwriteint32_t(s->addr, ofile);
 	fwriteint32_t(s->size, ofile);
 
@@ -1050,8 +1050,8 @@ static void macho_write_symtab (void)
     for (i = 0; i < nextdefsym; i++) {
 	sym = extdefsyms[i];
 	fwriteint32_t(sym->strx, ofile);
-	fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
-	fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	nasm_write(&sym->type, 1, ofile);	/* symbol type */
+	nasm_write(&sym->sect, 1, ofile);	/* section */
 	fwriteint16_t(sym->desc, ofile);	/* description */
 
 	/* Fix up the symbol value now that we know the final section
@@ -1068,8 +1068,8 @@ static void macho_write_symtab (void)
      for (i = 0; i < nundefsym; i++) {
 	 sym = undefsyms[i];
 	 fwriteint32_t(sym->strx, ofile);
-	 fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
-	 fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	 nasm_write(&sym->type, 1, ofile);	/* symbol type */
+	 nasm_write(&sym->sect, 1, ofile);	/* section */
 	 fwriteint16_t(sym->desc, ofile);	/* description */
 
 	 /* Fix up the symbol value now that we know the final section

@@ -1005,7 +1005,7 @@ static void macho_write_header (void)
     fwriteint32_t(head_ncmds64, ofile);	/* number of load commands */
     fwriteint32_t(head_sizeofcmds64, ofile);	/* size of load commands */
     fwriteint32_t(0, ofile);	/* no flags */
-	fwriteint32_t(0, ofile); /* reserved for future use */
+    fwriteint32_t(0, ofile);	/* reserved for future use */
 }
 
 /* Write out the segment load command at offset.  */
@@ -1036,8 +1036,8 @@ static uint32_t macho_write_segment (uint64_t offset)
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
-        fwrite(s->sectname, sizeof(s->sectname), 1, ofile);
-        fwrite(s->segname, sizeof(s->segname), 1, ofile);
+        nasm_write(s->sectname, sizeof(s->sectname), ofile);
+        nasm_write(s->segname, sizeof(s->segname), ofile);
         fwriteint64_t(s->addr, ofile);
         fwriteint64_t(s->size, ofile);
 
@@ -1202,9 +1202,9 @@ static void macho_write_symtab (void)
     for (sym = syms; sym != NULL; sym = sym->next) {
 	if ((sym->type & N_EXT) == 0) {
 	    fwriteint32_t(sym->strx, ofile);		/* string table entry number */
-	    fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
-	    fwrite(&sym->sect, 1, 1, ofile);	/* section */
-	    fwriteint16_t(sym->desc, ofile);	/* description */
+	    nasm_write(&sym->type, 1, ofile);		/* symbol type */
+	    nasm_write(&sym->sect, 1, ofile);		/* section */
+	    fwriteint16_t(sym->desc, ofile);		/* description */
 
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
@@ -1224,8 +1224,8 @@ static void macho_write_symtab (void)
     for (i = 0; i < nextdefsym; i++) {
 	sym = extdefsyms[i];
 	fwriteint32_t(sym->strx, ofile);
-	fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
-	fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	nasm_write(&sym->type, 1, ofile);	/* symbol type */
+	nasm_write(&sym->sect, 1, ofile);	/* section */
 	fwriteint16_t(sym->desc, ofile);	/* description */
 
 	/* Fix up the symbol value now that we know the final section
@@ -1242,8 +1242,8 @@ static void macho_write_symtab (void)
      for (i = 0; i < nundefsym; i++) {
 	 sym = undefsyms[i];
 	 fwriteint32_t(sym->strx, ofile);
-	 fwrite(&sym->type, 1, 1, ofile);	/* symbol type */
-	 fwrite(&sym->sect, 1, 1, ofile);	/* section */
+	 nasm_write(&sym->type, 1, ofile);	/* symbol type */
+	 nasm_write(&sym->sect, 1, ofile);	/* section */
 	 fwriteint16_t(sym->desc, ofile);	/* description */
 
 	 // Fix up the symbol value now that we know the final section sizes.

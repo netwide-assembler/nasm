@@ -998,7 +998,7 @@ static void coff_section_header(char *name, int32_t namepos, int32_t vsize,
 
     if (namepos == -1) {
         strncpy(padname, name, 8);
-        fwrite(padname, 8, 1, ofile);
+        nasm_write(padname, 8, ofile);
     } else {
         /*
          * If name is longer than 8 bytes, write '/' followed
@@ -1020,7 +1020,7 @@ static void coff_section_header(char *name, int32_t namepos, int32_t vsize,
         padname[6] = '0' + (namepos / 10);
         namepos = namepos % 10;
         padname[7] = '0' + (namepos);
-        fwrite(padname, 8, 1, ofile);
+        nasm_write(padname, 8, ofile);
     }
 
     fwriteint32_t(0,            ofile); /* Virtual size field - set to 0 or vsize */
@@ -1073,7 +1073,7 @@ static void coff_symbol(char *name, int32_t strpos, int32_t value,
 
     if (name) {
         strncpy(padname, name, 8);
-        fwrite(padname, 8, 1, ofile);
+        nasm_write(padname, 8, ofile);
     } else {
         fwriteint32_t(0, ofile);
         fwriteint32_t(strpos, ofile);
@@ -1097,7 +1097,7 @@ static void coff_write_symbols(void)
      */
     coff_symbol(".file", 0L, 0L, -2, 0, 0x67, 1);
     strncpy(filename, coff_infile, 18);
-    fwrite(filename, 18, 1, ofile);
+    nasm_write(filename, 18, ofile);
 
     /*
      * The section records, with their auxiliaries.
@@ -1108,7 +1108,7 @@ static void coff_write_symbols(void)
         coff_symbol(sects[i]->name, 0L, 0L, i + 1, 0, 3, 1);
         fwriteint32_t(sects[i]->len,    ofile);
         fwriteint16_t(sects[i]->nrelocs,ofile);
-        fwrite(filename, 12, 1, ofile);
+        nasm_write(filename, 12, ofile);
     }
 
     /*
