@@ -86,8 +86,7 @@ static int output_bin(FILE *f, void *data, uint32_t bytes, uint32_t where)
     }
 
     pad = (where-origin) - offset;
-    if (fwritezero(pad, f) != pad)
-	return -1;
+    fwritezero(pad, f);
     offset += pad;
 
     if (fwrite(data, 1, bytes, f) != bytes)
