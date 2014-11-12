@@ -2490,7 +2490,7 @@ VMOVNTDQA	xmmreg,mem128			[rm:	vex.128.66.0f38 2a /r]			AVX,SANDYBRIDGE
 VMOVNTPD	mem128,xmmreg			[mr:	vex.128.66.0f 2b /r]			AVX,SANDYBRIDGE
 VMOVNTPD	mem256,ymmreg			[mr:	vex.256.66.0f 2b /r]			AVX,SANDYBRIDGE
 VMOVNTPS	mem128,xmmreg			[mr:	vex.128.0f 2b /r]			AVX,SANDYBRIDGE
-VMOVNTPS	mem128,ymmreg			[mr:	vex.256.0f 2b /r]			AVX,SANDYBRIDGE
+VMOVNTPS	mem256,ymmreg			[mr:	vex.256.0f 2b /r]			AVX,SANDYBRIDGE
 VMOVSD		xmmreg,xmmreg*,xmmreg		[rvm:	vex.nds.lig.f2.0f 10 /r]		AVX,SANDYBRIDGE
 VMOVSD		xmmreg,mem64			[rm:	vex.lig.f2.0f 10 /r]			AVX,SANDYBRIDGE
 VMOVSD		xmmreg,xmmreg*,xmmreg		[mvr:	vex.nds.lig.f2.0f 11 /r]		AVX,SANDYBRIDGE
