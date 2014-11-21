@@ -14,12 +14,20 @@ exec_prefix	= $(prefix)
 bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
+!IF "$(DEBUG)" == "1"
+CFLAGS		= /Od /Zi
+LDFLAGS		= /DEBUG
+!ELSE
+CFLAGS		= /O2 /Ox /Oy
+!ENDIF
+
 CC		= cl
-CFLAGS		= /O2 /Ox /Oy /W2
+LD		= link
+CFLAGS		= $(CFLAGS) /W2
 BUILD_CFLAGS	= $(CFLAGS) /I$(srcdir)/inttypes
 INTERNAL_CFLAGS = /I$(srcdir) /I. /DHAVE__SNPRINTF /DHAVE__VSNPRINTF
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-LDFLAGS		=
+LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE
 LIBS		=
 PERL		= perl -I$(srcdir)/perllib
 
@@ -64,10 +72,10 @@ all: nasm$(X) ndisasm$(X)
 	rem cd rdoff && $(MAKE) all
 
 nasm$(X): $(NASM)
-	$(CC) $(LDFLAGS) /Fenasm$(X) $(NASM) $(LIBS)
+	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS)
 
 ndisasm$(X): $(NDISASM)
-	$(CC) $(LDFLAGS) /Fendisasm$(X) $(NDISASM) $(LIBS)
+	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS)
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
