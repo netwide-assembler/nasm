@@ -900,6 +900,8 @@ is_expression:
             value = evaluate(stdscan, NULL, &tokval, &op->opflags,
                              critical, nasm_error, &hints);
             i = tokval.t_type;
+            if (!value)
+                goto fail;
 
             if (parse_mref(&o2, value))
                 goto fail;
