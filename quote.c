@@ -441,8 +441,10 @@ char *nasm_skip_string(char *str)
 	return p;
     } else if (bq == '`') {
 	/* `...` string */
-	p = str+1;
 	state = st_start;
+	p = str+1;
+	if (!*p)
+		return p;
 
 	while ((c = *p++)) {
 	    switch (state) {
