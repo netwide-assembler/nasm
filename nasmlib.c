@@ -424,7 +424,7 @@ void fwriteint32_t(uint32_t data, FILE * fp)
 {
     char buffer[4], *p = buffer;
     WRITELONG(p, data);
-    nasm_write(buffer, 1, 4, fp);
+    nasm_write(buffer, 4, fp);
 }
 
 void fwriteint64_t(uint64_t data, FILE * fp)
