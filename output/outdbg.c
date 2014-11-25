@@ -206,7 +206,7 @@ static int dbg_set_info(enum geninfo type, char **val)
 char *types[] = {
     "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
 };
-void dbgdbg_init(void)
+static void dbgdbg_init(void)
 {
     fprintf(ofile, "   With debug info\n");
 }
