@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -45,6 +45,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "hashtbl.h"
+#include "labels.h"
 
 /*
  * A local label is one that begins with exactly one period. Things
