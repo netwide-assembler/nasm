@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -165,7 +165,7 @@ int errorcount = 0;             /* determines main program exit status */
  *
  * sets up segments 0, 1, and 2, the initial code data and bss segments
  */
-void initsegments()
+static void initsegments(void)
 {
     nsegs = 3;
     outputseg[0].type = 1;
@@ -190,7 +190,7 @@ void initsegments()
  * each segment it contains (including determining destination segments and
  * relocation factors for segments that	are kept).
  */
-void loadmodule(const char *filename)
+static void loadmodule(const char *filename)
 {
     if (options.verbose)
         printf("loading `%s'\n", filename);
@@ -426,7 +426,7 @@ void processmodule(const char *filename, struct modulenode *mod)
 /*
  * Return 1 if a given module is in the list, 0 otherwise.
  */
-int lookformodule(const char *name)
+static int lookformodule(const char *name)
 {
     struct modulenode *curr = modules;
 
@@ -560,7 +560,7 @@ int symtab_get(const char *symbol, int *segment, int32_t *offset)
  * checks that a library can be opened and is in the correct format,
  * then adds it to the linked list of libraries.
  */
-void add_library(const char *name)
+static void add_library(const char *name)
 {
     if (rdl_verify(name)) {
         rdl_perror("ldrdf", name);
@@ -599,7 +599,7 @@ void add_library(const char *name)
  * returns 1 if any extra library modules are included, indicating that
  * another pass through the library list should be made (possibly).
  */
-int search_libraries()
+static int search_libraries(void)
 {
     struct librarynode *cur;
     rdffile f;
@@ -706,7 +706,7 @@ int search_libraries()
  * all the modules into a single output module, and then writes this to a
  * file.
  */
-void write_output(const char *filename)
+static void write_output(const char *filename)
 {
     FILE *f;
     rdf_headerbuf *rdfheader;
@@ -1153,7 +1153,7 @@ void write_output(const char *filename)
  * Main program
  */
 
-void usage()
+static void usage(void)
 {
     printf("usage:\n"
            "   ldrdf [options] object modules ... [-llibrary ...]\n"
