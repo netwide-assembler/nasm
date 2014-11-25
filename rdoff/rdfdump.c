@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -49,7 +49,7 @@
 
 FILE *infile;
 
-void print_header(int32_t length, int rdf_version)
+static void print_header(int32_t length, int rdf_version)
 {
     char buf[129], t, l, s, flags;
     uint8_t reclen;
