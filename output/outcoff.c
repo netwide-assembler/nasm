@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -737,7 +737,7 @@ typedef struct tagString {
 
 static STRING *Exports = NULL;
 static struct Section *directive_sec;
-void AddExport(char *name)
+static void AddExport(char *name)
 {
     STRING *rvp = Exports, *newS;
 
