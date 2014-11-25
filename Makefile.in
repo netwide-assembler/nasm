@@ -304,7 +304,7 @@ alldeps: perlreq
 assemble.$(O): assemble.c assemble.h compiler.h config.h directiv.h disp8.h \
  iflag.h iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h \
  preproc.h regs.h tables.h tokens.h
-crc64.$(O): crc64.c compiler.h config.h nasmlib.h
+crc64.$(O): crc64.c compiler.h config.h hashtbl.h nasmlib.h
 directiv.$(O): directiv.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 disasm.$(O): disasm.c compiler.h config.h directiv.h disasm.h disp8.h \
@@ -333,7 +333,7 @@ insnsd.$(O): insnsd.c compiler.h config.h directiv.h iflag.h iflaggen.h \
  tables.h tokens.h
 insnsn.$(O): insnsn.c compiler.h config.h insnsi.h tables.h
 labels.$(O): labels.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
- nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+ labels.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 lib/snprintf.$(O): lib/snprintf.c compiler.h config.h nasmlib.h
 lib/strlcpy.$(O): lib/strlcpy.c compiler.h config.h
 lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h config.h nasmlib.h
@@ -353,7 +353,8 @@ ndisasm.$(O): ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h sync.h tables.h tokens.h
 output/nulldbg.$(O): output/nulldbg.c compiler.h config.h directiv.h \
- insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+ insnsi.h nasm.h nasmlib.h opflags.h output/outlib.h pptok.h preproc.h \
+ regs.h tables.h
 output/nullout.$(O): output/nullout.c compiler.h config.h directiv.h \
  insnsi.h nasm.h nasmlib.h opflags.h output/outlib.h pptok.h preproc.h \
  regs.h tables.h
@@ -374,7 +375,7 @@ output/outdbg.$(O): output/outdbg.c compiler.h config.h directiv.h insnsi.h \
  tables.h
 output/outelf.$(O): output/outelf.c compiler.h config.h directiv.h insnsi.h \
  nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h output/outelf.h \
- output/outform.h pptok.h preproc.h regs.h tables.h
+ output/outform.h pptok.h preproc.h rbtree.h regs.h saa.h tables.h
 output/outelf32.$(O): output/outelf32.c compiler.h config.h directiv.h \
  eval.h insnsi.h nasm.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
  output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
@@ -435,6 +436,6 @@ strfunc.$(O): strfunc.c compiler.h config.h directiv.h insnsi.h nasm.h \
 sync.$(O): sync.c compiler.h config.h nasmlib.h sync.h
 tokhash.$(O): tokhash.c compiler.h config.h directiv.h hashtbl.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
- regs.h tables.h tokens.h
+ regs.h stdscan.h tables.h tokens.h
 ver.$(O): ver.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h version.h

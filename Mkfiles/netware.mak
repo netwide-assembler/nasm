@@ -134,7 +134,7 @@ $(OBJDIR)/version.mak: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
 assemble.o: assemble.c assemble.h compiler.h config.h directiv.h disp8.h \
  iflag.h iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h \
  preproc.h regs.h tables.h tokens.h
-crc64.o: crc64.c compiler.h config.h nasmlib.h
+crc64.o: crc64.c compiler.h config.h hashtbl.h nasmlib.h
 directiv.o: directiv.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 disasm.o: disasm.c compiler.h config.h directiv.h disasm.h disp8.h iflag.h \
@@ -162,8 +162,8 @@ insnsd.o: insnsd.c compiler.h config.h directiv.h iflag.h iflaggen.h insns.h \
  insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h \
  tokens.h
 insnsn.o: insnsn.c compiler.h config.h insnsi.h tables.h
-labels.o: labels.c compiler.h config.h directiv.h hashtbl.h insnsi.h nasm.h \
- nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+labels.o: labels.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
+ labels.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 snprintf.o: snprintf.c compiler.h config.h nasmlib.h
 strlcpy.o: strlcpy.c compiler.h config.h
 vsnprintf.o: vsnprintf.c compiler.h config.h nasmlib.h
@@ -182,7 +182,7 @@ ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h sync.h tables.h tokens.h
 nulldbg.o: nulldbg.c compiler.h config.h directiv.h insnsi.h nasm.h \
- nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+ nasmlib.h opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 nullout.o: nullout.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 outaout.o: outaout.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
@@ -200,8 +200,8 @@ outcoff.o: outcoff.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
 outdbg.o: outdbg.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h outform.h pptok.h preproc.h regs.h tables.h
 outelf.o: outelf.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
- opflags.h dwarf.h elf.h outelf.h outform.h pptok.h preproc.h regs.h \
- tables.h
+ opflags.h dwarf.h elf.h outelf.h outform.h pptok.h preproc.h rbtree.h \
+ regs.h saa.h tables.h
 outelf32.o: outelf32.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h stabs.h \
  pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h
@@ -255,6 +255,6 @@ strfunc.o: strfunc.c compiler.h config.h directiv.h insnsi.h nasm.h \
 sync.o: sync.c compiler.h config.h nasmlib.h sync.h
 tokhash.o: tokhash.c compiler.h config.h directiv.h hashtbl.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
- regs.h tables.h tokens.h
+ regs.h stdscan.h tables.h tokens.h
 ver.o: ver.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h version.h
