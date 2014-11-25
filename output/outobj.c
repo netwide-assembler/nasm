@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -2404,7 +2404,7 @@ static void obj_fwrite(ObjRecord * orp)
 
 extern macros_t obj_stdmac[];
 
-void dbgbi_init(void)
+static void dbgbi_init(void)
 {
     fnhead = NULL;
     fntail = &fnhead;
