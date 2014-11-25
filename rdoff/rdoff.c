@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -69,7 +69,7 @@
  * how int32_t it is).
  * ======================================================================== */
 
-memorybuffer *newmembuf()
+static memorybuffer *newmembuf()
 {
     memorybuffer *t;
 
@@ -82,7 +82,7 @@ memorybuffer *newmembuf()
     return t;
 }
 
-void membufwrite(memorybuffer * const b, void *data, int bytes)
+static void membufwrite(memorybuffer * const b, void *data, int bytes)
 {
     uint16_t w;
     int32_t l;
@@ -130,7 +130,7 @@ void membufwrite(memorybuffer * const b, void *data, int bytes)
     }
 }
 
-void membufdump(memorybuffer * b, FILE * fp)
+static void membufdump(memorybuffer * b, FILE * fp)
 {
     if (!b)
         return;
@@ -140,14 +140,14 @@ void membufdump(memorybuffer * b, FILE * fp)
     membufdump(b->next, fp);
 }
 
-int membuflength(memorybuffer * b)
+static int membuflength(memorybuffer * b)
 {
     if (!b)
         return 0;
     return b->length + membuflength(b->next);
 }
 
-void freemembuf(memorybuffer * b)
+static void freemembuf(memorybuffer * b)
 {
     if (!b)
         return;
