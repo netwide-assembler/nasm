@@ -1299,7 +1299,7 @@ static void ieee_unqualified_name(char *dest, char *source)
     } else
         strcpy(dest, source);
 }
-void dbgls_init(void)
+static void dbgls_init(void)
 {
     int tempint;
 
