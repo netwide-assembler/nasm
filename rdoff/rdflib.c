@@ -109,7 +109,7 @@ static void int32_ttolocal(int32_t *l)
 #endif
 }
 
-char copybytes(FILE * fp, FILE * fp2, int n)
+static char copybytes(FILE * fp, FILE * fp2, int n)
 {
     int i, t = 0;
 
@@ -129,7 +129,7 @@ char copybytes(FILE * fp, FILE * fp2, int n)
     return (char)t;             /* return last char read */
 }
 
-int32_t copyint32_t(FILE * fp, FILE * fp2)
+static int32_t copyint32_t(FILE * fp, FILE * fp2)
 {
     int32_t l;
     int i, t;
