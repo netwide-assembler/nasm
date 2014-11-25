@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2014 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -211,6 +211,7 @@ if ($output eq 'h') {
     print "#include \"nasm.h\"\n";
     print "#include \"hashtbl.h\"\n";
     print "#include \"insns.h\"\n";
+    print "#include \"stdscan.h\"\n";
     print "\n";
 
     # These somewhat odd sizes and ordering thereof are due to the
