@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -33,6 +33,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "output/outlib.h"
 
 void null_debug_init(void)
 {
