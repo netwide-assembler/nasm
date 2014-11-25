@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -126,7 +126,7 @@ int rdl_open(struct librarynode *lib, const char *name)
     return 0;
 }
 
-void rdl_close(struct librarynode *lib)
+static void rdl_close(struct librarynode *lib)
 {
     if (lib->fp)
         fclose(lib->fp);
