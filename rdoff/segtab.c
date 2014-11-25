@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -70,7 +70,7 @@ void init_seglocations(segtab * root)
     *root = NULL;
 }
 
-void descend_tree_add(struct segtabnode **node,
+static void descend_tree_add(struct segtabnode **node,
                       int localseg, int destseg, int32_t offset)
 {
     struct segtabnode *n;
@@ -143,7 +143,7 @@ int get_seglocation(segtab * root, int localseg, int *destseg,
         return 0;
 }
 
-void freenode(struct segtabnode *n)
+static void freenode(struct segtabnode *n)
 {
     if (!n)
         return;
