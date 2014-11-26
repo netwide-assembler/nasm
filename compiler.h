@@ -93,7 +93,7 @@ int snprintf(char *, size_t, const char *, ...);
 #endif
 
 #ifndef HAVE_VSNPRINTF
-# ifdef HAVE__VSNPRINT
+# ifdef HAVE__VSNPRINTF
 #  define vsnprintf _vsnprintf
 # else
 int vsnprintf(char *, size_t, const char *, va_list);
