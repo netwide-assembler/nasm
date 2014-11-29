@@ -898,7 +898,7 @@ set_warning:
                 depend_emit_phony = true;
                 break;
             case 'D':
-                operating_mode = OP_DEPEND | OP_NORMAL;
+                operating_mode = OP_NORMAL;
                 depend_file = q;
                 advance = true;
                 break;
