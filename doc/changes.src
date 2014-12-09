@@ -7,6 +7,18 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.07} Version 2.11.07
+
+\b Fix 256 bit \c{VMOVNTPS} instruction.
+
+\b Fix \c{-MD} option handling, which was rather broken in previous
+release changing command line api.
+
+\b Fix access to unitialized space when handling strings with
+a single grave.
+
+\b Fix nil dereference in handling memory reference parsing.
+
 \S{cl-2.11.06} Version 2.11.06
 
 \b Update AVX512 instructions based on the Extension Reference (319433-021 Sept
