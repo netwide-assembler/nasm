@@ -158,44 +158,48 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
     if (regval < 0 || regval > (rex & REX_EV ? 31 : 15))
         return 0;
 
+#define GET_REGISTER(__array, __index)                      \
+    ((__index) < ARRAY_SIZE(__array) ? __array[(__index)] : 0)
+
     if (!(REG8 & ~regflags)) {
         if (rex & (REX_P|REX_NH))
-            return nasm_rd_reg8_rex[regval];
+            return GET_REGISTER(nasm_rd_reg8_rex, regval);
         else
-            return nasm_rd_reg8[regval];
+            return GET_REGISTER(nasm_rd_reg8, regval);
     }
     if (!(REG16 & ~regflags))
-        return nasm_rd_reg16[regval];
+        return GET_REGISTER(nasm_rd_reg16, regval);
     if (!(REG32 & ~regflags))
-        return nasm_rd_reg32[regval];
+        return GET_REGISTER(nasm_rd_reg32, regval);
     if (!(REG64 & ~regflags))
-        return nasm_rd_reg64[regval];
+        return GET_REGISTER(nasm_rd_reg64, regval);
     if (!(REG_SREG & ~regflags))
-        return nasm_rd_sreg[regval & 7]; /* Ignore REX */
+        return GET_REGISTER(nasm_rd_sreg, regval & 7); /* Ignore REX */
     if (!(REG_CREG & ~regflags))
-        return nasm_rd_creg[regval];
+        return GET_REGISTER(nasm_rd_creg, regval);
     if (!(REG_DREG & ~regflags))
-        return nasm_rd_dreg[regval];
+        return GET_REGISTER(nasm_rd_dreg, regval);
     if (!(REG_TREG & ~regflags)) {
         if (regval > 7)
             return 0;        /* TR registers are ill-defined with rex */
-        return nasm_rd_treg[regval];
+        return GET_REGISTER(nasm_rd_treg, regval);
     }
     if (!(FPUREG & ~regflags))
-        return nasm_rd_fpureg[regval & 7]; /* Ignore REX */
+        return GET_REGISTER(nasm_rd_fpureg, regval & 7); /* Ignore REX */
     if (!(MMXREG & ~regflags))
-        return nasm_rd_mmxreg[regval & 7]; /* Ignore REX */
+        return GET_REGISTER(nasm_rd_mmxreg, regval & 7); /* Ignore REX */
     if (!(XMMREG & ~regflags))
-        return nasm_rd_xmmreg[regval];
+        return GET_REGISTER(nasm_rd_xmmreg, regval);
     if (!(YMMREG & ~regflags))
-        return nasm_rd_ymmreg[regval];
+        return GET_REGISTER(nasm_rd_ymmreg, regval);
     if (!(ZMMREG & ~regflags))
-        return nasm_rd_zmmreg[regval];
+        return GET_REGISTER(nasm_rd_zmmreg, regval);
     if (!(OPMASKREG & ~regflags))
-        return nasm_rd_opmaskreg[regval];
+        return GET_REGISTER(nasm_rd_opmaskreg, regval);
     if (!(BNDREG & ~regflags))
-        return nasm_rd_bndreg[regval];
+        return GET_REGISTER(nasm_rd_bndreg, regval);
 
+#undef GET_REGISTER
     return 0;
 }
 
