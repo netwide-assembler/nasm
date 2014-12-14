@@ -502,7 +502,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
     memset(ins->prefixes, 0, sizeof ins->prefixes);
 
     if (itemp_has(t, (segsize == 64 ? IF_NOLONG : IF_LONG)))
-        return false;
+        return 0;
 
     if (prefix->rep == 0xF2)
         drep = (itemp_has(t, IF_BND) ? P_BND : P_REPNE);
@@ -525,7 +525,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
         case 04:
             while (c--)
                 if (*r++ != *data++)
-                    return false;
+                    return 0;
             break;
 
         case 05:
@@ -538,7 +538,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
         {
             int t = *r++, d = *data++;
             if (d < t || d > t + 7)
-                return false;
+                return 0;
             else {
                 opx->basereg = (d-t)+
                     (ins->rex & REX_B ? 8 : 0);
@@ -664,7 +664,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             opx->segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
             if (!data)
-                return false;
+                return 0;
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
             if ((ins->rex & REX_EV) && (segsize == 64))
                 opx->basereg += (ins->evex_p[0] & EVEX_P0RP ? 0 : 16);
@@ -687,7 +687,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 c = *r++;
 
                 if ((c ^ ximm) & 15)
-                    return false;
+                    return 0;
 
                 ins->oprs[c >> 4].basereg = (ximm >> 4) & regmask;
                 ins->oprs[c >> 4].segment |= SEG_RMREG;
@@ -714,10 +714,10 @@ static int matches(const struct itemplate *t, uint8_t *data,
         {
             int modrm = *data++;
             if (((modrm >> 3) & 07) != (c & 07))
-                return false;   /* spare field doesn't match up */
+                return 0;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
             if (!data)
-                return false;
+                return 0;
             break;
         }
 
@@ -732,19 +732,19 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
             ins->rex |= REX_EV;
             if ((prefix->rex & (REX_EV|REX_V|REX_P)) != REX_EV)
-                return false;
+                return 0;
 
             if ((evexm & 0x1f) != prefix->vex_m)
-                return false;
+                return 0;
 
             switch (evexwlp & 060) {
             case 000:
                 if (prefix->rex & REX_W)
-                    return false;
+                    return 0;
                 break;
             case 020:
                 if (!(prefix->rex & REX_W))
-                    return false;
+                    return 0;
                 ins->rex |= REX_W;
                 break;
             case 040:        /* VEX.W is a don't care */
@@ -763,13 +763,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
                 valid_mask = 0xf;   /* vector length and prefix */
             }
             if ((evexwlp ^ prefix->vex_lp) & valid_mask)
-                return false;
+                return 0;
 
             if (c == 0250) {
                 if ((prefix->vex_v != 0) ||
                     (!(prefix->evex[2] & EVEX_P2VP) &&
                      ((eat < EA_XMMVSIB) || (eat > EA_ZMMVSIB))))
-                    return false;
+                    return 0;
             } else {
                 opx->segment |= SEG_RMREG;
                 opx->basereg = ((~prefix->evex[2] & EVEX_P2VP) << (4 - 3) ) |
@@ -788,19 +788,19 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
             ins->rex |= REX_V;
             if ((prefix->rex & (REX_V|REX_P)) != REX_V)
-                return false;
+                return 0;
 
             if ((vexm & 0x1f) != prefix->vex_m)
-                return false;
+                return 0;
 
             switch (vexwlp & 060) {
             case 000:
                 if (prefix->rex & REX_W)
-                    return false;
+                    return 0;
                 break;
             case 020:
                 if (!(prefix->rex & REX_W))
-                    return false;
+                    return 0;
                 ins->rex &= ~REX_W;
                 break;
             case 040:        /* VEX.W is a don't care */
@@ -812,11 +812,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
             /* The 010 bit of vexwlp is set if VEX.L is ignored */
             if ((vexwlp ^ prefix->vex_lp) & ((vexwlp & 010) ? 03 : 07))
-                return false;
+                return 0;
 
             if (c == 0270) {
                 if (prefix->vex_v != 0)
-                    return false;
+                    return 0;
             } else {
                 opx->segment |= SEG_RMREG;
                 opx->basereg = prefix->vex_v;
@@ -848,69 +848,69 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case 0310:
             if (asize != 16)
-                return false;
+                return 0;
             else
                 a_used = true;
             break;
 
         case 0311:
             if (asize != 32)
-                return false;
+                return 0;
             else
                 a_used = true;
             break;
 
         case 0312:
             if (asize != segsize)
-                return false;
+                return 0;
             else
                 a_used = true;
             break;
 
         case 0313:
             if (asize != 64)
-                return false;
+                return 0;
             else
                 a_used = true;
             break;
 
         case 0314:
             if (prefix->rex & REX_B)
-                return false;
+                return 0;
             break;
 
         case 0315:
             if (prefix->rex & REX_X)
-                return false;
+                return 0;
             break;
 
         case 0316:
             if (prefix->rex & REX_R)
-                return false;
+                return 0;
             break;
 
         case 0317:
             if (prefix->rex & REX_W)
-                return false;
+                return 0;
             break;
 
         case 0320:
             if (osize != 16)
-                return false;
+                return 0;
             else
                 o_used = true;
             break;
 
         case 0321:
             if (osize != 32)
-                return false;
+                return 0;
             else
                 o_used = true;
             break;
 
         case 0322:
             if (osize != (segsize == 16) ? 16 : 32)
-                return false;
+                return 0;
             else
                 o_used = true;
             break;
@@ -923,7 +923,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case 0324:
             if (osize != 64)
-                return false;
+                return 0;
             o_used = true;
             break;
 
@@ -935,7 +935,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
         {
             int t = *r++, d = *data++;
             if (d < t || d > t + 15)
-                return false;
+                return 0;
             else
                 ins->condition = d - t;
             break;
@@ -943,23 +943,23 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case 0326:
             if (prefix->rep == 0xF3)
-                return false;
+                return 0;
             break;
 
         case 0331:
             if (prefix->rep)
-                return false;
+                return 0;
             break;
 
         case 0332:
             if (prefix->rep != 0xF2)
-                return false;
+                return 0;
             drep = 0;
             break;
 
         case 0333:
             if (prefix->rep != 0xF3)
-                return false;
+                return 0;
             drep = 0;
             break;
 
@@ -980,44 +980,44 @@ static int matches(const struct itemplate *t, uint8_t *data,
             break;
 
         case 0340:
-            return false;
+            return 0;
 
         case 0341:
             if (prefix->wait != 0x9B)
-                return false;
+                return 0;
             dwait = 0;
             break;
 
         case 0360:
             if (prefix->osp || prefix->rep)
-                return false;
+                return 0;
             break;
 
         case 0361:
             if (!prefix->osp || prefix->rep)
-                return false;
+                return 0;
             o_used = true;
             break;
 
         case 0364:
             if (prefix->osp)
-                return false;
+                return 0;
             break;
 
         case 0365:
             if (prefix->asp)
-                return false;
+                return 0;
             break;
 
         case 0366:
             if (!prefix->osp)
-                return false;
+                return 0;
             o_used = true;
             break;
 
         case 0367:
             if (!prefix->asp)
-                return false;
+                return 0;
             a_used = true;
             break;
 
@@ -1038,16 +1038,16 @@ static int matches(const struct itemplate *t, uint8_t *data,
             break;
 
         default:
-            return false;    /* Unknown code */
+            return 0;    /* Unknown code */
         }
     }
 
     if (!vex_ok && (ins->rex & (REX_V | REX_EV)))
-        return false;
+        return 0;
 
     /* REX cannot be combined with VEX */
     if ((ins->rex & REX_V) && (prefix->rex & REX_P))
-        return false;
+        return 0;
 
     /*
      * Check for unused rep or a/o prefixes.
@@ -1059,12 +1059,12 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
     if (lock) {
         if (ins->prefixes[PPS_LOCK])
-            return false;
+            return 0;
         ins->prefixes[PPS_LOCK] = P_LOCK;
     }
     if (drep) {
         if (ins->prefixes[PPS_REP])
-            return false;
+            return 0;
         ins->prefixes[PPS_REP] = drep;
     }
     ins->prefixes[PPS_WAIT] = dwait;
@@ -1085,13 +1085,13 @@ static int matches(const struct itemplate *t, uint8_t *data,
             }
 
             if (ins->prefixes[PPS_OSIZE])
-                return false;
+                return 0;
             ins->prefixes[PPS_OSIZE] = pfx;
         }
     }
     if (!a_used && asize != segsize) {
         if (ins->prefixes[PPS_ASIZE])
-            return false;
+            return 0;
         ins->prefixes[PPS_ASIZE] = asize == 16 ? P_A16 : P_A32;
     }
 
