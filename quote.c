@@ -471,7 +471,7 @@ char *nasm_skip_string(char *str)
 		break;
 	    }
 	}
-	return p;		/* Unterminated string... */
+	return p-1;		/* Unterminated string... */
     } else {
 	return str;		/* Not a string... */
     }
