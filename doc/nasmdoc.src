@@ -4490,7 +4490,7 @@ define a new section, if you try to switch to a section that does
 not (yet) exist.
 
 The Unix object formats, and the \c{bin} object format (but see
-\k{multisec}, all support
+\k{multisec}), all support
 the \i{standardized section names} \c{.text}, \c{.data} and \c{.bss}
 for the code, data and uninitialized-data sections. The \c{obj}
 format, by contrast, does not recognize these section names as being
