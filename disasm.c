@@ -159,7 +159,7 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
         return 0;
 
 #define GET_REGISTER(__array, __index)                      \
-    ((__index) < ARRAY_SIZE(__array) ? __array[(__index)] : 0)
+    ((size_t)(__index) < (size_t)ARRAY_SIZE(__array) ? __array[(__index)] : 0)
 
     if (!(REG8 & ~regflags)) {
         if (rex & (REX_P|REX_NH))
