@@ -114,85 +114,88 @@ my $outfmt;
 my $lastname;
 my $z;
 
-foreach $fname ( @ARGV ) {
-    open(INPUT,"< $fname\0") or die "$0: $fname: $!\n";
-    while (<INPUT>) {
-	$line++;
-	chomp;
-	while (/^(.*)\\$/) {
-	    $_ = $1;
-	    $_ .= <INPUT>;
-	    chomp;
+foreach $args ( @ARGV ) {
+    my @file_list = glob ( $args );
+    foreach $fname ( @file_list ) {
+        open(INPUT,"< $fname\0") or die "$0: $fname: $!\n";
+	while (<INPUT>) {
 	    $line++;
-	}
-	if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
-	    $tasm_count = $index;
-	    print OUT "    /* End of TASM macros */\n";
-	} elsif (m/^OUT:\s*(.*\S)\s*$/) {
-	    undef $pkg;
-	    my @out_alias = split(/\s+/, $1);
-	    printf OUT "        /* %4d */ 0\n", $index++;
-	    print OUT "};\n#endif\n";
-	    $index = 0;
-	    print OUT "\n";
-	    my $pfx = '#if';
-	    foreach my $al (@out_alias) {
-		print OUT $pfx, " defined(OF_\U${al}\E)";
-		$pfx = ' ||';
+	    chomp;
+	    while (/^(.*)\\$/) {
+		$_ = $1;
+		$_ .= <INPUT>;
+		chomp;
+		$line++;
 	    }
-	    printf OUT "\nconst unsigned char %s_stdmac[] = {\n", $out_alias[0];
-	    print  OUT "    /* From $fname */\n";
-	    $lastname = $fname;
-	    push(@out_list, $out_alias[0]);
-	    $out_index{$out_alias[0]} = $index;
-	} elsif (m/^USE:\s*(\S+)\s*$/) {
-	    $pkg = $1;
-	    if (defined($pkg_number{$pkg})) {
-		die "$0: $fname: duplicate package: $pkg\n";
-	    }
-	    printf OUT "        /* %4d */ 0\n", $index++;
-	    print OUT "};\n#endif\n";
-	    $index = 0;
-	    print OUT "\n#if 1\n";
-	    printf OUT "static const unsigned char nasm_stdmac_%s[] = {\n", $pkg;
-	    print  OUT "    /* From $fname */\n";
-	    $lastname = $fname;
-	    push(@pkg_list, $pkg);
-	    $pkg_number{$pkg} = $npkg++;
-	    $z = pack("C", $pptok_hash{'%define'}+128)."__USE_\U$pkg\E__";
-	    printf OUT "        /* %4d */ %s0,\n", $index, charcify($z);
-	    $index += length($z)+1;
-	} elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
-	    my $s1, $s2, $pd, $ws;
-	    $s1 = $1;
-	    $s2 = '';
-	    while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
-		$s2 .= "$'";
-		$pd = $1;
-		$ws = $3;
-		$s1 = $4;
-		if (defined($pptok_hash{$pd}) &&
-		    $pptok_hash{$pd} <= 127) {
-		    $s2 .= pack("C", $pptok_hash{$pd}+128);
-		} else {
-		    $s2 .= $pd.$ws;
+	    if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
+		$tasm_count = $index;
+		print OUT "    /* End of TASM macros */\n";
+	    } elsif (m/^OUT:\s*(.*\S)\s*$/) {
+		undef $pkg;
+		my @out_alias = split(/\s+/, $1);
+		printf OUT "        /* %4d */ 0\n", $index++;
+		print OUT "};\n#endif\n";
+		$index = 0;
+		print OUT "\n";
+		my $pfx = '#if';
+		foreach my $al (@out_alias) {
+		    print OUT $pfx, " defined(OF_\U${al}\E)";
+		    $pfx = ' ||';
 		}
+		printf OUT "\nconst unsigned char %s_stdmac[] = {\n", $out_alias[0];
+		print  OUT "    /* From $fname */\n";
+		$lastname = $fname;
+		push(@out_list, $out_alias[0]);
+		$out_index{$out_alias[0]} = $index;
+	    } elsif (m/^USE:\s*(\S+)\s*$/) {
+		$pkg = $1;
+		if (defined($pkg_number{$pkg})) {
+		    die "$0: $fname: duplicate package: $pkg\n";
+		}
+		printf OUT "        /* %4d */ 0\n", $index++;
+		print OUT "};\n#endif\n";
+		$index = 0;
+		print OUT "\n#if 1\n";
+		printf OUT "static const unsigned char nasm_stdmac_%s[] = {\n", $pkg;
+		print  OUT "    /* From $fname */\n";
+		$lastname = $fname;
+		push(@pkg_list, $pkg);
+		$pkg_number{$pkg} = $npkg++;
+		$z = pack("C", $pptok_hash{'%define'}+128)."__USE_\U$pkg\E__";
+		printf OUT "        /* %4d */ %s0,\n", $index, charcify($z);
+		$index += length($z)+1;
+	    } elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
+		my $s1, $s2, $pd, $ws;
+		$s1 = $1;
+		$s2 = '';
+		while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
+		    $s2 .= "$'";
+		    $pd = $1;
+		    $ws = $3;
+		    $s1 = $4;
+		    if (defined($pptok_hash{$pd}) &&
+			$pptok_hash{$pd} <= 127) {
+			$s2 .= pack("C", $pptok_hash{$pd}+128);
+		    } else {
+			$s2 .= $pd.$ws;
+		    }
+		}
+		$s2 .= $s1;
+		if (length($s2) > 0) {
+		    if ($lastname ne $fname) {
+			print OUT "\n    /* From $fname */\n";
+			$lastname = $fname;
+		    }	
+		    printf OUT "        /* %4d */ %s0,\n",
+			$index, charcify($s2);
+		    $index += length($s2)+1;
+		}
+	    } else {
+		die "$fname:$line:  error unterminated quote";
 	    }
-	    $s2 .= $s1;
-	    if (length($s2) > 0) {
-		if ($lastname ne $fname) {
-		    print OUT "\n    /* From $fname */\n";
-		    $lastname = $fname;
-		}	
-		printf OUT "        /* %4d */ %s0,\n",
-		    $index, charcify($s2);
-		$index += length($s2)+1;
-	    }
-	} else {
-	    die "$fname:$line:  error unterminated quote";
 	}
+        close(INPUT);
     }
-    close(INPUT);
 }
 printf OUT "        /* %4d */ 0\n};\n#endif\n\n", $index++;
 print OUT "const unsigned char * const nasm_stdmac_after_tasm = ",
