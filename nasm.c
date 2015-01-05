@@ -199,7 +199,7 @@ static void nasm_fputs(const char *line, FILE * outfile)
 }
 
 /* Convert a struct tm to a POSIX-style time constant */
-static int64_t posix_mktime(struct tm *tm)
+static int64_t make_posix_time(struct tm *tm)
 {
     int64_t t;
     int64_t y = tm->tm_year;
@@ -253,9 +253,9 @@ static void define_macros_early(void)
     }
 
     if (gm_p)
-        posix_time = posix_mktime(&gm);
+        posix_time = make_posix_time(&gm);
     else if (lt_p)
-        posix_time = posix_mktime(&lt);
+        posix_time = make_posix_time(&lt);
     else
         posix_time = 0;
 
