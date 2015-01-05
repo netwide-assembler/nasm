@@ -126,13 +126,6 @@ int rdl_open(struct librarynode *lib, const char *name)
     return 0;
 }
 
-static void rdl_close(struct librarynode *lib)
-{
-    if (lib->fp)
-        fclose(lib->fp);
-    free(lib->name);
-}
-
 int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
 {
     char buf[512];
