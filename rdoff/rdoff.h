@@ -52,7 +52,7 @@
 #define RDOFF2_SIGNATURE	"RDOFF2"
 
 /* Maximum size of an import/export label (including trailing zero) */
-#define EXIM_LABEL_MAX		64
+#define EXIM_LABEL_MAX		256
 
 /* Maximum size of library or module name (including trailing zero) */
 #define MODLIB_NAME_MAX		128
