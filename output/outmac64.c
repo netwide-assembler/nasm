@@ -304,11 +304,15 @@ static struct symbol *get_closest_section_symbol_by_offset(uint8_t fileindex, in
 
     for (sym = syms; sym; sym = sym->next) {
         if ((sym->sect != NO_SECT) && (sym->sect == fileindex)) {
-            if ((int64_t)sym->value > offset)
+            if ((int64_t)sym->value >= offset)
                 break;
             nearest = sym;
         }
     }
+
+    if (!nearest)
+        nasm_error(ERR_FATAL, "No section for index %x offset %llx found\n",
+                   fileindex, (long long)offset);
 
     return nearest;
 }
