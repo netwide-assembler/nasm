@@ -36,7 +36,7 @@ D: Documentation - "3dNow!" instructions and misc.
 D: insns.dat fixes and new instructions.
 
 N: AMD Inc. (names of developers here?)
-E: 
+E:
 D: 3DNow instructions
 D: New Athlon instructions
 D: Makefile.vc fix
@@ -46,8 +46,8 @@ E: johninsd@users.sourceforge.net
 D: added Jcc optimizations; CPU level checks
 D: bug fixes, compilation fixes
 
-N: Yuri Zaporogets
-E: yuriz@users.sourceforge.net
+N: Yuri Zaporozhets
+E: r_tty@yahoo.co.uk
 D: RDOFF support
 
 N: H. Peter Anvin
@@ -61,17 +61,17 @@ D: Preprocessor and OBJ (OMF) output format driver
 D: Organized DOS versions of 0.98 release
 
 N: Kendall Bennet
-E: KendallB@scitechsoft.com 
+E: KendallB@scitechsoft.com
 D: NASM enhancements
 D: macros
 D: Syntax modifications
 
 N: Gary Clark
-E: 
+E:
 D: AMD 3DNow! instructions
 
 N: Andrew Crabtree
-E: 
+E:
 D: Debugging support
 
 N: Rafael R. Sevilla

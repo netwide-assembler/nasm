@@ -1241,7 +1241,7 @@ from the current BITS setting (16 or 32).
 
 
 \b       Removed the "outforms.h" file - it appears to be
-        someone's old backup of "outform.h". version "0.98.06e" 
+        someone's old backup of "outform.h". version "0.98.06e"
 
 01/09/01
 
@@ -1264,7 +1264,7 @@ from the current BITS setting (16 or 32).
 
 \b James Seter - -postfix, -prefix command line switches.
 
-\b Yuri Zaporogets - rdoff utility changes.
+\b Yuri Zaporozhets - rdoff utility changes.
 
 
 \S{cl-0.98p1} Version 0.98p1
@@ -1277,9 +1277,9 @@ from the current BITS setting (16 or 32).
 \S{cl-0.98bf (bug-fixed)} Version 0.98bf (bug-fixed)
 
 \b Fixed - elf and aoutb bug - shared libraries
-        - multiple "%include" bug in "-f obj"   
+        - multiple "%include" bug in "-f obj"
         - jcxz, jecxz bug
-        - unrecognized option bug in ndisasm 
+        - unrecognized option bug in ndisasm
 
 \S{cl-0.98.03 with John Coffman's changes released 27-Jul-2000} Version 0.98.03 with John Coffman's changes released 27-Jul-2000
 
@@ -1302,7 +1302,7 @@ This feature is controlled by a new command-line switch: "O",
 extra optimization passes, "-O1" allows up to 5 extra passes,
 and "-O2"(default), allows up to 10 extra optimization passes.
 
-\b Added a new directive:  'cpu XXX', where XXX is any of: 
+\b Added a new directive:  'cpu XXX', where XXX is any of:
 8086, 186, 286, 386, 486, 586, pentium, 686, PPro, P2, P3 or
 Katmai.  All are case insensitive.  All instructions will
 be selected only if they apply to the selected cpu or lower.
@@ -1312,7 +1312,7 @@ Corrected a couple of bugs in cpu-dependence in 'insns.dat'.
 the "bits 16/32" directive. This is nothing new, just conforms
 to a lot of other assemblers. (minor)
 
-\b Changed label allocation from 320/32 (10000 labels @ 200K+) 
+\b Changed label allocation from 320/32 (10000 labels @ 200K+)
 to 32/37 (1000 labels); makes running under DOS much easier.
 Since additional label space is allocated dynamically, this
 should have no effect on large programs with lots of labels.

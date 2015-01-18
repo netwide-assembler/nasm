@@ -7,13 +7,13 @@
 
 @titlepage
 @title Relocatable Dynamic Object File Format (RDOFF)
-@author Yuri Zaporogets @email{yuriz@@ukr.net}
+@author Yuri Zaporozhets @email{r_tty@@yahoo.co.uk}
 @author Julian Hall @email{jules@@dsf.org.uk}
 @end titlepage
 
 @ifinfo
-Copyright @copyright{} 2002-2004 Netwide Assembler Project.
-Written by Yuri Zaporogets @email{yuriz@@users.sf.net}
+Copyright @copyright{} 2002-2015 Netwide Assembler Project.
+Written by Yuri Zaporozhets @email{r_tty@@yahoo.co.uk}
 Based on various sources and notes written by Julian Hall @email{jules@@dsf.org.uk}
 Distributed under GNU documentation license.
 @end ifinfo

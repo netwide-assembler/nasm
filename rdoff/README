@@ -23,7 +23,7 @@ Here is a brief summary of the programs' usage:
 rdfdump
 =======
 
-This tool prints a list of the header records in an RDOFF object in 
+This tool prints a list of the header records in an RDOFF object in
 human-readable form, and optionally prints a hex dump of the contents
 of the segments.
 
@@ -59,7 +59,7 @@ Most of its options are not implemented, but those that are are listed here:
   -2	redirect all output from stderr to stdout. It is useful for some
   	systems which don't have such a redirection in shell (e.g. DOS).
 
-  -v	increase verbosity level. Currently 4 verbosity levels are 
+  -v	increase verbosity level. Currently 4 verbosity levels are
 	available: default (which only prints error information), normal
 	(which prints information about the produced object, -v), medium
 	(which prints information about what the program is doing, -v -v)
@@ -68,25 +68,25 @@ Most of its options are not implemented, but those that are are listed here:
   -a	change alignment value to which multiple segments combigned into
 	a single segment should be aligned (must be either 1, 2, 4, 8,
 	16, 32 or 256. Default is 16).
-	
+
   -s	strip exported symbols from output file. Symbols marked as
   	SYM_GLOBAL are never stripped.
-	
+
   -x	warn about unresolved symbols.
-  
+
   -xe	issue an error when at least one symbol is unresolved.
-	
+
   -o name	write output to file <name>. The default output filename
 		is 'aout.rdx'.
-		
+
   -j path	specify search path for object files. Default path is a
   		current directory.
-		
+
   -L path	specify search path for libraries. Default path is a
   		current directory.
-		
+
   -g file	embed 'file' as a first header record with type 'generic'.
-		
+
 
 rdx
 ===
@@ -146,7 +146,7 @@ how long the segment is.
 BUGS
 ====
 
-This product has recently undergone a major revision, and as such there 
+This product has recently undergone a major revision, and as such there
 are probably several bugs left over from the testing phase (although the
 previous version had quite a few that have now been fixed!). Could you
 please report any bugs to maintainers at the addresses below, including the
@@ -181,5 +181,5 @@ file for a comment containing the word 'TODO'. A brief list is given here:
 MAINTAINERS
 ===========
 
-Yuri Zaporogets <yuriz@users.sf.net> - primary maintainer
+Yuri Zaporozhets <r_tty@yahoo.co.uk> - primary maintainer
 Julian Hall <jules@dsf.org.uk> - original designer and author
