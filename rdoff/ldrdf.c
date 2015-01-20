@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -65,7 +65,7 @@
 #include "segtab.h"
 #include "nasmlib.h"
 
-#define LDRDF_VERSION "1.07"
+#define LDRDF_VERSION "1.08"
 
 /* #define STINGY_MEMORY */
 
@@ -128,6 +128,9 @@ char *libpath = NULL;
 /* file to embed as a generic record */
 char *generic_rec_file = NULL;
 
+/* module name to be added at the beginning of output file */
+char *modname_specified = NULL;
+
 /* error file */
 static FILE *error_file;
 
@@ -184,7 +187,7 @@ static void initsegments(void)
 }
 
 /*
- * loadmodule
+ * loadmodule()
  *
  * Determine the characteristics of a module, and decide what to do with
  * each segment it contains (including determining destination segments and
@@ -711,7 +714,7 @@ static void write_output(const char *filename)
     FILE *f;
     rdf_headerbuf *rdfheader;
     struct modulenode *cur;
-    int i, availableseg, seg, localseg, isrelative;
+    int i, n, availableseg, seg, localseg, isrelative;
     void *header;
     rdfheaderrec *hr, newrec;
     symtabEnt *se;
@@ -747,7 +750,7 @@ static void write_output(const char *filename)
                     generic_rec_file);
             exit(1);
         }
-        i = fread(hr->g.data, 1, sizeof(hr->g.data), ff);
+        n = fread(hr->g.data, 1, sizeof(hr->g.data), ff);
         fseek(ff, 0, SEEK_END);
         if (ftell(ff) > (long)sizeof(hr->g.data)) {
             fprintf(error_file,
@@ -757,11 +760,35 @@ static void write_output(const char *filename)
         }
         fclose(ff);
 
-        hr->g.type = 0;
-        hr->g.reclen = i;
+        hr->g.type = RDFREC_GENERIC;
+        hr->g.reclen = n;
         rdfaddheader(rdfheader, hr);
         free(hr);
     }
+
+    /*
+     * Add module name record if `-mn' option was given
+     */
+    if (modname_specified) {
+	n = strlen(modname_specified);
+
+	if ((n < 1) || (n >= MODLIB_NAME_MAX)) {
+            fprintf(stderr, "ldrdf: invalid length of module name `%s'\n",
+        	modname_specified);
+            exit(1);
+        }
+
+        if (options.verbose)
+            printf("\nadding module name record %s\n", modname_specified);
+
+        hr = (rdfheaderrec *) malloc(sizeof(struct ModRec));
+	hr->m.type = RDFREC_MODNAME;
+        hr->m.reclen = n + 1;
+        strcpy(hr->m.modname, modname_specified);
+        rdfaddheader(rdfheader, hr);
+        free(hr);
+    }
+
 
     if (options.verbose)
         printf("\nbuilding output module (%d segments)\n", nsegs);
@@ -1166,7 +1193,8 @@ static void usage(void)
            "   -o name         write output in file 'name'\n"
            "   -j path         specify objects search path\n"
            "   -L path         specify libraries search path\n"
-           "   -g file         embed 'file' as a first header record with type 'generic'\n");
+           "   -g file         embed 'file' as a first header record with type 'generic'\n"
+           "   -mn name        add module name record at the beginning of output file\n");
     exit(0);
 }
 
@@ -1220,6 +1248,16 @@ int main(int argc, char **argv)
         case 'd':
             if (argv[0][2] == 'y')
                 options.dynalink = 1;
+            break;
+        case 'm':
+            if (argv[0][2] == 'n') {
+                modname_specified = argv[1];
+        	argv++, argc--;
+        	if (!argc) {
+        	    fprintf(stderr, "ldrdf: -mn expects a module name\n");
+            	    exit(1);
+        	}
+	    }
             break;
         case 'o':
             outname = argv[1];
@@ -1292,6 +1330,10 @@ int main(int argc, char **argv)
         case 'g':
             generic_rec_file = argv[1];
             argv++, argc--;
+            if (!argc) {
+        	fprintf(stderr, "ldrdf: -g expects a file name\n");
+            	exit(1);
+	    }
             break;
         default:
             usage();
