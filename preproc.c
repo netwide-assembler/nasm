@@ -5203,6 +5203,10 @@ static void pp_pre_define(char *definition)
     if (equals)
         *equals = '=';
 
+    if (space->next->type != TOK_PREPROC_ID &&
+        space->next->type != TOK_ID)
+        error(ERR_WARNING, "pre-defining non ID `%s\'\n", definition);
+
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
