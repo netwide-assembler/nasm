@@ -781,6 +781,12 @@ static void bin_out(int32_t segto, const void *data,
 	    WRITEADDR(p, *(int64_t *)data, asize);
             saa_wbytes(s->contents, mydata, asize);
         }
+
+        /*
+         * Reassign size with sign dropped, we will need it
+         * for section length calculation.
+         */
+        size = asize;
 	break;
     }
 
