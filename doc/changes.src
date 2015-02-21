@@ -7,6 +7,28 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.08} Version 2.11.08
+
+\b Fix section length computation in \c{bin} backend which leaded in incorrect
+   relocation records.
+
+\b Add a warning for numeric preprocessor definitions passed via command
+   line which might have unexpected results otherwise.
+
+\b Add ability to specify a module name record in \c{rdoff} linker with
+   \c{-mn} option.
+
+\b Increase label length capacity up to 256 bytes in \c{rdoff} backend for
+   FreePascal sake, which tends to generate very long labels for procedures.
+
+\b Fix segmentation failure when rip addressing is used in \c{macho64} backend.
+
+\b Fix access on out of memory when handling strings with a single
+   grave. We have sixed similar problem in previous release but not
+   all cases were covered.
+
+\b Fix NULL dereference in disassembled on \c{BND} instruction.
+
 \S{cl-2.11.07} Version 2.11.07
 
 \b Fix 256 bit \c{VMOVNTPS} instruction.
