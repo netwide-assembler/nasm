@@ -808,8 +808,8 @@ static void elf_out(int32_t segto, const void *data,
         } else if (asize != 4 && segment != NO_SEG) {
 	    nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
         }
-	WRITEADDR(p, addr, size);
-        elf_sect_write(s, mydata, size);
+	WRITEADDR(p, addr, asize);
+        elf_sect_write(s, mydata, asize);
 	break;
     }
 

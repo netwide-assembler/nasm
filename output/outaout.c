@@ -677,11 +677,11 @@ static void aout_out(int32_t segto, const void *data,
             }
         }
         p = mydata;
-        if (size == 2)
+        if (asize == 2)
             WRITESHORT(p, addr);
         else
             WRITELONG(p, addr);
-        aout_sect_write(s, mydata, size);
+        aout_sect_write(s, mydata, asize);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
             nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");

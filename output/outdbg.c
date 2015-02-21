@@ -128,7 +128,7 @@ static void dbg_out(int32_t segto, const void *data,
     int id;
 
     if (type == OUT_ADDRESS)
-        fprintf(ofile, "out to %"PRIx32", len = %d: ", segto, (int)size);
+        fprintf(ofile, "out to %"PRIx32", len = %d: ", segto, (int)abs((int)size));
     else
         fprintf(ofile, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
 
