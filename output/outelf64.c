@@ -1084,7 +1084,7 @@ static void elf_write(void)
 
     /* .symtab */
     elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
-                       symtablen, sec_strtab, symtablocal, 4, 24);
+                       symtablen, sec_strtab, symtablocal, 8, 24);
     p += strlen(p) + 1;
 
     /* .strtab */
@@ -1096,7 +1096,7 @@ static void elf_write(void)
     for (i = 0; i < nsects; i++)
         if (sects[i]->head) {
             elf_section_header(p - shstrtab, SHT_RELA, 0, sects[i]->rel, true,
-                               sects[i]->rellen, sec_symtab, i + 1, 4, 24);
+                               sects[i]->rellen, sec_symtab, i + 1, 8, 24);
             p += strlen(p) + 1;
         }
 
