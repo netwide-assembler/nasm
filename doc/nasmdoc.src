@@ -4440,7 +4440,7 @@ The `\c{USE16}' and `\c{USE32}' directives can be used in place of
 
 The \c{DEFAULT} directive changes the assembler defaults.  Normally,
 NASM defaults to a mode where the programmer is expected to explicitly
-specify most features directly.  However, this is occationally
+specify most features directly.  However, this is occasionally
 obnoxious, as the explicit form is pretty much the only one one wishes
 to use.
 
