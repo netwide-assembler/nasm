@@ -590,7 +590,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_REL4ADR:
         p = mydata;
-        WRITEDLONG(p, *(int64_t *)data + 4 - size);
+        WRITELONG(p, *(int64_t *)data + 4 - size);
 
         if (section == secto)
             nasm_error(ERR_PANIC, "intra-section OUT_REL4ADR");
