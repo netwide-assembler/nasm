@@ -410,6 +410,8 @@ static void macho_output(int32_t secto, const void *data,
         return;
     }
 
+    memset(mydata, 0, sizeof(mydata));
+
     switch (type) {
     case OUT_RESERVE:
         if (s != sbss) {

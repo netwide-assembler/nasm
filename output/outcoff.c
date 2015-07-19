@@ -634,6 +634,8 @@ static void coff_out(int32_t segto, const void *data,
         return;
     }
 
+    memset(mydata, 0, sizeof(mydata));
+
     if (type == OUT_RESERVE) {
         if (s->data) {
             nasm_error(ERR_WARNING, "uninitialised space declared in"

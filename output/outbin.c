@@ -542,6 +542,8 @@ static void bin_cleanup(int debuginfo)
 
         nasm_assert(r->bytes <= 8);
 
+        memset(mydata, 0, sizeof(mydata));
+
         saa_fread(r->target->contents, r->posn, mydata, r->bytes);
         p = mydata;
         l = 0;

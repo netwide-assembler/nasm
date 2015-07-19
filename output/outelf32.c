@@ -709,6 +709,8 @@ static void elf_out(int32_t segto, const void *data,
         return;
     }
 
+    memset(mydata, 0, sizeof(mydata));
+
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {

@@ -330,6 +330,8 @@ static void as86_out(int32_t segto, const void *data,
         return;
     }
 
+    memset(mydata, 0, sizeof(mydata));
+
     if (type == OUT_RESERVE) {
         if (s) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
