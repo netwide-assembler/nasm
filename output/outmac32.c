@@ -373,7 +373,7 @@ static void macho_output(int32_t secto, const void *data,
 {
     struct section *s, *sbss;
     int32_t addr;
-    uint8_t mydata[4], *p;
+    uint8_t mydata[8], *p;
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;
