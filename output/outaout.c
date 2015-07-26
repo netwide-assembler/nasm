@@ -294,10 +294,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 expr *e;
                 char *p = special;
 
-                while (*p && !nasm_isspace(*p))
-                    p++;
-                while (*p && nasm_isspace(*p))
-                    p++;
+                p = nasm_skip_spaces(nasm_skip_word(p));
                 stdscan_reset();
                 stdscan_set(p);
                 tokval.t_type = TOKEN_INVALID;
