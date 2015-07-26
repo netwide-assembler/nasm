@@ -7,6 +7,20 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.11.09} Version 2.11.09
+
+\b Fix potential stack overwrite in \c{macho32} backend.
+
+\b Fix relocation records in \c{macho64} backend.
+
+\b Fix symbol lookup computation in \c{macho64} backend.
+
+\b Adjust \c{.symtab} and \c{.rela.text} sections alignments to 8 bytes
+   in \c{elf64} backed.
+
+\b Fix section length computation in \c{bin} backend which leaded in incorrect
+   relocation records.
+
 \S{cl-2.11.08} Version 2.11.08
 
 \b Fix section length computation in \c{bin} backend which leaded in incorrect
