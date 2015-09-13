@@ -1684,7 +1684,7 @@ int32_t eatbyte(uint8_t *data, char *output, int outbufsize, int segsize)
         str = "ss";
         break;
     case 0x3E:
-        str = "ss";
+        str = "ds";
         break;
     case 0x26:
         str = "es";
