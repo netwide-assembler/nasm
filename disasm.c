@@ -1216,7 +1216,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case 0x62:
         {
             uint8_t evex_p0 = data[1] & 0x0f;
-            if (segsize == 64 ||
+            if (segsize == 64 &&
                 ((evex_p0 >= 0x01) && (evex_p0 <= 0x03))) {
                 data++;        /* 62h EVEX prefix */
                 prefix.evex[0] = *data++;
