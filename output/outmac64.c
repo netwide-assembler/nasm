@@ -590,7 +590,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_REL4ADR:
         p = mydata;
-        WRITELONG(p, *(int64_t *)data + 4 - size);
+        addr = *(int64_t *)data + 4 - size;
 
         if (section == secto)
             nasm_error(ERR_PANIC, "intra-section OUT_REL4ADR");
@@ -600,7 +600,7 @@ static void macho_output(int32_t secto, const void *data,
                   " section base references");
         } else {
 			if (wrt == NO_SEG) {
-				*(int64_t *)mydata -= add_reloc(s, section, 1, 4, *(int64_t *)mydata);				// X86_64_RELOC_SIGNED/BRANCH
+				addr -= add_reloc(s, section, 1, 4, addr);              // X86_64_RELOC_SIGNED/BRANCH
 			} else if (wrt == macho_gotpcrel_sect) {
 				if (s->data->datalen > 1) {
 					saa_fread(s->data, s->data->datalen-2, &gotload, 1);				// Retrieve Instruction Opcode
@@ -608,9 +608,9 @@ static void macho_output(int32_t secto, const void *data,
 					gotload = 0;
 				}
 				if (gotload == 0x8B) {													// Check for MOVQ Opcode
-					*(int64_t *)mydata -= add_reloc(s, section, 4, 4, *(int64_t *)mydata);			// X86_64_GOT_LOAD (MOVQ load)
+					addr -= add_reloc(s, section, 4, 4, addr);			// X86_64_GOT_LOAD (MOVQ load)
 				} else {
-					*(int64_t *)mydata -= add_reloc(s, section, 3, 4, *(int64_t *)mydata);			// X86_64_GOT
+					addr -= add_reloc(s, section, 3, 4, addr);			// X86_64_GOT
 				}
 			} else {
 				nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -619,6 +619,7 @@ static void macho_output(int32_t secto, const void *data,
 			}
 		}
 
+        WRITELONG(p, addr);
         sect_write(s, mydata, 4L);
         break;
 
