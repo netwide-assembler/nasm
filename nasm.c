@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -88,6 +88,7 @@ static int using_debug_info, opt_verbose_info;
 bool tasm_compatible_mode = false;
 int pass0, passn;
 int maxbits = 0;
+static bool allow_64_bit = false;
 int globalrel = 0;
 int globalbnd = 0;
 
@@ -614,11 +615,15 @@ struct textargs {
     int value;
 };
 
-#define OPT_PREFIX 0
-#define OPT_POSTFIX 1
+enum text_options {
+    OPT_PREFIX,
+    OPT_POSTFIX,
+    OPT_ALLOW_64_BIT
+};
 struct textargs textopts[] = {
     {"prefix", OPT_PREFIX},
     {"postfix", OPT_POSTFIX},
+    {"allow-64-bit", OPT_ALLOW_64_BIT},
     {NULL, 0}
 };
 
@@ -804,7 +809,10 @@ static bool process_arg(char *p, char *q)
                  "    -h          show invocation summary and exit\n\n"
                  "--prefix,--postfix\n"
                  "  this options prepend or append the given argument to all\n"
-                 "  extern and global variables\n\n"
+                 "  extern and global variables\n"
+                 "--allow-64-bit\n"
+                 "  do not restrict 64-bit code to 64-bit capable output\n"
+                 "  formats (use with care, no complaining)\n\n"
                  "Warnings:\n");
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",
@@ -959,18 +967,23 @@ set_warning:
                             advance = 1, param = q;
                         }
 
-                        if (s == OPT_PREFIX) {
-                            strncpy(lprefix, param, PREFIX_MAX - 1);
-                            lprefix[PREFIX_MAX - 1] = 0;
+                        switch (s) {
+                        case OPT_PREFIX:
+                            strlcpy(lprefix, param, PREFIX_MAX);
                             break;
-                        }
-                        if (s == OPT_POSTFIX) {
-                            strncpy(lpostfix, param, POSTFIX_MAX - 1);
-                            lpostfix[POSTFIX_MAX - 1] = 0;
+                        case OPT_POSTFIX:
+                            strlcpy(lpostfix, param, POSTFIX_MAX);
+                            break;
+                        default:
+                            nasm_error(ERR_PANIC | ERR_NOFILE,
+                                       "internal error");
                             break;
                         }
                         break;
                     }
+                case OPT_ALLOW_64_BIT:
+                    allow_64_bit = true;
+                    break;
                 default:
                     {
                         nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -2088,7 +2101,7 @@ static int get_bits(char *value)
                          "cannot specify 64-bit segment on processor below an x86-64");
             i = 16;
         }
-        if (i != maxbits) {
+        if (i != maxbits && !allow_64_bit) {
             nasm_error(ERR_NONFATAL,
                          "%s output format does not support 64-bit code",
                          ofmt->shortname);
