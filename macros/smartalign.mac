@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;   
-;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -164,6 +164,8 @@ USE: smartalign
   sectalign %1   ; align a segment as well
   %ifnempty %2
     times (((%1) - (($-$$) % (%1))) % (%1)) %2
+  %elif __PASS__ == 0 || __PASS__ == 3
+    times (((%1) - (($-$$) % (%1))) % (%1)) nop
   %else
     %push
     %assign %$pad (((%1) - (($-$$) % (%1))) % (%1))
