@@ -400,6 +400,13 @@ char *nasm_trim_spaces(char *p);
 char *nasm_get_word(char *p, char **tail);
 char *nasm_opt_val(char *p, char **opt, char **val);
 
+/*
+ * Converts a relative pathname rel_path into an absolute path name.
+ *
+ * The buffer returned must be freed by the caller
+ */
+char *nasm_realpath(const char *rel_path);
+
 const char *prefix_name(int);
 
 #define ZERO_BUF_SIZE 4096
