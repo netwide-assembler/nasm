@@ -91,7 +91,8 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	lib/strlcpy.$(O) \
 	preproc-nop.$(O) \
 	disp8.$(O) \
-	iflag.$(O)
+	iflag.$(O) \
+	md5c.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) \
