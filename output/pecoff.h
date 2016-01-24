@@ -474,4 +474,59 @@
 #define IMPORT_NAME_NOPREFIX    2
 #define IMPORT_NAME_UNDECORATE  3
 
+struct coff_Section {
+    struct SAA *data;
+    uint32_t len;
+    int nrelocs;
+    int32_t index;
+    struct coff_Reloc *head, **tail;
+    uint32_t flags;             /* section flags */
+    char *name;
+    int32_t namepos;            /* Offset of name into the strings table */
+    int32_t pos, relpos;
+};
+
+struct coff_Reloc {
+    struct coff_Reloc *next;
+    int32_t address;            /* relative to _start_ of section */
+    int32_t symbol;             /* symbol number */
+    enum {
+        SECT_SYMBOLS,
+        ABS_SYMBOL,
+        REAL_SYMBOLS
+    } symbase;                  /* relocation for symbol number :) */
+    int16_t type;
+};
+
+struct coff_Symbol {
+    char name[9];
+    int32_t strpos;             /* string table position of name */
+    int32_t value;              /* address, or COMMON variable size */
+    int section;                /* section number where it's defined
+                                 * - in COFF codes, not NASM codes */
+    bool is_global;             /* is it a global symbol or not? */
+    int16_t type;               /* 0 - notype, 0x20 - function */
+    int32_t namlen;             /* full name length */
+};
+
+struct coff_DebugInfo {
+    int32_t segto;
+    int32_t seg;
+    uint64_t size;
+    struct coff_Section *section;
+};
+
+extern struct coff_Section **coff_sects;
+extern int coff_nsects;
+extern struct SAA *coff_syms;
+extern uint32_t coff_nsyms;
+extern struct SAA *coff_strs;
+extern bool win32, win64;
+
+extern char coff_infile[FILENAME_MAX];
+extern char coff_outfile[FILENAME_MAX];
+
+extern int coff_make_section(char *name, uint32_t flags);
+
+
 #endif /* PECOFF_H */

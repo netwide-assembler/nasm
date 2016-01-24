@@ -62,7 +62,7 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	preproc-nop.$(O) \
 	disp8.$(O) \
 	iflag.$(O) \
-	md5c.$(O)
+	md5c.$(O) output/codeview.$(O)
 
 NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) \
