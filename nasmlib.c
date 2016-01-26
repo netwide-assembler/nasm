@@ -696,18 +696,6 @@ char *nasm_opt_val(char *p, char **val, char **next)
     return p;
 }
 
-#ifdef _WIN32
-char *nasm_realpath(const char *rel_path)
-{
-    return _fullpath(NULL, rel_path, 0);
-}
-#else
-char *nasm_realpath(const char *rel_path)
-{
-    return realpath(rel_path, NULL);
-}
-#endif
-
 /*
  * initialized data bytes length from opcode
  */

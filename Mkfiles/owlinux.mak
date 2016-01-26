@@ -59,6 +59,7 @@ X               = .exe
 # Edit in Makefile.in, not here!
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	raa.$(O) saa.$(O) rbtree.$(O) \
+	realpath.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	directiv.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
@@ -69,7 +70,9 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/outelfx32.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmac32.$(O) \
-	output/outmac64.$(O) preproc.$(O) quote.$(O) pptok.$(O) \
+	output/outmac64.$(O) \
+	md5c.$(O) output/codeview.$(O) \
+	preproc.$(O) quote.$(O) pptok.$(O) \
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
 	ilog2.$(O) \
@@ -277,6 +280,7 @@ listing.$(O): listing.c compiler.h directiv.h insnsi.h listing.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 macros.$(O): macros.c compiler.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outform.h pptok.h preproc.h regs.h tables.h
+md5c.$(O): md5c.c md5.h
 nasm.$(O): nasm.c assemble.h compiler.h directiv.h eval.h float.h iflag.h \
  iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h opflags.h \
  output/outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
@@ -287,6 +291,9 @@ nasmlib.$(O): nasmlib.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
 ndisasm.$(O): ndisasm.c compiler.h directiv.h disasm.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h sync.h \
  tables.h tokens.h
+output/codeview.$(O): output/codeview.c compiler.h directiv.h insnsi.h md5.h \
+ nasm.h nasmlib.h opflags.h output/outlib.h output/pecoff.h pptok.h \
+ preproc.h regs.h saa.h tables.h version.h
 output/nulldbg.$(O): output/nulldbg.c compiler.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outlib.h pptok.h preproc.h regs.h tables.h
 output/nullout.$(O): output/nullout.c compiler.h directiv.h insnsi.h nasm.h \
@@ -351,6 +358,9 @@ preproc.$(O): preproc.c compiler.h directiv.h eval.h hashtbl.h insnsi.h \
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h nasmlib.h raa.h
 rbtree.$(O): rbtree.c compiler.h rbtree.h
+realpath.$(O): realpath.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
+ insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h \
+ tokens.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h

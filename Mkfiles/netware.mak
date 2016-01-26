@@ -32,6 +32,7 @@ O = o
 # Edit in Makefile.in, not here!
 NASM =	nasm.o nasmlib.o ver.o \
 	raa.o saa.o rbtree.o \
+	realpath.o \
 	float.o insnsa.o insnsb.o \
 	directiv.o \
 	assemble.o labels.o hashtbl.o crc64.o parser.o \
@@ -42,7 +43,9 @@ NASM =	nasm.o nasmlib.o ver.o \
 	outelfx32.o \
 	outobj.o outas86.o outrdf2.o \
 	outdbg.o outieee.o outmac32.o \
-	outmac64.o preproc.o quote.o pptok.o \
+	outmac64.o \
+	md5c.o codeview.o \
+	preproc.o quote.o pptok.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
 	strfunc.o tokhash.o regvals.o regflags.o \
 	ilog2.o \
@@ -171,6 +174,7 @@ listing.o: listing.c compiler.h config.h directiv.h insnsi.h listing.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 macros.o: macros.c compiler.h config.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h tables.h
+md5c.o: md5c.c md5.h
 nasm.o: nasm.c assemble.h compiler.h config.h directiv.h eval.h float.h \
  iflag.h iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h \
  opflags.h outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
@@ -181,6 +185,9 @@ nasmlib.o: nasmlib.c compiler.h config.h directiv.h iflag.h iflaggen.h \
 ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h sync.h tables.h tokens.h
+codeview.o: codeview.c compiler.h config.h directiv.h insnsi.h md5.h nasm.h \
+ nasmlib.h opflags.h outlib.h pecoff.h pptok.h preproc.h regs.h saa.h \
+ tables.h version.h
 nulldbg.o: nulldbg.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 nullout.o: nullout.c compiler.h config.h directiv.h insnsi.h nasm.h \
@@ -241,6 +248,9 @@ preproc.o: preproc.c compiler.h config.h directiv.h eval.h hashtbl.h \
 quote.o: quote.c compiler.h config.h nasmlib.h quote.h
 raa.o: raa.c compiler.h config.h nasmlib.h raa.h
 rbtree.o: rbtree.c compiler.h config.h rbtree.h
+realpath.o: realpath.c compiler.h config.h directiv.h iflag.h iflaggen.h \
+ insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h \
+ tables.h tokens.h
 regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h

@@ -126,6 +126,12 @@ AC_CHECK_HEADERS(strings.h)
 dnl Look for <stdbool.h>
 AC_CHECK_HEADERS(stdbool.h)
 
+dnl Look for <unistd.h>
+AC_CHECK_HEADERS(unistd.h)
+
+dnl Look for <sys/param.h>
+AC_CHECK_HEADERS(sys/param.h)
+
 dnl Checks for library functions.
 AC_SUBST(XOBJS)
 
@@ -154,6 +160,11 @@ AC_CHECK_FUNCS(strlcpy)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
+
+AC_CHECK_FUNCS(realpath)
+AC_CHECK_FUNCS(canonicalize_file_name)
+AC_CHECK_FUNCS(_fullpath)
+AC_CHECK_FUNCS(pathconf)
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors
