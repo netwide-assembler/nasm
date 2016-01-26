@@ -344,9 +344,7 @@ preproc.$(O): preproc.c compiler.h directiv.h eval.h hashtbl.h insnsi.h \
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h nasmlib.h raa.h
 rbtree.$(O): rbtree.c compiler.h rbtree.h
-realpath.$(O): realpath.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
- insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h \
- tokens.h
+realpath.$(O): realpath.c compiler.h nasmlib.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h

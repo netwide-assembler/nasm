@@ -248,9 +248,7 @@ preproc.o: preproc.c compiler.h config.h directiv.h eval.h hashtbl.h \
 quote.o: quote.c compiler.h config.h nasmlib.h quote.h
 raa.o: raa.c compiler.h config.h nasmlib.h raa.h
 rbtree.o: rbtree.c compiler.h config.h rbtree.h
-realpath.o: realpath.c compiler.h config.h directiv.h iflag.h iflaggen.h \
- insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h \
- tables.h tokens.h
+realpath.o: realpath.c compiler.h config.h nasmlib.h
 regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
