@@ -49,7 +49,7 @@
 
 #include "nasmlib.h"
 
-#if 0 /* def HAVE_CANONICALIZE_FILE_NAME */
+#ifdef HAVE_CANONICALIZE_FILE_NAME
 
 /*
  * GNU-specific, but avoids the realpath(..., NULL)
