@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 2007-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -42,6 +42,11 @@
 
 #ifndef NASM_COMPILER_H
 #define NASM_COMPILER_H 1
+
+#ifdef __DJGPP__
+/* DJGPP has header file problems if __STRICT_ANSI__ is defined */
+# undef __STRICT_ANSI__
+#endif
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
