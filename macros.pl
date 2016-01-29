@@ -225,7 +225,7 @@ print OUT "    };\n";
 # Put a large value in unused slots.  This makes it extremely unlikely
 # that any combination that involves unused slot will pass the range test.
 # This speeds up rejection of unrecognized tokens, i.e. identifiers.
-print OUT "#define UNUSED 16383\n";
+print OUT "#define UNUSED (65535/3)\n";
 
 print OUT "    static const int16_t hash1[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
