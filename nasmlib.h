@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -409,7 +409,10 @@ char *nasm_realpath(const char *rel_path);
 
 const char *prefix_name(int);
 
-#define ZERO_BUF_SIZE 4096
+#define ZERO_BUF_SIZE 4096      /* Default value */
+#if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
+# define ZERO_BUF_SIZE BUFSIZ
+#endif
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
 void fwritezero(size_t bytes, FILE *fp);
 
