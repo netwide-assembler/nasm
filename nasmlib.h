@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -75,12 +75,10 @@ extern unsigned char nasm_tolower_tab[256];
  */
 typedef void (*efunc) (int severity, const char *fmt, ...);
 typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
-#ifdef __GNUC__
-void nasm_error(int severity, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-#else
-void nasm_error(int severity, const char *fmt, ...);
-#endif
+void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
 void nasm_set_verror(vefunc);
+no_return printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
+#define panic() nasm_panic(ERR_NOFILE, "Internal error at %s:%d\n", __FILE__, __LINE__);
 
 /*
  * These are the error severity codes which get passed as the first

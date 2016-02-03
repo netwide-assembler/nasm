@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -81,6 +81,15 @@ void nasm_error(int severity, const char *fmt, ...)
     va_start(ap, fmt);
     nasm_verror(severity, fmt, ap);
     va_end(ap);
+}
+
+no_return nasm_panic(int flags, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    nasm_verror(flags | ERR_PANIC, fmt, ap);
+    abort();			/* We should never get here */
 }
 
 void *nasm_malloc(size_t size)
