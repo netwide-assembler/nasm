@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -94,9 +94,10 @@ struct section {
     char segname[16];           /* segment this section will be in */
     uint64_t addr;         /* in-memory address (subject to alignment) */
     uint64_t size;         /* in-memory and -file size  */
+    uint32_t pad;          /* padding bytes before section */
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
-	uint32_t extreloc;     /* external relocations */
+    uint32_t extreloc;     /* external relocations */
 };
 
 #define SECTION_TYPE	0x000000ff      /* section type mask */
@@ -667,6 +668,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                 s->index = seg_alloc();
                 s->relocs = NULL;
                 s->align = -1;
+                s->pad = -1;
 
                 xstrncpy(s->segname, sm->segname);
                 xstrncpy(s->sectname, sm->sectname);
@@ -966,24 +968,31 @@ static void macho_calculate_sizes (void)
 
     /* count sections and calculate in-memory and in-file offsets */
     for (s = sects; s != NULL; s = s->next) {
-        uint64_t pad = 0;
-
-        /* zerofill sections aren't actually written to the file */
-        if ((s->flags & SECTION_TYPE) != S_ZEROFILL)
-            seg_filesize64 += s->size;
+        uint64_t newaddr;
 
         /* recalculate segment address based on alignment and vm size */
         s->addr = seg_vmsize64;
+
         /* we need section alignment to calculate final section address */
         if (s->align == -1)
             s->align = DEFAULT_SECTION_ALIGNMENT;
-        if(s->align) {
-            uint64_t newaddr = ALIGN(s->addr, 1 << s->align);
-            pad = newaddr - s->addr;
-            s->addr = newaddr;
-        }
 
-        seg_vmsize64 += s->size + pad;
+	newaddr = ALIGN(s->addr, 1 << s->align);
+        s->addr = newaddr;
+
+        seg_vmsize64 = newaddr + s->size;
+
+        /* zerofill sections aren't actually written to the file */
+        if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
+	    /*
+	     * LLVM/Xcode as always aligns the section data to 4
+	     * bytes; there is a comment in the LLVM source code that
+	     * perhaps aligning to pointer size would be better.
+	     */
+	    s->pad = ALIGN(seg_filesize64, 4) - seg_filesize64;
+            seg_filesize64 += s->size + s->pad;
+	}
+
         ++seg_nsects64;
     }
 
@@ -1050,7 +1059,10 @@ static uint32_t macho_write_segment (uint64_t offset)
 
         /* dummy data for zerofill sections or proper values */
         if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
+	    nasm_assert(s->pad != (uint32_t)-1);
+	    offset += s->pad;
             fwriteint32_t(offset, ofile);
+	    offset += s->size;
             /* Write out section alignment, as a power of two.
             e.g. 32-bit word alignment would be 2 (2^2 = 4).  */
             if (s->align == -1)
@@ -1061,11 +1073,10 @@ static uint32_t macho_write_segment (uint64_t offset)
             fwriteint32_t(s->nreloc ? rel_base + s_reloff : 0, ofile);
             fwriteint32_t(s->nreloc, ofile);
 
-            offset += s->size;
             s_reloff += s->nreloc * MACHO_RELINFO64_SIZE;
         } else {
             fwriteint32_t(0, ofile);
-            fwriteint32_t(0, ofile);
+            fwriteint32_t(0, ofile); /* No alignment?! */
             fwriteint32_t(0, ofile);
             fwriteint32_t(0, ofile);
         }
@@ -1077,10 +1088,10 @@ static uint32_t macho_write_segment (uint64_t offset)
 		}
 
         fwriteint32_t(s->flags, ofile);      /* flags */
-        fwriteint32_t(0, ofile);     /* reserved */
-        fwriteint32_t(0, ofile);     /* reserved */
+        fwriteint32_t(0, ofile);	     /* reserved */
+        fwriteint32_t(0, ofile);	     /* reserved */
 		
-		fwriteint32_t(0, ofile);     /* align */
+	fwriteint32_t(0, ofile); 	     /* align */
     }
 
     rel_padcnt64 = rel_base - offset;
@@ -1121,8 +1132,6 @@ static void macho_write_section (void)
     for (s = sects; s != NULL; s = s->next) {
 	if ((s->flags & SECTION_TYPE) == S_ZEROFILL)
 	    continue;
-
-	/* no padding needs to be done to the sections */
 
 	/* Like a.out Mach-O references things in the data or bss
 	 * sections by addresses which are actually relative to the
@@ -1184,6 +1193,7 @@ static void macho_write_section (void)
 	}
 
 	/* dump the section data to file */
+	fwritezero(s->pad, ofile);
 	saa_fpwrite(s->data, ofile);
     }
 
