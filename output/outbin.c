@@ -765,7 +765,7 @@ static void bin_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_ADDRESS:
     {
-        int asize = abs(size);
+        int asize = abs((int)size);
 
         if (segment != NO_SEG && !find_section_by_index(segment)) {
             if (segment % 2)

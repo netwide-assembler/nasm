@@ -634,7 +634,7 @@ static void aout_out(int32_t segto, const void *data,
             nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
-        int asize = abs(size);
+        int asize = abs((int)size);
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {

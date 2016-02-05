@@ -1087,7 +1087,7 @@ static void obj_out(int32_t segto, const void *data,
         int rsize;
 
         if (type == OUT_ADDRESS)
-            size = abs(size);
+            size = abs((int)size);
 
         if (segment == NO_SEG && type != OUT_ADDRESS)
             nasm_error(ERR_NONFATAL, "relative call to absolute address not"

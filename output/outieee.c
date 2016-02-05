@@ -438,7 +438,7 @@ static void ieee_out(int32_t segto, const void *data,
     } else if (type == OUT_ADDRESS || type == OUT_REL2ADR ||
                type == OUT_REL4ADR) {
         if (type == OUT_ADDRESS)
-            size = abs(size);
+            size = abs((int)size);
         else if (segment == NO_SEG)
             nasm_error(ERR_NONFATAL, "relative call to absolute address not"
                   " supported by IEEE format");

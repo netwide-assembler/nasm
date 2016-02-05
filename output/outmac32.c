@@ -434,7 +434,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_ADDRESS:
     {
-	int asize = abs(size);
+	int asize = abs((int)size);
 	
 	addr = *(int64_t *)data;
 	

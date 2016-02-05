@@ -347,7 +347,7 @@ static void as86_out(int32_t segto, const void *data,
         as86_sect_write(s, data, size);
         as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
-        int asize = abs(size);
+        int asize = abs((int)size);
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"

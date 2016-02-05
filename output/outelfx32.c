@@ -745,7 +745,7 @@ static void elf_out(int32_t segto, const void *data,
     case OUT_ADDRESS:
     {
         int isize = (int)size;
-        int asize = abs(size);
+        int asize = abs((int)size);
 
         addr = *(int64_t *)data;
         if (segment == NO_SEG) {
