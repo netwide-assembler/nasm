@@ -258,6 +258,8 @@ void standard_extension(char *inname, char *outname, char *extension);
 /*
  * Power of 2 align helpers
  */
+#undef ALIGN_MASK		/* Some BSD flavors define these in system headers */
+#undef ALIGN
 #define ALIGN_MASK(v, mask)     (((v) + (mask)) & ~(mask))
 #define ALIGN(v, a)             ALIGN_MASK(v, (a) - 1)
 #define IS_ALIGNED(v, a)        (((v) & ((a) - 1)) == 0)
