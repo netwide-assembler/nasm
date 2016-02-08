@@ -410,6 +410,7 @@ const char *prefix_name(int);
 
 #define ZERO_BUF_SIZE 4096      /* Default value */
 #if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
+# undef ZERO_BUF_SIZE
 # define ZERO_BUF_SIZE BUFSIZ
 #endif
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
