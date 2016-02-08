@@ -1010,16 +1010,6 @@ underscore to all global and external variables, as C requires it in
 some, but not all, system calling conventions.
 
 
-\S{opt-allow64bit} The \i\c{--allow-64-bit} Option.
-
-The \c{--allow-64-bit} option allows using 64-bit instructions in a
-32-bit or 16-bit output format.  This is useful in a few situations,
-such as when writing code switching from 32-bit to 64-bit mode and
-linking into a 32-bit module.  However, it is important to be aware of
-the restriction the output format poses on you in terms of
-relocations.  Use with caution!
-
-
 \S{nasmenv} The \i\c{NASMENV} \i{Environment} Variable
 
 If you define an environment variable called \c{NASMENV}, the program

@@ -88,7 +88,6 @@ static int using_debug_info, opt_verbose_info;
 bool tasm_compatible_mode = false;
 int pass0, passn;
 int maxbits = 0;
-static bool allow_64_bit = false;
 int globalrel = 0;
 int globalbnd = 0;
 
@@ -169,6 +168,7 @@ static const struct warning {
     {"lock", "lock prefix on unlockable instructions", true},
     {"hle", "invalid hle prefixes", true},
     {"bnd", "invalid bnd prefixes", true},
+    {"zero-reloc", "relocation zero-extended to match output format", true},
 };
 
 static bool want_usage;
@@ -618,12 +618,10 @@ struct textargs {
 enum text_options {
     OPT_PREFIX,
     OPT_POSTFIX,
-    OPT_ALLOW_64_BIT
 };
 struct textargs textopts[] = {
     {"prefix", OPT_PREFIX},
     {"postfix", OPT_POSTFIX},
-    {"allow-64-bit", OPT_ALLOW_64_BIT},
     {NULL, 0}
 };
 
@@ -981,9 +979,7 @@ set_warning:
                         }
                         break;
                     }
-                case OPT_ALLOW_64_BIT:
-                    allow_64_bit = true;
-                    break;
+
                 default:
                     {
                         nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -2099,12 +2095,6 @@ static int get_bits(char *value)
         if (iflag_ffs(&cpu) < IF_X86_64) {
             nasm_error(ERR_NONFATAL,
                          "cannot specify 64-bit segment on processor below an x86-64");
-            i = 16;
-        }
-        if (i != maxbits && !allow_64_bit) {
-            nasm_error(ERR_NONFATAL,
-                         "%s output format does not support 64-bit code",
-                         ofmt->shortname);
             i = 16;
         }
     } else {

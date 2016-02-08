@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -308,7 +308,8 @@ static void warn_overflow_opd(const struct operand *o, int size)
 /*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
- * generator at the same time.
+ * generator at the same time, flatten unnecessary relocations,
+ * and verify backend compatibility.
  */
 static void out(int64_t offset, int32_t segto, const void *data,
                 enum out_type type, uint64_t size,
@@ -317,6 +318,9 @@ static void out(int64_t offset, int32_t segto, const void *data,
     static int32_t lineno = 0;     /* static!!! */
     static char *lnfname = NULL;
     uint8_t p[8];
+    const int asize = abs((int)size); /* True address size */
+    const int abits = asize << 3;   /* Address size in bits */
+    const int amax  = maxbits >> 3; /* Maximum address size in bytes */
 
     if (type == OUT_ADDRESS && segment == NO_SEG && wrt == NO_SEG) {
         /*
@@ -325,13 +329,12 @@ static void out(int64_t offset, int32_t segto, const void *data,
          */
         uint8_t *q = p;
         
-        size = abs((int)size);
-        if (size > 8) {
+        if (asize > 8) {
             errfunc(ERR_PANIC, "OUT_ADDRESS with size > 8");
             return;
         }
 
-        WRITEADDR(q, *(int64_t *)data, size);
+        WRITEADDR(q, *(int64_t *)data, asize);
         data = p;
         type = OUT_RAWDATA;
     }
@@ -349,6 +352,22 @@ static void out(int64_t offset, int32_t segto, const void *data,
 
     if (src_get(&lineno, &lnfname))
         outfmt->current_dfmt->linenum(lnfname, lineno, segto);
+
+    if (type == OUT_ADDRESS && abits > maxbits) {
+        if (asize < 0) {
+            errfunc(ERR_NONFATAL,
+                    "%d-bit signed relocation unsupported by output format %s\n",
+                    abits, outfmt->shortname);
+        } else {
+            errfunc(ERR_WARNING | ERR_WARN_ZEXTRELOC,
+                    "%d-bit unsigned relocation zeroq-padded from %d bits\n",
+                    abits, maxbits);
+            outfmt->output(segto, data, type, amax, segment, wrt);
+            size -= amax;
+        }
+        data = zero_buffer;
+        type = OUT_RAWDATA;
+    }
 
     outfmt->output(segto, data, type, size, segment, wrt);
 }

@@ -125,7 +125,8 @@ no_return nasm_panic_from_macro(const char *file, int line);
 #define ERR_WARN_LOCK		WARN(12) /* bad LOCK prefixes */
 #define ERR_WARN_HLE		WARN(13) /* bad HLE prefixes */
 #define ERR_WARN_BND		WARN(14) /* bad BND prefixes */
-#define ERR_WARN_MAX            14       /* the highest numbered one */
+#define ERR_WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
+#define ERR_WARN_MAX            15       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
