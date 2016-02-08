@@ -92,6 +92,11 @@ no_return nasm_panic(int flags, const char *fmt, ...)
     abort();			/* We should never get here */
 }
 
+no_return nasm_panic_from_macro(const char *file, int line)
+{
+    nasm_panic(ERR_NOFILE, "Internal error at %s:%d\n", file, line);
+}
+
 void *nasm_malloc(size_t size)
 {
     void *p = malloc(size);
