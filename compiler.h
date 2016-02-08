@@ -188,4 +188,13 @@ char *strsep(char **, const char *);
 # define no_return void
 #endif
 
+/*
+ * How to tell the compiler that a function takes a printf-like string
+ */
+#ifdef __GNUC__
+# define printf_func(fmt, list) __attribute__((format(printf, fmt, list)))
+#else
+# define printf_func(fmt, list)
+#endif
+
 #endif	/* NASM_COMPILER_H */
