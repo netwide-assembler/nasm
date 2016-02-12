@@ -328,26 +328,6 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
     return NO_SECT;
 }
 
-static struct symbol *get_closest_section_symbol_by_offset(uint8_t fileindex, int64_t offset)
-{
-    struct symbol *nearest = NULL;
-    struct symbol *sym;
-
-    for (sym = syms; sym; sym = sym->next) {
-        if ((sym->sect != NO_SECT) && (sym->sect == fileindex)) {
-            if ((int64_t)sym->value > offset)
-                break;
-            nearest = sym;
-        }
-    }
-
-    if (!nearest)
-        nasm_error(ERR_FATAL, "No section for index %x offset %llx found\n",
-                   fileindex, (long long)offset);
-
-    return nearest;
-}
-
 /*
  * Special section numbers which are used to define Mach-O special
  * symbols, which can be used with WRT to provide PIC relocation
@@ -390,16 +370,11 @@ enum reltype {
     RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
 };
 
-static int32_t add_reloc(struct section *sect, int32_t section,
-			 enum reltype reltype, int bytes, int64_t reloff)
+static void add_reloc(struct section *sect, int32_t section,
+		      enum reltype reltype, int bytes)
 {
     struct reloc *r;
-    struct symbol *sym;
     int32_t fi;
-    int32_t adjustment = 0;
-
-    if (section == NO_SEG)
-	return 0;
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a
@@ -427,20 +402,19 @@ static int32_t add_reloc(struct section *sect, int32_t section,
     switch (reltype) {
     case RL_ABS:
 	if (section == NO_SEG) {
-	    /* intra-section */
+	    /* absolute (can this even happen?) */
+	    r->ext = 0;
 	    r->snum = R_ABS;
 	} else {
 	    /* inter-section */
 	    fi = get_section_fileindex_by_index(section);
-
 	    if (fi == NO_SECT) {
 		/* external */
 		r->snum = raa_read(extsyms, section);
 	    } else {
 		/* local */
-		sym = get_closest_section_symbol_by_offset(fi, reloff);
-		r->snum = sym->initial_snum;
-		adjustment = sym->value;
+		r->ext = 0;
+		r->snum = fi;
 	    }
 	}
 	break;
@@ -461,9 +435,8 @@ static int32_t add_reloc(struct section *sect, int32_t section,
 		r->snum = raa_read(extsyms, section);
 	    } else {
 		/* local */
-		sym = get_closest_section_symbol_by_offset(fi, reloff);
-		r->snum = sym->initial_snum;
-		adjustment = sym->value;
+		r->ext = 0;
+		r->snum = fi;
 	    }
 	}
 	break;
@@ -487,8 +460,6 @@ static int32_t add_reloc(struct section *sect, int32_t section,
     }
 
     ++sect->nreloc;
-
-    return adjustment;
 }
 
 static void macho_output(int32_t secto, const void *data,
@@ -564,7 +535,7 @@ static void macho_output(int32_t secto, const void *data,
 		    nasm_error(ERR_NONFATAL, "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
 		} else {
-		    addr -= add_reloc(s, section, RL_ABS, asize, addr);
+		    add_reloc(s, section, RL_ABS, asize);
 		}
 	    } else {
 		nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -595,7 +566,7 @@ static void macho_output(int32_t secto, const void *data,
 		       " this use of WRT");
 	    wrt = NO_SEG;	/* we can at least _try_ to continue */
 	} else {
-	    addr -= add_reloc(s, section, RL_REL, 2, addr);
+	    add_reloc(s, section, RL_REL, 2);
 	}
 
         WRITESHORT(p, addr);
@@ -613,7 +584,7 @@ static void macho_output(int32_t secto, const void *data,
 		       " section base references");
         } else if (wrt == NO_SEG) {
 	    /* Plain relative relocation */
-	    addr -= add_reloc(s, section, RL_REL, 4, addr);
+	    add_reloc(s, section, RL_REL, 4);
 	} else if (wrt == macho_gotpcrel_sect) {
 	    if (s->data->datalen > 1) {
 		/* Retrieve instruction opcode */
@@ -623,10 +594,10 @@ static void macho_output(int32_t secto, const void *data,
 	    }
 	    if (gotload == 0x8B) {
 		/* Check for MOVQ Opcode -> X86_64_RELOC_GOT_LOAD */
-		addr -= add_reloc(s, section, RL_GOTLOAD, 4, addr);
+		add_reloc(s, section, RL_GOTLOAD, 4);
 	    } else {
 		/* X86_64_RELOC_GOT */
-		addr -= add_reloc(s, section, RL_GOT, 4, addr);
+		add_reloc(s, section, RL_GOT, 4);
 	    }
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
