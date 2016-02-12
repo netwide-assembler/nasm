@@ -217,12 +217,12 @@ extern struct ofmt of_macho64;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
-static uint32_t head_ncmds64 = 0;
-static uint32_t head_sizeofcmds64 = 0;
-static uint64_t seg_filesize64 = 0;
-static uint64_t seg_vmsize64 = 0;
-static uint32_t seg_nsects64 = 0;
-static uint64_t rel_padcnt64 = 0;
+static uint32_t head_ncmds = 0;
+static uint32_t head_sizeofcmds = 0;
+static uint64_t seg_filesize = 0;
+static uint64_t seg_vmsize = 0;
+static uint32_t seg_nsects = 0;
+static uint64_t rel_padcnt = 0;
 
 
 #define xstrncpy(xdst, xsrc)						\
@@ -974,7 +974,7 @@ static void macho_calculate_sizes (void)
         uint64_t newaddr;
 
         /* recalculate segment address based on alignment and vm size */
-        s->addr = seg_vmsize64;
+        s->addr = seg_vmsize;
 
         /* we need section alignment to calculate final section address */
         if (s->align == -1)
@@ -983,7 +983,7 @@ static void macho_calculate_sizes (void)
 	newaddr = ALIGN(s->addr, 1 << s->align);
         s->addr = newaddr;
 
-        seg_vmsize64 = newaddr + s->size;
+        seg_vmsize = newaddr + s->size;
 
         /* zerofill sections aren't actually written to the file */
         if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
@@ -992,29 +992,29 @@ static void macho_calculate_sizes (void)
 	     * bytes; there is a comment in the LLVM source code that
 	     * perhaps aligning to pointer size would be better.
 	     */
-	    s->pad = ALIGN(seg_filesize64, 4) - seg_filesize64;
-	    s->offset = seg_filesize64 + s->pad;
-            seg_filesize64 += s->size + s->pad;
+	    s->pad = ALIGN(seg_filesize, 4) - seg_filesize;
+	    s->offset = seg_filesize + s->pad;
+            seg_filesize += s->size + s->pad;
 	}
 
-        ++seg_nsects64;
+        ++seg_nsects;
     }
 
     /* calculate size of all headers, load commands and sections to
     ** get a pointer to the start of all the raw data */
-    if (seg_nsects64 > 0) {
-        ++head_ncmds64;
-        head_sizeofcmds64 +=
-            MACHO_SEGCMD64_SIZE + seg_nsects64 * MACHO_SECTCMD64_SIZE;
+    if (seg_nsects > 0) {
+        ++head_ncmds;
+        head_sizeofcmds +=
+            MACHO_SEGCMD64_SIZE + seg_nsects * MACHO_SECTCMD64_SIZE;
     }
 
     if (nsyms > 0) {
-	++head_ncmds64;
-	head_sizeofcmds64 += MACHO_SYMCMD_SIZE;
+	++head_ncmds;
+	head_sizeofcmds += MACHO_SYMCMD_SIZE;
     }
 
     /* Create a table of sections by file index to avoid linear search */
-    sectstab = nasm_malloc((seg_nsects64 + 1) * sizeof(*sectstab));
+    sectstab = nasm_malloc((seg_nsects + 1) * sizeof(*sectstab));
     sectstab[0] = NULL;
     for (s = sects, fi = 1; s != NULL; s = s->next, fi++)
 	sectstab[fi] = s;
@@ -1028,8 +1028,8 @@ static void macho_write_header (void)
     fwriteint32_t(CPU_TYPE_X86_64, ofile);	/* CPU type */
     fwriteint32_t(CPU_SUBTYPE_I386_ALL, ofile);	/* CPU subtype */
     fwriteint32_t(MH_OBJECT, ofile);	/* Mach-O file type */
-    fwriteint32_t(head_ncmds64, ofile);	/* number of load commands */
-    fwriteint32_t(head_sizeofcmds64, ofile);	/* size of load commands */
+    fwriteint32_t(head_ncmds, ofile);	/* number of load commands */
+    fwriteint32_t(head_sizeofcmds, ofile);	/* size of load commands */
     fwriteint32_t(0, ofile);	/* no flags */
     fwriteint32_t(0, ofile);	/* reserved for future use */
 }
@@ -1038,7 +1038,7 @@ static void macho_write_header (void)
 
 static uint32_t macho_write_segment (uint64_t offset)
 {
-    uint64_t rel_base = alignint64_t (offset + seg_filesize64);
+    uint64_t rel_base = alignint64_t (offset + seg_filesize);
     uint32_t s_reloff = 0;
     struct section *s;
 
@@ -1046,19 +1046,19 @@ static uint32_t macho_write_segment (uint64_t offset)
 
     /* size of load command including section load commands */
     fwriteint32_t(MACHO_SEGCMD64_SIZE +
-		  seg_nsects64 * MACHO_SECTCMD64_SIZE,
+		  seg_nsects * MACHO_SECTCMD64_SIZE,
 		  ofile);
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
     fwritezero(16, ofile);
     fwriteint64_t(0, ofile); /* in-memory offset */
-    fwriteint64_t(seg_vmsize64, ofile);        /* in-memory size */
+    fwriteint64_t(seg_vmsize, ofile);        /* in-memory size */
     fwriteint64_t(offset, ofile);    /* in-file offset to data */
-    fwriteint64_t(seg_filesize64, ofile);      /* in-file size */
+    fwriteint64_t(seg_filesize, ofile);      /* in-file size */
     fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* maximum vm protection */
     fwriteint32_t(VM_PROT_DEFAULT, ofile);   /* initial vm protection */
-    fwriteint32_t(seg_nsects64, ofile);        /* number of sections */
+    fwriteint32_t(seg_nsects, ofile);        /* number of sections */
     fwriteint32_t(0, ofile); /* no flags */
 
     /* emit section headers */
@@ -1105,7 +1105,7 @@ static uint32_t macho_write_segment (uint64_t offset)
 	fwriteint32_t(0, ofile); 	     /* align */
     }
 
-    rel_padcnt64 = rel_base - offset;
+    rel_padcnt = rel_base - offset;
     offset = rel_base + s_reloff;
 
     return offset;
@@ -1209,7 +1209,7 @@ static void macho_write_section (void)
     }
 
     /* pad last section up to reloc entries on int64_t boundary */
-    fwritezero(rel_padcnt64, ofile);
+    fwritezero(rel_padcnt, ofile);
 
     /* emit relocation entries */
     for (s = sects; s != NULL; s = s->next)
@@ -1235,7 +1235,7 @@ static void macho_write_symtab (void)
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
 	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-		nasm_assert(sym->sect <= seg_nsects64);
+		nasm_assert(sym->sect <= seg_nsects);
 		sym->value += sectstab[sym->sect]->addr;
 	    }
 
@@ -1253,7 +1253,7 @@ static void macho_write_symtab (void)
 	/* Fix up the symbol value now that we know the final section
 	   sizes.  */
 	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-	    nasm_assert(sym->sect <= seg_nsects64);
+	    nasm_assert(sym->sect <= seg_nsects);
 	    sym->value += sectstab[sym->sect]->addr;
 	}
 
@@ -1269,7 +1269,7 @@ static void macho_write_symtab (void)
 
 	 // Fix up the symbol value now that we know the final section sizes.
 	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-	    nasm_assert(sym->sect <= seg_nsects64);
+	    nasm_assert(sym->sect <= seg_nsects);
 	    sym->value += sectstab[sym->sect]->addr;
 	 }
 
@@ -1379,10 +1379,10 @@ static void macho_write (void)
     /* Emit the Mach-O header.  */
     macho_write_header();
 
-    offset = MACHO_HEADER64_SIZE + head_sizeofcmds64;
+    offset = MACHO_HEADER64_SIZE + head_sizeofcmds;
 
     /* emit the segment load command */
-    if (seg_nsects64 > 0)
+    if (seg_nsects > 0)
 	offset = macho_write_segment (offset);
     else
         nasm_error(ERR_WARNING, "no sections?");
@@ -1400,7 +1400,7 @@ static void macho_write (void)
     }
 
     /* emit section data */
-    if (seg_nsects64 > 0)
+    if (seg_nsects > 0)
 	macho_write_section ();
 
     /* emit symbol table if we have symbols */
