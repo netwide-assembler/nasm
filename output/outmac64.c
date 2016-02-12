@@ -59,10 +59,11 @@
 /* Mach-O in-file header structure sizes */
 #define MACHO_HEADER64_SIZE		(32)
 #define MACHO_SEGCMD64_SIZE		(72)
-#define MACHO_SECTCMD64_SIZE	(80)
+#define MACHO_SECTCMD64_SIZE		(80)
 #define MACHO_SYMCMD_SIZE		(24)
 #define MACHO_NLIST64_SIZE		(16)
-#define MACHO_RELINFO64_SIZE	(8)
+#define MACHO_RELINFO64_SIZE		(8)
+#define MACHO_DATA_IN_CODE_CMD_SIZE	(16)
 
 /* Mach-O file header values */
 #define	MH_MAGIC_64		(0xfeedfacf)
@@ -72,6 +73,7 @@
 
 #define	LC_SEGMENT_64	(0x19)  /* segment load command */
 #define LC_SYMTAB		(0x2)   /* symbol table load command */
+#define LC_DATA_IN_CODE	(0x29)		/* data in code command */
 
 #define	VM_PROT_NONE	(0x00)
 #define VM_PROT_READ	(0x01)
@@ -94,6 +96,7 @@ struct section {
     char segname[16];           /* segment this section will be in */
     uint64_t addr;         /* in-memory address (subject to alignment) */
     uint64_t size;         /* in-memory and -file size  */
+    uint64_t offset;	   /* in-file offset */
     uint32_t pad;          /* padding bytes before section */
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
@@ -179,7 +182,7 @@ struct symbol {
 #define	NO_SECT		0       /* no section, invalid */
 #define MAX_SECT	255     /* maximum number of sections */
 
-static struct section *sects, **sectstail;
+static struct section *sects, **sectstail, **sectstab;
 static struct symbol *syms, **symstail;
 static uint32_t nsyms;
 
@@ -669,6 +672,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
                 s->relocs = NULL;
                 s->align = -1;
                 s->pad = -1;
+		s->offset = -1;
 
                 xstrncpy(s->segname, sm->segname);
                 xstrncpy(s->sectname, sm->sectname);
@@ -965,6 +969,7 @@ static void macho_layout_symbols (uint32_t *numsyms,
 static void macho_calculate_sizes (void)
 {
     struct section *s;
+    int fi;
 
     /* count sections and calculate in-memory and in-file offsets */
     for (s = sects; s != NULL; s = s->next) {
@@ -990,6 +995,7 @@ static void macho_calculate_sizes (void)
 	     * perhaps aligning to pointer size would be better.
 	     */
 	    s->pad = ALIGN(seg_filesize64, 4) - seg_filesize64;
+	    s->offset = seg_filesize64 + s->pad;
             seg_filesize64 += s->size + s->pad;
 	}
 
@@ -1008,6 +1014,15 @@ static void macho_calculate_sizes (void)
 	++head_ncmds64;
 	head_sizeofcmds64 += MACHO_SYMCMD_SIZE;
     }
+
+    ++head_ncmds64;		/* LC_DATA_IN_CODE */
+    head_sizeofcmds64 += MACHO_DATA_IN_CODE_CMD_SIZE;
+
+    /* Create a table of sections by file index to avoid linear search */
+    sectstab = nasm_malloc(seg_nsects64 + 1);
+    sectstab[0] = NULL;
+    for (s = sects, fi = 1; s != NULL; s = s->next, fi++)
+	sectstab[fi] = s;
 }
 
 /* Write out the header information for the file.  */
@@ -1035,8 +1050,9 @@ static uint32_t macho_write_segment (uint64_t offset)
     fwriteint32_t(LC_SEGMENT_64, ofile);        /* cmd == LC_SEGMENT_64 */
 
     /* size of load command including section load commands */
-    fwriteint32_t(MACHO_SEGCMD64_SIZE + seg_nsects64 *
-	       MACHO_SECTCMD64_SIZE, ofile);
+    fwriteint32_t(MACHO_SEGCMD64_SIZE +
+		  seg_nsects64 * MACHO_SECTCMD64_SIZE,
+		  ofile);
 
     /* in an MH_OBJECT file all sections are in one unnamed (name
     ** all zeros) segment */
@@ -1210,8 +1226,6 @@ static void macho_write_section (void)
 static void macho_write_symtab (void)
 {
     struct symbol *sym;
-    struct section *s;
-    int64_t fi;
     uint64_t i;
 
     /* we don't need to pad here since MACHO_RELINFO_SIZE == 8 */
@@ -1226,12 +1240,8 @@ static void macho_write_symtab (void)
 	    /* Fix up the symbol value now that we know the final section
 	       sizes.  */
 	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-		    for (s = sects, fi = 1; s != NULL; s = s->next, fi++) {
-		        if (fi == sym->sect) {
-		            sym->value += s->addr;
-		            break;
-		        }
-		    }
+		nasm_assert(sym->sect <= seg_nsects64);
+		sym->value += sectstab[sym->sect]->addr;
 	    }
 
 	    fwriteint64_t(sym->value, ofile);	/* value (i.e. offset) */
@@ -1248,9 +1258,8 @@ static void macho_write_symtab (void)
 	/* Fix up the symbol value now that we know the final section
 	   sizes.  */
 	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-	    for (s = sects, fi = 1;
-		 s != NULL && fi < sym->sect; s = s->next, ++fi)
-		sym->value += s->size;
+	    nasm_assert(sym->sect <= seg_nsects64);
+	    sym->value += sectstab[sym->sect]->addr;
 	}
 
 	fwriteint64_t(sym->value, ofile);	/* value (i.e. offset) */
@@ -1265,9 +1274,8 @@ static void macho_write_symtab (void)
 
 	 // Fix up the symbol value now that we know the final section sizes.
 	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
-	     for (s = sects, fi = 1;
-		  s != NULL && fi < sym->sect; s = s->next, ++fi)
-		 sym->value += s->size;
+	    nasm_assert(sym->sect <= seg_nsects64);
+	    sym->value += sectstab[sym->sect]->addr;
 	 }
 
 	 fwriteint64_t(sym->value, ofile);	// value (i.e. offset)
@@ -1391,11 +1399,16 @@ static void macho_write (void)
         fwriteint32_t(offset, ofile);    /* symbol table offset */
         fwriteint32_t(nsyms, ofile);     /* number of symbol
                                          ** table entries */
-
         offset += nsyms * MACHO_NLIST64_SIZE;
         fwriteint32_t(offset, ofile);    /* string table offset */
         fwriteint32_t(strslen, ofile);   /* string table size */
     }
+
+    /* emit dummy data in code command */
+    fwriteint32_t(LC_DATA_IN_CODE, ofile);
+    fwriteint32_t(MACHO_DATA_IN_CODE_CMD_SIZE, ofile);
+    fwriteint32_t(offset, ofile);
+    fwriteint32_t(0, ofile);		/* no actual DATA_IN_CODE */
 
     /* emit section data */
     if (seg_nsects64 > 0)
