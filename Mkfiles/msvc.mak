@@ -55,8 +55,7 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/outelf.$(O) output/outelf32.$(O) output/outelf64.$(O) \
 	output/outelfx32.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmac32.$(O) \
-	output/outmac64.$(O) \
+	output/outdbg.$(O) output/outieee.$(O) output/outmac.$(O) \
 	md5c.$(O) output/codeview.$(O) \
 	preproc.$(O) quote.$(O) pptok.$(O) \
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
@@ -320,12 +319,9 @@ output/outieee.$(O): output/outieee.c compiler.h directiv.h insnsi.h nasm.h \
  regs.h tables.h
 output/outlib.$(O): output/outlib.c compiler.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outlib.h pptok.h preproc.h regs.h tables.h
-output/outmac32.$(O): output/outmac32.c compiler.h directiv.h eval.h \
- insnsi.h nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h \
- pptok.h preproc.h raa.h regs.h saa.h tables.h
-output/outmac64.$(O): output/outmac64.c compiler.h directiv.h insnsi.h \
- nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h pptok.h \
- preproc.h raa.h regs.h saa.h tables.h
+output/outmac.$(O): output/outmac.c compiler.h directiv.h insnsi.h nasm.h \
+ nasmlib.h opflags.h output/outform.h output/outlib.h pptok.h preproc.h \
+ raa.h regs.h saa.h tables.h
 output/outobj.$(O): output/outobj.c compiler.h directiv.h eval.h insnsi.h \
  nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h pptok.h \
  preproc.h regs.h stdscan.h tables.h
