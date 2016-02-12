@@ -441,7 +441,7 @@ static int32_t add_reloc(struct section *sect, int32_t section,
 
 		/* inter-section */
 		} else {
-			r->type = 2;			// X86_64_RELOC_BRANCH
+			r->type = 1;			// X86_64_RELOC_SIGNED
 			fi = get_section_fileindex_by_index(section);
 
 			/* external */
@@ -1015,9 +1015,6 @@ static void macho_calculate_sizes (void)
 	head_sizeofcmds64 += MACHO_SYMCMD_SIZE;
     }
 
-    ++head_ncmds64;		/* LC_DATA_IN_CODE */
-    head_sizeofcmds64 += MACHO_DATA_IN_CODE_CMD_SIZE;
-
     /* Create a table of sections by file index to avoid linear search */
     sectstab = nasm_malloc(seg_nsects64 + 1);
     sectstab[0] = NULL;
@@ -1403,12 +1400,6 @@ static void macho_write (void)
         fwriteint32_t(offset, ofile);    /* string table offset */
         fwriteint32_t(strslen, ofile);   /* string table size */
     }
-
-    /* emit dummy data in code command */
-    fwriteint32_t(LC_DATA_IN_CODE, ofile);
-    fwriteint32_t(MACHO_DATA_IN_CODE_CMD_SIZE, ofile);
-    fwriteint32_t(offset, ofile);
-    fwriteint32_t(0, ofile);		/* no actual DATA_IN_CODE */
 
     /* emit section data */
     if (seg_nsects64 > 0)
