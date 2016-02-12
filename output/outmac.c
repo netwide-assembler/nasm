@@ -707,14 +707,14 @@ static int32_t macho_section(char *name, int pass, int *bits)
                         newAlignment = alignlog2_32(value);
 
                         if (0 != *end) {
-                            nasm_error(ERR_PANIC,
+                            nasm_error(ERR_FATAL,
                                   "unknown or missing alignment value \"%s\" "
                                       "specified for section \"%s\"",
                                   currentAttribute + 6,
                                   name);
                             return NO_SEG;
                         } else if (0 > newAlignment) {
-                            nasm_error(ERR_PANIC,
+                            nasm_error(ERR_FATAL,
                                   "alignment of %d (for section \"%s\") is not "
                                       "a power of two",
                                   value,
@@ -722,24 +722,12 @@ static int32_t macho_section(char *name, int pass, int *bits)
                             return NO_SEG;
                         }
 
-                        if ((-1 != originalIndex)
-                            && (s->align != newAlignment)
-                           && (s->align != -1)) {
-                            nasm_error(ERR_PANIC,
-                                  "section \"%s\" has already been specified "
-                                      "with alignment %d, conflicts with new "
-                                      "alignment of %d",
-                            name,
-                            (1 << s->align),
-                            value);
-                            return NO_SEG;
-                        }
-
-                        s->align = newAlignment;
+			if (s->align < newAlignment)
+			    s->align = newAlignment;
                     } else if (!nasm_stricmp("data", currentAttribute)) {
                         /* Do nothing; 'data' is implicit */
                     } else {
-                        nasm_error(ERR_PANIC,
+                        nasm_error(ERR_FATAL,
                               "unknown section attribute %s for section %s",
                               currentAttribute,
                               name);
@@ -752,7 +740,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
         }
     }
 
-    nasm_error(ERR_PANIC, "invalid section name %s", name);
+    nasm_error(ERR_FATAL, "invalid section name %s", name);
     return NO_SEG;
 }
 
@@ -845,6 +833,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 static void macho_sectalign(int32_t seg, unsigned int value)
 {
     struct section *s;
+    int align;
 
     list_for_each(s, sects) {
         if (s->index == seg)
@@ -854,9 +843,9 @@ static void macho_sectalign(int32_t seg, unsigned int value)
     if (!s || !is_power2(value))
         return;
 
-    value = alignlog2_32(value);
-    if (s->align < (int)value)
-        s->align = value;
+    align = alignlog2_32(value);
+    if (s->align < align);
+        s->align = align;
 }
 
 static int32_t macho_segbase(int32_t section)
