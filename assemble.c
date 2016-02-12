@@ -306,6 +306,27 @@ static void warn_overflow_opd(const struct operand *o, int size)
 }
 
 /*
+ * Size of an address relocation, or zero if not an address
+ */
+static int addrsize(enum out_type type, uint64_t size)
+{
+    switch (type) {
+    case OUT_ADDRESS:
+        return abs((int)size);
+    case OUT_REL1ADR:
+        return 1;
+    case OUT_REL2ADR:
+        return 2;
+    case OUT_REL4ADR:
+        return 4;
+    case OUT_REL8ADR:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+/*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
  * generator at the same time, flatten unnecessary relocations,
@@ -318,7 +339,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
     static int32_t lineno = 0;     /* static!!! */
     static char *lnfname = NULL;
     uint8_t p[8];
-    const int asize = abs((int)size); /* True address size */
+    int asize = addrsize(type, size); 	    /* Address size in bytes */
     const int amax  = outfmt->maxbits >> 3; /* Maximum address size in bytes */
 
     if (type == OUT_ADDRESS && segment == NO_SEG && wrt == NO_SEG) {
@@ -336,6 +357,8 @@ static void out(int64_t offset, int32_t segto, const void *data,
         WRITEADDR(q, *(int64_t *)data, asize);
         data = p;
         type = OUT_RAWDATA;
+
+        asize = 0;              /* No longer an address */
     }
 
     list->output(offset, data, type, size);
@@ -352,8 +375,8 @@ static void out(int64_t offset, int32_t segto, const void *data,
     if (src_get(&lineno, &lnfname))
         outfmt->current_dfmt->linenum(lnfname, lineno, segto);
 
-    if (type == OUT_ADDRESS && asize > amax) {
-        if (asize < 0) {
+    if (asize && asize > amax) {
+        if (type != OUT_ADDRESS || (int)size < 0) {
             errfunc(ERR_NONFATAL,
                     "%d-bit signed relocation unsupported by output format %s\n",
                     asize << 3, outfmt->shortname);
