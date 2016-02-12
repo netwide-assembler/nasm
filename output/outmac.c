@@ -32,8 +32,8 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * outmac64.c	output routines for the Netwide Assembler to produce
- *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files
+ * outmac.c	output routines for the Netwide Assembler to produce
+ *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files
  */
 
 /* Most of this file is, like Mach-O itself, based on a.out. For more
@@ -1499,7 +1499,7 @@ static void macho32_init(void)
 
 struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
-    "macho64",
+    "macho32",
     0,
     32,
     null_debug_arr,
