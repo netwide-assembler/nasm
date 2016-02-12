@@ -653,9 +653,9 @@ static int32_t macho_section(char *name, int pass, int *bits)
 
     (void)pass;
 
-    /* Default to 64 bits. */
+    /* Default to the appropriate number of bits. */
     if (!name) {
-        *bits = 64;
+        *bits = fmt->ptrsize << 3;
         name = ".text";
         sectionAttributes = NULL;
     } else {
