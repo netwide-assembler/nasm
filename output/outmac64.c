@@ -1016,7 +1016,7 @@ static void macho_calculate_sizes (void)
     }
 
     /* Create a table of sections by file index to avoid linear search */
-    sectstab = nasm_malloc(seg_nsects64 + 1);
+    sectstab = nasm_malloc((seg_nsects64 + 1) * sizeof(*sectstab));
     sectstab[0] = NULL;
     for (s = sects, fi = 1; s != NULL; s = s->next, fi++)
 	sectstab[fi] = s;
@@ -1456,14 +1456,15 @@ static void macho_cleanup(int debuginfo)
     saa_free(strs);
     raa_free(extsyms);
 
-    if (syms) {
-    while (syms->next) {
+    while (syms) {
        sym = syms;
        syms = syms->next;
-
        nasm_free (sym);
     }
-}
+
+    nasm_free(extdefsyms);
+    nasm_free(undefsyms);
+    nasm_free(sectstab);
 }
 
 /* Debugging routines.  */
