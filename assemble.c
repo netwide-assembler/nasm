@@ -383,12 +383,13 @@ static void out(int64_t offset, int32_t segto, const void *data,
         } else {
             errfunc(ERR_WARNING | ERR_WARN_ZEXTRELOC,
                     "%d-bit unsigned relocation zero-extended from %d bits\n",
-                    asize << 4, outfmt->maxbits);
+                    asize << 3, outfmt->maxbits);
             outfmt->output(segto, data, type, amax, segment, wrt);
             size -= amax;
         }
         data = zero_buffer;
         type = OUT_RAWDATA;
+	segment = wrt = NO_SEG;
     }
 
     outfmt->output(segto, data, type, size, segment, wrt);
