@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -402,7 +402,7 @@ static void register_reloc(struct coff_Section *const sect,
     for (uint32_t i = 0; i < coff_nsyms; i++) {
         struct coff_Symbol *s = saa_rstruct(coff_syms);
         r->symbol++;
-        if (s->strpos == -1 && s->name && !strcmp(sym, s->name)) {
+        if (s->strpos == -1 && !strcmp(sym, s->name)) {
             return;
         } else if (s->strpos != -1) {
             int res;

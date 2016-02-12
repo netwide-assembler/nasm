@@ -611,7 +611,7 @@ static void coff_out(int32_t segto, const void *data,
         dinfo.section = s;
 
         if (type == OUT_ADDRESS)
-            dinfo.size = abs(size);
+            dinfo.size = abs((int)size);
         else
             dinfo.size = realsize(type, size);
 
@@ -630,7 +630,7 @@ static void coff_out(int32_t segto, const void *data,
             nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
         coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
-        int asize = abs(size);
+        int asize = abs((int)size);
         if (!win64) {
             if (asize != 4 && (segment != NO_SEG || wrt != NO_SEG)) {
                 nasm_error(ERR_NONFATAL, "COFF format does not support non-32-bit"

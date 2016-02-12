@@ -583,7 +583,7 @@ static void rdf2_out(int32_t segto, const void *data,
 
         membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
-        int asize = abs(size);
+        int asize = abs((int)size);
 
         /* if segment == NO_SEG then we are writing an address of an
            object within the same segment - do not produce reloc rec. */

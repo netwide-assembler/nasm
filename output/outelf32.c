@@ -730,7 +730,7 @@ static void elf_out(int32_t segto, const void *data,
     case OUT_ADDRESS:
     {
         bool gnu16 = false;
-        int asize = abs(size);
+        int asize = abs((int)size);
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
