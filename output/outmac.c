@@ -646,7 +646,7 @@ static void macho_output(int32_t secto, const void *data,
 
 static int32_t macho_section(char *name, int pass, int *bits)
 {
-    int32_t index, originalIndex;
+    int32_t index;
     char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
@@ -669,8 +669,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
             char *currentAttribute;
 
             /* try to find section with that name */
-            originalIndex = index = get_section_index_by_name(sm->segname,
-                                                              sm->sectname);
+            index = get_section_index_by_name(sm->segname, sm->sectname);
 
             /* create it if it doesn't exist yet */
             if (index == -1) {
@@ -844,7 +843,7 @@ static void macho_sectalign(int32_t seg, unsigned int value)
         return;
 
     align = alignlog2_32(value);
-    if (s->align < align);
+    if (s->align < align)
         s->align = align;
 }
 
