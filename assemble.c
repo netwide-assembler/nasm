@@ -360,7 +360,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
                     abits, outfmt->shortname);
         } else {
             errfunc(ERR_WARNING | ERR_WARN_ZEXTRELOC,
-                    "%d-bit unsigned relocation zeroq-padded from %d bits\n",
+                    "%d-bit unsigned relocation zero-extended from %d bits\n",
                     abits, maxbits);
             outfmt->output(segto, data, type, amax, segment, wrt);
             size -= amax;

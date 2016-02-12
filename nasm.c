@@ -168,7 +168,7 @@ static const struct warning {
     {"lock", "lock prefix on unlockable instructions", true},
     {"hle", "invalid hle prefixes", true},
     {"bnd", "invalid bnd prefixes", true},
-    {"zero-reloc", "relocation zero-extended to match output format", true},
+    {"zext-reloc", "relocation zero-extended to match output format", true},
 };
 
 static bool want_usage;
