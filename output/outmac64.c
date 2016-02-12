@@ -217,12 +217,12 @@ extern struct ofmt of_macho64;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
-uint32_t head_ncmds64 = 0;
-uint32_t head_sizeofcmds64 = 0;
-uint64_t seg_filesize64 = 0;
-uint64_t seg_vmsize64 = 0;
-uint32_t seg_nsects64 = 0;
-uint64_t rel_padcnt64 = 0;
+static uint32_t head_ncmds64 = 0;
+static uint32_t head_sizeofcmds64 = 0;
+static uint64_t seg_filesize64 = 0;
+static uint64_t seg_vmsize64 = 0;
+static uint32_t seg_nsects64 = 0;
+static uint64_t rel_padcnt64 = 0;
 
 
 #define xstrncpy(xdst, xsrc)						\

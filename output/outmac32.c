@@ -210,12 +210,12 @@ static uint32_t strslen;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
-uint32_t head_ncmds = 0;
-uint32_t head_sizeofcmds = 0;
-uint32_t seg_filesize = 0;
-uint32_t seg_vmsize = 0;
-uint32_t seg_nsects = 0;
-uint32_t rel_padcnt = 0;
+static uint32_t head_ncmds = 0;
+static uint32_t head_sizeofcmds = 0;
+static uint32_t seg_filesize = 0;
+static uint32_t seg_vmsize = 0;
+static uint32_t seg_nsects = 0;
+static uint32_t rel_padcnt = 0;
 
 
 #define xstrncpy(xdst, xsrc)						\
