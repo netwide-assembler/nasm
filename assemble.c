@@ -357,7 +357,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
         WRITEADDR(q, *(int64_t *)data, asize);
         data = p;
         type = OUT_RAWDATA;
-
+	size = asize;
         asize = 0;              /* No longer an address */
     }
 
@@ -380,12 +380,13 @@ static void out(int64_t offset, int32_t segto, const void *data,
             errfunc(ERR_NONFATAL,
                     "%d-bit signed relocation unsupported by output format %s\n",
                     asize << 3, outfmt->shortname);
+	    size = asize;
         } else {
             errfunc(ERR_WARNING | ERR_WARN_ZEXTRELOC,
                     "%d-bit unsigned relocation zero-extended from %d bits\n",
                     asize << 3, outfmt->maxbits);
             outfmt->output(segto, data, type, amax, segment, wrt);
-            size -= amax;
+            size = asize - amax;
         }
         data = zero_buffer;
         type = OUT_RAWDATA;
