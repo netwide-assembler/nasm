@@ -114,8 +114,6 @@ static void rdf2_init(void)
 {
     int segtext, segdata, segbss;
 
-    maxbits = 64;
-
     /* set up the initial segments */
     segments[0].segname = ".text";
     segments[0].segnumber = 0;
@@ -781,6 +779,7 @@ struct ofmt of_rdf2 = {
     "Relocatable Dynamic Object File Format v2.0",
     "rdf",
     0,
+    64,
     null_debug_arr,
     &null_debug_form,
     rdf2_stdmac,

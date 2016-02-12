@@ -2627,6 +2627,7 @@ struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
     0,
+    32,
     borland_debug_arr,
     &borland_debug_form,
     obj_stdmac,

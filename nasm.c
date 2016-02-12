@@ -87,7 +87,6 @@ static void usage(void);
 static int using_debug_info, opt_verbose_info;
 bool tasm_compatible_mode = false;
 int pass0, passn;
-int maxbits = 0;
 int globalrel = 0;
 int globalbnd = 0;
 

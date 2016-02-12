@@ -1366,6 +1366,7 @@ struct ofmt of_elf32 = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf32",
     0,
+    32,
     elf32_debugs_arr,
     &df_stabs,
     elf_stdmac,

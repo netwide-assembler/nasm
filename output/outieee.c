@@ -1517,6 +1517,7 @@ struct ofmt of_ieee = {
     "IEEE-695 (LADsoft variant) object file format",
     "ieee",
     OFMT_TEXT,
+    32,
     ladsoft_debug_arr,
     &ladsoft_debug_form,
     NULL,

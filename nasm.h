@@ -738,8 +738,10 @@ struct ofmt {
     /*
      * Output format flags.
      */
-#define OFMT_TEXT   1   /* Text file format */
+#define OFMT_TEXT   1   	/* Text file format */
     unsigned int flags;
+
+    int maxbits;                /* Maximum segment bits supported */
 
     /*
      * this is a pointer to the first element of the debug information
@@ -1181,7 +1183,6 @@ extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */
-extern int maxbits;             /* max bits supported by output */
 
 /*
  * NASM version strings, defined in ver.c

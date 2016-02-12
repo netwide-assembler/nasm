@@ -332,8 +332,6 @@ static void macho_init(void)
 {
     char zero = 0;
 
-    maxbits = 64;
-
     sects = NULL;
     sectstail = &sects;
 
@@ -1495,6 +1493,7 @@ struct ofmt of_macho64 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
     "macho64",
     0,
+    64,
     null_debug_arr,
     &null_debug_form,
     macho_stdmac,

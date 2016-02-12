@@ -319,8 +319,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
     static char *lnfname = NULL;
     uint8_t p[8];
     const int asize = abs((int)size); /* True address size */
-    const int abits = asize << 3;   /* Address size in bits */
-    const int amax  = maxbits >> 3; /* Maximum address size in bytes */
+    const int amax  = outfmt->maxbits >> 3; /* Maximum address size in bytes */
 
     if (type == OUT_ADDRESS && segment == NO_SEG && wrt == NO_SEG) {
         /*
@@ -353,15 +352,15 @@ static void out(int64_t offset, int32_t segto, const void *data,
     if (src_get(&lineno, &lnfname))
         outfmt->current_dfmt->linenum(lnfname, lineno, segto);
 
-    if (type == OUT_ADDRESS && abits > maxbits) {
+    if (type == OUT_ADDRESS && asize > amax) {
         if (asize < 0) {
             errfunc(ERR_NONFATAL,
                     "%d-bit signed relocation unsupported by output format %s\n",
-                    abits, outfmt->shortname);
+                    asize << 3, outfmt->shortname);
         } else {
             errfunc(ERR_WARNING | ERR_WARN_ZEXTRELOC,
                     "%d-bit unsigned relocation zero-extended from %d bits\n",
-                    abits, maxbits);
+                    asize << 4, outfmt->maxbits);
             outfmt->output(segto, data, type, amax, segment, wrt);
             size -= amax;
         }

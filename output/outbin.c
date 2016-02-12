@@ -1431,7 +1431,6 @@ static void srec_init(void)
 
 static void binfmt_init(void)
 {
-    maxbits = 64;               /* Support 64-bit Segments */
     relocs = NULL;
     reloctail = &relocs;
     origin_defined = 0;
@@ -1660,6 +1659,7 @@ struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
     0,
+    64,
     null_debug_arr,
     &null_debug_form,
     bin_stdmac,
@@ -1679,6 +1679,7 @@ struct ofmt of_ith = {
     "Intel hex",
     "ith",
     OFMT_TEXT,
+    64,
     null_debug_arr,
     &null_debug_form,
     bin_stdmac,
@@ -1697,7 +1698,8 @@ struct ofmt of_ith = {
 struct ofmt of_srec = {
     "Motorola S-records",
     "srec",
-    0,
+    OFMT_TEXT,
+    64,
     null_debug_arr,
     &null_debug_form,
     bin_stdmac,

@@ -196,7 +196,6 @@ static void coff_win32_init(void)
 
 static void coff_win64_init(void)
 {
-    maxbits = 64;
     win32 = false;
     win64 = true;
     coff_gen_init();
@@ -1173,6 +1172,7 @@ struct ofmt of_coff = {
     "COFF (i386) object files (e.g. DJGPP for DOS)",
     "coff",
     0,
+    32,
     null_debug_arr,
     &null_debug_form,
     coff_stdmac,
@@ -1200,6 +1200,7 @@ struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
     "win32",
     0,
+    32,
     win32_debug_arr,
     &df_cv8,
     coff_stdmac,
@@ -1225,6 +1226,7 @@ struct ofmt of_win64 = {
     "Microsoft Win64 (x86-64) object files",
     "win64",
     0,
+    64,
     win64_debug_arr,
     &df_cv8,
     coff_stdmac,

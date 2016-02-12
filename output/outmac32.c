@@ -1303,6 +1303,7 @@ struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
     0,
+    32,
     null_debug_arr,
     &null_debug_form,
     macho_stdmac,

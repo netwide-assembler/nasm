@@ -264,6 +264,7 @@ struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
     OFMT_TEXT,
+    64,
     debug_debug_arr,
     &debug_debug_form,
     NULL,

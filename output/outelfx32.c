@@ -190,7 +190,6 @@ static int32_t elf_gottpoff_sect;
 
 static void elf_init(void)
 {
-    maxbits = 64;
     sects = NULL;
     nsects = sectlen = 0;
     syms = saa_init((int32_t)sizeof(struct elf_symbol));
@@ -1416,6 +1415,7 @@ struct ofmt of_elfx32 = {
     "ELFX32 (x86_64) object files (e.g. Linux)",
     "elfx32",
     0,
+    64,
     elfx32_debugs_arr,
     &df_stabs,
     elf_stdmac,

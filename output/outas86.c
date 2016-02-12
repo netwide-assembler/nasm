@@ -633,6 +633,7 @@ struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
     0,
+    32,
     null_debug_arr,
     &null_debug_form,
     as86_stdmac,
