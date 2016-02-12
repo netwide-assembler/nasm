@@ -100,28 +100,6 @@ struct macho_fmt {
     uint32_t nlist_size;	/* Nlist (symbol) size */
 };
 
-static const struct macho_fmt macho32_fmt = {
-    4,
-    MH_MAGIC,
-    CPU_TYPE_I386,
-    LC_SEGMENT,
-    MACHO_HEADER_SIZE,
-    MACHO_SEGCMD_SIZE,
-    MACHO_SECTCMD_SIZE,
-    MACHO_NLIST_SIZE
-};
-
-static const struct macho_fmt macho64_fmt = {
-    8,
-    MH_MAGIC_64,
-    CPU_TYPE_X86_64,
-    LC_SEGMENT_64,
-    MACHO_HEADER64_SIZE,
-    MACHO_SEGCMD64_SIZE,
-    MACHO_SECTCMD64_SIZE,
-    MACHO_NLIST64_SIZE
-};
-
 static const struct macho_fmt *fmt;
 
 static void fwriteptr(uint64_t data, FILE * fp)
@@ -1512,6 +1490,17 @@ static void debug_section_relocs (struct section *s)
 }
 
 #ifdef OF_MACHO32
+static const struct macho_fmt macho32_fmt = {
+    4,
+    MH_MAGIC,
+    CPU_TYPE_I386,
+    LC_SEGMENT,
+    MACHO_HEADER_SIZE,
+    MACHO_SEGCMD_SIZE,
+    MACHO_SECTCMD_SIZE,
+    MACHO_NLIST_SIZE
+};
+
 static void macho32_init(void)
 {
     fmt = &macho32_fmt;
@@ -1542,6 +1531,17 @@ struct ofmt of_macho32 = {
 #endif
 
 #ifdef OF_MACHO64
+static const struct macho_fmt macho64_fmt = {
+    8,
+    MH_MAGIC_64,
+    CPU_TYPE_X86_64,
+    LC_SEGMENT_64,
+    MACHO_HEADER64_SIZE,
+    MACHO_SEGCMD64_SIZE,
+    MACHO_SECTCMD64_SIZE,
+    MACHO_NLIST64_SIZE
+};
+
 static void macho64_init(void)
 {
     fmt = &macho64_fmt;
