@@ -80,15 +80,19 @@ char *nasm_realpath(const char *rel_path)
         int path_max = -1;
         char *buf;
 
-# ifdef PATH_MAX
-        path_max = PATH_MAX;    /* SUSv2 */
-# elif defined(MAXPATHLEN)
-        path_max = MAXPATHLEN;  /* Solaris */
-# elif defined(HAVE_PATHCONF) && defined(_PC_PATH_MAX)
-        path_max = pathconf(path, _PC_PATH_MAX); /* POSIX */
-# endif
-        if (path_max < 0)
+#if defined(HAVE_PATHCONF) && defined(_PC_PATH_MAX)
+        path_max = pathconf(rel_path, _PC_PATH_MAX); /* POSIX */
+#endif
+
+        if (path_max < 0) {
+#ifdef PATH_MAX
+            path_max = PATH_MAX;    /* SUSv2 */
+#elif defined(MAXPATHLEN)
+            path_max = MAXPATHLEN;  /* Solaris */
+#else
             path_max = 65536;    /* Crazily high, we hope */
+#endif
+        }
 
         buf = nasm_malloc(path_max);
 
