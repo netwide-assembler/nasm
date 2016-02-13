@@ -32,7 +32,7 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * outmac.c	output routines for the Netwide Assembler to produce
+ * outmacho.c	output routines for the Netwide Assembler to produce
  *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files
  */
 

@@ -42,7 +42,7 @@ NASM =	nasm.o nasmlib.o ver.o \
 	outelf.o outelf32.o outelf64.o \
 	outelfx32.o \
 	outobj.o outas86.o outrdf2.o \
-	outdbg.o outieee.o outmac.o \
+	outdbg.o outieee.o outmacho.o \
 	md5c.o codeview.o \
 	preproc.o quote.o pptok.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
@@ -223,8 +223,9 @@ outieee.o: outieee.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h tables.h
 outlib.o: outlib.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h outlib.h pptok.h preproc.h regs.h tables.h
-outmac.o: outmac.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
- opflags.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h tables.h
+outmacho.o: outmacho.c compiler.h config.h directiv.h insnsi.h nasm.h \
+ nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h \
+ tables.h
 outobj.o: outobj.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h stdscan.h \
  tables.h
