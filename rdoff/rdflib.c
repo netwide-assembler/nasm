@@ -180,7 +180,8 @@ int main(int argc, char **argv)
         }
         fwrite(sig_modname, 1, strlen(sig_modname) + 1, fp);
         fwrite(rdl_signature, 1, strlen(rdl_signature), fp);
-        l = sizeof(t = time(NULL));
+	t = time(NULL);
+        l = sizeof(t);
         fwrite(&l, sizeof(l), 1, fp);
         fwrite(&t, 1, l, fp);
         fclose(fp);
