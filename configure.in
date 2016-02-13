@@ -78,17 +78,6 @@ dnl If we have gcc, add appropriate options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-std=c99])
-PA_ADD_CFLAGS([-pedantic])
-PA_ADD_CFLAGS([-Werror=implicit])
-PA_ADD_CFLAGS([-Werror=missing-braces])
-PA_ADD_CFLAGS([-Werror=return-type])
-PA_ADD_CFLAGS([-Werror=trigraphs])
-PA_ADD_CFLAGS([-Werror=pointer-arith])
-PA_ADD_CFLAGS([-Werror=strict-prototypes])
-PA_ADD_CFLAGS([-Werror=missing-prototypes])
-PA_ADD_CFLAGS([-Werror=missing-declarations])
-PA_ADD_CFLAGS([-Werror=comment])
-PA_ADD_CFLAGS([-Werror=vla])
 
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
@@ -191,6 +180,18 @@ AC_ARG_WITH([ccache],
                             [Compile with ccache])],
           [CC="ccache $CC"],
           [])
+
+PA_ADD_CFLAGS([-pedantic])
+PA_ADD_CFLAGS([-Werror=implicit])
+PA_ADD_CFLAGS([-Werror=missing-braces])
+PA_ADD_CFLAGS([-Werror=return-type])
+PA_ADD_CFLAGS([-Werror=trigraphs])
+PA_ADD_CFLAGS([-Werror=pointer-arith])
+PA_ADD_CFLAGS([-Werror=strict-prototypes])
+PA_ADD_CFLAGS([-Werror=missing-prototypes])
+PA_ADD_CFLAGS([-Werror=missing-declarations])
+PA_ADD_CFLAGS([-Werror=comment])
+PA_ADD_CFLAGS([-Werror=vla])
 
 AC_OUTPUT_COMMANDS([mkdir -p output])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
