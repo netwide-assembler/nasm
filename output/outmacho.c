@@ -289,29 +289,6 @@ static struct section *get_section_by_index(const int32_t index)
     return s;
 }
 
-static int32_t get_section_index_by_name(const char *segname,
-                                      const char *sectname)
-{
-    struct section *s;
-
-    for (s = sects; s != NULL; s = s->next)
-        if (!strcmp(s->segname, segname) && !strcmp(s->sectname, sectname))
-            return s->index;
-
-    return -1;
-}
-
-static char *get_section_name_by_index(const int32_t index)
-{
-    struct section *s;
-
-    for (s = sects; s != NULL; s = s->next)
-        if (index == s->index)
-            return s->sectname;
-
-    return NULL;
-}
-
 static uint8_t get_section_fileindex_by_index(const int32_t index)
 {
     struct section *s;
@@ -467,9 +444,10 @@ static void macho_output(int32_t secto, const void *data,
 			 enum out_type type, uint64_t size,
                          int32_t section, int32_t wrt)
 {
-    struct section *s, *sbss;
+    struct section *s;
     int64_t addr;
     uint8_t mydata[16], *p, gotload;
+    bool is_bss;
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
@@ -488,14 +466,14 @@ static void macho_output(int32_t secto, const void *data,
 
         /* should never happen */
         if (s == NULL)
-            nasm_error(ERR_PANIC, "text section not found");
+            nasm_panic(0, "text section not found");
     }
 
-    sbss = get_section_by_name("__DATA", "__bss");
+    is_bss = (s->flags & SECTION_TYPE) == S_ZEROFILL;
 
-    if (s == sbss && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in the"
-              " BSS section: ignored");
+    if (is_bss && type != OUT_RESERVE) {
+        nasm_error(ERR_WARNING, "attempt to initialize memory in "
+              "BSS section: ignored");
         s->size += realsize(type, size);
         return;
     }
@@ -504,10 +482,9 @@ static void macho_output(int32_t secto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s != sbss) {
+        if (!is_bss) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
-                  " %s section: zeroing",
-                  get_section_name_by_index(secto));
+		       " %s,%s section: zeroing", s->segname, s->sectname);
 
             sect_write(s, NULL, size);
         } else
@@ -517,7 +494,7 @@ static void macho_output(int32_t secto, const void *data,
 
     case OUT_RAWDATA:
         if (section != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
 
         sect_write(s, data, size);
         break;
@@ -533,7 +510,8 @@ static void macho_output(int32_t secto, const void *data,
                       " section base references");
             } else if (wrt == NO_SEG) {
 		if (fmt->ptrsize == 8 && asize != 8) {
-		    nasm_error(ERR_NONFATAL, "Mach-O 64-bit format does not support"
+		    nasm_error(ERR_NONFATAL,
+			       "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
 		} else {
 		    add_reloc(s, section, RL_ABS, asize);
@@ -622,6 +600,11 @@ static int32_t macho_section(char *name, int pass, int *bits)
     char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
+    const char *section, *segment;
+    uint32_t flags;
+    char *currentAttribute;
+    char *comma;
+    bool new_seg;
 
     (void)pass;
 
@@ -635,84 +618,144 @@ static int32_t macho_section(char *name, int pass, int *bits)
         name = nasm_strsep(&sectionAttributes, " \t");
     }
 
-    for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
-        /* make lookup into section name translation table */
-        if (!strcmp(name, sm->nasmsect)) {
-            char *currentAttribute;
+    section = segment = NULL;
+    flags = 0;
 
-            /* try to find section with that name */
-            index = get_section_index_by_name(sm->segname, sm->sectname);
+    comma = strchr(name, ',');
+    if (comma) {
+	int len;
 
-            /* create it if it doesn't exist yet */
-            if (index == -1) {
-                s = *sectstail = nasm_malloc(sizeof(struct section));
-                s->next = NULL;
-                sectstail = &s->next;
+	*comma = '\0';
+	segment = name;
+	section = comma+1;
 
-                s->data = saa_init(1L);
-                s->index = seg_alloc();
-                s->relocs = NULL;
-                s->align = -1;
-                s->pad = -1;
-		s->offset = -1;
+	len = strlen(segment);
+	if (len == 0) {
+	    nasm_error(ERR_NONFATAL, "empty segment name\n");
+	} else if (len > 16) {
+	    nasm_error(ERR_NONFATAL, "segment name %s too long\n", segment);
+	}
 
-                xstrncpy(s->segname, sm->segname);
-                xstrncpy(s->sectname, sm->sectname);
-                s->size = 0;
-                s->nreloc = 0;
-                s->flags = sm->flags;
+	len = strlen(section);
+	if (len == 0) {
+	    nasm_error(ERR_NONFATAL, "empty section name\n");
+	} else if (len > 16) {
+	    nasm_error(ERR_NONFATAL, "section name %s too long\n", section);
+	}
 
-                index = s->index;
-            } else {
-                s = get_section_by_index(index);
-            }
-
-            while ((NULL != sectionAttributes)
-                   && (currentAttribute = nasm_strsep(&sectionAttributes, " \t"))) {
-                if (0 != *currentAttribute) {
-                    if (!nasm_strnicmp("align=", currentAttribute, 6)) {
-                        char *end;
-                        int newAlignment, value;
-
-                        value = strtoul(currentAttribute + 6, (char**)&end, 0);
-                        newAlignment = alignlog2_32(value);
-
-                        if (0 != *end) {
-                            nasm_error(ERR_FATAL,
-                                  "unknown or missing alignment value \"%s\" "
-                                      "specified for section \"%s\"",
-                                  currentAttribute + 6,
-                                  name);
-                            return NO_SEG;
-                        } else if (0 > newAlignment) {
-                            nasm_error(ERR_FATAL,
-                                  "alignment of %d (for section \"%s\") is not "
-                                      "a power of two",
-                                  value,
-                                  name);
-                            return NO_SEG;
-                        }
-
-			if (s->align < newAlignment)
-			    s->align = newAlignment;
-                    } else if (!nasm_stricmp("data", currentAttribute)) {
-                        /* Do nothing; 'data' is implicit */
-                    } else {
-                        nasm_error(ERR_FATAL,
-                              "unknown section attribute %s for section %s",
-                              currentAttribute,
-                              name);
-                        return NO_SEG;
-                    }
-                }
-            }
-
-            return index;
-        }
+	if (!strcmp(segment, "__TEXT")) {
+	    flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
+		S_ATTR_PURE_INSTRUCTIONS;
+	} else if (!strcmp(segment, "__DATA") && !strcmp(section, "__bss")) {
+	    flags = S_ZEROFILL;
+	} else {
+	    flags = S_REGULAR;
+	}
+    } else {
+	for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
+	    /* make lookup into section name translation table */
+	    if (!strcmp(name, sm->nasmsect)) {
+		segment = sm->segname;
+		section = sm->sectname;
+		goto found;
+	    }
+	}
+	nasm_error(ERR_NONFATAL, "unknown section name\n");
+	return NO_SEG;
     }
 
-    nasm_error(ERR_FATAL, "invalid section name %s", name);
-    return NO_SEG;
+ found:
+    /* try to find section with that name */
+    s = get_section_by_name(segment, section);
+
+    /* create it if it doesn't exist yet */
+    if (!s) {
+	new_seg = true;
+
+	s = *sectstail = nasm_malloc(sizeof(struct section));
+	s->next = NULL;
+	sectstail = &s->next;
+
+	s->data = saa_init(1L);
+	s->index = seg_alloc();
+	s->relocs = NULL;
+	s->align = -1;
+	s->pad = -1;
+	s->offset = -1;
+
+	xstrncpy(s->segname, segment);
+	xstrncpy(s->sectname, section);
+	s->size = 0;
+	s->nreloc = 0;
+	s->flags = flags;
+
+	index = s->index;
+    } else {
+	new_seg = false;
+    }
+
+    if (comma)
+	*comma = ',';		/* Restore comma */
+
+    flags = (uint32_t)-1;
+
+    while ((NULL != sectionAttributes)
+	   && (currentAttribute = nasm_strsep(&sectionAttributes, " \t"))) {
+	if (0 != *currentAttribute) {
+	    if (!nasm_strnicmp("align=", currentAttribute, 6)) {
+		char *end;
+		int newAlignment, value;
+
+		value = strtoul(currentAttribute + 6, (char**)&end, 0);
+		newAlignment = alignlog2_32(value);
+
+		if (0 != *end) {
+		    nasm_error(ERR_FATAL,
+			       "unknown or missing alignment value \"%s\" "
+			       "specified for section \"%s\"",
+			       currentAttribute + 6,
+			       name);
+		    return NO_SEG;
+		} else if (0 > newAlignment) {
+		    nasm_error(ERR_FATAL,
+			       "alignment of %d (for section \"%s\") is not "
+			       "a power of two",
+			       value,
+			       name);
+		    return NO_SEG;
+		}
+
+		if (s->align < newAlignment)
+		    s->align = newAlignment;
+	    } else if (!nasm_stricmp("data", currentAttribute)) {
+		flags = S_REGULAR;
+	    } else if (!nasm_stricmp("code", currentAttribute)) {
+		flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
+		    S_ATTR_PURE_INSTRUCTIONS;
+	    } else if (!nasm_stricmp("mixed", currentAttribute)) {
+		flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS;
+	    } else if (!nasm_stricmp("bss", currentAttribute)) {
+		flags = S_ZEROFILL;
+	    } else {
+		nasm_error(ERR_NONFATAL,
+			   "unknown section attribute %s for section %s",
+			   currentAttribute,
+			   name);
+	    }
+	}
+
+	if (flags != (uint32_t)-1) {
+	    if (!new_seg && s->flags != flags) {
+		nasm_error(ERR_NONFATAL,
+			   "inconsistent section attributes for section %s\n",
+			   name);
+	    } else {
+		s->flags = flags;
+	    }
+	}
+    }
+
+   return index;
 }
 
 static void macho_symdef(char *name, int32_t section, int64_t offset,
