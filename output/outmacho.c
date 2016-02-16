@@ -425,7 +425,7 @@ static void add_reloc(struct section *sect, int32_t section,
 	    /* intra-section */
 	    r->type = 1;			// X86_64_RELOC_SIGNED
 	} else {
-		/* inter-section */
+	    /* inter-section */
 	    r->type = 1;			// X86_64_RELOC_SIGNED
 	    fi = get_section_fileindex_by_index(section);
 
@@ -1145,14 +1145,9 @@ static void macho_write_section (void)
 	       offset which we already have. The linker takes care
 	       of the rest of the address.  */
 	    if (!r->ext) {
-            /* generate final address by section address and offset */
-		    for (s2 = sects, fi = 1;
-		        s2 != NULL; s2 = s2->next, fi++) {
-		        if (fi == r->snum) {
-		            l += s2->addr;
-		            break;
-		        }
-		    }
+		/* generate final address by section address and offset */
+		nasm_assert(r->snum <= seg_nsects);
+		l += sectstab[r->snum]->addr;
 	    }
 
 	    /* write new offset back */
