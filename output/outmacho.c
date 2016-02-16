@@ -317,13 +317,9 @@ static uint8_t get_section_fileindex_by_index(const int32_t index)
     struct section *s;
     uint8_t i = 1;
 
-    for (s = sects; s != NULL && i < MAX_SECT; s = s->next, ++i)
+    for (s = sects; s != NULL; s = s->next, ++i)
         if (index == s->index)
             return i;
-
-    if (i == MAX_SECT)
-        nasm_error(ERR_WARNING,
-              "too many sections (>255) - clipped by fileindex");
 
     return NO_SECT;
 }
@@ -988,6 +984,11 @@ static void macho_calculate_sizes (void)
     if (nsyms > 0) {
 	++head_ncmds;
 	head_sizeofcmds += MACHO_SYMCMD_SIZE;
+    }
+
+    if (seg_nsects > MAX_SECT) {
+	nasm_error(ERR_FATAL, "MachO output is limited to %d sections\n",
+		   MAX_SECT);
     }
 
     /* Create a table of sections by file index to avoid linear search */
