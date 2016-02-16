@@ -370,11 +370,12 @@ enum reltype {
     RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
 };
 
-static void add_reloc(struct section *sect, int32_t section,
-		      enum reltype reltype, int bytes)
+static int64_t add_reloc(struct section *sect, int32_t section,
+			 enum reltype reltype, int bytes)
 {
     struct reloc *r;
     int32_t fi;
+    int64_t adjust;
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a
@@ -389,6 +390,7 @@ static void add_reloc(struct section *sect, int32_t section,
      ** bit by accident */
     r->addr = sect->size & ~R_SCATTERED;
     r->ext = 1;
+    adjust = bytes;
 
     /* match byte count 1, 2, 4, 8 to length codes 0, 1, 2, 3 respectively */
     r->length = ilog2_32(bytes);
@@ -415,6 +417,7 @@ static void add_reloc(struct section *sect, int32_t section,
 		/* local */
 		r->ext = 0;
 		r->snum = fi;
+		adjust = -sect->size;
 	    }
 	}
 	break;
@@ -437,6 +440,7 @@ static void add_reloc(struct section *sect, int32_t section,
 		/* local */
 		r->ext = 0;
 		r->snum = fi;
+		adjust = -sect->size;
 	    }
 	}
 	break;
@@ -460,6 +464,7 @@ static void add_reloc(struct section *sect, int32_t section,
     }
 
     ++sect->nreloc;
+    return adjust;
 }
 
 static void macho_output(int32_t secto, const void *data,
@@ -553,7 +558,7 @@ static void macho_output(int32_t secto, const void *data,
 	nasm_assert(section != secto);
 
         p = mydata;
-        addr = *(int64_t *)data + 2 - size;
+        addr = *(int64_t *)data - size;
 
         if (section != NO_SEG && section % 2) {
             nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -566,7 +571,7 @@ static void macho_output(int32_t secto, const void *data,
 		       " this use of WRT");
 	    wrt = NO_SEG;	/* we can at least _try_ to continue */
 	} else {
-	    add_reloc(s, section, RL_REL, 2);
+	    addr += add_reloc(s, section, RL_REL, 2);
 	}
 
         WRITESHORT(p, addr);
@@ -577,14 +582,14 @@ static void macho_output(int32_t secto, const void *data,
 	nasm_assert(section != secto);
 
         p = mydata;
-        addr = *(int64_t *)data + 4 - size;
+        addr = *(int64_t *)data - size;
 
         if (section != NO_SEG && section % 2) {
             nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 		       " section base references");
         } else if (wrt == NO_SEG) {
 	    /* Plain relative relocation */
-	    add_reloc(s, section, RL_REL, 4);
+	    addr += add_reloc(s, section, RL_REL, 4);
 	} else if (wrt == macho_gotpcrel_sect) {
 	    if (s->data->datalen > 1) {
 		/* Retrieve instruction opcode */
@@ -594,10 +599,10 @@ static void macho_output(int32_t secto, const void *data,
 	    }
 	    if (gotload == 0x8B) {
 		/* Check for MOVQ Opcode -> X86_64_RELOC_GOT_LOAD */
-		add_reloc(s, section, RL_GOTLOAD, 4);
+		addr += add_reloc(s, section, RL_GOTLOAD, 4);
 	    } else {
 		/* X86_64_RELOC_GOT */
-		add_reloc(s, section, RL_GOT, 4);
+		addr += add_reloc(s, section, RL_GOT, 4);
 	    }
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -965,6 +970,7 @@ static void macho_calculate_sizes (void)
 	     * perhaps aligning to pointer size would be better.
 	     */
 	    s->pad = ALIGN(seg_filesize, 4) - seg_filesize;
+	    // s->pad = ALIGN(seg_filesize, 1U << s->align) - seg_filesize;
 	    s->offset = seg_filesize + s->pad;
             seg_filesize += s->size + s->pad;
 	}
@@ -1100,9 +1106,9 @@ static void macho_write_relocs (struct reloc *r)
 /* Write out the section data.  */
 static void macho_write_section (void)
 {
-    struct section *s, *s2;
+    struct section *s;
     struct reloc *r;
-    uint8_t fi, *p;
+    uint8_t *p;
     int32_t len;
     int64_t l;
     union offset {
