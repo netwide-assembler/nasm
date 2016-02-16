@@ -114,6 +114,7 @@ struct section {
     int32_t index;
     struct reloc *relocs;
     int align;
+    bool by_name;		/* This section was specified by full MachO name */
 
     /* data that goes into the file */
     char sectname[16];          /* what this section is called */
@@ -247,7 +248,6 @@ static uint64_t seg_filesize = 0;
 static uint64_t seg_vmsize = 0;
 static uint32_t seg_nsects = 0;
 static uint64_t rel_padcnt = 0;
-
 
 #define xstrncpy(xdst, xsrc)						\
     memset(xdst, '\0', sizeof(xdst));	/* zero out whole buffer */	\
@@ -632,14 +632,14 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	len = strlen(segment);
 	if (len == 0) {
 	    nasm_error(ERR_NONFATAL, "empty segment name\n");
-	} else if (len > 16) {
+	} else if (len >= 16) {
 	    nasm_error(ERR_NONFATAL, "segment name %s too long\n", segment);
 	}
 
 	len = strlen(section);
 	if (len == 0) {
 	    nasm_error(ERR_NONFATAL, "empty section name\n");
-	} else if (len > 16) {
+	} else if (len >= 16) {
 	    nasm_error(ERR_NONFATAL, "section name %s too long\n", section);
 	}
 
@@ -682,6 +682,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	s->align = -1;
 	s->pad = -1;
 	s->offset = -1;
+	s->by_name = false;
 
 	xstrncpy(s->segname, segment);
 	xstrncpy(s->sectname, section);
@@ -696,6 +697,8 @@ static int32_t macho_section(char *name, int pass, int *bits)
 
     if (comma)
 	*comma = ',';		/* Restore comma */
+
+    s->by_name = s->by_name || comma; /* Was specified by name */
 
     flags = (uint32_t)-1;
 
@@ -1114,6 +1117,17 @@ static uint32_t macho_write_segment (uint64_t offset)
 	    s->flags |= S_ATTR_LOC_RELOC;
 	    if (s->extreloc)
 		s->flags |= S_ATTR_EXT_RELOC;
+	} else if (!strcmp(s->segname, "__DATA") &&
+		   !strcmp(s->sectname, "__const") &&
+		   !s->by_name &&
+		   !get_section_by_name("__TEXT", "__const")) {
+	    /*
+	     * The MachO equivalent to .rodata can be either
+	     * __DATA,__const or __TEXT,__const; the latter only if
+	     * there are no relocations.  However, when mixed it is
+	     * better to specify the segments explicitly.
+	     */
+	    xstrncpy(s->segname, "__TEXT");
 	}
 
         fwriteint32_t(s->flags, ofile);      /* flags */
