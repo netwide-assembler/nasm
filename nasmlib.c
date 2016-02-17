@@ -391,16 +391,14 @@ int64_t readstrnum(char *str, int length, bool *warn)
     return charconst;
 }
 
-static int32_t next_seg;
-
-void seg_init(void)
-{
-    next_seg = 0;
-}
-
 int32_t seg_alloc(void)
 {
-    return (next_seg += 2) - 2;
+    static int32_t next_seg = 0;
+    int32_t this_seg = next_seg;
+
+    next_seg += 2;
+
+    return this_seg;
 }
 
 #ifdef WORDS_LITTLEENDIAN

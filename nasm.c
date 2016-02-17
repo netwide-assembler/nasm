@@ -343,8 +343,6 @@ int main(int argc, char **argv)
     preproc = &nasmpp;
     operating_mode = OP_NORMAL;
 
-    seg_init();
-
     /* Define some macros dependent on the runtime, but not
        on the command line. */
     define_macros_early();
@@ -1291,8 +1289,10 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                            "segment alignment `%s' is not power of two",
                                             value);
                             }
+
                             /* callee should be able to handle all details */
-                            ofmt->sectalign(location.segment, align);
+			    if (location.segment != NO_SEG)
+			      ofmt->sectalign(location.segment, align);
                         }
                     }
                     break;
