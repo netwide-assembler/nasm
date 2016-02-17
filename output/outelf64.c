@@ -160,24 +160,24 @@ static struct dfmt df_stabs;
 static struct elf_symbol *lastsym;
 
 /* common debugging routines */
-static void debug64_typevalue(int32_t);
-static void debug64_deflabel(char *, int32_t, int64_t, int, char *);
-static void debug64_directive(const char *, const char *);
+static void debug_typevalue(int32_t);
+static void debug_deflabel(char *, int32_t, int64_t, int, char *);
+static void debug_directive(const char *, const char *);
 
 /* stabs debugging routines */
-static void stabs64_linenum(const char *filename, int32_t linenumber, int32_t);
-static void stabs64_output(int, void *);
-static void stabs64_generate(void);
-static void stabs64_cleanup(void);
+static void stabs_linenum(const char *filename, int32_t linenumber, int32_t);
+static void stabs_output(int, void *);
+static void stabs_generate(void);
+static void stabs_cleanup(void);
 
 /* dwarf debugging routines */
-static void dwarf64_init(void);
-static void dwarf64_linenum(const char *filename, int32_t linenumber, int32_t);
-static void dwarf64_output(int, void *);
-static void dwarf64_generate(void);
-static void dwarf64_cleanup(void);
-static void dwarf64_findfile(const char *);
-static void dwarf64_findsect(const int);
+static void dwarf_init(void);
+static void dwarf_linenum(const char *filename, int32_t linenumber, int32_t);
+static void dwarf_output(int, void *);
+static void dwarf_generate(void);
+static void dwarf_cleanup(void);
+static void dwarf_findfile(const char *);
+static void dwarf_findsect(const int);
 
 /*
  * Special section numbers which are used to define ELF special
@@ -1104,7 +1104,7 @@ static void elf_write(void)
            which are the .stab , .stabstr and .rel.stab sections respectively */
 
         /* this function call creates the stab sections in memory */
-        stabs64_generate();
+        stabs_generate();
 
         if (stabbuf && stabstrbuf && stabrelbuf) {
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, stabbuf, false,
@@ -1125,7 +1125,7 @@ static void elf_write(void)
 
             /* this function call creates the dwarf sections in memory */
             if (dwarf_fsect)
-                dwarf64_generate();
+                dwarf_generate();
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
                                arangeslen, 0, 0, 1, 0);
@@ -1430,24 +1430,24 @@ static int elf_set_info(enum geninfo type, char **val)
 static struct dfmt df_dwarf = {
     "ELF64 (x86-64) dwarf debug format for Linux/Unix",
     "dwarf",
-    dwarf64_init,
-    dwarf64_linenum,
-    debug64_deflabel,
-    debug64_directive,
-    debug64_typevalue,
-    dwarf64_output,
-    dwarf64_cleanup
+    dwarf_init,
+    dwarf_linenum,
+    debug_deflabel,
+    debug_directive,
+    debug_typevalue,
+    dwarf_output,
+    dwarf_cleanup
 };
 static struct dfmt df_stabs = {
     "ELF64 (x86-64) stabs debug format for Linux/Unix",
     "stabs",
     null_debug_init,
-    stabs64_linenum,
-    debug64_deflabel,
-    debug64_directive,
-    debug64_typevalue,
-    stabs64_output,
-    stabs64_cleanup
+    stabs_linenum,
+    debug_deflabel,
+    debug_directive,
+    debug_typevalue,
+    stabs_output,
+    stabs_cleanup
 };
 
 struct dfmt *elf64_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
@@ -1473,7 +1473,7 @@ struct ofmt of_elf64 = {
 };
 
 /* common debugging routines */
-static void debug64_deflabel(char *name, int32_t segment, int64_t offset,
+static void debug_deflabel(char *name, int32_t segment, int64_t offset,
                              int is_global, char *special)
 {
     (void)name;
@@ -1483,13 +1483,13 @@ static void debug64_deflabel(char *name, int32_t segment, int64_t offset,
     (void)special;
 }
 
-static void debug64_directive(const char *directive, const char *params)
+static void debug_directive(const char *directive, const char *params)
 {
     (void)directive;
     (void)params;
 }
 
-static void debug64_typevalue(int32_t type)
+static void debug_typevalue(int32_t type)
 {
     int32_t stype, ssize;
     switch (TYM_TYPE(type)) {
@@ -1558,7 +1558,7 @@ static void debug64_typevalue(int32_t type)
 
 /* stabs debugging routines */
 
-static void stabs64_linenum(const char *filename, int32_t linenumber, int32_t segto)
+static void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
     (void)segto;
     if (!stabs_filename) {
@@ -1581,7 +1581,7 @@ static void stabs64_linenum(const char *filename, int32_t linenumber, int32_t se
 }
 
 
-static void stabs64_output(int type, void *param)
+static void stabs_output(int type, void *param)
 {
     struct symlininfo *s;
     struct linelist *el;
@@ -1612,7 +1612,7 @@ static void stabs64_output(int type, void *param)
 
 /* for creating the .stab , .stabstr and .rel.stab sections in memory */
 
-static void stabs64_generate(void)
+static void stabs_generate(void)
 {
     int i, numfiles, strsize, numstabs = 0, currfile, mainfileindex;
     uint8_t *sbuf, *ssbuf, *rbuf, *sptr, *rptr;
@@ -1750,7 +1750,7 @@ static void stabs64_generate(void)
     stabstrbuf = ssbuf;
 }
 
-static void stabs64_cleanup(void)
+static void stabs_cleanup(void)
 {
     struct linelist *ptr, *del;
     if (!stabslines)
@@ -1770,22 +1770,22 @@ static void stabs64_cleanup(void)
 
 /* dwarf routines */
 
-static void dwarf64_init(void)
+static void dwarf_init(void)
 {
     ndebugs = 3; /* 3 debug symbols */
 }
 
-static void dwarf64_linenum(const char *filename, int32_t linenumber,
+static void dwarf_linenum(const char *filename, int32_t linenumber,
                             int32_t segto)
 {
     (void)segto;
-    dwarf64_findfile(filename);
+    dwarf_findfile(filename);
     debug_immcall = 1;
     currentline = linenumber;
 }
 
 /* called from elf_out with type == TY_DEBUGSYMLIN */
-static void dwarf64_output(int type, void *param)
+static void dwarf_output(int type, void *param)
 {
     int ln, aa, inx, maxln, soc;
     struct symlininfo *s;
@@ -1801,7 +1801,7 @@ static void dwarf64_output(int type, void *param)
 
     /* Check if section index has changed */
     if (!(dwarf_csect && (dwarf_csect->section) == (s->section)))
-        dwarf64_findsect(s->section);
+        dwarf_findsect(s->section);
 
     /* do nothing unless line or file has changed */
     if (!debug_immcall)
@@ -1841,7 +1841,7 @@ static void dwarf64_output(int type, void *param)
 }
 
 
-static void dwarf64_generate(void)
+static void dwarf_generate(void)
 {
     uint8_t *pbuf;
     int indx;
@@ -2076,7 +2076,7 @@ static void dwarf64_generate(void)
     WRITEDLONG(pbuf,0);  /* null  ending offset */
 }
 
-static void dwarf64_cleanup(void)
+static void dwarf_cleanup(void)
 {
     nasm_free(arangesbuf);
     nasm_free(arangesrelbuf);
@@ -2090,7 +2090,7 @@ static void dwarf64_cleanup(void)
     nasm_free(locbuf);
 }
 
-static void dwarf64_findfile(const char * fname)
+static void dwarf_findfile(const char * fname)
 {
     int finx;
     struct linelist *match;
@@ -2127,7 +2127,7 @@ static void dwarf64_findfile(const char * fname)
     }
 }
 
-static void dwarf64_findsect(const int index)
+static void dwarf_findsect(const int index)
 {
     int sinx;
     struct sectlist *match;
