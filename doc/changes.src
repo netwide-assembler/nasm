@@ -32,6 +32,9 @@ since 2007.
    relocations are zero-extended from 32-bits with a warning
    (suppressible via \c{}); signed 64-bit relocations are an arror.
 
+\b Line numbers in list files now correspond to the lines in the source
+   files, instead of simply being sequential.
+
 \S{cl-2.11.09} Version 2.11.09
 
 \b Fix potential stack overwrite in \c{macho32} backend.
