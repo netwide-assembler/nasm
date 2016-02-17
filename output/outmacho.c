@@ -1074,6 +1074,24 @@ static uint32_t macho_write_segment (uint64_t offset)
 
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
+	if (s->nreloc) {
+	    nasm_assert((s->flags & SECTION_TYPE) != S_ZEROFILL);
+	    s->flags |= S_ATTR_LOC_RELOC;
+	    if (s->extreloc)
+		s->flags |= S_ATTR_EXT_RELOC;
+	} else if (!strcmp(s->segname, "__DATA") &&
+		   !strcmp(s->sectname, "__const") &&
+		   !s->by_name &&
+		   !get_section_by_name("__TEXT", "__const")) {
+	    /*
+	     * The MachO equivalent to .rodata can be either
+	     * __DATA,__const or __TEXT,__const; the latter only if
+	     * there are no relocations.  However, when mixed it is
+	     * better to specify the segments explicitly.
+	     */
+	    xstrncpy(s->segname, "__TEXT");
+	}
+
         nasm_write(s->sectname, sizeof(s->sectname), ofile);
         nasm_write(s->segname, sizeof(s->segname), ofile);
         fwriteptr(s->addr, ofile);
@@ -1100,23 +1118,6 @@ static uint32_t macho_write_segment (uint64_t offset)
             fwriteint32_t(0, ofile);
             fwriteint32_t(0, ofile);
         }
-
-	if (s->nreloc) {
-	    s->flags |= S_ATTR_LOC_RELOC;
-	    if (s->extreloc)
-		s->flags |= S_ATTR_EXT_RELOC;
-	} else if (!strcmp(s->segname, "__DATA") &&
-		   !strcmp(s->sectname, "__const") &&
-		   !s->by_name &&
-		   !get_section_by_name("__TEXT", "__const")) {
-	    /*
-	     * The MachO equivalent to .rodata can be either
-	     * __DATA,__const or __TEXT,__const; the latter only if
-	     * there are no relocations.  However, when mixed it is
-	     * better to specify the segments explicitly.
-	     */
-	    xstrncpy(s->segname, "__TEXT");
-	}
 
         fwriteint32_t(s->flags, ofile);      /* flags */
         fwriteint32_t(0, ofile);	     /* reserved */
