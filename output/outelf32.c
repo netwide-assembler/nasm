@@ -1384,32 +1384,6 @@ struct ofmt of_elf32 = {
 
 /* again, the stabs debugging stuff (code) */
 
-static void stabs32_linenum(const char *filename, int32_t linenumber,
-                            int32_t segto)
-{
-    (void)segto;
-
-    if (!stabs_filename) {
-        stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
-        strcpy(stabs_filename, filename);
-    } else {
-        if (strcmp(stabs_filename, filename)) {
-            /*
-             * yep, a memory leak...this program is one-shot anyway, so who cares...
-             * in fact, this leak comes in quite handy to maintain a list of files
-             * encountered so far in the symbol lines...
-             */
-
-            /* why not nasm_free(stabs_filename); we're done with the old one */
-
-            stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
-            strcpy(stabs_filename, filename);
-        }
-    }
-    debug_immcall = 1;
-    currentline = linenumber;
-}
-
 static void debug32_deflabel(char *name, int32_t segment, int64_t offset, int is_global,
                     char *special)
 {
@@ -1491,6 +1465,33 @@ static void debug32_typevalue(int32_t type)
         lastsym->size = ssize;
         lastsym->type = stype;
     }
+}
+
+/* stabs debugging routines */
+
+static void stabs32_linenum(const char *filename, int32_t linenumber,
+                            int32_t segto)
+{
+    (void)segto;
+
+    if (!stabs_filename) {
+        stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
+        strcpy(stabs_filename, filename);
+    } else {
+        if (strcmp(stabs_filename, filename)) {
+            /* yep, a memory leak...this program is one-shot anyway, so who cares...
+               in fact, this leak comes in quite handy to maintain a list of files
+               encountered so far in the symbol lines... */
+
+
+            /* why not nasm_free(stabs_filename); we're done with the old one */
+
+            stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
+            strcpy(stabs_filename, filename);
+        }
+    }
+    debug_immcall = 1;
+    currentline = linenumber;
 }
 
 static void stabs32_output(int type, void *param)
