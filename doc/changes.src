@@ -9,7 +9,7 @@ since 2007.
 
 \S{cl-2.12} Version 2.12
 
-\b Huge rework of \{macho\} backend, internal unification of 32 and 64
+\b Huge rework of \c{macho} backend, internal unification of 32 and 64
    bit formats and make nasm to handle section alignemts properly.
 
 \b Fix wrong negative size treated as a big positive value passed into
