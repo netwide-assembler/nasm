@@ -7,6 +7,25 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.12} Version 2.12
+
+\b Huge rework of \{macho\} backend, internal unification of 32 and 64
+   bit formats and make nasm to handle section alignemts properly.
+
+\b Fix wrong negative size treated as a big positive value passed into
+   backend causing nasm to crash.
+
+\b Fix handling of zero-extending unsigned relocations, we have been printing
+   wrong message and forgot to assign segment with predefined value before
+   passing it into output format.
+
+\b Fix potential write of oversized (with size greater than allowed in
+   output format) relative relocations.
+
+\b Portability fixes for building nasm with LLVM compiler.
+
+\b Add support of Codeview debug format for \c{win32} and \c{win64} formats in \c{coff} backend.
+
 \S{cl-2.11.09} Version 2.11.09
 
 \b Fix potential stack overwrite in \c{macho32} backend.
