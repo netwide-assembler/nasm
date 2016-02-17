@@ -112,6 +112,7 @@ struct section {
     struct section *next;
     struct SAA *data;
     int32_t index;
+    int32_t fileindex;
     struct reloc *relocs;
     int align;
     bool by_name;		/* This section was specified by full MachO name */
@@ -291,14 +292,9 @@ static struct section *get_section_by_index(const int32_t index)
 
 static uint8_t get_section_fileindex_by_index(const int32_t index)
 {
-    struct section *s;
-    uint8_t i = 1;
+    struct section *s = get_section_by_index(index);
 
-    for (s = sects; s != NULL; s = s->next, ++i)
-        if (index == s->index)
-            return i;
-
-    return NO_SECT;
+    return s ? s->fileindex : NO_SECT;
 }
 
 /*
@@ -426,13 +422,13 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     case RL_GOT:
 	r->pcrel = 1;
 	r->type = 4;				// X86_64_RELOC_GOT
-	r->snum = macho_gotpcrel_sect;
+	r->snum = macho_gotpcrel_sect;		/* WTF? */
 	break;
 
     case RL_GOTLOAD:
 	r->pcrel = 1;
 	r->type = 3;				// X86_64_RELOC_GOT_LOAD
-	r->snum = macho_gotpcrel_sect;
+	r->snum = macho_gotpcrel_sect;		/* WTF? */
 	break;
     }
 
@@ -596,7 +592,6 @@ static void macho_output(int32_t secto, const void *data,
 
 static int32_t macho_section(char *name, int pass, int *bits)
 {
-    int32_t index;
     char *sectionAttributes;
     struct sectmap *sm;
     struct section *s;
@@ -657,6 +652,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	    if (!strcmp(name, sm->nasmsect)) {
 		segment = sm->segname;
 		section = sm->sectname;
+		flags = sm->flags;
 		goto found;
 	    }
 	}
@@ -678,6 +674,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
 
 	s->data = saa_init(1L);
 	s->index = seg_alloc();
+	s->fileindex = ++seg_nsects;
 	s->relocs = NULL;
 	s->align = -1;
 	s->pad = -1;
@@ -689,8 +686,6 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	s->size = 0;
 	s->nreloc = 0;
 	s->flags = flags;
-
-	index = s->index;
     } else {
 	new_seg = false;
     }
@@ -713,19 +708,17 @@ static int32_t macho_section(char *name, int pass, int *bits)
 		newAlignment = alignlog2_32(value);
 
 		if (0 != *end) {
-		    nasm_error(ERR_FATAL,
+		    nasm_error(ERR_NONFATAL,
 			       "unknown or missing alignment value \"%s\" "
 			       "specified for section \"%s\"",
 			       currentAttribute + 6,
 			       name);
-		    return NO_SEG;
 		} else if (0 > newAlignment) {
-		    nasm_error(ERR_FATAL,
+		    nasm_error(ERR_NONFATAL,
 			       "alignment of %d (for section \"%s\") is not "
 			       "a power of two",
 			       value,
 			       name);
-		    return NO_SEG;
 		}
 
 		if (s->align < newAlignment)
@@ -758,7 +751,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	}
     }
 
-   return index;
+    return s->index;
 }
 
 static void macho_symdef(char *name, int32_t section, int64_t offset,
@@ -803,7 +796,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     /* external and common symbols get N_EXT */
     if (is_global != 0) {
         sym->type |= N_EXT;
-	}
+    }
 
     if (section == NO_SEG) {
         /* symbols in no section get absolute */
@@ -815,16 +808,15 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         /* get the in-file index of the section the symbol was defined in */
         sym->sect = get_section_fileindex_by_index(section);
 
-		/* track the initially allocated symbol number for use in future fix-ups */
-		sym->initial_snum = nsyms;
+	/* track the initially allocated symbol number for use in future fix-ups */
+	sym->initial_snum = nsyms;
 
         if (sym->sect == NO_SECT) {
-
             /* remember symbol number of references to external
              ** symbols, this works because every external symbol gets
              ** its own section number allocated internally by nasm and
              ** can so be used as a key */
-			extsyms = raa_write(extsyms, section, nsyms);
+	    extsyms = raa_write(extsyms, section, nsyms);
 
             switch (is_global) {
             case 1:
@@ -839,8 +831,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 /* give an error on unfound section if it's not an
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
-                nasm_error(ERR_PANIC, "in-file index for section %d not found",
-                      section);
+                nasm_panic(0, "in-file index for section %d not found, is_global = %d", section, is_global);
             }
         }
     }
@@ -852,10 +843,9 @@ static void macho_sectalign(int32_t seg, unsigned int value)
     struct section *s;
     int align;
 
-    list_for_each(s, sects) {
-        if (s->index == seg)
-            break;
-    }
+    nasm_assert(!(seg & 1));
+
+    s = get_section_by_index(seg);
 
     if (!s || !is_power2(value))
         return;
@@ -1016,8 +1006,6 @@ static void macho_calculate_sizes (void)
 	    s->offset = seg_filesize + s->pad;
             seg_filesize += s->size + s->pad;
 	}
-
-        ++seg_nsects;
     }
 
     /* calculate size of all headers, load commands and sections to
