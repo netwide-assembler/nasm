@@ -51,6 +51,7 @@
 #include "nasmlib.h"
 #include "saa.h"
 #include "raa.h"
+#include "rbtree.h"
 #include "output/outform.h"
 #include "output/outlib.h"
 
@@ -77,10 +78,29 @@
 #define	CPU_SUBTYPE_I386_ALL	3		/* all-x86 compatible */
 #define	MH_OBJECT		0x1		/* object file */
 
+/* Mach-O load commands */
 #define LC_SEGMENT		0x1		/* 32-bit segment load cmd */
 #define LC_SEGMENT_64		0x19		/* 64-bit segment load cmd */
 #define LC_SYMTAB		0x2		/* symbol table load command */
 
+/* Mach-O relocations numbers */
+
+/* Generic relocs, used by i386 Mach-O */
+#define GENERIC_RELOC_VANILLA   0               /* Generic relocation */
+#define GENERIC_RELOC_TLV	5		/* Thread local */
+
+#define X86_64_RELOC_UNSIGNED   0               /* Absolute address */
+#define X86_64_RELOC_SIGNED     1               /* Signed 32-bit disp */
+#define X86_64_RELOC_BRANCH     2		/* CALL/JMP with 32-bit disp */
+#define X86_64_RELOC_GOT_LOAD   3		/* MOVQ of GOT entry */
+#define X86_64_RELOC_GOT        4		/* Different GOT entry */
+#define X86_64_RELOC_SUBTRACTOR 5		/* Subtracting two symbols */
+#define X86_64_RELOC_SIGNED_1   6		/* SIGNED with -1 addend */
+#define X86_64_RELOC_SIGNED_2   7		/* SIGNED with -2 addend */
+#define X86_64_RELOC_SIGNED_4   8		/* SIGNED with -4 addend */
+#define X86_64_RELOC_TLV        9		/* Thread local */
+
+/* Mach-O VM permission constants */
 #define	VM_PROT_NONE	(0x00)
 #define VM_PROT_READ	(0x01)
 #define VM_PROT_WRITE	(0x02)
@@ -88,6 +108,18 @@
 
 #define VM_PROT_DEFAULT	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_ALL	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+
+/* Our internal relocation types */
+enum reltype {
+    RL_ABS,			/* Absolute relocation */
+    RL_REL,			/* Relative relocation */
+    RL_TLV,			/* Thread local */
+    RL_SUB,			/* X86_64_RELOC_SUBTRACT */
+    RL_GOT,			/* X86_64_RELOC_GOT */
+    RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
+};
+#define RL_MAX_32	RL_TLV
+#define RL_MAX_64	RL_GOTLOAD
 
 struct macho_fmt {
     uint32_t ptrsize;		/* Pointer size in bytes */
@@ -98,6 +130,10 @@ struct macho_fmt {
     uint32_t segcmd_size;	/* Segment command size */
     uint32_t sectcmd_size;	/* Section command size */
     uint32_t nlist_size;	/* Nlist (symbol) size */
+    enum reltype maxreltype;	/* Maximum entry in enum reltype permitted */
+    uint32_t reloc_abs;		/* Absolute relocation type */
+    uint32_t reloc_rel;		/* Relative relocation type */
+    uint32_t reloc_tlv;		/* Thread local relocation type */
 };
 
 static const struct macho_fmt *fmt;
@@ -114,6 +150,7 @@ struct section {
     int32_t index;
     int32_t fileindex;
     struct reloc *relocs;
+    struct rbtree *gsyms;	/* Global symbols in section */
     int align;
     bool by_name;		/* This section was specified by full MachO name */
 
@@ -144,7 +181,7 @@ struct section {
 #define S_ATTR_PURE_INSTRUCTIONS 0x80000000		/* section uses pure
 												   machine instructions */
 
-static struct sectmap {
+static const struct sectmap {
     const char *nasmsect;
     const char *segname;
     const char *sectname;
@@ -178,18 +215,18 @@ struct reloc {
 
 struct symbol {
     /* nasm internal data */
+    struct rbtree symv;         /* Global symbol rbtree; "key" contains the
+				   symbol offset. */
     struct symbol *next;	/* next symbol in the list */
     char *name;			/* name of this symbol */
-    int32_t initial_snum;		/* symbol number used above in
-				   reloc */
-    int32_t snum;			/* true snum for reloc */
+    int32_t initial_snum;	/* symbol number used above in reloc */
+    int32_t snum;		/* true snum for reloc */
 
     /* data that goes into the file */
-    uint32_t strx;                  /* string table index */
-    uint8_t type;         /* symbol type */
-    uint8_t sect;         /* NO_SECT or section number */
-    uint16_t desc;                 /* for stab debugging, 0 for us */
-    uint64_t value;        /* offset of symbol in section */
+    uint32_t strx;              /* string table index */
+    uint8_t type;		/* symbol type */
+    uint8_t sect;		/* NO_SECT or section number */
+    uint16_t desc;		/* for stab debugging, 0 for us */
 };
 
 /* symbol type bits */
@@ -290,18 +327,12 @@ static struct section *get_section_by_index(const int32_t index)
     return s;
 }
 
-static uint8_t get_section_fileindex_by_index(const int32_t index)
-{
-    struct section *s = get_section_by_index(index);
-
-    return s ? s->fileindex : NO_SECT;
-}
-
 /*
  * Special section numbers which are used to define Mach-O special
  * symbols, which can be used with WRT to provide PIC relocation
  * types.
  */
+static int32_t macho_tlvp_sect;
 static int32_t macho_gotpcrel_sect;
 
 static void macho_init(void)
@@ -322,6 +353,11 @@ static void macho_init(void)
     /* string table starts with a zero byte so index 0 is an empty string */
     saa_wbytes(strs, zero_buffer, 1);
     strslen = 1;
+
+    /* add special symbol for TLVP */
+    macho_tlvp_sect = seg_alloc() + 1;
+    define_label("..tlvp", macho_tlvp_sect, 0L, NULL, false, false);
+
 }
 
 static void sect_write(struct section *sect,
@@ -331,32 +367,42 @@ static void sect_write(struct section *sect,
     sect->size += len;
 }
 
-enum reltype {
-    RL_ABS,			/* Absolute relocation */
-    RL_REL,			/* Relative relocation */
-    RL_SUB,			/* X86_64_RELOC_SUBTRACT */
-    RL_GOT,			/* X86_64_RELOC_GOT */
-    RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
-};
+/*
+ * Find a suitable global symbol for a ..gotpcrel or ..tlvp reference
+ */
+static struct symbol *macho_find_gsym(struct section *s,
+				      uint64_t offset, bool exact)
+{
+    struct rbtree *srb;
+
+    srb = rb_search(s->gsyms, offset);
+
+    if (!srb || (exact && srb->key != offset)) {
+        nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
+              " for this reference");
+        return NULL;
+    }
+
+    return container_of(srb, struct symbol, symv);
+}
 
 static int64_t add_reloc(struct section *sect, int32_t section,
+			 int64_t offset,
 			 enum reltype reltype, int bytes)
 {
     struct reloc *r;
+    struct section *s;
     int32_t fi;
     int64_t adjust;
 
-    /* NeXT as puts relocs in reversed order (address-wise) into the
-     ** files, so we do the same, doesn't seem to make much of a
-     ** difference either way */
-    r = nasm_malloc(sizeof(struct reloc));
-    r->next = sect->relocs;
-    sect->relocs = r;
+    /* Double check this is a valid relocation type for this platform */
+    nasm_assert(reltype <= fmt->maxreltype);
 
     /* the current end of the section will be the symbol's address for
      ** now, might have to be fixed by macho_fixup_relocs() later on. make
      ** sure we don't make the symbol scattered by setting the highest
      ** bit by accident */
+    r = nasm_malloc(sizeof(struct reloc));
     r->addr = sect->size & ~R_SCATTERED;
     r->ext = 1;
     adjust = bytes;
@@ -365,9 +411,14 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     r->length = ilog2_32(bytes);
 
     /* set default relocation values */
-    r->type = 0;
+    r->type = fmt->reloc_abs;
     r->pcrel = 0;
     r->snum = R_ABS;
+
+    s = NULL;
+    if (section != NO_SEG)
+	s = get_section_by_index(section);
+    fi = s ? s->fileindex : NO_SECT;
 
     /* absolute relocation */
     switch (reltype) {
@@ -376,64 +427,82 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    /* absolute (can this even happen?) */
 	    r->ext = 0;
 	    r->snum = R_ABS;
+	} else if (fi == NO_SECT) {
+	    /* external */
+	    r->snum = raa_read(extsyms, section);
 	} else {
-	    /* inter-section */
-	    fi = get_section_fileindex_by_index(section);
-	    if (fi == NO_SECT) {
-		/* external */
-		r->snum = raa_read(extsyms, section);
-	    } else {
-		/* local */
-		r->ext = 0;
-		r->snum = fi;
-		adjust = -sect->size;
-	    }
+	    /* local */
+	    r->ext = 0;
+	    r->snum = fi;
+	    adjust = -sect->size;
 	}
 	break;
 
     case RL_REL:
+	r->type = fmt->reloc_rel;
 	r->pcrel = 1;
 	if (section == NO_SEG) {
-	    /* intra-section */
-	    r->type = 1;			// X86_64_RELOC_SIGNED
+	    goto bail;		/* No relocation needed */
+	} else if (fi == NO_SECT) {
+	    /* external */
+	    sect->extreloc = 1;
+	    r->snum = raa_read(extsyms, section);
 	} else {
-	    /* inter-section */
-	    r->type = 1;			// X86_64_RELOC_SIGNED
-	    fi = get_section_fileindex_by_index(section);
-
-	    if (fi == NO_SECT) {
-		/* external */
-		sect->extreloc = 1;
-		r->snum = raa_read(extsyms, section);
-	    } else {
-		/* local */
-		r->ext = 0;
-		r->snum = fi;
-		adjust = -sect->size;
-	    }
+	    /* local */
+	    r->ext = 0;
+	    r->snum = fi;
+	    adjust = -sect->size;
 	}
 	break;
 
     case RL_SUB:
 	r->pcrel = 0;
-	r->type = 5;				// X86_64_RELOC_SUBTRACTOR
+	r->type = X86_64_RELOC_SUBTRACTOR;
 	break;
 
     case RL_GOT:
-	r->pcrel = 1;
-	r->type = 4;				// X86_64_RELOC_GOT
-	r->snum = macho_gotpcrel_sect;		/* WTF? */
-	break;
+	r->type = X86_64_RELOC_GOT;
+	goto needsym;
 
     case RL_GOTLOAD:
+	r->type = X86_64_RELOC_GOT_LOAD;
+	goto needsym;
+
+    case RL_TLV:
+	r->type = fmt->reloc_tlv;
+	goto needsym;
+
+    needsym:
 	r->pcrel = 1;
-	r->type = 3;				// X86_64_RELOC_GOT_LOAD
-	r->snum = macho_gotpcrel_sect;		/* WTF? */
+	if (section == NO_SEG) {
+	    nasm_error(ERR_NONFATAL, "Unsupported use of use of WRT");
+	} else if (fi == NO_SECT) {
+	    /* external */
+	    r->snum = raa_read(extsyms, section);
+	} else {
+	    /* internal */
+	    struct symbol *sym = macho_find_gsym(s, offset, reltype != RL_TLV);
+	    if (!sym)
+		goto bail;
+	    r->snum = sym->initial_snum;
+	}
 	break;
     }
 
+    /* NeXT as puts relocs in reversed order (address-wise) into the
+     ** files, so we do the same, doesn't seem to make much of a
+     ** difference either way */
+    r->next = sect->relocs;
+    sect->relocs = r;
+    if (r->ext)
+	sect->extreloc = 1;
     ++sect->nreloc;
+
     return adjust;
+
+ bail:
+    nasm_free(r);
+    return 0;
 }
 
 static void macho_output(int32_t secto, const void *data,
@@ -441,7 +510,7 @@ static void macho_output(int32_t secto, const void *data,
                          int32_t section, int32_t wrt)
 {
     struct section *s;
-    int64_t addr;
+    int64_t addr, offset;
     uint8_t mydata[16], *p, gotload;
     bool is_bss;
 
@@ -449,7 +518,6 @@ static void macho_output(int32_t secto, const void *data,
         if (type != OUT_RESERVE)
             nasm_error(ERR_NONFATAL, "attempt to assemble code in "
                   "[ABSOLUTE] space");
-
         return;
     }
 
@@ -510,7 +578,7 @@ static void macho_output(int32_t secto, const void *data,
 			       "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
 		} else {
-		    add_reloc(s, section, RL_ABS, asize);
+		    add_reloc(s, section, addr, RL_ABS, asize);
 		}
 	    } else {
 		nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -528,7 +596,8 @@ static void macho_output(int32_t secto, const void *data,
 	nasm_assert(section != secto);
 
         p = mydata;
-        addr = *(int64_t *)data - size;
+	offset = *(int64_t *)data;
+        addr = offset - size;
 
         if (section != NO_SEG && section % 2) {
             nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -541,7 +610,7 @@ static void macho_output(int32_t secto, const void *data,
 		       " this use of WRT");
 	    wrt = NO_SEG;	/* we can at least _try_ to continue */
 	} else {
-	    addr += add_reloc(s, section, RL_REL, 2);
+	    addr += add_reloc(s, section, addr+size, RL_REL, 2);
 	}
 
         WRITESHORT(p, addr);
@@ -552,14 +621,15 @@ static void macho_output(int32_t secto, const void *data,
 	nasm_assert(section != secto);
 
         p = mydata;
-        addr = *(int64_t *)data - size;
+	offset = *(int64_t *)data;
+        addr = offset - size;
 
         if (section != NO_SEG && section % 2) {
             nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 		       " section base references");
         } else if (wrt == NO_SEG) {
 	    /* Plain relative relocation */
-	    addr += add_reloc(s, section, RL_REL, 4);
+	    addr += add_reloc(s, section, offset, RL_REL, 4);
 	} else if (wrt == macho_gotpcrel_sect) {
 	    if (s->data->datalen > 1) {
 		/* Retrieve instruction opcode */
@@ -569,11 +639,13 @@ static void macho_output(int32_t secto, const void *data,
 	    }
 	    if (gotload == 0x8B) {
 		/* Check for MOVQ Opcode -> X86_64_RELOC_GOT_LOAD */
-		addr += add_reloc(s, section, RL_GOTLOAD, 4);
+		addr += add_reloc(s, section, offset, RL_GOTLOAD, 4);
 	    } else {
 		/* X86_64_RELOC_GOT */
-		addr += add_reloc(s, section, RL_GOT, 4);
+		addr += add_reloc(s, section, offset, RL_GOT, 4);
 	    }
+	} else if (wrt == macho_tlvp_sect) {
+	    addr += add_reloc(s, section, offset, RL_TLV, 4);
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 		       " this use of WRT");
@@ -593,7 +665,7 @@ static void macho_output(int32_t secto, const void *data,
 static int32_t macho_section(char *name, int pass, int *bits)
 {
     char *sectionAttributes;
-    struct sectmap *sm;
+    const struct sectmap *sm;
     struct section *s;
     const char *section, *segment;
     uint32_t flags;
@@ -668,14 +740,12 @@ static int32_t macho_section(char *name, int pass, int *bits)
     if (!s) {
 	new_seg = true;
 
-	s = *sectstail = nasm_malloc(sizeof(struct section));
-	s->next = NULL;
+	s = *sectstail = nasm_zalloc(sizeof(struct section));
 	sectstail = &s->next;
 
 	s->data = saa_init(1L);
 	s->index = seg_alloc();
 	s->fileindex = ++seg_nsects;
-	s->relocs = NULL;
 	s->align = -1;
 	s->pad = -1;
 	s->offset = -1;
@@ -771,18 +841,18 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         return;
     }
 
-	if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        /*
-         * This is a NASM special symbol. We never allow it into
-         * the Macho-O symbol table, even if it's a valid one. If it
-         * _isn't_ a valid one, we should barf immediately.
-         */
-        if (strcmp(name, "..gotpcrel"))
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
+	/*
+	 * This is a NASM special symbol. We never allow it into
+	 * the Macho-O symbol table, even if it's a valid one. If it
+	 * _isn't_ a valid one, we should barf immediately.
+	 */
+	if (strcmp(name, "..gotpcrel") && strcmp(name, "..tlvp"))
             nasm_error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
-         return;
+	return;
     }
 
-    sym = *symstail = nasm_malloc(sizeof(struct symbol));
+    sym = *symstail = nasm_zalloc(sizeof(struct symbol));
     sym->next = NULL;
     symstail = &sym->next;
 
@@ -790,7 +860,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     sym->strx = strslen;
     sym->type = 0;
     sym->desc = 0;
-    sym->value = offset;
+    sym->symv.key = offset;
     sym->initial_snum = -1;
 
     /* external and common symbols get N_EXT */
@@ -803,15 +873,17 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         sym->type |= N_ABS;
         sym->sect = NO_SECT;
     } else {
+	struct section *s = get_section_by_index(section);
+
         sym->type |= N_SECT;
 
         /* get the in-file index of the section the symbol was defined in */
-        sym->sect = get_section_fileindex_by_index(section);
+        sym->sect = s ? s->fileindex : NO_SECT;
 
 	/* track the initially allocated symbol number for use in future fix-ups */
 	sym->initial_snum = nsyms;
 
-        if (sym->sect == NO_SECT) {
+        if (!s) {
             /* remember symbol number of references to external
              ** symbols, this works because every external symbol gets
              ** its own section number allocated internally by nasm and
@@ -823,7 +895,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
             case 2:
                 /* there isn't actually a difference between global
                  ** and common symbols, both even have their size in
-                 ** sym->value */
+                 ** sym->symv.key */
                 sym->type = N_EXT;
                 break;
 
@@ -832,8 +904,11 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
                 nasm_panic(0, "in-file index for section %d not found, is_global = %d", section, is_global);
+		break;
             }
-        }
+	} else if (is_global) {
+	    s->gsyms = rb_insert(s->gsyms, &sym->symv);
+	}
     }
     ++nsyms;
 }
@@ -1242,10 +1317,10 @@ static void macho_write_symtab (void)
 	       sizes.  */
 	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 		nasm_assert(sym->sect <= seg_nsects);
-		sym->value += sectstab[sym->sect]->addr;
+		sym->symv.key += sectstab[sym->sect]->addr;
 	    }
 
-	    fwriteptr(sym->value, ofile);	/* value (i.e. offset) */
+	    fwriteptr(sym->symv.key, ofile);	/* value (i.e. offset) */
 	}
     }
 
@@ -1260,10 +1335,10 @@ static void macho_write_symtab (void)
 	   sizes.  */
 	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 	    nasm_assert(sym->sect <= seg_nsects);
-	    sym->value += sectstab[sym->sect]->addr;
+	    sym->symv.key += sectstab[sym->sect]->addr;
 	}
 
-	fwriteptr(sym->value, ofile);		/* value (i.e. offset) */
+	fwriteptr(sym->symv.key, ofile); /* value (i.e. offset) */
     }
 
      for (i = 0; i < nundefsym; i++) {
@@ -1277,10 +1352,10 @@ static void macho_write_symtab (void)
 	   sizes.  */
 	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 	    nasm_assert(sym->sect <= seg_nsects);
-	    sym->value += sectstab[sym->sect]->addr;
+	    sym->symv.key += sectstab[sym->sect]->addr;
 	 }
 
-	 fwriteptr(sym->value, ofile);		/* value (i.e. offset) */
+	 fwriteptr(sym->symv.key, ofile); /* value (i.e. offset) */
      }
 
 }
@@ -1505,7 +1580,11 @@ static const struct macho_fmt macho32_fmt = {
     MACHO_HEADER_SIZE,
     MACHO_SEGCMD_SIZE,
     MACHO_SECTCMD_SIZE,
-    MACHO_NLIST_SIZE
+    MACHO_NLIST_SIZE,
+    RL_MAX_32,
+    GENERIC_RELOC_VANILLA,
+    GENERIC_RELOC_VANILLA,
+    GENERIC_RELOC_TLV
 };
 
 static void macho32_init(void)
@@ -1546,7 +1625,11 @@ static const struct macho_fmt macho64_fmt = {
     MACHO_HEADER64_SIZE,
     MACHO_SEGCMD64_SIZE,
     MACHO_SECTCMD64_SIZE,
-    MACHO_NLIST64_SIZE
+    MACHO_NLIST64_SIZE,
+    RL_MAX_64,
+    X86_64_RELOC_UNSIGNED,
+    X86_64_RELOC_SIGNED,
+    X86_64_RELOC_TLV
 };
 
 static void macho64_init(void)
@@ -1555,8 +1638,7 @@ static void macho64_init(void)
     macho_init();
 
     /* add special symbol for ..gotpcrel */
-    macho_gotpcrel_sect = seg_alloc();
-    macho_gotpcrel_sect++;
+    macho_gotpcrel_sect = seg_alloc() + 1;
     define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false);
 }
 
