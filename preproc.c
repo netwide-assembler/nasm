@@ -80,6 +80,7 @@
 #include "eval.h"
 #include "tokens.h"
 #include "tables.h"
+#include "listing.h"
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -878,7 +879,7 @@ static char *read_line(void)
      */
     buffer[strcspn(buffer, "\032")] = '\0';
 
-    nasmlist->line(LIST_READ, buffer);
+    lfmt->line(LIST_READ, buffer);
 
     return buffer;
 }
@@ -2506,7 +2507,7 @@ static int do_directive(Token * tline)
             inc->expansion = NULL;
             inc->mstk = NULL;
             istk = inc;
-            nasmlist->uplevel(LIST_INCLUDE);
+            lfmt->uplevel(LIST_INCLUDE);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2962,7 +2963,7 @@ issue_error:
 
         istk->mstk = defining;
 
-        nasmlist->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+        lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
         tmp_defining = defining;
         defining = defining->rep_nest;
         free_tlist(origline);
@@ -4769,7 +4770,7 @@ static int expand_mmacro(Token * tline)
         }
     }
 
-    nasmlist->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+    lfmt->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
     return 1;
 }
@@ -4971,7 +4972,7 @@ static char *pp_getline(void)
                 }
                 istk->expansion = l->next;
                 nasm_free(l);
-                nasmlist->downlevel(LIST_MACRO);
+                lfmt->downlevel(LIST_MACRO);
             }
         }
         while (1) {             /* until we get a line we can use */
@@ -4985,7 +4986,7 @@ static char *pp_getline(void)
                 istk->expansion = l->next;
                 nasm_free(l);
                 p = detoken(tline, false);
-                nasmlist->line(LIST_MACRO, p);
+                lfmt->line(LIST_MACRO, p);
                 nasm_free(p);
                 break;
             }
@@ -5013,7 +5014,7 @@ static char *pp_getline(void)
                     nasm_free(src_set_fname(nasm_strdup(i->fname)));
                 }
                 istk = i->next;
-                nasmlist->downlevel(LIST_INCLUDE);
+                lfmt->downlevel(LIST_INCLUDE);
                 nasm_free(i);
                 if (!istk) {
 		    line = NULL;

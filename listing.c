@@ -326,7 +326,7 @@ static void list_error(int severity, const char *pfx, const char *msg)
 }
 
 
-static const ListGen nasm_list = {
+static const struct lfmt nasm_list = {
     list_init,
     list_cleanup,
     list_output,
@@ -336,5 +336,5 @@ static const ListGen nasm_list = {
     list_error
 };
 
-const ListGen *nasmlist = &nasm_list;
+const struct lfmt *lfmt = &nasm_list;
  
