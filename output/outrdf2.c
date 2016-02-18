@@ -775,7 +775,7 @@ static int rdf2_set_info(enum geninfo type, char **val)
     return 0;
 }
 
-struct ofmt of_rdf2 = {
+const struct ofmt of_rdf2 = {
     "Relocatable Dynamic Object File Format v2.0",
     "rdf",
     0,

@@ -188,7 +188,7 @@ static void aout_init(void)
 
 #ifdef OF_AOUTB
 
-extern struct ofmt of_aoutb;
+extern const struct ofmt of_aoutb;
 
 static void aoutb_init(void)
 {
@@ -908,7 +908,7 @@ extern macros_t aout_stdmac[];
 
 #ifdef OF_AOUT
 
-struct ofmt of_aout = {
+const struct ofmt of_aout = {
     "Linux a.out object files",
     "aout",
     0,
@@ -932,7 +932,7 @@ struct ofmt of_aout = {
 
 #ifdef OF_AOUTB
 
-struct ofmt of_aoutb = {
+const struct ofmt of_aoutb = {
     "NetBSD/FreeBSD a.out object files",
     "aoutb",
     0,

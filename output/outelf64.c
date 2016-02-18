@@ -82,7 +82,7 @@ static struct elf_symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
-extern struct ofmt of_elf64;
+extern const struct ofmt of_elf64;
 
 static struct ELF_SECTDATA {
     void *data;
@@ -1451,7 +1451,7 @@ static struct dfmt df_stabs = {
 
 struct dfmt *elf64_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
 
-struct ofmt of_elf64 = {
+const struct ofmt of_elf64 = {
     "ELF64 (x86_64) object files (e.g. Linux)",
     "elf64",
     0,

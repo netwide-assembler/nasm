@@ -184,7 +184,7 @@ struct ieeeFixupp {
 static int32_t ieee_entry_seg, ieee_entry_ofs;
 static int checksum;
 
-extern struct ofmt of_ieee;
+extern const struct ofmt of_ieee;
 
 static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
@@ -1513,7 +1513,7 @@ static struct dfmt *ladsoft_debug_arr[3] = {
     &null_debug_form,
     NULL
 };
-struct ofmt of_ieee = {
+const struct ofmt of_ieee = {
     "IEEE-695 (LADsoft variant) object file format",
     "ieee",
     OFMT_TEXT,

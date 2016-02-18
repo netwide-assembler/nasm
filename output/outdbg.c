@@ -56,7 +56,7 @@ struct Section {
     char *name;
 } *dbgsect;
 
-struct ofmt of_dbg;
+const struct ofmt of_dbg;
 static void dbg_init(void)
 {
     dbgsect = NULL;
@@ -260,7 +260,7 @@ static struct dfmt *debug_debug_arr[3] = {
     NULL
 };
 
-struct ofmt of_dbg = {
+const struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
     OFMT_TEXT,

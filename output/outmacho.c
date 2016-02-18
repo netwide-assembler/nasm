@@ -276,7 +276,7 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-extern struct ofmt of_macho64;
+extern const struct ofmt of_macho64;
 
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
@@ -1595,7 +1595,7 @@ static void macho32_init(void)
     macho_gotpcrel_sect = NO_SEG;
 }
 
-struct ofmt of_macho32 = {
+const struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
     0,
@@ -1642,7 +1642,7 @@ static void macho64_init(void)
     define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false);
 }
 
-struct ofmt of_macho64 = {
+const struct ofmt of_macho64 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
     "macho64",
     0,

@@ -624,7 +624,7 @@ static struct ExpDef {
 
 static int32_t obj_entry_seg, obj_entry_ofs;
 
-struct ofmt of_obj;
+const struct ofmt of_obj;
 
 /* The current segment */
 static struct Segment *current_seg;
@@ -2623,7 +2623,7 @@ static struct dfmt *borland_debug_arr[3] = {
     NULL
 };
 
-struct ofmt of_obj = {
+const struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
     0,

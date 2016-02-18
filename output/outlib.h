@@ -44,7 +44,6 @@ int null_directive(enum directives directive, char *value, int pass);
 void null_sectalign(int32_t seg, unsigned int value);
 
 /* Do-nothing versions of all the debug routines */
-struct ofmt;
 void null_debug_init(void);
 void null_debug_linenum(const char *filename, int32_t linenumber,
 			int32_t segto);

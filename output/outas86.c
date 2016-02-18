@@ -629,7 +629,7 @@ static void as86_filename(char *inname, char *outname)
 
 extern macros_t as86_stdmac[];
 
-struct ofmt of_as86 = {
+const struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
     0,

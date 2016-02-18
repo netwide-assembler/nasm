@@ -262,24 +262,24 @@
 #define OF_DEFAULT of_bin
 #endif
 
-extern struct ofmt of_bin;
-extern struct ofmt of_ith;
-extern struct ofmt of_srec;
-extern struct ofmt of_aout;
-extern struct ofmt of_aoutb;
-extern struct ofmt of_coff;
-extern struct ofmt of_elf32;
-extern struct ofmt of_elfx32;
-extern struct ofmt of_elf64;
-extern struct ofmt of_as86;
-extern struct ofmt of_obj;
-extern struct ofmt of_win32;
-extern struct ofmt of_win64;
-extern struct ofmt of_rdf2;
-extern struct ofmt of_ieee;
-extern struct ofmt of_macho32;
-extern struct ofmt of_macho64;
-extern struct ofmt of_dbg;
+extern const struct ofmt of_bin;
+extern const struct ofmt of_ith;
+extern const struct ofmt of_srec;
+extern const struct ofmt of_aout;
+extern const struct ofmt of_aoutb;
+extern const struct ofmt of_coff;
+extern const struct ofmt of_elf32;
+extern const struct ofmt of_elfx32;
+extern const struct ofmt of_elf64;
+extern const struct ofmt of_as86;
+extern const struct ofmt of_obj;
+extern const struct ofmt of_win32;
+extern const struct ofmt of_win64;
+extern const struct ofmt of_rdf2;
+extern const struct ofmt of_ieee;
+extern const struct ofmt of_macho32;
+extern const struct ofmt of_macho64;
+extern const struct ofmt of_dbg;
 
 #ifdef BUILD_DRIVERS_ARRAY      /* only if included from outform.c */
 
@@ -288,7 +288,7 @@ extern struct ofmt of_dbg;
  * drivers array based on the above defines
  */
 
-static struct ofmt *drivers[] = {
+static const struct ofmt *drivers[] = {
 #ifdef OF_BIN
     &of_bin,
     &of_ith,
@@ -343,7 +343,7 @@ static struct ofmt *drivers[] = {
     NULL
 };
 
-static struct ofmt_alias ofmt_aliases[] = {
+static const struct ofmt_alias ofmt_aliases[] = {
 #ifdef OF_ELF32
     {
         "elf",
@@ -370,10 +370,10 @@ static struct ofmt_alias ofmt_aliases[] = {
 
 #endif /* BUILD_DRIVERS_ARRAY */
 
-struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias);
-struct dfmt *dfmt_find(struct ofmt *, char *);
-void ofmt_list(struct ofmt *, FILE *);
-void dfmt_list(struct ofmt *ofmt, FILE * fp);
+const struct ofmt *ofmt_find(char *name, const struct ofmt_alias **ofmt_alias);
+struct dfmt *dfmt_find(const struct ofmt *, char *);
+void ofmt_list(const struct ofmt *, FILE *);
+void dfmt_list(const struct ofmt *ofmt, FILE * fp);
 extern struct dfmt null_debug_form;
 
 #endif /* NASM_OUTFORM_H */

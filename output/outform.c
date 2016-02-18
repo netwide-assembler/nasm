@@ -47,9 +47,9 @@
 #define BUILD_DRIVERS_ARRAY
 #include "output/outform.h"
 
-struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias)
+const struct ofmt *ofmt_find(char *name, const struct ofmt_alias **ofmt_alias)
 {
-    struct ofmt **ofp, *of;
+    const struct ofmt **ofp, *of;
     unsigned int i;
 
     *ofmt_alias = NULL;
@@ -72,7 +72,7 @@ struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias)
     return NULL;
 }
 
-struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
+struct dfmt *dfmt_find(const struct ofmt *ofmt, char *name)
 {
     struct dfmt **dfp, *df;
 
@@ -83,9 +83,9 @@ struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
     return NULL;
 }
 
-void ofmt_list(struct ofmt *deffmt, FILE * fp)
+void ofmt_list(const struct ofmt *deffmt, FILE * fp)
 {
-    struct ofmt **ofp, *of;
+    const struct ofmt **ofp, *of;
     unsigned int i;
 
     /* primary targets first */
@@ -105,7 +105,7 @@ void ofmt_list(struct ofmt *deffmt, FILE * fp)
     }
 }
 
-void dfmt_list(struct ofmt *ofmt, FILE *fp)
+void dfmt_list(const struct ofmt *ofmt, FILE *fp)
 {
     struct dfmt **dfp, *df;
 

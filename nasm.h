@@ -917,7 +917,7 @@ struct ofmt_alias {
     struct ofmt *ofmt;
 };
 
-extern struct ofmt *ofmt;
+extern const struct ofmt *ofmt;
 extern FILE *ofile;
 
 /*

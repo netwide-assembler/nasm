@@ -1405,7 +1405,7 @@ static int bin_set_info(enum geninfo type, char **val)
     return 0;
 }
 
-struct ofmt of_bin, of_ith, of_srec;
+const struct ofmt of_bin, of_ith, of_srec;
 static void binfmt_init(void);
 static void do_output_bin(void);
 static void do_output_ith(void);
@@ -1655,7 +1655,7 @@ static void do_output_srec(void)
 }
 
 
-struct ofmt of_bin = {
+const struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
     0,
@@ -1675,7 +1675,7 @@ struct ofmt of_bin = {
     bin_cleanup
 };
 
-struct ofmt of_ith = {
+const struct ofmt of_ith = {
     "Intel hex",
     "ith",
     OFMT_TEXT,
@@ -1695,7 +1695,7 @@ struct ofmt of_ith = {
     bin_cleanup
 };
 
-struct ofmt of_srec = {
+const struct ofmt of_srec = {
     "Motorola S-records",
     "srec",
     OFMT_TEXT,

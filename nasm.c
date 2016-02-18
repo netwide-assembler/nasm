@@ -99,8 +99,8 @@ static char listname[FILENAME_MAX];
 static char errname[FILENAME_MAX];
 static int globallineno;        /* for forward-reference tracking */
 /* static int pass = 0; */
-struct ofmt *ofmt = &OF_DEFAULT;
-struct ofmt_alias *ofmt_alias = NULL;
+const struct ofmt *ofmt = &OF_DEFAULT;
+const struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
 
 static FILE *error_file;        /* Where to write error messages */
