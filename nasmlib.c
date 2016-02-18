@@ -83,6 +83,15 @@ void nasm_error(int severity, const char *fmt, ...)
     va_end(ap);
 }
 
+no_return nasm_fatal(int flags, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    nasm_verror(flags | ERR_FATAL, fmt, ap);
+    abort();			/* We should never get here */
+}
+
 no_return nasm_panic(int flags, const char *fmt, ...)
 {
     va_list ap;
@@ -101,7 +110,7 @@ void *nasm_malloc(size_t size)
 {
     void *p = malloc(size);
     if (!p)
-        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_fatal(ERR_NOFILE, "out of memory");
     return p;
 }
 
@@ -109,7 +118,7 @@ void *nasm_zalloc(size_t size)
 {
     void *p = calloc(size, 1);
     if (!p)
-        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_fatal(ERR_NOFILE, "out of memory");
     return p;
 }
 
@@ -117,7 +126,7 @@ void *nasm_realloc(void *q, size_t size)
 {
     void *p = q ? realloc(q, size) : malloc(size);
     if (!p)
-        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_fatal(ERR_NOFILE, "out of memory");
     return p;
 }
 
@@ -134,7 +143,7 @@ char *nasm_strdup(const char *s)
 
     p = malloc(size);
     if (!p)
-        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_fatal(ERR_NOFILE, "out of memory");
     strcpy(p, s);
     return p;
 }
@@ -146,7 +155,7 @@ char *nasm_strndup(const char *s, size_t len)
 
     p = malloc(size);
     if (!p)
-        nasm_error(ERR_FATAL | ERR_NOFILE, "out of memory");
+        nasm_fatal(ERR_NOFILE, "out of memory");
     strncpy(p, s, len);
     p[len] = '\0';
     return p;
