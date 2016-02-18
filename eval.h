@@ -43,8 +43,7 @@
  * providing segment-base details, and what function can be used to
  * look labels up.
  */
-void eval_global_info(struct ofmt *output, lfunc lookup_label,
-                      struct location * locp);
+void eval_global_info(lfunc lookup_label, struct location * locp);
 
 /*
  * The evaluator itself.

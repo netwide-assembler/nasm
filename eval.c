@@ -56,8 +56,6 @@
 static scanner scan;            /* Address of scanner routine */
 static lfunc labelfunc;         /* Address of label routine */
 
-static struct ofmt *outfmt;     /* Structure of addresses of output routines */
-
 static expr **tempexprs = NULL;
 static int ntempexprs;
 static int tempexprs_size = 0;
@@ -241,7 +239,7 @@ static expr *segment_part(expr * e)
               " is already a segment base");
         return NULL;
     } else {
-        int32_t base = outfmt->segbase(seg + 1);
+        int32_t base = ofmt->segbase(seg + 1);
 
         begintemp();
         addtotemp((base == NO_SEG ? EXPR_UNKNOWN : EXPR_SEGBASE + base),
@@ -953,10 +951,8 @@ static expr *expr6(int critical)
     }
 }
 
-void eval_global_info(struct ofmt *output, lfunc lookup_label,
-                      struct location * locp)
+void eval_global_info(lfunc lookup_label, struct location * locp)
 {
-    outfmt = output;
     labelfunc = lookup_label;
     location = locp;
 }
