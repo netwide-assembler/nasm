@@ -203,7 +203,7 @@ static int dbg_set_info(enum geninfo type, char **val)
     return 0;
 }
 
-char *types[] = {
+static const char * const types[] = {
     "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
 };
 static void dbgdbg_init(void)
