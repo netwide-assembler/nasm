@@ -36,9 +36,6 @@
  *		NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X object files
  */
 
-/* Most of this file is, like Mach-O itself, based on a.out. For more
- * guidelines see outaout.c.  */
-
 #include "compiler.h"
 
 #include <stdio.h>
@@ -710,10 +707,10 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	    nasm_error(ERR_NONFATAL, "section name %s too long\n", section);
 	}
 
-	if (!strcmp(segment, "__TEXT")) {
+	if (!strcmp(section, "__text")) {
 	    flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
 		S_ATTR_PURE_INSTRUCTIONS;
-	} else if (!strcmp(segment, "__DATA") && !strcmp(section, "__bss")) {
+	} else if (!strcmp(section, "__bss")) {
 	    flags = S_ZEROFILL;
 	} else {
 	    flags = S_REGULAR;
