@@ -245,8 +245,8 @@ static void elf_cleanup(int debuginfo)
     saa_free(syms);
     raa_free(bsym);
     saa_free(strs);
-    if (of_elfx32.current_dfmt) {
-        of_elfx32.current_dfmt->cleanup();
+    if (dfmt) {
+        dfmt->cleanup();
     }
 }
 
@@ -708,12 +708,12 @@ static void elf_out(int32_t segto, const void *data,
     }
 
     /* again some stabs debugging stuff */
-    if (of_elfx32.current_dfmt) {
+    if (dfmt) {
         sinfo.offset = s->len;
         sinfo.section = i;
         sinfo.segto = segto;
         sinfo.name = s->name;
-        of_elfx32.current_dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
+        dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
     }
     /* end of debugging stuff */
 
@@ -939,9 +939,9 @@ static void elf_write(void)
      * relocation sections for the user sections.
      */
     nsections = sec_numspecial + 1;
-    if (of_elfx32.current_dfmt == &df_stabs)
+    if (dfmt == &df_stabs)
         nsections += 3;
-    else if (of_elfx32.current_dfmt == &df_dwarf)
+    else if (dfmt == &df_dwarf)
         nsections += 10;
 
     add_sectname("", ".shstrtab");
@@ -955,14 +955,14 @@ static void elf_write(void)
         }
     }
 
-    if (of_elfx32.current_dfmt == &df_stabs) {
+    if (dfmt == &df_stabs) {
         /* in case the debug information is wanted, just add these three sections... */
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
         add_sectname(".rel", ".stab");
     }
 
-    else if (of_elfx32.current_dfmt == &df_dwarf) {
+    else if (dfmt == &df_dwarf) {
         /* the dwarf debug standard specifies the following ten sections,
            not all of which are currently implemented,
            although all of them are defined. */
@@ -1059,7 +1059,7 @@ static void elf_write(void)
             p += strlen(p) + 1;
         }
 
-    if (of_elfx32.current_dfmt == &df_stabs) {
+    if (dfmt == &df_stabs) {
         /* for debugging information, create the last three sections
            which are the .stab , .stabstr and .rel.stab sections respectively */
 
@@ -1080,7 +1080,7 @@ static void elf_write(void)
                                stabrellen, sec_symtab, sec_stab, 4, 8);
             p += strlen(p) + 1;
         }
-    } else if (of_elfx32.current_dfmt == &df_dwarf) {
+    } else if (dfmt == &df_dwarf) {
             /* for dwarf debugging information, create the ten dwarf sections */
 
             /* this function call creates the dwarf sections in memory */
@@ -1206,7 +1206,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
       * dwarf needs symbols for debug sections
       * which are relocation targets.
       */
-     if (of_elfx32.current_dfmt == &df_dwarf) {
+     if (dfmt == &df_dwarf) {
         dwarf_infosym = *local;
         p = entry;
         WRITELONG(p, 0);        /* no symbol name */

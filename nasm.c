@@ -358,7 +358,9 @@ int main(int argc, char **argv)
 
     /* If debugging info is disabled, suppress any debug calls */
     if (!using_debug_info)
-        ofmt->current_dfmt = &null_debug_form;
+        dfmt = &null_debug_form;
+    else if (!dfmt)
+	dfmt = ofmt->default_dfmt;
 
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
@@ -459,7 +461,6 @@ int main(int argc, char **argv)
         init_labels();
 
         ofmt->init();
-        dfmt = ofmt->current_dfmt;
         dfmt->init();
 
         assemble_file(inname, depend_ptr);
@@ -665,6 +666,7 @@ static bool process_arg(char *p, char *q)
                            "unrecognised output format `%s' - "
                            "use -hf for a list", param);
             }
+	    dfmt = NULL;
             break;
 
         case 'O':       /* Optimization level */
@@ -742,8 +744,8 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'F':       /* specify debug format */
-            ofmt->current_dfmt = dfmt_find(ofmt, param);
-            if (!ofmt->current_dfmt) {
+            dfmt = dfmt_find(ofmt, param);
+            if (!dfmt) {
                 nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
                            "unrecognized debug format `%s' for"
                            " output format `%s'",

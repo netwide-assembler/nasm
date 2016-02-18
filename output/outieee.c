@@ -235,7 +235,7 @@ static int ieee_set_info(enum geninfo type, char **val)
 static void ieee_cleanup(int debuginfo)
 {
     ieee_write_file(debuginfo);
-    of_ieee.current_dfmt->cleanup();
+    dfmt->cleanup();
     while (seghead) {
         struct ieeeSection *segtmp = seghead;
         seghead = seghead->next;

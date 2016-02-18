@@ -111,7 +111,7 @@ void dfmt_list(struct ofmt *ofmt, FILE *fp)
 
     for (dfp = ofmt->debug_formats; (df = *dfp); dfp++) {
         fprintf(fp, "  %c %-10s%s\n",
-                df == ofmt->current_dfmt ? '*' : ' ',
+                df == dfmt ? '*' : ' ',
                 df->shortname, df->fullname);
     }
 }

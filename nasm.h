@@ -751,13 +751,9 @@ struct ofmt {
     struct dfmt **debug_formats;
 
     /*
-     * and a pointer to the element that is being used
-     * note: this is set to the default at compile time and changed if the
-     * -F option is selected.  If developing a set of new debug formats for
-     * an output format, be sure to set this to whatever default you want
-     *
+     * the default debugging format if -F is not specified
      */
-    const struct dfmt *current_dfmt;
+    const struct dfmt *default_dfmt;
 
     /*
      * This, if non-NULL, is a NULL-terminated list of `char *'s

@@ -262,14 +262,14 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
 
             ofmt->symdef(xsymbol, segment, offset, exi,
                          special ? special : lptr->defn.special);
-            ofmt->current_dfmt->debug_deflabel(xsymbol, segment, offset, exi,
+            dfmt->debug_deflabel(xsymbol, segment, offset, exi,
                                                special ? special : lptr->defn.special);
 /**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
         } else {
             if ((lptr->defn.is_global & (GLOBAL_BIT | EXTERN_BIT)) != EXTERN_BIT) {
                 ofmt->symdef(lptr->defn.label, segment, offset, exi,
                              special ? special : lptr->defn.special);
-                ofmt->current_dfmt->debug_deflabel(label, segment, offset, exi,
+                dfmt->debug_deflabel(label, segment, offset, exi,
                                                    special ? special : lptr->defn.special);
             }
         }
@@ -327,14 +327,14 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
 
             ofmt->symdef(xsymbol, segment, offset, exi,
                          special ? special : lptr->defn.special);
-            ofmt->current_dfmt->debug_deflabel(xsymbol, segment, offset, exi,
+            dfmt->debug_deflabel(xsymbol, segment, offset, exi,
                                                special ? special : lptr->defn.special);
 /**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
         } else {
             if ((lptr->defn.is_global & (GLOBAL_BIT | EXTERN_BIT)) != EXTERN_BIT) {
                 ofmt->symdef(lptr->defn.label, segment, offset, exi,
                              special ? special : lptr->defn.special);
-                ofmt->current_dfmt->debug_deflabel(label, segment, offset, exi,
+                dfmt->debug_deflabel(label, segment, offset, exi,
                                                    special ? special : lptr->defn.special);
             }
         }
@@ -371,7 +371,7 @@ void define_common(char *label, int32_t segment, int32_t size, char *special)
 
     ofmt->symdef(lptr->defn.label, segment, size, 2,
                  special ? special : lptr->defn.special);
-    ofmt->current_dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
+    dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
                                        special ? special : lptr->defn.special);
 }
 

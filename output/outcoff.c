@@ -228,8 +228,8 @@ static void coff_cleanup(int debuginfo)
     struct coff_Reloc *r;
     int i;
 
-    if (debuginfo && ofmt->current_dfmt->cleanup)
-        ofmt->current_dfmt->cleanup();
+    if (debuginfo && dfmt->cleanup)
+        dfmt->cleanup();
 
     coff_write();
     for (i = 0; i < coff_nsects; i++) {
@@ -603,7 +603,7 @@ static void coff_out(int32_t segto, const void *data,
 
     memset(mydata, 0, sizeof(mydata));
 
-    if (ofmt->current_dfmt && ofmt->current_dfmt->debug_output) {
+    if (dfmt && dfmt->debug_output) {
         struct coff_DebugInfo dinfo;
         dinfo.segto = segto;
         dinfo.seg = segment;
@@ -614,7 +614,7 @@ static void coff_out(int32_t segto, const void *data,
         else
             dinfo.size = realsize(type, size);
 
-        ofmt->current_dfmt->debug_output(type, &dinfo);
+        dfmt->debug_output(type, &dinfo);
     }
 
     if (type == OUT_RESERVE) {
