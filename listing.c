@@ -73,7 +73,6 @@ static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
 
 static int32_t listlineno;
-static const char *listfn;
 
 static int32_t listp;
 
