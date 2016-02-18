@@ -111,6 +111,9 @@ AC_CHECK_HEADERS(strings.h)
 dnl Look for <stdbool.h>
 AC_HEADER_STDBOOL
 
+dnl Look for <io.h>
+AC_CHECK_HEADERS(io.h)
+
 dnl Look for <unistd.h>
 AC_CHECK_HEADERS(unistd.h)
 
@@ -134,6 +137,11 @@ AC_CHECK_FUNCS(realpath)
 AC_CHECK_FUNCS(canonicalize_file_name)
 AC_CHECK_FUNCS(_fullpath)
 AC_CHECK_FUNCS(pathconf)
+
+AC_TYPE_OFF_T
+AC_FUNC_FSEEKO
+AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
+AC_CHECK_FUNCS([fileno])
 
 PA_HAVE_FUNC(__builtin_ctz, (0U))
 PA_HAVE_FUNC(__builtin_ctzl, (0UL))

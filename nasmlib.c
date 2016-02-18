@@ -165,7 +165,7 @@ no_return nasm_assert_failed(const char *file, int line, const char *msg)
 void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);
-    if (n != size)
+    if (n != size || ferror(f) || feof(f))
         nasm_error(ERR_FATAL, "unable to write output: %s", strerror(errno));
 }
 
@@ -459,9 +459,36 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 
 #endif
 
+#ifndef HAVE_FSEEKO
+# define fseeko fseek
+# define ftello ftell
+#endif
+
+#ifdef HAVE_FILENO		/* Useless without fileno() */
+# ifdef HAVE__CHSIZE_S
+#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
+# elif defined(HAVE__CHSIZE)
+#  define nasm_ftruncate(fd,size) _chsize(fd,size)
+# elif defined(HAVE_FTRUNCATE)
+#  define nasm_ftruncate(fd,size) ftruncate(fd,size)
+# endif
+#endif
+
 void fwritezero(size_t bytes, FILE *fp)
 {
     size_t blksize;
+
+#ifdef nasm_ftruncate
+    if (bytes >= BUFSIZ && !ferror(fp) && !feof(fp)) {
+	off_t pos = ftello(fp);
+	if (pos >= 0) {
+	    if (!fflush(fp) &&
+		!nasm_ftruncate(fileno(fp), pos + bytes) &&
+		!fseeko(fp, pos+bytes, SEEK_SET))
+		    return;
+	}
+    }
+#endif
 
     while (bytes) {
 	blksize = (bytes < ZERO_BUF_SIZE) ? bytes : ZERO_BUF_SIZE;
