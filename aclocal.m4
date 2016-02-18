@@ -14,25 +14,32 @@ AC_DEFUN(PA_ADD_CFLAGS,
  CFLAGS="$pa_add_cflags__old_cflags")])
 
 dnl --------------------------------------------------------------------------
-dnl PA_WORKING_STDBOOL
+dnl PA_HAVE_FUNC
 dnl
-dnl See if we have a working <stdbool.h> and bool support; in particular,
-dnl OpenWatcom 1.8 has a broken _Bool type that we don't want to use.
+dnl Look for a function with the specified arguments which could be
+dnl a builtin/intrinsic function.
 dnl --------------------------------------------------------------------------
-AC_DEFUN(PA_WORKING_BOOL,
-[AC_MSG_CHECKING([if $CC has a working bool type])
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
-int foo(bool x, int y)
-{
-	return x+y;
-}
- ])],
- [AC_MSG_RESULT([yes])
-  AC_DEFINE(HAVE_WORKING_BOOL, 1,
-    [Define to 1 if your compiler has a correct implementation of bool])],
- [AC_MSG_RESULT([no])])
-])
+AC_DEFUN(PA_HAVE_FUNC,
+[AC_MSG_CHECKING([for $1])
+AC_TRY_LINK([], [(void)$1$2;],
+AC_MSG_RESULT([yes])
+AC_DEFINE(m4_toupper([HAVE_$1]), [1],
+  [Define to 1 if you have the `$1' intrinsic function.]),
+AC_MSG_RESULT([no]))])
 
+dnl --------------------------------------------------------------------------
+dnl PA_REPLACE_FUNC
+dnl
+dnl Look for a function and possible alternatives, unlike AC_REPLACE_FUNCS
+dnl this will only add *one* replacement to LIBOBJS if no alternative is
+dnl found.
+dnl --------------------------------------------------------------------------
+AC_DEFUN(PA_REPLACE_FUNC_WITH,
+[pa_replace_func__$2_missing=true
+AC_CHECK_FUNCS([$1], [pa_replace_func__$2_missing=false], [])
+if $pa_replace_func__$2_missing; then
+  AC_LIBOBJ([$2])
+fi])
+
+AC_DEFUN(PA_REPLACE_FUNC,
+[PA_REPLACE_FUNC_WITH([$1], m4_car(m4_unquote(m4_split(m4_normalize[$1]))))])

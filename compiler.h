@@ -70,15 +70,6 @@
 #define __STDC_FORMAT_MACROS	1
 
 #ifdef __GNUC__
-# if __GNUC__ >= 4
-#  define HAVE_GNUC_4
-# endif
-# if __GNUC__ >= 3
-#  define HAVE_GNUC_3
-# endif
-#endif
-
-#ifdef __GNUC__
 # define _unused	__attribute__((unused))
 #else
 # define _unused
@@ -110,8 +101,12 @@ size_t strlcpy(char *, const char *, size_t);
 #endif
 
 #ifndef __cplusplus		/* C++ has false, true, bool as keywords */
-# if defined(HAVE_STDBOOL_H) && defined(HAVE_WORKING_BOOL)
+# ifdef HAVE_STDBOOL_H
 #  include <stdbool.h>
+# elif defined(HAVE__BOOL)
+#  typedef _Bool bool
+#  define false 0
+#  define true 1
 # else
 /* This is sort of dangerous, since casts will behave different than
    casting to the standard boolean type.  Always use !!, not (bool). */

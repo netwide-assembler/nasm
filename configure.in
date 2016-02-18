@@ -1,6 +1,6 @@
-dnl Process this file with autoconf 2.61 or later to produce
+dnl Process this file with autoconf 2.63 or later to produce
 dnl a configure script.
-AC_PREREQ(2.61)
+AC_PREREQ(2.63)
 AC_INIT(config.h.in)
 AC_CONFIG_HEADERS(config.h)
 
@@ -48,8 +48,9 @@ AC_PREFIX_PROGRAM(nasm)
 
 dnl Checks for programs.
 dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
+AC_PROG_CC_STDC
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 if test -f nasm.c; then
@@ -65,7 +66,6 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_RESTRICT
 AC_TYPE_SIZE_T
-PA_WORKING_BOOL
 AC_C_BIGENDIAN(AC_DEFINE(WORDS_BIGENDIAN),AC_DEFINE(WORDS_LITTLEENDIAN))
 AH_TEMPLATE(WORDS_BIGENDIAN,
 [Define to 1 if your processor stores words with the most significant
@@ -73,11 +73,6 @@ byte first (like Motorola and SPARC, unlike Intel and VAX).])
 AH_TEMPLATE(WORDS_LITTLEENDIAN,
 [Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
-
-dnl If we have gcc, add appropriate options
-PA_ADD_CFLAGS([-W])
-PA_ADD_CFLAGS([-Wall])
-PA_ADD_CFLAGS([-std=c99])
 
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
@@ -113,7 +108,7 @@ dnl The standard header for str*casecmp is <strings.h>
 AC_CHECK_HEADERS(strings.h)
 
 dnl Look for <stdbool.h>
-AC_CHECK_HEADERS(stdbool.h)
+AC_HEADER_STDBOOL
 
 dnl Look for <unistd.h>
 AC_CHECK_HEADERS(unistd.h)
@@ -122,30 +117,14 @@ dnl Look for <sys/param.h>
 AC_CHECK_HEADERS(sys/param.h)
 
 dnl Checks for library functions.
-AC_SUBST(XOBJS)
-
 AC_CHECK_FUNCS(strcspn, ,
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")]))
 
 AC_CHECK_FUNCS(strspn, ,
   AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")]))
 
-missing=true
-AC_CHECK_FUNCS([vsnprintf _vsnprintf], missing=false)
-if $missing; then
-   XOBJS="$XOBJS lib/vsnprintf.o"
-fi
-
-missing=true
-AC_CHECK_FUNCS([snprintf _snprintf], missing=false)
-if $missing; then
-   XOBJS="$XOBJS lib/snprintf.o"
-fi
-
 AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
-AC_CHECK_FUNCS(strsep)
-AC_CHECK_FUNCS(strlcpy)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
@@ -154,6 +133,18 @@ AC_CHECK_FUNCS(realpath)
 AC_CHECK_FUNCS(canonicalize_file_name)
 AC_CHECK_FUNCS(_fullpath)
 AC_CHECK_FUNCS(pathconf)
+
+PA_HAVE_FUNC(__builtin_ctz, (0U))
+PA_HAVE_FUNC(__builtin_ctzl, (0UL))
+PA_HAVE_FUNC(__builtin_ctzll, (0ULL))
+
+dnl Functions for which we have replacements available in lib/
+AC_CONFIG_LIBOBJ_DIR([lib])
+AC_SUBST([LIBOBJDIR], [lib/])
+PA_REPLACE_FUNC([vsnprintf _vsnprintf])
+PA_REPLACE_FUNC([snprintf _snprintf])
+PA_REPLACE_FUNC([strlcpy])
+PA_REPLACE_FUNC([strsep])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors
@@ -181,6 +172,9 @@ AC_ARG_WITH([ccache],
           [CC="ccache $CC"],
           [])
 
+dnl If we have gcc, add appropriate options
+PA_ADD_CFLAGS([-W])
+PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-pedantic])
 PA_ADD_CFLAGS([-Werror=implicit])
 PA_ADD_CFLAGS([-Werror=missing-braces])

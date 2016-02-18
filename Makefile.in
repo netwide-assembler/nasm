@@ -22,9 +22,13 @@ INTERNAL_CFLAGS = -I$(srcdir) -I.
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
-PERL		= perl -I$(srcdir)/perllib
+PERL		= perl
+PERLFLAGS	= -I$(srcdir)/perllib
 
-XOBJS		= @XOBJS@
+RUNPERL         = $(PERL) $(PERLFLAGS)
+
+LIBOBJDIR	= @LIBOBJDIR@
+LIBOBJS         = @LIBOBJS@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
@@ -102,11 +106,11 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 
 all: nasm$(X) ndisasm$(X) manpages rdf
 
-nasm$(X): $(NASM) $(XOBJS)
-	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(XOBJS) $(LIBS)
+nasm$(X): $(NASM) $(LIBOBJS)
+	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(LIBOBJS) $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(XOBJS)
-	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(XOBJS) $(LIBS)
+ndisasm$(X): $(NDISASM) $(LIBOBJS)
+	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(LIBOBJS) $(LIBS)
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -115,79 +119,79 @@ ndisasm$(X): $(NDISASM) $(XOBJS)
 INSDEP = insns.dat insns.pl insns-iflags.pl
 
 iflag.c: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat
 iflaggen.h: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -fh $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -fh $(srcdir)/insns.dat
 insnsb.c: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
 insnsa.c: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
 insnsd.c: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -d $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -d $(srcdir)/insns.dat
 insnsi.h: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -i $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -i $(srcdir)/insns.dat
 insnsn.c: $(INSDEP)
-	$(PERL) $(srcdir)/insns.pl -n $(srcdir)/insns.dat
+	$(RUNPERL) $(srcdir)/insns.pl -n $(srcdir)/insns.dat
 
 # These files contains all the standard macros that are derived from
 # the version number.
 version.h: version version.pl
-	$(PERL) $(srcdir)/version.pl h < $(srcdir)/version > version.h
+	$(RUNPERL) $(srcdir)/version.pl h < $(srcdir)/version > version.h
 version.mac: version version.pl
-	$(PERL) $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
+	$(RUNPERL) $(srcdir)/version.pl mac < $(srcdir)/version > version.mac
 version.sed: version version.pl
-	$(PERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
+	$(RUNPERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
 version.mak: version version.pl
-	$(PERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
+	$(RUNPERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
 version.nsh: version version.pl
-	$(PERL) $(srcdir)/version.pl nsis < $(srcdir)/version > version.nsh
+	$(RUNPERL) $(srcdir)/version.pl nsis < $(srcdir)/version > version.nsh
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
 macros.c: macros.pl pptok.ph standard.mac version.mac \
 	$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
-	$(PERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
+	$(RUNPERL) $(srcdir)/macros.pl $(srcdir)/standard.mac version.mac \
 		$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 
 # These source files are generated from regs.dat by yet another
 # perl script.
 regs.c: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl c $(srcdir)/regs.dat > regs.c
+	$(RUNPERL) $(srcdir)/regs.pl c $(srcdir)/regs.dat > regs.c
 regflags.c: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl fc $(srcdir)/regs.dat > regflags.c
+	$(RUNPERL) $(srcdir)/regs.pl fc $(srcdir)/regs.dat > regflags.c
 regdis.c: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl dc $(srcdir)/regs.dat > regdis.c
+	$(RUNPERL) $(srcdir)/regs.pl dc $(srcdir)/regs.dat > regdis.c
 regdis.h: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl dh $(srcdir)/regs.dat > regdis.h
+	$(RUNPERL) $(srcdir)/regs.pl dh $(srcdir)/regs.dat > regdis.h
 regvals.c: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl vc $(srcdir)/regs.dat > regvals.c
+	$(RUNPERL) $(srcdir)/regs.pl vc $(srcdir)/regs.dat > regvals.c
 regs.h: regs.dat regs.pl
-	$(PERL) $(srcdir)/regs.pl h $(srcdir)/regs.dat > regs.h
+	$(RUNPERL) $(srcdir)/regs.pl h $(srcdir)/regs.dat > regs.h
 
 # Assembler token hash
 tokhash.c: insns.dat regs.dat tokens.dat tokhash.pl perllib/phash.ph
-	$(PERL) $(srcdir)/tokhash.pl c $(srcdir)/insns.dat $(srcdir)/regs.dat \
+	$(RUNPERL) $(srcdir)/tokhash.pl c $(srcdir)/insns.dat $(srcdir)/regs.dat \
 		$(srcdir)/tokens.dat > tokhash.c
 
 # Assembler token metadata
 tokens.h: insns.dat regs.dat tokens.dat tokhash.pl perllib/phash.ph
-	$(PERL) $(srcdir)/tokhash.pl h $(srcdir)/insns.dat $(srcdir)/regs.dat \
+	$(RUNPERL) $(srcdir)/tokhash.pl h $(srcdir)/insns.dat $(srcdir)/regs.dat \
 		$(srcdir)/tokens.dat > tokens.h
 
 # Preprocessor token hash
 pptok.h: pptok.dat pptok.pl perllib/phash.ph
-	$(PERL) $(srcdir)/pptok.pl h $(srcdir)/pptok.dat pptok.h
+	$(RUNPERL) $(srcdir)/pptok.pl h $(srcdir)/pptok.dat pptok.h
 pptok.c: pptok.dat pptok.pl perllib/phash.ph
-	$(PERL) $(srcdir)/pptok.pl c $(srcdir)/pptok.dat pptok.c
+	$(RUNPERL) $(srcdir)/pptok.pl c $(srcdir)/pptok.dat pptok.c
 pptok.ph: pptok.dat pptok.pl perllib/phash.ph
-	$(PERL) $(srcdir)/pptok.pl ph $(srcdir)/pptok.dat pptok.ph
+	$(RUNPERL) $(srcdir)/pptok.pl ph $(srcdir)/pptok.dat pptok.ph
 
 # Directives hash
 directiv.h: directiv.dat directiv.pl perllib/phash.ph
-	$(PERL) $(srcdir)/directiv.pl h $(srcdir)/directiv.dat directiv.h
+	$(RUNPERL) $(srcdir)/directiv.pl h $(srcdir)/directiv.dat directiv.h
 directiv.c: directiv.dat directiv.pl perllib/phash.ph
-	$(PERL) $(srcdir)/directiv.pl c $(srcdir)/directiv.dat directiv.c
+	$(RUNPERL) $(srcdir)/directiv.pl c $(srcdir)/directiv.dat directiv.c
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
@@ -284,18 +288,18 @@ splint:
 	splint -weak *.c
 
 test: nasm$(X)
-	cd test && $(PERL) performtest.pl --nasm=../nasm *.asm
+	cd test && $(RUNPERL) performtest.pl --nasm=../nasm *.asm
 
 golden: nasm$(X)
-	cd test && $(PERL) performtest.pl --golden --nasm=../nasm *.asm
+	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm *.asm
 
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,
 # it's expected to be invoked manually.
 #
 alldeps: perlreq
-	$(PERL) syncfiles.pl Makefile.in Mkfiles/*.mak
-	$(PERL) mkdep.pl -M Makefile.in Mkfiles/*.mak -- \
+	$(RUNPERL) syncfiles.pl Makefile.in Mkfiles/*.mak
+	$(RUNPERL) mkdep.pl -M Makefile.in Mkfiles/*.mak -- \
 		. output lib
 	./config.status
 

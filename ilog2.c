@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -42,6 +42,7 @@
         }                                   \
     } while (0)
 
+
 #if defined(__GNUC__) && defined(__x86_64__)
 
 int ilog2_32(uint32_t v)
@@ -67,7 +68,7 @@ int ilog2_32(uint32_t v)
     return n;
 }
 
-#elif defined(HAVE_GNUC_4)
+#elif defined(HAVE___BUILTIN_CTZ) && INT_MAX >= 2147483647
 
 int ilog2_32(uint32_t v)
 {
@@ -106,7 +107,7 @@ int ilog2_64(uint64_t v)
     return n;
 }
 
-#elif defined(HAVE_GNUC_4)
+#elif defined(HAVE__BUILTIN_CTZLL) && LLONG_MAX >= 9223372036854775807L
 
 int ilog2_64(uint64_t v)
 {
