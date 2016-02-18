@@ -48,7 +48,6 @@ NASM =	nasm.o nasmlib.o ver.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
 	strfunc.o tokhash.o regvals.o regflags.o \
 	ilog2.o \
-	strlcpy.o \
 	preproc-nop.o \
 	disp8.o \
 	iflag.o
@@ -224,8 +223,8 @@ outieee.o: outieee.c compiler.h config.h directiv.h insnsi.h nasm.h \
 outlib.o: outlib.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 outmacho.o: outmacho.c compiler.h config.h directiv.h insnsi.h nasm.h \
- nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h raa.h regs.h saa.h \
- tables.h
+ nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h raa.h rbtree.h \
+ regs.h saa.h tables.h
 outobj.o: outobj.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h stdscan.h \
  tables.h

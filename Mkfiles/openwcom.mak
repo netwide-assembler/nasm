@@ -64,7 +64,6 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) &
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) &
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) &
 	ilog2.$(O) &
-	lib/strlcpy.$(O) &
 	preproc-nop.$(O) &
 	disp8.$(O) &
 	iflag.$(O)
@@ -372,7 +371,7 @@ output/outlib.$(O): output/outlib.c compiler.h config.h directiv.h insnsi.h &
  tables.h
 output/outmacho.$(O): output/outmacho.c compiler.h config.h directiv.h &
  insnsi.h nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h &
- pptok.h preproc.h raa.h regs.h saa.h tables.h
+ pptok.h preproc.h raa.h rbtree.h regs.h saa.h tables.h
 output/outobj.$(O): output/outobj.c compiler.h config.h directiv.h eval.h &
  insnsi.h nasm.h nasmlib.h opflags.h output/outform.h output/outlib.h &
  pptok.h preproc.h regs.h stdscan.h tables.h
