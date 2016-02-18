@@ -77,6 +77,7 @@ typedef void (*efunc) (int severity, const char *fmt, ...);
 typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
 void nasm_set_verror(vefunc);
+no_return printf_func(2, 3) nasm_fatal(int flags, const char *fmt, ...);
 no_return printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
 no_return nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
