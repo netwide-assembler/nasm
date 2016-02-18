@@ -129,6 +129,7 @@ AC_CHECK_FUNCS(strspn, ,
 
 AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
+AC_CHECK_FUNCS(strsep)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
@@ -153,7 +154,6 @@ AC_SUBST([LIBOBJDIR], [lib/])
 PA_REPLACE_FUNC([vsnprintf _vsnprintf])
 PA_REPLACE_FUNC([snprintf _snprintf])
 PA_REPLACE_FUNC([strlcpy])
-PA_REPLACE_FUNC([strsep])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors
