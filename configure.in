@@ -1,6 +1,6 @@
 dnl Process this file with autoconf 2.61 or later to produce
 dnl a configure script.
-AC_PREREQ(2.61)
+AC_PREREQ(2.63)
 AC_INIT(config.h.in)
 AC_CONFIG_HEADERS(config.h)
 
@@ -176,14 +176,17 @@ fi
 dnl
 dnl support cchace
 dnl
-AC_ARG_WITH([ccache],
-            [AC_HELP_STRING([--with-ccache],
-                            [Compile with ccache])],
-          [CC="ccache $CC"],
-          [])
+AC_ARG_ENABLE([ccache],
+[AC_HELP_STRING([--with-ccache], [compile with ccache])],
+[CC="ccache $CC"],
+[])
 
 PA_ADD_CFLAGS([-pedantic])
-PA_ADD_CFLAGS([-Werror=implicit])
+AC_ARG_ENABLE([werror],
+[AC_HELP_STRING([--enable-werror],
+[compile with -Werror to error out on any warning])],
+[PA_ADD_CFLAGS([-Werror])],
+[PA_ADD_CFLAGS([-Werror=implicit])
 PA_ADD_CFLAGS([-Werror=missing-braces])
 PA_ADD_CFLAGS([-Werror=return-type])
 PA_ADD_CFLAGS([-Werror=trigraphs])
@@ -192,7 +195,7 @@ PA_ADD_CFLAGS([-Werror=strict-prototypes])
 PA_ADD_CFLAGS([-Werror=missing-prototypes])
 PA_ADD_CFLAGS([-Werror=missing-declarations])
 PA_ADD_CFLAGS([-Werror=comment])
-PA_ADD_CFLAGS([-Werror=vla])
+PA_ADD_CFLAGS([-Werror=vla])])
 
 AC_OUTPUT_COMMANDS([mkdir -p output])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
