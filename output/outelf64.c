@@ -594,8 +594,8 @@ static void elf_add_reloc(struct elf_section *sect, int32_t segment,
  * _containing_ the symbol. Such relocations call to this routine,
  * which searches the symbol list for the symbol in question.
  *
- * R_386_GOT32 references require the _exact_ symbol address to be
- * used; R_386_32 references can be at an offset from the symbol.
+ * R_X86_64_GOT32 references require the _exact_ symbol address to be
+ * used; R_X86_64_32 references can be at an offset from the symbol.
  * The boolean argument `exact' tells us this.
  *
  * Return value is the adjusted value of `addr', having become an
