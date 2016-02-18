@@ -849,7 +849,7 @@ struct ofmt {
 struct ofmt_alias {
     const char  *shortname;
     const char  *fullname;
-    struct ofmt *ofmt;
+    const struct ofmt *ofmt;
 };
 
 extern const struct ofmt *ofmt;
