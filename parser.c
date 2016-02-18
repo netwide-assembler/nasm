@@ -61,12 +61,6 @@ static int is_comma_next(void);
 
 static int i;
 static struct tokenval tokval;
-static struct location *location;       /* Pointer to current line's segment,offset */
-
-void parser_global_info(struct location * locp)
-{
-    location = locp;
-}
 
 static int prefix_slot(int prefix)
 {
@@ -431,14 +425,14 @@ restart_parse:
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
             /*
-             * FIXME: location->segment could be NO_SEG, in which case
+             * FIXME: location.segment could be NO_SEG, in which case
              * it is possible we should be passing 'abs_seg'. Look into this.
              * Work out whether that is *really* what we should be doing.
              * Generally fix things. I think this is right as it is, but
              * am still not certain.
              */
-            ldef(result->label, in_abs_seg ? abs_seg : location->segment,
-                 location->offset, NULL, true, false);
+            ldef(result->label, in_abs_seg ? abs_seg : location.segment,
+                 location.offset, NULL, true, false);
         }
     }
 

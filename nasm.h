@@ -220,6 +220,7 @@ struct location {
     int32_t segment;
     int     known;
 };
+extern struct location location;
 
 /*
  * Expression-evaluator datatype. Expressions, within the

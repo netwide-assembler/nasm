@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -54,7 +54,6 @@
 #define TEMPEXPR_DELTA 8
 
 static scanner scan;            /* Address of scanner routine */
-static lfunc labelfunc;         /* Address of label routine */
 
 static expr **tempexprs = NULL;
 static int ntempexprs;
@@ -68,7 +67,6 @@ static struct tokenval *tokval; /* The current token */
 static int i;                   /* The t_type of tokval */
 
 static void *scpriv;
-static struct location *location;         /* Pointer to current line's segment,offset */
 static int *opflags;
 
 static struct eval_hints *hint;
@@ -890,11 +888,11 @@ static expr *expr6(int critical)
         case TOKEN_HERE:
         case TOKEN_BASE:
             /*
-             * If !location->known, this indicates that no
+             * If !location.known, this indicates that no
              * symbol, Here or Base references are valid because we
              * are in preprocess-only mode.
              */
-            if (!location->known) {
+            if (!location.known) {
                 nasm_error(ERR_NONFATAL,
                       "%s not supported in preprocess-only mode",
                       (i == TOKEN_HERE ? "`$'" :
@@ -906,13 +904,13 @@ static expr *expr6(int critical)
 
             type = EXPR_SIMPLE; /* might get overridden by UNKNOWN */
             if (i == TOKEN_BASE) {
-                label_seg = in_abs_seg ? abs_seg : location->segment;
+                label_seg = in_abs_seg ? abs_seg : location.segment;
                 label_ofs = 0;
             } else if (i == TOKEN_HERE) {
-                label_seg = in_abs_seg ? abs_seg : location->segment;
-                label_ofs = in_abs_seg ? abs_offset : location->offset;
+                label_seg = in_abs_seg ? abs_seg : location.segment;
+                label_ofs = in_abs_seg ? abs_offset : location.offset;
             } else {
-                if (!labelfunc(tokval->t_charptr, &label_seg, &label_ofs)) {
+                if (!lookup_label(tokval->t_charptr, &label_seg, &label_ofs)) {
                     scope = local_scope(tokval->t_charptr);
                     if (critical == 2) {
                         nasm_error(ERR_NONFATAL, "symbol `%s%s' undefined",
@@ -949,12 +947,6 @@ static expr *expr6(int critical)
         nasm_error(ERR_NONFATAL, "expression syntax error");
         return NULL;
     }
-}
-
-void eval_global_info(lfunc lookup_label, struct location * locp)
-{
-    labelfunc = lookup_label;
-    location = locp;
 }
 
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,

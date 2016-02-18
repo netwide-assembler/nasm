@@ -116,7 +116,7 @@ int64_t global_offset_changed;      /* referenced in labels.c */
 int64_t prev_offset_changed;
 int32_t stall_count;
 
-static struct location location;
+struct location location;
 int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
 int32_t abs_seg;                   /* ABSOLUTE segment basis */
 int32_t abs_offset;                /* ABSOLUTE offset */
@@ -364,8 +364,6 @@ int main(int argc, char **argv)
 
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
-    parser_global_info(&location);
-    eval_global_info(ofmt, lookup_label, &location);
 
     /* define some macros dependent of command-line */
     define_macros_late();

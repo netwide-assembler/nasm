@@ -39,13 +39,6 @@
 #define NASM_EVAL_H
 
 /*
- * Called once to tell the evaluator what output format is
- * providing segment-base details, and what function can be used to
- * look labels up.
- */
-void eval_global_info(lfunc lookup_label, struct location * locp);
-
-/*
  * The evaluator itself.
  */
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
