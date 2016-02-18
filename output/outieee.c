@@ -1508,7 +1508,7 @@ static const struct dfmt ladsoft_debug_form = {
     dbgls_output,
     dbgls_cleanup,
 };
-static const struct dfmt *ladsoft_debug_arr[3] = {
+static const struct dfmt * const ladsoft_debug_arr[3] = {
     &ladsoft_debug_form,
     &null_debug_form,
     NULL

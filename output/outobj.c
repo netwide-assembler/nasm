@@ -2617,7 +2617,7 @@ static const struct dfmt borland_debug_form = {
     dbgbi_cleanup,
 };
 
-static const struct dfmt *borland_debug_arr[3] = {
+static const struct dfmt * const borland_debug_arr[3] = {
     &borland_debug_form,
     &null_debug_form,
     NULL
