@@ -370,7 +370,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
      */
 
     if (src_get(&lineno, &lnfname))
-        ofmt->current_dfmt->linenum(lnfname, lineno, segto);
+        dfmt->linenum(lnfname, lineno, segto);
 
     if (asize && asize > amax) {
         if (type != OUT_ADDRESS || (int)size < 0) {

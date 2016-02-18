@@ -66,7 +66,7 @@ static void dbg_init(void)
 static void dbg_cleanup(int debuginfo)
 {
     (void)debuginfo;
-    of_dbg.current_dfmt->cleanup();
+    dfmt->cleanup();
     while (dbgsect) {
         struct Section *tmp = dbgsect;
         dbgsect = dbgsect->next;
