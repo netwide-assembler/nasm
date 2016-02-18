@@ -89,7 +89,7 @@ static void list_emit(void)
     if (!listlinep && !listdata[0])
         return;
 
-    fprintf(listfp, "%6"PRId32" ", ++listlineno);
+    fprintf(listfp, "%6"PRId32" ", listlineno);
 
     if (listdata[0])
         fprintf(listfp, "%08"PRIX32" %-*s", listoffset, LIST_HEXBIT + 1,
@@ -111,7 +111,7 @@ static void list_emit(void)
     listdata[0] = '\0';
 
     if (listerror[0]) {
-	fprintf(listfp, "%6"PRId32"          ", ++listlineno);
+	fprintf(listfp, "%6"PRId32"          ", listlineno);
 	for (i = 0; i < LIST_HEXBIT; i++)
 	    putc('*', listfp);
 	
@@ -248,10 +248,9 @@ static void list_line(int type, char *line)
 {
     if (!listp)
         return;
-    if (user_nolist) {          /* fbk - 9/2/00 */
-        listlineno++;
-        return;
-    }
+
+    if (user_nolist)
+      return;
 
     if (mistack && mistack->inhibiting) {
         if (type == LIST_MACRO)
@@ -263,6 +262,7 @@ static void list_line(int type, char *line)
         }
     }
     list_emit();
+    listlineno = src_get_linnum();
     listlinep = true;
     strncpy(listline, line, LIST_MAX_LEN - 1);
     listline[LIST_MAX_LEN - 1] = '\0';
