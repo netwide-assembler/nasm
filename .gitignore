@@ -46,9 +46,8 @@ TAGS
 /insnsn.c
 /macros.c
 /nasm
-/nasm.man
 /ndisasm
-/ndisasm.man
+/*.1
 /pptok.c
 /pptok.h
 /pptok.ph
