@@ -48,9 +48,10 @@ AC_PREFIX_PROGRAM(nasm)
 
 dnl Checks for programs.
 dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
+AC_USE_SYSTEM_EXTENSIONS
+AC_SYS_LARGEFILE
 AC_PROG_CC
 AC_PROG_CC_STDC
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 if test -f nasm.c; then
@@ -166,17 +167,20 @@ fi
 dnl
 dnl support cchace
 dnl
-AC_ARG_WITH([ccache],
-            [AC_HELP_STRING([--with-ccache],
-                            [Compile with ccache])],
-          [CC="ccache $CC"],
-          [])
+AC_ARG_ENABLE([ccache],
+[AC_HELP_STRING([--with-ccache], [compile with ccache])],
+[CC="ccache $CC"],
+[])
 
 dnl If we have gcc, add appropriate options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-pedantic])
-PA_ADD_CFLAGS([-Werror=implicit])
+AC_ARG_ENABLE([werror],
+[AC_HELP_STRING([--enable-werror],
+[compile with -Werror to error out on any warning])],
+[PA_ADD_CFLAGS([-Werror])],
+[PA_ADD_CFLAGS([-Werror=implicit])
 PA_ADD_CFLAGS([-Werror=missing-braces])
 PA_ADD_CFLAGS([-Werror=return-type])
 PA_ADD_CFLAGS([-Werror=trigraphs])
@@ -185,7 +189,7 @@ PA_ADD_CFLAGS([-Werror=strict-prototypes])
 PA_ADD_CFLAGS([-Werror=missing-prototypes])
 PA_ADD_CFLAGS([-Werror=missing-declarations])
 PA_ADD_CFLAGS([-Werror=comment])
-PA_ADD_CFLAGS([-Werror=vla])
+PA_ADD_CFLAGS([-Werror=vla])])
 
 AC_OUTPUT_COMMANDS([mkdir -p output])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
