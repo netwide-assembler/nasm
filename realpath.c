@@ -57,7 +57,8 @@
  */
 char *nasm_realpath(const char *rel_path)
 {
-    return canonicalize_file_name(rel_path);
+    char *rp = canonicalize_file_name(rel_path);
+    return rp ? rp : nasm_strdup(rel_path);
 }
 
 #elif defined(HAVE_REALPATH)
@@ -69,16 +70,14 @@ char *nasm_realpath(const char *rel_path)
 
 char *nasm_realpath(const char *rel_path)
 {
-    char *buf;
+    char *rp;
 
-    buf = realpath(rel_path, NULL);
-    if (buf)
-        return buf;
+    rp = realpath(rel_path, NULL);
 
     /* Not all implemetations of realpath() support a NULL second argument */
-    if (errno == EINVAL) {
-        int path_max = -1;
-        char *buf;
+    if (!rp && errno == EINVAL) {
+        long path_max = -1;
+        char *rp;
 
 #if defined(HAVE_PATHCONF) && defined(_PC_PATH_MAX)
         path_max = pathconf(rel_path, _PC_PATH_MAX); /* POSIX */
@@ -94,20 +93,20 @@ char *nasm_realpath(const char *rel_path)
 #endif
         }
 
-        buf = nasm_malloc(path_max);
+        rp = nasm_malloc(path_max);
 
-        if (!realpath(rel_path, buf)) {
-            nasm_free(buf);
-            buf = NULL;
+        if (!realpath(rel_path, rp)) {
+            nasm_free(rp);
+            rp = NULL;
         } else {
             /* On some systems, pathconf() can return a very large value */
 
-            buf[path_max - 1] = '\0'; /* Just in case overrun is possible */
-            buf = nasm_realloc(buf, strlen(buf) + 1);
+            rp[path_max - 1] = '\0'; /* Just in case overrun is possible */
+            rp = nasm_realloc(rp, strlen(rp) + 1);
         }
     }
 
-    return buf;
+    return rp ? rp : nasm_strdup(rel_path);
 }
 
 #elif defined(HAVE__FULLPATH)
@@ -118,7 +117,8 @@ char *nasm_realpath(const char *rel_path)
 
 char *nasm_realpath(const char *rel_path)
 {
-    return _fullpath(NULL, rel_path, 0);
+    char *rp = _fullpath(NULL, rel_path, 0);
+    return rp ? rp : nasm_strdup(rel_path);
 }
 
 #else
