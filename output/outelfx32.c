@@ -154,8 +154,8 @@ static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
 static int32_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
 
 
-static struct dfmt df_dwarf;
-static struct dfmt df_stabs;
+static const struct dfmt df_dwarf;
+static const struct dfmt df_stabs;
 static struct elf_symbol *lastsym;
 
 /* common debugging routines */
@@ -1385,7 +1385,7 @@ static int elf_set_info(enum geninfo type, char **val)
     (void)val;
     return 0;
 }
-static struct dfmt df_dwarf = {
+static const struct dfmt df_dwarf = {
     "ELFX32 (x86-64) dwarf debug format for Linux/Unix",
     "dwarf",
     dwarf_init,
@@ -1396,7 +1396,7 @@ static struct dfmt df_dwarf = {
     dwarf_output,
     dwarf_cleanup
 };
-static struct dfmt df_stabs = {
+static const struct dfmt df_stabs = {
     "ELFX32 (x86-64) stabs debug format for Linux/Unix",
     "stabs",
     null_debug_init,
@@ -1408,7 +1408,8 @@ static struct dfmt df_stabs = {
     stabs_cleanup
 };
 
-struct dfmt *elfx32_debugs_arr[3] = { &df_dwarf, &df_stabs, NULL };
+static const struct dfmt * const elfx32_debugs_arr[3] =
+  { &df_dwarf, &df_stabs, NULL };
 
 const struct ofmt of_elfx32 = {
     "ELFX32 (x86_64) object files (e.g. Linux)",

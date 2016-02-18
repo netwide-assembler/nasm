@@ -2605,7 +2605,7 @@ static void dbgbi_output(int output_type, void *param)
     (void)output_type;
     (void)param;
 }
-static struct dfmt borland_debug_form = {
+static const struct dfmt borland_debug_form = {
     "Borland Debug Records",
     "borland",
     dbgbi_init,
@@ -2617,7 +2617,7 @@ static struct dfmt borland_debug_form = {
     dbgbi_cleanup,
 };
 
-static struct dfmt *borland_debug_arr[3] = {
+static const struct dfmt *borland_debug_arr[3] = {
     &borland_debug_form,
     &null_debug_form,
     NULL

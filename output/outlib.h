@@ -53,7 +53,7 @@ void null_debug_directive(const char *directive, const char *params);
 void null_debug_typevalue(int32_t type);
 void null_debug_output(int type, void *param);
 void null_debug_cleanup(void);
-extern struct dfmt *null_debug_arr[2];
+extern const struct dfmt * const null_debug_arr[2];
 
 #endif /* NASM_OUTLIB_H */
 

@@ -288,7 +288,7 @@ extern const struct ofmt of_dbg;
  * drivers array based on the above defines
  */
 
-static const struct ofmt *drivers[] = {
+static const struct ofmt * const drivers[] = {
 #ifdef OF_BIN
     &of_bin,
     &of_ith,
@@ -370,8 +370,8 @@ static const struct ofmt_alias ofmt_aliases[] = {
 
 #endif /* BUILD_DRIVERS_ARRAY */
 
-const struct ofmt *ofmt_find(char *name, const struct ofmt_alias **ofmt_alias);
-struct dfmt *dfmt_find(const struct ofmt *, char *);
+const struct ofmt *ofmt_find(const char *name, const struct ofmt_alias **ofmt_alias);
+const struct dfmt *dfmt_find(const struct ofmt *, const char *);
 void ofmt_list(const struct ofmt *, FILE *);
 void dfmt_list(const struct ofmt *ofmt, FILE * fp);
 extern struct dfmt null_debug_form;

@@ -242,7 +242,7 @@ static void dbgdbg_typevalue(int32_t type)
     fprintf(ofile, "new type: %s(%"PRIX32")\n",
             types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
 }
-static struct dfmt debug_debug_form = {
+static const struct dfmt debug_debug_form = {
     "Trace of all info passed to debug stage",
     "debug",
     dbgdbg_init,
@@ -254,7 +254,7 @@ static struct dfmt debug_debug_form = {
     dbgdbg_cleanup,
 };
 
-static struct dfmt *debug_debug_arr[3] = {
+static const struct dfmt * const debug_debug_arr[3] = {
     &debug_debug_form,
     &null_debug_form,
     NULL

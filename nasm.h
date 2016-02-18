@@ -683,7 +683,7 @@ struct ofmt {
     /*
      * this is a pointer to the first element of the debug information
      */
-    struct dfmt **debug_formats;
+    const struct dfmt * const *debug_formats;
 
     /*
      * the default debugging format if -F is not specified

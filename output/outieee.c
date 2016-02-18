@@ -1497,7 +1497,7 @@ static void dbgls_output(int output_type, void *param)
     (void)output_type;
     (void)param;
 }
-static struct dfmt ladsoft_debug_form = {
+static const struct dfmt ladsoft_debug_form = {
     "LADsoft Debug Records",
     "ladsoft",
     dbgls_init,
@@ -1508,7 +1508,7 @@ static struct dfmt ladsoft_debug_form = {
     dbgls_output,
     dbgls_cleanup,
 };
-static struct dfmt *ladsoft_debug_arr[3] = {
+static const struct dfmt *ladsoft_debug_arr[3] = {
     &ladsoft_debug_form,
     &null_debug_form,
     NULL

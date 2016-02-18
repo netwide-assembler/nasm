@@ -1190,11 +1190,11 @@ const struct ofmt of_coff = {
 
 #endif
 
-extern struct dfmt df_cv8;
+extern const struct dfmt df_cv8;
 
 #ifdef OF_WIN32
 
-struct dfmt *win32_debug_arr[2] = { &df_cv8, NULL };
+static const struct dfmt * const win32_debug_arr[2] = { &df_cv8, NULL };
 
 const struct ofmt of_win32 = {
     "Microsoft Win32 (i386) object files",
@@ -1220,7 +1220,7 @@ const struct ofmt of_win32 = {
 
 #ifdef OF_WIN64
 
-struct dfmt *win64_debug_arr[2] = { &df_cv8, NULL };
+static const struct dfmt * const win64_debug_arr[2] = { &df_cv8, NULL };
 
 const struct ofmt of_win64 = {
     "Microsoft Win64 (x86-64) object files",

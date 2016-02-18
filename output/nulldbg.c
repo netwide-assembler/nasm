@@ -77,7 +77,7 @@ void null_debug_cleanup(void)
 {
 }
 
-struct dfmt null_debug_form = {
+const struct dfmt null_debug_form = {
     "Null debug format",
     "null",
     null_debug_init,
@@ -89,4 +89,4 @@ struct dfmt null_debug_form = {
     null_debug_cleanup
 };
 
-struct dfmt *null_debug_arr[2] = { &null_debug_form, NULL };
+const struct dfmt * const null_debug_arr[2] = { &null_debug_form, NULL };
