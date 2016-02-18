@@ -5,6 +5,9 @@ NASMOPT = -Ox -I../misc $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
 
+$(NASM):
+	$(MAKE) -C ..
+
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
 
