@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -249,8 +249,8 @@ sub got_para {
     while (/^\\c (([^\\]|\\[^c])*)(.*)$/) {
       $l = $1;
       $_ = $3;
-      $l =~ s/\\{/{/g;
-      $l =~ s/\\}/}/g;
+      $l =~ s/\\\{/\{/g;
+      $l =~ s/\\\}/}/g;
       $l =~ s/\\\\/\\/g;
       push @$pname, $l;
     }
@@ -263,7 +263,7 @@ sub got_para {
     $snum = 0;
     $xref = "chapter-$cnum";
     $pflags = "chap $cnum :$xref";
-    die "badly formatted chapter heading: $_\n" if !/^\\C{([^}]*)}\s*(.*)$/;
+    die "badly formatted chapter heading: $_\n" if !/^\\C\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "chapter $cnum";
     $node = "Chapter $cnum";
     &add_item($node, 1);
@@ -280,7 +280,7 @@ sub got_para {
     $snum = 0;
     $xref = "appendix-$cnum";
     $pflags = "appn $cnum :$xref";
-    die "badly formatted appendix heading: $_\n" if !/^\\A{([^}]*)}\s*(.*)$/;
+    die "badly formatted appendix heading: $_\n" if !/^\\A\{([^\}]*)}\s*(.*)$/;
     $refs{$1} = "appendix $cnum";
     $node = "Appendix $cnum";
     &add_item($node, 1);
@@ -294,7 +294,7 @@ sub got_para {
     $snum = 0;
     $xref = "section-$cnum.$hnum";
     $pflags = "head $cnum.$hnum :$xref";
-    die "badly formatted heading: $_\n" if !/^\\[HP]{([^}]*)}\s*(.*)$/;
+    die "badly formatted heading: $_\n" if !/^\\[HP]{([^\}]*)}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum";
     $node = "Section $cnum.$hnum";
     &add_item($node, 2);
@@ -307,7 +307,7 @@ sub got_para {
     $snum++;
     $xref = "section-$cnum.$hnum.$snum";
     $pflags = "subh $cnum.$hnum.$snum :$xref";
-    die "badly formatted subheading: $_\n" if !/^\\S{([^}]*)}\s*(.*)$/;
+    die "badly formatted subheading: $_\n" if !/^\\S\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum.$snum";
     $node = "Section $cnum.$hnum.$snum";
     &add_item($node, 3);
@@ -317,18 +317,18 @@ sub got_para {
     # the standard word-by-word code will happen next
   } elsif (/^\\IR/) {
     # An index-rewrite.
-    die "badly formatted index rewrite: $_\n" if !/^\\IR{([^}]*)}\s*(.*)$/;
+    die "badly formatted index rewrite: $_\n" if !/^\\IR\{([^\}]*)\}\s*(.*)$/;
     $irewrite = $1;
     $_ = $2;
     # the standard word-by-word code will happen next
   } elsif (/^\\IA/) {
     # An index-alias.
-    die "badly formatted index alias: $_\n" if !/^\\IA{([^}]*)}{([^}]*)}\s*$/;
+    die "badly formatted index alias: $_\n" if !/^\\IA\{([^\}]*)}\{([^\}]*)\}\s*$/;
     $idxalias{$1} = $2;
     return; # avoid word-by-word code
   } elsif (/^\\M/) {
     # Metadata
-    die "badly formed metadata: $_\n" if !/^\\M{([^}]*)}{([^}]*)}\s*$/;
+    die "badly formed metadata: $_\n" if !/^\\M\{([^\}]*)}\{([^\}]*)\}\s*$/;
     $metadata{$1} = $2;
     return; # avoid word-by-word code
   } elsif (/^\\b/) {
@@ -374,11 +374,11 @@ sub got_para {
       $qindex = 1 if $1 eq "\\I";
       $indexing = 1, s/^\\[iI]// if $1;
       s/^\\c//;
-      die "badly formatted \\c: \\c$_\n" if !/{(([^\\}]|\\.)*)}(.*)$/;
+      die "badly formatted \\c: \\c$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
       $w = $1;
       $_ = $3;
-      $w =~ s/\\{/{/g;
-      $w =~ s/\\}/}/g;
+      $w =~ s/\\\{/\{/g;
+      $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       (push @$pname,"i"),$lastp = $#$pname if $indexing;
@@ -391,11 +391,11 @@ sub got_para {
       $indexing = 1, $type = "\\i" if $1;
       $emph = 1, $type = "\\e" if $2;
       s/^(\\[iI])?(\\e?)//;
-      die "badly formatted $type: $type$_\n" if !/{(([^\\}]|\\.)*)}(.*)$/;
+      die "badly formatted $type: $type$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
       $w = $1;
       $_ = $3;
-      $w =~ s/\\{/{/g;
-      $w =~ s/\\}/}/g;
+      $w =~ s/\\\{/\{/g;
+      $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       $t = $emph ? "es" : "n ";
@@ -418,21 +418,21 @@ sub got_para {
       $t = "k ";
       $t = "kK" if /^\\K/;
       s/^\\[kK]//;
-      die "badly formatted \\k: \\c$_\n" if !/{([^}]*)}(.*)$/;
+      die "badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
       $_ = $2;
       push @$pname,"$t$1";
     } elsif (/^\\W/) {
       s/^\\W//;
       die "badly formatted \\W: \\W$_\n"
-          if !/{([^}]*)}(\\i)?(\\c)?{(([^\\}]|\\.)*)}(.*)$/;
+          if !/\{([^\}]*)\}(\\i)?(\\c)?\{(([^\\}]|\\.)*)\}(.*)$/;
       $l = $1;
       $w = $4;
       $_ = $6;
       $t = "w ";
       $t = "wc" if $3 eq "\\c";
       $indexing = 1 if $2;
-      $w =~ s/\\{/{/g;
-      $w =~ s/\\}/}/g;
+      $w =~ s/\\\{/\{/g;
+      $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       (push @$pname,"i"),$lastp = $#$pname if $indexing;
@@ -443,8 +443,8 @@ sub got_para {
       die "painful death! $_\n" if !length $1;
       $w = $1;
       $_ = $3;
-      $w =~ s/\\{/{/g;
-      $w =~ s/\\}/}/g;
+      $w =~ s/\\\{/\{/g;
+      $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       if ($w eq "-") {
