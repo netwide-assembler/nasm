@@ -58,7 +58,7 @@ static void cv8_typevalue(int32_t type);
 static void cv8_output(int type, void *param);
 static void cv8_cleanup(void);
 
-struct dfmt df_cv8 = {
+const struct dfmt df_cv8 = {
     .fullname = "Codeview 8",
     .shortname = "cv8",
     .init = cv8_init,
