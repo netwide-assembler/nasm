@@ -188,6 +188,7 @@
 #include "insns.h"
 #include "tables.h"
 #include "disp8.h"
+#include "listing.h"
 
 enum match_result {
     /*
@@ -358,7 +359,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
         asize = 0;              /* No longer an address */
     }
 
-    nasmlist->output(offset, data, type, size);
+    lfmt->output(offset, data, type, size);
 
     /*
      * this call to src_get determines when we call the
@@ -495,15 +496,15 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
             }
             if (t > 0 && t == instruction->times - 1) {
                 /*
-                 * Dummy call to nasmlist->output to give the offset to the
+                 * Dummy call to lfmt->output to give the offset to the
                  * listing module.
                  */
-                nasmlist->output(offset, NULL, OUT_RAWDATA, 0);
-                nasmlist->uplevel(LIST_TIMES);
+                lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+                lfmt->uplevel(LIST_TIMES);
             }
         }
         if (instruction->times > 1)
-            nasmlist->downlevel(LIST_TIMES);
+            lfmt->downlevel(LIST_TIMES);
         return offset - start;
     }
 
@@ -534,11 +535,11 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     len = (size_t)instruction->eops->next->next->offset;
             }
             /*
-             * Dummy call to nasmlist->output to give the offset to the
+             * Dummy call to lfmt->output to give the offset to the
              * listing module.
              */
-            nasmlist->output(offset, NULL, OUT_RAWDATA, 0);
-            nasmlist->uplevel(LIST_INCBIN);
+            lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+            lfmt->uplevel(LIST_INCBIN);
             while (t--) {
                 size_t l;
 
@@ -564,15 +565,15 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     l -= m;
                 }
             }
-            nasmlist->downlevel(LIST_INCBIN);
+            lfmt->downlevel(LIST_INCBIN);
             if (instruction->times > 1) {
                 /*
-                 * Dummy call to nasmlist->output to give the offset to the
+                 * Dummy call to lfmt->output to give the offset to the
                  * listing module.
                  */
-                nasmlist->output(offset, NULL, OUT_RAWDATA, 0);
-                nasmlist->uplevel(LIST_TIMES);
-                nasmlist->downlevel(LIST_TIMES);
+                lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+                lfmt->uplevel(LIST_TIMES);
+                lfmt->downlevel(LIST_TIMES);
             }
             fclose(fp);
             return instruction->times * len;
@@ -710,15 +711,15 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                 offset += insn_size;
                 if (itimes > 0 && itimes == instruction->times - 1) {
                     /*
-                     * Dummy call to nasmlist->output to give the offset to the
+                     * Dummy call to lfmt->output to give the offset to the
                      * listing module.
                      */
-                    nasmlist->output(offset, NULL, OUT_RAWDATA, 0);
-                    nasmlist->uplevel(LIST_TIMES);
+                    lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+                    lfmt->uplevel(LIST_TIMES);
                 }
             }
         if (instruction->times > 1)
-            nasmlist->downlevel(LIST_TIMES);
+            lfmt->downlevel(LIST_TIMES);
         return offset - start;
     } else {
         /* No match */

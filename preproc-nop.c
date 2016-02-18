@@ -51,6 +51,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "preproc.h"
+#include "listing.h"
 
 #define BUF_DELTA 512
 
@@ -130,7 +131,7 @@ static char *nop_getline(void)
         break;
     }
 
-    nasmlist->line(LIST_READ, buffer);
+    lfmt->line(LIST_READ, buffer);
 
     return buffer;
 }

@@ -1220,7 +1220,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
-	    nasmlist->init(listname);
+	    lfmt->init(listname);
         }
         in_abs_seg = false;
         global_offset_changed = 0;  /* set by redefine_label */
@@ -1800,7 +1800,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     }
 
     preproc->cleanup(0);
-    nasmlist->cleanup();
+    lfmt->cleanup();
     if (!terminate_after_phase && opt_verbose_info) {
         /*  -On and -Ov switches */
         fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
@@ -2002,7 +2002,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
      * preprocessor warnings in the list file
      */
     if ((severity & ERR_MASK) >= ERR_WARNING)
-	nasmlist->error(severity, pfx, msg);
+	lfmt->error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
