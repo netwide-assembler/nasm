@@ -139,7 +139,6 @@ static int debug_immcall = 0;
 static struct linelist *stabslines = 0;
 static int numlinestabs = 0;
 static char *stabs_filename = 0;
-static int symtabsection;
 static uint8_t *stabbuf = 0, *stabstrbuf = 0, *stabrelbuf = 0;
 static int stablen, stabstrlen, stabrellen;
 
@@ -1116,7 +1115,7 @@ static void elf_write(void)
 
             /* link -> symtable  info -> section to refer to */
             elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
-                               stabrellen, symtabsection, sec_stab, 4, 16);
+                               stabrellen, sec_symtab, sec_stab, 4, 16);
             p += strlen(p) + 1;
         }
     } else if (dfmt == &df_dwarf) {
@@ -1131,7 +1130,7 @@ static void elf_write(void)
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
-                               arangesrellen, symtabsection, debug_aranges, 1, 24);
+                               arangesrellen, sec_symtab, debug_aranges, 1, 24);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf, false,
@@ -1143,7 +1142,7 @@ static void elf_write(void)
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
-                               inforellen, symtabsection, debug_info, 1, 24);
+                               inforellen, sec_symtab, debug_info, 1, 24);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
@@ -1155,7 +1154,7 @@ static void elf_write(void)
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
-                               linerellen, symtabsection, debug_line, 1, 24);
+                               linerellen, sec_symtab, debug_line, 1, 24);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
