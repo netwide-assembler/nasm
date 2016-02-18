@@ -9,12 +9,15 @@ since 2007.
 
 \S{cl-2.12} Version 2.12
 
-\b Huge rework of \c{macho} backend (\k{Mach-O}), internal unification
-   of 32 and 64 bit formats and make NASM to handle section
-   alignment properly.
+\b Major fixes to the \c{macho} backend (\k{machofmt}); earlier versions
+   would produce invalid symbols and relocations on a regular basis.
+
+\b Support for thread-local storage in Mach-O.
+
+\b Support for arbitrary sections in Mach-O.
 
 \b Fix wrong negative size treated as a big positive value passed into
-   backend causing nasm to crash.
+   backend causing NASM to crash.
 
 \b Fix handling of zero-extending unsigned relocations, we have been printing
    wrong message and forgot to assign segment with predefined value before
@@ -25,15 +28,18 @@ since 2007.
 
 \b Portability fixes for building NASM with LLVM compiler.
 
-\b Add support of Codeview (\c{cv8}) debug format for \c{win32} and \c{win64}
-   formats in the \c{COFF} backend (\k{coff}).
+\b Add support of Codeview version 8 (\c{cv8}) debug format for
+   \c{win32} and \c{win64} formats in the \c{COFF} backend,
+   see \k{codeview}.
 
 \b Allow 64-bit outputs in 16/32-bit only backends.  Unsigned 64-bit
    relocations are zero-extended from 32-bits with a warning
-   (suppressible via \c{}); signed 64-bit relocations are an arror.
+   (suppressible via \c{-w-zext-reloc}); signed 64-bit relocations are
+   an arror.
 
 \b Line numbers in list files now correspond to the lines in the source
    files, instead of simply being sequential.
+
 
 \S{cl-2.11.09} Version 2.11.09
 
