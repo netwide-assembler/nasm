@@ -49,6 +49,7 @@ AC_PREFIX_PROGRAM(nasm)
 dnl Checks for programs.
 dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
 AC_USE_SYSTEM_EXTENSIONS
+AC_SYS_LARGEFILE
 AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET

@@ -48,6 +48,9 @@
 # undef __STRICT_ANSI__
 #endif
 
+/* On Microsoft platforms we support multibyte character sets in filenames */
+#define _MBCS 1
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 /* autoconf doesn't define these if they are redundant, but we want to
