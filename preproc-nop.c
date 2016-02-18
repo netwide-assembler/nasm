@@ -170,7 +170,7 @@ static void nop_include_path(char *path)
     (void)path;
 }
 
-struct preproc_ops preproc_nop = {
+const struct preproc_ops preproc_nop = {
     nop_reset,
     nop_getline,
     nop_cleanup,

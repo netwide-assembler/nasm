@@ -126,7 +126,7 @@ static struct RAA *offsets;
 static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
-static struct preproc_ops *preproc;
+static const struct preproc_ops *preproc;
 
 #define OP_NORMAL           (1u << 0)
 #define OP_PREPROCESS       (1u << 1)

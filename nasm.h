@@ -345,8 +345,8 @@ struct preproc_ops {
     void (*include_path)(char *path);
 };
 
-extern struct preproc_ops nasmpp;
-extern struct preproc_ops preproc_nop;
+extern const struct preproc_ops nasmpp;
+extern const struct preproc_ops preproc_nop;
 
 /*
  * Some lexical properties of the NASM source language, included

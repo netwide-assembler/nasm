@@ -5237,7 +5237,7 @@ static void make_tok_num(Token * tok, int64_t val)
     tok->type = TOK_NUMBER;
 }
 
-struct preproc_ops nasmpp = {
+const struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
     pp_cleanup,
