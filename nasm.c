@@ -79,6 +79,7 @@ static iflag_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
 static void assemble_file(char *, StrList **);
 static bool is_suppressed_warning(int severity);
+static bool skip_this_pass(int severity);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
 static void nasm_verror_vc(int severity, const char *fmt, va_list args);
 static void nasm_verror_common(int severity, const char *fmt, va_list args);
@@ -1869,11 +1870,13 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
     if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
 
-    if (currentfile) {
-        fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-        nasm_free(currentfile);
-    } else {
-        fputs("nasm: ", error_file);
+    if (!skip_this_pass(severity)) {
+	if (currentfile) {
+	    fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
+	    nasm_free(currentfile);
+	} else {
+	    fputs("nasm: ", error_file);
+	}
     }
 
     nasm_verror_common(severity, fmt, ap);
@@ -1905,11 +1908,13 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
     if (!(severity & ERR_NOFILE))
         src_get(&lineno, &currentfile);
 
-    if (currentfile) {
-        fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
-        nasm_free(currentfile);
-    } else {
-        fputs("nasm: ", error_file);
+    if (!skip_this_pass(severity)) {
+        if (currentfile) {
+	    fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
+	    nasm_free(currentfile);
+	} else {
+	    fputs("nasm: ", error_file);
+	}
     }
 
     nasm_verror_common(severity, fmt, ap);
@@ -1929,16 +1934,24 @@ static bool is_suppressed_warning(int severity)
     if ((severity & ERR_MASK) != ERR_WARNING)
         return false;
 
-    /* See if it's a pass-one only warning and we're not in pass one. */
-    if (((severity & ERR_PASS1) && pass0 != 1) ||
-        ((severity & ERR_PASS2) && pass0 != 2))
-        return true;
-
     /* Might be a warning but suppresed explicitly */
     if (severity & ERR_WARN_MASK)
         return !warning_on[WARN_IDX(severity)];
     else
         return false;
+}
+
+static bool skip_this_pass(int severity)
+{
+    /* See if it's a pass-one only warning and we're not in pass one. */
+    if ((severity & ERR_MASK) > ERR_WARNING)
+	return false;
+
+    if (((severity & ERR_PASS1) && pass0 != 1) ||
+        ((severity & ERR_PASS2) && pass0 != 2))
+        return true;
+
+    return false;
 }
 
 /**
@@ -1979,9 +1992,15 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 
     vsnprintf(msg, sizeof msg, fmt, args);
 
-    fprintf(error_file, "%s%s\n", pfx, msg);
+    if (!skip_this_pass(severity))
+	fprintf(error_file, "%s%s\n", pfx, msg);
 
-    nasmlist->error(severity, pfx, msg);
+    /*
+     * Don't suppress this with skip_this_pass(), or we don't get
+     * preprocessor warnings in the list file
+     */
+    if ((severity & ERR_MASK) >= ERR_WARNING)
+	nasmlist->error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
@@ -2011,6 +2030,11 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     case ERR_PANIC:
         fflush(NULL);
         /* abort(); */          /* halt, catch fire, and dump core */
+        if (ofile) {
+            fclose(ofile);
+            remove(outname);
+            ofile = NULL;
+        }
         exit(3);
         break;
     }
