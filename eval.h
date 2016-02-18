@@ -50,8 +50,7 @@ void eval_global_info(struct ofmt *output, lfunc lookup_label,
  * The evaluator itself.
  */
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
-               int *fwref, int critical, efunc report_error,
-               struct eval_hints *hints);
+               int *fwref, int critical, struct eval_hints *hints);
 
 void eval_cleanup(void);
 

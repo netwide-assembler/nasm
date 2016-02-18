@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -126,12 +126,17 @@ static void list_emit(void)
     }
 }
 
-static void list_init(char *fname, efunc error)
+static void list_init(const char *fname)
 {
+    if (!fname) {
+	listfp = NULL;
+	return;
+    }
+
     listfp = fopen(fname, "w");
     if (!listfp) {
-        error(ERR_NONFATAL, "unable to open listing file `%s'",
-	      fname);
+	nasm_error(ERR_NONFATAL, "unable to open listing file `%s'",
+		   fname);
         return;
     }
 
@@ -197,7 +202,7 @@ static void list_output(int32_t offset, const void *data,
 {
     char q[20];
 
-    if (!listp || suppress || user_nolist)      /* fbk - 9/2/00 */
+    if (!listp || suppress || user_nolist)
         return;
 
     switch (type) {
@@ -321,7 +326,7 @@ static void list_error(int severity, const char *pfx, const char *msg)
 }
 
 
-ListGen nasmlist = {
+static const ListGen nasm_list = {
     list_init,
     list_cleanup,
     list_output,
@@ -330,3 +335,6 @@ ListGen nasmlist = {
     list_downlevel,
     list_error
 };
+
+const ListGen *nasmlist = &nasm_list;
+ 

@@ -374,7 +374,6 @@ struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias);
 struct dfmt *dfmt_find(struct ofmt *, char *);
 void ofmt_list(struct ofmt *, FILE *);
 void dfmt_list(struct ofmt *ofmt, FILE * fp);
-struct ofmt *ofmt_register(efunc error);
 extern struct dfmt null_debug_form;
 
 #endif /* NASM_OUTFORM_H */

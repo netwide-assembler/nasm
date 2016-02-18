@@ -136,7 +136,7 @@ typedef struct {
      * called. The `char *' parameter is the file name to write the
      * listing to.
      */
-    void (*init)(char *fname, efunc error);
+    void (*init)(const char *fname);
 
     /*
      * Called to clear stuff up and close the listing file.
@@ -189,6 +189,8 @@ typedef struct {
      */
     void (*error)(int severity, const char *pfx, const char *msg);
 } ListGen;
+
+extern const ListGen *nasmlist;
 
 /*
  * Token types returned by the scanner, in addition to ordinary
@@ -351,7 +353,7 @@ struct eval_hints {
 #define CRITICAL 0x100
 typedef expr *(*evalfunc)(scanner sc, void *scprivate,
                           struct tokenval *tv, int *fwref, int critical,
-                          efunc error, struct eval_hints *hints);
+                          struct eval_hints *hints);
 
 /*
  * Special values for expr->type.
@@ -382,7 +384,7 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(char *file, int pass, ListGen *listgen, StrList **deplist);
+    void (*reset)(char *file, int pass, StrList **deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line

@@ -382,7 +382,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 stdscan_reset();
                 stdscan_set(p);
                 tokval.t_type = TOKEN_INVALID;
-                e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
+                e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
                 if (e) {
                     if (!is_simple(e))
                         nasm_error(ERR_NONFATAL, "cannot use relocatable"
@@ -524,8 +524,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                     stdscan_reset();
                     stdscan_set(special + n);
                     tokval.t_type = TOKEN_INVALID;
-                    e = evaluate(stdscan, NULL, &tokval, &fwd, 0, nasm_error,
-                                 NULL);
+		    e = evaluate(stdscan, NULL, &tokval, &fwd, 0, NULL);
                     if (fwd) {
                         sym->nextfwd = fwds;
                         fwds = sym;

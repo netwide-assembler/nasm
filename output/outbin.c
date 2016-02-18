@@ -990,7 +990,7 @@ static int bin_read_attribute(char **line, int *attribute,
     stdscan_reset();
     stdscan_set(exp);
     tokval.t_type = TOKEN_INVALID;
-    e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
+    e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
     if (e) {
         if (!is_really_simple(e)) {
             nasm_error(ERR_NONFATAL, "section attribute value must be"
@@ -1299,7 +1299,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
         stdscan_reset();
         stdscan_set(args);
         tokval.t_type = TOKEN_INVALID;
-        e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
+        e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
         if (e) {
             if (!is_really_simple(e))
                 nasm_error(ERR_NONFATAL, "org value must be a critical"
