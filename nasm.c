@@ -78,10 +78,10 @@ static int get_bits(char *value);
 static iflag_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **);
 static void assemble_file(char *, StrList **);
+static bool is_suppressed_warning(int severity);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
 static void nasm_verror_vc(int severity, const char *fmt, va_list args);
 static void nasm_verror_common(int severity, const char *fmt, va_list args);
-static bool is_suppressed_warning(int severity);
 static void usage(void);
 
 static int using_debug_info, opt_verbose_info;
@@ -172,7 +172,7 @@ static const struct warning {
 
 static bool want_usage;
 static bool terminate_after_phase;
-int user_nolist = 0;            /* fbk 9/2/00 */
+bool user_nolist = false;
 
 static char *quote_for_make(const char *str);
 
@@ -377,7 +377,7 @@ int main(int argc, char **argv)
             if (depend_missing_ok)
                 preproc->include_path(NULL);    /* "assume generated" */
 
-            preproc->reset(inname, 0, &nasmlist, depend_ptr);
+            preproc->reset(inname, 0, depend_ptr);
             if (outname[0] == '\0')
                 ofmt->filename(inname, outname);
             ofile = NULL;
@@ -402,8 +402,9 @@ int main(int argc, char **argv)
             location.known = false;
 
             /* pass = 1; */
-            preproc->reset(inname, 3, &nasmlist, depend_ptr);
-            memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
+            preproc->reset(inname, 3, depend_ptr);
+            memcpy(warning_on, warning_on_global,
+		   (ERR_WARN_MAX+1) * sizeof(bool));
 
             while ((line = preproc->getline())) {
                 /*
@@ -1200,8 +1201,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     int pass_max;
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
-        nasm_fatal(0, "command line: "
-                     "32-bit segment size requires a higher cpu");
+	nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
 
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
@@ -1217,8 +1217,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
-            if (*listname)
-                nasmlist.init(listname, nasm_error);
+	    nasmlist->init(listname);
         }
         in_abs_seg = false;
         global_offset_changed = 0;  /* set by redefine_label */
@@ -1230,8 +1229,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             raa_free(offsets);
             offsets = raa_init();
         }
-        preproc->reset(fname, pass1, &nasmlist,
-                       pass1 == 2 ? depend_ptr : NULL);
+        preproc->reset(fname, pass1, pass1 == 2 ? depend_ptr : NULL);
         memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
 
         globallineno = 0;
@@ -1270,7 +1268,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                         stdscan_reset();
                         stdscan_set(value);
                         tokval.t_type = TOKEN_INVALID;
-                        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, nasm_error, NULL);
+                        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
                         if (e) {
                             unsigned int align = (unsigned int)e->value;
                             if ((uint64_t)e->value > 0x7fffffff) {
@@ -1428,8 +1426,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     stdscan_reset();
                     stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
-                    e = evaluate(stdscan, NULL, &tokval, NULL, pass2,
-                                 nasm_error, NULL);
+                    e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
                     if (e) {
                         if (!is_reloc(e))
                             nasm_error(pass0 ==
@@ -1676,7 +1673,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     if (pass1 == 1) {
 
                         int64_t l = insn_size(location.segment, offs, sb, cpu,
-                                           &output_ins, nasm_error);
+					      &output_ins);
 
                         /* if (using_debug_info)  && output_ins.opcode != -1) */
                         if (using_debug_info)
@@ -1755,8 +1752,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
                     } else {
                         offs += assemble(location.segment, offs, sb, cpu,
-                                         &output_ins, ofmt, nasm_error,
-                                         &nasmlist);
+                                         &output_ins);
                         set_curr_offs(offs);
 
                     }
@@ -1801,7 +1797,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     }
 
     preproc->cleanup(0);
-    nasmlist.cleanup();
+    nasmlist->cleanup();
     if (!terminate_after_phase && opt_verbose_info) {
         /*  -On and -Ov switches */
         fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
@@ -1985,8 +1981,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 
     fprintf(error_file, "%s%s\n", pfx, msg);
 
-    if (*listname)
-        nasmlist.error(severity, pfx, msg);
+    nasmlist->error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;

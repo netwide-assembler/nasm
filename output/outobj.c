@@ -969,7 +969,7 @@ static void obj_deflabel(char *name, int32_t segment,
                 stdscan_reset();
                 stdscan_set(special);
                 tokval.t_type = TOKEN_INVALID;
-                e = evaluate(stdscan, NULL, &tokval, NULL, 1, nasm_error, NULL);
+                e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
                 if (e) {
                     if (!is_simple(e))
                         nasm_error(ERR_NONFATAL, "cannot use relocatable"

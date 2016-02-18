@@ -73,32 +73,40 @@ extern unsigned char nasm_tolower_tab[256];
 /*
  * An error reporting function should look like this.
  */
-typedef void (*efunc) (int severity, const char *fmt, ...);
-typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
-void nasm_set_verror(vefunc);
 no_return printf_func(2, 3) nasm_fatal(int flags, const char *fmt, ...);
 no_return printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
 no_return nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
+
+typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
+extern vefunc nasm_verror;
+static inline vefunc nasm_set_verror(vefunc ve)
+{
+    vefunc old_verror = nasm_verror;
+    nasm_verror = ve;
+    return old_verror;
+}
 
 /*
  * These are the error severity codes which get passed as the first
  * argument to an efunc.
  */
 
-#define ERR_DEBUG       0x00000008      /* put out debugging message */
-#define ERR_WARNING     0x00000000      /* warn only: no further action */
-#define ERR_NONFATAL    0x00000001      /* terminate assembly after phase */
-#define ERR_FATAL       0x00000002      /* instantly fatal: exit with error */
-#define ERR_PANIC       0x00000003      /* internal error: panic instantly
+#define ERR_DEBUG       0x00000000      /* put out debugging message */
+#define ERR_WARNING     0x00000001      /* warn only: no further action */
+#define ERR_NONFATAL    0x00000002      /* terminate assembly after phase */
+#define ERR_FATAL       0x00000006      /* instantly fatal: exit with error */
+#define ERR_PANIC       0x00000007      /* internal error: panic instantly
                                          * and dump core for reference */
-#define ERR_MASK        0x0000000F      /* mask off the above codes */
+#define ERR_MASK        0x00000007      /* mask off the above codes */
 #define ERR_NOFILE      0x00000010      /* don't give source file name/line */
 #define ERR_USAGE       0x00000020      /* print a usage message */
 #define ERR_PASS1       0x00000040      /* only print this error on pass one */
 #define ERR_PASS2       0x00000080
+
 #define ERR_NO_SEVERITY 0x00000100      /* suppress printing severity */
+#define ERR_PP_PRECOND	0x00000200	/* for preprocessor use */
 
 /*
  * These codes define specific types of suppressible warning.

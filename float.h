@@ -48,8 +48,7 @@ enum float_round {
     FLOAT_RC_UP
 };
 
-int float_const(const char *string, int sign, uint8_t *result, int bytes,
-                efunc error);
+int float_const(const char *string, int sign, uint8_t *result, int bytes);
 int float_option(const char *option);
 
 #endif

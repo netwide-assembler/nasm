@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -402,8 +402,6 @@ static uint64_t unique;     /* unique identifier numbers */
 static Line *predef = NULL;
 static bool do_predef;
 
-static ListGen *list;
-
 /*
  * The current set of multi-line macros we have defined.
  */
@@ -461,8 +459,8 @@ static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static void make_tok_num(Token * tok, int64_t val);
-static void error(int severity, const char *fmt, ...);
-static void error_precond(int severity, const char *fmt, ...);
+static void pp_verror(int severity, const char *fmt, va_list ap);
+static vefunc real_verror;
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
@@ -488,7 +486,7 @@ static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
     size_t clen = strlen(qstr);
 
     if (len != clen)
-        error(ERR_NONFATAL, "NUL character in `%s' directive",
+        nasm_error(ERR_NONFATAL, "NUL character in `%s' directive",
               pp_directives[directive]);
 
     return clen;
@@ -880,7 +878,7 @@ static char *read_line(void)
      */
     buffer[strcspn(buffer, "\032")] = '\0';
 
-    list->line(LIST_READ, buffer);
+    nasmlist->line(LIST_READ, buffer);
 
     return buffer;
 }
@@ -920,7 +918,8 @@ static Token *tokenize(char *line)
                     p++;
                 }
                 if (*p != '}')
-                    error(ERR_WARNING | ERR_PASS1, "unterminated %{ construct");
+                    nasm_error(ERR_WARNING | ERR_PASS1,
+			       "unterminated %%{ construct");
                 p[-1] = '\0';
                 if (*p)
                     p++;
@@ -951,7 +950,8 @@ static Token *tokenize(char *line)
                 if (*p)
                     *p++ = '\0';
                 if (lvl)
-                    error(ERR_NONFATAL, "unterminated %[ construct");
+                    nasm_error(ERR_NONFATAL|ERR_PASS1,
+			       "unterminated %%[ construct");
                 type = TOK_INDIRECT;
             } else if (*p == '?') {
                 type = TOK_PREPROC_Q; /* %? */
@@ -973,7 +973,8 @@ static Token *tokenize(char *line)
                     if (*p)
                         p++;
                     else
-                        error(ERR_NONFATAL|ERR_PASS1, "unterminated %! string");
+                        nasm_error(ERR_NONFATAL|ERR_PASS1,
+				   "unterminated %%! string");
                 } else {
                     /* %! without string or identifier */
                     type = TOK_OTHER; /* Legacy behavior... */
@@ -1006,7 +1007,7 @@ static Token *tokenize(char *line)
             if (*p) {
                 p++;
             } else {
-                error(ERR_WARNING|ERR_PASS1, "unterminated string");
+                nasm_error(ERR_WARNING|ERR_PASS1, "unterminated string");
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
             }
@@ -1253,8 +1254,8 @@ static char *detoken(Token * tlist, bool expand_locals)
                 size_t clen = strlen(v);
 
                 if (len != clen) {
-                    error(ERR_NONFATAL | ERR_PASS1,
-                          "NUL character in %! string");
+                    nasm_error(ERR_NONFATAL | ERR_PASS1,
+                          "NUL character in %%! string");
                     v = NULL;
                 }
             }
@@ -1262,7 +1263,7 @@ static char *detoken(Token * tlist, bool expand_locals)
             if (v) {
                 char *p = getenv(v);
                 if (!p) {
-                    error(ERR_NONFATAL | ERR_PASS1,
+                    nasm_error(ERR_NONFATAL | ERR_PASS1,
                           "nonexistent environment variable `%s'", v);
                     p = "";
                 }
@@ -1458,7 +1459,7 @@ static Context *get_ctx(const char *name, const char **namep)
         return NULL;
 
     if (!cstk) {
-        error(ERR_NONFATAL, "`%s': context stack is empty", name);
+        nasm_error(ERR_NONFATAL, "`%s': context stack is empty", name);
         return NULL;
     }
 
@@ -1471,7 +1472,7 @@ static Context *get_ctx(const char *name, const char **namep)
         ctx = ctx->next;
     }
     if (!ctx) {
-        error(ERR_NONFATAL, "`%s': context stack is only"
+        nasm_error(ERR_NONFATAL, "`%s': context stack is only"
               " %d level%s deep", name, i, (i == 1 ? "" : "s"));
         return NULL;
     }
@@ -1549,7 +1550,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         }
     }
 
-    error(ERR_FATAL, "unable to open include file `%s'", file);
+    nasm_error(ERR_FATAL, "unable to open include file `%s'", file);
     return NULL;
 }
 
@@ -1650,7 +1651,7 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
                 t = t->next;
                 skip_white_(t);
                 if (tok_isnt_(t, ",")) {
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "braces do not enclose all of macro parameter");
                     while (tok_isnt_(t, ","))
                         t = t->next;
@@ -1692,7 +1693,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (!tline)
                 break;
             if (tline->type != TOK_ID) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%s' expects context identifiers", pp_directives[ct]);
                 free_tlist(origline);
                 return -1;
@@ -1710,7 +1711,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (!tline || (tline->type != TOK_ID &&
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%s' expects macro identifiers", pp_directives[ct]);
                 goto fail;
             }
@@ -1729,7 +1730,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                            tline->type != TOK_STRING &&
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '!'))) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%s' expects environment variable names",
                       pp_directives[ct]);
                 goto fail;
@@ -1752,7 +1753,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         while (tok_isnt_(tt, ","))
             tt = tt->next;
         if (!tt) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s' expects two comma-separated arguments",
                   pp_directives[ct]);
             goto fail;
@@ -1761,7 +1762,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         j = true;               /* assume equality unless proved not */
         while ((t->type != TOK_OTHER || strcmp(t->text, ",")) && tt) {
             if (tt->type == TOK_OTHER && !strcmp(tt->text, ",")) {
-                error(ERR_NONFATAL, "`%s': more than one comma on line",
+                nasm_error(ERR_NONFATAL, "`%s': more than one comma on line",
                       pp_directives[ct]);
                 goto fail;
             }
@@ -1810,7 +1811,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         skip_white_(tline);
         tline = expand_id(tline);
         if (!tok_type_(tline, TOK_ID)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s' expects a macro name", pp_directives[ct]);
             goto fail;
         }
@@ -1827,14 +1828,14 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         skip_white_(tline);
         if (!tline) {
         } else if (!tok_type_(tline, TOK_NUMBER)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s' expects a parameter count or nothing",
                   pp_directives[ct]);
         } else {
             searching.nparam_min = searching.nparam_max =
                 readnum(tline->text, &j);
             if (j)
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "unable to parse parameter count `%s'",
                       tline->text);
         }
@@ -1843,17 +1844,17 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (tok_is_(tline, "*"))
                 searching.nparam_max = INT_MAX;
             else if (!tok_type_(tline, TOK_NUMBER))
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%s' expects a parameter count after `-'",
                       pp_directives[ct]);
             else {
                 searching.nparam_max = readnum(tline->text, &j);
                 if (j)
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "unable to parse parameter count `%s'",
                           tline->text);
                 if (searching.nparam_min > searching.nparam_max)
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "minimum parameter count exceeds maximum");
             }
         }
@@ -1874,7 +1875,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             mmac = mmac->next;
         }
         if (tline && tline->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after %%ifmacro ignored");
         nasm_free(searching.name);
         j = found;
@@ -1931,14 +1932,14 @@ iftype:
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
         evalresult = evaluate(ppscan, tptr, &tokval,
-                              NULL, pass | CRITICAL, error, NULL);
+                              NULL, pass | CRITICAL, NULL);
         if (!evalresult)
             return -1;
         if (tokval.t_type)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "non-constant value given to `%s'", pp_directives[ct]);
             goto fail;
         }
@@ -1946,7 +1947,7 @@ iftype:
         break;
 
     default:
-        error(ERR_FATAL,
+        nasm_error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
               pp_directives[ct]);
         goto fail;
@@ -1971,7 +1972,7 @@ static bool define_smacro(Context *ctx, const char *mname, bool casesense,
 
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
         if (!smac) {
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "single-line macro `%s' defined both with and"
                   " without parameters", mname);
             /*
@@ -2044,7 +2045,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     skip_white_(tline);
     tline = expand_id(tline);
     if (!tok_type_(tline, TOK_ID)) {
-        error(ERR_NONFATAL, "`%s' expects a macro name", directive);
+        nasm_error(ERR_NONFATAL, "`%s' expects a macro name", directive);
         return false;
     }
 
@@ -2060,12 +2061,12 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     tline = expand_smacro(tline->next);
     skip_white_(tline);
     if (!tok_type_(tline, TOK_NUMBER)) {
-        error(ERR_NONFATAL, "`%s' expects a parameter count", directive);
+        nasm_error(ERR_NONFATAL, "`%s' expects a parameter count", directive);
     } else {
         def->nparam_min = def->nparam_max =
             readnum(tline->text, &err);
         if (err)
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "unable to parse parameter count `%s'", tline->text);
     }
     if (tline && tok_is_(tline->next, "-")) {
@@ -2073,16 +2074,16 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         if (tok_is_(tline, "*")) {
             def->nparam_max = INT_MAX;
         } else if (!tok_type_(tline, TOK_NUMBER)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s' expects a parameter count after `-'", directive);
         } else {
             def->nparam_max = readnum(tline->text, &err);
             if (err) {
-                error(ERR_NONFATAL, "unable to parse parameter count `%s'",
+                nasm_error(ERR_NONFATAL, "unable to parse parameter count `%s'",
                       tline->text);
             }
             if (def->nparam_min > def->nparam_max) {
-                error(ERR_NONFATAL, "minimum parameter count exceeds maximum");
+                nasm_error(ERR_NONFATAL, "minimum parameter count exceeds maximum");
             }
         }
     }
@@ -2111,7 +2112,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus)
-        error(ERR_WARNING|ERR_PASS1|ERR_WARN_MDP,
+        nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MDP,
               "too many default macro parameters");
 
     return true;
@@ -2183,7 +2184,7 @@ static int do_directive(Token * tline)
      * in future release (2.09-2.10)
      */
     if (i == PP_RMACRO || i == PP_IRMACRO || i == PP_EXITMACRO) {
-        error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
+        nasm_error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
               tline->text);
        return NO_DIRECTIVE_FOUND;
     }
@@ -2238,7 +2239,7 @@ static int do_directive(Token * tline)
 
     switch (i) {
     case PP_INVALID:
-        error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
+        nasm_error(ERR_NONFATAL, "unknown preprocessor directive `%s'",
               tline->text);
         return NO_DIRECTIVE_FOUND;      /* didn't get it */
 
@@ -2251,7 +2252,7 @@ static int do_directive(Token * tline)
         if (tline && tline->type == TOK_WHITESPACE)
             tline = tline->next;
         if (!tline || tline->type != TOK_ID) {
-            error(ERR_NONFATAL, "`%%stacksize' missing size parameter");
+            nasm_error(ERR_NONFATAL, "`%%stacksize' missing size parameter");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
@@ -2284,7 +2285,7 @@ static int do_directive(Token * tline)
             ArgOffset = 6;
             LocalOffset = 0;
         } else {
-            error(ERR_NONFATAL, "`%%stacksize' invalid size type");
+            nasm_error(ERR_NONFATAL, "`%%stacksize' invalid size type");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
@@ -2307,7 +2308,7 @@ static int do_directive(Token * tline)
             if (tline && tline->type == TOK_WHITESPACE)
                 tline = tline->next;
             if (!tline || tline->type != TOK_ID) {
-                error(ERR_NONFATAL, "`%%arg' missing argument parameter");
+                nasm_error(ERR_NONFATAL, "`%%arg' missing argument parameter");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
@@ -2317,14 +2318,14 @@ static int do_directive(Token * tline)
             tline = tline->next;
             if (!tline || tline->type != TOK_OTHER
                 || tline->text[0] != ':') {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "Syntax error processing `%%arg' directive");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
             tline = tline->next;
             if (!tline || tline->type != TOK_ID) {
-                error(ERR_NONFATAL, "`%%arg' missing size type parameter");
+                nasm_error(ERR_NONFATAL, "`%%arg' missing size type parameter");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
@@ -2334,7 +2335,7 @@ static int do_directive(Token * tline)
             tt = expand_smacro(tt);
             size = parse_size(tt->text);
             if (!size) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "Invalid size type for `%%arg' missing directive");
                 free_tlist(tt);
                 free_tlist(origline);
@@ -2380,7 +2381,7 @@ static int do_directive(Token * tline)
             if (tline && tline->type == TOK_WHITESPACE)
                 tline = tline->next;
             if (!tline || tline->type != TOK_ID) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%%local' missing argument parameter");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
@@ -2391,14 +2392,14 @@ static int do_directive(Token * tline)
             tline = tline->next;
             if (!tline || tline->type != TOK_OTHER
                 || tline->text[0] != ':') {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "Syntax error processing `%%local' directive");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
             tline = tline->next;
             if (!tline || tline->type != TOK_ID) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "`%%local' missing size type parameter");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
@@ -2409,7 +2410,7 @@ static int do_directive(Token * tline)
             tt = expand_smacro(tt);
             size = parse_size(tt->text);
             if (!size) {
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "Invalid size type for `%%local' missing directive");
                 free_tlist(tt);
                 free_tlist(origline);
@@ -2443,7 +2444,7 @@ static int do_directive(Token * tline)
 
     case PP_CLEAR:
         if (tline->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%clear' ignored");
         free_macros();
         init_macros();
@@ -2455,12 +2456,12 @@ static int do_directive(Token * tline)
         skip_white_(t);
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
-            error(ERR_NONFATAL, "`%%depend' expects a file name");
+            nasm_error(ERR_NONFATAL, "`%%depend' expects a file name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%depend' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2481,12 +2482,12 @@ static int do_directive(Token * tline)
 
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
-            error(ERR_NONFATAL, "`%%include' expects a file name");
+            nasm_error(ERR_NONFATAL, "`%%include' expects a file name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%include' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -2505,7 +2506,7 @@ static int do_directive(Token * tline)
             inc->expansion = NULL;
             inc->mstk = NULL;
             istk = inc;
-            list->uplevel(LIST_INCLUDE);
+            nasmlist->uplevel(LIST_INCLUDE);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2522,18 +2523,18 @@ static int do_directive(Token * tline)
         if (!tline || (tline->type != TOK_STRING &&
                        tline->type != TOK_INTERNAL_STRING &&
                        tline->type != TOK_ID)) {
-            error(ERR_NONFATAL, "`%%use' expects a package name");
+            nasm_error(ERR_NONFATAL, "`%%use' expects a package name");
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (tline->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
         if (tline->type == TOK_STRING)
             nasm_unquote_cstr(tline->text, i);
         use_pkg = nasm_stdmac_find_package(tline->text);
         if (!use_pkg)
-            error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
+            nasm_error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
         else
             pkg_macro = (char *)use_pkg + 1; /* The first string will be <%define>__USE_*__ */
         if (use_pkg && ! smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
@@ -2551,13 +2552,13 @@ static int do_directive(Token * tline)
         tline = expand_id(tline);
         if (tline) {
             if (!tok_type_(tline, TOK_ID)) {
-                error(ERR_NONFATAL, "`%s' expects a context identifier",
+                nasm_error(ERR_NONFATAL, "`%s' expects a context identifier",
                       pp_directives[i]);
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;     /* but we did _something_ */
             }
             if (tline->next)
-                error(ERR_WARNING|ERR_PASS1,
+                nasm_error(ERR_WARNING|ERR_PASS1,
                       "trailing garbage after `%s' ignored",
                       pp_directives[i]);
             p = nasm_strdup(tline->text);
@@ -2575,11 +2576,11 @@ static int do_directive(Token * tline)
         } else {
             /* %pop or %repl */
             if (!cstk) {
-                error(ERR_NONFATAL, "`%s': context stack is empty",
+                nasm_error(ERR_NONFATAL, "`%s': context stack is empty",
                       pp_directives[i]);
             } else if (i == PP_POP) {
                 if (p && (!cstk->name || nasm_stricmp(p, cstk->name)))
-                    error(ERR_NONFATAL, "`%%pop' in wrong context: %s, "
+                    nasm_error(ERR_NONFATAL, "`%%pop' in wrong context: %s, "
                           "expected %s",
                           cstk->name ? cstk->name : "anonymous", p);
                 else
@@ -2619,11 +2620,11 @@ issue_error:
             /* The line contains only a quoted string */
             p = tline->text;
             nasm_unquote(p, NULL); /* Ignore NUL character truncation */
-            error(severity, "%s",  p);
+            nasm_error(severity, "%s",  p);
         } else {
             /* Not a quoted string, or more than a quoted string */
             p = detoken(tline, false);
-            error(severity, "%s",  p);
+            nasm_error(severity, "%s",  p);
             nasm_free(p);
         }
         free_tlist(origline);
@@ -2649,7 +2650,7 @@ issue_error:
 
     CASE_PP_ELIF:
         if (!istk->conds)
-            error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
+            nasm_error(ERR_FATAL, "`%s': no matching `%%if'", pp_directives[i]);
         switch(istk->conds->state) {
         case COND_IF_TRUE:
             istk->conds->state = COND_DONE;
@@ -2661,8 +2662,8 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            error_precond(ERR_WARNING|ERR_PASS1,
-                          "`%%elif' after `%%else' ignored");
+	    nasm_error(ERR_WARNING|ERR_PASS1|ERR_PP_PRECOND,
+		       "`%%elif' after `%%else' ignored");
             istk->conds->state = COND_NEVER;
             break;
 
@@ -2686,10 +2687,10 @@ issue_error:
 
     case PP_ELSE:
         if (tline->next)
-            error_precond(ERR_WARNING|ERR_PASS1,
-                          "trailing garbage after `%%else' ignored");
+            nasm_error(ERR_WARNING|ERR_PASS1|ERR_PP_PRECOND,
+		       "trailing garbage after `%%else' ignored");
         if (!istk->conds)
-            error(ERR_FATAL, "`%%else': no matching `%%if'");
+	    nasm_fatal(0, "`%%else: no matching `%%if'");
         switch(istk->conds->state) {
         case COND_IF_TRUE:
         case COND_DONE:
@@ -2705,7 +2706,7 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            error_precond(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1|ERR_PP_PRECOND,
                           "`%%else' after `%%else' ignored.");
             istk->conds->state = COND_NEVER;
             break;
@@ -2715,10 +2716,10 @@ issue_error:
 
     case PP_ENDIF:
         if (tline->next)
-            error_precond(ERR_WARNING|ERR_PASS1,
-                          "trailing garbage after `%%endif' ignored");
+            nasm_error(ERR_WARNING|ERR_PASS1|ERR_PP_PRECOND,
+		       "trailing garbage after `%%endif' ignored");
         if (!istk->conds)
-            error(ERR_FATAL, "`%%endif': no matching `%%if'");
+            nasm_error(ERR_FATAL, "`%%endif': no matching `%%if'");
         cond = istk->conds;
         istk->conds = cond->next;
         nasm_free(cond);
@@ -2732,7 +2733,7 @@ issue_error:
     case PP_MACRO:
     case PP_IMACRO:
         if (defining) {
-            error(ERR_FATAL, "`%s': already defining a macro",
+            nasm_error(ERR_FATAL, "`%s': already defining a macro",
                   pp_directives[i]);
             return DIRECTIVE_FOUND;
         }
@@ -2753,7 +2754,7 @@ issue_error:
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                error(ERR_WARNING|ERR_PASS1,
+                nasm_error(ERR_WARNING|ERR_PASS1,
                       "redefining multi-line macro `%s'", defining->name);
                 return DIRECTIVE_FOUND;
             }
@@ -2765,7 +2766,7 @@ issue_error:
     case PP_ENDM:
     case PP_ENDMACRO:
         if (! (defining && defining->name)) {
-            error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
+            nasm_error(ERR_NONFATAL, "`%s': not defining a macro", tline->text);
             return DIRECTIVE_FOUND;
         }
         mmhead = (MMacro **) hash_findi_add(&mmacros, defining->name);
@@ -2797,7 +2798,7 @@ issue_error:
             }
             istk->expansion = l;
         } else {
-            error(ERR_NONFATAL, "`%%exitmacro' not within `%%macro' block");
+            nasm_error(ERR_NONFATAL, "`%%exitmacro' not within `%%macro' block");
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2836,7 +2837,7 @@ issue_error:
             tline = tline->next;
         if (!tline->next) {
             free_tlist(origline);
-            error(ERR_NONFATAL, "`%%rotate' missing rotate count");
+            nasm_error(ERR_NONFATAL, "`%%rotate' missing rotate count");
             return DIRECTIVE_FOUND;
         }
         t = expand_smacro(tline->next);
@@ -2846,24 +2847,24 @@ issue_error:
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
         evalresult =
-            evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
+            evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
         free_tlist(tline);
         if (!evalresult)
             return DIRECTIVE_FOUND;
         if (tokval.t_type)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
-            error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
+            nasm_error(ERR_NONFATAL, "non-constant value given to `%%rotate'");
             return DIRECTIVE_FOUND;
         }
         mmac = istk->mstk;
         while (mmac && !mmac->name)     /* avoid mistaking %reps for macros */
             mmac = mmac->next_active;
         if (!mmac) {
-            error(ERR_NONFATAL, "`%%rotate' invoked outside a macro call");
+            nasm_error(ERR_NONFATAL, "`%%rotate' invoked outside a macro call");
         } else if (mmac->nparam == 0) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%rotate' invoked within macro without parameters");
         } else {
             int rotate = mmac->rotate + reloc_value(evalresult);
@@ -2895,26 +2896,26 @@ issue_error:
             tptr = &t;
             tokval.t_type = TOKEN_INVALID;
             evalresult =
-                evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
+                evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
             if (!evalresult) {
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
             if (tokval.t_type)
-                error(ERR_WARNING|ERR_PASS1,
+                nasm_error(ERR_WARNING|ERR_PASS1,
                       "trailing garbage after expression ignored");
             if (!is_simple(evalresult)) {
-                error(ERR_NONFATAL, "non-constant value given to `%%rep'");
+                nasm_error(ERR_NONFATAL, "non-constant value given to `%%rep'");
                 return DIRECTIVE_FOUND;
             }
             count = reloc_value(evalresult);
             if (count >= REP_LIMIT) {
-                error(ERR_NONFATAL, "`%%rep' value exceeds limit");
+                nasm_error(ERR_NONFATAL, "`%%rep' value exceeds limit");
                 count = 0;
             } else
                 count++;
         } else {
-            error(ERR_NONFATAL, "`%%rep' expects a repeat count");
+            nasm_error(ERR_NONFATAL, "`%%rep' expects a repeat count");
             count = 0;
         }
         free_tlist(origline);
@@ -2938,7 +2939,7 @@ issue_error:
 
     case PP_ENDREP:
         if (!defining || defining->name) {
-            error(ERR_NONFATAL, "`%%endrep': no matching `%%rep'");
+            nasm_error(ERR_NONFATAL, "`%%endrep': no matching `%%rep'");
             return DIRECTIVE_FOUND;
         }
 
@@ -2961,7 +2962,7 @@ issue_error:
 
         istk->mstk = defining;
 
-        list->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+        nasmlist->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
         tmp_defining = defining;
         defining = defining->rep_nest;
         free_tlist(origline);
@@ -2980,7 +2981,7 @@ issue_error:
         if (l)
             l->finishes->in_progress = 1;
         else
-            error(ERR_NONFATAL, "`%%exitrep' not within `%%rep' block");
+            nasm_error(ERR_NONFATAL, "`%%exitrep' not within `%%rep' block");
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2996,7 +2997,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL, "`%s' expects a macro identifier",
+            nasm_error(ERR_NONFATAL, "`%s' expects a macro identifier",
                   pp_directives[i]);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3020,12 +3021,12 @@ issue_error:
             while (1) {
                 skip_white_(tline);
                 if (!tline) {
-                    error(ERR_NONFATAL, "parameter identifier expected");
+                    nasm_error(ERR_NONFATAL, "parameter identifier expected");
                     free_tlist(origline);
                     return DIRECTIVE_FOUND;
                 }
                 if (tline->type != TOK_ID) {
-                    error(ERR_NONFATAL,
+                    nasm_error(ERR_NONFATAL,
                           "`%s': parameter identifier expected",
                           tline->text);
                     free_tlist(origline);
@@ -3038,7 +3039,7 @@ issue_error:
                     tline = tline->next;
                 } else {
                     if (!tok_is_(tline, ")")) {
-                        error(ERR_NONFATAL,
+                        nasm_error(ERR_NONFATAL,
                               "`)' expected to terminate macro template");
                         free_tlist(origline);
                         return DIRECTIVE_FOUND;
@@ -3085,12 +3086,12 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL, "`%%undef' expects a macro identifier");
+            nasm_error(ERR_NONFATAL, "`%%undef' expects a macro identifier");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
         if (tline->next) {
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after macro name ignored");
         }
 
@@ -3110,7 +3111,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL, "`%s' expects a macro identifier",
+            nasm_error(ERR_NONFATAL, "`%s' expects a macro identifier",
                   pp_directives[i]);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3151,7 +3152,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s' expects a macro identifier as first parameter",
                   pp_directives[i]);
             free_tlist(origline);
@@ -3167,7 +3168,7 @@ issue_error:
             t = t->next;
         /* t should now point to the string */
         if (!tok_type_(t, TOK_STRING)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%s` requires string as second parameter",
                   pp_directives[i]);
             free_tlist(tline);
@@ -3207,7 +3208,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%pathsearch' expects a macro identifier as first parameter");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3223,13 +3224,13 @@ issue_error:
 
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
-            error(ERR_NONFATAL, "`%%pathsearch' expects a file name");
+            nasm_error(ERR_NONFATAL, "`%%pathsearch' expects a file name");
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%pathsearch' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
@@ -3268,7 +3269,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%strlen' expects a macro identifier as first parameter");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3283,7 +3284,7 @@ issue_error:
             t = t->next;
         /* t should now point to the string */
         if (!tok_type_(t, TOK_STRING)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%strlen` requires string as second parameter");
             free_tlist(tline);
             free_tlist(origline);
@@ -3314,7 +3315,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%strcat' expects a macro identifier as first parameter");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3337,7 +3338,7 @@ issue_error:
                     break;
                 /* else fall through */
             default:
-                error(ERR_NONFATAL,
+                nasm_error(ERR_NONFATAL,
                       "non-string passed to `%%strcat' (%d)", t->type);
                 free_tlist(tline);
                 free_tlist(origline);
@@ -3379,7 +3380,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%substr' expects a macro identifier as first parameter");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3396,7 +3397,7 @@ issue_error:
 
         /* t should now point to the string */
         if (!tok_type_(t, TOK_STRING)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%substr` requires string as second parameter");
             free_tlist(tline);
             free_tlist(origline);
@@ -3406,14 +3407,13 @@ issue_error:
         tt = t->next;
         tptr = &tt;
         tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, tptr, &tokval, NULL,
-                              pass, error, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
         if (!evalresult) {
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         } else if (!is_simple(evalresult)) {
-            error(ERR_NONFATAL, "non-constant value given to `%%substr`");
+            nasm_error(ERR_NONFATAL, "non-constant value given to `%%substr`");
             free_tlist(tline);
             free_tlist(origline);
             return DIRECTIVE_FOUND;
@@ -3426,14 +3426,13 @@ issue_error:
             count = 1;  /* Backwards compatibility: one character */
         } else {
             tokval.t_type = TOKEN_INVALID;
-            evalresult = evaluate(ppscan, tptr, &tokval, NULL,
-                                  pass, error, NULL);
+            evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
             if (!evalresult) {
                 free_tlist(tline);
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             } else if (!is_simple(evalresult)) {
-                error(ERR_NONFATAL, "non-constant value given to `%%substr`");
+                nasm_error(ERR_NONFATAL, "non-constant value given to `%%substr`");
                 free_tlist(tline);
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
@@ -3480,7 +3479,7 @@ issue_error:
         if (!tline || (tline->type != TOK_ID &&
                        (tline->type != TOK_PREPROC_ID ||
                         tline->text[1] != '$'))) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "`%%%sassign' expects a macro identifier",
                   (i == PP_IASSIGN ? "i" : ""));
             free_tlist(origline);
@@ -3494,8 +3493,7 @@ issue_error:
         t = tline;
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
-        evalresult =
-            evaluate(ppscan, tptr, &tokval, NULL, pass, error, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
         free_tlist(tline);
         if (!evalresult) {
             free_tlist(origline);
@@ -3503,11 +3501,11 @@ issue_error:
         }
 
         if (tokval.t_type)
-            error(ERR_WARNING|ERR_PASS1,
+            nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after expression ignored");
 
         if (!is_simple(evalresult)) {
-            error(ERR_NONFATAL,
+            nasm_error(ERR_NONFATAL,
                   "non-constant value given to `%%%sassign'",
                   (i == PP_IASSIGN ? "i" : ""));
             free_tlist(origline);
@@ -3535,7 +3533,7 @@ issue_error:
         tline = tline->next;
         skip_white_(tline);
         if (!tok_type_(tline, TOK_NUMBER)) {
-            error(ERR_NONFATAL, "`%%line' expects line number");
+            nasm_error(ERR_NONFATAL, "`%%line' expects line number");
             free_tlist(origline);
             return DIRECTIVE_FOUND;
         }
@@ -3545,7 +3543,7 @@ issue_error:
         if (tok_is_(tline, "+")) {
             tline = tline->next;
             if (!tok_type_(tline, TOK_NUMBER)) {
-                error(ERR_NONFATAL, "`%%line' expects line increment");
+                nasm_error(ERR_NONFATAL, "`%%line' expects line increment");
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
             }
@@ -3562,7 +3560,7 @@ issue_error:
         return DIRECTIVE_FOUND;
 
     default:
-        error(ERR_FATAL,
+        nasm_error(ERR_FATAL,
               "preprocessor directive `%s' not yet implemented",
               pp_directives[i]);
         return DIRECTIVE_FOUND;
@@ -3649,7 +3647,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
 
             /* Left pasting token is start of line */
             if (!prev_nonspace)
-                error(ERR_FATAL, "No lvalue found on pasting");
+                nasm_error(ERR_FATAL, "No lvalue found on pasting");
 
             /*
              * No ending token, this might happen in two
@@ -3841,7 +3839,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
     return head;
 
 err:
-    error(ERR_NONFATAL, "`%%{%s}': macro parameters out of range",
+    nasm_error(ERR_NONFATAL, "`%%{%s}': macro parameters out of range",
           &tline->text[1]);
     return tline;
 }
@@ -3879,7 +3877,7 @@ static Token *expand_mmac_params(Token * tline)
             while (mac && !mac->name)   /* avoid mistaking %reps for macros */
                 mac = mac->next_active;
             if (!mac) {
-                error(ERR_NONFATAL, "`%s': not in a macro call", t->text);
+                nasm_error(ERR_NONFATAL, "`%s': not in a macro call", t->text);
             } else {
                 pos = strchr(t->text, ':');
                 if (!pos) {
@@ -3910,14 +3908,14 @@ static Token *expand_mmac_params(Token * tline)
                         }
                         cc = find_cc(tt);
                         if (cc == -1) {
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "macro parameter %d is not a condition code",
                                   n + 1);
                             text = NULL;
                         } else {
                             type = TOK_ID;
                             if (inverse_ccs[cc] == -1) {
-                                error(ERR_NONFATAL,
+                                nasm_error(ERR_NONFATAL,
                                       "condition code `%s' is not invertible",
                                       conditions[cc]);
                                 text = NULL;
@@ -3936,7 +3934,7 @@ static Token *expand_mmac_params(Token * tline)
                         }
                         cc = find_cc(tt);
                         if (cc == -1) {
-                            error(ERR_NONFATAL,
+                            nasm_error(ERR_NONFATAL,
                                   "macro parameter %d is not a condition code",
                                   n + 1);
                             text = NULL;
@@ -4078,7 +4076,7 @@ again:
 
     while (tline) {             /* main token loop */
         if (!--deadman) {
-            error(ERR_NONFATAL, "interminable macro recursion");
+            nasm_error(ERR_NONFATAL, "interminable macro recursion");
             goto err;
         }
 
@@ -4185,7 +4183,7 @@ again:
                             tline = t;
 
                             if (!tline) {
-                                error(ERR_NONFATAL,
+                                nasm_error(ERR_NONFATAL,
                                       "macro call expects terminating `)'");
                                 break;
                             }
@@ -4235,7 +4233,7 @@ again:
                             }
                             if (brackets < 0) {
                                 brackets = 0;
-                                error(ERR_NONFATAL, "braces do not "
+                                nasm_error(ERR_NONFATAL, "braces do not "
                                       "enclose all of macro parameter");
                             }
                             paramsize[nparam] += white + 1;
@@ -4247,7 +4245,7 @@ again:
                                              m->casesense)))
                             m = m->next;
                         if (!m)
-                            error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
+                            nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
                                   "macro `%s' exists, "
                                   "but not taking %d parameters",
                                   mstart->text, nparam);
@@ -4485,7 +4483,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
              */
             if (m->in_progress > m->max_depth) {
                 if (m->max_depth > 0) {
-                    error(ERR_WARNING,
+                    nasm_error(ERR_WARNING,
                           "reached maximum recursion depth of %i",
                           m->max_depth);
                 }
@@ -4537,7 +4535,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
+    nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
           "macro `%s' exists, but not taking %d parameters",
           tline->text, nparam);
     nasm_free(params);
@@ -4673,7 +4671,7 @@ static int expand_mmacro(Token * tline)
             paramlen[i]++;
         }
         if (brace)
-            error(ERR_NONFATAL, "macro params should be enclosed in braces");
+            nasm_error(ERR_NONFATAL, "macro params should be enclosed in braces");
     }
 
     /*
@@ -4771,73 +4769,57 @@ static int expand_mmacro(Token * tline)
         }
     }
 
-    list->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+    nasmlist->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
 
     return 1;
 }
 
-/* The function that actually does the error reporting */
-static void verror(int severity, const char *fmt, va_list arg)
+/*
+ * This function adds macro names to error messages, and suppresses
+ * them if necessary.
+ */
+static void pp_verror(int severity, const char *fmt, va_list arg)
 {
-    char buff[1024];
+    char buff[BUFSIZ];
     MMacro *mmac = NULL;
     int delta = 0;
 
-    vsnprintf(buff, sizeof(buff), fmt, arg);
+    /*
+     * If we're in a dead branch of IF or something like it, ignore the error.
+     * However, because %else etc are evaluated in the state context
+     * of the previous branch, errors might get lost:
+     *   %if 0 ... %else trailing garbage ... %endif
+     * So %else etc should set the ERR_PP_PRECOND flag.
+     */
+    if ((severity & ERR_MASK) < ERR_FATAL &&
+	istk && istk->conds &&
+	((severity & ERR_PP_PRECOND) ?
+	 istk->conds->state == COND_NEVER :
+	 emitting(istk->conds->state)))
+	return;
 
     /* get %macro name */
-    if (istk && istk->mstk) {
+    if (!(severity & ERR_NOFILE) && istk && istk->mstk) {
         mmac = istk->mstk;
         /* but %rep blocks should be skipped */
         while (mmac && !mmac->name)
             mmac = mmac->next_active, delta++;
     }
 
-    if (mmac)
-        nasm_error(severity, "(%s:%d) %s",
-                   mmac->name, mmac->lineno - delta, buff);
-    else
-        nasm_error(severity, "%s", buff);
-}
+    if (mmac) {
+	vsnprintf(buff, sizeof(buff), fmt, arg);
 
-/*
- * Since preprocessor always operate only on the line that didn't
- * arrived yet, we should always use ERR_OFFBY1.
- */
-static void error(int severity, const char *fmt, ...)
-{
-    va_list arg;
-
-    /* If we're in a dead branch of IF or something like it, ignore the error */
-    if (istk && istk->conds && !emitting(istk->conds->state))
-        return;
-
-    va_start(arg, fmt);
-    verror(severity, fmt, arg);
-    va_end(arg);
-}
-
-/*
- * Because %else etc are evaluated in the state context
- * of the previous branch, errors might get lost with error():
- *   %if 0 ... %else trailing garbage ... %endif
- * So %else etc should report errors with this function.
- */
-static void error_precond(int severity, const char *fmt, ...)
-{
-    va_list arg;
-
-    /* Only ignore the error if it's really in a dead branch */
-    if (istk && istk->conds && istk->conds->state == COND_NEVER)
-        return;
-
-    va_start(arg, fmt);
-    verror(severity, fmt, arg);
-    va_end(arg);
+	nasm_set_verror(real_verror);
+	nasm_error(severity, "(%s:%d) %s",
+		   mmac->name, mmac->lineno - delta, buff);
+	nasm_set_verror(pp_verror);
+    } else {
+        real_verror(severity, fmt, arg);
+    }
 }
 
 static void
-pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
+pp_reset(char *file, int apass, StrList **deplist)
 {
     Token *t;
 
@@ -4853,8 +4835,7 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
     src_set_linnum(0);
     istk->lineinc = 1;
     if (!istk->fp)
-        error(ERR_FATAL|ERR_NOFILE, "unable to open input file `%s'",
-              file);
+	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);
     defining = NULL;
     nested_mac_count = 0;
     nested_rep_count = 0;
@@ -4867,7 +4848,6 @@ pp_reset(char *file, int apass, ListGen * listgen, StrList **deplist)
     }
     any_extrastdmac = extrastdmac && *extrastdmac;
     do_predef = true;
-    list = listgen;
 
     /*
      * 0 for dependencies, 1 for preparatory passes, 2 for final pass.
@@ -4901,6 +4881,8 @@ static char *pp_getline(void)
 {
     char *line;
     Token *tline;
+
+    real_verror = nasm_set_verror(pp_verror);
 
     while (1) {
         /*
@@ -4955,13 +4937,11 @@ static char *pp_getline(void)
                  */
                 if (defining) {
                     if (defining->name)
-                        error(ERR_PANIC,
-                              "defining with name in expansion");
+                        nasm_panic(0, "defining with name in expansion");
                     else if (istk->mstk->name)
-                        error(ERR_FATAL,
-                              "`%%rep' without `%%endrep' within"
-                              " expansion of macro `%s'",
-                              istk->mstk->name);
+                        nasm_fatal(0, "`%%rep' without `%%endrep' within"
+				   " expansion of macro `%s'",
+				   istk->mstk->name);
                 }
 
                 /*
@@ -4991,7 +4971,7 @@ static char *pp_getline(void)
                 }
                 istk->expansion = l->next;
                 nasm_free(l);
-                list->downlevel(LIST_MACRO);
+                nasmlist->downlevel(LIST_MACRO);
             }
         }
         while (1) {             /* until we get a line we can use */
@@ -5005,7 +4985,7 @@ static char *pp_getline(void)
                 istk->expansion = l->next;
                 nasm_free(l);
                 p = detoken(tline, false);
-                list->line(LIST_MACRO, p);
+                nasmlist->line(LIST_MACRO, p);
                 nasm_free(p);
                 break;
             }
@@ -5033,10 +5013,12 @@ static char *pp_getline(void)
                     nasm_free(src_set_fname(nasm_strdup(i->fname)));
                 }
                 istk = i->next;
-                list->downlevel(LIST_INCLUDE);
+                nasmlist->downlevel(LIST_INCLUDE);
                 nasm_free(i);
-                if (!istk)
-                    return NULL;
+                if (!istk) {
+		    line = NULL;
+		    goto done;
+		}
                 if (istk->expansion && istk->expansion->finishes)
                     break;
             }
@@ -5109,23 +5091,30 @@ static char *pp_getline(void)
         }
     }
 
+done:
+    nasm_set_verror(real_verror);
     return line;
 }
 
 static void pp_cleanup(int pass)
 {
+    real_verror = nasm_set_verror(pp_verror);
+
     if (defining) {
         if (defining->name) {
-            error(ERR_NONFATAL,
-                  "end of file while still defining macro `%s'",
-                  defining->name);
+            nasm_error(ERR_NONFATAL,
+		       "end of file while still defining macro `%s'",
+		       defining->name);
         } else {
-            error(ERR_NONFATAL, "end of file while still in %%rep");
+            nasm_error(ERR_NONFATAL, "end of file while still in %%rep");
         }
 
         free_mmacro(defining);
         defining = NULL;
     }
+
+    nasm_set_verror(real_verror);
+
     while (cstk)
         ctx_pop();
     free_macros();
@@ -5194,6 +5183,8 @@ static void pp_pre_define(char *definition)
     Line *l;
     char *equals;
 
+    real_verror = nasm_set_verror(pp_verror);
+
     equals = strchr(definition, '=');
     space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
     def = new_Token(space, TOK_PREPROC_ID, "%define", 0);
@@ -5205,13 +5196,15 @@ static void pp_pre_define(char *definition)
 
     if (space->next->type != TOK_PREPROC_ID &&
         space->next->type != TOK_ID)
-        error(ERR_WARNING, "pre-defining non ID `%s\'\n", definition);
+        nasm_error(ERR_WARNING, "pre-defining non ID `%s\'\n", definition);
 
     l = nasm_malloc(sizeof(Line));
     l->next = predef;
     l->first = def;
     l->finishes = NULL;
     predef = l;
+
+    nasm_set_verror(real_verror);
 }
 
 static void pp_pre_undefine(char *definition)

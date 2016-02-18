@@ -38,7 +38,7 @@
 #ifndef NASM_LISTING_H
 #define NASM_LISTING_H
 
-extern ListGen nasmlist;
-extern int user_nolist;         /* fbk - 9/1/00 */
+extern const ListGen *nasmlist;
+extern bool user_nolist;
 
 #endif

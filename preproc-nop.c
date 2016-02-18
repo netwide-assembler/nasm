@@ -55,10 +55,9 @@
 #define BUF_DELTA 512
 
 static FILE *nop_fp;
-static ListGen *nop_list;
 static int32_t nop_lineinc;
 
-static void nop_reset(char *file, int pass, ListGen *listgen, StrList **deplist)
+static void nop_reset(char *file, int pass, StrList **deplist)
 {
     src_set_fname(nasm_strdup(file));
     src_set_linnum(0);
@@ -66,9 +65,7 @@ static void nop_reset(char *file, int pass, ListGen *listgen, StrList **deplist)
     nop_fp = fopen(file, "r");
 
     if (!nop_fp)
-        nasm_fatal(ERR_NOFILE,
-		   "unable to open input file `%s'", file);
-    nop_list = listgen;
+	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);
     (void)pass;                 /* placate compilers */
 
     if (deplist) {
@@ -133,7 +130,7 @@ static char *nop_getline(void)
         break;
     }
 
-    nop_list->line(LIST_READ, buffer);
+    nasmlist->line(LIST_READ, buffer);
 
     return buffer;
 }

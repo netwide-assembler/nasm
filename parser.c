@@ -461,7 +461,7 @@ restart_parse:
             expr *value;
 
             i = stdscan(NULL, &tokval);
-            value = evaluate(stdscan, NULL, &tokval, NULL, pass0, nasm_error, NULL);
+            value = evaluate(stdscan, NULL, &tokval, NULL, pass0, NULL);
             i = tokval.t_type;
             if (!value)                  /* Error in evaluator */
                 goto fail;
@@ -646,8 +646,7 @@ is_float:
                 eop->stringval = (char *)eop + sizeof(extop);
                 if (!eop->stringlen ||
                     !float_const(tokval.t_charptr, sign,
-                                 (uint8_t *)eop->stringval,
-                                 eop->stringlen, nasm_error))
+                                 (uint8_t *)eop->stringval, eop->stringlen))
                     eop->type = EOT_NOTHING;
                 i = stdscan(NULL, &tokval); /* eat the comma */
             } else {
@@ -656,7 +655,7 @@ is_float:
 
 is_expression:
                 value = evaluate(stdscan, NULL, &tokval, NULL,
-                                 critical, nasm_error, NULL);
+                                 critical, NULL);
                 i = tokval.t_type;
                 if (!value)                  /* Error in evaluator */
                     goto fail;
@@ -845,8 +844,7 @@ is_expression:
         }
 
         value = evaluate(stdscan, NULL, &tokval,
-                         &op->opflags,
-                         critical, nasm_error, &hints);
+                         &op->opflags, critical, &hints);
         i = tokval.t_type;
         if (op->opflags & OPFLAG_FORWARD) {
             result->forw_ref = true;
@@ -876,8 +874,7 @@ is_expression:
                 i = stdscan(NULL, &tokval);
             }
             value = evaluate(stdscan, NULL, &tokval,
-                             &op->opflags,
-                             critical, nasm_error, &hints);
+                             &op->opflags, critical, &hints);
             i = tokval.t_type;
             if (op->opflags & OPFLAG_FORWARD) {
                 result->forw_ref = true;
@@ -898,7 +895,7 @@ is_expression:
 
             i = stdscan(NULL, &tokval); /* Eat comma */
             value = evaluate(stdscan, NULL, &tokval, &op->opflags,
-                             critical, nasm_error, &hints);
+                             critical, &hints);
             i = tokval.t_type;
             if (!value)
                 goto fail;

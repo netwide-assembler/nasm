@@ -49,7 +49,7 @@
 #include "insns.h"
 
 int globalbits = 0;    /* defined in nasm.h, works better here for ASM+DISASM */
-static vefunc nasm_verror;	/* Global error handling function */
+vefunc nasm_verror;    /* Global error handling function */
 
 /* Uninitialized -> all zero by C spec */
 const uint8_t zero_buffer[ZERO_BUF_SIZE];
@@ -67,11 +67,6 @@ void tolower_init(void)
 
     for (i = 0; i < 256; i++)
 	nasm_tolower_tab[i] = tolower(i);
-}
-
-void nasm_set_verror(vefunc ve)
-{
-    nasm_verror = ve;
 }
 
 void nasm_error(int severity, const char *fmt, ...)
