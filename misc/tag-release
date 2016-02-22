@@ -20,6 +20,10 @@ do
     --no-push)
         push=0
         ;;
+    -*)
+	echo "Invalid option: $opt" 1>&2
+	exit 1
+	;;
     *)
         version=$opt
         ;;
