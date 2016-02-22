@@ -459,11 +459,6 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 
 #endif
 
-#ifndef HAVE_FSEEKO
-# define fseeko fseek
-# define ftello ftell
-#endif
-
 #ifdef HAVE_FILENO		/* Useless without fileno() */
 # ifdef HAVE__CHSIZE_S
 #  define nasm_ftruncate(fd,size) _chsize_s(fd,size)

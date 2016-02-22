@@ -139,8 +139,8 @@ AC_CHECK_FUNCS(canonicalize_file_name)
 AC_CHECK_FUNCS(_fullpath)
 AC_CHECK_FUNCS(pathconf)
 
-AC_TYPE_OFF_T
 AC_FUNC_FSEEKO
+AC_CHECK_FUNCS([_fseeki64])
 AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
 AC_CHECK_FUNCS([fileno])
 
