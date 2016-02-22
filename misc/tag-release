@@ -3,10 +3,9 @@
 version=""
 repo=""
 branch=""
-push=1
+push=0
 
-for opt in $*
-do
+for opt; do
     case "$opt" in
     --ver=*)
         version=`echo $opt | sed 's/[-a-zA-Z0-9]*=//'`
@@ -17,9 +16,16 @@ do
     --branch=*)
         branch=`echo $opt | sed 's/[-a-zA-Z0-9]*=//'`
         ;;
+    --push)
+	push=1
+	;;
     --no-push)
         push=0
         ;;
+    -*)
+	echo "Invalid option: $opt" 1>&2
+	exit 1
+	;;
     *)
         version=$opt
         ;;

@@ -111,6 +111,7 @@ enum reltype {
     RL_ABS,			/* Absolute relocation */
     RL_REL,			/* Relative relocation */
     RL_TLV,			/* Thread local */
+    RL_BRANCH,			/* Relative direct branch */
     RL_SUB,			/* X86_64_RELOC_SUBTRACT */
     RL_GOT,			/* X86_64_RELOC_GOT */
     RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
@@ -435,8 +436,14 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	}
 	break;
 
+    case RL_BRANCH:
+	r->type = X86_64_RELOC_BRANCH;
+	goto rel_or_branch;
+
     case RL_REL:
 	r->type = fmt.reloc_rel;
+
+    rel_or_branch:
 	r->pcrel = 1;
 	if (section == NO_SEG) {
 	    goto bail;		/* No relocation needed */
@@ -508,8 +515,9 @@ static void macho_output(int32_t secto, const void *data,
 {
     struct section *s;
     int64_t addr, offset;
-    uint8_t mydata[16], *p, gotload;
+    uint8_t mydata[16], *p;
     bool is_bss;
+    enum reltype reltype;
 
     if (secto == NO_SEG) {
         if (type != OUT_RESERVE)
@@ -620,35 +628,56 @@ static void macho_output(int32_t secto, const void *data,
         p = mydata;
 	offset = *(int64_t *)data;
         addr = offset - size;
+	reltype = RL_REL;
 
         if (section != NO_SEG && section % 2) {
             nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 		       " section base references");
         } else if (wrt == NO_SEG) {
-	    /* Plain relative relocation */
-	    addr += add_reloc(s, section, offset, RL_REL, 4);
-	} else if (wrt == macho_gotpcrel_sect) {
-	    if (s->data->datalen > 1) {
-		/* Retrieve instruction opcode */
-		saa_fread(s->data, s->data->datalen-2, &gotload, 1);
-	    } else {
-		gotload = 0;
+	    if (fmt.ptrsize == 8 &&
+		(s->flags & S_ATTR_SOME_INSTRUCTIONS)) {
+		uint8_t opcode[2];
+
+		opcode[0] = opcode[1] = 0;
+
+		/* HACK: Retrieve instruction opcode */
+		if (likely(s->data->datalen >= 2)) {
+		    saa_fread(s->data, s->data->datalen-2, opcode, 2);
+		} else if (s->data->datalen == 1) {
+		    saa_fread(s->data, 0, opcode+1, 1);
+		}
+
+		if (opcode[1] == 0xe8 || opcode[1] == 0xe9 ||
+		    (opcode[0] == 0x0f && (opcode[1] & 0xf0) == 0x80)) {
+		    /* Direct call, jmp, or jcc */
+		    reltype = RL_BRANCH;
+		}
 	    }
-	    if (gotload == 0x8B) {
-		/* Check for MOVQ Opcode -> X86_64_RELOC_GOT_LOAD */
-		addr += add_reloc(s, section, offset, RL_GOTLOAD, 4);
-	    } else {
-		/* X86_64_RELOC_GOT */
-		addr += add_reloc(s, section, offset, RL_GOT, 4);
+	} else if (wrt == macho_gotpcrel_sect) {
+	    reltype = RL_GOT;
+
+	    if ((s->flags & S_ATTR_SOME_INSTRUCTIONS) &&
+		s->data->datalen >= 3) {
+		uint8_t gotload[3];
+
+		/* HACK: Retrieve instruction opcode */
+		saa_fread(s->data, s->data->datalen-3, gotload, 3);
+		if ((gotload[0] & 0xf8) == 0x48 &&
+		    gotload[1] == 0x8b &&
+		    (gotload[2] & 0307) == 0005) {
+		    /* movq <reg>,[rel sym wrt ..gotpcrel] */
+		    reltype = RL_GOTLOAD;
+		}
 	    }
 	} else if (wrt == macho_tlvp_sect) {
-	    addr += add_reloc(s, section, offset, RL_TLV, 4);
+	    reltype = RL_TLV;
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 		       " this use of WRT");
-	    wrt = NO_SEG;	/* we can at least _try_ to continue */
+	    /* continue with RL_REL */
 	}
 
+	addr += add_reloc(s, section, offset, reltype, 4);
         WRITELONG(p, addr);
         sect_write(s, mydata, 4);
         break;
