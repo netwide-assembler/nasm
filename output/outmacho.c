@@ -179,6 +179,9 @@ struct section {
 #define S_ATTR_PURE_INSTRUCTIONS 0x80000000		/* section uses pure
 												   machine instructions */
 
+/* Fake section for absolute symbols, *not* part of the section linked list */
+static struct section absolute_sect;
+
 static const struct sectmap {
     const char *nasmsect;
     const char *segname;
@@ -197,10 +200,10 @@ struct reloc {
     struct reloc *next;
 
     /* data that goes into the file */
-    int32_t addr;                  /* op's offset in section */
-    uint32_t snum:24,       /* contains symbol index if
-				** ext otherwise in-file
-				** section number */
+    int32_t addr;		/* op's offset in section */
+    uint32_t snum:24,		/* contains symbol index if
+				 ** ext otherwise in-file
+				 ** section number */
 	pcrel:1,                /* relative relocation */
 	length:2,               /* 0=byte, 1=word, 2=int32_t, 3=int64_t */
 	ext:1,                  /* external symbol referenced */
@@ -274,8 +277,6 @@ static struct RAA *extsyms;
 static struct SAA *strs;
 static uint32_t strslen;
 
-extern struct ofmt of_macho64;
-
 /* Global file information. This should be cleaned up into either
    a structure or as function arguments.  */
 static uint32_t head_ncmds = 0;
@@ -338,6 +339,9 @@ static void macho_init(void)
     sects = NULL;
     sectstail = &sects;
 
+    /* Fake section for absolute symbols */
+    absolute_sect.index = NO_SEG;
+
     syms = NULL;
     symstail = &syms;
     nsyms = 0;
@@ -376,8 +380,9 @@ static struct symbol *macho_find_gsym(struct section *s,
     srb = rb_search(s->gsyms, offset);
 
     if (!srb || (exact && srb->key != offset)) {
-        nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
-              " for this reference");
+        nasm_error(ERR_NONFATAL, "unable to find a suitable %s symbol"
+		   " for this reference",
+		   s == &absolute_sect ? "absolute" : "global");
         return NULL;
     }
 
@@ -436,21 +441,33 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	}
 	break;
 
-    case RL_BRANCH:
-	r->type = X86_64_RELOC_BRANCH;
-	goto rel_or_branch;
-
     case RL_REL:
+    case RL_BRANCH:
 	r->type = fmt.reloc_rel;
-
-    rel_or_branch:
 	r->pcrel = 1;
 	if (section == NO_SEG) {
-	    goto bail;		/* No relocation needed */
+	    /* absolute - seems to produce garbage no matter what */
+	    nasm_error(ERR_NONFATAL, "Mach-O does not support relative "
+		       "references to absolute addresses");
+	    goto bail;
+#if 0
+	    /* This "seems" to be how it ought to work... */
+
+	    struct symbol *sym = macho_find_gsym(&absolute_sect,
+						 offset, false);
+	    if (!sym)
+		goto bail;
+
+	    sect->extreloc = 1;
+	    r->snum = NO_SECT;
+	    adjust = -sect->size;
+#endif
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    sect->extreloc = 1;
 	    r->snum = raa_read(extsyms, section);
+	    if (reltype == RL_BRANCH)
+		r->type = X86_64_RELOC_BRANCH;
 	} else {
 	    /* local */
 	    r->ext = 0;
@@ -647,7 +664,7 @@ static void macho_output(int32_t secto, const void *data,
 		    saa_fread(s->data, 0, opcode+1, 1);
 		}
 
-		if (opcode[1] == 0xe8 || opcode[1] == 0xe9 ||
+		if ((opcode[0] != 0x0f && (opcode[1] & 0xfe) == 0xe8) ||
 		    (opcode[0] == 0x0f && (opcode[1] & 0xf0) == 0x80)) {
 		    /* Direct call, jmp, or jcc */
 		    reltype = RL_BRANCH;
@@ -821,7 +838,8 @@ static int32_t macho_section(char *name, int pass, int *bits)
 		    s->align = newAlignment;
 	    } else if (!nasm_stricmp("data", currentAttribute)) {
 		flags = S_REGULAR;
-	    } else if (!nasm_stricmp("code", currentAttribute)) {
+	    } else if (!nasm_stricmp("code", currentAttribute) ||
+		       !nasm_stricmp("text", currentAttribute)) {
 		flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
 		    S_ATTR_PURE_INSTRUCTIONS;
 	    } else if (!nasm_stricmp("mixed", currentAttribute)) {
@@ -898,6 +916,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         /* symbols in no section get absolute */
         sym->type |= N_ABS;
         sym->sect = NO_SECT;
+
+	/* all absolute symbols are available to use as references */
+	absolute_sect.gsyms = rb_insert(absolute_sect.gsyms, &sym->symv);
     } else {
 	struct section *s = get_section_by_index(section);
 
@@ -1103,7 +1124,6 @@ static void macho_calculate_sizes (void)
 	     * perhaps aligning to pointer size would be better.
 	     */
 	    s->pad = ALIGN(seg_filesize, 4) - seg_filesize;
-	    // s->pad = ALIGN(seg_filesize, 1U << s->align) - seg_filesize;
 	    s->offset = seg_filesize + s->pad;
             seg_filesize += s->size + s->pad;
 	}
@@ -1128,7 +1148,7 @@ static void macho_calculate_sizes (void)
 
     /* Create a table of sections by file index to avoid linear search */
     sectstab = nasm_malloc((seg_nsects + 1) * sizeof(*sectstab));
-    sectstab[0] = NULL;
+    sectstab[NO_SECT] = &absolute_sect;
     for (s = sects, fi = 1; s != NULL; s = s->next, fi++)
 	sectstab[fi] = s;
 }
@@ -1302,6 +1322,8 @@ static void macho_write_section (void)
 		/* generate final address by section address and offset */
 		nasm_assert(r->snum <= seg_nsects);
 		l += sectstab[r->snum]->addr;
+		if (r->pcrel)
+		    l -= s->addr;
 	    }
 
 	    /* write new offset back */
