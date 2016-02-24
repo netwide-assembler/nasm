@@ -59,15 +59,15 @@ static void cv8_output(int type, void *param);
 static void cv8_cleanup(void);
 
 struct dfmt df_cv8 = {
-    .fullname = "Codeview 8",
-    .shortname = "cv8",
-    .init = cv8_init,
-    .linenum = cv8_linenum,
-    .debug_deflabel = cv8_deflabel,
-    .debug_directive = null_debug_directive,
-    .debug_typevalue = cv8_typevalue,
-    .debug_output = cv8_output,
-    .cleanup = cv8_cleanup,
+    "Codeview 8",               /* .fullname */
+    "cv8",                      /* .shortname */
+    cv8_init,                   /* .init */
+    cv8_linenum,                /* .linenum */
+    cv8_deflabel,               /* .debug_deflabel */
+    null_debug_directive,       /* .debug_directive */
+    cv8_typevalue,              /* .debug_typevalue */
+    cv8_output,                 /* .debug_output */
+    cv8_cleanup,                /* .cleanup */
 };
 
 /*******************************************************************************
