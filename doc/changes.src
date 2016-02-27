@@ -40,6 +40,8 @@ since 2007.
 \b Line numbers in list files now correspond to the lines in the source
    files, instead of simply being sequential.
 
+\b There is now an official 64-bit (x64 a.k.a. x86-64) build for Windows.
+
 
 \S{cl-2.11.09} Version 2.11.09
 
