@@ -3,14 +3,14 @@
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@NASM_MANGLED_VER@@
-Release: 1
+Release: 0
 License: BSD
 Group: Development/Languages
 Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
-BuildRequires: perl
+BuildRequires: perl, asciidoc, xmlto, ghostscript, texinfo
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %package doc
