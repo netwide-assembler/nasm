@@ -79,6 +79,7 @@ dnl If we have gcc, add appropriate options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-std=c99])
+PA_ADD_CFLAGS([-fwrapv])
 
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
