@@ -89,7 +89,7 @@ enum symbol_type {
     SYMTYPE_LDATA,
     SYMTYPE_GDATA,
 
-    SYMTYPE_MAX,
+    SYMTYPE_MAX
 };
 
 struct cv8_symbol {
@@ -113,7 +113,7 @@ struct cv8_symbol {
         TYPE_REAL80 = 0x0042,
         TYPE_REAL128= 0x0043,
         TYPE_REAL256= 0x0044,
-        TYPE_REAL512= 0x0045,
+        TYPE_REAL512= 0x0045
     } symtype;
 };
 

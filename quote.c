@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -235,7 +235,7 @@ size_t nasm_unquote(char *str, char **ep)
 	st_backslash,
 	st_hex,
 	st_oct,
-	st_ucs,
+	st_ucs
     } state;
     int ndig = 0;
     int32_t nval = 0;
@@ -430,7 +430,7 @@ char *nasm_skip_string(char *str)
     char c;
     enum unq_state {
 	st_start,
-	st_backslash,
+	st_backslash
     } state;
 
     bq = str[0];
