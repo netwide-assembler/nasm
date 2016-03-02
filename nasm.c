@@ -807,9 +807,6 @@ static bool process_arg(char *p, char *q)
                  "--prefix,--postfix\n"
                  "  this options prepend or append the given argument to all\n"
                  "  extern and global variables\n"
-                 "--allow-64-bit\n"
-                 "  do not restrict 64-bit code to 64-bit capable output\n"
-                 "  formats (use with care, no complaining)\n\n"
                  "Warnings:\n");
             for (i = 0; i <= ERR_WARN_MAX; i++)
                 printf("    %-23s %s (default %s)\n",

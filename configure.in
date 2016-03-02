@@ -75,6 +75,10 @@ AH_TEMPLATE(WORDS_LITTLEENDIAN,
 [Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
 
+dnl Force gcc and gcc-compatible compilers treat signed integers
+dnl as 2's complement
+PA_ADD_CFLAGS([-fwrapv])
+
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
@@ -180,9 +184,10 @@ AC_ARG_ENABLE([ccache],
 [CC="ccache $CC"],
 [])
 
-dnl If we have gcc, add appropriate options
+dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
+PA_ADD_CFLAGS([-std=c99])
 PA_ADD_CFLAGS([-pedantic])
 AC_ARG_ENABLE([werror],
 [AC_HELP_STRING([--enable-werror],
