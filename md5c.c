@@ -15,18 +15,18 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include <string.h>		/* for memcpy() */
 #include "md5.h"
+#include <string.h>             /* for memcpy() */
 
-#if __BYTE_ORDER == 1234
+#ifdef WORDS_LITTEENDIAN
 #define byteReverse(buf, len)	/* Nothing */
 #else
-void byteReverse(unsigned char *buf, unsigned longs);
+static void byteReverse(unsigned char *buf, unsigned longs);
 
 /*
  * Note: this code is harmless on little-endian machines.
  */
-void byteReverse(unsigned char *buf, unsigned longs)
+static void byteReverse(unsigned char *buf, unsigned longs)
 {
     uint32_t t;
     do {
