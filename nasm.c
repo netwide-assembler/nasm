@@ -614,7 +614,7 @@ struct textargs {
 
 enum text_options {
     OPT_PREFIX,
-    OPT_POSTFIX,
+    OPT_POSTFIX
 };
 struct textargs textopts[] = {
     {"prefix", OPT_PREFIX},

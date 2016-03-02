@@ -106,7 +106,7 @@ enum out_type {
     OUT_REL1ADR,    /* 1-byte relative address */
     OUT_REL2ADR,    /* 2-byte relative address */
     OUT_REL4ADR,    /* 4-byte relative address */
-    OUT_REL8ADR,    /* 8-byte relative address */
+    OUT_REL8ADR     /* 8-byte relative address */
 };
 
 /*
@@ -228,7 +228,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
     TOKEN_DECORATOR,    /* decorators such as {...} */
-    TOKEN_OPMASK,       /* translated token for opmask registers */
+    TOKEN_OPMASK        /* translated token for opmask registers */
 };
 
 enum floatize {
@@ -239,7 +239,7 @@ enum floatize {
     FLOAT_80M,
     FLOAT_80E,
     FLOAT_128L,
-    FLOAT_128H,
+    FLOAT_128H
 };
 
 /* Must match the list in string_transform(), in strfunc.c */
@@ -249,14 +249,14 @@ enum strfunc {
     STRFUNC_UTF16BE,
     STRFUNC_UTF32,
     STRFUNC_UTF32LE,
-    STRFUNC_UTF32BE,
+    STRFUNC_UTF32BE
 };
 
 enum ifunc {
     IFUNC_ILOG2E,
     IFUNC_ILOG2W,
     IFUNC_ILOG2F,
-    IFUNC_ILOG2C,
+    IFUNC_ILOG2C
 };
 
 size_t string_transform(char *, size_t, char **, enum strfunc);
@@ -534,7 +534,7 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 enum vex_class {
     RV_VEX      = 0,    /* C4/C5 */
     RV_XOP      = 1,    /* 8F */
-    RV_EVEX     = 2,    /* 62 */
+    RV_EVEX     = 2     /* 62 */
 };
 
 /*
@@ -575,7 +575,7 @@ enum extop_type { /* extended operand types */
     EOT_NOTHING,
     EOT_DB_STRING,      /* Byte string */
     EOT_DB_STRING_FREE, /* Byte string which should be nasm_free'd*/
-    EOT_DB_NUMBER,      /* Integer */
+    EOT_DB_NUMBER       /* Integer */
 };
 
 enum ea_flags { /* special EA flags */
@@ -585,14 +585,14 @@ enum ea_flags { /* special EA flags */
     EAF_REL         =  8,   /* IP-relative addressing */
     EAF_ABS         = 16,   /* non-IP-relative addressing */
     EAF_FSGS        = 32,   /* fs/gs segment override present */
-    EAF_MIB         = 64,   /* mib operand */
+    EAF_MIB         = 64    /* mib operand */
 };
 
 enum eval_hint { /* values for `hinttype' */
     EAH_NOHINT   = 0,       /* no hint at all - our discretion */
     EAH_MAKEBASE = 1,       /* try to make given reg the base */
     EAH_NOTBASE  = 2,       /* try _not_ to make reg the base */
-    EAH_SUMMED   = 3,       /* base and index are summed into index */
+    EAH_SUMMED   = 3        /* base and index are summed into index */
 };
 
 typedef struct operand { /* operand to an instruction */
@@ -632,7 +632,7 @@ enum ea_type {
     EA_SCALAR,      /* Scalar EA */
     EA_XMMVSIB,     /* XMM vector EA */
     EA_YMMVSIB,     /* YMM vector EA */
-    EA_ZMMVSIB,     /* ZMM vector EA */
+    EA_ZMMVSIB      /* ZMM vector EA */
 };
 
 /*
@@ -676,7 +676,7 @@ enum ttypes {
     QVM   = 015,
     OVM   = 016,
     M128  = 017,
-    DUP   = 020,
+    DUP   = 020
 };
 
 /* EVEX.L'L : Vector length on vector insns */
@@ -684,7 +684,7 @@ enum vectlens {
     VL128 = 0,
     VL256 = 1,
     VL512 = 2,
-    VLMAX = 3,
+    VLMAX = 3
 };
 
 /* If you need to change this, also change it in insns.pl */

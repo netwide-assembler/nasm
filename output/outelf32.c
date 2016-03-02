@@ -1162,7 +1162,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
       * dwarf needs symbols for debug sections
       * which are relocation targets.
       */
-//*** fix for 32 bit
+    /*** fix for 32 bit ***/
      if (of_elf32.current_dfmt == &df_dwarf) {
         dwarf_infosym = *local;
         p = entry;

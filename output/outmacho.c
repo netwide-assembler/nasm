@@ -114,7 +114,7 @@ enum reltype {
     RL_BRANCH,			/* Relative direct branch */
     RL_SUB,			/* X86_64_RELOC_SUBTRACT */
     RL_GOT,			/* X86_64_RELOC_GOT */
-    RL_GOTLOAD,			/* X86_64_RELOC_GOT_LOAD */
+    RL_GOTLOAD			/* X86_64_RELOC_GOT_LOAD */
 };
 #define RL_MAX_32	RL_TLV
 #define RL_MAX_64	RL_GOTLOAD

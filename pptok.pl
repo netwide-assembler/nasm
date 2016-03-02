@@ -110,13 +110,15 @@ if ($what eq 'h') {
 
     print  OUT "enum pp_conditional {\n";
     $n = 0;
+    $c = '';
     foreach $cc (@cond) {
 	if (defined($cc)) {
-	    printf OUT "    %-16s = %3d,\n", "PPC_IF\U$cc\E", $n;
+	    printf OUT "$c    %-16s = %3d", "PPC_IF\U$cc\E", $n;
+	    $c = ',';
 	}
 	$n += 2;
     }
-    print  OUT "};\n\n";
+    print  OUT "\n};\n\n";
 
     printf OUT "#define PP_COND(x)     ((enum pp_conditional)((x) & 0x%x))\n",
 	(scalar(@cond)-1) << 1;
