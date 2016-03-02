@@ -9,7 +9,8 @@ AC_DEFUN(PA_ADD_CFLAGS,
  CFLAGS="$CFLAGS $1"
  AC_TRY_LINK([#include <stdio.h>],
  [printf("Hello, World!\n");],
- AC_MSG_RESULT([yes]),
+ AC_MSG_RESULT([yes])
+ CFLAGS="$pa_add_cflags__old_cflags ifelse([$2],[],[$1],[$2])",
  AC_MSG_RESULT([no])
  CFLAGS="$pa_add_cflags__old_cflags")])
 

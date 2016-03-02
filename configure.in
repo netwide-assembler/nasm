@@ -189,6 +189,11 @@ PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
 PA_ADD_CFLAGS([-std=c99])
 PA_ADD_CFLAGS([-pedantic])
+dnl Suppress format warning on Windows targets due to their <inttypes.h>
+PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
+PA_ADD_CFLAGS([-Wc90-c99-compat])
+PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
+PA_ADD_CFLAGS([-Wwrite-strings])
 AC_ARG_ENABLE([werror],
 [AC_HELP_STRING([--enable-werror],
 [compile with -Werror to error out on any warning])],
