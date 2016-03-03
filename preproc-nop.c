@@ -66,7 +66,7 @@ static void nop_reset(char *file, int pass, ListGen *listgen, StrList **deplist)
     nop_fp = fopen(file, "r");
 
     if (!nop_fp)
-        nasm_error(ERR_FATAL | ERR_NOFILE,
+        nasm_fatal(ERR_NOFILE,
 		   "unable to open input file `%s'", file);
     nop_list = listgen;
     (void)pass;                 /* placate compilers */

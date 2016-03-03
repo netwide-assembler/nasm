@@ -234,7 +234,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
 
     lptr = find_label(label, 1);
     if (!lptr)
-        nasm_error(ERR_PANIC, "can't find label `%s' on pass two", label);
+        nasm_panic(0, "can't find label `%s' on pass two", label);
 
     if (!islocal(label)) {
         if (!islocalchar(*label) && lptr->defn.is_norm)

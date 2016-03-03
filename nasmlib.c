@@ -163,7 +163,7 @@ char *nasm_strndup(const char *s, size_t len)
 
 no_return nasm_assert_failed(const char *file, int line, const char *msg)
 {
-    nasm_error(ERR_FATAL, "assertion %s failed at %s:%d", msg, file, line);
+    nasm_fatal(0, "assertion %s failed at %s:%d", msg, file, line);
     exit(1);
 }
 
@@ -171,7 +171,7 @@ void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);
     if (n != size)
-        nasm_error(ERR_FATAL, "unable to write output: %s", strerror(errno));
+        nasm_fatal(0, "unable to write output: %s", strerror(errno));
 }
 
 #ifndef nasm_stricmp

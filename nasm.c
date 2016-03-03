@@ -393,7 +393,7 @@ int main(int argc, char **argv)
             if (*outname) {
                 ofile = fopen(outname, "w");
                 if (!ofile)
-                    nasm_error(ERR_FATAL | ERR_NOFILE,
+                    nasm_fatal(ERR_NOFILE,
                                  "unable to open output file `%s'",
                                  outname);
             } else
@@ -446,7 +446,7 @@ int main(int argc, char **argv)
 
         ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
         if (!ofile)
-            nasm_error(ERR_FATAL | ERR_NOFILE,
+            nasm_fatal(ERR_NOFILE,
                        "unable to open output file `%s'", outname);
 
         /*
@@ -519,7 +519,7 @@ static void copy_filename(char *dst, const char *src)
     size_t len = strlen(src);
 
     if (len >= (size_t)FILENAME_MAX) {
-        nasm_error(ERR_FATAL | ERR_NOFILE, "file name too long");
+        nasm_fatal(ERR_NOFILE, "file name too long");
         return;
     }
     strncpy(dst, src, FILENAME_MAX);
@@ -659,7 +659,7 @@ static bool process_arg(char *p, char *q)
         case 'f':       /* output format */
             ofmt = ofmt_find(param, &ofmt_alias);
             if (!ofmt) {
-                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                nasm_fatal(ERR_NOFILE | ERR_USAGE,
                            "unrecognised output format `%s' - "
                            "use -hf for a list", param);
             }
@@ -699,7 +699,7 @@ static bool process_arg(char *p, char *q)
                         break;
 
                     default:
-                        nasm_error(ERR_FATAL,
+                        nasm_fatal(0,
                                    "unknown optimization option -O%c\n",
                                    *param);
                         break;
@@ -742,7 +742,7 @@ static bool process_arg(char *p, char *q)
         case 'F':       /* specify debug format */
             ofmt->current_dfmt = dfmt_find(ofmt, param);
             if (!ofmt->current_dfmt) {
-                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                nasm_fatal(ERR_NOFILE | ERR_USAGE,
                            "unrecognized debug format `%s' for"
                            " output format `%s'",
                            param, ofmt->shortname);
@@ -756,7 +756,7 @@ static bool process_arg(char *p, char *q)
             else if (nasm_stricmp("gnu", param) == 0)
                 nasm_set_verror(nasm_verror_gnu);
             else
-                nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+                nasm_fatal(ERR_NOFILE | ERR_USAGE,
                            "unrecognized error reporting format `%s'",
                            param);
             break;
@@ -967,7 +967,7 @@ set_warning:
                             strlcpy(lpostfix, param, POSTFIX_MAX);
                             break;
                         default:
-                            nasm_error(ERR_PANIC | ERR_NOFILE,
+                            nasm_panic(ERR_NOFILE,
                                        "internal error");
                             break;
                         }
@@ -1170,7 +1170,7 @@ static void parse_cmdline(int argc, char **argv)
              !strcmp(inname, outname)   ||
              !strcmp(inname, listname)  ||
              (depend_file && !strcmp(inname, depend_file)))
-        nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+        nasm_fatal(ERR_NOFILE | ERR_USAGE,
                    "file `%s' is both input and output file",
                    inname);
 
@@ -1178,7 +1178,7 @@ static void parse_cmdline(int argc, char **argv)
         error_file = fopen(errname, "w");
         if (!error_file) {
             error_file = stderr;        /* Revert to default! */
-            nasm_error(ERR_FATAL | ERR_NOFILE | ERR_USAGE,
+            nasm_fatal(ERR_NOFILE | ERR_USAGE,
                        "cannot open file `%s' for error messages",
                        errname);
         }
@@ -1200,7 +1200,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     int pass_max;
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
-        nasm_error(ERR_FATAL, "command line: "
+        nasm_fatal(0, "command line: "
                      "32-bit segment size requires a higher cpu");
 
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
@@ -1279,7 +1279,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                  * ofmt should have some 'check' method which
                                  * would report segment alignment bounds.
                                  */
-                                nasm_error(ERR_FATAL,
+                                nasm_fatal(0,
                                            "incorrect segment alignment `%s'", value);
                             } else if (!is_power2(align)) {
                                 nasm_error(ERR_NONFATAL,
@@ -1443,7 +1443,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     } else if (passn == 1)
                         abs_offset = 0x100;     /* don't go near zero in case of / */
                     else
-                        nasm_error(ERR_PANIC, "invalid ABSOLUTE address "
+                        nasm_panic(0, "invalid ABSOLUTE address "
                                      "in pass two");
                     in_abs_seg = true;
                     location.segment = NO_SEG;

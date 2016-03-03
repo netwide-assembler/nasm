@@ -583,7 +583,7 @@ static void coff_out(int32_t segto, const void *data,
     if (!s) {
         int tempint;            /* ignored */
         if (segto != coff_section_names(".text", 2, &tempint))
-            nasm_error(ERR_PANIC, "strange segment conditions in COFF driver");
+            nasm_panic(0, "strange segment conditions in COFF driver");
         else
             s = coff_sects[coff_nsects - 1];
     }
@@ -626,7 +626,7 @@ static void coff_out(int32_t segto, const void *data,
             s->len += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);
@@ -674,7 +674,7 @@ static void coff_out(int32_t segto, const void *data,
               " relocations");
     } else if (type == OUT_REL4ADR) {
         if (segment == segto && !(win64))  /* Acceptable for RIP-relative */
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_panic(0, "intra-segment OUT_REL4ADR");
         else if (segment == NO_SEG && win32)
             nasm_error(ERR_NONFATAL, "Win32 COFF does not correctly support"
                   " relative references to absolute addresses");
@@ -875,7 +875,7 @@ static inline void coff_adjust_relocs(struct coff_Section *s)
     else
     {
         if (ofmt == &of_coff)
-            nasm_error(ERR_FATAL,
+            nasm_fatal(0,
                        "Too many relocations (%d) for section `%s'",
                        s->nrelocs, s->name);
     }

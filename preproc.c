@@ -5024,7 +5024,7 @@ static char *pp_getline(void)
                 fclose(i->fp);
                 if (i->conds) {
                     /* nasm_error can't be conditionally suppressed */
-                    nasm_error(ERR_FATAL,
+                    nasm_fatal(0,
                                "expected `%%endif' before end of file");
                 }
                 /* only set line and file name if there's a next node */

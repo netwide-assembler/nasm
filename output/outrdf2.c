@@ -145,7 +145,7 @@ static void rdf2_init(void)
     segdata = seg_alloc();
     segbss = seg_alloc();
     if (segtext != 0 || segdata != 2 || segbss != 4)
-        nasm_error(ERR_PANIC,
+        nasm_panic(0,
               "rdf segment numbers not allocated as expected (%d,%d,%d)",
               segtext, segdata, segbss);
     bsslength = 0;
@@ -227,7 +227,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
         code = 3;
     }
     if (nsegments == RDF_MAXSEGS) {
-        nasm_error(ERR_FATAL, "reached compiled-in maximum segment limit (%d)",
+        nasm_fatal(0, "reached compiled-in maximum segment limit (%d)",
               RDF_MAXSEGS);
         return NO_SEG;
     }
@@ -235,7 +235,7 @@ static int32_t rdf2_section_names(char *name, int pass, int *bits)
     segments[nsegments].segname = nasm_strdup(name);
     i = seg_alloc();
     if (i % 2 != 0)
-        nasm_error(ERR_PANIC, "seg_alloc() returned odd number");
+        nasm_panic(0, "seg_alloc() returned odd number");
     segments[nsegments].segnumber = i >> 1;
     segments[nsegments].segtype = code;
     segments[nsegments].segreserved = reserved;
@@ -497,7 +497,7 @@ static void membufwrite(int segment, const void *data, int bytes)
             break;
     }
     if (i == nsegments)
-        nasm_error(ERR_PANIC, "can't find segment %d", segment);
+        nasm_panic(0, "can't find segment %d", segment);
 
     if (bytes < 0) {
         b = buf;
@@ -520,7 +520,7 @@ static int getsegmentlength(int segment)
             break;
     }
     if (i == nsegments)
-        nasm_error(ERR_PANIC, "can't find segment %d", segment);
+        nasm_panic(0, "can't find segment %d", segment);
 
     return segments[i].seglength;
 }
@@ -577,7 +577,7 @@ static void rdf2_out(int32_t segto, const void *data,
                 membufwrite(segto, databuf, 1);
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
 
         membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
@@ -606,7 +606,7 @@ static void rdf2_out(int32_t segto, const void *data,
         membufwrite(segto, databuf, asize);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+            nasm_panic(0, "intra-segment OUT_REL2ADR");
 
         rr.reclen = 8;
         rr.offset = getsegmentlength(segto);    /* current offset */
@@ -638,9 +638,9 @@ static void rdf2_out(int32_t segto, const void *data,
         membufwrite(segto, &rr.offset, -2);
     } else if (type == OUT_REL4ADR) {
         if ((segment == segto) && (globalbits != 64))
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
-            nasm_error(ERR_PANIC, "erm... 4 byte segment base ref?");
+            nasm_panic(0, "erm... 4 byte segment base ref?");
         }
 
         rr.type = RDFREC_RELOC; /* type signature */

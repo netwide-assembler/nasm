@@ -1139,7 +1139,7 @@ static void macho_calculate_sizes (void)
     }
 
     if (seg_nsects > MAX_SECT) {
-	nasm_error(ERR_FATAL, "MachO output is limited to %d sections\n",
+	nasm_fatal(0, "MachO output is limited to %d sections\n",
 		   MAX_SECT);
     }
 

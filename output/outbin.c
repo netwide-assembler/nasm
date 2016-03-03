@@ -270,7 +270,7 @@ static void bin_cleanup(int debuginfo)
         if (s->flags & (START_DEFINED | ALIGN_DEFINED | FOLLOWS_DEFINED)) {     /* Check for a mixture of real and virtual section attributes. */
             if (s->flags & (VSTART_DEFINED | VALIGN_DEFINED |
 			    VFOLLOWS_DEFINED))
-                nasm_error(ERR_FATAL|ERR_NOFILE,
+                nasm_fatal(ERR_NOFILE,
                       "cannot mix real and virtual attributes"
                       " in nobits section (%s)", s->name);
             /* Real and virtual attributes mean the same thing for nobits sections. */
@@ -341,11 +341,11 @@ static void bin_cleanup(int debuginfo)
              s && strcmp(s->name, g->follows);
              sp = &s->next, s = s->next) ;
         if (!s)
-            nasm_error(ERR_FATAL|ERR_NOFILE, "section %s follows an invalid or"
+            nasm_fatal(ERR_NOFILE, "section %s follows an invalid or"
                   " unknown section (%s)", g->name, g->follows);
         if (s->next && (s->next->flags & FOLLOWS_DEFINED) &&
             !strcmp(s->name, s->next->follows))
-            nasm_error(ERR_FATAL|ERR_NOFILE, "sections %s and %s can't both follow"
+            nasm_fatal(ERR_NOFILE, "sections %s and %s can't both follow"
                   " section %s", g->name, s->next->name, s->name);
         /* Find the end of the current follows group (gs). */
         for (gsp = &g->next, gs = g->next;
@@ -389,7 +389,7 @@ static void bin_cleanup(int debuginfo)
 	if (sections->flags & START_DEFINED) {
             /* Make sure this section doesn't begin before the origin. */
             if (sections->start < origin)
-                nasm_error(ERR_FATAL|ERR_NOFILE, "section %s begins"
+                nasm_fatal(ERR_NOFILE, "section %s begins"
                       " before program origin", sections->name);
 	} else if (sections->flags & ALIGN_DEFINED) {
             sections->start = ALIGN(origin, sections->align);
@@ -445,13 +445,13 @@ static void bin_cleanup(int debuginfo)
         /* Check for section overlap. */
         if (s) {
 	    if (s->start < origin)
-		nasm_error(ERR_FATAL|ERR_NOFILE, "section %s beings before program origin",
+		nasm_fatal(ERR_NOFILE, "section %s beings before program origin",
 		      s->name);
 	    if (g->start > s->start)
-                nasm_error(ERR_FATAL|ERR_NOFILE, "sections %s ~ %s and %s overlap!",
+                nasm_fatal(ERR_NOFILE, "sections %s ~ %s and %s overlap!",
                       gs->name, g->name, s->name);
             if (pend > s->start)
-                nasm_error(ERR_FATAL|ERR_NOFILE, "sections %s and %s overlap!",
+                nasm_fatal(ERR_NOFILE, "sections %s and %s overlap!",
                       g->name, s->name);
         }
         /* Remember this section as the latest >0 length section. */
@@ -480,7 +480,7 @@ static void bin_cleanup(int debuginfo)
                 for (s = sections; s && strcmp(g->vfollows, s->name);
                      s = s->next) ;
                 if (!s)
-                    nasm_error(ERR_FATAL|ERR_NOFILE,
+                    nasm_fatal(ERR_NOFILE,
                           "section %s vfollows unknown section (%s)",
                           g->name, g->vfollows);
             } else if (g->prev != NULL)
@@ -519,7 +519,7 @@ static void bin_cleanup(int debuginfo)
         }
     }
     if (h)
-        nasm_error(ERR_FATAL|ERR_NOFILE, "circular vfollows path detected");
+        nasm_fatal(ERR_NOFILE, "circular vfollows path detected");
 
 #ifdef DEBUG
     nasm_error(ERR_DEBUG,
@@ -748,7 +748,7 @@ static void bin_out(int32_t segto, const void *data,
     /* Find the segment we are targeting. */
     s = find_section_by_index(segto);
     if (!s)
-        nasm_error(ERR_PANIC, "code directed to nonexistent segment?");
+        nasm_panic(0, "code directed to nonexistent segment?");
 
     /* "Smart" section-type adaptation code. */
     if (!(s->flags & TYPE_DEFINED)) {
