@@ -186,6 +186,8 @@ PA_ADD_CFLAGS([-pedantic])
 AC_ARG_ENABLE([werror],
 [AC_HELP_STRING([--enable-werror],
 [compile with -Werror to error out on any warning])],
+[], [enable_werror=no])
+AS_IF([test x"$enable_werror" != xno],
 [PA_ADD_CFLAGS([-Werror])],
 [PA_ADD_CFLAGS([-Werror=implicit])
 PA_ADD_CFLAGS([-Werror=missing-braces])
