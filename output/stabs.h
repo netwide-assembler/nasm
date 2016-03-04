@@ -34,7 +34,6 @@
 #ifndef STABS_H_
 #define STABS_H_
 
-#include <ctype.h>
 #include <inttypes.h>
 
 #include "compiler.h"

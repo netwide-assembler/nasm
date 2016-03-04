@@ -48,21 +48,22 @@
 #endif
 
 /*
- * tolower table -- avoids a function call on some platforms.
- * NOTE: unlike the tolower() function in ctype, EOF is *NOT*
+ * tolower/toupper tables -- avoids a function call on some platforms.
+ * NOTE: unlike the to*() and is*() functions in ctype.h, EOF is *NOT*
  * a permitted value, for obvious reasons.
  */
-void tolower_init(void);
-extern unsigned char nasm_tolower_tab[256];
+extern const unsigned char nasm_tolower_tab[256];
 #define nasm_tolower(x) nasm_tolower_tab[(unsigned char)(x)]
 
-/* Wrappers around <ctype.h> functions */
-/* These are only valid for values that cannot include EOF */
-#define nasm_isspace(x)  isspace((unsigned char)(x))
-#define nasm_isalpha(x)  isalpha((unsigned char)(x))
-#define nasm_isdigit(x)  isdigit((unsigned char)(x))
-#define nasm_isalnum(x)  isalnum((unsigned char)(x))
-#define nasm_isxdigit(x) isxdigit((unsigned char)(x))
+extern const unsigned char nasm_toupper_tab[256];
+#define nasm_toupper(x) nasm_toupper_tab[(unsigned char)(x)]
+
+extern const unsigned char nasm_ctype_tab[256];
+#define nasm_isspace(x)  (!!(nasm_ctype_tab[(unsigned char)(x)] & 0x01))
+#define nasm_isalpha(x)  (!!(nasm_ctype_tab[(unsigned char)(x)] & 0x02))
+#define nasm_isdigit(x)  (!!(nasm_ctype_tab[(unsigned char)(x)] & 0x04))
+#define nasm_isalnum(x)  (!!(nasm_ctype_tab[(unsigned char)(x)] & 0x06))
+#define nasm_isxdigit(x) (!!(nasm_ctype_tab[(unsigned char)(x)] & 0x08))
 
 /*
  * -------------------------

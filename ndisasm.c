@@ -41,7 +41,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 
@@ -93,7 +92,6 @@ int main(int argc, char **argv)
     int32_t offset;
     FILE *fp;
 
-    tolower_init();
     nasm_set_verror(ndisasm_verror);
     iflag_clear_all(&prefer);
 

@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 
@@ -53,21 +52,6 @@ vefunc nasm_verror;    /* Global error handling function */
 
 /* Uninitialized -> all zero by C spec */
 const uint8_t zero_buffer[ZERO_BUF_SIZE];
-
-/*
- * Prepare a table of tolower() results.  This avoids function calls
- * on some platforms.
- */
-
-unsigned char nasm_tolower_tab[256];
-
-void tolower_init(void)
-{
-    int i;
-
-    for (i = 0; i < 256; i++)
-	nasm_tolower_tab[i] = tolower(i);
-}
 
 void nasm_error(int severity, const char *fmt, ...)
 {

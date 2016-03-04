@@ -72,7 +72,6 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>             /* Note: we need the ANSI version of stdarg.h */
-#include <ctype.h>
 #include <inttypes.h>
 
 #include "nasm.h"
@@ -1294,7 +1293,7 @@ static void ieee_unqualified_name(char *dest, char *source)
 {
     if (ieee_uppercase) {
         while (*source)
-            *dest++ = toupper(*source++);
+            *dest++ = nasm_toupper(*source++);
         *dest = 0;
     } else
         strcpy(dest, source);

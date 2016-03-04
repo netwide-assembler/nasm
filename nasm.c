@@ -41,7 +41,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <time.h>
@@ -335,8 +334,6 @@ int main(int argc, char **argv)
     nasm_set_verror(nasm_verror_gnu);
 
     error_file = stderr;
-
-    tolower_init();
 
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));

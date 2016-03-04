@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 
@@ -428,7 +427,7 @@ static ObjRecord *obj_name(ObjRecord * orp, const char *name)
     orp->used += len + 1;
     if (obj_uppercase)
         while (--len >= 0) {
-            *ptr++ = toupper(*name);
+            *ptr++ = nasm_toupper(*name);
             name++;
     } else
         memcpy(ptr, name, len);

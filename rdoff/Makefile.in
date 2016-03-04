@@ -32,7 +32,7 @@ MKDIR		= mkdir
 LDRDFLIBS 	= rdoff.$(O) symtab.$(O) collectn.$(O) \
 		  rdlib.$(O) segtab.$(O) hash.$(O)
 RDXLIBS 	= rdoff.$(O) rdfload.$(O) symtab.$(O) collectn.$(O) hash.$(O)
-NASMLIB		= ../nasmlib.$(O)
+NASMLIB		= ../nasmlib.$(O) ../ctype.$(O)
 
 # Binary suffixes
 O               = @OBJEXT@

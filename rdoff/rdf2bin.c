@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 
 #include "rdfload.h"
@@ -263,7 +262,7 @@ static const char *getformat(const char *pathname)
 	if (!nasm_stricmp(p, "rdf2")) {
 	    const char *q = p+4;
 	    char *r = fmt_buf;
-	    while (isalnum(*q) && r < fmt_buf+sizeof fmt_buf-1)
+	    while (nasm_isalnum(*q) && r < fmt_buf+sizeof fmt_buf-1)
 		*r++ = *q++;
 	    *r = '\0';
 	    if (fmt_buf[0])

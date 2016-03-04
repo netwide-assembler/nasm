@@ -428,25 +428,14 @@ extern struct preproc_ops preproc_nop;
  * decorator. E.g. {rn-sae}, {1to8}, {k1}{z}
  */
 
-#define isidstart(c) (nasm_isalpha(c)   ||  \
-                      (c) == '_'        ||  \
-                      (c) == '.'        ||  \
-                      (c) == '?'        ||  \
-                      (c) == '@')
-
-#define isidchar(c) (isidstart(c)       ||  \
-                     nasm_isdigit(c)    ||  \
-                     (c) == '$'         ||  \
-                     (c) == '#'         ||  \
-                     (c) == '~')
-
-#define isbrcchar(c) (isidchar(c)       ||  \
-                      (c) == '-')
+#define isidstart(c) ((nasm_ctype_tab[(unsigned char)c] & 0x60) >= 0x60)
+#define isidchar(c)  ((nasm_ctype_tab[(unsigned char)c] & 0x60) >= 0x40)
+#define isbrcchar(c) ((nasm_ctype_tab[(unsigned char)c] & 0x60) >= 0x20)
 
 /* Ditto for numeric constants. */
 
-#define isnumstart(c)  (nasm_isdigit(c) || (c) == '$')
-#define isnumchar(c)   (nasm_isalnum(c) || (c) == '_')
+#define isnumstart(c) (!!(nasm_ctype_tab[(unsigned char)c] & 0x80))
+#define isnumchar(c)  nasm_isalnum(c)
 
 /*
  * Data-type flags that get passed to listing-file routines.
