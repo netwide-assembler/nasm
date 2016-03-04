@@ -47,8 +47,10 @@ TAGS
 /macros.c
 /nasm
 /nasm.man
+/nasm.1
 /ndisasm
 /ndisasm.man
+/nasm.1
 /pptok.c
 /pptok.h
 /pptok.ph
@@ -76,7 +78,8 @@ TAGS
 /version.h
 /version.mac
 /version.mak
-/version.nsh
 /version.sed
 /iflag.c
 /iflaggen.h
+/nsis/version.nsh
+/nsis/arch.nsh
