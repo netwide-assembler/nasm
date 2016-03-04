@@ -4,5 +4,5 @@ endstruc
 
 a_struc:
   istruc A_STRUC
-  at A_STRUC._a dw 1
+  at A_STRUC._a, dw 1
   iend
