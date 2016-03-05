@@ -5115,6 +5115,9 @@ WRPKRU		void				[	0f 01 ef]				X64,FUTURE
 ; New memory instructions
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
 
+; AMD Zen v1
+CLZERO		void				[	0f 01 fc]				X64,FUTURE,AMD
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
