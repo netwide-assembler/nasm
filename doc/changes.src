@@ -14,6 +14,8 @@ since 2007.
 
 \b Fix error when not specifying a list file.
 
+\b Add the \c{CLZERO} instruction.
+
 
 \S{cl-2.12} Version 2.12
 
