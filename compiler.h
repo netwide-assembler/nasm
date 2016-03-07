@@ -72,12 +72,6 @@
 #define __STDC_LIMIT_MACROS	1
 #define __STDC_FORMAT_MACROS	1
 
-#ifdef __GNUC__
-# define _unused	__attribute__((unused))
-#else
-# define _unused
-#endif
-
 /* Some versions of MSVC have these only with underscores in front */
 #include <stddef.h>
 #include <stdarg.h>

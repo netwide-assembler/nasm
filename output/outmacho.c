@@ -300,9 +300,6 @@ static uint64_t rel_padcnt = 0;
 #define alignptr(x) \
     ALIGN(x, fmt.ptrsize)	/* align x to output format width */
 
-static void debug_reloc (struct reloc *);
-static void debug_section_relocs (struct section *) _unused;
-
 static struct section *get_section_by_name(const char *segname,
                                            const char *sectname)
 {
@@ -1593,30 +1590,6 @@ static void macho_cleanup(int debuginfo)
     nasm_free(extdefsyms);
     nasm_free(undefsyms);
     nasm_free(sectstab);
-}
-
-/* Debugging routines.  */
-static void debug_reloc (struct reloc *r)
-{
-    fprintf (stdout, "reloc:\n");
-    fprintf (stdout, "\taddr: %"PRId32"\n", r->addr);
-    fprintf (stdout, "\tsnum: %d\n", r->snum);
-    fprintf (stdout, "\tpcrel: %d\n", r->pcrel);
-    fprintf (stdout, "\tlength: %d\n", r->length);
-    fprintf (stdout, "\text: %d\n", r->ext);
-    fprintf (stdout, "\ttype: %d\n", r->type);
-}
-
-static void debug_section_relocs (struct section *s)
-{
-    struct reloc *r = s->relocs;
-
-    fprintf (stdout, "relocs for section %s:\n\n", s->sectname);
-
-    while (r != NULL) {
-	debug_reloc (r);
-	r = r->next;
-    }
 }
 
 #ifdef OF_MACHO32
