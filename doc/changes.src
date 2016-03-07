@@ -12,6 +12,10 @@ since 2007.
 
 \b Portability fixes for some platforms.
 
+\b Fix error when not specifying a list file.
+
+\b Add \c{CLZERO}, \c{MONITORX} and \c{MWAITX} instructions.
+
 
 \S{cl-2.12} Version 2.12
 

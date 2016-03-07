@@ -343,7 +343,7 @@ static void as86_out(int32_t segto, const void *data,
             bsslen += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         as86_sect_write(s, data, size);
         as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
@@ -364,7 +364,7 @@ static void as86_out(int32_t segto, const void *data,
         }
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+            nasm_panic(0, "intra-segment OUT_REL2ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"
@@ -377,7 +377,7 @@ static void as86_out(int32_t segto, const void *data,
         }
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"
@@ -518,7 +518,7 @@ static void as86_set_rsize(int size)
             fputc(0x03, ofile);
             break;
         default:
-            nasm_error(ERR_PANIC, "bizarre relocation size %d", size);
+            nasm_panic(0, "bizarre relocation size %d", size);
 	    break;
         }
     }

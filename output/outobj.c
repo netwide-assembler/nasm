@@ -840,7 +840,7 @@ static void obj_deflabel(char *name, int32_t segment,
     if (!any_segs && segment == first_seg) {
         int tempint;            /* ignored */
         if (segment != obj_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_error(ERR_PANIC, "strange segment conditions in OBJ driver");
+            nasm_panic(0, "strange segment conditions in OBJ driver");
     }
 
     for (seg = seghead; seg && is_global; seg = seg->next)
@@ -1046,7 +1046,7 @@ static void obj_out(int32_t segto, const void *data,
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != obj_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_error(ERR_PANIC, "strange segment conditions in OBJ driver");
+            nasm_panic(0, "strange segment conditions in OBJ driver");
     }
 
     /*
@@ -1056,7 +1056,7 @@ static void obj_out(int32_t segto, const void *data,
         if (seg->index == segto)
             break;
     if (!seg)
-        nasm_error(ERR_PANIC, "code directed to nonexistent segment?");
+        nasm_panic(0, "code directed to nonexistent segment?");
 
     orp = seg->orp;
     orp->parm[0] = seg->currentpos;
@@ -1193,7 +1193,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
         locat = FIX_16_SELECTOR;
         seg--;
         if (bytes != 2)
-            nasm_error(ERR_PANIC, "OBJ: 4-byte segment base fixup got"
+            nasm_panic(0, "OBJ: 4-byte segment base fixup got"
                   " through sanity check");
     } else {
         base = false;
@@ -1239,7 +1239,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
             if (eb)
                 method = 6, e = eb->exts[i], tidx = e->index;
             else
-                nasm_error(ERR_PANIC,
+                nasm_panic(0,
                       "unrecognised segment value in obj_write_fixup");
         }
     }
@@ -1298,7 +1298,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
                 if (eb)
                     method |= 0x20, fidx = eb->exts[i]->index;
                 else
-                    nasm_error(ERR_PANIC,
+                    nasm_panic(0,
                           "unrecognised WRT value in obj_write_fixup");
             }
         }
@@ -1447,7 +1447,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                         if (!strcmp(grp->name, "FLAT"))
                             break;
                     if (!grp)
-                        nasm_error(ERR_PANIC, "failure to define FLAT?!");
+                        nasm_panic(0, "failure to define FLAT?!");
                 }
                 seg->grp = grp;
             } else if (!nasm_strnicmp(p, "class=", 6))
@@ -2457,7 +2457,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != obj_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_error(ERR_PANIC, "strange segment conditions in OBJ driver");
+            nasm_panic(0, "strange segment conditions in OBJ driver");
     }
 
     /*
@@ -2467,7 +2467,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
         if (seg->index == segto)
             break;
     if (!seg)
-        nasm_error(ERR_PANIC, "lineno directed to nonexistent segment?");
+        nasm_panic(0, "lineno directed to nonexistent segment?");
 
 /*    for (fn = fnhead; fn; fn = fnhead->next) */
     for (fn = fnhead; fn; fn = fn->next)        /* fbk - Austin Lunnen - John Fine */

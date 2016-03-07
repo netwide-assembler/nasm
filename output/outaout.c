@@ -630,7 +630,7 @@ static void aout_out(int32_t segto, const void *data,
             sbss.len += size;
     } else if (type == OUT_RAWDATA) {
         if (segment != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);
@@ -682,7 +682,7 @@ static void aout_out(int32_t segto, const void *data,
         aout_sect_write(s, mydata, asize);
     } else if (type == OUT_REL2ADR) {
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL2ADR");
+            nasm_panic(0, "intra-segment OUT_REL2ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "a.out format does not support"
                   " segment base references");
@@ -712,7 +712,7 @@ static void aout_out(int32_t segto, const void *data,
         aout_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "a.out format does not support"
                   " segment base references");

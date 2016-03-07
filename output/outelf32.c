@@ -421,7 +421,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             /* we have to be sure at least text section is there */
             int tempint;
             if (segment != elf_section_names(".text", 2, &tempint))
-                nasm_error(ERR_PANIC, "strange segment conditions in ELF driver");
+                nasm_panic(0, "strange segment conditions in ELF driver");
         }
         for (i = 0; i < nsects; i++) {
             if (segment == sects[i]->index) {
@@ -684,7 +684,7 @@ static void elf_out(int32_t segto, const void *data,
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
-            nasm_error(ERR_PANIC, "strange segment conditions in ELF driver");
+            nasm_panic(0, "strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
             i = nsects - 1;
@@ -721,7 +721,7 @@ static void elf_out(int32_t segto, const void *data,
 
     case OUT_RAWDATA:
         if (segment != NO_SEG)
-            nasm_error(ERR_PANIC, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, size);
 	break;
 
@@ -844,7 +844,7 @@ static void elf_out(int32_t segto, const void *data,
 
     case OUT_REL4ADR:
         if (segment == segto)
-            nasm_error(ERR_PANIC, "intra-segment OUT_REL4ADR");
+            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "ELF format does not support"
                   " segment base references");

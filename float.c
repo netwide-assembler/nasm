@@ -733,7 +733,7 @@ static int to_float(const char *str, int s, uint8_t *result,
     const char *strend;
 
     if (!str[0]) {
-        nasm_error(ERR_PANIC,
+        nasm_panic(0,
               "internal errror: empty string passed to float_const");
         return 0;
     }
@@ -916,7 +916,7 @@ int float_const(const char *number, int sign, uint8_t *result, int bytes)
     case 16:
         return to_float(number, sign, result, &ieee_128);
     default:
-        nasm_error(ERR_PANIC, "strange value %d passed to float_const", bytes);
+        nasm_panic(0, "strange value %d passed to float_const", bytes);
         return 0;
     }
 }

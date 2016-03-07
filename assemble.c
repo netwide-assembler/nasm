@@ -348,7 +348,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
         uint8_t *q = p;
         
         if (asize > 8) {
-            nasm_error(ERR_PANIC, "OUT_ADDRESS with size > 8");
+            nasm_panic(0, "OUT_ADDRESS with size > 8");
             return;
         }
 
@@ -591,7 +591,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
         int64_t insn_size = calcsize(segment, offset, bits, instruction, temp);
         itimes = instruction->times;
         if (insn_size < 0)  /* shouldn't be, on pass two */
-            nasm_error(ERR_PANIC, "errors made it through from pass one");
+            nasm_panic(0, "errors made it through from pass one");
         else
             while (itimes--) {
                 for (j = 0; j < MAXPREFIX; j++) {
@@ -697,7 +697,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     case P_none:
                         break;
                     default:
-                        nasm_error(ERR_PANIC, "invalid instruction prefix");
+                        nasm_panic(0, "invalid instruction prefix");
                     }
                     if (c != 0) {
                         out(offset, segment, &c, OUT_RAWDATA, 1,
@@ -1301,7 +1301,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         default:
-            nasm_error(ERR_PANIC, "internal instruction table corrupt"
+            nasm_panic(0, "internal instruction table corrupt"
                     ": instruction code \\%o (0x%02X) given", c, c);
             break;
         }
@@ -1822,7 +1822,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0340:
             if (ins->oprs[0].segment != NO_SEG)
-                nasm_error(ERR_PANIC, "non-constant BSS size in pass two");
+                nasm_panic(0, "non-constant BSS size in pass two");
             else {
                 int64_t size = ins->oprs[0].offset;
                 if (size > 0)
@@ -1967,7 +1967,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         default:
-            nasm_error(ERR_PANIC, "internal instruction table corrupt"
+            nasm_panic(0, "internal instruction table corrupt"
                     ": instruction code \\%o (0x%02X) given", c, c);
             break;
         }
@@ -1977,14 +1977,14 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 static opflags_t regflag(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_error(ERR_PANIC, "invalid operand passed to regflag()");
+        nasm_panic(0, "invalid operand passed to regflag()");
     return nasm_reg_flags[o->basereg];
 }
 
 static int32_t regval(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_error(ERR_PANIC, "invalid operand passed to regval()");
+        nasm_panic(0, "invalid operand passed to regval()");
     return nasm_regvals[o->basereg];
 }
 
@@ -1994,7 +1994,7 @@ static int op_rexflags(const operand * o, int mask)
     int val;
 
     if (!is_register(o->basereg))
-        nasm_error(ERR_PANIC, "invalid operand passed to op_rexflags()");
+        nasm_panic(0, "invalid operand passed to op_rexflags()");
 
     flags = nasm_reg_flags[o->basereg];
     val = nasm_regvals[o->basereg];

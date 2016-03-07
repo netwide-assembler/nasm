@@ -75,7 +75,8 @@ TAGS
 /version.h
 /version.mac
 /version.mak
-/version.nsh
 /version.sed
 /iflag.c
 /iflaggen.h
+/nsis/version.nsh
+/nsis/arch.nsh

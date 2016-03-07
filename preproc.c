@@ -4884,7 +4884,7 @@ static char *pp_getline(void)
     Token *tline;
 
     real_verror = nasm_set_verror(pp_verror);
-    
+
     while (1) {
         /*
          * Fetch a tokenized line, either from the macro-expansion
@@ -5005,7 +5005,7 @@ static char *pp_getline(void)
                 fclose(i->fp);
                 if (i->conds) {
                     /* nasm_error can't be conditionally suppressed */
-                    nasm_error(ERR_FATAL,
+                    nasm_fatal(0,
                                "expected `%%endif' before end of file");
                 }
                 /* only set line and file name if there's a next node */
@@ -5100,7 +5100,7 @@ done:
 static void pp_cleanup(int pass)
 {
     real_verror = nasm_set_verror(pp_verror);
-    
+
     if (defining) {
         if (defining->name) {
             nasm_error(ERR_NONFATAL,
@@ -5115,7 +5115,7 @@ static void pp_cleanup(int pass)
     }
 
     nasm_set_verror(real_verror);
-    
+
     while (cstk)
         ctx_pop();
     free_macros();
@@ -5185,7 +5185,7 @@ static void pp_pre_define(char *definition)
     char *equals;
 
     real_verror = nasm_set_verror(pp_verror);
-    
+
     equals = strchr(definition, '=');
     space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
     def = new_Token(space, TOK_PREPROC_ID, "%define", 0);

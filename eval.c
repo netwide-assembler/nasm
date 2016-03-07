@@ -752,7 +752,7 @@ static int64_t eval_ifunc(int64_t val, enum ifunc func)
         break;
 
     default:
-        nasm_error(ERR_PANIC, "invalid IFUNC token %d", func);
+        nasm_panic(0, "invalid IFUNC token %d", func);
         rv = 0;
         break;
     }

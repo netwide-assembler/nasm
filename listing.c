@@ -128,7 +128,7 @@ static void list_emit(void)
 
 static void list_init(const char *fname)
 {
-    if (!fname) {
+    if (!fname || fname[0] == '\0') {
 	listfp = NULL;
 	return;
     }
@@ -337,4 +337,3 @@ static const struct lfmt nasm_list = {
 };
 
 const struct lfmt *lfmt = &nasm_list;
- 

@@ -38,6 +38,8 @@ NROFF		= @NROFF@
 ASCIIDOC	= @ASCIIDOC@
 XMLTO		= @XMLTO@
 
+MAKENSIS	= makensis
+
 MKDIR		= mkdir
 RM		= rm
 
@@ -57,7 +59,7 @@ endif
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
-.PHONY: manpages
+.PHONY: manpages nsis
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -73,7 +75,6 @@ endif
 
 .xml.1:
 	$(XMLTO) man --skip-validation $< 2>/dev/null
-
 
 #-- Begin File Lists --#
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
@@ -103,7 +104,7 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
 	disp8.$(O) iflag.$(O)
 #-- End File Lists --#
 
-all: nasm$(X) ndisasm$(X) manpages rdf
+all: nasm$(X) ndisasm$(X) rdf
 
 nasm$(X): $(NASM) $(LIBOBJS)
 	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(LIBOBJS) $(LIBS)
@@ -142,8 +143,8 @@ version.sed: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
 version.mak: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
-version.nsh: version version.pl
-	$(RUNPERL) $(srcdir)/version.pl nsis < $(srcdir)/version > version.nsh
+nsis/version.nsh: version version.pl
+	$(RUNPERL) $(srcdir)/version.pl nsis < $(srcdir)/version > nsis/version.nsh
 
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
@@ -198,9 +199,18 @@ PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regdis.h regvals.c \
 	  tokhash.c tokens.h pptok.h pptok.c pptok.ph \
 	  directiv.c directiv.h \
-	  version.h version.mac version.mak version.nsh \
-	  iflag.c iflaggen.h
+	  iflag.c iflaggen.h \
+	  version.h version.mac version.mak nsis/version.nsh
 perlreq: $(PERLREQ)
+
+# NSIS is not built except by explicit request, as it only applies to
+# Windows platforms
+nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
+	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
+
+# Should only be done after "make everything"
+nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
+	$(MAKENSIS) nsis/nasm.nsi
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1
@@ -218,7 +228,9 @@ clean:
 	$(RM) -f lib/*.$(O) lib/*.s lib/*.i
 	$(RM) -f output/*.$(O) output/*.s output/*.i
 	$(RM) -f nasm$(X) ndisasm$(X)
+	$(RM) -f nasm-*-installer-*.exe
 	$(RM) -f tags TAGS
+	$(RM) -f nsis/arch.nsh
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
@@ -264,7 +276,7 @@ doc:
 doc_install install_doc:
 	cd doc && $(MAKE) install
 
-everything: all doc rdf
+everything: all manpages doc rdf
 
 install_everything: everything install install_doc install_rdf
 
