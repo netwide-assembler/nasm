@@ -887,7 +887,7 @@ struct dfmt {
     /*
      * debug_deflabel - called whenever a label is defined. Parameters
      * are the same as to 'symdef()' in the output format. This function
-     * would be called before the output format version.
+     * is called after the output format version.
      */
 
     void (*debug_deflabel)(char *name, int32_t segment, int64_t offset,
