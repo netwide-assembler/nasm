@@ -47,7 +47,10 @@ OPTIONS
 	formats, use the *-y* option (for example *-felf -y*).
 
 *-g*::
-	Causes *nasm* to generate debug information in selected format.
+	Causes *nasm* to generate debug information.
+
+*-g*'format'::
+	Equivalent to **-g -F**__ format__.
 
 *-h*::
 	Causes *nasm* to exit immediately, after giving a summary of its

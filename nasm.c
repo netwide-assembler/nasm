@@ -85,7 +85,9 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list args);
 static void nasm_verror_common(int severity, const char *fmt, va_list args);
 static void usage(void);
 
-static int using_debug_info, opt_verbose_info;
+static bool using_debug_info, opt_verbose_info;
+static const char *debug_format;
+
 bool tasm_compatible_mode = false;
 int pass0, passn;
 int globalrel = 0;
@@ -356,11 +358,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* If debugging info is disabled, suppress any debug calls */
-    if (!using_debug_info)
+    if (!using_debug_info) {
+        /* No debug info, redirect to the null backend (empty stubs) */
         dfmt = &null_debug_form;
-    else if (!dfmt)
+    } else if (!debug_format) {
+        /* Default debug format for this backend */
 	dfmt = ofmt->default_dfmt;
+    } else {
+        dfmt = dfmt_find(ofmt, debug_format);
+        if (!dfmt) {
+            nasm_fatal(ERR_NOFILE | ERR_USAGE,
+                       "unrecognized debug format `%s' for"
+                       " output format `%s'",
+                       debug_format, ofmt->shortname);
+        }
+    }
 
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
@@ -464,7 +476,7 @@ int main(int argc, char **argv)
         assemble_file(inname, depend_ptr);
 
         if (!terminate_after_phase) {
-            ofmt->cleanup(using_debug_info);
+            ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
             if (ferror(ofile))
@@ -664,7 +676,6 @@ static bool process_arg(char *p, char *q)
                            "unrecognised output format `%s' - "
                            "use -hf for a list", param);
             }
-	    dfmt = NULL;
             break;
 
         case 'O':       /* Optimization level */
@@ -742,14 +753,8 @@ static bool process_arg(char *p, char *q)
             break;
 
         case 'F':       /* specify debug format */
-            dfmt = dfmt_find(ofmt, param);
-            if (!dfmt) {
-                nasm_fatal(ERR_NOFILE | ERR_USAGE,
-                           "unrecognized debug format `%s' for"
-                           " output format `%s'",
-                           param, ofmt->shortname);
-            }
             using_debug_info = true;
+            debug_format = param;
             break;
 
         case 'X':       /* specify error reporting format */
@@ -765,6 +770,8 @@ static bool process_arg(char *p, char *q)
 
         case 'g':
             using_debug_info = true;
+            if (p[2])
+                debug_format = nasm_skip_spaces(p + 2);
             break;
 
         case 'h':
@@ -773,8 +780,7 @@ static bool process_arg(char *p, char *q)
                  "[-l listfile]\n"
                  "            [options...] [--] filename\n"
                  "    or nasm -v (or --v) for version info\n\n"
-                 "    -t          assemble in SciTech TASM compatible mode\n"
-                 "    -g          generate debug information in selected format\n");
+                 "    -t          assemble in SciTech TASM compatible mode\n");
             printf
                 ("    -E (or -e)  preprocess only (writes output to stdout by default)\n"
                  "    -a          don't preprocess (assemble only)\n"
@@ -787,7 +793,9 @@ static bool process_arg(char *p, char *q)
                  "    -MP         emit phony target\n\n"
                  "    -Z<file>    redirect error messages to file\n"
                  "    -s          redirect error messages to stdout\n\n"
+                 "    -g          generate debugging information\n\n"
                  "    -F format   select a debugging format\n\n"
+                 "    -gformat    same as -g -F format\n\n"
                  "    -o outfile  write output to an outfile\n\n"
                  "    -f format   select an output format\n\n"
                  "    -l listfile write listing to a listfile\n\n"

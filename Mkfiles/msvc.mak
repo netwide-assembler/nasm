@@ -5,6 +5,9 @@
 #
 # Make sure to put the appropriate directories in your PATH, in
 # the case of MSVC++ 2005, they are ...\VC\bin and ...\Common7\IDE.
+#
+# This is typically done by opening the Visual Studio Command Prompt.
+#
 
 top_srcdir	= .
 srcdir		= .
@@ -18,7 +21,7 @@ mandir		= $(prefix)/man
 CFLAGS		= /Od /Zi
 LDFLAGS		= /DEBUG
 !ELSE
-CFLAGS		= /O2 /Ox /Oy
+CFLAGS		= /O2
 !ENDIF
 
 CC		= cl
@@ -264,7 +267,7 @@ listing.$(O): listing.c compiler.h directiv.h insnsi.h listing.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 macros.$(O): macros.c compiler.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outform.h pptok.h preproc.h regs.h tables.h
-md5c.$(O): md5c.c md5.h
+md5c.$(O): md5c.c compiler.h md5.h
 nasm.$(O): nasm.c assemble.h compiler.h directiv.h eval.h float.h iflag.h \
  iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h opflags.h \
  output/outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \

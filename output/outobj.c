@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -625,12 +625,13 @@ static struct ExpDef {
 static int32_t obj_entry_seg, obj_entry_ofs;
 
 const struct ofmt of_obj;
+static const struct dfmt borland_debug_form;
 
 /* The current segment */
 static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
-static void obj_write_file(int debuginfo);
+static void obj_write_file(void);
 static int obj_directive(enum directives, char *, int);
 
 static void obj_init(void)
@@ -667,9 +668,10 @@ static int obj_set_info(enum geninfo type, char **val)
 
     return 0;
 }
-static void obj_cleanup(int debuginfo)
+
+static void obj_cleanup(void)
 {
-    obj_write_file(debuginfo);
+    obj_write_file();
     dfmt->cleanup();
     while (seghead) {
         struct Segment *segtmp = seghead;
@@ -1916,7 +1918,7 @@ static void obj_filename(char *inname, char *outname)
     standard_extension(inname, outname, ".obj");
 }
 
-static void obj_write_file(int debuginfo)
+static void obj_write_file(void)
 {
     struct Segment *seg, *entry_seg_ptr = 0;
     struct FileName *fn;
@@ -1928,6 +1930,7 @@ static void obj_write_file(int debuginfo)
     struct ExpDef *export;
     int lname_idx;
     ObjRecord *orp;
+    const bool debuginfo = (dfmt == &borland_debug_form);
 
     /*
      * Write the THEADR module header.
@@ -2500,18 +2503,14 @@ static void dbgbi_deflabel(char *name, int32_t segment,
     (void)special;
 
     /*
+     * Note: ..[^@] special symbols are filtered in labels.c
+     */
+
+    /*
      * If it's a special-retry from pass two, discard it.
      */
     if (is_global == 3)
         return;
-
-    /*
-     * First check for the double-period, signifying something
-     * unusual.
-     */
-    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        return;
-    }
 
     /*
      * Case (i):

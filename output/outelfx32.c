@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -160,8 +160,6 @@ static struct elf_symbol *lastsym;
 
 /* common debugging routines */
 static void debug_typevalue(int32_t);
-static void debug_deflabel(char *, int32_t, int64_t, int, char *);
-static void debug_directive(const char *, const char *);
 
 /* stabs debugging routines */
 static void stabs_linenum(const char *filename, int32_t linenumber, int32_t);
@@ -222,12 +220,10 @@ static void elf_init(void)
 
 }
 
-static void elf_cleanup(int debuginfo)
+static void elf_cleanup(void)
 {
     struct elf_reloc *r;
     int i;
-
-    (void)debuginfo;
 
     elf_write();
     for (i = 0; i < nsects; i++) {
@@ -245,9 +241,7 @@ static void elf_cleanup(int debuginfo)
     saa_free(syms);
     raa_free(bsym);
     saa_free(strs);
-    if (dfmt) {
-        dfmt->cleanup();
-    }
+    dfmt->cleanup();
 }
 
 /* add entry to the elf .shstrtab section */
@@ -708,13 +702,11 @@ static void elf_out(int32_t segto, const void *data,
     }
 
     /* again some stabs debugging stuff */
-    if (dfmt) {
-        sinfo.offset = s->len;
-        sinfo.section = i;
-        sinfo.segto = segto;
-        sinfo.name = s->name;
-        dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
-    }
+    sinfo.offset = s->len;
+    sinfo.section = i;
+    sinfo.segto = segto;
+    sinfo.name = s->name;
+    dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
@@ -1390,8 +1382,8 @@ static const struct dfmt df_dwarf = {
     "dwarf",
     dwarf_init,
     dwarf_linenum,
-    debug_deflabel,
-    debug_directive,
+    null_debug_deflabel,
+    null_debug_directive,
     debug_typevalue,
     dwarf_output,
     dwarf_cleanup
@@ -1401,8 +1393,8 @@ static const struct dfmt df_stabs = {
     "stabs",
     null_debug_init,
     stabs_linenum,
-    debug_deflabel,
-    debug_directive,
+    null_debug_deflabel,
+    null_debug_directive,
     debug_typevalue,
     stabs_output,
     stabs_cleanup
@@ -1432,22 +1424,6 @@ const struct ofmt of_elfx32 = {
 };
 
 /* common debugging routines */
-static void debug_deflabel(char *name, int32_t segment, int64_t offset,
-                             int is_global, char *special)
-{
-    (void)name;
-    (void)segment;
-    (void)offset;
-    (void)is_global;
-    (void)special;
-}
-
-static void debug_directive(const char *directive, const char *params)
-{
-    (void)directive;
-    (void)params;
-}
-
 static void debug_typevalue(int32_t type)
 {
     int32_t stype, ssize;

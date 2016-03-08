@@ -188,8 +188,6 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
 static void cv8_deflabel(char *name, int32_t segment, int64_t offset,
         int is_global, char *special)
 {
-    int ret;
-    size_t len;
     struct cv8_symbol *sym;
     struct coff_Section *s;
 
@@ -214,21 +212,8 @@ static void cv8_deflabel(char *name, int32_t segment, int64_t offset,
     sym->size = 0;
     sym->typeindex = 0;
 
-    /* handle local labels */
-    if (name[0] == '.' && name[1] != '.' && cv8_state.last_sym != NULL) {
-        len = strlen(cv8_state.last_sym->name) + strlen(name);
-        sym->name = nasm_malloc(len + 1);
-        ret = snprintf(sym->name, len + 1, "%s%s",
-                cv8_state.last_sym->name, name);
-        nasm_assert(ret > 0 && (size_t)ret == len);
-    } else {
-        len = strlen(name);
-        sym->name = nasm_malloc(len + 1);
-        ret = snprintf(sym->name, len + 1, "%s", name);
-        nasm_assert(ret > 0 && (size_t)ret == len);
-    }
-
-    cv8_state.symbol_lengths += len + 1;
+    sym->name = nasm_strdup(name);
+    cv8_state.symbol_lengths += strlen(sym->name) + 1;
 
     if (cv8_state.last_sym && cv8_state.last_sym->section == segment)
         cv8_state.last_sym->size = offset - cv8_state.last_sym->secrel;

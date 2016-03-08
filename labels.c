@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -125,6 +125,22 @@ static bool initialized = false;
 
 char lprefix[PREFIX_MAX] = { 0 };
 char lpostfix[PREFIX_MAX] = { 0 };
+
+/*
+ * Emit a symdef to the output and the debug format backends.
+ */
+static void out_symdef(char *name, int32_t segment, int64_t offset,
+                       int is_global, char *special)
+{
+    ofmt->symdef(name, segment, offset, is_global, special);
+
+    /*
+     * NASM special symbols are not passed to the debug format; none
+     * of the current backends want to see them.
+     */
+    if (!(name[0] == '.' && name[1] == '.' && name[2] != '@'))
+        dfmt->debug_deflabel(name, segment, offset, is_global, special);
+}
 
 /*
  * Internal routine: finds the `union label' corresponding to the
@@ -260,17 +276,13 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
             snprintf(xsymbol, slen, "%s%s%s", lprefix, lptr->defn.label,
                      lpostfix);
 
-            ofmt->symdef(xsymbol, segment, offset, exi,
-                         special ? special : lptr->defn.special);
-            dfmt->debug_deflabel(xsymbol, segment, offset, exi,
-                                               special ? special : lptr->defn.special);
-/**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
+            out_symdef(xsymbol, segment, offset, exi,
+                       special ? special : lptr->defn.special);
+            /**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
         } else {
             if ((lptr->defn.is_global & (GLOBAL_BIT | EXTERN_BIT)) != EXTERN_BIT) {
-                ofmt->symdef(lptr->defn.label, segment, offset, exi,
-                             special ? special : lptr->defn.special);
-                dfmt->debug_deflabel(label, segment, offset, exi,
-                                                   special ? special : lptr->defn.special);
+                out_symdef(lptr->defn.label, segment, offset, exi,
+                           special ? special : lptr->defn.special);
             }
         }
     }   /* if (pass0 == 1) */
@@ -325,17 +337,13 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
             snprintf(xsymbol, slen, "%s%s%s", lprefix, lptr->defn.label,
                      lpostfix);
 
-            ofmt->symdef(xsymbol, segment, offset, exi,
-                         special ? special : lptr->defn.special);
-            dfmt->debug_deflabel(xsymbol, segment, offset, exi,
-                                               special ? special : lptr->defn.special);
-/**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
+            out_symdef(xsymbol, segment, offset, exi,
+                       special ? special : lptr->defn.special);
+            /**	nasm_free(xsymbol);  ! outobj.c stores the pointer; ouch!!! **/
         } else {
             if ((lptr->defn.is_global & (GLOBAL_BIT | EXTERN_BIT)) != EXTERN_BIT) {
-                ofmt->symdef(lptr->defn.label, segment, offset, exi,
-                             special ? special : lptr->defn.special);
-                dfmt->debug_deflabel(label, segment, offset, exi,
-                                                   special ? special : lptr->defn.special);
+                out_symdef(lptr->defn.label, segment, offset, exi,
+                           special ? special : lptr->defn.special);
             }
         }
     }   /* if (pass0 == 1) */
@@ -369,10 +377,8 @@ void define_common(char *label, int32_t segment, int32_t size, char *special)
     if (pass0 == 0)
         return;
 
-    ofmt->symdef(lptr->defn.label, segment, size, 2,
-                 special ? special : lptr->defn.special);
-    dfmt->debug_deflabel(lptr->defn.label, segment, size, 2,
-                                       special ? special : lptr->defn.special);
+    out_symdef(lptr->defn.label, segment, size, 2,
+               special ? special : lptr->defn.special);
 }
 
 void declare_as_global(char *label, char *special)

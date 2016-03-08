@@ -172,7 +172,7 @@ listing.o: listing.c compiler.h config.h directiv.h insnsi.h listing.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 macros.o: macros.c compiler.h config.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h tables.h
-md5c.o: md5c.c md5.h
+md5c.o: md5c.c compiler.h config.h md5.h
 nasm.o: nasm.c assemble.h compiler.h config.h directiv.h eval.h float.h \
  iflag.h iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h \
  opflags.h outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \

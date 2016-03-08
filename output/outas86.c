@@ -138,11 +138,9 @@ static void as86_init(void)
     as86_add_string(as86_module);
 }
 
-static void as86_cleanup(int debuginfo)
+static void as86_cleanup(void)
 {
     struct Piece *p;
-
-    (void)debuginfo;
 
     as86_write();
     saa_free(stext.data);
