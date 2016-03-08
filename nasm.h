@@ -1117,13 +1117,4 @@ extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */
 
-/*
- * NASM version strings, defined in ver.c
- */
-extern const char nasm_version[];
-extern const char nasm_date[];
-extern const char nasm_compile_options[];
-extern const char nasm_comment[];
-extern const char nasm_signature[];
-
 #endif

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,21 +31,17 @@
  *
  * ----------------------------------------------------------------------- */
 
-#include "ver.h"
-#include "version.h"
+/*
+ * NASM version strings, defined in ver.c
+ */
 
-/* This is printed when entering nasm -v */
-const char nasm_version[] = NASM_VER;
-const char nasm_date[] = __DATE__;
-const char nasm_compile_options[] = ""
-#ifdef DEBUG
-    " with -DDEBUG"
-#endif
-    ;
+#ifndef NASM_VER_H
+#define NASM_VER_H
 
-/* These are used by some backends. */
-const char nasm_comment[] =
-    "The Netwide Assembler " NASM_VER;
+extern const char nasm_version[];
+extern const char nasm_date[];
+extern const char nasm_compile_options[];
+extern const char nasm_comment[];
+extern const char nasm_signature[];
 
-const char nasm_signature[] =
-    "NASM " NASM_VER;
+#endif /* NASM_VER_H */

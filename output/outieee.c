@@ -77,6 +77,8 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "ver.h"
+
 #include "output/outform.h"
 #include "output/outlib.h"
 

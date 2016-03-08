@@ -176,6 +176,7 @@ nasmlib.o: nasmlib.c compiler.h config.h directiv.h iflag.h iflaggen.h \
 realpath.o: realpath.c compiler.h config.h nasmlib.h
 snprintf.o: snprintf.c compiler.h config.h nasmlib.h
 strlcpy.o: strlcpy.c compiler.h config.h
+ver.o: ver.c ver.h version.h
 vsnprintf.o: vsnprintf.c compiler.h config.h nasmlib.h
 listing.o: listing.c compiler.h config.h directiv.h insnsi.h listing.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
@@ -184,10 +185,10 @@ macros.o: macros.c compiler.h config.h directiv.h hashtbl.h insnsi.h nasm.h \
 nasm.o: nasm.c assemble.h compiler.h config.h directiv.h eval.h float.h \
  iflag.h iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h \
  opflags.h outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
- tables.h tokens.h
+ tables.h tokens.h ver.h
 ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
- regs.h sync.h tables.h tokens.h
+ regs.h sync.h tables.h tokens.h ver.h
 codeview.o: codeview.c compiler.h config.h directiv.h insnsi.h md5.h nasm.h \
  nasmlib.h opflags.h outlib.h pecoff.h pptok.h preproc.h regs.h saa.h \
  tables.h version.h
@@ -214,17 +215,19 @@ outelf.o: outelf.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  regs.h saa.h tables.h
 outelf32.o: outelf32.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h stabs.h \
- pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h
+ pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h ver.h
 outelf64.o: outelf64.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h stabs.h \
- pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h
+ pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h ver.h
 outelfx32.o: outelfx32.c compiler.h config.h directiv.h eval.h insnsi.h \
  nasm.h nasmlib.h opflags.h dwarf.h elf.h outelf.h outform.h outlib.h \
- stabs.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h
+ stabs.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h \
+ ver.h
 outform.o: outform.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h pptok.h preproc.h regs.h tables.h
 outieee.o: outieee.c compiler.h config.h directiv.h insnsi.h nasm.h \
- nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h tables.h
+ nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h tables.h \
+ ver.h
 outlib.o: outlib.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 outmacho.o: outmacho.c compiler.h config.h directiv.h insnsi.h nasm.h \
@@ -232,7 +235,7 @@ outmacho.o: outmacho.c compiler.h config.h directiv.h insnsi.h nasm.h \
  regs.h saa.h tables.h
 outobj.o: outobj.c compiler.h config.h directiv.h eval.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h regs.h stdscan.h \
- tables.h
+ tables.h ver.h
 outrdf2.o: outrdf2.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outform.h outlib.h pptok.h preproc.h rdoff.h regs.h \
  saa.h tables.h
@@ -263,5 +266,3 @@ sync.o: sync.c compiler.h config.h nasmlib.h sync.h
 tokhash.o: tokhash.c compiler.h config.h directiv.h hashtbl.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h stdscan.h tables.h tokens.h
-ver.o: ver.c compiler.h config.h directiv.h insnsi.h nasm.h nasmlib.h \
- opflags.h pptok.h preproc.h regs.h tables.h version.h

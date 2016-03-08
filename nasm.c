@@ -61,6 +61,7 @@
 #include "output/outform.h"
 #include "listing.h"
 #include "iflag.h"
+#include "ver.h"
 
 /*
  * This is the maximum number of optimization passes to do.  If we ever

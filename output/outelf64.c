@@ -53,6 +53,7 @@
 #include "output/outform.h"
 #include "output/outlib.h"
 #include "rbtree.h"
+#include "ver.h"
 
 #include "output/dwarf.h"
 #include "output/stabs.h"

@@ -49,6 +49,8 @@
 #include "nasmlib.h"
 #include "stdscan.h"
 #include "eval.h"
+#include "ver.h"
+
 #include "output/outform.h"
 #include "output/outlib.h"
 
