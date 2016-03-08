@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -160,8 +160,6 @@ static struct elf_symbol *lastsym;
 
 /* common debugging routines */
 static void debugx32_typevalue(int32_t);
-static void debugx32_deflabel(char *, int32_t, int64_t, int, char *);
-static void debugx32_directive(const char *, const char *);
 
 /* stabs debugging routines */
 static void stabsx32_linenum(const char *filename, int32_t linenumber, int32_t);
@@ -1390,8 +1388,8 @@ static struct dfmt df_dwarf = {
     "dwarf",
     dwarfx32_init,
     dwarfx32_linenum,
-    debugx32_deflabel,
-    debugx32_directive,
+    null_debug_deflabel,
+    null_debug_directive,
     debugx32_typevalue,
     dwarfx32_output,
     dwarfx32_cleanup
@@ -1401,8 +1399,8 @@ static struct dfmt df_stabs = {
     "stabs",
     null_debug_init,
     stabsx32_linenum,
-    debugx32_deflabel,
-    debugx32_directive,
+    null_debug_deflabel,
+    null_debug_directive,
     debugx32_typevalue,
     stabsx32_output,
     stabsx32_cleanup
@@ -1431,22 +1429,6 @@ struct ofmt of_elfx32 = {
 };
 
 /* common debugging routines */
-static void debugx32_deflabel(char *name, int32_t segment, int64_t offset,
-                             int is_global, char *special)
-{
-    (void)name;
-    (void)segment;
-    (void)offset;
-    (void)is_global;
-    (void)special;
-}
-
-static void debugx32_directive(const char *directive, const char *params)
-{
-    (void)directive;
-    (void)params;
-}
-
 static void debugx32_typevalue(int32_t type)
 {
     int32_t stype, ssize;
