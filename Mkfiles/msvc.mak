@@ -5,6 +5,9 @@
 #
 # Make sure to put the appropriate directories in your PATH, in
 # the case of MSVC++ 2005, they are ...\VC\bin and ...\Common7\IDE.
+#
+# This is typically done by opening the Visual Studio Command Prompt.
+#
 
 top_srcdir	= .
 srcdir		= .
@@ -18,7 +21,7 @@ mandir		= $(prefix)/man
 CFLAGS		= /Od /Zi
 LDFLAGS		= /DEBUG
 !ELSE
-CFLAGS		= /O2 /Ox /Oy
+CFLAGS		= /O2
 !ENDIF
 
 CC		= cl
