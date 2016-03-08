@@ -79,7 +79,7 @@ endif
 #-- Begin File Lists --#
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	raa.$(O) saa.$(O) rbtree.$(O) \
-	realpath.$(O) \
+	realpath.$(O) file.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	directiv.$(O) \
 	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
@@ -333,6 +333,7 @@ eval.$(O): eval.c compiler.h config.h directiv.h eval.h float.h insnsi.h \
  labels.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 exprlib.$(O): exprlib.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+file.$(O): file.c compiler.h config.h nasmlib.h
 float.$(O): float.c compiler.h config.h directiv.h float.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 hashtbl.$(O): hashtbl.c compiler.h config.h directiv.h hashtbl.h insnsi.h \

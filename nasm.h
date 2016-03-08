@@ -479,10 +479,6 @@ enum vex_class {
  * prefixes, we must ensure the enumerations for prefixes and
  * register names do not overlap.
  */
-#ifdef P_WAIT
-# undef P_WAIT			/* Macro defined on some Windows versions */
-#endif
-
 enum prefixes { /* instruction prefixes */
     P_none = 0,
     PREFIX_ENUM_START = REG_ENUM_LIMIT,

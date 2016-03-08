@@ -46,12 +46,6 @@
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
-#ifdef HAVE_IO_H
-# include <io.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 /*
  * tolower table -- avoids a function call on some platforms.

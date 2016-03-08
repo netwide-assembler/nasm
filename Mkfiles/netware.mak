@@ -32,7 +32,7 @@ O = o
 # Edit in Makefile.in, not here!
 NASM =	nasm.o nasmlib.o ver.o \
 	raa.o saa.o rbtree.o \
-	realpath.o \
+	realpath.o file.o \
 	float.o insnsa.o insnsb.o \
 	directiv.o \
 	assemble.o labels.o hashtbl.o crc64.o parser.o \
@@ -147,6 +147,7 @@ eval.o: eval.c compiler.h config.h directiv.h eval.h float.h insnsi.h \
  labels.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 exprlib.o: exprlib.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+file.o: file.c compiler.h config.h nasmlib.h
 float.o: float.c compiler.h config.h directiv.h float.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 hashtbl.o: hashtbl.c compiler.h config.h directiv.h hashtbl.h insnsi.h \

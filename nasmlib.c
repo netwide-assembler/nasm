@@ -162,13 +162,6 @@ no_return nasm_assert_failed(const char *file, int line, const char *msg)
     exit(1);
 }
 
-void nasm_write(const void *ptr, size_t size, FILE *f)
-{
-    size_t n = fwrite(ptr, 1, size, f);
-    if (n != size || ferror(f) || feof(f))
-        nasm_fatal(0, "unable to write output: %s", strerror(errno));
-}
-
 #ifndef nasm_stricmp
 int nasm_stricmp(const char *s1, const char *s2)
 {
@@ -403,94 +396,6 @@ int32_t seg_alloc(void)
     next_seg += 2;
 
     return this_seg;
-}
-
-#ifdef WORDS_LITTLEENDIAN
-
-void fwriteint16_t(uint16_t data, FILE * fp)
-{
-    nasm_write(&data, 2, fp);
-}
-
-void fwriteint32_t(uint32_t data, FILE * fp)
-{
-    nasm_write(&data, 4, fp);
-}
-
-void fwriteint64_t(uint64_t data, FILE * fp)
-{
-    nasm_write(&data, 8, fp);
-}
-
-void fwriteaddr(uint64_t data, int size, FILE * fp)
-{
-    nasm_write(&data, size, fp);
-}
-
-#else /* not WORDS_LITTLEENDIAN */
-
-void fwriteint16_t(uint16_t data, FILE * fp)
-{
-    char buffer[2], *p = buffer;
-    WRITESHORT(p, data);
-    nasm_write(buffer, 2, fp);
-}
-
-void fwriteint32_t(uint32_t data, FILE * fp)
-{
-    char buffer[4], *p = buffer;
-    WRITELONG(p, data);
-    nasm_write(buffer, 4, fp);
-}
-
-void fwriteint64_t(uint64_t data, FILE * fp)
-{
-    char buffer[8], *p = buffer;
-    WRITEDLONG(p, data);
-    nasm_write(buffer, 8, fp);
-}
-
-void fwriteaddr(uint64_t data, int size, FILE * fp)
-{
-    char buffer[8], *p = buffer;
-    WRITEADDR(p, data, size);
-    nasm_write(buffer, size, fp);
-}
-
-#endif
-
-#ifdef HAVE_FILENO		/* Useless without fileno() */
-# ifdef HAVE__CHSIZE_S
-#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
-# elif defined(HAVE__CHSIZE)
-#  define nasm_ftruncate(fd,size) _chsize(fd,size)
-# elif defined(HAVE_FTRUNCATE)
-#  define nasm_ftruncate(fd,size) ftruncate(fd,size)
-# endif
-#endif
-
-void fwritezero(size_t bytes, FILE *fp)
-{
-    size_t blksize;
-
-#ifdef nasm_ftruncate
-    if (bytes >= BUFSIZ && !ferror(fp) && !feof(fp)) {
-	off_t pos = ftello(fp);
-	if (pos >= 0) {
-	    if (!fflush(fp) &&
-		!nasm_ftruncate(fileno(fp), pos + bytes) &&
-		!fseeko(fp, pos+bytes, SEEK_SET))
-		    return;
-	}
-    }
-#endif
-
-    while (bytes) {
-	blksize = (bytes < ZERO_BUF_SIZE) ? bytes : ZERO_BUF_SIZE;
-
-	nasm_write(zero_buffer, blksize, fp);
-	bytes -= blksize;
-    }
 }
 
 void standard_extension(char *inname, char *outname, char *extension)
