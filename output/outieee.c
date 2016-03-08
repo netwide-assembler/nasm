@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -305,7 +305,7 @@ static void ieee_deflabel(char *name, int32_t segment,
      * First check for the double-period, signifying something
      * unusual.
      */
-    if (name[0] == '.' && name[1] == '.') {
+    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         if (!strcmp(name, "..start")) {
             ieee_entry_seg = segment;
             ieee_entry_ofs = offset;
@@ -1398,18 +1398,14 @@ static void dbgls_deflabel(char *name, int32_t segment,
     (void)special;
 
     /*
+     * Note: ..[^@] special symbols are filtered in labels.c
+     */
+
+    /*
      * If it's a special-retry from pass two, discard it.
      */
     if (is_global == 3)
         return;
-
-    /*
-     * First check for the double-period, signifying something
-     * unusual.
-     */
-    if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        return;
-    }
 
     /*
      * Case (i):
