@@ -43,6 +43,31 @@
 # include <unistd.h>
 #endif
 
+/* Missing fseeko/ftello */
+#ifndef HAVE_FSEEKO
+# undef off_t                   /* Just in case it is a macro */
+# ifdef HAVE__FSEEKI64
+#  define fseeko _fseeki64
+#  define ftello _ftelli64
+#  define off_t  int64_t
+# else
+#  define fseeko fseek
+#  define ftello ftell
+#  define off_t  long
+# endif
+#endif
+
+/* Can we adjust the file size without actually writing all the bytes? */
+#ifdef HAVE_FILENO		/* Useless without fileno() */
+# ifdef HAVE__CHSIZE_S
+#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
+# elif defined(HAVE__CHSIZE)
+#  define nasm_ftruncate(fd,size) _chsize(fd,size)
+# elif defined(HAVE_FTRUNCATE)
+#  define nasm_ftruncate(fd,size) ftruncate(fd,size)
+# endif
+#endif
+
 void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);
@@ -104,16 +129,6 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 
 #endif
 
-
-#ifdef HAVE_FILENO		/* Useless without fileno() */
-# ifdef HAVE__CHSIZE_S
-#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
-# elif defined(HAVE__CHSIZE)
-#  define nasm_ftruncate(fd,size) _chsize(fd,size)
-# elif defined(HAVE_FTRUNCATE)
-#  define nasm_ftruncate(fd,size) ftruncate(fd,size)
-# endif
-#endif
 
 void fwritezero(size_t bytes, FILE *fp)
 {

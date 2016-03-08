@@ -93,20 +93,6 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # endif
 #endif
 
-/* Missing fseeko/ftello */
-#ifndef HAVE_FSEEKO
-# undef off_t                   /* Just in case it is a macro */
-# ifdef HAVE__FSEEKI64
-#  define fseeko _fseeki64
-#  define ftello _ftelli64
-#  define off_t  int64_t
-# else
-#  define fseeko fseek
-#  define ftello ftell
-#  define off_t  long
-# endif
-#endif
-
 #if !defined(HAVE_STRLCPY) || !HAVE_DECL_STRLCPY
 size_t strlcpy(char *, const char *, size_t);
 #endif
