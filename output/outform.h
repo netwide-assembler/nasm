@@ -371,7 +371,7 @@ static struct ofmt_alias ofmt_aliases[] = {
 #endif /* BUILD_DRIVERS_ARRAY */
 
 struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias);
-struct dfmt *dfmt_find(struct ofmt *, char *);
+struct dfmt *dfmt_find(struct ofmt *, const char *);
 void ofmt_list(struct ofmt *, FILE *);
 void dfmt_list(struct ofmt *ofmt, FILE * fp);
 extern struct dfmt null_debug_form;

@@ -72,7 +72,7 @@ struct ofmt *ofmt_find(char *name, struct ofmt_alias **ofmt_alias)
     return NULL;
 }
 
-struct dfmt *dfmt_find(struct ofmt *ofmt, char *name)
+struct dfmt *dfmt_find(struct ofmt *ofmt, const char *name)
 {
     struct dfmt **dfp, *df;
 
