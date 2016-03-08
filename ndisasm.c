@@ -43,7 +43,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <inttypes.h>
 
 #include "insns.h"
 #include "nasm.h"

@@ -42,7 +42,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

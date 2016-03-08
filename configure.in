@@ -102,40 +102,14 @@ AC_CHECK_TOOL(STRIP, strip)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-if test $ac_cv_header_stdc = no; then
-  AC_MSG_ERROR([NASM requires ANSI C header files to compile])
-fi
-
-AC_CHECK_HEADERS(limits.h)
-if test $ac_cv_header_limits_h = no; then
-  AC_MSG_ERROR([NASM requires '<limits.h>' to compile])
-fi
-
-dnl Check for <inttypes.h> or add a substitute version
-AC_CHECK_HEADERS(inttypes.h, , CFLAGS="$CFLAGS -I\$(top_srcdir)/inttypes")
-
-dnl The standard header for str*casecmp is <strings.h>
+AC_CHECK_HEADERS(inttypes.h)
 AC_CHECK_HEADERS(strings.h)
-
-dnl Look for <stdbool.h>
 AC_HEADER_STDBOOL
-
-dnl Look for <io.h>
 AC_CHECK_HEADERS(io.h)
-
-dnl Look for <unistd.h>
 AC_CHECK_HEADERS(unistd.h)
-
-dnl Look for <sys/param.h>
 AC_CHECK_HEADERS(sys/param.h)
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(strcspn, ,
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strcspn")]))
-
-AC_CHECK_FUNCS(strspn, ,
-  AC_MSG_ERROR([NASM requires ANSI C (specifically, "strspn")]))
-
 AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
 AC_CHECK_FUNCS(strsep)

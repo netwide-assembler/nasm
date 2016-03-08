@@ -2,7 +2,6 @@
 #define MD5_H
 
 #include "compiler.h"
-#include <inttypes.h>
 
 #define MD5_HASHBYTES 16
 

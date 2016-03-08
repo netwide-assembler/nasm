@@ -35,7 +35,6 @@
 #define STABS_H_
 
 #include <ctype.h>
-#include <inttypes.h>
 
 #include "compiler.h"
 #include "nasmlib.h"

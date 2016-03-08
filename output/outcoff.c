@@ -43,7 +43,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

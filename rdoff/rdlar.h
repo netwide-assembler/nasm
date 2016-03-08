@@ -5,7 +5,6 @@
 #ifndef RDOFF_RDLAR_H
 #define RDOFF_RDLAR_H 1
 
-#include <inttypes.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

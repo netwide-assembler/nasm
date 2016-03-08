@@ -39,7 +39,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
 #include "nasm.h"
 #include "output/outform.h"

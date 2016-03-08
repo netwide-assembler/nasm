@@ -72,11 +72,17 @@
 #define __STDC_LIMIT_MACROS	1
 #define __STDC_FORMAT_MACROS	1
 
-/* Some versions of MSVC have these only with underscores in front */
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# include "nasmint.h"
+#endif
+
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
 
+/* Some versions of MSVC have these only with underscores in front */
 #ifndef HAVE_SNPRINTF
 # ifdef HAVE__SNPRINTF
 #  define snprintf _snprintf

@@ -40,7 +40,6 @@
 #ifndef NASM_HASHTBL_H
 #define NASM_HASHTBL_H
 
-#include <inttypes.h>
 #include <stddef.h>
 #include "nasmlib.h"
 

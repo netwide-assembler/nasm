@@ -38,7 +38,6 @@
 #ifndef RDOFF_RDOFF_H
 #define RDOFF_RDOFF_H 1
 
-#include <inttypes.h>
 
 /*
  * RDOFF definitions. They are used by RDOFF utilities and by NASM's

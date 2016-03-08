@@ -35,7 +35,6 @@
 #define NASM_RBTREE_H
 
 #include "compiler.h"
-#include <inttypes.h>
 
 /* This structure should be embedded in a larger data structure;
    the final output from rb_search() can then be converted back

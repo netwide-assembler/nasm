@@ -44,7 +44,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-#include <inttypes.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

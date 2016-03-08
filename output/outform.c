@@ -42,7 +42,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
 
 #define BUILD_DRIVERS_ARRAY
 #include "output/outform.h"

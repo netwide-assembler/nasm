@@ -6,7 +6,6 @@
 #ifndef RDOFF_LDSEGS_H
 #define RDOFF_LDSEGS_H 1
 
-#include <inttypes.h>
 
 struct segconfig {
     uint16_t typelow, typehi;	/* range of seg nos for which this is valid */

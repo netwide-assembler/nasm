@@ -38,7 +38,6 @@
 #ifndef RDOFF_SYMTAB_H
 #define RDOFF_SYMTAB_H 1
 
-#include <inttypes.h>
 
 typedef struct {
     char *name;

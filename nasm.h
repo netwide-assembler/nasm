@@ -41,7 +41,6 @@
 #include "compiler.h"
 
 #include <stdio.h>
-#include <inttypes.h>
 #include "nasmlib.h"
 #include "preproc.h"
 #include "insnsi.h"     /* For enum opcode */

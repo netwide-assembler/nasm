@@ -62,9 +62,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <inttypes.h>
 #include <time.h>
-#include <inttypes.h>
 
 /* functions supported:
  *   create a library	(no extra operands required)

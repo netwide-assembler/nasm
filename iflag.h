@@ -1,7 +1,6 @@
 #ifndef NASM_IFLAG_H
 #define NASM_IFLAG_H
 
-#include <inttypes.h>
 
 #include <string.h>
 

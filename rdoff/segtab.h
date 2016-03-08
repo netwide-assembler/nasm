@@ -34,7 +34,6 @@
 #ifndef RDOFF_SEGTAB_H
 #define RDOFF_SEGTAB_H 1
 
-#include <inttypes.h>
 
 typedef void *segtab;
 

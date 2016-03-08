@@ -41,7 +41,6 @@
 #define NASM_TABLES_H
 
 #include "compiler.h"
-#include <inttypes.h>
 #include "insnsi.h"		/* For enum opcode */
 
 /* --- From standard.mac via macros.pl: --- */

@@ -11,7 +11,6 @@
 #ifndef RDOFF_HASH_H
 #define RDOFF_HASH_H 1
 
-#include <inttypes.h>
 
 uint32_t hash(const char *name);
 
