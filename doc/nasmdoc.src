@@ -3824,17 +3824,6 @@ variable, for example:
 \c %defstr C_colon      %!'C:'
 
 
-\H{comment} Comment Blocks: \i\c{%comment}
-
-The \c{%comment} and \c{%endcomment} directives are used to specify
-a block of commented (i.e. unprocessed) code/text. Everything between
-\c{%comment} and \c{%endcomment} will be ignored by the preprocessor.
-
-\c %comment
-\c     ; some code, text or data to be ignored
-\c %endcomment
-
-
 \H{stdmac} \i{Standard Macros}
 
 NASM defines a set of standard macros, which are already defined
