@@ -466,7 +466,7 @@ int main(int argc, char **argv)
         assemble_file(inname, depend_ptr);
 
         if (!terminate_after_phase) {
-            ofmt->cleanup(using_debug_info);
+            ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
             if (ferror(ofile))

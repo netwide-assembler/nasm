@@ -1543,13 +1543,11 @@ static void macho_write (void)
    for the object file, writing, and then freeing all of the data from
    the file.  */
 
-static void macho_cleanup(int debuginfo)
+static void macho_cleanup(void)
 {
     struct section *s;
     struct reloc *r;
     struct symbol *sym;
-
-    (void)debuginfo;
 
     /* Sort all symbols.  */
     macho_layout_symbols (&nsyms, &strslen);

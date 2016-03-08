@@ -63,9 +63,8 @@ static void dbg_init(void)
     fprintf(ofile, "NASM Output format debug dump\n");
 }
 
-static void dbg_cleanup(int debuginfo)
+static void dbg_cleanup(void)
 {
-    (void)debuginfo;
     dfmt->cleanup();
     while (dbgsect) {
         struct Section *tmp = dbgsect;

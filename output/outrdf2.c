@@ -657,13 +657,11 @@ static void rdf2_out(int32_t segto, const void *data,
     }
 }
 
-static void rdf2_cleanup(int debuginfo)
+static void rdf2_cleanup(void)
 {
     int32_t l;
     struct BSSRec bs;
     int i;
-
-    (void)debuginfo;
 
     /* should write imported & exported symbol declarations to header here */
 

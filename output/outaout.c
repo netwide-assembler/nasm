@@ -211,11 +211,9 @@ static void aoutb_init(void)
 
 #endif
 
-static void aout_cleanup(int debuginfo)
+static void aout_cleanup(void)
 {
     struct Reloc *r;
-
-    (void)debuginfo;
 
     aout_pad_sections();
     aout_fixup_relocs(&stext);

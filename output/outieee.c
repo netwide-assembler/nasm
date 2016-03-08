@@ -185,13 +185,14 @@ static int32_t ieee_entry_seg, ieee_entry_ofs;
 static int checksum;
 
 extern struct ofmt of_ieee;
+static struct dfmt ladsoft_debug_form;
 
 static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
                              int, uint64_t, int32_t);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
 static int32_t ieee_segment(char *, int, int *);
-static void ieee_write_file(int debuginfo);
+static void ieee_write_file(void);
 static void ieee_write_byte(struct ieeeSection *, int);
 static void ieee_write_word(struct ieeeSection *, int);
 static void ieee_write_dword(struct ieeeSection *, int32_t);
@@ -232,9 +233,9 @@ static int ieee_set_info(enum geninfo type, char **val)
 /*
  * Rundown
  */
-static void ieee_cleanup(int debuginfo)
+static void ieee_cleanup(void)
 {
-    ieee_write_file(debuginfo);
+    ieee_write_file();
     dfmt->cleanup();
     while (seghead) {
         struct ieeeSection *segtmp = seghead;
@@ -899,7 +900,7 @@ static void ieee_filename(char *inname, char *outname)
     standard_extension(inname, outname, ".o");
 }
 
-static void ieee_write_file(int debuginfo)
+static void ieee_write_file(void)
 {
     struct tm *thetime;
     time_t reltime;
@@ -911,6 +912,7 @@ static void ieee_write_file(int debuginfo)
     struct ieeeFixupp *fix;
     struct Array *arr;
     int i;
+    const bool debuginfo = (dfmt == &ladsoft_debug_form);
 
     /*
      * Write the module header

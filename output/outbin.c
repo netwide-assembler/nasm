@@ -220,7 +220,7 @@ static struct Section *create_section(char *name)
     return last_section;
 }
 
-static void bin_cleanup(int debuginfo)
+static void bin_cleanup(void)
 {
     struct Section *g, **gp;
     struct Section *gs = NULL, **gsp;
@@ -231,8 +231,6 @@ static void bin_cleanup(int debuginfo)
     struct Reloc *r;
     uint64_t pend;
     int h;
-
-    (void)debuginfo;      /* placate optimizers */
 
 #ifdef DEBUG
     nasm_error(ERR_DEBUG,

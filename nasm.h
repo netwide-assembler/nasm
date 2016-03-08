@@ -839,7 +839,7 @@ struct ofmt {
      * One thing the cleanup routine should always do is to close
      * the output file pointer.
      */
-    void (*cleanup)(int debuginfo);
+    void (*cleanup)(void);
 };
 
 /*

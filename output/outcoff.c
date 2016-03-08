@@ -223,13 +223,12 @@ static void coff_gen_init(void)
     def_seg = seg_alloc();
 }
 
-static void coff_cleanup(int debuginfo)
+static void coff_cleanup(void)
 {
     struct coff_Reloc *r;
     int i;
 
-    if (debuginfo && dfmt->cleanup)
-        dfmt->cleanup();
+    dfmt->cleanup();
 
     coff_write();
     for (i = 0; i < coff_nsects; i++) {

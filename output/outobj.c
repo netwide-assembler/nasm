@@ -625,12 +625,13 @@ static struct ExpDef {
 static int32_t obj_entry_seg, obj_entry_ofs;
 
 struct ofmt of_obj;
+static struct dfmt borland_debug_form;
 
 /* The current segment */
 static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
-static void obj_write_file(int debuginfo);
+static void obj_write_file(void);
 static int obj_directive(enum directives, char *, int);
 
 static void obj_init(void)
@@ -667,9 +668,10 @@ static int obj_set_info(enum geninfo type, char **val)
 
     return 0;
 }
-static void obj_cleanup(int debuginfo)
+
+static void obj_cleanup(void)
 {
-    obj_write_file(debuginfo);
+    obj_write_file();
     dfmt->cleanup();
     while (seghead) {
         struct Segment *segtmp = seghead;
@@ -1916,7 +1918,7 @@ static void obj_filename(char *inname, char *outname)
     standard_extension(inname, outname, ".obj");
 }
 
-static void obj_write_file(int debuginfo)
+static void obj_write_file(void)
 {
     struct Segment *seg, *entry_seg_ptr = 0;
     struct FileName *fn;
@@ -1928,6 +1930,7 @@ static void obj_write_file(int debuginfo)
     struct ExpDef *export;
     int lname_idx;
     ObjRecord *orp;
+    const bool debuginfo = (dfmt == &borland_debug_form);
 
     /*
      * Write the THEADR module header.

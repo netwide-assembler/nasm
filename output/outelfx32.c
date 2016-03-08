@@ -220,12 +220,10 @@ static void elf_init(void)
 
 }
 
-static void elf_cleanup(int debuginfo)
+static void elf_cleanup(void)
 {
     struct elf_reloc *r;
     int i;
-
-    (void)debuginfo;
 
     elf_write();
     for (i = 0; i < nsects; i++) {
@@ -243,9 +241,7 @@ static void elf_cleanup(int debuginfo)
     saa_free(syms);
     raa_free(bsym);
     saa_free(strs);
-    if (dfmt) {
-        dfmt->cleanup();
-    }
+    dfmt->cleanup();
 }
 
 /* add entry to the elf .shstrtab section */
@@ -706,13 +702,11 @@ static void elf_out(int32_t segto, const void *data,
     }
 
     /* again some stabs debugging stuff */
-    if (dfmt) {
-        sinfo.offset = s->len;
-        sinfo.section = i;
-        sinfo.segto = segto;
-        sinfo.name = s->name;
-        dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
-    }
+    sinfo.offset = s->len;
+    sinfo.section = i;
+    sinfo.segto = segto;
+    sinfo.name = s->name;
+    dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
