@@ -89,11 +89,16 @@ AC_CHECK_PROGS(PSTOPDF,  pstopdf,  false)
 
 dnl Check for progs needed for manpage generation
 if test $ASCIIDOC = false; then
-  AC_MSG_WARN([No acsciidoc package found])
+  AC_MSG_WARN([No asciidoc package found])
 fi
 if test $XMLTO = false; then
   AC_MSG_WARN([No xmlto package found])
 fi
+
+dnl Check for host compiler tools
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib, :)
+AC_CHECK_TOOL(STRIP, strip)
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -153,11 +158,9 @@ PA_HAVE_FUNC(__builtin_ctzl, (0UL))
 PA_HAVE_FUNC(__builtin_ctzll, (0ULL))
 
 dnl Functions for which we have replacements available in lib/
-AC_CONFIG_LIBOBJ_DIR([lib])
-AC_SUBST([LIBOBJDIR], [lib/])
-PA_REPLACE_FUNC([vsnprintf _vsnprintf])
-PA_REPLACE_FUNC([snprintf _snprintf])
-PA_REPLACE_FUNC([strlcpy])
+AC_CHECK_FUNCS([vsnprintf _vsnprintf])
+AC_CHECK_FUNCS([snprintf _snprintf])
+AC_CHECK_FUNCS([strlcpy])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors

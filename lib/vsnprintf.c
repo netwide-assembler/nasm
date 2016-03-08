@@ -14,6 +14,8 @@
 
 #include "nasmlib.h"
 
+#if !defined(HAVE_VSNPRINTF) && !defined(HAVE__VSNPRINTF)
+
 #define BUFFER_SIZE     65536   /* Bigger than any string we might print... */
 
 static char snprintf_buffer[BUFFER_SIZE];
@@ -44,3 +46,5 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 
     return rv;
 }
+
+#endif

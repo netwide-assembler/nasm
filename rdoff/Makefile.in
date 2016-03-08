@@ -22,42 +22,56 @@ BUILD_CFLAGS	= $(CFLAGS) @DEFS@
 INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir)
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+
+AR		= @AR@
+RANLIB		= @RANLIB@
+STRIP		= @STRIP@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 LN_S 		= @LN_S@
-MKDIR		= mkdir
 
-LDRDFLIBS 	= rdoff.$(O) symtab.$(O) collectn.$(O) \
+MKDIR		= mkdir
+RM		= rm
+
+LIBOBJS         = rdoff.$(O) rdfload.$(O) symtab.$(O) collectn.$(O) \
 		  rdlib.$(O) segtab.$(O) hash.$(O)
-RDXLIBS 	= rdoff.$(O) rdfload.$(O) symtab.$(O) collectn.$(O) hash.$(O)
-NASMLIB		= ../nasmlib.$(O) ../file.$(O)
+RDFLIB		= librdoff.$(A)
+NASMLIB		= ../libnasm.$(A)
+LIBS		= $(RDFLIB) $(NASMLIB)
 
 # Binary suffixes
 O               = @OBJEXT@
 X               = @EXEEXT@
+A		= a
 
 PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
 	   rdf2bin$(X) rdf2com$(X) rdf2ith$(X) rdf2ihx$(X) rdf2srec$(X)
 
-.SUFFIXES: .c .i .s .$(O) .1 .man
+.SUFFIXES: .c .i .s .$(O) .$(A) .1 .man
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) $<
 
 all: $(PROGRAMS)
 
-rdfdump$(X): rdfdump.$(O) rdoff.$(O)
-	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O) rdoff.$(O)
-ldrdf$(X): ldrdf.$(O) $(LDRDFLIBS) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LDRDFLIBS) $(NASMLIB)
-rdx$(X): rdx.$(O) $(RDXLIBS) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(RDXLIBS) $(NASMLIB)
-rdflib$(X): rdflib.$(O)
-	$(CC) $(LDFLAGS) -o rdflib$(X) rdflib.$(O)
-rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
+$(RDFLIB): $(LIBOBJS)
+	$(RM) -f $(RDFLIB)
+	$(AR) cq $(RDFLIB) $(LIBOBJS)
+	$(RANLIB) $(RDFLIB)
+
+rdfdump$(X): rdfdump.$(O) $(LIBS)
+	$(CC) $(LDFLAGS) -o rdfdump$(X) rdfdump.$(O) $(LIBS)
+ldrdf$(X): ldrdf.$(O) $(LIBS)
+	$(CC) $(LDFLAGS) -o ldrdf$(X) ldrdf.$(O) $(LIBS)
+rdx$(X): rdx.$(O) $(LIBS)
+	$(CC) $(LDFLAGS) -o rdx$(X) rdx.$(O) $(LIBS)
+rdflib$(X): rdflib.$(O) $(LIBS)
+	$(CC) $(LDFLAGS) -o rdflib$(X) rdflib.$(O) $(LIBS)
+rdf2bin$(X): rdf2bin.$(O) $(LIBS)
+	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(LIBS)
 rdf2com$(X):
 	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
 rdf2ith$(X):
@@ -81,7 +95,7 @@ rdflib.$(O): rdflib.c
 segtab.$(O): segtab.c
 
 clean:
-	rm -f *.$(O) $(PROGRAMS)
+	rm -f *.$(O) *.$(A) $(PROGRAMS)
 
 spotless: clean
 	rm -f Makefile

@@ -57,12 +57,11 @@ X               = .exe
 
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
-NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
+NASM =	nasm.$(O) \
 	raa.$(O) saa.$(O) rbtree.$(O) \
-	realpath.$(O) file.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	directiv.$(O) \
-	assemble.$(O) labels.$(O) hashtbl.$(O) crc64.$(O) parser.$(O) \
+	assemble.$(O) labels.$(O) hashtbl.$(O) parser.$(O) \
 	output/outform.$(O) output/outlib.$(O) output/nulldbg.$(O) \
 	output/nullout.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
@@ -70,18 +69,22 @@ NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
 	output/outelfx32.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	md5c.$(O) output/codeview.$(O) \
+	output/codeview.$(O) \
 	preproc.$(O) quote.$(O) pptok.$(O) \
 	macros.$(O) listing.$(O) eval.$(O) exprlib.$(O) stdscan.$(O) \
 	strfunc.$(O) tokhash.$(O) regvals.$(O) regflags.$(O) \
-	ilog2.$(O) \
 	preproc-nop.$(O) \
 	disp8.$(O) \
 	iflag.$(O)
 
-NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) nasmlib.$(O) ver.$(O) \
+NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) \
 	insnsd.$(O) insnsb.$(O) insnsn.$(O) regs.$(O) regdis.$(O) \
 	disp8.$(O) iflag.$(O)
+
+LIBOBJ = lib/snprintf.$(O) lib/vsnprintf.$(O) lib/strlcpy.$(O) \
+	lib/nasmlib.$(O) lib/ver.$(O) \
+	lib/file.$(O) lib/realpath.$(O) \
+	lib/ilog2.$(O) lib/md5c.$(O) lib/crc64.$(O)
 #-- End File Lists --#
 
 what:
@@ -241,7 +244,6 @@ everything: all doc rdf
 assemble.$(O): assemble.c assemble.h compiler.h directiv.h disp8.h iflag.h \
  iflaggen.h insns.h insnsi.h listing.h nasm.h nasmlib.h opflags.h pptok.h \
  preproc.h regs.h tables.h tokens.h
-crc64.$(O): crc64.c compiler.h hashtbl.h nasmlib.h
 directiv.$(O): directiv.c compiler.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 disasm.$(O): disasm.c compiler.h directiv.h disasm.h disp8.h iflag.h \
@@ -253,13 +255,11 @@ eval.$(O): eval.c compiler.h directiv.h eval.h float.h insnsi.h labels.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 exprlib.$(O): exprlib.c compiler.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h
-file.$(O): file.c compiler.h nasmlib.h
 float.$(O): float.c compiler.h directiv.h float.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h
 hashtbl.$(O): hashtbl.c compiler.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 iflag.$(O): iflag.c compiler.h iflag.h iflaggen.h
-ilog2.$(O): ilog2.c compiler.h nasmlib.h
 insnsa.$(O): insnsa.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
  insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h \
  tokens.h
@@ -272,6 +272,14 @@ insnsd.$(O): insnsd.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
 insnsn.$(O): insnsn.c compiler.h insnsi.h tables.h
 labels.$(O): labels.c compiler.h directiv.h hashtbl.h insnsi.h labels.h \
  nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
+lib/crc64.$(O): lib/crc64.c compiler.h hashtbl.h nasmlib.h
+lib/file.$(O): lib/file.c compiler.h nasmlib.h
+lib/ilog2.$(O): lib/ilog2.c compiler.h nasmlib.h
+lib/md5c.$(O): lib/md5c.c compiler.h md5.h
+lib/nasmlib.$(O): lib/nasmlib.c compiler.h directiv.h iflag.h iflaggen.h \
+ insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h \
+ tables.h tokens.h
+lib/realpath.$(O): lib/realpath.c compiler.h nasmlib.h
 lib/snprintf.$(O): lib/snprintf.c compiler.h nasmlib.h
 lib/strlcpy.$(O): lib/strlcpy.c compiler.h
 lib/vsnprintf.$(O): lib/vsnprintf.c compiler.h nasmlib.h
@@ -279,14 +287,10 @@ listing.$(O): listing.c compiler.h directiv.h insnsi.h listing.h nasm.h \
  nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 macros.$(O): macros.c compiler.h directiv.h hashtbl.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outform.h pptok.h preproc.h regs.h tables.h
-md5c.$(O): md5c.c compiler.h md5.h
 nasm.$(O): nasm.c assemble.h compiler.h directiv.h eval.h float.h iflag.h \
  iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmlib.h opflags.h \
  output/outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h stdscan.h \
  tables.h tokens.h
-nasmlib.$(O): nasmlib.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
- insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h \
- tokens.h
 ndisasm.$(O): ndisasm.c compiler.h directiv.h disasm.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h sync.h \
  tables.h tokens.h
@@ -354,7 +358,6 @@ preproc.$(O): preproc.c compiler.h directiv.h eval.h hashtbl.h insnsi.h \
 quote.$(O): quote.c compiler.h nasmlib.h quote.h
 raa.$(O): raa.c compiler.h nasmlib.h raa.h
 rbtree.$(O): rbtree.c compiler.h rbtree.h
-realpath.$(O): realpath.c compiler.h nasmlib.h
 regdis.$(O): regdis.c regdis.h regs.h
 regflags.$(O): regflags.c compiler.h directiv.h insnsi.h nasm.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h
