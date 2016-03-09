@@ -62,6 +62,9 @@ else
 fi
 AC_PROG_INSTALL
 
+dnl Check for library extension
+PA_LIBEXT
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE

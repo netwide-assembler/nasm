@@ -45,7 +45,7 @@ LIBS		= $(RDFLIB) $(NASMLIB)
 # Binary suffixes
 O               = @OBJEXT@
 X               = @EXEEXT@
-A		= a
+A		= @LIBEXT@
 
 PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
 	   rdf2bin$(X) rdf2com$(X) rdf2ith$(X) rdf2ihx$(X) rdf2srec$(X)

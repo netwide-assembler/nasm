@@ -6,6 +6,8 @@
 # redistributable under the license given in the file "LICENSE"
 # distributed in the NASM archive.
 
+@SET_MAKE@
+
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
 VPATH		= @srcdir@
@@ -48,7 +50,7 @@ FIND		= find
 # Binary suffixes
 O               = @OBJEXT@
 X               = @EXEEXT@
-A		= a
+A		= @LIBEXT@
 
 # Debug stuff
 ifeq ($(TRACE),1)
