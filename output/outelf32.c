@@ -240,6 +240,7 @@ static void elf_cleanup(void)
     dfmt->cleanup();
 }
 
+/* add entry to the elf .shstrtab section */
 static void add_sectname(char *firsthalf, char *secondhalf)
 {
     int len = strlen(firsthalf) + strlen(secondhalf);
