@@ -964,7 +964,7 @@ static void elf_write(void)
      * Now output the section header table.
      */
 
-    elf_foffs = 0x40 + 0x28 * nsections;
+    elf_foffs = 0x40 + sizeof(Elf32_Shdr) * nsections;
     align = ALIGN(elf_foffs, SEC_FILEALIGN) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
@@ -1153,7 +1153,6 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
       * dwarf needs symbols for debug sections
       * which are relocation targets.
       */
-    /*** fix for 32 bit ***/
      if (dfmt == &df_dwarf) {
         dwarf_infosym = *local;
         p = entry;
@@ -1374,8 +1373,7 @@ const struct ofmt of_elf32 = {
     elf_cleanup
 };
 
-/* again, the stabs debugging stuff (code) */
-
+/* common debugging routines */
 static void debug_typevalue(int32_t type)
 {
     int32_t stype, ssize;
@@ -1445,11 +1443,9 @@ static void debug_typevalue(int32_t type)
 
 /* stabs debugging routines */
 
-static void stabs_linenum(const char *filename, int32_t linenumber,
-                            int32_t segto)
+static void stabs_linenum(const char *filename, int32_t linenumber, int32_t segto)
 {
     (void)segto;
-
     if (!stabs_filename) {
         stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
         strcpy(stabs_filename, filename);
@@ -1458,7 +1454,6 @@ static void stabs_linenum(const char *filename, int32_t linenumber,
             /* yep, a memory leak...this program is one-shot anyway, so who cares...
                in fact, this leak comes in quite handy to maintain a list of files
                encountered so far in the symbol lines... */
-
 
             /* why not nasm_free(stabs_filename); we're done with the old one */
 
@@ -1512,9 +1507,7 @@ static void stabs_generate(void)
 
     ptr = stabslines;
 
-    allfiles = (char **)nasm_malloc(numlinestabs * sizeof(char *));
-    for (i = 0; i < numlinestabs; i++)
-        allfiles[i] = 0;
+    allfiles = (char **)nasm_zalloc(numlinestabs * sizeof(char *));
     numfiles = 0;
     while (ptr) {
         if (numfiles == 0) {

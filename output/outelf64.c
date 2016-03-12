@@ -986,9 +986,7 @@ static void elf_write(void)
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
         add_sectname(".rel", ".stab");
-    }
-
-    else if (dfmt == &df_dwarf) {
+    } else if (dfmt == &df_dwarf) {
         /* the dwarf debug standard specifies the following ten sections,
            not all of which are currently implemented,
            although all of them are defined. */
@@ -1209,7 +1207,6 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         *len += 24;
         (*local)++;
     }
-
 
     /*
      * Now the other local symbols.
@@ -1551,7 +1548,6 @@ static void stabs_linenum(const char *filename, int32_t linenumber, int32_t segt
     debug_immcall = 1;
     currentline = linenumber;
 }
-
 
 static void stabs_output(int type, void *param)
 {
@@ -1991,8 +1987,7 @@ static void dwarf_generate(void)
     saa_write8(plines,0);           /* End of table */
     /* File Name Table */
     ftentry = dwarf_flist;
-    for (indx = 0;indx<dwarf_numfiles;indx++)
-    {
+    for (indx = 0; indx < dwarf_numfiles; indx++) {
       saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
       saa_write8(plines,0);			/* directory  LEB128u */
       saa_write8(plines,0);			/* time LEB128u */
