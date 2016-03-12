@@ -551,7 +551,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         nasm_error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
-static void elf_add_reloc(struct elf_section *sect, int32_t segment, int type)
+static void elf_add_reloc(struct elf_section *sect, int32_t segment,
+                          int64_t offset, int type)
 {
     struct elf_reloc *r;
 
@@ -559,6 +560,8 @@ static void elf_add_reloc(struct elf_section *sect, int32_t segment, int type)
     sect->tail = &r->next;
 
     r->address = sect->len;
+    r->offset = offset;
+
     if (segment != NO_SEG) {
         int i;
         for (i = 0; i < nsects; i++)
@@ -623,7 +626,7 @@ static int32_t elf_add_gsym_reloc(struct elf_section *sect,
             nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
                   " for this reference");
         else
-            elf_add_reloc(sect, segment, type);
+            elf_add_reloc(sect, segment, 0, type);
         return offset;
     }
 
@@ -736,14 +739,14 @@ static void elf_out(int32_t segto, const void *data,
                     switch (asize) {
                     case 1:
                         gnu16 = true;
-                        elf_add_reloc(s, segment, R_386_8);
+                        elf_add_reloc(s, segment, 0, R_386_8);
                         break;
                     case 2:
                         gnu16 = true;
-                        elf_add_reloc(s, segment, R_386_16);
+                        elf_add_reloc(s, segment, 0, R_386_16);
                         break;
                     case 4:
-                        elf_add_reloc(s, segment, R_386_32);
+                        elf_add_reloc(s, segment, 0, R_386_32);
                         break;
                     default:	/* Error issued further down */
                         break;
@@ -755,9 +758,9 @@ static void elf_out(int32_t segto, const void *data,
                      * need to fix up the data item by $-$$.
                      */
                     addr += s->len;
-                    elf_add_reloc(s, segment, R_386_GOTPC);
+                    elf_add_reloc(s, segment, 0, R_386_GOTPC);
                 } else if (wrt == elf_gotoff_sect + 1) {
-                    elf_add_reloc(s, segment, R_386_GOTOFF);
+                    elf_add_reloc(s, segment, 0, R_386_GOTOFF);
                 } else if (wrt == elf_tlsie_sect + 1) {
                     addr = elf_add_gsym_reloc(s, segment, addr,
                                               R_386_TLS_IE, true);
@@ -823,7 +826,7 @@ static void elf_out(int32_t segto, const void *data,
             if (wrt == NO_SEG) {
                 nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
                       "8- or 16-bit relocations in ELF is a GNU extension");
-                elf_add_reloc(s, segment, reltype);
+                elf_add_reloc(s, segment, 0, reltype);
             } else {
                 nasm_error(ERR_NONFATAL,
                       "Unsupported non-32-bit ELF relocation");
@@ -842,9 +845,9 @@ static void elf_out(int32_t segto, const void *data,
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, R_386_PC32);
+                elf_add_reloc(s, segment, 0, R_386_PC32);
             } else if (wrt == elf_plt_sect + 1) {
-                elf_add_reloc(s, segment, R_386_PLT32);
+                elf_add_reloc(s, segment, 0, R_386_PLT32);
             } else if (wrt == elf_gotpc_sect + 1 ||
                        wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {

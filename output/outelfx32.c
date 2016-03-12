@@ -557,7 +557,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
 }
 
 static void elf_add_reloc(struct elf_section *sect, int32_t segment,
-                          int32_t offset, int type)
+                          int64_t offset, int type)
 {
     struct elf_reloc *r;
 
