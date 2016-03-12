@@ -285,11 +285,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     uint64_t align;
     int type, i;
 
-    /*
-     * Default is 32 bits.
-     */
     if (!name) {
-        *bits = 32;
+        *bits = ofmt->maxbits;
         return def_seg;
     }
 
