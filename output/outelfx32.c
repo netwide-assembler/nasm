@@ -177,14 +177,12 @@ static void dwarf_findfile(const char *);
 static void dwarf_findsect(const int);
 
 /*
- * Special section numbers which are used to define ELF special
- * symbols, which can be used with WRT to provide PIC relocation
- * types.
+ * Special NASM section numbers which are used to define ELF special
+ * symbols.
  */
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
-static int32_t elf_sym_sect;
-static int32_t elf_gottpoff_sect;
+static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
 
 static void elf_init(void)
 {
@@ -203,6 +201,11 @@ static void elf_init(void)
 
     fwds = NULL;
 
+    /*
+     * FIXME: tlsie is Elf32 only and
+     * gottpoff is Elfx32|64 only.
+     */
+
     elf_gotpc_sect = seg_alloc();
     define_label("..gotpc", elf_gotpc_sect + 1, 0L, NULL, false, false);
     elf_gotoff_sect = seg_alloc();
@@ -215,6 +218,8 @@ static void elf_init(void)
     define_label("..sym", elf_sym_sect + 1, 0L, NULL, false, false);
     elf_gottpoff_sect = seg_alloc();
     define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false);
+    elf_tlsie_sect = seg_alloc();
+    define_label("..tlsie", elf_tlsie_sect + 1, 0L, NULL, false, false);
 
     def_seg = seg_alloc();
 }
@@ -354,10 +359,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          * This is a NASM special symbol. We never allow it into
          * the ELF symbol table, even if it's a valid one. If it
          * _isn't_ a valid one, we should barf immediately.
+         *
+         * FIXME: tlsie is Elf32 only, and gottpoff is Elfx32|64 only.
          */
         if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
             strcmp(name, "..got") && strcmp(name, "..plt") &&
-            strcmp(name, "..sym") && strcmp(name, "..gottpoff"))
+            strcmp(name, "..sym") && strcmp(name, "..gottpoff") &&
+            strcmp(name, "..tlsie"))
             nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
         return;
     }

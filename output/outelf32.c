@@ -200,6 +200,11 @@ static void elf_init(void)
 
     fwds = NULL;
 
+    /*
+     * FIXME: tlsie is Elf32 only and
+     * gottpoff is Elfx32|64 only.
+     */
+
     elf_gotpc_sect = seg_alloc();
     define_label("..gotpc", elf_gotpc_sect + 1, 0L, NULL, false, false);
     elf_gotoff_sect = seg_alloc();
@@ -210,6 +215,8 @@ static void elf_init(void)
     define_label("..plt", elf_plt_sect + 1, 0L, NULL, false, false);
     elf_sym_sect = seg_alloc();
     define_label("..sym", elf_sym_sect + 1, 0L, NULL, false, false);
+    elf_gottpoff_sect = seg_alloc();
+    define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false);
     elf_tlsie_sect = seg_alloc();
     define_label("..tlsie", elf_tlsie_sect + 1, 0L, NULL, false, false);
 
@@ -351,10 +358,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          * This is a NASM special symbol. We never allow it into
          * the ELF symbol table, even if it's a valid one. If it
          * _isn't_ a valid one, we should barf immediately.
+         *
+         * FIXME: tlsie is Elf32 only, and gottpoff is Elfx32|64 only.
          */
         if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
             strcmp(name, "..got") && strcmp(name, "..plt") &&
-            strcmp(name, "..sym") && strcmp(name, "..tlsie"))
+            strcmp(name, "..sym") && strcmp(name, "..gottpoff") &&
+            strcmp(name, "..tlsie"))
             nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
         return;
     }
