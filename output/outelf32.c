@@ -108,7 +108,8 @@ struct erel {
 
 struct symlininfo {
     int offset;
-    int section;                /* section index */
+    int section;                /* index into sects[] */
+    int segto;                  /* internal section number */
     char *name;                 /* shallow-copied pointer of section name */
 };
 
@@ -689,6 +690,7 @@ static void elf_out(int32_t segto, const void *data,
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
     sinfo.section = i;
+    sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_STABSSYMLIN, &sinfo);
     /* end of debugging stuff */
