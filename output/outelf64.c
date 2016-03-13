@@ -177,14 +177,12 @@ static void dwarf_findfile(const char *);
 static void dwarf_findsect(const int);
 
 /*
- * Special section numbers which are used to define ELF special
- * symbols, which can be used with WRT to provide PIC relocation
- * types.
+ * Special NASM section numbers which are used to define ELF special
+ * symbols.
  */
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
-static int32_t elf_sym_sect;
-static int32_t elf_gottpoff_sect;
+static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
 
 static void elf_init(void)
 {
@@ -328,8 +326,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         i = elf_make_section(name, type, flags, align);
     } else if (pass == 1) {
           if ((type && sects[i]->type != type)
-             || (align && sects[i]->align != align)
-             || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
+              || (align && sects[i]->align != align)
+              || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
             nasm_error(ERR_WARNING, "incompatible section attributes ignored on"
                   " redeclaration of section `%s'", name);
     }

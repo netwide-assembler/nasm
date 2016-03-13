@@ -299,7 +299,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     flags_and = flags_or = type = align = 0;
 
     elf_section_attrib(name, p, pass, &flags_and,
-		       &flags_or, &align, &type);
+                       &flags_or, &align, &type);
 
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||
@@ -328,8 +328,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         i = elf_make_section(name, type, flags, align);
     } else if (pass == 1) {
           if ((type && sects[i]->type != type)
-             || (align && sects[i]->align != align)
-             || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
+              || (align && sects[i]->align != align)
+              || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
             nasm_error(ERR_WARNING, "incompatible section attributes ignored on"
                   " redeclaration of section `%s'", name);
     }

@@ -177,12 +177,11 @@ static void dwarf_findsect(const int);
 
 /*
  * Special NASM section numbers which are used to define ELF special
- * symbols, which can be used with WRT to provide PIC and TLS
- * relocation types.
+ * symbols.
  */
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
-static int32_t elf_sym_sect, elf_tlsie_sect;
+static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
 
 static void elf_init(void)
 {
@@ -297,7 +296,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     flags_and = flags_or = type = align = 0;
 
     elf_section_attrib(name, p, pass, &flags_and,
-		       &flags_or, &align, &type);
+                       &flags_or, &align, &type);
 
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||
