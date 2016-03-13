@@ -86,11 +86,11 @@ extern const struct ofmt of_elfx32;
 
 static struct ELF_SECTDATA {
     void *data;
-    int32_t len;
+    int64_t len;
     bool is_saa;
 } *elf_sects;
 static int elf_nsect, nsections;
-static int32_t elf_foffs;
+static int64_t elf_foffs;
 
 static void elf_write(void);
 static void elf_sect_write(struct elf_section *, const void *, size_t);
