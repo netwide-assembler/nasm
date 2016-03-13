@@ -667,17 +667,6 @@ static void elf_out(int32_t segto, const void *data,
     int i;
     static struct symlininfo sinfo;
 
-#if defined(DEBUG) && DEBUG>2
-    if (data)
-        nasm_error(ERR_DEBUG,
-                   " elf_out line: %d type: %x seg: %"PRIx32" segto: %"PRIx32" bytes: %"PRIx64" data: %"PRIx64"\n",
-                   currentline, type, segment, segto, size, *(int64_t *)data);
-    else
-        nasm_error(ERR_DEBUG,
-                   " elf_out line: %d type: %x seg: %"PRIx32" segto: %"PRIx32" bytes: %"PRIx64"\n",
-                   currentline, type, segment, segto, size);
-#endif
-
     /*
      * handle absolute-assembly (structure definitions)
      */
