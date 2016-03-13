@@ -692,7 +692,7 @@ static void elf_out(int32_t segto, const void *data,
     sinfo.section = i;
     sinfo.segto = segto;
     sinfo.name = s->name;
-    dfmt->debug_output(TY_STABSSYMLIN, &sinfo);
+    dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
@@ -1471,7 +1471,7 @@ static void stabs_output(int type, void *param)
 {
     struct symlininfo *s;
     struct linelist *el;
-    if (type == TY_STABSSYMLIN) {
+    if (type == TY_DEBUGSYMLIN) {
         if (debug_immcall) {
             s = (struct symlininfo *)param;
             if (!(sects[s->section]->flags & SHF_EXECINSTR))

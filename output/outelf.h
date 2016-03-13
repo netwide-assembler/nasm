@@ -50,10 +50,7 @@
 /* alignment of sections in file */
 #define SEC_FILEALIGN 16
 
-/* this stuff is needed for the stabs debugging format */
-#define TY_STABSSYMLIN 0x40     /* ouch */
-
-/* this stuff is needed for the dwarf debugging format */
+/* this stuff is needed for the dwarf/stabs debugging format */
 #define TY_DEBUGSYMLIN 0x40     /* internal call to debug_out */
 
 /* Known sections with nonstandard defaults */
