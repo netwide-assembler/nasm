@@ -94,8 +94,8 @@ static int64_t elf_foffs;
 
 static void elf_write(void);
 static void elf_sect_write(struct elf_section *, const void *, size_t);
-static void elf_sect_writeaddr(struct elf_section *, int32_t, size_t);
-static void elf_section_header(int, int, uint32_t, void *, bool, uint32_t, int, int,
+static void elf_sect_writeaddr(struct elf_section *, int64_t, size_t);
+static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, int,
                                int, int);
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
@@ -1283,8 +1283,8 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
     return s;
 }
 
-static void elf_section_header(int name, int type, uint32_t flags,
-                               void *data, bool is_saa, uint32_t datalen,
+static void elf_section_header(int name, int type, uint64_t flags,
+                               void *data, bool is_saa, uint64_t datalen,
                                int link, int info, int align, int eltsize)
 {
     elf_sects[elf_nsect].data = data;
@@ -1327,7 +1327,8 @@ static void elf_sect_write(struct elf_section *sect, const void *data, size_t le
     saa_wbytes(sect->data, data, len);
     sect->len += len;
 }
-static void elf_sect_writeaddr(struct elf_section *sect, int32_t data, size_t len)
+
+static void elf_sect_writeaddr(struct elf_section *sect, int64_t data, size_t len)
 {
     saa_writeaddr(sect->data, data, len);
     sect->len += len;
