@@ -153,7 +153,6 @@ static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
            abbrevlen, linelen, linerellen, framelen, loclen;
 static int64_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
 
-
 static const struct dfmt df_dwarf;
 static const struct dfmt df_stabs;
 static struct elf_symbol *lastsym;
