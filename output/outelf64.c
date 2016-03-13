@@ -217,7 +217,6 @@ static void elf_init(void)
     define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false);
 
     def_seg = seg_alloc();
-
 }
 
 static void elf_cleanup(void)
@@ -1835,8 +1834,7 @@ static void dwarf_generate(void)
      psect = dwarf_fsect;
      totlen = 0;
      highaddr = 0;
-     for (indx = 0; indx < dwarf_nsections; indx++)
-     {
+    for (indx = 0; indx < dwarf_nsections; indx++) {
          plinep = psect->psaa;
          /* Line Number Program Epilogue */
          saa_write8(plinep,2);			/* std op 2 */

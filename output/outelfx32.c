@@ -217,7 +217,6 @@ static void elf_init(void)
     define_label("..gottpoff", elf_gottpoff_sect + 1, 0L, NULL, false, false);
 
     def_seg = seg_alloc();
-
 }
 
 static void elf_cleanup(void)
