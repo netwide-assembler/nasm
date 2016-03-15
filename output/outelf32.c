@@ -945,8 +945,8 @@ static void elf_write(void)
     fputc(elf_osabi, ofile);
     fputc(elf_abiver, ofile);
     fwritezero(7, ofile);
-    fwriteint16_t(1, ofile);        /* ET_REL relocatable file */
-    fwriteint16_t(3, ofile);        /* EM_386 processor ID */
+    fwriteint16_t(ET_REL, ofile);      /* relocatable file */
+    fwriteint16_t(EM_386, ofile);      /* processor ID */
     fwriteint32_t(1L, ofile);       /* EV_CURRENT file format version */
     fwriteint32_t(0L, ofile);       /* no entry point */
     fwriteint32_t(0L, ofile);       /* no program header table */
@@ -956,7 +956,7 @@ static void elf_write(void)
     fwriteint16_t(0x34, ofile);     /* size of ELF header */
     fwriteint16_t(0, ofile);        /* no program header table, again */
     fwriteint16_t(0, ofile);        /* still no program header table */
-    fwriteint16_t(0x28, ofile);     /* size of section header */
+    fwriteint16_t(sizeof(Elf32_Shdr), ofile);     /* size of section header */
     fwriteint16_t(nsections, ofile);      /* number of sections */
     fwriteint16_t(sec_shstrtab, ofile);   /* string table section index for
                                            * section header table */
