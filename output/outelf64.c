@@ -82,7 +82,9 @@ static struct elf_symbol *fwds;
 
 static char elf_module[FILENAME_MAX];
 
+extern const struct ofmt of_elf32;
 extern const struct ofmt of_elf64;
+extern const struct ofmt of_elfx32;
 
 static struct ELF_SECTDATA {
     void *data;
