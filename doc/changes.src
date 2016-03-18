@@ -48,7 +48,7 @@ since 2007.
 \b Allow 64-bit outputs in 16/32-bit only backends.  Unsigned 64-bit
    relocations are zero-extended from 32-bits with a warning
    (suppressible via \c{-w-zext-reloc}); signed 64-bit relocations are
-   an arror.
+   an error.
 
 \b Line numbers in list files now correspond to the lines in the source
    files, instead of simply being sequential.
