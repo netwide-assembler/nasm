@@ -4796,7 +4796,7 @@ static void pp_verror(int severity, const char *fmt, va_list arg)
 	istk && istk->conds &&
 	((severity & ERR_PP_PRECOND) ?
 	 istk->conds->state == COND_NEVER :
-	 emitting(istk->conds->state)))
+	 !emitting(istk->conds->state)))
 	return;
 
     /* get %macro name */
