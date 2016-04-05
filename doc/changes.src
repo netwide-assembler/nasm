@@ -8,6 +8,11 @@ The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
 
+\S{cl-2.12.02} Version 2.12.02
+
+\b Fix preprocessor errors, especially \c{%error} and \c{%warning},
+   inside \c{%if} statements.
+
 \S{cl-2.12.01} Version 2.12.01
 
 \b Portability fixes for some platforms.
