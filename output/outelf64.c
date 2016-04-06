@@ -607,9 +607,9 @@ static void elf_add_reloc(struct elf_section *sect, int32_t segment,
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static void elf_add_gsym_reloc(struct elf_section *sect,
-                               int32_t segment, uint64_t offset, int64_t pcrel,
-                               int type, bool exact)
+static int64_t elf_add_gsym_reloc(struct elf_section *sect,
+				  int32_t segment, uint64_t offset, int64_t pcrel,
+				  int type, bool exact)
 {
     struct elf_reloc *r;
     struct elf_section *s;
@@ -636,27 +636,28 @@ static void elf_add_gsym_reloc(struct elf_section *sect,
             nasm_error(ERR_NONFATAL, "invalid access to an external symbol");
         else
             elf_add_reloc(sect, segment, offset - pcrel, type);
-        return;
+        return 0;
     }
 
     srb = rb_search(s->gsyms, offset);
     if (!srb || (exact && srb->key != offset)) {
         nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
               " for this reference");
-        return;
+        return 0;
     }
     sym = container_of(srb, struct elf_symbol, symv);
 
     r = *sect->tail = nasm_malloc(sizeof(struct elf_reloc));
     sect->tail = &r->next;
-    r->next = NULL;
 
+    r->next = NULL;
     r->address = sect->len;
     r->offset = offset - pcrel - sym->symv.key;
     r->symbol = GLOBAL_TEMP_BASE + sym->globnum;
     r->type = type;
 
     sect->nrelocs++;
+    return r->offset;
 }
 
 static void elf_out(int32_t segto, const void *data,

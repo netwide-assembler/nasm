@@ -607,9 +607,9 @@ static void elf_add_reloc(struct elf_section *sect, int32_t segment,
  * Inefficiency: we search, currently, using a linked list which
  * isn't even necessarily sorted.
  */
-static int32_t elf_add_gsym_reloc(struct elf_section *sect,
-                               int32_t segment, uint32_t offset,
-                               int type, bool exact)
+static int64_t elf_add_gsym_reloc(struct elf_section *sect,
+				  int32_t segment, uint64_t offset, int64_t pcrel,
+				  int type, bool exact)
 {
     struct elf_reloc *r;
     struct elf_section *s;
@@ -633,11 +633,10 @@ static int32_t elf_add_gsym_reloc(struct elf_section *sect,
 
     if (!s) {
         if (exact && offset)
-            nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
-                  " for this reference");
+            nasm_error(ERR_NONFATAL, "invalid access to an external symbol");
         else
-            elf_add_reloc(sect, segment, 0, type);
-        return offset;
+            elf_add_reloc(sect, segment, offset - pcrel, type);
+        return 0;
     }
 
     srb = rb_search(s->gsyms, offset);
@@ -653,12 +652,12 @@ static int32_t elf_add_gsym_reloc(struct elf_section *sect,
 
     r->next     = NULL;
     r->address  = sect->len;
+    r->offset = offset - pcrel - sym->symv.key;
     r->symbol   = GLOBAL_TEMP_BASE + sym->globnum;
     r->type     = type;
 
     sect->nrelocs++;
-
-    return offset - sym->symv.key;
+    return r->offset;
 }
 
 static void elf_out(int32_t segto, const void *data,
@@ -773,26 +772,26 @@ static void elf_out(int32_t segto, const void *data,
                 } else if (wrt == elf_gotoff_sect + 1) {
                     elf_add_reloc(s, segment, 0, R_386_GOTOFF);
                 } else if (wrt == elf_tlsie_sect + 1) {
-                    addr = elf_add_gsym_reloc(s, segment, addr,
-                                              R_386_TLS_IE, true);
+                    addr = elf_add_gsym_reloc(s, segment, addr, 0,
+					      R_386_TLS_IE, true);
                 } else if (wrt == elf_got_sect + 1) {
-                    addr = elf_add_gsym_reloc(s, segment, addr,
-                                              R_386_GOT32, true);
+                    addr = elf_add_gsym_reloc(s, segment, addr, 0,
+					      R_386_GOT32, true);
                 } else if (wrt == elf_sym_sect + 1) {
                     switch (asize) {
                     case 1:
                         gnu16 = true;
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_386_8, false);
+                        addr = elf_add_gsym_reloc(s, segment, addr, 0,
+						  R_386_8, false);
                         break;
                     case 2:
                         gnu16 = true;
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_386_16, false);
+                        addr = elf_add_gsym_reloc(s, segment, addr, 0,
+						  R_386_16, false);
                         break;
                     case 4:
-                        addr = elf_add_gsym_reloc(s, segment, addr,
-                                                  R_386_32, false);
+                        addr = elf_add_gsym_reloc(s, segment, addr, 0,
+						  R_386_32, false);
                         break;
                     default:
                         break;
