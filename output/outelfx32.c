@@ -666,7 +666,7 @@ static void elf_out(int32_t segto, const void *data,
                     int32_t segment, int32_t wrt)
 {
     struct elf_section *s;
-    int32_t addr;
+    int64_t addr;
     int reltype, bytes;
     int i;
     static struct symlininfo sinfo;

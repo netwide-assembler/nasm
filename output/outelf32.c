@@ -665,8 +665,7 @@ static void elf_out(int32_t segto, const void *data,
                     int32_t segment, int32_t wrt)
 {
     struct elf_section *s;
-    int32_t addr;
-    uint8_t mydata[8], *p;
+    int64_t addr;
     int reltype, bytes;
     int i;
     static struct symlininfo sinfo;
@@ -712,8 +711,6 @@ static void elf_out(int32_t segto, const void *data,
         return;
     }
 
-    memset(mydata, 0, sizeof(mydata));
-
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
@@ -734,6 +731,7 @@ static void elf_out(int32_t segto, const void *data,
     {
         bool gnu16 = false;
         int asize = abs((int)size);
+
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
@@ -806,15 +804,14 @@ static void elf_out(int32_t segto, const void *data,
                 }
             }
         }
-        p = mydata;
+
         if (gnu16) {
             nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
                   "8- or 16-bit relocations in ELF32 is a GNU extension");
         } else if (asize != 4 && segment != NO_SEG) {
 	    nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
         }
-	WRITEADDR(p, addr, asize);
-        elf_sect_write(s, mydata, asize);
+        elf_sect_writeaddr(s, addr, asize);
 	break;
     }
 
@@ -828,6 +825,7 @@ static void elf_out(int32_t segto, const void *data,
 	goto rel12adr;
 
     rel12adr:
+        addr = *(int64_t *)data - size;
         nasm_assert(segment != segto);
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "ELF format does not support"
@@ -842,12 +840,11 @@ static void elf_out(int32_t segto, const void *data,
                       "Unsupported non-32-bit ELF relocation");
             }
         }
-	p = mydata;
-        WRITESHORT(p, *(int64_t *)data - size);
-        elf_sect_write(s, mydata, bytes);
+        elf_sect_writeaddr(s, addr, bytes);
 	break;
 
     case OUT_REL4ADR:
+        addr = *(int64_t *)data - size;
         if (segment == segto)
             nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
@@ -869,17 +866,14 @@ static void elf_out(int32_t segto, const void *data,
                 wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-	p = mydata;
-        WRITELONG(p, *(int64_t *)data - size);
-        elf_sect_write(s, mydata, 4L);
+        elf_sect_writeaddr(s, addr, 4);
 	break;
 
     case OUT_REL8ADR:
 	nasm_error(ERR_NONFATAL,
 		   "32-bit ELF format does not support 64-bit relocations");
-	p = mydata;
-	WRITEDLONG(p, 0);
-	elf_sect_write(s, mydata, 8L);
+	addr = 0;
+        elf_sect_writeaddr(s, addr, 8);
 	break;
     }
 }
