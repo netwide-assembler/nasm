@@ -819,12 +819,12 @@ static void elf_out(int32_t segto, const void *data,
     }
 
     case OUT_REL1ADR:
-	bytes = 1;
 	reltype = R_386_PC8;
+	bytes = 1;
 	goto rel12adr;
     case OUT_REL2ADR:
-	bytes = 2;
 	reltype = R_386_PC16;
+	bytes = 2;
 	goto rel12adr;
 
     rel12adr:
