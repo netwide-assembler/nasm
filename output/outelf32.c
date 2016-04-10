@@ -660,9 +660,9 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
     return r->offset;
 }
 
-static void elf_out(int32_t segto, const void *data,
-                    enum out_type type, uint64_t size,
-                    int32_t segment, int32_t wrt)
+static void elf32_out(int32_t segto, const void *data,
+		      enum out_type type, uint64_t size,
+		      int32_t segment, int32_t wrt)
 {
     struct elf_section *s;
     int64_t addr;
@@ -1374,7 +1374,7 @@ const struct ofmt of_elf32 = {
     elf_stdmac,
     elf_init,
     elf_set_info,
-    elf_out,
+    elf32_out,
     elf_deflabel,
     elf_section_names,
     elf_sectalign,
