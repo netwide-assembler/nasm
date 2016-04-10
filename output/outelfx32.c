@@ -153,8 +153,7 @@ static uint8_t *arangesbuf = 0, *arangesrelbuf = 0, *pubnamesbuf = 0, *infobuf =
 static int8_t line_base = -5, line_range = 14, opcode_base = 13;
 static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
            abbrevlen, linelen, linerellen, framelen, loclen;
-static int32_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
-
+static int64_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
 
 static const struct dfmt df_dwarf;
 static const struct dfmt df_stabs;
