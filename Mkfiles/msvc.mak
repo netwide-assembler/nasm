@@ -21,22 +21,25 @@ mandir		= $(prefix)/man
 CFLAGS		= /Od /Zi
 LDFLAGS		= /DEBUG
 !ELSE
-CFLAGS		= /O2
+CFLAGS		= /O2 /Zi
+LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF # (latter two undoes /DEBUG harm)
 !ENDIF
 
 CC		= cl
 LD		= link
+AR		= lib
 CFLAGS		= $(CFLAGS) /W2
 BUILD_CFLAGS	= $(CFLAGS) /I$(srcdir)/inttypes
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /DHAVE__SNPRINTF /DHAVE__VSNPRINTF /DHAVE__FULLPATH
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE
+LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=
 PERL		= perl -I$(srcdir)/perllib
 
 # Binary suffixes
 O               = obj
+L		= lib
 X               = .exe
 
 .SUFFIXES: .c .i .s .$(O) .1 .man
@@ -79,11 +82,14 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 all: nasm$(X) ndisasm$(X)
 	rem cd rdoff && $(MAKE) all
 
-nasm$(X): $(NASM)
-	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS)
+nasm$(X): $(NASM) nasm.$(L)
+	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS) nasm.$(L)
 
-ndisasm$(X): $(NDISASM)
-	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS)
+ndisasm$(X): $(NDISASM) nasm.$(L)
+	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS) nasm.$(L)
+
+nasm.$(L): $(LIBOBJ)
+	$(AR) $(ARFLAGS) /OUT:$@ $**
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -169,19 +175,32 @@ directiv.c: directiv.dat directiv.pl perllib/phash.ph
 # This allows easier generation of distribution (see dist target).
 PERLREQ = macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c \
 	  regs.c regs.h regflags.c regdis.c regvals.c tokhash.c tokens.h \
-	  version.h version.mac pptok.h pptok.c iflag.c iflag.h
+	  version.h version.mac pptok.h pptok.c iflag.c iflaggen.h \
+	  directiv.c directiv.h pptok.ph regdis.h
 perlreq: $(PERLREQ)
 
 clean:
 	-del /f *.$(O)
+	-del /f *.pdb
 	-del /f *.s
 	-del /f *.i
 	-del /f lib\*.$(O)
+	-del /f lib\*.pdb
 	-del /f lib\*.s
 	-del /f lib\*.i
 	-del /f output\*.$(O)
+	-del /f output\*.pdb
 	-del /f output\*.s
 	-del /f output\*.i
+	-del /f nasmlib\*.$(O)
+	-del /f nasmlib\*.pdb
+	-del /f nasmlib\*.s
+	-del /f nasmlib\*.i
+	-del /f stdlib\*.$(O)
+	-del /f stdlib\*.pdb
+	-del /f stdlib\*.s
+	-del /f stdlib\*.i
+	-del /f nasm.$(L)
 	-del /f nasm$(X)
 	-del /f ndisasm$(X)
 	rem cd rdoff && $(MAKE) clean

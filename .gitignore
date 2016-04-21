@@ -1,6 +1,8 @@
+*.a
 *.bin
 *.dbg
 *.exe
+*.lib
 *.lst
 *.o
 *.o64
@@ -8,6 +10,7 @@
 *.obj64
 *.orig
 *.out
+*.pdb
 *.rej
 *.xml
 *.swp
