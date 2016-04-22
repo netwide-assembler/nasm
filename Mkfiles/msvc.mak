@@ -39,10 +39,10 @@ PERL		= perl -I$(srcdir)/perllib
 
 # Binary suffixes
 O               = obj
-L		= lib
+A		= lib
 X               = .exe
 
-.SUFFIXES: .c .i .s .$(O) .1 .man
+.SUFFIXES: .c .i .s .$(O) .$(A) .1 .man
 
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
@@ -82,13 +82,13 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 all: nasm$(X) ndisasm$(X)
 	rem cd rdoff && $(MAKE) all
 
-nasm$(X): $(NASM) nasm.$(L)
-	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS) nasm.$(L)
+nasm$(X): $(NASM) nasm.$(A)
+	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS) nasm.$(A)
 
-ndisasm$(X): $(NDISASM) nasm.$(L)
-	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS) nasm.$(L)
+ndisasm$(X): $(NDISASM) nasm.$(A)
+	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS) nasm.$(A)
 
-nasm.$(L): $(LIBOBJ)
+nasm.$(A): $(LIBOBJ)
 	$(AR) $(ARFLAGS) /OUT:$@ $**
 
 # These source files are automagically generated from a single
@@ -200,7 +200,7 @@ clean:
 	-del /f stdlib\*.pdb
 	-del /f stdlib\*.s
 	-del /f stdlib\*.i
-	-del /f nasm.$(L)
+	-del /f nasm.$(A)
 	-del /f nasm$(X)
 	-del /f ndisasm$(X)
 	rem cd rdoff && $(MAKE) clean
