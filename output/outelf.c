@@ -1565,7 +1565,7 @@ static void elf_write(void)
         nsections++;            /* for the section itself */
         if (sects[i]->head) {
             nsections++;        /* for its relocations */
-            add_sectname(is_elf32() ? ".rel" : "rela", sects[i]->name);
+            add_sectname(is_elf32() ? ".rel" : ".rela", sects[i]->name);
         }
     }
 
