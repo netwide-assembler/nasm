@@ -1509,7 +1509,7 @@ static bool in_list(const StrList *list, const char *str)
  * the end of the path.
  */
 static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
-                       bool missing_ok)
+                       bool missing_ok, const char *mode)
 {
     FILE *fp;
     char *prefix = "";
@@ -1522,7 +1522,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         sl = nasm_malloc(prefix_len+len+1+sizeof sl->next);
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
-        fp = fopen(sl->str, "r");
+        fp = fopen(sl->str, mode);
         if (fp && dhead && !in_list(*dhead, sl->str)) {
             sl->next = NULL;
             **dtail = sl;
@@ -1564,13 +1564,13 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
  * that get a file:lineno pair and need to look at the file again
  * (e.g. the CodeView debug backend). Returns NULL on failure.
  */
-FILE *pp_input_fopen(const char *filename)
+FILE *pp_input_fopen(const char *filename, const char *mode)
 {
     FILE *fp;
     StrList *xsl = NULL;
     StrList **xst = &xsl;
 
-    fp = inc_fopen(filename, &xsl, &xst, true);
+    fp = inc_fopen(filename, &xsl, &xst, true, mode);
     if (xsl)
         nasm_free(xsl);
     return fp;
@@ -2517,7 +2517,7 @@ static int do_directive(Token * tline)
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
-        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0);
+        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0, "r");
         if (!inc->fp) {
             /* -MG given but file not found */
             nasm_free(inc);
@@ -3260,7 +3260,7 @@ issue_error:
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
 
-        fp = inc_fopen(p, &xsl, &xst, true);
+        fp = inc_fopen(p, &xsl, &xst, true, "r");
         if (fp) {
             p = xsl->str;
             fclose(fp);         /* Don't actually care about the file */

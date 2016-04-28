@@ -309,7 +309,7 @@ static void calc_md5(const char *const filename,
     FILE *f;
     MD5_CTX ctx;
 
-    f = pp_input_fopen(filename);
+    f = pp_input_fopen(filename, "rb");
     if (!f)
         goto done;
 
