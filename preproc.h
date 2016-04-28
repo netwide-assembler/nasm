@@ -48,4 +48,7 @@ typedef const unsigned char macros_t;
 
 enum preproc_token pp_token_hash(const char *token);
 
+/* Opens an include file or input file. This uses the include path. */
+FILE *pp_input_fopen(const char *filename);
+
 #endif

@@ -1555,6 +1555,23 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
 }
 
 /*
+ * Opens an include or input file. Public version, for use by modules
+ * that get a file:lineno pair and need to look at the file again
+ * (e.g. the CodeView debug backend). Returns NULL on failure.
+ */
+FILE *pp_input_fopen(const char *filename)
+{
+    FILE *fp;
+    StrList *xsl = NULL;
+    StrList **xst = &xsl;
+
+    fp = inc_fopen(filename, &xsl, &xst, true);
+    if (xsl)
+        nasm_free(xsl);
+    return fp;
+}
+
+/*
  * Determine if we should warn on defining a single-line macro of
  * name `name', with `nparam' parameters. If nparam is 0 or -1, will
  * return true if _any_ single-line macro of that name is defined.

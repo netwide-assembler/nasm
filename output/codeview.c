@@ -44,6 +44,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "preproc.h"
 #include "saa.h"
 #include "output/outlib.h"
 #include "output/pecoff.h"
@@ -308,7 +309,7 @@ static void calc_md5(const char *const filename,
     FILE *f;
     MD5_CTX ctx;
 
-    f = fopen(filename, "r");
+    f = pp_input_fopen(filename);
     if (!f)
         goto done;
 
