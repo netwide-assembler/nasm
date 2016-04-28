@@ -169,15 +169,15 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
     struct coff_Section *s;
     struct linepair *li;
 
-    if (cv8_state.source_file.name == NULL)
-        register_file(filename);
-
     s = find_section(segto);
     if (s == NULL)
         return;
 
     if ((s->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
         return;
+
+    if (cv8_state.source_file.name == NULL)
+        register_file(filename);
 
     li = saa_wstruct(cv8_state.lines);
     li->file_offset = cv8_state.text_offset;
