@@ -1,6 +1,7 @@
 *.bin
 *.dbg
 *.exe
+*.i
 *.lst
 *.o
 *.o64
@@ -9,8 +10,9 @@
 *.orig
 *.out
 *.rej
-*.xml
+*.s
 *.swp
+*.xml
 .*swo
 *~
 \#*
