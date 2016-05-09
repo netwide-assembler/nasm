@@ -19,7 +19,13 @@ since 2007.
 
 \b If the MASM PTR keyword is encountered, issue a warning.  This is
    much more likely to indicate a MASM-ism encountered in NASM than it
-   is a valid label.  This warning can be suppressed with -w-ptr.
+   is a valid label.  This warning can be suppressed with \c{-w-ptr},
+   the \c{[warning]} directive (see \k{opt-w}) or by the macro
+   definition \c{%idefine ptr %??}.
+
+\b When an error or a warning comes from the expansion of a multi-line
+   macro, display the file and line numbers for the expanded macros.
+   Macros defined with \c{.nolist} do not get displayed.
 
 
 \S{cl-2.12.01} Version 2.12.01

@@ -963,13 +963,21 @@ Enabled by default.
 form of jmp instruction becomes jmp short form.
 Enabled by default.
 
+\b \i\c{zext-reloc} warns that a relocation has been zero-extended due
+to limitations in the output format.
+
+\b \i\c\{ptr} warns about keywords used in other assemblers that might
+indicate a mistake in the source code.  Currently only the MASM
+\c{PTR} keyword is recognized.
+
 \b \i\c{error} causes warnings to be treated as errors.  Disabled by
 default.
 
 \b \i\c{all} is an alias for \e{all} suppressible warning classes (not
 including \c{error}).  Thus, \c{-w+all} enables all available warnings.
 
-In addition, you can set warning classes across sections.
+In addition, you can control warnings in the source code itself, using
+the \i\c{[warning]} directive.
 Warning classes may be enabled with \i\c{[warning +warning-name]},
 disabled with \i\c{[warning -warning-name]} or reset to their
 original value with \i\c{[warning *warning-name]}. No "user form"
