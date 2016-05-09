@@ -171,6 +171,7 @@ static const struct warning {
     {"hle", "invalid hle prefixes", true},
     {"bnd", "invalid bnd prefixes", true},
     {"zext-reloc", "relocation zero-extended to match output format", true},
+    {"ptr", "non-NASM keyword used in other assemblers", true},
 };
 
 static bool want_usage;
@@ -1957,7 +1958,6 @@ static bool skip_this_pass(int severity)
 
     if ((severity & ERR_MASK) > ERR_WARNING)
 	return false;
-
 
     /*
      * passn is 1 on the very first pass only.

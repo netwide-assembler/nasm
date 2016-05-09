@@ -135,7 +135,8 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_WARN_HLE		WARN(13) /* bad HLE prefixes */
 #define ERR_WARN_BND		WARN(14) /* bad BND prefixes */
 #define ERR_WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
-#define ERR_WARN_MAX            15       /* the highest numbered one */
+#define ERR_WARN_PTR		WARN(16) /* not a NASM keyword */
+#define ERR_WARN_MAX            16       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will

@@ -421,6 +421,7 @@ enum ccode { /* condition code names */
 #define TFLAG_BRC_OPT   (1 << 1)    /* may or may not have braces. opmasks {k1} */
 #define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
 #define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
+#define TFLAG_WARN	(1 << 3)    /* warning only, treat as ID */
 
 static inline uint8_t get_cond_opcode(enum ccode c)
 {

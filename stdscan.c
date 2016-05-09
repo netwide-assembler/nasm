@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -166,6 +166,11 @@ int stdscan(void *private_data, struct tokenval *tv)
         /* right, so we have an identifier sitting in temp storage. now,
          * is it actually a register or instruction name, or what? */
         token_type = nasm_token_hash(ourcopy, tv);
+
+	if (unlikely(tv->t_flag & TFLAG_WARN)) {
+	    nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_PTR,
+		       "%s is not a NASM keyword", tv->t_charptr);
+	}
 
         if (likely(!(tv->t_flag & TFLAG_BRC))) {
             /* most of the tokens fall into this case */

@@ -1,6 +1,6 @@
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -75,6 +75,9 @@ tword
 word
 yword
 zword
+
+% TOKEN_ID, 0, TFLAG_WARN, 0
+ptr
 
 % TOKEN_FLOAT, 0, 0, 0
 __infinity__
