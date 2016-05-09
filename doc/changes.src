@@ -13,6 +13,11 @@ since 2007.
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},
    inside \c{%if} statements.
 
+\b Fix relative relocations in 32-bit Mach-O.
+
+\b More Codeview debug format fixes.
+
+
 \S{cl-2.12.01} Version 2.12.01
 
 \b Portability fixes for some platforms.
