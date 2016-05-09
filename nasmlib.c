@@ -570,6 +570,12 @@ int32_t src_set_linnum(int32_t newline)
     return oldline;
 }
 
+/* This returns a pointer, not a copy, to the current fname */
+const char *src_get_fname(void)
+{
+    return file_name;
+}
+
 int32_t src_get_linnum(void)
 {
     return line_number;

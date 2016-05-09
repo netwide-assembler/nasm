@@ -155,6 +155,9 @@ struct MMacro {
     uint64_t unique;
     int lineno;                 /* Current line number on expansion */
     uint64_t condcnt;           /* number of if blocks... */
+
+    char *fname;		/* File where defined */
+    int32_t xline;		/* First line in macro */
 };
 
 
@@ -625,6 +628,7 @@ static void free_mmacro(MMacro * m)
     free_tlist(m->dlist);
     nasm_free(m->defaults);
     free_llist(m->expansion);
+    nasm_free(m->fname);
     nasm_free(m);
 }
 
@@ -2738,7 +2742,7 @@ issue_error:
                   pp_directives[i]);
             return DIRECTIVE_FOUND;
         }
-        defining = nasm_malloc(sizeof(MMacro));
+        defining = nasm_zalloc(sizeof(MMacro));
         defining->max_depth =
             (i == PP_RMACRO) || (i == PP_IRMACRO) ? DEADMAN_LIMIT : 0;
         defining->casesense = (i == PP_MACRO) || (i == PP_RMACRO);
@@ -2747,6 +2751,8 @@ issue_error:
             defining = NULL;
             return DIRECTIVE_FOUND;
         }
+
+	src_get(&defining->xline, &defining->fname);
 
         mmac = (MMacro *) hash_findix(&mmacros, defining->name);
         while (mmac) {
@@ -5011,7 +5017,7 @@ static char *pp_getline(void)
                 /* only set line and file name if there's a next node */
                 if (i->next) {
                     src_set_linnum(i->lineno);
-                    nasm_free(src_set_fname(nasm_strdup(i->fname)));
+                    src_set_fname(nasm_strdup(i->fname));
                 }
                 istk = i->next;
                 lfmt->downlevel(LIST_INCLUDE);
@@ -5237,7 +5243,29 @@ static void make_tok_num(Token * tok, int64_t val)
     tok->type = TOK_NUMBER;
 }
 
-struct preproc_ops nasmpp = {
+static void pp_error_list_macros(int severity)
+{
+    MMacro *m;
+    int32_t saved_line;
+    const char *saved_fname = NULL;
+
+    severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY;
+    saved_line = src_get_linnum();
+    saved_fname = src_get_fname();
+
+    list_for_each(m, istk->mstk) {
+	if (m->name && !m->nolist) {
+	    src_set_linnum(m->xline + m->lineno);
+	    src_set_fname(m->fname);
+	    nasm_error(severity, "from macro `%s' defined here", m->name);
+	}
+    }
+
+    src_set_fname((char *)saved_fname);
+    src_set_linnum(saved_line);
+}
+
+const struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
     pp_cleanup,
@@ -5245,5 +5273,6 @@ struct preproc_ops nasmpp = {
     pp_pre_define,
     pp_pre_undefine,
     pp_pre_include,
-    pp_include_path
+    pp_include_path,
+    pp_error_list_macros,
 };

@@ -107,6 +107,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
 
 #define ERR_NO_SEVERITY 0x00000100      /* suppress printing severity */
 #define ERR_PP_PRECOND	0x00000200	/* for preprocessor use */
+#define ERR_PP_LISTMACRO 0x00000400	/* from preproc->error_list_macros() */
 
 /*
  * These codes define specific types of suppressible warning.
@@ -392,6 +393,7 @@ int bsi(const char *string, const char **array, int size);
 int bsii(const char *string, const char **array, int size);
 
 char *src_set_fname(char *newname);
+const char *src_get_fname(void);
 int32_t src_set_linnum(int32_t newline);
 int32_t src_get_linnum(void);
 /*

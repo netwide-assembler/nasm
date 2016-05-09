@@ -128,7 +128,7 @@ static struct RAA *offsets;
 static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
-static struct preproc_ops *preproc;
+static const struct preproc_ops *preproc;
 
 #define OP_NORMAL           (1u << 0)
 #define OP_PREPROCESS       (1u << 1)
@@ -1876,12 +1876,11 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
         return;
 
     if (!(severity & ERR_NOFILE))
-        src_get(&lineno, &currentfile);
+	src_get(&lineno, &currentfile);
 
     if (!skip_this_pass(severity)) {
 	if (currentfile) {
 	    fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-	    nasm_free(currentfile);
 	} else {
 	    fputs("nasm: ", error_file);
 	}
@@ -2002,13 +2001,17 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     }
 
     vsnprintf(msg, sizeof msg - 64, fmt, args);
-    if (severity & ERR_WARN_MASK) {
+    if ((severity & (ERR_WARN_MASK|ERR_PP_LISTMACRO)) == ERR_WARN_MASK) {
 	char *p = strchr(msg, '\0');
 	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
     }
 
     if (!skip_this_pass(severity))
 	fprintf(error_file, "%s%s\n", pfx, msg);
+
+    /* Are we recursing from error_list_macros? */
+    if (severity & ERR_PP_LISTMACRO)
+	return;
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
@@ -2019,6 +2022,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 
     if (severity & ERR_USAGE)
         want_usage = true;
+
+    preproc->error_list_macros(severity);
 
     switch (severity & ERR_MASK) {
     case ERR_DEBUG:

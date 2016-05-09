@@ -342,10 +342,13 @@ struct preproc_ops {
 
     /* Include path from command line */
     void (*include_path)(char *path);
+
+    /* Unwind the macro stack when printing an error message */
+    void (*error_list_macros)(int severity);
 };
 
-extern struct preproc_ops nasmpp;
-extern struct preproc_ops preproc_nop;
+extern const struct preproc_ops nasmpp;
+extern const struct preproc_ops preproc_nop;
 
 /*
  * Some lexical properties of the NASM source language, included

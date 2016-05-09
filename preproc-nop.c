@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -170,7 +170,12 @@ static void nop_include_path(char *path)
     (void)path;
 }
 
-struct preproc_ops preproc_nop = {
+static void nop_error_list_macros(int severity)
+{
+    (void)severity;
+}
+
+const struct preproc_ops preproc_nop = {
     nop_reset,
     nop_getline,
     nop_cleanup,
@@ -178,5 +183,6 @@ struct preproc_ops preproc_nop = {
     nop_pre_define,
     nop_pre_undefine,
     nop_pre_include,
-    nop_include_path
+    nop_include_path,
+    nop_error_list_macros,
 };
