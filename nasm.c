@@ -893,8 +893,7 @@ set_warning:
                 for (i = 1; i <= ERR_WARN_MAX; i++)
                     warning_on_global[i] = !do_warn;
             } else {
-                nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                           "invalid warning `%s'", param);
+		/* Ignore invalid warning names; forward compatibility */
             }
             break;
 
@@ -1518,9 +1517,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             warning_on[i] = warning_on_global[i];
                             break;
                         }
-                    } else
-                        nasm_error(ERR_NONFATAL,
-                                   "invalid warning id in WARNING directive");
+                    }
                     break;
                 case D_CPU:         /* [CPU] */
                     cpu = get_cpu(value);
