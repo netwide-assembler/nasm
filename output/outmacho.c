@@ -1323,7 +1323,7 @@ static void macho_write_section (void)
 		l += sectstab[r->snum]->addr;
 		if (r->pcrel)
 		    l -= s->addr;
-	    } else if (r->pcrel && r->type == GENERIC_RELOC_VANILLA)
+	    } else if (r->pcrel && r->type == GENERIC_RELOC_VANILLA) {
 		l -= s->addr;
 	    }
 
