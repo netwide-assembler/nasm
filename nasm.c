@@ -1953,15 +1953,19 @@ static bool is_suppressed_warning(int severity)
 
 static bool skip_this_pass(int severity)
 {
-    /* See if it's a pass-one only warning and we're not in pass one. */
+  /* See if it's a pass-specific warning which should be skipped. */
+
     if ((severity & ERR_MASK) > ERR_WARNING)
 	return false;
 
-    if (((severity & ERR_PASS1) && pass0 != 1) ||
-        ((severity & ERR_PASS2) && pass0 != 2))
-        return true;
 
-    return false;
+    /*
+     * passn is 1 on the very first pass only.
+     * pass0 is 2 on the code-generation (final) pass only.
+     * These are the passes we care about in this case.
+     */
+    return (((severity & ERR_PASS1) && passn != 1) ||
+	    ((severity & ERR_PASS2) && pass0 != 2));
 }
 
 /**
@@ -2000,14 +2004,18 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;
     }
 
-    vsnprintf(msg, sizeof msg, fmt, args);
+    vsnprintf(msg, sizeof msg - 64, fmt, args);
+    if (severity & ERR_WARN_MASK) {
+	char *p = strchr(msg, '\0');
+	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
+    }
 
     if (!skip_this_pass(severity))
 	fprintf(error_file, "%s%s\n", pfx, msg);
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
-     * preprocessor warnings in the list file
+     * pass1 or preprocessor warnings in the list file
      */
     if ((severity & ERR_MASK) >= ERR_WARNING)
 	lfmt->error(severity, pfx, msg);
