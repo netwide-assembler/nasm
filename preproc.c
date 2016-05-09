@@ -5243,9 +5243,23 @@ static void make_tok_num(Token * tok, int64_t val)
     tok->type = TOK_NUMBER;
 }
 
+static void pp_list_one_macro(MMacro *m, int severity)
+{
+    if (!m)
+	return;
+
+    /* We need to print the next_active list in reverse order */
+    pp_list_one_macro(m->next_active, severity);
+
+    if (m->name && !m->nolist) {
+	src_set_linnum(m->xline + m->lineno);
+	src_set_fname(m->fname);
+	nasm_error(severity, "... from macro `%s' defined here", m->name);
+    }
+}
+
 static void pp_error_list_macros(int severity)
 {
-    MMacro *m;
     int32_t saved_line;
     const char *saved_fname = NULL;
 
@@ -5253,13 +5267,7 @@ static void pp_error_list_macros(int severity)
     saved_line = src_get_linnum();
     saved_fname = src_get_fname();
 
-    list_for_each(m, istk->mstk) {
-	if (m->name && !m->nolist) {
-	    src_set_linnum(m->xline + m->lineno);
-	    src_set_fname(m->fname);
-	    nasm_error(severity, "from macro `%s' defined here", m->name);
-	}
-    }
+    pp_list_one_macro(istk->mstk, severity);
 
     src_set_fname((char *)saved_fname);
     src_set_linnum(saved_line);
