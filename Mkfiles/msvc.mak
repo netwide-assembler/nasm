@@ -47,7 +47,7 @@ X               = .exe
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
 NASM =	nasm.$(O) nasmlib.$(O) ver.$(O) \
-	raa.$(O) saa.$(O) rbtree.$(O) \
+	raa.$(O) saa.$(O) rbtree.$(O) srcfile.$(O) \
 	realpath.$(O) \
 	float.$(O) insnsa.$(O) insnsb.$(O) \
 	directiv.$(O) \
@@ -350,6 +350,7 @@ regflags.$(O): regflags.c compiler.h directiv.h insnsi.h nasm.h nasmlib.h \
 regs.$(O): regs.c compiler.h insnsi.h tables.h
 regvals.$(O): regvals.c compiler.h insnsi.h tables.h
 saa.$(O): saa.c compiler.h nasmlib.h saa.h
+srcfile.$(O): srcfile.c compiler.h hashtbl.h nasmlib.h
 stdscan.$(O): stdscan.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
  insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h quote.h regs.h \
  stdscan.h tables.h tokens.h

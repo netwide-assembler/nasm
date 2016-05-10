@@ -31,7 +31,7 @@ O = o
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
 NASM =	nasm.o nasmlib.o ver.o \
-	raa.o saa.o rbtree.o \
+	raa.o saa.o rbtree.o srcfile.o \
 	realpath.o \
 	float.o insnsa.o insnsb.o \
 	directiv.o \
@@ -251,6 +251,7 @@ regflags.o: regflags.c compiler.h config.h directiv.h insnsi.h nasm.h \
 regs.o: regs.c compiler.h config.h insnsi.h tables.h
 regvals.o: regvals.c compiler.h config.h insnsi.h tables.h
 saa.o: saa.c compiler.h config.h nasmlib.h saa.h
+srcfile.o: srcfile.c compiler.h config.h hashtbl.h nasmlib.h
 stdscan.o: stdscan.c compiler.h config.h directiv.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h quote.h \
  regs.h stdscan.h tables.h tokens.h

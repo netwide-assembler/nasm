@@ -335,7 +335,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
                 int32_t segment, int32_t wrt)
 {
     static int32_t lineno = 0;     /* static!!! */
-    static char *lnfname = NULL;
+    static const char *lnfname = NULL;
     uint8_t p[8];
     int asize = addrsize(type, size); 	    /* Address size in bytes */
     const int amax  = ofmt->maxbits >> 3; /* Maximum address size in bytes */

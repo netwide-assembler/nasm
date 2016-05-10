@@ -340,6 +340,7 @@ int main(int argc, char **argv)
     error_file = stderr;
 
     tolower_init();
+    src_init();
 
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
@@ -402,7 +403,7 @@ int main(int argc, char **argv)
             preproc->cleanup(0);
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
-            char *file_name = NULL;
+            const char *file_name = NULL;
             int32_t prior_linnum = 0;
             int lineinc = 0;
 
@@ -442,7 +443,6 @@ int main(int argc, char **argv)
                 nasm_fputs(line, ofile);
                 nasm_free(line);
             }
-            nasm_free(file_name);
             preproc->cleanup(0);
             if (ofile)
                 fclose(ofile);
@@ -482,9 +482,11 @@ int main(int argc, char **argv)
             ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
-            if (ferror(ofile))
+            if (ferror(ofile)) {
                 nasm_error(ERR_NONFATAL|ERR_NOFILE,
                            "write error on output file `%s'", outname);
+                terminate_after_phase = true;
+            }
         }
 
         if (ofile) {
@@ -505,6 +507,7 @@ int main(int argc, char **argv)
     saa_free(forwrefs);
     eval_cleanup();
     stdscan_cleanup();
+    src_free();
 
     return terminate_after_phase;
 }
@@ -1869,7 +1872,7 @@ static enum directives getkw(char **directive, char **value)
  */
 static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
 {
-    char *currentfile = NULL;
+    const char *currentfile = NULL;
     int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
@@ -1906,7 +1909,7 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
  */
 static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
 {
-    char *currentfile = NULL;
+    const char *currentfile = NULL;
     int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
@@ -1918,7 +1921,6 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
     if (!skip_this_pass(severity)) {
         if (currentfile) {
 	    fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
-	    nasm_free(currentfile);
 	} else {
 	    fputs("nasm: ", error_file);
 	}

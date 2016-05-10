@@ -553,50 +553,6 @@ int bsii(const char *string, const char **array, int size)
     return -1;                  /* we haven't got it :( */
 }
 
-static char *file_name = NULL;
-static int32_t line_number = 0;
-
-char *src_set_fname(char *newname)
-{
-    char *oldname = file_name;
-    file_name = newname;
-    return oldname;
-}
-
-int32_t src_set_linnum(int32_t newline)
-{
-    int32_t oldline = line_number;
-    line_number = newline;
-    return oldline;
-}
-
-/* This returns a pointer, not a copy, to the current fname */
-const char *src_get_fname(void)
-{
-    return file_name;
-}
-
-int32_t src_get_linnum(void)
-{
-    return line_number;
-}
-
-int src_get(int32_t *xline, char **xname)
-{
-    if (!file_name || !*xname || strcmp(*xname, file_name)) {
-        nasm_free(*xname);
-        *xname = file_name ? nasm_strdup(file_name) : NULL;
-        *xline = line_number;
-        return -2;
-    }
-    if (*xline != line_number) {
-        int32_t tmp = line_number - *xline;
-        *xline = line_number;
-        return tmp;
-    }
-    return 0;
-}
-
 char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;

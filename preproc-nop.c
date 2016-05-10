@@ -60,8 +60,7 @@ static int32_t nop_lineinc;
 
 static void nop_reset(char *file, int pass, StrList **deplist)
 {
-    src_set_fname(nasm_strdup(file));
-    src_set_linnum(0);
+    src_set(0, file);
     nop_lineinc = 1;
     nop_fp = fopen(file, "r");
 
@@ -121,9 +120,9 @@ static char *nop_getline(void)
             int li;
             char *nm = nasm_malloc(strlen(buffer));
             if (sscanf(buffer + 5, "%"PRId32"+%d %s", &ln, &li, nm) == 3) {
-                nasm_free(src_set_fname(nm));
-                src_set_linnum(ln);
+                src_set(ln, nm);
                 nop_lineinc = li;
+                nasm_free(nm);
                 continue;
             }
             nasm_free(nm);

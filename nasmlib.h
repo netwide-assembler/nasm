@@ -392,17 +392,24 @@ void fwriteaddr(uint64_t data, int size, FILE * fp);
 int bsi(const char *string, const char **array, int size);
 int bsii(const char *string, const char **array, int size);
 
-char *src_set_fname(char *newname);
+/*
+ * These functions are used to keep track of the source code file and name.
+ */
+void src_init(void);
+void src_free(void);
+const char *src_set_fname(const char *newname);
 const char *src_get_fname(void);
 int32_t src_set_linnum(int32_t newline);
 int32_t src_get_linnum(void);
+/* Can be used when there is no need for the old information */
+void src_set(int32_t line, const char *filename);
 /*
- * src_get may be used if you simply want to know the source file and line.
+ * src_get gets both the source file name and line.
  * It is also used if you maintain private status about the source location
  * It return 0 if the information was the same as the last time you
- * checked, -1 if the name changed and (new-old) if just the line changed.
+ * checked, -2 if the name changed and (new-old) if just the line changed.
  */
-int src_get(int32_t *xline, char **xname);
+int32_t src_get(int32_t *xline, const char **xname);
 
 char *nasm_strcat(const char *one, const char *two);
 
