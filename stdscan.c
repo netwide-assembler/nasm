@@ -114,7 +114,7 @@ static int stdscan_handle_brace(struct tokenval *tv)
     if (!(tv->t_flag & TFLAG_BRC_ANY)) {
         /* invalid token is put inside braces */
         nasm_error(ERR_NONFATAL,
-                    "%s is not a valid decorator with braces", tv->t_charptr);
+                    "`%s' is not a valid decorator with braces", tv->t_charptr);
         tv->t_type = TOKEN_INVALID;
     } else if (tv->t_flag & TFLAG_BRC_OPT) {
         if (is_reg_class(OPMASKREG, tv->t_integer)) {
@@ -169,7 +169,7 @@ int stdscan(void *private_data, struct tokenval *tv)
 
 	if (unlikely(tv->t_flag & TFLAG_WARN)) {
 	    nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_PTR,
-		       "%s is not a NASM keyword", tv->t_charptr);
+		       "`%s' is not a NASM keyword", tv->t_charptr);
 	}
 
         if (likely(!(tv->t_flag & TFLAG_BRC))) {
