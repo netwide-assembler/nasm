@@ -60,7 +60,17 @@
 /* Can we adjust the file size without actually writing all the bytes? */
 #ifdef HAVE_FILENO		/* Useless without fileno() */
 # ifdef HAVE__CHSIZE_S
-#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
+static int nasm_ftruncate(int fd, int64_t size)
+{
+    int err = _chsize_s(fd, size);
+
+    if (!err)
+        return 0;
+
+    errno = err;
+    return -1;
+}
+#  define nasm_ftruncate(fd,size) nasm_ftruncate(fd,size)
 # elif defined(HAVE__CHSIZE)
 #  define nasm_ftruncate(fd,size) _chsize(fd,size)
 # elif defined(HAVE_FTRUNCATE)
