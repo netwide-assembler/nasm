@@ -5277,7 +5277,8 @@ static void pp_error_list_macros(int severity)
     severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY;
     src_get(&saved_line, &saved_fname);
 
-    pp_list_one_macro(istk->mstk, severity);
+    if (istk)
+        pp_list_one_macro(istk->mstk, severity);
 
     src_set(saved_line, saved_fname);
 }
