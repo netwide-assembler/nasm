@@ -451,7 +451,7 @@ static inline uint8_t get_cond_opcode(enum ccode c)
 /*
  * EVEX bit field
  */
-#define EVEX_P0MM       0x03        /* EVEX P[1:0] : Legacy escape        */
+#define EVEX_P0MM       0x0f        /* EVEX P[3:0] : Opcode map           */
 #define EVEX_P0RP       0x10        /* EVEX P[4] : High-16 reg            */
 #define EVEX_P0X        0x40        /* EVEX P[6] : High-16 rm             */
 #define EVEX_P1PP       0x03        /* EVEX P[9:8] : Legacy prefix        */

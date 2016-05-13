@@ -81,8 +81,8 @@
  *
  * EVEX prefixes are followed by the sequence:
  * \cm\wlp\tup    where cm is:
- *                  cc 000 0mm
- *                  c = 2 for EVEX and m is the legacy escape (0f, 0f38, 0f3a)
+ *                  cc 00m mmm
+ *                  c = 2 for EVEX and mmmm is the M field (EVEX.P0[3:0])
  *                and wlp is:
  *                  00 wwl lpp
  *                  [l0]  ll = 0 (.128, .lz)
@@ -1662,7 +1662,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             /* EVEX.X can be set by either REX or EVEX for different reasons */
             bytes[1] = ((((ins->rex & 7) << 5) |
                          (ins->evex_p[0] & (EVEX_P0X | EVEX_P0RP))) ^ 0xf0) |
-                       (ins->vex_cm & 3);
+                       (ins->vex_cm & EVEX_P0MM);
             bytes[2] = ((ins->rex & REX_W) << (7 - 3)) |
                        ((~ins->vexreg & 15) << 3) |
                        (1 << 2) | (ins->vex_wlp & 3);

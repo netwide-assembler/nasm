@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -864,7 +864,8 @@ sub byte_code_compile($$) {
             push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
             $prefix_ok = 0;
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
-            my $c = $vexmap{$1};
+            my $vexname = $1;
+            my $c = $vexmap{$vexname};
             my ($m,$w,$l,$p) = (undef,2,undef,0);
             my $has_nds = 0;
             my @subops = split(/\./, $op);
@@ -902,19 +903,23 @@ sub byte_code_compile($$) {
                         $m = $1+0;
                     } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
                         if (!defined($oppos{'v'})) {
-                            die "$fname: $line: vex.$oq without 'v' operand\n";
+                            die "$fname: $line: $vexname.$oq without 'v' operand\n";
                         }
                         $has_nds = 1;
                     } else {
-                        die "$fname: $line: undefined VEX subcode: $oq\n";
+                        die "$fname: $line: undefined \U$vexname\E subcode: $oq\n";
                     }
                 }
             if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
-                die "$fname: $line: missing fields in VEX specification\n";
+                die "$fname: $line: missing fields in \U$vexname\E specification\n";
             }
             if (defined($oppos{'v'}) && !$has_nds) {
-                die "$fname: $line: 'v' operand without vex.nds or vex.ndd\n";
+                die "$fname: $line: 'v' operand without ${vexname}.nds or ${vexname}.ndd\n";
             }
+	    my $minmap = ($c == 1) ? 8 : 0; # 0-31 for VEX, 8-31 for XOP
+	    if ($m < $minmap || $m > 31) {
+		die "$fname: $line: Only maps ${minmap}-31 are valid for \U${vexname}\n";
+	    }
             push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
                  ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
             $prefix_ok = 0;
@@ -970,6 +975,9 @@ sub byte_code_compile($$) {
             if (defined($oppos{'v'}) && !$has_nds) {
                 die "$fname: $line: 'v' operand without evex.nds or evex.ndd\n";
             }
+	    if ($m > 15) {
+		die "$fname: $line: Only maps 0-15 are valid for EVEX\n";
+	    }
             push(@codes, defined($oppos{'v'}) ? 0240+($oppos{'v'} & 3) : 0250,
                  ($c << 6)+$m, ($w << 4)+($l << 2)+$p, $tup);
             $prefix_ok = 0;
