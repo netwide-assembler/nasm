@@ -37,7 +37,7 @@ ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD		= $(CC)
 LDFLAGS		= $(ALL_CFLAGS)
 LIBS		=
-PERL		= perl -I$(srcdir)/perllib
+PERL		= perl -I$(srcdir)/perllib -I$(srcdir)
 
 STRIP		= wstrip
 

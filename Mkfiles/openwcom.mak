@@ -22,7 +22,7 @@ LD      = *wlink
 LDEBUG      =
 LDFLAGS     = op quiet $(%TARGET_LFLAGS) $(LDEBUG)
 LIBS        =
-PERL        = perl -I$(srcdir)/perllib
+PERL        = perl -I$(srcdir)/perllib -I$(srcdir)
 
 STRIP       = wstrip
 

@@ -33,7 +33,7 @@ INTERNAL_CFLAGS = /I$(srcdir) /I. \
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE
 LIBS		=
-PERL		= perl -I$(srcdir)/perllib
+PERL		= perl -I$(srcdir)/perllib -I$(srcdir)
 
 # Binary suffixes
 O               = obj

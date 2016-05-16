@@ -22,7 +22,7 @@ INTERNAL_CFLAGS = -I$(srcdir) -I.
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
-PERL		= perl -I$(srcdir)/perllib
+PERL		= perl -I$(srcdir)/perllib -I$(srcdir)
 
 XOBJS		= @XOBJS@
 
@@ -113,7 +113,7 @@ ndisasm$(X): $(NDISASM) $(XOBJS)
 # instruction-table file by a Perl script. They're distributed,
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
-INSDEP = insns.dat insns.pl insns-iflags.pl
+INSDEP = insns.dat insns.pl
 
 iflag.c: $(INSDEP)
 	$(PERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat

@@ -204,5 +204,5 @@ PA_ADD_CFLAGS([-Werror=missing-declarations])
 PA_ADD_CFLAGS([-Werror=comment])
 PA_ADD_CFLAGS([-Werror=vla])])
 
-AC_OUTPUT_COMMANDS([mkdir -p output])
+AC_OUTPUT_COMMANDS([mkdir -p lib nsis output])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
