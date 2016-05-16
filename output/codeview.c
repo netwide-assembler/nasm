@@ -74,8 +74,20 @@ struct dfmt df_cv8 = {
 /*******************************************************************************
  * dfmt callbacks
  ******************************************************************************/
+struct source_file;
+
 struct source_file {
     char *name;
+    uint32_t namelen;
+
+    struct source_file *next;
+
+    uint32_t filetbl_off;
+    uint32_t sourcetbl_off;
+
+    struct SAA *lines;
+    uint32_t num_lines;
+
     unsigned char md5sum[MD5_HASHBYTES];
 };
 
@@ -125,9 +137,10 @@ struct cv8_state {
     uint32_t text_offset;
 
     struct source_file source_file;
+    unsigned num_files;
+    uint32_t total_filename_len;
 
-    struct SAA *lines;
-    uint32_t num_lines;
+    unsigned total_lines;
 
     struct SAA *symbols;
     struct cv8_symbol *last_sym;
@@ -151,8 +164,13 @@ static void cv8_init(void)
 
     cv8_state.text_offset = 0;
 
-    cv8_state.lines = saa_init(sizeof(struct linepair));
-    cv8_state.num_lines = 0;
+    cv8_state.source_file.name = NULL;
+    cv8_state.source_file.next = NULL;
+
+    cv8_state.num_files = 0;
+    cv8_state.total_filename_len = 0;
+
+    cv8_state.total_lines = 0;
 
     cv8_state.symbols = saa_init(sizeof(struct cv8_symbol));
     cv8_state.last_sym = NULL;
@@ -160,7 +178,7 @@ static void cv8_init(void)
     cv8_state.cwd = nasm_realpath(".");
 }
 
-static void register_file(const char *filename);
+static struct source_file *register_file(const char *filename);
 static struct coff_Section *find_section(int32_t segto);
 
 static void cv8_linenum(const char *filename, int32_t linenumber,
@@ -168,6 +186,7 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
 {
     struct coff_Section *s;
     struct linepair *li;
+    struct source_file *file;
 
     s = find_section(segto);
     if (s == NULL)
@@ -176,14 +195,14 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
     if ((s->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
         return;
 
-    if (cv8_state.source_file.name == NULL)
-        register_file(filename);
+    file = register_file(filename);
 
-    li = saa_wstruct(cv8_state.lines);
+    li = saa_wstruct(file->lines);
     li->file_offset = cv8_state.text_offset;
     li->linenumber = linenumber;
 
-    cv8_state.num_lines++;
+    file->num_lines++;
+    cv8_state.total_lines++;
 }
 
 static void cv8_deflabel(char *name, int32_t segment, int64_t offset,
@@ -277,6 +296,7 @@ static void build_type_table(struct coff_Section *const sect);
 static void cv8_cleanup(void)
 {
     struct cv8_symbol *sym;
+    struct source_file *file;
 
     struct coff_Section *symbol_sect = coff_sects[cv8_state.symbol_sect];
     struct coff_Section *type_sect = coff_sects[cv8_state.type_sect];
@@ -284,8 +304,16 @@ static void cv8_cleanup(void)
     build_symbol_table(symbol_sect);
     build_type_table(type_sect);
 
-    if (cv8_state.source_file.name != NULL)
+    if (cv8_state.source_file.name) {
         nasm_free(cv8_state.source_file.name);
+        saa_free(cv8_state.source_file.lines);
+    }
+
+    list_for_each(file, cv8_state.source_file.next) {
+        nasm_free(file->name);
+        saa_free(file->lines);
+        free(file);
+    }
 
     if (cv8_state.cwd != NULL)
         nasm_free(cv8_state.cwd);
@@ -339,11 +367,40 @@ done:
     return;
 }
 
-static void register_file(const char *filename)
+static struct source_file *register_file(const char *filename)
 {
-    cv8_state.source_file.name = nasm_realpath(filename);
-    memset(cv8_state.source_file.md5sum, 0, MD5_HASHBYTES);
-    calc_md5(filename, cv8_state.source_file.md5sum);
+    struct source_file *file;
+
+    char *fullpath = nasm_realpath(filename);
+
+    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+        if (file->name != NULL && !strcmp(file->name, fullpath)) {
+            free(fullpath);
+            return file;
+        }
+    }
+
+    if (cv8_state.source_file.name == NULL) {
+        file = &cv8_state.source_file;
+    } else {
+        struct source_file *next;
+        file = nasm_malloc(sizeof(struct source_file));
+        for (next = &cv8_state.source_file; next->next != NULL; next = next->next) {}
+        next->next = file;
+    }
+
+    memset(file, 0, sizeof(struct source_file));
+
+    file->name = fullpath;
+    file->namelen = strlen(fullpath);
+    file->lines = saa_init(sizeof(struct linepair));
+    file->next = NULL;
+    calc_md5(fullpath, file->md5sum);
+
+    cv8_state.num_files++;
+    cv8_state.total_filename_len += file->namelen + 1;
+
+    return file;
 }
 
 static struct coff_Section *find_section(int32_t segto)
@@ -433,40 +490,63 @@ static inline void section_wbytes(struct coff_Section *sect, const void *buf,
 
 static void write_filename_table(struct coff_Section *const sect)
 {
-    uint32_t field_length = 0;
-    size_t filename_len = strlen(cv8_state.source_file.name);
+    uint32_t field_length;
+    uint32_t tbl_off = 1;    /* offset starts at 1 to skip NULL entry */
+    struct source_file *file;
 
-    field_length = 1 + filename_len + 1;
+    nasm_assert(cv8_state.source_file.name != NULL);
+    nasm_assert(cv8_state.num_files > 0);
+    nasm_assert(cv8_state.total_filename_len > 0);
+
+    field_length = 1 + cv8_state.total_filename_len;
 
     section_write32(sect, 0x000000F3);
     section_write32(sect, field_length);
 
     section_write8(sect, 0);
-    section_wbytes(sect, cv8_state.source_file.name, filename_len + 1);
+
+    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+        section_wbytes(sect, file->name, file->namelen + 1);
+        file->filetbl_off = tbl_off;
+        tbl_off += file->namelen + 1;
+    }
 }
 
 static void write_sourcefile_table(struct coff_Section *const sect)
 {
-    uint32_t field_length = 0;
+    const uint32_t entry_size = 4 + 2 + MD5_HASHBYTES + 2;
 
-    field_length = 4 + 2 + MD5_HASHBYTES + 2;
+    uint32_t field_length = 0;
+    uint32_t tbl_off = 0;
+    struct source_file *file;
+
+    field_length = entry_size * cv8_state.num_files;
 
     section_write32(sect, 0x000000F4);
     section_write32(sect, field_length);
 
-    section_write32(sect, 1); /* offset of filename in filename str table */
-    section_write16(sect, 0x0110);
-    section_wbytes(sect, cv8_state.source_file.md5sum, MD5_HASHBYTES);
-    section_write16(sect, 0);
+    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+        nasm_assert(file->filetbl_off > 0);
+        section_write32(sect, file->filetbl_off);
+        section_write16(sect, 0x0110);
+        section_wbytes(sect, file->md5sum, MD5_HASHBYTES);
+        section_write16(sect, 0);
+
+        file->sourcetbl_off = tbl_off;
+        tbl_off += entry_size;
+    }
 }
 
 static void write_linenumber_table(struct coff_Section *const sect)
 {
+    const uint32_t file_field_len = 12;
+    const uint32_t line_field_len = 8;
+
     int i;
     uint32_t field_length = 0;
     size_t field_base;
+    struct source_file *file;
     struct coff_Section *s;
-    struct linepair *li;
 
     for (i = 0; i < coff_nsects; i++) {
         if (!strncmp(coff_sects[i]->name, ".text", 5))
@@ -477,7 +557,9 @@ static void write_linenumber_table(struct coff_Section *const sect)
         return;
     s = coff_sects[i];
 
-    field_length = 12 + 12 + (cv8_state.num_lines * 8);
+    field_length = 12;
+    field_length += (cv8_state.num_files * file_field_len);
+    field_length += (cv8_state.total_lines * line_field_len);
 
     section_write32(sect, 0x000000F2);
     section_write32(sect, field_length);
@@ -494,16 +576,20 @@ static void write_linenumber_table(struct coff_Section *const sect)
     register_reloc(sect, ".text", field_base + 4,
         win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
 
-    /* 1 or more source mappings (we assume only 1) */
-    section_write32(sect, 0);
-    section_write32(sect, cv8_state.num_lines);
-    section_write32(sect, 12 + (cv8_state.num_lines * 8));
+    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+        struct linepair *li;
 
-    /* the pairs */
-    saa_rewind(cv8_state.lines);
-    while ((li = saa_rstruct(cv8_state.lines))) {
-        section_write32(sect, li->file_offset);
-        section_write32(sect, li->linenumber |= 0x80000000);
+        /* source mapping */
+        section_write32(sect, file->sourcetbl_off);
+        section_write32(sect, file->num_lines);
+        section_write32(sect, file_field_len + (file->num_lines * line_field_len));
+
+        /* the pairs */
+        saa_rewind(file->lines);
+        while ((li = saa_rstruct(file->lines))) {
+            section_write32(sect, li->file_offset);
+            section_write32(sect, li->linenumber |= 0x80000000);
+        }
     }
 }
 
