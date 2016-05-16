@@ -188,14 +188,14 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
     struct linepair *li;
     struct source_file *file;
 
+    file = register_file(filename);
+
     s = find_section(segto);
     if (s == NULL)
         return;
 
     if ((s->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
         return;
-
-    file = register_file(filename);
 
     li = saa_wstruct(file->lines);
     li->file_offset = cv8_state.text_offset;
