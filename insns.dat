@@ -799,8 +799,10 @@ MFENCE		void				[	np 0f ae f0]				X64,AMD
 MONITOR		void				[	0f 01 c8]				PRESCOTT
 MONITOR		reg_eax,reg_ecx,reg_edx		[---:	0f 01 c8]				PRESCOTT,NOLONG,ND
 MONITOR		reg_rax,reg_ecx,reg_edx		[---:	0f 01 c8]				X64,ND
-MONITORX	void				[	0f 01 fa]				X64,AMD
+MONITORX	void				[	0f 01 fa]				AMD
 MONITORX	reg_rax,reg_ecx,reg_edx		[---:	0f 01 fa]				X64,AMD,ND
+MONITORX	reg_eax,reg_ecx,reg_edx		[---:	0f 01 fa]				AMD,ND
+MONITORX	reg_ax,reg_ecx,reg_edx		[---:	0f 01 fa]				AMD,ND
 MOV		mem,reg_sreg			[mr:	8c /r]					8086,SW
 MOV		reg16,reg_sreg			[mr:	o16 8c /r]				8086
 MOV		reg32,reg_sreg			[mr:	o32 8c /r]				386
@@ -893,8 +895,8 @@ MUL		rm32				[m:	o32 f7 /4]				386
 MUL		rm64				[m:	o64 f7 /4]				X64
 MWAIT		void				[	0f 01 c9]				PRESCOTT
 MWAIT		reg_eax,reg_ecx			[--:	0f 01 c9]				PRESCOTT,ND
-MWAITX		void				[	0f 01 fb]				X64,AMD
-MWAITX		reg_eax,reg_ecx			[--:	0f 01 fb]				X64,AMD,ND
+MWAITX		void				[	0f 01 fb]				AMD
+MWAITX		reg_eax,reg_ecx			[--:	0f 01 fb]				AMD,ND
 NEG		rm8				[m:	hle f6 /3]				8086,LOCK
 NEG		rm16				[m:	hle o16 f7 /3]				8086,LOCK
 NEG		rm32				[m:	hle o32 f7 /3]				386,LOCK
@@ -5116,7 +5118,7 @@ WRPKRU		void				[	0f 01 ef]				X64,FUTURE
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
 
 ; AMD Zen v1
-CLZERO		void				[	0f 01 fc]				X64,FUTURE,AMD
+CLZERO		void				[	0f 01 fc]				FUTURE,AMD
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

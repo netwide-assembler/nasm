@@ -42,9 +42,10 @@
 #include "nasmlib.h"
 #include "quote.h"
 
-char *nasm_quote(char *str, size_t len)
+char *nasm_quote(const char *str, size_t len)
 {
-    char c, c1, *p, *q, *nstr, *ep;
+    const char *p, *ep;
+    char c, c1, *q, *nstr;
     unsigned char uc;
     bool sq_ok, dq_ok;
     size_t qlen;

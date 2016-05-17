@@ -171,6 +171,7 @@ static const struct warning {
     {"hle", "invalid hle prefixes", true},
     {"bnd", "invalid bnd prefixes", true},
     {"zext-reloc", "relocation zero-extended to match output format", true},
+    {"ptr", "non-NASM keyword used in other assemblers", true},
 };
 
 static bool want_usage;
@@ -339,6 +340,7 @@ int main(int argc, char **argv)
     error_file = stderr;
 
     tolower_init();
+    src_init();
 
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
@@ -399,7 +401,7 @@ int main(int argc, char **argv)
             preproc->cleanup(0);
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
-            char *file_name = NULL;
+            const char *file_name = NULL;
             int32_t prior_linnum = 0;
             int lineinc = 0;
 
@@ -439,7 +441,6 @@ int main(int argc, char **argv)
                 nasm_fputs(line, ofile);
                 nasm_free(line);
             }
-            nasm_free(file_name);
             preproc->cleanup(0);
             if (ofile)
                 fclose(ofile);
@@ -479,9 +480,11 @@ int main(int argc, char **argv)
             ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
-            if (ferror(ofile))
+            if (ferror(ofile)) {
                 nasm_error(ERR_NONFATAL|ERR_NOFILE,
                            "write error on output file `%s'", outname);
+                terminate_after_phase = true;
+            }
         }
 
         if (ofile) {
@@ -502,6 +505,7 @@ int main(int argc, char **argv)
     saa_free(forwrefs);
     eval_cleanup();
     stdscan_cleanup();
+    src_free();
 
     return terminate_after_phase;
 }
@@ -890,8 +894,7 @@ set_warning:
                 for (i = 1; i <= ERR_WARN_MAX; i++)
                     warning_on_global[i] = !do_warn;
             } else {
-                nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                           "invalid warning `%s'", param);
+		/* Ignore invalid warning names; forward compatibility */
             }
             break;
 
@@ -1515,9 +1518,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                             warning_on[i] = warning_on_global[i];
                             break;
                         }
-                    } else
-                        nasm_error(ERR_NONFATAL,
-                                   "invalid warning id in WARNING directive");
+                    }
                     break;
                 case D_CPU:         /* [CPU] */
                     cpu = get_cpu(value);
@@ -1869,19 +1870,18 @@ static enum directives getkw(char **directive, char **value)
  */
 static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
 {
-    char *currentfile = NULL;
+    const char *currentfile = NULL;
     int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
         return;
 
     if (!(severity & ERR_NOFILE))
-        src_get(&lineno, &currentfile);
+	src_get(&lineno, &currentfile);
 
     if (!skip_this_pass(severity)) {
 	if (currentfile) {
 	    fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-	    nasm_free(currentfile);
 	} else {
 	    fputs("nasm: ", error_file);
 	}
@@ -1907,7 +1907,7 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
  */
 static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
 {
-    char *currentfile = NULL;
+    const char *currentfile = NULL;
     int32_t lineno = 0;
 
     if (is_suppressed_warning(severity))
@@ -1919,7 +1919,6 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
     if (!skip_this_pass(severity)) {
         if (currentfile) {
 	    fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
-	    nasm_free(currentfile);
 	} else {
 	    fputs("nasm: ", error_file);
 	}
@@ -1951,15 +1950,18 @@ static bool is_suppressed_warning(int severity)
 
 static bool skip_this_pass(int severity)
 {
-    /* See if it's a pass-one only warning and we're not in pass one. */
+  /* See if it's a pass-specific warning which should be skipped. */
+
     if ((severity & ERR_MASK) > ERR_WARNING)
 	return false;
 
-    if (((severity & ERR_PASS1) && pass0 != 1) ||
-        ((severity & ERR_PASS2) && pass0 != 2))
-        return true;
-
-    return false;
+    /*
+     * passn is 1 on the very first pass only.
+     * pass0 is 2 on the code-generation (final) pass only.
+     * These are the passes we care about in this case.
+     */
+    return (((severity & ERR_PASS1) && passn != 1) ||
+	    ((severity & ERR_PASS2) && pass0 != 2));
 }
 
 /**
@@ -1998,20 +2000,30 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;
     }
 
-    vsnprintf(msg, sizeof msg, fmt, args);
+    vsnprintf(msg, sizeof msg - 64, fmt, args);
+    if ((severity & (ERR_WARN_MASK|ERR_PP_LISTMACRO)) == ERR_WARN_MASK) {
+	char *p = strchr(msg, '\0');
+	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
+    }
 
     if (!skip_this_pass(severity))
 	fprintf(error_file, "%s%s\n", pfx, msg);
 
+    /* Are we recursing from error_list_macros? */
+    if (severity & ERR_PP_LISTMACRO)
+	return;
+
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
-     * preprocessor warnings in the list file
+     * pass1 or preprocessor warnings in the list file
      */
     if ((severity & ERR_MASK) >= ERR_WARNING)
 	lfmt->error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
+
+    preproc->error_list_macros(severity);
 
     switch (severity & ERR_MASK) {
     case ERR_DEBUG:

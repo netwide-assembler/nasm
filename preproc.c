@@ -154,6 +154,9 @@ struct MMacro {
     uint64_t unique;
     int lineno;                 /* Current line number on expansion */
     uint64_t condcnt;           /* number of if blocks... */
+
+    const char *fname;		/* File where defined */
+    int32_t xline;		/* First line in macro */
 };
 
 
@@ -267,7 +270,7 @@ struct Include {
     FILE *fp;
     Cond *conds;
     Line *expansion;
-    char *fname;
+    const char *fname;
     int lineno, lineinc;
     MMacro *mstk;       /* stack of active macros/reps */
 };
@@ -2517,7 +2520,7 @@ static int do_directive(Token * tline)
             /* -MG given but file not found */
             nasm_free(inc);
         } else {
-            inc->fname = src_set_fname(nasm_strdup(p));
+            inc->fname = src_set_fname(p);
             inc->lineno = src_set_linnum(0);
             inc->lineinc = 1;
             inc->expansion = NULL;
@@ -2754,7 +2757,7 @@ issue_error:
                   pp_directives[i]);
             return DIRECTIVE_FOUND;
         }
-        defining = nasm_malloc(sizeof(MMacro));
+        defining = nasm_zalloc(sizeof(MMacro));
         defining->max_depth =
             (i == PP_RMACRO) || (i == PP_IRMACRO) ? DEADMAN_LIMIT : 0;
         defining->casesense = (i == PP_MACRO) || (i == PP_RMACRO);
@@ -2763,6 +2766,8 @@ issue_error:
             defining = NULL;
             return DIRECTIVE_FOUND;
         }
+
+	src_get(&defining->xline, &defining->fname);
 
         mmac = (MMacro *) hash_findix(&mmacros, defining->name);
         while (mmac) {
@@ -3571,7 +3576,9 @@ issue_error:
         src_set_linnum(k);
         istk->lineinc = m;
         if (tline) {
-            nasm_free(src_set_fname(detoken(tline, false)));
+            char *fname = detoken(tline, false);
+            src_set_fname(fname);
+            nasm_free(fname);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -4128,12 +4135,10 @@ again:
                      */
                     if (!m->expansion) {
                         if (!strcmp("__FILE__", m->name)) {
-                            int32_t num = 0;
-                            char *file = NULL;
-                            src_get(&num, &file);
+                            const char *file = src_get_fname();
+                            /* nasm_free(tline->text); here? */
                             tline->text = nasm_quote(file, strlen(file));
                             tline->type = TOK_STRING;
-                            nasm_free(file);
                             continue;
                         }
                         if (!strcmp("__LINE__", m->name)) {
@@ -4812,7 +4817,7 @@ static void pp_verror(int severity, const char *fmt, va_list arg)
 	istk && istk->conds &&
 	((severity & ERR_PP_PRECOND) ?
 	 istk->conds->state == COND_NEVER :
-	 emitting(istk->conds->state)))
+	 !emitting(istk->conds->state)))
 	return;
 
     /* get %macro name */
@@ -4848,8 +4853,7 @@ pp_reset(char *file, int apass, StrList **deplist)
     istk->mstk = NULL;
     istk->fp = fopen(file, "r");
     istk->fname = NULL;
-    src_set_fname(nasm_strdup(file));
-    src_set_linnum(0);
+    src_set(0, file);
     istk->lineinc = 1;
     if (!istk->fp)
 	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);
@@ -5025,10 +5029,8 @@ static char *pp_getline(void)
                                "expected `%%endif' before end of file");
                 }
                 /* only set line and file name if there's a next node */
-                if (i->next) {
-                    src_set_linnum(i->lineno);
-                    nasm_free(src_set_fname(nasm_strdup(i->fname)));
-                }
+                if (i->next)
+                    src_set(i->lineno, i->fname);
                 istk = i->next;
                 lfmt->downlevel(LIST_INCLUDE);
                 nasm_free(i);
@@ -5139,12 +5141,11 @@ static void pp_cleanup(int pass)
         Include *i = istk;
         istk = istk->next;
         fclose(i->fp);
-        nasm_free(i->fname);
         nasm_free(i);
     }
     while (cstk)
         ctx_pop();
-    nasm_free(src_set_fname(NULL));
+    src_set_fname(NULL);
     if (pass == 0) {
         IncPath *i;
         free_llist(predef);
@@ -5253,6 +5254,34 @@ static void make_tok_num(Token * tok, int64_t val)
     tok->type = TOK_NUMBER;
 }
 
+static void pp_list_one_macro(MMacro *m, int severity)
+{
+    if (!m)
+	return;
+
+    /* We need to print the next_active list in reverse order */
+    pp_list_one_macro(m->next_active, severity);
+
+    if (m->name && !m->nolist) {
+	src_set(m->xline + m->lineno, m->fname);
+	nasm_error(severity, "... from macro `%s' defined here", m->name);
+    }
+}
+
+static void pp_error_list_macros(int severity)
+{
+    int32_t saved_line;
+    const char *saved_fname = NULL;
+
+    severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY;
+    src_get(&saved_line, &saved_fname);
+
+    if (istk)
+        pp_list_one_macro(istk->mstk, severity);
+
+    src_set(saved_line, saved_fname);
+}
+
 const struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
@@ -5261,5 +5290,6 @@ const struct preproc_ops nasmpp = {
     pp_pre_define,
     pp_pre_undefine,
     pp_pre_include,
-    pp_include_path
+    pp_include_path,
+    pp_error_list_macros,
 };

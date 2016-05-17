@@ -56,7 +56,8 @@ NDISASM = ndisasm.o disasm.o sync.o \
 LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
 	nasmlib.o ver.o \
 	file.o realpath.o \
-	ilog2.o md5c.o crc64.o
+	ilog2.o md5c.o crc64.o \
+	srcfile.o
 #-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)
@@ -183,6 +184,7 @@ nasmlib.o: nasmlib.c compiler.h config.h directiv.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h tables.h tokens.h
 realpath.o: realpath.c compiler.h config.h nasmint.h nasmlib.h
+srcfile.o: srcfile.c compiler.h config.h hashtbl.h nasmint.h nasmlib.h
 ver.o: ver.c ver.h version.h
 ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h \

@@ -10,6 +10,7 @@
 
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
+objdir		= @builddir@
 VPATH		= @srcdir@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -30,7 +31,7 @@ RANLIB		= @RANLIB@
 STRIP		= @STRIP@
 
 PERL		= perl
-PERLFLAGS	= -I$(srcdir)/perllib
+PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
 INSTALL		= @INSTALL@
@@ -105,7 +106,8 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) \
 LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/nasmlib.$(O) nasmlib/ver.$(O) \
 	nasmlib/file.$(O) nasmlib/realpath.$(O) \
-	nasmlib/ilog2.$(O) nasmlib/md5c.$(O) nasmlib/crc64.$(O)
+	nasmlib/ilog2.$(O) nasmlib/md5c.$(O) nasmlib/crc64.$(O) \
+	nasmlib/srcfile.$(O)
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf
@@ -127,7 +129,7 @@ ndisasm$(X): $(NDISASM) $(NASMLIB)
 # instruction-table file by a Perl script. They're distributed,
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
-INSDEP = insns.dat insns.pl insns-iflags.pl
+INSDEP = insns.dat insns.pl
 
 iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/insns.pl -fc $(srcdir)/insns.dat
@@ -219,9 +221,11 @@ perlreq: $(PERLREQ)
 nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
 
-# Should only be done after "make everything"
+# Should only be done after "make everything".
+# The use of redirection here keeps makensis from moving the cwd to the
+# source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) nsis/nasm.nsi
+	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < "$<"
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1
@@ -382,6 +386,8 @@ nasmlib/nasmlib.$(O): nasmlib/nasmlib.c compiler.h config.h directiv.h \
  pptok.h preproc.h regs.h tables.h tokens.h
 nasmlib/realpath.$(O): nasmlib/realpath.c compiler.h config.h nasmint.h \
  nasmlib.h
+nasmlib/srcfile.$(O): nasmlib/srcfile.c compiler.h config.h hashtbl.h \
+ nasmint.h nasmlib.h
 nasmlib/ver.$(O): nasmlib/ver.c ver.h version.h
 ndisasm.$(O): ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h \
@@ -411,11 +417,10 @@ output/outcoff.$(O): output/outcoff.c compiler.h config.h directiv.h eval.h \
 output/outdbg.$(O): output/outdbg.c compiler.h config.h directiv.h insnsi.h \
  nasm.h nasmint.h nasmlib.h opflags.h output/outform.h pptok.h preproc.h \
  regs.h tables.h
-output/outelf.$(O): output/outelf.c compiler.h config.h directiv.h \
- eval.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h output/dwarf.h \
- output/elf.h output/outelf.h output/outform.h output/outlib.h \
- output/stabs.h pptok.h preproc.h raa.h rbtree.h regs.h saa.h stdscan.h \
- tables.h ver.h
+output/outelf.$(O): output/outelf.c compiler.h config.h directiv.h eval.h \
+ insnsi.h nasm.h nasmint.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
+ output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
+ preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h ver.h
 output/outform.$(O): output/outform.c compiler.h config.h directiv.h \
  insnsi.h nasm.h nasmint.h nasmlib.h opflags.h output/outform.h pptok.h \
  preproc.h regs.h tables.h

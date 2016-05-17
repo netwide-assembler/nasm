@@ -285,16 +285,16 @@ static void cv8_cleanup(void)
     build_type_table(type_sect);
 
     if (cv8_state.source_file.name != NULL)
-        free(cv8_state.source_file.name);
+        nasm_free(cv8_state.source_file.name);
 
     if (cv8_state.cwd != NULL)
-        free(cv8_state.cwd);
+        nasm_free(cv8_state.cwd);
 
     saa_free(cv8_state.lines);
 
     saa_rewind(cv8_state.symbols);
     while ((sym = saa_rstruct(cv8_state.symbols)))
-        free(sym->name);
+        nasm_free(sym->name);
     saa_free(cv8_state.symbols);
 }
 

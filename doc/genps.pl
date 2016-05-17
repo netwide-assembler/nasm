@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -35,9 +35,6 @@
 #
 # Format the documentation as PostScript
 #
-
-use Env;
-use lib $srcdir;
 
 require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
@@ -87,6 +84,9 @@ use Fcntl;
 	       '11x17'  => [792,1224], # US double paper size
 	       );
 
+# Canned header file
+$headps = 'head.ps';
+
 #
 # Parse the command line
 #
@@ -104,6 +104,8 @@ while ( $arg = shift(@ARGV) ) {
 	    $psconf{$parm} = shift(@ARGV);
 	} elsif ( $parm =~ /^(title|subtitle|year|author|license)$/ ) {
 	    $metadata{$parm} = shift(@ARGV);
+	} elsif ( $parm eq 'headps' ) {
+	    $headps = shift(@ARGV);
 	} else {
 	    die "$0: Unknown option: $arg\n";
 	}
@@ -1028,7 +1030,8 @@ foreach $fset ( @AllFonts ) {
 print "/bullet [",ps_string($charcode{'bullet'}),"] def\n";
 
 # Emit the canned PostScript prologue
-open(PSHEAD, "< head.ps");
+open(PSHEAD, '<', $headps)
+    or die "$0: cannot open: $headps: $!\n";
 while ( defined($line = <PSHEAD>) ) {
     print $line;
 }

@@ -33,6 +33,7 @@
 \#
 \# Source code to NASM documentation
 \#
+
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
 \M{year}{1996-2016}
@@ -45,6 +46,9 @@
 \M{infotitle}{The Netwide Assembler for x86}
 \M{epslogo}{nasmlogo.eps}
 \M{logoyadj}{-72}
+
+\& version.src
+
 \IR{-D} \c{-D} option
 \IR{-E} \c{-E} option
 \IR{-F} \c{-F} option
@@ -381,11 +385,6 @@ google for us!
 \i{New releases}, \i{release candidates}, and \I{snapshots, daily
 development}\i{daily development snapshots} of NASM are available from
 the official web site.
-
-Announcements are posted to
-\W{news:comp.lang.asm.x86}\i\c{comp.lang.asm.x86},
-and to the web site
-\W{http://www.freshmeat.net/}\c{http://www.freshmeat.net/}.
 
 If you want information about the current development status, please
 subscribe to the \i\c{nasm-devel} email list; see link from the
@@ -963,13 +962,21 @@ Enabled by default.
 form of jmp instruction becomes jmp short form.
 Enabled by default.
 
+\b \i\c{zext-reloc} warns that a relocation has been zero-extended due
+to limitations in the output format.
+
+\b \i\c\{ptr} warns about keywords used in other assemblers that might
+indicate a mistake in the source code.  Currently only the MASM
+\c{PTR} keyword is recognized.
+
 \b \i\c{error} causes warnings to be treated as errors.  Disabled by
 default.
 
 \b \i\c{all} is an alias for \e{all} suppressible warning classes (not
 including \c{error}).  Thus, \c{-w+all} enables all available warnings.
 
-In addition, you can set warning classes across sections.
+In addition, you can control warnings in the source code itself, using
+the \i\c{[warning]} directive.
 Warning classes may be enabled with \i\c{[warning +warning-name]},
 disabled with \i\c{[warning -warning-name]} or reset to their
 original value with \i\c{[warning *warning-name]}. No "user form"
@@ -8246,4 +8253,3 @@ column shows the processor type in which the instruction was introduced and,
 \A{changelog} \i{NASM Version History}
 
 \& changes.src
-

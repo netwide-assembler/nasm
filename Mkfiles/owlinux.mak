@@ -37,7 +37,7 @@ ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD		= $(CC)
 LDFLAGS		= $(ALL_CFLAGS)
 LIBS		=
-PERL		= perl -I$(srcdir)/perllib
+PERL		= perl -I$(srcdir)/perllib -I$(srcdir)
 
 STRIP		= wstrip
 
@@ -83,7 +83,8 @@ NDISASM = ndisasm.$(O) disasm.$(O) sync.$(O) \
 LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/nasmlib.$(O) nasmlib/ver.$(O) \
 	nasmlib/file.$(O) nasmlib/realpath.$(O) \
-	nasmlib/ilog2.$(O) nasmlib/md5c.$(O) nasmlib/crc64.$(O)
+	nasmlib/ilog2.$(O) nasmlib/md5c.$(O) nasmlib/crc64.$(O) \
+	nasmlib/srcfile.$(O)
 #-- End File Lists --#
 
 what:
@@ -288,6 +289,8 @@ nasmlib/nasmlib.$(O): nasmlib/nasmlib.c compiler.h directiv.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h \
  preproc.h regs.h tables.h tokens.h
 nasmlib/realpath.$(O): nasmlib/realpath.c compiler.h nasmint.h nasmlib.h
+nasmlib/srcfile.$(O): nasmlib/srcfile.c compiler.h hashtbl.h nasmint.h \
+ nasmlib.h
 nasmlib/ver.$(O): nasmlib/ver.c ver.h version.h
 ndisasm.$(O): ndisasm.c compiler.h directiv.h disasm.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h \
@@ -316,8 +319,8 @@ output/outcoff.$(O): output/outcoff.c compiler.h directiv.h eval.h insnsi.h \
 output/outdbg.$(O): output/outdbg.c compiler.h directiv.h insnsi.h nasm.h \
  nasmint.h nasmlib.h opflags.h output/outform.h pptok.h preproc.h regs.h \
  tables.h
-output/outelf.$(O): output/outelf.c compiler.h directiv.h eval.h \
- insnsi.h nasm.h nasmint.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
+output/outelf.$(O): output/outelf.c compiler.h directiv.h eval.h insnsi.h \
+ nasm.h nasmint.h nasmlib.h opflags.h output/dwarf.h output/elf.h \
  output/outelf.h output/outform.h output/outlib.h output/stabs.h pptok.h \
  preproc.h raa.h rbtree.h regs.h saa.h stdscan.h tables.h ver.h
 output/outform.$(O): output/outform.c compiler.h directiv.h insnsi.h nasm.h \

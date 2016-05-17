@@ -3,6 +3,7 @@
 *.dbg
 *.exe
 *.lib
+*.i
 *.lst
 *.o
 *.o64
@@ -12,8 +13,9 @@
 *.out
 *.pdb
 *.rej
-*.xml
+*.s
 *.swp
+*.xml
 .*swo
 *~
 \#*
@@ -40,6 +42,7 @@ TAGS
 /doc/*.txt
 /doc/Makefile
 /doc/inslist.src
+/doc/version.src
 /doc/html
 /doc/info
 /insnsa.c

@@ -464,6 +464,8 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    r->snum = raa_read(extsyms, section);
 	    if (reltype == RL_BRANCH)
 		r->type = X86_64_RELOC_BRANCH;
+	    else if (reltype == GENERIC_RELOC_VANILLA)
+		adjust = -sect->size;
 	} else {
 	    /* local */
 	    r->ext = 0;
@@ -1320,6 +1322,8 @@ static void macho_write_section (void)
 		l += sectstab[r->snum]->addr;
 		if (r->pcrel)
 		    l -= s->addr;
+	    } else if (r->pcrel && r->type == GENERIC_RELOC_VANILLA) {
+		l -= s->addr;
 	    }
 
 	    /* write new offset back */

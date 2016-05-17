@@ -106,6 +106,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
 
 #define ERR_NO_SEVERITY 0x00000100      /* suppress printing severity */
 #define ERR_PP_PRECOND	0x00000200	/* for preprocessor use */
+#define ERR_PP_LISTMACRO 0x00000400	/* from preproc->error_list_macros() */
 
 /*
  * These codes define specific types of suppressible warning.
@@ -134,7 +135,8 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_WARN_HLE		WARN(13) /* bad HLE prefixes */
 #define ERR_WARN_BND		WARN(14) /* bad BND prefixes */
 #define ERR_WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
-#define ERR_WARN_MAX            15       /* the highest numbered one */
+#define ERR_WARN_PTR		WARN(16) /* not a NASM keyword */
+#define ERR_WARN_MAX            16       /* the highest numbered one */
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will
@@ -389,16 +391,24 @@ void fwriteaddr(uint64_t data, int size, FILE * fp);
 int bsi(const char *string, const char **array, int size);
 int bsii(const char *string, const char **array, int size);
 
-char *src_set_fname(char *newname);
+/*
+ * These functions are used to keep track of the source code file and name.
+ */
+void src_init(void);
+void src_free(void);
+const char *src_set_fname(const char *newname);
+const char *src_get_fname(void);
 int32_t src_set_linnum(int32_t newline);
 int32_t src_get_linnum(void);
+/* Can be used when there is no need for the old information */
+void src_set(int32_t line, const char *filename);
 /*
- * src_get may be used if you simply want to know the source file and line.
+ * src_get gets both the source file name and line.
  * It is also used if you maintain private status about the source location
  * It return 0 if the information was the same as the last time you
- * checked, -1 if the name changed and (new-old) if just the line changed.
+ * checked, -2 if the name changed and (new-old) if just the line changed.
  */
-int src_get(int32_t *xline, char **xname);
+int32_t src_get(int32_t *xline, const char **xname);
 
 char *nasm_strcat(const char *one, const char *two);
 

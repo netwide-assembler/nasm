@@ -342,6 +342,9 @@ struct preproc_ops {
 
     /* Include path from command line */
     void (*include_path)(char *path);
+
+    /* Unwind the macro stack when printing an error message */
+    void (*error_list_macros)(int severity);
 };
 
 extern const struct preproc_ops nasmpp;
@@ -421,6 +424,7 @@ enum ccode { /* condition code names */
 #define TFLAG_BRC_OPT   (1 << 1)    /* may or may not have braces. opmasks {k1} */
 #define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
 #define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
+#define TFLAG_WARN	(1 << 3)    /* warning only, treat as ID */
 
 static inline uint8_t get_cond_opcode(enum ccode c)
 {
