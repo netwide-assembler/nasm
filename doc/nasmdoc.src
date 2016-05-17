@@ -33,6 +33,7 @@
 \#
 \# Source code to NASM documentation
 \#
+
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
 \M{year}{1996-2016}
@@ -45,6 +46,9 @@
 \M{infotitle}{The Netwide Assembler for x86}
 \M{epslogo}{nasmlogo.eps}
 \M{logoyadj}{-72}
+
+\& version.src
+
 \IR{-D} \c{-D} option
 \IR{-E} \c{-E} option
 \IR{-F} \c{-F} option
@@ -8254,4 +8258,3 @@ column shows the processor type in which the instruction was introduced and,
 \A{changelog} \i{NASM Version History}
 
 \& changes.src
-

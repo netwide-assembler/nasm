@@ -2,6 +2,7 @@
 # UNIX Makefile for NASM documentation
 #
 
+top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
 VPATH		= @srcdir@
 prefix		= @prefix@
@@ -16,7 +17,7 @@ INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
-PERL		= perl
+PERL		= perl -I$(srcdir)
 MAKEINFO	= makeinfo
 TEXI2DVI        = texi2dvi
 TEXI2IPF	= texi2ipf
@@ -26,7 +27,7 @@ ACRODIST	= @ACRODIST@		# Acrobat Distiller
 PSTOPDF		= @PSTOPDF@		# BSD/MacOS X utility
 PS2PDF          = @PS2PDF@		# Part of GhostScript
 
-SRCS		= nasmdoc.src inslist.src changes.src
+SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
 
 # exports
@@ -38,28 +39,35 @@ all: $(OUT)
 os2: nasm.inf
 
 inslist.src: inslist.pl ../insns.dat
-	$(PERL) $(srcdir)/inslist.pl
+	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../insns.dat
 
 .PHONY: html
 html: html/nasmdoc0.html
 
+RDSRC = $(PERL) $(srcdir)/rdsrc.pl -I$(srcdir)/
+
 html/nasmdoc0.html: $(SRCS) rdsrc.pl
 	mkdir -p html
-	$(PERL) $(srcdir)/rdsrc.pl html < $<
+	$(RDSRC) html "$<"
 	mv -f *.html html
 
 nasmdoc.dip: $(SRCS) rdsrc.pl
-	$(PERL) $(srcdir)/rdsrc.pl dip < $<
+	$(RDSRC) dip "$<"
 
 nasmdoc.texi: $(SRCS) rdsrc.pl
-	$(PERL) $(srcdir)/rdsrc.pl texi < $<
+	$(RDSRC) texi "$<"
 
 nasmdoc.txt: $(SRCS) rdsrc.pl
-	$(PERL) $(srcdir)/rdsrc.pl txt < $<
+	$(RDSRC) txt "$<"
 
-nasmdoc.ps: nasmdoc.dip nasmlogo.eps $(srcdir)/../version genpsdriver.pl \
-	    genps.pl psfonts.ph pswidth.ph head.ps
-	$(PERL) $(srcdir)/genpsdriver.pl > nasmdoc.ps
+version.src: $(top_srcdir)/version.pl $(top_srcdir)/version
+	$(PERL) $(top_srcdir)/version.pl docsrc \
+		< $(top_srcdir)/version > version.src
+
+nasmdoc.ps: nasmdoc.dip nasmlogo.eps \
+	    genps.pl psfonts.ph pswidth.ph head.ps 
+	$(PERL) $(srcdir)/genps.pl -headps $(srcdir)/head.ps nasmdoc.dip \
+		> nasmdoc.ps
 
 nasmdoc.pdf: nasmdoc.ps
 	$(ACRODIST) -n -q --nosecurity -o $@ $< || \
@@ -88,7 +96,7 @@ nasm.inf: nasmdoc.ipf
 clean:
 	-rm -f *.rtf *.hpj *.texi *.gid *.ipf *.dip
 	-rm -f *.aux *.cp *.fn *.ky *.pg *.log *.toc *.tp *.vr
-	-rm -f inslist.src
+	-rm -f inslist.src version.src
 
 spotless: clean
 	-rm -rf html info

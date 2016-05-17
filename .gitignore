@@ -39,6 +39,7 @@ TAGS
 /doc/*.txt
 /doc/Makefile
 /doc/inslist.src
+/doc/version.src
 /doc/html
 /doc/info
 /insnsa.c
@@ -52,7 +53,7 @@ TAGS
 /nasm.1
 /ndisasm
 /ndisasm.man
-/nasm.1
+/ndisasm.1
 /pptok.c
 /pptok.h
 /pptok.ph

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
+##
 ##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -116,12 +116,20 @@
 # \&{filename}
 #  Includes filename. Recursion is allowed.
 #
- 
-use IO::File;
+
+use File::Spec;
+
+@include_path = ();
 
 $diag = 1, shift @ARGV if $ARGV[0] eq "-d";
+while ($ARGV[0] =~ /^\-[Ii](.*)$/) {
+    push(@include_path, $1);
+    shift;
+}
 
-($out_format) = @ARGV;
+$out_format = shift(@ARGV);
+@files = @ARGV;
+@files = ('-') unless(scalar(@files));
 
 $| = 1;
 
@@ -136,9 +144,8 @@ print "Reading input...";
 $pname = "para000000";
 @pnames = @pflags = ();
 $para = undef;
-while (defined($_ = <STDIN>)) {
-  $_ = &untabify($_);
-  &check_include($_);
+foreach $file (@files) {
+  &include($file);
 }
 &got_para($para);
 print "done.\n";
@@ -205,8 +212,9 @@ sub untabify($) {
   }
   return $o;
 }
-sub check_include {
+sub read_line {
   local $_ = shift;
+  $_ = &untabify($_);
   if (/\\& (\S+)/) {
      &include($1);
   } else {
@@ -226,11 +234,25 @@ sub get_para($_) {
 }
 sub include {
   my $name = shift;
-  my $F = IO::File->new($name)
-     or die "Cannot open $name: $!";
-  while (<$F>) {
-     &check_include($_);
+  my $F;
+
+  if ($name eq '-') {
+    open($F, '<-');		# stdin
+  } else {
+    my $found = 0;
+    foreach my $idir ( File::Spec->curdir, @include_path ) {
+	my $fpath = File::Spec->catfile($idir, $name);
+      if (open($F, '<', $fpath)) {
+	$found = 1;
+	last;
+      }
+    }
+    die "Cannot open $name: $!\n" unless ($found);
   }
+  while (defined($_ = <$F>)) {
+     &read_line($_);
+  }
+  close($F);
 }
 sub got_para {
   local ($_) = @_;
@@ -1493,7 +1515,7 @@ sub add_item {
 #
 sub write_dip {
   open(PARAS, "> nasmdoc.dip");
-  foreach $k (keys(%metadata)) {
+  foreach $k (sort(keys(%metadata))) {
       print PARAS 'meta :', $k, "\n";
       print PARAS $metadata{$k},"\n";
   }

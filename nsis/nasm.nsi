@@ -26,6 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+!addincludedir "${objdir}/nsis"
+!addincludedir "${srcdir}/nsis"
 !include "version.nsh"
 !include /nonfatal "arch.nsh"
 
@@ -50,7 +52,7 @@ SetCompressor lzma
 
 ;Name and file
 Name "${PACKAGE_NAME}"
-OutFile "../${PACKAGE_SHORT_NAME}-installer-${ARCH}.exe"
+OutFile "${objdir}/${PACKAGE_SHORT_NAME}-installer-${ARCH}.exe"
 
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
@@ -67,8 +69,8 @@ Var CmdFailed
 ;--------------------------------
 ;Interface Settings
 Caption "${PACKAGE_SHORT_NAME} installation"
-Icon "nasm.ico"
-UninstallIcon "nasm-un.ico"
+Icon "${srcdir}/nsis/nasm.ico"
+UninstallIcon "${srcdir}/nsis/nasm-un.ico"
 
 !define MUI_ABORTWARNING
 
@@ -98,10 +100,10 @@ UninstallIcon "nasm-un.ico"
 Section "NASM" SecNasm
     Sectionin RO
     SetOutPath "$INSTDIR"
-    File "../LICENSE"
-    File "../nasm.exe"
-    File "../ndisasm.exe"
-    File "nasm.ico"
+    File "${srcdir}/LICENSE"
+    File "${objdir}/nasm.exe"
+    File "${objdir}/ndisasm.exe"
+    File "${srcdir}/nsis/nasm.ico"
 
     ;Store installation folder
     WriteRegStr HKCU "Software\${PRODUCT_SHORT_NAME}" "" $INSTDIR
@@ -137,27 +139,27 @@ skip:
 SectionEnd
 
 Section "RDOFF" SecRdoff
-    File "../rdoff/ldrdf.exe"
-    File "../rdoff/rdf2bin.exe"
-    File "../rdoff/rdf2com.exe"
-    File "../rdoff/rdf2ith.exe"
-    File "../rdoff/rdf2ihx.exe"
-    File "../rdoff/rdf2srec.exe"
-    File "../rdoff/rdfdump.exe"
-    File "../rdoff/rdflib.exe"
+    File "${objdir}/rdoff/ldrdf.exe"
+    File "${objdir}/rdoff/rdf2bin.exe"
+    File "${objdir}/rdoff/rdf2com.exe"
+    File "${objdir}/rdoff/rdf2ith.exe"
+    File "${objdir}/rdoff/rdf2ihx.exe"
+    File "${objdir}/rdoff/rdf2srec.exe"
+    File "${objdir}/rdoff/rdfdump.exe"
+    File "${objdir}/rdoff/rdflib.exe"
 SectionEnd
 
 Section "Manual" SecManual
     SetOutPath "$INSTDIR"
-    File "../doc/nasmdoc.pdf"
+    File "${objdir}/doc/nasmdoc.pdf"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\nasmdoc.pdf"
 SectionEnd
 
 Section "VS8 integration" SecVS8
     CreateDirectory "$INSTDIR\VSrules"
     SetOutPath "$INSTDIR\VSrules"
-    File "../contrib/VSrules/nasm.README"
-    File "../contrib/VSrules/nasm.rules"
+    File "${srcdir}/contrib/VSrules/nasm.README"
+    File "${srcdir}/contrib/VSrules/nasm.rules"
 SectionEnd
 
 ;--------------------------------

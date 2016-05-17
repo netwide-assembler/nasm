@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -178,6 +178,9 @@ if ( $what eq 'h' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {
     printf "0x%08x\n", $nasm_id; # Print ID in hexadecimal
+} elsif ( $what eq 'docsrc' ) {
+    printf "\\M{version}{%s}\n", $line;
+    printf "\\M{subtitle}{version %s}\n", $line;
 } else {
     die "$0: Unknown output: $what\n";
 }

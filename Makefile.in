@@ -8,6 +8,7 @@
 
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
+objdir		= @builddir@
 VPATH		= @srcdir@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -205,9 +206,11 @@ perlreq: $(PERLREQ)
 nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
 
-# Should only be done after "make everything"
+# Should only be done after "make everything".
+# The use of redirection here keeps makensis from moving the cwd to the
+# source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) nsis/nasm.nsi
+	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < "$<"
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1
