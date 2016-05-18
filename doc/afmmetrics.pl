@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -68,14 +68,10 @@ while ( $line = <STDIN> ) {
 	    $charwidth{$name} = $width;
 	}
     } elsif ( $kerndata ) {
-	@data = split(/\s+/, $line);
-	if ( $data[0] eq 'KPX' ) {
-	    if ( defined($charcodes{$data[1]}) &&
-		 defined($charcodes{$data[2]}) &&
-		 $data[3] != 0 ) {
-		$kernpairs{chr($charcodes{$data[1]}).
-			   chr($charcodes{$data[2]})} = $data[3];
-	    }
+	my($kpx, $a, $b, $adj) = split(/\s+/, $line);
+	if ( $kpx eq 'KPX' ) {
+	    $kernpairs{$a} = {} unless defined($kernpairs{$a});
+	    $kernpairs{$a}{$b} = $adj;
 	}
     }
 }
@@ -104,27 +100,33 @@ print "%PS_${psfont} = (\n";
 print "  name => \'$fontname\',\n";
 print "  widths => {";
 $lw = 100000;
-foreach $cc ( keys(%charwidth) ) {
-    $ss = sprintf('%s => %d, ', qstr($cc), $charwidth{$cc});
+foreach $cc ( sort(keys(%charwidth)) ) {
+    $ss = sprintf(' %s => %d,', qstr($cc), $charwidth{$cc});
     $lw += length($ss);
     if ( $lw > 72 ) {
-	print "\n    ";
+	print "\n   ";
 	$lw = 4 + length($ss);
     }
     print $ss;
 }
+print "\n  },\n";
+print "  kern => {";
+$lt = "\n";
+foreach $ka ( sort(keys(%kernpairs)) ) {
+    printf '%s    %s => {', $lt, qstr($ka);
+    $lw = 100000;
+    foreach $kb ( sort(keys(%{$kernpairs{$ka}})) ) {
+	$ss = sprintf(' %s => %d,', qstr($kb), $kernpairs{$ka}{$kb});
+	$lw += length($ss);
+	if ( $lw > 72 ) {
+	    print "\n     ";
+	    $lw = 6 + length($ss);
+	}
+	print $ss;
+    }
+    print "\n    }";
+    $lt = ",\n";
+}
 print "\n  }\n";
-#print "  kern => {";
-#$lw = 100000;
-#foreach $kp ( keys(%kernpairs) ) {
-#    $ss = sprintf('%s => %d, ', qstr($kp), $kernpairs{$kp});
-#    $lw += length($ss);
-#    if ( $lw > 72 ) {
-#	print "\n    ";
-#	$lw = 4 + length($ss);
-#    }
-#    print $ss;
-#}
-#print "  }\n";
 print ");\n";
 print "1;\n";
