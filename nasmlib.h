@@ -145,12 +145,17 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * passed a NULL pointer; nasm_free will do nothing if it is passed
  * a NULL pointer.
  */
-void *nasm_malloc(size_t);
-void *nasm_zalloc(size_t);
-void *nasm_realloc(void *, size_t);
+void * safe_malloc(1) nasm_malloc(size_t);
+void * safe_malloc(1) nasm_zalloc(size_t);
+void * safe_malloc2(1,2) nasm_calloc(size_t, size_t);
+void * safe_realloc(2) nasm_realloc(void *, size_t);
 void nasm_free(void *);
-char *nasm_strdup(const char *);
-char *nasm_strndup(const char *, size_t);
+char * safe_alloc nasm_strdup(const char *);
+char * safe_alloc nasm_strndup(const char *, size_t);
+
+#define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
+#define nasm_newn(p,n) ((p) = nasm_calloc(sizeof(*(p)),(n)))
+#define nasm_delete(p) do { nasm_free(p); (p) = NULL; } while (0)
 
 /*
  * Wrapper around fwrite() which fatal-errors on output failure.

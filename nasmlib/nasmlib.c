@@ -108,12 +108,17 @@ void *nasm_malloc(size_t size)
     return p;
 }
 
-void *nasm_zalloc(size_t size)
+void *nasm_calloc(size_t size, size_t nelem)
 {
-    void *p = calloc(size, 1);
+    void *p = calloc(size, nelem);
     if (!p)
         nasm_fatal(ERR_NOFILE, "out of memory");
     return p;
+}
+
+void *nasm_zalloc(size_t size)
+{
+    return nasm_calloc(size, 1);
 }
 
 void *nasm_realloc(void *q, size_t size)
