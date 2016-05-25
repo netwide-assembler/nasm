@@ -46,6 +46,7 @@
 #include "nasmlib.h"
 #include "preproc.h"
 #include "saa.h"
+#include "hashtbl.h"
 #include "output/outlib.h"
 #include "output/pecoff.h"
 #include "md5.h"
@@ -77,8 +78,9 @@ struct dfmt df_cv8 = {
 struct source_file;
 
 struct source_file {
-    char *name;
-    uint32_t namelen;
+    const char *filename;
+    char *fullname;
+    uint32_t fullnamelen;
 
     struct source_file *next;
 
@@ -136,9 +138,13 @@ struct cv8_state {
 
     uint32_t text_offset;
 
-    struct source_file source_file;
+    struct source_file *source_files, **source_files_tail;
+    const char *last_filename;
+    struct source_file *last_source_file;
+    struct hash_table file_hash;
     unsigned num_files;
     uint32_t total_filename_len;
+
 
     unsigned total_lines;
 
@@ -164,8 +170,9 @@ static void cv8_init(void)
 
     cv8_state.text_offset = 0;
 
-    cv8_state.source_file.name = NULL;
-    cv8_state.source_file.next = NULL;
+    cv8_state.source_files = NULL;
+    cv8_state.source_files_tail = &cv8_state.source_files;
+    hash_init(&cv8_state.file_hash, HASH_MEDIUM);
 
     cv8_state.num_files = 0;
     cv8_state.total_filename_len = 0;
@@ -304,21 +311,15 @@ static void cv8_cleanup(void)
     build_symbol_table(symbol_sect);
     build_type_table(type_sect);
 
-    if (cv8_state.source_file.name) {
-        nasm_free(cv8_state.source_file.name);
-        saa_free(cv8_state.source_file.lines);
-    }
-
-    list_for_each(file, cv8_state.source_file.next) {
-        nasm_free(file->name);
+    list_for_each(file, cv8_state.source_files) {
+        nasm_free(file->fullname);
         saa_free(file->lines);
         free(file);
     }
-
+    hash_free(&cv8_state.file_hash);
+    
     if (cv8_state.cwd != NULL)
         nasm_free(cv8_state.cwd);
-
-    saa_free(cv8_state.lines);
 
     saa_rewind(cv8_state.symbols);
     while ((sym = saa_rstruct(cv8_state.symbols)))
@@ -370,36 +371,46 @@ done:
 static struct source_file *register_file(const char *filename)
 {
     struct source_file *file;
+    void **filep;
+    char *fullpath;
+    struct hash_insert hi;
 
-    char *fullpath = nasm_realpath(filename);
+    /*
+     * The common case is that we are invoked with the same filename
+     * as we were last time.  Make this a pointer comparison: this is
+     * safe because the NASM core code allocates each filename once
+     * and never frees it.
+     */
+    if (likely(cv8_state.last_filename == filename))
+        return cv8_state.last_source_file;
 
-    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
-        if (file->name != NULL && !strcmp(file->name, fullpath)) {
-            free(fullpath);
-            return file;
-        }
-    }
+    cv8_state.last_filename = filename;
 
-    if (cv8_state.source_file.name == NULL) {
-        file = &cv8_state.source_file;
+    filep = hash_find(&cv8_state.file_hash, filename, &hi);
+    if (likely(filep)) {
+        file = *filep;
     } else {
-        struct source_file *next;
-        file = nasm_malloc(sizeof(struct source_file));
-        for (next = &cv8_state.source_file; next->next != NULL; next = next->next) {}
-        next->next = file;
+        /* New filename encounter */
+
+        fullpath = nasm_realpath(filename);
+
+        file = nasm_zalloc(sizeof(*file));
+
+        file->filename = filename;
+        file->fullname = fullpath;
+        file->fullnamelen = strlen(fullpath);
+        file->lines = saa_init(sizeof(struct linepair));
+        *cv8_state.source_files_tail = file;
+        cv8_state.source_files_tail = &file->next;
+        calc_md5(fullpath, file->md5sum);
+
+        hash_add(&hi, filename, file);
+
+        cv8_state.num_files++;
+        cv8_state.total_filename_len += file->fullnamelen + 1;
     }
 
-    memset(file, 0, sizeof(struct source_file));
-
-    file->name = fullpath;
-    file->namelen = strlen(fullpath);
-    file->lines = saa_init(sizeof(struct linepair));
-    file->next = NULL;
-    calc_md5(fullpath, file->md5sum);
-
-    cv8_state.num_files++;
-    cv8_state.total_filename_len += file->namelen + 1;
-
+    cv8_state.last_source_file = file;
     return file;
 }
 
@@ -494,7 +505,7 @@ static void write_filename_table(struct coff_Section *const sect)
     uint32_t tbl_off = 1;    /* offset starts at 1 to skip NULL entry */
     struct source_file *file;
 
-    nasm_assert(cv8_state.source_file.name != NULL);
+    nasm_assert(cv8_state.source_files != NULL);
     nasm_assert(cv8_state.num_files > 0);
     nasm_assert(cv8_state.total_filename_len > 0);
 
@@ -505,10 +516,10 @@ static void write_filename_table(struct coff_Section *const sect)
 
     section_write8(sect, 0);
 
-    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
-        section_wbytes(sect, file->name, file->namelen + 1);
+    list_for_each(file, cv8_state.source_files) {
+        section_wbytes(sect, file->fullname, file->fullnamelen + 1);
         file->filetbl_off = tbl_off;
-        tbl_off += file->namelen + 1;
+        tbl_off += file->fullnamelen + 1;
     }
 }
 
@@ -525,7 +536,7 @@ static void write_sourcefile_table(struct coff_Section *const sect)
     section_write32(sect, 0x000000F4);
     section_write32(sect, field_length);
 
-    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+    list_for_each(file, cv8_state.source_files) {
         nasm_assert(file->filetbl_off > 0);
         section_write32(sect, file->filetbl_off);
         section_write16(sect, 0x0110);
@@ -576,7 +587,7 @@ static void write_linenumber_table(struct coff_Section *const sect)
     register_reloc(sect, ".text", field_base + 4,
         win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
 
-    for (file = &cv8_state.source_file; file != NULL; file = file->next) {
+    list_for_each(file, cv8_state.source_files) {
         struct linepair *li;
 
         /* source mapping */
