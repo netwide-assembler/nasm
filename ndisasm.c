@@ -271,7 +271,7 @@ int main(int argc, char **argv)
     }
 
     if (strcmp(filename, "-")) {
-        fp = fopen(filename, "rb");
+        fp = nasm_open_read(filename, NF_BINARY);
         if (!fp) {
             fprintf(stderr, "%s: unable to open `%s': %s\n",
                     pname, filename, strerror(errno));

@@ -153,3 +153,38 @@ void fwritezero(size_t bytes, FILE *fp)
 	bytes -= blksize;
     }
 }
+
+#ifdef __GLIBC__
+/* If we are using glibc, attempt to mmap the files for speed */
+# define READ_TEXT_FILE "rtm"
+# define READ_BIN_FILE  "rbm"
+#else
+# define READ_TEXT_FILE "rt"
+# define READ_BIN_FILE  "rb"
+#endif
+#define WRITE_TEXT_FILE "wt"
+#define WRITE_BIN_FILE  "wb"
+
+FILE *nasm_open_read(const char *filename, enum file_flags flags)
+{
+    FILE *f;
+
+    f = fopen(filename, (flags & NF_TEXT) ? READ_TEXT_FILE : READ_BIN_FILE);
+    if (!f && (flags & NF_FATAL))
+        nasm_fatal(ERR_NOFILE, "unable to open input file: `%s': %s",
+                   filename, strerror(errno));
+
+    return f;
+}
+
+FILE *nasm_open_write(const char *filename, enum file_flags flags)
+{
+    FILE *f;
+
+    f = fopen(filename, (flags & NF_TEXT) ? WRITE_TEXT_FILE : WRITE_BIN_FILE);
+    if (!f && (flags & NF_FATAL))
+        nasm_fatal(ERR_NOFILE, "unable to open output file: `%s': %s",
+                   filename, strerror(errno));
+
+    return f;
+}

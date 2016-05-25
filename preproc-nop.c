@@ -61,7 +61,7 @@ static void nop_reset(char *file, int pass, StrList **deplist)
 {
     src_set(0, file);
     nop_lineinc = 1;
-    nop_fp = fopen(file, "r");
+    nop_fp = nasm_open_read(file, NF_TEXT);
 
     if (!nop_fp)
 	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);

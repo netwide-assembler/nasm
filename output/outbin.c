@@ -1347,7 +1347,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
                 else if (!nasm_stricmp(p, "stderr"))
                     rf = stderr;
                 else {          /* Must be a filename. */
-                    rf = fopen(p, "wt");
+                    rf = nasm_open_write(p, NF_TEXT);
                     if (!rf) {
                         nasm_error(ERR_WARNING, "unable to open map file `%s'",
                               p);

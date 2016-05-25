@@ -511,7 +511,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
         const char *fname = instruction->eops->stringval;
         FILE *fp;
 
-        fp = fopen(fname, "rb");
+        fp = nasm_open_read(fname, NF_BINARY);
         if (!fp) {
             nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);
@@ -806,7 +806,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
         int64_t val = 0;
         size_t len;
 
-        fp = fopen(fname, "rb");
+        fp = nasm_open_read(fname, NF_BINARY);
         if (!fp)
             nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);

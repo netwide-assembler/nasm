@@ -290,7 +290,7 @@ static void emit_dependencies(StrList *list)
     StrList *l, *nl;
 
     if (depend_file && strcmp(depend_file, "-")) {
-        deps = fopen(depend_file, "w");
+        deps = nasm_open_write(depend_file, NF_TEXT);
         if (!deps) {
             nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
                        "unable to write dependency file `%s'", depend_file);
@@ -406,7 +406,7 @@ int main(int argc, char **argv)
             int lineinc = 0;
 
             if (*outname) {
-                ofile = fopen(outname, "w");
+                ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
                     nasm_fatal(ERR_NOFILE,
                                  "unable to open output file `%s'",
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
          */
         ofmt->filename(inname, outname);
 
-        ofile = fopen(outname, (ofmt->flags & OFMT_TEXT) ? "w" : "wb");
+        ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
             nasm_fatal(ERR_NOFILE,
                        "unable to open output file `%s'", outname);
@@ -1106,7 +1106,7 @@ static void process_args(char *args)
 static void process_response_file(const char *file)
 {
     char str[2048];
-    FILE *f = fopen(file, "r");
+    FILE *f = nasm_open_read(file, NF_TEXT);
     if (!f) {
         perror(file);
         exit(-1);
@@ -1159,7 +1159,7 @@ static void parse_cmdline(int argc, char **argv)
         if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
             p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &advance);
             if (p) {
-                rfile = fopen(p, "r");
+                rfile = nasm_open_read(p, NF_TEXT);
                 if (rfile) {
                     process_respfile(rfile);
                     fclose(rfile);
@@ -1188,7 +1188,7 @@ static void parse_cmdline(int argc, char **argv)
                    inname);
 
     if (*errname) {
-        error_file = fopen(errname, "w");
+        error_file = nasm_open_write(errname, NF_TEXT);
         if (!error_file) {
             error_file = stderr;        /* Revert to default! */
             nasm_fatal(ERR_NOFILE | ERR_USAGE,

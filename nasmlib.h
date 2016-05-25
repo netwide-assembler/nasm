@@ -434,6 +434,19 @@ char *nasm_realpath(const char *rel_path);
 
 const char *prefix_name(int);
 
+/*
+ * Wrappers around fopen()... for future change to a dedicated structure
+ */
+enum file_flags {
+    NF_BINARY	= 0x00000000,   /* Binary file (default) */
+    NF_TEXT	= 0x00000001,   /* Text file */
+    NF_NONFATAL = 0x00000000,   /* Don't die on open failure (default) */
+    NF_FATAL    = 0x00000002    /* Die on open failure */
+};
+
+FILE *nasm_open_read(const char *filename, enum file_flags flags);
+FILE *nasm_open_write(const char *filename, enum file_flags flags);
+
 #define ZERO_BUF_SIZE 4096      /* Default value */
 #if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
 # undef ZERO_BUF_SIZE

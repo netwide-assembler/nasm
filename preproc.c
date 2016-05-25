@@ -1507,7 +1507,7 @@ static bool in_list(const StrList *list, const char *str)
  * the end of the path.
  */
 static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
-                       bool missing_ok, const char *mode)
+                       bool missing_ok, enum file_flags mode)
 {
     FILE *fp;
     char *prefix = "";
@@ -1520,7 +1520,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         sl = nasm_malloc(prefix_len+len+1+sizeof sl->next);
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
-        fp = fopen(sl->str, mode);
+        fp = nasm_open_read(sl->str, mode);
         if (fp && dhead && !in_list(*dhead, sl->str)) {
             sl->next = NULL;
             **dtail = sl;
@@ -1562,7 +1562,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
  * that get a file:lineno pair and need to look at the file again
  * (e.g. the CodeView debug backend). Returns NULL on failure.
  */
-FILE *pp_input_fopen(const char *filename, const char *mode)
+FILE *pp_input_fopen(const char *filename, enum file_flags mode)
 {
     FILE *fp;
     StrList *xsl = NULL;
@@ -2515,7 +2515,7 @@ static int do_directive(Token * tline)
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
-        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0, "r");
+        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0, NF_TEXT);
         if (!inc->fp) {
             /* -MG given but file not found */
             nasm_free(inc);
@@ -3258,7 +3258,7 @@ issue_error:
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
 
-        fp = inc_fopen(p, &xsl, &xst, true, "r");
+        fp = inc_fopen(p, &xsl, &xst, true, NF_TEXT);
         if (fp) {
             p = xsl->str;
             fclose(fp);         /* Don't actually care about the file */
@@ -4851,7 +4851,7 @@ pp_reset(char *file, int apass, StrList **deplist)
     istk->conds = NULL;
     istk->expansion = NULL;
     istk->mstk = NULL;
-    istk->fp = fopen(file, "r");
+    istk->fp = nasm_open_read(file, NF_TEXT);
     istk->fname = NULL;
     src_set(0, file);
     istk->lineinc = 1;
