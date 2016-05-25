@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;   
-;;   Copyright 2012 The NASM Authors - All Rights Reserved
+;;   Copyright 2012-2016 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -42,5 +42,7 @@ USE: ifunc
 %idefine ilog2(x)	(__ilog2e__(x))
 %idefine ilog2e(x)	(__ilog2e__(x))
 %idefine ilog2w(x)	(__ilog2w__(x))
+%idefine ilog2fw(x)	(__ilog2w__(x))
 %idefine ilog2f(x)	(__ilog2f__(x))
+%idefine ilog2cw(x)	(__ilog2w__(x) * 0 + __ilog2c__(x))
 %idefine ilog2c(x)	(__ilog2c__(x))
