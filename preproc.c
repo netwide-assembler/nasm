@@ -389,7 +389,7 @@ static const char * const tasm_directives[] = {
 };
 
 static int StackSize = 4;
-static char *StackPointer = "ebp";
+static const char *StackPointer = "ebp";
 static int ArgOffset = 8;
 static int LocalOffset = 0;
 
