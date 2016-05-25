@@ -7,7 +7,6 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
-
 \S{cl-2.12.02} Version 2.12.02
 
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},
@@ -26,6 +25,9 @@ since 2007.
 \b When an error or a warning comes from the expansion of a multi-line
    macro, display the file and line numbers for the expanded macros.
    Macros defined with \c{.nolist} do not get displayed.
+
+\b Add macros \c{ilog2fw()} and \c{ilog2cw()} to the \c{ifunc} macro
+   package.  See \k{ilog2}.
 
 
 \S{cl-2.12.01} Version 2.12.01

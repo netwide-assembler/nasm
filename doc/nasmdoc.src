@@ -4333,20 +4333,22 @@ The macros provided are:
 
 These functions calculate the integer logarithm base 2 of their
 argument, considered as an unsigned integer.  The only differences
-between the functions is their behavior if the argument provided is
-not a power of two.
+between the functions is their respective behavior if the argument
+provided is not a power of two.
 
-The function \i\c{ilog2e()} (alias \i\c{ilog2()}) generate an error if
+The function \i\c{ilog2e()} (alias \i\c{ilog2()}) generates an error if
 the argument is not a power of two.
-
-The function \i\c{ilog2w()} generate a warning if the argument is not
-a power of two.
 
 The function \i\c{ilog2f()} rounds the argument down to the nearest
 power of two; if the argument is zero it returns zero.
 
 The function \i\c{ilog2c()} rounds the argument up to the nearest
 power of two.
+
+The functions \i\c{ilog2fw()} (alias \i\c{ilog2w()}) and
+\i\c{ilog2cw()} generate a warning if the argument is not a power of
+two, but otherwise behaves like \c{ilog2f()} and \c{ilog2c()},
+respectively.
 
 
 \C{directive} \i{Assembler Directives}
