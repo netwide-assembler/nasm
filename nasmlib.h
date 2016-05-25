@@ -205,6 +205,10 @@ int nasm_memicmp(const char *, const char *, size_t);
 char *nasm_strsep(char **stringp, const char *delim);
 #endif
 
+#ifndef HAVE_DECL_STRNLEN
+size_t strnlen(const char *, size_t);
+#endif
+
 /* This returns the numeric value of a given 'digit'. */
 #define numvalue(c)         ((c) >= 'a' ? (c) - 'a' + 10 : (c) >= 'A' ? (c) - 'A' + 10 : (c) - '0')
 

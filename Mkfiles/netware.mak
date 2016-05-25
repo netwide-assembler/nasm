@@ -45,19 +45,23 @@ NASM =	nasm.o \
 	preproc.o quote.o pptok.o \
 	macros.o listing.o eval.o exprlib.o stdscan.o \
 	strfunc.o tokhash.o regvals.o regflags.o \
+	segalloc.o \
 	preproc-nop.o \
-	disp8.o \
-	iflag.o
+	disp8.o rdstrnum.o \
+	iflag.o common.o
 
 NDISASM = ndisasm.o disasm.o sync.o \
 	insnsd.o insnsb.o insnsn.o regs.o regdis.o \
-	disp8.o iflag.o
+	disp8.o iflag.o common.o
 
 LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
-	nasmlib.o ver.o \
-	file.o realpath.o \
-	ilog2.o md5c.o crc64.o \
-	srcfile.o
+	strnlen.o \
+	ver.o \
+	crc64.o malloc.o \
+	error.o md5c.o string.o \
+	file.o ilog2.o \
+	realpath.o filename.o srcfile.o \
+	zerobuf.o readnum.o bsi.o
 #-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)
@@ -138,6 +142,9 @@ $(OBJDIR)/version.mak: $(PROOT)/version $(PROOT)/version.pl $(OBJDIR)
 assemble.o: assemble.c assemble.h compiler.h config.h directiv.h disp8.h \
  iflag.h iflaggen.h insns.h insnsi.h listing.h nasm.h nasmint.h nasmlib.h \
  opflags.h pptok.h preproc.h regs.h tables.h tokens.h
+common.o: common.c compiler.h config.h directiv.h iflag.h iflaggen.h insns.h \
+ insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h regs.h \
+ tables.h tokens.h
 directiv.o: directiv.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
  nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 disasm.o: disasm.c compiler.h config.h directiv.h disasm.h disp8.h iflag.h \
@@ -176,22 +183,27 @@ nasm.o: nasm.c assemble.h compiler.h config.h directiv.h eval.h float.h \
  iflag.h iflaggen.h insns.h insnsi.h labels.h listing.h nasm.h nasmint.h \
  nasmlib.h opflags.h outform.h parser.h pptok.h preproc.h raa.h regs.h saa.h \
  stdscan.h tables.h tokens.h ver.h
+bsi.o: bsi.c compiler.h config.h nasmint.h nasmlib.h
 crc64.o: crc64.c compiler.h config.h hashtbl.h nasmint.h nasmlib.h
+error.o: error.c compiler.h config.h nasmint.h nasmlib.h
 file.o: file.c compiler.h config.h nasmint.h nasmlib.h
+filename.o: filename.c compiler.h config.h nasmint.h nasmlib.h
 ilog2.o: ilog2.c compiler.h config.h nasmint.h nasmlib.h
+malloc.o: malloc.c compiler.h config.h nasmint.h nasmlib.h
 md5c.o: md5c.c compiler.h config.h md5.h nasmint.h
-nasmlib.o: nasmlib.c compiler.h config.h directiv.h iflag.h iflaggen.h \
- insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h \
- regs.h tables.h tokens.h
+readnum.o: readnum.c compiler.h config.h directiv.h insnsi.h nasm.h \
+ nasmint.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 realpath.o: realpath.c compiler.h config.h nasmint.h nasmlib.h
 srcfile.o: srcfile.c compiler.h config.h hashtbl.h nasmint.h nasmlib.h
+string.o: string.c compiler.h config.h nasmint.h nasmlib.h
 ver.o: ver.c ver.h version.h
+zerobuf.o: zerobuf.c compiler.h config.h nasmint.h nasmlib.h
 ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h \
  preproc.h regs.h sync.h tables.h tokens.h ver.h
-codeview.o: codeview.c compiler.h config.h directiv.h insnsi.h md5.h nasm.h \
- nasmint.h nasmlib.h opflags.h outlib.h pecoff.h pptok.h preproc.h regs.h \
- saa.h tables.h version.h
+codeview.o: codeview.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
+ md5.h nasm.h nasmint.h nasmlib.h opflags.h outlib.h pecoff.h pptok.h \
+ preproc.h regs.h saa.h tables.h version.h
 nulldbg.o: nulldbg.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmint.h nasmlib.h opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 nullout.o: nullout.c compiler.h config.h directiv.h insnsi.h nasm.h \
@@ -244,14 +256,20 @@ preproc.o: preproc.c compiler.h config.h directiv.h eval.h hashtbl.h \
 quote.o: quote.c compiler.h config.h nasmint.h nasmlib.h quote.h
 raa.o: raa.c compiler.h config.h nasmint.h nasmlib.h raa.h
 rbtree.o: rbtree.c compiler.h config.h nasmint.h rbtree.h
+rdstrnum.o: rdstrnum.c compiler.h config.h directiv.h insnsi.h nasm.h \
+ nasmint.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 regdis.o: regdis.c regdis.h regs.h
 regflags.o: regflags.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmint.h nasmlib.h opflags.h pptok.h preproc.h regs.h tables.h
 regs.o: regs.c compiler.h config.h insnsi.h nasmint.h tables.h
 regvals.o: regvals.c compiler.h config.h insnsi.h nasmint.h tables.h
 saa.o: saa.c compiler.h config.h nasmint.h nasmlib.h saa.h
+segalloc.o: segalloc.c compiler.h config.h directiv.h iflag.h iflaggen.h \
+ insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h \
+ regs.h tables.h tokens.h
 snprintf.o: snprintf.c compiler.h config.h nasmint.h nasmlib.h
 strlcpy.o: strlcpy.c compiler.h config.h nasmint.h
+strnlen.o: strnlen.c compiler.h config.h nasmint.h
 vsnprintf.o: vsnprintf.c compiler.h config.h nasmint.h nasmlib.h
 stdscan.o: stdscan.c compiler.h config.h directiv.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmint.h nasmlib.h opflags.h pptok.h preproc.h \

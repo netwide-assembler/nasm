@@ -116,6 +116,7 @@ dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
 AC_CHECK_FUNCS(strsep)
+AC_CHECK_FUNCS(strnlen)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
@@ -148,6 +149,7 @@ AC_CHECK_DECLS(strncasecmp)
 AC_CHECK_DECLS(strnicmp)
 AC_CHECK_DECLS(strsep)
 AC_CHECK_DECLS(strlcpy)
+AC_CHECK_DECLS(strnlen)
 
 if test $ac_cv_prog_make_vpathok = no; then
   echo Copying generated srcs into build directory to compensate for VPATH breakage
