@@ -57,7 +57,7 @@
 #include "eval.h"
 #include "assemble.h"
 #include "labels.h"
-#include "output/outform.h"
+#include "outform.h"
 #include "listing.h"
 #include "iflag.h"
 #include "ver.h"

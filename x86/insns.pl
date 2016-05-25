@@ -37,7 +37,7 @@
 #
 # Parse insns.dat and produce generated source code files
 
-require 'insns-iflags.pl';
+require 'x86/insns-iflags.pl';
 
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
@@ -79,7 +79,9 @@ foreach $arg ( @ARGV ) {
     }
 }
 
-$fname = "insns.dat" unless $fname = $args[0];
+die if (scalar(@args) != 2);	# input output
+($fname, $oname) = @args;
+
 open (F, $fname) || die "unable to open $fname";
 
 %dinstables = ();
@@ -190,10 +192,10 @@ undef @bytecode_list;
 @opcodes    = sort keys(%k_opcodes);
 @opcodes_cc = sort keys(%k_opcodes_cc);
 
-if ( !defined($output) || $output eq 'b') {
-    print STDERR "Writing insnsb.c...\n";
+if ( $output eq 'b') {
+    print STDERR "Writing $oname...\n";
 
-    open B, ">insnsb.c";
+    open(B, '>', $oname);
 
     print B "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
@@ -231,10 +233,10 @@ if ( !defined($output) || $output eq 'b') {
     close B;
 }
 
-if ( !defined($output) || $output eq 'a' ) {
-    print STDERR "Writing insnsa.c...\n";
+if ( $output eq 'a' ) {
+    print STDERR "Writing $oname...\n";
 
-    open A, ">insnsa.c";
+    open(A, '>', $oname);
 
     print A "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
@@ -259,10 +261,10 @@ if ( !defined($output) || $output eq 'a' ) {
     close A;
 }
 
-if ( !defined($output) || $output eq 'd' ) {
-    print STDERR "Writing insnsd.c...\n";
+if ( $output eq 'd' ) {
+    print STDERR "Writing $oname...\n";
 
-    open D, ">insnsd.c";
+    open(D, '>', $oname);
 
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
@@ -341,10 +343,10 @@ if ( !defined($output) || $output eq 'd' ) {
     close D;
 }
 
-if ( !defined($output) || $output eq 'i' ) {
-    print STDERR "Writing insnsi.h...\n";
+if ( $output eq 'i' ) {
+    print STDERR "Writing $oname...\n";
 
-    open I, ">insnsi.h";
+    open(I, '>', $oname);
 
     print I "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
@@ -372,10 +374,10 @@ if ( !defined($output) || $output eq 'i' ) {
     close I;
 }
 
-if ( !defined($output) || $output eq 'n' ) {
-    print STDERR "Writing insnsn.c...\n";
+if ( $output eq 'n' ) {
+    print STDERR "Writing $oname...\n";
 
-    open N, ">insnsn.c";
+    open(N, '>', $oname);
 
     print N "/* This file is auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
@@ -395,11 +397,11 @@ if ( !defined($output) || $output eq 'n' ) {
     close N;
 }
 
-if ( !defined($output) || $output eq 'fh') {
+if ( $output eq 'fh') {
     write_iflaggen_h();
 }
 
-if ( !defined($output) || $output eq 'fc') {
+if ( $output eq 'fc') {
     write_iflag_c();
 }
 

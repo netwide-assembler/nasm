@@ -19,7 +19,7 @@ datarootdir	= @datarootdir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 BUILD_CFLAGS	= $(CFLAGS) @DEFS@
-INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir) -I..
+INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir) -I$(top_srcdir)/include -I..
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
@@ -31,7 +31,7 @@ STRIP		= @STRIP@
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
-LN_S 		= @LN_S@
+LN_S		= @LN_S@
 
 MKDIR		= mkdir
 RM		= rm
@@ -84,12 +84,13 @@ rdf2srec$(X):
 rdf2ihx.$(O): rdf2ihx.c
 rdf2bin.$(O): rdf2bin.c
 rdfdump.$(O): rdfdump.c
-rdoff.$(O): rdoff.c rdoff.h
-ldrdf.$(O): ldrdf.c rdoff.h ../nasmlib.h symtab.h collectn.h rdlib.h
+rdoff.$(O): rdoff.c ../include/rdoff.h
+ldrdf.$(O): ldrdf.c ../include/rdoff.h ../include/nasmlib.h symtab.h \
+	collectn.h rdlib.h
 symtab.$(O): symtab.c symtab.h
 collectn.$(O): collectn.c collectn.h
-rdx.$(O): rdx.c rdoff.h rdfload.h symtab.h
-rdfload.$(O): rdfload.c rdfload.h rdoff.h collectn.h symtab.h
+rdx.$(O): rdx.c ../include/rdoff.h rdfload.h symtab.h
+rdfload.$(O): rdfload.c rdfload.h ../include/rdoff.h collectn.h symtab.h
 rdlib.$(O): rdlib.c rdlib.h
 rdflib.$(O): rdflib.c
 segtab.$(O): segtab.c

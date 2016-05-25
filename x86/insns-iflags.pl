@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -206,9 +206,9 @@ sub insns_flag_index(@) {
 }
 
 sub write_iflaggen_h() {
-    print STDERR "Writing iflaggen.h ...\n";
+    print STDERR "Writing $oname...\n";
 
-    open(N, ">iflaggen.h") or die "$0: $!\n";
+    open(N, '>', $oname) or die "$0: $!\n";
 
     print N "/* This file is auto-generated. Don't edit. */\n";
     print N "#ifndef NASM_IFLAGGEN_H\n";
@@ -233,9 +233,9 @@ sub write_iflaggen_h() {
 }
 
 sub write_iflag_c() {
-    print STDERR "Writing iflag.c ...\n";
+    print STDERR "Writing $oname...\n";
 
-    open N, ">iflag.c";
+    open(N, '>', $oname) or die "$0: $!\n";
 
     print N "/* This file is auto-generated. Don't edit. */\n";
     print N "#include \"iflag.h\"\n\n";

@@ -45,7 +45,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
-#include "output/outform.h"
+#include "outform.h"
 
 #ifdef OF_DBG
 

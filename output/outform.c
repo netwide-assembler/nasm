@@ -44,7 +44,7 @@
 #include <string.h>
 
 #define BUILD_DRIVERS_ARRAY
-#include "output/outform.h"
+#include "outform.h"
 
 const struct ofmt *ofmt_find(const char *name,
 			     const struct ofmt_alias **ofmt_alias)

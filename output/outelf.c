@@ -46,15 +46,15 @@
 #include "raa.h"
 #include "stdscan.h"
 #include "eval.h"
-#include "output/outform.h"
-#include "output/outlib.h"
+#include "outform.h"
+#include "outlib.h"
 #include "rbtree.h"
 #include "ver.h"
 
-#include "output/dwarf.h"
-#include "output/stabs.h"
-#include "output/outelf.h"
-#include "output/elf.h"
+#include "dwarf.h"
+#include "stabs.h"
+#include "outelf.h"
+#include "elf.h"
 
 #if defined(OF_ELF32) || defined(OF_ELF64) || defined(OF_ELFX32)
 

@@ -33,7 +33,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
-#include "output/outlib.h"
+#include "outlib.h"
 
 int null_setinfo(enum geninfo type, char **string)
 {

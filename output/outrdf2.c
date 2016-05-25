@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -48,15 +48,15 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "saa.h"
-#include "output/outform.h"
-#include "output/outlib.h"
+#include "outform.h"
+#include "outlib.h"
 
 /* VERBOSE_WARNINGS: define this to add some extra warnings... */
 #define VERBOSE_WARNINGS
 
 #ifdef OF_RDF2
 
-#include "rdoff/rdoff.h"
+#include "rdoff.h"
 
 /* This signature is written to start of RDOFF files */
 static const char *RDOFF2Id = RDOFF2_SIGNATURE;

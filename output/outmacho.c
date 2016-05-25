@@ -48,8 +48,8 @@
 #include "saa.h"
 #include "raa.h"
 #include "rbtree.h"
-#include "output/outform.h"
-#include "output/outlib.h"
+#include "outform.h"
+#include "outlib.h"
 
 #if defined(OF_MACHO) || defined(OF_MACHO64)
 

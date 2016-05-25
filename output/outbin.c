@@ -86,8 +86,8 @@
 #include "stdscan.h"
 #include "labels.h"
 #include "eval.h"
-#include "output/outform.h"
-#include "output/outlib.h"
+#include "outform.h"
+#include "outlib.h"
 
 #ifdef OF_BIN
 

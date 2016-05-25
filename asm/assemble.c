@@ -1936,7 +1936,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                             out(offset, segment, &data, OUT_ADDRESS,
                                 ea_data.bytes, NO_SEG, NO_SEG);
                         } else {
-                            /* overflow check in output/linker? */
+                            /* overflow check in linker? */
                             out(offset, segment, &data, OUT_REL4ADR,
                                 insn_end - offset, opy->segment, opy->wrt);
                         }

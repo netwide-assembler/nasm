@@ -47,8 +47,8 @@
 #include "preproc.h"
 #include "saa.h"
 #include "hashtbl.h"
-#include "output/outlib.h"
-#include "output/pecoff.h"
+#include "outlib.h"
+#include "pecoff.h"
 #include "md5.h"
 
 static void cv8_init(void);

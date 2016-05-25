@@ -37,7 +37,7 @@
 #ifndef OUTPUT_OUTELF_H
 #define OUTPUT_OUTELF_H
 
-#include "output/elf.h"
+#include "elf.h"
 #include "rbtree.h"
 #include "saa.h"
 

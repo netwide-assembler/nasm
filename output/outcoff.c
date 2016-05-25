@@ -49,9 +49,9 @@
 #include "saa.h"
 #include "raa.h"
 #include "eval.h"
-#include "output/outform.h"
-#include "output/outlib.h"
-#include "output/pecoff.h"
+#include "outform.h"
+#include "outlib.h"
+#include "pecoff.h"
 
 #if defined(OF_COFF) || defined(OF_WIN32) || defined(OF_WIN64)
 

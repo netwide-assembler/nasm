@@ -39,7 +39,7 @@
 
 #include "compiler.h"
 #include "nasm.h"
-#include "output/outlib.h"
+#include "outlib.h"
 
 uint64_t realsize(enum out_type type, uint64_t size)
 {
