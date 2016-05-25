@@ -154,7 +154,10 @@ struct cv8_state {
     unsigned symbol_lengths;
     unsigned total_syms;
 
-    char *cwd;
+    struct {
+        char *name;
+        size_t namebytes;
+    } outfile;
 };
 struct cv8_state cv8_state;
 
@@ -181,8 +184,6 @@ static void cv8_init(void)
 
     cv8_state.symbols = saa_init(sizeof(struct cv8_symbol));
     cv8_state.last_sym = NULL;
-
-    cv8_state.cwd = nasm_realpath(".");
 }
 
 static struct source_file *register_file(const char *filename);
@@ -308,6 +309,9 @@ static void cv8_cleanup(void)
     struct coff_Section *symbol_sect = coff_sects[cv8_state.symbol_sect];
     struct coff_Section *type_sect = coff_sects[cv8_state.type_sect];
 
+    cv8_state.outfile.name = nasm_realpath(coff_outfile);
+    cv8_state.outfile.namebytes = strlen(cv8_state.outfile.name) + 1;
+
     build_symbol_table(symbol_sect);
     build_type_table(type_sect);
 
@@ -317,14 +321,13 @@ static void cv8_cleanup(void)
         free(file);
     }
     hash_free(&cv8_state.file_hash);
-    
-    if (cv8_state.cwd != NULL)
-        nasm_free(cv8_state.cwd);
 
     saa_rewind(cv8_state.symbols);
     while ((sym = saa_rstruct(cv8_state.symbols)))
         nasm_free(sym->name);
     saa_free(cv8_state.symbols);
+
+    nasm_free(cv8_state.outfile.name);
 }
 
 /*******************************************************************************
@@ -604,19 +607,16 @@ static void write_linenumber_table(struct coff_Section *const sect)
     }
 }
 
-static uint16_t write_symbolinfo_obj(struct coff_Section *sect,
-        const char sep)
+static uint16_t write_symbolinfo_obj(struct coff_Section *sect)
 {
     uint16_t obj_len;
 
-    obj_len = 2 + 4 + strlen(cv8_state.cwd)+ 1 + strlen(coff_outfile) +1;
+    obj_len = 2 + 4 + cv8_state.outfile.namebytes;
 
     section_write16(sect, obj_len);
     section_write16(sect, 0x1101);
     section_write32(sect, 0); /* ASM language */
-    section_wbytes(sect, cv8_state.cwd, strlen(cv8_state.cwd));
-    section_write8(sect, sep);
-    section_wbytes(sect, coff_outfile, strlen(coff_outfile)+1);
+    section_wbytes(sect, cv8_state.outfile.name, cv8_state.outfile.namebytes);
 
     return obj_len;
 }
@@ -704,15 +704,14 @@ static uint16_t write_symbolinfo_symbols(struct coff_Section *sect)
 
 static void write_symbolinfo_table(struct coff_Section *const sect)
 {
-    const char sep = '\\';
-    const char *creator_str = "The Netwide Assembler " NASM_VER;
-
-
+    static const char creator_str[] = "The Netwide Assembler " NASM_VER;
     uint16_t obj_length, creator_length, sym_length;
     uint32_t field_length = 0, out_len;
 
-    /* signature, language, workingdir / coff_outfile NULL */
-    obj_length = 2 + 4 + strlen(cv8_state.cwd)+ 1 + strlen(coff_outfile) +1;
+    nasm_assert(cv8_state.outfile.namebytes);
+
+    /* signature, language, outfile NULL */
+    obj_length = 2 + 4 + cv8_state.outfile.namebytes;
     creator_length = 2 + 4 + 4 + 4 + 4 + strlen(creator_str)+1 + 2;
 
     sym_length =    ( cv8_state.num_syms[SYMTYPE_CODE] *  7) +
@@ -730,7 +729,7 @@ static void write_symbolinfo_table(struct coff_Section *const sect)
 
     /* for sub fields, length preceeds type */
 
-    out_len = write_symbolinfo_obj(sect, sep);
+    out_len = write_symbolinfo_obj(sect);
     nasm_assert(out_len == obj_length);
 
     out_len = write_symbolinfo_properties(sect, creator_str);
@@ -799,5 +798,3 @@ static void build_type_table(struct coff_Section *const sect)
         section_write32(sect, 0); /*num params */
     }
 }
-
-
