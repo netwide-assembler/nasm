@@ -1100,9 +1100,43 @@ static void obj_out(int32_t segto, const void *data,
 
         ldata = *(int64_t *)data;
         if (type != OUT_ADDRESS) {
-            ldata += size;
-	    size = realsize(type, size);
+	    /*
+	     * For 16-bit and 32-bit x86 code, the size and realsize() always
+	     * matches as only jumps, calls and loops uses PC relative
+	     * addressing and the address isn't followed by any other opcode
+	     * bytes.  In 64-bit mode there is RIP relative addressing which
+	     * means the fixup location can be followed by an immediate value,
+	     * meaning that size > realsize().
+	     *
+	     * When the CPU is calculating the effective address, it takes the
+	     * RIP at the end of the instruction and adds the fixed up relative
+	     * address value to it.
+	     *
+	     * The linker's point of reference is the end of the fixup location
+	     * (which is the end of the instruction for Jcc, CALL, LOOP[cc]).
+	     * It is calculating distance between the target symbol and the end
+	     * of the fixup location, and add this to the displacement value we
+	     * are calculating here and storing at the fixup location.
+	     *
+	     * To get the right effect, we need to _reduce_ the displacement
+	     * value by the number of bytes following the fixup.
+	     *
+	     * Example:
+	     *  data at address 0x100; REL4ADR at 0x050, 4 byte immediate,
+	     *  end of fixup at 0x054, end of instruction at 0x058.
+	     *  => size = 8.
+	     *  => realsize() -> 4
+	     *  => CPU needs a value of:   0x100 - 0x058 = 0x0a8
+	     *  => linker/loader will add: 0x100 - 0x054 = 0x0ac
+	     *  => We must add an addend of -4.
+	     *  => realsize() - size = -4.
+	     *
+	     * The code used to do size - realsize() at least since v0.90,
+	     * probably because it wasn't needed...
+	     */
 	    ldata -= size;
+	    size = realsize(type, size);
+	    ldata += size;
         }
 
 	if (size > UINT_MAX)
