@@ -1507,7 +1507,7 @@ static bool in_list(const StrList *list, const char *str)
  * the end of the path.
  */
 static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
-                       bool missing_ok, enum file_flags mode)
+                       char **found_path, bool missing_ok, enum file_flags mode)
 {
     FILE *fp;
     char *prefix = "";
@@ -1515,11 +1515,20 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
     int len = strlen(file);
     size_t prefix_len = 0;
     StrList *sl;
+    size_t path_len;
 
     while (1) {
-        sl = nasm_malloc(prefix_len+len+1+sizeof sl->next);
+        path_len = prefix_len + len + 1;
+
+        sl = nasm_malloc(path_len + sizeof sl->next);
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
+
+        if (found_path != NULL) {
+            *found_path = nasm_malloc(path_len);
+            memcpy(*found_path, sl->str, path_len);
+        }
+
         fp = nasm_open_read(sl->str, mode);
         if (fp && dhead && !in_list(*dhead, sl->str)) {
             sl->next = NULL;
@@ -1530,6 +1539,12 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         }
         if (fp)
             return fp;
+
+        if (found_path != NULL && *found_path != NULL) {
+            nasm_free(*found_path);
+            *found_path = NULL;
+        }
+
         if (!ip) {
             if (!missing_ok)
                 break;
@@ -1568,7 +1583,7 @@ FILE *pp_input_fopen(const char *filename, enum file_flags mode)
     StrList *xsl = NULL;
     StrList **xst = &xsl;
 
-    fp = inc_fopen(filename, &xsl, &xst, true, mode);
+    fp = inc_fopen(filename, &xsl, &xst, NULL, true, mode);
     if (xsl)
         nasm_free(xsl);
     return fp;
@@ -2173,7 +2188,7 @@ static int do_directive(Token * tline)
     bool casesense;
     int k, m;
     int offset;
-    char *p, *pp;
+    char *p, *pp, *found_path;
     const char *mname;
     Include *inc;
     Context *ctx;
@@ -2515,12 +2530,13 @@ static int do_directive(Token * tline)
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
-        inc->fp = inc_fopen(p, dephead, &deptail, pass == 0, NF_TEXT);
+        found_path = NULL;
+        inc->fp = inc_fopen(p, dephead, &deptail, &found_path, pass == 0, NF_TEXT);
         if (!inc->fp) {
             /* -MG given but file not found */
             nasm_free(inc);
         } else {
-            inc->fname = src_set_fname(p);
+            inc->fname = src_set_fname(found_path ? found_path : p);
             inc->lineno = src_set_linnum(0);
             inc->lineinc = 1;
             inc->expansion = NULL;
@@ -3258,7 +3274,7 @@ issue_error:
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
 
-        fp = inc_fopen(p, &xsl, &xst, true, NF_TEXT);
+        fp = inc_fopen(p, &xsl, &xst, NULL, true, NF_TEXT);
         if (fp) {
             p = xsl->str;
             fclose(fp);         /* Don't actually care about the file */

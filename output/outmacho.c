@@ -464,7 +464,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    r->snum = raa_read(extsyms, section);
 	    if (reltype == RL_BRANCH)
 		r->type = X86_64_RELOC_BRANCH;
-	    else if (reltype == GENERIC_RELOC_VANILLA)
+	    else if (r->type == GENERIC_RELOC_VANILLA)
 		adjust = -sect->size;
 	} else {
 	    /* local */
