@@ -1543,7 +1543,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
 
         if (found_path != NULL && *found_path != NULL) {
             nasm_free(*found_path);
-            *found_path == NULL;
+            *found_path = NULL;
         }
 
         if (!ip) {
