@@ -2019,8 +2019,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
      * Don't suppress this with skip_this_pass(), or we don't get
      * pass1 or preprocessor warnings in the list file
      */
-    if ((severity & ERR_MASK) >= ERR_WARNING)
-	lfmt->error(severity, pfx, msg);
+    lfmt->error(severity, pfx, msg);
 
     if (severity & ERR_USAGE)
         want_usage = true;
