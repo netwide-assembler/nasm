@@ -38,8 +38,8 @@ all: $(OUT)
 
 os2: nasm.inf
 
-inslist.src: inslist.pl ../insns.dat
-	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../insns.dat
+inslist.src: inslist.pl ../x86/insns.dat
+	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../x86/insns.dat
 
 .PHONY: html
 html: html/nasmdoc0.html
