@@ -430,17 +430,13 @@ static uint64_t nested_rep_count;
 #define PARAM_DELTA 16
 
 /*
- * The standard macro set: defined in macros.c in the array nasm_stdmac.
- * This gives our position in the macro set, when we're processing it.
+ * The standard macro set: defined in macros.c in a set of arrays.
+ * This gives our position in any macro set, while we are processing it.
+ * The stdmacset is an array of such macro sets.
  */
 static macros_t *stdmacpos;
-
-/*
- * The extra standard macros that come from the object format, if
- * any.
- */
-static macros_t *extrastdmac = NULL;
-static bool any_extrastdmac;
+static macros_t **stdmacnext;
+static macros_t *stdmacros[8];
 
 /*
  * Tokens are allocated in blocks to improve speed
@@ -457,6 +453,7 @@ static Blocks blocks = { NULL, NULL };
 /*
  * Forward declarations.
  */
+static void pp_add_stdmac(macros_t *macros);
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
@@ -762,11 +759,10 @@ static char *line_from_stdmac(void)
     *q = '\0';
 
     if (!*stdmacpos) {
-        /* This was the last of the standard macro chain... */
+        /* This was the last of this particular macro set */
         stdmacpos = NULL;
-        if (any_extrastdmac) {
-            stdmacpos = extrastdmac;
-            any_extrastdmac = false;
+        if (*stdmacnext) {
+            stdmacpos = *stdmacnext++;
         } else if (do_predef) {
             Line *pd, *l;
             Token *head, **tail, *t;
@@ -4878,12 +4874,16 @@ pp_reset(char *file, int apass, StrList **deplist)
     nested_rep_count = 0;
     init_macros();
     unique = 0;
-    if (tasm_compatible_mode) {
-        stdmacpos = nasm_stdmac;
-    } else {
-        stdmacpos = nasm_stdmac_after_tasm;
-    }
-    any_extrastdmac = extrastdmac && *extrastdmac;
+
+    if (tasm_compatible_mode)
+        pp_add_stdmac(nasm_stdmac_tasm);
+
+    pp_add_stdmac(nasm_stdmac_nasm);
+    pp_add_stdmac(nasm_stdmac_version);
+
+    stdmacpos  = stdmacros[0];
+    stdmacnext = &stdmacros[1];
+
     do_predef = true;
 
     /*
@@ -5257,9 +5257,19 @@ static void pp_pre_undefine(char *definition)
     predef = l;
 }
 
-static void pp_extra_stdmac(macros_t *macros)
+static void pp_add_stdmac(macros_t *macros)
 {
-    extrastdmac = macros;
+    macros_t **mp;
+
+    /* Find the end of the list and avoid duplicates */
+    for (mp = stdmacros; *mp; mp++) {
+        if (*mp == macros)
+            return;             /* Nothing to do */
+    }
+
+    nasm_assert(mp < &stdmacros[ARRAY_SIZE(stdmacros)-1]);
+
+    *mp = macros;
 }
 
 static void make_tok_num(Token * tok, int64_t val)
@@ -5302,7 +5312,7 @@ const struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
     pp_cleanup,
-    pp_extra_stdmac,
+    pp_add_stdmac,
     pp_pre_define,
     pp_pre_undefine,
     pp_pre_include,

@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;   
-;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -33,9 +33,8 @@
 
 ; Standard macro set for NASM -*- nasm -*-
 
-; Macros to make NASM ignore some TASM directives before the first include
-; directive.
-
+; Macros to make NASM ignore some TASM directives
+STD: tasm
     %idefine IDEAL
     %idefine JUMPS
     %idefine P386
@@ -43,8 +42,8 @@
     %idefine P586
     %idefine END
 
-; This is a magic token which indicates the end of the TASM macros
-*END*TASM*MACROS*
+; The normal standard macros
+STD: nasm
 
 ; Note that although some user-level forms of directives are defined
 ; here, not all of them are: the user-level form of a format-specific

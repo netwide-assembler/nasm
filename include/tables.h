@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -46,8 +46,9 @@
 /* --- From standard.mac via macros.pl: --- */
 
 /* macros.c */
-extern const unsigned char nasm_stdmac[];
-extern const unsigned char * const nasm_stdmac_after_tasm;
+extern const unsigned char nasm_stdmac_tasm[];
+extern const unsigned char nasm_stdmac_nasm[];
+extern const unsigned char nasm_stdmac_version[];
 const unsigned char *nasm_stdmac_find_package(const char *);
 
 /* --- From insns.dat via insns.pl: --- */

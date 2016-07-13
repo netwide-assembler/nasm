@@ -143,6 +143,7 @@ if ( $what eq 'h' ) {
     printf "#define NASM_VER            \"%s\"\n", $line;
     print  "#endif /* NASM_VERSION_H */\n";
 } elsif ( $what eq 'mac' ) {
+    print  "STD: version\n";
     printf "%%define __NASM_MAJOR__ %d\n", $nmaj;
     printf "%%define __NASM_MINOR__ %d\n", $nmin;
     printf "%%define __NASM_SUBMINOR__ %d\n", $nsmin;

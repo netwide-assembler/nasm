@@ -102,9 +102,8 @@ print OUT "#include \"nasmlib.h\"\n";
 print OUT "#include \"hashtbl.h\"\n";
 print OUT "#include \"outform.h\"\n";
 print OUT "\n";
-print OUT "#if 1\n";
-print OUT "const unsigned char nasm_stdmac[] = {";
 
+my $name = undef;
 my $npkg = 0;
 my @pkg_list   = ();
 my %pkg_number = ();
@@ -127,14 +126,14 @@ foreach $args ( @ARGV ) {
 		chomp;
 		$line++;
 	    }
-	    if (m/^\s*\*END\*TASM\*MACROS\*\s*$/) {
-		$tasm_count = $index;
-		print OUT "    /* End of TASM macros */\n";
-	    } elsif (m/^OUT:\s*(.*\S)\s*$/) {
+	    if (m/^OUT:\s*(.*\S)\s*$/) {
 		undef $pkg;
 		my @out_alias = split(/\s+/, $1);
-		printf OUT "        /* %4d */ 0\n", $index++;
-		print OUT "};\n#endif\n";
+		if (defined($name)) {
+		    printf OUT "        /* %4d */ 0\n", $index++;
+		    print OUT "};\n#endif\n";
+		    undef $name;
+		}
 		$index = 0;
 		print OUT "\n";
 		my $pfx = '#if';
@@ -142,22 +141,43 @@ foreach $args ( @ARGV ) {
 		    print OUT $pfx, " defined(OF_\U${al}\E)";
 		    $pfx = ' ||';
 		}
-		printf OUT "\nconst unsigned char %s_stdmac[] = {\n", $out_alias[0];
-		print  OUT "    /* From $fname */\n";
+		$name = $out_alias[0] . '_stdmac';
+		print OUT "\nconst unsigned char ${name}[] = {\n";
+		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
 		push(@out_list, $out_alias[0]);
 		$out_index{$out_alias[0]} = $index;
+	    } elsif (m/^STD:\s*(.*\S)\s*$/) {
+		undef $pkg;
+		my @out_alias = split(/\s+/, $1);
+		if (defined($name)) {
+		    printf OUT "        /* %4d */ 0\n", $index++;
+		    print OUT "};\n#endif\n";
+		    undef $name;
+		}
+		$index = 0;
+		print OUT "\n#if 1";
+		$name = 'nasm_stdmac_' . $out_alias[0];
+		print OUT "\nconst unsigned char ${name}[] = {\n";
+		print OUT "    /* From $fname */\n";
+		$lastname = $fname;
+		push(@std_list, $out_alias[0]);
+		$std_index{$std_alias[0]} = $index;
 	    } elsif (m/^USE:\s*(\S+)\s*$/) {
 		$pkg = $1;
 		if (defined($pkg_number{$pkg})) {
 		    die "$0: $fname: duplicate package: $pkg\n";
 		}
-		printf OUT "        /* %4d */ 0\n", $index++;
-		print OUT "};\n#endif\n";
+		if (defined($name)) {
+		    printf OUT "        /* %4d */ 0\n", $index++;
+		    print OUT "};\n#endif\n";
+		    undef $name;
+		}
 		$index = 0;
-		print OUT "\n#if 1\n";
-		printf OUT "static const unsigned char nasm_stdmac_%s[] = {\n", $pkg;
-		print  OUT "    /* From $fname */\n";
+		print OUT "\n#if 1";
+		$name = 'nasm_usemac_' . $pkg;
+		print OUT "\nstatic const unsigned char ${name}[] = {\n";
+		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
 		push(@pkg_list, $pkg);
 		$pkg_number{$pkg} = $npkg++;
@@ -166,6 +186,11 @@ foreach $args ( @ARGV ) {
 		$index += length($z)+1;
 	    } elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
 		my $s1, $s2, $pd, $ws;
+
+		if (!defined($name)) {
+		    die "$0: $fname: macro declarations outside a known block\n";
+		}
+		
 		$s1 = $1;
 		$s2 = '';
 		while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
@@ -197,9 +222,12 @@ foreach $args ( @ARGV ) {
         close(INPUT);
     }
 }
-printf OUT "        /* %4d */ 0\n};\n#endif\n\n", $index++;
-print OUT "const unsigned char * const nasm_stdmac_after_tasm = ",
-    "&nasm_stdmac[$tasm_count];\n\n";
+
+if (defined($name)) {
+    printf OUT "        /* %4d */ 0\n", $index++;
+    print OUT "};\n#endif\n";
+    undef $name;
+}
 
 my @hashinfo = gen_perfect_hash(\%pkg_number);
 if (!@hashinfo) {
@@ -217,7 +245,7 @@ print OUT "         const char *package;\n";
 print OUT "         const unsigned char *macros;\n";
 print OUT "    } packages[$npkg] = {\n";
 foreach $pkg (@pkg_list) {
-    printf OUT "        { \"%s\", nasm_stdmac_%s },\n",
+    printf OUT "        { \"%s\", nasm_usemac_%s },\n",
 	$pkg, $pkg;
 }
 print OUT "    };\n";
