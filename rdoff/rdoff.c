@@ -69,7 +69,7 @@
  * how int32_t it is).
  * ======================================================================== */
 
-static memorybuffer *newmembuf()
+static memorybuffer *newmembuf(void)
 {
     memorybuffer *t;
 
