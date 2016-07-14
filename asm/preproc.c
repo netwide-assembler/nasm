@@ -1264,9 +1264,13 @@ static char *detoken(Token * tlist, bool expand_locals)
                 if (!p) {
                     nasm_error(ERR_NONFATAL | ERR_PASS1,
                           "nonexistent environment variable `%s'", v);
-                    p = "";
-                }
-                t->text = nasm_strdup(p);
+                    /*
+                     * FIXME We better should investigate if accessing
+                     * ->text[1] without ->text[0] is safe enough.
+                     */
+                    t->text = nasm_zalloc(2);
+                } else
+                    t->text = nasm_strdup(p);
             }
             nasm_free(q);
         }
