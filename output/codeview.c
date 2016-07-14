@@ -624,22 +624,30 @@ static uint16_t write_symbolinfo_obj(struct coff_Section *sect)
 static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
         const char *const creator_str)
 {
+    /* https://github.com/Microsoft/microsoft-pdb/blob/1d60e041/include/cvinfo.h#L3313 */
     uint16_t creator_len;
 
-    creator_len = 2 + 4 + 4 + 4 + 4 + strlen(creator_str)+1 + 2;
+    creator_len = 2 + 4 + 2 + 3*2 + 3*2 + strlen(creator_str)+1 + 2;
 
     section_write16(sect, creator_len);
     section_write16(sect, 0x1116);
-    section_write32(sect, 3); /* language */
+    section_write32(sect, 3); /* language/flags */
     if (win64)
-        section_write32(sect, 0x000000D0);
+        section_write16(sect, 0x00D0); /* machine */
     else if (win32)
-        section_write32(sect, 0x00000006);
+        section_write16(sect, 0x0006); /* machine */
     else
         nasm_assert(!"neither win32 nor win64 are set!");
-    section_write32(sect, 0); /* flags*/
-    section_write32(sect, 8); /* version */
-    section_wbytes(sect, creator_str, strlen(creator_str)+1);
+    section_write16(sect, 0); /* verFEMajor */
+    section_write16(sect, 0); /* verFEMinor */
+    section_write16(sect, 0); /* verFEBuild */
+
+    /* BinScope/WACK insist on version >= 8.0.50727 */
+    section_write16(sect, 8); /* verMajor */
+    section_write16(sect, 0); /* verMinor */
+    section_write16(sect, 50727); /* verBuild */
+
+    section_wbytes(sect, creator_str, strlen(creator_str)+1); /* verSt */
     /*
      * normally there would be key/value pairs here, but they aren't
      * necessary. They are terminated by 2B
@@ -712,7 +720,7 @@ static void write_symbolinfo_table(struct coff_Section *const sect)
 
     /* signature, language, outfile NULL */
     obj_length = 2 + 4 + cv8_state.outfile.namebytes;
-    creator_length = 2 + 4 + 4 + 4 + 4 + strlen(creator_str)+1 + 2;
+    creator_length = 2 + 4 + 2 + 3*2 + 3*2 + strlen(creator_str)+1 + 2;
 
     sym_length =    ( cv8_state.num_syms[SYMTYPE_CODE] *  7) +
             ( cv8_state.num_syms[SYMTYPE_PROC] *  7) +
