@@ -277,7 +277,7 @@ install: nasm$(X) ndisasm$(X)
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	for d in . stdlib nasmlib output asm dis asm x86; do \
+	for d in . stdlib nasmlib output asm disasm x86 common macros; do \
 		$(RM) -f "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
 	done
 	$(RM) -f nasm$(X) ndisasm$(X)
