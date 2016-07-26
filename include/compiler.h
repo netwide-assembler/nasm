@@ -43,8 +43,11 @@
 #ifndef NASM_COMPILER_H
 #define NASM_COMPILER_H 1
 
-#ifdef __DJGPP__
-/* DJGPP has header file problems if __STRICT_ANSI__ is defined */
+/*
+ * At least DJGPP and Cygwin have broken header files if __STRICT_ANSI__
+ * is defined.
+ */
+#ifdef __GNUC__
 # undef __STRICT_ANSI__
 #endif
 

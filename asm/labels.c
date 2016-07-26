@@ -146,7 +146,7 @@ static void out_symdef(char *name, int32_t segment, int64_t offset,
  * given label name. Creates a new one, if it isn't found, and if
  * `create' is true.
  */
-static union label *find_label(char *label, int create)
+static union label *find_label(char *label, int create, int *created)
 {
     char *prev;
     int prevlen, len;
@@ -174,8 +174,11 @@ static union label *find_label(char *label, int create)
     lpp = (union label **) hash_find(&ltab, label, &ip);
     lptr = lpp ? *lpp : NULL;
 
-    if (lptr || !create)
+    if (lptr || !create) {
+        if (created)
+            *created = 0;
         return lptr;
+    }
 
     /* Create a new label... */
     if (lfree->admin.movingon == END_BLOCK) {
@@ -186,6 +189,9 @@ static union label *find_label(char *label, int create)
         lfree = lfree->admin.next;
         init_block(lfree);
     }
+
+    if (created)
+        *created = 1;
 
     lfree->admin.movingon = BOGUS_VALUE;
     lfree->defn.label = perm_copy(label);
@@ -203,7 +209,7 @@ bool lookup_label(char *label, int32_t *segment, int64_t *offset)
     if (!initialized)
         return false;
 
-    lptr = find_label(label, 0);
+    lptr = find_label(label, 0, NULL);
     if (lptr && (lptr->defn.is_global & DEFINED_BIT)) {
         *segment = lptr->defn.segment;
         *offset = lptr->defn.offset;
@@ -220,7 +226,7 @@ bool is_extern(char *label)
     if (!initialized)
         return false;
 
-    lptr = find_label(label, 0);
+    lptr = find_label(label, 0, NULL);
     return (lptr && (lptr->defn.is_global & EXTERN_BIT));
 }
 
@@ -228,7 +234,7 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
                     bool is_norm, bool isextrn)
 {
     union label *lptr;
-    int exi;
+    int exi, created;
 
     /* This routine possibly ought to check for phase errors.  Most assemblers
      * check for phase errors at this point.  I don't know whether phase errors
@@ -247,9 +253,12 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
               label, segment, offset, special, is_norm, isextrn);
 #endif
 
-    lptr = find_label(label, 1);
+    lptr = find_label(label, 1, &created);
     if (!lptr)
         nasm_panic(0, "can't find label `%s' on pass two", label);
+
+    if (created)
+	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
 
     if (!islocal(label)) {
         if (!islocalchar(*label) && lptr->defn.is_norm)
@@ -300,7 +309,7 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
         nasm_error(ERR_DEBUG, "define_label (%s, %"PRIx32", %"PRIx64", %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
-    lptr = find_label(label, 1);
+    lptr = find_label(label, 1, NULL);
     if (!lptr)
         return;
     if (lptr->defn.is_global & DEFINED_BIT) {
@@ -352,7 +361,7 @@ void define_common(char *label, int32_t segment, int32_t size, char *special)
 {
     union label *lptr;
 
-    lptr = find_label(label, 1);
+    lptr = find_label(label, 1, NULL);
     if (!lptr)
         return;
     if ((lptr->defn.is_global & DEFINED_BIT) &&
@@ -389,7 +398,7 @@ void declare_as_global(char *label, char *special)
               " global", label);
         return;
     }
-    lptr = find_label(label, 1);
+    lptr = find_label(label, 1, NULL);
     if (!lptr)
         return;
     switch (lptr->defn.is_global & TYPE_MASK) {
