@@ -58,13 +58,13 @@ rdflib$(X): rdflib.$(O)
 	$(CC) $(LDFLAGS) -o rdflib$(X) rdflib.$(O)
 rdf2bin$(X): rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
 	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(RDXLIBS) $(NASMLIB)
-rdf2com$(X):
+rdf2com$(X): rdf2bin$(X)
 	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
-rdf2ith$(X):
+rdf2ith$(X): rdf2bin$(X)
 	rm -f rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
-rdf2ihx$(X):
+rdf2ihx$(X): rdf2bin$(X)
 	rm -f rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
-rdf2srec$(X):
+rdf2srec$(X): rdf2bin$(X)
 	rm -f rdf2srec$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
 
 rdf2ihx.$(O): rdf2ihx.c
