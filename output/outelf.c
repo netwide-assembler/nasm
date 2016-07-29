@@ -155,8 +155,6 @@ static int arangeslen, arangesrellen, pubnameslen, infolen, inforellen,
            abbrevlen, linelen, linerellen, framelen, loclen;
 static int64_t dwarf_infosym, dwarf_abbrevsym, dwarf_linesym;
 
-static const struct dfmt df_dwarf;
-static const struct dfmt df_stabs;
 static struct elf_symbol *lastsym;
 
 /* common debugging routines */
@@ -180,6 +178,9 @@ static void dwarf_findsect(const int);
 static bool is_elf64(void);
 static bool is_elf32(void);
 static bool is_elfx32(void);
+
+static bool dfmt_is_stabs(void);
+static bool dfmt_is_dwarf(void);
 
 /*
  * Special NASM section numbers which are used to define ELF special
@@ -1553,9 +1554,9 @@ static void elf_write(void)
      * relocation sections for the user sections.
      */
     nsections = sec_numspecial + 1;
-    if (dfmt == &df_stabs)
+	if (dfmt_is_stabs())
         nsections += 3;
-    else if (dfmt == &df_dwarf)
+    else if (dfmt_is_dwarf())
         nsections += 10;
 
     add_sectname("", ".shstrtab");
@@ -1569,12 +1570,12 @@ static void elf_write(void)
         }
     }
 
-    if (dfmt == &df_stabs) {
+    if (dfmt_is_stabs()) {
         /* in case the debug information is wanted, just add these three sections... */
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
         add_sectname(".rel", ".stab");
-    } else if (dfmt == &df_dwarf) {
+    } else if (dfmt_is_dwarf()) {
         /* the dwarf debug standard specifies the following ten sections,
            not all of which are currently implemented,
            although all of them are defined. */
@@ -1719,7 +1720,7 @@ static void elf_write(void)
         }
     }
 
-    if (dfmt == &df_stabs) {
+    if (dfmt_is_stabs()) {
         /* for debugging information, create the last three sections
            which are the .stab , .stabstr and .rel.stab sections respectively */
 
@@ -1740,7 +1741,7 @@ static void elf_write(void)
                                stabrellen, sec_symtab, sec_stab, 4, is_elf64() ? 16 : 8);
             p += strlen(p) + 1;
         }
-    } else if (dfmt == &df_dwarf) {
+    } else if (dfmt_is_dwarf()) {
             /* for dwarf debugging information, create the ten dwarf sections */
 
             /* this function call creates the dwarf sections in memory */
@@ -1897,7 +1898,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
          * dwarf needs symbols for debug sections
          * which are relocation targets.
          */
-        if (dfmt == &df_dwarf) {
+        if (dfmt_is_dwarf()) {
             dwarf_infosym = *local;
             p = entry;
             WRITELONG(p, 0);        /* no symbol name */
@@ -1948,7 +1949,7 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
          * dwarf needs symbols for debug sections
          * which are relocation targets.
          */
-        if (dfmt == &df_dwarf) {
+        if (dfmt_is_dwarf()) {
             dwarf_infosym = *local;
             p = entry;
             WRITELONG(p, 0);        /* no symbol name */
@@ -2364,6 +2365,16 @@ static bool is_elf32(void)
 static bool is_elfx32(void)
 {
 	return ofmt == &of_elfx32;
+}
+
+static bool dfmt_is_stabs(void)
+{
+	return dfmt == &elf32_df_stabs || dfmt == &elfx32_df_stabs || dfmt == &elf64_df_stabs;
+}
+
+static bool dfmt_is_dwarf(void)
+{
+	return dfmt == &elf32_df_dwarf || dfmt == &elfx32_df_dwarf || dfmt == &elf64_df_dwarf;
 }
 
 /* common debugging routines */
