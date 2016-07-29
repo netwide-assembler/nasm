@@ -1574,7 +1574,7 @@ static void elf_write(void)
         /* in case the debug information is wanted, just add these three sections... */
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
-        add_sectname(".rel", ".stab");
+        add_sectname(is_elf32() ? ".rel" : ".rela", ".stab");
     } else if (dfmt_is_dwarf()) {
         /* the dwarf debug standard specifies the following ten sections,
            not all of which are currently implemented,
@@ -1737,8 +1737,13 @@ static void elf_write(void)
             p += strlen(p) + 1;
 
             /* link -> symtable  info -> section to refer to */
-            elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
-                               stabrellen, sec_symtab, sec_stab, 4, is_elf64() ? 16 : 8);
+            if (is_elf32()) {
+                elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
+                                   stabrellen, sec_symtab, sec_stab, 4, 8);
+            } else {
+                elf_section_header(p - shstrtab, SHT_RELA, 0, stabrelbuf, false,
+                                   stabrellen, sec_symtab, sec_stab, 4, is_elf64() ? 24 : 12);
+            }
             p += strlen(p) + 1;
         }
     } else if (dfmt_is_dwarf()) {
@@ -2589,11 +2594,13 @@ static void stabs_generate(void)
         } else if (is_elfx32()) {
             WRITELONG(rptr, (sptr - sbuf) - 4);
             WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_X86_64_32);
+            WRITELONG(rptr, 0);
         } else {
             nasm_assert(is_elf64());
             WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
             WRITELONG(rptr, R_X86_64_32);
             WRITELONG(rptr, ptr->info.section + 2);
+            WRITEDLONG(rptr, 0);
         }
         numstabs++;
         currfile = mainfileindex;
@@ -2640,6 +2647,7 @@ static void stabs_generate(void)
                 /* relocation table entry */
                 WRITELONG(rptr, (sptr - sbuf) - 4);
                 WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_X86_64_32);
+                WRITELONG(rptr, ptr->info.offset);
             }
 
             WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
@@ -2648,6 +2656,7 @@ static void stabs_generate(void)
             /* relocation table entry */
             WRITELONG(rptr, (sptr - sbuf) - 4);
             WRITELONG(rptr, ((ptr->info.section + 2) << 8) | R_X86_64_32);
+            WRITELONG(rptr, ptr->info.offset);
 
             ptr = ptr->next;
         }
@@ -2668,6 +2677,7 @@ static void stabs_generate(void)
                 WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
                 WRITELONG(rptr, R_X86_64_32);
                 WRITELONG(rptr, ptr->info.section + 2);
+                WRITEDLONG(rptr, ptr->info.offset);
             }
 
             WRITE_STAB(sptr, 0, N_SLINE, 0, ptr->line, ptr->info.offset);
@@ -2677,6 +2687,7 @@ static void stabs_generate(void)
             WRITEDLONG(rptr, (int64_t)(sptr - sbuf) - 4);
             WRITELONG(rptr, R_X86_64_32);
             WRITELONG(rptr, ptr->info.section + 2);
+            WRITEDLONG(rptr, ptr->info.offset);
 
             ptr = ptr->next;
         }
