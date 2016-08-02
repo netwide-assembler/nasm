@@ -82,6 +82,11 @@ dnl Force gcc and gcc-compatible compilers treat signed integers
 dnl as 2's complement
 PA_ADD_CFLAGS([-fwrapv])
 
+dnl Don't put things in common if we can avoid it.  We don't want to
+dnl assume all compilers support common, and this will help find those
+dnl problems.  This also works around an OSX linker problem.
+PA_ADD_CFLAGS([-fno-common])
+
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
