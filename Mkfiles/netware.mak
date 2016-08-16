@@ -184,9 +184,9 @@ nasmlib.o: nasmlib.c compiler.h config.h directiv.h iflag.h iflaggen.h \
 ndisasm.o: ndisasm.c compiler.h config.h directiv.h disasm.h iflag.h \
  iflaggen.h insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h \
  regs.h sync.h tables.h tokens.h
-codeview.o: codeview.c compiler.h config.h directiv.h insnsi.h md5.h nasm.h \
- nasmlib.h opflags.h outlib.h pecoff.h pptok.h preproc.h regs.h saa.h \
- tables.h version.h
+codeview.o: codeview.c compiler.h config.h directiv.h hashtbl.h insnsi.h \
+ md5.h nasm.h nasmlib.h opflags.h outlib.h pecoff.h pptok.h preproc.h regs.h \
+ saa.h tables.h version.h
 nulldbg.o: nulldbg.c compiler.h config.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h outlib.h pptok.h preproc.h regs.h tables.h
 nullout.o: nullout.c compiler.h config.h directiv.h insnsi.h nasm.h \

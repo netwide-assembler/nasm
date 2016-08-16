@@ -279,9 +279,9 @@ nasmlib.$(O): nasmlib.c compiler.h directiv.h iflag.h iflaggen.h insns.h \
 ndisasm.$(O): ndisasm.c compiler.h directiv.h disasm.h iflag.h iflaggen.h \
  insns.h insnsi.h nasm.h nasmlib.h opflags.h pptok.h preproc.h regs.h sync.h \
  tables.h tokens.h
-output/codeview.$(O): output/codeview.c compiler.h directiv.h insnsi.h md5.h \
- nasm.h nasmlib.h opflags.h output/outlib.h output/pecoff.h pptok.h \
- preproc.h regs.h saa.h tables.h version.h
+output/codeview.$(O): output/codeview.c compiler.h directiv.h hashtbl.h \
+ insnsi.h md5.h nasm.h nasmlib.h opflags.h output/outlib.h output/pecoff.h \
+ pptok.h preproc.h regs.h saa.h tables.h version.h
 output/nulldbg.$(O): output/nulldbg.c compiler.h directiv.h insnsi.h nasm.h \
  nasmlib.h opflags.h output/outlib.h pptok.h preproc.h regs.h tables.h
 output/nullout.$(O): output/nullout.c compiler.h directiv.h insnsi.h nasm.h \
