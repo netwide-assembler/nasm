@@ -42,10 +42,10 @@
  */
 uint8_t get_disp8N(insn *ins)
 {
-    const uint8_t fv_n[2][2][VLMAX] = {{{16, 32, 64}, {4, 4, 4}},
-                                       {{16, 32, 64}, {8, 8, 8}}};
-    const uint8_t hv_n[2][VLMAX]    =  {{8, 16, 32}, {4, 4, 4}};
-    const uint8_t dup_n[VLMAX]      =   {8, 32, 64};
+    static const uint8_t fv_n[2][2][VLMAX] = {{{16, 32, 64}, {4, 4, 4}},
+                                              {{16, 32, 64}, {8, 8, 8}}};
+    static const uint8_t hv_n[2][VLMAX]    =  {{8, 16, 32}, {4, 4, 4}};
+    static const uint8_t dup_n[VLMAX]      =   {8, 32, 64};
 
     bool evex_b           = (ins->evex_p[2] & EVEX_P2B) >> 4;
     enum ttypes   tuple   = ins->evex_tuple;
