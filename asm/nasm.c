@@ -951,6 +951,9 @@ set_warning:
                 if (!nasm_stricmp(p, "--v"))
                     show_version();
 
+                if (!nasm_stricmp(p, "--version"))
+                    show_version();
+
                 for (s = 0; textopts[s].label; s++) {
                     if (!nasm_stricmp(p + 2, textopts[s].label)) {
                         break;
