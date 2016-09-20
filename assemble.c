@@ -1435,6 +1435,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
     const uint8_t *codes = temp->code;
     uint8_t opex = 0;
     enum ea_type eat = EA_SCALAR;
+    int r;
 
     ins->rex_done = false;
 
@@ -1607,36 +1608,36 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0172:
+        {
+            int mask = ins->prefixes[PPS_VEX] == P_EVEX ? 7 : 15;
+            const struct operand *opy;
+
             c = *codes++;
             opx = &ins->oprs[c >> 3];
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
-            opx = &ins->oprs[c & 7];
-            if (opx->segment != NO_SEG || opx->wrt != NO_SEG) {
+            opy = &ins->oprs[c & 7];
+            if (opy->segment != NO_SEG || opy->wrt != NO_SEG) {
                 nasm_error(ERR_NONFATAL,
                         "non-absolute expression not permitted as argument %d",
                         c & 7);
-            } else {
-                if (opx->offset & ~15) {
-                    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                            "four-bit argument exceeds bounds");
-                }
-                bytes[0] |= opx->offset & 15;
+            } else if (opy->offset & ~mask) {
+                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                           "is4 argument exceeds bounds");
             }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
+            c = opy->offset & mask;
+            goto emit_is4;
+         }
 
         case 0173:
             c = *codes++;
             opx = &ins->oprs[c >> 4];
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
-            bytes[0] |= c & 15;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
-            break;
+            c &= 15;
+            goto emit_is4;
 
         case4(0174):
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
+            c = 0;
+        emit_is4:
+            r = nasm_regvals[opx->basereg];
+            bytes[0] = (r << 4) | ((r & 0x10) >> 1) | c;
             out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
             offset++;
             break;
