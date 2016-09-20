@@ -1000,6 +1000,9 @@ rel12adr:
         addr = 0;
         elf_sect_writeaddr(s, addr, 8);
         break;
+
+    default:
+        panic();
     }
 }
 static void elf64_out(int32_t segto, const void *data,
@@ -1286,6 +1289,9 @@ rel12adr:
         }
         elf_sect_writeaddr(s, addr, 8);
         break;
+
+    default:
+        panic();
     }
 }
 
@@ -1535,6 +1541,9 @@ rel12adr:
         addr = 0;
         elf_sect_writeaddr(s, addr, 8);
         break;
+
+    default:
+        panic();
     }
 }
 
