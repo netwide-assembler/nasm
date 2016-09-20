@@ -230,9 +230,8 @@ static iflag_t cpu;             /* cpu level received from nasm.c */
 
 static int64_t calcsize(int32_t, int64_t, int, insn *,
                         const struct itemplate *);
-static void gencode(int32_t segment, int64_t offset, int bits,
-                    insn * ins, const struct itemplate *temp,
-                    int64_t insn_end);
+static int emit_prefix(struct out_data *data, const int bits, insn *ins);
+static void gencode(struct out_data *data, insn *ins);
 static enum match_result find_match(const struct itemplate **tempp,
                                     insn *instruction,
                                     int32_t segment, int64_t offset, int bits);
@@ -303,62 +302,67 @@ static void warn_overflow_opd(const struct operand *o, int size)
 }
 
 /*
- * Size of an address relocation, or zero if not an address
- */
-static int addrsize(enum out_type type, uint64_t size)
-{
-    switch (type) {
-    case OUT_ADDRESS:
-        return abs((int)size);
-    case OUT_REL1ADR:
-        return 1;
-    case OUT_REL2ADR:
-        return 2;
-    case OUT_REL4ADR:
-        return 4;
-    case OUT_REL8ADR:
-        return 8;
-    default:
-        return 0;
-    }
-}
-
-/*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
  * generator at the same time, flatten unnecessary relocations,
  * and verify backend compatibility.
  */
-static void out(int64_t offset, int32_t segto, const void *data,
-                enum out_type type, uint64_t size,
-                int32_t segment, int32_t wrt)
+static void out(struct out_data *data)
 {
     static int32_t lineno = 0;     /* static!!! */
     static const char *lnfname = NULL;
-    uint8_t p[8];
-    int asize = addrsize(type, size); 	    /* Address size in bytes */
+    int asize;
     const int amax  = ofmt->maxbits >> 3; /* Maximum address size in bytes */
+    union {
+        uint8_t b[8];
+        uint64_t q;
+    } xdata;
+    uint64_t size = data->size;
 
-    if (type == OUT_ADDRESS && segment == NO_SEG && wrt == NO_SEG) {
-        /*
-         * This is a non-relocated address, and we're going to
-         * convert it into RAWDATA format.
-         */
-        uint8_t *q = p;
-        
-        if (asize > 8) {
-            nasm_panic(0, "OUT_ADDRESS with size > 8");
-            return;
+    if (!data->size)
+        return;                 /* Nothing to do */
+
+    switch (data->type) {
+    case OUT_ADDRESS:
+        asize = data->size;
+        nasm_assert(asize <= 8);
+        if (data->tsegment == NO_SEG && data->twrt == NO_SEG) {
+            /* Convert to RAWDATA */
+            /* XXX: check for overflow */
+            uint8_t *q = xdata.b;
+
+            WRITEADDR(q, data->toffset, asize);
+            data->data = xdata.b;
+            data->type = OUT_RAWDATA;
+            asize = 0;              /* No longer an address */
         }
+        break;
 
-        WRITEADDR(q, *(int64_t *)data, asize);
-        data = p;
-        type = OUT_RAWDATA;
-	size = asize;
-        asize = 0;              /* No longer an address */
+    case OUT_RELADDR:
+        asize = data->size;
+        nasm_assert(asize <= 8);
+        if (data->tsegment == data->segment && data->twrt == NO_SEG) {
+            /* Convert to RAWDATA */
+            uint8_t *q = xdata.b;
+            int64_t delta = data->toffset - data->offset
+                - (data->inslen - data->insoffs);
+
+            if (overflow_signed(delta, asize))
+                warn_overflow(ERR_PASS2, asize);
+
+            WRITEADDR(q, delta, asize);
+            data->data = xdata.b;
+            data->type = OUT_RAWDATA;
+            asize = 0;              /* No longer an address */
+        }
+        break;
+
+    default:
+        asize = 0;              /* Not an address */
+        break;
     }
 
-    lfmt->output(offset, data, type, size);
+    lfmt->output(data);
 
     /*
      * this call to src_get determines when we call the
@@ -370,39 +374,137 @@ static void out(int64_t offset, int32_t segto, const void *data,
      */
 
     if (src_get(&lineno, &lnfname))
-        dfmt->linenum(lnfname, lineno, segto);
+        dfmt->linenum(lnfname, lineno, data->segment);
 
     if (asize && asize > amax) {
-        if (type != OUT_ADDRESS || (int)size < 0) {
+        if (data->type != OUT_ADDRESS || data->sign == OUT_SIGNED) {
             nasm_error(ERR_NONFATAL,
                     "%d-bit signed relocation unsupported by output format %s\n",
                     asize << 3, ofmt->shortname);
-	    size = asize;
         } else {
             nasm_error(ERR_WARNING | ERR_WARN_ZEXTRELOC,
                     "%d-bit unsigned relocation zero-extended from %d bits\n",
                     asize << 3, ofmt->maxbits);
-            ofmt->output(segto, data, type, amax, segment, wrt);
-            size = asize - amax;
+            data->size = amax;
+            ofmt->output(data->segment, data->data, data->type,
+                         data->size, data->tsegment, data->twrt);
+            data->insoffs += amax;
+            data->offset += amax;
+            data->size = size = asize - amax;
         }
-        data = zero_buffer;
-        type = OUT_RAWDATA;
-	segment = wrt = NO_SEG;
+        data->data = zero_buffer;
+        data->type = OUT_RAWDATA;
     }
 
-    ofmt->output(segto, data, type, size, segment, wrt);
+    /* Hack until backend change */
+    switch (data->type) {
+    case OUT_RELADDR:
+        switch (data->size) {
+        case 1:
+            data->type = OUT_REL1ADR;
+            break;
+        case 2:
+            data->type = OUT_REL2ADR;
+            break;
+        case 4:
+            data->type = OUT_REL4ADR;
+            break;
+        case 8:
+            data->type = OUT_REL8ADR;
+            break;
+        default:
+            panic();
+            break;
+        }
+
+        xdata.q = data->toffset;
+        data->data = xdata.b;
+        data->size = data->inslen - data->insoffs;
+        break;
+
+    case OUT_SEGMENT:
+        data->type = OUT_ADDRESS;
+        /* fall through */
+
+    case OUT_ADDRESS:
+        xdata.q = data->toffset;
+        data->data = xdata.b;
+        data->size = (data->sign == OUT_SIGNED) ? -data->size : data->size;
+        break;
+
+    case OUT_RAWDATA:
+    case OUT_RESERVE:
+        data->tsegment = data->twrt = NO_SEG;
+        break;
+
+    default:
+        panic();
+        break;
+    }
+
+    ofmt->output(data->segment, data->data, data->type,
+                 data->size, data->tsegment, data->twrt);
+    data->offset += size;
+    data->insoffs += size;
 }
 
-static void out_imm8(int64_t offset, int32_t segment,
-                     struct operand *opx, int asize)
+static inline void out_rawdata(struct out_data *data, const void *rawdata,
+                               size_t size)
 {
-    if (opx->segment != NO_SEG) {
-        uint64_t data = opx->offset;
-        out(offset, segment, &data, OUT_ADDRESS, asize, opx->segment, opx->wrt);
-    } else {
-        uint8_t byte = opx->offset;
-        out(offset, segment, &byte, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-    }
+    data->type = OUT_RAWDATA;
+    data->data = rawdata;
+    data->size = size;
+    out(data);
+}
+
+static void out_rawbyte(struct out_data *data, uint8_t byte)
+{
+    data->type = OUT_RAWDATA;
+    data->data = &byte;
+    data->size = 1;
+    out(data);
+}
+
+static inline void out_reserve(struct out_data *data, uint64_t size)
+{
+    data->type = OUT_RESERVE;
+    data->size = size;
+    out(data);
+}
+
+static inline void out_imm(struct out_data *data, struct operand *opx,
+                           int size, enum out_sign sign)
+{
+    data->type = OUT_ADDRESS;
+    data->sign = sign;
+    data->size = size;
+    data->toffset = opx->offset;
+    data->tsegment = opx->segment;
+    data->twrt = opx->wrt;
+    out(data);
+}
+
+static inline void out_reladdr(struct out_data *data, struct operand *opx,
+                               int size)
+{
+    data->type = OUT_RELADDR;
+    data->sign = OUT_SIGNED;
+    data->size = size;
+    data->toffset = opx->offset;
+    data->tsegment = opx->segment;
+    data->twrt = opx->wrt;
+    out(data);
+}
+
+static inline void out_segment(struct out_data *data, struct operand *opx)
+{
+    data->type = OUT_SEGMENT;
+    data->sign = OUT_UNSIGNED;
+    data->size = 2;
+    data->toffset = opx->offset;
+    data->tsegment = ofmt->segbase(opx->segment + 1);
+    data->twrt = opx->wrt;
+    out(data);
 }
 
 static bool jmp_match(int32_t segment, int64_t offset, int bits,
@@ -442,18 +544,22 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return is_byte;
 }
 
-int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
+int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                  insn * instruction)
 {
+    struct out_data data;
     const struct itemplate *temp;
-    int j;
     enum match_result m;
-    int64_t insn_end;
     int32_t itimes;
-    int64_t start = offset;
     int64_t wsize;              /* size for DB etc. */
 
     cpu = cp;
+
+    data.offset = start;
+    data.segment = segment;
+    data.itemp = NULL;
+    data.sign = OUT_WRAP;
+    data.bits = bits;
 
     wsize = idata_bytes(instruction->opcode);
     if (wsize == -1)
@@ -473,291 +579,188 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                                 "integer supplied to a DT, DO or DY"
                                 " instruction");
                     } else {
-                        out(offset, segment, &e->offset,
-                            OUT_ADDRESS, wsize, e->segment, e->wrt);
-                        offset += wsize;
+                        data.insoffs = 0;
+                        data.type = OUT_ADDRESS;
+                        data.inslen = data.size = wsize;
+                        data.toffset = e->offset;
+                        data.tsegment = e->segment;
+                        data.twrt = e->wrt;
+                        out(&data);
                     }
                 } else if (e->type == EOT_DB_STRING ||
                            e->type == EOT_DB_STRING_FREE) {
-                    int align;
-
-                    out(offset, segment, e->stringval,
-                        OUT_RAWDATA, e->stringlen, NO_SEG, NO_SEG);
-                    align = e->stringlen % wsize;
-
-                    if (align) {
+                    int align = e->stringlen % wsize;
+                    if (align)
                         align = wsize - align;
-                        out(offset, segment, zero_buffer,
-                            OUT_RAWDATA, align, NO_SEG, NO_SEG);
-                    }
-                    offset += e->stringlen + align;
+
+                    data.insoffs = 0;
+                    data.inslen = e->stringlen + align;
+
+                    out_rawdata(&data, e->stringval, e->stringlen);
+                    out_rawdata(&data, zero_buffer, align);
                 }
             }
             if (t > 0 && t == instruction->times - 1) {
-                /*
-                 * Dummy call to lfmt->output to give the offset to the
-                 * listing module.
-                 */
-                lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+                lfmt->set_offset(data.offset);
                 lfmt->uplevel(LIST_TIMES);
             }
         }
         if (instruction->times > 1)
             lfmt->downlevel(LIST_TIMES);
-        return offset - start;
-    }
-
-    if (instruction->opcode == I_INCBIN) {
+    } else if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         FILE *fp;
+        static char buf[BUFSIZ];
+        size_t t = instruction->times;
+        off_t base = 0;
+        off_t len;
 
         fp = nasm_open_read(fname, NF_BINARY);
         if (!fp) {
             nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);
-        } else if (fseek(fp, 0L, SEEK_END) < 0) {
-            nasm_error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
-                  fname);
-            fclose(fp);
-        } else {
-            static char buf[4096];
-            size_t t = instruction->times;
-            size_t base = 0;
-            size_t len;
+            goto done;
+        }
 
-            len = ftell(fp);
-            if (instruction->eops->next) {
-                base = instruction->eops->next->offset;
+        if (fseeko(fp, 0, SEEK_END) < 0) {
+            nasm_error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
+                       fname);
+            goto close_done;
+        }
+
+        len = ftello(fp);
+        if (instruction->eops->next) {
+            base = instruction->eops->next->offset;
+            if (base >= len) {
+                len = 0;
+            } else {
                 len -= base;
                 if (instruction->eops->next->next &&
-                    len > (size_t)instruction->eops->next->next->offset)
-                    len = (size_t)instruction->eops->next->next->offset;
+                    len > (off_t)instruction->eops->next->next->offset)
+                    len = (off_t)instruction->eops->next->next->offset;
             }
-            /*
-             * Dummy call to lfmt->output to give the offset to the
-             * listing module.
-             */
-            lfmt->output(offset, NULL, OUT_RAWDATA, 0);
-            lfmt->uplevel(LIST_INCBIN);
-            while (t--) {
-                size_t l;
-
-                fseek(fp, base, SEEK_SET);
-                l = len;
-                while (l > 0) {
-                    int32_t m;
-                    m = fread(buf, 1, l > sizeof(buf) ? sizeof(buf) : l, fp);
-                    if (!m) {
-                        /*
-                         * This shouldn't happen unless the file
-                         * actually changes while we are reading
-                         * it.
-                         */
-                        nasm_error(ERR_NONFATAL,
-                              "`incbin': unexpected EOF while"
-                              " reading file `%s'", fname);
-                        t = 0;  /* Try to exit cleanly */
-                        break;
-                    }
-                    out(offset, segment, buf, OUT_RAWDATA, m,
-                        NO_SEG, NO_SEG);
-                    l -= m;
-                }
-            }
-            lfmt->downlevel(LIST_INCBIN);
-            if (instruction->times > 1) {
-                /*
-                 * Dummy call to lfmt->output to give the offset to the
-                 * listing module.
-                 */
-                lfmt->output(offset, NULL, OUT_RAWDATA, 0);
-                lfmt->uplevel(LIST_TIMES);
-                lfmt->downlevel(LIST_TIMES);
-            }
-            fclose(fp);
-            return instruction->times * len;
         }
-        return 0;               /* if we're here, there's an error */
-    }
+        lfmt->set_offset(data.offset);
+        lfmt->uplevel(LIST_INCBIN);
+        while (t--) {
+            off_t l;
 
-    /* Check to see if we need an address-size prefix */
-    add_asp(instruction, bits);
+            data.insoffs = 0;
+            data.inslen = len;
 
-    m = find_match(&temp, instruction, segment, offset, bits);
-
-    if (m == MOK_GOOD) {
-        /* Matches! */
-        int64_t insn_size = calcsize(segment, offset, bits, instruction, temp);
-        itimes = instruction->times;
-        if (insn_size < 0)  /* shouldn't be, on pass two */
-            nasm_panic(0, "errors made it through from pass one");
-        else
-            while (itimes--) {
-                for (j = 0; j < MAXPREFIX; j++) {
-                    uint8_t c = 0;
-                    switch (instruction->prefixes[j]) {
-                    case P_WAIT:
-                        c = 0x9B;
-                        break;
-                    case P_LOCK:
-                        c = 0xF0;
-                        break;
-                    case P_REPNE:
-                    case P_REPNZ:
-                    case P_XACQUIRE:
-                    case P_BND:
-                        c = 0xF2;
-                        break;
-                    case P_REPE:
-                    case P_REPZ:
-                    case P_REP:
-                    case P_XRELEASE:
-                        c = 0xF3;
-                        break;
-                    case R_CS:
-                        if (bits == 64) {
-                            nasm_error(ERR_WARNING | ERR_PASS2,
-                                  "cs segment base generated, but will be ignored in 64-bit mode");
-                        }
-                        c = 0x2E;
-                        break;
-                    case R_DS:
-                        if (bits == 64) {
-                            nasm_error(ERR_WARNING | ERR_PASS2,
-                                  "ds segment base generated, but will be ignored in 64-bit mode");
-                        }
-                        c = 0x3E;
-                        break;
-                    case R_ES:
-                        if (bits == 64) {
-                            nasm_error(ERR_WARNING | ERR_PASS2,
-                                  "es segment base generated, but will be ignored in 64-bit mode");
-                        }
-                        c = 0x26;
-                        break;
-                    case R_FS:
-                        c = 0x64;
-                        break;
-                    case R_GS:
-                        c = 0x65;
-                        break;
-                    case R_SS:
-                        if (bits == 64) {
-                            nasm_error(ERR_WARNING | ERR_PASS2,
-                                  "ss segment base generated, but will be ignored in 64-bit mode");
-                        }
-                        c = 0x36;
-                        break;
-                    case R_SEGR6:
-                    case R_SEGR7:
-                        nasm_error(ERR_NONFATAL,
-                              "segr6 and segr7 cannot be used as prefixes");
-                        break;
-                    case P_A16:
-                        if (bits == 64) {
-                            nasm_error(ERR_NONFATAL,
-                                  "16-bit addressing is not supported "
-                                  "in 64-bit mode");
-                        } else if (bits != 16)
-                            c = 0x67;
-                        break;
-                    case P_A32:
-                        if (bits != 32)
-                            c = 0x67;
-                        break;
-                    case P_A64:
-                        if (bits != 64) {
-                            nasm_error(ERR_NONFATAL,
-                                  "64-bit addressing is only supported "
-                                  "in 64-bit mode");
-                        }
-                        break;
-                    case P_ASP:
-                        c = 0x67;
-                        break;
-                    case P_O16:
-                        if (bits != 16)
-                            c = 0x66;
-                        break;
-                    case P_O32:
-                        if (bits == 16)
-                            c = 0x66;
-                        break;
-                    case P_O64:
-                        /* REX.W */
-                        break;
-                    case P_OSP:
-                        c = 0x66;
-                        break;
-                    case P_EVEX:
-                    case P_VEX3:
-                    case P_VEX2:
-                    case P_NOBND:
-                    case P_none:
-                        break;
-                    default:
-                        nasm_panic(0, "invalid instruction prefix");
-                    }
-                    if (c != 0) {
-                        out(offset, segment, &c, OUT_RAWDATA, 1,
-                            NO_SEG, NO_SEG);
-                        offset++;
-                    }
-                }
-                insn_end = offset + insn_size;
-                gencode(segment, offset, bits, instruction,
-                        temp, insn_end);
-                offset += insn_size;
-                if (itimes > 0 && itimes == instruction->times - 1) {
+            if (fseeko(fp, base, SEEK_SET) < 0 || ferror(fp)) {
+                nasm_error(ERR_NONFATAL,
+                           "`incbin': unable to seek on file `%s'",
+                           fname);
+                goto end_incbin;
+            }
+            l = len;
+            while (l > 0) {
+                size_t m = l > (off_t)sizeof(buf) ? (size_t)l : sizeof(buf);
+                m = fread(buf, 1, m, fp);
+                if (!m || feof(fp)) {
                     /*
-                     * Dummy call to lfmt->output to give the offset to the
-                     * listing module.
+                     * This shouldn't happen unless the file
+                     * actually changes while we are reading
+                     * it.
                      */
-                    lfmt->output(offset, NULL, OUT_RAWDATA, 0);
+                    nasm_error(ERR_NONFATAL,
+                               "`incbin': unexpected EOF while"
+                               " reading file `%s'", fname);
+                    goto end_incbin;
+                }
+                out_rawdata(&data, buf, m);
+                l -= m;
+            }
+        }
+    end_incbin:
+        lfmt->downlevel(LIST_INCBIN);
+        if (instruction->times > 1) {
+            lfmt->set_offset(data.offset);
+            lfmt->uplevel(LIST_TIMES);
+            lfmt->downlevel(LIST_TIMES);
+        }
+        if (ferror(fp)) {
+            nasm_error(ERR_NONFATAL,
+                       "`incbin': error while"
+                       " reading file `%s'", fname);
+        }
+    close_done:
+        fclose(fp);
+    done:
+        ;
+    } else {
+        /* "Real" instruction */
+
+        /* Check to see if we need an address-size prefix */
+        add_asp(instruction, bits);
+
+        m = find_match(&temp, instruction, data.segment, data.offset, bits);
+
+        if (m == MOK_GOOD) {
+            /* Matches! */
+            int64_t insn_size = calcsize(data.segment, data.offset,
+                                         bits, instruction, temp);
+            itimes = instruction->times;
+            if (insn_size < 0)  /* shouldn't be, on pass two */
+                nasm_panic(0, "errors made it through from pass one");
+
+            data.itemp = temp;
+            data.bits = bits;
+
+            while (itimes--) {
+                data.insoffs = 0;
+                data.inslen = insn_size;
+
+                gencode(&data, instruction);
+                nasm_assert(data.insoffs == insn_size);
+
+                if (itimes > 0 && itimes == instruction->times - 1) {
+                    lfmt->set_offset(data.offset);
                     lfmt->uplevel(LIST_TIMES);
                 }
             }
-        if (instruction->times > 1)
-            lfmt->downlevel(LIST_TIMES);
-        return offset - start;
-    } else {
-        /* No match */
-        switch (m) {
-        case MERR_OPSIZEMISSING:
-            nasm_error(ERR_NONFATAL, "operation size not specified");
-            break;
-        case MERR_OPSIZEMISMATCH:
-            nasm_error(ERR_NONFATAL, "mismatch in operand sizes");
-            break;
-        case MERR_BRNUMMISMATCH:
-            nasm_error(ERR_NONFATAL,
-                  "mismatch in the number of broadcasting elements");
-            break;
-        case MERR_BADCPU:
-            nasm_error(ERR_NONFATAL, "no instruction for this cpu level");
-            break;
-        case MERR_BADMODE:
-            nasm_error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
-                  bits);
-            break;
-        case MERR_ENCMISMATCH:
-            nasm_error(ERR_NONFATAL, "specific encoding scheme not available");
-            break;
-        case MERR_BADBND:
-            nasm_error(ERR_NONFATAL, "bnd prefix is not allowed");
-            break;
-        case MERR_BADREPNE:
-            nasm_error(ERR_NONFATAL, "%s prefix is not allowed",
-                  (has_prefix(instruction, PPS_REP, P_REPNE) ?
-                   "repne" : "repnz"));
-            break;
-        default:
-            nasm_error(ERR_NONFATAL,
-                  "invalid combination of opcode and operands");
-            break;
+            if (instruction->times > 1)
+                lfmt->downlevel(LIST_TIMES);
+        } else {
+            /* No match */
+            switch (m) {
+            case MERR_OPSIZEMISSING:
+                nasm_error(ERR_NONFATAL, "operation size not specified");
+                break;
+            case MERR_OPSIZEMISMATCH:
+                nasm_error(ERR_NONFATAL, "mismatch in operand sizes");
+                break;
+            case MERR_BRNUMMISMATCH:
+                nasm_error(ERR_NONFATAL,
+                           "mismatch in the number of broadcasting elements");
+                break;
+            case MERR_BADCPU:
+                nasm_error(ERR_NONFATAL, "no instruction for this cpu level");
+                break;
+            case MERR_BADMODE:
+                nasm_error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
+                           bits);
+                break;
+            case MERR_ENCMISMATCH:
+                nasm_error(ERR_NONFATAL, "specific encoding scheme not available");
+                break;
+            case MERR_BADBND:
+                nasm_error(ERR_NONFATAL, "bnd prefix is not allowed");
+                break;
+            case MERR_BADREPNE:
+                nasm_error(ERR_NONFATAL, "%s prefix is not allowed",
+                           (has_prefix(instruction, PPS_REP, P_REPNE) ?
+                            "repne" : "repnz"));
+                break;
+            default:
+                nasm_error(ERR_NONFATAL,
+                           "invalid combination of opcode and operands");
+                break;
+            }
         }
     }
-    return 0;
+    return data.offset - start;
 }
 
 int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
@@ -797,14 +800,14 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
                 align += wsize;
             isize += osize + align;
         }
-        return isize * instruction->times;
+        return isize;
     }
 
     if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         FILE *fp;
         int64_t val = 0;
-        size_t len;
+        off_t len;
 
         fp = nasm_open_read(fname, NF_BINARY);
         if (!fp)
@@ -816,13 +819,17 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
         else {
             len = ftell(fp);
             if (instruction->eops->next) {
-                len -= instruction->eops->next->offset;
-                if (instruction->eops->next->next &&
-                    len > (size_t)instruction->eops->next->next->offset) {
-                    len = (size_t)instruction->eops->next->next->offset;
+                if (len <= (off_t)instruction->eops->next->offset) {
+                    len = 0;
+                } else {
+                    len -= instruction->eops->next->offset;
+                    if (instruction->eops->next->next &&
+                        len > (off_t)instruction->eops->next->next->offset) {
+                        len = (off_t)instruction->eops->next->next->offset;
+                    }
                 }
             }
-            val = instruction->times * len;
+            val = len;
         }
         if (fp)
             fclose(fp);
@@ -835,44 +842,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
     m = find_match(&temp, instruction, segment, offset, bits);
     if (m == MOK_GOOD) {
         /* we've matched an instruction. */
-        int64_t isize;
-        int j;
-
-        isize = calcsize(segment, offset, bits, instruction, temp);
-        if (isize < 0)
-            return -1;
-        for (j = 0; j < MAXPREFIX; j++) {
-            switch (instruction->prefixes[j]) {
-            case P_A16:
-                if (bits != 16)
-                    isize++;
-                break;
-            case P_A32:
-                if (bits != 32)
-                    isize++;
-                break;
-            case P_O16:
-                if (bits != 16)
-                    isize++;
-                break;
-            case P_O32:
-                if (bits == 16)
-                    isize++;
-                break;
-            case P_A64:
-            case P_O64:
-            case P_EVEX:
-            case P_VEX3:
-            case P_VEX2:
-            case P_NOBND:
-            case P_none:
-                break;
-            default:
-                isize++;
-                break;
-            }
-        }
-        return isize * instruction->times;
+        return calcsize(segment, offset, bits, instruction, temp);
     } else {
         return -1;                  /* didn't match any instruction */
     }
@@ -1402,40 +1372,161 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         (itemp_has(temp, IF_BND) && !has_prefix(ins, PPS_REP, P_NOBND)))
             ins->prefixes[PPS_REP] = P_BND;
 
+    /*
+     * Add length of legacy prefixes
+     */
+    length += emit_prefix(NULL, bits, ins);
+
     return length;
 }
 
-static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, int bits)
+static inline void emit_rex(struct out_data *data, insn *ins)
 {
-    if (bits == 64) {
+    if (data->bits == 64) {
         if ((ins->rex & REX_MASK) &&
             !(ins->rex & (REX_V | REX_EV)) &&
             !ins->rex_done) {
-            int rex = (ins->rex & REX_MASK) | REX_P;
-            out(offset, segment, &rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            uint8_t rex = (ins->rex & REX_MASK) | REX_P;
+            out_rawbyte(data, rex);
             ins->rex_done = true;
-            return 1;
         }
     }
-
-    return 0;
 }
 
-static void gencode(int32_t segment, int64_t offset, int bits,
-                    insn * ins, const struct itemplate *temp,
-                    int64_t insn_end)
+static int emit_prefix(struct out_data *data, const int bits, insn *ins)
+{
+    int bytes = 0;
+    int j;
+
+    for (j = 0; j < MAXPREFIX; j++) {
+        uint8_t c = 0;
+        switch (ins->prefixes[j]) {
+        case P_WAIT:
+            c = 0x9B;
+            break;
+        case P_LOCK:
+            c = 0xF0;
+            break;
+        case P_REPNE:
+        case P_REPNZ:
+        case P_XACQUIRE:
+        case P_BND:
+            c = 0xF2;
+            break;
+        case P_REPE:
+        case P_REPZ:
+        case P_REP:
+        case P_XRELEASE:
+            c = 0xF3;
+            break;
+        case R_CS:
+            if (bits == 64) {
+                nasm_error(ERR_WARNING | ERR_PASS2,
+                           "cs segment base generated, but will be ignored in 64-bit mode");
+            }
+            c = 0x2E;
+            break;
+        case R_DS:
+            if (bits == 64) {
+                nasm_error(ERR_WARNING | ERR_PASS2,
+                           "ds segment base generated, but will be ignored in 64-bit mode");
+            }
+            c = 0x3E;
+            break;
+        case R_ES:
+            if (bits == 64) {
+                nasm_error(ERR_WARNING | ERR_PASS2,
+                           "es segment base generated, but will be ignored in 64-bit mode");
+            }
+            c = 0x26;
+            break;
+        case R_FS:
+            c = 0x64;
+            break;
+        case R_GS:
+            c = 0x65;
+            break;
+        case R_SS:
+            if (bits == 64) {
+                nasm_error(ERR_WARNING | ERR_PASS2,
+                           "ss segment base generated, but will be ignored in 64-bit mode");
+            }
+            c = 0x36;
+            break;
+        case R_SEGR6:
+        case R_SEGR7:
+            nasm_error(ERR_NONFATAL,
+                       "segr6 and segr7 cannot be used as prefixes");
+            break;
+        case P_A16:
+            if (bits == 64) {
+                nasm_error(ERR_NONFATAL,
+                           "16-bit addressing is not supported "
+                           "in 64-bit mode");
+            } else if (bits != 16)
+                c = 0x67;
+            break;
+        case P_A32:
+            if (bits != 32)
+                c = 0x67;
+            break;
+        case P_A64:
+            if (bits != 64) {
+                nasm_error(ERR_NONFATAL,
+                           "64-bit addressing is only supported "
+                           "in 64-bit mode");
+            }
+            break;
+        case P_ASP:
+            c = 0x67;
+            break;
+        case P_O16:
+            if (bits != 16)
+                c = 0x66;
+            break;
+        case P_O32:
+            if (bits == 16)
+                c = 0x66;
+            break;
+        case P_O64:
+            /* REX.W */
+            break;
+        case P_OSP:
+            c = 0x66;
+            break;
+        case P_EVEX:
+        case P_VEX3:
+        case P_VEX2:
+        case P_NOBND:
+        case P_none:
+            break;
+        default:
+            nasm_panic(0, "invalid instruction prefix");
+        }
+        if (c) {
+            if (data)
+                out_rawbyte(data, c);
+            bytes++;
+        }
+    }
+    return bytes;
+}
+
+static void gencode(struct out_data *data, insn *ins)
 {
     uint8_t c;
     uint8_t bytes[4];
     int64_t size;
-    int64_t data;
     int op1, op2;
     struct operand *opx;
-    const uint8_t *codes = temp->code;
+    const uint8_t *codes = data->itemp->code;
     uint8_t opex = 0;
     enum ea_type eat = EA_SCALAR;
+    const int bits = data->bits;
 
     ins->rex_done = false;
+
+    emit_prefix(data, bits, ins);
 
     while (*codes) {
         c = *codes++;
@@ -1444,15 +1535,15 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         opx = &ins->oprs[op1];
         opex = 0;                /* For the next iteration */
 
+
         switch (c) {
         case 01:
         case 02:
         case 03:
         case 04:
-            offset += emit_rex(ins, segment, offset, bits);
-            out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG);
+            emit_rex(data, ins);
+            out_rawdata(data, codes, c);
             codes += c;
-            offset += c;
             break;
 
         case 05:
@@ -1462,38 +1553,30 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case4(010):
-            offset += emit_rex(ins, segment, offset, bits);
-            bytes[0] = *codes++ + (regval(opx) & 7);
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            emit_rex(data, ins);
+            out_rawbyte(data, *codes++ + (regval(opx) & 7));
             break;
 
         case4(014):
             break;
 
         case4(020):
-            if (opx->offset < -256 || opx->offset > 255) {
+            if (opx->offset < -256 || opx->offset > 255)
                 nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "byte value exceeds bounds");
-            }
-            out_imm8(offset, segment, opx, -1);
-            offset += 1;
+            out_imm(data, opx, 1, OUT_WRAP);
             break;
 
         case4(024):
             if (opx->offset < 0 || opx->offset > 255)
                 nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "unsigned byte value exceeds bounds");
-            out_imm8(offset, segment, opx, 1);
-            offset += 1;
+            out_imm(data, opx, 1, OUT_UNSIGNED);
             break;
 
         case4(030):
             warn_overflow_opd(opx, 2);
-            data = opx->offset;
-            out(offset, segment, &data, OUT_ADDRESS, 2,
-                opx->segment, opx->wrt);
-            offset += 2;
+            out_imm(data, opx, 2, OUT_WRAP);
             break;
 
         case4(034):
@@ -1502,64 +1585,36 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             else
                 size = (bits == 16) ? 2 : 4;
             warn_overflow_opd(opx, size);
-            data = opx->offset;
-            out(offset, segment, &data, OUT_ADDRESS, size,
-                opx->segment, opx->wrt);
-            offset += size;
+            out_imm(data, opx, size, OUT_WRAP);
             break;
 
         case4(040):
             warn_overflow_opd(opx, 4);
-            data = opx->offset;
-            out(offset, segment, &data, OUT_ADDRESS, 4,
-                opx->segment, opx->wrt);
-            offset += 4;
+            out_imm(data, opx, 4, OUT_WRAP);
             break;
 
         case4(044):
-            data = opx->offset;
             size = ins->addr_size >> 3;
             warn_overflow_opd(opx, size);
-            out(offset, segment, &data, OUT_ADDRESS, size,
-                opx->segment, opx->wrt);
-            offset += size;
+            out_imm(data, opx, size, OUT_WRAP);
             break;
 
         case4(050):
-            if (opx->segment != segment) {
-                data = opx->offset;
-                out(offset, segment, &data,
-                    OUT_REL1ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
-            } else {
-                data = opx->offset - insn_end;
-                if (data > 127 || data < -128)
+            if (opx->segment == data->segment) {
+                int64_t delta = opx->offset - data->offset
+                    - (data->inslen - data->insoffs);
+                if (delta > 127 || delta < -128)
                     nasm_error(ERR_NONFATAL, "short jump is out of range");
-                out(offset, segment, &data,
-                    OUT_ADDRESS, 1, NO_SEG, NO_SEG);
             }
-            offset += 1;
+            out_reladdr(data, opx, 1);
             break;
 
         case4(054):
-            data = (int64_t)opx->offset;
-            out(offset, segment, &data, OUT_ADDRESS, 8,
-                opx->segment, opx->wrt);
-            offset += 8;
+            out_imm(data, opx, 8, OUT_WRAP);
             break;
 
         case4(060):
-            if (opx->segment != segment) {
-                data = opx->offset;
-                out(offset, segment, &data,
-                    OUT_REL2ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
-            } else {
-                data = opx->offset - insn_end;
-                out(offset, segment, &data,
-                    OUT_ADDRESS, 2, NO_SEG, NO_SEG);
-            }
-            offset += 2;
+            out_reladdr(data, opx, 2);
             break;
 
         case4(064):
@@ -1567,42 +1622,19 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
-            if (opx->segment != segment) {
-                data = opx->offset;
-                out(offset, segment, &data,
-                    size == 2 ? OUT_REL2ADR : OUT_REL4ADR,
-                    insn_end - offset, opx->segment, opx->wrt);
-            } else {
-                data = opx->offset - insn_end;
-                out(offset, segment, &data,
-                    OUT_ADDRESS, size, NO_SEG, NO_SEG);
-            }
-            offset += size;
+
+            out_reladdr(data, opx, size);
             break;
 
         case4(070):
-            if (opx->segment != segment) {
-                data = opx->offset;
-                out(offset, segment, &data,
-                    OUT_REL4ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
-            } else {
-                data = opx->offset - insn_end;
-                out(offset, segment, &data,
-                    OUT_ADDRESS, 4, NO_SEG, NO_SEG);
-            }
-            offset += 4;
+            out_reladdr(data, opx, 4);
             break;
 
         case4(074):
             if (opx->segment == NO_SEG)
                 nasm_error(ERR_NONFATAL, "value referenced by FAR is not"
                         " relocatable");
-            data = 0;
-            out(offset, segment, &data, OUT_ADDRESS, 2,
-                ofmt->segbase(1 + opx->segment),
-                opx->wrt);
-            offset += 2;
+            out_segment(data, opx);
             break;
 
         case 0172:
@@ -1621,35 +1653,28 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 }
                 bytes[0] |= opx->offset & 15;
             }
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
+            out_rawdata(data, bytes, 1);
             break;
 
         case 0173:
             c = *codes++;
             opx = &ins->oprs[c >> 4];
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
-            bytes[0] |= c & 15;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
+            /* XXX: ZMM? */
+            out_rawbyte(data, (nasm_regvals[opx->basereg] << 4) | (c & 15));
             break;
 
         case4(0174):
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset++;
+            out_rawbyte(data, (nasm_regvals[opx->basereg] << 4) |
+                        ((nasm_regvals[opx->basereg] & 16) >> 1));
             break;
 
         case4(0254):
-            data = opx->offset;
             if (opx->wrt == NO_SEG && opx->segment == NO_SEG &&
-                (int32_t)data != (int64_t)data) {
+                (int32_t)opx->offset != (int64_t)opx->offset) {
                 nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "signed dword immediate exceeds bounds");
             }
-            out(offset, segment, &data, OUT_ADDRESS, -4,
-                opx->segment, opx->wrt);
-            offset += 4;
+            out_imm(data, opx, 4, OUT_SIGNED);
             break;
 
         case4(0240):
@@ -1667,8 +1692,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                        ((~ins->vexreg & 15) << 3) |
                        (1 << 2) | (ins->vex_wlp & 3);
             bytes[3] = ins->evex_p[2];
-            out(offset, segment, &bytes, OUT_RAWDATA, 4, NO_SEG, NO_SEG);
-            offset += 4;
+            out_rawdata(data, bytes, 4);
             break;
 
         case4(0260):
@@ -1680,14 +1704,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
                     ((~ins->vexreg & 15)<< 3) | (ins->vex_wlp & 07);
-                out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);
-                offset += 3;
+                out_rawdata(data, bytes, 3);
             } else {
                 bytes[0] = 0xc5;
                 bytes[1] = ((~ins->rex & REX_R) << (7-2)) |
                     ((~ins->vexreg & 15) << 3) | (ins->vex_wlp & 07);
-                out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
-                offset += 2;
+                out_rawdata(data, bytes, 2);
             }
             break;
 
@@ -1725,16 +1747,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                         s == 32 ? "dword" :
                         "signed dword");
             }
-            if (opx->segment != NO_SEG) {
-                data = uv;
-                out(offset, segment, &data, OUT_ADDRESS, 1,
-                    opx->segment, opx->wrt);
-            } else {
-                bytes[0] = uv;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
-            }
-            offset += 1;
+            out_imm(data, opx, 1, OUT_WRAP); /* XXX: OUT_SIGNED? */
             break;
         }
 
@@ -1742,21 +1755,13 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0310:
-            if (bits == 32 && !has_prefix(ins, PPS_ASIZE, P_A16)) {
-                *bytes = 0x67;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-                offset += 1;
-            } else
-                offset += 0;
+            if (bits == 32 && !has_prefix(ins, PPS_ASIZE, P_A16))
+                out_rawbyte(data, 0x67);
             break;
 
         case 0311:
-            if (bits != 32 && !has_prefix(ins, PPS_ASIZE, P_A32)) {
-                *bytes = 0x67;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-                offset += 1;
-            } else
-                offset += 0;
+            if (bits != 32 && !has_prefix(ins, PPS_ASIZE, P_A32))
+                out_rawbyte(data, 0x67);
             break;
 
         case 0312:
@@ -1788,9 +1793,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0330:
-            *bytes = *codes++ ^ get_cond_opcode(ins->condition);
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            out_rawbyte(data, *codes++ ^ get_cond_opcode(ins->condition));
             break;
 
         case 0331:
@@ -1798,17 +1801,12 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0332:
         case 0333:
-            *bytes = c - 0332 + 0xF2;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            out_rawbyte(data, c - 0332 + 0xF2);
             break;
 
         case 0334:
-            if (ins->rex & REX_R) {
-                *bytes = 0xF0;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-                offset += 1;
-            }
+            if (ins->rex & REX_R)
+                out_rawbyte(data, 0xF0);
             ins->rex &= ~(REX_L|REX_R);
             break;
 
@@ -1822,13 +1820,8 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0340:
             if (ins->oprs[0].segment != NO_SEG)
                 nasm_panic(0, "non-constant BSS size in pass two");
-            else {
-                int64_t size = ins->oprs[0].offset;
-                if (size > 0)
-                    out(offset, segment, NULL,
-                        OUT_RESERVE, size, NO_SEG, NO_SEG);
-                offset += size;
-            }
+
+            out_reserve(data, ins->oprs[0].offset);
             break;
 
         case 0341:
@@ -1838,9 +1831,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0361:
-            bytes[0] = 0x66;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            out_rawbyte(data, 0x66);
             break;
 
         case 0364:
@@ -1849,18 +1840,14 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0366:
         case 0367:
-            *bytes = c - 0366 + 0x66;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            out_rawbyte(data, c - 0366 + 0x66);
             break;
 
         case3(0370):
             break;
 
         case 0373:
-            *bytes = bits == 16 ? 3 : 5;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
-            offset += 1;
+            out_rawbyte(data, bits == 16 ? 3 : 5);
             break;
 
         case 0374:
@@ -1892,7 +1879,6 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 int rfield;
                 opflags_t rflags;
                 uint8_t *p;
-                int32_t s;
                 struct operand *opy = &ins->oprs[op2];
 
                 if (c <= 0177) {
@@ -1913,55 +1899,31 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
                     *p++ = ea_data.sib;
-
-                s = p - bytes;
-                out(offset, segment, bytes, OUT_RAWDATA, s, NO_SEG, NO_SEG);
+                out_rawdata(data, bytes, p - bytes);
 
                 /*
                  * Make sure the address gets the right offset in case
                  * the line breaks in the .lst file (BR 1197827)
                  */
-                offset += s;
-                s = 0;
 
                 if (ea_data.bytes) {
                     /* use compressed displacement, if available */
-                    data = ea_data.disp8 ? ea_data.disp8 : opy->offset;
-                    s += ea_data.bytes;
-                    if (ea_data.rip) {
-                        if (opy->segment == segment) {
-                            data -= insn_end;
-                            if (overflow_signed(data, ea_data.bytes))
-                                warn_overflow(ERR_PASS2, ea_data.bytes);
-                            out(offset, segment, &data, OUT_ADDRESS,
-                                ea_data.bytes, NO_SEG, NO_SEG);
-                        } else {
-                            /* overflow check in linker? */
-                            out(offset, segment, &data, OUT_REL4ADR,
-                                insn_end - offset, opy->segment, opy->wrt);
-                        }
+                    if (ea_data.disp8) {
+                        out_rawbyte(data, ea_data.disp8);
+                    } else if (ea_data.rip) {
+                        out_reladdr(data, opy, ea_data.bytes);
                     } else {
                         int asize = ins->addr_size >> 3;
-                        int atype = ea_data.bytes;
 
-                        if (overflow_general(data, asize) ||
-                            signed_bits(data, ins->addr_size) !=
-                            signed_bits(data, ea_data.bytes << 3))
+                        if (overflow_general(opy->offset, asize) ||
+                            signed_bits(opy->offset, ins->addr_size) !=
+                            signed_bits(opy->offset, ea_data.bytes << 3))
                             warn_overflow(ERR_PASS2, ea_data.bytes);
 
-                        if (asize > ea_data.bytes) {
-                            /*
-                             * If the address isn't the full width of
-                             * the address size, treat is as signed...
-                             */
-                            atype = -atype;
-                        }
-
-                        out(offset, segment, &data, OUT_ADDRESS,
-                            atype, opy->segment, opy->wrt);
+                        out_imm(data, opy, ea_data.bytes,
+                                (asize > ea_data.bytes) ? OUT_SIGNED : OUT_UNSIGNED);
                     }
                 }
-                offset += s;
             }
             break;
 
@@ -2612,7 +2574,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 default:   /* then what the smeg is it? */
                     goto err;    /* panic */
                 }
-                
+
                 if (bt == -1) {
                     base = 5;
                     mod = 0;

@@ -1687,6 +1687,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
                         int64_t l = insn_size(location.segment, offs, sb, cpu,
 					      &output_ins);
+                        l *= output_ins.times;
 
                         /* if (using_debug_info)  && output_ins.opcode != -1) */
                         if (using_debug_info)

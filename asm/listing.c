@@ -166,7 +166,7 @@ static void list_cleanup(void)
     fclose(listfp);
 }
 
-static void list_out(int32_t offset, char *str)
+static void list_out(int64_t offset, char *str)
 {
     if (strlen(listdata) + strlen(str) > LIST_HEXBIT) {
         strcat(listdata, "-");
@@ -177,7 +177,7 @@ static void list_out(int32_t offset, char *str)
     strcat(listdata, str);
 }
 
-static void list_address(int32_t offset, const char *brackets,
+static void list_address(int64_t offset, const char *brackets,
 			 int64_t addr, int size)
 {
     char q[20];
@@ -196,21 +196,22 @@ static void list_address(int32_t offset, const char *brackets,
     list_out(offset, q);
 }
 
-static void list_output(int32_t offset, const void *data,
-			enum out_type type, uint64_t size)
+static void list_output(const struct out_data *data)
 {
     char q[20];
+    uint64_t size = data->size;
+    uint64_t offset = data->offset;
 
     if (!listp || suppress || user_nolist)
         return;
 
-    switch (type) {
+    switch (data->type) {
     case OUT_RAWDATA:
     {
-        uint8_t const *p = data;
+        const uint8_t *p = data->data;
 
 	if (size == 0 && !listdata[0])
-	    listoffset = offset;
+	    listoffset = data->offset;
         while (size--) {
             HEX(q, *p);
             q[2] = '\0';
@@ -220,19 +221,11 @@ static void list_output(int32_t offset, const void *data,
 	break;
     }
     case OUT_ADDRESS:
-      list_address(offset, "[]", *(int64_t *)data, abs((int)size));
+    case OUT_SEGMENT:
+      list_address(offset, "[]", data->toffset, size);
 	break;
-    case OUT_REL1ADR:
-	list_address(offset, "()", *(int64_t *)data, 1);
-	break;
-    case OUT_REL2ADR:
-	list_address(offset, "()", *(int64_t *)data, 2);
-	break;
-    case OUT_REL4ADR:
-	list_address(offset, "()", *(int64_t *)data, 4);
-	break;
-    case OUT_REL8ADR:
-	list_address(offset, "()", *(int64_t *)data, 8);
+    case OUT_RELADDR:
+	list_address(offset, "()", data->toffset, size);
 	break;
     case OUT_RESERVE:
     {
@@ -240,6 +233,8 @@ static void list_output(int32_t offset, const void *data,
         list_out(offset, q);
 	break;
     }
+    default:
+        panic();
     }
 }
 
@@ -324,6 +319,10 @@ static void list_error(int severity, const char *pfx, const char *msg)
 	list_emit();
 }
 
+static void list_set_offset(uint64_t offset)
+{
+    listoffset = offset;
+}
 
 static const struct lfmt nasm_list = {
     list_init,
@@ -332,7 +331,8 @@ static const struct lfmt nasm_list = {
     list_line,
     list_uplevel,
     list_downlevel,
-    list_error
+    list_error,
+    list_set_offset
 };
 
 const struct lfmt *lfmt = &nasm_list;

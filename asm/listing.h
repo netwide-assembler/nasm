@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -61,12 +61,9 @@ struct lfmt {
      * output-format interface, only OUT_ADDRESS will _always_ be
      * displayed as if it's relocatable, so ensure that any non-
      * relocatable address has been converted to OUT_RAWDATA by
-     * then. Note that OUT_RAWDATA,0 is a valid data type, and is a
-     * dummy call used to give the listing generator an offset to
-     * work with when doing things like uplevel(LIST_TIMES) or
-     * uplevel(LIST_INCBIN).
+     * then.
      */
-    void (*output)(int32_t offset, const void *data, enum out_type type, uint64_t size);
+    void (*output)(const struct out_data *data);
 
     /*
      * Called to send a text line to the listing generator. The
@@ -100,6 +97,14 @@ struct lfmt {
      * Called on a warning or error, with the error message.
      */
     void (*error)(int severity, const char *pfx, const char *msg);
+
+    /*
+     * Update the current offset.  Used to give the listing generator
+     * an offset to work with when doing things like
+     * uplevel(LIST_TIMES) or uplevel(LIST_INCBIN); see
+     * list_set_offset();
+     */
+    void (*set_offset)(uint64_t offset);
 };
 
 extern const struct lfmt *lfmt;

@@ -100,12 +100,43 @@ struct ofmt;
  */
 enum out_type {
     OUT_RAWDATA,    /* Plain bytes */
-    OUT_ADDRESS,    /* An address (symbol value) */
     OUT_RESERVE,    /* Reserved bytes (RESB et al) */
-    OUT_REL1ADR,    /* 1-byte relative address */
-    OUT_REL2ADR,    /* 2-byte relative address */
-    OUT_REL4ADR,    /* 4-byte relative address */
-    OUT_REL8ADR     /* 8-byte relative address */
+    OUT_ADDRESS,    /* An address (symbol value) */
+    OUT_RELADDR,    /* A relative address (relative to instruction end) */
+    OUT_SEGMENT,    /* A segment number */
+
+    /* These are temporary until the backend change */
+    OUT_REL1ADR,
+    OUT_REL2ADR,
+    OUT_REL4ADR,
+    OUT_REL8ADR
+};
+
+enum out_sign {
+    OUT_WRAP,                   /* Undefined signedness (wraps) */
+    OUT_SIGNED,                 /* Value is signed */
+    OUT_UNSIGNED                /* Value is unsigned */
+};
+
+/*
+ * The data we send down to the backend.
+ * XXX: We still want to push down the base address symbol if
+ * available, and replace the segment numbers with a structure.
+ */
+struct out_data {
+    int64_t offset;             /* Offset within segment */
+    int32_t segment;            /* Segment written to */
+    enum out_type type;         /* See above */
+    enum out_sign sign;         /* See above */
+    int inslen;                 /* Length of instruction */
+    int insoffs;                /* Offset inside instruction */
+    int bits;                   /* Bits mode of compilation */
+    uint64_t size;              /* Size of output */
+    const struct itemplate *itemp; /* Instruction template */
+    const void *data;           /* Data for OUT_RAWDATA */
+    uint64_t toffset;           /* Target address offset for relocation */
+    int32_t tsegment;           /* Target segment for relocation */
+    int32_t twrt;               /* Relocation with respect to */
 };
 
 /*
