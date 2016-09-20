@@ -1522,6 +1522,7 @@ static void gencode(struct out_data *data, insn *ins)
     const uint8_t *codes = data->itemp->code;
     uint8_t opex = 0;
     enum ea_type eat = EA_SCALAR;
+    int r;
     const int bits = data->bits;
 
     ins->rex_done = false;
@@ -1638,34 +1639,36 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0172:
+        {
+            int mask = ins->prefixes[PPS_VEX] == P_EVEX ? 7 : 15;
+            const struct operand *opy;
+
             c = *codes++;
             opx = &ins->oprs[c >> 3];
-            bytes[0] = nasm_regvals[opx->basereg] << 4;
-            opx = &ins->oprs[c & 7];
-            if (opx->segment != NO_SEG || opx->wrt != NO_SEG) {
+            opy = &ins->oprs[c & 7];
+            if (opy->segment != NO_SEG || opy->wrt != NO_SEG) {
                 nasm_error(ERR_NONFATAL,
                         "non-absolute expression not permitted as argument %d",
                         c & 7);
-            } else {
-                if (opx->offset & ~15) {
-                    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                            "four-bit argument exceeds bounds");
-                }
-                bytes[0] |= opx->offset & 15;
+            } else if (opy->offset & ~mask) {
+                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                           "is4 argument exceeds bounds");
             }
-            out_rawdata(data, bytes, 1);
-            break;
+            c = opy->offset & mask;
+            goto emit_is4;
+         }
 
         case 0173:
             c = *codes++;
             opx = &ins->oprs[c >> 4];
-            /* XXX: ZMM? */
-            out_rawbyte(data, (nasm_regvals[opx->basereg] << 4) | (c & 15));
-            break;
+            c &= 15;
+            goto emit_is4;
 
         case4(0174):
-            out_rawbyte(data, (nasm_regvals[opx->basereg] << 4) |
-                        ((nasm_regvals[opx->basereg] & 16) >> 1));
+            c = 0;
+        emit_is4:
+            r = nasm_regvals[opx->basereg];
+            out_rawbyte(data, (r << 4) | ((r & 0x10) >> 1) | c);
             break;
 
         case4(0254):
