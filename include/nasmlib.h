@@ -459,6 +459,20 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags);
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
 void fwritezero(size_t bytes, FILE *fp);
 
+/* Missing fseeko/ftello */
+#ifndef HAVE_FSEEKO
+# undef off_t                   /* Just in case it is a macro */
+# ifdef HAVE__FSEEKI64
+#  define fseeko _fseeki64
+#  define ftello _ftelli64
+#  define off_t  int64_t
+# else
+#  define fseeko fseek
+#  define ftello ftell
+#  define off_t  long
+# endif
+#endif
+
 static inline bool overflow_general(int64_t value, int bytes)
 {
     int sbit;

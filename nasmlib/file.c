@@ -43,20 +43,6 @@
 # include <unistd.h>
 #endif
 
-/* Missing fseeko/ftello */
-#ifndef HAVE_FSEEKO
-# undef off_t                   /* Just in case it is a macro */
-# ifdef HAVE__FSEEKI64
-#  define fseeko _fseeki64
-#  define ftello _ftelli64
-#  define off_t  int64_t
-# else
-#  define fseeko fseek
-#  define ftello ftell
-#  define off_t  long
-# endif
-#endif
-
 /* Can we adjust the file size without actually writing all the bytes? */
 #ifdef HAVE_FILENO		/* Useless without fileno() */
 # ifdef HAVE__CHSIZE_S
@@ -188,3 +174,5 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
 
     return f;
 }
+
+off_t
