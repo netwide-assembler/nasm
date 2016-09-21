@@ -544,6 +544,9 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return is_byte;
 }
 
+/* This is totally just a wild guess what is reasonable... */
+#define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
+
 int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                  insn * instruction)
 {
@@ -610,11 +613,13 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
     } else if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         FILE *fp;
-        static char buf[BUFSIZ];
         size_t t = instruction->times;
         off_t base = 0;
         off_t len;
         const void *map = NULL;
+        char *buf = NULL;
+        size_t blk = 0;         /* Buffered I/O block size */
+        size_t m = 0;           /* Bytes last read */
 
         fp = nasm_open_read(fname, NF_BINARY|NF_FORMAP);
         if (!fp) {
@@ -651,6 +656,10 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
 
         /* Try to map file data */
         map = nasm_map_file(fp, base, len);
+        if (!map) {
+            blk = len < (off_t)INCBIN_MAX_BUF ? (size_t)len : INCBIN_MAX_BUF;
+            buf = nasm_malloc(blk);
+        }
 
         while (t--) {
             data.insoffs = 0;
@@ -658,6 +667,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
 
             if (map) {
                 out_rawdata(&data, map, len);
+            } else if ((off_t)m == len) {
+                out_rawdata(&data, buf, len);
             } else {
                 off_t l = len;
 
@@ -668,8 +679,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                     goto end_incbin;
                 }
                 while (l > 0) {
-                    size_t m = l < (off_t)sizeof(buf) ? (size_t)l : sizeof(buf);
-                    m = fread(buf, 1, m, fp);
+                    m = fread(buf, 1, l < (off_t)blk ? (size_t)l : blk, fp);
                     if (!m || feof(fp)) {
                         /*
                          * This shouldn't happen unless the file
@@ -699,6 +709,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                        " reading file `%s'", fname);
         }
     close_done:
+        if (buf)
+            nasm_free(buf);
         if (map)
             nasm_unmap_file(map, len);
         fclose(fp);

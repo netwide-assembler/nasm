@@ -455,7 +455,7 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags);
 /* Probe for existence of a file */
 bool nasm_file_exists(const char *filename);
 
-#define ZERO_BUF_SIZE 4096      /* Default value */
+#define ZERO_BUF_SIZE 65536     /* Default value */
 #if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
 # undef ZERO_BUF_SIZE
 # define ZERO_BUF_SIZE BUFSIZ
