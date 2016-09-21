@@ -36,11 +36,20 @@
 
 #include <errno.h>
 
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #ifdef HAVE_IO_H
 # include <io.h>
 #endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
 #endif
 
 /* Can we adjust the file size without actually writing all the bytes? */
@@ -116,7 +125,7 @@ void fwriteaddr(uint64_t data, int size, FILE * fp)
 #endif
 
 
-void fwritezero(size_t bytes, FILE *fp)
+void fwritezero(off_t bytes, FILE *fp)
 {
     size_t blksize;
 
@@ -124,15 +133,16 @@ void fwritezero(size_t bytes, FILE *fp)
     if (bytes >= BUFSIZ && !ferror(fp) && !feof(fp)) {
 	off_t pos = ftello(fp);
 	if (pos >= 0) {
+            pos += bytes;
 	    if (!fflush(fp) &&
-		!nasm_ftruncate(fileno(fp), pos + bytes) &&
-		!fseeko(fp, pos+bytes, SEEK_SET))
+		!nasm_ftruncate(fileno(fp), pos) &&
+		!fseeko(fp, pos, SEEK_SET))
 		    return;
 	}
     }
 #endif
 
-    while (bytes) {
+    while (bytes > 0) {
 	blksize = (bytes < ZERO_BUF_SIZE) ? bytes : ZERO_BUF_SIZE;
 
 	nasm_write(zero_buffer, blksize, fp);
@@ -140,22 +150,25 @@ void fwritezero(size_t bytes, FILE *fp)
     }
 }
 
-#ifdef __GLIBC__
-/* If we are using glibc, attempt to mmap the files for speed */
-# define READ_TEXT_FILE "rtm"
-# define READ_BIN_FILE  "rbm"
-#else
-# define READ_TEXT_FILE "rt"
-# define READ_BIN_FILE  "rb"
-#endif
-#define WRITE_TEXT_FILE "wt"
-#define WRITE_BIN_FILE  "wb"
-
 FILE *nasm_open_read(const char *filename, enum file_flags flags)
 {
     FILE *f;
+    bool again = true;
 
-    f = fopen(filename, (flags & NF_TEXT) ? READ_TEXT_FILE : READ_BIN_FILE);
+#ifdef __GLIBC__
+    /*
+     * Try to open this file with memory mapping for speed, unless we are
+     * going to do it "manually" with nasm_map_file()
+     */
+    if (!(flags & NF_FORMAP)) {
+        f = fopen(filename, (flags & NF_TEXT) ? "rtm" : "rbm");
+        again = (!f) && (errno == EINVAL); /* Not supported, try without m */
+    }
+#endif
+
+    if (again)
+        f = fopen(filename, (flags & NF_TEXT) ? "rt" : "rb");
+
     if (!f && (flags & NF_FATAL))
         nasm_fatal(ERR_NOFILE, "unable to open input file: `%s': %s",
                    filename, strerror(errno));
@@ -167,7 +180,8 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
 {
     FILE *f;
 
-    f = fopen(filename, (flags & NF_TEXT) ? WRITE_TEXT_FILE : WRITE_BIN_FILE);
+    f = fopen(filename, (flags & NF_TEXT) ? "wt" : "wb");
+
     if (!f && (flags & NF_FATAL))
         nasm_fatal(ERR_NOFILE, "unable to open output file: `%s': %s",
                    filename, strerror(errno));
@@ -175,4 +189,157 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
     return f;
 }
 
-off_t
+/*
+ * Report the existence of a file
+ */
+bool nasm_file_exists(const char *filename)
+{
+#if defined(HAVE_FACCESSAT) && defined(AT_EACCESS)
+    return faccessat(AT_FDCWD, filename, R_OK, AT_EACCESS) == 0;
+#elif defined(HAVE_ACCESS)
+    return access(filename, R_OK) == 0;
+#else
+    FILE *f;
+
+    f = fopen(filename, "rb");
+    if (f) {
+        fclose(f);
+        return true;
+    } else {
+        return false;
+    }
+#endif
+}
+
+/*
+ * Report file size.  This MAY move the file pointer.
+ */
+off_t nasm_file_size(FILE *f)
+{
+#if defined(HAVE_FILENO) && defined(HAVE_FSTAT)
+    struct stat st;
+
+    if (fstat(fileno(f), &st))
+        return (off_t)-1;
+
+    return st.st_size;
+#else
+    if (fseeko(f, 0, SEEK_END))
+        return (off_t)-1;
+
+    return ftello(f);
+#endif
+}
+
+/*
+ * Report file size given pathname
+ */
+off_t nasm_file_size_by_path(const char *pathname)
+{
+#ifdef HAVE_STAT
+    struct stat st;
+
+    if (stat(pathname, &st))
+        return (off_t)-1;
+
+    return st.st_size;
+#else
+    FILE *fp;
+    off_t len;
+
+    fp = nasm_open_read(pathname, NF_BINARY);
+    if (!fp)
+        return (off_t)-1;
+
+    len = nasm_file_size(fp);
+    fclose(fp);
+
+    return len;
+#endif
+}
+
+/*
+ * System page size
+ */
+
+/* File scope since not all compilers like static data in inline functions */
+static size_t nasm_pagemask;
+
+static size_t get_pagemask(void)
+{
+    size_t ps = 0;
+
+# if defined(HAVE_SYSCONF) && defined(_SC_PAGESIZE)
+    ps = sysconf(_SC_PAGESIZE);
+# elif defined(HAVE_GETPAGESIZE)
+    ps = getpagesize();
+# endif
+
+    nasm_pagemask = ps = is_power2(ps) ? (ps - 1) : 0;
+    return ps;
+}
+
+static inline size_t pagemask(void)
+{
+    size_t pm = nasm_pagemask;
+
+    if (unlikely(!pm))
+        return get_pagemask();
+
+    return pm;
+}
+
+/*
+ * Try to map an input file into memory
+ */
+const void *nasm_map_file(FILE *fp, off_t start, off_t len)
+{
+#if defined(HAVE_FILENO) && defined(HAVE_MMAP)
+   const char *p;
+    off_t  astart;              /* Aligned start */
+    size_t salign;              /* Amount of start adjustment */
+    size_t alen;                /* Aligned length */
+    const size_t page_mask = pagemask();
+
+    if (unlikely(!page_mask))
+        return NULL;            /* Page size undefined? */
+
+    if (unlikely(!len))
+        return NULL;            /* Mapping nothing... */
+
+    if (unlikely(len != (off_t)(size_t)len))
+        return NULL;            /* Address space insufficient */
+
+    astart = start & ~(off_t)page_mask;
+    salign = start - astart;
+    alen = (len + salign + page_mask) & ~page_mask;
+
+    p = mmap(NULL, alen, PROT_READ, MAP_SHARED, fileno(fp), astart);
+    return unlikely(p == MAP_FAILED) ? NULL : p + salign;
+#else
+    /* XXX: add Windows support? */
+    return NULL;
+#endif
+}
+
+/*
+ * Unmap an input file
+ */
+void nasm_unmap_file(const void *p, size_t len)
+{
+#if defined(HAVE_FILENO) && defined(HAVE_MMAP)
+    const size_t page_mask = pagemask();
+    uintptr_t astart;
+    size_t salign;
+    size_t alen;
+
+    if (unlikely(!page_mask))
+        return;
+
+    astart = (uintptr_t)p & ~(uintptr_t)page_mask;
+    salign = (uintptr_t)p - astart;
+    alen = (len + salign + page_mask) & ~page_mask;
+
+    munmap((void *)astart, alen);
+#endif
+}

@@ -114,8 +114,11 @@ AC_CHECK_HEADERS(inttypes.h)
 AC_CHECK_HEADERS(strings.h)
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS(io.h)
+AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(sys/param.h)
+AC_CHECK_HEADERS(sys/mman.h)
+AC_CHECK_HEADERS(sys/stat.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
@@ -136,6 +139,14 @@ AC_CHECK_FUNCS([_fseeki64])
 AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
 AC_CHECK_FUNCS([fileno])
 
+AC_CHECK_FUNCS(stat)
+AC_CHECK_FUNCS(fstat)
+AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(getpagesize)
+AC_CHECK_FUNCS(sysconf)
+
+AC_CHECK_FUNCS([access faccessat])
+
 PA_HAVE_FUNC(__builtin_ctz, (0U))
 PA_HAVE_FUNC(__builtin_ctzl, (0UL))
 PA_HAVE_FUNC(__builtin_ctzll, (0ULL))
@@ -155,6 +166,9 @@ AC_CHECK_DECLS(strnicmp)
 AC_CHECK_DECLS(strsep)
 AC_CHECK_DECLS(strlcpy)
 AC_CHECK_DECLS(strnlen)
+
+dnl Check for missing types
+AC_TYPE_UINTPTR_T
 
 if test $ac_cv_prog_make_vpathok = no; then
   echo Copying generated srcs into build directory to compensate for VPATH breakage

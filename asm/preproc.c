@@ -1505,9 +1505,19 @@ static bool in_list(const StrList *list, const char *str)
  * ERR_FATAL and bombing out completely if not. It should also try
  * the include path one by one until it finds the file or reaches
  * the end of the path.
+ *
+ * Note: for INC_PROBE the function returns NULL at all times;
+ * instead look for the
  */
+enum incopen_mode {
+    INC_NEEDED,                 /* File must exist */
+    INC_OPTIONAL,               /* Missing is OK */
+    INC_PROBE                   /* Only an existence probe */
+};
+
 static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
-                       char **found_path, bool missing_ok, enum file_flags mode)
+                       char **found_path, enum incopen_mode omode,
+                       enum file_flags fmode)
 {
     FILE *fp;
     char *prefix = "";
@@ -1516,6 +1526,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
     size_t prefix_len = 0;
     StrList *sl;
     size_t path_len;
+    bool found;
 
     while (1) {
         path_len = prefix_len + len + 1;
@@ -1524,29 +1535,32 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
 
-        if (found_path != NULL) {
-            *found_path = nasm_malloc(path_len);
-            memcpy(*found_path, sl->str, path_len);
-        }
-
-        fp = nasm_open_read(sl->str, mode);
-        if (fp && dhead && !in_list(*dhead, sl->str)) {
-            sl->next = NULL;
-            **dtail = sl;
-            *dtail = &sl->next;
+        if (omode == INC_PROBE) {
+            fp = NULL;
+            found = nasm_file_exists(sl->str);
         } else {
-            nasm_free(sl);
+            fp = nasm_open_read(sl->str, fmode);
+            found = (fp != NULL);
         }
-        if (fp)
+        if (found) {
+            if (found_path)
+                *found_path = nasm_strdup(sl->str);
+
+            if (dhead && !in_list(*dhead, sl->str)) {
+                sl->next = NULL;
+                **dtail = sl;
+                *dtail = &sl->next;
+            } else {
+                nasm_free(sl);
+            }
+        }
+        if (found)
             return fp;
 
-        if (found_path != NULL && *found_path != NULL) {
-            nasm_free(*found_path);
-            *found_path = NULL;
-        }
+        nasm_free(sl);
 
         if (!ip) {
-            if (!missing_ok)
+            if (omode == INC_NEEDED)
                 break;
             prefix = NULL;
         } else {
@@ -1583,7 +1597,7 @@ FILE *pp_input_fopen(const char *filename, enum file_flags mode)
     StrList *xsl = NULL;
     StrList **xst = &xsl;
 
-    fp = inc_fopen(filename, &xsl, &xst, NULL, true, mode);
+    fp = inc_fopen(filename, &xsl, &xst, NULL, INC_OPTIONAL, mode);
     if (xsl)
         nasm_free(xsl);
     return fp;
@@ -2531,7 +2545,8 @@ static int do_directive(Token * tline)
         inc->next = istk;
         inc->conds = NULL;
         found_path = NULL;
-        inc->fp = inc_fopen(p, dephead, &deptail, &found_path, pass == 0, NF_TEXT);
+        inc->fp = inc_fopen(p, dephead, &deptail, &found_path,
+                            pass == 0 ? INC_OPTIONAL : INC_NEEDED, NF_TEXT);
         if (!inc->fp) {
             /* -MG given but file not found */
             nasm_free(inc);
@@ -3234,7 +3249,6 @@ issue_error:
 
     case PP_PATHSEARCH:
     {
-        FILE *fp;
         StrList *xsl = NULL;
         StrList **xst = &xsl;
 
@@ -3274,11 +3288,9 @@ issue_error:
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
 
-        fp = inc_fopen(p, &xsl, &xst, NULL, true, NF_TEXT);
-        if (fp) {
+        inc_fopen(p, &xsl, &xst, NULL, INC_PROBE, NF_BINARY);
+        if (xsl)
             p = xsl->str;
-            fclose(fp);         /* Don't actually care about the file */
-        }
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
         macro_start->text = nasm_quote(p, strlen(p));

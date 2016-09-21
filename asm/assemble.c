@@ -614,21 +614,23 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
         size_t t = instruction->times;
         off_t base = 0;
         off_t len;
+        const void *map = NULL;
 
-        fp = nasm_open_read(fname, NF_BINARY);
+        fp = nasm_open_read(fname, NF_BINARY|NF_FORMAP);
         if (!fp) {
             nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
                   fname);
             goto done;
         }
 
-        if (fseeko(fp, 0, SEEK_END) < 0) {
-            nasm_error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
+        len = nasm_file_size(fp);
+
+        if (len == (off_t)-1) {
+            nasm_error(ERR_NONFATAL, "`incbin': unable to get length of file `%s'",
                        fname);
             goto close_done;
         }
 
-        len = ftello(fp);
         if (instruction->eops->next) {
             base = instruction->eops->next->offset;
             if (base >= len) {
@@ -640,37 +642,48 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                     len = (off_t)instruction->eops->next->next->offset;
             }
         }
+
         lfmt->set_offset(data.offset);
         lfmt->uplevel(LIST_INCBIN);
-        while (t--) {
-            off_t l;
 
+        if (!len)
+            goto end_incbin;
+
+        /* Try to map file data */
+        map = nasm_map_file(fp, base, len);
+
+        while (t--) {
             data.insoffs = 0;
             data.inslen = len;
 
-            if (fseeko(fp, base, SEEK_SET) < 0 || ferror(fp)) {
-                nasm_error(ERR_NONFATAL,
-                           "`incbin': unable to seek on file `%s'",
-                           fname);
-                goto end_incbin;
-            }
-            l = len;
-            while (l > 0) {
-                size_t m = l > (off_t)sizeof(buf) ? (size_t)l : sizeof(buf);
-                m = fread(buf, 1, m, fp);
-                if (!m || feof(fp)) {
-                    /*
-                     * This shouldn't happen unless the file
-                     * actually changes while we are reading
-                     * it.
-                     */
+            if (map) {
+                out_rawdata(&data, map, len);
+            } else {
+                off_t l = len;
+
+                if (fseeko(fp, base, SEEK_SET) < 0 || ferror(fp)) {
                     nasm_error(ERR_NONFATAL,
-                               "`incbin': unexpected EOF while"
-                               " reading file `%s'", fname);
+                               "`incbin': unable to seek on file `%s'",
+                               fname);
                     goto end_incbin;
                 }
-                out_rawdata(&data, buf, m);
-                l -= m;
+                while (l > 0) {
+                    size_t m = l < (off_t)sizeof(buf) ? (size_t)l : sizeof(buf);
+                    m = fread(buf, 1, m, fp);
+                    if (!m || feof(fp)) {
+                        /*
+                         * This shouldn't happen unless the file
+                         * actually changes while we are reading
+                         * it.
+                         */
+                        nasm_error(ERR_NONFATAL,
+                                   "`incbin': unexpected EOF while"
+                                   " reading file `%s'", fname);
+                        goto end_incbin;
+                    }
+                    out_rawdata(&data, buf, m);
+                    l -= m;
+                }
             }
         }
     end_incbin:
@@ -686,6 +699,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                        " reading file `%s'", fname);
         }
     close_done:
+        if (map)
+            nasm_unmap_file(map, len);
         fclose(fp);
     done:
         ;
@@ -805,35 +820,28 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
 
     if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
-        FILE *fp;
-        int64_t val = 0;
         off_t len;
 
-        fp = nasm_open_read(fname, NF_BINARY);
-        if (!fp)
-            nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
-                  fname);
-        else if (fseek(fp, 0L, SEEK_END) < 0)
-            nasm_error(ERR_NONFATAL, "`incbin': unable to seek on file `%s'",
-                  fname);
-        else {
-            len = ftell(fp);
-            if (instruction->eops->next) {
-                if (len <= (off_t)instruction->eops->next->offset) {
-                    len = 0;
-                } else {
-                    len -= instruction->eops->next->offset;
-                    if (instruction->eops->next->next &&
-                        len > (off_t)instruction->eops->next->next->offset) {
-                        len = (off_t)instruction->eops->next->next->offset;
-                    }
+        len = nasm_file_size_by_path(fname);
+        if (len == (off_t)-1) {
+            nasm_error(ERR_NONFATAL, "`incbin': unable to get length of file `%s'",
+                       fname);
+            return 0;
+        }
+
+        if (instruction->eops->next) {
+            if (len <= (off_t)instruction->eops->next->offset) {
+                len = 0;
+            } else {
+                len -= instruction->eops->next->offset;
+                if (instruction->eops->next->next &&
+                    len > (off_t)instruction->eops->next->next->offset) {
+                    len = (off_t)instruction->eops->next->next->offset;
                 }
             }
-            val = len;
         }
-        if (fp)
-            fclose(fp);
-        return val;
+
+        return len;
     }
 
     /* Check to see if we need an address-size prefix */

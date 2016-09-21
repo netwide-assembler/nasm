@@ -445,11 +445,15 @@ enum file_flags {
     NF_BINARY	= 0x00000000,   /* Binary file (default) */
     NF_TEXT	= 0x00000001,   /* Text file */
     NF_NONFATAL = 0x00000000,   /* Don't die on open failure (default) */
-    NF_FATAL    = 0x00000002    /* Die on open failure */
+    NF_FATAL    = 0x00000002,   /* Die on open failure */
+    NF_FORMAP   = 0x00000004    /* Intended to use nasm_map_file() */
 };
 
 FILE *nasm_open_read(const char *filename, enum file_flags flags);
 FILE *nasm_open_write(const char *filename, enum file_flags flags);
+
+/* Probe for existence of a file */
+bool nasm_file_exists(const char *filename);
 
 #define ZERO_BUF_SIZE 4096      /* Default value */
 #if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
@@ -457,7 +461,6 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags);
 # define ZERO_BUF_SIZE BUFSIZ
 #endif
 extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
-void fwritezero(size_t bytes, FILE *fp);
 
 /* Missing fseeko/ftello */
 #ifndef HAVE_FSEEKO
@@ -472,6 +475,12 @@ void fwritezero(size_t bytes, FILE *fp);
 #  define off_t  long
 # endif
 #endif
+
+const void *nasm_map_file(FILE *fp, off_t start, off_t len);
+void nasm_unmap_file(const void *p, size_t len);
+off_t nasm_file_size(FILE *f);
+off_t nasm_file_size_by_path(const char *pathname);
+void fwritezero(off_t bytes, FILE *fp);
 
 static inline bool overflow_general(int64_t value, int bytes)
 {
