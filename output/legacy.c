@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,32 +31,65 @@
  *
  * ----------------------------------------------------------------------- */
 
-#ifndef NASM_OUTLIB_H
-#define NASM_OUTLIB_H
+/*
+ * output/legacy.c
+ *
+ * Mangle a struct out_data to match the rather bizarre legacy
+ * backend interface.
+ */
 
 #include "nasm.h"
 
-uint64_t realsize(enum out_type type, uint64_t size);
+void nasm_do_legacy_output(const struct out_data *data)
+{
+    const void *dptr = data->data;
+    enum out_type type = data->type;
+    int32_t tsegment = data->tsegment;
+    int32_t twrt = data->twrt;
+    uint64_t size = data->size;
 
-/* Do-nothing versions of some output routines */
-int null_setinfo(enum geninfo type, char **string);
-int null_directive(enum directives directive, char *value, int pass);
-void null_sectalign(int32_t seg, unsigned int value);
+    switch (data->type) {
+    case OUT_RELADDR:
+        switch (data->size) {
+        case 1:
+            type = OUT_REL1ADR;
+            break;
+        case 2:
+            type = OUT_REL2ADR;
+            break;
+        case 4:
+            type = OUT_REL4ADR;
+            break;
+        case 8:
+            type = OUT_REL8ADR;
+            break;
+        default:
+            panic();
+            break;
+        }
 
-/* Do-nothing versions of all the debug routines */
-void null_debug_init(void);
-void null_debug_linenum(const char *filename, int32_t linenumber,
-			int32_t segto);
-void null_debug_deflabel(char *name, int32_t segment, int64_t offset,
-                         int is_global, char *special);
-void null_debug_directive(const char *directive, const char *params);
-void null_debug_typevalue(int32_t type);
-void null_debug_output(int type, void *param);
-void null_debug_cleanup(void);
-extern const struct dfmt * const null_debug_arr[2];
+        dptr = &data->toffset;
+        size = data->inslen - data->insoffs;
+        break;
 
-/* Wrapper for unported backends */
-void nasm_do_legacy_output(const struct out_data *data);
+    case OUT_SEGMENT:
+        type = OUT_ADDRESS;
+        /* fall through */
 
-#endif /* NASM_OUTLIB_H */
+    case OUT_ADDRESS:
+        dptr = &data->toffset;
+        size = (data->sign == OUT_SIGNED) ? -data->size : data->size;
+        break;
 
+    case OUT_RAWDATA:
+    case OUT_RESERVE:
+        tsegment = twrt = NO_SEG;
+        break;
+
+    default:
+        panic();
+        break;
+    }
+
+    ofmt->legacy_output(data->segment, dptr, type, size, tsegment, twrt);
+}

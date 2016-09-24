@@ -71,8 +71,8 @@ NASM =	asm/nasm.$(O) \
 	\
 	macros/macros.$(O) \
 	\
-	output/outform.$(O) output/outlib.$(O) output/nulldbg.$(O) \
-	output/nullout.$(O) \
+	output/outform.$(O) output/outlib.$(O) output/legacy.$(O) \
+	output/nulldbg.$(O) output/nullout.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
@@ -387,6 +387,9 @@ output/codeview.$(O): output/codeview.c asm/directiv.h asm/pptok.h \
  include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h \
  include/saa.h include/tables.h output/outlib.h output/pecoff.h version.h \
  x86/insnsi.h x86/regs.h
+output/legacy.$(O): output/legacy.c asm/directiv.h asm/pptok.h asm/preproc.h \
+ include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h \
+ include/opflags.h include/tables.h x86/insnsi.h x86/regs.h
 output/nulldbg.$(O): output/nulldbg.c asm/directiv.h asm/pptok.h \
  asm/preproc.h include/compiler.h include/nasm.h include/nasmint.h \
  include/nasmlib.h include/opflags.h include/tables.h output/outlib.h \
@@ -416,7 +419,8 @@ output/outcoff.$(O): output/outcoff.c asm/directiv.h asm/eval.h asm/pptok.h \
  x86/insnsi.h x86/regs.h
 output/outdbg.$(O): output/outdbg.c asm/directiv.h asm/pptok.h asm/preproc.h \
  include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h \
- include/opflags.h include/tables.h output/outform.h x86/insnsi.h x86/regs.h
+ include/opflags.h include/tables.h output/outform.h output/outlib.h \
+ x86/insnsi.h x86/regs.h
 output/outelf.$(O): output/outelf.c asm/directiv.h asm/eval.h asm/pptok.h \
  asm/preproc.h asm/stdscan.h include/compiler.h include/nasm.h \
  include/nasmint.h include/nasmlib.h include/opflags.h include/raa.h \

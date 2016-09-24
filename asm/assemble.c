@@ -386,8 +386,7 @@ static void out(struct out_data *data)
                     "%d-bit unsigned relocation zero-extended from %d bits\n",
                     asize << 3, ofmt->maxbits);
             data->size = amax;
-            ofmt->output(data->segment, data->data, data->type,
-                         data->size, data->tsegment, data->twrt);
+            ofmt->output(data);
             data->insoffs += amax;
             data->offset += amax;
             data->size = size = asize - amax;
@@ -396,54 +395,7 @@ static void out(struct out_data *data)
         data->type = OUT_RAWDATA;
     }
 
-    /* Hack until backend change */
-    switch (data->type) {
-    case OUT_RELADDR:
-        switch (data->size) {
-        case 1:
-            data->type = OUT_REL1ADR;
-            break;
-        case 2:
-            data->type = OUT_REL2ADR;
-            break;
-        case 4:
-            data->type = OUT_REL4ADR;
-            break;
-        case 8:
-            data->type = OUT_REL8ADR;
-            break;
-        default:
-            panic();
-            break;
-        }
-
-        xdata.q = data->toffset;
-        data->data = xdata.b;
-        data->size = data->inslen - data->insoffs;
-        break;
-
-    case OUT_SEGMENT:
-        data->type = OUT_ADDRESS;
-        /* fall through */
-
-    case OUT_ADDRESS:
-        xdata.q = data->toffset;
-        data->data = xdata.b;
-        data->size = (data->sign == OUT_SIGNED) ? -data->size : data->size;
-        break;
-
-    case OUT_RAWDATA:
-    case OUT_RESERVE:
-        data->tsegment = data->twrt = NO_SEG;
-        break;
-
-    default:
-        panic();
-        break;
-    }
-
-    ofmt->output(data->segment, data->data, data->type,
-                 data->size, data->tsegment, data->twrt);
+    ofmt->output(data);
     data->offset += size;
     data->insoffs += size;
 }

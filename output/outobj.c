@@ -2667,6 +2667,7 @@ const struct ofmt of_obj = {
     obj_stdmac,
     obj_init,
     obj_set_info,
+    nasm_do_legacy_output,
     obj_out,
     obj_deflabel,
     obj_segment,

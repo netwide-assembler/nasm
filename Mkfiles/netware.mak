@@ -44,8 +44,8 @@ NASM =	nasm.o \
 	\
 	macros.o \
 	\
-	outform.o outlib.o nulldbg.o \
-	nullout.o \
+	outform.o outlib.o legacy.o \
+	nulldbg.o nullout.o \
 	outbin.o outaout.o outcoff.o \
 	outelf.o \
 	outobj.o outas86.o outrdf2.o \
@@ -226,6 +226,8 @@ zerobuf.o: zerobuf.c config.h compiler.h nasmint.h nasmlib.h
 codeview.o: codeview.c directiv.h pptok.h preproc.h config.h compiler.h \
  hashtbl.h md5.h nasm.h nasmint.h nasmlib.h opflags.h saa.h tables.h \
  outlib.h pecoff.h version.h insnsi.h regs.h
+legacy.o: legacy.c directiv.h pptok.h preproc.h config.h compiler.h nasm.h \
+ nasmint.h nasmlib.h opflags.h tables.h insnsi.h regs.h
 nulldbg.o: nulldbg.c directiv.h pptok.h preproc.h config.h compiler.h nasm.h \
  nasmint.h nasmlib.h opflags.h tables.h outlib.h insnsi.h regs.h
 nullout.o: nullout.c directiv.h pptok.h preproc.h config.h compiler.h nasm.h \
@@ -243,7 +245,7 @@ outcoff.o: outcoff.c directiv.h eval.h pptok.h preproc.h config.h compiler.h \
  nasm.h nasmint.h nasmlib.h opflags.h raa.h saa.h tables.h outform.h \
  outlib.h pecoff.h insnsi.h regs.h
 outdbg.o: outdbg.c directiv.h pptok.h preproc.h config.h compiler.h nasm.h \
- nasmint.h nasmlib.h opflags.h tables.h outform.h insnsi.h regs.h
+ nasmint.h nasmlib.h opflags.h tables.h outform.h outlib.h insnsi.h regs.h
 outelf.o: outelf.c directiv.h eval.h pptok.h preproc.h stdscan.h config.h \
  compiler.h nasm.h nasmint.h nasmlib.h opflags.h raa.h rbtree.h saa.h \
  tables.h ver.h dwarf.h elf.h outelf.h outform.h outlib.h stabs.h insnsi.h \

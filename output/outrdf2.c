@@ -782,6 +782,7 @@ const struct ofmt of_rdf2 = {
     rdf2_stdmac,
     rdf2_init,
     rdf2_set_info,
+    nasm_do_legacy_output,
     rdf2_out,
     rdf2_deflabel,
     rdf2_section_names,

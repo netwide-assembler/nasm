@@ -46,6 +46,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "outform.h"
+#include "outlib.h"
 
 #ifdef OF_DBG
 
@@ -268,6 +269,7 @@ const struct ofmt of_dbg = {
     NULL,
     dbg_init,
     dbg_set_info,
+    nasm_do_legacy_output,
     dbg_out,
     dbg_deflabel,
     dbg_section_names,

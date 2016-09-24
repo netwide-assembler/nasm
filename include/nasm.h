@@ -749,6 +749,13 @@ struct ofmt {
     int (*setinfo)(enum geninfo type, char **string);
 
     /*
+     * This is the modern output function, which gets passed
+     * a struct out_data with much more information.  See the
+     * definition of struct out_data.
+     */
+    void (*output)(const struct out_data *data);
+
+    /*
      * This procedure is called by assemble() to write actual
      * generated code or data to the object file. Typically it
      * doesn't have to actually _write_ it, just store it for
@@ -756,10 +763,15 @@ struct ofmt {
      *
      * The `type' argument specifies the type of output data, and
      * usually the size as well: its contents are described below.
+     *
+     * This is used for backends which have not yet been ported to
+     * the new interface, and should be NULL on ported backends.
+     * To use this entry point, set the output pointer to
+     * nasm_do_legacy_output.
      */
-    void (*output)(int32_t segto, const void *data,
-                   enum out_type type, uint64_t size,
-                   int32_t segment, int32_t wrt);
+    void (*legacy_output)(int32_t segto, const void *data,
+                          enum out_type type, uint64_t size,
+                          int32_t segment, int32_t wrt);
 
     /*
      * This procedure is called once for every symbol defined in

@@ -1522,6 +1522,7 @@ const struct ofmt of_ieee = {
     NULL,
     ieee_init,
     ieee_set_info,
+    nasm_do_legacy_output,
     ieee_out,
     ieee_deflabel,
     ieee_segment,
