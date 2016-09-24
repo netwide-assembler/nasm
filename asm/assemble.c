@@ -614,8 +614,16 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
         }
 
         while (t--) {
+            /*
+             * Consider these irrelevant for INCBIN, since it is fully
+             * possible that these might be (way) bigger than an int
+             * can hold; there is, however, no reason to widen these
+             * types just for INCBIN.  data.inslen == 0 signals to the
+             * backend that these fields are meaningless, if at all
+             * needed.
+             */
             data.insoffs = 0;
-            data.inslen = len;
+            data.inslen = 0;
 
             if (map) {
                 out_rawdata(&data, map, len);
