@@ -286,6 +286,13 @@ struct IncPath {
 };
 
 /*
+ * File real name hash, so we don't have to re-search the include
+ * path for every pass (and potentially more than that if a file
+ * is used more than once.)
+ */
+struct hash_table FileHash;
+
+/*
  * Conditional assembly: we maintain a separate stack of these for
  * each level of file inclusion. (The only reason we keep the
  * stacks separate is to ensure that a stray `%endif' in a file
@@ -1515,13 +1522,13 @@ enum incopen_mode {
     INC_PROBE                   /* Only an existence probe */
 };
 
-static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
-                       char **found_path, enum incopen_mode omode,
-                       enum file_flags fmode)
+/* This is conducts a full pathname search */
+static FILE *inc_fopen_search(const char *file, StrList **slpath,
+                              enum incopen_mode omode, enum file_flags fmode)
 {
     FILE *fp;
     char *prefix = "";
-    IncPath *ip = ipath;
+    const IncPath *ip = ipath;
     int len = strlen(file);
     size_t prefix_len = 0;
     StrList *sl;
@@ -1534,6 +1541,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
         sl = nasm_malloc(path_len + sizeof sl->next);
         memcpy(sl->str, prefix, prefix_len);
         memcpy(sl->str+prefix_len, file, len+1);
+        sl->next = NULL;
 
         if (omode == INC_PROBE) {
             fp = NULL;
@@ -1543,47 +1551,92 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
             found = (fp != NULL);
         }
         if (found) {
-            if (found_path)
-                *found_path = nasm_strdup(sl->str);
-
-            if (dhead && !in_list(*dhead, sl->str)) {
-                sl->next = NULL;
-                **dtail = sl;
-                *dtail = &sl->next;
-            } else {
-                nasm_free(sl);
-            }
-        }
-        if (found)
+            *slpath = sl;
             return fp;
+        }
 
         nasm_free(sl);
 
-        if (!ip) {
-            if (omode == INC_NEEDED)
-                break;
-            prefix = NULL;
-        } else {
-            prefix = ip->path;
-            ip = ip->next;
+        if (!ip)
+            return NULL;
+
+        prefix = ip->path;
+        prefix_len = strlen(prefix);
+        ip = ip->next;
+    }
+}
+
+/*
+ * Open a file, or test for the presence of one (depending on omode),
+ * considering the include path.
+ */
+static FILE *inc_fopen(const char *file,
+                       StrList **dhead, StrList ***dtail,
+                       char **found_path,
+                       enum incopen_mode omode,
+                       enum file_flags fmode)
+{
+    StrList *sl;
+    struct hash_insert hi;
+    void **hp;
+    char *path;
+    FILE *fp = NULL;
+
+    hp = hash_find(&FileHash, file, &hi);
+    if (hp) {
+        path = *hp;
+    } else {
+        /* Need to do the actual path search */
+        size_t file_len;
+
+        sl = NULL;
+        fp = inc_fopen_search(file, &sl, omode, fmode);
+
+        file_len = strlen(file);
+
+        if (!sl) {
+            /* Store negative result for this file */
+            sl = nasm_malloc(file_len + 1 + sizeof sl->next);
+            memcpy(sl->str, file, file_len+1);
+            sl->next = NULL;
+            file = sl->str;
+            path = NULL;
+        } else  {
+            path = sl->str;
+            file = strchr(path, '\0') - file_len;
         }
-        if (prefix) {
-            prefix_len = strlen(prefix);
-        } else {
-            /* -MG given and file not found */
-            if (dhead && !in_list(*dhead, file)) {
-                sl = nasm_malloc(len+1+sizeof sl->next);
-                sl->next = NULL;
-                strcpy(sl->str, file);
+
+        hash_add(&hi, file, path); /* Positive or negative result */
+
+        if (path || omode != INC_NEEDED) {
+            /*
+             * Add file to dependency path. The in_list() is needed
+             * in case the file was already added with %depend.
+             */
+            if (dhead && !in_list(*dhead, sl->str)) {
                 **dtail = sl;
                 *dtail = &sl->next;
             }
-            return NULL;
         }
     }
 
-    nasm_error(ERR_FATAL, "unable to open include file `%s'", file);
-    return NULL;
+    if (!path) {
+        if (omode == INC_NEEDED)
+            nasm_fatal(0, "unable to open include file `%s'", file);
+
+        if (found_path)
+            *found_path = NULL;
+
+        return NULL;
+    }
+
+    if (!fp && omode != INC_PROBE)
+        fp = nasm_open_read(file, fmode);
+
+    if (found_path)
+        *found_path = nasm_strdup(path);
+
+    return fp;
 }
 
 /*
@@ -1593,14 +1646,7 @@ static FILE *inc_fopen(const char *file, StrList **dhead, StrList ***dtail,
  */
 FILE *pp_input_fopen(const char *filename, enum file_flags mode)
 {
-    FILE *fp;
-    StrList *xsl = NULL;
-    StrList **xst = &xsl;
-
-    fp = inc_fopen(filename, &xsl, &xst, NULL, INC_OPTIONAL, mode);
-    if (xsl)
-        nasm_free(xsl);
-    return fp;
+    return inc_fopen(filename, NULL, NULL, NULL, INC_OPTIONAL, mode);
 }
 
 /*
@@ -3249,8 +3295,7 @@ issue_error:
 
     case PP_PATHSEARCH:
     {
-        StrList *xsl = NULL;
-        StrList **xst = &xsl;
+        char *found_path;
 
         casesense = true;
 
@@ -3288,16 +3333,16 @@ issue_error:
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
 
-        inc_fopen(p, &xsl, &xst, NULL, INC_PROBE, NF_BINARY);
-        if (xsl)
-            p = xsl->str;
+        inc_fopen(p, NULL, NULL, &found_path, INC_PROBE, NF_BINARY);
+        if (found_path)
+            p = found_path;
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
         macro_start->text = nasm_quote(p, strlen(p));
         macro_start->type = TOK_STRING;
         macro_start->a.mac = NULL;
-        if (xsl)
-            nasm_free(xsl);
+        if (found_path)
+            nasm_free(found_path);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -4930,6 +4975,11 @@ pp_reset(char *file, int apass, StrList **deplist)
     define_smacro(NULL, "__PASS__", true, 0, t);
 }
 
+static void pp_init(void)
+{
+    hash_init(&FileHash, HASH_MEDIUM);
+}
+
 static char *pp_getline(void)
 {
     char *line;
@@ -5325,6 +5375,7 @@ static void pp_error_list_macros(int severity)
 }
 
 const struct preproc_ops nasmpp = {
+    pp_init,
     pp_reset,
     pp_getline,
     pp_cleanup,

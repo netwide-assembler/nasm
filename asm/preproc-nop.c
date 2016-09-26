@@ -57,6 +57,11 @@
 static FILE *nop_fp;
 static int32_t nop_lineinc;
 
+static void nop_init(void)
+{
+    /* Nothing to do */
+}
+
 static void nop_reset(char *file, int pass, StrList **deplist)
 {
     src_set(0, file);
@@ -174,6 +179,7 @@ static void nop_error_list_macros(int severity)
 }
 
 const struct preproc_ops preproc_nop = {
+    nop_init,
     nop_reset,
     nop_getline,
     nop_cleanup,

@@ -345,6 +345,11 @@ typedef struct string_list {
  */
 struct preproc_ops {
     /*
+     * Called once at the very start of assembly.
+     */
+    void (*init)(void);
+
+    /*
      * Called at the start of a pass; given a file name, the number
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.

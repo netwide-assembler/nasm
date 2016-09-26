@@ -348,8 +348,12 @@ int main(int argc, char **argv)
     preproc = &nasmpp;
     operating_mode = OP_NORMAL;
 
-    /* Define some macros dependent on the runtime, but not
-       on the command line. */
+    /*
+     * Define some macros dependent on the runtime, but not
+     * on the command line.  This only works because the only
+     * alternative preprocessor is preproc_nop...
+     */
+    preproc->init();
     define_macros_early();
 
     parse_cmdline(argc, argv);
