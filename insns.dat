@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -5116,6 +5116,9 @@ WRPKRU		void				[	0f 01 ef]				X64,FUTURE
 
 ; New memory instructions
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
+CLWB            mem                             [m:     66 0f ae /6]                            FUTURE
+;# This one was killed before it saw the light of day
+PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,UNDOC
 
 ; AMD Zen v1
 CLZERO		void				[	0f 01 fc]				FUTURE,AMD
@@ -5314,4 +5317,3 @@ HINT_NOP62	rm64				[m:	o64 0f 1f /6]				X64,UNDOC
 HINT_NOP63	rm16				[m:	o16 0f 1f /7]				P6,UNDOC
 HINT_NOP63	rm32				[m:	o32 0f 1f /7]				P6,UNDOC
 HINT_NOP63	rm64				[m:	o64 0f 1f /7]				X64,UNDOC
-
