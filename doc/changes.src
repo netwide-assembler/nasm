@@ -30,6 +30,11 @@ since 2007.
 
 \b Fix Codeview malformed compiler version record.
 
+\b Add the \c{CLWB} and \c{PCOMMIT} instructions.  Note that the
+   \c{PCOMMIT} instruction has been deprecated and will never be
+   included in a shipping product; it is included for completeness
+   only.
+
 \S{cl-2.12.02} Version 2.12.02
 
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},
