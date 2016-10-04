@@ -332,13 +332,38 @@ static int addrsize(enum out_type type, uint64_t size)
  */
 static void out(int64_t offset, int32_t segto, const void *data,
                 enum out_type type, uint64_t size,
-                int32_t segment, int32_t wrt)
+                int32_t segment, int32_t wrt, bool relative)
 {
     static int32_t lineno = 0;     /* static!!! */
     static const char *lnfname = NULL;
     uint8_t p[8];
-    int asize = addrsize(type, size); 	    /* Address size in bytes */
+    int asize = addrsize(type, size);	    /* Address size in bytes */
     const int amax  = ofmt->maxbits >> 3; /* Maximum address size in bytes */
+
+    if (unlikely(relative)) {
+        if (type == OUT_ADDRESS) {
+        switch (asize) {
+        case 1:
+            type = OUT_REL1ADR;
+            break;
+        case 2:
+            type = OUT_REL2ADR;
+            break;
+        case 4:
+            type = OUT_REL4ADR;
+            break;
+        case 8:
+            type = OUT_REL8ADR;
+            break;
+        default:
+            panic();
+        }
+
+        size = 0;
+        } else {
+            nasm_error(ERR_NONFATAL, "expression cannot be converted to relative");
+        }
+    }
 
     if (type == OUT_ADDRESS && segment == NO_SEG && wrt == NO_SEG) {
         /*
@@ -346,7 +371,7 @@ static void out(int64_t offset, int32_t segto, const void *data,
          * convert it into RAWDATA format.
          */
         uint8_t *q = p;
-        
+
         if (asize > 8) {
             nasm_panic(0, "OUT_ADDRESS with size > 8");
             return;
@@ -399,10 +424,11 @@ static void out_imm8(int64_t offset, int32_t segment,
 {
     if (opx->segment != NO_SEG) {
         uint64_t data = opx->offset;
-        out(offset, segment, &data, OUT_ADDRESS, asize, opx->segment, opx->wrt);
+        out(offset, segment, &data, OUT_ADDRESS, asize, opx->segment, opx->wrt,
+            opx->relative);
     } else {
         uint8_t byte = opx->offset;
-        out(offset, segment, &byte, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+        out(offset, segment, &byte, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
     }
 }
 
@@ -475,7 +501,8 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                                 " instruction");
                     } else {
                         out(offset, segment, &e->offset,
-                            OUT_ADDRESS, wsize, e->segment, e->wrt);
+                            OUT_ADDRESS, wsize, e->segment, e->wrt,
+                            e->relative);
                         offset += wsize;
                     }
                 } else if (e->type == EOT_DB_STRING ||
@@ -483,13 +510,13 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     int align;
 
                     out(offset, segment, e->stringval,
-                        OUT_RAWDATA, e->stringlen, NO_SEG, NO_SEG);
+                        OUT_RAWDATA, e->stringlen, NO_SEG, NO_SEG, false);
                     align = e->stringlen % wsize;
 
                     if (align) {
                         align = wsize - align;
                         out(offset, segment, zero_buffer,
-                            OUT_RAWDATA, align, NO_SEG, NO_SEG);
+                            OUT_RAWDATA, align, NO_SEG, NO_SEG, false);
                     }
                     offset += e->stringlen + align;
                 }
@@ -561,7 +588,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                         break;
                     }
                     out(offset, segment, buf, OUT_RAWDATA, m,
-                        NO_SEG, NO_SEG);
+                        NO_SEG, NO_SEG, false);
                     l -= m;
                 }
             }
@@ -701,7 +728,7 @@ int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
                     }
                     if (c != 0) {
                         out(offset, segment, &c, OUT_RAWDATA, 1,
-                            NO_SEG, NO_SEG);
+                            NO_SEG, NO_SEG, false);
                         offset++;
                     }
                 }
@@ -916,6 +943,12 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
                 prefix_name(rep_pfx));
         break;
     }
+}
+
+static void fail_if_relative(const struct operand *op)
+{
+    if (op->relative)
+        nasm_error(ERR_NONFATAL, "invalid use of self-relative operand");
 }
 
 /* Common construct */
@@ -1416,7 +1449,7 @@ static inline unsigned int emit_rex(insn *ins, int32_t segment, int64_t offset, 
             !(ins->rex & (REX_V | REX_EV)) &&
             !ins->rex_done) {
             int rex = (ins->rex & REX_MASK) | REX_P;
-            out(offset, segment, &rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, &rex, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             ins->rex_done = true;
             return 1;
         }
@@ -1455,7 +1488,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 03:
         case 04:
             offset += emit_rex(ins, segment, offset, bits);
-            out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG);
+            out(offset, segment, codes, OUT_RAWDATA, c, NO_SEG, NO_SEG, false);
             codes += c;
             offset += c;
             break;
@@ -1469,7 +1502,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case4(010):
             offset += emit_rex(ins, segment, offset, bits);
             bytes[0] = *codes++ + (regval(opx) & 7);
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
@@ -1497,7 +1530,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             warn_overflow_opd(opx, 2);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, 2,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += 2;
             break;
 
@@ -1509,7 +1542,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             warn_overflow_opd(opx, size);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, size,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += size;
             break;
 
@@ -1517,7 +1550,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             warn_overflow_opd(opx, 4);
             data = opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, 4,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += 4;
             break;
 
@@ -1526,22 +1559,23 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             size = ins->addr_size >> 3;
             warn_overflow_opd(opx, size);
             out(offset, segment, &data, OUT_ADDRESS, size,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += size;
             break;
 
         case4(050):
+            fail_if_relative(opx);
             if (opx->segment != segment) {
                 data = opx->offset;
                 out(offset, segment, &data,
                     OUT_REL1ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
+                    opx->segment, opx->wrt, false);
             } else {
                 data = opx->offset - insn_end;
                 if (data > 127 || data < -128)
                     nasm_error(ERR_NONFATAL, "short jump is out of range");
                 out(offset, segment, &data,
-                    OUT_ADDRESS, 1, NO_SEG, NO_SEG);
+                    OUT_ADDRESS, 1, NO_SEG, NO_SEG, false);
             }
             offset += 1;
             break;
@@ -1549,25 +1583,27 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case4(054):
             data = (int64_t)opx->offset;
             out(offset, segment, &data, OUT_ADDRESS, 8,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += 8;
             break;
 
         case4(060):
+            fail_if_relative(opx);
             if (opx->segment != segment) {
                 data = opx->offset;
                 out(offset, segment, &data,
                     OUT_REL2ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
+                    opx->segment, opx->wrt, false);
             } else {
                 data = opx->offset - insn_end;
                 out(offset, segment, &data,
-                    OUT_ADDRESS, 2, NO_SEG, NO_SEG);
+                    OUT_ADDRESS, 2, NO_SEG, NO_SEG, false);
             }
             offset += 2;
             break;
 
         case4(064):
+            fail_if_relative(opx);
             if (opx->type & (BITS16 | BITS32 | BITS64))
                 size = (opx->type & BITS16) ? 2 : 4;
             else
@@ -1576,25 +1612,26 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 data = opx->offset;
                 out(offset, segment, &data,
                     size == 2 ? OUT_REL2ADR : OUT_REL4ADR,
-                    insn_end - offset, opx->segment, opx->wrt);
+                    insn_end - offset, opx->segment, opx->wrt, false);
             } else {
                 data = opx->offset - insn_end;
                 out(offset, segment, &data,
-                    OUT_ADDRESS, size, NO_SEG, NO_SEG);
+                    OUT_ADDRESS, size, NO_SEG, NO_SEG, false);
             }
             offset += size;
             break;
 
         case4(070):
+            fail_if_relative(opx);
             if (opx->segment != segment) {
                 data = opx->offset;
                 out(offset, segment, &data,
                     OUT_REL4ADR, insn_end - offset,
-                    opx->segment, opx->wrt);
+                    opx->segment, opx->wrt, false);
             } else {
                 data = opx->offset - insn_end;
                 out(offset, segment, &data,
-                    OUT_ADDRESS, 4, NO_SEG, NO_SEG);
+                    OUT_ADDRESS, 4, NO_SEG, NO_SEG, false);
             }
             offset += 4;
             break;
@@ -1606,7 +1643,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             data = 0;
             out(offset, segment, &data, OUT_ADDRESS, 2,
                 ofmt->segbase(1 + opx->segment),
-                opx->wrt);
+                opx->wrt, opx->relative);
             offset += 2;
             break;
 
@@ -1641,7 +1678,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         emit_is4:
             r = nasm_regvals[opx->basereg];
             bytes[0] = (r << 4) | ((r & 0x10) >> 1) | c;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset++;
             break;
 
@@ -1653,7 +1690,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                         "signed dword immediate exceeds bounds");
             }
             out(offset, segment, &data, OUT_ADDRESS, -4,
-                opx->segment, opx->wrt);
+                opx->segment, opx->wrt, opx->relative);
             offset += 4;
             break;
 
@@ -1672,7 +1709,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                        ((~ins->vexreg & 15) << 3) |
                        (1 << 2) | (ins->vex_wlp & 3);
             bytes[3] = ins->evex_p[2];
-            out(offset, segment, &bytes, OUT_RAWDATA, 4, NO_SEG, NO_SEG);
+            out(offset, segment, &bytes, OUT_RAWDATA, 4, NO_SEG, NO_SEG, false);
             offset += 4;
             break;
 
@@ -1685,13 +1722,13 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
                     ((~ins->vexreg & 15)<< 3) | (ins->vex_wlp & 07);
-                out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG);
+                out(offset, segment, &bytes, OUT_RAWDATA, 3, NO_SEG, NO_SEG, false);
                 offset += 3;
             } else {
                 bytes[0] = 0xc5;
                 bytes[1] = ((~ins->rex & REX_R) << (7-2)) |
                     ((~ins->vexreg & 15) << 3) | (ins->vex_wlp & 07);
-                out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG);
+                out(offset, segment, &bytes, OUT_RAWDATA, 2, NO_SEG, NO_SEG, false);
                 offset += 2;
             }
             break;
@@ -1733,11 +1770,11 @@ static void gencode(int32_t segment, int64_t offset, int bits,
             if (opx->segment != NO_SEG) {
                 data = uv;
                 out(offset, segment, &data, OUT_ADDRESS, 1,
-                    opx->segment, opx->wrt);
+                    opx->segment, opx->wrt, opx->relative);
             } else {
                 bytes[0] = uv;
                 out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG,
-                    NO_SEG);
+                    NO_SEG, false);
             }
             offset += 1;
             break;
@@ -1749,7 +1786,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0310:
             if (bits == 32 && !has_prefix(ins, PPS_ASIZE, P_A16)) {
                 *bytes = 0x67;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
                 offset += 1;
             } else
                 offset += 0;
@@ -1758,7 +1795,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0311:
             if (bits != 32 && !has_prefix(ins, PPS_ASIZE, P_A32)) {
                 *bytes = 0x67;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
                 offset += 1;
             } else
                 offset += 0;
@@ -1794,7 +1831,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0330:
             *bytes = *codes++ ^ get_cond_opcode(ins->condition);
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
@@ -1804,14 +1841,14 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0332:
         case 0333:
             *bytes = c - 0332 + 0xF2;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
         case 0334:
             if (ins->rex & REX_R) {
                 *bytes = 0xF0;
-                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+                out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
                 offset += 1;
             }
             ins->rex &= ~(REX_L|REX_R);
@@ -1831,7 +1868,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                 int64_t size = ins->oprs[0].offset;
                 if (size > 0)
                     out(offset, segment, NULL,
-                        OUT_RESERVE, size, NO_SEG, NO_SEG);
+                        OUT_RESERVE, size, NO_SEG, NO_SEG, false);
                 offset += size;
             }
             break;
@@ -1844,7 +1881,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0361:
             bytes[0] = 0x66;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
@@ -1855,7 +1892,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
         case 0366:
         case 0367:
             *bytes = c - 0366 + 0x66;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
@@ -1864,7 +1901,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
 
         case 0373:
             *bytes = bits == 16 ? 3 : 5;
-            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG);
+            out(offset, segment, bytes, OUT_RAWDATA, 1, NO_SEG, NO_SEG, false);
             offset += 1;
             break;
 
@@ -1920,7 +1957,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                     *p++ = ea_data.sib;
 
                 s = p - bytes;
-                out(offset, segment, bytes, OUT_RAWDATA, s, NO_SEG, NO_SEG);
+                out(offset, segment, bytes, OUT_RAWDATA, s, NO_SEG, NO_SEG, false);
 
                 /*
                  * Make sure the address gets the right offset in case
@@ -1939,11 +1976,16 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                             if (overflow_signed(data, ea_data.bytes))
                                 warn_overflow(ERR_PASS2, ea_data.bytes);
                             out(offset, segment, &data, OUT_ADDRESS,
-                                ea_data.bytes, NO_SEG, NO_SEG);
+                                ea_data.bytes, NO_SEG, NO_SEG, false);
                         } else {
                             /* overflow check in output/linker? */
-                            out(offset, segment, &data, OUT_REL4ADR,
-                                insn_end - offset, opy->segment, opy->wrt);
+                            out(offset, segment, &data,
+                                ea_data.bytes == 1 ? OUT_REL1ADR :
+                                ea_data.bytes == 2 ? OUT_REL2ADR :
+                                ea_data.bytes == 4 ? OUT_REL4ADR :
+                                OUT_REL8ADR,
+                                insn_end - offset, opy->segment, opy->wrt,
+                                false);
                         }
                     } else {
                         int asize = ins->addr_size >> 3;
@@ -1963,7 +2005,7 @@ static void gencode(int32_t segment, int64_t offset, int bits,
                         }
 
                         out(offset, segment, &data, OUT_ADDRESS,
-                            atype, opy->segment, opy->wrt);
+                            atype, opy->segment, opy->wrt, false);
                     }
                 }
                 offset += s;
@@ -2490,17 +2532,26 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             /*
              * It's a pure offset.
              */
-            if (bits == 64 && ((input->type & IP_REL) == IP_REL) &&
-                input->segment == NO_SEG) {
-                nasm_error(ERR_WARNING | ERR_PASS1, "absolute address can not be RIP-relative");
-                input->type &= ~IP_REL;
-                input->type |= MEMORY;
-            }
+            if (bits == 64 && !(IP_REL & ~input->type)) {
+                if (input->segment == NO_SEG) {
+                    nasm_error(ERR_WARNING | ERR_PASS1,
+                               "absolute address can not be RIP-relative");
+                    input->type &= ~IP_REL;
+                    input->type |= MEMORY;
+                }
 
-            if (bits == 64 &&
-                !(IP_REL & ~input->type) && (eaflags & EAF_MIB)) {
-                nasm_error(ERR_NONFATAL, "RIP-relative addressing is prohibited for mib.");
-                return -1;
+                if (input->relative) {
+                    nasm_error(ERR_WARNING | ERR_PASS1,
+                               "double relative address; ignoring REL");
+                    input->type &= ~IP_REL;
+                    input->type |= MEMORY;
+                }
+
+                if (eaflags & EAF_MIB) {
+                    nasm_error(ERR_NONFATAL, "RIP-relative addressing is prohibited for mib.");
+                    return -1;
+                }
+
             }
 
             if (eaflags & EAF_BYTEOFFS ||
@@ -2514,12 +2565,12 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 output->sib         = GEN_SIB(0, 4, 5);
                 output->bytes       = 4;
                 output->modrm       = GEN_MODRM(0, rfield, 4);
-                output->rip         = false;
+                output->rip         = input->relative;
             } else {
                 output->sib_present = false;
                 output->bytes       = (addrbits != 16 ? 4 : 2);
                 output->modrm       = GEN_MODRM(0, rfield, (addrbits != 16 ? 5 : 6));
-                output->rip         = bits == 64;
+                output->rip         = (bits == 64) || input->relative;
             }
         } else {
             /*
@@ -2530,6 +2581,8 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             int hb = input->hintbase, ht = input->hinttype;
             int t, it, bt;              /* register numbers */
             opflags_t x, ix, bx;        /* register flags */
+
+            output->rip = input->relative;
 
             if (s == 0)
                 i = -1;         /* make this easy, at least */
@@ -2617,7 +2670,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 default:   /* then what the smeg is it? */
                     goto err;    /* panic */
                 }
-                
+
                 if (bt == -1) {
                     base = 5;
                     mod = 0;

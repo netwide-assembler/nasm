@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -261,7 +261,7 @@ static int parse_mref(operand *op, const expr *e)
 
         if (is_gpr && e->value == 1)
             b = e->type;	/* It can be basereg */
-        else            	/* No, it has to be indexreg */
+        else			/* No, it has to be indexreg */
             i = e->type, s = e->value;
         e++;
     }
@@ -380,6 +380,59 @@ static void mref_set_optype(operand *op)
         else if (is_class(ZMMREG,iclass))
             op->type |= ZMEM;
     }
+}
+
+/*
+ * Convert an expression vector returned from evaluate() into an
+ * extop structure.  Return zero on success.
+ */
+static int value_to_extop(expr * vect, extop *eop, int32_t myseg)
+{
+    eop->type = EOT_DB_NUMBER;
+    eop->offset = 0;
+    eop->segment = eop->wrt = NO_SEG;
+    eop->relative = false;
+
+    for (; vect->type; vect++) {
+        if (!vect->value)       /* zero term, safe to ignore */
+            continue;
+
+        if (vect->type < EXPR_SIMPLE)  /* false if a register is present */
+            return -1;
+
+        if (vect->type == EXPR_UNKNOWN) /* something we can't resolve yet */
+            return 0;
+
+        if (vect->type == EXPR_SIMPLE) {
+            /* Simple number expression */
+            eop->offset += vect->value;
+            continue;
+        }
+        if (eop->wrt == NO_SEG && !eop->relative && vect->type == EXPR_WRT) {
+            /* WRT term */
+            eop->wrt = vect->value;
+            continue;
+        }
+
+        if (eop->wrt == NO_SEG && !eop->relative &&
+            vect->type == EXPR_SEGBASE + myseg && vect->value == -1) {
+            /* Expression of the form: foo - $ */
+            eop->relative = true;
+            continue;
+        }
+
+        if (eop->segment == NO_SEG && vect->type >= EXPR_SEGBASE &&
+            vect->value == 1) {
+            eop->segment = vect->type - EXPR_SEGBASE;
+            continue;
+        }
+
+        /* Otherwise, badness */
+        return -1;
+    }
+
+    /* We got to the end and it was all okay */
+    return 0;
 }
 
 insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
@@ -659,19 +712,10 @@ is_expression:
                 i = tokval.t_type;
                 if (!value)                  /* Error in evaluator */
                     goto fail;
-                if (is_unknown(value)) {
-                    eop->type = EOT_DB_NUMBER;
-                    eop->offset = 0;    /* doesn't matter what we put */
-                    eop->segment = eop->wrt = NO_SEG;   /* likewise */
-                } else if (is_reloc(value)) {
-                    eop->type = EOT_DB_NUMBER;
-                    eop->offset = reloc_value(value);
-                    eop->segment = reloc_seg(value);
-                    eop->wrt = reloc_wrt(value);
-                } else {
+                if (value_to_extop(value, eop, location->segment)) {
                     nasm_error(ERR_NONFATAL,
-                          "operand %d: expression is not simple"
-                          " or relocatable", oper_num);
+                               "operand %d: expression is not simple or relocatable",
+                               oper_num);
                 }
             }
 
