@@ -340,6 +340,17 @@ typedef struct string_list {
     char                str[1];
 } StrList;
 
+static inline StrList *nasm_str_to_strlist(const char *str)
+{
+    size_t l = strlen(str) + 1;
+    StrList *sl = nasm_malloc(l + sizeof sl->next);
+
+    memcpy(sl->str, str, l);
+    sl->next = NULL;
+
+    return sl;
+}
+
 /*
  * preprocessors ought to look like this:
  */
