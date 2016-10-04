@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include "nasmlib.h"
+#include "strlist.h"
 #include "preproc.h"
 #include "insnsi.h"     /* For enum opcode */
 #include "directiv.h"   /* For enum directive */
@@ -331,25 +332,6 @@ typedef expr *(*evalfunc)(scanner sc, void *scprivate,
 #define EXPR_WRT        (EXPR_REG_END+3)
 #define EXPR_RDSAE      (EXPR_REG_END+4)
 #define EXPR_SEGBASE    (EXPR_REG_END+5)
-
-/*
- * Linked list of strings
- */
-typedef struct string_list {
-    struct string_list  *next;
-    char                str[1];
-} StrList;
-
-static inline StrList *nasm_str_to_strlist(const char *str)
-{
-    size_t l = strlen(str) + 1;
-    StrList *sl = nasm_malloc(l + sizeof sl->next);
-
-    memcpy(sl->str, str, l);
-    sl->next = NULL;
-
-    return sl;
-}
 
 /*
  * preprocessors ought to look like this:

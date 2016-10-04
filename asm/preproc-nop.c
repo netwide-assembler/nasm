@@ -72,12 +72,7 @@ static void nop_reset(char *file, int pass, StrList **deplist)
 	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);
     (void)pass;                 /* placate compilers */
 
-    if (deplist) {
-	StrList *sl = nasm_malloc(strlen(file)+1+sizeof sl->next);
-	sl->next = NULL;
-	strcpy(sl->str, file);
-	*deplist = sl;
-    }
+    nasm_add_string_to_strlist(deplist, file);
 }
 
 static char *nop_getline(void)

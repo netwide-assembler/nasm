@@ -1494,53 +1494,6 @@ static Context *get_ctx(const char *name, const char **namep)
 }
 
 /*
- * Append a string list entry to a string list if and only if it isn't
- * already there.  Return true if it was added.
- */
-static bool add_to_list(StrList **head, StrList *entry)
-{
-    StrList *list;
-
-    if (!head)
-        return false;
-
-    list = *head;
-    while (list) {
-        if (!strcmp(list->str, entry->str))
-            return false;
-        head = &list->next;
-        list = list->next;
-    }
-
-    *head = entry;
-    entry->next = NULL;
-    return true;
-}
-
-/*
- * Append a string to a string list if and only if it isn't
- * already there.  Return true if it was added.
- */
-static bool add_string_to_list(StrList **head, const char *str)
-{
-    StrList *list;
-
-    if (!head)
-        return false;
-
-    list = *head;
-    while (list) {
-        if (!strcmp(list->str, str))
-            return false;
-        head = &list->next;
-        list = list->next;
-    }
-
-    *head = nasm_str_to_strlist(str);
-    return true;
-}
-
-/*
  * Open an include file. This routine must always return a valid
  * file pointer if it returns - it's responsible for throwing an
  * ERR_FATAL and bombing out completely if not. It should also try
@@ -1647,7 +1600,7 @@ static FILE *inc_fopen(const char *file,
          * in case the file was already added with %depend.
          */
         if (path || omode != INC_NEEDED)
-            add_to_list(dhead, sl);
+            nasm_add_to_strlist(dhead, sl);
     }
 
     if (!path) {
@@ -2592,7 +2545,7 @@ static int do_directive(Token * tline)
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
-        add_string_to_list(dephead, p);
+        nasm_add_string_to_strlist(dephead, p);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -4978,7 +4931,7 @@ pp_reset(char *file, int apass, StrList **deplist)
     pass = apass > 2 ? 2 : apass;
 
     dephead = deplist;
-    add_string_to_list(dephead, file);
+    nasm_add_string_to_strlist(dephead, file);
     
     /*
      * Define the __PASS__ macro.  This is defined here unlike
