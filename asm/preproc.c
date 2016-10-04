@@ -1572,7 +1572,7 @@ static FILE *inc_fopen_search(const char *file, StrList **slpath,
  */
 static FILE *inc_fopen(const char *file,
                        StrList **dhead, StrList ***dtail,
-                       char **found_path,
+                       const char **found_path,
                        enum incopen_mode omode,
                        enum file_flags fmode)
 {
@@ -1634,7 +1634,7 @@ static FILE *inc_fopen(const char *file,
         fp = nasm_open_read(file, fmode);
 
     if (found_path)
-        *found_path = nasm_strdup(path);
+        *found_path = path;
 
     return fp;
 }
@@ -2248,7 +2248,8 @@ static int do_directive(Token * tline)
     bool casesense;
     int k, m;
     int offset;
-    char *p, *pp, *found_path;
+    char *p, *pp;
+    const char *found_path;
     const char *mname;
     Include *inc;
     Context *ctx;
@@ -3295,7 +3296,7 @@ issue_error:
 
     case PP_PATHSEARCH:
     {
-        char *found_path;
+        const char *found_path;
 
         casesense = true;
 
@@ -3334,15 +3335,13 @@ issue_error:
             nasm_unquote(p, NULL);
 
         inc_fopen(p, NULL, NULL, &found_path, INC_PROBE, NF_BINARY);
-        if (found_path)
-            p = found_path;
+        if (!found_path)
+            found_path = p;
         macro_start = nasm_malloc(sizeof(*macro_start));
         macro_start->next = NULL;
-        macro_start->text = nasm_quote(p, strlen(p));
+        macro_start->text = nasm_quote(found_path, strlen(found_path));
         macro_start->type = TOK_STRING;
         macro_start->a.mac = NULL;
-        if (found_path)
-            nasm_free(found_path);
 
         /*
          * We now have a macro name, an implicit parameter count of
