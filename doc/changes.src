@@ -35,6 +35,10 @@ since 2007.
    included in a shipping product; it is included for completeness
    only.
 
+\b Add the \c{%pragma} preprocessor directive for forward
+   compatibility with future versions of NASM.  At this time no pragmas
+   are implemented and this is merely a dummy directive.
+
 \S{cl-2.12.02} Version 2.12.02
 
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},

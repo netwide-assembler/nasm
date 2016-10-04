@@ -1398,7 +1398,9 @@ int main(int argc, char **argv)
 
     write_output(outname);
 
-    if (errorcount > 0)
+    if (errorcount > 0) {
+        remove(outname);
         exit(1);
+    }
     return 0;
 }
