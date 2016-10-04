@@ -2283,6 +2283,14 @@ static int do_directive(Token * tline)
               tline->text);
         return NO_DIRECTIVE_FOUND;      /* didn't get it */
 
+    case PP_PRAGMA:
+        /*
+         * Currently %pragma doesn't do anything; it is here for
+         * forward compatibility with future versions of NASM.
+         */
+        free_tlist(origline);
+        return DIRECTIVE_FOUND;
+
     case PP_STACKSIZE:
         /* Directive to tell NASM what the default stack size is. The
          * default is for a 16-bit stack, and this can be overriden with
