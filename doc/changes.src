@@ -7,6 +7,34 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.12.03} Version 2.12.03
+
+\b Add new warnings for certain dangerous constructs which never ought
+   to have been allowed.  In particular, the \c{RESB} family of
+   instructions should have been taking a critical expression all
+   along.
+
+\b Fix the EVEX (AVX-512) versions of the \c{VPBROADCAST}, \c{VPEXTR},
+   and \c{VPINSR} instructions.
+
+\b Support contracted forms of additional instructions.  As a general
+   rule, if an instruction has a non-destructive source immediately
+   after a destination register that isn't used as an input, NASM
+   supports omitting that source register, using the destination
+   register as that value.  This among other things makes it easier to
+   convert SSE code to the equivalent AVX code:
+
+\c      addps xmm1,xmm0                       ; SSE instruction
+\c      vaddps ymm1,ymm1,ymm0                 ; AVX official long form
+\c      vaddps ymm1,ymm0                      ; AVX contracted form
+
+\b Fix Codeview malformed compiler version record.
+
+\b Add the \c{CLWB} and \c{PCOMMIT} instructions.  Note that the
+   \c{PCOMMIT} instruction has been deprecated and will never be
+   included in a shipping product; it is included for completeness
+   only.
+
 \S{cl-2.12.02} Version 2.12.02
 
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},
@@ -16,7 +44,7 @@ since 2007.
 
 \b More Codeview debug format fixes.
 
-\b If the MASM PTR keyword is encountered, issue a warning.  This is
+\b If the MASM \c{PTR} keyword is encountered, issue a warning.  This is
    much more likely to indicate a MASM-ism encountered in NASM than it
    is a valid label.  This warning can be suppressed with \c{-w-ptr},
    the \c{[warning]} directive (see \k{opt-w}) or by the macro

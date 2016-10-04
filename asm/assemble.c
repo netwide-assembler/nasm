@@ -1127,6 +1127,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (ins->oprs[0].segment != NO_SEG)
                 nasm_error(ERR_NONFATAL, "attempt to reserve non-constant"
                         " quantity of BSS space");
+            else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
+                nasm_error(ERR_WARNING | ERR_PASS1,
+                           "forward reference in RESx can have unpredictable results");
             else
                 length += ins->oprs[0].offset;
             break;

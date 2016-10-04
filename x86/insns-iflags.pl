@@ -136,6 +136,7 @@ my %insns_flag_bit = (
     "AVX512BW"          => [ 73, "AVX-512 Byte and Word"],
     "AVX512IFMA"        => [ 74, "AVX-512 IFMA instructions"],
     "AVX512VBMI"        => [ 75, "AVX-512 VBMI instructions"],
+    "OBSOLETE"          => [ 93, "Instruction removed from architecture"],
     "VEX"               => [ 94, "VEX or XOP encoded instruction"],
     "EVEX"              => [ 95, "EVEX encoded instruction"],
 
