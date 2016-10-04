@@ -47,6 +47,9 @@ $(NASM):
 %.asm: %.pl
 	$(PERL) $< > $@
 
+%.i: %.asm $(NASM)
+	$(NASM) $(NASMOPT) -E -o $@ $<
+
 all:
 
 golden: performtest.pl $(TESTS)
@@ -60,7 +63,7 @@ diff:	performtest.pl $(NASM) $(TESTS)
 
 clean:
 	rm -f *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
-	rm -f *.dbg *.coff *.ith *.srec *.mo32 *.mo64
+	rm -f *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
 	rm -rf testresults
 	rm -f elftest elftest64
 
