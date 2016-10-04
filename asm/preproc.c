@@ -2209,6 +2209,22 @@ static int parse_size(const char *str) {
     return sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1];
 }
 
+/*
+ * Process a preprocessor %pragma directive.  Currently there are none.
+ * Gets passed the token list starting with the "preproc" token from
+ * "%pragma preproc".
+ */
+static void do_pragma_preproc(Token *tline)
+{
+    /* Skip to the real stuff */
+    tline = tline->next;
+    skip_white_(tline);
+    if (!tline)
+        return;
+
+    (void)tline;                /* Nothing else to do at present */
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -2218,10 +2234,11 @@ static int parse_size(const char *str) {
  * (and not the caller) to free_tlist() the line.
  *
  * @param tline a pointer to the current tokeninzed line linked list
+ * @param output if this directive generated output
  * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
  *
  */
-static int do_directive(Token * tline)
+static int do_directive(Token *tline, char **output)
 {
     enum preproc_token i;
     int j;
@@ -2247,6 +2264,7 @@ static int do_directive(Token * tline)
     size_t len;
     int severity;
 
+    *output = NULL;             /* No output generated */
     origline = tline;
 
     skip_white_(tline);
@@ -2324,9 +2342,34 @@ static int do_directive(Token * tline)
 
     case PP_PRAGMA:
         /*
-         * Currently %pragma doesn't do anything; it is here for
-         * forward compatibility with future versions of NASM.
+         * %pragma namespace options...
+         *
+         * The namespace "preproc" is reserved for the preprocessor;
+         * all other namespaces generate a [pragma] assembly directive.
+         *
+         * Invalid %pragmas are ignored and may have different
+         * meaning in future versions of NASM.
          */
+        tline = tline->next;
+        skip_white_(tline);
+        tline = expand_smacro(tline);
+        if (tok_type_(tline, TOK_ID)) {
+            if (!nasm_stricmp(tline->text, "preproc")) {
+                /* Preprocessor pragma */
+                do_pragma_preproc(tline);
+            } else {
+                /* Build the assembler directive */
+                t = new_Token(NULL, TOK_OTHER, "[", 1);
+                t->next = new_Token(NULL, TOK_ID, "pragma", 6);
+                t->next->next = new_Token(tline, TOK_WHITESPACE, NULL, 0);
+                tline = t;
+                for (t = tline; t->next; t = t->next)
+                    ;
+                t->next = new_Token(NULL, TOK_OTHER, "]", 1);
+                /* true here can be revisited in the future */
+                *output = detoken(tline, true);
+            }
+        }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2436,7 +2479,7 @@ static int do_directive(Token * tline)
             /* Now define the macro for the argument */
             snprintf(directive, sizeof(directive), "%%define %s (%s+%d)",
                      arg, StackPointer, offset);
-            do_directive(tokenize(directive));
+            do_directive(tokenize(directive), output);
             offset += size;
 
             /* Move to the next argument in the list */
@@ -2513,12 +2556,12 @@ static int do_directive(Token * tline)
             /* Now define the macro for the argument */
             snprintf(directive, sizeof(directive), "%%define %s (%s-%d)",
                      local, StackPointer, offset);
-            do_directive(tokenize(directive));
+            do_directive(tokenize(directive), output);
 
             /* Now define the assign to setup the enter_c macro correctly */
             snprintf(directive, sizeof(directive),
                      "%%assign %%$localsize %%$localsize+%d", size);
-            do_directive(tokenize(directive));
+            do_directive(tokenize(directive), output);
 
             /* Move to the next argument in the list */
             tline = tline->next;
@@ -5121,8 +5164,11 @@ static char *pp_getline(void)
         /*
          * Check the line to see if it's a preprocessor directive.
          */
-        if (do_directive(tline) == DIRECTIVE_FOUND) {
-            continue;
+        if (do_directive(tline, &line) == DIRECTIVE_FOUND) {
+            if (line)
+                break;          /* Directive generated output */
+            else
+                continue;
         } else if (defining) {
             /*
              * We're defining a multi-line macro. We emit nothing

@@ -1613,6 +1613,9 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                                    value);
                     }
                     break;
+                case D_PRAGMA:
+                    /* Currently the pragma directive doesn't do anything */
+                    break;
                 default:
                     if (ofmt->directive(d, value, pass2))
                         break;
