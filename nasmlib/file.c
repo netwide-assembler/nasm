@@ -36,6 +36,12 @@
 
 #include <errno.h>
 
+#ifdef HAVE_TYPES_H
+# include <types.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
@@ -52,6 +58,19 @@
 # include <sys/mman.h>
 #endif
 
+#if !defined(HAVE_FILENO) && defined(HAVE__FILENO)
+# define HAVE_FILENO 1
+# define fileno _fileno
+#endif
+
+#if !defined(HAVE_ACCESS) && defined(HAVE__ACCESS)
+# define HAVE_ACCESS 1
+# define access _access
+#endif
+#ifndef R_OK
+# define R_OK 4                 /* Classic Unix constant, same on Windows */
+#endif
+
 /* Can we adjust the file size without actually writing all the bytes? */
 #ifdef HAVE_FILENO		/* Useless without fileno() */
 # ifdef HAVE__CHSIZE_S
@@ -61,6 +80,11 @@
 # elif defined(HAVE_FTRUNCATE)
 #  define nasm_ftruncate(fd,size) ftruncate(fd,size)
 # endif
+#endif
+
+#ifdef HAVE__STATI64
+# define HAVE_STAT 1
+# define stat _stati64
 #endif
 
 void nasm_write(const void *ptr, size_t size, FILE *f)
@@ -216,7 +240,9 @@ bool nasm_file_exists(const char *filename)
  */
 off_t nasm_file_size(FILE *f)
 {
-#if defined(HAVE_FILENO) && defined(HAVE_FSTAT)
+#if defined(HAVE_FILENO) && defined(HAVE__FILELENGTHI64)
+    return _filelengthi64(fileno(f));
+#elif defined(HAVE_FILENO) && defined(HAVE_FSTAT)
     struct stat st;
 
     if (fstat(fileno(f), &st))

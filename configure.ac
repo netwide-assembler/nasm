@@ -1,8 +1,8 @@
 dnl Process this file with autoconf 2.63 or later to produce
 dnl a configure script.
 AC_PREREQ(2.63)
-AC_INIT(config.h.in)
-AC_CONFIG_HEADERS(config.h)
+AC_INIT(config/config.h.in)
+AC_CONFIG_HEADERS(config/config.h)
 
 dnl Check for broken VPATH handling on older NetBSD makes.
 AC_DEFUN(AC_PROG_MAKE_VPATHOK,
@@ -137,15 +137,16 @@ AC_CHECK_FUNCS(pathconf)
 AC_FUNC_FSEEKO
 AC_CHECK_FUNCS([_fseeki64])
 AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
-AC_CHECK_FUNCS([fileno])
+AC_CHECK_FUNCS([fileno _fileno])
 
-AC_CHECK_FUNCS(stat)
+AC_CHECK_FUNCS(_filelengthi64)
+AC_CHECK_FUNCS([stat _stati64])
 AC_CHECK_FUNCS(fstat)
 AC_CHECK_FUNCS(mmap)
 AC_CHECK_FUNCS(getpagesize)
 AC_CHECK_FUNCS(sysconf)
 
-AC_CHECK_FUNCS([access faccessat])
+AC_CHECK_FUNCS([access _access faccessat])
 
 PA_HAVE_FUNC(__builtin_ctz, (0U))
 PA_HAVE_FUNC(__builtin_ctzl, (0UL))
@@ -216,5 +217,5 @@ PA_ADD_CFLAGS([-Werror=missing-declarations])
 PA_ADD_CFLAGS([-Werror=comment])
 PA_ADD_CFLAGS([-Werror=vla])])
 
-AC_OUTPUT_COMMANDS([mkdir -p nasmlib nsis output stdlib x86 asm disasm])
+AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)

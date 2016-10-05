@@ -29,9 +29,13 @@ CC		= cl
 LD		= link
 AR		= lib
 CFLAGS		= $(CFLAGS) /W2
-BUILD_CFLAGS	= $(CFLAGS) /I$(srcdir)/inttypes
+BUILD_CFLAGS	= $(CFLAGS)
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
-		  /DHAVE__SNPRINTF /DHAVE__VSNPRINTF /DHAVE__FULLPATH
+		  /I$(srcdir)/include /I./include \
+		  /I$(srcdir)/x86 /I./x86 \
+		  /I$(srcdir)/asm /I./asm \
+		  /I$(srcdir)/disasm /I./disasm \
+		  /I$(srcdir)/output /I./output \
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=

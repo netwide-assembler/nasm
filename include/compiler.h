@@ -55,18 +55,14 @@
 #define _MBCS 1
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+# include "config/config.h"
 /* autoconf doesn't define these if they are redundant, but we want to
    be able to #ifdef them... */
+#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
+# include "config/msvc.h"
 #else
-/* Default these to unsupported unless we have config.h */
-# ifndef inline
-#  define inline
-# endif
-# ifndef restrict
-#  define restrict
-# endif
-#endif /* HAVE_CONFIG_H */
+/* Add more compiler-specific header files here */
+#endif /* Configuration file */
 
 /* This is required to get the standard <inttypes.h> macros when compiling
    with a C++ compiler.  This must be defined *before* <inttypes.h> is
@@ -102,7 +98,7 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # endif
 #endif
 
-#if !defined(HAVE_STRLCPY) || !HAVE_DECL_STRLCPY
+#if !defined(HAVE_STRLCPY) || !defined(HAVE_DECL_STRLCPY)
 size_t strlcpy(char *, const char *, size_t);
 #endif
 
@@ -134,23 +130,23 @@ typedef enum bool { false, true } bool;
 #endif
 
 /* Some misguided platforms hide the defs for these */
-#if defined(HAVE_STRCASECMP) && !HAVE_DECL_STRCASECMP
+#if defined(HAVE_STRCASECMP) && !defined(HAVE_DECL_STRCASECMP)
 int strcasecmp(const char *, const char *);
 #endif
 
-#if defined(HAVE_STRICMP) && !HAVE_DECL_STRICMP
+#if defined(HAVE_STRICMP) && !defined(HAVE_DECL_STRICMP)
 int stricmp(const char *, const char *);
 #endif
 
-#if defined(HAVE_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
+#if defined(HAVE_STRNCASECMP) && !defined(HAVE_DECL_STRNCASECMP)
 int strncasecmp(const char *, const char *, size_t);
 #endif
 
-#if defined(HAVE_STRNICMP) && !HAVE_DECL_STRNICMP
+#if defined(HAVE_STRNICMP) && !defined(HAVE_DECL_STRNICMP)
 int strnicmp(const char *, const char *, size_t);
 #endif
 
-#if defined(HAVE_STRSEP) && !HAVE_DECL_STRSEP
+#if defined(HAVE_STRSEP) && !defined(HAVE_DECL_STRSEP)
 char *strsep(char **, const char *);
 #endif
 
