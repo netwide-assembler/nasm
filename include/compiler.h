@@ -56,12 +56,10 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config/config.h"
-/* autoconf doesn't define these if they are redundant, but we want to
-   be able to #ifdef them... */
 #elif defined(_MSC_VER) && (_MSC_VER >= 1310)
 # include "config/msvc.h"
 #else
-/* Add more compiler-specific header files here */
+# include "config/unknown.h"
 #endif /* Configuration file */
 
 /* This is required to get the standard <inttypes.h> macros when compiling
