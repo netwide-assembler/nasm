@@ -58,7 +58,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#if _MSC_VER >= 1900
+#if _MSC_VER >= 1800
 # define HAVE_INTTYPES_H 1
 #endif
 
@@ -120,7 +120,7 @@
 #define stat _stati64
 
 /* Define to 1 if stdbool.h conforms to C99. */
-#if _MSC_VER >= 1900
+#if _MSC_VER >= 1800
 # define HAVE_STDBOOL_H 1
 #endif
 
