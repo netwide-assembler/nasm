@@ -1,5 +1,5 @@
 /*
- * inttypes.h
+ * nasmint.h
  *
  * Small ersatz subset of <inttypes.h>, deriving the types from
  * <limits.h>.
@@ -9,8 +9,8 @@
  * a 01111111... bit pattern.
  */
 
-#ifndef INTTYPES_H
-#define INTTYPES_H
+#ifndef NASM_NASMINT_H
+#define NASM_NASMINT_H
 
 #include <limits.h>
 
@@ -216,4 +216,4 @@ typedef unsigned char		uint8_t;
 #define INT64_MAX	INT64_C(9223372036854775807)
 #define UINT64_MAX	UINT64_C(18446744073709551615)
 
-#endif /* INTTYPES_H */
+#endif /* NASM_NASMINT_H */
