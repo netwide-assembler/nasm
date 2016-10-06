@@ -39,6 +39,7 @@
  */
 
 #include "nasm.h"
+#include "outlib.h"
 
 void nasm_do_legacy_output(const struct out_data *data)
 {
