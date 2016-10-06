@@ -5,10 +5,7 @@
 #ifndef RDOFF_RDLAR_H
 #define RDOFF_RDLAR_H 1
 
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "compiler.h"
 
 /* For non-POSIX operating systems */
 #ifndef HAVE_GETUID
