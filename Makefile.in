@@ -288,7 +288,7 @@ clean:
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
-	$(RM) -f config.h config.log config.status
+	$(RM) -f config.log config.status config/config.h
 	$(RM) -f Makefile *~ *.bak *.lst *.bin
 	$(RM) -f output/*~ output/*.bak
 	$(RM) -f test/*.lst test/*.bin test/*.$(O) test/*.bin
