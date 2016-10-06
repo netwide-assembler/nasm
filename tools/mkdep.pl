@@ -245,7 +245,8 @@ foreach my $dir ( @files ) {
 	    push(@cfiles, $path);
 	} elsif ( $file =~ /\.[Hh]$/ ) {
 	    print STDERR "Filesystem: $file -> $path\n";
-	    $dep_path{$file} = $path;
+	    $dep_path{$file} = $path; # Allow the blank filename
+	    $dep_path{$path} = $path; # Also allow the full pathname
 	}
     }
     closedir(DIR);
