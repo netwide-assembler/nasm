@@ -421,7 +421,7 @@ output/codeview.$(O): output/codeview.c asm/directiv.h asm/pptok.h \
 output/legacy.$(O): output/legacy.c asm/directiv.h asm/pptok.h asm/preproc.h \
  config/config.h config/msvc.h config/unknown.h include/compiler.h \
  include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h \
- include/strlist.h include/tables.h x86/insnsi.h x86/regs.h
+ include/strlist.h include/tables.h output/outlib.h x86/insnsi.h x86/regs.h
 output/nulldbg.$(O): output/nulldbg.c asm/directiv.h asm/pptok.h \
  asm/preproc.h config/config.h config/msvc.h config/unknown.h \
  include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h \

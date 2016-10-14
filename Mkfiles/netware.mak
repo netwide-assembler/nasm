@@ -249,8 +249,8 @@ codeview.o: codeview.c directiv.h pptok.h preproc.h config.h msvc.h \
  unknown.h compiler.h hashtbl.h md5.h nasm.h nasmint.h nasmlib.h opflags.h \
  saa.h strlist.h tables.h outlib.h pecoff.h version.h insnsi.h regs.h
 legacy.o: legacy.c directiv.h pptok.h preproc.h config.h msvc.h unknown.h \
- compiler.h nasm.h nasmint.h nasmlib.h opflags.h strlist.h tables.h insnsi.h \
- regs.h
+ compiler.h nasm.h nasmint.h nasmlib.h opflags.h strlist.h tables.h outlib.h \
+ insnsi.h regs.h
 nulldbg.o: nulldbg.c directiv.h pptok.h preproc.h config.h msvc.h unknown.h \
  compiler.h nasm.h nasmint.h nasmlib.h opflags.h strlist.h tables.h outlib.h \
  insnsi.h regs.h
