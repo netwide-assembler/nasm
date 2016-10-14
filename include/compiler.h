@@ -197,7 +197,7 @@ char *strsep(char **, const char *);
 #endif
 #ifndef safe_malloc
 # define safe_malloc(s) safe_alloc
-# define safe_malloc2(s1,s2) save_alloc
+# define safe_malloc2(s1,s2) safe_alloc
 # define safe_realloc(s) never_null
 #endif
 
