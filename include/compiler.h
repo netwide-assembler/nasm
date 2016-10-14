@@ -180,15 +180,25 @@ char *strsep(char **, const char *);
 #if defined(__GNUC__) && __GNUC__ >= 4 /* ? */
 # define never_null __attribute__((returns_nonnull))
 # define safe_alloc never_null __attribute__((malloc))
-# define safe_malloc(s) safe_alloc __attribute__((alloc_size(s)))
-# define safe_malloc2(s1,s2) safe_alloc __attribute__((alloc_size(s1,s2)))
-# define safe_realloc(s) never_null __attribute__((alloc_size(s)))
-#else
+# ifdef __has_attribute
+#  if __has_attribute(alloc_size)
+#   define safe_malloc(s) safe_alloc __attribute__((alloc_size(s)))
+#   define safe_malloc2(s1,s2) safe_alloc __attribute__((alloc_size(s1,s2)))
+#   define safe_realloc(s) never_null __attribute__((alloc_size(s)))
+#  endif
+# endif
+#endif
+
+#ifndef never_null
 # define never_null
+#endif
+#ifndef safe_alloc
 # define safe_alloc
-# define safe_malloc(s)
-# define safe_malloc2(s1,s2)
-# define safe_realloc(s)
+#endif
+#ifndef safe_malloc
+# define safe_malloc(s) safe_alloc
+# define safe_malloc2(s1,s2) save_alloc
+# define safe_realloc(s) never_null
 #endif
 
 /*
