@@ -58,6 +58,8 @@
 # include "config/config.h"
 #elif defined(_MSC_VER) && (_MSC_VER >= 1310)
 # include "config/msvc.h"
+#elif defined(__WATCOM__)
+# include "config/watcom.h"
 #else
 # include "config/unknown.h"
 #endif /* Configuration file */
