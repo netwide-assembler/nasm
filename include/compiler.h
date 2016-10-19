@@ -79,6 +79,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
 /* Some versions of MSVC have these only with underscores in front */
 #ifndef HAVE_SNPRINTF
 # ifdef HAVE__SNPRINTF

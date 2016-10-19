@@ -119,6 +119,7 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(sys/param.h)
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/stat.h)
+AC_CHECK_HEADERS(sys/types.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
