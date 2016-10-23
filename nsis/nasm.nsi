@@ -30,6 +30,7 @@
 !addincludedir "${srcdir}/nsis"
 !include "version.nsh"
 !include /nonfatal "arch.nsh"
+!include /nonfatal "x64.nsh"
 
 !define PRODUCT_NAME "Netwide Assembler"
 !define PRODUCT_SHORT_NAME "nasm"
@@ -229,6 +230,13 @@ SectionEnd
 ; MUI requires this hooks
 Function .onInit
     !insertmacro MULTIUSER_INIT
+    ${If} ${RunningX64}
+        SetRegView 64
+	${EnableX64FSRedirection}
+        StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCT_SHORT_NAME}"
+    ${Else}
+        StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_SHORT_NAME}"
+    ${EndIf}
 FunctionEnd
 
 Function un.onInit
