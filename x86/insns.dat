@@ -2462,7 +2462,7 @@ VMOVDQA		xmmrm128,xmmreg			[mr:	vex.128.66.0f 7f /r]			AVX,SANDYBRIDGE
 ; These are officially documented as VMOVDQA, but VMOVQQA seems more logical to me...
 VMOVQQA		ymmreg,ymmrm256			[rm:	vex.256.66.0f 6f /r]			AVX,SANDYBRIDGE
 VMOVQQA		ymmrm256,ymmreg			[mr:	vex.256.66.0f 7f /r]			AVX,SANDYBRIDGE
-VMOVDQA		ymmreg,ymmrm			[rm:	vex.256.66.0f 6f /r]			AVX,SANDYBRIDGE
+VMOVDQA		ymmreg,ymmrm256			[rm:	vex.256.66.0f 6f /r]			AVX,SANDYBRIDGE
 VMOVDQA		ymmrm256,ymmreg			[mr:	vex.256.66.0f 7f /r]			AVX,SANDYBRIDGE
 VMOVDQU		xmmreg,xmmrm128			[rm:	vex.128.f3.0f 6f /r]			AVX,SANDYBRIDGE
 VMOVDQU		xmmrm128,xmmreg			[mr:	vex.128.f3.0f 7f /r]			AVX,SANDYBRIDGE
