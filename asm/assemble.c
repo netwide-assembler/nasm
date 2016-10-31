@@ -322,12 +322,15 @@ static void out(struct out_data *data)
     if (!data->size)
         return;                 /* Nothing to do */
 
+    /*
+     * Convert addresses to RAWDATA if possible
+     * XXX: not all backends want this for global symbols!!!!
+     */
     switch (data->type) {
     case OUT_ADDRESS:
         asize = data->size;
         nasm_assert(asize <= 8);
         if (data->tsegment == NO_SEG && data->twrt == NO_SEG) {
-            /* Convert to RAWDATA */
             /* XXX: check for overflow */
             uint8_t *q = xdata.b;
 
@@ -342,7 +345,6 @@ static void out(struct out_data *data)
         asize = data->size;
         nasm_assert(asize <= 8);
         if (data->tsegment == data->segment && data->twrt == NO_SEG) {
-            /* Convert to RAWDATA */
             uint8_t *q = xdata.b;
             int64_t delta = data->toffset - data->offset
                 - (data->inslen - data->insoffs);
@@ -535,7 +537,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                                 " instruction");
                     } else {
                         data.insoffs = 0;
-                        data.type = OUT_ADDRESS;
+                        data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
                         data.inslen = data.size = wsize;
                         data.toffset = e->offset;
                         data.tsegment = e->segment;

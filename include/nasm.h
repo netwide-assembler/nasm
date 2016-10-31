@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * nasm.h   main header file for the Netwide Assembler: inter-module interface
  */
 
@@ -575,6 +575,7 @@ typedef struct operand { /* operand to an instruction */
     int32_t         segment;    /* immediate segment, if needed */
     int64_t         offset;     /* any immediate number */
     int32_t         wrt;        /* segment base it's relative to */
+    bool            relative;   /* self-relative expression */
     int             eaflags;    /* special EA flags */
     int             opflags;    /* see OPFLAG_* defines below */
     decoflags_t     decoflags;  /* decorator flags such as {...} */
@@ -582,7 +583,7 @@ typedef struct operand { /* operand to an instruction */
 
 #define OPFLAG_FORWARD      1   /* operand is a forward reference */
 #define OPFLAG_EXTERN       2   /* operand is an external reference */
-#define OPFLAG_UNKNOWN      4   /* operand is an unknown reference 
+#define OPFLAG_UNKNOWN      4   /* operand is an unknown reference
                                  * (always a forward reference also)
                                  */
 
@@ -593,6 +594,7 @@ typedef struct extop { /* extended operand */
     int64_t         offset;     /* ... it's given here ... */
     int32_t         segment;    /* if it's a number/address, then... */
     int32_t         wrt;        /* ... and here */
+    bool            relative;   /* self-relative expression */
     enum extop_type type;       /* defined above */
 } extop;
 
@@ -707,7 +709,7 @@ struct ofmt {
     /*
      * Output format flags.
      */
-#define OFMT_TEXT   1   	/* Text file format */
+#define OFMT_TEXT   1		/* Text file format */
     unsigned int flags;
 
     int maxbits;                /* Maximum segment bits supported */
