@@ -172,7 +172,7 @@ char *strsep(char **, const char *);
  * Hints to the compiler that a particular branch of code is more or
  * less likely to be taken.
  */
-#if HAVE_BUILTIN_EXPECT
+#if HAVE___BUILTIN_EXPECT
 # define likely(x)	__builtin_expect(!!(x), 1)
 # define unlikely(x)	__builtin_expect(!!(x), 0)
 #else
