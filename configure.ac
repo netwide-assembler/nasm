@@ -4,46 +4,6 @@ AC_PREREQ(2.63)
 AC_INIT(config/config.h.in)
 AC_CONFIG_HEADERS(config/config.h)
 
-dnl Check for broken VPATH handling on older NetBSD makes.
-AC_DEFUN(AC_PROG_MAKE_VPATHOK,
-[AC_MSG_CHECKING(whether ${MAKE-make} has sane VPATH handling)
-set dummy ${MAKE-make}; ac_make=`echo "[$]2" | sed 'y%./+-%__p_%'`
-AC_CACHE_VAL(ac_cv_prog_make_vpathok,
-[mkdir conftestdir
-cat > conftestdir/conftestmake <<\EOF
-VPATH = ..
-conftestfoo: conftestbar
-	@echo ac_make2temp=ok
-conftestbar: conftestbaz
-	@echo ac_maketemp=broken
-	@touch conftestbar
-EOF
-echo > conftestbaz # these two lines need to be...
-echo > conftestbar # ... in this order not the other
-changequote(, )dnl
-unset ac_maketemp
-unset ac_make2temp
-# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
-eval `cd conftestdir; ${MAKE-make} -f conftestmake 2>/dev/null | grep temp=`
-changequote([, ])dnl
-if test -n "$ac_maketemp"; then
-  ac_cv_prog_make_vpathok=no
-else
-  if test -n "$ac_make2temp"; then
-    ac_cv_prog_make_vpathok=yes
-  else
-    ac_cv_prog_make_vpathok=no
-  fi
-fi
-rm -rf conftestdir
-rm -f conftestbar conftestbaz])dnl
-if test $ac_cv_prog_make_vpathok = yes; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-])
-
 AC_PREFIX_PROGRAM(nasm)
 
 dnl Checks for programs.
@@ -54,12 +14,6 @@ AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-if test -f nasm.c; then
-  # we're building in the source dir, so we don't need this check at all
-  ac_cv_prog_make_vpathok=yes
-else
-  AC_PROG_MAKE_VPATHOK
-fi
 AC_PROG_INSTALL
 
 dnl Check for library extension
@@ -78,9 +32,15 @@ AH_TEMPLATE(WORDS_LITTLEENDIAN,
 [Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
 
+PA_ADD_CFLAGS([-std=c99])
+
 dnl Force gcc and gcc-compatible compilers treat signed integers
 dnl as 2's complement
 PA_ADD_CFLAGS([-fwrapv])
+
+dnl Some environments abuse __STRICT_ANSI__ to disable some
+dnl function declarations
+PA_ADD_CFLAGS([-U__STRICT_ANSI__])
 
 dnl Don't put things in common if we can avoid it.  We don't want to
 dnl assume all compilers support common, and this will help find those
@@ -152,6 +112,7 @@ AC_CHECK_FUNCS([access _access faccessat])
 PA_HAVE_FUNC(__builtin_ctz, (0U))
 PA_HAVE_FUNC(__builtin_ctzl, (0UL))
 PA_HAVE_FUNC(__builtin_ctzll, (0ULL))
+PA_HAVE_FUNC(__builtin_expect, (1,1))
 
 dnl Functions for which we have replacements available in lib/
 AC_CHECK_FUNCS([vsnprintf _vsnprintf])
@@ -172,12 +133,18 @@ AC_CHECK_DECLS(strnlen)
 dnl Check for missing types
 AC_TYPE_UINTPTR_T
 
-if test $ac_cv_prog_make_vpathok = no; then
-  echo Copying generated srcs into build directory to compensate for VPATH breakage
-  for file in macros.c insnsa.c insnsd.c insnsn.c insnsi.h version.h version.mac; do
-    if test ! -f $file; then cp -p ${srcdir}/${file} .; fi
-  done
-fi
+dnl
+dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
+dnl support these, but don't define __GNUC__ as they don't support
+dnl some other features of gcc.
+dnl
+PA_FUNC_ATTRIBUTE(noreturn)
+PA_FUNC_ATTRIBUTE(returns_nonnull)
+PA_FUNC_ATTRIBUTE(malloc)
+PA_FUNC_ATTRIBUTE(alloc_size, (1))
+PA_FUNC_ATTRIBUTE(format, [(printf,1,2)], int, [const char *, ...], ["%d",1])
+PA_FUNC_ATTRIBUTE(const)
+PA_FUNC_ATTRIBUTE(pure)
 
 dnl
 dnl support cchace
@@ -190,7 +157,6 @@ AC_ARG_ENABLE([ccache],
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
-PA_ADD_CFLAGS([-std=c99])
 PA_ADD_CFLAGS([-pedantic])
 dnl LLVM doesn't error out on invalid -W options unless this option is
 dnl specified first.  Enable this so this script can actually discover

@@ -186,7 +186,7 @@ no_return nasm_assert_failed(const char *, int, const char *);
 #elif defined(HAVE_STRICMP)
 #define nasm_stricmp stricmp
 #else
-int nasm_stricmp(const char *, const char *);
+int pure_func nasm_stricmp(const char *, const char *);
 #endif
 
 #if defined(HAVE_STRNCASECMP)
@@ -194,10 +194,10 @@ int nasm_stricmp(const char *, const char *);
 #elif defined(HAVE_STRNICMP)
 #define nasm_strnicmp strnicmp
 #else
-int nasm_strnicmp(const char *, const char *, size_t);
+int pure_func nasm_strnicmp(const char *, const char *, size_t);
 #endif
 
-int nasm_memicmp(const char *, const char *, size_t);
+int pure_func nasm_memicmp(const char *, const char *, size_t);
 
 #if defined(HAVE_STRSEP)
 #define nasm_strsep strsep
@@ -206,7 +206,7 @@ char *nasm_strsep(char **stringp, const char *delim);
 #endif
 
 #ifndef HAVE_DECL_STRNLEN
-size_t strnlen(const char *, size_t);
+size_t pure_func strnlen(const char *, size_t);
 #endif
 
 /* This returns the numeric value of a given 'digit'. */
@@ -230,8 +230,8 @@ int64_t readstrnum(char *str, int length, bool *warn);
  * seg_init: Initialise the segment-number allocator.
  * seg_alloc: allocate a hitherto unused segment number.
  */
-void seg_init(void);
-int32_t seg_alloc(void);
+void pure_func seg_init(void);
+int32_t pure_func seg_alloc(void);
 
 /*
  * many output formats will be able to make use of this: a standard
@@ -436,7 +436,7 @@ char *nasm_opt_val(char *p, char **opt, char **val);
  */
 char *nasm_realpath(const char *rel_path);
 
-const char *prefix_name(int);
+const char * pure_func prefix_name(int);
 
 /*
  * Wrappers around fopen()... for future change to a dedicated structure
@@ -482,7 +482,7 @@ off_t nasm_file_size(FILE *f);
 off_t nasm_file_size_by_path(const char *pathname);
 void fwritezero(off_t bytes, FILE *fp);
 
-static inline bool overflow_general(int64_t value, int bytes)
+static inline bool const_func overflow_general(int64_t value, int bytes)
 {
     int sbit;
     int64_t vmax, vmin;
@@ -497,7 +497,7 @@ static inline bool overflow_general(int64_t value, int bytes)
     return value < vmin || value > vmax;
 }
 
-static inline bool overflow_signed(int64_t value, int bytes)
+static inline bool const_func overflow_signed(int64_t value, int bytes)
 {
     int sbit;
     int64_t vmax, vmin;
@@ -512,7 +512,7 @@ static inline bool overflow_signed(int64_t value, int bytes)
     return value < vmin || value > vmax;
 }
 
-static inline bool overflow_unsigned(int64_t value, int bytes)
+static inline bool const_func overflow_unsigned(int64_t value, int bytes)
 {
     int sbit;
     int64_t vmax, vmin;
@@ -527,7 +527,7 @@ static inline bool overflow_unsigned(int64_t value, int bytes)
     return value < vmin || value > vmax;
 }
 
-static inline int64_t signed_bits(int64_t value, int bits)
+static inline int64_t const_func signed_bits(int64_t value, int bits)
 {
     if (bits < 64) {
         value &= ((int64_t)1 << bits) - 1;
@@ -537,7 +537,7 @@ static inline int64_t signed_bits(int64_t value, int bits)
     return value;
 }
 
-int idata_bytes(int opcode);
+int const_func idata_bytes(int opcode);
 
 /* check if value is power of 2 */
 #define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
@@ -545,13 +545,13 @@ int idata_bytes(int opcode);
 /*
  * floor(log2(v))
  */
-int ilog2_32(uint32_t v);
-int ilog2_64(uint64_t v);
+int const_func ilog2_32(uint32_t v);
+int const_func ilog2_64(uint64_t v);
 
 /*
  * v == 0 ? 0 : is_power2(x) ? ilog2_X(v) : -1
  */
-int alignlog2_32(uint32_t v);
-int alignlog2_64(uint64_t v);
+int const_func alignlog2_32(uint32_t v);
+int const_func alignlog2_64(uint64_t v);
 
 #endif

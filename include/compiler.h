@@ -172,7 +172,7 @@ char *strsep(char **, const char *);
  * Hints to the compiler that a particular branch of code is more or
  * less likely to be taken.
  */
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if HAVE_BUILTIN_EXPECT
 # define likely(x)	__builtin_expect(!!(x), 1)
 # define unlikely(x)	__builtin_expect(!!(x), 0)
 #else
@@ -183,25 +183,23 @@ char *strsep(char **, const char *);
 /*
  * Hints about malloc-like functions that never return NULL
  */
-#if defined(__GNUC__) && __GNUC__ >= 4 /* ? */
+#ifdef HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
 # define never_null __attribute__((returns_nonnull))
+#else
+# define never_null
+#endif
+
+#ifdef HAVE_FUNC_ATTRIBUTE_MALLOC
 # define safe_alloc never_null __attribute__((malloc))
-# ifdef __has_attribute
-#  if __has_attribute(alloc_size)
+#else
+# define safe_alloc
+#endif
+
+#ifdef HAVE_FUNC_ATTRIBUTE_ALLOC_SIZE
 #   define safe_malloc(s) safe_alloc __attribute__((alloc_size(s)))
 #   define safe_malloc2(s1,s2) safe_alloc __attribute__((alloc_size(s1,s2)))
 #   define safe_realloc(s) never_null __attribute__((alloc_size(s)))
-#  endif
-# endif
-#endif
-
-#ifndef never_null
-# define never_null
-#endif
-#ifndef safe_alloc
-# define safe_alloc
-#endif
-#ifndef safe_malloc
+#else
 # define safe_malloc(s) safe_alloc
 # define safe_malloc2(s1,s2) safe_alloc
 # define safe_realloc(s) never_null
@@ -210,7 +208,7 @@ char *strsep(char **, const char *);
 /*
  * How to tell the compiler that a function doesn't return
  */
-#ifdef __GNUC__
+#ifdef HAVE_FUNC_ATTRIBUTE_NORETURN
 # define no_return void __attribute__((noreturn))
 #else
 # define no_return void
@@ -219,10 +217,31 @@ char *strsep(char **, const char *);
 /*
  * How to tell the compiler that a function takes a printf-like string
  */
-#ifdef __GNUC__
+#ifdef HAVE_FUNC_ATTRIBUTE_FORMAT
 # define printf_func(fmt, list) __attribute__((format(printf, fmt, list)))
 #else
 # define printf_func(fmt, list)
+#endif
+
+/*
+ * How to tell the compiler that a function is pure arithmetic
+ */
+#ifdef HAVE_FUNC_ATTRIBUTE_CONST
+# define const_func __attribute__((const))
+#else
+# define const_func
+#endif
+
+/*
+ * This function has no side effects, but depends on its arguments,
+ * memory pointed to by its arguments, or global variables.
+ * NOTE: functions that return a value by modifying memory pointed to
+ * by a pointer argument are *NOT* considered pure.
+ */
+#ifdef HAVE_FUNC_ATTRIBUTE_PURE
+# define pure_func __attribute__((pure))
+#else
+# define pure_func
 #endif
 
 #endif	/* NASM_COMPILER_H */
