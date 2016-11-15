@@ -33,6 +33,7 @@
 
 #include "compiler.h"
 #include "nasmlib.h"
+#include <limits.h>
 
 #define ROUND(v, a, w)                      \
     do {                                    \
@@ -61,14 +62,20 @@ int ilog2_32(uint32_t v)
 {
     int n;
 
+#ifdef __i686__
+    __asm__("bsrl %1,%0 ; cmovz %2,%0\n"
+            : "=&r" (n)
+            : "rm" (v), "r" (0));
+#else
     __asm__("bsrl %1,%0 ; jnz 1f ; xorl %0,%0\n"
             "1:"
             : "=&r" (n)
             : "rm" (v));
-    return n;
+#endif
+     return n;
 }
 
-#elif defined(HAVE___BUILTIN_CTZ) && INT_MAX == 2147483647
+#elif defined(HAVE___BUILTIN_CLZ) && INT_MAX == 2147483647
 
 int ilog2_32(uint32_t v)
 {
@@ -107,7 +114,7 @@ int ilog2_64(uint64_t v)
     return n;
 }
 
-#elif defined(HAVE__BUILTIN_CTZLL) && LLONG_MAX == 9223372036854775807LL
+#elif defined(HAVE__BUILTIN_CLZLL) && LLONG_MAX == 9223372036854775807LL
 
 int ilog2_64(uint64_t v)
 {

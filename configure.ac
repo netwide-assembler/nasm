@@ -109,9 +109,9 @@ AC_CHECK_FUNCS(sysconf)
 
 AC_CHECK_FUNCS([access _access faccessat])
 
-PA_HAVE_FUNC(__builtin_ctz, (0U))
-PA_HAVE_FUNC(__builtin_ctzl, (0UL))
-PA_HAVE_FUNC(__builtin_ctzll, (0ULL))
+PA_HAVE_FUNC(__builtin_clz, (0U))
+PA_HAVE_FUNC(__builtin_clzl, (0UL))
+PA_HAVE_FUNC(__builtin_clzll, (0ULL))
 PA_HAVE_FUNC(__builtin_expect, (1,1))
 
 dnl Functions for which we have replacements available in lib/
