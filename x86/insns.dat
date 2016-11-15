@@ -5114,6 +5114,11 @@ VXORPS          zmmreg|mask|z,zmmreg*,zmmrm512|b32  [rvm:fv: evex.nds.512.0f.w0 
 RDPKRU		void				[	0f 01 ee]				X64,FUTURE
 WRPKRU		void				[	0f 01 ef]				X64,FUTURE
 
+; Read Processor ID
+RDPID		reg32				[m:	f3 0f c7 /7]				NOLONG,FUTURE
+RDPID		reg64				[m:	o64nw f3 0f c7 /7]			X64,FUTURE
+RDPID		reg32				[m:	f3 0f c7 /7]				X64,UNDOC,FUTURE
+
 ; New memory instructions
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
 CLWB            mem                             [m:     66 0f ae /6]                            FUTURE

@@ -39,6 +39,8 @@ since 2007.
    compatibility with future versions of NASM.  At this time no pragmas
    are implemented and this is merely a dummy directive.
 
+\b Add the \c{RDPID} instruction.
+
 \S{cl-2.12.02} Version 2.12.02
 
 \b Fix preprocessor errors, especially \c{%error} and \c{%warning},
