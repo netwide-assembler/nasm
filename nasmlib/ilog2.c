@@ -68,7 +68,7 @@ int ilog2_32(uint32_t v)
     return n;
 }
 
-#elif defined(HAVE___BUILTIN_CTZ) && INT_MAX >= 2147483647
+#elif defined(HAVE___BUILTIN_CTZ) && INT_MAX == 2147483647
 
 int ilog2_32(uint32_t v)
 {
@@ -107,7 +107,7 @@ int ilog2_64(uint64_t v)
     return n;
 }
 
-#elif defined(HAVE__BUILTIN_CTZLL) && LLONG_MAX >= 9223372036854775807L
+#elif defined(HAVE__BUILTIN_CTZLL) && LLONG_MAX == 9223372036854775807LL
 
 int ilog2_64(uint64_t v)
 {
