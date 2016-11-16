@@ -167,11 +167,10 @@ static int32_t as86_section_names(char *name, int pass, int *bits)
     /*
      * Default is 16 bits.
      */
-    if (!name)
+    if (!name) {
         *bits = 16;
-
-    if (!name)
         return stext.index;
+    }
 
     if (!strcmp(name, ".text"))
         return stext.index;
