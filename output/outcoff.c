@@ -306,10 +306,9 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
             *bits = 64;
         else
             *bits = 32;
-    }
 
-    if (!name)
         return def_seg;
+    }
 
     p = name;
     while (*p && !nasm_isspace(*p))
