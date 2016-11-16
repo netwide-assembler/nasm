@@ -223,7 +223,7 @@ int stdscan(void *private_data, struct tokenval *tv)
                 is_float = true;
                 if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
                     stdscan_bufptr++;
-            } else if (isnumchar(c) || c == '_')
+            } else if (isnumchar(c))
                 ; /* just advance */
             else if (c == '.')
                 is_float = true;
