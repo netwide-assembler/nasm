@@ -1256,6 +1256,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     struct tokenval tokval;
     expr *e;
     int pass_max;
+    char debugid[128];
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
 	nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
@@ -1504,7 +1505,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     break;
                 case D_DEBUG:           /* [DEBUG] */
                 {
-                    char debugid[128];
                     bool badid, overlong;
 
                     p = value;
