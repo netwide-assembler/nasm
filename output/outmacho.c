@@ -1109,7 +1109,7 @@ static void macho_calculate_sizes (void)
         if (s->align == -1)
             s->align = DEFAULT_SECTION_ALIGNMENT;
 
-	newaddr = ALIGN(s->addr, 1 << s->align);
+        newaddr = ALIGN(s->addr, 1L << s->align);
         s->addr = newaddr;
 
         seg_vmsize = newaddr + s->size;
