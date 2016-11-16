@@ -143,7 +143,7 @@ void MD5Final(unsigned char digest[16], MD5_CTX *ctx)
     MD5Transform(ctx->buf, (uint32_t *) ctx->in);
     byteReverse((unsigned char *) ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
-    memset((char *) ctx, 0, sizeof(ctx));	/* In case it's sensitive */
+    memset((char *) ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
 }
 
 /* The four core functions - F1 is optimized somewhat */
