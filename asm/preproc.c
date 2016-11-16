@@ -1054,7 +1054,7 @@ static Token *tokenize(char *line)
                     is_float = true;
                     if (*p == '+' || *p == '-')
                         p++;
-                } else if (isnumchar(c) || c == '_')
+                } else if (isnumchar(c))
                     ; /* just advance */
                 else if (c == '.') {
                     /*
