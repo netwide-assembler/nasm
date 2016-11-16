@@ -395,7 +395,6 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             if (segsize == 64) {
                 op->eaflags |= EAF_REL;
                 op->segment |= SEG_RELATIVE;
-                mod = 2;    /* fake disp32 */
             }
 
             if (asize != 64)
