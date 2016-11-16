@@ -911,7 +911,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             break;
 
         case 0322:
-            if (osize != (segsize == 16) ? 16 : 32)
+            if (osize != (segsize == 16 ? 16 : 32))
                 return 0;
             else
                 o_used = true;
