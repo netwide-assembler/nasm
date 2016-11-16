@@ -109,7 +109,7 @@ static FILE *error_file;        /* Where to write error messages */
 
 FILE *ofile = NULL;
 int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
-static int sb, cmd_sb = 16;    /* by default */
+static int cmd_sb = 16;    /* by default */
 
 static iflag_t cpu;
 static iflag_t cmd_cpu;
@@ -1257,6 +1257,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     expr *e;
     int pass_max;
     char debugid[128];
+    int sb;
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
 	nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
