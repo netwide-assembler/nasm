@@ -243,11 +243,10 @@ static int32_t aout_section_names(char *name, int pass, int *bits)
     /*
      * Default to 32 bits.
      */
-    if (!name)
+    if (!name) {
         *bits = 32;
-
-    if (!name)
         return stext.index;
+    }
 
     if (!strcmp(name, ".text"))
         return stext.index;
