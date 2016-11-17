@@ -351,7 +351,11 @@ int main(int argc, char **argv)
         fseek(fp, 0, SEEK_SET);
         copybytes(fp, fptmp, l);
         rewind(fptmp);
-        freopen(argv[2], "wb", fp);
+        if (freopen(argv[2], "wb", fp) == NULL) {
+            fprintf(stderr, "rdflib: could not reopen '%s'\n", argv[2]);
+            perror("rdflib");
+            exit(1);
+        }
 
         while (!feof(fptmp)) {
             /* read name */
