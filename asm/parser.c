@@ -390,7 +390,7 @@ static int value_to_extop(expr * vect, extop *eop, int32_t myseg)
         if (!vect->value)       /* zero term, safe to ignore */
             continue;
 
-        if (vect->type < EXPR_SIMPLE)  /* false if a register is present */
+        if (vect->type <= EXPR_REG_END) /* false if a register is present */
             return -1;
 
         if (vect->type == EXPR_UNKNOWN) /* something we can't resolve yet */
