@@ -77,6 +77,7 @@
 # include "nasmint.h"
 #endif
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -208,7 +209,10 @@ char *strsep(char **, const char *);
 /*
  * How to tell the compiler that a function doesn't return
  */
-#ifdef HAVE_FUNC_ATTRIBUTE_NORETURN
+#ifdef HAVE_STDNORETURN_H
+# include <stdnoreturn.h>
+# define no_return noreturn void
+#elif defined(HAVE_FUNC_ATTRIBUTE_NORETURN)
 # define no_return void __attribute__((noreturn))
 #else
 # define no_return void

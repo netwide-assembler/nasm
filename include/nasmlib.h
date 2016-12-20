@@ -175,7 +175,18 @@ no_return nasm_assert_failed(const char *, int, const char *);
 /*
  * NASM failure at build time if x != 0
  */
-#define nasm_build_assert(x) (void)(sizeof(char[1-2*!!(x)]))
+#ifdef static_assert
+# define nasm_build_assert(x) static_assert(x, "assertion " #x " failed")
+#elif defined(HAVE_FUNC_ATTRIBUTE_ERROR)
+# define nasm_build_assert(x)                                           \
+    if (!(x)) {                                                         \
+        extern void __attribute__((error("assertion " #x " failed")))      \
+            fail(void);                                                 \
+        fail();                                                         \
+    }
+#else
+# define nasm_build_assert(x) (void)(sizeof(char[1-2*!(x)]))
+#endif
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or

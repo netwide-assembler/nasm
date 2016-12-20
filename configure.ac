@@ -32,8 +32,6 @@ AH_TEMPLATE(WORDS_LITTLEENDIAN,
 [Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
 
-PA_ADD_CFLAGS([-std=c99])
-
 dnl Force gcc and gcc-compatible compilers treat signed integers
 dnl as 2's complement
 PA_ADD_CFLAGS([-fwrapv])
@@ -73,6 +71,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(inttypes.h)
 AC_CHECK_HEADERS(strings.h)
 AC_HEADER_STDBOOL
+AC_CHECK_HEADERS(stdnoreturn.h)
 AC_CHECK_HEADERS(io.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(unistd.h)
@@ -145,6 +144,7 @@ PA_FUNC_ATTRIBUTE(alloc_size, (1))
 PA_FUNC_ATTRIBUTE(format, [(printf,1,2)], int, [const char *, ...], ["%d",1])
 PA_FUNC_ATTRIBUTE(const)
 PA_FUNC_ATTRIBUTE(pure)
+PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
 dnl support cchace
