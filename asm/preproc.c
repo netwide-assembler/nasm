@@ -1614,7 +1614,7 @@ static FILE *inc_fopen(const char *file,
     }
 
     if (!fp && omode != INC_PROBE)
-        fp = nasm_open_read(file, fmode);
+        fp = nasm_open_read(path, fmode);
 
     if (found_path)
         *found_path = path;
