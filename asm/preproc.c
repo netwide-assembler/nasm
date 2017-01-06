@@ -444,6 +444,7 @@ static uint64_t nested_rep_count;
 static macros_t *stdmacpos;
 static macros_t **stdmacnext;
 static macros_t *stdmacros[8];
+static macros_t *extrastdmac;
 
 /*
  * Tokens are allocated in blocks to improve speed
@@ -4969,6 +4970,9 @@ pp_reset(char *file, int apass, StrList **deplist)
     pp_add_stdmac(nasm_stdmac_nasm);
     pp_add_stdmac(nasm_stdmac_version);
 
+    if (extrastdmac)
+        pp_add_stdmac(extrastdmac);
+
     stdmacpos  = stdmacros[0];
     stdmacnext = &stdmacros[1];
 
@@ -5362,6 +5366,11 @@ static void pp_add_stdmac(macros_t *macros)
     *mp = macros;
 }
 
+static void pp_extra_stdmac(macros_t *macros)
+{
+        extrastdmac = macros;
+}
+
 static void make_tok_num(Token * tok, int64_t val)
 {
     char numbuf[32];
@@ -5403,7 +5412,7 @@ const struct preproc_ops nasmpp = {
     pp_reset,
     pp_getline,
     pp_cleanup,
-    pp_add_stdmac,
+    pp_extra_stdmac,
     pp_pre_define,
     pp_pre_undefine,
     pp_pre_include,
