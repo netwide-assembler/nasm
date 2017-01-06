@@ -92,7 +92,7 @@ STD: nasm
         %define %$strucname %1
         [absolute %2]
         %$strucname:        ; allow definition of `.member' to work sanely
-    %endmacro
+%endmacro
 
 %imacro endstruc 0.nolist
         %{$strucname}_size equ ($-%$strucname)
