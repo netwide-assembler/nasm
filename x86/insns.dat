@@ -3577,6 +3577,7 @@ SHA1RNDS4       xmmreg,xmmrm128,imm8                [rmi: 0f 3a cc /r ib ] SHA,F
 SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f 38 cc /r ] SHA,FUTURE
 SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f 38 cd /r ] SHA,FUTURE
 SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f 38 cb /r ] SHA,FUTURE
+SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f 38 cb /r ] SHA,FUTURE
 VADDPD          xmmreg|mask|z,xmmreg*,xmmrm128|b64  [rvm:fv: evex.nds.128.66.0f.w1 58 /r ] AVX512VL,AVX512,FUTURE
 VADDPD          ymmreg|mask|z,ymmreg*,ymmrm256|b64  [rvm:fv: evex.nds.256.66.0f.w1 58 /r ] AVX512VL,AVX512,FUTURE
 VADDPD          zmmreg|mask|z,zmmreg*,zmmrm512|b64|er [rvm:fv: evex.nds.512.66.0f.w1 58 /r ] AVX512,FUTURE
