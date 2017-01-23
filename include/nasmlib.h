@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -176,13 +176,13 @@ no_return nasm_assert_failed(const char *, int, const char *);
  * NASM failure at build time if x != 0
  */
 #ifdef static_assert
-# define nasm_build_assert(x) static_assert(x, "assertion " #x " failed")
-#elif defined(HAVE_FUNC_ATTRIBUTE_ERROR)
+# define nasm_build_assert(x) static_assert(x, #x)
+#elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
 # define nasm_build_assert(x)                                           \
     if (!(x)) {                                                         \
-        extern void __attribute__((error("assertion " #x " failed")))      \
-            fail(void);                                                 \
-        fail();                                                         \
+        extern void __attribute__((error("assertion " #x " failed")))   \
+            _nasm_static_fail(void);					\
+        _nasm_static_fail();                                            \
     }
 #else
 # define nasm_build_assert(x) (void)(sizeof(char[1-2*!(x)]))
