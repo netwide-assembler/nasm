@@ -173,7 +173,7 @@ no_return nasm_assert_failed(const char *, int, const char *);
     } while (0)
 
 /*
- * NASM failure at build time if x != 0
+ * NASM failure at build time if the argument is false
  */
 #ifdef static_assert
 # define nasm_build_assert(x) static_assert(x, #x)
@@ -185,7 +185,9 @@ no_return nasm_assert_failed(const char *, int, const char *);
         _nasm_static_fail();                                            \
     }
 #else
-# define nasm_build_assert(x) (void)(sizeof(char[1-2*!(x)]))
+/* See http://www.drdobbs.com/compile-time-assertions/184401873 */
+# define nasm_build_assert(x) \
+    do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
 
 /*
