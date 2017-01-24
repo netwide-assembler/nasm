@@ -155,6 +155,10 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 
 #define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
 #define nasm_newn(p,n) ((p) = nasm_calloc(sizeof(*(p)),(n)))
+/*
+ * Careful: nasm_delete() is not side-effect safe.
+ * Any ideas how to fix that?
+ */
 #define nasm_delete(p) do { nasm_free(p); (p) = NULL; } while (0)
 #define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
 
