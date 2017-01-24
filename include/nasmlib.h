@@ -153,13 +153,24 @@ void nasm_free(void *);
 char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
 
+/* Assert the argument is a pointer without evaluating it */
+#define nasm_assert_pointer(p) ((void)sizeof(*(p)))
+
 #define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
 #define nasm_newn(p,n) ((p) = nasm_calloc(sizeof(*(p)),(n)))
 /*
- * Careful: nasm_delete() is not side-effect safe.
- * Any ideas how to fix that?
+ * This is broken on platforms where there are pointers which don't
+ * match void * in their internal layout.  It unfortunately also
+ * loses any "const" part of the argument, although hopefully the
+ * compiler will warn in that case.
  */
-#define nasm_delete(p) do { nasm_free(p); (p) = NULL; } while (0)
+#define nasm_delete(p)						\
+    do {							\
+	void **_pp = (void **)&(p);				\
+	nasm_assert_pointer(p);					\
+	nasm_free(*_pp);					\
+	*_pp = NULL;						\
+    } while (0)
 #define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
 
 /*
