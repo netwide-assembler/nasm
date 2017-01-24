@@ -176,9 +176,9 @@ no_return nasm_assert_failed(const char *, int, const char *);
  * NASM failure at build time if the argument is false
  */
 #ifdef static_assert
-# define nasm_build_assert(x) static_assert(x, #x)
+# define nasm_static_assert(x) static_assert(x, #x)
 #elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
-# define nasm_build_assert(x)                                           \
+# define nasm_static_assert(x)                                           \
     if (!(x)) {                                                         \
         extern void __attribute__((error("assertion " #x " failed")))   \
             _nasm_static_fail(void);					\
@@ -186,7 +186,7 @@ no_return nasm_assert_failed(const char *, int, const char *);
     }
 #else
 /* See http://www.drdobbs.com/compile-time-assertions/184401873 */
-# define nasm_build_assert(x) \
+# define nasm_static_assert(x) \
     do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
 

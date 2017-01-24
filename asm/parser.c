@@ -492,7 +492,7 @@ restart_parse:
     if (i == TOKEN_EOS)
         goto fail;
 
-    nasm_build_assert(P_none == 0);
+    nasm_static_assert(P_none == 0);
     memset(result->prefixes, P_none, sizeof(result->prefixes));
     result->times = 1L;
 
