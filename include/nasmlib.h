@@ -156,6 +156,7 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 #define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
 #define nasm_newn(p,n) ((p) = nasm_calloc(sizeof(*(p)),(n)))
 #define nasm_delete(p) do { nasm_free(p); (p) = NULL; } while (0)
+#define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
 
 /*
  * Wrapper around fwrite() which fatal-errors on output failure.
