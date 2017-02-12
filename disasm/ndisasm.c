@@ -65,7 +65,7 @@ static const char *help =
     "   -k avoids disassembling <bytes> bytes from position <start>\n"
     "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
 
-static void output_ins(uint32_t, uint8_t *, int, char *);
+static void output_ins(uint64_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
 static void ndisasm_verror(int severity, const char *fmt, va_list va)
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     bool eof = false;
     iflag_t prefer;
     bool rn_error;
-    int32_t offset;
+    int64_t offset;
     FILE *fp;
 
     tolower_init();
@@ -306,7 +306,7 @@ int main(int argc, char **argv)
         if ((nextsync || synclen) &&
 	    (uint32_t)offset == nextsync) {
             if (synclen) {
-                fprintf(stdout, "%08"PRIX32"  skipping 0x%"PRIX32" bytes\n",
+                fprintf(stdout, "%08"PRIX64"  skipping 0x%"PRIX32" bytes\n",
 			offset, synclen);
                 offset += synclen;
                 skip(synclen, fp);
@@ -342,11 +342,11 @@ int main(int argc, char **argv)
     return 0;
 }
 
-static void output_ins(uint32_t offset, uint8_t *data,
+static void output_ins(uint64_t offset, uint8_t *data,
                        int datalen, char *insn)
 {
     int bytes;
-    fprintf(stdout, "%08"PRIX32"  ", offset);
+    fprintf(stdout, "%08"PRIX64"  ", offset);
 
     bytes = 0;
     while (datalen > 0 && bytes < BPL) {

@@ -39,7 +39,7 @@
 #define NASM_SYNC_H
 
 void init_sync(void);
-void add_sync(uint32_t position, uint32_t length);
-uint32_t next_sync(uint32_t position, uint32_t *length);
+void add_sync(uint64_t position, uint32_t length);
+uint64_t next_sync(uint64_t position, uint32_t *length);
 
 #endif

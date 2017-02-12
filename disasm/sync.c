@@ -56,7 +56,7 @@
  */
 
 static struct Sync {
-    uint32_t pos;
+    uint64_t pos;
     uint32_t length;
 } *synx;
 
@@ -76,7 +76,7 @@ void init_sync(void)
     nsynx = 0;
 }
 
-void add_sync(uint32_t pos, uint32_t length)
+void add_sync(uint64_t pos, uint32_t length)
 {
     uint32_t i;
 
@@ -97,7 +97,7 @@ void add_sync(uint32_t pos, uint32_t length)
     }
 }
 
-uint32_t next_sync(uint32_t position, uint32_t *length)
+uint64_t next_sync(uint64_t position, uint32_t *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
         uint32_t i, j;

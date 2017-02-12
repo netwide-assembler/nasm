@@ -1109,7 +1109,7 @@ static const char * const condition_name[16] = {
 };
 
 int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
-            int32_t offset, int autosync, iflag_t *prefer)
+	       int64_t offset, int autosync, iflag_t *prefer)
 {
     const struct itemplate * const *p, * const *best_p;
     const struct disasm_index *ix;
@@ -1591,7 +1591,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
             } else if (o->segment & SEG_DISP32) {
                 if (prefix.asize == 64) {
                     const char *prefix;
-                    uint64_t offset = (int64_t)(int32_t)offs;
+                    uint64_t offset = offs;
                     if ((int32_t)offs < 0 && started) {
                         offset = -offset;
                         prefix = "-";
