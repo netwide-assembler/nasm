@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -247,6 +247,7 @@ static int parse_mref(operand *op, const expr *e)
 
     b = i = -1;
     o = s = 0;
+    op->segment = op->wrt = NO_SEG;
 
     if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
         bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
@@ -272,17 +273,16 @@ static int parse_mref(operand *op, const expr *e)
             b = e->type;
         e++;
     }
-    if (e->type != 0) { /* is there an offset? */
+
+    if (e->type) {                     /* is there an offset? */
         if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
             nasm_error(ERR_NONFATAL,
-                       "beroset-p-603-invalid effective address");
+                       "invalid effective address: impossible register");
             return -1;
         } else {
             if (e->type == EXPR_UNKNOWN) {
                 op->opflags |= OPFLAG_UNKNOWN;
                 o = 0;  /* doesn't matter what */
-                op->wrt = NO_SEG;     /* nor this */
-                op->segment = NO_SEG; /* or this */
                 while (e->type)
                     e++;        /* go to the end of the line */
             } else {
@@ -293,48 +293,44 @@ static int parse_mref(operand *op, const expr *e)
                 if (e->type == EXPR_WRT) {
                     op->wrt = e->value;
                     e++;
-                } else
-                    op->wrt = NO_SEG;
+                }
                 /*
                  * Look for a segment base type.
                  */
-                if (e->type && e->type < EXPR_SEGBASE) {
-                    nasm_error(ERR_NONFATAL,
-                               "beroset-p-630-invalid effective address");
-                    return -1;
-                }
-                while (e->type && e->value == 0)
-                    e++;
-                if (e->type && e->value != 1) {
-                    nasm_error(ERR_NONFATAL,
-                               "beroset-p-637-invalid effective address");
-                    return -1;
-                }
-                if (e->type) {
-                    op->segment = e->type - EXPR_SEGBASE;
-                    e++;
-                } else
-                    op->segment = NO_SEG;
-                while (e->type && e->value == 0)
-                    e++;
-                if (e->type) {
-                    nasm_error(ERR_NONFATAL,
-                               "beroset-p-650-invalid effective address");
-                    return -1;
+                for (; e->type; e++) {
+                    if (!e->value)
+                        continue;
+
+                    if (e->type <= EXPR_REG_END) {
+                        nasm_error(ERR_NONFATAL,
+                                   "invalid effective address: too many registers");
+                        return -1;
+                    } else if (e->type < EXPR_SEGBASE) {
+                        nasm_error(ERR_NONFATAL,
+                                   "invalid effective address: bad subexpression type");
+                        return -1;
+                    } else if (e->value == 1) {
+                        if (op->segment != NO_SEG) {
+                            nasm_error(ERR_NONFATAL,
+                                       "invalid effective address: multiple base segments");
+                            return -1;
+                        }
+                        op->segment = e->type - EXPR_SEGBASE;
+                    } else if (e->value == -1 &&
+                               e->type == location.segment + EXPR_SEGBASE &&
+                               !(op->opflags & OPFLAG_RELATIVE)) {
+                        op->opflags |= OPFLAG_RELATIVE;
+                    } else {
+                        nasm_error(ERR_NONFATAL,
+                                   "invalid effective address: impossible segment base multiplier");
+                        return -1;
+                    }
                 }
             }
         }
-    } else {
-        o = 0;
-        op->wrt = NO_SEG;
-        op->segment = NO_SEG;
     }
 
-    if (e->type != 0) { /* there'd better be nothing left! */
-        nasm_error(ERR_NONFATAL,
-                   "beroset-p-663-invalid effective address");
-        return -1;
-    }
+    nasm_assert(!e->type);      /* We should be at the end */
 
     op->basereg = b;
     op->indexreg = i;
@@ -1056,6 +1052,7 @@ is_expression:
                 op->offset    = reloc_value(value);
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
+                op->opflags   |= is_self_relative(value) ? OPFLAG_RELATIVE : 0;
 
                 if (is_simple(value)) {
                     uint64_t n = reloc_value(value);
@@ -1073,7 +1070,7 @@ is_expression:
                             op->type |= SDWORD;
                     }
                 }
-            } else if(value->type == EXPR_RDSAE) {
+            } else if (value->type == EXPR_RDSAE) {
                 /*
                  * it's not an operand but a rounding or SAE decorator.
                  * put the decorator information in the (opflag_t) type field

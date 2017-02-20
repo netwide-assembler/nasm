@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -273,14 +273,16 @@ typedef struct {
 /*
  * Library routines to manipulate expression data types.
  */
-int is_reloc(expr *vect);
-int is_simple(expr *vect);
-int is_really_simple(expr *vect);
-int is_unknown(expr *vect);
-int is_just_unknown(expr *vect);
-int64_t reloc_value(expr *vect);
-int32_t reloc_seg(expr *vect);
-int32_t reloc_wrt(expr *vect);
+bool is_reloc(const expr *vect);
+bool is_simple(const expr *vect);
+bool is_really_simple(const expr *vect);
+bool is_unknown(const expr *vect);
+bool is_just_unknown(const expr *vect);
+int64_t reloc_value(const expr *vect);
+int32_t reloc_seg(const expr *vect);
+int32_t reloc_wrt(const expr *vect);
+bool is_self_relative(const expr *vect);
+void dump_expr(const expr *vect);
 
 /*
  * The evaluator can also return hints about which of two registers
@@ -575,7 +577,6 @@ typedef struct operand { /* operand to an instruction */
     int32_t         segment;    /* immediate segment, if needed */
     int64_t         offset;     /* any immediate number */
     int32_t         wrt;        /* segment base it's relative to */
-    bool            relative;   /* self-relative expression */
     int             eaflags;    /* special EA flags */
     int             opflags;    /* see OPFLAG_* defines below */
     decoflags_t     decoflags;  /* decorator flags such as {...} */
@@ -584,8 +585,9 @@ typedef struct operand { /* operand to an instruction */
 #define OPFLAG_FORWARD      1   /* operand is a forward reference */
 #define OPFLAG_EXTERN       2   /* operand is an external reference */
 #define OPFLAG_UNKNOWN      4   /* operand is an unknown reference
-                                 * (always a forward reference also)
-                                 */
+                                   (always a forward reference also) */
+#define OPFLAG_RELATIVE     8   /* operand is self-relative, e.g. [foo - $]
+                                   where foo is not in the current segment */
 
 typedef struct extop { /* extended operand */
     struct extop    *next;      /* linked list */

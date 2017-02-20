@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -43,82 +43,88 @@
  * Return true if the argument is a simple scalar. (Or a far-
  * absolute, which counts.)
  */
-int is_simple(expr * vect)
+bool is_simple(const expr *vect)
 {
     while (vect->type && !vect->value)
         vect++;
     if (!vect->type)
-        return 1;
+        return true;
     if (vect->type != EXPR_SIMPLE)
-        return 0;
+        return false;
     do {
         vect++;
     } while (vect->type && !vect->value);
     if (vect->type && vect->type < EXPR_SEGBASE + SEG_ABS)
-        return 0;
-    return 1;
+        return false;
+    return true;
 }
 
 /*
  * Return true if the argument is a simple scalar, _NOT_ a far-
  * absolute.
  */
-int is_really_simple(expr * vect)
+bool is_really_simple(const expr *vect)
 {
     while (vect->type && !vect->value)
         vect++;
     if (!vect->type)
-        return 1;
+        return true;
     if (vect->type != EXPR_SIMPLE)
-        return 0;
+        return false;
     do {
         vect++;
     } while (vect->type && !vect->value);
     if (vect->type)
-        return 0;
-    return 1;
+        return false;
+    return true;
 }
 
 /*
  * Return true if the argument is relocatable (i.e. a simple
- * scalar, plus at most one segment-base, plus possibly a WRT).
+ * scalar, plus at most one segment-base, possibly a subtraction
+ * of the current segment base, plus possibly a WRT).
  */
-int is_reloc(expr * vect)
+bool is_reloc(const expr *vect)
 {
-    while (vect->type && !vect->value)  /* skip initial value-0 terms */
-        vect++;
-    if (!vect->type)            /* trivially return true if nothing */
-        return 1;               /* is present apart from value-0s */
-    if (vect->type < EXPR_SIMPLE)       /* false if a register is present */
-        return 0;
-    if (vect->type == EXPR_SIMPLE) {    /* skip over a pure number term... */
-        do {
-            vect++;
-        } while (vect->type && !vect->value);
-        if (!vect->type)        /* ...returning true if that's all */
-            return 1;
+    bool has_rel = false;       /* Has a self-segment-subtract */
+    bool has_seg = false;       /* Has a segment base */
+
+    for (; vect->type; vect++) {
+        if (!vect->value) {
+            /* skip value-0 terms */
+            continue;
+        } else if (vect->type < EXPR_SIMPLE) {
+            /* false if a register is present */
+            return false;
+        } else if (vect->type == EXPR_SIMPLE) {
+            /* skip over a pure number term... */
+            continue;
+        } else if (vect->type == EXPR_WRT) {
+            /* skip over a WRT term... */
+            continue;
+        } else if (vect->type < EXPR_SEGBASE) {
+            /* other special type -> problem */
+            return false;
+        } else if (vect->value == 1) {
+            if (has_seg)
+                return false;   /* only one segbase allowed */
+            has_seg = true;
+        } else if (vect->value == -1) {
+            if (vect->type != location.segment + EXPR_SEGBASE)
+                return false;   /* can only subtract current segment */
+            if (has_rel)
+                return false;   /* already is relative */
+            has_rel = true;
+        }
     }
-    if (vect->type == EXPR_WRT) {       /* skip over a WRT term... */
-        do {
-            vect++;
-        } while (vect->type && !vect->value);
-        if (!vect->type)        /* ...returning true if that's all */
-            return 1;
-    }
-    if (vect->value != 0 && vect->value != 1)
-        return 0;               /* segment base multiplier non-unity */
-    do {                        /* skip over _one_ seg-base term... */
-        vect++;
-    } while (vect->type && !vect->value);
-    if (!vect->type)            /* ...returning true if that's all */
-        return 1;
-    return 0;                   /* And return false if there's more */
+
+    return true;
 }
 
 /*
  * Return true if the argument contains an `unknown' part.
  */
-int is_unknown(expr * vect)
+bool is_unknown(const expr *vect)
 {
     while (vect->type && vect->type < EXPR_UNKNOWN)
         vect++;
@@ -129,7 +135,7 @@ int is_unknown(expr * vect)
  * Return true if the argument contains nothing but an `unknown'
  * part.
  */
-int is_just_unknown(expr * vect)
+bool is_just_unknown(const expr *vect)
 {
     while (vect->type && !vect->value)
         vect++;
@@ -140,7 +146,7 @@ int is_just_unknown(expr * vect)
  * Return the scalar part of a relocatable vector. (Including
  * simple scalar vectors - those qualify as relocatable.)
  */
-int64_t reloc_value(expr * vect)
+int64_t reloc_value(const expr *vect)
 {
     while (vect->type && !vect->value)
         vect++;
@@ -156,26 +162,21 @@ int64_t reloc_value(expr * vect)
  * Return the segment number of a relocatable vector, or NO_SEG for
  * simple scalars.
  */
-int32_t reloc_seg(expr * vect)
+int32_t reloc_seg(const expr *vect)
 {
-    while (vect->type && (vect->type == EXPR_WRT || !vect->value))
-        vect++;
-    if (vect->type == EXPR_SIMPLE) {
-        do {
-            vect++;
-        } while (vect->type && (vect->type == EXPR_WRT || !vect->value));
+    for (; vect->type; vect++) {
+        if (vect->type >= EXPR_SEGBASE && vect->value == 1)
+            return vect->type - EXPR_SEGBASE;
     }
-    if (!vect->type)
-        return NO_SEG;
-    else
-        return vect->type - EXPR_SEGBASE;
+
+    return NO_SEG;
 }
 
 /*
  * Return the WRT segment number of a relocatable vector, or NO_SEG
  * if no WRT part is present.
  */
-int32_t reloc_wrt(expr * vect)
+int32_t reloc_wrt(const expr *vect)
 {
     while (vect->type && vect->type < EXPR_WRT)
         vect++;
@@ -183,4 +184,59 @@ int32_t reloc_wrt(expr * vect)
         return vect->value;
     } else
         return NO_SEG;
+}
+
+/*
+ * Return true if this expression contains a subtraction of the location
+ */
+bool is_self_relative(const expr *vect)
+{
+    for (; vect->type; vect++) {
+        if (vect->type == location.segment + EXPR_SEGBASE && vect->value == -1)
+            return true;
+    }
+
+    return false;
+}
+
+/*
+ * Debug support: dump a description of an expression vector to stdout
+ */
+static const char *expr_type(int32_t type)
+{
+    static char seg_str[64];
+
+    switch (type) {
+    case 0:
+        return "null";
+    case EXPR_UNKNOWN:
+        return "unknown";
+    case EXPR_SIMPLE:
+        return "simple";
+    case EXPR_WRT:
+        return "wrt";
+    case EXPR_RDSAE:
+        return "sae";
+    default:
+        break;
+    }
+
+    if (type >= EXPR_REG_START && type <= EXPR_REG_END) {
+        return nasm_reg_names[type - EXPR_REG_START];
+    } else if (type >= EXPR_SEGBASE) {
+        snprintf(seg_str, sizeof seg_str, "%sseg %d",
+                 (type - EXPR_SEGBASE) == location.segment ? "this " : "",
+                 type - EXPR_SEGBASE);
+        return seg_str;
+    } else {
+        return "ERR";
+    }
+}
+
+void dump_expr(const expr *e)
+{
+    printf("[");
+    for (; e->type; e++)
+        printf("<%s(%d),%ld>", expr_type(e->type), e->type, e->value);
+    printf("]\n");
 }

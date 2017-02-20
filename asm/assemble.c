@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -245,6 +245,12 @@ static void add_asp(insn *, int);
 
 static enum ea_type process_ea(operand *, ea *, int, int, opflags_t, insn *);
 
+static inline bool absolute_op(const struct operand *o)
+{
+    return o->segment == NO_SEG && o->wrt == NO_SEG &&
+        !(o->opflags & OPFLAG_RELATIVE);
+}
+
 static int has_prefix(insn * ins, enum prefix_pos pos, int prefix)
 {
     return ins->prefixes[pos] == prefix;
@@ -295,7 +301,7 @@ static void warn_overflow_const(int64_t data, int size)
 
 static void warn_overflow_opd(const struct operand *o, int size)
 {
-    if (o->wrt == NO_SEG && o->segment == NO_SEG) {
+    if (absolute_op(o)) {
         if (overflow_general(o->offset, size))
             warn_overflow(ERR_PASS2, size);
     }
@@ -426,10 +432,11 @@ static inline void out_reserve(struct out_data *data, uint64_t size)
     out(data);
 }
 
-static inline void out_imm(struct out_data *data, struct operand *opx,
+static inline void out_imm(struct out_data *data, const struct operand *opx,
                            int size, enum out_sign sign)
 {
-    data->type = OUT_ADDRESS;
+    data->type =
+        (opx->opflags & OPFLAG_RELATIVE) ? OUT_RELADDR : OUT_ADDRESS;
     data->sign = sign;
     data->size = size;
     data->toffset = opx->offset;
@@ -438,9 +445,12 @@ static inline void out_imm(struct out_data *data, struct operand *opx,
     out(data);
 }
 
-static inline void out_reladdr(struct out_data *data, struct operand *opx,
-                               int size)
+static void out_reladdr(struct out_data *data, const struct operand *opx,
+                        int size)
 {
+    if (opx->opflags & OPFLAG_RELATIVE)
+        nasm_error(ERR_NONFATAL, "invalid use of self-relative expression");
+
     data->type = OUT_RELADDR;
     data->sign = OUT_SIGNED;
     data->size = size;
@@ -450,7 +460,8 @@ static inline void out_reladdr(struct out_data *data, struct operand *opx,
     out(data);
 }
 
-static inline void out_segment(struct out_data *data, struct operand *opx)
+static inline void out_segment(struct out_data *data,
+                               const struct operand *opx)
 {
     data->type = OUT_SEGMENT;
     data->sign = OUT_UNSIGNED;
@@ -1126,7 +1137,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0340:
-            if (ins->oprs[0].segment != NO_SEG)
+            if (!absolute_op(&ins->oprs[0]))
                 nasm_error(ERR_NONFATAL, "attempt to reserve non-constant"
                         " quantity of BSS space");
             else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
@@ -1631,7 +1642,7 @@ static void gencode(struct out_data *data, insn *ins)
             c = *codes++;
             opx = &ins->oprs[c >> 3];
             opy = &ins->oprs[c & 7];
-            if (opy->segment != NO_SEG || opy->wrt != NO_SEG) {
+            if (!absolute_op(opy)) {
                 nasm_error(ERR_NONFATAL,
                         "non-absolute expression not permitted as argument %d",
                         c & 7);
@@ -1657,7 +1668,7 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case4(0254):
-            if (opx->wrt == NO_SEG && opx->segment == NO_SEG &&
+            if (absolute_op(opx) &&
                 (int32_t)opx->offset != (int64_t)opx->offset) {
                 nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
                         "signed dword immediate exceeds bounds");
@@ -2429,11 +2440,12 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             /*
              * It's a pure offset.
              */
-            if (bits == 64 && ((input->type & IP_REL) == IP_REL) &&
-                input->segment == NO_SEG) {
-                nasm_error(ERR_WARNING | ERR_PASS1, "absolute address can not be RIP-relative");
-                input->type &= ~IP_REL;
-                input->type |= MEMORY;
+            if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
+                if (input->segment == NO_SEG || (input->opflags & OPFLAG_RELATIVE)) {
+                    nasm_error(ERR_WARNING | ERR_PASS2, "absolute address can not be RIP-relative");
+                    input->type &= ~IP_REL;
+                    input->type |= MEMORY;
+                }
             }
 
             if (bits == 64 &&
