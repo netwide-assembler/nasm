@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -2492,7 +2492,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
              */
             if (bits == 64 && ((input->type & IP_REL) == IP_REL) &&
                 input->segment == NO_SEG) {
-                nasm_error(ERR_WARNING | ERR_PASS1, "absolute address can not be RIP-relative");
+                nasm_error(ERR_WARNING | ERR_PASS2, "absolute address can not be RIP-relative");
                 input->type &= ~IP_REL;
                 input->type |= MEMORY;
             }
