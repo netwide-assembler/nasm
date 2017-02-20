@@ -2092,25 +2092,19 @@ done:
 
 static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
 {
-    opflags_t opsize = opflags & SIZE_MASK;
+    unsigned int opsize = (opflags & SIZE_MASK) >> SIZE_SHIFT;
     uint8_t brcast_num;
 
-    /*
-     * Due to discontinuity between BITS64 and BITS128 (BITS80),
-     * this cannot be a simple arithmetic calculation.
-     */
     if (brsize > BITS64)
         nasm_error(ERR_FATAL,
             "size of broadcasting element is greater than 64 bits");
 
-    switch (opsize) {
-    case BITS64:
-        brcast_num = BITS64 / brsize;
-        break;
-    default:
-        brcast_num = (opsize / BITS128) * (BITS64 / brsize) * 2;
-        break;
-    }
+    /*
+     * The shift term is to take care of the extra BITS80 inserted
+     * between BITS64 and BITS128.
+     */
+    brcast_num = ((opsize / (BITS64 >> SIZE_SHIFT)) * (BITS64 / brsize))
+        >> (opsize > (BITS64 >> SIZE_SHIFT));
 
     return brcast_num;
 }
