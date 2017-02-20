@@ -81,6 +81,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <limits.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -246,6 +247,22 @@ char *strsep(char **, const char *);
 # define pure_func __attribute__((pure))
 #else
 # define pure_func
+#endif
+
+/* Watcom doesn't handle switch statements with 64-bit types, hack around it */
+#ifdef __WATCOM__
+# define BOGUS_CASE 0x76543210
+
+static inline unsigned int watcom_switch_hack(uint64_t x)
+{
+    if (x > UINT_MAX)
+        return BOGUS_CASE;
+    else
+        return (unsigned int)x;
+}
+
+# define switch(x) switch(watcom_switch_hack(x))
+# define default case BOGUS_CASE: default
 #endif
 
 #endif	/* NASM_COMPILER_H */
