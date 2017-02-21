@@ -348,6 +348,7 @@ static void out(struct out_data *data)
     } xdata;
     uint64_t size = data->size;
     int64_t addrval;
+    int32_t fixseg;             /* Segment for which to produce fixed data */
 
     if (!data->size)
         return;                 /* Nothing to do */
@@ -359,16 +360,18 @@ static void out(struct out_data *data)
     switch (data->type) {
     case OUT_ADDRESS:
         addrval = data->toffset;
+        fixseg = NO_SEG;        /* Absolute address is fixed data */
         goto address;
 
     case OUT_RELADDR:
         addrval = data->toffset - data->relbase;
+        fixseg = data->segment; /* Our own segment is fixed data */
         goto address;
 
     address:
         asize = data->size;
         nasm_assert(asize <= 8);
-        if (data->tsegment == NO_SEG && data->twrt == NO_SEG) {
+        if (data->tsegment == fixseg && data->twrt == NO_SEG) {
             uint8_t *q = xdata.b;
 
             warn_overflow_out(addrval, asize, data->sign);
