@@ -307,6 +307,29 @@ static void warn_overflow_opd(const struct operand *o, int size)
     }
 }
 
+static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
+{
+    bool err;
+
+    switch (sign) {
+    case OUT_WRAP:
+        err = overflow_general(data, size);
+        break;
+    case OUT_SIGNED:
+        err = overflow_signed(data, size);
+        break;
+    case OUT_UNSIGNED:
+        err = overflow_unsigned(data, size);
+        break;
+    default:
+        panic();
+        break;
+    }
+
+    if (err)
+        warn_overflow(ERR_PASS2, size);
+}
+
 /*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
@@ -324,6 +347,7 @@ static void out(struct out_data *data)
         uint64_t q;
     } xdata;
     uint64_t size = data->size;
+    int64_t addrval;
 
     if (!data->size)
         return;                 /* Nothing to do */
@@ -334,31 +358,22 @@ static void out(struct out_data *data)
      */
     switch (data->type) {
     case OUT_ADDRESS:
+        addrval = data->toffset;
+        goto address;
+
+    case OUT_RELADDR:
+        addrval = data->toffset - data->relbase;
+        goto address;
+
+    address:
         asize = data->size;
         nasm_assert(asize <= 8);
         if (data->tsegment == NO_SEG && data->twrt == NO_SEG) {
-            /* XXX: check for overflow */
             uint8_t *q = xdata.b;
 
-            WRITEADDR(q, data->toffset, asize);
-            data->data = xdata.b;
-            data->type = OUT_RAWDATA;
-            asize = 0;              /* No longer an address */
-        }
-        break;
+            warn_overflow_out(addrval, asize, data->sign);
 
-    case OUT_RELADDR:
-        asize = data->size;
-        nasm_assert(asize <= 8);
-        if (data->tsegment == data->segment && data->twrt == NO_SEG) {
-            uint8_t *q = xdata.b;
-            int64_t delta = data->toffset - data->offset
-                - (data->inslen - data->insoffs);
-
-            if (overflow_signed(delta, asize))
-                warn_overflow(ERR_PASS2, asize);
-
-            WRITEADDR(q, delta, asize);
+            WRITEADDR(q, addrval, asize);
             data->data = xdata.b;
             data->type = OUT_RAWDATA;
             asize = 0;              /* No longer an address */
@@ -442,6 +457,14 @@ static inline void out_imm(struct out_data *data, const struct operand *opx,
     data->toffset = opx->offset;
     data->tsegment = opx->segment;
     data->twrt = opx->wrt;
+    /*
+     * XXX: improve this if at some point in the future we can
+     * distinguish the subtrahend in expressions like [foo - bar]
+     * where bar is a symbol in the current segment.  However, at the
+     * current point, if OPFLAG_RELATIVE is set that subtraction has
+     * already occurred.
+     */
+    data->relbase = 0;
     out(data);
 }
 
@@ -457,6 +480,7 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
     data->toffset = opx->offset;
     data->tsegment = opx->segment;
     data->twrt = opx->wrt;
+    data->relbase = data->offset + (data->inslen - data->insoffs);
     out(data);
 }
 
@@ -523,6 +547,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
 
     cpu = cp;
 
+    nasm_zero(&data);
     data.offset = start;
     data.segment = segment;
     data.itemp = NULL;
@@ -553,6 +578,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
                         data.toffset = e->offset;
                         data.tsegment = e->segment;
                         data.twrt = e->wrt;
+                        data.relbase = 0;
                         out(&data);
                     }
                 } else if (e->type == EOT_DB_STRING ||

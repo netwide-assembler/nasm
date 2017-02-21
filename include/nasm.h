@@ -84,29 +84,20 @@ struct ofmt;
 
 /*
  * Values for the `type' parameter to an output function.
- *
- * Exceptions are OUT_RELxADR, which denote an x-byte relocation
- * which will be a relative jump. For this we need to know the
- * distance in bytes from the start of the relocated record until
- * the end of the containing instruction. _This_ is what is stored
- * in the size part of the parameter, in this case.
- *
- * Also OUT_RESERVE denotes reservation of N bytes of BSS space,
- * and the contents of the "data" parameter is irrelevant.
- *
- * The "data" parameter for the output function points to a "int32_t",
- * containing the address in question, unless the type is
- * OUT_RAWDATA, in which case it points to an "uint8_t"
- * array.
  */
 enum out_type {
     OUT_RAWDATA,    /* Plain bytes */
     OUT_RESERVE,    /* Reserved bytes (RESB et al) */
     OUT_ADDRESS,    /* An address (symbol value) */
-    OUT_RELADDR,    /* A relative address (relative to instruction end) */
+    OUT_RELADDR,    /* A relative address */
     OUT_SEGMENT,    /* A segment number */
 
-    /* These are temporary until the backend change */
+    /*
+     * These values are used by the legacy backend interface only;
+     * see output/legacy.c for more information.  These should never
+     * be used otherwise.  Once all backends have been migrated to the
+     * new interface they should be removed.
+     */
     OUT_REL1ADR,
     OUT_REL2ADR,
     OUT_REL4ADR,
@@ -138,6 +129,7 @@ struct out_data {
     uint64_t toffset;           /* Target address offset for relocation */
     int32_t tsegment;           /* Target segment for relocation */
     int32_t twrt;               /* Relocation with respect to */
+    int64_t relbase;            /* Relative base for OUT_RELADDR */
 };
 
 /*
