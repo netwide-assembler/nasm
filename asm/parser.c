@@ -402,7 +402,7 @@ static int value_to_extop(expr * vect, extop *eop, int32_t myseg)
             continue;
         }
 
-        if (eop->wrt == NO_SEG && !eop->relative &&
+        if (!eop->relative &&
             vect->type == EXPR_SEGBASE + myseg && vect->value == -1) {
             /* Expression of the form: foo - $ */
             eop->relative = true;
