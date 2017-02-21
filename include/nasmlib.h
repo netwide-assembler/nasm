@@ -172,6 +172,7 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 	*_pp = NULL;						\
     } while (0)
 #define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
+#define nasm_zeron(p,n) (memset((p), 0, (n)*sizeof(*(p))))
 
 /*
  * Wrapper around fwrite() which fatal-errors on output failure.
