@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -76,9 +76,23 @@
 # endif
 #endif
 
+/*
+ * On Win32, stat has a 32-bit file size but _stati64 has a 64-bit file
+ * size.  However, as "stat" is already a macro, don't confuse the situation
+ * further by redefining it, instead we create our own.
+ */
 #ifdef HAVE__STATI64
-# define HAVE_STAT 1
-# define stat _stati64
+# define nasm_stat _stati64
+#elif defined(HAVE_STAT)
+# define nasm_stat stat
+#endif
+
+#ifdef HAVE_FILENO
+# ifdef HAVE__FSTATI64
+#  define nasm_fstat _fstati64
+# elif defined(HAVE_FSTAT)
+#  define nasm_fstat fstat
+# endif
 #endif
 
 void nasm_write(const void *ptr, size_t size, FILE *f)
@@ -236,10 +250,10 @@ off_t nasm_file_size(FILE *f)
 {
 #if defined(HAVE_FILENO) && defined(HAVE__FILELENGTHI64)
     return _filelengthi64(fileno(f));
-#elif defined(HAVE_FILENO) && defined(HAVE_FSTAT)
-    struct stat st;
+#elif defined(nasm_fstat)
+    struct nasm_stat st;
 
-    if (fstat(fileno(f), &st))
+    if (nasm_fstat(fileno(f), &st))
         return (off_t)-1;
 
     return st.st_size;
@@ -280,7 +294,11 @@ off_t nasm_file_size_by_path(const char *pathname)
 
 /*
  * System page size
+ *
+ * Not needed unless we have mmap(), and can cause compile failures,
+ * e.g. on MinGW32, so we #if around it.
  */
+#if defined(HAVE_FILENO) && defined(HAVE_MMAP)
 
 /* File scope since not all compilers like static data in inline functions */
 static size_t nasm_pagemask;
@@ -308,6 +326,8 @@ static inline size_t pagemask(void)
 
     return pm;
 }
+
+#endif
 
 /*
  * Try to map an input file into memory
@@ -338,6 +358,7 @@ const void *nasm_map_file(FILE *fp, off_t start, off_t len)
     return unlikely(p == MAP_FAILED) ? NULL : p + salign;
 #else
     /* XXX: add Windows support? */
+    (void)fp; (void)start; (void)len;
     return NULL;
 #endif
 }
@@ -361,5 +382,7 @@ void nasm_unmap_file(const void *p, size_t len)
     alen = (len + salign + page_mask) & ~page_mask;
 
     munmap((void *)astart, alen);
+#else
+    (void)p; (void)len;
 #endif
 }
