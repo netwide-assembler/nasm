@@ -63,6 +63,7 @@ AC_DEFUN(PA_FUNC_ATTRIBUTE,
 #include <stdarg.h>
 extern ifelse([$3],[],[void *],[$3])  __attribute__(($1$2))
   bar(ifelse([$4],[],[int],[$4]));
+void *foo(void);
 void *foo(void)
 {
 	return bar(ifelse([$5],[],[1],[$5]));
@@ -86,6 +87,7 @@ AC_DEFUN(PA_FUNC_ATTRIBUTE_ERROR,
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <stdarg.h>
 extern void __attribute__((error("message"))) barf(void);
+void foo(void);
 void foo(void)
 {
 	if (0)
