@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -436,6 +436,7 @@ static void register_reloc(struct coff_Section *const sect,
 {
     struct coff_Reloc *r;
     struct coff_Section *sec;
+    uint32_t i;
 
     r = *sect->tail = nasm_malloc(sizeof(struct coff_Reloc));
     sect->tail = &r->next;
@@ -447,7 +448,7 @@ static void register_reloc(struct coff_Section *const sect,
     r->type = type;
 
     r->symbol = 0;
-    for (int i = 0; i < coff_nsects; i++) {
+    for (i = 0; i < (uint32_t)coff_nsects; i++) {
         sec = coff_sects[i];
         if (!strcmp(sym, sec->name)) {
             return;
@@ -456,7 +457,7 @@ static void register_reloc(struct coff_Section *const sect,
     }
 
     saa_rewind(coff_syms);
-    for (uint32_t i = 0; i < coff_nsyms; i++) {
+    for (i = 0; i < coff_nsyms; i++) {
         struct coff_Symbol *s = saa_rstruct(coff_syms);
         r->symbol++;
         if (s->strpos == -1 && !strcmp(sym, s->name)) {
