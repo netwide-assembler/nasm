@@ -102,7 +102,7 @@ AC_CHECK_FUNCS([fileno _fileno])
 AC_CHECK_FUNCS(_filelengthi64)
 AC_CHECK_FUNCS([stat _stati64])
 AC_CHECK_FUNCS(fstat)
-AC_CHECK_FUNCS(mmap)
+AC_FUNC_MMAP
 AC_CHECK_FUNCS(getpagesize)
 AC_CHECK_FUNCS(sysconf)
 
