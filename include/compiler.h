@@ -261,7 +261,7 @@ static inline unsigned int watcom_switch_hack(uint64_t x)
         return (unsigned int)x;
 }
 
-# define switch(x) switch(watcom_switch_hack(x))
+# define switch(x) switch(sizeof(x) > sizeof(unsigned int) ? watcom_switch_hack(x) : (x))
 # define default case BOGUS_CASE: default
 #endif
 
