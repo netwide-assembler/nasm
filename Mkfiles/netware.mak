@@ -59,7 +59,7 @@ LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
 	ver.o \
 	crc64.o malloc.o \
 	error.o md5c.o string.o \
-	file.o ilog2.o \
+	file.o mmap.o ilog2.o \
 	realpath.o filename.o srcfile.o \
 	zerobuf.o readnum.o bsi.o \
 	rbtree.o hashtbl.o \
@@ -225,7 +225,7 @@ crc64.o: crc64.c config.h msvc.h unknown.h watcom.h compiler.h hashtbl.h \
 error.o: error.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
  nasmlib.h
 file.o: file.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
- nasmlib.h
+ nasmlib.h file.h
 filename.o: filename.c config.h msvc.h unknown.h watcom.h compiler.h \
  nasmint.h nasmlib.h
 hashtbl.o: hashtbl.c directiv.h pptok.h preproc.h config.h msvc.h unknown.h \
@@ -236,6 +236,8 @@ ilog2.o: ilog2.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
 malloc.o: malloc.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
  nasmlib.h
 md5c.o: md5c.c config.h msvc.h unknown.h watcom.h compiler.h md5.h nasmint.h
+mmap.o: mmap.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
+ nasmlib.h file.h
 raa.o: raa.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \
  nasmlib.h raa.h
 rbtree.o: rbtree.c config.h msvc.h unknown.h watcom.h compiler.h nasmint.h \

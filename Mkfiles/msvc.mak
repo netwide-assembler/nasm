@@ -82,7 +82,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/ver.$(O) \
 	nasmlib/crc64.$(O) nasmlib/malloc.$(O) \
 	nasmlib/error.$(O) nasmlib/md5c.$(O) nasmlib/string.$(O) \
-	nasmlib/file.$(O) nasmlib/ilog2.$(O) \
+	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
 	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) \
 	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) \
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
@@ -384,7 +384,8 @@ nasmlib/crc64.$(O): nasmlib/crc64.c config/msvc.h config/unknown.h \
 nasmlib/error.$(O): nasmlib/error.c config/msvc.h config/unknown.h \
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/file.$(O): nasmlib/file.c config/msvc.h config/unknown.h \
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
+ config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h \
+ nasmlib/file.h
 nasmlib/filename.$(O): nasmlib/filename.c config/msvc.h config/unknown.h \
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/hashtbl.$(O): nasmlib/hashtbl.c asm/directiv.h asm/pptok.h \
@@ -398,6 +399,9 @@ nasmlib/malloc.$(O): nasmlib/malloc.c config/msvc.h config/unknown.h \
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/md5c.$(O): nasmlib/md5c.c config/msvc.h config/unknown.h \
  config/watcom.h include/compiler.h include/md5.h include/nasmint.h
+nasmlib/mmap.$(O): nasmlib/mmap.c config/msvc.h config/unknown.h \
+ config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h \
+ nasmlib/file.h
 nasmlib/raa.$(O): nasmlib/raa.c config/msvc.h config/unknown.h \
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h \
  include/raa.h
