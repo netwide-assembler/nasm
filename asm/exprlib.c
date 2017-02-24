@@ -237,6 +237,6 @@ void dump_expr(const expr *e)
 {
     printf("[");
     for (; e->type; e++)
-        printf("<%s(%d),%ld>", expr_type(e->type), e->type, e->value);
+        printf("<%s(%d),%"PRId64">", expr_type(e->type), e->type, e->value);
     printf("]\n");
 }
