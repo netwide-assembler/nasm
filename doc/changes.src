@@ -7,6 +7,22 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.13} Version 2.13
+
+\b Support the official forms of the \c{UD0} and \c{UD1} instructions.
+
+\b Allow self-segment-relative expressions in immediates and
+   displacements, even when combined with an external or otherwise
+   out-of-segment special symbol, e.g.:
+
+\c      extern foo
+\c      mov eax,[foo - $ + ebx]               ; Now legal
+
+\b Handle a 64-bit origin in NDISASM.
+
+\b NASM can now generate sparse output files for relevant output
+   formats, if the underlying operating system supports them.
+
 \S{cl-2.12.03} Version 2.12.03
 
 \b Add new warnings for certain dangerous constructs which never ought
@@ -1328,7 +1344,7 @@ it 0.98.28 to not confuse poor little apt-get.
 Changes from 0.98.07 release to 98.09b as of 28-Oct-2001
 
 \b More closely compatible with 0.98 when -O0 is implied
-or specified.  Not strictly identical, since backward 
+or specified.  Not strictly identical, since backward
 branches in range of short offsets are recognized, and signed
 byte values with no explicit size specification will be
 assembled as a single byte.
@@ -2045,7 +2061,7 @@ on lines such as `dd 0.0,0.0,0.0,0.0,...'
 \b Fixed a subtle preprocessor bug whereby invoking one multi-line
 macro on the first line of the expansion of another, when the second
 had been invoked with a label defined before it, didn't expand the
-inner macro. 
+inner macro.
 
 \b Added internal.doc back in to the distribution archives - it was
 missing in 0.96 *blush*
