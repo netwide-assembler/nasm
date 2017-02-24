@@ -104,7 +104,7 @@ int vsnprintf(char *, size_t, const char *, va_list);
 # endif
 #endif
 
-#if !defined(HAVE_STRLCPY) || !defined(HAVE_DECL_STRLCPY)
+#if !defined(HAVE_STRLCPY) || !HAVE_DECL_STRLCPY
 size_t strlcpy(char *, const char *, size_t);
 #endif
 
@@ -136,24 +136,28 @@ typedef enum bool { false, true } bool;
 #endif
 
 /* Some misguided platforms hide the defs for these */
-#if defined(HAVE_STRCASECMP) && !defined(HAVE_DECL_STRCASECMP)
+#if defined(HAVE_STRCASECMP) && !HAVE_DECL_STRCASECMP
 int strcasecmp(const char *, const char *);
 #endif
 
-#if defined(HAVE_STRICMP) && !defined(HAVE_DECL_STRICMP)
+#if defined(HAVE_STRICMP) && !HAVE_DECL_STRICMP
 int stricmp(const char *, const char *);
 #endif
 
-#if defined(HAVE_STRNCASECMP) && !defined(HAVE_DECL_STRNCASECMP)
+#if defined(HAVE_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
 int strncasecmp(const char *, const char *, size_t);
 #endif
 
-#if defined(HAVE_STRNICMP) && !defined(HAVE_DECL_STRNICMP)
+#if defined(HAVE_STRNICMP) && !HAVE_DECL_STRNICMP
 int strnicmp(const char *, const char *, size_t);
 #endif
 
-#if defined(HAVE_STRSEP) && !defined(HAVE_DECL_STRSEP)
+#if defined(HAVE_STRSEP) && !HAVE_DECL_STRSEP
 char *strsep(char **, const char *);
+#endif
+
+#if !HAVE_DECL_STRNLEN
+size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /*
