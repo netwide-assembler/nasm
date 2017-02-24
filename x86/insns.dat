@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -1375,9 +1375,15 @@ TEST		rm64,imm			[mi:	o64 f7 /0 id,s]				X64,SM
 TEST		mem,imm8			[mi:	f6 /0 ib]				8086,SM
 TEST		mem,imm16			[mi:	o16 f7 /0 iw]				8086,SM
 TEST		mem,imm32			[mi:	o32 f7 /0 id]				386,SM
-UD0		void				[	0f ff]					186,UNDOC
-UD1		void				[	0f b9]					186,UNDOC
-UD2B		void				[	0f b9]					186,UNDOC,ND
+UD0		void				[	0f ff]					186
+UD1		reg,rm16			[rm:	o16 0f b9 /r]				186
+UD1		reg,rm32			[rm:	o32 0f b9 /r]				186
+UD1		reg,rm64			[rm:	o64 0f b9 /r]				186
+UD1		void				[	0f b9]					186,ND
+UD2B		void				[	0f b9]					186,ND
+UD2B		reg,rm16			[rm:	o16 0f b9 /r]				186,ND
+UD2B		reg,rm32			[rm:	o32 0f b9 /r]				186,ND
+UD2B		reg,rm64			[rm:	o64 0f b9 /r]				186,ND
 UD2		void				[	0f 0b]					186
 UD2A		void				[	0f 0b]					186,ND
 UMOV		mem,reg8			[mr:	np 0f 10 /r]				386,UNDOC,SM,ND
