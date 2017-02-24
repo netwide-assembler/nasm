@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 2007-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -261,7 +261,10 @@ static inline unsigned int watcom_switch_hack(uint64_t x)
         return (unsigned int)x;
 }
 
-# define switch(x) switch(sizeof(x) > sizeof(unsigned int) ? watcom_switch_hack(x) : (x))
+# define switch(x) switch(sizeof(x) > sizeof(unsigned int) \
+                          ? watcom_switch_hack(x) : (unsigned int)(x))
+
+/* This is to make sure BOGUS_CASE doesn't conflict with anything real... */
 # define default case BOGUS_CASE: default
 #endif
 
