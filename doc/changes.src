@@ -111,7 +111,7 @@ since 2007.
 \b Fix potential write of oversized (with size greater than allowed in
    output format) relative relocations.
 
-\b Portability fixes for building NASM with LLVM compiler.
+\b Portability fixes for building NASM with the LLVM compiler.
 
 \b Add support of Codeview version 8 (\c{cv8}) debug format for
    \c{win32} and \c{win64} formats in the \c{COFF} backend,
