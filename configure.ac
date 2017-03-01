@@ -151,11 +151,12 @@ PA_FUNC_ATTRIBUTE(pure)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
-dnl support ccache
+dnl support function sections
 dnl
-AC_ARG_ENABLE([ccache],
-[AC_HELP_STRING([--enable-ccache], [compile with ccache])],
-[CC="ccache $CC"],
+AC_ARG_ENABLE([sections],
+[AC_HELP_STRING([--enable-sections], [compile with function/data section support])],
+[PA_ADD_CFLAGS([-ffunction-sections]),
+PA_ADD_CFLAGS([-fdata-sections])],
 [])
 
 dnl
@@ -202,6 +203,14 @@ PA_ADD_CFLAGS([-Werror=missing-prototypes])
 PA_ADD_CFLAGS([-Werror=missing-declarations])
 PA_ADD_CFLAGS([-Werror=comment])
 PA_ADD_CFLAGS([-Werror=vla])])
+
+dnl
+dnl support ccache
+dnl
+AC_ARG_ENABLE([ccache],
+[AC_HELP_STRING([--enable-ccache], [compile with ccache])],
+[CC="ccache $CC"],
+[])
 
 AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
