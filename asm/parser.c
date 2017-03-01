@@ -1048,25 +1048,25 @@ is_expression:
                         UNITY | SBYTEWORD | SBYTEDWORD | UDWORD | SDWORD;
                 }
             } else if (is_reloc(value)) {       /* it's immediate */
+                uint64_t n = reloc_value(value);
+
                 op->type      |= IMMEDIATE;
-                op->offset    = reloc_value(value);
+                op->offset    = n;
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
                 op->opflags   |= is_self_relative(value) ? OPFLAG_RELATIVE : 0;
 
                 if (is_simple(value)) {
-                    uint64_t n = reloc_value(value);
                     if (n == 1)
                         op->type |= UNITY;
-                    if (optimizing >= 0 &&
-                        !(op->type & STRICT)) {
+                    if (optimizing >= 0 && !(op->type & STRICT)) {
                         if ((uint32_t) (n + 128) <= 255)
                             op->type |= SBYTEDWORD;
                         if ((uint16_t) (n + 128) <= 255)
                             op->type |= SBYTEWORD;
-                        if (n <= 0xFFFFFFFF)
+                        if (n <= UINT64_C(0xFFFFFFFF))
                             op->type |= UDWORD;
-                        if (n + 0x80000000 <= 0xFFFFFFFF)
+                        if (n + UINT64_C(0x80000000) <= UINT64_C(0xFFFFFFFF))
                             op->type |= SDWORD;
                     }
                 }
