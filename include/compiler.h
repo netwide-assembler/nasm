@@ -58,7 +58,7 @@
 # include "config/config.h"
 #elif defined(_MSC_VER) && (_MSC_VER >= 1310)
 # include "config/msvc.h"
-#elif defined(__WATCOM__)
+#elif defined(__WATCOMC__)
 # include "config/watcom.h"
 #else
 # include "config/unknown.h"
@@ -254,7 +254,7 @@ size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */
-#ifdef __WATCOM__
+#ifdef __WATCOMC__
 # define BOGUS_CASE 0x76543210
 
 static inline unsigned int watcom_switch_hack(uint64_t x)
