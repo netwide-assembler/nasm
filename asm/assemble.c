@@ -287,23 +287,23 @@ static const char *size_name(int size)
     }
 }
 
-static void warn_overflow(int pass, int size)
+static void warn_overflow(int size)
 {
-    nasm_error(ERR_WARNING | pass | ERR_WARN_NOV,
+    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
             "%s data exceeds bounds", size_name(size));
 }
 
 static void warn_overflow_const(int64_t data, int size)
 {
     if (overflow_general(data, size))
-        warn_overflow(ERR_PASS1, size);
+        warn_overflow(size);
 }
 
 static void warn_overflow_opd(const struct operand *o, int size)
 {
     if (absolute_op(o)) {
         if (overflow_general(o->offset, size))
-            warn_overflow(ERR_PASS2, size);
+            warn_overflow(size);
     }
 }
 
@@ -327,7 +327,7 @@ static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
     }
 
     if (err)
-        warn_overflow(ERR_PASS2, size);
+        warn_overflow(size);
 }
 
 /*
@@ -1940,7 +1940,7 @@ static void gencode(struct out_data *data, insn *ins)
                         if (overflow_general(opy->offset, asize) ||
                             signed_bits(opy->offset, ins->addr_size) !=
                             signed_bits(opy->offset, ea_data.bytes << 3))
-                            warn_overflow(ERR_PASS2, ea_data.bytes);
+                            warn_overflow(ea_data.bytes);
 
                         out_imm(data, opy, ea_data.bytes,
                                 (asize > ea_data.bytes) ? OUT_SIGNED : OUT_UNSIGNED);
