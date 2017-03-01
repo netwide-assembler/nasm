@@ -1751,31 +1751,37 @@ static void gencode(struct out_data *data, insn *ins)
             uint64_t uv, um;
             int s;
 
-            if (ins->rex & REX_W)
-                s = 64;
-            else if (ins->prefixes[PPS_OSIZE] == P_O16)
-                s = 16;
-            else if (ins->prefixes[PPS_OSIZE] == P_O32)
-                s = 32;
-            else
-                s = bits;
+            if (absolute_op(opx)) {
+                if (ins->rex & REX_W)
+                    s = 64;
+                else if (ins->prefixes[PPS_OSIZE] == P_O16)
+                    s = 16;
+                else if (ins->prefixes[PPS_OSIZE] == P_O32)
+                    s = 32;
+                else
+                    s = bits;
 
-            um = (uint64_t)2 << (s-1);
-            uv = opx->offset;
+                um = (uint64_t)2 << (s-1);
+                uv = opx->offset;
 
-            if (uv > 127 && uv < (uint64_t)-128 &&
-                (uv < um-128 || uv > um-1)) {
-                /* If this wasn't explicitly byte-sized, warn as though we
-                 * had fallen through to the imm16/32/64 case.
-                 */
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "%s value exceeds bounds",
-                        (opx->type & BITS8) ? "signed byte" :
-                        s == 16 ? "word" :
-                        s == 32 ? "dword" :
-                        "signed dword");
+                if (uv > 127 && uv < (uint64_t)-128 &&
+                    (uv < um-128 || uv > um-1)) {
+                    /* If this wasn't explicitly byte-sized, warn as though we
+                     * had fallen through to the imm16/32/64 case.
+                     */
+                    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                               "%s value exceeds bounds",
+                               (opx->type & BITS8) ? "signed byte" :
+                               s == 16 ? "word" :
+                               s == 32 ? "dword" :
+                               "signed dword");
+                }
+
+                /* Output as a raw byte to avoid byte overflow check */
+                out_rawbyte(data, (uint8_t)uv);
+            } else {
+                out_imm(data, opx, 1, OUT_WRAP); /* XXX: OUT_SIGNED? */
             }
-            out_imm(data, opx, 1, OUT_WRAP); /* XXX: OUT_SIGNED? */
             break;
         }
 
