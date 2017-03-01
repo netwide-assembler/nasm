@@ -16,6 +16,9 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
+dnl For gcc, at lest, use -O3
+PA_ADD_CFLAGS([-O3])
+
 dnl Check for library extension
 PA_LIBEXT
 
