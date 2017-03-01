@@ -787,7 +787,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
                     nasm_error(ERR_NONFATAL, "segment alignment should be"
                           " numeric");
                 }
-                switch ((int)seg->align) {
+                switch (seg->align) {
                 case 1:        /* BYTE */
                 case 2:        /* WORD */
                 case 4:        /* DWORD */

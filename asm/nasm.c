@@ -1586,7 +1586,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     stdscan_set(value);
                     tokval.t_type = TOKEN_INVALID;
                     if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
-                        switch ((int)tokval.t_integer) {
+                        switch (tokval.t_integer) {
                         case S_REL:
                             globalrel = 1;
                             break;

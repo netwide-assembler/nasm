@@ -107,7 +107,7 @@ static int prefix_slot(int prefix)
 static void process_size_override(insn *result, operand *op)
 {
     if (tasm_compatible_mode) {
-        switch ((int)tokval.t_integer) {
+        switch (tokval.t_integer) {
             /* For TASM compatibility a size override inside the
              * brackets changes the size of the operand, not the
              * address type of the operand as it does in standard
@@ -146,7 +146,7 @@ static void process_size_override(insn *result, operand *op)
         }
     } else {
         /* Standard NASM compatible syntax */
-        switch ((int)tokval.t_integer) {
+        switch (tokval.t_integer) {
         case S_NOSPLIT:
             op->eaflags |= EAF_TIMESTWO;
             break;
@@ -788,7 +788,7 @@ is_expression:
         first = false;
         op->type = 0; /* so far, no override */
         while (i == TOKEN_SPECIAL) {    /* size specifiers */
-            switch ((int)tokval.t_integer) {
+            switch (tokval.t_integer) {
             case S_BYTE:
                 if (!setsize)   /* we want to use only the first */
                     op->type |= BITS8;

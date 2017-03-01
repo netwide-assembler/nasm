@@ -581,7 +581,7 @@ static void as86_write_section(struct Section *sect, int index)
                 fwriteint16_t(p->number, ofile);
             else
                 fputc(p->number, ofile);
-            switch ((int)s) {
+            switch (s) {
             case 0:
                 break;
             case 1:
