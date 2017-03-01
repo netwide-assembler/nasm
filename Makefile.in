@@ -85,7 +85,25 @@ endif
 	$(XMLTO) man --skip-validation $< 2>/dev/null
 
 #-- Begin File Lists --#
-NASM =	asm/nasm.$(O) \
+NASM =	asm/nasm.$(O)
+NDISASM = disasm/ndisasm.$(O)
+
+LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
+	stdlib/strnlen.$(O) \
+	nasmlib/ver.$(O) \
+	nasmlib/crc64.$(O) nasmlib/malloc.$(O) \
+	nasmlib/error.$(O) nasmlib/md5c.$(O) nasmlib/string.$(O) \
+	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
+	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) \
+	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) \
+	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
+	nasmlib/raa.$(O) nasmlib/saa.$(O) \
+	nasmlib/strlist.$(O) \
+	common/common.$(O) \
+	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsd.$(O) x86/insnsn.$(O) \
+	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) \
+	x86/disp8.$(O) x86/iflag.$(O) \
+	\
 	asm/float.$(O) \
 	asm/directiv.$(O) \
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
@@ -105,25 +123,9 @@ NASM =	asm/nasm.$(O) \
 	output/outelf.$(O) \
 	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	output/codeview.$(O)
-
-NDISASM = disasm/ndisasm.$(O) disasm/disasm.$(O) disasm/sync.$(O)
-
-LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
-	stdlib/strnlen.$(O) \
-	nasmlib/ver.$(O) \
-	nasmlib/crc64.$(O) nasmlib/malloc.$(O) \
-	nasmlib/error.$(O) nasmlib/md5c.$(O) nasmlib/string.$(O) \
-	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
-	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) \
-	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) \
-	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
-	nasmlib/raa.$(O) nasmlib/saa.$(O) \
-	nasmlib/strlist.$(O) \
-	common/common.$(O) \
-	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsd.$(O) x86/insnsn.$(O) \
-	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) \
-	x86/disp8.$(O) x86/iflag.$(O)
+	output/codeview.$(O) \
+	\
+	disasm/disasm.$(O) disasm/sync.$(O)
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf

@@ -30,7 +30,25 @@ O = o
 
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
-NASM =	nasm.o \
+NASM =	nasm.o
+NDISASM = ndisasm.o
+
+LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
+	strnlen.o \
+	ver.o \
+	crc64.o malloc.o \
+	error.o md5c.o string.o \
+	file.o mmap.o ilog2.o \
+	realpath.o filename.o srcfile.o \
+	zerobuf.o readnum.o bsi.o \
+	rbtree.o hashtbl.o \
+	raa.o saa.o \
+	strlist.o \
+	common.o \
+	insnsa.o insnsb.o insnsd.o insnsn.o \
+	regs.o regvals.o regflags.o regdis.o \
+	disp8.o iflag.o \
+	\
 	float.o \
 	directiv.o \
 	assemble.o labels.o parser.o \
@@ -50,25 +68,9 @@ NASM =	nasm.o \
 	outelf.o \
 	outobj.o outas86.o outrdf2.o \
 	outdbg.o outieee.o outmacho.o \
-	codeview.o
-
-NDISASM = ndisasm.o disasm.o sync.o
-
-LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
-	strnlen.o \
-	ver.o \
-	crc64.o malloc.o \
-	error.o md5c.o string.o \
-	file.o mmap.o ilog2.o \
-	realpath.o filename.o srcfile.o \
-	zerobuf.o readnum.o bsi.o \
-	rbtree.o hashtbl.o \
-	raa.o saa.o \
-	strlist.o \
-	common.o \
-	insnsa.o insnsb.o insnsd.o insnsn.o \
-	regs.o regvals.o regflags.o regdis.o \
-	disp8.o iflag.o
+	codeview.o \
+	\
+	disasm.o sync.o
 #-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)
