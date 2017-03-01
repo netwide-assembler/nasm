@@ -6,8 +6,10 @@ AC_CONFIG_HEADERS(config/config.h)
 
 AC_PREFIX_PROGRAM(nasm)
 
-dnl Checks for programs.
-dnl Consider AC_USE_SYSTEM_EXTENSIONS if autoconf 2.61 is OK in the future
+dnl Save initial CFLAGS, to see if -g -O2 came from configure or not
+pa_init_cflags="$CFLAGS"
+
+dnl Checks for programs and enable necessary CC extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_CC
@@ -16,8 +18,10 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
-dnl For gcc, at lest, use -O3
-PA_ADD_CFLAGS([-O3])
+dnl If the user did not specify a CFLAGS default, change default -O2 to -O3
+if test x"$pa_init_cflags" = x; then
+   CFLAGS=`echo "$CFLAGS" | sed -e 's/-O2/-O3/'`
+fi
 
 dnl Check for library extension
 PA_LIBEXT
