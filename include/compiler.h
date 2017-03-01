@@ -259,7 +259,7 @@ size_t strnlen(const char *s, size_t maxlen);
 
 static inline unsigned int watcom_switch_hack(uint64_t x)
 {
-    if (x > UINT_MAX)
+    if (x > (uint64_t)UINT_MAX)
         return BOGUS_CASE;
     else
         return (unsigned int)x;
