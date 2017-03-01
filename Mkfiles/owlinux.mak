@@ -98,6 +98,9 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	output/codeview.$(O) \
 	\
 	disasm/disasm.$(O) disasm/sync.$(O)
+
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+XSUBDIRS = test doc nsis
 #-- End File Lists --#
 
 what:

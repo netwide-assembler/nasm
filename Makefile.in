@@ -126,6 +126,9 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	output/codeview.$(O) \
 	\
 	disasm/disasm.$(O) disasm/sync.$(O)
+
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+XSUBDIRS = test doc nsis
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf
@@ -280,7 +283,7 @@ install: nasm$(X) ndisasm$(X)
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	for d in . stdlib nasmlib output asm disasm x86 common macros; do \
+	for d in . $(SUBDIRS); do \
 		$(RM) -f "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
 	done
 	$(RM) -f nasm$(X) ndisasm$(X)
@@ -291,9 +294,11 @@ clean:
 
 distclean: clean
 	$(RM) -f config.log config.status config/config.h
-	$(RM) -f Makefile *~ *.bak *.lst *.bin
-	$(RM) -f output/*~ output/*.bak
-	$(RM) -f test/*.lst test/*.bin test/*.$(O) test/*.bin
+	$(RM) -f Makefile
+	for d in . $(SUBDIRS) $(XSUBDIRS); do \
+		$(RM) -f "$$d"/*~ "$$d"/*.bak "$$d"/*.lst "$$d"/*.bin ; \
+	done
+	$(RM) -f test/*.$(O)
 	$(RM) -rf autom4te*.cache
 	cd rdoff && $(MAKE) distclean
 
@@ -302,7 +307,7 @@ cleaner: clean
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
-	$(RM) -f doc/Makefile doc/*~ doc/*.bak
+	$(RM) -f doc/Makefile
 
 strip:
 	$(STRIP) --strip-unneeded nasm$(X) ndisasm$(X)

@@ -71,6 +71,9 @@ LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
 	codeview.o \
 	\
 	disasm.o sync.o
+
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+XSUBDIRS = test doc nsis
 #-- End File Lists --#
 
 NASM_OBJ = $(addprefix $(OBJDIR)/,$(notdir $(NASM))) $(EOLIST)

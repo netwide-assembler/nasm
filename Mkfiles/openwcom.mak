@@ -87,6 +87,9 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	output/codeview.$(O) &
 	&
 	disasm/disasm.$(O) disasm/sync.$(O)
+
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+XSUBDIRS = test doc nsis
 #-- End File Lists --#
 
 what:   .SYMBOLIC
@@ -221,6 +224,7 @@ clean: .SYMBOLIC
     rm -f common/*.$(O) common/*.s common/*.i
     rm -f stdlib/*.$(O) stdlib/*.s stdlib/*.i
     rm -f nasmlib/*.$(O) nasmlib/*.s nasmlib/*.i
+    rm -f disasm/*.$(O) disasm/*.s disasm/*.i
     rm -f config.h config.log config.status
     rm -f nasm$(X) ndisasm$(X) $(NASMLIB)
 #   cd rdoff && $(MAKE) clean
