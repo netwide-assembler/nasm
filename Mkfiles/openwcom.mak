@@ -69,7 +69,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	asm/directiv.$(O) &
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) &
 	asm/preproc.$(O) asm/quote.$(O) asm/pptok.$(O) &
-	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) &
+	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) &
 	asm/stdscan.$(O) &
 	asm/strfunc.$(O) asm/tokhash.$(O) &
 	asm/segalloc.$(O) &
@@ -272,6 +272,10 @@ asm/eval.$(O): asm/eval.c asm/directiv.h asm/eval.h asm/float.h asm/pptok.h &
  include/compiler.h include/labels.h include/nasm.h include/nasmint.h &
  include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
  x86/insnsi.h x86/regs.h
+asm/exprdump.$(O): asm/exprdump.c asm/directiv.h asm/pptok.h asm/preproc.h &
+ config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
+ include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
+ include/strlist.h include/tables.h x86/insnsi.h x86/regs.h
 asm/exprlib.$(O): asm/exprlib.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
  include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
