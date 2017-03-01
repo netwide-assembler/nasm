@@ -6,7 +6,7 @@
 
 top_srcdir  = .
 srcdir      = .
-VPATH       = $(srcdir)/asm;$(srcdir)/x86;asm;x86;$(srcdir)/output;$(srcdir)/lib
+VPATH       = $(srcdir)/asm;$(srcdir)/x86;asm;x86;$(srcdir)/macros;macros;$(srcdir)/output;$(srcdir)/lib;$(srcdir)/common;$(srcdir)/stdlib;$(srcdir)/nasmlib;$(srcdir)/disasm
 prefix      = C:\Program Files\NASM
 exec_prefix = $(prefix)
 bindir      = $(prefix)\bin
@@ -115,11 +115,16 @@ linux386:   .SYMBOLIC
 all: perlreq nasm$(X) ndisasm$(X) .SYMBOLIC
 #   cd rdoff && $(MAKE) all
 
-nasm$(X): $(NASM)
-    $(LD) $(LDFLAGS) name nasm$(X) file {$(NASM)} $(LIBS)
+NASMLIB = nasm.lib
 
-ndisasm$(X): $(NDISASM)
-    $(LD) $(LDFLAGS) name ndisasm$(X) file {$(NDISASM)} $(LIBS)
+nasm$(X): $(NASM) $(NASMLIB)
+    $(LD) $(LDFLAGS) name nasm$(X) libr {$(NASMLIB) $(LIBS)} file {$(NASM)}
+
+ndisasm$(X): $(NDISASM) $(LIBOBJ)
+    $(LD) $(LDFLAGS) name ndisasm$(X) libr {$(NASMLIB) $(LIBS)} file {$(NDISASM)}
+
+nasm.lib: $(LIBOBJ)
+    wlib -q -b -n $@ $(LIBOBJ)
 
 # These source files are automagically generated from a single
 # instruction-table file by a Perl script. They're distributed,
@@ -208,10 +213,16 @@ perlreq: $(PERLREQ) .SYMBOLIC
 
 clean: .SYMBOLIC
     rm -f *.$(O) *.s *.i
+    rm -f asm/*.$(O) asm/*.s asm/*.i
+    rm -f x86/*.$(O) x86/*.s x86/*.i
     rm -f lib/*.$(O) lib/*.s lib/*.i
+    rm -f macros/*.$(O) macros/*.s macros/*.i
     rm -f output/*.$(O) output/*.s output/*.i
+    rm -f common/*.$(O) common/*.s common/*.i
+    rm -f stdlib/*.$(O) stdlib/*.s stdlib/*.i
+    rm -f nasmlib/*.$(O) nasmlib/*.s nasmlib/*.i
     rm -f config.h config.log config.status
-    rm -f nasm$(X) ndisasm$(X)
+    rm -f nasm$(X) ndisasm$(X) $(NASMLIB)
 #   cd rdoff && $(MAKE) clean
 
 distclean: clean .SYMBOLIC
