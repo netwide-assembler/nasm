@@ -148,12 +148,27 @@ PA_FUNC_ATTRIBUTE(pure)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
-dnl support cchace
+dnl support ccache
 dnl
 AC_ARG_ENABLE([ccache],
-[AC_HELP_STRING([--with-ccache], [compile with ccache])],
+[AC_HELP_STRING([--enable-ccache], [compile with ccache])],
 [CC="ccache $CC"],
 [])
+
+dnl
+dnl support LTO
+dnl
+AC_ARG_ENABLE([lto],
+[AC_HELP_STRING([--enable-lto], [compile with gcc link time optimization])],
+[PA_ADD_CLDFLAGS([-flto])
+dnl Note: we use _PROG rather than _TOOL since we are prepending the full
+dnl CC name which ought to already contain the host triplet if needed
+ccbase=`echo "$CC" | awk '{ print $1; }'`
+AC_CHECK_PROG(CC_AR, [${ccbase}-ar], [${ccbase}-ar], [$ac_cv_prog_AR])
+AR="$CC_AR"
+AC_CHECK_PROG(CC_RANLIB, [${ccbase}-ranlib], [${ccbase}-ranlib], [$ac_cv_prog_RANLIB])
+RANLIB="$CC_RANLIB"
+], [])
 
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])

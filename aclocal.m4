@@ -15,6 +15,27 @@ AC_DEFUN(PA_ADD_CFLAGS,
  CFLAGS="$pa_add_cflags__old_cflags")])
 
 dnl --------------------------------------------------------------------------
+dnl PA_ADD_CLDFLAGS()
+dnl
+dnl Attempt to add the given option to CFLAGS and LDFLAGS,
+dnl if it doesn't break compilation
+dnl --------------------------------------------------------------------------
+AC_DEFUN(PA_ADD_CLDFLAGS,
+[AC_MSG_CHECKING([if $CC accepts $1])
+ pa_add_cldflags__old_cflags="$CFLAGS"
+ CFLAGS="$CFLAGS $1"
+ pa_add_cldflags__old_ldflags="$LDFLAGS"
+ LDFLAGS="$LDFLAGS $1"
+ AC_TRY_LINK([#include <stdio.h>],
+ [printf("Hello, World!\n");],
+ AC_MSG_RESULT([yes])
+ CFLAGS="$pa_add_cldflags__old_cflags ifelse([$2],[],[$1],[$2])"
+ LDFLAGS="$pa_add_cldflags__old_ldflags ifelse([$2],[],[$1],[$2])",
+ AC_MSG_RESULT([no])
+ CFLAGS="$pa_add_cldflags__old_cflags"
+ LDFLAGS="$pa_add_cldflags__old_ldflags")])
+
+dnl --------------------------------------------------------------------------
 dnl PA_HAVE_FUNC
 dnl
 dnl Look for a function with the specified arguments which could be
