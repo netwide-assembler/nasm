@@ -6,7 +6,7 @@
 
 top_srcdir  = .
 srcdir      = .
-VPATH       = .;$(srcdir)/output;$(srcdir)/lib
+VPATH       = $(srcdir)/asm;$(srcdir)/x86;asm;x86;$(srcdir)/output;$(srcdir)/lib
 prefix      = C:\Program Files\NASM
 exec_prefix = $(prefix)
 bindir      = $(prefix)\bin
@@ -16,7 +16,7 @@ CC      = *wcl386
 DEBUG       =
 CFLAGS      = -zq -6 -ox -wx -ze -fpi $(DEBUG)
 BUILD_CFLAGS    = $(CFLAGS) $(%TARGET_CFLAGS)
-INTERNAL_CFLAGS = -I$(srcdir) -I.
+INTERNAL_CFLAGS = -I$(srcdir) -I. -I$(srcdir)/include -I$(srcdir)/x86 -Ix86 -I$(srcdir)/asm -Iasm -I$(srcdir)/disasm -I$(srcdir)/output
 ALL_CFLAGS  = $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD      = *wlink
 LDEBUG      =
@@ -126,18 +126,22 @@ ndisasm$(X): $(NDISASM)
 
 insns.pl: insns-iflags.pl
 
-iflag.c iflag.h: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -t $(srcdir)/insns.dat
-insnsb.c: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -b $(srcdir)/insns.dat
-insnsa.c: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -a $(srcdir)/insns.dat
-insnsd.c: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -d $(srcdir)/insns.dat
-insnsi.h: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -i $(srcdir)/insns.dat
-insnsn.c: insns.dat insns.pl
-    $(PERL) $(srcdir)/insns.pl -n $(srcdir)/insns.dat
+INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.pl
+
+x86/iflag.c: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -fc $(srcdir)/x86/insns.dat x86/iflag.c
+x86/iflaggen.h: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -fh $(srcdir)/x86/insns.dat x86/iflaggen.h
+x86/insnsb.c: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -b $(srcdir)/x86/insns.dat x86/insnsb.c
+x86/insnsa.c: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -a $(srcdir)/x86/insns.dat x86/insnsa.c
+x86/insnsd.c: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -d $(srcdir)/x86/insns.dat x86/insnsd.c
+x86/insnsi.h: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -i $(srcdir)/x86/insns.dat x86/insnsi.h
+x86/insnsn.c: $(INSDEP)
+    $(PERL) $(srcdir)/x86/insns.pl -n $(srcdir)/x86/insns.dat x86/insnsn.c
 
 # These files contains all the standard macros that are derived from
 # the version number.
@@ -151,56 +155,53 @@ version.mac: version version.pl
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
 
-macros.c: macros.pl standard.mac version.mac macros/*.mac output/*.mac
-    $(PERL) $<
+macros/macros.c: macros/macros.pl asm/pptok.ph version.mac $(srcdir)/macros/*.mac $(srcdir)/output/*.mac
+    $(PERL) $(srcdir)/macros/macros.pl version.mac $(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 
 # These source files are generated from regs.dat by yet another
 # perl script.
-regs.c: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl c $(srcdir)/regs.dat > regs.c
-regflags.c: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl fc $(srcdir)/regs.dat > regflags.c
-regdis.c: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl dc $(srcdir)/regs.dat > regdis.c
-regdis.h: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl dh $(srcdir)/regs.dat > regdis.h
-regvals.c: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl vc $(srcdir)/regs.dat > regvals.c
-regs.h: regs.dat regs.pl
-    $(PERL) $(srcdir)/regs.pl h $(srcdir)/regs.dat > regs.h
+x86/regs.c: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl c $(srcdir)/x86/regs.dat > x86/regs.c
+x86/regflags.c: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl fc $(srcdir)/x86/regs.dat > x86/regflags.c
+x86/regdis.c: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl dc $(srcdir)/x86/regs.dat > x86/regdis.c
+x86/regdis.h: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl dh $(srcdir)/x86/regs.dat > x86/regdis.h
+x86/regvals.c: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl vc $(srcdir)/x86/regs.dat > x86/regvals.c
+x86/regs.h: x86/regs.dat x86/regs.pl
+    $(PERL) $(srcdir)/x86/regs.pl h $(srcdir)/x86/regs.dat > x86/regs.h
 
 # Assembler token hash
-tokhash.c: insns.dat regs.dat tokens.dat tokhash.pl perllib/phash.ph
-    $(PERL) $(srcdir)/tokhash.pl c $(srcdir)/insns.dat $(srcdir)/regs.dat &
-        $(srcdir)/tokens.dat > tokhash.c
+asm/tokhash.c: x86/insns.dat x86/regs.dat asm/tokens.dat asm/tokhash.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/tokhash.pl c $(srcdir)/x86/insns.dat $(srcdir)/x86/regs.dat &
+        $(srcdir)/asm/tokens.dat > asm/tokhash.c
 
 # Assembler token metadata
-tokens.h: insns.dat regs.dat tokens.dat tokhash.pl perllib/phash.ph
-    $(PERL) $(srcdir)/tokhash.pl h $(srcdir)/insns.dat $(srcdir)/regs.dat &
-        $(srcdir)/tokens.dat > tokens.h
+asm/tokens.h: x86/insns.dat x86/regs.dat asm/tokens.dat asm/tokhash.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/tokhash.pl h $(srcdir)/x86/insns.dat $(srcdir)/x86/regs.dat &
+        $(srcdir)/asm/tokens.dat > asm/tokens.h
 
 # Preprocessor token hash
-pptok.h: pptok.dat pptok.pl perllib/phash.ph
-    $(PERL) $(srcdir)/pptok.pl h $(srcdir)/pptok.dat pptok.h
-pptok.c: pptok.dat pptok.pl perllib/phash.ph
-    $(PERL) $(srcdir)/pptok.pl c $(srcdir)/pptok.dat pptok.c
-pptok.ph: pptok.dat pptok.pl perllib/phash.ph
-    $(PERL) $(srcdir)/pptok.pl ph $(srcdir)/pptok.dat pptok.ph
+asm/pptok.h: asm/pptok.dat asm/pptok.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/pptok.pl h $(srcdir)/asm/pptok.dat asm/pptok.h
+asm/pptok.c: asm/pptok.dat asm/pptok.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/pptok.pl c $(srcdir)/asm/pptok.dat asm/pptok.c
+asm/pptok.ph: asm/pptok.dat asm/pptok.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/pptok.pl ph $(srcdir)/asm/pptok.dat asm/pptok.ph
 
 # Directives hash
-directiv.h: directiv.dat directiv.pl perllib/phash.ph
-    $(PERL) $(srcdir)/directiv.pl h $(srcdir)/directiv.dat directiv.h
-directiv.c: directiv.dat directiv.pl perllib/phash.ph
-    $(PERL) $(srcdir)/directiv.pl c $(srcdir)/directiv.dat directiv.c
+asm/directiv.h: asm/directiv.dat asm/directiv.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/directiv.pl h $(srcdir)/asm/directiv.dat asm/directiv.h
+asm/directiv.c: asm/directiv.dat asm/directiv.pl perllib/phash.ph
+    $(PERL) $(srcdir)/asm/directiv.pl c $(srcdir)/asm/directiv.dat asm/directiv.c
 
 # This target generates all files that require perl.
 # This allows easier generation of distribution (see dist target).
-PERLREQ = pptok.ph macros.c insnsb.c insnsa.c insnsd.c insnsi.h insnsn.c &
-      regs.c regs.h regflags.c regdis.c regdis.h regvals.c &
-      tokhash.c tokens.h pptok.h pptok.c &
-      directiv.c directiv.h &
-      version.h version.mac &
-      iflag.c iflag.h
+PERLREQ = macros/macros.c x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c &
+	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regvals.c asm/tokhash.c asm/tokens.h &
+	  version.h version.mac asm/pptok.h asm/pptok.c x86/iflag.c
 perlreq: $(PERLREQ) .SYMBOLIC
 
 clean: .SYMBOLIC
