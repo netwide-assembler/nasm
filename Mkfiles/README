@@ -15,23 +15,14 @@ The Makefiles are:
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
   openwcom.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.7 (Win32)
+		Linux (386)			OpenWatcom 1.9 (Linux)
 
-	For building on a DOS, OS/2 or Win32 host using OpenWatcom.
+	For building on a DOS, OS/2, Win32 or Linux host using OpenWatcom.
 	OpenWatcom can be downloaded from http://www.openwatcom.org/.
 
 	Usage:	wmake /f Mkfiles/<filename> <target>
 
-	<target> is dos, win32, or os2.
-
-  Filename      Target		Compiler	Tested with
-  ---------------------------------------------------------------------------
-  owlinux.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.6rc2 (Linux)
-
-	For building on a Linux host using OpenWatcom for Linux.
-
-	Usage:	make -f Mkfiles/<filename> <target>
-
-	<target> is dos, win32, or os2.
+	<target> is dos, win32, os2, or linux386.
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
