@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -101,7 +101,7 @@ static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, 
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
 static struct SAA *elf_build_reltab(uint64_t *, struct elf_reloc *);
-static void add_sectname(char *, char *);
+static void add_sectname(const char *, const char *);
 
 struct erel {
     int                 offset;
@@ -376,7 +376,7 @@ static void elf_cleanup(void)
 }
 
 /* add entry to the elf .shstrtab section */
-static void add_sectname(char *firsthalf, char *secondhalf)
+static void add_sectname(const char *firsthalf, const char *secondhalf)
 {
     int len = strlen(firsthalf) + strlen(secondhalf);
     while (shstrtablen + len + 1 > shstrtabsize)
