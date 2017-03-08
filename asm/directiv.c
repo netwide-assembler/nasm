@@ -206,10 +206,22 @@ bool process_directives(char *directive)
 	break;
 
     default:			/* It's a backend-specific directive */
-        if (ofmt->directive(d, value, pass2))
+        switch (ofmt->directive(d, value, pass2)) {
+        case DIRR_UNKNOWN:
+            goto unknown;
+        case DIRR_OK:
+        case DIRR_ERROR:
             break;
-        /* else fall through */
+        case DIRR_BADPARAM:
+            bad_param = true;
+            break;
+        default:
+            panic();
+        }
+        break;
+
     case D_unknown:
+    unknown:
         nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_PANIC,
                    "unrecognised directive [%s]", directive);
         break;

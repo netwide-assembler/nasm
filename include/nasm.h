@@ -712,6 +712,21 @@ struct pragma {
 };
 
 /*
+ * What to return from a directive-handling function.
+ * Currently DIRR_OK and DIRR_ERROR are treated the same way;
+ * in both cases the backend is expected to produce the appropriate
+ * error message on its own.
+ *
+ * DIRR_BADPARAM causes a generic error message to be printed.
+ */
+enum directive_result {
+    DIRR_UNKNOWN,               /* Directive not handled by backend */
+    DIRR_OK,                    /* Directive processed */
+    DIRR_ERROR,                 /* Directive processed unsuccessfully */
+    DIRR_BADPARAM               /* Print bad argument error message */
+};
+
+/*
  * The data structure defining an output format driver, and the
  * interfaces to the functions therein.
  */
@@ -870,14 +885,17 @@ struct ofmt {
      * `value'. It is called in both assembly passes, and `pass'
      * will be either 1 or 2.
      *
-     * This procedure should return zero if it does not _recognise_
-     * the directive, so that the main program can report an error.
-     * If it recognises the directive but then has its own errors,
-     * it should report them itself and then return non-zero. It
-     * should also return non-zero if it correctly processes the
-     * directive.
+     * The following values are (currently) possible for
+     * directive_result:
+     *
+     * 0 - DIRR_UNKNOWN		- directive not recognized by backend
+     * 1 - DIRR_OK		- directive processed ok
+     * 2 - DIRR_ERROR		- backend printed its own error message
+     * 3 - DIRR_BADPARAM	- print the generic message
+     *				  "invalid parameter to [*] directive"
      */
-    int (*directive)(enum directives directive, char *value, int pass);
+    enum directive_result
+    (*directive)(enum directives directive, char *value, int pass);
 
     /*
      * This procedure is called before anything else - even before

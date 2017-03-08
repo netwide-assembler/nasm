@@ -634,7 +634,7 @@ static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
 static void obj_write_file(void);
-static int obj_directive(enum directives, char *, int);
+static enum directive_result obj_directive(enum directives, char *, int);
 
 static void obj_init(void)
 {
@@ -1598,7 +1598,8 @@ static int32_t obj_segment(char *name, int pass, int *bits)
     }
 }
 
-static int obj_directive(enum directives directive, char *value, int pass)
+static enum directive_result
+obj_directive(enum directives directive, char *value, int pass)
 {
     switch (directive) {
     case D_GROUP:
@@ -1629,7 +1630,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
              *
              * if (!*q) {
              *     nasm_error(ERR_NONFATAL,"GROUP directive contains no segments");
-             *     return 1;
+             *     return DIRR_ERROR;
              * }
              */
 
@@ -1638,7 +1639,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
                 obj_idx++;
                 if (!strcmp(grp->name, v)) {
                     nasm_error(ERR_NONFATAL, "group `%s' defined twice", v);
-                    return 1;
+                    return DIRR_ERROR;
                 }
             }
 
@@ -1709,11 +1710,11 @@ static int obj_directive(enum directives directive, char *value, int pass)
                     extp = &(*extp)->next_dws;
             }
         }
-        return 1;
+        return DIRR_OK;
     }
     case D_UPPERCASE:
         obj_uppercase = true;
-        return 1;
+        return DIRR_OK;
 
     case D_IMPORT:
     {
@@ -1760,7 +1761,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
                 imp->impname = NULL;
         }
 
-        return 1;
+        return DIRR_OK;
     }
     case D_EXPORT:
     {
@@ -1770,7 +1771,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
         unsigned int ordinal = 0;
 
         if (pass == 2)
-            return 1;           /* ignore in pass two */
+            return DIRR_OK;     /* ignore in pass two */
         intname = q = value;
         while (*q && !nasm_isspace(*q))
             q++;
@@ -1791,7 +1792,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
 
         if (!*intname) {
             nasm_error(ERR_NONFATAL, "`export' directive requires export name");
-            return 1;
+            return DIRR_OK;
         }
         if (!*extname) {
             extname = intname;
@@ -1816,7 +1817,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
                 if (err) {
                     nasm_error(ERR_NONFATAL,
                           "value `%s' for `parm' is non-numeric", v + 5);
-                    return 1;
+                    return DIRR_ERROR;
                 }
             } else {
                 bool err = false;
@@ -1824,7 +1825,7 @@ static int obj_directive(enum directives directive, char *value, int pass)
                 if (err) {
                     nasm_error(ERR_NONFATAL,
                           "unrecognised export qualifier `%s'", v);
-                    return 1;
+                    return DIRR_ERROR;
                 }
                 flags |= EXPDEF_FLAG_ORDINAL;
             }
@@ -1838,10 +1839,10 @@ static int obj_directive(enum directives directive, char *value, int pass)
         export->ordinal = ordinal;
         export->flags = flags;
 
-        return 1;
+        return DIRR_OK;
     }
     default:
-	return 0;
+	return DIRR_UNKNOWN;
     }
 }
 

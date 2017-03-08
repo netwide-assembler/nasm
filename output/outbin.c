@@ -1285,7 +1285,8 @@ static int32_t bin_secname(char *name, int pass, int *bits)
     return sec->vstart_index;
 }
 
-static int bin_directive(enum directives directive, char *args, int pass)
+static enum directive_result
+bin_directive(enum directives directive, char *args, int pass)
 {
     switch (directive) {
     case D_ORG:
@@ -1315,7 +1316,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
         } else
             nasm_error(ERR_NONFATAL, "No or invalid offset specified"
                   " in ORG directive.");
-        return 1;
+        return DIRR_OK;
     }
     case D_MAP:
     {
@@ -1324,7 +1325,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
 	char *p;
 	
         if (pass != 1)
-            return 1;
+            return DIRR_OK;
         args += strspn(args, " \t");
         while (*args) {
             p = args;
@@ -1353,7 +1354,7 @@ static int bin_directive(enum directives directive, char *args, int pass)
                         nasm_error(ERR_WARNING, "unable to open map file `%s'",
                               p);
                         map_control = 0;
-                        return 1;
+                        return DIRR_OK;
                     }
                 }
             } else
@@ -1363,10 +1364,10 @@ static int bin_directive(enum directives directive, char *args, int pass)
             map_control |= MAP_ORIGIN | MAP_SUMMARY;
         if (!rf)
             rf = stdout;
-        return 1;
+        return DIRR_OK;
     }
     default:
-	return 0;
+	return DIRR_UNKNOWN;
     }
 }
 

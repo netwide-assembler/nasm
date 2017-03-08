@@ -42,12 +42,13 @@ int null_setinfo(enum geninfo type, char **string)
     return 0;
 }
 
-int null_directive(enum directives directive, char *value, int pass)
+enum directive_result
+null_directive(enum directives directive, char *value, int pass)
 {
     (void)directive;
     (void)value;
     (void)pass;
-    return 0;
+    return DIRR_UNKNOWN;
 }
 
 void null_sectalign(int32_t seg, unsigned int value)

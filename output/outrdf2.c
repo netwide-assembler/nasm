@@ -720,7 +720,8 @@ static int32_t rdf2_segbase(int32_t segment)
 /*
  * Handle RDOFF2 specific directives
  */
-static int rdf2_directive(enum directives directive, char *value, int pass)
+static enum directive_result
+rdf2_directive(enum directives directive, char *value, int pass)
 {
     size_t n;
 
@@ -729,7 +730,7 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
 	n = strlen(value);
 	if (n >= MODLIB_NAME_MAX) {
 	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
-	    return 1;
+	    return DIRR_ERROR;
 	}
         if (pass == 1) {
             struct DLLRec r;
@@ -738,12 +739,12 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
             strcpy(r.libname, value);
             write_dll_rec(&r);
         }
-        return 1;
+        return DIRR_OK;
 	
     case D_MODULE:
 	if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
 	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
-	    return 1;
+	    return DIRR_ERROR;
 	}
         if (pass == 1) {
             struct ModRec r;
@@ -752,10 +753,10 @@ static int rdf2_directive(enum directives directive, char *value, int pass)
             strcpy(r.modname, value);
             write_modname_rec(&r);
         }
-        return 1;
+        return DIRR_OK;
 
     default:
-	return 0;
+	return DIRR_UNKNOWN;
     }
 }
 

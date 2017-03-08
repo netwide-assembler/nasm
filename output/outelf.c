@@ -269,7 +269,8 @@ void elf_section_attrib(char *name, char *attr, int pass,
     }
 }
 
-int elf_directive(enum directives directive, char *value, int pass)
+static enum directive_result
+elf_directive(enum directives directive, char *value, int pass)
 {
     int64_t n;
     bool err;
@@ -278,17 +279,17 @@ int elf_directive(enum directives directive, char *value, int pass)
     switch (directive) {
     case D_OSABI:
         if (pass == 2)
-            return 1; /* ignore in pass 2 */
+            return DIRR_OK; /* ignore in pass 2 */
 
         n = readnum(value, &err);
         if (err) {
             nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
-            return 1;
+            return DIRR_ERROR;
         }
 
         if (n < 0 || n > 255) {
             nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
-            return 1;
+            return DIRR_ERROR;
         }
 
         elf_osabi  = n;
@@ -296,19 +297,19 @@ int elf_directive(enum directives directive, char *value, int pass)
 
         p = strchr(value,',');
         if (!p)
-            return 1;
+            return DIRR_OK;
 
         n = readnum(p + 1, &err);
         if (err || n < 0 || n > 255) {
             nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
-            return 1;
+            return DIRR_ERROR;
         }
 
         elf_abiver = n;
-        return 1;
+        return DIRR_OK;
 
     default:
-        return 0;
+        return DIRR_UNKNOWN;
     }
 }
 

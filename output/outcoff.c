@@ -768,7 +768,8 @@ static void BuildExportTable(STRING **rvp)
     *rvp = NULL;
 }
 
-static int coff_directives(enum directives directive, char *value, int pass)
+static enum directive_result
+coff_directives(enum directives directive, char *value, int pass)
 {
     switch (directive) {
     case D_EXPORT:
@@ -776,7 +777,7 @@ static int coff_directives(enum directives directive, char *value, int pass)
         char *q, *name;
 
         if (pass == 2)
-            return 1;           /* ignore in pass two */
+            return DIRR_OK;           /* ignore in pass two */
         name = q = value;
         while (*q && !nasm_isspace(*q))
             q++;
@@ -788,14 +789,14 @@ static int coff_directives(enum directives directive, char *value, int pass)
 
         if (!*name) {
             nasm_error(ERR_NONFATAL, "`export' directive requires export name");
-            return 1;
+            return DIRR_ERROR;
         }
         if (*q) {
             nasm_error(ERR_NONFATAL, "unrecognized export qualifier `%s'", q);
-            return 1;
+            return DIRR_ERROR;
         }
         AddExport(name);
-        return 1;
+        return DIRR_OK;
     }
     case D_SAFESEH:
     {
@@ -855,12 +856,13 @@ static int coff_directives(enum directives directive, char *value, int pass)
             if (n == coff_nsyms) {
                 nasm_error(ERR_NONFATAL,
                            "`safeseh' directive requires valid symbol");
+                return DIRR_ERROR;
             }
         }
-        return 1;
+        return DIRR_OK;
     }
     default:
-        return 0;
+        return DIRR_UNKNOWN;
     }
 }
 

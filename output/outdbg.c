@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -183,11 +183,12 @@ static int32_t dbg_segbase(int32_t segment)
     return segment;
 }
 
-static int dbg_directive(enum directives directive, char *value, int pass)
+static enum directive_result
+dbg_directive(enum directives directive, char *value, int pass)
 {
     fprintf(ofile, "directive [%s] value [%s] (pass %d)\n",
             directives[directive], value, pass);
-    return 1;
+    return DIRR_OK;
 }
 
 static void dbg_filename(char *inname, char *outname)
