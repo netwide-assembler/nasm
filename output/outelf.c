@@ -2127,39 +2127,47 @@ static void elf_section_header(int name, int type, uint64_t flags,
                                void *data, bool is_saa, uint64_t datalen,
                                int link, int info, int align, int eltsize)
 {
+    union {
+        Elf32_Shdr  shdr32;
+        Elf64_Shdr  shdr64;
+    } shdr;
+
     elf_sects[elf_nsect].data = data;
     elf_sects[elf_nsect].len = datalen;
     elf_sects[elf_nsect].is_saa = is_saa;
     elf_nsect++;
 
     if (is_elf32() || is_elfx32()) {
-        fwriteint32_t((int32_t)name, ofile);
-        fwriteint32_t((int32_t)type, ofile);
-        fwriteint32_t((int32_t)flags, ofile);
-        fwriteint32_t(0L, ofile);      /* no address, ever, in object files */
-        fwriteint32_t(type == 0 ? 0L : elf_foffs, ofile);
-        fwriteint32_t(datalen, ofile);
+        shdr.shdr32.sh_name         = long_le(name);
+        shdr.shdr32.sh_type         = long_le(type);
+        shdr.shdr32.sh_flags        = long_le(flags);
+        shdr.shdr32.sh_addr         = 0;
+        shdr.shdr32.sh_offset       = long_le(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.shdr32.sh_size         = long_le(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        fwriteint32_t((int32_t)link, ofile);
-        fwriteint32_t((int32_t)info, ofile);
-        fwriteint32_t((int32_t)align, ofile);
-        fwriteint32_t((int32_t)eltsize, ofile);
+        shdr.shdr32.sh_link         = long_le(link);
+        shdr.shdr32.sh_info         = long_le(info);
+        shdr.shdr32.sh_addralign    = long_le(align);
+        shdr.shdr32.sh_entsize      = long_le(eltsize);
     } else {
         nasm_assert(is_elf64());
-        fwriteint32_t((int32_t)name, ofile);
-        fwriteint32_t((int32_t)type, ofile);
-        fwriteint64_t((int64_t)flags, ofile);
-        fwriteint64_t(0L, ofile);      /* no address, ever, in object files */
-        fwriteint64_t(type == 0 ? 0L : elf_foffs, ofile);
-        fwriteint64_t(datalen, ofile);
+
+        shdr.shdr64.sh_name         = long_le(name);
+        shdr.shdr64.sh_type         = long_le(type);
+        shdr.shdr64.sh_flags        = dlong_le(flags);
+        shdr.shdr64.sh_addr         = 0;
+        shdr.shdr64.sh_offset       = dlong_le(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.shdr64.sh_size         = long_le(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        fwriteint32_t((int32_t)link, ofile);
-        fwriteint32_t((int32_t)info, ofile);
-        fwriteint64_t((int64_t)align, ofile);
-        fwriteint64_t((int64_t)eltsize, ofile);
+        shdr.shdr64.sh_link        = long_le(link);
+        shdr.shdr64.sh_info        = long_le(info);
+        shdr.shdr64.sh_addralign   = dlong_le(align);
+        shdr.shdr64.sh_entsize     = dlong_le(eltsize);
     }
+
+    nasm_write(&shdr, is_elf64() ? sizeof(shdr.shdr64) : sizeof(shdr.shdr32), ofile);
 }
 
 static void elf_write_sections(void)
