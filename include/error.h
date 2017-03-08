@@ -89,7 +89,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN(x)         ((x) << ERR_WARN_SHR)
 #define WARN_IDX(x)     (((x) & ERR_WARN_MASK) >> ERR_WARN_SHR)
 
-#define ERR_WARN_TERM           WARN( 0) /* treat warnings as errors */
+#define ERR_WARN_OTHER          WARN( 0) /* any noncategorized warning */
 #define ERR_WARN_MNP            WARN( 1) /* macro-num-parameters warning */
 #define ERR_WARN_MSR            WARN( 2) /* macro self-reference */
 #define ERR_WARN_MDP            WARN( 3) /* macro default parameters check */
@@ -110,16 +110,26 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_WARN_BAD_PRAGMA	WARN(17) /* malformed pragma */
 #define ERR_WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
 #define ERR_WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
-#define ERR_WARN_MAX            19       /* the highest numbered one */
+#define ERR_WARN_UNK_WARNING	WARN(20) /* unknown warning */
+
+/* The "all" warning acts as a global switch, it must come last */
+#define ERR_WARN_ALL            21 /* Do not use WARN() here */
 
 struct warning {
     const char *name;
     const char *help;
     bool enabled;
 };
-extern const struct warning warnings[ERR_WARN_MAX+1];
-extern bool warning_on[ERR_WARN_MAX+1];        /* Current state */
-extern bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state */
-void init_warnings(void);
+extern const struct warning warnings[ERR_WARN_ALL+1];
+
+/* This is a bitmask */
+#define WARN_ST_ENABLED      1   /* Warning is currently enabled */
+#define WARN_ST_ERROR        2   /* Treat this warning as an error */
+
+extern uint8_t warning_state[ERR_WARN_ALL];
+extern uint8_t warning_state_init[ERR_WARN_ALL];
+
+/* Process a warning option or directive */
+bool set_warning_status(const char *);
 
 #endif /* NASM_ERROR_H */

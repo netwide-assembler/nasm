@@ -332,6 +332,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /* Save away the default state of warnings */
+    memcpy(warning_state_init, warning_state, sizeof warning_state);
+
     if (!using_debug_info) {
         /* No debug info, redirect to the null backend (empty stubs) */
         dfmt = &null_debug_form;
@@ -390,8 +393,9 @@ int main(int argc, char **argv)
 
             /* pass = 1; */
             preproc->reset(inname, 3, depend_ptr);
-            memcpy(warning_on, warning_on_global,
-		   (ERR_WARN_MAX+1) * sizeof(bool));
+
+	    /* Revert all warnings to the default state */
+	    memcpy(warning_state, warning_state_init, sizeof warning_state);
 
             while ((line = preproc->getline())) {
                 /*
@@ -624,7 +628,6 @@ static bool process_arg(char *p, char *q, int pass)
     char *param;
     int i;
     bool advance = false;
-    bool do_warn;
 
     if (!p || !p[0])
         return false;
@@ -803,24 +806,28 @@ static bool process_arg(char *p, char *q, int pass)
                  "    -X<format>  specifies error reporting format (gnu or vc)\n"
                  "    -w+foo      enables warning foo (equiv. -Wfoo)\n"
                  "    -w-foo      disable warning foo (equiv. -Wno-foo)\n\n"
-                 "    -h          show invocation summary and exit\n\n"
+                 "    -w[+-]error[=foo] can be used to promote warnings to errors\n"
+                "    -h           show invocation summary and exit\n\n"
                  "--prefix,--postfix\n"
-                 "  this options prepend or append the given argument to all\n"
-                 "  extern and global variables\n"
-                 "Warnings:\n");
-            for (i = 0; i <= ERR_WARN_MAX; i++)
-                printf("    %-23s %s (default %s)\n",
+                 "                these options prepend or append the given string\n"
+                 "                to all extern and global variables\n"
+		 "\n"
+		 "Response files should contain command line parameters,\n"
+                 "one per line.\n"
+		 "\n"
+                 "Warnings for the -W/-w options:\n");
+            for (i = 0; i <= ERR_WARN_ALL; i++)
+                printf("    %-23s %s%s\n",
                        warnings[i].name, warnings[i].help,
-                       warnings[i].enabled ? "on" : "off");
-            printf
-                ("\nresponse files should contain command line parameters"
-                 ", one per line.\n");
+		       i == ERR_WARN_ALL ? "\n" :
+                       warnings[i].enabled ? " (default on)" :
+		       " (default off)");
             if (p[2] == 'f') {
-                printf("\nvalid output formats for -f are"
+                printf("valid output formats for -f are"
                        " (`*' denotes default):\n");
                 ofmt_list(ofmt, stdout);
             } else {
-                printf("\nFor a list of valid output formats, use -hf.\n");
+                printf("For a list of valid output formats, use -hf.\n");
                 printf("For a list of debug formats, use -f <form> -y.\n");
             }
             exit(0);    /* never need usage message here */
@@ -853,48 +860,15 @@ static bool process_arg(char *p, char *q, int pass)
                 preproc = &preproc_nop;
             break;
 
+        case 'w':
         case 'W':
             if (pass == 2) {
-                if (param[0] == 'n' && param[1] == 'o' && param[2] == '-') {
-                    do_warn = false;
-                    param += 3;
-                } else {
-                    do_warn = true;
+                if (!set_warning_status(param)) {
+                    nasm_error(ERR_WARNING|ERR_NOFILE|ERR_WARN_UNK_WARNING,
+			       "unknown warning option: %s", param);
                 }
-                goto set_warning;
             }
-            break;
-
-        case 'w':
-            if (pass == 2) {
-                if (param[0] != '+' && param[0] != '-') {
-                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                               "invalid option to `-w'");
-                    break;
-                }
-                do_warn = (param[0] == '+');
-                param++;
-                goto set_warning;
-            }
-            break;
-
-set_warning:
-            for (i = 0; i <= ERR_WARN_MAX; i++) {
-                if (!nasm_stricmp(param, warnings[i].name))
-                    break;
-            }
-            if (i <= ERR_WARN_MAX) {
-                warning_on_global[i] = do_warn;
-            } else if (!nasm_stricmp(param, "all")) {
-                for (i = 1; i <= ERR_WARN_MAX; i++)
-                    warning_on_global[i] = do_warn;
-            } else if (!nasm_stricmp(param, "none")) {
-                for (i = 1; i <= ERR_WARN_MAX; i++)
-                    warning_on_global[i] = !do_warn;
-            } else {
-		/* Ignore invalid warning names; forward compatibility */
-            }
-            break;
+        break;
 
         case 'M':
             if (pass == 2) {
@@ -1130,8 +1104,11 @@ static void parse_cmdline(int argc, char **argv, int pass)
 
     *inname = *outname = *listname = *errname = '\0';
 
-    for (i = 0; i <= ERR_WARN_MAX; i++)
-        warning_on_global[i] = warnings[i].enabled;
+    /* Initialize all the warnings to their default state */
+    for (i = 0; i < ERR_WARN_ALL; i++) {
+        warning_state_init[i] = warning_state[i] =
+	    warnings[i].enabled ? WARN_ST_ENABLED : 0;
+    }
 
     /*
      * First, process the NASMENV environment variable.
@@ -1246,7 +1223,9 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             offsets = raa_init();
         }
         preproc->reset(fname, pass1, pass1 == 2 ? depend_ptr : NULL);
-        memcpy(warning_on, warning_on_global, (ERR_WARN_MAX+1) * sizeof(bool));
+
+	/* Revert all warnings to the default state */
+	memcpy(warning_state, warning_state_init, sizeof warning_state);
 
         globallineno = 0;
         if (passn == 1)
@@ -1571,17 +1550,13 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
 /*
  * check to see if this is a suppressable warning
  */
-static inline bool is_suppressable_warning(int severity)
+static inline bool is_valid_warning(int severity)
 {
-    int index;
-
     /* Not a warning at all */
     if ((severity & ERR_MASK) != ERR_WARNING)
         return false;
 
-    index = WARN_IDX(severity);
-
-    return index && index <= ERR_WARN_MAX;
+    return WARN_IDX(severity) < ERR_WARN_ALL;
 }
 
 /**
@@ -1595,8 +1570,16 @@ static inline bool is_suppressable_warning(int severity)
 static bool is_suppressed_warning(int severity)
 {
     /* Might be a warning but suppresed explicitly */
-    if (is_suppressable_warning(severity))
-         return !warning_on[WARN_IDX(severity)];
+    if (is_valid_warning(severity))
+        return !(warning_state[WARN_IDX(severity)] & WARN_ST_ENABLED);
+    else
+        return false;
+}
+
+static bool warning_is_error(int severity)
+{
+    if (is_valid_warning(severity))
+        return !!(warning_state[WARN_IDX(severity)] & WARN_ST_ERROR);
     else
         return false;
 }
@@ -1654,7 +1637,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     }
 
     vsnprintf(msg, sizeof msg - 64, fmt, args);
-    if (is_suppressable_warning(severity)) {
+    if (is_valid_warning(severity) && WARN_IDX(severity) != ERR_WARN_OTHER) {
         char *p = strchr(msg, '\0');
 	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
     }
@@ -1683,7 +1666,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;
     case ERR_WARNING:
         /* Treat warnings as errors */
-        if (warning_on[WARN_IDX(ERR_WARN_TERM)])
+        if (warning_is_error(severity))
             terminate_after_phase = true;
         break;
     case ERR_NONFATAL:

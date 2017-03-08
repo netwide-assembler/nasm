@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -44,11 +44,10 @@
 
 /*
  * Description of the suppressible warnings for the command line and
- * the [warning] directive.  Entry zero isn't an actual warning, but
- * it used for -w+error/-Werror.
+ * the [warning] directive.
  */
-const struct warning warnings[ERR_WARN_MAX+1] = {
-    {"error", "treat warnings as errors", false},
+const struct warning warnings[ERR_WARN_ALL+1] = {
+    {"other", "any warning not specifially mentioned below", true},
     {"macro-params", "macro calls with wrong parameter count", true},
     {"macro-selfref", "cyclic macro references", false},
     {"macro-defaults", "macros with more default than optional parameters", true},
@@ -67,10 +66,15 @@ const struct warning warnings[ERR_WARN_MAX+1] = {
     {"ptr", "non-NASM keyword used in other assemblers", true},
     {"bad-pragma", "empty or malformed %pragma", false},
     {"unknown-pragma", "unknown %pragma facility or directive", false},
-    {"not-my-pragma", "%pragma not applicable to this compilation", false}
+    {"not-my-pragma", "%pragma not applicable to this compilation", false},
+    {"unknown-warning", "unknown warning in -W/-w or warning directive", false},
+
+    /* THIS ENTRY MUST COME LAST */
+    {"all", "all possible warnings", false}
 };
-bool warning_on[ERR_WARN_MAX+1];        /* Current state */
-bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state, for reset */
+
+uint8_t warning_state[ERR_WARN_ALL];/* Current state */
+uint8_t warning_state_init[ERR_WARN_ALL]; /* Command-line state, for reset */
 
 vefunc nasm_verror;    /* Global error handling function */
 
@@ -108,5 +112,91 @@ no_return nasm_panic_from_macro(const char *file, int line)
 
 no_return nasm_assert_failed(const char *file, int line, const char *msg)
 {
-    nasm_fatal(0, "assertion %s failed at %s:%d", msg, file, line);
+    nasm_panic(0, "assertion %s failed at %s:%d", msg, file, line);
+}
+
+/*
+ * This is called when processing a -w or -W option, or a warning directive.
+ * Returns true if if the action was successful.
+ */
+bool set_warning_status(const char *value)
+{
+    enum warn_action { WID_OFF, WID_ON, WID_RESET };
+    enum warn_action action;
+    uint8_t mask;
+    int i;
+    bool ok = false;
+
+    value = nasm_skip_spaces(value);
+    switch (*value) {
+    case '-':
+        action = WID_OFF;
+        value++;
+        break;
+    case '+':
+        action = WID_ON;
+        value++;
+        break;
+    case '*':
+        action = WID_RESET;
+        value++;
+        break;
+    case 'N':
+    case 'n':
+        if (!nasm_strnicmp(value, "no-", 3)) {
+            action = WID_OFF;
+            value += 3;
+            break;
+        } else if (!nasm_stricmp(value, "none")) {
+            action = WID_OFF;
+            value = NULL;
+            break;
+        }
+        /* else fall through */
+    default:
+        action = WID_ON;
+        break;
+    }
+
+    mask = WARN_ST_ENABLED;
+
+    if (value && !nasm_strnicmp(value, "error", 5)) {
+        switch (value[5]) {
+        case '=':
+            mask = WARN_ST_ERROR;
+            value += 6;
+            break;
+        case '\0':
+            mask = WARN_ST_ERROR;
+            value = NULL;
+            break;
+        default:
+            /* Just an accidental prefix? */
+            break;
+        }
+    }
+
+    if (value && !nasm_stricmp(value, "all"))
+        value = NULL;
+
+    /* This is inefficient, but it shouldn't matter... */
+    for (i = 0; i < ERR_WARN_ALL; i++) {
+        if (!value || !nasm_stricmp(value, warnings[i].name)) {
+            ok = true;          /* At least one action taken */
+            switch (action) {
+            case WID_OFF:
+                warning_state[i] &= ~mask;
+                break;
+            case WID_ON:
+                warning_state[i] |= mask;
+                break;
+            case WID_RESET:
+                warning_state[i] &= ~mask;
+                warning_state[i] |= warning_state_init[i] & mask;
+                break;
+            }
+        }
+    }
+
+    return ok;
 }

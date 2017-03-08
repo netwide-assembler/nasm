@@ -26,6 +26,10 @@ since 2007.
 \b \c{macho} object format now supports the \c{subsections_via_symbols}
    directive, see \k{macho-ssvs}.
 
+\b All warnings can now be suppressed if desired.  Furthermore,
+   warning-as-error can now be controlled on a per-warning-class
+   basis.
+
 \S{cl-2.12.03} Version 2.12.03
 
 \b Add new warnings for certain dangerous constructs which never ought

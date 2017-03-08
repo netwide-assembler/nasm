@@ -480,37 +480,11 @@ bool process_directives(char *directive)
     }
 
     case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
-    {
-	enum warn_action { WID_OFF, WID_ON, WID_RESET };
-	enum warn_action action;
-	int i;
-
-        value = nasm_skip_spaces(value);
-        switch(*value) {
-        case '-': action = WID_OFF;   value++; break;
-        case '+': action = WID_ON;    value++; break;
-        case '*': action = WID_RESET; value++; break;
-        default:  action = WID_ON;    break;
+        if (!set_warning_status(value)) {
+            nasm_error(ERR_WARNING|ERR_WARN_UNK_WARNING,
+                       "unknown warning option: %s", value);
         }
-
-        for (i = 1; i <= ERR_WARN_MAX; i++)
-            if (!nasm_stricmp(value, warnings[i].name))
-                break;
-        if (i <= ERR_WARN_MAX) {
-            switch (action) {
-            case WID_OFF:
-                warning_on[i] = false;
-                break;
-            case WID_ON:
-                warning_on[i] = true;
-                break;
-            case WID_RESET:
-                warning_on[i] = warning_on_global[i];
-                break;
-            }
-        }
-	break;
-    }
+        break;
 
     case D_CPU:         /* [CPU] */
         cpu = get_cpu(value);

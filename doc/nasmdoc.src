@@ -77,6 +77,8 @@
 \IR{-u} \c{-u} option
 \IR{-v} \c{-v} option
 \IR{-W} \c{-W} option
+\IR{-Werror} \c{-Werror} option
+\IR{-Wno-error} \c{-Wno-error} option
 \IR{-w} \c{-w} option
 \IR{-y} \c{-y} option
 \IR{-Z} \c{-Z} option
@@ -910,7 +912,10 @@ name, for example \c{orphan-labels}; you can enable warnings of
 this class by the command-line option \c{-w+orphan-labels} and
 disable it by \c{-w-orphan-labels}.
 
-The \i{suppressible warning} classes are:
+The current \i{warning classes} are:
+
+\b \i\c{other} specifies any warning not otherwise specified in any
+class.
 
 \b \i\c{macro-params} covers warnings about \i{multi-line macros}
 being invoked with the wrong number of parameters. This warning
@@ -969,22 +974,36 @@ to limitations in the output format.
 indicate a mistake in the source code.  Currently only the MASM
 \c{PTR} keyword is recognized.
 
-\b \i\c{error} causes warnings to be treated as errors.  Disabled by
-default.
+\b \i\c{bad-pragma} warns about a malformed or otherwise unparsable
+\c{%pragma} directive.  Disabled by default.
 
-\b \i\c{all} is an alias for \e{all} suppressible warning classes (not
-including \c{error}).  Thus, \c{-w+all} enables all available warnings.
+\b \i\c{unknown-pragma} warns about an unknown \c{%pragma} directive.
+This is not yet implemented.  Disabled by default.
 
-In addition, you can control warnings in the source code itself, using
-the \i\c{[warning]} directive.
-Warning classes may be enabled with \i\c{[warning +warning-name]},
-disabled with \i\c{[warning -warning-name]} or reset to their
-original value with \i\c{[warning *warning-name]}. No "user form"
-(without the brackets) exists.
+\b \i\c{not-my-pragma} warns about a \c{%pragma} directive which is
+not applicable to this particular assembly session.  This is not yet
+implemented.  Disabled by default.
+
+\b \i\c{unknown-warning} warns about a \c{-w} or \c{-W} option or a
+\c{[WARNING]} directive that contains an unknown warning name or is
+otherwise not possible to process.
+
+\b \i\c{all} is an alias for \e{all} suppressible warning classes.
+Thus, \c{-w+all} enables all available warnings, and \c{-w-all}
+disables warnings entirely (since NASM 2.13).
 
 Since version 2.00, NASM has also supported the gcc-like syntax
-\c{-Wwarning} and \c{-Wno-warning} instead of \c{-w+warning} and
-\c{-w-warning}, respectively.
+\c{-Wwarning-class} and \c{-Wno-warning-class} instead of \c{-w+warning-class} and
+\c{-w-warning-class}, respectively; both syntaxes work identically.
+
+The option \c{-w+error} or \i\c{-Werror} can be used to treat warnings
+as errors.  This can be controlled on a per warning class basis
+(\c{-w+error=}\e{warning-class}); if no \e{warning-class} is specified
+NASM treats it as \c{-w+error=all}; the same applies to \c{-w-error}
+or \i\c{-Wno-error}, of course.
+
+In addition, you can control warnings in the source code itself, using
+the \i\c{[WARNING]} directive.  See \k{asmdir-warning}.
 
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
@@ -4774,6 +4793,22 @@ has avoided the use of the brackeded primitive form, (\c{[FLOAT]}).
 
 \c{__FLOAT__} contains the full set of floating-point settings; this
 value can be saved away and invoked later to restore the setting.
+
+
+\H{asmdir-warning} \i\c{[WARNING]}: Enable or disable warnings
+
+The \c{[WARNING]} directive can be used to enable or disable classes
+of warnings in the same way as the \c{-w} option, see \k{opt-w} for
+more details about warning classes.
+
+Warning classes may be enabled with \c{[warning +]\e{warning-class}\c{]}, disabled
+with \c{[warning -}\e{warning-class}\c{]}, or reset to their original value (as
+specified on the command line) with \c{[warning *}\e{warning-class}{]}.
+
+The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
+\c{error=}\e{warning-class} specifiers.
+
+No "user form" (without the brackets) currently exists.
 
 
 \C{outfmt} \i{Output Formats}
