@@ -37,6 +37,6 @@ OUT: macho macho32 macho64
 %endmacro
 
 ; This directive sets the MH_SUBSECTION_VIA_SYMBOLS header flag
-%macro subsection_via_symbols 0
+%imacro subsection_via_symbols 0
 [%?]
 %endmacro
