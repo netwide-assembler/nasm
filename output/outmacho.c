@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -74,6 +74,9 @@
 #define CPU_TYPE_X86_64		0x01000007	/* x86-64 platform */
 #define	CPU_SUBTYPE_I386_ALL	3		/* all-x86 compatible */
 #define	MH_OBJECT		0x1		/* object file */
+
+/* Mach-O header flags */
+#define MH_SUBSECTIONS_VIA_SYMBOLS 0x2000
 
 /* Mach-O load commands */
 #define LC_SEGMENT		0x1		/* 32-bit segment load cmd */
@@ -281,6 +284,7 @@ static uint32_t strslen;
    a structure or as function arguments.  */
 static uint32_t head_ncmds = 0;
 static uint32_t head_sizeofcmds = 0;
+static uint32_t head_flags = 0;
 static uint64_t seg_filesize = 0;
 static uint64_t seg_vmsize = 0;
 static uint32_t seg_nsects = 0;
@@ -1162,7 +1166,7 @@ static void macho_write_header (void)
     fwriteint32_t(MH_OBJECT, ofile);	/* Mach-O file type */
     fwriteint32_t(head_ncmds, ofile);	/* number of load commands */
     fwriteint32_t(head_sizeofcmds, ofile);	/* size of load commands */
-    fwriteint32_t(0, ofile);			/* no flags */
+    fwriteint32_t(head_flags, ofile);		/* flags, if any */
     fwritezero(fmt.header_size - 7*4, ofile);	/* reserved fields */
 }
 
@@ -1594,6 +1598,27 @@ static void macho_cleanup(void)
     nasm_free(sectstab);
 }
 
+/*
+ * Mach-O-specific directives
+ */
+static enum directive_result
+    macho_directive(enum directives directive, char *value, int pass)
+{
+     switch (directive) {
+     case D_SUBSECTIONS_VIA_SYMBOLS:
+	 if (*value)
+	     return DIRR_BADPARAM;
+	 
+	 if (pass == 2)
+	     head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
+
+	 return DIRR_OK;
+
+     default:
+	 return DIRR_UNKNOWN;	/* Not a Mach-O directive */
+     }
+}
+ 
 #ifdef OF_MACHO32
 static const struct macho_fmt macho32_fmt = {
     4,
@@ -1634,7 +1659,7 @@ const struct ofmt of_macho32 = {
     macho_section,
     macho_sectalign,
     macho_segbase,
-    null_directive,
+    macho_directive,
     macho_filename,
     macho_cleanup,
     NULL                        /* pragma list */
@@ -1683,7 +1708,7 @@ const struct ofmt of_macho64 = {
     macho_section,
     macho_sectalign,
     macho_segbase,
-    null_directive,
+    macho_directive,
     macho_filename,
     macho_cleanup,
     NULL                        /* pragma list */

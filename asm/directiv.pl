@@ -54,7 +54,7 @@ open(DD, "< ${directives_dat}\0")
     or die "$0: cannot open: ${directives_dat}: $!\n";
 while (defined($line = <DD>)) {
     chomp $line;
-    if ($line =~ /^\s*([[:alnum:]]+)\s*(|[\;\#].*)$/) {
+    if ($line =~ /^\s*([[:alnum:]_]+)\s*(|[\;\#].*)$/) {
 	push(@directives, $1);
     }
 }
