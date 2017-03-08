@@ -77,7 +77,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	x86/disp8.$(O) x86/iflag.$(O) \
 	\
 	asm/float.$(O) \
-	asm/directiv.$(O) \
+	asm/directbl.$(O) \
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
 	asm/preproc.$(O) asm/quote.$(O) asm/pptok.$(O) \
 	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
@@ -263,7 +263,7 @@ asm/assemble.$(O): asm/assemble.c asm/assemble.h asm/directiv.h \
  include/disp8.h include/iflag.h include/insns.h include/nasm.h \
  include/nasmint.h include/nasmlib.h include/opflags.h include/strlist.h \
  include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
-asm/directiv.$(O): asm/directiv.c asm/directiv.h asm/pptok.h asm/preproc.h \
+asm/directbl.$(O): asm/directbl.c asm/directiv.h asm/pptok.h asm/preproc.h \
  config/config.h config/msvc.h config/unknown.h config/watcom.h \
  include/compiler.h include/hashtbl.h include/nasm.h include/nasmint.h \
  include/nasmlib.h include/opflags.h include/strlist.h include/tables.h \

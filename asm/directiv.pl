@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -37,7 +37,7 @@
 #
 # Usage:
 #      directiv.pl h directiv.dat directiv.h (to generate C header)
-#      directiv.pl c directiv.dat directiv.c (to generate C source)
+#      directiv.pl c directiv.dat directbl.c (to generate C source)
 #
 
 require 'phash.ph';
@@ -70,8 +70,8 @@ if ($output eq 'h') {
     print H " */\n";
     print H "\n";
 
-    print H "#ifndef NASM_DIRECTIVES_H\n";
-    print H "#define NASM_DIRECTIVES_H\n";
+    print H "#ifndef NASM_DIRECTIV_H\n";
+    print H "#define NASM_DIRECTIV_H\n";
     print H "\n";
 
     $c = '{';
@@ -88,7 +88,7 @@ if ($output eq 'h') {
     printf H "extern const char * const directives[%d];\n",
         scalar(@directives)+scalar(@specials);
     print H "enum directives find_directive(const char *token);\n\n";
-    print H "#endif /* NASM_DIRECTIVES_H */\n";
+    print H "#endif /* NASM_DIRECTIV_H */\n";
 } elsif ($output eq 'c') {
     %directive = ();
     $n = 0;
