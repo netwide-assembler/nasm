@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -90,6 +90,7 @@ static const char *debug_format;
 
 bool tasm_compatible_mode = false;
 int pass0, passn;
+static int pass1, pass2;	/* XXX: Get rid of these, they are redundant */
 int globalrel = 0;
 int globalbnd = 0;
 
@@ -1243,20 +1244,447 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
-static enum directives getkw(char **directive, char **value);
+static enum directives parse_directive_line(char **directive, char **value)
+{
+    char *p, *q, *buf;
+
+    buf = nasm_skip_spaces(*directive);
+
+    /*
+     * It should be enclosed in [ ].
+     * XXX: we don't check there is nothing else on the remainder of the
+     * line, except a possible comment.
+     */
+    if (*buf != '[')
+        return D_none;
+    q = strchr(buf, ']');
+    if (!q)
+        return D_corrupt;
+
+    /*
+     * Strip off the comments.  XXX: this doesn't account for quoted
+     * strings inside a directive.  We should really strip the
+     * comments in generic code, not here.  While we're at it, it
+     * would be better to pass the backend a series of tokens instead
+     * of a raw string, and actually process quoted strings for it,
+     * like of like argv is handled in C.
+     */
+    p = strchr(buf, ';');
+    if (p) {
+        if (p < q) /* ouch! somewhere inside */
+            return D_corrupt;
+        *p = '\0';
+    }
+
+    /* no brace, no trailing spaces */
+    *q = '\0';
+    nasm_zap_spaces_rev(--q);
+
+    /* directive */
+    p = nasm_skip_spaces(++buf);
+    q = nasm_skip_word(p);
+    if (!q)
+        return D_corrupt; /* sigh... no value there */
+    *q = '\0';
+    *directive = p;
+
+    /* and value finally */
+    p = nasm_skip_spaces(++q);
+    *value = p;
+
+    return find_directive(*directive);
+}
+
+static void process_pragma(char *str)
+{
+    (void)str;
+}
+
+static enum directives process_directives(char *directive)
+{
+    enum directives d;
+    char *value, *p, *q, *special;
+    struct tokenval tokval;
+    bool bad_param = false;
+
+    d = parse_directive_line(&directive, &value);
+
+    switch (d) {
+    case D_none:
+        return D_none;      /* Not a directive */
+
+    case D_corrupt:
+	nasm_error(ERR_NONFATAL, "invalid directive line");
+	break;
+
+    default:			/* It's a backend-specific directive */
+        if (ofmt->directive(d, value, pass2))
+            break;
+        /* else fall through */
+    case D_unknown:
+        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+                   "unrecognised directive [%s]", directive);
+        break;
+
+    case D_SEGMENT:         /* [SEGMENT n] */
+    case D_SECTION:
+    {
+	int sb;
+        int32_t seg = ofmt->section(value, pass2, &sb);
+
+        if (seg == NO_SEG) {
+            nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+                       "segment name `%s' not recognized", value);
+        } else {
+            in_abs_seg = false;
+            location.segment = seg;
+        }
+        break;
+    }
+
+    case D_SECTALIGN:       /* [SECTALIGN n] */
+    {
+	expr *e;
+
+        if (*value) {
+            stdscan_reset();
+            stdscan_set(value);
+            tokval.t_type = TOKEN_INVALID;
+            e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
+            if (e) {
+                uint64_t align = e->value;
+
+		if (!is_power2(e->value)) {
+                    nasm_error(ERR_NONFATAL,
+                               "segment alignment `%s' is not power of two",
+                               value);
+		} else if (align > UINT64_C(0x7fffffff)) {
+                    /*
+                     * FIXME: Please make some sane message here
+                     * ofmt should have some 'check' method which
+                     * would report segment alignment bounds.
+                     */
+		    nasm_error(ERR_NONFATAL,
+			       "absurdly large segment alignment `%s' (2^%d)",
+			       value, ilog2_64(align));
+                }
+
+                /* callee should be able to handle all details */
+                if (location.segment != NO_SEG)
+                    ofmt->sectalign(location.segment, align);
+            }
+        }
+        break;
+    }
+
+    case D_EXTERN:          /* [EXTERN label:special] */
+        if (*value == '$')
+            value++;        /* skip initial $ if present */
+        if (pass0 == 2) {
+            q = value;
+            while (*q && *q != ':')
+                q++;
+            if (*q == ':') {
+                *q++ = '\0';
+                ofmt->symdef(value, 0L, 0L, 3, q);
+            }
+        } else if (passn == 1) {
+            bool validid = true;
+            q = value;
+            if (!isidstart(*q))
+                validid = false;
+            while (*q && *q != ':') {
+                if (!isidchar(*q))
+                    validid = false;
+                q++;
+            }
+            if (!validid) {
+                nasm_error(ERR_NONFATAL, "identifier expected after EXTERN");
+                break;
+            }
+            if (*q == ':') {
+                *q++ = '\0';
+                special = q;
+            } else
+                special = NULL;
+            if (!is_extern(value)) {        /* allow re-EXTERN to be ignored */
+                int temp = pass0;
+                pass0 = 1;  /* fake pass 1 in labels.c */
+                declare_as_global(value, special);
+                define_label(value, seg_alloc(), 0L, NULL,
+                             false, true);
+                pass0 = temp;
+            }
+        }           /* else  pass0 == 1 */
+        break;
+
+    case D_BITS:            /* [BITS bits] */
+        globalbits = get_bits(value);
+        break;
+
+    case D_GLOBAL:          /* [GLOBAL symbol:special] */
+        if (*value == '$')
+            value++;        /* skip initial $ if present */
+        if (pass0 == 2) {   /* pass 2 */
+            q = value;
+            while (*q && *q != ':')
+                q++;
+            if (*q == ':') {
+                *q++ = '\0';
+                ofmt->symdef(value, 0L, 0L, 3, q);
+            }
+        } else if (pass2 == 1) {    /* pass == 1 */
+            bool validid = true;
+
+            q = value;
+            if (!isidstart(*q))
+                validid = false;
+            while (*q && *q != ':') {
+                if (!isidchar(*q))
+                    validid = false;
+                q++;
+            }
+            if (!validid) {
+                nasm_error(ERR_NONFATAL,
+                           "identifier expected after GLOBAL");
+                break;
+            }
+            if (*q == ':') {
+                *q++ = '\0';
+                special = q;
+            } else
+                special = NULL;
+            declare_as_global(value, special);
+        }           /* pass == 1 */
+        break;
+
+    case D_COMMON:          /* [COMMON symbol size:special] */
+    {
+        int64_t size;
+	bool rn_error;
+	bool validid;
+
+        if (*value == '$')
+            value++;        /* skip initial $ if present */
+        p = value;
+        validid = true;
+        if (!isidstart(*p))
+            validid = false;
+        while (*p && !nasm_isspace(*p)) {
+            if (!isidchar(*p))
+                validid = false;
+            p++;
+        }
+        if (!validid) {
+            nasm_error(ERR_NONFATAL, "identifier expected after COMMON");
+            break;
+        }
+        if (*p) {
+            p = nasm_zap_spaces_fwd(p);
+            q = p;
+            while (*q && *q != ':')
+                q++;
+            if (*q == ':') {
+                *q++ = '\0';
+                special = q;
+            } else {
+                special = NULL;
+            }
+            size = readnum(p, &rn_error);
+            if (rn_error) {
+                nasm_error(ERR_NONFATAL,
+                           "invalid size specified"
+                           " in COMMON declaration");
+                break;
+            }
+        } else {
+            nasm_error(ERR_NONFATAL,
+                       "no size specified in"
+                       " COMMON declaration");
+            break;
+        }
+
+        if (pass0 < 2) {
+            define_common(value, seg_alloc(), size, special);
+        } else if (pass0 == 2) {
+            if (special)
+                ofmt->symdef(value, 0L, 0L, 3, special);
+        }
+        break;
+    }
+
+    case D_ABSOLUTE:        /* [ABSOLUTE address] */
+    {
+	expr *e;
+
+        stdscan_reset();
+        stdscan_set(value);
+        tokval.t_type = TOKEN_INVALID;
+        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
+        if (e) {
+            if (!is_reloc(e))
+                nasm_error(pass0 ==
+                           1 ? ERR_NONFATAL : ERR_PANIC,
+                           "cannot use non-relocatable expression as "
+                           "ABSOLUTE address");
+            else {
+                abs_seg = reloc_seg(e);
+                abs_offset = reloc_value(e);
+            }
+        } else if (passn == 1)
+            abs_offset = 0x100;     /* don't go near zero in case of / */
+        else
+            nasm_panic(0, "invalid ABSOLUTE address "
+                       "in pass two");
+        in_abs_seg = true;
+        location.segment = NO_SEG;
+        break;
+    }
+
+    case D_DEBUG:           /* [DEBUG] */
+    {
+        bool badid, overlong;
+	char debugid[128];
+
+        p = value;
+        q = debugid;
+        badid = overlong = false;
+        if (!isidstart(*p)) {
+            badid = true;
+        } else {
+            while (*p && !nasm_isspace(*p)) {
+                if (q >= debugid + sizeof debugid - 1) {
+                    overlong = true;
+                    break;
+                }
+                if (!isidchar(*p))
+                    badid = true;
+                *q++ = *p++;
+            }
+            *q = 0;
+        }
+        if (badid) {
+            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+                       "identifier expected after DEBUG");
+            break;
+        }
+        if (overlong) {
+            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
+                       "DEBUG identifier too long");
+            break;
+        }
+        p = nasm_skip_spaces(p);
+        if (pass0 == 2)
+            dfmt->debug_directive(debugid, p);
+        break;
+    }
+
+    case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
+    {
+	enum warn_action { WID_OFF, WID_ON, WID_RESET };
+	enum warn_action action;
+	int i;
+
+        value = nasm_skip_spaces(value);
+        switch(*value) {
+        case '-': action = WID_OFF;   value++; break;
+        case '+': action = WID_ON;    value++; break;
+        case '*': action = WID_RESET; value++; break;
+        default:  action = WID_ON;    break;
+        }
+
+        for (i = 1; i <= ERR_WARN_MAX; i++)
+            if (!nasm_stricmp(value, warnings[i].name))
+                break;
+        if (i <= ERR_WARN_MAX) {
+            switch (action) {
+            case WID_OFF:
+                warning_on[i] = false;
+                break;
+            case WID_ON:
+                warning_on[i] = true;
+                break;
+            case WID_RESET:
+                warning_on[i] = warning_on_global[i];
+                break;
+            }
+        }
+	break;
+    }
+
+    case D_CPU:         /* [CPU] */
+        cpu = get_cpu(value);
+        break;
+
+    case D_LIST:        /* [LIST {+|-}] */
+        value = nasm_skip_spaces(value);
+        if (*value == '+') {
+            user_nolist = 0;
+        } else {
+            if (*value == '-') {
+                user_nolist = 1;
+            } else {
+                bad_param = true;
+            }
+        }
+        break;
+
+    case D_DEFAULT:         /* [DEFAULT] */
+        stdscan_reset();
+        stdscan_set(value);
+        tokval.t_type = TOKEN_INVALID;
+        if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
+            switch (tokval.t_integer) {
+            case S_REL:
+                globalrel = 1;
+                break;
+            case S_ABS:
+                globalrel = 0;
+                break;
+            case P_BND:
+                globalbnd = 1;
+                break;
+            case P_NOBND:
+                globalbnd = 0;
+                break;
+            default:
+                bad_param = true;
+                break;
+            }
+        } else {
+            bad_param = true;
+        }
+        break;
+
+    case D_FLOAT:
+        if (float_option(value)) {
+            nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
+                       "unknown 'float' directive: %s", value);
+        }
+        break;
+
+    case D_PRAGMA:
+        process_pragma(value);
+        break;
+    }
+
+
+    /* A common error message */
+    if (bad_param) {
+        nasm_error(ERR_NONFATAL, "invalid parameter to [%s] directive",
+                   directive);
+    }
+
+    return d;
+}
 
 static void assemble_file(char *fname, StrList **depend_ptr)
 {
-    char *directive, *value, *p, *q, *special, *line;
+    char *line;
     insn output_ins;
-    int i, validid;
-    bool rn_error;
-    int32_t seg;
+    int i;
     int64_t offs;
-    struct tokenval tokval;
-    expr *e;
     int pass_max;
-    char debugid[128];
     int sb;
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
@@ -1264,7 +1692,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
-        int pass1, pass2;
         ldfunc def_label;
 
         pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
@@ -1297,528 +1724,204 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         location.offset = offs = get_curr_offs();
 
         while ((line = preproc->getline())) {
-            enum directives d;
             globallineno++;
 
             /*
              * Here we parse our directives; this is not handled by the
-             * 'real' parser.  This really should be a separate function.
+             * main parser.
              */
-            directive = line;
-            d = getkw(&directive, &value);
-            if (d) {
-                int err = 0;
+            if (process_directives(line) != D_none)
+                goto end_of_line; /* Just do final cleanup */
 
-                switch (d) {
-                case D_SEGMENT:         /* [SEGMENT n] */
-                case D_SECTION:
-                    seg = ofmt->section(value, pass2, &sb);
-                    if (seg == NO_SEG) {
-                        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                     "segment name `%s' not recognized",
-                                     value);
-                    } else {
-                        in_abs_seg = false;
-                        location.segment = seg;
-                    }
-                    break;
-                case D_SECTALIGN:       /* [SECTALIGN n] */
-                    if (*value) {
-                        stdscan_reset();
-                        stdscan_set(value);
-                        tokval.t_type = TOKEN_INVALID;
-                        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
-                        if (e) {
-                            unsigned int align = (unsigned int)e->value;
-                            if ((uint64_t)e->value > 0x7fffffff) {
-                                /*
-                                 * FIXME: Please make some sane message here
-                                 * ofmt should have some 'check' method which
-                                 * would report segment alignment bounds.
-                                 */
-                                nasm_fatal(0,
-                                           "incorrect segment alignment `%s'", value);
-                            } else if (!is_power2(align)) {
-                                nasm_error(ERR_NONFATAL,
-                                           "segment alignment `%s' is not power of two",
-                                            value);
+            /* Not a directive, or even something that starts with [ */
+
+            parse_line(pass1, line, &output_ins, def_label);
+
+            if (optimizing > 0) {
+                if (forwref != NULL && globallineno == forwref->lineno) {
+                    output_ins.forw_ref = true;
+                    do {
+                        output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
+                        forwref = saa_rstruct(forwrefs);
+                    } while (forwref != NULL
+                             && forwref->lineno == globallineno);
+                } else
+                    output_ins.forw_ref = false;
+
+                if (output_ins.forw_ref) {
+                    if (passn == 1) {
+                        for (i = 0; i < output_ins.operands; i++) {
+                            if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
+                                struct forwrefinfo *fwinf = (struct forwrefinfo *)saa_wstruct(forwrefs);
+                                fwinf->lineno = globallineno;
+                                fwinf->operand = i;
                             }
-
-                            /* callee should be able to handle all details */
-			    if (location.segment != NO_SEG)
-			      ofmt->sectalign(location.segment, align);
                         }
                     }
-                    break;
-                case D_EXTERN:          /* [EXTERN label:special] */
-                    if (*value == '$')
-                        value++;        /* skip initial $ if present */
-                    if (pass0 == 2) {
-                        q = value;
-                        while (*q && *q != ':')
-                            q++;
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            ofmt->symdef(value, 0L, 0L, 3, q);
-                        }
-                    } else if (passn == 1) {
-                        q = value;
-                        validid = true;
-                        if (!isidstart(*q))
-                            validid = false;
-                        while (*q && *q != ':') {
-                            if (!isidchar(*q))
-                                validid = false;
-                            q++;
-                        }
-                        if (!validid) {
-                            nasm_error(ERR_NONFATAL,
-                                         "identifier expected after EXTERN");
-                            break;
-                        }
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            special = q;
-                        } else
-                            special = NULL;
-                        if (!is_extern(value)) {        /* allow re-EXTERN to be ignored */
-                            int temp = pass0;
-                            pass0 = 1;  /* fake pass 1 in labels.c */
-                            declare_as_global(value, special);
-                            define_label(value, seg_alloc(), 0L, NULL,
-                                         false, true);
-                            pass0 = temp;
-                        }
-                    }           /* else  pass0 == 1 */
-                    break;
-                case D_BITS:            /* [BITS bits] */
-                    globalbits = sb = get_bits(value);
-                    break;
-                case D_GLOBAL:          /* [GLOBAL symbol:special] */
-                    if (*value == '$')
-                        value++;        /* skip initial $ if present */
-                    if (pass0 == 2) {   /* pass 2 */
-                        q = value;
-                        while (*q && *q != ':')
-                            q++;
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            ofmt->symdef(value, 0L, 0L, 3, q);
-                        }
-                    } else if (pass2 == 1) {    /* pass == 1 */
-                        q = value;
-                        validid = true;
-                        if (!isidstart(*q))
-                            validid = false;
-                        while (*q && *q != ':') {
-                            if (!isidchar(*q))
-                                validid = false;
-                            q++;
-                        }
-                        if (!validid) {
-                            nasm_error(ERR_NONFATAL,
-                                         "identifier expected after GLOBAL");
-                            break;
-                        }
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            special = q;
-                        } else
-                            special = NULL;
-                        declare_as_global(value, special);
-                    }           /* pass == 1 */
-                    break;
-                case D_COMMON:          /* [COMMON symbol size:special] */
-                {
-                    int64_t size;
-
-                    if (*value == '$')
-                        value++;        /* skip initial $ if present */
-                    p = value;
-                    validid = true;
-                    if (!isidstart(*p))
-                        validid = false;
-                    while (*p && !nasm_isspace(*p)) {
-                        if (!isidchar(*p))
-                            validid = false;
-                        p++;
-                    }
-                    if (!validid) {
-                        nasm_error(ERR_NONFATAL,
-                                   "identifier expected after COMMON");
-                        break;
-                    }
-                    if (*p) {
-                        p = nasm_zap_spaces_fwd(p);
-                        q = p;
-                        while (*q && *q != ':')
-                            q++;
-                        if (*q == ':') {
-                            *q++ = '\0';
-                            special = q;
-                        } else {
-                            special = NULL;
-                        }
-                        size = readnum(p, &rn_error);
-                        if (rn_error) {
-                            nasm_error(ERR_NONFATAL,
-                                       "invalid size specified"
-                                       " in COMMON declaration");
-                            break;
-                        }
-                    } else {
-                        nasm_error(ERR_NONFATAL,
-                                   "no size specified in"
-                                   " COMMON declaration");
-                        break;
-                    }
-
-                    if (pass0 < 2) {
-                        define_common(value, seg_alloc(), size, special);
-                    } else if (pass0 == 2) {
-                        if (special)
-                            ofmt->symdef(value, 0L, 0L, 3, special);
-                    }
-                    break;
                 }
-                case D_ABSOLUTE:        /* [ABSOLUTE address] */
-                    stdscan_reset();
-                    stdscan_set(value);
-                    tokval.t_type = TOKEN_INVALID;
-                    e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
-                    if (e) {
-                        if (!is_reloc(e))
-                            nasm_error(pass0 ==
-                                         1 ? ERR_NONFATAL : ERR_PANIC,
-                                         "cannot use non-relocatable expression as "
-                                         "ABSOLUTE address");
-                        else {
-                            abs_seg = reloc_seg(e);
-                            abs_offset = reloc_value(e);
-                        }
-                    } else if (passn == 1)
-                        abs_offset = 0x100;     /* don't go near zero in case of / */
-                    else
-                        nasm_panic(0, "invalid ABSOLUTE address "
-                                     "in pass two");
-                    in_abs_seg = true;
-                    location.segment = NO_SEG;
-                    break;
-                case D_DEBUG:           /* [DEBUG] */
-                {
-                    bool badid, overlong;
+            }
 
-                    p = value;
-                    q = debugid;
-                    badid = overlong = false;
-                    if (!isidstart(*p)) {
-                        badid = true;
-                    } else {
-                        while (*p && !nasm_isspace(*p)) {
-                            if (q >= debugid + sizeof debugid - 1) {
-                                overlong = true;
-                                break;
-                            }
-                            if (!isidchar(*p))
-                                badid = true;
-                            *q++ = *p++;
-                        }
-                        *q = 0;
+            /*  forw_ref */
+            if (output_ins.opcode == I_EQU) {
+                if (pass1 == 1) {
+                    /*
+                     * Special `..' EQUs get processed in pass two,
+                     * except `..@' macro-processor EQUs which are done
+                     * in the normal place.
+                     */
+                    if (!output_ins.label)
+                        nasm_error(ERR_NONFATAL,
+                                   "EQU not preceded by label");
+
+                    else if (output_ins.label[0] != '.' ||
+                             output_ins.label[1] != '.' ||
+                             output_ins.label[2] == '@') {
+                        if (output_ins.operands == 1 &&
+                            (output_ins.oprs[0].type & IMMEDIATE) &&
+                            output_ins.oprs[0].wrt == NO_SEG) {
+                            bool isext = !!(output_ins.oprs[0].opflags & OPFLAG_EXTERN);
+                            def_label(output_ins.label,
+                                      output_ins.oprs[0].segment,
+                                      output_ins.oprs[0].offset, NULL,
+                                      false, isext);
+                        } else if (output_ins.operands == 2
+                                   && (output_ins.oprs[0].type & IMMEDIATE)
+                                   && (output_ins.oprs[0].type & COLON)
+                                   && output_ins.oprs[0].segment == NO_SEG
+                                   && output_ins.oprs[0].wrt == NO_SEG
+                                   && (output_ins.oprs[1].type & IMMEDIATE)
+                                   && output_ins.oprs[1].segment == NO_SEG
+                                   && output_ins.oprs[1].wrt == NO_SEG) {
+                            def_label(output_ins.label,
+                                      output_ins.oprs[0].offset | SEG_ABS,
+                                      output_ins.oprs[1].offset,
+                                      NULL, false, false);
+                        } else
+                            nasm_error(ERR_NONFATAL,
+                                       "bad syntax for EQU");
                     }
-                    if (badid) {
-                        nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                   "identifier expected after DEBUG");
-                        break;
+                } else {
+                    /*
+                     * Special `..' EQUs get processed here, except
+                     * `..@' macro processor EQUs which are done above.
+                     */
+                    if (output_ins.label[0] == '.' &&
+                        output_ins.label[1] == '.' &&
+                        output_ins.label[2] != '@') {
+                        if (output_ins.operands == 1 &&
+                            (output_ins.oprs[0].type & IMMEDIATE)) {
+                            define_label(output_ins.label,
+                                         output_ins.oprs[0].segment,
+                                         output_ins.oprs[0].offset,
+                                         NULL, false, false);
+                        } else if (output_ins.operands == 2
+                                   && (output_ins.oprs[0].type & IMMEDIATE)
+                                   && (output_ins.oprs[0].type & COLON)
+                                   && output_ins.oprs[0].segment == NO_SEG
+                                   && (output_ins.oprs[1].type & IMMEDIATE)
+                                   && output_ins.oprs[1].segment == NO_SEG) {
+                            define_label(output_ins.label,
+                                         output_ins.oprs[0].offset | SEG_ABS,
+                                         output_ins.oprs[1].offset,
+                                         NULL, false, false);
+                        } else
+                            nasm_error(ERR_NONFATAL,
+                                       "bad syntax for EQU");
                     }
-                    if (overlong) {
-                        nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                   "DEBUG identifier too long");
-                        break;
-                    }
-                    p = nasm_skip_spaces(p);
-                    if (pass0 == 2)
-                        dfmt->debug_directive(debugid, p);
-                    break;
                 }
-                case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
-                    value = nasm_skip_spaces(value);
-                    switch(*value) {
-                        case '-': validid = 0; value++; break;
-                        case '+': validid = 1; value++; break;
-                        case '*': validid = 2; value++; break;
-                        default:  validid = 1; break;
-                    }
+            } else {        /* instruction isn't an EQU */
 
-                    for (i = 1; i <= ERR_WARN_MAX; i++)
-                        if (!nasm_stricmp(value, warnings[i].name))
+                if (pass1 == 1) {
+
+                    int64_t l = insn_size(location.segment, offs, sb, cpu,
+                                          &output_ins);
+                    l *= output_ins.times;
+
+                    /* if (using_debug_info)  && output_ins.opcode != -1) */
+                    if (using_debug_info)
+                    {       /* fbk 03/25/01 */
+                            /* this is done here so we can do debug type info */
+                        int32_t typeinfo =
+                            TYS_ELEMENTS(output_ins.operands);
+                        switch (output_ins.opcode) {
+                        case I_RESB:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
                             break;
-                    if (i <= ERR_WARN_MAX) {
-                        switch(validid) {
-                        case 0:
-                            warning_on[i] = false;
+                        case I_RESW:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
                             break;
-                        case 1:
-                            warning_on[i] = true;
+                        case I_RESD:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
                             break;
-                        case 2:
-                            warning_on[i] = warning_on_global[i];
+                        case I_RESQ:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
                             break;
-                        }
-                    }
-                    break;
-                case D_CPU:         /* [CPU] */
-                    cpu = get_cpu(value);
-                    break;
-                case D_LIST:        /* [LIST {+|-}] */
-                    value = nasm_skip_spaces(value);
-                    if (*value == '+') {
-                        user_nolist = 0;
-                    } else {
-                        if (*value == '-') {
-                            user_nolist = 1;
-                        } else {
-                            err = 1;
-                        }
-                    }
-                    break;
-                case D_DEFAULT:         /* [DEFAULT] */
-                    stdscan_reset();
-                    stdscan_set(value);
-                    tokval.t_type = TOKEN_INVALID;
-                    if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
-                        switch (tokval.t_integer) {
-                        case S_REL:
-                            globalrel = 1;
+                        case I_REST:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
                             break;
-                        case S_ABS:
-                            globalrel = 0;
+                        case I_RESO:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
                             break;
-                        case P_BND:
-                            globalbnd = 1;
+                        case I_RESY:
+                            typeinfo =
+                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
                             break;
-                        case P_NOBND:
-                            globalbnd = 0;
+                        case I_DB:
+                            typeinfo |= TY_BYTE;
+                            break;
+                        case I_DW:
+                            typeinfo |= TY_WORD;
+                            break;
+                        case I_DD:
+                            if (output_ins.eops_float)
+                                typeinfo |= TY_FLOAT;
+                            else
+                                typeinfo |= TY_DWORD;
+                            break;
+                        case I_DQ:
+                            typeinfo |= TY_QWORD;
+                            break;
+                        case I_DT:
+                            typeinfo |= TY_TBYTE;
+                            break;
+                        case I_DO:
+                            typeinfo |= TY_OWORD;
+                            break;
+                        case I_DY:
+                            typeinfo |= TY_YWORD;
                             break;
                         default:
-                            err = 1;
-                            break;
+                            typeinfo = TY_LABEL;
+
                         }
-                    } else {
-                        err = 1;
+
+                        dfmt->debug_typevalue(typeinfo);
                     }
-                    break;
-                case D_FLOAT:
-                    if (float_option(value)) {
-                        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                                   "unknown 'float' directive: %s",
-                                   value);
-                    }
-                    break;
-                case D_PRAGMA:
-                    /* Currently the pragma directive doesn't do anything */
-                    break;
-                default:
-                    if (ofmt->directive(d, value, pass2))
-                        break;
-                    /* else fall through */
-                case D_unknown:
-                    nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                               "unrecognised directive [%s]",
-                               directive);
-                    break;
-                }
-                if (err) {
-                    nasm_error(ERR_NONFATAL,
-                               "invalid parameter to [%s] directive",
-                               directive);
-                }
-            } else {            /* it isn't a directive */
-                parse_line(pass1, line, &output_ins, def_label);
-
-                if (optimizing > 0) {
-                    if (forwref != NULL && globallineno == forwref->lineno) {
-                        output_ins.forw_ref = true;
-                        do {
-                            output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
-                            forwref = saa_rstruct(forwrefs);
-                        } while (forwref != NULL
-                                 && forwref->lineno == globallineno);
-                    } else
-                        output_ins.forw_ref = false;
-
-                    if (output_ins.forw_ref) {
-                        if (passn == 1) {
-                            for (i = 0; i < output_ins.operands; i++) {
-                                if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
-                                    struct forwrefinfo *fwinf = (struct forwrefinfo *)saa_wstruct(forwrefs);
-                                    fwinf->lineno = globallineno;
-                                    fwinf->operand = i;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                /*  forw_ref */
-                if (output_ins.opcode == I_EQU) {
-                    if (pass1 == 1) {
-                        /*
-                         * Special `..' EQUs get processed in pass two,
-                         * except `..@' macro-processor EQUs which are done
-                         * in the normal place.
-                         */
-                        if (!output_ins.label)
-                            nasm_error(ERR_NONFATAL,
-                                         "EQU not preceded by label");
-
-                        else if (output_ins.label[0] != '.' ||
-                                 output_ins.label[1] != '.' ||
-                                 output_ins.label[2] == '@') {
-                            if (output_ins.operands == 1 &&
-                                (output_ins.oprs[0].type & IMMEDIATE) &&
-                                output_ins.oprs[0].wrt == NO_SEG) {
-                                bool isext = !!(output_ins.oprs[0].opflags & OPFLAG_EXTERN);
-                                def_label(output_ins.label,
-                                          output_ins.oprs[0].segment,
-                                          output_ins.oprs[0].offset, NULL,
-                                          false, isext);
-                            } else if (output_ins.operands == 2
-                                       && (output_ins.oprs[0].type & IMMEDIATE)
-                                       && (output_ins.oprs[0].type & COLON)
-                                       && output_ins.oprs[0].segment == NO_SEG
-                                       && output_ins.oprs[0].wrt == NO_SEG
-                                       && (output_ins.oprs[1].type & IMMEDIATE)
-                                       && output_ins.oprs[1].segment == NO_SEG
-                                       && output_ins.oprs[1].wrt == NO_SEG) {
-                                def_label(output_ins.label,
-                                          output_ins.oprs[0].offset | SEG_ABS,
-                                          output_ins.oprs[1].offset,
-                                          NULL, false, false);
-                            } else
-                                nasm_error(ERR_NONFATAL,
-                                             "bad syntax for EQU");
-                        }
-                    } else {
-                        /*
-                         * Special `..' EQUs get processed here, except
-                         * `..@' macro processor EQUs which are done above.
-                         */
-                        if (output_ins.label[0] == '.' &&
-                            output_ins.label[1] == '.' &&
-                            output_ins.label[2] != '@') {
-                            if (output_ins.operands == 1 &&
-                                (output_ins.oprs[0].type & IMMEDIATE)) {
-                                define_label(output_ins.label,
-                                             output_ins.oprs[0].segment,
-                                             output_ins.oprs[0].offset,
-                                             NULL, false, false);
-                            } else if (output_ins.operands == 2
-                                       && (output_ins.oprs[0].type & IMMEDIATE)
-                                       && (output_ins.oprs[0].type & COLON)
-                                       && output_ins.oprs[0].segment == NO_SEG
-                                       && (output_ins.oprs[1].type & IMMEDIATE)
-                                       && output_ins.oprs[1].segment == NO_SEG) {
-                                define_label(output_ins.label,
-                                             output_ins.oprs[0].offset | SEG_ABS,
-                                             output_ins.oprs[1].offset,
-                                             NULL, false, false);
-                            } else
-                                nasm_error(ERR_NONFATAL,
-                                             "bad syntax for EQU");
-                        }
-                    }
-                } else {        /* instruction isn't an EQU */
-
-                    if (pass1 == 1) {
-
-                        int64_t l = insn_size(location.segment, offs, sb, cpu,
-					      &output_ins);
-                        l *= output_ins.times;
-
-                        /* if (using_debug_info)  && output_ins.opcode != -1) */
-                        if (using_debug_info)
-                        {       /* fbk 03/25/01 */
-                            /* this is done here so we can do debug type info */
-                            int32_t typeinfo =
-                                TYS_ELEMENTS(output_ins.operands);
-                            switch (output_ins.opcode) {
-                            case I_RESB:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
-                                break;
-                            case I_RESW:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
-                                break;
-                            case I_RESD:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
-                                break;
-                            case I_RESQ:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
-                                break;
-                            case I_REST:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
-                                break;
-                            case I_RESO:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
-                                break;
-                            case I_RESY:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
-                                break;
-                            case I_DB:
-                                typeinfo |= TY_BYTE;
-                                break;
-                            case I_DW:
-                                typeinfo |= TY_WORD;
-                                break;
-                            case I_DD:
-                                if (output_ins.eops_float)
-                                    typeinfo |= TY_FLOAT;
-                                else
-                                    typeinfo |= TY_DWORD;
-                                break;
-                            case I_DQ:
-                                typeinfo |= TY_QWORD;
-                                break;
-                            case I_DT:
-                                typeinfo |= TY_TBYTE;
-                                break;
-                            case I_DO:
-                                typeinfo |= TY_OWORD;
-                                break;
-                            case I_DY:
-                                typeinfo |= TY_YWORD;
-                                break;
-                            default:
-                                typeinfo = TY_LABEL;
-
-                            }
-
-                            dfmt->debug_typevalue(typeinfo);
-                        }
-                        if (l != -1) {
-                            offs += l;
-                            set_curr_offs(offs);
-                        }
-                        /*
-                         * else l == -1 => invalid instruction, which will be
-                         * flagged as an error on pass 2
-                         */
-
-                    } else {
-                        offs += assemble(location.segment, offs, sb, cpu,
-                                         &output_ins);
+                    if (l != -1) {
+                        offs += l;
                         set_curr_offs(offs);
-
                     }
-                }               /* not an EQU */
-                cleanup_insn(&output_ins);
-            }
+                    /*
+                     * else l == -1 => invalid instruction, which will be
+                     * flagged as an error on pass 2
+                     */
+
+                } else {
+                    offs += assemble(location.segment, offs, sb, cpu,
+                                     &output_ins);
+                    set_curr_offs(offs);
+
+                }
+            }               /* not an EQU */
+            cleanup_insn(&output_ins);
+
+        end_of_line:
             nasm_free(line);
             location.offset = offs = get_curr_offs();
         }                       /* end while (line = preproc->getline... */
@@ -1862,46 +1965,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         /*  -On and -Ov switches */
         fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
     }
-}
-
-static enum directives getkw(char **directive, char **value)
-{
-    char *p, *q, *buf;
-
-    buf = nasm_skip_spaces(*directive);
-
-    /* it should be enclosed in [ ] */
-    if (*buf != '[')
-        return D_none;
-    q = strchr(buf, ']');
-    if (!q)
-        return D_none;
-
-    /* stip off the comments */
-    p = strchr(buf, ';');
-    if (p) {
-        if (p < q) /* ouch! somwhere inside */
-            return D_none;
-        *p = '\0';
-    }
-
-    /* no brace, no trailing spaces */
-    *q = '\0';
-    nasm_zap_spaces_rev(--q);
-
-    /* directive */
-    p = nasm_skip_spaces(++buf);
-    q = nasm_skip_word(p);
-    if (!q)
-        return D_none; /* sigh... no value there */
-    *q = '\0';
-    *directive = p;
-
-    /* and value finally */
-    p = nasm_skip_spaces(++q);
-    *value = p;
-
-    return find_directive(*directive);
 }
 
 /**

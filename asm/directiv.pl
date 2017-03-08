@@ -45,7 +45,10 @@ require 'phash.ph';
 my($output, $directives_dat, $outfile) = @ARGV;
 
 @directives = ();
-@specials   = ('none', 'unknown');
+
+# Special values for enum directives.  Note that D_none must be first
+# so D_none == 0.
+@specials   = ('none', 'unknown', 'corrupt');
 
 open(DD, "< ${directives_dat}\0")
     or die "$0: cannot open: ${directives_dat}: $!\n";
