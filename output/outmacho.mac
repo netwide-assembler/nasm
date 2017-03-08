@@ -36,7 +36,7 @@ OUT: macho macho32 macho64
 %macro __NASM_CDecl__ 1
 %endmacro
 
-; This directive sets the MH_SUBSECTION_VIA_SYMBOLS header flag
-%imacro subsection_via_symbols 0
+; This directive sets the MH_SUBSECTIONS_VIA_SYMBOLS header flag
+%imacro subsections_via_symbols 0
 [%?]
 %endmacro
