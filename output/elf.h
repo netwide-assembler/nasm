@@ -258,7 +258,7 @@
 #define ELF32_ST_BIND(i)      ((i) >> 4)
 #define ELF32_ST_MKBIND(i)    ((i) << 4)  /* just a helper */
 #define ELF32_ST_TYPE(i)      ((i) & 0xf)
-#define ELF32_ST_INFO(b, i)   (ELF_ST_MKBIND(b) + ELF_ST_TYPE(i))
+#define ELF32_ST_INFO(b, i)   (ELF32_ST_MKBIND(b) + ELF32_ST_TYPE(i))
 
 #define ELF64_ST_BIND(i)      ELF32_ST_BIND(i)
 #define ELF64_ST_MKBIND(i)    ELF32_ST_MKBIND(i)
