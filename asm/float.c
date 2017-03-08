@@ -44,6 +44,7 @@
 
 #include "nasm.h"
 #include "float.h"
+#include "error.h"
 
 /*
  * -----------------

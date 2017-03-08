@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -32,16 +32,20 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * assemble.h  header file for assemble.c
+ * assemble.h - header file for stuff private to the assembler
  */
 
 #ifndef NASM_ASSEMBLE_H
 #define NASM_ASSEMBLE_H
 
+#include "nasm.h"
 #include "iflag.h"
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
-               insn * instruction);
-int64_t assemble(int32_t segment, int64_t offset, int bits, iflag_t cp,
-                 insn * instruction);
+extern iflag_t cpu;
+extern bool in_absolute;        /* Are we in an absolute segment? */
+extern struct location absolute;
+
+int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction);
+int64_t assemble(int32_t segment, int64_t offset, int bits, insn *instruction);
+
 #endif

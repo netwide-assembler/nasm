@@ -44,6 +44,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "preproc.h"
 #include "saa.h"
 #include "hashtbl.h"

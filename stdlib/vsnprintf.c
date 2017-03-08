@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "nasmlib.h"
+#include "error.h"
 
 #if !defined(HAVE_VSNPRINTF) && !defined(HAVE__VSNPRINTF)
 

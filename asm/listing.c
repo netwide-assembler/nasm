@@ -45,6 +45,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "listing.h"
 
 #define LIST_MAX_LEN 216        /* something sensible */

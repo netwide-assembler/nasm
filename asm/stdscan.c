@@ -40,6 +40,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "quote.h"
 #include "stdscan.h"
 #include "insns.h"

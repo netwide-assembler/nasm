@@ -53,7 +53,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	stdlib/strnlen.$(O) &
 	nasmlib/ver.$(O) &
 	nasmlib/crc64.$(O) nasmlib/malloc.$(O) &
-	nasmlib/error.$(O) nasmlib/md5c.$(O) nasmlib/string.$(O) &
+	nasmlib/md5c.$(O) nasmlib/string.$(O) &
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) &
 	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) &
 	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) &
@@ -65,8 +65,9 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) &
 	x86/disp8.$(O) x86/iflag.$(O) &
 	&
+	asm/error.$(O) &
 	asm/float.$(O) &
-	asm/directbl.$(O) &
+	asm/directiv.$(O) asm/directbl.$(O) &
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) &
 	asm/preproc.$(O) asm/quote.$(O) asm/pptok.$(O) &
 	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) &
@@ -274,18 +275,27 @@ alldeps: perlreq .SYMBOLIC
 asm/assemble.$(O): asm/assemble.c asm/assemble.h asm/directiv.h &
  asm/listing.h asm/pptok.h asm/preproc.h asm/tokens.h config/msvc.h &
  config/unknown.h config/watcom.h include/compiler.h include/disp8.h &
- include/iflag.h include/insns.h include/nasm.h include/nasmint.h &
- include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
- x86/iflaggen.h x86/insnsi.h x86/regs.h
+ include/error.h include/iflag.h include/insns.h include/nasm.h &
+ include/nasmint.h include/nasmlib.h include/opflags.h include/strlist.h &
+ include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/directbl.$(O): asm/directbl.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
  include/hashtbl.h include/nasm.h include/nasmint.h include/nasmlib.h &
  include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
  x86/regs.h
-asm/eval.$(O): asm/eval.c asm/directiv.h asm/eval.h asm/float.h asm/pptok.h &
- asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/labels.h include/nasm.h include/nasmint.h &
- include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+asm/directiv.$(O): asm/directiv.c asm/assemble.h asm/directiv.h asm/eval.h &
+ asm/float.h asm/listing.h asm/pptok.h asm/preproc.h asm/stdscan.h &
+ config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
+ include/error.h include/iflag.h include/labels.h include/nasm.h &
+ include/nasmint.h include/nasmlib.h include/opflags.h include/strlist.h &
+ include/tables.h output/outform.h x86/iflaggen.h x86/insnsi.h x86/regs.h
+asm/error.$(O): asm/error.c config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/error.h include/nasmint.h include/nasmlib.h
+asm/eval.$(O): asm/eval.c asm/assemble.h asm/directiv.h asm/eval.h &
+ asm/float.h asm/pptok.h asm/preproc.h config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/error.h include/iflag.h &
+ include/labels.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/strlist.h include/tables.h x86/iflaggen.h &
  x86/insnsi.h x86/regs.h
 asm/exprdump.$(O): asm/exprdump.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
@@ -297,46 +307,47 @@ asm/exprlib.$(O): asm/exprlib.c asm/directiv.h asm/pptok.h asm/preproc.h &
  include/strlist.h include/tables.h x86/insnsi.h x86/regs.h
 asm/float.$(O): asm/float.c asm/directiv.h asm/float.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
- x86/regs.h
-asm/labels.$(O): asm/labels.c asm/directiv.h asm/pptok.h asm/preproc.h &
- config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/hashtbl.h include/labels.h include/nasm.h include/nasmint.h &
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
  include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
  x86/insnsi.h x86/regs.h
+asm/labels.$(O): asm/labels.c asm/directiv.h asm/pptok.h asm/preproc.h &
+ config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
+ include/error.h include/hashtbl.h include/labels.h include/nasm.h &
+ include/nasmint.h include/nasmlib.h include/opflags.h include/strlist.h &
+ include/tables.h x86/insnsi.h x86/regs.h
 asm/listing.$(O): asm/listing.c asm/directiv.h asm/listing.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
- x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ x86/insnsi.h x86/regs.h
 asm/nasm.$(O): asm/nasm.c asm/assemble.h asm/directiv.h asm/eval.h &
  asm/float.h asm/listing.h asm/parser.h asm/pptok.h asm/preproc.h &
  asm/stdscan.h asm/tokens.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/iflag.h include/insns.h include/labels.h &
+ include/compiler.h include/error.h include/iflag.h include/insns.h &
+ include/labels.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/raa.h include/saa.h include/strlist.h &
+ include/tables.h include/ver.h output/outform.h x86/iflaggen.h x86/insnsi.h &
+ x86/regs.h
+asm/parser.$(O): asm/parser.c asm/assemble.h asm/directiv.h asm/eval.h &
+ asm/float.h asm/parser.h asm/pptok.h asm/preproc.h asm/stdscan.h &
+ asm/tokens.h config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/error.h include/iflag.h include/insns.h &
  include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/raa.h include/saa.h include/strlist.h include/tables.h &
- include/ver.h output/outform.h x86/iflaggen.h x86/insnsi.h x86/regs.h
-asm/parser.$(O): asm/parser.c asm/directiv.h asm/eval.h asm/float.h &
- asm/parser.h asm/pptok.h asm/preproc.h asm/stdscan.h asm/tokens.h &
- config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/iflag.h include/insns.h include/nasm.h include/nasmint.h &
- include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
- x86/iflaggen.h x86/insnsi.h x86/regs.h
+ include/strlist.h include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/pptok.$(O): asm/pptok.c asm/pptok.h asm/preproc.h config/msvc.h &
  config/unknown.h config/watcom.h include/compiler.h include/hashtbl.h &
  include/nasmint.h include/nasmlib.h
 asm/preproc-nop.$(O): asm/preproc-nop.c asm/directiv.h asm/listing.h &
  asm/pptok.h asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
- x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ x86/insnsi.h x86/regs.h
 asm/preproc.$(O): asm/preproc.c asm/directiv.h asm/eval.h asm/listing.h &
  asm/pptok.h asm/preproc.h asm/quote.h asm/stdscan.h asm/tokens.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/hashtbl.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
- x86/regs.h
+ include/error.h include/hashtbl.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ x86/insnsi.h x86/regs.h
 asm/quote.$(O): asm/quote.c asm/quote.h config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 asm/rdstrnum.$(O): asm/rdstrnum.c asm/directiv.h asm/pptok.h asm/preproc.h &
@@ -350,9 +361,10 @@ asm/segalloc.$(O): asm/segalloc.c asm/directiv.h asm/pptok.h asm/preproc.h &
  include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/stdscan.$(O): asm/stdscan.c asm/directiv.h asm/pptok.h asm/preproc.h &
  asm/quote.h asm/stdscan.h asm/tokens.h config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/iflag.h include/insns.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/strlist.h include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
+ config/watcom.h include/compiler.h include/error.h include/iflag.h &
+ include/insns.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/strlist.h include/tables.h x86/iflaggen.h &
+ x86/insnsi.h x86/regs.h
 asm/strfunc.$(O): asm/strfunc.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
  include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
@@ -375,10 +387,10 @@ disasm/disasm.$(O): disasm/disasm.c asm/directiv.h asm/pptok.h asm/preproc.h &
  x86/insnsi.h x86/regdis.h x86/regs.h
 disasm/ndisasm.$(O): disasm/ndisasm.c asm/directiv.h asm/pptok.h &
  asm/preproc.h asm/tokens.h config/msvc.h config/unknown.h config/watcom.h &
- disasm/disasm.h disasm/sync.h include/compiler.h include/iflag.h &
- include/insns.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h include/ver.h &
- x86/iflaggen.h x86/insnsi.h x86/regs.h
+ disasm/disasm.h disasm/sync.h include/compiler.h include/error.h &
+ include/iflag.h include/insns.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ include/ver.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 disasm/sync.$(O): disasm/sync.c config/msvc.h config/unknown.h &
  config/watcom.h disasm/sync.h include/compiler.h include/nasmint.h &
  include/nasmlib.h
@@ -392,13 +404,12 @@ nasmlib/bsi.$(O): nasmlib/bsi.c config/msvc.h config/unknown.h &
 nasmlib/crc64.$(O): nasmlib/crc64.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/hashtbl.h include/nasmint.h &
  include/nasmlib.h
-nasmlib/error.$(O): nasmlib/error.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/file.$(O): nasmlib/file.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
- nasmlib/file.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h nasmlib/file.h
 nasmlib/filename.$(O): nasmlib/filename.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h
 nasmlib/hashtbl.$(O): nasmlib/hashtbl.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/hashtbl.h include/nasm.h include/nasmint.h &
@@ -407,12 +418,13 @@ nasmlib/hashtbl.$(O): nasmlib/hashtbl.c asm/directiv.h asm/pptok.h &
 nasmlib/ilog2.$(O): nasmlib/ilog2.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/malloc.$(O): nasmlib/malloc.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h
 nasmlib/md5c.$(O): nasmlib/md5c.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/md5.h include/nasmint.h
 nasmlib/mmap.$(O): nasmlib/mmap.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
- nasmlib/file.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h nasmlib/file.h
 nasmlib/raa.$(O): nasmlib/raa.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
  include/raa.h
@@ -420,9 +432,9 @@ nasmlib/rbtree.$(O): nasmlib/rbtree.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/rbtree.h
 nasmlib/readnum.$(O): nasmlib/readnum.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h &
- x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ x86/insnsi.h x86/regs.h
 nasmlib/realpath.$(O): nasmlib/realpath.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 nasmlib/saa.$(O): nasmlib/saa.c config/msvc.h config/unknown.h &
@@ -441,57 +453,61 @@ nasmlib/zerobuf.$(O): nasmlib/zerobuf.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 output/codeview.$(O): output/codeview.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/hashtbl.h include/md5.h include/nasm.h &
- include/nasmint.h include/nasmlib.h include/opflags.h include/saa.h &
- include/strlist.h include/tables.h output/outlib.h output/pecoff.h &
- version.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/hashtbl.h include/md5.h &
+ include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
+ include/saa.h include/strlist.h include/tables.h output/outlib.h &
+ output/pecoff.h version.h x86/insnsi.h x86/regs.h
 output/legacy.$(O): output/legacy.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/strlist.h include/tables.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/error.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/strlist.h include/tables.h output/outlib.h &
+ x86/insnsi.h x86/regs.h
 output/nulldbg.$(O): output/nulldbg.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h output/outlib.h &
- x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ output/outlib.h x86/insnsi.h x86/regs.h
 output/nullout.$(O): output/nullout.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h output/outlib.h &
- x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ output/outlib.h x86/insnsi.h x86/regs.h
 output/outaout.$(O): output/outaout.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/raa.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
-output/outas86.$(O): output/outas86.c asm/directiv.h asm/pptok.h &
- asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/raa.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
-output/outbin.$(O): output/outbin.c asm/directiv.h asm/eval.h asm/pptok.h &
- asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/labels.h include/nasm.h include/nasmint.h &
- include/nasmlib.h include/opflags.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
-output/outcoff.$(O): output/outcoff.c asm/directiv.h asm/eval.h asm/pptok.h &
- asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/raa.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h output/pecoff.h &
- x86/insnsi.h x86/regs.h
-output/outdbg.$(O): output/outdbg.c asm/directiv.h asm/pptok.h asm/preproc.h &
- config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/raa.h include/saa.h &
  include/strlist.h include/tables.h output/outform.h output/outlib.h &
  x86/insnsi.h x86/regs.h
+output/outas86.$(O): output/outas86.c asm/directiv.h asm/pptok.h &
+ asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/raa.h include/saa.h &
+ include/strlist.h include/tables.h output/outform.h output/outlib.h &
+ x86/insnsi.h x86/regs.h
+output/outbin.$(O): output/outbin.c asm/directiv.h asm/eval.h asm/pptok.h &
+ asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/error.h include/labels.h include/nasm.h &
+ include/nasmint.h include/nasmlib.h include/opflags.h include/saa.h &
+ include/strlist.h include/tables.h output/outform.h output/outlib.h &
+ x86/insnsi.h x86/regs.h
+output/outcoff.$(O): output/outcoff.c asm/directiv.h asm/eval.h asm/pptok.h &
+ asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/raa.h include/saa.h &
+ include/strlist.h include/tables.h output/outform.h output/outlib.h &
+ output/pecoff.h x86/insnsi.h x86/regs.h
+output/outdbg.$(O): output/outdbg.c asm/directiv.h asm/pptok.h asm/preproc.h &
+ config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
+ include/error.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/strlist.h include/tables.h output/outform.h &
+ output/outlib.h x86/insnsi.h x86/regs.h
 output/outelf.$(O): output/outelf.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/raa.h include/rbtree.h include/saa.h &
- include/strlist.h include/tables.h include/ver.h output/dwarf.h &
- output/elf.h output/outelf.h output/outform.h output/outlib.h &
- output/stabs.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/raa.h include/rbtree.h &
+ include/saa.h include/strlist.h include/tables.h include/ver.h &
+ output/dwarf.h output/elf.h output/outelf.h output/outform.h &
+ output/outlib.h output/stabs.h x86/insnsi.h x86/regs.h
 output/outform.$(O): output/outform.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
@@ -499,29 +515,31 @@ output/outform.$(O): output/outform.c asm/directiv.h asm/pptok.h &
  x86/insnsi.h x86/regs.h
 output/outieee.$(O): output/outieee.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h include/ver.h &
- output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ include/ver.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
 output/outlib.$(O): output/outlib.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/strlist.h include/tables.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/error.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/strlist.h include/tables.h output/outlib.h &
+ x86/insnsi.h x86/regs.h
 output/outmacho.$(O): output/outmacho.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/raa.h include/rbtree.h include/saa.h &
- include/strlist.h include/tables.h output/outform.h output/outlib.h &
- x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/raa.h include/rbtree.h &
+ include/saa.h include/strlist.h include/tables.h output/outform.h &
+ output/outlib.h x86/insnsi.h x86/regs.h
 output/outobj.$(O): output/outobj.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/strlist.h include/tables.h include/ver.h &
- output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/strlist.h include/tables.h &
+ include/ver.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
 output/outrdf2.$(O): output/outrdf2.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
- include/opflags.h include/rdoff.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/nasm.h include/nasmint.h &
+ include/nasmlib.h include/opflags.h include/rdoff.h include/saa.h &
+ include/strlist.h include/tables.h output/outform.h output/outlib.h &
+ x86/insnsi.h x86/regs.h
 stdlib/snprintf.$(O): stdlib/snprintf.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 stdlib/strlcpy.$(O): stdlib/strlcpy.c config/msvc.h config/unknown.h &
@@ -529,7 +547,8 @@ stdlib/strlcpy.$(O): stdlib/strlcpy.c config/msvc.h config/unknown.h &
 stdlib/strnlen.$(O): stdlib/strnlen.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h
 stdlib/vsnprintf.$(O): stdlib/vsnprintf.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h
 x86/disp8.$(O): x86/disp8.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/compiler.h &
  include/disp8.h include/nasm.h include/nasmint.h include/nasmlib.h &

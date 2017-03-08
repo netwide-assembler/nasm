@@ -43,6 +43,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "hashtbl.h"
 #include "labels.h"
 

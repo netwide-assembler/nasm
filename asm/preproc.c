@@ -72,6 +72,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "preproc.h"
 #include "hashtbl.h"
 #include "quote.h"

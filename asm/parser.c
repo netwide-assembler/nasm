@@ -46,15 +46,14 @@
 #include "nasm.h"
 #include "insns.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "stdscan.h"
 #include "eval.h"
 #include "parser.h"
 #include "float.h"
+#include "assemble.h"
 #include "tables.h"
 
-extern int in_abs_seg;          /* ABSOLUTE segment flag */
-extern int32_t abs_seg;         /* ABSOLUTE segment */
-extern int32_t abs_offset;      /* ABSOLUTE segment offset */
 
 static int is_comma_next(void);
 
@@ -474,12 +473,12 @@ restart_parse:
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
             /*
              * FIXME: location.segment could be NO_SEG, in which case
-             * it is possible we should be passing 'abs_seg'. Look into this.
+             * it is possible we should be passing 'absolute.segment'. Look into this.
              * Work out whether that is *really* what we should be doing.
              * Generally fix things. I think this is right as it is, but
              * am still not certain.
              */
-            ldef(result->label, in_abs_seg ? abs_seg : location.segment,
+            ldef(result->label, in_absolute ? absolute.segment : location.segment,
                  location.offset, NULL, true, false);
         }
     }

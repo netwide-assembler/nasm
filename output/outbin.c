@@ -82,6 +82,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "saa.h"
 #include "stdscan.h"
 #include "labels.h"

@@ -46,6 +46,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "stdscan.h"
 #include "eval.h"
 #include "ver.h"

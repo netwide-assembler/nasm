@@ -37,6 +37,7 @@
 
 #include "compiler.h"
 #include "nasmlib.h"
+#include "error.h"
 
 void standard_extension(char *inname, char *outname, char *extension)
 {

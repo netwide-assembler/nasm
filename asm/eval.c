@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -45,9 +45,11 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "eval.h"
 #include "labels.h"
 #include "float.h"
+#include "assemble.h"
 
 #define TEMPEXPRS_DELTA 128
 #define TEMPEXPR_DELTA 8
@@ -70,9 +72,6 @@ static int *opflags;
 
 static struct eval_hints *hint;
 
-extern int in_abs_seg;          /* ABSOLUTE segment flag */
-extern int32_t abs_seg;         /* ABSOLUTE segment */
-extern int32_t abs_offset;      /* ABSOLUTE segment offset */
 
 /*
  * Unimportant cleanup is done to avoid confusing people who are trying
@@ -903,11 +902,11 @@ static expr *expr6(int critical)
 
             type = EXPR_SIMPLE; /* might get overridden by UNKNOWN */
             if (i == TOKEN_BASE) {
-                label_seg = in_abs_seg ? abs_seg : location.segment;
+                label_seg = in_absolute ? absolute.segment : location.segment;
                 label_ofs = 0;
             } else if (i == TOKEN_HERE) {
-                label_seg = in_abs_seg ? abs_seg : location.segment;
-                label_ofs = in_abs_seg ? abs_offset : location.offset;
+                label_seg = in_absolute ? absolute.segment : location.segment;
+                label_ofs = in_absolute ? absolute.offset : location.offset;
             } else {
                 if (!lookup_label(tokval->t_charptr, &label_seg, &label_ofs)) {
                     scope = local_scope(tokval->t_charptr);

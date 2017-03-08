@@ -183,6 +183,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "assemble.h"
 #include "insns.h"
 #include "tables.h"
@@ -225,8 +226,6 @@ typedef struct {
 
 #define GEN_MODRM(mod, reg, rm)                     \
         (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
-
-static iflag_t cpu;             /* cpu level received from nasm.c */
 
 static int64_t calcsize(int32_t, int64_t, int, insn *,
                         const struct itemplate *);
@@ -539,16 +538,13 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
 /* This is totally just a wild guess what is reasonable... */
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
-int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
-                 insn * instruction)
+int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
 {
     struct out_data data;
     const struct itemplate *temp;
     enum match_result m;
     int32_t itimes;
     int64_t wsize;              /* size for DB etc. */
-
-    cpu = cp;
 
     nasm_zero(&data);
     data.offset = start;
@@ -792,13 +788,10 @@ int64_t assemble(int32_t segment, int64_t start, int bits, iflag_t cp,
     return data.offset - start;
 }
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, iflag_t cp,
-                  insn * instruction)
+int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 {
     const struct itemplate *temp;
     enum match_result m;
-
-    cpu = cp;
 
     if (instruction->opcode == I_none)
         return 0;

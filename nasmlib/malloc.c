@@ -40,6 +40,7 @@
 #include <stdlib.h>
 
 #include "nasmlib.h"
+#include "error.h"
 
 void *nasm_malloc(size_t size)
 {

@@ -47,6 +47,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "saa.h"
 #include "outform.h"
 #include "outlib.h"

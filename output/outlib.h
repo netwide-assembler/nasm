@@ -35,6 +35,7 @@
 #define NASM_OUTLIB_H
 
 #include "nasm.h"
+#include "error.h"
 
 uint64_t realsize(enum out_type type, uint64_t size);
 

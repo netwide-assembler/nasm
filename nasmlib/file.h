@@ -36,6 +36,7 @@
 
 #include "compiler.h"
 #include "nasmlib.h"
+#include "error.h"
 
 #include <errno.h>
 

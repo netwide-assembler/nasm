@@ -47,6 +47,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "saa.h"
 #include "raa.h"
 #include "float.h"
@@ -74,8 +75,6 @@ struct forwrefinfo {            /* info held on forward refs. */
     int operand;
 };
 
-static int get_bits(char *value);
-static iflag_t get_cpu(char *cpu_str);
 static void parse_cmdline(int, char **, int);
 static void assemble_file(char *, StrList **);
 static bool is_suppressed_warning(int severity);
@@ -112,7 +111,7 @@ FILE *ofile = NULL;
 int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
 static int cmd_sb = 16;    /* by default */
 
-static iflag_t cpu;
+iflag_t cpu;
 static iflag_t cmd_cpu;
 
 int64_t global_offset_changed;      /* referenced in labels.c */
@@ -120,9 +119,8 @@ int64_t prev_offset_changed;
 int32_t stall_count;
 
 struct location location;
-int in_abs_seg;                 /* Flag we are in ABSOLUTE seg */
-int32_t abs_seg;                   /* ABSOLUTE segment basis */
-int32_t abs_offset;                /* ABSOLUTE offset */
+bool in_absolute;                 /* Flag we are in ABSOLUTE seg */
+struct location absolute;         /* Segment/offset inside ABSOLUTE */
 
 static struct RAA *offsets;
 
@@ -143,38 +141,6 @@ static bool depend_missing_ok = false;
 static const char *depend_target = NULL;
 static const char *depend_file = NULL;
 
-/*
- * Which of the suppressible warnings are suppressed. Entry zero
- * isn't an actual warning, but it used for -w+error/-Werror.
- */
-
-static bool warning_on[ERR_WARN_MAX+1]; /* Current state */
-static bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state */
-
-static const struct warning {
-    const char *name;
-    const char *help;
-    bool enabled;
-} warnings[ERR_WARN_MAX+1] = {
-    {"error", "treat warnings as errors", false},
-    {"macro-params", "macro calls with wrong parameter count", true},
-    {"macro-selfref", "cyclic macro references", false},
-    {"macro-defaults", "macros with more default than optional parameters", true},
-    {"orphan-labels", "labels alone on lines without trailing `:'", true},
-    {"number-overflow", "numeric constant does not fit", true},
-    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
-    {"float-overflow", "floating point overflow", true},
-    {"float-denorm", "floating point denormal", false},
-    {"float-underflow", "floating point underflow", false},
-    {"float-toolong", "too many digits in floating-point number", true},
-    {"user", "%warning directives", true},
-    {"lock", "lock prefix on unlockable instructions", true},
-    {"hle", "invalid hle prefixes", true},
-    {"bnd", "invalid bnd prefixes", true},
-    {"zext-reloc", "relocation zero-extended to match output format", true},
-    {"ptr", "non-NASM keyword used in other assemblers", true},
-};
-
 static bool want_usage;
 static bool terminate_after_phase;
 bool user_nolist = false;
@@ -183,13 +149,13 @@ static char *quote_for_make(const char *str);
 
 static int64_t get_curr_offs(void)
 {
-    return in_abs_seg ? abs_offset : raa_read(offsets, location.segment);
+    return in_absolute ? absolute.offset : raa_read(offsets, location.segment);
 }
 
 static void set_curr_offs(int64_t l_off)
 {
-        if (in_abs_seg)
-            abs_offset = l_off;
+        if (in_absolute)
+            absolute.offset = l_off;
         else
             offsets = raa_write(offsets, location.segment, l_off);
 }
@@ -1244,440 +1210,6 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
-static enum directives parse_directive_line(char **directive, char **value)
-{
-    char *p, *q, *buf;
-
-    buf = nasm_skip_spaces(*directive);
-
-    /*
-     * It should be enclosed in [ ].
-     * XXX: we don't check there is nothing else on the remainder of the
-     * line, except a possible comment.
-     */
-    if (*buf != '[')
-        return D_none;
-    q = strchr(buf, ']');
-    if (!q)
-        return D_corrupt;
-
-    /*
-     * Strip off the comments.  XXX: this doesn't account for quoted
-     * strings inside a directive.  We should really strip the
-     * comments in generic code, not here.  While we're at it, it
-     * would be better to pass the backend a series of tokens instead
-     * of a raw string, and actually process quoted strings for it,
-     * like of like argv is handled in C.
-     */
-    p = strchr(buf, ';');
-    if (p) {
-        if (p < q) /* ouch! somewhere inside */
-            return D_corrupt;
-        *p = '\0';
-    }
-
-    /* no brace, no trailing spaces */
-    *q = '\0';
-    nasm_zap_spaces_rev(--q);
-
-    /* directive */
-    p = nasm_skip_spaces(++buf);
-    q = nasm_skip_word(p);
-    if (!q)
-        return D_corrupt; /* sigh... no value there */
-    *q = '\0';
-    *directive = p;
-
-    /* and value finally */
-    p = nasm_skip_spaces(++q);
-    *value = p;
-
-    return find_directive(*directive);
-}
-
-static void process_pragma(char *str)
-{
-    (void)str;
-}
-
-static enum directives process_directives(char *directive)
-{
-    enum directives d;
-    char *value, *p, *q, *special;
-    struct tokenval tokval;
-    bool bad_param = false;
-
-    d = parse_directive_line(&directive, &value);
-
-    switch (d) {
-    case D_none:
-        return D_none;      /* Not a directive */
-
-    case D_corrupt:
-	nasm_error(ERR_NONFATAL, "invalid directive line");
-	break;
-
-    default:			/* It's a backend-specific directive */
-        if (ofmt->directive(d, value, pass2))
-            break;
-        /* else fall through */
-    case D_unknown:
-        nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                   "unrecognised directive [%s]", directive);
-        break;
-
-    case D_SEGMENT:         /* [SEGMENT n] */
-    case D_SECTION:
-    {
-	int sb;
-        int32_t seg = ofmt->section(value, pass2, &sb);
-
-        if (seg == NO_SEG) {
-            nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "segment name `%s' not recognized", value);
-        } else {
-            in_abs_seg = false;
-            location.segment = seg;
-        }
-        break;
-    }
-
-    case D_SECTALIGN:       /* [SECTALIGN n] */
-    {
-	expr *e;
-
-        if (*value) {
-            stdscan_reset();
-            stdscan_set(value);
-            tokval.t_type = TOKEN_INVALID;
-            e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
-            if (e) {
-                uint64_t align = e->value;
-
-		if (!is_power2(e->value)) {
-                    nasm_error(ERR_NONFATAL,
-                               "segment alignment `%s' is not power of two",
-                               value);
-		} else if (align > UINT64_C(0x7fffffff)) {
-                    /*
-                     * FIXME: Please make some sane message here
-                     * ofmt should have some 'check' method which
-                     * would report segment alignment bounds.
-                     */
-		    nasm_error(ERR_NONFATAL,
-			       "absurdly large segment alignment `%s' (2^%d)",
-			       value, ilog2_64(align));
-                }
-
-                /* callee should be able to handle all details */
-                if (location.segment != NO_SEG)
-                    ofmt->sectalign(location.segment, align);
-            }
-        }
-        break;
-    }
-
-    case D_EXTERN:          /* [EXTERN label:special] */
-        if (*value == '$')
-            value++;        /* skip initial $ if present */
-        if (pass0 == 2) {
-            q = value;
-            while (*q && *q != ':')
-                q++;
-            if (*q == ':') {
-                *q++ = '\0';
-                ofmt->symdef(value, 0L, 0L, 3, q);
-            }
-        } else if (passn == 1) {
-            bool validid = true;
-            q = value;
-            if (!isidstart(*q))
-                validid = false;
-            while (*q && *q != ':') {
-                if (!isidchar(*q))
-                    validid = false;
-                q++;
-            }
-            if (!validid) {
-                nasm_error(ERR_NONFATAL, "identifier expected after EXTERN");
-                break;
-            }
-            if (*q == ':') {
-                *q++ = '\0';
-                special = q;
-            } else
-                special = NULL;
-            if (!is_extern(value)) {        /* allow re-EXTERN to be ignored */
-                int temp = pass0;
-                pass0 = 1;  /* fake pass 1 in labels.c */
-                declare_as_global(value, special);
-                define_label(value, seg_alloc(), 0L, NULL,
-                             false, true);
-                pass0 = temp;
-            }
-        }           /* else  pass0 == 1 */
-        break;
-
-    case D_BITS:            /* [BITS bits] */
-        globalbits = get_bits(value);
-        break;
-
-    case D_GLOBAL:          /* [GLOBAL symbol:special] */
-        if (*value == '$')
-            value++;        /* skip initial $ if present */
-        if (pass0 == 2) {   /* pass 2 */
-            q = value;
-            while (*q && *q != ':')
-                q++;
-            if (*q == ':') {
-                *q++ = '\0';
-                ofmt->symdef(value, 0L, 0L, 3, q);
-            }
-        } else if (pass2 == 1) {    /* pass == 1 */
-            bool validid = true;
-
-            q = value;
-            if (!isidstart(*q))
-                validid = false;
-            while (*q && *q != ':') {
-                if (!isidchar(*q))
-                    validid = false;
-                q++;
-            }
-            if (!validid) {
-                nasm_error(ERR_NONFATAL,
-                           "identifier expected after GLOBAL");
-                break;
-            }
-            if (*q == ':') {
-                *q++ = '\0';
-                special = q;
-            } else
-                special = NULL;
-            declare_as_global(value, special);
-        }           /* pass == 1 */
-        break;
-
-    case D_COMMON:          /* [COMMON symbol size:special] */
-    {
-        int64_t size;
-	bool rn_error;
-	bool validid;
-
-        if (*value == '$')
-            value++;        /* skip initial $ if present */
-        p = value;
-        validid = true;
-        if (!isidstart(*p))
-            validid = false;
-        while (*p && !nasm_isspace(*p)) {
-            if (!isidchar(*p))
-                validid = false;
-            p++;
-        }
-        if (!validid) {
-            nasm_error(ERR_NONFATAL, "identifier expected after COMMON");
-            break;
-        }
-        if (*p) {
-            p = nasm_zap_spaces_fwd(p);
-            q = p;
-            while (*q && *q != ':')
-                q++;
-            if (*q == ':') {
-                *q++ = '\0';
-                special = q;
-            } else {
-                special = NULL;
-            }
-            size = readnum(p, &rn_error);
-            if (rn_error) {
-                nasm_error(ERR_NONFATAL,
-                           "invalid size specified"
-                           " in COMMON declaration");
-                break;
-            }
-        } else {
-            nasm_error(ERR_NONFATAL,
-                       "no size specified in"
-                       " COMMON declaration");
-            break;
-        }
-
-        if (pass0 < 2) {
-            define_common(value, seg_alloc(), size, special);
-        } else if (pass0 == 2) {
-            if (special)
-                ofmt->symdef(value, 0L, 0L, 3, special);
-        }
-        break;
-    }
-
-    case D_ABSOLUTE:        /* [ABSOLUTE address] */
-    {
-	expr *e;
-
-        stdscan_reset();
-        stdscan_set(value);
-        tokval.t_type = TOKEN_INVALID;
-        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
-        if (e) {
-            if (!is_reloc(e))
-                nasm_error(pass0 ==
-                           1 ? ERR_NONFATAL : ERR_PANIC,
-                           "cannot use non-relocatable expression as "
-                           "ABSOLUTE address");
-            else {
-                abs_seg = reloc_seg(e);
-                abs_offset = reloc_value(e);
-            }
-        } else if (passn == 1)
-            abs_offset = 0x100;     /* don't go near zero in case of / */
-        else
-            nasm_panic(0, "invalid ABSOLUTE address "
-                       "in pass two");
-        in_abs_seg = true;
-        location.segment = NO_SEG;
-        break;
-    }
-
-    case D_DEBUG:           /* [DEBUG] */
-    {
-        bool badid, overlong;
-	char debugid[128];
-
-        p = value;
-        q = debugid;
-        badid = overlong = false;
-        if (!isidstart(*p)) {
-            badid = true;
-        } else {
-            while (*p && !nasm_isspace(*p)) {
-                if (q >= debugid + sizeof debugid - 1) {
-                    overlong = true;
-                    break;
-                }
-                if (!isidchar(*p))
-                    badid = true;
-                *q++ = *p++;
-            }
-            *q = 0;
-        }
-        if (badid) {
-            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "identifier expected after DEBUG");
-            break;
-        }
-        if (overlong) {
-            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "DEBUG identifier too long");
-            break;
-        }
-        p = nasm_skip_spaces(p);
-        if (pass0 == 2)
-            dfmt->debug_directive(debugid, p);
-        break;
-    }
-
-    case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
-    {
-	enum warn_action { WID_OFF, WID_ON, WID_RESET };
-	enum warn_action action;
-	int i;
-
-        value = nasm_skip_spaces(value);
-        switch(*value) {
-        case '-': action = WID_OFF;   value++; break;
-        case '+': action = WID_ON;    value++; break;
-        case '*': action = WID_RESET; value++; break;
-        default:  action = WID_ON;    break;
-        }
-
-        for (i = 1; i <= ERR_WARN_MAX; i++)
-            if (!nasm_stricmp(value, warnings[i].name))
-                break;
-        if (i <= ERR_WARN_MAX) {
-            switch (action) {
-            case WID_OFF:
-                warning_on[i] = false;
-                break;
-            case WID_ON:
-                warning_on[i] = true;
-                break;
-            case WID_RESET:
-                warning_on[i] = warning_on_global[i];
-                break;
-            }
-        }
-	break;
-    }
-
-    case D_CPU:         /* [CPU] */
-        cpu = get_cpu(value);
-        break;
-
-    case D_LIST:        /* [LIST {+|-}] */
-        value = nasm_skip_spaces(value);
-        if (*value == '+') {
-            user_nolist = 0;
-        } else {
-            if (*value == '-') {
-                user_nolist = 1;
-            } else {
-                bad_param = true;
-            }
-        }
-        break;
-
-    case D_DEFAULT:         /* [DEFAULT] */
-        stdscan_reset();
-        stdscan_set(value);
-        tokval.t_type = TOKEN_INVALID;
-        if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
-            switch (tokval.t_integer) {
-            case S_REL:
-                globalrel = 1;
-                break;
-            case S_ABS:
-                globalrel = 0;
-                break;
-            case P_BND:
-                globalbnd = 1;
-                break;
-            case P_NOBND:
-                globalbnd = 0;
-                break;
-            default:
-                bad_param = true;
-                break;
-            }
-        } else {
-            bad_param = true;
-        }
-        break;
-
-    case D_FLOAT:
-        if (float_option(value)) {
-            nasm_error(pass1 == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "unknown 'float' directive: %s", value);
-        }
-        break;
-
-    case D_PRAGMA:
-        process_pragma(value);
-        break;
-    }
-
-
-    /* A common error message */
-    if (bad_param) {
-        nasm_error(ERR_NONFATAL, "invalid parameter to [%s] directive",
-                   directive);
-    }
-
-    return d;
-}
-
 static void assemble_file(char *fname, StrList **depend_ptr)
 {
     char *line;
@@ -1705,7 +1237,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         if (pass0 == 2) {
 	    lfmt->init(listname);
         }
-        in_abs_seg = false;
+        in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
         location.segment = ofmt->section(NULL, pass2, &sb);
         globalbits = sb;
@@ -1832,8 +1364,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             } else {        /* instruction isn't an EQU */
 
                 if (pass1 == 1) {
-
-                    int64_t l = insn_size(location.segment, offs, sb, cpu,
+                    int64_t l = insn_size(location.segment, offs, sb,
                                           &output_ins);
                     l *= output_ins.times;
 
@@ -1913,8 +1444,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                      */
 
                 } else {
-                    offs += assemble(location.segment, offs, sb, cpu,
-                                     &output_ins);
+                    offs += assemble(location.segment, offs, sb, &output_ins);
                     set_curr_offs(offs);
 
                 }
@@ -2040,8 +1570,24 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
     nasm_verror_common(severity, fmt, ap);
 }
 
+/*
+ * check to see if this is a suppressable warning
+ */
+static inline bool is_suppressable_warning(int severity)
+{
+    int index;
+
+    /* Not a warning at all */
+    if ((severity & ERR_MASK) != ERR_WARNING)
+        return false;
+
+    index = WARN_IDX(severity);
+
+    return index && index <= ERR_WARN_MAX;
+}
+
 /**
- * check for supressed warning
+ * check for suppressed warning
  * checks for suppressed warning or pass one only warning and we're
  * not in pass 1
  *
@@ -2050,13 +1596,9 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
  */
 static bool is_suppressed_warning(int severity)
 {
-    /* Not a warning at all */
-    if ((severity & ERR_MASK) != ERR_WARNING)
-        return false;
-
     /* Might be a warning but suppresed explicitly */
-    if (severity & ERR_WARN_MASK)
-        return !warning_on[WARN_IDX(severity)];
+    if (is_suppressable_warning(severity))
+         return !warning_on[WARN_IDX(severity)];
     else
         return false;
 }
@@ -2114,8 +1656,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     }
 
     vsnprintf(msg, sizeof msg - 64, fmt, args);
-    if ((severity & (ERR_WARN_MASK|ERR_PP_LISTMACRO)) == ERR_WARN_MASK) {
-	char *p = strchr(msg, '\0');
+    if (is_suppressable_warning(severity)) {
+        char *p = strchr(msg, '\0');
 	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
     }
 
@@ -2175,80 +1717,4 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 static void usage(void)
 {
     fputs("type `nasm -h' for help\n", error_file);
-}
-
-static iflag_t get_cpu(char *value)
-{
-    iflag_t r;
-
-    iflag_clear_all(&r);
-
-    if (!strcmp(value, "8086"))
-        iflag_set(&r, IF_8086);
-    else if (!strcmp(value, "186"))
-        iflag_set(&r, IF_186);
-    else if (!strcmp(value, "286"))
-        iflag_set(&r, IF_286);
-    else if (!strcmp(value, "386"))
-        iflag_set(&r, IF_386);
-    else if (!strcmp(value, "486"))
-        iflag_set(&r, IF_486);
-    else if (!strcmp(value, "586") ||
-             !nasm_stricmp(value, "pentium"))
-        iflag_set(&r, IF_PENT);
-    else if (!strcmp(value, "686")              ||
-             !nasm_stricmp(value, "ppro")       ||
-             !nasm_stricmp(value, "pentiumpro") ||
-             !nasm_stricmp(value, "p2"))
-        iflag_set(&r, IF_P6);
-    else if (!nasm_stricmp(value, "p3") ||
-             !nasm_stricmp(value, "katmai"))
-        iflag_set(&r, IF_KATMAI);
-    else if (!nasm_stricmp(value, "p4") ||   /* is this right? -- jrc */
-             !nasm_stricmp(value, "willamette"))
-        iflag_set(&r, IF_WILLAMETTE);
-    else if (!nasm_stricmp(value, "prescott"))
-        iflag_set(&r, IF_PRESCOTT);
-    else if (!nasm_stricmp(value, "x64") ||
-             !nasm_stricmp(value, "x86-64"))
-        iflag_set(&r, IF_X86_64);
-    else if (!nasm_stricmp(value, "ia64")   ||
-             !nasm_stricmp(value, "ia-64")  ||
-             !nasm_stricmp(value, "itanium")||
-             !nasm_stricmp(value, "itanic") ||
-             !nasm_stricmp(value, "merced"))
-        iflag_set(&r, IF_IA64);
-    else {
-        iflag_set(&r, IF_PLEVEL);
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                   "unknown 'cpu' type");
-    }
-    return r;
-}
-
-static int get_bits(char *value)
-{
-    int i;
-
-    if ((i = atoi(value)) == 16)
-        return i;               /* set for a 16-bit segment */
-    else if (i == 32) {
-        if (iflag_ffs(&cpu) < IF_386) {
-            nasm_error(ERR_NONFATAL,
-                         "cannot specify 32-bit segment on processor below a 386");
-            i = 16;
-        }
-    } else if (i == 64) {
-        if (iflag_ffs(&cpu) < IF_X86_64) {
-            nasm_error(ERR_NONFATAL,
-                         "cannot specify 64-bit segment on processor below an x86-64");
-            i = 16;
-        }
-    } else {
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                     "`%s' is not a valid segment size; must be 16, 32 or 64",
-                     value);
-        i = 16;
-    }
-    return i;
 }

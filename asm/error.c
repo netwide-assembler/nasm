@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -32,7 +32,7 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * nasmlib.c	library routines for the Netwide Assembler
+ * error.c - error message handling routines for the assembler
  */
 
 #include "compiler.h"
@@ -40,6 +40,34 @@
 #include <stdlib.h>
 
 #include "nasmlib.h"
+#include "error.h"
+
+/*
+ * Description of the suppressible warnings for the command line and
+ * the [warning] directive.  Entry zero isn't an actual warning, but
+ * it used for -w+error/-Werror.
+ */
+const struct warning warnings[ERR_WARN_MAX+1] = {
+    {"error", "treat warnings as errors", false},
+    {"macro-params", "macro calls with wrong parameter count", true},
+    {"macro-selfref", "cyclic macro references", false},
+    {"macro-defaults", "macros with more default than optional parameters", true},
+    {"orphan-labels", "labels alone on lines without trailing `:'", true},
+    {"number-overflow", "numeric constant does not fit", true},
+    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
+    {"float-overflow", "floating point overflow", true},
+    {"float-denorm", "floating point denormal", false},
+    {"float-underflow", "floating point underflow", false},
+    {"float-toolong", "too many digits in floating-point number", true},
+    {"user", "%warning directives", true},
+    {"lock", "lock prefix on unlockable instructions", true},
+    {"hle", "invalid hle prefixes", true},
+    {"bnd", "invalid bnd prefixes", true},
+    {"zext-reloc", "relocation zero-extended to match output format", true},
+    {"ptr", "non-NASM keyword used in other assemblers", true},
+};
+bool warning_on[ERR_WARN_MAX+1];        /* Current state */
+bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state, for reset */
 
 vefunc nasm_verror;    /* Global error handling function */
 

@@ -47,6 +47,7 @@
 #include "insns.h"
 #include "nasm.h"
 #include "nasmlib.h"
+#include "error.h"
 #include "ver.h"
 #include "sync.h"
 #include "disasm.h"

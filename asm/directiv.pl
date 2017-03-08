@@ -88,6 +88,7 @@ if ($output eq 'h') {
     printf H "extern const char * const directives[%d];\n",
         scalar(@directives)+scalar(@specials);
     print H "enum directives find_directive(const char *token);\n\n";
+    print H "enum directives process_directives(char *line); /* in asm/directiv.c */\n";
     print H "#endif /* NASM_DIRECTIV_H */\n";
 } elsif ($output eq 'c') {
     %directive = ();
