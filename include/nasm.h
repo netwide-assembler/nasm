@@ -45,7 +45,7 @@
 #include "strlist.h"
 #include "preproc.h"
 #include "insnsi.h"     /* For enum opcode */
-#include "directiv.h"   /* For enum directive */
+#include "directbl.h"   /* For enum directive */
 #include "opflags.h"
 #include "regs.h"
 

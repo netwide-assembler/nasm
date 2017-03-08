@@ -36,8 +36,8 @@
 # Generate a perfect hash for directive parsing
 #
 # Usage:
-#      directiv.pl h directiv.dat directiv.h (to generate C header)
-#      directiv.pl c directiv.dat directiv.c (to generate C source)
+#      directiv.pl h directiv.dat directbl.h (to generate C header)
+#      directiv.pl c directiv.dat directbl.c (to generate C source)
 #
 
 require 'phash.ph';
@@ -124,7 +124,7 @@ if ($output eq 'h') {
     print C "#include <string.h>\n";
     print C "#include \"nasm.h\"\n";
     print C "#include \"hashtbl.h\"\n";
-    print C "#include \"directiv.h\"\n";
+    print C "#include \"directbl.h\"\n";
     print C "\n";
 
     printf C "const char * const directives[%d] =\n",

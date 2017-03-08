@@ -27,8 +27,8 @@ tags
 TAGS
 /*.1
 /Makefile
-/asm/directiv.c
-/asm/directiv.h
+/asm/directbl.c
+/asm/directbl.h
 /asm/pptok.c
 /asm/pptok.h
 /asm/pptok.ph
