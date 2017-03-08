@@ -114,10 +114,6 @@ static int cmd_sb = 16;    /* by default */
 iflag_t cpu;
 static iflag_t cmd_cpu;
 
-int64_t global_offset_changed;      /* referenced in labels.c */
-int64_t prev_offset_changed;
-int32_t stall_count;
-
 struct location location;
 bool in_absolute;                 /* Flag we are in ABSOLUTE seg */
 struct location absolute;         /* Segment/offset inside ABSOLUTE */
@@ -1218,6 +1214,8 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     int64_t offs;
     int pass_max;
     int sb;
+    uint64_t prev_offset_changed;
+    unsigned int stall_count = 0; /* Make sure we make forward progress... */
 
     if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
 	nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
@@ -1476,7 +1474,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         if (terminate_after_phase)
             break;
 
-        if ((stall_count > 997) || (passn >= pass_max)) {
+        if ((stall_count > 997U) || (passn >= pass_max)) {
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */

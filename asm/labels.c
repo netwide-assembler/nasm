@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -108,7 +108,7 @@ struct permts {                 /* permanent text storage */
     char data[PERMTS_SIZE];     /* ... the data block itself */
 };
 
-extern int64_t global_offset_changed;   /* defined in nasm.c */
+uint64_t global_offset_changed;		/* counter for global offset changes */
 
 static struct hash_table ltab;          /* labels hash table */
 static union label *ldata;              /* all label data blocks */

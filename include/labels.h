@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -38,6 +38,8 @@
 #ifndef LABELS_H
 #define LABELS_H
 
+#include "compiler.h"
+
 extern char lprefix[PREFIX_MAX];
 extern char lpostfix[PREFIX_MAX];
 
@@ -52,5 +54,7 @@ void declare_as_global(char *label, char *special);
 int init_labels(void);
 void cleanup_labels(void);
 char *local_scope(char *label);
+
+extern uint64_t global_offset_changed;
 
 #endif /* LABELS_H */
