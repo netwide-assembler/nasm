@@ -23,6 +23,9 @@ since 2007.
 \b NASM can now generate sparse output files for relevant output
    formats, if the underlying operating system supports them.
 
+\b \c{macho} object format now supports the \c{subsections_via_symbols}
+   directive, see \k{macho-ssvs}.
+
 \S{cl-2.12.03} Version 2.12.03
 
 \b Add new warnings for certain dangerous constructs which never ought

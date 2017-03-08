@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -36,7 +36,7 @@
 
 \M{category}{Programming}
 \M{title}{NASM - The Netwide Assembler}
-\M{year}{1996-2016}
+\M{year}{1996-2017}
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the file "LICENSE" distributed in the NASM archive.}
@@ -5758,6 +5758,21 @@ right-hand side of the \c{WRT} operator:
 \b \c{..gotpcrel} is used to specify references to the Global Offset
    Table.  The GOT is supported in the \c{macho64} format only.
 
+\S{macho-ssvs} \c{macho} specfic directive \i\c{subsections_via_symbols}
+
+The directive \c{subsections_via_symbols} sets the
+\c{MH_SUBSECTIONS_VIA_SYMBOLS} flag in the Mach-O header, which tells
+the linker that the symbols in the file matches the conventions
+required to allow for link-time dead code elimination.
+
+This directive takes no arguments.  Like most directives, it is
+wrapped in a macro; it is therefore possible to support older versions
+of NASM (without the dead code elimination support) simply by:
+
+\c      %ifnmacro subsections_via_symbols
+\c        %imacro subsections_via_symbols 0
+\c        %endmacro
+\c      %endif
 
 \H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
