@@ -182,12 +182,12 @@ static enum directives parse_directive_line(char **directive, char **value)
     return find_directive(*directive);
 }
 
-static void process_pragma(char *str)
-{
-    (void)str;
-}
-
-enum directives process_directives(char *directive)
+/*
+ * Process a line from the assembler and try to handle it if it
+ * is a directive.  Return true if the line was handled (including
+ * if it was an error), false otherwise.
+ */
+bool process_directives(char *directive)
 {
     enum directives d;
     char *value, *p, *q, *special;
@@ -563,5 +563,5 @@ enum directives process_directives(char *directive)
                    directive);
     }
 
-    return d;
+    return d != D_none;
 }

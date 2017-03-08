@@ -251,6 +251,7 @@ static const struct dfmt debug_debug_form = {
     dbgdbg_typevalue,
     dbgdbg_output,
     dbgdbg_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt * const debug_debug_arr[3] = {
@@ -277,7 +278,8 @@ const struct ofmt of_dbg = {
     dbg_segbase,
     dbg_directive,
     dbg_filename,
-    dbg_cleanup
+    dbg_cleanup,
+    NULL                        /* pragma list */
 };
 
 #endif                          /* OF_DBG */

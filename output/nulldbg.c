@@ -86,7 +86,8 @@ const struct dfmt null_debug_form = {
     null_debug_directive,
     null_debug_typevalue,
     null_debug_output,
-    null_debug_cleanup
+    null_debug_cleanup,
+    NULL                        /* pragma list */
 };
 
 const struct dfmt * const null_debug_arr[2] = { &null_debug_form, NULL };

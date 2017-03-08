@@ -685,6 +685,33 @@ enum geninfo { GI_SWITCH };
 typedef uint64_t iflags_t;
 
 /*
+ * A pragma facility: this structure is used to request passing a
+ * parsed pragma directive for a specific facility.  If the handler is
+ * NULL then this pragma facility is recognized but ignored; pragma
+ * processing stops at that point, as if the handler had returned true.
+ *
+ * Note that the handler is passed a pointer to the facility structure
+ * as part of the struct pragma.
+ */
+struct pragma;
+
+struct pragma_facility {
+    const char *name;
+    void (*handler)(const struct pragma *);
+};
+
+/*
+ * This structure defines how a pragma directive is passed to a
+ * facility.  This structure may be augmented in the future.
+ */
+struct pragma {
+    const struct pragma_facility *facility;
+    const char *facility_name;  /* Facility name exactly as entered by user */
+    const char *operation;      /* First word after the facility name */
+    const char *tail;           /* Anything after the operation */
+};
+
+/*
  * The data structure defining an output format driver, and the
  * interfaces to the functions therein.
  */
@@ -881,6 +908,11 @@ struct ofmt {
      * the output file pointer.
      */
     void (*cleanup)(void);
+
+    /*
+     * List of pragma facility names that apply to this backend.
+     */
+    const struct pragma_facility *pragmas;
 };
 
 /*
@@ -960,6 +992,11 @@ struct dfmt {
      * cleanup - called after processing of file is complete
      */
     void (*cleanup)(void);
+
+    /*
+     * List of pragma facility names that apply to this backend.
+     */
+    const struct pragma_facility *pragmas;
 };
 
 extern const struct dfmt *dfmt;

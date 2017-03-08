@@ -2647,6 +2647,7 @@ static const struct dfmt borland_debug_form = {
     dbgbi_typevalue,
     dbgbi_output,
     dbgbi_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt * const borland_debug_arr[3] = {
@@ -2673,6 +2674,7 @@ const struct ofmt of_obj = {
     obj_segbase,
     obj_directive,
     obj_filename,
-    obj_cleanup
+    obj_cleanup,
+    NULL                        /* pragma list */
 };
 #endif                          /* OF_OBJ */

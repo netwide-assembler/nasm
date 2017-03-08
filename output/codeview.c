@@ -71,6 +71,7 @@ const struct dfmt df_cv8 = {
     cv8_typevalue,              /* .debug_typevalue */
     cv8_output,                 /* .debug_output */
     cv8_cleanup,                /* .cleanup */
+    NULL                        /* pragma list */
 };
 
 /*******************************************************************************

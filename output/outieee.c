@@ -1507,6 +1507,7 @@ static const struct dfmt ladsoft_debug_form = {
     dbgls_typevalue,
     dbgls_output,
     dbgls_cleanup,
+    NULL                        /* pragma list */
 };
 static const struct dfmt * const ladsoft_debug_arr[3] = {
     &ladsoft_debug_form,
@@ -1531,7 +1532,8 @@ const struct ofmt of_ieee = {
     ieee_segbase,
     ieee_directive,
     ieee_filename,
-    ieee_cleanup
+    ieee_cleanup,
+    NULL                        /* pragma list */
 };
 
 #endif                          /* OF_IEEE */

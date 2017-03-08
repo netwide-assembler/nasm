@@ -1260,7 +1260,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
              * Here we parse our directives; this is not handled by the
              * main parser.
              */
-            if (process_directives(line) != D_none)
+            if (process_directives(line))
                 goto end_of_line; /* Just do final cleanup */
 
             /* Not a directive, or even something that starts with [ */

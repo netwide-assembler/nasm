@@ -2235,7 +2235,8 @@ static const struct dfmt elf32_df_dwarf = {
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
-    dwarf_cleanup
+    dwarf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt elf32_df_stabs = {
@@ -2247,7 +2248,8 @@ static const struct dfmt elf32_df_stabs = {
     null_debug_directive,
     debug_typevalue,
     stabs_output,
-    stabs_cleanup
+    stabs_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt * const elf32_debugs_arr[3] =
@@ -2271,7 +2273,8 @@ const struct ofmt of_elf32 = {
     elf_segbase,
     elf_directive,
     elf_filename,
-    elf_cleanup
+    elf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt elf64_df_dwarf = {
@@ -2283,7 +2286,8 @@ static const struct dfmt elf64_df_dwarf = {
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
-    dwarf_cleanup
+    dwarf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt elf64_df_stabs = {
@@ -2295,7 +2299,8 @@ static const struct dfmt elf64_df_stabs = {
     null_debug_directive,
     debug_typevalue,
     stabs_output,
-    stabs_cleanup
+    stabs_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt * const elf64_debugs_arr[3] =
@@ -2319,7 +2324,8 @@ const struct ofmt of_elf64 = {
     elf_segbase,
     elf_directive,
     elf_filename,
-    elf_cleanup
+    elf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt elfx32_df_dwarf = {
@@ -2331,7 +2337,8 @@ static const struct dfmt elfx32_df_dwarf = {
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
-    dwarf_cleanup
+    dwarf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt elfx32_df_stabs = {
@@ -2343,7 +2350,8 @@ static const struct dfmt elfx32_df_stabs = {
     null_debug_directive,
     debug_typevalue,
     stabs_output,
-    stabs_cleanup
+    stabs_cleanup,
+    NULL                        /* pragma list */
 };
 
 static const struct dfmt * const elfx32_debugs_arr[3] =
@@ -2367,7 +2375,8 @@ const struct ofmt of_elfx32 = {
     elf_segbase,
     elf_directive,
     elf_filename,
-    elf_cleanup
+    elf_cleanup,
+    NULL                        /* pragma list */
 };
 
 static bool is_elf64(void)
@@ -2387,12 +2396,16 @@ static bool is_elfx32(void)
 
 static bool dfmt_is_stabs(void)
 {
-	return dfmt == &elf32_df_stabs || dfmt == &elfx32_df_stabs || dfmt == &elf64_df_stabs;
+	return dfmt == &elf32_df_stabs ||
+               dfmt == &elfx32_df_stabs ||
+               dfmt == &elf64_df_stabs;
 }
 
 static bool dfmt_is_dwarf(void)
 {
-	return dfmt == &elf32_df_dwarf || dfmt == &elfx32_df_dwarf || dfmt == &elf64_df_dwarf;
+	return dfmt == &elf32_df_dwarf ||
+               dfmt == &elfx32_df_dwarf ||
+               dfmt == &elf64_df_dwarf;
 }
 
 /* common debugging routines */

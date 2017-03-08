@@ -65,6 +65,9 @@ const struct warning warnings[ERR_WARN_MAX+1] = {
     {"bnd", "invalid bnd prefixes", true},
     {"zext-reloc", "relocation zero-extended to match output format", true},
     {"ptr", "non-NASM keyword used in other assemblers", true},
+    {"bad-pragma", "empty or malformed %pragma", false},
+    {"unknown-pragma", "unknown %pragma facility or directive", false},
+    {"not-my-pragma", "%pragma not applicable to this compilation", false}
 };
 bool warning_on[ERR_WARN_MAX+1];        /* Current state */
 bool warning_on_global[ERR_WARN_MAX+1]; /* Command-line state, for reset */

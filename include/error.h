@@ -107,7 +107,10 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_WARN_BND		WARN(14) /* bad BND prefixes */
 #define ERR_WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
 #define ERR_WARN_PTR		WARN(16) /* not a NASM keyword */
-#define ERR_WARN_MAX            16       /* the highest numbered one */
+#define ERR_WARN_BAD_PRAGMA	WARN(17) /* malformed pragma */
+#define ERR_WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
+#define ERR_WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
+#define ERR_WARN_MAX            19       /* the highest numbered one */
 
 struct warning {
     const char *name;

@@ -52,6 +52,7 @@ LIBOBJ = snprintf.o vsnprintf.o strlcpy.o \
 	error.o \
 	float.o \
 	directiv.o directbl.o \
+	pragma.o \
 	assemble.o labels.o parser.o \
 	preproc.o quote.o pptok.o \
 	listing.o eval.o exprlib.o exprdump.o \
@@ -195,6 +196,9 @@ parser.o: parser.c assemble.h directiv.h eval.h float.h parser.h pptok.h \
  tables.h iflaggen.h insnsi.h regs.h
 pptok.o: pptok.c pptok.h preproc.h config.h msvc.h unknown.h watcom.h \
  compiler.h hashtbl.h nasmint.h nasmlib.h
+pragma.o: pragma.c directiv.h pptok.h preproc.h config.h msvc.h unknown.h \
+ watcom.h compiler.h error.h nasm.h nasmint.h nasmlib.h opflags.h strlist.h \
+ tables.h insnsi.h regs.h
 preproc-nop.o: preproc-nop.c directiv.h listing.h pptok.h preproc.h config.h \
  msvc.h unknown.h watcom.h compiler.h error.h nasm.h nasmint.h nasmlib.h \
  opflags.h strlist.h tables.h insnsi.h regs.h

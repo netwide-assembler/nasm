@@ -75,6 +75,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	asm/error.$(O) \
 	asm/float.$(O) \
 	asm/directiv.$(O) asm/directbl.$(O) \
+	asm/pragma.$(O) \
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
 	asm/preproc.$(O) asm/quote.$(O) asm/pptok.$(O) \
 	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
@@ -335,6 +336,11 @@ asm/parser.$(O): asm/parser.c asm/assemble.h asm/directiv.h asm/eval.h \
 asm/pptok.$(O): asm/pptok.c asm/pptok.h asm/preproc.h config/msvc.h \
  config/unknown.h config/watcom.h include/compiler.h include/hashtbl.h \
  include/nasmint.h include/nasmlib.h
+asm/pragma.$(O): asm/pragma.c asm/directiv.h asm/pptok.h asm/preproc.h \
+ config/msvc.h config/unknown.h config/watcom.h include/compiler.h \
+ include/error.h include/nasm.h include/nasmint.h include/nasmlib.h \
+ include/opflags.h include/strlist.h include/tables.h x86/insnsi.h \
+ x86/regs.h
 asm/preproc-nop.$(O): asm/preproc-nop.c asm/directiv.h asm/listing.h \
  asm/pptok.h asm/preproc.h config/msvc.h config/unknown.h config/watcom.h \
  include/compiler.h include/error.h include/nasm.h include/nasmint.h \

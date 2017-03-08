@@ -1636,7 +1636,8 @@ const struct ofmt of_macho32 = {
     macho_segbase,
     null_directive,
     macho_filename,
-    macho_cleanup
+    macho_cleanup,
+    NULL                        /* pragma list */
 };
 #endif
 
@@ -1684,7 +1685,8 @@ const struct ofmt of_macho64 = {
     macho_segbase,
     null_directive,
     macho_filename,
-    macho_cleanup
+    macho_cleanup,
+    NULL                        /* pragma list */
 };
 #endif
 
