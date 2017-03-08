@@ -202,7 +202,8 @@
 #define EI_DATA         5
 #define EI_VERSION      6
 #define EI_OSABI        7
-#define EI_PAD          8
+#define EI_ABIVERSION   8
+#define EI_NINDENT      16
 
 #define ELFMAG0         0x7f    /* EI_MAG */
 #define ELFMAG1         'E'
