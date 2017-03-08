@@ -46,6 +46,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "assemble.h"
 #include "error.h"
 
 /*
