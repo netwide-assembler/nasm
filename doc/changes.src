@@ -26,12 +26,21 @@ since 2007.
 \b \c{macho} object format now supports the \c{subsections_via_symbols}
    directive, see \k{macho-ssvs}.
 
-\b All warnings can now be suppressed if desired.  Furthermore,
-   warning-as-error can now be controlled on a per-warning-class
-   basis.
+\b All warnings can now be suppressed if desired; warnings not
+   otherwise part of any warning class are now considered its own
+   warning class called \c{other} (e.g. \c{-w-other}).  Furthermore,
+   warning-as-error can now be controlled on a per warning class
+   basis, using the syntax \c{-w+error=}\e{warning-class} and its
+   equivalent for all other warning control options.  See \k{opt-w}
+   for the command-line options and warning classes and
+   \k{asmdir-warning} for the \c{[WARNING]} directive.
 
-\S{cl-2.12.03} Version 2.12.03
-
+\# --- hpa: commenting this header out since it looks like we will
+\# --- bypass 2.12.03 and go straight to 2.13.  However, please keep
+\# --- the header in place to make it easier to merge with the 2.12.xx
+\# --- branch if we should have to in the short term.
+\# \S{cl-2.12.03} Version 2.12.03
+\#
 \b Add new warnings for certain dangerous constructs which never ought
    to have been allowed.  In particular, the \c{RESB} family of
    instructions should have been taking a critical expression all
