@@ -249,6 +249,11 @@ void standard_extension(char *inname, char *outname, char *extension);
 
 #if X86_MEMORY
 
+static inline uint8_t char_le(uint8_t v) { return v; }
+static inline uint16_t short_le(uint16_t v) { return v; }
+static inline uint32_t long_le(uint32_t v) { return v; }
+static inline uint64_t dlong_le(uint64_t v) { return v; }
+
 #define WRITECHAR(p,v)                          \
     do {                                        \
         *(uint8_t *)(p) = (v);                  \
@@ -281,6 +286,32 @@ void standard_extension(char *inname, char *outname, char *extension);
     } while (0)
 
 #else /* !X86_MEMORY */
+
+static inline uint8_t char_le(uint8_t v)
+{
+    return v;
+}
+
+static inline uint16_t short_le(uint16_t v)
+{
+    return (v << 8) | (v >> 8);
+}
+
+static inline uint32_t long_le(uint32_t v)
+{
+    v = ((v << 8) & 0xff00ff00 ) |
+        ((v >> 8) & 0x00ff00ff);
+    return (v << 16) | (v >> 16);
+}
+
+static inline uint64_t dlong_le(uint64_t v)
+{
+    v = ((v << 8) & 0xff00ff00ff00ff00ull) |
+        ((v >> 8) & 0x00ff00ff00ff00ffull);
+    v = ((v << 16) & 0xffff0000ffff0000ull) |
+        ((v >> 16) & 0x0000ffff0000ffffull);
+    return (v << 32) | (v >> 32);
+}
 
 #define WRITECHAR(p,v)                          \
     do {                                        \
