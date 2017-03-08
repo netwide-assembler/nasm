@@ -48,7 +48,6 @@
 #include "float.h"
 #include "stdscan.h"
 #include "preproc.h"
-/* #include "parser.h" */
 #include "eval.h"
 #include "assemble.h"
 #include "outform.h"
