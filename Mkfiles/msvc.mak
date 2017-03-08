@@ -336,11 +336,11 @@ asm/parser.$(O): asm/parser.c asm/assemble.h asm/directiv.h asm/eval.h \
 asm/pptok.$(O): asm/pptok.c asm/pptok.h asm/preproc.h config/msvc.h \
  config/unknown.h config/watcom.h include/compiler.h include/hashtbl.h \
  include/nasmint.h include/nasmlib.h
-asm/pragma.$(O): asm/pragma.c asm/directiv.h asm/pptok.h asm/preproc.h \
- config/msvc.h config/unknown.h config/watcom.h include/compiler.h \
- include/error.h include/nasm.h include/nasmint.h include/nasmlib.h \
- include/opflags.h include/strlist.h include/tables.h x86/insnsi.h \
- x86/regs.h
+asm/pragma.$(O): asm/pragma.c asm/assemble.h asm/directiv.h asm/pptok.h \
+ asm/preproc.h config/msvc.h config/unknown.h config/watcom.h \
+ include/compiler.h include/error.h include/iflag.h include/nasm.h \
+ include/nasmint.h include/nasmlib.h include/opflags.h include/strlist.h \
+ include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/preproc-nop.$(O): asm/preproc-nop.c asm/directiv.h asm/listing.h \
  asm/pptok.h asm/preproc.h config/msvc.h config/unknown.h config/watcom.h \
  include/compiler.h include/error.h include/nasm.h include/nasmint.h \
