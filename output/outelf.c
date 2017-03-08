@@ -1610,46 +1610,60 @@ static void elf_write(void)
      * Output the ELF header.
      */
     if (is_elf32() || is_elfx32()) {
-        nasm_write("\177ELF\1\1\1", 7,                  ofile);
-        fputc(elf_osabi,                                ofile);
-        fputc(elf_abiver,                               ofile);
-        fwritezero(7,                                   ofile);
-        fwriteint16_t(ET_REL,                           ofile); /* relocatable file */
-        fwriteint16_t(is_elf32() ? EM_386 : EM_X86_64,  ofile); /* processor ID */
-        fwriteint32_t(1L,                               ofile); /* EV_CURRENT file format version */
-        fwriteint32_t(0L,                               ofile); /* no entry point */
-        fwriteint32_t(0L,                               ofile); /* no program header table */
-        fwriteint32_t(0x40L,                            ofile); /* section headers straight after ELF header plus alignment */
-        fwriteint32_t(0L,                               ofile); /* no special flags */
-        fwriteint16_t(0x34,                             ofile); /* size of ELF header */
-        fwriteint16_t(0,                                ofile); /* no program header table, again */
-        fwriteint16_t(0,                                ofile); /* still no program header table */
-        fwriteint16_t(sizeof(Elf32_Shdr),               ofile); /* size of section header */
-        fwriteint16_t(nsections,                        ofile); /* number of sections */
-        fwriteint16_t(sec_shstrtab,                     ofile); /* string table section index for section header table */
+        Elf32_Ehdr ehdr;
 
-        fwriteint32_t(0L,                               ofile); /* align to 0x40 bytes */
-        fwriteint32_t(0L,                               ofile);
-        fwriteint32_t(0L,                               ofile);
+        nasm_zero(&ehdr.e_ident);
+        memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
+        ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS32);
+        ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
+        ehdr.e_ident[EI_VERSION]    = char_le(EV_CURRENT);
+        ehdr.e_ident[EI_OSABI]      = char_le(elf_osabi);
+        ehdr.e_ident[EI_ABIVERSION] = char_le(elf_abiver);
+
+        ehdr.e_type                 = short_le(ET_REL);
+        ehdr.e_machine              = short_le(is_elf32() ? EM_386 : EM_X86_64);
+        ehdr.e_version              = short_le(EV_CURRENT);
+        ehdr.e_entry                = 0;
+        ehdr.e_phoff                = 0;
+        ehdr.e_shoff                = sizeof(Elf64_Ehdr);
+        ehdr.e_flags                = 0;
+        ehdr.e_ehsize               = short_le(sizeof(Elf32_Ehdr));
+        ehdr.e_phentsize            = 0;
+        ehdr.e_phnum                = 0;
+        ehdr.e_shentsize            = short_le(sizeof(Elf32_Shdr));
+        ehdr.e_shnum                = short_le(nsections);
+        ehdr.e_shstrndx             = short_le(sec_shstrtab);
+
+        nasm_write(&ehdr, sizeof(ehdr), ofile);
+        fwritezero(sizeof(Elf64_Ehdr) - sizeof(Elf32_Ehdr), ofile);
     } else {
+        Elf64_Ehdr ehdr;
+
         nasm_assert(is_elf64());
-        nasm_write("\177ELF\2\1\1", 7,                  ofile);
-        fputc(elf_osabi,                                ofile);
-        fputc(elf_abiver,                               ofile);
-        fwritezero(7,                                   ofile);
-        fwriteint16_t(ET_REL,                           ofile); /* relocatable file */
-        fwriteint16_t(EM_X86_64,                        ofile); /* processor ID */
-        fwriteint32_t(1L,                               ofile); /* EV_CURRENT file format version */
-        fwriteint64_t(0L,                               ofile); /* no entry point */
-        fwriteint64_t(0L,                               ofile); /* no program header table */
-        fwriteint64_t(0x40L,                            ofile); /* section headers straight after ELF header plus alignment */
-        fwriteint32_t(0L,                               ofile); /* no special flags */
-        fwriteint16_t(0x40,                             ofile); /* size of ELF header */
-        fwriteint16_t(0,                                ofile); /* no program header table, again */
-        fwriteint16_t(0,                                ofile); /* still no program header table */
-        fwriteint16_t(sizeof(Elf64_Shdr),               ofile); /* size of section header */
-        fwriteint16_t(nsections,                        ofile); /* number of sections */
-        fwriteint16_t(sec_shstrtab,                     ofile); /* string table section index for section header table */
+
+        nasm_zero(&ehdr.e_ident);
+        memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
+        ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS64);
+        ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
+        ehdr.e_ident[EI_VERSION]    = char_le(EV_CURRENT);
+        ehdr.e_ident[EI_OSABI]      = char_le(elf_osabi);
+        ehdr.e_ident[EI_ABIVERSION] = char_le(elf_abiver);
+
+        ehdr.e_type                 = short_le(ET_REL);
+        ehdr.e_machine              = short_le(EM_X86_64);
+        ehdr.e_version              = short_le(EV_CURRENT);
+        ehdr.e_entry                = 0;
+        ehdr.e_phoff                = 0;
+        ehdr.e_shoff                = sizeof(Elf64_Ehdr);
+        ehdr.e_flags                = 0;
+        ehdr.e_ehsize               = short_le(sizeof(Elf64_Ehdr));
+        ehdr.e_phentsize            = 0;
+        ehdr.e_phnum                = 0;
+        ehdr.e_shentsize            = short_le(sizeof(Elf64_Shdr));
+        ehdr.e_shnum                = short_le(nsections);
+        ehdr.e_shstrndx             = short_le(sec_shstrtab);
+
+        nasm_write(&ehdr, sizeof(ehdr), ofile);
     }
 
     /*
