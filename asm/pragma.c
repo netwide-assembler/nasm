@@ -106,6 +106,7 @@ static bool search_pragma_list(const struct pragma_facility *list,
 			       struct pragma *pragma)
 {
     const struct pragma_facility *pf;
+    enum directive_result rv;
 
     if (!list)
 	return false;
@@ -121,12 +122,15 @@ static bool search_pragma_list(const struct pragma_facility *list,
     return false;
 
 found_it:
-    if (!pf->handler)
-        return true;
-
     pragma->facility = pf;
 
-    switch (pf->handler(pragma)) {
+    /* If the handler is NULL all pragmas are unknown... */
+    if (pf->handler)
+        rv = pf->handler(pragma);
+    else
+        rv = DIRR_UNKNOWN;
+
+    switch (rv) {
     case DIRR_UNKNOWN:
         switch (pragma->opcode) {
         case D_none:
