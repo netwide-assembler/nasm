@@ -31,7 +31,18 @@
 ;;
 ;; --------------------------------------------------------------------------
 ;;
-;; List of global NASM directives (including backend-specific ones)
+;; List of global NASM directives and pragma operations codes
+;;
+;; ALL directives, including backend-specific, need to be added here.
+;;
+;; %pragma operation keywords (the second word, after facility) MAY
+;; be added here too to assist in parsing, but it is not required.
+;; See the definition of struct pragma in include/nasm.h.
+;;
+;; The same keyword can be used as a directive and as a pragma
+;; operation, or as pragma operations in different namespaces.  The
+;; same D_ constant will be used for both, and this is perfectly
+;; acceptable.
 ;;
 
 ; --- Global directives
@@ -63,3 +74,5 @@ osabi				; outelf
 safeseh				; outcoff
 uppercase			; outieee, outobj
 subsections_via_symbols		; outmacho
+
+; --- Pragma operations

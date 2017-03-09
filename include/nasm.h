@@ -685,10 +685,28 @@ enum geninfo { GI_SWITCH };
 typedef uint64_t iflags_t;
 
 /*
+ * What to return from a directive- or pragma-handling function.
+ * Currently DIRR_OK and DIRR_ERROR are treated the same way;
+ * in both cases the backend is expected to produce the appropriate
+ * error message on its own.
+ *
+ * DIRR_BADPARAM causes a generic error message to be printed.  Note
+ * that it is an error, not a warning, even in the case of pragmas;
+ * don't use it where forward compatiblity would be compromised
+ * (instead consider adding a DIRR_WARNPARAM.)
+ */
+enum directive_result {
+    DIRR_UNKNOWN,               /* Directive not handled by backend */
+    DIRR_OK,                    /* Directive processed */
+    DIRR_ERROR,                 /* Directive processed unsuccessfully */
+    DIRR_BADPARAM               /* Print bad argument error message */
+};
+
+/*
  * A pragma facility: this structure is used to request passing a
  * parsed pragma directive for a specific facility.  If the handler is
  * NULL then this pragma facility is recognized but ignored; pragma
- * processing stops at that point, as if the handler had returned true.
+ * processing stops at that point.
  *
  * Note that the handler is passed a pointer to the facility structure
  * as part of the struct pragma.
@@ -697,33 +715,24 @@ struct pragma;
 
 struct pragma_facility {
     const char *name;
-    void (*handler)(const struct pragma *);
+    enum directive_result (*handler)(const struct pragma *);
 };
 
 /*
  * This structure defines how a pragma directive is passed to a
  * facility.  This structure may be augmented in the future.
+ *
+ * Any facility MAY, but is not required to, add its operations
+ * keywords or a subset thereof into asm/directiv.dat, in which case
+ * the "opcode" field will be set to the corresponding D_ constant
+ * from directiv.h; otherwise it will be D_unknown.
  */
 struct pragma {
     const struct pragma_facility *facility;
     const char *facility_name;  /* Facility name exactly as entered by user */
-    const char *operation;      /* First word after the facility name */
+    const char *opname;         /* First word after the facility name */
     const char *tail;           /* Anything after the operation */
-};
-
-/*
- * What to return from a directive-handling function.
- * Currently DIRR_OK and DIRR_ERROR are treated the same way;
- * in both cases the backend is expected to produce the appropriate
- * error message on its own.
- *
- * DIRR_BADPARAM causes a generic error message to be printed.
- */
-enum directive_result {
-    DIRR_UNKNOWN,               /* Directive not handled by backend */
-    DIRR_OK,                    /* Directive processed */
-    DIRR_ERROR,                 /* Directive processed unsuccessfully */
-    DIRR_BADPARAM               /* Print bad argument error message */
+    enum directives opcode;     /* Operation as a D_ directives constant */
 };
 
 /*

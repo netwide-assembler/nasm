@@ -125,7 +125,38 @@ found_it:
         return true;
 
     pragma->facility = pf;
-    pf->handler(pragma);
+
+    switch (pf->handler(pragma)) {
+    case DIRR_UNKNOWN:
+        switch (pragma->opcode) {
+        case D_none:
+            nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_BAD_PRAGMA,
+                       "empty %%pragma %s", pragma->facility_name);
+            break;
+        default:
+            nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_UNKNOWN_PRAGMA,
+                       "unknown %%pragma %s %s",
+                       pragma->facility_name, pragma->opname);
+            break;
+        }
+        break;
+
+    case DIRR_OK:
+    case DIRR_ERROR:
+        break;                  /* Nothing to do */
+
+    case DIRR_BADPARAM:
+        /*
+         * This one is an error.  Don't use it if forward compatibility
+         * would be compromised, as opposed to an inherent error.
+         */
+        nasm_error(ERR_NONFATAL, "bad argument to %%pragma %s %s",
+                   pragma->facility_name, pragma->opname);
+        break;
+
+    default:
+        panic();
+    }
     return true;
 }
 
@@ -143,12 +174,18 @@ void process_pragma(char *str)
         return;                 /* Empty pragma */
     }
 
-    pragma.operation = nasm_get_word(p, &p);
-    if (!pragma.operation) {
-	nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_BAD_PRAGMA,
-		   "pragma directive contains only facility namespace");
-        return;                 /* Facility name only */
-    }
+    /*
+     * The facility "ignore" means just that; don't even complain of
+     * the absence of an operation.
+     */
+    if (!nasm_stricmp(pragma.facility_name, "ignore"))
+        return;
+
+    pragma.opname = nasm_get_word(p, &p);
+    if (!pragma.opname)
+        pragma.opcode = D_none;
+    else
+        pragma.opcode = find_directive(pragma.opname);
 
     pragma.tail = nasm_skip_spaces(p);
 
