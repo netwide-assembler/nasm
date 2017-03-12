@@ -1839,68 +1839,72 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
 {
     struct SAA *s = saa_init(1L);
     struct elf_symbol *sym;
-    uint8_t entry[24], *p;
     int i;
+
+    size_t usize = is_elf64() ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
+    union {
+        Elf32_Sym   sym32;
+        Elf64_Sym   sym64;
+    } u;
 
     *len = *local = 0;
 
     /*
-     * First, an all-zeros entry, required by the ELF spec.
+     * Zero symbol first as required by spec.
      */
-    saa_wbytes(s, NULL, is_elf64() ? 24L : 16L);   /* null symbol table entry */
-    *len += is_elf64() ? 24L : 16L;
+    saa_wbytes(s, NULL, usize);
+    *len += usize;
     (*local)++;
 
     /*
      * Next, an entry for the file name.
      */
-    p = entry;
     if (is_elf64()) {
-        WRITELONG(p, 1);            /* we know it's 1st entry in strtab */
-        WRITESHORT(p, STT_FILE);    /* type FILE */
-        WRITESHORT(p, SHN_ABS);
-        WRITEDLONG(p, (uint64_t) 0);  /* no value */
-        WRITEDLONG(p, (uint64_t) 0);  /* no size either */
-        saa_wbytes(s, entry, 24L);
-        *len += 24;
-        (*local)++;
+        u.sym64.st_name     = long_le(1);
+        u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_FILE));
+        u.sym64.st_other    = 0;
+        u.sym64.st_shndx    = short_le(SHN_ABS);
+        u.sym64.st_value    = 0;
+        u.sym64.st_size     = 0;
     } else {
-        WRITELONG(p, 1);            /* we know it's 1st entry in strtab */
-        WRITELONG(p, 0);            /* no value */
-        WRITELONG(p, 0);            /* no size either */
-        WRITESHORT(p, STT_FILE);    /* type FILE */
-        WRITESHORT(p, SHN_ABS);
-        saa_wbytes(s, entry, 16L);
-        *len += 16;
-        (*local)++;
+        u.sym32.st_name     = long_le(1);
+        u.sym32.st_value    = 0;
+        u.sym32.st_size     = 0;
+        u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_FILE));
+        u.sym32.st_other    = 0;
+        u.sym32.st_shndx    = short_le(SHN_ABS);
     }
+    saa_wbytes(s, &u, usize);
+    *len += usize;
+    (*local)++;
+
 
     /*
      * Now some standard symbols defining the segments, for relocation
      * purposes.
      */
     if (is_elf64()) {
+        u.sym64.st_name     = 0;
+        u.sym64.st_other    = 0;
+        u.sym64.st_value    = 0;
+        u.sym64.st_size     = 0;
         for (i = 1; i <= nsects; i++) {
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-            WRITESHORT(p, i);       /* section id */
-            WRITEDLONG(p, (uint64_t) 0);        /* offset zero */
-            WRITEDLONG(p, (uint64_t) 0);        /* size zero */
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_info      = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_shndx     = short_le(i);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
     } else {
+        u.sym32.st_name     = 0;
+        u.sym32.st_value    = 0;
+        u.sym32.st_size     = 0;
+        u.sym32.st_other    = 0;
         for (i = 1; i <= nsects; i++) {
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITELONG(p, 0);        /* offset zero */
-            WRITELONG(p, 0);        /* size zero */
-            WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-            WRITESHORT(p, i);       /* section id */
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_info      = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_shndx     = short_le(i);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
     }
@@ -1913,15 +1917,14 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (sym->type & SYM_GLOBAL)
                 continue;
-            p = entry;
-            WRITELONG(p, sym->strpos);      /* index into symbol string table */
-            WRITECHAR(p, sym->type);        /* type and binding */
-            WRITECHAR(p, sym->other);       /* visibility */
-            WRITESHORT(p, sym->section);    /* index into section header table */
-            WRITEDLONG(p, (int64_t)sym->symv.key); /* value of symbol */
-            WRITEDLONG(p, (int64_t)sym->size);  /* size of symbol */
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_name     = long_le(sym->strpos);
+            u.sym64.st_info     = char_le(sym->type);
+            u.sym64.st_other    = char_le(sym->other);
+            u.sym64.st_shndx    = short_le(sym->section);
+            u.sym64.st_value    = dlong_le(sym->symv.key);
+            u.sym64.st_size     = dlong_le(sym->size);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
         /*
@@ -1930,49 +1933,48 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
          */
         if (dfmt_is_dwarf()) {
             dwarf_infosym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-            WRITESHORT(p, debug_info);       /* section id */
-            WRITEDLONG(p, (uint64_t) 0);        /* offset zero */
-            WRITEDLONG(p, (uint64_t) 0);        /* size zero */
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_name     = 0;
+            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_other    = 0;
+            u.sym64.st_shndx    = short_le(debug_info);
+            u.sym64.st_value    = 0;
+            u.sym64.st_size     = 0;
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
             dwarf_abbrevsym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-            WRITESHORT(p, debug_abbrev);       /* section id */
-            WRITEDLONG(p, (uint64_t) 0);        /* offset zero */
-            WRITEDLONG(p, (uint64_t) 0);        /* size zero */
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_name     = 0;
+            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_other    = 0;
+            u.sym64.st_shndx    = short_le(debug_abbrev);
+            u.sym64.st_value    = 0;
+            u.sym64.st_size     = 0;
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
             dwarf_linesym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITESHORT(p, STT_SECTION);       /* type, binding, and visibility */
-            WRITESHORT(p, debug_line);       /* section id */
-            WRITEDLONG(p, (uint64_t) 0);        /* offset zero */
-            WRITEDLONG(p, (uint64_t) 0);        /* size zero */
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_name     = 0;
+            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_other    = 0;
+            u.sym64.st_shndx    = short_le(debug_line);
+            u.sym64.st_value    = 0;
+            u.sym64.st_size     = 0;
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
     } else {
         while ((sym = saa_rstruct(syms))) {
             if (sym->type & SYM_GLOBAL)
                 continue;
-            p = entry;
-            WRITELONG(p, sym->strpos);
-            WRITELONG(p, sym->symv.key);
-            WRITELONG(p, sym->size);
-            WRITECHAR(p, sym->type);        /* type and binding */
-            WRITECHAR(p, sym->other);       /* visibility */
-            WRITESHORT(p, sym->section);
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_name     = long_le(sym->strpos);
+            u.sym32.st_value    = long_le(sym->symv.key);
+            u.sym32.st_size     = long_le(sym->size);
+            u.sym32.st_info     = char_le(sym->type);
+            u.sym32.st_other    = char_le(sym->other);
+            u.sym32.st_shndx    = short_le(sym->section);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
         /*
@@ -1981,34 +1983,34 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
          */
         if (dfmt_is_dwarf()) {
             dwarf_infosym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITELONG(p, (uint32_t) 0);         /* offset zero */
-            WRITELONG(p, (uint32_t) 0);         /* size zero */
-            WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
-            WRITESHORT(p, sec_debug_info);      /* section id */
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_name     = 0;
+            u.sym32.st_value    = 0;
+            u.sym32.st_size     = 0;
+            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_other    = 0;
+            u.sym32.st_shndx    = short_le(sec_debug_info);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
             dwarf_abbrevsym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITELONG(p, (uint32_t) 0);         /* offset zero */
-            WRITELONG(p, (uint32_t) 0);         /* size zero */
-            WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
-            WRITESHORT(p, sec_debug_abbrev);    /* section id */
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_name     = 0;
+            u.sym32.st_value    = 0;
+            u.sym32.st_size     = 0;
+            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_other    = 0;
+            u.sym32.st_shndx    = short_le(sec_debug_abbrev);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
             dwarf_linesym = *local;
-            p = entry;
-            WRITELONG(p, 0);        /* no symbol name */
-            WRITELONG(p, (uint32_t) 0);         /* offset zero */
-            WRITELONG(p, (uint32_t) 0);         /* size zero */
-            WRITESHORT(p, STT_SECTION);         /* type, binding, and visibility */
-            WRITESHORT(p, sec_debug_line);      /* section id */
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_name     = 0;
+            u.sym32.st_value    = 0;
+            u.sym32.st_size     = 0;
+            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_other    = 0;
+            u.sym32.st_shndx    = short_le(sec_debug_line);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
             (*local)++;
         }
     }
@@ -2021,29 +2023,27 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (!(sym->type & SYM_GLOBAL))
                 continue;
-            p = entry;
-            WRITELONG(p, sym->strpos);
-            WRITECHAR(p, sym->type);        /* type and binding */
-            WRITECHAR(p, sym->other);       /* visibility */
-            WRITESHORT(p, sym->section);
-            WRITEDLONG(p, (int64_t)sym->symv.key);
-            WRITEDLONG(p, (int64_t)sym->size);
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.sym64.st_name     = long_le(sym->strpos);
+            u.sym64.st_info     = char_le(sym->type);
+            u.sym64.st_other    = char_le(sym->other);
+            u.sym64.st_shndx    = short_le(sym->section);
+            u.sym64.st_value    = dlong_le(sym->symv.key);
+            u.sym64.st_size     = dlong_le(sym->size);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
         }
     } else {
         while ((sym = saa_rstruct(syms))) {
             if (!(sym->type & SYM_GLOBAL))
                 continue;
-            p = entry;
-            WRITELONG(p, sym->strpos);
-            WRITELONG(p, sym->symv.key);
-            WRITELONG(p, sym->size);
-            WRITECHAR(p, sym->type);        /* type and binding */
-            WRITECHAR(p, sym->other);       /* visibility */
-            WRITESHORT(p, sym->section);
-            saa_wbytes(s, entry, 16L);
-            *len += 16;
+            u.sym32.st_name     = long_le(sym->strpos);
+            u.sym32.st_value    = long_le(sym->symv.key);
+            u.sym32.st_size     = long_le(sym->size);
+            u.sym32.st_info     = char_le(sym->type);
+            u.sym32.st_other    = char_le(sym->other);
+            u.sym32.st_shndx    = short_le(sym->section);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
         }
     }
 
