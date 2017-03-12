@@ -2053,8 +2053,15 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
 static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
 {
     struct SAA *s;
-    uint8_t *p, entry[24];
     int32_t global_offset;
+
+    size_t usize = is_elf64() ? sizeof(Elf64_Rela) :
+        (is_elfx32() ? sizeof(Elf32_Rela) : sizeof(Elf32_Rel));
+    union {
+        Elf32_Rel   rel32;
+        Elf32_Rela  rela32;
+        Elf64_Rela  rela64;
+    } u;
 
     if (!r)
         return NULL;
@@ -2076,11 +2083,10 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            p = entry;
-            WRITELONG(p, r->address);
-            WRITELONG(p, (sym << 8) + r->type);
-            saa_wbytes(s, entry, 8L);
-            *len += 8;
+            u.rel32.r_offset    = long_le(r->address);
+            u.rel32.r_info      = long_le(ELF32_R_INFO(sym, r->type));
+            saa_wbytes(s, &u, usize);
+            *len += usize;
 
             r = r->next;
         }
@@ -2091,12 +2097,11 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            p = entry;
-            WRITELONG(p, r->address);
-            WRITELONG(p, (sym << 8) + r->type);
-            WRITELONG(p, r->offset);
-            saa_wbytes(s, entry, 12L);
-            *len += 12;
+            u.rela32.r_offset   = long_le(r->address);
+            u.rela32.r_info     = long_le(ELF32_R_INFO(sym, r->type));
+            u.rela32.r_addend   = long_le(r->offset);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
 
             r = r->next;
         }
@@ -2108,13 +2113,11 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            p = entry;
-            WRITEDLONG(p, r->address);
-            WRITELONG(p, r->type);
-            WRITELONG(p, sym);
-            WRITEDLONG(p, r->offset);
-            saa_wbytes(s, entry, 24L);
-            *len += 24;
+            u.rela64.r_offset   = dlong_le(r->address);
+            u.rela64.r_info     = dlong_le(ELF64_R_INFO(sym, r->type));
+            u.rela64.r_addend   = dlong_le(r->offset);
+            saa_wbytes(s, &u, usize);
+            *len += usize;
 
             r = r->next;
         }
