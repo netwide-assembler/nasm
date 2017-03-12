@@ -317,6 +317,7 @@ typedef struct elf64_dyn {
 
 #define ELF32_R_SYM(x)  ((x) >> 8)
 #define ELF32_R_TYPE(x) ((x) & 0xff)
+#define ELF32_R_INFO(s,t) (((Elf32_Word)(s) << 8) + ELF32_R_TYPE(t))
 
 typedef struct elf32_rel {
     Elf32_Addr      r_offset;
@@ -351,6 +352,7 @@ enum reloc32_type {
 
 #define ELF64_R_SYM(x)  ((x) >> 32)
 #define ELF64_R_TYPE(x) ((x) & 0xffffffff)
+#define ELF64_R_INFO(s,t) (((Elf64_Xword)(s) << 32) + ELF64_R_TYPE(t))
 
 typedef struct elf64_rel {
     Elf64_Addr      r_offset;
