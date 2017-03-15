@@ -147,7 +147,7 @@ static void out_symdef(char *name, int32_t segment, int64_t offset,
  * given label name. Creates a new one, if it isn't found, and if
  * `create' is true.
  */
-static union label *find_label(char *label, int create, int *created)
+static union label *find_label(const char *label, int create, int *created)
 {
     char *prev;
     int prevlen, len;
@@ -203,7 +203,7 @@ static union label *find_label(char *label, int create, int *created)
     return lfree++;
 }
 
-bool lookup_label(char *label, int32_t *segment, int64_t *offset)
+bool lookup_label(const char *label, int32_t *segment, int64_t *offset)
 {
     union label *lptr;
 
@@ -220,7 +220,7 @@ bool lookup_label(char *label, int32_t *segment, int64_t *offset)
     return false;
 }
 
-bool is_extern(char *label)
+bool is_extern(const char *label)
 {
     union label *lptr;
 

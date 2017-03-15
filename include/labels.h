@@ -43,8 +43,8 @@
 extern char lprefix[PREFIX_MAX];
 extern char lpostfix[PREFIX_MAX];
 
-bool lookup_label(char *label, int32_t *segment, int64_t *offset);
-bool is_extern(char *label);
+bool lookup_label(const char *label, int32_t *segment, int64_t *offset);
+bool is_extern(const char *label);
 void define_label(char *label, int32_t segment, int64_t offset, char *special,
                   bool is_norm, bool isextrn);
 void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
