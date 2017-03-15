@@ -409,6 +409,23 @@ extern const struct preproc_ops preproc_nop;
 #define isnumchar(c)   (nasm_isalnum(c) || (c) == '_')
 
 /*
+ * inline function to skip past an identifier; returns the first character past
+ * the identifier if valid, otherwise NULL.
+ */
+static inline char *nasm_skip_identifier(const char *str)
+{
+    const char *p = str;
+
+    if (!isidstart(*p++)) {
+        p = NULL;
+    } else {
+        while (isidchar(*p++))
+            ;
+    }
+    return (char *)p;
+}
+
+/*
  * Data-type flags that get passed to listing-file routines.
  */
 enum {

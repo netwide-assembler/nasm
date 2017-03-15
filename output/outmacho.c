@@ -45,6 +45,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "labels.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -169,34 +170,26 @@ struct section {
 
 #define SECTION_TYPE	0x000000ff      /* section type mask */
 
-#define	S_REGULAR	(0x0)   /* standard section */
-#define	S_ZEROFILL	(0x1)   /* zerofill, in-memory only */
+#define	S_REGULAR		(0x0)   /* standard section */
+#define	S_ZEROFILL		(0x1)   /* zerofill, in-memory only */
 
 #define SECTION_ATTRIBUTES_SYS   0x00ffff00     /* system setable attributes */
 #define S_ATTR_SOME_INSTRUCTIONS 0x00000400     /* section contains some
-                                                   machine instructions */
-#define S_ATTR_EXT_RELOC         0x00000200     /* section has external
-                                                   relocation entries */
-#define S_ATTR_LOC_RELOC         0x00000100     /* section has local
-                                                   relocation entries */
-#define S_ATTR_PURE_INSTRUCTIONS 0x80000000		/* section uses pure
-												   machine instructions */
+						   machine instructions */
+#define S_ATTR_EXT_RELOC         0x00000200     /* section has external relocation entries */
+#define S_ATTR_LOC_RELOC         0x00000100     /* section has local relocation entries */
+#define S_ATTR_DEBUG		 0x02000000
+#define S_ATTR_SELF_MODIFYING_CODE 0x04000000
+#define S_ATTR_LIVE_SUPPORT	 0x08000000
+#define S_ATTR_NO_DEAD_STRIP	 0x10000000     /* no dead stripping */
+#define S_ATTR_STRIP_STATIC_SYMS 0x20000000
+#define S_ATTR_NO_TOC            0x40000000
+#define S_ATTR_PURE_INSTRUCTIONS 0x80000000	/* section uses pure machine instructions */
 
-/* Fake section for absolute symbols, *not* part of the section linked list */
+#define S_NASM_TYPE_MASK	 0x800004ff	/* we consider these bits "section type" */
+
+/* fake section for absolute symbols, *not* part of the section linked list */
 static struct section absolute_sect;
-
-static const struct sectmap {
-    const char *nasmsect;
-    const char *segname;
-    const char *sectname;
-    const int32_t flags;
-} sectmap[] = {
-    {".text", "__TEXT", "__text", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS|S_ATTR_PURE_INSTRUCTIONS},
-    {".data", "__DATA", "__data", S_REGULAR},
-    {".rodata", "__DATA", "__const", S_REGULAR},
-    {".bss", "__DATA", "__bss", S_ZEROFILL},
-    {NULL, NULL, NULL, 0}
-};
 
 struct reloc {
     /* nasm internal data */
@@ -708,6 +701,39 @@ static void macho_output(int32_t secto, const void *data,
     }
 }
 
+/* Translation table from traditional Unix section names to Mach-O */
+static const struct sectmap {
+    const char *nasmsect;
+    const char *segname;
+    const char *sectname;
+    const uint32_t flags;
+} sectmap[] = {
+    {".text", "__TEXT", "__text",
+     S_REGULAR|S_ATTR_SOME_INSTRUCTIONS|S_ATTR_PURE_INSTRUCTIONS},
+    {".data", "__DATA", "__data", S_REGULAR},
+    {".rodata", "__DATA", "__const", S_REGULAR},
+    {".bss", "__DATA", "__bss", S_ZEROFILL},
+    {NULL, NULL, NULL, 0}
+};
+
+#define NO_TYPE S_NASM_TYPE_MASK
+
+/* Section type or attribute directives */
+static const struct sect_attribs {
+    const char *name;
+    uint32_t flags;
+} sect_attribs[] = {
+    { "data", S_REGULAR },
+    { "code", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS|S_ATTR_PURE_INSTRUCTIONS },
+    { "mixed", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS },
+    { "bss", S_ZEROFILL },
+    { "zerofill", S_ZEROFILL },
+    { "no_dead_strip", NO_TYPE|S_ATTR_NO_DEAD_STRIP },
+    { "live_support", NO_TYPE|S_ATTR_LIVE_SUPPORT },
+    { "strip_static_syms", NO_TYPE|S_ATTR_STRIP_STATIC_SYMS },
+    { NULL, 0 }
+};
+
 static int32_t macho_section(char *name, int pass, int *bits)
 {
     char *sectionAttributes;
@@ -715,8 +741,10 @@ static int32_t macho_section(char *name, int pass, int *bits)
     struct section *s;
     const char *section, *segment;
     uint32_t flags;
+    const struct sect_attribs *sa;
     char *currentAttribute;
     char *comma;
+
     bool new_seg;
 
     (void)pass;
@@ -811,61 +839,66 @@ static int32_t macho_section(char *name, int pass, int *bits)
 
     s->by_name = s->by_name || comma; /* Was specified by name */
 
-    flags = (uint32_t)-1;
+    flags = NO_TYPE;
 
-    while ((NULL != sectionAttributes)
-	   && (currentAttribute = nasm_strsep(&sectionAttributes, " \t"))) {
-	if (0 != *currentAttribute) {
-	    if (!nasm_strnicmp("align=", currentAttribute, 6)) {
-		char *end;
-		int newAlignment, value;
+    while (sectionAttributes &&
+	   (currentAttribute = nasm_strsep(&sectionAttributes, " \t"))) {
+	if (!*currentAttribute)
+	    continue;
 
-		value = strtoul(currentAttribute + 6, (char**)&end, 0);
-		newAlignment = alignlog2_32(value);
+	if (!nasm_strnicmp("align=", currentAttribute, 6)) {
+	    char *end;
+	    int newAlignment, value;
 
-		if (0 != *end) {
-		    nasm_error(ERR_NONFATAL,
-			       "unknown or missing alignment value \"%s\" "
-			       "specified for section \"%s\"",
-			       currentAttribute + 6,
-			       name);
-		} else if (0 > newAlignment) {
-		    nasm_error(ERR_NONFATAL,
-			       "alignment of %d (for section \"%s\") is not "
-			       "a power of two",
-			       value,
-			       name);
+	    value = strtoul(currentAttribute + 6, (char**)&end, 0);
+	    newAlignment = alignlog2_32(value);
+
+	    if (0 != *end) {
+		nasm_error(ERR_NONFATAL,
+			   "unknown or missing alignment value \"%s\" "
+			   "specified for section \"%s\"",
+			   currentAttribute + 6,
+			   name);
+	    } else if (0 > newAlignment) {
+		nasm_error(ERR_NONFATAL,
+			   "alignment of %d (for section \"%s\") is not "
+			   "a power of two",
+			   value,
+			   name);
+	    }
+
+	    if (s->align < newAlignment)
+		s->align = newAlignment;
+	} else {
+	    for (sa = sect_attribs; sa->name; sa++) {
+		if (!nasm_stricmp(sa->name, currentAttribute)) {
+		    if ((sa->flags & S_NASM_TYPE_MASK) != NO_TYPE) {
+			flags = (flags & ~S_NASM_TYPE_MASK)
+			    | (sa->flags & S_NASM_TYPE_MASK);
+		    }
+		    flags |= sa->flags & ~S_NASM_TYPE_MASK;
+		    break;
 		}
+	    }
 
-		if (s->align < newAlignment)
-		    s->align = newAlignment;
-	    } else if (!nasm_stricmp("data", currentAttribute)) {
-		flags = S_REGULAR;
-	    } else if (!nasm_stricmp("code", currentAttribute) ||
-		       !nasm_stricmp("text", currentAttribute)) {
-		flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
-		    S_ATTR_PURE_INSTRUCTIONS;
-	    } else if (!nasm_stricmp("mixed", currentAttribute)) {
-		flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS;
-	    } else if (!nasm_stricmp("bss", currentAttribute)) {
-		flags = S_ZEROFILL;
-	    } else {
+	    if (!sa->name) {
 		nasm_error(ERR_NONFATAL,
 			   "unknown section attribute %s for section %s",
-			   currentAttribute,
-			   name);
+			   currentAttribute, name);
 	    }
 	}
+    }
 
-	if (flags != (uint32_t)-1) {
-	    if (!new_seg && s->flags != flags) {
-		nasm_error(ERR_NONFATAL,
-			   "inconsistent section attributes for section %s\n",
-			   name);
-	    } else {
-		s->flags = flags;
-	    }
+    if ((flags & S_NASM_TYPE_MASK) != NO_TYPE) {
+	if (!new_seg && ((s->flags ^ flags) & S_NASM_TYPE_MASK)) {
+	    nasm_error(ERR_NONFATAL,
+		       "inconsistent section attributes for section %s\n",
+		       name);
+	} else {
+	    s->flags = (s->flags & ~S_NASM_TYPE_MASK) | flags;
 	}
+    } else {
+	s->flags |= flags & ~S_NASM_TYPE_MASK;
     }
 
     return s->index;
@@ -1032,11 +1065,11 @@ static void macho_layout_symbols (uint32_t *numsyms,
 	    nlocalsym++;
 	}
 	else {
-		if ((sym->type & N_TYPE) != N_UNDF) {
-			nextdefsym++;
+	    if ((sym->type & N_TYPE) != N_UNDF) {
+		nextdefsym++;
 	    } else {
-			nundefsym++;
-		}
+		nundefsym++;
+	    }
 
 	    /* If we handle debug info we'll want
 	       to check for it here instead of just
@@ -1072,11 +1105,11 @@ static void macho_layout_symbols (uint32_t *numsyms,
 	    *strtabsize += strlen(sym->name) + 1;
 	}
 	else {
-		if((sym->type & N_TYPE) != N_UNDF) {
-			extdefsyms[i++] = sym;
+	    if ((sym->type & N_TYPE) != N_UNDF) {
+		extdefsyms[i++] = sym;
 	    } else {
-			undefsyms[j++] = sym;
-		}
+		undefsyms[j++] = sym;
+	    }
 	}
 	symp = &(sym->next);
     }
@@ -1598,27 +1631,98 @@ static void macho_cleanup(void)
     nasm_free(sectstab);
 }
 
+static bool macho_set_section_attribute_by_symbol(const char *label, uint32_t flags)
+{
+    struct section *s;
+    int32_t nasm_seg;
+    int64_t offset;
+
+    if (!lookup_label(label, &nasm_seg, &offset)) {
+	nasm_error(ERR_NONFATAL, "unknown symbol `%s' in no_dead_strip", label);
+	return false;
+    }
+
+    s = get_section_by_index(nasm_seg);
+    if (!s) {
+	nasm_error(ERR_NONFATAL, "symbol `%s' is external or absolute", label);
+	return false;
+    }
+
+    s->flags |= flags;
+    return true;
+}
+
 /*
- * Mach-O-specific directives
+ * Mark a symbol for no dead stripping
+ */
+static enum directive_result macho_no_dead_strip(const char *labels)
+{
+    char *s, *p, *ep;
+    char ec;
+    enum directive_result rv = DIRR_ERROR;
+    bool real = passn > 1;
+
+    p = s = nasm_strdup(labels);
+    while (*p) {
+	ep = nasm_skip_identifier(p);
+	if (!ep) {
+	    nasm_error(ERR_NONFATAL, "invalid symbol in NO_DEAD_STRIP");
+	    goto err;
+	}
+	ec = *ep;
+	if (ec && ec != ',' && !nasm_isspace(ec)) {
+	    nasm_error(ERR_NONFATAL, "cannot parse contents after symbol");
+	    goto err;
+	}
+	*ep = '\0';
+	if (real) {
+	    if (!macho_set_section_attribute_by_symbol(p, S_ATTR_NO_DEAD_STRIP))
+		rv = DIRR_ERROR;
+	}
+	*ep = ec;
+	p = nasm_skip_spaces(ep);
+	if (*p == ',')
+	    p = nasm_skip_spaces(++p);
+    }
+
+    rv = DIRR_OK;
+
+err:
+    nasm_free(s);
+    return rv;
+}
+
+/*
+ * Mach-O pragmas
  */
 static enum directive_result
-    macho_directive(enum directives directive, char *value, int pass)
+macho_pragma(const struct pragma *pragma)
 {
-     switch (directive) {
-     case D_SUBSECTIONS_VIA_SYMBOLS:
-	 if (*value)
-	     return DIRR_BADPARAM;
-	 
-	 if (pass == 2)
-	     head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
+    bool real = passn > 1;
 
-	 return DIRR_OK;
+    switch (pragma->opcode) {
+    case D_SUBSECTIONS_VIA_SYMBOLS:
+	if (*pragma->tail)
+	    return DIRR_BADPARAM;
 
-     default:
-	 return DIRR_UNKNOWN;	/* Not a Mach-O directive */
-     }
+	if (real)
+	    head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
+
+	return DIRR_OK;
+
+    case D_NO_DEAD_STRIP:
+	return macho_no_dead_strip(pragma->tail);
+
+    default:
+	return DIRR_UNKNOWN;	/* Not a Mach-O directive */
+    }
 }
- 
+
+static const struct pragma_facility macho_pragma_list[] = {
+    { "macho", macho_pragma },
+    { NULL, macho_pragma }	/* Implements macho32/macho64 namespaces */
+};
+
 #ifdef OF_MACHO32
 static const struct macho_fmt macho32_fmt = {
     4,
@@ -1659,10 +1763,10 @@ const struct ofmt of_macho32 = {
     macho_section,
     macho_sectalign,
     macho_segbase,
-    macho_directive,
+    null_directive,
     macho_filename,
     macho_cleanup,
-    NULL                        /* pragma list */
+    macho_pragma_list,
 };
 #endif
 
@@ -1708,10 +1812,10 @@ const struct ofmt of_macho64 = {
     macho_section,
     macho_sectalign,
     macho_segbase,
-    macho_directive,
+    null_directive,
     macho_filename,
     macho_cleanup,
-    NULL                        /* pragma list */
+    macho_pragma_list,
 };
 #endif
 

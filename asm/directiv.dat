@@ -73,6 +73,7 @@ org				; outbin
 osabi				; outelf
 safeseh				; outcoff
 uppercase			; outieee, outobj
-subsections_via_symbols		; outmacho
 
 ; --- Pragma operations
+subsections_via_symbols		; macho
+no_dead_strip			; macho
