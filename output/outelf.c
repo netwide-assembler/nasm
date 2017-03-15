@@ -2118,20 +2118,7 @@ static void elf_section_header(int name, int type, uint64_t flags,
     elf_sects[elf_nsect].is_saa = is_saa;
     elf_nsect++;
 
-    if (is_elf32()) {
-        fwriteint32_t((int32_t)name, ofile);
-        fwriteint32_t((int32_t)type, ofile);
-        fwriteint32_t((int32_t)flags, ofile);
-        fwriteint32_t(0L, ofile);      /* no address, ever, in object files */
-        fwriteint32_t(type == 0 ? 0L : elf_foffs, ofile);
-        fwriteint32_t(datalen, ofile);
-        if (data)
-            elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        fwriteint32_t((int32_t)link, ofile);
-        fwriteint32_t((int32_t)info, ofile);
-        fwriteint32_t((int32_t)align, ofile);
-        fwriteint32_t((int32_t)eltsize, ofile);
-    } else if (is_elfx32()) {
+    if (is_elf32() || is_elfx32()) {
         fwriteint32_t((int32_t)name, ofile);
         fwriteint32_t((int32_t)type, ofile);
         fwriteint32_t((int32_t)flags, ofile);
