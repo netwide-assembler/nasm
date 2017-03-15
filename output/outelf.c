@@ -2214,6 +2214,14 @@ static int elf_set_info(enum geninfo type, char **val)
     return 0;
 }
 
+/* Claim "elf" as a pragma namespace, for the future */
+static const struct pragma_facility elf_pragma_list[] =
+{
+    { "elf", NULL },
+    { NULL, NULL }          /* Implements the canonical output name */
+};
+
+
 static const struct dfmt elf32_df_dwarf = {
     "ELF32 (i386) dwarf debug format for Linux/Unix",
     "dwarf",
@@ -2262,7 +2270,7 @@ const struct ofmt of_elf32 = {
     elf_directive,
     elf_filename,
     elf_cleanup,
-    NULL                        /* pragma list */
+    elf_pragma_list,
 };
 
 static const struct dfmt elf64_df_dwarf = {
@@ -2313,7 +2321,7 @@ const struct ofmt of_elf64 = {
     elf_directive,
     elf_filename,
     elf_cleanup,
-    NULL                        /* pragma list */
+    elf_pragma_list,
 };
 
 static const struct dfmt elfx32_df_dwarf = {
@@ -2339,7 +2347,7 @@ static const struct dfmt elfx32_df_stabs = {
     debug_typevalue,
     stabs_output,
     stabs_cleanup,
-    NULL                        /* pragma list */
+    elf_pragma_list,
 };
 
 static const struct dfmt * const elfx32_debugs_arr[3] =
