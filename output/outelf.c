@@ -1679,7 +1679,7 @@ static void elf_write(void)
      * Now output the section header table.
      */
 
-    elf_foffs = 0x40 + (is_elf64() ? sizeof(Elf64_Shdr): sizeof(Elf32_Shdr)) * nsections;
+    elf_foffs = sizeof(Elf64_Ehdr) + (is_elf64() ? sizeof(Elf64_Shdr): sizeof(Elf32_Shdr)) * nsections;
     align = ALIGN(elf_foffs, SEC_FILEALIGN) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
