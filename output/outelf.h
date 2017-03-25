@@ -103,10 +103,6 @@ struct stabentry {
 extern uint8_t elf_osabi;
 extern uint8_t elf_abiver;
 
-void elf_section_attrib(char *name, char *attr, int pass,
-			uint32_t *flags_and, uint32_t *flags_or,
-			uint64_t *align, int *type);
-
 #define WRITE_STAB(p,n_strx,n_type,n_other,n_desc,n_value)  \
     do {                                                    \
         WRITELONG(p, n_strx);                               \
