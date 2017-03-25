@@ -494,12 +494,17 @@ enum dwarf_identifier_case {
 };
 
 enum dwarf_calling_conversion {
-	DW_CC_normal	= 0x01,
-	DW_CC_program	= 0x02,
-	DW_CC_nocall	= 0x03,
+	DW_CC_normal			= 0x01,
+	DW_CC_program			= 0x02,
+	DW_CC_nocall			= 0x03,
+	DW_CC_pass_by_reference		= 0x4,
+	DW_CC_pass_by_value		= 0x5,
 
-	DW_CC_lo_user	= 0x40,
-	DW_CC_hi_user	= 0xff
+	DW_CC_lo_user			= 0x40,
+	DW_CC_hi_user			= 0xff,
+
+	DW_CC_GNU_renesas_sh		= 0x40,
+	DW_CC_GNU_borland_fastcall_i386	= 0x41
 };
 
 enum dwarf_inline {
