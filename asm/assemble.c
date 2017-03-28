@@ -1948,7 +1948,8 @@ static void gencode(struct out_data *data, insn *ins)
                             warn_overflow(ea_data.bytes);
 
                         out_imm(data, opy, ea_data.bytes,
-                                (asize > ea_data.bytes) ? OUT_SIGNED : OUT_UNSIGNED);
+                                (asize > ea_data.bytes)
+                                ? OUT_SIGNED : OUT_WRAP);
                     }
                 }
             }
