@@ -5763,6 +5763,14 @@ comma.  The following flags can also be specified:
 
 \b \c{bss} - this section is uninitialized and filled with zero
 
+\b \c{zerofill} - same as \c{bss}
+
+\b \c{no_dead_strip} - inhibit dead code stripping for this section
+
+\b \c{live_support} - set the live support flag for this section
+
+\b \c{strip_static_syms} - strip static symbols for this section
+
 \b \c{align=}\e{alignment} - specify section alignment
 
 The default is \c{data}, unless the section name is \c{__text} or
@@ -5800,14 +5808,26 @@ The directive \c{subsections_via_symbols} sets the
 the linker that the symbols in the file matches the conventions
 required to allow for link-time dead code elimination.
 
-This directive takes no arguments.  Like most directives, it is
-wrapped in a macro; it is therefore possible to support older versions
-of NASM (without the dead code elimination support) simply by:
+This directive takes no arguments.
 
-\c      %ifnmacro subsections_via_symbols
-\c        %imacro subsections_via_symbols 0
-\c        %endmacro
-\c      %endif
+This is a macro implemented as a \c{%pragma}.  It can also be
+specified in its \c{%pragma} form, in which case it will not affect
+non-Mach-O builds of the same source code:
+
+\c      %pragma macho subsections_via_symbols
+
+\S{macho-ssvs} \c{macho} specfic directive \i\c{no_dead_strip}
+
+The directive \c{no_dead_strip} sets the Mach-O \c{SH_NO_DEAD_STRIP}
+section flag on the section containing a a specific symbol.  This
+directive takes a list of symbols as its arguments.
+
+This is a macro implemented as a \c{%pragma}.  It can also be
+specified in its \c{%pragma} form, in which case it will not affect
+non-Mach-O builds of the same source code:
+
+\c      %pragma macho no_dead_strip symbol...
+
 
 \H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
