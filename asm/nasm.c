@@ -1190,7 +1190,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     int i;
     int64_t offs;
     int pass_max;
-    int sb;
     uint64_t prev_offset_changed;
     unsigned int stall_count = 0; /* Make sure we make forward progress... */
 
@@ -1207,15 +1206,14 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
         def_label = passn > 1 ? redefine_label : define_label;
 
-        globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
+        globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
 	    lfmt->init(listname);
         }
         in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
-        location.segment = ofmt->section(NULL, pass2, &sb);
-        globalbits = sb;
+        location.segment = ofmt->section(NULL, pass2, &globalbits);
         if (passn > 1) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
@@ -1341,7 +1339,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             } else {        /* instruction isn't an EQU */
 
                 if (pass1 == 1) {
-                    int64_t l = insn_size(location.segment, offs, sb,
+                    int64_t l = insn_size(location.segment, offs, globalbits,
                                           &output_ins);
                     l *= output_ins.times;
 
@@ -1421,7 +1419,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                      */
 
                 } else {
-                    offs += assemble(location.segment, offs, sb, &output_ins);
+                    offs += assemble(location.segment, offs, globalbits, &output_ins);
                     set_curr_offs(offs);
 
                 }
