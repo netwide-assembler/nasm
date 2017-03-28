@@ -24,7 +24,11 @@ since 2007.
    formats, if the underlying operating system supports them.
 
 \b \c{macho} object format now supports the \c{subsections_via_symbols}
-   directive, see \k{macho-ssvs}.
+   and \c{no_dead_strip} directives, see \k{macho-ssvs}.
+
+\b \c{macho} object format now supports the \c{no_dead_strip},
+  \c{live_support} and \c{strip_static_syms} section flags, see
+  \k{machosect}.
 
 \b All warnings can now be suppressed if desired; warnings not
    otherwise part of any warning class are now considered its own
