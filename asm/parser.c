@@ -550,6 +550,7 @@ restart_parse:
              */
             result->opcode          = I_RESB;
             result->operands        = 1;
+            nasm_zero(result->oprs);
             result->oprs[0].type    = IMMEDIATE;
             result->oprs[0].offset  = 0L;
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
