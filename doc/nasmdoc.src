@@ -6217,11 +6217,6 @@ a hint as to where to find requested symbols.
 
 \H{dbgfmt} \i\c{dbg}: Debugging Format
 
-The \c{dbg} output format is not built into NASM in the default
-configuration. If you are building your own NASM executable from the
-sources, you can define \i\c{OF_DBG} in \c{output/outform.h} or on the
-compiler command line, and obtain the \c{dbg} output format.
-
 The \c{dbg} format does not output an object file as such; instead,
 it outputs a text file which contains a complete list of all the
 transactions between the main body of NASM and the output-format
@@ -6261,6 +6256,15 @@ yourself (using \c{EXTERN}, for example) if you really need to get a
 
 \c{dbg} accepts any section name and any directives at all, and logs
 them all to its output file.
+
+\c{dbg} accepts and logs any \c{%pragma}, but the specific
+\c{%pragma}:
+
+\c      %pragma dbg maxdump <size>
+
+where \c{<size>} is either a number or \c{unlimited}, can be used to
+control the maximum size for dumping the full contents of a
+\c{rawdata} output object.
 
 
 \C{16bit} Writing 16-bit Code (DOS, Windows 3/3.1)

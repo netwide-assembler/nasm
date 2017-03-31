@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -170,7 +171,7 @@ static void dbg_out(const struct out_data *data)
         fprintf(ofile, " ins %s(%d)",
                 nasm_insn_names[data->itemp->opcode], data->itemp->operands);
     } else {
-        fprintf(ofile, " (data)");
+        fprintf(ofile, " no ins (plain data)");
     }
 
     if (data->type == OUT_ADDRESS || data->type == OUT_RELADDR ||
@@ -305,6 +306,13 @@ dbg_directive(enum directives directive, char *value, int pass)
 }
 
 static enum directive_result
+dbg_pragma(const struct pragma *pragma);
+
+static const struct pragma_facility dbg_pragma_list[] = {
+    { NULL, dbg_pragma }
+};
+
+static enum directive_result
 dbg_pragma(const struct pragma *pragma)
 {
     fprintf(ofile, "pragma %s(%s) %s[%s] %s\n",
@@ -312,6 +320,26 @@ dbg_pragma(const struct pragma *pragma)
             pragma->facility->name ? pragma->facility->name : "<default>",
             pragma->opname, directive_name(pragma->opcode),
             pragma->tail);
+
+    if (pragma->facility == &dbg_pragma_list[0] &&
+        pragma->opcode == D_MAXDUMP) {
+        if (!nasm_stricmp(pragma->tail, "unlimited")) {
+            dbg_max_data_dump = -1UL;
+        } else {
+            char *ep;
+            unsigned long arg;
+
+            errno = 0;
+            arg = strtoul(pragma->tail, &ep, 0);
+            if (errno || *nasm_skip_spaces(ep)) {
+                nasm_error(ERR_WARNING | ERR_WARN_BAD_PRAGMA | ERR_PASS2,
+                           "invalid %%pragma dbg maxdump argument");
+                return DIRR_ERROR;
+            } else {
+                dbg_max_data_dump = arg;
+            }
+        }
+    }
 
     return DIRR_OK;
 }
@@ -383,10 +411,6 @@ static const struct dfmt * const debug_debug_arr[3] = {
     &debug_debug_form,
     &null_debug_form,
     NULL
-};
-
-static const struct pragma_facility dbg_pragma_list[] = {
-    { NULL, dbg_pragma }
 };
 
 const struct ofmt of_dbg = {

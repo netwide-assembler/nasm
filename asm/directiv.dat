@@ -77,3 +77,4 @@ uppercase			; outieee, outobj
 ; --- Pragma operations
 subsections_via_symbols		; macho
 no_dead_strip			; macho
+maxdump				; dbg
