@@ -85,8 +85,11 @@ if ($output eq 'h') {
 	$c = ',';
     }
     print H "\n};\n\n";
-    printf H "extern const char * const directives[%d];\n",
-        scalar(@directives)+scalar(@specials);
+
+    printf H "#define DIRECTIVE_END %d\n\n",
+	scalar(@directives)+scalar(@specials);
+
+    print H "extern const char * const directives[DIRECTIVE_END];\n";
     print H "enum directives find_directive(const char *token);\n\n";
     print H "#endif /* NASM_DIRECTIV_H */\n";
 } elsif ($output eq 'c') {
@@ -127,8 +130,7 @@ if ($output eq 'h') {
     print C "#include \"directiv.h\"\n";
     print C "\n";
 
-    printf C "const char * const directives[%d] =\n",
-        scalar(@directives)+scalar(@specials);
+    print C "const char * const directives[DIRECTIVE_END] = ";
     $c = '{';
     foreach $d (@specials) {
 	print C "$c\n    NULL";
