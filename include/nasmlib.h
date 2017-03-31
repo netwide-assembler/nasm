@@ -97,7 +97,7 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 	nasm_free(*_pp);					\
 	*_pp = NULL;						\
     } while (0)
-#define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
+#define nasm_zero(x) (memset(&(x), 0, sizeof(x)))
 #define nasm_zeron(p,n) (memset((p), 0, (n)*sizeof(*(p))))
 
 /*

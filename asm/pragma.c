@@ -169,7 +169,7 @@ void process_pragma(char *str)
     struct pragma pragma;
     char *p;
 
-    nasm_zero(&pragma);
+    nasm_zero(pragma);
 
     pragma.facility_name = nasm_get_word(str, &p);
     if (!pragma.facility_name) {

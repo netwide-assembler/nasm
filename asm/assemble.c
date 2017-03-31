@@ -546,7 +546,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     int32_t itimes;
     int64_t wsize;              /* size for DB etc. */
 
-    nasm_zero(&data);
+    nasm_zero(data);
     data.offset = start;
     data.segment = segment;
     data.itemp = NULL;
