@@ -975,25 +975,11 @@ is_expression:
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
-                if ((i == TOKEN_DECORATOR) || (i == TOKEN_OPMASK)) {
-                    /*
-                     * according to AVX512 spec, broacast or opmask decorator
-                     * is expected for memory reference operands
-                     */
-                    if (tokval.t_flag & TFLAG_BRDCAST) {
-                        brace_flags |= GEN_BRDCAST(0) |
-                                       VAL_BRNUM(tokval.t_integer - BRC_1TO2);
-                        i = stdscan(NULL, &tokval);
-                    } else if (i == TOKEN_OPMASK) {
-                        brace_flags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
-                        i = stdscan(NULL, &tokval);
-                    } else {
-                        nasm_error(ERR_NONFATAL, "broadcast or opmask "
-                                   "decorator expected inside braces");
-                        recover = true;
-                    }
+                if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
+                    /* parse opmask (and zeroing) after an operand */
+                    recover = parse_braces(&brace_flags);
+                    i = tokval.t_type;
                 }
-
                 if (i != 0 && i != ',') {
                     nasm_error(ERR_NONFATAL, "comma or end of line expected");
                     recover = true;
