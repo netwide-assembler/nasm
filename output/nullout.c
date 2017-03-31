@@ -35,13 +35,6 @@
 #include "nasmlib.h"
 #include "outlib.h"
 
-int null_setinfo(enum geninfo type, char **string)
-{
-    (void)type;
-    (void)string;
-    return 0;
-}
-
 enum directive_result
 null_directive(enum directives directive, char *value, int pass)
 {

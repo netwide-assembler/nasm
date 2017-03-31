@@ -224,14 +224,6 @@ static void ieee_init(void)
     checksum = 0;
 }
 
-static int ieee_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-
-    return 0;
-}
-
 /*
  * Rundown
  */
@@ -1524,7 +1516,6 @@ const struct ofmt of_ieee = {
     &ladsoft_debug_form,
     NULL,
     ieee_init,
-    ieee_set_info,
     nasm_do_legacy_output,
     ieee_out,
     ieee_deflabel,

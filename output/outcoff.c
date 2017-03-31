@@ -1158,12 +1158,6 @@ static void coff_win32_filename(char *inname, char *outname)
 
 extern macros_t coff_stdmac[];
 
-static int coff_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
 #endif /* defined(OF_COFF) || defined(OF_WIN32) */
 
 #ifdef OF_COFF
@@ -1177,7 +1171,6 @@ const struct ofmt of_coff = {
     &null_debug_form,
     coff_stdmac,
     coff_std_init,
-    coff_set_info,
     nasm_do_legacy_output,
     coff_out,
     coff_deflabel,
@@ -1207,7 +1200,6 @@ const struct ofmt of_win32 = {
     &df_cv8,
     coff_stdmac,
     coff_win32_init,
-    coff_set_info,
     nasm_do_legacy_output,
     coff_out,
     coff_deflabel,
@@ -1235,7 +1227,6 @@ const struct ofmt of_win64 = {
     &df_cv8,
     coff_stdmac,
     coff_win64_init,
-    coff_set_info,
     nasm_do_legacy_output,
     coff_out,
     coff_deflabel,

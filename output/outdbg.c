@@ -321,13 +321,6 @@ static void dbg_filename(char *inname, char *outname)
     standard_extension(inname, outname, ".dbg");
 }
 
-static int dbg_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-
 static const char * const types[] = {
     "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
 };
@@ -405,7 +398,6 @@ const struct ofmt of_dbg = {
     &debug_debug_form,
     NULL,
     dbg_init,
-    dbg_set_info,
     dbg_out,
     dbg_legacy_out,
     dbg_deflabel,

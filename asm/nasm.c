@@ -935,7 +935,6 @@ static bool process_arg(char *p, char *q, int pass)
                 }
 
                 switch (s) {
-
                 case OPT_PREFIX:
                 case OPT_POSTFIX:
                     {
@@ -959,8 +958,7 @@ static bool process_arg(char *p, char *q, int pass)
                                 strlcpy(lpostfix, param, POSTFIX_MAX);
                             break;
                         default:
-                            nasm_panic(ERR_NOFILE,
-                                       "internal error");
+                            panic();
                             break;
                         }
                         break;
@@ -977,9 +975,8 @@ static bool process_arg(char *p, char *q, int pass)
             }
 
         default:
-            if (!ofmt->setinfo(GI_SWITCH, &p))
-                nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                             "unrecognised option `-%c'", p[1]);
+            nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                       "unrecognised option `-%c'", p[1]);
             break;
         }
     } else if (pass == 2) {

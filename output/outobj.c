@@ -663,14 +663,6 @@ static void obj_init(void)
     current_seg = NULL;
 }
 
-static int obj_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-
-    return 0;
-}
-
 static void obj_cleanup(void)
 {
     obj_write_file();
@@ -2666,7 +2658,6 @@ const struct ofmt of_obj = {
     &borland_debug_form,
     obj_stdmac,
     obj_init,
-    obj_set_info,
     nasm_do_legacy_output,
     obj_out,
     obj_deflabel,

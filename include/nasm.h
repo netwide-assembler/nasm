@@ -696,8 +696,6 @@ typedef struct insn { /* an instruction itself */
     int8_t          evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
-enum geninfo { GI_SWITCH };
-
 /* Instruction flags type: IF_* flags are defined in insns.h */
 typedef uint64_t iflags_t;
 
@@ -800,15 +798,6 @@ struct ofmt {
      * up internal parameters.
      */
     void (*init)(void);
-
-    /*
-     * This procedure is called to pass generic information to the
-     * object file.  The first parameter gives the information type
-     * (currently only command line switches)
-     * and the second parameter gives the value.  This function returns
-     * 1 if recognized, 0 if unrecognized
-     */
-    int (*setinfo)(enum geninfo type, char **string);
 
     /*
      * This is the modern output function, which gets passed

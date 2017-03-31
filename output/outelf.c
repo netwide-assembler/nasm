@@ -2207,13 +2207,6 @@ static void elf_filename(char *inname, char *outname)
 
 extern macros_t elf_stdmac[];
 
-static int elf_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-
 /* Claim "elf" as a pragma namespace, for the future */
 static const struct pragma_facility elf_pragma_list[] =
 {
@@ -2260,7 +2253,6 @@ const struct ofmt of_elf32 = {
     &elf32_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elf32_out,
     elf_deflabel,
@@ -2311,7 +2303,6 @@ const struct ofmt of_elf64 = {
     &elf64_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elf64_out,
     elf_deflabel,
@@ -2362,7 +2353,6 @@ const struct ofmt of_elfx32 = {
     &elfx32_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elfx32_out,
     elf_deflabel,
