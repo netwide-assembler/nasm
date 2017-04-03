@@ -22,10 +22,13 @@ LD      = *wlink
 LDEBUG      =
 LDFLAGS     = op quiet $(%TARGET_LFLAGS) $(LDEBUG)
 LIBS        =
-PERL        = perl
-RUNPERL     = $(PERL) -I$(srcdir)/perllib -I$(srcdir)
-
 STRIP       = wstrip
+
+PERL		= perl
+PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
+RUNPERL         = $(PERL) $(PERLFLAGS)
+
+MAKENSIS        = makensis
 
 # Binary suffixes
 O               = obj

@@ -39,8 +39,12 @@ INTERNAL_CFLAGS = /I$(srcdir) /I. \
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=
+
 PERL		= perl
-PERL		= $(PERL) -I$(srcdir)/perllib -I$(srcdir)
+PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
+RUNPERL         = $(PERL) $(PERLFLAGS)
+
+MAKENSIS        = makensis
 
 # Binary suffixes
 O               = obj
