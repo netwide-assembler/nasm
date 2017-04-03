@@ -39,6 +39,14 @@ since 2007.
    for the command-line options and warning classes and
    \k{asmdir-warning} for the \c{[WARNING]} directive.
 
+\b Fix a number of bugs related to AVX-512 decorators.
+
+\b To build NASM with custom modifications (table changes) or from the
+   git tree now requires Perl 5.6 at the very minimum, quite possibly
+   a higher version (Perl 5.24.1 tested.)  There is no requirement to
+   have Perl on your system at all if all you want to do is build
+   unmodified NASM from source archives.
+
 \# --- hpa: commenting this header out since it looks like we will
 \# --- bypass 2.12.03 and go straight to 2.13.  However, please keep
 \# --- the header in place to make it easier to merge with the 2.12.xx
