@@ -23,11 +23,3 @@ The Makefiles are:
 	Usage:	wmake /f Mkfiles/<filename> <target>
 
 	<target> is dos, win32, os2, or linux386.
-
-  Filename      Target		Compiler	Tested with
-  ---------------------------------------------------------------------------
-  netware.mak	NetWare		Cross-GCC	Cross-GCC 3.2.3 (Linux, Win32)
-
-	For building on a Linux or Win32 host using Cross-GCC for Linux/Win32.
-
-	Usage:	make -f Mkfiles/netware.mak
