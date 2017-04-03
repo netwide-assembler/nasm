@@ -82,7 +82,7 @@ foreach $arg ( @ARGV ) {
 die if (scalar(@args) != 2);	# input output
 ($fname, $oname) = @args;
 
-open (F, $fname) || die "unable to open $fname";
+open(F, '<', $fname) || die "unable to open $fname";
 
 %dinstables = ();
 @bytecode_list = ();

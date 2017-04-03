@@ -50,7 +50,7 @@ my($output, $directives_dat, $outfile) = @ARGV;
 # so D_none == 0.
 @specials   = ('none', 'unknown', 'corrupt');
 
-open(DD, "< ${directives_dat}\0")
+open(DD, '<', $directives_dat)
     or die "$0: cannot open: ${directives_dat}: $!\n";
 while (defined($line = <DD>)) {
     chomp $line;
@@ -61,7 +61,7 @@ while (defined($line = <DD>)) {
 close(DD);
 
 if ($output eq 'h') {
-    open(H, "> ${outfile}\0")
+    open(H, '>', $outfile)
 	or die "$0: cannot create: ${outfile}: $!\n";
 
     print H "/*\n";
@@ -114,7 +114,7 @@ if ($output eq 'h') {
 
     die if ($n & ($n-1));
 
-    open(C, "> ${outfile}\0")
+    open(C, '>', $outfile)
 	or die "$0: cannot create: ${directives_c}: $!\n";
 
     print C "/*\n";

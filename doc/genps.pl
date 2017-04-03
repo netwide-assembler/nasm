@@ -39,8 +39,6 @@
 require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
 
-use Fcntl;
-
 #
 # PostScript configurables; these values are also available to the
 # PostScript code itself
@@ -190,10 +188,11 @@ for ( $i = 0 ; $i < 256 ; $i++ ) {
 # a cleaner representation
 #
 if ( defined($input) ) {
-    sysopen(PARAS, $input, O_RDONLY) or
+    open(PARAS, '<', $input) or
 	die "$0: cannot open $input: $!\n";
 } else {
-    open(PARAS, "<&STDIN") or die "$0: $!\n";
+    # stdin
+    open(PARAS, '<-') or die "$0: $!\n";
 }
 while ( defined($line = <PARAS>) ) {
     chomp $line;
@@ -1116,7 +1115,7 @@ print "sti show\n";
 # and DocumentFonts in the header of the EPSF and add those to the
 # global header.
 if ( defined($metadata{epslogo}) &&
-     sysopen(EPS, $metadata{epslogo}, O_RDONLY) ) {
+     open(EPS, '<', $metadata{epslogo}) ) {
     my @eps = ();
     my ($bbllx,$bblly,$bburx,$bbury) = (undef,undef,undef,undef);
     my $line;

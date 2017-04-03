@@ -67,7 +67,7 @@ $first_file = $ARGV[0];
 die unless (defined($first_file));
 
 foreach $file (@ARGV) {
-    open(FILE, "< $file\0") or die;
+    open(FILE, '<', $file) or die;
 
     # First, read the syntax hints
     %hints = %def_hints;
@@ -116,7 +116,7 @@ foreach $file (@ARGV) {
 
     # Write the file back out
     if (!$first) {
-	open(FILE, "> $file\0") or die;
+	open(FILE, '>', $file) or die;
 	print FILE @lines;
 	close(FILE);
     }

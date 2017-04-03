@@ -57,9 +57,9 @@ foreach $arg ( @ARGV ) {
 }
 
 $fname = "../insns.dat" unless $fname = $args[0];
-open (F, $fname) || die "unable to open $fname";
+open (F, '<', $fname) || die "unable to open $fname";
 print STDERR "Writing inslist.src...\n";
-open S, ">inslist.src";
+open S, '>', 'inslist.src';
 $line = 0;
 $insns = 0;
 while (<F>) {
