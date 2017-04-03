@@ -244,7 +244,8 @@ static int op_rexflags(const operand *, int);
 static int op_evexflags(const operand *, int, uint8_t);
 static void add_asp(insn *, int);
 
-static enum ea_type process_ea(operand *, ea *, int, int, opflags_t, insn *);
+static enum ea_type process_ea(operand *, ea *, int, int,
+                               opflags_t, insn *, const char **);
 
 static inline bool absolute_op(const struct operand *o)
 {
@@ -930,6 +931,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     uint8_t hleok = 0;
     bool lockcheck = true;
     enum reg_enum mib_index = R_none;   /* For a separate index MIB reg form */
+    const char *errmsg;
 
     ins->rex = 0;               /* Ensure REX is reset */
     eat = EA_SCALAR;            /* Expect a scalar EA */
@@ -1287,8 +1289,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 }
 
                 if (process_ea(opy, &ea_data, bits,
-                               rfield, rflags, ins) != eat) {
-                    nasm_error(ERR_NONFATAL, "invalid effective address");
+                               rfield, rflags, ins, &errmsg) != eat) {
+                    nasm_error(ERR_NONFATAL, "%s", errmsg);
                     return -1;
                 } else {
                     ins->rex |= ea_data.rex;
@@ -1552,6 +1554,7 @@ static void gencode(struct out_data *data, insn *ins)
     enum ea_type eat = EA_SCALAR;
     int r;
     const int bits = data->bits;
+    const char *errmsg;
 
     ins->rex_done = false;
 
@@ -1929,8 +1932,8 @@ static void gencode(struct out_data *data, insn *ins)
                 }
 
                 if (process_ea(opy, &ea_data, bits,
-                               rfield, rflags, ins) != eat)
-                    nasm_error(ERR_NONFATAL, "invalid effective address");
+                               rfield, rflags, ins, &errmsg) != eat)
+                    nasm_error(ERR_NONFATAL, "%s", errmsg);
 
                 p = bytes;
                 *p++ = ea_data.modrm;
@@ -2432,11 +2435,14 @@ static enum match_result matches(const struct itemplate *itemp,
                           is_disp8n(input, ins, &output->disp8)))
 
 static enum ea_type process_ea(operand *input, ea *output, int bits,
-                               int rfield, opflags_t rflags, insn *ins)
+                               int rfield, opflags_t rflags, insn *ins,
+                               const char **errmsg)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
     int addrbits = ins->addr_size;
     int eaflags = input->eaflags;
+
+    *errmsg = "invalid effective address"; /* Default error message */
 
     output->type    = EA_SCALAR;
     output->rip     = false;
@@ -2459,7 +2465,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
         /* broadcasting is not available with a direct register operand. */
         if (input->decoflags & BRDCAST_MASK) {
-            nasm_error(ERR_NONFATAL, "Broadcasting not allowed from a register");
+            *errmsg = "broadcast not allowed with register operand";
             goto err;
         }
 
@@ -2475,9 +2481,9 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
         /* Embedded rounding or SAE is not available with a mem ref operand. */
         if (input->decoflags & (ER | SAE)) {
-            nasm_error(ERR_NONFATAL,
-                       "Embedded rounding is available only with reg-reg op.");
-            return -1;
+            *errmsg = "embedded rounding is available only with "
+                "register-register operations";
+            goto err;
         }
 
         if (input->basereg == -1 &&
@@ -2486,8 +2492,10 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
              * It's a pure offset.
              */
             if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
-                if (input->segment == NO_SEG || (input->opflags & OPFLAG_RELATIVE)) {
-                    nasm_error(ERR_WARNING | ERR_PASS2, "absolute address can not be RIP-relative");
+                if (input->segment == NO_SEG ||
+                    (input->opflags & OPFLAG_RELATIVE)) {
+                    nasm_error(ERR_WARNING | ERR_PASS2,
+                               "absolute address can not be RIP-relative");
                     input->type &= ~IP_REL;
                     input->type |= MEMORY;
                 }
@@ -2495,14 +2503,15 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
             if (bits == 64 &&
                 !(IP_REL & ~input->type) && (eaflags & EAF_MIB)) {
-                nasm_error(ERR_NONFATAL, "RIP-relative addressing is prohibited for mib.");
-                return -1;
+                *errmsg = "RIP-relative addressing is prohibited for MIB.";
+                goto err;
             }
 
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
                  input->disp_size != (addrbits != 16 ? 32 : 16))) {
-                nasm_error(ERR_WARNING | ERR_PASS1, "displacement size ignored on absolute address");
+                nasm_error(ERR_WARNING | ERR_PASS1,
+                           "displacement size ignored on absolute address");
             }
 
             if (bits == 64 && (~input->type & IP_REL)) {
@@ -2514,7 +2523,8 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             } else {
                 output->sib_present = false;
                 output->bytes       = (addrbits != 16 ? 4 : 2);
-                output->modrm       = GEN_MODRM(0, rfield, (addrbits != 16 ? 5 : 6));
+                output->modrm       = GEN_MODRM(0, rfield,
+                                                (addrbits != 16 ? 5 : 6));
                 output->rip         = bits == 64;
             }
         } else {

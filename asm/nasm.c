@@ -1581,9 +1581,12 @@ static bool warning_is_error(int severity)
 
 static bool skip_this_pass(int severity)
 {
-  /* See if it's a pass-specific warning which should be skipped. */
-
-    if ((severity & ERR_MASK) > ERR_WARNING)
+    /*
+     * See if it's a pass-specific error or warning which should be skipped.
+     * We cannot skip errors stronger than ERR_NONFATAL as by definition
+     * they cannot be resumed from.
+     */
+    if ((severity & ERR_MASK) > ERR_NONFATAL)
 	return false;
 
     /*
@@ -1649,6 +1652,9 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
      * pass1 or preprocessor warnings in the list file
      */
     lfmt->error(severity, pfx, msg);
+
+    if (skip_this_pass(severity))
+        return;
 
     if (severity & ERR_USAGE)
         want_usage = true;

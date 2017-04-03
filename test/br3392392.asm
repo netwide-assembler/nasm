@@ -11,5 +11,6 @@
 	vmovdqa32 [rsi]{z}{1to16}, zmm1
 	vmovdqa32 [rsi]{z}{k1}{1to16}, zmm1
 	vpaddd zmm0, zmm0, [rax]{k1}
+	vpaddd zmm0, zmm1, zmm2{1to16}
 %endif
 	
