@@ -34,7 +34,8 @@ INSTALL_DATA	= @INSTALL_DATA@
 LN_S		= @LN_S@
 
 MKDIR		= mkdir
-RM		= rm
+RM_F		= rm -f
+RM_RF		= rm -rf
 
 LIBOBJS         = rdoff.$(O) rdfload.$(O) symtab.$(O) collectn.$(O) \
 		  rdlib.$(O) segtab.$(O) hash.$(O)
@@ -58,7 +59,7 @@ PROGRAMS = rdfdump$(X) ldrdf$(X) rdx$(X) rdflib$(X) \
 all: $(PROGRAMS)
 
 $(RDFLIB): $(LIBOBJS)
-	$(RM) -f $(RDFLIB)
+	$(RM_F) $(RDFLIB)
 	$(AR) cq $(RDFLIB) $(LIBOBJS)
 	$(RANLIB) $(RDFLIB)
 
@@ -73,13 +74,13 @@ rdflib$(X): rdflib.$(O) $(LIBS)
 rdf2bin$(X): rdf2bin.$(O) $(LIBS)
 	$(CC) $(LDFLAGS) -o rdf2bin$(X) rdf2bin.$(O) $(LIBS)
 rdf2com$(X): rdf2bin$(X)
-	rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
+	$(RM_F) rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
 rdf2ith$(X): rdf2bin$(X)
-	rm -f rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
+	$(RM_F) rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
 rdf2ihx$(X): rdf2bin$(X)
-	rm -f rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
+	$(RM_F) rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
 rdf2srec$(X): rdf2bin$(X)
-	rm -f rdf2srec$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
+	$(RM_F) rdf2srec$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
 
 rdf2ihx.$(O): rdf2ihx.c
 rdf2bin.$(O): rdf2bin.c
@@ -96,10 +97,10 @@ rdflib.$(O): rdflib.c
 segtab.$(O): segtab.c
 
 clean:
-	rm -f *.$(O) *.$(A) $(PROGRAMS)
+	$(RM_F) *.$(O) *.$(A) $(PROGRAMS)
 
 spotless: clean
-	rm -f Makefile
+	$(RM_F) Makefile
 
 distclean: spotless
 
@@ -110,9 +111,9 @@ install: all
 	$(INSTALL_PROGRAM) rdx$(X) $(INSTALLROOT)$(bindir)/rdx$(X)
 	$(INSTALL_PROGRAM) rdflib$(X) $(INSTALLROOT)$(bindir)/rdflib$(X)
 	$(INSTALL_PROGRAM) rdf2bin$(X) $(INSTALLROOT)$(bindir)/rdf2bin$(X)
-	cd $(INSTALLROOT)$(bindir) && rm -f rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
-	cd $(INSTALLROOT)$(bindir) && rm -f rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
-	cd $(INSTALLROOT)$(bindir) && rm -f rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
-	cd $(INSTALLROOT)$(bindir) && rm -f rdf2srec$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
+	cd $(INSTALLROOT)$(bindir) && $(RM_F) rdf2com$(X) && $(LN_S) rdf2bin$(X) rdf2com$(X)
+	cd $(INSTALLROOT)$(bindir) && $(RM_F) rdf2ith$(X) && $(LN_S) rdf2bin$(X) rdf2ith$(X)
+	cd $(INSTALLROOT)$(bindir) && $(RM_F) rdf2ihx$(X) && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
+	cd $(INSTALLROOT)$(bindir) && $(RM_F) rdf2srec$(X) && $(LN_S) rdf2bin$(X) rdf2srec$(X)
 	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/*.1 $(INSTALLROOT)$(mandir)/man1/

@@ -4,7 +4,8 @@ NASM	= ../nasm
 NASMOPT = -Ox -I../misc $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
-RM	= rm -f
+RM_F	= rm -f
+RM_RF	= rm -rf
 
 $(NASM):
 	$(MAKE) -C ..
@@ -63,13 +64,13 @@ diff:	performtest.pl $(NASM) $(TESTS)
 	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
 
 clean:
-	$(RM) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
-	$(RM) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
-	$(RM) -r testresults
-	$(RM) elftest elftest64
+	$(RM_F) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
+	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
+	$(RM_RF) testresults
+	$(RM_F) elftest elftest64
 
 spotless: clean
-	$(RM) -r golden
+	$(RM_RF) golden
 
 #
 # Test for ELF32 shared libraries; assumes an x86 Linux system

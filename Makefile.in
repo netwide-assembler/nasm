@@ -50,7 +50,8 @@ XMLTO		= @XMLTO@
 MAKENSIS	= makensis
 
 MKDIR		= mkdir
-RM		= rm
+RM_F		= rm -f
+RM_RF		= rm -rf
 FIND		= find
 
 # Binary suffixes
@@ -132,15 +133,6 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
 XSUBDIRS = test doc nsis
-
-# Perl-generated source files
-PERLREQ = x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
-	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regdis.h \
-	  x86/regvals.c asm/tokhash.c asm/tokens.h asm/pptok.h asm/pptok.c \
-	  x86/iflag.c x86/iflaggen.h \
-	  macros/macros.c \
-	  asm/pptok.ph asm/directbl.c asm/directiv.h \
-	  version.h version.mac version.mak nsis/version.nsh
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf
@@ -148,7 +140,7 @@ all: nasm$(X) ndisasm$(X) rdf
 NASMLIB = libnasm.$(A)
 
 $(NASMLIB): $(LIBOBJ)
-	$(RM) -f $(NASMLIB)
+	$(RM_F) $(NASMLIB)
 	$(AR) cq $(NASMLIB) $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
@@ -158,10 +150,21 @@ nasm$(X): $(NASM) $(NASMLIB)
 ndisasm$(X): $(NDISASM) $(NASMLIB)
 	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
 
-# These source files are automagically generated from a single
-# instruction-table file by a Perl script. They're distributed,
-# though, so it isn't necessary to have Perl just to recompile NASM
-# from the distribution.
+#-- Begin Generated File Rules --#
+
+# These source files are automagically generated from data files using
+# Perl scripts. They're distributed, though, so it isn't necessary to
+# have Perl just to recompile NASM from the distribution.
+
+# Perl-generated source files
+PERLREQ = x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
+	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regdis.h \
+	  x86/regvals.c asm/tokhash.c asm/tokens.h asm/pptok.h asm/pptok.c \
+	  x86/iflag.c x86/iflaggen.h \
+	  macros/macros.c \
+	  asm/pptok.ph asm/directbl.c asm/directiv.h \
+	  version.h version.mac version.mak nsis/version.nsh
+
 INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph
 
 x86/iflag.c: $(INSDEP)
@@ -263,6 +266,10 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 
 perlreq: $(PERLREQ)
 
+#-- End Generated File Rules --#
+
+#-- Begin NSIS Rules --#
+
 # NSIS is not built except by explicit request, as it only applies to
 # Windows platforms
 nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
@@ -272,7 +279,9 @@ nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < "$<"
+	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < nsis/nasm.nsi
+
+#-- End NSIS Rules --#
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1
@@ -287,30 +296,30 @@ install: nasm$(X) ndisasm$(X)
 
 clean:
 	for d in . $(SUBDIRS); do \
-		$(RM) -f "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
+		$(RM_F) "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
 	done
-	$(RM) -f nasm$(X) ndisasm$(X)
-	$(RM) -f nasm-*-installer-*.exe
-	$(RM) -f tags TAGS
-	$(RM) -f nsis/arch.nsh
+	$(RM_F) nasm$(X) ndisasm$(X)
+	$(RM_F) nasm-*-installer-*.exe
+	$(RM_F) tags TAGS
+	$(RM_F) nsis/arch.nsh
 	cd rdoff && $(MAKE) clean
 
 distclean: clean
-	$(RM) -f config.log config.status config/config.h
-	$(RM) -f Makefile
+	$(RM_F) config.log config.status config/config.h
+	$(RM_F) Makefile
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
-		$(RM) -f "$$d"/*~ "$$d"/*.bak "$$d"/*.lst "$$d"/*.bin ; \
+		$(RM_F) "$$d"/*~ "$$d"/*.bak "$$d"/*.lst "$$d"/*.bin ; \
 	done
-	$(RM) -f test/*.$(O)
-	$(RM) -rf autom4te*.cache
+	$(RM_F) test/*.$(O)
+	$(RM_RF) autom4te*.cache
 	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
-	$(RM) -f $(PERLREQ) *.1 nasm.spec
+	$(RM_F) $(PERLREQ) *.1 nasm.spec
 	cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
-	$(RM) -f doc/Makefile
+	$(RM_F) doc/Makefile
 
 strip:
 	$(STRIP) --strip-unneeded nasm$(X) ndisasm$(X)
@@ -319,15 +328,15 @@ rdf: $(NASMLIB)
 	cd rdoff && $(MAKE) all
 
 TAGS:
-	$(RM) -f TAGS
+	$(RM_F) TAGS
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
 
 tags:
-	$(RM) -f tags
+	$(RM_F) tags
 	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
 
 cscope:
-	$(RM) -f cscope.out cscope.files
+	$(RM_F) cscope.out cscope.files
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
@@ -349,7 +358,7 @@ dist:
 	$(MAKE) spotless perlreq manpages spec
 	autoheader
 	autoconf
-	$(RM) -rf ./autom4te*.cache
+	$(RM_RF) ./autom4te*.cache
 
 tar: dist
 	tar -cvj --exclude CVS -C .. -f ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 `basename \`pwd\``
