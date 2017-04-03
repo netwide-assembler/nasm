@@ -10,40 +10,40 @@ $(NASM):
 	$(MAKE) -C ..
 
 %.bin: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
 
 %.ith: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
 
 %.srec: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
 
 %.o: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
 
 %.o64: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
 
 %.obj: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
 
 %.coff: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
 
 %.win32: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
 
 %.win64: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
 
 %.mo32: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
 
 %.mo64: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
 
 %.dbg: %.asm $(NASM)
-	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@

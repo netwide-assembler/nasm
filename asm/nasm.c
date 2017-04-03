@@ -1207,6 +1207,9 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         cpu = cmd_cpu;
         if (pass0 == 2) {
 	    lfmt->init(listname);
+        } else if (passn == 1 && *listname) {
+            /* Remove the list file in case we die before the output pass */
+            remove(listname);
         }
         in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
