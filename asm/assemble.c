@@ -198,7 +198,9 @@ enum match_result {
     MERR_INVALOP,
     MERR_OPSIZEMISSING,
     MERR_OPSIZEMISMATCH,
+    MERR_BRNOTHERE,
     MERR_BRNUMMISMATCH,
+    MERR_MASKNOTHERE,
     MERR_BADCPU,
     MERR_BADMODE,
     MERR_BADHLE,
@@ -756,9 +758,17 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             case MERR_OPSIZEMISMATCH:
                 nasm_error(ERR_NONFATAL, "mismatch in operand sizes");
                 break;
+            case MERR_BRNOTHERE:
+                nasm_error(ERR_NONFATAL,
+                           "broadcast not permitted on this operand");
+                break;
             case MERR_BRNUMMISMATCH:
                 nasm_error(ERR_NONFATAL,
                            "mismatch in the number of broadcasting elements");
+                break;
+            case MERR_MASKNOTHERE:
+                nasm_error(ERR_NONFATAL,
+                           "mask not permitted on this operand");
                 break;
             case MERR_BADCPU:
                 nasm_error(ERR_NONFATAL, "no instruction for this cpu level");
@@ -2278,6 +2288,7 @@ static enum match_result matches(const struct itemplate *itemp,
     for (i = 0; i < itemp->operands; i++) {
         opflags_t type = instruction->oprs[i].type;
         decoflags_t deco = instruction->oprs[i].decoflags;
+        decoflags_t ideco = itemp->deco[i];
         bool is_broadcast = deco & BRDCAST_MASK;
         uint8_t brcast_num = 0;
         opflags_t template_opsize, insn_opsize;
@@ -2289,12 +2300,15 @@ static enum match_result matches(const struct itemplate *itemp,
         if (!is_broadcast) {
             template_opsize = itemp->opd[i] & SIZE_MASK;
         } else {
-            decoflags_t deco_brsize = itemp->deco[i] & BRSIZE_MASK;
+            decoflags_t deco_brsize = ideco & BRSIZE_MASK;
+
+            if (~ideco & BRDCAST_MASK)
+                return MERR_BRNOTHERE;
+
             /*
              * when broadcasting, the element size depends on
              * the instruction type. decorator flag should match.
              */
-
             if (deco_brsize) {
                 template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
                 /* calculate the proper number : {1to<brcast_num>} */
@@ -2304,8 +2318,10 @@ static enum match_result matches(const struct itemplate *itemp,
             }
         }
 
-        if ((itemp->opd[i] & ~type & ~SIZE_MASK) ||
-            (deco & ~itemp->deco[i] & ~BRNUM_MASK)) {
+        if (~ideco & deco & OPMASK_MASK)
+            return MERR_MASKNOTHERE;
+
+        if (itemp->opd[i] & ~type & ~SIZE_MASK) {
             return MERR_INVALOP;
         } else if (template_opsize) {
             if (template_opsize != insn_opsize) {

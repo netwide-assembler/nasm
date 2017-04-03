@@ -4,45 +4,46 @@ NASM	= ../nasm
 NASMOPT = -Ox -I../misc $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
+RM	= rm -f
 
 $(NASM):
 	$(MAKE) -C ..
 
 %.bin: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
 
 %.ith: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
 
 %.srec: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
 
 %.o: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
 
 %.o64: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
 
 %.obj: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
 
 %.coff: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
 
 %.win32: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
 
 %.win64: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
 
 %.mo32: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
 
 %.mo64: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
 
 %.dbg: %.asm $(NASM)
-	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
+	$(RM) $*.lst ; $(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@
@@ -62,13 +63,13 @@ diff:	performtest.pl $(NASM) $(TESTS)
 	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
 
 clean:
-	rm -f *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
-	rm -f *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
-	rm -rf testresults
-	rm -f elftest elftest64
+	$(RM) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
+	$(RM) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
+	$(RM) -r testresults
+	$(RM) elftest elftest64
 
 spotless: clean
-	rm -rf golden
+	$(RM) -r golden
 
 #
 # Test for ELF32 shared libraries; assumes an x86 Linux system
