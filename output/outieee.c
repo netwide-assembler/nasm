@@ -825,7 +825,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
  * directives supported
  */
 static enum directive_result
-ieee_directive(enum directives directive, char *value, int pass)
+ieee_directive(enum directive directive, char *value, int pass)
 {
 
     (void)value;

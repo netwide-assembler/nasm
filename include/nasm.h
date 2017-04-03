@@ -747,7 +747,7 @@ struct pragma {
     const char *facility_name;  /* Facility name exactly as entered by user */
     const char *opname;         /* First word after the facility name */
     const char *tail;           /* Anything after the operation */
-    enum directives opcode;     /* Operation as a D_ directives constant */
+    enum directive opcode;     /* Operation as a D_ directives constant */
 };
 
 /*
@@ -910,7 +910,7 @@ struct ofmt {
      *				  "invalid parameter to [*] directive"
      */
     enum directive_result
-    (*directive)(enum directives directive, char *value, int pass);
+    (*directive)(enum directive directive, char *value, int pass);
 
     /*
      * This procedure is called before anything else - even before

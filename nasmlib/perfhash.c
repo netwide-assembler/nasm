@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,21 +31,25 @@
  *
  * ----------------------------------------------------------------------- */
 
-#include "nasm.h"
-#include "nasmlib.h"
-#include "outlib.h"
+#include "perfhash.h"
+#include "hashtbl.h"            /* For crc64i() */
 
-enum directive_result
-null_directive(enum directive directive, char *value, int pass)
+int perfhash_find(const struct perfect_hash *hash, const char *str)
 {
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return DIRR_UNKNOWN;
-}
+    uint32_t k1, k2;
+    uint64_t crc;
+    uint16_t ix;
 
-void null_sectalign(int32_t seg, unsigned int value)
-{
-    (void)seg;
-    (void)value;
+    crc = crc64i(hash->crcinit, str);
+    k1 = (uint32_t)crc & hash->hashmask;
+    k2 = (uint32_t)(crc >> 32) & hash->hashmask;
+
+    ix = hash->hashvals[k1] + hash->hashvals[k2 + hash->hashmask + 1];
+
+    if (ix >= hash->tbllen ||
+        !hash->strings[ix] ||
+        nasm_stricmp(str, hash->strings[ix]))
+        return hash->errval;
+
+    return hash->tbloffs + ix;
 }

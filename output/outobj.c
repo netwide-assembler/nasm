@@ -634,7 +634,7 @@ static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
 static void obj_write_file(void);
-static enum directive_result obj_directive(enum directives, char *, int);
+static enum directive_result obj_directive(enum directive, char *, int);
 
 static void obj_init(void)
 {
@@ -1591,7 +1591,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-obj_directive(enum directives directive, char *value, int pass)
+obj_directive(enum directive directive, char *value, int pass)
 {
     switch (directive) {
     case D_GROUP:

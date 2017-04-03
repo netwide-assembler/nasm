@@ -721,7 +721,7 @@ static int32_t rdf2_segbase(int32_t segment)
  * Handle RDOFF2 specific directives
  */
 static enum directive_result
-rdf2_directive(enum directives directive, char *value, int pass)
+rdf2_directive(enum directive directive, char *value, int pass)
 {
     size_t n;
 

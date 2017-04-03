@@ -189,7 +189,7 @@ void process_pragma(char *str)
     if (!pragma.opname)
         pragma.opcode = D_none;
     else
-        pragma.opcode = find_directive(pragma.opname);
+        pragma.opcode = directive_find(pragma.opname);
 
     pragma.tail = nasm_skip_spaces(p);
 

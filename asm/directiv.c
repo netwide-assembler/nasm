@@ -131,7 +131,7 @@ static int get_bits(char *value)
     return i;
 }
 
-static enum directives parse_directive_line(char **directive, char **value)
+static enum directive parse_directive_line(char **directive, char **value)
 {
     char *p, *q, *buf;
 
@@ -179,7 +179,7 @@ static enum directives parse_directive_line(char **directive, char **value)
     p = nasm_skip_spaces(++q);
     *value = p;
 
-    return find_directive(*directive);
+    return directive_find(*directive);
 }
 
 /*
@@ -189,7 +189,7 @@ static enum directives parse_directive_line(char **directive, char **value)
  */
 bool process_directives(char *directive)
 {
-    enum directives d;
+    enum directive d;
     char *value, *p, *q, *special;
     struct tokenval tokval;
     bool bad_param = false;

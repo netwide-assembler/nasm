@@ -270,7 +270,7 @@ void elf_section_attrib(char *name, char *attr, int pass,
 }
 
 static enum directive_result
-elf_directive(enum directives directive, char *value, int pass)
+elf_directive(enum directive directive, char *value, int pass)
 {
     int64_t n;
     bool err;

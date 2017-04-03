@@ -133,6 +133,9 @@ no_return nasm_assert_failed(const char *, int, const char *);
     do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
 
+/* Utility function to generate a string for an invalid enum */
+const char *invalid_enum_str(int);
+
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or
  * `strcasecmp'.

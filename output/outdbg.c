@@ -285,23 +285,11 @@ static int32_t dbg_segbase(int32_t segment)
     return segment;
 }
 
-static const char *directive_name(enum directives directive)
-{
-    static char invalid_buf[64];
-
-    if (directive >= DIRECTIVE_END || !directives[directive]) {
-        sprintf(invalid_buf, "%d", directive);
-        return invalid_buf;
-    }
-
-    return directives[directive];
-}
-
 static enum directive_result
-dbg_directive(enum directives directive, char *value, int pass)
+dbg_directive(enum directive directive, char *value, int pass)
 {
     fprintf(ofile, "directive [%s] value [%s] (pass %d)\n",
-            directive_name(directive), value, pass);
+            directive_dname(directive), value, pass);
     return DIRR_OK;
 }
 
@@ -318,7 +306,7 @@ dbg_pragma(const struct pragma *pragma)
     fprintf(ofile, "pragma %s(%s) %s[%s] %s\n",
             pragma->facility_name,
             pragma->facility->name ? pragma->facility->name : "<default>",
-            pragma->opname, directive_name(pragma->opcode),
+            pragma->opname, directive_dname(pragma->opcode),
             pragma->tail);
 
     if (pragma->facility == &dbg_pragma_list[0] &&

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,21 +31,22 @@
  *
  * ----------------------------------------------------------------------- */
 
-#include "nasm.h"
-#include "nasmlib.h"
-#include "outlib.h"
+#ifndef PERFHASH_H
+#define PERFHASH_H 1
 
-enum directive_result
-null_directive(enum directive directive, char *value, int pass)
-{
-    (void)directive;
-    (void)value;
-    (void)pass;
-    return DIRR_UNKNOWN;
-}
+#include "compiler.h"
+#include "nasmlib.h"            /* For invalid_enum_str() */
 
-void null_sectalign(int32_t seg, unsigned int value)
-{
-    (void)seg;
-    (void)value;
-}
+struct perfect_hash {
+    uint64_t crcinit;
+    uint32_t hashmask;
+    uint32_t tbllen;
+    int tbloffs;
+    int errval;
+    const int16_t *hashvals;
+    const char * const *strings;
+};
+
+int perfhash_find(const struct perfect_hash *, const char *);
+
+#endif /* PERFHASH_H */

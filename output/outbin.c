@@ -1286,7 +1286,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-bin_directive(enum directives directive, char *args, int pass)
+bin_directive(enum directive directive, char *args, int pass)
 {
     switch (directive) {
     case D_ORG:

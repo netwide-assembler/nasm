@@ -769,7 +769,7 @@ static void BuildExportTable(STRING **rvp)
 }
 
 static enum directive_result
-coff_directives(enum directives directive, char *value, int pass)
+coff_directives(enum directive directive, char *value, int pass)
 {
     switch (directive) {
     case D_EXPORT:
