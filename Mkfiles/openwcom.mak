@@ -137,9 +137,9 @@ nasm.lib: $(LIBOBJ)
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
 
-insns.pl: insns-iflags.pl
+insns.pl: insns-iflags.ph
 
-INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.pl
+INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph
 
 x86/iflag.c: $(INSDEP)
     $(PERL) $(srcdir)/x86/insns.pl -fc $(srcdir)/x86/insns.dat x86/iflag.c

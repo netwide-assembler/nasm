@@ -132,6 +132,15 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
 XSUBDIRS = test doc nsis
+
+# Perl-generated source files
+PERLREQ = x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
+	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regdis.h \
+	  x86/regvals.c asm/tokhash.c asm/tokens.h asm/pptok.h asm/pptok.c \
+	  x86/iflag.c x86/iflaggen.h \
+	  macros/macros.c \
+	  asm/pptok.ph asm/directbl.c asm/directiv.h \
+	  version.h version.mac version.mak nsis/version.nsh
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf
@@ -153,7 +162,7 @@ ndisasm$(X): $(NDISASM) $(NASMLIB)
 # instruction-table file by a Perl script. They're distributed,
 # though, so it isn't necessary to have Perl just to recompile NASM
 # from the distribution.
-INSDEP = x86/insns.dat x86/insns.pl
+INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph
 
 x86/iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -fc \
@@ -252,15 +261,6 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 	$(RUNPERL) $(srcdir)/nasmlib/perfhash.pl c \
 		$(srcdir)/asm/directiv.dat asm/directbl.c
 
-# This target generates all files that require perl.
-# This allows easier generation of distribution (see dist target).
-PERLREQ = x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
-	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regdis.h \
-	  x86/regvals.c asm/tokhash.c asm/tokens.h asm/pptok.h asm/pptok.c \
-	  x86/iflag.c x86/iflaggen.h \
-	  macros/macros.c \
-	  asm/pptok.ph asm/directbl.c asm/directiv.h \
-	  version.h version.mac version.mak nsis/version.nsh
 perlreq: $(PERLREQ)
 
 # NSIS is not built except by explicit request, as it only applies to

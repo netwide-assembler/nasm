@@ -37,7 +37,7 @@
 #
 # Parse insns.dat and produce generated source code files
 
-require 'x86/insns-iflags.pl';
+require 'x86/insns-iflags.ph';
 
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
