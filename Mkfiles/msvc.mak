@@ -35,7 +35,7 @@ INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/x86 /I./x86 \
 		  /I$(srcdir)/asm /I./asm \
 		  /I$(srcdir)/disasm /I./disasm \
-		  /I$(srcdir)/output /I./output \
+		  /I$(srcdir)/output /I./output
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=
