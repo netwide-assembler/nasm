@@ -186,10 +186,10 @@ bool nasm_file_exists(const char *filename)
  */
 off_t nasm_file_size(FILE *f)
 {
-#if defined(HAVE_FILENO) && defined(HAVE__FILELENGTHI64)
+#ifdef HAVE__FILELENGTHI64
     return _filelengthi64(fileno(f));
 #elif defined(nasm_fstat)
-    struct nasm_stat st;
+    nasm_struct_stat st;
 
     if (nasm_fstat(fileno(f), &st))
         return (off_t)-1;
@@ -209,7 +209,7 @@ off_t nasm_file_size(FILE *f)
 off_t nasm_file_size_by_path(const char *pathname)
 {
 #ifdef nasm_stat
-    struct nasm_stat st;
+    nasm_struct_stat st;
 
     if (nasm_stat(pathname, &st))
         return (off_t)-1;

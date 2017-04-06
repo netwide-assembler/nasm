@@ -113,6 +113,9 @@
 /* Define to 1 if you have the `_fullpath' function. */
 #define HAVE__FULLPATH 1
 
+/* Define to 1 if the system has the type `struct _stati64'. */
+#define HAVE_STRUCT__STATI64
+
 /* Define to 1 if you have the `_stati64' function. */
 #define HAVE__STATI64 1
 

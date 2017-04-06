@@ -59,11 +59,6 @@
 # include <sys/mman.h>
 #endif
 
-#if !defined(HAVE_FILENO) && defined(HAVE__FILENO)
-# define HAVE_FILENO 1
-# define fileno _fileno
-#endif
-
 #if !defined(HAVE_ACCESS) && defined(HAVE__ACCESS)
 # define HAVE_ACCESS 1
 # define access _access
@@ -73,31 +68,61 @@
 #endif
 
 /* Can we adjust the file size without actually writing all the bytes? */
-#ifdef HAVE_FILENO		/* Useless without fileno() */
-# ifdef HAVE__CHSIZE_S
-#  define nasm_ftruncate(fd,size) _chsize_s(fd,size)
-# elif defined(HAVE__CHSIZE)
-#  define nasm_ftruncate(fd,size) _chsize(fd,size)
-# elif defined(HAVE_FTRUNCATE)
-#  define nasm_ftruncate(fd,size) ftruncate(fd,size)
-# endif
+#ifdef HAVE__CHSIZE_S
+# define nasm_ftruncate(fd,size) _chsize_s(fd,size)
+#elif defined(HAVE__CHSIZE)
+# define nasm_ftruncate(fd,size) _chsize(fd,size)
+#elif defined(HAVE_FTRUNCATE)
+# define nasm_ftruncate(fd,size) ftruncate(fd,size)
 #endif
 
 /*
- * On Win32, stat has a 32-bit file size but _stati64 has a 64-bit file
- * size.  However, as "stat" is already a macro, don't confuse the situation
- * further by redefining it, instead we create our own.
+ * On Win32/64, stat has a 32-bit file size but _stati64 has a 64-bit file
+ * size.  Things get complicated because some of these may be macros,
+ * which autoconf won't pick up on as the standard autoconf tests do
+ * #undef.
  */
-#ifdef HAVE__STATI64
-# define nasm_stat _stati64
-# if defined(HAVE_FILENO) && defined(HAVE__FSTATI64)
+#ifdef _stati64
+# define HAVE_STRUCT__STATI64 1
+# define HAVE__STATI64 1
+#endif
+#ifdef _fstati64
+# define HAVE__FSTATI64 1
+#endif
+
+#ifdef HAVE_STRUCT__STATI64
+typedef struct _stati64 nasm_struct_stat;
+# ifdef HAVE__STATI64
+#  define nasm_stat _stati64
+# endif
+# ifdef HAVE__FSTATI64
 #  define nasm_fstat _fstati64
 # endif
-#elif defined(HAVE_STAT)
-# define nasm_stat stat
-# if defined(HAVE_FILENO) && defined(HAVE_FSTAT)
+#elif defined(HAVE_STRUCT_STAT)
+typedef struct stat nasm_struct_stat;
+# ifdef HAVE_STAT
+#  define nasm_stat stat
+# endif
+# ifdef HAVE_FSTAT
 #  define nasm_fstat fstat
 # endif
+#endif
+
+#ifndef HAVE_FILENO
+# ifdef fileno                  /* autoconf doesn't always pick up macros */
+#  define HAVE_FILENO 1
+# elif defined(HAVE__FILENO)
+#  define HAVE_FILENO 1
+#  define fileno _fileno
+# endif
+#endif
+
+/* These functions are utterly useless without fileno() */
+#ifndef HAVE_FILENO
+# undef nasm_fstat
+# undef nasm_ftruncate
+# undef HAVE_MMAP
+# undef HAVE__FILELENGTHI64
 #endif
 
 #endif /* NASMLIB_FILE_H */
