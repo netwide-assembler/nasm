@@ -120,3 +120,22 @@ void foo(void)
     [Define to 1 if your compiler supports __attribute__((error)) on functions])],
  [AC_MSG_RESULT([no])])
 ])
+
+dnl --------------------------------------------------------------------------
+dnl PA_ARG_ENABLED
+dnl PA_ARG_DISABLED
+dnl
+dnl  Simpler-to-use versions of AC_ARG_ENABLED, that include the
+dnl  test for $enableval and the AS_HELP_STRING definition
+dnl --------------------------------------------------------------------------
+AC_DEFUN(PA_ARG_ENABLED,
+[AC_ARG_ENABLE([$1],
+ [AS_HELP_STRING([--enable-$1],[$2])], [], [enableval=no])
+  AS_IF([test x"$enableval" != xno], [$3], [$4])
+])
+
+AC_DEFUN(PA_ARG_DISABLED,
+[AC_ARG_ENABLE([$1],
+ [AS_HELP_STRING([--disable-$1],[$2])], [], [enableval=yes])
+  AS_IF([test x"$enableval" = xno], [$3], [$4])
+])

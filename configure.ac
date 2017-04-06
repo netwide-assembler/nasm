@@ -9,6 +9,12 @@ AC_PREFIX_PROGRAM(nasm)
 dnl Save initial CFLAGS, to see if -g -O2 came from configure or not
 pa_init_cflags="$CFLAGS"
 
+dnl This prevents us from running Wine and thinking we are not
+dnl cross-compiling when in fact we are; running Wine here is at
+dnl the best very slow and doesn't buy us a single thing at all.
+WINELOADER=/dev/null
+export WINELOADER
+
 dnl Checks for programs and enable necessary CC extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -18,10 +24,13 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
-dnl If the user did not specify a CFLAGS default, change default -O2 to -O3
-if test x"$pa_init_cflags" = x; then
-   CFLAGS=`echo "$CFLAGS" | sed -e 's/-O2/-O3/'`
-fi
+dnl If the user did not specify a CFLAGS default, change default -O2
+dnl to either -O3 (normal) or -O0 (for debugging)
+PA_ARG_DISABLED([optimization],
+ [compile without optimization (-O0) to help debugging],
+ [pa_optimize=-O0], [pa_optimize=-O3])
+AS_IF([test x"$pa_init_cflags" = x],
+      [CFLAGS=`echo "$CFLAGS" | sed -e "s/-O2/$pa_optimize/"`])
 
 dnl Check for library extension
 PA_LIBEXT
@@ -61,12 +70,12 @@ AC_CHECK_PROGS(PS2PDF,   ps2pdf,   false)
 AC_CHECK_PROGS(PSTOPDF,  pstopdf,  false)
 
 dnl Check for progs needed for manpage generation
-if test $ASCIIDOC = false; then
-  AC_MSG_WARN([No asciidoc package found])
-fi
-if test $XMLTO = false; then
-  AC_MSG_WARN([No xmlto package found])
-fi
+AS_IF([test $ASCIIDOC = false],
+  [AC_MSG_WARN([No asciidoc package found])]
+)
+AS_IF([test $XMLTO = false],
+  [AC_MSG_WARN([No xmlto package found])]
+)
 
 dnl Check for host compiler tools
 AC_CHECK_TOOL(AR, ar)
@@ -157,26 +166,24 @@ PA_FUNC_ATTRIBUTE_ERROR
 dnl
 dnl support function sections
 dnl
-AC_ARG_ENABLE([sections],
-[AC_HELP_STRING([--enable-sections], [compile with function/data section support])],
-[PA_ADD_CFLAGS([-ffunction-sections]),
-PA_ADD_CFLAGS([-fdata-sections])],
-[])
-
+PA_ARG_ENABLED([sections],
+ [compile with function/data section support],
+ [PA_ADD_CFLAGS([-ffunction-sections]),
+  PA_ADD_CFLAGS([-fdata-sections])],
+ [])
 dnl
 dnl support LTO
 dnl
-AC_ARG_ENABLE([lto],
-[AC_HELP_STRING([--enable-lto], [compile with gcc link time optimization])],
-[PA_ADD_CLDFLAGS([-flto])
-dnl Note: we use _PROG rather than _TOOL since we are prepending the full
-dnl CC name which ought to already contain the host triplet if needed
-ccbase=`echo "$CC" | awk '{ print $1; }'`
-AC_CHECK_PROG(CC_AR, [${ccbase}-ar], [${ccbase}-ar], [$ac_cv_prog_AR])
-AR="$CC_AR"
-AC_CHECK_PROG(CC_RANLIB, [${ccbase}-ranlib], [${ccbase}-ranlib], [$ac_cv_prog_RANLIB])
-RANLIB="$CC_RANLIB"
-], [])
+PA_ARG_ENABLED([lto],
+ [compile with gcc-style link time optimization],
+ [PA_ADD_CLDFLAGS([-flto])
+  dnl Note: we use _PROG rather than _TOOL since we are prepending the full
+  dnl CC name which ought to already contain the host triplet if needed
+  ccbase=`echo "$CC" | awk '{ print $1; }'`
+  AC_CHECK_PROGS(CC_AR, [${ccbase}-ar], [$ac_cv_prog_AR])
+  AR="$CC_AR"
+  AC_CHECK_PROGS(CC_RANLIB, [${ccbase}-ranlib], [$ac_cv_prog_RANLIB])
+  RANLIB="$CC_RANLIB"], [])
 
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
@@ -191,30 +198,25 @@ PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
 PA_ADD_CFLAGS([-Wc90-c99-compat])
 PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
-AC_ARG_ENABLE([werror],
-[AC_HELP_STRING([--enable-werror],
-[compile with -Werror to error out on any warning])],
-[], [enable_werror=no])
-AS_IF([test x"$enable_werror" != xno],
-[PA_ADD_CFLAGS([-Werror])],
-[PA_ADD_CFLAGS([-Werror=implicit])
-PA_ADD_CFLAGS([-Werror=missing-braces])
-PA_ADD_CFLAGS([-Werror=return-type])
-PA_ADD_CFLAGS([-Werror=trigraphs])
-PA_ADD_CFLAGS([-Werror=pointer-arith])
-PA_ADD_CFLAGS([-Werror=strict-prototypes])
-PA_ADD_CFLAGS([-Werror=missing-prototypes])
-PA_ADD_CFLAGS([-Werror=missing-declarations])
-PA_ADD_CFLAGS([-Werror=comment])
-PA_ADD_CFLAGS([-Werror=vla])])
+PA_ARG_ENABLED([werror],
+ [compile with -Werror to error out on any warning],
+ [PA_ADD_CFLAGS([-Werror])],
+ [PA_ADD_CFLAGS([-Werror=implicit])
+  PA_ADD_CFLAGS([-Werror=missing-braces])
+  PA_ADD_CFLAGS([-Werror=return-type])
+  PA_ADD_CFLAGS([-Werror=trigraphs])
+  PA_ADD_CFLAGS([-Werror=pointer-arith])
+  PA_ADD_CFLAGS([-Werror=strict-prototypes])
+  PA_ADD_CFLAGS([-Werror=missing-prototypes])
+  PA_ADD_CFLAGS([-Werror=missing-declarations])
+  PA_ADD_CFLAGS([-Werror=comment])
+  PA_ADD_CFLAGS([-Werror=vla])]
+)
 
 dnl
 dnl support ccache
 dnl
-AC_ARG_ENABLE([ccache],
-[AC_HELP_STRING([--enable-ccache], [compile with ccache])],
-[CC="ccache $CC"],
-[])
+PA_ARG_ENABLED([ccache], [compile with ccache], [CC="ccache $CC"], [])
 
 AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm])
 AC_OUTPUT(Makefile rdoff/Makefile doc/Makefile)
