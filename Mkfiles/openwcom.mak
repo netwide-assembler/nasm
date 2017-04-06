@@ -251,9 +251,9 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 	$(RUNPERL) $(srcdir)/nasmlib/perfhash.pl c &
 		$(srcdir)/asm/directiv.dat asm/directbl.c
 
-perlreq: $(PERLREQ)
-
 #-- End Generated File Rules --#
+
+perlreq: $(PERLREQ) .SYMBOLIC
 
 #-- Begin NSIS Rules --#
 # Edit in Makefile.in, not here!
