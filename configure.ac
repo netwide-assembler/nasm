@@ -84,8 +84,8 @@ AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(sys/param.h)
 AC_CHECK_HEADERS(sys/mman.h)
-AC_CHECK_HEADERS(sys/stat.h)
 AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(sys/stat.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
@@ -108,7 +108,7 @@ AC_CHECK_FUNCS([fileno _fileno])
 
 AC_CHECK_FUNCS(_filelengthi64)
 AC_CHECK_FUNCS([stat _stati64])
-AC_CHECK_FUNCS(fstat)
+AC_CHECK_FUNCS([fstat _fstati64])
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(getpagesize)
 AC_CHECK_FUNCS(sysconf)

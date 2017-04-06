@@ -43,6 +43,9 @@
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -87,14 +90,12 @@
  */
 #ifdef HAVE__STATI64
 # define nasm_stat _stati64
+# if defined(HAVE_FILENO) && defined(HAVE__FSTATI64)
+#  define nasm_fstat _fstati64
+# endif
 #elif defined(HAVE_STAT)
 # define nasm_stat stat
-#endif
-
-#ifdef HAVE_FILENO
-# ifdef HAVE__FSTATI64
-#  define nasm_fstat _fstati64
-# elif defined(HAVE_FSTAT)
+# if defined(HAVE_FILENO) && defined(HAVE_FSTAT)
 #  define nasm_fstat fstat
 # endif
 #endif

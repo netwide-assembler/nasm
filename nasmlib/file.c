@@ -208,10 +208,10 @@ off_t nasm_file_size(FILE *f)
  */
 off_t nasm_file_size_by_path(const char *pathname)
 {
-#ifdef HAVE_STAT
-    struct stat st;
+#ifdef nasm_stat
+    struct nasm_stat st;
 
-    if (stat(pathname, &st))
+    if (nasm_stat(pathname, &st))
         return (off_t)-1;
 
     return st.st_size;

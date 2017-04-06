@@ -12,7 +12,7 @@
 top_srcdir	= .
 srcdir		= .
 VPATH		= .
-prefix		= C:\Program Files\NASM
+prefix		= "C:\Program Files\NASM"
 exec_prefix	= $(prefix)
 bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
