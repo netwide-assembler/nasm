@@ -116,8 +116,6 @@ AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
 AC_CHECK_FUNCS([fileno _fileno])
 
 AC_CHECK_FUNCS(_filelengthi64)
-AC_CHECK_FUNCS([stat _stati64])
-AC_CHECK_FUNCS([fstat _fstati64])
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(getpagesize)
 AC_CHECK_FUNCS(sysconf)
@@ -133,6 +131,12 @@ dnl Functions for which we have replacements available in lib/
 AC_CHECK_FUNCS([vsnprintf _vsnprintf])
 AC_CHECK_FUNCS([snprintf _snprintf])
 AC_CHECK_FUNCS([strlcpy])
+
+dnl These types are POSIX-specific, and Windows does it differently...
+AC_CHECK_TYPES([struct _stati64])
+AC_CHECK_TYPES([struct stat])
+AC_CHECK_FUNCS([stat _stati64])
+AC_CHECK_FUNCS([fstat _fstati64])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors
