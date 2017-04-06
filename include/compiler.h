@@ -219,6 +219,8 @@ size_t strnlen(const char *s, size_t maxlen);
 # define no_return noreturn void
 #elif defined(HAVE_FUNC_ATTRIBUTE_NORETURN)
 # define no_return void __attribute__((noreturn))
+#elif defined(_MSC_VER)
+# define no_return __declspec(noreturn) void
 #else
 # define no_return void
 #endif
