@@ -3418,7 +3418,7 @@ VPGATHERQQ	xmmreg,xmem64,xmmreg		[rmv:	vm64x vex.dds.128.66.0f38.w1 91 /r]	FUTUR
 VPGATHERDQ	ymmreg,xmem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTURE,AVX2
 VPGATHERQQ	ymmreg,ymem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
-;# Transactional Synchronization Extensions (TSX)
+;# Intel Transactional Synchronization Extensions (TSX)
 XABORT		imm				[i:	c6 f8 ib]				FUTURE,RTM
 XABORT		imm8				[i:	c6 f8 ib]				FUTURE,RTM
 XBEGIN		imm				[i:	odf c7 f8 rel]				FUTURE,RTM
@@ -3488,7 +3488,7 @@ T1MSKC		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /7]			LONG,FUTURE,TBM
 
 PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  PREFETCHWT1,FUTURE
 
-; MPX instructions
+;# Intel Memory Protection Extensions (MPX)
 BNDMK       bndreg,mem             [rm:         f3 0f 1b /r ]  MPX,MIB,FUTURE
 BNDCL       bndreg,mem             [rm:         f3 0f 1a /r ]  MPX,FUTURE
 BNDCL       bndreg,reg32           [rm:         f3 0f 1a /r ]  MPX,NOLONG,FUTURE
@@ -3512,7 +3512,17 @@ BNDSTX      mem,reg64,bndreg       [mxr:           0f 1b /r ]  MPX,MIB,LONG,FUTU
 BNDSTX      mem,bndreg,reg32       [mrx:           0f 1b /r ]  MPX,MIB,NOLONG,FUTURE
 BNDSTX      mem,bndreg,reg64       [mrx:           0f 1b /r ]  MPX,MIB,LONG,FUTURE
 
-;# MJC PUBLIC BEGIN
+;# Intel SHA acceleration instructions
+SHA1MSG1        xmmreg,xmmrm128                     [rm: 0f 38 c9 /r ] SHA,FUTURE
+SHA1MSG2        xmmreg,xmmrm128                     [rm: 0f 38 ca /r ] SHA,FUTURE
+SHA1NEXTE       xmmreg,xmmrm128                     [rm: 0f 38 c8 /r ] SHA,FUTURE
+SHA1RNDS4       xmmreg,xmmrm128,imm8                [rmi: 0f 3a cc /r ib ] SHA,FUTURE
+SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f 38 cc /r ] SHA,FUTURE
+SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f 38 cd /r ] SHA,FUTURE
+SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f 38 cb /r ] SHA,FUTURE
+SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f 38 cb /r ] SHA,FUTURE
+
+;# AVX-512 mask register instructions
 KADDB           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 4a /r ] FUTURE
 KADDD           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w1 4a /r ] FUTURE
 KADDQ           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w1 4a /r ] FUTURE
@@ -3576,14 +3586,8 @@ KXORB           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 47
 KXORD           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w1 47 /r ] FUTURE
 KXORQ           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w1 47 /r ] FUTURE
 KXORW           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w0 47 /r ] FUTURE
-SHA1MSG1        xmmreg,xmmrm128                     [rm: 0f 38 c9 /r ] SHA,FUTURE
-SHA1MSG2        xmmreg,xmmrm128                     [rm: 0f 38 ca /r ] SHA,FUTURE
-SHA1NEXTE       xmmreg,xmmrm128                     [rm: 0f 38 c8 /r ] SHA,FUTURE
-SHA1RNDS4       xmmreg,xmmrm128,imm8                [rmi: 0f 3a cc /r ib ] SHA,FUTURE
-SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f 38 cc /r ] SHA,FUTURE
-SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f 38 cd /r ] SHA,FUTURE
-SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f 38 cb /r ] SHA,FUTURE
-SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f 38 cb /r ] SHA,FUTURE
+
+;# AVX-512 instructions
 VADDPD          xmmreg|mask|z,xmmreg*,xmmrm128|b64  [rvm:fv: evex.nds.128.66.0f.w1 58 /r ] AVX512VL,AVX512,FUTURE
 VADDPD          ymmreg|mask|z,ymmreg*,ymmrm256|b64  [rvm:fv: evex.nds.256.66.0f.w1 58 /r ] AVX512VL,AVX512,FUTURE
 VADDPD          zmmreg|mask|z,zmmreg*,zmmrm512|b64|er [rvm:fv: evex.nds.512.66.0f.w1 58 /r ] AVX512,FUTURE
@@ -5097,21 +5101,21 @@ VXORPD          zmmreg|mask|z,zmmreg*,zmmrm512|b64  [rvm:fv: evex.nds.512.66.0f.
 VXORPS          xmmreg|mask|z,xmmreg*,xmmrm128|b32  [rvm:fv: evex.nds.128.0f.w0 57 /r ] AVX512VL,AVX512DQ,FUTURE
 VXORPS          ymmreg|mask|z,ymmreg*,ymmrm256|b32  [rvm:fv: evex.nds.256.0f.w0 57 /r ] AVX512VL,AVX512DQ,FUTURE
 VXORPS          zmmreg|mask|z,zmmreg*,zmmrm512|b32  [rvm:fv: evex.nds.512.0f.w0 57 /r ] AVX512DQ,FUTURE
-;# MJC PUBLIC END
+; MJC PUBLIC END
 
-; Intel memory protection keys for userspace (PKU aka PKEYs)
+;# Intel memory protection keys for userspace (PKU aka PKEYs)
 RDPKRU		void				[	0f 01 ee]				X64,FUTURE
 WRPKRU		void				[	0f 01 ef]				X64,FUTURE
 
-; Read Processor ID
+;# Read Processor ID
 RDPID		reg32				[m:	f3 0f c7 /7]				NOLONG,FUTURE
 RDPID		reg64				[m:	o64nw f3 0f c7 /7]			X64,FUTURE
 RDPID		reg32				[m:	f3 0f c7 /7]				X64,UNDOC,FUTURE
 
-; New memory instructions
+;# New memory instructions
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
 CLWB            mem                             [m:     66 0f ae /6]                            FUTURE
-;# This one was killed before it saw the light of day
+; This one was killed before it saw the light of day
 PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,UNDOC,OBSOLETE
 
 ; AMD Zen v1
