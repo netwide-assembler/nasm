@@ -86,6 +86,10 @@ endif
 .xml.1:
 	$(XMLTO) man --skip-validation $< 2>/dev/null
 
+# This rule is only used for rdoff, to allow common rules
+.$(O)$(X):
+	$(CC) $(LDFLAGS) -o $@ $(NDISASM) $(RDFLIB) $(NASMLIB) $(LIBS)
+
 #-- Begin File Lists --#
 NASM =	asm/nasm.$(O)
 NDISASM = disasm/ndisasm.$(O)
@@ -146,10 +150,10 @@ $(NASMLIB): $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
 nasm$(X): $(NASM) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
+	$(LD) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
+	$(LD) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
 
 #-- Begin Generated File Rules --#
 
@@ -284,15 +288,10 @@ RDFLIB = rdoff/librdoff.$(A)
 RDFLIBS = $(RDFLIB) $(NASMLIB)
 
 rdoff/rdfdump$(X): rdoff/rdfdump.$(O) $(RDFLIBS)
-	$(CC) $(LDFLAGS) -o rdoff/rdfdump$(X) rdoff/rdfdump.$(O) $(RDFLIBS) $(LIBS)
 rdoff/ldrdf$(X): rdoff/ldrdf.$(O) $(RDFLIBS)
-	$(CC) $(LDFLAGS) -o rdoff/ldrdf$(X) rdoff/ldrdf.$(O) $(RDFLIBS) $(LIBS)
 rdoff/rdx$(X): rdoff/rdx.$(O) $(RDFLIBS)
-	$(CC) $(LDFLAGS) -o rdoff/rdx$(X) rdoff/rdx.$(O) $(RDFLIBS) $(LIBS)
 rdoff/rdflib$(X): rdoff/rdflib.$(O) $(RDFLIBS)
-	$(CC) $(LDFLAGS) -o rdoff/rdflib$(X) rdoff/rdflib.$(O) $(RDFLIBS) $(LIBS)
 rdoff/rdf2bin$(X): rdoff/rdf2bin.$(O) $(RDFLIBS)
-	$(CC) $(LDFLAGS) -o rdoff/rdf2bin$(X) rdoff/rdf2bin.$(O) $(RDFLIBS) $(LIBS)
 rdoff/rdf2com$(X): rdoff/rdf2bin$(X)
 	$(RM_F) rdoff/rdf2com$(X)
 	cd rdoff && $(LN_S) rdf2bin$(X) rdf2com$(X)
