@@ -38,6 +38,10 @@
 
 SetCompressor lzma
 
+!if "${NSIS_PACKEDVERSION}" >= 0x3000000
+Unicode true
+!endif
+
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_MUI
 !define MULTIUSER_INSTALLMODE_COMMANDLINE

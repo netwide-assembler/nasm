@@ -41,7 +41,7 @@ Var MultiUser.InstallMode
       ${UnStrStr}
     !endif
   !endif
-  
+
   Var MultiUser.Parameters
   Var MultiUser.Result
 !endif
@@ -84,32 +84,32 @@ Install modes
   ${ifnot} ${IsNT}
     ${orif} $MultiUser.Privileges == "Admin"
     ${orif} $MultiUser.Privileges == "Power"
-  
+
     StrCpy $MultiUser.InstallMode AllUsers
-  
+
     SetShellVarContext all
-  
+
     !if "${UNINSTALLER_PREFIX}" != UN
       ;Set default installation location for installer
       !ifdef MULTIUSER_INSTALLMODE_INSTDIR
         StrCpy $INSTDIR "${GLOBALINSTDIR}\${MULTIUSER_INSTALLMODE_INSTDIR}"
       !endif
     !endif
-  
+
     !ifdef MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY & MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME
-  
+
       ReadRegStr $MultiUser.InstDir HKLM "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY}" "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME}"
-  
+
       ${if} $MultiUser.InstDir != ""
         StrCpy $INSTDIR $MultiUser.InstDir
       ${endif}
-  
+
     !endif
-  
+
     !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
       Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
     !endif
-    
+
   ${endif}
 
 !macroend
@@ -117,15 +117,15 @@ Install modes
 !macro MULTIUSER_INSTALLMODE_CURRENTUSER UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
 
   ;Install mode initialization - per-user
-  
-  ${if} ${IsNT}  
-  
+
+  ${if} ${IsNT}
+
     StrCpy $MultiUser.InstallMode CurrentUser
-    
+
     SetShellVarContext current
-  
+
     !if "${UNINSTALLER_PREFIX}" != UN
-      ;Set default installation location for installer  
+      ;Set default installation location for installer
       !ifdef MULTIUSER_INSTALLMODE_INSTDIR
         ${if} ${AtLeastWin2000}
           StrCpy $INSTDIR "$LOCALAPPDATA\bin\${MULTIUSER_INSTALLMODE_INSTDIR}"
@@ -134,21 +134,21 @@ Install modes
         ${endif}
       !endif
     !endif
-  
+
     !ifdef MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY & MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME
-  
+
       ReadRegStr $MultiUser.InstDir HKCU "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY}" "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME}"
-  
+
       ${if} $MultiUser.InstDir != ""
         StrCpy $INSTDIR $MultiUser.InstDir
       ${endif}
-  
+
     !endif
-  
+
     !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
       Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
     !endif
-  
+
   ${endif}
 
 !macroend
@@ -213,36 +213,36 @@ Installer/uninstaller initialization
 
   UserInfo::GetAccountType
   Pop $MultiUser.Privileges
-  
+
   ${if} ${IsNT}
-  
+
     ;Check privileges
-  
+
     !if "${MULTIUSER_EXECUTIONLEVEL}" == Admin
-  
+
       ${if} $MultiUser.Privileges != "Admin"
         MessageBox MB_OK|MB_ICONSTOP "${MULTIUSER_INIT_TEXT_ADMINREQUIRED}"
         !insertmacro MULTIUSER_INIT_QUIT "${UNINSTALLER_FUNCPREFIX}"
       ${endif}
-  
+
     !else if "${MULTIUSER_EXECUTIONLEVEL}" == Power
-  
+
       ${if} $MultiUser.Privileges != "Power"
         ${andif} $MultiUser.Privileges != "Admin"
         ${if} ${AtMostWinXP}
            MessageBox MB_OK|MB_ICONSTOP "${MULTIUSER_INIT_TEXT_POWERREQUIRED}"
         ${else}
            MessageBox MB_OK|MB_ICONSTOP "${MULTIUSER_INIT_TEXT_ADMINREQUIRED}"
-        ${endif}        
+        ${endif}
         !insertmacro MULTIUSER_INIT_QUIT "${UNINSTALLER_FUNCPREFIX}"
       ${endif}
-  
+
     !endif
-    
+
     !ifdef MULTIUSER_EXECUTIONLEVEL_ALLUSERS
-    
+
       ;Default to per-machine installation if possible
-    
+
       ${if} $MultiUser.Privileges == "Admin"
         ${orif} $MultiUser.Privileges == "Power"
         !ifndef MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
@@ -278,27 +278,27 @@ Installer/uninstaller initialization
       ${else}
         Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
       ${endif}
-    
+
     !else
 
       Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
 
-    !endif  
-  
+    !endif
+
     !ifdef MULTIUSER_INSTALLMODE_COMMANDLINE
-    
+
       ;Check for install mode setting on command line
 
       ${${UNINSTALLER_FUNCPREFIX}GetParameters} $MultiUser.Parameters
-  
-      ${${UNINSTALLER_PREFIX}StrStr} $MultiUser.Result $MultiUser.Parameters "/CurrentUser"    
-    
+
+      ${${UNINSTALLER_PREFIX}StrStr} $MultiUser.Result $MultiUser.Parameters "/CurrentUser"
+
       ${if} $MultiUser.Result != ""
         Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-      ${endif}    
-  
-      ${${UNINSTALLER_PREFIX}StrStr} $MultiUser.Result $MultiUser.Parameters "/AllUsers"    
-    
+      ${endif}
+
+      ${${UNINSTALLER_PREFIX}StrStr} $MultiUser.Result $MultiUser.Parameters "/AllUsers"
+
       ${if} $MultiUser.Result != ""
         ${if} $MultiUser.Privileges == "Admin"
           ${orif} $MultiUser.Privileges == "Power"
@@ -307,15 +307,15 @@ Installer/uninstaller initialization
           MessageBox MB_OK|MB_ICONSTOP "${MULTIUSER_INIT_TEXT_ALLUSERSNOTPOSSIBLE}"
         ${endif}
       ${endif}
-  
+
     !endif
-    
+
   ${else}
-  
+
     ;Not running Windows NT, per-user installation not supported
-    
+
     Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-  
+
   ${endif}
 
 !macroend
@@ -323,10 +323,10 @@ Installer/uninstaller initialization
 !macro MULTIUSER_INIT
   !verbose push
   !verbose 3
-  
+
   !insertmacro MULTIUSER_INIT_CHECKS "" ""
-  
-  !verbose pop 
+
+  !verbose pop
 !macroend
 
 !ifndef MULTIUSER_NOUNINSTALL
@@ -334,10 +334,10 @@ Installer/uninstaller initialization
 !macro MULTIUSER_UNINIT
   !verbose push
   !verbose 3
-  
+
   !insertmacro MULTIUSER_INIT_CHECKS Un un.
-  
-  !verbose pop 
+
+  !verbose pop
 !macroend
 
 !endif
@@ -355,12 +355,12 @@ Modern UI 2 page
   !ifndef MULTIUSER_INSTALLMODEPAGE_INTERFACE
     !define MULTIUSER_INSTALLMODEPAGE_INTERFACE
     Var MultiUser.InstallModePage
-    
+
     Var MultiUser.InstallModePage.Text
-    
+
     Var MultiUser.InstallModePage.AllUsers
     Var MultiUser.InstallModePage.CurrentUser
-    
+
     Var MultiUser.InstallModePage.ReturnValue
   !endif
 
@@ -373,7 +373,7 @@ Modern UI 2 page
 
   !insertmacro MUI_DEFAULT MULTIUSER_INSTALLMODEPAGE_TEXT_TOP "$(MULTIUSER_INNERTEXT_INSTALLMODE_TOP)"
   !insertmacro MUI_DEFAULT MULTIUSER_INSTALLMODEPAGE_TEXT_ALLUSERS "$(MULTIUSER_INNERTEXT_INSTALLMODE_ALLUSERS)"
-  !insertmacro MUI_DEFAULT MULTIUSER_INSTALLMODEPAGE_TEXT_CURRENTUSER "$(MULTIUSER_INNERTEXT_INSTALLMODE_CURRENTUSER)"  
+  !insertmacro MUI_DEFAULT MULTIUSER_INSTALLMODEPAGE_TEXT_CURRENTUSER "$(MULTIUSER_INNERTEXT_INSTALLMODE_CURRENTUSER)"
 
   PageEx custom
 
@@ -397,36 +397,44 @@ Modern UI 2 page
 
   !verbose push
   !verbose 3
-  
+
   !ifndef MULTIUSER_EXECUTIONLEVEL_ALLUSERS
     !error "A mixed-mode installation requires MULTIUSER_EXECUTIONLEVEL to be set to Admin, Power or Highest."
   !endif
-  
+
   !insertmacro MUI_PAGE_INIT
   !insertmacro MULTIUSER_PAGEDECLARATION_INSTALLMODE
-  
+
   !verbose pop
 
 !macroend
 
 !macro MULTIUSER_FUNCTION_INSTALLMODEPAGE PRE LEAVE
 
+  !ifndef MULTIUSER_TEXT_NOTADMIN
+    !define MULTIUSER_TEXT_NOTADMIN "The installer is currently running as an unprivileged user.  It will not be possible to install this software for all users on the system.  Cancel and re-run the installer as Administrator to install system-wide."
+  !endif
+
   ;Page functions of Modern UI page
 
   Function "${PRE}"
-  
+
     ${ifnot} ${IsNT}
       Abort
     ${endif}
-  
+
     ${if} $MultiUser.Privileges != "Power"
       ${andif} $MultiUser.Privileges != "Admin"
-      Abort
+	MessageBox MB_OKCANCEL "${MULTIUSER_TEXT_NOTADMIN}" /SD IDOK IDABORT nofun
+	Abort
+
+    nofun:
+	Quit
     ${endif}
-    
+
     !insertmacro MUI_PAGE_FUNCTION_CUSTOM PRE
     !insertmacro MUI_HEADER_TEXT_PAGE $(MULTIUSER_TEXT_INSTALLMODE_TITLE) $(MULTIUSER_TEXT_INSTALLMODE_SUBTITLE)
-    
+
     nsDialogs::Create 1018
     Pop $MultiUser.InstallModePage
 
@@ -435,30 +443,30 @@ Modern UI 2 page
 
     ${NSD_CreateRadioButton} 20u 50u 280u 10u "${MULTIUSER_INSTALLMODEPAGE_TEXT_ALLUSERS}"
     Pop $MultiUser.InstallModePage.AllUsers
-    
+
     ${NSD_CreateRadioButton} 20u 70u 280u 10u "${MULTIUSER_INSTALLMODEPAGE_TEXT_CURRENTUSER}"
     Pop $MultiUser.InstallModePage.CurrentUser
-    
+
     ${if} $MultiUser.InstallMode == "AllUsers"
       SendMessage $MultiUser.InstallModePage.AllUsers ${BM_SETCHECK} ${BST_CHECKED} 0
     ${else}
       SendMessage $MultiUser.InstallModePage.CurrentUser ${BM_SETCHECK} ${BST_CHECKED} 0
     ${endif}
-    
+
     !insertmacro MUI_PAGE_FUNCTION_CUSTOM SHOW
     nsDialogs::Show
-    
+
   FunctionEnd
 
   Function "${LEAVE}"
      SendMessage $MultiUser.InstallModePage.AllUsers ${BM_GETCHECK} 0 0 $MultiUser.InstallModePage.ReturnValue
-     
+
      ${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
         Call MultiUser.InstallMode.AllUsers
      ${else}
         Call MultiUser.InstallMode.CurrentUser
      ${endif}
-  
+
     !insertmacro MUI_PAGE_FUNCTION_CUSTOM LEAVE
   FunctionEnd
 
