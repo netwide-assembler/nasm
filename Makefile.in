@@ -52,6 +52,7 @@ MAKENSIS	= makensis
 MKDIR		= mkdir
 RM_F		= rm -f
 RM_RF		= rm -rf
+LN_S		= @LN_S@
 FIND		= find
 
 # Binary suffixes
@@ -132,7 +133,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	disasm/disasm.$(O) disasm/sync.$(O)
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis
+XSUBDIRS = test doc nsis rdoff
 #-- End File Lists --#
 
 all: nasm$(X) ndisasm$(X) rdf
@@ -268,6 +269,52 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 
 perlreq: $(PERLREQ)
 
+#-- Begin RDOFF Shared Rules --#
+
+RDFLIBOBJ = rdoff/rdoff.$(O) rdoff/rdfload.$(O) rdoff/symtab.$(O) \
+	    rdoff/collectn.$(O) rdoff/rdlib.$(O) rdoff/segtab.$(O) \
+	    rdoff/hash.$(O)
+
+RDFPROGS = rdoff/rdfdump$(X) rdoff/ldrdf$(X) rdoff/rdx$(X) rdoff/rdflib$(X) \
+	   rdoff/rdf2bin$(X)
+RDF2BINLINKS = rdoff/rdf2com$(X) rdoff/rdf2ith$(X) \
+	    rdoff/rdf2ihx$(X) rdoff/rdf2srec$(X)
+
+RDFLIB = rdoff/librdoff.$(A)
+RDFLIBS = $(RDFLIB) $(NASMLIB)
+
+rdoff/rdfdump$(X): rdoff/rdfdump.$(O) $(RDFLIBS)
+	$(CC) $(LDFLAGS) -o rdoff/rdfdump$(X) rdoff/rdfdump.$(O) $(RDFLIBS) $(LIBS)
+rdoff/ldrdf$(X): rdoff/ldrdf.$(O) $(RDFLIBS)
+	$(CC) $(LDFLAGS) -o rdoff/ldrdf$(X) rdoff/ldrdf.$(O) $(RDFLIBS) $(LIBS)
+rdoff/rdx$(X): rdoff/rdx.$(O) $(RDFLIBS)
+	$(CC) $(LDFLAGS) -o rdoff/rdx$(X) rdoff/rdx.$(O) $(RDFLIBS) $(LIBS)
+rdoff/rdflib$(X): rdoff/rdflib.$(O) $(RDFLIBS)
+	$(CC) $(LDFLAGS) -o rdoff/rdflib$(X) rdoff/rdflib.$(O) $(RDFLIBS) $(LIBS)
+rdoff/rdf2bin$(X): rdoff/rdf2bin.$(O) $(RDFLIBS)
+	$(CC) $(LDFLAGS) -o rdoff/rdf2bin$(X) rdoff/rdf2bin.$(O) $(RDFLIBS) $(LIBS)
+rdoff/rdf2com$(X): rdoff/rdf2bin$(X)
+	$(RM_F) rdoff/rdf2com$(X)
+	cd rdoff && $(LN_S) rdf2bin$(X) rdf2com$(X)
+rdoff/rdf2ith$(X): rdoff/rdf2bin$(X)
+	$(RM_F) rdoff/rdf2ith$(X)
+	cd rdoff && $(LN_S) rdf2bin$(X) rdf2ith$(X)
+rdoff/rdf2ihx$(X): rdoff/rdf2bin$(X)
+	$(RM_F) rdf2ihx$(X)
+	cd rdoff && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
+rdoff/rdf2srec$(X): rdoff/rdf2bin$(X)
+	$(RM_F) rdf2srec$(X)
+	cd rdoff && $(LN_S) rdf2bin$(X) rdf2srec$(X)
+
+#-- End RDOFF Shared Rules --#
+
+rdf: $(RDFPROGS) $(RDF2BINLINKS)
+
+$(RDFLIB): $(RDFLIBOBJ)
+	$(RM_F) $(RDFLIB)
+	$(AR) cq $(RDFLIB) $(RDFLIBOBJ)
+	$(RANLIB) $(RDFLIB)
+
 #-- Begin NSIS Rules --#
 
 # NSIS is not built except by explicit request, as it only applies to
@@ -295,14 +342,14 @@ install: nasm$(X) ndisasm$(X)
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
 
 clean:
-	for d in . $(SUBDIRS); do \
+	for d in . $(SUBDIRS) $(XSUBDIRS); do \
 		$(RM_F) "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
 	done
 	$(RM_F) nasm$(X) ndisasm$(X)
 	$(RM_F) nasm-*-installer-*.exe
 	$(RM_F) tags TAGS
 	$(RM_F) nsis/arch.nsh
-	cd rdoff && $(MAKE) clean
+	$(RM_F) $(RDFPROGS) $(RDF2BINLINKS)
 
 distclean: clean
 	$(RM_F) config.log config.status config/config.h
@@ -312,7 +359,6 @@ distclean: clean
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_RF) autom4te*.cache
-	cd rdoff && $(MAKE) distclean
 
 cleaner: clean
 	$(RM_F) $(PERLREQ) *.1 nasm.spec
@@ -323,9 +369,6 @@ spotless: distclean cleaner
 
 strip:
 	$(STRIP) --strip-unneeded nasm$(X) ndisasm$(X)
-
-rdf: $(NASMLIB)
-	cd rdoff && $(MAKE) all
 
 TAGS:
 	$(RM_F) TAGS
@@ -340,8 +383,17 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
-rdf_install install_rdf:
-	cd rdoff && $(MAKE) install
+rdf_install install_rdf install_rdoff:
+	$(MKDIR) -p $(INSTALLROOT)$(bindir)
+	for f in $(RDFPROGS); do \
+		$(INSTALL_PROGRAM) "$$f" '$(INSTALLROOT)$(bindir)'/ ;
+	done
+	for f in $(RDF2BINLINKS); do \
+		$(RM_F) '$(INSTALLROOT)$(bindir)'/`basename "$$f"` ; \
+		$(LN_S) rdf2bin$(X) `basename "$$f"`;
+	done
+	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
+	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(INSTALLROOT)$(mandir)/man1/
 
 doc:
 	cd doc && $(MAKE) all
@@ -385,7 +437,7 @@ alldeps: perlreq tools/syncfiles.pl tools/mkdep.pl
 	$(RUNPERL) tools/syncfiles.pl Makefile.in Mkfiles/*.mak
 	$(RUNPERL) tools/mkdep.pl -M Makefile.in Mkfiles/*.mak -- \
 		. include asm common config disasm macros nasmlib \
-		output stdlib x86
+		output stdlib x86 rdoff
 	./config.status
 
 #-- Magic hints to mkdep.pl --#
@@ -694,6 +746,44 @@ output/outrdf2.$(O): output/outrdf2.c asm/directiv.h asm/pptok.h \
  include/nasmint.h include/nasmlib.h include/opflags.h include/perfhash.h \
  include/rdoff.h include/saa.h include/strlist.h include/tables.h \
  output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+rdoff/collectn.$(O): rdoff/collectn.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ rdoff/collectn.h
+rdoff/hash.$(O): rdoff/hash.c config/config.h config/msvc.h config/unknown.h \
+ config/watcom.h include/compiler.h include/nasmint.h rdoff/hash.h
+rdoff/ldrdf.$(O): rdoff/ldrdf.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/nasmlib.h include/rdoff.h rdoff/collectn.h rdoff/ldsegs.h \
+ rdoff/rdlib.h rdoff/segtab.h rdoff/symtab.h
+rdoff/rdf2bin.$(O): rdoff/rdf2bin.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/nasmlib.h include/rdoff.h rdoff/rdfload.h
+rdoff/rdfdump.$(O): rdoff/rdfdump.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/rdoff.h
+rdoff/rdflib.$(O): rdoff/rdflib.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h
+rdoff/rdfload.$(O): rdoff/rdfload.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/rdoff.h rdoff/collectn.h rdoff/rdfload.h rdoff/symtab.h
+rdoff/rdlar.$(O): rdoff/rdlar.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ rdoff/rdlar.h
+rdoff/rdlib.$(O): rdoff/rdlib.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/rdoff.h rdoff/rdlar.h rdoff/rdlib.h
+rdoff/rdoff.$(O): rdoff/rdoff.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ include/rdoff.h
+rdoff/rdx.$(O): rdoff/rdx.c config/config.h config/msvc.h config/unknown.h \
+ config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h \
+ rdoff/rdfload.h rdoff/symtab.h
+rdoff/segtab.$(O): rdoff/segtab.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ rdoff/segtab.h
+rdoff/symtab.$(O): rdoff/symtab.c config/config.h config/msvc.h \
+ config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
+ rdoff/hash.h rdoff/symtab.h
 stdlib/snprintf.$(O): stdlib/snprintf.c config/config.h config/msvc.h \
  config/unknown.h config/watcom.h include/compiler.h include/nasmint.h \
  include/nasmlib.h

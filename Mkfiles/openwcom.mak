@@ -96,7 +96,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	disasm/disasm.$(O) disasm/sync.$(O)
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis
+XSUBDIRS = test doc nsis rdoff
 #-- End File Lists --#
 
 what:   .SYMBOLIC
@@ -614,6 +614,39 @@ output/outrdf2.$(O): output/outrdf2.c asm/directiv.h asm/pptok.h &
  include/nasmlib.h include/opflags.h include/perfhash.h include/rdoff.h &
  include/saa.h include/strlist.h include/tables.h output/outform.h &
  output/outlib.h x86/insnsi.h x86/regs.h
+rdoff/collectn.$(O): rdoff/collectn.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h rdoff/collectn.h
+rdoff/hash.$(O): rdoff/hash.c config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/nasmint.h rdoff/hash.h
+rdoff/ldrdf.$(O): rdoff/ldrdf.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
+ include/rdoff.h rdoff/collectn.h rdoff/ldsegs.h rdoff/rdlib.h &
+ rdoff/segtab.h rdoff/symtab.h
+rdoff/rdf2bin.$(O): rdoff/rdf2bin.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
+ include/rdoff.h rdoff/rdfload.h
+rdoff/rdfdump.$(O): rdoff/rdfdump.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h
+rdoff/rdflib.$(O): rdoff/rdflib.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h
+rdoff/rdfload.$(O): rdoff/rdfload.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h &
+ rdoff/collectn.h rdoff/rdfload.h rdoff/symtab.h
+rdoff/rdlar.$(O): rdoff/rdlar.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h rdoff/rdlar.h
+rdoff/rdlib.$(O): rdoff/rdlib.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h &
+ rdoff/rdlar.h rdoff/rdlib.h
+rdoff/rdoff.$(O): rdoff/rdoff.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h
+rdoff/rdx.$(O): rdoff/rdx.c config/msvc.h config/unknown.h config/watcom.h &
+ include/compiler.h include/nasmint.h include/rdoff.h rdoff/rdfload.h &
+ rdoff/symtab.h
+rdoff/segtab.$(O): rdoff/segtab.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h rdoff/segtab.h
+rdoff/symtab.$(O): rdoff/symtab.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h rdoff/hash.h &
+ rdoff/symtab.h
 stdlib/snprintf.$(O): stdlib/snprintf.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 stdlib/strlcpy.$(O): stdlib/strlcpy.c config/msvc.h config/unknown.h &
