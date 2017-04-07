@@ -65,7 +65,7 @@ ifeq ($(TRACE),1)
 	CFLAGS += -DNASM_TRACE
 endif
 
-.SUFFIXES: .c .i .s .$(O) .$(A) .1 .txt .xml
+.SUFFIXES: .c .i .s .$(O) .$(A) $(X) .1 .txt .xml
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
