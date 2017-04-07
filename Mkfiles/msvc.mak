@@ -342,10 +342,11 @@ spotless: distclean cleaner
 
 strip:
 
-doc:
-	# cd doc && $(MAKE) all
+# Abuse doc/Makefile.in to build nasmdoc.pdf only
+docs:
+	cd doc && $(MAKE) /f Makefile.in srcdir=. top_srcdir=.. PERL=$(PERL) nasmdoc.pdf
 
-everything: all doc rdf
+everything: all docs nsis
 
 #-- Magic hints to mkdep.pl --#
 # @object-ending: ".$(O)"
