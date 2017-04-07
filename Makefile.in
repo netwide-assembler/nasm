@@ -299,10 +299,10 @@ rdoff/rdf2ith$(X): rdoff/rdf2bin$(X)
 	$(RM_F) rdoff/rdf2ith$(X)
 	cd rdoff && $(LN_S) rdf2bin$(X) rdf2ith$(X)
 rdoff/rdf2ihx$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdf2ihx$(X)
+	$(RM_F) rdoff/rdf2ihx$(X)
 	cd rdoff && $(LN_S) rdf2bin$(X) rdf2ihx$(X)
 rdoff/rdf2srec$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdf2srec$(X)
+	$(RM_F) rdoff/rdf2srec$(X)
 	cd rdoff && $(LN_S) rdf2bin$(X) rdf2srec$(X)
 
 #-- End RDOFF Shared Rules --#
