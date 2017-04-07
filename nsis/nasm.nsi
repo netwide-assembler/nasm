@@ -36,7 +36,7 @@
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
-SetCompressor lzma
+SetCompressor /solid lzma
 
 !if "${NSIS_PACKEDVERSION}" >= 0x3000000
 Unicode true
