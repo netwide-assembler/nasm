@@ -2503,7 +2503,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
             if (bits == 64 &&
                 !(IP_REL & ~input->type) && (eaflags & EAF_MIB)) {
-                *errmsg = "RIP-relative addressing is prohibited for MIB.";
+                *errmsg = "RIP-relative addressing is prohibited for MIB";
                 goto err;
             }
 
