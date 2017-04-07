@@ -11,6 +11,7 @@
 
 top_srcdir	= .
 srcdir		= .
+objdir          = .
 VPATH		= .
 prefix		= "C:\Program Files\NASM"
 exec_prefix	= $(prefix)
@@ -26,7 +27,6 @@ LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF # (latter two undoes /DEBUG harm)
 !ENDIF
 
 CC		= cl
-LD		= link
 AR		= lib
 CFLAGS		= $(CFLAGS) /W2
 BUILD_CFLAGS	= $(CFLAGS)
@@ -37,7 +37,7 @@ INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/disasm /I./disasm \
 		  /I$(srcdir)/output /I./output
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-LDFLAGS		= $(LDFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
+LDFLAGS		= /link $(LINKFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=
 
 PERL		= perl
@@ -53,11 +53,14 @@ LN_S		= copy
 O               = obj
 A		= lib
 X               = .exe
-
-.SUFFIXES: .c .i .s .$(O) .$(A) .1 .man
+.SUFFIXES: .c .i .s .$(O) .$(A) .exe .1 .man
 
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
+
+# This rule is only used for rdoff
+.obj.exe:
+	$(CC) $(ALL_CFLAGS) /Fe$@ $< $(LDFLAGS) $(RDFLIB) $(NASMLIB) $(LIBS)
 
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
@@ -110,15 +113,17 @@ SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
 XSUBDIRS = test doc nsis rdoff
 #-- End File Lists --#
 
+NASMLIB = libnasm.$(A)
+
 all: nasm$(X) ndisasm$(X) rdf
 
-nasm$(X): $(NASM) nasm.$(A)
-	$(LD) $(LDFLAGS) /OUT:nasm$(X) $(NASM) $(LIBS) nasm.$(A)
+nasm$(X): $(NASM) $(NASMLIB)
+	$(CC) /Fe$@ $(NASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
 
-ndisasm$(X): $(NDISASM) nasm.$(A)
-	$(LD) $(LDFLAGS) /OUT:ndisasm$(X) $(NDISASM) $(LIBS) nasm.$(A)
+ndisasm$(X): $(NDISASM) $(NASMLIB)
+	$(CC) /Fe$@ $(NDISASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
 
-nasm.$(A): $(LIBOBJ)
+$(NASMLIB): $(LIBOBJ)
 	$(AR) $(ARFLAGS) /OUT:$@ $**
 
 #-- Begin Generated File Rules --#
@@ -277,7 +282,7 @@ rdoff\rdf2srec$(X): rdoff\rdf2bin$(X)
 
 rdf: $(RDFPROGS) $(RDF2BINLINKS)
 
-$(RDFLIB): ($RDFLIBOBJ)
+$(RDFLIB): $(RDFLIBOBJ)
 	$(AR) $(ARFLAGS) /OUT:$@ $**
 
 #-- Begin NSIS Rules --#
@@ -297,39 +302,24 @@ nsis: nsis\nasm.nsi nsis\arch.nsh nsis\version.nsh
 #-- End NSIS Rules --#
 
 clean:
-	-del /f *.$(O)
-	-del /f *.pdb
-	-del /f *.s
-	-del /f *.i
-	-del /f lib\*.$(O)
-	-del /f lib\*.pdb
-	-del /f lib\*.s
-	-del /f lib\*.i
-	-del /f output\*.$(O)
-	-del /f output\*.pdb
-	-del /f output\*.s
-	-del /f output\*.i
-	-del /f nasmlib\*.$(O)
-	-del /f nasmlib\*.pdb
-	-del /f nasmlib\*.s
-	-del /f nasmlib\*.i
-	-del /f stdlib\*.$(O)
-	-del /f stdlib\*.pdb
-	-del /f stdlib\*.s
-	-del /f stdlib\*.i
-	-del /f nasm.$(A)
+	-del /f /s *.$(O)
+	-del /f /s *.pdb
+	-del /f /s *.s
+	-del /f /s *.i
+	-del /f $(NASMLIB) $(RDFLIB)
 	-del /f nasm$(X)
 	-del /f ndisasm$(X)
+	-del /f rdoff\*$(X)
 
 distclean: clean
 	-del /f config.h
 	-del /f config.log
 	-del /f config.status
 	-del /f Makefile
-	-del /f *~
-	-del /f *.bak
-	-del /f *.lst
-	-del /f *.bin
+	-del /f /s *~
+	-del /f /s *.bak
+	-del /f /s *.lst
+	-del /f /s *.bin
 	-del /f output\*~
 	-del /f output\*.bak
 	-del /f test\*.lst
