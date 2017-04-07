@@ -5,6 +5,7 @@
 #
 
 use strict;
+use bytes;
 
 my %archnames = (
     0x01de => 'am33',
@@ -37,9 +38,9 @@ open(my $fh, '<', $file)
 read($fh, my $mz, 2);
 exit 1 if ($mz ne 'MZ');
 
-exit 1 unless (seek($fh, 0x3c, 0));
-exit 1 unless (read($fh, my $pe_offset, 1) == 1);
-$pe_offset = unpack("C", $pe_offset);
+exit 0 unless (seek($fh, 0x3c, 0));
+exit 0 unless (read($fh, my $pe_offset, 4) == 4);
+$pe_offset = unpack("V", $pe_offset);
 
 exit 1 unless (seek($fh, $pe_offset, 0));
 read($fh, my $pe, 4);
