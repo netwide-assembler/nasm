@@ -385,7 +385,7 @@ cscope:
 rdf_install install_rdf install_rdoff:
 	$(MKDIR) -p $(INSTALLROOT)$(bindir)
 	for f in $(RDFPROGS); do \
-		$(INSTALL_PROGRAM) "$$f" '$(INSTALLROOT)$(bindir)'/ ;
+		$(INSTALL_PROGRAM) "$$f" '$(INSTALLROOT)$(bindir)'/ ; \
 	done
 	for f in $(RDF2BINLINKS); do \
 		$(RM_F) '$(INSTALLROOT)$(bindir)'/`basename "$$f"` ; \
