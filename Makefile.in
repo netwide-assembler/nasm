@@ -387,9 +387,10 @@ rdf_install install_rdf install_rdoff:
 	for f in $(RDFPROGS); do \
 		$(INSTALL_PROGRAM) "$$f" '$(INSTALLROOT)$(bindir)'/ ; \
 	done
+	cd '$(INSTALLROOT)$(bindir)' && \
 	for f in $(RDF2BINLINKS); do \
-		$(RM_F) '$(INSTALLROOT)$(bindir)'/`basename "$$f"` ; \
-		$(LN_S) rdf2bin$(X) `basename "$$f"`;
+		bn=`basename "$$f"` && $(RM_F) "$$bn" && \
+		$(LN_S) rdf2bin$(X) "$$bn" ; \
 	done
 	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(INSTALLROOT)$(mandir)/man1/
