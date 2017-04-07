@@ -65,9 +65,6 @@ dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
 AC_CHECK_PROGS(XMLTO,    xmlto,    false)
-AC_CHECK_PROGS(ACRODIST, acrodist, false)
-AC_CHECK_PROGS(PS2PDF,   ps2pdf,   false)
-AC_CHECK_PROGS(PSTOPDF,  pstopdf,  false)
 
 dnl Check for progs needed for manpage generation
 AS_IF([test $ASCIIDOC = false],

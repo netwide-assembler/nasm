@@ -23,9 +23,9 @@ TEXI2DVI        = texi2dvi
 TEXI2IPF	= texi2ipf
 IPFC		= ipfc
 
-ACRODIST	= @ACRODIST@		# Acrobat Distiller
-PSTOPDF		= @PSTOPDF@		# BSD/MacOS X utility
-PS2PDF          = @PS2PDF@		# Part of GhostScript
+ACRODIST	= acrodist		# Acrobat Distiller
+PSTOPDF		= pstopdf		# BSD/MacOS X utility
+PS2PDF          = ps2pdf		# Part of GhostScript
 
 SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
