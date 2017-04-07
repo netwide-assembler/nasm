@@ -88,7 +88,7 @@ endif
 
 # This rule is only used for rdoff, to allow common rules
 .$(O)$(X):
-	$(CC) $(LDFLAGS) -o $@ $(NDISASM) $(RDFLIB) $(NASMLIB) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $< $(RDFLIB) $(NASMLIB) $(LIBS)
 
 #-- Begin File Lists --#
 NASM =	asm/nasm.$(O)
@@ -150,10 +150,10 @@ $(NASMLIB): $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
 nasm$(X): $(NASM) $(NASMLIB)
-	$(LD) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
+	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(NASMLIB)
-	$(LD) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
+	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
 
 #-- Begin Generated File Rules --#
 
