@@ -46,7 +46,7 @@ html: html/nasmdoc0.html
 RDSRC = $(PERL) $(srcdir)/rdsrc.pl -I$(srcdir)/
 
 html/nasmdoc0.html: $(SRCS) rdsrc.pl
-	$(RDSRC) html nasmdoc.src
+	$(RDSRC) -ohtml html nasmdoc.src
 
 nasmdoc.dip: $(SRCS) rdsrc.pl
 	$(RDSRC) dip nasmdoc.src

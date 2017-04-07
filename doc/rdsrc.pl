@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -120,11 +120,17 @@
 use File::Spec;
 
 @include_path = ();
+$out_path = File::Spec->curdir();
 
-$diag = 1, shift @ARGV if $ARGV[0] eq "-d";
-while ($ARGV[0] =~ /^\-[Ii](.*)$/) {
-    push(@include_path, $1);
-    shift;
+while ($ARGV[0] =~ /^-/) {
+    my $opt = shift @ARGV;
+    if ($opt eq '-d') {
+	$diag = 1;
+    } elsif ($opt =~ /^\-[Ii](.*)$/) {
+	push(@include_path, $1);
+    } elsif ($opt =~ /^\-[Oo](.*)$/) {
+	$out_path = $1;
+    }
 }
 
 $out_format = shift(@ARGV);
@@ -160,6 +166,9 @@ print "done.\n";
 print "Sorting index tags...";
 &indexsort;
 print "done.\n";
+
+# Make output directory if necessary
+mkdir($out_path);
 
 if ($diag) {
   print "Writing index-diagnostic file...";
@@ -541,7 +550,7 @@ sub indexsort {
 
 sub indexdiag {
   my $iitem,$ientry,$w,$ww,$foo,$node;
-  open INDEXDIAG,'>', 'index.diag';
+  open INDEXDIAG, '>', File::Spec->catfile($out_path, 'index.diag');
   foreach $iitem (@itags) {
     $ientry = $idxmap{$iitem};
     print INDEXDIAG "<$iitem> ";
@@ -593,7 +602,7 @@ sub write_txt {
 
   # Open file.
   print "writing file...";
-  open TEXT,'>', 'nasmdoc.txt';
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc.txt');
   select TEXT;
 
   # Preamble.
@@ -724,7 +733,7 @@ sub write_html {
   # Write contents file. Just the preamble, then a menu of links to the
   # separate chapter files and the nodes therein.
   print "writing contents file...";
-  open TEXT,'>', 'nasmdoc0.html';
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc0.html');
   select TEXT;
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
@@ -759,7 +768,7 @@ sub write_html {
   # Open a null file, to ensure output (eg random &html_jumppoints calls)
   # goes _somewhere_.
   print "writing chapter files...";
-  open TEXT, '>', '/dev/null';
+  open TEXT, '>', File::Spec->devnull();
   select TEXT;
   $html_lastf = '';
 
@@ -780,7 +789,9 @@ sub write_html {
       $html_lastf = $html_fnames{$chapternode};
       $chapternode = $nodexrefs{$xref};
       $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
-      open(TEXT, '>', $html_fnames{$chapternode}); select TEXT; &html_preamble(1);
+      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      select TEXT;
+      &html_preamble(1);
       foreach $i (@$pname) {
         $ww = &word_html($i);
         $title .= $ww unless $ww eq "\001";
@@ -796,7 +807,9 @@ sub write_html {
       $html_lastf = $html_fnames{$chapternode};
       $chapternode = $nodexrefs{$xref};
       $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
-      open(TEXT, '>', $html_fnames{$chapternode}); select TEXT; &html_preamble(1);
+      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      select TEXT;
+      &html_preamble(1);
       foreach $i (@$pname) {
         $ww = &word_html($i);
         $title .= $ww unless $ww eq "\001";
@@ -865,7 +878,7 @@ sub write_html {
   close TEXT;
 
   print "\n   writing index file...";
-  open TEXT,'>', 'nasmdoci.html';
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoci.html');
   select TEXT;
   &html_preamble(0);
   print "<p align=center><a href=\"nasmdoc0.html\">Contents</a>\n";
@@ -986,7 +999,7 @@ sub write_texi {
 
   # Open file.
   print "writing file...";
-  open TEXT,'>', 'nasmdoc.texi';
+  open TEXT,'>', File::Spec->catfile($out_path, 'nasmdoc.texi');
   select TEXT;
 
   # Preamble.
@@ -1252,7 +1265,7 @@ sub write_hlp {
 
   # Write the HPJ project-description file.
   print "writing .hpj file...";
-  open HPJ,'>', 'nasmdoc.hpj';
+  open HPJ, '>', File::Spec->catfile($out_path, 'nasmdoc.hpj');
   print HPJ "[OPTIONS]\ncompress=true\n";
   print HPJ "title=NASM: The Netwide Assembler\noldkeyphrase=no\n\n";
   print HPJ "[FILES]\nnasmdoc.rtf\n\n";
@@ -1264,7 +1277,7 @@ sub write_hlp {
 
   # Open file.
   print "\n   writing .rtf file...";
-  open TEXT,'>', 'nasmdoc.rtf';
+  open TEXT,'>', File::Spec->catfile($out_path, 'nasmdoc.rtf');
   select TEXT;
 
   # Preamble.
@@ -1514,7 +1527,7 @@ sub add_item {
 # by future backends, instead of putting it all in the same script.
 #
 sub write_dip {
-  open(PARAS, '>', 'nasmdoc.dip');
+  open(PARAS, '>', File::Spec->catfile($out_path, 'nasmdoc.dip'));
   foreach $k (sort(keys(%metadata))) {
       print PARAS 'meta :', $k, "\n";
       print PARAS $metadata{$k},"\n";
