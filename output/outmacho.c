@@ -1162,6 +1162,10 @@ static void macho_calculate_sizes (void)
 	    s->pad = ALIGN(seg_filesize, 4) - seg_filesize;
 	    s->offset = seg_filesize + s->pad;
             seg_filesize += s->size + s->pad;
+
+            /* filesize and vmsize needs to be aligned */
+            seg_vmsize += s->pad;
+
 	}
     }
 
