@@ -345,7 +345,13 @@ struct section_info {
     int32_t secto;
 };
 
-static struct file_list  *dw_head_list = 0, *dw_cur_list = 0, *dw_last_list = 0;
+#define DW_LN_BASE (-5)
+#define DW_LN_RANGE 14
+#define DW_OPCODE_BASE 13
+#define DW_MAX_LN (DW_LN_BASE + DW_LN_RANGE)
+#define DW_MAX_SP_OPCODE 256
+
+static struct file_list *dw_head_list = 0, *dw_cur_list = 0, *dw_last_list = 0;
 static struct dw_sect_list  *dw_head_sect = 0, *dw_cur_sect = 0, *dw_last_sect = 0;
 static uint32_t  cur_line = 0, dw_num_files = 0, dw_num_sects = 0;
 static bool  dbg_immcall = false;
@@ -755,6 +761,7 @@ static const struct sectmap {
     {".bss", "__DATA", "__bss", S_ZEROFILL},
     {".debug_abbrev", "__DWARF", "__debug_abbrev", S_ATTR_DEBUG},
     {".debug_info", "__DWARF", "__debug_info", S_ATTR_DEBUG},
+    {".debug_line", "__DWARF", "__debug_line", S_ATTR_DEBUG},
     {".debug_str", "__DWARF", "__debug_str", S_ATTR_DEBUG},
     {NULL, NULL, NULL, 0}
 };
@@ -1208,7 +1215,6 @@ static void macho_calculate_sizes (void)
 
             /* filesize and vmsize needs to be aligned */
             seg_vmsize += s->pad;
-
 	}
     }
 
@@ -1775,7 +1781,7 @@ static const struct pragma_facility macho_pragma_list[] = {
 static void macho_dbg_generate(void)
 {
     uint8_t *p_buf = NULL, *p_buf_base = NULL;
-    size_t saa_len = 0, high_addr = 0;
+    size_t saa_len = 0, high_addr = 0, total_len = 0;
     struct section *p_section = NULL;
     /* calculated at debug_str and referenced at debug_info */
     uint32_t producer_str_offset = 0, module_str_offset = 0;
@@ -1785,6 +1791,7 @@ static void macho_dbg_generate(void)
         int bits = 0;
         macho_section(".debug_abbrev", 0, &bits);
         macho_section(".debug_info", 0, &bits);
+        macho_section(".debug_line", 0, &bits);
         macho_section(".debug_str", 0, &bits);
     }
 
@@ -1794,9 +1801,84 @@ static void macho_dbg_generate(void)
         uint32_t idx = 0;
         for(; idx < dw_num_sects; idx++) {
             uint64_t offset = get_section_by_index(p_sect->section)->size;
+            struct SAA *p_linep = p_sect->psaa;
+
+            saa_write8(p_linep, 2); /* std op 2 */
+            saa_write8(p_linep, offset - p_sect->offset);
+            saa_write8(p_linep, DW_LNS_extended_op);
+            saa_write8(p_linep, 1); /* operand length */
+            saa_write8(p_linep, DW_LNE_end_sequence);
+
+            total_len += p_linep->datalen;
             high_addr += offset;
             p_sect = p_sect->next;
         }
+    }
+
+    /* debug line */
+    {
+        struct file_list *p_file = dw_head_list;
+        struct dw_sect_list *p_sect = dw_head_sect;
+        size_t linep_off = 0;
+        uint32_t idx = 0, buf_size = 0;
+        struct SAA *p_lines = saa_init(1L);
+        nasm_assert(p_lines != NULL);
+
+        p_section = get_section_by_name("__DWARF", "__debug_line");
+        nasm_assert(p_section != NULL);
+
+        saa_write8(p_lines, 1); /* minimum instruction length */
+        saa_write8(p_lines, 1); /* initial value of "is_stmt" */
+        saa_write8(p_lines, DW_LN_BASE); /* line base */
+        saa_write8(p_lines, DW_LN_RANGE); /* line range */
+        saa_write8(p_lines, DW_OPCODE_BASE); /* opcode base */
+        saa_write8(p_lines, 0); /* std opcode 1 length */
+        saa_write8(p_lines, 1); /* std opcode 2 length */
+        saa_write8(p_lines, 1); /* std opcode 3 length */
+        saa_write8(p_lines, 1); /* std opcode 4 length */
+        saa_write8(p_lines, 1); /* std opcode 5 length */
+        saa_write8(p_lines, 0); /* std opcode 6 length */
+        saa_write8(p_lines, 0); /* std opcode 7 length */
+        saa_write8(p_lines, 0); /* std opcode 8 length */
+        saa_write8(p_lines, 1); /* std opcode 9 length */
+        saa_write8(p_lines, 0); /* std opcode 10 length */
+        saa_write8(p_lines, 0); /* std opcode 11 length */
+        saa_write8(p_lines, 1); /* std opcode 12 length */
+        saa_write8(p_lines, 0); /* end of table */
+
+        for(idx = 0; idx < dw_num_files; idx++) {
+            saa_wbytes(p_lines, p_file->file_name, (int32_t)(strlen(p_file->file_name) +1));
+            saa_write8(p_lines, 0); /* directory */
+            saa_write8(p_lines, 0); /* time */
+            saa_write8(p_lines, 0); /* size */
+            p_file = p_file->next;
+        }
+        saa_write8(p_lines, 0); /* end of table */
+
+        linep_off = p_lines->datalen;
+        /* 10 bytes for initial & prolong length, and dwarf version info */
+        buf_size = saa_len = linep_off + total_len + 10;
+        p_buf_base = p_buf = nasm_malloc(buf_size);
+
+        WRITELONG(p_buf, saa_len - 4); /* initial length; size excluding itself */
+        WRITESHORT(p_buf, 2); /* dwarf version */
+        WRITELONG(p_buf, linep_off); /* prolong length */
+
+        saa_rnbytes(p_lines, p_buf, linep_off);
+        p_buf += linep_off;
+        saa_free(p_lines);
+
+        for(idx = 0; idx < dw_num_sects; idx++) {
+            struct SAA *p_linep = p_sect->psaa;
+            saa_len = p_linep->datalen;
+            saa_rnbytes(p_linep, p_buf, saa_len);
+            p_buf += saa_len;
+            saa_free(p_linep);
+            p_sect = p_sect->next;
+        }
+
+        macho_output(p_section->index, p_buf_base, OUT_RAWDATA, buf_size, NO_SEG, 0);
+
     }
 
     /* string section */
@@ -1980,6 +2062,7 @@ static void macho_dbg_output(int type, void *param)
     struct section_info *sinfo_param = (struct section_info *)param;
     int32_t secto = sinfo_param->secto;
     bool need_new_sect = false;
+    struct SAA *p_linep = NULL;
     (void)type;
 
     if(!(dw_cur_sect && (dw_cur_sect->section == secto))) {
@@ -2002,10 +2085,20 @@ static void macho_dbg_output(int type, void *param)
     if(need_new_sect) {
         nasm_new(dw_cur_sect);
         dw_num_sects ++;
+        p_linep = dw_cur_sect->psaa = saa_init(1L);
         dw_cur_sect->line = dw_cur_sect->file = 1;
         dw_cur_sect->offset = 0;
         dw_cur_sect->next = NULL;
         dw_cur_sect->section = secto;
+
+        saa_write8(p_linep, DW_LNS_extended_op);
+        saa_write8(p_linep, (ofmt == &of_macho64) ? 9 : 5);
+        saa_write8(p_linep, DW_LNE_set_address);
+        if (ofmt == &of_macho64) {
+            saa_write64(p_linep, 0);
+        } else {
+            saa_write32(p_linep, 0);
+        }
 
         if(!dw_head_sect) {
             dw_head_sect = dw_last_sect = dw_cur_sect;
@@ -2017,13 +2110,33 @@ static void macho_dbg_output(int type, void *param)
 
     if(dbg_immcall == true) {
         int32_t line_delta = cur_line - dw_cur_sect->line;
+        int32_t offset_delta = sinfo_param->size - dw_cur_sect->offset;
         uint32_t cur_file = dw_cur_list->file;
+        p_linep = dw_cur_sect->psaa;
 
         if(cur_file != dw_cur_sect->file) {
+            saa_write8(p_linep, DW_LNS_set_file);
+            saa_write8(p_linep, cur_file);
             dw_cur_sect->file = cur_file;
         }
 
         if(line_delta) {
+            int special_opcode = (line_delta - DW_LN_BASE) + (DW_LN_RANGE * offset_delta) +
+                                             DW_OPCODE_BASE;
+
+            if((line_delta >= DW_LN_BASE) && (line_delta < DW_MAX_LN) &&
+                (special_opcode < DW_MAX_SP_OPCODE)) {
+                saa_write8(p_linep, special_opcode);
+            } else {
+                saa_write8(p_linep, DW_LNS_advance_line);
+                saa_wleb128s(p_linep, line_delta);
+                if(offset_delta) {
+                    saa_write8(p_linep, DW_LNS_advance_pc);
+                    saa_wleb128u(p_linep, offset_delta);
+                }
+                saa_write8(p_linep, DW_LNS_copy);
+            }
+
             dw_cur_sect->line = cur_line;
             dw_cur_sect->offset = sinfo_param->size;
         }
