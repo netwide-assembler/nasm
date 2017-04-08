@@ -1727,6 +1727,27 @@ static const struct pragma_facility macho_pragma_list[] = {
     { NULL, macho_pragma }	/* Implements macho32/macho64 namespaces */
 };
 
+static void macho_dbg_init(void)
+{
+}
+
+static void macho_dbg_linenum(const char *file_name, int32_t line_num, int32_t segto)
+{
+    (void)file_name;
+    (void)line_num;
+    (void)segto;
+}
+
+static void macho_dbg_output(int type, void *param)
+{
+    (void)type;
+    (void)param;
+}
+
+static void macho_dbg_cleanup(void)
+{
+}
+
 #ifdef OF_MACHO32
 static const struct macho_fmt macho32_fmt = {
     4,
@@ -1751,13 +1772,29 @@ static void macho32_init(void)
     macho_gotpcrel_sect = NO_SEG;
 }
 
+static const struct dfmt macho32_df_dwarf = {
+    "MachO32 (i386) dwarf debug format for Darwin/MacOS",
+    "dwarf",
+    macho_dbg_init,
+    macho_dbg_linenum,
+    null_debug_deflabel,
+    null_debug_directive,
+    null_debug_typevalue,
+    macho_dbg_output,
+    macho_dbg_cleanup,
+    NULL /*pragma list*/
+};
+
+static const struct dfmt * const macho32_df_arr[2] =
+ { &macho32_df_dwarf, NULL };
+
 const struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
     0,
     32,
-    null_debug_arr,
-    &null_debug_form,
+    macho32_df_arr,
+    &macho32_df_dwarf,
     macho_stdmac,
     macho32_init,
     nasm_do_legacy_output,
@@ -1799,13 +1836,29 @@ static void macho64_init(void)
     define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false);
 }
 
+static const struct dfmt macho64_df_dwarf = {
+    "MachO64 (x86-64) dwarf debug format for Darwin/MacOS",
+    "dwarf",
+    macho_dbg_init,
+    macho_dbg_linenum,
+    null_debug_deflabel,
+    null_debug_directive,
+    null_debug_typevalue,
+    macho_dbg_output,
+    macho_dbg_cleanup,
+    NULL /*pragma list*/
+};
+
+static const struct dfmt * const macho64_df_arr[2] =
+ { &macho64_df_dwarf, NULL };
+
 const struct ofmt of_macho64 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
     "macho64",
     0,
     64,
-    null_debug_arr,
-    &null_debug_form,
+    macho64_df_arr,
+    &macho64_df_dwarf,
     macho_stdmac,
     macho64_init,
     nasm_do_legacy_output,
