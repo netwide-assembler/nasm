@@ -320,6 +320,33 @@ static struct section *get_section_by_index(const int32_t index)
     return s;
 }
 
+struct file_list {
+    struct file_list *next;
+    struct file_list *last;
+    char *file_name;
+    uint32_t file;
+};
+
+struct dw_sect_list {
+    struct SAA *psaa;
+    int32_t section;
+    uint32_t line;
+    uint64_t offset;
+    uint32_t file;
+    struct dw_sect_list *next;
+    struct dw_sect_list *last;
+};
+
+struct section_info {
+    uint64_t size;
+    int32_t secto;
+};
+
+static struct file_list  *dw_head_list = 0, *dw_cur_list = 0, *dw_last_list = 0;
+static struct dw_sect_list  *dw_head_sect = 0, *dw_cur_sect = 0, *dw_last_sect = 0;
+static uint32_t  cur_line = 0, dw_num_files = 0, dw_num_sects = 0;
+static bool  dbg_immcall = false;
+
 /*
  * Special section numbers which are used to define Mach-O special
  * symbols, which can be used with WRT to provide PIC relocation
@@ -549,6 +576,16 @@ static void macho_output(int32_t secto, const void *data,
         /* should never happen */
         if (s == NULL)
             nasm_panic(0, "text section not found");
+    }
+
+    /* debug code generation only for sections tagged with
+     * instruction attribute */
+    if (s->flags & S_ATTR_SOME_INSTRUCTIONS)
+    {
+        struct section_info sinfo;
+        sinfo.size = s->size;
+        sinfo.secto = secto;
+        dfmt->debug_output(0, &sinfo);
     }
 
     is_bss = (s->flags & SECTION_TYPE) == S_ZEROFILL;
@@ -1594,6 +1631,8 @@ static void macho_cleanup(void)
     struct reloc *r;
     struct symbol *sym;
 
+    dfmt->cleanup();
+
     /* Sort all symbols.  */
     macho_layout_symbols (&nsyms, &strslen);
 
@@ -1733,19 +1772,118 @@ static void macho_dbg_init(void)
 
 static void macho_dbg_linenum(const char *file_name, int32_t line_num, int32_t segto)
 {
-    (void)file_name;
-    (void)line_num;
+    bool need_new_list = true;
     (void)segto;
+
+    if(!dw_cur_list || strcmp(file_name, dw_cur_list->file_name)) {
+        if(dw_head_list) {
+            struct file_list *match = dw_head_list;
+            uint32_t idx = 0;
+
+            for (; idx < dw_num_files; idx++ ) {
+                if(!(strcmp(file_name, match->file_name))) {
+                    dw_cur_list = match;
+                    need_new_list = false;
+                    break;
+                }
+                match = match->next;
+            }
+        }
+
+        if(need_new_list) {
+            nasm_new(dw_cur_list);
+            dw_cur_list->file = ++dw_num_files;
+            dw_cur_list->file_name = (char*)file_name;
+
+            if(!dw_head_list) {
+                dw_head_list = dw_last_list = dw_cur_list;
+            } else {
+                dw_last_list->next = dw_cur_list;
+                dw_last_list = dw_cur_list;
+            }
+        }
+    }
+
+    dbg_immcall = true;
+    cur_line = line_num;
 }
 
 static void macho_dbg_output(int type, void *param)
 {
+    struct section_info *sinfo_param = (struct section_info *)param;
+    int32_t secto = sinfo_param->secto;
+    bool need_new_sect = false;
     (void)type;
-    (void)param;
+
+    if(!(dw_cur_sect && (dw_cur_sect->section == secto))) {
+        need_new_sect = true;
+        if(dw_head_sect) {
+            struct dw_sect_list *match = dw_head_sect;
+            uint32_t idx = 0;
+
+            for(; idx < dw_num_sects; idx++) {
+                if(match->section == secto) {
+                    dw_cur_sect = match;
+                    need_new_sect = false;
+                    break;
+                }
+                match = match->next;
+            }
+        }
+    }
+
+    if(need_new_sect) {
+        nasm_new(dw_cur_sect);
+        dw_num_sects ++;
+        dw_cur_sect->line = dw_cur_sect->file = 1;
+        dw_cur_sect->offset = 0;
+        dw_cur_sect->next = NULL;
+        dw_cur_sect->section = secto;
+
+        if(!dw_head_sect) {
+            dw_head_sect = dw_last_sect = dw_cur_sect;
+        } else {
+            dw_last_sect->next = dw_cur_sect;
+            dw_last_sect = dw_cur_sect;
+        }
+    }
+
+    if(dbg_immcall == true) {
+        int32_t line_delta = cur_line - dw_cur_sect->line;
+        uint32_t cur_file = dw_cur_list->file;
+
+        if(cur_file != dw_cur_sect->file) {
+            dw_cur_sect->file = cur_file;
+        }
+
+        if(line_delta) {
+            dw_cur_sect->line = cur_line;
+            dw_cur_sect->offset = sinfo_param->size;
+        }
+
+        dbg_immcall = false;
+    }
 }
 
 static void macho_dbg_cleanup(void)
 {
+    {
+        struct dw_sect_list *p_sect = dw_head_sect;
+        struct file_list *p_file = dw_head_list;
+        uint32_t idx = 0;
+
+        for(; idx < dw_num_sects; idx++) {
+            struct dw_sect_list *next = p_sect->next;
+            nasm_free(p_sect);
+            p_sect = next;
+        }
+
+        for(idx = 0; idx < dw_num_files; idx++) {
+            struct file_list *next = p_file->next;
+            nasm_free(p_file);
+            p_file = next;
+        }
+    }
 }
 
 #ifdef OF_MACHO32
