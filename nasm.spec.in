@@ -11,7 +11,8 @@ URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 BuildRequires: perl, asciidoc, xmlto, ghostscript, texinfo, perl-Font-TTF, \
-	       adobe-source-sans-pro-fonts, adobe-source-code-pro-fonts
+	       adobe-source-sans-pro-fonts, adobe-source-code-pro-fonts, \
+	       fontconfig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %package doc
