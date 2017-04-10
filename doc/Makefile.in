@@ -94,15 +94,15 @@ clean:
 	-$(RM_F) *.rtf *.hpj *.texi *.gid *.ipf *.dip
 	-$(RM_F) *.aux *.cp *.fn *.ky *.pg *.log *.toc *.tp *.vr
 	-$(RM_F) inslist.src version.src
+	-$(RM_F) nasmdoc*.ps
 
 spotless: clean
 	-$(RM_RF) html info
 	-$(RM_F) *.hlp nasmdoc.txt *.inf *.pdf *.dvi
-	-$(RM_F) nasmdoc*.ps
 
 install: all
 	mkdir -p $(INSTALLROOT)$(infodir)
 	$(INSTALL_DATA) info/* $(INSTALLROOT)$(infodir)
 	mkdir -p $(INSTALLROOT)$(docdir)/html
 	$(INSTALL_DATA) html/* $(INSTALLROOT)$(docdir)/html
-	$(INSTALL_DATA) nasmdoc.ps nasmdoc.pdf nasmdoc.txt $(INSTALLROOT)$(docdir)
+	$(INSTALL_DATA) nasmdoc.pdf nasmdoc.txt $(INSTALLROOT)$(docdir)
