@@ -10,9 +10,9 @@ Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_ve
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
-BuildRequires: perl, asciidoc, xmlto, ghostscript, texinfo, perl-Font-TTF, \
-	       adobe-source-sans-pro-fonts, adobe-source-code-pro-fonts, \
-	       fontconfig
+BuildRequires: perl, asciidoc, xmlto, ghostscript, texinfo, perl-Font-TTF
+BuildRequires: adobe-source-sans-pro-fonts, adobe-source-code-pro-fonts
+BuildRequires: fontconfig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %package doc
