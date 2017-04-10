@@ -52,6 +52,7 @@ sub parse_afm_file($$) {
 
     $fontdata->{file} = $fontfile;
     $fontdata->{type} = $filetype;
+    $fontdata->{scale} = 1000;	# AFM metrics always have scale 1000
 
     return undef unless (open(my $fh, '<', $filename.'.afm'));
 

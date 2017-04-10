@@ -359,12 +359,12 @@ sub ps_flow_lines($$$@) {
 	} else {
 	    my $ew = ps_width($$e[1], $fontset->{fonts}->[$$e[0]][1],
 			      \@NASMEncoding) *
-		($fontset->{fonts}->[$$e[0]][0]/1000);
+		($fontset->{fonts}->[$$e[0]][0]);
 	    my $sp = $$e[1];
 	    $sp =~ tr/[^ ]//d;	# Delete nonspaces
 	    my $esw = ps_width($sp, $fontset->{fonts}->[$$e[0]][1],
 			       \@NASMEncoding) *
-		($fontset->{fonts}->[$$e[0]][0]/1000);
+		($fontset->{fonts}->[$$e[0]][0]);
 
 	    if ( ($w+$ew) - $ps_space_squeeze*($sw+$esw) > $wid ) {
 		# Begin new line
@@ -423,13 +423,13 @@ sub ps_flow_lines($$$@) {
 			my $xew = ps_width($$le[1],
 					   $fontset->{fonts}->[$$le[0]][1],
 					   \@NASMEncoding) *
-			    ($fontset->{fonts}->[$$le[0]][0]/1000);
+			    ($fontset->{fonts}->[$$le[0]][0]);
 			my $xsp = $$le[1];
 			$xsp =~ tr/[^ ]//d;	# Delete nonspaces
 			my $xsw = ps_width($xsp,
 					   $fontset->{fonts}->[$$le[0]][1],
 					   \@NASMEncoding) *
-			    ($fontset->{fonts}->[$$le[0]][0]/1000);
+			    ($fontset->{fonts}->[$$le[0]][0]);
 			$w += $xew;  $sw += $xsw;
 		    }
 		}
@@ -738,7 +738,7 @@ sub ps_break_lines($$) {
 	    my $ntoc = substr($ptype,3,1)+0;
 	    my $refwidth = ps_width($refname, $BodyFont{fonts}->[0][1],
 				    \@NASMEncoding) *
-		($BodyFont{fonts}->[0][0]/1000);
+		($BodyFont{fonts}->[0][0]);
 
 	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
 				$psconf{tocpnz}-$refwidth,

@@ -1,8 +1,7 @@
 #!/usr/bin/perl
 #
-# Get the width of a PostScript string in font units
-# (1000 font units == the font point height) given a set of
-# font metrics and an encoding vector.
+# Get the width of a PostScript string in PostScript points (1/72")
+# given a set of font metrics and an encoding vector.
 #
 sub ps_width($$$) {
     my($str, $met, $encoding) = @_;
@@ -19,7 +18,7 @@ sub ps_width($$$) {
 	$p = $c;
     }
     
-    return $w;
+    return $w / $met->{scale};
 }
 
 # OK

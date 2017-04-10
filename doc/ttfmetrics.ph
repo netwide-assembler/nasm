@@ -26,15 +26,11 @@ sub parse_ttf_file($) {
     $fontdata->{type} = defined($f->{' CFF'}) ? 'otf' : 'ttf';
 
     $f->{head}->read();
-    #printf "unitsPerEm: %d\n", $f->{head}{unitsPerEm};
-    #printf "xMin yMin xMax yMax: %d %d %d %d\n",
-    #$f->{head}{xMin},
-    #$f->{head}{yMin},
-    #$f->{head}{xMin},
-    #$f->{head}{yMax};
-    #$f->{maxp}->read();
+    $fontdata->{scale} = $f->{head}{unitsPerEm};
+
+    $f->{maxp}->read();
     my $glyphs = $f->{maxp}{numGlyphs};
-    #printf "Total glyphs: %d\n", $glyphs;
+
     $f->{cmap}->read();
     $f->{hmtx}->read();
     $f->{name}->read();
