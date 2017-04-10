@@ -23,15 +23,13 @@ TEXI2DVI        = texi2dvi
 TEXI2IPF	= texi2ipf
 IPFC		= ipfc
 
-ACRODIST	= acrodist		# Acrobat Distiller
-PSTOPDF		= pstopdf		# BSD/MacOS X utility
-PS2PDF          = ps2pdf		# Part of GhostScript
+PDFOPT		= @PDFOPT@
 
 RM_F		= rm -f
 RM_RF		= rm -rf
 
 SRCS		= nasmdoc.src inslist.src changes.src version.src
-OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
+OUT		= info html nasmdoc.txt nasmdoc.pdf
 
 .SUFFIXES: .pfa .ph
 
@@ -68,8 +66,8 @@ nasmdoc.ps: nasmdoc.dip genps.pl afmmetrics.ph ttfmetrics.ph \
 	$(PERL) $(srcdir)/genps.pl -headps $(srcdir)/head.ps nasmdoc.dip \
 		> nasmdoc.ps
 
-nasmdoc.pdf: nasmdoc.ps
-	$(PERL) pspdf.pl nasmdoc.ps nasmdoc.pdf
+nasmdoc.pdf: nasmdoc.ps pspdf.pl
+	$(PERL) pspdf.pl $(PDFOPT) nasmdoc.ps nasmdoc.pdf
 
 .PHONY: info
 info: info/nasm.info

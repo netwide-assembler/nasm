@@ -5,10 +5,21 @@
 
 use strict;
 
+my $compress = 1;
+
+while ($ARGV[0] =~ /^-(.*)$/) {
+    my $opt = $1;
+    shift @ARGV;
+
+    if ($opt eq '-nocompress') {
+	$compress = 0;
+    }
+}
+
 my ($in, $out) = @ARGV;
 
 if (!defined($out)) {
-	die "Usage: $0 infile outfile\n";
+	die "Usage: $0 [-nocompress] infile outfile\n";
 }
 
 # Remove output file
@@ -20,8 +31,8 @@ exit 0 if ( !$r && -f $out );
 
 # 2. ps2pdf (from Ghostscript)
 my $r = system('ps2pdf', '-dOptimize=true', '-dEmbedAllFonts=true',
-	       '-dUseFlateCompression=true',
-	       $in, $out);
+	       '-dCompressPages=' . ($compress ? 'true' : 'false'),
+	       '-dUseFlateCompression=true', $in, $out);
 exit 0 if ( !$r && -f $out );
 
 # 3. pstopdf (BSD/MacOS X utility)

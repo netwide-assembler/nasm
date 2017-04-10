@@ -344,7 +344,8 @@ strip:
 
 # Abuse doc/Makefile.in to build nasmdoc.pdf only
 docs:
-	cd doc && $(MAKE) /f Makefile.in srcdir=. top_srcdir=.. PERL=$(PERL) nasmdoc.pdf
+	cd doc && $(MAKE) /f Makefile.in srcdir=. top_srcdir=.. \
+		PERL=$(PERL) PDFOPT= nasmdoc.pdf
 
 everything: all docs nsis
 

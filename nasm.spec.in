@@ -44,7 +44,7 @@ include linker, library manager, loader, and information dump.
 %setup -q -n nasm-%{nasm_version}
 
 %build
-%configure
+%configure --disable-pdf-compression
 make %{?_smp_mflags} everything
 
 %install

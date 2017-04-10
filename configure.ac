@@ -149,6 +149,14 @@ AC_CHECK_DECLS(strnlen)
 dnl Check for missing types
 AC_TYPE_UINTPTR_T
 
+dnl Documentation: should we generate an uncompressed PDF?  It is
+dnl about twice as big, but it can be externally compressed (e.g. with xz)
+dnl and becomes significantly smaller than the original.
+PA_ARG_DISABLED([pdf-compression],
+  [generate an uncompressed documentation PDF],
+  [PDFOPT='-nocompress'])
+AC_SUBST([PDFOPT])
+
 dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
 dnl support these, but don't define __GNUC__ as they don't support
