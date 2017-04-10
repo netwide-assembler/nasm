@@ -19,7 +19,9 @@ my $r = system('acrodist', '-n', '-q', '--nosecurity', '-o', $out, $in);
 exit 0 if ( !$r && -f $out );
 
 # 2. ps2pdf (from Ghostscript)
-my $r = system('ps2pdf', $in, $out);
+my $r = system('ps2pdf', '-dOptimize=true', '-dEmbedAllFonts=true',
+	       '-dUseFlateCompression=true',
+	       $in, $out);
 exit 0 if ( !$r && -f $out );
 
 # 3. pstopdf (BSD/MacOS X utility)
