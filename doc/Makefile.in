@@ -33,6 +33,8 @@ RM_RF		= rm -rf
 SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= info html nasmdoc.txt nasmdoc.ps nasmdoc.pdf
 
+.SUFFIXES: .pfa .ph
+
 all: $(OUT)
 
 os2: nasm.inf
@@ -61,8 +63,8 @@ version.src: $(top_srcdir)/version.pl $(top_srcdir)/version
 	$(PERL) $(top_srcdir)/version.pl docsrc \
 		< $(top_srcdir)/version > version.src
 
-nasmdoc.ps: nasmdoc.dip nasmlogo.eps \
-	    genps.pl psfonts.ph pswidth.ph head.ps 
+nasmdoc.ps: nasmdoc.dip nasmlogo.eps genps.pl afmmetrics.ph pswidth.ph \
+	psfonts.ph head.ps
 	$(PERL) $(srcdir)/genps.pl -headps $(srcdir)/head.ps nasmdoc.dip \
 		> nasmdoc.ps
 
