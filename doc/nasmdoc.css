@@ -52,10 +52,13 @@ ul.index {
     }
 }
 @media screen {
+    /* Setting an explicit margin to keep the navbar from moving */
     body {
 	padding: 0;
 	margin: 10px;
     }
+
+    /* Link styles */
     a:link {
 	color: #33c;
     }
@@ -69,6 +72,13 @@ ul.index {
 	color: #f33;
 	background: #ccc;
     }
+
+    /* Trick to avoid the navbar hiding the the target of an # link */
+    :target {
+	margin-top: -4em;
+	padding-top: 4em;
+    }
+
     ul.navbar {
 	display: block;
 	position: sticky;
@@ -94,7 +104,7 @@ ul.index {
 	display: block;
 	color: white;
 	text-align: center;
-	padding: 14px 16px;
+	padding: 1em 1.5em;
 	text-decoration: none;
     }
     ul.navbar a:hover {
