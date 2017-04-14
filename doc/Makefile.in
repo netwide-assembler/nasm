@@ -81,8 +81,6 @@ spotless: clean
 	-$(RM_F) *.hlp nasmdoc.txt *.inf *.pdf *.dvi
 
 install: all
-	mkdir -p $(INSTALLROOT)$(infodir)
-	$(INSTALL_DATA) info/* $(INSTALLROOT)$(infodir)
 	mkdir -p $(INSTALLROOT)$(docdir)/html
 	$(INSTALL_DATA) html/* $(INSTALLROOT)$(docdir)/html
 	$(INSTALL_DATA) nasmdoc.pdf nasmdoc.txt $(INSTALLROOT)$(docdir)
