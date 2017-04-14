@@ -43,47 +43,51 @@ require 'pswidth.ph';		# PostScript string width
 require 'findfont.ph';		# Find fonts in the system
 
 #
-# PostScript configurables; these values are also available to the
-# PostScript code itself
+# Document formatting parameters
 #
 %psconf = (
-	   pagewidth => 595,    # Page width in PostScript points
-	   pageheight => 792,	# Page height in PostScript points
-	   lmarg => 72*1.25,	# Left margin in PostScript points
-	   rmarg => 72,		# Right margin in PostScript points
-	   topmarg => 72,	# Top margin in PostScript points
-	   botmarg => 72,	# Bottom margin in PostScript points
-	   plmarg => 72*0.25,	# Page number position relative to left margin
-	   prmarg => 0,		# Page number position relative to right margin
-	   pymarg => 24,	# Page number position relative to bot margin
-	   startcopyright => 75, # How much above the bottom margin is the
-	                         # copyright notice stuff
-	   bulladj => 12,	# How much to indent a bullet paragraph
-	   tocind => 12,	# TOC indentation per level
-	   tocpnz => 24,	# Width of TOC page number only zone
-	   tocdots => 8,	# Spacing between TOC dots
-	   idxspace => 24,	# Minimum space between index title and pg#
-	   idxindent => 24,	# How much to indent a subindex entry
-	   idxgutter => 24,	# Space between index columns
-	   idxcolumns => 2,	# Number of index columns
-	   );
+    pagewidth => 595,    # Page width in PostScript points
+    pageheight => 792,	# Page height in PostScript points
+    lmarg => 72*1.25,	# Left margin in PostScript points
+    rmarg => 72,		# Right margin in PostScript points
+    topmarg => 72,	# Top margin in PostScript points
+    botmarg => 72,	# Bottom margin in PostScript points
+    plmarg => 72*0.25,	# Page number position relative to left margin
+    prmarg => 0,		# Page number position relative to right margin
+    pymarg => 24,	# Page number position relative to bot margin
+    startcopyright => 75, # How much above the bottom margin is the
+    # copyright notice stuff
+    bulladj => 12,	# How much to indent a bullet paragraph
+    tocind => 12,	# TOC indentation per level
+    tocpnz => 24,	# Width of TOC page number only zone
+    tocdots => 8,	# Spacing between TOC dots
+    idxspace => 24,	# Minimum space between index title and pg#
+    idxindent => 24,	# How much to indent a subindex entry
+    idxgutter => 24,	# Space between index columns
+    idxcolumns => 2,	# Number of index columns
+
+    paraskip => 6,		# Space between paragraphs
+    chapstart => 30,		# Space before a chapter heading
+    chapskip => 24,		# Space after a chapter heading
+    tocskip => 6,		# Space between TOC entries
+    );
 
 %psbool = (
-	   colorlinks => 0,	# Set links in blue rather than black
-	   );
+    colorlinks => 0,	# Set links in blue rather than black
+    );
 
 # Known paper sizes
 %papersizes = (
-	       'a5'     => [421, 595], # ISO half paper size
-	       'b5'     => [501, 709], # ISO small paper size
-	       'a4'     => [595, 842], # ISO standard paper size
-	       'letter' => [612, 792], # US common paper size
-	       'pa4'    => [595, 792], # Compromise ("portable a4")
-	       'b4'     => [709,1002], # ISO intermediate paper size
-	       'legal'  => [612,1008], # US intermediate paper size
-	       'a3'     => [842,1190], # ISO double paper size
-	       '11x17'  => [792,1224], # US double paper size
-	       );
+    'a5'     => [421, 595], # ISO half paper size
+    'b5'     => [501, 709], # ISO small paper size
+    'a4'     => [595, 842], # ISO standard paper size
+    'letter' => [612, 792], # US common paper size
+    'pa4'    => [595, 792], # Compromise ("portable a4")
+    'b4'     => [709,1002], # ISO intermediate paper size
+    'legal'  => [612,1008], # US intermediate paper size
+    'a3'     => [842,1190], # ISO double paper size
+    '11x17'  => [792,1224], # US double paper size
+    );
 
 # Canned header file
 $headps = 'head.ps';
@@ -117,20 +121,19 @@ while ( $arg = shift(@ARGV) ) {
     }
 }
 
-#
-# Document formatting parameters
-#
-$paraskip = 6;			# Space between paragraphs
-$chapstart = 30;		# Space before a chapter heading
-$chapskip = 24;			# Space after a chapter heading
-$tocskip = 6;			# Space between TOC entries
-
 # Configure post-paragraph skips for each kind of paragraph
-%skiparray = ('chap' => $chapskip, 'appn' => $chapstart,
-	      'head' => $paraskip, 'subh' => $paraskip,
-	      'norm' => $paraskip, 'bull' => $paraskip,
-	      'code' => $paraskip, 'toc0' => $tocskip,
-	      'toc1' => $tocskip,  'toc2' => $tocskip);
+# (subject to modification above)
+%skiparray = ('chap' => $psconf{chapskip},
+	      'appn' => $psconf{chapstart},
+	      'head' => $psconf{paraskip},
+	      'subh' => $psconf{paraskip},
+	      'norm' => $psconf{paraskip},
+	      'bull' => $psconf{paraskip},
+	      'code' => $psconf{paraskip},
+	      'toc0' => $psconf{tocskip},
+	      'toc1' => $psconf{tocskip},
+	      'toc2' => $psconf{tocskip}
+    );
 
 # Read the font metrics files, and update @AllFonts
 # Get the list of fonts used
