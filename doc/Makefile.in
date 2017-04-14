@@ -68,7 +68,7 @@ nasmdoc.ps: nasmdoc.dip genps.pl afmmetrics.ph ttfmetrics.ph \
 		> nasmdoc.ps
 
 nasmdoc.pdf: nasmdoc.ps pspdf.pl
-	$(PERL) pspdf.pl $(PDFOPT) nasmdoc.ps nasmdoc.pdf
+	$(PERL) $(srcdir)/pspdf.pl $(PDFOPT) nasmdoc.ps nasmdoc.pdf
 
 clean:
 	-$(RM_F) *.rtf *.hpj *.texi *.gid *.ipf *.dip
