@@ -818,7 +818,7 @@ sub write_html {
       $pflags =~ /chap (.*) :(.*)/;
       $title = "Chapter $1: ";
       $xref = $2;
-      print "</body>\n</html>\n"; select STDOUT; close TEXT;
+      &html_postamble; select STDOUT; close TEXT;
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
@@ -836,7 +836,7 @@ sub write_html {
       $pflags =~ /appn (.*) :(.*)/;
       $title = "Appendix $1: ";
       $xref = $2;
-      print "</body>\n</html>\n"; select STDOUT; close TEXT;
+      &html_postamble; select STDOUT; close TEXT;
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
@@ -924,10 +924,10 @@ sub write_html {
   }
 
   # Close whichever file was open.
-  &html_jumppoints;
-  print "</body></html>\n";
-  select STDOUT;
-  close TEXT;
+  print "</pre>\n" if ($in_code);
+  print "</li>\n</ul>\n" if ($in_list);
+  print "</blockquote>\n" if ($in_bquo);
+  &html_postamble; select STDOUT; close TEXT;
 
   print "\n   writing index file...";
   open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoci.html');
@@ -951,11 +951,8 @@ sub html_preamble {
     print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
     print "</head>\n";
     print "<body>\n";
-    &html_jumppoints;
-    print "<h1>", $metadata{'title'}, "</h1>\n\n";
-}
 
-sub html_jumppoints {
+    # Navigation bar
     print "<ul class=\"navbar\">\n";
     if (defined($html_nav_last)) {
 	my $lastf = $html_fnames{$html_nav_last};
@@ -968,6 +965,13 @@ sub html_jumppoints {
     print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
     print "<li class=\"last\"><a class=\"index\" href=\"nasmdoci.html\">Index</a></li>\n";
     print "</ul>\n";
+
+    print "<h1>", $metadata{'title'}, "</h1>\n";
+}
+
+sub html_postamble {
+    # Closing tags
+    print "</body>\n</html>\n";
 }
 
 sub html_index {
