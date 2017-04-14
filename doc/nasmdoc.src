@@ -214,6 +214,8 @@ convention
 \IR{nan} NaN
 \IR{nasm version} NASM version
 \IR{netbsd} NetBSD
+\IR{nsis} NSIS
+\IR{nullsoft scriptable installer} Nullsoft Scriptable Installer
 \IR{omf} OMF
 \IR{openbsd} OpenBSD
 \IR{operating system} operating system
@@ -293,50 +295,15 @@ Object File Format
 The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed
 for portability and modularity. It supports a range of object file
 formats, including Linux and \c{*BSD} \c{a.out}, \c{ELF}, \c{COFF},
-\c{Mach-O}, Microsoft 16-bit \c{OBJ}, \c{Win32} and \c{Win64}. It will
-also output plain binary files. Its syntax is designed to be simple
-and easy to understand, similar to Intel's but less complex. It
-supports all currently known x86 architectural extensions, and has
-strong support for macros.
+\c{Mach-O}, 16-bit and 32-bit \c{OBJ} (OMF) format, \c{Win32} and
+\c{Win64}. It will also output plain binary files, Intel hex and
+Motorola S-Record formats. Its syntax is designed to be simple and
+easy to understand, similar to the syntax in the Intel Software
+Developer Manual with minimal complexity. It supports all currently
+known x86 architectural extensions, and has strong support for macros.
 
-
-\S{yaasm} Why Yet Another Assembler?
-
-The Netwide Assembler grew out of an idea on \i\c{comp.lang.asm.x86}
-(or possibly \i\c{alt.lang.asm} - I forget which), which was
-essentially that there didn't seem to be a good \e{free} x86-series
-assembler around, and that maybe someone ought to write one.
-
-\b \i\c{a86} is good, but not free, and in particular you don't get any
-32-bit capability until you pay. It's DOS only, too.
-
-\b \i\c{gas} is free, and ports over to DOS and Unix, but it's not
-very good, since it's designed to be a back end to \i\c{gcc}, which
-always feeds it correct code. So its error checking is minimal. Also,
-its syntax is horrible, from the point of view of anyone trying to
-actually \e{write} anything in it. Plus you can't write 16-bit code in
-it (properly.)
-
-\b \i\c{as86} is specific to Minix and Linux, and (my version at least)
-doesn't seem to have much (or any) documentation.
-
-\b \i\c{MASM} isn't very good, and it's (was) expensive, and it runs only under
-DOS.
-
-\b \i\c{TASM} is better, but still strives for MASM compatibility,
-which means millions of directives and tons of red tape. And its syntax
-is essentially MASM's, with the contradictions and quirks that
-entails (although it sorts out some of those by means of Ideal mode.)
-It's expensive too. And it's DOS-only.
-
-So here, for your coding pleasure, is NASM. At present it's
-still in prototype stage - we don't promise that it can outperform
-any of these assemblers. But please, \e{please} send us bug reports,
-fixes, helpful information, and anything else you can get your hands
-on (and thanks to the many people who've done this already! You all
-know who you are), and we'll improve it out of all recognition.
-Again.
-
+NASM also comes with a set of utilities for handling the \c{RDOFF}
+custom object-file format.
 
 \S{legal} \i{License} Conditions
 
@@ -357,7 +324,7 @@ notice, this list of conditions and the following disclaimer.
 \b Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
-      
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -371,97 +338,6 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-\H{contact} Contact Information
-
-The current version of NASM (since about 0.98.08) is maintained by a
-team of developers, accessible through the \c{nasm-devel} mailing list
-(see below for the link).
-If you want to report a bug, please read \k{bugs} first.
-
-NASM has a \i{website} at
-\W{http://www.nasm.us/}\c{http://www.nasm.us/}. If it's not there,
-google for us!
-
-\i{New releases}, \i{release candidates}, and \I{snapshots, daily
-development}\i{daily development snapshots} of NASM are available from
-the official web site.
-
-If you want information about the current development status, please
-subscribe to the \i\c{nasm-devel} email list; see link from the
-website.
-
-
-\H{install} Installation
-
-\S{instdos} \i{Installing} NASM under MS-\i{DOS} or Windows
-
-Once you've obtained the appropriate archive for NASM,
-\i\c{nasm-XXX-dos.zip} or \i\c{nasm-XXX-win32.zip} (where \c{XXX}
-denotes the version number of NASM contained in the archive), unpack
-it into its own directory (for example \c{c:\\nasm}).
-
-The archive will contain a set of executable files: the NASM
-executable file \i\c{nasm.exe}, the NDISASM executable file
-\i\c{ndisasm.exe}, and possibly additional utilities to handle the
-RDOFF file format.
-
-The only file NASM needs to run is its own executable, so copy
-\c{nasm.exe} to a directory on your PATH, or alternatively edit
-\i\c{autoexec.bat} to add the \c{nasm} directory to your
-\i\c{PATH} (to do that under Windows XP, go to Start > Control Panel >
-System > Advanced > Environment Variables; these instructions may work
-under other versions of Windows as well.)
-
-That's it - NASM is installed. You don't need the nasm directory
-to be present to run NASM (unless you've added it to your \c{PATH}),
-so you can delete it if you need to save space; however, you may
-want to keep the documentation or test programs.
-
-If you've downloaded the \i{DOS source archive}, \i\c{nasm-XXX.zip},
-the \c{nasm} directory will also contain the full NASM \i{source
-code}, and a selection of \i{Makefiles} you can (hopefully) use to
-rebuild your copy of NASM from scratch.  See the file \c{INSTALL} in
-the source archive.
-
-Note that a number of files are generated from other files by Perl
-scripts.  Although the NASM source distribution includes these
-generated files, you will need to rebuild them (and hence, will need a
-Perl interpreter) if you change insns.dat, standard.mac or the
-documentation. It is possible future source distributions may not
-include these files at all. Ports of \i{Perl} for a variety of
-platforms, including DOS and Windows, are available from
-\W{http://www.cpan.org/ports/}\i{www.cpan.org}.
-
-
-\S{instdos} Installing NASM under \i{Unix}
-
-Once you've obtained the \i{Unix source archive} for NASM,
-\i\c{nasm-XXX.tar.gz} (where \c{XXX} denotes the version number of
-NASM contained in the archive), unpack it into a directory such
-as \c{/usr/local/src}. The archive, when unpacked, will create its
-own subdirectory \c{nasm-XXX}.
-
-NASM is an \I{Autoconf}\I\c{configure}auto-configuring package: once
-you've unpacked it, \c{cd} to the directory it's been unpacked into
-and type \c{./configure}. This shell script will find the best C
-compiler to use for building NASM and set up \i{Makefiles}
-accordingly.
-
-Once NASM has auto-configured, you can type \i\c{make} to build the
-\c{nasm} and \c{ndisasm} binaries, and then \c{make install} to
-install them in \c{/usr/local/bin} and install the \i{man pages}
-\i\c{nasm.1} and \i\c{ndisasm.1} in \c{/usr/local/man/man1}.
-Alternatively, you can give options such as \c{--prefix} to the
-configure script (see the file \i\c{INSTALL} for more details), or
-install the programs yourself.
-
-NASM also comes with a set of utilities for handling the \c{RDOFF}
-custom object-file format, which are in the \i\c{rdoff} subdirectory
-of the NASM archive. You can build these with \c{make rdf} and
-install them with \c{make rdf_install}, if you want them.
-
 
 \C{running} Running NASM
 
@@ -993,8 +869,9 @@ Thus, \c{-w+all} enables all available warnings, and \c{-w-all}
 disables warnings entirely (since NASM 2.13).
 
 Since version 2.00, NASM has also supported the gcc-like syntax
-\c{-Wwarning-class} and \c{-Wno-warning-class} instead of \c{-w+warning-class} and
-\c{-w-warning-class}, respectively; both syntaxes work identically.
+\c{-Wwarning-class} and \c{-Wno-warning-class} instead of
+\c{-w+warning-class} and \c{-w-warning-class}, respectively; both
+syntaxes work identically.
 
 The option \c{-w+error} or \i\c{-Werror} can be used to treat warnings
 as errors.  This can be controlled on a per warning class basis
@@ -1350,7 +1227,7 @@ For example:
 \c wordvar:        resw    1               ; reserve a word
 \c realarray       resq    10              ; array of ten reals
 \c ymmval:         resy    1               ; one YMM register
-\c zmmvals:        resz    32              ; 32 ZMM registers 
+\c zmmvals:        resz    32              ; 32 ZMM registers
 
 \S{incbin} \i\c{INCBIN}: Including External \i{Binary Files}
 
@@ -4329,7 +4206,7 @@ This packages contains the following floating-point convenience macros:
 \c %define NaN             __QNaN__
 \c %define QNaN            __QNaN__
 \c %define SNaN            __SNaN__
-\c 
+\c
 \c %define float8(x)       __float8__(x)
 \c %define float16(x)      __float16__(x)
 \c %define float32(x)      __float32__(x)
@@ -5968,8 +5845,8 @@ causes the linker to build an entry \e{in} the GOT containing the
 offset of the symbol within the TLS block, so you can access the value
 of the symbol with code such as:
 
-\c 	  mov  eax,[tid wrt ..tlsie]
-\c 	  mov  [gs:eax],ebx
+\c	  mov  eax,[tid wrt ..tlsie]
+\c	  mov  [gs:eax],ebx
 
 
 \b In ELF64 or ELFx32 mode, referring to an external or global symbol using
@@ -5978,7 +5855,7 @@ causes the linker to build an entry \e{in} the GOT containing the
 offset of the symbol within the TLS block, so you can access the value
 of the symbol with code such as:
 
-\c 	  mov	rax,[rel tid wrt ..gottpoff]
+\c	  mov	rax,[rel tid wrt ..gottpoff]
 \c	  mov	rcx,[fs:rax]
 
 
@@ -8150,13 +8027,6 @@ not understand \c{DOS .EXE} files like \c{debug} will. It just
 disassembles.
 
 
-\H{ndisstart} Getting Started: Installation
-
-See \k{install} for installation instructions. NDISASM, like NASM,
-has a \c{man page} which you may want to put somewhere useful, if you
-are on a Unix system.
-
-
 \H{ndisrun} Running NDISASM
 
 To disassemble a file, you will typically use a command of the form
@@ -8329,3 +8199,59 @@ column shows the processor type in which the instruction was introduced and,
 \A{changelog} \i{NASM Version History}
 
 \& changes.src
+
+\A{contact} Compiling and Contact Information
+
+\H{website} Where to Get NASM and How to Contact Us
+
+NASM has a \i{website} at
+\W{http://www.nasm.us/}\c{http://www.nasm.us/}.
+
+\i{New releases}, \i{release candidates}, and \I{snapshots, daily
+development}\i{daily development snapshots} of NASM are available from
+the official web site in source form as well as binaries for a number
+of common platforms.
+
+If you want information about the current development status or
+participate in the development, please subscribe to the
+\i\c{nasm-devel} email list; see link from the website.
+
+To report bugs in NASM, please file a bug report in the bug tracker on
+our website.
+
+\H{source} Building NASM from Source
+
+The source archives available on the web site should be capable of
+building on a number of platforms.  On a system which has Unix shell,
+run:
+
+\c      ./configure
+\c      make everything
+
+A number of options can be passed to \c{./configure}; see
+\c{./configure --help}.
+
+A set of Makefiles for some other environments are also available;
+please see the file \c{Mkfiles/README}.
+
+To build the installer for the Windows platform, you will need the
+\i\e{Nullsoft Scriptable Installer}, \i{NSIS}, installed.
+
+To build the documentation, you will need a set of additional tools.
+The documentation is not likely to be able to build on non-Unix
+systems.
+
+\H{git} Building NASM from the \i\c{git} Repository
+
+The NASM development tree is kept in a source code repository using
+the \c{git} distributed source control system.  The link is available
+on the website.
+
+To build NASM from the \c{git} repository you will need a Perl and, if
+building on a Unix system, GNU autoconf.
+
+To build on a Unix system, run:
+
+\c      ./autogen.sh
+
+to create the \c{configure} script and then build as listed above.
