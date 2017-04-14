@@ -17,15 +17,36 @@ code {
     display: inline;
     white-space: nowrap;
 }
+a {
+    text-decoration: none;
+}
 @media not screen {
     ul.navbar {
 	display: none;
+    }
+}
+@media print {
+    a {
+	color: inherit;
     }
 }
 @media screen {
     body {
 	padding: 0;
 	margin: 10px;
+    }
+    a:link {
+	color: #33c;
+    }
+    a:visited {
+	color: #338;
+    }
+    a:hover {
+	background: #ccc;
+    }
+    a:active {
+	color: #f33;
+	background: #ccc;
     }
     ul.navbar {
 	display: block;
