@@ -25,8 +25,7 @@ RM_F		= rm -f
 RM_RF		= rm -rf
 CP_F		= cp -f
 
-SRCS		= nasmdoc.src inslist.src changes.src version.src \
-		  nasmdoc.css nasmlogw.png
+SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= html nasmdoc.txt nasmdoc.pdf
 
 .SUFFIXES: .pfa .ph
@@ -37,11 +36,14 @@ inslist.src: inslist.pl ../x86/insns.dat
 	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../x86/insns.dat
 
 .PHONY: html
-html: html/nasmdoc0.html html/nasmdoc.css html/nasmlogw.png
+html: $(SRCS) rdsrc.pl nasmdoc.css nasmlogw.png
+	mkdir -p html
+	$(MAKE) html/nasmdoc0.html html/nasmdoc.css html/nasmlogw.png
 
 RDSRC = $(PERL) $(srcdir)/rdsrc.pl -I$(srcdir)/
 
 html/nasmdoc0.html: $(SRCS) rdsrc.pl
+	$(RM_F) html/*.html
 	$(RDSRC) -ohtml html nasmdoc.src
 
 html/nasmdoc.css: nasmdoc.css

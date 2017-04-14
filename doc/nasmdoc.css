@@ -20,6 +20,27 @@ code {
 a {
     text-decoration: none;
 }
+div.toc {
+    padding-left: 0;
+    font-size: 195%;
+}
+div.toc li {
+    list-style-type: none;
+    padding-left: 0;
+}
+div.toc ol {
+    padding-left: 2em;
+    font-size: 80%;
+}
+li.toc1 {
+    padding-top: 0.7em;
+}
+li.toc2 {
+    padding-top: 0.3em;
+}
+ul.index {
+    list-style-type: none;
+}
 @media not screen {
     ul.navbar {
 	display: none;

@@ -745,31 +745,48 @@ sub write_html {
   select TEXT;
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
-  print "targetting the Intel x86 series of processors, with portable source.\n";
-  print "<p>";
+  print "targetting the Intel x86 series of processors, with portable source.\n</p>";
+  print "<div class=\"toc\">\n";
+  $level = 0;
   for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
-    if ($tstruct_level{$node} == 1) {
+      my $lastlevel = $level;
+      while ($tstruct_level{$node} < $level) {
+	  print "</li>\n</ol>\n";
+	  $level--;
+      }
+      while ($tstruct_level{$node} > $level) {
+	  print "<ol class=\"toc", ++$level, "\">\n";
+      }
+      if ($lastlevel >= $level) {
+	  print "</li>\n";
+      }
+      $level = $tstruct_level{$node};
+      if ($level == 1) {
       # Invent a file name.
-      ($number = lc($xrefnodes{$node})) =~ s/.*-//;
-      $fname="nasmdocx.html";
-      substr($fname,8 - length $number, length $number) = $number;
-      $html_fnames{$node} = $fname;
-      $link = $fname;
-      print "<p>";
-    } else {
-      # Use the preceding filename plus a marker point.
-      $link = $fname . "#$xrefnodes{$node}";
-    }
-    $title = "$node: ";
-    $pname = $tstruct_pname{$node};
-    foreach $i (@$pname) {
-      $ww = &word_html($i);
-      $title .= $ww unless $ww eq "\001";
-    }
-    print "<a href=\"$link\">$title</a><br>\n";
+	  ($number = lc($xrefnodes{$node})) =~ s/.*-//;
+	  $fname="nasmdocx.html";
+	  substr($fname,8 - length $number, length $number) = $number;
+	  $html_fnames{$node} = $fname;
+	  $link = $fname;
+      } else {
+	  # Use the preceding filename plus a marker point.
+	  $link = $fname . "#$xrefnodes{$node}";
+      }
+      $title = '';
+      $pname = $tstruct_pname{$node};
+      foreach $i (@$pname) {
+	  $ww = &word_html($i);
+	  $title .= $ww unless $ww eq "\001";
+      }
+      print "<li class=\"toc${level}\">\n";
+      print "<span class=\"node\">$node: </span><a href=\"$link\">$title</a>\n";
   }
-  print "<p><a href=\"nasmdoci.html\">Index</a>\n";
-  print "</body></html>\n";
+  while ($level--) {
+      print "</li>\n</ol>\n";
+  }
+  print "</div>\n";
+  print "</body>\n";
+  print "</html>\n";
   select STDOUT;
   close TEXT;
 
@@ -915,7 +932,7 @@ sub write_html {
   open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoci.html');
   select TEXT;
   &html_preamble(0);
-  print "<h2 class=\"index\"><a href=\"nasmdoc0.html\">Index</a></h1>\n";
+  print "<h2 class=\"index\">Index</h2>\n";
   print "<ul class=\"index\">\n";
   &html_index;
   print "</ul>\n</body>\n</html>\n";
@@ -961,6 +978,7 @@ sub html_index {
       push @a, "sp", "x $xrefnodes{$node}", "n $node", "xe$xrefnodes{$node}";
       $sep = 1;
     }
+    print "<li class=\"index\">\n";
     $line = '';
     do {
       do { $w = &word_html(shift @a) } while $w eq "\001"; # nasty hack
@@ -979,9 +997,9 @@ sub html_index {
     } while ($w ne '' && $w ne undef);
     if ($line =~ /\S/) {
       $line =~ s/\s*$//; # trim trailing spaces
-      print "$line\n";
+      print $line, "\n";
     }
-    print "<br>\n";
+    print "</li>\n";
   }
 }
 
