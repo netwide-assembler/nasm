@@ -227,5 +227,5 @@ dnl support ccache
 dnl
 PA_ARG_ENABLED([ccache], [compile with ccache], [CC="ccache $CC"], [])
 
-AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm rdoff macros])
+AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm rdoff macros common])
 AC_OUTPUT(Makefile doc/Makefile)
