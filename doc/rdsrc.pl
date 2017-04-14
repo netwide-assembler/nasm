@@ -795,7 +795,8 @@ sub write_html {
   print "writing chapter files...";
   open TEXT, '>', File::Spec->devnull();
   select TEXT;
-  $html_lastf = '';
+  undef $html_nav_last;
+  undef $html_nav_next;
 
   $in_list = 0;
   $in_bquo = 0;
@@ -818,9 +819,9 @@ sub write_html {
       $title = "Chapter $1: ";
       $xref = $2;
       print "</body>\n</html>\n"; select STDOUT; close TEXT;
-      $html_lastf = $html_fnames{$chapternode};
+      $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
-      $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
+      $html_nav_next = $tstruct_mnext{$chapternode};
       open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
       select TEXT;
       &html_preamble(1);
@@ -836,9 +837,9 @@ sub write_html {
       $title = "Appendix $1: ";
       $xref = $2;
       print "</body>\n</html>\n"; select STDOUT; close TEXT;
-      $html_lastf = $html_fnames{$chapternode};
+      $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
-      $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
+      $html_nav_next = $tstruct_mnext{$chapternode};
       open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
       select TEXT;
       &html_preamble(1);
@@ -956,8 +957,14 @@ sub html_preamble {
 
 sub html_jumppoints {
     print "<ul class=\"navbar\">\n";
-    print "<li class=\"first\"><a class=\"prev\" href=\"$html_lastf\">Previous Chapter</a></li>\n" if $html_lastf;
-    print "<li><a class=\"next\" href=\"$html_nextf\">Next Chapter</a></li>\n" if $html_nextf;
+    if (defined($html_nav_last)) {
+	my $lastf = $html_fnames{$html_nav_last};
+	print "<li class=\"first\"><a class=\"prev\" href=\"$lastf\">$html_nav_last</a></li>\n";
+    }
+    if (defined($html_nav_next)) {
+	my $nextf = $html_fnames{$html_nav_next};
+	print "<li><a class=\"next\" href=\"$nextf\">$html_nav_next</a></li>\n";
+    }
     print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
     print "<li class=\"last\"><a class=\"index\" href=\"nasmdoci.html\">Index</a></li>\n";
     print "</ul>\n";
