@@ -63,8 +63,10 @@ mv nasm-"$version".tar.gz nasm-"$version".tar.bz2 nasm-"$version".tar.xz ..
 
 # Create zipfile (DOS convention: no prefix, convert file endings)
 cd nasm-"$version"
-zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip -x \*.ico	# Text files
-zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip -i \*.ico	# Binary files
+# Text files
+zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip -x \*.ico -x \*.png
+# Binary files
+zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip -i \*.ico -i \*.png	
 cd ..
 
 # Record what we have already generated
@@ -92,8 +94,8 @@ mv nasm-"$version"-xdoc.tar.gz nasm-"$version"-xdoc.tar.bz2 nasm-"$version"-xdoc
 
 # Create doc zipfile (DOS convention: no prefix, convert file endings)
 cd nasm-"$version"
-zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf
-zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf
+zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf -x \*.png
+zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf -i \*.png
 
 # Clean up
 cd ../..
