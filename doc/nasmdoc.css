@@ -77,6 +77,8 @@ ul.index {
     :target {
 	margin-top: -10vh;
 	padding-top: 10vh;
+	background: #ff4;	/* Highlight the jump target */
+	background-clip: content-box;
     }
 
     ul.navbar {
