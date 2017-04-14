@@ -10,7 +10,7 @@ Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_ve
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
-BuildRequires: perl, asciidoc, xmlto, ghostscript, texinfo, perl-Font-TTF
+BuildRequires: perl, asciidoc, xmlto, ghostscript, perl-Font-TTF
 BuildRequires: adobe-source-sans-pro-fonts, adobe-source-code-pro-fonts
 BuildRequires: fontconfig, xz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -18,9 +18,6 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %package doc
 Summary: Extensive documentation for NASM
 Group: Development/Languages
-BuildRequires: ghostscript, texinfo
-Requires(post): /sbin/install-info
-Requires(preun): /sbin/install-info
 
 %package rdoff
 Summary: Tools for the RDOFF binary format, sometimes used with NASM.
@@ -32,8 +29,8 @@ NASM is the Netwide Assembler, a free portable assembler for the Intel
 instruction mnemonics and syntax.
 
 %description doc
-Extensive documentation for the Netwide Assembler, NASM, in HTML,
-info, PostScript and text formats.
+Extensive documentation for the Netwide Assembler (NASM) in HTML and
+PDF formats.
 
 %description rdoff
 Tools for the operating-system independent RDOFF binary format, which
@@ -51,25 +48,16 @@ make %{?_smp_mflags} everything
 rm -rf "$RPM_BUILD_ROOT"
 mkdir -p "$RPM_BUILD_ROOT"/%{_bindir}
 mkdir -p "$RPM_BUILD_ROOT"/%{_mandir}/man1
-mkdir -p "$RPM_BUILD_ROOT"/%{_infodir}
 mkdir -p "$RPM_BUILD_ROOT"/usr/tempdoc
 %makeinstall install_everything	docdir="$RPM_BUILD_ROOT"/usr/tempdoc
 cp -a $RPM_BUILD_ROOT/usr/tempdoc/html \
-   $RPM_BUILD_ROOT/usr/tempdoc/nasmdoc.{txt,pdf} .
-xz -9ef nasmdoc.{pdf,txt}
+   $RPM_BUILD_ROOT/usr/tempdoc/nasmdoc.pdf .
+xz -9ef nasmdoc.pdf
 # remove unpackaged files from the buildroot
 rm -rf $RPM_BUILD_ROOT%{_prefix}/tempdoc
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
-
-%post
-/sbin/install-info %{_infodir}/nasm.info.gz %{_infodir}/dir || :
-
-%preun
-if [ $1 = 0 ]; then
-  /sbin/install-info --delete %{_infodir}/nasm.info.gz %{_infodir}/dir || :
-fi
 
 %files
 %defattr(-,root,root)
@@ -78,11 +66,10 @@ fi
 %{_bindir}/ndisasm
 %{_mandir}/man1/nasm.1*
 %{_mandir}/man1/ndisasm.1*
-%{_infodir}/nasm.info*.gz
 
 %files doc
 %defattr(-,root,root)
-%doc html nasmdoc.txt.xz nasmdoc.pdf.xz
+%doc html nasmdoc.pdf.xz
 
 %files rdoff
 %defattr(-,root,root)

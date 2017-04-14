@@ -394,7 +394,7 @@ instruction.
 
 \c XRELEASE MOV [absolute],AL
 
-Previous versions would incorrectly generate \c{F3 A2} for this
+\> Previous versions would incorrectly generate \c{F3 A2} for this
 instruction and issue a warning; correct behavior is to emit \c{F3 88
 05}.
 
@@ -418,7 +418,7 @@ only integer logarithms.  See \k{pkg_ifunc}.
 \c      mov r64,imm32                   ;  7 bytes
 \c      mov r64,imm64                   ; 10 bytes
 
-To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
+\> To force a specific form, use the \c{STRICT} keyword, see \k{strict}.
 
 \b Add support for the Intel AVX2 instruction set.
 
@@ -1388,33 +1388,29 @@ from the current BITS setting (16 or 32).
 
 \b Changed definition of the optimization flag:
 
-        -O0     strict two-pass assembly, JMP and Jcc are
-                handled more like 0.98, except that back-
-                ward JMPs are short, if possible.
-
-        -O1     strict two-pass assembly, but forward
-                branches are assembled with code guaranteed
-                to reach; may produce larger code than
-                -O0, but will produce successful assembly
-                more often if branch offset sizes are not
-                specified.
-
-        -O2     multi-pass optimization, minimize branch
-                offsets; also will minimize signed immed-
-                iate bytes, overriding size specification.
-
-        -O3     like -O2, but more passes taken, if needed
+\c    -O0     strict two-pass assembly, JMP and Jcc are
+\c            handled more like 0.98, except that back-
+\c            ward JMPs are short, if possible.
+\c
+\c    -O1     strict two-pass assembly, but forward
+\c            branches are assembled with code guaranteed
+\c            to reach; may produce larger code than
+\c            -O0, but will produce successful assembly
+\c            more often if branch offset sizes are not
+\c            specified.
+\c
+\c    -O2     multi-pass optimization, minimize branch
+\c            offsets; also will minimize signed immed-
+\c            iate bytes, overriding size specification.
+\c
+\c    -O3     like -O2, but more passes taken, if needed
 
 
 \S{cl-0.98.07 released 01/28/01} Version 0.98.07 released 01/28/01
 
-\b       Added Stepane Denis' SSE2 instructions to a *working*
+\b      Added Stepane Denis' SSE2 instructions to a *working*
         version of the code - some earlier versions were based on
         broken code - sorry 'bout that. version "0.98.07"
-
-
-01/28/01
-
 
 \b       Cosmetic modifications to nasm.c, nasm.h,
         AUTHORS, MODIFIED
@@ -1423,8 +1419,9 @@ from the current BITS setting (16 or 32).
 \S{cl-0.98.06f released 01/18/01} Version 0.98.06f released 01/18/01
 
 
-\b       - Add "metalbrain"s jecxz bug fix in insns.dat
-        - alter nasmdoc.src to match - version "0.98.06f"
+\b Add "metalbrain"s jecxz bug fix in insns.dat
+
+\b Alter nasmdoc.src to match - version "0.98.06f"
 
 
 \S{cl-0.98.06e released 01/09/01} Version 0.98.06e released 01/09/01
@@ -1432,8 +1429,6 @@ from the current BITS setting (16 or 32).
 
 \b       Removed the "outforms.h" file - it appears to be
         someone's old backup of "outform.h". version "0.98.06e"
-
-01/09/01
 
 \b fbk - finally added the fix for the "multiple %includes bug",
         known since 7/27/99 - reported originally (?) and sent to
@@ -1449,8 +1444,6 @@ from the current BITS setting (16 or 32).
 
 \b Brian Raiter / fbk - "elfso bug" fix - applied to aoutb format
                        as well - testing might be desirable...
-
-08/07/00
 
 \b James Seter - -postfix, -prefix command line switches.
 
@@ -1487,7 +1480,7 @@ form 'Jnotcc $+3/JMP label', in cases where a short offset
 is out of bounds.  If compiling for a 386 or higher CPU, then
 the 386 form of Jcc will be used instead.
 
-This feature is controlled by a new command-line switch: "O",
+\> This feature is controlled by a new command-line switch: "O",
 (upper case letter O).  "-O0" reverts the assembler to no
 extra optimization passes, "-O1" allows up to 5 extra passes,
 and "-O2"(default), allows up to 10 extra optimization passes.
@@ -1578,7 +1571,7 @@ in macros etc. For example:
 \c      abc     %$here
 \c      %$here
 
-    Now last line will be expanded into "hello" as expected. This also allows
+\>    Now last line will be expanded into "hello" as expected. This also allows
     for lots of goodies, a good example are extended "proc" macros included
     in this archive.
 
@@ -1588,7 +1581,7 @@ in macros etc. For example:
 \c      %ifdef %$abc
 \c      %endif
 
-    to work without warnings even in no context.
+\>    to work without warnings even in no context.
 
 \b Added a check for "cstk" in %if*ctx and %elif*ctx directives -
     this allows to use \c{%ifctx} without excessive warnings. If there is
@@ -1606,7 +1599,7 @@ in macros etc. For example:
 \c      %define %$name andy
 \c      %error "hello(%$name)"
 
-    Same happened with \c{%include} directive.
+\> Same happened with \c{%include} directive.
 
 \b Now all directives that expect an identifier will try to expand and
     concatenate everything without whitespaces in between before usage.
@@ -1616,21 +1609,21 @@ in macros etc. For example:
 \c      %define __%$abc goodbye
 \c      __%$abc
 
-    would produce "incorrect" output: last line will expand to
+\>    would produce "incorrect" output: last line will expand to
 
 \c      hello goodbyehello
 
-    Not quite what you expected, eh? :-) The answer is that preprocessor
+\>    Not quite what you expected, eh? :-) The answer is that preprocessor
     treats the \c{%define} construct as if it would be
 
 \c      %define __ %$abc goodbye
 
-    (note the white space between __ and %$abc). After my "fix" it
+\>    (note the white space between __ and %$abc). After my "fix" it
     will "correctly" expand into
 
 \c      goodbye
 
-    as expected. Note that I use quotes around words "correct", "incorrect"
+\>    as expected. Note that I use quotes around words "correct", "incorrect"
     etc because this is rather a feature not a bug; however current behaviour
     is more logical (and allows more advanced macro usage :-).
 
@@ -1656,7 +1649,7 @@ in macros etc. For example:
 \c
 \c                        push    eax,ebx,ecx
 
-    will produce a warning, but if we remove the first line we won't see it
+\>  will produce a warning, but if we remove the first line we won't see it
     anymore (which is The Right Thing To Do {tm} IMHO since C preprocessor
     eats such constructs without warnings at all).
 
@@ -1671,7 +1664,7 @@ in macros etc. For example:
 \c        %define cextern(x) _ %+ x
 \c        cextern (myfunc)
 
-    After first expansion, third line will become "_myfunc". After this
+\>    After first expansion, third line will become "_myfunc". After this
     expansion is performed again so it becomes "_otherunc".
 
 \b Now if preprocessor is in a non-emitting state, no warning or error
@@ -1697,13 +1690,13 @@ in macros etc. For example:
 \c                %pop
 \c        %pop
 
-    will expand correctly the fourth line to [esp]; if we'll define another
+\>    will expand correctly the fourth line to [esp]; if we'll define another
     %$a inside the "inner" context, it will take precedence over outer
     definition. However, this modification has been applied only to
     expand_smacro and not to smacro_define: as a consequence expansion
     looks in outer contexts, but \c{%ifdef} won't look in outer contexts.
 
-    This behaviour is needed because we don't want nested contexts to
+\>    This behaviour is needed because we don't want nested contexts to
     act on already defined local macros. Example:
 
 \c        %define %$arg1  [esp+4]
@@ -1712,7 +1705,7 @@ in macros etc. For example:
 \c                mov     eax,%$arg1
 \c        endif
 
-    In this example the "if" mmacro enters into the "if" context, so %$arg1
+\>    In this example the "if" mmacro enters into the "if" context, so %$arg1
     is not valid anymore inside "if". Of course it could be worked around
     by using explicitely %$$arg1 but this is ugly IMHO.
 

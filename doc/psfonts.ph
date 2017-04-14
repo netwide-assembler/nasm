@@ -15,8 +15,12 @@ my @HItal = ('SourceSansPro-SemiboldIt', 'ClearSans-BoldItalic',
 my @HCode = ('SourceCodePro-Semibold', 'LiberationMono-Bold', 'Courier-Bold');
 my @BText = ('SourceSansPro-Regular', 'ClearSans', 'LiberationSans', 'Arial', 'Helvetica');
 my @BItal = ('SourceSansPro-It', 'ClearSans-Italic', 'LiberationSans-Italic',
-	     'Arial-Italic', 'Helvetica-BoldItalic');
-my @BCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier-Bold');
+	     'Arial-Italic', 'Helvetica-Italic');
+my @BCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
+my @QText = ('SourceSansPro-It', 'ClearSans-Italic', 'LiberationSans-Italic',
+	     'Arial-Italic', 'Helvetica-Italic');
+my @QBold = ('SourceSansPro-BoldIt', 'ClearSans-BoldItalic', 'LiberationSans-BoldItalic', 'Arial-Bold', 'Helvetica-BoldItalic');
+my @QCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
 
 # The fonts we want to use for various things
 # The order is: <normal> <emphatic> <code>
@@ -36,10 +40,14 @@ my @BCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier-Bold');
 %BodyFont = (name => 'bfont',
 	     leading => 12,
 	     fonts => [[10, \@BText], [10, \@BItal], [10, \@BCode]]);
+%BquoFont = (name => 'qfont',
+	     leading => 10.8,
+	     fonts => [[9, \@QText], [9, \@QBold], [9, \@QCode]]);
 #
 # List of all fontsets; used to compute the list of fonts needed
 #
-@AllFonts = ( \%TitlFont, \%ChapFont, \%HeadFont, \%SubhFont, \%BodyFont );
+@AllFonts = ( \%TitlFont, \%ChapFont, \%HeadFont, \%SubhFont, \%BodyFont,
+    \%BquoFont);
 
 # OK
 1;

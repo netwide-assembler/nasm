@@ -1,0 +1,61 @@
+body {
+    font-family: "source sans pro", "clear sans", "liberation sans",
+    "arial", "sans-serif";
+    background: white;
+}
+h1 {
+    text-align: center;
+}
+code, pre {
+    font-family: "source code pro", "liberation mono", "monospace";
+}
+pre, blockquote {
+    margin-left: 4em;
+    margin-right: 4em;
+}
+code {
+    display: inline;
+    white-space: nowrap;
+}
+@media not screen {
+    ul.navbar {
+	display: none;
+    }
+}
+@media screen {
+    body {
+	padding: 0;
+	margin: 10px;
+    }
+    ul.navbar {
+	display: block;
+	position: sticky;
+	top: 10px;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	list-style-type: none;
+	background: #336 url("nasmlogw.png") no-repeat right center;
+	background-size: contain;
+    }
+
+    ul.navbar li {
+	float: left;
+    }
+    ul.navbar li.last {
+	border-right: none;
+    }
+    ul.navbar a {
+	border-right: 1px solid #bbb;
+	display: block;
+	color: white;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
+    }
+    ul.navbar a:hover {
+	background-color: #448;
+    }
+}

@@ -57,7 +57,7 @@ require 'findfont.ph';		# Find fonts in the system
     pymarg => 24,	# Page number position relative to bot margin
     startcopyright => 75, # How much above the bottom margin is the
     # copyright notice stuff
-    bulladj => 12,	# How much to indent a bullet paragraph
+    bulladj => 12,	# How much to indent a bullet/indented paragraph
     tocind => 12,	# TOC indentation per level
     tocpnz => 24,	# Width of TOC page number only zone
     tocdots => 8,	# Spacing between TOC dots
@@ -129,6 +129,8 @@ while ( $arg = shift(@ARGV) ) {
 	      'subh' => $psconf{paraskip},
 	      'norm' => $psconf{paraskip},
 	      'bull' => $psconf{paraskip},
+	      'indt' => $psconf{paraskip},
+	      'bquo' => $psconf{paraskip},
 	      'code' => $psconf{paraskip},
 	      'toc0' => $psconf{tocskip},
 	      'toc1' => $psconf{tocskip},
@@ -730,8 +732,10 @@ sub ps_break_lines($$) {
 	    $ls[0]->[0]->[2] = [[$AuxStr,$secn]];
 	} elsif ( $ptype eq 'norm' ) {
 	    @ls = ps_flow_lines($linewidth, \%BodyFont, $ptype, @data);
-	} elsif ( $ptype eq 'bull' ) {
+	} elsif ( $ptype =~ /^(bull|indt)$/ ) {
 	    @ls = ps_flow_lines($bullwidth, \%BodyFont, $ptype, @data);
+	} elsif ( $ptypq eq 'bquo' ) {
+	    @ls = ps_flow_lines($bullwidth, \%BquoFont, $ptype, @data);
 	} elsif ( $ptype =~ /^toc/ ) {
 	    unless ( $xtype =~/^\S+ :([^:]*):(.*)$/ ) {
 		die "Bad para";
@@ -1134,10 +1138,10 @@ $ps_page = 0;
 # Title page
 ps_start_page();
 $title = $metadata{'title'} || '';
-$title =~ s/ \- / $charcode{'emdash'} /;
+$title =~ s/ \- / $charcode{'endash'} /;
 
 $subtitle = $metadata{'subtitle'} || '';
-$subtitle =~ s/ \- / $charcode{'emdash'} /;
+$subtitle =~ s/ \- / $charcode{'endash'} /;
 
 # Print title
 print "/ti ", ps_string($title), " def\n";

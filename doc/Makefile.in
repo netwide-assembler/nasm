@@ -18,41 +18,40 @@ INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
 PERL		= perl -I$(srcdir)
-MAKEINFO	= makeinfo
-TEXI2DVI        = texi2dvi
-TEXI2IPF	= texi2ipf
-IPFC		= ipfc
 
 PDFOPT		= @PDFOPT@
 
 RM_F		= rm -f
 RM_RF		= rm -rf
+CP_F		= cp -f
 
-SRCS		= nasmdoc.src inslist.src changes.src version.src
-OUT		= info html nasmdoc.txt nasmdoc.pdf
+SRCS		= nasmdoc.src inslist.src changes.src version.src \
+		  nasmdoc.css nasmlogw.png
+OUT		= html nasmdoc.txt nasmdoc.pdf
 
 .SUFFIXES: .pfa .ph
 
 all: $(OUT)
 
-os2: nasm.inf
-
 inslist.src: inslist.pl ../x86/insns.dat
 	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../x86/insns.dat
 
 .PHONY: html
-html: html/nasmdoc0.html
+html: html/nasmdoc0.html html/nasmdoc.css html/nasmlogw.png
 
 RDSRC = $(PERL) $(srcdir)/rdsrc.pl -I$(srcdir)/
 
 html/nasmdoc0.html: $(SRCS) rdsrc.pl
 	$(RDSRC) -ohtml html nasmdoc.src
 
+html/nasmdoc.css: nasmdoc.css
+	$(CP_F) nasmdoc.css html/nasmdoc.css
+
+html/nasmlogw.png: nasmlogw.png
+	$(CP_F) nasmlogw.png html/nasmlogw.png
+
 nasmdoc.dip: $(SRCS) rdsrc.pl
 	$(RDSRC) dip nasmdoc.src
-
-nasmdoc.texi: $(SRCS) rdsrc.pl
-	$(RDSRC) texi nasmdoc.src
 
 nasmdoc.txt: $(SRCS) rdsrc.pl
 	$(RDSRC) txt nasmdoc.src
@@ -68,25 +67,6 @@ nasmdoc.ps: nasmdoc.dip genps.pl afmmetrics.ph ttfmetrics.ph \
 
 nasmdoc.pdf: nasmdoc.ps pspdf.pl
 	$(PERL) pspdf.pl $(PDFOPT) nasmdoc.ps nasmdoc.pdf
-
-.PHONY: info
-info: info/nasm.info
-
-info/nasm.info: nasmdoc.texi
-	mkdir -p info
-	$(MAKEINFO) $<
-	mv -f *.info *.info-* info
-
-# DVI output from texinfo (optional)
-nasmdoc.dvi: nasmdoc.texi
-	$(TEXI2DVI) nasmdoc.texi
-
-# Rules for building an OS/2 book
-nasmdoc.ipf: nasmdoc.texi
-	$(TEXI2IPF) $< >$@
-
-nasm.inf: nasmdoc.ipf
-	$(IPFC) -i -s $< $@
 
 clean:
 	-$(RM_F) *.rtf *.hpj *.texi *.gid *.ipf *.dip
