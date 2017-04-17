@@ -949,6 +949,7 @@ sub html_preamble {
     print "<head>\n";
     print "<title>", $metadata{'title'}, "</title>\n";
     print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+    print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
     print "</head>\n";
     print "<body>\n";
 
