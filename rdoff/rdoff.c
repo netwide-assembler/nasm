@@ -275,7 +275,11 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
     f->fp = fp;
     initpos = ftell(fp);
 
-    fread(buf, 6, 1, f->fp);    /* read header */
+    /* read header */
+    if (fread(buf, 1, 6, f->fp) != 6) {
+        fclose(f->fp);
+        return rdf_errno = RDF_ERR_READ;
+    }
     buf[6] = 0;
 
     if (strcmp(buf, RDOFFId)) {
