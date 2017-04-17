@@ -24,6 +24,10 @@ PDFOPT		= @PDFOPT@
 RM_F		= rm -f
 RM_RF		= rm -rf
 CP_F		= cp -f
+CP_UF		= cp -ufv
+
+# Auxiliary files referenced by the HTML files
+HTMLAUX		= nasmdoc.css local.css nasmlogw.png
 
 SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= html nasmdoc.txt nasmdoc.pdf
@@ -36,21 +40,16 @@ inslist.src: inslist.pl ../x86/insns.dat
 	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../x86/insns.dat
 
 .PHONY: html
-html: $(SRCS) rdsrc.pl nasmdoc.css nasmlogw.png
+html: $(HTMLAUX)
 	mkdir -p html
-	$(MAKE) html/nasmdoc0.html html/nasmdoc.css html/nasmlogw.png
+	for f in $(HTMLAUX); do $(CP_UF) "$(srcdir)/$$f" html/; done
+	$(MAKE) html/nasmdoc0.html
 
 RDSRC = $(PERL) $(srcdir)/rdsrc.pl -I$(srcdir)/
 
 html/nasmdoc0.html: $(SRCS) rdsrc.pl
 	$(RM_F) html/*.html
 	$(RDSRC) -ohtml html nasmdoc.src
-
-html/nasmdoc.css: nasmdoc.css
-	$(CP_F) $(srcdir)/nasmdoc.css html/nasmdoc.css
-
-html/nasmlogw.png: nasmlogw.png
-	$(CP_F) $(srcdir)/nasmlogw.png html/nasmlogw.png
 
 nasmdoc.dip: $(SRCS) rdsrc.pl
 	$(RDSRC) dip nasmdoc.src
@@ -64,7 +63,8 @@ version.src: $(top_srcdir)/version.pl $(top_srcdir)/version
 
 nasmdoc.ps: nasmdoc.dip genps.pl afmmetrics.ph ttfmetrics.ph \
 	pswidth.ph nasmlogo.eps psfonts.ph head.ps
-	$(PERL) $(srcdir)/genps.pl -headps $(srcdir)/head.ps nasmdoc.dip \
+	$(PERL) $(srcdir)/genps.pl -epsdir "$(srcdir)" \
+		-headps $(srcdir)/head.ps nasmdoc.dip \
 		> nasmdoc.ps
 
 nasmdoc.pdf: nasmdoc.ps pspdf.pl

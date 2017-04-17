@@ -92,6 +92,10 @@ require 'findfont.ph';		# Find fonts in the system
 # Canned header file
 $headps = 'head.ps';
 
+# Directories
+$fontsdir = 'fonts';
+$epsdir   = File::Spec->curdir();
+
 #
 # Parse the command line
 #
@@ -107,11 +111,13 @@ while ( $arg = shift(@ARGV) ) {
 	    $psbool{$parm} = $true;
 	} elsif ( $true && defined($psconf{$parm}) ) {
 	    $psconf{$parm} = shift(@ARGV);
-	} elsif ( $parm =~ /^(title|subtitle|year|author|license)$/ ) {
+	} elsif ( $true && $parm =~ /^(title|subtitle|year|author|license)$/ ) {
 	    $metadata{$parm} = shift(@ARGV);
-	} elsif ( $parm =~ /^fontsdir$/ ) {
+	} elsif ( $true && $parm eq 'fontsdir' ) {
 	    $fontsdir = shift(@ARGV);
-	} elsif ( $parm eq 'headps' ) {
+	} elsif ( $true && $parm eq 'epsdir' ) {
+	    $epsdir = shift(@ARGV);
+	} elsif ( $true && $parm eq 'headps' ) {
 	    $headps = shift(@ARGV);
 	} else {
 	    die "$0: Unknown option: $arg\n";
@@ -1161,7 +1167,7 @@ print "sti show\n";
 # and DocumentFonts in the header of the EPSF and add those to the
 # global header.
 if ( defined($metadata{epslogo}) &&
-     open(EPS, '<', $metadata{epslogo}) ) {
+     open(EPS, '<', File::Spec->catfile($epsdir, $metadata{epslogo})) ) {
     my @eps = ();
     my ($bbllx,$bblly,$bburx,$bbury) = (undef,undef,undef,undef);
     my $line;
