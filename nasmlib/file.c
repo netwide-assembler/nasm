@@ -132,7 +132,7 @@ void fwritezero(off_t bytes, FILE *fp)
 
 FILE *nasm_open_read(const char *filename, enum file_flags flags)
 {
-    FILE *f;
+    FILE *f = NULL;
     bool again = true;
 
 #ifdef __GLIBC__
