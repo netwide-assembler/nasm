@@ -63,7 +63,8 @@ version.src: $(top_srcdir)/version.pl $(top_srcdir)/version
 
 nasmdoc.ps: nasmdoc.dip genps.pl afmmetrics.ph ttfmetrics.ph \
 	pswidth.ph nasmlogo.eps psfonts.ph head.ps
-	$(PERL) $(srcdir)/genps.pl -headps $(srcdir)/head.ps nasmdoc.dip \
+	$(PERL) $(srcdir)/genps.pl -epsdir "$(srcdir)" \
+		-headps $(srcdir)/head.ps nasmdoc.dip \
 		> nasmdoc.ps
 
 nasmdoc.pdf: nasmdoc.ps pspdf.pl
