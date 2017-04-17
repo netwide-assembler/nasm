@@ -3,8 +3,18 @@ body {
     "arial", "sans-serif";
     background: white;
 }
-h1 {
+div.title {
     text-align: center;
+    font-weight: bold;
+    margin: 0.67em 0;
+}
+h1 {
+    font-size: 2em;
+    margin: 0;
+}
+span.subtitle {
+    font-size: 1.25em;
+    font-style: italic;
 }
 code, pre {
     font-family: "source code pro", "liberation mono", "monospace";

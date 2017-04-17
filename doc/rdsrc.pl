@@ -967,7 +967,10 @@ sub html_preamble {
     print "<li class=\"last\"><a class=\"index\" href=\"nasmdoci.html\">Index</a></li>\n";
     print "</ul>\n";
 
+    print "<div class=\"title\">\n";
     print "<h1>", $metadata{'title'}, "</h1>\n";
+    print '<span class="subtitle">', $metadata{'subtitle'}, "</span>\n";
+    print "</div>\n";
 }
 
 sub html_postamble {
