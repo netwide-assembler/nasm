@@ -33,6 +33,16 @@
 
 #include "file.h"
 
+void nasm_read(void *ptr, size_t size, FILE *f)
+{
+    size_t n = fread(ptr, 1, size, f);
+    if (ferror(f)) {
+        nasm_fatal(0, "unable to read input: %s", strerror(errno));
+    } else if (n != size || feof(f)) {
+        nasm_fatal(0, "fatal short read on input");
+    }
+}
+
 void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);

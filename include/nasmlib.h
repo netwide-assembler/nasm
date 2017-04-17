@@ -101,8 +101,10 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 #define nasm_zeron(p,n) (memset((p), 0, (n)*sizeof(*(p))))
 
 /*
- * Wrapper around fwrite() which fatal-errors on output failure.
+ * Wrappers around fread()/fwrite() which fatal-errors on failure.
+ * For fread(), only use this if EOF is supposed to be a fatal error!
  */
+void nasm_read(void *, size_t, FILE *);
 void nasm_write(const void *, size_t, FILE *);
 
 /*

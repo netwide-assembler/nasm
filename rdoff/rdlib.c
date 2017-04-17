@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -41,9 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RDOFF_UTILS
-
-#include "rdoff.h"
+#include "rdfutils.h"
 #include "rdlib.h"
 #include "rdlar.h"
 
@@ -92,11 +90,11 @@ int rdl_verify(const char *filename)
              *   content
              * so we can handle it uniformaly with RDOFF2 modules.
              */
-            fread(buf, 6, 1, fp);
+            nasm_read(buf, 6, fp);
             buf[6] = 0;
             /* Currently, nothing useful to do with signature block.. */
         } else {
-            fread(buf, 6, 1, fp);
+            nasm_read(buf, 6, fp);
             buf[6] = 0;
             if (strncmp(buf, "RDOFF", 5)) {
                 fclose(fp);
@@ -106,7 +104,7 @@ int rdl_verify(const char *filename)
                 return rdl_error = lastresult = 3;
             }
         }
-        fread(&length, 4, 1, fp);
+        nasm_read(&length, 4, fp);
         fseek(fp, length, SEEK_CUR);    /* skip over the module */
     }
     fclose(fp);
@@ -120,7 +118,7 @@ int rdl_open(struct librarynode *lib, const char *name)
         return i;
 
     lib->fp = NULL;
-    lib->name = strdup(name);
+    lib->name = nasm_strdup(name);
     lib->referenced = 0;
     lib->next = NULL;
     return 0;
@@ -165,7 +163,7 @@ int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
         if (feof(lib->fp))
             break;
         if (!strcmp(buf + t, ".dir")) { /* skip over directory */
-            fread(&l, 4, 1, lib->fp);
+            nasm_read(&l, 4, lib->fp);
             fseek(lib->fp, l, SEEK_CUR);
             continue;
         }
@@ -179,7 +177,7 @@ int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
         /*
          * read in the header, and scan for exported symbols
          */
-        hdr = malloc(f->header_len);
+        hdr = nasm_malloc(f->header_len);
         rdfloadseg(f, RDOFF_HEADER, hdr);
 
         while ((r = rdfgetheaderrec(f))) {
@@ -187,7 +185,7 @@ int rdl_searchlib(struct librarynode *lib, const char *label, rdffile * f)
                 continue;
 
             if (!strcmp(r->e.label, label)) {   /* match! */
-                free(hdr);      /* reset to 'just open' */
+                nasm_free(hdr);      /* reset to 'just open' */
                 f->header_loc = NULL;   /* state... */
                 f->header_fp = 0;
                 return 1;
@@ -254,7 +252,7 @@ int rdl_openmodule(struct librarynode *lib, int moduleno, rdffile * f)
             return rdl_error;
         }
 
-        fread(buf, 6, 1, lib->fp);
+        nasm_read(buf, 6, lib->fp);
         buf[6] = 0;
         if (buf[t] == '.') {
             /* do nothing */
@@ -272,7 +270,7 @@ int rdl_openmodule(struct librarynode *lib, int moduleno, rdffile * f)
             return rdl_error = 3;
         }
 
-        fread(&length, 4, 1, lib->fp);
+        nasm_read(&length, 4, lib->fp);
         fseek(lib->fp, length, SEEK_CUR);       /* skip over the module */
     }
     if (!--lib->referenced) {

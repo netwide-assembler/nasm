@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -41,9 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RDOFF_UTILS
-
-#include "rdoff.h"
+#include "rdfutils.h"
 
 #define PROGRAM_VERSION	"2.3"
 
@@ -57,9 +55,9 @@ static void print_header(int32_t length, int rdf_version)
     uint16_t rs;
 
     while (length > 0) {
-        fread(&t, 1, 1, infile);
+        nasm_read(&t, 1, infile);
         if (rdf_version >= 2) {
-            fread(&reclen, 1, 1, infile);
+            nasm_read(&reclen, 1, infile);
         }
         switch (t) {
         case RDFREC_GENERIC:   /* generic record */
@@ -69,10 +67,10 @@ static void print_header(int32_t length, int rdf_version)
 
         case RDFREC_RELOC:     /* relocation record */
         case RDFREC_SEGRELOC:  /* segment relocation */
-            fread(&s, 1, 1, infile);
-            fread(&o, 4, 1, infile);
-            fread(&l, 1, 1, infile);
-            fread(&rs, 2, 1, infile);
+            nasm_read(&s, 1, infile);
+            nasm_read(&o, 4, infile);
+            nasm_read(&l, 1, infile);
+            nasm_read(&rs, 2, infile);
             printf("  %s: location (%04x:%08"PRIx32"), length %d, "
                    "referred seg %04x\n",
                    t == 1 ? "relocation" : "seg relocation", (int)s,
@@ -88,17 +86,17 @@ static void print_header(int32_t length, int rdf_version)
 
         case RDFREC_IMPORT:    /* import record */
         case RDFREC_FARIMPORT: /* import far symbol */
-            fread(&flags, 1, 1, infile);
-            fread(&rs, 2, 1, infile);
+            nasm_read(&flags, 1, infile);
+            nasm_read(&rs, 2, infile);
             ll = 0;
 
             if (rdf_version == 1) {
                 do {
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
                 } while (buf[ll++]);
             } else {
                 for (; ll < reclen - 3; ll++)
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
             }
 
             if (t == 7)
@@ -117,18 +115,18 @@ static void print_header(int32_t length, int rdf_version)
             break;
 
         case RDFREC_GLOBAL:    /* export record */
-            fread(&flags, 1, 1, infile);
-            fread(&s, 1, 1, infile);
-            fread(&o, 4, 1, infile);
+            nasm_read(&flags, 1, infile);
+            nasm_read(&s, 1, infile);
+            nasm_read(&o, 4, infile);
             ll = 0;
 
             if (rdf_version == 1) {
                 do {
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
                 } while (buf[ll++]);
             } else {
                 for (; ll < reclen - 6; ll++)
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
             }
             printf((flags & SYM_GLOBAL) ? "  export" : "  public");
             if (flags & SYM_FUNCTION)
@@ -145,11 +143,11 @@ static void print_header(int32_t length, int rdf_version)
             ll = 0;
             if (rdf_version == 1) {
                 do {
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
                 } while (buf[ll++]);
             } else {
                 for (; ll < reclen; ll++)
-                    fread(&buf[ll], 1, 1, infile);
+                    nasm_read(&buf[ll], 1, infile);
             }
             if (t == 4)
                 printf("  dll: %s\n", buf);
@@ -160,7 +158,7 @@ static void print_header(int32_t length, int rdf_version)
             break;
 
         case RDFREC_BSS:       /* BSS reservation */
-            fread(&ll, 4, 1, infile);
+            nasm_read(&ll, 4, infile);
             printf("  bss reservation: %08"PRIx32" bytes\n", translateint32_t(ll));
             if (rdf_version == 1)
                 length -= 5;
@@ -172,11 +170,11 @@ static void print_header(int32_t length, int rdf_version)
                 uint16_t seg, align;
                 uint32_t size;
 
-                fread(&seg, 2, 1, infile);
-                fread(&size, 4, 1, infile);
-                fread(&align, 2, 1, infile);
+                nasm_read(&seg, 2, infile);
+                nasm_read(&size, 4, infile);
+                nasm_read(&align, 2, infile);
                 for (ll = 0; ll < reclen - 8; ll++)
-                    fread(buf + ll, 1, 1, infile);
+                    nasm_read(buf + ll, 1, infile);
                 printf("  common: segment %04x = %s, %"PRId32":%d\n",
                        translateint16_t(seg), buf, translateint32_t(size),
                        translateint16_t(align));
@@ -221,6 +219,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    rdoff_init();
+
     if (!strcmp(argv[1], "-v")) {
         verbose = 1;
         if (argc < 3) {
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    fread(id, 6, 1, infile);
+    nasm_read(id, 6, infile);
     if (strncmp(id, "RDOFF", 5)) {
         fputs("rdfdump: File does not contain valid RDOFF header\n",
               stderr);
@@ -251,23 +251,23 @@ int main(int argc, char **argv)
     version = id[5] - '0';
 
     if (version > 1) {
-        fread(&l, 4, 1, infile);
+        nasm_read(&l, 4, infile);
         objectlength = translateint32_t(l);
         printf("Object content size: %"PRId32" bytes\n", objectlength);
     }
 
-    fread(&l, 4, 1, infile);
+    nasm_read(&l, 4, infile);
     headerlength = translateint32_t(l);
     printf("Header (%"PRId32" bytes):\n", headerlength);
     print_header(headerlength, version);
 
     if (version == 1) {
-        fread(&l, 4, 1, infile);
+        nasm_read(&l, 4, infile);
         l = translateint32_t(l);
         printf("\nText segment length = %"PRId32" bytes\n", l);
         offset = 0;
         while (l--) {
-            fread(id, 1, 1, infile);
+            nasm_read(id, 1, infile);
             if (verbose) {
                 if (offset % 16 == 0)
                     printf("\n%08"PRIx32" ", offset);
@@ -278,14 +278,14 @@ int main(int argc, char **argv)
         if (verbose)
             printf("\n\n");
 
-        fread(&l, 4, 1, infile);
+        nasm_read(&l, 4, infile);
         l = translateint32_t(l);
         printf("Data segment length = %"PRId32" bytes\n", l);
 
         if (verbose) {
             offset = 0;
             while (l--) {
-                fread(id, 1, 1, infile);
+                nasm_read(id, 1, infile);
                 if (offset % 16 == 0)
                     printf("\n%08"PRIx32" ", offset);
                 printf(" %02x", (int)(uint8_t)id[0]);
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
         }
     } else {
         do {
-            fread(&s, 2, 1, infile);
+            nasm_read(&s, 2, infile);
             s = translateint16_t(s);
             if (!s) {
                 printf("\nNULL segment\n");
@@ -306,18 +306,18 @@ int main(int argc, char **argv)
                    translatesegmenttype(s));
             nsegments++;
 
-            fread(&s, 2, 1, infile);
+            nasm_read(&s, 2, infile);
             printf("  Number = %04X\n", (int)translateint16_t(s));
-            fread(&s, 2, 1, infile);
+            nasm_read(&s, 2, infile);
             printf("  Resrvd = %04X\n", (int)translateint16_t(s));
-            fread(&l, 4, 1, infile);
+            nasm_read(&l, 4, infile);
             l = translateint32_t(l);
             printf("  Length = %"PRId32" bytes\n", l);
             segmentcontentlength += l;
 
             offset = 0;
             while (l--) {
-                fread(id, 1, 1, infile);
+                nasm_read(id, 1, infile);
                 if (verbose) {
                     if (offset % 16 == 0)
                         printf("\n%08"PRIx32" ", offset);

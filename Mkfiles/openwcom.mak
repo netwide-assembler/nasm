@@ -618,30 +618,37 @@ rdoff/collectn.$(O): rdoff/collectn.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h rdoff/collectn.h
 rdoff/hash.$(O): rdoff/hash.c config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/nasmint.h rdoff/hash.h
+rdoff/iochk.$(O): rdoff/iochk.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 rdoff/ldrdf.$(O): rdoff/ldrdf.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
- include/rdoff.h rdoff/collectn.h rdoff/ldsegs.h rdoff/rdlib.h &
- rdoff/segtab.h rdoff/symtab.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/collectn.h rdoff/ldsegs.h &
+ rdoff/rdfutils.h rdoff/rdlib.h rdoff/segtab.h rdoff/symtab.h
 rdoff/rdf2bin.$(O): rdoff/rdf2bin.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h &
- include/rdoff.h rdoff/rdfload.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfload.h rdoff/rdfutils.h
 rdoff/rdfdump.$(O): rdoff/rdfdump.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfutils.h
 rdoff/rdflib.$(O): rdoff/rdflib.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfutils.h
 rdoff/rdfload.$(O): rdoff/rdfload.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h &
- rdoff/collectn.h rdoff/rdfload.h rdoff/symtab.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/collectn.h rdoff/rdfload.h &
+ rdoff/rdfutils.h rdoff/symtab.h
 rdoff/rdlar.$(O): rdoff/rdlar.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h rdoff/rdlar.h
 rdoff/rdlib.$(O): rdoff/rdlib.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h &
- rdoff/rdlar.h rdoff/rdlib.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfutils.h rdoff/rdlar.h &
+ rdoff/rdlib.h
 rdoff/rdoff.$(O): rdoff/rdoff.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/rdoff.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfutils.h
 rdoff/rdx.$(O): rdoff/rdx.c config/msvc.h config/unknown.h config/watcom.h &
- include/compiler.h include/nasmint.h include/rdoff.h rdoff/rdfload.h &
- rdoff/symtab.h
+ include/compiler.h include/error.h include/nasmint.h include/nasmlib.h &
+ include/rdoff.h rdoff/rdfload.h rdoff/rdfutils.h rdoff/symtab.h
 rdoff/segtab.$(O): rdoff/segtab.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h rdoff/segtab.h
 rdoff/symtab.$(O): rdoff/symtab.c config/msvc.h config/unknown.h &

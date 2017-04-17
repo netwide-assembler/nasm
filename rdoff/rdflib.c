@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -57,6 +57,7 @@
  */
 
 #include "compiler.h"
+#include "rdfutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,6 +169,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    rdoff_init();
+
     switch (argv[1][0]) {
     case 'c':                  /* create library */
         fp = fopen(argv[2], "wb");
@@ -176,12 +179,10 @@ int main(int argc, char **argv)
             perror("rdflib");
             exit(1);
         }
-        fwrite(sig_modname, 1, strlen(sig_modname) + 1, fp);
-        fwrite(rdl_signature, 1, strlen(rdl_signature), fp);
+        nasm_write(sig_modname, strlen(sig_modname) + 1, fp);
+        nasm_write(rdl_signature, strlen(rdl_signature), fp);
 	t = time(NULL);
-        l = sizeof(t);
-        fwrite(&l, sizeof(l), 1, fp);
-        fwrite(&t, 1, l, fp);
+        fwriteint32_t(t, fp);
         fclose(fp);
         break;
 
@@ -374,7 +375,7 @@ int main(int argc, char **argv)
                 fseek(fptmp, l, SEEK_CUR);
                 break;
             } else {
-                fwrite(buf, 1, strlen(buf) + 1, fp);    /* module name */
+                nasm_write(buf, strlen(buf) + 1, fp);    /* module name */
                 if ((c = copybytes(fptmp, fp, 6)) >= '2') {
                     l = copyint32_t(fptmp, fp);    /* version 2 or above */
                     copybytes(fptmp, fp, l);    /* entire object */
