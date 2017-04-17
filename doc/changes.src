@@ -23,12 +23,15 @@ since 2007.
 \b NASM can now generate sparse output files for relevant output
    formats, if the underlying operating system supports them.
 
-\b \c{macho} object format now supports the \c{subsections_via_symbols}
+\b The \c{macho} object format now supports the \c{subsections_via_symbols}
    and \c{no_dead_strip} directives, see \k{macho-ssvs}.
 
-\b \c{macho} object format now supports the \c{no_dead_strip},
+\b The \c{macho} object format now supports the \c{no_dead_strip},
   \c{live_support} and \c{strip_static_syms} section flags, see
   \k{machosect}.
+
+\b The \c{macho} object format now supports the \c{dwarf} debugging
+  format, as required by newer toolchains.
 
 \b All warnings can now be suppressed if desired; warnings not
    otherwise part of any warning class are now considered its own
