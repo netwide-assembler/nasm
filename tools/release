@@ -38,16 +38,16 @@ unset GIT_DIR
 git clone -s -l "$HERE" nasm
 rm -rf nasm/.git nasm/.gitignore
 
-# How to invoke make if MAKE is not set
-MAKE="${MAKE:-make}"
+# How to invoke make if makej is not set
+makej="${makej:-make}"
 
 # Create files which are in the release but automatically generated
 cd nasm
 ./autogen.sh
 ./configure --prefix=/usr/local
-$MAKE perlreq spec manpages
-$MAKE alldeps
-$MAKE distclean
+$makej perlreq spec manpages
+$makej alldeps
+$makej distclean
 cd ..
 
 # Clean up any previous attempt
@@ -78,9 +78,9 @@ find nasm-"$version" -not -type d -print > main
 # Create documentation
 cd nasm-"$version"
 ./configure --prefix=/usr/local
-$MAKE doc
+$makej doc
 # Remove intermediate files.
-$MAKE cleaner
+$makej cleaner
 cd ..
 
 # Remove non-documentation
