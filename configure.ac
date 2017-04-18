@@ -140,6 +140,29 @@ dnl Check for missing types
 AC_TYPE_UINTPTR_T
 
 dnl
+dnl Look for byte-swapping support...
+dnl
+PA_ADD_HEADERS(endian.h asm/byteorder.h)
+PA_HAVE_FUNC(__cpu_to_le16, (0))
+PA_HAVE_FUNC(__cpu_to_le32, (0))
+PA_HAVE_FUNC(__cpu_to_le64, (0))
+PA_HAVE_FUNC(cpu_to_le16, (0))
+PA_HAVE_FUNC(cpu_to_le32, (0))
+PA_HAVE_FUNC(cpu_to_le64, (0))
+PA_HAVE_FUNC(__cpu_to_le16, (0))
+PA_HAVE_FUNC(__cpu_to_le32, (0))
+PA_HAVE_FUNC(__cpu_to_le64, (0))
+PA_HAVE_FUNC(htole16, (0))
+PA_HAVE_FUNC(htole32, (0))
+PA_HAVE_FUNC(htole64, (0))
+PA_HAVE_FUNC(__bswap_16, (0))
+PA_HAVE_FUNC(__bswap_32, (0))
+PA_HAVE_FUNC(__bswap_64, (0))
+PA_HAVE_FUNC(__builtin_bswap16, (0))
+PA_HAVE_FUNC(__builtin_bswap32, (0))
+PA_HAVE_FUNC(__builtin_bswap64, (0))
+
+dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
 dnl support these, but don't define __GNUC__ as they don't support
 dnl some other features of gcc.
