@@ -85,6 +85,14 @@ int ilog2_32(uint32_t v)
     return __builtin_clz(v) ^ 31;
 }
 
+#elif defined(HAVE__BITSCANREVERSE)
+
+int ilog2_32(uint32_t v)
+{
+    unsigned long ix;
+    return _BitScanReverse(&ix, v) ? v : 0;
+}
+
 #else
 
 int ilog2_32(uint32_t v)
@@ -122,6 +130,14 @@ int ilog2_64(uint64_t v)
         return 0;
 
     return __builtin_clzll(v) ^ 63;
+}
+
+#elif defined(HAVE__BITSCANREVERSE64)
+
+int ilog2_64(uint64_t v)
+{
+    unsigned long ix;
+    return _BitScanReverse64(&ix, v) ? ix : 0;
 }
 
 #else
