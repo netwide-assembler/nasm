@@ -721,7 +721,7 @@ static int32_t rdf2_segbase(int32_t segment)
  * Handle RDOFF2 specific directives
  */
 static enum directive_result
-rdf2_directive(enum directives directive, char *value, int pass)
+rdf2_directive(enum directive directive, char *value, int pass)
 {
     size_t n;
 
@@ -767,13 +767,6 @@ static void rdf2_filename(char *inname, char *outname)
 
 extern macros_t rdf2_stdmac[];
 
-static int rdf2_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-
 const struct ofmt of_rdf2 = {
     "Relocatable Dynamic Object File Format v2.0",
     "rdf",
@@ -783,7 +776,6 @@ const struct ofmt of_rdf2 = {
     &null_debug_form,
     rdf2_stdmac,
     rdf2_init,
-    rdf2_set_info,
     nasm_do_legacy_output,
     rdf2_out,
     rdf2_deflabel,

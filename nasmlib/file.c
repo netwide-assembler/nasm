@@ -33,6 +33,16 @@
 
 #include "file.h"
 
+void nasm_read(void *ptr, size_t size, FILE *f)
+{
+    size_t n = fread(ptr, 1, size, f);
+    if (ferror(f)) {
+        nasm_fatal(0, "unable to read input: %s", strerror(errno));
+    } else if (n != size || feof(f)) {
+        nasm_fatal(0, "fatal short read on input");
+    }
+}
+
 void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);
@@ -122,7 +132,7 @@ void fwritezero(off_t bytes, FILE *fp)
 
 FILE *nasm_open_read(const char *filename, enum file_flags flags)
 {
-    FILE *f;
+    FILE *f = NULL;
     bool again = true;
 
 #ifdef __GLIBC__
@@ -186,10 +196,10 @@ bool nasm_file_exists(const char *filename)
  */
 off_t nasm_file_size(FILE *f)
 {
-#if defined(HAVE_FILENO) && defined(HAVE__FILELENGTHI64)
+#ifdef HAVE__FILELENGTHI64
     return _filelengthi64(fileno(f));
 #elif defined(nasm_fstat)
-    struct nasm_stat st;
+    nasm_struct_stat st;
 
     if (nasm_fstat(fileno(f), &st))
         return (off_t)-1;
@@ -208,10 +218,10 @@ off_t nasm_file_size(FILE *f)
  */
 off_t nasm_file_size_by_path(const char *pathname)
 {
-#ifdef HAVE_STAT
-    struct stat st;
+#ifdef nasm_stat
+    nasm_struct_stat st;
 
-    if (stat(pathname, &st))
+    if (nasm_stat(pathname, &st))
         return (off_t)-1;
 
     return st.st_size;

@@ -37,7 +37,7 @@
 #
 # Parse insns.dat and produce generated source code files
 
-require 'x86/insns-iflags.pl';
+require 'x86/insns-iflags.ph';
 
 # Opcode prefixes which need their own opcode tables
 # LONGER PREFIXES FIRST!
@@ -82,7 +82,7 @@ foreach $arg ( @ARGV ) {
 die if (scalar(@args) != 2);	# input output
 ($fname, $oname) = @args;
 
-open (F, $fname) || die "unable to open $fname";
+open(F, '<', $fname) || die "unable to open $fname";
 
 %dinstables = ();
 @bytecode_list = ();

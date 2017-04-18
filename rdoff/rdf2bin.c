@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -254,7 +254,7 @@ static const char *getformat(const char *pathname)
     const char *p;
     static char fmt_buf[16];
 
-    /* 
+    /*
      * Search backwards for the string "rdf2" followed by a string
      * of alphanumeric characters.  This should handle path prefixes,
      * as well as extensions (e.g. C:\FOO\RDF2SREC.EXE).
@@ -302,6 +302,8 @@ int main(int argc, char **argv)
 	usage();
         return 1;
     }
+
+    rdoff_init();
 
     argv++, argc--;
 

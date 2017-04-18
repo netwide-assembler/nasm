@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,10 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-#include "compiler.h"
-
-#include <stdio.h>
-#include <stdlib.h>
+#include "rdfutils.h"
 #include "segtab.h"
 
 struct segtabnode {
@@ -76,7 +73,7 @@ static void descend_tree_add(struct segtabnode **node,
     struct segtabnode *n;
 
     if (*node == NULL) {
-        *node = malloc(sizeof(**node));
+        *node = nasm_malloc(sizeof(**node));
         if (!*node) {
             fprintf(stderr, "segment table: out of memory\n");
             exit(1);
@@ -149,7 +146,7 @@ static void freenode(struct segtabnode *n)
         return;
     freenode(n->left);
     freenode(n->right);
-    free(n);
+    nasm_free(n);
 }
 
 void done_seglocations(segtab * root)

@@ -26,24 +26,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-!addincludedir "${objdir}/nsis"
-!addincludedir "${srcdir}/nsis"
+!addincludedir "${objdir}\nsis"
+!addincludedir "${srcdir}\nsis"
 !include "version.nsh"
-!include /nonfatal "arch.nsh"
-!include /nonfatal "x64.nsh"
+!include "arch.nsh"
 
 !define PRODUCT_NAME "Netwide Assembler"
 !define PRODUCT_SHORT_NAME "nasm"
 !define PACKAGE_NAME "${PRODUCT_NAME} ${VERSION}"
 !define PACKAGE_SHORT_NAME "${PRODUCT_SHORT_NAME}-${VERSION}"
 
-SetCompressor lzma
+SetCompressor /solid lzma
+
+!if "${NSIS_PACKEDVERSION}" >= 0x3000000
+Unicode true
+!endif
 
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_MUI
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
 !define MULTIUSER_INSTALLMODE_INSTDIR "NASM"
-!include "MultiUser.nsh"
+!include "NASMMultiUser.nsh"
 
 !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MULTIUSER_INSTALLMODEPAGE_INTERFACE
@@ -53,7 +56,7 @@ SetCompressor lzma
 
 ;Name and file
 Name "${PACKAGE_NAME}"
-OutFile "${objdir}/${PACKAGE_SHORT_NAME}-installer-${ARCH}.exe"
+OutFile "${objdir}\${PACKAGE_SHORT_NAME}-installer-${ARCH}.exe"
 
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT_SHORT_NAME}" ""
@@ -70,8 +73,8 @@ Var CmdFailed
 ;--------------------------------
 ;Interface Settings
 Caption "${PACKAGE_SHORT_NAME} installation"
-Icon "${srcdir}/nsis/nasm.ico"
-UninstallIcon "${srcdir}/nsis/nasm-un.ico"
+Icon "${srcdir}\nsis\nasm.ico"
+UninstallIcon "${srcdir}\nsis\nasm-un.ico"
 
 !define MUI_ABORTWARNING
 
@@ -101,10 +104,10 @@ UninstallIcon "${srcdir}/nsis/nasm-un.ico"
 Section "NASM" SecNasm
     Sectionin RO
     SetOutPath "$INSTDIR"
-    File "${srcdir}/LICENSE"
-    File "${objdir}/nasm.exe"
-    File "${objdir}/ndisasm.exe"
-    File "${srcdir}/nsis/nasm.ico"
+    File "${srcdir}\LICENSE"
+    File "${objdir}\nasm.exe"
+    File "${objdir}\ndisasm.exe"
+    File "${srcdir}\nsis\nasm.ico"
 
     ;Store installation folder
     WriteRegStr HKCU "Software\${PRODUCT_SHORT_NAME}" "" $INSTDIR
@@ -140,27 +143,27 @@ skip:
 SectionEnd
 
 Section "RDOFF" SecRdoff
-    File "${objdir}/rdoff/ldrdf.exe"
-    File "${objdir}/rdoff/rdf2bin.exe"
-    File "${objdir}/rdoff/rdf2com.exe"
-    File "${objdir}/rdoff/rdf2ith.exe"
-    File "${objdir}/rdoff/rdf2ihx.exe"
-    File "${objdir}/rdoff/rdf2srec.exe"
-    File "${objdir}/rdoff/rdfdump.exe"
-    File "${objdir}/rdoff/rdflib.exe"
+    File "${objdir}\rdoff\ldrdf.exe"
+    File "${objdir}\rdoff\rdf2bin.exe"
+    File "${objdir}\rdoff\rdf2com.exe"
+    File "${objdir}\rdoff\rdf2ith.exe"
+    File "${objdir}\rdoff\rdf2ihx.exe"
+    File "${objdir}\rdoff\rdf2srec.exe"
+    File "${objdir}\rdoff\rdfdump.exe"
+    File "${objdir}\rdoff\rdflib.exe"
 SectionEnd
 
 Section "Manual" SecManual
     SetOutPath "$INSTDIR"
-    File "${objdir}/doc/nasmdoc.pdf"
+    File "${objdir}\doc\nasmdoc.pdf"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Manual.lnk" "$INSTDIR\nasmdoc.pdf"
 SectionEnd
 
 Section "VS8 integration" SecVS8
     CreateDirectory "$INSTDIR\VSrules"
     SetOutPath "$INSTDIR\VSrules"
-    File "${srcdir}/contrib/VSrules/nasm.README"
-    File "${srcdir}/contrib/VSrules/nasm.rules"
+    File "${srcdir}\contrib\VSrules\nasm.README"
+    File "${srcdir}\contrib\VSrules\nasm.rules"
 SectionEnd
 
 ;--------------------------------
@@ -229,14 +232,8 @@ SectionEnd
 ;
 ; MUI requires this hooks
 Function .onInit
+    SetRegView ${BITS}
     !insertmacro MULTIUSER_INIT
-    ${If} ${RunningX64}
-        SetRegView 64
-	${EnableX64FSRedirection}
-        StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCT_SHORT_NAME}"
-    ${Else}
-        StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_SHORT_NAME}"
-    ${EndIf}
 FunctionEnd
 
 Function un.onInit

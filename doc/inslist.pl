@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -36,10 +36,6 @@
 # inslist.pl   produce inslist.src
 #
 
-# Opcode prefixes which need their own opcode tables
-# LONGER PREFIXES FIRST!
-@disasm_prefixes = qw(0F24 0F25 0F38 0F3A 0F7A 0FA6 0FA7 0F);
-
 print STDERR "Reading insns.dat...\n";
 
 @args   = ();
@@ -57,9 +53,9 @@ foreach $arg ( @ARGV ) {
 }
 
 $fname = "../insns.dat" unless $fname = $args[0];
-open (F, $fname) || die "unable to open $fname";
+open (F, '<', $fname) || die "unable to open $fname";
 print STDERR "Writing inslist.src...\n";
-open S, ">inslist.src";
+open S, '>', 'inslist.src';
 $line = 0;
 $insns = 0;
 while (<F>) {
@@ -82,13 +78,27 @@ while (<F>) {
 
   $entry[1] =~ s/ignore//;
   $entry[1] =~ s/void//;
-  $entry[3] =~ s/ignore//;
-  $entry[3] =~ s/,SB//;
-  $entry[3] =~ s/,SM//;
-  $entry[3] =~ s/,SM2//;
-  $entry[3] =~ s/,SQ//;
-  $entry[3] =~ s/,AR2//;
-  printf S "\\c %-16s %-24s %s\n",$entry[0],$entry[1],$entry[3];
+
+  my @flags = split(/,/, $entry[3]);
+  my @nflags;
+  undef $isavx512;
+  undef @avx512fl;
+  for my $fl (@flags) {
+      next if ($fl =~ /^(ignore|SB|SM|SM2|SQ|AR2|FUTURE)$/);
+
+      if ($fl =~ /^AVX512(.*)$/) {
+	  $isavx512 = 1;
+	  push(@avx512fl, $1) unless ($1 eq '');
+      } else {
+	  push(@nflags,$fl);
+      }
+  }
+
+  if ($isavx512) {
+      unshift(@nflags, "AVX512".join('/', @avx512fl));
+  }
+
+  printf S "\\c %-16s %-24s %s\n",$entry[0],$entry[1], join(',', @nflags);
   $insns++;
 }
 print S "\n";

@@ -49,6 +49,7 @@
  * 1700 - Visual Studio 2012
  * 1800 - Visual Studio 2013
  * 1900 - Visual Studio 2015
+ * 1910 - Visual Studio 2017
  */
 
 #ifndef NASM_CONFIG_MSVC_H
@@ -112,9 +113,14 @@
 /* Define to 1 if you have the `_fullpath' function. */
 #define HAVE__FULLPATH 1
 
-/* Define to 1 if you have the `stat' function. */
-#define HAVE_STAT 1
-#define stat _stati64
+/* Define to 1 if the system has the type `struct _stati64'. */
+#define HAVE_STRUCT__STATI64
+
+/* Define to 1 if you have the `_stati64' function. */
+#define HAVE__STATI64 1
+
+/* Define to 1 if you have the `_fstati64' function. */
+#define HAVE__FSTATI64 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #if _MSC_VER >= 1800

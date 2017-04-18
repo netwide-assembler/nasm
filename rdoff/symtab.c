@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,13 +31,13 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * symtab.c     Routines to maintain and manipulate a symbol table
  *
  *   These routines donated to the NASM effort by Graeme Defty.
  */
 
-#include "compiler.h"
+#include "rdfutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ void *symtabNew(void)
 {
     symtab mytab;
 
-    mytab = (symtabTab *) calloc(SYMTABSIZE, sizeof(symtabNode *));
+    mytab = (symtabTab *) nasm_calloc(SYMTABSIZE, sizeof(symtabNode *));
     if (mytab == NULL) {
         fprintf(stderr, "symtab: out of memory\n");
         exit(3);
@@ -86,11 +86,11 @@ void symtabDone(void *stab)
 
         for (this = (*mytab)[i]; this; this = next) {
             next = this->next;
-            free(this);
+            nasm_free(this);
         }
 
     }
-    free(*mytab);
+    nasm_free(*mytab);
 }
 
 /* ------------------------------------- */
@@ -100,7 +100,7 @@ void symtabInsert(void *stab, symtabEnt * ent)
     symtabNode *node;
     int slot;
 
-    node = malloc(sizeof(symtabNode));
+    node = nasm_malloc(sizeof(symtabNode));
     if (node == NULL) {
         fprintf(stderr, "symtab: out of memory\n");
         exit(3);

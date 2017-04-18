@@ -43,7 +43,7 @@ my($what, $in, $out) = @ARGV;
 #
 # Read pptok.dat
 #
-open(IN, "< $in") or die "$0: cannot open: $in\n";
+open(IN, '<', $in) or die "$0: cannot open: $in\n";
 while (defined($line = <IN>)) {
     $line =~ s/\r?\n$//;	# Remove trailing \r\n or \n
     $line =~ s/^\s+//;		# Remove leading whitespace
@@ -86,7 +86,7 @@ foreach $ct (@cctok) {
 $first_uncond = $pptok[0];
 @pptok = (@cptok, @pptok);
 
-open(OUT, "> $out") or die "$0: cannot open: $out\n";
+open(OUT, '>', $out) or die "$0: cannot open: $out\n";
 
 #
 # Output pptok.h

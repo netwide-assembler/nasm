@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -61,7 +61,7 @@ rdfmodule *rdfload(const char *filename)
     char *hdr;
     rdfheaderrec *r;
 
-    f = malloc(sizeof(rdfmodule));
+    f = nasm_malloc(sizeof(rdfmodule));
     if (f == NULL) {
         rdf_errno = RDF_ERR_NOMEM;
         return NULL;
@@ -69,32 +69,32 @@ rdfmodule *rdfload(const char *filename)
 
     f->symtab = symtabNew();
     if (!f->symtab) {
-        free(f);
+        nasm_free(f);
         rdf_errno = RDF_ERR_NOMEM;
         return NULL;
     }
 
     /* open the file */
     if (rdfopen(&(f->f), filename)) {
-        free(f);
+        nasm_free(f);
         return NULL;
     }
 
     /* read in text and data segments, and header */
 
-    f->t = malloc(f->f.seg[0].length);
-    f->d = malloc(f->f.seg[1].length);  /* BSS seg allocated later */
-    hdr = malloc(f->f.header_len);
+    f->t = nasm_malloc(f->f.seg[0].length);
+    f->d = nasm_malloc(f->f.seg[1].length);  /* BSS seg allocated later */
+    hdr = nasm_malloc(f->f.header_len);
 
     if (!f->t || !f->d || !hdr) {
         rdf_errno = RDF_ERR_NOMEM;
         rdfclose(&f->f);
         if (f->t)
-            free(f->t);
+            nasm_free(f->t);
         if (f->d)
-            free(f->d);
-        free(f);
-        free(hdr);
+            nasm_free(f->d);
+        nasm_free(f);
+        nasm_free(hdr);
         return NULL;
     }
 
@@ -102,10 +102,10 @@ rdfmodule *rdfload(const char *filename)
         rdfloadseg(&f->f, RDOFF_CODE, f->t) ||
         rdfloadseg(&f->f, RDOFF_DATA, f->d)) {
         rdfclose(&f->f);
-        free(f->t);
-        free(f->d);
-        free(f);
-        free(hdr);
+        nasm_free(f->t);
+        nasm_free(f->d);
+        nasm_free(f);
+        nasm_free(hdr);
         return NULL;
     }
 
@@ -118,12 +118,12 @@ rdfmodule *rdfload(const char *filename)
             bsslength += r->b.amount;
     }
 
-    f->b = malloc(bsslength);
+    f->b = nasm_malloc(bsslength);
     if (bsslength && (!f->b)) {
-        free(f->t);
-        free(f->d);
-        free(f);
-        free(hdr);
+        nasm_free(f->t);
+        nasm_free(f->d);
+        nasm_free(f);
+        nasm_free(hdr);
         rdf_errno = RDF_ERR_NOMEM;
         return NULL;
     }
@@ -195,7 +195,7 @@ int rdf_relocate(rdfmodule * m)
                                       e.segment == 1 ? m->datarel :     /* 1 -> data */
                                       m->bssrel);       /* 2 -> bss  */
             e.flags = 0;
-            e.name = malloc(strlen(r->e.label) + 1);
+            e.name = nasm_malloc(strlen(r->e.label) + 1);
             if (!e.name)
                 return 1;
 

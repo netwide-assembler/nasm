@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -36,56 +36,65 @@
 # Format the documentation as PostScript
 #
 
+use File::Spec;
+
 require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
-
-use Fcntl;
+require 'findfont.ph';		# Find fonts in the system
 
 #
-# PostScript configurables; these values are also available to the
-# PostScript code itself
+# Document formatting parameters
 #
 %psconf = (
-	   pagewidth => 595,    # Page width in PostScript points
-	   pageheight => 792,	# Page height in PostScript points
-	   lmarg => 100,	# Left margin in PostScript points
-	   rmarg => 50,		# Right margin in PostScript points
-	   topmarg => 100,	# Top margin in PostScript points
-	   botmarg => 100,	# Bottom margin in PostScript points
-	   plmarg => 50,	# Page number position relative to left margin
-	   prmarg => 0,		# Page number position relative to right margin
-	   pymarg => 50,	# Page number position relative to bot margin
-	   startcopyright => 75, # How much above the bottom margin is the
-	                         # copyright notice stuff
-	   bulladj => 12,	# How much to indent a bullet paragraph
-	   tocind => 12,	# TOC indentation per level
-	   tocpnz => 24,	# Width of TOC page number only zone
-	   tocdots => 8,	# Spacing between TOC dots
-	   idxspace => 24,	# Minimum space between index title and pg#
-	   idxindent => 24,	# How much to indent a subindex entry
-	   idxgutter => 24,	# Space between index columns
-	   idxcolumns => 2,	# Number of index columns
-	   );
+    pagewidth => 595,    # Page width in PostScript points
+    pageheight => 792,	# Page height in PostScript points
+    lmarg => 72*1.25,	# Left margin in PostScript points
+    rmarg => 72,		# Right margin in PostScript points
+    topmarg => 72,	# Top margin in PostScript points
+    botmarg => 72,	# Bottom margin in PostScript points
+    plmarg => 72*0.25,	# Page number position relative to left margin
+    prmarg => 0,		# Page number position relative to right margin
+    pymarg => 24,	# Page number position relative to bot margin
+    startcopyright => 75, # How much above the bottom margin is the
+    # copyright notice stuff
+    bulladj => 12,	# How much to indent a bullet/indented paragraph
+    tocind => 12,	# TOC indentation per level
+    tocpnz => 24,	# Width of TOC page number only zone
+    tocdots => 8,	# Spacing between TOC dots
+    idxspace => 24,	# Minimum space between index title and pg#
+    idxindent => 24,	# How much to indent a subindex entry
+    idxgutter => 24,	# Space between index columns
+    idxcolumns => 2,	# Number of index columns
+
+    paraskip => 6,		# Space between paragraphs
+    chapstart => 30,		# Space before a chapter heading
+    chapskip => 24,		# Space after a chapter heading
+    tocskip => 6,		# Space between TOC entries
+    );
 
 %psbool = (
-	   colorlinks => 0,	# Set links in blue rather than black
-	   );
+    colorlinks => 0,	# Set links in blue rather than black
+    );
 
 # Known paper sizes
 %papersizes = (
-	       'a5'     => [421, 595], # ISO half paper size
-	       'b5'     => [501, 709], # ISO small paper size
-	       'a4'     => [595, 842], # ISO standard paper size
-	       'letter' => [612, 792], # US common paper size
-	       'pa4'    => [595, 792], # Compromise ("portable a4")
-	       'b4'     => [709,1002], # ISO intermediate paper size
-	       'legal'  => [612,1008], # US intermediate paper size
-	       'a3'     => [842,1190], # ISO double paper size
-	       '11x17'  => [792,1224], # US double paper size
-	       );
+    'a5'     => [421, 595], # ISO half paper size
+    'b5'     => [501, 709], # ISO small paper size
+    'a4'     => [595, 842], # ISO standard paper size
+    'letter' => [612, 792], # US common paper size
+    'pa4'    => [595, 792], # Compromise ("portable a4")
+    'b4'     => [709,1002], # ISO intermediate paper size
+    'legal'  => [612,1008], # US intermediate paper size
+    'a3'     => [842,1190], # ISO double paper size
+    '11x17'  => [792,1224], # US double paper size
+    );
 
 # Canned header file
 $headps = 'head.ps';
+
+# Directories
+$fontsdir = 'fonts';
+$epsdir   = File::Spec->curdir();
 
 #
 # Parse the command line
@@ -102,9 +111,13 @@ while ( $arg = shift(@ARGV) ) {
 	    $psbool{$parm} = $true;
 	} elsif ( $true && defined($psconf{$parm}) ) {
 	    $psconf{$parm} = shift(@ARGV);
-	} elsif ( $parm =~ /^(title|subtitle|year|author|license)$/ ) {
+	} elsif ( $true && $parm =~ /^(title|subtitle|year|author|license)$/ ) {
 	    $metadata{$parm} = shift(@ARGV);
-	} elsif ( $parm eq 'headps' ) {
+	} elsif ( $true && $parm eq 'fontsdir' ) {
+	    $fontsdir = shift(@ARGV);
+	} elsif ( $true && $parm eq 'epsdir' ) {
+	    $epsdir = shift(@ARGV);
+	} elsif ( $true && $parm eq 'headps' ) {
 	    $headps = shift(@ARGV);
 	} else {
 	    die "$0: Unknown option: $arg\n";
@@ -114,20 +127,44 @@ while ( $arg = shift(@ARGV) ) {
     }
 }
 
-#
-# Document formatting parameters
-#
-$paraskip = 6;			# Space between paragraphs
-$chapstart = 30;		# Space before a chapter heading
-$chapskip = 24;			# Space after a chapter heading
-$tocskip = 6;			# Space between TOC entries
-
 # Configure post-paragraph skips for each kind of paragraph
-%skiparray = ('chap' => $chapskip, 'appn' => $chapstart,
-	      'head' => $paraskip, 'subh' => $paraskip,
-	      'norm' => $paraskip, 'bull' => $paraskip,
-	      'code' => $paraskip, 'toc0' => $tocskip,
-	      'toc1' => $tocskip,  'toc2' => $tocskip);
+# (subject to modification above)
+%skiparray = ('chap' => $psconf{chapskip},
+	      'appn' => $psconf{chapstart},
+	      'head' => $psconf{paraskip},
+	      'subh' => $psconf{paraskip},
+	      'norm' => $psconf{paraskip},
+	      'bull' => $psconf{paraskip},
+	      'indt' => $psconf{paraskip},
+	      'bquo' => $psconf{paraskip},
+	      'code' => $psconf{paraskip},
+	      'toc0' => $psconf{tocskip},
+	      'toc1' => $psconf{tocskip},
+	      'toc2' => $psconf{tocskip}
+    );
+
+# Read the font metrics files, and update @AllFonts
+# Get the list of fonts used
+%ps_all_fonts = ();
+%ps_font_subst = ();
+foreach my $fset ( @AllFonts ) {
+    foreach my $font ( @{$fset->{fonts}} ) {
+	my $fdata;
+	my @flist = @{$font->[1]};
+	my $fname;
+	while (defined($fname = shift(@flist))) {
+	    $fdata = findfont($fname);
+	    last if (defined($fdata));
+	}
+	if (!defined($fdata)) {
+	    die "$infile: no font found of: ".
+		join(', ', @{$font->[1]}), "\n".
+		"Install one of these fonts or update psfonts.ph\n";
+	}
+	$ps_all_fonts{$fname} = $fdata;
+	$font->[1] = $fdata;
+    }
+}
 
 # Custom encoding vector.  This is basically the same as
 # ISOLatin1Encoding (a level 2 feature, so we dont want to use it),
@@ -190,10 +227,11 @@ for ( $i = 0 ; $i < 256 ; $i++ ) {
 # a cleaner representation
 #
 if ( defined($input) ) {
-    sysopen(PARAS, $input, O_RDONLY) or
+    open(PARAS, '<', $input) or
 	die "$0: cannot open $input: $!\n";
 } else {
-    open(PARAS, "<&STDIN") or die "$0: $!\n";
+    # stdin
+    open(PARAS, '<-') or die "$0: $!\n";
 }
 while ( defined($line = <PARAS>) ) {
     chomp $line;
@@ -332,12 +370,12 @@ sub ps_flow_lines($$$@) {
 	} else {
 	    my $ew = ps_width($$e[1], $fontset->{fonts}->[$$e[0]][1],
 			      \@NASMEncoding) *
-		($fontset->{fonts}->[$$e[0]][0]/1000);
+		($fontset->{fonts}->[$$e[0]][0]);
 	    my $sp = $$e[1];
 	    $sp =~ tr/[^ ]//d;	# Delete nonspaces
 	    my $esw = ps_width($sp, $fontset->{fonts}->[$$e[0]][1],
 			       \@NASMEncoding) *
-		($fontset->{fonts}->[$$e[0]][0]/1000);
+		($fontset->{fonts}->[$$e[0]][0]);
 
 	    if ( ($w+$ew) - $ps_space_squeeze*($sw+$esw) > $wid ) {
 		# Begin new line
@@ -396,13 +434,13 @@ sub ps_flow_lines($$$@) {
 			my $xew = ps_width($$le[1],
 					   $fontset->{fonts}->[$$le[0]][1],
 					   \@NASMEncoding) *
-			    ($fontset->{fonts}->[$$le[0]][0]/1000);
+			    ($fontset->{fonts}->[$$le[0]][0]);
 			my $xsp = $$le[1];
 			$xsp =~ tr/[^ ]//d;	# Delete nonspaces
 			my $xsw = ps_width($xsp,
 					   $fontset->{fonts}->[$$le[0]][1],
 					   \@NASMEncoding) *
-			    ($fontset->{fonts}->[$$le[0]][0]/1000);
+			    ($fontset->{fonts}->[$$le[0]][0]);
 			$w += $xew;  $sw += $xsw;
 		    }
 		}
@@ -700,8 +738,10 @@ sub ps_break_lines($$) {
 	    $ls[0]->[0]->[2] = [[$AuxStr,$secn]];
 	} elsif ( $ptype eq 'norm' ) {
 	    @ls = ps_flow_lines($linewidth, \%BodyFont, $ptype, @data);
-	} elsif ( $ptype eq 'bull' ) {
+	} elsif ( $ptype =~ /^(bull|indt)$/ ) {
 	    @ls = ps_flow_lines($bullwidth, \%BodyFont, $ptype, @data);
+	} elsif ( $ptypq eq 'bquo' ) {
+	    @ls = ps_flow_lines($bullwidth, \%BquoFont, $ptype, @data);
 	} elsif ( $ptype =~ /^toc/ ) {
 	    unless ( $xtype =~/^\S+ :([^:]*):(.*)$/ ) {
 		die "Bad para";
@@ -711,7 +751,7 @@ sub ps_break_lines($$) {
 	    my $ntoc = substr($ptype,3,1)+0;
 	    my $refwidth = ps_width($refname, $BodyFont{fonts}->[0][1],
 				    \@NASMEncoding) *
-		($BodyFont{fonts}->[0][0]/1000);
+		($BodyFont{fonts}->[0][0]);
 
 	    @ls = ps_flow_lines($linewidth-$ntoc*$psconf{tocind}-
 				$psconf{tocpnz}-$refwidth,
@@ -789,6 +829,8 @@ sub ps_break_pages($$) {
 	    # First line of a new chapter heading.  Start a new page.
 	    undef $columnstart;
 	    $curpage++ if ( $curypos > 0 || defined($columnstart) );
+	    # Always start on an odd page
+	    $curpage |= 1;
 	    $curypos = $chapstart;
 	} elsif ( defined($columnstart) && $$linfo[0] !~ /$columnregexp/o ) {
 	    undef $columnstart;
@@ -956,13 +998,13 @@ ps_break_pages($startofindex, $nlines);
 #
 push(@bookmarks, ['index', 0, 'Index']);
 
-# Get the list of fonts used
-%ps_all_fonts = ();
-foreach $fset ( @AllFonts ) {
-    foreach $font ( @{$fset->{fonts}} ) {
-	$ps_all_fonts{$font->[1]->{name}}++;
-    }
+@all_fonts_lst = sort(keys(%ps_all_fonts));
+$all_fonts_str = join(' ', @all_fonts_lst);
+@need_fonts_lst = ();
+foreach my $f (@all_fonts_lst) {
+    push(@need_fonts_lst, $f); # unless (defined($ps_all_fonts{$f}->{file}));
 }
+$need_fonts_str = join(' ', @need_fonts_lst);
 
 # Emit the PostScript DSC header
 print "%!PS-Adobe-3.0\n";
@@ -970,8 +1012,8 @@ print "%%Pages: $curpage\n";
 print "%%BoundingBox: 0 0 ", $psconf{pagewidth}, ' ', $psconf{pageheight}, "\n";
 print "%%Creator: (NASM psflow.pl)\n";
 print "%%DocumentData: Clean7Bit\n";
-print "%%DocumentFonts: ", join(' ', keys(%ps_all_fonts)), "\n";
-print "%%DocumentNeededFonts: ", join(' ', keys(%ps_all_fonts)), "\n";
+print "%%DocumentFonts: $all_fonts_str\n";
+print "%%DocumentNeededFonts: $need_fonts_str\n";
 print "%%Orientation: Portrait\n";
 print "%%PageOrder: Ascend\n";
 print "%%EndComments\n";
@@ -984,6 +1026,17 @@ foreach $c ( keys(%psconf) ) {
 foreach $c ( keys(%psbool) ) {
     print "/$c ", ($psbool{$c}?'true':'false'), " def\n";
 }
+
+# Embed font data, if applicable
+#foreach my $f (@all_fonts_lst) {
+#    my $fontfile = $all_ps_fonts{$f}->{file};
+#    if (defined($fontfile)) {
+#	if (open(my $fh, '<', $fontfile)) {
+#	    print vector <$fh>;
+#	    close($fh);
+#	}
+#    }
+#}
 
 # Emit custom encoding vector
 $zstr = '/NASMEncoding [ ';
@@ -1009,7 +1062,7 @@ print "  definefont pop\n";
 print "} def\n";
 
 # Emit fontset definitions
-foreach $font ( keys(%ps_all_fonts) ) {
+foreach $font ( sort(keys(%ps_all_fonts)) ) {
     print '/',$font,'-NASM /',$font," nasmenc\n";
 }
 
@@ -1093,10 +1146,10 @@ $ps_page = 0;
 # Title page
 ps_start_page();
 $title = $metadata{'title'} || '';
-$title =~ s/ \- / $charcode{'emdash'} /;
+$title =~ s/ \- / $charcode{'endash'} /;
 
 $subtitle = $metadata{'subtitle'} || '';
-$subtitle =~ s/ \- / $charcode{'emdash'} /;
+$subtitle =~ s/ \- / $charcode{'endash'} /;
 
 # Print title
 print "/ti ", ps_string($title), " def\n";
@@ -1116,7 +1169,7 @@ print "sti show\n";
 # and DocumentFonts in the header of the EPSF and add those to the
 # global header.
 if ( defined($metadata{epslogo}) &&
-     sysopen(EPS, $metadata{epslogo}, O_RDONLY) ) {
+     open(EPS, '<', File::Spec->catfile($epsdir, $metadata{epslogo})) ) {
     my @eps = ();
     my ($bbllx,$bblly,$bburx,$bbury) = (undef,undef,undef,undef);
     my $line;
@@ -1181,10 +1234,10 @@ ps_start_page();
 foreach $line ( @pslines ) {
     my $linfo = $line->[0];
 
-    if ( $$linfo[4] != $curpage ) {
+    while ( $$linfo[4] > $curpage ) {
         ps_end_page($curpage > 2);
         ps_start_page();
-        $curpage = $$linfo[4];
+        $curpage++;
     }
 
     print '[';

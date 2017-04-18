@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -47,6 +47,14 @@
 #   Bullets the paragraph. Rest of paragraph is indented to cope. In
 #   HTML, consecutive groups of bulleted paragraphs become unordered
 #   lists.
+#
+# Indent \>
+#   Indents the paragraph equvalently to a bulleted paragraph.  In HTML,
+#   an indented paragraph following a bulleted paragraph is included in the
+#   same list item.
+#
+# Blockquote \q
+#   Marks the paragraph as a block quote.
 #
 # Emphasis \e{foobar}
 #   produces `_foobar_' in text and italics in HTML, PS, RTF
@@ -120,11 +128,17 @@
 use File::Spec;
 
 @include_path = ();
+$out_path = File::Spec->curdir();
 
-$diag = 1, shift @ARGV if $ARGV[0] eq "-d";
-while ($ARGV[0] =~ /^\-[Ii](.*)$/) {
-    push(@include_path, $1);
-    shift;
+while ($ARGV[0] =~ /^-/) {
+    my $opt = shift @ARGV;
+    if ($opt eq '-d') {
+	$diag = 1;
+    } elsif ($opt =~ /^\-[Ii](.*)$/) {
+	push(@include_path, $1);
+    } elsif ($opt =~ /^\-[Oo](.*)$/) {
+	$out_path = $1;
+    }
 }
 
 $out_format = shift(@ARGV);
@@ -161,6 +175,9 @@ print "Sorting index tags...";
 &indexsort;
 print "done.\n";
 
+# Make output directory if necessary
+mkdir($out_path);
+
 if ($diag) {
   print "Writing index-diagnostic file...";
   &indexdiag;
@@ -175,14 +192,6 @@ if ($out_format eq 'txt') {
 } elsif ($out_format eq 'html') {
     print "Producing HTML output: ";
     &write_html;
-    print "done.\n";
-} elsif ($out_format eq 'texi') {
-    print "Producing Texinfo output: ";
-    &write_texi;
-    print "done.\n";
-} elsif ($out_format eq 'hlp') {
-    print "Producing WinHelp output: ";
-    &write_hlp;
     print "done.\n";
 } elsif ($out_format eq 'dip') {
     print "Producing Documentation Intermediate Paragraphs: ";
@@ -353,11 +362,16 @@ sub got_para {
     die "badly formed metadata: $_\n" if !/^\\M\{([^\}]*)}\{([^\}]*)\}\s*$/;
     $metadata{$1} = $2;
     return; # avoid word-by-word code
-  } elsif (/^\\b/) {
-    # A bulleted paragraph. Strip off the initial \b and let the
-    # word-by-word code take care of the rest.
-    $pflags = "bull";
-    s/^\\b\s*//;
+  } elsif (/^\\([b\>q])/) {
+    # An indented paragraph of some sort. Strip off the initial \b and let the
+      # word-by-word code take care of the rest.
+      my %ipar = (
+	  'b' => 'bull',
+	  '>' => 'indt',
+	  'q' => 'bquo',
+	  );
+    $pflags = $ipar{$1};
+    s/^\\[b\>q]\s*//;
   } else {
     # A normal paragraph. Just set $pflags: the word-by-word code does
     # the rest.
@@ -373,7 +387,8 @@ sub got_para {
   #
   # Type codes are:
   # "n " for normal
-  # "da" for a dash
+  # "da" for an en dash
+  # "dm" for an em desh
   # "es" for first emphasised word in emphasised bit
   # "e " for emphasised in mid-emphasised-bit
   # "ee" for last emphasised word in emphasised bit
@@ -469,8 +484,10 @@ sub got_para {
       $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
-      if ($w eq "-") {
-        push @$pname,"da";
+      if ($w eq '--') {
+	  push @$pname, 'dm';
+      } elsif ($w eq '-') {
+        push @$pname, 'da';
       } else {
         push @$pname,"n $w";
       }
@@ -541,7 +558,7 @@ sub indexsort {
 
 sub indexdiag {
   my $iitem,$ientry,$w,$ww,$foo,$node;
-  open INDEXDIAG,">index.diag";
+  open INDEXDIAG, '>', File::Spec->catfile($out_path, 'index.diag');
   foreach $iitem (@itags) {
     $ientry = $idxmap{$iitem};
     print INDEXDIAG "<$iitem> ";
@@ -593,11 +610,11 @@ sub write_txt {
 
   # Open file.
   print "writing file...";
-  open TEXT,">nasmdoc.txt";
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc.txt');
   select TEXT;
 
   # Preamble.
-  $title = "The Netwide Assembler: NASM";
+  $title = $metadata{'title'};
   $spaces = ' ' x ((75-(length $title))/2);
   ($underscore = $title) =~ s/./=/g;
   print "$spaces$title\n$spaces$underscore\n";
@@ -648,13 +665,13 @@ sub write_txt {
         warn "code line longer than 68 chars: $i\n" if length $i > 68;
         print ' 'x7, $i, "\n";
       }
-    } elsif ($ptype eq "bull" || $ptype eq "norm") {
-      # Ordinary paragraph, optionally bulleted. We wrap, with ragged
+    } elsif ($ptype =~ /^(norm|bull|indt|bquo)$/) {
+      # Ordinary paragraph, optionally indented. We wrap, with ragged
       # 75-char right margin and either 7 or 11 char left margin
       # depending on bullets.
-      if ($ptype eq "bull") {
-        $line = ' 'x7 . '(*) ';
-	$next = ' 'x11;
+      if ($ptype ne 'norm') {
+	  $line = ' 'x7 . (($ptype eq 'bull') ? '(*) ' : '    ');
+	  $next = ' 'x11;
       } else {
         $line = $next = ' 'x7;
       }
@@ -700,7 +717,7 @@ sub word_txt {
     return $w;
   } elsif ($wtype eq "sp") {
     return ' ';
-  } elsif ($wtype eq "da") {
+  } elsif ($wtype eq 'da' || $wtype eq 'dm') {
     return '-';
   } elsif ($wmajt eq "c" || $wtype eq "wc") {
     return "`${w}'";
@@ -724,84 +741,113 @@ sub write_html {
   # Write contents file. Just the preamble, then a menu of links to the
   # separate chapter files and the nodes therein.
   print "writing contents file...";
-  open TEXT,">nasmdoc0.html";
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc0.html');
   select TEXT;
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
-  print "targetting the Intel x86 series of processors, with portable source.\n";
-  print "<p>";
+  print "targetting the Intel x86 series of processors, with portable source.\n</p>";
+  print "<div class=\"toc\">\n";
+  $level = 0;
   for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
-    if ($tstruct_level{$node} == 1) {
+      my $lastlevel = $level;
+      while ($tstruct_level{$node} < $level) {
+	  print "</li>\n</ol>\n";
+	  $level--;
+      }
+      while ($tstruct_level{$node} > $level) {
+	  print "<ol class=\"toc", ++$level, "\">\n";
+      }
+      if ($lastlevel >= $level) {
+	  print "</li>\n";
+      }
+      $level = $tstruct_level{$node};
+      if ($level == 1) {
       # Invent a file name.
-      ($number = lc($xrefnodes{$node})) =~ s/.*-//;
-      $fname="nasmdocx.html";
-      substr($fname,8 - length $number, length $number) = $number;
-      $html_fnames{$node} = $fname;
-      $link = $fname;
-      print "<p>";
-    } else {
-      # Use the preceding filename plus a marker point.
-      $link = $fname . "#$xrefnodes{$node}";
-    }
-    $title = "$node: ";
-    $pname = $tstruct_pname{$node};
-    foreach $i (@$pname) {
-      $ww = &word_html($i);
-      $title .= $ww unless $ww eq "\001";
-    }
-    print "<a href=\"$link\">$title</a><br>\n";
+	  ($number = lc($xrefnodes{$node})) =~ s/.*-//;
+	  $fname="nasmdocx.html";
+	  substr($fname,8 - length $number, length $number) = $number;
+	  $html_fnames{$node} = $fname;
+	  $link = $fname;
+      } else {
+	  # Use the preceding filename plus a marker point.
+	  $link = $fname . "#$xrefnodes{$node}";
+      }
+      $title = '';
+      $pname = $tstruct_pname{$node};
+      foreach $i (@$pname) {
+	  $ww = &word_html($i);
+	  $title .= $ww unless $ww eq "\001";
+      }
+      print "<li class=\"toc${level}\">\n";
+      print "<span class=\"node\">$node: </span><a href=\"$link\">$title</a>\n";
   }
-  print "<p><a href=\"nasmdoci.html\">Index</a>\n";
-  print "</body></html>\n";
+  while ($level--) {
+      print "</li>\n</ol>\n";
+  }
+  print "</div>\n";
+  print "</body>\n";
+  print "</html>\n";
   select STDOUT;
   close TEXT;
 
   # Open a null file, to ensure output (eg random &html_jumppoints calls)
   # goes _somewhere_.
   print "writing chapter files...";
-  open TEXT,">/dev/null";
+  open TEXT, '>', File::Spec->devnull();
   select TEXT;
-  $html_lastf = '';
+  undef $html_nav_last;
+  undef $html_nav_next;
 
   $in_list = 0;
+  $in_bquo = 0;
+  $in_code = 0;
 
   for ($para = 0; $para <= $#pnames; $para++) {
     $pname = $pnames[$para];
     $pflags = $pflags[$para];
     $ptype = substr($pflags,0,4);
 
-    $in_list = 0, print "</ul>\n" if $in_list && $ptype ne "bull";
+    $in_code = 0, print "</pre>\n" if ($in_code && $ptype ne 'code');
+    $in_list = 0, print "</li>\n</ul>\n" if ($in_list && $ptype !~ /^(bull|indt|code)$/);
+    $in_bquo = 0, print "</blockquote>\n" if ($in_bquo && $ptype ne 'bquo');
+
+    $endtag = '';
+
     if ($ptype eq "chap") {
       # Chapter heading. Begin a new file.
       $pflags =~ /chap (.*) :(.*)/;
       $title = "Chapter $1: ";
       $xref = $2;
-      &html_jumppoints; print "</body></html>\n"; select STDOUT; close TEXT;
-      $html_lastf = $html_fnames{$chapternode};
+      &html_postamble; select STDOUT; close TEXT;
+      $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
-      $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
-      open TEXT,">$html_fnames{$chapternode}"; select TEXT; &html_preamble(1);
+      $html_nav_next = $tstruct_mnext{$chapternode};
+      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      select TEXT;
+      &html_preamble(1);
       foreach $i (@$pname) {
         $ww = &word_html($i);
         $title .= $ww unless $ww eq "\001";
       }
-      $h = "<h2><a name=\"$xref\">$title</a></h2>\n";
+      $h = "<h2 id=\"$xref\">$title</h2>\n";
       print $h; print FULL $h;
     } elsif ($ptype eq "appn") {
       # Appendix heading. Begin a new file.
       $pflags =~ /appn (.*) :(.*)/;
       $title = "Appendix $1: ";
       $xref = $2;
-      &html_jumppoints; print "</body></html>\n"; select STDOUT; close TEXT;
-      $html_lastf = $html_fnames{$chapternode};
+      &html_postamble; select STDOUT; close TEXT;
+      $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
-      $html_nextf = $html_fnames{$tstruct_mnext{$chapternode}};
-      open TEXT,">$html_fnames{$chapternode}"; select TEXT; &html_preamble(1);
+      $html_nav_next = $tstruct_mnext{$chapternode};
+      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      select TEXT;
+      &html_preamble(1);
       foreach $i (@$pname) {
         $ww = &word_html($i);
         $title .= $ww unless $ww eq "\001";
       }
-      print "<h2><a name=\"$xref\">$title</a></h2>\n";
+      print "<h2 id=\"$xref\">$title</h2>\n";
     } elsif ($ptype eq "head" || $ptype eq "subh") {
       # Heading or subheading.
       $pflags =~ /.... (.*) :(.*)/;
@@ -812,27 +858,45 @@ sub write_html {
         $ww = &word_html($i);
         $title .= $ww unless $ww eq "\001";
       }
-      print "<$hdr><a name=\"$xref\">$title</a></$hdr>\n";
+      print "<$hdr id=\"$xref\">$title</$hdr>\n";
     } elsif ($ptype eq "code") {
-      # Code paragraph.
-      print "<p><pre>\n";
-      foreach $i (@$pname) {
-	$w = $i;
-	$w =~ s/&/&amp;/g;
-	$w =~ s/</&lt;/g;
-	$w =~ s/>/&gt;/g;
-        print $w, "\n";
-      }
-      print "</pre>\n";
-    } elsif ($ptype eq "bull" || $ptype eq "norm") {
-      # Ordinary paragraph, optionally bulleted. We wrap, with ragged
-      # 75-char right margin and either 7 or 11 char left margin
-      # depending on bullets.
-      if ($ptype eq "bull") {
-        $in_list = 1, print "<ul>\n" unless $in_list;
-        $line = '<li>';
+	# Code paragraph.
+	$in_code = 1, print "<pre>" unless $in_code;
+	print "\n";
+	foreach $i (@$pname) {
+	    $w = $i;
+	    $w =~ s/&/&amp;/g;
+	    $w =~ s/</&lt;/g;
+	    $w =~ s/>/&gt;/g;
+	    print $w, "\n";
+	}
+    } elsif ($ptype =~ /^(norm|bull|indt|bquo)$/) {
+      # Ordinary paragraph, optionally indented.
+	if ($ptype eq 'bull') {
+	    if (!$in_list) {
+		$in_list = 1;
+		print "<ul>\n";
+	    } else {
+		print "</li>\n";
+	    }
+	    print "<li>\n";
+	    $line = '<p>';
+	    $endtag = '</p>';
+      } elsif ($ptype eq 'indt') {
+	  if (!$in_list) {
+	      $in_list = 1;
+	      print "<ul>\n";
+	      print "<li class=\"indt\">\n"; # This is such a hack
+	  }
+	  $line = '<p>';
+	  $endtag = '</p>';
+      } elsif ($ptype eq 'bquo') {
+	  $in_bquo = 1, print "<blockquote>\n" unless $in_bquo;
+	  $line = '<p>';
+	  $endtag = '</p>';
       } else {
         $line = '<p>';
+        $endtag = '</p>';
       }
       @a = @$pname;
       $wd = $wprev = '';
@@ -853,42 +917,65 @@ sub write_html {
       } while ($w ne '' && $w ne undef);
       if ($line =~ /\S/) {
 	$line =~ s/\s*$//; # trim trailing spaces
-	print "$line\n";
+	print $line;
       }
+      print $endtag, "\n";
     }
   }
 
   # Close whichever file was open.
-  &html_jumppoints;
-  print "</body></html>\n";
-  select STDOUT;
-  close TEXT;
+  print "</pre>\n" if ($in_code);
+  print "</li>\n</ul>\n" if ($in_list);
+  print "</blockquote>\n" if ($in_bquo);
+  &html_postamble; select STDOUT; close TEXT;
 
   print "\n   writing index file...";
-  open TEXT,">nasmdoci.html";
+  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoci.html');
   select TEXT;
   &html_preamble(0);
-  print "<p align=center><a href=\"nasmdoc0.html\">Contents</a>\n";
-  print "<p>";
+  print "<h2 class=\"index\">Index</h2>\n";
+  print "<ul class=\"index\">\n";
   &html_index;
-  print "<p align=center><a href=\"nasmdoc0.html\">Contents</a>\n";
-  print "</body></html>\n";
+  print "</ul>\n</body>\n</html>\n";
   select STDOUT;
   close TEXT;
 }
 
 sub html_preamble {
-  print "<html><head><title>NASM Manual</title></head>\n";
-  print "<body><h1 align=center>The Netwide Assembler: NASM</h1>\n\n";
-  &html_jumppoints if $_[0];
+    print "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n";
+    print "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" ";
+    print "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n";
+    print "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
+    print "<head>\n";
+    print "<title>", $metadata{'title'}, "</title>\n";
+    print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+    print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+    print "</head>\n";
+    print "<body>\n";
+
+    # Navigation bar
+    print "<ul class=\"navbar\">\n";
+    if (defined($html_nav_last)) {
+	my $lastf = $html_fnames{$html_nav_last};
+	print "<li class=\"first\"><a class=\"prev\" href=\"$lastf\">$html_nav_last</a></li>\n";
+    }
+    if (defined($html_nav_next)) {
+	my $nextf = $html_fnames{$html_nav_next};
+	print "<li><a class=\"next\" href=\"$nextf\">$html_nav_next</a></li>\n";
+    }
+    print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
+    print "<li class=\"last\"><a class=\"index\" href=\"nasmdoci.html\">Index</a></li>\n";
+    print "</ul>\n";
+
+    print "<div class=\"title\">\n";
+    print "<h1>", $metadata{'title'}, "</h1>\n";
+    print '<span class="subtitle">', $metadata{'subtitle'}, "</span>\n";
+    print "</div>\n";
 }
 
-sub html_jumppoints {
-  print "<p align=center>";
-  print "<a href=\"$html_nextf\">Next Chapter</a> |\n" if $html_nextf;
-  print "<a href=\"$html_lastf\">Previous Chapter</a> |\n" if $html_lastf;
-  print "<a href=\"nasmdoc0.html\">Contents</a> |\n";
-  print "<a href=\"nasmdoci.html\">Index</a>\n";
+sub html_postamble {
+    # Closing tags
+    print "</body>\n</html>\n";
 }
 
 sub html_index {
@@ -906,6 +993,7 @@ sub html_index {
       push @a, "sp", "x $xrefnodes{$node}", "n $node", "xe$xrefnodes{$node}";
       $sep = 1;
     }
+    print "<li class=\"index\">\n";
     $line = '';
     do {
       do { $w = &word_html(shift @a) } while $w eq "\001"; # nasty hack
@@ -924,9 +1012,9 @@ sub html_index {
     } while ($w ne '' && $w ne undef);
     if ($line =~ /\S/) {
       $line =~ s/\s*$//; # trim trailing spaces
-      print "$line\n";
+      print $line, "\n";
     }
-    print "<br>\n";
+    print "</li>\n";
   }
 }
 
@@ -950,9 +1038,11 @@ sub word_html {
   } elsif ($wtype eq "sp") {
     return ' ';
   } elsif ($wtype eq "da") {
-    return '-'; # sadly, en-dashes are non-standard in HTML
+    return '&ndash;';
+  } elsif ($wtype eq "dm") {
+    return '&mdash;';
   } elsif ($wmajt eq "c" || $wtype eq "wc") {
-    return $pfx . "<code><nobr>${w}</nobr></code>" . $sfx;
+    return $pfx . "<code>${w}</code>" . $sfx;
   } elsif ($wtype eq "es") {
     return "<em>${w}";
   } elsif ($wtype eq "ee") {
@@ -980,517 +1070,6 @@ sub word_html {
   }
 }
 
-sub write_texi {
-  # This is called from the top level, so I won't bother using
-  # my or local.
-
-  # Open file.
-  print "writing file...";
-  open TEXT,">nasmdoc.texi";
-  select TEXT;
-
-  # Preamble.
-  print "\\input texinfo   \@c -*-texinfo-*-\n";
-  print "\@c \%**start of header\n";
-  print "\@setfilename ",$metadata{'infofile'},".info\n";
-  print "\@dircategory ",$metadata{'category'},"\n";
-  print "\@direntry\n";
-  printf "* %-28s %s.\n",
-  sprintf('%s: (%s).', $metadata{'infoname'}, $metadata{'infofile'}),
-  $metadata{'infotitle'};
-  print "\@end direntry\n";
-  print "\@settitle ", $metadata{'title'},"\n";
-  print "\@setchapternewpage odd\n";
-  print "\@c \%**end of header\n";
-  print "\n";
-  print "\@ifinfo\n";
-  print $metadata{'summary'}, "\n";
-  print "\n";
-  print "Copyright ",$metadata{'year'}," ",$metadata{'author'},"\n";
-  print "\n";
-  print $metadata{'license'}, "\n";
-  print "\@end ifinfo\n";
-  print "\n";
-  print "\@titlepage\n";
-  $title = $metadata{'title'};
-  $title =~ s/ - / --- /g;
-  print "\@title ${title}\n";
-  print "\@author ",$metadata{'author'},"\n";
-  print "\n";
-  print "\@page\n";
-  print "\@vskip 0pt plus 1filll\n";
-  print "Copyright \@copyright{} ",$metadata{'year'},' ',$metadata{'author'},"\n";
-  print "\n";
-  print $metadata{'license'}, "\n";
-  print "\@end titlepage\n";
-  print "\n";
-  print "\@node Top, $tstruct_next{'Top'}, (dir), (dir)\n";
-  print "\@top ",$metadata{'infotitle'},"\n";
-  print "\n";
-  print "\@ifinfo\n";
-  print $metadata{'summary'}, "\n";
-  print "\@end ifinfo\n";
-
-  $node = "Top";
-
-  $bulleting = 0;
-  for ($para = 0; $para <= $#pnames; $para++) {
-    $pname = $pnames[$para];
-    $pflags = $pflags[$para];
-    $ptype = substr($pflags,0,4);
-
-    $bulleting = 0, print "\@end itemize\n" if $bulleting && $ptype ne "bull";
-    print "\n"; # always one of these before a new paragraph
-
-    if ($ptype eq "chap") {
-      # Chapter heading. Begin a new node.
-      &texi_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /chap (.*) :(.*)/;
-      $node = "Chapter $1";
-      $title = "Chapter $1: ";
-      foreach $i (@$pname) {
-        $ww = &word_texi($i);
-        $title .= $ww unless $ww eq "\001";
-      }
-      print "\@node $node, $tstruct_next{$node}, $tstruct_prev{$node},";
-      print " $tstruct_up{$node}\n\@unnumbered $title\n";
-    } elsif ($ptype eq "appn") {
-      # Appendix heading. Begin a new node.
-      &texi_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /appn (.*) :(.*)/;
-      $node = "Appendix $1";
-      $title = "Appendix $1: ";
-      foreach $i (@$pname) {
-        $ww = &word_texi($i);
-        $title .= $ww unless $ww eq "\001";
-      }
-      print "\@node $node, $tstruct_next{$node}, $tstruct_prev{$node},";
-      print " $tstruct_up{$node}\n\@unnumbered $title\n";
-    } elsif ($ptype eq "head" || $ptype eq "subh") {
-      # Heading or subheading. Begin a new node.
-      &texi_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /.... (.*) :(.*)/;
-      $node = "Section $1";
-      $title = "$1. ";
-      foreach $i (@$pname) {
-        $ww = &word_texi($i);
-        $title .= $ww unless $ww eq "\001";
-      }
-      print "\@node $node, $tstruct_next{$node}, $tstruct_prev{$node},";
-      print " $tstruct_up{$node}\n";
-      $hdr = ($ptype eq "subh" ? "\@unnumberedsubsec" : "\@unnumberedsec");
-      print "$hdr $title\n";
-    } elsif ($ptype eq "code") {
-      # Code paragraph. Surround with @example / @end example.
-      print "\@example\n";
-      foreach $i (@$pname) {
-        warn "code line longer than 68 chars: $i\n" if length $i > 68;
-	$i =~ s/\@/\@\@/g;
-	$i =~ s/\{/\@\{/g;
-	$i =~ s/\}/\@\}/g;
-        print "$i\n";
-      }
-      print "\@end example\n";
-    } elsif ($ptype eq "bull" || $ptype eq "norm") {
-      # Ordinary paragraph, optionally bulleted. We wrap, FWIW.
-      if ($ptype eq "bull") {
-        $bulleting = 1, print "\@itemize \@bullet\n" if !$bulleting;
-	print "\@item\n";
-      }
-      $line = '';
-      @a = @$pname;
-      $wd = $wprev = '';
-      do {
-        do { $w = &word_texi(shift @a); } while $w eq "\001"; # hack
-	$wd .= $wprev;
-	if ($wprev =~ /-$/ || $w eq ' ' || $w eq '' || $w eq undef) {
-	  if (length ($line . $wd) > 75) {
-	    $line =~ s/\s*$//; # trim trailing spaces
-	    print "$line\n";
-	    $line = '';
-	    $wd =~ s/^\s*//; # trim leading spaces
-	  }
-	  $line .= $wd;
-	  $wd = '';
-	}
-	$wprev = $w;
-      } while ($w ne '' && $w ne undef);
-      if ($line =~ /\S/) {
-	$line =~ s/\s*$//; # trim trailing spaces
-	print "$line\n";
-      }
-    }
-  }
-
-  # Write index.
-  &texi_index;
-
-  # Close file.
-  print "\n\@contents\n\@bye\n";
-  select STDOUT;
-  close TEXT;
-}
-
-# Side effect of this procedure: update global `texiwdlen' to be the length
-# in chars of the formatted version of the word.
-sub word_texi {
-  my ($w) = @_;
-  my $wtype, $wmajt;
-
-  return undef if $w eq '' || $w eq undef;
-  $wtype = substr($w,0,2);
-  $wmajt = substr($wtype,0,1);
-  $w = substr($w,2);
-  $wlen = length $w;
-  $w =~ s/\@/\@\@/g;
-  $w =~ s/\{/\@\{/g;
-  $w =~ s/\}/\@\}/g;
-  $w =~ s/<.*>// if $wmajt eq "w"; # remove web links
-  substr($w,0,1) =~ tr/a-z/A-Z/, $capital = 0 if $capital;
-  if ($wmajt eq "n" || $wtype eq "e " || $wtype eq "w ") {
-    $texiwdlen = $wlen;
-    return $w;
-  } elsif ($wtype eq "sp") {
-    $texiwdlen = 1;
-    return ' ';
-  } elsif ($wtype eq "da") {
-    $texiwdlen = 2;
-    return '--';
-  } elsif ($wmajt eq "c" || $wtype eq "wc") {
-    $texiwdlen = 2 + $wlen;
-    return "\@code\{$w\}";
-  } elsif ($wtype eq "es") {
-    $texiwdlen = 1 + $wlen;
-    return "\@emph\{${w}";
-  } elsif ($wtype eq "ee") {
-    $texiwdlen = 1 + $wlen;
-    return "${w}\}";
-  } elsif ($wtype eq "eo") {
-    $texiwdlen = 2 + $wlen;
-    return "\@emph\{${w}\}";
-  } elsif ($wtype eq "x ") {
-    $texiwdlen = 0; # we don't need it in this case
-    $capital = 1; # hack
-    return "\@ref\{";
-  } elsif ($wtype eq "xe") {
-    $texiwdlen = 0; # we don't need it in this case
-    return "\}";
-  } elsif ($wmajt eq "i") {
-    $texiwdlen = 0; # we don't need it in this case
-    return "\001";
-  } else {
-    die "panic in word_texi: $wtype$w\n";
-  }
-}
-
-sub texi_menu {
-  my ($topitem) = @_;
-  my $item, $i, $mpname, $title, $wd;
-
-  $item = $tstruct_next{$topitem};
-  print "\@menu\n";
-  while ($item) {
-    $title = "";
-    $mpname = $tstruct_pname{$item};
-    foreach $i (@$mpname) {
-      $wd = &word_texi($i);
-      $title .= $wd unless $wd eq "\001";
-    }
-    print "* ${item}:: $title\n";
-    $item = $tstruct_mnext{$item};
-  }
-  print "* Index::\n" if $topitem eq "Top";
-  print "\@end menu\n";
-}
-
-sub texi_index {
-  my $itag, $ientry, @a, $wd, $item, $len;
-  my $subnums = "123456789ABCDEFGHIJKLMNOPQRSTU" .
-                "VWXYZabcdefghijklmnopqrstuvwxyz";
-
-  print "\@ifinfo\n\@node Index, , $FIXMElastnode, Top\n";
-  print "\@unnumbered Index\n\n\@menu\n";
-
-  foreach $itag (@itags) {
-    $ientry = $idxmap{$itag};
-    @a = @$ientry;
-    $item = '';
-    $len = 0;
-    foreach $i (@a) {
-      $wd = &word_texi($i);
-      $item .= $wd, $len += $texiwdlen unless $wd eq "\001";
-    }
-    $i = 0;
-    foreach $node (@nodes) {
-      next if !$idxnodes{$node,$itag};
-      printf "* %s%s (%s): %s.\n",
-          $item, " " x (40-$len), substr($subnums,$i++,1), $node;
-    }
-  }
-  print "\@end menu\n\@end ifinfo\n";
-}
-
-sub write_hlp {
-  # This is called from the top level, so I won't bother using
-  # my or local.
-
-  # Build the index-tag text forms.
-  print "building index entries...";
-  @hlp_index = map {
-                 my $i,$ww;
-		 my $ientry = $idxmap{$_};
-		 my $title = "";
-                 foreach $i (@$ientry) {
-		   $ww = &word_hlp($i,0);
-		   $title .= $ww unless $ww eq "\001";
-		 }
-		 $title;
-               } @itags;
-
-  # Write the HPJ project-description file.
-  print "writing .hpj file...";
-  open HPJ,">nasmdoc.hpj";
-  print HPJ "[OPTIONS]\ncompress=true\n";
-  print HPJ "title=NASM: The Netwide Assembler\noldkeyphrase=no\n\n";
-  print HPJ "[FILES]\nnasmdoc.rtf\n\n";
-  print HPJ "[CONFIG]\n";
-  print HPJ 'CreateButton("btn_up", "&Up",'.
-            ' "JumpContents(`nasmdoc.hlp'."'".')")';
-  print HPJ "\nBrowseButtons()\n";
-  close HPJ;
-
-  # Open file.
-  print "\n   writing .rtf file...";
-  open TEXT,">nasmdoc.rtf";
-  select TEXT;
-
-  # Preamble.
-  print "{\\rtf1\\ansi{\\fonttbl\n";
-  print "\\f0\\froman Times New Roman;\\f1\\fmodern Courier New;\n";
-  print "\\f2\\fswiss Arial;\\f3\\ftech Wingdings}\\deff0\n";
-  print "#{\\footnote Top}\n";
-  print "\${\\footnote Contents}\n";
-  print "+{\\footnote browse:00000}\n";
-  print "!{\\footnote DisableButton(\"btn_up\")}\n";
-  print "\\keepn\\f2\\b\\fs30\\sb0\n";
-  print "NASM: The Netwide Assembler\n";
-  print "\\par\\pard\\plain\\sb120\n";
-  print "This file documents NASM, the Netwide Assembler: an assembler \n";
-  print "targetting the Intel x86 series of processors, with portable source.\n";
-
-  $node = "Top";
-  $browse = 0;
-
-  $newpar = "\\par\\sb120\n";
-  for ($para = 0; $para <= $#pnames; $para++) {
-    $pname = $pnames[$para];
-    $pflags = $pflags[$para];
-    $ptype = substr($pflags,0,4);
-
-    print $newpar;
-    $newpar = "\\par\\sb120\n";
-
-    if ($ptype eq "chap") {
-      # Chapter heading. Begin a new node.
-      &hlp_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /chap (.*) :(.*)/;
-      $node = "Chapter $1";
-      $title = $footnotetitle = "Chapter $1: ";
-      foreach $i (@$pname) {
-        $ww = &word_hlp($i,1);
-	$title .= $ww, $footnotetitle .= &word_hlp($i,0) unless $ww eq "\001";
-      }
-      print "\\page\n";
-      printf "#{\\footnote %s}\n", &hlp_sectkw($node);
-      print "\${\\footnote $footnotetitle}\n";
-      printf "+{\\footnote browse:%05d}\n", ++$browse;
-      printf "!{\\footnote ChangeButtonBinding(\"btn_up\"," .
-             "\"JumpId(\`nasmdoc.hlp',\`%s')\");\n",
-	     &hlp_sectkw($tstruct_up{$node});
-      print "EnableButton(\"btn_up\")}\n";
-      &hlp_keywords($node);
-      print "\\keepn\\f2\\b\\fs30\\sb60\\sa60\n";
-      print "$title\n";
-      $newpar = "\\par\\pard\\plain\\sb120\n";
-    } elsif ($ptype eq "appn") {
-      # Appendix heading. Begin a new node.
-      &hlp_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /appn (.*) :(.*)/;
-      $node = "Appendix $1";
-      $title = $footnotetitle = "Appendix $1: ";
-      foreach $i (@$pname) {
-        $ww = &word_hlp($i,1);
-	$title .= $ww, $footnotetitle .= &word_hlp($i,0) unless $ww eq "\001";
-      }
-      print "\\page\n";
-      printf "#{\\footnote %s}\n", &hlp_sectkw($node);
-      print "\${\\footnote $footnotetitle}\n";
-      printf "+{\\footnote browse:%05d}\n", ++$browse;
-      printf "!{\\footnote ChangeButtonBinding(\"btn_up\"," .
-             "\"JumpId(\`nasmdoc.hlp',\`%s')\");\n",
-	     &hlp_sectkw($tstruct_up{$node});
-      print "EnableButton(\"btn_up\")}\n";
-      &hlp_keywords($node);
-      print "\\keepn\\f2\\b\\fs30\\sb60\\sa60\n";
-      print "$title\n";
-      $newpar = "\\par\\pard\\plain\\sb120\n";
-    } elsif ($ptype eq "head" || $ptype eq "subh") {
-      # Heading or subheading. Begin a new node.
-      &hlp_menu($node)
-        if $tstruct_level{$tstruct_next{$node}} > $tstruct_level{$node};
-      $pflags =~ /.... (.*) :(.*)/;
-      $node = "Section $1";
-      $title = $footnotetitle = "$1. ";
-      foreach $i (@$pname) {
-        $ww = &word_hlp($i,1);
-	$title .= $ww, $footnotetitle .= &word_hlp($i,0) unless $ww eq "\001";
-      }
-      print "\\page\n";
-      printf "#{\\footnote %s}\n", &hlp_sectkw($node);
-      print "\${\\footnote $footnotetitle}\n";
-      printf "+{\\footnote browse:%05d}\n", ++$browse;
-      printf "!{\\footnote ChangeButtonBinding(\"btn_up\"," .
-             "\"JumpId(\`nasmdoc.hlp',\`%s')\");\n",
-	     &hlp_sectkw($tstruct_up{$node});
-      print "EnableButton(\"btn_up\")}\n";
-      &hlp_keywords($node);
-      print "\\keepn\\f2\\b\\fs30\\sb60\\sa60\n";
-      print "$title\n";
-      $newpar = "\\par\\pard\\plain\\sb120\n";
-    } elsif ($ptype eq "code") {
-      # Code paragraph.
-      print "\\keep\\f1\\sb120\n";
-      foreach $i (@$pname) {
-	my $x = $i;
-        warn "code line longer than 68 chars: $i\n" if length $i > 68;
-	$x =~ s/\\/\\\\/g;
-	$x =~ s/\{/\\\{/g;
-	$x =~ s/\}/\\\}/g;
-        print "$x\\par\\sb0\n";
-      }
-      $newpar = "\\pard\\f0\\sb120\n";
-    } elsif ($ptype eq "bull" || $ptype eq "norm") {
-      # Ordinary paragraph, optionally bulleted. We wrap, FWIW.
-      if ($ptype eq "bull") {
-        print "\\tx360\\li360\\fi-360{\\f3\\'9F}\\tab\n";
-	$newpar = "\\par\\pard\\sb120\n";
-      } else {
-	$newpar = "\\par\\sb120\n";
-      }
-      $line = '';
-      @a = @$pname;
-      $wd = $wprev = '';
-      do {
-        do { $w = &word_hlp((shift @a),1); } while $w eq "\001"; # hack
-	$wd .= $wprev;
-	if ($w eq ' ' || $w eq '' || $w eq undef) {
-	  if (length ($line . $wd) > 75) {
-	    $line =~ s/\s*$//; # trim trailing spaces
-	    print "$line \n"; # and put one back
-	    $line = '';
-	    $wd =~ s/^\s*//; # trim leading spaces
-	  }
-	  $line .= $wd;
-	  $wd = '';
-	}
-	$wprev = $w;
-      } while ($w ne '' && $w ne undef);
-      if ($line =~ /\S/) {
-	$line =~ s/\s*$//; # trim trailing spaces
-	print "$line\n";
-      }
-    }
-  }
-
-  # Close file.
-  print "\\page}\n";
-  select STDOUT;
-  close TEXT;
-}
-
-sub word_hlp {
-  my ($w, $docode) = @_;
-  my $wtype, $wmajt;
-
-  return undef if $w eq '' || $w eq undef;
-  $wtype = substr($w,0,2);
-  $wmajt = substr($wtype,0,1);
-  $w = substr($w,2);
-  $w =~ s/\\/\\\\/g;
-  $w =~ s/\{/\\\{/g;
-  $w =~ s/\}/\\\}/g;
-  $w =~ s/<.*>// if $wmajt eq "w"; # remove web links
-  substr($w,0,length($w)-1) =~ s/-/\\\'AD/g if $wmajt ne "x"; #nonbreakhyphens
-  if ($wmajt eq "n" || $wtype eq "e " || $wtype eq "w ") {
-    return $w;
-  } elsif ($wtype eq "sp") {
-    return ' ';
-  } elsif ($wtype eq "da") {
-    return "\\'96";
-  } elsif ($wmajt eq "c" || $wtype eq "wc") {
-    $w =~ s/ /\\\'A0/g; # make spaces non-breaking
-    return $docode ? "{\\f1 ${w}}" : $w;
-  } elsif ($wtype eq "es") {
-    return "{\\i ${w}";
-  } elsif ($wtype eq "ee") {
-    return "${w}}";
-  } elsif ($wtype eq "eo") {
-    return "{\\i ${w}}";
-  } elsif ($wtype eq "x ") {
-    return "{\\uldb ";
-  } elsif ($wtype eq "xe") {
-    $w = &hlp_sectkw($w);
-    return "}{\\v ${w}}";
-  } elsif ($wmajt eq "i") {
-    return "\001";
-  } else {
-    die "panic in word_hlp: $wtype$w\n";
-  }
-}
-
-sub hlp_menu {
-  my ($topitem) = @_;
-  my $item, $kword, $i, $mpname, $title;
-
-  $item = $tstruct_next{$topitem};
-  print "\\li360\\fi-360\n";
-  while ($item) {
-    $title = "";
-    $mpname = $tstruct_pname{$item};
-    foreach $i (@$mpname) {
-      $ww = &word_hlp($i, 0);
-      $title .= $ww unless $ww eq "\001";
-    }
-    $kword = &hlp_sectkw($item);
-    print "{\\uldb ${item}: $title}{\\v $kword}\\par\\sb0\n";
-    $item = $tstruct_mnext{$item};
-  }
-  print "\\pard\\sb120\n";
-}
-
-sub hlp_sectkw {
-  my ($node) = @_;
-  $node =~ tr/A-Z/a-z/;
-  $node =~ tr/- ./___/;
-  $node;
-}
-
-sub hlp_keywords {
-  my ($node) = @_;
-  my $pfx = "K{\\footnote ";
-  my $done = 0;
-  foreach $i (0..$#itags) {
-    (print $pfx,$hlp_index[$i]), $pfx = ";\n", $done++
-        if $idxnodes{$node,$itags[$i]};
-  }
-  print "}\n" if $done;
-}
-
 # Make tree structures. $tstruct_* is top-level and global.
 sub add_item {
   my ($item, $level) = @_;
@@ -1514,7 +1093,7 @@ sub add_item {
 # by future backends, instead of putting it all in the same script.
 #
 sub write_dip {
-  open(PARAS, "> nasmdoc.dip");
+  open(PARAS, '>', File::Spec->catfile($out_path, 'nasmdoc.dip'));
   foreach $k (sort(keys(%metadata))) {
       print PARAS 'meta :', $k, "\n";
       print PARAS $metadata{$k},"\n";

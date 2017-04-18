@@ -60,14 +60,14 @@ sub do_transform($$) {
     return $l;
 }
 
-@file_list = ();
+undef %line_lists;
 
 $first = 1;
 $first_file = $ARGV[0];
 die unless (defined($first_file));
 
 foreach $file (@ARGV) {
-    open(FILE, "< $file\0") or die;
+    open(FILE, '<', $file) or die;
 
     # First, read the syntax hints
     %hints = %def_hints;
@@ -80,13 +80,16 @@ foreach $file (@ARGV) {
     # Read and process the file
     seek(FILE,0,0);
     @lines = ();
-    $processing = 0;
+    undef $processing;
     while (defined($line = <FILE>)) {
 	chomp $line;
-	if ($processing) {
-	    if ($line eq '#-- End File Lists --#') {
+	if (defined($processing)) {
+	    if ($line =~ /^\#-- End ([^-\#]*[^-#\s]) --\#$/) {
+		if ($1 ne $processing) {
+		    die "$0: $file: Mismatched Begin and End lines (\"$processing\" -> \"$1\"\n";
+		}
 		push(@lines, $line."\n");
-		$processing = 0;
+		undef $processing;
 	    } elsif ($first) {
 		my $xl = $line;
 		my $oe = "\Q$hints{'object-ending'}";
@@ -96,16 +99,24 @@ foreach $file (@ARGV) {
 		$xl =~ s/${oe}(\s|$)/\x01$1/g;
 		$xl =~ s/${ps}/\x02/g;
 		$xl =~ s/${cn}$/\x03/;
-		push(@file_list, $xl);
+		push(@{$line_lists{$processing}}, $xl);
 		push(@lines, $line);
 	    }
 	} else {
 	    push(@lines, $line."\n");
-	    if ($line eq '#-- Begin File Lists --#') {
-		$processing = 1;
-		if (!$first) {
+	    if ($line =~ '#-- Begin ([^-\#]*[^-#\s]) --#') {
+		$processing = $1;
+		if ($first) {
+		    if (defined($line_lists{$processing})) {
+			die "$0: $file: Repeated Begin block: $processing\n";
+		    }
+		    $line_lists{$processing} = [];
+		} elsif (!$first) {
+		    if (!defined($line_lists{$processing})) {
+			die "$0: $file: Begin block without template\n";
+		    }
 		    push(@lines, "# Edit in $first_file, not here!\n");
-		    foreach $l (@file_list) {
+		    foreach $l (@{$line_lists{$processing}}) {
 			push(@lines, do_transform($l, \%hints)."\n");
 		    }
 		}
@@ -116,7 +127,7 @@ foreach $file (@ARGV) {
 
     # Write the file back out
     if (!$first) {
-	open(FILE, "> $file\0") or die;
+	open(FILE, '>', $file) or die;
 	print FILE @lines;
 	close(FILE);
     }

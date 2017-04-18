@@ -696,8 +696,6 @@ typedef struct insn { /* an instruction itself */
     int8_t          evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
-enum geninfo { GI_SWITCH };
-
 /* Instruction flags type: IF_* flags are defined in insns.h */
 typedef uint64_t iflags_t;
 
@@ -749,7 +747,7 @@ struct pragma {
     const char *facility_name;  /* Facility name exactly as entered by user */
     const char *opname;         /* First word after the facility name */
     const char *tail;           /* Anything after the operation */
-    enum directives opcode;     /* Operation as a D_ directives constant */
+    enum directive opcode;     /* Operation as a D_ directives constant */
 };
 
 /*
@@ -800,15 +798,6 @@ struct ofmt {
      * up internal parameters.
      */
     void (*init)(void);
-
-    /*
-     * This procedure is called to pass generic information to the
-     * object file.  The first parameter gives the information type
-     * (currently only command line switches)
-     * and the second parameter gives the value.  This function returns
-     * 1 if recognized, 0 if unrecognized
-     */
-    int (*setinfo)(enum geninfo type, char **string);
 
     /*
      * This is the modern output function, which gets passed
@@ -921,7 +910,7 @@ struct ofmt {
      *				  "invalid parameter to [*] directive"
      */
     enum directive_result
-    (*directive)(enum directives directive, char *value, int pass);
+    (*directive)(enum directive directive, char *value, int pass);
 
     /*
      * This procedure is called before anything else - even before

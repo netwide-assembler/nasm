@@ -5,6 +5,7 @@
 #
 
 use strict;
+use bytes;
 
 my %archnames = (
     0x01de => 'am33',
@@ -35,28 +36,28 @@ open(my $fh, '<', $file)
     or die "$0: cannot open file: $file: $!\n";
 
 read($fh, my $mz, 2);
-exit 0 if ($mz ne 'MZ');
+exit 1 if ($mz ne 'MZ');
 
 exit 0 unless (seek($fh, 0x3c, 0));
-exit 0 unless (read($fh, my $pe_offset, 1) == 1);
-$pe_offset = unpack("C", $pe_offset);
+exit 0 unless (read($fh, my $pe_offset, 4) == 4);
+$pe_offset = unpack("V", $pe_offset);
 
-exit 0 unless (seek($fh, $pe_offset, 0));
+exit 1 unless (seek($fh, $pe_offset, 0));
 read($fh, my $pe, 4);
-exit 0 unless ($pe eq "PE\0\0");
+exit 1 unless ($pe eq "PE\0\0");
 
-exit 0 unless (read($fh, my $arch, 2) == 2);
+exit 1 unless (read($fh, my $arch, 2) == 2);
 $arch = $archnames{unpack("v", $arch)};
 if (defined($arch)) {
     print "!define ARCH ${arch}\n";
 }
 
-exit 0 unless (seek($fh, 14, 1));
-exit 0 unless (read($fh, my $auxheaderlen, 2) == 2);
-exit 0 unless (unpack("v", $auxheaderlen) >= 2);
+exit 1 unless (seek($fh, 14, 1));
+exit 1 unless (read($fh, my $auxheaderlen, 2) == 2);
+exit 1 unless (unpack("v", $auxheaderlen) >= 2);
 
-exit 0 unless (seek($fh, 2, 1));
-exit 0 unless (read($fh, my $petype, 2) == 2);
+exit 1 unless (seek($fh, 2, 1));
+exit 1 unless (read($fh, my $petype, 2) == 2);
 $petype = unpack("v", $petype);
 if ($petype == 0x010b) {
     # It is a 32-bit PE32 file
@@ -68,6 +69,7 @@ if ($petype == 0x010b) {
     print "!define GLOBALINSTDIR \$PROGRAMFILES64\n";
 } else {
     # No idea...
+    exit 1;
 }
 
 close($fh);

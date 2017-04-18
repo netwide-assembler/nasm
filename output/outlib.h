@@ -40,9 +40,8 @@
 uint64_t realsize(enum out_type type, uint64_t size);
 
 /* Do-nothing versions of some output routines */
-int null_setinfo(enum geninfo type, char **string);
 enum directive_result
-null_directive(enum directives directive, char *value, int pass);
+null_directive(enum directive directive, char *value, int pass);
 void null_sectalign(int32_t seg, unsigned int value);
 
 /* Do-nothing versions of all the debug routines */

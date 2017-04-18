@@ -38,13 +38,16 @@ unset GIT_DIR
 git clone -s -l "$HERE" nasm
 rm -rf nasm/.git nasm/.gitignore
 
+# How to invoke make if makej is not set
+makej="${makej:-make}"
+
 # Create files which are in the release but automatically generated
 cd nasm
 ./autogen.sh
 ./configure --prefix=/usr/local
-make perlreq spec manpages
-make alldeps
-make distclean
+$makej perlreq spec manpages
+$makej alldeps
+$makej distclean
 cd ..
 
 # Clean up any previous attempt
@@ -63,8 +66,10 @@ mv nasm-"$version".tar.gz nasm-"$version".tar.bz2 nasm-"$version".tar.xz ..
 
 # Create zipfile (DOS convention: no prefix, convert file endings)
 cd nasm-"$version"
-zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip -x \*.ico	# Text files
-zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip -i \*.ico	# Binary files
+# Text files
+zip -9Dlr ../../nasm-"$version".zip * -x \*.jpg -x \*.zip -x \*.ico -x \*.png
+# Binary files
+zip -9Dgr ../../nasm-"$version".zip * -i \*.jpg -i \*.zip -i \*.ico -i \*.png	
 cd ..
 
 # Record what we have already generated
@@ -73,9 +78,9 @@ find nasm-"$version" -not -type d -print > main
 # Create documentation
 cd nasm-"$version"
 ./configure --prefix=/usr/local
-make doc
+$makej doc
 # Remove intermediate files.
-make cleaner
+$makej cleaner
 cd ..
 
 # Remove non-documentation
@@ -91,10 +96,9 @@ gzip  -9   nasm-"$version"-xdoc.tar
 mv nasm-"$version"-xdoc.tar.gz nasm-"$version"-xdoc.tar.bz2 nasm-"$version"-xdoc.tar.xz ..
 
 # Create doc zipfile (DOS convention: no prefix, convert file endings)
-# (Note: generating Win .hlp files requires additional tools)
 cd nasm-"$version"
-zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf -x \*.info\*
-zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf -i \*.info\*
+zip -9Dlr ../../nasm-"$version"-xdoc.zip doc -x \*.pdf -x \*.png
+zip -9Dgr ../../nasm-"$version"-xdoc.zip doc -i \*.pdf -i \*.png
 
 # Clean up
 cd ../..

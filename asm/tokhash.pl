@@ -55,7 +55,7 @@ my($output, $insns_dat, $regs_dat, $tokens_dat) = @ARGV;
 #
 # Read insns.dat
 #
-open(ID, "< ${insns_dat}") or die "$0: cannot open $insns_dat: $!\n";
+open(ID, '<', $insns_dat) or die "$0: cannot open $insns_dat: $!\n";
 while (defined($line = <ID>)) {
     if ($line =~ /^([A-Z0-9_]+)(|cc)\s/) {
 	$insn = $1.$2;
@@ -83,7 +83,7 @@ close(ID);
 #
 # Read regs.dat
 #
-open(RD, "< ${regs_dat}") or die "$0: cannot open $regs_dat: $!\n";
+open(RD, '<', $regs_dat) or die "$0: cannot open $regs_dat: $!\n";
 while (defined($line = <RD>)) {
     if ($line =~ /^([a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(\S*)/) {
 	$reg = $1;
@@ -126,7 +126,7 @@ close(RD);
 #
 # Read tokens.dat
 #
-open(TD, "< ${tokens_dat}") or die "$0: cannot open $tokens_dat: $!\n";
+open(TD, '<', $tokens_dat) or die "$0: cannot open $tokens_dat: $!\n";
 while (defined($line = <TD>)) {
     if ($line =~ /^\%\s+(.*)$/) {
 	$pattern = $1;

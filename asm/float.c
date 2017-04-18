@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -545,7 +545,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
                 mp = mult;
                 ms = (LIMB_BITS-1)-l;
 
-                twopwr = seendot ? twopwr-bits+l : l+1-bits;
+                twopwr += l+1-bits;
             }
 
             if (seendigit) {

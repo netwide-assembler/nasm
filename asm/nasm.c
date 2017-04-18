@@ -935,7 +935,6 @@ static bool process_arg(char *p, char *q, int pass)
                 }
 
                 switch (s) {
-
                 case OPT_PREFIX:
                 case OPT_POSTFIX:
                     {
@@ -959,8 +958,7 @@ static bool process_arg(char *p, char *q, int pass)
                                 strlcpy(lpostfix, param, POSTFIX_MAX);
                             break;
                         default:
-                            nasm_panic(ERR_NOFILE,
-                                       "internal error");
+                            panic();
                             break;
                         }
                         break;
@@ -977,9 +975,8 @@ static bool process_arg(char *p, char *q, int pass)
             }
 
         default:
-            if (!ofmt->setinfo(GI_SWITCH, &p))
-                nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                             "unrecognised option `-%c'", p[1]);
+            nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                       "unrecognised option `-%c'", p[1]);
             break;
         }
     } else if (pass == 2) {
@@ -1190,7 +1187,6 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     int i;
     int64_t offs;
     int pass_max;
-    int sb;
     uint64_t prev_offset_changed;
     unsigned int stall_count = 0; /* Make sure we make forward progress... */
 
@@ -1207,15 +1203,17 @@ static void assemble_file(char *fname, StrList **depend_ptr)
 
         def_label = passn > 1 ? redefine_label : define_label;
 
-        globalbits = sb = cmd_sb;   /* set 'bits' to command line default */
+        globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
 	    lfmt->init(listname);
+        } else if (passn == 1 && *listname) {
+            /* Remove the list file in case we die before the output pass */
+            remove(listname);
         }
         in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
-        location.segment = ofmt->section(NULL, pass2, &sb);
-        globalbits = sb;
+        location.segment = ofmt->section(NULL, pass2, &globalbits);
         if (passn > 1) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
@@ -1341,7 +1339,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
             } else {        /* instruction isn't an EQU */
 
                 if (pass1 == 1) {
-                    int64_t l = insn_size(location.segment, offs, sb,
+                    int64_t l = insn_size(location.segment, offs, globalbits,
                                           &output_ins);
                     l *= output_ins.times;
 
@@ -1421,7 +1419,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                      */
 
                 } else {
-                    offs += assemble(location.segment, offs, sb, &output_ins);
+                    offs += assemble(location.segment, offs, globalbits, &output_ins);
                     set_curr_offs(offs);
 
                 }
@@ -1586,9 +1584,12 @@ static bool warning_is_error(int severity)
 
 static bool skip_this_pass(int severity)
 {
-  /* See if it's a pass-specific warning which should be skipped. */
-
-    if ((severity & ERR_MASK) > ERR_WARNING)
+    /*
+     * See if it's a pass-specific error or warning which should be skipped.
+     * We cannot skip errors stronger than ERR_NONFATAL as by definition
+     * they cannot be resumed from.
+     */
+    if ((severity & ERR_MASK) > ERR_NONFATAL)
 	return false;
 
     /*
@@ -1654,6 +1655,9 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
      * pass1 or preprocessor warnings in the list file
      */
     lfmt->error(severity, pfx, msg);
+
+    if (skip_this_pass(severity))
+        return;
 
     if (severity & ERR_USAGE)
         want_usage = true;

@@ -191,52 +191,56 @@ static void process_size_override(insn *result, operand *op)
 }
 
 /*
- * when two or more decorators follow a register operand,
- * consecutive decorators are parsed here.
- * opmask and zeroing decorators can be placed in any order.
- * e.g. zmm1 {k2}{z} or zmm2 {z}{k3}
- * decorator(s) are placed at the end of an operand.
+ * Brace decorators are are parsed here.  opmask and zeroing
+ * decorators can be placed in any order.  e.g. zmm1 {k2}{z} or zmm2
+ * {z}{k3} decorator(s) are placed at the end of an operand.
  */
 static bool parse_braces(decoflags_t *decoflags)
 {
-    int i;
-    bool recover = false;
+    int i, j;
 
     i = tokval.t_type;
-    do {
-        if (i == TOKEN_OPMASK) {
+
+    while (true) {
+        switch (i) {
+        case TOKEN_OPMASK:
             if (*decoflags & OPMASK_MASK) {
-                nasm_error(ERR_NONFATAL, "opmask k%"PRIu64" is already set",
+                nasm_error(ERR_NONFATAL,
+                           "opmask k%"PRIu64" is already set",
                            *decoflags & OPMASK_MASK);
                 *decoflags &= ~OPMASK_MASK;
             }
             *decoflags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
-        } else if (i == TOKEN_DECORATOR) {
-            switch (tokval.t_integer) {
+            break;
+        case TOKEN_DECORATOR:
+            j = tokval.t_integer;
+            switch (j) {
             case BRC_Z:
-                /*
-                 * according to AVX512 spec, only zeroing/merging decorator
-                 * is supported with opmask
-                 */
-                *decoflags |= GEN_Z(0);
+                *decoflags |= Z_MASK;
+                break;
+            case BRC_1TO2:
+            case BRC_1TO4:
+            case BRC_1TO8:
+            case BRC_1TO16:
+                *decoflags |= BRDCAST_MASK | VAL_BRNUM(j - BRC_1TO2);
                 break;
             default:
-                nasm_error(ERR_NONFATAL, "{%s} is not an expected decorator",
-                                         tokval.t_charptr);
+                nasm_error(ERR_NONFATAL,
+                           "{%s} is not an expected decorator",
+                           tokval.t_charptr);
                 break;
             }
-        } else if (i == ',' || i == TOKEN_EOS){
             break;
-        } else {
-            nasm_error(ERR_NONFATAL, "only a series of valid decorators"
-                                     " expected");
-            recover = true;
-            break;
+        case ',':
+        case TOKEN_EOS:
+            return false;
+        default:
+            nasm_error(ERR_NONFATAL,
+                       "only a series of valid decorators expected");
+            return true;
         }
         i = stdscan(NULL, &tokval);
-    } while(1);
-
-    return recover;
+    }
 }
 
 static int parse_mref(operand *op, const expr *e)
@@ -550,6 +554,7 @@ restart_parse:
              */
             result->opcode          = I_RESB;
             result->operands        = 1;
+            nasm_zero(result->oprs);
             result->oprs[0].type    = IMMEDIATE;
             result->oprs[0].offset  = 0L;
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
@@ -975,25 +980,11 @@ is_expression:
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
-                if ((i == TOKEN_DECORATOR) || (i == TOKEN_OPMASK)) {
-                    /*
-                     * according to AVX512 spec, broacast or opmask decorator
-                     * is expected for memory reference operands
-                     */
-                    if (tokval.t_flag & TFLAG_BRDCAST) {
-                        brace_flags |= GEN_BRDCAST(0) |
-                                       VAL_BRNUM(tokval.t_integer - BRC_1TO2);
-                        i = stdscan(NULL, &tokval);
-                    } else if (i == TOKEN_OPMASK) {
-                        brace_flags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
-                        i = stdscan(NULL, &tokval);
-                    } else {
-                        nasm_error(ERR_NONFATAL, "broadcast or opmask "
-                                   "decorator expected inside braces");
-                        recover = true;
-                    }
+                if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
+                    /* parse opmask (and zeroing) after an operand */
+                    recover = parse_braces(&brace_flags);
+                    i = tokval.t_type;
                 }
-
                 if (i != 0 && i != ',') {
                     nasm_error(ERR_NONFATAL, "comma or end of line expected");
                     recover = true;

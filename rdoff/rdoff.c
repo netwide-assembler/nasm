@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -47,13 +47,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define RDOFF_UTILS
-
-#include "rdoff.h"
-
-#define newstr(str) strcpy(malloc(strlen(str) + 1),str)
-#define newstrcat(s1,s2) strcat(strcpy(malloc(strlen(s1) + strlen(s2) + 1), \
-                                       s1),s2)
+#include "rdfutils.h"
 
 /*
  * Comment this out to allow the module to read & write header record types
@@ -72,7 +66,7 @@ static memorybuffer *newmembuf(void)
 {
     memorybuffer *t;
 
-    t = malloc(sizeof(memorybuffer));
+    t = nasm_malloc(sizeof(memorybuffer));
     if (!t)
         return NULL;
 
@@ -134,8 +128,7 @@ static void membufdump(memorybuffer * b, FILE * fp)
     if (!b)
         return;
 
-    fwrite(b->buffer, 1, b->length, fp);
-
+    nasm_write(b->buffer, b->length, fp);
     membufdump(b->next, fp);
 }
 
@@ -151,7 +144,7 @@ static void freemembuf(memorybuffer * b)
     if (!b)
         return;
     freemembuf(b->next);
-    free(b);
+    nasm_free(b);
 }
 
 /* =========================================================================
@@ -234,6 +227,22 @@ const char *rdf_errors[11] = {
 int rdf_errno = 0;
 
 /* ========================================================================
+ * Hook for nasm_error() to work
+ * ======================================================================== */
+static void rdoff_verror(int severity, const char *fmt, va_list val)
+{
+    vfprintf(stderr, fmt, val);
+
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+        exit(1);
+}
+
+void rdoff_init(void)
+{
+    nasm_set_verror(rdoff_verror);
+}
+
+/* ========================================================================
    The library functions
    ======================================================================== */
 
@@ -266,7 +275,11 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
     f->fp = fp;
     initpos = ftell(fp);
 
-    fread(buf, 6, 1, f->fp);    /* read header */
+    /* read header */
+    if (fread(buf, 1, 6, f->fp) != 6) {
+        fclose(f->fp);
+        return rdf_errno = RDF_ERR_READ;
+    }
     buf[6] = 0;
 
     if (strcmp(buf, RDOFFId)) {
@@ -326,7 +339,7 @@ int rdfopenhere(rdffile * f, FILE * fp, int *refcount, const char *name)
     fseek(f->fp, initpos, SEEK_SET);
     f->header_loc = NULL;
 
-    f->name = newstr(name);
+    f->name = nasm_strdup(name);
     f->refcount = refcount;
     if (refcount)
         (*refcount)++;
@@ -339,7 +352,7 @@ int rdfclose(rdffile * f)
         fclose(f->fp);
         f->fp = NULL;
     }
-    free(f->name);
+    nasm_free(f->name);
 
     return 0;
 }
@@ -510,7 +523,7 @@ void rdfheaderrewind(rdffile * f)
 
 rdf_headerbuf *rdfnewheader(void)
 {
-    rdf_headerbuf *hb = malloc(sizeof(rdf_headerbuf));
+    rdf_headerbuf *hb = nasm_malloc(sizeof(rdf_headerbuf));
     if (hb == NULL)
         return NULL;
 
@@ -589,14 +602,12 @@ int rdfwriteheader(FILE * fp, rdf_headerbuf * h)
 {
     int32_t l, l2;
 
-    fwrite(RDOFFId, 1, strlen(RDOFFId), fp);
+    nasm_write(RDOFFId, strlen(RDOFFId), fp);
 
     l = membuflength(h->buf);
     l2 = l + 14 + 10 * h->nsegments + h->seglength;
-    l = translateint32_t(l);
-    l2 = translateint32_t(l2);
-    fwrite(&l2, 4, 1, fp);      /* object length */
-    fwrite(&l, 4, 1, fp);       /* header length */
+    fwriteint32_t(l, fp);
+    fwriteint32_t(l2, fp);
 
     membufdump(h->buf, fp);
 
@@ -606,5 +617,5 @@ int rdfwriteheader(FILE * fp, rdf_headerbuf * h)
 void rdfdoneheader(rdf_headerbuf * h)
 {
     freemembuf(h->buf);
-    free(h);
+    nasm_free(h);
 }

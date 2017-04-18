@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -42,11 +42,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
 #include "outform.h"
 #include "outlib.h"
+#include "insns.h"
 
 #ifdef OF_DBG
 
@@ -55,6 +57,8 @@ struct Section {
     int32_t number;
     char *name;
 } *dbgsect;
+
+static unsigned long dbg_max_data_dump = 128;
 
 const struct ofmt of_dbg;
 static void dbg_init(void)
@@ -119,30 +123,128 @@ static void dbg_deflabel(char *name, int32_t segment, int64_t offset,
             is_global, special ? ": " : "", special);
 }
 
-static void dbg_out(int32_t segto, const void *data,
-		    enum out_type type, uint64_t size,
-                    int32_t segment, int32_t wrt)
+static const char *out_type(enum out_type type)
+{
+    static const char *out_types[] = {
+        "rawdata",
+        "reserve",
+        "address",
+        "reladdr",
+        "segment"
+    };
+    static char invalid_buf[64];
+
+    if (type >= sizeof(out_types)/sizeof(out_types[0])) {
+        sprintf(invalid_buf, "[invalid type %d]", type);
+        return invalid_buf;
+    }
+
+    return out_types[type];
+}
+
+static const char *out_sign(enum out_sign sign)
+{
+    static const char *out_signs[] = {
+        "wrap",
+        "signed",
+        "unsigned"
+    };
+    static char invalid_buf[64];
+
+    if (sign >= sizeof(out_signs)/sizeof(out_signs[0])) {
+        sprintf(invalid_buf, "[invalid sign %d]", sign);
+        return invalid_buf;
+    }
+
+    return out_signs[sign];
+}
+
+static void dbg_out(const struct out_data *data)
+{
+    fprintf(ofile,
+            "out to %"PRIx32":%"PRIx64" %s %s bits %d insoffs %d/%d "
+            "size %"PRIu64,
+            data->segment, data->offset,
+            out_type(data->type), out_sign(data->sign),
+            data->bits, data->insoffs, data->inslen, data->size);
+    if (data->itemp) {
+        fprintf(ofile, " ins %s(%d)",
+                nasm_insn_names[data->itemp->opcode], data->itemp->operands);
+    } else {
+        fprintf(ofile, " no ins (plain data)");
+    }
+
+    if (data->type == OUT_ADDRESS || data->type == OUT_RELADDR ||
+        data->type == OUT_SEGMENT) {
+        fprintf(ofile, " target %"PRIx32":%"PRIx64,
+                data->tsegment, data->toffset);
+        if (data->twrt != NO_SEG)
+            fprintf(ofile, " wrt %"PRIx32, data->twrt);
+    }
+    if (data->type == OUT_RELADDR)
+        fprintf(ofile, " relbase %"PRId64, data->relbase);
+
+    putc('\n', ofile);
+
+    if (data->type == OUT_RAWDATA) {
+        if ((size_t)data->size != data->size) {
+            fprintf(ofile, "  data: <error: impossible size>\n");
+        } else if (!data->data) {
+            fprintf(ofile, "  data: <error: null pointer>\n");
+        } else if (dbg_max_data_dump != -1UL &&
+                   data->size > dbg_max_data_dump) {
+            fprintf(ofile, "  data: <%"PRIu64" bytes>\n", data->size);
+        } else {
+            size_t i, j;
+            const uint8_t *bytes = data->data;
+            for (i = 0; i < data->size; i += 16) {
+                fprintf(ofile, "  data:");
+                for (j = 0; j < 16; j++) {
+                    if (i+j >= data->size)
+                        fprintf(ofile, "   ");
+                    else
+                        fprintf(ofile, "%c%02x",
+                                (j == 8) ? '-' : ' ', bytes[i+j]);
+                }
+                fprintf(ofile,"    ");
+                for (j = 0; j < 16; j++) {
+                    if (i+j >= data->size) {
+                        putc(' ', ofile);
+                    } else {
+                        if (bytes[i+j] >= 32 && bytes[i+j] <= 126)
+                            putc(bytes[i+j], ofile);
+                        else
+                            putc('.', ofile);
+                    }
+                }
+                putc('\n', ofile);
+            }
+        }
+    }
+
+    /* This is probably the only place were we'll call this this way... */
+    nasm_do_legacy_output(data);
+}
+
+static void dbg_legacy_out(int32_t segto, const void *data,
+                           enum out_type type, uint64_t size,
+                           int32_t segment, int32_t wrt)
 {
     int32_t ldata;
-    int id;
 
     if (type == OUT_ADDRESS)
-        fprintf(ofile, "out to %"PRIx32", len = %d: ", segto, (int)abs((int)size));
+        fprintf(ofile, "  legacy: out to %"PRIx32", len = %d: ",
+                segto, (int)abs((int)size));
     else
-        fprintf(ofile, "out to %"PRIx32", len = %"PRIu64": ", segto, size);
+        fprintf(ofile, "  legacy: out to %"PRIx32", len = %"PRIu64": ",
+                segto, size);
 
     switch (type) {
     case OUT_RESERVE:
         fprintf(ofile, "reserved.\n");
         break;
     case OUT_RAWDATA:
-        fprintf(ofile, "raw data = ");
-        while (size--) {
-            id = *(uint8_t *)data;
-            data = (char *)data + 1;
-            fprintf(ofile, "%02x ", id);
-        }
-        fprintf(ofile, "\n");
+        fprintf(ofile, "rawdata\n"); /* Already have a data dump */
         break;
     case OUT_ADDRESS:
 	ldata = *(int64_t *)data;
@@ -184,23 +286,55 @@ static int32_t dbg_segbase(int32_t segment)
 }
 
 static enum directive_result
-dbg_directive(enum directives directive, char *value, int pass)
+dbg_directive(enum directive directive, char *value, int pass)
 {
     fprintf(ofile, "directive [%s] value [%s] (pass %d)\n",
-            directives[directive], value, pass);
+            directive_dname(directive), value, pass);
+    return DIRR_OK;
+}
+
+static enum directive_result
+dbg_pragma(const struct pragma *pragma);
+
+static const struct pragma_facility dbg_pragma_list[] = {
+    { NULL, dbg_pragma }
+};
+
+static enum directive_result
+dbg_pragma(const struct pragma *pragma)
+{
+    fprintf(ofile, "pragma %s(%s) %s[%s] %s\n",
+            pragma->facility_name,
+            pragma->facility->name ? pragma->facility->name : "<default>",
+            pragma->opname, directive_dname(pragma->opcode),
+            pragma->tail);
+
+    if (pragma->facility == &dbg_pragma_list[0] &&
+        pragma->opcode == D_MAXDUMP) {
+        if (!nasm_stricmp(pragma->tail, "unlimited")) {
+            dbg_max_data_dump = -1UL;
+        } else {
+            char *ep;
+            unsigned long arg;
+
+            errno = 0;
+            arg = strtoul(pragma->tail, &ep, 0);
+            if (errno || *nasm_skip_spaces(ep)) {
+                nasm_error(ERR_WARNING | ERR_WARN_BAD_PRAGMA | ERR_PASS2,
+                           "invalid %%pragma dbg maxdump argument");
+                return DIRR_ERROR;
+            } else {
+                dbg_max_data_dump = arg;
+            }
+        }
+    }
+
     return DIRR_OK;
 }
 
 static void dbg_filename(char *inname, char *outname)
 {
     standard_extension(inname, outname, ".dbg");
-}
-
-static int dbg_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
 }
 
 static const char * const types[] = {
@@ -216,7 +350,7 @@ static void dbgdbg_cleanup(void)
 
 static void dbgdbg_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
-    fprintf(ofile, "dbglinenum %s(%"PRId32") := %08"PRIx32"\n",
+    fprintf(ofile, "dbglinenum %s(%"PRId32") segment %"PRIx32"\n",
 	    lnfname, lineno, segto);
 }
 static void dbgdbg_deflabel(char *name, int32_t segment,
@@ -242,6 +376,12 @@ static void dbgdbg_typevalue(int32_t type)
     fprintf(ofile, "new type: %s(%"PRIX32")\n",
             types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
 }
+
+static const struct pragma_facility dbgdbg_pragma_list[] = {
+    { "dbgdbg", dbg_pragma },
+    { NULL, dbg_pragma }        /* Won't trigger, "debug" is a reserved ns */
+};
+
 static const struct dfmt debug_debug_form = {
     "Trace of all info passed to debug stage",
     "debug",
@@ -252,7 +392,7 @@ static const struct dfmt debug_debug_form = {
     dbgdbg_typevalue,
     dbgdbg_output,
     dbgdbg_cleanup,
-    NULL                        /* pragma list */
+    dbgdbg_pragma_list
 };
 
 static const struct dfmt * const debug_debug_arr[3] = {
@@ -270,9 +410,8 @@ const struct ofmt of_dbg = {
     &debug_debug_form,
     NULL,
     dbg_init,
-    dbg_set_info,
-    nasm_do_legacy_output,
     dbg_out,
+    dbg_legacy_out,
     dbg_deflabel,
     dbg_section_names,
     dbg_sectalign,
@@ -280,7 +419,7 @@ const struct ofmt of_dbg = {
     dbg_directive,
     dbg_filename,
     dbg_cleanup,
-    NULL                        /* pragma list */
+    dbg_pragma_list
 };
 
 #endif                          /* OF_DBG */

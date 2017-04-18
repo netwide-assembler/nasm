@@ -5,38 +5,33 @@ The Makefiles are:
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
-  msvc.mak	Win32		MS Visual C++	Visual C++ Express 2005
+  msvc.mak	Win32		MS Visual C++	Visual Visual Studio 2013-2017
 
 	For building on a Win32 host using Microsoft Visual C++.
 
-	Usage:	nmake /f Mkfiles/msvc.mak
+	Usage:	nmake /f Mkfiles\msvc.mak
 
+	If the following tools are installed, the full installer package can
+	be built:
+		1. Perl (5.6 or later)
+		2. Nullsoft Scriptable Installer System (makensis)
+		3. Ghostscript (ps2pdf) or Acrobat Distriller (acrodist)
+		4. The Adobe Source Sans Pro and Source Code Pro fonts
+		5. The Perl module Font::TTF
+
+	The tools need to be in your current path.  To build the
+	installer package, run:
+
+		nmake /f Mkfiles\msvc.mak nsis
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
   openwcom.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.7 (Win32)
+		Linux (386)			OpenWatcom 1.9 (Linux)
 
-	For building on a DOS, OS/2 or Win32 host using OpenWatcom.
+	For building on a DOS, OS/2, Win32 or Linux host using OpenWatcom.
 	OpenWatcom can be downloaded from http://www.openwatcom.org/.
 
-	Usage:	wmake /f Mkfiles/<filename> <target>
+	Usage:	wmake /f Mkfiles/openwcom.mak <target>
 
-	<target> is dos, win32, or os2.
-
-  Filename      Target		Compiler	Tested with
-  ---------------------------------------------------------------------------
-  owlinux.mak	DOS,Win32,OS/2	OpenWatcom C	OpenWatcom 1.6rc2 (Linux)
-
-	For building on a Linux host using OpenWatcom for Linux.
-
-	Usage:	make -f Mkfiles/<filename> <target>
-
-	<target> is dos, win32, or os2.
-
-  Filename      Target		Compiler	Tested with
-  ---------------------------------------------------------------------------
-  netware.mak	NetWare		Cross-GCC	Cross-GCC 3.2.3 (Linux, Win32)
-
-	For building on a Linux or Win32 host using Cross-GCC for Linux/Win32.
-
-	Usage:	make -f Mkfiles/netware.mak
+	<target> is dos, win32, os2, or linux386.

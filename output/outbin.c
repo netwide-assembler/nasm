@@ -1286,7 +1286,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-bin_directive(enum directives directive, char *args, int pass)
+bin_directive(enum directive directive, char *args, int pass)
 {
     switch (directive) {
     case D_ORG:
@@ -1395,13 +1395,6 @@ static void srec_filename(char *inname, char *outname)
 static int32_t bin_segbase(int32_t segment)
 {
     return segment;
-}
-
-static int bin_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
 }
 
 const struct ofmt of_bin, of_ith, of_srec;
@@ -1663,7 +1656,6 @@ const struct ofmt of_bin = {
     &null_debug_form,
     bin_stdmac,
     bin_init,
-    bin_set_info,
     nasm_do_legacy_output,
     bin_out,
     bin_deflabel,
@@ -1685,7 +1677,6 @@ const struct ofmt of_ith = {
     &null_debug_form,
     bin_stdmac,
     ith_init,
-    bin_set_info,
     nasm_do_legacy_output,
     bin_out,
     bin_deflabel,
@@ -1707,7 +1698,6 @@ const struct ofmt of_srec = {
     &null_debug_form,
     bin_stdmac,
     srec_init,
-    bin_set_info,
     nasm_do_legacy_output,
     bin_out,
     bin_deflabel,

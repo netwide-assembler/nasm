@@ -270,7 +270,7 @@ static void elf_section_attrib(char *name, char *attr, int pass,
 }
 
 static enum directive_result
-elf_directive(enum directives directive, char *value, int pass)
+elf_directive(enum directive directive, char *value, int pass)
 {
     int64_t n;
     bool err;
@@ -1612,7 +1612,7 @@ static void elf_write(void)
     if (is_elf32() || is_elfx32()) {
         Elf32_Ehdr ehdr;
 
-        nasm_zero(&ehdr.e_ident);
+        nasm_zero(ehdr.e_ident);
         memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
         ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS32);
         ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
@@ -1641,7 +1641,7 @@ static void elf_write(void)
 
         nasm_assert(is_elf64());
 
-        nasm_zero(&ehdr.e_ident);
+        nasm_zero(ehdr.e_ident);
         memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
         ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS64);
         ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
@@ -2232,13 +2232,6 @@ static void elf_filename(char *inname, char *outname)
 
 extern macros_t elf_stdmac[];
 
-static int elf_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-    return 0;
-}
-
 /* Claim "elf" as a pragma namespace, for the future */
 static const struct pragma_facility elf_pragma_list[] =
 {
@@ -2285,7 +2278,6 @@ const struct ofmt of_elf32 = {
     &elf32_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elf32_out,
     elf_deflabel,
@@ -2336,7 +2328,6 @@ const struct ofmt of_elf64 = {
     &elf64_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elf64_out,
     elf_deflabel,
@@ -2387,7 +2378,6 @@ const struct ofmt of_elfx32 = {
     &elfx32_df_stabs,
     elf_stdmac,
     elf_init,
-    elf_set_info,
     nasm_do_legacy_output,
     elfx32_out,
     elf_deflabel,
@@ -3323,6 +3313,7 @@ static void dwarf_findfile(const char * fname)
                 dwarf_clist = match;
                 return;
             }
+            match = match->next;
         }
     }
 

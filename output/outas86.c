@@ -635,7 +635,6 @@ const struct ofmt of_as86 = {
     &null_debug_form,
     as86_stdmac,
     as86_init,
-    null_setinfo,
     nasm_do_legacy_output,
     as86_out,
     as86_deflabel,

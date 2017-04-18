@@ -96,7 +96,7 @@ sub process_line($) {
 %regs = ();
 %regvals = ();
 %disclass = ();
-open(REGS, "< ${file}") or die "$0: Cannot open $file\n";
+open(REGS, '<', $file) or die "$0: Cannot open $file\n";
 while ( defined($line = <REGS>) ) {
     $nline++;
 

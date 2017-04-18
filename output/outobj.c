@@ -634,7 +634,7 @@ static struct Segment *current_seg;
 
 static int32_t obj_segment(char *, int, int *);
 static void obj_write_file(void);
-static enum directive_result obj_directive(enum directives, char *, int);
+static enum directive_result obj_directive(enum directive, char *, int);
 
 static void obj_init(void)
 {
@@ -661,14 +661,6 @@ static void obj_init(void)
     obj_use32 = false;
     passtwo = 0;
     current_seg = NULL;
-}
-
-static int obj_set_info(enum geninfo type, char **val)
-{
-    (void)type;
-    (void)val;
-
-    return 0;
 }
 
 static void obj_cleanup(void)
@@ -1599,7 +1591,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-obj_directive(enum directives directive, char *value, int pass)
+obj_directive(enum directive directive, char *value, int pass)
 {
     switch (directive) {
     case D_GROUP:
@@ -2666,7 +2658,6 @@ const struct ofmt of_obj = {
     &borland_debug_form,
     obj_stdmac,
     obj_init,
-    obj_set_info,
     nasm_do_legacy_output,
     obj_out,
     obj_deflabel,

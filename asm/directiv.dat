@@ -45,6 +45,17 @@
 ;; acceptable.
 ;;
 
+; --- General configuration
+#name directive
+#prefix D_
+#errval D_unknown
+#header directiv.h
+
+; --- Special enum values
+#special none = 0			; Must be zero
+#special unknown
+#special corrupt
+
 ; --- Global directives
 absolute
 bits
@@ -77,3 +88,4 @@ uppercase			; outieee, outobj
 ; --- Pragma operations
 subsections_via_symbols		; macho
 no_dead_strip			; macho
+maxdump				; dbg

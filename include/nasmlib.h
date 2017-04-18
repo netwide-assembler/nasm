@@ -97,12 +97,14 @@ char * safe_alloc nasm_strndup(const char *, size_t);
 	nasm_free(*_pp);					\
 	*_pp = NULL;						\
     } while (0)
-#define nasm_zero(p) (memset((p), 0, sizeof(*(p))))
+#define nasm_zero(x) (memset(&(x), 0, sizeof(x)))
 #define nasm_zeron(p,n) (memset((p), 0, (n)*sizeof(*(p))))
 
 /*
- * Wrapper around fwrite() which fatal-errors on output failure.
+ * Wrappers around fread()/fwrite() which fatal-errors on failure.
+ * For fread(), only use this if EOF is supposed to be a fatal error!
  */
+void nasm_read(void *, size_t, FILE *);
 void nasm_write(const void *, size_t, FILE *);
 
 /*
@@ -132,6 +134,9 @@ no_return nasm_assert_failed(const char *, int, const char *);
 # define nasm_static_assert(x) \
     do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
+
+/* Utility function to generate a string for an invalid enum */
+const char *invalid_enum_str(int);
 
 /*
  * ANSI doesn't guarantee the presence of `stricmp' or

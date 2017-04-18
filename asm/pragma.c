@@ -169,7 +169,7 @@ void process_pragma(char *str)
     struct pragma pragma;
     char *p;
 
-    nasm_zero(&pragma);
+    nasm_zero(pragma);
 
     pragma.facility_name = nasm_get_word(str, &p);
     if (!pragma.facility_name) {
@@ -189,7 +189,7 @@ void process_pragma(char *str)
     if (!pragma.opname)
         pragma.opcode = D_none;
     else
-        pragma.opcode = find_directive(pragma.opname);
+        pragma.opcode = directive_find(pragma.opname);
 
     pragma.tail = nasm_skip_spaces(p);
 
