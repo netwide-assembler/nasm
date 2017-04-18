@@ -45,9 +45,9 @@ MAKE="${MAKE:-make}"
 cd nasm
 ./autogen.sh
 ./configure --prefix=/usr/local
-"$MAKE" perlreq spec manpages
-"$MAKE" alldeps
-"$MAKE" distclean
+$MAKE perlreq spec manpages
+$MAKE alldeps
+$MAKE distclean
 cd ..
 
 # Clean up any previous attempt
@@ -78,9 +78,9 @@ find nasm-"$version" -not -type d -print > main
 # Create documentation
 cd nasm-"$version"
 ./configure --prefix=/usr/local
-"$MAKE" doc
+$MAKE doc
 # Remove intermediate files.
-"$MAKE" cleaner
+$MAKE cleaner
 cd ..
 
 # Remove non-documentation
