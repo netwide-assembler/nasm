@@ -7754,9 +7754,10 @@ a zero-extended absolute displacement can access from 0 to 4 GB.
 
 \H{unix64} Interfacing to 64-bit C Programs (Unix)
 
-On Unix, the 64-bit ABI is defined by the document:
+On Unix, the 64-bit ABI as well as the x32 ABI (32-bit ABI with the
+CPU in 64-bit mode) is defined by the documents at:
 
-\W{http://www.nasm.us/links/unix64abi}\c{http://www.nasm.us/links/unix64abi}
+\W{http://www.nasm.us/abi/unix64}\c{http://www.nasm.us/abi/unix64}
 
 Although written for AT&T-syntax assembly, the concepts apply equally
 well for NASM-style assembly.  What follows is a simplified summary.
@@ -7786,9 +7787,9 @@ Integer and SSE register arguments are counted separately, so for the case of
 
 \H{win64} Interfacing to 64-bit C Programs (Win64)
 
-The Win64 ABI is described at:
+The Win64 ABI is described by the document at:
 
-\W{http://www.nasm.us/links/win64abi}\c{http://www.nasm.us/links/win64abi}
+\W{http://www.nasm.us/abi/win64}\c{http://www.nasm.us/abi/win64}
 
 What follows is a simplified summary.
 
