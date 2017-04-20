@@ -4,8 +4,7 @@
  * This file is public domain.
  */
 
-#include "compiler.h"
-#include <stdlib.h>
+#include "rdfutils.h"
 #include "collectn.h"
 
 void collection_init(Collection * c)
@@ -22,7 +21,7 @@ void **colln(Collection * c, int index)
     while (index >= 32) {
         index -= 32;
         if (c->next == NULL) {
-            c->next = malloc(sizeof(Collection));
+            c->next = nasm_malloc(sizeof(Collection));
             collection_init(c->next);
         }
         c = c->next;
@@ -36,7 +35,7 @@ void collection_reset(Collection * c)
 
     if (c->next) {
         collection_reset(c->next);
-        free(c->next);
+        nasm_free(c->next);
     }
 
     c->next = NULL;

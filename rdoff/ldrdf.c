@@ -56,9 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RDOFF_UTILS
-
-#include "rdoff.h"
+#include "rdfutils.h"
 #include "symtab.h"
 #include "collectn.h"
 #include "rdlib.h"
@@ -90,9 +88,6 @@ struct modulenode {
 };
 
 #include "ldsegs.h"
-
-#define newstr(str) strcpy(malloc(strlen(str) + 1),str)
-#define newstrcat(s1,s2) strcat(strcpy(malloc(strlen(s1)+strlen(s2)+1),s1),s2)
 
 /* ==========================================================================
  * Function prototypes of private utility functions
@@ -200,10 +195,10 @@ static void loadmodule(const char *filename)
 
     /* allocate a new module entry on the end of the modules list */
     if (!modules) {
-        modules = malloc(sizeof(*modules));
+        modules = nasm_malloc(sizeof(*modules));
         lastmodule = modules;
     } else {
-        lastmodule->next = malloc(sizeof(*modules));
+        lastmodule->next = nasm_malloc(sizeof(*modules));
         lastmodule = lastmodule->next;
     }
 
@@ -224,7 +219,7 @@ static void loadmodule(const char *filename)
      * factor if we decide to keep them)
      */
     lastmodule->header = NULL;
-    lastmodule->name = strdup(filename);
+    lastmodule->name = nasm_strdup(filename);
     lastmodule->next = NULL;
 
     processmodule(filename, lastmodule);
@@ -325,7 +320,7 @@ void processmodule(const char *filename, struct modulenode *mod)
      * extract symbols from the header, and dump them into the
      * symbol table
      */
-    header = malloc(mod->f.header_len);
+    header = nasm_malloc(mod->f.header_len);
     if (!header) {
         fprintf(stderr, "ldrdf: not enough memory\n");
         exit(1);
@@ -420,7 +415,7 @@ void processmodule(const char *filename, struct modulenode *mod)
      * of this program...
      */
     mod->f.header_loc = NULL;
-    free(header);
+    nasm_free(header);
 
 #endif
 
@@ -524,12 +519,12 @@ void symtab_add(const char *symbol, int segment, int32_t offset)
     /*
      * this is the first declaration of this symbol
      */
-    ste = malloc(sizeof(symtabEnt));
+    ste = nasm_malloc(sizeof(symtabEnt));
     if (!ste) {
         fprintf(stderr, "ldrdf: out of memory\n");
         exit(1);
     }
-    ste->name = strdup(symbol);
+    ste->name = nasm_strdup(symbol);
     ste->segment = segment;
     ste->offset = offset;
     ste->flags = 0;
@@ -571,13 +566,13 @@ static void add_library(const char *name)
         return;
     }
     if (!libraries) {
-        lastlib = libraries = malloc(sizeof(*libraries));
+        lastlib = libraries = nasm_malloc(sizeof(*libraries));
         if (!libraries) {
             fprintf(stderr, "ldrdf: out of memory\n");
             exit(1);
         }
     } else {
-        lastlib->next = malloc(sizeof(*libraries));
+        lastlib->next = nasm_malloc(sizeof(*libraries));
         if (!lastlib->next) {
             fprintf(stderr, "ldrdf: out of memory\n");
             exit(1);
@@ -626,7 +621,7 @@ static int search_libraries(void)
             if (options.verbose > 3)
                 printf("  looking in module `%s'\n", f.name);
 
-            header = malloc(f.header_len);
+            header = nasm_malloc(f.header_len);
             if (!header) {
                 fprintf(stderr, "ldrdf: not enough memory\n");
                 exit(1);
@@ -671,20 +666,20 @@ static int search_libraries(void)
                  * there are modules on the module list by the time
                  * we get here.
                  */
-                lastmodule->next = malloc(sizeof(*lastmodule->next));
+                lastmodule->next = nasm_malloc(sizeof(*lastmodule->next));
                 if (!lastmodule->next) {
                     fprintf(stderr, "ldrdf: not enough memory\n");
                     exit(1);
                 }
                 lastmodule = lastmodule->next;
                 memcpy(&lastmodule->f, &f, sizeof(f));
-                lastmodule->name = strdup(f.name);
+                lastmodule->name = nasm_strdup(f.name);
                 lastmodule->next = NULL;
                 processmodule(f.name, lastmodule);
                 break;
             }
             if (!keepfile) {
-                free(f.name);
+                nasm_free(f.name);
                 f.name = NULL;
                 f.fp = NULL;
             }
@@ -744,7 +739,7 @@ static void write_output(const char *filename)
             printf("\nadding generic record from binary file %s\n",
                    generic_rec_file);
 
-        hr = (rdfheaderrec *) malloc(sizeof(struct GenericRec));
+        hr = (rdfheaderrec *) nasm_malloc(sizeof(struct GenericRec));
         if ((ff = fopen(generic_rec_file, "r")) == NULL) {
             fprintf(stderr, "ldrdf: couldn't open %s for input\n",
                     generic_rec_file);
@@ -763,7 +758,7 @@ static void write_output(const char *filename)
         hr->g.type = RDFREC_GENERIC;
         hr->g.reclen = n;
         rdfaddheader(rdfheader, hr);
-        free(hr);
+        nasm_free(hr);
     }
 
     /*
@@ -774,19 +769,19 @@ static void write_output(const char *filename)
 
 	if ((n < 1) || (n >= MODLIB_NAME_MAX)) {
             fprintf(stderr, "ldrdf: invalid length of module name `%s'\n",
-        	modname_specified);
+		modname_specified);
             exit(1);
         }
 
         if (options.verbose)
             printf("\nadding module name record %s\n", modname_specified);
 
-        hr = (rdfheaderrec *) malloc(sizeof(struct ModRec));
+        hr = (rdfheaderrec *) nasm_malloc(sizeof(struct ModRec));
 	hr->m.type = RDFREC_MODNAME;
         hr->m.reclen = n + 1;
         strcpy(hr->m.modname, modname_specified);
         rdfaddheader(rdfheader, hr);
-        free(hr);
+        nasm_free(hr);
     }
 
 
@@ -803,7 +798,7 @@ static void write_output(const char *filename)
         outputseg[i].data = NULL;
         if (!outputseg[i].length)
             continue;
-        outputseg[i].data = malloc(outputseg[i].length);
+        outputseg[i].data = nasm_malloc(outputseg[i].length);
         if (!outputseg[i].data) {
             fprintf(stderr, "ldrdf: out of memory\n");
             exit(1);
@@ -841,7 +836,7 @@ static void write_output(const char *filename)
          * Perform fixups, and add new header records where required
          */
 
-        header = malloc(cur->f.header_len);
+        header = nasm_malloc(cur->f.header_len);
         if (!header) {
             fprintf(stderr, "ldrdf: out of memory\n");
             exit(1);
@@ -1000,12 +995,12 @@ static void write_output(const char *filename)
                      * future reference
                      */
                     if (!se) {
-                        se = malloc(sizeof(*se));
+                        se = nasm_malloc(sizeof(*se));
                         if (!se) {
                             fprintf(stderr, "ldrdf: out of memory\n");
                             exit(1);
                         }
-                        se->name = strdup(hr->i.label);
+                        se->name = nasm_strdup(hr->i.label);
                         se->flags = 0;
                         se->segment = availableseg++;
                         se->offset = 0;
@@ -1125,7 +1120,7 @@ static void write_output(const char *filename)
             }
         }
 
-        free(header);
+        nasm_free(header);
         done_seglocations(&segs);
 
     }
@@ -1155,22 +1150,14 @@ static void write_output(const char *filename)
      * the output file
      */
     for (i = 0; i < nsegs; i++) {
-        uint16_t s;
-        int32_t l;
-
         if (i == 2)
             continue;
 
-        s = translateint16_t(outputseg[i].type);
-        fwrite(&s, 2, 1, f);
-        s = translateint16_t(outputseg[i].number);
-        fwrite(&s, 2, 1, f);
-        s = translateint16_t(outputseg[i].reserved);
-        fwrite(&s, 2, 1, f);
-        l = translateint32_t(outputseg[i].length);
-        fwrite(&l, 4, 1, f);
-
-        fwrite(outputseg[i].data, outputseg[i].length, 1, f);
+        fwriteint16_t(outputseg[i].type, f);
+        fwriteint16_t(outputseg[i].number, f);
+        fwriteint16_t(outputseg[i].reserved, f);
+        fwriteint32_t(outputseg[i].length, f);
+        nasm_write(outputseg[i].data, outputseg[i].length, f);
     }
 
     fwritezero(10, f);
@@ -1203,6 +1190,8 @@ int main(int argc, char **argv)
     char *outname = "aout.rdf";
     int moduleloaded = 0;
     char *respstrings[128] = { 0, };
+
+    rdoff_init();
 
     options.verbose = 0;
     options.align = 16;
@@ -1252,11 +1241,11 @@ int main(int argc, char **argv)
         case 'm':
             if (argv[0][2] == 'n') {
                 modname_specified = argv[1];
-        	argv++, argc--;
-        	if (!argc) {
-        	    fprintf(stderr, "ldrdf: -mn expects a module name\n");
-            	    exit(1);
-        	}
+		argv++, argc--;
+		if (!argc) {
+		    fprintf(stderr, "ldrdf: -mn expects a module name\n");
+		    exit(1);
+		}
 	    }
             break;
         case 'o':
@@ -1317,7 +1306,7 @@ int main(int argc, char **argv)
                         fprintf(stderr, "ldrdf: too many input files\n");
                         exit(1);
                     }
-                    *(respstrings + i) = newstr(buf);
+                    *(respstrings + i) = nasm_strdup(buf);
                     argc++, i++;
                 }
                 fclose(f);
@@ -1331,8 +1320,8 @@ int main(int argc, char **argv)
             generic_rec_file = argv[1];
             argv++, argc--;
             if (!argc) {
-        	fprintf(stderr, "ldrdf: -g expects a file name\n");
-            	exit(1);
+		fprintf(stderr, "ldrdf: -g expects a file name\n");
+		exit(1);
 	    }
             break;
         default:
@@ -1371,12 +1360,12 @@ int main(int argc, char **argv)
             break;
         if (!strncmp(*argv, "-l", 2)) {
             if (libpath && (argv[0][2] != '/'))
-                add_library(newstrcat(libpath, *argv + 2));
+                add_library(nasm_strcat(libpath, *argv + 2));
             else
                 add_library(*argv + 2);
         } else {
             if (objpath && (argv[0][0] != '/'))
-                loadmodule(newstrcat(objpath, *argv));
+                loadmodule(nasm_strcat(objpath, *argv));
             else
                 loadmodule(*argv);
             moduleloaded = 1;

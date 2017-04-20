@@ -829,6 +829,8 @@ sub ps_break_pages($$) {
 	    # First line of a new chapter heading.  Start a new page.
 	    undef $columnstart;
 	    $curpage++ if ( $curypos > 0 || defined($columnstart) );
+	    # Always start on an odd page
+	    $curpage |= 1;
 	    $curypos = $chapstart;
 	} elsif ( defined($columnstart) && $$linfo[0] !~ /$columnregexp/o ) {
 	    undef $columnstart;
@@ -1232,10 +1234,10 @@ ps_start_page();
 foreach $line ( @pslines ) {
     my $linfo = $line->[0];
 
-    if ( $$linfo[4] != $curpage ) {
+    while ( $$linfo[4] > $curpage ) {
         ps_end_page($curpage > 2);
         ps_start_page();
-        $curpage = $$linfo[4];
+        $curpage++;
     }
 
     print '[';
