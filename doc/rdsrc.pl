@@ -971,11 +971,12 @@ sub html_preamble {
     print "<h1>", $metadata{'title'}, "</h1>\n";
     print '<span class="subtitle">', $metadata{'subtitle'}, "</span>\n";
     print "</div>\n";
+    print "<div class=\"contents\"\n>\n";
 }
 
 sub html_postamble {
-    # Closing tags
-    print "</body>\n</html>\n";
+    # Common closing tags
+    print "</div>\n</body>\n</html>\n";
 }
 
 sub html_index {
