@@ -1784,7 +1784,7 @@ static void macho_dbg_generate(void)
     size_t saa_len = 0, high_addr = 0, total_len = 0;
     struct section *p_section = NULL;
     /* calculated at debug_str and referenced at debug_info */
-    uint32_t producer_str_offset = 0, module_str_offset = 0;
+    uint32_t producer_str_offset = 0, module_str_offset = 0, path_str_offset = 0;
 
     /* debug section defines */
     {
@@ -1886,7 +1886,8 @@ static void macho_dbg_generate(void)
         struct file_list *p_file = dw_head_list;
         uint32_t idx = 0;
         struct SAA *p_str = saa_init(1L);
-        nasm_assert(p_str != NULL);
+        struct SAA *p_path_str = saa_init(1L);
+        nasm_assert((p_str != NULL) && (p_path_str != NULL));
 
         p_section = get_section_by_name("__DWARF", "__debug_str");
         nasm_assert(p_section != NULL);
@@ -1894,19 +1895,33 @@ static void macho_dbg_generate(void)
         producer_str_offset = 0;
         saa_wbytes(p_str, nasm_signature, strlen(nasm_signature) + 1);
 
-        module_str_offset = producer_str_offset + strlen(nasm_signature) + 1;
+        module_str_offset = path_str_offset = producer_str_offset + strlen(nasm_signature) + 1;
+
         for(; idx < dw_num_files; idx++) {
-            saa_wbytes(p_str, p_file->file_name, (int32_t)(strlen(p_file->file_name) + 1));
+            size_t cur_file_strlen =  strlen(p_file->file_name) + 1;
+            char *cur_path = nasm_realpath(p_file->file_name);
+            size_t cur_path_strlen =  strlen(cur_path);
+
+            nasm_assert(cur_path_strlen > cur_file_strlen);
+            cur_path_strlen -= cur_file_strlen;
+            cur_path[cur_path_strlen] = '\0';
+            saa_wbytes(p_str, p_file->file_name, cur_file_strlen);
+            saa_wbytes(p_path_str, cur_path, cur_path_strlen);
+            path_str_offset += cur_file_strlen;
             p_file = p_file->next;
         }
 
         saa_len = p_str->datalen;
-
         p_buf = nasm_malloc(saa_len);
         saa_rnbytes(p_str, p_buf, saa_len);
         macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
-
         saa_free(p_str);
+
+        saa_len = p_path_str->datalen;
+        p_buf = nasm_malloc(saa_len);
+        saa_rnbytes(p_path_str, p_buf, saa_len);
+        macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
+        saa_free(p_path_str);
     }
 
     /* debug info */
@@ -1927,6 +1942,7 @@ static void macho_dbg_generate(void)
         saa_write32(p_info, producer_str_offset); /* offset from string table for DW_AT_producer  */
         saa_write16(p_info, DW_LANG_Mips_Assembler); /* DW_AT_language  */
         saa_write32(p_info, module_str_offset); /* offset from string table for DW_AT_name  */
+        saa_write32(p_info, path_str_offset); /* offset from string table for DW_AT_comp_dir */
         saa_write32(p_info, 0); /* DW_AT_stmt_list  */
 
         if (ofmt == &of_macho64) {
@@ -1978,6 +1994,9 @@ static void macho_dbg_generate(void)
         saa_write8(p_abbrev, DW_FORM_data2);
 
         saa_write8(p_abbrev, DW_AT_name);
+        saa_write8(p_abbrev, DW_FORM_strp);
+
+        saa_write8(p_abbrev, DW_AT_comp_dir);
         saa_write8(p_abbrev, DW_FORM_strp);
 
         saa_write8(p_abbrev, DW_AT_stmt_list);
