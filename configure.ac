@@ -208,8 +208,9 @@ dnl support function sections
 dnl
 PA_ARG_ENABLED([sections],
  [compile with function/data section support],
- [PA_ADD_CFLAGS([-ffunction-sections]),
-  PA_ADD_CFLAGS([-fdata-sections])],
+ [PA_ADD_CLDFLAGS([-ffunction-sections])
+  PA_ADD_CLDFLAGS([-fdata-sections])
+  PA_ADD_CLDFLAGS([-Wl,--gc-sections])],
  [])
 dnl
 dnl support LTO

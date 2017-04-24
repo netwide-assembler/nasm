@@ -61,11 +61,26 @@ ul.index {
 	color: inherit;
     }
 }
+@media only screen and (min-width: 90em) {
+    /* For a very wide screen, go to a columnar layout */
+    div.contents {
+	-webkit-column-count: 2;
+	-moz-column-count: 2;
+	column-count: 2;
+    }
+}
+@media only screen and (min-width: 135em) {
+    div.contents {
+	-webkit-column-count: 3;
+	-moz-column-count: 3;
+	column-count: 3;
+    }
+}
 @media screen {
     /* Setting an explicit margin to keep the navbar from moving */
     body {
 	padding: 0;
-	margin: 10px;
+	margin: 8px;
     }
 
     /* Link styles */
@@ -94,7 +109,7 @@ ul.index {
     ul.navbar {
 	display: block;
 	position: sticky;
-	top: 10px;
+	top: 8px;
 	width: 100%;
 	margin: 0;
 	padding: 0;

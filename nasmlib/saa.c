@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -147,6 +147,19 @@ void saa_wbytes(struct SAA *s, const void *data, size_t len)
             s->wpos = 0;
         }
     }
+}
+
+/*
+ * Writes a string, *including* the final null, to the specified SAA,
+ * and return the number of bytes written.
+ */
+size_t saa_wcstring(struct SAA *s, const char *str)
+{
+    size_t bytes = strlen(str) + 1;
+
+    saa_wbytes(s, str, bytes);
+
+    return bytes;
 }
 
 void saa_rewind(struct SAA *s)

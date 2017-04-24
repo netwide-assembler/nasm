@@ -791,19 +791,18 @@ disable it by \c{-w-orphan-labels}.
 The current \i{warning classes} are:
 
 \b \i\c{other} specifies any warning not otherwise specified in any
-class.
+class.  Enabled by default.
 
 \b \i\c{macro-params} covers warnings about \i{multi-line macros}
-being invoked with the wrong number of parameters. This warning
-class is enabled by default; see \k{mlmacover} for an example of why
+being invoked with the wrong number of parameters. Enabled by default;
+see \k{mlmacover} for an example of why you might want to disable it.
+
+\b \i\c{macro-selfref} warns if a macro references itself. Disabled by
+default.
+
+\b \i\c{macro-defaults} warns when a macro has more default parameters
+than optional parameters. Enabled by default; see \k{mlmacdef} for why
 you might want to disable it.
-
-\b \i\c{macro-selfref} warns if a macro references itself. This
-warning class is disabled by default.
-
-\b\i\c{macro-defaults} warns when a macro has more default
-parameters than optional parameters. This warning class
-is enabled by default; see \k{mlmacdef} for why you might want to disable it.
 
 \b \i\c{orphan-labels} covers warnings about source lines which
 contain no instruction but define a label without a trailing colon.
@@ -811,11 +810,11 @@ NASM warns about this somewhat obscure condition by default;
 see \k{syntax} for more information.
 
 \b \i\c{number-overflow} covers warnings about numeric constants which
-don't fit in 64 bits. This warning class is enabled by default.
+don't fit in 64 bits.  Enabled by default.
 
 \b \i\c{gnu-elf-extensions} warns if 8-bit or 16-bit relocations
 are used in \c{-f elf} format. The GNU extensions allow this.
-This warning class is disabled by default.
+Disabled by default.
 
 \b \i\c{float-overflow} warns about floating point overflow.
 Enabled by default.
@@ -844,11 +843,11 @@ form of jmp instruction becomes jmp short form.
 Enabled by default.
 
 \b \i\c{zext-reloc} warns that a relocation has been zero-extended due
-to limitations in the output format.
+to limitations in the output format.  Enabled by default.
 
 \b \i\c\{ptr} warns about keywords used in other assemblers that might
 indicate a mistake in the source code.  Currently only the MASM
-\c{PTR} keyword is recognized.
+\c{PTR} keyword is recognized.  Enabled by default.
 
 \b \i\c{bad-pragma} warns about a malformed or otherwise unparsable
 \c{%pragma} directive.  Disabled by default.
@@ -862,22 +861,24 @@ implemented.  Disabled by default.
 
 \b \i\c{unknown-warning} warns about a \c{-w} or \c{-W} option or a
 \c{[WARNING]} directive that contains an unknown warning name or is
-otherwise not possible to process.
+otherwise not possible to process.  Disabled by default.
 
 \b \i\c{all} is an alias for \e{all} suppressible warning classes.
 Thus, \c{-w+all} enables all available warnings, and \c{-w-all}
 disables warnings entirely (since NASM 2.13).
 
-Since version 2.00, NASM has also supported the gcc-like syntax
+Since version 2.00, NASM has also supported the \c{gcc}-like syntax
 \c{-Wwarning-class} and \c{-Wno-warning-class} instead of
 \c{-w+warning-class} and \c{-w-warning-class}, respectively; both
 syntaxes work identically.
 
 The option \c{-w+error} or \i\c{-Werror} can be used to treat warnings
 as errors.  This can be controlled on a per warning class basis
-(\c{-w+error=}\e{warning-class}); if no \e{warning-class} is specified
-NASM treats it as \c{-w+error=all}; the same applies to \c{-w-error}
-or \i\c{-Wno-error}, of course.
+(\c{-w+error=}\e{warning-class} or \c{-Werror=}\e{warning-class});
+if no \e{warning-class} is specified NASM treats it as
+\c{-w+error=all}; the same applies to \c{-w-error} or
+\i\c{-Wno-error},
+of course.
 
 In addition, you can control warnings in the source code itself, using
 the \i\c{[WARNING]} directive.  See \k{asmdir-warning}.
@@ -4678,9 +4679,15 @@ The \c{[WARNING]} directive can be used to enable or disable classes
 of warnings in the same way as the \c{-w} option, see \k{opt-w} for
 more details about warning classes.
 
-Warning classes may be enabled with \c{[warning +]\e{warning-class}\c{]}, disabled
-with \c{[warning -}\e{warning-class}\c{]}, or reset to their original value (as
-specified on the command line) with \c{[warning *}\e{warning-class}{]}.
+\b \c{[warning +}\e{warning-class}\c{]} enables warnings for
+   \e{warning-class}.
+
+\b \c{[warning -}\e{warning-class}\c{]} disables warnings for
+   \e{warning-class}.
+
+\b \c{[warning *}\e{warning-class}\c{]} restores \e{warning-class} to
+   the original value, either the default value or as specified on the
+   command line.
 
 The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
 \c{error=}\e{warning-class} specifiers.
@@ -7754,9 +7761,10 @@ a zero-extended absolute displacement can access from 0 to 4 GB.
 
 \H{unix64} Interfacing to 64-bit C Programs (Unix)
 
-On Unix, the 64-bit ABI is defined by the document:
+On Unix, the 64-bit ABI as well as the x32 ABI (32-bit ABI with the
+CPU in 64-bit mode) is defined by the documents at:
 
-\W{http://www.nasm.us/links/unix64abi}\c{http://www.nasm.us/links/unix64abi}
+\W{http://www.nasm.us/abi/unix64}\c{http://www.nasm.us/abi/unix64}
 
 Although written for AT&T-syntax assembly, the concepts apply equally
 well for NASM-style assembly.  What follows is a simplified summary.
@@ -7786,9 +7794,9 @@ Integer and SSE register arguments are counted separately, so for the case of
 
 \H{win64} Interfacing to 64-bit C Programs (Win64)
 
-The Win64 ABI is described at:
+The Win64 ABI is described by the document at:
 
-\W{http://www.nasm.us/links/win64abi}\c{http://www.nasm.us/links/win64abi}
+\W{http://www.nasm.us/abi/win64}\c{http://www.nasm.us/abi/win64}
 
 What follows is a simplified summary.
 

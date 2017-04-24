@@ -59,7 +59,8 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	nasmlib/crc64.$(O) nasmlib/malloc.$(O) &
 	nasmlib/md5c.$(O) nasmlib/string.$(O) &
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) &
-	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) &
+	nasmlib/realpath.$(O) nasmlib/path.$(O) &
+	nasmlib/filename.$(O) nasmlib/srcfile.$(O) &
 	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) &
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) &
 	nasmlib/raa.$(O) nasmlib/saa.$(O) &
@@ -493,6 +494,9 @@ nasmlib/md5c.$(O): nasmlib/md5c.c config/msvc.h config/unknown.h &
 nasmlib/mmap.$(O): nasmlib/mmap.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/error.h include/nasmint.h &
  include/nasmlib.h nasmlib/file.h
+nasmlib/path.$(O): nasmlib/path.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h
 nasmlib/perfhash.$(O): nasmlib/perfhash.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/hashtbl.h include/nasmint.h &
  include/nasmlib.h include/perfhash.h

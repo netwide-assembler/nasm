@@ -2426,13 +2426,11 @@ static enum match_result matches(const struct itemplate *itemp,
  * - offset can fit in a byte when EVEX is not used
  * - offset can be compressed when EVEX is used
  */
-#define IS_MOD_01()     (input->eaflags & EAF_BYTEOFFS ||       \
-                         (o >= -128 && o <= 127 &&              \
-                          seg == NO_SEG && !forw_ref &&         \
-                          !(input->eaflags & EAF_WORDOFFS) &&   \
-                          !(ins->rex & REX_EV)) ||              \
-                         (ins->rex & REX_EV &&                  \
-                          is_disp8n(input, ins, &output->disp8)))
+#define IS_MOD_01() (!(input->eaflags & EAF_WORDOFFS) &&               \
+                    (ins->rex & REX_EV ? seg == NO_SEG && !forw_ref && \
+                     is_disp8n(input, ins, &output->disp8) :           \
+                     input->eaflags & EAF_BYTEOFFS || (o >= -128 &&    \
+                     o <= 127 && seg == NO_SEG && !forw_ref)))
 
 static enum ea_type process_ea(operand *input, ea *output, int bits,
                                int rfield, opflags_t rflags, insn *ins,
