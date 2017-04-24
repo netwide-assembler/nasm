@@ -55,7 +55,7 @@
 #elif defined(Macintosh)        /* MacOS classic? */
 # define separators ":"
 # define curdir ":"
-# define catsep ":"
+# define catsep ':'
 # define cleandirend ":"
 # define leaveonclean 0
 # define leave_leading 1
@@ -137,7 +137,11 @@ char *nasm_dirname(const char *path)
     return nasm_strndup(path, p-path);
 }
 
-/* Concatenate a directory path and a filename */
+/*
+ * Concatenate a directory path and a filename.  Note that this function
+ * currently does NOT handle the case where file itself contains
+ * directory components (except on Unix platforms, because it is trivial.)
+ */
 char *nasm_catfile(const char *dir, const char *file)
 {
 #ifndef catsep
