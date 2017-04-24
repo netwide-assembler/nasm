@@ -186,7 +186,7 @@ static union label *find_label(const char *label, int create, int *created)
         /*
          * must allocate a new block
          */
-        lfree->admin.next = (union label *)nasm_malloc(LBLK_SIZE);
+        lfree->admin.next = nasm_malloc(LBLK_SIZE);
         lfree = lfree->admin.next;
         init_block(lfree);
     }
@@ -424,11 +424,11 @@ int init_labels(void)
 {
     hash_init(&ltab, HASH_LARGE);
 
-    ldata = lfree = (union label *)nasm_malloc(LBLK_SIZE);
+    ldata = lfree = nasm_malloc(LBLK_SIZE);
     init_block(lfree);
 
     perm_head = perm_tail =
-        (struct permts *)nasm_malloc(sizeof(struct permts));
+        nasm_malloc(sizeof(struct permts));
 
     perm_head->next = NULL;
     perm_head->size = PERMTS_SIZE;
@@ -483,7 +483,7 @@ static char *perm_copy(const char *string)
 
     if (perm_tail->size - perm_tail->usage < len) {
         perm_tail->next =
-            (struct permts *)nasm_malloc(sizeof(struct permts));
+            nasm_malloc(sizeof(struct permts));
         perm_tail = perm_tail->next;
         perm_tail->next = NULL;
         perm_tail->size = PERMTS_SIZE;

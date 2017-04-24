@@ -2468,7 +2468,7 @@ static void stabs_linenum(const char *filename, int32_t linenumber, int32_t segt
 {
     (void)segto;
     if (!stabs_filename) {
-        stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
+        stabs_filename = nasm_malloc(strlen(filename) + 1);
         strcpy(stabs_filename, filename);
     } else {
         if (strcmp(stabs_filename, filename)) {
@@ -2478,7 +2478,7 @@ static void stabs_linenum(const char *filename, int32_t linenumber, int32_t segt
 
             /* why not nasm_free(stabs_filename); we're done with the old one */
 
-            stabs_filename = (char *)nasm_malloc(strlen(filename) + 1);
+            stabs_filename = nasm_malloc(strlen(filename) + 1);
             strcpy(stabs_filename, filename);
         }
     }
@@ -2496,7 +2496,7 @@ static void stabs_output(int type, void *param)
             if (!(sects[s->section]->flags & SHF_EXECINSTR))
                 return; /* line info is only collected for executable sections */
             numlinestabs++;
-            el = (struct linelist *)nasm_malloc(sizeof(struct linelist));
+            el = nasm_malloc(sizeof(struct linelist));
             el->info.offset = s->offset;
             el->info.section = s->section;
             el->info.name = s->name;
@@ -2528,7 +2528,7 @@ static void stabs_generate(void)
 
     ptr = stabslines;
 
-    allfiles = (char **)nasm_zalloc(numlinestabs * sizeof(char *));
+    allfiles = nasm_zalloc(numlinestabs * sizeof(char *));
     numfiles = 0;
     while (ptr) {
         if (numfiles == 0) {
@@ -2547,7 +2547,7 @@ static void stabs_generate(void)
         ptr = ptr->next;
     }
     strsize = 1;
-    fileidx = (int *)nasm_malloc(numfiles * sizeof(int));
+    fileidx = nasm_malloc(numfiles * sizeof(int));
     for (i = 0; i < numfiles; i++) {
         fileidx[i] = strsize;
         strsize += strlen(allfiles[i]) + 1;
@@ -2565,10 +2565,10 @@ static void stabs_generate(void)
      * the sourcefiles changes each line, which would mean 1 SOL, 1 SYMLIN per line
      * plus one "ending" entry
      */
-    sbuf = (uint8_t *)nasm_malloc((numlinestabs * 2 + 4) *
+    sbuf = nasm_malloc((numlinestabs * 2 + 4) *
                                     sizeof(struct stabentry));
-    ssbuf = (uint8_t *)nasm_malloc(strsize);
-    rbuf = (uint8_t *)nasm_malloc(numlinestabs * (is_elf64() ? 16 : 8) * (2 + 3));
+    ssbuf = nasm_malloc(strsize);
+    rbuf = nasm_malloc(numlinestabs * (is_elf64() ? 16 : 8) * (2 + 3));
     rptr = rbuf;
 
     for (i = 0; i < numfiles; i++)
@@ -3293,7 +3293,7 @@ static void dwarf_findfile(const char * fname)
     }
 
     /* add file name to end of list */
-    dwarf_clist = (struct linelist *)nasm_malloc(sizeof(struct linelist));
+    dwarf_clist = nasm_malloc(sizeof(struct linelist));
     dwarf_numfiles++;
     dwarf_clist->line = dwarf_numfiles;
     dwarf_clist->filename = nasm_malloc(strlen(fname) + 1);
@@ -3332,7 +3332,7 @@ static void dwarf_findsect(const int index)
     }
 
     /* add entry to end of list */
-    dwarf_csect = (struct sectlist *)nasm_malloc(sizeof(struct sectlist));
+    dwarf_csect = nasm_malloc(sizeof(struct sectlist));
     dwarf_nsections++;
     dwarf_csect->psaa = plinep = saa_init(1L);
     dwarf_csect->line = 1;
