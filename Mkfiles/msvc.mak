@@ -101,6 +101,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	macros\macros.$(O) \
 	\
 	output\outform.$(O) output\outlib.$(O) output\legacy.$(O) \
+	output\strtbl.$(O) \
 	output\nulldbg.$(O) output\nullout.$(O) \
 	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) \
 	output\outelf.$(O) \
@@ -645,6 +646,11 @@ output\outrdf2.$(O): output\outrdf2.c asm\directiv.h asm\pptok.h \
  include\nasmlib.h include\opflags.h include\perfhash.h include\rdoff.h \
  include\saa.h include\strlist.h include\tables.h output\outform.h \
  output\outlib.h x86\insnsi.h x86\regs.h
+output\strtbl.$(O): output\strtbl.c asm\directiv.h asm\pptok.h asm\preproc.h \
+ config\msvc.h config\unknown.h config\watcom.h include\compiler.h \
+ include\error.h include\hashtbl.h include\nasm.h include\nasmint.h \
+ include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
+ include\tables.h output\strtbl.h x86\insnsi.h x86\regs.h
 rdoff\collectn.$(O): rdoff\collectn.c config\msvc.h config\unknown.h \
  config\watcom.h include\compiler.h include\error.h include\nasmint.h \
  include\nasmlib.h include\rdoff.h rdoff\collectn.h rdoff\rdfutils.h
