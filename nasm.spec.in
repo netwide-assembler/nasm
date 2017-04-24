@@ -46,7 +46,7 @@ include linker, library manager, loader, and information dump.
 
 %build
 autoreconf
-%configure --disable-pdf-compression --enable-lto
+%configure --disable-pdf-compression --enable-sections
 make %{?_smp_mflags} everything
 xz -9ef doc/nasmdoc.pdf
 
