@@ -38,7 +38,7 @@
 
 struct RAA;
 
-struct RAA *raa_init(void);
+struct RAA * never_null raa_init(void);
 void raa_free(struct RAA *);
 int64_t raa_read(struct RAA *, int32_t);
 struct RAA *raa_write(struct RAA *r, int32_t posn, int64_t value);
