@@ -70,6 +70,7 @@ struct SAA *saa_init(size_t elem_len);  /* 1 == byte */
 void saa_free(struct SAA *);
 void *saa_wstruct(struct SAA *);        /* return a structure of elem_len */
 void saa_wbytes(struct SAA *, const void *, size_t);    /* write arbitrary bytes */
+size_t saa_wcstring(struct SAA *s, const char *str);     /* write a C string */
 void saa_rewind(struct SAA *);  /* for reading from beginning */
 void *saa_rstruct(struct SAA *);        /* return NULL on EOA */
 const void *saa_rbytes(struct SAA *, size_t *); /* return 0 on EOA */
