@@ -348,6 +348,7 @@ clean:
 	$(RM_F) nasm-*-installer-*.exe
 	$(RM_F) tags TAGS
 	$(RM_F) nsis/arch.nsh
+	$(RM_F) perlbreq.si
 	$(RM_F) $(RDFPROGS) $(RDF2BINLINKS)
 
 distclean: clean
@@ -417,8 +418,16 @@ tar: dist
 
 spec: nasm.spec
 
-nasm.spec: nasm.spec.in version.sed
-	sed -f version.sed < nasm.spec.in > nasm.spec
+ALLPERLSRC := $(shell find $(srcdir) -type f -name '*.p[lh]')
+
+perlbreq.si: $(ALLPERLSRC)
+	sed -n -r -e 's/^use[[:space:]]+([^[:space:];]+).*$$/Build-Requires: perl(\1)/p' $(ALLPERLSRC) | \
+	sed -r -e '/perl\((strict|warnings)\)/d' | \
+	sort | uniq > perlbreq.si || ( rm -f perlbreq.si ; false )
+
+nasm.spec: nasm.spec.in version.sed perlbreq.si
+	sed -f version.sed -e '/@@PERLBUILDREQS@@/r perlbreq.si' \
+	< nasm.spec.in > nasm.spec || ( rm -f nasm.spec ; false )
 
 splint:
 	splint -weak *.c
