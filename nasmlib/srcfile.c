@@ -55,13 +55,7 @@ void src_init(void)
 
 void src_free(void)
 {
-    struct hash_tbl_node *iter = NULL;
-    void *dp;
-
-    while ((dp = hash_iterate(&filename_hash, &iter, NULL)) != NULL)
-        nasm_free(dp);
-
-    hash_free(&filename_hash);
+    hash_free_all(&filename_hash, false);
 }
 
 /*

@@ -57,30 +57,24 @@ void strtbl_init(struct nasm_strtbl *tbl)
 {
     tbl->size = 0;
     hash_init(&tbl->hash, HASH_LARGE);
-    strtbl_find(tbl, "", true); /* Index 0 is always an empty string */
+    strtbl_add(tbl, "");       /* Index 0 is always an empty string */
 }
 
 void strtbl_free(struct nasm_strtbl *tbl)
 {
-    struct hash_tbl_node *iter = NULL;
-    struct strtbl_entry *se;
-
-    while ((se = hash_iterate(&tbl->hash, &iter, NULL)))
-        nasm_free(se);
-
-    hash_free(&tbl->hash);
+    hash_free_all(&tbl->hash, false);
 }
 
-size_t strtbl_find(struct nasm_strtbl *tbl, const char *str, bool add)
+size_t strtbl_add(struct nasm_strtbl *tbl, const char *str)
 {
-    struct hash_insert hi;
-    void **dp;
+    void **sep;
     struct strtbl_entry *se;
+    struct hash_insert hi;
 
-    dp = hash_find(&tbl->hash, str, &hi);
-    if (dp) {
-        se = *dp;
-    } else if (add) {
+    sep = hash_find(&tbl->hash, str, &hi);
+    if (sep) {
+        se = *sep;
+    } else {
         size_t bytes = strlen(str) + 1;
 
         se = nasm_malloc(sizeof(struct strtbl_entry)-1+bytes);
@@ -90,11 +84,23 @@ size_t strtbl_find(struct nasm_strtbl *tbl, const char *str, bool add)
         memcpy(se->str, str, bytes);
 
         hash_add(&hi, se->str, se);
-    } else {
-        return STRTBL_NONE;
     }
 
     return se->index;
+}
+
+size_t strtbl_find(struct nasm_strtbl *tbl, const char *str)
+{
+    void **sep;
+    struct strtbl_entry *se;
+
+    sep = hash_find(&tbl->hash, str, NULL);
+    if (sep) {
+        se = *sep;
+        return se->index;
+    } else {
+        return STRTBL_NONE;
+    }
 }
 
 /* This create a linearized buffer containing the actual string table */

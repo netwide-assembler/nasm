@@ -46,7 +46,8 @@ struct nasm_strtbl {
 
 void strtbl_init(struct nasm_strtbl *tbl);
 void strtbl_free(struct nasm_strtbl *tbl);
-size_t strtbl_find(struct nasm_strtbl *tbl, const char *str, bool add);
+size_t strtbl_find(struct nasm_strtbl *tbl, const char *str);
+size_t strtbl_add(struct nasm_strtbl *tbl, const char *str);
 static inline size_t strtbl_size(const struct nasm_strtbl *tbl)
 {
     return tbl->size;

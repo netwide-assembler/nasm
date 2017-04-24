@@ -81,5 +81,6 @@ void *hash_iterate(const struct hash_table *head,
 		   struct hash_tbl_node **iterator,
 		   const char **key);
 void hash_free(struct hash_table *head);
+void hash_free_all(struct hash_table *head, bool free_keys);
 
 #endif /* NASM_HASHTBL_H */
