@@ -59,7 +59,8 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) &
 	nasmlib/crc64.$(O) nasmlib/malloc.$(O) &
 	nasmlib/md5c.$(O) nasmlib/string.$(O) &
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) &
-	nasmlib/realpath.$(O) nasmlib/filename.$(O) nasmlib/srcfile.$(O) &
+	nasmlib/realpath.$(O) nasmlib/path.$(O) &
+	nasmlib/filename.$(O) nasmlib/srcfile.$(O) &
 	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) &
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) &
 	nasmlib/raa.$(O) nasmlib/saa.$(O) &
@@ -493,6 +494,9 @@ nasmlib/md5c.$(O): nasmlib/md5c.c config/msvc.h config/unknown.h &
 nasmlib/mmap.$(O): nasmlib/mmap.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/error.h include/nasmint.h &
  include/nasmlib.h nasmlib/file.h
+nasmlib/path.$(O): nasmlib/path.c config/msvc.h config/unknown.h &
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h
 nasmlib/perfhash.$(O): nasmlib/perfhash.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/hashtbl.h include/nasmint.h &
  include/nasmlib.h include/perfhash.h
@@ -601,7 +605,8 @@ output/outmacho.$(O): output/outmacho.c asm/directiv.h asm/pptok.h &
  include/compiler.h include/error.h include/labels.h include/nasm.h &
  include/nasmint.h include/nasmlib.h include/opflags.h include/perfhash.h &
  include/raa.h include/rbtree.h include/saa.h include/strlist.h &
- include/tables.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/tables.h include/ver.h output/dwarf.h output/outform.h &
+ output/outlib.h x86/insnsi.h x86/regs.h
 output/outobj.$(O): output/outobj.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/error.h include/nasm.h include/nasmint.h &
@@ -615,11 +620,10 @@ output/outrdf2.$(O): output/outrdf2.c asm/directiv.h asm/pptok.h &
  include/saa.h include/strlist.h include/tables.h output/outform.h &
  output/outlib.h x86/insnsi.h x86/regs.h
 rdoff/collectn.$(O): rdoff/collectn.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h rdoff/collectn.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/collectn.h rdoff/rdfutils.h
 rdoff/hash.$(O): rdoff/hash.c config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/nasmint.h rdoff/hash.h
-rdoff/iochk.$(O): rdoff/iochk.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
 rdoff/ldrdf.$(O): rdoff/ldrdf.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/error.h include/nasmint.h &
  include/nasmlib.h include/rdoff.h rdoff/collectn.h rdoff/ldsegs.h &
@@ -650,9 +654,11 @@ rdoff/rdx.$(O): rdoff/rdx.c config/msvc.h config/unknown.h config/watcom.h &
  include/compiler.h include/error.h include/nasmint.h include/nasmlib.h &
  include/rdoff.h rdoff/rdfload.h rdoff/rdfutils.h rdoff/symtab.h
 rdoff/segtab.$(O): rdoff/segtab.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h rdoff/segtab.h
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/rdfutils.h rdoff/segtab.h
 rdoff/symtab.$(O): rdoff/symtab.c config/msvc.h config/unknown.h &
- config/watcom.h include/compiler.h include/nasmint.h rdoff/hash.h &
+ config/watcom.h include/compiler.h include/error.h include/nasmint.h &
+ include/nasmlib.h include/rdoff.h rdoff/hash.h rdoff/rdfutils.h &
  rdoff/symtab.h
 stdlib/snprintf.$(O): stdlib/snprintf.c config/msvc.h config/unknown.h &
  config/watcom.h include/compiler.h include/nasmint.h include/nasmlib.h
