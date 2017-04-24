@@ -395,7 +395,14 @@ char *nasm_opt_val(char *p, char **opt, char **val);
  *
  * The buffer returned must be freed by the caller
  */
-char *nasm_realpath(const char *rel_path);
+char * safe_alloc nasm_realpath(const char *rel_path);
+
+/*
+ * Path-splitting and merging functions
+ */
+char * safe_alloc nasm_dirname(const char *path);
+char * safe_alloc nasm_basename(const char *path);
+char * safe_alloc nasm_catfile(const char *dir, const char *path);
 
 const char * pure_func prefix_name(int);
 

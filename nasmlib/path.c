@@ -42,17 +42,20 @@
 #if defined(unix) || defined(__unix) || defined(__unix__)
 # define separators "/"
 # define cleandirend "/"
+# define catsep '/'
 # define leaveonclean 1
 # define curdir "."
 #elif defined(__MSDOS__) || defined(__WINDOWS__) || \
     defined(__OS2__) || defined(_WIN16) || defined(_WIN32)
 # define separators "/\\:"
 # define cleandirend "/\\"
+# define catsep '\\'
 # define leaveonclean 2         /* Leave \\ at the start alone */
 # define curdir "."
 #elif defined(Macintosh)        /* MacOS classic? */
 # define separators ":"
 # define curdir ":"
+# define catsep ":"
 # define cleandirend ":"
 # define leaveonclean 0
 # define leave_leading 1
@@ -68,6 +71,10 @@
 # define curdir ""
 #endif
 
+/*
+ * This is an inline, because most compilers can greatly simplify this
+ * for a fixed string, like we have here.
+ */
 static inline bool ismatch(const char *charset, char ch)
 {
     const char *p;
@@ -128,4 +135,33 @@ char *nasm_dirname(const char *path)
 #endif
 
     return nasm_strndup(path, p-path);
+}
+
+/* Concatenate a directory path and a filename */
+char *nasm_catfile(const char *dir, const char *file)
+{
+#ifndef catsep
+    return nasm_strcat(dir, file);
+#else
+    size_t dl = strlen(dir);
+    size_t fl = strlen(file);
+    char *p;
+    bool dosep = true;
+
+    if (!dl || ismatch(separators, dir[dl-1])) {
+        /* No separator necessary */
+        dosep = false;
+    }
+
+    p = nasm_malloc(dl + fl + dosep + 1);
+
+    memcpy(p, dir, dl);
+    p += dl;
+    if (dosep)
+        *p++ = catsep;
+
+    memcpy(p, file, fl+1);
+
+    return p;
+#endif
 }
