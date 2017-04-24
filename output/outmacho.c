@@ -1797,9 +1797,9 @@ static void macho_dbg_generate(void)
 
     /* dw section walk to find high_addr and total_len */
     {
-        struct dw_sect_list *p_sect = dw_head_sect;
-        uint32_t idx = 0;
-        for(; idx < dw_num_sects; idx++) {
+        struct dw_sect_list *p_sect;
+
+        list_for_each(p_sect, dw_head_sect) {
             uint64_t offset = get_section_by_index(p_sect->section)->size;
             struct SAA *p_linep = p_sect->psaa;
 
@@ -1811,16 +1811,14 @@ static void macho_dbg_generate(void)
 
             total_len += p_linep->datalen;
             high_addr += offset;
-            p_sect = p_sect->next;
         }
     }
 
     /* debug line */
     {
-        struct file_list *p_file = dw_head_list;
-        struct dw_sect_list *p_sect = dw_head_sect;
-        size_t linep_off = 0;
-        uint32_t idx = 0, buf_size = 0;
+        struct file_list *p_file;
+        struct dw_sect_list *p_sect;
+        size_t linep_off, buf_size;
         struct SAA *p_lines = saa_init(1L);
         nasm_assert(p_lines != NULL);
 
@@ -1846,12 +1844,11 @@ static void macho_dbg_generate(void)
         saa_write8(p_lines, 1); /* std opcode 12 length */
         saa_write8(p_lines, 0); /* end of table */
 
-        for(idx = 0; idx < dw_num_files; idx++) {
-            saa_wbytes(p_lines, p_file->file_name, (int32_t)(strlen(p_file->file_name) +1));
+        list_for_each(p_file, dw_head_list) {
+            saa_wcstring(p_lines, p_file->file_name);
             saa_write8(p_lines, 0); /* directory */
             saa_write8(p_lines, 0); /* time */
             saa_write8(p_lines, 0); /* size */
-            p_file = p_file->next;
         }
         saa_write8(p_lines, 0); /* end of table */
 
@@ -1868,7 +1865,7 @@ static void macho_dbg_generate(void)
         p_buf += linep_off;
         saa_free(p_lines);
 
-        for(idx = 0; idx < dw_num_sects; idx++) {
+        list_for_each(p_sect, dw_head_sect) {
             struct SAA *p_linep = p_sect->psaa;
             saa_len = p_linep->datalen;
             saa_rnbytes(p_linep, p_buf, saa_len);
@@ -1884,7 +1881,6 @@ static void macho_dbg_generate(void)
     /* string section */
     {
         struct file_list *p_file = dw_head_list;
-        uint32_t idx = 0;
         struct SAA *p_str = saa_init(1L);
         struct SAA *p_path_str = saa_init(1L);
         nasm_assert((p_str != NULL) && (p_path_str != NULL));
@@ -1897,21 +1893,21 @@ static void macho_dbg_generate(void)
 
         module_str_offset = path_str_offset = producer_str_offset + strlen(nasm_signature) + 1;
 
-        for(; idx < dw_num_files; idx++) {
-            size_t cur_file_strlen =  strlen(p_file->file_name) + 1;
+        list_for_each(p_file, dw_head_list) {
             char *cur_path = nasm_realpath(p_file->file_name);
-            size_t cur_path_strlen =  strlen(cur_path);
+	    char *cur_file = nasm_basename(cur_path);
+	    char *cur_dir  = nasm_dirname(cur_path);
 
-            nasm_assert(cur_path_strlen > cur_file_strlen);
-            cur_path_strlen -= cur_file_strlen;
-            cur_path[cur_path_strlen] = '\0';
-            saa_wbytes(p_str, p_file->file_name, cur_file_strlen);
-            saa_wbytes(p_path_str, cur_path, cur_path_strlen);
-            path_str_offset += cur_file_strlen;
-            p_file = p_file->next;
+	    saa_wcstring(p_str, cur_file);
+	    saa_wcstring(p_path_str, cur_dir);
+
+	    nasm_free(cur_path);
+	    nasm_free(cur_file);
+	    nasm_free(cur_dir);
         }
 
         saa_len = p_str->datalen;
+	path_str_offset += saa_len;
         p_buf = nasm_malloc(saa_len);
         saa_rnbytes(p_str, p_buf, saa_len);
         macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
@@ -2045,16 +2041,14 @@ static void macho_dbg_linenum(const char *file_name, int32_t line_num, int32_t s
 
     if(!dw_cur_list || strcmp(file_name, dw_cur_list->file_name)) {
         if(dw_head_list) {
-            struct file_list *match = dw_head_list;
-            uint32_t idx = 0;
+            struct file_list *match;
 
-            for (; idx < dw_num_files; idx++ ) {
+	    list_for_each(match, dw_head_list) {
                 if(!(strcmp(file_name, match->file_name))) {
                     dw_cur_list = match;
                     need_new_list = false;
                     break;
                 }
-                match = match->next;
             }
         }
 
