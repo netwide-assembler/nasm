@@ -425,8 +425,8 @@ perlbreq.si: $(ALLPERLSRC)
 	sed -r -e '/perl\((strict|warnings)\)/d' | \
 	sort | uniq > perlbreq.si || ( rm -f perlbreq.si ; false )
 
-nasm.spec: nasm.spec.in version.sed perlbreq.si
-	sed -f version.sed -e '/@@PERLBUILDREQS@@/r perlbreq.si' \
+nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
+	sed -f version.sed -f nasm.spec.sed \
 	< nasm.spec.in > nasm.spec || ( rm -f nasm.spec ; false )
 
 splint:
