@@ -86,6 +86,39 @@
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
+#ifdef HAVE_ENDIAN_H
+# include <endian.h>
+#endif
+
+/*
+ * If we have BYTE_ORDER defined, trust it over what autoconf came up
+ * with, especially since autoconf obviously can't figure things out
+ * for a universal compiler.
+ */
+#if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+# undef WORDS_LITTLEENDIAN
+# undef WORDS_BIGENDIAN
+# if BYTE_ORDER == LITTLE_ENDIAN
+#  define WORDS_LITTLEENDIAN 1
+# elif BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+# endif
+#endif
+
+/*
+ * Define this to 1 for faster performance if this is a littleendian
+ * platform which can do unaligned memory references.  It is safe
+ * to leave it defined to 0 even if that is true.
+ */
+#if defined(__386__) || defined(__i386__) || defined(__x86_64__) \
+    || defined(_M_IX86) || defined(_M_X64)
+# define X86_MEMORY 1
+# ifndef WORDS_LITTLEENDIAN
+#  define WORDS_LITTLEENDIAN 1
+# endif
+#else
+# define X86_MEMORY 0
+#endif
 
 /* Some versions of MSVC have these only with underscores in front */
 #ifndef HAVE_SNPRINTF
@@ -158,20 +191,6 @@ char *strsep(char **, const char *);
 
 #if !HAVE_DECL_STRNLEN
 size_t strnlen(const char *s, size_t maxlen);
-#endif
-
-/*
- * Define this to 1 for faster performance if this is a littleendian
- * platform which can do unaligned memory references.  It is safe
- * to leave it defined to 0 even if that is true.
- */
-#if defined(__386__) || defined(__i386__) || defined(__x86_64__)
-# define X86_MEMORY 1
-# ifndef WORDS_LITTLEENDIAN
-#  define WORDS_LITTLEENDIAN 1
-# endif
-#else
-# define X86_MEMORY 0
 #endif
 
 /*

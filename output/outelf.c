@@ -1614,25 +1614,25 @@ static void elf_write(void)
 
         nasm_zero(ehdr.e_ident);
         memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
-        ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS32);
-        ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
-        ehdr.e_ident[EI_VERSION]    = char_le(EV_CURRENT);
-        ehdr.e_ident[EI_OSABI]      = char_le(elf_osabi);
-        ehdr.e_ident[EI_ABIVERSION] = char_le(elf_abiver);
+        ehdr.e_ident[EI_CLASS]      = ELFCLASS32;
+        ehdr.e_ident[EI_DATA]       = ELFDATA2LSB;
+        ehdr.e_ident[EI_VERSION]    = EV_CURRENT;
+        ehdr.e_ident[EI_OSABI]      = elf_osabi;
+        ehdr.e_ident[EI_ABIVERSION] = elf_abiver;
 
-        ehdr.e_type                 = short_le(ET_REL);
-        ehdr.e_machine              = short_le(is_elf32() ? EM_386 : EM_X86_64);
-        ehdr.e_version              = short_le(EV_CURRENT);
+        ehdr.e_type                 = cpu_to_le16(ET_REL);
+        ehdr.e_machine              = cpu_to_le16(is_elf32() ? EM_386 : EM_X86_64);
+        ehdr.e_version              = cpu_to_le16(EV_CURRENT);
         ehdr.e_entry                = 0;
         ehdr.e_phoff                = 0;
         ehdr.e_shoff                = sizeof(Elf64_Ehdr);
         ehdr.e_flags                = 0;
-        ehdr.e_ehsize               = short_le(sizeof(Elf32_Ehdr));
+        ehdr.e_ehsize               = cpu_to_le16(sizeof(Elf32_Ehdr));
         ehdr.e_phentsize            = 0;
         ehdr.e_phnum                = 0;
-        ehdr.e_shentsize            = short_le(sizeof(Elf32_Shdr));
-        ehdr.e_shnum                = short_le(nsections);
-        ehdr.e_shstrndx             = short_le(sec_shstrtab);
+        ehdr.e_shentsize            = cpu_to_le16(sizeof(Elf32_Shdr));
+        ehdr.e_shnum                = cpu_to_le16(nsections);
+        ehdr.e_shstrndx             = cpu_to_le16(sec_shstrtab);
 
         nasm_write(&ehdr, sizeof(ehdr), ofile);
         fwritezero(sizeof(Elf64_Ehdr) - sizeof(Elf32_Ehdr), ofile);
@@ -1643,25 +1643,25 @@ static void elf_write(void)
 
         nasm_zero(ehdr.e_ident);
         memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
-        ehdr.e_ident[EI_CLASS]      = char_le(ELFCLASS64);
-        ehdr.e_ident[EI_DATA]       = char_le(ELFDATA2LSB);
-        ehdr.e_ident[EI_VERSION]    = char_le(EV_CURRENT);
-        ehdr.e_ident[EI_OSABI]      = char_le(elf_osabi);
-        ehdr.e_ident[EI_ABIVERSION] = char_le(elf_abiver);
+        ehdr.e_ident[EI_CLASS]      = ELFCLASS64;
+        ehdr.e_ident[EI_DATA]       = ELFDATA2LSB;
+        ehdr.e_ident[EI_VERSION]    = EV_CURRENT;
+        ehdr.e_ident[EI_OSABI]      = elf_osabi;
+        ehdr.e_ident[EI_ABIVERSION] = elf_abiver;
 
-        ehdr.e_type                 = short_le(ET_REL);
-        ehdr.e_machine              = short_le(EM_X86_64);
-        ehdr.e_version              = short_le(EV_CURRENT);
+        ehdr.e_type                 = cpu_to_le16(ET_REL);
+        ehdr.e_machine              = cpu_to_le16(EM_X86_64);
+        ehdr.e_version              = cpu_to_le16(EV_CURRENT);
         ehdr.e_entry                = 0;
         ehdr.e_phoff                = 0;
         ehdr.e_shoff                = sizeof(Elf64_Ehdr);
         ehdr.e_flags                = 0;
-        ehdr.e_ehsize               = short_le(sizeof(Elf64_Ehdr));
+        ehdr.e_ehsize               = cpu_to_le16(sizeof(Elf64_Ehdr));
         ehdr.e_phentsize            = 0;
         ehdr.e_phnum                = 0;
-        ehdr.e_shentsize            = short_le(sizeof(Elf64_Shdr));
-        ehdr.e_shnum                = short_le(nsections);
-        ehdr.e_shstrndx             = short_le(sec_shstrtab);
+        ehdr.e_shentsize            = cpu_to_le16(sizeof(Elf64_Shdr));
+        ehdr.e_shnum                = cpu_to_le16(nsections);
+        ehdr.e_shstrndx             = cpu_to_le16(sec_shstrtab);
 
         nasm_write(&ehdr, sizeof(ehdr), ofile);
     }
@@ -1860,19 +1860,19 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
      * Next, an entry for the file name.
      */
     if (is_elf64()) {
-        u.sym64.st_name     = long_le(1);
-        u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_FILE));
+        u.sym64.st_name     = cpu_to_le32(1);
+        u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_FILE);
         u.sym64.st_other    = 0;
-        u.sym64.st_shndx    = short_le(SHN_ABS);
+        u.sym64.st_shndx    = cpu_to_le16(SHN_ABS);
         u.sym64.st_value    = 0;
         u.sym64.st_size     = 0;
     } else {
-        u.sym32.st_name     = long_le(1);
+        u.sym32.st_name     = cpu_to_le32(1);
         u.sym32.st_value    = 0;
         u.sym32.st_size     = 0;
-        u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_FILE));
+        u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_FILE);
         u.sym32.st_other    = 0;
-        u.sym32.st_shndx    = short_le(SHN_ABS);
+        u.sym32.st_shndx    = cpu_to_le16(SHN_ABS);
     }
     saa_wbytes(s, &u, usize);
     *len += usize;
@@ -1889,8 +1889,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         u.sym64.st_value    = 0;
         u.sym64.st_size     = 0;
         for (i = 1; i <= nsects; i++) {
-            u.sym64.st_info      = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
-            u.sym64.st_shndx     = short_le(i);
+            u.sym64.st_info      = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
+            u.sym64.st_shndx     = cpu_to_le16(i);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -1901,8 +1901,8 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         u.sym32.st_size     = 0;
         u.sym32.st_other    = 0;
         for (i = 1; i <= nsects; i++) {
-            u.sym32.st_info      = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
-            u.sym32.st_shndx     = short_le(i);
+            u.sym32.st_info      = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
+            u.sym32.st_shndx     = cpu_to_le16(i);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -1917,12 +1917,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (sym->type & SYM_GLOBAL)
                 continue;
-            u.sym64.st_name     = long_le(sym->strpos);
-            u.sym64.st_info     = char_le(sym->type);
-            u.sym64.st_other    = char_le(sym->other);
-            u.sym64.st_shndx    = short_le(sym->section);
-            u.sym64.st_value    = dlong_le(sym->symv.key);
-            u.sym64.st_size     = dlong_le(sym->size);
+            u.sym64.st_name     = cpu_to_le32(sym->strpos);
+            u.sym64.st_info     = sym->type;
+            u.sym64.st_other    = sym->other;
+            u.sym64.st_shndx    = cpu_to_le16(sym->section);
+            u.sym64.st_value    = cpu_to_le64(sym->symv.key);
+            u.sym64.st_size     = cpu_to_le64(sym->size);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -1934,9 +1934,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         if (dfmt_is_dwarf()) {
             dwarf_infosym = *local;
             u.sym64.st_name     = 0;
-            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = short_le(debug_info);
+            u.sym64.st_shndx    = cpu_to_le16(debug_info);
             u.sym64.st_value    = 0;
             u.sym64.st_size     = 0;
             saa_wbytes(s, &u, usize);
@@ -1944,9 +1944,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             (*local)++;
             dwarf_abbrevsym = *local;
             u.sym64.st_name     = 0;
-            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = short_le(debug_abbrev);
+            u.sym64.st_shndx    = cpu_to_le16(debug_abbrev);
             u.sym64.st_value    = 0;
             u.sym64.st_size     = 0;
             saa_wbytes(s, &u, usize);
@@ -1954,9 +1954,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             (*local)++;
             dwarf_linesym = *local;
             u.sym64.st_name     = 0;
-            u.sym64.st_info     = char_le(ELF64_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = short_le(debug_line);
+            u.sym64.st_shndx    = cpu_to_le16(debug_line);
             u.sym64.st_value    = 0;
             u.sym64.st_size     = 0;
             saa_wbytes(s, &u, usize);
@@ -1967,12 +1967,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (sym->type & SYM_GLOBAL)
                 continue;
-            u.sym32.st_name     = long_le(sym->strpos);
-            u.sym32.st_value    = long_le(sym->symv.key);
-            u.sym32.st_size     = long_le(sym->size);
-            u.sym32.st_info     = char_le(sym->type);
-            u.sym32.st_other    = char_le(sym->other);
-            u.sym32.st_shndx    = short_le(sym->section);
+            u.sym32.st_name     = cpu_to_le32(sym->strpos);
+            u.sym32.st_value    = cpu_to_le32(sym->symv.key);
+            u.sym32.st_size     = cpu_to_le32(sym->size);
+            u.sym32.st_info     = sym->type;
+            u.sym32.st_other    = sym->other;
+            u.sym32.st_shndx    = cpu_to_le16(sym->section);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -1986,9 +1986,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             u.sym32.st_name     = 0;
             u.sym32.st_value    = 0;
             u.sym32.st_size     = 0;
-            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = short_le(sec_debug_info);
+            u.sym32.st_shndx    = cpu_to_le16(sec_debug_info);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -1996,9 +1996,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             u.sym32.st_name     = 0;
             u.sym32.st_value    = 0;
             u.sym32.st_size     = 0;
-            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = short_le(sec_debug_abbrev);
+            u.sym32.st_shndx    = cpu_to_le16(sec_debug_abbrev);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -2006,9 +2006,9 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
             u.sym32.st_name     = 0;
             u.sym32.st_value    = 0;
             u.sym32.st_size     = 0;
-            u.sym32.st_info     = char_le(ELF32_ST_INFO(STB_LOCAL, STT_SECTION));
+            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
             u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = short_le(sec_debug_line);
+            u.sym32.st_shndx    = cpu_to_le16(sec_debug_line);
             saa_wbytes(s, &u, usize);
             *len += usize;
             (*local)++;
@@ -2023,12 +2023,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (!(sym->type & SYM_GLOBAL))
                 continue;
-            u.sym64.st_name     = long_le(sym->strpos);
-            u.sym64.st_info     = char_le(sym->type);
-            u.sym64.st_other    = char_le(sym->other);
-            u.sym64.st_shndx    = short_le(sym->section);
-            u.sym64.st_value    = dlong_le(sym->symv.key);
-            u.sym64.st_size     = dlong_le(sym->size);
+            u.sym64.st_name     = cpu_to_le32(sym->strpos);
+            u.sym64.st_info     = sym->type;
+            u.sym64.st_other    = sym->other;
+            u.sym64.st_shndx    = cpu_to_le16(sym->section);
+            u.sym64.st_value    = cpu_to_le64(sym->symv.key);
+            u.sym64.st_size     = cpu_to_le64(sym->size);
             saa_wbytes(s, &u, usize);
             *len += usize;
         }
@@ -2036,12 +2036,12 @@ static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
         while ((sym = saa_rstruct(syms))) {
             if (!(sym->type & SYM_GLOBAL))
                 continue;
-            u.sym32.st_name     = long_le(sym->strpos);
-            u.sym32.st_value    = long_le(sym->symv.key);
-            u.sym32.st_size     = long_le(sym->size);
-            u.sym32.st_info     = char_le(sym->type);
-            u.sym32.st_other    = char_le(sym->other);
-            u.sym32.st_shndx    = short_le(sym->section);
+            u.sym32.st_name     = cpu_to_le32(sym->strpos);
+            u.sym32.st_value    = cpu_to_le32(sym->symv.key);
+            u.sym32.st_size     = cpu_to_le32(sym->size);
+            u.sym32.st_info     = sym->type;
+            u.sym32.st_other    = sym->other;
+            u.sym32.st_shndx    = cpu_to_le16(sym->section);
             saa_wbytes(s, &u, usize);
             *len += usize;
         }
@@ -2083,8 +2083,8 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            u.rel32.r_offset    = long_le(r->address);
-            u.rel32.r_info      = long_le(ELF32_R_INFO(sym, r->type));
+            u.rel32.r_offset    = cpu_to_le32(r->address);
+            u.rel32.r_info      = cpu_to_le32(ELF32_R_INFO(sym, r->type));
             saa_wbytes(s, &u, usize);
             *len += usize;
 
@@ -2097,9 +2097,9 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            u.rela32.r_offset   = long_le(r->address);
-            u.rela32.r_info     = long_le(ELF32_R_INFO(sym, r->type));
-            u.rela32.r_addend   = long_le(r->offset);
+            u.rela32.r_offset   = cpu_to_le32(r->address);
+            u.rela32.r_info     = cpu_to_le32(ELF32_R_INFO(sym, r->type));
+            u.rela32.r_addend   = cpu_to_le32(r->offset);
             saa_wbytes(s, &u, usize);
             *len += usize;
 
@@ -2113,9 +2113,9 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
             if (sym >= GLOBAL_TEMP_BASE)
                 sym += global_offset;
 
-            u.rela64.r_offset   = dlong_le(r->address);
-            u.rela64.r_info     = dlong_le(ELF64_R_INFO(sym, r->type));
-            u.rela64.r_addend   = dlong_le(r->offset);
+            u.rela64.r_offset   = cpu_to_le64(r->address);
+            u.rela64.r_info     = cpu_to_le64(ELF64_R_INFO(sym, r->type));
+            u.rela64.r_addend   = cpu_to_le64(r->offset);
             saa_wbytes(s, &u, usize);
             *len += usize;
 
@@ -2141,33 +2141,33 @@ static void elf_section_header(int name, int type, uint64_t flags,
     elf_nsect++;
 
     if (is_elf32() || is_elfx32()) {
-        shdr.shdr32.sh_name         = long_le(name);
-        shdr.shdr32.sh_type         = long_le(type);
-        shdr.shdr32.sh_flags        = long_le(flags);
+        shdr.shdr32.sh_name         = cpu_to_le32(name);
+        shdr.shdr32.sh_type         = cpu_to_le32(type);
+        shdr.shdr32.sh_flags        = cpu_to_le32(flags);
         shdr.shdr32.sh_addr         = 0;
-        shdr.shdr32.sh_offset       = long_le(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.shdr32.sh_size         = long_le(datalen);
+        shdr.shdr32.sh_offset       = cpu_to_le32(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.shdr32.sh_size         = cpu_to_le32(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.shdr32.sh_link         = long_le(link);
-        shdr.shdr32.sh_info         = long_le(info);
-        shdr.shdr32.sh_addralign    = long_le(align);
-        shdr.shdr32.sh_entsize      = long_le(eltsize);
+        shdr.shdr32.sh_link         = cpu_to_le32(link);
+        shdr.shdr32.sh_info         = cpu_to_le32(info);
+        shdr.shdr32.sh_addralign    = cpu_to_le32(align);
+        shdr.shdr32.sh_entsize      = cpu_to_le32(eltsize);
     } else {
         nasm_assert(is_elf64());
 
-        shdr.shdr64.sh_name         = long_le(name);
-        shdr.shdr64.sh_type         = long_le(type);
-        shdr.shdr64.sh_flags        = dlong_le(flags);
+        shdr.shdr64.sh_name         = cpu_to_le32(name);
+        shdr.shdr64.sh_type         = cpu_to_le32(type);
+        shdr.shdr64.sh_flags        = cpu_to_le64(flags);
         shdr.shdr64.sh_addr         = 0;
-        shdr.shdr64.sh_offset       = dlong_le(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.shdr64.sh_size         = long_le(datalen);
+        shdr.shdr64.sh_offset       = cpu_to_le64(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.shdr64.sh_size         = cpu_to_le32(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.shdr64.sh_link        = long_le(link);
-        shdr.shdr64.sh_info        = long_le(info);
-        shdr.shdr64.sh_addralign   = dlong_le(align);
-        shdr.shdr64.sh_entsize     = dlong_le(eltsize);
+        shdr.shdr64.sh_link        = cpu_to_le32(link);
+        shdr.shdr64.sh_info        = cpu_to_le32(info);
+        shdr.shdr64.sh_addralign   = cpu_to_le64(align);
+        shdr.shdr64.sh_entsize     = cpu_to_le64(eltsize);
     }
 
     nasm_write(&shdr, is_elf64() ? sizeof(shdr.shdr64) : sizeof(shdr.shdr32), ofile);
