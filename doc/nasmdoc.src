@@ -3706,16 +3706,16 @@ all file name and line numbers relative to the values specified
 therein.
 
 
-\S{getenv} \i\c{%!}\c{<env>}: Read an environment variable.
+\S{getenv} \i\c{%!}\e{variable}: Read an Environment Variable.
 
-The \c{%!<env>} directive makes it possible to read the value of an
+The \c{%!}\e{variable} directive makes it possible to read the value of an
 environment variable at assembly time. This could, for example, be used
 to store the contents of an environment variable into a string, which
 could be used at some other point in your code.
 
-For example, suppose that you have an environment variable \c{FOO}, and
-you want the contents of \c{FOO} to be embedded in your program. You
-could do that as follows:
+For example, suppose that you have an environment variable \c{FOO},
+and you want the contents of \c{FOO} to be embedded in your program as
+a quoted string. You could do that as follows:
 
 \c %defstr FOO          %!FOO
 
