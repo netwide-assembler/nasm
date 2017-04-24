@@ -7,12 +7,12 @@ AC_DEFUN(PA_ADD_CFLAGS,
 [AC_MSG_CHECKING([if $CC accepts $1])
  pa_add_cflags__old_cflags="$CFLAGS"
  CFLAGS="$CFLAGS $1"
- AC_TRY_LINK([#include <stdio.h>],
+ AC_TRY_LINK(AC_INCLUDES_DEFAULT,
  [printf("Hello, World!\n");],
- AC_MSG_RESULT([yes])
- CFLAGS="$pa_add_cflags__old_cflags ifelse([$2],[],[$1],[$2])",
- AC_MSG_RESULT([no])
- CFLAGS="$pa_add_cflags__old_cflags")])
+ [AC_MSG_RESULT([yes])
+  CFLAGS="$pa_add_cflags__old_cflags ifelse([$2],[],[$1],[$2])"],
+ [AC_MSG_RESULT([no])
+  CFLAGS="$pa_add_cflags__old_cflags"])])
 
 dnl --------------------------------------------------------------------------
 dnl PA_ADD_CLDFLAGS()
@@ -26,14 +26,14 @@ AC_DEFUN(PA_ADD_CLDFLAGS,
  CFLAGS="$CFLAGS $1"
  pa_add_cldflags__old_ldflags="$LDFLAGS"
  LDFLAGS="$LDFLAGS $1"
- AC_TRY_LINK([#include <stdio.h>],
+ AC_TRY_LINK(AC_INCLUDES_DEFAULT,
  [printf("Hello, World!\n");],
- AC_MSG_RESULT([yes])
- CFLAGS="$pa_add_cldflags__old_cflags ifelse([$2],[],[$1],[$2])"
- LDFLAGS="$pa_add_cldflags__old_ldflags ifelse([$2],[],[$1],[$2])",
- AC_MSG_RESULT([no])
- CFLAGS="$pa_add_cldflags__old_cflags"
- LDFLAGS="$pa_add_cldflags__old_ldflags")])
+ [AC_MSG_RESULT([yes])
+  CFLAGS="$pa_add_cldflags__old_cflags ifelse([$2],[],[$1],[$2])"
+  LDFLAGS="$pa_add_cldflags__old_ldflags ifelse([$2],[],[$1],[$2])"],
+ [AC_MSG_RESULT([no])
+  CFLAGS="$pa_add_cldflags__old_cflags"
+  LDFLAGS="$pa_add_cldflags__old_ldflags"])])
 
 dnl --------------------------------------------------------------------------
 dnl PA_HAVE_FUNC
@@ -129,13 +129,11 @@ dnl  Simpler-to-use versions of AC_ARG_ENABLED, that include the
 dnl  test for $enableval and the AS_HELP_STRING definition
 dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_ARG_ENABLED,
-[AC_ARG_ENABLE([$1],
- [AS_HELP_STRING([--enable-$1],[$2])], [], [enableval=no])
-  AS_IF([test x"$enableval" != xno], [$3], [$4])
+[AC_ARG_ENABLE([$1], [AS_HELP_STRING([--enable-$1],[$2])], [], [enableval=no])
+ AS_IF([test x"$enableval" != xno], [$3], [$4])
 ])
 
 AC_DEFUN(PA_ARG_DISABLED,
-[AC_ARG_ENABLE([$1],
- [AS_HELP_STRING([--disable-$1],[$2])], [], [enableval=yes])
-  AS_IF([test x"$enableval" = xno], [$3], [$4])
+[AC_ARG_ENABLE([$1],[AS_HELP_STRING([--disable-$1],[$2])], [], [enableval=yes])
+ AS_IF([test x"$enableval" = xno], [$3], [$4])
 ])
