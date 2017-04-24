@@ -5,7 +5,6 @@ Name: nasm
 Version: @@NASM_MANGLED_VER@@
 Release: 0%{?dist}
 License: BSD
-Group: Development/Languages
 Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
@@ -14,20 +13,19 @@ Prefix: %{_prefix}
 BuildRequires: autoconf
 BuildRequires: asciidoc
 BuildRequires: xmlto
-BuildRequires: ghostscript
-BuildRequires: fontconfig
-BuildRequires: adobe-source-sans-pro-fonts
-BuildRequires: adobe-source-code-pro-fonts
 BuildRequires: xz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %package doc
-Summary: Extensive documentation for NASM
-Group: Development/Languages
+Summary: Detailed manual for the Netwide Assembler
+BuildArch: noarch
+BuildRequires: ghostscript
+BuildRequires: fontconfig
+BuildRequires: adobe-source-sans-pro-fonts
+BuildRequires: adobe-source-code-pro-fonts
 
 %package rdoff
 Summary: Tools for the RDOFF binary format, sometimes used with NASM.
-Group: Development/Tools
 
 %description
 NASM is the Netwide Assembler, a free portable assembler for the Intel
@@ -53,10 +51,10 @@ make %{?_smp_mflags} everything
 xz -9ef doc/nasmdoc.pdf
 
 %install
-rm -rf "$RPM_BUILD_ROOT"
-mkdir -p "$RPM_BUILD_ROOT"/%{_bindir}
-mkdir -p "$RPM_BUILD_ROOT"/%{_mandir}/man1
-make INSTALLROOT="$RPM_BUILD_ROOT" install install_rdf
+rm -rf "%{buildroot}"
+mkdir -p "%{buildroot}"/%{_bindir}
+mkdir -p "%{buildroot}"/%{_mandir}/man1
+make INSTALLROOT="%{buildroot}" install install_rdf
 
 %files
 %doc AUTHORS CHANGES README TODO
