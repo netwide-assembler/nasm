@@ -3338,7 +3338,7 @@ top context on the stack. Of course, after a subsequent \c{%push},
 it can then still be accessed by the name \c{%$$localmac}.
 
 
-\S{ctxfallthrough} \i{Context Fall-Through Lookup}
+\S{ctxfallthrough} \i{Context Fall-Through Lookup} \e{(deprecated)}
 
 Context fall-through lookup (automatic searching of outer contexts)
 is a feature that was added in NASM version 0.98.03. Unfortunately,
