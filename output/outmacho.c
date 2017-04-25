@@ -355,6 +355,7 @@ static struct file_list *dw_head_list = 0, *dw_cur_list = 0, *dw_last_list = 0;
 static struct dw_sect_list  *dw_head_sect = 0, *dw_cur_sect = 0, *dw_last_sect = 0;
 static uint32_t  cur_line = 0, dw_num_files = 0, dw_num_sects = 0;
 static bool  dbg_immcall = false;
+static const char *module_name = NULL;
 
 /*
  * Special section numbers which are used to define Mach-O special
@@ -1071,6 +1072,7 @@ static int32_t macho_segbase(int32_t section)
 static void macho_filename(char *inname, char *outname)
 {
     standard_extension(inname, outname, ".o");
+    module_name = inname;
 }
 
 extern macros_t macho_stdmac[];
@@ -1784,7 +1786,7 @@ static void macho_dbg_generate(void)
     size_t saa_len = 0, high_addr = 0, total_len = 0;
     struct section *p_section = NULL;
     /* calculated at debug_str and referenced at debug_info */
-    uint32_t producer_str_offset = 0, module_str_offset = 0, path_str_offset = 0;
+    uint32_t producer_str_offset = 0, module_str_offset = 0, dir_str_offset = 0;
 
     /* debug section defines */
     {
@@ -1816,11 +1818,9 @@ static void macho_dbg_generate(void)
 
     /* debug line */
     {
-        struct file_list *p_file;
         struct dw_sect_list *p_sect;
         size_t linep_off, buf_size;
         struct SAA *p_lines = saa_init(1L);
-        nasm_assert(p_lines != NULL);
 
         p_section = get_section_by_name("__DWARF", "__debug_line");
         nasm_assert(p_section != NULL);
@@ -1844,12 +1844,10 @@ static void macho_dbg_generate(void)
         saa_write8(p_lines, 1); /* std opcode 12 length */
         saa_write8(p_lines, 0); /* end of table */
 
-        list_for_each(p_file, dw_head_list) {
-            saa_wcstring(p_lines, p_file->file_name);
-            saa_write8(p_lines, 0); /* directory */
-            saa_write8(p_lines, 0); /* time */
-            saa_write8(p_lines, 0); /* size */
-        }
+        saa_wcstring(p_lines, module_name);
+        saa_write8(p_lines, 0); /* directory */
+        saa_write8(p_lines, 0); /* time */
+        saa_write8(p_lines, 0); /* size */
         saa_write8(p_lines, 0); /* end of table */
 
         linep_off = p_lines->datalen;
@@ -1867,63 +1865,49 @@ static void macho_dbg_generate(void)
 
         list_for_each(p_sect, dw_head_sect) {
             struct SAA *p_linep = p_sect->psaa;
+
             saa_len = p_linep->datalen;
             saa_rnbytes(p_linep, p_buf, saa_len);
             p_buf += saa_len;
+
             saa_free(p_linep);
-            p_sect = p_sect->next;
         }
 
         macho_output(p_section->index, p_buf_base, OUT_RAWDATA, buf_size, NO_SEG, 0);
 
+        nasm_free(p_buf_base);
     }
 
     /* string section */
     {
-        struct file_list *p_file = dw_head_list;
         struct SAA *p_str = saa_init(1L);
-        struct SAA *p_path_str = saa_init(1L);
-        nasm_assert((p_str != NULL) && (p_path_str != NULL));
+        char *cur_path = nasm_realpath(module_name);
+        char *cur_file = nasm_basename(cur_path);
+        char *cur_dir = nasm_dirname(cur_path);
 
         p_section = get_section_by_name("__DWARF", "__debug_str");
         nasm_assert(p_section != NULL);
 
         producer_str_offset = 0;
-        saa_wbytes(p_str, nasm_signature, strlen(nasm_signature) + 1);
-
-        module_str_offset = path_str_offset = producer_str_offset + strlen(nasm_signature) + 1;
-
-        list_for_each(p_file, dw_head_list) {
-            char *cur_path = nasm_realpath(p_file->file_name);
-	    char *cur_file = nasm_basename(cur_path);
-	    char *cur_dir  = nasm_dirname(cur_path);
-
-	    saa_wcstring(p_str, cur_file);
-	    saa_wcstring(p_path_str, cur_dir);
-
-	    nasm_free(cur_path);
-	    nasm_free(cur_file);
-	    nasm_free(cur_dir);
-        }
+        module_str_offset = dir_str_offset = saa_wcstring(p_str, nasm_signature);
+        dir_str_offset += saa_wcstring(p_str, cur_file);
+        saa_wcstring(p_str, cur_dir);
 
         saa_len = p_str->datalen;
-	path_str_offset += saa_len;
         p_buf = nasm_malloc(saa_len);
         saa_rnbytes(p_str, p_buf, saa_len);
         macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
-        saa_free(p_str);
 
-        saa_len = p_path_str->datalen;
-        p_buf = nasm_malloc(saa_len);
-        saa_rnbytes(p_path_str, p_buf, saa_len);
-        macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
-        saa_free(p_path_str);
+        nasm_free(cur_path);
+        nasm_free(cur_file);
+        nasm_free(cur_dir);
+        saa_free(p_str);
+        nasm_free(p_buf);
     }
 
     /* debug info */
     {
         struct SAA *p_info = saa_init(1L);
-        nasm_assert(p_info != NULL);
 
         p_section = get_section_by_name("__DWARF", "__debug_info");
         nasm_assert(p_section != NULL);
@@ -1938,7 +1922,7 @@ static void macho_dbg_generate(void)
         saa_write32(p_info, producer_str_offset); /* offset from string table for DW_AT_producer  */
         saa_write16(p_info, DW_LANG_Mips_Assembler); /* DW_AT_language  */
         saa_write32(p_info, module_str_offset); /* offset from string table for DW_AT_name  */
-        saa_write32(p_info, path_str_offset); /* offset from string table for DW_AT_comp_dir */
+        saa_write32(p_info, dir_str_offset); /* offset from string table for DW_AT_comp_dir */
         saa_write32(p_info, 0); /* DW_AT_stmt_list  */
 
         if (ofmt == &of_macho64) {
@@ -1968,12 +1952,12 @@ static void macho_dbg_generate(void)
         macho_output(p_section->index, p_buf_base, OUT_RAWDATA, saa_len + 4, NO_SEG, 0);
 
         saa_free(p_info);
+        nasm_free(p_buf_base);
     }
 
     /* abbrev section */
     {
         struct SAA *p_abbrev = saa_init(1L);
-        nasm_assert(p_abbrev != NULL);
 
         p_section = get_section_by_name("__DWARF", "__debug_abbrev");
         nasm_assert(p_section != NULL);
@@ -2027,6 +2011,7 @@ static void macho_dbg_generate(void)
         macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
 
         saa_free(p_abbrev);
+        nasm_free(p_buf);
     }
 }
 
