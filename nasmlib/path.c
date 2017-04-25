@@ -39,7 +39,7 @@
 #include "nasmlib.h"
 #include "error.h"
 
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(__MACH__)
 # define separators "/"
 # define cleandirend "/"
 # define catsep '/'
@@ -93,7 +93,7 @@ static const char *first_filename_char(const char *path)
     const char *p = path + strlen(path);
 
     while (p > path) {
-        if (!ismatch(separators, p[-1]))
+        if (ismatch(separators, p[-1]))
             return p;
         p--;
     }
