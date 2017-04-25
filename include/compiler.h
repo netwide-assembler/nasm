@@ -96,11 +96,20 @@
 #endif
 
 /*
- * If we have BYTE_ORDER defined, trust it over what autoconf came up
- * with, especially since autoconf obviously can't figure things out
- * for a universal compiler.
+ * If we have BYTE_ORDER defined, or the compiler provides
+ * __BIG_ENDIAN__ or __LITTLE_ENDIAN__, trust it over what autoconf
+ * came up with, especially since autoconf obviously can't figure
+ * things out for a universal compiler.
  */
-#if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+#if defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+# undef WORDS_LITTLEENDIAN
+# undef WORDS_BIGENDIAN
+# define WORDS_BIGENDIAN 1
+#elif defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+# undef WORDS_LITTLEENDIAN
+# undef WORDS_BIGENDIAN
+# define WORDS_LITTLEENDIAN 1
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
 # undef WORDS_LITTLEENDIAN
 # undef WORDS_BIGENDIAN
 # if BYTE_ORDER == LITTLE_ENDIAN
@@ -112,15 +121,15 @@
 
 /*
  * Define this to 1 for faster performance if this is a littleendian
- * platform which can do unaligned memory references.  It is safe
- * to leave it defined to 0 even if that is true.
+ * platform *and* it can do arbitrary unaligned memory references.  It
+ * is safe to leave it defined to 0 even if that is true.
  */
 #if defined(__386__) || defined(__i386__) || defined(__x86_64__) \
     || defined(_M_IX86) || defined(_M_X64)
 # define X86_MEMORY 1
-# ifndef WORDS_LITTLEENDIAN
-#  define WORDS_LITTLEENDIAN 1
-# endif
+# undef WORDS_BIGENDIAN
+# undef WORDS_LITTLEENDIAN
+# define WORDS_LITTLEENDIAN 1
 #else
 # define X86_MEMORY 0
 #endif

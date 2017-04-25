@@ -223,8 +223,42 @@ static inline uint64_t cpu_to_le64(uint64_t v)
 
 #else /* not WORDS_LITTLEENDIAN or WORDS_BIGENDIAN */
 
-#error "Update byteord.h to include arbitrary byte orders"
+static inline uint16_t cpu_to_le16(uint16_t v)
+{
+    union u16 {
+        uint16_t v;
+        uint8_t c[2];
+    } x;
+    uint8_t *cp = &x.c;
+
+    WRITESHORT(cp, v);
+    return x.v;
+}
+
+static inline uint32_t cpu_to_le32(uint32_t v)
+{
+    union u32 {
+        uint32_t v;
+        uint8_t c[4];
+    } x;
+    uint8_t *cp = &x.c;
+
+    WRITELONG(cp, v);
+    return x.v;
+}
+
+static inline uint64_t cpu_to_le64(uint64_t v)
+{
+    union u64 {
+        uint64_t v;
+        uint8_t c[8];
+    } x;
+    uint8_t *cp = &x.c;
+
+    WRITEDLONG(cp, v);
+    return x.v;
+}
 
 #endif
 
-#endif /* NASM_BYTEORD_H */
+#endif /* NASM_BYTESEX_H */
