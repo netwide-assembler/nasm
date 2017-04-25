@@ -33,26 +33,40 @@
 
 /*
  * path.c - host operating system specific pathname manipulation functions
+ *
+ * This file is inherently nonportable ... please help adjusting it to
+ * any new platforms that may be necessary.
  */
 
 #include "compiler.h"
 #include "nasmlib.h"
 #include "error.h"
 
-#if defined(unix) || defined(__unix) || defined(__unix__) || defined(__MACH__)
-# define separators "/"
-# define cleandirend "/"
-# define catsep '/'
-# define leaveonclean 1
-# define curdir "."
-#elif defined(__MSDOS__) || defined(__WINDOWS__) || \
-    defined(__OS2__) || defined(_WIN16) || defined(_WIN32)
+#if defined(__MSDOS__) || defined(__DOS__) || \
+    defined(__WINDOWS__) || defined(_Windows) ||                        \
+    defined(__OS2__) || defined(_WIN16) || defined(WIN32) || defined(_WIN32)
+/* MS-DOS/Windows and like operating systems */
 # define separators "/\\:"
 # define cleandirend "/\\"
 # define catsep '\\'
 # define leaveonclean 2         /* Leave \\ at the start alone */
 # define curdir "."
-#elif defined(Macintosh)        /* MacOS classic? */
+#elif defined(unix) || defined(__unix) || defined(__unix__) ||   \
+    defined(__UNIX__) || defined(__Unix__) || \
+    defined(__MACH__) || defined(__BEOS__)
+/* Unix and Unix-like operating systems and others using
+ * the equivalent syntax (slashes as only separators, no concept of volume)
+ *
+ * This must come after the __MSDOS__ section, since it seems that at
+ * least DJGPP defines __unix__ despite not being a Unix environment at all.
+ */
+# define separators "/"
+# define cleandirend "/"
+# define catsep '/'
+# define leaveonclean 1
+# define curdir "."
+#elif defined(Macintosh) || defined(macintosh)
+/* MacOS classic */
 # define separators ":"
 # define curdir ":"
 # define catsep ':'
@@ -60,7 +74,8 @@
 # define leaveonclean 0
 # define leave_leading 1
 #elif defined(__VMS)
-/*
+/* VMS *
+ *
  * VMS filenames may have ;version at the end.  Assume we should count that
  * as part of the filename anyway.
  */
