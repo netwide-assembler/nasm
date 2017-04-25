@@ -3095,14 +3095,14 @@ variants are also provided.
 
 The conditional assembly construct \c{%ifenv} assembles the
 subsequent code if and only if the environment variable referenced by
-the \c{%!<env>} directive exists.
+the \c{%!}\e{variable} directive exists.
 
 The usual \i\c{%elifenv}, \i\c\{%ifnenv}, and \i\c{%elifnenv}
 variants are also provided.
 
-Just as for \c{%!<env>} the argument should be written as a string if
-it contains characters that would not be legal in an identifier.  See
-\k{getenv}.
+Just as for \c{%!}\e{variable} the argument should be written as a
+string if it contains characters that would not be legal in an
+identifier.  See \k{getenv}.
 
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 
