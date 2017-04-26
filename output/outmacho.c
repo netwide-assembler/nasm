@@ -1830,6 +1830,8 @@ static void macho_dbg_generate(void)
         struct dw_sect_list *p_sect;
         size_t linep_off, buf_size;
         struct SAA *p_lines = saa_init(1L);
+        struct dir_list *p_dir;
+        struct file_list *p_file;
 
         p_section = get_section_by_name("__DWARF", "__debug_line");
         nasm_assert(p_section != NULL);
@@ -1851,12 +1853,17 @@ static void macho_dbg_generate(void)
         saa_write8(p_lines, 0); /* std opcode 10 length */
         saa_write8(p_lines, 0); /* std opcode 11 length */
         saa_write8(p_lines, 1); /* std opcode 12 length */
+        list_for_each(p_dir, dw_head_dir) {
+            saa_wcstring(p_lines, p_dir->dir_name);
+        }
         saa_write8(p_lines, 0); /* end of table */
 
-        saa_wcstring(p_lines, module_name);
-        saa_write8(p_lines, 0); /* directory */
-        saa_write8(p_lines, 0); /* time */
-        saa_write8(p_lines, 0); /* size */
+        list_for_each(p_file, dw_head_file) {
+            saa_wcstring(p_lines, p_file->file_name);
+            saa_write8(p_lines, p_file->dir->dir); /* directory id */
+            saa_write8(p_lines, 0); /* time */
+            saa_write8(p_lines, 0); /* size */
+        }
         saa_write8(p_lines, 0); /* end of table */
 
         linep_off = p_lines->datalen;
