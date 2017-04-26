@@ -61,11 +61,11 @@ sub add_file_to_font_hash($) {
     my $fontdata;
 
     if ( $filename =~ /\.(otf|ttf)$/i ) {
-	$fontdata = parse_ttf_file($filename);
+        $fontdata = parse_ttf_file($filename);
     } elsif ( $filename =~ /\.(pfa|pfb)$/i ) {
-	if ( -f "${filestem}.afm" ) {
-	    $fontdata = parse_afm_file($filestem, $fonttype);
-	}
+        if ( -f "${filestem}.afm" ) {
+            $fontdata = parse_afm_file($filestem, $fonttype);
+        }
     }
 
     return unless (defined($fontdata));
@@ -73,16 +73,14 @@ sub add_file_to_font_hash($) {
     my $oldinfo = $font_info_hash{$fontdata->{name}};
 
     if (!defined($oldinfo) ||
-	$prefs{$fontdata->{type}} < $prefs{$oldinfo->{type}}) {
-	$font_info_hash{$fontdata->{name}} = $fontdata;
+        $prefs{$fontdata->{type}} < $prefs{$oldinfo->{type}}) {
+        $font_info_hash{$fontdata->{name}} = $fontdata;
     }
 }
 
 my $win32_ok = eval {
-    require Win32::Registry;
-    Win32::Registry->import();
-    require Win32;
-    Win32->import();
+    require Win32::TieRegistry;
+    Win32::TieRegistry->import();
     1;
 };
 
@@ -95,26 +93,25 @@ my $win32_ok = eval {
 #   This module is released under the terms of the Artistic License 2.0.
 #   For details, see the full text of the license in the file LICENSE.
 sub scanfonts_win32() {
-    return undef unless ($win32_ok);
+    return unless ($win32_ok);
 
-    my $font_key = 'SOFTWARE\Microsoft\Windows' .
-	(Win32::IsWinNT() ? 'NT' : '') . '\CurrentVersion\Fonts';
-    my($regfont, $list, $l, $file);
+    my $Reg = $::Registry->Open('', {Access=>'KEY_READ', Delimiter=>'/'});
+    my $fd;
+    foreach my $win ('Windows NT', 'Windows') {
+	$fd = $Reg->{"HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/$win/CurrentVersion/Fonts"};
+        last if (defined($fd));
+    }
+    return unless (defined($fd));
 
-    $::HKEY_LOCAL_MACHINE->Open($font_key, $regfont);
-    $regfont->GetValues($list);
-
-    foreach my $l (keys(%$list)) {
-	my $fname = $list->{$l}[0];
-	next unless ($fname =~ s/\((TrueType|OpenType)\)$//);
-	$file = File::Spec->rel2abs($list->{$l}[2], $ENV{'windir'}.'\fonts');
-	add_file_to_font_hash($file)
+    foreach my $font (keys(%$fd)) {
+        my($fname, $ftype) = ($font =~ m:^/(.+?)(| \([^\(\)]+\))$:);
+        next unless ($ftype =~ / \((TrueType|OpenType)\)$/);
+        my $file = File::Spec->rel2abs($fd->{$font}, $ENV{'windir'}.'\\fonts');
+        add_file_to_font_hash($file);
     }
 }
 
-sub font_search_file() {
-    my($fontdata, $filestem, $fonttype);
-
+sub font_search_file {
     add_file_to_font_hash($_);
 }
 
@@ -135,49 +132,46 @@ sub findfont($) {
     # NOTE: use a single string for the command here, or this
     # script dies horribly on Windows, even though this isn't really
     # applicable there...
-    if (!defined($file) &&
-	open(my $fh, '-|',
+    if (open(my $fh, '-|',
 	     "fc-match -f \"%{file}\\n%{postscriptname}\\n\" ".
-	     "\" : postscriptname=$fontname\"") {
-	chomp($file = <$fh>);
-	chomp($psname = <$fh>);
-	close($fh);
-	if ( -f $file ) {
-	    if ($psname eq $fontname) {
-		add_file_to_font_hash($file);
-	    }
-	    if (!exists($font_info_hash{$fontname})) {
-		$font_info_hash{$fontname} = undef;
-	    }
-	    return $font_info_hash{$fontname};
-	}
+	     "\" : postscriptname=$fontname\"")) {
+        chomp($file = <$fh>);
+        chomp($psname = <$fh>);
+        close($fh);
+        if ( -f $file ) {
+            if ($psname eq $fontname) {
+                add_file_to_font_hash($file);
+            }
+            if (!exists($font_info_hash{$fontname})) {
+                $font_info_hash{$fontname} = undef;
+            }
+            return $font_info_hash{$fontname};
+        }
     }
 
     if (exists($font_info_hash{$fontname})) {
-	return $font_info_hash{$fontname};
+        return $font_info_hash{$fontname};
     } elsif ($fonts_scanned >= 1) {
-	return $font_info_hash{$fontname} = undef;
+        return $font_info_hash{$fontname} = undef;
     }
 
-    if ($win32) {
-	scanfonts_win32();
-	$fonts_scanned = 1;
-    }
+    scanfonts_win32();
+    $fonts_scanned = 1;
 
     if (exists($font_info_hash{$fontname})) {
-	return $font_info_hash{$fontname};
+        return $font_info_hash{$fontname};
     } elsif ($fonts_scanned >= 2) {
-	return $font_info_hash{$fontname} = undef;
+        return $font_info_hash{$fontname} = undef;
     }
 
     # Search a set of possible locations for a file, from a few different
     # systems...
-    my @dirs = ('fonts', '/usr/share/fonts', '/Library/Fonts');
-    push @dirs, $ENV{'windir'}.'\fonts' if (defined $ENV{'windir'});
+    my @dirs = ('fonts', '/usr/share/fonts', '/usr/lib/fonts', '/Library/Fonts');
+    push @dirs, $ENV{'windir'}.'\\fonts' if (defined $ENV{'windir'});
     push @dirs, $ENV{'HOME'}.'/.fonts', $ENV{'HOME'}.'/Library/Fonts'
 	if (defined $ENV{'HOME'});
 
-    find({wanted => \font_search_file, follow=>1, no_chdir=>1}, @dirs);
+    find({wanted => \&font_search_file, follow=>1, no_chdir=>1}, @dirs);
     $fonts_scanned = 2;
 
     return $font_info_hash{$fontname};
