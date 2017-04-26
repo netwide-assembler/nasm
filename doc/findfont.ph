@@ -132,10 +132,13 @@ sub findfont($) {
     }
 
     # Are we on a system that uses fontconfig?
+    # NOTE: use a single string for the command here, or this
+    # script dies horribly on Windows, even though this isn't really
+    # applicable there...
     if (!defined($file) &&
-	open(my $fh, '-|', 'fc-match',
-	     '-f', '%{file}\n%{postscriptname}\n',
-	     " : postscriptname=$fontname")) {
+	open(my $fh, '-|',
+	     "fc-match -f \"%{file}\\n%{postscriptname}\\n\" ".
+	     "\" : postscriptname=$fontname\"") {
 	chomp($file = <$fh>);
 	chomp($psname = <$fh>);
 	close($fh);
