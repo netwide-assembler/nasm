@@ -83,9 +83,7 @@ since 2007.
    included in a shipping product; it is included for completeness
    only.
 
-\b Add the \c{%pragma} preprocessor directive for forward
-   compatibility with future versions of NASM.  At this time no pragmas
-   are implemented and this is merely a dummy directive.
+\b Add the \c{%pragma} preprocessor directive for soft-error directives.
 
 \b Add the \c{RDPID} instruction.
 
