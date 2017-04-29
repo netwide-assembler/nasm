@@ -45,22 +45,18 @@ since 2007.
 \b Fix a number of bugs related to AVX-512 decorators.
 
 \b Significant improvements to building NASM with Microsoft Visual
-   Studio via \c{Mkfiles/msvc.mak}.
+   Studio via \c{Mkfiles/msvc.mak}.  It is now possible to build the
+   full Windows installer binary as long as the necessary
+   prerequisites are installed; see \c{Mkfiles/README}
 
 \b To build NASM with custom modifications (table changes) or from the
-   git tree now requires Perl 5.6 at the very minimum, quite possibly
+   git tree now requires Perl 5.8 at the very minimum, quite possibly
    a higher version (Perl 5.24.1 tested.)  There is no requirement to
    have Perl on your system at all if all you want to do is build
    unmodified NASM from source archives.
 
 \b Fix the \c{\{z\}} decorator on AVX-512 \c{VMOVDQ*} instructions.
 
-\# --- hpa: commenting this header out since it looks like we will
-\# --- bypass 2.12.03 and go straight to 2.13.  However, please keep
-\# --- the header in place to make it easier to merge with the 2.12.xx
-\# --- branch if we should have to in the short term.
-\# \S{cl-2.12.03} Version 2.12.03
-\#
 \b Add new warnings for certain dangerous constructs which never ought
    to have been allowed.  In particular, the \c{RESB} family of
    instructions should have been taking a critical expression all
