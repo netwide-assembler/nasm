@@ -36,6 +36,14 @@ AC_DEFUN(PA_ADD_CLDFLAGS,
   LDFLAGS="$pa_add_cldflags__old_ldflags"])])
 
 dnl --------------------------------------------------------------------------
+dnl PA_VAR
+dnl
+dnl Canonicalize a variable name: upper case, and fold non-C characters
+dnl to underscores.
+dnl --------------------------------------------------------------------------
+AC_DEFUN(PA_VAR, [patsubst(m4_toupper([$1]),[[^A-Za-z0-9_]],[_])])
+
+dnl --------------------------------------------------------------------------
 dnl PA_HAVE_FUNC
 dnl
 dnl Look for a function with the specified arguments which could be
@@ -43,9 +51,9 @@ dnl a builtin/intrinsic function.
 dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_HAVE_FUNC,
 [AC_MSG_CHECKING([for $1])
-AC_TRY_LINK([], [(void)$1$2;],
+AC_TRY_LINK(AC_INCLUDES_DEFAULT, [(void)$1$2;],
 AC_MSG_RESULT([yes])
-AC_DEFINE(m4_toupper([HAVE_$1]), [1],
+AC_DEFINE(PA_VAR([HAVE_$1]), [1],
   [Define to 1 if you have the `$1' intrinsic function.]),
 AC_MSG_RESULT([no]))])
 
@@ -81,7 +89,7 @@ dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_FUNC_ATTRIBUTE,
 [AC_MSG_CHECKING([if $CC supports the $1 function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#include <stdarg.h>
+AC_INCLUDES_DEFAULT
 extern ifelse([$3],[],[void *],[$3])  __attribute__(($1$2))
   bar(ifelse([$4],[],[int],[$4]));
 void *foo(void);
@@ -91,7 +99,7 @@ void *foo(void)
 }
  ])],
  [AC_MSG_RESULT([yes])
-  AC_DEFINE(m4_toupper([HAVE_FUNC_ATTRIBUTE_$1]), 1,
+  AC_DEFINE(PA_VAR([HAVE_FUNC_ATTRIBUTE_$1]), 1,
     [Define to 1 if your compiler supports __attribute__(($1)) on functions])],
  [AC_MSG_RESULT([no])])
 ])
@@ -106,7 +114,7 @@ dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_FUNC_ATTRIBUTE_ERROR,
 [AC_MSG_CHECKING([if $CC supports the error function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#include <stdarg.h>
+AC_INCLUDES_DEFAULT
 extern void __attribute__((error("message"))) barf(void);
 void foo(void);
 void foo(void)
@@ -116,7 +124,7 @@ void foo(void)
 }
  ])],
  [AC_MSG_RESULT([yes])
-  AC_DEFINE(m4_toupper([HAVE_FUNC_ATTRIBUTE_ERROR]), 1,
+  AC_DEFINE(PA_VAR([HAVE_FUNC_ATTRIBUTE_ERROR]), 1,
     [Define to 1 if your compiler supports __attribute__((error)) on functions])],
  [AC_MSG_RESULT([no])])
 ])
@@ -137,3 +145,15 @@ AC_DEFUN(PA_ARG_DISABLED,
 [AC_ARG_ENABLE([$1],[AS_HELP_STRING([--disable-$1],[$2])], [], [enableval=yes])
  AS_IF([test x"$enableval" = xno], [$3], [$4])
 ])
+
+dnl --------------------------------------------------------------------------
+dnl PA_ADD_HEADERS()
+dnl
+dnl Call AC_CHECK_HEADERS(), and add to ac_includes_default if found
+dnl --------------------------------------------------------------------------
+AC_DEFUN(_PA_ADD_HEADER,
+[AC_CHECK_HEADERS([$1],[ac_includes_default="$ac_includes_default
+#include <$1>"])])
+
+AC_DEFUN(PA_ADD_HEADERS,
+[m4_map_args_w([$1],[_PA_ADD_HEADER(],[)])])

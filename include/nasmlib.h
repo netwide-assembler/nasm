@@ -39,6 +39,7 @@
 #define NASM_NASMLIB_H
 
 #include "compiler.h"
+#include "bytesex.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -247,103 +248,7 @@ void standard_extension(char *inname, char *outname, char *extension);
 #define IS_ALIGNED(v, a)        (((v) & ((a) - 1)) == 0)
 
 /*
- * some handy macros that will probably be of use in more than one
- * output format: convert integers into little-endian byte packed
- * format in memory
- */
-
-#if X86_MEMORY
-
-#define WRITECHAR(p,v)                          \
-    do {                                        \
-        *(uint8_t *)(p) = (v);                  \
-        (p) += 1;                               \
-    } while (0)
-
-#define WRITESHORT(p,v)                         \
-    do {                                        \
-        *(uint16_t *)(p) = (v);                 \
-        (p) += 2;                               \
-    } while (0)
-
-#define WRITELONG(p,v)                          \
-    do {                                        \
-        *(uint32_t *)(p) = (v);                 \
-        (p) += 4;                               \
-    } while (0)
-
-#define WRITEDLONG(p,v)                         \
-    do {                                        \
-        *(uint64_t *)(p) = (v);                 \
-        (p) += 8;                               \
-    } while (0)
-
-#define WRITEADDR(p,v,s)                        \
-    do {                                        \
-        uint64_t _wa_v = (v);                   \
-        memcpy((p), &_wa_v, (s));               \
-        (p) += (s);                             \
-    } while (0)
-
-#else /* !X86_MEMORY */
-
-#define WRITECHAR(p,v)                          \
-    do {                                        \
-        uint8_t *_wc_p = (uint8_t *)(p);        \
-        uint8_t _wc_v = (v);                    \
-        _wc_p[0] = _wc_v;                       \
-        (p) = (void *)(_wc_p + 1);              \
-    } while (0)
-
-#define WRITESHORT(p,v)                         \
-    do {                                        \
-        uint8_t *_ws_p = (uint8_t *)(p);        \
-        uint16_t _ws_v = (v);                   \
-        _ws_p[0] = _ws_v;                       \
-        _ws_p[1] = _ws_v >> 8;                  \
-        (p) = (void *)(_ws_p + 2);              \
-    } while (0)
-
-#define WRITELONG(p,v)                          \
-    do {                                        \
-        uint8_t *_wl_p = (uint8_t *)(p);        \
-        uint32_t _wl_v = (v);                   \
-        _wl_p[0] = _wl_v;                       \
-        _wl_p[1] = _wl_v >> 8;                  \
-        _wl_p[2] = _wl_v >> 16;                 \
-        _wl_p[3] = _wl_v >> 24;                 \
-        (p) = (void *)(_wl_p + 4);              \
-    } while (0)
-
-#define WRITEDLONG(p,v)                         \
-    do {                                        \
-        uint8_t *_wq_p = (uint8_t *)(p);        \
-        uint64_t _wq_v = (v);                   \
-        _wq_p[0] = _wq_v;                       \
-        _wq_p[1] = _wq_v >> 8;                  \
-        _wq_p[2] = _wq_v >> 16;                 \
-        _wq_p[3] = _wq_v >> 24;                 \
-        _wq_p[4] = _wq_v >> 32;                 \
-        _wq_p[5] = _wq_v >> 40;                 \
-        _wq_p[6] = _wq_v >> 48;                 \
-        _wq_p[7] = _wq_v >> 56;                 \
-        (p) = (void *)(_wq_p + 8);              \
-    } while (0)
-
-#define WRITEADDR(p,v,s)                        \
-    do {                                        \
-        int _wa_s = (s);                        \
-        uint64_t _wa_v = (v);                   \
-        while (_wa_s--) {                       \
-            WRITECHAR(p,_wa_v);                 \
-            _wa_v >>= 8;                        \
-        }                                       \
-    } while(0)
-
-#endif
-
-/*
- * and routines to do the same thing to a file
+ * Routines to write littleendian data to a file
  */
 #define fwriteint8_t(d,f) putc(d,f)
 void fwriteint16_t(uint16_t data, FILE * fp);

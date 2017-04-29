@@ -88,7 +88,7 @@ AC_CHECK_HEADERS(stdnoreturn.h)
 AC_CHECK_HEADERS(io.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(unistd.h)
-AC_CHECK_HEADERS(sys/param.h)
+AC_CHECK_HEADERS(endian.h sys/endian.h machine/endian.h)
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(sys/stat.h)
@@ -119,10 +119,15 @@ AC_CHECK_FUNCS(sysconf)
 
 AC_CHECK_FUNCS([access _access faccessat])
 
+PA_HAVE_FUNC(__builtin_expect, (1,1))
+
+dnl ilog2() building blocks
+PA_ADD_HEADERS(intrin.h)
 PA_HAVE_FUNC(__builtin_clz, (0U))
 PA_HAVE_FUNC(__builtin_clzl, (0UL))
 PA_HAVE_FUNC(__builtin_clzll, (0ULL))
-PA_HAVE_FUNC(__builtin_expect, (1,1))
+PA_HAVE_FUNC(_BitScanReverse, (0))
+PA_HAVE_FUNC(_BitScanReverse64, (0))
 
 dnl Functions for which we have replacements available in lib/
 AC_CHECK_FUNCS([vsnprintf _vsnprintf])
@@ -156,6 +161,28 @@ PA_ARG_DISABLED([pdf-compression],
   [generate an uncompressed documentation PDF],
   [PDFOPT='-nocompress'])
 AC_SUBST([PDFOPT])
+
+dnl
+dnl Look for byte-swapping support...
+dnl
+PA_HAVE_FUNC(cpu_to_le16, (0))
+PA_HAVE_FUNC(cpu_to_le32, (0))
+PA_HAVE_FUNC(cpu_to_le64, (0))
+PA_HAVE_FUNC(__cpu_to_le16, (0))
+PA_HAVE_FUNC(__cpu_to_le32, (0))
+PA_HAVE_FUNC(__cpu_to_le64, (0))
+PA_HAVE_FUNC(htole16, (0))
+PA_HAVE_FUNC(htole32, (0))
+PA_HAVE_FUNC(htole64, (0))
+PA_HAVE_FUNC(__bswap_16, (0))
+PA_HAVE_FUNC(__bswap_32, (0))
+PA_HAVE_FUNC(__bswap_64, (0))
+PA_HAVE_FUNC(__builtin_bswap16, (0))
+PA_HAVE_FUNC(__builtin_bswap32, (0))
+PA_HAVE_FUNC(__builtin_bswap64, (0))
+PA_HAVE_FUNC(_byteswap_ushort, (0))
+PA_HAVE_FUNC(_byteswap_ulong, (0))
+PA_HAVE_FUNC(_byteswap_uint64, (0))
 
 dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)

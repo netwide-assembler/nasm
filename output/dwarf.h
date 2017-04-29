@@ -460,11 +460,30 @@ enum dwarf_language {
 	DW_LANG_ObjC_plus_plus	= 0x0011,
 	DW_LANG_UPC		= 0x0012,
 	DW_LANG_D		= 0x0013,
+	DW_LANG_Python		= 0x0014,
+	DW_LANG_OpenCL		= 0x0015,
+	DW_LANG_Go		= 0x0016,
+	DW_LANG_Modula3		= 0x0017,
+	DW_LANG_Haskell		= 0x0018,
+	DW_LANG_C_plus_plus_03	= 0x0019,
+	DW_LANG_C_plus_plus_11	= 0x001a,
+	DW_LANG_OCaml		= 0x001b,
+	DW_LANG_Rust		= 0x001c,
+	DW_LANG_C11		= 0x001d,
+	DW_LANG_Swift		= 0x001e,
+	DW_LANG_Julia		= 0x001f,
+	DW_LANG_Dylan		= 0x0020,
+	DW_LANG_C_plus_plus_14	= 0x0021,
+	DW_LANG_Fortran03	= 0x0022,
+	DW_LANG_Fortran08	= 0x0023,
+	DW_LANG_RenderScript	= 0x0024,
 
 	DW_LANG_Mips_Assembler	= 0x8001,
 
 	DW_LANG_lo_user		= 0x8000,
-	DW_LANG_hi_user		= 0xffff
+	DW_LANG_hi_user		= 0xffff,
+
+	DW_LANG_Rust_old	= 0x9000
 };
 
 enum dwarf_identifier_case {
@@ -475,12 +494,17 @@ enum dwarf_identifier_case {
 };
 
 enum dwarf_calling_conversion {
-	DW_CC_normal	= 0x01,
-	DW_CC_program	= 0x02,
-	DW_CC_nocall	= 0x03,
+	DW_CC_normal			= 0x01,
+	DW_CC_program			= 0x02,
+	DW_CC_nocall			= 0x03,
+	DW_CC_pass_by_reference		= 0x4,
+	DW_CC_pass_by_value		= 0x5,
 
-	DW_CC_lo_user	= 0x40,
-	DW_CC_hi_user	= 0xff
+	DW_CC_lo_user			= 0x40,
+	DW_CC_hi_user			= 0xff,
+
+	DW_CC_GNU_renesas_sh		= 0x40,
+	DW_CC_GNU_borland_fastcall_i386	= 0x41
 };
 
 enum dwarf_inline {
@@ -520,6 +544,7 @@ enum dwarf_line_number_extended {
 	DW_LNE_end_sequence	= 0x01,
 	DW_LNE_set_address	= 0x02,
 	DW_LNE_define_file	= 0x03,
+	DW_LNE_set_discriminator= 0x04,
 	DW_LNE_lo_user		= 0x80,
 	DW_LNE_hi_user		= 0xff
 };

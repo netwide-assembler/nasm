@@ -222,11 +222,35 @@ void *hash_iterate(const struct hash_table *head,
 
 /*
  * Free the hash itself.  Doesn't free the data elements; use
- * hash_iterate() to do that first, if needed.
+ * hash_iterate() to do that first, if needed.  This function is normally
+ * used when the hash data entries are either freed separately, or
+ * compound objects which can't be freed in a single operation.
  */
 void hash_free(struct hash_table *head)
 {
     void *p = head->table;
     head->table = NULL;
     nasm_free(p);
+}
+
+/*
+ * Frees the hash *and* all data elements.  This is applicable only in
+ * the case where the data element is a single allocation.  If the
+ * second argument is false, the key string is part of the data
+ * allocation or belongs to an allocation which will be freed
+ * separately, if it is true the keys are also freed.
+ */
+void hash_free_all(struct hash_table *head, bool free_keys)
+{
+    struct hash_tbl_node *iter = NULL;
+    const char *keyp;
+    void *d;
+
+    while ((d = hash_iterate(head, &iter, &keyp))) {
+        nasm_free(d);
+        if (free_keys)
+            nasm_free((void *)keyp);
+    }
+
+    hash_free(head);
 }

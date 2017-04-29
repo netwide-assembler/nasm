@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,56 +31,27 @@
  *
  * ----------------------------------------------------------------------- */
 
-/*
- * hashtbl.h
- *
- * Efficient dictionary hash table class.
- */
+#ifndef NASM_STRTBL_H
+#define NASM_STRTBL_H
 
-#ifndef NASM_HASHTBL_H
-#define NASM_HASHTBL_H
+#include "compiler.h"
+#include "hashtbl.h"
 
-#include <stddef.h>
-#include "nasmlib.h"
-
-struct hash_tbl_node {
-    uint64_t hash;
-    const char *key;
-    void *data;
-};
-
-struct hash_table {
-    struct hash_tbl_node *table;
-    size_t load;
+struct nasm_strtbl {
     size_t size;
-    size_t max_load;
+    struct hash_table hash;
 };
 
-struct hash_insert {
-    uint64_t hash;
-    struct hash_table *head;
-    struct hash_tbl_node *where;
-};
+#define STRTBL_NONE ((size_t)-1)
 
-uint64_t crc64(uint64_t crc, const char *string);
-uint64_t crc64i(uint64_t crc, const char *string);
-#define CRC64_INIT UINT64_C(0xffffffffffffffff)
+void strtbl_init(struct nasm_strtbl *tbl);
+void strtbl_free(struct nasm_strtbl *tbl);
+size_t strtbl_find(struct nasm_strtbl *tbl, const char *str);
+size_t strtbl_add(struct nasm_strtbl *tbl, const char *str);
+static inline size_t strtbl_size(const struct nasm_strtbl *tbl)
+{
+    return tbl->size;
+}
+void * safe_alloc strtbl_generate(const struct nasm_strtbl *tbl);
 
-/* Some reasonable initial sizes... */
-#define HASH_SMALL	4
-#define HASH_MEDIUM	16
-#define HASH_LARGE	256
-
-void hash_init(struct hash_table *head, size_t size);
-void **hash_find(struct hash_table *head, const char *string,
-		struct hash_insert *insert);
-void **hash_findi(struct hash_table *head, const char *string,
-		struct hash_insert *insert);
-void **hash_add(struct hash_insert *insert, const char *string, void *data);
-void *hash_iterate(const struct hash_table *head,
-		   struct hash_tbl_node **iterator,
-		   const char **key);
-void hash_free(struct hash_table *head);
-void hash_free_all(struct hash_table *head, bool free_keys);
-
-#endif /* NASM_HASHTBL_H */
+#endif /* NASM_STRTBL_H */
