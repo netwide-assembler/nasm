@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -35,12 +35,12 @@
 #include "nasmlib.h"
 #include <limits.h>
 
-#define ROUND(v, a, w)                      \
-    do {                                    \
-        if (v & (((1 << w) - 1) << w)) {    \
-            a  += w;                        \
-            v >>= w;                        \
-        }                                   \
+#define ROUND(v, a, w)                                  \
+    do {                                                \
+        if (v & (((UINT32_C(1) << w) - 1) << w)) {      \
+            a  += w;                                    \
+            v >>= w;                                    \
+        }                                               \
     } while (0)
 
 
