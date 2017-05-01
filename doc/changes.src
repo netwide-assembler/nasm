@@ -7,6 +7,15 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.13.01} Version 2.13.01
+
+\b Fix incorrect output for some types of \c{FAR} or \c{SEG}
+   references in the \c{obj} output format, and possibly other 16-bit
+   output formats.
+
+\b Fix the address in the list file for an instruction containing a
+   \c{TIMES} directive.
+
 \S{cl-2.13} Version 2.13
 
 \b Support the official forms of the \c{UD0} and \c{UD1} instructions.
