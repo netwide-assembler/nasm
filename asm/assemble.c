@@ -495,7 +495,7 @@ static inline void out_segment(struct out_data *data,
     data->type = OUT_SEGMENT;
     data->sign = OUT_UNSIGNED;
     data->size = 2;
-    data->toffset = opx->offset;
+    data->toffset = opx->offset; /* Is this really needed/wanted? */
     data->tsegment = ofmt->segbase(opx->segment + 1);
     data->twrt = opx->wrt;
     out(data);
