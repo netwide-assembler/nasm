@@ -688,7 +688,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     end_incbin:
         lfmt->downlevel(LIST_INCBIN);
         if (instruction->times > 1) {
-            lfmt->set_offset(start);
             lfmt->uplevel(LIST_TIMES);
             lfmt->downlevel(LIST_TIMES);
         }
