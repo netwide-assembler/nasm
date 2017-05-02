@@ -2460,6 +2460,10 @@ static void debug_typevalue(int32_t type)
             ssize = 32;
             stype = STT_OBJECT;
             break;
+        case TY_ZWORD:
+            ssize = 64;
+            stype = STT_OBJECT;
+            break;
         case TY_COMMON:
             ssize = 0;
             stype = STT_COMMON;

@@ -89,7 +89,9 @@ void nasm_do_legacy_output(const struct out_data *data)
 
     case OUT_SEGMENT:
         type = OUT_ADDRESS;
-        /* fall through */
+        dptr = &zero_buffer;
+        size = (data->sign == OUT_SIGNED) ? -data->size : data->size;
+        break;
 
     case OUT_ADDRESS:
         dptr = &data->toffset;

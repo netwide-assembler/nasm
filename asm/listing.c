@@ -222,9 +222,16 @@ static void list_output(const struct out_data *data)
 	break;
     }
     case OUT_ADDRESS:
-    case OUT_SEGMENT:
-      list_address(offset, "[]", data->toffset, size);
+        list_address(offset, "[]", data->toffset, size);
 	break;
+    case OUT_SEGMENT:
+        q[0] = '[';
+        memset(q+1, 's', size << 1);
+        q[(size << 1)+1] = ']';
+        q[(size << 1)+2] = '\0';
+        list_out(offset, q);
+        offset += size;
+        break;
     case OUT_RELADDR:
 	list_address(offset, "()", data->toffset, size);
 	break;
