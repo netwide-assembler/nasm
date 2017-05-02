@@ -666,7 +666,7 @@ is_float:
                 eop->type = EOT_DB_STRING;
                 result->eops_float = true;
 
-                eop->stringlen = idata_bytes(result->opcode);
+                eop->stringlen = db_bytes(result->opcode);
                 if (eop->stringlen > 16) {
                     nasm_error(ERR_NONFATAL, "floating-point constant"
                                " encountered in DY or DZ instruction");
@@ -1129,7 +1129,7 @@ is_expression:
      * Transform RESW, RESD, RESQ, REST, RESO, RESY, RESZ into RESB.
      */
     if (opcode_is_resb(result->opcode)) {
-        result->oprs[0].offset *= resv_bytes(result->opcode);
+        result->oprs[0].offset *= resb_bytes(result->opcode);
         result->oprs[0].offset *= result->times;
         result->times = 1;
         result->opcode = I_RESB;

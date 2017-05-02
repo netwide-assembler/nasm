@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -89,6 +89,7 @@ open(F, '<', $fname) || die "unable to open $fname";
 
 $line = 0;
 $insns = 0;
+$n_opcodes = $n_opcodes_cc = 0;
 while (<F>) {
     $line++;
     chomp;
@@ -146,10 +147,14 @@ while (<F>) {
         }
         if ( $fields[0] =~ /cc$/ ) {
             # Conditional instruction
-            $k_opcodes_cc{$fields[0]}++;
+	    if (!defined($k_opcodes_cc{$fields[0]})) {
+		$k_opcodes_cc{$fields[0]} = $n_opcodes_cc++;
+	    }
         } else {
             # Unconditional instruction
-            $k_opcodes{$fields[0]}++;
+	    if (!defined($k_opcodes{$fields[0]})) {
+		$k_opcodes{$fields[0]} = $n_opcodes++;
+	    }
         }
         if ($formatted && !$nd) {
             push @big, $formatted;
@@ -189,8 +194,8 @@ foreach $bl (@bytecode_list) {
 }
 undef @bytecode_list;
 
-@opcodes    = sort keys(%k_opcodes);
-@opcodes_cc = sort keys(%k_opcodes_cc);
+@opcodes    = sort { $k_opcodes{$a} <=> $k_opcodes{$b} } keys(%k_opcodes);
+@opcodes_cc = sort { $k_opcodes_cc{$a} <=> $k_opcodes_cc{$b} } keys(%k_opcodes_cc);
 
 if ( $output eq 'b') {
     print STDERR "Writing $oname...\n";

@@ -48,6 +48,8 @@
 ;
 
 ;# Special instructions...
+; These MUST be first in this file and must maintain the pattern of
+; Dx by size, RESx by size, and INCBIN in that order.
 DB		ignore				ignore						ignore
 DW		ignore				ignore						ignore
 DD		ignore				ignore						ignore
@@ -64,6 +66,7 @@ REST		ignore				ignore						ignore
 RESO		ignore				ignore						ignore
 RESY		ignore				ignore						ignore
 RESZ		ignore				ignore						ignore
+INCBIN		ignore				ignore						ignore
 
 ;# Conventional instructions
 AAA		void				[	37]					8086,NOLONG
@@ -652,7 +655,6 @@ INC		rm8				[m:	hle fe /0]				8086,LOCK
 INC		rm16				[m:	hle o16 ff /0]				8086,LOCK
 INC		rm32				[m:	hle o32 ff /0]				386,LOCK
 INC		rm64				[m:	hle o64 ff /0]				X64,LOCK
-INCBIN		ignore				ignore						ignore
 INSB		void				[	6c]					186
 INSD		void				[	o32 6d]					386
 INSW		void				[	o16 6d]					186

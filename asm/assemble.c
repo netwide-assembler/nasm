@@ -555,7 +555,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     data.sign = OUT_WRAP;
     data.bits = bits;
 
-    wsize = idata_bytes(instruction->opcode);
+    wsize = db_bytes(instruction->opcode);
     if (wsize == -1)
         return 0;
 
@@ -790,7 +790,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
         int32_t isize, osize, wsize;
 
         isize = 0;
-        wsize = idata_bytes(instruction->opcode);
+        wsize = db_bytes(instruction->opcode);
         nasm_assert(wsize > 0);
 
         list_for_each(e, instruction->eops) {
