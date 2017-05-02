@@ -282,6 +282,9 @@ static void cv8_typevalue(int32_t type)
     case TY_YWORD:
         cv8_state.last_sym->symtype = TYPE_REAL256;
         break;
+    case TY_ZWORD:
+        cv8_state.last_sym->symtype = TYPE_REAL512;
+        break;
     case TY_UNKNOWN:
         break;
     case TY_LABEL:

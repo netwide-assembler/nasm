@@ -1337,93 +1337,114 @@ static void assemble_file(char *fname, StrList **depend_ptr)
                     }
                 }
             } else {        /* instruction isn't an EQU */
+                int32_t n;
 
-                if (pass1 == 1) {
-                    int64_t l = insn_size(location.segment, offs, globalbits,
-                                          &output_ins);
-                    l *= output_ins.times;
+                nasm_assert(output_ins.times >= 0);
 
-                    /* if (using_debug_info)  && output_ins.opcode != -1) */
-                    if (using_debug_info)
-                    {       /* fbk 03/25/01 */
+                for (n = 1; n <= output_ins.times; n++) {
+                    if (pass1 == 1) {
+                        int64_t l = insn_size(location.segment, offs,
+                                              globalbits, &output_ins);
+
+                        /* if (using_debug_info)  && output_ins.opcode != -1) */
+                        if (using_debug_info)
+                        {       /* fbk 03/25/01 */
                             /* this is done here so we can do debug type info */
-                        int32_t typeinfo =
-                            TYS_ELEMENTS(output_ins.operands);
-                        switch (output_ins.opcode) {
-                        case I_RESB:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
-                            break;
-                        case I_RESW:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
-                            break;
-                        case I_RESD:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
-                            break;
-                        case I_RESQ:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
-                            break;
-                        case I_REST:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
-                            break;
-                        case I_RESO:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
-                            break;
-                        case I_RESY:
-                            typeinfo =
-                                TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
-                            break;
-                        case I_DB:
-                            typeinfo |= TY_BYTE;
-                            break;
-                        case I_DW:
-                            typeinfo |= TY_WORD;
-                            break;
-                        case I_DD:
-                            if (output_ins.eops_float)
-                                typeinfo |= TY_FLOAT;
-                            else
-                                typeinfo |= TY_DWORD;
-                            break;
-                        case I_DQ:
-                            typeinfo |= TY_QWORD;
-                            break;
-                        case I_DT:
-                            typeinfo |= TY_TBYTE;
-                            break;
-                        case I_DO:
-                            typeinfo |= TY_OWORD;
-                            break;
-                        case I_DY:
-                            typeinfo |= TY_YWORD;
-                            break;
-                        default:
-                            typeinfo = TY_LABEL;
+                            int32_t typeinfo =
+                                TYS_ELEMENTS(output_ins.operands);
+                            switch (output_ins.opcode) {
+                            case I_RESB:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
+                                break;
+                            case I_RESW:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
+                                break;
+                            case I_RESD:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
+                                break;
+                            case I_RESQ:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
+                                break;
+                            case I_REST:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
+                                break;
+                            case I_RESO:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
+                                break;
+                            case I_RESY:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
+                                break;
+                            case I_RESZ:
+                                typeinfo =
+                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_ZWORD;
+                                break;
+                            case I_DB:
+                                typeinfo |= TY_BYTE;
+                                break;
+                            case I_DW:
+                                typeinfo |= TY_WORD;
+                                break;
+                            case I_DD:
+                                if (output_ins.eops_float)
+                                    typeinfo |= TY_FLOAT;
+                                else
+                                    typeinfo |= TY_DWORD;
+                                break;
+                            case I_DQ:
+                                typeinfo |= TY_QWORD;
+                                break;
+                            case I_DT:
+                                typeinfo |= TY_TBYTE;
+                                break;
+                            case I_DO:
+                                typeinfo |= TY_OWORD;
+                                break;
+                            case I_DY:
+                                typeinfo |= TY_YWORD;
+                                break;
+                            case I_DZ:
+                                typeinfo |= TY_ZWORD;
+                                break;
+                            default:
+                                typeinfo = TY_LABEL;
+                                break;
+                            }
 
+                            dfmt->debug_typevalue(typeinfo);
                         }
 
-                        dfmt->debug_typevalue(typeinfo);
-                    }
-                    if (l != -1) {
-                        offs += l;
+                        /*
+                         * For INCBIN, let the code in assemble
+                         * handle TIMES, so we don't have to read the
+                         * input file over and over.
+                         */
+                        if (l != -1) {
+                            offs += l;
+                            set_curr_offs(offs);
+                        }
+                        /*
+                         * else l == -1 => invalid instruction, which will be
+                         * flagged as an error on pass 2
+                         */
+                    } else {
+                        if (n == 2)
+                            lfmt->uplevel(LIST_TIMES);
+                        offs += assemble(location.segment, offs,
+                                         globalbits, &output_ins);
                         set_curr_offs(offs);
                     }
-                    /*
-                     * else l == -1 => invalid instruction, which will be
-                     * flagged as an error on pass 2
-                     */
+                }               /* not an EQU */
+            }
+            if (output_ins.times > 1)
+                lfmt->downlevel(LIST_TIMES);
 
-                } else {
-                    offs += assemble(location.segment, offs, globalbits, &output_ins);
-                    set_curr_offs(offs);
-
-                }
-            }               /* not an EQU */
             cleanup_insn(&output_ins);
 
         end_of_line:

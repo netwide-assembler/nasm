@@ -546,7 +546,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     struct out_data data;
     const struct itemplate *temp;
     enum match_result m;
-    int32_t itimes;
     int64_t wsize;              /* size for DB etc. */
 
     nasm_zero(data);
@@ -562,52 +561,40 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
 
     if (wsize) {
         extop *e;
-        int32_t t = instruction->times;
 
-        if (t < 0)
-	    nasm_panic(0, "instruction->times < 0 (%"PRId32") in assemble()", t);
-
-        while (t--) {           /* repeat TIMES times */
-            list_for_each(e, instruction->eops) {
-                if (e->type == EOT_DB_NUMBER) {
-                    if (wsize > 8) {
-                        nasm_error(ERR_NONFATAL,
-                                "integer supplied to a DT, DO or DY"
-                                " instruction");
-                    } else {
-                        data.insoffs = 0;
-                        data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
-                        data.inslen = data.size = wsize;
-                        data.toffset = e->offset;
-                        data.tsegment = e->segment;
-                        data.twrt = e->wrt;
-                        data.relbase = 0;
-                        out(&data);
-                    }
-                } else if (e->type == EOT_DB_STRING ||
-                           e->type == EOT_DB_STRING_FREE) {
-                    int align = e->stringlen % wsize;
-                    if (align)
-                        align = wsize - align;
-
+        list_for_each(e, instruction->eops) {
+            if (e->type == EOT_DB_NUMBER) {
+                if (wsize > 8) {
+                    nasm_error(ERR_NONFATAL,
+                               "integer supplied to a DT, DO, DY or DZ"
+                               " instruction");
+                } else {
                     data.insoffs = 0;
-                    data.inslen = e->stringlen + align;
-
-                    out_rawdata(&data, e->stringval, e->stringlen);
-                    out_rawdata(&data, zero_buffer, align);
+                    data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
+                    data.inslen = data.size = wsize;
+                    data.toffset = e->offset;
+                    data.tsegment = e->segment;
+                    data.twrt = e->wrt;
+                    data.relbase = 0;
+                    out(&data);
                 }
-            }
-            if (t > 0 && t == instruction->times - 1) {
-                lfmt->set_offset(start);
-                lfmt->uplevel(LIST_TIMES);
+            } else if (e->type == EOT_DB_STRING ||
+                       e->type == EOT_DB_STRING_FREE) {
+                int align = e->stringlen % wsize;
+                if (align)
+                    align = wsize - align;
+
+                data.insoffs = 0;
+                data.inslen = e->stringlen + align;
+
+                out_rawdata(&data, e->stringval, e->stringlen);
+                out_rawdata(&data, zero_buffer, align);
             }
         }
-        if (instruction->times > 1)
-            lfmt->downlevel(LIST_TIMES);
     } else if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         FILE *fp;
-        size_t t = instruction->times;
+        size_t t = instruction->times; /* INCBIN handles TIMES by itself */
         off_t base = 0;
         off_t len;
         const void *map = NULL;
@@ -717,6 +704,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             nasm_unmap_file(map, len);
         fclose(fp);
     done:
+        instruction->times = 1; /* Tell the upper layer not to iterate */
         ;
     } else {
         /* "Real" instruction */
@@ -730,27 +718,15 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             /* Matches! */
             int64_t insn_size = calcsize(data.segment, data.offset,
                                          bits, instruction, temp);
-            itimes = instruction->times;
-            if (insn_size < 0)  /* shouldn't be, on pass two */
-                nasm_panic(0, "errors made it through from pass one");
+            nasm_assert(insn_size >= 0);
 
             data.itemp = temp;
             data.bits = bits;
+            data.insoffs = 0;
+            data.inslen = insn_size;
 
-            while (itimes--) {
-                data.insoffs = 0;
-                data.inslen = insn_size;
-
-                gencode(&data, instruction);
-                nasm_assert(data.insoffs == insn_size);
-
-                if (itimes > 0 && itimes == instruction->times - 1) {
-                    lfmt->set_offset(start);
-                    lfmt->uplevel(LIST_TIMES);
-                }
-            }
-            if (instruction->times > 1)
-                lfmt->downlevel(LIST_TIMES);
+            gencode(&data, instruction);
+            nasm_assert(data.insoffs == insn_size);
         } else {
             /* No match */
             switch (m) {
@@ -795,6 +771,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                            "invalid combination of opcode and operands");
                 break;
             }
+
+            instruction->times = 1; /* Avoid repeated error messages */
         }
     }
     return data.offset - start;
@@ -808,15 +786,13 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
     if (instruction->opcode == I_none)
         return 0;
 
-    if (instruction->opcode == I_DB || instruction->opcode == I_DW ||
-        instruction->opcode == I_DD || instruction->opcode == I_DQ ||
-        instruction->opcode == I_DT || instruction->opcode == I_DO ||
-        instruction->opcode == I_DY) {
+    if (opcode_is_db(instruction->opcode)) {
         extop *e;
         int32_t isize, osize, wsize;
 
         isize = 0;
         wsize = idata_bytes(instruction->opcode);
+        nasm_assert(wsize > 0);
 
         list_for_each(e, instruction->eops) {
             int32_t align;
@@ -859,6 +835,9 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
                 }
             }
         }
+
+        len *= instruction->times;
+        instruction->times = 1; /* Tell the upper layer to not iterate */
 
         return len;
     }

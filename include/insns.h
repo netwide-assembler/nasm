@@ -48,4 +48,23 @@ extern const uint8_t nasm_bytecodes[];
  */
 #define ITEMPLATE_END {-1,-1,{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1},NULL,0}
 
+/* Width of Dx and RESx instructions */
+int const_func idata_bytes(enum opcode opcode);
+int const_func resv_bytes(enum opcode opcode);
+
+/*
+ * Pseudo-op tests
+ */
+/* DB-type instruction (DB, DW, ...) */
+static inline bool opcode_is_db(enum opcode opcode)
+{
+    return idata_bytes(opcode) > 0;
+}
+
+/* RESB-type instruction (RESB, RESW, ...) */
+static inline bool opcode_is_resb(enum opcode opcode)
+{
+    return resv_bytes(opcode) > 0;
+}
+
 #endif /* NASM_INSNS_H */

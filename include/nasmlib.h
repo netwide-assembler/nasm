@@ -505,8 +505,6 @@ static inline int64_t const_func signed_bits(int64_t value, int bits)
     return value;
 }
 
-int const_func idata_bytes(int opcode);
-
 /* check if value is power of 2 */
 #define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
 
