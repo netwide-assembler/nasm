@@ -566,10 +566,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         if (t < 0)
 	    nasm_panic(0, "instruction->times < 0 (%"PRId32") in assemble()", t);
 
-        if (t > 1) {
-            lfmt->set_offset(data.offset);
-            lfmt->uplevel(LIST_TIMES);
-        }
         while (t--) {           /* repeat TIMES times */
             list_for_each(e, instruction->eops) {
                 if (e->type == EOT_DB_NUMBER) {
@@ -600,17 +596,19 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                     out_rawdata(&data, zero_buffer, align);
                 }
             }
+            if (t > 0 && t == instruction->times - 1) {
+                lfmt->set_offset(data.offset);
+                lfmt->uplevel(LIST_TIMES);
+            }
         }
-        if (instruction->times > 1) {
+        if (instruction->times > 1)
             lfmt->downlevel(LIST_TIMES);
-        }
     } else if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         FILE *fp;
         size_t t = instruction->times;
         off_t base = 0;
         off_t len;
-        uint64_t list_offset;
         const void *map = NULL;
         char *buf = NULL;
         size_t blk = 0;         /* Buffered I/O block size */
@@ -643,7 +641,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             }
         }
 
-        list_offset = data.offset;
         lfmt->set_offset(data.offset);
         lfmt->uplevel(LIST_INCBIN);
 
@@ -703,7 +700,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     end_incbin:
         lfmt->downlevel(LIST_INCBIN);
         if (instruction->times > 1) {
-            lfmt->set_offset(list_offset);
+            lfmt->set_offset(data.offset);
             lfmt->uplevel(LIST_TIMES);
             lfmt->downlevel(LIST_TIMES);
         }
@@ -739,10 +736,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             data.itemp = temp;
             data.bits = bits;
 
-            if (itimes > 1) {
-                lfmt->set_offset(data.offset);
-                lfmt->uplevel(LIST_TIMES);
-            }
             while (itimes--) {
                 data.insoffs = 0;
                 data.inslen = insn_size;
@@ -750,6 +743,10 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 gencode(&data, instruction);
                 nasm_assert(data.insoffs == insn_size);
 
+                if (itimes > 0 && itimes == instruction->times - 1) {
+                    lfmt->set_offset(data.offset);
+                    lfmt->uplevel(LIST_TIMES);
+                }
             }
             if (instruction->times > 1)
                 lfmt->downlevel(LIST_TIMES);
