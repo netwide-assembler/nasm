@@ -61,6 +61,16 @@ ul.index {
 	color: inherit;
     }
 }
+@media only screen {
+    div.contents {
+	-webkit-column-gap: 4em;
+	-webkit-column-rule: 1px dotted black;
+	-moz-column-gap: 4em;
+	-moz-column-rule: 1px dotted black;
+	column-gap: 4em;
+	column-rule: 1px dotted black;
+    }
+}
 @media only screen and (min-width: 90em) {
     /* For a very wide screen, go to a columnar layout */
     div.contents {
