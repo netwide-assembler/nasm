@@ -563,6 +563,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     if (wsize) {
         extop *e;
         int32_t t = instruction->times;
+
         if (t < 0)
 	    nasm_panic(0, "instruction->times < 0 (%"PRId32") in assemble()", t);
 
@@ -597,7 +598,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 }
             }
             if (t > 0 && t == instruction->times - 1) {
-                lfmt->set_offset(data.offset);
+                lfmt->set_offset(start);
                 lfmt->uplevel(LIST_TIMES);
             }
         }
@@ -700,7 +701,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     end_incbin:
         lfmt->downlevel(LIST_INCBIN);
         if (instruction->times > 1) {
-            lfmt->set_offset(data.offset);
+            lfmt->set_offset(start);
             lfmt->uplevel(LIST_TIMES);
             lfmt->downlevel(LIST_TIMES);
         }
@@ -744,7 +745,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 nasm_assert(data.insoffs == insn_size);
 
                 if (itimes > 0 && itimes == instruction->times - 1) {
-                    lfmt->set_offset(data.offset);
+                    lfmt->set_offset(start);
                     lfmt->uplevel(LIST_TIMES);
                 }
             }
