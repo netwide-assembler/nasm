@@ -46,7 +46,7 @@ extern const uint8_t nasm_bytecodes[];
 /*
  * this define is used to signify the end of an itemplate
  */
-#define ITEMPLATE_END {-1,-1,{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1},NULL,0}
+#define ITEMPLATE_END {I_none,0,{0,},{0,},NULL,0}
 
 /* Width of Dx and RESx instructions */
 int const_func idata_bytes(enum opcode opcode);
