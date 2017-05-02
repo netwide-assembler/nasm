@@ -47,7 +47,7 @@
 ; subheaders in the NASM documentation.
 ;
 
-;# Special instructions...
+;# Special instructions (pseudo-ops)
 ; These MUST be first in this file and must maintain the pattern of
 ; Dx by size, RESx by size, and INCBIN in that order.
 DB		ignore				ignore						ignore
