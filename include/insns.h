@@ -68,7 +68,7 @@ static inline bool const_func opcode_is_resb(enum opcode opcode)
 /*
  * initialized data bytes length from opcode
  */
-static inline int const_func db_bytes(int opcode)
+static inline int const_func db_bytes(enum opcode opcode)
 {
     switch (opcode) {
     case I_DB:
