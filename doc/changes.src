@@ -16,6 +16,11 @@ since 2007.
 \b Fix the address in the list file for an instruction containing a
    \c{TIMES} directive.
 
+\b Fix error with \c{TIMES} used together with an instruction which
+   can vary in size, e.g. \c{JMP}.
+
+\b Fix breakage on some uses of the \c{DZ} pseudo-op.
+
 \S{cl-2.13} Version 2.13
 
 \b Support the official forms of the \c{UD0} and \c{UD1} instructions.
