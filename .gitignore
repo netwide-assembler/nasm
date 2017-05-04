@@ -9,6 +9,7 @@
 *.o64
 *.obj
 *.obj64
+*.od
 *.orig
 *.out
 *.pdb
@@ -54,6 +55,7 @@ TAGS
 /doc/inslist.src
 /doc/version.src
 /macros/macros.c
+/misc/omfdump
 /nasm
 /ndisasm
 /nasm.spec
