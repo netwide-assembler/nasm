@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -64,22 +65,27 @@ static const char *record_types[256] =
 
 typedef void (*dump_func)(uint8_t, const uint8_t *, size_t);
 
-static void hexdump_data(unsigned int offset, const uint8_t *data, size_t n)
+static void hexdump_data(unsigned int offset, const uint8_t *data,
+                         size_t n, size_t field)
 {
     unsigned int i, j;
 
     for (i = 0; i < n; i += 16) {
-	printf("  %04x: ", i+offset);
+	printf("   %04x: ", i+offset);
 	for (j = 0; j < 16; j++) {
-	    if (i+j < n)
-		printf("%02x%c", data[i+j], (j == 7) ? '-' : ' ');
-	    else
-		printf("   ");
+            char sep = (j == 7) ? '-' : ' ';
+	    if (i+j < field)
+		printf("%02x%c", data[i+j], sep);
+	    else if (i+j < n)
+                printf("xx%c", sep); /* Beyond end of... */
+            else
+		printf("   ");  /* No separator */
 	}
 	printf(" :  ");
 	for (j = 0; j < 16; j++) {
-	    if (i+j < n)
-		putchar(isprint(data[i+j]) ? data[i+j] : '.');
+            if (i+j < n)
+                putchar((i+j >= field) ? 'x' :
+                        isprint(data[i+j]) ? data[i+j] : '.');
 	}
 	putchar('\n');
     }
@@ -88,7 +94,7 @@ static void hexdump_data(unsigned int offset, const uint8_t *data, size_t n)
 static void dump_unknown(uint8_t type, const uint8_t *data, size_t n)
 {
     (void)type;
-    hexdump_data(0, data, n);
+    hexdump_data(0, data, n, n);
 }
 
 static void dump_coment(uint8_t type, const uint8_t *data, size_t n)
@@ -121,26 +127,150 @@ static void dump_coment(uint8_t type, const uint8_t *data, size_t n)
     };
 
     if (n < 2) {
-	dump_unknown(type, data, n);
+	hexdump_data(type, data, 2, n);
 	return;
     }
 
     type  = data[0];
     class = data[1];
 
-    printf("  [NP=%d NL=%d UD=%02X] %02X %s\n",
+    printf("   [NP=%d NL=%d UD=%02X] %02X %s\n",
 	   (type >> 7) & 1,
 	   (type >> 6) & 1,
 	   type & 0x3f,
 	   class,
 	   coment_class[class] ? coment_class[class] : "???");
 
-    hexdump_data(2, data+2, n-2);
+    hexdump_data(2, data+2, n-2, n-2);
+}
+
+/* Parse an index field */
+static uint16_t get_index(const uint8_t **pp)
+{
+    uint8_t c;
+
+    c = *(*pp)++;
+    if (c & 0x80) {
+        return ((c & 0x7f) << 8) + *(*pp)++;
+    } else {
+        return c;
+    }
+}
+
+static uint16_t get_16(const uint8_t **pp)
+{
+    uint16_t v = *(const uint16_t *)(*pp);
+    (*pp) += 2;
+
+    return v;
+}
+
+static uint32_t get_32(const uint8_t **pp)
+{
+    const uint32_t v = *(const uint32_t *)(*pp);
+    (*pp) += 4;
+
+    return v;
+}
+
+/* LNAMES or LLNAMES */
+static void dump_lnames(uint8_t type, const uint8_t *data, size_t n)
+{
+    const uint8_t *p = data;
+    const uint8_t *end = data + n;
+    int i = 0;
+
+    while (p < end) {
+        size_t l = *p+1;
+        if (l > n) {
+            printf("   # 0x%04x: \"%.*s... <%zu missing bytes>\n",
+                   ++i, n-1, p+1, l-n);
+        } else {
+            printf("   # 0x%04x: \"%.*s\"\n", ++i, l-1, p+1);
+        }
+        hexdump_data(p-data, p, l, n);
+        p += l;
+        n -= l;
+    }
+}
+
+/* FIXUPP16 or FIXUPP32 */
+static void dump_fixupp(uint8_t type, const uint8_t *data, size_t n)
+{
+    bool big = type & 1;
+    unsigned int size = type == 0x9d ? 4 : 2;
+    const uint8_t *p = data;
+    const uint8_t *end = data + n;
+    static const char * const method_base[4] =
+        { "SEGDEF", "GRPDEF", "EXTDEF", "frame#" };
+
+    while (p < end) {
+        const uint8_t *start = p;
+        uint8_t op = *p++;
+        uint16_t index;
+        uint32_t disp;
+
+        if (!(op & 0x80)) {
+            /* THREAD record */
+            bool frame = !!(op & 0x40);
+
+            printf("   THREAD %-7s%d%s method %c%d (%s)",
+                   frame ? "frame" : "target", op & 3,
+                   (op & 0x20) ? " +flag5?" : "",
+                   (op & 0x40) ? 'F' : 'T',
+                   op & 3, method_base[op & 3]);
+
+            if ((op & 0x50) != 0x50) {
+                printf(" index 0x%04x", get_index(&p));
+            }
+            putchar('\n');
+        } else {
+            /* FIXUP subrecord */
+            uint8_t fix;
+
+            printf("   FIXUP  %s-rel location %2d offset 0x%03x",
+                   (op & 0x40) ? "seg" : "self",
+                   (op & 0x3c) >> 2,
+                   ((op & 3) << 8) + *p++);
+
+            fix = *p++;
+            printf("\n          frame %s%d%s",
+                   (fix & 0x80) ? "thread " : "F",
+                   ((fix & 0x70) >> 4),
+                   ((fix & 0xc0) == 0xc0) ? "?" : "");
+
+            if ((fix & 0xc0) == 0)
+                printf(" datum 0x%04x", get_index(&p));
+
+            printf("\n          target %s%d",
+                   (fix & 0x10) ? "thread " : "method T",
+                   fix & 3);
+
+            if ((fix & 0x10) == 0)
+                printf(" (%s)", method_base[fix & 3]);
+
+            printf(" datum 0x%04x", get_index(&p));
+
+            if ((fix & 0x08) == 0) {
+                if (big) {
+                    printf(" disp 0x%08x", get_32(&p));
+                } else {
+                    printf(" disp 0x%04x", get_16(&p));
+                }
+            }
+            putchar('\n');
+        }
+        hexdump_data(start-data, start, p-start, n-(start-data));
+    }
 }
 
 static const dump_func dump_type[256] =
 {
     [0x88] = dump_coment,
+    [0x96] = dump_lnames,
+    [0x9c] = dump_fixupp,
+    [0x9d] = dump_fixupp,
+    [0xca] = dump_lnames,
 };
 
 int dump_omf(int fd)
