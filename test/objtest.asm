@@ -35,8 +35,8 @@
 	  common _commvar 2	; [3]
 	  extern _printf	; [6]
 
-	  group mygroup mybss mydata ; [10]
-	  group mygroup2 mycode mycode2	; [10]
+	  group mygroup mybss mydata
+	  group mygroup2 mycode mycode2
 
 	  segment mycode private
 
@@ -67,6 +67,8 @@ _function push bp
 	  retf
 
 .printf	  dw _printf, seg _printf ; [2] [4] [16]
+.printfd  dd _printf, seg _printf ; [2] [4] [16]
+.printfq  dq _printf, seg _printf ; [2] [4] [16]
 
 	  segment mycode2 private
 

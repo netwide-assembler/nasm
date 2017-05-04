@@ -88,6 +88,7 @@ struct ofmt;
 enum out_type {
     OUT_RAWDATA,    /* Plain bytes */
     OUT_RESERVE,    /* Reserved bytes (RESB et al) */
+    OUT_ZERODATA,   /* Initialized data, but all zero */
     OUT_ADDRESS,    /* An address (symbol value) */
     OUT_RELADDR,    /* A relative address */
     OUT_SEGMENT,    /* A segment number */

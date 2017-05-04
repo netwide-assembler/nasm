@@ -342,13 +342,12 @@ static void out(struct out_data *data)
 {
     static int32_t lineno = 0;     /* static!!! */
     static const char *lnfname = NULL;
-    int asize;
-    const int amax  = ofmt->maxbits >> 3; /* Maximum address size in bytes */
     union {
         uint8_t b[8];
         uint64_t q;
     } xdata;
-    uint64_t size = data->size;
+    size_t asize, amax;
+    uint64_t zeropad = 0;
     int64_t addrval;
     int32_t fixseg;             /* Segment for which to produce fixed data */
 
@@ -371,26 +370,28 @@ static void out(struct out_data *data)
         goto address;
 
     address:
+        nasm_assert(data->size <= 8);
         asize = data->size;
-        nasm_assert(asize <= 8);
+        amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
         if (data->tsegment == fixseg && data->twrt == NO_SEG) {
-            uint8_t *q = xdata.b;
-
             warn_overflow_out(addrval, asize, data->sign);
-
-            WRITEADDR(q, addrval, asize);
+            xdata.q = htole64(addrval);
             data->data = xdata.b;
             data->type = OUT_RAWDATA;
-            asize = 0;              /* No longer an address */
+            asize = amax = 0;   /* No longer an address */
         }
         break;
 
+    case OUT_SEGMENT:
+        nasm_assert(data->size <= 8);
+        asize = data->size;
+        amax = 2;
+        break;
+
     default:
-        asize = 0;              /* Not an address */
+        asize = amax = 0;       /* Not an address */
         break;
     }
-
-    lfmt->output(data);
 
     /*
      * this call to src_get determines when we call the
@@ -404,28 +405,35 @@ static void out(struct out_data *data)
     if (src_get(&lineno, &lnfname))
         dfmt->linenum(lnfname, lineno, data->segment);
 
-    if (asize && asize > amax) {
-        if (data->type != OUT_ADDRESS || data->sign == OUT_SIGNED) {
+    if (asize > amax) {
+        if (data->type == OUT_RELADDR || data->sign == OUT_SIGNED) {
             nasm_error(ERR_NONFATAL,
-                    "%d-bit signed relocation unsupported by output format %s\n",
-                    asize << 3, ofmt->shortname);
+                    "%u-bit signed relocation unsupported by output format %s",
+                       (unsigned int)(asize << 3), ofmt->shortname);
         } else {
             nasm_error(ERR_WARNING | ERR_WARN_ZEXTRELOC,
-                    "%d-bit unsigned relocation zero-extended from %d bits\n",
-                    asize << 3, ofmt->maxbits);
-            data->size = amax;
-            ofmt->output(data);
-            data->insoffs += amax;
-            data->offset += amax;
-            data->size = size = asize - amax;
+                       "%u-bit %s relocation zero-extended from %u bits",
+                       (unsigned int)(asize << 3),
+                       data->type == OUT_SEGMENT ? "segment" : "unsigned",
+                       (unsigned int)(amax << 3));
         }
-        data->data = zero_buffer;
-        data->type = OUT_RAWDATA;
+        zeropad = data->size - amax;
+        data->size = amax;
     }
-
+    lfmt->output(data);
     ofmt->output(data);
-    data->offset += size;
-    data->insoffs += size;
+    data->offset  += data->size;
+    data->insoffs += data->size;
+
+    if (zeropad) {
+        data->type     = OUT_ZERODATA;
+        data->size     = zeropad;
+        lfmt->output(data);
+        ofmt->output(data);
+        data->offset  += zeropad;
+        data->insoffs += zeropad;
+        data->size    += zeropad;  /* Restore original size value */
+    }
 }
 
 static inline void out_rawdata(struct out_data *data, const void *rawdata,
@@ -452,13 +460,37 @@ static inline void out_reserve(struct out_data *data, uint64_t size)
     out(data);
 }
 
-static inline void out_imm(struct out_data *data, const struct operand *opx,
-                           int size, enum out_sign sign)
+static void out_segment(struct out_data *data, const struct operand *opx)
 {
-    data->type =
-        (opx->opflags & OPFLAG_RELATIVE) ? OUT_RELADDR : OUT_ADDRESS;
+    if (opx->opflags & OPFLAG_RELATIVE)
+        nasm_error(ERR_NONFATAL, "segment references cannot be relative");
+
+    data->type = OUT_SEGMENT;
+    data->sign = OUT_UNSIGNED;
+    data->size = 2;
+    data->toffset = opx->offset;
+    data->tsegment = ofmt->segbase(opx->segment | 1);
+    data->twrt = opx->wrt;
+    out(data);
+}
+
+static void out_imm(struct out_data *data, const struct operand *opx,
+                    int size, enum out_sign sign)
+{
+    if (opx->segment != NO_SEG && (opx->segment & 1)) {
+        /*
+         * This is actually a segment reference, but eval() has
+         * already called ofmt->segbase() for us.  Sigh.
+         */
+        if (size < 2)
+            nasm_error(ERR_NONFATAL, "segment reference must be 16 bits");
+
+        data->type = OUT_SEGMENT;
+    } else {
+        data->type = (opx->opflags & OPFLAG_RELATIVE)
+            ? OUT_RELADDR : OUT_ADDRESS;
+    }
     data->sign = sign;
-    data->size = size;
     data->toffset = opx->offset;
     data->tsegment = opx->segment;
     data->twrt = opx->wrt;
@@ -470,6 +502,7 @@ static inline void out_imm(struct out_data *data, const struct operand *opx,
      * already occurred.
      */
     data->relbase = 0;
+    data->size = size;
     out(data);
 }
 
@@ -486,18 +519,6 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
     data->tsegment = opx->segment;
     data->twrt = opx->wrt;
     data->relbase = data->offset + (data->inslen - data->insoffs);
-    out(data);
-}
-
-static inline void out_segment(struct out_data *data,
-                               const struct operand *opx)
-{
-    data->type = OUT_SEGMENT;
-    data->sign = OUT_UNSIGNED;
-    data->size = 2;
-    data->toffset = opx->offset; /* Is this really needed/wanted? */
-    data->tsegment = ofmt->segbase(opx->segment + 1);
-    data->twrt = opx->wrt;
     out(data);
 }
 
@@ -552,7 +573,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     data.offset = start;
     data.segment = segment;
     data.itemp = NULL;
-    data.sign = OUT_WRAP;
     data.bits = bits;
 
     wsize = db_bytes(instruction->opcode);
@@ -570,12 +590,19 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                                " instruction");
                 } else {
                     data.insoffs = 0;
-                    data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
                     data.inslen = data.size = wsize;
                     data.toffset = e->offset;
-                    data.tsegment = e->segment;
                     data.twrt = e->wrt;
                     data.relbase = 0;
+                    if (e->segment != NO_SEG && (e->segment & 1)) {
+                        data.tsegment = e->segment;
+                        data.type = OUT_SEGMENT;
+                        data.sign = OUT_UNSIGNED;
+                    } else {
+                        data.tsegment = e->segment;
+                        data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
+                        data.sign = OUT_WRAP;
+                    }
                     out(&data);
                 }
             } else if (e->type == EOT_DB_STRING ||

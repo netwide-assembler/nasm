@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -114,7 +114,7 @@ static void list_emit(void)
 	fprintf(listfp, "%6"PRId32"          ", listlineno);
 	for (i = 0; i < LIST_HEXBIT; i++)
 	    putc('*', listfp);
-	
+
 	if (listlevel_e)
 	    fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
 		    listlevel_e);
@@ -202,15 +202,23 @@ static void list_output(const struct out_data *data)
     char q[20];
     uint64_t size = data->size;
     uint64_t offset = data->offset;
+    const uint8_t *p = data->data;
+
 
     if (!listp || suppress || user_nolist)
         return;
 
     switch (data->type) {
+    case OUT_ZERODATA:
+        if (size > 16) {
+            snprintf(q, sizeof(q), "<zero %08"PRIX64">", size);
+            list_out(offset, q);
+        } else {
+            p = zero_buffer;
+            /* fall through */
+        }
     case OUT_RAWDATA:
     {
-        const uint8_t *p = data->data;
-
 	if (size == 0 && !listdata[0])
 	    listoffset = data->offset;
         while (size--) {

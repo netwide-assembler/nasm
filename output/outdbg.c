@@ -59,6 +59,7 @@ struct Section {
 } *dbgsect;
 
 static unsigned long dbg_max_data_dump = 128;
+static bool section_labels = true;
 
 const struct ofmt of_dbg;
 static void dbg_init(void)
@@ -78,7 +79,8 @@ static void dbg_cleanup(void)
     }
 }
 
-static int32_t dbg_section_names(char *name, int pass, int *bits)
+static int32_t dbg_add_section(char *name, int pass, int *bits,
+                                     const char *whatwecallit)
 {
     int seg;
 
@@ -88,12 +90,13 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
     if (!name)
         *bits = 16;
 
-    if (!name)
+    if (!name) {
         fprintf(ofile, "section_name on init: returning %d\n",
                 seg = seg_alloc());
-    else {
+    } else {
         int n = strcspn(name, " \t");
         char *sname = nasm_strndup(name, n);
+        char *tail = nasm_skip_spaces(name+n);
         struct Section *s;
 
         seg = NO_SEG;
@@ -107,11 +110,19 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
             s->number = seg = seg_alloc();
             s->next = dbgsect;
             dbgsect = s;
-            fprintf(ofile, "section_name %s (pass %d): returning %d\n",
-                    name, pass, seg);
+            fprintf(ofile, "%s %s (%s) pass %d: returning %d\n",
+                    whatwecallit, name, tail, pass, seg);
+
+            if (section_labels)
+                define_label(s->name, s->number + 1, 0, NULL, false, false);
         }
     }
     return seg;
+}
+
+static int32_t dbg_section_names(char *name, int pass, int *bits)
+{
+    return dbg_add_section(name, pass, bits, "section_names");
 }
 
 static void dbg_deflabel(char *name, int32_t segment, int64_t offset,
@@ -128,6 +139,7 @@ static const char *out_type(enum out_type type)
     static const char *out_types[] = {
         "rawdata",
         "reserve",
+        "zerodata",
         "address",
         "reladdr",
         "segment"
@@ -288,6 +300,23 @@ static int32_t dbg_segbase(int32_t segment)
 static enum directive_result
 dbg_directive(enum directive directive, char *value, int pass)
 {
+    switch (directive) {
+        /*
+         * The .obj GROUP directive is nontrivial to emulate in a macro.
+         * It effectively creates a "pseudo-section" containing the first
+         * space-separated argument; the rest we ignore.
+         */
+    case D_GROUP:
+    {
+        int dummy;
+        dbg_add_section(value, pass, &dummy, "directive:group");
+        break;
+    }
+
+    default:
+        break;
+    }
+
     fprintf(ofile, "directive [%s] value [%s] (pass %d)\n",
             directive_dname(directive), value, pass);
     return DIRR_OK;
@@ -309,26 +338,34 @@ dbg_pragma(const struct pragma *pragma)
             pragma->opname, directive_dname(pragma->opcode),
             pragma->tail);
 
-    if (pragma->facility == &dbg_pragma_list[0] &&
-        pragma->opcode == D_MAXDUMP) {
-        if (!nasm_stricmp(pragma->tail, "unlimited")) {
-            dbg_max_data_dump = -1UL;
-        } else {
-            char *ep;
-            unsigned long arg;
-
-            errno = 0;
-            arg = strtoul(pragma->tail, &ep, 0);
-            if (errno || *nasm_skip_spaces(ep)) {
-                nasm_error(ERR_WARNING | ERR_WARN_BAD_PRAGMA | ERR_PASS2,
-                           "invalid %%pragma dbg maxdump argument");
-                return DIRR_ERROR;
+    if (pragma->facility == &dbg_pragma_list[0]) {
+        switch (pragma->opcode) {
+        case D_MAXDUMP:
+            if (!nasm_stricmp(pragma->tail, "unlimited")) {
+                dbg_max_data_dump = -1UL;
             } else {
-                dbg_max_data_dump = arg;
+                char *ep;
+                unsigned long arg;
+
+                errno = 0;
+                arg = strtoul(pragma->tail, &ep, 0);
+                if (errno || *nasm_skip_spaces(ep)) {
+                    nasm_error(ERR_WARNING | ERR_WARN_BAD_PRAGMA | ERR_PASS2,
+                               "invalid %%pragma dbg maxdump argument");
+                    return DIRR_ERROR;
+                } else {
+                    dbg_max_data_dump = arg;
+                }
             }
+            break;
+        case D_NOSECLABELS:
+            section_labels = false;
+            break;
+
+        default:
+            break;
         }
     }
-
     return DIRR_OK;
 }
 
@@ -401,6 +438,8 @@ static const struct dfmt * const debug_debug_arr[3] = {
     NULL
 };
 
+extern macros_t dbg_stdmac[];
+
 const struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
@@ -408,7 +447,7 @@ const struct ofmt of_dbg = {
     64,
     debug_debug_arr,
     &debug_debug_form,
-    NULL,
+    dbg_stdmac,
     dbg_init,
     dbg_out,
     dbg_legacy_out,

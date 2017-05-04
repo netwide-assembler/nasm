@@ -30,63 +30,24 @@
 ;;     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; --------------------------------------------------------------------------
-;;
-;; List of global NASM directives and pragma operations codes
-;;
-;; ALL directives, including backend-specific, need to be added here.
-;;
-;; %pragma operation keywords (the second word, after facility) MAY
-;; be added here too to assist in parsing, but it is not required.
-;; See the definition of struct pragma in include/nasm.h.
-;;
-;; The same keyword can be used as a directive and as a pragma
-;; operation, or as pragma operations in different namespaces.  The
-;; same D_ constant will be used for both, and this is perfectly
-;; acceptable.
-;;
 
-; --- General configuration
-#name directive
-#prefix D_
-#errval D_unknown
-#header directiv.h
-
-; --- Special enum values
-#special none = 0			; Must be zero
-#special unknown
-#special corrupt
-
-; --- Global directives
-absolute
-bits
-common
-cpu
-debug
-default
-extern
-float
-global
-list
-section
-segment
-warning
-sectalign
-pragma
-
-; --- Format-specific directives
-export				; outcoff, outobj
-group				; outobj
-import				; outobj
-library				; outrdf2
-map				; outbin
-module				; outrdf2
-org				; outbin
-osabi				; outelf
-safeseh				; outcoff
-uppercase			; outieee, outobj
-
-; --- Pragma operations
-subsections_via_symbols		; macho
-no_dead_strip			; macho
-maxdump				; dbg
-noseclabels			; dbg
+;
+; Define a few macros which lets the dbg format process files intended
+; for the .obj format.
+;
+OUT: dbg
+%define __SECT__ [section .text]
+%imacro group 1+.nolist
+[group %1]
+%endmacro
+%imacro uppercase 0+.nolist
+ %pragma dbg uppercase %1
+%endmacro
+%imacro export 1+.nolist
+ %pragma dbg export %1
+%endmacro
+%imacro import 1+.nolist
+ %pragma dbg import %1
+%endmacro
+%macro __NASM_CDecl__ 1
+%endmacro
