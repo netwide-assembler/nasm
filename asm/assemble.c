@@ -375,7 +375,7 @@ static void out(struct out_data *data)
         amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
         if (data->tsegment == fixseg && data->twrt == NO_SEG) {
             warn_overflow_out(addrval, asize, data->sign);
-            xdata.q = htole64(addrval);
+            xdata.q = cpu_to_le64(addrval);
             data->data = xdata.b;
             data->type = OUT_RAWDATA;
             asize = amax = 0;   /* No longer an address */
