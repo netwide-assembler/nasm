@@ -66,7 +66,7 @@ const char *prefix_name(int token)
 /*
  * initialized data bytes length from opcode
  */
-int idata_bytes(int opcode)
+int idata_bytes(enum opcode opcode)
 {
     switch (opcode) {
     case I_DB:
@@ -95,7 +95,7 @@ int idata_bytes(int opcode)
 /*
  * Uninitialized data bytes length from opcode
  */
-int resv_bytes(int opcode)
+int resv_bytes(enum opcode opcode)
 {
     switch (opcode) {
     case I_RESB:
