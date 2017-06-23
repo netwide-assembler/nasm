@@ -24,6 +24,9 @@ The Makefiles are:
 		5. The Perl module Font::TTF (can usually be installed
 		   via the "CPAN Client" in your Perl distribution)
 		   http://search.cpan.org/~bhallissy/Font-TTF/
+		6. The Perl module Sort::Versions (can usually be installed
+		   via the "CPAN Client" in your Perl distribution)
+		   http://search.cpan.org/~neilb/Sort-Versions-1.62/lib/Sort/Versions.pm
 
 	The tools need to be in your current path.  To build the
 	installer package, run:
