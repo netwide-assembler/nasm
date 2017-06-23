@@ -299,7 +299,7 @@ void saa_write8(struct SAA *s, uint8_t v)
     saa_wbytes(s, &v, 1);
 }
 
-#ifdef WORDS_LITTEENDIAN
+#ifdef WORDS_LITTLEENDIAN
 
 void saa_write16(struct SAA *s, uint16_t v)
 {
