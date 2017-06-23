@@ -8,6 +8,9 @@
 bar:	resd 0
 %endif
 
+	global start
+	global foo
+
 	section .rodata
 rod1:	dd 0x01234567
 rod2:	dd 0x89abcdef
