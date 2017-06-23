@@ -138,6 +138,7 @@ struct macho_fmt {
     uint32_t reloc_abs;		/* Absolute relocation type */
     uint32_t reloc_rel;		/* Relative relocation type */
     uint32_t reloc_tlv;		/* Thread local relocation type */
+    bool forcesym;		/* Always use "external" (symbol-relative) relocations */
 };
 
 static struct macho_fmt fmt;
@@ -154,7 +155,7 @@ struct section {
     int32_t index;
     int32_t fileindex;
     struct reloc *relocs;
-    struct rbtree *gsyms;	/* Global symbols in section */
+    struct rbtree *syms[2]; /* All/global symbols symbols in section */
     int align;
     bool by_name;		/* This section was specified by full MachO name */
 
@@ -215,7 +216,7 @@ struct reloc {
 
 struct symbol {
     /* nasm internal data */
-    struct rbtree symv;         /* Global symbol rbtree; "key" contains the
+    struct rbtree symv[2];	/* All/global symbol rbtrees; "key" contains the
 				   symbol offset. */
     struct symbol *next;	/* next symbol in the list */
     char *name;			/* name of this symbol */
@@ -412,21 +413,22 @@ static void sect_write(struct section *sect,
 /*
  * Find a suitable global symbol for a ..gotpcrel or ..tlvp reference
  */
-static struct symbol *macho_find_gsym(struct section *s,
-				      uint64_t offset, bool exact)
+static struct symbol *macho_find_sym(struct section *s, uint64_t offset,
+				     bool global, bool exact)
 {
     struct rbtree *srb;
 
-    srb = rb_search(s->gsyms, offset);
+    srb = rb_search(s->syms[global], offset);
 
     if (!srb || (exact && srb->key != offset)) {
-        nasm_error(ERR_NONFATAL, "unable to find a suitable %s symbol"
+        nasm_error(ERR_NONFATAL, "unable to find a suitable%s%s symbol"
 		   " for this reference",
-		   s == &absolute_sect ? "absolute" : "global");
+		   global ? " global" : "",
+		   s == &absolute_sect ? " absolute " : "");
         return NULL;
     }
 
-    return container_of(srb, struct symbol, symv);
+    return container_of(srb - global, struct symbol, symv);
 }
 
 static int64_t add_reloc(struct section *sect, int32_t section,
@@ -469,7 +471,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	if (section == NO_SEG) {
 	    /* absolute (can this even happen?) */
 	    r->ext = 0;
-	    r->snum = R_ABS;
+	    r->snum = NO_SECT;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
@@ -493,8 +495,8 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 #if 0
 	    /* This "seems" to be how it ought to work... */
 
-	    struct symbol *sym = macho_find_gsym(&absolute_sect,
-						 offset, false);
+	    struct symbol *sym = macho_find_sym(&absolute_sect, offset,
+						false, false);
 	    if (!sym)
 		goto bail;
 
@@ -543,13 +545,25 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
 	} else {
-	    /* internal */
-	    struct symbol *sym = macho_find_gsym(s, offset, reltype != RL_TLV);
+	    /* internal - does it really need to be global? */
+	    struct symbol *sym = macho_find_sym(s, offset, true,
+						reltype != RL_TLV);
 	    if (!sym)
 		goto bail;
+
 	    r->snum = sym->initial_snum;
 	}
 	break;
+    }
+
+    /* For 64-bit Mach-O, force a symbol reference if at all possible */
+    if (!r->ext && r->snum != NO_SECT && fmt.forcesym) {
+	struct symbol *sym = macho_find_sym(s, offset, false, false);
+	if (sym) {
+	    adjust = bytes - sym->symv[0].key;
+	    r->snum = sym->initial_snum;
+	    r->ext = 1;
+	}
     }
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
@@ -645,7 +659,7 @@ static void macho_output(int32_t secto, const void *data,
         if (section != NO_SEG) {
             if (section % 2) {
                 nasm_error(ERR_NONFATAL, "Mach-O format does not support"
-                      " section base references");
+			   " section base references");
             } else if (wrt == NO_SEG) {
 		if (fmt.ptrsize == 8 && asize != 8) {
 		    nasm_error(ERR_NONFATAL,
@@ -968,6 +982,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                          int is_global, char *special)
 {
     struct symbol *sym;
+    struct section *s;
 
     if (special) {
         nasm_error(ERR_NONFATAL, "The Mach-O output format does "
@@ -1000,7 +1015,8 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     sym->strx = strslen;
     sym->type = 0;
     sym->desc = 0;
-    sym->symv.key = offset;
+    sym->symv[0].key = offset;
+    sym->symv[1].key = offset;
     sym->initial_snum = -1;
 
     /* external and common symbols get N_EXT */
@@ -1013,10 +1029,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         sym->type |= N_ABS;
         sym->sect = NO_SECT;
 
-	/* all absolute symbols are available to use as references */
-	absolute_sect.gsyms = rb_insert(absolute_sect.gsyms, &sym->symv);
+	s = &absolute_sect;
     } else {
-	struct section *s = get_section_by_index(section);
+	s = get_section_by_index(section);
 
         sym->type |= N_SECT;
 
@@ -1038,7 +1053,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
             case 2:
                 /* there isn't actually a difference between global
                  ** and common symbols, both even have their size in
-                 ** sym->symv.key */
+                 ** sym->symv[0].key */
                 sym->type = N_EXT;
                 break;
 
@@ -1049,10 +1064,15 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 nasm_panic(0, "in-file index for section %d not found, is_global = %d", section, is_global);
 		break;
             }
-	} else if (is_global) {
-	    s->gsyms = rb_insert(s->gsyms, &sym->symv);
 	}
     }
+
+    if (s) {
+	s->syms[0] = rb_insert(s->syms[0], &sym->symv[0]);
+	if (is_global)
+	    s->syms[1] = rb_insert(s->syms[1], &sym->symv[1]);
+    }
+
     ++nsyms;
 }
 
@@ -1467,10 +1487,10 @@ static void macho_write_symtab (void)
 	       sizes.  */
 	    if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 		nasm_assert(sym->sect <= seg_nsects);
-		sym->symv.key += sectstab[sym->sect]->addr;
+		sym->symv[0].key += sectstab[sym->sect]->addr;
 	    }
 
-	    fwriteptr(sym->symv.key, ofile);	/* value (i.e. offset) */
+	    fwriteptr(sym->symv[0].key, ofile);	/* value (i.e. offset) */
 	}
     }
 
@@ -1485,10 +1505,10 @@ static void macho_write_symtab (void)
 	   sizes.  */
 	if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 	    nasm_assert(sym->sect <= seg_nsects);
-	    sym->symv.key += sectstab[sym->sect]->addr;
+	    sym->symv[0].key += sectstab[sym->sect]->addr;
 	}
 
-	fwriteptr(sym->symv.key, ofile); /* value (i.e. offset) */
+	fwriteptr(sym->symv[0].key, ofile); /* value (i.e. offset) */
     }
 
      for (i = 0; i < nundefsym; i++) {
@@ -1502,10 +1522,10 @@ static void macho_write_symtab (void)
 	   sizes.  */
 	 if (((sym->type & N_TYPE) == N_SECT) && (sym->sect != NO_SECT)) {
 	    nasm_assert(sym->sect <= seg_nsects);
-	    sym->symv.key += sectstab[sym->sect]->addr;
+	    sym->symv[0].key += sectstab[sym->sect]->addr;
 	 }
 
-	 fwriteptr(sym->symv.key, ofile); /* value (i.e. offset) */
+	 fwriteptr(sym->symv[0].key, ofile); /* value (i.e. offset) */
      }
 
 }
@@ -2232,7 +2252,8 @@ static const struct macho_fmt macho32_fmt = {
     RL_MAX_32,
     GENERIC_RELOC_VANILLA,
     GENERIC_RELOC_VANILLA,
-    GENERIC_RELOC_TLV
+    GENERIC_RELOC_TLV,
+    false			/* Allow segment-relative relocations */
 };
 
 static void macho32_init(void)
@@ -2277,7 +2298,7 @@ const struct ofmt of_macho32 = {
     null_directive,
     macho_filename,
     macho_cleanup,
-    macho_pragma_list,
+    macho_pragma_list
 };
 #endif
 
@@ -2294,7 +2315,8 @@ static const struct macho_fmt macho64_fmt = {
     RL_MAX_64,
     X86_64_RELOC_UNSIGNED,
     X86_64_RELOC_SIGNED,
-    X86_64_RELOC_TLV
+    X86_64_RELOC_TLV,
+    true			/* Force symbol-relative relocations */
 };
 
 static void macho64_init(void)
