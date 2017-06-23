@@ -182,7 +182,7 @@ static void dbg_out(const struct out_data *data)
             fprintf(ofile, " wrt %"PRIx32, data->twrt);
     }
     if (data->type == OUT_RELADDR)
-        fprintf(ofile, " relbase %"PRId64, data->relbase);
+        fprintf(ofile, " relbase %"PRIx64, data->relbase);
 
     putc('\n', ofile);
 
@@ -236,8 +236,8 @@ static void dbg_legacy_out(int32_t segto, const void *data,
         fprintf(ofile, "  legacy: out to %"PRIx32", len = %d: ",
                 segto, (int)abs((int)size));
     else
-        fprintf(ofile, "  legacy: out to %"PRIx32", len = %"PRIu64": ",
-                segto, size);
+        fprintf(ofile, "  legacy: out to %"PRIx32", len = %"PRId64" (0x%"PRIx64"): ",
+                segto, (int64_t)size, size);
 
     switch (type) {
     case OUT_RESERVE:
