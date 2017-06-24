@@ -18,7 +18,7 @@
 #include "md5.h"
 #include <string.h>             /* for memcpy() */
 
-#ifdef WORDS_LITTEENDIAN
+#ifdef WORDS_LITTLEENDIAN
 #define byteReverse(buf, len)	/* Nothing */
 #else
 static void byteReverse(unsigned char *buf, unsigned longs);
