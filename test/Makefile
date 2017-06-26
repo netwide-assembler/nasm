@@ -1,5 +1,6 @@
 .SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
 
+NASMDEP = ../nasm
 NASM	= ../nasm
 NASMOPT = -Ox -I../misc $(OPT)
 PERL	= perl
@@ -10,49 +11,49 @@ RM_RF	= rm -rf
 $(NASM):
 	$(MAKE) -C ..
 
-%.bin: %.asm $(NASM)
+%.bin: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
 
-%.ith: %.asm $(NASM)
+%.ith: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
 
-%.srec: %.asm $(NASM)
+%.srec: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
 
-%.o: %.asm $(NASM)
+%.o: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
 
-%.o64: %.asm $(NASM)
+%.o64: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
 
-%.obj: %.asm $(NASM)
+%.obj: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
 
 %.od: %.obj ../misc/omfdump
 	../misc/omfdump $< > $@
 
-%.coff: %.asm $(NASM)
+%.coff: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
 
-%.win32: %.asm $(NASM)
+%.win32: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
 
-%.win64: %.asm $(NASM)
+%.win64: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
 
-%.mo32: %.asm $(NASM)
+%.mo32: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
 
-%.mo64: %.asm $(NASM)
+%.mo64: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
 
-%.dbg: %.asm $(NASM)
+%.dbg: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@
 
-%.i: %.asm $(NASM)
+%.i: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -E -o $@ $<
 
 all:
@@ -60,10 +61,10 @@ all:
 golden: performtest.pl $(TESTS)
 	$(PERL) performtest.pl --golden --nasm='$(NASM)' $(TESTS)
 
-test:	performtest.pl $(NASM) $(TESTS)
+test:	performtest.pl $(NASMDEP) $(TESTS)
 	$(PERL) performtest.pl --nasm='$(NASM)' $(TESTS)
 
-diff:	performtest.pl $(NASM) $(TESTS)
+diff:	performtest.pl $(NASMDEP) $(TESTS)
 	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
 
 clean:
@@ -78,7 +79,7 @@ spotless: clean
 #
 # Test for ELF32 shared libraries; assumes an x86 Linux system
 #
-elfso.o: elfso.asm $(NASM)
+elfso.o: elfso.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf32 -F stabs -o $@ -l $*.lst $<
 
 elfso.so: elfso.o
@@ -91,7 +92,7 @@ elftest: elftest.c elfso.so
 #
 # Test for ELF64 shared libraries; assumes an x86-64 Linux system
 #
-elf64so.o: elf64so.asm $(NASM)
+elf64so.o: elf64so.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf64 -F dwarf -o $@ -l $*.lst $<
 
 elf64so.so: elf64so.o
