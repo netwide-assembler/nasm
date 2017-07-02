@@ -20,6 +20,7 @@ datarootdir	= @datarootdir@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
+CPPFLAGS	= @CPPFLAGS@
 BUILD_CFLAGS	= $(CFLAGS) @DEFS@
 INTERNAL_CFLAGS = -I$(srcdir) -I$(objdir) \
 		  -I$(srcdir)/include -I$(objdir)/include \
@@ -72,13 +73,13 @@ endif
 .PHONY: manpages nsis
 
 .c.$(O):
-	$(CC) -c $(ALL_CFLAGS) -o $@ $<
+	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .c.s:
-	$(CC) -S $(ALL_CFLAGS) -o $@ $<
+	$(CC) -S $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .c.i:
-	$(CC) -E $(ALL_CFLAGS) -o $@ $<
+	$(CC) -E $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .txt.xml:
 	$(ASCIIDOC) -b docbook -d manpage -o $@ $<
@@ -88,7 +89,7 @@ endif
 
 # This rule is only used for rdoff, to allow common rules
 .$(O)$(X):
-	$(CC) $(LDFLAGS) -o $@ $< $(RDFLIB) $(NASMLIB) $(LIBS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $< $(RDFLIB) $(NASMLIB) $(LIBS)
 
 #-- Begin File Lists --#
 NASM =	asm/nasm.$(O)
@@ -152,10 +153,10 @@ $(NASMLIB): $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
 nasm$(X): $(NASM) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(NASMLIB)
-	$(CC) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
 
 #-- Begin Generated File Rules --#
 
@@ -335,12 +336,12 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 manpages: nasm.1 ndisasm.1
 
 install: nasm$(X) ndisasm$(X)
-	$(MKDIR) -p $(INSTALLROOT)$(bindir)
-	$(INSTALL_PROGRAM) nasm$(X) $(INSTALLROOT)$(bindir)/nasm$(X)
-	$(INSTALL_PROGRAM) ndisasm$(X) $(INSTALLROOT)$(bindir)/ndisasm$(X)
-	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
-	$(INSTALL_DATA) $(srcdir)/nasm.1 $(INSTALLROOT)$(mandir)/man1/nasm.1
-	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(INSTALLROOT)$(mandir)/man1/ndisasm.1
+	$(MKDIR) -p $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) nasm$(X) $(DESTDIR)$(bindir)/nasm$(X)
+	$(INSTALL_PROGRAM) ndisasm$(X) $(DESTDIR)$(bindir)/ndisasm$(X)
+	$(MKDIR) -p $(DESTDIR)$(mandir)/man1
+	$(INSTALL_DATA) $(srcdir)/nasm.1 $(DESTDIR)$(mandir)/man1/nasm.1
+	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(DESTDIR)$(mandir)/man1/ndisasm.1
 
 clean:
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
@@ -364,7 +365,7 @@ distclean: clean
 
 cleaner: clean
 	$(RM_F) $(PERLREQ) *.1 nasm.spec
-	cd doc && $(MAKE) clean
+	$(MAKE) -C doc clean
 
 spotless: distclean cleaner
 	$(RM_F) doc/Makefile
@@ -386,23 +387,23 @@ cscope:
 	cscope -b -f cscope.out
 
 rdf_install install_rdf install_rdoff:
-	$(MKDIR) -p $(INSTALLROOT)$(bindir)
+	$(MKDIR) -p $(DESTDIR)$(bindir)
 	for f in $(RDFPROGS); do \
-		$(INSTALL_PROGRAM) "$$f" '$(INSTALLROOT)$(bindir)'/ ; \
+		$(INSTALL_PROGRAM) "$$f" '$(DESTDIR)$(bindir)'/ ; \
 	done
-	cd '$(INSTALLROOT)$(bindir)' && \
+	cd '$(DESTDIR)$(bindir)' && \
 	for f in $(RDF2BINLINKS); do \
 		bn=`basename "$$f"` && $(RM_F) "$$bn" && \
 		$(LN_S) rdf2bin$(X) "$$bn" ; \
 	done
-	$(MKDIR) -p $(INSTALLROOT)$(mandir)/man1
-	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(INSTALLROOT)$(mandir)/man1/
+	$(MKDIR) -p $(DESTDIR)$(mandir)/man1
+	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(DESTDIR)$(mandir)/man1/
 
 doc:
-	cd doc && $(MAKE) all
+	$(MAKE) -C doc all
 
 doc_install install_doc:
-	cd doc && $(MAKE) install
+	$(MAKE) -C doc install
 
 everything: all manpages doc rdf
 
