@@ -21,7 +21,7 @@ datarootdir	= @datarootdir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= @CPPFLAGS@
-BUILD_CFLAGS	= $(CFLAGS) @DEFS@
+BUILD_CFLAGS	= $(CPPFLAGS) $(CFLAGS) @DEFS@
 INTERNAL_CFLAGS = -I$(srcdir) -I$(objdir) \
 		  -I$(srcdir)/include -I$(objdir)/include \
 		  -I$(srcdir)/x86 -I$(objdir)/x86 \
@@ -73,13 +73,13 @@ endif
 .PHONY: manpages nsis
 
 .c.$(O):
-	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
+	$(CC) -c $(ALL_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .c.s:
-	$(CC) -S $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
+	$(CC) -S $(ALL_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .c.i:
-	$(CC) -E $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $<
+	$(CC) -E $(ALL_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
 .txt.xml:
 	$(ASCIIDOC) -b docbook -d manpage -o $@ $<

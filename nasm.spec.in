@@ -54,7 +54,7 @@ xz -9ef doc/nasmdoc.pdf
 rm -rf "%{buildroot}"
 mkdir -p "%{buildroot}"/%{_bindir}
 mkdir -p "%{buildroot}"/%{_mandir}/man1
-make INSTALLROOT="%{buildroot}" install install_rdf
+make DESTDIR="%{buildroot}" install install_rdf
 
 %files
 %doc AUTHORS CHANGES README TODO
