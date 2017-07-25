@@ -3845,9 +3845,15 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                 len += strlen(tok->text);
                 p = buf = nasm_malloc(len + 1);
 
+                strcpy(p, tok->text);
+                p = strchr(p, '\0');
+                tok = delete_Token(tok);
+
                 while (tok != next) {
-                    strcpy(p, tok->text);
-                    p = strchr(p, '\0');
+                    if (PP_CONCAT_MATCH(tok, m[i].mask_tail)) {
+                        strcpy(p, tok->text);
+                        p = strchr(p, '\0');
+                    }
                     tok = delete_Token(tok);
                 }
 
