@@ -5101,8 +5101,18 @@ static char *pp_getline(void)
                             nasm_free(m->paramlen);
                             l->finishes->in_progress = 0;
                         }
-                    } else
+                    }
+
+                    /*
+                     * FIXME It is incorrect to always free_mmacro here.
+                     * It leads to usage-after-free.
+                     *
+                     * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
+                     */
+#if 0
+                    else
                         free_mmacro(m);
+#endif
                 }
                 istk->expansion = l->next;
                 nasm_free(l);
