@@ -1280,8 +1280,8 @@ static char *detoken(Token * tlist, bool expand_locals)
                     t->text = nasm_zalloc(2);
                 } else
                     t->text = nasm_strdup(p);
+		nasm_free(q);
             }
-            nasm_free(q);
         }
 
         /* Expand local macros here and not during preprocessing */
