@@ -32,6 +32,12 @@ PA_ARG_DISABLED([optimization],
 AS_IF([test x"$pa_init_cflags" = x],
       [CFLAGS=`echo "$CFLAGS" | sed -e "s/-O2/$pa_optimize/"`])
 
+dnl Compile and link with dwarf debug
+PA_ARG_ENABLED([gdb],
+ [disable optimization and compile with extra debug information for GDB debugger],
+ [CFLAGS=`echo "$CFLAGS" | sed -e "s/\(-O2\|-O3\)/-O0/"`
+   PA_ADD_CLDFLAGS([-ggdb3])])
+
 dnl Check for library extension
 PA_LIBEXT
 
