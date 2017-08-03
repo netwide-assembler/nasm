@@ -43,7 +43,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
-#include <time.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -93,7 +92,7 @@ static int pass1, pass2;	/* XXX: Get rid of these, they are redundant */
 int globalrel = 0;
 int globalbnd = 0;
 
-static time_t official_compile_time;
+struct compile_time official_compile_time;
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
@@ -165,69 +164,35 @@ static void nasm_fputs(const char *line, FILE * outfile)
         puts(line);
 }
 
-/* Convert a struct tm to a POSIX-style time constant */
-static int64_t make_posix_time(struct tm *tm)
-{
-    int64_t t;
-    int64_t y = tm->tm_year;
-
-    /* See IEEE 1003.1:2004, section 4.14 */
-
-    t = (y-70)*365 + (y-69)/4 - (y-1)/100 + (y+299)/400;
-    t += tm->tm_yday;
-    t *= 24;
-    t += tm->tm_hour;
-    t *= 60;
-    t += tm->tm_min;
-    t *= 60;
-    t += tm->tm_sec;
-
-    return t;
-}
-
 static void define_macros_early(void)
 {
+    const struct compile_time * const oct = &official_compile_time;
     char temp[128];
-    struct tm lt, *lt_p, gm, *gm_p;
-    int64_t posix_time;
 
-    lt_p = localtime(&official_compile_time);
-    if (lt_p) {
-        lt = *lt_p;
-
-        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
+    if (oct->have_local) {
+        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
+        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
+        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
+        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &oct->local);
         preproc->pre_define(temp);
     }
 
-    gm_p = gmtime(&official_compile_time);
-    if (gm_p) {
-        gm = *gm_p;
-
-        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
+    if (oct->have_gm) {
+        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
+        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
+        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
+        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &oct->gm);
         preproc->pre_define(temp);
     }
 
-    if (gm_p)
-        posix_time = make_posix_time(&gm);
-    else if (lt_p)
-        posix_time = make_posix_time(&lt);
-    else
-        posix_time = 0;
-
-    if (posix_time) {
-        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
+    if (oct->have_posix) {
+        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, oct->posix);
         preproc->pre_define(temp);
     }
 }
@@ -287,11 +252,64 @@ static void emit_dependencies(StrList *list)
         fclose(deps);
 }
 
+/* Convert a struct tm to a POSIX-style time constant */
+static int64_t make_posix_time(const struct tm *tm)
+{
+    int64_t t;
+    int64_t y = tm->tm_year;
+
+    /* See IEEE 1003.1:2004, section 4.14 */
+
+    t = (y-70)*365 + (y-69)/4 - (y-1)/100 + (y+299)/400;
+    t += tm->tm_yday;
+    t *= 24;
+    t += tm->tm_hour;
+    t *= 60;
+    t += tm->tm_min;
+    t *= 60;
+    t += tm->tm_sec;
+
+    return t;
+}
+
+static void timestamp(void)
+{
+    struct compile_time * const oct = &official_compile_time;
+    const struct tm *tp, *best_gm;
+
+    time(&oct->t);
+
+    best_gm = NULL;
+
+    tp = localtime(&oct->t);
+    if (tp) {
+        oct->local = *tp;
+        best_gm = &oct->local;
+        oct->have_local = true;
+    }
+
+    tp = gmtime(&oct->t);
+    if (tp) {
+        oct->gm = *tp;
+        best_gm = &oct->gm;
+        oct->have_gm = true;
+        if (!oct->have_local)
+            oct->local = oct->gm;
+    } else {
+        oct->gm = oct->local;
+    }
+
+    if (best_gm) {
+        oct->posix = make_posix_time(best_gm);
+        oct->have_posix = true;
+    }
+}
+
 int main(int argc, char **argv)
 {
     StrList *depend_list = NULL, **depend_ptr;
 
-    time(&official_compile_time);
+    timestamp();
 
     iflag_set(&cpu, IF_PLEVEL);
     iflag_set(&cmd_cpu, IF_PLEVEL);

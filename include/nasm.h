@@ -41,6 +41,8 @@
 #include "compiler.h"
 
 #include <stdio.h>
+#include <time.h>
+
 #include "nasmlib.h"
 #include "strlist.h"
 #include "preproc.h"
@@ -48,6 +50,16 @@
 #include "directiv.h"   /* For enum directive */
 #include "opflags.h"
 #include "regs.h"
+
+/* Time stamp for the official start of compilation */
+struct compile_time {
+    time_t t;
+    bool have_local, have_gm, have_posix;
+    int64_t posix;
+    struct tm local;
+    struct tm gm;
+};
+extern struct compile_time official_compile_time;
 
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
