@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -64,6 +65,48 @@ static const char *record_types[256] =
 };
 
 typedef void (*dump_func)(uint8_t, const uint8_t *, size_t);
+
+/* Ordered collection type */
+struct collection {
+    size_t n;			/* Elements in collection (not including 0) */
+    size_t s;			/* Elements allocated (not including 0) */
+    const void **p;		/* Element pointers */
+};
+
+struct collection c_names, c_lsegs, c_groups, c_extsym;
+
+static void nomem(void)
+{
+    fprintf(stderr, "%s: memory allocation error\n", progname);
+    exit(1);
+}
+
+#define INIT_SIZE 64
+static void add_collection(struct collection *c, const void *p)
+{
+    if (c->n >= c->s) {
+	size_t cs = c->s ? (c->s << 1) : INIT_SIZE;
+	const void **cp = realloc(c->p, cs*sizeof(const void *));
+
+	if (!cp)
+	    nomem();
+
+	c->p = cp;
+	c->s = cs;
+
+	memset(cp + c->n, 0, (cs - c->n)*sizeof(const void *));
+    }
+
+    c->p[++c->n] = p;
+}
+
+static const void *get_collection(struct collection *c, size_t index)
+{
+    if (index >= c->n)
+	return NULL;
+
+    return c->p[index];
+}
 
 static void hexdump_data(unsigned int offset, const uint8_t *data,
                          size_t n, size_t field)
@@ -173,20 +216,44 @@ static uint32_t get_32(const uint8_t **pp)
     return v;
 }
 
+/* Returns a name as a C string in a newly allocated buffer */
+char *lname(int index)
+{
+    char *s;
+    const char *p = get_collection(&c_names, index);
+    size_t len;
+
+    if (!p)
+	return NULL;
+
+    len = (uint8_t)p[0];
+
+    s = malloc(len+1);
+    if (!s)
+	nomem();
+
+    memcpy(s, p+1, len);
+    s[len] = '\0';
+
+    return s;
+}
+
 /* LNAMES or LLNAMES */
 static void dump_lnames(uint8_t type, const uint8_t *data, size_t n)
 {
     const uint8_t *p = data;
     const uint8_t *end = data + n;
-    int i = 0;
 
     while (p < end) {
         size_t l = *p+1;
         if (l > n) {
-            printf("   # 0x%04x: \"%.*s... <%zu missing bytes>\n",
-                   ++i, n-1, p+1, l-n);
+	    add_collection(&c_names, NULL);
+            printf("   # %4u 0x%04x: \"%.*s... <%zu missing bytes>\n",
+                   c_names.n, c_names.n, n-1, p+1, l-n);
         } else {
-            printf("   # 0x%04x: \"%.*s\"\n", ++i, l-1, p+1);
+	    add_collection(&c_names, p);
+            printf("   # %4u 0x%04x: \"%.*s\"\n",
+		   c_names.n, c_names.n, l-1, p+1);
         }
         hexdump_data(p-data, p, l, n);
         p += l;
@@ -194,11 +261,76 @@ static void dump_lnames(uint8_t type, const uint8_t *data, size_t n)
     }
 }
 
+/* SEGDEF16 or SEGDEF32 */
+static void dump_segdef(uint8_t type, const uint8_t *data, size_t n)
+{
+    bool big = type & 1;
+    const uint8_t *p = data;
+    const uint8_t *end = data+n;
+    uint8_t attr;
+    static const char * const alignment[8] =
+	{ "ABS", "BYTE", "WORD", "PARA", "PAGE", "DWORD", "LTL", "?ALIGN" };
+    static const char * const combine[8] =
+	{ "PRIVATE", "?COMMON", "PUBLIC", "?COMBINE", "?PUBLIC", "STACK", "COMMON", "?PUBLIC" };
+    uint16_t idx;
+    char *s;
+
+    if (p >= end)
+	return;
+
+    attr = *p++;
+
+    printf("   # %s (A%u) %s (C%u) %s%s",
+	   alignment[(attr >> 5) & 7], (attr >> 5) & 7,
+	   combine[(attr >> 2) & 7], (attr >> 2) & 7,
+	   (attr & 0x02) ? "MAXSIZE " : "",
+	   (attr & 0x01) ? "USE32" : "USE16");
+
+    if (((attr >> 5) & 7) == 0) {
+	/* Absolute segment */
+	if (p+3 > end)
+	    goto dump;
+	printf(" AT %04x:", get_16(&p));
+	printf("%02x", *p++);
+    }
+
+    if (big) {
+	if (p+4 > end)
+	    goto dump;
+	printf(" size 0x%08x", get_32(&p));
+    } else {
+	if (p+2 > end)
+	    goto dump;
+	printf(" size 0x%04x", get_16(&p));
+    }
+
+    idx = get_index(&p);
+    if (p > end)
+	goto dump;
+    s = lname(idx);
+    printf(" name '%s'", s);
+
+    idx = get_index(&p);
+    if (p > end)
+	goto dump;
+    s = lname(idx);
+    printf(" class '%s'", s);
+
+    idx = get_index(&p);
+    if (p > end)
+	goto dump;
+    s = lname(idx);
+    printf(" ovl '%s'", s);
+
+dump:
+    putchar('\n');
+    hexdump_data(0, data, n, n);
+}
+
 /* FIXUPP16 or FIXUPP32 */
 static void dump_fixupp(uint8_t type, const uint8_t *data, size_t n)
 {
     bool big = type & 1;
-    unsigned int size = type == 0x9d ? 4 : 2;
     const uint8_t *p = data;
     const uint8_t *end = data + n;
     static const char * const method_base[4] =
@@ -268,6 +400,8 @@ static const dump_func dump_type[256] =
 {
     [0x88] = dump_coment,
     [0x96] = dump_lnames,
+    [0x98] = dump_segdef,
+    [0x99] = dump_segdef,
     [0x9c] = dump_fixupp,
     [0x9d] = dump_fixupp,
     [0xca] = dump_lnames,
