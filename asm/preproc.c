@@ -1574,6 +1574,14 @@ static FILE *inc_fopen(const char *file,
     hp = hash_find(&FileHash, file, &hi);
     if (hp) {
         path = *hp;
+        if (path || omode != INC_NEEDED) {
+            const char *name = path ? path : file;
+            size_t name_len = strlen(name);
+            sl = nasm_malloc(name_len + 1 + sizeof sl->next);
+            memcpy(sl->str, name, name_len+1);
+            sl->next = NULL;
+            nasm_add_to_strlist(dhead, sl);
+        }
     } else {
         /* Need to do the actual path search */
         size_t file_len;
