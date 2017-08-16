@@ -12,49 +12,49 @@ $(NASM):
 	$(MAKE) -C ..
 
 %.bin: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f bin -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f bin -o $@ -MD $@.dep -l $*.lst $<
 
 %.ith: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f ith -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f ith -o $@ -MD $@.dep -l $*.lst $<
 
 %.srec: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f srec -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f srec -o $@ -MD $@.dep -l $*.lst $<
 
 %.o: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf32 -o $@ -MD $@.dep -l $*.lst $<
 
 %.o64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf64 -o $@ -MD $@.dep -l $*.lst $<
 
 %.obj: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f obj -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f obj -o $@ -MD $@.dep -l $*.lst $<
 
 %.od: %.obj ../misc/omfdump
 	../misc/omfdump $< > $@
 
 %.coff: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f coff -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f coff -o $@ -MD $@.dep -l $*.lst $<
 
 %.win32: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f win32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f win32 -o $@ -MD $@.dep -l $*.lst $<
 
 %.win64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f win64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f win64 -o $@ -MD $@.dep -l $*.lst $<
 
 %.mo32: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f macho32 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f macho32 -o $@ -MD $@.dep -l $*.lst $<
 
 %.mo64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f macho64 -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f macho64 -o $@ -MD $@.dep -l $*.lst $<
 
 %.dbg: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f dbg -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f dbg -o $@ -MD $@.dep -l $*.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@
 
 %.i: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -E -o $@ $<
+	$(NASM) $(NASMOPT) -E -o $@ -MD $@.dep $<
 
 all:
 
@@ -69,7 +69,7 @@ diff:	performtest.pl $(NASMDEP) $(TESTS)
 
 clean:
 	$(RM_F) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
-	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i
+	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i *.dep
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
 
@@ -80,24 +80,24 @@ spotless: clean
 # Test for ELF32 shared libraries; assumes an x86 Linux system
 #
 elfso.o: elfso.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf32 -F stabs -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf32 -F stabs -o $@ -MD $@.dep -l $*.lst $<
 
 elfso.so: elfso.o
-	$(LD) -m elf_i386 -shared -o $@ $<
+	$(LD) -m elf_i386 -shared -o $@ -MD $@.dep $<
 
 elftest: elftest.c elfso.so
-	$(CC) -g -m32 -o $@ $^
+	$(CC) -g -m32 -o $@ -MD $@.dep $^
 	-env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest
 
 #
 # Test for ELF64 shared libraries; assumes an x86-64 Linux system
 #
 elf64so.o: elf64so.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf64 -F dwarf -o $@ -l $*.lst $<
+	$(NASM) $(NASMOPT) -f elf64 -F dwarf -o $@ -MD $@.dep -l $*.lst $<
 
 elf64so.so: elf64so.o
-	$(LD) -shared -o $@ $<
+	$(LD) -shared -o $@ -MD $@.dep $<
 
 elftest64: elftest64.c elf64so.so
-	$(CC) -g -o $@ $^
+	$(CC) -g -o $@ -MD $@.dep $^
 	-env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./elftest64
