@@ -89,3 +89,4 @@ uppercase			; outieee, outobj
 subsections_via_symbols		; macho
 no_dead_strip			; macho
 maxdump				; dbg
+nodepend			; obj

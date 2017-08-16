@@ -239,3 +239,21 @@ off_t nasm_file_size_by_path(const char *pathname)
     return len;
 #endif
 }
+
+/*
+ * Report the timestamp on a file, returns true if successful
+ */
+bool nasm_file_time(time_t *t, const char *pathname)
+{
+#ifdef nasm_stat
+    nasm_struct_stat st;
+
+    if (nasm_stat(pathname, &st))
+        return false;
+
+    *t = st.st_mtime;
+    return true;
+#else
+    return false;               /* No idea how to do this on this OS */
+#endif
+}

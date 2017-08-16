@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -148,13 +148,15 @@ enum RecordID {                 /* record ID codes */
 };
 
 enum ComentID {                 /* ID codes for comment records */
-
-    dEXTENDED = 0xA1,           /* tells that we are using translator-specific extensions */
-    dLINKPASS = 0xA2,           /* link pass 2 marker */
-    dTYPEDEF = 0xE3,            /* define a type */
-    dSYM = 0xE6,                /* symbol debug record */
-    dFILNAME = 0xE8,            /* file name record */
-    dCOMPDEF = 0xEA             /* compiler type info */
+    dTRANSL   = 0x0000,         /* translator comment */
+    dOMFEXT   = 0xC0A0,         /* "OMF extension" */
+    dEXTENDED = 0xC0A1,         /* translator-specific extensions */
+    dLINKPASS = 0x40A2,         /* link pass 2 marker */
+    dTYPEDEF  = 0xC0E3,         /* define a type */
+    dSYM      = 0xC0E6,         /* symbol debug record */
+    dFILNAME  = 0xC0E8,         /* file name record */
+    dDEPFILE  = 0xC0E9,         /* dependency file */
+    dCOMPDEF  = 0xC0EA          /* compiler type info */
 };
 
 typedef struct ObjRecord ObjRecord;
@@ -181,6 +183,7 @@ static ObjRecord *obj_commit(ObjRecord * orp);
 
 static bool obj_uppercase;       /* Flag: all names in uppercase */
 static bool obj_use32;           /* Flag: at least one segment is 32-bit */
+static bool obj_nodepend;        /* Flag: don't emit file dependencies */
 
 /*
  * Clear an ObjRecord structure.  (Never reallocates).
@@ -483,8 +486,7 @@ static void ori_linnum(ObjRecord * orp)
  */
 static void ori_local(ObjRecord * orp)
 {
-    obj_byte(orp, 0x40);
-    obj_byte(orp, dSYM);
+    obj_rword(orp, dSYM);
 }
 
 /*
@@ -1944,6 +1946,31 @@ static void obj_filename(char *inname, char *outname)
     standard_extension(inname, outname, ".obj");
 }
 
+/* Get a file timestamp in MS-DOS format */
+static uint32_t obj_file_timestamp(const char *pathname)
+{
+    time_t t;
+    const struct tm *lt;
+
+    if (!nasm_file_time(&t, pathname))
+        return 0;
+
+    lt = localtime(&t);
+    if (!lt)
+        return 0;
+
+    if (lt->tm_year < 80 || lt->tm_year > 207)
+        return 0;               /* Only years 1980-2107 representable */
+
+    return
+        ((uint32_t)lt->tm_sec >> 1) +
+        ((uint32_t)lt->tm_min << 5) +
+        ((uint32_t)lt->tm_hour << 11) +
+        ((uint32_t)lt->tm_mday << 16) +
+        (((uint32_t)lt->tm_mon + 1) << 21) +
+        (((uint32_t)lt->tm_year - 80) << 25);
+}
+
 static void obj_write_file(void)
 {
     struct Segment *seg, *entry_seg_ptr = 0;
@@ -1956,6 +1983,7 @@ static void obj_write_file(void)
     struct ExpDef *export;
     int lname_idx;
     ObjRecord *orp;
+    const StrList *depfile;
     const bool debuginfo = (dfmt == &borland_debug_form);
 
     /*
@@ -1970,16 +1998,34 @@ static void obj_write_file(void)
      * Write the NASM boast comment.
      */
     orp->type = COMENT;
-    obj_rword(orp, 0);          /* comment type zero */
+    obj_rword(orp, dTRANSL);
     obj_name(orp, nasm_comment);
     obj_emit2(orp);
+
+    /*
+     * Output file dependency information
+     */
+    if (!obj_nodepend) {
+        list_for_each(depfile, depend_list) {
+            uint32_t ts;
+
+            ts = obj_file_timestamp(depfile->str);
+            if (ts) {
+                orp->type = COMENT;
+                obj_rword(orp, dDEPFILE);
+                obj_dword(orp, ts);
+                obj_name(orp, depfile->str);
+                obj_emit2(orp);
+            }
+        }
+    }
 
     orp->type = COMENT;
     /*
      * Write the IMPDEF records, if any.
      */
     for (imp = imphead; imp; imp = imp->next) {
-        obj_rword(orp, 0xA0);   /* comment class A0 */
+        obj_rword(orp, dOMFEXT);
         obj_byte(orp, 1);       /* subfunction 1: IMPDEF */
         if (imp->impname)
             obj_byte(orp, 0);   /* import by name */
@@ -1998,7 +2044,7 @@ static void obj_write_file(void)
      * Write the EXPDEF records, if any.
      */
     for (export = exphead; export; export = export->next) {
-        obj_rword(orp, 0xA0);   /* comment class A0 */
+        obj_rword(orp, dOMFEXT);
         obj_byte(orp, 2);       /* subfunction 2: EXPDEF */
         obj_byte(orp, export->flags);
         obj_name(orp, export->extname);
@@ -2011,8 +2057,7 @@ static void obj_write_file(void)
     /* we're using extended OMF if we put in debug info */
     if (debuginfo) {
         orp->type = COMENT;
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dEXTENDED);
+        obj_rword(orp, dEXTENDED);
         obj_emit2(orp);
     }
 
@@ -2188,8 +2233,7 @@ static void obj_write_file(void)
      */
     if (debuginfo || obj_entry_seg == NO_SEG) {
         orp->type = COMENT;
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dLINKPASS);
+        obj_rword(orp, dLINKPASS);
         obj_byte(orp, 1);
         obj_emit2(orp);
     }
@@ -2202,34 +2246,29 @@ static void obj_write_file(void)
         int i;
         struct Array *arrtmp = arrhead;
         orp->type = COMENT;
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dCOMPDEF);
+        obj_rword(orp, dCOMPDEF);
         obj_byte(orp, 4);
         obj_byte(orp, 0);
         obj_emit2(orp);
 
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x18);    /* type # for linking */
         obj_word(orp, 6);       /* size of type */
         obj_byte(orp, 0x2a);    /* absolute type for debugging */
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x19);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x24);    /* absolute type for debugging */
         obj_byte(orp, 0);       /* near/far specifier */
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x1A);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x24);    /* absolute type for debugging */
         obj_byte(orp, 1);       /* near/far specifier */
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x1b);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x23);    /* absolute type for debugging */
@@ -2237,8 +2276,7 @@ static void obj_write_file(void)
         obj_byte(orp, 0);
         obj_byte(orp, 0);
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x1c);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x23);    /* absolute type for debugging */
@@ -2246,8 +2284,7 @@ static void obj_write_file(void)
         obj_byte(orp, 4);
         obj_byte(orp, 0);
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x1d);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x23);    /* absolute type for debugging */
@@ -2255,8 +2292,7 @@ static void obj_write_file(void)
         obj_byte(orp, 1);
         obj_byte(orp, 0);
         obj_emit2(orp);
-        obj_byte(orp, 0x40);
-        obj_byte(orp, dTYPEDEF);
+        obj_rword(orp, dTYPEDEF);
         obj_word(orp, 0x1e);    /* type # for linking */
         obj_word(orp, 0);       /* size of type */
         obj_byte(orp, 0x23);    /* absolute type for debugging */
@@ -2267,8 +2303,7 @@ static void obj_write_file(void)
 
         /* put out the array types */
         for (i = ARRAYBOT; i < arrindex; i++) {
-            obj_byte(orp, 0x40);
-            obj_byte(orp, dTYPEDEF);
+            obj_rword(orp, dTYPEDEF);
             obj_word(orp, i);   /* type # for linking */
             obj_word(orp, arrtmp->size);        /* size of type */
             obj_byte(orp, 0x1A);        /* absolute type for debugging (array) */
@@ -2291,8 +2326,7 @@ static void obj_write_file(void)
             /* write out current file name */
             orp->type = COMENT;
             orp->ori = ori_null;
-            obj_byte(orp, 0x40);
-            obj_byte(orp, dFILNAME);
+            obj_rword(orp, dFILNAME);
             obj_byte(orp, 0);
             obj_name(orp, fn->name);
             obj_dword(orp, 0);
@@ -2429,6 +2463,21 @@ static void obj_fwrite(ObjRecord * orp)
     for (ptr = orp->buf; --len; ptr++)
         cksum += *ptr;
     fputc((-cksum) & 0xFF, ofile);
+}
+
+static enum directive_result
+obj_pragma(const struct pragma *pragma)
+{
+    switch (pragma->opcode) {
+    case D_NODEPEND:
+        obj_nodepend = true;
+        break;
+
+    default:
+        break;
+    }
+
+    return DIRR_OK;
 }
 
 extern macros_t obj_stdmac[];
@@ -2608,7 +2657,7 @@ static void dbgbi_typevalue(int32_t type)
         vsize = 10;
         break;
     default:
-        last_defined->type = 0x19;      /*label */
+        last_defined->type = 0x19;      /* label */
         vsize = 0;
         break;
     }
@@ -2649,6 +2698,10 @@ static const struct dfmt * const borland_debug_arr[3] = {
     NULL
 };
 
+static const struct pragma_facility obj_pragma_list[] = {
+    { NULL, obj_pragma }
+};
+
 const struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
@@ -2667,6 +2720,6 @@ const struct ofmt of_obj = {
     obj_directive,
     obj_filename,
     obj_cleanup,
-    NULL                        /* pragma list */
+    obj_pragma_list
 };
 #endif                          /* OF_OBJ */

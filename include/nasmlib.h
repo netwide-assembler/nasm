@@ -448,6 +448,7 @@ const void *nasm_map_file(FILE *fp, off_t start, off_t len);
 void nasm_unmap_file(const void *p, size_t len);
 off_t nasm_file_size(FILE *f);
 off_t nasm_file_size_by_path(const char *pathname);
+bool nasm_file_time(time_t *t, const char *pathname);
 void fwritezero(off_t bytes, FILE *fp);
 
 static inline bool const_func overflow_general(int64_t value, int bytes)

@@ -135,6 +135,7 @@ static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
 static const char *depend_target = NULL;
 static const char *depend_file = NULL;
+StrList *depend_list;
 
 static bool want_usage;
 static bool terminate_after_phase;
@@ -307,7 +308,7 @@ static void timestamp(void)
 
 int main(int argc, char **argv)
 {
-    StrList *depend_list = NULL, **depend_ptr;
+    StrList **depend_ptr;
 
     timestamp();
 

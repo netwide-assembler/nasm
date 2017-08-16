@@ -385,6 +385,9 @@ struct preproc_ops {
 extern const struct preproc_ops nasmpp;
 extern const struct preproc_ops preproc_nop;
 
+/* List of dependency files */
+extern StrList *depend_list;
+
 /*
  * Some lexical properties of the NASM source language, included
  * here because they are shared between the parser and preprocessor.
