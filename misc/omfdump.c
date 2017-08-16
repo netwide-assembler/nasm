@@ -165,6 +165,8 @@ static void dump_coment(uint8_t type, const uint8_t *data, size_t n)
 	[0xdc] = "Date",
 	[0xdd] = "Timestamp",
 	[0xdf] = "User",
+        [0xe3] = "Type definition",
+        [0xe8] = "Filename",
 	[0xe9] = "Dependency file",
 	[0xff] = "Command line"
     };
