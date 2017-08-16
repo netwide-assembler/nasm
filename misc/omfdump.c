@@ -140,6 +140,31 @@ static void dump_unknown(uint8_t type, const uint8_t *data, size_t n)
     hexdump_data(0, data, n, n);
 }
 
+static void print_dostime(const uint8_t *p)
+{
+    uint16_t da = (p[3] << 8) + p[2];
+    uint16_t ti = (p[1] << 8) + p[0];
+
+    printf("%04u-%02u-%02u %02u:%02u:%02u",
+           (da >> 9) + 1980, (da >> 5) & 15, da & 31,
+           (ti >> 11), (ti >> 5) & 63, (ti << 1) & 63);
+}
+
+static void dump_coment_depfile(uint8_t type, const uint8_t *data, size_t n)
+{
+    if (n > 4 && data[4] == n-5) {
+        printf("   # ");
+        print_dostime(data);
+        printf("  %.*s\n", n-5, data+5);
+    }
+
+    hexdump_data(2, data, n, n);
+}
+
+static const dump_func dump_coment_class[256] = {
+    [0xe9] = dump_coment_depfile
+};
+
 static void dump_coment(uint8_t type, const uint8_t *data, size_t n)
 {
     uint8_t class;
@@ -186,7 +211,10 @@ static void dump_coment(uint8_t type, const uint8_t *data, size_t n)
 	   class,
 	   coment_class[class] ? coment_class[class] : "???");
 
-    hexdump_data(2, data+2, n-2, n-2);
+    if (dump_coment_class[class])
+        dump_coment_class[class](class, data+2, n-2);
+    else
+        hexdump_data(2, data+2, n-2, n-2);
 }
 
 /* Parse an index field */
