@@ -5197,6 +5197,14 @@ also supports default-\c{WRT} specification like \c{EXTERN} does
 \c common  baz     24:wrt data:6
 
 
+\S{objdepend} Embedded File Dependency Information
+
+Since NASM 2.13.02, \c{obj} files contain embedded dependency file
+information.  To suppress the generation of dependencies, use
+
+\c %pragma obj nodepend
+
+
 \H{win32fmt} \i\c{win32}: Microsoft Win32 Object Files
 
 The \c{win32} output format generates Microsoft Win32 object files,

@@ -9,8 +9,24 @@ since 2007.
 
 \S{cl-2.13.02} Version 2.13.02
 
+\b Fix the incorrect generation of VEX-encoded instruction when static
+   mode decorators are specified on scalar instructions, losing the
+   decorators as they require EVEX encoding.
+
 \b Option \c{-MW} to quote dependency outputs according to Watcom
-   Make conventions.  See \k{opt-MW}.
+   Make conventions instead of POSIX Make conventions.  See \k{opt-MW}.
+
+\b The \c{obj} output format now contains embedded dependency file
+   information, unless disabled with \c{%pragma obj nodepend}.  See
+   \k{objdepend}.
+
+\b Fix generation of dependency lists.
+
+\b Fix several memory allocation errors.
+
+\b Always generate symbol-relative relocations for the \c{macho64}
+   output format; at least some versions of the XCode/LLVM linker fails
+   for section-relative relocations.
 
 \S{cl-2.13.01} Version 2.13.01
 
