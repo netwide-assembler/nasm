@@ -1575,12 +1575,7 @@ static FILE *inc_fopen(const char *file,
     if (hp) {
         path = *hp;
         if (path || omode != INC_NEEDED) {
-            const char *name = path ? path : file;
-            size_t name_len = strlen(name);
-            sl = nasm_malloc(name_len + 1 + sizeof sl->next);
-            memcpy(sl->str, name, name_len+1);
-            sl->next = NULL;
-            nasm_add_to_strlist(dhead, sl);
+            nasm_add_string_to_strlist(dhead, path ? path : file);
         }
     } else {
         /* Need to do the actual path search */

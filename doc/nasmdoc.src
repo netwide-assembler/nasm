@@ -60,6 +60,7 @@
 \IR{-MP} \c{-MP} option
 \IR{-MQ} \c{-MQ} option
 \IR{-MT} \c{-MT} option
+\IR{-MW} \c{-MW} option
 \IR{-O} \c{-O} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
@@ -518,6 +519,15 @@ each header file.  This prevents Make from complaining if a header
 file has been removed.
 
 
+\S{opt-MW} The \i\c{-MW} Option: Watcom Make quoting style
+
+This option causes NASM to attempt to quote dependencies according to
+Watcom Make conventions rather than POSIX Make conventions (also used
+by most other Make variants.)  This quotes \c{#} as \c{$#} rather than
+\c{\\#}, uses \c{&} rather than \c{\\} for continuation lines, and
+encloses filenames containing whitespace in double quotes.
+
+
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
 
 This option is used to select the format of the debug information
@@ -531,9 +541,8 @@ A complete list of the available debug file formats for an output
 format can be seen by issuing the command \c{nasm -f <format> -y}.  Not
 all output formats currently support debugging output.  See \k{opt-y}.
 
-This should not be confused with the \c{-f dbg} output format option which
-is not built into NASM by default. For information on how
-to enable it when building from the sources, see \k{dbgfmt}.
+This should not be confused with the \c{-f dbg} output format option,
+see \k{dbgfmt}.
 
 
 \S{opt-g} The \i\c{-g} Option: Enabling \i{Debug Information}.
@@ -5186,6 +5195,14 @@ also supports default-\c{WRT} specification like \c{EXTERN} does
 \c common  foo     10:wrt dgroup
 \c common  bar     16:far 2:wrt data
 \c common  baz     24:wrt data:6
+
+
+\S{objdepend} Embedded File Dependency Information
+
+Since NASM 2.13.02, \c{obj} files contain embedded dependency file
+information.  To suppress the generation of dependencies, use
+
+\c %pragma obj nodepend
 
 
 \H{win32fmt} \i\c{win32}: Microsoft Win32 Object Files

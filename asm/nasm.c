@@ -43,7 +43,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
-#include <time.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
@@ -93,7 +92,7 @@ static int pass1, pass2;	/* XXX: Get rid of these, they are redundant */
 int globalrel = 0;
 int globalbnd = 0;
 
-static time_t official_compile_time;
+struct compile_time official_compile_time;
 
 static char inname[FILENAME_MAX];
 static char outname[FILENAME_MAX];
@@ -136,12 +135,15 @@ static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
 static const char *depend_target = NULL;
 static const char *depend_file = NULL;
+StrList *depend_list;
 
 static bool want_usage;
 static bool terminate_after_phase;
 bool user_nolist = false;
 
-static char *quote_for_make(const char *str);
+static char *quote_for_pmake(const char *str);
+static char *quote_for_wmake(const char *str);
+static char *(*quote_for_make)(const char *) = quote_for_pmake;
 
 static int64_t get_curr_offs(void)
 {
@@ -165,69 +167,35 @@ static void nasm_fputs(const char *line, FILE * outfile)
         puts(line);
 }
 
-/* Convert a struct tm to a POSIX-style time constant */
-static int64_t make_posix_time(struct tm *tm)
-{
-    int64_t t;
-    int64_t y = tm->tm_year;
-
-    /* See IEEE 1003.1:2004, section 4.14 */
-
-    t = (y-70)*365 + (y-69)/4 - (y-1)/100 + (y+299)/400;
-    t += tm->tm_yday;
-    t *= 24;
-    t += tm->tm_hour;
-    t *= 60;
-    t += tm->tm_min;
-    t *= 60;
-    t += tm->tm_sec;
-
-    return t;
-}
-
 static void define_macros_early(void)
 {
+    const struct compile_time * const oct = &official_compile_time;
     char temp[128];
-    struct tm lt, *lt_p, gm, *gm_p;
-    int64_t posix_time;
 
-    lt_p = localtime(&official_compile_time);
-    if (lt_p) {
-        lt = *lt_p;
-
-        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &lt);
+    if (oct->have_local) {
+        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &lt);
+        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &lt);
+        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &lt);
+        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &oct->local);
         preproc->pre_define(temp);
     }
 
-    gm_p = gmtime(&official_compile_time);
-    if (gm_p) {
-        gm = *gm_p;
-
-        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &gm);
+    if (oct->have_gm) {
+        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &gm);
+        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &gm);
+        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &gm);
+        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &oct->gm);
         preproc->pre_define(temp);
     }
 
-    if (gm_p)
-        posix_time = make_posix_time(&gm);
-    else if (lt_p)
-        posix_time = make_posix_time(&lt);
-    else
-        posix_time = 0;
-
-    if (posix_time) {
-        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, posix_time);
+    if (oct->have_posix) {
+        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, oct->posix);
         preproc->pre_define(temp);
     }
 }
@@ -251,6 +219,11 @@ static void emit_dependencies(StrList *list)
     FILE *deps;
     int linepos, len;
     StrList *l, *nl;
+    bool wmake = (quote_for_make == quote_for_wmake);
+    const char *wrapstr, *nulltarget;
+
+    wrapstr = wmake ? " &\n " : " \\\n ";
+    nulltarget = wmake ? "\t%null\n" : "";
 
     if (depend_file && strcmp(depend_file, "-")) {
         deps = nasm_open_write(depend_file, NF_TEXT);
@@ -263,12 +236,12 @@ static void emit_dependencies(StrList *list)
         deps = stdout;
     }
 
-    linepos = fprintf(deps, "%s:", depend_target);
+    linepos = fprintf(deps, "%s :", depend_target);
     list_for_each(l, list) {
         char *file = quote_for_make(l->str);
         len = strlen(file);
         if (linepos + len > 62 && linepos > 1) {
-            fprintf(deps, " \\\n ");
+            fputs(wrapstr, deps);
             linepos = 1;
         }
         fprintf(deps, " %s", file);
@@ -278,8 +251,11 @@ static void emit_dependencies(StrList *list)
     fprintf(deps, "\n\n");
 
     list_for_each_safe(l, nl, list) {
-        if (depend_emit_phony)
-            fprintf(deps, "%s:\n\n", l->str);
+        if (depend_emit_phony) {
+            char *file = quote_for_make(l->str);
+            fprintf(deps, "%s :\n%s\n", file, nulltarget);
+            nasm_free(file);
+        }
         nasm_free(l);
     }
 
@@ -287,11 +263,64 @@ static void emit_dependencies(StrList *list)
         fclose(deps);
 }
 
+/* Convert a struct tm to a POSIX-style time constant */
+static int64_t make_posix_time(const struct tm *tm)
+{
+    int64_t t;
+    int64_t y = tm->tm_year;
+
+    /* See IEEE 1003.1:2004, section 4.14 */
+
+    t = (y-70)*365 + (y-69)/4 - (y-1)/100 + (y+299)/400;
+    t += tm->tm_yday;
+    t *= 24;
+    t += tm->tm_hour;
+    t *= 60;
+    t += tm->tm_min;
+    t *= 60;
+    t += tm->tm_sec;
+
+    return t;
+}
+
+static void timestamp(void)
+{
+    struct compile_time * const oct = &official_compile_time;
+    const struct tm *tp, *best_gm;
+
+    time(&oct->t);
+
+    best_gm = NULL;
+
+    tp = localtime(&oct->t);
+    if (tp) {
+        oct->local = *tp;
+        best_gm = &oct->local;
+        oct->have_local = true;
+    }
+
+    tp = gmtime(&oct->t);
+    if (tp) {
+        oct->gm = *tp;
+        best_gm = &oct->gm;
+        oct->have_gm = true;
+        if (!oct->have_local)
+            oct->local = oct->gm;
+    } else {
+        oct->gm = oct->local;
+    }
+
+    if (best_gm) {
+        oct->posix = make_posix_time(best_gm);
+        oct->have_posix = true;
+    }
+}
+
 int main(int argc, char **argv)
 {
-    StrList *depend_list = NULL, **depend_ptr;
+    StrList **depend_ptr;
 
-    time(&official_compile_time);
+    timestamp();
 
     iflag_set(&cpu, IF_PLEVEL);
     iflag_set(&cmd_cpu, IF_PLEVEL);
@@ -358,6 +387,7 @@ int main(int argc, char **argv)
     define_macros_late();
 
     depend_ptr = (depend_file || (operating_mode & OP_DEPEND)) ? &depend_list : NULL;
+
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
@@ -519,9 +549,9 @@ static void copy_filename(char *dst, const char *src)
 }
 
 /*
- * Convert a string to Make-safe form
+ * Convert a string to a POSIX make-safe form
  */
-static char *quote_for_make(const char *str)
+static char *quote_for_pmake(const char *str)
 {
     const char *p;
     char *os, *q;
@@ -594,6 +624,75 @@ static char *quote_for_make(const char *str)
     }
     while (nbs--)
         *q++ = '\\';
+
+    *q = '\0';
+
+    return os;
+}
+
+/*
+ * Convert a string to a Watcom make-safe form
+ */
+static char *quote_for_wmake(const char *str)
+{
+    const char *p;
+    char *os, *q;
+    bool quote = false;
+
+    size_t n = 1; /* Terminating zero */
+
+    if (!str)
+        return NULL;
+
+    for (p = str; *p; p++) {
+        switch (*p) {
+        case ' ':
+        case '\t':
+        case '&':
+            quote = true;
+            n++;
+            break;
+        case '\"':
+            quote = true;
+            n += 2;
+            break;
+        case '$':
+        case '#':
+            n += 2;
+            break;
+        default:
+            n++;
+            break;
+        }
+    }
+
+    if (quote)
+        n += 2;
+
+    os = q = nasm_malloc(n);
+
+    if (quote)
+        *q++ = '\"';
+
+    for (p = str; *p; p++) {
+        switch (*p) {
+        case '$':
+        case '#':
+            *q++ = '$';
+            *q++ = *p;
+            break;
+        case '\"':
+            *q++ = *p;
+            *q++ = *p;
+            break;
+        default:
+            *q++ = *p;
+            break;
+        }
+    }
+
+    if (quote)
+        *q++ = '\"';
 
     *q = '\0';
 
@@ -871,7 +970,21 @@ static bool process_arg(char *p, char *q, int pass)
         break;
 
         case 'M':
-            if (pass == 2) {
+            if (pass == 1) {
+                switch (p[2]) {
+                case 'W':
+                    quote_for_make = quote_for_wmake;
+                    break;
+                case 'D':
+                case 'F':
+                case 'T':
+                case 'Q':
+                    advance = true;
+                    break;
+                default:
+                    break;
+                }
+            } else {
                 switch (p[2]) {
                 case 0:
                     operating_mode = OP_DEPEND;
@@ -900,16 +1013,19 @@ static bool process_arg(char *p, char *q, int pass)
                     depend_target = quote_for_make(q);
                     advance = true;
                     break;
+                case 'W':
+                    /* handled in pass 1 */
+                    break;
                 default:
                     nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
                                "unknown dependency option `-M%c'", p[2]);
                     break;
                 }
-                if (advance && (!q || !q[0])) {
-                    nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-                               "option `-M%c' requires a parameter", p[2]);
-                    break;
-                }
+            }
+            if (advance && (!q || !q[0])) {
+                nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+                           "option `-M%c' requires a parameter", p[2]);
+                break;
             }
             break;
 

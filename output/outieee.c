@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -835,7 +835,7 @@ ieee_directive(enum directive directive, char *value, int pass)
     case D_UPPERCASE:
         ieee_uppercase = true;
         return DIRR_OK;
-	
+
     default:
 	return DIRR_UNKNOWN;
     }
@@ -897,8 +897,7 @@ static void ieee_filename(char *inname, char *outname)
 
 static void ieee_write_file(void)
 {
-    struct tm *thetime;
-    time_t reltime;
+    const struct tm * const thetime = &official_compile_time.local;
     struct FileName *fn;
     struct ieeeSection *seg;
     struct ieeePublic *pub, *loc;
@@ -927,8 +926,6 @@ static void ieee_write_file(void)
     /*
      * date and time
      */
-    time(&reltime);
-    thetime = localtime(&reltime);
     ieee_putascii("DT%04d%02d%02d%02d%02d%02d.\n",
                   1900 + thetime->tm_year, thetime->tm_mon + 1,
                   thetime->tm_mday, thetime->tm_hour, thetime->tm_min,

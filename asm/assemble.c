@@ -201,6 +201,7 @@ enum match_result {
     MERR_BRNOTHERE,
     MERR_BRNUMMISMATCH,
     MERR_MASKNOTHERE,
+    MERR_DECONOTHERE,
     MERR_BADCPU,
     MERR_BADMODE,
     MERR_BADHLE,
@@ -773,6 +774,9 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             case MERR_MASKNOTHERE:
                 nasm_error(ERR_NONFATAL,
                            "mask not permitted on this operand");
+                break;
+            case MERR_DECONOTHERE:
+                nasm_error(ERR_NONFATAL, "unsupported mode decorator for instruction");
                 break;
             case MERR_BADCPU:
                 nasm_error(ERR_NONFATAL, "no instruction for this cpu level");
@@ -2329,6 +2333,9 @@ static enum match_result matches(const struct itemplate *itemp,
 
         if (~ideco & deco & OPMASK_MASK)
             return MERR_MASKNOTHERE;
+
+        if (~ideco & deco & (Z_MASK|STATICRND_MASK|SAE_MASK))
+            return MERR_DECONOTHERE;
 
         if (itemp->opd[i] & ~type & ~SIZE_MASK) {
             return MERR_INVALOP;

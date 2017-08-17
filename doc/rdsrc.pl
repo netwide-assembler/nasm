@@ -237,7 +237,7 @@ sub get_para($_) {
     $para = undef;
   }
   if (/\S/) {
-    s/\\#.*$//; # strip comments
+    s/(^|[^\\])\\#.*$/\1/; # strip comments
     $para .= " " . $_;
   }
 }
