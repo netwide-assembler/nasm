@@ -524,7 +524,8 @@ file has been removed.
 This option causes NASM to attempt to quote dependencies according to
 Watcom Make conventions rather than POSIX Make conventions (also used
 by most other Make variants.)  This quotes \c{#} as \c{$#} rather than
-\c{\\#}, and uses \c{&} rather than \c{\\} for continuation lines.
+\c{\\#}, uses \c{&} rather than \c{\\} for continuation lines, and
+encloses filenames containing whitespace in double quotes.
 
 
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
