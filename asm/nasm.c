@@ -648,6 +648,7 @@ static char *quote_for_wmake(const char *str)
         switch (*p) {
         case ' ':
         case '\t':
+        case '&':
             quote = true;
             n++;
             break;
