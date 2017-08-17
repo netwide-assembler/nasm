@@ -219,9 +219,11 @@ static void emit_dependencies(StrList *list)
     FILE *deps;
     int linepos, len;
     StrList *l, *nl;
-    char wrapstr[] = " \\\n ";
+    bool wmake = (quote_for_make == quote_for_wmake);
+    const char *wrapstr, *nulltarget;
 
-    wrapstr[1] = (quote_for_make == quote_for_wmake) ? '&' : '\\';
+    wrapstr = wmake ? " &\n " : " \\\n ";
+    nulltarget = wmake ? "\t%null\n" : "";
 
     if (depend_file && strcmp(depend_file, "-")) {
         deps = nasm_open_write(depend_file, NF_TEXT);
@@ -239,7 +241,7 @@ static void emit_dependencies(StrList *list)
         char *file = quote_for_make(l->str);
         len = strlen(file);
         if (linepos + len > 62 && linepos > 1) {
-            fwrite(wrapstr, 1, sizeof wrapstr-1, deps);
+            fputs(wrapstr, deps);
             linepos = 1;
         }
         fprintf(deps, " %s", file);
@@ -251,7 +253,7 @@ static void emit_dependencies(StrList *list)
     list_for_each_safe(l, nl, list) {
         if (depend_emit_phony) {
             char *file = quote_for_make(l->str);
-            fprintf(deps, "%s :\n\n", file);
+            fprintf(deps, "%s :\n%s\n", file, nulltarget);
             nasm_free(file);
         }
         nasm_free(l);
