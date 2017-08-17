@@ -60,6 +60,7 @@
 \IR{-MP} \c{-MP} option
 \IR{-MQ} \c{-MQ} option
 \IR{-MT} \c{-MT} option
+\IR{-MW} \c{-MW} option
 \IR{-O} \c{-O} option
 \IR{-P} \c{-P} option
 \IR{-U} \c{-U} option
@@ -516,6 +517,14 @@ When used with any of the dependency generation options, the \c{-MP}
 option causes NASM to emit a phony target without dependencies for
 each header file.  This prevents Make from complaining if a header
 file has been removed.
+
+
+\S{opt-MW} The \i\c{-MW} Option: Watcom Make quoting style
+
+This option causes NASM to attempt to quote dependencies according to
+Watcom Make conventions rather than POSIX Make conventions (also used
+by most other Make variants.)  This quotes \c{#} as \c{$#} rather than
+\c{\\#}, and uses \c{&} rather than \c{\\} for continuation lines.
 
 
 \S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}

@@ -141,7 +141,9 @@ static bool want_usage;
 static bool terminate_after_phase;
 bool user_nolist = false;
 
-static char *quote_for_make(const char *str);
+static char *quote_for_pmake(const char *str);
+static char *quote_for_wmake(const char *str);
+static char *(*quote_for_make)(const char *) = quote_for_pmake;
 
 static int64_t get_curr_offs(void)
 {
@@ -217,6 +219,9 @@ static void emit_dependencies(StrList *list)
     FILE *deps;
     int linepos, len;
     StrList *l, *nl;
+    char wrapstr[] = " \\\n ";
+
+    wrapstr[1] = (quote_for_make == quote_for_wmake) ? '&' : '\\';
 
     if (depend_file && strcmp(depend_file, "-")) {
         deps = nasm_open_write(depend_file, NF_TEXT);
@@ -229,12 +234,12 @@ static void emit_dependencies(StrList *list)
         deps = stdout;
     }
 
-    linepos = fprintf(deps, "%s:", depend_target);
+    linepos = fprintf(deps, "%s :", depend_target);
     list_for_each(l, list) {
         char *file = quote_for_make(l->str);
         len = strlen(file);
         if (linepos + len > 62 && linepos > 1) {
-            fprintf(deps, " \\\n ");
+            fwrite(wrapstr, 1, sizeof wrapstr-1, deps);
             linepos = 1;
         }
         fprintf(deps, " %s", file);
@@ -244,8 +249,11 @@ static void emit_dependencies(StrList *list)
     fprintf(deps, "\n\n");
 
     list_for_each_safe(l, nl, list) {
-        if (depend_emit_phony)
-            fprintf(deps, "%s:\n\n", l->str);
+        if (depend_emit_phony) {
+            char *file = quote_for_make(l->str);
+            fprintf(deps, "%s :\n\n", file);
+            nasm_free(file);
+        }
         nasm_free(l);
     }
 
@@ -377,6 +385,7 @@ int main(int argc, char **argv)
     define_macros_late();
 
     depend_ptr = (depend_file || (operating_mode & OP_DEPEND)) ? &depend_list : NULL;
+
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
@@ -538,9 +547,9 @@ static void copy_filename(char *dst, const char *src)
 }
 
 /*
- * Convert a string to Make-safe form
+ * Convert a string to a POSIX make-safe form
  */
-static char *quote_for_make(const char *str)
+static char *quote_for_pmake(const char *str)
 {
     const char *p;
     char *os, *q;
@@ -613,6 +622,51 @@ static char *quote_for_make(const char *str)
     }
     while (nbs--)
         *q++ = '\\';
+
+    *q = '\0';
+
+    return os;
+}
+
+/*
+ * Convert a string to a Watcom make-safe form
+ */
+static char *quote_for_wmake(const char *str)
+{
+    const char *p;
+    char *os, *q;
+
+    size_t n = 1; /* Terminating zero */
+
+    if (!str)
+        return NULL;
+
+    for (p = str; *p; p++) {
+        switch (*p) {
+        case '$':
+        case '#':
+            n += 2;
+            break;
+        default:
+            n++;
+            break;
+        }
+    }
+
+    os = q = nasm_malloc(n);
+
+    for (p = str; *p; p++) {
+        switch (*p) {
+        case '$':
+        case '#':
+            *q++ = '$';
+            *q++ = *p;
+            break;
+        default:
+            *q++ = *p;
+            break;
+        }
+    }
 
     *q = '\0';
 
@@ -890,7 +944,21 @@ static bool process_arg(char *p, char *q, int pass)
         break;
 
         case 'M':
-            if (pass == 2) {
+            if (pass == 1) {
+                switch (p[2]) {
+                case 'W':
+                    quote_for_make = quote_for_wmake;
+                    break;
+                case 'D':
+                case 'F':
+                case 'T':
+                case 'Q':
+                    advance = true;
+                    break;
+                default:
+                    break;
+                }
+            } else {
                 switch (p[2]) {
                 case 0:
                     operating_mode = OP_DEPEND;
@@ -919,16 +987,19 @@ static bool process_arg(char *p, char *q, int pass)
                     depend_target = quote_for_make(q);
                     advance = true;
                     break;
+                case 'W':
+                    /* handled in pass 1 */
+                    break;
                 default:
                     nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
                                "unknown dependency option `-M%c'", p[2]);
                     break;
                 }
-                if (advance && (!q || !q[0])) {
-                    nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-                               "option `-M%c' requires a parameter", p[2]);
-                    break;
-                }
+            }
+            if (advance && (!q || !q[0])) {
+                nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
+                           "option `-M%c' requires a parameter", p[2]);
+                break;
             }
             break;
 

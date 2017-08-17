@@ -7,6 +7,11 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.13.02} Version 2.13.02
+
+\b Option \c{-MW} to quote dependency outputs according to Watcom
+   Make conventions.  See \k{opt-MW}.
+
 \S{cl-2.13.01} Version 2.13.01
 
 \b Fix incorrect output for some types of \c{FAR} or \c{SEG}
