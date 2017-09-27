@@ -1,12 +1,14 @@
 *.a
 *.bin
+*.coff
 *.dbg
 *.dep
 *.exe
 *.lib
 *.i
+*.ith
 *.lst
-*.mo
+*.mo32
 *.mo64
 *.o
 *.o64
@@ -18,8 +20,11 @@
 *.pdb
 *.rej
 *.s
+*.srec
 *.si
 *.swp
+*.win32
+*.win64
 *.xml
 .*swo
 *~
