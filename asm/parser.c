@@ -515,9 +515,8 @@ restart_parse:
                 result->times = 1L;
             } else {
                 result->times = value->value;
-                if (value->value < 0 && pass0 == 2) {
-                    nasm_error(ERR_NONFATAL, "TIMES value %"PRId64" is negative",
-                          value->value);
+                if (value->value < 0) {
+                    nasm_error(ERR_NONFATAL|ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
                     result->times = 0;
                 }
             }

@@ -603,6 +603,9 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         size_t blk = 0;         /* Buffered I/O block size */
         size_t m = 0;           /* Bytes last read */
 
+        if (!t)
+            goto done;
+
         fp = nasm_open_read(fname, NF_BINARY|NF_FORMAP);
         if (!fp) {
             nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
