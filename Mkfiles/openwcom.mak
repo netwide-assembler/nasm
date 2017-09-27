@@ -343,19 +343,19 @@ asm/directbl.$(O): asm/directbl.c asm/directiv.h config/msvc.h &
 asm/directiv.$(O): asm/directiv.c asm/assemble.h asm/directiv.h asm/eval.h &
  asm/float.h asm/listing.h asm/pptok.h asm/preproc.h asm/stdscan.h &
  config/msvc.h config/unknown.h config/watcom.h include/bytesex.h &
- include/compiler.h include/error.h include/iflag.h include/labels.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/perfhash.h include/strlist.h include/tables.h output/outform.h &
- x86/iflaggen.h x86/insnsi.h x86/regs.h
+ include/compiler.h include/error.h include/iflag.h include/ilog2.h &
+ include/labels.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/perfhash.h include/strlist.h include/tables.h &
+ output/outform.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/error.$(O): asm/error.c config/msvc.h config/unknown.h config/watcom.h &
  include/bytesex.h include/compiler.h include/error.h include/nasmint.h &
  include/nasmlib.h
 asm/eval.$(O): asm/eval.c asm/assemble.h asm/directiv.h asm/eval.h &
  asm/float.h asm/pptok.h asm/preproc.h config/msvc.h config/unknown.h &
  config/watcom.h include/bytesex.h include/compiler.h include/error.h &
- include/iflag.h include/labels.h include/nasm.h include/nasmint.h &
- include/nasmlib.h include/opflags.h include/perfhash.h include/strlist.h &
- include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
+ include/iflag.h include/ilog2.h include/labels.h include/nasm.h &
+ include/nasmint.h include/nasmlib.h include/opflags.h include/perfhash.h &
+ include/strlist.h include/tables.h x86/iflaggen.h x86/insnsi.h x86/regs.h
 asm/exprdump.$(O): asm/exprdump.c asm/directiv.h asm/pptok.h asm/preproc.h &
  config/msvc.h config/unknown.h config/watcom.h include/bytesex.h &
  include/compiler.h include/nasm.h include/nasmint.h include/nasmlib.h &
@@ -496,8 +496,7 @@ nasmlib/hashtbl.$(O): nasmlib/hashtbl.c asm/directiv.h asm/pptok.h &
  include/nasmint.h include/nasmlib.h include/opflags.h include/perfhash.h &
  include/strlist.h include/tables.h x86/insnsi.h x86/regs.h
 nasmlib/ilog2.$(O): nasmlib/ilog2.c config/msvc.h config/unknown.h &
- config/watcom.h include/bytesex.h include/compiler.h include/nasmint.h &
- include/nasmlib.h
+ config/watcom.h include/compiler.h include/ilog2.h include/nasmint.h
 nasmlib/malloc.$(O): nasmlib/malloc.c config/msvc.h config/unknown.h &
  config/watcom.h include/bytesex.h include/compiler.h include/error.h &
  include/nasmint.h include/nasmlib.h
@@ -583,10 +582,11 @@ output/outbin.$(O): output/outbin.c asm/directiv.h asm/eval.h asm/pptok.h &
  output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
 output/outcoff.$(O): output/outcoff.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/bytesex.h include/compiler.h include/error.h include/nasm.h &
- include/nasmint.h include/nasmlib.h include/opflags.h include/perfhash.h &
- include/raa.h include/saa.h include/strlist.h include/tables.h &
- output/outform.h output/outlib.h output/pecoff.h x86/insnsi.h x86/regs.h
+ include/bytesex.h include/compiler.h include/error.h include/ilog2.h &
+ include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
+ include/perfhash.h include/raa.h include/saa.h include/strlist.h &
+ include/tables.h output/outform.h output/outlib.h output/pecoff.h &
+ x86/insnsi.h x86/regs.h
 output/outdbg.$(O): output/outdbg.c asm/directiv.h asm/pptok.h asm/preproc.h &
  asm/tokens.h config/msvc.h config/unknown.h config/watcom.h &
  include/bytesex.h include/compiler.h include/error.h include/iflag.h &
@@ -618,11 +618,11 @@ output/outlib.$(O): output/outlib.c asm/directiv.h asm/pptok.h asm/preproc.h &
  include/tables.h output/outlib.h x86/insnsi.h x86/regs.h
 output/outmacho.$(O): output/outmacho.c asm/directiv.h asm/pptok.h &
  asm/preproc.h config/msvc.h config/unknown.h config/watcom.h &
- include/bytesex.h include/compiler.h include/error.h include/labels.h &
- include/nasm.h include/nasmint.h include/nasmlib.h include/opflags.h &
- include/perfhash.h include/raa.h include/rbtree.h include/saa.h &
- include/strlist.h include/tables.h include/ver.h output/dwarf.h &
- output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
+ include/bytesex.h include/compiler.h include/error.h include/ilog2.h &
+ include/labels.h include/nasm.h include/nasmint.h include/nasmlib.h &
+ include/opflags.h include/perfhash.h include/raa.h include/rbtree.h &
+ include/saa.h include/strlist.h include/tables.h include/ver.h &
+ output/dwarf.h output/outform.h output/outlib.h x86/insnsi.h x86/regs.h
 output/outobj.$(O): output/outobj.c asm/directiv.h asm/eval.h asm/pptok.h &
  asm/preproc.h asm/stdscan.h config/msvc.h config/unknown.h config/watcom.h &
  include/bytesex.h include/compiler.h include/error.h include/nasm.h &

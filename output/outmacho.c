@@ -45,6 +45,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "ilog2.h"
 #include "labels.h"
 #include "error.h"
 #include "saa.h"

@@ -44,6 +44,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "ilog2.h"
 #include "error.h"
 #include "float.h"
 #include "stdscan.h"

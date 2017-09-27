@@ -208,6 +208,29 @@ size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /*
+ * Hack to support external-linkage inline functions
+ */
+#ifdef __GNUC__
+# ifdef __GNUC_STDC_INLINE__
+#  define HAVE_STDC_INLINE
+# else
+#  define HAVE_GNU_INLINE
+# endif
+#elif defined(__STDC_VERSION__)
+# if __STDC_VERSION__ >= 199901L
+#  define HAVE_STDC_INLINE
+# endif
+#endif
+
+#ifdef HAVE_STDC_INLINE
+# define extern_inline inline
+#elif defined(HAVE_GNU_INLINE)
+# define extern_inline extern inline
+#else
+# define inline_prototypes
+#endif
+
+/*
  * Hints to the compiler that a particular branch of code is more or
  * less likely to be taken.
  */
