@@ -18,6 +18,7 @@
 *.orig
 *.out
 *.pdb
+*.rdf
 *.rej
 *.s
 *.srec
