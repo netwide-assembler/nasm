@@ -2046,6 +2046,8 @@ static void macho_dbg_generate(void)
 
         saa_write16(p_abbrev, DW_END_default);
 
+	saa_write8(p_abbrev, 0); /* Terminal zero entry */
+
         saa_len = p_abbrev->datalen;
 
         p_buf = nasm_malloc(saa_len);
