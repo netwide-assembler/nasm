@@ -287,10 +287,16 @@ static uint64_t seg_vmsize = 0;
 static uint32_t seg_nsects = 0;
 static uint64_t rel_padcnt = 0;
 
-#define xstrncpy(xdst, xsrc)						\
-    memset(xdst, '\0', sizeof(xdst));	/* zero out whole buffer */	\
-    strncpy(xdst, xsrc, sizeof(xdst));	/* copy over string */		\
-    xdst[sizeof(xdst) - 1] = '\0';      /* proper null-termination */
+/*
+ * Functions for handling fixed-length zero-padded string
+ * fields, that may or may not be null-terminated.
+ */
+
+/* Copy a string into a zero-padded fixed-length field */
+#define xstrncpy(xdst, xsrc) strncpy(xdst, xsrc, sizeof(xdst))
+
+/* Compare a fixed-length field with a string */
+#define xstrncmp(xdst, xsrc) strncmp(xdst, xsrc, sizeof(xdst))
 
 #define alignint32_t(x)							\
     ALIGN(x, sizeof(int32_t))	/* align x to int32_t boundary */
@@ -307,7 +313,7 @@ static struct section *get_section_by_name(const char *segname,
     struct section *s;
 
     for (s = sects; s != NULL; s = s->next)
-        if (!strcmp(s->segname, segname) && !strcmp(s->sectname, sectname))
+        if (!xstrncmp(s->segname, segname) && !xstrncmp(s->sectname, sectname))
             break;
 
     return s;
@@ -805,6 +811,7 @@ static const struct sect_attribs {
     { "no_dead_strip", NO_TYPE|S_ATTR_NO_DEAD_STRIP },
     { "live_support", NO_TYPE|S_ATTR_LIVE_SUPPORT },
     { "strip_static_syms", NO_TYPE|S_ATTR_STRIP_STATIC_SYMS },
+    { "debug", NO_TYPE|S_ATTR_DEBUG },
     { NULL, 0 }
 };
 
@@ -847,14 +854,14 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	len = strlen(segment);
 	if (len == 0) {
 	    nasm_error(ERR_NONFATAL, "empty segment name\n");
-	} else if (len >= 16) {
+	} else if (len > 16) {
 	    nasm_error(ERR_NONFATAL, "segment name %s too long\n", segment);
 	}
 
 	len = strlen(section);
 	if (len == 0) {
 	    nasm_error(ERR_NONFATAL, "empty section name\n");
-	} else if (len >= 16) {
+	} else if (len > 16) {
 	    nasm_error(ERR_NONFATAL, "section name %s too long\n", section);
 	}
 
@@ -1320,8 +1327,8 @@ static uint32_t macho_write_segment (uint64_t offset)
 	    s->flags |= S_ATTR_LOC_RELOC;
 	    if (s->extreloc)
 		s->flags |= S_ATTR_EXT_RELOC;
-	} else if (!strcmp(s->segname, "__DATA") &&
-		   !strcmp(s->sectname, "__const") &&
+	} else if (!xstrncmp(s->segname, "__DATA") &&
+		   !xstrncmp(s->sectname, "__const") &&
 		   !s->by_name &&
 		   !get_section_by_name("__TEXT", "__const")) {
 	    /*
