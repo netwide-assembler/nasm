@@ -6,6 +6,8 @@
 *.lib
 *.i
 *.lst
+*.mo
+*.mo64
 *.o
 *.o64
 *.obj
