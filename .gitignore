@@ -1,6 +1,7 @@
 *.a
 *.bin
 *.dbg
+*.dep
 *.exe
 *.lib
 *.i
