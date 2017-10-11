@@ -302,14 +302,6 @@ static void warn_overflow_const(int64_t data, int size)
         warn_overflow(size);
 }
 
-static void warn_overflow_opd(const struct operand *o, int size)
-{
-    if (absolute_op(o)) {
-        if (overflow_general(o->offset, size))
-            warn_overflow(size);
-    }
-}
-
 static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
 {
     bool err;
@@ -1580,21 +1572,14 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case4(020):
-            if (opx->offset < -256 || opx->offset > 255)
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "byte value exceeds bounds");
             out_imm(data, opx, 1, OUT_WRAP);
             break;
 
         case4(024):
-            if (opx->offset < 0 || opx->offset > 255)
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "unsigned byte value exceeds bounds");
             out_imm(data, opx, 1, OUT_UNSIGNED);
             break;
 
         case4(030):
-            warn_overflow_opd(opx, 2);
             out_imm(data, opx, 2, OUT_WRAP);
             break;
 
@@ -1603,18 +1588,15 @@ static void gencode(struct out_data *data, insn *ins)
                 size = (opx->type & BITS16) ? 2 : 4;
             else
                 size = (bits == 16) ? 2 : 4;
-            warn_overflow_opd(opx, size);
             out_imm(data, opx, size, OUT_WRAP);
             break;
 
         case4(040):
-            warn_overflow_opd(opx, 4);
             out_imm(data, opx, 4, OUT_WRAP);
             break;
 
         case4(044):
             size = ins->addr_size >> 3;
-            warn_overflow_opd(opx, size);
             out_imm(data, opx, size, OUT_WRAP);
             break;
 
