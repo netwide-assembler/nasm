@@ -29,14 +29,19 @@ dnl to either -O3 (normal) or -O0 (for debugging)
 PA_ARG_DISABLED([optimization],
  [compile without optimization (-O0) to help debugging],
  [pa_optimize=-O0], [pa_optimize=-O3])
-AS_IF([test x"$pa_init_cflags" = x],
-      [CFLAGS=`echo "$CFLAGS" | sed -e "s/-O2/$pa_optimize/"`])
 
 dnl Compile and link with dwarf debug
 PA_ARG_ENABLED([gdb],
  [disable optimization and compile with extra debug information for GDB debugger],
- [CFLAGS=`echo "$CFLAGS" | sed -e "s/\(-O2\|-O3\)/-O0/"`
-   PA_ADD_CLDFLAGS([-ggdb3])])
+ [pa_optimize='-O0'
+  PA_ADD_CFLAGS([-ggdb3])
+ ])
+
+AS_IF([test x"$pa_init_cflags" = x],
+      [CFLAGS=`echo "$CFLAGS" | sed -e "s/-O2/$pa_optimize/"`])
+
+AS_IF([test x"$pa_optimize" = "x-O0"],
+      [PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
 dnl Check for library extension
 PA_LIBEXT
@@ -179,7 +184,7 @@ PA_FUNC_ATTRIBUTE(pure)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
-dnl support function sections
+dnl support function sections (if available)
 dnl
 PA_ARG_ENABLED([sections],
  [compile with function/data section support],
@@ -187,6 +192,7 @@ PA_ARG_ENABLED([sections],
   PA_ADD_CLDFLAGS([-fdata-sections])
   PA_ADD_CLDFLAGS([-Wl,--gc-sections])],
  [])
+
 dnl
 dnl support LTO
 dnl
@@ -200,6 +206,15 @@ PA_ARG_ENABLED([lto],
   AR="$CC_AR"
   AC_CHECK_PROGS(CC_RANLIB, [${ccbase}-ranlib], [$ac_cv_prog_RANLIB])
   RANLIB="$CC_RANLIB"], [])
+
+dnl
+dnl support sanitizers (if available)
+dnl
+PA_ARG_ENABLED([sanitizer],
+ [compile with sanitizers enabled],
+ [PA_ADD_CFLAGS([-fno-omit-frame-pointer])
+  PA_ADD_CLDFLAGS([-fsanitize=address])
+  PA_ADD_CLDFLAGS([-fsanitize=undefined])])
 
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
