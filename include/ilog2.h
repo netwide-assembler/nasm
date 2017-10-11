@@ -48,6 +48,7 @@ extern int const_func ilog2_32(uint32_t v);
 extern int const_func ilog2_64(uint64_t v);
 extern int const_func ilog2_64(uint64_t vv);
 extern int const_func alignlog2_32(uint32_t v);
+extern int const_func alignlog2_64(uint64_t v);
 #endif
 
 #ifdef extern_inline
