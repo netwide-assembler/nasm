@@ -3848,8 +3848,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                     next = next->next;
                 }
 
-                /* No match */
-                if (tok == next)
+                /* No match or no text to process */
+                if (tok == next || len == 0)
                     break;
 
                 len += strlen(tok->text);
