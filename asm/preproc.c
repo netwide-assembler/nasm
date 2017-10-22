@@ -4430,6 +4430,16 @@ again:
                                                         ttt->text, 0);
                                 ptail = &pt->next;
                                 ttt = ttt->next;
+                                if (!ttt && i > 0) {
+                                    /*
+                                     * FIXME: Need to handle more gracefully,
+                                     * exiting early on agruments analysis.
+                                     */
+                                    nasm_error(ERR_FATAL,
+                                               "macro `%s' expects %d args",
+                                               mstart->text,
+                                               (int)paramsize[t->type - TOK_SMAC_PARAM]);
+                                }
                             }
                             tline = pcopy;
                         } else if (t->type == TOK_PREPROC_Q) {
