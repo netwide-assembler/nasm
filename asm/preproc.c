@@ -3714,6 +3714,8 @@ static int find_cc(Token * t)
         return -1;              /* Probably a %+ without a space */
 
     skip_white_(t);
+    if (!t)
+        return -1;
     if (t->type != TOK_ID)
         return -1;
     tt = t->next;
