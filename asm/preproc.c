@@ -1938,9 +1938,11 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                     nasm_error(ERR_NONFATAL,
                           "unable to parse parameter count `%s'",
                           tline->text);
-                if (searching.nparam_min > searching.nparam_max)
+                if (searching.nparam_min > searching.nparam_max) {
                     nasm_error(ERR_NONFATAL,
                           "minimum parameter count exceeds maximum");
+                    searching.nparam_max = searching.nparam_min;
+                }
             }
         }
         if (tline && tok_is_(tline->next, "+")) {
@@ -2169,6 +2171,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
             }
             if (def->nparam_min > def->nparam_max) {
                 nasm_error(ERR_NONFATAL, "minimum parameter count exceeds maximum");
+                def->nparam_max = def->nparam_min;
             }
         }
     }
