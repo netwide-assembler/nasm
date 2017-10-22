@@ -1254,7 +1254,8 @@ static char *detoken(Token * tlist, bool expand_locals)
     int len = 0;
 
     list_for_each(t, tlist) {
-        if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
+        if (t->type == TOK_PREPROC_ID && t->text &&
+            t->text[0] && t->text[1] == '!') {
             char *v;
             char *q = t->text;
 
