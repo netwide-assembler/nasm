@@ -366,7 +366,7 @@ static inline bool const_func overflow_general(int64_t value, int bytes)
 
     sbit = (bytes << 3) - 1;
     vmax =  ((int64_t)2 << sbit) - 1;
-    vmin = -((int64_t)1 << sbit);
+    vmin = -((int64_t)2 << sbit);
 
     return value < vmin || value > vmax;
 }

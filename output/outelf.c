@@ -3163,6 +3163,8 @@ static void dwarf_generate(void)
     saa_write8(pabbrev,DW_AT_frame_base);
     saa_write8(pabbrev,DW_FORM_data4);
     saa_write16(pabbrev,0);     /* end of entry */
+    /* Terminal zero entry */
+    saa_write8(pabbrev,0);
     abbrevlen = saalen = pabbrev->datalen;
     abbrevbuf = pbuf = nasm_malloc(saalen);
     saa_rnbytes(pabbrev, pbuf, saalen);

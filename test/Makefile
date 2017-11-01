@@ -29,6 +29,9 @@ $(NASM):
 %.obj: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f obj -o $@ -MD $@.dep -l $*.lst $<
 
+%.rdf: %.asm $(NASMDEP)
+	$(NASM) $(NASMOPT) -f rdf -o $@ -MD $@.dep -l $*.lst $<
+
 %.od: %.obj ../misc/omfdump
 	../misc/omfdump $< > $@
 
@@ -69,7 +72,7 @@ diff:	performtest.pl $(NASMDEP) $(TESTS)
 
 clean:
 	$(RM_F) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
-	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i *.dep
+	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i *.dep *.rdf
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
 

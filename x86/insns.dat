@@ -1703,8 +1703,10 @@ PCMPGTB		xmmreg,xmmrm			[rm:	66 0f 64 /r]				WILLAMETTE,SSE2,SO
 PCMPGTW		xmmreg,xmmrm			[rm:	66 0f 65 /r]				WILLAMETTE,SSE2,SO
 PCMPGTD		xmmreg,xmmrm			[rm:	66 0f 66 /r]				WILLAMETTE,SSE2,SO
 PEXTRW		reg32,xmmreg,imm		[rmi:	66 0f c5 /r ib,u]			WILLAMETTE,SSE2,SB,AR2
+PEXTRW		reg64,xmmreg,imm		[rmi:	66 0f c5 /r ib,u]			X64,SSE2,SB,AR2,ND
 PINSRW		xmmreg,reg16,imm		[rmi:	66 0f c4 /r ib,u]			WILLAMETTE,SSE2,SB,AR2
 PINSRW		xmmreg,reg32,imm		[rmi:	66 0f c4 /r ib,u]			WILLAMETTE,SSE2,SB,AR2,ND
+PINSRW		xmmreg,reg64,imm		[rmi:	66 0f c4 /r ib,u]			X64,SSE2,SB,AR2,ND
 PINSRW		xmmreg,mem,imm			[rmi:	66 0f c4 /r ib,u]			WILLAMETTE,SSE2,SB,AR2
 PINSRW		xmmreg,mem16,imm		[rmi:	66 0f c4 /r ib,u]			WILLAMETTE,SSE2,SB,AR2
 PMADDWD		xmmreg,xmmrm			[rm:	66 0f f5 /r]				WILLAMETTE,SSE2,SO
@@ -1957,8 +1959,8 @@ PBLENDW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0e /r ib,u]			SSE41
 PCMPEQQ		xmmreg,xmmrm			[rm:	66 0f 38 29 /r]				SSE41
 PEXTRB		reg32,xmmreg,imm		[mri:	66 0f 3a 14 /r ib,u]			SSE41
 PEXTRB		mem8,xmmreg,imm			[mri:	66 0f 3a 14 /r ib,u]			SSE41
-PEXTRB		reg64,xmmreg,imm		[mri:	o64 66 0f 3a 14 /r ib,u]		SSE41,X64
-PEXTRD		rm32,xmmreg,imm			[mri:	norexw 66 0f 3a 16 /r ib,u]			SSE41
+PEXTRB		reg64,xmmreg,imm		[mri:	o64nw 66 0f 3a 14 /r ib,u]		SSE41,X64
+PEXTRD		rm32,xmmreg,imm			[mri:	norexw 66 0f 3a 16 /r ib,u]		SSE41
 PEXTRQ		rm64,xmmreg,imm			[mri:	o64 66 0f 3a 16 /r ib,u]		SSE41,X64
 PEXTRW		reg32,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
 PEXTRW		mem16,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
@@ -1967,8 +1969,8 @@ PHMINPOSUW	xmmreg,xmmrm			[rm:	66 0f 38 41 /r]				SSE41
 PINSRB		xmmreg,mem,imm			[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
 PINSRB		xmmreg,rm8,imm			[rmi:	nohi 66 0f 3a 20 /r ib,u]		SSE41,SB,AR2
 PINSRB		xmmreg,reg32,imm		[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,mem,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,rm32,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]			SSE41,SB,AR2
+PINSRD		xmmreg,mem,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
+PINSRD		xmmreg,rm32,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
 PINSRQ		xmmreg,mem,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X64,SB,AR2
 PINSRQ		xmmreg,rm64,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X64,SB,AR2
 PMAXSB		xmmreg,xmmrm			[rm:	66 0f 38 3c /r]				SSE41

@@ -230,7 +230,7 @@ bool process_directives(char *directive)
     case D_SEGMENT:         /* [SEGMENT n] */
     case D_SECTION:
     {
-	int sb;
+	int sb = globalbits;
         int32_t seg = ofmt->section(value, pass2, &sb);
 
         if (seg == NO_SEG) {
@@ -239,6 +239,7 @@ bool process_directives(char *directive)
         } else {
             in_absolute = false;
             location.segment = seg;
+            globalbits = sb;
         }
         break;
     }

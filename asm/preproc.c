@@ -948,7 +948,9 @@ static Token *tokenize(char *line)
                     case '\'':
                     case '\"':
                     case '`':
-                        p = nasm_skip_string(p - 1) + 1;
+                        p = nasm_skip_string(p - 1);
+                        if (*p)
+                            p++;
                         break;
                     default:
                         break;
@@ -1252,7 +1254,8 @@ static char *detoken(Token * tlist, bool expand_locals)
     int len = 0;
 
     list_for_each(t, tlist) {
-        if (t->type == TOK_PREPROC_ID && t->text[1] == '!') {
+        if (t->type == TOK_PREPROC_ID && t->text &&
+            t->text[0] && t->text[1] == '!') {
             char *v;
             char *q = t->text;
 
@@ -1936,9 +1939,11 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                     nasm_error(ERR_NONFATAL,
                           "unable to parse parameter count `%s'",
                           tline->text);
-                if (searching.nparam_min > searching.nparam_max)
+                if (searching.nparam_min > searching.nparam_max) {
                     nasm_error(ERR_NONFATAL,
                           "minimum parameter count exceeds maximum");
+                    searching.nparam_max = searching.nparam_min;
+                }
             }
         }
         if (tline && tok_is_(tline->next, "+")) {
@@ -2167,6 +2172,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
             }
             if (def->nparam_min > def->nparam_max) {
                 nasm_error(ERR_NONFATAL, "minimum parameter count exceeds maximum");
+                def->nparam_max = def->nparam_min;
             }
         }
     }
@@ -3709,6 +3715,8 @@ static int find_cc(Token * t)
         return -1;              /* Probably a %+ without a space */
 
     skip_white_(t);
+    if (!t)
+        return -1;
     if (t->type != TOK_ID)
         return -1;
     tt = t->next;
@@ -3841,8 +3849,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                     next = next->next;
                 }
 
-                /* No match */
-                if (tok == next)
+                /* No match or no text to process */
+                if (tok == next || len == 0)
                     break;
 
                 len += strlen(tok->text);
@@ -4425,6 +4433,16 @@ again:
                                                         ttt->text, 0);
                                 ptail = &pt->next;
                                 ttt = ttt->next;
+                                if (!ttt && i > 0) {
+                                    /*
+                                     * FIXME: Need to handle more gracefully,
+                                     * exiting early on agruments analysis.
+                                     */
+                                    nasm_error(ERR_FATAL,
+                                               "macro `%s' expects %d args",
+                                               mstart->text,
+                                               (int)paramsize[t->type - TOK_SMAC_PARAM]);
+                                }
                             }
                             tline = pcopy;
                         } else if (t->type == TOK_PREPROC_Q) {
