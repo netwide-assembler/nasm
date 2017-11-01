@@ -359,10 +359,10 @@ everything: all docs nsis
 asm\assemble.$(O): asm\assemble.c asm\assemble.h asm\directiv.h \
  asm\listing.h asm\pptok.h asm\preproc.h asm\tokens.h config\msvc.h \
  config\unknown.h config\watcom.h include\bytesex.h include\compiler.h \
- include\disp8.h include\error.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\disp8.h include\error.h include\iflag.h include\ilog2.h \
+ include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\directbl.$(O): asm\directbl.c asm\directiv.h config\msvc.h \
  config\unknown.h config\watcom.h include\bytesex.h include\compiler.h \
  include\nasmint.h include\nasmlib.h include\perfhash.h
@@ -412,26 +412,26 @@ asm\nasm.$(O): asm\nasm.c asm\assemble.h asm\directiv.h asm\eval.h \
  asm\float.h asm\listing.h asm\parser.h asm\pptok.h asm\preproc.h \
  asm\stdscan.h asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\iflag.h \
- include\insns.h include\labels.h include\nasm.h include\nasmint.h \
- include\nasmlib.h include\opflags.h include\perfhash.h include\raa.h \
- include\saa.h include\strlist.h include\tables.h include\ver.h \
- output\outform.h x86\iflaggen.h x86\insnsi.h x86\regs.h
+ include\ilog2.h include\insns.h include\labels.h include\nasm.h \
+ include\nasmint.h include\nasmlib.h include\opflags.h include\perfhash.h \
+ include\raa.h include\saa.h include\strlist.h include\tables.h \
+ include\ver.h output\outform.h x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\parser.$(O): asm\parser.c asm\assemble.h asm\directiv.h asm\eval.h \
  asm\float.h asm\parser.h asm\pptok.h asm\preproc.h asm\stdscan.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\iflag.h \
- include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
- include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
- x86\iflaggen.h x86\insnsi.h x86\regs.h
+ include\ilog2.h include\insns.h include\nasm.h include\nasmint.h \
+ include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
+ include\tables.h x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\pptok.$(O): asm\pptok.c asm\pptok.h asm\preproc.h config\msvc.h \
  config\unknown.h config\watcom.h include\bytesex.h include\compiler.h \
  include\hashtbl.h include\nasmint.h include\nasmlib.h
 asm\pragma.$(O): asm\pragma.c asm\assemble.h asm\directiv.h asm\pptok.h \
  asm\preproc.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\iflag.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\ilog2.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\preproc-nop.$(O): asm\preproc-nop.c asm\directiv.h asm\listing.h \
  asm\pptok.h asm\preproc.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\nasm.h \
@@ -453,16 +453,16 @@ asm\rdstrnum.$(O): asm\rdstrnum.c asm\directiv.h asm\pptok.h asm\preproc.h \
  x86\insnsi.h x86\regs.h
 asm\segalloc.$(O): asm\segalloc.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
- include\bytesex.h include\compiler.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\bytesex.h include\compiler.h include\iflag.h include\ilog2.h \
+ include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\stdscan.$(O): asm\stdscan.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\quote.h asm\stdscan.h asm\tokens.h config\msvc.h config\unknown.h \
  config\watcom.h include\bytesex.h include\compiler.h include\error.h \
- include\iflag.h include\insns.h include\nasm.h include\nasmint.h \
- include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
- include\tables.h x86\iflaggen.h x86\insnsi.h x86\regs.h
+ include\iflag.h include\ilog2.h include\insns.h include\nasm.h \
+ include\nasmint.h include\nasmlib.h include\opflags.h include\perfhash.h \
+ include\strlist.h include\tables.h x86\iflaggen.h x86\insnsi.h x86\regs.h
 asm\strfunc.$(O): asm\strfunc.c asm\directiv.h asm\pptok.h asm\preproc.h \
  config\msvc.h config\unknown.h config\watcom.h include\bytesex.h \
  include\compiler.h include\nasm.h include\nasmint.h include\nasmlib.h \
@@ -471,28 +471,29 @@ asm\strfunc.$(O): asm\strfunc.c asm\directiv.h asm\pptok.h asm\preproc.h \
 asm\tokhash.$(O): asm\tokhash.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\stdscan.h asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\hashtbl.h include\iflag.h \
+ include\ilog2.h include\insns.h include\nasm.h include\nasmint.h \
+ include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
+ include\tables.h x86\iflaggen.h x86\insnsi.h x86\regs.h
+common\common.$(O): common\common.c asm\directiv.h asm\pptok.h asm\preproc.h \
+ asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
+ include\bytesex.h include\compiler.h include\iflag.h include\ilog2.h \
  include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
  include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
  x86\iflaggen.h x86\insnsi.h x86\regs.h
-common\common.$(O): common\common.c asm\directiv.h asm\pptok.h asm\preproc.h \
- asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
- include\bytesex.h include\compiler.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
 disasm\disasm.$(O): disasm\disasm.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h disasm\disasm.h \
  disasm\sync.h include\bytesex.h include\compiler.h include\disp8.h \
- include\iflag.h include\insns.h include\nasm.h include\nasmint.h \
- include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
- include\tables.h x86\iflaggen.h x86\insnsi.h x86\regdis.h x86\regs.h
+ include\iflag.h include\ilog2.h include\insns.h include\nasm.h \
+ include\nasmint.h include\nasmlib.h include\opflags.h include\perfhash.h \
+ include\strlist.h include\tables.h x86\iflaggen.h x86\insnsi.h x86\regdis.h \
+ x86\regs.h
 disasm\ndisasm.$(O): disasm\ndisasm.c asm\directiv.h asm\pptok.h \
  asm\preproc.h asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
  disasm\disasm.h disasm\sync.h include\bytesex.h include\compiler.h \
- include\error.h include\iflag.h include\insns.h include\nasm.h \
- include\nasmint.h include\nasmlib.h include\opflags.h include\perfhash.h \
- include\strlist.h include\tables.h include\ver.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\error.h include\iflag.h include\ilog2.h include\insns.h \
+ include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
+ include\perfhash.h include\strlist.h include\tables.h include\ver.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 disasm\sync.$(O): disasm\sync.c config\msvc.h config\unknown.h \
  config\watcom.h disasm\sync.h include\bytesex.h include\compiler.h \
  include\nasmint.h include\nasmlib.h
@@ -616,9 +617,10 @@ output\outcoff.$(O): output\outcoff.c asm\directiv.h asm\eval.h asm\pptok.h \
 output\outdbg.$(O): output\outdbg.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\iflag.h \
- include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
- include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
- output\outform.h output\outlib.h x86\iflaggen.h x86\insnsi.h x86\regs.h
+ include\ilog2.h include\insns.h include\nasm.h include\nasmint.h \
+ include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
+ include\tables.h output\outform.h output\outlib.h x86\iflaggen.h \
+ x86\insnsi.h x86\regs.h
 output\outelf.$(O): output\outelf.c asm\directiv.h asm\eval.h asm\pptok.h \
  asm\preproc.h asm\stdscan.h config\msvc.h config\unknown.h config\watcom.h \
  include\bytesex.h include\compiler.h include\error.h include\nasm.h \
@@ -727,25 +729,26 @@ x86\disp8.$(O): x86\disp8.c asm\directiv.h asm\pptok.h asm\preproc.h \
  include\nasmlib.h include\opflags.h include\perfhash.h include\strlist.h \
  include\tables.h x86\insnsi.h x86\regs.h
 x86\iflag.$(O): x86\iflag.c config\msvc.h config\unknown.h config\watcom.h \
- include\compiler.h include\iflag.h include\nasmint.h x86\iflaggen.h
+ include\compiler.h include\iflag.h include\ilog2.h include\nasmint.h \
+ x86\iflaggen.h
 x86\insnsa.$(O): x86\insnsa.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
- include\bytesex.h include\compiler.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\bytesex.h include\compiler.h include\iflag.h include\ilog2.h \
+ include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 x86\insnsb.$(O): x86\insnsb.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
- include\bytesex.h include\compiler.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\bytesex.h include\compiler.h include\iflag.h include\ilog2.h \
+ include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 x86\insnsd.$(O): x86\insnsd.c asm\directiv.h asm\pptok.h asm\preproc.h \
  asm\tokens.h config\msvc.h config\unknown.h config\watcom.h \
- include\bytesex.h include\compiler.h include\iflag.h include\insns.h \
- include\nasm.h include\nasmint.h include\nasmlib.h include\opflags.h \
- include\perfhash.h include\strlist.h include\tables.h x86\iflaggen.h \
- x86\insnsi.h x86\regs.h
+ include\bytesex.h include\compiler.h include\iflag.h include\ilog2.h \
+ include\insns.h include\nasm.h include\nasmint.h include\nasmlib.h \
+ include\opflags.h include\perfhash.h include\strlist.h include\tables.h \
+ x86\iflaggen.h x86\insnsi.h x86\regs.h
 x86\insnsn.$(O): x86\insnsn.c config\msvc.h config\unknown.h config\watcom.h \
  include\compiler.h include\nasmint.h include\tables.h x86\insnsi.h
 x86\regdis.$(O): x86\regdis.c x86\regdis.h x86\regs.h
