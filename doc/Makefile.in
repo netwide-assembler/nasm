@@ -34,6 +34,7 @@ HTMLAUX		= nasmdoc.css local.css nasmlogw.png
 SRCS		= nasmdoc.src inslist.src changes.src version.src
 OUT		= html nasmdoc.txt nasmdoc.pdf
 
+.SUFFIXES:
 .SUFFIXES: .pfa .ph
 
 all: $(OUT)
