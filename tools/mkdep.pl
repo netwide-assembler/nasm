@@ -134,7 +134,7 @@ sub _insert_deps($$) {
     my $obj = '.o';		# Defaults
     my $sep = '/';
     my $cont = "\\";
-    my $include_command = 'include';
+    my $include_command = undef;
     my $selfrule = 0;
     my $do_external = 0;
     my $maxline = 78;		# Seems like a reasonable default
@@ -194,7 +194,7 @@ sub _insert_deps($$) {
     }
 
     if ( $externalize ) {
-	if ( $is_external ) {
+	if ( $is_external && defined($include_command) ) {
 	    print $out "$include_command $external\n";
 	}
 	return undef;
