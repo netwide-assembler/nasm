@@ -382,11 +382,14 @@ dep: msvc.dep
 # Include and/or generate msvc.dep as needed. This is too complex to
 # use the include-command feature, but we can open-code it here.
 !IF $(EXTERNAL_DEPENDENCIES) == 1
-!IF [$(MAKE) /c MKDEP=1 /f Mkfiles\msvc.mak msvc.dep] == 0
+!IFDEF MKDEP
+!IF EXISTS(msvc.dep)
 !INCLUDE msvc.dep
-!ELSEIFNDEF MKDEP
-!ERROR Unable to rebuild dependencies file msvc.dep
 !ENDIF
+!ELSEIF [$(MAKE) /c MKDEP=1 /f Mkfiles\msvc.mak msvc.dep] == 0
+!INCLUDE msvc.dep
+!ELSE
+!ERROR Unable to rebuild dependencies file msvc.dep
 !ENDIF
 
 #-- Magic hints to mkdep.pl --#
