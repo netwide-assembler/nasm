@@ -1,6 +1,6 @@
-dnl Process this file with autoconf 2.63 or later to produce
+dnl Process this file with autoconf 2.69 or later to produce
 dnl a configure script.
-AC_PREREQ(2.63)
+AC_PREREQ(2.69)
 AC_INIT(config/config.h.in)
 AC_CONFIG_HEADERS(config/config.h)
 

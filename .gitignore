@@ -51,6 +51,7 @@ TAGS
 /config.log
 /config.status
 /configure
+/autom4te.cache
 /doc/*.dip
 /doc/*.hpj
 /doc/*.pdf

@@ -449,20 +449,22 @@ golden: nasm$(X)
 	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm *.asm
 
 #
-# Rules to re-run autoconf if necessary
+# Rules to run autoreconf if necessary
 #
-config/config.h.in: configure.ac
-	autoheader
+configure: configure.ac aclocal.m4
+	autoreconf
 
-configure: configure.ac config/config.h.in
-	autoconf
-
-config.status: configure Makefile.in doc/Makefile.in config/config.h.in
+config.status: configure
+	@if [ ! -f config.status ]; then \
+		echo "*** ERROR: Need to run configure!" 1>&2 ; \
+		exit 1; \
+	fi
 	sh config.status --recheck
 
-Makefile: config.status
+Makefile: config.status Makefile.in doc/Makefile.in
+	sh config.status
 
-doc/Makefile: config.status
+doc/Makefile: Makefile
 
 config/config.h: config.status
 
@@ -484,7 +486,6 @@ Makefile.dep: $(PERLREQ) tools/mkdep.pl config.status
 dep: Makefile.dep
 
 #
-#
 # This build dependencies in *ALL* makefiles, and forces all
 # dependencies to be inserted inline.  For that reason, it should only
 # be invoked manually or via "make dist".  It should be run before
@@ -497,10 +498,9 @@ alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
 		if [ $(EXTERNAL_DEPENDENCIES) -eq 1 ]; then \
-			./config.status --recheck; \
-		else \
-			./config.status; \
-		fi \
+			sh config.status --recheck; \
+		fi; \
+		sh config.status; \
 	fi
 
 # Strip internal dependency information from all Makefiles; this makes
@@ -512,10 +512,9 @@ cleandeps: $(PERLREQ) qtools/syncfiles.pl tools/mkdep.pl
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
 		if [ $(EXTERNAL_DEPENDENCIES) -eq 0 ]; then \
-			./config.status --recheck; \
-		else \
-			./config.status; \
-		fi \
+			sh config.status --recheck; \
+		fi; \
+		sh config.status; \
 	fi
 
 #-- Magic hints to mkdep.pl --#
