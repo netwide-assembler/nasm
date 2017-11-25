@@ -25,7 +25,7 @@ since 2007.
 
 \b Fix false positive in testing of numeric overflows.
 
-\b Fix generation of \c{PEXTRW} instruction for.
+\b Fix generation of \c{PEXTRW} instruction.
 
 \b Fix \c{smartalign} package which can trigger an error during
    compiling if alignment code grows too big.
