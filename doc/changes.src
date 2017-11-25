@@ -9,6 +9,42 @@ since 2007.
 
 \S{cl-2.13.02} Version 2.13.02
 
+\b Fix buffer overflow in specially malformed preprocessor
+   token directive.
+
+\b Fix null dereference in case if data missed with implicit
+   pasting preprocessor mode.
+
+\b Fix null dereference in conditional preprocessing.
+
+\b Fix null dereference in malformed multiline and singleline
+   macros arguments.
+
+\b Fix accessing of arbitrary memory on unterminated strings in
+   prepocessor mode.
+
+\b Fix false positive in testing of numeric overflows.
+
+\b Fix generation of \c{PEXTRW} instruction for.
+
+\b Fix \c{smartalign} package which can trigger an error during
+   compiling if alignment code grows too big.
+
+\b Fix a case where negative value in \c{TIMES} directive causes
+   panic while error should be printed instead.
+
+\b Always finalize \c{.debug_abbrev} section with a null in
+   \c{dwarf} output format.
+
+\b Support \c{debug} flag in section attributes for \c{macho}
+   output format.
+
+\b Support up to 16 characters in section names for \c{macho}
+   output format.
+
+\b Fix missing update of global \c{BITS} setting if \c{SECTION}
+   directive requested to.
+
 \b Fix the incorrect generation of VEX-encoded instruction when static
    mode decorators are specified on scalar instructions, losing the
    decorators as they require EVEX encoding.
