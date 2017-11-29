@@ -43,7 +43,8 @@ since 2007.
    output format.
 
 \b Fix missing update of global \c{BITS} setting if \c{SECTION}
-   directive requested to.
+   directive specified a bit size using output format-specific
+   extensions (e.g. \c{USE32} for the \c{obj} output format.)
 
 \b Fix the incorrect generation of VEX-encoded instruction when static
    mode decorators are specified on scalar instructions, losing the
