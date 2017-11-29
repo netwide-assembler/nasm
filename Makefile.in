@@ -505,7 +505,7 @@ alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 
 # Strip internal dependency information from all Makefiles; this makes
 # the output good for git checkin
-cleandeps: $(PERLREQ) qtools/syncfiles.pl tools/mkdep.pl
+cleandeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 	$(RUNPERL) tools/syncfiles.pl Makefile.in Mkfiles/*.mak
 	$(RUNPERL) tools/mkdep.pl -e -M Makefile.in Mkfiles/*.mak -- \
 		$(DEPDIRS)
