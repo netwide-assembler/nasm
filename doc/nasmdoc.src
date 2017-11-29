@@ -5672,6 +5672,8 @@ comma.  The following flags can also be specified:
 
 \b \c{strip_static_syms} - strip static symbols for this section
 
+\b \c{debug} - this section contains debugging information
+
 \b \c{align=}\e{alignment} - specify section alignment
 
 The default is \c{data}, unless the section name is \c{__text} or

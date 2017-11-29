@@ -9,35 +9,22 @@ since 2007.
 
 \S{cl-2.13.02} Version 2.13.02
 
-\b Fix buffer overflow in specially malformed preprocessor
-   token directive.
-
-\b Fix null dereference in case if data missed with implicit
-   pasting preprocessor mode.
-
-\b Fix null dereference in conditional preprocessing.
-
-\b Fix null dereference in malformed multiline and singleline
-   macros arguments.
-
-\b Fix accessing of arbitrary memory on unterminated strings in
-   prepocessor mode.
-
 \b Fix false positive in testing of numeric overflows.
 
 \b Fix generation of \c{PEXTRW} instruction.
 
-\b Fix \c{smartalign} package which can trigger an error during
-   compiling if alignment code grows too big.
+\b Fix \c{smartalign} package which could trigger an error during
+   optimization if the alignment code expanded too much due to
+   optimization of the previous code.
 
 \b Fix a case where negative value in \c{TIMES} directive causes
-   panic while error should be printed instead.
+   panic instead of an error.
 
 \b Always finalize \c{.debug_abbrev} section with a null in
    \c{dwarf} output format.
 
 \b Support \c{debug} flag in section attributes for \c{macho}
-   output format.
+   output format.  See \k{machosect}.
 
 \b Support up to 16 characters in section names for \c{macho}
    output format.
@@ -59,7 +46,7 @@ since 2007.
 
 \b Fix generation of dependency lists.
 
-\b Fix several memory allocation errors.
+\b Fix a number of null pointer reference and memory allocation errors.
 
 \b Always generate symbol-relative relocations for the \c{macho64}
    output format; at least some versions of the XCode/LLVM linker fails
