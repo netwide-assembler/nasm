@@ -50,83 +50,66 @@
  * format in memory.
  */
 
+#define WRITECHAR(p,v)                          	\
+    do {                                        	\
+        uint8_t *_wc_p = (uint8_t *)(p);		\
+        *_wc_p++ = (v);                                 \
+        (p) = (void *)_wc_p;                            \
+    } while (0)
+
 #if X86_MEMORY
 
-#define WRITECHAR(p,v)                          \
-    do {                                        \
-        uint8_t *_wc_p = (uint8_t *)(p);        \
-        *_wc_p = (v);                           \
-        (p) = (void *)(_wc_p + 1);              \
+#define WRITESHORT(p,v)                         	\
+    do {                                        	\
+        uint16_t *_ws_p = (uint16_t *)(p);      	\
+        *_ws_p++ = (v);                           	\
+        (p) = (void *)_ws_p;              		\
     } while (0)
 
-#define WRITESHORT(p,v)                         \
-    do {                                        \
-        uint16_t *_ws_p = (uint16_t *)(p);      \
-        *_ws_p = (v);                           \
-        (p) = (void *)(_ws_p + 1);              \
+#define WRITELONG(p,v)                          	\
+    do {                                        	\
+        uint32_t *_wl_p = (uint32_t *)(p);		\
+        *_wl_p++ = (v);                           	\
+        (p) = (void *)_wl_p;              		\
     } while (0)
 
-#define WRITELONG(p,v)                          \
-    do {                                        \
-        uint32_t *_wl_p = (uint32_t *)(p);      \
-        *_wl_p = (v);                           \
-        (p) = (void *)(_wl_p + 1);              \
-    } while (0)
-
-#define WRITEDLONG(p,v)                         \
-    do {                                        \
-        uint64_t *_wq_p = (uint64_t *)(p);      \
-        *_wq_p = (v);                           \
-        (p) = (void *)(_wq_p + 1);              \
+#define WRITEDLONG(p,v)                         	\
+    do {                                        	\
+        uint64_t *_wq_p = (uint64_t *)(p);      	\
+        *_wq_p++ = (v);                           	\
+        (p) = (void *)_wq_p;              		\
     } while (0)
 
 #else /* !X86_MEMORY */
 
-#define WRITECHAR(p,v)                          \
-    do {                                        \
-        uint8_t *_wc_p = (uint8_t *)(p);        \
-        uint8_t _wc_v = (v);                    \
-        _wc_p[0] = _wc_v;                       \
-        (p) = (void *)(_wc_p + 1);              \
+#define WRITESHORT(p,v)                         	\
+    do {                                        	\
+        uint8_t *_ws_p = (uint8_t *)(p);        	\
+        const uint16_t _ws_v = (v);                     \
+        WRITECHAR(_ws_p, _ws_v);                        \
+        WRITECHAR(_ws_p, _ws_v >> 8);                   \
+        (p) = (void *)_ws_p;                            \
     } while (0)
 
-#define WRITESHORT(p,v)                         \
-    do {                                        \
-        uint8_t *_ws_p = (uint8_t *)(p);        \
-        uint16_t _ws_v = (v);                   \
-        _ws_p[0] = _ws_v;                       \
-        _ws_p[1] = _ws_v >> 8;                  \
-        (p) = (void *)(_ws_p + 2);              \
+#define WRITELONG(p,v)                         		\
+    do {                                        	\
+        uint8_t *_wl_p = (uint8_t *)(p);        	\
+        const uint32_t _wl_v = (v);                     \
+        WRITESHORT(_wl_p, _wl_v);                       \
+        WRITESHORT(_wl_p, _wl_v >> 16);                 \
+        (p) = (void *)_wl_p;                            \
     } while (0)
 
-#define WRITELONG(p,v)                          \
-    do {                                        \
-        uint8_t *_wl_p = (uint8_t *)(p);        \
-        uint32_t _wl_v = (v);                   \
-        _wl_p[0] = _wl_v;                       \
-        _wl_p[1] = _wl_v >> 8;                  \
-        _wl_p[2] = _wl_v >> 16;                 \
-        _wl_p[3] = _wl_v >> 24;                 \
-        (p) = (void *)(_wl_p + 4);              \
+#define WRITEDLONG(p,v)                         	\
+    do {                                        	\
+        uint8_t *_wq_p = (uint8_t *)(p);        	\
+        const uint64_t _wq_v = (v);                     \
+        WRITELONG(_wq_p, _wq_v);                        \
+        WRITELONG(_wq_p, _wq_v >> 32);                  \
+        (p) = (void *)_wq_p;                            \
     } while (0)
 
-#define WRITEDLONG(p,v)                         \
-    do {                                        \
-        uint8_t *_wq_p = (uint8_t *)(p);        \
-        uint64_t _wq_v = (v);                   \
-        _wq_p[0] = _wq_v;                       \
-        _wq_p[1] = _wq_v >> 8;                  \
-        _wq_p[2] = _wq_v >> 16;                 \
-        _wq_p[3] = _wq_v >> 24;                 \
-        _wq_p[4] = _wq_v >> 32;                 \
-        _wq_p[5] = _wq_v >> 40;                 \
-        _wq_p[6] = _wq_v >> 48;                 \
-        _wq_p[7] = _wq_v >> 56;                 \
-        (p) = (void *)(_wq_p + 8);              \
-    } while (0)
-
-#endif
-
+#endif /* X86_MEMORY */
 
 /*
  * Endian control functions which work on a single integer
@@ -248,31 +231,31 @@ static inline uint64_t cpu_to_le64(uint64_t v)
 
 #endif
 
-#define WRITEADDR(p,v,s)                        \
-    do {                                        \
-	switch (is_constant(s) ? (s) : 0) {	\
-        case 1:                                 \
-            WRITECHAR(p,v);                     \
-            break;                              \
-        case 2:                                 \
-            WRITESHORT(p,v);                    \
-            break;                              \
-        case 4:                                 \
-            WRITELONG(p,v);                     \
-            break;                              \
-	case 8:                                 \
-            WRITEDLONG(p,v);                    \
-            break;                              \
-        default:                                \
-        {                                       \
-            uint64_t _wa_v = cpu_to_le64(v);	\
-            size_t _wa_s = (s);                 \
-            uint8_t *_wa_p = (uint8_t *)(p);	\
-            memcpy(_wa_p, &_wa_v, _wa_s);       \
-            (p) = (void *)(_wa_p + _wa_s);      \
-        }                                       \
-        break;                                  \
-        }                                       \
+#define WRITEADDR(p,v,s)                        		\
+    do {                                                        \
+	switch (is_constant(s) ? (s) : 0) {                     \
+        case 1:                                                 \
+            WRITECHAR(p,v);                                     \
+            break;                                              \
+        case 2:                                                 \
+            WRITESHORT(p,v);                                    \
+            break;                                              \
+        case 4:                                                 \
+            WRITELONG(p,v);                                     \
+            break;                                              \
+	case 8:                                                 \
+            WRITEDLONG(p,v);                                    \
+            break;                                              \
+        default:                                                \
+        {                                                       \
+            const uint64_t _wa_v = cpu_to_le64(v);              \
+            const size_t _wa_s = (s);                           \
+            uint8_t * const _wa_p = (uint8_t *)(p);             \
+            memcpy(_wa_p, &_wa_v, _wa_s);                       \
+            (p) = (void *)(_wa_p + _wa_s);                      \
+        }                                                       \
+        break;                                                  \
+        }                                                       \
     } while (0)
 
 #endif /* NASM_BYTESEX_H */
