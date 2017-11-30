@@ -130,13 +130,13 @@
 #ifdef WORDS_LITTLEENDIAN
 
 #ifndef HAVE_CPU_TO_LE16
-static inline uint16_t cpu_to_le16(uint16_t v) { return v; }
+# define cpu_to_le16(v) ((uint16_t)(v))
 #endif
 #ifndef HAVE_CPU_TO_LE32
-static inline uint32_t cpu_to_le32(uint32_t v) { return v; }
+# define cpu_to_le32(v) ((uint32_t)(v))
 #endif
 #ifndef HAVE_CPU_TO_LE64
-static inline uint64_t cpu_to_le64(uint64_t v) { return v; }
+# define cpu_to_le64(v) ((uint64_t)(v))
 #endif
 
 #elif defined(WORDS_BIGENDIAN)
