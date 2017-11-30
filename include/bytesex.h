@@ -76,13 +76,6 @@
         (p) += 8;                               \
     } while (0)
 
-#define WRITEADDR(p,v,s)                        \
-    do {                                        \
-        uint64_t _wa_v = (v);                   \
-        memcpy((p), &_wa_v, (s));               \
-        (p) += (s);                             \
-    } while (0)
-
 #else /* !X86_MEMORY */
 
 #define WRITECHAR(p,v)                          \
@@ -127,16 +120,6 @@
         _wq_p[7] = _wq_v >> 56;                 \
         (p) = (void *)(_wq_p + 8);              \
     } while (0)
-
-#define WRITEADDR(p,v,s)                        \
-    do {                                        \
-        int _wa_s = (s);                        \
-        uint64_t _wa_v = (v);                   \
-        while (_wa_s--) {                       \
-            WRITECHAR(p,_wa_v);                 \
-            _wa_v >>= 8;                        \
-        }                                       \
-    } while(0)
 
 #endif
 
@@ -260,5 +243,30 @@ static inline uint64_t cpu_to_le64(uint64_t v)
 }
 
 #endif
+
+#define WRITEADDR(p,v,s)                        \
+    do {                                        \
+	switch (is_constant(s) ? (s) : 0) {	\
+        case 1:                                 \
+            WRITECHAR(p,v);                     \
+            break;                              \
+        case 2:                                 \
+            WRITESHORT(p,v);                    \
+            break;                              \
+        case 4:                                 \
+            WRITELONG(p,v);                     \
+            break;                              \
+	case 8:                                 \
+            WRITEDLONG(p,v);                    \
+            break;                              \
+        default:                                \
+        {                                       \
+            uint64_t _wa_v = cpu_to_le64(v);	\
+            memcpy((p), &_wa_v, (s));           \
+            (p) += (s);                         \
+        }                                       \
+        break;                                  \
+        }                                       \
+    } while (0)
 
 #endif /* NASM_BYTESEX_H */
