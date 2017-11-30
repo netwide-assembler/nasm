@@ -311,6 +311,13 @@ size_t strnlen(const char *s, size_t maxlen);
 # define pure_func
 #endif
 
+/* Determine probabilistically if something is a compile-time constant */
+#ifdef HAVE__BUILTIN_CONSTANT_P
+# define is_constant(x) __builtin_constant_p(x)
+#else
+# define is_constant(x) false
+#endif
+
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */
 #ifdef __WATCOMC__
 # define BOGUS_CASE 0x76543210
