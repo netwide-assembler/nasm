@@ -99,7 +99,6 @@ AC_CHECK_HEADERS(stdnoreturn.h)
 AC_CHECK_HEADERS(io.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(unistd.h)
-AC_CHECK_HEADERS(endian.h sys/endian.h machine/endian.h)
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(sys/stat.h)
@@ -176,6 +175,7 @@ AC_SUBST([PDFOPT])
 dnl
 dnl Look for byte-swapping support...
 dnl
+PA_ADD_HEADERS(endian.h sys/endian.h machine/endian.h)
 PA_HAVE_FUNC(cpu_to_le16, (0))
 PA_HAVE_FUNC(cpu_to_le32, (0))
 PA_HAVE_FUNC(cpu_to_le64, (0))
@@ -194,6 +194,11 @@ PA_HAVE_FUNC(__builtin_bswap64, (0))
 PA_HAVE_FUNC(_byteswap_ushort, (0))
 PA_HAVE_FUNC(_byteswap_ulong, (0))
 PA_HAVE_FUNC(_byteswap_uint64, (0))
+
+dnl
+dnl Check for __builtin_constant_p()
+dnl
+PA_HAVE_FUNC(__builtin_constant_p, (0))
 
 dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
