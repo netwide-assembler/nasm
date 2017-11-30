@@ -54,26 +54,30 @@
 
 #define WRITECHAR(p,v)                          \
     do {                                        \
-        *(uint8_t *)(p) = (v);                  \
-        (p) += 1;                               \
+        uint8_t *_wc_p = (uint8_t *)(p);        \
+        *_wc_p = (v);                           \
+        (p) = (void *)(_wc_p + 1);              \
     } while (0)
 
 #define WRITESHORT(p,v)                         \
     do {                                        \
-        *(uint16_t *)(p) = (v);                 \
-        (p) += 2;                               \
+        uint16_t *_ws_p = (uint16_t *)(p);      \
+        *_ws_p = (v);                           \
+        (p) = (void *)(_ws_p + 1);              \
     } while (0)
 
 #define WRITELONG(p,v)                          \
     do {                                        \
-        *(uint32_t *)(p) = (v);                 \
-        (p) += 4;                               \
+        uint32_t *_wl_p = (uint32_t *)(p);      \
+        *_wl_p = (v);                           \
+        (p) = (void *)(_wl_p + 1);              \
     } while (0)
 
 #define WRITEDLONG(p,v)                         \
     do {                                        \
-        *(uint64_t *)(p) = (v);                 \
-        (p) += 8;                               \
+        uint64_t *_wq_p = (uint64_t *)(p);      \
+        *_wq_p = (v);                           \
+        (p) = (void *)(_wq_p + 1);              \
     } while (0)
 
 #else /* !X86_MEMORY */
@@ -263,8 +267,9 @@ static inline uint64_t cpu_to_le64(uint64_t v)
         {                                       \
             uint64_t _wa_v = cpu_to_le64(v);	\
             size_t _wa_s = (s);                 \
-            memcpy((p), &_wa_v, _wa_s);         \
-            (p) += _wa_s;                       \
+            uint8_t *_wa_p = (uint8_t *)(p);	\
+            memcpy(_wa_p, &_wa_v, _wa_s);       \
+            (p) = (void *)(_wa_p + _wa_s);      \
         }                                       \
         break;                                  \
         }                                       \
