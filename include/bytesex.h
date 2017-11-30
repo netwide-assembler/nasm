@@ -262,8 +262,9 @@ static inline uint64_t cpu_to_le64(uint64_t v)
         default:                                \
         {                                       \
             uint64_t _wa_v = cpu_to_le64(v);	\
-            memcpy((p), &_wa_v, (s));           \
-            (p) += (s);                         \
+            size_t _wa_s = (s);                 \
+            memcpy((p), &_wa_v, _wa_s);         \
+            (p) += _wa_s;                       \
         }                                       \
         break;                                  \
         }                                       \
