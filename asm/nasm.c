@@ -1635,11 +1635,12 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
 	src_get(&lineno, &currentfile);
 
     if (!skip_this_pass(severity)) {
-	if (currentfile) {
-	    fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-	} else {
+	if (!currentfile)
 	    fputs("nasm: ", error_file);
-	}
+        else if (!lineno)
+            fprintf(error_file, "%s: ", currentfile);
+        else
+            fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
     }
 
     nasm_verror_common(severity, fmt, ap);
