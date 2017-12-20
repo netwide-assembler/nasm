@@ -115,6 +115,7 @@ AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
 AC_CHECK_FUNCS(strsep)
 AC_CHECK_FUNCS(strnlen)
+AC_CHECK_FUNCS(strrchrnul)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
@@ -146,10 +147,11 @@ PA_HAVE_FUNC(__builtin_clzll, (0ULL))
 PA_HAVE_FUNC(_BitScanReverse, (0))
 PA_HAVE_FUNC(_BitScanReverse64, (0))
 
-dnl Functions for which we have replacements available in lib/
+dnl Functions for which we have replacements available in stdlib/
 AC_CHECK_FUNCS([vsnprintf _vsnprintf])
 AC_CHECK_FUNCS([snprintf _snprintf])
 AC_CHECK_FUNCS([strlcpy])
+AC_CHECK_FUNCS([strrchrnul])
 
 dnl These types are POSIX-specific, and Windows does it differently...
 AC_CHECK_TYPES([struct _stati64])
@@ -167,6 +169,7 @@ AC_CHECK_DECLS(strnicmp)
 AC_CHECK_DECLS(strsep)
 AC_CHECK_DECLS(strlcpy)
 AC_CHECK_DECLS(strnlen)
+AC_CHECK_DECLS(strrchrnul)
 
 dnl Check for missing types
 AC_TYPE_UINTPTR_T

@@ -1106,12 +1106,6 @@ static int32_t macho_segbase(int32_t section)
     return section;
 }
 
-static void macho_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".o");
-    module_name = inname;
-}
-
 extern macros_t macho_stdmac[];
 
 /* Comparison function for qsort symbol layout.  */
@@ -2293,6 +2287,7 @@ static const struct dfmt * const macho32_df_arr[2] =
 const struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
+    ".o",
     0,
     32,
     macho32_df_arr,
@@ -2306,7 +2301,6 @@ const struct ofmt of_macho32 = {
     macho_sectalign,
     macho_segbase,
     null_directive,
-    macho_filename,
     macho_cleanup,
     macho_pragma_list
 };
@@ -2358,6 +2352,7 @@ static const struct dfmt * const macho64_df_arr[2] =
 const struct ofmt of_macho64 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
     "macho64",
+    ".o",
     0,
     64,
     macho64_df_arr,
@@ -2371,7 +2366,6 @@ const struct ofmt of_macho64 = {
     macho_sectalign,
     macho_segbase,
     null_directive,
-    macho_filename,
     macho_cleanup,
     macho_pragma_list,
 };

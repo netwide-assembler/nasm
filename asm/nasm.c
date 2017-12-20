@@ -75,7 +75,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 };
 
 static void parse_cmdline(int, char **, int);
-static void assemble_file(char *, StrList **);
+static void assemble_file(const char *, StrList **);
 static bool is_suppressed_warning(int severity);
 static bool skip_this_pass(int severity);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
@@ -94,10 +94,11 @@ int globalbnd = 0;
 
 struct compile_time official_compile_time;
 
-static char inname[FILENAME_MAX];
-static char outname[FILENAME_MAX];
-static char listname[FILENAME_MAX];
-static char errname[FILENAME_MAX];
+const char *inname;
+const char *outname;
+static const char *listname;
+static const char *errname;
+
 static int globallineno;        /* for forward-reference tracking */
 /* static int pass = 0; */
 const struct ofmt *ofmt = &OF_DEFAULT;
@@ -383,6 +384,10 @@ int main(int argc, char **argv)
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
 
+    /* no output file name? */
+    if (!outname)
+        outname = filename_set_extension(inname, ofmt->extension);
+
     /* define some macros dependent of command-line */
     define_macros_late();
 
@@ -398,8 +403,6 @@ int main(int argc, char **argv)
                 preproc->include_path(NULL);    /* "assume generated" */
 
             preproc->reset(inname, 0, depend_ptr);
-            if (outname[0] == '\0')
-                ofmt->filename(inname, outname);
             ofile = NULL;
             while ((line = preproc->getline()))
                 nasm_free(line);
@@ -410,7 +413,7 @@ int main(int argc, char **argv)
             int32_t prior_linnum = 0;
             int lineinc = 0;
 
-            if (*outname) {
+            if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
                     nasm_fatal(ERR_NOFILE,
@@ -456,15 +459,6 @@ int main(int argc, char **argv)
     }
 
     if (operating_mode & OP_NORMAL) {
-        /*
-         * We must call ofmt->filename _anyway_, even if the user
-         * has specified their own output file, because some
-         * formats (eg OBJ and COFF) use ofmt->filename to find out
-         * the name of the input file and then put that inside the
-         * file.
-         */
-        ofmt->filename(inname, outname);
-
         ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
             nasm_fatal(ERR_NOFILE,
@@ -537,15 +531,12 @@ static char *get_param(char *p, char *q, bool *advance)
 /*
  * Copy a filename
  */
-static void copy_filename(char *dst, const char *src)
+static void copy_filename(const char **dst, const char *src, const char *what)
 {
-    size_t len = strlen(src);
+    if (*dst)
+        nasm_fatal(0, "more than one %s file specified: %s\n", what, src);
 
-    if (len >= (size_t)FILENAME_MAX) {
-        nasm_fatal(ERR_NOFILE, "file name too long");
-        return;
-    }
-    strncpy(dst, src, FILENAME_MAX);
+    *dst = nasm_strdup(src);
 }
 
 /*
@@ -746,7 +737,7 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'o':       /* output file */
             if (pass == 2)
-                copy_filename(outname, param);
+                copy_filename(&outname, param, "output");
             break;
 
         case 'f':       /* output format */
@@ -832,12 +823,12 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'l':       /* listing file */
             if (pass == 2)
-                copy_filename(listname, param);
+                copy_filename(&listname, param, "listing");
             break;
 
         case 'Z':       /* error messages file */
             if (pass == 1)
-                copy_filename(errname, param);
+                copy_filename(&errname, param, "error");
             break;
 
         case 'F':       /* specify debug format */
@@ -1096,12 +1087,8 @@ static bool process_arg(char *p, char *q, int pass)
             break;
         }
     } else if (pass == 2) {
-        if (*inname) {
-            nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                         "more than one input file specified");
-        } else {
-            copy_filename(inname, p);
-        }
+        /* In theory we could allow multiple input files... */
+        copy_filename(&inname, p, "input");
     }
 
     return advance;
@@ -1215,8 +1202,6 @@ static void parse_cmdline(int argc, char **argv, int pass)
     char *envreal, *envcopy = NULL, *p;
     int i;
 
-    *inname = *outname = *listname = *errname = '\0';
-
     /* Initialize all the warnings to their default state */
     for (i = 0; i < ERR_WARN_ALL; i++) {
         warning_state_init[i] = warning_state[i] =
@@ -1274,18 +1259,16 @@ static void parse_cmdline(int argc, char **argv, int pass)
     if (pass != 2)
         return;
 
-    if (!*inname)
-        nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                   "no input file specified");
-    else if (!strcmp(inname, errname)   ||
-             !strcmp(inname, outname)   ||
-             !strcmp(inname, listname)  ||
-             (depend_file && !strcmp(inname, depend_file)))
-        nasm_fatal(ERR_NOFILE | ERR_USAGE,
-                   "file `%s' is both input and output file",
-                   inname);
+    if (!inname)
+        nasm_fatal(ERR_NOFILE | ERR_USAGE, "no input file specified");
 
-    if (*errname) {
+    else if ((errname && !strcmp(inname, errname)) ||
+             (outname && !strcmp(inname, outname)) ||
+             (listname &&  !strcmp(inname, listname))  ||
+             (depend_file && !strcmp(inname, depend_file)))
+        nasm_fatal(ERR_USAGE, "will not overwrite input file");
+
+    if (errname) {
         error_file = nasm_open_write(errname, NF_TEXT);
         if (!error_file) {
             error_file = stderr;        /* Revert to default! */
@@ -1296,7 +1279,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
-static void assemble_file(char *fname, StrList **depend_ptr)
+static void assemble_file(const char *fname, StrList **depend_ptr)
 {
     char *line;
     insn output_ins;
@@ -1323,7 +1306,7 @@ static void assemble_file(char *fname, StrList **depend_ptr)
         cpu = cmd_cpu;
         if (pass0 == 2) {
 	    lfmt->init(listname);
-        } else if (passn == 1 && *listname) {
+        } else if (passn == 1 && listname) {
             /* Remove the list file in case we die before the output pass */
             remove(listname);
         }

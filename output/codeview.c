@@ -314,7 +314,7 @@ static void cv8_cleanup(void)
     struct coff_Section *symbol_sect = coff_sects[cv8_state.symbol_sect];
     struct coff_Section *type_sect = coff_sects[cv8_state.type_sect];
 
-    cv8_state.outfile.name = nasm_realpath(coff_outfile);
+    cv8_state.outfile.name = nasm_realpath(outname);
     cv8_state.outfile.namebytes = strlen(cv8_state.outfile.name) + 1;
 
     build_symbol_table(symbol_sect);

@@ -1940,12 +1940,6 @@ static int32_t obj_segbase(int32_t segment)
     return segment;             /* no special treatment */
 }
 
-static void obj_filename(char *inname, char *outname)
-{
-    strcpy(obj_infile, inname);
-    standard_extension(inname, outname, ".obj");
-}
-
 /* Get a file timestamp in MS-DOS format */
 static uint32_t obj_file_timestamp(const char *pathname)
 {
@@ -2705,6 +2699,7 @@ static const struct pragma_facility obj_pragma_list[] = {
 const struct ofmt of_obj = {
     "MS-DOS 16-bit/32-bit OMF object files",
     "obj",
+    ".obj",
     0,
     32,
     borland_debug_arr,
@@ -2718,7 +2713,6 @@ const struct ofmt of_obj = {
     obj_sectalign,
     obj_segbase,
     obj_directive,
-    obj_filename,
     obj_cleanup,
     obj_pragma_list
 };

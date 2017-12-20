@@ -894,11 +894,6 @@ static int32_t aout_segbase(int32_t segment)
     return segment;
 }
 
-static void aout_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".o");
-}
-
 extern macros_t aout_stdmac[];
 
 #endif                          /* OF_AOUT || OF_AOUTB */
@@ -908,6 +903,7 @@ extern macros_t aout_stdmac[];
 const struct ofmt of_aout = {
     "Linux a.out object files",
     "aout",
+    ".o",
     0,
     32,
     null_debug_arr,
@@ -921,7 +917,6 @@ const struct ofmt of_aout = {
     null_sectalign,
     aout_segbase,
     null_directive,
-    aout_filename,
     aout_cleanup,
     NULL                        /* pragma list */
 };
@@ -933,6 +928,7 @@ const struct ofmt of_aout = {
 const struct ofmt of_aoutb = {
     "NetBSD/FreeBSD a.out object files",
     "aoutb",
+    ".o",
     0,
     32,
     null_debug_arr,
@@ -946,7 +942,6 @@ const struct ofmt of_aoutb = {
     null_sectalign,
     aout_segbase,
     null_directive,
-    aout_filename,
     aout_cleanup,
     NULL                        /* pragma list */
 };

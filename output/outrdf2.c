@@ -760,16 +760,12 @@ rdf2_directive(enum directive directive, char *value, int pass)
     }
 }
 
-static void rdf2_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".rdf");
-}
-
 extern macros_t rdf2_stdmac[];
 
 const struct ofmt of_rdf2 = {
     "Relocatable Dynamic Object File Format v2.0",
     "rdf",
+    ".rdf",
     0,
     64,
     null_debug_arr,
@@ -783,7 +779,6 @@ const struct ofmt of_rdf2 = {
     null_sectalign,
     rdf2_segbase,
     rdf2_directive,
-    rdf2_filename,
     rdf2_cleanup,
     NULL                        /* pragma list */
 };

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -91,8 +91,6 @@ struct Section {
     struct Piece *head, *last, **tail;
 };
 
-static char as86_module[FILENAME_MAX];
-
 static struct Section stext, sdata;
 static uint32_t bsslen;
 static int32_t bssindex;
@@ -103,13 +101,13 @@ static uint32_t nsyms;
 static struct RAA *bsym;
 
 static struct SAA *strs;
-static uint32_t strslen;
+static size_t strslen;
 
 static int as86_reloc_size;
 
 static void as86_write(void);
 static void as86_write_section(struct Section *, int);
-static int as86_add_string(char *name);
+static size_t as86_add_string(const char *name);
 static void as86_sect_write(struct Section *, const uint8_t *,
                             uint32_t);
 
@@ -135,7 +133,8 @@ static void as86_init(void)
     strs = saa_init(1L);
     strslen = 0;
 
-    as86_add_string(as86_module);
+    /* as86 module name = input file minus extension */
+    as86_add_string(filename_set_extension(inname, ""));
 }
 
 static void as86_cleanup(void)
@@ -183,12 +182,12 @@ static int32_t as86_section_names(char *name, int pass, int *bits)
         return NO_SEG;
 }
 
-static int as86_add_string(char *name)
+static size_t as86_add_string(const char *name)
 {
-    int pos = strslen;
-    int length = strlen(name);
+    size_t pos = strslen;
+    size_t length = strlen(name);
 
-    saa_wbytes(strs, name, (int32_t)(length + 1));
+    saa_wbytes(strs, name, length + 1);
     strslen += 1 + length;
 
     return pos;
@@ -611,24 +610,12 @@ static int32_t as86_segbase(int32_t segment)
     return segment;
 }
 
-static void as86_filename(char *inname, char *outname)
-{
-    char *p;
-
-    if ((p = strrchr(inname, '.')) != NULL) {
-        strncpy(as86_module, inname, p - inname);
-        as86_module[p - inname] = '\0';
-    } else
-        strcpy(as86_module, inname);
-
-    standard_extension(inname, outname, ".o");
-}
-
 extern macros_t as86_stdmac[];
 
 const struct ofmt of_as86 = {
     "Linux as86 (bin86 version 0.3) object files",
     "as86",
+    ".o",
     0,
     32,
     null_debug_arr,
@@ -642,7 +629,6 @@ const struct ofmt of_as86 = {
     null_sectalign,
     as86_segbase,
     null_directive,
-    as86_filename,
     as86_cleanup,
     NULL                        /* pragma list */
 };

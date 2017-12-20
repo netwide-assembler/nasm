@@ -4970,7 +4970,7 @@ static void pp_verror(int severity, const char *fmt, va_list arg)
 }
 
 static void
-pp_reset(char *file, int apass, StrList **deplist)
+pp_reset(const char *file, int apass, StrList **deplist)
 {
     Token *t;
 

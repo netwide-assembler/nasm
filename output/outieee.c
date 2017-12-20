@@ -886,15 +886,6 @@ static int32_t ieee_segbase(int32_t segment)
     return segment;             /* no special treatment */
 }
 
-/*
- * filename
- */
-static void ieee_filename(char *inname, char *outname)
-{
-    strcpy(ieee_infile, inname);
-    standard_extension(inname, outname, ".o");
-}
-
 static void ieee_write_file(void)
 {
     const struct tm * const thetime = &official_compile_time.local;
@@ -1507,6 +1498,7 @@ static const struct dfmt * const ladsoft_debug_arr[3] = {
 const struct ofmt of_ieee = {
     "IEEE-695 (LADsoft variant) object file format",
     "ieee",
+    ".o",
     OFMT_TEXT,
     32,
     ladsoft_debug_arr,
@@ -1520,7 +1512,6 @@ const struct ofmt of_ieee = {
     ieee_sectalign,
     ieee_segbase,
     ieee_directive,
-    ieee_filename,
     ieee_cleanup,
     NULL                        /* pragma list */
 };

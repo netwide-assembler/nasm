@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -161,7 +161,6 @@ static int origin_defined;
 #define MAP_SECTIONS     4
 #define MAP_SYMBOLS      8
 static int map_control = 0;
-static char *infile, *outfile;
 
 extern macros_t bin_stdmac[];
 
@@ -580,7 +579,7 @@ static void bin_cleanup(void)
         for (h = 63; h; h--)
             fputc('-', rf);
         fprintf(rf, "\n\nSource file:  %s\nOutput file:  %s\n\n",
-                infile, outfile);
+                inname, outname);
 
         if (map_control & MAP_ORIGIN) { /* Display program origin. */
             fprintf(rf, "-- Program origin ");
@@ -1371,27 +1370,6 @@ bin_directive(enum directive directive, char *args, int pass)
     }
 }
 
-static void bin_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, "");
-    infile = inname;
-    outfile = outname;
-}
-
-static void ith_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".ith");
-    infile = inname;
-    outfile = outname;
-}
-
-static void srec_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".srec");
-    infile = inname;
-    outfile = outname;
-}
-
 static int32_t bin_segbase(int32_t segment)
 {
     return segment;
@@ -1650,6 +1628,7 @@ static void do_output_srec(void)
 const struct ofmt of_bin = {
     "flat-form binary files (e.g. DOS .COM, .SYS)",
     "bin",
+    "",
     0,
     64,
     null_debug_arr,
@@ -1663,7 +1642,6 @@ const struct ofmt of_bin = {
     bin_sectalign,
     bin_segbase,
     bin_directive,
-    bin_filename,
     bin_cleanup,
     NULL                        /* pragma list */
 };
@@ -1671,6 +1649,7 @@ const struct ofmt of_bin = {
 const struct ofmt of_ith = {
     "Intel hex",
     "ith",
+    ".ith",                     /* really should have been ".hex"... */
     OFMT_TEXT,
     64,
     null_debug_arr,
@@ -1684,7 +1663,6 @@ const struct ofmt of_ith = {
     bin_sectalign,
     bin_segbase,
     bin_directive,
-    ith_filename,
     bin_cleanup,
     NULL                        /* pragma list */
 };
@@ -1692,6 +1670,7 @@ const struct ofmt of_ith = {
 const struct ofmt of_srec = {
     "Motorola S-records",
     "srec",
+    ".srec",
     OFMT_TEXT,
     64,
     null_debug_arr,
@@ -1705,7 +1684,6 @@ const struct ofmt of_srec = {
     bin_sectalign,
     bin_segbase,
     bin_directive,
-    srec_filename,
     bin_cleanup,
     NULL                        /* pragma list */
 };

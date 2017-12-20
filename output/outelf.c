@@ -2224,12 +2224,6 @@ static int32_t elf_segbase(int32_t segment)
     return segment;
 }
 
-static void elf_filename(char *inname, char *outname)
-{
-    strcpy(elf_module, inname);
-    standard_extension(inname, outname, ".o");
-}
-
 extern macros_t elf_stdmac[];
 
 /* Claim "elf" as a pragma namespace, for the future */
@@ -2272,6 +2266,7 @@ static const struct dfmt * const elf32_debugs_arr[3] =
 const struct ofmt of_elf32 = {
     "ELF32 (i386) object files (e.g. Linux)",
     "elf32",
+    ".o",
     0,
     32,
     elf32_debugs_arr,
@@ -2285,7 +2280,6 @@ const struct ofmt of_elf32 = {
     elf_sectalign,
     elf_segbase,
     elf_directive,
-    elf_filename,
     elf_cleanup,
     elf_pragma_list,
 };
@@ -2322,6 +2316,7 @@ static const struct dfmt * const elf64_debugs_arr[3] =
 const struct ofmt of_elf64 = {
     "ELF64 (x86_64) object files (e.g. Linux)",
     "elf64",
+    ".o",
     0,
     64,
     elf64_debugs_arr,
@@ -2335,7 +2330,6 @@ const struct ofmt of_elf64 = {
     elf_sectalign,
     elf_segbase,
     elf_directive,
-    elf_filename,
     elf_cleanup,
     elf_pragma_list,
 };
@@ -2372,6 +2366,7 @@ static const struct dfmt * const elfx32_debugs_arr[3] =
 const struct ofmt of_elfx32 = {
     "ELFX32 (x86_64) object files (e.g. Linux)",
     "elfx32",
+    ".o",
     0,
     64,
     elfx32_debugs_arr,
@@ -2385,7 +2380,6 @@ const struct ofmt of_elfx32 = {
     elf_sectalign,
     elf_segbase,
     elf_directive,
-    elf_filename,
     elf_cleanup,
     NULL                        /* pragma list */
 };

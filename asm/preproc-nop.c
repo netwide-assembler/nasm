@@ -63,7 +63,7 @@ static void nop_init(void)
     /* Nothing to do */
 }
 
-static void nop_reset(char *file, int pass, StrList **deplist)
+static void nop_reset(const char *file, int pass, StrList **deplist)
 {
     src_set(0, file);
     nop_lineinc = 1;

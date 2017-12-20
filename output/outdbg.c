@@ -66,6 +66,8 @@ static void dbg_init(void)
 {
     dbgsect = NULL;
     fprintf(ofile, "NASM Output format debug dump\n");
+    fprintf(ofile, "input file  = %s\n", inname);
+    fprintf(ofile, "output file = %s\n", outname);
 }
 
 static void dbg_cleanup(void)
@@ -369,11 +371,6 @@ dbg_pragma(const struct pragma *pragma)
     return DIRR_OK;
 }
 
-static void dbg_filename(char *inname, char *outname)
-{
-    standard_extension(inname, outname, ".dbg");
-}
-
 static const char * const types[] = {
     "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
 };
@@ -443,6 +440,7 @@ extern macros_t dbg_stdmac[];
 const struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
+    ".dbg",
     OFMT_TEXT,
     64,
     debug_debug_arr,
@@ -456,7 +454,6 @@ const struct ofmt of_dbg = {
     dbg_sectalign,
     dbg_segbase,
     dbg_directive,
-    dbg_filename,
     dbg_cleanup,
     dbg_pragma_list
 };

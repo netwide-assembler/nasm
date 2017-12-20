@@ -64,10 +64,6 @@ extern struct compile_time official_compile_time;
 #define NO_SEG -1L              /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 
-#ifndef FILENAME_MAX
-#define FILENAME_MAX 256
-#endif
-
 #ifndef PREFIX_MAX
 #define PREFIX_MAX 10
 #endif
@@ -354,7 +350,7 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(char *file, int pass, StrList **deplist);
+    void (*reset)(const char *file, int pass, StrList **deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -783,6 +779,11 @@ struct ofmt {
     const char *shortname;
 
     /*
+     * Default output filename extension, or a null string
+     */
+    const char *extension;
+
+    /*
      * Output format flags.
      */
 #define OFMT_TEXT   1		/* Text file format */
@@ -927,25 +928,6 @@ struct ofmt {
      */
     enum directive_result
     (*directive)(enum directive directive, char *value, int pass);
-
-    /*
-     * This procedure is called before anything else - even before
-     * the "init" routine - and is passed the name of the input
-     * file from which this output file is being generated. It
-     * should return its preferred name for the output file in
-     * `outname', if outname[0] is not '\0', and do nothing to
-     * `outname' otherwise. Since it is called before the driver is
-     * properly initialized, it has to be passed its error handler
-     * separately.
-     *
-     * This procedure may also take its own copy of the input file
-     * name for use in writing the output file: it is _guaranteed_
-     * that it will be called before the "init" routine.
-     *
-     * The parameter `outname' points to an area of storage
-     * guaranteed to be at least FILENAME_MAX in size.
-     */
-    void (*filename)(char *inname, char *outname);
 
     /*
      * This procedure is called after assembly finishes, to allow
@@ -1243,5 +1225,8 @@ extern int optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */
+
+extern const char *inname;	/* primary input filename */
+extern const char *outname;     /* output filename */
 
 #endif

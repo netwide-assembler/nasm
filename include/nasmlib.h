@@ -196,10 +196,9 @@ void pure_func seg_init(void);
 int32_t pure_func seg_alloc(void);
 
 /*
- * many output formats will be able to make use of this: a standard
- * function to add an extension to the name of the input file
+ * Add/replace or remove an extension to the end of a filename
  */
-void standard_extension(char *inname, char *outname, char *extension);
+const char *filename_set_extension(const char *inname, const char *extension);
 
 /*
  * Utility macros...
