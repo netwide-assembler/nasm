@@ -43,6 +43,13 @@ AS_IF([test x"$pa_init_cflags" = x],
 AS_IF([test x"$pa_optimize" = "x-O0"],
       [PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
+dnl Abort on panic
+PA_ARG_ENABLED([panic-abort],
+ [call abort() on panic to trap in the debugger],
+ [AC_DEFINE(ABORT_ON_PANIC)])
+AH_TEMPLATE(ABORT_ON_PANIC,
+[Define to 1 to call abort() on panics (internal errors), for debugging.])
+
 dnl Check for library extension
 PA_LIBEXT
 

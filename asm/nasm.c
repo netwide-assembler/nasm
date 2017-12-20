@@ -1829,7 +1829,9 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;                  /* placate silly compilers */
     case ERR_PANIC:
         fflush(NULL);
-        /* abort(); */          /* halt, catch fire, and dump core */
+#ifdef ABORT_ON_PANIC
+        abort();                /* halt, catch fire, dump core/stop debugger */
+#endif
         if (ofile) {
             fclose(ofile);
             remove(outname);
