@@ -71,13 +71,14 @@ static inline vefunc nasm_set_verror(vefunc ve)
                                          * and dump core for reference */
 #define ERR_MASK        0x00000007      /* mask off the above codes */
 #define ERR_NOFILE      0x00000010      /* don't give source file name/line */
-#define ERR_USAGE       0x00000020      /* print a usage message */
-#define ERR_PASS1       0x00000040      /* only print this error on pass one */
-#define ERR_PASS2       0x00000080
+#define ERR_TOPFILE	0x00000020      /* give the top input file name only */
+#define ERR_USAGE       0x00000040      /* print a usage message */
+#define ERR_PASS1       0x00000080      /* only print this error on pass one */
+#define ERR_PASS2       0x00000100      /* only print this error on pass one */
 
-#define ERR_NO_SEVERITY 0x00000100      /* suppress printing severity */
-#define ERR_PP_PRECOND	0x00000200	/* for preprocessor use */
-#define ERR_PP_LISTMACRO 0x00000400	/* from preproc->error_list_macros() */
+#define ERR_NO_SEVERITY 0x00000200      /* suppress printing severity */
+#define ERR_PP_PRECOND	0x00000400	/* for preprocessor use */
+#define ERR_PP_LISTMACRO 0x00000800	/* from preproc->error_list_macros() */
 
 /*
  * These codes define specific types of suppressible warning.
