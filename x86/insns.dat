@@ -5123,6 +5123,30 @@ PCOMMIT         void                            [       66 0f ae f8]            
 ; AMD Zen v1
 CLZERO		void				[	0f 01 fc]				FUTURE,AMD
 
+;# Intel instruction extension based on pub number 319433-030 dated October 2017
+
+; Intel VAES instructions
+VAESENC		ymmreg,ymmreg*,ymmrm256		[rvm:   vex.nds.256.66.0f38.wig dc /r]		VAES,FUTURE
+VAESENCLAST	ymmreg,ymmreg*,ymmrm256		[rvm:   vex.nds.256.66.0f38.wig dd /r]		VAES,FUTURE
+VAESDEC		ymmreg,ymmreg*,ymmrm256		[rvm:   vex.nds.256.66.0f38.wig de /r]		VAES,FUTURE
+VAESDECLAST	ymmreg,ymmreg*,ymmrm256		[rvm:   vex.nds.256.66.0f38.wig df /r]		VAES,FUTURE
+
+; Intel VAES + AVX512VL instructions
+VAESENC		xmmreg,xmmreg*,xmmrm128		[rvm:fv: evex.nds.128.66.0f38.wig dc /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESENC		ymmreg,ymmreg*,ymmrm256		[rvm:fv: evex.nds.256.66.0f38.wig dc /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESENCLAST	xmmreg,xmmreg*,xmmrm128		[rvm:fv: evex.nds.128.66.0f38.wig dd /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESENCLAST	ymmreg,ymmreg*,ymmrm256		[rvm:fv: evex.nds.256.66.0f38.wig dd /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESDEC		xmmreg,xmmreg*,xmmrm128		[rvm:fv: evex.nds.128.66.0f38.wig de /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESDEC		ymmreg,ymmreg*,ymmrm256		[rvm:fv: evex.nds.256.66.0f38.wig de /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESDECLAST	xmmreg,xmmreg*,xmmrm128		[rvm:fv: evex.nds.128.66.0f38.wig df /r]	AVX512VL,AVX512,VAES,FUTURE
+VAESDECLAST	ymmreg,ymmreg*,ymmrm256		[rvm:fv: evex.nds.256.66.0f38.wig df /r]	AVX512VL,AVX512,VAES,FUTURE
+
+; Intel VAES + AVX512F instructions
+VAESENC		zmmreg,zmmreg*,zmmrm512		[rvm:fv: evex.nds.512.66.0f38.wig dc /r]	AVX512,VAES,FUTURE
+VAESENCLAST	zmmreg,zmmreg*,zmmrm512		[rvm:fv: evex.nds.512.66.0f38.wig dd /r]	AVX512,VAES,FUTURE
+VAESDEC		zmmreg,zmmreg*,zmmrm512		[rvm:fv: evex.nds.512.66.0f38.wig de /r]	AVX512,VAES,FUTURE
+VAESDECLAST	zmmreg,zmmreg*,zmmrm512		[rvm:fv: evex.nds.512.66.0f38.wig df /r]	AVX512,VAES,FUTURE
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
