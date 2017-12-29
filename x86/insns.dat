@@ -2778,6 +2778,33 @@ VPCLMULLQHQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f3a 44 /r 10]		AVX,
 VPCLMULHQHQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f3a 44 /r 11]		AVX,SANDYBRIDGE
 VPCLMULQDQ	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:	vex.nds.128.66.0f3a 44 /r ib]		AVX,SANDYBRIDGE
 
+; Intel VPCLMULQDQ instructions
+VPCLMULLQLQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  vex.nds.256.66.0f3a.wig 44 /r 00]	VPCLMULQDQ,FUTURE
+VPCLMULHQLQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  vex.nds.256.66.0f3a.wig 44 /r 01]	VPCLMULQDQ,FUTURE
+VPCLMULLQHQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  vex.nds.256.66.0f3a.wig 44 /r 10]	VPCLMULQDQ,FUTURE
+VPCLMULHQHQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  vex.nds.256.66.0f3a.wig 44 /r 11]	VPCLMULQDQ,FUTURE
+VPCLMULQDQ	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:fv: vex.nds.256.66.0f3a.wig 44 /r ib]	VPCLMULQDQ,FUTURE
+
+; Intel VPCLMULQDQ + AVX512VL instructions
+VPCLMULLQLQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:fv:  evex.nds.128.66.0f3a.wig 44 /r 00]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULHQLQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:fv:  evex.nds.128.66.0f3a.wig 44 /r 01]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULLQHQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:fv:  evex.nds.128.66.0f3a.wig 44 /r 10]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULHQHQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:fv:  evex.nds.128.66.0f3a.wig 44 /r 11]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULQDQ	xmmreg,xmmreg*,xmmrm128,imm8	[rvmi:fv: evex.nds.128.66.0f3a.wig 44 /r ib]	AVX512VL,VPCLMULQDQ,FUTURE
+
+VPCLMULLQLQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  evex.nds.256.66.0f3a.wig 44 /r 00]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULHQLQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  evex.nds.256.66.0f3a.wig 44 /r 01]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULLQHQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  evex.nds.256.66.0f3a.wig 44 /r 10]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULHQHQDQ	ymmreg,ymmreg*,ymmrm256		[rvm:fv:  evex.nds.256.66.0f3a.wig 44 /r 11]	AVX512VL,VPCLMULQDQ,FUTURE
+VPCLMULQDQ	ymmreg,ymmreg*,ymmrm256,imm8	[rvmi:fv: evex.nds.256.66.0f3a.wig 44 /r ib]	AVX512VL,VPCLMULQDQ,FUTURE
+
+; Intel VPCLMULQDQ + AVX512F instructions
+VPCLMULLQLQDQ	zmmreg,zmmreg*,zmmrm512		[rvm:fv:  evex.nds.512.66.0f3a.wig 44 /r 00]	AVX512,VPCLMULQDQ,FUTURE
+VPCLMULHQLQDQ	zmmreg,zmmreg*,zmmrm512		[rvm:fv:  evex.nds.512.66.0f3a.wig 44 /r 01]	AVX512,VPCLMULQDQ,FUTURE
+VPCLMULLQHQDQ	zmmreg,zmmreg*,zmmrm512		[rvm:fv:  evex.nds.512.66.0f3a.wig 44 /r 10]	AVX512,VPCLMULQDQ,FUTURE
+VPCLMULHQHQDQ	zmmreg,zmmreg*,zmmrm512		[rvm:fv:  evex.nds.512.66.0f3a.wig 44 /r 11]	AVX512,VPCLMULQDQ,FUTURE
+VPCLMULQDQ	zmmreg,zmmreg*,zmmrm512,imm8	[rvmi:fv: evex.nds.512.66.0f3a.wig 44 /r ib]	AVX512,VPCLMULQDQ,FUTURE
+
 ;# Intel Fused Multiply-Add instructions (FMA)
 VFMADD132PS	xmmreg,xmmreg,xmmrm128		[rvm:	vex.dds.128.66.0f38.w0 98 /r]		FMA,FUTURE
 VFMADD132PS	ymmreg,ymmreg,ymmrm256		[rvm:	vex.dds.256.66.0f38.w0 98 /r]		FMA,FUTURE
