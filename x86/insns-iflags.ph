@@ -141,6 +141,7 @@ my %insns_flag_bit = (
     "EVEX"              => [ 95, "EVEX encoded instruction"],
     "AES"               => [ 96, "AES instructions"],
     "VAES"              => [ 97, "AES AVX instructions"],
+    "VPCLMULQDQ"        => [ 98, "Carry-Less Multiplication extention"],
 
     #
     # dword bound, cpu type flags
