@@ -139,31 +139,33 @@ my %insns_flag_bit = (
     "OBSOLETE"          => [ 93, "Instruction removed from architecture"],
     "VEX"               => [ 94, "VEX or XOP encoded instruction"],
     "EVEX"              => [ 95, "EVEX encoded instruction"],
+    "AES"               => [ 96, "AES instructions"],
+    "VAES"              => [ 97, "AES AVX instructions"],
 
     #
-    # dword bound, index 3 - cpu type flags
+    # dword bound, cpu type flags
     #
     # The CYRIX and AMD flags should have the highest bit values; the
     # disassembler selection algorithm depends on it.
     #
-    "8086"              => [ 96, "8086"],
-    "186"               => [ 97, "186+"],
-    "286"               => [ 98, "286+"],
-    "386"               => [ 99, "386+"],
-    "486"               => [100, "486+"],
-    "PENT"              => [101, "Pentium"],
-    "P6"                => [102, "P6"],
-    "KATMAI"            => [103, "Katmai"],
-    "WILLAMETTE"        => [104, "Willamette"],
-    "PRESCOTT"          => [105, "Prescott"],
-    "X86_64"            => [106, "x86-64 (long or legacy mode)"],
-    "NEHALEM"           => [107, "Nehalem"],
-    "WESTMERE"          => [108, "Westmere"],
-    "SANDYBRIDGE"       => [109, "Sandy Bridge"],
-    "FUTURE"            => [110, "Future processor (not yet disclosed)"],
-    "IA64"              => [111, "IA64 (in x86 mode)"],
-    "CYRIX"             => [126, "Cyrix-specific"],
-    "AMD"               => [127, "AMD-specific"],
+    "8086"              => [128, "8086"],
+    "186"               => [129, "186+"],
+    "286"               => [130, "286+"],
+    "386"               => [131, "386+"],
+    "486"               => [132, "486+"],
+    "PENT"              => [133, "Pentium"],
+    "P6"                => [134, "P6"],
+    "KATMAI"            => [135, "Katmai"],
+    "WILLAMETTE"        => [136, "Willamette"],
+    "PRESCOTT"          => [137, "Prescott"],
+    "X86_64"            => [138, "x86-64 (long or legacy mode)"],
+    "NEHALEM"           => [139, "Nehalem"],
+    "WESTMERE"          => [140, "Westmere"],
+    "SANDYBRIDGE"       => [141, "Sandy Bridge"],
+    "FUTURE"            => [142, "Future processor (not yet disclosed)"],
+    "IA64"              => [143, "IA64 (in x86 mode)"],
+    "CYRIX"             => [144, "Cyrix-specific"],
+    "AMD"               => [145, "AMD-specific"],
 );
 
 my %insns_flag_hash = ();
