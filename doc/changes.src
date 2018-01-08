@@ -7,6 +7,10 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.13.03} Version 2.13.03
+
+\b Added AVX and AVX512 \c{VAES*} and \c{VPCLMULQDQ} instructions.
+
 \S{cl-2.13.02} Version 2.13.02
 
 \b Fix false positive in testing of numeric overflows.
