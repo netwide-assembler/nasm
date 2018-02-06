@@ -131,9 +131,9 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
     iflag_clear(&v2, IF_CYRIX);
     iflag_clear(&v2, IF_AMD);
 
-    if (v1.field[3] < v2.field[3])
+    if (v1.field[4] < v2.field[4])
         return -1;
-    else if (v1.field[3] > v2.field[3])
+    else if (v1.field[4] > v2.field[4])
         return 1;
 
     return 0;
