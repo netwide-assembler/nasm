@@ -322,8 +322,8 @@ int main(int argc, char **argv)
 
     timestamp();
 
-    iflag_set(&cpu, IF_PLEVEL);
-    iflag_set(&cmd_cpu, IF_PLEVEL);
+    iflag_set_default_cpu(&cpu);
+    iflag_set_default_cpu(&cmd_cpu);
 
     pass0 = 0;
     want_usage = terminate_after_phase = false;
@@ -1306,8 +1306,21 @@ static void assemble_file(char *fname, StrList **depend_ptr)
     uint64_t prev_offset_changed;
     unsigned int stall_count = 0; /* Make sure we make forward progress... */
 
-    if (cmd_sb == 32 && iflag_ffs(&cmd_cpu) < IF_386)
-	nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
+    switch (cmd_sb) {
+    case 16:
+        break;
+    case 32:
+        if (!iflag_cpu_level_ok(&cmd_cpu, IF_386))
+            nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
+        break;
+    case 64:
+        if (!iflag_cpu_level_ok(&cmd_cpu, IF_X86_64))
+            nasm_fatal(0, "command line: 64-bit segment size requires a higher cpu");
+        break;
+    default:
+        panic();
+        break;
+    }
 
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {

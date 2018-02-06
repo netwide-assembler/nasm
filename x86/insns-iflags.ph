@@ -64,109 +64,117 @@
 # for a set of flags, so be careful moving bits (and
 # don't forget to update C code generation then).
 #
+sub dword_align($) {
+    my($n) = @_;
+
+    $$n = ($$n + 31) & ~31;
+    return $n;
+}
+
+my $f = 0;
 my %insns_flag_bit = (
     #
     # dword bound, index 0 - specific flags
     #
-    "SM"                => [  0, "Size match"],
-    "SM2"               => [  1, "Size match first two operands"],
-    "SB"                => [  2, "Unsized operands can't be non-byte"],
-    "SW"                => [  3, "Unsized operands can't be non-word"],
-    "SD"                => [  4, "Unsized operands can't be non-dword"],
-    "SQ"                => [  5, "Unsized operands can't be non-qword"],
-    "SO"                => [  6, "Unsized operands can't be non-oword"],
-    "SY"                => [  7, "Unsized operands can't be non-yword"],
-    "SZ"                => [  8, "Unsized operands can't be non-zword"],
-    "SIZE"              => [  9, "Unsized operands must match the bitsize"],
-    "SX"                => [ 10, "Unsized operands not allowed"],
-    "AR0"               => [ 11, "SB, SW, SD applies to argument 0"],
-    "AR1"               => [ 12, "SB, SW, SD applies to argument 1"],
-    "AR2"               => [ 13, "SB, SW, SD applies to argument 2"],
-    "AR3"               => [ 14, "SB, SW, SD applies to argument 3"],
-    "AR4"               => [ 15, "SB, SW, SD applies to argument 4"],
-    "OPT"               => [ 16, "Optimizing assembly only"],
+    "SM"                => [$f++, "Size match"],
+    "SM2"               => [$f++, "Size match first two operands"],
+    "SB"                => [$f++, "Unsized operands can't be non-byte"],
+    "SW"                => [$f++, "Unsized operands can't be non-word"],
+    "SD"                => [$f++, "Unsized operands can't be non-dword"],
+    "SQ"                => [$f++, "Unsized operands can't be non-qword"],
+    "SO"                => [$f++, "Unsized operands can't be non-oword"],
+    "SY"                => [$f++, "Unsized operands can't be non-yword"],
+    "SZ"                => [$f++, "Unsized operands can't be non-zword"],
+    "SIZE"              => [$f++, "Unsized operands must match the bitsize"],
+    "SX"                => [$f++, "Unsized operands not allowed"],
+    "AR0"               => [$f++, "SB, SW, SD applies to argument 0"],
+    "AR1"               => [$f++, "SB, SW, SD applies to argument 1"],
+    "AR2"               => [$f++, "SB, SW, SD applies to argument 2"],
+    "AR3"               => [$f++, "SB, SW, SD applies to argument 3"],
+    "AR4"               => [$f++, "SB, SW, SD applies to argument 4"],
+    "OPT"               => [$f++, "Optimizing assembly only"],
 
     #
-    # dword bound, index 1 - instruction filtering flags
+    # dword bound - instruction filtering flags
     #
-    "PRIV"              => [ 32, "Privileged instruction"],
-    "SMM"               => [ 33, "Only valid in SMM"],
-    "PROT"              => [ 34, "Protected mode only"],
-    "LOCK"              => [ 35, "Lockable if operand 0 is memory"],
-    "NOLONG"            => [ 36, "Not available in long mode"],
-    "LONG"              => [ 37, "Long mode"],
-    "NOHLE"             => [ 38, "HLE prefixes forbidden"],
-    "MIB"               => [ 39, "disassemble with split EA"],
-    "BND"               => [ 40, "BND (0xF2) prefix available"],
-    "UNDOC"             => [ 41, "Undocumented"],
-    "HLE"               => [ 42, "HLE prefixed"],
-    "FPU"               => [ 43, "FPU"],
-    "MMX"               => [ 44, "MMX"],
-    "3DNOW"             => [ 45, "3DNow!"],
-    "SSE"               => [ 46, "SSE (KNI, MMX2)"],
-    "SSE2"              => [ 47, "SSE2"],
-    "SSE3"              => [ 48, "SSE3 (PNI)"],
-    "VMX"               => [ 49, "VMX"],
-    "SSSE3"             => [ 50, "SSSE3"],
-    "SSE4A"             => [ 51, "AMD SSE4a"],
-    "SSE41"             => [ 52, "SSE4.1"],
-    "SSE42"             => [ 53, "SSE4.2"],
-    "SSE5"              => [ 54, "SSE5"],
-    "AVX"               => [ 55, "AVX (128b)"],
-    "AVX2"              => [ 56, "AVX2 (256b)"],
-    "FMA"               => [ 57, ""],
-    "BMI1"              => [ 58, ""],
-    "BMI2"              => [ 59, ""],
-    "TBM"               => [ 60, ""],
-    "RTM"               => [ 61, ""],
-    "INVPCID"           => [ 62, ""],
+    "PRIV"              => [${dword_align(\$f)}++, "Privileged instruction"],
+    "SMM"               => [$f++, "Only valid in SMM"],
+    "PROT"              => [$f++, "Protected mode only"],
+    "LOCK"              => [$f++, "Lockable if operand 0 is memory"],
+    "NOLONG"            => [$f++, "Not available in long mode"],
+    "LONG"              => [$f++, "Long mode"],
+    "NOHLE"             => [$f++, "HLE prefixes forbidden"],
+    "MIB"               => [$f++, "disassemble with split EA"],
+    "BND"               => [$f++, "BND (0xF2) prefix available"],
+    "UNDOC"             => [$f++, "Undocumented"],
+    "HLE"               => [$f++, "HLE prefixed"],
+    "FPU"               => [$f++, "FPU"],
+    "MMX"               => [$f++, "MMX"],
+    "3DNOW"             => [$f++, "3DNow!"],
+    "SSE"               => [$f++, "SSE (KNI, MMX2)"],
+    "SSE2"              => [$f++, "SSE2"],
+    "SSE3"              => [$f++, "SSE3 (PNI)"],
+    "VMX"               => [$f++, "VMX"],
+    "SSSE3"             => [$f++, "SSSE3"],
+    "SSE4A"             => [$f++, "AMD SSE4a"],
+    "SSE41"             => [$f++, "SSE4.1"],
+    "SSE42"             => [$f++, "SSE4.2"],
+    "SSE5"              => [$f++, "SSE5"],
+    "AVX"               => [$f++, "AVX  (256-bit floating point)"],
+    "AVX2"              => [$f++, "AVX2 (256-bit integer)"],
+    "FMA"               => [$f++, ""],
+    "BMI1"              => [$f++, ""],
+    "BMI2"              => [$f++, ""],
+    "TBM"               => [$f++, ""],
+    "RTM"               => [$f++, ""],
+    "INVPCID"           => [$f++, ""],
+    "AVX512"            => [$f++, "AVX-512F (512-bit base architecture)"],
+    "AVX512CD"          => [$f++, "AVX-512 Conflict Detection"],
+    "AVX512ER"          => [$f++, "AVX-512 Exponential and Reciprocal"],
+    "AVX512PF"          => [$f++, "AVX-512 Prefetch"],
+    "MPX"               => [$f++, "MPX"],
+    "SHA"               => [$f++, "SHA"],
+    "PREFETCHWT1"       => [$f++, "PREFETCHWT1"],
+    "AVX512VL"          => [$f++, "AVX-512 Vector Length Orthogonality"],
+    "AVX512DQ"          => [$f++, "AVX-512 Dword and Qword"],
+    "AVX512BW"          => [$f++, "AVX-512 Byte and Word"],
+    "AVX512IFMA"        => [$f++, "AVX-512 IFMA instructions"],
+    "AVX512VBMI"        => [$f++, "AVX-512 VBMI instructions"],
+    "AES"               => [$f++, "AES instructions"],
+    "VAES"              => [$f++, "AES AVX instructions"],
+    "VPCLMULQDQ"        => [$f++, "Carry-Less Multiplication extention"],
+
+    # Put these last
+    "OBSOLETE"          => [$f++, "Instruction removed from architecture"],
+    "VEX"               => [$f++, "VEX or XOP encoded instruction"],
+    "EVEX"              => [$f++, "EVEX encoded instruction"],
 
     #
-    # dword bound, index 2 - instruction filtering flags
-    #
-    "AVX512"            => [ 64, "AVX-512F (512b)"],
-    "AVX512CD"          => [ 65, "AVX-512 Conflict Detection"],
-    "AVX512ER"          => [ 66, "AVX-512 Exponential and Reciprocal"],
-    "AVX512PF"          => [ 67, "AVX-512 Prefetch"],
-    "MPX"               => [ 68	,"MPX"],
-    "SHA"               => [ 69	,"SHA"],
-    "PREFETCHWT1"       => [ 70	,"PREFETCHWT1"],
-    "AVX512VL"          => [ 71, "AVX-512 Vector Length Orthogonality"],
-    "AVX512DQ"          => [ 72, "AVX-512 Dword and Qword"],
-    "AVX512BW"          => [ 73, "AVX-512 Byte and Word"],
-    "AVX512IFMA"        => [ 74, "AVX-512 IFMA instructions"],
-    "AVX512VBMI"        => [ 75, "AVX-512 VBMI instructions"],
-    "OBSOLETE"          => [ 93, "Instruction removed from architecture"],
-    "VEX"               => [ 94, "VEX or XOP encoded instruction"],
-    "EVEX"              => [ 95, "EVEX encoded instruction"],
-    "AES"               => [ 96, "AES instructions"],
-    "VAES"              => [ 97, "AES AVX instructions"],
-    "VPCLMULQDQ"        => [ 98, "Carry-Less Multiplication extention"],
-
-    #
-    # dword bound, cpu type flags
+    # dword bound - cpu type flags
     #
     # The CYRIX and AMD flags should have the highest bit values; the
     # disassembler selection algorithm depends on it.
     #
-    "8086"              => [128, "8086"],
-    "186"               => [129, "186+"],
-    "286"               => [130, "286+"],
-    "386"               => [131, "386+"],
-    "486"               => [132, "486+"],
-    "PENT"              => [133, "Pentium"],
-    "P6"                => [134, "P6"],
-    "KATMAI"            => [135, "Katmai"],
-    "WILLAMETTE"        => [136, "Willamette"],
-    "PRESCOTT"          => [137, "Prescott"],
-    "X86_64"            => [138, "x86-64 (long or legacy mode)"],
-    "NEHALEM"           => [139, "Nehalem"],
-    "WESTMERE"          => [140, "Westmere"],
-    "SANDYBRIDGE"       => [141, "Sandy Bridge"],
-    "FUTURE"            => [142, "Future processor (not yet disclosed)"],
-    "IA64"              => [143, "IA64 (in x86 mode)"],
-    "CYRIX"             => [144, "Cyrix-specific"],
-    "AMD"               => [145, "AMD-specific"],
+    "8086"              => [${dword_align(\$f)}++, "8086"],
+    "186"               => [$f++, "186+"],
+    "286"               => [$f++, "286+"],
+    "386"               => [$f++, "386+"],
+    "486"               => [$f++, "486+"],
+    "PENT"              => [$f++, "Pentium"],
+    "P6"                => [$f++, "P6"],
+    "KATMAI"            => [$f++, "Katmai"],
+    "WILLAMETTE"        => [$f++, "Willamette"],
+    "PRESCOTT"          => [$f++, "Prescott"],
+    "X86_64"            => [$f++, "x86-64 (long or legacy mode)"],
+    "NEHALEM"           => [$f++, "Nehalem"],
+    "WESTMERE"          => [$f++, "Westmere"],
+    "SANDYBRIDGE"       => [$f++, "Sandy Bridge"],
+    "FUTURE"            => [$f++, "Future processor (not yet disclosed)"],
+    "IA64"              => [$f++, "IA64 (in x86 mode)"],
+
+    # Put these last
+    "CYRIX"             => [$f++, "Cyrix-specific"],
+    "AMD"               => [$f++, "AMD-specific"],
 );
 
 my %insns_flag_hash = ();
@@ -176,9 +184,9 @@ my $iflag_words;
 sub get_flag_words() {
     my $max = -1;
 
-    foreach my $key (keys(%insns_flag_bit)) {
-	if (${$insns_flag_bit{$key}}[0] > $max) {
-	    $max = ${$insns_flag_bit{$key}}[0];
+    foreach my $vp (values(%insns_flag_bit)) {
+	if ($vp->[0] > $max) {
+	    $max = $vp->[0];
 	}
     }
 
@@ -218,14 +226,28 @@ sub write_iflaggen_h() {
     print N "#ifndef NASM_IFLAGGEN_H\n";
     print N "#define NASM_IFLAGGEN_H 1\n\n";
 
-    foreach my $key (sort { $insns_flag_bit{$a}[0] <=> $insns_flag_bit{$b}[0] } keys(%insns_flag_bit)) {
+    my @flagnames = keys(%insns_flag_bit);
+    @flagnames = sort {
+	$insns_flag_bit{$a}->[0] <=> $insns_flag_bit{$b}->[0]
+    } @flagnames;
+    my $next = 0;
+    foreach my $key (@flagnames) {
+	my $v = $insns_flag_bit{$key};
+	if ($v->[0] > $next) {
+	    printf N "%-31s /* %-64s */\n", '',
+		($next != $v->[0]-1) ?
+		sprintf("%d...%d unused", $next, $v->[0]-1) :
+		sprintf("%d unused", $next);
+	}
         print N sprintf("#define IF_%-16s %3d /* %-64s */\n",
-            $key, $insns_flag_bit{$key}[0], $insns_flag_bit{$key}[1]);
+			$key, $v->[0], $v->[1]);
+	$next = $v->[0] + 1;
     }
 
     print N "\n";
+    printf N "#define IF_FIELD_COUNT %d\n", $iflag_words;
     print N "typedef struct {\n";
-    printf N "    uint32_t field[%d];\n", $iflag_words;
+    print N "    uint32_t field[IF_FIELD_COUNT];\n";
     print N "} iflag_t;\n";
 
     print N "\n";

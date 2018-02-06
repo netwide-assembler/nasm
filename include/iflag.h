@@ -1,32 +1,28 @@
 #ifndef NASM_IFLAG_H
 #define NASM_IFLAG_H
 
-#include <string.h>
-
 #include "compiler.h"
 
-int ilog2_32(uint32_t v);
+#include <string.h>
 
 #include "iflaggen.h"
+#include "nasmlib.h"            /* For ilog2_32() */
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << (bit))
 
-static inline unsigned int iflag_test(const iflag_t *f, unsigned int bit)
+static inline bool iflag_test(const iflag_t *f, unsigned int bit)
 {
-    unsigned int index = bit / 32;
-    return f->field[index] & (UINT32_C(1) << (bit - (index * 32)));
+    return !!(f->field[bit >> 5] & IF_GENBIT(bit & 31));
 }
 
 static inline void iflag_set(iflag_t *f, unsigned int bit)
 {
-    unsigned int index = bit / 32;
-    f->field[index] |= (UINT32_C(1) << (bit - (index * 32)));
+    f->field[bit >> 5] |= IF_GENBIT(bit & 31);
 }
 
 static inline void iflag_clear(iflag_t *f, unsigned int bit)
 {
-    unsigned int index = bit / 32;
-    f->field[index] &= ~(UINT32_C(1) << (bit - (index * 32)));
+    f->field[bit >> 5] &= ~IF_GENBIT(bit & 31);
 }
 
 static inline void iflag_clear_all(iflag_t *f)
@@ -36,39 +32,21 @@ static inline void iflag_clear_all(iflag_t *f)
 
 static inline void iflag_set_all(iflag_t *f)
 {
-     memset(f, 0xff, sizeof(*f));
+     memset(f, ~0, sizeof(*f));
 }
+
+#define iflag_for_each_field(v) for ((v) = 0; (v) < IF_FIELD_COUNT; (v)++)
 
 static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
 {
     int i;
 
-    for (i = sizeof(a->field) / sizeof(a->field[0]) - 1; i >= 0; i--) {
+    /* This is intentionally a reverse loop! */
+    for (i = IF_FIELD_COUNT-1; i >= 0; i--) {
         if (a->field[i] == b->field[i])
             continue;
 
-        return (a->field[i] > b->field[i]) ? 1 : -1;
-    }
-
-    return 0;
-}
-
-static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
-{
-    if (a->field[3] < b->field[3])
-        return -1;
-    else if (a->field[3] > b->field[3])
-        return 1;
-    return 0;
-}
-
-static inline unsigned int iflag_ffs(const iflag_t *a)
-{
-    unsigned int i;
-
-    for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++) {
-        if (a->field[i])
-            return ilog2_32(a->field[i]) + (i * 32);
+        return (int)(a->field[i] - b->field[i]);
     }
 
     return 0;
@@ -80,7 +58,7 @@ static inline unsigned int iflag_ffs(const iflag_t *a)
         unsigned int i;                                                 \
         iflag_t res;                                                    \
                                                                         \
-        for (i = 0; i < sizeof(a->field) / sizeof(a->field[0]); i++)    \
+        iflag_for_each_field(i)                                         \
             res.field[i] = a->field[i] op b->field[i];                  \
                                                                         \
         return res;                                                     \
@@ -88,13 +66,6 @@ static inline unsigned int iflag_ffs(const iflag_t *a)
 
 IF_GEN_HELPER(xor, ^)
 
-
-/* Use this helper to test instruction template flags */
-#define itemp_has(itemp, bit)   iflag_test(&insns_flags[(itemp)->iflag_idx], bit)
-
-
-/* Maximum processor level at moment */
-#define IF_PLEVEL               IF_IA64
 /* Some helpers which are to work with predefined masks */
 #define IF_SMASK        \
     (IF_GENBIT(IF_SB)  |\
@@ -120,23 +91,67 @@ IF_GEN_HELPER(xor, ^)
 #define itemp_arg(itemp)        _itemp_arg((itemp)->iflag_idx)
 #define itemp_armask(itemp)     _itemp_armask((itemp)->iflag_idx)
 
+/*
+ * IF_8086 is the first CPU level flag and IF_PLEVEL the last
+ */
+#if IF_8086 & 31
+#error "IF_8086 must be on a uint32_t boundary"
+#endif
+#define IF_PLEVEL               IF_IA64
+#define IF_CPU_FIELD	       (IF_8086 >> 5)
+#define IF_CPU_LEVEL_MASK      ((IF_GENBIT(IF_PLEVEL & 31) << 1) - 1)
+
+/*
+ * IF_PRIV is the firstr instruction filtering flag
+ */
+#if IF_PRIV & 31
+#error "IF_PRIV must be on a uint32_t boundary"
+#endif
+#define IF_FEATURE_FIELD	(IF_PRIV >> 5)
+
+static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
+{
+    return (int)(a->field[IF_CPU_FIELD] - b->field[IF_CPU_FIELD]);
+}
+
+static inline uint32_t _iflag_cpu_level(const iflag_t *a)
+{
+    return a->field[IF_CPU_FIELD] & IF_CPU_LEVEL_MASK;
+}
+
 static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 {
-    iflag_t v1 = *a;
-    iflag_t v2 = *b;
+    uint32_t aa = _iflag_cpu_level(a);
+    uint32_t bb = _iflag_cpu_level(b);
 
-    iflag_clear(&v1, IF_CYRIX);
-    iflag_clear(&v1, IF_AMD);
+    return (int)(aa - bb);
+}
 
-    iflag_clear(&v2, IF_CYRIX);
-    iflag_clear(&v2, IF_AMD);
+/* Returns true if the CPU level is at least a certain value */
+static inline bool iflag_cpu_level_ok(const iflag_t *a, unsigned int bit)
+{
+    return _iflag_cpu_level(a) >= IF_GENBIT(bit & 31);
+}
 
-    if (v1.field[3] < v2.field[3])
-        return -1;
-    else if (v1.field[3] > v2.field[3])
-        return 1;
+static inline void iflag_set_all_features(iflag_t *a)
+{
+    size_t i;
 
-    return 0;
+    for (i = IF_FEATURE_FIELD; i < IF_CPU_FIELD; i++)
+        a->field[i] = ~UINT32_C(0);
+}
+
+static inline void iflag_set_cpu(iflag_t *a, unsigned int cpu)
+{
+    a->field[0] = 0;     /* Not applicable to the CPU type */
+    iflag_set_all_features(a);    /* All feature masking bits set for now */
+    a->field[IF_CPU_FIELD] &= ~IF_CPU_LEVEL_MASK;
+    iflag_set(a, cpu);
+}
+
+static inline void iflag_set_default_cpu(iflag_t *a)
+{
+    iflag_set_cpu(a, IF_PLEVEL);
 }
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)

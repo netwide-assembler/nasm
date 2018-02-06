@@ -23,6 +23,12 @@ struct itemplate {
     uint32_t        iflag_idx;          /* some flags referenced by index */
 };
 
+/* Use this helper to test instruction template flags */
+static inline bool itemp_has(const struct itemplate *itemp, unsigned int bit)
+{
+    return iflag_test(&insns_flags[itemp->iflag_idx], bit);
+}
+
 /* Disassembler table structure */
 
 /*

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1353,7 +1353,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length++;
         } else if ((ins->rex & REX_L) &&
                    !(ins->rex & (REX_P|REX_W|REX_X|REX_B)) &&
-                   iflag_ffs(&cpu) >= IF_X86_64) {
+                   iflag_cpu_level_ok(&cpu, IF_X86_64)) {
             /* LOCK-as-REX.R */
             assert_no_prefix(ins, PPS_LOCK);
             lockcheck = false;  /* Already errored, no need for warning */
