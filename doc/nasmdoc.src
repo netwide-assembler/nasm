@@ -7778,7 +7778,7 @@ The only instructions which take a full \I{64-bit displacement}64-bit
 \c{EAX} or \c{RAX} (but no other registers) to an absolute 64-bit address.
 Since this is a relatively rarely used instruction (64-bit code generally uses
 relative addressing), the programmer has to explicitly declare the
-displacement size as \c{QWORD}:
+displacement size as \c{ABS QWORD}:
 
 \c      default abs
 \c
