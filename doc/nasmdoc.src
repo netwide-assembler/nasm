@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -7754,6 +7754,24 @@ immediate as \c{DWORD}:
 \c      mov rax,dword foo       ; 32-bit immediate, sign-extended
 
 The length of these instructions are 10, 5 and 7 bytes, respectively.
+
+If optimization is enabled and NASM can determine at assembly time
+that a shorter instruction will suffice, the shorter instruction will
+be emitted unless of course \c{STRICT QWORD} or \c{STRICT DWORD} is
+specified (see \k{strict}):
+
+\c      mov rax,1		; Assembles as "mov eax,1" (5 bytes)
+\c      mov rax,strict qword 1  ; Full 10-byte instruction
+\c	mov rax,strict dword 1	; 7-byte instruction
+\c      mov rax,symbol          ; 10 bytes, not known at assembly time
+\c      lea rax,[rel symbol]    ; 7 bytes, usually preferred by the ABI
+
+Note that \c{lea rax,[rel symbol]} is position-independent, whereas
+\c{mov rax,symbol} is not.  Most ABIs prefer or even require
+position-independent code in 64-bit mode.  However, the \c{MOV}
+instruction is able to reference a symbol anywhere in the 64-bit
+address space, whereas \c{LEA} is only able to access a symbol within
+within 2 GB of the instruction itself (see below.)
 
 The only instructions which take a full \I{64-bit displacement}64-bit
 \e{displacement} is loading or storing, using \c{MOV}, \c{AL}, \c{AX},
