@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -85,6 +85,11 @@ static void usage(void);
 
 static bool using_debug_info, opt_verbose_info;
 static const char *debug_format;
+
+#ifndef ABORT_ON_PANIC
+# define ABORT_ON_PANIC 0
+#endif
+static bool abort_on_panic = ABORT_ON_PANIC;
 
 bool tasm_compatible_mode = false;
 int pass0, passn;
@@ -690,19 +695,25 @@ static char *quote_for_wmake(const char *str)
     return os;
 }
 
-struct textargs {
-    const char *label;
-    int value;
-};
-
 enum text_options {
+    OPT_BOGUS,
+    OPT_VERSION,
+    OPT_ABORT_ON_PANIC,
     OPT_PREFIX,
     OPT_POSTFIX
 };
+struct textargs {
+    const char *label;
+    enum text_options opt;
+    bool need_arg;
+};
 static const struct textargs textopts[] = {
-    {"prefix", OPT_PREFIX},
-    {"postfix", OPT_POSTFIX},
-    {NULL, 0}
+    {"v", OPT_VERSION, false},
+    {"version", OPT_VERSION, false},
+    {"abort-on-panic", OPT_ABORT_ON_PANIC, false},
+    {"prefix", OPT_PREFIX, true},
+    {"postfix", OPT_POSTFIX, true},
+    {NULL, OPT_BOGUS, false}
 };
 
 static void show_version(void)
@@ -1022,61 +1033,49 @@ static bool process_arg(char *p, char *q, int pass)
 
         case '-':
             {
-                int s;
+                const struct textargs *tx;
 
                 if (p[2] == 0) {        /* -- => stop processing options */
-                    stopoptions = 1;
+                    stopoptions = true;
                     break;
                 }
 
-                if (!nasm_stricmp(p, "--v"))
-                    show_version();
-
-                if (!nasm_stricmp(p, "--version"))
-                    show_version();
-
-                for (s = 0; textopts[s].label; s++) {
-                    if (!nasm_stricmp(p + 2, textopts[s].label)) {
+                for (tx = textopts; tx->label; tx++) {
+                    if (!nasm_stricmp(p + 2, tx->label))
                         break;
-                    }
                 }
 
-                switch (s) {
-                case OPT_PREFIX:
-                case OPT_POSTFIX:
-                    {
-                        if (!q) {
-                            nasm_error(ERR_NONFATAL | ERR_NOFILE |
-                                         ERR_USAGE,
-                                         "option `--%s' requires an argument",
-                                         p + 2);
-                            break;
-                        } else {
-                            advance = 1, param = q;
-                        }
-
-                        switch (s) {
-                        case OPT_PREFIX:
-                            if (pass == 2)
-                                strlcpy(lprefix, param, PREFIX_MAX);
-                            break;
-                        case OPT_POSTFIX:
-                            if (pass == 2)
-                                strlcpy(lpostfix, param, POSTFIX_MAX);
-                            break;
-                        default:
-                            panic();
-                            break;
-                        }
-                        break;
-                    }
-
-                default:
-                    {
+                if (tx->need_arg) {
+                    if (!q) {
                         nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                                     "unrecognised option `--%s'", p + 2);
+                                   "option `--%s' requires an argument",
+                                   p + 2);
                         break;
                     }
+                    advance = true;
+                }
+
+                switch (tx->opt) {
+                case OPT_VERSION:
+                    show_version();
+                    break;
+                case OPT_ABORT_ON_PANIC:
+                    abort_on_panic = true;
+                    break;
+                case OPT_PREFIX:
+                    if (pass == 2)
+                        strlcpy(lprefix, q, PREFIX_MAX);
+                    break;
+                case OPT_POSTFIX:
+                    if (pass == 2)
+                        strlcpy(lpostfix, q, POSTFIX_MAX);
+                    break;
+                case OPT_BOGUS:
+                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                               "unrecognized option `--%s'", p + 2);
+                    break;
+                default:
+                    panic();
                 }
                 break;
             }
@@ -1825,9 +1824,10 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;                  /* placate silly compilers */
     case ERR_PANIC:
         fflush(NULL);
-#ifdef ABORT_ON_PANIC
-        abort();                /* halt, catch fire, dump core/stop debugger */
-#endif
+
+        if (abort_on_panic)
+            abort();		/* halt, catch fire, dump core/stop debugger */
+
         if (ofile) {
             fclose(ofile);
             remove(outname);
