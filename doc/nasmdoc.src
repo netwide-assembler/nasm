@@ -7704,10 +7704,15 @@ platforms pass arguments in registers rather than on the stack.
 Furthermore, 64-bit platforms use SSE2 by default for floating point.
 Please see the ABI documentation for your platform.
 
-64-bit platforms differ in the sizes of the fundamental datatypes, not
-just from 32-bit platforms but from each other.  If a specific size
-data type is desired, it is probably best to use the types defined in
-the Standard C header \c{<inttypes.h>}.
+64-bit platforms differ in the sizes of the C/C++ fundamental
+datatypes, not just from 32-bit platforms but from each other.  If a
+specific size data type is desired, it is probably best to use the
+types defined in the standard C header \c{<inttypes.h>}.
+
+All known 64-bit platforms except some embedded platforms require that
+the stack is 16-byte aligned at the entry to a function.  In order to
+enforce that, the stack pointer (\c{RSP}) needs to be aligned on an
+\c{odd} multiple of 8 bytes before the \c{CALL} instruction.
 
 In 64-bit mode, the default instruction size is still 32 bits.  When
 loading a value into a 32-bit register (but not an 8- or 16-bit
@@ -7815,9 +7820,11 @@ calls, and thus are available for use by the function without saving.
 Integer return values are passed in \c{RAX} and \c{RDX}, in that order.
 
 Floating point is done using SSE registers, except for \c{long
-double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM7};
-return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed on the
-stack, and returned in \c{ST0} and \c{ST1}.
+double}, which is 80 bits (\c{TWORD}) on most platforms (Android is
+one exception; there \c{long double} is 64 bits and treated the same
+as \c{double}.)  Floating-point arguments are passed in \c{XMM0} to
+\c{XMM7}; return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed
+on the stack, and returned in \c{ST0} and \c{ST1}.
 
 All SSE and x87 registers are destroyed by function calls.
 
