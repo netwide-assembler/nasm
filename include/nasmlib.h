@@ -190,7 +190,7 @@ int64_t readstrnum(char *str, int length, bool *warn);
 /*
  * seg_alloc: allocate a hitherto unused segment number.
  */
-int32_t pure_func seg_alloc(void);
+int32_t seg_alloc(void);
 
 /*
  * many output formats will be able to make use of this: a standard
