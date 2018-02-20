@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "iflaggen.h"
-#include "nasmlib.h"            /* For ilog2_32() */
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << (bit))
 
