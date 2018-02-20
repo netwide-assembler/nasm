@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -1129,6 +1129,24 @@ RETF		void				[	cb]					8086
 RETF		imm				[i:	ca iw]					8086,SW
 RETN		void				[	c3]					8086,BND
 RETN		imm				[i:	c2 iw]					8086,SW,BND
+RETW		void				[	o16 c3]					8086,BND
+RETW		imm				[i:	c2 iw]					8086,SW,BND
+RETFW		void				[	o16 cb]					8086
+RETFW		imm				[i:	o16 ca iw]				8086,SW
+RETNW		void				[	o16 c3]					8086,BND
+RETNW		imm				[i:	o16 c2 iw]				8086,SW,BND
+RETD		void				[	o32 c3]					8086,BND,NOLONG
+RETD		imm				[i:	o32 c2 iw]				8086,SW,BND,NOLONG
+RETFD		void				[	o32 cb]					8086
+RETFD		imm				[i:	o32 ca iw]				8086,SW
+RETND		void				[	o32 c3]					8086,BND,NOLONG
+RETND		imm				[i:	o32 c2 iw]				8086,SW,BND,NOLONG
+RETQ		void				[	o64nw c3]				X64,BND
+RETQ		imm				[i:	o64nw c2 iw]				X64,SW,BND
+RETFQ		void				[	o64 cb]					X64
+RETFQ		imm				[i:	o64 ca iw]				X64,SW
+RETNQ		void				[	o64nw c3]				X64,BND
+RETNQ		imm				[i:	o64nw c2 iw]				X64,SW,BND
 
 ROL		rm8,unity			[m-:	d0 /0]					8086
 ROL		rm8,reg_cl			[m-:	d2 /0]					8086

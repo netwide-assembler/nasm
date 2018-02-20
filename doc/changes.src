@@ -7,6 +7,12 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.13.04} Version 2.13.04
+
+\b Added \c{-W}, \c{-D}, and \c{-Q} suffix aliases for \c{RET}
+   instructions so the operand sizes of these instructions can be
+   encoded without using \c{o16}, \c{o32} or \c{o64}.
+
 \S{cl-2.13.03} Version 2.13.03
 
 \b Added AVX and AVX512 \c{VAES*} and \c{VPCLMULQDQ} instructions.
