@@ -2575,10 +2575,10 @@ static void stabs_generate(void)
         fileidx[i] = strsize;
         strsize += strlen(allfiles[i]) + 1;
     }
-    mainfileindex = 0;
+    currfile = mainfileindex = 0;
     for (i = 0; i < numfiles; i++) {
         if (!strcmp(allfiles[i], elf_module)) {
-            mainfileindex = i;
+            currfile = mainfileindex = i;
             break;
         }
     }
@@ -2638,7 +2638,6 @@ static void stabs_generate(void)
             WRITEDLONG(rptr, 0);
         }
         numstabs++;
-        currfile = mainfileindex;
     }
 
     if (is_elf32()) {
