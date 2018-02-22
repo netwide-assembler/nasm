@@ -87,7 +87,7 @@ void nasm_error(int severity, const char *fmt, ...)
     va_end(ap);
 }
 
-no_return nasm_fatal(int flags, const char *fmt, ...)
+fatal_func nasm_fatal(int flags, const char *fmt, ...)
 {
     va_list ap;
 
@@ -96,7 +96,7 @@ no_return nasm_fatal(int flags, const char *fmt, ...)
     abort();			/* We should never get here */
 }
 
-no_return nasm_panic(int flags, const char *fmt, ...)
+fatal_func nasm_panic(int flags, const char *fmt, ...)
 {
     va_list ap;
 
@@ -105,12 +105,12 @@ no_return nasm_panic(int flags, const char *fmt, ...)
     abort();			/* We should never get here */
 }
 
-no_return nasm_panic_from_macro(const char *file, int line)
+fatal_func nasm_panic_from_macro(const char *file, int line)
 {
     nasm_panic(ERR_NOFILE, "Internal error at %s:%d\n", file, line);
 }
 
-no_return nasm_assert_failed(const char *file, int line, const char *msg)
+fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
     nasm_panic(0, "assertion %s failed at %s:%d", msg, file, line);
 }

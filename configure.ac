@@ -223,6 +223,7 @@ PA_FUNC_ATTRIBUTE(alloc_size, (1))
 PA_FUNC_ATTRIBUTE(format, [(printf,1,2)], int, [const char *, ...], ["%d",1])
 PA_FUNC_ATTRIBUTE(const)
 PA_FUNC_ATTRIBUTE(pure)
+PA_FUNC_ATTRIBUTE(cold)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl

@@ -111,7 +111,7 @@ void nasm_write(const void *, size_t, FILE *);
 /*
  * NASM assert failure
  */
-no_return nasm_assert_failed(const char *, int, const char *);
+fatal_func nasm_assert_failed(const char *, int, const char *);
 #define nasm_assert(x)                                          \
     do {                                                        \
         if (unlikely(!(x)))                                     \

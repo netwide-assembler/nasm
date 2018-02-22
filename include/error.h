@@ -44,9 +44,9 @@
  * An error reporting function should look like this.
  */
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
-no_return printf_func(2, 3) nasm_fatal(int flags, const char *fmt, ...);
-no_return printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
-no_return nasm_panic_from_macro(const char *file, int line);
+fatal_func printf_func(2, 3) nasm_fatal(int flags, const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
+fatal_func nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
 
 typedef void (*vefunc) (int severity, const char *fmt, va_list ap);

@@ -286,6 +286,22 @@ size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /*
+ * How to tell the compiler that a function is unlikely to be executed.
+ * This differs from unlikely() in that it is applied to a function call,
+ * not a boolean condition.
+ */
+#ifndef HAVE_FUNC_ATTRIBUTE_COLD
+# define unlikely_func __attribute__((cold))
+#else
+# define unlikely_func
+#endif
+
+/*
+ * A fatal function is both unlikely and no_return
+ */
+#define fatal_func no_return unlikely_func
+
+/*
  * How to tell the compiler that a function takes a printf-like string
  */
 #ifdef HAVE_FUNC_ATTRIBUTE_FORMAT
