@@ -649,6 +649,7 @@ static void bin_cleanup(void)
         if (map_control & MAP_SYMBOLS) {
             int32_t segment;
             int64_t offset;
+            bool found_label;
 
             fprintf(rf, "-- Symbols ");
             for (h = 68; h; h--)
@@ -660,7 +661,8 @@ static void bin_cleanup(void)
                     fputc('-', rf);
                 fprintf(rf, "\n\nValue     Name\n");
                 list_for_each(l, no_seg_labels) {
-                    lookup_label(l->name, &segment, &offset);
+                    found_label = lookup_label(l->name, &segment, &offset);
+                    nasm_assert(found_label);
                     fprintf(rf, "%08"PRIX64"  %s\n", offset, l->name);
                 }
                 fprintf(rf, "\n\n");
@@ -672,7 +674,8 @@ static void bin_cleanup(void)
                         fputc('-', rf);
                     fprintf(rf, "\n\nReal              Virtual           Name\n");
                     list_for_each(l, s->labels) {
-                        lookup_label(l->name, &segment, &offset);
+                        found_label = lookup_label(l->name, &segment, &offset);
+                        nasm_assert(found_label);
                         fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %s\n",
                                 s->start + offset, s->vstart + offset,
                                 l->name);
