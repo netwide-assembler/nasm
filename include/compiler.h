@@ -214,15 +214,20 @@ size_t strnlen(const char *s, size_t maxlen);
 /*
  * Hack to support external-linkage inline functions
  */
-#ifdef __GNUC__
-# ifdef __GNUC_STDC_INLINE__
-#  define HAVE_STDC_INLINE
-# else
-#  define HAVE_GNU_INLINE
-# endif
-#elif defined(__STDC_VERSION__)
-# if __STDC_VERSION__ >= 199901L
-#  define HAVE_STDC_INLINE
+#ifndef HAVE_STDC_INLINE
+# ifdef __GNUC__
+#  ifdef __GNUC_STDC_INLINE__
+#   define HAVE_STDC_INLINE
+#  else
+#   define HAVE_GNU_INLINE
+#  endif
+# elif defined(__GNUC_GNU_INLINE__)
+/* Some other compiler implementing only GNU inline semantics? */
+#   define HAVE_GNU_INLINE
+# elif defined(__STDC_VERSION__)
+#  if __STDC_VERSION__ >= 199901L
+#   define HAVE_STDC_INLINE
+#  endif
 # endif
 #endif
 
@@ -230,6 +235,7 @@ size_t strnlen(const char *s, size_t maxlen);
 # define extern_inline inline
 #elif defined(HAVE_GNU_INLINE)
 # define extern_inline extern inline
+# define inline_prototypes
 #else
 # define inline_prototypes
 #endif

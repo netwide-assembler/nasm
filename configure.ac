@@ -288,6 +288,13 @@ PA_ARG_ENABLED([werror],
 )
 
 dnl
+dnl On some versions of gcc, -Werror=missing-prototypes causes problems
+dnl with C99-style external inlines.  Test this *after* adding the -Werror
+dnl options.
+dnl
+PA_CHECK_BAD_STDC_INLINE
+
+dnl
 dnl support ccache
 dnl
 PA_ARG_ENABLED([ccache], [compile with ccache], [CC="ccache $CC"], [])

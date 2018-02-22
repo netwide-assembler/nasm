@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -56,78 +56,90 @@
 #include "labels.h"
 #include "iflag.h"
 
-static iflag_t get_cpu(char *value)
+struct cpunames {
+    const char *name;
+    unsigned int level;
+    /* Eventually a table of features */
+};
+
+static iflag_t get_cpu(const char *value)
 {
     iflag_t r;
+    const struct cpunames *cpu;
+    static const struct cpunames cpunames[] = {
+        { "8086", IF_8086 },
+        { "186",  IF_186  },
+        { "286",  IF_286  },
+        { "386",  IF_386  },
+        { "486",  IF_486  },
+        { "586",  IF_PENT },
+        { "pentium", IF_PENT },
+        { "pentiummmx", IF_PENT },
+        { "686",  IF_P6 },
+        { "p6",   IF_P6 },
+        { "ppro", IF_P6 },
+        { "pentiumpro", IF_P6 },
+        { "p2", IF_P6 },        /* +MMX */
+        { "pentiumii", IF_P6 },
+        { "p3", IF_KATMAI },
+        { "katmai", IF_KATMAI },
+        { "p4", IF_WILLAMETTE },
+        { "willamette", IF_WILLAMETTE },
+        { "prescott", IF_PRESCOTT },
+        { "x64", IF_X86_64 },
+        { "x86-64", IF_X86_64 },
+        { "ia64", IF_IA64 },
+        { "ia-64", IF_IA64 },
+        { "itanium", IF_IA64 },
+        { "itanic", IF_IA64 },
+        { "merced", IF_IA64 },
+        { "any", IF_PLEVEL },
+        { "default", IF_PLEVEL },
+        { "all", IF_PLEVEL },
+        { NULL, IF_PLEVEL }     /* Error and final default entry */
+    };
 
-    iflag_clear_all(&r);
-
-    if (!strcmp(value, "8086"))
-        iflag_set(&r, IF_8086);
-    else if (!strcmp(value, "186"))
-        iflag_set(&r, IF_186);
-    else if (!strcmp(value, "286"))
-        iflag_set(&r, IF_286);
-    else if (!strcmp(value, "386"))
-        iflag_set(&r, IF_386);
-    else if (!strcmp(value, "486"))
-        iflag_set(&r, IF_486);
-    else if (!strcmp(value, "586") ||
-             !nasm_stricmp(value, "pentium"))
-        iflag_set(&r, IF_PENT);
-    else if (!strcmp(value, "686")              ||
-             !nasm_stricmp(value, "ppro")       ||
-             !nasm_stricmp(value, "pentiumpro") ||
-             !nasm_stricmp(value, "p2"))
-        iflag_set(&r, IF_P6);
-    else if (!nasm_stricmp(value, "p3") ||
-             !nasm_stricmp(value, "katmai"))
-        iflag_set(&r, IF_KATMAI);
-    else if (!nasm_stricmp(value, "p4") ||   /* is this right? -- jrc */
-             !nasm_stricmp(value, "willamette"))
-        iflag_set(&r, IF_WILLAMETTE);
-    else if (!nasm_stricmp(value, "prescott"))
-        iflag_set(&r, IF_PRESCOTT);
-    else if (!nasm_stricmp(value, "x64") ||
-             !nasm_stricmp(value, "x86-64"))
-        iflag_set(&r, IF_X86_64);
-    else if (!nasm_stricmp(value, "ia64")   ||
-             !nasm_stricmp(value, "ia-64")  ||
-             !nasm_stricmp(value, "itanium")||
-             !nasm_stricmp(value, "itanic") ||
-             !nasm_stricmp(value, "merced"))
-        iflag_set(&r, IF_IA64);
-    else {
-        iflag_set(&r, IF_PLEVEL);
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                   "unknown 'cpu' type");
+    for (cpu = cpunames; cpu->name; cpu++) {
+        if (!strcmp(value, cpu->name))
+            break;
     }
+
+    if (!cpu->name) {
+        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
+                   "unknown 'cpu' type '%s'", value);
+    }
+
+    iflag_set_cpu(&r, cpu->level);
     return r;
 }
 
-static int get_bits(char *value)
+static int get_bits(const char *value)
 {
-    int i;
+    int i = atoi(value);
 
-    if ((i = atoi(value)) == 16)
-        return i;               /* set for a 16-bit segment */
-    else if (i == 32) {
-        if (iflag_ffs(&cpu) < IF_386) {
+    switch (i) {
+    case 16:
+        break;                  /* Always safe */
+    case 32:
+        if (!iflag_cpu_level_ok(&cpu, IF_386)) {
             nasm_error(ERR_NONFATAL,
-                         "cannot specify 32-bit segment on processor below a 386");
+                       "cannot specify 32-bit segment on processor below a 386");
             i = 16;
         }
-    } else if (i == 64) {
-        if (iflag_ffs(&cpu) < IF_X86_64) {
+        break;
+    case 64:
+        if (!iflag_cpu_level_ok(&cpu, IF_X86_64)) {
             nasm_error(ERR_NONFATAL,
-                         "cannot specify 64-bit segment on processor below an x86-64");
+                       "cannot specify 64-bit segment on processor below an x86-64");
             i = 16;
         }
-    } else {
+        break;
+    default:
         nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                     "`%s' is not a valid segment size; must be 16, 32 or 64",
-                     value);
+                   "`%s' is not a valid segment size; must be 16, 32 or 64",
+                   value);
         i = 16;
+        break;
     }
     return i;
 }

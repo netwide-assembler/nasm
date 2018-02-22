@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -7704,10 +7704,15 @@ platforms pass arguments in registers rather than on the stack.
 Furthermore, 64-bit platforms use SSE2 by default for floating point.
 Please see the ABI documentation for your platform.
 
-64-bit platforms differ in the sizes of the fundamental datatypes, not
-just from 32-bit platforms but from each other.  If a specific size
-data type is desired, it is probably best to use the types defined in
-the Standard C header \c{<inttypes.h>}.
+64-bit platforms differ in the sizes of the C/C++ fundamental
+datatypes, not just from 32-bit platforms but from each other.  If a
+specific size data type is desired, it is probably best to use the
+types defined in the standard C header \c{<inttypes.h>}.
+
+All known 64-bit platforms except some embedded platforms require that
+the stack is 16-byte aligned at the entry to a function.  In order to
+enforce that, the stack pointer (\c{RSP}) needs to be aligned on an
+\c{odd} multiple of 8 bytes before the \c{CALL} instruction.
 
 In 64-bit mode, the default instruction size is still 32 bits.  When
 loading a value into a 32-bit register (but not an 8- or 16-bit
@@ -7755,12 +7760,30 @@ immediate as \c{DWORD}:
 
 The length of these instructions are 10, 5 and 7 bytes, respectively.
 
+If optimization is enabled and NASM can determine at assembly time
+that a shorter instruction will suffice, the shorter instruction will
+be emitted unless of course \c{STRICT QWORD} or \c{STRICT DWORD} is
+specified (see \k{strict}):
+
+\c      mov rax,1		; Assembles as "mov eax,1" (5 bytes)
+\c      mov rax,strict qword 1  ; Full 10-byte instruction
+\c	mov rax,strict dword 1	; 7-byte instruction
+\c      mov rax,symbol          ; 10 bytes, not known at assembly time
+\c      lea rax,[rel symbol]    ; 7 bytes, usually preferred by the ABI
+
+Note that \c{lea rax,[rel symbol]} is position-independent, whereas
+\c{mov rax,symbol} is not.  Most ABIs prefer or even require
+position-independent code in 64-bit mode.  However, the \c{MOV}
+instruction is able to reference a symbol anywhere in the 64-bit
+address space, whereas \c{LEA} is only able to access a symbol within
+within 2 GB of the instruction itself (see below.)
+
 The only instructions which take a full \I{64-bit displacement}64-bit
 \e{displacement} is loading or storing, using \c{MOV}, \c{AL}, \c{AX},
 \c{EAX} or \c{RAX} (but no other registers) to an absolute 64-bit address.
 Since this is a relatively rarely used instruction (64-bit code generally uses
 relative addressing), the programmer has to explicitly declare the
-displacement size as \c{QWORD}:
+displacement size as \c{ABS QWORD}:
 
 \c      default abs
 \c
@@ -7797,9 +7820,11 @@ calls, and thus are available for use by the function without saving.
 Integer return values are passed in \c{RAX} and \c{RDX}, in that order.
 
 Floating point is done using SSE registers, except for \c{long
-double}.  Floating-point arguments are passed in \c{XMM0} to \c{XMM7};
-return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed on the
-stack, and returned in \c{ST0} and \c{ST1}.
+double}, which is 80 bits (\c{TWORD}) on most platforms (Android is
+one exception; there \c{long double} is 64 bits and treated the same
+as \c{double}.)  Floating-point arguments are passed in \c{XMM0} to
+\c{XMM7}; return is \c{XMM0} and \c{XMM1}.  \c{long double} are passed
+on the stack, and returned in \c{ST0} and \c{ST1}.
 
 All SSE and x87 registers are destroyed by function calls.
 

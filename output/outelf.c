@@ -3273,6 +3273,9 @@ static void dwarf_generate(void)
     if (is_elf32()) {
         WRITELONG(pbuf,0);  /* null  beginning offset */
         WRITELONG(pbuf,0);  /* null  ending offset */
+    } else if (is_elfx32()) {
+        WRITELONG(pbuf,0);  /* null  beginning offset */
+        WRITELONG(pbuf,0);  /* null  ending offset */
     } else {
         nasm_assert(is_elf64());
         WRITEDLONG(pbuf,0);  /* null  beginning offset */
