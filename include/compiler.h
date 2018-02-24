@@ -296,7 +296,7 @@ size_t strnlen(const char *s, size_t maxlen);
  * This differs from unlikely() in that it is applied to a function call,
  * not a boolean condition.
  */
-#ifndef HAVE_FUNC_ATTRIBUTE_COLD
+#ifdef HAVE_FUNC_ATTRIBUTE_COLD
 # define unlikely_func __attribute__((cold))
 #else
 # define unlikely_func
