@@ -209,6 +209,7 @@ static void ieee_unqualified_name(char *, char *);
  */
 static void ieee_init(void)
 {
+    strlcpy(ieee_infile, inname, sizeof(ieee_infile));
     any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;

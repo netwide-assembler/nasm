@@ -384,6 +384,7 @@ static int32_t macho_gotpcrel_sect;
 
 static void macho_init(void)
 {
+    module_name = inname;
     sects = NULL;
     sectstail = &sects;
 

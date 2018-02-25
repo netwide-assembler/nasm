@@ -640,6 +640,7 @@ static enum directive_result obj_directive(enum directive, char *, int);
 
 static void obj_init(void)
 {
+    strlcpy(obj_infile, inname, sizeof(inname));
     first_seg = seg_alloc();
     any_segs = false;
     fpubhead = NULL;
