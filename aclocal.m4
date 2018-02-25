@@ -199,3 +199,29 @@ inline int foo(int x)
     [Define to 1 if your compiler supports C99 extern inline])],
  [AC_MSG_RESULT([no])
   PA_ADD_CFLAGS([-fgnu89-inline])])])
+
+dnl --------------------------------------------------------------------------
+dnl PA_CHECK_FALLTHROUGH_ATTRIBUTE
+dnl --------------------------------------------------------------------------
+AC_DEFUN(PA_CHECK_FALLTHROUGH_ATTRIBUTE,
+[AC_MSG_CHECKING([if $CC supports fallthrough attribute])
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+int main(int argc, char **argv)
+{
+	switch (argc) {
+	case 1:
+		(void)argc;
+		__attribute__((fallthrough));
+	default:
+		(void)argv;
+		break;
+	}
+	return argc;
+}
+ ])],
+ [AC_MSG_RESULT([yes])
+  AC_DEFINE([HAVE_FALLTHROUGH_ATTRIBUTE], 1,
+    [Define to 1 if your compiler supports __attribute__((fallthrough))])],
+ [AC_MSG_RESULT([no])])
+])

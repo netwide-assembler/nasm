@@ -294,6 +294,11 @@ dnl options.
 dnl
 PA_CHECK_BAD_STDC_INLINE
 
+dnl Figure out if we can use fallthrough attribute or
+dnl should provide simple comment instead.
+dnl
+PA_CHECK_FALLTHROUGH_ATTRIBUTE
+
 dnl
 dnl support ccache
 dnl
