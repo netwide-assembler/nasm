@@ -205,6 +205,7 @@ dnl PA_CHECK_FALLTHROUGH_ATTRIBUTE
 dnl --------------------------------------------------------------------------
 AC_DEFUN(PA_CHECK_FALLTHROUGH_ATTRIBUTE,
 [AC_MSG_CHECKING([if $CC supports fallthrough attribute])
+ CFLAGS="$CFLAGS -Werror"
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 int main(int argc, char **argv)
