@@ -215,8 +215,8 @@ static void list_output(const struct out_data *data)
             list_out(offset, q);
         } else {
             p = zero_buffer;
-            /* fall through */
         }
+	fallthrough();
     case OUT_RAWDATA:
     {
 	if (size == 0 && !listdata[0])
