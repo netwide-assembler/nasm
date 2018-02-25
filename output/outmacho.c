@@ -233,6 +233,7 @@ struct symbol {
 
 /* symbol type bits */
 #define	N_EXT	0x01            /* global or external symbol */
+#define	N_PEXT	0x10            /* private external symbol */
 
 #define	N_UNDF	0x0             /* undefined symbol | n_sect == */
 #define	N_ABS	0x2             /* absolute symbol  |  NO_SECT */
@@ -992,14 +993,29 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 {
     struct symbol *sym;
     struct section *s;
+    bool special_used = false;
 
-    if (special) {
-        nasm_error(ERR_NONFATAL, "The Mach-O output format does "
-              "not support any special symbol types");
-        return;
-    }
+#if defined(DEBUG) && DEBUG>2
+    nasm_error(ERR_DEBUG,
+            " macho_symdef: %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+            name, section, offset, is_global, special);
+#endif
 
     if (is_global == 3) {
+        if (special) {
+            int n = strcspn(special, " \t");
+
+            if (!nasm_strnicmp(special, "private_extern", n)) {
+                for (sym = syms; sym != NULL; sym = sym->next) {
+                    if (!strcmp(name, sym->name)) {
+                        if (sym->type & N_PEXT)
+                            return; /* nothing to be done */
+                        else
+                            break;
+                    }
+                }
+            }
+        }
         nasm_error(ERR_NONFATAL, "The Mach-O format does not "
               "(yet) support forward reference fixups.");
         return;
@@ -1031,6 +1047,18 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     /* external and common symbols get N_EXT */
     if (is_global != 0) {
         sym->type |= N_EXT;
+    }
+    if (is_global == 1) {
+        /* check special to see if the global symbol shall be marked as private external: N_PEXT */
+        if (special) {
+            int n = strcspn(special, " \t");
+
+            if (!nasm_strnicmp(special, "private_extern", n))
+                sym->type |= N_PEXT;
+            else
+                nasm_error(ERR_NONFATAL, "unrecognised symbol type `%.*s'", n, special);
+        }
+        special_used = true;
     }
 
     if (section == NO_SEG) {
@@ -1083,6 +1111,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
     }
 
     ++nsyms;
+
+    if (special && !special_used)
+        nasm_error(ERR_NONFATAL, "no special symbol features supported here");
 }
 
 static void macho_sectalign(int32_t seg, unsigned int value)
