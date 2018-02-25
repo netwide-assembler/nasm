@@ -99,6 +99,8 @@ static iflag_t get_cpu(const char *value)
         { NULL, IF_PLEVEL }     /* Error and final default entry */
     };
 
+    iflag_clear_all(&r);
+
     for (cpu = cpunames; cpu->name; cpu++) {
         if (!strcmp(value, cpu->name))
             break;
