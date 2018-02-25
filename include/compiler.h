@@ -241,15 +241,6 @@ size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /*
- * Fallthrough handling.
- */
-#ifdef HAVE_FALLTHROUGH_ATTRIBUTE
-# define fallthrough() __attribute__((fallthrough))
-#else
-# define fallthrough() /* fall through */
-#endif
-
-/*
  * Hints to the compiler that a particular branch of code is more or
  * less likely to be taken.
  */
